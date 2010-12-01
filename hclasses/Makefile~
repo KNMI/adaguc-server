@@ -1,0 +1,40 @@
+HOME=/data/apps/rcc/MaartenP/install
+HOME=/nobackup/users/plieger/hdf5mapserver/build
+
+#HOME=/data/data1/mapserver/
+#HOME2=/data/data1/software/install/
+
+HOME=/home/plieger/interpolws/software/install
+
+HOME=/nobackup/users/plieger/build/
+LIBDIR=$(HOME)/lib
+
+INCLUDEDIR=$(HOME)/include -I /usr/include/libxml2/ -I $(HOME2)/include
+
+#CCOMPILER=g++ -Wall -I $(INCLUDEDIR) 
+
+#optimalization options:
+#CCOMPILER=g++ -march=pentium4 -mtune=pentium4 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 -I $(INCLUDEDIR) 
+#CCOMPILER=g++ -march=core2 -mtune=core2 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 -I $(INCLUDEDIR) 
+CCOMPILER=g++ -O2 -I $(INCLUDEDIR) 
+
+USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lgdal -lxml2 -lgd -lproj -lpq -ludunits
+
+# all libs together
+LIBS = -L$(LIBDIR) $(USERLIBS) -L$(HOME2)/lib
+
+OBJECTS = hclassestest.o CADAGUCNCMLWriter.o  CADAGUC_time.o  CDirReader.o  CADAGUC_V_API.o CTypes.o CPGSQLDB.o CGetCMDOption.o CDebugger.o #CADAGUC_R_API.o 
+
+EXECUTABLE= hclassestest
+
+default: $(EXECUTABLE)
+$(EXECUTABLE): $(OBJECTS)
+	g++ $(OBJECTS) $(HELPOBJECTS) -o  $(EXECUTABLE) $(LIBS)
+
+%.o: %.cpp
+	$(CCOMPILER) -c $< -o $@
+
+clean:
+	rm $(OBJECTS)
+
+
