@@ -30,7 +30,13 @@ CADAGUC_time::CADAGUC_time(const char * DateSince){
   if (utInit("") != 0) {
     CDBError("Couldn't initialize Unidata units library, try setting UDUNITS_PATH to udunits.dat");exit(1);
   }
-  if(utScan(DateSince,&dataunits) != 0)  {
+  
+  size_t l=strlen(stpszDateSince);
+  for(size_t j=0;j<l;j++){
+    if(stpszDateSince[j]=='T')stpszDateSince[j]=32;
+    if(stpszDateSince[j]=='Z')stpszDateSince[j]=32;
+  }
+  if(utScan(stpszDateSince,&dataunits) != 0)  {
     CDBError("internal error: udu_fmt_time can't parse data unit string");
   }
   //char szTemp[MAX_STR_LEN+1]; snprintf(szTemp,MAX_STR_LEN,"UDUNITS initialized with [%s]",DateSince);CDBDebug(szTemp);

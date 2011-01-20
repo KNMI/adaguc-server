@@ -402,7 +402,7 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
         min=int(min/ival);min=min*ival;//min-=int(idval*1);
         max=int(max/ival);max=max*ival;max+=ival;
         if(drawShade){
-          setValuePixel(dataSource,drawImage,x,y,max);
+          setValuePixel(dataSource,drawImage,x,y,(min+max)/2);
             //setValuePixel(dataSource,drawImage,x,y,val[0]);
         }
         if((max-min)/ival<3&&(max-min)/ival>1){
@@ -457,7 +457,8 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
                 }
                 if(drawText){
                   if((x%50==0)&&(drawnTextY==0)){
-                    floatToString(szTemp,255,c);
+                    //floatToString(szTemp,255,c);
+                    sprintf(szTemp,"%6.1f",c);
                     int l=strlen(szTemp);
                     
                     drawImage->rectangle(x-1,y-1,x+2,y+2, 241,248);
@@ -545,6 +546,7 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
         //drawImage->line(x,y,x+4,y+4,2,244);
         int col=col2;
         float w;
+        
         int lastXdir=-10,lastYdir;
         int distanceFromStart=0;
         int drawnText=0;
@@ -581,9 +583,10 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
                         float c = valueData[x+y*dImageWidth];
                         float m=(int((c/ival)+0.5f))*ival;
                         if(float(int(interval))==interval&&int(m)==m){
-                          snprintf(szTemp,10,"%d",int(m*textScaleFactor+textOffsetFactor+0.5));
+                          snprintf(szTemp,10,"%d",int(m*textScaleFactor+textOffsetFactor));
                         }else{
-                          floatToString(szTemp,255,m*textScaleFactor+textOffsetFactor);
+                          //floatToString(szTemp,255,m*textScaleFactor+textOffsetFactor);
+                          snprintf(szTemp,10,"%6.1f",(m*textScaleFactor+textOffsetFactor));
                         }
                         busyDrawingText=strlen(szTemp)*1+3;
                       }
@@ -612,9 +615,13 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
                   modulo=int((smallContInterval/ival)+0.5f);
                   if(modulo>0){smallC=(int((fabs(c)/ival)+0.5f))%modulo;}else smallC=1;
                 
+                  
+                  col1=241;
+                  col2=241;
                   col=col2;
+                  
                   w=0.4;
-                  if(smallC==0){w=0.4;col=col2;}
+                  if(smallC==0){w=0.75;col=col2;}
                   if(bigC==0){w=1.0;col=col1;}
                   
                   if(drawLine){//&&(distanceFromStart%(linePointDistance*3)>linePointDistance*1)){

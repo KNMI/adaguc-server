@@ -68,19 +68,25 @@ void CDF::getCDataTypeName(char *name,size_t maxlen,int type){
   if(type==CDF_UINT  )snprintf(name,maxlen,"uint");
 }
 
+//const char *getAttributeAsString(CDF::Attribute *attr){
+//}
+
 void CDF::_dumpPrintAttributes(const char *variableName, std::vector<CDF::Attribute *>attributes,CT::string *dumpString){
   //print attributes:
   for(size_t a=0;a<attributes.size();a++){
     CDF::Attribute *attr=attributes[a];
     dumpString->printconcat("\t\t%s:%s =",variableName,attr->name.c_str());
+    
     //print data
     char *data = new char[attr->length+1];
     memcpy(data,attr->data,attr->length);
     data[attr->length]='\0';
     if(attr->type==CDF_CHAR)dumpString->printconcat(" \"%s\"",data);
-    if(attr->type==CDF_UBYTE)dumpString->printconcat(" \"%s\"",data);
-    if(attr->type==CDF_BYTE)dumpString->printconcat(" \"%s\"",data);
+    //if(attr->type==CDF_UBYTE)dumpString->printconcat(" \"%s\"",data);
+    //if(attr->type==CDF_BYTE)dumpString->printconcat(" \"%s\"",data);
     delete[] data;
+    
+    if(attr->type==CDF_BYTE||attr->type==CDF_UBYTE)for(size_t n=0;n<attr->length;n++)dumpString->printconcat(" %db",((char*)attr->data)[n]);
     if(attr->type==CDF_INT||attr->type==CDF_UINT)for(size_t n=0;n<attr->length;n++)dumpString->printconcat(" %d",((int*)attr->data)[n]);
     if(attr->type==CDF_SHORT||attr->type==CDF_USHORT)for(size_t n=0;n<attr->length;n++)dumpString->printconcat(" %ds",((short*)attr->data)[n]);
     if(attr->type==CDF_FLOAT)for(size_t n=0;n<attr->length;n++)dumpString->printconcat(" %ff",((float*)attr->data)[n]);

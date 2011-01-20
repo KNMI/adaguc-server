@@ -56,6 +56,8 @@ int CImageDataWriter::_setTransparencyAndBGColor(CServerParams *srvParam,CDrawIm
 
 int CImageDataWriter::drawCascadedWMS(const char *service,const char *layers,bool transparent){
   return 0;
+#ifdef ENABLE_CURL
+  
   bool trueColor=drawImage.getTrueColor();
   transparent=true;
   CT::string url=service;
@@ -94,6 +96,11 @@ int CImageDataWriter::drawCascadedWMS(const char *service,const char *layers,boo
     gdImageDestroy(gdImage);
   }
   return 0;
+#elseif
+  CDBError("CURL not enabled");
+  return 1;
+#endif
+  return 0;
 }
 
 int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int NrOfBands){
@@ -104,6 +111,7 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
     drawImage.setTrueColor(true);
     drawImage.setAntiAliased(true);
   }
+  
   //Set font location
   if(srvParam->cfg->Font.size()!=0){
     if(srvParam->cfg->Font[0]->attr.location.c_str()!=NULL){
@@ -118,6 +126,8 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   }
   
   
+
+  
   //drawImage.setTrueColor(true);
   //drawImage.setAntiAliased(true);
   /*drawImage.setTrueColor(true);
@@ -131,8 +141,8 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
     if(status != 0) return 1;
   }
   if(requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
-    drawImage.setAntiAliased(false);
-    drawImage.setTrueColor(false);
+    //drawImage.setAntiAliased(false);
+    //drawImage.setTrueColor(false);
     status = drawImage.createImage(LEGEND_WIDTH,LEGEND_HEIGHT);
     if(status != 0) return 1;
   }
@@ -142,11 +152,15 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
     getFeatureInfoHeader.copy("");
     return 0;
   }
+  
   int dLegendIndex = initializeLegend(srvParam,dataSource);
+
   if(dLegendIndex==-1){
     CDBError("Unable to initialize legend for dataSource %s",dataSource->cfgLayer->Name[0]->value.c_str());
     return 1;
   }
+
+  
   status = drawImage.createGDPalette(srvParam->cfg->Legend[dLegendIndex]);
   if(status != 0){
     CDBError("Unknown palette type for %s",srvParam->cfg->Legend[dLegendIndex]->attr.name.c_str());
@@ -284,7 +298,7 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
             //Find the render method:
             if(legendStyle->count==2||legendStyle->count==3){
               if(legendStyle[1].length()>0){
-                CDBDebug("Rendermethod = %s",legendStyle[1].c_str());
+                //CDBDebug("Rendermethod = %s",legendStyle[1].c_str());
                 renderMethod=getRenderMethodFromString(&legendStyle[1]);
               }
             }
@@ -608,8 +622,11 @@ int CImageDataWriter::warpImage(CDataSource *dataSource,CDrawImage *drawImage){
   //Open the data of this dataSource
   //CDBDebug("opening:");
   CDataReader reader;
+  //CDBDebug("!");
   CT::string cacheLocation;srvParam->getCacheDirectory(&cacheLocation);
+  //CDBDebug("!");
   status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL,cacheLocation.c_str());
+  //CDBDebug("!");
   if(status!=0){
     CDBError("Could not open file: %s",dataSource->getFileName());
     return 1;
@@ -897,6 +914,7 @@ int CImageDataWriter::calculateData(std::vector <CDataSource*>&dataSources){
   return 0;
 }
 int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
+  
   int status;
   
   if(animation==1&&nrImagesAdded>0){
@@ -907,8 +925,11 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
   // draw the Image
   for(size_t j=0;j<dataSources.size();j++){
     CDataSource *dataSource=dataSources[j];
+    //CDBDebug("!");
     if(j!=0){if(initializeLegend(srvParam,dataSource)!=0)return 1;}
+    //CDBDebug("!");
     status = warpImage(dataSource,&drawImage);
+    //CDBDebug("!");
     if(status != 0)return status;
     if(j==dataSources.size()-1){
       if(status == 0){
@@ -966,6 +987,21 @@ int CImageDataWriter::end(){
   return 0;
 }
 float CImageDataWriter::getValueForColorIndex(CDataSource *dataSource,int index){
+  if(dataSource->stretchMinMax){
+    if(dataSource->statistics==NULL){
+      dataSource->statistics = new CDataSource::Statistics();
+      dataSource->statistics->calculate(dataSource);
+    }
+    float minValue=(float)dataSource->statistics->getMinimum();
+    float maxValue=(float)dataSource->statistics->getMaximum();
+    //maxValue+=10;
+    float ls=240/(maxValue-minValue);
+    float lo=-(minValue*ls);
+    dataSource->legendScale=ls;
+    dataSource->legendOffset=lo;
+    CDBDebug("max=%f; min=%f",maxValue,minValue);
+    CDBDebug("scale=%f; offset=%f",ls,lo);
+  }  
   float v=index;
   v-=dataSource->legendOffset;
   v/=dataSource->legendScale;
@@ -1038,22 +1074,37 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage
       maxValue=getValueForColorIndex(dataSource,240);
     }
   
-    float legendInterval=shadeInterval;
-    int numClasses=int((maxValue-minValue)/legendInterval);
-    while(numClasses>15){
-      legendInterval*=2;//(maxValue-minValue);
-      numClasses=int((maxValue-minValue)/legendInterval);
+    //Only show the classes that are in the map
+    if(dataSource->stretchMinMax==false){
+      if(dataSource->statistics==NULL){
+        dataSource->statistics = new CDataSource::Statistics();
+        dataSource->statistics->calculate(dataSource);
+        minValue=(float)dataSource->statistics->getMinimum();
+        maxValue=(float)dataSource->statistics->getMaximum();
+      }
     }
-    float iMin = int(minValue/legendInterval+0.5)*legendInterval-legendInterval;
-    float iMax = int(maxValue/legendInterval+0.5)*legendInterval+legendInterval*1;
+    float legendInterval=shadeInterval;
+    int numClasses=(int((maxValue-minValue)/legendInterval));
+    if(!dataSource->stretchMinMax){
+      while(numClasses>15){
+        legendInterval*=2;//(maxValue-minValue);
+        numClasses=int((maxValue-minValue)/legendInterval);
+      }
+    }
+
+    float iMin = int(minValue/legendInterval)*legendInterval;//-legendInterval;
+    float iMax = int(maxValue/legendInterval+1)*legendInterval;//+legendInterval*1;
     
     
     floatToString(szTemp,255,iMax);
    
     
     numClasses=int((iMax-iMin)/legendInterval);
-    CDBDebug("numClasses = %d",numClasses);
-    int classSizeY=(200/(numClasses+1));
+    //if(numClasses<=2)numClasses=2;
+    
+    //CDBDebug("numClasses = %d",numClasses);
+    int classSizeY=(180/(numClasses));
+    if(classSizeY>18)classSizeY=18;
     //for(float j=iMax+legendInterval;j>=iMin;j=j-legendInterval){
     int classNr=0;
     for(float j=iMin;j<iMax+legendInterval;j=j+legendInterval){
@@ -1064,20 +1115,27 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage
       
       //int y2=getColorIndexForValue(dataSource,(v+legendInterval));
       int cY= int((cbH-(classNr-5))+4);
+      
+      int dDistanceBetweenClasses=(classSizeY-10);
+      if(dDistanceBetweenClasses<4)dDistanceBetweenClasses=0;
+      if(dDistanceBetweenClasses>4)dDistanceBetweenClasses=4;
+      cY-=dDistanceBetweenClasses;
       int cY2=int((cbH-(classNr+classSizeY-5))+4);
       classNr+=classSizeY;
       //cY*=numClasses;
       //cY2*=numClasses;
       if(j<iMax)
       {
-        int y=getColorIndexForValue(dataSource,v+legendInterval);
-        drawImage->rectangle(2,cY2,int(cbW),cY,(y),248);
+        int y=getColorIndexForValue(dataSource,v+legendInterval/2);
+        drawImage->rectangle(4,cY2,int(cbW)+7,cY,(y),248);
+              //drawImage->line((int)5,(int)cY,(int)cbW+5,(int)cY,248);
+        sprintf(szTemp,"%2.1f - %2.1f",v,v+legendInterval);
+      //CT::string 
+      //floatToString(szTemp,255,v);
+        int l=strlen(szTemp);
+        drawImage->setText(szTemp,l,(int)cbW+18,((cY+cY2)/2)-7,248,0);
       }
-      drawImage->line((int)5,(int)cY,(int)cbW+5,(int)cY,248);
-      //sprintf(szTemp,"%2.6f",v);
-      floatToString(szTemp,255,v);
-      int l=strlen(szTemp);
-      drawImage->setText(szTemp,l,(int)cbW+10,(cY)-7,248,0);
+
     }
     
     /*for(int j=0;j<240;j++){
@@ -1106,7 +1164,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage
     }
   }
   //Print the units under the legend:
-  if(units.length()>0)drawImage->setText(units.c_str(),units.length(),2,LEGEND_HEIGHT-13,248,-1);
+  if(units.length()>0)drawImage->setText(units.c_str(),units.length(),5,LEGEND_HEIGHT-13,248,-1);
   
   return 0;
 }

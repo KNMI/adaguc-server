@@ -59,7 +59,7 @@
 #define CNETCDFREADER_MODE_OPEN_ALL       2
 #define CNETCDFREADER_MODE_GET_METADATA   3
 
-//#define MEASURETIME
+#define MEASURETIME
 
 //Web Coverage restriction and Get Feature Info restriction
 #define ALLOW_NONE     1

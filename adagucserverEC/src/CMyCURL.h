@@ -1,3 +1,4 @@
+#ifdef ENABLE_CURL
 #ifndef CMYCURL_H
 #define CMYCURL_H
 #include <stdio.h>
@@ -142,4 +143,5 @@ class MyCURL{
   }
 
 };
+#endif
 #endif

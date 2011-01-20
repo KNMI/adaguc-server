@@ -115,7 +115,11 @@ class CFile{
       error(szTemp);
       return 1;
     }
-    fread(buf,1,length,fp);
+    size_t result=fread(buf,1,length,fp);
+    if(result!=length){
+      //CDBError("openFileToBuf: Number of bytes read != requested");
+      return 1;
+    }
     fclose(fp);
     return 0;
   }

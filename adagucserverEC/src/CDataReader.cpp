@@ -1,6 +1,27 @@
 #include "CDataReader.h"
 #include <sys/stat.h>
 const char *CDataReader::className="CDataReader";
+/*void writeLogFile2(const char * msg){
+  char * logfile=getenv("ADAGUC_LOGFILE");
+  if(logfile!=NULL){
+    FILE * pFile = NULL;
+    pFile = fopen (logfile , "a" );
+    if(pFile != NULL){
+      fputs  (msg, pFile );
+      if(strncmp(msg,"[D:",3)==0||strncmp(msg,"[W:",3)==0||strncmp(msg,"[E:",3)==0){
+        time_t myTime = time(NULL);
+        tm *myUsableTime = localtime(&myTime);
+        char szTemp[128];
+        snprintf(szTemp,127,"%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ ",
+                 myUsableTime->tm_year+1900,myUsableTime->tm_mon+1,myUsableTime->tm_mday,
+                 myUsableTime->tm_hour,myUsableTime->tm_min,myUsableTime->tm_sec
+                );
+        fputs  (szTemp, pFile );
+      }
+      fclose (pFile);
+    }//else CDBError("Unable to write logfile %s",logfile);
+  }
+}*/
 
 void printStatus(const char *status,const char *a,...){
   va_list ap;
@@ -156,16 +177,16 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
 #endif
 
   if(cacheAvailable==true){
-    if(cdfReader!=NULL)delete cdfReader;
+  if(cdfReader!=NULL)delete cdfReader;
     
-    cdfReader = new CDFNetCDFReader(cdfObject);
+  cdfReader = new CDFNetCDFReader(cdfObject);
   
     //CDBDebug("Reading from Cache file");
-    status = cdfReader->open(uniqueIDFor2DField.c_str());
-    int timeStep = sourceImage->getCurrentTimeStep();
-    for(size_t j=0;j<sourceImage->timeSteps[timeStep]->dims.dimensions.size();j++){
-      sourceImage->timeSteps[timeStep]->dims.dimensions[0]->index=0;
-    }
+  status = cdfReader->open(uniqueIDFor2DField.c_str());
+  int timeStep = sourceImage->getCurrentTimeStep();
+  for(size_t j=0;j<sourceImage->timeSteps[timeStep]->dims.dimensions.size();j++){
+    sourceImage->timeSteps[timeStep]->dims.dimensions[0]->index=0;
+  }
   }else{
     status = cdfReader->open(FileName.c_str());
   }
@@ -249,13 +270,13 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
   //Check if projection is overidden in the config file
   if(sourceImage->cfgLayer->Projection.size()==1){
     //Read projection information from configuration
-    if(sourceImage->cfgLayer->Projection[0]->attr.id.c_str()!=NULL)
-      sourceImage->nativeEPSG.copy(sourceImage->cfgLayer->Projection[0]->attr.id.c_str());
-    else sourceImage->nativeEPSG.copy("EPSG:4326");
+  if(sourceImage->cfgLayer->Projection[0]->attr.id.c_str()!=NULL)
+    sourceImage->nativeEPSG.copy(sourceImage->cfgLayer->Projection[0]->attr.id.c_str());
+  else sourceImage->nativeEPSG.copy("EPSG:4326");
     //Read proj4 string
-    if(sourceImage->cfgLayer->Projection[0]->attr.proj4.c_str()!=NULL)
-      sourceImage->nativeProj4.copy(sourceImage->cfgLayer->Projection[0]->attr.proj4.c_str());
-    else sourceImage->nativeProj4.copy("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
+  if(sourceImage->cfgLayer->Projection[0]->attr.proj4.c_str()!=NULL)
+    sourceImage->nativeProj4.copy(sourceImage->cfgLayer->Projection[0]->attr.proj4.c_str());
+  else sourceImage->nativeProj4.copy("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
   }else{
     // If undefined, set standard lat lon projection
     sourceImage->nativeProj4.copy("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
@@ -362,21 +383,21 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
         AttrValue.copy("");
         switch (attribute->type){
           case CDF_CHAR:{
-              szType[0]='C';//char
-              AttrValue.copy((char*)attribute->data);
-            }
-            break;
+            szType[0]='C';//char
+            AttrValue.copy((char*)attribute->data);
+          }
+          break;
           case CDF_SHORT:{
-              szType[0]='S';//short
-              for(m=0; m < attribute->length-1; m++) {
-                snprintf( szTemp, MAX_STR_LEN,"%d, ",((short*)attribute->data)[m] );
-                AttrValue.concat(szTemp);
-              }
-              snprintf( szTemp, MAX_STR_LEN,"%d",((short*)attribute->data)[m]);
+            szType[0]='S';//short
+            for(m=0; m < attribute->length-1; m++) {
+              snprintf( szTemp, MAX_STR_LEN,"%d, ",((short*)attribute->data)[m] );
               AttrValue.concat(szTemp);
             }
-            break;
-            case CDF_INT:{
+            snprintf( szTemp, MAX_STR_LEN,"%d",((short*)attribute->data)[m]);
+            AttrValue.concat(szTemp);
+          }
+          break;
+          case CDF_INT:{
             szType[0]='I';//Int
             for(m=0; m < attribute->length-1; m++) {
               snprintf( szTemp, MAX_STR_LEN,"%d, ",((int*)attribute->data)[m] );
@@ -435,8 +456,8 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
     /*//Get Unit
     CDF::Attribute *varUnits=var[varNr]->getAttribute("units");
     if(varUnits!=NULL){
-      sourceImage->dataObject[varNr]->units.copy((char*)varUnits->data);
-    }else sourceImage->dataObject[varNr]->units.copy("");
+    sourceImage->dataObject[varNr]->units.copy((char*)varUnits->data);
+  }else sourceImage->dataObject[varNr]->units.copy("");
     */
   
     CDF::Attribute *fillValue = var[varNr]->getAttribute("_FillValue");
@@ -446,10 +467,10 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
       
     }else hasNodataValue=false;
   //size_t varNr=0;
-    CDBDebug("--- varNR [%d], name=\"%s\"",varNr,var[varNr]->name.c_str());
+    /*CDBDebug("--- varNR [%d], name=\"%s\"",varNr,var[varNr]->name.c_str());
     for(size_t d=0;d<var[varNr]->dimensionlinks.size();d++){
       CDBDebug("%s  \tstart: %d\tcount %d",var[varNr]->dimensionlinks[d]->name.c_str(),start[d],count[d]);
-    }
+  }*/
     
     cdfReader->readVariableData(var[varNr], sourceImage->dataObject[varNr]->dataType,start,count,stride);
 //    CDBDebug("Reading variable %s",var[varNr]->name.c_str());
@@ -489,6 +510,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
     sourceImage->dataObject[varNr]->hasNodataValue=hasNodataValue;
   }
   
+  if(sourceImage->legendScale==0.0f)sourceImage->stretchMinMax=true;else sourceImage->stretchMinMax=false;
   if(sourceImage->stretchMinMax){
     if(sourceImage->statistics==NULL){
       sourceImage->statistics = new CDataSource::Statistics();
@@ -502,7 +524,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
     //Calculate legendOffset legendScale
     float ls=240/(max-min);
     float lo=-(min*ls);
-    lo=int(lo-ls/2);
+    //lo=int(lo-ls)/2;
     //float minValue=min;
     //float maxValue=max;
     sourceImage->legendScale=ls;
@@ -520,50 +542,93 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
   }*/
 
     if(enableDataCache==true&&saveFieldFile==true){
+  
+  // CT::string dumpString;
+  // CDF::dump(cdfObject,&dumpString);
+  // CDBDebug(dumpString.c_str());
+  
       //CDFObject newCDFObject
       
   //CDBDebug("Writing data cache file");
       /*if(saveMetadataFile){
-        CDBDebug("Writing to %s",uniqueIDFor2DField.c_str());
-        CDFNetCDFWriter netCDFWriter(cdfObject);
-        netCDFWriter.disableVariableWrite();
-        netCDFWriter.write(uniqueIDForMetadata.c_str());
+  CDBDebug("Writing to %s",uniqueIDFor2DField.c_str());
+  CDFNetCDFWriter netCDFWriter(cdfObject);
+  netCDFWriter.disableVariableWrite();
+  netCDFWriter.write(uniqueIDForMetadata.c_str());
     }*/
-      int keepVariable[sourceImage->dataObject.size()];
-      for(size_t v=0;v<cdfObject->variables.size();v++){
-        keepVariable[v]=0;        
-      }
+  //int keepVariable[sourceImage->dataObject.size()];
+  int keepVariable[cdfObject->variables.size()];
+  for(size_t v=0;v<cdfObject->variables.size();v++){
+    keepVariable[v]=0;        
+  }
       //if(saveFieldFile)
-      {
+  {
         //size_t dataSize=sourceImage->dWidth*sourceImage->dHeight*CDF::getTypeSize(sourceImage->dataObject[0]->dataType);
         //CDBDebug("Writing to %s",uniqueIDFor2DField.c_str());
         
-        //Make a list of required variables and dimensions...
-        for(size_t v=0;v<sourceImage->dataObject.size();v++){
-          for(size_t w=0;w<cdfObject->variables.size();w++){
-            if(keepVariable[w]==0){
-              if(cdfObject->variables[w]->isDimension==true||cdfObject->variables[w]->dimensionlinks.size()==0){
+    
+    
+    //Make a list of required dimensions
+    std::vector<CT::string *> dimsToKeep;
+    for(size_t v=0;v<sourceImage->dataObject.size();v++){
+      CDF::Variable *var = cdfObject->getVariable(sourceImage->dataObject[v]->variableName.c_str());
+      //Loop through dim links
+      for(size_t d=0;d<var->dimensionlinks.size();d++){
+        dimsToKeep.push_back(new CT::string(var->dimensionlinks[d]->name.c_str()));
+      }
+    }
+    
+     //Make a list of required variables
+    for(size_t v=0;v<sourceImage->dataObject.size();v++){
+      for(size_t w=0;w<cdfObject->variables.size();w++){
+        if(keepVariable[w]==0){
+          if(cdfObject->variables[w]->isDimension==true){
+            bool keepDim=false;
+            for(size_t d=0;d<dimsToKeep.size();d++){
+              if(cdfObject->variables[w]->name.equals(dimsToKeep[d]->c_str())){
                 keepVariable[w]=1;
+                keepDim=true;break;
               }
-              if(keepVariable[w]==0){
-                if(cdfObject->variables[w]->name.equals(&sourceImage->dataObject[v]->variableName)){
-                  keepVariable[w]=1;
-                }
+              /*if(keepDim==true){
+                CDBDebug("Keep %s",(cdfObject->variables[w]->name.c_str()));
+                
               }
+              if(keepDim==false){
+                CDBDebug("False %s",(cdfObject->variables[w]->name.c_str()));
+            }*/
+            }
+          }
+          if(cdfObject->variables[w]->dimensionlinks.size()==0){
+            keepVariable[w]=1;
+          }
+          if(keepVariable[w]==0){
+            if(cdfObject->variables[w]->name.equals(&sourceImage->dataObject[v]->variableName)){
+              keepVariable[w]=1;
             }
           }
         }
-        std::vector<CT::string *> deleteVarNames;
-        for(size_t v=0;v<cdfObject->variables.size();v++){
-          if(keepVariable[v]==0){
-            deleteVarNames.push_back(new CT::string(&cdfObject->variables[v]->name));
-          }
-        }
-        for(size_t i=0;i<deleteVarNames.size();i++){
-          cdfObject->removeVariable(deleteVarNames[i]->c_str());
-          delete deleteVarNames[i];
-          deleteVarNames[i]=NULL;
-        }
+      }
+    }
+    for(size_t d=0;d<dimsToKeep.size();d++){
+      delete dimsToKeep[d];
+      dimsToKeep[d]=NULL;
+    }
+
+
+    
+    std::vector<CT::string *> deleteVarNames;
+    for(size_t v=0;v<cdfObject->variables.size();v++){
+      if(keepVariable[v]==0){
+        deleteVarNames.push_back(new CT::string(&cdfObject->variables[v]->name));
+      }
+    }
+    for(size_t i=0;i<deleteVarNames.size();i++){
+      //CDBDebug("Removing %s",deleteVarNames[i]->c_str());
+      cdfObject->removeVariable(deleteVarNames[i]->c_str());
+      cdfObject->removeDimension(deleteVarNames[i]->c_str());
+      delete deleteVarNames[i];
+      deleteVarNames[i]=NULL;
+    }
         //cdfObject->removeVariable("image1.image_data");
         //for(size_t v=0;v<cdfObject->variables.size();v++){
           //CDBDebug("%d%s",cdfObject->variables[v]->isDimension,cdfObject->variables[v]->name.c_str());
@@ -574,93 +639,98 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
         //}
         //Adjust dimensions for the single object:
         
-        varX->type=CDF_DOUBLE;
-        varY->type=CDF_DOUBLE;
-        int timeStep = sourceImage->getCurrentTimeStep();
+    varX->type=CDF_DOUBLE;
+    varY->type=CDF_DOUBLE;
+    int timeStep = sourceImage->getCurrentTimeStep();
 
         /*for(size_t j=0;j<cdfObject->variables.size();j++){
-          cdfObject->variables[j]->type=CDF_DOUBLE;
-      }*/
+    cdfObject->variables[j]->type=CDF_DOUBLE;
+  }*/
           
-        for(size_t j=0;j<sourceImage->timeSteps[timeStep]->dims.dimensions.size();j++){
-          CDF::Dimension *dim = cdfObject->getDimension(sourceImage->timeSteps[timeStep]->dims.dimensions[0]->name.c_str());
-          CDF::Variable *var = cdfObject->getVariable(sourceImage->timeSteps[timeStep]->dims.dimensions[0]->name.c_str());
+    for(size_t j=0;j<sourceImage->timeSteps[timeStep]->dims.dimensions.size();j++){
+      CDF::Dimension *dim = cdfObject->getDimension(sourceImage->timeSteps[timeStep]->dims.dimensions[0]->name.c_str());
+      CDF::Variable *var = cdfObject->getVariable(sourceImage->timeSteps[timeStep]->dims.dimensions[0]->name.c_str());
           
-            cdfReader->readVariableData(var,CDF_DOUBLE);
+      cdfReader->readVariableData(var,CDF_DOUBLE);
             
-            double dimValue[var->getSize()];
+      double dimValue[var->getSize()];
             //sourceImage->timeSteps[0]->dims.dimensions[0]->index*CDF::getTypeSize(var->type)
-            CDF::dataCopier.copy(dimValue,var->data,var->type,var->getSize());
-            size_t index=sourceImage->timeSteps[timeStep]->dims.dimensions[0]->index;
+      CDF::dataCopier.copy(dimValue,var->data,var->type,var->getSize());
+      size_t index=sourceImage->timeSteps[timeStep]->dims.dimensions[0]->index;
             //CDBDebug("dimvalue %s at index %d = %f",var->name.c_str(),index,dimValue[index]);
             
-            var->setSize(1);
-            dim->length=1;
-            ((double*)var->data)[0]=dimValue[index];
+      var->setSize(1);
+      dim->length=1;
+      ((double*)var->data)[0]=dimValue[index];
             //sourceImage->timeSteps[0]->dims.dimensions[0]->index
             //var->setData(var->type,const void *dataToSet,1){
              //sourceImage->timeSteps[0]->dims.dimensions[0]->index);
-          }
-         // CT::string dumpString;
-          //CDF::dump(cdfObject,&dumpString);
-          //printf("\nSTART\n%s\nEND\n",dumpString.c_str());
-        
-        CDFNetCDFWriter netCDFWriter(cdfObject);
-        netCDFWriter.disableReadData();
+    }
+    
+    
+    
+    
+    
+         /*CT::string dumpString;
+         CDF::dump(cdfObject,&dumpString);
+         //CDBDebug("\nSTART\n%s\nEND\n",dumpString.c_str());
+    writeLogFile2(dumpString.c_str());*/
+    CDFNetCDFWriter netCDFWriter(cdfObject);
+    netCDFWriter.disableReadData();
         
         //netCDFWriter.disableVariableWrite();
         //uniqueIDFor2DField.concat("nep");
-        FILE * pFile = NULL;  
-        pFile = fopen ( uniqueIDFor2DFieldTmp.c_str() , "r" );
-        if(pFile != NULL){
-          fclose (pFile);
-          workingOnCache=true;
-        }
+    FILE * pFile = NULL;  
+    pFile = fopen ( uniqueIDFor2DFieldTmp.c_str() , "r" );
+    if(pFile != NULL){
+      fclose (pFile);
+      workingOnCache=true;
+    }
         
-        pFile = fopen ( uniqueIDFor2DField.c_str() , "r" );
-        if(pFile != NULL){
-          fclose (pFile);
-          workingOnCache=true;
-        }
+    pFile = fopen ( uniqueIDFor2DField.c_str() , "r" );
+    if(pFile != NULL){
+      fclose (pFile);
+      workingOnCache=true;
+    }
         
-        if(workingOnCache==false){
+    if(workingOnCache==false){
           //Imediately claim this file!
-          CDBDebug("*** [1/4] Claiming cache file ");
-          const char buffer[] = { "ab" };
-          pFile = fopen ( uniqueIDFor2DFieldTmp.c_str() , "wb" );
-          size_t bytesWritten = fwrite (buffer , sizeof(char),2 , pFile );
-          fflush (pFile);   
-          fclose (pFile);
-          if(bytesWritten!=2){
-            CDBDebug("*** Failed to Claim the cache  file %d",bytesWritten);
-            workingOnCache=true;
-          }else {
-            CDBDebug("*** [2/4] Succesfully claimed the cache file");
-          }
-        }
+      CDBDebug("*** [1/4] Claiming cache file ");
+      const char buffer[] = { "ab" };
+      pFile = fopen ( uniqueIDFor2DFieldTmp.c_str() , "wb" );
+      size_t bytesWritten = fwrite (buffer , sizeof(char),2 , pFile );
+      fflush (pFile);   
+      fclose (pFile);
+      if(bytesWritten!=2){
+        CDBDebug("*** Failed to Claim the cache  file %d",bytesWritten);
+        workingOnCache=true;
+      }else {
+        CDBDebug("*** [2/4] Succesfully claimed the cache file");
+      }
+    }
     
-        if(workingOnCache==true){
-          CDBDebug("*** Another process is working on the cache file");
-          saveFieldFile=false;
-          cacheAvailable=false;
-        }else{
+    if(workingOnCache==true){
+      CDBDebug("*** Another process is working on the cache file");
+      saveFieldFile=false;
+      cacheAvailable=false;
+    }else{
           
-          CDBDebug("*** [3/4] Writing cache file");
+      CDBDebug("*** [3/4] Writing cache file");
           
           
          
         
-          netCDFWriter.write(uniqueIDFor2DFieldTmp.c_str());
+      netCDFWriter.write(uniqueIDFor2DFieldTmp.c_str());
         
           //Move the temp file to the final name
-          rename(uniqueIDFor2DFieldTmp.c_str(),uniqueIDFor2DField.c_str());
-          CDBDebug("*** [4/4] Writing cache file complete!");
+      rename(uniqueIDFor2DFieldTmp.c_str(),uniqueIDFor2DField.c_str());
+      CDBDebug("*** [4/4] Writing cache file complete!");
 
-        }
+    }
        // return 0;
         
-      }
-      return 0;
+  }
+  return 0;
     }
   }
   
@@ -727,13 +797,16 @@ int CDataReader::createDBUpdateTables(CPGSQLDB *DB,CDataSource *sourceImage,int 
     CT::string dimName(sourceImage->cfgLayer->Dimension[d]->attr.name.c_str());
     dimName.toLowerCase();
     if(dimName.equals("time"))isTimeDim=true;
+    //How do we detect correctly wether this is a time dim?
+    if(dimName.indexOf("time")!=-1)isTimeDim=true;
+    
     //Create database tablenames
     CT::string tablename(sourceImage->cfgLayer->DataBaseTable[0]->value.c_str());
     makeCorrectTableName(&tablename,&dimName);
     //Create column names
     CT::string tableColumns("path varchar (255)");
     if(isTimeDim==true){
-      tableColumns.printconcat(", time timestamp, dimtime int");
+      tableColumns.printconcat(", %s timestamp, dim%s int",dimName.c_str(),dimName.c_str());
     }else{
       tableColumns.printconcat(", %s real, dim%s int",dimName.c_str(),dimName.c_str());
     }
@@ -799,6 +872,8 @@ int CDataReader::DBLoopFiles(CPGSQLDB *DB,CDataSource *sourceImage,int removeNon
         CT::string dimName(sourceImage->cfgLayer->Dimension[d]->attr.name.c_str());
         dimName.toLowerCase();
         if(dimName.equals("time"))isTimeDim=true;
+        //How do we detect correctly wether this is a time dim?
+        if(dimName.indexOf("time")!=-1)isTimeDim=true;
         //Create database tablenames
         CT::string tablename(sourceImage->cfgLayer->DataBaseTable[0]->value.c_str());
         makeCorrectTableName(&tablename,&dimName);
@@ -826,8 +901,8 @@ int CDataReader::DBLoopFiles(CPGSQLDB *DB,CDataSource *sourceImage,int removeNon
         // Check if file already resides in the database
         CT::string query;
         query.print("select path from %s where path = '%s' limit 1",
-                tablename.c_str(),
-                dirReader->fileList[j]->fullName.c_str());
+                    tablename.c_str(),
+                    dirReader->fileList[j]->fullName.c_str());
         CT::string *pathValues = DB->query_select(query.c_str(),0);
         if(pathValues == NULL){CDBError("Query failed");DB->close();throw(__LINE__);}
         // Does the file already reside in the DB?
@@ -857,9 +932,9 @@ int CDataReader::DBLoopFiles(CPGSQLDB *DB,CDataSource *sourceImage,int removeNon
         if(fileExistsInDB == 0){
           try{
             printf("Adding fileNo %d/%d\t %s",
-                  (int)j,
-                  (int)dirReader->fileList.size(),
-                  dirReader->fileList[j]->baseName.c_str());
+                   (int)j,
+                   (int)dirReader->fileList.size(),
+                   dirReader->fileList[j]->baseName.c_str());
             //Create CDF object
             cdfObject=new CDFObject();
             cdfReader = getCDFReader(sourceImage);
@@ -893,10 +968,10 @@ int CDataReader::DBLoopFiles(CPGSQLDB *DB,CDataSource *sourceImage,int removeNon
                   for(size_t i=0;i<dimDim->length;i++){
                     CT::string queryString;
                     queryString.print("INSERT into %s VALUES ('%s','%f','%d')",
-                            tablename_temp.c_str(),
-                            dirReader->fileList[j]->fullName.c_str(),
-                            double(dimValues[i]),
-                            int(i));
+                                      tablename_temp.c_str(),
+                                      dirReader->fileList[j]->fullName.c_str(),
+                                      double(dimValues[i]),
+                                      int(i));
                     status = DB->query(queryString.c_str()); if(status!=0)throw(__LINE__);
                     if(removeNonExistingFiles==1){
                       //We are adding the query above to the temporay table if removeNonExistingFiles==1;
@@ -914,6 +989,7 @@ int CDataReader::DBLoopFiles(CPGSQLDB *DB,CDataSource *sourceImage,int removeNon
                 }
                 //Add time dim:
                 if(isTimeDim==true){
+                  CDBDebug("Treating %s as a time dimension",dimVar->name.c_str());
                   const double *dtimes=(double*)dimVar->data;
                   CADAGUC_time *ADTime = new CADAGUC_time((char*)dimUnits->data);
                   for(size_t i=0;i<dimDim->length;i++){
@@ -925,10 +1001,10 @@ int CDataReader::DBLoopFiles(CPGSQLDB *DB,CDataSource *sourceImage,int removeNon
                         printf("%s\n", ISOTime);
                         CT::string queryString;
                         queryString.print("INSERT into %s VALUES ('%s','%s','%d')",
-                                tablename_temp.c_str(),
-                                dirReader->fileList[j]->fullName.c_str(),
-                                ISOTime,
-                                int(i));
+                                          tablename_temp.c_str(),
+                                          dirReader->fileList[j]->fullName.c_str(),
+                                          ISOTime,
+                                          int(i));
                         status = DB->query(queryString.c_str()); if(status!=0)throw(__LINE__);
                         if(removeNonExistingFiles==1){
                           //We are adding the query above to the temporay table if removeNonExistingFiles==1;
@@ -973,24 +1049,24 @@ int CDataReader::DBLoopFiles(CPGSQLDB *DB,CDataSource *sourceImage,int removeNon
       }
     }
     if(status != 0){CDBError(DB->getError());throw(__LINE__);}
-    }
-    catch(int linenr){
+  }
+  catch(int linenr){
       //Exception handling!
       //Always do a COMMIT after an exception to be sure a transaction will not hang
       //CDBDebug("COMMIT");
-      DB->query("COMMIT"); 
-      CDBError("Exception in DBLoopFiles at line %d",linenr);
+    DB->query("COMMIT"); 
+    CDBError("Exception in DBLoopFiles at line %d",linenr);
       //Close cdfReader. this is only needed if an exception occurs, otherwise it does nothing...
-      if(cdfReader!=NULL)cdfReader->close();
-      delete cdfReader;cdfReader=NULL;
-      delete cdfObject;cdfObject=NULL;
-      return 1;
-    }
-    //Not really necessary...
     if(cdfReader!=NULL)cdfReader->close();
     delete cdfReader;cdfReader=NULL;
     delete cdfObject;cdfObject=NULL;
-    return 0;
+    return 1;
+  }
+    //Not really necessary...
+  if(cdfReader!=NULL)cdfReader->close();
+  delete cdfReader;cdfReader=NULL;
+  delete cdfObject;cdfObject=NULL;
+  return 0;
 }
 
 
@@ -1039,7 +1115,7 @@ int CDataReader::updatedb(const char *pszDBParams, CDataSource *sourceImage,CT::
   
   printf("\n*** Starting update layer \"%s\" with title \"%s\"\n",sourceImage->cfgLayer->Name[0]->value.c_str(),sourceImage->cfgLayer->Title[0]->value.c_str());
     
-  if(FilePath.lastIndexOf(".nc")>0){
+  if(FilePath.lastIndexOf(".nc")>0||FilePath.indexOf("http://")>=0){
     CFileObject * fileObject = new CFileObject();
     fileObject->fullName.copy(&FilePath);
     fileObject->baseName.copy(&FilePath);

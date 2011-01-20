@@ -494,10 +494,11 @@ int CRequest::process_all_layers(){
       
       
 
-      Query.print("select a0.path,time");
+      Query.print("select a0.path");
       for(size_t i=0;i<dataSources[j]->requiredDims.size();i++){
-        Query.printconcat(",dim%s",dataSources[j]->requiredDims[i]->netCDFDimName.c_str());
+        Query.printconcat(",%s,dim%s",dataSources[j]->requiredDims[i]->netCDFDimName.c_str(),dataSources[j]->requiredDims[i]->netCDFDimName.c_str());
       }
+      
       Query.concat(" from ");
       bool timeValidationError = false;
       for(size_t i=0;i<dataSources[j]->requiredDims.size();i++){
@@ -551,6 +552,7 @@ int CRequest::process_all_layers(){
         status = DB.close();
         return 1;
       }
+      
       //Execute the query
       values_path = DB.query_select(Query.c_str(),0);
       if(values_path==NULL){
@@ -579,10 +581,12 @@ int CRequest::process_all_layers(){
       
       std::vector <CT::string*> dimValues;
       for(size_t i=0;i<dataSources[j]->requiredDims.size();i++){
-        dimValues.push_back(DB.query_select(Query.c_str(),2+i));
+        CT::string *t=DB.query_select(Query.c_str(),2+i*2);
+        dimValues.push_back(t);
+        //CDBError("%s",t->c_str());
       }
-      
-      //for(int k=0;k<values_path->count;k++)printf("%s\n",date_time[k].c_str());
+            
+      //for(int k=0;k<values_path->count;k++)printgf("%s\n",date_time[k].c_str());
       for(int k=0;k<values_path->count;k++){
         
         
@@ -595,8 +599,7 @@ int CRequest::process_all_layers(){
         }
         //dataSources[j]->addTimeStep(values_path[k].c_str(),atoi(values_dim[k].c_str()),date_time[k].c_str());
       }
-      
-      
+
       status = DB.close();  if(status!=0)return 1;
       
       for(size_t j=0;j<dimValues.size();j++){
@@ -650,10 +653,14 @@ int CRequest::process_all_layers(){
         if(srvParam->requestType==REQUEST_WMS_GETMAP){
           CImageDataWriter imageDataWriter;
           char szTemp[MAX_STR_LEN+1];
+          
+          
+          
           status = imageDataWriter.init(srvParam,dataSources[0],dataSources[0]->getNumTimeSteps());if(status != 0){
             throw(__LINE__);
           }
     
+          
           if(dataSources[0]->getNumTimeSteps()>1)imageDataWriter.createAnimation();
     
           for(size_t k=0;k<(size_t)dataSources[0]->getNumTimeSteps();k++){
@@ -661,7 +668,9 @@ int CRequest::process_all_layers(){
               dataSources[d]->setTimeStep(k);
             }
             if(dataSources[j]->dLayerType==CConfigReaderLayerTypeDataBase){
+              //CDBDebug("!");
               status = imageDataWriter.addData(dataSources);
+              //CDBDebug("!");
               if(status != 0){
                 //Do not ruin an animation if one timestep fails to load.
                 //If there is a single time step then throw an exception otherwise continue.

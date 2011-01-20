@@ -23,7 +23,7 @@ int CXMLGen::getFileNameForLayer(WMSLayer * myWMSLayer){
       CDBError("No dimensions given for layer %s",layerUniqueName.c_str());
       return 1; 
     }
-    CDBDebug("Database");  
+    //CDBDebug("Database");  
     CPGSQLDB DB;
     
     status = DB.connect(srvParam->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0)return 1;
@@ -40,7 +40,7 @@ int CXMLGen::getFileNameForLayer(WMSLayer * myWMSLayer){
     }
     delete[] values;
     DB.close();
-    CDBDebug("/Database");  
+    //CDBDebug("/Database");  
      }
      if(myWMSLayer->layer->attr.type.equals("file")){
        CT::string pathFileName("");
@@ -56,7 +56,7 @@ int CXMLGen::getFileNameForLayer(WMSLayer * myWMSLayer){
 
 int CXMLGen::getDataSourceForLayer(WMSLayer * myWMSLayer){
   CDataReader reader;
-  CDBDebug("Reading %s",myWMSLayer->fileName.c_str());
+  //CDBDebug("Reading %s",myWMSLayer->fileName.c_str());
   myWMSLayer->dataSource = new CDataSource ();
   myWMSLayer->dataSource->addTimeStep(myWMSLayer->fileName.c_str(),"");
   myWMSLayer->dataSource->setCFGLayer(srvParam->configObj->Configuration[0],myWMSLayer->layer,myWMSLayer->name.c_str());
@@ -416,15 +416,15 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
             XMLDoc->concat("</Layer>\n");
           }
             
-          CDBError("subGroups->count %d",subGroups->count);
-          CDBError("prevSubGroups->count %d",prevSubGroups->count);
+          //CDBError("subGroups->count %d",subGroups->count);
+          //CDBError("prevSubGroups->count %d",prevSubGroups->count);
           int removeGroups=0;
           for(size_t j=0;j<subGroups->count&&j<prevSubGroups->count;j++){
             //CDBError("CC %d",j);
             if(subGroups[j].equals(&prevSubGroups[j])==false||removeGroups==1){
               removeGroups=1;
-              CDBError("!=%d %s!=%s",j,subGroups[j].c_str(),prevSubGroups[j].c_str());
-              CDBError("<");
+              //CDBError("!=%d %s!=%s",j,subGroups[j].c_str(),prevSubGroups[j].c_str());
+              //CDBError("<");
               XMLDoc->concat("</Layer>\n");
               currentGroupDepth--;
               //break;
@@ -434,7 +434,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
           for(int j=currentGroupDepth;j<subGroups->count;j++){
             XMLDoc->concat("<Layer>\n");
             XMLDoc->concat("<Title>");
-            CDBError("> %s",subGroups[j].c_str());
+            //CDBError("> %s",subGroups[j].c_str());
             XMLDoc->concat(subGroups[j].c_str());
             XMLDoc->concat("</Title>\n");
           }
@@ -446,7 +446,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
           for(int j=0;j<subGroups->count;j++){
             XMLDoc->concat("<Layer>\n");
             XMLDoc->concat("<Title>");
-            CDBError("> %s grpupindex %d",subGroups[j].c_str(),groupIndex);
+            //CDBError("> %s grpupindex %d",subGroups[j].c_str(),groupIndex);
             XMLDoc->concat(subGroups[j].c_str());
             XMLDoc->concat("</Title>\n");
           }

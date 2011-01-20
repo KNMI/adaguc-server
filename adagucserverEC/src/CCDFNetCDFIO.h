@@ -7,11 +7,12 @@
 #include <netcdf.h>
 #include <math.h>
 #include "CDebugger.h"
-#include "CStopWatch.h"
+//#include "CStopWatch.h"
 
 void ncError(int line, const char *className, const char * msg,int e);
 class CDFNetCDFReader :public CDFReader{
   private:
+    bool lonWarpNeeded;size_t lonWarpStartIndex;
   CDFType typeConversion(nc_type type){
     if(type==NC_BYTE)return CDF_BYTE;
     if(type==NC_UBYTE)return CDF_UBYTE;
@@ -43,7 +44,7 @@ class CDFNetCDFReader :public CDFReader{
       }else{
         CDF::Dimension * dim = new CDF::Dimension();
         dim->id=j;
-        dim->name.copy(name);
+        dim->setName(name);
         dim->length=length;
         cdfObject->dimensions.push_back(dim);
       }
@@ -64,7 +65,7 @@ class CDFNetCDFReader :public CDFReader{
         status = nc_inq_att(root_id,varID,name,&type,&length);
         if(status!=NC_NOERR){ncError(__LINE__,className,"nc_inq_att: ",status);return 1;}
         CDF::Attribute *attr = new CDF::Attribute();
-        attr->name.copy(name);
+        attr->setName(name);
         attr->type=typeConversion(type);
         attr->length=length;
         CDF::allocateData(attr->type,&attr->data,attr->length+1);
@@ -104,7 +105,7 @@ class CDFNetCDFReader :public CDFReader{
           }
         }
         var->type=typeConversion(type);
-        var->name.copy(name);
+        var->setName(name);
         var->id=j;
         var->isDimension=isDimension;
           //Attributes:
@@ -121,6 +122,8 @@ class CDFNetCDFReader :public CDFReader{
   public:
     CDFNetCDFReader(CDFObject *cdfObject):CDFReader(cdfObject){
       root_id=-1;
+      lonWarpNeeded=false;
+      lonWarpStartIndex = 0;
     }
     ~CDFNetCDFReader(){
       close();
@@ -170,7 +173,75 @@ class CDFNetCDFReader :public CDFReader{
       root_id=-1;
       return 0;
     }
+    
+    int warpLonData(CDF::Variable *variable){
+      //Apply longitude warping of the data
+      //Longitude data must be already present in order to make variable warping available.
+      //EG 0-360 to -180 till -180
+      bool enableLonWarp=true;
+      if(enableLonWarp){
+        if(variable->name.equals("lon")){
+          //CDBDebug("Warplon: Found variable lon");
+          double *lonData = new double[variable->getSize()];
+          CDF::dataCopier.copy(lonData,variable->data,variable->type,variable->getSize());
+          double average=0;
+          double cellSize = fabs(lonData[0]-lonData[1]);
+          for(size_t j=0;j<variable->getSize();j++){
+            average+=lonData[j];
+          }
+          average/=double(variable->getSize());
+          //CDBDebug("Warplon: average = %f",average);
+          if(average>180-cellSize&&average<180+cellSize)lonWarpNeeded=true;
+          if(lonWarpNeeded==true){
+            for(size_t j=0;j<variable->getSize()&&(lonData[j]<=180);j++){
+              lonWarpStartIndex=j;
+            }
+                        //printf("%d==%f %f\n",lonWarpStartIndex,lonData[lonWarpStartIndex]-360,lonData[variable->getSize()-1]-360);
+            //CDBDebug("Warplon: start warp");
+                        //Warp longitude:
+            for(size_t j=0;j<variable->getSize();j++){
+              lonData[j]-=180;
+              if(variable->type==CDF_FLOAT)((float*)variable->data)[j]=float(lonData[j]);
+              if(variable->type==CDF_DOUBLE)((double*)variable->data)[j]=double(lonData[j]);
+            }
+          }
+          delete[] lonData;
+        }
+        if(lonWarpNeeded==true){
+          int dimIndex = variable->getDimensionIndex("lon");
+          if(dimIndex!=-1){
+            //CDBDebug("Warplon: Found dimension lon for variable %s",variable->name.c_str());
+            if(dimIndex!=((int)variable->dimensionlinks.size())-1){
+              CDBError("Error while warping longitude dimension for variable %s: longitude is not the first index",variable->name.c_str());
+              return 1;
+            }
+            CDF::Dimension *dim = variable->getDimension("lon");
+            if(dim!=NULL){
+              size_t offset=0;
+              do{
+                for(size_t lon=0;lon<lonWarpStartIndex&&(lon+lonWarpStartIndex<dim->length);lon++){
+                  if(variable->type==CDF_FLOAT){
+                    float *data=(float*)variable->data;
+                    size_t p1=lon+offset;
+                    size_t p2=lon+lonWarpStartIndex+offset;
+                    float tmp1=data[p1];
+                    float tmp2=data[p2];
+                    data[p1]=tmp2;
+                    data[p2]=tmp1;
+                  }
+                }
+                offset+=dim->length;
+              }while(offset<variable->getSize());
+            }else{
+              CDBError("Warplon: No dimension lon found for variable %s",variable->name.c_str());
+            }
+          }
+        }
+      }
+    }
+    
     int readVariableData(CDF::Variable *var, CDFType type){
+      //CDBDebug("readVariableData");
       //It is essential that the variable nows which reader can be used to read the data
       var->cdfReaderPointer=(void*)this;
      size_t totalVariableSize = 1;
@@ -193,11 +264,12 @@ class CDFNetCDFReader :public CDFReader{
         CDBError("Problem with variable %s:",var->name.c_str());
         ncError(__LINE__,className,"nc_get_var: ",status);
         return 1;}
-      
+        warpLonData(var);
       return 0;
     }
     
     int readVariableData(CDF::Variable *var, CDFType type,size_t *start,size_t *count,ptrdiff_t *stride){
+      //CDBDebug("readVariableData");
       //It is essential that the variable nows which reader can be used to read the data
       var->cdfReaderPointer=(void*)this;
       size_t totalVariableSize = 1;
@@ -228,6 +300,9 @@ class CDFNetCDFReader :public CDFReader{
         return 1;
       }
       if(status!=NC_NOERR){ncError(__LINE__,className,"nc_get_var: ",status);return 1;}
+      
+      warpLonData(var);
+      
       return 0;
     }
 
@@ -297,12 +372,17 @@ class CDFNetCDFWriter{
         status = nc_put_att(root_id, NC_GLOBAL, cdfObject->attributes[i]->name.c_str(),
                             NCtypeConversion(cdfObject->attributes[i]->type),cdfObject->attributes[i]->length,
                             cdfObject->attributes[i]->data);
-        if(status!=NC_NOERR){ncError(__LINE__,className,"nc_put_att: ",status);return 1;}
+        if(status!=NC_NOERR){
+          char name[1023];
+          CDF::getCDFDataTypeName(name,1000,cdfObject->attributes[i]->type);
+          CDBError("For attribute NC_GLOBAL::%s of type %s:",cdfObject->attributes[i]->name.c_str(),name);
+          ncError(__LINE__,className,"nc_put_att: ",status);return 1;
+        }
       }
       //Define dimensions
       for(size_t j=0;j<cdfObject->dimensions.size();j++){
         CDF::Dimension * dim = new CDF::Dimension();
-        dim->name.copy(cdfObject->dimensions[j]->name.c_str());
+        dim->setName(cdfObject->dimensions[j]->name.c_str());
         dim->length=cdfObject->dimensions[j]->length;
         status = nc_def_dim(root_id,dim->name.c_str() , dim->length, &dim->id);
         if(status!=NC_NOERR){ncError(__LINE__,className,"nc_def_dim: ",status);return 1;}
@@ -355,7 +435,7 @@ class CDFNetCDFWriter{
               if(status!=NC_NOERR){ncError(__LINE__,className,"nc_def_var: ",status);return 1;}
               //Set chunking and deflate options
               chunkSizes[0]=1;
-              if(netcdfMode>=4&&numDims>0&&1==2){
+              if(netcdfMode>=4&&numDims>0&&1==1){
                 int shuffle       = 0;
                 int deflate       = 1;
                 int deflate_level = 2;
@@ -367,10 +447,10 @@ class CDFNetCDFWriter{
               }
               
               //copy data
-              /*CT::string message;
+              CT::string message;
               message.print("%d/%d Copying data for variable %s: total %d bytes",
                             nrVarsWritten+1,cdfObject->variables.size(),variableInfo.c_str(),int(totalVariableSize)*CDF::getTypeSize(variable->type));
-              CDBDebug("%s",message.c_str());*/
+              CDBDebug("%s",message.c_str());
               //Copy attributes for this specific variable
               for(size_t i=0;i<variable->attributes.size();i++){
                 if(!variable->attributes[i]->name.equals("CLASS")){
@@ -410,8 +490,10 @@ class CDFNetCDFWriter{
                   
                   //Apply longitude warping of the data
                   //EG 0-360 to -180 till -180
+                  
                   if(enableLonWarp){
                     if(variable->name.equals("lon")){
+                      //CDBDebug("Warplon: Found variable lon");
                       double *lonData = new double[variable->getSize()];
                       CDF::dataCopier.copy(lonData,variable->data,variable->type,variable->getSize());
                       double average=0;
@@ -420,12 +502,14 @@ class CDFNetCDFWriter{
                         average+=lonData[j];
                       }
                       average/=double(variable->getSize());
+                      //CDBDebug("Warplon: average = %f",average);
                       if(average>180-cellSize&&average<180+cellSize)lonWarpNeeded=true;
                       if(lonWarpNeeded==true){
                         for(size_t j=0;j<variable->getSize()&&(lonData[j]<=180);j++){
                             lonWarpStartIndex=j;
                         }
                         //printf("%d==%f %f\n",lonWarpStartIndex,lonData[lonWarpStartIndex]-360,lonData[variable->getSize()-1]-360);
+                        //CDBDebug("Warplon: start warp");
                         //Warp longitude:
                         for(size_t j=0;j<variable->getSize();j++){
                           lonData[j]-=180;

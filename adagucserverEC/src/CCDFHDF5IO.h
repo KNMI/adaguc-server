@@ -75,7 +75,7 @@ class CDFHDF5Reader :public CDFReader{
           hid_t HDF5_attr_memtype = H5Tget_native_type(HDF5_attr_type, H5T_DIR_ASCEND);
           hsize_t stSize = H5Aget_storage_size(HDF5_attribute)/sizeof(int);
           CDF::Attribute *attr = new CDF::Attribute();
-          attr->name.copy(attName);
+          attr->setName(attName);
           
           attr->type=typeConversion(HDF5_attr_memtype);
           attr->length=stSize;
@@ -92,7 +92,7 @@ class CDFHDF5Reader :public CDFReader{
           hid_t HDF5_attr_memtype = H5Tget_native_type(HDF5_attr_type, H5T_DIR_ASCEND);
           hsize_t stSize = H5Aget_storage_size(HDF5_attribute)/sizeof(float);
           CDF::Attribute *attr = new CDF::Attribute();
-          attr->name.copy(attName);
+          attr->setName(attName);
           attr->type=CDF_FLOAT;
           attr->length=stSize;
           CDF::allocateData(attr->type,&attr->data,attr->length+1);
@@ -105,7 +105,7 @@ class CDFHDF5Reader :public CDFReader{
           hid_t HDF5_attr_memtype = H5Tget_native_type(HDF5_attr_type, H5T_DIR_ASCEND);
           hsize_t stSize = H5Aget_storage_size(HDF5_attribute)*sizeof(char);
           CDF::Attribute *attr = new CDF::Attribute();
-          attr->name.copy(attName);
+          attr->setName(attName);
           attr->type=CDF_CHAR;
           attr->length=stSize;
           CDF::allocateData(attr->type,&attr->data,attr->length+1);
@@ -138,7 +138,7 @@ class CDFHDF5Reader :public CDFReader{
       dim->length=len;
       CDF::Variable *var= new CDF::Variable();
       var->cdfReaderPointer=this;
-      var->name.copy(dimName);
+      var->setName(dimName);
       var->id=cdfObject->variables.size();
       var->isDimension=true;
       var->dimensionlinks.push_back(dim);
@@ -148,7 +148,7 @@ class CDFHDF5Reader :public CDFReader{
       var->setSize(dim->length);
       cdfObject->variables.push_back(var);
       cdfObject->dimensions.push_back(dim);
-      dim->name.copy(dimName);
+      dim->setName(dimName);
       
       return dim;
     }
@@ -179,7 +179,7 @@ class CDFHDF5Reader :public CDFReader{
             CDF::Variable * var = new CDF::Variable();
             var->type=CDF_CHAR;
             var->isDimension=false;
-            var->name.copy(temp);
+            var->setName(temp);
             var->id= cdfObject->variables.size();
             var->cdfReaderPointer=this;//TODO
           //Attributes:
@@ -221,7 +221,7 @@ class CDFHDF5Reader :public CDFReader{
                 }
                 var->type=cdfType;
                 var->isDimension=false;
-                var->name.copy(varName);
+                var->setName(varName);
                 //printf("Adding %s\n",varName);
                 var->id= cdfObject->variables.size();
                 var->cdfReaderPointer=this;
@@ -321,10 +321,10 @@ class CDFHDF5Reader :public CDFReader{
       CDF::allocateData(varX->type,&varX->data,dimX->length);
       CDF::allocateData(varY->type,&varY->data,dimY->length);
       
-      varX->name.copy("x");
-      varY->name.copy("y");
-      dimX->name.copy("x");
-      dimY->name.copy("y");
+      varX->setName("x");
+      varY->setName("y");
+      dimX->setName("x");
+      dimY->setName("y");
       
       double cellSizeX,cellSizeY,offsetX,offsetY;
       cellsizeXattr->getData(&cellSizeX,1);
@@ -344,12 +344,12 @@ class CDFHDF5Reader :public CDFReader{
       
       CDF::Variable * projection = new CDF::Variable();
       cdfObject->addVariable(projection);
-      projection->name.copy("projection");
+      projection->setName("projection");
       projection->type=CDF_CHAR;
       projection->isDimension=false;
       
       CDF::Attribute* proj4_params = new CDF::Attribute();
-      proj4_params->name.copy("proj4_params");
+      proj4_params->setName("proj4_params");
       proj4_params->setData(CDF_CHAR,proj4attr->data,proj4attr->length);
       projection->addAttribute(proj4_params);
       //Set time dimension
@@ -357,13 +357,13 @@ class CDFHDF5Reader :public CDFReader{
       CDF::Dimension* timeDim= new CDF::Dimension();
       cdfObject->addDimension(timeDim);
       cdfObject->addVariable(time);
-      time->name.copy("time");
-      timeDim->name.copy("time");
+      time->setName("time");
+      timeDim->setName("time");
       timeDim->length=1;
       time->type=CDF_DOUBLE;
       time->isDimension=true;
       CDF::Attribute *time_units = new CDF::Attribute();
-      time_units->name.copy("units");
+      time_units->setName("units");
       time_units->setData("minutes since 2000-01-01 00:00:00\0");
       time->addAttribute(time_units);
       time->dimensionlinks.push_back(timeDim);
@@ -403,7 +403,7 @@ class CDFHDF5Reader :public CDFReader{
         var = cdfObject->getVariable(varName.c_str());
         if(var!=NULL){
           CDF::Attribute* grid_mapping= new CDF::Attribute();
-          grid_mapping->name.copy("grid_mapping");
+          grid_mapping->setName("grid_mapping");
           grid_mapping->setData(CDF_CHAR,(char*)"projection\0",11);
           var->addAttribute(grid_mapping);
           var->dimensionlinks.insert(var->dimensionlinks.begin(),1,timeDim);
@@ -422,7 +422,7 @@ class CDFHDF5Reader :public CDFReader{
     //          CDBDebug("Found calibration_out_of_image attribute value=%f, status = %d",dfNodata,status);
               if(dfNodata!=0){
                 CDF::Attribute* nodata = new CDF::Attribute();
-                nodata->name.copy("_FillValue");
+                nodata->setName("_FillValue");
                 nodata->setData(CDF_DOUBLE,&dfNodata,1);
                 var->addAttribute(nodata);
               }
@@ -432,7 +432,7 @@ class CDFHDF5Reader :public CDFReader{
       
           
           /*CDF::Attribute* nodata = new CDF::Attribute();
-          nodata->name.copy("_FillValue");
+          nodata->setName("_FillValue");
           nodata->setData(var->type,0,1);
           var->addAttribute(nodata);*/
         }
@@ -445,7 +445,8 @@ class CDFHDF5Reader :public CDFReader{
       if(H5F_file <0){CDBError("could not open HDF5 file %s",fileName);return 1;}
       
       //Read global attributes
-      hid_t HDF5_group = H5Gopen(H5F_file,".");
+      //hid_t HDF5_group = H5Gopen(H5F_file,"."); API V1.6
+      hid_t HDF5_group = H5Gopen2(H5F_file,".",H5P_DEFAULT);
       if(HDF5_group <0){CDBError("could not open HDF5 group");
         H5Fclose(H5F_file );
         
@@ -503,9 +504,9 @@ class CDFHDF5Reader :public CDFReader{
       
       char typeName[32];
       CDF::getCDFDataTypeName(typeName,31,type);
-      CDBDebug("Reading %s with type %s",var->name.c_str(),typeName);
+      CDBDebug("Reading %s with type %s",var->orgName.c_str(),typeName);
       char varName[1024];
-      hid_t HDF5_group=openH5GroupByName(varName,1023,var->name.c_str());
+      hid_t HDF5_group=openH5GroupByName(varName,1023,var->orgName.c_str());
       if(HDF5_group>0){
         hid_t datasetID = H5Dopen2(HDF5_group,varName,H5P_DEFAULT);
         if(datasetID>0){
@@ -562,7 +563,7 @@ class CDFHDF5Reader :public CDFReader{
         return 0;
       }
       char varName[1024];
-      hid_t HDF5_group=openH5GroupByName(varName,1023,var->name.c_str());
+      hid_t HDF5_group=openH5GroupByName(varName,1023,var->orgName.c_str());
       if(HDF5_group>0){
         hid_t datasetID = H5Dopen2(HDF5_group,varName,H5P_DEFAULT);
         if(datasetID>0){

@@ -45,7 +45,7 @@ class string:public basetype{
     size_t bufferlength;  // Length of buffer
     void _Free();
     void _Allocate(int _length);
-    char* strrstr(const char *x, const char *y);
+    const char* strrstr(const char *x, const char *y);
     char _tohex(char in);
     char _fromhex(char in);
     char *value;

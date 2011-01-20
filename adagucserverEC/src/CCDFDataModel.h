@@ -56,6 +56,10 @@ namespace CDF{
   
   class Attribute{
     public:
+      void setName(const char *value){
+        name.copy(value);
+      }
+
       Attribute(){
         data=NULL;
         length=0;
@@ -67,6 +71,10 @@ namespace CDF{
       CT::string name;
       size_t length;
       void *data;
+      int setData(Attribute *attribute){
+        this->setData(attribute->type,attribute->data,attribute->size());
+        return 0;
+      }
       int setData(CDFType type,const void *dataToSet,size_t dataLength){
         if(data!=NULL)free(data);data=NULL;
         length=dataLength;
@@ -91,15 +99,24 @@ namespace CDF{
         return 0;
       }
       template <class T>
-          int getData(T *dataToGet,size_t getlength){
+      int getData(T *dataToGet,size_t getlength){
         if(data==NULL)return 0;
         if(getlength>length)getlength=length;
         dataCopier.copy(dataToGet,data,type,getlength);
         return getlength;
-          }
-          size_t size(){
-            return length;
-          }
+      }
+      int getDataAsString(CT::string *out){
+        out->copy("");
+        if(type==CDF_CHAR||type==CDF_UBYTE||type==CDF_BYTE){out->copy((const char*)data,length);return 0;}
+        if(type==CDF_INT||type==CDF_UINT)for(size_t n=0;n<length;n++)out->printconcat(" %d",((int*)data)[n]);
+        if(type==CDF_SHORT||type==CDF_USHORT)for(size_t n=0;n<length;n++)out->printconcat(" %ds",((short*)data)[n]);
+        if(type==CDF_FLOAT)for(size_t n=0;n<length;n++)out->printconcat(" %ff",((float*)data)[n]);
+        if(type==CDF_DOUBLE)for(size_t n=0;n<length;n++)out->printconcat(" %fdf",((double*)data)[n]);
+        return 0;
+      }
+      size_t size(){
+        return length;
+      }
   };
   class Dimension{
     public:
@@ -109,6 +126,9 @@ namespace CDF{
         return length;
       }
       int id;
+      void setName(const char *value){
+        name.copy(value);
+      }
   };
   class Variable{
     public:
@@ -129,6 +149,12 @@ namespace CDF{
       std::vector<Dimension *> dimensionlinks;
       CDFType type;
       CT::string name;
+      CT::string orgName;
+      void setName(const char *value){
+        name.copy(value);
+        //TODO Implement this correctly in readvariabledata....
+        if(orgName.length()==0)orgName.copy(value);
+      }
       int id;
       size_t currentSize;
       void setSize(size_t size){
@@ -195,6 +221,15 @@ namespace CDF{
         delete[] attrData;
         return retStat;
       }
+      int setAttributeText(const char *attrName,const char *attrString){
+        size_t attrLen=strlen(attrString);
+        char *attrData=new char[attrLen];
+        memcpy(attrData,attrString,attrLen);
+        int retStat = setAttribute(attrName,CDF_CHAR,attrData,attrLen);
+        delete[] attrData;
+        return retStat;
+      }
+
       int readData(CDFType type);
       int setData(CDFType type,const void *dataToSet,size_t dataLength){
         if(data!=NULL)free(data);data=NULL;
@@ -279,14 +314,34 @@ class CDFObject:public CDF::Variable{
                     pszType=(char*)node->children->content;
                   node=node->next;
                 }
+                //Check what the parentname of this attribute is:
+                const char *attributeParentVarName = NULL;
+                if(cur_node->parent){
+                  if(cur_node->parent->properties){
+                    xmlAttr *tempnode = cur_node->parent->properties;
+                    while(tempnode!=NULL){
+                      if(strncmp("name",(char*)tempnode->name,4)==0){
+                        attributeParentVarName=(char*)tempnode->children->content;
+                        break;
+                      }
+                      tempnode=tempnode->next;
+                    }
+                  }
+                }
                 if(pszType!=NULL&&pszName!=NULL){
                   if(strncmp(pszType,"variable",8)==0){
                     removeVariable(pszName);
                   }
-                  if(NCMLVarName!=NULL){
-                    if(strncmp(pszType,"attribute",9)==0){
-                      CDF::Variable *var= getVariable(NCMLVarName);
-                      var->removeAttribute(pszName);
+                  //Check wether we want to remove an attribute
+                  if(strncmp(pszType,"attribute",9)==0){
+                    if(attributeParentVarName!=NULL){
+                      CDF::Variable *var= getVariable(attributeParentVarName);
+                      if(var!=NULL){
+                        var->removeAttribute(pszName);
+                      }
+                    }else {
+                      //Remove a global attribute
+                      removeAttribute(pszName);
                     }
                   }
                 }
@@ -337,22 +392,36 @@ class CDFObject:public CDF::Variable{
                                             pszAttributeValue,
                                             strlen(pszAttributeValue));
                         }else{
-                          double value=atof(pszAttributeValue);
+                          size_t attrLen=0;
+                          CT::string t=pszAttributeValue;
+                          CT::string *t2=t.split(",");
+                          attrLen=t2->count;
+                          double values[attrLen];
+                          for(size_t attrN=0;attrN<attrLen;attrN++){
+                            values[attrN]=atof(t2[attrN].c_str());
+                            CDBDebug("%f",values[attrN]);
+                          }
+                          delete[] t2;
+                          //if(attrLen==3)exit(2);
+                          
+                          //double value=atof(pszAttributeValue);
                           CDF::Attribute *attr = new CDF::Attribute();
                           attr->name.copy(pszAttributeName);
                           var->addAttribute(attr);
                           attr->type=attrType;
-                          CDF::allocateData(attrType,&attr->data,1);
-                          if(attrType==CDF_BYTE)((char*)attr->data)[0]=(char)value;
-                          if(attrType==CDF_UBYTE)((unsigned char*)attr->data)[0]=(unsigned char)value;
-                          if(attrType==CDF_CHAR)((char*)attr->data)[0]=(char)value;
-                          if(attrType==CDF_SHORT)((short*)attr->data)[0]=(short)value;
-                          if(attrType==CDF_USHORT)((unsigned short*)attr->data)[0]=(unsigned short)value;
-                          if(attrType==CDF_INT)((int*)attr->data)[0]=(int)value;
-                          if(attrType==CDF_UINT)((unsigned int*)attr->data)[0]=(unsigned int)value;
-                          if(attrType==CDF_FLOAT)((float*)attr->data)[0]=(float)value;
-                          if(attrType==CDF_DOUBLE)((double*)attr->data)[0]=(double)value;
-                          attr->length=1;
+                          CDF::allocateData(attrType,&attr->data,attrLen);
+                          for(size_t attrN=0;attrN<attrLen;attrN++){
+                            if(attrType==CDF_BYTE)((char*)attr->data)[attrN]=(char)values[attrN];
+                            if(attrType==CDF_UBYTE)((unsigned char*)attr->data)[attrN]=(unsigned char)values[attrN];
+                            if(attrType==CDF_CHAR)((char*)attr->data)[attrN]=(char)values[attrN];
+                            if(attrType==CDF_SHORT)((short*)attr->data)[attrN]=(short)values[attrN];
+                            if(attrType==CDF_USHORT)((unsigned short*)attr->data)[attrN]=(unsigned short)values[attrN];
+                            if(attrType==CDF_INT)((int*)attr->data)[attrN]=(int)values[attrN];
+                            if(attrType==CDF_UINT)((unsigned int*)attr->data)[attrN]=(unsigned int)values[attrN];
+                            if(attrType==CDF_FLOAT)((float*)attr->data)[attrN]=(float)values[attrN];
+                            if(attrType==CDF_DOUBLE)((double*)attr->data)[attrN]=(double)values[attrN];
+                          }
+                          attr->length=attrLen;
                         }
                       }
                     }

@@ -1,5 +1,5 @@
-HOME=/data/apps/rcc/MaartenP/install
-HOME=/nobackup/users/plieger/hdf5mapserver/build
+#HOME=/data/apps/rcc/MaartenP/install
+HOME=/nobackup/users/plieger/software/install
 
 #HOME=/data/data1/mapserver/
 #HOME2=/data/data1/software/install/
@@ -7,9 +7,12 @@ HOME=/nobackup/users/plieger/hdf5mapserver/build
 #HOME=/home/plieger/interpolws/software/install
 #HOME=/nobackup/users/plieger/build/
 
+#HOME=/home/plieger/interpolws/software/install
+#HOME=/home/gsie/gsiews/software/install/
+
 LIBDIR=$(HOME)/lib
 
-INCLUDEDIR=$(HOME)/include -I /usr/include/libxml2/ -I $(HOME2)/include
+INCLUDEDIR=$(HOME)/include -I /usr/include/libxml2/ -I $(HOME2)/include  -I /usr/include/postgresql/
 
 #CCOMPILER=g++ -Wall -I $(INCLUDEDIR) 
 

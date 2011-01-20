@@ -194,7 +194,7 @@ int CDrawImage::createImage(CGeoParams *_Geo){
     ras->gamma(1.3);
     ras->filling_rule(agg::fill_even_odd);
     if(_bEnableTrueColor){
-    renRGBA->clear(agg::rgba8(255, 255, 255,0));
+    renRGBA->clear(agg::rgba8(210, 210, 210,0));
       /*int j=0;int i=imageSize;
       do{
         aggBytebuf[j++]=0;
@@ -553,7 +553,7 @@ void CDrawImage::setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,u
 void CDrawImage::setText(const char * text, size_t length,int x,int y,int color,int fontSize){
   if(_bEnableAGG==true){
     agg::rgba8 colStr(CDIred[color], CDIgreen[color], CDIblue[color],255);
-    drawFreeTypeText( x, y, 0,text,colStr);
+    drawFreeTypeText( x, y+11, 0,text,colStr);
     //Not yet supported...
   }else{
     char *pszText=new char[length+1];
@@ -688,11 +688,16 @@ int CDrawImage::createGDPalette(CServerConfig::XMLE_Legend *legend){
 
 void CDrawImage::rectangle( int x1, int y1, int x2, int y2,int innercolor,int outercolor){
   if(_bEnableAGG==true){
-    line( x1, y1, x2, y1,1,outercolor);
-    line( x2, y1, x2, y2,1,outercolor);
-    line( x2, y2, x1, y2,1,outercolor);
-    line( x1, y2, x1, y1,1,outercolor);
     
+    
+    float w=1;
+    line( x1-1, y1, x2+1, y1,w,outercolor);
+    line( x2, y1, x2, y2,w,outercolor);
+    line( x2+1, y2, x1-1, y2,w,outercolor);
+    line( x1, y2, x1, y1,w,outercolor);
+    for(int j=y1+1;j<y2;j++){
+      line( x1, j, x2, j,1,innercolor);
+    }
   }else{
     gdImageFilledRectangle (image,x1+1,y1+1,x2-1,y2-1, innercolor);
     gdImageRectangle (image,x1,y1,x2,y2, outercolor);

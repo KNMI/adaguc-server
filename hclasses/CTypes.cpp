@@ -36,9 +36,9 @@ namespace CT{
     value=new char[_length+1];
     allocated=1;
   }
-  char *string::strrstr(const char *x, const char *y) {
-    char *prev = NULL;
-    char *next;
+  const char *string::strrstr(const char *x, const char *y) {
+    const char *prev = NULL;
+    const char *next;
     if (*y == '\0')return strchr(x, '\0');
     while ((next = strstr(x, y)) != NULL) {
       prev = next;
