@@ -359,6 +359,25 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
 void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float interval,float smallContInterval,float bigContInterval,CDataSource *dataSource,CDrawImage *drawImage,bool drawLine, bool drawShade, bool drawText,float textScaleFactor,float textOffsetFactor){
   float val[4];
   //drawText=false;
+  
+
+  //When using min/max stretching, the classes need to be extended according to its shade itnerval
+  if(dataSource->stretchMinMax==true){
+    if(dataSource->statistics!=NULL){
+      float legendInterval=interval;
+      float minValue=(float)dataSource->statistics->getMinimum();
+      float maxValue=(float)dataSource->statistics->getMaximum();
+      float iMin = int(minValue/legendInterval)*legendInterval;//-legendInterval;
+      float iMax = int(maxValue/legendInterval+1)*legendInterval;//+legendInterval*1;
+      //Calculate new scale and offset for this:
+      float ls=240/((iMax-iMin));
+      float lo=-(iMin*ls);
+      dataSource->legendScale=ls;
+      dataSource->legendOffset=lo;
+    }
+  }
+ 
+  
   bool drawHQ = drawImage->getAntialiased();
   drawHQ=true;
   int col1=244;
@@ -402,7 +421,8 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
         min=int(min/ival);min=min*ival;//min-=int(idval*1);
         max=int(max/ival);max=max*ival;max+=ival;
         if(drawShade){
-          setValuePixel(dataSource,drawImage,x,y,(min+max)/2);
+          //setValuePixel(dataSource,drawImage,x,y,(min+max)/2);
+          setValuePixel(dataSource,drawImage,x,y,min);
             //setValuePixel(dataSource,drawImage,x,y,val[0]);
         }
         if((max-min)/ival<3&&(max-min)/ival>1){

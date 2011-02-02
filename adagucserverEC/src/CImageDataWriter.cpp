@@ -1016,7 +1016,8 @@ int CImageDataWriter::getColorIndexForValue(CDataSource *dataSource,float value)
   val*=dataSource->legendScale;
   val+=dataSource->legendOffset;
   if(val>=239)val=239;else if(val<1)val=1;
-  return int(val);
+  //return int(val);
+  return int(val+0.5f);
 }
 int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage){
   int legendPositiveUp = 1;
@@ -1095,7 +1096,15 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage
     float iMin = int(minValue/legendInterval)*legendInterval;//-legendInterval;
     float iMax = int(maxValue/legendInterval+1)*legendInterval;//+legendInterval*1;
     
-    
+    //Calculate new scale and offset for the new min/max:
+    if(dataSource->stretchMinMax==true){
+      //Calculate new scale and offset for the new min/max:
+      float ls=240/((iMax-iMin));
+      float lo=-(iMin*ls);
+      dataSource->legendScale=ls;
+      dataSource->legendOffset=lo;
+    }
+
     floatToString(szTemp,255,iMax);
    
     
@@ -1126,7 +1135,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage
       //cY2*=numClasses;
       if(j<iMax)
       {
-        int y=getColorIndexForValue(dataSource,v+legendInterval/2);
+        int y=getColorIndexForValue(dataSource,v);
         drawImage->rectangle(4,cY2,int(cbW)+7,cY,(y),248);
               //drawImage->line((int)5,(int)cY,(int)cbW+5,(int)cY,248);
         sprintf(szTemp,"%2.1f - %2.1f",v,v+legendInterval);
