@@ -1,22 +1,12 @@
 #ifndef CServerParams_H
 #define CServerParams_H
+#include "netcdf.h"
 #include "CDebugger.h"
 #include "CTypes.h"
 #include "Definitions.h"
 #include "CServerConfig_CPPXSD.h"
 #include "COGCDims.h"
 #include "CGeoParams.h"
-/*
-#include "CXMLSerializerInterface.h"
-
-
-#include "CServerError.h"
-#include "CDrawImage.h"
-#include "CDataSource.h"
-#include "COGCDims.h"
-*/
-
-
 
 class CServerParams{
   public:
@@ -30,7 +20,7 @@ class CServerParams{
     CGeoParams * Geo;
     CT::string Styles;
     CT::string Style;
-    COGCDims OGCDims[MAX_DIMS];
+    COGCDims OGCDims[NC_MAX_DIMS];
     int NumOGCDims;
     int serviceType;
     int requestType;

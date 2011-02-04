@@ -385,7 +385,7 @@ int  CGDALDataWriter::end(){
 
   if(customOptions.length()>2){
     CT::string *co = customOptions.split(",");
-    for(int j=0;j<co->count;j++){
+    for(size_t j=0;j<co->count;j++){
       CT::string *splittedco = customOptions.split("=");
       papszOptions = CSLSetNameValue( papszOptions, splittedco[0].c_str(), splittedco[1].c_str() );
       delete[] splittedco;

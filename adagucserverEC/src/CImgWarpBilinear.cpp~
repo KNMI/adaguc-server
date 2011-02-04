@@ -448,6 +448,7 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
           if(val[j]<min)min=val[j];
           if(val[j]>max)max=val[j];
         }
+        if(min<0)min-=0.5; if(max<0)max-=0.5;
         min=int(min/ival);min=min*ival;//min-=int(idval*1);
         max=int(max/ival);max=max*ival;max+=ival;
         if(drawShade){

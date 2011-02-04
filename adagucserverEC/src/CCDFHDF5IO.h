@@ -472,7 +472,7 @@ class CDFHDF5Reader :public CDFReader{
       hid_t HDF5_group=H5F_file;hid_t newGroupID;
       CT::string varName(variableGroupName);
       CT::string * paths=varName.split(".");
-      for(int j=0;j<paths->count-1;j++){
+      for(size_t j=0;j<paths->count-1;j++){
         
         newGroupID= H5Gopen2(HDF5_group ,paths[j].c_str(),H5P_DEFAULT);
         //CDBDebug("Opened group %s with id %d from %d",paths[j].c_str(),newGroupID,HDF5_group);

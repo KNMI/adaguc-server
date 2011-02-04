@@ -1,18 +1,13 @@
 #ifndef Definitions_H
 #define Definitions_H
-#include "netcdf.h"
-
-//CConfigReader
-#define MAX_DIMS                          3
 
 //CConfigReaderLayerType
-#define CConfigReaderLayerTypeFile        1
-#define CConfigReaderLayerTypeDataBase    2
-#define CConfigReaderLayerTypeStyled      3
+#define CConfigReaderLayerTypeDataBase    1
+#define CConfigReaderLayerTypeStyled      2
 
 //CRequest
-#define SERVICE_WMS 1
-#define SERVICE_WCS 2
+#define SERVICE_WMS                       1
+#define SERVICE_WCS                       2
 #define REQUEST_WMS_GETCAPABILITIES       1
 #define REQUEST_WMS_GETMAP                2
 #define REQUEST_WMS_GETLEGENDGRAPHIC      3
@@ -43,14 +38,11 @@
 #define WCS_VERSION_1_0                   1
 
 // XMLGen templates
-#define BUFFER_SIZE 8192
 #define WMS_1_0_0_HEADERFILE              "./XMLTemplates/WMS_1.0.0_GetCapabilities_Header.dat"
 #define WMS_1_0_0_LAYERHEADERFILE         "./XMLTemplates/WMS_1.0.0_GetCapabilities_LayerHeader.dat"
-//#define WMS_1_0_0_LAYERFOOTERFILE         "./XMLTemplates/WMS_1.0.0_GetCapabilities_LayerFooter.dat"
 
 #define WMS_1_1_1_HEADERFILE              "./XMLTemplates/WMS_1.1.1_GetCapabilities_Header.dat"
 #define WMS_1_1_1_LAYERHEADERFILE         "./XMLTemplates/WMS_1.1.1_GetCapabilities_LayerHeader.dat"
-//#define WMS_1_1_1_LAYERFOOTERFILE         "./XMLTemplates/WMS_1.1.1_GetCapabilities_LayerFooter.dat"
 
 #define WCS_1_0_HEADERFILE                "./XMLTemplates/WCS_1.0.0_GetCapabilities_Header.dat"
 
@@ -59,6 +51,7 @@
 #define CNETCDFREADER_MODE_OPEN_ALL       2
 #define CNETCDFREADER_MODE_GET_METADATA   3
 
+//Log a summary of different time durations during execution
 #define MEASURETIME
 
 //Web Coverage restriction and Get Feature Info restriction
@@ -66,9 +59,6 @@
 #define ALLOW_WCS      2 
 #define ALLOW_GFI      4
 #define ALLOW_METADATA 8
-
-
-
 
 #endif
 

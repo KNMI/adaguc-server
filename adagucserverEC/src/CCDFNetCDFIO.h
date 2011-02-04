@@ -238,6 +238,7 @@ class CDFNetCDFReader :public CDFReader{
           }
         }
       }
+      return 0;
     }
     
     int readVariableData(CDF::Variable *var, CDFType type){

@@ -1,7 +1,7 @@
 #include "CImgWarpBilinear.h"
 #include <gd.h>
 
-#define CImgWarpBilinear_DEBUG
+//#define CImgWarpBilinear_DEBUG
 
 const char *CImgWarpBilinear::className="CImgWarpBilinear";
  void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDrawImage *drawImage){

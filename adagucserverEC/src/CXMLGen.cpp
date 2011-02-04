@@ -179,7 +179,7 @@ int CXMLGen::getDimsForLayer(WMSLayer * myWMSLayer){
           }
           TimePositions=new CT::string[values->count];
           char szTemp[32];
-          for(int l=0;l<values->count;l++){
+          for(size_t l=0;l<values->count;l++){
             snprintf(szTemp,31,"%s",values[l].c_str());szTemp[10]='T';
             TimePositions[l].copy(szTemp);
             TimePositions[l].count=values[l].count;
@@ -234,7 +234,7 @@ int CXMLGen::getStylesForLayer(WMSLayer * myWMSLayer){
     if(layerStyleNames->count>0){
                 //styleNames.push_back(layerStyleNames[0].c_str());
                 
-      for(int s=0;s<layerStyleNames->count;s++){
+      for(size_t s=0;s<layerStyleNames->count;s++){
         if(layerStyleNames[s].length()>0){
                     //Check wheter we should at this style or not...
           int dConfigStyleIndex=-1;
@@ -270,7 +270,7 @@ int CXMLGen::getStylesForLayer(WMSLayer * myWMSLayer){
             renderMethodList.copy(CImageDataWriter::RenderMethodStringList);
           }
           CT::string *renderMethods = renderMethodList.split(",");
-          for(int r=0;r<renderMethods->count;r++){
+          for(size_t r=0;r<renderMethods->count;r++){
             if(renderMethods[r].length()>0){
                         //Check wether we should support this rendermethod or not:
               bool skipRenderMethod=false;
@@ -412,7 +412,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
           CT::string prevKey=groupKeys[groupIndex-1].c_str();
           CT::string *prevSubGroups=prevKey.split("/");
           
-          bool s=false;
+
           for(size_t j=subGroups->count;j<prevSubGroups->count;j++){
             CDBError("<");
             currentGroupDepth--;
@@ -434,7 +434,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
             }
           }
           //CDBDebug("!!! %d",currentGroupDepth);
-          for(int j=currentGroupDepth;j<subGroups->count;j++){
+          for(size_t j=currentGroupDepth;j<subGroups->count;j++){
             XMLDoc->concat("<Layer>\n");
             XMLDoc->concat("<Title>");
             //CDBError("> %s",subGroups[j].c_str());
@@ -445,23 +445,17 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
           delete[] prevSubGroups;
         }
         else{
-          
-          for(int j=0;j<subGroups->count;j++){
+          for(size_t j=0;j<subGroups->count;j++){
             XMLDoc->concat("<Layer>\n");
             XMLDoc->concat("<Title>");
             //CDBError("> %s grpupindex %d",subGroups[j].c_str(),groupIndex);
             XMLDoc->concat(subGroups[j].c_str());
             XMLDoc->concat("</Title>\n");
           }
-            
-          
         }
-        
-        
         delete[] subGroups;
         currentGroupDepth=groupDepth;
         //CDBDebug("currentGroupDepth = %d",currentGroupDepth);
-        
       }
       
       for(size_t lnr=0;lnr<myWMSLayerList->size();lnr++){

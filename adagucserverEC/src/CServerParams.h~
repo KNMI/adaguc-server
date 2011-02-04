@@ -1,5 +1,6 @@
 #ifndef CServerParams_H
 #define CServerParams_H
+#include "netcdf.h"
 #include "CDebugger.h"
 #include "CTypes.h"
 #include "Definitions.h"
@@ -30,7 +31,7 @@ class CServerParams{
     CGeoParams * Geo;
     CT::string Styles;
     CT::string Style;
-    COGCDims OGCDims[MAX_DIMS];
+    COGCDims OGCDims[NC_MAX_DIMS];
     int NumOGCDims;
     int serviceType;
     int requestType;
@@ -72,6 +73,7 @@ class CServerParams{
       layerName->concat(cfgLayer->Name[0]->value.c_str());
     }
     void getCacheFileName(CT::string *cacheFileName);
+    void getCacheDirectory(CT::string *cacheFileName);
 };
 
 

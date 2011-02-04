@@ -46,7 +46,7 @@ int CRequest::setConfigFile(const char *pszConfigFile){
 
 int CRequest::process_wms_getmetadata_request(){
   if(srvParam->WMSLayers!=NULL)
-    for(int j=0;j<srvParam->WMSLayers->count;j++){
+    for(size_t j=0;j<srvParam->WMSLayers->count;j++){
       CDBDebug("WMS GETMETADATA %s",srvParam->WMSLayers[j].c_str());
     }
     return process_all_layers();
@@ -406,7 +406,7 @@ int CRequest::process_all_layers(){
         //Get the number of required dims from the given dims
         //Check if all dimensions are given
         for(int k=0;k<srvParam->NumOGCDims;k++)srvParam->OGCDims[k].Name.toLowerCase();
-        int dimsfound[MAX_DIMS];
+        int dimsfound[NC_MAX_DIMS];
         for(size_t i=0;i<dataSources[j]->cfgLayer->Dimension.size();i++){
           CT::string dimName(dataSources[j]->cfgLayer->Dimension[i]->value.c_str());
           dimName.toLowerCase();
@@ -1355,7 +1355,7 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan){
   for(size_t layerNo=0;layerNo<numberOfLayers;layerNo++){
     CDataSource *dataSource = new CDataSource ();
     dataSources.push_back(dataSource);
-    dataSource->setCFGLayer(srvParam->configObj->Configuration[0],srvParam->cfg->Layer[layerNo],layerName.c_str());
+    dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[layerNo],layerName.c_str());
   }
 
   srvParam->requestType=REQUEST_UPDATEDB;

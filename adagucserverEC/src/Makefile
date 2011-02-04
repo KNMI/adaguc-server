@@ -19,14 +19,14 @@ INCLUDEDIR=$(SRCLIBS)/include -I $(HELPERCLASSES) -I /usr/include/libxml2/ -I ..
 
 HELPOBJECTS = $(HELPERCLASSES)/CTypes.o $(HELPERCLASSES)/CPGSQLDB.o $(HELPERCLASSES)/CDirReader.o $(HELPERCLASSES)/CADAGUC_time.o $(HELPERCLASSES)/CDebugger.o
 
-#CCOMPILER=g++ -Wall -I $(INCLUDEDIR)
+CCOMPILER=g++ -Wall -I $(INCLUDEDIR)
 
 #optimalization options:
 #CCOMPILER=g++ -march=pentium4 -mtune=pentium4 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 -I $(INCLUDEDIR) 
-#CCOMPILER=g++ -march=core2 -mtune=core2 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 -I $(INCLUDEDIR) 
-CCOMPILER=g++ -O2 -I $(INCLUDEDIR) 
+CCOMPILER=g++ -march=core2 -mtune=core2 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 -I $(INCLUDEDIR) 
+#CCOMPILER=g++ -O2 -I $(INCLUDEDIR) 
 
-USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lgdal -lxml2 -lgd -lproj -lpq -ludunits -lfreetype -lgd -lpng -lrt
+USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lgdal -lxml2 -lgd -lproj -lpq -ludunits -lfreetype -lgd -lpng -lrt -lpthread
 #-lcurl 
 
 # all libs together

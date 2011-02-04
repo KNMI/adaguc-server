@@ -34,7 +34,7 @@ namespace CT{
          virtual void init() = 0;
          virtual ~basetype(){}
       int id;
-      int count;
+      size_t count;
       basetype *next,*prev,*start,*end;//Linked list
   };
 

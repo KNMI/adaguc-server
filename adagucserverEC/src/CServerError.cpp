@@ -33,10 +33,10 @@ void printerrorImage(void *_drawImage){
   messages=errormsg.split("\n");
   int y=0;
   size_t w=70,characters=0;
-  for(int i=0;i<messages->count;i++){
+  for(size_t i=0;i<messages->count;i++){
     sp=messages[i].split(" ");
     concat.copy("");
-    for(int k=0;k<sp->count;k++){
+    for(size_t k=0;k<sp->count;k++){
       if(characters+sp[k].length()<w){
         concat.concat(&sp[k]);
         concat.concat(" ");
@@ -92,7 +92,7 @@ void readyerror(){
     CT::string errormsg(errormsgs),*messages;
     messages=errormsg.split("\n");
     fprintf(stdout,"    ");
-    for(int j=0;j<messages->count;j++){
+    for(size_t j=0;j<messages->count;j++){
       fprintf(stdout,"%s",messages[j].c_str());
       if(j+1<messages->count)fprintf(stdout,";\n");
     }

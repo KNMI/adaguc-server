@@ -114,7 +114,7 @@ void CDirReader::makeCleanPath(CT::string *path){
   if(path->c_str()[0]=='/'){
     path->copy("/");
   }else path->copy("");
-  for(int j=0;j<parts->count;j++){
+  for(size_t j=0;j<parts->count;j++){
     if(parts[j].length()>0){
       path->concat(&parts[j]);
       if(j+1<parts->count){

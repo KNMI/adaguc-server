@@ -16,7 +16,7 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
   }
   // Load metadata from the dataSource
   //CDBDebug("CNETCDFREADER_MODE_GET_METADATA");
-  status = reader.open(dataSource,CNETCDFREADER_MODE_GET_METADATA);
+  status = reader.open(dataSource,CNETCDFREADER_MODE_GET_METADATA,NULL);
   if(status!=0){
     CDBError("Could not open file: %s",dataSource->getFileName());return 1;
   }
@@ -89,7 +89,7 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
 
   // Retrieve output format
   CT::string driverName;
-
+  
   for(size_t j=0;j<srvParam->cfg->WCS[0]->WCSFormat.size();j++){
     if(srvParam->Format.match(srvParam->cfg->WCS[0]->WCSFormat[j]->attr.name.c_str())==0){
       driverName.copy(srvParam->cfg->WCS[0]->WCSFormat[j]->attr.driver.c_str());
@@ -99,14 +99,16 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
     }
   }
   srvParam->Format.toUpperCase();
-  if(srvParam->Format.match("GEOTIFF")==0){
-    driverName.copy("GTiff");
-  }
-  if(srvParam->Format.match("AAIGRID")==0){
-    driverName.copy("AAIGRID");
-    if(NrOfBands>1){
-      CDBError("This WCS format ('%s') does not support multiple bands. Select a single image, or choose an other format.",srvParam->Format.c_str());
-      return 1;
+  if(driverName.length()==0){
+    if(srvParam->Format.match("GEOTIFF")==0){
+      driverName.copy("GTiff");
+    }
+    if(srvParam->Format.match("AAIGRID")==0){
+      driverName.copy("AAIGRID");
+      if(NrOfBands>1){
+        CDBError("This WCS format ('%s') does not support multiple bands. Select a single image, or choose an other format.",srvParam->Format.c_str());
+        return 1;
+      }
     }
   }
   if(driverName.length()==0){
@@ -141,6 +143,12 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
     CDBError("Invalid datatype: dataSource->dataObject[0]->dataType=%s",temp);
     return 1;
   }
+  
+//  char dataTypeName[256];
+//  CDF::getCDFDataTypeName(dataTypeName,255,dataSource->dataObject[0]->dataType);
+//  CDBDebug("Dataset datatype = %s sizeof(short)=%d",dataTypeName,sizeof(short));
+  
+  
   hMemDS2 = GDALCreate( hMemDriver2, "memory_dataset_2",
                         dataSource->dWidth, dataSource->dHeight, NrOfBands, datatype, NULL );
   if( hMemDS2 == NULL ){CDBError("Failed to create GDAL MEM dataset.");reader.close();return 1;}

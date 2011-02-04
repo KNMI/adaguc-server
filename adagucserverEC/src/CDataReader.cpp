@@ -26,7 +26,7 @@ const char *CDataReader::className="CDataReader";
   }
 }*/
 
-void printStatus(const char *status,const char *a,...){
+/*void printStatus(const char *status,const char *a,...){
   va_list ap;
   char message[8192+1];
   va_start (ap, a);
@@ -47,7 +47,7 @@ void printStatus(const char *status,const char *a,...){
   strncpy(outMessage+79-statuslen,newStatus,statuslen);
   outMessage[79]='\0';
   printf("%s\n",outMessage);
-}
+}*/
 
 CDFReader *CDataReader::getCDFReader(CDataSource *sourceImage){
    //Do we have a datareader defined in the configuration file?
@@ -67,15 +67,12 @@ CDFReader *CDataReader::getCDFReader(CDataSource *sourceImage){
 
 
 int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocation){
-  
-  //Some checks
+  //Perform some checks on pointers
   if(cdfObject!=NULL){CDBError("CDataReader already in use");return 1;}
   if(_sourceImage==NULL){CDBError("Invalid sourceImage");return 1;}
   if(_sourceImage->getFileName()==NULL){CDBError("Invalid NetCDF filename");return 1;}
   sourceImage=_sourceImage;
   FileName.copy(sourceImage->getFileName());
-  //sourceImage->stretchMinMax=true;
-  //CDBDebug("Reading %s",sourceImage->getFileName());
   //Create CDF object
   cdfObject=new CDFObject();
   //Get a reader:
@@ -95,17 +92,14 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
   if(cacheLocation==NULL)enableDataCache=false;else if(strlen(cacheLocation)==0)enableDataCache=false;
   bool cacheAvailable=false;
   bool workingOnCache=false;
-  //bool saveMetadataFile = false;
   bool saveFieldFile = false;
   CT::string uniqueIDFor2DField;
   CT::string uniqueIDFor2DFieldTmp;
-  //CT::string uniqueIDForMetadata;
   
   //Check wether we should use cache or not (in case of OpenDAP, this speeds up things a lot)
   if(enableDataCache==true){
     int intStat;
     struct stat stFileInfo;
-    
     int timeStep = sourceImage->getCurrentTimeStep();
     //Test whether directory structure is OK
     uniqueIDFor2DField.copy(cacheLocation);
@@ -168,7 +162,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
   
   if(cacheAvailable==true){
     CDBDebug("Reading from Cache file");
-    //We need to rebuild our CDF reader, because cache files are always netcdf.
+    //We need to rebuild our CDF reader, because cache files are always netcdf. Input can be different.
     if(cdfReader!=NULL)delete cdfReader;
     cdfReader = new CDFNetCDFReader(cdfObject);
     status = cdfReader->open(uniqueIDFor2DField.c_str());
@@ -214,10 +208,12 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
   int dimYIndex=sourceImage->dNetCDFNumDims-2;
   
   bool swapXYDimensions = false;
-  //If our X dimension has a character y/Y in it, XY dims are probably swapped.
-  if(var[0]->dimensionlinks[dimXIndex]->name.indexOf("y")!=-1||var[0]->dimensionlinks[dimXIndex]->name.indexOf("Y")!=-1){
-    swapXYDimensions=true;
-  }
+
+  //If our X dimension has a character y/lat in it, XY dims are probably swapped.
+  CT::string dimensionXName=var[0]->dimensionlinks[dimXIndex]->name.c_str();
+  dimensionXName.toLowerCase();
+  if(dimensionXName.indexOf("y")!=-1||dimensionXName.indexOf("lat")!=-1)swapXYDimensions=true;
+  
   if(swapXYDimensions){
     dimXIndex=sourceImage->dNetCDFNumDims-2;
     dimYIndex=sourceImage->dNetCDFNumDims-1;
@@ -488,7 +484,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
     }*/
     
     cdfReader->readVariableData(var[varNr], sourceImage->dataObject[varNr]->dataType,start,count,stride);
-    CDBDebug("Done");
+    
     //Swap X, Y dimensions so that pointer x+y*w works correctly
     if(cacheAvailable!=true){
       //Cached data was already swapped. Because we have stored the result of this object in the cache.
@@ -656,7 +652,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
         }
       }
     }
-    CDBDebug("Done");
+    
     for(size_t d=0;d<dimsToKeep.size();d++){
       delete dimsToKeep[d];
       dimsToKeep[d]=NULL;
@@ -803,7 +799,7 @@ int CDataReader::getTimeUnit(char * pszTime){
     return 1;
   }
   if(sourceImage->cfgLayer->Dimension.size()==0){
-    snprintf(pszTime,MAX_STR_LEN,"");
+    pszTime[0]='\0';
     return 0;
   }
   pszTime[0]='\0';
@@ -822,7 +818,7 @@ int CDataReader::getTimeString(char * pszTime){
     return 1;
   }
   if(sourceImage->cfgLayer->Dimension.size()==0){
-    snprintf(pszTime,MAX_STR_LEN,"");
+    pszTime[0]='\0';
     return 0;
   }
   pszTime[0]='\0';

@@ -142,7 +142,8 @@ class CDataSource{
     for(size_t j=0;j<requiredDims.size();j++)delete requiredDims[j];
     if(statistics!=NULL)delete statistics;statistics=NULL;
   }
-  void setCFGLayer(CServerConfig::XMLE_Configuration *_cfg,CServerConfig::XMLE_Layer * _cfgLayer,const char *_layerName){
+  void setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Configuration *_cfg,CServerConfig::XMLE_Layer * _cfgLayer,const char *_layerName){
+    srvParams=_srvParams;
     cfg=_cfg;
     cfgLayer=_cfgLayer;
 //    numVariables = cfgLayer->Variable.size();

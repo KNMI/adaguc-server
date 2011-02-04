@@ -278,7 +278,7 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
             }
             legendStyle=requestStyle[0].split("/");
             //if(!requestStyle[0].equals("default")){
-              for(int j=0;j<layerstyles->count;j++){
+              for(size_t j=0;j<layerstyles->count;j++){
                 if(layerstyles[j].equals(legendStyle[0].c_str())){
                   layerStyleName.copy(&layerstyles[j]);
                   dLayerStyleIndex=j;
@@ -776,19 +776,19 @@ int CImageDataWriter::calculateData(std::vector <CDataSource*>&dataSources){
       CT::string style;
 //      bool errorOccured=false;
       for(size_t j=0;j<dataSources.size();j++){
-        int numberOfValues = 1;
+        size_t numberOfValues = 1;
         CT::string *_style = layerStyles[j].split("|");
         style.copy(&_style[0]);
         CDBDebug("STYLE == %s",style.c_str());
         if(j==0){
           //Find the conditional expression for the first layer (the boolean map)
           CT::string *conditionals = style.split("_");
-          if(!conditionals[0].equals("default")&&conditionals->count!=(int)dataSources.size()-2){
+          if(!conditionals[0].equals("default")&&conditionals->count!=dataSources.size()-2){
             CDBError("Incorrect number of conditional operators specified: %d  (expected %d)",
                      conditionals->count,dataSources.size()-2);
             hasFailed=true;
           }else{
-            for(int i=0;i<conditionals->count;i++){
+            for(size_t i=0;i<conditionals->count;i++){
               combineBooleanMapExpression[i]=myand;
               if(conditionals[i].equals("and"))combineBooleanMapExpression[i]=myand;
               if(conditionals[i].equals("or"))combineBooleanMapExpression[i]=myor;

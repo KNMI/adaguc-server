@@ -160,7 +160,7 @@ class CDataSource{
       dLayerType=CConfigReaderLayerTypeStyled;
     }
     if(cfgLayer->attr.type.equals("file")){
-      dLayerType=CConfigReaderLayerTypeFile;
+      dLayerType=CConfigReaderLayerTypeDataBase;//CConfigReaderLayerTypeFile;
     }
     //Set the layername
     layerName.copy(_layerName);

@@ -46,7 +46,7 @@ int CRequest::setConfigFile(const char *pszConfigFile){
 
 int CRequest::process_wms_getmetadata_request(){
   if(srvParam->WMSLayers!=NULL)
-    for(int j=0;j<srvParam->WMSLayers->count;j++){
+    for(size_t j=0;j<srvParam->WMSLayers->count;j++){
       CDBDebug("WMS GETMETADATA %s",srvParam->WMSLayers[j].c_str());
     }
     return process_all_layers();
@@ -54,14 +54,14 @@ int CRequest::process_wms_getmetadata_request(){
 
 int CRequest::process_wms_getlegendgraphic_request(){
   if(srvParam->WMSLayers!=NULL)
-    for(int j=0;j<srvParam->WMSLayers->count;j++){
+    for(size_t j=0;j<srvParam->WMSLayers->count;j++){
       CDBDebug("WMS GETLEGENDGRAPHIC %s",srvParam->WMSLayers[j].c_str());
     }
   return process_all_layers();
 }
 int CRequest::process_wms_getfeatureinfo_request(){
   if(srvParam->WMSLayers!=NULL)
-    for(int j=0;j<srvParam->WMSLayers->count;j++){
+    for(size_t j=0;j<srvParam->WMSLayers->count;j++){
       CDBDebug("WMS GETFEATUREINFO %s",srvParam->WMSLayers[j].c_str());
     }
   return process_all_layers();
@@ -69,7 +69,7 @@ int CRequest::process_wms_getfeatureinfo_request(){
 
 int CRequest::process_wcs_getcoverage_request(){
   if(srvParam->WMSLayers!=NULL)
-    for(int j=0;j<srvParam->WMSLayers->count;j++){
+    for(size_t j=0;j<srvParam->WMSLayers->count;j++){
       CDBDebug("WCS GETCOVERAGE %s",srvParam->WMSLayers[j].c_str());
     }
   return process_all_layers();
@@ -193,7 +193,7 @@ int CRequest::generateOGCGetCapabilities(CT::string *XMLdocument){
 }
 int CRequest::generateOGCDescribeCoverage(CT::string *XMLdocument){
   CXMLGen XMLGen;
-  for(int j=0;j<srvParam->WMSLayers->count;j++){
+  for(size_t j=0;j<srvParam->WMSLayers->count;j++){
     CDBDebug("WCS_DESCRIBECOVERAGE %s",srvParam->WMSLayers[j].c_str());
   }
   return XMLGen.OGCGetCapabilities(srvParam,XMLdocument);
@@ -241,7 +241,7 @@ int CRequest::process_wcs_describecov_request(){
 
 int CRequest::process_wms_getmap_request(){
   if(srvParam->WMSLayers!=NULL)
-    for(int j=0;j<srvParam->WMSLayers->count;j++){
+    for(size_t j=0;j<srvParam->WMSLayers->count;j++){
       //CDBDebug("WMS GETMAP %s",srvParam->WMSLayers[j].c_str());
     }
   return process_all_layers();
@@ -315,7 +315,7 @@ int CRequest::process_all_layers(){
     //Now set the properties of these sourceimages
     CT::string layerName;
     
-    for(int j=0;j<srvParam->WMSLayers->count;j++){
+    for(size_t j=0;j<srvParam->WMSLayers->count;j++){
       size_t layerNo=0;
       for(layerNo=0;layerNo<srvParam->cfg->Layer.size();layerNo++){
         srvParam->makeUniqueLayerName(&layerName,srvParam->cfg->Layer[layerNo]);
@@ -406,7 +406,7 @@ int CRequest::process_all_layers(){
         //Get the number of required dims from the given dims
         //Check if all dimensions are given
         for(int k=0;k<srvParam->NumOGCDims;k++)srvParam->OGCDims[k].Name.toLowerCase();
-        int dimsfound[MAX_DIMS];
+        int dimsfound[NC_MAX_DIMS];
         for(size_t i=0;i<dataSources[j]->cfgLayer->Dimension.size();i++){
           CT::string dimName(dataSources[j]->cfgLayer->Dimension[i]->value.c_str());
           dimName.toLowerCase();
@@ -423,7 +423,7 @@ int CRequest::process_all_layers(){
               //If we have a special styled layer, the time does not come from TIME, but from style:
               if(dataSources[0]->dLayerType==CConfigReaderLayerTypeStyled){
                 CT::string *splittedStyles=srvParam->Styles.split(",");
-                if(splittedStyles->count!=(int)dataSources.size()){
+                if(splittedStyles->count!=dataSources.size()){
                   status = DB.close();
                   CDBError("Number of provided layers (%d) does not match the number of provided styles (%d)",dataSources.size(),splittedStyles->count);
                   //for(size_t j=0;j<requiredDims.size();j++)delete requiredDims[j];
@@ -514,10 +514,10 @@ int CRequest::process_all_layers(){
                       tableName.c_str());
           CT::string queryParams(&dataSources[j]->requiredDims[i]->Value);
           CT::string *cDims =queryParams.split(",");// Split up by commas (and put into cDims)
-          for(int k=0;k<cDims->count;k++){
+          for(size_t k=0;k<cDims->count;k++){
             CT::string *sDims =cDims[k].split("/");// Split up by slashes (and put into sDims)
             if(sDims->count>0&&k>0)subQuery.concat("or ");
-            for(int l=0;l<sDims->count;l++){
+            for(size_t  l=0;l<sDims->count;l++){
               if(l>0)subQuery.concat("and ");
               if(sDims->count==1){
                 if(!checkTimeFormat(sDims[l]))timeValidationError=true;
@@ -581,7 +581,7 @@ int CRequest::process_all_layers(){
           dimValues.push_back(t);
         }
               
-        for(int k=0;k<values_path->count;k++){
+        for(size_t k=0;k<values_path->count;k++){
           CDataSource::TimeStep * timeStep = new CDataSource::TimeStep();
           dataSources[j]->timeSteps.push_back(timeStep);
           timeStep->fileName.copy(values_path[k].c_str());
@@ -789,8 +789,7 @@ int CRequest::process_querystring(){
 
   CT::string * parameters=queryString.split("&");
   CT::string value0Cap;
-  for(int j=0;j<parameters->count;j++)
-  {
+  for(size_t j=0;j<parameters->count;j++){
     CT::string * values=parameters[j].split("=");
 
     // Styles parameter
