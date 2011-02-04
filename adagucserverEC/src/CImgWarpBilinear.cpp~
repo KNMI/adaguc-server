@@ -41,12 +41,19 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
    dfPixelExtent[2]=((dfPixelExtent[2]-dfSourceOrigX)/dfSourceExtW)*dfSourceW+2;
    dfPixelExtent[3]=((dfPixelExtent[3]-dfSourceOrigY)/dfSourceExtH)*dfSourceH+3;
    
-   
-   //Convert the pixel extent to integer values
-   //Also stretch the BBOX a bit, to hide edge effects
+   //Make sure the images are not swapped in Y dir.
    if(dfPixelExtent[1]>dfPixelExtent[3]){
      float t1=dfPixelExtent[1];dfPixelExtent[1]=dfPixelExtent[3];dfPixelExtent[3]=t1;
    }
+
+   //Make sure the images are not swapped in X dir.
+   if(dfPixelExtent[0]>dfPixelExtent[2]){
+     float t1=dfPixelExtent[0];dfPixelExtent[0]=dfPixelExtent[2];dfPixelExtent[2]=t1;
+   }
+
+
+   //Convert the pixel extent to integer values
+   //Also stretch the BBOX a bit, to hide edge effects
    int dPixelExtent[4];
    dPixelExtent[0]=int(dfPixelExtent[0]);
    dPixelExtent[1]=int(dfPixelExtent[1]);
@@ -631,7 +638,7 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
                           //floatToString(szTemp,255,m*textScaleFactor+textOffsetFactor);
                           snprintf(szTemp,10,"%6.1f",(m*textScaleFactor+textOffsetFactor));
                         }
-                        busyDrawingText=strlen(szTemp)*1+3;
+                        busyDrawingText=strlen(szTemp)*1+1;
                       }
                     }
                   }
@@ -664,8 +671,9 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
                   col=col2;
                   
                   w=0.4;
-                  if(smallC==0){w=0.75;col=col2;}
+                  if(smallC==0){w=0.6;col=col2;}
                   if(bigC==0){w=1.0;col=col1;}
+                  
                   
                   if(drawLine){//&&(distanceFromStart%(linePointDistance*3)>linePointDistance*1)){
                     if(busyDrawingText>0){

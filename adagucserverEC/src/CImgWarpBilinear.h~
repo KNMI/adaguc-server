@@ -64,9 +64,9 @@ class CImgWarpBilinear:public CImageWarperRenderInterface{
             shadeInterval=values[1].toFloat();
             if(shadeInterval==0.0f){CDBWarning("invalid value given for shadeInterval");}
           }
-          if(values[0].equals("smoothFilter")){
-            smoothFilter=values[1].toFloat();
-            if(smoothFilter==0.0f){CDBWarning("invalid value given for smoothFilter");}
+          if(values[0].equals("smoothingFilter")){
+            smoothingFilter=values[1].toInt();
+            if(smoothingFilter<0||smoothingFilter>20){CDBWarning("invalid value given for smoothingFilter");}
           }
           
           if(values[0].equals("contourBigInterval")){

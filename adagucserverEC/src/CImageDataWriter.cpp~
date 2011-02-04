@@ -573,7 +573,7 @@ int CImageDataWriter::getFeatureInfo(CDataSource *dataSource,int dX,int dY){
 
   if(imx>=0&&imy>=0&&imx<dataSource->dWidth&&imy<dataSource->dHeight){
     for(size_t j=0;j<dataSource->dataObject.size();j++){
-      bool swapXY=true;
+      bool swapXY=false;//Experimental: Used when y,x dims are in different order
        size_t ptr;
       if(swapXY==false){
         ptr=imx+imy*dataSource->dWidth;
@@ -1030,7 +1030,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage
   int legendPositiveUp = 1;
   int dH=0;
   float cbH=LEGEND_HEIGHT-13-10;
-  float cbW=LEGEND_WIDTH/6;
+  float cbW=LEGEND_WIDTH/7;
   char szTemp[256];
   CDataReader reader;
   
@@ -1099,7 +1099,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage
         numClasses=int((maxValue-minValue)/legendInterval);
       }
     }
-
+    if(minValue<0)minValue-=0.5f;if(maxValue<0)maxValue-=0.5f; // Rounding negative values down works in the opposite way.
     float iMin = int(minValue/legendInterval)*legendInterval;//-legendInterval;
     float iMax = int(maxValue/legendInterval+1)*legendInterval;//+legendInterval*1;
     
@@ -1120,7 +1120,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage
     
     //CDBDebug("numClasses = %d",numClasses);
     int classSizeY=(180/(numClasses));
-    if(classSizeY>18)classSizeY=18;
+    if(classSizeY>16)classSizeY=16;
     //for(float j=iMax+legendInterval;j>=iMin;j=j-legendInterval){
     int classNr=0;
     for(float j=iMin;j<iMax+legendInterval;j=j+legendInterval){
@@ -1144,12 +1144,10 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage
       {
         int y=getColorIndexForValue(dataSource,v);
         drawImage->rectangle(4,cY2,int(cbW)+7,cY,(y),248);
-              //drawImage->line((int)5,(int)cY,(int)cbW+5,(int)cY,248);
         sprintf(szTemp,"%2.1f - %2.1f",v,v+legendInterval);
-      //CT::string 
-      //floatToString(szTemp,255,v);
+        //CT::string    //floatToString(szTemp,255,v);
         int l=strlen(szTemp);
-        drawImage->setText(szTemp,l,(int)cbW+18,((cY+cY2)/2)-7,248,0);
+        drawImage->setText(szTemp,l,(int)cbW+14,((cY+cY2)/2)-7,248,0);
       }
 
     }

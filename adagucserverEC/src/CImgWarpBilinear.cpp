@@ -448,6 +448,7 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
           if(val[j]<min)min=val[j];
           if(val[j]>max)max=val[j];
         }
+        if(min<0)min-=0.5; if(max<0)max-=0.5;
         min=int(min/ival);min=min*ival;//min-=int(idval*1);
         max=int(max/ival);max=max*ival;max+=ival;
         if(drawShade){
@@ -638,7 +639,7 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
                           //floatToString(szTemp,255,m*textScaleFactor+textOffsetFactor);
                           snprintf(szTemp,10,"%6.1f",(m*textScaleFactor+textOffsetFactor));
                         }
-                        busyDrawingText=strlen(szTemp)*1+3;
+                        busyDrawingText=strlen(szTemp)*1+1;
                       }
                     }
                   }
@@ -671,8 +672,9 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
                   col=col2;
                   
                   w=0.4;
-                  if(smallC==0){w=0.75;col=col2;}
+                  if(smallC==0){w=0.6;col=col2;}
                   if(bigC==0){w=1.0;col=col1;}
+                  
                   
                   if(drawLine){//&&(distanceFromStart%(linePointDistance*3)>linePointDistance*1)){
                     if(busyDrawingText>0){
