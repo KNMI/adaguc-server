@@ -1,6 +1,9 @@
 #include "CDataReader.h"
 #include <sys/stat.h>
 const char *CDataReader::className="CDataReader";
+
+#define uchar unsigned char
+
 /*void writeLogFile2(const char * msg){
   char * logfile=getenv("ADAGUC_LOGFILE");
   if(logfile!=NULL){
@@ -98,43 +101,42 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
   CT::string uniqueIDFor2DFieldTmp;
   //CT::string uniqueIDForMetadata;
   
+  //Check wether we should use cache or not (in case of OpenDAP, this speeds up things a lot)
   if(enableDataCache==true){
     int intStat;
     struct stat stFileInfo;
     
     int timeStep = sourceImage->getCurrentTimeStep();
-    //uniqueIDFor2DField.copy("file_");
+    //Test whether directory structure is OK
     uniqueIDFor2DField.copy(cacheLocation);
     uniqueIDFor2DField.concat("/");
     intStat = stat(uniqueIDFor2DField.c_str(),&stFileInfo);
+    //Directory structure needs to be created for all the cache files.
     if(intStat != 0){
       CDBDebug("making dir %s",uniqueIDFor2DField.c_str());
       mode_t permissions = S_IRWXU|S_IRWXG|S_IRWXO;
       mkdir (uniqueIDFor2DField.c_str(),permissions);
     }
+    //Make the cache unique directory name, based on the filename
     CT::string validFileName(sourceImage->getFileName());
-    //int b=validFileName.lastIndexOf("/");
-    //if(b>0)validFileName.substring(b,validFileName.length());
-    validFileName.replace(":","");
-    validFileName.replace("/","");
+    //Replace : and / by nothing, so we can use the string as a directory name
+    validFileName.replace(":",""); 
+    validFileName.replace("/",""); 
+    //Concat the filename to the cache directory
     uniqueIDFor2DField.concat(&validFileName);
     uniqueIDFor2DField.concat("cache");
-    //uniqueIDFor2DField.copy(&uniqueIDForMetadata);
-    
-    
-    
+    //Check wether the specific cache file directory exists
     intStat = stat(uniqueIDFor2DField.c_str(),&stFileInfo);
     if(intStat != 0){
       CDBDebug("making dir %s",uniqueIDFor2DField.c_str());
       mode_t permissions = S_IRWXU|S_IRWXG|S_IRWXO;
       mkdir (uniqueIDFor2DField.c_str(),permissions);
     }
+    //Now make the filename, based on variable name and dimension properties
     uniqueIDFor2DField.concat("/");
-    
     uniqueIDFor2DField.concat(sourceImage->dataObject[0]->variableName.c_str());
     uniqueIDFor2DField.concat("_");
-    
-    
+    //Add dimension properties to the filename
     if(sourceImage->timeSteps[timeStep]->dims.dimensions.size()>0){
       for(size_t j=0;j<sourceImage->timeSteps[timeStep]->dims.dimensions.size();j++){
         uniqueIDFor2DField.printconcat("%s=%d", 
@@ -142,52 +144,40 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
                                        sourceImage->timeSteps[timeStep]->dims.dimensions[0]->index);
       }
     }
+    //Create a temporary filename, which we can move in other to avoid read/write conflicts.
     uniqueIDFor2DFieldTmp.copy(&uniqueIDFor2DField);
     uniqueIDFor2DFieldTmp.concat("_tmp");
-    //uniqueIDForMetadata.concat(".ncmeta");
-    //uniqueIDFor2DField.concat(".ncfield");
-    
-//    CDBDebug("uniqueIDFor2DField = %s",uniqueIDFor2DField.c_str());
-    
-    
-    //intStat = stat(uniqueIDForMetadata.c_str(),&stFileInfo);if(intStat != 0)saveMetadataFile = true;
+    //Test wether the cache file is already available (in this case we do not need above tmp name)
     intStat = stat(uniqueIDFor2DField.c_str(),&stFileInfo);if(intStat != 0)saveFieldFile = true;else {
-      //CDBDebug("Cache file available");
       cacheAvailable=true;
     }
-    
+    //Test wether the tmp file already exists, in this case another process is working on the cache
     intStat = stat(uniqueIDFor2DFieldTmp.c_str(),&stFileInfo);
     if(intStat == 0){workingOnCache=true;}
-    
-    //intStat = stat(uniqueIDFor2DField.c_str(),&stFileInfo);
-    //if(intStat == 0){workingOnCache=true;}
-    
+    //This means that cache is not yet available, but also we do not need to create a cache file.
     if(workingOnCache==true){
-      CDBDebug("*** Another process is working on the cache file");
+      CDBDebug("*** Another process is now working on the cache file. The cache can not be used for the moment.");
       saveFieldFile=false;
       cacheAvailable=false;
     }
-    
-    
   }
   
-//  CDBDebug("uniqueIDFor2DField = %s",uniqueIDFor2DField.c_str());
 #ifdef MEASURETIME
   StopWatch_Stop("opening file");
 #endif
-
-  if(cacheAvailable==true){
-  if(cdfReader!=NULL)delete cdfReader;
-    
-  cdfReader = new CDFNetCDFReader(cdfObject);
   
-    //CDBDebug("Reading from Cache file");
-  status = cdfReader->open(uniqueIDFor2DField.c_str());
-  int timeStep = sourceImage->getCurrentTimeStep();
-  for(size_t j=0;j<sourceImage->timeSteps[timeStep]->dims.dimensions.size();j++){
-    sourceImage->timeSteps[timeStep]->dims.dimensions[0]->index=0;
-  }
+  if(cacheAvailable==true){
+    CDBDebug("Reading from Cache file");
+    //We need to rebuild our CDF reader, because cache files are always netcdf.
+    if(cdfReader!=NULL)delete cdfReader;
+    cdfReader = new CDFNetCDFReader(cdfObject);
+    status = cdfReader->open(uniqueIDFor2DField.c_str());
+    int timeStep = sourceImage->getCurrentTimeStep();
+    for(size_t j=0;j<sourceImage->timeSteps[timeStep]->dims.dimensions.size();j++){
+      sourceImage->timeSteps[timeStep]->dims.dimensions[0]->index=0;
+    }
   }else{
+    //We just open the file in the standard way, without cache
     status = cdfReader->open(FileName.c_str());
   }
   
@@ -212,45 +202,73 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
       return 1;*/
     }
     //CDBDebug("Getting info for variable %s",sourceImage->dataObject[varNr]->variableName.c_str());
-    
   }
   
-  // Retrieve Width and Height
+  // Retrieve X, Y Dimensions and Width, Height
   sourceImage->dNetCDFNumDims = var[0]->dimensionlinks.size();
-//  CDBDebug("GRead X and Y dimension data %d",sourceImage->dNetCDFNumDims );
-  CDF::Dimension *dimX=var[0]->dimensionlinks[sourceImage->dNetCDFNumDims-1];
-  CDF::Dimension *dimY=var[0]->dimensionlinks[sourceImage->dNetCDFNumDims-2];
-  if(dimX==NULL||dimY==NULL){CDBError("X and or Y dims not found...");return 1;}
+  int dimXIndex=sourceImage->dNetCDFNumDims-1;
+  int dimYIndex=sourceImage->dNetCDFNumDims-2;
   
-  sourceImage->dWidth=dimX->length;
-  sourceImage->dHeight=dimY->length;
+  bool swapXYDimensions = true;
+   
+   //CDBDebug("b %f %f %f %f",sourceImage->dfBBOX[0],sourceImage->dfBBOX[1],sourceImage->dfBBOX[2],sourceImage->dfBBOX[3]);
+   //CDBDebug("d %f %f %f %f",drawImage->Geo->dfBBOX[0],drawImage->Geo->dfBBOX[1],drawImage->Geo->dfBBOX[2],drawImage->Geo->dfBBOX[3]);
+  //CDBDebug("d %f %f %f %f",sourceImage->srvParams->Geo->dfBBOX[0],
+//           sourceImage->srvParams->Geo->dfBBOX[1],sourceImage->srvParams->Geo->dfBBOX[2],sourceImage->srvParams->Geo->dfBBOX[3]);
+  
+   
+  // It is possible to skip every N cell in x and y. When set to 1, all data is displayed.
+  // When set to 2, every second datacell is displayed, etc...
+  int stride2DMap=1;
+  
+  if(swapXYDimensions){
+    dimXIndex=sourceImage->dNetCDFNumDims-2;
+    dimYIndex=sourceImage->dNetCDFNumDims-1;
+  }
+  
+  CDF::Dimension *dimX=var[0]->dimensionlinks[dimXIndex];
+  CDF::Dimension *dimY=var[0]->dimensionlinks[dimYIndex];
+  if(dimX==NULL||dimY==NULL){CDBError("X and or Y dims not found...");return 1;}
+  sourceImage->dWidth=dimX->length/stride2DMap;
+  sourceImage->dHeight=dimY->length/stride2DMap;
   size_t start[sourceImage->dNetCDFNumDims+1];
   size_t count[sourceImage->dNetCDFNumDims+1];
   ptrdiff_t stride[sourceImage->dNetCDFNumDims+1];
+  
+  //Set X and Y dimensions start, count and stride
   for(int j=0;j<sourceImage->dNetCDFNumDims;j++){start[j]=0; count[j]=1;stride[j]=1;}
-  count[sourceImage->dNetCDFNumDims-1]=sourceImage->dWidth;
-  count[sourceImage->dNetCDFNumDims-2]=sourceImage->dHeight;
+  count[dimXIndex]=sourceImage->dWidth;
+  count[dimYIndex]=sourceImage->dHeight;
+  stride[dimXIndex]=stride2DMap;
+  stride[dimYIndex]=stride2DMap;
+  //Set other dimensions than X and Y.
   if(sourceImage->dNetCDFNumDims>2){
     for(int j=0;j<sourceImage->dNetCDFNumDims-2;j++){
       start[j]=sourceImage->getDimensionIndex(var[0]->dimensionlinks[j]->name.c_str());//dOGCDimValues[0];// time dim
       //CDBDebug("%s==%d",var[0]->dimensionlinks[j]->name.c_str(),start[j]);
     }
   }
-  //Read X and Y dimension data
   
+  
+  //Read X and Y dimension data completely.
   CDF::Variable *varX=cdfObject->getVariable(dimX->name.c_str());
   CDF::Variable *varY=cdfObject->getVariable(dimY->name.c_str());
   if(varX==NULL||varY==NULL){CDBError("X and or Y vars not found...");return 1;}
-  status = cdfReader->readVariableData(varX,CDF_DOUBLE);if(status!=0){
+
+  size_t sta[1],sto[1];ptrdiff_t str[1];
+  sta[0]=0;str[0]=stride2DMap; sto[0]=sourceImage->dWidth;
+  status = cdfReader->readVariableData(varX,CDF_DOUBLE,sta,sto,str);if(status!=0){
     CDBError("Unable to read x dimension");
     return 1;
   }
-  status = cdfReader->readVariableData(varY,CDF_DOUBLE);if(status!=0){
+
+  sto[0]=sourceImage->dHeight;
+  status = cdfReader->readVariableData(varY,CDF_DOUBLE,sta,sto,str);if(status!=0){
     CDBError("Unable to read y dimension");
     return 1;
   }
   
-// Calculate cellsize
+  // Calculate cellsize based on read X,Y dims
   double *dfdim_X=(double*)varX->data;
   double *dfdim_Y=(double*)varY->data;
   sourceImage->dfCellSizeX=(dfdim_X[sourceImage->dWidth-1]-dfdim_X[0])/double(sourceImage->dWidth-1);
@@ -466,13 +484,45 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
       fillValue->getData(&dfNoData,1);
       
     }else hasNodataValue=false;
-  //size_t varNr=0;
+    
     /*CDBDebug("--- varNR [%d], name=\"%s\"",varNr,var[varNr]->name.c_str());
     for(size_t d=0;d<var[varNr]->dimensionlinks.size();d++){
       CDBDebug("%s  \tstart: %d\tcount %d",var[varNr]->dimensionlinks[d]->name.c_str(),start[d],count[d]);
-  }*/
+    }*/
     
     cdfReader->readVariableData(var[varNr], sourceImage->dataObject[varNr]->dataType,start,count,stride);
+    CDBDebug("Done");
+    //Swap X, Y dimensions so that pointer x+y*w works correctly
+    if(cacheAvailable!=true){
+      //Cached data was already swapped. Because we have stored the result of this object in the cache.
+      if(swapXYDimensions){
+        size_t imgSize=sourceImage->dHeight*sourceImage->dWidth;
+        size_t w=sourceImage->dWidth;size_t h=sourceImage->dHeight;size_t x,y;
+        void *vd=NULL;                 //destination data
+        void *vs=var[varNr]->data;     //source data
+        CDFType dataType=sourceImage->dataObject[varNr]->dataType;
+        //Allocate data for our new memory block
+        CDF::allocateData(dataType,&vd,imgSize);
+        //TODO This could also be solved using a template. But this works fine too.
+        switch (dataType){
+          case CDF_CHAR  : {char   *s=(char  *)vs;char   *d=(char  *)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
+          case CDF_BYTE  : {char   *s=(char  *)vs;char   *d=(char  *)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
+          case CDF_UBYTE : {uchar  *s=(uchar *)vs;uchar  *d=(uchar *)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
+          case CDF_SHORT : {short  *s=(short *)vs;short  *d=(short *)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
+          case CDF_USHORT: {ushort *s=(ushort*)vs;ushort *d=(ushort*)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
+          case CDF_INT   : {int    *s=(int   *)vs;int    *d=(int   *)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
+          case CDF_UINT  : {uint   *s=(uint  *)vs;uint   *d=(uint  *)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
+          case CDF_FLOAT : {float  *s=(float *)vs;float  *d=(float *)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
+          case CDF_DOUBLE: {double *s=(double*)vs;double *d=(double*)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
+          default: CDBError("Unknown data type"); return 1;
+        }
+        //We will replace our old memory block with the new one, but free it first.
+        free(var[varNr]->data);
+        //Replace the memory block.
+        var[varNr]->data=vd;
+      }
+    }
+    
 //    CDBDebug("Reading variable %s",var[varNr]->name.c_str());
     if(sourceImage->dataObject[varNr]->scaleOffsetIsApplied == true ){
       double dfscale_factor = sourceImage->dataObject[varNr]->dfscale_factor;
@@ -537,9 +587,9 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
     //CDBDebug("Read succesfully:\nsf=%f\naf=%f,nd=%f\n",dfscale_factor,dfadd_offset,sourceImage->dfNodataValue);
   //Check wether this local file does already exist...
     
-/*    for(int j=0;j<sourceImage->dNetCDFNumDims;j++){
-      CDBDebug("start %d count %d\n",start[j],count[j]);
-  }*/
+    //for(int j=0;j<sourceImage->dNetCDFNumDims;j++){
+      //CDBDebug("start %d count %d",start[j],count[j]);
+    //}
 
     if(enableDataCache==true&&saveFieldFile==true){
   
@@ -564,7 +614,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
       //if(saveFieldFile)
   {
         //size_t dataSize=sourceImage->dWidth*sourceImage->dHeight*CDF::getTypeSize(sourceImage->dataObject[0]->dataType);
-        //CDBDebug("Writing to %s",uniqueIDFor2DField.c_str());
+        CDBDebug("Writing to %s",uniqueIDFor2DField.c_str());
         
     
     
@@ -589,13 +639,13 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
                 keepVariable[w]=1;
                 keepDim=true;break;
               }
-              /*if(keepDim==true){
+              if(keepDim==true){
                 CDBDebug("Keep %s",(cdfObject->variables[w]->name.c_str()));
                 
               }
               if(keepDim==false){
                 CDBDebug("False %s",(cdfObject->variables[w]->name.c_str()));
-            }*/
+              }
             }
           }
           if(cdfObject->variables[w]->dimensionlinks.size()==0){
@@ -609,6 +659,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
         }
       }
     }
+    CDBDebug("Done");
     for(size_t d=0;d<dimsToKeep.size();d++){
       delete dimsToKeep[d];
       dimsToKeep[d]=NULL;
@@ -623,7 +674,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
       }
     }
     for(size_t i=0;i<deleteVarNames.size();i++){
-      //CDBDebug("Removing %s",deleteVarNames[i]->c_str());
+      CDBDebug("Removing %s",deleteVarNames[i]->c_str());
       cdfObject->removeVariable(deleteVarNames[i]->c_str());
       cdfObject->removeDimension(deleteVarNames[i]->c_str());
       delete deleteVarNames[i];
@@ -646,32 +697,35 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
         /*for(size_t j=0;j<cdfObject->variables.size();j++){
     cdfObject->variables[j]->type=CDF_DOUBLE;
   }*/
-          
+    CDBDebug("DONE");      
     for(size_t j=0;j<sourceImage->timeSteps[timeStep]->dims.dimensions.size();j++){
       CDF::Dimension *dim = cdfObject->getDimension(sourceImage->timeSteps[timeStep]->dims.dimensions[0]->name.c_str());
-      CDF::Variable *var = cdfObject->getVariable(sourceImage->timeSteps[timeStep]->dims.dimensions[0]->name.c_str());
-          
-      cdfReader->readVariableData(var,CDF_DOUBLE);
-            
-      double dimValue[var->getSize()];
-            //sourceImage->timeSteps[0]->dims.dimensions[0]->index*CDF::getTypeSize(var->type)
-      CDF::dataCopier.copy(dimValue,var->data,var->type,var->getSize());
-      size_t index=sourceImage->timeSteps[timeStep]->dims.dimensions[0]->index;
-            //CDBDebug("dimvalue %s at index %d = %f",var->name.c_str(),index,dimValue[index]);
-            
-      var->setSize(1);
-      dim->length=1;
-      ((double*)var->data)[0]=dimValue[index];
+      if(dim!=NULL){
+        CDF::Variable *var = cdfObject->getVariable(sourceImage->timeSteps[timeStep]->dims.dimensions[0]->name.c_str());
+        
+        if(var==NULL){CDBError("var is null");return 1;}
+        CDBDebug("Reading variable %s"    ,var->name.c_str());
+        cdfReader->readVariableData(var,CDF_DOUBLE);
+              
+        double dimValue[var->getSize()];
+              //sourceImage->timeSteps[0]->dims.dimensions[0]->index*CDF::getTypeSize(var->type)
+        CDF::dataCopier.copy(dimValue,var->data,var->type,var->getSize());
+        size_t index=sourceImage->timeSteps[timeStep]->dims.dimensions[0]->index;
+              //CDBDebug("dimvalue %s at index %d = %f",var->name.c_str(),index,dimValue[index]);
+              
+        var->setSize(1);
+        dim->length=1;
+        ((double*)var->data)[0]=dimValue[index];
+      }
             //sourceImage->timeSteps[0]->dims.dimensions[0]->index
             //var->setData(var->type,const void *dataToSet,1){
              //sourceImage->timeSteps[0]->dims.dimensions[0]->index);
     }
+
     
     
     
-    
-    
-         /*CT::string dumpString;
+      /*  CT::string dumpString;
          CDF::dump(cdfObject,&dumpString);
          //CDBDebug("\nSTART\n%s\nEND\n",dumpString.c_str());
     writeLogFile2(dumpString.c_str());*/
@@ -718,7 +772,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
       CDBDebug("*** [3/4] Writing cache file");
           
           
-         
+      netCDFWriter.setNetCDFMode(3);
         
       netCDFWriter.write(uniqueIDFor2DFieldTmp.c_str());
         
@@ -732,9 +786,9 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
   }
   return 0;
     }
+    
+    
   }
-  
-  
   
   return 0;
 }
@@ -746,9 +800,14 @@ int CDataReader::close(){
   return 0;
 }
 int CDataReader::getTimeUnit(char * pszTime){
+  //TODO We assume that the first configured DIM is always time. This might be not the case!
   if(cdfObject==NULL){
     CDBError("CNetCDFReader is not opened");
     return 1;
+  }
+  if(sourceImage->cfgLayer->Dimension.size()==0){
+    snprintf(pszTime,MAX_STR_LEN,"");
+    return 0;
   }
   pszTime[0]='\0';
   CDF::Variable *time = cdfObject->getVariable(sourceImage->cfgLayer->Dimension[0]->attr.name.c_str());
@@ -760,9 +819,14 @@ int CDataReader::getTimeUnit(char * pszTime){
 }
 
 int CDataReader::getTimeString(char * pszTime){
+  //TODO We assume that the first configured DIM is always time. This might be not the case!
   if(cdfObject==NULL){
     CDBError("CNetCDFReader is not opened");
     return 1;
+  }
+  if(sourceImage->cfgLayer->Dimension.size()==0){
+    snprintf(pszTime,MAX_STR_LEN,"");
+    return 0;
   }
   pszTime[0]='\0';
   CDF::Variable *time = cdfObject->getVariable(sourceImage->cfgLayer->Dimension[0]->attr.name.c_str());
@@ -866,6 +930,7 @@ int CDataReader::DBLoopFiles(CPGSQLDB *DB,CDataSource *sourceImage,int removeNon
     printf("Adding files that are now available...\n");
     char ISOTime[MAX_STR_LEN+1];
     for(size_t j=0;j<dirReader->fileList.size();j++){
+      //Loop through all configured dimensions.
       for(size_t d=0;d<sourceImage->cfgLayer->Dimension.size();d++){
         int fileExistsInDB=0;
         bool isTimeDim = false;
@@ -976,7 +1041,7 @@ int CDataReader::DBLoopFiles(CPGSQLDB *DB,CDataSource *sourceImage,int removeNon
                     if(removeNonExistingFiles==1){
                       //We are adding the query above to the temporay table if removeNonExistingFiles==1;
                       //Lets add it also to the real table for convenience
-                      //Later this table will be dropped, but it is more up to date this way.
+                      //Later this table will be dropped, but it will remain more up to date during scanning this way.
                       CT::string queryString;
                       queryString.print("INSERT into %s VALUES ('%s','%f','%d')",
                                         tablename_temp.c_str(),
@@ -1009,7 +1074,7 @@ int CDataReader::DBLoopFiles(CPGSQLDB *DB,CDataSource *sourceImage,int removeNon
                         if(removeNonExistingFiles==1){
                           //We are adding the query above to the temporay table if removeNonExistingFiles==1;
                           //Lets add it also to the real table for convenience
-                          //Later this table will be dropped, but it is more up to date this way.
+                          //Later this table will be dropped, but it will remain more up to date during scanning this way.
                           CT::string queryString;
                           queryString.print("INSERT into %s VALUES ('%s','%s','%d')",
                                             tablename.c_str(),

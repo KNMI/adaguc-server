@@ -1,6 +1,7 @@
 #ifndef CDataSource_H
 #define CDataSource_H
 #include "CXMLSerializerInterface.h"
+#include "CServerParams.h"
 #include "CServerConfig_CPPXSD.h"
 #include "CDebugger.h"
 #include "Definitions.h"
@@ -108,6 +109,8 @@ class CDataSource{
 
   //Current value index of the dim
   //int dOGCDimValues[MAX_DIMS];
+  
+  CServerParams *srvParams;
 
   //Link to the XML configuration
   CServerConfig::XMLE_Layer * cfgLayer;
@@ -124,6 +127,7 @@ class CDataSource{
     metaData=NULL;
     statistics=NULL;
     currentAnimationStep=0;
+    srvParams=NULL;
     }
   ~CDataSource(){
     if(metaData!=NULL){delete[] metaData;metaData=NULL;}
@@ -138,7 +142,8 @@ class CDataSource{
     for(size_t j=0;j<requiredDims.size();j++)delete requiredDims[j];
     if(statistics!=NULL)delete statistics;statistics=NULL;
   }
-  void setCFGLayer(CServerConfig::XMLE_Configuration *_cfg,CServerConfig::XMLE_Layer * _cfgLayer,const char *_layerName){
+  void setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Configuration *_cfg,CServerConfig::XMLE_Layer * _cfgLayer,const char *_layerName){
+    srvParams=_srvParams;
     cfg=_cfg;
     cfgLayer=_cfgLayer;
 //    numVariables = cfgLayer->Variable.size();

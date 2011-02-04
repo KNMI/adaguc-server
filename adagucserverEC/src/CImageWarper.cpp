@@ -223,6 +223,10 @@ int CImageWarper::closereproj(){
         dfBBOX[1]=sourceImage->dfBBOX[3];
         dfBBOX[3]=sourceImage->dfBBOX[1];
       }
+      if(dfBBOX[0]>dfBBOX[2]){
+        dfBBOX[0]=sourceImage->dfBBOX[2];
+        dfBBOX[2]=sourceImage->dfBBOX[0];
+      }
     }
     double tempy;//tempx
     double miny1=dfBBOX[1];

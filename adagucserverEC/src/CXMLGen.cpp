@@ -15,13 +15,12 @@ int CXMLGen::getFileNameForLayer(WMSLayer * myWMSLayer){
   /**********************************************/
   int status;
   if(myWMSLayer->layer->attr.type.equals("database")||
-     myWMSLayer->layer->attr.type.equals("styled")){
-          //Check if any dimension is given:
+    myWMSLayer->layer->attr.type.equals("styled")){
+    //Check if any dimension is given:
     if(myWMSLayer->layer->Dimension.size()==0){
-      CT::string layerUniqueName;
-      srvParam->makeUniqueLayerName(&layerUniqueName,myWMSLayer->layer);
-      CDBError("No dimensions given for layer %s",layerUniqueName.c_str());
-      return 1; 
+      //If not, just return the filename
+      myWMSLayer->fileName.copy(myWMSLayer->layer->FilePath[0]->value.c_str());
+      return 0;
     }
     //CDBDebug("Database");  
     CPGSQLDB DB;
@@ -41,17 +40,19 @@ int CXMLGen::getFileNameForLayer(WMSLayer * myWMSLayer){
     delete[] values;
     DB.close();
     //CDBDebug("/Database");  
-     }
-     if(myWMSLayer->layer->attr.type.equals("file")){
-       CT::string pathFileName("");
-       if(myWMSLayer->fileName.c_str()[0]!='/'){
-         pathFileName.copy(srvParam->cfg->Path[0]->attr.value.c_str());
-         pathFileName.concat("/");
-       }
-       pathFileName.concat(&myWMSLayer->fileName);
-       myWMSLayer->fileName.copy(pathFileName.c_str(),pathFileName.length());
-     }
-     return 0;
+    }
+    //If this layer is a file type layer (not a database type layer) TODO type file is deprecated...
+    if(myWMSLayer->layer->attr.type.equals("file")){
+      CDBWarning("Type 'file' is deprecated");
+      CT::string pathFileName("");
+      if(myWMSLayer->fileName.c_str()[0]!='/'){
+        pathFileName.copy(srvParam->cfg->Path[0]->attr.value.c_str());
+        pathFileName.concat("/");
+      }
+      pathFileName.concat(&myWMSLayer->fileName);
+      myWMSLayer->fileName.copy(pathFileName.c_str(),pathFileName.length());
+    }
+    return 0;
 }
 
 int CXMLGen::getDataSourceForLayer(WMSLayer * myWMSLayer){
@@ -59,8 +60,10 @@ int CXMLGen::getDataSourceForLayer(WMSLayer * myWMSLayer){
   //CDBDebug("Reading %s",myWMSLayer->fileName.c_str());
   myWMSLayer->dataSource = new CDataSource ();
   myWMSLayer->dataSource->addTimeStep(myWMSLayer->fileName.c_str(),"");
-  myWMSLayer->dataSource->setCFGLayer(srvParam->configObj->Configuration[0],myWMSLayer->layer,myWMSLayer->name.c_str());
+  myWMSLayer->dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],myWMSLayer->layer,myWMSLayer->name.c_str());
+  CDBDebug("b");
   int status = reader.open(myWMSLayer->dataSource,CNETCDFREADER_MODE_OPEN_HEADER,NULL);
+  CDBDebug("b");
   if(status!=0){
     CDBError("Could not open file: %s",myWMSLayer->dataSource->getFileName());
     return 1;
@@ -103,9 +106,9 @@ int CXMLGen::getDimsForLayer(WMSLayer * myWMSLayer){
   //char szInterval[32];
   int hastimedomain = 0;
 
- // Dimensions
+// Dimensions
   if(myWMSLayer->layer->attr.type.equals("database")||
-     myWMSLayer->layer->attr.type.equals("styled")){
+    myWMSLayer->layer->attr.type.equals("styled")){
           //printf("Opening DB\n");
     CPGSQLDB DB;
     int status = DB.connect(srvParam->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0)return 1;
@@ -131,8 +134,8 @@ int CXMLGen::getDimsForLayer(WMSLayer * myWMSLayer){
           {
             if(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.units.c_str()==NULL){
               CDBError("No units specified for dim %s in layer %s",
-                       myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str(),
-                       myWMSLayer->dataSource->layerName.c_str());
+                      myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str(),
+                      myWMSLayer->dataSource->layerName.c_str());
               return 1;
             }
             dim->name.copy(myWMSLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
@@ -215,8 +218,8 @@ int CXMLGen::getDimsForLayer(WMSLayer * myWMSLayer){
       }
     }
     DB.close();
-     }
-     return 0;
+    }
+    return 0;
 }
 
 int CXMLGen::getStylesForLayer(WMSLayer * myWMSLayer){
@@ -272,17 +275,17 @@ int CXMLGen::getStylesForLayer(WMSLayer * myWMSLayer){
                         //Check wether we should support this rendermethod or not:
               bool skipRenderMethod=false;
               if(srvParam->cfg->Style[dConfigStyleIndex]->ContourIntervalL.size()<=0||
-                 srvParam->cfg->Style[dConfigStyleIndex]->ContourIntervalH.size()<=0){
+                srvParam->cfg->Style[dConfigStyleIndex]->ContourIntervalH.size()<=0){
                 if(renderMethods[r].equals("contour")||
-                   renderMethods[r].equals("bilinearcontour")||
-                   renderMethods[r].equals("nearestcontour")){
+                  renderMethods[r].equals("bilinearcontour")||
+                  renderMethods[r].equals("nearestcontour")){
                   skipRenderMethod=true;
-                   }
-                 }
-                 if(skipRenderMethod==false){
-                   name.print("%s/%s",layerStyleNames[s].c_str(),renderMethods[r].c_str());
-                   styleNames.push_back(name.c_str());
-                 }
+                  }
+                }
+                if(skipRenderMethod==false){
+                  name.print("%s/%s",layerStyleNames[s].c_str(),renderMethods[r].c_str());
+                  styleNames.push_back(name.c_str());
+                }
             }
           }
           delete[] renderMethods;
@@ -629,7 +632,7 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc,std::vector<WMSLay
                   "    <gml:pos>%f %f</gml:pos>\n",
               layer->name.c_str(),layer->name.c_str(),layer->title.c_str(),
               layer->dfLatLonBBOX[0],layer->dfLatLonBBOX[1],layer->dfLatLonBBOX[2],layer->dfLatLonBBOX[3]
-                                 );
+                                );
   
               if(timeDimIndex>=0){
               //For information about this, visit http://www.galdosinc.com/archives/151
@@ -654,7 +657,7 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc,std::vector<WMSLay
                     "        </gml:Envelope>\n",
                 proj->name.c_str(),
                 proj->dfBBOX[0],proj->dfBBOX[1],proj->dfBBOX[2],proj->dfBBOX[3]
-                                   );
+                                  );
               }
               XMLDoc->printconcat(
                   "        <gml:RectifiedGrid dimension=\"2\">\n"
@@ -679,7 +682,7 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc,std::vector<WMSLay
               layer->dataSource->dfBBOX[1],
               layer->dataSource->dfCellSizeX,
               layer->dataSource->dfCellSizeY
-                                 );
+                                );
           
               if(timeDimIndex>=0){
                 XMLDoc->concat("      <temporalDomain>\n");
@@ -788,13 +791,13 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
 
     //Get a default file name for this layer to obtain some information
     status = getFileNameForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;
-    
+    CDBDebug("b");
     //Try to open the file, and make a datasource for the layer
     status = getDataSourceForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;
-    
+    CDBDebug("b");
     //Generate a common projection list information
     status = getProjectionInformationForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;
-    
+    CDBDebug("b");
     //Get the dimensions and its extents for this layer
     status = getDimsForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;
     

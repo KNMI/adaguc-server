@@ -136,7 +136,7 @@ class CDFNetCDFReader :public CDFReader{
       if(sizeof(int)   !=4){CDBError("The size of int is unequeal to 32 Bits");return 1;}
       if(sizeof(float) !=4){CDBError("The size of float is unequeal to 32 Bits");return 1;}
       if(sizeof(double)!=8){CDBError("The size of double is unequeal to 64 Bits");return 1;}
-      CDBDebug("opening %s",fileName);
+      //CDBDebug("opening %s",fileName);
       status = nc_open(fileName,NC_NOWRITE,&root_id);
       if(status!=NC_NOERR){ncError(__LINE__,className,"nc_open: ",status);return 1;}
 /*#ifdef MEASURETIME
@@ -274,8 +274,9 @@ class CDFNetCDFReader :public CDFReader{
       var->cdfReaderPointer=(void*)this;
       size_t totalVariableSize = 1;
       for(size_t i=0;i<var->dimensionlinks.size();i++){
-        totalVariableSize*=count[i]/stride[i];
+        totalVariableSize*=count[i];//stride[i];
       }
+      //CDBDebug("totalVariableSize = %d",totalVariableSize);
       var->setSize(totalVariableSize);
       CDF::allocateData(type,&var->data,var->getSize());
 /*     
@@ -289,12 +290,12 @@ class CDFNetCDFReader :public CDFReader{
         CDBError("Unable to determine netcdf type\n");
         return 1;
     }*/
-      if(type==CDF_BYTE||type==CDF_UBYTE)status = nc_get_vara_ubyte(root_id,var->id,start,count,(unsigned char*)var->data);
-      else if(type==CDF_CHAR)status = nc_get_vara_text(root_id,var->id,start,count,(char*)var->data);
-      else if(type==CDF_SHORT)status = nc_get_vara_short(root_id,var->id,start,count,(short*)var->data);
-      else if(type==CDF_INT)status = nc_get_vara_int(root_id,var->id,start,count,(int*)var->data);
-      else if(type==CDF_FLOAT)status = nc_get_vara_float(root_id,var->id,start,count,(float*)var->data);
-      else if(type==CDF_DOUBLE)status = nc_get_vara_double(root_id,var->id,start,count,(double*)var->data);
+      if(type==CDF_BYTE||type==CDF_UBYTE)status = nc_get_vars_ubyte(root_id,var->id,start,count,stride,(unsigned char*)var->data);
+      else if(type==CDF_CHAR)status = nc_get_vars_text(root_id,var->id,start,count,stride,(char*)var->data);
+      else if(type==CDF_SHORT)status = nc_get_vars_short(root_id,var->id,start,count,stride,(short*)var->data);
+      else if(type==CDF_INT)status = nc_get_vars_int(root_id,var->id,start,count,stride,(int*)var->data);
+      else if(type==CDF_FLOAT)status = nc_get_vars_float(root_id,var->id,start,count,stride,(float*)var->data);
+      else if(type==CDF_DOUBLE)status = nc_get_vars_double(root_id,var->id,start,count,stride,(double*)var->data);
       else {
         CDBError("Unable to determine netcdf type for variable %s",var->name.c_str());
         return 1;

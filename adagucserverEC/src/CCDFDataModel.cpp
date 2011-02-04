@@ -10,6 +10,8 @@ int CDF::getTypeSize(CDFType type){
   if(type == CDF_DOUBLE)return 8;
   return 0;
 }
+
+//Data must be freed with free()
 int CDF::allocateData(CDFType type,void **p,size_t length){
   if((*p)!=NULL)free(*p);(*p)=NULL;
   size_t typeSize=1;

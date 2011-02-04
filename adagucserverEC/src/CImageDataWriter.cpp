@@ -573,7 +573,14 @@ int CImageDataWriter::getFeatureInfo(CDataSource *dataSource,int dX,int dY){
 
   if(imx>=0&&imy>=0&&imx<dataSource->dWidth&&imy<dataSource->dHeight){
     for(size_t j=0;j<dataSource->dataObject.size();j++){
-      size_t ptr=imx+imy*dataSource->dWidth;
+      bool swapXY=false;//Experimental: Used when y,x dims are in different order
+       size_t ptr;
+      if(swapXY==false){
+        ptr=imx+imy*dataSource->dWidth;
+      }else {
+        ptr=imy+imx*dataSource->dHeight;
+      }
+      
       double pixel=0;
       pixel = convertValue(dataSource->dataObject[j]->dataType,dataSource->dataObject[j]->data,ptr);
       status = reader.getTimeString(szTemp);

@@ -1,6 +1,7 @@
 #ifndef CDataSource_H
 #define CDataSource_H
 #include "CXMLSerializerInterface.h"
+#include "CServerParams.h"
 #include "CServerConfig_CPPXSD.h"
 #include "CDebugger.h"
 #include "Definitions.h"
@@ -26,6 +27,9 @@ class CDataSource{
       bool hasNodataValue;
       CT::string variableName;
       CT::string units;
+      bool scaleOffsetIsApplied;
+      double dfscale_factor;
+      double dfadd_offset;
   };
   class Statistics{
     private:
@@ -105,6 +109,8 @@ class CDataSource{
 
   //Current value index of the dim
   //int dOGCDimValues[MAX_DIMS];
+  
+  CServerParams *srvParams;
 
   //Link to the XML configuration
   CServerConfig::XMLE_Layer * cfgLayer;
@@ -121,6 +127,7 @@ class CDataSource{
     metaData=NULL;
     statistics=NULL;
     currentAnimationStep=0;
+    srvParams=NULL;
     }
   ~CDataSource(){
     if(metaData!=NULL){delete[] metaData;metaData=NULL;}
@@ -178,7 +185,7 @@ class CDataSource{
     //dOGCDimValues[0]=timeSteps[currentAnimationStep]->dims.getDimensionIndex("time");
   }
   int getCurrentTimeStep(){
-    return currentAnimationStep
+    return currentAnimationStep;
   }
   size_t getDimensionIndex(const char *name){
     return timeSteps[currentAnimationStep]->dims.getDimensionIndex(name);

@@ -38,10 +38,18 @@ class CImgWarpNearestNeighbour:public CImageWarperRenderInterface{
             dfSourceBBOX[k]=sourceImage->dfBBOX[k];
             dfImageBBOX[k]=sourceImage->dfBBOX[k];
           }
+          
+          //Look whether BBOX was swapped in y dir
           if(sourceImage->dfBBOX[3]<sourceImage->dfBBOX[1]){
             dfSourceBBOX[1]=sourceImage->dfBBOX[3];
             dfSourceBBOX[3]=sourceImage->dfBBOX[1];
           }
+          //Look whether BBOX was swapped in x dir
+          if(sourceImage->dfBBOX[2]<sourceImage->dfBBOX[0]){
+            dfSourceBBOX[0]=sourceImage->dfBBOX[2];
+            dfSourceBBOX[2]=sourceImage->dfBBOX[0];
+          }
+          
           dfNodataValue    = sourceImage->dataObject[0]->dfNodataValue ;
           legendValueRange = sourceImage->legendValueRange;
           legendLowerRange = sourceImage->legendLowerRange;
@@ -91,6 +99,7 @@ class CImgWarpNearestNeighbour:public CImageWarperRenderInterface{
         
             rcx_3= (line_dx2 -line_dx1)/y_div;
             rcy_3= (line_dy2 -line_dy1)/y_div;
+            //bool swapXY=true;
             dstpixel_x=int(x)+dDestX;
             for(y=0;y<=y_div;y=y+1){
               dstpixel_y=int(y)+dDestY;
@@ -106,6 +115,11 @@ class CImgWarpNearestNeighbour:public CImageWarperRenderInterface{
                     if(srcpixel_y>=0&&srcpixel_y<dHeight)
                     {
                       imgpointer=srcpixel_x+(dHeight-1-srcpixel_y)*dWidth;
+                      //if(swapXY==false){
+                        imgpointer=srcpixel_x+(dHeight-1-srcpixel_y)*dWidth;
+                      //}else{
+                        //imgpointer=(dHeight-1-srcpixel_y)+(srcpixel_x)*dHeight;
+                      //}
                       val=data[imgpointer];
                       isNodata=false;
                       if(hasNodataValue)if(val==dfNodataValue)isNodata=true;
@@ -156,10 +170,19 @@ class CImgWarpNearestNeighbour:public CImageWarperRenderInterface{
             dfSourceBBOX[k]=sourceImage->dfBBOX[k];
             dfImageBBOX[k]=sourceImage->dfBBOX[k];
           }
+          
+          //Look whether BBOX was swapped in y dir
           if(sourceImage->dfBBOX[3]<sourceImage->dfBBOX[1]){
             dfSourceBBOX[1]=sourceImage->dfBBOX[3];
             dfSourceBBOX[3]=sourceImage->dfBBOX[1];
           }
+          //Look whether BBOX was swapped in x dir
+          if(sourceImage->dfBBOX[2]<sourceImage->dfBBOX[0]){
+            dfSourceBBOX[0]=sourceImage->dfBBOX[2];
+            dfSourceBBOX[2]=sourceImage->dfBBOX[0];
+          }
+          
+          
           dfNodataValue    = sourceImage->dataObject[0]->dfNodataValue ;
           legendValueRange = sourceImage->legendValueRange;
           legendLowerRange = sourceImage->legendLowerRange;
@@ -170,7 +193,7 @@ class CImgWarpNearestNeighbour:public CImageWarperRenderInterface{
           legendLog = sourceImage->legendLog;
           legendScale = sourceImage->legendScale;
           legendOffset = sourceImage->legendOffset;
-// Allocate the Byte Buffer
+          // Allocate the Byte Buffer
           size_t imageSize=sourceImage->dWidth*sourceImage->dHeight;
           allocateArray(&buf,imageSize);
           memset ( buf, 255, imageSize);
@@ -187,6 +210,7 @@ class CImgWarpNearestNeighbour:public CImageWarperRenderInterface{
           rcy_1= (y_corners[0] - y_corners[3])/x_div;
           rcx_2= (x_corners[1] - x_corners[2])/x_div;
           rcy_2= (y_corners[1] - y_corners[2])/x_div;
+          
           for(k=0;k<4;k++)
             if(fabs(x_corners[k]-x_corners[0])>=fabs(dfSourceBBOX[2]-dfSourceBBOX[0]))break;
           if(k==4){
@@ -218,7 +242,7 @@ class CImgWarpNearestNeighbour:public CImageWarperRenderInterface{
             line_dy2= y_corners[2]+rcy_2*x;
   */
             line_dx1+=rcx_1;line_dx2+=rcx_2;line_dy1+=rcy_1;line_dy2+=rcy_2;
-  
+            //bool swapXY=true;
             rcx_3= (line_dx2 -line_dx1)/y_div;
             rcy_3= (line_dy2 -line_dy1)/y_div;
             dstpixel_x=int(x)+dDestX;
@@ -232,7 +256,11 @@ class CImgWarpNearestNeighbour:public CImageWarperRenderInterface{
                   if(srcpixel_x>=0&&srcpixel_x<dWidth){
                     srcpixel_y=int(((sample_sy-dfImageBBOX[1])/(dfImageBBOX[3]-dfImageBBOX[1]))*dHeight);
                     if(srcpixel_y>=0&&srcpixel_y<dHeight){
-                      imgpointer=srcpixel_x+(dHeight-1-srcpixel_y)*dWidth;
+                      //if(swapXY==false){
+                        imgpointer=srcpixel_x+(dHeight-1-srcpixel_y)*dWidth;
+                      //}else{
+                        //imgpointer=(dHeight-1-srcpixel_y)+(srcpixel_x)*dHeight;
+                      //}
                       if(buf[imgpointer]!=0){
                         if(buf[imgpointer]==255){
                           val=data[imgpointer];
@@ -644,7 +672,10 @@ class CImgWarpNearestNeighbour:public CImageWarperRenderInterface{
       int tile_offset_x=0;
       int tile_offset_y=0;
     
-      if(sourceImage->dataObject[0]->dataType==CDF_CHAR||sourceImage->dataObject[0]->dataType==CDF_BYTE||sourceImage->dataObject[0]->dataType==CDF_UBYTE){
+      if(sourceImage->dataObject[0]->dataType==CDF_CHAR||
+        sourceImage->dataObject[0]->dataType==CDF_BYTE||
+        sourceImage->dataObject[0]->dataType==CDF_UBYTE
+        ){
       //Do not cache the calculated results for CDF_CHAR
         CDrawRawField drawFieldClass;
         drawFieldClass.x_div=tile_width;
@@ -676,43 +707,18 @@ class CImgWarpNearestNeighbour:public CImageWarperRenderInterface{
           }
           }   
       }else{
-        /*if(1==1){
-          CDrawRawFieldConvertToByte drawFieldClass;
-          drawFieldClass.x_div=tile_width;
-          drawFieldClass.y_div=tile_height;
-          drawFieldClass.init(sourceImage,drawImage);
-          for(int x=0;x<x_div;x=x+1){
-            for(int y=0;y<y_div;y=y+1){
-              status = reproj(warper,sourceImage,drawImage->Geo,x,(y_div-1)-y,x_div,y_div);
-              if(status == 0){
-              tile_offset_x=int(double(x)*tile_width);
-              tile_offset_y=int(double(y)*tile_height);
-              drawFieldClass.drawRawField(x_corners,y_corners,tile_offset_x,tile_offset_y);
-            }
-          }
-        }
-      }else*/{
-      //Cache the calculated results
+
+        //Cache the calculated results
         CDrawRawFieldByteCache drawFieldClass;
-  //      CDrawRawFieldConvertToByte drawFieldClass;
         drawFieldClass.x_div=tile_width;
         drawFieldClass.y_div=tile_height;
         drawFieldClass.init(sourceImage,drawImage);
-        //dfMaskBBOX
         //CDBDebug("b %f %f %f %f",sourceImage->dfBBOX[0],sourceImage->dfBBOX[1],sourceImage->dfBBOX[2],sourceImage->dfBBOX[3]);
         //CDBDebug("d %f %f %f %f",drawImage->Geo->dfBBOX[0],drawImage->Geo->dfBBOX[1],drawImage->Geo->dfBBOX[2],drawImage->Geo->dfBBOX[3]);
         int drawStat = -1;
         for(int x=0;x<x_div;x=x+1)
           for(int y=0;y<y_div;y=y+1){
           status = reproj(warper,sourceImage,drawImage->Geo,x,(y_div-1)-y,x_div,y_div);
-          /*x_corners[0]=drawImage->Geo->dfBBOX[2];
-          x_corners[1]=drawImage->Geo->dfBBOX[2];
-          x_corners[2]=drawImage->Geo->dfBBOX[0];
-          x_corners[3]=drawImage->Geo->dfBBOX[0];
-          y_corners[0]=drawImage->Geo->dfBBOX[3];
-          y_corners[1]=drawImage->Geo->dfBBOX[1];
-          y_corners[2]=drawImage->Geo->dfBBOX[1];
-          y_corners[3]=drawImage->Geo->dfBBOX[3];*/
           if((x_corners[0]>=DBL_MAX||x_corners[0]<=-DBL_MAX)&&x_div==1&&x_div==1){
             x_corners[0]=drawImage->Geo->dfBBOX[2];
             x_corners[1]=drawImage->Geo->dfBBOX[2];
@@ -749,7 +755,7 @@ class CImgWarpNearestNeighbour:public CImageWarperRenderInterface{
             //CDBDebug("drawStat: %d",drawStat);
           //}
         }
-      }
+      
     }
   }
 };

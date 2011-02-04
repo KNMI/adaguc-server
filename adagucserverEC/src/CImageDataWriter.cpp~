@@ -573,7 +573,14 @@ int CImageDataWriter::getFeatureInfo(CDataSource *dataSource,int dX,int dY){
 
   if(imx>=0&&imy>=0&&imx<dataSource->dWidth&&imy<dataSource->dHeight){
     for(size_t j=0;j<dataSource->dataObject.size();j++){
-      size_t ptr=imx+imy*dataSource->dWidth;
+      bool swapXY=true;
+       size_t ptr;
+      if(swapXY==false){
+        ptr=imx+imy*dataSource->dWidth;
+      }else {
+        ptr=imy+imx*dataSource->dHeight;
+      }
+      
       double pixel=0;
       pixel = convertValue(dataSource->dataObject[j]->dataType,dataSource->dataObject[j]->data,ptr);
       status = reader.getTimeString(szTemp);
@@ -1096,8 +1103,8 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage
     float iMin = int(minValue/legendInterval)*legendInterval;//-legendInterval;
     float iMax = int(maxValue/legendInterval+1)*legendInterval;//+legendInterval*1;
     
-     //Calculate new scale and offset for the new min/max:
-     if(dataSource->stretchMinMax==true){
+    //Calculate new scale and offset for the new min/max:
+    if(dataSource->stretchMinMax==true){
       //Calculate new scale and offset for the new min/max:
       float ls=240/((iMax-iMin));
       float lo=-(iMin*ls);

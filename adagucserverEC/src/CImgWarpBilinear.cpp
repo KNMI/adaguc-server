@@ -1,8 +1,13 @@
 #include "CImgWarpBilinear.h"
 #include <gd.h>
+
+#define CImgWarpBilinear_DEBUG
+
 const char *CImgWarpBilinear::className="CImgWarpBilinear";
  void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDrawImage *drawImage){
-//   CDBDebug("Render");
+   #ifdef CImgWarpBilinear_DEBUG
+   CDBDebug("Render");
+   #endif
    int dImageWidth=drawImage->Geo->dWidth+1;
    int dImageHeight=drawImage->Geo->dHeight+1;
    
@@ -36,12 +41,19 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
    dfPixelExtent[2]=((dfPixelExtent[2]-dfSourceOrigX)/dfSourceExtW)*dfSourceW+2;
    dfPixelExtent[3]=((dfPixelExtent[3]-dfSourceOrigY)/dfSourceExtH)*dfSourceH+3;
    
-   
-    //Convert the pixel extent to integer values
-    //Also stretch the BBOX a bit, to hide edge effects
+   //Make sure the images are not swapped in Y dir.
    if(dfPixelExtent[1]>dfPixelExtent[3]){
      float t1=dfPixelExtent[1];dfPixelExtent[1]=dfPixelExtent[3];dfPixelExtent[3]=t1;
    }
+
+   //Make sure the images are not swapped in X dir.
+   if(dfPixelExtent[0]>dfPixelExtent[2]){
+     float t1=dfPixelExtent[0];dfPixelExtent[0]=dfPixelExtent[2];dfPixelExtent[2]=t1;
+   }
+
+
+   //Convert the pixel extent to integer values
+   //Also stretch the BBOX a bit, to hide edge effects
    int dPixelExtent[4];
    dPixelExtent[0]=int(dfPixelExtent[0]);
    dPixelExtent[1]=int(dfPixelExtent[1]);
@@ -73,9 +85,10 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
    int dPixelDestW=dPixelExtent[2]-dPixelExtent[0];
    int dPixelDestH=dPixelExtent[3]-dPixelExtent[1];
    size_t numDestPixels = dPixelDestW*dPixelDestH;
-//   CDBDebug("Allocate");
-    //Allocate memory
-//   CDBDebug("numDestPixels %d x %d",dPixelDestW,dPixelDestH);
+   //Allocate memory
+   #ifdef CImgWarpBilinear_DEBUG
+   CDBDebug("Allocate, numDestPixels %d x %d",dPixelDestW,dPixelDestH);
+   #endif
    int *dpDestX = new int[numDestPixels];
    int *dpDestY = new int[numDestPixels];
    class ValueClass{
@@ -93,6 +106,10 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
    };
    ValueClass *valObj = new ValueClass[sourceImage->dataObject.size()];
    for(size_t dNr=0;dNr<sourceImage->dataObject.size();dNr++){
+     #ifdef CImgWarpBilinear_DEBUG
+     CDBDebug("Allocating valObj nr %d: numDestPixels %d x %d",dNr,dPixelDestW,dPixelDestH);
+     CDBDebug("Allocating valObj nr %d: imageSize %d x %d",dNr,dImageWidth,dImageHeight);
+     #endif
      valObj[dNr].fpValues = new float [numDestPixels];
      valObj[dNr].valueData = new float[dImageWidth*dImageHeight];
    }
@@ -104,15 +121,16 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
    //Get the nodatavalue
    float fNodataValue = sourceImage->dataObject[0]->dfNodataValue ;
    
-    //Reproject all the points 
-//   CDBDebug("Reproject all the points");
+   //Reproject all the points 
+   #ifdef CImgWarpBilinear_DEBUG
+   CDBDebug("Reproject all the points");
    char temp[32];
    CDF::getCDFDataTypeName(temp,31,sourceImage->dataObject[0]->dataType);
-//   CDBDebug("datatype: %s",temp);
-      
-/*   for(int j=0;j<4;j++){
+   CDBDebug("datatype: %s",temp);
+   for(int j=0;j<4;j++){
      CDBDebug("dPixelExtent[%d]=%d",j,dPixelExtent[j]);
- }*/
+    }
+   #endif
    
    for(int y=dPixelExtent[1];y<dPixelExtent[3];y++){
      for(int x=dPixelExtent[0];x<dPixelExtent[2];x++){
@@ -178,20 +196,29 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
    
    //return;
    
+  #ifdef CImgWarpBilinear_DEBUG
+  CDBDebug("reprojection finished");
+  #endif
+
   for(size_t varNr=0;varNr<sourceImage->dataObject.size();varNr++){
     float *fpValues=valObj[varNr].fpValues;
     float *valueData=valObj[varNr].valueData;
-      //Smooth the data (better for contour lines)
+
+    //Smooth the data (better for contour lines)
+    #ifdef CImgWarpBilinear_DEBUG
+    CDBDebug("start smoothing data with filter %d",smoothingFilter);
+    #endif
     smoothData(fpValues,fNodataValue,smoothingFilter, dPixelDestW,dPixelDestH);
       
-      //Draw the obtained raster by using triangle tesselation
+    //Draw the obtained raster by using triangle tesselation (eg gouraud shading)
     int xP[3],yP[3];
     size_t drawImageSize = dImageWidth*dImageHeight;
-      //Set default nodata values
+    //Set default nodata values
     for(size_t j=0;j<drawImageSize;j++)valueData[j]=fNodataValue;
-      //start drawing triangles
-    
-    
+    //start drawing triangles
+    #ifdef CImgWarpBilinear_DEBUG
+    CDBDebug("Start triangle generation");
+    #endif
     for(int y=dPixelExtent[1];y<dPixelExtent[3]-1;y=y+1){
       for(int x=dPixelExtent[0];x<dPixelExtent[2]-1;x=x+1){
         size_t p = size_t((x-(dPixelExtent[0]))+((y-(dPixelExtent[1]))*dPixelDestW));
@@ -245,7 +272,10 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
     }
   }
 
-   //Copy pointerdatabitmap to graphics
+  //Copy pointerdatabitmap to graphics
+  #ifdef CImgWarpBilinear_DEBUG
+  CDBDebug("Start converting float bitmap to graphics");
+  #endif
   float *valueData=valObj[0].valueData;
    if(drawMap==true){
      for(int y=0;y<dImageHeight;y++){
