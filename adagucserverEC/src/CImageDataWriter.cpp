@@ -1119,7 +1119,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage
     
     //CDBDebug("numClasses = %d",numClasses);
     int classSizeY=(180/(numClasses));
-    if(classSizeY>16)classSizeY=16;
+    if(classSizeY>14)classSizeY=14;
     //for(float j=iMax+legendInterval;j>=iMin;j=j-legendInterval){
     int classNr=0;
     for(float j=iMin;j<iMax+legendInterval;j=j+legendInterval){

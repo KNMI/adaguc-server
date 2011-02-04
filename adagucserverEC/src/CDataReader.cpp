@@ -203,24 +203,21 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
     }
     //CDBDebug("Getting info for variable %s",sourceImage->dataObject[varNr]->variableName.c_str());
   }
-  
+
+  // It is possible to skip every N cell in x and y. When set to 1, all data is displayed.
+  // When set to 2, every second datacell is displayed, etc...
+  int stride2DMap=1;
+
   // Retrieve X, Y Dimensions and Width, Height
   sourceImage->dNetCDFNumDims = var[0]->dimensionlinks.size();
   int dimXIndex=sourceImage->dNetCDFNumDims-1;
   int dimYIndex=sourceImage->dNetCDFNumDims-2;
   
-  bool swapXYDimensions = true;
-   
-   //CDBDebug("b %f %f %f %f",sourceImage->dfBBOX[0],sourceImage->dfBBOX[1],sourceImage->dfBBOX[2],sourceImage->dfBBOX[3]);
-   //CDBDebug("d %f %f %f %f",drawImage->Geo->dfBBOX[0],drawImage->Geo->dfBBOX[1],drawImage->Geo->dfBBOX[2],drawImage->Geo->dfBBOX[3]);
-  //CDBDebug("d %f %f %f %f",sourceImage->srvParams->Geo->dfBBOX[0],
-//           sourceImage->srvParams->Geo->dfBBOX[1],sourceImage->srvParams->Geo->dfBBOX[2],sourceImage->srvParams->Geo->dfBBOX[3]);
-  
-   
-  // It is possible to skip every N cell in x and y. When set to 1, all data is displayed.
-  // When set to 2, every second datacell is displayed, etc...
-  int stride2DMap=1;
-  
+  bool swapXYDimensions = false;
+  //If our X dimension has a character y/Y in it, XY dims are probably swapped.
+  if(var[0]->dimensionlinks[dimXIndex]->name.indexOf("y")!=-1||var[0]->dimensionlinks[dimXIndex]->name.indexOf("Y")!=-1){
+    swapXYDimensions=true;
+  }
   if(swapXYDimensions){
     dimXIndex=sourceImage->dNetCDFNumDims-2;
     dimYIndex=sourceImage->dNetCDFNumDims-1;

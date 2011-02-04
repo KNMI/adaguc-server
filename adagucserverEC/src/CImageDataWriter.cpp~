@@ -1022,9 +1022,8 @@ int CImageDataWriter::getColorIndexForValue(CDataSource *dataSource,float value)
   if(dataSource->legendLog!=0)val=log10(val+.000001)/log10(dataSource->legendLog);
   val*=dataSource->legendScale;
   val+=dataSource->legendOffset;
-  if(val>=239)val=239;else if(val<1)val=1;
-  //return int(val);
-  return int(val+0.5f);
+  if(val>=239)val=239;else if(val<0)val=0;
+  return int(val);
 }
 int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage){
   int legendPositiveUp = 1;
