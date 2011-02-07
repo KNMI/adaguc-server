@@ -1033,11 +1033,17 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage
   char szTemp[256];
   CDataReader reader;
   
-
+  //Get the cache location
+  CT::string cacheLocation;srvParam->getCacheDirectory(&cacheLocation);
+  //When the scale factor is zero (0.0f) we need to open the data too, because we want to estimate min/max in this case.
+  // When the scale factor is given, we only need to open the header, for displaying the units.
+  if(dataSource->legendScale==0.0f){
+    status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL,cacheLocation.c_str());
+  }else{
+    status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER,cacheLocation.c_str());
+  }
   
   if(renderMethod!=contourshaded){
-    CT::string cacheLocation;srvParam->getCacheDirectory(&cacheLocation);
-    status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER,cacheLocation.c_str());
     for(int j=0;j<cbH;j++){
       for(int i=0;i<cbW+2;i++){
         float c=(float(cbH*legendPositiveUp-j)/cbH)*240.0f;
@@ -1062,9 +1068,6 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage
       drawImage->setText(szTemp,l,(int)cbW+8,(int)c+dH,248,0);
     }
   }else{
-    CT::string cacheLocation;srvParam->getCacheDirectory(&cacheLocation);
-    status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL,cacheLocation.c_str());
-
     float minValue=0;
     float maxValue=0;
     

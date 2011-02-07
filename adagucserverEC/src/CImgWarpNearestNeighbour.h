@@ -433,7 +433,7 @@ class CImgWarpNearestNeighbour:public CImageWarperRenderInterface{
          x_div=1;
          y_div=1;
          //When we are drawing just one tile, threading is not needed
-         useThreading=true;
+         useThreading=false;
       }
       double tile_width=(double(drawImage->Geo->dWidth)/double(x_div));
       double tile_height=(double(drawImage->Geo->dHeight)/double(y_div));

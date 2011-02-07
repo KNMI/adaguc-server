@@ -4,7 +4,6 @@
 #include <pthread.h>
 #include "CImageWarperRenderInterface.h"
 
-
 /**
   This interface represents the tile rendering classes.
 */

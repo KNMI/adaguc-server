@@ -738,6 +738,7 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
 
 void CImgWarpBilinear::smoothData(float *valueData,float fNodataValue,int smoothWindow, int W,int H){
 //SmootH!
+  if(smoothWindow==0)return;//No smoothing.
   size_t drawImageSize = W*H;
   float *valueData2 = new float[W*H];
   int smw=smoothWindow;

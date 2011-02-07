@@ -12,12 +12,20 @@ class CServerConfig:public CXMLSerializerInterface{
             int min,max,index,red,green,blue;
         }attr;
         void addAttribute(const char *name,const char *value){
-          if(equals("min",3,name)){attr.min=parseInt(value);return;}
+          if(     equals("min",3,name)){attr.min=parseInt(value);return;}
           else if(equals("max",3,name)){attr.max=parseInt(value);return;}
           else if(equals("red",3,name)){attr.red=parseInt(value);return;}
           else if(equals("blue",4,name)){attr.blue=parseInt(value);return;}
           else if(equals("green",5,name)){attr.green=parseInt(value);return;}
           else if(equals("index",5,name)){attr.index=parseInt(value);return;}
+          else if(equals("color",5,name)){//Hex color like: #A41D23
+            if(value[0]=='#')if(strlen(value)==7){
+              attr.red  =((value[1]>64)?value[1]-55:value[1]-48)*16+((value[2]>64)?value[2]-55:value[2]-48);
+              attr.green=((value[3]>64)?value[3]-55:value[3]-48)*16+((value[4]>64)?value[4]-55:value[4]-48);
+              attr.blue =((value[5]>64)?value[5]-55:value[5]-48)*16+((value[6]>64)?value[6]-55:value[6]-48);
+            }
+            return;
+          }
         }
     };
     class XMLE_Legend: public CXMLObjectInterface{
