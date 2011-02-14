@@ -30,8 +30,9 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
    double hCellSizeY = (dfSourceExtH/dfSourceH)/2.0f;
    double dfPixelExtent[4];
     
-    //Reproject the boundingbox from the destination bbcx: 
+    //Reproject the boundingbox from the destination bbox: 
    for(int j=0;j<4;j++)dfPixelExtent[j]=drawImage->Geo->dfBBOX[j];  
+   
       //warper->findExtent(sourceImage,dfPixelExtent);
    warper->reprojBBOX(dfPixelExtent);
    
@@ -78,13 +79,14 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
    if(dPixelExtent[1]<0)dPixelExtent[1]=0;
    if(dPixelExtent[2]>sourceImage->dWidth)dPixelExtent[2]=sourceImage->dWidth;
    if(dPixelExtent[3]>sourceImage->dHeight)dPixelExtent[3]=sourceImage->dHeight;
-    
-    
       
     //Get width and height of the pixel extent
    int dPixelDestW=dPixelExtent[2]-dPixelExtent[0];
    int dPixelDestH=dPixelExtent[3]-dPixelExtent[1];
    size_t numDestPixels = dPixelDestW*dPixelDestH;
+   
+   //TODO increase field resolution in order to create better contour plots.
+   
    //Allocate memory
    #ifdef CImgWarpBilinear_DEBUG
    CDBDebug("Allocate, numDestPixels %d x %d",dPixelDestW,dPixelDestH);
@@ -430,9 +432,53 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
     distance = new unsigned int[imageSize];
     memset (distance,0,imageSize*sizeof(unsigned int));
   }
-      
+  
+  
+  
+ /* for(int y=0;y<dImageHeight;y++){
+    for(int x=0;x<dImageWidth+1;x++){
+      size_t p1 = size_t(x+y*dImageWidth);
+      //valueData[p1]=100.0f;
+    }
+  }*/
+  /*FILE * pFile;
+  pFile = fopen ( "/nobackup/users/plieger/eclipseworkspace/cpp/adagucserver-2011-02-04/adagucserverEC/src/test.bin" , "wb" );
+  CT::string ascii;
+  ascii.printconcat("nrcols %d\n",dImageWidth);
+  ascii.printconcat("nrrows %d\n",dImageHeight);
+  ascii.printconcat("xllcorner 0\n");
+  ascii.printconcat("yllcorner 0\n");
+  ascii.printconcat("cellsize 1\n");
+  
   for(int y=0;y<dImageHeight;y++){
     for(int x=0;x<dImageWidth+1;x++){
+      ascii.printconcat("%0.2f ",valueData[x+y*dImageWidth]);
+    }
+    ascii.concat("\n");
+  }
+  fwrite (ascii.c_str() , ascii.length() , sizeof(char) , pFile );
+  fclose (pFile);*/
+  /*float allowedDifference=(1.0f/(1000/ival));
+  for(int y=0;y<dImageHeight;y++){
+    for(int x=0;x<dImageWidth+1;x++){
+      float a=int(valueData[x+y*dImageWidth]/allowedDifference);
+      a*=allowedDifference;
+      valueData[x+y*dImageWidth]=a;
+    }
+  }*/
+  
+  //TODO "pleister" om contourlijnen goed te krijgen.
+  float allowedDifference=ival/10000;
+  for(int y=0;y<dImageHeight;y++){
+    for(int x=0;x<dImageWidth+1;x++){
+      //float a=int(valueData[x+y*dImageWidth]/allowedDifference);
+      //a*=allowedDifference;
+      valueData[x+y*dImageWidth]-=ival/100;
+      //valueData[x+y*dImageWidth]-=0.1;
+    }
+  }
+  for(int y=0;y<dImageHeight;y++){
+    for(int x=0;x<dImageWidth-1;x++){
       size_t p1 = size_t(x+y*dImageWidth);
       val[0] = valueData[p1];
       val[1] = valueData[p1+1];
@@ -448,7 +494,9 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
           if(val[j]<min)min=val[j];
           if(val[j]>max)max=val[j];
         }
+        float difference=max-min;
         if(min<0)min-=0.5; if(max<0)max-=0.5;
+        
         min=int(min/ival);min=min*ival;//min-=int(idval*1);
         max=int(max/ival);max=max*ival;max+=ival;
         if(drawShade){
@@ -456,12 +504,12 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
           setValuePixel(dataSource,drawImage,x,y,min);
             //setValuePixel(dataSource,drawImage,x,y,val[0]);
         }
-        if((max-min)/ival<3&&(max-min)/ival>1){
+        if((max-min)/ival<3&&(max-min)/ival>1&&difference>allowedDifference){
           for(double c=min;c<max;c=c+ival){
-    //       if((val[0]>=c&&val[1]<c)||(val[0]>c&&val[1]<=c)||(val[0]<c&&val[1]>=c)||(val[0]<=c&&val[1]>c)||
-  //             (val[0]>c&&val[2]<=c)||(val[0]>=c&&val[2]<c)||(val[0]<=c&&val[2]>c)||(val[0]<c&&val[2]>=c))
-            if(((val[0]>=c&&val[1]<c)||(val[0]<=c&&val[1]>c))||
-                ((val[0]>=c&&val[2]<c)||(val[0]<=c&&val[2]>c)))
+           if((val[0]>=c&&val[1]<c)||(val[0]>c&&val[1]<=c)||(val[0]<c&&val[1]>=c)||(val[0]<=c&&val[1]>c)||
+               (val[0]>c&&val[2]<=c)||(val[0]>=c&&val[2]<c)||(val[0]<=c&&val[2]>c)||(val[0]<c&&val[2]>=c))
+  //          if(((val[0]>=c&&val[1]<c)||(val[0]<=c&&val[1]>c))||
+    //            ((val[0]>=c&&val[2]<c)||(val[0]<=c&&val[2]>c)))
             {
               
               /*int bigC;int smallC;
@@ -701,7 +749,7 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
                         drawImage->drawText( int(tx), int(ty), angle,8,szTemp,agg::rgba8(0,0,0,255));
                         
                         //Draw a line under the text
-                        if(l<3){
+                        if(l<3&&1==2){
                           float a=3.1415f/4;
                           float o=10;
                           drawImage->line(int(cx+cos(angle-a)*o),int(cy-sin(angle-a)*o),

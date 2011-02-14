@@ -98,7 +98,7 @@ class CImgWarpBilinear:public CImageWarperRenderInterface{
         if(sourceImage->legendLog!=0)val=log10(val+.000001)/log10(sourceImage->legendLog);
         val*=sourceImage->legendScale;
         val+=sourceImage->legendOffset;
-        if(val>=239)val=239;else if(val<0)val=0;
+        if(val>=239)val=239;else if(val<1)val=1;
         drawImage->setPixelIndexed(destX,destY,(unsigned char)val);
       }//else drawImage->setPixelIndexed(destX,destY,248);
     }

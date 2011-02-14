@@ -37,7 +37,7 @@ class CImgWarpBilinear:public CImageWarperRenderInterface{
       if(strlen(pszSettings)==0)return 0;
       CT::string settings(pszSettings);
       CT::string *nodes= settings.split(";");
-      for(int j=0;j<nodes->count;j++){
+      for(size_t j=0;j<nodes->count;j++){
         CT::string *values=nodes[j].split("=");
         if(values->count==2){
           if(values[0].equals("drawMap")){

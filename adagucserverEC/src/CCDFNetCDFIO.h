@@ -9,6 +9,7 @@
 #include "CDebugger.h"
 //#include "CStopWatch.h"
 
+#define CCDFNETCDFIO_ENABLELONWARP false
 void ncError(int line, const char *className, const char * msg,int e);
 class CDFNetCDFReader :public CDFReader{
   private:
@@ -178,7 +179,7 @@ class CDFNetCDFReader :public CDFReader{
       //Apply longitude warping of the data
       //Longitude data must be already present in order to make variable warping available.
       //EG 0-360 to -180 till -180
-      bool enableLonWarp=true;
+      bool enableLonWarp=CCDFNETCDFIO_ENABLELONWARP;
       if(enableLonWarp){
         if(variable->name.equals("lon")){
           //CDBDebug("Warplon: Found variable lon");
@@ -274,32 +275,38 @@ class CDFNetCDFReader :public CDFReader{
       //It is essential that the variable nows which reader can be used to read the data
       var->cdfReaderPointer=(void*)this;
       size_t totalVariableSize = 1;
+      bool useStriding=false;
       for(size_t i=0;i<var->dimensionlinks.size();i++){
         totalVariableSize*=count[i];//stride[i];
+        if(stride[i]!=1)useStriding=true;
       }
       //CDBDebug("totalVariableSize = %d",totalVariableSize);
       var->setSize(totalVariableSize);
       CDF::allocateData(type,&var->data,var->getSize());
-/*     
-      if(type==CDF_BYTE)status = nc_get_vars_ubyte(root_id,var->id,start,count,stride,(unsigned char*)var->data);
-      else if(type==CDF_CHAR)status = nc_get_vars_text(root_id,var->id,start,count,stride,(char*)var->data);
-      else if(type==CDF_SHORT)status = nc_get_vars_short(root_id,var->id,start,count,stride,(short*)var->data);
-      else if(type==CDF_INT)status = nc_get_vars_int(root_id,var->id,start,count,stride,(int*)var->data);
-      else if(type==CDF_FLOAT)status = nc_get_vars_float(root_id,var->id,start,count,stride,(float*)var->data);
-      else if(type==CDF_DOUBLE)status = nc_get_vars_double(root_id,var->id,start,count,stride,(double*)var->data);
-      else {
-        CDBError("Unable to determine netcdf type\n");
-        return 1;
-    }*/
-      if(type==CDF_BYTE||type==CDF_UBYTE)status = nc_get_vars_ubyte(root_id,var->id,start,count,stride,(unsigned char*)var->data);
-      else if(type==CDF_CHAR)status = nc_get_vars_text(root_id,var->id,start,count,stride,(char*)var->data);
-      else if(type==CDF_SHORT)status = nc_get_vars_short(root_id,var->id,start,count,stride,(short*)var->data);
-      else if(type==CDF_INT)status = nc_get_vars_int(root_id,var->id,start,count,stride,(int*)var->data);
-      else if(type==CDF_FLOAT)status = nc_get_vars_float(root_id,var->id,start,count,stride,(float*)var->data);
-      else if(type==CDF_DOUBLE)status = nc_get_vars_double(root_id,var->id,start,count,stride,(double*)var->data);
-      else {
-        CDBError("Unable to determine netcdf type for variable %s",var->name.c_str());
-        return 1;
+      //CDBDebug("Stride enabled: %d",useStriding);
+      if(!useStriding){
+        
+        if(type==CDF_BYTE)status = nc_get_vara_ubyte(root_id,var->id,start,count,(unsigned char*)var->data);
+        else if(type==CDF_CHAR)status = nc_get_vara_text(root_id,var->id,start,count,(char*)var->data);
+        else if(type==CDF_SHORT)status = nc_get_vara_short(root_id,var->id,start,count,(short*)var->data);
+        else if(type==CDF_INT)status = nc_get_vara_int(root_id,var->id,start,count,(int*)var->data);
+        else if(type==CDF_FLOAT)status = nc_get_vara_float(root_id,var->id,start,count,(float*)var->data);
+        else if(type==CDF_DOUBLE)status = nc_get_vara_double(root_id,var->id,start,count,(double*)var->data);
+        else {
+          CDBError("Unable to determine netcdf type for variable %s",var->name.c_str());
+          return 1;
+        }
+      }else{
+        if(type==CDF_BYTE||type==CDF_UBYTE)status = nc_get_vars_ubyte(root_id,var->id,start,count,stride,(unsigned char*)var->data);
+        else if(type==CDF_CHAR)status = nc_get_vars_text(root_id,var->id,start,count,stride,(char*)var->data);
+        else if(type==CDF_SHORT)status = nc_get_vars_short(root_id,var->id,start,count,stride,(short*)var->data);
+        else if(type==CDF_INT)status = nc_get_vars_int(root_id,var->id,start,count,stride,(int*)var->data);
+        else if(type==CDF_FLOAT)status = nc_get_vars_float(root_id,var->id,start,count,stride,(float*)var->data);
+        else if(type==CDF_DOUBLE)status = nc_get_vars_double(root_id,var->id,start,count,stride,(double*)var->data);
+        else {
+          CDBError("Unable to determine netcdf type for variable %s",var->name.c_str());
+          return 1;
+        }
       }
       if(status!=NC_NOERR){ncError(__LINE__,className,"nc_get_var: ",status);return 1;}
       
@@ -391,7 +398,7 @@ class CDFNetCDFWriter{
         dimensions.push_back(dim);
       }
    
-      bool enableLonWarp = true; //To be set by user
+      bool enableLonWarp = CCDFNETCDFIO_ENABLELONWARP; //To be set by user
       bool lonWarpNeeded = false; //Internal variable
       size_t lonWarpStartIndex = 0;
       int nrVarsWritten=0;

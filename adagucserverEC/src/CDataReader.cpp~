@@ -161,7 +161,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
 #endif
   
   if(cacheAvailable==true){
-    CDBDebug("Reading from Cache file");
+    //CDBDebug("Reading from Cache file");
     //We need to rebuild our CDF reader, because cache files are always netcdf. Input can be different.
     if(cdfReader!=NULL)delete cdfReader;
     cdfReader = new CDFNetCDFReader(cdfObject);
@@ -213,7 +213,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
   CT::string dimensionXName=var[0]->dimensionlinks[dimXIndex]->name.c_str();
   dimensionXName.toLowerCase();
   if(dimensionXName.indexOf("y")!=-1||dimensionXName.indexOf("lat")!=-1)swapXYDimensions=true;
-  
+  swapXYDimensions=false;
   if(swapXYDimensions){
     dimXIndex=sourceImage->dNetCDFNumDims-2;
     dimYIndex=sourceImage->dNetCDFNumDims-1;
@@ -330,24 +330,25 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
       sourceImage->dataObject[varNr]->units.copy((char*)varUnits->data);
     }else sourceImage->dataObject[varNr]->units.copy("");
   
-  //  bool scaleOffsetIsApplied;
-   // double dfscale_factor;
-    //double dfadd_offset;
     // Check for packed data / scaleOffsetIsApplied
     CDF::Attribute *scale_factor = var[varNr]->getAttribute("scale_factor");
-    
     if(scale_factor!=NULL){
+      //Scale and offset will be applied further downwards in this function.
+      //We already set it to true, so we know we have to process it.
       sourceImage->dataObject[varNr]->scaleOffsetIsApplied=true;
-        // Currently two unpacked data types are supported (CF-1.4): float and double
-      if(scale_factor->type==CDF_FLOAT)sourceImage->dataObject[varNr]->dataType=CDF_FLOAT;
-      if(scale_factor->type==CDF_DOUBLE)sourceImage->dataObject[varNr]->dataType=CDF_DOUBLE;
-      //sourceImage->dataObject[varNr]->dataType=CDF_DOUBLE;
+      // Currently two unpacked data types are supported (CF-1.4): float and double
+      if(scale_factor->type==CDF_FLOAT){
+        sourceImage->dataObject[varNr]->dataType=CDF_FLOAT;
+      }
+      if(scale_factor->type==CDF_DOUBLE){
+        sourceImage->dataObject[varNr]->dataType=CDF_DOUBLE;
+      }
     
-      char dataTypeName[256];
-      CDF::getCDFDataTypeName(dataTypeName,255, sourceImage->dataObject[varNr]->dataType);
+      //char dataTypeName[256];
+      //CDF::getCDFDataTypeName(dataTypeName,255, sourceImage->dataObject[varNr]->dataType);
       //CDBDebug("Dataset datatype for reading = %s sizeof(short)=%d",dataTypeName,sizeof(short));
     
-        //Internally we use always double for scale and offset parameters:
+      //Internally we use always double for scale and offset parameters:
       scale_factor->getData(&sourceImage->dataObject[varNr]->dfscale_factor,1);
       CDF::Attribute *add_offset = var[varNr]->getAttribute("add_offset");
       if(add_offset!=NULL){
@@ -463,26 +464,18 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
   
   for(size_t varNr=0;varNr<sourceImage->dataObject.size();varNr++)
   {
-
-    /*//Get Unit
-    CDF::Attribute *varUnits=var[varNr]->getAttribute("units");
-    if(varUnits!=NULL){
-    sourceImage->dataObject[varNr]->units.copy((char*)varUnits->data);
-  }else sourceImage->dataObject[varNr]->units.copy("");
-    */
-  
     CDF::Attribute *fillValue = var[varNr]->getAttribute("_FillValue");
     if(fillValue!=NULL){
       hasNodataValue=true;
       fillValue->getData(&dfNoData,1);
-      
     }else hasNodataValue=false;
     
     /*CDBDebug("--- varNR [%d], name=\"%s\"",varNr,var[varNr]->name.c_str());
     for(size_t d=0;d<var[varNr]->dimensionlinks.size();d++){
-      CDBDebug("%s  \tstart: %d\tcount %d",var[varNr]->dimensionlinks[d]->name.c_str(),start[d],count[d]);
+      CDBDebug("%s  \tstart: %d\tcount %d\tstride %d",var[varNr]->dimensionlinks[d]->name.c_str(),start[d],count[d],stride[d]);
     }*/
     
+    //Read variable data
     cdfReader->readVariableData(var[varNr], sourceImage->dataObject[varNr]->dataType,start,count,stride);
     
     //Swap X, Y dimensions so that pointer x+y*w works correctly
@@ -496,7 +489,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
         CDFType dataType=sourceImage->dataObject[varNr]->dataType;
         //Allocate data for our new memory block
         CDF::allocateData(dataType,&vd,imgSize);
-        //TODO This could also be solved using a template. But this works fine too.
+        //TODO This could also be solved using a template. But this works fine.
         switch (dataType){
           case CDF_CHAR  : {char   *s=(char  *)vs;char   *d=(char  *)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
           case CDF_BYTE  : {char   *s=(char  *)vs;char   *d=(char  *)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
@@ -509,14 +502,14 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
           case CDF_DOUBLE: {double *s=(double*)vs;double *d=(double*)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
           default: CDBError("Unknown data type"); return 1;
         }
-        //We will replace our old memory block with the new one, but free it first.
+        //We will replace our old memory block with the new one, but we have to free our old one first.
         free(var[varNr]->data);
         //Replace the memory block.
         var[varNr]->data=vd;
       }
     }
     
-//    CDBDebug("Reading variable %s",var[varNr]->name.c_str());
+    //Apply the scale and offset factor on the data
     if(sourceImage->dataObject[varNr]->scaleOffsetIsApplied == true ){
       double dfscale_factor = sourceImage->dataObject[varNr]->dfscale_factor;
       double dfadd_offset = sourceImage->dataObject[varNr]->dfadd_offset;
@@ -535,8 +528,23 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
           }
         }
       }
-      if(sourceImage->dataObject[varNr]->dataType==CDF_DOUBLE){
+      if(sourceImage->dataObject[varNr]->dataType==CDF_FLOAT){
+        //Preserve the original nodata value, so it remains a nice short rounded number.
+        float fNoData=dfNoData;
         // packed data to be unpacked to FLOAT:
+        float *_data=(float*)var[varNr]->data;
+        for(size_t j=0;j<var[varNr]->getSize();j++){
+          _data[j]*=dfscale_factor;
+          _data[j]+=dfadd_offset;
+        }
+        //Convert the nodata type
+        fNoData*=(float)dfscale_factor;
+        fNoData+=(float)dfadd_offset;
+        dfNoData=(double)fNoData;
+      }
+      
+      if(sourceImage->dataObject[varNr]->dataType==CDF_DOUBLE){
+        // packed data to be unpacked to DOUBLE:
         double *_data=(double*)var[varNr]->data;
         for(size_t j=0;j<var[varNr]->getSize();j++){
           _data[j]*=dfscale_factor;
@@ -547,19 +555,41 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
         dfNoData+=(double)dfadd_offset;
       }
     }
+    
+    //Set the pointers to our sourceimage
     sourceImage->dataObject[varNr]->data=var[varNr]->data;
     sourceImage->dataObject[varNr]->dfNodataValue=dfNoData;
-    //CDBDebug("%f %f",sourceImage->dataObject[varNr]->dfscale_factor,dfNoData);
     sourceImage->dataObject[varNr]->hasNodataValue=hasNodataValue;
+    
+    /*In order to write good cache files we need to modify
+      our cdfobject. Data is now unpacked, so we need to remove
+      scale_factor and add_offset attributes and change datatypes 
+      of the data and _FillValue 
+    */
+    //remove scale_factor and add_offset attributes
+    var[varNr]->removeAttribute("scale_factor");
+    var[varNr]->removeAttribute("add_offset");
+    
+    //Set original var datatype correctly for the cdfobject 
+    var[varNr]->type=sourceImage->dataObject[varNr]->dataType;
+    
+    //Reset _FillValue to correct datatype and adjust scale and offset values.
+    if(hasNodataValue){
+      CDF::Attribute *fillValue = var[varNr]->getAttribute("_FillValue");
+      if(fillValue!=NULL){
+        if(var[varNr]->type==CDF_FLOAT){float fNoData=(float)dfNoData;fillValue->setData(CDF_FLOAT,&fNoData,1);}
+        if(var[varNr]->type==CDF_DOUBLE)fillValue->setData(CDF_DOUBLE,&dfNoData,1);
+      }
+    }
   }
   
+  //Use autoscale of legendcolors when the scale factor has been set to zero.
   if(sourceImage->legendScale==0.0f)sourceImage->stretchMinMax=true;else sourceImage->stretchMinMax=false;
   if(sourceImage->stretchMinMax){
     if(sourceImage->statistics==NULL){
       sourceImage->statistics = new CDataSource::Statistics();
       sourceImage->statistics->calculate(sourceImage);
     }
-    
     float min=(float)sourceImage->statistics->getMinimum();
     float max=(float)sourceImage->statistics->getMaximum();
     //Make sure that there is always a range in between the min and max.
@@ -567,9 +597,6 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
     //Calculate legendOffset legendScale
     float ls=240/(max-min);
     float lo=-(min*ls);
-    //lo=int(lo-ls)/2;
-    //float minValue=min;
-    //float maxValue=max;
     sourceImage->legendScale=ls;
     sourceImage->legendOffset=lo;
   }
@@ -577,13 +604,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
   StopWatch_Stop("all read");
 #endif
 
-    //CDBDebug("Read succesfully:\nsf=%f\naf=%f,nd=%f\n",dfscale_factor,dfadd_offset,sourceImage->dfNodataValue);
-  //Check wether this local file does already exist...
-    
-    //for(int j=0;j<sourceImage->dNetCDFNumDims;j++){
-      //CDBDebug("start %d count %d",start[j],count[j]);
-    //}
-
+  //Write the cache file if neccessary.
     if(enableDataCache==true&&saveFieldFile==true){
   
   // CT::string dumpString;
@@ -627,6 +648,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
         if(keepVariable[w]==0){
           if(cdfObject->variables[w]->isDimension==true){
             bool keepDim=false;
+            //Determine for each dim whether we want to keep it (whether is occurs in our variable)
             for(size_t d=0;d<dimsToKeep.size();d++){
               if(cdfObject->variables[w]->name.equals(dimsToKeep[d]->c_str())){
                 keepVariable[w]=1;
@@ -634,13 +656,13 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
               }
               if(keepDim==true){
                 CDBDebug("Keep %s",(cdfObject->variables[w]->name.c_str()));
-                
               }
               if(keepDim==false){
                 CDBDebug("False %s",(cdfObject->variables[w]->name.c_str()));
               }
             }
           }
+          //We will keep the variables with a size of zero, because these are usually variables with a lot of metadata attributes.
           if(cdfObject->variables[w]->dimensionlinks.size()==0){
             keepVariable[w]=1;
           }
@@ -658,8 +680,6 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
       dimsToKeep[d]=NULL;
     }
 
-
-    
     std::vector<CT::string *> deleteVarNames;
     for(size_t v=0;v<cdfObject->variables.size();v++){
       if(keepVariable[v]==0){
@@ -691,6 +711,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
     cdfObject->variables[j]->type=CDF_DOUBLE;
   }*/
     CDBDebug("DONE");      
+    //Read the dimensions
     for(size_t j=0;j<sourceImage->timeSteps[timeStep]->dims.dimensions.size();j++){
       CDF::Dimension *dim = cdfObject->getDimension(sourceImage->timeSteps[timeStep]->dims.dimensions[0]->name.c_str());
       if(dim!=NULL){
@@ -818,7 +839,7 @@ int CDataReader::getTimeString(char * pszTime){
     return 1;
   }
   if(sourceImage->cfgLayer->Dimension.size()==0){
-    snprintf(pszTime,MAX_STR_LEN,"");
+    pszTime[0]='\0';
     return 0;
   }
   pszTime[0]='\0';
@@ -989,7 +1010,7 @@ int CDataReader::DBLoopFiles(CPGSQLDB *DB,CDataSource *sourceImage,int removeNon
         //Therefore we need to read information from it
         if(fileExistsInDB == 0){
           try{
-            printf("Adding fileNo %d/%d\t %s",
+            printf("Adding fileNo %d/%d\t %s\n",
                    (int)j,
                    (int)dirReader->fileList.size(),
                    dirReader->fileList[j]->baseName.c_str());
@@ -1008,7 +1029,10 @@ int CDataReader::DBLoopFiles(CPGSQLDB *DB,CDataSource *sourceImage,int removeNon
               CDF::Dimension * dimDim = cdfObject->getDimension(sourceImage->cfgLayer->Dimension[d]->attr.name.c_str());
               CDF::Variable *  dimVar = cdfObject->getVariable(sourceImage->cfgLayer->Dimension[d]->attr.name.c_str());
               if(dimDim==NULL||dimVar==NULL){
-                CDBError("In file %s dimension %s not found",dirReader->fileList[j]->fullName.c_str(),sourceImage->cfgLayer->Dimension[0]->attr.name.c_str());
+                CDBError("In file %s",dirReader->fileList[j]->fullName.c_str());
+                CDBError("For variable '%s' dimension '%s' not found",
+                         sourceImage->cfgLayer->Variable[0]->value.c_str(),
+                         sourceImage->cfgLayer->Dimension[d]->attr.name.c_str());
                 throw(__LINE__);
               }else{
                 CDF::Attribute *dimUnits = dimVar->getAttribute("units");
@@ -1089,7 +1113,8 @@ int CDataReader::DBLoopFiles(CPGSQLDB *DB,CDataSource *sourceImage,int removeNon
             delete cdfReader;cdfReader=NULL;
             delete cdfObject;cdfObject=NULL;
           }catch(int linenr){
-            fprintf(stderr,"*** SKIPPING FILE *** File open exception in DBLoopFiles at line %d\n",linenr);
+            CDBError("File open exception in DBLoopFiles at line %d",linenr);
+            CDBError(" *** SKIPPING FILE %s ***",dirReader->fileList[j]->baseName.c_str());
             //Close cdfReader. this is only needed if an exception occurs, otherwise it does nothing...
             if(cdfReader!=NULL)cdfReader->close();
             delete cdfReader;cdfReader=NULL;

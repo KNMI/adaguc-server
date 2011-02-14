@@ -302,7 +302,8 @@ class CDrawTileObj:public CDrawTileObjInterface{
                     val*=legendScale;
                     val+=legendOffset;
                     if(val>=239)val=239;else if(val<1)val=1;
-                    drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,drawImage->colors[(unsigned char)val]);
+                    //drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,drawImage->colors[(unsigned char)val]);
+                    drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,val);
                   }
                 }
               }
@@ -429,11 +430,11 @@ class CImgWarpNearestNeighbour:public CImageWarperRenderInterface{
       int x_div=drawImage->Geo->dWidth/16;
       int y_div=drawImage->Geo->dHeight/16;
       if(warper->isProjectionRequired()==false){
-        //CDBDebug("No reprojection required");
+         //CDBDebug("No reprojection required");
          x_div=1;
-         y_div=1;
+         y_div=numThreads;
          //When we are drawing just one tile, threading is not needed
-         useThreading=true;
+         //useThreading=false;
       }
       double tile_width=(double(drawImage->Geo->dWidth)/double(x_div));
       double tile_height=(double(drawImage->Geo->dHeight)/double(y_div));
@@ -448,8 +449,8 @@ class CImgWarpNearestNeighbour:public CImageWarperRenderInterface{
       }else{
         drawTileClass = new CDrawTileObjByteCache();  //keep the calculated results
       }
-      
-      drawTileClass->init(sourceImage,drawImage,tile_width,tile_height);
+      //drawTileClass = new CDrawTileObj();  //keep the calculated results
+      drawTileClass->init(sourceImage,drawImage,(int)tile_width,(int)tile_height);
       //CDBDebug("b %f %f %f %f",sourceImage->dfBBOX[0],sourceImage->dfBBOX[1],sourceImage->dfBBOX[2],sourceImage->dfBBOX[3]);
       //CDBDebug("d %f %f %f %f",drawImage->Geo->dfBBOX[0],drawImage->Geo->dfBBOX[1],drawImage->Geo->dfBBOX[2],drawImage->Geo->dfBBOX[3]);
       
@@ -462,7 +463,7 @@ class CImgWarpNearestNeighbour:public CImageWarperRenderInterface{
         int tileId=x+y*x_div;
         curTileSettings=&drawTileSettings[tileId];
         curTileSettings->id=tileId;
-        if(status != 0)curTileSettings->id=-tileId;//This one does not need to be done.
+        if(status != 0)curTileSettings->id=(-tileId)-1;//This one does not need to be done.
         for(int j=0;j<4;j++){
           curTileSettings->x_corners[j]=x_corners[j];
           curTileSettings->y_corners[j]=y_corners[j];
