@@ -81,6 +81,7 @@ class CDrawImage{
     void setPixelTrueColor(int x,int y,unsigned int color);
     void setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,unsigned char b);
     void setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,unsigned char b,unsigned char a);
+    void getHexColorForColorIndex(CT::string *hexValue,int colorIndex);
     void setText(const char * text, size_t length,int x,int y, int color,int fontSize);
     void setTextStroke(const char * text, size_t length,int x,int y, int fgcolor,int bgcolor, int fontSize);
     void rectangle( int x1, int y1, int x2, int y2,int innercolor,int outercolor);

@@ -187,6 +187,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
   }
   for(size_t varNr=0;varNr<sourceImage->dataObject.size();varNr++){
     var[varNr] = cdfObject->getVariable(sourceImage->dataObject[varNr]->variableName.c_str());
+    
     if(var[varNr]==NULL){
       CDBError("Variable %s does not exist",sourceImage->dataObject[varNr]->variableName.c_str());
       return 1;
@@ -194,6 +195,43 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
       CDF::dump(cdfObject,&dumpString);
       CDBError("dump:%s\n",dumpString.c_str());
       return 1;*/
+    }
+    //Fill in CDF pointers
+    sourceImage->dataObject[varNr]->cdfObject=cdfObject;
+    sourceImage->dataObject[varNr]->cdfVariable=var[varNr];
+
+    //Check if our variable has a statusflag
+    sourceImage->dataObject[0]->hasStatusFlag=false;
+    CDF::Variable * var=sourceImage->dataObject[0]->cdfVariable;
+    if(var!=NULL){
+      CDF::Attribute *attr_flag_meanings=var->getAttribute("flag_meanings");
+      //We might have status flag, check if all mandatory attributes are set!
+      if(attr_flag_meanings!=NULL){
+        CDF::Attribute *attr_flag_values=var->getAttribute("flag_values");
+        if(attr_flag_values!=NULL){
+          CT::string flag_meanings;
+          attr_flag_meanings->getDataAsString(&flag_meanings);
+          CT::string *flagStrings=flag_meanings.split(" ");
+          size_t nrOfFlagMeanings=flagStrings->count;
+          if(nrOfFlagMeanings>0){
+            size_t nrOfFlagValues=attr_flag_values->length;
+            //Check we have an equal number of flagmeanings and flagvalues
+            if(nrOfFlagMeanings==nrOfFlagValues){
+              sourceImage->dataObject[0]->hasStatusFlag=true;
+              double dfFlagValues[nrOfFlagMeanings+1];
+              attr_flag_values->getData(dfFlagValues,attr_flag_values->length);
+              for(size_t j=0;j<nrOfFlagMeanings;j++){
+                CDataSource::StatusFlag * statusFlag = new CDataSource::StatusFlag;
+                sourceImage->dataObject[0]->statusFlagList.push_back(statusFlag);
+                statusFlag->meaning.copy(flagStrings[j].c_str());
+                statusFlag->meaning.replace("_"," ");
+                statusFlag->value=dfFlagValues[j];
+              }
+            }else {CDBError("nrOfFlagMeanings!=nrOfFlagValues");}
+          }else {CDBError("flag_meanings: nrOfFlagMeanings = 0");}
+          delete[] flagStrings;
+        }else {CDBError("flag_meanings found, but no flag_values attribute found");}
+      }
     }
     //CDBDebug("Getting info for variable %s",sourceImage->dataObject[varNr]->variableName.c_str());
   }
@@ -1071,7 +1109,8 @@ int CDataReader::DBLoopFiles(CPGSQLDB *DB,CDataSource *sourceImage,int removeNon
                 }
                 //Add time dim:
                 if(isTimeDim==true){
-                  CDBDebug("Treating %s as a time dimension",dimVar->name.c_str());
+                  //TODO read standard_name and check for value time, this ensures that it is a time dim.
+                  //CDBDebug("Treating %s as a time dimension",dimVar->name.c_str());
                   const double *dtimes=(double*)dimVar->data;
                   CADAGUC_time *ADTime = new CADAGUC_time((char*)dimUnits->data);
                   for(size_t i=0;i<dimDim->length;i++){
@@ -1080,7 +1119,7 @@ int CDataReader::DBLoopFiles(CPGSQLDB *DB,CDataSource *sourceImage,int removeNon
                       status = 0;//TODO make PrintISOTime return a 0 if succeeded
                       if(status == 0){
                         ISOTime[19]='Z';ISOTime[20]='\0';
-                        printf("%s\n", ISOTime);
+                        //printf("%s\n", ISOTime);
                         CT::string queryString;
                         queryString.print("INSERT into %s VALUES ('%s','%s','%d')",
                                           tablename_temp.c_str(),

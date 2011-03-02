@@ -150,7 +150,8 @@ class CDrawTileObjByteCache:public CDrawTileObjInterface{
                       if(hasNodataValue)if(val==dfNodataValue)isNodata=true;
                       if(!isNodata)if(legendValueRange)if(val<legendLowerRange||val>legendUpperRange)isNodata=true;
                       if(!isNodata){
-                        if(legendLog!=0)val=log10(val+.000001)/log10(legendLog);
+                        if(val==0)val=1e-10;
+                        if(legendLog!=0)val=log10(val)/log10(legendLog);
                         val*=legendScale;
                         val+=legendOffset;
                         if(val>=239)val=239;else if(val<1)val=1;

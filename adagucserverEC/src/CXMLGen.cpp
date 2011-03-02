@@ -283,7 +283,13 @@ int CXMLGen::getStylesForLayer(WMSLayer * myWMSLayer){
                   }
                 }
                 if(skipRenderMethod==false){
-                  name.print("%s/%s",layerStyleNames[s].c_str(),renderMethods[r].c_str());
+                  if(renderMethods[r].equals("nearest")){
+                    //Default is always nearest, so we do not need to add it with style/nearest
+                    name.print("%s",layerStyleNames[s].c_str());
+                  }else{
+                    //Otherwise we add the rendermethod by /bilinear etc...
+                    name.print("%s/%s",layerStyleNames[s].c_str(),renderMethods[r].c_str());
+                  }
                   styleNames.push_back(name.c_str());
                 }
             }

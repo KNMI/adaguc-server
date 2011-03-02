@@ -507,7 +507,7 @@ void CImageDataWriter::setValue(CDFType type,void *data,size_t ptr,double pixel)
   if(type==CDF_DOUBLE)((double*)data)[ptr]=(double)pixel;
 }
 int CImageDataWriter::getFeatureInfo(CDataSource *dataSource,int dX,int dY){
-  CT::string tempResult;
+  
 //  status  = imageWarper.getFeatureInfo(&getFeatureInfoHeader,&temp,dataSource,drawImage.Geo,dX,dY);
   
   //int CImageWarper::getFeatureInfo(CT::string *Header,CT::string *Result,CDataSource *dataSource,CGeoParams *GeoDest,int dX, int dY){
@@ -533,7 +533,7 @@ int CImageDataWriter::getFeatureInfo(CDataSource *dataSource,int dX,int dY){
     reader.close();
     return 1;
   }
-  tempResult.copy("");
+  
   getFeatureInfoHeader.copy("");
   double x,y,sx,sy,CoordX,CoordY;
   int imx,imy;
@@ -561,28 +561,49 @@ int CImageDataWriter::getFeatureInfo(CDataSource *dataSource,int dX,int dY){
   imy=dataSource->dHeight-(int)y-1;
 // printf("Image XY (%d : %d)\n<br>",imx,imy);
   imageWarper.closereproj();
-  getFeatureInfoHeader.concat("<b>");
-  for(size_t j=0;j<dataSource->dataObject.size();j++){
-    if(dataSource->dataObject.size()>1)getFeatureInfoHeader.printconcat("(%d) ",j);
-    getFeatureInfoHeader.concat(dataSource->dataObject[j]->variableName.c_str());
-    if(j+1<dataSource->dataObject.size())getFeatureInfoHeader.concat(",");
-  }
-  getFeatureInfoHeader.concat("</b><br>");
+  
+  //Print coordinates
   snprintf(szTemp,MAX_STR_LEN,"coordinates (%0.2f , %0.2f)<br>\n",CoordX,CoordY);
   getFeatureInfoHeader.concat(szTemp);
-
+  //Print variable names
+  getFeatureInfoHeader.concat("<b>");
+  for(size_t j=0;j<dataSource->dataObject.size();j++){
+    //Print variable number, if more than one
+    if(dataSource->dataObject.size()>1)getFeatureInfoHeader.printconcat("(%d) ",j);
+    
+    
+    //Print variable standard names
+    CDF::Attribute * attr_standard_name=dataSource->dataObject[j]->cdfVariable->getAttribute("standard_name");
+    if(attr_standard_name!=NULL){
+      CT::string standardName;attr_standard_name->getDataAsString(&standardName);
+      standardName.replace("_"," ");standardName.replace(" status flag","");
+      getFeatureInfoHeader.printconcat("%s </b> - %s<b>",dataSource->dataObject[j]->variableName.c_str(),standardName.c_str());
+    }else{
+      //Print variable name
+      getFeatureInfoHeader.concat(dataSource->dataObject[j]->variableName.c_str());
+    }
+    if(j+1<dataSource->dataObject.size())getFeatureInfoHeader.concat("<br>");
+  }
+  getFeatureInfoHeader.concat("</b><br>\n");
+  
+  
+  CT::string tempResult;
+  tempResult.copy("<table>\n");
   if(imx>=0&&imy>=0&&imx<dataSource->dWidth&&imy<dataSource->dHeight){
     for(size_t j=0;j<dataSource->dataObject.size();j++){
-      bool swapXY=false;//Experimental: Used when y,x dims are in different order
-       size_t ptr;
-      if(swapXY==false){
-        ptr=imx+imy*dataSource->dWidth;
-      }else {
-        ptr=imy+imx*dataSource->dHeight;
-      }
-      
+      tempResult.concat("<tr><td>");
+      size_t ptr=imx+imy*dataSource->dWidth;
       double pixel=0;
       pixel = convertValue(dataSource->dataObject[j]->dataType,dataSource->dataObject[j]->data,ptr);
+      
+      /*//Add a coloured box:
+      if((pixel!=dataSource->dataObject[j]->dfNodataValue&&dataSource->dataObject[j]->hasNodataValue==true)||dataSource->dataObject[0]->hasNodataValue==false){
+        CT::string hexVal;
+        drawImage.getHexColorForColorIndex(&hexVal,getColorIndexForValue(dataSource,pixel));
+        tempResult.printconcat("</td><td bgcolor=\"%s\">%s</td><td>",hexVal.c_str(),hexVal.c_str());
+      }*/
+      
+      //Add time
       status = reader.getTimeString(szTemp);
       if(status != 0){
         tempResult.printconcat("status = %d: ",status);
@@ -591,24 +612,32 @@ int CImageDataWriter::getFeatureInfo(CDataSource *dataSource,int dX,int dY){
         tempResult.concat(szTemp);if(strlen(szTemp)>1)tempResult.concat(": ");
       }
       if((pixel!=dataSource->dataObject[j]->dfNodataValue&&dataSource->dataObject[j]->hasNodataValue==true)||dataSource->dataObject[0]->hasNodataValue==false){
-        floatToString(szTemp,MAX_STR_LEN,pixel);
-        tempResult.concat("<b>");
-        if(dataSource->dataObject.size()>1)tempResult.printconcat("(%d) ",j);
-        tempResult.concat(szTemp);
-        tempResult.concat("</b>");
-  
-        if(dataSource->dataObject[j]->units.length()!=0){
-          snprintf(szTemp,MAX_STR_LEN," %s",dataSource->dataObject[j]->units.c_str());
+        
+        //Add status flag
+        if(dataSource->dataObject[j]->hasStatusFlag){
+          CT::string flagMeaning;
+          tempResult.printconcat("<b>%s</b> (%d)",dataSource->dataObject[j]->getFlagMeaning(pixel),(int)pixel);
+        }else{
+          floatToString(szTemp,MAX_STR_LEN,pixel);
+          tempResult.concat("<b>");
+          if(dataSource->dataObject.size()>1)tempResult.printconcat("(%d) ",j);
           tempResult.concat(szTemp);
+          tempResult.concat("</b>");
+          //Add units
+          if(dataSource->dataObject[j]->units.length()!=0){
+            snprintf(szTemp,MAX_STR_LEN," %s",dataSource->dataObject[j]->units.c_str());
+            tempResult.concat(szTemp);
+          }
         }
-        tempResult.concat("<br>\n");
+
   
       }
       else {
-        tempResult.concat("no data<br>\n");
+        tempResult.concat("no data\n");
       }
+      tempResult.concat("</td></tr>\n");
     }
-  }
+  }tempResult.concat("</table>\n");
   reader.close();
   getFeatureInfoResult.concat(&tempResult);
   return 0;
@@ -958,8 +987,8 @@ int CImageDataWriter::end(){
   mode=2;
   if(requestType==REQUEST_WMS_GETFEATUREINFO){
     printf("%s%c%c\n","Content-Type:text/html",13,10);
-    printf("%s<hr>",getFeatureInfoHeader.c_str());
-    printf("%s",getFeatureInfoResult.c_str());
+    printf("<html>\n%s<hr>\n",getFeatureInfoHeader.c_str());
+    printf("%s</html>\n",getFeatureInfoResult.c_str());
   }
   if(requestType!=REQUEST_WMS_GETMAP&&requestType!=REQUEST_WMS_GETLEGENDGRAPHIC)return 0;
   //if(CRequest::CGI==1){
@@ -1025,6 +1054,7 @@ int CImageDataWriter::getColorIndexForValue(CDataSource *dataSource,float value)
   if(val>=239)val=239;else if(val<0)val=0;
   return int(val);
 }
+
 int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage){
   int legendPositiveUp = 1;
   int dH=0;
@@ -1043,7 +1073,18 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage
     status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER,cacheLocation.c_str());
   }
   
-  if(renderMethod!=contourshaded){
+  if(dataSource->dataObject[0]->hasStatusFlag){
+    size_t numFlags=dataSource->dataObject[0]->statusFlagList.size();
+    for(size_t j=0;j<numFlags;j++){
+      float y=j*18+(cbH-numFlags*18+8);
+      double value=dataSource->dataObject[0]->statusFlagList[j]->value;
+      int c=getColorIndexForValue(dataSource,value);
+      drawImage->rectangle(5,2+dH+y,(int)cbW+9,(int)y+2+dH+12,c,248);
+      CT::string legendMessage;
+      legendMessage.print("%d %s",(int)j,dataSource->dataObject[0]->statusFlagList[j]->meaning.c_str());
+      drawImage->setText(legendMessage.c_str(),legendMessage.length(),(int)cbW+16,(int)y+dH+1,248,-1);  
+    }
+  }else  if(renderMethod!=contourshaded){
     for(int j=0;j<cbH;j++){
       for(int i=0;i<cbW+2;i++){
         float c=(float(cbH*legendPositiveUp-j)/cbH)*240.0f;

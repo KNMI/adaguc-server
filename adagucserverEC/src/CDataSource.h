@@ -18,10 +18,32 @@ class CDataSource{
    DEF_ERRORFUNCTION();
 
   public:
+  class StatusFlag{
+    public:
+      CT::string meaning;
+      double value;
+  };
+    
   //Data class
   class DataClass{
     public:
+      ~DataClass(){
+        for(size_t j=0;j<statusFlagList.size();j++){
+          delete statusFlagList[j];
+        }
+      }
+      
+      //Handle status flags properly
+      bool hasStatusFlag;
+      std::vector<StatusFlag*> statusFlagList;
+      const char *getFlagMeaning(double value){
+        for(size_t j=0;j<statusFlagList.size();j++){if(statusFlagList[j]->value==value){return statusFlagList[j]->meaning.c_str();}}
+        return "no flag meaning";
+      }
+      
       void *data;
+      CDFObject *cdfObject;
+      CDF::Variable *cdfVariable;
       CDFType dataType;
       double dfNodataValue;
       bool hasNodataValue;
@@ -41,6 +63,8 @@ class CDataSource{
       double getMaximum(){
         return max;
       }
+      
+      // TODO this currently works only for float data
       int calculate(CDataSource *dataSource){
         //Get Min and Max
         CDataSource::DataClass *dataObject = dataSource->dataObject[0];

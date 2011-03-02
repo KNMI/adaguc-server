@@ -482,6 +482,21 @@ void CDrawImage::setPixelTrueColor(int x,int y,unsigned int color){
   }
 }
 
+const char* toHex8(char *data,unsigned char hex){
+  unsigned char a=hex/16;
+  unsigned char b=hex%16;
+  data[0]=a<10?a+48:a+55;
+  data[1]=b<10?b+48:b+55;
+  data[2]='\0';
+  return data;
+}
+
+void CDrawImage::getHexColorForColorIndex(CT::string *hexValue,int color){
+  char data[3];
+  hexValue->print("#%s%s%s",toHex8(data, CDIred[color]),toHex8(data, CDIgreen[color]),toHex8(data, CDIblue[color]));
+}
+
+
 map<int,int> myColorMap;
 map<int,int>::iterator myColorIter;
 
@@ -687,20 +702,34 @@ int CDrawImage::createGDPalette(CServerConfig::XMLE_Legend *legend){
 }
 
 void CDrawImage::rectangle( int x1, int y1, int x2, int y2,int innercolor,int outercolor){
-  if(_bEnableAGG==true){
-    
-    
-    float w=1;
-    line( x1-1, y1, x2+1, y1,w,outercolor);
-    line( x2, y1, x2, y2,w,outercolor);
-    line( x2+1, y2, x1-1, y2,w,outercolor);
-    line( x1, y2, x1, y1,w,outercolor);
-    for(int j=y1+1;j<y2;j++){
-      line( x1, j, x2, j,1,innercolor);
+  if(innercolor>=0&&innercolor<240){
+    if(_bEnableAGG==true){
+      
+      
+      float w=1;
+      line( x1-1, y1, x2+1, y1,w,outercolor);
+      line( x2, y1, x2, y2,w,outercolor);
+      line( x2+1, y2, x1-1, y2,w,outercolor);
+      line( x1, y2, x1, y1,w,outercolor);
+      for(int j=y1+1;j<y2;j++){
+        line( x1, j, x2, j,1,innercolor);
+      }
+    }else{
+      //Check for transparency
+      if(CDIred[innercolor]==0){
+        //In case of transparency, draw a checkerboard
+        for(int x=x1;x<x2-3;x=x+6){
+          for(int y=y1;y<y2;y=y+3){
+            int tx=x+((y%6)/3)*3;
+            gdImageFilledRectangle (image,tx,y,tx+2,y+2, 240);
+          }
+        }
+      }else{
+        gdImageFilledRectangle (image,x1+1,y1+1,x2-1,y2-1, innercolor);
+      }
+      gdImageRectangle (image,x1,y1,x2,y2, outercolor);
+      
     }
-  }else{
-    gdImageFilledRectangle (image,x1+1,y1+1,x2-1,y2-1, innercolor);
-    gdImageRectangle (image,x1,y1,x2,y2, outercolor);
   }
 }
 
