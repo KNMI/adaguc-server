@@ -25,6 +25,7 @@
 #include <freetype/ftoutln.h>
 #include <freetype/fttrigon.h>
 #include FT_FREETYPE_H
+float convertValueToClass(float val,float interval);
 
 class CDrawImage{
   private:

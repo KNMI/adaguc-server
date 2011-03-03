@@ -469,14 +469,14 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
   
   //TODO "pleister" om contourlijnen goed te krijgen.
   float allowedDifference=ival/10000;
-  for(int y=0;y<dImageHeight;y++){
+/*  for(int y=0;y<dImageHeight;y++){
     for(int x=0;x<dImageWidth+1;x++){
       //float a=int(valueData[x+y*dImageWidth]/allowedDifference);
       //a*=allowedDifference;
       valueData[x+y*dImageWidth]-=ival/100;
       //valueData[x+y*dImageWidth]-=0.1;
     }
-  }
+  }*/
   for(int y=0;y<dImageHeight;y++){
     for(int x=0;x<dImageWidth-1;x++){
       size_t p1 = size_t(x+y*dImageWidth);
@@ -495,10 +495,10 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
           if(val[j]>max)max=val[j];
         }
         float difference=max-min;
-        if(min<0)min-=0.5; if(max<0)max-=0.5;
         
-        min=int(min/ival);min=min*ival;//min-=int(idval*1);
-        max=int(max/ival);max=max*ival;max+=ival;
+        min=convertValueToClass(min,ival);
+        max=convertValueToClass(max,ival)+ival;
+        
         if(drawShade){
           //setValuePixel(dataSource,drawImage,x,y,(min+max)/2);
           setValuePixel(dataSource,drawImage,x,y,min);
@@ -537,7 +537,7 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
                 
               }else{
                 if(drawLine){
-                  int bigC;
+                  /*int bigC;
                   int modulo=int((bigContInterval/ival)+0.5f);
                   if(modulo>0){
                     bigC=(int((fabs(c)/ival)+0.5f))%modulo;
@@ -552,7 +552,7 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
                     }
                   }else{
                     drawImage->setPixelIndexed(x,y,col2);
-                  }
+                  }*/
                 }
                 if(drawText){
                   if((x%50==0)&&(drawnTextY==0)){
@@ -680,7 +680,9 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
                         drawnText=1;
                         needToDrawText=0;
                         float c = valueData[x+y*dImageWidth];
-                        float m=(int((c/ival)+0.5f))*ival;
+                        //Calculate which value we need to print for the contourBigInterval
+                        //Add the half of the interval in order to make sure that we are always in the upper bin.
+                        float m=convertValueToClass(c+ival/2,ival);
                         if(float(int(interval))==interval&&int(m)==m){
                           snprintf(szTemp,10,"%d",int(m*textScaleFactor+textOffsetFactor));
                         }else{
@@ -725,8 +727,10 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
                   
                   
                   if(drawLine){//&&(distanceFromStart%(linePointDistance*3)>linePointDistance*1)){
+                    
                     if(busyDrawingText>0){
                       busyDrawingText--;
+                      //busyDrawingText=0;
                       if(busyDrawingText==0){
 
                       //snprintf(szTemp,5,"%f",m);
@@ -749,12 +753,12 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
                         drawImage->drawText( int(tx), int(ty), angle,8,szTemp,agg::rgba8(0,0,0,255));
                         
                         //Draw a line under the text
-                        if(l<3&&1==2){
+                        /*if(l<3&&1==2){
                           float a=3.1415f/4;
                           float o=10;
                           drawImage->line(int(cx+cos(angle-a)*o),int(cy-sin(angle-a)*o),
                                       int(cx+cos(angle-(a+(3.1415f/2)))*o),int(cy-sin(angle-(a+(3.1415f/2)))*o),0.5,240);
-                        }
+                        }*/
                       
                       }
                     }else{

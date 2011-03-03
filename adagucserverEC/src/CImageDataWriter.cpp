@@ -1142,9 +1142,9 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage
         numClasses=int((maxValue-minValue)/legendInterval);
       }
     }
-    if(minValue<0)minValue-=0.5f;if(maxValue<0)maxValue-=0.5f; // Rounding negative values down works in the opposite way.
-    float iMin = int(minValue/legendInterval)*legendInterval;//-legendInterval;
-    float iMax = int(maxValue/legendInterval+1)*legendInterval;//+legendInterval*1;
+    
+    float iMin=convertValueToClass(minValue,legendInterval);
+    float iMax=convertValueToClass(maxValue,legendInterval)+legendInterval;
     
     //Calculate new scale and offset for the new min/max:
     if(dataSource->stretchMinMax==true){

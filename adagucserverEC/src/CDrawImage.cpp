@@ -1,6 +1,13 @@
 #include "CDrawImage.h"
 
 const char *CDrawImage::className="CDrawImage";
+
+float convertValueToClass(float val,float interval){
+  float f=int(val/interval);
+  if(val<0)f-=1;
+  return f*interval;
+}
+
 CDrawImage::CDrawImage(){
     dImageCreated=0;
     dPaletteCreated=0;
