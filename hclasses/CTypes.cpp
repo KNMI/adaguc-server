@@ -1,6 +1,39 @@
 #include "CTypes.h"
 
 namespace CT{
+
+  stringlist *string::splitN(const char * _value){
+    stringlist *stringList = new stringlist();
+    const char *fo = strstr(value,_value);
+    const char *prevFo=value;
+    if(fo==NULL)return stringList;
+    while(fo!=NULL){
+      CT::string * val = new CT::string();stringList->push_back(val);
+      val->copy(prevFo,(fo-prevFo));
+     // printf("pushing1 %s %d\n",val->c_str(),stringList.size());
+      prevFo=fo+1;
+      fo = strstr(fo+1,_value);
+    }
+    CT::string * val = new CT::string();stringList->push_back(val);val->copy(prevFo);
+    //printf("pushing2 %s %d\n",val->c_str(),stringList.size());
+    return stringList;
+  }
+ /*void string::splitN( stringlist stringList,const char * _value){
+    stringList.free();
+    const char *fo = strstr(value,_value);
+    const char *prevFo=value;
+    if(fo==NULL)return;
+    while(fo!=NULL){
+      CT::string * val = new CT::string();stringList.push_back(val);
+      val->copy(prevFo,(fo-prevFo));
+     // printf("pushing1 %s %d\n",val->c_str(),stringList.size());
+      prevFo=fo+1;
+      fo = strstr(fo+1,_value);
+    }
+    CT::string * val = new CT::string();stringList.push_back(val);val->copy(prevFo);
+    //printf("pushing2 %s %d\n",val->c_str(),stringList.size());
+    //return stringList;
+  }*/
   string * string::split(const char * _value){
     string str(value,privatelength);
     void *temp[8000];
@@ -158,6 +191,7 @@ namespace CT{
       char *pszDecode=new char[privatelength*6+1];
       int p=0;
       unsigned char szChar,d1,d2;
+      replace("+"," ");
       for(unsigned int j=0;j<privatelength;j++){
         szChar=value[j];
         if(szChar=='%'){

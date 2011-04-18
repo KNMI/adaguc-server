@@ -15,7 +15,30 @@
 #define END NULL
 
 namespace CT{
+  using namespace std;
+   template <class T2>
+  class list:public std::vector<T2>{
+  public:
+    ~list(){
+      free();
+    }
+    void free(){
+      //printf("Deleting list\n");
+      for(size_t j=0;j<this->size();j++){
+        delete (*this)[j];(*this)[j]=NULL;
+      }
+    }
+    T2 get(int j){
+      return (*this)[j];
+    }
+    void add(T2 t){
+      push_back(t);
+    }
+  };
+  #define stringlist list<CT::string*>
 
+  
+  
   template <class T>
   void CTlink(T *object,int nr){
     for(int j=0;j<nr;j++){
@@ -135,6 +158,8 @@ class string:public basetype{
     void decodeURL();
     void encodeURL();
     string * split(const char * _value);
+    stringlist* splitN(const char * _value);
+    //void splitN(stringlist,const char * _value);
     void print(const char *a, ...);
     void printconcat(const char *a, ...);
     const char * c_str();
