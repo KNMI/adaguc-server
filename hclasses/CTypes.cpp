@@ -150,7 +150,11 @@ namespace CT{
         return in;
     }
     char string::_fromhex(char in){
+      //From lowercase to uppercase
+      if(in>96)in-=32;
+      //From number character to numeric value
       in-=48;
+      //When numeric value is more than 16 (eg ABCDEF) substract 7 to get numeric value 10,11,12,etc...
       if(in>16)in-=7;
       return in;
     }
