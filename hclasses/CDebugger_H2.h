@@ -25,10 +25,10 @@ void _printDebug(const char *pszMessage,...);
 void _printWarning(const char *pszMessage,...);
 void _printError(const char *pszMessage,...);
 
-#define CDBWarning             _printWarning("[W: %s, %d in class %s] ",__FILE__,__LINE__,className);_printWarningLine
-#define CDBError               _printError("[E: %s, %d in class %s] ",__FILE__,__LINE__,className);_printErrorLine
+#define CDBWarning             _printWarning("[W: %s, %d in %s] ",__FILE__,__LINE__,className);_printWarningLine
+#define CDBError               _printError("[E: %s, %d in %s] ",__FILE__,__LINE__,className);_printErrorLine
 #define CDBErrormessage        _printErrorLine
-#define CDBDebug               _printDebug("[D: %s, %d in class %s] ",__FILE__,__LINE__,className);_printDebugLine
+#define CDBDebug               _printDebug("[D: %s, %d in %s] ",__FILE__,__LINE__,className);_printDebugLine
 #define CDBEnterFunction(name) const char *functionName=name;_printDebugLine("D %s, %d class %s: Entering function '%s'",__FILE__,__LINE__,className,functionName);
 #define CDBReturn(id)          {_printDebug("D %s, %d class %s::%s: returns %d\n",__FILE__,__LINE__,className,functionName,id);return id;}
 #define CDBDebugFunction       _printDebug("D %s, %d class %s::%s: ",__FILE__,__LINE__,className,functionName);_printDebugLine
