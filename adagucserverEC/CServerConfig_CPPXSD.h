@@ -419,7 +419,7 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString type;
+            CXMLString type,hidden;
         }attr;
         
         
@@ -501,6 +501,7 @@ class CServerConfig:public CXMLSerializerInterface{
         }
         void addAttribute(const char *attrname,const char *attrvalue){
           if(equals("type",4,attrname)){attr.type.copy(attrvalue);return;}
+          else if(equals("hidden",6,attrname)){attr.hidden.copy(attrvalue);return;}
         }
     };
 

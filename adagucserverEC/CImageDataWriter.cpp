@@ -78,6 +78,9 @@ int CImageDataWriter::drawCascadedWMS(const char *service,const char *layers,boo
                   drawImage.Geo->dfBBOX[3]);
   url.printconcat("&SRS=%s",drawImage.Geo->CRS.c_str());
   url.printconcat("&LAYERS=%s",layers);
+  for(int k=0;k<srvParam->NumOGCDims;k++){
+    url.printconcat("&%s=%s",srvParam->OGCDims[k].Name.c_str(),srvParam->OGCDims[k].Value.c_str());
+  }
   CDBDebug(url.c_str());
   gdImagePtr gdImage;
   MyCURL myCURL;

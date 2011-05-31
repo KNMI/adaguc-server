@@ -243,7 +243,7 @@ int  CGDALDataWriter::end(){
   //imageWarper.decodeCRS(&srvParam->Geo->CRS);
   CT::string destinationCRS(&srvParam->Geo->CRS);
   CDBDebug("Check %s",srvParam->Geo->CRS.c_str());
-  imageWarper.decodeCRS(&destinationCRS,&srvParam->Geo->CRS,&srvParam->cfg->Projection);
+  //imageWarper.decodeCRS(&destinationCRS,&srvParam->Geo->CRS,&srvParam->cfg->Projection);
   //CDBDebug("Check");
   if(oSRS.SetFromUserInput(destinationCRS.c_str())!=OGRERR_NONE){
     CDBError("WCS: Invalid destination projection: [%s]",destinationCRS.c_str());

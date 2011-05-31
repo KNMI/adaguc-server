@@ -365,7 +365,7 @@ int CXMLGen::getWMS_1_0_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
         for(size_t d=0;d<layer->dimList.size();d++){
           WMSLayer::Dim * dim = layer->dimList[d];
           XMLDoc->printconcat("<Dimension name=\"%s\" units=\"%s\"/>\n",dim->name.c_str(),dim->units.c_str());
-          XMLDoc->printconcat("<Extent name=\"%s\" default=\"%s\" multipleValues=\"%d\" nearestValue=\"0\">\n",
+          XMLDoc->printconcat("<Extent name=\"%s\" default=\"%s\" multipleValues=\"%d\" nearestValue=\"0\">",
                               dim->name.c_str(),dim->defaultValue.c_str(),1);
           XMLDoc->concat(dim->values.c_str());
           XMLDoc->concat("</Extent>\n");
@@ -501,7 +501,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
             for(size_t d=0;d<layer->dimList.size();d++){
               WMSLayer::Dim * dim = layer->dimList[d];
               XMLDoc->printconcat("<Dimension name=\"%s\" units=\"%s\"/>\n",dim->name.c_str(),dim->units.c_str());
-              XMLDoc->printconcat("<Extent name=\"%s\" default=\"%s\" multipleValues=\"%d\" nearestValue=\"0\">\n",
+              XMLDoc->printconcat("<Extent name=\"%s\" default=\"%s\" multipleValues=\"%d\" nearestValue=\"0\">",
                                   dim->name.c_str(),dim->defaultValue.c_str(),1);
               XMLDoc->concat(dim->values.c_str());
               XMLDoc->concat("</Extent>\n");
@@ -778,46 +778,51 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
   std::vector<WMSLayer*> myWMSLayerList;
   
   for(size_t j=0;j<srvParam->cfg->Layer.size();j++){
-    CT::string layerUniqueName;
-    srvParam->makeUniqueLayerName(&layerUniqueName,srvParam->cfg->Layer[j]);
-    //For web: URL encoding is necessary
-    //layerUniqueName.encodeURL();
-    CT::string layerGroup;
-    if(srvParam->cfg->Layer[j]->Group.size()>0){
-      if(srvParam->cfg->Layer[j]->Group[0]->attr.value.c_str()!=NULL){
-        layerGroup.copy(srvParam->cfg->Layer[j]->Group[0]->attr.value.c_str());
+    bool hideLayer=false;
+    if(srvParam->cfg->Layer[j]->attr.hidden.equals("true"))hideLayer=true;
+    
+    
+    if(hideLayer==false){
+      CT::string layerUniqueName;
+      srvParam->makeUniqueLayerName(&layerUniqueName,srvParam->cfg->Layer[j]);
+      //For web: URL encoding is necessary
+      //layerUniqueName.encodeURL();
+      CT::string layerGroup;
+      if(srvParam->cfg->Layer[j]->Group.size()>0){
+        if(srvParam->cfg->Layer[j]->Group[0]->attr.value.c_str()!=NULL){
+          layerGroup.copy(srvParam->cfg->Layer[j]->Group[0]->attr.value.c_str());
+        }
       }
-    }
-    //Create a new layer and push it in the list
-    WMSLayer *myWMSLayer = new WMSLayer();myWMSLayerList.push_back(myWMSLayer);
-    
-    myWMSLayer->name.copy(&layerUniqueName);
-    myWMSLayer->title.copy(srvParam->cfg->Layer[j]->Title[0]->value.c_str());
-    myWMSLayer->group.copy(&layerGroup);
-    //Set the configuration layer for this layer, as easy reference
-    myWMSLayer->layer=srvParam->cfg->Layer[j];
-    
-    //Check if this layer is querable
-    int datasetRestriction = checkDataRestriction();
-    if((datasetRestriction&ALLOW_GFI)){
-      myWMSLayer->isQuerable=1;
-    }
+      //Create a new layer and push it in the list
+      WMSLayer *myWMSLayer = new WMSLayer();myWMSLayerList.push_back(myWMSLayer);
+      
+      myWMSLayer->name.copy(&layerUniqueName);
+      myWMSLayer->title.copy(srvParam->cfg->Layer[j]->Title[0]->value.c_str());
+      myWMSLayer->group.copy(&layerGroup);
+      //Set the configuration layer for this layer, as easy reference
+      myWMSLayer->layer=srvParam->cfg->Layer[j];
+      
+      //Check if this layer is querable
+      int datasetRestriction = checkDataRestriction();
+      if((datasetRestriction&ALLOW_GFI)){
+        myWMSLayer->isQuerable=1;
+      }
 
-    //Get a default file name for this layer to obtain some information
-    status = getFileNameForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;
-    
-    //Try to open the file, and make a datasource for the layer
-    status = getDataSourceForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;
-    
-    //Generate a common projection list information
-    status = getProjectionInformationForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;
-    
-    //Get the dimensions and its extents for this layer
-    status = getDimsForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;
-    
-    //Get the defined styles for this layer
-    status = getStylesForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;
-
+      //Get a default file name for this layer to obtain some information
+      status = getFileNameForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;
+      
+      //Try to open the file, and make a datasource for the layer
+      status = getDataSourceForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;
+      
+      //Generate a common projection list information
+      status = getProjectionInformationForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;
+      
+      //Get the dimensions and its extents for this layer
+      status = getDimsForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;
+      
+      //Get the defined styles for this layer
+      status = getStylesForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;
+    }
   }
   
   //Generate an XML document on basis of the information gathered above.
