@@ -39,6 +39,7 @@ class CImageDataWriter: public CBaseDataWriterInterface{
           CT::string value;
           CT::string units;
           CT::string standard_name;
+          CT::string feature_name;
           CT::string long_name;
           CT::string var_name;
           CT::string time;

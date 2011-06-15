@@ -648,9 +648,10 @@ int CImageDataWriter::getFeatureInfo(CDataSource *dataSource,int dX,int dY){
     CDF::Attribute * attr_standard_name=dataSource->dataObject[j]->cdfVariable->getAttributeNE("standard_name");
     if(attr_standard_name!=NULL){
       CT::string standardName;attr_standard_name->getDataAsString(&standardName);
+      element->standard_name.copy(&standardName);
       // Make a more clean standard name.
       standardName.replace("_"," ");standardName.replace(" status flag","");
-      element->standard_name.copy(&standardName);
+      element->feature_name.copy(&standardName);
     }else element->standard_name.copy(&element->var_name);
     
     // Get variable long name
@@ -1098,9 +1099,9 @@ int CImageDataWriter::end(){
             resultHTML.printconcat("%d: ",elNR);
           }
           if(resultFormat==texthtml){
-            resultHTML.printconcat("<b>%s</b> - %s<br>\n",e->var_name.c_str(),e->standard_name.c_str());
+            resultHTML.printconcat("<b>%s</b> - %s<br>\n",e->var_name.c_str(),e->feature_name.c_str());
           }else{
-            resultHTML.printconcat("%s - %s\n",e->var_name.c_str(),e->standard_name.c_str());
+            resultHTML.printconcat("%s - %s\n",e->var_name.c_str(),e->feature_name.c_str());
           }
         }
         if(resultFormat==texthtml)resultHTML.printconcat("<hr>\n");
@@ -1161,8 +1162,7 @@ int CImageDataWriter::end(){
           resultXML.printconcat("  <%s_layer>\n",layerName.c_str());
           for(size_t elNR=0;elNR<g->elements.size();elNR++){
             GetFeatureInfoResult::Element * e=g->elements[elNR];
-            CT::string featureName=e->standard_name.c_str();
-            featureName.replace(" ","_");
+            CT::string featureName=e->standard_name.c_str();featureName.replace(" ","_");
             resultXML.printconcat("    <%s_feature>\n",featureName.c_str());
             resultXML.printconcat("      <gml:location>\n");
             
