@@ -56,14 +56,14 @@ namespace CDF{
       int copy(T *destdata,void *sourcedata,CDFType sourcetype,size_t destinationOffset,size_t sourceOffset,size_t length){
         size_t dsto=destinationOffset;
         size_t srco=sourceOffset;
-        if(sourcetype==CDF_CHAR||sourcetype==CDF_BYTE)for(size_t t=0;t<length;t++){destdata[t+dsto]=((char*)sourcedata)[t+srco];}
-        if(sourcetype==CDF_CHAR||sourcetype==CDF_UBYTE)for(size_t t=0;t<length;t++){destdata[t+dsto]=((unsigned char*)sourcedata)[t+srco];}
-        if(sourcetype==CDF_SHORT)for(size_t t=0;t<length;t++){destdata[t+dsto]=((short*)sourcedata)[t+srco];}
-        if(sourcetype==CDF_USHORT)for(size_t t=0;t<length;t++){destdata[t+dsto]=((unsigned short*)sourcedata)[t+srco];}
-        if(sourcetype==CDF_INT)for(size_t t=0;t<length;t++){destdata[t+dsto]=((int*)sourcedata)[t+srco];}
-        if(sourcetype==CDF_UINT)for(size_t t=0;t<length;t++){destdata[t+dsto]=((unsigned int*)sourcedata)[t+srco];}
-        if(sourcetype==CDF_FLOAT)for(size_t t=0;t<length;t++){destdata[t+dsto]=((float*)sourcedata)[t+srco];}
-        if(sourcetype==CDF_DOUBLE)for(size_t t=0;t<length;t++){destdata[t+dsto]=((double*)sourcedata)[t+srco];}
+        if(sourcetype==CDF_CHAR||sourcetype==CDF_BYTE)for(size_t t=0;t<length;t++){destdata[t+dsto]=(T)((char*)sourcedata)[t+srco];}
+        if(sourcetype==CDF_CHAR||sourcetype==CDF_UBYTE)for(size_t t=0;t<length;t++){destdata[t+dsto]=(T)((unsigned char*)sourcedata)[t+srco];}
+        if(sourcetype==CDF_SHORT)for(size_t t=0;t<length;t++){destdata[t+dsto]=(T)((short*)sourcedata)[t+srco];}
+        if(sourcetype==CDF_USHORT)for(size_t t=0;t<length;t++){destdata[t+dsto]=(T)((unsigned short*)sourcedata)[t+srco];}
+        if(sourcetype==CDF_INT)for(size_t t=0;t<length;t++){destdata[t+dsto]=(T)((int*)sourcedata)[t+srco];}
+        if(sourcetype==CDF_UINT)for(size_t t=0;t<length;t++){destdata[t+dsto]=(T)((unsigned int*)sourcedata)[t+srco];}
+        if(sourcetype==CDF_FLOAT)for(size_t t=0;t<length;t++){destdata[t+dsto]=(T)((float*)sourcedata)[t+srco];}
+        if(sourcetype==CDF_DOUBLE)for(size_t t=0;t<length;t++){destdata[t+dsto]=(T)((double*)sourcedata)[t+srco];}
         return 0;
       }
       template <class T>          
