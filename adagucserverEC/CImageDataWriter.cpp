@@ -1,6 +1,5 @@
 #include "CImageDataWriter.h"
 
-
 const char * CImageDataWriter::className = "CImageDataWriter";
 const char * CImageDataWriter::RenderMethodStringList="nearest,bilinear,contour,shadedcontour,shaded,vector,vectorcontour,nearestcontour,bilinearcontour,vectorcontourshaded";
 CImageDataWriter::CImageDataWriter(){
