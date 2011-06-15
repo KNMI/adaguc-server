@@ -472,6 +472,9 @@ int CDrawImage::addColor(int Color,unsigned char R,unsigned char G,unsigned char
 int CDrawImage::copyPalette(){
   if(_bAntiAliased==false){
     _colors[255] = gdImageColorAllocate(image,BGColorR,BGColorG,BGColorB); 
+    if(_bEnableTransparency){
+      gdImageColorTransparent(image,_colors[255]);
+    }
     for(int j=0;j<255;j++){
       _colors[j] = gdImageColorAllocate(image,CDIred[j],CDIgreen[j],CDIblue[j]); 
     }
@@ -483,11 +486,7 @@ int CDrawImage::copyPalette(){
       if(CDIred[j]==0&&CDIgreen[j]==0&&CDIblue[j]==0)colors[j]=_colors[255];
     }
   }
-  if(_bAntiAliased==false){
-    if(_bEnableTransparency){
-      gdImageColorTransparent(image,_colors[255]);
-    }
-  }
+  
   return 0;
 }
 

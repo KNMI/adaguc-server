@@ -560,16 +560,18 @@ int CRequest::process_all_layers(){
         //Execute the query
         values_path = DB.query_select(Query.c_str(),0);
         if(values_path==NULL){
-          CDBError("No results for query: '%s'",Query.c_str());
+          if(showqueryinfo){
+            CDBError("No results for query: '%s'",Query.c_str());
+          }
           status = DB.close();
-          return 1;
+          return 2;
         }
 
         if(values_path->count==0){
           CDBError("No results for query: '%s'",Query.c_str());
           delete[] values_path;
           status = DB.close();
-          return 1;
+          return 2;
         }
         //Get timestring
         date_time = DB.query_select(Query.c_str(),1);
@@ -947,6 +949,19 @@ int CRequest::process_querystring(){
           dErrorOccured=1;
         }
       }
+      
+      // INFO_FORMAT parameter
+      if(value0Cap.match("INFO_FORMAT")==0){
+        if(dFound_InfoFormat==0){
+          if(values[1].length()>1){
+            srvParam->InfoFormat.copy(&values[1]);
+            dFound_InfoFormat=1;
+          }
+        }else{
+          CDBWarning("INFO_FORMAT already defined");
+          dErrorOccured=1;
+        }
+      }
 
       // TRANSPARENT parameter
       if(value0Cap.equals("TRANSPARENT")){
@@ -1022,10 +1037,10 @@ int CRequest::process_querystring(){
       //   dErrorOccured=1;
       // }else{
           srvParam->WMSLayers = values[1].split(",");
-          if(srvParam->WMSLayers->count>1){
-            CDBError("Too many layers in request");
-            dErrorOccured=1;
-          }
+//          if(srvParam->WMSLayers->count>1){
+  //          CDBError("Too many layers in request");
+    //        dErrorOccured=1;
+      //    }
         //}
         dFound_WMSLAYER=1;
       }
@@ -1214,7 +1229,12 @@ int CRequest::process_querystring(){
           }
           int status =  process_wms_getfeatureinfo_request();
           if(status != 0) {
-            CDBError("WMS GetFeatureInfo Request failed");
+            if(status!=2){
+              CDBError("WMS GetFeatureInfo Request failed");
+            }else {
+              printf("%s%c%c\n","Content-Type:text/plain",13,10);
+              printf("No results from query.");
+            }
             return 1;
           }
           return 0;

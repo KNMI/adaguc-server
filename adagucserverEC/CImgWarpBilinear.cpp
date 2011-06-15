@@ -30,57 +30,70 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
    double hCellSizeX = (dfSourceExtW/dfSourceW)/2.0f;
    double hCellSizeY = (dfSourceExtH/dfSourceH)/2.0f;
    double dfPixelExtent[4];
-    
-    //Reproject the boundingbox from the destination bbox: 
-   for(int j=0;j<4;j++)dfPixelExtent[j]=drawImage->Geo->dfBBOX[j];  
-   
-      //warper->findExtent(sourceImage,dfPixelExtent);
-   warper->reprojBBOX(dfPixelExtent);
-   
-    //Convert the bbox to source image pixel extent
-   dfPixelExtent[0]=((dfPixelExtent[0]-dfSourceOrigX)/dfSourceExtW)*dfSourceW;
-   dfPixelExtent[1]=((dfPixelExtent[1]-dfSourceOrigY)/dfSourceExtH)*dfSourceH;
-   dfPixelExtent[2]=((dfPixelExtent[2]-dfSourceOrigX)/dfSourceExtW)*dfSourceW+2;
-   dfPixelExtent[3]=((dfPixelExtent[3]-dfSourceOrigY)/dfSourceExtH)*dfSourceH+3;
-   
-   //Make sure the images are not swapped in Y dir.
-   if(dfPixelExtent[1]>dfPixelExtent[3]){
-     float t1=dfPixelExtent[1];dfPixelExtent[1]=dfPixelExtent[3];dfPixelExtent[3]=t1;
-   }
-
-   //Make sure the images are not swapped in X dir.
-   if(dfPixelExtent[0]>dfPixelExtent[2]){
-     float t1=dfPixelExtent[0];dfPixelExtent[0]=dfPixelExtent[2];dfPixelExtent[2]=t1;
-   }
-
-
-   //Convert the pixel extent to integer values
-   //Also stretch the BBOX a bit, to hide edge effects
    int dPixelExtent[4];
-   dPixelExtent[0]=int(dfPixelExtent[0]);
-   dPixelExtent[1]=int(dfPixelExtent[1]);
-   dPixelExtent[2]=int(dfPixelExtent[2]);
-   dPixelExtent[3]=int(dfPixelExtent[3]);
-   //Return if we are zoomed in to an infinite area
-   if(dPixelExtent[0]==dPixelExtent[2]){
-     CDBDebug("Infinite area, dPixelExtent[0]==dPixelExtent[2]: %d==%d, stopping.... ",dPixelExtent[0],dPixelExtent[2]);
-     return;
-   }
-   if(dPixelExtent[1]==dPixelExtent[3]){
-     CDBDebug("Infinite area, dPixelExtent[1]==dPixelExtent[3]: %d==%d, stopping.... ",dPixelExtent[1],dPixelExtent[3]);
-     return;
+   bool tryToOptimizeExtent=false;
+   
+   if(tryToOptimizeExtent){
+        //Reproject the boundingbox from the destination bbox: 
+      for(int j=0;j<4;j++)dfPixelExtent[j]=drawImage->Geo->dfBBOX[j];  
+    #ifdef CImgWarpBilinear_DEBUG
+      for(int j=0;j<4;j++){
+      CDBDebug("dfPixelExtent: %d %f",j,dfPixelExtent[j]);
+      }
+    #endif   
+          //warper->findExtent(sourceImage,dfPixelExtent);
+      warper->reprojBBOX(dfPixelExtent);
+      
+        //Convert the bbox to source image pixel extent
+      dfPixelExtent[0]=((dfPixelExtent[0]-dfSourceOrigX)/dfSourceExtW)*dfSourceW;
+      dfPixelExtent[1]=((dfPixelExtent[1]-dfSourceOrigY)/dfSourceExtH)*dfSourceH;
+      dfPixelExtent[2]=((dfPixelExtent[2]-dfSourceOrigX)/dfSourceExtW)*dfSourceW+2;
+      dfPixelExtent[3]=((dfPixelExtent[3]-dfSourceOrigY)/dfSourceExtH)*dfSourceH+3;
+      
+      //Make sure the images are not swapped in Y dir.
+      if(dfPixelExtent[1]>dfPixelExtent[3]){
+        float t1=dfPixelExtent[1];dfPixelExtent[1]=dfPixelExtent[3];dfPixelExtent[3]=t1;
+      }
+
+      //Make sure the images are not swapped in X dir.
+      if(dfPixelExtent[0]>dfPixelExtent[2]){
+        float t1=dfPixelExtent[0];dfPixelExtent[0]=dfPixelExtent[2];dfPixelExtent[2]=t1;
+      }
+
+
+      //Convert the pixel extent to integer values
+      //Also stretch the BBOX a bit, to hide edge effects
+      
+      dPixelExtent[0]=int(dfPixelExtent[0]);
+      dPixelExtent[1]=int(dfPixelExtent[1]);
+      dPixelExtent[2]=int(dfPixelExtent[2]);
+      dPixelExtent[3]=int(dfPixelExtent[3]);
+      //Return if we are zoomed in to an infinite area
+      if(dPixelExtent[0]==dPixelExtent[2]){
+        CDBDebug("Infinite area, dPixelExtent[0]==dPixelExtent[2]: %d==%d, stopping.... ",dPixelExtent[0],dPixelExtent[2]);
+        return;
+      }
+      if(dPixelExtent[1]==dPixelExtent[3]){
+        CDBDebug("Infinite area, dPixelExtent[1]==dPixelExtent[3]: %d==%d, stopping.... ",dPixelExtent[1],dPixelExtent[3]);
+        return;
+      }
+      
+      dPixelExtent[0]-=2;
+      dPixelExtent[1]-=4;
+      dPixelExtent[2]+=2;
+      dPixelExtent[3]+=2;
+        //Extent should lie within the source image size
+      if(dPixelExtent[0]<0)dPixelExtent[0]=0;
+      if(dPixelExtent[1]<0)dPixelExtent[1]=0;
+      if(dPixelExtent[2]>sourceImage->dWidth)dPixelExtent[2]=sourceImage->dWidth;
+      if(dPixelExtent[3]>sourceImage->dHeight)dPixelExtent[3]=sourceImage->dHeight;
+   }else{
+      dPixelExtent[0]=0;
+      dPixelExtent[1]=0;
+      dPixelExtent[2]=sourceImage->dWidth;
+      dPixelExtent[3]=sourceImage->dHeight;
    }
    
-   dPixelExtent[0]-=2;
-   dPixelExtent[1]-=4;
-   dPixelExtent[2]+=2;
-   dPixelExtent[3]+=2;
-    //Extent should lie within the source image size
-   if(dPixelExtent[0]<0)dPixelExtent[0]=0;
-   if(dPixelExtent[1]<0)dPixelExtent[1]=0;
-   if(dPixelExtent[2]>sourceImage->dWidth)dPixelExtent[2]=sourceImage->dWidth;
-   if(dPixelExtent[3]>sourceImage->dHeight)dPixelExtent[3]=sourceImage->dHeight;
-      
     //Get width and height of the pixel extent
    int dPixelDestW=dPixelExtent[2]-dPixelExtent[0];
    int dPixelDestH=dPixelExtent[3]-dPixelExtent[1];

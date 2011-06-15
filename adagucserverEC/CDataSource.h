@@ -27,6 +27,9 @@ class CDataSource{
   //Data class
   class DataClass{
     public:
+      DataClass(){
+        hasStatusFlag=false;
+      }
       ~DataClass(){
         for(size_t j=0;j<statusFlagList.size();j++){
           delete statusFlagList[j];

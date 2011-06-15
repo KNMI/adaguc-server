@@ -95,8 +95,8 @@ int CPGSQLDB::query(const char *pszQuery){
   result = PQexec(connection, pszQuery);
   if (PQresultStatus(result) != PGRES_COMMAND_OK)         /* did the query fail? */
   {
-    snprintf(szTemp,MAX_STR_LEN,"query: [%s] failed: %s",pszQuery,PQerrorMessage(connection));
-    CDBError(szTemp);
+    //snprintf(szTemp,MAX_STR_LEN,"query: [%s] failed: %s",pszQuery,PQerrorMessage(connection));
+    //CDBError(szTemp);
     clearResult();
     return 1;
   }
@@ -115,8 +115,8 @@ CT::string* CPGSQLDB::query_select(const char *pszQuery,int dColumn){
 
   if (PQresultStatus(result) != PGRES_TUPLES_OK) // did the query fail? 
   {
-    snprintf(szTemp,MAX_STR_LEN,"query_select: %s failed",pszQuery);
-    CDBError(szTemp);
+    //snprintf(szTemp,MAX_STR_LEN,"query_select: %s failed",pszQuery);
+    //CDBError(szTemp);
     clearResult();
     return NULL;
   }

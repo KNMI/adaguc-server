@@ -53,7 +53,7 @@
 #define CNETCDFREADER_MODE_GET_METADATA   3
 
 //Log a summary of different time durations during execution
-#define MEASURETIME
+//#define MEASURETIME
 
 //Web Coverage restriction and Get Feature Info restriction
 #define ALLOW_NONE     1
@@ -64,6 +64,6 @@
 
 #define ENABLE_CURL
 
-
+#define showqueryinfo false
 #endif
 

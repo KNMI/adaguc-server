@@ -15,6 +15,7 @@ class CServerParams{
     int dX,dY;
     CT::string *WMSLayers;
     CT::string Format;
+    CT::string InfoFormat;
     CT::string BGColor;
     bool Transparent;
     CGeoParams * Geo;

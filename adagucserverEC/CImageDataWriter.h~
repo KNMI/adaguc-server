@@ -1,6 +1,6 @@
 #ifndef CImageDataWriter_H
 #define CImageDataWriter_H
-#include <Definitions.h>
+#include "Definitions.h"
 #include "CStopWatch.h"
 #include "CIBaseDataWriterInterface.h"
 #include "CImgWarpNearestNeighbour.h"
@@ -16,8 +16,40 @@ class CImageDataWriter: public CBaseDataWriterInterface{
     int mode;
     int animation;
     int nrImagesAdded;
-    CT::string getFeatureInfoResult;
-    CT::string getFeatureInfoHeader;
+    //CT::string getFeatureInfoResult;
+    //CT::string getFeatureInfoHeader;
+
+    
+    class GetFeatureInfoResult{
+      public:
+        ~GetFeatureInfoResult(){
+          for(size_t j=0;j<elements.size();j++)delete elements[j];
+        }
+        
+        double x_imagePixel,y_imagePixel;
+        double x_imageCoordinate,y_imageCoordinate;
+        double x_rasterCoordinate,y_rasterCoordinate;
+        double x_rasterIndex,y_rasterIndex;
+        double lat_coordinate,lon_coordinate;
+
+        CT::string layerName;
+
+        class Element{
+        public:
+          CT::string value;
+          CT::string units;
+          CT::string standard_name;
+          CT::string long_name;
+          CT::string var_name;
+          CT::string time;
+          CDF::Variable *variable;
+        };
+        std::vector <Element*>elements;
+    };
+    
+    
+    std::vector<GetFeatureInfoResult*> getFeatureInfoResultList;
+    
     DEF_ERRORFUNCTION();
     int createLegend(CDataSource *sourceImage,CDrawImage *drawImage);
     int warpImage(CDataSource *sourceImage,CDrawImage *drawImage);

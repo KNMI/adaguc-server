@@ -601,7 +601,7 @@ int CDrawImage::writeRGBAPng(int width,int height,unsigned char *RGBAByteBuffer,
     return 1;
   }
   png_set_packing(png_ptr);
-#ifdef MEASURETIME 
+#ifdef MEASURETIME
   StopWatch_Stop("LINE %d",__LINE__);
 #endif  
 

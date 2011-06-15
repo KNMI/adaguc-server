@@ -78,6 +78,9 @@ int CImageDataWriter::drawCascadedWMS(const char *service,const char *layers,boo
                   drawImage.Geo->dfBBOX[3]);
   url.printconcat("&SRS=%s",drawImage.Geo->CRS.c_str());
   url.printconcat("&LAYERS=%s",layers);
+  for(int k=0;k<srvParam->NumOGCDims;k++){
+    url.printconcat("&%s=%s",srvParam->OGCDims[k].Name.c_str(),srvParam->OGCDims[k].Value.c_str());
+  }
   CDBDebug(url.c_str());
   gdImagePtr gdImage;
   MyCURL myCURL;
@@ -155,14 +158,12 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   }
   if(requestType==REQUEST_WMS_GETFEATUREINFO){
     drawImage.Geo->copy(srvParam->Geo);
-    getFeatureInfoResult.copy("");
-    getFeatureInfoHeader.copy("");
     return 0;
   }
   
   //Create 6-8-5 palette for cascaded layer
   if(dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
-    status = drawImage.createGDPalette(srvParam->cfg->Legend[0]);
+    status = drawImage.create685Palette();
     if(status != 0){
       CDBError("Unable to create standard 6-8-5 palette");
       return 1;
@@ -428,15 +429,20 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
     }
    //Get Legend settings
     
-    if(cfgStyle->Scale.size()>0){
-      dataSource->legendScale=parseFloat(cfgStyle->Scale[0]->value.c_str());
+    if(cfgStyle->Scale.size()>0)dataSource->legendScale=parseFloat(cfgStyle->Scale[0]->value.c_str());
+    if(cfgStyle->Offset.size()>0)dataSource->legendOffset=parseFloat(cfgStyle->Offset[0]->value.c_str());
+
+    //When min and max are given, calculate the scale and offset according to min and max.
+    if(cfgStyle->Min.size()>0&&cfgStyle->Max.size()>0){
+      float min=parseFloat(cfgStyle->Min[0]->value.c_str());
+      float max=parseFloat(cfgStyle->Max[0]->value.c_str());
+      dataSource->legendScale=240/(max-min);
+      dataSource->legendOffset=min*(-dataSource->legendScale);
     }
-    if(cfgStyle->Offset.size()>0){
-      dataSource->legendOffset=parseFloat(cfgStyle->Offset[0]->value.c_str());
-    }
-    if(cfgStyle->Log.size()>0){
-      dataSource->legendLog=parseFloat(cfgStyle->Log[0]->value.c_str());
-    }
+    
+    
+    if(cfgStyle->Log.size()>0)dataSource->legendLog=parseFloat(cfgStyle->Log[0]->value.c_str());
+    
     if(cfgStyle->ValueRange.size()>0){
       dataSource->legendValueRange=1;
       dataSource->legendLowerRange=parseFloat(cfgStyle->ValueRange[0]->attr.min.c_str());
@@ -450,6 +456,17 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
     if(dataSource->cfgLayer->Offset.size()>0){
       dataSource->legendOffset=parseFloat(dataSource->cfgLayer->Offset[0]->value.c_str());
     }
+    
+    //When min and max are given, calculate the scale and offset according to min and max.
+    if(dataSource->cfgLayer->Min.size()>0&&dataSource->cfgLayer->Max.size()>0){
+      float min=parseFloat(dataSource->cfgLayer->Min[0]->value.c_str());
+      float max=parseFloat(dataSource->cfgLayer->Max[0]->value.c_str());
+      dataSource->legendScale=240/(max-min);
+      dataSource->legendOffset=min*(-dataSource->legendScale);
+    }
+    
+    
+    
     if(dataSource->cfgLayer->Log.size()>0){
       dataSource->legendLog=parseFloat(dataSource->cfgLayer->Log[0]->value.c_str());
     }
@@ -526,7 +543,10 @@ void CImageDataWriter::setValue(CDFType type,void *data,size_t ptr,double pixel)
   if(type==CDF_DOUBLE)((double*)data)[ptr]=(double)pixel;
 }
 int CImageDataWriter::getFeatureInfo(CDataSource *dataSource,int dX,int dY){
-  
+  // Create a new getFeatureInfoResult object and push it into the vector.
+  GetFeatureInfoResult  *getFeatureInfoResult = new GetFeatureInfoResult();
+  getFeatureInfoResultList.push_back(getFeatureInfoResult);
+    
 //  status  = imageWarper.getFeatureInfo(&getFeatureInfoHeader,&temp,dataSource,drawImage.Geo,dX,dY);
   
   //int CImageWarper::getFeatureInfo(CT::string *Header,CT::string *Result,CDataSource *dataSource,CGeoParams *GeoDest,int dX, int dY){
@@ -553,7 +573,7 @@ int CImageDataWriter::getFeatureInfo(CDataSource *dataSource,int dX,int dY){
     return 1;
   }
   
-  getFeatureInfoHeader.copy("");
+  //getFeatureInfoHeader.copy("");
   double x,y,sx,sy,CoordX,CoordY;
   int imx,imy;
   sx=dX;
@@ -569,6 +589,9 @@ int CImageDataWriter::getFeatureInfo(CDataSource *dataSource,int dX,int dY){
   CoordX=x;
   CoordY=y;
   imageWarper.reprojpoint(x,y);
+  
+  double nativeCoordX=x;
+  double nativeCoordY=y;
   //printf("Projected XY (%f : %f)\n<br>",x,y);
   x-=dataSource->dfBBOX[0];
   y-=dataSource->dfBBOX[1];
@@ -578,90 +601,104 @@ int CImageDataWriter::getFeatureInfo(CDataSource *dataSource,int dX,int dY){
   y*=double(dataSource->dHeight);
   imx=(int)x;
   imy=dataSource->dHeight-(int)y-1;
-// printf("Image XY (%d : %d)\n<br>",imx,imy);
-  imageWarper.closereproj();
-  
-  //Print coordinates
-  snprintf(szTemp,MAX_STR_LEN,"coordinates (%0.2f , %0.2f)<br>\n",CoordX,CoordY);
-  getFeatureInfoHeader.concat(szTemp);
-  //Print variable names
-  getFeatureInfoHeader.concat("<b>");
-  for(size_t j=0;j<dataSource->dataObject.size();j++){
-    //Print variable number, if more than one
-    if(dataSource->dataObject.size()>1)getFeatureInfoHeader.printconcat("(%d) ",j);
-    
-    
-    //Print variable standard names
-    CDF::Attribute * attr_standard_name=dataSource->dataObject[j]->cdfVariable->getAttribute("standard_name");
-    if(attr_standard_name!=NULL){
-      CT::string standardName;attr_standard_name->getDataAsString(&standardName);
-      standardName.replace("_"," ");standardName.replace(" status flag","");
-      getFeatureInfoHeader.printconcat("%s </b> - %s<b>",dataSource->dataObject[j]->variableName.c_str(),standardName.c_str());
-    }else{
-      //Print variable name
-      getFeatureInfoHeader.concat(dataSource->dataObject[j]->variableName.c_str());
-    }
-    if(j+1<dataSource->dataObject.size())getFeatureInfoHeader.concat("<br>");
-  }
-  getFeatureInfoHeader.concat("</b><br>\n");
-  
-  
-  CT::string tempResult;
-  tempResult.copy("<table>\n");
-  if(imx>=0&&imy>=0&&imx<dataSource->dWidth&&imy<dataSource->dHeight){
-    for(size_t j=0;j<dataSource->dataObject.size();j++){
-      tempResult.concat("<tr><td>");
-      size_t ptr=imx+imy*dataSource->dWidth;
-      double pixel=0;
-      pixel = convertValue(dataSource->dataObject[j]->dataType,dataSource->dataObject[j]->data,ptr);
-      
-      /*//Add a coloured box:
-      if((pixel!=dataSource->dataObject[j]->dfNodataValue&&dataSource->dataObject[j]->hasNodataValue==true)||dataSource->dataObject[0]->hasNodataValue==false){
-        CT::string hexVal;
-        drawImage.getHexColorForColorIndex(&hexVal,getColorIndexForValue(dataSource,pixel));
-        tempResult.printconcat("</td><td bgcolor=\"%s\">%s</td><td>",hexVal.c_str(),hexVal.c_str());
-      }*/
-      
-      //Add time
-      status = reader.getTimeString(szTemp);
-      if(status != 0){
-        tempResult.printconcat("status = %d: ",status);
-      }
-      else{
-        tempResult.concat(szTemp);if(strlen(szTemp)>1)tempResult.concat(": ");
-      }
-      
-      //Check wether this is a NoData value:
-      if((pixel!=dataSource->dataObject[j]->dfNodataValue&&dataSource->dataObject[j]->hasNodataValue==true&&pixel==pixel)||
-        dataSource->dataObject[0]->hasNodataValue==false){
-        
-        //Add status flag
-        if(dataSource->dataObject[j]->hasStatusFlag){
-          CT::string flagMeaning;
-          tempResult.printconcat("<b>%s</b> (%d)",dataSource->dataObject[j]->getFlagMeaning(pixel),(int)pixel);
-        }else{
-          floatToString(szTemp,MAX_STR_LEN,pixel);
-          tempResult.concat("<b>");
-          if(dataSource->dataObject.size()>1)tempResult.printconcat("(%d) ",j);
-          tempResult.concat(szTemp);
-          tempResult.concat("</b>");
-          //Add units
-          if(dataSource->dataObject[j]->units.length()!=0){
-            snprintf(szTemp,MAX_STR_LEN," %s",dataSource->dataObject[j]->units.c_str());
-            tempResult.concat(szTemp);
-          }
-        }
+  // printf("Image XY (%d : %d)\n<br>",imx,imy);
+  //Get lat/lon
+
+  // Projections coordinates in latlon
+  getFeatureInfoResult->lon_coordinate=CoordX;
+  getFeatureInfoResult->lat_coordinate=CoordY;
 
   
+  imageWarper.reprojToLatLon(getFeatureInfoResult->lon_coordinate,getFeatureInfoResult->lat_coordinate);
+  imageWarper.closereproj();
+
+  // Pixel X and Y on the image
+  getFeatureInfoResult->x_imagePixel=dX;
+  getFeatureInfoResult->y_imagePixel=dY;
+ 
+  // Projection coordinates X and Y on the image
+  getFeatureInfoResult->x_imageCoordinate=CoordX;
+  getFeatureInfoResult->y_imageCoordinate=CoordY;
+  
+  // Projection coordinates X and Y in the raster
+  getFeatureInfoResult->x_rasterCoordinate=nativeCoordX;
+  getFeatureInfoResult->y_rasterCoordinate=nativeCoordY;
+  
+  // Pixel X and Y on the raster
+  getFeatureInfoResult->x_rasterIndex=imx;
+  getFeatureInfoResult->y_rasterIndex=imy;
+  
+
+  //Copy layer name
+  getFeatureInfoResult->layerName.copy(&dataSource->layerName);
+  
+  //TODO find raster projection units and find image projection units.
+  
+  //Retrieve variable names
+  for(size_t j=0;j<dataSource->dataObject.size();j++){
+    //Create a new element and at it to the elements list.
+    GetFeatureInfoResult::Element * element = new GetFeatureInfoResult::Element();
+    getFeatureInfoResult->elements.push_back(element);
+
+    //Get variable name
+    element->var_name.copy(&dataSource->dataObject[j]->variableName);
+    //Get variable units
+    element->units.copy(&dataSource->dataObject[j]->units);
+
+    //Get variable standard name
+    CDF::Attribute * attr_standard_name=dataSource->dataObject[j]->cdfVariable->getAttributeNE("standard_name");
+    if(attr_standard_name!=NULL){
+      CT::string standardName;attr_standard_name->getDataAsString(&standardName);
+      // Make a more clean standard name.
+      standardName.replace("_"," ");standardName.replace(" status flag","");
+      element->standard_name.copy(&standardName);
+    }else element->standard_name.copy(&element->var_name);
+    
+    // Get variable long name
+    CDF::Attribute * attr_long_name=dataSource->dataObject[j]->cdfVariable->getAttributeNE("long_name");
+    if(attr_long_name!=NULL){
+      attr_long_name->getDataAsString(&element->long_name);
+    }else element->long_name.copy(&element->var_name);
+    
+    // Assign CDF::Variable Pointer
+    element->variable = dataSource->dataObject[j]->cdfVariable;
+    element->value="";
+    status = reader.getTimeString(szTemp);
+    if(status != 0){
+      element->time.print("Time error: %d: ",status);
+    }
+    else{
+      element->time=szTemp;
+    }
+  }
+  
+  // Retrieve corresponding values.
+  if(imx>=0&&imy>=0&&imx<dataSource->dWidth&&imy<dataSource->dHeight){
+    for(size_t j=0;j<dataSource->dataObject.size();j++){
+      GetFeatureInfoResult::Element * element=getFeatureInfoResult->elements[j];
+      size_t ptr=imx+imy*dataSource->dWidth;
+      double pixel=convertValue(dataSource->dataObject[j]->dataType,dataSource->dataObject[j]->data,ptr);
+      //Get time
+      
+      //Check wether this is a NoData value:
+      if((pixel!=dataSource->dataObject[j]->dfNodataValue&&dataSource->dataObject[j]->hasNodataValue==true&&pixel==pixel)||dataSource->dataObject[0]->hasNodataValue==false){
+        if(dataSource->dataObject[j]->hasStatusFlag){
+          //Add status flag
+          element->value.print("%s (%d)",dataSource->dataObject[j]->getFlagMeaning(pixel),(int)pixel);
+          element->units="";
+        }else{
+          //Add raster value
+          floatToString(szTemp,MAX_STR_LEN,pixel);
+          element->value=szTemp;
+        }
       }
       else {
-        tempResult.concat("no data\n");
+        element->value="nodata";
       }
-      tempResult.concat("</td></tr>\n");
     }
-  }tempResult.concat("</table>\n");
+  }
   reader.close();
-  getFeatureInfoResult.concat(&tempResult);
+  
   return 0;
 }
 int CImageDataWriter::createAnimation(){
@@ -670,6 +707,7 @@ int CImageDataWriter::createAnimation(){
   animation = 1;
   return 0;
 }
+
 void CImageDataWriter::setDate(const char *szTemp){
   drawImage.setTextStroke(szTemp, strlen(szTemp),drawImage.Geo->dWidth-170,5,240,254,0);
 }
@@ -1026,9 +1064,172 @@ int CImageDataWriter::end(){
   if(mode==2){CDBError("Already finished");return 1;}
   mode=2;
   if(requestType==REQUEST_WMS_GETFEATUREINFO){
-    printf("%s%c%c\n","Content-Type:text/html",13,10);
-    printf("<html>\n%s<hr>\n",getFeatureInfoHeader.c_str());
-    printf("%s</html>\n",getFeatureInfoResult.c_str());
+    enum ResultFormats {textplain,texthtml,textxml, applicationvndogcgml};
+    ResultFormats resultFormat=texthtml;
+    
+    if(srvParam->InfoFormat.equals("text/plain"))resultFormat=textplain;
+    if(srvParam->InfoFormat.equals("text/xml"))resultFormat=textxml;
+    if(srvParam->InfoFormat.equals("application/vnd.ogc.gml"))resultFormat=textxml;//applicationvndogcgml;
+    
+
+    if(resultFormat==textplain||resultFormat==texthtml){
+      CT::string resultHTML;
+      if(resultFormat==textplain){
+        resultHTML.print("%s%c%c\n","Content-Type:text/plain",13,10);
+      }else{
+        resultHTML.print("%s%c%c\n","Content-Type:text/html",13,10);
+      }
+      
+      if(resultFormat==texthtml)resultHTML.printconcat("<html>\n");
+      
+      if(getFeatureInfoResultList.size()==0){
+        resultHTML.printconcat("Query returned no results");
+      }else{
+        GetFeatureInfoResult *g = getFeatureInfoResultList[0];
+        if(resultFormat==texthtml){
+          resultHTML.printconcat("coordinates (%0.2f , %0.2f)<br>\n",g->x_imageCoordinate,g->y_imageCoordinate);
+        }else{
+          resultHTML.printconcat("coordinates (%0.2f , %0.2f)\n",g->x_imageCoordinate,g->y_imageCoordinate);
+        }
+        
+      
+        for(size_t elNR=0;elNR<g->elements.size();elNR++){
+          GetFeatureInfoResult::Element * e=g->elements[elNR];
+          if(g->elements.size()>1){
+            resultHTML.printconcat("%d: ",elNR);
+          }
+          if(resultFormat==texthtml){
+            resultHTML.printconcat("<b>%s</b> - %s<br>\n",e->var_name.c_str(),e->standard_name.c_str());
+          }else{
+            resultHTML.printconcat("%s - %s\n",e->var_name.c_str(),e->standard_name.c_str());
+          }
+        }
+        if(resultFormat==texthtml)resultHTML.printconcat("<hr>\n");
+      
+        for(size_t j=0;j<getFeatureInfoResultList.size();j++){
+          GetFeatureInfoResult *g = getFeatureInfoResultList[j];
+          for(size_t elNR=0;elNR<g->elements.size();elNR++){
+            GetFeatureInfoResult::Element * e=g->elements[elNR];
+            if(g->elements.size()>1){
+              resultHTML.printconcat("%d: ",elNR);
+            }
+            if(e->value.length()>0){
+              if(resultFormat==texthtml){
+                resultHTML.printconcat("%s: <b>%s</b>",e->time.c_str(),e->value.c_str());}else{
+                resultHTML.printconcat("%s: %s",e->time.c_str(),e->value.c_str());             
+              }
+              if(e->units.length()>0){
+                if(!e->value.equals("nodata")&&!e->value.equals("")){
+                  resultHTML.printconcat(" %s",e->units.c_str());
+                }
+              }
+            }/*else{
+              resultHTML.printconcat("%s: -",e->time.c_str());
+            }*/
+            if(resultFormat==texthtml)resultHTML.printconcat("<br>\n");else resultHTML.printconcat("\n");
+          }
+        }
+
+      }
+      
+      if(resultFormat==texthtml)resultHTML.printconcat("</html>\n");else resultHTML.printconcat("\n");
+      resetErrors();
+      
+      
+      printf("%s",resultHTML.c_str());
+    }
+    
+    if(resultFormat==textxml){
+      
+      CT::string resultXML;
+      resultXML.print("%s%c%c\n","Content-Type:text/xml",13,10);
+      resultXML.printconcat("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n");
+      resultXML.printconcat(" <GMLOutput\n");
+      resultXML.printconcat("          xmlns:gml=\"http://www.opengis.net/gml\"\n");
+      resultXML.printconcat("          xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n");
+      resultXML.printconcat("          xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n");
+
+      if(getFeatureInfoResultList.size()==0){
+        CDBError("Query returned no results");
+        return 1;
+      }else{
+        for(size_t j=0;j<getFeatureInfoResultList.size();j++){
+          GetFeatureInfoResult *g = getFeatureInfoResultList[j];
+          CT::string layerName=g->layerName.c_str();
+          layerName.replace(" ","_");
+          layerName.replace("/","_");
+          
+          resultXML.printconcat("  <%s_layer>\n",layerName.c_str());
+          for(size_t elNR=0;elNR<g->elements.size();elNR++){
+            GetFeatureInfoResult::Element * e=g->elements[elNR];
+            CT::string featureName=e->standard_name.c_str();
+            featureName.replace(" ","_");
+            resultXML.printconcat("    <%s_feature>\n",featureName.c_str());
+            resultXML.printconcat("      <gml:location>\n");
+            
+            resultXML.printconcat("        <gml:Point srsName=\"EPSG:4326\">\n");
+            resultXML.printconcat("          <gml:pos>%f,%f</gml:pos>\n",g->lon_coordinate,g->lat_coordinate);
+            resultXML.printconcat("        </gml:Point>\n");
+            
+            resultXML.printconcat("        <gml:Point srsName=\"%s\">\n",srvParam->Geo->CRS.c_str());
+            resultXML.printconcat("          <gml:pos>%f %f</gml:pos>\n",g->x_imageCoordinate,g->y_imageCoordinate);
+            resultXML.printconcat("        </gml:Point>\n");
+
+            resultXML.printconcat("        <gml:Point srsName=\"%s\">\n","image:xyindices");
+            resultXML.printconcat("          <gml:pos>%d %d</gml:pos>\n",g->x_imagePixel,g->y_imagePixel);
+            resultXML.printconcat("        </gml:Point>\n");
+
+            resultXML.printconcat("        <gml:Point srsName=\"%s\">\n","raster:coordinates");
+            resultXML.printconcat("          <gml:pos>%f %f</gml:pos>\n",g->x_rasterCoordinate,g->y_rasterCoordinate);
+            resultXML.printconcat("        </gml:Point>\n");
+
+            resultXML.printconcat("        <gml:Point srsName=\"%s\">\n","raster:xyindices");
+            resultXML.printconcat("          <gml:pos>%d %d</gml:pos>\n",g->x_rasterIndex,g->y_rasterIndex);
+            resultXML.printconcat("        </gml:Point>\n");
+
+            
+            resultXML.printconcat("      </gml:location>\n");
+            resultXML.printconcat("      <FeatureName>%s</FeatureName>\n",featureName.c_str());
+            resultXML.printconcat("      <StandardName>%s</StandardName>\n",e->standard_name.c_str());
+            resultXML.printconcat("      <LongName>%s</LongName>\n",e->long_name.c_str());
+            resultXML.printconcat("      <VarName>%s</VarName>\n",e->var_name.c_str());
+            resultXML.printconcat("      <Value units=\"%s\">%s</Value>\n",e->units.c_str(),e->value.c_str());
+            resultXML.printconcat("      <Dimension name=\"time\">%s</Dimension>\n",e->time.c_str());
+            
+            
+            resultXML.printconcat("    </%s_feature>\n",featureName.c_str());
+          }
+          resultXML.printconcat("  </%s_layer>\n",layerName.c_str());
+        }
+      }
+      resultXML.printconcat(" </GMLOutput>\n");
+      resetErrors();
+      printf("%s",resultXML.c_str());
+      
+      /*
+        <?xml version="1.0" encoding="ISO-8859-1"?>
+
+        <msGMLOutput 
+                xmlns:gml="http://www.opengis.net/gml"
+                xmlns:xlink="http://www.w3.org/1999/xlink"
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                <SCIA__CONS_R___IMAP____L3__20040101T000000_20040201T000000_0001_CH4_layer>
+                        <SCIA__CONS_R___IMAP____L3__20040101T000000_20040201T000000_0001_CH4_feature>
+                                <gml:boundedBy>
+                                        <gml:Box srsName="EPSG:4326">
+                                                <gml:coordinates>-74.500000,-6.500000 -74.500000,-6.500000</gml:coordinates>
+                                        </gml:Box>
+                                </gml:boundedBy>
+                        </SCIA__CONS_R___IMAP____L3__20040101T000000_20040201T000000_0001_CH4_feature>
+                </SCIA__CONS_R___IMAP____L3__20040101T000000_20040201T000000_0001_CH4_layer>
+        </msGMLOutput>
+      */
+      
+    
+    
+    }
+    //printf("<html>\n%s<hr>\n",getFeatureInfoHeader.c_str());
+    //printf("%s</html>\n",getFeatureInfoResult.c_str());
   }
   if(requestType!=REQUEST_WMS_GETMAP&&requestType!=REQUEST_WMS_GETLEGENDGRAPHIC)return 0;
   //if(CRequest::CGI==1){

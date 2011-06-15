@@ -45,7 +45,21 @@ int CImageWarper::closereproj(){
     }
     return 0;
   }
-
+  
+  int CImageWarper::reprojToLatLon(double &dfx,double &dfy){
+    if(convertRadiansDegreesDst){
+      dfx*=DEG_TO_RAD;
+      dfy*=DEG_TO_RAD;
+    }
+    if(pj_transform(destpj,latlonpj,1,0,&dfx,&dfy,NULL)!=0){
+      //throw("reprojfromLatLon error");
+    }
+    dfx/=DEG_TO_RAD;
+    dfy/=DEG_TO_RAD;    
+    return 0;
+  }
+  
+  
   int CImageWarper::reprojfromLatLon(double &dfx,double &dfy){
     dfx*=DEG_TO_RAD;
     dfy*=DEG_TO_RAD;

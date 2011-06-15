@@ -35,6 +35,7 @@ class CImageWarper{
     int reprojpoint_inv(double &dfx,double &dfy);
     void reprojBBOX(double *df4PixelExtent);
     int reprojfromLatLon(double &dfx,double &dfy);
+    int reprojToLatLon(double &dfx,double &dfy);
     int decodeCRS(CT::string *outputCRS, CT::string *inputCRS);
     int decodeCRS(CT::string *outputCRS, CT::string *inputCRS,std::vector <CServerConfig::XMLE_Projection*> *prj);
     int findExtent(CDataSource *sourceImage,double * dfBBOX);

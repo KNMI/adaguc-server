@@ -7,6 +7,7 @@
 #include <hdf5.h>
 #include "CDebugger.h"
 #include "CADAGUC_time.h"
+//#define CCDFHDF5IO_DEBUG
 void ncError(int line, const char *className, const char * msg,int e);
 class CDFHDF5Reader :public CDFReader{
   private:
@@ -137,7 +138,7 @@ class CDFHDF5Reader :public CDFReader{
       dim = new CDF::Dimension();
       dim->length=len;
       CDF::Variable *var= new CDF::Variable();
-      var->cdfReaderPointer=this;
+      var->setCDFReaderPointer(this);
       var->setName(dimName);
       var->id=cdfObject->variables.size();
       var->isDimension=true;
@@ -154,6 +155,10 @@ class CDFHDF5Reader :public CDFReader{
     }
     
     void list(hid_t groupID,char *groupName){
+#ifdef CCDFHDF5IO_DEBUG      
+CDBDebug("list '%s'",groupName);      
+#endif
+      
       H5G_info_t group_info ;
       H5Gget_info( groupID, &group_info  );
       //printf("%d\n",(int)group_info.nlinks);
@@ -161,6 +166,10 @@ class CDFHDF5Reader :public CDFReader{
       
       for(int j=0;j<(int)group_info.nlinks;j++){
         H5Lget_name_by_idx(groupID,".",H5_INDEX_NAME, H5_ITER_INC, j, name, 255, H5P_DEFAULT  );
+#ifdef CCDFHDF5IO_DEBUG      
+CDBDebug("Getting group '%s'",name);      
+#endif
+
         hid_t objectID=H5Oopen(groupID, name,H5P_DEFAULT );
         H5I_type_t type = H5Iget_type(objectID);
         
@@ -181,7 +190,7 @@ class CDFHDF5Reader :public CDFReader{
             var->isDimension=false;
             var->setName(temp);
             var->id= cdfObject->variables.size();
-            var->cdfReaderPointer=this;//TODO
+            var->setCDFReaderPointer(this);//TODO
           //Attributes:
             readAttributes(var->attributes,newGroupID);
             cdfObject->variables.push_back(var);
@@ -193,9 +202,13 @@ class CDFHDF5Reader :public CDFReader{
         }
         
         if(type==H5I_DATASET){
-          //CDBDebug("%d,%s",groupID,name);
+#ifdef CCDFHDF5IO_DEBUG      
+CDBDebug("H5I_DATASET: %d,%s",groupID,name);
+#endif
           hid_t datasetID = H5Dopen2(groupID, name,H5P_DEFAULT );
-          //CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
+#ifdef CCDFHDF5IO_DEBUG      
+CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
+#endif
           if(datasetID>0){
             hid_t datasetType=H5Dget_type(datasetID);
             if(datasetType>0){
@@ -208,13 +221,21 @@ class CDFHDF5Reader :public CDFReader{
                 }else snprintf(varName,1023,"%s",name);
 
                 int cdfType = typeConversion(datasetNativeType);
-                //char temp[20];
-                //CDF::getDataTypeName(temp,19,cdfType);
+#ifdef CCDFHDF5IO_DEBUG      
+char tempType[20];
+CDF::getCDFDataTypeName(tempType,19,cdfType);
+CDBDebug("DataType is %s",tempType);
+#endif
+                
                 hid_t   HDF5_dataspace = H5Dget_space(datasetID);    /* dataspace handle */
                 int     ndims          = H5Sget_simple_extent_ndims(HDF5_dataspace);
-                hsize_t dims_out[2];
+              if(ndims>19){
+                  CDBError("Maximum number of 20 dimensions supported, got %d dimensions",ndims);
+                  return;
+                }                
+                hsize_t dims_out[20];
                 H5Sget_simple_extent_dims(HDF5_dataspace, dims_out, NULL);
-                CDF::Variable * var=cdfObject->getVariable(varName);
+                CDF::Variable * var=cdfObject->getVariableNE(varName);
                 if(var==NULL){
                   var= new CDF::Variable();
                   cdfObject->variables.push_back(var);
@@ -222,20 +243,31 @@ class CDFHDF5Reader :public CDFReader{
                 var->type=cdfType;
                 var->isDimension=false;
                 var->setName(varName);
-                //printf("Adding %s\n",varName);
+                
+#ifdef CCDFHDF5IO_DEBUG      
+CDBDebug("Adding %s",varName);
+#endif
                 var->id= cdfObject->variables.size();
-                var->cdfReaderPointer=this;
+                var->setCDFReaderPointer(this);
                 readAttributes(var->attributes,datasetID);
-                //printf("%s.%s\t %s ",groupName,name,temp);
+#ifdef CCDFHDF5IO_DEBUG      
+CDBDebug("%s.%s",groupName,name);
+#endif
                 CDF::Dimension *dim ;
+  
                 for(int d=0;d<ndims;d++){
-                 // printf("%d\t",(size_t)dims_out[d]);
+#ifdef CCDFHDF5IO_DEBUG      
+CDBDebug("Dim size %d=%d\t",d,(size_t)dims_out[d]);
+#endif
                   //Make fake dimensions
-                  char dimname[10];snprintf(dimname,9,"dim_%d",d);
+                  char dimname[20];snprintf(dimname,19,"dim_%d",d);
                   if(ndims==2){
                     if(d==0)dimname[4]='y';
                     if(d==1)dimname[4]='x';
                   }
+#ifdef CCDFHDF5IO_DEBUG      
+CDBDebug("Making dimension %s",dimname);
+#endif                  
                   dim = makeDimension(dimname,dims_out[d]);
                   var->dimensionlinks.push_back(dim);
                 }
@@ -294,30 +326,30 @@ class CDFHDF5Reader :public CDFReader{
     }
     int convertKNMIHDF5toCF(){
       //Fill in dim ranges
-      CDF::Variable *var = cdfObject->getVariable("image1.image_data");
+      CDF::Variable *var = cdfObject->getVariableNE("image1.image_data");
       if(var==NULL){CDBError("variable image1.image_data not found");return 1;}
-      CDF::Variable *geo = cdfObject->getVariable("geographic");
+      CDF::Variable *geo = cdfObject->getVariableNE("geographic");
       if(geo==NULL){CDBError("variable geographic not found");return 1;}
       if(var->dimensionlinks.size()!=2){CDBError("variable does not have 2 dims");return 1;}
-      CDF::Variable *proj = cdfObject->getVariable("geographic.map_projection");
+      CDF::Variable *proj = cdfObject->getVariableNE("geographic.map_projection");
       if(proj==NULL){CDBError("variable geographic.map_projection not found");return 1;}
-      CDF::Attribute *cellsizeXattr =geo->getAttribute("geo_pixel_size_x");
-      CDF::Attribute *cellsizeYattr =geo->getAttribute("geo_pixel_size_y");
-      CDF::Attribute *offsetXattr =geo->getAttribute("geo_column_offset");
-      CDF::Attribute *offsetYattr =geo->getAttribute("geo_row_offset");
-      CDF::Attribute *proj4attr =proj->getAttribute("projection_proj4_params");
+      CDF::Attribute *cellsizeXattr =geo->getAttributeNE("geo_pixel_size_x");
+      CDF::Attribute *cellsizeYattr =geo->getAttributeNE("geo_pixel_size_y");
+      CDF::Attribute *offsetXattr =geo->getAttributeNE("geo_column_offset");
+      CDF::Attribute *offsetYattr =geo->getAttributeNE("geo_row_offset");
+      CDF::Attribute *proj4attr =proj->getAttributeNE("projection_proj4_params");
       if(cellsizeXattr==NULL||cellsizeYattr==NULL||offsetXattr==NULL||offsetYattr==NULL||proj4attr==NULL){
         CDBError("geographic attributes incorrect");return 1;
       }
-      CDF::Variable *overview = cdfObject->getVariable("overview");
+      CDF::Variable *overview = cdfObject->getVariableNE("overview");
       if(overview==NULL){CDBError("variable overview not found");return 1;}
-      CDF::Attribute *product_datetime_start =overview->getAttribute("product_datetime_start");
+      CDF::Attribute *product_datetime_start =overview->getAttributeNE("product_datetime_start");
       if(product_datetime_start==NULL){CDBError("attribute product_datetime_start not found");return 1;}
       
       CDF::Dimension *dimX=var->dimensionlinks[1];
       CDF::Dimension *dimY=var->dimensionlinks[0];
-      CDF::Variable *varX=cdfObject->getVariable(dimX->name.c_str());
-      CDF::Variable *varY=cdfObject->getVariable(dimY->name.c_str());
+      CDF::Variable *varX=cdfObject->getVariableNE(dimX->name.c_str());
+      CDF::Variable *varY=cdfObject->getVariableNE(dimY->name.c_str());
       CDF::allocateData(varX->type,&varX->data,dimX->length);
       CDF::allocateData(varY->type,&varY->data,dimY->length);
       
@@ -400,7 +432,7 @@ class CDFHDF5Reader :public CDFReader{
       
       do{
         varName.print("image%d.image_data",v);
-        var = cdfObject->getVariable(varName.c_str());
+        var = cdfObject->getVariableNE(varName.c_str());
         if(var!=NULL){
           CDF::Attribute* grid_mapping= new CDF::Attribute();
           grid_mapping->setName("grid_mapping");
@@ -414,9 +446,9 @@ class CDFHDF5Reader :public CDFReader{
           
           //Set units
           varName.print("image%d",v);
-          CDF::Variable *imageN = cdfObject->getVariable(varName.c_str());
+          CDF::Variable *imageN = cdfObject->getVariableNE(varName.c_str());
           if(imageN!=NULL){
-            CDF::Attribute * image_geo_parameter = imageN->getAttribute("image_geo_parameter"); 
+            CDF::Attribute * image_geo_parameter = imageN->getAttributeNE("image_geo_parameter"); 
             if(image_geo_parameter!=NULL){
               CDF::Attribute* units= new CDF::Attribute();
               units->setName("units");
@@ -430,10 +462,10 @@ class CDFHDF5Reader :public CDFReader{
           //Set no data
           //Get nodatavalue:
           varName.print("image%d.calibration",v);
-          CDF::Variable *calibration = cdfObject->getVariable(varName.c_str());
+          CDF::Variable *calibration = cdfObject->getVariableNE(varName.c_str());
           if(calibration!=NULL){
 //            CDBDebug("Found calibration group");
-            CDF::Attribute *calibration_out_of_image = calibration->getAttribute("calibration_out_of_image"); 
+            CDF::Attribute *calibration_out_of_image = calibration->getAttributeNE("calibration_out_of_image"); 
             if(calibration_out_of_image!=NULL){
   //            CDBDebug("Found calibration_out_of_image attribute");
               double dfNodata = 0;
@@ -444,7 +476,9 @@ class CDFHDF5Reader :public CDFReader{
                 CDF::Attribute* noDataAttr = new CDF::Attribute();
                 noDataAttr->setName("_FillValue");
                 char attrType[256];CDF::getCDFDataTypeName(attrType,255,var->type);
+#ifdef CCDFHDF5IO_DEBUG                      
                 CDBDebug("%s: Setting type %s",var->name.c_str(),attrType);
+#endif                
 
                 switch(var->type){
                   case CDF_CHAR  : {char   nodata=(char)dfNodata;noDataAttr->setData(var->type,&nodata,1);};break;
@@ -476,10 +510,16 @@ class CDFHDF5Reader :public CDFReader{
       return 0;
     }
     int open(const char *fileName){
+#ifdef CCDFHDF5IO_DEBUG      
+CDBDebug("Opening HDF5 file %s",fileName);      
+#endif
       H5F_file = H5Fopen(fileName,H5F_ACC_RDONLY, H5P_DEFAULT );
       if(H5F_file <0){CDBError("could not open HDF5 file %s",fileName);return 1;}
       
       //Read global attributes
+#ifdef CCDFHDF5IO_DEBUG      
+CDBDebug("Opening group \".\"");      
+#endif
       //hid_t HDF5_group = H5Gopen(H5F_file,"."); API V1.6
       hid_t HDF5_group = H5Gopen2(H5F_file,".",H5P_DEFAULT);
       if(HDF5_group <0){CDBError("could not open HDF5 group");
@@ -487,12 +527,21 @@ class CDFHDF5Reader :public CDFReader{
         
         return 1;
       }
+#ifdef CCDFHDF5IO_DEBUG      
+CDBDebug("readAttributes");      
+#endif
       readAttributes(cdfObject->attributes,HDF5_group);//TODO
       H5Gclose(HDF5_group);
-      
+
+#ifdef CCDFHDF5IO_DEBUG      
+CDBDebug("list");      
+#endif
       list(H5F_file,(char*)"");
       
       if(b_EnableKNMIHDF5toCFConversion){
+#ifdef CCDFHDF5IO_DEBUG      
+CDBDebug("convertKNMIHDF5toCF()");      
+#endif
         return convertKNMIHDF5toCF();
       }
       return 0;
@@ -535,9 +584,9 @@ class CDFHDF5Reader :public CDFReader{
         opengroups.pop_back();
       }
     }
-    int readVariableData(CDF::Variable *var, CDFType type,size_t *start,size_t *count,ptrdiff_t *stride){
+    int _readVariableData(CDF::Variable *var, CDFType type,size_t *start,size_t *count,ptrdiff_t *stride){
       if(var->data!=NULL){
-        //CDBWarning("Not reading any data because it is already in memory");
+        CDBWarning("Not reading any data because it is already in memory");
         return 0;
       }
       char typeName[32];
@@ -612,7 +661,7 @@ class CDFHDF5Reader :public CDFReader{
       closeH5GroupByName(var->name.c_str());
       return 0;
     }
-    int readVariableData(CDF::Variable *var, CDFType type){
+    int _readVariableData(CDF::Variable *var, CDFType type){
       //All ready in memory
       int status =0;
 //      CDBDebug(" ***** %s size=%d",var->name.c_str(),var->size());

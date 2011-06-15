@@ -9,8 +9,12 @@
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 
-typedef int CDFType;
+//#define CCDFDATAMODEL_DEBUG
+//CDF: Common Data Format
 
+
+/* Types supported by CDF */
+typedef int CDFType;
 #define CDF_NONE    0 /* Unknown */
 #define CDF_BYTE    1 /* signed 1 byte integer */
 #define CDF_CHAR    2 /* ISO/ASCII character */
@@ -22,40 +26,85 @@ typedef int CDFType;
 #define CDF_USHORT  8 /* unsigned 2-byte int */
 #define CDF_UINT    9 /* unsigned 4-byte int */
 
+/* Possible error codes, thrown by CDF */
+typedef int CDFError;
+#define CDF_E_NONE              0 /* Unknown */
+#define CDF_E_ERROR             1 /* Unknown */
+#define CDF_E_VARNOTFOUND       2 /* Variable not found */
+#define CDF_E_DIMNOTFOUND       3 /* Dimension not found */
+#define CDF_E_ATTNOTFOUND       4 /* Attribute not found */
+#define CDF_E_NRDIMSNOTEQUAL    5
+#define CDF_E_VARHASNOPARENT    6 /*Variable has no parent CDFObject*/
+#define CDF_E_VARHASNODATA      7/*Variable has no data*/
+
+
+/*#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+#define AT __FILE__ ", " TOSTRING(__LINE__)
+#define EXCEPTION(x) "Exception in "AT": " x*/
+
 namespace CDF{
   //Allocates data for an array, provide type, the empty array and length
   // Data must be freed by using free()
   int allocateData(CDFType type,void **p,size_t length);
+  int freeData(void **p);
   //Copies data from one array to another and performs type conversion
   //Destdata must be a pointer to an empty array with non-void type
   class DataCopier{
     public:
       template <class T>
-          int copy(T *destdata,void *sourcedata,CDFType sourcetype,size_t length){
-        if(sourcetype==CDF_CHAR||sourcetype==CDF_BYTE)for(size_t t=0;t<length;t++){destdata[t]=((char*)sourcedata)[t];}
-        if(sourcetype==CDF_CHAR||sourcetype==CDF_UBYTE)for(size_t t=0;t<length;t++){destdata[t]=((unsigned char*)sourcedata)[t];}
-        if(sourcetype==CDF_SHORT)for(size_t t=0;t<length;t++){destdata[t]=((short*)sourcedata)[t];}
-        if(sourcetype==CDF_USHORT)for(size_t t=0;t<length;t++){destdata[t]=((unsigned short*)sourcedata)[t];}
-        if(sourcetype==CDF_INT)for(size_t t=0;t<length;t++){destdata[t]=((int*)sourcedata)[t];}
-        if(sourcetype==CDF_UINT)for(size_t t=0;t<length;t++){destdata[t]=((unsigned int*)sourcedata)[t];}
-        if(sourcetype==CDF_FLOAT)for(size_t t=0;t<length;t++){destdata[t]=((float*)sourcedata)[t];}
-        if(sourcetype==CDF_DOUBLE)for(size_t t=0;t<length;t++){destdata[t]=((double*)sourcedata)[t];}
+      int copy(T *destdata,void *sourcedata,CDFType sourcetype,size_t destinationOffset,size_t sourceOffset,size_t length){
+        size_t dsto=destinationOffset;
+        size_t srco=sourceOffset;
+        if(sourcetype==CDF_CHAR||sourcetype==CDF_BYTE)for(size_t t=0;t<length;t++){destdata[t+dsto]=((char*)sourcedata)[t+srco];}
+        if(sourcetype==CDF_CHAR||sourcetype==CDF_UBYTE)for(size_t t=0;t<length;t++){destdata[t+dsto]=((unsigned char*)sourcedata)[t+srco];}
+        if(sourcetype==CDF_SHORT)for(size_t t=0;t<length;t++){destdata[t+dsto]=((short*)sourcedata)[t+srco];}
+        if(sourcetype==CDF_USHORT)for(size_t t=0;t<length;t++){destdata[t+dsto]=((unsigned short*)sourcedata)[t+srco];}
+        if(sourcetype==CDF_INT)for(size_t t=0;t<length;t++){destdata[t+dsto]=((int*)sourcedata)[t+srco];}
+        if(sourcetype==CDF_UINT)for(size_t t=0;t<length;t++){destdata[t+dsto]=((unsigned int*)sourcedata)[t+srco];}
+        if(sourcetype==CDF_FLOAT)for(size_t t=0;t<length;t++){destdata[t+dsto]=((float*)sourcedata)[t+srco];}
+        if(sourcetype==CDF_DOUBLE)for(size_t t=0;t<length;t++){destdata[t+dsto]=((double*)sourcedata)[t+srco];}
         return 0;
-          }
+      }
+      template <class T>          
+      int copy(T *destdata,void *sourcedata,CDFType sourcetype,size_t length){
+        return copy(destdata,sourcedata,sourcetype,0,0,length);
+      }
+    int copy(void *destdata,void *sourcedata,CDFType sourcetype,size_t destinationOffset,size_t sourceOffset,size_t length){
+      switch(sourcetype){
+        case CDF_CHAR:copy((char*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
+        case CDF_BYTE:copy((char*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
+        case CDF_UBYTE:copy((unsigned char*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
+        case CDF_SHORT:copy((short*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
+        case CDF_USHORT:copy((unsigned short*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
+        case CDF_INT:copy((int*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
+        case CDF_UINT:copy((unsigned int*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
+        case CDF_FLOAT:copy((float*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
+        case CDF_DOUBLE:copy((double*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
+        default:return 1;
+      }
+      
+        return 0;
+          }          
+          
   };
-  //dataCopier.copy should work
+  /*dataCopier.copy function should do the job...*/
   static DataCopier dataCopier;
 
-  //Puts the CDF name of the type in the array with name (CDF_FLOAT, CDF_INT, etc...)
-  void getCDFDataTypeName(char *name,size_t maxlen,int type);
-  //Puts the C name of the type in the array with name (float, int, etc...)
-  void getCDataTypeName(char *name,size_t maxlen,int type);
-  //Returns the number of bytes needed for a single element of this datatype
+  /*Puts the CDF name of the type in the string array with name (CDF_FLOAT, CDF_INT, etc...)*/
+  void getCDFDataTypeName(char *name,const size_t maxlen,const int type);
+  
+  /*Puts the C name of the type in the string array with name (float, int, etc...)*/
+  void getCDataTypeName(char *name,const size_t maxlen,const int type);
+  
+  /*Puts the error code as string in the string array based on the error code number*/
+  void getErrorMessage(char *errorMessage,const size_t maxlen,const int errorCode);
+  
+  /*Returns the number of bytes needed for a single element of this datatype*/
   int getTypeSize(CDFType type);
   
   
   class Attribute{
-        DEF_ERRORFUNCTION();
     public:
       void setName(const char *value){
         name.copy(value);
@@ -66,7 +115,7 @@ namespace CDF{
         length=0;
       }
       ~Attribute(){
-        if(data!=NULL)free(data);data=NULL;
+        if(data!=NULL)freeData(&data);data=NULL;
       }
       CDFType type;
       CT::string name;
@@ -77,13 +126,10 @@ namespace CDF{
         return 0;
       }
       int setData(CDFType type,const void *dataToSet,size_t dataLength){
-        if(data!=NULL)free(data);data=NULL;
+        if(data!=NULL)freeData(&data);data=NULL;
         length=dataLength;
         this->type=type;
         allocateData(type,&data,length);
-        
-        char attrType[256];CDF::getCDFDataTypeName(attrType,255,type);
-        CDBDebug("%s: Setting type %s",name.c_str(),attrType);
         if(type==CDF_CHAR||type==CDF_UBYTE||type==CDF_BYTE)memcpy(data,dataToSet,length);
         if(type==CDF_SHORT||type==CDF_USHORT)memcpy(data,dataToSet,length*sizeof(short));
         if(type==CDF_INT||type==CDF_UINT)memcpy(data,dataToSet,length*sizeof(int));
@@ -92,7 +138,7 @@ namespace CDF{
         return 0;
       }
       int setData(const char*dataToSet){
-        if(data!=NULL)free(data);data=NULL;
+        if(data!=NULL)freeData(&data);data=NULL;
         length=strlen(dataToSet);
         this->type=CDF_CHAR;
         allocateData(type,&data,length+1);
@@ -123,20 +169,129 @@ namespace CDF{
       }
   };
   class Dimension{
+    
     public:
+      Dimension(){
+        isIterative=false;
+        length=0;
+      }
       CT::string name;
       size_t length;
+      bool isIterative;
+      int id;
       size_t getSize(){
         return length;
       }
-      int id;
+      void setSize(size_t _length){
+        length=_length;
+      }
       void setName(const char *value){
         name.copy(value);
       }
+      //Returns a new copy of this dimension
+      Dimension *clone(){
+        Dimension *newDim = new Dimension ();
+        newDim->name=name.c_str();
+        newDim->length=length;
+        newDim->isIterative=isIterative;
+        newDim->id=id;
+        return newDim;
+      }
   };
+  
+  
   class Variable{
+    private:
+      //Currently, aggregation along just 1 dimension is supported.
+      class CDFObjectClass{
+      public:
+        void *cdfObjectPointer;
+        int dimIndex;
+        double dimValue;
+      };
+    std::vector<CDFObjectClass *> cdfObjectList;
+    void *cdfReaderPointer;
+    void *parentCDFObject;
     public:
-      void *cdfReaderPointer;
+      
+      void setParentCDFObject(void *parentCDFObject){
+        this->parentCDFObject=parentCDFObject;
+      }
+      void * getParentCDFObject(){
+        if(parentCDFObject==NULL){
+          throw(CDF_E_VARHASNOPARENT);
+        }
+        return parentCDFObject;
+      }
+      void *getCDFObjectPointer(size_t *start,size_t *count){
+        if(cdfObjectList.size()==0){
+#ifdef CCDFDATAMODEL_DEBUG
+          CDBDebug("returning getParentCDFObject");
+#endif          
+          return getParentCDFObject();
+        }
+        //Return the correct cdfReader According the given dims.
+        size_t iterativeDimIndex;
+        for(size_t j=0;j<dimensionlinks.size();j++){
+          //CDBDebug("%d-> %d - %d - isIterative: %d", j, start[j],count[j],dimensionlinks[j]->isIterative);
+          if(dimensionlinks[j]->isIterative){
+            iterativeDimIndex=start[j];
+            if(count[j]!=1){
+              CDBError("Count %d instead of  1 is requested for iterative dimension %s",count[j],dimensionlinks[j]->name.c_str());
+              throw(CDF_E_ERROR);
+            }
+            break;
+          }
+        }
+#ifdef CCDFDATAMODEL_DEBUG        
+        CDBDebug("Aggregating %d == %d",cdfObjectList[iterativeDimIndex]->dimIndex,iterativeDimIndex);
+#endif
+        return cdfObjectList[iterativeDimIndex]->cdfObjectPointer;
+      }
+      void setCDFReaderPointer(void *cdfReaderPointer){
+        this->cdfReaderPointer=cdfReaderPointer;
+      }
+      void setCDFObjectDim(Variable *sourceVar,const char *dimName);
+      void freeData(){
+        if(data==NULL)return;
+#ifdef CCDFDATAMODEL_DEBUG                
+        char typeName[255];getCDFDataTypeName(typeName,254,type);
+        CDBDebug("Freeing %d elements of type %s for variable %s",getSize(),typeName,name.c_str());
+#endif        
+        if(data!=NULL){CDF::freeData(&data);data=NULL;}
+        setSize(0);
+      }
+      
+      int readData(CDFType type);
+      int readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t *stride);
+      
+       template <class T>
+      T getDataAt(int index){
+        if(data==NULL){
+          throw(CDF_E_VARHASNODATA);
+        }
+        T dataElement=((T*)data)[index];
+        return dataElement;
+      }
+      
+      /*template <class T>
+      int getData(T *dataToGet,size_t getlength){
+        if(data==NULL)return 0;
+        if(getlength>getSize())getlength=getSize();
+        dataCopier.copy(dataToGet,data,type,getlength);
+        return getlength;
+      }*/
+      int getIterativeDimIndex(){
+        for(size_t j=0;j<dimensionlinks.size();j++){if(dimensionlinks[j]->isIterative)return j;}
+        return -1;
+      }
+      Dimension* getIterativeDim(){
+        int i=getIterativeDimIndex();
+        if(i==-1){
+          throw(CDF_E_DIMNOTFOUND);
+        }
+        return dimensionlinks[i];
+      }
       DEF_ERRORFUNCTION();
       Variable(){
         isDimension=false;
@@ -144,10 +299,12 @@ namespace CDF{
         currentSize=0;
         type=CDF_CHAR;
         cdfReaderPointer=NULL;
+        parentCDFObject=NULL;
       }
       ~Variable(){
         for(size_t j=0;j<attributes.size();j++){if(attributes[j]!=NULL){delete attributes[j];attributes[j]=NULL;}}
-        if(data!=NULL){free(data);data=NULL;}
+        if(data!=NULL){CDF::freeData(&data);data=NULL;}
+        for(size_t j=0;j<cdfObjectList.size();j++){if(cdfObjectList[j]!=NULL){delete cdfObjectList[j];cdfObjectList[j]=NULL;}}
       }
       std::vector<Attribute *> attributes;
       std::vector<Dimension *> dimensionlinks;
@@ -169,23 +326,36 @@ namespace CDF{
       }
       void *data;
       bool isDimension;
+      
       Attribute * getAttribute(const char *name){
         for(size_t j=0;j<attributes.size();j++){
           if(attributes[j]->name.equals(name)){
             return attributes[j];
           }
         }
+        throw(CDF_E_ATTNOTFOUND);
         return NULL;
       }
+      Attribute * getAttributeNE(const char *name){try{return getAttribute(name);}catch(int e){return NULL;}}
+      
       Dimension * getDimension(const char *name){
         for(size_t j=0;j<dimensionlinks.size();j++){
           if(dimensionlinks[j]->name.equals(name)){
             return dimensionlinks[j];
           }
         }
+        throw(CDF_E_DIMNOTFOUND);
         return NULL;
       }
+      Dimension * getDimensionNE(const char *name){try{return getDimension(name);}catch(int e){return NULL;}}
+
       int getDimensionIndex(const char *name){
+       int i=getDimensionIndexNE(name);
+       if(i==-1)throw(CDF_E_DIMNOTFOUND);
+       return i;
+      }
+      
+      int getDimensionIndexNE(const char *name){
         for(size_t j=0;j<dimensionlinks.size();j++){
           if(dimensionlinks[j]->name.equals(name)){
             return j;
@@ -207,8 +377,10 @@ namespace CDF{
         return 0;
       }
       int setAttribute(const char *attrName,CDFType attrType,const void *attrData,size_t attrLen){
-        Attribute *attr=getAttribute(attrName);
-        if(attr==NULL){
+        Attribute *attr;
+        try{
+          attr=getAttribute(attrName);
+        }catch(...){
           attr = new Attribute();
           attr->name.copy(attrName);
           addAttribute(attr);
@@ -234,9 +406,9 @@ namespace CDF{
         return retStat;
       }
 
-      int readData(CDFType type);
+      
       int setData(CDFType type,const void *dataToSet,size_t dataLength){
-        if(data!=NULL)free(data);data=NULL;
+        if(data!=NULL)CDF::freeData(&data);data=NULL;
         currentSize=dataLength;
         this->type=type;
         allocateData(type,&data,currentSize);
@@ -285,23 +457,27 @@ class CDFObject:public CDF::Variable{
                   }
                   //Rename a variable
                   if(pszOrgName!=NULL&&pszName!=NULL){
-                    CDF::Variable *var= getVariable(pszOrgName);
-                    if(var!=NULL){
+                    try{
+                      CDF::Variable *var= getVariable(pszOrgName);
                       var->name.copy(pszName);
-                    }
+                    }catch(...){}
                   }
                   if(pszName!=NULL){
                     NCMLVarName=pszName;
-                    CDF::Variable *var= getVariable(pszName);
-                    if(var==NULL&&pszOrgName==NULL){
-                      var = new CDF::Variable();
-                      var->type=CDF_CHAR;
-                      if(pszType!=NULL){
-                        var->type=ncmlTypeToCDFType(pszType);
+                    CDF::Variable *var=NULL;
+                    try{
+                      var= getVariable(pszName);
+                    }catch(...){
+                      if(pszOrgName==NULL){
+                        var = new CDF::Variable();
+                        var->type=CDF_CHAR;
+                        if(pszType!=NULL){
+                          var->type=ncmlTypeToCDFType(pszType);
+                        }
+                        var->name.copy(pszName);
+                        addVariable(var);
                       }
-                      var->name.copy(pszName);
-                      addVariable(var);
-                    }
+                    }                    
                   }
                 }
               }
@@ -339,10 +515,10 @@ class CDFObject:public CDF::Variable{
                   //Check wether we want to remove an attribute
                   if(strncmp(pszType,"attribute",9)==0){
                     if(attributeParentVarName!=NULL){
-                      CDF::Variable *var= getVariable(attributeParentVarName);
-                      if(var!=NULL){
+                      try{
+                        CDF::Variable *var= getVariable(attributeParentVarName);
                         var->removeAttribute(pszName);
-                      }
+                      }catch(...){}
                     }else {
                       //Remove a global attribute
                       removeAttribute(pszName);
@@ -373,18 +549,16 @@ class CDFObject:public CDF::Variable{
                   if(pszAttributeName!=NULL){
                     //Rename an attribute
                     if(pszOrgName!=NULL){
-                      CDF::Variable *var = getVariable(NCMLVarName);
-                      if(var!=NULL){
-                        CDF::Attribute *attr=var->getAttribute(pszOrgName);
-                        if(attr!=NULL){
-                          attr->name.copy(pszAttributeName);
-                        }
-                      }
+                      try{
+                        getVariable(NCMLVarName)->getAttribute(pszOrgName)->name.copy(pszAttributeName);
+                      }catch(...){}
                     }else{
                       //Add an attribute
                       if(pszAttributeType!=NULL&&pszAttributeValue!=NULL){
-                        CDF::Variable *var = getVariable(NCMLVarName);
-                        if(var == NULL){
+                        CDF::Variable *var = NULL;
+                        try{
+                          var = getVariable(NCMLVarName);
+                        }catch(...){
                           var = new CDF::Variable();
                           var->name.copy(NCMLVarName);
                           addVariable(var);
@@ -403,7 +577,7 @@ class CDFObject:public CDF::Variable{
                           double values[attrLen];
                           for(size_t attrN=0;attrN<attrLen;attrN++){
                             values[attrN]=atof(t2[attrN].c_str());
-                            CDBDebug("%f",values[attrN]);
+                            //CDBDebug("%f",values[attrN]);
                           }
                           delete[] t2;
                           //if(attrLen==3)exit(2);
@@ -460,10 +634,15 @@ class CDFObject:public CDF::Variable{
           return variables[j];
         }
       }
+      throw(CDF_E_VARNOTFOUND);
       return NULL;
+    }
+    CDF::Variable * getVariableNE(const char *name){
+      try{return getVariable(name);}catch(int e){return NULL;}
     }
     int addVariable(CDF::Variable *var){
       var->id = variables.size();
+      var->setParentCDFObject(this);
       variables.push_back(var);
       return 0;
     }
@@ -496,8 +675,13 @@ class CDFObject:public CDF::Variable{
           return dimensions[j];
         }
       }
+      throw(CDF_E_DIMNOTFOUND);
       return NULL;
     }
+    CDF::Dimension * getDimensionNE(const char *name){
+      try{return getDimension(name);}catch(int e){return NULL;}
+    }
+
     int applyNCMLFile(const char * ncmlFileName){
       //The following ncml features have been implemented:
       // add a variable with <variable name=... type=.../>
@@ -524,6 +708,28 @@ class CDFObject:public CDF::Variable{
       if(errorRaised==1)return 1;
       return 0;
     }
+    int aggregateDim(CDFObject *sourceCDFObject,const char *dimName){
+      CDF::Variable *srcVar;
+      CDF::Variable *destVar;
+      for(size_t v=0;v<sourceCDFObject->variables.size();v++){
+          //try{srcVar=sourceCDFObject->getVariable("ctt");}catch(int e){CDBError("Variable not found.");throw(__LINE__);}
+        srcVar=sourceCDFObject->variables[v];
+        
+        try{
+          try{destVar=getVariable(srcVar->name.c_str());}catch(int e){CDBError("Variable %s not found.",srcVar->name.c_str());throw(__LINE__);}
+          
+          try{
+            destVar->setCDFObjectDim(srcVar,dimName);
+          }catch(int e){char msg[255];CDF::getErrorMessage(msg,254,e);CDBError(msg);throw(__LINE__);}
+        }catch(int e){
+          CDBError("Unable to setCDFObjectDim for variable %s",srcVar->name.c_str());
+          return 1;
+        }
+        
+      }
+      
+      return 0;
+    }
 };
 namespace CDF{
   void dump(CDFObject* cdfObject,CT::string* dumpString);
@@ -539,9 +745,11 @@ class CDFReader{
     CDFObject *cdfObject;
     virtual int open(const char *fileName) = 0;
     virtual int close() = 0;
-    virtual int readVariableData(CDF::Variable *var, CDFType type) = 0;
+    
+    //These two function may only be used by the variable class itself (TODO create friend class, protected?).
+    virtual int _readVariableData(CDF::Variable *var, CDFType type) = 0;
     //Allocates and reads the variable data
-    virtual int readVariableData(CDF::Variable *var,CDFType type,size_t *start,size_t *count,ptrdiff_t  *stride) = 0;
+    virtual int _readVariableData(CDF::Variable *var,CDFType type,size_t *start,size_t *count,ptrdiff_t  *stride) = 0;
 };
 
 #endif

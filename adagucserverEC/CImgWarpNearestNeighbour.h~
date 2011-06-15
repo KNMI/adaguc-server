@@ -165,12 +165,13 @@ class CDrawTileObjByteCache:public CDrawTileObjInterface{
                         val+=legendOffset;
                         if(val>=239)val=239;else if(val<0)val=0;
                         buf[imgpointer]=(unsigned char)val;
-                        //drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,drawImage->colors[buf[imgpointer]]);
-                        drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,buf[imgpointer]);
+                        drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,drawImage->colors[buf[imgpointer]]);
+                        //drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,buf[imgpointer]);
+                        //drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,0);
                       }else buf[imgpointer]=254;
                     }else{
-                      //drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,drawImage->colors[buf[imgpointer]]);
-                      drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,buf[imgpointer]);
+                      drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,drawImage->colors[buf[imgpointer]]);
+                      //drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,buf[imgpointer]);
                     }
                   }
                 }
@@ -305,7 +306,7 @@ class CDrawTileObj:public CDrawTileObjInterface{
                     imgpointer=srcpixel_x+(dHeight-1-srcpixel_y)*dWidth;
                   val=data[imgpointer];
                   isNodata=false;
-                  if(hasNodataValue)if(val==dfNodataValue)isNodata=true;
+                  if(hasNodataValue){if(val==dfNodataValue)isNodata=true;else if(!(val==val))isNodata=true;}
                   if(!isNodata)if(legendValueRange)if(val<legendLowerRange||val>legendUpperRange)isNodata=true;
                   if(!isNodata){
                     if(legendLog!=0){
@@ -315,8 +316,8 @@ class CDrawTileObj:public CDrawTileObjInterface{
                     val*=legendScale;
                     val+=legendOffset;
                     if(val>=239)val=239;else if(val<0)val=0;
-                    //drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,drawImage->colors[(unsigned char)val]);
-                    drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,(int)val);
+                    drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,drawImage->colors[(unsigned char)val]);
+                    //drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,(int)val);
                   }
                 }
               }

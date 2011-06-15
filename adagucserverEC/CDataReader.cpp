@@ -4,6 +4,8 @@ const char *CDataReader::className="CDataReader";
 
 #define uchar unsigned char
 
+//#define CDATAREADER_DEBUG
+
 /*void writeLogFile2(const char * msg){
   char * logfile=getenv("ADAGUC_LOGFILE");
   if(logfile!=NULL){
@@ -54,13 +56,21 @@ CDFReader *CDataReader::getCDFReader(CDataSource *sourceImage){
   if(cdfReader !=NULL){delete cdfReader;cdfReader = NULL;}
   if(sourceImage->cfgLayer->DataReader.size()>0){
     if(sourceImage->cfgLayer->DataReader[0]->value.equals("HDF5")){
+#ifdef CDATAREADER_DEBUG
+CDBDebug("Creating HDF5 reader");
+#endif
       cdfReader = new CDFHDF5Reader(cdfObject);
       CDFHDF5Reader * hdf5Reader = (CDFHDF5Reader*)cdfReader;
       hdf5Reader->enableKNMIHDF5toCFConversion();
     }
   }
   //Defaults to the netcdf reader
-  if(cdfReader==NULL)cdfReader = new CDFNetCDFReader(cdfObject);
+  if(cdfReader==NULL){
+#ifdef CDATAREADER_DEBUG
+CDBDebug("Creating NetCDF reader");
+#endif
+    cdfReader = new CDFNetCDFReader(cdfObject);
+  }
   return cdfReader;
 }
 
@@ -186,7 +196,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
     return 1;
   }
   for(size_t varNr=0;varNr<sourceImage->dataObject.size();varNr++){
-    var[varNr] = cdfObject->getVariable(sourceImage->dataObject[varNr]->variableName.c_str());
+    var[varNr] = cdfObject->getVariableNE(sourceImage->dataObject[varNr]->variableName.c_str());
     
     if(var[varNr]==NULL){
       CDBError("Variable %s does not exist",sourceImage->dataObject[varNr]->variableName.c_str());
@@ -204,10 +214,10 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
     sourceImage->dataObject[0]->hasStatusFlag=false;
     CDF::Variable * var=sourceImage->dataObject[0]->cdfVariable;
     if(var!=NULL){
-      CDF::Attribute *attr_flag_meanings=var->getAttribute("flag_meanings");
+      CDF::Attribute *attr_flag_meanings=var->getAttributeNE("flag_meanings");
       //We might have status flag, check if all mandatory attributes are set!
       if(attr_flag_meanings!=NULL){
-        CDF::Attribute *attr_flag_values=var->getAttribute("flag_values");
+        CDF::Attribute *attr_flag_values=var->getAttributeNE("flag_values");
         if(attr_flag_values!=NULL){
           CT::string flag_meanings;
           attr_flag_meanings->getDataAsString(&flag_meanings);
@@ -282,19 +292,21 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
   
   
   //Read X and Y dimension data completely.
-  CDF::Variable *varX=cdfObject->getVariable(dimX->name.c_str());
-  CDF::Variable *varY=cdfObject->getVariable(dimY->name.c_str());
+  CDF::Variable *varX=cdfObject->getVariableNE(dimX->name.c_str());
+  CDF::Variable *varY=cdfObject->getVariableNE(dimY->name.c_str());
   if(varX==NULL||varY==NULL){CDBError("X and or Y vars not found...");return 1;}
 
   size_t sta[1],sto[1];ptrdiff_t str[1];
   sta[0]=0;str[0]=stride2DMap; sto[0]=sourceImage->dWidth;
-  status = cdfReader->readVariableData(varX,CDF_DOUBLE,sta,sto,str);if(status!=0){
+  //status = cdfReader->readVariableData(varX,CDF_DOUBLE,sta,sto,str);
+  status = varX->readData(CDF_DOUBLE,sta,sto,str);
+  if(status!=0){
     CDBError("Unable to read x dimension");
     return 1;
   }
 
   sto[0]=sourceImage->dHeight;
-  status = cdfReader->readVariableData(varY,CDF_DOUBLE,sta,sto,str);if(status!=0){
+  status = varY->readData(CDF_DOUBLE,sta,sto,str);if(status!=0){
     CDBError("Unable to read y dimension");
     return 1;
   }
@@ -331,17 +343,17 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
     sourceImage->nativeProj4.copy("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
     sourceImage->nativeEPSG.copy("EPSG:4326");
     //Read projection attributes from the file
-    CDF::Attribute *projvarnameAttr = var[0]->getAttribute("grid_mapping");
+    CDF::Attribute *projvarnameAttr = var[0]->getAttributeNE("grid_mapping");
     if(projvarnameAttr!=NULL){
-      CDF::Variable * projVar = cdfObject->getVariable((char*)projvarnameAttr->data);
+      CDF::Variable * projVar = cdfObject->getVariableNE((char*)projvarnameAttr->data);
       if(projVar==NULL){CDBWarning("projection variable '%s' not found",(char*)projvarnameAttr->data);}
       else {
         //Get proj4_params
-        CDF::Attribute *proj4Attr = projVar->getAttribute("proj4_params");
+        CDF::Attribute *proj4Attr = projVar->getAttributeNE("proj4_params");
         if(proj4Attr!=NULL)sourceImage->nativeProj4.copy((char*)proj4Attr->data);
         //else {CDBWarning("proj4_params not found in variable %s",(char*)projvarnameAttr->data);}
         //Get EPSG_code
-        CDF::Attribute *epsgAttr = projVar->getAttribute("EPSG_code");
+        CDF::Attribute *epsgAttr = projVar->getAttributeNE("EPSG_code");
         if(epsgAttr!=NULL)sourceImage->nativeEPSG.copy((char*)epsgAttr->data);
         //else {CDBWarning("EPSG_code not found in variable %s",(char*)projvarnameAttr->data);}
       }
@@ -364,13 +376,13 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
       return 1;
     }*/
     //Get Unit
-    CDF::Attribute *varUnits=var[varNr]->getAttribute("units");
+    CDF::Attribute *varUnits=var[varNr]->getAttributeNE("units");
     if(varUnits!=NULL){
       sourceImage->dataObject[varNr]->units.copy((char*)varUnits->data);
     }else sourceImage->dataObject[varNr]->units.copy("");
   
     // Check for packed data / scaleOffsetIsApplied
-    CDF::Attribute *scale_factor = var[varNr]->getAttribute("scale_factor");
+    CDF::Attribute *scale_factor = var[varNr]->getAttributeNE("scale_factor");
     if(scale_factor!=NULL){
       //Scale and offset will be applied further downwards in this function.
       //We already set it to true, so we know we have to process it.
@@ -389,7 +401,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
     
       //Internally we use always double for scale and offset parameters:
       scale_factor->getData(&sourceImage->dataObject[varNr]->dfscale_factor,1);
-      CDF::Attribute *add_offset = var[varNr]->getAttribute("add_offset");
+      CDF::Attribute *add_offset = var[varNr]->getAttributeNE("add_offset");
       if(add_offset!=NULL){
         add_offset->getData(&sourceImage->dataObject[varNr]->dfadd_offset,1);
       }else sourceImage->dataObject[varNr]->dfadd_offset=0;
@@ -503,7 +515,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
   
   for(size_t varNr=0;varNr<sourceImage->dataObject.size();varNr++)
   {
-    CDF::Attribute *fillValue = var[varNr]->getAttribute("_FillValue");
+    CDF::Attribute *fillValue = var[varNr]->getAttributeNE("_FillValue");
     if(fillValue!=NULL){
       hasNodataValue=true;
       fillValue->getData(&dfNoData,1);
@@ -515,7 +527,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
     }*/
     
     //Read variable data
-    cdfReader->readVariableData(var[varNr], sourceImage->dataObject[varNr]->dataType,start,count,stride);
+    var[varNr]->readData(sourceImage->dataObject[varNr]->dataType,start,count,stride);
     
     //Swap X, Y dimensions so that pointer x+y*w works correctly
     if(cacheAvailable!=true){
@@ -614,7 +626,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
     
     //Reset _FillValue to correct datatype and adjust scale and offset values.
     if(hasNodataValue){
-      CDF::Attribute *fillValue = var[varNr]->getAttribute("_FillValue");
+      CDF::Attribute *fillValue = var[varNr]->getAttributeNE("_FillValue");
       if(fillValue!=NULL){
         if(var[varNr]->type==CDF_FLOAT){float fNoData=(float)dfNoData;fillValue->setData(CDF_FLOAT,&fNoData,1);}
         if(var[varNr]->type==CDF_DOUBLE)fillValue->setData(CDF_DOUBLE,&dfNoData,1);
@@ -674,7 +686,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
     //Make a list of required dimensions
     std::vector<CT::string *> dimsToKeep;
     for(size_t v=0;v<sourceImage->dataObject.size();v++){
-      CDF::Variable *var = cdfObject->getVariable(sourceImage->dataObject[v]->variableName.c_str());
+      CDF::Variable *var = cdfObject->getVariableNE(sourceImage->dataObject[v]->variableName.c_str());
       //Loop through dim links
       for(size_t d=0;d<var->dimensionlinks.size();d++){
         dimsToKeep.push_back(new CT::string(var->dimensionlinks[d]->name.c_str()));
@@ -752,13 +764,13 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
     CDBDebug("DONE");      
     //Read the dimensions
     for(size_t j=0;j<sourceImage->timeSteps[timeStep]->dims.dimensions.size();j++){
-      CDF::Dimension *dim = cdfObject->getDimension(sourceImage->timeSteps[timeStep]->dims.dimensions[0]->name.c_str());
+      CDF::Dimension *dim = cdfObject->getDimensionNE(sourceImage->timeSteps[timeStep]->dims.dimensions[0]->name.c_str());
       if(dim!=NULL){
-        CDF::Variable *var = cdfObject->getVariable(sourceImage->timeSteps[timeStep]->dims.dimensions[0]->name.c_str());
+        CDF::Variable *var = cdfObject->getVariableNE(sourceImage->timeSteps[timeStep]->dims.dimensions[0]->name.c_str());
         
         if(var==NULL){CDBError("var is null");return 1;}
         CDBDebug("Reading variable %s"    ,var->name.c_str());
-        cdfReader->readVariableData(var,CDF_DOUBLE);
+        var->readData(CDF_DOUBLE);
               
         double dimValue[var->getSize()];
               //sourceImage->timeSteps[0]->dims.dimensions[0]->index*CDF::getTypeSize(var->type)
@@ -863,9 +875,9 @@ int CDataReader::getTimeUnit(char * pszTime){
     return 0;
   }
   pszTime[0]='\0';
-  CDF::Variable *time = cdfObject->getVariable(sourceImage->cfgLayer->Dimension[0]->attr.name.c_str());
+  CDF::Variable *time = cdfObject->getVariableNE(sourceImage->cfgLayer->Dimension[0]->attr.name.c_str());
   if(time==NULL){return 1;}
-  CDF::Attribute *timeUnits = time->getAttribute("units");
+  CDF::Attribute *timeUnits = time->getAttributeNE("units");
   if(timeUnits ==NULL){return 1;}
   snprintf(pszTime,MAX_STR_LEN,"%s",(char*)timeUnits->data);
   return 0;
@@ -882,11 +894,11 @@ int CDataReader::getTimeString(char * pszTime){
     return 0;
   }
   pszTime[0]='\0';
-  CDF::Variable *time = cdfObject->getVariable(sourceImage->cfgLayer->Dimension[0]->attr.name.c_str());
+  CDF::Variable *time = cdfObject->getVariableNE(sourceImage->cfgLayer->Dimension[0]->attr.name.c_str());
   if(time==NULL){return 1;}
-  CDF::Attribute *timeUnits = time->getAttribute("units");
+  CDF::Attribute *timeUnits = time->getAttributeNE("units");
   if(timeUnits ==NULL){return 1;}
-  cdfReader->readVariableData(time,CDF_DOUBLE);
+  time->readData(CDF_DOUBLE);
   if(sourceImage->dNetCDFNumDims>2){
     size_t index=sourceImage->getDimensionIndex("time");
     if(index>=0&&index<time->getSize()){
@@ -984,11 +996,20 @@ int CDataReader::DBLoopFiles(CPGSQLDB *DB,CDataSource *sourceImage,int removeNon
     char ISOTime[MAX_STR_LEN+1];
     for(size_t j=0;j<dirReader->fileList.size();j++){
       //Loop through all configured dimensions.
+#ifdef CDATAREADER_DEBUG
+CDBDebug("Loop through all configured dimensions.");
+#endif
       for(size_t d=0;d<sourceImage->cfgLayer->Dimension.size();d++){
         int fileExistsInDB=0;
         bool isTimeDim = false;
         CT::string dimName(sourceImage->cfgLayer->Dimension[d]->attr.name.c_str());
         dimName.toLowerCase();
+        
+#ifdef CDATAREADER_DEBUG
+CDBDebug("Dimname %s",dimName.c_str());
+#endif
+
+        
         if(dimName.equals("time"))isTimeDim=true;
         //How do we detect correctly wether this is a time dim?
         if(dimName.indexOf("time")!=-1)isTimeDim=true;
@@ -1053,20 +1074,36 @@ int CDataReader::DBLoopFiles(CPGSQLDB *DB,CDataSource *sourceImage,int removeNon
                    (int)j,
                    (int)dirReader->fileList.size(),
                    dirReader->fileList[j]->baseName.c_str());
+#ifdef CDATAREADER_DEBUG
+CDBDebug("Creating new CDFObject");
+#endif
+            
             //Create CDF object
             cdfObject=new CDFObject();
+#ifdef CDATAREADER_DEBUG
+CDBDebug("Getting CDFReader");
+#endif
+            
             cdfReader = getCDFReader(sourceImage);
             if(cdfReader == NULL)throw(__LINE__);
             
             //Open the file
+#ifdef CDATAREADER_DEBUG
+CDBDebug("Opening file %s",dirReader->fileList[j]->fullName.c_str());
+#endif
+            
             status = cdfReader->open(dirReader->fileList[j]->fullName.c_str());
             if(status!=0){
               CDBError("Unable to open file '%s'",dirReader->fileList[j]->fullName.c_str());
               throw(__LINE__);
             }
+#ifdef CDATAREADER_DEBUG
+CDBDebug("File opened.");
+#endif
+            
             if(status==0){
-              CDF::Dimension * dimDim = cdfObject->getDimension(sourceImage->cfgLayer->Dimension[d]->attr.name.c_str());
-              CDF::Variable *  dimVar = cdfObject->getVariable(sourceImage->cfgLayer->Dimension[d]->attr.name.c_str());
+              CDF::Dimension * dimDim = cdfObject->getDimensionNE(sourceImage->cfgLayer->Dimension[d]->attr.name.c_str());
+              CDF::Variable *  dimVar = cdfObject->getVariableNE(sourceImage->cfgLayer->Dimension[d]->attr.name.c_str());
               if(dimDim==NULL||dimVar==NULL){
                 CDBError("In file %s",dirReader->fileList[j]->fullName.c_str());
                 CDBError("For variable '%s' dimension '%s' not found",
@@ -1074,12 +1111,12 @@ int CDataReader::DBLoopFiles(CPGSQLDB *DB,CDataSource *sourceImage,int removeNon
                          sourceImage->cfgLayer->Dimension[d]->attr.name.c_str());
                 throw(__LINE__);
               }else{
-                CDF::Attribute *dimUnits = dimVar->getAttribute("units");
+                CDF::Attribute *dimUnits = dimVar->getAttributeNE("units");
                 if(dimUnits==NULL){
                   CDBError("No units found for dimension %s",dimVar->name.c_str());
                   throw(__LINE__);
                 }
-                status = cdfReader->readVariableData(dimVar,CDF_DOUBLE);if(status!=0){
+                status = dimVar->readData(CDF_DOUBLE);if(status!=0){
                   CDBError("Unable to read variable data for %s",dimVar->name.c_str());
                   throw(__LINE__);
                 }

@@ -60,7 +60,6 @@ class CServerParams{
         }
       }
       layerName->concat(cfgLayer->Name[0]->value.c_str());
-      layerName->encodeURL();
     }
     void getCacheFileName(CT::string *cacheFileName);
     void getCacheDirectory(CT::string *cacheFileName);

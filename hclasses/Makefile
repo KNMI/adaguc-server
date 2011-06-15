@@ -1,5 +1,5 @@
 #HOME=/data/apps/rcc/MaartenP/install
-#HOME=/nobackup/users/plieger/software/install
+HOME=/nobackup/users/plieger/software/install
 
 #HOME=/data/data1/mapserver/
 #HOME2=/data/data1/software/install/
@@ -10,7 +10,7 @@
 #HOME=/home/plieger/interpolws/software/install
 #HOME=/home/gsie/gsiews/software/install/
 #HOME=/home/plieger/software/install
-HOME=/data/apps/rcc/MaartenP/install
+#HOME=/data/apps/rcc/MaartenP/install
 LIBDIR=$(HOME)/lib
 
 INCLUDEDIR=$(HOME)/include -I /usr/include/libxml2/ -I $(HOME2)/include  -I /usr/include/postgresql/
@@ -19,8 +19,8 @@ CCOMPILER=g++ -Wall -I $(INCLUDEDIR)
 
 #optimalization options:
 #CCOMPILER=g++ -march=pentium4 -mtune=pentium4 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 -I $(INCLUDEDIR) 
-#CCOMPILER=g++ -march=core2 -mtune=core2 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 -I $(INCLUDEDIR) 
-CCOMPILER=g++ -O2 -I $(INCLUDEDIR) 
+CCOMPILER=g++ -march=core2 -mtune=core2 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 -I $(INCLUDEDIR) 
+#CCOMPILER=g++ -O2 -I $(INCLUDEDIR) 
 #CCOMPILER=g++ -march=k8-sse3 -mtune=k8-sse3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 -I $(INCLUDEDIR)  
 
 USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lgdal -lxml2 -lgd -lproj -lpq -ludunits

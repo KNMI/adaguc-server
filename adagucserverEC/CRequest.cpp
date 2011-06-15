@@ -560,16 +560,18 @@ int CRequest::process_all_layers(){
         //Execute the query
         values_path = DB.query_select(Query.c_str(),0);
         if(values_path==NULL){
-          CDBError("No results for query: '%s'",Query.c_str());
+          if(showqueryinfo){
+            CDBError("No results for query: '%s'",Query.c_str());
+          }
           status = DB.close();
-          return 1;
+          return 2;
         }
 
         if(values_path->count==0){
           CDBError("No results for query: '%s'",Query.c_str());
           delete[] values_path;
           status = DB.close();
-          return 1;
+          return 2;
         }
         //Get timestring
         date_time = DB.query_select(Query.c_str(),1);
@@ -792,6 +794,7 @@ int CRequest::process_querystring(){
   int dFound_Request=0;
   int dFound_Service=0;
   int dFound_Format=0;
+  int dFound_InfoFormat=0;
   int dFound_Transparent=0;
   int dFound_BGColor=0;
   int dErrorOccured=0;
@@ -944,6 +947,19 @@ int CRequest::process_querystring(){
           }
         }else{
           CDBWarning("FORMAT already defined");
+          dErrorOccured=1;
+        }
+      }
+      
+      // INFO_FORMAT parameter
+      if(value0Cap.match("INFO_FORMAT")==0){
+        if(dFound_InfoFormat==0){
+          if(values[1].length()>1){
+            srvParam->InfoFormat.copy(&values[1]);
+            dFound_InfoFormat=1;
+          }
+        }else{
+          CDBWarning("INFO_FORMAT already defined");
           dErrorOccured=1;
         }
       }
@@ -1214,7 +1230,12 @@ int CRequest::process_querystring(){
           }
           int status =  process_wms_getfeatureinfo_request();
           if(status != 0) {
-            CDBError("WMS GetFeatureInfo Request failed");
+            if(status!=2){
+              CDBError("WMS GetFeatureInfo Request failed");
+            }else {
+              printf("%s%c%c\n","Content-Type:text/plain",13,10);
+              printf("No results from query.");
+            }
             return 1;
           }
           return 0;
