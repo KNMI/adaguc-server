@@ -222,6 +222,13 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
   if(dataSource->cfgLayer->Offset.size()>0){
     dataSource->legendOffset=parseFloat(dataSource->cfgLayer->Offset[0]->value.c_str());
   }
+   //When min and max are given, calculate the scale and offset according to min and max.
+    if(dataSource->cfgLayer->Min.size()>0&&dataSource->cfgLayer->Max.size()>0){
+      float min=parseFloat(dataSource->cfgLayer->Min[0]->value.c_str());
+      float max=parseFloat(dataSource->cfgLayer->Max[0]->value.c_str());
+      dataSource->legendScale=240/(max-min);
+      dataSource->legendOffset=min*(-dataSource->legendScale);
+    }
   if(dataSource->cfgLayer->Log.size()>0){
     dataSource->legendLog=parseFloat(dataSource->cfgLayer->Log[0]->value.c_str());
   }
@@ -458,6 +465,7 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
     
     //When min and max are given, calculate the scale and offset according to min and max.
     if(dataSource->cfgLayer->Min.size()>0&&dataSource->cfgLayer->Max.size()>0){
+      CDBDebug("Found min and max in layer configuration");
       float min=parseFloat(dataSource->cfgLayer->Min[0]->value.c_str());
       float max=parseFloat(dataSource->cfgLayer->Max[0]->value.c_str());
       dataSource->legendScale=240/(max-min);

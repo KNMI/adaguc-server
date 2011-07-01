@@ -1,5 +1,6 @@
 #include "CTypes.h"
-
+/* !!! TODO Currently missing in netcdf lib 4.1.2 */
+//int nc_def_var_deflate(int ncid, int varid, int shuffle, int deflate,                        int deflate_level){return 0;};
 namespace CT{
 
   stringlist *string::splitN(const char * _value){

@@ -7,6 +7,7 @@
 #include "CADAGUC_time.h"
 #define MAX_VARS 512
 #define SOFTWARE_VERSION "ADAGUC NetCDF4 vector API V0.2"
+#include "CTypes.h"
 #include "CDebugger.h"
 
 void ncerror(const char * msg,int e) ;

@@ -6,7 +6,7 @@ const char *CDataReader::className="CDataReader";
 
 //#define CDATAREADER_DEBUG
 
-/*void writeLogFile2(const char * msg){
+void writeLogFile2(const char * msg){
   char * logfile=getenv("ADAGUC_LOGFILE");
   if(logfile!=NULL){
     FILE * pFile = NULL;
@@ -26,7 +26,7 @@ const char *CDataReader::className="CDataReader";
       fclose (pFile);
     }//else CDBError("Unable to write logfile %s",logfile);
   }
-}*/
+}
 
 /*void printStatus(const char *status,const char *a,...){
   va_list ap;
@@ -249,6 +249,11 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
   // It is possible to skip every N cell in x and y. When set to 1, all data is displayed.
   // When set to 2, every second datacell is displayed, etc...
   int stride2DMap=1;
+  
+  //When we are reading from cache, the file has been written based on strided data
+  if(cacheAvailable){
+    stride2DMap=1;
+  }
 
   // Retrieve X, Y Dimensions and Width, Height
   sourceImage->dNetCDFNumDims = var[0]->dimensionlinks.size();
@@ -705,13 +710,13 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
                 keepVariable[w]=1;
                 keepDim=true;break;
               }
-              if(keepDim==true){
-                CDBDebug("Keep %s",(cdfObject->variables[w]->name.c_str()));
-              }
-              if(keepDim==false){
-                CDBDebug("False %s",(cdfObject->variables[w]->name.c_str()));
-              }
             }
+	    if(keepDim==true){
+	      CDBDebug("Keep %s",(cdfObject->variables[w]->name.c_str()));
+	    }
+	    if(keepDim==false){
+	      CDBDebug("Discard %s",(cdfObject->variables[w]->name.c_str()));
+	    }
           }
           //We will keep the variables with a size of zero, because these are usually variables with a lot of metadata attributes.
           if(cdfObject->variables[w]->dimensionlinks.size()==0){
@@ -756,6 +761,28 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
         
     varX->type=CDF_DOUBLE;
     varY->type=CDF_DOUBLE;
+    try{
+      
+      //Reduce dimension sizes because of striding
+      cdfObject->getDimension(varX->name.c_str())->setSize(cdfObject->getDimension(varX->name.c_str())->getSize()/stride2DMap);
+      cdfObject->getDimension(varY->name.c_str())->setSize(cdfObject->getDimension(varY->name.c_str())->getSize()/stride2DMap);
+      CDBDebug("dfdim_X[0] %f-%f",dfdim_X[0],dfdim_X[sourceImage->dWidth-1]);
+      for(size_t j=0;j<cdfObject->getDimension(varX->name.c_str())->getSize();j++)((double*)varX->data)[j]=dfdim_X[j];
+      for(size_t j=0;j<cdfObject->getDimension(varY->name.c_str())->getSize();j++)((double*)varY->data)[j]=dfdim_Y[j];
+      
+      /*//Calculate cellsize based on read X,Y dims
+      double *dfdim_X=(double*)varX->data;
+      double *dfdim_Y=(double*)varY->data;
+      sourceImage->dfCellSizeX=(dfdim_X[sourceImage->dWidth-1]-dfdim_X[0])/double(sourceImage->dWidth-1);
+      sourceImage->dfCellSizeY=(dfdim_Y[sourceImage->dHeight-1]-dfdim_Y[0])/double(sourceImage->dHeight-1);
+      // Calculate BBOX
+      sourceImage->dfBBOX[0]=dfdim_X[0]-sourceImage->dfCellSizeX/2.0f;
+      sourceImage->dfBBOX[1]=dfdim_Y[sourceImage->dHeight-1]+sourceImage->dfCellSizeY/2.0f;
+      sourceImage->dfBBOX[2]=dfdim_X[sourceImage->dWidth-1]+sourceImage->dfCellSizeX/2.0f;
+      sourceImage->dfBBOX[3]=dfdim_Y[0]-sourceImage->dfCellSizeY/2.0f;;*/
+    }catch(int e){}
+    
+    
     int timeStep = sourceImage->getCurrentTimeStep();
 
         /*for(size_t j=0;j<cdfObject->variables.size();j++){
@@ -769,7 +796,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
         CDF::Variable *var = cdfObject->getVariableNE(sourceImage->timeSteps[timeStep]->dims.dimensions[0]->name.c_str());
         
         if(var==NULL){CDBError("var is null");return 1;}
-        CDBDebug("Reading variable %s"    ,var->name.c_str());
+        CDBDebug("Cache Reading variable %s"    ,var->name.c_str());
         var->readData(CDF_DOUBLE);
               
         double dimValue[var->getSize()];
@@ -790,10 +817,10 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
     
     
     
-      /*  CT::string dumpString;
+       CT::string dumpString;
          CDF::dump(cdfObject,&dumpString);
          //CDBDebug("\nSTART\n%s\nEND\n",dumpString.c_str());
-    writeLogFile2(dumpString.c_str());*/
+    writeLogFile2(dumpString.c_str());
     CDFNetCDFWriter netCDFWriter(cdfObject);
     netCDFWriter.disableReadData();
         

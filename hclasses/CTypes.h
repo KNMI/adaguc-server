@@ -13,7 +13,8 @@
 
 
 #define END NULL
-
+/* !!! TODO Currently missing in netcdf lib 4.1.2 */
+//int nc_def_var_deflate(int ncid, int varid, int shuffle, int deflate,                        int deflate_level);
 namespace CT{
   using namespace std;
    template <class T2>

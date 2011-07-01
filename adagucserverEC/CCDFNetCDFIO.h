@@ -149,8 +149,8 @@ class CDFNetCDFReader :public CDFReader{
       //Set cache size
       //status = nc_set_chunk_cache(55353600*10,2000,0.75);
       //if(status!=NC_NOERR){ncError(__LINE__,className,"nc_set_chunk_cache: ",status);return 1;}
-      status = nc_set_chunk_cache(0,0,0);
-      if(status!=NC_NOERR){ncError(__LINE__,className,"nc_set_chunk_cache: ",status);return 1;}
+      //status = nc_set_chunk_cache(0,0,0);
+      //if(status!=NC_NOERR){ncError(__LINE__,className,"nc_set_chunk_cache: ",status);return 1;}
       //CDBDebug("opening %s",fileName);
       status = nc_open(fileName,NC_NOWRITE,&root_id);
       if(status!=NC_NOERR){ncError(__LINE__,className,"nc_open: ",status);return 1;}
@@ -193,7 +193,7 @@ class CDFNetCDFReader :public CDFReader{
       //Apply longitude warping of the data
       //Longitude data must be already present in order to make variable warping available.
       //EG 0-360 to -180 till -180
-      bool enableLonWarp=false;//true;
+      bool enableLonWarp=true;//true;
       if(enableLonWarp){
         if(variable->name.equals("lon")){
           //CDBDebug("Warplon: Found variable lon");
@@ -223,7 +223,7 @@ class CDFNetCDFReader :public CDFReader{
           delete[] lonData;
         }
         if(lonWarpNeeded==true){
-          int dimIndex = variable->getDimensionIndex("lon");
+          int dimIndex = variable->getDimensionIndexNE("lon");
           if(dimIndex!=-1){
             //CDBDebug("Warplon: Found dimension lon for variable %s",variable->name.c_str());
             if(dimIndex!=((int)variable->dimensionlinks.size())-1){
@@ -301,7 +301,7 @@ class CDFNetCDFReader :public CDFReader{
     }
     
     int _readVariableData(CDF::Variable *var, CDFType type,size_t *start,size_t *count,ptrdiff_t *stride){
-      CDBDebug("reading from file %s",fileName.c_str());
+      CDBDebug("reading %s from file %s",var->name.c_str(),fileName.c_str());
       //CDBDebug("readVariableData");
       //It is essential that the variable nows which reader can be used to read the data
       //var->cdfReaderPointer=(void*)this;
@@ -437,8 +437,8 @@ class CDFNetCDFWriter{
       for(int writeDimsFirst=0;writeDimsFirst<2;writeDimsFirst++){
         //Write all different variables.
         nc_close(root_id);
-        status = nc_set_chunk_cache(0,0,0);
-        if(status!=NC_NOERR){ncError(__LINE__,className,"nc_set_chunk_cache: ",status);return 1;}
+        //status = nc_set_chunk_cache(0,0,0);
+        //if(status!=NC_NOERR){ncError(__LINE__,className,"nc_set_chunk_cache: ",status);return 1;}
   
         status = nc_open(fileName ,netcdfWriteMode|NC_WRITE, &root_id);
         if(status!=NC_NOERR){ncError(__LINE__,className,"nc_create: ",status);nc_close(root_id);return 1;}
@@ -482,14 +482,14 @@ class CDFNetCDFWriter{
               //Set chunking and deflate options
               chunkSizes[0]=1;
               if(netcdfMode>=4&&numDims>0&&1==1){
-                int shuffle       = 0;
+                /*int shuffle       = 0;
                 int deflate       = 1;
                 int deflate_level = 2;
                 status = nc_def_var_chunking(root_id,nc_var_id,0 ,chunkSizes);
                 if(status!=NC_NOERR){ncError(__LINE__,className,"nc_def_var_chunking: ",status);return 1;}
                 status = nc_def_var_deflate(root_id,nc_var_id,shuffle ,deflate, deflate_level);
                 if(status!=NC_NOERR){ncError(__LINE__,className,"nc_def_var_deflate: ",status);return 1;}
-                
+                */
               }
               
               //copy data
@@ -622,7 +622,7 @@ class CDFNetCDFWriter{
             delete[] lonData;
           }
           if(lonWarpNeeded==true){
-            int dimIndex = variable->getDimensionIndex("lon");
+            int dimIndex = variable->getDimensionIndexNE("lon");
             if(dimIndex!=-1){
               if(dimIndex!=((int)variable->dimensionlinks.size())-1){
                 CDBError("Error while warping longitude dimension for variable %s: longitude is not the first index",variable->name.c_str());

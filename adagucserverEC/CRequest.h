@@ -1,11 +1,13 @@
 #ifndef CRequest_H
 #define CRequest_H
-
+#include <sys/stat.h>
 #include "CServerParams.h"
 #include "CDataSource.h"
 #include "CStopWatch.h"
 #include "CXMLGen.h"
+#ifdef ADAGUC_USE_GDAL
 #include "CGDALDataWriter.h"
+#endif
 #include "CImageDataWriter.h"
 #include "CDebugger.h"
 

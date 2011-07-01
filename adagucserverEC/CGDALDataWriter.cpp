@@ -1,3 +1,4 @@
+#ifdef ADAGUC_USE_GDAL
 #include "CGDALDataWriter.h"
 
 
@@ -585,3 +586,4 @@ void CGDALDataWriter::generateGetCoverageFileName(char *pszTempFileName){
   pszTempFileName[128]='\0';
   //CDBDebug("generateGetCoverageFileName");
 }
+#endif

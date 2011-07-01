@@ -438,11 +438,11 @@ int CADAGUC_R_API::SetProjection(const char * _pszProjection){
 
       //deflate
       if(isNetCDF3==0&&enableChunkDeflate==1){
-        status = nc_def_var_deflate(destncid,lonvar_id,shuffle ,deflate, deflate_level);
+        /*status = nc_def_var_deflate(destncid,lonvar_id,shuffle ,deflate, deflate_level);
         ncerror ("nc_def_var_deflate",status);if(status!=NC_NOERR)return 1;
         status = nc_def_var_deflate(destncid,latvar_id,shuffle ,deflate, deflate_level);
         ncerror ("nc_def_var_deflate",status);if(status!=NC_NOERR)return 1;
-
+*/
         size_t chunksizes[2];
         chunksizes[0]=dRows;
         chunksizes[1]=dColumns;

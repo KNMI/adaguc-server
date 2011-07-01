@@ -7,6 +7,7 @@ HOME=/nobackup/users/plieger/software/install
 #HOME=/home/gsie/gsiews/software/install/
 #HOME=/home/plieger/software/install
 #HOME=/data/apps/rcc/MaartenP/install
+HOME=/home/plieger/software/install/
 LIBDIR=$(HOME)/lib
 
 INCLUDEDIR=$(HOME)/include -I /usr/include/libxml2/ 
@@ -28,7 +29,7 @@ CCOMPILER=g++ -Wall -I $(INCLUDEDIR)
 #CCOMPILER=g++ -march=core2 -mtune=core2 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 -I $(INCLUDEDIR) 
 #CCOMPILER=g++ -O2 -I $(INCLUDEDIR) 
 #CCOMPILER=g++ -march=k8-sse3 -mtune=k8-sse3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 -I $(INCLUDEDIR)  
-USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lgdal -lxml2 -lgd -lproj -lpq -ludunits -lfreetype -lgd -lpng -lrt -lpthread -lcurl 
+USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lxml2 -lgd -lproj -lpq -ludunits -lfreetype -lgd -lpng -lrt -lpthread -lcurl #-lgdal 
 
 # all libs together
 LIBS = -L$(LIBDIR) $(USERLIBS) -L$(HOME2)/lib

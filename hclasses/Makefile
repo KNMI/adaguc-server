@@ -11,6 +11,7 @@ HOME=/nobackup/users/plieger/software/install
 #HOME=/home/gsie/gsiews/software/install/
 #HOME=/home/plieger/software/install
 #HOME=/data/apps/rcc/MaartenP/install
+HOME=/home/plieger/software/install/
 LIBDIR=$(HOME)/lib
 
 INCLUDEDIR=$(HOME)/include -I /usr/include/libxml2/ -I $(HOME2)/include  -I /usr/include/postgresql/
@@ -23,12 +24,12 @@ CCOMPILER=g++ -march=core2 -mtune=core2 -msse -msse2 -msse3 -mssse3 -mfpmath=sse
 #CCOMPILER=g++ -O2 -I $(INCLUDEDIR) 
 #CCOMPILER=g++ -march=k8-sse3 -mtune=k8-sse3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 -I $(INCLUDEDIR)  
 
-USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lgdal -lxml2 -lgd -lproj -lpq -ludunits
+USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lxml2 -lgd -lproj -lpq -ludunits #-lgdal
 
 # all libs together
 LIBS = -L$(LIBDIR) $(USERLIBS) -L$(HOME2)/lib
 
-OBJECTS = hclassestest.o CADAGUCNCMLWriter.o  CADAGUC_time.o  CDirReader.o  CADAGUC_V_API.o CTypes.o CPGSQLDB.o CGetCMDOption.o CDebugger.o #CADAGUC_R_API.o 
+OBJECTS = hclassestest.o CADAGUCNCMLWriter.o  CADAGUC_time.o  CDirReader.o  CTypes.o CPGSQLDB.o CGetCMDOption.o CDebugger.o #CADAGUC_R_API.o 
 
 EXECUTABLE= hclassestest
 
