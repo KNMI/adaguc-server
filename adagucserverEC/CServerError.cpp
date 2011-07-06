@@ -7,6 +7,9 @@ static char errormsgs[ERRORMSGS_SIZE];
 static int errormsgs_ptr=0;
 static int error_raised=0;
 static int cerror_mode=0;//0 = text 1 = image 2 = XML
+static int errImageWidth=640;
+static int errImageHeight=480;
+static int errImageFormat=IMAGEFORMAT_IMAGEPNG8;
 void printerror(const char * text)
 {
   error_raised=1;
@@ -42,10 +45,8 @@ void printerrorImage(void *_drawImage){
         concat.concat(" ");
         characters=concat.length();
       }
-      else
-      {
-          // drawImage.rectangle(5,y*15+4,499,y*15+20,253,253);
-        drawImage->setText(concat.c_str(),concat.length(),12,5+y*15, 240,0);
+      else{
+        drawImage->setText(concat.c_str(),concat.length(),12,5+y*15, 240,-1);
         y++;
         concat.copy(&sp[k]);
         concat.concat(" ");
@@ -53,22 +54,26 @@ void printerrorImage(void *_drawImage){
       }
     }
     delete[] sp;
-      
-        //drawImage.rectangle(5,y*15+4,499,y*15+20,253,253);
-    drawImage->setText(concat.c_str(),concat.length(),12,5+y*15, 240,0);
+    drawImage->setText(concat.c_str(),concat.length(),12,5+y*15, 240,-1);
     y++;
   }
   y=(y-1)*15+26;
-      //drawImage.rectangle(5,3,499,(y-1)*15+20,252,0);
-  drawImage->line(3,3,499,3,254);
+      //drawImage.rectangle(5,3,errImageWidth-1,(y-1)*15+20,252,0);
+  drawImage->line(3,3,errImageWidth-1,3,254);
   drawImage->line(3,3,5,y,254);
-  drawImage->line(3,y,499,y,251);
-  drawImage->line(499,3,499,y,251);
+  drawImage->line(3,y,errImageWidth-1,y,251);
+  drawImage->line(errImageWidth-1,3,errImageWidth-1,y,251);
   delete [] messages;
 }
 
-
-
+bool errorsOccured(){
+  if(error_raised==0)return false; else return true;
+}
+void setErrorImageSize(int w,int h,int format){
+  errImageWidth=w;
+  errImageHeight=h;
+  errImageFormat=format;
+}
 void readyerror(){
 
 
@@ -102,10 +107,9 @@ void readyerror(){
     return;
   }
   if(cerror_mode==WMS_EXCEPTIONS_IMAGE||cerror_mode==WMS_EXCEPTIONS_BLANKIMAGE){//Image
-    printf("%s%c%c\n","Content-Type:image/png",13,10);  
     CDrawImage drawImage;
     drawImage.setBGColor(255,255,255);
-    drawImage.createImage(500,500);
+    drawImage.createImage(errImageWidth,errImageHeight);
     
     drawImage.createGDPalette();
     //palette.createStandard();
@@ -113,7 +117,17 @@ void readyerror(){
     if(cerror_mode==WMS_EXCEPTIONS_IMAGE){
       printerrorImage(&drawImage);
     }
-    drawImage.printImage();
+    
+    if(errImageFormat==IMAGEFORMAT_IMAGEPNG8||errImageFormat==IMAGEFORMAT_IMAGEPNG32){
+      printf("%s%c%c\n","Content-Type:image/png",13,10);
+      drawImage.printImagePng();
+    }else if(errImageFormat==IMAGEFORMAT_IMAGEGIF){
+      printf("%s%c%c\n","Content-Type:image/gif",13,10);
+      drawImage.printImageGif();
+    }else {
+      printf("%s%c%c\n","Content-Type:image/png",13,10);
+      drawImage.printImagePng();
+    }
   }
 }
 

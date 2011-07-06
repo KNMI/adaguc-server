@@ -22,16 +22,16 @@
       <DCPType>
         <HTTP>
           <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="[SERVICEONLINERESOURCE]"/></Get>
-          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="[SERVICEONLINERESOURCE]"/></Post>
         </HTTP>
       </DCPType>
     </GetCapabilities>
     <GetMap>
       <Format>image/png</Format>
+      <Format>image/gif</Format>
+      <Format>image/png32</Format>
       <DCPType>
         <HTTP>
           <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="[SERVICEONLINERESOURCE]"/></Get>
-          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="[SERVICEONLINERESOURCE]"/></Post>
         </HTTP>
       </DCPType>
     </GetMap>
@@ -42,7 +42,6 @@
       <DCPType>
         <HTTP>
           <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="[SERVICEONLINERESOURCE]"/></Get>
-          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="[SERVICEONLINERESOURCE]"/></Post>
         </HTTP>
       </DCPType>
     </GetFeatureInfo>
@@ -51,16 +50,16 @@
       <DCPType>
         <HTTP>
           <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="[SERVICEONLINERESOURCE]"/></Get>
-          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="[SERVICEONLINERESOURCE]"/></Post>
         </HTTP>
       </DCPType>
     </DescribeLayer>
     <GetLegendGraphic>
       <Format>image/png</Format>
+      <Format>image/gif</Format>
+      <Format>image/png32</Format>
       <DCPType>
         <HTTP>
           <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="[SERVICEONLINERESOURCE]"/></Get>
-          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="[SERVICEONLINERESOURCE]"/></Post>
         </HTTP>
       </DCPType>
     </GetLegendGraphic>
@@ -69,7 +68,6 @@
       <DCPType>
         <HTTP>
           <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="[SERVICEONLINERESOURCE]"/></Get>
-          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="[SERVICEONLINERESOURCE]"/></Post>
         </HTTP>
       </DCPType>
     </GetStyles>

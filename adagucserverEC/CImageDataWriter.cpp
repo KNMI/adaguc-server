@@ -111,7 +111,7 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   if(mode!=0){CDBError("Already initialized");return 1;}
   this->srvParam=srvParam;
   if(_setTransparencyAndBGColor(this->srvParam,&drawImage)!=0)return 1;
-  if(srvParam->Format.indexOf("24")>0||srvParam->Styles.indexOf("HQ")>0){
+  if(srvParam->imageMode==SERVERIMAGEMODE_RGBA||srvParam->Styles.indexOf("HQ")>0){
     drawImage.setTrueColor(true);
     drawImage.setAntiAliased(true);
   }
@@ -129,7 +129,7 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
       //return 1;
 
     }else {
-      CDBError("Font configured, but no attribute location was given");
+      CDBError("In <Font>, attribute \"location\" missing");
       return 1;
     }
   }
@@ -245,6 +245,11 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
   
   //Default rendermethod is nearest
   renderMethod=nearest;
+
+  if(CDataReader::autoConfigureStyles(dataSource)!=0){
+    CDBError("Unable to autoconfigure styles");
+    return 1;
+  }
   
   //Try to find the default rendermethod from the layers style object
   if(dataSource->cfgLayer->Styles.size()==1){
@@ -272,7 +277,10 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
       }
     }
     delete[] layerstyles ;
-  }else return dLegendIndex;
+  }else {
+    // No legend or styles are defined for this layer
+    return dLegendIndex;
+  }
   
   //If a rendermethod is given in the layers config, use the first one as default
   if(dataSource->cfgLayer->RenderMethod.size()==1){
@@ -724,18 +732,18 @@ int CImageDataWriter::warpImage(CDataSource *dataSource,CDrawImage *drawImage){
   
   int status;
   //Open the data of this dataSource
-  //CDBDebug("opening:");
+  CDBDebug("opening:");
   CDataReader reader;
-  //CDBDebug("!");
+  CDBDebug("!");
   CT::string cacheLocation;srvParam->getCacheDirectory(&cacheLocation);
-  //CDBDebug("!");
+  CDBDebug("!");
   status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL,cacheLocation.c_str());
-  //CDBDebug("!");
+  CDBDebug("!");
   if(status!=0){
     CDBError("Could not open file: %s",dataSource->getFileName());
     return 1;
   }
-//  CDBDebug("opened");
+  CDBDebug("opened");
   //Initialize projection algorithm
   status = imageWarper.initreproj(dataSource,drawImage->Geo,&srvParam->cfg->Projection);
   if(status!=0){
@@ -802,10 +810,13 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   }
   
 #ifdef MEASURETIME
-  StopWatch_Stop("warp  finished");
+  StopWatch_Stop("warp finished");
 #endif
+  CDBDebug("imageWarper.closereproj();");
   imageWarper.closereproj();
+  CDBDebug("reader.close();");
   reader.close();
+  CDBDebug("Ok");
   return 0;
 }
 
@@ -1045,11 +1056,14 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
       
     if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
       if(j!=0){if(initializeLegend(srvParam,dataSource)==-1)return 1;}
+      CDBDebug("Start warping");
       status = warpImage(dataSource,&drawImage);
+      CDBDebug("Finished warping");
       if(status != 0){
         CDBError("warpImage for layer %s failed",dataSource->layerName.c_str());
         return status;
       }
+      
       if(j==dataSources.size()-1){
         if(status == 0){
           if(dataSource->cfgLayer->ImageText.size()>0){
@@ -1213,62 +1227,37 @@ int CImageDataWriter::end(){
       resetErrors();
       printf("%s",resultXML.c_str());
       
-      /*
-        <?xml version="1.0" encoding="ISO-8859-1"?>
-
-        <msGMLOutput 
-                xmlns:gml="http://www.opengis.net/gml"
-                xmlns:xlink="http://www.w3.org/1999/xlink"
-                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-                <SCIA__CONS_R___IMAP____L3__20040101T000000_20040201T000000_0001_CH4_layer>
-                        <SCIA__CONS_R___IMAP____L3__20040101T000000_20040201T000000_0001_CH4_feature>
-                                <gml:boundedBy>
-                                        <gml:Box srsName="EPSG:4326">
-                                                <gml:coordinates>-74.500000,-6.500000 -74.500000,-6.500000</gml:coordinates>
-                                        </gml:Box>
-                                </gml:boundedBy>
-                        </SCIA__CONS_R___IMAP____L3__20040101T000000_20040201T000000_0001_CH4_feature>
-                </SCIA__CONS_R___IMAP____L3__20040101T000000_20040201T000000_0001_CH4_layer>
-        </msGMLOutput>
-      */
-      
-    
-    
     }
-    //printf("<html>\n%s<hr>\n",getFeatureInfoHeader.c_str());
-    //printf("%s</html>\n",getFeatureInfoResult.c_str());
+    for(size_t j=0;j<getFeatureInfoResultList.size();j++){delete getFeatureInfoResultList[j];getFeatureInfoResultList[j]=NULL; } getFeatureInfoResultList.clear();
   }
   if(requestType!=REQUEST_WMS_GETMAP&&requestType!=REQUEST_WMS_GETLEGENDGRAPHIC)return 0;
-  //if(CRequest::CGI==1){
-  if(requestType==REQUEST_WMS_GETMAP){
-//drawCascadedWMS("http://bhw222.knmi.nl:8080/cgi-bin/interpol_overlaymap.cgi?","NL_provinces,NL_seas,NL_country_borders",true);
-    //http://bhlbontw.knmi.nl/rcc/download/ensembles/cgi-bin/basemaps.cgi?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=world_eca,country&WIDTH=1640&HEIGHT=933&SRS=EPSG:28992&BBOX=-1176662.9631120902,-386020.95362084033,1897718.0006410922,1363001.8751485008&STYLES=&FORMAT=image/png&TRANSPARENT=TRUE&
-
-     //drawCascadedWMS("http://bhlbontw.knmi.nl/rcc/download/ensembles/cgi-bin/basemaps.cgi?","country_lines",true);
-     
+  
+  
+  //Output WMS getmap results
+  if(errorsOccured()){
+    return 1;
   }
   
+  //Animation image:
   if(animation==1){
     drawImage.addImage(100);
     drawImage.endAnimation();
     return 0;
   }
-  printf("%s%c%c\n","Content-Type:image/png",13,10);
-  printerrorImage(&drawImage);
-  if(srvParam){
-    //TODO write correct format
+
+  //Static image
+  int status=0;
+  if(srvParam->imageFormat==IMAGEFORMAT_IMAGEPNG8||srvParam->imageFormat==IMAGEFORMAT_IMAGEPNG32){
+    printf("%s%c%c\n","Content-Type:image/png",13,10);
+    status=drawImage.printImagePng();
+  }else if(srvParam->imageFormat==IMAGEFORMAT_IMAGEGIF){
+    printf("%s%c%c\n","Content-Type:image/gif",13,10);
+    status=drawImage.printImageGif();
+  }else {
+    printf("%s%c%c\n","Content-Type:image/png",13,10);
+    status=drawImage.printImagePng();
   }
-  
-  for(int y=0;y<255;y++){
-    for(int x=0;x<255;x++){
-      //drawImage.setPixel2(x,y,x+y*256);
-    }
-  }
-  
-  
-  drawImage.printImage();
-  //}
-  return 0;
+  return status;
 }
 float CImageDataWriter::getValueForColorIndex(CDataSource *dataSource,int index){
   /*if(dataSource->stretchMinMax){

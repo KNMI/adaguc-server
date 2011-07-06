@@ -29,7 +29,7 @@ class CDirReader{
     ~CDirReader();
     int listDir (const char* directory,const char *ext_filter);
     int listDirRecursive (const char* directory,const char *ext_filter);
-    void makeCleanPath(CT::string *path);
+    static void makeCleanPath(CT::string *path);
     int testRegEx(const char *string,const char *pattern);
 };
 #endif

@@ -28,11 +28,12 @@ void writeLogFile(const char * msg){
         fputs  (szTemp, pFile );
       }
       fclose (pFile);
-    }//else CDBError("Unable to write logfile %s",logfile);
+    }else fprintf(stderr,"Unable to write logfile %s",logfile);
   }
 }
 
 void writeErrorFile(const char * msg){
+  //fprintf(stderr,"%s",msg);
   char * logfile=getenv("ADAGUC_ERRORFILE");
   if(logfile!=NULL){
     FILE * pFile;
@@ -50,7 +51,7 @@ void writeErrorFile(const char * msg){
         fputs  (szTemp, pFile );
       }
       fclose (pFile);
-    }//else CDBError("Unable to write logfile %s",logfile);
+    }else fprintf(stderr,"Unable to write logfile %s",logfile);
   };
   writeLogFile(msg);
 }

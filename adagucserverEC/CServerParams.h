@@ -7,8 +7,11 @@
 #include "CServerConfig_CPPXSD.h"
 #include "COGCDims.h"
 #include "CGeoParams.h"
+#include "CPGSQLDB.h"
+
 
 class CServerParams{
+  DEF_ERRORFUNCTION();
   public:
     double dfResX,dfResY;
     int dWCS_RES_OR_WH;
@@ -16,11 +19,14 @@ class CServerParams{
     CT::string *WMSLayers;
     CT::string Format;
     CT::string InfoFormat;
+    int imageFormat;
+    int imageMode;
     CT::string BGColor;
     bool Transparent;
     CGeoParams * Geo;
     CT::string Styles;
     CT::string Style;
+    CT::string OpenDAPSource,OpenDapVariable;
     COGCDims OGCDims[NC_MAX_DIMS];
     int NumOGCDims;
     int serviceType;
@@ -44,6 +50,8 @@ class CServerParams{
       enableDocumentCache=true;
       configObj = new CServerConfig();
       Geo = new CGeoParams;
+      imageFormat=IMAGEFORMAT_IMAGEPNG8;
+      imageMode=SERVERIMAGEMODE_8BIT;
   //    dataSources = NULL;
     }
     ~CServerParams(){
@@ -60,12 +68,28 @@ class CServerParams{
           layerName->concat("/");
         }
       }
+      if(cfgLayer->Name.size()==0){
+        CServerConfig::XMLE_Name *name=new CServerConfig::XMLE_Name();
+        cfgLayer->Name.push_back(name);
+        name->value.copy(cfgLayer->Variable[0]->value.c_str());
+      }  
       layerName->concat(cfgLayer->Name[0]->value.c_str());
     }
+    void encodeTableName(CT::string *tableName){
+      tableName->replace("/","_");
+      tableName->toLowerCase();
+    }
+    
+    int lookupTableName(CT::string *tableName,const char *path,const char *filter);
+
+
     void getCacheFileName(CT::string *cacheFileName);
     void getCacheDirectory(CT::string *cacheFileName);
+    //Table names need to be different between time and height.
+    // Therefore create unique tablenames like tablename_time and tablename_height
+    static void makeCorrectTableName(CT::string *tableName,CT::string *dimName);
+    static void showWCSNotEnabledErrorMessage();
 };
-
 
 
 

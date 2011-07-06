@@ -56,6 +56,8 @@ class CServerConfig:public CXMLSerializerInterface{
     };
     class XMLE_Scale: public CXMLObjectInterface{};
     class XMLE_Offset: public CXMLObjectInterface{};
+    class XMLE_Min: public CXMLObjectInterface{};
+    class XMLE_Max: public CXMLObjectInterface{};
     
     class XMLE_ContourIntervalL: public CXMLObjectInterface{};
     class XMLE_ContourIntervalH: public CXMLObjectInterface{};
@@ -108,6 +110,8 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_Legend*> Legend;
         std::vector <XMLE_Scale*> Scale;
         std::vector <XMLE_Offset*> Offset;
+        std::vector <XMLE_Min*> Min;
+        std::vector <XMLE_Max*> Max;
         std::vector <XMLE_ContourIntervalL*> ContourIntervalL;
         std::vector <XMLE_ContourIntervalH*> ContourIntervalH;
         std::vector <XMLE_Log*> Log;
@@ -116,11 +120,14 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_ContourText*> ContourText;
         std::vector <XMLE_ShadeInterval*> ShadeInterval;
         std::vector <XMLE_SmoothingFilter*> SmoothingFilter;
+        std::vector <XMLE_StandardNames*> StandardNames;
         
         ~XMLE_Style(){
           XMLE_DELOBJ(Legend);
           XMLE_DELOBJ(Scale);
           XMLE_DELOBJ(Offset);
+          XMLE_DELOBJ(Min);
+          XMLE_DELOBJ(Max);
           XMLE_DELOBJ(Log);
           XMLE_DELOBJ(ValueRange);
           XMLE_DELOBJ(ContourIntervalL);
@@ -129,6 +136,8 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(ContourText);
           XMLE_DELOBJ(ShadeInterval);
           XMLE_DELOBJ(SmoothingFilter);
+          XMLE_DELOBJ(StandardNames);
+          
         }
         class Cattr{
           public:
@@ -143,6 +152,8 @@ class CServerConfig:public CXMLSerializerInterface{
             if(equals("Legend",6,name)){XMLE_ADDOBJ(Legend);}
             else if(equals("Scale",5,name)){XMLE_ADDOBJ(Scale);}
             else if(equals("Offset",6,name)){XMLE_ADDOBJ(Offset);}
+            else if(equals("Min",3,name)){XMLE_ADDOBJ(Min);}
+            else if(equals("Max",3,name)){XMLE_ADDOBJ(Max);}
             else if(equals("Log",3,name)){XMLE_ADDOBJ(Log);}
             else if(equals("ValueRange",10,name)){XMLE_ADDOBJ(ValueRange);}
             else if(equals("ContourIntervalL",16,name)){XMLE_ADDOBJ(ContourIntervalL);}
@@ -151,6 +162,7 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("ContourText",11,name)){XMLE_ADDOBJ(ContourText);}
             else if(equals("ShadeInterval",13,name)){XMLE_ADDOBJ(ShadeInterval);}
             else if(equals("SmoothingFilter",15,name)){XMLE_ADDOBJ(SmoothingFilter);}
+            else if(equals("StandardNames",13,name)){XMLE_ADDOBJ(StandardNames);}
             
            
           }
@@ -385,10 +397,10 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString value,cachefile;
+            CXMLString enabled,cachefile;
         }attr;
         void addAttribute(const char *attrname,const char *attrvalue){
-          if(equals("value",5,attrname)){attr.value.copy(attrvalue);return;}
+          if(equals("enabled",7,attrname)){attr.enabled.copy(attrvalue);return;}
           else if(equals("cachefile",9,attrname)){attr.cachefile.copy(attrvalue);return;}
         }
     };
@@ -419,7 +431,7 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString type;
+            CXMLString type,hidden;
         }attr;
         
         
@@ -434,6 +446,8 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_Legend*> Legend;
         std::vector <XMLE_Scale*> Scale;
         std::vector <XMLE_Offset*> Offset;
+        std::vector <XMLE_Min*> Min;
+        std::vector <XMLE_Max*> Max;
         std::vector <XMLE_Log*> Log;
         std::vector <XMLE_ValueRange*> ValueRange;
         std::vector <XMLE_ImageText*> ImageText;
@@ -458,6 +472,8 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(Legend);
           XMLE_DELOBJ(Scale);
           XMLE_DELOBJ(Offset);
+          XMLE_DELOBJ(Min);
+          XMLE_DELOBJ(Max);
           XMLE_DELOBJ(Log);
           XMLE_DELOBJ(ValueRange);
           XMLE_DELOBJ(ImageText);
@@ -467,6 +483,7 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(RenderMethod);
           XMLE_DELOBJ(MetadataURL);
           XMLE_DELOBJ(Cache);
+          XMLE_DELOBJ(WMSLayer);
         }
         void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value){
           CXMLSerializerInterface * base = (CXMLSerializerInterface*)baseClass;
@@ -485,6 +502,8 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("Legend",6,name)){XMLE_ADDOBJ(Legend);}
             else if(equals("Scale",5,name)){XMLE_ADDOBJ(Scale);}
             else if(equals("Offset",6,name)){XMLE_ADDOBJ(Offset);}
+            else if(equals("Min",3,name)){XMLE_ADDOBJ(Min);}
+            else if(equals("Max",3,name)){XMLE_ADDOBJ(Max);}            
             else if(equals("Log",3,name)){XMLE_ADDOBJ(Log);}
             else if(equals("ValueRange",10,name)){XMLE_ADDOBJ(ValueRange);}
             else if(equals("ImageText",9,name)){XMLE_ADDOBJ(ImageText);}
@@ -500,6 +519,7 @@ class CServerConfig:public CXMLSerializerInterface{
         }
         void addAttribute(const char *attrname,const char *attrvalue){
           if(equals("type",4,attrname)){attr.type.copy(attrvalue);return;}
+          else if(equals("hidden",6,attrname)){attr.hidden.copy(attrvalue);return;}
         }
     };
 

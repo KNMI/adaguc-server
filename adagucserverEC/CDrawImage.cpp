@@ -91,7 +91,7 @@ int CDrawImage::createImage(CGeoParams *_Geo){
 
 
 
-int CDrawImage::printImage(){
+int CDrawImage::printImagePng(){
   if(dImageCreated==0){CDBError("print: image not created");return 1;}
   
   if(_bAntiAliased==true){
@@ -100,6 +100,17 @@ int CDrawImage::printImage(){
   }
   if(_bAntiAliased==false){
     gdImagePng(image, stdout);
+  }
+  return 0;
+}
+int CDrawImage::printImageGif(){
+  if(dImageCreated==0){CDBError("print: image not created");return 1;}
+  if(_bAntiAliased==true){
+    CDBError("Antialiasing with gif images is not supported");
+    return 1;
+  }
+  if(_bAntiAliased==false){
+    gdImageGif(image, stdout);
   }
   return 0;
 }

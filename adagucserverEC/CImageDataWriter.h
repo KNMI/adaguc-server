@@ -72,6 +72,10 @@ class CImageDataWriter: public CBaseDataWriterInterface{
   public:
     static const char *RenderMethodStringList;
     CImageDataWriter();
+    ~CImageDataWriter(){
+      for(size_t j=0;j<getFeatureInfoResultList.size();j++){delete getFeatureInfoResultList[j];getFeatureInfoResultList[j]=NULL; } getFeatureInfoResultList.clear();
+    }
+    
     int createLegend(CDataSource *sourceImage);
     int getFeatureInfo(CDataSource *sourceImage,int dX,int dY);
     int createAnimation();

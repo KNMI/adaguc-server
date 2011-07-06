@@ -73,8 +73,8 @@ int CPGSQLDB::checkTable(const char * pszTableName,const char *pszColumns){
     result = PQexec(connection, query_string);                   /* send the query */
     if (PQresultStatus(result) != PGRES_COMMAND_OK)         /* did the query fail? */
     {
-      snprintf(szTemp,MAX_STR_LEN,"checkTable: CREATE TABLE %s failed",pszTableName);
-      CDBError(szTemp);
+      //snprintf(szTemp,MAX_STR_LEN,"checkTable: CREATE TABLE %s failed",pszTableName);
+      //CDBError(szTemp);
       clearResult();
       return 1;
     }
@@ -89,7 +89,7 @@ int CPGSQLDB::checkTable(const char * pszTableName,const char *pszColumns){
 int CPGSQLDB::query(const char *pszQuery){
   LastErrorMsg[0]='\0';
   if(dConnected == 0){
-    CDBError("checkTable: Not connected to DB");
+    CDBError("query: Not connected to DB");
     return 1;
   }
   result = PQexec(connection, pszQuery);
@@ -107,7 +107,7 @@ CT::string* CPGSQLDB::query_select(const char *pszQuery,int dColumn){
   LastErrorMsg[0]='\0';
   int i;
   if(dConnected == 0){
-    CDBError("checkTable: Not connected to DB");
+    CDBError("query_select: Not connected to DB");
     return NULL;
   }
 
@@ -132,4 +132,51 @@ CT::string* CPGSQLDB::query_select(const char *pszQuery,int dColumn){
 }
 CT::string* CPGSQLDB::query_select(const char *pszQuery){
   return query_select(pszQuery,0);
+}
+
+
+CDB::Store* CPGSQLDB::queryToStore(const char *pszQuery){
+  LastErrorMsg[0]='\0';
+
+  if(dConnected == 0){
+    CDBError("queryToStore: Not connected to DB");
+    return NULL;
+  }
+
+  result = PQexec(connection, pszQuery);
+
+  if (PQresultStatus(result) != PGRES_TUPLES_OK) // did the query fail? 
+  {
+    //snprintf(szTemp,MAX_STR_LEN,"query_select: %s failed",pszQuery);
+    //CDBError(szTemp);
+    clearResult();
+    return NULL;
+  }
+  size_t numCols=PQnfields(result);
+  size_t numRows=PQntuples(result);
+  if(numCols==0||numRows==0){
+    clearResult();
+    return NULL;
+  }
+  ColumnModel *colModel = new ColumnModel(PQnfields(result));
+ // colModel 
+  
+  
+  for(size_t colNumber=0;colNumber<numCols;colNumber++){
+    colModel->setColumn(colNumber,PQfname(result,colNumber));
+  }
+  
+  Store *store=new Store(colModel);
+  
+  
+  
+  
+  for(size_t rowNumber=0;rowNumber<numRows;rowNumber++){
+    Record *record = new Record(colModel);
+    for(size_t colNumber=0;colNumber<numCols;colNumber++)record->push(colNumber,PQgetvalue(result, rowNumber, colNumber));
+    store->push(record);
+  }
+ 
+  clearResult();
+  return store;;
 }

@@ -13,27 +13,58 @@ int CXMLGen::getFileNameForLayer(WMSLayer * myWMSLayer){
   /**********************************************/
   /*  Read the file to obtain BBOX parameters   */
   /**********************************************/
+  
+  //Create a new datasource and set configuration for it
+  if(myWMSLayer->dataSource==NULL){
+    myWMSLayer->dataSource = new CDataSource ();
+    myWMSLayer->dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],myWMSLayer->layer,myWMSLayer->name.c_str());
+  }
+  CDBDebug("databasetable='%s'",myWMSLayer->layer->DataBaseTable[0]->value.c_str());
   int status;
   if(myWMSLayer->layer->attr.type.equals("database")||
     myWMSLayer->layer->attr.type.equals("styled")){
+    if(myWMSLayer->dataSource->cfgLayer->Dimension.size()==0){
+      if(CDataReader::autoConfigureDimensions(myWMSLayer->dataSource,true)!=0){
+        CDBError("Unable to autoconfigure dimensions");
+        return 1;
+      }
+    }
+   
     //Check if any dimension is given:
     if(myWMSLayer->layer->Dimension.size()==0){
       //If not, just return the filename
       myWMSLayer->fileName.copy(myWMSLayer->layer->FilePath[0]->value.c_str());
       return 0;
     }
-    //CDBDebug("Database");  
+    CDBDebug("Database");  
     CPGSQLDB DB;
     
     status = DB.connect(srvParam->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0)return 1;
+    CDBDebug("ok");  
     CT::string tableName(myWMSLayer->layer->DataBaseTable[0]->value.c_str());
+    CDBDebug("ok %s",myWMSLayer->layer->Dimension[0]->attr.name.c_str());
     CT::string dimName(myWMSLayer->layer->Dimension[0]->attr.name.c_str());
-    makeCorrectTableName(&tableName,&dimName);
+     CDBDebug("ok");
+    CServerParams::makeCorrectTableName(&tableName,&dimName);
+     CDBDebug("ok");
     CT::string query;
     query.print("select path from %s limit 1",tableName.c_str());
-          
+    CDBDebug("query %s",query.c_str());        
     CT::string *values = DB.query_select(query.c_str(),0);
-    if(values == NULL){CDBError("Query failed");DB.close();return 1;}
+    if(values == NULL){
+      CDBDebug("Query '%s' failed. Now trying to update the database.",query.c_str());
+      
+      //CDBDebug("Start update db for layer %s",myWMSLayer->name.c_str());
+      
+
+      status = CDBFileScanner::updatedb(srvParam->cfg->DataBase[0]->attr.parameters.c_str(),myWMSLayer->dataSource,NULL,NULL);
+      if(status !=0){CDBError("Could not update db for: %s",myWMSLayer->dataSource->cfgLayer->Name[0]->value.c_str());DB.close();return 1;}
+
+      
+      DB.close();
+      return getFileNameForLayer(myWMSLayer);
+      
+    }
     if(values->count>0){
       myWMSLayer->fileName.copy(&values[0]);
     }
@@ -55,26 +86,57 @@ int CXMLGen::getFileNameForLayer(WMSLayer * myWMSLayer){
     return 0;
 }
 
-int CXMLGen::getDataSourceForLayer(WMSLayer * myWMSLayer){
-  CDataReader reader;
+int CXMLGen::getDataSourceForLayer(WMSLayer * myWMSLayer, CDataReader *reader){
+ 
   //CDBDebug("Reading %s",myWMSLayer->fileName.c_str());
-  myWMSLayer->dataSource = new CDataSource ();
-  myWMSLayer->dataSource->addTimeStep(myWMSLayer->fileName.c_str(),"");
-  myWMSLayer->dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],myWMSLayer->layer,myWMSLayer->name.c_str());
+
   
+  myWMSLayer->dataSource->addTimeStep(myWMSLayer->fileName.c_str(),"");
   //Is this a cascaded WMS server?
   if(myWMSLayer->layer->attr.type.equals("cascaded")){
   }
   
   //Is this a local file based WMS server?
   if(!myWMSLayer->layer->attr.type.equals("cascaded")){
-    int status = reader.open(myWMSLayer->dataSource,CNETCDFREADER_MODE_OPEN_HEADER,NULL);
+    int status = reader->open(myWMSLayer->dataSource,CNETCDFREADER_MODE_OPEN_HEADER,NULL);
     
     if(status!=0){
+    
       CDBError("Could not open file: %s",myWMSLayer->dataSource->getFileName());
       return 1;
     }
-    reader.close();
+          
+    //Get a nice name for this layer (if not configured)
+    if(myWMSLayer->dataSource->cfgLayer->Title.size()==0){
+      //By default title is the same as the name of the layer.
+      myWMSLayer->title.copy(myWMSLayer->dataSource->cfgLayer->Name[0]->value.c_str());
+      //Try to get longname:
+      //reader.cdfObject->
+   
+      try{
+        CT::string attributeValue;
+        myWMSLayer->dataSource->dataObject[0]->cdfVariable->getAttribute("long_name")->getDataAsString(&attributeValue);
+        CDBDebug("attributeValue %s",attributeValue.c_str());
+        myWMSLayer->title.copy(attributeValue.c_str());
+      }catch(int e){
+        CT::string errorMessage;
+        CDF::getErrorMessage(&errorMessage,e);
+        CDBDebug("No long_name: %s (%d)",errorMessage.c_str(),e);
+        try{
+          CT::string attributeValue;
+          myWMSLayer->dataSource->dataObject[0]->cdfVariable->getAttribute("standard_name")->getDataAsString(&attributeValue);
+          CDBDebug("attributeValue %s",attributeValue.c_str());
+          myWMSLayer->title.copy(attributeValue.c_str());
+        }catch(int e){
+          CT::string errorMessage;
+          CDF::getErrorMessage(&errorMessage,e);
+          CDBDebug("No standard_name: %s (%d)",errorMessage.c_str(),e);
+        }
+      }
+    }else{
+      myWMSLayer->title.copy(myWMSLayer->dataSource->cfgLayer->Title[0]->value.c_str());
+    }
+    
   }
   return 0;
 }
@@ -111,7 +173,7 @@ int CXMLGen::getProjectionInformationForLayer(WMSLayer * myWMSLayer){
   return 0;
 }
 
-int CXMLGen::getDimsForLayer(WMSLayer * myWMSLayer){
+int CXMLGen::getDimsForLayer(WMSLayer * myWMSLayer,CDataReader *reader){
   char szMaxTime[32];
   char szMinTime[32];
   //char szInterval[32];
@@ -123,13 +185,20 @@ int CXMLGen::getDimsForLayer(WMSLayer * myWMSLayer){
           //printf("Opening DB\n");
     CPGSQLDB DB;
     int status = DB.connect(srvParam->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0)return 1;
+    if(myWMSLayer->dataSource->cfgLayer->Dimension.size()!=0){
+      //Check if all dimensions are configured properly by the user (X and Y are never configured by the user, so +2)
+      if(myWMSLayer->dataSource->cfgLayer->Dimension.size()+2!=myWMSLayer->dataSource->dataObject[0]->cdfVariable->dimensionlinks.size()){
+        CDBError("Warning: Dimensions for layer %s are not configured properly! (configured: %d!=variable: %d)",myWMSLayer->dataSource->cfgLayer->Name[0]->value.c_str()+2,myWMSLayer->dataSource->cfgLayer->Dimension.size(),myWMSLayer->dataSource->dataObject[0]->cdfVariable->dimensionlinks.size());
+      }
+    }
+      
     for(size_t i=0;i<myWMSLayer->dataSource->cfgLayer->Dimension.size();i++){
       //Create a new dim to store in the layer
       WMSLayer::Dim *dim=new WMSLayer::Dim();myWMSLayer->dimList.push_back(dim);
       //Get the tablename
       CT::string tableName(myWMSLayer->layer->DataBaseTable[0]->value.c_str());
       CT::string dimName(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
-      makeCorrectTableName(&tableName,&dimName);
+      CServerParams::makeCorrectTableName(&tableName,&dimName);
             
       bool hasMultipleValues=false;
       if(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.c_str()==NULL)hasMultipleValues=true;
@@ -139,7 +208,7 @@ int CXMLGen::getDimsForLayer(WMSLayer * myWMSLayer){
         CT::string query;
         query.print("select %s from %s",myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str(),tableName.c_str());
         CT::string *values = DB.query_select(query.c_str(),0);
-        if(values == NULL){CDBError("Query failed");DB.close();return 1;}
+        if(values == NULL){CDBError("Query failed \"%s\"",query.c_str());DB.close();return 1;}
         if(values->count>0){
           //if(srvParam->requestType==REQUEST_WMS_GETCAPABILITIES)
           {
@@ -651,11 +720,11 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc,std::vector<WMSLay
               //For information about this, visit http://www.galdosinc.com/archives/151
                 CT::string * timeDimSplit = layer->dimList[timeDimIndex]->values.split("/");
                 if(timeDimSplit->count==3){
-                  XMLDoc->concat("        <gml:TimePeriod>\n");
+                  XMLDoc->     concat("        <gml:TimePeriod>\n");
                   XMLDoc->printconcat("          <gml:begin>%s</gml:begin>\n",timeDimSplit[0].c_str());
                   XMLDoc->printconcat("          <gml:end>%s</gml:end>\n",timeDimSplit[1].c_str());
                   XMLDoc->printconcat("          <gml:duration>%s</gml:duration>\n",timeDimSplit[2].c_str());
-                  XMLDoc->concat("        </gml:TimePeriod>\n");
+                  XMLDoc->     concat("        </gml:TimePeriod>\n");
                 }
                 delete[] timeDimSplit;
               }
@@ -798,7 +867,7 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
       WMSLayer *myWMSLayer = new WMSLayer();myWMSLayerList.push_back(myWMSLayer);
       
       myWMSLayer->name.copy(&layerUniqueName);
-      myWMSLayer->title.copy(srvParam->cfg->Layer[j]->Title[0]->value.c_str());
+     
       myWMSLayer->group.copy(&layerGroup);
       //Set the configuration layer for this layer, as easy reference
       myWMSLayer->layer=srvParam->cfg->Layer[j];
@@ -813,13 +882,24 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
       status = getFileNameForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;
       
       //Try to open the file, and make a datasource for the layer
-      status = getDataSourceForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;
+      CDataReader *reader = new CDataReader();
+      if(myWMSLayer->hasError==false){status = getDataSourceForLayer(myWMSLayer,reader);if(status != 0)myWMSLayer->hasError=1;}
       
       //Generate a common projection list information
-      status = getProjectionInformationForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;
+      if(myWMSLayer->hasError==false){status = getProjectionInformationForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;}
       
       //Get the dimensions and its extents for this layer
-      status = getDimsForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;
+      if(myWMSLayer->hasError==false){status = getDimsForLayer(myWMSLayer,reader);if(status != 0)myWMSLayer->hasError=1;}
+      
+      //Auto configure styles
+      if(myWMSLayer->hasError==false){
+        if(myWMSLayer->dataSource->cfgLayer->Styles.size()==0){
+          status=CDataReader::autoConfigureStyles(myWMSLayer->dataSource);
+          if(status != 0){myWMSLayer->hasError=1;CDBError("Unable to autoconfigure styles for layer %s",layerUniqueName.c_str());}
+        }
+      }
+      reader->close();
+      delete reader;
       
       //Get the defined styles for this layer
       status = getStylesForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;
@@ -839,11 +919,21 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
   }
 
   if(srvParam->requestType==REQUEST_WCS_GETCAPABILITIES){
-    status = getWCS_1_0_0_Capabilities(&XMLDoc,&myWMSLayerList);
+    #ifndef ADAGUC_USE_GDAL
+      CServerParams::showWCSNotEnabledErrorMessage();
+      return 1;
+    #else
+      status = getWCS_1_0_0_Capabilities(&XMLDoc,&myWMSLayerList);
+    #endif
   }
   
   if(srvParam->requestType==REQUEST_WCS_DESCRIBECOVERAGE){
-    status = getWCS_1_0_0_DescribeCoverage(&XMLDoc,&myWMSLayerList);
+    #ifndef ADAGUC_USE_GDAL 
+      CServerParams::showWCSNotEnabledErrorMessage();
+      return 1;
+    #else
+      status = getWCS_1_0_0_DescribeCoverage(&XMLDoc,&myWMSLayerList);
+    #endif
   }
   
   if(status != 0){

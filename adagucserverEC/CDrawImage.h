@@ -384,7 +384,8 @@ class CDrawImage{
     ~CDrawImage();
     int createImage(int _dW,int _dH);
     int createImage(CGeoParams *_Geo);
-    int printImage();
+    int printImagePng();
+    int printImageGif();
     int createGDPalette(CServerConfig::XMLE_Legend *palette);
     int createGDPalette();
     int create685Palette();

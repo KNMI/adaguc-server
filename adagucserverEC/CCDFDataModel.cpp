@@ -77,6 +77,13 @@ void CDF::getErrorMessage(char *errorMessage,const size_t maxlen,const int error
    
 }
 
+void CDF::getErrorMessage(CT::string *errorMessage,const int errorCode){
+  char msg[1024];
+  getErrorMessage(msg,1023,errorCode);
+  errorMessage->copy(msg);    
+}
+  
+
 
 //const char *getAttributeAsString(CDF::Attribute *attr){
 //}
@@ -463,3 +470,43 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
   
 }
 
+CDFObject::~CDFObject(){
+  CDBDebug("********** Destroying cdfobject");
+  clear();
+  CDFReader *r=(CDFReader*)reader;
+  delete r;r=NULL;
+  reader=NULL;
+  //for(size_t j=0;j<attributes.size();j++){delete attributes[j];attributes[j]=NULL;}
+}
+int CDFObject::attachCDFReader(void *reader){
+  CDFReader *r=(CDFReader*)reader;
+  r->cdfObject=this;
+  this->reader=r;
+  return 0;
+}
+void CDFObject::clear(){
+  for(size_t j=0;j<dimensions.size();j++){delete dimensions[j];dimensions[j]=NULL;}
+  for(size_t j=0;j<variables.size();j++){delete variables[j];variables[j]=NULL;}
+}
+int CDFObject::open(const char *fileName){
+  CDBDebug("Opening file %s (current =%s)",fileName,currentFile.c_str());
+  if(currentFile.equals(fileName)){
+    CDBDebug("OK: Current file is already open");
+    return 0;
+  }
+  CDFReader *r=(CDFReader*)reader;
+   if(r==NULL){
+    CDBError("No reader attached");return 1;
+  }
+  clear();
+  currentFile.copy(fileName);
+  return r->open(fileName);
+}
+int CDFObject::close(){
+  if(reader==NULL){
+    CDBError("No reader attached");return 1;
+  }
+  CDBDebug("Closing reader");
+  CDFReader *r=(CDFReader*)reader;
+  return r->close();
+}

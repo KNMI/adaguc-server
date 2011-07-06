@@ -1,5 +1,5 @@
 #include "CServerParams.h"
-
+const char *CServerParams::className="CServerParams";
 
 
 void CServerParams::getCacheFileName(CT::string *cacheFileName){
@@ -64,3 +64,68 @@ void CServerParams::getCacheDirectory(CT::string *cacheFileName){
   cacheFileName->concat("/");
   cacheFileName->concat(&cacheName);
 }
+
+int CServerParams::lookupTableName(CT::string *tableName,const char *path,const char *filter){
+  // This makes use of a lookup table to find the tablename belonging to the filter and path combinations.
+  // Database collumns: path filter tablename
+  
+  CT::string filterString="FILTER_";filterString.concat(filter);
+  CT::string pathString="PATH";pathString.concat(path);
+  CT::string lookupTableName = "pathfiltertablelookup";
+  CT::string tableColumns("path varchar (255), filter varchar (255), tablename varchar (255)");
+  CT::string mvRecordQuery;
+  int status;
+  CPGSQLDB DB;
+  const char *pszDBParams = this->cfg->DataBase[0]->attr.parameters.c_str();
+  status = DB.connect(pszDBParams);if(status!=0){
+    CDBError("Error Could not connect to the database with parameters: [%s]",pszDBParams);
+    return 1;
+  }
+
+  status = DB.checkTable(lookupTableName.c_str(),tableColumns.c_str());
+  //if(status == 0){CDBDebug("OK: Table %s is available",lookupTableName.c_str());}
+  if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",lookupTableName.c_str(),tableColumns.c_str()); DB.close();return 1;  }
+  //if(status == 2){CDBDebug("OK: Table %s is created",lookupTableName.c_str());  }
+
+  
+  //Check wether a table exists with this path and filter combination.
+  bool lookupTableIsAvailable=false;
+  mvRecordQuery.print("SELECT * FROM %s where path=E'%s' and filter=E'%s'",lookupTableName.c_str(),pathString.c_str(),filterString.c_str());
+  CT::string *rec = DB.query_select(mvRecordQuery.c_str(),2); if(rec==NULL){CDBError("Unable to select records: \"%s\"",mvRecordQuery.c_str());DB.close();return 1;  }
+  if(rec->count==1){
+    tableName->copy(&rec[0]);
+    lookupTableIsAvailable=true;
+  }
+  if(rec->count>1){
+    CDBError("Path filter combination has more than 1 lookuptable");
+    return 1;
+  }
+  delete[] rec;
+  
+  //Add a new lookuptable with an unique id.
+  if(lookupTableIsAvailable==false){
+    mvRecordQuery.print("SELECT COUNT(*) FROM %s",lookupTableName.c_str());
+    rec = DB.query_select(mvRecordQuery.c_str(),0); if(rec==NULL){CDBError("Unable to count records: \"%s\"",mvRecordQuery.c_str());DB.close();return 1;  }
+    int numRecords=rec[0].toInt();
+    delete[] rec;
+    tableName->printconcat("_%d",numRecords);
+    mvRecordQuery.print("INSERT INTO %s values (E'%s',E'%s',E'%s')",lookupTableName.c_str(),pathString.c_str(),filterString.c_str(),tableName->c_str());
+    status = DB.query(mvRecordQuery.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",mvRecordQuery.c_str());DB.close();return 1;  }
+  }
+  //Close the database
+  DB.close();
+  return 0;
+}
+
+
+//Table names need to be different between dims like time and height.
+// Therefore create unique tablenames like tablename_time and tablename_height
+void CServerParams::makeCorrectTableName(CT::string *tableName,CT::string *dimName){
+  tableName->concat("_");tableName->concat(dimName);
+  tableName->toLowerCase();
+}
+
+void CServerParams::showWCSNotEnabledErrorMessage(){
+  CDBError("WCS is not enabled because GDAL was not compiled into the server. ");
+}
+

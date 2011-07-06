@@ -99,6 +99,7 @@ namespace CDF{
   
   /*Puts the error code as string in the string array based on the error code number*/
   void getErrorMessage(char *errorMessage,const size_t maxlen,const int errorCode);
+  void getErrorMessage(CT::string *errorMessage,const int errorCode);
   
   /*Returns the number of bytes needed for a single element of this datatype*/
   int getTypeSize(CDFType type);
@@ -611,16 +612,14 @@ class CDFObject:public CDF::Variable{
         putNCMLAttributes(cur_node->children);
       }
     }
+  void *reader;
   public:
     DEF_ERRORFUNCTION();
     CDFObject(){
       name.copy("NC_GLOBAL");
+      reader=NULL;
     }
-    ~CDFObject(){
-      for(size_t j=0;j<dimensions.size();j++){delete dimensions[j];dimensions[j]=NULL;}
-      for(size_t j=0;j<variables.size();j++){delete variables[j];variables[j]=NULL;}
-      //for(size_t j=0;j<attributes.size();j++){delete attributes[j];attributes[j]=NULL;}
-    }
+    ~CDFObject();
     std::vector<CDF::Dimension *> dimensions;
     //std::vector<CDF::Attribute *> attributes;
     std::vector<CDF::Variable *> variables;
@@ -730,6 +729,12 @@ class CDFObject:public CDF::Variable{
       
       return 0;
     }
+    CT::string currentFile;
+    int open(const char *fileName) ;
+    int close();
+    void clear();
+    int attachCDFReader(void *reader);
+    void *getCDFReader(){return reader;}
 };
 namespace CDF{
   void dump(CDFObject* cdfObject,CT::string* dumpString);
@@ -738,9 +743,7 @@ namespace CDF{
 
 class CDFReader{
   public:
-    CDFReader(CDFObject *cdfObject){
-      this->cdfObject=cdfObject;
-    }
+    CDFReader(){}
     virtual ~CDFReader(){}
     CDFObject *cdfObject;
     virtual int open(const char *fileName) = 0;

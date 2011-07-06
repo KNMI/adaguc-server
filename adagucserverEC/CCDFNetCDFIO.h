@@ -127,7 +127,7 @@ class CDFNetCDFReader :public CDFReader{
   }
 
   public:
-    CDFNetCDFReader(CDFObject *cdfObject):CDFReader(cdfObject){
+    CDFNetCDFReader():CDFReader(){
       root_id=-1;
       lonWarpNeeded=false;
       lonWarpStartIndex = 0;
@@ -151,7 +151,7 @@ class CDFNetCDFReader :public CDFReader{
       //if(status!=NC_NOERR){ncError(__LINE__,className,"nc_set_chunk_cache: ",status);return 1;}
       //status = nc_set_chunk_cache(0,0,0);
       //if(status!=NC_NOERR){ncError(__LINE__,className,"nc_set_chunk_cache: ",status);return 1;}
-      //CDBDebug("opening %s",fileName);
+      CDBDebug("opening %s",fileName);
       status = nc_open(fileName,NC_NOWRITE,&root_id);
       if(status!=NC_NOERR){ncError(__LINE__,className,"nc_open: ",status);return 1;}
 /*#ifdef MEASURETIME
@@ -183,6 +183,7 @@ class CDFNetCDFReader :public CDFReader{
     int close(){
       
       if(root_id!=-1){
+        CDBDebug("closing");
         nc_close(root_id);
       }
       root_id=-1;
@@ -265,6 +266,11 @@ class CDFNetCDFReader :public CDFReader{
         CDBError("No dimensions specified for variable %s",var->name.c_str());
         return 1;
       }
+      if(root_id==-1){
+        CDBDebug("opening %s",fileName.c_str());
+        status = nc_open(fileName.c_str(),NC_NOWRITE,&root_id);
+        if(status!=NC_NOERR){ncError(__LINE__,className,"nc_open: ",status);return 1;}
+      }
       var->freeData();
      size_t totalVariableSize = 1;
       for(size_t i=0;i<var->dimensionlinks.size();i++){
@@ -301,6 +307,11 @@ class CDFNetCDFReader :public CDFReader{
     }
     
     int _readVariableData(CDF::Variable *var, CDFType type,size_t *start,size_t *count,ptrdiff_t *stride){
+      if(root_id==-1){
+        CDBDebug("opening %s",fileName.c_str());
+        status = nc_open(fileName.c_str(),NC_NOWRITE,&root_id);
+        if(status!=NC_NOERR){ncError(__LINE__,className,"nc_open: ",status);return 1;}
+      }
       CDBDebug("reading %s from file %s",var->name.c_str(),fileName.c_str());
       //CDBDebug("readVariableData");
       //It is essential that the variable nows which reader can be used to read the data

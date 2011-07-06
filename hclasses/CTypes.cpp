@@ -7,7 +7,7 @@ namespace CT{
     stringlist *stringList = new stringlist();
     const char *fo = strstr(value,_value);
     const char *prevFo=value;
-    if(fo==NULL)return stringList;
+   // if(fo==NULL)return stringList;
     while(fo!=NULL){
       CT::string * val = new CT::string();stringList->push_back(val);
       val->copy(prevFo,(fo-prevFo));

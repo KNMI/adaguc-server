@@ -7,8 +7,11 @@
 #define CConfigReaderLayerTypeCascaded    3
 
 //CRequest
+//Service options
 #define SERVICE_WMS                       1
 #define SERVICE_WCS                       2
+
+//Request options
 #define REQUEST_WMS_GETCAPABILITIES       1
 #define REQUEST_WMS_GETMAP                2
 #define REQUEST_WMS_GETLEGENDGRAPHIC      3
@@ -35,15 +38,24 @@
 #define WMS_EXCEPTIONS_XML_1_1_1          3
 #define WCS_EXCEPTIONS_XML_1_0_0          4
 
+//Image formats
+#define IMAGEFORMAT_IMAGEPNG8             0
+#define IMAGEFORMAT_IMAGEGIF              1
+#define IMAGEFORMAT_IMAGEPNG32            2
+
+#define SERVERIMAGEMODE_8BIT              0
+#define SERVERIMAGEMODE_RGBA              1
+
+
 //WCS Versions
 #define WCS_VERSION_1_0                   1
 
 // XMLGen templates
 #define WMS_1_0_0_HEADERFILE              "./XMLTemplates/WMS_1.0.0_GetCapabilities_Header.dat"
-#define WMS_1_0_0_LAYERHEADERFILE         "./XMLTemplates/WMS_1.0.0_GetCapabilities_LayerHeader.dat"
+//#define WMS_1_0_0_LAYERHEADERFILE         "./XMLTemplates/WMS_1.0.0_GetCapabilities_LayerHeader.dat"
 
 #define WMS_1_1_1_HEADERFILE              "./XMLTemplates/WMS_1.1.1_GetCapabilities_Header.dat"
-#define WMS_1_1_1_LAYERHEADERFILE         "./XMLTemplates/WMS_1.1.1_GetCapabilities_LayerHeader.dat"
+//#define WMS_1_1_1_LAYERHEADERFILE         "./XMLTemplates/WMS_1.1.1_GetCapabilities_LayerHeader.dat"
 
 #define WCS_1_0_HEADERFILE                "./XMLTemplates/WCS_1.0.0_GetCapabilities_Header.dat"
 
@@ -53,7 +65,7 @@
 #define CNETCDFREADER_MODE_GET_METADATA   3
 
 //Log a summary of different time durations during execution
-//#define MEASURETIME
+#define MEASURETIME
 
 //Web Coverage restriction and Get Feature Info restriction
 #define ALLOW_NONE     1

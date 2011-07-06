@@ -63,7 +63,7 @@ class CServerConfig:public CXMLSerializerInterface{
     class XMLE_ContourIntervalH: public CXMLObjectInterface{};
     class XMLE_ShadeInterval: public CXMLObjectInterface{};
     class XMLE_SmoothingFilter: public CXMLObjectInterface{};
-    
+    class XMLE_StandardNames: public CXMLObjectInterface{};
     
     class XMLE_Log: public CXMLObjectInterface{};
     class XMLE_ValueRange: public CXMLObjectInterface{
@@ -120,6 +120,7 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_ContourText*> ContourText;
         std::vector <XMLE_ShadeInterval*> ShadeInterval;
         std::vector <XMLE_SmoothingFilter*> SmoothingFilter;
+        std::vector <XMLE_StandardNames*> StandardNames;
         
         ~XMLE_Style(){
           XMLE_DELOBJ(Legend);
@@ -135,6 +136,8 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(ContourText);
           XMLE_DELOBJ(ShadeInterval);
           XMLE_DELOBJ(SmoothingFilter);
+          XMLE_DELOBJ(StandardNames);
+          
         }
         class Cattr{
           public:
@@ -159,6 +162,7 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("ContourText",11,name)){XMLE_ADDOBJ(ContourText);}
             else if(equals("ShadeInterval",13,name)){XMLE_ADDOBJ(ShadeInterval);}
             else if(equals("SmoothingFilter",15,name)){XMLE_ADDOBJ(SmoothingFilter);}
+            else if(equals("StandardNames",13,name)){XMLE_ADDOBJ(StandardNames);}
             
            
           }
@@ -393,10 +397,10 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString value,cachefile;
+            CXMLString enabled,cachefile;
         }attr;
         void addAttribute(const char *attrname,const char *attrvalue){
-          if(equals("value",5,attrname)){attr.value.copy(attrvalue);return;}
+          if(equals("enabled",7,attrname)){attr.enabled.copy(attrvalue);return;}
           else if(equals("cachefile",9,attrname)){attr.cachefile.copy(attrvalue);return;}
         }
     };

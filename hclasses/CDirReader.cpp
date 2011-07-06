@@ -110,19 +110,19 @@ int CDirReader::listDir (const char* directory,const char *ext_filter){
 void CDirReader::makeCleanPath(CT::string *path){
   if(path==NULL)return;
   if(path->length()==0)return;
-  CT::string *parts=path->split("/");
+  CT::stringlist *parts =path->splitN("/");
   if(path->c_str()[0]=='/'){
     path->copy("/");
   }else path->copy("");
-  for(size_t j=0;j<parts->count;j++){
-    if(parts[j].length()>0){
-      path->concat(&parts[j]);
-      if(j+1<parts->count){
+  for(size_t j=0;j<parts->size();j++){
+    if((*parts)[j]->length()>0){
+      path->concat((*parts)[j]);
+      if(j+1<parts->size()){
         path->concat("/");
       }
     }
   }
-  delete[] parts;
+  delete parts;
 }
 
 

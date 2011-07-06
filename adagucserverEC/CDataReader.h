@@ -12,36 +12,66 @@
 #include <math.h>
 #include "CStopWatch.h"
 #include "CDebugger.h"
+//Datasource can share multiple cdfObjects
+//A cdfObject is allways opened using a sourceImage path/filter combo
+// When a CDFObject is already opened
+class CDFObjectStore{
+  private:
+    std::vector <CT::string*> fileNames;
+    std::vector <CDFObject*> cdfObjects;
+
+    DEF_ERRORFUNCTION();
+  public:
+    ~CDFObjectStore(){
+       for(size_t j=0;j<fileNames.size();j++){
+         delete fileNames[j];
+         delete cdfObjects[j];
+       }
+       fileNames.clear();
+       cdfObjects.clear();
+    }
+    static CDFObjectStore *getCDFObjectStore();
+    CDFObject *getCDFObject(CDataSource *dataSource,const char *fileName,bool returnNew);
+    
+};
+
 class CDataReader{
   private:
-  DEF_ERRORFUNCTION();
+    DEF_ERRORFUNCTION();
     CDataSource *sourceImage;
-    CDFReader * cdfReader;
-    CDFObject *cdfObject;
-    int status;
+    //CDFReader * cdfReader;
+    CDFObject *thisCDFObject;
+
     CT::string FileName;
-    CDFReader *getCDFReader(CDataSource *sourceImage);
     
-    int createDBUpdateTables(CPGSQLDB *DB,CDataSource *sourceImage,int &removeNonExistingFiles);
-    int DBLoopFiles(CPGSQLDB *DB,CDataSource *sourceImage,int removeNonExistingFiles,CDirReader *dirReader);
-  
   public:
+    CDataReader(){}
+    ~CDataReader(){close();}
+  
+    static CDFReader *getCDFReader(CDataSource *sourceImage);
+    static int autoConfigureDimensions(CDataSource *dataSource,bool tryToFindInterval);
+    static int autoConfigureStyles(CDataSource *dataSource);
+    static int justLoadAFileHeader(CDataSource *dataSource);
     CDFObject *getCDFObject(){
-      return cdfObject;
+      return thisCDFObject;
     }
     int getTimeString(char * pszTime);
     int getTimeUnit(char * pszTime);
     const char *getFileName(){return FileName.c_str();}
-    CDataReader(){cdfReader=NULL;cdfObject=NULL;}
-    ~CDataReader(){
-      if(cdfReader!=NULL){cdfReader->close();delete cdfReader;cdfReader=NULL;}
-      if(cdfObject!=NULL){delete cdfObject;cdfObject=NULL;};
-    }
     int open(CDataSource *dataSource,int mode,const char *cacheLocation);
     int close();
-    int updatedb(const char *pszDBParams, CDataSource *dataSource,CT::string *tailPath,CT::string *_layerPathToScan);
 };
-//Table names need to be different between time and height.
-// Therefore create unique tablenames like tablename_time and tablename_height
-void makeCorrectTableName(CT::string *tableName,CT::string *dimName);
+
+class CDBFileScanner{
+  private:
+    DEF_ERRORFUNCTION();
+    static int createDBUpdateTables(CPGSQLDB *DB,CDataSource *sourceImage,int &removeNonExistingFiles);
+    static int DBLoopFiles(CPGSQLDB *DB,CDataSource *sourceImage,int removeNonExistingFiles,CDirReader *dirReader);
+    
+    
+  public:
+    static int searchFileNames(CDataSource *sourceImage,CDirReader *dirReader,CT::string *tailPath);
+    static int updatedb(const char *pszDBParams, CDataSource *dataSource,CT::string *tailPath,CT::string *_layerPathToScan);
+ 
+};
 #endif

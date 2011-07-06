@@ -9,6 +9,7 @@ void seterrormode(int errormode);
 void readyerror();
 void printerrorImage(void * drawImage);
 void resetErrors();
-
+bool errorsOccured();
+void setErrorImageSize(int w,int h,int format);
 #endif
 

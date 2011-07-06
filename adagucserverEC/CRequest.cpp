@@ -30,9 +30,9 @@ int CRequest::setConfigFile(const char *pszConfigFile){
     srvParam->configFileName.copy(pszConfigFile);
     srvParam->cfg=srvParam->configObj->Configuration[0];
     if(srvParam->cfg->CacheDocs.size()==1){
-      if(srvParam->cfg->CacheDocs[0]->attr.value.equals("true")){
+      if(srvParam->cfg->CacheDocs[0]->attr.enabled.equals("true")){
         srvParam->enableDocumentCache=true;
-      }else if(srvParam->cfg->CacheDocs[0]->attr.value.equals("false")){
+      }else if(srvParam->cfg->CacheDocs[0]->attr.enabled.equals("false")){
         srvParam->enableDocumentCache=false;
       }
     }
@@ -68,11 +68,16 @@ int CRequest::process_wms_getfeatureinfo_request(){
 }
 
 int CRequest::process_wcs_getcoverage_request(){
+  #ifndef ADAGUC_USE_GDAL
+    CServerParams::showWCSNotEnabledErrorMessage();
+    return 1;
+  #else
   if(srvParam->WMSLayers!=NULL)
     for(size_t j=0;j<srvParam->WMSLayers->count;j++){
       CDBDebug("WCS GETCOVERAGE %s",srvParam->WMSLayers[j].c_str());
     }
   return process_all_layers();
+  #endif
 }
 const char *CSimpleStore::className="CSimpleStore";
 
@@ -394,6 +399,11 @@ int CRequest::process_all_layers(){
 
       //When this layer has no dimensions, we do not need to query 
       // When there are no dims, we can get the filename from the config
+      if(dataSources[j]->cfgLayer->Dimension.size()==0){
+       
+        CDataReader::autoConfigureDimensions(dataSources[j],true);
+        
+      }
       if(dataSources[j]->cfgLayer->Dimension.size()!=0){
         CPGSQLDB DB;
         CT::string Query;
@@ -403,7 +413,7 @@ int CRequest::process_all_layers(){
         //char szPartialQuery[MAX_STR_LEN+1];
       
         // Connect do DB
-        status = DB.connect(srvParam->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0)return 1;
+        status = DB.connect(srvParam->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0){CDBError("Unable to connect to DB");return 1;}
         //Get the number of required dims from the given dims
         //Check if all dimensions are given
         for(int k=0;k<srvParam->NumOGCDims;k++)srvParam->OGCDims[k].Name.toLowerCase();
@@ -455,7 +465,7 @@ int CRequest::process_all_layers(){
               if(ogcDim->Value.match("current")==0){
                 dimsfound[i]=2;
                 CT::string tableName(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str());
-                makeCorrectTableName(&tableName,&ogcDim->netCDFDimName);
+                CServerParams::makeCorrectTableName(&tableName,&ogcDim->netCDFDimName);
                 
                 snprintf(szTemp,MAX_STR_LEN,"select max(%s) from %s",
                         ogcDim->netCDFDimName.c_str(),
@@ -475,7 +485,7 @@ int CRequest::process_all_layers(){
           if(dimsfound[i]==0){
             CT::string netCDFDimName(dataSources[j]->cfgLayer->Dimension[i]->attr.name.c_str());
             CT::string tableName(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str());
-            makeCorrectTableName(&tableName,&netCDFDimName);
+            CServerParams::makeCorrectTableName(&tableName,&netCDFDimName);
             //Add the undefined dims to the srvParams as additional dims
             COGCDims *ogcDim = new COGCDims;
             dataSources[j]->requiredDims.push_back(ogcDim);
@@ -508,7 +518,7 @@ int CRequest::process_all_layers(){
         for(size_t i=0;i<dataSources[j]->requiredDims.size();i++){
           CT::string netCDFDimName(&dataSources[j]->requiredDims[i]->netCDFDimName);
           CT::string tableName(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str());
-          makeCorrectTableName(&tableName,&netCDFDimName);
+          CServerParams::makeCorrectTableName(&tableName,&netCDFDimName);
           CT::string subQuery;
           subQuery.print("(select path,dim%s,%s from %s where ",netCDFDimName.c_str(),
                       netCDFDimName.c_str(),
@@ -560,14 +570,19 @@ int CRequest::process_all_layers(){
         //Execute the query
         values_path = DB.query_select(Query.c_str(),0);
         if(values_path==NULL){
-          if(showqueryinfo){
-            CDBError("No results for query: '%s'",Query.c_str());
+          CDBDebug("No results for query: Trying to update the database automatically.");
+        
+          status = CDBFileScanner::updatedb(srvParam->cfg->DataBase[0]->attr.parameters.c_str(),dataSources[j],NULL,NULL);
+          if(status !=0){CDBError("Could not update db for: %s",dataSources[j]->cfgLayer->Name[0]->value.c_str());DB.close();return 2;}
+          values_path = DB.query_select(Query.c_str(),0);
+          if(values_path==NULL){
+            CDBError("No results for query");
+            return 2;
           }
-          status = DB.close();
-          return 2;
-        }
+      }
 
         if(values_path->count==0){
+          if(!showqueryinfo)Query.copy("hidden");
           CDBError("No results for query: '%s'",Query.c_str());
           delete[] values_path;
           status = DB.close();
@@ -762,7 +777,7 @@ int CRequest::process_querystring(){
 //  StopWatch_Time("render()");
   //First try to find all possible dimensions
   //std::vector
-  for(size_t j=0;j<srvParam->cfg->Layer.size();j++){
+ /* for(size_t j=0;j<srvParam->cfg->Layer.size();j++){
     for(size_t d=0;d<srvParam->cfg->Layer[j]->Dimension.size();d++){
       CT::string *dim = new CT::string(srvParam->cfg->Layer[j]->Dimension[d]->value.c_str());
       
@@ -777,7 +792,7 @@ int CRequest::process_querystring(){
       }else delete dim;
     }
   }
-  
+  */
 
   seterrormode(EXCEPTIONS_PLAINTEXT);
   CT::string SERVICE,REQUEST;
@@ -806,6 +821,10 @@ int CRequest::process_querystring(){
   int dFound_Exceptions=0;
   int dFound_Styles=0;
   int dFound_Style=0;
+  
+  int dFound_OpenDAPSource=0;
+  int dFound_OpenDAPVariable=0;
+  
   char * data;
   data=getenv("QUERY_STRING");
   
@@ -928,7 +947,7 @@ int CRequest::process_querystring(){
         }
       }
       //DIM Params
-      for(size_t d=0;d<queryDims.size();d++){
+      /*for(size_t d=0;d<queryDims.size();d++){
         CT::string dimName("DIM_");
         dimName.concat(queryDims[d]);
         if(value0Cap.equals(queryDims[d])||value0Cap.equals(&dimName)){
@@ -937,6 +956,11 @@ int CRequest::process_querystring(){
           srvParam->OGCDims[srvParam->NumOGCDims].Value.copy(&values[1]);
           srvParam->NumOGCDims++;
         }
+      }*/
+      if(value0Cap.equals("TIME")||value0Cap.equals("ELEVATION")||value0Cap.indexOf("DIM_")==0){
+        srvParam->OGCDims[srvParam->NumOGCDims].Name.copy(value0Cap.c_str());
+        srvParam->OGCDims[srvParam->NumOGCDims].Value.copy(&values[1]);
+        srvParam->NumOGCDims++;
       }
 
       // FORMAT parameter
@@ -1020,6 +1044,27 @@ int CRequest::process_querystring(){
         }
       }
 
+
+      //Opendap source parameter
+      if(dFound_OpenDAPSource==0){
+        if(value0Cap.match("SOURCE")==0){
+          if(srvParam->OpenDAPSource.c_str()==NULL){
+            srvParam->OpenDAPSource.copy(values[1].c_str());
+          }
+          dFound_OpenDAPSource=1;
+        }
+      }
+      //Opendap variable parameter
+       if(dFound_OpenDAPVariable==0){
+        if(value0Cap.match("VARIABLE")==0){
+          if(srvParam->OpenDapVariable.c_str()==NULL){
+            srvParam->OpenDapVariable.copy(values[1].c_str());
+          }
+          dFound_OpenDAPVariable=1;
+        }
+      }
+      
+      
       //WMS Layers parameter
       if(value0Cap.match("LAYERS")==0){
         if(srvParam->WMSLayers!=NULL)
@@ -1116,6 +1161,64 @@ int CRequest::process_querystring(){
 
   // WMS Service
   if(dErrorOccured==0&&srvParam->serviceType==SERVICE_WMS){
+    // If an Opendapsource is used, the LAYERS indicate which value should be visualised.
+    // Add configuration layers to the XML object to make things work
+    if(srvParam->OpenDAPSource.c_str()!=NULL){
+     
+      if(srvParam->OpenDapVariable.c_str()==NULL||srvParam->OpenDapVariable.equals("*")){
+        //Try to retrieve a list of variables from the OpenDAPURL.
+        srvParam->OpenDapVariable.copy("");
+        CDFObject c;
+        c.attachCDFReader(new CDFNetCDFReader());
+        int status=c.open(srvParam->OpenDAPSource.c_str());
+        if(status==0){
+          
+          for(size_t j=0;j<c.variables.size();j++){
+            if(c.variables[j]->dimensionlinks.size()>=2){
+              if(srvParam->OpenDapVariable.length()>0)srvParam->OpenDapVariable.concat(",");
+              srvParam->OpenDapVariable.concat(c.variables[j]->name.c_str());
+              CDBDebug("%s",c.variables[j]->name.c_str());
+            }
+          }
+        }
+        if(srvParam->OpenDapVariable.length()==0)status=1;
+        if(status!=0){
+          CDBError("A source parameter without a variable parameter is given");
+          readyerror();exit(0);
+        }
+      }
+      {
+        CT::stringlist *variables=srvParam->OpenDapVariable.splitN(",");
+        for(size_t j=0;j<variables->size();j++){
+          CServerConfig::XMLE_Layer *xmleLayer=new CServerConfig::XMLE_Layer();
+          CServerConfig::XMLE_Variable* xmleVariable = new CServerConfig::XMLE_Variable();
+          CServerConfig::XMLE_FilePath* xmleFilePath = new CServerConfig::XMLE_FilePath();
+          xmleLayer->attr.type.copy("database");
+          xmleVariable->value.copy((*variables)[j]->c_str());
+          xmleFilePath->value.copy(srvParam->OpenDAPSource.c_str());
+          xmleFilePath->attr.filter.copy("*");
+          xmleLayer->Variable.push_back(xmleVariable);
+          xmleLayer->FilePath.push_back(xmleFilePath);
+          srvParam->cfg->Layer.push_back(xmleLayer);
+        }
+        
+        //Adjust online resource in order to pass on variable and source parameters
+        CT::string onlineResource=srvParam->cfg->OnlineResource[0]->attr.value.c_str();
+        CT::string stringToAdd;
+        stringToAdd.concat("&source=");stringToAdd.concat(srvParam->OpenDAPSource.c_str());
+        stringToAdd.concat("&variable=");stringToAdd.concat(srvParam->OpenDapVariable.c_str());
+        stringToAdd.concat("&");
+        stringToAdd.encodeURL();
+        onlineResource.concat(stringToAdd.c_str());
+        srvParam->cfg->OnlineResource[0]->attr.value.copy(onlineResource.c_str());
+        CDBDebug("%s -- %s",srvParam->OpenDapVariable.c_str(),srvParam->OpenDAPSource.c_str());
+        
+        //CDBError("A");readyerror();exit(0);
+        delete variables;
+      }
+    }
+    
+    
     //Default is 1.1.1
 
     srvParam->OGCVersion=WMS_VERSION_1_1_1;
@@ -1171,6 +1274,22 @@ int CRequest::process_querystring(){
       }
     }
     
+    if(srvParam->requestType==REQUEST_WMS_GETMAP||srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
+        if(dFound_Format==0){
+          CDBWarning("Parameter FORMAT missing");
+          dErrorOccured=1;
+        }else{
+          // Set format
+          if(srvParam->Format.indexOf("24")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG32;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
+          else if(srvParam->Format.indexOf("32")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG32;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
+          else if(srvParam->Format.indexOf("8")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8;srvParam->imageMode=SERVERIMAGEMODE_8BIT;}
+          else if(srvParam->Format.indexOf("gif")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEGIF;srvParam->imageMode=SERVERIMAGEMODE_8BIT;}
+          else if(srvParam->Format.indexOf("GIF")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEGIF;srvParam->imageMode=SERVERIMAGEMODE_8BIT;}
+       
+        }
+      }
+       
+    
     if(dErrorOccured==0&&(srvParam->requestType==REQUEST_WMS_GETMAP||srvParam->requestType==REQUEST_WMS_GETFEATUREINFO)){
       if(srvParam->requestType==REQUEST_WMS_GETFEATUREINFO){
         int status = checkDataRestriction();
@@ -1193,6 +1312,12 @@ int CRequest::process_querystring(){
         CDBWarning("Parameter HEIGHT missing");
         dErrorOccured=1;
       }
+      
+      // When error is image, utilize full image size
+      setErrorImageSize(srvParam->Geo->dWidth,srvParam->Geo->dHeight,srvParam->imageFormat);
+      
+     
+      
       if(dFound_BBOX==0){
         CDBWarning("Parameter BBOX missing");
         dErrorOccured=1;
@@ -1201,12 +1326,7 @@ int CRequest::process_querystring(){
         CDBWarning("Parameter SRS missing");
         dErrorOccured=1;
       }
-      if(srvParam->requestType==REQUEST_WMS_GETMAP){
-        if(dFound_Format==0){
-          CDBWarning("Parameter FORMAT missing");
-          dErrorOccured=1;
-        }
-      }
+      
       if(dFound_WMSLAYERS==0){
         CDBWarning("Parameter LAYERS missing");
         dErrorOccured=1;
@@ -1244,10 +1364,6 @@ int CRequest::process_querystring(){
       }
     }
     if(dErrorOccured==0&&srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
-      if(dFound_Format==0){
-        CDBWarning("Parameter FORMAT missing");
-        dErrorOccured=1;
-      }
       if(dFound_WMSLAYER==0){
         CDBWarning("Parameter LAYER missing");
         dErrorOccured=1;
@@ -1409,7 +1525,7 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan){
 
   srvParam->requestType=REQUEST_UPDATEDB;
 
-  CDataReader reader;
+  //CDataReader reader;
   CT::string tablesdone[numberOfLayers];
   int nrtablesdone=0;
   for(size_t j=0;j<numberOfLayers;j++){
@@ -1421,7 +1537,7 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan){
         if(tablesdone[i].match(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str())==0){found=1;break;}
       }
       if(found==0){
-        status = reader.updatedb(srvParam->cfg->DataBase[0]->attr.parameters.c_str(),dataSources[j],tailPath,layerPathToScan);
+        status = CDBFileScanner::updatedb(srvParam->cfg->DataBase[0]->attr.parameters.c_str(),dataSources[j],tailPath,layerPathToScan);
         if(status !=0){CDBError("Could not update db for: %s",dataSources[j]->cfgLayer->Name[0]->value.c_str());return 1;}
 
         //Remember that we did this table allready

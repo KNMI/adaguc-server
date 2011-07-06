@@ -44,7 +44,7 @@ class CDFHDF5Reader :public CDFReader{
     hid_t error_stack;
     bool b_EnableKNMIHDF5toCFConversion;
   public:
-    CDFHDF5Reader(CDFObject *cdfObject):CDFReader(cdfObject){
+    CDFHDF5Reader():CDFReader(){
       H5F_file=-1;
       //Get error strack
       error_stack = H5Eget_current_stack();
