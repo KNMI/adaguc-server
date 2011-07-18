@@ -7,7 +7,7 @@
 #include <netcdf.h>
 #include <math.h>
 #include "CDebugger.h"
-#define CCDFNETCDFIO_DEBUG
+//#define CCDFNETCDFIO_DEBUG
 //#ifdef CCDFNETCDFIO_DEBUG        
 //#include "CStopWatch.h"
 
