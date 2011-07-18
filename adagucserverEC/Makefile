@@ -7,7 +7,7 @@ HOME=/nobackup/users/plieger/software/install
 #HOME=/home/gsie/gsiews/software/install/
 #HOME=/home/plieger/software/install
 #HOME=/data/apps/rcc/MaartenP/install
-HOME=/home/plieger/software/install/
+#HOME=/home/plieger/software/install/
 LIBDIR=$(HOME)/lib
 
 INCLUDEDIR=$(HOME)/include -I /usr/include/libxml2/ 
@@ -17,10 +17,13 @@ SRCLIBS=$(HOME)
 LIBDIR=$(HOME)/lib 
 
 HELPERCLASSES="../hclasses"
+HELPOBJECTS = $(HELPERCLASSES)/hclasses.a
 
-INCLUDEDIR=$(SRCLIBS)/include -I $(HELPERCLASSES) -I /usr/include/libxml2/ -I $(SRCLIBS)/include/freetype2 -I $($HOME2)/include/freetype2 -I /data/data1/software/install/include/freetype2 -I /data/data1/software/install/include/ -I/usr/include/freetype2/ -I /usr/include/postgresql/
+CCDFDATAMODEL = "../CCDFDataModel"
+CCDFDATAMODELOBJ = $(CCDFDATAMODEL)/CCDFDataModel.a
 
-HELPOBJECTS = $(HELPERCLASSES)/CTypes.o $(HELPERCLASSES)/CPGSQLDB.o $(HELPERCLASSES)/CDirReader.o $(HELPERCLASSES)/CADAGUC_time.o $(HELPERCLASSES)/CDebugger.o
+INCLUDEDIR=$(SRCLIBS)/include -I $(HELPERCLASSES) -I $(CCDFDATAMODEL) -I /usr/include/libxml2/ -I $(SRCLIBS)/include/freetype2 -I $($HOME2)/include/freetype2 -I /data/data1/software/install/include/freetype2 -I /data/data1/software/install/include/ -I/usr/include/freetype2/ -I /usr/include/postgresql/
+
 
 CCOMPILER=g++ -Wall -I $(INCLUDEDIR)
 
@@ -34,13 +37,13 @@ USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lxml2 -lgd -lproj -lpq -ludunits -lfreetype
 # all libs together
 LIBS = -L$(LIBDIR) $(USERLIBS) -L$(HOME2)/lib
 
-OBJECTS = adagucserverEC.o CDataReader.o CImageWarper.o CDrawImage.o CServerError.o CRequest.o  CXMLGen.o CServerParams.o CGDALDataWriter.o CImageDataWriter.o CXMLSerializerInterface.o CDataSource.o CCDFDataModel.o CCDFNetCDFIO.o CStopWatch.o CCDFHDF5IO.o CImgWarpBilinear.o CImgWarpBoolean.o CImgWarpNearestNeighbour.o
+OBJECTS = adagucserverEC.o CDataReader.o CImageWarper.o CDrawImage.o CServerError.o CRequest.o  CXMLGen.o CServerParams.o CGDALDataWriter.o CImageDataWriter.o CXMLSerializerInterface.o CDataSource.o CStopWatch.o CImgWarpBilinear.o CImgWarpBoolean.o CImgWarpNearestNeighbour.o CPGSQLDB.o
 
 EXECUTABLE= adagucserverEC
 
 default: $(EXECUTABLE)
 $(EXECUTABLE): $(OBJECTS)
-	g++ $(OBJECTS) $(HELPOBJECTS) -o  $(EXECUTABLE) $(LIBS)
+	g++ $(OBJECTS) $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  $(EXECUTABLE) $(LIBS)
 
 %.o: %.cpp
 	$(CCOMPILER) -c $< -o $@

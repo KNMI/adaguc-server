@@ -108,6 +108,7 @@ class string:public basetype{
     void setChar(size_t location,const char character){
       if(location<privatelength){
         value[location]=character;
+        if(character=='\0')privatelength=location;
       } 
     }
     int indexOf(const char* search,size_t _length);
@@ -151,6 +152,12 @@ class string:public basetype{
       return true;
     }
     int indexOf(const char* search){return indexOf(search,strlen(search));};
+    void trim(){
+      int s=-1,e=privatelength;
+      for(size_t j=0;j<privatelength;j++){if(value[j]!=' '){s=j;break;}}
+      for(size_t j=privatelength-1;j>=0;j--){if(value[j]!=' '){e=j;break;}}
+      substring(s,e+1);
+    }
     int lastIndexOf(const char* search,size_t _length);
     int lastIndexOf(const char* search){return lastIndexOf(search,strlen(search));};
     void toUnicode();
@@ -230,8 +237,13 @@ class string:public basetype{
         return 0;
       }
       if(end>string->privatelength)end=string->privatelength;
+      //printf("end-start %d,%d",end,string->length());
+      //size_t l=strlen(string->value);
+      //printf("*** %s\n",string->value);
+      //if(end>l)end=l;
       CT::string temp(string->value+start,end-start);
       copy(&temp);
+      //printf("**** %s\n",value);
       //printf("templength: %d\n",temp.length());
       //privatelength=end-start;
       //value[privatelength]='\0';
@@ -240,6 +252,10 @@ class string:public basetype{
     }
     float toFloat(){
       float fValue=(float)atof(value);
+      return fValue;  
+    }
+    double toDouble(){
+      double fValue=(double)atof(value);
       return fValue;  
     }
     int toInt(){

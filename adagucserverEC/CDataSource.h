@@ -8,7 +8,8 @@
 #include "CTypes.h"
 #include "CCDFDataModel.h"
 #include "COGCDims.h"
-
+#include "CStopWatch.h"
+#include "CPGSQLDB.h"
 /**
  * This class represents data to be used further in the server. Specific  metadata and data is filled in by CDataReader
  * This class is used for both image drawing (WMS) and data output (WCS)
@@ -43,6 +44,34 @@ class CDataSource{
   
   class Statistics{
     private:
+      template <class T>
+      
+      void calcMinMax(T *data,size_t size,DataClass *dataObject){
+#ifdef MEASURETIME
+  StopWatch_Stop("Start min/max calculation");
+#endif
+ 
+        T _min=0.0f,_max=0.0f;
+        int firstDone=0;
+        for(size_t p=0;p<size;p++){
+          T v=data[p];
+
+          if((((double)v)!=dataObject->dfNodataValue||(!dataObject->hasNodataValue))&&v==v){
+            if(firstDone==0){
+              _min=v;_max=v;
+              firstDone=1;
+            }else{
+              if(v<_min)_min=v;
+              if(v>_max)_max=v;
+            }
+          }
+        }
+        min=(double)_min;
+        max=(double)_max;
+#ifdef MEASURETIME
+  StopWatch_Stop("Finished min/max calculation");
+#endif
+      }
       double min,max;
     public:
       double getMinimum();

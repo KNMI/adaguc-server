@@ -1,4 +1,7 @@
 #include "CDirReader.h"
+
+#define MAX_STR_LEN 1023
+
 const char *CDirReader::className="CDirReader";
 CDirReader::CDirReader(){
 }

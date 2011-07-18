@@ -3,7 +3,6 @@
 #include "CServerParams.h"
 #include "CDataReader.h"
 #include "CDrawImage.h"
-#include "CDefinitions.h"
 #include "CImageWarper.h"
 #include <stdlib.h>
 #include "CDebugger.h"

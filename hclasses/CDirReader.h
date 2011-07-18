@@ -10,7 +10,7 @@
 #include <dirent.h>
 #include "CTypes.h"
 #include "CDebugger.h"
-#include "CDefinitions.h"
+
 
 class CFileObject{
   public:

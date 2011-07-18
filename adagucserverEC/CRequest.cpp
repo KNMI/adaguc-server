@@ -341,7 +341,7 @@ int CRequest::process_all_layers(){
 
 
 
-  char szTemp[MAX_STR_LEN+1];
+
   int status;
   if(srvParam->serviceType==SERVICE_WMS){
     if(srvParam->Geo->dWidth>8000){
@@ -423,6 +423,7 @@ int CRequest::process_all_layers(){
           dimName.toLowerCase();
           dimsfound[i]=0;
           for(int k=0;k<srvParam->NumOGCDims;k++){
+            CDBDebug("DIM COMPARE: %s==%s",srvParam->OGCDims[k].Name.c_str(),dimName.c_str());
             if(srvParam->OGCDims[k].Name.equals(&dimName)){
               //This dimension has been specified in the request, so the dimension has been found:
               dimsfound[i]=1;
@@ -467,10 +468,9 @@ int CRequest::process_all_layers(){
                 CT::string tableName(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str());
                 CServerParams::makeCorrectTableName(&tableName,&ogcDim->netCDFDimName);
                 
-                snprintf(szTemp,MAX_STR_LEN,"select max(%s) from %s",
+                Query.print("select max(%s) from %s",
                         ogcDim->netCDFDimName.c_str(),
                           dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str());
-                Query.copy(szTemp);
                 CT::string *temp = DB.query_select(Query.c_str(),0);
                 if(temp == NULL){CDBError("Query failed");status = DB.close(); return 1;}
                 ogcDim->Value.copy(&temp[0]);
@@ -492,10 +492,9 @@ int CRequest::process_all_layers(){
             ogcDim->Name.copy(dataSources[j]->cfgLayer->Dimension[i]->value.c_str());
             ogcDim->netCDFDimName.copy(dataSources[j]->cfgLayer->Dimension[i]->attr.name.c_str());
             //Try to find the max value for this dim name from the database
-            snprintf(szTemp,MAX_STR_LEN,"select max(%s) from %s",
+            Query.print("select max(%s) from %s",
                       dataSources[j]->cfgLayer->Dimension[i]->attr.name.c_str(),
                       tableName.c_str());
-            Query.copy(szTemp);
             //Execute the query
             CT::string *temp = DB.query_select(Query.c_str(),0);
             if(temp == NULL){CDBError("Query failed");status = DB.close(); return 1;}
@@ -655,7 +654,7 @@ int CRequest::process_all_layers(){
       try{
         if(srvParam->requestType==REQUEST_WMS_GETMAP){
           CImageDataWriter imageDataWriter;
-          char szTemp[MAX_STR_LEN+1];
+
           /*
             We want like give priority to our own internal layers, instead to external cascaded layers. This is because
             our internal layers have an exact customized legend, and we would like to use this always.
@@ -705,7 +704,8 @@ int CRequest::process_all_layers(){
             }
             if(dataSources[j]->getNumTimeSteps()>1){
               //Print the animation data into the image
-              snprintf(szTemp,MAX_STR_LEN,"%s UTC",dataSources[0]->timeSteps[k]->timeString.c_str());
+              char szTemp[1024];
+              snprintf(szTemp,1023,"%s UTC",dataSources[0]->timeSteps[k]->timeString.c_str());
               imageDataWriter.setDate(szTemp);
             }
           }
@@ -749,14 +749,15 @@ int CRequest::process_all_layers(){
           printf("%s%c%c\n","Content-Type:text/plain",13,10);
           //printf("%s",dataSources[j]->getFileName());
           CDataReader reader;
-          status = reader.open(dataSources[j],CNETCDFREADER_MODE_OPEN_HEADER,NULL);
+          status = reader.open(dataSources[j],CNETCDFREADER_MODE_OPEN_HEADER);
           if(status!=0){
             CDBError("Could not open file: %s",dataSources[j]->getFileName());
             throw(__LINE__);
           }
-          CDFObject *cdfObject = reader.getCDFObject();
+          
           CT::string dumpString;
-          CDF::dump(cdfObject,&dumpString);
+          
+          reader.dump(&dumpString);
           printf("%s",dumpString.c_str());
           reader.close();
 
@@ -958,8 +959,14 @@ int CRequest::process_querystring(){
         }
       }*/
       if(value0Cap.equals("TIME")||value0Cap.equals("ELEVATION")||value0Cap.indexOf("DIM_")==0){
-        srvParam->OGCDims[srvParam->NumOGCDims].Name.copy(value0Cap.c_str());
-        srvParam->OGCDims[srvParam->NumOGCDims].Value.copy(&values[1]);
+        
+        if(value0Cap.indexOf("DIM_")==0){
+          srvParam->OGCDims[srvParam->NumOGCDims].Name.copy(value0Cap.c_str()+4);
+        }else{
+          srvParam->OGCDims[srvParam->NumOGCDims].Name.copy(value0Cap.c_str());
+        }
+         srvParam->OGCDims[srvParam->NumOGCDims].Value.copy(&values[1]);
+        CDBDebug("DIM_ %s==%s",value0Cap.c_str(),srvParam->OGCDims[srvParam->NumOGCDims].Value.c_str());
         srvParam->NumOGCDims++;
       }
 
@@ -1187,35 +1194,45 @@ int CRequest::process_querystring(){
           readyerror();exit(0);
         }
       }
-      {
-        CT::stringlist *variables=srvParam->OpenDapVariable.splitN(",");
-        for(size_t j=0;j<variables->size();j++){
-          CServerConfig::XMLE_Layer *xmleLayer=new CServerConfig::XMLE_Layer();
-          CServerConfig::XMLE_Variable* xmleVariable = new CServerConfig::XMLE_Variable();
-          CServerConfig::XMLE_FilePath* xmleFilePath = new CServerConfig::XMLE_FilePath();
-          xmleLayer->attr.type.copy("database");
-          xmleVariable->value.copy((*variables)[j]->c_str());
-          xmleFilePath->value.copy(srvParam->OpenDAPSource.c_str());
-          xmleFilePath->attr.filter.copy("*");
-          xmleLayer->Variable.push_back(xmleVariable);
-          xmleLayer->FilePath.push_back(xmleFilePath);
-          srvParam->cfg->Layer.push_back(xmleLayer);
-        }
-        
-        //Adjust online resource in order to pass on variable and source parameters
-        CT::string onlineResource=srvParam->cfg->OnlineResource[0]->attr.value.c_str();
-        CT::string stringToAdd;
-        stringToAdd.concat("&source=");stringToAdd.concat(srvParam->OpenDAPSource.c_str());
-        stringToAdd.concat("&variable=");stringToAdd.concat(srvParam->OpenDapVariable.c_str());
-        stringToAdd.concat("&");
-        stringToAdd.encodeURL();
-        onlineResource.concat(stringToAdd.c_str());
-        srvParam->cfg->OnlineResource[0]->attr.value.copy(onlineResource.c_str());
-        CDBDebug("%s -- %s",srvParam->OpenDapVariable.c_str(),srvParam->OpenDAPSource.c_str());
-        
-        //CDBError("A");readyerror();exit(0);
-        delete variables;
+    
+      CT::stringlist *variables=srvParam->OpenDapVariable.splitN(",");
+      for(size_t j=0;j<variables->size();j++){
+        CServerConfig::XMLE_Layer *xmleLayer=new CServerConfig::XMLE_Layer();
+        CServerConfig::XMLE_Variable* xmleVariable = new CServerConfig::XMLE_Variable();
+        CServerConfig::XMLE_FilePath* xmleFilePath = new CServerConfig::XMLE_FilePath();
+        CServerConfig::XMLE_Cache* xmleCache = new CServerConfig::XMLE_Cache();
+        xmleCache->attr.enabled.copy("true");
+        xmleLayer->attr.type.copy("database");
+        xmleVariable->value.copy((*variables)[j]->c_str());
+        xmleFilePath->value.copy(srvParam->OpenDAPSource.c_str());
+        xmleFilePath->attr.filter.copy("*");
+        xmleLayer->Variable.push_back(xmleVariable);
+        xmleLayer->FilePath.push_back(xmleFilePath);
+        xmleLayer->Cache.push_back(xmleCache);
+        srvParam->cfg->Layer.push_back(xmleLayer);
       }
+      
+      //Adjust online resource in order to pass on variable and source parameters
+      CT::string onlineResource=srvParam->cfg->OnlineResource[0]->attr.value.c_str();
+      CT::string stringToAdd;
+      stringToAdd.concat("&source=");stringToAdd.concat(srvParam->OpenDAPSource.c_str());
+      stringToAdd.concat("&variable=");stringToAdd.concat(srvParam->OpenDapVariable.c_str());
+      stringToAdd.concat("&");
+      stringToAdd.encodeURL();
+      onlineResource.concat(stringToAdd.c_str());
+      srvParam->cfg->OnlineResource[0]->attr.value.copy(onlineResource.c_str());
+      CDBDebug("%s -- %s",srvParam->OpenDapVariable.c_str(),srvParam->OpenDAPSource.c_str());
+      
+      //CDBError("A");readyerror();exit(0);
+      delete variables;
+      
+      
+      //When an opendap source is added, we should not cache the getcapabilities
+      if(srvParam->cfg->CacheDocs.size()==0){
+        srvParam->cfg->CacheDocs.push_back(new CServerConfig::XMLE_CacheDocs());
+      }
+      srvParam->cfg->CacheDocs[0]->attr.enabled.copy("false");
+      srvParam->enableDocumentCache=false;
     }
     
     

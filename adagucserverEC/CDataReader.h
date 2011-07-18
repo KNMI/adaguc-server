@@ -2,7 +2,6 @@
 #define CDataReader_H
 #include "CDataSource.h"
 #include "CServerError.h"
-#include "CDefinitions.h"
 #include "CDirReader.h"
 #include "CPGSQLDB.h"
 #include "CADAGUC_time.h"
@@ -52,13 +51,18 @@ class CDataReader{
     static int autoConfigureDimensions(CDataSource *dataSource,bool tryToFindInterval);
     static int autoConfigureStyles(CDataSource *dataSource);
     static int justLoadAFileHeader(CDataSource *dataSource);
-    CDFObject *getCDFObject(){
-      return thisCDFObject;
+    static int getCacheFileName(CDataSource *dataSource,CT::string *cacheName);
+    static int getCacheFileName(CServerParams *srvParams,CT::string *uniqueIDFor2DField,const char *fileName);
+  //  CDFObject *getCDFObject(){
+    //  return thisCDFObject;
+    //}
+    void dump(CT::string *dumpString){
+      CDF::dump(thisCDFObject,dumpString);
     }
     int getTimeString(char * pszTime);
     int getTimeUnit(char * pszTime);
     const char *getFileName(){return FileName.c_str();}
-    int open(CDataSource *dataSource,int mode,const char *cacheLocation);
+    int open(CDataSource *dataSource,int mode);
     int close();
 };
 

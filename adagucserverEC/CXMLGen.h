@@ -5,7 +5,7 @@
 #include <string.h>
 
 
-#include <CDefinitions.h>
+
 #include "CServerError.h"
 #include "CDataReader.h"
 #include "CImageWarper.h"
@@ -93,12 +93,11 @@ class CXMLGen{
 
 class CFile{
   private:
+  DEF_ERRORFUNCTION();
   size_t getFileSize(const char *pszFileName){
     FILE *fp=fopen(pszFileName, "r");
     if (fp == NULL) {
-      char szTemp[MAX_STR_LEN+1];
-      snprintf(szTemp,MAX_STR_LEN,"File not found:[%s]",pszFileName);
-      error(szTemp);
+      CDBError("File not found:[%s]",pszFileName);
       return 0;
     }
     fseek( fp, 0L, SEEK_END );
@@ -110,9 +109,7 @@ class CFile{
   int openFileToBuf(const char *pszFileName,char *buf,size_t length){
     FILE *fp=fopen(pszFileName, "r");
     if (fp == NULL) {
-      char szTemp[MAX_STR_LEN+1];
-      snprintf(szTemp,MAX_STR_LEN,"File not found:[%s]",pszFileName);
-      error(szTemp);
+      CDBError("File not found:[%s]",pszFileName);
       return 1;
     }
     size_t result=fread(buf,1,length,fp);
@@ -126,11 +123,7 @@ class CFile{
   public:
     char *data;
     size_t size;
-   void error(const char * msg){
-      char szDebug[MAX_STR_LEN+1];
-      snprintf(szDebug,MAX_STR_LEN,"CFile: %s",msg);
-      printerror(szDebug);
-    }
+
     CFile(){
       data=NULL;
     }
@@ -152,8 +145,10 @@ class CFile{
       return status;
     }
     int open(const char * path,const char *pszFileName){
-      char szTemp[MAX_STR_LEN+1];
-      snprintf(szTemp,MAX_STR_LEN,"%s/%s",path,pszFileName);
+      size_t l=0;
+      l=strlen(path)+strlen(pszFileName)+10;
+      char szTemp[l+1];
+      snprintf(szTemp,l,"%s/%s",path,pszFileName);
       return open(szTemp);
     }
 };

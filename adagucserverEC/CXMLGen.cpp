@@ -4,6 +4,8 @@
 #include <string>
 #include "CXMLGen.h"
 
+const char *CFile::className="CFile";
+
 const char *CXMLGen::className="CXMLGen";
 int CXMLGen::WCSDescribeCoverage(CServerParams *srvParam,CT::string *XMLDocument){
   return OGCGetCapabilities(srvParam,XMLDocument);
@@ -98,7 +100,7 @@ int CXMLGen::getDataSourceForLayer(WMSLayer * myWMSLayer, CDataReader *reader){
   
   //Is this a local file based WMS server?
   if(!myWMSLayer->layer->attr.type.equals("cascaded")){
-    int status = reader->open(myWMSLayer->dataSource,CNETCDFREADER_MODE_OPEN_HEADER,NULL);
+    int status = reader->open(myWMSLayer->dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
     
     if(status!=0){
     
@@ -133,6 +135,7 @@ int CXMLGen::getDataSourceForLayer(WMSLayer * myWMSLayer, CDataReader *reader){
           CDBDebug("No standard_name: %s (%d)",errorMessage.c_str(),e);
         }
       }
+      CDBDebug("title=%s",myWMSLayer->title.c_str());
     }else{
       myWMSLayer->title.copy(myWMSLayer->dataSource->cfgLayer->Title[0]->value.c_str());
     }
@@ -306,10 +309,13 @@ int CXMLGen::getStylesForLayer(WMSLayer * myWMSLayer){
   CT::string styleName("default");
   std::vector <std::string> styleNames;
   if(myWMSLayer->dataSource->cfgLayer->Styles.size()==1){
+   
     CT::string *layerStyleNames=NULL;
+    CDBDebug("A %s",myWMSLayer->dataSource->cfgLayer->Styles[0]->value.c_str());
     CT::string styles(myWMSLayer->dataSource->cfgLayer->Styles[0]->value.c_str());
+    CDBDebug("A");
     layerStyleNames = styles.split(",");
-              
+               CDBDebug("A");
     CT::string name;
     if(layerStyleNames->count>0){
                 //styleNames.push_back(layerStyleNames[0].c_str());
@@ -898,11 +904,13 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
           if(status != 0){myWMSLayer->hasError=1;CDBError("Unable to autoconfigure styles for layer %s",layerUniqueName.c_str());}
         }
       }
+      
       reader->close();
       delete reader;
       
       //Get the defined styles for this layer
       status = getStylesForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;
+      //CDBDebug("OK");
     }
   }
   

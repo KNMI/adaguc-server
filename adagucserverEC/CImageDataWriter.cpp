@@ -566,17 +566,13 @@ int CImageDataWriter::getFeatureInfo(CDataSource *dataSource,int dX,int dY){
   
   //int CImageWarper::getFeatureInfo(CT::string *Header,CT::string *Result,CDataSource *dataSource,CGeoParams *GeoDest,int dX, int dY){
 
-  char szTemp[MAX_STR_LEN+1];
   if(dataSource==NULL){
     CDBError("dataSource == NULL");
     return 1;
   }
   int status;
   CDataReader reader;
-  
-  CT::string cacheLocation;srvParam->getCacheDirectory(&cacheLocation);
-  
-  status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL,cacheLocation.c_str());
+  status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
   if(status!=0){
     CDBError("Could not open file: %s",dataSource->getFileName());
     return 1;
@@ -679,6 +675,7 @@ int CImageDataWriter::getFeatureInfo(CDataSource *dataSource,int dX,int dY){
     // Assign CDF::Variable Pointer
     element->variable = dataSource->dataObject[j]->cdfVariable;
     element->value="";
+    char szTemp[1024];
     status = reader.getTimeString(szTemp);
     if(status != 0){
       element->time.print("Time error: %d: ",status);
@@ -704,7 +701,8 @@ int CImageDataWriter::getFeatureInfo(CDataSource *dataSource,int dX,int dY){
           element->units="";
         }else{
           //Add raster value
-          floatToString(szTemp,MAX_STR_LEN,pixel);
+          char szTemp[1024];
+          floatToString(szTemp,1023,pixel);
           element->value=szTemp;
         }
       }
@@ -734,10 +732,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource,CDrawImage *drawImage){
   //Open the data of this dataSource
   CDBDebug("opening:");
   CDataReader reader;
-  CDBDebug("!");
-  CT::string cacheLocation;srvParam->getCacheDirectory(&cacheLocation);
-  CDBDebug("!");
-  status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL,cacheLocation.c_str());
+  status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
   CDBDebug("!");
   if(status!=0){
     CDBError("Could not open file: %s",dataSource->getFileName());
@@ -855,8 +850,7 @@ int CImageDataWriter::calculateData(std::vector <CDataSource*>&dataSources){
       dataSource=dataSources[i];
       CDataReader *reader = new CDataReader ();
       dataReaders.push_back(reader);
-      CT::string cacheLocation;srvParam->getCacheDirectory(&cacheLocation);
-      status = reader->open(dataSource,CNETCDFREADER_MODE_OPEN_ALL,cacheLocation.c_str());
+      status = reader->open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
       CDBDebug("Opening %s",dataSource->getFileName());
       if(status!=0){CDBError("Could not open file: %s",dataSource->getFileName());  hasFailed=true; }
     }
@@ -1300,8 +1294,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage
   char szTemp[256];
   CDataReader reader;
   
-  //Get the cache location
-  CT::string cacheLocation;srvParam->getCacheDirectory(&cacheLocation);
+  
   /*if(renderMethod!=contourshaded&&renderMethod!=shaded&&renderMethod!=contour){
      //When the scale factor is zero (0.0f) we need to open the data too, because we want to estimate min/max in this case.
      // When the scale factor is given, we only need to open the header, for displaying the units.
@@ -1317,14 +1310,14 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage
   
   if(renderMethod==contourshaded||renderMethod==shaded||renderMethod==contour){
     //We need to open all the data, because we need to estimate min/max for legend drawing
-     status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL,cacheLocation.c_str());
+     status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
   }else {
     //When the scale factor is zero (0.0f) we need to open the data too, because we want to estimate min/max in this case.
     // When the scale factor is given, we only need to open the header, for displaying the units.
     if(dataSource->legendScale==0.0f){
-      status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL,cacheLocation.c_str());
+      status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
     }else{
-      status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER,cacheLocation.c_str());
+      status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
     }
   }
   //Create a legend based on status flags.

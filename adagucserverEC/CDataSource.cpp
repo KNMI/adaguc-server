@@ -36,28 +36,18 @@ int CDataSource::Statistics::calculate(CDataSource *dataSource){
   //Get Min and Max
   CDataSource::DataClass *dataObject = dataSource->dataObject[0];
   if(dataObject->data!=NULL){
-    size_t s = dataSource->dWidth*dataSource->dHeight;
-    float _min=0.0f,_max=0.0f;
-    if(dataObject->dataType==CDF_FLOAT){
-      float *data=(float*)dataObject->data;
-      int firstDone=0;
-  
-      for(size_t p=0;p<s;p++){
-        float v=data[p];
-        if(v!=(float)dataObject->dfNodataValue||(!dataObject->hasNodataValue)){
-          if(firstDone==0){
-            _min=v;_max=v;
-            firstDone=1;
-          }else{
-        //CDBDebug("%d=%f",p,v);
-            if(v<_min)_min=v;
-            if(v>_max)_max=v;
-          }
-        }
-      }
-      min=_min;
-      max=_max;
-    }
+    size_t size = dataSource->dWidth*dataSource->dHeight;
+    
+    if(dataObject->dataType==CDF_CHAR)calcMinMax((char*)dataObject->data,size,dataObject);
+    if(dataObject->dataType==CDF_BYTE)calcMinMax((char*)dataObject->data,size,dataObject);
+    if(dataObject->dataType==CDF_UBYTE)calcMinMax((unsigned char*)dataObject->data,size,dataObject);
+    if(dataObject->dataType==CDF_SHORT)calcMinMax((short*)dataObject->data,size,dataObject);
+    if(dataObject->dataType==CDF_USHORT)calcMinMax((unsigned short*)dataObject->data,size,dataObject);
+    if(dataObject->dataType==CDF_INT)calcMinMax((int*)dataObject->data,size,dataObject);
+    if(dataObject->dataType==CDF_UINT)calcMinMax((unsigned int*)dataObject->data,size,dataObject);
+    if(dataObject->dataType==CDF_FLOAT)calcMinMax((float*)dataObject->data,size,dataObject);
+    if(dataObject->dataType==CDF_DOUBLE)calcMinMax((double*)dataObject->data,size,dataObject); 
+    
   }
   return 0;
 }
@@ -157,8 +147,8 @@ void CDataSource::addTimeStep(const char * pszName,const char *pszTimeString){
 }
 
 const char *CDataSource::getFileName(){
-  if(currentAnimationStep<0)return "less than 0";
-  if(currentAnimationStep>(int)timeSteps.size())return "more than timeSteps.size()";
+  if(currentAnimationStep<0)return NULL;
+  if(currentAnimationStep>=(int)timeSteps.size())return NULL;
   return timeSteps[currentAnimationStep]->fileName.c_str();
 }
 

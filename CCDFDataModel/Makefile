@@ -1,6 +1,6 @@
 HOME=/nobackup/users/plieger/software/install
 
-INCLUDEDIR=$(HOME)/include  
+INCLUDEDIR=$(HOME)/include -I ../hclasses  -I /usr/include/libxml2/
 
 CCOMPILER=g++ -Wall -I $(INCLUDEDIR) 
 #optimalization options:
@@ -10,18 +10,20 @@ CCOMPILER=g++ -O2 -I $(INCLUDEDIR)
 #CCOMPILER=g++ -march=k8-sse3 -mtune=k8-sse3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 -I $(INCLUDEDIR)  
 
 
-OBJECTS = CDirReader.o  CTypes.o CDebugger.o 
+OBJECTS = CCDFDataModel.o  CCDFNetCDFIO.o CADAGUC_time.o CCDFHDF5IO.o 
+#OBJECTS = CCDFDataModel.o  CCDFNetCDFIO.o 
 
-EXECUTABLE= hclasses
+
+EXECUTABLE= CCDFDataModel
 
 default: $(EXECUTABLE)
 $(EXECUTABLE): $(OBJECTS)
-	ar rcs $(EXECUTABLE).a $(OBJECTS)  
+	ar rcs  $(EXECUTABLE).a $(OBJECTS) 
 
 %.o: %.cpp
 	$(CCOMPILER) -c $< -o $@
 
 clean:
-	rm $(OBJECTS) $(EXECUTABLE).a
+	rm $(OBJECTS)  $(EXECUTABLE).a
 
 

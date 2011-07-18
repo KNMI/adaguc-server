@@ -4,7 +4,7 @@ const char *CDataReader::className="CDataReader";
 const char *CDBFileScanner::className="CDBFileScanner";
 const char *CDFObjectStore::className="CDFObjectStore";
 #define uchar unsigned char
-
+#define MAX_STR_LEN 8191
 #define CDATAREADER_DEBUG
 extern CDFObjectStore cdfObjectStore;
 CDFObjectStore cdfObjectStore;
@@ -115,18 +115,76 @@ CDBDebug("Creating NetCDF reader");
 
 
 
-int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocation){
-  //Perform some checks on pointers
+int CDataReader::getCacheFileName(CDataSource *dataSource,CT::string *uniqueIDFor2DField){
+  if(dataSource==NULL)return 1;
+  if(dataSource->srvParams==NULL)return 1;
+  CDBDebug("GetCacheFileName");
+  CT::string cacheLocation;dataSource->srvParams->getCacheDirectory(&cacheLocation);
+  if(cacheLocation.c_str()==NULL)return 1;else if(cacheLocation.length()==0)return 1;  
+  CDBDebug("/GetCacheFileName");
+  uniqueIDFor2DField->copy(cacheLocation.c_str());
+  uniqueIDFor2DField->concat("/");
+  struct stat stFileInfo;
+  int timeStep = dataSource->getCurrentTimeStep();
+  int intStat = stat(uniqueIDFor2DField->c_str(),&stFileInfo);
+  //Directory structure needs to be created for all the cache files.
+  if(intStat != 0){
+    CDBDebug("making dir %s",uniqueIDFor2DField->c_str());
+    mode_t permissions = S_IRWXU|S_IRWXG|S_IRWXO;
+    mkdir (uniqueIDFor2DField->c_str(),permissions);
+  }
+  CDBDebug("OK");
+  if(dataSource->getFileName()==NULL){
+     CDBError("No filename for datasource");
+    return 1;
+  }
+  CDBDebug("OK");
+  //Make the cache unique directory name, based on the filename
+  CT::string validFileName(dataSource->getFileName());
+  //Replace : and / by nothing, so we can use the string as a directory name
+  validFileName.replace(":",""); 
+  validFileName.replace("/",""); 
+  //Concat the filename to the cache directory
+  uniqueIDFor2DField->concat(&validFileName);
+  uniqueIDFor2DField->concat("cache");
 
+  //Check wether the specific cache file directory exists
+  intStat = stat(uniqueIDFor2DField->c_str(),&stFileInfo);
+  if(intStat != 0){
+    CDBDebug("making dir %s",uniqueIDFor2DField->c_str());
+    mode_t permissions = S_IRWXU|S_IRWXG|S_IRWXO;
+    mkdir (uniqueIDFor2DField->c_str(),permissions);
+  }
+  
+  
+  //Now make the filename, based on variable name and dimension properties
+  uniqueIDFor2DField->concat("/");
+  uniqueIDFor2DField->concat(dataSource->dataObject[0]->variableName.c_str());
+  uniqueIDFor2DField->concat("_");
+  
+  CDBDebug("Add dimension properties to the filename");
+  //Add dimension properties to the filename
+  if(dataSource->timeSteps[timeStep]->dims.dimensions.size()>0){
+    for(size_t j=0;j<dataSource->timeSteps[timeStep]->dims.dimensions.size();j++){
+      uniqueIDFor2DField->printconcat("%s=%d", 
+                                      dataSource->timeSteps[timeStep]->dims.dimensions[0]->name.c_str(),
+                                      dataSource->timeSteps[timeStep]->dims.dimensions[0]->index);
+    }
+  }
+  
+  
+  return 0;
+}
+
+int CDataReader::open(CDataSource *_sourceImage, int mode){
+  //Perform some checks on pointers
+  
   if(_sourceImage==NULL){CDBError("Invalid sourceImage");return 1;}
   if(_sourceImage->getFileName()==NULL){CDBError("Invalid NetCDF filename (NULL)");return 1;}
   sourceImage=_sourceImage;
   FileName.copy(sourceImage->getFileName());
 
-  CDFObject *cdfObject=CDFObjectStore::getCDFObjectStore()->getCDFObject(sourceImage,FileName.c_str(),false);
-  thisCDFObject=cdfObject;
-  if(cdfObject==NULL){return 1;}
-
+  
   int status=0;
   bool enableDataCache=false;
   if(sourceImage->cfgLayer->Cache.size()>0){
@@ -134,69 +192,41 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
       enableDataCache=true;
     }
   }
-  
-  if(cacheLocation==NULL)enableDataCache=false;else if(strlen(cacheLocation)==0)enableDataCache=false;
+ 
   bool cacheAvailable=false;
   bool workingOnCache=false;
   bool saveFieldFile = false;
   CT::string uniqueIDFor2DField;
   CT::string uniqueIDFor2DFieldTmp;
   
+  //Get cachefilename
+  if(enableDataCache==true){
+    if(getCacheFileName(sourceImage,&uniqueIDFor2DField)!=0){
+      enableDataCache=false;
+    }
+  }
+
+  
+  
   //Check wether we should use cache or not (in case of OpenDAP, this speeds up things a lot)
   if(enableDataCache==true){
-    int intStat;
-    struct stat stFileInfo;
-    int timeStep = sourceImage->getCurrentTimeStep();
-    //Test whether directory structure is OK
-    uniqueIDFor2DField.copy(cacheLocation);
-    uniqueIDFor2DField.concat("/");
-    intStat = stat(uniqueIDFor2DField.c_str(),&stFileInfo);
-    //Directory structure needs to be created for all the cache files.
-    if(intStat != 0){
-      CDBDebug("making dir %s",uniqueIDFor2DField.c_str());
-      mode_t permissions = S_IRWXU|S_IRWXG|S_IRWXO;
-      mkdir (uniqueIDFor2DField.c_str(),permissions);
-    }
-    //Make the cache unique directory name, based on the filename
-    CT::string validFileName(sourceImage->getFileName());
-    //Replace : and / by nothing, so we can use the string as a directory name
-    validFileName.replace(":",""); 
-    validFileName.replace("/",""); 
-    //Concat the filename to the cache directory
-    uniqueIDFor2DField.concat(&validFileName);
-    uniqueIDFor2DField.concat("cache");
-    //Check wether the specific cache file directory exists
-    intStat = stat(uniqueIDFor2DField.c_str(),&stFileInfo);
-    if(intStat != 0){
-      CDBDebug("making dir %s",uniqueIDFor2DField.c_str());
-      mode_t permissions = S_IRWXU|S_IRWXG|S_IRWXO;
-      mkdir (uniqueIDFor2DField.c_str(),permissions);
-    }
-    //Now make the filename, based on variable name and dimension properties
-    uniqueIDFor2DField.concat("/");
-    uniqueIDFor2DField.concat(sourceImage->dataObject[0]->variableName.c_str());
-    uniqueIDFor2DField.concat("_");
-    //Add dimension properties to the filename
-    if(sourceImage->timeSteps[timeStep]->dims.dimensions.size()>0){
-      for(size_t j=0;j<sourceImage->timeSteps[timeStep]->dims.dimensions.size();j++){
-        uniqueIDFor2DField.printconcat("%s=%d", 
-                                       sourceImage->timeSteps[timeStep]->dims.dimensions[0]->name.c_str(),
-                                       sourceImage->timeSteps[timeStep]->dims.dimensions[0]->index);
-      }
-    }
     //Create a temporary filename, which we can move in other to avoid read/write conflicts.
-    uniqueIDFor2DFieldTmp.copy(&uniqueIDFor2DField);
+    uniqueIDFor2DFieldTmp.copy(&uniqueIDFor2DField);  
     uniqueIDFor2DFieldTmp.concat("_tmp");
+
+    
+    struct stat stFileInfo;
     //Test wether the cache file is already available (in this case we do not need above tmp name)
-    intStat = stat(uniqueIDFor2DField.c_str(),&stFileInfo);if(intStat != 0)saveFieldFile = true;else {
+    int intStat = stat(uniqueIDFor2DField.c_str(),&stFileInfo);if(intStat != 0)saveFieldFile = true;else {
       cacheAvailable=true;
     }
+    
     //Test wether the tmp file already exists, in this case another process is working on the cache
     intStat = stat(uniqueIDFor2DFieldTmp.c_str(),&stFileInfo);
     if(intStat == 0){workingOnCache=true;}
     //This means that cache is not yet available, but also we do not need to create a cache file.
     if(workingOnCache==true){
-      CDBDebug("*** Another process is now working on the cache file. The cache can not be used for the moment.");
+      CDBDebug("*** %s exists: Another process is now working on the cache file. The cache can not be used for the moment.",uniqueIDFor2DFieldTmp.c_str());
       saveFieldFile=false;
       cacheAvailable=false;
     }
@@ -205,29 +235,38 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
 #ifdef MEASURETIME
   StopWatch_Stop("opening file");
 #endif
-  
+  CDFObject *cdfObject = NULL;
   if(cacheAvailable==true){
     CDBDebug("Reading from Cache file");
-    //We need to rebuild our CDF reader, because cache files are always netcdf. Input can be different.
-    CDFReader *cdfReader=(CDFReader*)cdfObject->getCDFReader();
-    if(cdfReader!=NULL)delete cdfReader;
-    cdfReader = new CDFNetCDFReader();
-    cdfObject->attachCDFReader(cdfReader);
+
+    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(sourceImage,uniqueIDFor2DField.c_str(),false);
+    if(cdfObject==NULL){return 1;}
     status = cdfObject->open(uniqueIDFor2DField.c_str());
     int timeStep = sourceImage->getCurrentTimeStep();
     for(size_t j=0;j<sourceImage->timeSteps[timeStep]->dims.dimensions.size();j++){
       sourceImage->timeSteps[timeStep]->dims.dimensions[0]->index=0;
     }
+    
+    
+    
+
   }else{
     //We just open the file in the standard way, without cache
+    cdfObject=CDFObjectStore::getCDFObjectStore()->getCDFObject(sourceImage,FileName.c_str(),false);
+    if(cdfObject==NULL){return 1;}
+    CDBDebug("Reading directly without Cache: %s",FileName.c_str());
     status = cdfObject->open(FileName.c_str());
   }
    if(status != 0){CDBError("Unable to read file %s",FileName.c_str());return 1;}
 #ifdef MEASURETIME
   StopWatch_Stop("file opened");
 #endif
+  //Used for internal access:
+  thisCDFObject=cdfObject;
+/* CDFObject *cdfObject=CDFObjectStore::getCDFObjectStore()->getCDFObject(sourceImage,FileName.c_str(),false);
+  thisCDFObject=cdfObject;
+  if(cdfObject==NULL){return 1;}*/
 
- 
   
  // sourceImage->cdfObject=cdfObject;
   
@@ -296,13 +335,8 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
 
   // It is possible to skip every N cell in x and y. When set to 1, all data is displayed.
   // When set to 2, every second datacell is displayed, etc...
-  int stride2DMap=1;
   
-  //When we are reading from cache, the file has been written based on strided data
-  if(cacheAvailable){
-    stride2DMap=1;
-  }
-
+ 
   // Retrieve X, Y Dimensions and Width, Height
   sourceImage->dNetCDFNumDims = var[0]->dimensionlinks.size();
   int dimXIndex=sourceImage->dNetCDFNumDims-1;
@@ -323,6 +357,18 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
   CDF::Dimension *dimX=var[0]->dimensionlinks[dimXIndex];
   CDF::Dimension *dimY=var[0]->dimensionlinks[dimYIndex];
   if(dimX==NULL||dimY==NULL){CDBError("X and or Y dims not found...");return 1;}
+  
+  int stride2DMap=1;
+  while(dimX->length/stride2DMap>360){
+    stride2DMap++;
+  }
+  
+  //When we are reading from cache, the file has been written based on strided data
+  if(cacheAvailable){
+    stride2DMap=1;
+  }
+  stride2DMap=1;
+  
   sourceImage->dWidth=dimX->length/stride2DMap;
   sourceImage->dHeight=dimY->length/stride2DMap;
   size_t start[sourceImage->dNetCDFNumDims+1];
@@ -699,6 +745,9 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
     }
     float min=(float)sourceImage->statistics->getMinimum();
     float max=(float)sourceImage->statistics->getMaximum();
+    CDBDebug("Min = %f, Max = %f",min,max);
+    
+    
     //Make sure that there is always a range in between the min and max.
     if(max==min)max=min+0.1;
     //Calculate legendOffset legendScale
@@ -714,6 +763,11 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
   //Write the cache file if neccessary.
     if(enableDataCache==true&&saveFieldFile==true){
   
+      CT::string dumpString;
+         CDF::dump(cdfObject,&dumpString);
+         //CDBDebug("\nSTART\n%s\nEND\n",dumpString.c_str());
+    writeLogFile2(dumpString.c_str());
+      
   // CT::string dumpString;
   // CDF::dump(cdfObject,&dumpString);
   // CDBDebug(dumpString.c_str());
@@ -729,86 +783,90 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
     }*/
   //int keepVariable[sourceImage->dataObject.size()];
   int keepVariable[cdfObject->variables.size()];
-  for(size_t v=0;v<cdfObject->variables.size();v++){
-    keepVariable[v]=0;        
-  }
-      //if(saveFieldFile)
+  int keepDimension[cdfObject->dimensions.size()];
+  //By default throw away everything
+  for(size_t v=0;v<cdfObject->variables.size();v++)keepVariable[v]=0;
+  for(size_t v=0;v<cdfObject->dimensions.size();v++)keepDimension[v]=0;        
+  
+   //if(saveFieldFile)
   {
-        //size_t dataSize=sourceImage->dWidth*sourceImage->dHeight*CDF::getTypeSize(sourceImage->dataObject[0]->dataType);
-        CDBDebug("Writing to %s",uniqueIDFor2DField.c_str());
-        
+    CDBDebug("Writing to %s",uniqueIDFor2DField.c_str());
     
-    
-    //Make a list of required dimensions
-    std::vector<CT::string *> dimsToKeep;
+  
+
+    //keep the concerning variable itself
     for(size_t v=0;v<sourceImage->dataObject.size();v++){
-      CDF::Variable *var = cdfObject->getVariableNE(sourceImage->dataObject[v]->variableName.c_str());
-      //Loop through dim links
-      for(size_t d=0;d<var->dimensionlinks.size();d++){
-        dimsToKeep.push_back(new CT::string(var->dimensionlinks[d]->name.c_str()));
-      }
+      CDF::Variable * var=sourceImage->dataObject[v]->cdfVariable;
+      try{
+        keepVariable[cdfObject->getVariableIndex(var->name.c_str())]=1;
+      }catch(int e){}
     }
+    //Make a list of required dimensions
     
-     //Make a list of required variables
+    for(size_t v=0;v<cdfObject->variables.size();v++){
+      try{
+        if(keepVariable[v]==1){
+          //Loop through dim links
+          CDF::Variable *var = cdfObject->variables[v];
+          for(size_t d=0;d<var->dimensionlinks.size();d++){
+            try{
+              keepDimension[cdfObject->getDimensionIndex(var->dimensionlinks[d]->name.c_str())]=1;
+            }catch(int e){
+              CT::string errMsg;
+              CDF::getErrorMessage(&errMsg,e);
+              CDBDebug("Dim %s %s",var->dimensionlinks[d]->name.c_str(),errMsg.c_str());
+              
+            }
+            try{
+              keepVariable[cdfObject->getVariableIndex(var->dimensionlinks[d]->name.c_str())]=1;
+            }catch(int e){
+              CT::string errMsg;
+              CDF::getErrorMessage(&errMsg,e);
+              CDBDebug("Var %s %s",var->dimensionlinks[d]->name.c_str(),errMsg.c_str());
+              
+            }                  
+          }
+        }
+      }catch(int e){}
+    }
+  //Make a list of required variables
     for(size_t v=0;v<sourceImage->dataObject.size();v++){
       for(size_t w=0;w<cdfObject->variables.size();w++){
+        //Metadata variables often have no dimensions. We want to keep them to show info to the user.
         if(keepVariable[w]==0){
-          if(cdfObject->variables[w]->isDimension==true){
-            bool keepDim=false;
-            //Determine for each dim whether we want to keep it (whether is occurs in our variable)
-            for(size_t d=0;d<dimsToKeep.size();d++){
-              if(cdfObject->variables[w]->name.equals(dimsToKeep[d]->c_str())){
-                keepVariable[w]=1;
-                keepDim=true;break;
-              }
-            }
-	    if(keepDim==true){
-	      CDBDebug("Keep %s",(cdfObject->variables[w]->name.c_str()));
-	    }
-	    if(keepDim==false){
-	      CDBDebug("Discard %s",(cdfObject->variables[w]->name.c_str()));
-	    }
-          }
-          //We will keep the variables with a size of zero, because these are usually variables with a lot of metadata attributes.
-          if(cdfObject->variables[w]->dimensionlinks.size()==0){
+          if(cdfObject->variables[w]->dimensionlinks.size()<2){
             keepVariable[w]=1;
-          }
-          if(keepVariable[w]==0){
-            if(cdfObject->variables[w]->name.equals(&sourceImage->dataObject[v]->variableName)){
-              keepVariable[w]=1;
-            }
+            /*try{
+              keepDimension[cdfObject->getDimensionIndex(cdfObject->variables[w]->name.c_str())]=1;
+            }catch(int e){}*/
+             cdfObject->variables[w]->dimensionlinks.resize(0);
+
           }
         }
       }
     }
-    
-    for(size_t d=0;d<dimsToKeep.size();d++){
-      delete dimsToKeep[d];
-      dimsToKeep[d]=NULL;
-    }
-
     std::vector<CT::string *> deleteVarNames;
+    //Remove variables
     for(size_t v=0;v<cdfObject->variables.size();v++){
-      if(keepVariable[v]==0){
-        deleteVarNames.push_back(new CT::string(&cdfObject->variables[v]->name));
-      }
+      if(keepVariable[v]==0)deleteVarNames.push_back(new CT::string(&cdfObject->variables[v]->name));
     }
     for(size_t i=0;i<deleteVarNames.size();i++){
-      CDBDebug("Removing %s",deleteVarNames[i]->c_str());
+      CDBDebug("Removing variable %s",deleteVarNames[i]->c_str());
       cdfObject->removeVariable(deleteVarNames[i]->c_str());
+      delete deleteVarNames[i];
+    }
+    deleteVarNames.clear();
+    //Remove dimensions
+    for(size_t d=0;d<cdfObject->dimensions.size();d++){
+      if(keepDimension[d]==0)deleteVarNames.push_back(new CT::string(&cdfObject->dimensions[d]->name));
+    }
+    for(size_t i=0;i<deleteVarNames.size();i++){
+      CDBDebug("Removing dimensions %s",deleteVarNames[i]->c_str());
       cdfObject->removeDimension(deleteVarNames[i]->c_str());
       delete deleteVarNames[i];
-      deleteVarNames[i]=NULL;
     }
-        //cdfObject->removeVariable("image1.image_data");
-        //for(size_t v=0;v<cdfObject->variables.size();v++){
-          //CDBDebug("%d%s",cdfObject->variables[v]->isDimension,cdfObject->variables[v]->name.c_str());
-          
-          //if(cdfObject->variables[v]->name.equals("QC")){
-            //CDF::allocateData(CDF_FLOAT,&cdfObject->variables[v]->data,1036800);
-          //}
-        //}
-        //Adjust dimensions for the single object:
+    
+    //Adjust dimensions for the single object:
         
     varX->type=CDF_DOUBLE;
     varY->type=CDF_DOUBLE;
@@ -879,6 +937,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
         
         //netCDFWriter.disableVariableWrite();
         //uniqueIDFor2DField.concat("nep");
+    //Is some kind of process working on any of the cache files?
     FILE * pFile = NULL;  
     pFile = fopen ( uniqueIDFor2DFieldTmp.c_str() , "r" );
     if(pFile != NULL){
@@ -893,10 +952,14 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
     }
         
     if(workingOnCache==false){
-          //Imediately claim this file!
-      CDBDebug("*** [1/4] Claiming cache file ");
+      //Imediately claim this file!
+      CDBDebug("*** [1/4] Claiming cache file %s",uniqueIDFor2DFieldTmp.c_str());
       const char buffer[] = { "ab" };
       pFile = fopen ( uniqueIDFor2DFieldTmp.c_str() , "wb" );
+      if(pFile==NULL){
+        CDBDebug("*** Unable to write to cache file");
+        return 1;
+      }
       size_t bytesWritten = fwrite (buffer , sizeof(char),2 , pFile );
       fflush (pFile);   
       fclose (pFile);
@@ -909,7 +972,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
     }
     
     if(workingOnCache==true){
-      CDBDebug("*** Another process is working on the cache file");
+      CDBDebug("*** Another process is working on cache file %s",uniqueIDFor2DFieldTmp.c_str());
       saveFieldFile=false;
       cacheAvailable=false;
     }else{
@@ -918,10 +981,14 @@ int CDataReader::open(CDataSource *_sourceImage, int mode,const char *cacheLocat
           
           
       netCDFWriter.setNetCDFMode(4);
-        
-      netCDFWriter.write(uniqueIDFor2DFieldTmp.c_str());
-        
+      try{
+        netCDFWriter.write(uniqueIDFor2DFieldTmp.c_str());
+      }catch(int e){
+        CDBError("Exception %d in writing cache file",e);
+        return 1;
+      }
           //Move the temp file to the final name
+      CDBDebug("Renaming cache file...");
       rename(uniqueIDFor2DFieldTmp.c_str(),uniqueIDFor2DField.c_str());
       CDBDebug("*** [4/4] Writing cache file complete!");
 
@@ -1207,8 +1274,8 @@ CDBDebug("File opened.");
               }else{
                 CDF::Attribute *dimUnits = dimVar->getAttributeNE("units");
                 if(dimUnits==NULL){
-                  CDBError("No units found for dimension %s",dimVar->name.c_str());
-                  throw(__LINE__);
+                  dimVar->setAttributeText("units","1");
+                  dimUnits = dimVar->getAttributeNE("units");
                 }
                 //if(dimVar->data==NULL){
                   status = dimVar->readData(CDF_DOUBLE);if(status!=0){
@@ -1465,14 +1532,20 @@ int CDataReader::justLoadAFileHeader(CDataSource *dataSource){
   if(dataSource==NULL){CDBError("datasource == NULL");return 1;}
   if(dataSource->cfgLayer==NULL){CDBError("datasource->cfgLayer == NULL");return 1;}
   if(dataSource->dataObject.size()==0){CDBError("dataSource->dataObject.size()==0");return 1;}
-  if(dataSource->dataObject[0]->cdfVariable!=NULL){CDBError("dataSource->dataObject[0]->cdfVariable!=NULL");return 1;}
-  if(dataSource->dataObject[0]->cdfObject!=NULL){CDBError("datasource->dataObject[0]->cdfObject != NULL");return 1;}
+  if(dataSource->dataObject[0]->cdfVariable!=NULL){CDBDebug("already loaded: dataSource->dataObject[0]->cdfVariable!=NULL");return 0;}
+  //if(dataSource->dataObject[0]->cdfObject!=NULL){CDBError("datasource->dataObject[0]->cdfObject != NULL");return 1;}
 
   CDirReader dirReader;
   if(CDBFileScanner::searchFileNames(dataSource,&dirReader,NULL)!=0){CDBError("Could not find any filename");return 1; }
   if(dirReader.fileList.size()==0){CDBError("dirReader.fileList.size()==0");return 1; }
   //Open a file
   try{
+    /*CT::string cachefileName;
+    if(getCacheFileName(dataSource,&cachefileName)!=0){
+      CDBDebug("cachefileName: %s",cachefileName.c_str());
+      dirReader.fileList[0]->fullName.copy(cachefileName.c_str());
+    }*/
+    
     CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource,dirReader.fileList[0]->fullName.c_str(),false);
     if(cdfObject == NULL)throw(__LINE__);
 
@@ -1480,6 +1553,8 @@ int CDataReader::justLoadAFileHeader(CDataSource *dataSource){
    // dataSource->dataObject[0]->cdfObject=cdfObject;
     //CDFReader *cdfReader = CDataReader::getCDFReader(dataSource,cdfObject);
     //if(cdfReader == NULL){throw(__LINE__);}
+    
+    
     CDBDebug("Opening %s",dirReader.fileList[0]->fullName.c_str());
     int status = cdfObject->open(dirReader.fileList[0]->fullName.c_str());
     CDBDebug("OK");
@@ -1521,20 +1596,21 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource,bool tryToFindI
   db.close(); 
   if(store!=NULL){
     try{
-      CServerConfig::XMLE_Dimension *xmleDim=new CServerConfig::XMLE_Dimension();
       
-      xmleDim->value.copy(store->getRecord(0)->get("ogcname")->c_str());
-      xmleDim->attr.name.copy(store->getRecord(0)->get("ncname")->c_str());
-      xmleDim->attr.units.copy(store->getRecord(0)->get("units")->c_str());
-      CDBDebug("Retrieved auto dims from db for layer %s",layerTableId.c_str());
-      dataSource->cfgLayer->Dimension.push_back(xmleDim);
+      for(size_t j=0;j<store->size();j++){
+        CServerConfig::XMLE_Dimension *xmleDim=new CServerConfig::XMLE_Dimension();
+        xmleDim->value.copy(store->getRecord(j)->get("ogcname")->c_str());
+        xmleDim->attr.name.copy(store->getRecord(j)->get("ncname")->c_str());
+        xmleDim->attr.units.copy(store->getRecord(j)->get("units")->c_str());
+        CDBDebug("Retrieved auto dim %s-%s from db for layer %s", xmleDim->value.c_str(),xmleDim->attr.name.c_str(),layerTableId.c_str());
+        dataSource->cfgLayer->Dimension.push_back(xmleDim);
+      }
       delete store;
       return 0;
     }catch(int e){
       delete store;
       CDBError("DB Exception: %s\n",db.getErrorMessage(e));
     }
-   
   }
   CDBDebug("autoConfigureDimensions information not in DB");
   //Information is not available in the database. We need to load it from a file.
@@ -1554,8 +1630,24 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource,bool tryToFindI
       if(dataSource->dataObject[0]->cdfVariable->dimensionlinks.size()>=2){
         CDBDebug("OK");
         try{
+          //Create the database table
+          CT::string tableColumns("layerid varchar (255), ncname varchar (255), ogcname varchar (255), units varchar (255)");
+          int status;
+          CPGSQLDB DB;
+          status = DB.connect(dataSource->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0){CDBError("Error Could not connect to the database");throw(__LINE__);}
+          status = DB.checkTable(tableName.c_str(),tableColumns.c_str());
+          if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tableName.c_str(),tableColumns.c_str()); DB.close();throw(__LINE__);  }
+
           CDF::Variable *variable=dataSource->dataObject[0]->cdfVariable;
           CDBDebug("OK %d",variable->dimensionlinks.size()-2);
+          
+          // When there are no extra dims besides x and y: make a table anyway so autoconfigure_dimensions is not run 
+          // Each time to find the non existing dims.
+          if(variable->dimensionlinks.size()==2){
+            CDBDebug("Creating an empty table, because this variable has only x and y dims");
+            return 0;
+          }
+          
           for(size_t d=0;d<variable->dimensionlinks.size()-2;d++){
             CDF::Dimension *dim=variable->dimensionlinks[d];
             if(dim!=NULL){
@@ -1565,7 +1657,7 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource,bool tryToFindI
               CT::string standard_name=dim->name.c_str();  
               CT::string OGCDimName;
               try{dimVar->getAttribute("units")->getDataAsString(&units);}catch(int e){}
-              try{dimVar->getAttribute("standard_name")->getDataAsString(&standard_name);}catch(int e){}
+              //try{dimVar->getAttribute("standard_name")->getDataAsString(&standard_name);}catch(int e){}
               OGCDimName.copy(&standard_name);
               CDBDebug("Datasource %s: Dim %s; units %s; standard_name %s",dataSource->layerName.c_str(),dim->name.c_str(),units.c_str(),standard_name.c_str());
               CServerConfig::XMLE_Dimension *xmleDim=new CServerConfig::XMLE_Dimension();
@@ -1576,13 +1668,6 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource,bool tryToFindI
               
               
               //Store the data in the db for quick access.
-              CT::string tableColumns("layerid varchar (255), ncname varchar (255), ogcname varchar (255), units varchar (255)");
-              int status;
-              CPGSQLDB DB;
-              status = DB.connect(dataSource->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0){CDBError("Error Could not connect to the database");throw(__LINE__);}
-              status = DB.checkTable(tableName.c_str(),tableColumns.c_str());
-              if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tableName.c_str(),tableColumns.c_str()); DB.close();throw(__LINE__);  }
-
               query.print("INSERT INTO %s values (E'%s',E'%s',E'%s',E'%s')",tableName.c_str(),layerTableId.c_str(),standard_name.c_str(),OGCDimName.c_str(),units.c_str());
               status = DB.query(query.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",query.c_str());DB.close();throw(__LINE__); }
                       
@@ -1610,95 +1695,101 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource,bool tryToFindI
 
 
 int CDataReader::autoConfigureStyles(CDataSource *dataSource){
+  CDBDebug("autoConfigureStyles");
   if(dataSource==NULL){CDBDebug("datasource == NULL");return 1;}
   if(dataSource->cfgLayer==NULL){CDBDebug("datasource->cfgLayer == NULL");return 1;}
   if(dataSource->cfgLayer->DataBaseTable.size()==0){CDBDebug("dataSource->cfgLayer->DataBaseTable.size()==0");return 1;}
-  
-  if(dataSource->cfgLayer->Styles.size()==0){
-    // Try to find a style corresponding the the standard_name or long_name attribute of the file.
-    CServerConfig::XMLE_Styles *xmleStyle=new CServerConfig::XMLE_Styles();
-    dataSource->cfgLayer->Styles.push_back(xmleStyle);
-    CT::string tableName = "autoconfigure_styles";
-    CT::string layerTableId = dataSource->cfgLayer->DataBaseTable[0]->value.c_str();
-    CT::string query;
-    query.print("SELECT * FROM %s where layerid=E'%s'",tableName.c_str(),layerTableId.c_str());
-    CPGSQLDB db;
-    if(db.connect(dataSource->cfg->DataBase[0]->attr.parameters.c_str())!=0){CDBError("Error Could not connect to the database");return 1; }
-    CDB::Store *store = db.queryToStore(query.c_str());
-    db.close(); 
-    if(store!=NULL){
+  if(dataSource->cfgLayer->Styles.size()!=0){CDBDebug("dataSource->cfgLayer->Styles.size()!=0");return 1;}
+
+  // Try to find a style corresponding the the standard_name or long_name attribute of the file.
+  CServerConfig::XMLE_Styles *xmleStyle=new CServerConfig::XMLE_Styles();
+  dataSource->cfgLayer->Styles.push_back(xmleStyle);
+  CT::string tableName = "autoconfigure_styles";
+  CT::string layerTableId = dataSource->cfgLayer->DataBaseTable[0]->value.c_str();
+  CT::string query;
+  query.print("SELECT * FROM %s where layerid=E'%s'",tableName.c_str(),layerTableId.c_str());
+  CPGSQLDB db;
+  if(db.connect(dataSource->cfg->DataBase[0]->attr.parameters.c_str())!=0){CDBError("Error Could not connect to the database");return 1; }
+  CDB::Store *store = db.queryToStore(query.c_str());
+  db.close(); 
+  if(store!=NULL){
+    if(store->size()!=0){
       try{
         xmleStyle->value.copy(store->getRecord(0)->get("styles")->c_str());
-        delete store;
+        delete store;store=NULL;
       }catch(int e){
         delete store;
         CDBError("autoConfigureStyles: DB Exception: %s for query %s",db.getErrorMessage(e),query.c_str());
         return 1;
       }
       CDBDebug("Retrieved auto styles \"%s\" from db",xmleStyle->value.c_str());
-      //Finished!
-    }else{
-      // Auto style is not available in the database, so look it up in the file.
-      CT::string searchName=dataSource->dataObject[0]->variableName.c_str();
-  
-      try{
-        //If the file header is not yet loaded, load it.
-        if(dataSource->dataObject[0]->cdfVariable==NULL){
-          int status=CDataReader::justLoadAFileHeader(dataSource);
-          if(status!=0){CDBError("unable to load datasource headers");return 1;}
-        }
-        dataSource->dataObject[0]->cdfVariable->getAttribute("long_name")->getDataAsString(&searchName);
-        dataSource->dataObject[0]->cdfVariable->getAttribute("standard_name")->getDataAsString(&searchName);        
-      }catch(int e){}
-    /*  if(cdfObject!=NULL){
-        //TODO CHECK
-        //Decouple references
-        dataSource->dataObject[0]->cdfObject=NULL;
-        dataSource->dataObject[0]->cdfVariable=NULL;
-        for(size_t varNr=0;varNr<dataSource->dataObject.size();varNr++){dataSource->dataObject[varNr]->cdfVariable = NULL;}
-      }
-      delete cdfObject;*/
-      CDBDebug("Retrieving auto styles by using fileinfo \"%s\"",searchName.c_str());
-      // We now have the keyword searchname, with this keyword we are going to lookup all StandardName's in the server configured Styles
-      CT::string styles="auto";
-      for(size_t j=0;j<dataSource->cfg->Style.size();j++){
-        const char *styleName=dataSource->cfg->Style[j]->attr.name.c_str();
-        CDBDebug("Searching Style \"%s\"",styleName);
-        if(styleName!=NULL){
-          for(size_t i=0;i<dataSource->cfg->Style[j]->StandardNames.size();i++){
-            const char *cfgStandardNames=dataSource->cfg->Style[j]->StandardNames[i]->value.c_str();
-            CDBDebug("Searching StandardNames \"%s\"",cfgStandardNames);
-            if(cfgStandardNames!=NULL){
-              CT::string t=cfgStandardNames;
-              CT::stringlist *standardNameList=t.splitN(",");
-              for(size_t n=0;n<(*standardNameList).size();n++){
-                if(searchName.indexOf((*standardNameList)[n]->c_str())!=-1){
-                  CDBDebug("*** Match: \"%s\" ~~ \"%s\"",searchName.c_str(),(*standardNameList)[n]->c_str());
-                  if(styles.length()!=0)styles.concat(",");
-                  styles.concat((*standardNameList)[n]->c_str());
-                }
-              }
-              delete standardNameList;
-            }
-          }
-        }      
-      }
-      CDBDebug("Found styles \"%s\"",styles.c_str());
-      try{
-        CT::string tableColumns("layerid varchar (255), styles varchar (255)");
-        int status;
-        CPGSQLDB DB;
-        status = DB.connect(dataSource->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0){CDBError("Error Could not connect to the database");throw(__LINE__);}
-        status = DB.checkTable(tableName.c_str(),tableColumns.c_str());
-        if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tableName.c_str(),tableColumns.c_str()); DB.close();throw(__LINE__);  }
-        query.print("INSERT INTO %s values (E'%s',E'%s')",tableName.c_str(),layerTableId.c_str(),styles.c_str());
-        status = DB.query(query.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",query.c_str());DB.close();throw(__LINE__); }
-      }catch(int linenr){
-        CDBError("Exception at line %d",linenr);
-        return 1;
-      }
-      xmleStyle->value.copy(styles.c_str());
+      //OK!
+      return 0;
     }
+    delete store;
   }
+    //Finished!
+    
+    // Auto style is not available in the database, so look it up in the file.
+    CT::string searchName=dataSource->dataObject[0]->variableName.c_str();
+
+    try{
+      //If the file header is not yet loaded, load it.
+      if(dataSource->dataObject[0]->cdfVariable==NULL){
+        int status=CDataReader::justLoadAFileHeader(dataSource);
+        if(status!=0){CDBError("unable to load datasource headers");return 1;}
+      }
+      dataSource->dataObject[0]->cdfVariable->getAttribute("long_name")->getDataAsString(&searchName);
+      dataSource->dataObject[0]->cdfVariable->getAttribute("standard_name")->getDataAsString(&searchName);        
+    }catch(int e){}
+  /*  if(cdfObject!=NULL){
+      //TODO CHECK
+      //Decouple references
+      dataSource->dataObject[0]->cdfObject=NULL;
+      dataSource->dataObject[0]->cdfVariable=NULL;
+      for(size_t varNr=0;varNr<dataSource->dataObject.size();varNr++){dataSource->dataObject[varNr]->cdfVariable = NULL;}
+    }
+    delete cdfObject;*/
+    CDBDebug("Retrieving auto styles by using fileinfo \"%s\"",searchName.c_str());
+    // We now have the keyword searchname, with this keyword we are going to lookup all StandardName's in the server configured Styles
+    CT::string styles="auto";
+    for(size_t j=0;j<dataSource->cfg->Style.size();j++){
+      const char *styleName=dataSource->cfg->Style[j]->attr.name.c_str();
+      CDBDebug("Searching Style \"%s\"",styleName);
+      if(styleName!=NULL){
+        for(size_t i=0;i<dataSource->cfg->Style[j]->StandardNames.size();i++){
+          const char *cfgStandardNames=dataSource->cfg->Style[j]->StandardNames[i]->value.c_str();
+          CDBDebug("Searching StandardNames \"%s\"",cfgStandardNames);
+          if(cfgStandardNames!=NULL){
+            CT::string t=cfgStandardNames;
+            CT::stringlist *standardNameList=t.splitN(",");
+            for(size_t n=0;n<(*standardNameList).size();n++){
+              if(searchName.indexOf((*standardNameList)[n]->c_str())!=-1){
+                CDBDebug("*** Match: \"%s\" ~~ \"%s\"",searchName.c_str(),(*standardNameList)[n]->c_str());
+                if(styles.length()!=0)styles.concat(",");
+                styles.concat(dataSource->cfg->Style[j]->attr.name.c_str());
+              }
+            }
+            delete standardNameList;
+          }
+        }
+      }      
+    }
+    CDBDebug("Found styles \"%s\"",styles.c_str());
+    try{
+      CT::string tableColumns("layerid varchar (255), styles varchar (255)");
+      int status;
+      CPGSQLDB DB;
+      status = DB.connect(dataSource->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0){CDBError("Error Could not connect to the database");throw(__LINE__);}
+      status = DB.checkTable(tableName.c_str(),tableColumns.c_str());
+      if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tableName.c_str(),tableColumns.c_str()); DB.close();throw(__LINE__);  }
+      query.print("INSERT INTO %s values (E'%s',E'%s')",tableName.c_str(),layerTableId.c_str(),styles.c_str());
+      status = DB.query(query.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",query.c_str());DB.close();throw(__LINE__); }
+    }catch(int linenr){
+      CDBError("Exception at line %d",linenr);
+      return 1;
+    }
+    xmleStyle->value.copy(styles.c_str());
+  
   return 0;
 }
