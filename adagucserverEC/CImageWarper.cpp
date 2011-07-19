@@ -171,8 +171,9 @@ int CImageWarper::closereproj(){
       return 1;
     }
     if(sourceImage->nativeProj4.c_str()==NULL){
-      CDBError("sourceImage->CRS.c_str()==NULL");
-      return 1;
+      sourceImage->nativeProj4.copy("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
+      CDBWarning("sourceImage->CRS.c_str()==NULL setting to default latlon");
+      //return 1;
     }
     if (!(sourcepj = pj_init_plus(sourceImage->nativeProj4.c_str()))){
       CDBError("SetSourceProjection: Invalid projection: %s",sourceImage->nativeProj4.c_str());

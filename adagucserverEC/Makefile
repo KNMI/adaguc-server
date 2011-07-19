@@ -1,5 +1,5 @@
 #HOME=/data/apps/rcc/MaartenP/install
-HOME=/nobackup/users/plieger/software/install
+#HOME=/nobackup/users/plieger/software/install
 #HOME=/data/data1/mapserver/
 #HOME2=/data/data1/software/install/
 #HOME=/home/plieger/interpolws/software/install
@@ -7,7 +7,7 @@ HOME=/nobackup/users/plieger/software/install
 #HOME=/home/gsie/gsiews/software/install/
 #HOME=/home/plieger/software/install
 #HOME=/data/apps/rcc/MaartenP/install
-#HOME=/home/plieger/software/install/
+HOME=/home/plieger/software/install/
 LIBDIR=$(HOME)/lib
 
 INCLUDEDIR=$(HOME)/include -I /usr/include/libxml2/ 

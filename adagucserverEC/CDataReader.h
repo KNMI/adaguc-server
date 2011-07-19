@@ -11,6 +11,8 @@
 #include <math.h>
 #include "CStopWatch.h"
 #include "CDebugger.h"
+
+
 //Datasource can share multiple cdfObjects
 //A cdfObject is allways opened using a sourceImage path/filter combo
 // When a CDFObject is already opened

@@ -1,8 +1,7 @@
 #include "CImgWarpBilinear.h"
 #include <gd.h>
 
-#define CImgWarpBilinear_DEBUG
-#define CImgWarpBilinear_TIME
+
 
 const char *CImgWarpBilinear::className="CImgWarpBilinear";
  void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDrawImage *drawImage){
@@ -439,8 +438,9 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
       dataSource->legendOffset=lo;
     }
   }
- 
+#ifdef CImgWarpBilinear_DEBUG 
   CDBDebug("scale=%f offset=%f",dataSource->legendScale,dataSource->legendOffset);
+#endif  
   bool drawHQ = drawImage->getAntialiased();
   drawHQ=true;
   int col1=244;

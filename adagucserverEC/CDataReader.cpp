@@ -5,14 +5,13 @@ const char *CDBFileScanner::className="CDBFileScanner";
 const char *CDFObjectStore::className="CDFObjectStore";
 #define uchar unsigned char
 #define MAX_STR_LEN 8191
-#define CDATAREADER_DEBUG
+
 extern CDFObjectStore cdfObjectStore;
 CDFObjectStore cdfObjectStore;
 
 
 CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,const char *fileName,bool returnNew){
       if(returnNew==false){
-        CDBDebug("Searching for CDFObject with filename %s",fileName);
         for(size_t j=0;j<fileNames.size();j++){
           if(fileNames[j]->equals(fileName)){
             CDBDebug("Found CDFObject with filename %s",fileName);
@@ -20,7 +19,9 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,const char *file
           }
         }
       }
+#ifdef CDATAREADER_DEBUG              
       CDBDebug("Creating CDFObject with filename %s",fileName);
+#endif      
       //CDFObject not found: Create one
       CDFObject *cdfObject = new CDFObject();
       CDFReader *cdfReader = CDataReader::getCDFReader(dataSource);
@@ -35,9 +36,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,const char *file
         fileNames.push_back(new CT::string(fileName));
         cdfObjects.push_back(cdfObject);
       }
-    
-      CDBDebug("OK");
-      return cdfObject;
+    return cdfObject;
     }
 CDFObjectStore *CDFObjectStore::getCDFObjectStore(){return &cdfObjectStore;};
 void writeLogFile2(const char * msg){
@@ -254,7 +253,9 @@ int CDataReader::open(CDataSource *_sourceImage, int mode){
     //We just open the file in the standard way, without cache
     cdfObject=CDFObjectStore::getCDFObjectStore()->getCDFObject(sourceImage,FileName.c_str(),false);
     if(cdfObject==NULL){return 1;}
+#ifdef CDATAREADER_DEBUG            
     CDBDebug("Reading directly without Cache: %s",FileName.c_str());
+#endif    
     status = cdfObject->open(FileName.c_str());
   }
    if(status != 0){CDBError("Unable to read file %s",FileName.c_str());return 1;}
@@ -745,7 +746,9 @@ int CDataReader::open(CDataSource *_sourceImage, int mode){
     }
     float min=(float)sourceImage->statistics->getMinimum();
     float max=(float)sourceImage->statistics->getMaximum();
+#ifdef CDATAREADER_DEBUG    
     CDBDebug("Min = %f, Max = %f",min,max);
+#endif    
     
     
     //Make sure that there is always a range in between the min and max.
@@ -1261,7 +1264,7 @@ CDBDebug("Opening file %s",dirReader->fileList[j]->fullName.c_str());
 #ifdef CDATAREADER_DEBUG
 CDBDebug("File opened.");
 #endif
-            
+            CDBDebug("D");
             if(status==0){
               CDF::Dimension * dimDim = cdfObject->getDimensionNE(sourceImage->cfgLayer->Dimension[d]->attr.name.c_str());
               CDF::Variable *  dimVar = cdfObject->getVariableNE(sourceImage->cfgLayer->Dimension[d]->attr.name.c_str());
@@ -1577,6 +1580,10 @@ int CDataReader::justLoadAFileHeader(CDataSource *dataSource){
 
 
 int CDataReader::autoConfigureDimensions(CDataSource *dataSource,bool tryToFindInterval){
+#ifdef CDATAREADER_DEBUG
+ CDBDebug("autoConfigureDimensions");
+#endif
+ 
   // Auto configure dimensions, in case they are not configured by the user.
   // Dimension configuration is added to the internal XML configuration structure.
   if(dataSource->cfgLayer->Dimension.size()>0)return 0;
@@ -1602,7 +1609,9 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource,bool tryToFindI
         xmleDim->value.copy(store->getRecord(j)->get("ogcname")->c_str());
         xmleDim->attr.name.copy(store->getRecord(j)->get("ncname")->c_str());
         xmleDim->attr.units.copy(store->getRecord(j)->get("units")->c_str());
+#ifdef CDATAREADER_DEBUG        
         CDBDebug("Retrieved auto dim %s-%s from db for layer %s", xmleDim->value.c_str(),xmleDim->attr.name.c_str(),layerTableId.c_str());
+#endif        
         dataSource->cfgLayer->Dimension.push_back(xmleDim);
       }
       delete store;
@@ -1695,7 +1704,9 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource,bool tryToFindI
 
 
 int CDataReader::autoConfigureStyles(CDataSource *dataSource){
+#ifdef CDATAREADER_DEBUG     
   CDBDebug("autoConfigureStyles");
+#endif  
   if(dataSource==NULL){CDBDebug("datasource == NULL");return 1;}
   if(dataSource->cfgLayer==NULL){CDBDebug("datasource->cfgLayer == NULL");return 1;}
   if(dataSource->cfgLayer->DataBaseTable.size()==0){CDBDebug("dataSource->cfgLayer->DataBaseTable.size()==0");return 1;}
@@ -1722,7 +1733,9 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
         CDBError("autoConfigureStyles: DB Exception: %s for query %s",db.getErrorMessage(e),query.c_str());
         return 1;
       }
+#ifdef CDATAREADER_DEBUG           
       CDBDebug("Retrieved auto styles \"%s\" from db",xmleStyle->value.c_str());
+#endif     
       //OK!
       return 0;
     }

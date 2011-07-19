@@ -90,19 +90,20 @@ CDataSource::~CDataSource(){
   //if(cdfObject!=NULL)delete cdfObject;cdfObject=NULL;(not owned by datasource)
 }
 
-void CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Configuration *_cfg,CServerConfig::XMLE_Layer * _cfgLayer,const char *_layerName){
+int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Configuration *_cfg,CServerConfig::XMLE_Layer * _cfgLayer,const char *_layerName){
   srvParams=_srvParams;
   cfg=_cfg;
   cfgLayer=_cfgLayer;
 //    numVariables = cfgLayer->Variable.size();
-  
-  
+ 
   
   for(size_t j=0;j<cfgLayer->Variable.size();j++){
     DataClass *data = new DataClass();
     data->variableName.copy(cfgLayer->Variable[j]->value.c_str());
     dataObject.push_back(data);
   }
+  //Defaults to database
+  dLayerType=CConfigReaderLayerTypeDataBase;
   if(cfgLayer->attr.type.equals("database")){
     dLayerType=CConfigReaderLayerTypeDataBase;
   }
@@ -129,12 +130,16 @@ void CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Conf
       cfgLayer->DataBaseTable.push_back(dbtable);
       //Create a table name based on the filepath and its filter.
       CT::string tableName=layerName.c_str();
+      if(cfgLayer->FilePath[0]->attr.filter.c_str()==NULL){
+        cfgLayer->FilePath[0]->attr.filter.copy("\\.nc");
+      }
       srvParams->lookupTableName(&tableName,cfgLayer->FilePath[0]->value.c_str(),cfgLayer->FilePath[0]->attr.filter.c_str());
       srvParams->encodeTableName(&tableName);
       dbtable->value.copy(tableName.c_str());
   }
 
   isConfigured=true;
+  return 0;
 }
 
 void CDataSource::addTimeStep(const char * pszName,const char *pszTimeString){

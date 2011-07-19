@@ -64,8 +64,7 @@
 #define CNETCDFREADER_MODE_OPEN_ALL       2
 #define CNETCDFREADER_MODE_GET_METADATA   3
 
-//Log a summary of different time durations during execution
-#define MEASURETIME
+
 
 //Web Coverage restriction and Get Feature Info restriction
 #define ALLOW_NONE     1
@@ -77,5 +76,19 @@
 #define ENABLE_CURL
 
 #define showqueryinfo false
+
+//Debug settings:
+/*#define CIMAGEDATAWRITER_DEBUG
+#define CDATAREADER_DEBUG
+#define CXMLGEN_DEBUG
+#define CImgWarpBilinear_DEBUG
+#define CImgWarpBilinear_TIME
+
+//Log a summary of different time durations during execution
+#define MEASURETIME
+*/
+#define CCDFNETCDFIO_DEBUG
+
 #endif
+
 

@@ -28,7 +28,7 @@ void writeLogFile(const char * msg){
         fputs  (szTemp, pFile );
       }
       fclose (pFile);
-    }else fprintf(stderr,"Unable to write logfile %s",logfile);
+    }else fprintf(stderr,"Unable to write logfile %s\n",logfile);
   }
 }
 
@@ -51,7 +51,7 @@ void writeErrorFile(const char * msg){
         fputs  (szTemp, pFile );
       }
       fclose (pFile);
-    }else fprintf(stderr,"Unable to write logfile %s",logfile);
+    }else fprintf(stderr,"Unable to write error logfile %s\n",logfile);
   };
   writeLogFile(msg);
 }

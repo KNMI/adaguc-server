@@ -40,6 +40,16 @@ int CRequest::setConfigFile(const char *pszConfigFile){
   }else{
     srvParam->cfg=NULL;
   }
+  for(size_t j=0;j<srvParam->cfg->Layer.size();j++){
+    if(srvParam->cfg->Layer[j]->Variable.size()==0){
+      CDBError("Configuration error at layer %d: <Variable> not defined",j);
+      return 1;
+    }
+    if(srvParam->cfg->Layer[j]->FilePath.size()==0){
+      CDBError("Configuration error at layer %d: <FilePath> not defined",j);
+      return 1;
+    }
+  }
   return status;
 }
 
@@ -323,12 +333,17 @@ int CRequest::process_all_layers(){
     for(size_t j=0;j<srvParam->WMSLayers->count;j++){
       size_t layerNo=0;
       for(layerNo=0;layerNo<srvParam->cfg->Layer.size();layerNo++){
+         
+
+              
         srvParam->makeUniqueLayerName(&layerName,srvParam->cfg->Layer[layerNo]);
         //CDBError("comparing (%d) %s==%s",j,layerName.c_str(),srvParam->WMSLayers[j].c_str());
         if(layerName.equals(srvParam->WMSLayers[j].c_str())){
           CDataSource *dataSource = new CDataSource ();
           dataSources.push_back(dataSource);
-          dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[layerNo],layerName.c_str());
+          if(dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[layerNo],layerName.c_str())!=0){
+            return 1;
+          }
           break;
         }
       }
@@ -423,7 +438,7 @@ int CRequest::process_all_layers(){
           dimName.toLowerCase();
           dimsfound[i]=0;
           for(int k=0;k<srvParam->NumOGCDims;k++){
-            CDBDebug("DIM COMPARE: %s==%s",srvParam->OGCDims[k].Name.c_str(),dimName.c_str());
+            //CDBDebug("DIM COMPARE: %s==%s",srvParam->OGCDims[k].Name.c_str(),dimName.c_str());
             if(srvParam->OGCDims[k].Name.equals(&dimName)){
               //This dimension has been specified in the request, so the dimension has been found:
               dimsfound[i]=1;
@@ -966,7 +981,7 @@ int CRequest::process_querystring(){
           srvParam->OGCDims[srvParam->NumOGCDims].Name.copy(value0Cap.c_str());
         }
          srvParam->OGCDims[srvParam->NumOGCDims].Value.copy(&values[1]);
-        CDBDebug("DIM_ %s==%s",value0Cap.c_str(),srvParam->OGCDims[srvParam->NumOGCDims].Value.c_str());
+        //CDBDebug("DIM_ %s==%s",value0Cap.c_str(),srvParam->OGCDims[srvParam->NumOGCDims].Value.c_str());
         srvParam->NumOGCDims++;
       }
 
@@ -1537,7 +1552,9 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan){
   for(size_t layerNo=0;layerNo<numberOfLayers;layerNo++){
     CDataSource *dataSource = new CDataSource ();
     dataSources.push_back(dataSource);
-    dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[layerNo],layerName.c_str());
+    if(dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[layerNo],layerName.c_str())!=0){
+      return 1;
+    }
   }
 
   srvParam->requestType=REQUEST_UPDATEDB;

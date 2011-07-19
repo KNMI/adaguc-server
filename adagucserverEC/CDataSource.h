@@ -129,7 +129,7 @@ class CDataSource{
   
   CDataSource();
   ~CDataSource();
-  void setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Configuration *_cfg,CServerConfig::XMLE_Layer * _cfgLayer,const char *_layerName);
+  int setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Configuration *_cfg,CServerConfig::XMLE_Layer * _cfgLayer,const char *_layerName);
   void addTimeStep(const char * pszName,const char *pszTimeString);
   const char *getFileName();
   void setTimeStep(int timeStep);

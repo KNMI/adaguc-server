@@ -151,7 +151,9 @@ class CDFNetCDFReader :public CDFReader{
       //if(status!=NC_NOERR){ncError(__LINE__,className,"nc_set_chunk_cache: ",status);return 1;}
       //status = nc_set_chunk_cache(0,0,0);
       //if(status!=NC_NOERR){ncError(__LINE__,className,"nc_set_chunk_cache: ",status);return 1;}
-      CDBDebug("opening %s",fileName);
+#ifdef CCDFNETCDFIO_DEBUG        
+CDBDebug("opening %s",fileName);
+#endif      
       status = nc_open(fileName,NC_NOWRITE,&root_id);
       if(status!=NC_NOERR){ncError(__LINE__,className,"nc_open: ",status);return 1;}
 /*#ifdef MEASURETIME
@@ -183,7 +185,9 @@ class CDFNetCDFReader :public CDFReader{
     int close(){
       
       if(root_id!=-1){
-        CDBDebug("closing");
+#ifdef CCDFNETCDFIO_DEBUG        
+CDBDebug("closing");
+#endif        
         nc_close(root_id);
       }
       root_id=-1;

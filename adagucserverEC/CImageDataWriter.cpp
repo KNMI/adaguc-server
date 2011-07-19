@@ -1,5 +1,7 @@
 #include "CImageDataWriter.h"
 
+
+
 const char * CImageDataWriter::className = "CImageDataWriter";
 const char * CImageDataWriter::RenderMethodStringList="nearest,bilinear,contour,shadedcontour,shaded,vector,vectorcontour,nearestcontour,bilinearcontour,vectorcontourshaded";
 CImageDataWriter::CImageDataWriter(){
@@ -246,10 +248,10 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
   //Default rendermethod is nearest
   renderMethod=nearest;
 
-  if(CDataReader::autoConfigureStyles(dataSource)!=0){
+  /*if(CDataReader::autoConfigureStyles(dataSource)!=0){
     CDBError("Unable to autoconfigure styles");
     return 1;
-  }
+  }*/
   
   //Try to find the default rendermethod from the layers style object
   if(dataSource->cfgLayer->Styles.size()==1){
@@ -473,7 +475,9 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
     
     //When min and max are given, calculate the scale and offset according to min and max.
     if(dataSource->cfgLayer->Min.size()>0&&dataSource->cfgLayer->Max.size()>0){
+#ifdef CIMAGEDATAWRITER_DEBUG          
       CDBDebug("Found min and max in layer configuration");
+#endif      
       float min=parseFloat(dataSource->cfgLayer->Min[0]->value.c_str());
       float max=parseFloat(dataSource->cfgLayer->Max[0]->value.c_str());
       dataSource->legendScale=240/(max-min);
@@ -730,15 +734,18 @@ int CImageDataWriter::warpImage(CDataSource *dataSource,CDrawImage *drawImage){
   
   int status;
   //Open the data of this dataSource
+#ifdef CIMAGEDATAWRITER_DEBUG  
   CDBDebug("opening:");
+#endif  
   CDataReader reader;
   status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
-  CDBDebug("!");
   if(status!=0){
     CDBError("Could not open file: %s",dataSource->getFileName());
     return 1;
   }
+#ifdef CIMAGEDATAWRITER_DEBUG  
   CDBDebug("opened");
+#endif  
   //Initialize projection algorithm
   status = imageWarper.initreproj(dataSource,drawImage->Geo,&srvParam->cfg->Projection);
   if(status!=0){
@@ -807,11 +814,8 @@ if(renderMethod==contour){CDBDebug("contour");}*/
 #ifdef MEASURETIME
   StopWatch_Stop("warp finished");
 #endif
-  CDBDebug("imageWarper.closereproj();");
   imageWarper.closereproj();
-  CDBDebug("reader.close();");
   reader.close();
-  CDBDebug("Ok");
   return 0;
 }
 
@@ -829,6 +833,7 @@ int CImageDataWriter::calculateData(std::vector <CDataSource*>&dataSources){
    */
 
 //  int status;
+
   CDBDebug("calculateData");
 
   if(animation==1&&nrImagesAdded>1){
@@ -1023,7 +1028,9 @@ int CImageDataWriter::calculateData(std::vector <CDataSource*>&dataSources){
   return 0;
 }
 int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
+#ifdef CIMAGEDATAWRITER_DEBUG  
    CDBDebug("addData");
+#endif   
   int status = 0;
   
   if(animation==1&&nrImagesAdded>0){
@@ -1033,7 +1040,9 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
   nrImagesAdded++;
   // draw the Image
   //drawCascadedWMS("http://geoservices.knmi.nl/cgi-bin/restricted/MODIS_Netherlands.cgi?","modis_250m_netherlands_8bit",true);
+#ifdef CIMAGEDATAWRITER_DEBUG    
   CDBDebug("Draw data. dataSources.size() =  %d",dataSources.size());
+#endif  
   
   for(size_t j=0;j<dataSources.size();j++){
     CDataSource *dataSource=dataSources[j];
@@ -1050,9 +1059,13 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
       
     if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
       if(j!=0){if(initializeLegend(srvParam,dataSource)==-1)return 1;}
-      CDBDebug("Start warping");
+#ifdef CIMAGEDATAWRITER_DEBUG
+      CDBDebug("Start warping")
+#endif
       status = warpImage(dataSource,&drawImage);
+#ifdef CIMAGEDATAWRITER_DEBUG
       CDBDebug("Finished warping");
+#endif      
       if(status != 0){
         CDBError("warpImage for layer %s failed",dataSource->layerName.c_str());
         return status;
@@ -1407,12 +1420,15 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage
         numClasses=int((maxValue-minValue)/legendInterval);
       }
     }*/
-    
-    CDBDebug("minValue=%f maxValue=%f",minValue,maxValue);
+#ifdef CIMAGEDATAWRITER_DEBUG    
+CDBDebug("minValue=%f maxValue=%f",minValue,maxValue);
 CDBDebug("scale=%f offset=%f",dataSource->legendScale,dataSource->legendOffset);    
+#endif
     float iMin=convertValueToClass(minValue,legendInterval);
     float iMax=convertValueToClass(maxValue,legendInterval)+legendInterval;
+#ifdef CIMAGEDATAWRITER_DEBUG        
 CDBDebug("iMin=%f iMax=%f",iMin,iMax);
+#endif
 
     //In case of auto scale and autooffset we will stretch the colors over the min/max values
     //Calculate new scale and offset for the new min/max:
@@ -1424,7 +1440,9 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
       dataSource->legendScale=ls;
       dataSource->legendOffset=lo;
     }
+#ifdef CIMAGEDATAWRITER_DEBUG        
     CDBDebug("scale=%f offset=%f",dataSource->legendScale,dataSource->legendOffset);
+#endif    
     //floatToString(szTemp,255,iMax);
    
     

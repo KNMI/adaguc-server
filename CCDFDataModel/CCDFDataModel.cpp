@@ -471,7 +471,7 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
 }
 
 CDFObject::~CDFObject(){
-  CDBDebug("********** Destroying cdfobject");
+  //CDBDebug("********** Destroying cdfobject");
   clear();
   CDFReader *r=(CDFReader*)reader;
   delete r;r=NULL;
@@ -489,7 +489,7 @@ void CDFObject::clear(){
   for(size_t j=0;j<variables.size();j++){delete variables[j];variables[j]=NULL;}
 }
 int CDFObject::open(const char *fileName){
-  CDBDebug("Opening file %s (current =%s)",fileName,currentFile.c_str());
+  //CDBDebug("Opening file %s (current =%s)",fileName,currentFile.c_str());
   if(currentFile.equals(fileName)){
     CDBDebug("OK: Current file is already open");
     return 0;
