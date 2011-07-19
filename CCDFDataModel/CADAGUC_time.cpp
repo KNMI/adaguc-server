@@ -68,7 +68,7 @@ int CADAGUC_time::OffsetToAdaguc(stADAGUC_time  &ADtime, double offset){
 }
 
 int CADAGUC_time::TimeToOffset(double &offset,int year,int month,int day,int hour,int minute,float second){
-  if(utInvCalendar(year,month, day,hour,minute,(int)second,&dataunits,&offset) != 0){
+  if(utInvCalendar(year,month+1, day+1,hour,minute,(int)second,&dataunits,&offset) != 0){
     CDBError("ITimeToOffset: nternal error: utInvCalendar");return 1;
   }
   return 0;
