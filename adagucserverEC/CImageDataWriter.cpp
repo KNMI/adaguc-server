@@ -248,10 +248,10 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
   //Default rendermethod is nearest
   renderMethod=nearest;
 
-  /*if(CDataReader::autoConfigureStyles(dataSource)!=0){
+  if(CDataReader::autoConfigureStyles(dataSource)!=0){
     CDBError("Unable to autoconfigure styles");
     return 1;
-  }*/
+  }
   
   //Try to find the default rendermethod from the layers style object
   if(dataSource->cfgLayer->Styles.size()==1){
@@ -1060,7 +1060,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
     if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
       if(j!=0){if(initializeLegend(srvParam,dataSource)==-1)return 1;}
 #ifdef CIMAGEDATAWRITER_DEBUG
-      CDBDebug("Start warping")
+      CDBDebug("Start warping");
 #endif
       status = warpImage(dataSource,&drawImage);
 #ifdef CIMAGEDATAWRITER_DEBUG

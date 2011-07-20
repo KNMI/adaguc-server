@@ -117,10 +117,15 @@ CDBDebug("Creating NetCDF reader");
 int CDataReader::getCacheFileName(CDataSource *dataSource,CT::string *uniqueIDFor2DField){
   if(dataSource==NULL)return 1;
   if(dataSource->srvParams==NULL)return 1;
+#ifdef CDATAREADER_DEBUG    
   CDBDebug("GetCacheFileName");
+#endif
+  
   CT::string cacheLocation;dataSource->srvParams->getCacheDirectory(&cacheLocation);
   if(cacheLocation.c_str()==NULL)return 1;else if(cacheLocation.length()==0)return 1;  
+#ifdef CDATAREADER_DEBUG  
   CDBDebug("/GetCacheFileName");
+#endif  
   uniqueIDFor2DField->copy(cacheLocation.c_str());
   uniqueIDFor2DField->concat("/");
   struct stat stFileInfo;
@@ -132,12 +137,12 @@ int CDataReader::getCacheFileName(CDataSource *dataSource,CT::string *uniqueIDFo
     mode_t permissions = S_IRWXU|S_IRWXG|S_IRWXO;
     mkdir (uniqueIDFor2DField->c_str(),permissions);
   }
-  CDBDebug("OK");
+  
   if(dataSource->getFileName()==NULL){
      CDBError("No filename for datasource");
     return 1;
   }
-  CDBDebug("OK");
+  
   //Make the cache unique directory name, based on the filename
   CT::string validFileName(dataSource->getFileName());
   //Replace : and / by nothing, so we can use the string as a directory name
@@ -160,8 +165,9 @@ int CDataReader::getCacheFileName(CDataSource *dataSource,CT::string *uniqueIDFo
   uniqueIDFor2DField->concat("/");
   uniqueIDFor2DField->concat(dataSource->dataObject[0]->variableName.c_str());
   uniqueIDFor2DField->concat("_");
-  
+#ifdef CDATAREADER_DEBUG    
   CDBDebug("Add dimension properties to the filename");
+#endif  
   //Add dimension properties to the filename
   if(dataSource->timeSteps[timeStep]->dims.dimensions.size()>0){
     for(size_t j=0;j<dataSource->timeSteps[timeStep]->dims.dimensions.size();j++){
@@ -236,8 +242,9 @@ int CDataReader::open(CDataSource *_sourceImage, int mode){
 #endif
   CDFObject *cdfObject = NULL;
   if(cacheAvailable==true){
+#ifdef CDATAREADER_DEBUG        
     CDBDebug("Reading from Cache file");
-
+#endif
     cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(sourceImage,uniqueIDFor2DField.c_str(),false);
     if(cdfObject==NULL){return 1;}
     status = cdfObject->open(uniqueIDFor2DField.c_str());
@@ -1134,7 +1141,7 @@ int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *sourceImage,i
       CT::string query;
       status=DB->checkTable(tablename_temp.c_str(),tableColumns.c_str());
       if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tablename_temp.c_str(),tableColumns.c_str()); DB->close();return 1;  }
-      if(status == 2)CDBDebug("OK");
+      if(status == 2)
       if(status==0){
         query.print("drop table %s",tablename_temp.c_str());
         CDBDebug("\n*** %s",query.c_str());
@@ -1264,7 +1271,7 @@ CDBDebug("Opening file %s",dirReader->fileList[j]->fullName.c_str());
 #ifdef CDATAREADER_DEBUG
 CDBDebug("File opened.");
 #endif
-            CDBDebug("D");
+
             if(status==0){
               CDF::Dimension * dimDim = cdfObject->getDimensionNE(sourceImage->cfgLayer->Dimension[d]->attr.name.c_str());
               CDF::Variable *  dimVar = cdfObject->getVariableNE(sourceImage->cfgLayer->Dimension[d]->attr.name.c_str());
@@ -1444,7 +1451,7 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *sourceImage,C
     CDBError("Error Could not connect to the database with parameters: [%s]",pszDBParams);
     return 1;
   }
-  CDBDebug("OK");
+  
   try{ 
     //First check and create all tables...
     status = createDBUpdateTables(&DB,sourceImage,removeNonExistingFiles);
@@ -1560,7 +1567,7 @@ int CDataReader::justLoadAFileHeader(CDataSource *dataSource){
     
     CDBDebug("Opening %s",dirReader.fileList[0]->fullName.c_str());
     int status = cdfObject->open(dirReader.fileList[0]->fullName.c_str());
-    CDBDebug("OK");
+    
  
     if(status!=0){
       CDBError("Unable to open file '%s'",dirReader.fileList[0]->fullName.c_str());
@@ -1574,7 +1581,7 @@ int CDataReader::justLoadAFileHeader(CDataSource *dataSource){
     dataSource->detachCDFObject();
     return 1;        
   }
-  CDBDebug("OK");
+  
   return 0;
 }
 
@@ -1627,17 +1634,17 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource,bool tryToFindI
   if(status!=0){
     CDBError("justLoadAFileHeader failed");
   }
-  CDBDebug("OK");
+  
   try{
     if(dataSource->dataObject.size()==0){CDBDebug("dataSource->dataObject.size()==0");throw(__LINE__);}
     if(dataSource->dataObject[0]->cdfVariable==NULL){CDBDebug("dataSource->dataObject[0]->cdfVariable==NULL");throw(__LINE__);}
     CDBDebug("OK %d",dataSource->cfgLayer->Dimension.size());
     if(dataSource->cfgLayer->Dimension.size()==0){
     
-      CDBDebug("OK");
+      
       //No dimensions are configured by the user, try to configure them automatically here.
       if(dataSource->dataObject[0]->cdfVariable->dimensionlinks.size()>=2){
-        CDBDebug("OK");
+        
         try{
           //Create the database table
           CT::string tableColumns("layerid varchar (255), ncname varchar (255), ogcname varchar (255), units varchar (255)");
@@ -1698,7 +1705,7 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource,bool tryToFindI
     return 1;
   }
 
-  CDBDebug("OK");
+  
   return 0;
 }
 
@@ -1709,9 +1716,12 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
 #endif  
   if(dataSource==NULL){CDBDebug("datasource == NULL");return 1;}
   if(dataSource->cfgLayer==NULL){CDBDebug("datasource->cfgLayer == NULL");return 1;}
-  if(dataSource->cfgLayer->DataBaseTable.size()==0){CDBDebug("dataSource->cfgLayer->DataBaseTable.size()==0");return 1;}
-  if(dataSource->cfgLayer->Styles.size()!=0){CDBDebug("dataSource->cfgLayer->Styles.size()!=0");return 1;}
+  if(dataSource->cfgLayer->Styles.size()!=0){return 0;};//Configured by user, auto styles is not required
 
+  if(dataSource->cfgLayer->Legend.size()!=0){return 0;};//Configured by user, auto styles is not required
+
+  if(dataSource->cfgLayer->DataBaseTable.size()==0){CDBDebug("dataSource->cfgLayer->DataBaseTable.size()==0");return 1;}
+  
   // Try to find a style corresponding the the standard_name or long_name attribute of the file.
   CServerConfig::XMLE_Styles *xmleStyle=new CServerConfig::XMLE_Styles();
   dataSource->cfgLayer->Styles.push_back(xmleStyle);

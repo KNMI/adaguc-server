@@ -35,7 +35,7 @@ void CServerParams::getCacheFileName(CT::string *cacheFileName){
 
 
 void CServerParams::getCacheDirectory(CT::string *cacheFileName){
-  CDBDebug("getCacheDirectory");
+  //CDBDebug("getCacheDirectory");
   CT::string cacheName("WMSCACHE");
   bool useProvidedCacheFileName=false;
   //Check wether a cachefile has been provided in the config

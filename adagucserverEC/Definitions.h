@@ -80,13 +80,14 @@
 //Debug settings:
 /*#define CIMAGEDATAWRITER_DEBUG
 #define CDATAREADER_DEBUG
-#define CXMLGEN_DEBUG
+
 #define CImgWarpBilinear_DEBUG
 #define CImgWarpBilinear_TIME
 
 //Log a summary of different time durations during execution
 #define MEASURETIME
 */
+//#define CXMLGEN_DEBUG
 #define CCDFNETCDFIO_DEBUG
 
 #endif
