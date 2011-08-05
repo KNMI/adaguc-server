@@ -1,4 +1,4 @@
-#ifdef ADAGUC_USE_GDAL
+//#ifdef ADAGUC_USE_GDAL
 #include "CGDALDataWriter.h"
 
 
@@ -17,7 +17,7 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
   }
   // Load metadata from the dataSource
   //CDBDebug("CNETCDFREADER_MODE_GET_METADATA");
-  status = reader.open(dataSource,CNETCDFREADER_MODE_GET_METADATA,NULL);
+  status = reader.open(dataSource,CNETCDFREADER_MODE_GET_METADATA);
   if(status!=0){
     CDBError("Could not open file: %s",dataSource->getFileName());return 1;
   }
@@ -178,7 +178,7 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
 int  CGDALDataWriter::addData(std::vector <CDataSource*>&dataSources){
   int status;
   CDataSource *dataSource = dataSources[0];
-  status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL,NULL);
+  status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
   if(status!=0){
     CDBError("Could not open file: %s",dataSource->getFileName());
     return 1;
@@ -586,4 +586,4 @@ void CGDALDataWriter::generateGetCoverageFileName(char *pszTempFileName){
   pszTempFileName[128]='\0';
   //CDBDebug("generateGetCoverageFileName");
 }
-#endif
+//#endif

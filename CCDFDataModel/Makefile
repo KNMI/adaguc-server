@@ -1,5 +1,7 @@
-HOME=/nobackup/users/plieger/software/install
+#HOME=/nobackup/users/plieger/software/install
 #HOME=/home/plieger/software/install
+#HOME=/data/data1/software/install
+HOME=/data/data1/mapserver
 INCLUDEDIR=$(HOME)/include -I ../hclasses  -I /usr/include/libxml2/
 
 CCOMPILER=g++ -Wall -I $(INCLUDEDIR) 

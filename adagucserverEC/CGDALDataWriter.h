@@ -25,7 +25,7 @@
 #include "CADAGUC_time.h"
 
 #include "CIBaseDataWriterInterface.h"
-
+#define MAX_STR_LEN 8191
 
 class CGDALDataWriter: public CBaseDataWriterInterface{
   private:
