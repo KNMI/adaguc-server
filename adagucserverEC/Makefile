@@ -1,7 +1,7 @@
 #HOME=/data/apps/rcc/MaartenP/install
-#HOME=/nobackup/users/plieger/software/install
-HOME=/data/data1/mapserver/
-HOME2=/data/data1/software/install/
+HOME=/nobackup/users/plieger/software/install
+#HOME=/data/data1/mapserver/
+#HOME2=/data/data1/software/install/
 #HOME=/home/plieger/interpolws/software/install
 #HOME=/nobackup/users/plieger/build/
 #HOME=/home/gsie/gsiews/software/install/

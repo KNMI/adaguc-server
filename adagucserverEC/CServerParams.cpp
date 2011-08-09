@@ -123,6 +123,8 @@ int CServerParams::lookupTableName(CT::string *tableName,const char *path,const 
 // Therefore create unique tablenames like tablename_time and tablename_height
 void CServerParams::makeCorrectTableName(CT::string *tableName,CT::string *dimName){
   tableName->concat("_");tableName->concat(dimName);
+  tableName->replace("-","_d_");
+  tableName->replace("+","_p_");
   tableName->toLowerCase();
 }
 

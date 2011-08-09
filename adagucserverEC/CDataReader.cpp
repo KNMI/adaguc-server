@@ -14,7 +14,9 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,const char *file
       if(returnNew==false){
         for(size_t j=0;j<fileNames.size();j++){
           if(fileNames[j]->equals(fileName)){
+#ifdef CDATAREADER_DEBUG                          
             CDBDebug("Found CDFObject with filename %s",fileName);
+#endif            
             return cdfObjects[j];
           }
         }
@@ -164,16 +166,15 @@ int CDataReader::getCacheFileName(CDataSource *dataSource,CT::string *uniqueIDFo
   //Now make the filename, based on variable name and dimension properties
   uniqueIDFor2DField->concat("/");
   uniqueIDFor2DField->concat(dataSource->dataObject[0]->variableName.c_str());
-  uniqueIDFor2DField->concat("_");
 #ifdef CDATAREADER_DEBUG    
   CDBDebug("Add dimension properties to the filename");
 #endif  
   //Add dimension properties to the filename
   if(dataSource->timeSteps[timeStep]->dims.dimensions.size()>0){
     for(size_t j=0;j<dataSource->timeSteps[timeStep]->dims.dimensions.size();j++){
-      uniqueIDFor2DField->printconcat("%s=%d", 
-                                      dataSource->timeSteps[timeStep]->dims.dimensions[0]->name.c_str(),
-                                      dataSource->timeSteps[timeStep]->dims.dimensions[0]->index);
+      uniqueIDFor2DField->printconcat("_[%s=%d]", 
+                                      dataSource->timeSteps[timeStep]->dims.dimensions[j]->name.c_str(),
+                                      dataSource->timeSteps[timeStep]->dims.dimensions[j]->index);
     }
   }
   
@@ -772,11 +773,11 @@ int CDataReader::open(CDataSource *_sourceImage, int mode){
 
   //Write the cache file if neccessary.
     if(enableDataCache==true&&saveFieldFile==true){
-  
-      CT::string dumpString;
-         CDF::dump(cdfObject,&dumpString);
+
+   //   CT::string dumpString;
+    //     CDF::dump(cdfObject,&dumpString);
          //CDBDebug("\nSTART\n%s\nEND\n",dumpString.c_str());
-    writeLogFile2(dumpString.c_str());
+    //writeLogFile2(dumpString.c_str());
       
   // CT::string dumpString;
   // CDF::dump(cdfObject,&dumpString);
@@ -907,17 +908,23 @@ int CDataReader::open(CDataSource *_sourceImage, int mode){
         /*for(size_t j=0;j<cdfObject->variables.size();j++){
     cdfObject->variables[j]->type=CDF_DOUBLE;
   }*/
-    CDBDebug("DONE");      
+    CDBDebug("DONE");  
+   
     //Read the dimensions
     for(size_t j=0;j<sourceImage->timeSteps[timeStep]->dims.dimensions.size();j++){
-      CDF::Dimension *dim = cdfObject->getDimensionNE(sourceImage->timeSteps[timeStep]->dims.dimensions[0]->name.c_str());
+      CDF::Dimension *dim = cdfObject->getDimensionNE(sourceImage->timeSteps[timeStep]->dims.dimensions[j]->name.c_str());
+         
       if(dim!=NULL){
-        CDF::Variable *var = cdfObject->getVariableNE(sourceImage->timeSteps[timeStep]->dims.dimensions[0]->name.c_str());
+        CDF::Variable *var = cdfObject->getVariableNE(sourceImage->timeSteps[timeStep]->dims.dimensions[j]->name.c_str());
         
         if(var==NULL){CDBError("var is null");return 1;}
         CDBDebug("Cache Reading variable %s"    ,var->name.c_str());
+        
         //if(var->data==NULL){
-          var->readData(CDF_DOUBLE);
+        if(var->readData(CDF_DOUBLE)!=0){
+          CDBError("Unable to read variable %s",var->name.c_str());
+          return 1;
+        }
        //}
               
         double dimValue[var->getSize()];
@@ -935,13 +942,15 @@ int CDataReader::open(CDataSource *_sourceImage, int mode){
              //sourceImage->timeSteps[0]->dims.dimensions[0]->index);
     }
 
-    
+#ifdef CDATAREADER_DEBUG
     
     
        CT::string dumpString;
          CDF::dump(cdfObject,&dumpString);
          //CDBDebug("\nSTART\n%s\nEND\n",dumpString.c_str());
+    CDBDebug("DUMP For file to write:");
     writeLogFile2(dumpString.c_str());
+#endif
     CDFNetCDFWriter netCDFWriter(cdfObject);
     netCDFWriter.disableReadData();
         
@@ -964,16 +973,16 @@ int CDataReader::open(CDataSource *_sourceImage, int mode){
     if(workingOnCache==false){
       //Imediately claim this file!
       CDBDebug("*** [1/4] Claiming cache file %s",uniqueIDFor2DFieldTmp.c_str());
-      const char buffer[] = { "ab" };
+      const char buffer[] = { "temp_data\n" };
       pFile = fopen ( uniqueIDFor2DFieldTmp.c_str() , "wb" );
       if(pFile==NULL){
         CDBDebug("*** Unable to write to cache file");
         return 1;
       }
-      size_t bytesWritten = fwrite (buffer , sizeof(char),2 , pFile );
+      size_t bytesWritten = fwrite (buffer , sizeof(char),10 , pFile );
       fflush (pFile);   
       fclose (pFile);
-      if(bytesWritten!=2){
+      if(bytesWritten!=10){
         CDBDebug("*** Failed to Claim the cache  file %d",bytesWritten);
         workingOnCache=true;
       }else {
@@ -987,7 +996,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode){
       cacheAvailable=false;
     }else{
           
-      CDBDebug("*** [3/4] Writing cache file");
+      CDBDebug("*** [3/4] Writing cache file %s",uniqueIDFor2DFieldTmp.c_str());
           
           
       netCDFWriter.setNetCDFMode(4);
@@ -1533,7 +1542,9 @@ int CDBFileScanner::searchFileNames(CDataSource *sourceImage,CDirReader *dirRead
       return 1;
     }
   }
+#ifdef CDATAREADER_DEBUG     
   CDBDebug("Found %d file(s) in directory",int(dirReader->fileList.size()));
+#endif  
   return 0;
 }
 
@@ -1587,21 +1598,28 @@ int CDataReader::justLoadAFileHeader(CDataSource *dataSource){
 
 
 int CDataReader::autoConfigureDimensions(CDataSource *dataSource,bool tryToFindInterval){
-#ifdef CDATAREADER_DEBUG
- CDBDebug("autoConfigureDimensions");
-#endif
+
  
   // Auto configure dimensions, in case they are not configured by the user.
   // Dimension configuration is added to the internal XML configuration structure.
-  if(dataSource->cfgLayer->Dimension.size()>0)return 0;
+  if(dataSource->cfgLayer->Dimension.size()>0){
+#ifdef CDATAREADER_DEBUG        
+        CDBDebug("dataSource->cfgLayer->Dimension.size()>0: return 0;");
+#endif     
+    return 0;
+  }
   if(dataSource==NULL){CDBDebug("datasource == NULL");return 1;}
   if(dataSource->cfgLayer==NULL){CDBDebug("datasource->cfgLayer == NULL");return 1;}
   if(dataSource->cfgLayer->DataBaseTable.size()==0){CDBDebug("dataSource->cfgLayer->DataBaseTable.size()==0");return 1;}
   
+#ifdef CDATAREADER_DEBUG
+ CDBDebug("autoConfigureDimensions %s",dataSource->getLayerName());
+#endif  
   //Try to load the auto dimension information from the database
   CT::string query;
   CT::string tableName = "autoconfigure_dimensions";
   CT::string layerTableId = dataSource->cfgLayer->DataBaseTable[0]->value.c_str();
+  layerTableId.concat("_");layerTableId.concat(dataSource->getLayerName());
   query.print("SELECT * FROM %s where layerid=E'%s'",tableName.c_str(),layerTableId.c_str());
   CPGSQLDB db;
 
@@ -1609,6 +1627,7 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource,bool tryToFindI
   CDB::Store *store = db.queryToStore(query.c_str());
   db.close(); 
   if(store!=NULL){
+    
     try{
       
       for(size_t j=0;j<store->size();j++){
@@ -1622,13 +1641,18 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource,bool tryToFindI
         dataSource->cfgLayer->Dimension.push_back(xmleDim);
       }
       delete store;
-      return 0;
+#ifdef CDATAREADER_DEBUG        
+        CDBDebug("Found auto dims.");
+#endif        
+      //return 0;
     }catch(int e){
       delete store;
       CDBError("DB Exception: %s\n",db.getErrorMessage(e));
     }
   }
+#ifdef CDATAREADER_DEBUG     
   CDBDebug("autoConfigureDimensions information not in DB");
+#endif  
   //Information is not available in the database. We need to load it from a file.
   int status=justLoadAFileHeader(dataSource);
   if(status!=0){
@@ -1638,7 +1662,7 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource,bool tryToFindI
   try{
     if(dataSource->dataObject.size()==0){CDBDebug("dataSource->dataObject.size()==0");throw(__LINE__);}
     if(dataSource->dataObject[0]->cdfVariable==NULL){CDBDebug("dataSource->dataObject[0]->cdfVariable==NULL");throw(__LINE__);}
-    CDBDebug("OK %d",dataSource->cfgLayer->Dimension.size());
+    //CDBDebug("OK %d",dataSource->cfgLayer->Dimension.size());
     if(dataSource->cfgLayer->Dimension.size()==0){
     
       
@@ -1660,7 +1684,7 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource,bool tryToFindI
           // When there are no extra dims besides x and y: make a table anyway so autoconfigure_dimensions is not run 
           // Each time to find the non existing dims.
           if(variable->dimensionlinks.size()==2){
-            CDBDebug("Creating an empty table, because this variable has only x and y dims");
+            CDBDebug("Creating an empty table, because variable %s has only x and y dims",variable->name.c_str());
             return 0;
           }
           

@@ -735,10 +735,13 @@ int CImageDataWriter::warpImage(CDataSource *dataSource,CDrawImage *drawImage){
   int status;
   //Open the data of this dataSource
 #ifdef CIMAGEDATAWRITER_DEBUG  
-  CDBDebug("opening:");
+  CDBDebug("opening %s",dataSource->getFileName());
 #endif  
   CDataReader reader;
   status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
+#ifdef CIMAGEDATAWRITER_DEBUG  
+  CDBDebug("Has opened %s",dataSource->getFileName());
+#endif    
   if(status!=0){
     CDBError("Could not open file: %s",dataSource->getFileName());
     return 1;
@@ -1332,6 +1335,10 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage
     }else{
       status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
     }
+  }
+  if(status!=0){
+    CDBError("Unable to open file");
+    return 1;
   }
   //Create a legend based on status flags.
   if(dataSource->dataObject[0]->hasStatusFlag){

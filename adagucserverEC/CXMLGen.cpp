@@ -239,7 +239,62 @@ CDBDebug("Start looping dimensions");
       CServerParams::makeCorrectTableName(&tableName,&dimName);
             
       bool hasMultipleValues=false;
-      if(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.c_str()==NULL)hasMultipleValues=true;
+      if(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.c_str()==NULL){
+        hasMultipleValues=true;
+        
+        //TODO try to detect automatically the time resolution of the layer.
+        if(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.equals("time")){
+          CT::string units;
+          try{
+            myWMSLayer->dataSource->dataObject[0]->cdfObject->getVariable("time")->getAttribute("units")->getDataAsString(&units);
+          }catch(int e){
+          }
+          if(units.length()>0){
+            CT::string query;
+            query.print("select %s from %s limit 10",myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str(),tableName.c_str());
+            CDB::Store *store = DB.queryToStore(query.c_str());
+            if(store!=NULL){
+              if(store->size()!=0){
+                CADAGUC_time *ADTime = new CADAGUC_time(units.c_str());
+                double startTime;
+                double secondTime;
+                double stopTime;
+                try{
+                  for(size_t j=0;j<store->size();j++){
+                    double offset;
+                    store->getRecord(j)->get("time")->setChar(10,'T');
+                    ADTime->ISOTimeToOffset(offset,store->getRecord(j)->get("time")->c_str());
+                    if(j==0)startTime=offset;
+                    if(j==1)secondTime=offset;
+                    stopTime=offset;
+                  }
+                  double timeResolution=secondTime-startTime;
+                  double overallTimeResolution=(stopTime-startTime)/double(store->size()-1);
+                  CT::string iso8601timeRes="P";
+                  if(timeResolution==overallTimeResolution&&int(timeResolution+0.5)==int(timeResolution)){
+                    if(units.indexOf("year")>=0){iso8601timeRes.printconcat("%dY",int(timeResolution));}
+                    if(units.indexOf("month")>=0){iso8601timeRes.printconcat("%dM",int(timeResolution));}
+                    if(units.indexOf("day")>=0){iso8601timeRes.printconcat("%dD",int(timeResolution));}
+                    if(units.indexOf("hour")>=0){iso8601timeRes.printconcat("T%dH",int(timeResolution));}
+                    if(units.indexOf("minute")>=0){iso8601timeRes.printconcat("T%dM",int(timeResolution));}
+                    if(units.indexOf("second")>=0){iso8601timeRes.printconcat("T%dS",int(timeResolution));}
+#ifdef CXMLGEN_DEBUG                    
+                    CDBDebug("Calculated a timeresolution of %s",iso8601timeRes.c_str());
+#endif                    
+                    myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.copy(iso8601timeRes.c_str());
+                    myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.units.copy("ISO8601");
+                    hasMultipleValues=false;
+                  }
+                }catch(int e){
+                }
+                delete ADTime;
+              }
+              delete store;store=NULL;
+            }
+          }
+        }
+        
+      }
       //This is a multival dim.
       if(hasMultipleValues==true){
         //Get all dimension values from the db
@@ -678,8 +733,8 @@ int CXMLGen::getWCS_1_0_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
     return 1;
   }
   if(srvParam->cfg->WCS[0]->Name.size()==0){
-    CDBError("No Name defined for WCS");
-    return 1;
+    srvParam->cfg->WCS[0]->Name.push_back(new CServerConfig::XMLE_Name());
+    srvParam->cfg->WCS[0]->Name[0]->value.copy(srvParam->cfg->WCS[0]->Title[0]->value.c_str());
   }
   if(srvParam->cfg->WCS[0]->Abstract.size()==0)
   {

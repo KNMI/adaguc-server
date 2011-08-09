@@ -280,9 +280,10 @@ CDBDebug("closing");
       for(size_t i=0;i<var->dimensionlinks.size();i++){
         totalVariableSize*=var->dimensionlinks[i]->length;
       }
-      /*for(size_t i=0;i<var->dimensionlinks.size();i++){
+      for(size_t i=0;i<var->dimensionlinks.size();i++){
         CDBDebug("Reading %s,%d: %d",var->name.c_str(),i,var->dimensionlinks[i]->length);
-      }*/
+      }
+      CDBDebug("Calculated size = %d",totalVariableSize);
       
       var->setSize(totalVariableSize);
       CDF::allocateData(type,&var->data,var->getSize());
@@ -323,6 +324,7 @@ CDBDebug("closing");
       size_t totalVariableSize = 1;
       for(size_t i=0;i<var->dimensionlinks.size();i++){
         totalVariableSize*=count[i];//stride[i];
+        CDBDebug("%s: [%d %d %d]",var->dimensionlinks[i]->name.c_str(),start[i],count[i],stride[i]);
       }
       //CDBDebug("totalVariableSize = %d",totalVariableSize);
       var->setSize(totalVariableSize);

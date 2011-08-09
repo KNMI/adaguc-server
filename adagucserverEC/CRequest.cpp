@@ -1181,8 +1181,7 @@ int CRequest::process_querystring(){
   if(SERVICE.match("WMS")==0)srvParam->serviceType=SERVICE_WMS;
   if(SERVICE.match("WCS")==0)srvParam->serviceType=SERVICE_WCS;
 
-  // WMS Service
-  if(dErrorOccured==0&&srvParam->serviceType==SERVICE_WMS){
+  
     // If an Opendapsource is used, the LAYERS indicate which value should be visualised.
     // Add configuration layers to the XML object to make things work
     if(srvParam->OpenDAPSource.c_str()!=NULL){
@@ -1249,6 +1248,10 @@ int CRequest::process_querystring(){
       srvParam->cfg->CacheDocs[0]->attr.enabled.copy("false");
       srvParam->enableDocumentCache=false;
     }
+  
+  // WMS Service
+  if(dErrorOccured==0&&srvParam->serviceType==SERVICE_WMS){
+
     
     
     //Default is 1.1.1

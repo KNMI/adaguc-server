@@ -491,7 +491,7 @@ void CDFObject::clear(){
 int CDFObject::open(const char *fileName){
   //CDBDebug("Opening file %s (current =%s)",fileName,currentFile.c_str());
   if(currentFile.equals(fileName)){
-    CDBDebug("OK: Current file is already open");
+    //CDBDebug("OK: Current file is already open");
     return 0;
   }
   CDFReader *r=(CDFReader*)reader;
