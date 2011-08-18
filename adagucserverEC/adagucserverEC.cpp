@@ -98,7 +98,7 @@ int runRequest(){
     CDBError("Unable to read configuration file");
     return 1;
   }
-  request.process_querystring();
+  request.runRequest();
   return 0;
 }
 

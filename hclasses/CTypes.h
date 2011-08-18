@@ -103,7 +103,7 @@ class string:public basetype{
     }
     
     void concat(const char*_value,size_t len);
-    void concat(const char*_value){concat(_value,strlen(_value));};
+    void concat(const char*_value){if(_value==NULL)return;concat(_value,strlen(_value));};
     char charAt(size_t n);
     void setChar(size_t location,const char character){
       if(location<privatelength){

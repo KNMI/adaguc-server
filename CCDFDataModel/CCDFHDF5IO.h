@@ -45,6 +45,9 @@ class CDFHDF5Reader :public CDFReader{
     bool b_EnableKNMIHDF5toCFConversion;
   public:
     CDFHDF5Reader():CDFReader(){
+#ifdef CCDFHDF5IO_DEBUG            
+      CDBDebug("CCDFHDF5IO init");
+#endif      
       H5F_file=-1;
       //Get error strack
       error_stack = H5Eget_current_stack();
@@ -56,6 +59,9 @@ class CDFHDF5Reader :public CDFReader{
       b_EnableKNMIHDF5toCFConversion=false;
     }
     ~CDFHDF5Reader(){
+#ifdef CCDFHDF5IO_DEBUG            
+      CDBDebug("CCDFHDF5IO close");
+#endif     
       close();
       /* Restore previous error handler */
       //H5Eset_auto2(error_stack, old_func, old_client_data);

@@ -56,6 +56,7 @@ class CDFNetCDFReader :public CDFReader{
     return 0;
   }
   int readAttributes(std::vector<CDF::Attribute *> &attributes,int varID,int natt){
+    
     char name[NC_MAX_NAME+1];
     nc_type type;
     size_t length;
@@ -263,7 +264,11 @@ CDBDebug("closing");
     
     int _readVariableData(CDF::Variable *var, CDFType type){
       //CDBDebug("reading from file %s",fileName.c_str());
-      //CDBDebug("readVariableData");
+#ifdef CCDFNETCDFIO_DEBUG   
+      char typeName[254];
+      CDF::getCDFDataTypeName(typeName,255,var->type);
+      CDBDebug("readVariableData %s of type %s",var->name.c_str(),typeName);
+#endif      
       //It is essential that the variable nows which reader can be used to read the data
       //var->setCDFReaderPointer((void*)this);
       if(var->dimensionlinks.size()==0){
@@ -280,13 +285,15 @@ CDBDebug("closing");
       for(size_t i=0;i<var->dimensionlinks.size();i++){
         totalVariableSize*=var->dimensionlinks[i]->length;
       }
+#ifdef CCDFNETCDFIO_DEBUG                     
       for(size_t i=0;i<var->dimensionlinks.size();i++){
         CDBDebug("Reading %s,%d: %d",var->name.c_str(),i,var->dimensionlinks[i]->length);
       }
       CDBDebug("Calculated size = %d",totalVariableSize);
-      
+#endif      
       var->setSize(totalVariableSize);
       CDF::allocateData(type,&var->data,var->getSize());
+      
       //printf("%s\n",var->name.c_str());
       //if(var->name.equals("azidiff"))return 0;
       if(type==CDF_BYTE)status = nc_get_var_ubyte(root_id,var->id,(unsigned char*)var->data);
@@ -420,13 +427,13 @@ class CDFNetCDFWriter{
         netcdfWriteMode=NC_CLOBBER|NC_64BIT_OFFSET;
         status = nc_create(fileName , netcdfWriteMode, &root_id);
       }
-      if(status!=NC_NOERR){ncError(__LINE__,className,"nc_create: ",status);nc_close(root_id);return 1;}
+      if(status!=NC_NOERR){ncError(__LINE__,className,"nc_create: ",status);nc_close(root_id);root_id=-1;return 1;}
       status = _write();
       #ifdef CCDFNETCDFIO_DEBUG                        
         CDBDebug("Finished writing to file %s",fileName);
       #endif  
 
-      nc_close(root_id);
+      nc_close(root_id);root_id=-1;
       return status;
     }
     int _write(){

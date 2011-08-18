@@ -178,6 +178,7 @@ private:
     int process_all_layers();
     int updatedb(CT::string *tailPath,CT::string *layerPathToScan);
     bool checkTimeFormat(CT::string& timeToCheck);
+    int runRequest();
     
 };
 void getCacheFileName(CT::string *cacheFileName,CServerParams *srvParam);

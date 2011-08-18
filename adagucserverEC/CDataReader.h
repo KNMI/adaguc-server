@@ -1,5 +1,7 @@
 #ifndef CDataReader_H
 #define CDataReader_H
+#include <math.h>
+#include "CDebugger.h"
 #include "CDataSource.h"
 #include "CServerError.h"
 #include "CDirReader.h"
@@ -8,9 +10,8 @@
 #include "CCDFDataModel.h"
 #include "CCDFNetCDFIO.h"
 #include "CCDFHDF5IO.h"
-#include <math.h>
 #include "CStopWatch.h"
-#include "CDebugger.h"
+
 
 
 //Datasource can share multiple cdfObjects
@@ -24,16 +25,13 @@ class CDFObjectStore{
     DEF_ERRORFUNCTION();
   public:
     ~CDFObjectStore(){
-       for(size_t j=0;j<fileNames.size();j++){
-         delete fileNames[j];
-         delete cdfObjects[j];
-       }
-       fileNames.clear();
-       cdfObjects.clear();
+      clear();
     }
-    static CDFObjectStore *getCDFObjectStore();
-    CDFObject *getCDFObject(CDataSource *dataSource,const char *fileName,bool returnNew);
     
+    static CDFObjectStore *getCDFObjectStore();
+    CDFObject *getCDFObject(CDataSource *dataSource,const char *fileName);
+    CDFObject *deleteCDFObject(CDFObject **cdfObject);
+    void clear();
 };
 
 class CDataReader{

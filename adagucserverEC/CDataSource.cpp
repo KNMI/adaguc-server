@@ -87,7 +87,6 @@ CDataSource::~CDataSource(){
   }
   for(size_t j=0;j<requiredDims.size();j++)delete requiredDims[j];
   if(statistics!=NULL)delete statistics;statistics=NULL;
-  //if(cdfObject!=NULL)delete cdfObject;cdfObject=NULL;(not owned by datasource)
 }
 
 int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Configuration *_cfg,CServerConfig::XMLE_Layer * _cfgLayer,const char *_layerName){
@@ -121,8 +120,12 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Confi
 
   //Set the layername
   //A layername has to start with a letter (not numeric value);
+  _layerName=NULL;
   layerName="ID_";
   layerName.concat(_layerName);
+#ifdef CDATAREADER_DEBUG  
+  CDBDebug("LayerName=\"%s\"",layerName.c_str());
+#endif  
 
   //When a database table is not configured, generate a name automatically
   if(cfgLayer->DataBaseTable.size()==0){

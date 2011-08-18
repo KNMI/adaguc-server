@@ -10,7 +10,8 @@ extern CDFObjectStore cdfObjectStore;
 CDFObjectStore cdfObjectStore;
 
 
-CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,const char *fileName,bool returnNew){
+CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,const char *fileName){
+  bool returnNew=false;
       if(returnNew==false){
         for(size_t j=0;j<fileNames.size();j++){
           if(fileNames[j]->equals(fileName)){
@@ -41,6 +42,33 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,const char *file
     return cdfObject;
     }
 CDFObjectStore *CDFObjectStore::getCDFObjectStore(){return &cdfObjectStore;};
+
+CDFObject *CDFObjectStore::deleteCDFObject(CDFObject **cdfObject){
+  for(size_t j=0;j<cdfObjects.size();j++){
+    if(cdfObjects[j]==(*cdfObject)){
+        delete cdfObjects[j];cdfObjects[j]=NULL;(*cdfObject)=NULL;
+        delete fileNames[j]; fileNames[j] = NULL;
+        cdfObjects.erase(cdfObjects.begin()+j);
+        fileNames.erase(fileNames.begin()+j);
+        return NULL;
+    }
+  }
+  
+  return NULL;
+}
+
+
+void CDFObjectStore::clear(){
+  
+  for(size_t j=0;j<fileNames.size();j++){
+    delete fileNames[j]; fileNames[j] = NULL;
+    delete cdfObjects[j];cdfObjects[j] = NULL;
+  }
+  fileNames.clear();
+  cdfObjects.clear();
+}
+
+
 void writeLogFile2(const char * msg){
   char * logfile=getenv("ADAGUC_LOGFILE");
   if(logfile!=NULL){
@@ -212,7 +240,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode){
     }
   }
 
-  
+ 
   
   //Check wether we should use cache or not (in case of OpenDAP, this speeds up things a lot)
   if(enableDataCache==true){
@@ -246,7 +274,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode){
 #ifdef CDATAREADER_DEBUG        
     CDBDebug("Reading from Cache file");
 #endif
-    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(sourceImage,uniqueIDFor2DField.c_str(),false);
+    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(sourceImage,uniqueIDFor2DField.c_str());
     if(cdfObject==NULL){return 1;}
     status = cdfObject->open(uniqueIDFor2DField.c_str());
     int timeStep = sourceImage->getCurrentTimeStep();
@@ -259,7 +287,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode){
 
   }else{
     //We just open the file in the standard way, without cache
-    cdfObject=CDFObjectStore::getCDFObjectStore()->getCDFObject(sourceImage,FileName.c_str(),false);
+    cdfObject=CDFObjectStore::getCDFObjectStore()->getCDFObject(sourceImage,FileName.c_str());
     if(cdfObject==NULL){return 1;}
 #ifdef CDATAREADER_DEBUG            
     CDBDebug("Reading directly without Cache: %s",FileName.c_str());
@@ -276,7 +304,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode){
   thisCDFObject=cdfObject;
   if(cdfObject==NULL){return 1;}*/
 
-  
+   
  // sourceImage->cdfObject=cdfObject;
   
   CDF::Variable *var[sourceImage->dataObject.size()+1];
@@ -520,6 +548,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode){
   }
 
   if(mode==CNETCDFREADER_MODE_GET_METADATA){
+   
     sourceImage->nrMetadataItems=0;
     char szTemp[MAX_STR_LEN+1];
     // Find out how many attributes we have
@@ -632,10 +661,12 @@ int CDataReader::open(CDataSource *_sourceImage, int mode){
       fillValue->getData(&dfNoData,1);
     }else hasNodataValue=false;
     
-    /*CDBDebug("--- varNR [%d], name=\"%s\"",varNr,var[varNr]->name.c_str());
+    #ifdef CDATAREADER_DEBUG   
+    CDBDebug("--- varNR [%d], name=\"%s\"",varNr,var[varNr]->name.c_str());
     for(size_t d=0;d<var[varNr]->dimensionlinks.size();d++){
       CDBDebug("%s  \tstart: %d\tcount %d\tstride %d",var[varNr]->dimensionlinks[d]->name.c_str(),start[d],count[d],stride[d]);
-    }*/
+    }
+    #endif
     
     //Read variable data
     var[varNr]->readData(sourceImage->dataObject[varNr]->dataType,start,count,stride);
@@ -770,7 +801,7 @@ int CDataReader::open(CDataSource *_sourceImage, int mode){
 #ifdef MEASURETIME
   StopWatch_Stop("all read");
 #endif
-
+  
   //Write the cache file if neccessary.
     if(enableDataCache==true&&saveFieldFile==true){
 
@@ -1181,6 +1212,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *sourceImage,int remove
     //Loop dimensions and files
     CDBDebug("Adding files that are now available...");
     char ISOTime[MAX_STR_LEN+1];
+    size_t numberOfFilesAddedFromDB=0;
     for(size_t j=0;j<dirReader->fileList.size();j++){
       //Loop through all configured dimensions.
 #ifdef CDATAREADER_DEBUG
@@ -1188,6 +1220,7 @@ CDBDebug("Loop through all configured dimensions.");
 #endif
       for(size_t d=0;d<sourceImage->cfgLayer->Dimension.size();d++){
         int fileExistsInDB=0;
+       
         bool isTimeDim = false;
         CT::string dimName(sourceImage->cfgLayer->Dimension[d]->attr.name.c_str());
         dimName.toLowerCase();
@@ -1229,6 +1262,7 @@ CDBDebug("Dimname %s",dimName.c_str());
         query.print("select path from %s where path = '%s' limit 1",
                     tablename.c_str(),
                     dirReader->fileList[j]->fullName.c_str());
+        
         CT::string *pathValues = DB->query_select(query.c_str(),0);
         if(pathValues == NULL){CDBError("Query failed");DB->close();throw(__LINE__);}
         // Does the file already reside in the DB?
@@ -1251,6 +1285,7 @@ CDBDebug("Dimname %s",dimName.c_str());
                              );
           //printf("%s\n",mvRecordQuery.c_str());
           if(DB->query(mvRecordQuery.c_str())!=0){CDBError("Query %s failed",mvRecordQuery.c_str());throw(__LINE__);}
+          numberOfFilesAddedFromDB++;
         }
 
         //The file metadata does not already reside in the db.
@@ -1264,7 +1299,7 @@ CDBDebug("Dimname %s",dimName.c_str());
 #ifdef CDATAREADER_DEBUG
 CDBDebug("Creating new CDFObject");
 #endif
-            cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(sourceImage,dirReader->fileList[j]->fullName.c_str(),true);
+            cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(sourceImage,dirReader->fileList[j]->fullName.c_str());
             if(cdfObject == NULL)throw(__LINE__);
              
             //Open the file
@@ -1369,12 +1404,14 @@ CDBDebug("File opened.");
                 }
               }
             }
-            delete cdfObject;cdfObject=NULL;
+            //delete cdfObject;cdfObject=NULL;
+            cdfObject=CDFObjectStore::getCDFObjectStore()->deleteCDFObject(&cdfObject);
           }catch(int linenr){
             CDBError("File open exception in DBLoopFiles at line %d",linenr);
             CDBError(" *** SKIPPING FILE %s ***",dirReader->fileList[j]->baseName.c_str());
             //Close cdfObject. this is only needed if an exception occurs, otherwise it does nothing...
-            delete cdfObject;cdfObject=NULL;
+            //delete cdfObject;cdfObject=NULL;
+            cdfObject=CDFObjectStore::getCDFObjectStore()->deleteCDFObject(&cdfObject);
           }
         }
         //If we are messing in the non-temporary table (e.g.removeNonExistingFiles==0)
@@ -1385,27 +1422,30 @@ CDBDebug("File opened.");
           //CDBDebug("COMMIT");
           status = DB->query("COMMIT"); if(status!=0)throw(__LINE__);
         }
+       
       }
+     
     }
     if(status != 0){CDBError(DB->getError());throw(__LINE__);}
+    if(numberOfFilesAddedFromDB!=0){CDBDebug("%d files in the database",numberOfFilesAddedFromDB);}
   }
   catch(int linenr){
-      //Exception handling!
-      //Always do a COMMIT after an exception to be sure a transaction will not hang
-      //CDBDebug("COMMIT");
     DB->query("COMMIT"); 
     CDBError("Exception in DBLoopFiles at line %d",linenr);
-      //Close cdfObject. this is only needed if an exception occurs, otherwise it does nothing...
-     delete cdfObject;cdfObject=NULL;
+    cdfObject=CDFObjectStore::getCDFObjectStore()->deleteCDFObject(&cdfObject);
     return 1;
   }
-  delete cdfObject;cdfObject=NULL;
+ 
+
+  //delete cdfObject;cdfObject=NULL;
+  cdfObject=CDFObjectStore::getCDFObjectStore()->deleteCDFObject(&cdfObject);
   return 0;
 }
 
 
 
 int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *sourceImage,CT::string *_tailPath,CT::string *_layerPathToScan){
+  
   if(sourceImage->dLayerType!=CConfigReaderLayerTypeDataBase)return 0;
   
   //We only need to update the provided path in layerPathToScan. We will simply ignore the other directories
@@ -1567,7 +1607,7 @@ int CDataReader::justLoadAFileHeader(CDataSource *dataSource){
       dirReader.fileList[0]->fullName.copy(cachefileName.c_str());
     }*/
     
-    CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource,dirReader.fileList[0]->fullName.c_str(),false);
+    CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource,dirReader.fileList[0]->fullName.c_str());
     if(cdfObject == NULL)throw(__LINE__);
 
     

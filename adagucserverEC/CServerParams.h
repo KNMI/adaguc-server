@@ -1,6 +1,5 @@
 #ifndef CServerParams_H
 #define CServerParams_H
-#include "netcdf.h"
 #include "CDebugger.h"
 #include "CTypes.h"
 #include "Definitions.h"
@@ -9,6 +8,7 @@
 #include "CGeoParams.h"
 #include "CPGSQLDB.h"
 
+#define MAX_DIMS 10
 
 class CServerParams{
   DEF_ERRORFUNCTION();
@@ -27,7 +27,7 @@ class CServerParams{
     CT::string Styles;
     CT::string Style;
     CT::string OpenDAPSource,OpenDapVariable;
-    COGCDims OGCDims[NC_MAX_DIMS];
+    COGCDims OGCDims[MAX_DIMS];
     int NumOGCDims;
     int serviceType;
     int requestType;

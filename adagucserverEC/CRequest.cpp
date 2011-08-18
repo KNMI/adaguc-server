@@ -2,7 +2,11 @@
 const char *CRequest::className="CRequest";
 int CRequest::CGI=0;
 
-
+int CRequest::runRequest(){
+  int status=process_querystring();
+  CDFObjectStore::getCDFObjectStore()->clear();
+  return status;
+}
 
 int checkDataRestriction(){
   const char *data=getenv("ADAGUC_DATARESTRICTION");
@@ -257,7 +261,7 @@ int CRequest::process_wcs_describecov_request(){
 int CRequest::process_wms_getmap_request(){
   if(srvParam->WMSLayers!=NULL)
     for(size_t j=0;j<srvParam->WMSLayers->count;j++){
-      //CDBDebug("WMS GETMAP %s",srvParam->WMSLayers[j].c_str());
+      CDBDebug("WMS GETMAP for layers (%d) %s",j,srvParam->WMSLayers[j].c_str());
     }
   return process_all_layers();
 }
@@ -1548,10 +1552,11 @@ int CRequest::process_querystring(){
 
 
 int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan){
+
   int status;
   //Fill in all data sources from the configuratin object
   size_t numberOfLayers = srvParam->cfg->Layer.size();
-  CT::string layerName;
+  CT::string layerName="A";
   for(size_t layerNo=0;layerNo<numberOfLayers;layerNo++){
     CDataSource *dataSource = new CDataSource ();
     dataSources.push_back(dataSource);
@@ -1567,6 +1572,7 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan){
   int nrtablesdone=0;
   for(size_t j=0;j<numberOfLayers;j++){
     if(dataSources[j]->dLayerType==CConfigReaderLayerTypeDataBase){
+
       int i,found=0;
       //Make sure we are not updating the table twice
 
@@ -1599,6 +1605,7 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan){
   status = getDocFromDocCache(&simpleStore,NULL,NULL);  
   simpleStore.setStringAttribute("configModificationDate","needsupdate!");
   if(storeDocumentCache(&simpleStore)!=0)return 1;*/
+  
   printf("OK!\n\n");
   return 0;
 }

@@ -121,6 +121,7 @@ namespace CT{
 }*/
    
   void string::concat(const char*_value,size_t len){
+    if(_value==NULL)return;
     size_t cat_len=len,total_len=privatelength+cat_len;
     if(len==0)return;
     if(total_len<bufferlength){

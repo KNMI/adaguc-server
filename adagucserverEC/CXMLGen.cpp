@@ -1004,7 +1004,7 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
         }
         
         reader->close();
-        delete reader;
+        delete reader;reader=NULL;
         
         //Get the defined styles for this layer
         status = getStylesForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;
