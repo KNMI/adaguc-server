@@ -1186,6 +1186,8 @@ int CRequest::process_querystring(){
   if(SERVICE.match("WCS")==0)srvParam->serviceType=SERVICE_WCS;
 
   
+  //srvParam->OpenDAPSource="/net/bhw262/nobackup/users/vreedede/ECMWF/U11_1313650800.nc";
+  
     // If an Opendapsource is used, the LAYERS indicate which value should be visualised.
     // Add configuration layers to the XML object to make things work
     if(srvParam->OpenDAPSource.c_str()!=NULL){
@@ -1556,11 +1558,11 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan){
   int status;
   //Fill in all data sources from the configuratin object
   size_t numberOfLayers = srvParam->cfg->Layer.size();
-  CT::string layerName="A";
+
   for(size_t layerNo=0;layerNo<numberOfLayers;layerNo++){
     CDataSource *dataSource = new CDataSource ();
     dataSources.push_back(dataSource);
-    if(dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[layerNo],layerName.c_str())!=0){
+    if(dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[layerNo],NULL)!=0){
       return 1;
     }
   }

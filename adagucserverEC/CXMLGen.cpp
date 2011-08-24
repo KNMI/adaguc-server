@@ -604,7 +604,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
           
 
           for(size_t j=subGroups->count;j<prevSubGroups->count;j++){
-            CDBError("<");
+            //CDBError("<");
             currentGroupDepth--;
             XMLDoc->concat("</Layer>\n");
           }

@@ -1582,9 +1582,9 @@ int CDBFileScanner::searchFileNames(CDataSource *sourceImage,CDirReader *dirRead
       return 1;
     }
   }
-#ifdef CDATAREADER_DEBUG     
+//#ifdef CDATAREADER_DEBUG     
   CDBDebug("Found %d file(s) in directory",int(dirReader->fileList.size()));
-#endif  
+//#endif  
   return 0;
 }
 
@@ -1624,6 +1624,7 @@ int CDataReader::justLoadAFileHeader(CDataSource *dataSource){
       CDBError("Unable to open file '%s'",dirReader.fileList[0]->fullName.c_str());
       throw(__LINE__);
     }
+    
     
    dataSource->attachCDFObject(cdfObject);
    
@@ -1697,6 +1698,7 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource,bool tryToFindI
   int status=justLoadAFileHeader(dataSource);
   if(status!=0){
     CDBError("justLoadAFileHeader failed");
+    return 1;
   }
   
   try{

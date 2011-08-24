@@ -61,6 +61,11 @@ class CServerParams{
       if(Geo!=NULL){delete Geo;Geo=NULL;}
     }
     int makeUniqueLayerName(CT::string *layerName,CServerConfig::XMLE_Layer *cfgLayer){
+     /*
+      if(cfgLayer->Variable.size()!=0){
+      _layerName=cfgLayer->Variable[0]->value.c_str();
+    }*/
+      
       layerName->copy("");
       if(cfgLayer->Group.size()==1){
         if(cfgLayer->Group[0]->attr.value.c_str()!=NULL){
@@ -72,10 +77,15 @@ class CServerParams{
         CServerConfig::XMLE_Name *name=new CServerConfig::XMLE_Name();
         cfgLayer->Name.push_back(name);
         if(cfgLayer->Variable.size()==0){
-          name->value.copy("undefined variable");
+          name->value.copy("undefined_variable");
         }else{
           name->value.copy(cfgLayer->Variable[0]->value.c_str());
         }
+      }
+      if(cfgLayer->Title.size()==0){
+        CServerConfig::XMLE_Title *title=new CServerConfig::XMLE_Title();
+        cfgLayer->Title.push_back(title);
+        title->value.copy(cfgLayer->Name[0]->value.c_str());
       }  
       layerName->concat(cfgLayer->Name[0]->value.c_str());
       return 0;

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Configuration>
-  <Font location="FreeSans.ttf" size="7"/>
+  
   <Path value="../adagucserverEC"/>
   <TempDir value="/tmp"/>
   <OnlineResource value="http://geoservices.knmi.nl/cgi-bin/RADNL_OPER_R___25PCPRR_L3.cgi?"/>
