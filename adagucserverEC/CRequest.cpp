@@ -622,6 +622,7 @@ int CRequest::process_all_layers(){
           dataSources[j]->timeSteps.push_back(timeStep);
           timeStep->fileName.copy(values_path[k].c_str());
           timeStep->timeString.copy(date_time[k].c_str());
+          //For each timesteps a new set of dimensions is added with corresponding dim array indices.
           for(size_t i=0;i<dataSources[j]->requiredDims.size();i++){
             timeStep->dims.addDimension(dataSources[j]->requiredDims[i]->netCDFDimName.c_str(),atoi(dimValues[i][k].c_str()));
           }

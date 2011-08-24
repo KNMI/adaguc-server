@@ -668,8 +668,12 @@ int CImageDataWriter::getFeatureInfo(CDataSource *dataSource,int dX,int dY){
       // Make a more clean standard name.
       standardName.replace("_"," ");standardName.replace(" status flag","");
       element->feature_name.copy(&standardName);
-    }else element->standard_name.copy(&element->var_name);
-    
+    }
+    if(element->standard_name.c_str()==NULL){
+      element->standard_name.copy(&element->var_name);
+      element->feature_name.copy(&element->var_name);
+    }
+
     // Get variable long name
     CDF::Attribute * attr_long_name=dataSource->dataObject[j]->cdfVariable->getAttributeNE("long_name");
     if(attr_long_name!=NULL){
@@ -1190,6 +1194,7 @@ int CImageDataWriter::end(){
           CT::string layerName=g->layerName.c_str();
           layerName.replace(" ","_");
           layerName.replace("/","_");
+          layerName.replace(":","-");
           
           resultXML.printconcat("  <%s_layer>\n",layerName.c_str());
           for(size_t elNR=0;elNR<g->elements.size();elNR++){

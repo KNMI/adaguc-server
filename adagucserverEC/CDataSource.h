@@ -51,7 +51,7 @@ class CDataSource{
   StopWatch_Stop("Start min/max calculation");
 #endif
  
-        T _min=0.0f,_max=0.0f;
+        T _min=(T)0.0f,_max=(T)0.0f;
         int firstDone=0;
         for(size_t p=0;p<size;p++){
           T v=data[p];

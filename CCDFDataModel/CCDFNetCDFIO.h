@@ -324,14 +324,18 @@ CDBDebug("closing");
         status = nc_open(fileName.c_str(),NC_NOWRITE,&root_id);
         if(status!=NC_NOERR){ncError(__LINE__,className,"nc_open: ",status);return 1;}
       }
+      #ifdef CCDFNETCDFIO_DEBUG        
       CDBDebug("reading %s from file %s",var->name.c_str(),fileName.c_str());
+      #endif
       //CDBDebug("readVariableData");
       //It is essential that the variable nows which reader can be used to read the data
       //var->cdfReaderPointer=(void*)this;
       size_t totalVariableSize = 1;
       for(size_t i=0;i<var->dimensionlinks.size();i++){
         totalVariableSize*=count[i];//stride[i];
+        #ifdef CCDFNETCDFIO_DEBUG        
         CDBDebug("%s: [%d %d %d]",var->dimensionlinks[i]->name.c_str(),start[i],count[i],stride[i]);
+        #endif
       }
       //CDBDebug("totalVariableSize = %d",totalVariableSize);
       var->setSize(totalVariableSize);

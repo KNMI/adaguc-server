@@ -669,7 +669,11 @@ int CDataReader::open(CDataSource *_sourceImage, int mode){
     #endif
     
     //Read variable data
+    //free(var[varNr]->data);var[varNr]->data=NULL;
+    var[varNr]->freeData();
     var[varNr]->readData(sourceImage->dataObject[varNr]->dataType,start,count,stride);
+    
+    
     
     //Swap X, Y dimensions so that pointer x+y*w works correctly
     if(cacheAvailable!=true){
@@ -1115,7 +1119,8 @@ int CDataReader::getTimeString(char * pszTime){
     time->readData(CDF_DOUBLE);
   //}
   if(sourceImage->dNetCDFNumDims>2){
-    size_t index=sourceImage->getDimensionIndex("time");
+    size_t index=sourceImage->getDimensionIndex(time->name.c_str());
+    //size_t index=sourceImage->getCurrentTimeStep();
     if(index>=0&&index<time->getSize()){
       CADAGUC_time *ADTime = new CADAGUC_time((char*)timeUnits->data);
       stADAGUC_time timest;
