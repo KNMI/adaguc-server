@@ -365,7 +365,7 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
                 setValuePixel(sourceImage,drawImage,x,y,strength);
               }else{
                 if((int(x-firstXPos)%vectorDensityPx==0&&(y-firstYPos)%vectorDensityPx==0)||(enableContour==false&&enableShade==false)){
-                  strength=(strength/4)*1.0;
+                  strength=(strength)*1.0;
                   drawImage->drawVector(x,y,direction,strength,240);
                   
                 }
