@@ -38,6 +38,7 @@
     <GetFeatureInfo>
       <Format>text/plain</Format>
       <Format>text/html</Format>
+      <Format>text/xml</Format>
       <Format>application/vnd.ogc.gml</Format>
       <DCPType>
         <HTTP>

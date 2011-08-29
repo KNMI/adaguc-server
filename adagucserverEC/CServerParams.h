@@ -15,7 +15,7 @@ class CServerParams{
   public:
     double dfResX,dfResY;
     int dWCS_RES_OR_WH;
-    int dX,dY;
+    double dX,dY;
     CT::string *WMSLayers;
     CT::string Format;
     CT::string InfoFormat;

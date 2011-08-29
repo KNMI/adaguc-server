@@ -21,6 +21,7 @@
 #define REQUEST_WCS_GETCOVERAGE           7
 #define REQUEST_WMS_GETMETADATA           8
 #define REQUEST_WMS_GETSTYLES             9
+#define REQUEST_WMS_GETPOINTVALUE         10
 #define REQUEST_UPDATEDB                  100
 
 //Legend

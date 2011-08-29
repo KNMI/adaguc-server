@@ -757,6 +757,7 @@ int CRequest::process_all_layers(){
           }
           status = ImageDataWriter.end();if(status != 0)throw(__LINE__);
         }
+        
         // WMS Getlegendgraphic
         if(srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
           CImageDataWriter ImageDataWriter;
@@ -945,12 +946,12 @@ int CRequest::process_querystring(){
 
       // X Parameter
       if(strncmp(value0Cap.c_str(),"X",1)==0&&value0Cap.length()==1){
-        srvParam->dX=atoi(values[1].c_str());
+        srvParam->dX=atof(values[1].c_str());
         dFound_X=1;
       }
       // Y Parameter
       if(strncmp(value0Cap.c_str(),"Y",1)==0&&value0Cap.length()==1){
-        srvParam->dY=atoi(values[1].c_str());
+        srvParam->dY=atof(values[1].c_str());
         dFound_Y=1;
       }
       // SRS / CRS Parameters
@@ -1269,12 +1270,13 @@ int CRequest::process_querystring(){
       CDBWarning("Parameter REQUEST missing");
       dErrorOccured=1;
     }else{
-      if(REQUEST.match("GETCAPABILITIES")==0)srvParam->requestType=REQUEST_WMS_GETCAPABILITIES;
-      if(REQUEST.match("GETMAP")==0)srvParam->requestType=REQUEST_WMS_GETMAP;
-      if(REQUEST.match("GETFEATUREINFO")==0)srvParam->requestType=REQUEST_WMS_GETFEATUREINFO;
-      if(REQUEST.match("GETLEGENDGRAPHIC")==0)srvParam->requestType=REQUEST_WMS_GETLEGENDGRAPHIC;
-      if(REQUEST.match("GETMETADATA")==0)srvParam->requestType=REQUEST_WMS_GETMETADATA;
-      if(REQUEST.match("GETSTYLES")==0)srvParam->requestType=REQUEST_WMS_GETSTYLES;
+      if(REQUEST.equals("GETCAPABILITIES"))srvParam->requestType=REQUEST_WMS_GETCAPABILITIES;
+      if(REQUEST.equals("GETMAP"))srvParam->requestType=REQUEST_WMS_GETMAP;
+      if(REQUEST.equals("GETFEATUREINFO"))srvParam->requestType=REQUEST_WMS_GETFEATUREINFO;
+      if(REQUEST.equals("GETPOINTVALUE"))srvParam->requestType=REQUEST_WMS_GETPOINTVALUE;
+      if(REQUEST.equals("GETLEGENDGRAPHIC"))srvParam->requestType=REQUEST_WMS_GETLEGENDGRAPHIC;
+      if(REQUEST.equals("GETMETADATA"))srvParam->requestType=REQUEST_WMS_GETMETADATA;
+      if(REQUEST.equals("GETSTYLES"))srvParam->requestType=REQUEST_WMS_GETSTYLES;
     }
     
     //For getlegend graphic the parameter is style, not styles
@@ -1332,8 +1334,14 @@ int CRequest::process_querystring(){
       }
        
     
-    if(dErrorOccured==0&&(srvParam->requestType==REQUEST_WMS_GETMAP||srvParam->requestType==REQUEST_WMS_GETFEATUREINFO)){
-      if(srvParam->requestType==REQUEST_WMS_GETFEATUREINFO){
+    if(dErrorOccured==0&&
+      (
+        srvParam->requestType==REQUEST_WMS_GETMAP||
+        srvParam->requestType==REQUEST_WMS_GETFEATUREINFO||
+        srvParam->requestType==REQUEST_WMS_GETPOINTVALUE        
+      )){
+      
+      if(srvParam->requestType==REQUEST_WMS_GETFEATUREINFO||srvParam->requestType==REQUEST_WMS_GETPOINTVALUE){
         int status = checkDataRestriction();
         if((status&ALLOW_GFI)==false){
           CDBWarning("This layer is not queryable.");
@@ -1346,6 +1354,25 @@ int CRequest::process_querystring(){
           //CDBWarning("Parameter STYLES missing");TODO Google Earth does not provide this!
         }
       }
+      
+      if(srvParam->requestType==REQUEST_WMS_GETPOINTVALUE){
+        //Maps REQUEST_WMS_GETPOINTVALUE to REQUEST_WMS_GETFEATUREINFO
+        //http://bhw222.knmi.nl:8080/cgi-bin/model.cgi?&SERVICE=WMS&REQUEST=GetPointValue&VERSION=1.1.1&SRS=EPSG%3A4326&QUERY_LAYERS=PMSL_sfc_0&X=3.74&Y=52.34&INFO_FORMAT=text/html&time=2011-08-18T09:00:00Z/2011-08-18T18:00:00Z&DIM_sfc_snow=0
+        dFound_BBOX=1;
+        dFound_WMSLAYERS=1;
+        dFound_Width=1;
+        dFound_Height=1;
+        srvParam->Geo->dfBBOX[0]=srvParam->dX;
+        srvParam->Geo->dfBBOX[1]=srvParam->dY;
+        srvParam->Geo->dfBBOX[2]=srvParam->Geo->dfBBOX[0];
+        srvParam->Geo->dfBBOX[3]=srvParam->Geo->dfBBOX[1];
+        srvParam->Geo->dWidth=1;
+        srvParam->Geo->dHeight=1;
+        srvParam->dX=0;
+        srvParam->dY=0;
+        srvParam->requestType=REQUEST_WMS_GETFEATUREINFO;
+      }
+      
       if(dFound_Width==0){
         CDBWarning("Parameter WIDTH missing");
         dErrorOccured=1;
@@ -1358,7 +1385,7 @@ int CRequest::process_querystring(){
       // When error is image, utilize full image size
       setErrorImageSize(srvParam->Geo->dWidth,srvParam->Geo->dHeight,srvParam->imageFormat);
       
-     
+    
       
       if(dFound_BBOX==0){
         CDBWarning("Parameter BBOX missing");
@@ -1382,6 +1409,7 @@ int CRequest::process_querystring(){
           }
           return 0;
         }
+      
         if(srvParam->requestType==REQUEST_WMS_GETFEATUREINFO){
           if(dFound_X==0){
             CDBWarning("Parameter X missing");
