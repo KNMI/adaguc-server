@@ -72,7 +72,7 @@ CDataSource::CDataSource(){
   srvParams=NULL;
   cfgLayer = NULL;
   cfg=NULL;
- 
+  datasourceIndex=0;
 }
 
 CDataSource::~CDataSource(){
@@ -89,13 +89,13 @@ CDataSource::~CDataSource(){
   if(statistics!=NULL)delete statistics;statistics=NULL;
 }
 
-int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Configuration *_cfg,CServerConfig::XMLE_Layer * _cfgLayer,const char *_layerName){
+int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Configuration *_cfg,CServerConfig::XMLE_Layer * _cfgLayer,const char *_layerName,int layerIndex){
   srvParams=_srvParams;
   cfg=_cfg;
   cfgLayer=_cfgLayer;
 //    numVariables = cfgLayer->Variable.size();
  
-  
+  datasourceIndex=layerIndex;
   for(size_t j=0;j<cfgLayer->Variable.size();j++){
     DataClass *data = new DataClass();
     data->variableName.copy(cfgLayer->Variable[j]->value.c_str());
@@ -133,17 +133,19 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Confi
 #endif  
 
   //When a database table is not configured, generate a name automatically
-  if(cfgLayer->DataBaseTable.size()==0){
-      CServerConfig::XMLE_DataBaseTable *dbtable=new CServerConfig::XMLE_DataBaseTable();
-      cfgLayer->DataBaseTable.push_back(dbtable);
-      //Create a table name based on the filepath and its filter.
-      CT::string tableName=layerName.c_str();
-      if(cfgLayer->FilePath[0]->attr.filter.c_str()==NULL){
-        cfgLayer->FilePath[0]->attr.filter.copy("\\.nc");
-      }
-      srvParams->lookupTableName(&tableName,cfgLayer->FilePath[0]->value.c_str(),cfgLayer->FilePath[0]->attr.filter.c_str());
-      srvParams->encodeTableName(&tableName);
-      dbtable->value.copy(tableName.c_str());
+  if( dLayerType!=CConfigReaderLayerTypeCascaded){
+    if(cfgLayer->DataBaseTable.size()==0){
+        CServerConfig::XMLE_DataBaseTable *dbtable=new CServerConfig::XMLE_DataBaseTable();
+        cfgLayer->DataBaseTable.push_back(dbtable);
+        //Create a table name based on the filepath and its filter.
+        CT::string tableName=layerName.c_str();
+        if(cfgLayer->FilePath[0]->attr.filter.c_str()==NULL){
+          cfgLayer->FilePath[0]->attr.filter.copy("\\.nc");
+        }
+        srvParams->lookupTableName(&tableName,cfgLayer->FilePath[0]->value.c_str(),cfgLayer->FilePath[0]->attr.filter.c_str());
+        srvParams->encodeTableName(&tableName);
+        dbtable->value.copy(tableName.c_str());
+    }
   }
 
   isConfigured=true;

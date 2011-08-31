@@ -16,6 +16,7 @@ int CXMLGen::getFileNameForLayer(WMSLayer * myWMSLayer){
 #ifdef CXMLGEN_DEBUG
 CDBDebug("getFileNameForLayer");
 #endif 
+  
   /**********************************************/
   /*  Read the file to obtain BBOX parameters   */
   /**********************************************/
@@ -23,16 +24,16 @@ CDBDebug("getFileNameForLayer");
   //Create a new datasource and set configuration for it
   if(myWMSLayer->dataSource==NULL){
     myWMSLayer->dataSource = new CDataSource ();
-    if(myWMSLayer->dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],myWMSLayer->layer,myWMSLayer->name.c_str())!=0){
+  
+    if(myWMSLayer->dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],myWMSLayer->layer,myWMSLayer->name.c_str(),-1)!=0){
       return 1;
     }
+  
   }
-#ifdef CXMLGEN_DEBUG  
-  CDBDebug("databasetable='%s'",myWMSLayer->layer->DataBaseTable[0]->value.c_str());
-#endif  
+
   int status;
   
-  
+ 
   if(myWMSLayer->dataSource->dLayerType==CConfigReaderLayerTypeDataBase||
     myWMSLayer->dataSource->dLayerType==CConfigReaderLayerTypeStyled){
       if(myWMSLayer->dataSource->cfgLayer->Dimension.size()==0){
@@ -101,18 +102,23 @@ int CXMLGen::getDataSourceForLayer(WMSLayer * myWMSLayer, CDataReader *reader){
 #ifdef CXMLGEN_DEBUG
 CDBDebug("getDataSourceForLayer");
 #endif 
- 
+   //Is this a cascaded WMS server?
+  if(myWMSLayer->dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
+  #ifdef CXMLGEN_DEBUG    
+  CDBDebug("Cascaded layer");
+  #endif    
+  if(myWMSLayer->dataSource->cfgLayer->Title.size()!=0){
+    myWMSLayer->title.copy(myWMSLayer->dataSource->cfgLayer->Title[0]->value.c_str());
+  }else{
+    myWMSLayer->title.copy(myWMSLayer->dataSource->cfgLayer->Name[0]->value.c_str());
+  }
+  return 0;
+  }
   //CDBDebug("Reading %s",myWMSLayer->fileName.c_str());
 
   
   myWMSLayer->dataSource->addTimeStep(myWMSLayer->fileName.c_str(),"");
-  //Is this a cascaded WMS server?
-  if(myWMSLayer->dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
-#ifdef CXMLGEN_DEBUG    
-CDBDebug("Cascaded layer");
-#endif    
-  return 0;
-  }
+
   
   //Is this a local file based WMS server?
   if(myWMSLayer->dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
@@ -166,10 +172,13 @@ int CXMLGen::getProjectionInformationForLayer(WMSLayer * myWMSLayer){
 #ifdef CXMLGEN_DEBUG
 CDBDebug("getProjectionInformationForLayer");
 #endif   
-  //Is this a cascaded WMS server?
-  if(myWMSLayer->layer->attr.type.equals("cascaded")){
-    return 0;
+  if(myWMSLayer->dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
+#ifdef CXMLGEN_DEBUG    
+CDBDebug("Cascaded layer");
+#endif    
+  return 0;
   }
+  
   CGeoParams geo;
   CImageWarper warper;
   int status;  
@@ -399,9 +408,17 @@ CDBDebug("Querying %s",query.c_str());
 }
 
 int CXMLGen::getStylesForLayer(WMSLayer * myWMSLayer){
+  
 #ifdef CXMLGEN_DEBUG
 CDBDebug("getStylesForLayer");
 #endif       
+
+  if(myWMSLayer->dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
+#ifdef CXMLGEN_DEBUG    
+CDBDebug("Cascaded layer");
+#endif    
+  return 0;
+  }
   CT::string styleName("default");
   std::vector <std::string> styleNames;
   if(myWMSLayer->dataSource->cfgLayer->Styles.size()==1){
@@ -998,8 +1015,10 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
         //Auto configure styles
         if(myWMSLayer->hasError==false){
           if(myWMSLayer->dataSource->cfgLayer->Styles.size()==0){
-            status=CDataReader::autoConfigureStyles(myWMSLayer->dataSource);
-            if(status != 0){myWMSLayer->hasError=1;CDBError("Unable to autoconfigure styles for layer %s",layerUniqueName.c_str());}
+            if(myWMSLayer->dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
+              status=CDataReader::autoConfigureStyles(myWMSLayer->dataSource);
+              if(status != 0){myWMSLayer->hasError=1;CDBError("Unable to autoconfigure styles for layer %s",layerUniqueName.c_str());}
+            }
           }
         }
         

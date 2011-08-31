@@ -99,6 +99,8 @@
 
 */
 
+#define CXMLGEN_DEBUG
+
 #define ADAGUC_USE_GDAL
 #endif
 

@@ -85,7 +85,7 @@ class CDataSource{
       CT::string timeString; //String of the current time
       CCDFDims   dims;//Dimension index in the corresponding name and file
   };
-  
+  int datasourceIndex;
   int currentAnimationStep;
   std::vector <TimeStep*> timeSteps;
   bool stretchMinMax;
@@ -129,7 +129,7 @@ class CDataSource{
   
   CDataSource();
   ~CDataSource();
-  int setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Configuration *_cfg,CServerConfig::XMLE_Layer * _cfgLayer,const char *_layerName);
+  int setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Configuration *_cfg,CServerConfig::XMLE_Layer * _cfgLayer,const char *_layerName, int layerIndex);
   void addTimeStep(const char * pszName,const char *pszTimeString);
   const char *getFileName();
   void setTimeStep(int timeStep);

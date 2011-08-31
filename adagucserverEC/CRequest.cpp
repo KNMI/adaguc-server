@@ -45,13 +45,15 @@ int CRequest::setConfigFile(const char *pszConfigFile){
     srvParam->cfg=NULL;
   }
   for(size_t j=0;j<srvParam->cfg->Layer.size();j++){
-    if(srvParam->cfg->Layer[j]->Variable.size()==0){
-      CDBError("Configuration error at layer %d: <Variable> not defined",j);
-      return 1;
-    }
-    if(srvParam->cfg->Layer[j]->FilePath.size()==0){
-      CDBError("Configuration error at layer %d: <FilePath> not defined",j);
-      return 1;
+    if(srvParam->cfg->Layer[j]->attr.type.equals("database")){
+      if(srvParam->cfg->Layer[j]->Variable.size()==0){
+        CDBError("Configuration error at layer %d: <Variable> not defined",j);
+        return 1;
+      }
+      if(srvParam->cfg->Layer[j]->FilePath.size()==0){
+        CDBError("Configuration error at layer %d: <FilePath> not defined",j);
+        return 1;
+      }
     }
   }
   return status;
@@ -345,7 +347,7 @@ int CRequest::process_all_layers(){
         if(layerName.equals(srvParam->WMSLayers[j].c_str())){
           CDataSource *dataSource = new CDataSource ();
           dataSources.push_back(dataSource);
-          if(dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[layerNo],layerName.c_str())!=0){
+          if(dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[layerNo],layerName.c_str(),j)!=0){
             return 1;
           }
           break;
@@ -1591,7 +1593,7 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan){
   for(size_t layerNo=0;layerNo<numberOfLayers;layerNo++){
     CDataSource *dataSource = new CDataSource ();
     dataSources.push_back(dataSource);
-    if(dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[layerNo],NULL)!=0){
+    if(dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[layerNo],NULL,layerNo)!=0){
       return 1;
     }
   }

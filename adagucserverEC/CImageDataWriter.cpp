@@ -295,14 +295,20 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
   //Get legend for the layer by using layers style
   CT::string *requestStyle=srvParam->Styles.split(",");
   bool isDefaultStyle=false;
+  
+  
   if(requestStyle->count>0){
-    if(requestStyle[0].length()>0){
-      if(requestStyle[0].equals("default")||requestStyle[0].equals("default/HQ")){
+    int layerIndex=dataSource->datasourceIndex;
+    if(layerIndex==-1)layerIndex=0;
+    if(layerIndex>requestStyle->count)layerIndex=requestStyle->count;
+    CT::string *layerStyle=&requestStyle[layerIndex];
+    if(layerStyle->length()>0){
+      if(layerStyle->equals("default")||layerStyle->equals("default/HQ")){
         isDefaultStyle=true;
       }
-      //if(!requestStyle[0].equals("default"))
+      //if(!layerStyle->equals("default"))
       {
-        //requestStyle[0].copy("temperature/shadedcontour/HQ");
+        //layerStyle->copy("temperature/shadedcontour/HQ");
         if(dataSource->cfgLayer->Styles.size()==1){
           CT::string *legendStyle=NULL;
           if(srvParam->requestType==REQUEST_WMS_GETMAP||srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
@@ -310,10 +316,10 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
             CT::string *layerstyles = styles.split(",");
             //If default, take the first style...
             if(isDefaultStyle){
-              requestStyle[0].copy(&layerstyles[0]);
+              layerStyle->copy(&layerstyles[0]);
             }
-            legendStyle=requestStyle[0].split("/");
-            //if(!requestStyle[0].equals("default")){
+            legendStyle=layerStyle->split("/");
+            //if(!layerStyle->equals("default")){
               for(size_t j=0;j<layerstyles->count;j++){
                 if(layerstyles[j].equals(legendStyle[0].c_str())){
                   layerStyleName.copy(&layerstyles[j]);
@@ -351,7 +357,7 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
             dLayerStyleIndex=0;
             return 0;
           }
-          CDBError("Style '%s' was not found in the layers configuration",requestStyle[0].c_str());
+          CDBError("Style '%s' was not found in the layers configuration",layerStyle->c_str());
           return -1;
         }
       }
@@ -1504,7 +1510,7 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
       {
         int y=getColorIndexForValue(dataSource,v);
         drawImage->rectangle(4,cY2,int(cbW)+7,cY,(y),248);
-        if(textRounding<=0)sprintf(szTemp,"%2.1f - %2.1f",v,v+legendInterval);
+        if(textRounding<=0)sprintf(szTemp,"%2.0f - %2.0f",v,v+legendInterval);
         if(textRounding==1)sprintf(szTemp,"%2.1f - %2.1f",v,v+legendInterval);
         if(textRounding==2)sprintf(szTemp,"%2.2f - %2.2f",v,v+legendInterval);
         if(textRounding==3)sprintf(szTemp,"%2.3f - %2.3f",v,v+legendInterval);
