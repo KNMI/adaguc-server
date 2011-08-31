@@ -464,7 +464,27 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
       dataSource->legendLowerRange=parseFloat(cfgStyle->ValueRange[0]->attr.min.c_str());
       dataSource->legendUpperRange=parseFloat(cfgStyle->ValueRange[0]->attr.max.c_str());
     }
+    //Get contour info
+    shadeInterval=0.0f;contourIntervalL=0.0f;contourIntervalH=0.0f;smoothingFilter=1;
+    if(cfgStyle->ContourIntervalL.size()>0)
+      contourIntervalL=parseFloat(cfgStyle->ContourIntervalL[0]->value.c_str());
+    if(cfgStyle->ContourIntervalH.size()>0)
+      contourIntervalH=parseFloat(cfgStyle->ContourIntervalH[0]->value.c_str());
+    shadeInterval=contourIntervalL;
+    if(cfgStyle->ShadeInterval.size()>0)
+      shadeInterval=parseFloat(cfgStyle->ShadeInterval[0]->value.c_str());
+    if(cfgStyle->SmoothingFilter.size()>0)
+      smoothingFilter=parseInt(cfgStyle->SmoothingFilter[0]->value.c_str());
+    //Get contourtextinfo
+    textScaleFactor=1.0f;textOffsetFactor=0.0f;
     
+    if(cfgStyle->ContourText.size()>0){
+      if(cfgStyle->ContourText[0]->attr.scale.c_str()!=NULL){
+        textScaleFactor=parseFloat(cfgStyle->ContourText[0]->attr.scale.c_str());
+      }
+      if(cfgStyle->ContourText[0]->attr.offset.c_str()!=NULL)
+        textOffsetFactor=parseFloat(cfgStyle->ContourText[0]->attr.offset.c_str());
+    }
     //Legend settings can always be overriden in the layer itself!
     if(dataSource->cfgLayer->Scale.size()>0){
       dataSource->legendScale=parseFloat(dataSource->cfgLayer->Scale[0]->value.c_str());
@@ -472,7 +492,14 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
     if(dataSource->cfgLayer->Offset.size()>0){
       dataSource->legendOffset=parseFloat(dataSource->cfgLayer->Offset[0]->value.c_str());
     }
-    
+    if(dataSource->cfgLayer->ShadeInterval.size()>0){
+      shadeInterval=parseFloat(dataSource->cfgLayer->ShadeInterval[0]->value.c_str());
+    }
+    if(dataSource->cfgLayer->ContourIntervalL.size()>0){
+      contourIntervalL=parseFloat(dataSource->cfgLayer->ContourIntervalL[0]->value.c_str());
+    }
+
+
     //When min and max are given, calculate the scale and offset according to min and max.
     if(dataSource->cfgLayer->Min.size()>0&&dataSource->cfgLayer->Max.size()>0){
 #ifdef CIMAGEDATAWRITER_DEBUG          
@@ -496,27 +523,7 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
     }
 
     
-    //Get contour info
-    shadeInterval=0.0f;contourIntervalL=0.0f;contourIntervalH=0.0f;smoothingFilter=1;
-    if(cfgStyle->ContourIntervalL.size()>0)
-      contourIntervalL=parseFloat(cfgStyle->ContourIntervalL[0]->value.c_str());
-    if(cfgStyle->ContourIntervalH.size()>0)
-      contourIntervalH=parseFloat(cfgStyle->ContourIntervalH[0]->value.c_str());
-    shadeInterval=contourIntervalL;
-    if(cfgStyle->ShadeInterval.size()>0)
-      shadeInterval=parseFloat(cfgStyle->ShadeInterval[0]->value.c_str());
-    if(cfgStyle->SmoothingFilter.size()>0)
-      smoothingFilter=parseInt(cfgStyle->SmoothingFilter[0]->value.c_str());
-    //Get contourtextinfo
-    textScaleFactor=1.0f;textOffsetFactor=0.0f;
-    
-    if(cfgStyle->ContourText.size()>0){
-      if(cfgStyle->ContourText[0]->attr.scale.c_str()!=NULL){
-        textScaleFactor=parseFloat(cfgStyle->ContourText[0]->attr.scale.c_str());
-      }
-      if(cfgStyle->ContourText[0]->attr.offset.c_str()!=NULL)
-        textOffsetFactor=parseFloat(cfgStyle->ContourText[0]->attr.offset.c_str());
-    }
+
   }
   if(contourIntervalL<=0.0f||contourIntervalH<=0.0f){
     if(renderMethod==contour||

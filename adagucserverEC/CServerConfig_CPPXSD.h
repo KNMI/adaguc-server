@@ -449,6 +449,8 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_Min*> Min;
         std::vector <XMLE_Max*> Max;
         std::vector <XMLE_Log*> Log;
+        std::vector <XMLE_ShadeInterval*> ShadeInterval;
+        std::vector <XMLE_ContourIntervalL*> ContourIntervalL;
         std::vector <XMLE_ValueRange*> ValueRange;
         std::vector <XMLE_ImageText*> ImageText;
         std::vector <XMLE_LatLonBox*> LatLonBox;
@@ -475,6 +477,8 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(Min);
           XMLE_DELOBJ(Max);
           XMLE_DELOBJ(Log);
+          XMLE_DELOBJ(ShadeInterval);
+          XMLE_DELOBJ(ContourIntervalL);
           XMLE_DELOBJ(ValueRange);
           XMLE_DELOBJ(ImageText);
           XMLE_DELOBJ(LatLonBox);
@@ -505,6 +509,8 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("Min",3,name)){XMLE_ADDOBJ(Min);}
             else if(equals("Max",3,name)){XMLE_ADDOBJ(Max);}            
             else if(equals("Log",3,name)){XMLE_ADDOBJ(Log);}
+            else if(equals("ShadeInterval",13,name)){XMLE_ADDOBJ(ShadeInterval);}
+            else if(equals("ContourIntervalL",16,name)){XMLE_ADDOBJ(ContourIntervalL);}
             else if(equals("ValueRange",10,name)){XMLE_ADDOBJ(ValueRange);}
             else if(equals("ImageText",9,name)){XMLE_ADDOBJ(ImageText);}
             else if(equals("LatLonBox",9,name)){XMLE_ADDOBJ(LatLonBox);}
