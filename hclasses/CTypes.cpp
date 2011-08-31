@@ -15,7 +15,9 @@ namespace CT{
       prevFo=fo+1;
       fo = strstr(fo+1,_value);
     }
-    CT::string * val = new CT::string();stringList->push_back(val);val->copy(prevFo);
+    if(strlen(prevFo)>0){
+      CT::string * val = new CT::string();stringList->push_back(val);val->copy(prevFo);
+    }
     //printf("pushing2 %s %d\n",val->c_str(),stringList.size());
     return stringList;
   }

@@ -1465,7 +1465,7 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *sourceImage,C
       
       //If this is another directory we will simply ignore it.
       if(layerPath.equals(&layerPathToScan)==false){
-        //printf("Skipping %s\n",layerPath.c_str());
+        printf("Skipping %s==%s\n",layerPath.c_str(),layerPathToScan.c_str());
         return 0;
       }
     }
