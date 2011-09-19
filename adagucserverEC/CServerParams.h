@@ -82,11 +82,11 @@ class CServerParams{
           name->value.copy(cfgLayer->Variable[0]->value.c_str());
         }
       }
-      if(cfgLayer->Title.size()==0){
+      /*if(cfgLayer->Title.size()==0){
         CServerConfig::XMLE_Title *title=new CServerConfig::XMLE_Title();
         cfgLayer->Title.push_back(title);
         title->value.copy(cfgLayer->Name[0]->value.c_str());
-      }  
+      } */ 
       layerName->concat(cfgLayer->Name[0]->value.c_str());
       return 0;
     }

@@ -143,6 +143,7 @@ CDBDebug("Database layer");
         CT::string attributeValue;
         myWMSLayer->dataSource->dataObject[0]->cdfVariable->getAttribute("long_name")->getDataAsString(&attributeValue);
         myWMSLayer->title.copy(attributeValue.c_str());
+        myWMSLayer->title.printconcat(" (%s)",myWMSLayer->dataSource->dataObject[0]->cdfVariable->name.c_str());
       }catch(int e){
         CT::string errorMessage;
         CDF::getErrorMessage(&errorMessage,e);

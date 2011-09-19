@@ -579,7 +579,7 @@ int CRequest::process_all_layers(){
             Query.printconcat(" and a0.path=a%d.path",i);
           }
         }
-        Query.concat(" limit 25");
+        Query.concat(" limit 32");
         //CDBDebug(Query.c_str());
         if(timeValidationError==true){
           CDBError("Query fails regular expression: '%s'",Query.c_str());
