@@ -852,7 +852,7 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc,std::vector<WMSLay
                   "  <domainSet>\n"
                   "    <spatialDomain>\n");
               for(size_t p=0;p< layer->projectionList.size();p++){
-                WMSLayer::Projection *proj = (*myWMSLayerList)[0]->projectionList[p];
+                WMSLayer::Projection *proj = layer->projectionList[p];
                 XMLDoc->printconcat("        <gml:Envelope srsName=\"%s\">\n"
                     "          <gml:pos>%f %f</gml:pos>\n"
                     "          <gml:pos>%f %f</gml:pos>\n"

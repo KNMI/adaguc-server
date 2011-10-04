@@ -1,7 +1,7 @@
 #HOME=/data/apps/rcc/MaartenP/install
 HOME=/nobackup/users/plieger/software/install
-HOME=/data/data1/mapserver/
-HOME2=/data/data1/software/install/
+#HOME=/data/data1/mapserver/
+#HOME2=/data/data1/software/install/
 #HOME=/home/plieger/interpolws/software/install
 #HOME=/nobackup/users/plieger/build/
 #HOME=/home/gsie/gsiews/software/install/
@@ -37,13 +37,14 @@ USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lxml2 -lgd -lproj -lpq -ludunits -lfreetype
 # all libs together
 LIBS = -L$(LIBDIR) $(USERLIBS) -L$(HOME2)/lib
 
-OBJECTS = adagucserverEC.o CDataReader.o CImageWarper.o CDrawImage.o CServerError.o CRequest.o  CXMLGen.o CServerParams.o CGDALDataWriter.o CImageDataWriter.o CXMLSerializerInterface.o CDataSource.o CStopWatch.o CImgWarpBilinear.o CImgWarpBoolean.o CImgWarpNearestNeighbour.o CPGSQLDB.o
+OBJECTS = CDataReader.o CImageWarper.o CDrawImage.o CServerError.o CRequest.o  CXMLGen.o CServerParams.o CGDALDataWriter.o CImageDataWriter.o CXMLSerializerInterface.o CDataSource.o CStopWatch.o CImgWarpBilinear.o CImgWarpBoolean.o CImgWarpNearestNeighbour.o CPGSQLDB.o
 
 EXECUTABLE= adagucserverEC
 
 default: $(EXECUTABLE)
 $(EXECUTABLE): $(OBJECTS)
-	g++ $(OBJECTS) $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  $(EXECUTABLE) $(LIBS)
+	g++ $(OBJECTS) "$(EXECUTABLE).o" $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  $(EXECUTABLE) $(LIBS)
+	g++ $(OBJECTS) "h5ncdump.o" $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  "h5ncdump" $(LIBS)
 
 %.o: %.cpp
 	$(CCOMPILER) -c $< -o $@

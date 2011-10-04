@@ -470,16 +470,25 @@ int CDataReader::open(CDataSource *_sourceImage, int mode){
   //Check if projection is overidden in the config file
   if(sourceImage->cfgLayer->Projection.size()==1){
     //Read projection information from configuration
-  if(sourceImage->cfgLayer->Projection[0]->attr.id.c_str()!=NULL)
-    sourceImage->nativeEPSG.copy(sourceImage->cfgLayer->Projection[0]->attr.id.c_str());
-  else sourceImage->nativeEPSG.copy("EPSG:4326");
+    if(sourceImage->cfgLayer->Projection[0]->attr.id.c_str()!=NULL){
+      sourceImage->nativeEPSG.copy(sourceImage->cfgLayer->Projection[0]->attr.id.c_str());
+    }else{
+      sourceImage->nativeEPSG.copy("EPSG:4326");
+      //sourceImage->nativeEPSG.copy("unknown");
+    }
     //Read proj4 string
-  if(sourceImage->cfgLayer->Projection[0]->attr.proj4.c_str()!=NULL)
-    sourceImage->nativeProj4.copy(sourceImage->cfgLayer->Projection[0]->attr.proj4.c_str());
-  else sourceImage->nativeProj4.copy("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
+    if(sourceImage->cfgLayer->Projection[0]->attr.proj4.c_str()!=NULL){
+      sourceImage->nativeProj4.copy(sourceImage->cfgLayer->Projection[0]->attr.proj4.c_str());
+    }
+    else {
+      sourceImage->nativeProj4.copy("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
+      //sourceImage->nativeProj4.copy("unknown");
+    }
   }else{
     // If undefined, set standard lat lon projection
     sourceImage->nativeProj4.copy("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
+    //sourceImage->nativeEPSG.copy("EPSG:4326");
+    //sourceImage->nativeProj4.copy("unknown");
     sourceImage->nativeEPSG.copy("EPSG:4326");
     //Read projection attributes from the file
     CDF::Attribute *projvarnameAttr = var[0]->getAttributeNE("grid_mapping");
@@ -493,7 +502,12 @@ int CDataReader::open(CDataSource *_sourceImage, int mode){
         //else {CDBWarning("proj4_params not found in variable %s",(char*)projvarnameAttr->data);}
         //Get EPSG_code
         CDF::Attribute *epsgAttr = projVar->getAttributeNE("EPSG_code");
-        if(epsgAttr!=NULL)sourceImage->nativeEPSG.copy((char*)epsgAttr->data);
+        if(epsgAttr!=NULL){sourceImage->nativeEPSG.copy((char*)epsgAttr->data);}else
+        {
+          //Make a projection code based on PROJ4: namespace
+          sourceImage->nativeEPSG.print("PROJ4:%s",sourceImage->nativeProj4.c_str());
+          sourceImage->nativeEPSG.encodeURL();
+        }
         //else {CDBWarning("EPSG_code not found in variable %s",(char*)projvarnameAttr->data);}
       }
     }
