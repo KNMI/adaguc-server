@@ -42,15 +42,15 @@ OBJECTS = CDataReader.o CImageWarper.o CDrawImage.o CServerError.o CRequest.o  C
 EXECUTABLE= adagucserverEC
 
 default: $(EXECUTABLE)
-$(EXECUTABLE): $(OBJECTS)
-	g++ $(OBJECTS) "$(EXECUTABLE).o" $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  $(EXECUTABLE) $(LIBS)
-	g++ $(OBJECTS) "h5ncdump.o" $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  "h5ncdump" $(LIBS)
+$(EXECUTABLE): $(OBJECTS) $(EXECUTABLE).o h5ncdump.o
+	g++ $(EXECUTABLE).o $(OBJECTS) $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  $(EXECUTABLE) $(LIBS)
+	g++ "h5ncdump.o" $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  "h5ncdump" $(LIBS)
 
 %.o: %.cpp
 	$(CCOMPILER) -c $< -o $@
 
 clean:
-	rm $(OBJECTS) $(EXECUTABLE)
+	rm $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE).o h5ncdump.o
 run:
 	make
 	./$(EXECUTABLE)		

@@ -1187,9 +1187,9 @@ int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *sourceImage,i
       removeNonExistingFiles=0;
       //CDBDebug("OK: Table %s created, (check for unavailable files is off);",tablename.c_str());
       
-      //Create a unique index on these files:
+      //Create a index on these files:
 
-      query.print("create unique index %s_idx on %s (%s)",tablename.c_str(),tablename.c_str(),dimName.c_str());
+      query.print("create index %s_idx on %s (%s)",tablename.c_str(),tablename.c_str(),dimName.c_str());
       CDBDebug("%s",query.c_str());
       if(DB->query(query.c_str())!=0){
           CDBError("Query %s failed",query.c_str());
@@ -1237,8 +1237,8 @@ int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *sourceImage,i
         if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tablename_temp.c_str(),tableColumns.c_str()); DB->close();return 1;  }
         if(status == 2){CDBDebug("OK: Table %s created",tablename_temp.c_str());}
       }
-       //Create a unique index on these files:
-      query.print("create unique index %s_idx on %s (%s)",tablename_temp.c_str(),tablename_temp.c_str(),dimName.c_str());
+       //Create a index on these files:
+      query.print("create index %s_idx on %s (%s)",tablename_temp.c_str(),tablename_temp.c_str(),dimName.c_str());
       CDBDebug("%s",query.c_str());
       DB->query(query.c_str());
       /*if(DB->query(query.c_str())!=0){
