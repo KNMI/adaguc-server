@@ -1136,14 +1136,21 @@ int CDataReader::getTimeString(char * pszTime){
     size_t index=sourceImage->getDimensionIndex(time->name.c_str());
     //size_t index=sourceImage->getCurrentTimeStep();
     if(index>=0&&index<time->getSize()){
-      CADAGUC_time *ADTime = new CADAGUC_time((char*)timeUnits->data);
-      stADAGUC_time timest;
-      int status = ADTime->OffsetToAdaguc(timest,((double*)time->data)[index]);
-      if(status == 0){
-        char ISOTime[MAX_STR_LEN+1];
-        ADTime->PrintISOTime(ISOTime,MAX_STR_LEN,timest);
-        ISOTime[19]='Z';ISOTime[20]='\0';
-        snprintf(pszTime,MAX_STR_LEN,"%s",ISOTime);
+      CADAGUC_time *ADTime = NULL;
+      try{
+        ADTime = new CADAGUC_time((char*)timeUnits->data);
+        stADAGUC_time timest;
+        int status = ADTime->OffsetToAdaguc(timest,((double*)time->data)[index]);
+        if(status == 0){
+          char ISOTime[MAX_STR_LEN+1];
+          ADTime->PrintISOTime(ISOTime,MAX_STR_LEN,timest);
+          ISOTime[19]='Z';ISOTime[20]='\0';
+          snprintf(pszTime,MAX_STR_LEN,"%s",ISOTime);
+        }
+      }catch(int e){
+        CDBError("Unable to initialize CADAGUC_time");
+        delete ADTime;
+        return 1;
       }
       delete ADTime;
     }
@@ -1427,7 +1434,8 @@ CDBDebug("File opened.");
                   //TODO read standard_name and check for value time, this ensures that it is a time dim.
                   //CDBDebug("Treating %s as a time dimension",dimVar->name.c_str());
                   const double *dtimes=(double*)dimVar->data;
-                  CADAGUC_time *ADTime = new CADAGUC_time((char*)dimUnits->data);
+                  CADAGUC_time *ADTime  = NULL;
+                  try{ADTime = new CADAGUC_time((char*)dimUnits->data);}catch(int e){delete ADTime;ADTime=NULL;throw(__LINE__);}
                   for(size_t i=0;i<dimDim->length;i++){
                     if(dtimes[i]!=NC_FILL_DOUBLE){
                       ADTime->PrintISOTime(ISOTime,MAX_STR_LEN,dtimes[i]);
@@ -1559,7 +1567,7 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *sourceImage,C
   if(dirReader.fileList.size()==0)return 0;
   
   /*----------- Connect to DB --------------*/
-  CDBDebug("Connecting to DB %s ...\t",pszDBParams);
+  CDBDebug("Connecting to DB ...\t");
   status = DB.connect(pszDBParams);if(status!=0){
     CDBError("FAILED: Unable to connect to the database with parameters: [%s]",pszDBParams);
     return 1;

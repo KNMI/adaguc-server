@@ -28,7 +28,7 @@ CADAGUC_time::CADAGUC_time(const char * DateSince){
   }
  // strncpy(stpszDateSince,DateSince,ADAGUC_TIME_MAX_STR_LEN);stpszDateSince[ADAGUC_TIME_MAX_STR_LEN]='\0';
   if (utInit("") != 0) {
-    CDBError("Couldn't initialize Unidata units library, try setting UDUNITS_PATH to udunits.dat");throw(1);return;
+    CDBError("Couldn't initialize Unidata units library, try setting UDUNITS_PATH to udunits.dat or try setting UDUNITS2_XML_PATH to udunits2.xml");throw(1);return;
   }
   
   size_t l=strlen(stpszDateSince);
