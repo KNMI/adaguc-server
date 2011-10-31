@@ -880,8 +880,8 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc,std::vector<WMSLay
                   "      </spatialDomain>\n",
               layer->dataSource->dWidth-1,
               layer->dataSource->dHeight-1,
-              layer->dataSource->dfBBOX[0],
-              layer->dataSource->dfBBOX[1],
+              layer->dataSource->dfBBOX[0]+layer->dataSource->dfCellSizeX/2,
+              layer->dataSource->dfBBOX[3]+layer->dataSource->dfCellSizeY/2,
               layer->dataSource->dfCellSizeX,
               layer->dataSource->dfCellSizeY
                                 );
