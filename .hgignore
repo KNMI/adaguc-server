@@ -5,3 +5,5 @@ syntax: glob
 .ccache/*
 *~
 *.a
+.project
+.cproject
