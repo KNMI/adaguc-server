@@ -117,7 +117,7 @@ int CDrawImage::printImageGif(){
 
 
 void CDrawImage::drawVector(int x,int y,double direction, double strength,int color){
-  double wx1,wy1,wx2,wy2,hx1,hy1,hx2,hy2,dx1,dy1;
+  double wx1,wy1,wx2,wy2,dx1,dy1;
 //  dx1=cos(direction)*(strength+3.50);
   //dy1=sin(direction)*(strength+3.50);
   if(fabs(strength)<0.25){
@@ -133,17 +133,26 @@ void CDrawImage::drawVector(int x,int y,double direction, double strength,int co
   //hx1=double(x)+cos(direction-0.7f)*(strength/1.8f);hy1=double(y)+sin(direction-0.7f)*(strength/1.8f);
   //hx2=double(x)+cos(direction+0.7f)*(strength/1.8f);hy2=double(y)+sin(direction+0.7f)*(strength/1.8f);
   strength=(-3-strength);
-  hx1=double(wx2)+cos(direction-0.7f)*(strength/1.8f);hy1=double(wy2)+sin(direction-0.7f)*(strength/1.8f);
-  hx2=double(wx2)+cos(direction+0.7f)*(strength/1.8f);hy2=double(wy2)+sin(direction+0.7f)*(strength/1.8f);
+  int hx1,hy1,hx2,hy2;
+  hx1=int((double(wx2)+cos(direction-0.7f)*(strength/1.8f))+0.5);
+  hy1=int((double(wy2)+sin(direction-0.7f)*(strength/1.8f))+0.5);
+  hx2=int((double(wx2)+cos(direction+0.7f)*(strength/1.8f))+0.5);
+  hy2=int((double(wy2)+sin(direction+0.7f)*(strength/1.8f))+0.5);
+  
+  int iwx1=int(wx1+0.5);
+  int iwy1=int(wy1+0.5);
+  int iwx2=int(wx2+0.5);
+  int iwy2=int(wy2+0.5);
+  
   if(_bAntiAliased==true){
       wuLine->setColor(CDIred[color],CDIgreen[color],CDIblue[color],255);
-      wuLine->line(int(wx1),int(wy1),int(wx2),int(wy2));
-      wuLine->line(int(wx2),int(wy2),int(hx1),int(hy1));    
-      wuLine->line(int(wx2),int(wy2),int(hx2),int(hy2));    
+      wuLine->line(iwx1,iwy1,iwx2,iwy2);
+      wuLine->line(iwx2,iwy2,hx1,hy1);    
+      wuLine->line(iwx2,iwy2,hx2,hy2);    
   }else{
-    gdImageLine(image, int(wx1),int(wy1),int(wx2),int(wy2),_colors[color]);
-    gdImageLine(image, int(wx2),int(wy2),int(hx1),int(hy1),_colors[color]);
-    gdImageLine(image, int(wx2),int(wy2),int(hx2),int(hy2),_colors[color]);
+    gdImageLine(image, iwx1,iwy1,iwx2,iwy2,_colors[color]);
+    gdImageLine(image, iwx2,iwy2,hx1,hy1,_colors[color]);
+    gdImageLine(image, iwx2,iwy2,hx2,hy2,_colors[color]);
   }
 }
 
