@@ -118,8 +118,16 @@ int CDrawImage::printImageGif(){
 
 void CDrawImage::drawVector(int x,int y,double direction, double strength,int color){
   double wx1,wy1,wx2,wy2,hx1,hy1,hx2,hy2,dx1,dy1;
-  dx1=cos(direction)*(strength+3.50);
-  dy1=sin(direction)*(strength+3.50);
+//  dx1=cos(direction)*(strength+3.50);
+  //dy1=sin(direction)*(strength+3.50);
+  if(fabs(strength)<0.25){
+    setPixelIndexed(x,y,color);
+    return;
+  }
+  
+  dx1=cos(direction)*(strength);
+  dy1=sin(direction)*(strength);
+  
   wx1=double(x)-dx1;wy1=double(y)-dy1;
   wx2=double(x)+dx1;wy2=double(y)+dy1;
   //hx1=double(x)+cos(direction-0.7f)*(strength/1.8f);hy1=double(y)+sin(direction-0.7f)*(strength/1.8f);
