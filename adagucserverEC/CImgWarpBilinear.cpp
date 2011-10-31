@@ -309,6 +309,8 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
   CDBDebug("Start converting float bitmap to graphics");
   #endif
   float *valueData=valObj[0].valueData;
+  
+  //Draw bilinear
    if(drawMap==true&&enableShade==false){
      for(int y=0;y<dImageHeight;y++){
        for(int x=0;x<dImageWidth;x++){
@@ -323,22 +325,29 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
       int firstXPos=0;
       int firstYPos=0;
       
-      double tx=((-drawImage->Geo->dfBBOX[0])/(drawImage->Geo->dfBBOX[2]-drawImage->Geo->dfBBOX[0]))*
-            double(dImageWidth);
-      double ty=dImageHeight-((-drawImage->Geo->dfBBOX[1])/(drawImage->Geo->dfBBOX[3]-drawImage->Geo->dfBBOX[1]))*
-            double(dImageHeight);
-      int vectorDensityPx=22;
-      firstXPos=int(tx)%vectorDensityPx;
+      double tx=((-drawImage->Geo->dfBBOX[0])/(drawImage->Geo->dfBBOX[2]-drawImage->Geo->dfBBOX[0]))*double(dImageWidth);
+      double ty=dImageHeight-((-drawImage->Geo->dfBBOX[1])/(drawImage->Geo->dfBBOX[3]-drawImage->Geo->dfBBOX[1]))*double(dImageHeight);
+      
+      
+      
+      //Number of pixels between the vectors:
+      int vectorDensityPy=22;//50;//22;
+      int vectorDensityPx=22;//50;//22;
+      firstXPos=int(tx)%vectorDensityPy;
       firstYPos=int(ty)%vectorDensityPx;
       double u,v;
       
       double direction;
       double strength;
       double pi=3.141592654;
-      int step=1;
-      if(enableContour==false&&enableShade==false&&drawMap==false)step=vectorDensityPx;
-      for(int y=firstYPos-vectorDensityPx;y<dImageHeight;y=y+step){
-        for(int x=firstXPos-vectorDensityPx;x<dImageWidth;x=x+step){
+      int stepx=1;
+      int stepy=1;
+      if(enableContour==false&&enableShade==false&&drawMap==false){
+	stepy=vectorDensityPy;
+	stepx=vectorDensityPx;
+      }
+      for(int y=firstYPos-vectorDensityPx;y<dImageHeight;y=y+stepy){
+        for(int x=firstXPos-vectorDensityPy;x<dImageWidth;x=x+stepx){
           if(x>=0&&y>=0){
             size_t p = size_t(x+y*dImageWidth);
             
@@ -361,11 +370,46 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
               }
               strength=sqrt(u*u+v*v);
               valObj[0].valueData[p]=strength;
+	      
               if(drawMap==true){       
                 setValuePixel(sourceImage,drawImage,x,y,strength);
               }else{
-                if((int(x-firstXPos)%vectorDensityPx==0&&(y-firstYPos)%vectorDensityPx==0)||(enableContour==false&&enableShade==false)){
+                if((int(x-firstXPos)%vectorDensityPy==0&&(y-firstYPos)%vectorDensityPx==0)||(enableContour==false&&enableShade==false)){
                   strength=(strength)*1.0;
+		  
+		  //Calculate coordinates from requested coordinate system
+		  double projectedCoordX=((double(x)/double(dImageWidth))*(drawImage->Geo->dfBBOX[2]-drawImage->Geo->dfBBOX[0]))+drawImage->Geo->dfBBOX[0];;
+		  double projectedCoordY=((double(dImageHeight-y)/double(dImageHeight))*(drawImage->Geo->dfBBOX[3]-drawImage->Geo->dfBBOX[1]))+drawImage->Geo->dfBBOX[1];;
+		  
+		  //CDBDebug("W= d H=%d",dImageWidth,dImageHeight);
+		  //CDBDebug("BBOX= %f,%f,%f,%f",drawImage->Geo->dfBBOX[0],drawImage->Geo->dfBBOX[1],drawImage->Geo->dfBBOX[2],drawImage->Geo->dfBBOX[3]);
+		  
+		  //CDBDebug("x=%d y=%d",x,y);
+		  //CDBDebug("projectedCoordX=%f projectedCoordY=%f",projectedCoordX,projectedCoordY);
+		  double nativeCoordX=projectedCoordX;
+		  double nativeCoordY=projectedCoordY;
+		  
+		  //warper->reprojpoint(nativeCoordX,nativeCoordY);
+		  //warper->reprojpoint(projectedShiftedNCoordX,projectedShiftedNCoordY);
+		  
+		  
+		  warper->reprojToLatLon(nativeCoordX,nativeCoordY);
+		  //CDBDebug("lon=%f lat=%f",nativeCoordX,nativeCoordY);
+		  double projectedShiftedNCoordX=nativeCoordX;
+		  double projectedShiftedNCoordY=nativeCoordY+1.25;
+		  warper->reprojfromLatLon(projectedShiftedNCoordX,projectedShiftedNCoordY);
+		  //CDBDebug("projectedCoordX=%f projectedCoordY=%f",projectedCoordX,projectedCoordY);
+		  //CDBDebug("projectedShiftedNCoordX=%f projectedShiftedNCoordY=%f",projectedShiftedNCoordX,projectedShiftedNCoordY);
+		 
+		  double uShifted=projectedShiftedNCoordX-projectedCoordX;
+		  double vShifted=projectedShiftedNCoordY-projectedCoordY;
+		  double directionShifted=0;
+		  //direction = -pi/2;strength=15;
+		  directionShifted=atan2(uShifted,vShifted);
+		  direction+=directionShifted;
+		 //CDBDebug("nativeCoordX=%f nativeCoordY=%f",nativeCoordX,nativeCoordY);
+		  //CDBDebug("projectedShiftedNCoordX=%f projectedShiftedNCoordY=%f",projectedShiftedNCoordX,projectedShiftedNCoordY);		  
+		  
                   drawImage->drawVector(x,y,direction,strength,240);
                   
                 }
