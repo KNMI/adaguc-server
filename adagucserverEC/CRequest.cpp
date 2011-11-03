@@ -108,6 +108,10 @@ int CRequest::storeDocumentCache(CSimpleStore *simpleStore){
   if(pFile != NULL){
     fputs  (cacheBuffer.c_str(), pFile );
     fclose (pFile);
+    if(chmod(cacheFileName.c_str(),0777)<0){
+      CDBError("Unable to change permissions of cachefile %s",cacheFileName.c_str());
+      return 1;
+    }
   }else {
     CDBError("Unable to write cachefile %s",cacheFileName.c_str());
     return 1;
