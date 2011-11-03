@@ -545,14 +545,14 @@ class CDFNetCDFWriter{
               //Set chunking and deflate options
               chunkSizes[0]=1;
               if(netcdfMode>=4&&numDims>0&&1==1){
-                /*int shuffle       = 0;
+                int shuffle       = 0;
                 int deflate       = 1;
                 int deflate_level = 2;
-                status = nc_def_var_chunking(root_id,nc_var_id,0 ,chunkSizes);
-                if(status!=NC_NOERR){ncError(__LINE__,className,"nc_def_var_chunking: ",status);return 1;}
+                //status = nc_def_var_chunking(root_id,nc_var_id,0 ,chunkSizes);
+                //if(status!=NC_NOERR){ncError(__LINE__,className,"nc_def_var_chunking: ",status);return 1;}
                 status = nc_def_var_deflate(root_id,nc_var_id,shuffle ,deflate, deflate_level);
                 if(status!=NC_NOERR){ncError(__LINE__,className,"nc_def_var_deflate: ",status);return 1;}
-                */
+                
               }
               
               //copy data

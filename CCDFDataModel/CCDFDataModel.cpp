@@ -207,8 +207,8 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
       totalVariableSize*=count[i];
     }
     setSize(totalVariableSize);
-    CDF::allocateData(type,&data,getSize());
-    if(data==NULL){
+    int status=CDF::allocateData(type,&data,getSize());
+    if(data==NULL||status!=0){
       CDBError("Variable data allocation failed, unable to allocate %d elements",totalVariableSize);
       return 1;
     }
@@ -381,9 +381,17 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
   //  }
     void *dstData = NULL;
     void *srcData = NULL;
-   
-    allocateData(type,&dstData,currentDimSize+1);
-    allocateData(type,&srcData,1);
+    int status = 0;
+    status = allocateData(type,&dstData,currentDimSize+1);
+    if(status!=0){
+      CDBError("Unable to allocate data");
+      throw("__LINE__");
+    }
+    status = allocateData(type,&srcData,1);
+    if(status!=0){
+      CDBError("Unable to allocate data");  
+      throw("__LINE__");
+    }
     
      dataCopier.copy(srcData,srcDimVar->data,type,1);
     //srcDimVar->getData(srcData,1);
