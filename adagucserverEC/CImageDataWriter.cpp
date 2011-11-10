@@ -3,7 +3,7 @@
 
 
 const char * CImageDataWriter::className = "CImageDataWriter";
-const char * CImageDataWriter::RenderMethodStringList="nearest,bilinear,contour,shadedcontour,shaded,vector,vectorcontour,nearestcontour,bilinearcontour,vectorcontourshaded";
+const char * CImageDataWriter::RenderMethodStringList="nearest, bilinear, contour, vector, barb, barbcontour, shaded,contourshaded,vectorcontour,vectorcontourshaded,nearestcontour,bilinearcontour";
 CImageDataWriter::CImageDataWriter(){
   mode = 0;
 }
@@ -13,6 +13,8 @@ CImageDataWriter::RenderMethodEnum CImageDataWriter::getRenderMethodFromString(C
   if(renderMethodString->equals("bilinear"))renderMethod=bilinear;
   else if(renderMethodString->equals("nearest"))renderMethod=nearest;
   else if(renderMethodString->equals("vector"))renderMethod=vector;
+  else if(renderMethodString->equals("barb"))renderMethod=barb;
+  else if(renderMethodString->equals("barbcontour"))renderMethod=barbcontour;
   else if(renderMethodString->equals("shaded"))renderMethod=shaded;
   else if(renderMethodString->equals("contour"))renderMethod=contour;
   else if(renderMethodString->equals("shadedcontour"))renderMethod=contourshaded;
@@ -712,7 +714,7 @@ int CImageDataWriter::getFeatureInfo(CDataSource *dataSource,int dX,int dY){
       GetFeatureInfoResult::Element * element=getFeatureInfoResult->elements[j];
       size_t ptr=imx+imy*dataSource->dWidth;
       double pixel=convertValue(dataSource->dataObject[j]->dataType,dataSource->dataObject[j]->data,ptr);
-      //Get time
+
       
       //Check wether this is a NoData value:
       if((pixel!=dataSource->dataObject[j]->dfNodataValue&&dataSource->dataObject[j]->hasNodataValue==true&&pixel==pixel)||dataSource->dataObject[0]->hasNodataValue==false){
@@ -725,12 +727,46 @@ int CImageDataWriter::getFeatureInfo(CDataSource *dataSource,int dX,int dY){
           char szTemp[1024];
           floatToString(szTemp,1023,pixel);
           element->value=szTemp;
+
+	      //For vectors, we will calculate angle and strength
+		  if(dataSource->dataObject.size()==2){
+			double pi=3.141592;
+  		    double pixel1=convertValue(dataSource->dataObject[0]->dataType,dataSource->dataObject[0]->data,ptr);
+  		    double pixel2=convertValue(dataSource->dataObject[1]->dataType,dataSource->dataObject[1]->data,ptr);
+  		    double windspeed=hypot(pixel1, pixel2);
+  		    windspeed=windspeed*(3600./1852.);
+  		    double angle=atan2(pixel2, pixel1);
+  		    angle=angle*180/pi;
+  		    if (angle<0) angle=angle+360;
+  		    angle=270-angle;
+  		    if (angle<0) angle=angle+360;
+
+	    	GetFeatureInfoResult::Element *element2=new GetFeatureInfoResult::Element();
+  		    if (j==0) {
+  		      element2->long_name="wind direction";
+  		      element2->var_name="wind direction";
+  		      element2->standard_name="dir";
+  		      element2->feature_name="wind direction";
+              element2->value.print("%03.0f",angle);
+              element2->units="degrees";
+  		    } else {
+   		      element2->long_name="wind speed";
+   		      element2->var_name="wind speed";
+   		      element2->standard_name="speed";
+   		      element2->feature_name="wind speed";
+              element2->value.print("%03.0f",windspeed);
+              element2->units="kts";
+  		    }
+  		    getFeatureInfoResult->elements.push_back(element2);
+		  }
+
         }
       }
       else {
         element->value="nodata";
       }
     }
+
   }
   reader.close();
   
@@ -797,6 +833,8 @@ if(renderMethod==contour){CDBDebug("contour");}*/
      renderMethod==contour||
      renderMethod==vector||
      renderMethod==vectorcontour||
+     renderMethod==barb||
+     renderMethod==barbcontour||
      renderMethod==shaded||
      renderMethod==contourshaded||
      renderMethod==vectorcontourshaded
@@ -807,6 +845,7 @@ if(renderMethod==contour){CDBDebug("contour");}*/
     bool drawMap=false;
     bool drawContour=false;
     bool drawVector=false;
+    bool drawBarb=false;
     bool drawShaded=false;
     if(renderMethod==bilinear||renderMethod==bilinearcontour)drawMap=true;
     if(renderMethod==bilinearcontour)drawContour=true;
@@ -814,8 +853,11 @@ if(renderMethod==contour){CDBDebug("contour");}*/
     if(renderMethod==contour||renderMethod==contourshaded||renderMethod==vectorcontour||renderMethod==vectorcontourshaded)drawContour=true;
     if(renderMethod==vector||renderMethod==vectorcontour||renderMethod==vectorcontourshaded)drawVector=true;
     if(renderMethod==shaded||renderMethod==contourshaded||renderMethod==vectorcontourshaded)drawShaded=true;
+    if(renderMethod==barbcontour) { drawContour=true; drawBarb=true; }
+    if(renderMethod==barb) drawBarb=true;
     if(drawMap==true)bilinearSettings.printconcat("drawMap=true;");
     if(drawVector==true)bilinearSettings.printconcat("drawVector=true;");
+    if(drawBarb==true)bilinearSettings.printconcat("drawBarb=true;");
     if(drawShaded==true)bilinearSettings.printconcat("drawShaded=true;");
     if(drawContour==true)bilinearSettings.printconcat("drawContour=true;");
     bilinearSettings.printconcat("smoothingFilter=%d;",smoothingFilter);
@@ -825,7 +867,7 @@ if(renderMethod==contour){CDBDebug("contour");}*/
       bilinearSettings.printconcat("textScaleFactor=%f;textOffsetFactor=%f;",
                                    textScaleFactor,textOffsetFactor);
     }
-//    CDBDebug("bilinearSettings.c_str() %s",bilinearSettings.c_str());
+    CDBDebug("bilinearSettings.c_str() %s",bilinearSettings.c_str());
     imageWarperRenderer->set(bilinearSettings.c_str());
     imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
     delete imageWarperRenderer;
