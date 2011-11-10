@@ -56,7 +56,7 @@ class CImageDataWriter: public CBaseDataWriterInterface{
     int warpImage(CDataSource *sourceImage,CDrawImage *drawImage);
     CDrawImage drawImage;
     CServerParams *srvParam;
-    enum RenderMethodEnum { nearest, bilinear, contour, vector, shaded,contourshaded,vectorcontour,vectorcontourshaded,nearestcontour,bilinearcontour};
+    enum RenderMethodEnum { nearest, bilinear, contour, vector, barb, barbcontour, shaded,contourshaded,vectorcontour,vectorcontourshaded,nearestcontour,bilinearcontour};
     
     float shadeInterval,contourIntervalL,contourIntervalH;
     float textScaleFactor,textOffsetFactor;//To display pressure in pa to hpa etc...
