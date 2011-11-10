@@ -390,8 +390,11 @@ class CDrawImage{
     int createGDPalette();
     int create685Palette();
     void drawVector(int x,int y,double direction, double strength,int color);
+    void drawBarb(int x,int y,double direction, double strength,int color,bool flip);
     void line(int x1,int y1,int x2,int y2,int color);
     void line(int x1,int y1,int x2,int y2,float w,int color);
+    void poly(int x1, int y1, int x2, int y2, int x3, int y3, int c, bool fill);
+    void circle(int x, int y, int r, int color);
     void setPixelIndexed(int x,int y,int color);
     void setPixelTrueColor(int x,int y,unsigned int color);
     void setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,unsigned char b);

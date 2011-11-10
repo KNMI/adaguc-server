@@ -5,7 +5,7 @@
 
 class CImgWarpBilinear:public CImageWarperRenderInterface{
   private:
-    bool drawMap,enableContour,enableVector,enableShade;
+    bool drawMap,enableContour,enableVector,enableBarb,enableShade;
     float shadeInterval,contourSmallInterval,contourBigInterval;
     float textScaleFactor,textOffsetFactor;//To display pressure in pa to hpa etc...
     int smoothingFilter;
@@ -21,6 +21,7 @@ class CImgWarpBilinear:public CImageWarperRenderInterface{
       drawMap=false;
       enableContour=false;
       enableVector=false;
+      enableBarb=false;
       enableShade=false;
       textScaleFactor=1.0f;
       textOffsetFactor=0.0f;
@@ -55,6 +56,10 @@ class CImgWarpBilinear:public CImageWarperRenderInterface{
           if(values[0].equals("drawVector")){
             if(values[1].equals("true"))enableVector=true;
             if(values[1].equals("false"))enableVector=false;
+          }
+          if(values[0].equals("drawBarb")){
+            if(values[1].equals("true"))enableBarb=true;
+            if(values[1].equals("false"))enableBarb=false;
           }
           if(values[0].equals("contourSmallInterval")){
             contourSmallInterval=values[1].toFloat();

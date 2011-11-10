@@ -89,8 +89,6 @@ int CDrawImage::createImage(CGeoParams *_Geo){
 
 }
 
-
-
 int CDrawImage::printImagePng(){
   if(dImageCreated==0){CDBError("print: image not created");return 1;}
   
@@ -144,18 +142,142 @@ void CDrawImage::drawVector(int x,int y,double direction, double strength,int co
   int iwx2=int(wx2+0.5);
   int iwy2=int(wy2+0.5);
   
-  if(_bAntiAliased==true){
-      wuLine->setColor(CDIred[color],CDIgreen[color],CDIblue[color],255);
-      wuLine->line(iwx1,iwy1,iwx2,iwy2);
-      wuLine->line(iwx2,iwy2,hx1,hy1);    
-      wuLine->line(iwx2,iwy2,hx2,hy2);    
-  }else{
-    gdImageLine(image, iwx1,iwy1,iwx2,iwy2,_colors[color]);
-    gdImageLine(image, iwx2,iwy2,hx1,hy1,_colors[color]);
-    gdImageLine(image, iwx2,iwy2,hx2,hy2,_colors[color]);
+  line(iwx1,iwy1,iwx2,iwy2,color);
+  line(iwx2,iwy2,hx1,hy1,color);
+  line(iwx2,iwy2,hx2,hy2,color);
+//  if(_bAntiAliased==true){
+//      wuLine->setColor(CDIred[color],CDIgreen[color],CDIblue[color],255);
+//      wuLine->line(iwx1,iwy1,iwx2,iwy2);
+//      wuLine->line(iwx2,iwy2,hx1,hy1);
+//      wuLine->line(iwx2,iwy2,hx2,hy2);
+//  }else{
+//    gdImageLine(image, iwx1,iwy1,iwx2,iwy2,_colors[color]);
+//    gdImageLine(image, iwx2,iwy2,hx1,hy1,_colors[color]);
+//    gdImageLine(image, iwx2,iwy2,hx2,hy2,_colors[color]);
+//  }
+}
+#define MSTOKNOTS (3600/1852)
+
+void CDrawImage::drawBarb(int x,int y,double direction, double strength,int color,bool flip){
+  double wx1,wy1,wx2,wy2,dx1,dy1;
+  int strengthInKnots=int(strength*3600/1852.+0.5);
+
+//  char lbl[20];
+//  sprintf(lbl, "%3.1f %1d", strength, strengthInKnots);
+//  setText(lbl, strlen(lbl),x, y, color, 0);
+
+  if(strengthInKnots<=2){
+	// draw a circle
+    circle(x, y, 6, 240);
+    return;
   }
+
+  float pi=3.141592;
+
+  int shaftLength=30;
+
+  int nPennants=strengthInKnots/50;
+  int nBarbs=(strengthInKnots % 50)/10;
+  int rest=(strengthInKnots % 50)%10;
+  int nhalfBarbs;
+  if (rest<=2) {
+	  nhalfBarbs=0;
+  }else if (rest<=7) {
+	  nhalfBarbs=1;
+  } else {
+	  nhalfBarbs=0;
+	  nBarbs++;
+  }
+  int barbLength=14*(flip?-1:1);
+
+  direction=direction-pi;
+  if (direction<0) direction=direction+2*pi; //Barbs point to where the win comes from
+
+  dx1=cos(direction)*(shaftLength);
+  dy1=sin(direction)*(shaftLength);
+
+  wx1=double(x);wy1=double(y);  //wind barb root
+  wx2=double(x)+dx1;wy2=double(y)+dy1;  //wind barb top
+
+  int nrPos=10;
+
+  int hx1,hy1,hx2,hy2;
+  hx1=int((double(wx2)+cos(direction+pi/2)*barbLength)+0.5);
+  hy1=int((double(wy2)+sin(direction+pi/2)*barbLength)+0.5);
+
+  int iwx1=int(wx1+0.5);
+  int iwy1=int(wy1+0.5);
+  int iwx2=int(wx2+0.5);
+  int iwy2=int(wy2+0.5);
+
+#define round(x) (int(x+0.5))
+  int pos=0;
+  for (int i=0;i<nPennants;i++) {
+	  double wx3=wx2-pos*dx1/nrPos;
+	  double wy3=wy2-pos*dy1/nrPos;
+	  double hx3=wx3+cos(direction+pi/2)*barbLength;
+	  double hy3=wy3+sin(direction+pi/2)*barbLength;
+	  pos++;
+	  double wx4=wx2-pos*dx1/nrPos;
+	  double wy4=wy2-pos*dy1/nrPos;
+      poly(round(wx3), round(wy3), round(hx3), round(hy3), round(wx4), round(wy4), color, true);
+  }
+  if (nPennants>0) pos++;
+  for (int i=0; i<nBarbs;i++) {
+	  double wx3=wx2-pos*dx1/nrPos;
+	  double wy3=wy2-pos*dy1/nrPos;
+	  double hx3=wx3+cos(direction+pi/2)*barbLength;
+	  double hy3=wy3+sin(direction+pi/2)*barbLength;
+	  line(round(wx3), round(wy3), round(hx3), round(hy3), color);
+	  pos++;
+  }
+
+  if (nhalfBarbs>0){
+	  double wx3=wx2-pos*dx1/nrPos;
+	  double wy3=wy2-pos*dy1/nrPos;
+	  double hx3=wx3+cos(direction+pi/2)*barbLength/3;
+	  double hy3=wy3+sin(direction+pi/2)*barbLength/3;
+	  line(round(wx3), round(wy3), round(hx3), round(hy3), color);
+	  pos++;
+  }
+
+  line(iwx1,iwy1,iwx2,iwy2,color);
+
 }
 
+void CDrawImage::circle(int x, int y, int r, int color) {
+	  if(_bAntiAliased==true){
+          wuLine->setColor(CDIred[color],CDIgreen[color],CDIblue[color],255);
+	      wuLine->line(x-r,y,x,y+r);
+	      wuLine->line(x,y+r,x+r,y);
+	      wuLine->line(x+r,y,x,y-r);
+	      wuLine->line(x,y-r,x-r,y);
+	  }else {
+		  gdImageArc(image, x, y, 8, 8, 0, 360, _colors[color]);
+	  }
+}
+void CDrawImage::poly(int x1,int y1,int x2,int y2,int x3, int y3, int color, bool fill){
+	  if(_bAntiAliased==true){
+          wuLine->setColor(CDIred[color],CDIgreen[color],CDIblue[color],255);
+	      wuLine->line(x1,y1,x2,y2);
+	      wuLine->line(x2,y2,x3,y3);
+	  } else {
+		  gdPoint pt[4];
+		  pt[0].x=x1;
+		  pt[1].x=x2;
+		  pt[2].x=x3;
+		  pt[3].x=x1;
+		  pt[0].y=y1;
+		  pt[1].y=y2;
+		  pt[2].y=y3;
+		  pt[3].y=y1;
+		  if (fill) {
+  		    gdImageFilledPolygon(image, pt, 4, _colors[color]);
+		  } else {
+  		    gdImageFilledPolygon(image, pt, 4, _colors[color]);
+		  }
+	  }
+}
 void CDrawImage::line(int x1,int y1,int x2,int y2,int color){
   if(_bAntiAliased==true){
     if(color>=0&&color<256){
