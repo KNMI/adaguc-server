@@ -749,6 +749,7 @@ int CImageDataWriter::getFeatureInfo(CDataSource *dataSource,int dX,int dY){
   		      element2->feature_name="wind direction";
               element2->value.print("%03.0f",angle);
               element2->units="degrees";
+              element2->time="";
   		    } else {
    		      element2->long_name="wind speed";
    		      element2->var_name="wind speed";
@@ -756,6 +757,7 @@ int CImageDataWriter::getFeatureInfo(CDataSource *dataSource,int dX,int dY){
    		      element2->feature_name="wind speed";
               element2->value.print("%03.0f",windspeed);
               element2->units="kts";
+              element2->time="";
   		    }
   		    getFeatureInfoResult->elements.push_back(element2);
 		  }
