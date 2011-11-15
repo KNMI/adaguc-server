@@ -328,6 +328,11 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
       double tx=((-drawImage->Geo->dfBBOX[0])/(drawImage->Geo->dfBBOX[2]-drawImage->Geo->dfBBOX[0]))*double(dImageWidth);
       double ty=dImageHeight-((-drawImage->Geo->dfBBOX[1])/(drawImage->Geo->dfBBOX[3]-drawImage->Geo->dfBBOX[1]))*double(dImageHeight);
       
+      //Are u/v values in m/s? (Should we convert for wind barb drawing?)
+      //Depends on value units
+      //TODO Derive convertToKnots from units
+      bool convertToKnots=true; //default assumes m/s
+
       //Number of pixels between the vectors:
       int vectorDensityPy=50;//22;
       int vectorDensityPx=50;//22;
@@ -411,7 +416,7 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
 		  //CDBDebug("projectedShiftedNCoordX=%f projectedShiftedNCoordY=%f",projectedShiftedNCoordX,projectedShiftedNCoordY);		  
 		  
                   if (enableVector) drawImage->drawVector(x,y,direction,strength,240);
-                  if (enableBarb) drawImage->drawBarb(x,y,direction,strength,240,flip);
+                  if (enableBarb) drawImage->drawBarb(x,y,direction,strength,240,convertToKnots,flip);
                 }
               }
             }else valObj[0].valueData[p]=sourceImage->dataObject[0]->dfNodataValue;
