@@ -37,7 +37,10 @@ CADAGUC_time::CADAGUC_time(const char * DateSince){
     if(stpszDateSince[j]=='Z')stpszDateSince[j]=32;
   }
   if(utScan(stpszDateSince,&dataunits) != 0)  {
-    CDBError("internal error: udu_fmt_time can't parse data unit string");
+	CT::string *s=new CT::string("internal error: udu_fmt_time can't parse data unit string: ");
+	s->concat(stpszDateSince);
+    CDBError(s->c_str());
+    delete s;
   }
   //char szTemp[ADAGUC_TIME_MAX_STR_LEN+1]; snprintf(szTemp,ADAGUC_TIME_MAX_STR_LEN,"UDUNITS initialized with [%s]",DateSince);CDBDebug(szTemp);
 }

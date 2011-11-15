@@ -1,7 +1,10 @@
 #include "CDrawImage.h"
 
 const char *CDrawImage::className="CDrawImage";
+#ifndef USE_CAIRO
 const char *CFreeType::className="CFreeType";
+#endif
+
 float convertValueToClass(float val,float interval){
   float f=int(val/interval);
   if(val<0)f-=1;
@@ -16,10 +19,13 @@ CDrawImage::CDrawImage(){
     _bEnableTrueColor=false;
     dNumImages = 0;
     Geo = new CGeoParams;
-    rbuf=NULL;
+#ifdef USE_CAIRO
+    cairo=NULL;
+#else
     wuLine=NULL;
     freeType=NULL;
     RGBAByteBuffer=NULL;
+#endif
     TTFFontLocation = "/usr/X11R6/lib/X11/fonts/truetype/verdana.ttf";
     TTFFontSize = 9;
 }
@@ -36,12 +42,15 @@ CDrawImage::~CDrawImage(){
     };  
   }
   
-  delete rbuf;rbuf=NULL;
   delete Geo; Geo=NULL;
+#ifdef USE_CAIRO
+  delete cairo; cairo=NULL;
+#else
   delete wuLine;wuLine=NULL;
   delete freeType;freeType=NULL;
+
   delete RGBAByteBuffer;RGBAByteBuffer=NULL;
-  
+#endif
 }
 
 
@@ -61,6 +70,9 @@ int CDrawImage::createImage(CGeoParams *_Geo){
   Geo->copy(_Geo);
   if(_bAntiAliased==true){
     //Always true color
+#ifdef USE_CAIRO
+    cairo = new CCairoPlotter(Geo->dWidth, Geo->dHeight, TTFFontSize, TTFFontLocation );
+#else
     size_t imageSize=0;
     imageSize=Geo->dWidth * Geo->dHeight * 4;
     RGBAByteBuffer = new unsigned char[imageSize];
@@ -69,6 +81,7 @@ int CDrawImage::createImage(CGeoParams *_Geo){
     }
     wuLine = new CXiaolinWuLine(Geo->dWidth,Geo->dHeight,RGBAByteBuffer);
     freeType = new CFreeType (Geo->dWidth,Geo->dHeight,RGBAByteBuffer,TTFFontSize,TTFFontLocation);
+#endif
   }
   if(_bAntiAliased==false){
     if(_bEnableTrueColor==false){
@@ -89,14 +102,16 @@ int CDrawImage::createImage(CGeoParams *_Geo){
 
 }
 
-
-
 int CDrawImage::printImagePng(){
   if(dImageCreated==0){CDBError("print: image not created");return 1;}
   
   if(_bAntiAliased==true){
     //writeAGGPng();
+#ifdef USE_CAIRO
+    cairo->writeToPngStream(stdout);
+#else
     writeRGBAPng(Geo->dWidth,Geo->dHeight,RGBAByteBuffer,stdout,true);
+#endif
   }
   if(_bAntiAliased==false){
     gdImagePng(image, stdout);
@@ -118,9 +133,7 @@ int CDrawImage::printImageGif(){
 
 void CDrawImage::drawVector(int x,int y,double direction, double strength,int color){
   double wx1,wy1,wx2,wy2,dx1,dy1;
-//  dx1=cos(direction)*(strength+3.50);
-  //dy1=sin(direction)*(strength+3.50);
-  if(fabs(strength)<0.25){
+  if(fabs(strength)<1){
     setPixelIndexed(x,y,color);
     return;
   }
@@ -128,55 +141,176 @@ void CDrawImage::drawVector(int x,int y,double direction, double strength,int co
   dx1=cos(direction)*(strength);
   dy1=sin(direction)*(strength);
   
+  // arrow shaft
   wx1=double(x)-dx1;wy1=double(y)-dy1;
   wx2=double(x)+dx1;wy2=double(y)+dy1;
-  //hx1=double(x)+cos(direction-0.7f)*(strength/1.8f);hy1=double(y)+sin(direction-0.7f)*(strength/1.8f);
-  //hx2=double(x)+cos(direction+0.7f)*(strength/1.8f);hy2=double(y)+sin(direction+0.7f)*(strength/1.8f);
+
   strength=(-3-strength);
-  int hx1,hy1,hx2,hy2;
-  hx1=int((double(wx2)+cos(direction-0.7f)*(strength/1.8f))+0.5);
-  hy1=int((double(wy2)+sin(direction-0.7f)*(strength/1.8f))+0.5);
-  hx2=int((double(wx2)+cos(direction+0.7f)*(strength/1.8f))+0.5);
-  hy2=int((double(wy2)+sin(direction+0.7f)*(strength/1.8f))+0.5);
+
+  // arrow "feathers"
+  float hx1,hy1,hx2,hy2;
+  hx1=wx2+cos(direction-0.7f)*(strength/1.8f);
+  hy1=wy2+sin(direction-0.7f)*(strength/1.8f);
+  hx2=wx2+cos(direction+0.7f)*(strength/1.8f);
+  hy2=wy2+sin(direction+0.7f)*(strength/1.8f);
   
-  int iwx1=int(wx1+0.5);
-  int iwy1=int(wy1+0.5);
-  int iwx2=int(wx2+0.5);
-  int iwy2=int(wy2+0.5);
-  
-  if(_bAntiAliased==true){
-      wuLine->setColor(CDIred[color],CDIgreen[color],CDIblue[color],255);
-      wuLine->line(iwx1,iwy1,iwx2,iwy2);
-      wuLine->line(iwx2,iwy2,hx1,hy1);    
-      wuLine->line(iwx2,iwy2,hx2,hy2);    
-  }else{
-    gdImageLine(image, iwx1,iwy1,iwx2,iwy2,_colors[color]);
-    gdImageLine(image, iwx2,iwy2,hx1,hy1,_colors[color]);
-    gdImageLine(image, iwx2,iwy2,hx2,hy2,_colors[color]);
-  }
+  line(wx1,wy1,wx2,wy2,color);
+  line(wx2,wy2,hx1,hy1,color);
+  line(wx2,wy2,hx2,hy2,color);
 }
 
-void CDrawImage::line(int x1,int y1,int x2,int y2,int color){
+#define MSTOKNOTS (3600/1852)
+
+#define round(x) (int(x+0.5)) // Only for positive values!!!
+
+void CDrawImage::drawBarb(int x,int y,double direction, double strength,int color, bool toKnots, bool flip){
+  double wx1,wy1,wx2,wy2,dx1,dy1;
+
+  int strengthInKnots=round(strength);
+  if (toKnots) {
+    strengthInKnots = round(strength*3600/1852.);
+  }
+
+  if(strengthInKnots<=2){
+	// draw a circle
+    circle(x, y, 6, 240);
+    return;
+  }
+
+  float pi=3.141592;
+
+  int shaftLength=30;
+
+  int nPennants=strengthInKnots/50;
+  int nBarbs=(strengthInKnots % 50)/10;
+  int rest=(strengthInKnots % 50)%10;
+  int nhalfBarbs;
+  if (rest<=2) {
+	  nhalfBarbs=0;
+  }else if (rest<=7) {
+	  nhalfBarbs=1;
+  } else {
+	  nhalfBarbs=0;
+	  nBarbs++;
+  }
+  int barbLength=14*(flip?-1:1);
+
+  direction=direction-pi;
+  if (direction<0) direction=direction+2*pi; //Barbs point to where the wind comes from
+
+  dx1=cos(direction)*(shaftLength);
+  dy1=sin(direction)*(shaftLength);
+
+  wx1=double(x);wy1=double(y);  //wind barb root
+  wx2=double(x)+dx1;wy2=double(y)+dy1;  //wind barb top
+
+  int nrPos=10;
+
+  int pos=0;
+  for (int i=0;i<nPennants;i++) {
+	  double wx3=wx2-pos*dx1/nrPos;
+	  double wy3=wy2-pos*dy1/nrPos;
+	  double hx3=wx3+cos(direction+pi/2)*barbLength;
+	  double hy3=wy3+sin(direction+pi/2)*barbLength;
+	  pos++;
+	  double wx4=wx2-pos*dx1/nrPos;
+	  double wy4=wy2-pos*dy1/nrPos;
+    poly(wx3,wy3,hx3,hy3,wx4, wy4, color, true);
+  }
+  if (nPennants>0) pos++;
+  for (int i=0; i<nBarbs;i++) {
+	  double wx3=wx2-pos*dx1/nrPos;
+	  double wy3=wy2-pos*dy1/nrPos;
+	  double hx3=wx3+cos(direction+pi/2)*barbLength;
+	  double hy3=wy3+sin(direction+pi/2)*barbLength;
+	  line(wx3, wy3, hx3, hy3, color);
+	  pos++;
+  }
+
+  if (nhalfBarbs>0){
+	  double wx3=wx2-pos*dx1/nrPos;
+	  double wy3=wy2-pos*dy1/nrPos;
+	  double hx3=wx3+cos(direction+pi/2)*barbLength/3;
+	  double hy3=wy3+sin(direction+pi/2)*barbLength/3;
+    line(wx3, wy3, hx3, hy3, color);
+	  pos++;
+  }
+
+  line(wx1,wy1,wx2,wy2,color);
+
+}
+
+void CDrawImage::circle(int x, int y, int r, int color) {
+	  if(_bAntiAliased==true){
+#ifdef USE_CAIRO
+	    cairo->setColor(CDIred[color],CDIgreen[color],CDIblue[color],255);
+	    cairo->circle(x, y, r);
+#else
+        wuLine->setColor(CDIred[color],CDIgreen[color],CDIblue[color],255);
+	      wuLine->line(x-r,y,x,y+r);
+	      wuLine->line(x,y+r,x+r,y);
+	      wuLine->line(x+r,y,x,y-r);
+	      wuLine->line(x,y-r,x-r,y);
+#endif
+	  }else {
+		  gdImageArc(image, x, y, 8, 8, 0, 360, _colors[color]);
+	  }
+}
+void CDrawImage::poly(float x1,float y1,float x2,float y2,float x3, float y3, int color, bool fill){
+	  if(_bAntiAliased==true){
+#ifdef USE_CAIRO
+	    float ptx[3]={x1, x2, x3};
+	    float pty[3]={y1,y2,y3};
+	    cairo->setFillColor(CDIred[color],CDIgreen[color],CDIblue[color],255);
+	    cairo->poly(ptx, pty, 3, true, fill);
+#else
+      wuLine->setColor(CDIred[color],CDIgreen[color],CDIblue[color],255);
+	    wuLine->line(x1,y1,x2,y2);
+	    wuLine->line(x2,y2,x3,y3);
+#endif
+	  } else {
+		  gdPoint pt[4];
+		  pt[0].x=x1;
+		  pt[1].x=x2;
+		  pt[2].x=x3;
+		  pt[3].x=x1;
+		  pt[0].y=y1;
+		  pt[1].y=y2;
+		  pt[2].y=y3;
+		  pt[3].y=y1;
+		  if (fill) {
+  		    gdImageFilledPolygon(image, pt, 4, _colors[color]);
+		  } else {
+  		    gdImagePolygon(image, pt, 4, _colors[color]);
+		  }
+	  }
+}
+void CDrawImage::line(float x1, float y1, float x2, float y2,int color){
   if(_bAntiAliased==true){
     if(color>=0&&color<256){
+#ifdef USE_CAIRO
+      cairo->setColor(CDIred[color],CDIgreen[color],CDIblue[color],255);
+      cairo->line(x1,y1,x2,y2);
+#else
       wuLine->setColor(CDIred[color],CDIgreen[color],CDIblue[color],255);
       //wuLine->setColor(0,255,0,255);
       wuLine->line(x1,y1,x2,y2);
+#endif
     }
   }else{
     gdImageLine(image, x1,y1,x2,y2,_colors[color]);
   }
 }
-void CDrawImage::line(int x1,int y1,int x2,int y2,float w,int color){
+void CDrawImage::line(float x1,float y1,float x2,float y2,float w,int color){
   if(_bAntiAliased==true){
     if(color>=0&&color<256){
+#ifdef USE_CAIRO
+      cairo->setColor(CDIred[color],CDIgreen[color],CDIblue[color],255);
+      cairo->line(x1,y1,x2,y2);
+#else
       wuLine->setColor(CDIred[color],CDIgreen[color],CDIblue[color],255);
-//      wuLine->setColor(0,0,0,255);
-  //    wuLine->setFillColor(255,255,255,255);
       wuLine->line(x1,y1,x2,y2);
-    //  wuLine->filledRectangle(0,0,256,256);
-//      wuLine->setColor(0,0,0,255);
-  //    wuLine->line(0,128,256,130);
+#endif
     }
   }else{
     gdImageSetThickness(image, int(w)*2);
@@ -188,7 +322,11 @@ void CDrawImage::line(int x1,int y1,int x2,int y2,float w,int color){
 void CDrawImage::setPixelIndexed(int x,int y,int color){
   if(_bAntiAliased==true){
     //if(color>=0&&color<256){
-      wuLine-> pixel(x,y,CDIred[color],CDIgreen[color],CDIblue[color]);
+#ifdef USE_CAIRO
+    cairo-> pixel(x,y,CDIred[color],CDIgreen[color],CDIblue[color]);
+#else
+    wuLine-> pixel(x,y,CDIred[color],CDIgreen[color],CDIblue[color]);
+#endif
     //}
   }else{
     gdImageSetPixel(image, x,y,colors[color]);
@@ -198,7 +336,11 @@ void CDrawImage::setPixelIndexed(int x,int y,int color){
 void CDrawImage::setPixelTrueColor(int x,int y,unsigned int color){
   if(_bAntiAliased==true){
     //if(_bEnableTrueColor){
+#ifdef USE_CAIRO
+    cairo->pixel(x,y,color,color/256,color/(256*256));
+#else
       wuLine->pixel(x,y,color,color/256,color/(256*256));
+#endif
     //}
   }else{
     gdImageSetPixel(image, x,y,color);
@@ -225,8 +367,13 @@ map<int,int>::iterator myColorIter;
 
 void CDrawImage::setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,unsigned char b){
   if(_bAntiAliased==true){
+#ifdef USE_CAIRO
+    cairo->setColor(r,g,b,255);
+    cairo->pixel(x,y);
+#else
       wuLine->setColor(r,g,b,255);
       wuLine-> pixel(x,y);
+#endif
   }else{
     if(_bEnableTrueColor){
       gdImageSetPixel(image, x,y,r+g*256+b*65536);
@@ -248,8 +395,13 @@ void CDrawImage::setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,u
 
 void CDrawImage::setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,unsigned char b,unsigned char a){
   if(_bAntiAliased==true){
-          wuLine->setColor(r,g,b,a);
-      wuLine-> pixel(x,y);
+#ifdef USE_CAIRO
+    cairo->setColor(r,g,b,a);
+    cairo-> pixel(x,y);
+#else
+    wuLine->setColor(r,g,b,a);
+    wuLine-> pixel(x,y);
+#endif
   }else{
     if(_bEnableTrueColor){
       gdImageSetPixel(image, x,y,r+g*256+b*65536);
@@ -276,8 +428,13 @@ void CDrawImage::setText(const char * text, size_t length,int x,int y,int color,
 //    agg::rgba8 colStr(CDIred[color], CDIgreen[color], CDIblue[color],255);
   //  drawFreeTypeText( x, y+11, 0,text,colStr);
     if(color>=0&&color<256){
+#ifdef USE_CAIRO
+      cairo->setColor(CDIred[color],CDIgreen[color],CDIblue[color],255);
+      cairo->drawText(x,y+10,0,text);
+#else
       freeType->setColor(CDIred[color],CDIgreen[color],CDIblue[color],255);
       freeType->drawFreeTypeText(x,y+10,0,text);
+#endif
     }
   }else{
     char *pszText=new char[length+1];
@@ -317,8 +474,13 @@ void CDrawImage::setTextStroke(const char * text, size_t length,int x,int y, int
 
 void CDrawImage::drawText(int x,int y,float angle,const char *text,unsigned char colorIndex){
   if(_bAntiAliased==true){
+#ifdef USE_CAIRO
+    cairo->setColor(CDIred[colorIndex],CDIgreen[colorIndex],CDIblue[colorIndex],255);
+    cairo->drawText(x,y,angle,text);
+#else
     freeType->setColor(CDIred[colorIndex],CDIgreen[colorIndex],CDIblue[colorIndex],255);
     freeType->drawFreeTypeText(x,y,angle,text);
+#endif
   }else{
     bla(text, strlen(text),angle, x, y, 240,8);
   }
@@ -447,9 +609,15 @@ int CDrawImage::createGDPalette(CServerConfig::XMLE_Legend *legend){
 void CDrawImage::rectangle( int x1, int y1, int x2, int y2,int innercolor,int outercolor){
   if(innercolor>=0&&innercolor<240){
     if(_bAntiAliased==true){
+#ifdef USE_CAIRO
+      cairo->setColor(CDIred[outercolor],CDIgreen[outercolor],CDIblue[outercolor],255);
+      cairo->setFillColor(CDIred[innercolor],CDIgreen[innercolor],CDIblue[innercolor],255);
+      cairo->filledRectangle(x1,y1,x2,y2);
+#else
       wuLine->setColor(CDIred[outercolor],CDIgreen[outercolor],CDIblue[outercolor],255);
       wuLine->setFillColor(CDIred[innercolor],CDIgreen[innercolor],CDIblue[innercolor],255);
       wuLine->filledRectangle(x1,y1,x2,y2);
+#endif
       
       /*float w=1;
       line( x1-1, y1, x2+1, y1,w,outercolor);
@@ -559,7 +727,7 @@ void CDrawImage::setTrueColor(bool enable){
 }
 
 
-
+#ifndef USE_CAIRO
 int CDrawImage::writeRGBAPng(int width,int height,unsigned char *RGBAByteBuffer,FILE *file,bool trueColor){
   
   
@@ -663,3 +831,4 @@ int CDrawImage::writeRGBAPng(int width,int height,unsigned char *RGBAByteBuffer,
 #endif  
   return 0;
 }
+#endif

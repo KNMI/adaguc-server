@@ -319,7 +319,7 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
      }
    }
     //Wind VECTOR
-   if(enableVector)
+   if(enableVector||enableBarb)
    {
     if(sourceImage->dataObject.size()==2){
       int firstXPos=0;
@@ -328,11 +328,14 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
       double tx=((-drawImage->Geo->dfBBOX[0])/(drawImage->Geo->dfBBOX[2]-drawImage->Geo->dfBBOX[0]))*double(dImageWidth);
       double ty=dImageHeight-((-drawImage->Geo->dfBBOX[1])/(drawImage->Geo->dfBBOX[3]-drawImage->Geo->dfBBOX[1]))*double(dImageHeight);
       
-      
-      
+      //Are u/v values in m/s? (Should we convert for wind barb drawing?)
+      //Depends on value units
+      //TODO Derive convertToKnots from units
+      bool convertToKnots=true; //default assumes m/s
+
       //Number of pixels between the vectors:
-      int vectorDensityPy=22;//50;//22;
-      int vectorDensityPx=22;//50;//22;
+      int vectorDensityPy=50;//22;
+      int vectorDensityPx=50;//22;
       firstXPos=int(tx)%vectorDensityPy;
       firstYPos=int(ty)%vectorDensityPx;
       double u,v;
@@ -394,6 +397,8 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
 		  
 		  
 		  warper->reprojToLatLon(nativeCoordX,nativeCoordY);
+
+		  int flip=nativeCoordY<0; //Remember if we have to flip barb dir for southern hemisphere
 		  //CDBDebug("lon=%f lat=%f",nativeCoordX,nativeCoordY);
 		  double projectedShiftedNCoordX=nativeCoordX;
 		  double projectedShiftedNCoordY=nativeCoordY+1.25;
@@ -407,11 +412,11 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
 		  //direction = -pi/2;strength=15;
 		  directionShifted=atan2(uShifted,vShifted);
 		  direction+=directionShifted;
-		 //CDBDebug("nativeCoordX=%f nativeCoordY=%f",nativeCoordX,nativeCoordY);
+		  //CDBDebug("nativeCoordX=%f nativeCoordY=%f",nativeCoordX,nativeCoordY);
 		  //CDBDebug("projectedShiftedNCoordX=%f projectedShiftedNCoordY=%f",projectedShiftedNCoordX,projectedShiftedNCoordY);		  
 		  
-                  drawImage->drawVector(x,y,direction,strength,240);
-                  
+                  if (enableVector) drawImage->drawVector(x,y,direction,strength,240);
+                  if (enableBarb) drawImage->drawBarb(x,y,direction,strength,240,convertToKnots,flip);
                 }
               }
             }else valObj[0].valueData[p]=sourceImage->dataObject[0]->dfNodataValue;

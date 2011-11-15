@@ -1,14 +1,12 @@
 #ifndef CDrawImage_H
 #define CDrawImage_H
+
+#define USE_CAIRO
 #include "CDebugger.h"
 #include "CTypes.h"
 
 #include "Definitions.h" 
 #include "CStopWatch.h"
-#include <gd.h>
-#include "gdfontl.h"
-#include "gdfonts.h"
-#include "gdfontmb.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,13 +16,23 @@
 #include "CServerConfig_CPPXSD.h"
 #include <math.h>
 #include <png.h>
-#include <ft2build.h>
-#include <freetype/freetype.h>
-#include <freetype/ftglyph.h>
-#include <freetype/ftoutln.h>
-#include <freetype/fttrigon.h>
-#include FT_FREETYPE_H
+#include <gd.h>
+#include "gdfontl.h"
+#include "gdfonts.h"
+#include "gdfontmb.h"
+#ifdef USE_CAIRO
+#include "CCairoPlotter.h"
+#else
+  #include <ft2build.h>
+  #include <freetype/freetype.h>
+  #include <freetype/ftglyph.h>
+  #include <freetype/ftoutln.h>
+  #include <freetype/fttrigon.h>
+  #include FT_FREETYPE_H
+#endif
+
 float convertValueToClass(float val,float interval);
+#ifndef USE_CAIRO
 class CPlotter{
   public:
   unsigned char* RGBAByteBuffer;
@@ -161,7 +169,7 @@ class CXiaolinWuLine:private CPlotter{
       }
     }
   }
-  void line(int x1,int y1,int x2,int y2) {
+  void line(float x1,float y1,float x2, float y2) {
       //Xiaolin Wu's line algorithm
       float dx = x2 - x1;
       float dy = y2 - y1;
@@ -347,7 +355,7 @@ class CFreeType:private CPlotter{
       return 0;
     }
 };
-
+#endif //USE_CAIRO
 
 class CDrawImage{
   private:
@@ -364,19 +372,22 @@ class CDrawImage{
     bool _bEnableTransparency;
     bool _bEnableTrueColor;
     bool _bAntiAliased;
-    char *fontConfig ;
     int brect[8];
+#ifdef USE_CAIRO
+    CCairoPlotter *cairo;
+#else
     CXiaolinWuLine *wuLine;
     CFreeType *freeType;
     unsigned char *RGBAByteBuffer;
     int writeRGBAPng(int width,int height,unsigned char *RGBAByteBuffer,FILE *file,bool trueColor);
+#endif
     const char *TTFFontLocation;
     int TTFFontSize;
+    char *fontConfig ;
   public:
     
     int _colors[256];
     gdImagePtr image;
-
     
     int colors[256];
     CGeoParams *Geo;
@@ -390,8 +401,11 @@ class CDrawImage{
     int createGDPalette();
     int create685Palette();
     void drawVector(int x,int y,double direction, double strength,int color);
-    void line(int x1,int y1,int x2,int y2,int color);
-    void line(int x1,int y1,int x2,int y2,float w,int color);
+    void drawBarb(int x,int y,double direction, double strength,int color,bool toKnots,bool flip);
+    void line(float x1,float y1,float x2,float y2,int color);
+    void line(float x1,float y1,float x2,float y2,float w,int color);
+    void poly(float x1, float y1, float x2, float y2, float x3, float y3, int c, bool fill);
+    void circle(int x, int y, int r, int color);
     void setPixelIndexed(int x,int y,int color);
     void setPixelTrueColor(int x,int y,unsigned int color);
     void setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,unsigned char b);
