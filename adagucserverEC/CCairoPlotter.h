@@ -85,6 +85,7 @@ private:
       ARGBByteBuffer[p+2]=(unsigned char)sr;
       ARGBByteBuffer[p+3]=(unsigned char)tf;
     }
+    cairo_surface_mark_dirty(surface);
   }
   float fpart(float x) {
     double a;
