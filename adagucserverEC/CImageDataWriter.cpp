@@ -484,15 +484,15 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
     if(cfgStyle->SmoothingFilter.size()>0)
       smoothingFilter=parseInt(cfgStyle->SmoothingFilter[0]->value.c_str());
     //Get contourtextinfo
-    textScaleFactor=1.0f;textOffsetFactor=0.0f;
+    //textScaleFactor=1.0f;textOffsetFactor=0.0f;
     
-    if(cfgStyle->ContourText.size()>0){
+    /*if(cfgStyle->ContourText.size()>0){
       if(cfgStyle->ContourText[0]->attr.scale.c_str()!=NULL){
         textScaleFactor=parseFloat(cfgStyle->ContourText[0]->attr.scale.c_str());
       }
       if(cfgStyle->ContourText[0]->attr.offset.c_str()!=NULL)
         textOffsetFactor=parseFloat(cfgStyle->ContourText[0]->attr.offset.c_str());
-    }
+    }*/
     //Legend settings can always be overriden in the layer itself!
     if(dataSource->cfgLayer->Scale.size()>0){
       dataSource->legendScale=parseFloat(dataSource->cfgLayer->Scale[0]->value.c_str());
@@ -866,10 +866,9 @@ if(renderMethod==contour){CDBDebug("contour");}*/
     if(drawContour==true||drawShaded==true){
       bilinearSettings.printconcat("shadeInterval=%f;contourSmallInterval=%f;contourBigInterval=%f;",
                                    shadeInterval,contourIntervalL,contourIntervalH);
-      bilinearSettings.printconcat("textScaleFactor=%f;textOffsetFactor=%f;",
-                                   textScaleFactor,textOffsetFactor);
+      //bilinearSettings.printconcat("textScaleFactor=%f;textOffsetFactor=%f;",textScaleFactor,textOffsetFactor);
     }
-    CDBDebug("bilinearSettings.c_str() %s",bilinearSettings.c_str());
+    //CDBDebug("bilinearSettings.c_str() %s",bilinearSettings.c_str());
     imageWarperRenderer->set(bilinearSettings.c_str());
     imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
     delete imageWarperRenderer;

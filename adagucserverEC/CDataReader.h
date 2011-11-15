@@ -15,7 +15,7 @@
 
 
 //Datasource can share multiple cdfObjects
-//A cdfObject is allways opened using a sourceImage path/filter combo
+//A cdfObject is allways opened using a dataSource path/filter combo
 // When a CDFObject is already opened
 class CDFObjectStore{
   private:
@@ -37,7 +37,7 @@ class CDFObjectStore{
 class CDataReader{
   private:
     DEF_ERRORFUNCTION();
-    CDataSource *sourceImage;
+    CDataSource *dataSource;
     //CDFReader * cdfReader;
     CDFObject *thisCDFObject;
 
@@ -47,7 +47,7 @@ class CDataReader{
     CDataReader(){}
     ~CDataReader(){close();}
   
-    static CDFReader *getCDFReader(CDataSource *sourceImage);
+    static CDFReader *getCDFReader(CDataSource *dataSource);
     static int autoConfigureDimensions(CDataSource *dataSource,bool tryToFindInterval);
     static int autoConfigureStyles(CDataSource *dataSource);
     static int justLoadAFileHeader(CDataSource *dataSource);
@@ -69,12 +69,12 @@ class CDataReader{
 class CDBFileScanner{
   private:
     DEF_ERRORFUNCTION();
-    static int createDBUpdateTables(CPGSQLDB *DB,CDataSource *sourceImage,int &removeNonExistingFiles);
-    static int DBLoopFiles(CPGSQLDB *DB,CDataSource *sourceImage,int removeNonExistingFiles,CDirReader *dirReader);
+    static int createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,int &removeNonExistingFiles);
+    static int DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeNonExistingFiles,CDirReader *dirReader);
     
     
   public:
-    static int searchFileNames(CDataSource *sourceImage,CDirReader *dirReader,CT::string *tailPath);
+    static int searchFileNames(CDataSource *dataSource,CDirReader *dirReader,CT::string *tailPath);
     static int updatedb(const char *pszDBParams, CDataSource *dataSource,CT::string *tailPath,CT::string *_layerPathToScan);
  
 };

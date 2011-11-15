@@ -7,7 +7,6 @@ class CImgWarpBilinear:public CImageWarperRenderInterface{
   private:
     bool drawMap,enableContour,enableVector,enableBarb,enableShade;
     float shadeInterval,contourSmallInterval,contourBigInterval;
-    float textScaleFactor,textOffsetFactor;//To display pressure in pa to hpa etc...
     int smoothingFilter;
     class Point{
       public:
@@ -23,8 +22,6 @@ class CImgWarpBilinear:public CImageWarperRenderInterface{
       enableVector=false;
       enableBarb=false;
       enableShade=false;
-      textScaleFactor=1.0f;
-      textOffsetFactor=0.0f;
       smoothingFilter=1;
     }
     ~CImgWarpBilinear(){
@@ -78,8 +75,6 @@ class CImgWarpBilinear:public CImageWarperRenderInterface{
             contourBigInterval=values[1].toFloat();
             if(contourBigInterval==0.0f){CDBWarning("invalid value given for contourBigInterval");}
           }
-          if(values[0].equals("textOffsetFactor"))textOffsetFactor=values[1].toFloat();
-          if(values[0].equals("textScaleFactor"))textScaleFactor=values[1].toFloat();
         }
         delete[] values;
       }
@@ -111,7 +106,7 @@ class CImgWarpBilinear:public CImageWarperRenderInterface{
       }//else drawImage->setPixelIndexed(destX,destY,248);
     }
 
-    void drawContour(float *valueData,float fNodataValue,float interval,float smallContInterval,float bigContInterval,CDataSource *dataSource,CDrawImage *drawImage,bool drawLine, bool drawShade, bool drawText,float textScaleFactor,float textOffsetFactor);
+    void drawContour(float *valueData,float fNodataValue,float interval,float smallContInterval,float bigContInterval,CDataSource *dataSource,CDrawImage *drawImage,bool drawLine, bool drawShade, bool drawText);
 
     void fillTriangle(float  *data, float  *values, int W,int H, int *xP,int *yP){
       float yDiff[3],xDiff[3];

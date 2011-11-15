@@ -378,43 +378,43 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
                 setValuePixel(sourceImage,drawImage,x,y,strength);
               }else{
                 if((int(x-firstXPos)%vectorDensityPy==0&&(y-firstYPos)%vectorDensityPx==0)||(enableContour==false&&enableShade==false)){
-                  strength=(strength)*1.0;
-		  
-		  //Calculate coordinates from requested coordinate system
-		  double projectedCoordX=((double(x)/double(dImageWidth))*(drawImage->Geo->dfBBOX[2]-drawImage->Geo->dfBBOX[0]))+drawImage->Geo->dfBBOX[0];;
-		  double projectedCoordY=((double(dImageHeight-y)/double(dImageHeight))*(drawImage->Geo->dfBBOX[3]-drawImage->Geo->dfBBOX[1]))+drawImage->Geo->dfBBOX[1];;
-		  
-		  //CDBDebug("W= d H=%d",dImageWidth,dImageHeight);
-		  //CDBDebug("BBOX= %f,%f,%f,%f",drawImage->Geo->dfBBOX[0],drawImage->Geo->dfBBOX[1],drawImage->Geo->dfBBOX[2],drawImage->Geo->dfBBOX[3]);
-		  
-		  //CDBDebug("x=%d y=%d",x,y);
-		  //CDBDebug("projectedCoordX=%f projectedCoordY=%f",projectedCoordX,projectedCoordY);
-		  double nativeCoordX=projectedCoordX;
-		  double nativeCoordY=projectedCoordY;
-		  
-		  //warper->reprojpoint(nativeCoordX,nativeCoordY);
-		  //warper->reprojpoint(projectedShiftedNCoordX,projectedShiftedNCoordY);
-		  
-		  
-		  warper->reprojToLatLon(nativeCoordX,nativeCoordY);
+                              strength=(strength)*1.0;
+                    
+                    //Calculate coordinates from requested coordinate system
+                    double projectedCoordX=((double(x)/double(dImageWidth))*(drawImage->Geo->dfBBOX[2]-drawImage->Geo->dfBBOX[0]))+drawImage->Geo->dfBBOX[0];;
+                    double projectedCoordY=((double(dImageHeight-y)/double(dImageHeight))*(drawImage->Geo->dfBBOX[3]-drawImage->Geo->dfBBOX[1]))+drawImage->Geo->dfBBOX[1];;
+                    
+                    //CDBDebug("W= d H=%d",dImageWidth,dImageHeight);
+                    //CDBDebug("BBOX= %f,%f,%f,%f",drawImage->Geo->dfBBOX[0],drawImage->Geo->dfBBOX[1],drawImage->Geo->dfBBOX[2],drawImage->Geo->dfBBOX[3]);
+                    
+                    //CDBDebug("x=%d y=%d",x,y);
+                    //CDBDebug("projectedCoordX=%f projectedCoordY=%f",projectedCoordX,projectedCoordY);
+                    double nativeCoordX=projectedCoordX;
+                    double nativeCoordY=projectedCoordY;
+                    
+                    //warper->reprojpoint(nativeCoordX,nativeCoordY);
+                    //warper->reprojpoint(projectedShiftedNCoordX,projectedShiftedNCoordY);
+                    
+                    
+                    warper->reprojToLatLon(nativeCoordX,nativeCoordY);
 
-		  int flip=nativeCoordY<0; //Remember if we have to flip barb dir for southern hemisphere
-		  //CDBDebug("lon=%f lat=%f",nativeCoordX,nativeCoordY);
-		  double projectedShiftedNCoordX=nativeCoordX;
-		  double projectedShiftedNCoordY=nativeCoordY+1.25;
-		  warper->reprojfromLatLon(projectedShiftedNCoordX,projectedShiftedNCoordY);
-		  //CDBDebug("projectedCoordX=%f projectedCoordY=%f",projectedCoordX,projectedCoordY);
-		  //CDBDebug("projectedShiftedNCoordX=%f projectedShiftedNCoordY=%f",projectedShiftedNCoordX,projectedShiftedNCoordY);
-		 
-		  double uShifted=projectedShiftedNCoordX-projectedCoordX;
-		  double vShifted=projectedShiftedNCoordY-projectedCoordY;
-		  double directionShifted=0;
-		  //direction = -pi/2;strength=15;
-		  directionShifted=atan2(uShifted,vShifted);
-		  direction+=directionShifted;
-		  //CDBDebug("nativeCoordX=%f nativeCoordY=%f",nativeCoordX,nativeCoordY);
-		  //CDBDebug("projectedShiftedNCoordX=%f projectedShiftedNCoordY=%f",projectedShiftedNCoordX,projectedShiftedNCoordY);		  
-		  
+                    int flip=nativeCoordY<0; //Remember if we have to flip barb dir for southern hemisphere
+                    //CDBDebug("lon=%f lat=%f",nativeCoordX,nativeCoordY);
+                    double projectedShiftedNCoordX=nativeCoordX;
+                    double projectedShiftedNCoordY=nativeCoordY+1.25;
+                    warper->reprojfromLatLon(projectedShiftedNCoordX,projectedShiftedNCoordY);
+                    //CDBDebug("projectedCoordX=%f projectedCoordY=%f",projectedCoordX,projectedCoordY);
+                    //CDBDebug("projectedShiftedNCoordX=%f projectedShiftedNCoordY=%f",projectedShiftedNCoordX,projectedShiftedNCoordY);
+                    
+                    double uShifted=projectedShiftedNCoordX-projectedCoordX;
+                    double vShifted=projectedShiftedNCoordY-projectedCoordY;
+                    double directionShifted=0;
+                    //direction = -pi/2;strength=15;
+                    directionShifted=atan2(uShifted,vShifted);
+                    direction+=directionShifted;
+                    //CDBDebug("nativeCoordX=%f nativeCoordY=%f",nativeCoordX,nativeCoordY);
+                    //CDBDebug("projectedShiftedNCoordX=%f projectedShiftedNCoordY=%f",projectedShiftedNCoordX,projectedShiftedNCoordY);         
+                    
                   if (enableVector) drawImage->drawVector(x,y,direction,strength,240);
                   if (enableBarb) drawImage->drawBarb(x,y,direction,strength,240,convertToKnots,flip);
                 }
@@ -430,7 +430,7 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
     //drawContour(valueData,fNodataValue,500,5000,drawImage);
     if(enableContour||enableShade){
       drawContour(valueData,fNodataValue,shadeInterval,contourSmallInterval,contourBigInterval,
-                  sourceImage,drawImage,enableContour,enableShade,enableContour,textScaleFactor,textOffsetFactor);
+                  sourceImage,drawImage,enableContour,enableShade,enableContour);
     }
     
     /*
@@ -467,7 +467,7 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
  
  
   
-void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float interval,float smallContInterval,float bigContInterval,CDataSource *dataSource,CDrawImage *drawImage,bool drawLine, bool drawShade, bool drawText,float textScaleFactor,float textOffsetFactor){
+void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float interval,float smallContInterval,float bigContInterval,CDataSource *dataSource,CDrawImage *drawImage,bool drawLine, bool drawShade, bool drawText){
   float val[4];
   //drawText=false;
   
@@ -554,8 +554,8 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
   }*/
   
   
-  float allowedDifference=ival/10000;
-  if(1==2){
+  float allowedDifference=ival/100000;
+  if(1==1){
     #ifdef CImgWarpBilinear_TIME
     StopWatch_Stop("substracting ival/100");
     #endif
@@ -796,7 +796,7 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
                           float fracPart=ival-int(ival);
                           textRounding=-int(log10(fracPart)-0.9999999f);
                         }
-                        float valToPrint=(m*textScaleFactor+textOffsetFactor);
+                        float valToPrint=m;//(m*textScaleFactor+textOffsetFactor);
                         if(textRounding<=0)sprintf(szTemp,"%2.0f",valToPrint);
                         if(textRounding==1)sprintf(szTemp,"%2.1f",valToPrint);
                         if(textRounding==2)sprintf(szTemp,"%2.2f",valToPrint);
@@ -884,7 +884,7 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
                       
                       }
                     }else{
-                      drawImage->line(startX,startY,x,y,w,col);
+                      drawImage->line(startX,startY+1,x,y+1,w,col);
                       //drawImage->moveTo(startX,startY);//,x+1,y+1,w,col);
                       //drawImage->lineTo(x,y);//,x+1,y+1,w,col);
                        //drawImage->endLine(col1);//,x+1,y+1,w,col);
@@ -901,7 +901,7 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
         }while(j<24);
         if(drawLine){
           if(lastXdir!=-10&&distanceFromStart > 1){
-            drawImage->line(x+lastXdir*2,y+lastYdir,startX-lastXdir*2,startY-lastYdir,w,col);
+            drawImage->line(x+lastXdir*2,y+lastYdir+1,startX-lastXdir*2,startY-lastYdir+1,w,col);
             
           }
          

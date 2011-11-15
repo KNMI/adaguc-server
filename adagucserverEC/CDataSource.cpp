@@ -8,6 +8,8 @@ CDataSource::DataClass::DataClass(){
   hasStatusFlag=false;
   cdfVariable = NULL;
   cdfObject=NULL;
+  dfadd_offset=0;
+  dfscale_factor=1;
 }
 CDataSource::DataClass::~DataClass(){
   for(size_t j=0;j<statusFlagList.size();j++){

@@ -127,7 +127,7 @@ public:
 #endif
 
     initFont();
-    CDBDebug("constructor");
+    //CDBDebug("constructor");
   }
 
   ~CCairoPlotter() {
@@ -158,7 +158,7 @@ public:
     return 0;
   }
    int initializeFreeType(){
-    CDBDebug("initializeFreeType(%d)\n", library==NULL);
+    //CDBDebug("initializeFreeType(%d)\n", library==NULL);
     if(library!=NULL){
       CDBError("Freetype is already intialized");
       return 1;

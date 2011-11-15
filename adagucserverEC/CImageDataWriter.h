@@ -59,7 +59,7 @@ class CImageDataWriter: public CBaseDataWriterInterface{
     enum RenderMethodEnum { nearest, bilinear, contour, vector, barb, barbcontour, shaded,contourshaded,vectorcontour,vectorcontourshaded,nearestcontour,bilinearcontour};
     
     float shadeInterval,contourIntervalL,contourIntervalH;
-    float textScaleFactor,textOffsetFactor;//To display pressure in pa to hpa etc...
+    //float textScaleFactor,textOffsetFactor;//To display pressure in pa to hpa etc...
     int smoothingFilter;
     RenderMethodEnum renderMethod;
     RenderMethodEnum getRenderMethodFromString(CT::string *renderMethodString);

@@ -89,19 +89,7 @@ class CServerConfig:public CXMLSerializerInterface{
         else if(equals("location",8,attrname)){attr.location.copy(attrvalue);return;}
       }
     };
-    
-    class XMLE_ContourText: public CXMLObjectInterface{
-      public:
-        class Cattr{
-          public:
-            CXMLString scale,offset,color;
-        }attr;
-        void addAttribute(const char *attrname,const char *attrvalue){
-          if(equals("scale",5,attrname)){attr.scale.copy(attrvalue);return;}
-          else if(equals("offset",6,attrname)){attr.offset.copy(attrvalue);return;}
-          else if(equals("color",5,attrname)){attr.color.copy(attrvalue);return;}
-        }
-    };
+
 
     
     class XMLE_RenderMethod: public CXMLObjectInterface{};
@@ -117,7 +105,6 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_Log*> Log;
         std::vector <XMLE_ValueRange*> ValueRange;
         std::vector <XMLE_RenderMethod*> RenderMethod;
-        std::vector <XMLE_ContourText*> ContourText;
         std::vector <XMLE_ShadeInterval*> ShadeInterval;
         std::vector <XMLE_SmoothingFilter*> SmoothingFilter;
         std::vector <XMLE_StandardNames*> StandardNames;
@@ -133,7 +120,6 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(ContourIntervalL);
           XMLE_DELOBJ(ContourIntervalH);
           XMLE_DELOBJ(RenderMethod);
-          XMLE_DELOBJ(ContourText);
           XMLE_DELOBJ(ShadeInterval);
           XMLE_DELOBJ(SmoothingFilter);
           XMLE_DELOBJ(StandardNames);
@@ -159,7 +145,6 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("ContourIntervalL",16,name)){XMLE_ADDOBJ(ContourIntervalL);}
             else if(equals("ContourIntervalH",16,name)){XMLE_ADDOBJ(ContourIntervalH);}
             else if(equals("RenderMethod",12,name)){XMLE_ADDOBJ(RenderMethod);}
-            else if(equals("ContourText",11,name)){XMLE_ADDOBJ(ContourText);}
             else if(equals("ShadeInterval",13,name)){XMLE_ADDOBJ(ShadeInterval);}
             else if(equals("SmoothingFilter",15,name)){XMLE_ADDOBJ(SmoothingFilter);}
             else if(equals("StandardNames",13,name)){XMLE_ADDOBJ(StandardNames);}
@@ -426,6 +411,21 @@ class CServerConfig:public CXMLSerializerInterface{
           else if(equals("service",7,attrname)){attr.service.copy(attrvalue);return;}
         }
     };
+    
+    class XMLE_DataPostProc: public CXMLObjectInterface{
+      public:
+        class Cattr{
+          public:
+            CXMLString a,b,units,algorithm;
+        }attr;
+        void addAttribute(const char *attrname,const char *attrvalue){
+          if(equals("a",1,attrname)){attr.a.copy(attrvalue);return;}
+          else if(equals("b",1,attrname)){attr.b.copy(attrvalue);return;}
+          else if(equals("units",5,attrname)){attr.units.copy(attrvalue);return;}
+          else if(equals("algorithm",9,attrname)){attr.algorithm.copy(attrvalue);return;}
+        }
+    };
+    
   
     class XMLE_Layer: public CXMLObjectInterface{
       public:
@@ -460,6 +460,7 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_MetadataURL*> MetadataURL;
         std::vector <XMLE_Cache*> Cache;
         std::vector <XMLE_WMSLayer*> WMSLayer;
+        std::vector <XMLE_DataPostProc*> DataPostProc;
         
         
         ~XMLE_Layer(){
@@ -488,6 +489,7 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(MetadataURL);
           XMLE_DELOBJ(Cache);
           XMLE_DELOBJ(WMSLayer);
+          XMLE_DELOBJ(DataPostProc);
         }
         void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value){
           CXMLSerializerInterface * base = (CXMLSerializerInterface*)baseClass;
@@ -520,6 +522,8 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("MetadataURL",11,name)){XMLE_ADDOBJ(MetadataURL);} 
             else if(equals("Cache",5,name)){XMLE_ADDOBJ(Cache);}
             else if(equals("WMSLayer",8,name)){XMLE_ADDOBJ(WMSLayer);}
+            else if(equals("DataPostProc",12,name)){XMLE_ADDOBJ(DataPostProc);}
+            
           }
           if(pt2Class!=NULL)pt2Class->addElement(baseClass,rc-pt2Class->level,name,value);
         }
