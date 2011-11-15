@@ -167,7 +167,7 @@ int CImageWarper::closereproj(){
       return 1;
     }
     if(sourceImage==NULL||GeoDest==NULL){
-      CDBError("sourceImage==NULL||GeoDest==NULL");
+      CDBError("sourceImage==%s||GeoDest==%s", sourceImage==NULL?"NULL":"not-null", GeoDest==NULL?"NULL":"not-null");
       return 1;
     }
     if(sourceImage->nativeProj4.c_str()==NULL){
