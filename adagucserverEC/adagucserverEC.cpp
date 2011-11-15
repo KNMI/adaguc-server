@@ -16,6 +16,7 @@ void writeLogFile(const char * msg){
     FILE * pFile = NULL;
     pFile = fopen (logfile , "a" );
     if(pFile != NULL){
+ //     setvbuf(pFile, NULL, _IONBF, 0);
       fputs  (msg, pFile );
       if(strncmp(msg,"[D:",3)==0||strncmp(msg,"[W:",3)==0||strncmp(msg,"[E:",3)==0){
         time_t myTime = time(NULL);
@@ -39,6 +40,7 @@ void writeErrorFile(const char * msg){
     FILE * pFile;
     pFile = fopen (logfile , "a" );
     if(pFile != NULL){
+//      setvbuf(pFile, NULL, _IONBF, 0);
       fputs  (msg, pFile );
       if(strlen(msg)>1){
         time_t myTime = time(NULL);
