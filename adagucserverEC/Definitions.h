@@ -99,6 +99,11 @@
 
 */
 
+#define CCDFNETCDFIO_DEBUG
+#define CDATAREADER_DEBUG
+#define CDATASOURCE_DEBUG
+
+
 #define ADAGUC_USE_GDAL
 #endif
 

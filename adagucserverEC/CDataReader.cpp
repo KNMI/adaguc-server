@@ -166,6 +166,7 @@ int CDataReader::getCacheFileName(CDataSource *dataSource,CT::string *uniqueIDFo
     CDBDebug("making dir %s",uniqueIDFor2DField->c_str());
     mode_t permissions = S_IRWXU|S_IRWXG|S_IRWXO;
     mkdir (uniqueIDFor2DField->c_str(),permissions);
+    chmod(uniqueIDFor2DField->c_str(),0777);
   }
   
   if(dataSource->getFileName()==NULL){
@@ -188,6 +189,7 @@ int CDataReader::getCacheFileName(CDataSource *dataSource,CT::string *uniqueIDFo
     CDBDebug("making dir %s",uniqueIDFor2DField->c_str());
     mode_t permissions = S_IRWXU|S_IRWXG|S_IRWXO;
     mkdir (uniqueIDFor2DField->c_str(),permissions);
+    chmod(uniqueIDFor2DField->c_str(),0777);
   }
   
   
@@ -515,7 +517,6 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
   //CDBDebug("proj4=%s",dataSource->nativeProj4.c_str());
   //Determine dataSource->dataObject[0]->dataType of the variable we are going to read
   for(size_t varNr=0;varNr<dataSource->dataObject.size();varNr++){
-    dataSource->dataObject[varNr]->dataType=CDF_NONE;
     dataSource->dataObject[varNr]->dataType=var[varNr]->type;
     /*if(var[varNr]->type==CDF_CHAR||var[varNr]->type==CDF_BYTE)dataSource->dataObject[varNr]->dataType=CDF_CHAR;
     if(var[varNr]->type==CDF_UBYTE)dataSource->dataObject[varNr]->dataType=CDF_UBYTE;
@@ -563,11 +564,12 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
     //DataPostProc: Here our datapostprocessor comes into action!
     for(size_t dpi=0;dpi<dataSource->cfgLayer->DataPostProc.size();dpi++){
       CServerConfig::XMLE_DataPostProc * proc = dataSource->cfgLayer->DataPostProc[dpi];
-      dataSource->dataObject[varNr]->scaleOffsetIsApplied=true;
-      dataSource->dataObject[varNr]->dataType=CDF_DOUBLE;
       
       //Algorithm ax+b:
       if(proc->attr.algorithm.equals("ax+b")){
+        dataSource->dataObject[varNr]->scaleOffsetIsApplied=true;
+        dataSource->dataObject[varNr]->dataType=CDF_DOUBLE;
+       
         //Apply offset
         if(proc->attr.b.c_str()!=NULL){
           CT::string b;
@@ -586,6 +588,9 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
          dataSource->dataObject[varNr]->units=proc->attr.units.c_str();
       }
     }
+    
+    //Important!: The CDF datamodel needs to now the new datatype as well, in order to do right lon warping.
+    var[varNr]->type=dataSource->dataObject[varNr]->dataType;
   }
 
   if(mode==CNETCDFREADER_MODE_GET_METADATA){
@@ -748,7 +753,7 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
     }
     
     //Apply the scale and offset factor on the data
-    if(dataSource->dataObject[varNr]->scaleOffsetIsApplied == true ){
+    if(dataSource->dataObject[varNr]->scaleOffsetIsApplied == true && cacheAvailable == false ){
       double dfscale_factor = dataSource->dataObject[varNr]->dfscale_factor;
       double dfadd_offset = dataSource->dataObject[varNr]->dfadd_offset;
       //CDBDebug("dfNoData=%f",dfNoData*dfscale_factor);
@@ -1076,8 +1081,17 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
           
           
       netCDFWriter.setNetCDFMode(4);
+      //TODO disable compression
+      //netCDFWriter.setDeflate(0);
       try{
         netCDFWriter.write(uniqueIDFor2DFieldTmp.c_str());
+        
+        if(chmod(uniqueIDFor2DFieldTmp.c_str(),0777)<0){
+          CDBError("Unable to change permissions of netcdf cachefile %s",uniqueIDFor2DFieldTmp.c_str());
+          return 1;
+        }
+        
+        
       }catch(int e){
         CDBError("Exception %d in writing cache file",e);
         return 1;
