@@ -113,9 +113,10 @@ public:
     this->fontLocation=fontLocation;
     stride=cairo_format_stride_for_width(FORMAT, width);
     ARGBByteBuffer=new unsigned char[height*stride];
+    for(size_t j=0;j<height*stride;j++)ARGBByteBuffer[j]=0;
     surface=cairo_image_surface_create_for_data(ARGBByteBuffer, CCairoPlotter::FORMAT, width, height, stride);
     cr=cairo_create(this->surface);
-    fprintf(stderr, "cairo status: %s\n", cairo_status_to_string(cairo_status(cr)));
+    //fprintf(stderr, "cairo status: %s\n", cairo_status_to_string(cairo_status(cr)));
     r=0;g=0;b=0;a=255;
     rr=r/256.l; rg=g/256.;rb=b/256.;ra=1;
     fr=0;fg=0;fb=0;fa=1;
@@ -311,11 +312,15 @@ public:
 
   void filledRectangle(int x1,int y1,int x2,int y2){
     if(y1>y2)swap(y1,y2);
-
+    
     cairo_rectangle(cr, x1, y1, x2-x1, y2-y1);
     cairo_set_source_rgba(cr, rfr, rfg, rfb, rfa);
     cairo_fill(cr);
-
+    cairo_antialias_t aa=cairo_get_antialias(cr);
+    cairo_set_antialias(cr, CAIRO_ANTIALIAS_DEFAULT);
+    cairo_set_line_width(cr, 0.5);
+    rectangle(x1,y1,x2,y2);
+      cairo_set_antialias(cr, aa);
   }
   void line_noaa(int x1,int y1,int x2,int y2) {
     cairo_set_source_rgba(cr, rr, rg, rb, ra);

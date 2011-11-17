@@ -1385,9 +1385,10 @@ CDBDebug("Loop through all configured dimensions.");
         //Therefore we need to read information from it
         if(fileExistsInDB == 0){
           try{
-            CDBDebug("Adding fileNo %d/%d\t %s",
+            CDBDebug("Adding fileNo %d/%d %s\t %s",
                    (int)j,
                    (int)dirReader->fileList.size(),
+                   dataSource->cfgLayer->Dimension[d]->attr.name.c_str(),
                    dirReader->fileList[j]->baseName.c_str());
 #ifdef CDATAREADER_DEBUG
 CDBDebug("Creating new CDFObject");
@@ -1432,7 +1433,7 @@ CDBDebug("File opened.");
                   
                 //}
                 //Add other dim than time
-                if(isTimeDim==false){
+                if(isTimeDim[d]==false){
                   const double *dimValues=(double*)dimVar->data;
                   for(size_t i=0;i<dimDim->length;i++){
                     CT::string queryString;
@@ -1452,6 +1453,7 @@ CDBDebug("File opened.");
                                         dirReader->fileList[j]->fullName.c_str(),
                                         double(dimValues[i]),
                                         int(i));
+                      CDBDebug("%s",queryString.c_str());
                       status = DB->query(queryString.c_str()); if(status!=0)throw(__LINE__);
                     }
                   }

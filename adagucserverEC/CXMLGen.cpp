@@ -249,7 +249,7 @@ CDBDebug("Start looping dimensions");
       CServerParams::makeCorrectTableName(&tableName,&dimName);
             
       bool hasMultipleValues=false;
-      if(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.equals("")){
+      if(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.c_str()==NULL){
         hasMultipleValues=true;
         
         //TODO try to detect automatically the time resolution of the layer.
