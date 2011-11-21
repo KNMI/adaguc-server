@@ -1,6 +1,6 @@
 #include "CDirReader.h"
 
-#define MAX_STR_LEN 1023
+
 
 const char *CDirReader::className="CDirReader";
 CDirReader::CDirReader(){
@@ -13,7 +13,33 @@ CDirReader::~CDirReader(){
 }
 
 int CDirReader::listDirRecursive(const char* directory,const char *ext_filter){
-  return _ReadDir(directory,ext_filter,1);
+  try{
+    return _ReadDir(directory,ext_filter,1);
+  }catch(int a){
+    //Maybe the user provided a file instead of a directory?
+    struct stat64 fileattr;
+    if(stat64(directory,&fileattr)==-1){
+      //CDBError("Unable to stat %s",directory);
+      return 1;
+    }
+    //Is this a regular file?
+    if(S_ISREG(fileattr.st_mode)==0){
+      //CDBError("Not a regular file");
+      return 2;
+    }
+    //Check filter
+    if(testRegEx(directory,ext_filter)==1){
+      CFileObject * fileObject = new CFileObject();
+      fileList.push_back(fileObject);
+      fileObject->fullName.copy(directory);
+      makeCleanPath(&fileObject->fullName);
+      fileObject->baseName.copy(&fileObject->fullName);
+    }else{
+      //CDBError("Regexp failed.");
+      return 3;
+    }
+    return 0;
+  }
 }
 int CDirReader::_ReadDir(const char* directory,const char *ext_filter,int recursive){ 
   //printf("Entering %s\n",directory);
@@ -63,9 +89,9 @@ int CDirReader::_ReadDir(const char* directory,const char *ext_filter,int recurs
     (void) closedir (dp);
   }
   else {
-    char szTemp[MAX_STR_LEN+1];
-    snprintf(szTemp,MAX_STR_LEN,"Could not open the directory %s",directory);
-    throw szTemp;
+    //char szTemp[MAX_STR_LEN+1];
+    //snprintf(szTemp,MAX_STR_LEN,"Could not open the directory %s",directory);
+    throw 1;
     return 1;
   }
   return 0;

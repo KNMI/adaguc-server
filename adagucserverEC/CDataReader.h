@@ -21,7 +21,8 @@ class CDFObjectStore{
   private:
     std::vector <CT::string*> fileNames;
     std::vector <CDFObject*> cdfObjects;
-
+    std::vector <CDFReader*> cdfReaders;
+    static CDFReader *getCDFReader(CDataSource *dataSource);
     DEF_ERRORFUNCTION();
   public:
     ~CDFObjectStore(){
@@ -47,7 +48,7 @@ class CDataReader{
     CDataReader(){}
     ~CDataReader(){close();}
   
-    static CDFReader *getCDFReader(CDataSource *dataSource);
+    
     static int autoConfigureDimensions(CDataSource *dataSource,bool tryToFindInterval);
     static int autoConfigureStyles(CDataSource *dataSource);
     static int justLoadAFileHeader(CDataSource *dataSource);

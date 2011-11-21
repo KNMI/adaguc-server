@@ -481,9 +481,9 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
 CDFObject::~CDFObject(){
   //CDBDebug("********** Destroying cdfobject");
   clear();
-  CDFReader *r=(CDFReader*)reader;
+  /*CDFReader *r=(CDFReader*)reader;
   delete r;r=NULL;
-  reader=NULL;
+  reader=NULL;*/
   //for(size_t j=0;j<attributes.size();j++){delete attributes[j];attributes[j]=NULL;}
 }
 int CDFObject::attachCDFReader(void *reader){
