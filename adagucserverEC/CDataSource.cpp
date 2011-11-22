@@ -121,12 +121,12 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Confi
   }
 
   //Set the layername
-  //A layername has to start with a letter (not numeric value);
   CT::string layerUniqueName;
   if(_layerName==NULL){
     if(srvParams->makeUniqueLayerName(&layerUniqueName,cfgLayer)!=0)layerUniqueName="undefined";
     _layerName=layerUniqueName.c_str();
   }
+  //A layername has to start with a letter (not numeric value);
   if(isalpha(_layerName[0])==0)layerName="ID_";else layerName="";
   
   layerName.concat(_layerName);
