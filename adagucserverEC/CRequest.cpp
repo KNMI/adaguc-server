@@ -1229,7 +1229,7 @@ int CRequest::process_querystring(){
         CServerConfig::XMLE_Variable* xmleVariable = new CServerConfig::XMLE_Variable();
         CServerConfig::XMLE_FilePath* xmleFilePath = new CServerConfig::XMLE_FilePath();
         CServerConfig::XMLE_Cache* xmleCache = new CServerConfig::XMLE_Cache();
-        xmleCache->attr.enabled.copy("true");
+        xmleCache->attr.enabled.copy("false");
         xmleLayer->attr.type.copy("database");
         xmleVariable->value.copy((*variables)[j]->c_str());
         xmleFilePath->value.copy(srvParam->OpenDAPSource.c_str());
