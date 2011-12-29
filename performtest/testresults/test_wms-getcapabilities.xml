@@ -10,6 +10,7 @@
   <Name>OGC:WMS</Name>
   <Title>RADNL_OPER_R___25PCPRR_L3_WMS</Title>
   <Abstract>Radar precipitation measurements above the Netherlands, on a 1.0x1.0 km grid, measurements are available in a five minute time interval. The intensity is in kg/m2/hour (mm/hour). The dataset is created from KNMI RAD_NL25_PCP_NA files. For interoperability, the original unit reflectivity in DBZ is converted to precipitation flux in kg/m2/h. The conversion from dbZ to kg/m2/h is applied with the formula R = 10^((PixelValue -109)/32).</Abstract>
+  <ServerInfo>ADAGUCServer version 1.0, of Dec 29 2011 15:45:14</ServerInfo>
   <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://geoservices.knmi.nl/cgi-bin/RADNL_OPER_R___25PCPRR_L3.cgi?SERVICE=WMS&amp;"/>
   <ContactInformation>
   </ContactInformation>
@@ -38,6 +39,7 @@
     <GetFeatureInfo>
       <Format>text/plain</Format>
       <Format>text/html</Format>
+      <Format>text/xml</Format>
       <Format>application/vnd.ogc.gml</Format>
       <DCPType>
         <HTTP>

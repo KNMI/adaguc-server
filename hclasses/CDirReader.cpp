@@ -175,3 +175,15 @@ int CDirReader::testRegEx(const char *string,const char *pattern){
   //printf("OK\n");
   return(1);
 }
+
+
+int CDirReader::getFileDate(CT::string *date, const char *file){
+  struct tm* clock;       // create a time structure
+  struct stat attrib;     // create a file attribute structure
+  if(stat(file, &attrib)!=0)return 1;    // get the attributes of afile.txt
+  clock = gmtime(&(attrib.st_mtime)); // Get the last modified time and put it into the time structure
+  char buffer [80];
+  strftime (buffer,80,"%Y-%m-%dT%H:%M:%SZ",clock);
+  date->copy(buffer);
+}
+
