@@ -11,29 +11,9 @@
 #include "CCDFNetCDFIO.h"
 #include "CCDFHDF5IO.h"
 #include "CStopWatch.h"
-
-
-
-//Datasource can share multiple cdfObjects
-//A cdfObject is allways opened using a dataSource path/filter combo
-// When a CDFObject is already opened
-class CDFObjectStore{
-  private:
-    std::vector <CT::string*> fileNames;
-    std::vector <CDFObject*> cdfObjects;
-    std::vector <CDFReader*> cdfReaders;
-    static CDFReader *getCDFReader(CDataSource *dataSource);
-    DEF_ERRORFUNCTION();
-  public:
-    ~CDFObjectStore(){
-      clear();
-    }
-    
-    static CDFObjectStore *getCDFObjectStore();
-    CDFObject *getCDFObject(CDataSource *dataSource,const char *fileName);
-    CDFObject *deleteCDFObject(CDFObject **cdfObject);
-    void clear();
-};
+#include <sys/stat.h>
+#include "CDBFileScanner.h"
+#include "CDFObjectStore.h"
 
 class CDataReader{
   private:
@@ -54,12 +34,11 @@ class CDataReader{
     static int justLoadAFileHeader(CDataSource *dataSource);
     static int getCacheFileName(CDataSource *dataSource,CT::string *cacheName);
     static int getCacheFileName(CServerParams *srvParams,CT::string *uniqueIDFor2DField,const char *fileName);
-  //  CDFObject *getCDFObject(){
-    //  return thisCDFObject;
-    //}
+  
     void dump(CT::string *dumpString){
       CDF::dump(thisCDFObject,dumpString);
     }
+    
     int getTimeString(char * pszTime);
     int getTimeUnit(char * pszTime);
     const char *getFileName(){return FileName.c_str();}
@@ -67,16 +46,4 @@ class CDataReader{
     int close();
 };
 
-class CDBFileScanner{
-  private:
-    DEF_ERRORFUNCTION();
-    static int createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,int &removeNonExistingFiles);
-    static int DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeNonExistingFiles,CDirReader *dirReader);
-    
-    
-  public:
-    static int searchFileNames(CDataSource *dataSource,CDirReader *dirReader,CT::string *tailPath);
-    static int updatedb(const char *pszDBParams, CDataSource *dataSource,CT::string *tailPath,CT::string *_layerPathToScan);
- 
-};
 #endif
