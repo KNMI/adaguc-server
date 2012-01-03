@@ -1,5 +1,6 @@
 #INSTALLDIR=/data/apps/rcc/MaartenP/install
 INSTALLDIR=/nobackup/users/plieger/software/install
+
 #INSTALLDIR=/data/data1/mapserver/
 #INSTALLDIR2=/data/data1/software/install/
 #INSTALLDIR=/INSTALLDIR/plieger/interpolws/software/install
