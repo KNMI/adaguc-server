@@ -1,7 +1,7 @@
 #include "CDrawImage.h"
 
 const char *CDrawImage::className="CDrawImage";
-#ifndef USE_CAIRO
+#ifndef ADAGUC_USE_CAIRO
 const char *CFreeType::className="CFreeType";
 #endif
 
@@ -19,7 +19,7 @@ CDrawImage::CDrawImage(){
     _bEnableTrueColor=false;
     dNumImages = 0;
     Geo = new CGeoParams;
-#ifdef USE_CAIRO
+#ifdef ADAGUC_USE_CAIRO
     cairo=NULL;
 #else
     wuLine=NULL;
@@ -43,7 +43,7 @@ CDrawImage::~CDrawImage(){
   }
   
   delete Geo; Geo=NULL;
-#ifdef USE_CAIRO
+#ifdef ADAGUC_USE_CAIRO
   delete cairo; cairo=NULL;
 #else
   delete wuLine;wuLine=NULL;
@@ -70,7 +70,7 @@ int CDrawImage::createImage(CGeoParams *_Geo){
   Geo->copy(_Geo);
   if(_bAntiAliased==true){
     //Always true color
-#ifdef USE_CAIRO
+#ifdef ADAGUC_USE_CAIRO
     cairo = new CCairoPlotter(Geo->dWidth, Geo->dHeight, TTFFontSize, TTFFontLocation );
 #else
     size_t imageSize=0;
@@ -107,7 +107,7 @@ int CDrawImage::printImagePng(){
   
   if(_bAntiAliased==true){
     //writeAGGPng();
-#ifdef USE_CAIRO
+#ifdef ADAGUC_USE_CAIRO
     cairo->writeToPngStream(stdout);
 #else
     writeRGBAPng(Geo->dWidth,Geo->dHeight,RGBAByteBuffer,stdout,true);
@@ -242,7 +242,7 @@ void CDrawImage::drawBarb(int x,int y,double direction, double strength,int colo
 
 void CDrawImage::circle(int x, int y, int r, int color) {
 	  if(_bAntiAliased==true){
-#ifdef USE_CAIRO
+#ifdef ADAGUC_USE_CAIRO
 	    cairo->setColor(CDIred[color],CDIgreen[color],CDIblue[color],255);
 	    cairo->circle(x, y, r);
 #else
@@ -258,7 +258,7 @@ void CDrawImage::circle(int x, int y, int r, int color) {
 }
 void CDrawImage::poly(float x1,float y1,float x2,float y2,float x3, float y3, int color, bool fill){
 	  if(_bAntiAliased==true){
-#ifdef USE_CAIRO
+#ifdef ADAGUC_USE_CAIRO
 	    float ptx[3]={x1, x2, x3};
 	    float pty[3]={y1,y2,y3};
 	    cairo->setFillColor(CDIred[color],CDIgreen[color],CDIblue[color],255);
@@ -288,7 +288,7 @@ void CDrawImage::poly(float x1,float y1,float x2,float y2,float x3, float y3, in
 void CDrawImage::line(float x1, float y1, float x2, float y2,int color){
   if(_bAntiAliased==true){
     if(color>=0&&color<256){
-#ifdef USE_CAIRO
+#ifdef ADAGUC_USE_CAIRO
       cairo->setColor(CDIred[color],CDIgreen[color],CDIblue[color],255);
       cairo->line(x1,y1,x2,y2);
 #else
@@ -304,7 +304,7 @@ void CDrawImage::line(float x1, float y1, float x2, float y2,int color){
 void CDrawImage::line(float x1,float y1,float x2,float y2,float w,int color){
   if(_bAntiAliased==true){
     if(color>=0&&color<256){
-#ifdef USE_CAIRO
+#ifdef ADAGUC_USE_CAIRO
       cairo->setColor(CDIred[color],CDIgreen[color],CDIblue[color],255);
       cairo->line(x1,y1,x2,y2);
 #else
@@ -322,7 +322,7 @@ void CDrawImage::line(float x1,float y1,float x2,float y2,float w,int color){
 void CDrawImage::setPixelIndexed(int x,int y,int color){
   if(_bAntiAliased==true){
     //if(color>=0&&color<256){
-#ifdef USE_CAIRO
+#ifdef ADAGUC_USE_CAIRO
     cairo-> pixel(x,y,CDIred[color],CDIgreen[color],CDIblue[color]);
 #else
     wuLine-> pixel(x,y,CDIred[color],CDIgreen[color],CDIblue[color]);
@@ -336,7 +336,7 @@ void CDrawImage::setPixelIndexed(int x,int y,int color){
 void CDrawImage::setPixelTrueColor(int x,int y,unsigned int color){
   if(_bAntiAliased==true){
     //if(_bEnableTrueColor){
-#ifdef USE_CAIRO
+#ifdef ADAGUC_USE_CAIRO
     cairo->pixel(x,y,color,color/256,color/(256*256));
 #else
       wuLine->pixel(x,y,color,color/256,color/(256*256));
@@ -367,7 +367,7 @@ map<int,int>::iterator myColorIter;
 
 void CDrawImage::setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,unsigned char b){
   if(_bAntiAliased==true){
-#ifdef USE_CAIRO
+#ifdef ADAGUC_USE_CAIRO
     cairo->setColor(r,g,b,255);
     cairo->pixel(x,y);
 #else
@@ -395,7 +395,7 @@ void CDrawImage::setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,u
 
 void CDrawImage::setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,unsigned char b,unsigned char a){
   if(_bAntiAliased==true){
-#ifdef USE_CAIRO
+#ifdef ADAGUC_USE_CAIRO
     cairo->setColor(r,g,b,a);
     cairo-> pixel(x,y);
 #else
@@ -428,7 +428,7 @@ void CDrawImage::setText(const char * text, size_t length,int x,int y,int color,
 //    agg::rgba8 colStr(CDIred[color], CDIgreen[color], CDIblue[color],255);
   //  drawFreeTypeText( x, y+11, 0,text,colStr);
     if(color>=0&&color<256){
-#ifdef USE_CAIRO
+#ifdef ADAGUC_USE_CAIRO
       cairo->setColor(CDIred[color],CDIgreen[color],CDIblue[color],255);
       cairo->drawText(x,y+10,0,text);
 #else
@@ -474,7 +474,7 @@ void CDrawImage::setTextStroke(const char * text, size_t length,int x,int y, int
 
 void CDrawImage::drawText(int x,int y,float angle,const char *text,unsigned char colorIndex){
   if(_bAntiAliased==true){
-#ifdef USE_CAIRO
+#ifdef ADAGUC_USE_CAIRO
     cairo->setColor(CDIred[colorIndex],CDIgreen[colorIndex],CDIblue[colorIndex],255);
     cairo->drawText(x,y,angle,text);
 #else
@@ -609,7 +609,7 @@ int CDrawImage::createGDPalette(CServerConfig::XMLE_Legend *legend){
 void CDrawImage::rectangle( int x1, int y1, int x2, int y2,int innercolor,int outercolor){
   if(innercolor>=0&&innercolor<240){
     if(_bAntiAliased==true){
-#ifdef USE_CAIRO
+#ifdef ADAGUC_USE_CAIRO
       cairo->setColor(CDIred[outercolor],CDIgreen[outercolor],CDIblue[outercolor],255);
       cairo->setFillColor(CDIred[innercolor],CDIgreen[innercolor],CDIblue[innercolor],255);
       cairo->filledRectangle(x1,y1,x2,y2);
@@ -727,7 +727,7 @@ void CDrawImage::setTrueColor(bool enable){
 }
 
 
-#ifndef USE_CAIRO
+#ifndef ADAGUC_USE_CAIRO
 int CDrawImage::writeRGBAPng(int width,int height,unsigned char *RGBAByteBuffer,FILE *file,bool trueColor){
   
   

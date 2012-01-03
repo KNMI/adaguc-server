@@ -10,6 +10,7 @@
   <Name>OGC:WMS</Name>
   <Title>[SERVICETITLE]</Title>
   <Abstract>[SERVICEABSTRACT]</Abstract>
+  <ServerInfo>[SERVICEINFO]</ServerInfo>
   <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="[SERVICEONLINERESOURCE]"/>
   <ContactInformation>
   </ContactInformation>

@@ -302,7 +302,7 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
   if(requestStyle->count>0){
     int layerIndex=dataSource->datasourceIndex;
     if(layerIndex==-1)layerIndex=0;
-    if(layerIndex>requestStyle->count)layerIndex=requestStyle->count;
+    if(layerIndex>int(requestStyle->count))layerIndex=requestStyle->count;
     CT::string *layerStyle=&requestStyle[layerIndex];
     if(layerStyle->length()>0){
       if(layerStyle->equals("default")||layerStyle->equals("default/HQ")){

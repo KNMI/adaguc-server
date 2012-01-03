@@ -1,6 +1,8 @@
 #ifndef Definitions_H
 #define Definitions_H
 
+#define ADAGUCSERVER_VERSION             "1.0"
+
 //CConfigReaderLayerType
 #define CConfigReaderLayerTypeDataBase    1
 #define CConfigReaderLayerTypeStyled      2
@@ -53,12 +55,11 @@
 
 // XMLGen templates
 #define WMS_1_0_0_HEADERFILE              "./XMLTemplates/WMS_1.0.0_GetCapabilities_Header.dat"
-//#define WMS_1_0_0_LAYERHEADERFILE         "./XMLTemplates/WMS_1.0.0_GetCapabilities_LayerHeader.dat"
-
 #define WMS_1_1_1_HEADERFILE              "./XMLTemplates/WMS_1.1.1_GetCapabilities_Header.dat"
-//#define WMS_1_1_1_LAYERHEADERFILE         "./XMLTemplates/WMS_1.1.1_GetCapabilities_LayerHeader.dat"
-
 #define WCS_1_0_HEADERFILE                "./XMLTemplates/WCS_1.0.0_GetCapabilities_Header.dat"
+
+
+#define DEFAULT_FONT                       "./fonts/FreeSans.ttf"
 
 //CNetCDFReader opening options
 #define CNETCDFREADER_MODE_OPEN_HEADER    1
@@ -72,11 +73,7 @@
 #define ALLOW_WCS      2 
 #define ALLOW_GFI      4
 #define ALLOW_METADATA 8
-
-
-#define ENABLE_CURL
-
-#define showqueryinfo false
+#define SHOW_QUERYINFO 16 
 
 //Debug settings:
 /*
@@ -101,6 +98,8 @@
 
 
 
+#define ENABLE_CURL
+#define ADAGUC_USE_CAIRO
 #define ADAGUC_USE_GDAL
 #endif
 

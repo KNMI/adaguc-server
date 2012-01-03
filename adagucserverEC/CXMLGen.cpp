@@ -327,6 +327,12 @@ CDBDebug("Querying %s",query.c_str());
             dim->name.copy(myWMSLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
             dim->units.copy(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.units.c_str());
             dim->hasMultipleValues=1;
+            for(size_t j=0;j<size_t(values->count);j++){
+              //2011-01-01T22:00:01Z
+              //01234567890123456789
+              values[j].setChar(10,'T');
+              values[j].setChar(19,'Z');
+            }
             dim->defaultValue.copy(values[0].c_str());
             dim->values.copy(&values[0]);
             for(size_t j=1;j<size_t(values->count);j++){
@@ -527,6 +533,7 @@ int CXMLGen::getWMS_1_0_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
   XMLDoc->replace("[SERVICEABSTRACT]",srvParam->cfg->WMS[0]->Abstract[0]->value.c_str());
   XMLDoc->replace("[GLOBALLAYERTITLE]",srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->value.c_str());
   XMLDoc->replace("[SERVICEONLINERESOURCE]",OnlineResource.c_str());
+  XMLDoc->replace("[SERVICEINFO]",serviceInfo.c_str());
   if(myWMSLayerList->size()>0){
     for(size_t p=0;p<(*myWMSLayerList)[0]->projectionList.size();p++){
       WMSLayer::Projection *proj = (*myWMSLayerList)[0]->projectionList[p];
@@ -582,7 +589,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
   XMLDoc->replace("[SERVICEABSTRACT]",srvParam->cfg->WMS[0]->Abstract[0]->value.c_str());
   XMLDoc->replace("[GLOBALLAYERTITLE]",srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->value.c_str());
   XMLDoc->replace("[SERVICEONLINERESOURCE]",OnlineResource.c_str());
-  
+  XMLDoc->replace("[SERVICEINFO]",serviceInfo.c_str());
   if(myWMSLayerList->size()>0){
     for(size_t p=0;p<(*myWMSLayerList)[0]->projectionList.size();p++){
       WMSLayer::Projection *proj = (*myWMSLayerList)[0]->projectionList[p];
@@ -763,6 +770,7 @@ int CXMLGen::getWCS_1_0_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
   XMLDoc->replace("[SERVICETITLE]",srvParam->cfg->WCS[0]->Name[0]->value.c_str());
   XMLDoc->replace("[SERVICEABSTRACT]",srvParam->cfg->WCS[0]->Abstract[0]->value.c_str());
   XMLDoc->replace("[SERVICEONLINERESOURCE]",OnlineResource.c_str());
+  XMLDoc->replace("[SERVICEINFO]",serviceInfo.c_str());
   
   if(myWMSLayerList->size()>0){
     
@@ -994,7 +1002,7 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
         myWMSLayer->layer=srvParam->cfg->Layer[j];
         
         //Check if this layer is querable
-        int datasetRestriction = checkDataRestriction();
+        int datasetRestriction = CRequest::checkDataRestriction();
         if((datasetRestriction&ALLOW_GFI)){
           myWMSLayer->isQuerable=1;
         }
@@ -1033,6 +1041,7 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
     }
   }
   
+  serviceInfo.print("ADAGUCServer version %s, of %s %s",ADAGUCSERVER_VERSION,__DATE__,__TIME__);
   //Generate an XML document on basis of the information gathered above.
   CT::string XMLDoc;
   status = 0;
@@ -1044,24 +1053,29 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
       status = getWMS_1_1_1_Capabilities(&XMLDoc,&myWMSLayerList);
     }
   }
-
-  if(srvParam->requestType==REQUEST_WCS_GETCAPABILITIES){
-    #ifndef ADAGUC_USE_GDAL
-      CServerParams::showWCSNotEnabledErrorMessage();
-      return 1;
-    #else
-      status = getWCS_1_0_0_Capabilities(&XMLDoc,&myWMSLayerList);
-    #endif
+  try{
+    if(srvParam->requestType==REQUEST_WCS_GETCAPABILITIES){
+      #ifndef ADAGUC_USE_GDAL
+        CServerParams::showWCSNotEnabledErrorMessage();
+        throw(__LINE__);
+      #else
+        status = getWCS_1_0_0_Capabilities(&XMLDoc,&myWMSLayerList);
+      #endif
+    }
+    
+    if(srvParam->requestType==REQUEST_WCS_DESCRIBECOVERAGE){
+      #ifndef ADAGUC_USE_GDAL 
+        CServerParams::showWCSNotEnabledErrorMessage();
+        throw(__LINE__);
+      #else
+        status = getWCS_1_0_0_DescribeCoverage(&XMLDoc,&myWMSLayerList);
+      #endif
+    }
+  }catch(int e){
+    status = 1;
   }
   
-  if(srvParam->requestType==REQUEST_WCS_DESCRIBECOVERAGE){
-    #ifndef ADAGUC_USE_GDAL 
-      CServerParams::showWCSNotEnabledErrorMessage();
-      return 1;
-    #else
-      status = getWCS_1_0_0_DescribeCoverage(&XMLDoc,&myWMSLayerList);
-    #endif
-  }
+  for(size_t j=0;j<myWMSLayerList.size();j++){delete myWMSLayerList[j];myWMSLayerList[j]=NULL;}
   
   if(status != 0){
     CDBError("XML gen failed!");
@@ -1069,7 +1083,7 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
   }
   XMLDocument->concat(&XMLDoc);
   
-  for(size_t j=0;j<myWMSLayerList.size();j++){delete myWMSLayerList[j];myWMSLayerList[j]=NULL;}
+  
   
   resetErrors();
   return 0;

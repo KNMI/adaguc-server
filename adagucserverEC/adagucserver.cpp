@@ -1,12 +1,12 @@
 //============================================================================
-// Name        : adagucserverEC.cpp
+// Name        : adagucserver.cpp
 // Author      : Maarten Plieger
 // Version     :
-// Copyright   : LGPL
-// Description : Hello World in C++, Ansi-style
+// Copyright   : 
+// Description : 
 //============================================================================
 
-#include "adagucserverEC.h"
+#include "adagucserver.h"
 DEF_ERRORMAIN();
 
 
@@ -121,22 +121,23 @@ int main(int argc, const char *argv[]){
       int configSet = 0;
       CT::string tailPath,layerPathToScan;
       for(int j=0;j<argc;j++){
-        if(strncmp(argv[j],"--config",8)==0){
+        if(strncmp(argv[j],"--config",8)==0&&argc>j+1){
+          
           printf("Setting environment variable ADAGUC_CONFIG to \"%s\"\n",argv[j+1]);
           setenv("ADAGUC_CONFIG",argv[j+1],0);
           configSet = 1;
         }
-        if(strncmp(argv[j],"--tailpath",10)==0){
+        if(strncmp(argv[j],"--tailpath",10)==0&&argc>j+1){
           printf("Setting tailpath to \"%s\"\n",argv[j+1]);
           tailPath.copy(argv[j+1]);
         }
-        if(strncmp(argv[j],"--path",6)==0){
+        if(strncmp(argv[j],"--path",6)==0&&argc>j+1){
           printf("Setting path to \"%s\"\n",argv[j+1]);
           layerPathToScan.copy(argv[j+1]);
         }
       }
       if(configSet == 0){
-        printf("Configuration file is not set: use '--updatedb --config configfile.xml/'\n" );
+        printf("Error: Configuration file is not set: use '--updatedb --config configfile.xml'\n" );
         printf("And --tailpath for scanning specific sub directory, specify --path for a absolute path to update\n" );
 
         return 0;

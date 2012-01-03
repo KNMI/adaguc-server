@@ -9,6 +9,7 @@
 #define CCAIROPLOTTER_H_
 
 #define USE_FREETYPE
+
 //#define USE_PANGOCAIRO
 #ifdef USE_PANGOCAIRO
   #define PANGO_FONT_OPTIONS
@@ -112,8 +113,9 @@ public:
     this->fontSize=fontSize;
     this->fontLocation=fontLocation;
     stride=cairo_format_stride_for_width(FORMAT, width);
-    ARGBByteBuffer=new unsigned char[height*stride];
-    for(size_t j=0;j<height*stride;j++)ARGBByteBuffer[j]=0;
+    size_t bufferSize = size_t(height)*stride;
+    ARGBByteBuffer=new unsigned char[bufferSize];
+    for(size_t j=0;j<bufferSize;j++)ARGBByteBuffer[j]=0;
     surface=cairo_image_surface_create_for_data(ARGBByteBuffer, CCairoPlotter::FORMAT, width, height, stride);
     cr=cairo_create(this->surface);
     //fprintf(stderr, "cairo status: %s\n", cairo_status_to_string(cairo_status(cr)));

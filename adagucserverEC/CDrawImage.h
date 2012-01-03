@@ -1,7 +1,7 @@
 #ifndef CDrawImage_H
 #define CDrawImage_H
 
-#define USE_CAIRO
+
 #include "CDebugger.h"
 #include "CTypes.h"
 
@@ -20,7 +20,7 @@
 #include "gdfontl.h"
 #include "gdfonts.h"
 #include "gdfontmb.h"
-#ifdef USE_CAIRO
+#ifdef ADAGUC_USE_CAIRO
 #include "CCairoPlotter.h"
 #else
   #include <ft2build.h>
@@ -32,7 +32,7 @@
 #endif
 
 float convertValueToClass(float val,float interval);
-#ifndef USE_CAIRO
+#ifndef ADAGUC_USE_CAIRO
 class CPlotter{
   public:
   unsigned char* RGBAByteBuffer;
@@ -355,7 +355,7 @@ class CFreeType:private CPlotter{
       return 0;
     }
 };
-#endif //USE_CAIRO
+#endif //ADAGUC_USE_CAIRO
 
 class CDrawImage{
   private:
@@ -373,7 +373,7 @@ class CDrawImage{
     bool _bEnableTrueColor;
     bool _bAntiAliased;
     int brect[8];
-#ifdef USE_CAIRO
+#ifdef ADAGUC_USE_CAIRO
     CCairoPlotter *cairo;
 #else
     CXiaolinWuLine *wuLine;

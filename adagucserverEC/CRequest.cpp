@@ -8,23 +8,49 @@ int CRequest::runRequest(){
   return status;
 }
 
-int checkDataRestriction(){
+int CRequest::dataRestriction = -1;
+
+/**
+ * Checks whether data is restricted or not based on the environment variable ADAGUC_DATARESTRICTION.
+ * If not defined or set to FALSE, there are no dataset restrictions. If set to TRUE, dataaccess is restricted for WCS, GFI, metadata and queryinfo.
+ * Possible values are: ALLOW_GFI, ALLOW_WCS, ALLOW_METADATA and SHOW_QUERYINFO. Values can be combined by using the | sign without any space.
+ * 
+ * ALLOW_GFI: Allows getFeatureInfo request to work.
+ * 
+ * ALLOW_WCS: Allows dataaccess by the Web Coverage Service.
+ * 
+ * ALLOW_METADATA: Allows to display detailed netcdf header information.
+ * 
+ * SHOW_QUERYINFO: Displays failed queries, if not set "hidden" is shown instead.
+ */
+int CRequest::checkDataRestriction(){
+  if(dataRestriction!=-1)return dataRestriction;
+
+  //By default no restrictions
+  int dr = ALLOW_WCS|ALLOW_GFI|ALLOW_METADATA;
   const char *data=getenv("ADAGUC_DATARESTRICTION");
   if(data != NULL){
+    dr = ALLOW_NONE;
     CT::string temp(data);
     temp.toUpperCase();
     if(temp.equals("TRUE")){
-      return ALLOW_NONE;
+      dr = ALLOW_NONE;
     }
     if(temp.equals("FALSE")){
-      return ALLOW_WCS|ALLOW_GFI|ALLOW_METADATA;
+      dr = ALLOW_WCS|ALLOW_GFI|ALLOW_METADATA;
     }
-    if(temp.equals("ALLOW_GFI")){
-      return ALLOW_GFI;
+    //Decompose into stringlist and check each item
+    CT::stringlist *items = temp.splitN("|");
+    for(size_t j=0;j<items->size();j++){
+      if(items->get(j)->equals("ALLOW_GFI"))dr|=ALLOW_GFI;
+      if(items->get(j)->equals("ALLOW_WCS"))dr|=ALLOW_WCS;
+      if(items->get(j)->equals("ALLOW_METADATA"))dr|=ALLOW_METADATA;
+      if(items->get(j)->equals("SHOW_QUERYINFO"))dr|=SHOW_QUERYINFO;
     }
+    delete items;
   }
-  //By default no restrictions
-  return ALLOW_WCS|ALLOW_GFI|ALLOW_METADATA;
+  dataRestriction = dr;
+  return dataRestriction;
 }
 
 
@@ -43,6 +69,8 @@ int CRequest::setConfigFile(const char *pszConfigFile){
     
   }else{
     srvParam->cfg=NULL;
+    CDBError("Invalid XML file %s",pszConfigFile);
+    return 1;
   }
   for(size_t j=0;j<srvParam->cfg->Layer.size();j++){
     if(srvParam->cfg->Layer[j]->attr.type.equals("database")){
@@ -297,6 +325,7 @@ timeFormatObj timeFormats[NUMTIMEFORMATS] = {
 };*/
 const char *timeFormatAllowedChars="0123456789:TZ-/. ";
 bool CRequest::checkTimeFormat(CT::string& timeToCheck){
+  if(timeToCheck.length()<2)return false;
 //  bool isValidTime = false;
   //First test wether invalid characters are in this string
   int numValidChars = strlen(timeFormatAllowedChars);
@@ -495,7 +524,7 @@ int CRequest::process_all_layers(){
                 
                 Query.print("select max(%s) from %s",
                         ogcDim->netCDFDimName.c_str(),
-                          dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str());
+                            tableName.c_str());
                 CT::string *temp = DB.query_select(Query.c_str(),0);
                 if(temp == NULL){CDBError("Query failed");status = DB.close(); return 1;}
                 ogcDim->Value.copy(&temp[0]);
@@ -553,19 +582,22 @@ int CRequest::process_all_layers(){
             CT::string *sDims =cDims[k].split("/");// Split up by slashes (and put into sDims)
             if(sDims->count>0&&k>0)subQuery.concat("or ");
             for(size_t  l=0;l<sDims->count;l++){
-              if(l>0)subQuery.concat("and ");
-              if(sDims->count==1){
-                if(!checkTimeFormat(sDims[l]))timeValidationError=true;
-                subQuery.printconcat("%s = '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
-              }
-              if(sDims->count==2){
-                if(l==0){
+              if(sDims[l].length()>2){
+                if(l>0)subQuery.concat("and ");
+                if(sDims->count==1){
                   if(!checkTimeFormat(sDims[l]))timeValidationError=true;
-                  subQuery.printconcat("%s >= '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
+                  subQuery.printconcat("%s = '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
                 }
-                if(l==1){
-                  if(!checkTimeFormat(sDims[l]))timeValidationError=true;
-                  subQuery.printconcat("%s <= '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
+                //TODO Currently only start/stop is supported, start/stop/resolution is not supported yet.
+                if(sDims->count>=2){
+                  if(l==0){
+                    if(!checkTimeFormat(sDims[l]))timeValidationError=true;
+                    subQuery.printconcat("%s >= '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
+                  }
+                  if(l==1){
+                    if(!checkTimeFormat(sDims[l]))timeValidationError=true;
+                    subQuery.printconcat("%s <= '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
+                  }
                 }
               }
             }
@@ -586,6 +618,7 @@ int CRequest::process_all_layers(){
         Query.concat(" limit 32");
         //CDBDebug(Query.c_str());
         if(timeValidationError==true){
+          if((checkDataRestriction()&SHOW_QUERYINFO)==false)Query.copy("hidden");
           CDBError("Query fails regular expression: '%s'",Query.c_str());
           status = DB.close();
           return 1;
@@ -606,7 +639,7 @@ int CRequest::process_all_layers(){
       }
 
         if(values_path->count==0){
-          if(!showqueryinfo)Query.copy("hidden");
+          if((checkDataRestriction()&SHOW_QUERYINFO)==false)Query.copy("hidden");
           CDBError("No results for query: '%s'",Query.c_str());
           delete[] values_path;
           status = DB.close();
@@ -757,8 +790,8 @@ int CRequest::process_all_layers(){
           for(int k=0;k<dataSources[j]->getNumTimeSteps();k++){
             dataSources[j]->setTimeStep(k);
             status = ImageDataWriter.getFeatureInfo(dataSources[j],
-                srvParam->dX,
-                srvParam->dY);
+                int(srvParam->dX),
+                int(srvParam->dY));
             if(status != 0)throw(__LINE__);
           }
           status = ImageDataWriter.end();if(status != 0)throw(__LINE__);
@@ -1199,7 +1232,30 @@ int CRequest::process_querystring(){
     // If an Opendapsource is used, the LAYERS indicate which value should be visualised.
     // Add configuration layers to the XML object to make things work
     if(srvParam->OpenDAPSource.c_str()!=NULL){
-     
+      
+      bool isAutoOpenDAPEnabled = false;
+      if(srvParam->cfg->OpenDAP.size()>0){
+        if(srvParam->cfg->OpenDAP[0]->attr.enableautoopendap.equals("true")){
+          isAutoOpenDAPEnabled = true;
+        }
+      }
+      if(isAutoOpenDAPEnabled==false){
+        CDBError("Automatic OpenDAP is not enabled");
+        readyerror();exit(0);
+      }
+      
+      bool isValidOpenDAPURL = false;
+      if(srvParam->OpenDAPSource.indexOf("http://")==0)isValidOpenDAPURL=true;
+      if(srvParam->OpenDAPSource.indexOf("https://")==0)isValidOpenDAPURL=true;
+      if(srvParam->OpenDAPSource.indexOf("dodsc://")==0)isValidOpenDAPURL=true;
+      if(srvParam->OpenDAPSource.indexOf("dods://")==0)isValidOpenDAPURL=true;
+      if(srvParam->OpenDAPSource.indexOf("ncdods://")==0)isValidOpenDAPURL=true;
+
+      if(isValidOpenDAPURL==false){
+        CDBError("Invalid OpenDAP URL");
+        readyerror();exit(0);
+      }
+      
       if(srvParam->OpenDapVariable.c_str()==NULL||srvParam->OpenDapVariable.equals("*")){
         //Try to retrieve a list of variables from the OpenDAPURL.
         srvParam->OpenDapVariable.copy("");

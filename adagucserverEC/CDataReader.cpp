@@ -1123,7 +1123,7 @@ int CDataReader::justLoadAFileHeader(CDataSource *dataSource){
   //if(dataSource->dataObject[0]->cdfObject!=NULL){CDBError("datasource->dataObject[0]->cdfObject != NULL");return 1;}
 
   CDirReader dirReader;
-  if(CDBFileScanner::searchFileNames(dataSource,&dirReader,NULL)!=0){CDBError("Could not find any filename");return 1; }
+  if(CDBFileScanner::searchFileNames(&dirReader,dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),NULL)!=0){CDBError("Could not find any filename");return 1; }
   if(dirReader.fileList.size()==0){CDBError("dirReader.fileList.size()==0");return 1; }
   //Open a file
   try{

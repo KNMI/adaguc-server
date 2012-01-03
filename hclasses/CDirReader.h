@@ -30,6 +30,7 @@ class CDirReader{
     int listDir (const char* directory,const char *ext_filter);
     int listDirRecursive (const char* directory,const char *ext_filter);
     static void makeCleanPath(CT::string *path);
+    static int getFileDate(CT::string *date,const char *file);
     int testRegEx(const char *string,const char *pattern);
 };
 #endif

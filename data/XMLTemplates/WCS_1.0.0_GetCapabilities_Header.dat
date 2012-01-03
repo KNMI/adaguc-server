@@ -11,6 +11,7 @@
   <name>[SERVICENAME]</name>
   <label>[SERVICETITLE]</label>
   <abstract>[SERVICEABSTRACT]</abstract>
+  <ServerInfo>[SERVICEINFO]</ServerInfo>
   <fees>NONE</fees>
   <accessConstraints>
     NONE

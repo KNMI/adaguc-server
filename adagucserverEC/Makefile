@@ -26,11 +26,11 @@ INCLUDEDIR=$(SRCLIBS)/include -I $(HELPERCLASSES) -I $(CCDFDATAMODEL) -I /usr/in
 
 
 
-#CCOMPILER=g++ -Wall -I $(INCLUDEDIR)
+CCOMPILER=g++ -Wall -I $(INCLUDEDIR)
 
 #optimalization options:
 #CCOMPILER=g++ -march=pentium4 -mtune=pentium4 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 -I $(INCLUDEDIR) 
-CCOMPILER=g++ -march=core2 -mtune=core2 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 -I $(INCLUDEDIR) 
+#CCOMPILER=g++ -march=core2 -mtune=core2 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 -I $(INCLUDEDIR) 
 #CCOMPILER=g++ -O2 -I $(INCLUDEDIR) 
 #CCOMPILER=g++ -march=k8-sse3 -mtune=k8-sse3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 -I $(INCLUDEDIR)  
 USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lxml2 -lgd -lproj -lpq -ludunits2 -lfreetype -lgd -lpng -lrt -lpthread -lcurl -lgdal -lcairo
@@ -40,7 +40,7 @@ LIBS = -L$(LIBDIR) $(USERLIBS) -L$(INSTALLDIR2)/lib
 
 OBJECTS = CDataReader.o CImageWarper.o CDrawImage.o CServerError.o CRequest.o  CXMLGen.o CServerParams.o CGDALDataWriter.o CImageDataWriter.o CXMLSerializerInterface.o CDataSource.o CStopWatch.o CImgWarpBilinear.o CImgWarpBoolean.o CImgWarpNearestNeighbour.o CPGSQLDB.o CCairoPlotter.o CDBFileScanner.o CDFObjectStore.o
 
-EXECUTABLE= adagucserverEC
+EXECUTABLE= adagucserver
 
 default: $(EXECUTABLE)
 $(EXECUTABLE): $(OBJECTS) $(EXECUTABLE).o h5ncdump.o
@@ -51,7 +51,7 @@ $(EXECUTABLE): $(OBJECTS) $(EXECUTABLE).o h5ncdump.o
 	$(CCOMPILER) -c $< -o $@
 
 clean:
-	rm $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE).o h5ncdump.o
+	rm $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE).o h5ncdump.o h5ncdump
 run:
 	make
 	./$(EXECUTABLE)		

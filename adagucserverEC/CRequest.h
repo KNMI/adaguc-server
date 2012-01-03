@@ -146,6 +146,7 @@ private:
     int storeDocumentCache(CSimpleStore *simpleStore);
     int generateOGCGetCapabilities(CT::string *XMLdocument);
     int generateOGCDescribeCoverage(CT::string *XMLdocument);
+    static int dataRestriction;
   public:
     CRequest(){
       srvParam=new CServerParams();
@@ -179,9 +180,11 @@ private:
     int updatedb(CT::string *tailPath,CT::string *layerPathToScan);
     bool checkTimeFormat(CT::string& timeToCheck);
     int runRequest();
-    
+
+    static void getCacheFileName(CT::string *cacheFileName,CServerParams *srvParam);
+    static int checkDataRestriction();
+
 };
-void getCacheFileName(CT::string *cacheFileName,CServerParams *srvParam);
-int checkDataRestriction();
+
 #endif
 

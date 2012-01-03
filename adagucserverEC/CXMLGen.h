@@ -45,7 +45,7 @@ class WMSLayer{
       dataSource=NULL;
     }
     ~WMSLayer(){
-      delete dataSource;
+      delete dataSource;dataSource = NULL;
       for(size_t j=0;j<projectionList.size();j++){delete projectionList[j];projectionList[j]=NULL;}
       for(size_t j=0;j<dimList.size();j++){delete dimList[j];dimList[j]=NULL;}
       for(size_t j=0;j<styleList.size();j++){delete styleList[j];styleList[j]=NULL;}
@@ -75,6 +75,7 @@ class CXMLGen{
     int getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc,std::vector<WMSLayer*> *myWMSLayerList);
     int getStylesForLayer(WMSLayer * myWMSLayer);
     CServerParams *srvParam;
+    CT::string serviceInfo;
   public:
     int OGCGetCapabilities(CServerParams *srvParam,CT::string *XMLDocument);
     int WCSDescribeCoverage(CServerParams *srvParam,CT::string *XMLDocument);

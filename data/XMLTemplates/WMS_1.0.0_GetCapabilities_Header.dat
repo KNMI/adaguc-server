@@ -9,6 +9,7 @@
   <Name>OGC:WMS</Name>
   <Title>[SERVICETITLE]</Title>
   <Abstract>[SERVICEABSTRACT]</Abstract> <OnlineResource>[SERVICEONLINERESOURCE]</OnlineResource>
+  <ServerInfo>[SERVICEINFO]</ServerInfo>
 </Service>
 
 <Capability>
