@@ -171,8 +171,9 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
       #endif
       
       
-      CT::string fileDate="1970-01-01T00:00:00Z";
+      CT::string fileDate;
       CDirReader::getFileDate(&fileDate,dirReader->fileList[j]->fullName.c_str());
+      if(fileDate.length()<10)fileDate.copy("1970-01-01T00:00:00Z");
       
       for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
         int fileExistsInDB=0;
@@ -186,16 +187,14 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
           #endif          
         }
         
-        // Check if file already resides in the nontemporary database
-       // if(d==0){
-         
-         query.print("delete from %s where path = '%s' and filedate != '%s'",tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),fileDate.c_str());
-         status = DB->query(query.c_str()); if(status!=0)throw(__LINE__);
-         
-          query.print("select path from %s where path = '%s' and filedate = '%s' limit 1",tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),fileDate.c_str());
-     //  }else{
-          //query.print("select path from %s where path = '%s' limit 1",tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str());
-      //  }
+        //Delete files with non-matching creation date 
+        query.print("delete from %s where path = '%s' and (filedate != '%s' or filedate is NULL)",tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),fileDate.c_str());
+        //CDBDebug("Deleting: %s", query.c_str());
+        status = DB->query(query.c_str()); if(status!=0)throw(__LINE__);
+
+        //Check if file already resides in the nontemporary database
+        query.print("select path from %s where path = '%s' and filedate = '%s' and filedate is not NULL limit 1",tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),fileDate.c_str());
+        //CDBDebug("Checking: %s", query.c_str());
         CT::string *pathValues = DB->query_select(query.c_str(),0);
         if(pathValues == NULL){CDBError("Query failed");DB->close();throw(__LINE__);}
         if(pathValues->count==1){fileExistsInDB=1;}else{fileExistsInDB=0;}
@@ -292,28 +291,25 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                 for(size_t i=0;i<dimDim->length;i++){
                   if(dimValues[i]!=NC_FILL_DOUBLE){
                     if(isTimeDim[d]==false){
-                      //if(d==0){
-                        VALUES.print("VALUES ('%s','%f','%d','%s')",dirReader->fileList[j]->fullName.c_str(),double(dimValues[i]),int(i),fileDate.c_str());
-                     // }else{
-                      //  VALUES.print("VALUES ('%s','%f','%d')",dirReader->fileList[j]->fullName.c_str(),double(dimValues[i]),int(i));
-                      //}
+                      VALUES.print("VALUES ('%s','%f','%d','%s')",dirReader->fileList[j]->fullName.c_str(),double(dimValues[i]),int(i),fileDate.c_str());
                     }else{
                       VALUES.copy("");
                       ADTime->PrintISOTime(ISOTime,MAX_STR_LEN,dimValues[i]);status = 0;//TODO make PrintISOTime return a 0 if succeeded
                       if(status == 0){
                         ISOTime[19]='Z';ISOTime[20]='\0';
-                        //if(d==0){
-                          VALUES.print("VALUES ('%s','%s','%d','%s')",dirReader->fileList[j]->fullName.c_str(),ISOTime,int(i),fileDate.c_str());
-                        //}else{
-                         // VALUES.print("VALUES ('%s','%s','%d')",dirReader->fileList[j]->fullName.c_str(),ISOTime,int(i));
-                        //}
+                        VALUES.print("VALUES ('%s','%s','%d','%s')",dirReader->fileList[j]->fullName.c_str(),ISOTime,int(i),fileDate.c_str());
                       }
                     }
+                    
+                    //Insert record into DB.
                     if(VALUES.length()>0){
                       //Add the record to the temporary table.
                       queryString.print("INSERT into %s %s",tableNames_temp[d].c_str(),VALUES.c_str());
                       status = DB->query(queryString.c_str()); 
-                      if(status!=0)throw(__LINE__);
+                      if(status!=0){
+                        CDBError("Query failed: %s",queryString.c_str());
+                        throw(__LINE__);
+                      }
                       //CDBDebug("queryString= %s",queryString.c_str());
                       if(removeNonExistingFiles==1){
                         //We are adding the query above to the temporary table if removeNonExistingFiles==1;
