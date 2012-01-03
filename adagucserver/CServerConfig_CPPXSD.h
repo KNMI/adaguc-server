@@ -90,7 +90,17 @@ class CServerConfig:public CXMLSerializerInterface{
       }
     };
 
-
+    class XMLE_OpenDAP: public CXMLObjectInterface{
+    public:
+      class Cattr{
+      public:
+        CXMLString enableautoopendap;
+      }attr;
+      void addAttribute(const char *attrname,const char *attrvalue){
+        if(equals("enableautoopendap",17,attrname)){attr.enableautoopendap.copy(attrvalue);return;}
+      }
+    };
+    
     
     class XMLE_RenderMethod: public CXMLObjectInterface{};
     class XMLE_Style: public CXMLObjectInterface{
@@ -547,6 +557,7 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_Style*> Style;
         std::vector <XMLE_CacheDocs*> CacheDocs;
         std::vector <XMLE_Font*> Font;
+        std::vector <XMLE_OpenDAP*> OpenDAP;
         
         ~XMLE_Configuration(){
           XMLE_DELOBJ(Legend);
@@ -561,6 +572,7 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(Style);
           XMLE_DELOBJ(CacheDocs);
           XMLE_DELOBJ(Font);
+          XMLE_DELOBJ(OpenDAP);
         }
         void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value){
           CXMLSerializerInterface * base = (CXMLSerializerInterface*)baseClass;
@@ -580,6 +592,7 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("Layer",5,name)){XMLE_ADDOBJ(Layer);}
             else if(equals("Style",5,name)){XMLE_ADDOBJ(Style);}
             else if(equals("CacheDocs",9,name)){XMLE_ADDOBJ(CacheDocs);}
+            else if(equals("OpenDAP",7,name)){XMLE_ADDOBJ(OpenDAP);}
           }
           if(pt2Class!=NULL)pt2Class->addElement(baseClass,rc-pt2Class->level,name,value);
         }
