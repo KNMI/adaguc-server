@@ -325,7 +325,7 @@ timeFormatObj timeFormats[NUMTIMEFORMATS] = {
 };*/
 const char *timeFormatAllowedChars="0123456789:TZ-/. ";
 bool CRequest::checkTimeFormat(CT::string& timeToCheck){
-  if(timeToCheck.length()<2)return false;
+  if(timeToCheck.length()<1)return false;
 //  bool isValidTime = false;
   //First test wether invalid characters are in this string
   int numValidChars = strlen(timeFormatAllowedChars);
@@ -582,7 +582,7 @@ int CRequest::process_all_layers(){
             CT::string *sDims =cDims[k].split("/");// Split up by slashes (and put into sDims)
             if(sDims->count>0&&k>0)subQuery.concat("or ");
             for(size_t  l=0;l<sDims->count;l++){
-              if(sDims[l].length()>2){
+              if(sDims[l].length()>0){
                 if(l>0)subQuery.concat("and ");
                 if(sDims->count==1){
                   if(!checkTimeFormat(sDims[l]))timeValidationError=true;
@@ -633,7 +633,8 @@ int CRequest::process_all_layers(){
           if(status !=0){CDBError("Could not update db for: %s",dataSources[j]->cfgLayer->Name[0]->value.c_str());DB.close();return 2;}
           values_path = DB.query_select(Query.c_str(),0);
           if(values_path==NULL){
-            CDBError("No results for query");
+            if((checkDataRestriction()&SHOW_QUERYINFO)==false)Query.copy("hidden");
+            CDBError("No results for query: '%s'",Query.c_str());
             return 2;
           }
       }
@@ -676,7 +677,7 @@ int CRequest::process_all_layers(){
         delete[] values_dim;
         delete[] date_time;
       }else{
-        CDBDebug("SOFAR");
+        
         //This layer has no dimensions
         //We need to add one timestep with data.
         CDataSource::TimeStep * timeStep = new CDataSource::TimeStep();
@@ -685,11 +686,11 @@ int CRequest::process_all_layers(){
         timeStep->fileName.copy(dataSources[j]->cfgLayer->FilePath[0]->value.c_str());
         timeStep->timeString.copy("0");
         timeStep->dims.addDimension("time",0);
-        CDBDebug("SOFAR");
+        
       }
     }
     if(dataSources[j]->dLayerType==CConfigReaderLayerTypeCascaded){
-       CDBDebug("SOFAR");
+       
         //This layer has no dimensions
         //We need to add one timestep with data.
         CDataSource::TimeStep * timeStep = new CDataSource::TimeStep();
@@ -698,7 +699,7 @@ int CRequest::process_all_layers(){
         timeStep->fileName.copy("");
         timeStep->timeString.copy("0");
         timeStep->dims.addDimension("time",0);
-        CDBDebug("SOFAR");
+        
     }
   }
   int j=0;
