@@ -1,3 +1,4 @@
+#ifdef ADAGUC_USE_CAIRO
 /*
  * CCairoPlotter2.cpp
  *
@@ -19,3 +20,4 @@ cairo_status_t writerFunc(void *closure, const unsigned char *data, unsigned int
 
   return CAIRO_STATUS_WRITE_ERROR;
 }
+#endif

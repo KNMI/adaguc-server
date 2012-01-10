@@ -99,7 +99,7 @@
 
 
 #define ENABLE_CURL
-#define ADAGUC_USE_CAIRO
+//#define ADAGUC_USE_CAIRO
 #define ADAGUC_USE_GDAL
 #endif
 

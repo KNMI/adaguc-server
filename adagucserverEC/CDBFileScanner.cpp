@@ -150,7 +150,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
       //Create column names
       tableColumns[d].copy("path varchar (255)");
       if(isTimeDim[d]==true){
-        tableColumns[d].printconcat(", time timestamp, dimtime int");
+        tableColumns[d].printconcat(", %s timestamp, dim%s int",dimNames[d].c_str(),dimNames[d].c_str());
       }else{
         tableColumns[d].printconcat(", %s real, dim%s int",dimNames[d].c_str(),dimNames[d].c_str());
       }
@@ -264,9 +264,8 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
               CDF::Variable *  dimVar = cdfObject->getVariableNE(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
               if(dimDim==NULL||dimVar==NULL){
                 CDBError("In file %s",dirReader->fileList[j]->fullName.c_str());
-                CDBError("For variable '%s' dimension '%s' not found",
-                dataSource->cfgLayer->Variable[0]->value.c_str(),
-                dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+                CDBError("For variable '%s' dimension '%s' not found",dataSource->cfgLayer->Variable[0]->value.c_str(),
+                  dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
                 throw(__LINE__);
               }else{
                 CDF::Attribute *dimUnits = dimVar->getAttributeNE("units");
@@ -351,7 +350,27 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
     }
     if(status != 0){CDBError(DB->getError());throw(__LINE__);}
     if(numberOfFilesAddedFromDB!=0){CDBDebug("%d files not scanned, they were already in the database",numberOfFilesAddedFromDB);}
-    // CDBDebug("%d files scanned from disk",dirReader->fileList.size());
+    
+    
+    bool checkForDuplicateEntries=false;
+    //If this layer has only one dimension, we are able to detect whether there are multiple entries in our database.
+    if(dataSource->cfgLayer->Dimension.size()==1&&checkForDuplicateEntries==true){
+      //delete from e_obs_tg_time using (select time,count(time),min(filedate) as oldestfiledate from e_obs_tg_time group by time)C where C.count != 1 and e_obs_tg_time.time=C.time and filedate=C.oldestfiledate ;
+      
+      //select * from e_obs_tg_time,(select time,count(time),min(filedate) as oldestfiledate from e_obs_tg_time group by time)C where C.count != 1 and e_obs_tg_time.time=C.time and filedate=C.oldestfiledate ;
+      const char *tname=tableNames_temp[0].c_str();
+      const char *dname=dimNames[0].c_str();
+      queryString.print("DELETE FROM %s using (",tname);
+      queryString.printconcat("SELECT %s,count(%s),max(filedate) AS mostrecentfiledate FROM %s group by %s",dname,dname,tname,dname);
+      queryString.printconcat(")C where C.count!=1 and %s.%s=C.%s and filedate!=C.mostrecentfiledate",tname,dname,dname);
+      CDBDebug("Checking for duplicate entries and selecting most recent files:\n%s",queryString.c_str());
+      status = DB->query(queryString.c_str()); 
+      if(status!=0){
+        CDBError("Query failed: %s",queryString.c_str());
+        throw(__LINE__);
+      }
+    }
+    
     
   }
   catch(int linenr){

@@ -1,3 +1,4 @@
+#ifdef ADAGUC_USE_CAIRO
 /*
  * CCairoPlotter2.h
  *
@@ -405,3 +406,4 @@ public:
 };
 
 #endif /* CCAIROPLOTTER_H_ */
+#endif

@@ -398,6 +398,7 @@ int  CGDALDataWriter::end(){
   CDBDebug("GDALCreateCopy completed");
   if( hOutputDS == NULL ){
     CDBError("WriteGDALRaster: Failed to create output file:<br>\n\"%s\"",tmpFileName.c_str());
+    CDBError("LastErrorMsg: %s",CPLGetLastErrorMsg());
     GDALClose( hMemDS1 );
     return 1;
   }
