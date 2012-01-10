@@ -251,38 +251,15 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
   
 
     //Check if our variable has a statusflag
-    dataSource->dataObject[0]->hasStatusFlag=false;
+    std::vector<CDataSource::StatusFlag*> *statusFlagList=&dataSource->dataObject[0]->statusFlagList;
+   
+    
     CDF::Variable * var=dataSource->dataObject[0]->cdfVariable;
-    if(var!=NULL){
-      CDF::Attribute *attr_flag_meanings=var->getAttributeNE("flag_meanings");
-      //We might have status flag, check if all mandatory attributes are set!
-      if(attr_flag_meanings!=NULL){
-        CDF::Attribute *attr_flag_values=var->getAttributeNE("flag_values");
-        if(attr_flag_values!=NULL){
-          CT::string flag_meanings;
-          attr_flag_meanings->getDataAsString(&flag_meanings);
-          CT::string *flagStrings=flag_meanings.split(" ");
-          size_t nrOfFlagMeanings=flagStrings->count;
-          if(nrOfFlagMeanings>0){
-            size_t nrOfFlagValues=attr_flag_values->length;
-            //Check we have an equal number of flagmeanings and flagvalues
-            if(nrOfFlagMeanings==nrOfFlagValues){
-              dataSource->dataObject[0]->hasStatusFlag=true;
-              double dfFlagValues[nrOfFlagMeanings+1];
-              attr_flag_values->getData(dfFlagValues,attr_flag_values->length);
-              for(size_t j=0;j<nrOfFlagMeanings;j++){
-                CDataSource::StatusFlag * statusFlag = new CDataSource::StatusFlag;
-                dataSource->dataObject[0]->statusFlagList.push_back(statusFlag);
-                statusFlag->meaning.copy(flagStrings[j].c_str());
-                statusFlag->meaning.replace("_"," ");
-                statusFlag->value=dfFlagValues[j];
-              }
-            }else {CDBError("nrOfFlagMeanings!=nrOfFlagValues");}
-          }else {CDBError("flag_meanings: nrOfFlagMeanings = 0");}
-          delete[] flagStrings;
-        }else {CDBError("flag_meanings found, but no flag_values attribute found");}
-      }
-    }
+    CDataSource::readStatusFlags(var,statusFlagList);
+    
+    bool hasStatusFlag=false;
+    if(statusFlagList->size()>0)hasStatusFlag=true;
+    dataSource->dataObject[0]->hasStatusFlag=hasStatusFlag;
     //CDBDebug("Getting info for variable %s",dataSource->dataObject[varNr]->variableName.c_str());
   }
 
@@ -1041,6 +1018,13 @@ int CDataReader::close(){
   return 0;
 }
 int CDataReader::getTimeUnit(char * pszTime){
+  CDF::Variable *timeVar = getTimeVariable();
+  if(timeVar==NULL)return 1;
+  CDF::Attribute *timeUnits = timeVar->getAttributeNE("units");
+  if(timeUnits ==NULL){return 1;}
+  snprintf(pszTime,MAX_STR_LEN,"%s",(char*)timeUnits->data);
+  return 0;
+  /*
   //TODO We assume that the first configured DIM is always time. This might be not the case!
   if(dataSource->isConfigured==false){
     CDBError("dataSource is not configured");
@@ -1061,41 +1045,76 @@ int CDataReader::getTimeUnit(char * pszTime){
   CDF::Attribute *timeUnits = time->getAttributeNE("units");
   if(timeUnits ==NULL){return 1;}
   snprintf(pszTime,MAX_STR_LEN,"%s",(char*)timeUnits->data);
-  return 0;
+  return 0;*/
 }
+
+int CDataReader::getTimeDimIndex( CDFObject *cdfObject, CDF::Variable * var){
+  if(var == NULL || cdfObject == NULL)return -1;
+  if(var->dimensionlinks.size()==0){return -1;}
+  CT::string standard_name;
+  //First try to retrieve the time dimension by standard_name
+  for(size_t j=0;j<var->dimensionlinks.size();j++){
+    try{
+      cdfObject->getVariable(var->dimensionlinks[j]->name.c_str())->getAttribute("standard_name")->getDataAsString(&standard_name);
+      if(standard_name.equals("time"))return j;
+    }catch(int e){
+    }
+  }
+  //Second, if failed try to find it based on variable name.
+  for(size_t j=0;j<var->dimensionlinks.size();j++){
+    if(var->dimensionlinks[j]->name.equals("time"))return j;
+  }
+  //Third, try to find it based on indexof method.
+  for(size_t j=0;j<var->dimensionlinks.size();j++){
+    if(var->dimensionlinks[j]->name.indexOf("time")>=0)return j;
+  }
+  return -1;
+}
+CDF::Variable *CDataReader::getTimeVariable( CDFObject *cdfObject, CDF::Variable * var){
+  int timeDimIndex = getTimeDimIndex(cdfObject,var);
+  if(timeDimIndex == -1) return NULL;
+  return cdfObject->getVariableNE(var->dimensionlinks[timeDimIndex]->name.c_str());
+}
+
+CDF::Variable *CDataReader::getTimeVariable(){
+  if(dataSource->isConfigured==false){
+    CDBError("dataSource is not configured");
+    return NULL;
+  }
+  CDFObject *cdfObject=dataSource->dataObject[0]->cdfObject;
+  CDF::Variable * cdfVariable=dataSource->dataObject[0]->cdfVariable;
+  if(cdfObject==NULL||cdfVariable==NULL){
+    CDBError("CNetCDFReader is not opened");
+    return NULL;
+  }
+  return getTimeVariable(cdfObject,cdfVariable);
+}
+
 
 int CDataReader::getTimeString(char * pszTime){
   //TODO We assume that the first configured DIM is always time. This might be not the case!
+  pszTime[0]='\0';
   if(dataSource->isConfigured==false){
     CDBError("dataSource is not configured");
-    return 1;
-  }
-  CDFObject *cdfObject=dataSource->dataObject[0]->cdfObject;
-  if(cdfObject==NULL){
-    CDBError("CNetCDFReader is not opened");
     return 1;
   }
   if(dataSource->cfgLayer->Dimension.size()==0){
     pszTime[0]='\0';
     return 0;
   }
-  pszTime[0]='\0';
-  CDF::Variable *time = cdfObject->getVariableNE(dataSource->cfgLayer->Dimension[0]->attr.name.c_str());
+  CDF::Variable *time = getTimeVariable();
   if(time==NULL){return 1;}
   CDF::Attribute *timeUnits = time->getAttributeNE("units");
   if(timeUnits ==NULL){return 1;}
-  //if(time->data==NULL){
-    time->readData(CDF_DOUBLE);
-  //}
+  time->readData(CDF_DOUBLE);
   if(dataSource->dNetCDFNumDims>2){
-    size_t index=dataSource->getDimensionIndex(time->name.c_str());
-    //size_t index=dataSource->getCurrentTimeStep();
-    if(index>=0&&index<time->getSize()){
+    size_t currentTimeIndex=dataSource->getDimensionIndex(time->name.c_str());
+    if(currentTimeIndex>=0&&currentTimeIndex<time->getSize()){
       CADAGUC_time *ADTime = NULL;
       try{
         ADTime = new CADAGUC_time((char*)timeUnits->data);
         stADAGUC_time timest;
-        int status = ADTime->OffsetToAdaguc(timest,((double*)time->data)[index]);
+        int status = ADTime->OffsetToAdaguc(timest,((double*)time->data)[currentTimeIndex]);
         if(status == 0){
           char ISOTime[MAX_STR_LEN+1];
           ADTime->PrintISOTime(ISOTime,MAX_STR_LEN,timest);

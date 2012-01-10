@@ -18,10 +18,6 @@ CDataSource::DataClass::~DataClass(){
 }
 
 
-const char *CDataSource::DataClass::getFlagMeaning(double value){
-  for(size_t j=0;j<statusFlagList.size();j++){if(statusFlagList[j]->value==value){return statusFlagList[j]->meaning.c_str();}}
-  return "no flag meaning";
-}
 
 /************************************/
 /* CDataSource::Statistics          */
@@ -195,4 +191,54 @@ int CDataSource::getNumTimeSteps(){
 const char *CDataSource::getLayerName(){
   return layerName.c_str();
 }
+
+
+void CDataSource::readStatusFlags(CDF::Variable * var, std::vector<CDataSource::StatusFlag*> *statusFlagList){
+  for(size_t i=0;i<statusFlagList->size();i++)delete (*statusFlagList)[i];
+  statusFlagList->clear();
+  if(var!=NULL){
+    CDF::Attribute *attr_flag_meanings=var->getAttributeNE("flag_meanings");
+    //We might have status flag, check if all mandatory attributes are set!
+    if(attr_flag_meanings!=NULL){
+      CDF::Attribute *attr_flag_values=var->getAttributeNE("flag_values");
+      if(attr_flag_values!=NULL){
+        CT::string flag_meanings;
+        attr_flag_meanings->getDataAsString(&flag_meanings);
+        CT::string *flagStrings=flag_meanings.split(" ");
+        size_t nrOfFlagMeanings=flagStrings->count;
+        if(nrOfFlagMeanings>0){
+          size_t nrOfFlagValues=attr_flag_values->length;
+          //Check we have an equal number of flagmeanings and flagvalues
+          //nrOfFlagValues=54;
+          
+          if(nrOfFlagMeanings==nrOfFlagValues){
+            //hasStatusFlag=true;
+            double dfFlagValues[nrOfFlagMeanings+1];
+            attr_flag_values->getData(dfFlagValues,attr_flag_values->length);
+            for(size_t j=0;j<nrOfFlagMeanings;j++){
+              CDataSource::StatusFlag * statusFlag = new CDataSource::StatusFlag;
+              statusFlagList->push_back(statusFlag);
+              statusFlag->meaning.copy(flagStrings[j].c_str());
+              //statusFlag->meaning.replace("_"," ");
+              statusFlag->value=dfFlagValues[j];
+            }
+          }else {CDBError("ReadStatusFlags: nrOfFlagMeanings!=nrOfFlagValues, %d!=%d",nrOfFlagMeanings,nrOfFlagValues);}
+        }else {CDBError("ReadStatusFlags: flag_meanings: nrOfFlagMeanings = 0");}
+        delete[] flagStrings;
+      }else {CDBError("ReadStatusFlags: flag_meanings found, but no flag_values attribute found");}
+    }
+  }
+}
+
+const char *CDataSource::getFlagMeaning( std::vector<CDataSource::StatusFlag*> *statusFlagList,double value){
+  for(size_t j=0;j<statusFlagList->size();j++){if((*statusFlagList)[j]->value==value){return (*statusFlagList)[j]->meaning.c_str();}}
+  return "no_flag_meaning";
+}
+
+void CDataSource::getFlagMeaningHumanReadable( CT::string *flagMeaning,std::vector<CDataSource::StatusFlag*> *statusFlagList,double value){
+  flagMeaning->copy(getFlagMeaning(statusFlagList,value));
+  flagMeaning->replace("_"," ");
+}
+
+
 

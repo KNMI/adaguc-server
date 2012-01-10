@@ -34,12 +34,14 @@ class CDataReader{
     static int justLoadAFileHeader(CDataSource *dataSource);
     static int getCacheFileName(CDataSource *dataSource,CT::string *cacheName);
     static int getCacheFileName(CServerParams *srvParams,CT::string *uniqueIDFor2DField,const char *fileName);
-  
+    static int getTimeDimIndex( CDFObject *cdfObject, CDF::Variable * var);
+    static CDF::Variable *getTimeVariable( CDFObject *cdfObject, CDF::Variable * var);
     void dump(CT::string *dumpString){
       CDF::dump(thisCDFObject,dumpString);
     }
     
     int getTimeString(char * pszTime);
+    CDF::Variable *getTimeVariable();
     int getTimeUnit(char * pszTime);
     const char *getFileName(){return FileName.c_str();}
     int open(CDataSource *dataSource,int mode);

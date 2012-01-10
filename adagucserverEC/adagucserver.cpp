@@ -116,14 +116,14 @@ int main(int argc, const char *argv[]){
   //Check if a database update was requested
   if(argc>=2){
     if(strncmp(argv[1],"--updatedb",10)==0){
-      printf("**** Starting DB update\n");
+      CDBDebug("***** Starting DB update *****\n");
       CRequest request;
       int configSet = 0;
       CT::string tailPath,layerPathToScan;
       for(int j=0;j<argc;j++){
         if(strncmp(argv[j],"--config",8)==0&&argc>j+1){
           
-          printf("Setting environment variable ADAGUC_CONFIG to \"%s\"\n",argv[j+1]);
+          //CDBDebug("Setting environment variable ADAGUC_CONFIG to \"%s\"\n",argv[j+1]);
           setenv("ADAGUC_CONFIG",argv[j+1],0);
           configSet = 1;
         }
@@ -137,8 +137,8 @@ int main(int argc, const char *argv[]){
         }
       }
       if(configSet == 0){
-        printf("Error: Configuration file is not set: use '--updatedb --config configfile.xml'\n" );
-        printf("And --tailpath for scanning specific sub directory, specify --path for a absolute path to update\n" );
+        CDBError("Error: Configuration file is not set: use '--updatedb --config configfile.xml'\n" );
+        CDBError("And --tailpath for scanning specific sub directory, specify --path for a absolute path to update\n" );
 
         return 0;
       }

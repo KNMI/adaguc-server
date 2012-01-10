@@ -49,6 +49,7 @@ int CRequest::checkDataRestriction(){
     }
     delete items;
   }
+  
   dataRestriction = dr;
   return dataRestriction;
 }
@@ -323,7 +324,7 @@ timeFormatObj timeFormats[NUMTIMEFORMATS] = {
   {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}Z",  "T%H:%M:%SZ", "THH:MM:SSZ","PT1S"},
   {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}",  "T%H:%M:%S", "THH:MM:SSZ", "PT1S"},
 };*/
-const char *timeFormatAllowedChars="0123456789:TZ-/. ";
+const char *timeFormatAllowedChars="0123456789:TZ-/. _ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 bool CRequest::checkTimeFormat(CT::string& timeToCheck){
   if(timeToCheck.length()<1)return false;
 //  bool isValidTime = false;
@@ -627,6 +628,7 @@ int CRequest::process_all_layers(){
         //Execute the query
         values_path = DB.query_select(Query.c_str(),0);
         if(values_path==NULL){
+          //TODO disable automatic update for certain cases!
           CDBDebug("No results for query: Trying to update the database automatically.");
         
           status = CDBFileScanner::updatedb(srvParam->cfg->DataBase[0]->attr.parameters.c_str(),dataSources[j],NULL,NULL);
@@ -1690,7 +1692,7 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan){
   
   CT::string cacheFileName;
   srvParam->getCacheFileName(&cacheFileName);
-  printf("\nInvalidating cachefile %s...\n",cacheFileName.c_str());
+  //printf("\nInvalidating cachefile %s...\n",cacheFileName.c_str());
   if(cacheFileName.length()>0){
     remove(cacheFileName.c_str());
   }
@@ -1700,7 +1702,7 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan){
   simpleStore.setStringAttribute("configModificationDate","needsupdate!");
   if(storeDocumentCache(&simpleStore)!=0)return 1;*/
   
-  printf("OK!\n\n");
+  CDBDebug("***** Finished DB Update *****");
   return 0;
 }
 

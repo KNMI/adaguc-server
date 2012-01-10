@@ -249,12 +249,14 @@ CDBDebug("Start looping dimensions");
       CServerParams::makeCorrectTableName(&tableName,&dimName);
             
       bool hasMultipleValues=false;
+      bool isTimeDim=false;
       if(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.c_str()==NULL){
         hasMultipleValues=true;
-        
+      
         //TODO try to detect automatically the time resolution of the layer.
         if(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.equals("time")){
           CT::string units;
+          isTimeDim=true;
           try{
             myWMSLayer->dataSource->dataObject[0]->cdfObject->getVariable("time")->getAttribute("units")->getDataAsString(&units);
           }catch(int e){
@@ -327,11 +329,13 @@ CDBDebug("Querying %s",query.c_str());
             dim->name.copy(myWMSLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
             dim->units.copy(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.units.c_str());
             dim->hasMultipleValues=1;
-            for(size_t j=0;j<size_t(values->count);j++){
-              //2011-01-01T22:00:01Z
-              //01234567890123456789
-              values[j].setChar(10,'T');
-              values[j].setChar(19,'Z');
+            if(isTimeDim==true){
+              for(size_t j=0;j<size_t(values->count);j++){
+                //2011-01-01T22:00:01Z
+                //01234567890123456789
+                values[j].setChar(10,'T');
+                values[j].setChar(19,'Z');
+              }
             }
             dim->defaultValue.copy(values[0].c_str());
             dim->values.copy(&values[0]);

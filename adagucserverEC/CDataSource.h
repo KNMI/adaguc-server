@@ -39,7 +39,7 @@ class CDataSource{
       CDFType dataType;
       CT::string variableName,units;
 
-      const char *getFlagMeaning(double value);
+      
   };
   
   class Statistics{
@@ -129,6 +129,9 @@ class CDataSource{
   
   CDataSource();
   ~CDataSource();
+  static void readStatusFlags(CDF::Variable * var, std::vector<CDataSource::StatusFlag*> *statusFlagList);
+  static const char *getFlagMeaning(std::vector<CDataSource::StatusFlag*> *statusFlagList,double value);
+  static void getFlagMeaningHumanReadable(CT::string *flagMeaning ,std::vector<CDataSource::StatusFlag*> *statusFlagList,double value);
   int setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Configuration *_cfg,CServerConfig::XMLE_Layer * _cfgLayer,const char *_layerName, int layerIndex);
   void addTimeStep(const char * pszName,const char *pszTimeString);
   const char *getFileName();

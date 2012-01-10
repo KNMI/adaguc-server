@@ -720,7 +720,9 @@ int CImageDataWriter::getFeatureInfo(CDataSource *dataSource,int dX,int dY){
       if((pixel!=dataSource->dataObject[j]->dfNodataValue&&dataSource->dataObject[j]->hasNodataValue==true&&pixel==pixel)||dataSource->dataObject[0]->hasNodataValue==false){
         if(dataSource->dataObject[j]->hasStatusFlag){
           //Add status flag
-          element->value.print("%s (%d)",dataSource->dataObject[j]->getFlagMeaning(pixel),(int)pixel);
+          CT::string flagMeaning;
+          CDataSource::getFlagMeaningHumanReadable(&flagMeaning,&dataSource->dataObject[j]->statusFlagList,pixel);
+          element->value.print("%s (%d)",flagMeaning.c_str(),(int)pixel);
           element->units="";
         }else{
           //Add raster value
@@ -1413,9 +1415,11 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage
       double value=dataSource->dataObject[0]->statusFlagList[j]->value;
       int c=getColorIndexForValue(dataSource,value);
       drawImage->rectangle(5,int(2+dH+y),(int)cbW+9,(int)y+2+dH+12,c,248);
+      CT::string flagMeaning;
+      CDataSource::getFlagMeaningHumanReadable(&flagMeaning,&dataSource->dataObject[0]->statusFlagList,value);
       CT::string legendMessage;
-      legendMessage.print("%d %s",(int)dataSource->dataObject[0]->statusFlagList[j]->value,dataSource->dataObject[0]->statusFlagList[j]->meaning.c_str());
-      drawImage->setText(legendMessage.c_str(),legendMessage.length(),(int)cbW+16,(int)y+dH+1,248,-1);  
+      legendMessage.print("%d %s",(int)value,flagMeaning.c_str());
+      drawImage->setText(legendMessage.c_str(),legendMessage.length(),(int)cbW+16,(int)y+dH+2,248,-1);  
     }
   }else if(renderMethod!=contourshaded&&renderMethod!=shaded&&renderMethod!=contour){
     dH=30;
