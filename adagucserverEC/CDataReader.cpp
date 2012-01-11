@@ -1179,8 +1179,8 @@ int CDataReader::justLoadAFileHeader(CDataSource *dataSource){
 
 
 int CDataReader::autoConfigureDimensions(CDataSource *dataSource,bool tryToFindInterval){
+  
 
- 
   // Auto configure dimensions, in case they are not configured by the user.
   // Dimension configuration is added to the internal XML configuration structure.
   if(dataSource->cfgLayer->Dimension.size()>0){

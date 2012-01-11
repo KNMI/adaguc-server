@@ -176,12 +176,14 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
       CT::string fileDate;
       CDirReader::getFileDate(&fileDate,dirReader->fileList[j]->fullName.c_str());
       if(fileDate.length()<10)fileDate.copy("1970-01-01T00:00:00Z");
-      CT::string dimensionTextList;
-      dimensionTextList.print("(%s",dataSource->cfgLayer->Dimension[0]->attr.name.c_str());
-      for(size_t d=1;d<dataSource->cfgLayer->Dimension.size();d++){
-        dimensionTextList.printconcat(", %s",dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+      CT::string dimensionTextList="none";
+      if(dataSource->cfgLayer->Dimension.size()>0){
+        dimensionTextList.print("(%s",dataSource->cfgLayer->Dimension[0]->attr.name.c_str());
+        for(size_t d=1;d<dataSource->cfgLayer->Dimension.size();d++){
+          dimensionTextList.printconcat(", %s",dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+        }
+        dimensionTextList.concat(")");
       }
-      dimensionTextList.concat(")");
       for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
         int fileExistsInDB=0;
         //If we are messing in the non-temporary table (e.g.removeNonExistingFiles==0)

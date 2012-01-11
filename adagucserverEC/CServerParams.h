@@ -12,6 +12,8 @@
 
 class CServerParams{
   DEF_ERRORFUNCTION();
+  private:
+  int autoOpenDAPEnabled;
   public:
     double dfResX,dfResY;
     int dWCS_RES_OR_WH;
@@ -34,6 +36,7 @@ class CServerParams{
     int OGCVersion;
     int WCS_GoNative;
     bool enableDocumentCache;
+   
     //int skipErrorsSilently;
 // CDataSource *dataSources;
     CServerConfig *configObj;
@@ -52,6 +55,7 @@ class CServerParams{
       Geo = new CGeoParams;
       imageFormat=IMAGEFORMAT_IMAGEPNG8;
       imageMode=SERVERIMAGEMODE_8BIT;
+      autoOpenDAPEnabled=-1;
   //    dataSources = NULL;
     }
     ~CServerParams(){
@@ -73,6 +77,16 @@ class CServerParams{
 
     void getCacheFileName(CT::string *cacheFileName);
     void getCacheDirectory(CT::string *cacheFileName);
+    bool isAutoOpenDAPEnabled(){
+      if(autoOpenDAPEnabled==-1){
+        autoOpenDAPEnabled = 0;
+        if(cfg->OpenDAP.size()>0){
+          if(cfg->OpenDAP[0]->attr.enableautoopendap.equals("true"))autoOpenDAPEnabled = 1;
+        }
+      }
+      if(autoOpenDAPEnabled==0)return false;else return true;
+      return false;
+    }
     //Table names need to be different between time and height.
     // Therefore create unique tablenames like tablename_time and tablename_height
     static void makeCorrectTableName(CT::string *tableName,CT::string *dimName);

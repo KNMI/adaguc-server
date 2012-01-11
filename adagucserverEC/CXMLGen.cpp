@@ -46,7 +46,13 @@ CDBDebug("getFileNameForLayer");
       //Check if any dimension is given:
       if(myWMSLayer->layer->Dimension.size()==0){
         //If not, just return the filename
-        myWMSLayer->fileName.copy(myWMSLayer->layer->FilePath[0]->value.c_str());
+        CDirReader dirReader;
+        CDBFileScanner::searchFileNames(&dirReader,myWMSLayer->dataSource->cfgLayer->FilePath[0]->value.c_str(),myWMSLayer->dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),NULL);
+        if(dirReader.fileList.size()==1){
+          myWMSLayer->fileName.copy(dirReader.fileList[0]->fullName.c_str());
+        }else{
+          myWMSLayer->fileName.copy(myWMSLayer->layer->FilePath[0]->value.c_str());
+        }
         return 0;
       }
       CPGSQLDB DB;
@@ -64,7 +70,7 @@ CDBDebug("getFileNameForLayer");
       CDBDebug("query %s",query.c_str());        
 #endif      
       CT::string *values = DB.query_select(query.c_str(),0);
-      if(values == NULL){
+      if(values == NULL&&srvParam->isAutoOpenDAPEnabled()==true){
         CDBDebug("Query '%s' failed. Now trying to update the database.",query.c_str());
         //CDBDebug("Start update db for layer %s",myWMSLayer->name.c_str());
         status = CDBFileScanner::updatedb(srvParam->cfg->DataBase[0]->attr.parameters.c_str(),myWMSLayer->dataSource,NULL,NULL);

@@ -627,7 +627,7 @@ int CRequest::process_all_layers(){
         
         //Execute the query
         values_path = DB.query_select(Query.c_str(),0);
-        if(values_path==NULL){
+        if(values_path==NULL&&srvParam->isAutoOpenDAPEnabled()){
           //TODO disable automatic update for certain cases!
           CDBDebug("No results for query: Trying to update the database automatically.");
         
@@ -686,6 +686,15 @@ int CRequest::process_all_layers(){
         dataSources[j]->timeSteps.push_back(timeStep);
          //if(dataSources[j]->cfgLayer->Dimension.size()!=0){
         timeStep->fileName.copy(dataSources[j]->cfgLayer->FilePath[0]->value.c_str());
+        
+        CDirReader dirReader;
+        CDBFileScanner::searchFileNames(&dirReader,dataSources[j]->cfgLayer->FilePath[0]->value.c_str(),dataSources[j]->cfgLayer->FilePath[0]->attr.filter.c_str(),NULL);
+        if(dirReader.fileList.size()==1){
+          timeStep->fileName.copy(dirReader.fileList[0]->fullName.c_str());
+        }else{
+          timeStep->fileName.copy(dataSources[j]->cfgLayer->FilePath[0]->value.c_str());
+        }
+        
         timeStep->timeString.copy("0");
         timeStep->dims.addDimension("time",0);
         
@@ -1229,6 +1238,7 @@ int CRequest::process_querystring(){
   if(SERVICE.match("WMS")==0)srvParam->serviceType=SERVICE_WMS;
   if(SERVICE.match("WCS")==0)srvParam->serviceType=SERVICE_WCS;
 
+
   
   //srvParam->OpenDAPSource="/net/bhw262/nobackup/users/vreedede/ECMWF/U11_1313650800.nc";
   
@@ -1236,13 +1246,10 @@ int CRequest::process_querystring(){
     // Add configuration layers to the XML object to make things work
     if(srvParam->OpenDAPSource.c_str()!=NULL){
       
-      bool isAutoOpenDAPEnabled = false;
-      if(srvParam->cfg->OpenDAP.size()>0){
-        if(srvParam->cfg->OpenDAP[0]->attr.enableautoopendap.equals("true")){
-          isAutoOpenDAPEnabled = true;
-        }
-      }
-      if(isAutoOpenDAPEnabled==false){
+    
+      
+      
+      if(srvParam->isAutoOpenDAPEnabled()==false){
         CDBError("Automatic OpenDAP is not enabled");
         readyerror();exit(0);
       }
