@@ -75,6 +75,10 @@
 #define ALLOW_METADATA 8
 #define SHOW_QUERYINFO 16 
 
+//#define MEASURETIME
+
+//#define CDATAREADER_DEBUG
+//#define CCDFNETCDFIO_DEBUG
 //Debug settings:
 /*
 #define CIMAGEDATAWRITER_DEBUG

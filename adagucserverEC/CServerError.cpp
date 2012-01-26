@@ -111,7 +111,7 @@ void readyerror(){
     drawImage.setBGColor(255,255,255);
     drawImage.createImage(errImageWidth,errImageHeight);
     
-    drawImage.createGDPalette();
+    drawImage.create685Palette();
     //palette.createStandard();
 //    drawImage.createGDPalette(&palette);
     if(cerror_mode==WMS_EXCEPTIONS_IMAGE){

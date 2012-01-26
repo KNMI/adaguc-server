@@ -11,9 +11,11 @@
 class CImageDataWriter: public CBaseDataWriterInterface{
   private:
     CImageWarper imageWarper;
+    CDrawImage drawImage;
+    
     int requestType;
     int status;
-    int mode;
+   
     int animation;
     int nrImagesAdded;
     //CT::string getFeatureInfoResult;
@@ -54,10 +56,11 @@ class CImageDataWriter: public CBaseDataWriterInterface{
     DEF_ERRORFUNCTION();
     int createLegend(CDataSource *sourceImage,CDrawImage *drawImage);
     int warpImage(CDataSource *sourceImage,CDrawImage *drawImage);
-    CDrawImage drawImage;
+  
     CServerParams *srvParam;
     enum RenderMethodEnum { nearest, bilinear, contour, vector, barb, barbcontour, shaded,contourshaded,vectorcontour,vectorcontourshaded,nearestcontour,bilinearcontour};
-    
+    enum ImageDataWriterStatus { uninitialized, initialized, finished};
+    ImageDataWriterStatus writerStatus;
     float shadeInterval,contourIntervalL,contourIntervalH;
     //float textScaleFactor,textOffsetFactor;//To display pressure in pa to hpa etc...
     int smoothingFilter;

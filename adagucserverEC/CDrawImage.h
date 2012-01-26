@@ -1,7 +1,8 @@
 #ifndef CDrawImage_H
 #define CDrawImage_H
 
-
+#include <map>
+#include <iostream>
 #include "CDebugger.h"
 #include "CTypes.h"
 
@@ -357,17 +358,27 @@ class CFreeType:private CPlotter{
 };
 #endif //ADAGUC_USE_CAIRO
 
+class CLegend{
+public:
+  int id;
+  unsigned char CDIred[256],CDIgreen[256],CDIblue[256],CDIalpha[256];//Currently alpha of 0 and 255 is supported, but nothin in between.
+  CServerConfig::XMLE_Legend *legend;
+};
+
 class CDrawImage{
   private:
+    std::vector<CLegend *>legends;
+    CLegend * currentLegend;
     int dImageCreated;
-
+    
     DEF_ERRORFUNCTION();
     int _createStandard();
     
     int dPaletteCreated;
+    bool paletteCopied;
     unsigned char * rbuf;
     int dNumImages;
-    unsigned char CDIred[256],CDIgreen[256],CDIblue[256];
+    
     unsigned char BGColorR,BGColorG,BGColorB;
     bool _bEnableTransparency;
     bool _bEnableTrueColor;
@@ -398,10 +409,14 @@ class CDrawImage{
     int printImagePng();
     int printImageGif();
     int createGDPalette(CServerConfig::XMLE_Legend *palette);
-    int createGDPalette();
+
     int create685Palette();
-    void drawVector(int x,int y,double direction, double strength,int color);
+    
     void drawBarb(int x,int y,double direction, double strength,int color,bool toKnots,bool flip);
+    void drawText(int x,int y,float angle,const char *text,unsigned char colorIndex);
+    void drawTextAngle(const char * text, size_t length,double angle,int x,int y,int color,int fontSize);
+    void drawVector(int x,int y,double direction, double strength,int color);
+    void destroyImage();
     void line(float x1,float y1,float x2,float y2,int color);
     void line(float x1,float y1,float x2,float y2,float w,int color);
     void poly(float x1, float y1, float x2, float y2, float x3, float y3, int c, bool fill);
@@ -424,10 +439,10 @@ class CDrawImage{
     void setBGColor(unsigned char R,unsigned char G,unsigned char B);
     void setTrueColor(bool enable);
     bool getTrueColor(){return _bEnableTrueColor;}
-    void bla(const char * text, size_t length,double angle,int x,int y,int color,int fontSize);
+    
     void setAntiAliased(bool enable){      _bAntiAliased=enable;   };
     bool getAntialiased(){return _bAntiAliased;}
-    void drawText(int x,int y,float angle,const char *text,unsigned char colorIndex);
+    
     void setTTFFontLocation(const char *_TTFFontLocation){TTFFontLocation=_TTFFontLocation;  }
     void setTTFFontSize(int _TTFFontSize){  TTFFontSize=_TTFFontSize; }
 };

@@ -5,7 +5,10 @@
 const char * CImageDataWriter::className = "CImageDataWriter";
 const char * CImageDataWriter::RenderMethodStringList="nearest, bilinear, contour, vector, barb, barbcontour, shaded,contourshaded,vectorcontour,vectorcontourshaded,nearestcontour,bilinearcontour";
 CImageDataWriter::CImageDataWriter(){
-  mode = 0;
+
+  
+  //Mode can be "uninitialized"0 "initialized"(1) and "finished" (2)
+  writerStatus = uninitialized;
 }
 
 CImageDataWriter::RenderMethodEnum CImageDataWriter::getRenderMethodFromString(CT::string *renderMethodString){
@@ -112,7 +115,7 @@ int CImageDataWriter::drawCascadedWMS(const char *service,const char *layers,boo
 }
 
 int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int NrOfBands){
-  if(mode!=0){CDBError("Already initialized");return 1;}
+  if(writerStatus!=uninitialized){CDBError("Already initialized");return 1;}
   this->srvParam=srvParam;
   if(_setTransparencyAndBGColor(this->srvParam,&drawImage)!=0)return 1;
   if(srvParam->imageMode==SERVERIMAGEMODE_RGBA||srvParam->Styles.indexOf("HQ")>0){
@@ -145,7 +148,7 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   //drawImage.setAntiAliased(true);
   /*drawImage.setTrueColor(true);
   drawImage.setAntiAliased(true);*/
-  mode=1;
+  writerStatus=initialized;
   animation = 0;
   nrImagesAdded = 0;
   requestType=srvParam->requestType;
@@ -175,6 +178,7 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
 
   //Create palette for internal WNS layer
   if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
+
     int dLegendIndex = initializeLegend(srvParam,dataSource);
     if(dLegendIndex==-1){
       CDBError("Unable to initialize legend for dataSource %s",dataSource->cfgLayer->Name[0]->value.c_str());
@@ -195,6 +199,7 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   return 0;
 }
 int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *dataSource){
+
   if(srvParam==NULL){
     CDBError("srvParam==NULL");
     return -1;
@@ -206,8 +211,10 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
   }
   
 
-  /* GET LEGEND INFORMATION From the layer itself*/
-  //Get legend for the layer by using layers legend
+  /* GET LEGEND INFORMATION From the layer itself
+   * Lookup the legend name defined in the layers configuration in all available legends 
+   * and retrieve the legend index.
+   */
   if(dataSource->cfgLayer->Legend.size()!=0){
     if(srvParam->requestType==REQUEST_WMS_GETMAP||srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
       for(size_t j=0;j<srvParam->cfg->Legend.size()&&dLegendIndex==-1;j++){
@@ -215,7 +222,7 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
            srvParam->cfg->Legend[j]->attr.name.c_str())){
           dLegendIndex=j;
           break;
-           }
+        }
       }
     }
   }
@@ -226,8 +233,8 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
   if(dataSource->cfgLayer->Offset.size()>0){
     dataSource->legendOffset=parseFloat(dataSource->cfgLayer->Offset[0]->value.c_str());
   }
-   //When min and max are given, calculate the scale and offset according to min and max.
-    if(dataSource->cfgLayer->Min.size()>0&&dataSource->cfgLayer->Max.size()>0){
+  //When min and max are given, calculate the scale and offset according to min and max.
+  if(dataSource->cfgLayer->Min.size()>0&&dataSource->cfgLayer->Max.size()>0){
       float min=parseFloat(dataSource->cfgLayer->Min[0]->value.c_str());
       float max=parseFloat(dataSource->cfgLayer->Max[0]->value.c_str());
       dataSource->legendScale=240/(max-min);
@@ -242,8 +249,9 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
     dataSource->legendUpperRange=parseFloat(dataSource->cfgLayer->ValueRange[0]->attr.max.c_str());
   }
 
-  /* GET STYLE INFORMATION (OPTIONAL) */
-  //Get style information (if provided)
+  /* 
+   * Get style information ,if provided
+  */
   int dLayerStyleIndex=-1;//Equals styles=default (Nearest neighbour rendering)
   CT::string layerStyleName;
   
@@ -269,7 +277,6 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
             break;
           }
         }
-//        CDBDebug("j=%d",j);
         if(srvParam->cfg->Style[j]->RenderMethod.size()==1){
           CT::string renderMethodList(srvParam->cfg->Style[j]->RenderMethod[0]->value.c_str());
           CT::string *renderMethods = renderMethodList.split(",");
@@ -365,33 +372,15 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
       }
     }
   }
-  /*if(dLayerStyleIndex==-1){
-        //If no style information like legend, scale and offset is not given in the config
-        //Than the use the first index of the style element instead as style=default
-  if(dLegendIndex==-1){
-  if(dataSource->cfgLayer->Styles.size()==1){
-  CT::string styles(dataSource->cfgLayer->Styles[0]->value.c_str());
-  CT::string *layerstyles = styles.split(",");
-  if(layerstyles->count>0){
-          //renderMethod=nearest;
-  dLayerStyleIndex=0;
-  layerStyleName.copy(&layerstyles[0]);
-}
-  delete[] layerstyles;
-}else{
-  CDBError("No style information could be found in the configuration or in the layers configuration for layer %s",dataSource->getLayerName());
-  return 1;
-}
-}
-}*/
+
   delete[] requestStyle;
   
   int dConfigStyleIndex=-1;//Equals styles=default (Nearest neighbour rendering)
   //Get the servers style index from the name
   if(dLayerStyleIndex>-1){
-    //CDBDebug("dLayerStyleIndex %d - %d",dLayerStyleIndex,srvParam->cfg->Style.size());
-    //Get the servers style index from the name
-//    CDBDebug("Found style %s in the layers config, now searching the servers config.",layerStyleName.c_str());
+  //CDBDebug("dLayerStyleIndex %d - %d",dLayerStyleIndex,srvParam->cfg->Style.size());
+  //Get the servers style index from the name
+  // CDBDebug("Found style %s in the layers config, now searching the servers config.",layerStyleName.c_str());
 
     if(srvParam->cfg->Style.size()>0){
       if(srvParam->requestType==REQUEST_WMS_GETMAP||srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
@@ -1123,7 +1112,23 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
     }
       
     if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
-      if(j!=0){if(initializeLegend(srvParam,dataSource)==-1)return 1;}
+      
+      if(j!=0){
+        /*
+         * Reinitialize legend for other type of legends, if possible (in true color mode it is always the case
+         * For j==0, the legend is already initialized previously
+         */
+        #ifdef CIMAGEDATAWRITER_DEBUG
+        CDBDebug("REINITLEGEND");
+        #endif
+        int dLegendIndex = -1;
+        dLegendIndex=initializeLegend(srvParam,dataSource);
+        if(dLegendIndex==-1)return 1;
+        status = drawImage.createGDPalette(srvParam->cfg->Legend[dLegendIndex]);
+        if(status != 0){CDBError("Unknown palette type for %s",srvParam->cfg->Legend[dLegendIndex]->attr.name.c_str());return 1;}
+        
+      }
+      
 #ifdef CIMAGEDATAWRITER_DEBUG
       CDBDebug("Start warping");
 #endif
@@ -1154,9 +1159,9 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
   return status;
 }
 int CImageDataWriter::end(){
-  if(mode==0){CDBError("Not initialized");return 1;}
-  if(mode==2){CDBError("Already finished");return 1;}
-  mode=2;
+  if(writerStatus==uninitialized){CDBError("Not initialized");return 1;}
+  if(writerStatus==finished){CDBError("Already finished");return 1;}
+  writerStatus=finished;
   if(requestType==REQUEST_WMS_GETFEATUREINFO){
     enum ResultFormats {textplain,texthtml,textxml, applicationvndogcgml};
     ResultFormats resultFormat=texthtml;
@@ -1318,6 +1323,10 @@ int CImageDataWriter::end(){
     return 0;
   }
 
+#ifdef MEASURETIME
+StopWatch_Stop("Drawing finished");
+#endif
+
   //Static image
   int status=0;
   if(srvParam->imageFormat==IMAGEFORMAT_IMAGEPNG8||srvParam->imageFormat==IMAGEFORMAT_IMAGEPNG32){
@@ -1330,6 +1339,11 @@ int CImageDataWriter::end(){
     printf("%s%c%c\n","Content-Type:image/png",13,10);
     status=drawImage.printImagePng();
   }
+  
+  #ifdef MEASURETIME
+  StopWatch_Stop("Image printed");
+  #endif
+  
   return status;
 }
 float CImageDataWriter::getValueForColorIndex(CDataSource *dataSource,int index){

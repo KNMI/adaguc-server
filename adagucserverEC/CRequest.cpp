@@ -582,7 +582,7 @@ int CRequest::process_all_layers(){
           for(size_t k=0;k<cDims->count;k++){
             CT::string *sDims =cDims[k].split("/");// Split up by slashes (and put into sDims)
             if(sDims->count>0&&k>0)subQuery.concat("or ");
-            for(size_t  l=0;l<sDims->count;l++){
+            for(size_t  l=0;l<sDims->count&&l<2;l++){
               if(sDims[l].length()>0){
                 if(l>0)subQuery.concat("and ");
                 if(sDims->count==1){
@@ -625,6 +625,7 @@ int CRequest::process_all_layers(){
           return 1;
         }
         
+
         //Execute the query
         values_path = DB.query_select(Query.c_str(),0);
         if(values_path==NULL&&srvParam->isAutoOpenDAPEnabled()){
@@ -652,6 +653,7 @@ int CRequest::process_all_layers(){
         date_time = DB.query_select(Query.c_str(),1);
         if(date_time == NULL){CDBError("Query failed");status = DB.close(); return 1;}
         
+        
         //Now get the dimensions
         std::vector <CT::string*> dimValues;
         for(size_t i=0;i<dataSources[j]->requiredDims.size();i++){
@@ -663,6 +665,7 @@ int CRequest::process_all_layers(){
           CDataSource::TimeStep * timeStep = new CDataSource::TimeStep();
           dataSources[j]->timeSteps.push_back(timeStep);
           timeStep->fileName.copy(values_path[k].c_str());
+          CDBDebug("%s",timeStep->fileName.c_str());
           timeStep->timeString.copy(date_time[k].c_str());
           //For each timesteps a new set of dimensions is added with corresponding dim array indices.
           for(size_t i=0;i<dataSources[j]->requiredDims.size();i++){

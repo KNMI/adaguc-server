@@ -1,5 +1,5 @@
 #include "CDataReader.h"
-
+#include <math.h>
 const char *CDataReader::className="CDataReader";
 
 
@@ -125,6 +125,70 @@ int CDataReader::getCacheFileName(CDataSource *dataSource,CT::string *uniqueIDFo
   
   return 0;
 }
+
+/**
+ * Function to apply quickly scale and offset to a float data array
+ * Is static so it can be used in a multithreaded way.
+ */
+
+/*class ApplyScaleAndOffsetFloatSettings{
+  public:
+    size_t start;size_t stop;float *data;float scale;float offset;
+};
+
+void *applyScaleAndOffsetFloatThread(void *vsettings){
+
+  ApplyScaleAndOffsetFloatSettings *settings=(ApplyScaleAndOffsetFloatSettings *)vsettings;
+  size_t start = settings->start;
+  size_t stop = settings->stop;
+  float *data = settings->data;
+  float scale = settings ->scale;
+  float offset = settings->offset;
+  char msg[256];
+  sprintf(msg,"sf %d - %d == %d\n",start,stop,stop-start);
+  writeLogFile2(msg);
+          
+  for(size_t j=start;j<stop;j++){
+    data[j]=data[j]*scale+offset;
+  }
+  return NULL;
+}
+
+int applyScaleAndOffsetFloat(size_t start,size_t stop,float *data,float scale,float offset){
+  size_t numThreads=2;
+  int errcode;
+  int errorOccured = 0;
+  int blocksDone = 0;
+  int blockSize = (stop-start)/numThreads;
+  if(blockSize <=0 )return 1;
+  
+  pthread_t threads[numThreads];
+  ApplyScaleAndOffsetFloatSettings settings[numThreads];
+  try{
+    for(int j=0;j<numThreads;j++){
+      settings[j].start=start+blocksDone;
+      settings[j].stop=start+blocksDone+blockSize;
+      blocksDone+=blockSize;
+      if(j==numThreads-1)settings[j].stop=stop;
+      settings[j].data=data;
+      settings[j].scale=scale;
+      settings[j].offset=offset;
+      errcode=pthread_create(&threads[j],NULL,applyScaleAndOffsetFloatThread,(void*)(&settings[j]));
+      if(errcode){throw(__LINE__);}
+    }
+  }catch(int line){
+    errorOccured=1;
+  }
+  for (size_t j=0; j<numThreads; j++) {
+    errcode=pthread_join(threads[j],NULL);
+    if(errcode){ return 1;}
+  }
+  return errorOccured;
+}*/
+
+
+
+
 
 int CDataReader::open(CDataSource *_dataSource, int mode){
   //Perform some checks on pointers
@@ -455,8 +519,7 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
     //DataPostProc: Here our datapostprocessor comes into action!
     for(size_t dpi=0;dpi<dataSource->cfgLayer->DataPostProc.size();dpi++){
       CServerConfig::XMLE_DataPostProc * proc = dataSource->cfgLayer->DataPostProc[dpi];
-      
-      //Algorithm ax+b:
+       //Algorithm ax+b:
       if(proc->attr.algorithm.equals("ax+b")){
         dataSource->dataObject[varNr]->scaleOffsetIsApplied=true;
         dataSource->dataObject[varNr]->dataType=CDF_DOUBLE;
@@ -592,6 +655,10 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
   
   for(size_t varNr=0;varNr<dataSource->dataObject.size();varNr++)
   {
+    
+    #ifdef MEASURETIME
+    StopWatch_Stop("Reading _FillValue");
+    #endif
     CDF::Attribute *fillValue = var[varNr]->getAttributeNE("_FillValue");
     if(fillValue!=NULL){
       hasNodataValue=true;
@@ -599,17 +666,29 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
     }else hasNodataValue=false;
     
     #ifdef CDATAREADER_DEBUG   
-    CDBDebug("--- varNR [%d], name=\"%s\"",varNr,var[varNr]->name.c_str());
+    /*CDBDebug("--- varNR [%d], name=\"%s\"",varNr,var[varNr]->name.c_str());
     for(size_t d=0;d<var[varNr]->dimensionlinks.size();d++){
       CDBDebug("%s  \tstart: %d\tcount %d\tstride %d",var[varNr]->dimensionlinks[d]->name.c_str(),start[d],count[d],stride[d]);
-    }
+    }*/
+    #endif
+    
+    
+    #ifdef MEASURETIME
+    StopWatch_Stop("Freeing data");
     #endif
     
     //Read variable data
-    //free(var[varNr]->data);var[varNr]->data=NULL;
     var[varNr]->freeData();
+
+    #ifdef MEASURETIME
+    StopWatch_Stop("start reading data");
+    #endif
+    
     var[varNr]->readData(dataSource->dataObject[varNr]->dataType,start,count,stride);
     
+    #ifdef MEASURETIME
+    StopWatch_Stop("data read");
+    #endif
     
     
     //Swap X, Y dimensions so that pointer x+y*w works correctly
@@ -664,31 +743,35 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
       }*/
       if(dataSource->dataObject[varNr]->dataType==CDF_FLOAT){
         //Preserve the original nodata value, so it remains a nice short rounded number.
-        float fNoData=dfNoData;
+        float fNoData=(float)dfNoData;
+        float fscale_factor=(float)dfscale_factor;
+        float fadd_offset=(float)dfadd_offset;
         // packed data to be unpacked to FLOAT:
-        float *_data=(float*)var[varNr]->data;
-        for(size_t j=0;j<var[varNr]->getSize();j++){
-          _data[j]*=dfscale_factor;
-          _data[j]+=dfadd_offset;
+        if(fscale_factor!=1.0f||fadd_offset!=0.0f){
+          float *_data=(float*)var[varNr]->data;
+          size_t l=var[varNr]->getSize();
+          for(size_t j=0;j<l;j++){
+            _data[j]=_data[j]*fscale_factor+fadd_offset;
+          }
         }
         //Convert the nodata type
-        fNoData*=(float)dfscale_factor;
-        fNoData+=(float)dfadd_offset;
-        dfNoData=(double)fNoData;
+        dfNoData=fNoData*fscale_factor+fadd_offset;
       }
       
       if(dataSource->dataObject[varNr]->dataType==CDF_DOUBLE){
         // packed data to be unpacked to DOUBLE:
         double *_data=(double*)var[varNr]->data;
         for(size_t j=0;j<var[varNr]->getSize();j++){
-          _data[j]*=dfscale_factor;
-          _data[j]+=dfadd_offset;
+          _data[j]=_data[j]*dfscale_factor+dfadd_offset;
         }
         //Convert the nodata type
-        dfNoData*=(double)dfscale_factor;
-        dfNoData+=(double)dfadd_offset;
+        dfNoData=dfNoData*dfscale_factor+dfadd_offset;
       }
     }
+    
+    #ifdef MEASURETIME
+    StopWatch_Stop("Scale and offset applied");
+    #endif
     
     //Set the pointers to our dataSource
     dataSource->dataObject[varNr]->data=var[varNr]->data;
@@ -723,13 +806,15 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
     if(dataSource->statistics==NULL){
       dataSource->statistics = new CDataSource::Statistics();
       dataSource->statistics->calculate(dataSource);
+      #ifdef MEASURETIME
+      StopWatch_Stop("Calculated statistics");
+      #endif
     }
     float min=(float)dataSource->statistics->getMinimum();
     float max=(float)dataSource->statistics->getMaximum();
 #ifdef CDATAREADER_DEBUG    
     CDBDebug("Min = %f, Max = %f",min,max);
 #endif    
-    
     
     //Make sure that there is always a range in between the min and max.
     if(max==min)max=min+0.1;
@@ -742,7 +827,51 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
 #ifdef MEASURETIME
   StopWatch_Stop("all read");
 #endif
+
   
+  //DataPostProc: Here our datapostprocessor comes into action!
+  for(size_t dpi=0;dpi<dataSource->cfgLayer->DataPostProc.size();dpi++){
+    CServerConfig::XMLE_DataPostProc * proc = dataSource->cfgLayer->DataPostProc[dpi];
+    
+    //Algorithm msgcppmask
+    if(proc->attr.algorithm.equals("msgcppmask")){
+      if(dataSource->dataObject.size()!=2){
+        CDBError("3 variables are needed for msgcppmask");
+      }
+      CDBDebug("Applying msgcppmask");
+      float *data1=(float*)dataSource->dataObject[0]->data;//sunz
+      float *data2=(float*)dataSource->dataObject[1]->data;
+      //float *data3=(float*)dataSource->dataObject[2]->data;//azidiff
+      float fNodata1=(float)dataSource->dataObject[0]->dfNodataValue;
+      //float fNodata3=(float)dataSource->dataObject[2]->dfNodataValue;
+      size_t l=(size_t)dataSource->dHeight*(size_t)dataSource->dWidth;
+      
+      float fa=72,fb=75; 
+      
+      if(proc->attr.b.c_str()!=NULL){CT::string b;b.copy(proc->attr.b.c_str());fb=b.toDouble();}
+      if(proc->attr.a.c_str()!=NULL){CT::string a;a.copy(proc->attr.a.c_str());fa=a.toDouble();}
+      
+      for(size_t j=0;j<l;j++){
+        //if((data2[j]<72&&data1[j]<72&&data3[j]!=fNodata3)||(data2[j]>75))data1[j]=fNodata1;//else data1[j]=1;
+        if((data2[j]<fa&&data1[j]<fa)||(data2[j]>fb))data1[j]=fNodata1; else data1[j]=1;
+      //  if(data1[j]<43||data1[j]>65)data1[j]=fNodata;//else data1[j]=1;
+        //if(data3[j]+data1[j]<60)data1[j]=fNodata;;
+       // if(data1[j]<data2[j]-25)data1[j]=fNodata;;
+      //  if(data1[j]>data2[j]+25)data1[j]=fNodata;;
+       // if((data1[j]*data1[j]*data1[j]+data2[j]*data2[j]*data2[j])>55*55*data2[j])data1[j]=fNodata;
+        //data1[j]=sqrt(data1[j]*data1[j]+data2[j]*data2[j]);
+      }
+      delete dataSource->dataObject[1];
+      //delete dataSource->dataObject[2];
+      //dataSource->dataObject.erase(dataSource->dataObject.begin()+1);
+      dataSource->dataObject.erase(dataSource->dataObject.begin()+1);
+    }
+    #ifdef MEASURETIME
+    StopWatch_Stop("Data postprocessing completed");
+    #endif
+  }
+ 
+
   //Write the cache file if neccessary.
     if(enableDataCache==true&&saveFieldFile==true){
 

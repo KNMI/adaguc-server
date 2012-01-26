@@ -9,7 +9,7 @@
 */
 class CDrawTileObjInterface{
   public:
-    virtual void init(CDataSource *sourceImage,CDrawImage *drawImage,int tileWidth,int tileHeight) = 0;
+    virtual void init(CDataSource *dataSource,CDrawImage *drawImage,int tileWidth,int tileHeight) = 0;
     virtual int drawTile(double *x_corners,double *y_corners,int &dDestX,int &dDestY) = 0;
     virtual ~CDrawTileObjInterface(){
     }
@@ -35,40 +35,40 @@ class CDrawTileObjByteCache:public CDrawTileObjInterface{
     int dWidth,dHeight;
     float legendLog,legendScale,legendOffset;
     unsigned char *buf;
-    CDataSource * sourceImage;
+    CDataSource * dataSource;
     CDrawImage *drawImage;
-    void init(CDataSource *sourceImage,CDrawImage *drawImage,int tileWidth,int tileHeight){
-      this->sourceImage = sourceImage;
+    void init(CDataSource *dataSource,CDrawImage *drawImage,int tileWidth,int tileHeight){
+      this->dataSource = dataSource;
       this->drawImage = drawImage;
       x_div=tileWidth;y_div=tileHeight;
       for(int k=0;k<4;k++){
-        dfSourceBBOX[k]=sourceImage->dfBBOX[k];
-        dfImageBBOX[k]=sourceImage->dfBBOX[k];
+        dfSourceBBOX[k]=dataSource->dfBBOX[k];
+        dfImageBBOX[k]=dataSource->dfBBOX[k];
       }
       
       //Look whether BBOX was swapped in y dir
-      if(sourceImage->dfBBOX[3]<sourceImage->dfBBOX[1]){
-        dfSourceBBOX[1]=sourceImage->dfBBOX[3];
-        dfSourceBBOX[3]=sourceImage->dfBBOX[1];
+      if(dataSource->dfBBOX[3]<dataSource->dfBBOX[1]){
+        dfSourceBBOX[1]=dataSource->dfBBOX[3];
+        dfSourceBBOX[3]=dataSource->dfBBOX[1];
       }
       //Look whether BBOX was swapped in x dir
-      if(sourceImage->dfBBOX[2]<sourceImage->dfBBOX[0]){
-        dfSourceBBOX[0]=sourceImage->dfBBOX[2];
-        dfSourceBBOX[2]=sourceImage->dfBBOX[0];
+      if(dataSource->dfBBOX[2]<dataSource->dfBBOX[0]){
+        dfSourceBBOX[0]=dataSource->dfBBOX[2];
+        dfSourceBBOX[2]=dataSource->dfBBOX[0];
       }
       
-      dfNodataValue    = sourceImage->dataObject[0]->dfNodataValue ;
-      legendValueRange = sourceImage->legendValueRange;
-      legendLowerRange = sourceImage->legendLowerRange;
-      legendUpperRange = sourceImage->legendUpperRange;
-      hasNodataValue   = sourceImage->dataObject[0]->hasNodataValue;
-      dWidth = sourceImage->dWidth;
-      dHeight = sourceImage->dHeight;
-      legendLog = sourceImage->legendLog;
-      legendScale = sourceImage->legendScale;
-      legendOffset = sourceImage->legendOffset;
+      dfNodataValue    = dataSource->dataObject[0]->dfNodataValue ;
+      legendValueRange = dataSource->legendValueRange;
+      legendLowerRange = dataSource->legendLowerRange;
+      legendUpperRange = dataSource->legendUpperRange;
+      hasNodataValue   = dataSource->dataObject[0]->hasNodataValue;
+      dWidth = dataSource->dWidth;
+      dHeight = dataSource->dHeight;
+      legendLog = dataSource->legendLog;
+      legendScale = dataSource->legendScale;
+      legendOffset = dataSource->legendOffset;
       // Allocate the Byte Buffer
-      size_t imageSize=sourceImage->dWidth*sourceImage->dHeight;
+      size_t imageSize=dataSource->dWidth*dataSource->dHeight;
       allocateArray(&buf,imageSize);
       memset ( buf, 255, imageSize);
     }
@@ -79,8 +79,8 @@ class CDrawTileObjByteCache:public CDrawTileObjInterface{
       deleteArray(&buf);
     }
     int drawTile(double *x_corners,double *y_corners,int &dDestX,int &dDestY){
-      CDFType dataType=sourceImage->dataObject[0]->dataType;
-      void *data=sourceImage->dataObject[0]->data;
+      CDFType dataType=dataSource->dataObject[0]->dataType;
+      void *data=dataSource->dataObject[0]->data;
       switch(dataType){
         case CDF_CHAR  : return myDrawRawTile((char*)data,x_corners,y_corners,dDestX,dDestY);break;
         case CDF_BYTE  : return myDrawRawTile((char*)data,x_corners,y_corners,dDestX,dDestY);break;
@@ -198,43 +198,43 @@ class CDrawTileObj:public CDrawTileObjInterface{
     bool hasNodataValue;
     int dWidth,dHeight;
     float legendLog,legendScale,legendOffset;
-    CDataSource * sourceImage;
+    CDataSource * dataSource;
     CDrawImage *drawImage;
 //size_t prev_imgpointer;
-    void init(CDataSource *sourceImage,CDrawImage *drawImage,int tileWidth,int tileHeight){
-      this->sourceImage = sourceImage;
+    void init(CDataSource *dataSource,CDrawImage *drawImage,int tileWidth,int tileHeight){
+      this->dataSource = dataSource;
       this->drawImage = drawImage;
       x_div=tileWidth;y_div=tileHeight;
       for(int k=0;k<4;k++){
-        dfSourceBBOX[k]=sourceImage->dfBBOX[k];
-        dfImageBBOX[k]=sourceImage->dfBBOX[k];
+        dfSourceBBOX[k]=dataSource->dfBBOX[k];
+        dfImageBBOX[k]=dataSource->dfBBOX[k];
       }
       
       //Look whether BBOX was swapped in y dir
-      if(sourceImage->dfBBOX[3]<sourceImage->dfBBOX[1]){
-        dfSourceBBOX[1]=sourceImage->dfBBOX[3];
-        dfSourceBBOX[3]=sourceImage->dfBBOX[1];
+      if(dataSource->dfBBOX[3]<dataSource->dfBBOX[1]){
+        dfSourceBBOX[1]=dataSource->dfBBOX[3];
+        dfSourceBBOX[3]=dataSource->dfBBOX[1];
       }
       //Look whether BBOX was swapped in x dir
-      if(sourceImage->dfBBOX[2]<sourceImage->dfBBOX[0]){
-        dfSourceBBOX[0]=sourceImage->dfBBOX[2];
-        dfSourceBBOX[2]=sourceImage->dfBBOX[0];
+      if(dataSource->dfBBOX[2]<dataSource->dfBBOX[0]){
+        dfSourceBBOX[0]=dataSource->dfBBOX[2];
+        dfSourceBBOX[2]=dataSource->dfBBOX[0];
       }
       
-      dfNodataValue    = sourceImage->dataObject[0]->dfNodataValue ;
-      legendValueRange = sourceImage->legendValueRange;
-      legendLowerRange = sourceImage->legendLowerRange;
-      legendUpperRange = sourceImage->legendUpperRange;
-      hasNodataValue   = sourceImage->dataObject[0]->hasNodataValue;
-      dWidth = sourceImage->dWidth;
-      dHeight = sourceImage->dHeight;
-      legendLog = sourceImage->legendLog;
-      legendScale = sourceImage->legendScale;
-      legendOffset = sourceImage->legendOffset;
+      dfNodataValue    = dataSource->dataObject[0]->dfNodataValue ;
+      legendValueRange = dataSource->legendValueRange;
+      legendLowerRange = dataSource->legendLowerRange;
+      legendUpperRange = dataSource->legendUpperRange;
+      hasNodataValue   = dataSource->dataObject[0]->hasNodataValue;
+      dWidth = dataSource->dWidth;
+      dHeight = dataSource->dHeight;
+      legendLog = dataSource->legendLog;
+      legendScale = dataSource->legendScale;
+      legendOffset = dataSource->legendOffset;
     }
       int drawTile(double *x_corners,double *y_corners,int &dDestX,int &dDestY){
-      CDFType dataType=sourceImage->dataObject[0]->dataType;
-      void *data=sourceImage->dataObject[0]->data;
+      CDFType dataType=dataSource->dataObject[0]->dataType;
+      void *data=dataSource->dataObject[0]->data;
       switch(dataType){
         case CDF_CHAR  : return myDrawRawTile((char*)data,x_corners,y_corners,dDestX,dDestY);break;
         case CDF_BYTE  : return myDrawRawTile((char*)data,x_corners,y_corners,dDestX,dDestY);break;
@@ -370,7 +370,7 @@ class CImgWarpNearestNeighbour:public CImageWarperRenderInterface{
     //Reproject the corners of the tiles
      double y_corners[4],x_corners[4];
     double dfMaskBBOX[4];
-    int reproj(CImageWarper *warper,CDataSource *sourceImage,CGeoParams *GeoDest,double dfx,double dfy,double x_div,double y_div){
+    int reproj(CImageWarper *warper,CDataSource *dataSource,CGeoParams *GeoDest,double dfx,double dfy,double x_div,double y_div){
       double psx[4];
       double psy[4];
       double dfTiledBBOX[4];
@@ -411,7 +411,7 @@ class CImgWarpNearestNeighbour:public CImageWarperRenderInterface{
         }
       }
         pj_transform(warper->destpj,warper->sourcepj, 4,0,psx,psy,NULL);
-        if(sourceImage->nativeProj4.indexOf("longlat")>=0)
+        if(dataSource->nativeProj4.indexOf("longlat")>=0)
           for(int j=0;j<4;j++){
           psx[j]/=DEG_TO_RAD;
           psy[j]/=DEG_TO_RAD;
@@ -431,7 +431,7 @@ class CImgWarpNearestNeighbour:public CImageWarperRenderInterface{
     }
 
     //Setup projection and all other settings for the tiles to draw
-    void render(CImageWarper *warper,CDataSource *sourceImage,CDrawImage *drawImage){
+    void render(CImageWarper *warper,CDataSource *dataSource,CDrawImage *drawImage){
       //CDBDebug("Render");
       //This enables wether bunches of tiles are divided allong threads.
       int numThreads=4;
@@ -439,7 +439,7 @@ class CImgWarpNearestNeighbour:public CImageWarperRenderInterface{
       bool useThreading=true;
       if(numThreads==1)useThreading=false;
       
-      warper->findExtent(sourceImage,dfMaskBBOX);
+      warper->findExtent(dataSource,dfMaskBBOX);
       int x_div=drawImage->Geo->dWidth/16;
       int y_div=drawImage->Geo->dHeight/16;
       if(warper->isProjectionRequired()==false){
@@ -454,18 +454,20 @@ class CImgWarpNearestNeighbour:public CImageWarperRenderInterface{
 
       //Setup the renderer to draw the tiles with.We do not keep the calculated results for CDF_CHAR (faster)
       CDrawTileObjInterface *drawTileClass= NULL;
-      if(sourceImage->dataObject[0]->dataType==CDF_CHAR||
-        sourceImage->dataObject[0]->dataType==CDF_BYTE||
-        sourceImage->dataObject[0]->dataType==CDF_UBYTE
+      if(dataSource->dataObject[0]->dataType==CDF_CHAR||
+        dataSource->dataObject[0]->dataType==CDF_BYTE||
+        dataSource->dataObject[0]->dataType==CDF_UBYTE
       ){
         drawTileClass = new CDrawTileObj();           //Do not keep the calculated results for CDF_CHAR
+        
       }else{
-        drawTileClass = new CDrawTileObjByteCache();  //keep the calculated results
+        //drawTileClass = new CDrawTileObjByteCache();  //keep the calculated results
+        drawTileClass = new CDrawTileObj();           //Do not keep the calculated results for CDF_CHAR
       }
       //drawTileClass = new CDrawTileObjByteCache();           //Do not keep the calculated results for CDF_CHAR
       //drawTileClass = new CDrawTileObj();  //keep the calculated results
-      drawTileClass->init(sourceImage,drawImage,(int)tile_width,(int)tile_height);
-      //CDBDebug("b %f %f %f %f",sourceImage->dfBBOX[0],sourceImage->dfBBOX[1],sourceImage->dfBBOX[2],sourceImage->dfBBOX[3]);
+      drawTileClass->init(dataSource,drawImage,(int)tile_width,(int)tile_height);
+      //CDBDebug("b %f %f %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[1],dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
       //CDBDebug("d %f %f %f %f",drawImage->Geo->dfBBOX[0],drawImage->Geo->dfBBOX[1],drawImage->Geo->dfBBOX[2],drawImage->Geo->dfBBOX[3]);
       
       int numberOfTiles=x_div*y_div;
@@ -473,7 +475,7 @@ class CImgWarpNearestNeighbour:public CImageWarperRenderInterface{
       DrawTileSettings *curTileSettings;
       for(int x=0;x<x_div;x++){
         for(int y=0;y<y_div;y++){
-        status = reproj(warper,sourceImage,drawImage->Geo,x,(y_div-1)-y,x_div,y_div);
+        status = reproj(warper,dataSource,drawImage->Geo,x,(y_div-1)-y,x_div,y_div);
         int tileId=x+y*x_div;
         curTileSettings=&drawTileSettings[tileId];
         curTileSettings->id=tileId;

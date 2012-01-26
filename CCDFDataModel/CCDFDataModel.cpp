@@ -1,7 +1,9 @@
 #include "CCDFDataModel.h"
 const char *CDF::Variable::className="Variable";
 const char *CDFObject::className="CDFObject";
+#ifdef MEMLEAKCHECK
 extern Tracer NewTrace;
+#endif
 DEF_ERRORMAIN()
 int CDF::getTypeSize(CDFType type){
   if(type == CDF_CHAR || type == CDF_UBYTE || type == CDF_BYTE)return 1;
@@ -13,8 +15,10 @@ int CDF::getTypeSize(CDFType type){
 }
 
 int CDF::freeData(void **p){
+  #ifdef MEMLEAKCHECK
   if (Tracer::Ready)
     NewTrace.Remove (*p);
+  #endif
   free(*p);
   *p=NULL;
   return 0;
@@ -32,7 +36,9 @@ int CDF::allocateData(CDFType type,void **p,size_t length){
     return 1;
   }
   *p = malloc(length*typeSize);
+  #ifdef MEMLEAKCHECK
   if (Tracer::Ready)NewTrace.Add (*p, __FILE__, __LINE__);
+  #endif
 
   return 0;
 }
