@@ -98,9 +98,12 @@
 #define CDATAREADER_DEBUG
 #define CCDFNETCDFIO_DEBUG
 
+
+
+#define CXMLGEN_DEBUG
 */
 
-
+//#define CIMAGEDATAWRITER_DEBUG
 
 #define ENABLE_CURL
 //#define ADAGUC_USE_CAIRO

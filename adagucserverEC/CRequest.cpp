@@ -281,6 +281,8 @@ int CRequest::process_wms_getcap_request(){
   printf("%s%c%c\n","Content-Type:text/xml",13,10);
   printf("%s",XMLdocument.c_str());
   
+
+  
   return 0;
 }
 

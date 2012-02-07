@@ -15,7 +15,7 @@ CDrawImage::CDrawImage(){
 
   dImageCreated=0;
   dPaletteCreated=0;
-  
+  currentLegend = NULL;
   _bAntiAliased=false;
   _bEnableTransparency=false;
   _bEnableTrueColor=false;
@@ -129,6 +129,7 @@ int CDrawImage::printImagePng(){
   }
   return 0;
 }
+
 int CDrawImage::printImageGif(){
   if(dImageCreated==0){CDBError("print: image not created");return 1;}
   if(_bAntiAliased==true){
@@ -253,7 +254,6 @@ void CDrawImage::drawBarb(int x,int y,double direction, double strength,int colo
 
 void CDrawImage::circle(int x, int y, int r, int color) {
 	  if(_bAntiAliased==true){
-      if(currentLegend==NULL)return;
 #ifdef ADAGUC_USE_CAIRO
 	    cairo->setColor(currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],255);
 	    cairo->circle(x, y, r);
@@ -270,7 +270,6 @@ void CDrawImage::circle(int x, int y, int r, int color) {
 }
 void CDrawImage::poly(float x1,float y1,float x2,float y2,float x3, float y3, int color, bool fill){
 	  if(_bAntiAliased==true){
-      if(currentLegend==NULL)return;
 #ifdef ADAGUC_USE_CAIRO
 	    float ptx[3]={x1, x2, x3};
 	    float pty[3]={y1,y2,y3};
@@ -298,6 +297,7 @@ void CDrawImage::poly(float x1,float y1,float x2,float y2,float x3, float y3, in
 		  }
 	  }
 }
+
 void CDrawImage::line(float x1, float y1, float x2, float y2,int color){
   if(_bAntiAliased==true){
     if(currentLegend==NULL)return;
@@ -520,6 +520,27 @@ void CDrawImage::drawTextAngle(const char * text, size_t length,double angle,int
 }
 
 int CDrawImage::create685Palette(){
+  currentLegend=NULL;
+  
+  const char *paletteName685="685Palette";
+  
+  for(size_t j=0;j<legends.size();j++){
+    if(legends[j]->legendName.equals(paletteName685)){
+      CDBDebug("Found legend");
+      currentLegend=legends[j];
+      return 0;
+    }
+  }
+  
+  if(currentLegend ==NULL){
+    currentLegend = new CLegend();
+    currentLegend->id = legends.size();
+    currentLegend->legendName=paletteName685;
+    legends.push_back(currentLegend);
+  }
+  
+  if(dImageCreated==0){CDBError("createGDPalette: image not created");return 1;}
+  
   int j=0;
   for(int r=0;r<6;r++)
     for(int g=0;g<8;g++)
@@ -573,25 +594,23 @@ int CDrawImage::_createStandard(){
   return 0;
 }
 
+
 int CDrawImage::createGDPalette(CServerConfig::XMLE_Legend *legend){
-  //currentLegend = new CLegend();
-  //if(legends.size()>0)return 0;
   
   currentLegend=NULL;
   if(legend!=NULL){
     for(size_t j=0;j<legends.size();j++){
-      if(legend==legends[j]->legend){
-        CDBDebug("Found legend");
+      if(legends[j]->legendName.equals(legend->attr.name.c_str())){
         currentLegend=legends[j];
         return 0;
       }
     }
   }
   
-  if(currentLegend ==NULL){
+  if(currentLegend == NULL){
     currentLegend = new CLegend();
     currentLegend->id = legends.size();
-    currentLegend->legend=legend;
+    currentLegend->legendName=legend->attr.name.c_str();
     legends.push_back(currentLegend);
   }
   

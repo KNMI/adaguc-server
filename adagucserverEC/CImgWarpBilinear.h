@@ -60,20 +60,20 @@ class CImgWarpBilinear:public CImageWarperRenderInterface{
           }
           if(values[0].equals("contourSmallInterval")){
             contourSmallInterval=values[1].toFloat();
-            if(contourSmallInterval==0.0f){CDBWarning("invalid value given for contourSmallInterval");}
+            if(contourSmallInterval==0.0f){CDBWarning("invalid value given for contourSmallInterval: %s",pszSettings);}
           }
           if(values[0].equals("shadeInterval")){
             shadeInterval=values[1].toFloat();
-            if(shadeInterval==0.0f){CDBWarning("invalid value given for shadeInterval");}
+            if(shadeInterval==0.0f){CDBWarning("invalid value given for shadeInterval %s",pszSettings);}
           }
           if(values[0].equals("smoothingFilter")){
             smoothingFilter=values[1].toInt();
-            if(smoothingFilter<0||smoothingFilter>20){CDBWarning("invalid value given for smoothingFilter");}
+            if(smoothingFilter<0||smoothingFilter>20){CDBWarning("invalid value given for smoothingFilter %s",pszSettings);}
           }
           
           if(values[0].equals("contourBigInterval")){
             contourBigInterval=values[1].toFloat();
-            if(contourBigInterval==0.0f){CDBWarning("invalid value given for contourBigInterval");}
+            if(contourBigInterval==0.0f){CDBWarning("invalid value given for contourBigInterval %s",pszSettings);}
           }
         }
         delete[] values;

@@ -142,6 +142,7 @@ class CXMLSerializerInterface:public CXMLObjectInterface{
 
 int parseInt(const char *pszValue);
 float parseFloat(const char *pszValue);
+double parseDouble(const char *pszValue);
 
 #endif
 

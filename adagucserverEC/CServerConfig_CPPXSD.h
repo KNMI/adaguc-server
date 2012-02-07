@@ -461,6 +461,8 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_Log*> Log;
         std::vector <XMLE_ShadeInterval*> ShadeInterval;
         std::vector <XMLE_ContourIntervalL*> ContourIntervalL;
+        std::vector <XMLE_ContourIntervalH*> ContourIntervalH;
+        std::vector <XMLE_SmoothingFilter*> SmoothingFilter;
         std::vector <XMLE_ValueRange*> ValueRange;
         std::vector <XMLE_ImageText*> ImageText;
         std::vector <XMLE_LatLonBox*> LatLonBox;
@@ -490,6 +492,8 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(Log);
           XMLE_DELOBJ(ShadeInterval);
           XMLE_DELOBJ(ContourIntervalL);
+          XMLE_DELOBJ(ContourIntervalH);
+          XMLE_DELOBJ(SmoothingFilter);
           XMLE_DELOBJ(ValueRange);
           XMLE_DELOBJ(ImageText);
           XMLE_DELOBJ(LatLonBox);
@@ -523,6 +527,7 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("Log",3,name)){XMLE_ADDOBJ(Log);}
             else if(equals("ShadeInterval",13,name)){XMLE_ADDOBJ(ShadeInterval);}
             else if(equals("ContourIntervalL",16,name)){XMLE_ADDOBJ(ContourIntervalL);}
+            else if(equals("ContourIntervalH",16,name)){XMLE_ADDOBJ(ContourIntervalH);}
             else if(equals("ValueRange",10,name)){XMLE_ADDOBJ(ValueRange);}
             else if(equals("ImageText",9,name)){XMLE_ADDOBJ(ImageText);}
             else if(equals("LatLonBox",9,name)){XMLE_ADDOBJ(LatLonBox);}
@@ -533,6 +538,7 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("Cache",5,name)){XMLE_ADDOBJ(Cache);}
             else if(equals("WMSLayer",8,name)){XMLE_ADDOBJ(WMSLayer);}
             else if(equals("DataPostProc",12,name)){XMLE_ADDOBJ(DataPostProc);}
+            else if(equals("SmoothingFilter",15,name)){XMLE_ADDOBJ(SmoothingFilter);}
             
           }
           if(pt2Class!=NULL)pt2Class->addElement(baseClass,rc-pt2Class->level,name,value);
