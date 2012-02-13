@@ -1,6 +1,6 @@
 #INSTALLDIR=/data/apps/rcc/MaartenP/install
 INSTALLDIR=/nobackup/users/plieger/software/install
-
+#INSTALLDIR=/home/visadm/software/install
 #INSTALLDIR=/data/data1/mapserver/
 #INSTALLDIR2=/data/data1/software/install/
 #INSTALLDIR=/INSTALLDIR/plieger/interpolws/software/install
@@ -34,12 +34,12 @@ CCOMPILER=g++ -Wall -I $(INCLUDEDIR)
 CCOMPILER=g++ -march=core2 -mtune=core2 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 -I $(INCLUDEDIR) 
 #CCOMPILER=g++ -O2 -I $(INCLUDEDIR) 
 #CCOMPILER=g++ -march=k8-sse3 -mtune=k8-sse3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 -I $(INCLUDEDIR)  
-USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lxml2 -lgd -lproj -lpq -ludunits2 -lfreetype -lgd -lpng -lrt -lpthread -lcurl -lgdal -lcairo
+USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lxml2 -lgd -lproj -lpq -ludunits2 -lfreetype -lgd -lpng -lrt -lpthread -lcurl -lgdal #-lcairo
 
 # all libs together
 LIBS = -L$(LIBDIR) $(USERLIBS) -L$(INSTALLDIR2)/lib
 
-OBJECTS = CDataReader.o CImageWarper.o CDrawImage.o CServerError.o CRequest.o  CXMLGen.o CServerParams.o CGDALDataWriter.o CImageDataWriter.o CXMLSerializerInterface.o CDataSource.o CStopWatch.o CImgWarpBilinear.o CImgWarpBoolean.o CImgWarpNearestNeighbour.o CPGSQLDB.o CCairoPlotter.o CDBFileScanner.o CDFObjectStore.o
+OBJECTS = CDataReader.o CImageWarper.o CGeoParams.o CDrawImage.o CServerError.o CRequest.o  CXMLGen.o CServerParams.o CGDALDataWriter.o CImageDataWriter.o CXMLSerializerInterface.o CDataSource.o CStopWatch.o CImgWarpBilinear.o CImgWarpBoolean.o CImgWarpNearestNeighbour.o CPGSQLDB.o CCairoPlotter.o CDBFileScanner.o CDFObjectStore.o CDrawAA.o
 
 EXECUTABLE= adagucserver
 
@@ -55,4 +55,4 @@ clean:
 	rm $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE).o h5ncdump.o h5ncdump
 run:
 	make
-	./$(EXECUTABLE)		
+	./$(EXECUTABLE)

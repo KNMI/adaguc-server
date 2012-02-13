@@ -281,6 +281,8 @@ int CRequest::process_wms_getcap_request(){
   printf("%s%c%c\n","Content-Type:text/xml",13,10);
   printf("%s",XMLdocument.c_str());
   
+
+  
   return 0;
 }
 
@@ -301,29 +303,8 @@ int CRequest::process_wms_getmap_request(){
   return process_all_layers();
 }
 
-//The next piece of regular expressions are based on maptime.c from UMN MapServer
-/*#define NUMTIMEFORMATS 13
-typedef struct {
-  char pattern[64];
-  char  format[32];  
-  char userformat[32];
-  char resolution[8];
-} timeFormatObj;
-timeFormatObj timeFormats[NUMTIMEFORMATS] = {
-  {"^[0-9]{8}","%Y%m%d","YYYYMMDD","P1D"},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", "%Y-%m-%dT%H:%M:%SZ","YYYY-MM-DDTHH:MM:SSZ","PT1S"},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}",  "%Y-%m-%dT%H:%M:%S", "YYYY-MM-DDTHH:MM:SS","PT1S"},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}",  "%Y-%m-%d %H:%M:%S", "YYYY-MM-DD HH:MM:SS", "PT1S"},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}",  "%Y-%m-%dT%H:%M", "YYYY-MM-DDTHH:MM","PT1M"},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}",  "%Y-%m-%d %H:%M", "YYYY-MM-DD HH:MM","PT1M"},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}",  "%Y-%m-%dT%H", "YYYY-MM-DDTHH","PT1H"},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}",  "%Y-%m-%d %H", "YYYY-MM-DD HH","PT1H"},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}",  "%Y-%m-%d", "YYYY-MM-DD", "P1D"},
-  {"^[0-9]{4}-[0-9]{2}",  "%Y-%m", "YYYY-MM","P1M"},
-  {"^[0-9]{4}",  "%Y", "YYYY","P1Y"},
-  {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}Z",  "T%H:%M:%SZ", "THH:MM:SSZ","PT1S"},
-  {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}",  "T%H:%M:%S", "THH:MM:SSZ", "PT1S"},
-};*/
+
+
 const char *timeFormatAllowedChars="0123456789:TZ-/. _ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 bool CRequest::checkTimeFormat(CT::string& timeToCheck){
   if(timeToCheck.length()<1)return false;
@@ -443,7 +424,12 @@ int CRequest::process_all_layers(){
   }
 
   for(size_t j=0;j<dataSources.size();j++){
-    //WCS DescribeCoverage
+    
+    
+    if(dataSources[j]->dLayerType==CConfigReaderLayerTypeUnknown){
+      CDBError("Unknow layer type");
+      return 0;
+    }
 
     /***************************/
     /* Type = Database layer   */
@@ -518,7 +504,7 @@ int CRequest::process_all_layers(){
                 //CDBDebug("srvParam->OGCDims[k].Value %d==%s",j,srvParam->OGCDims[k].Value.c_str());
               }
               // If we have value 'current', give the dim a special status
-              if(ogcDim->Value.match("current")==0){
+              if(ogcDim->Value.equals("current")){
                 dimsfound[i]=2;
                 CT::string tableName(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str());
                 CServerParams::makeCorrectTableName(&tableName,&ogcDim->netCDFDimName);
@@ -783,6 +769,51 @@ int CRequest::process_all_layers(){
               imageDataWriter.setDate(szTemp);
             }
           }
+          
+          CDBDebug("drawing titles");
+          
+          int textY=5;
+          if(srvParam->mapTitle.length()>0){
+            if(srvParam->cfg->WMS[0]->TitleFont.size()==1){
+              float fontSize=parseFloat(srvParam->cfg->WMS[0]->TitleFont[0]->attr.size.c_str());
+              textY+=fontSize*1.2;
+              imageDataWriter.drawText(5,textY,srvParam->cfg->WMS[0]->TitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapTitle.c_str(),240);
+              textY+=4;
+            }
+          }
+          if(srvParam->mapSubTitle.length()>0){
+            if(srvParam->cfg->WMS[0]->SubTitleFont.size()==1){
+              float fontSize=parseFloat(srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.size.c_str());
+              textY+=fontSize*1.2;
+              imageDataWriter.drawText(8,textY,srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapSubTitle.c_str(),240);
+              textY+=4;
+            }
+          }
+          //imageDataWriter.drawText(5,5+30+25+2+12+2,"/home/visadm/software/fonts/verdana.ttf",12,0,dataSources[0]->timeSteps[0]->timeString.c_str(),240);
+          if(srvParam->showDimensionsInImage){
+            textY+=4;
+            for(int d=0;d<srvParam->NumOGCDims;d++){
+              CT::string message;
+              float fontSize=parseFloat(srvParam->cfg->WMS[0]->DimensionFont[0]->attr.size.c_str());
+              textY+=fontSize*1.2;
+              message.print("%s: %s",srvParam->OGCDims[d].Name.c_str(),srvParam->OGCDims[d].Value.c_str());
+              imageDataWriter.drawText(7,textY,srvParam->cfg->WMS[0]->DimensionFont[0]->attr.location.c_str(),fontSize,0,message.c_str(),240);
+              textY+=4;
+            }
+          }
+          if(srvParam->showLegendInImage){
+            //Draw legend
+            bool legendDrawn = false;
+            for(size_t d=0;d<dataSources.size()&&legendDrawn==false;d++){
+              if(dataSources[d]->dLayerType!=CConfigReaderLayerTypeCascaded){
+                status = imageDataWriter.createLegend(dataSources[d],7,srvParam->Geo->dHeight-LEGEND_HEIGHT-5);if(status != 0)throw(__LINE__);
+                legendDrawn=true;
+              }
+            }
+          }
+          if(srvParam->showNorthArrow){
+
+          }
           status = imageDataWriter.end();if(status != 0)throw(__LINE__);
           fclose(stdout);
         }
@@ -816,7 +847,7 @@ int CRequest::process_all_layers(){
         if(srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
           CImageDataWriter ImageDataWriter;
           status = ImageDataWriter.init(srvParam,dataSources[j],1);if(status != 0)throw(__LINE__);
-          status = ImageDataWriter.createLegend(dataSources[j]);if(status != 0)throw(__LINE__);
+          status = ImageDataWriter.createLegend(dataSources[j],0,0);if(status != 0)throw(__LINE__);
           status = ImageDataWriter.end();if(status != 0)throw(__LINE__);
         }
         // WMS GetMetaData
@@ -843,6 +874,8 @@ int CRequest::process_all_layers(){
         CDBError("Returning from line %d",i);
         return 1;
       }
+    }else{
+      CDBError("Unknown layer type");
     }
   //}
 
@@ -869,7 +902,15 @@ int CRequest::process_querystring(){
     }
   }
   */
-
+  if(srvParam->cfg->WMS.size()!=1){
+    CDBError("WMS element has not been configured");
+    return 1;
+  }
+  if(srvParam->cfg->WCS.size()!=1){
+    CDBError("WCS element has not been configured");
+    return 1;
+  }
+ 
   seterrormode(EXCEPTIONS_PLAINTEXT);
   CT::string SERVICE,REQUEST;
 
@@ -922,7 +963,7 @@ int CRequest::process_querystring(){
     // Styles parameter
     value0Cap.copy(&values[0]);
     value0Cap.toUpperCase();
-    if(value0Cap.match("STYLES")==0){
+    if(value0Cap.equals("STYLES")){
       if(dFound_Styles==0){
         if(values->count==2&&values[1].length()>0){
           srvParam->Styles.copy(&values[1]);
@@ -934,7 +975,7 @@ int CRequest::process_querystring(){
       }
     }
     // Style parameter
-    if(value0Cap.match("STYLE")==0){
+    if(value0Cap.equals("STYLE")){
       if(dFound_Style==0){
         if(values->count==2&&values[1].length()>0){
           srvParam->Style.copy(&values[1]);
@@ -947,7 +988,7 @@ int CRequest::process_querystring(){
     }
     if(values->count>=2){
       // BBOX Parameters
-      if(value0Cap.match("BBOX")==0){
+      if(value0Cap.equals("BBOX")){
         CT::string * bboxvalues=values[1].split(",");
         if(bboxvalues->count==4){
           for(int j=0;j<4;j++){
@@ -961,7 +1002,7 @@ int CRequest::process_querystring(){
         dFound_BBOX=1;
       }
       // Width Parameters
-      if(value0Cap.match("WIDTH")==0){
+      if(value0Cap.equals("WIDTH")){
         srvParam->Geo->dWidth=atoi(values[1].c_str());
         if(srvParam->Geo->dWidth<1){
           CDBWarning("Parameter Width should be at least 1");
@@ -970,7 +1011,7 @@ int CRequest::process_querystring(){
         dFound_Width=1;
       }
       // Height Parameters
-      if(value0Cap.match("HEIGHT")==0){
+      if(value0Cap.equals("HEIGHT")){
         srvParam->Geo->dHeight=atoi(values[1].c_str());
         if(srvParam->Geo->dHeight<1){
           CDBWarning("Parameter Height should be at least 1");
@@ -980,7 +1021,7 @@ int CRequest::process_querystring(){
         dFound_Height=1;
       }
       // RESX Parameters
-      if(value0Cap.match("RESX")==0){
+      if(value0Cap.equals("RESX")){
         srvParam->dfResX=atof(values[1].c_str());
         if(srvParam->dfResX==0){
           CDBWarning("Parameter RESX should not be zero");
@@ -989,7 +1030,7 @@ int CRequest::process_querystring(){
         dFound_RESX=1;
       }
       // RESY Parameters
-      if(value0Cap.match("RESY")==0){
+      if(value0Cap.equals("RESY")){
         srvParam->dfResY=atof(values[1].c_str());
         if(srvParam->dfResY==0){
           CDBWarning("Parameter RESY should not be zero");
@@ -1009,13 +1050,13 @@ int CRequest::process_querystring(){
         dFound_Y=1;
       }
       // SRS / CRS Parameters
-      if(value0Cap.match("SRS")==0){
+      if(value0Cap.equals("SRS")){
         if(parameters[j].length()>5){
           srvParam->Geo->CRS.copy(parameters[j].c_str()+4);
           dFound_SRS=1;
         }
       }
-      if(value0Cap.match("CRS")==0){
+      if(value0Cap.equals("CRS")){
         if(parameters[j].length()>5){
           srvParam->Geo->CRS.copy(parameters[j].c_str()+4);
           srvParam->Geo->CRS.decodeURL();
@@ -1046,7 +1087,7 @@ int CRequest::process_querystring(){
       }
 
       // FORMAT parameter
-      if(value0Cap.match("FORMAT")==0){
+      if(value0Cap.equals("FORMAT")){
         if(dFound_Format==0){
           if(values[1].length()>1){
             srvParam->Format.copy(&values[1]);
@@ -1059,7 +1100,7 @@ int CRequest::process_querystring(){
       }
       
       // INFO_FORMAT parameter
-      if(value0Cap.match("INFO_FORMAT")==0){
+      if(value0Cap.equals("INFO_FORMAT")){
         if(dFound_InfoFormat==0){
           if(values[1].length()>1){
             srvParam->InfoFormat.copy(&values[1]);
@@ -1101,7 +1142,7 @@ int CRequest::process_querystring(){
       
       
       // Version parameter
-      if(value0Cap.match("VERSION")==0){
+      if(value0Cap.equals("VERSION")){
         if(dFound_Version==0){
           if(values[1].length()>1){
             Version.copy(&values[1]);
@@ -1114,7 +1155,7 @@ int CRequest::process_querystring(){
       }
 
       // Exceptions parameter
-      if(value0Cap.match("EXCEPTIONS")==0){
+      if(value0Cap.equals("EXCEPTIONS")){
         if(dFound_Exceptions==0){
           if(values[1].length()>1){
             Exceptions.copy(&values[1]);
@@ -1129,7 +1170,7 @@ int CRequest::process_querystring(){
 
       //Opendap source parameter
       if(dFound_OpenDAPSource==0){
-        if(value0Cap.match("SOURCE")==0){
+        if(value0Cap.equals("SOURCE")){
           if(srvParam->OpenDAPSource.c_str()==NULL){
             srvParam->OpenDAPSource.copy(values[1].c_str());
           }
@@ -1138,7 +1179,7 @@ int CRequest::process_querystring(){
       }
       //Opendap variable parameter
        if(dFound_OpenDAPVariable==0){
-        if(value0Cap.match("VARIABLE")==0){
+        if(value0Cap.equals("VARIABLE")){
           if(srvParam->OpenDapVariable.c_str()==NULL){
             srvParam->OpenDapVariable.copy(values[1].c_str());
           }
@@ -1148,50 +1189,33 @@ int CRequest::process_querystring(){
       
       
       //WMS Layers parameter
-      if(value0Cap.match("LAYERS")==0){
+      if(value0Cap.equals("LAYERS")){
         if(srvParam->WMSLayers!=NULL)
-        //{
-      //    CDBError("LAYERS already defined");
-      //    dErrorOccured=1;
           delete[] srvParam->WMSLayers;
           srvParam->WMSLayers = values[1].split(",");
         dFound_WMSLAYERS=1;
       }
-    //WMS Layer parameter
-      if(value0Cap.match("LAYER")==0){
+      //WMS Layer parameter
+      if(value0Cap.equals("LAYER")){
         if(srvParam->WMSLayers!=NULL)
-        //{
-        //  CDBError("LAYER already defined");
           delete[] srvParam->WMSLayers;
-      //   dErrorOccured=1;
-      // }else{
           srvParam->WMSLayers = values[1].split(",");
-//          if(srvParam->WMSLayers->count>1){
-  //          CDBError("Too many layers in request");
-    //        dErrorOccured=1;
-      //    }
-        //}
         dFound_WMSLAYER=1;
       }
 
     //WMS Layer parameter
-      if(value0Cap.match("QUERY_LAYERS")==0){
+      if(value0Cap.equals("QUERY_LAYERS")){
         if(srvParam->WMSLayers!=NULL)
-        //{
           delete[] srvParam->WMSLayers;
-    //     CDBError("QUERY_LAYERS already defined");
-      //   dErrorOccured=1;
-        //}else{
           srvParam->WMSLayers = values[1].split(",");
           if(srvParam->WMSLayers->count>1){
             CDBError("Too many layers in request");
             dErrorOccured=1;
           }
-        //}
         dFound_WMSLAYER=1;
     }
       //WCS Coverage parameter
-    if(value0Cap.match("COVERAGE")==0){
+    if(value0Cap.equals("COVERAGE")){
         if(srvParam->WMSLayers!=NULL){
           CDBWarning("COVERAGE already defined");
           dErrorOccured=1;
@@ -1202,13 +1226,13 @@ int CRequest::process_querystring(){
       }
 
       // Service parameters
-      if(value0Cap.match("SERVICE")==0){
+      if(value0Cap.equals("SERVICE")){
         values[1].toUpperCase();
         SERVICE.copy(values[1].c_str(),values[1].length());
         dFound_Service=1;
       }
       // Request parameters
-      if(value0Cap.match("REQUEST")==0){
+      if(value0Cap.equals("REQUEST")){
         values[1].toUpperCase();
         REQUEST.copy(values[1].c_str(),values[1].length());
         dFound_Request=1;
@@ -1216,15 +1240,42 @@ int CRequest::process_querystring(){
 
 
       // debug Parameters
-      if(value0Cap.match("DEBUG")==0){
-        if(values[1].match("ON")==0){
+      if(value0Cap.equals("DEBUG")){
+        if(values[1].equals("ON")){
           printf("%s%c%c\n","Content-Type:text/plain",13,10);
           printf("Debug mode:ON\nDebug messages:<br>\r\n\r\n");
           dFound_Debug=1;
         }
       }
-
-
+      
+      if(value0Cap.equals("TITLE")){
+        if(values[1].length()>0){
+          srvParam->mapTitle = values[1].c_str();
+        }
+      }
+      if(value0Cap.equals("SUBTITLE")){
+        if(values[1].length()>0){
+          srvParam->mapSubTitle = values[1].c_str();
+        }
+      }
+      if(value0Cap.equals("SHOWDIMS")){
+        values[1].toLowerCase();
+        if(values[1].equals("true")){
+          srvParam->showDimensionsInImage = true;
+        }
+      }
+      if(value0Cap.equals("SHOWLEGEND")){
+        values[1].toLowerCase();
+        if(values[1].equals("true")){
+          srvParam->showLegendInImage = true;
+        }
+      }
+      if(value0Cap.equals("SHOWNORTHARROW")){
+        values[1].toLowerCase();
+        if(values[1].equals("true")){
+          srvParam->showNorthArrow = true;
+        }
+      }
     }
     delete[] values;
   }
@@ -1238,8 +1289,8 @@ int CRequest::process_querystring(){
   if(dFound_Styles==0){
     srvParam->Styles.copy("");
   }
-  if(SERVICE.match("WMS")==0)srvParam->serviceType=SERVICE_WMS;
-  if(SERVICE.match("WCS")==0)srvParam->serviceType=SERVICE_WCS;
+  if(SERVICE.equals("WMS"))srvParam->serviceType=SERVICE_WMS;
+  if(SERVICE.equals("WCS"))srvParam->serviceType=SERVICE_WCS;
 
 
   
@@ -1367,8 +1418,8 @@ int CRequest::process_querystring(){
     // Check the version
     if(dFound_Version!=0){
       srvParam->OGCVersion=WMS_VERSION_1_1_1;
-      if(Version.match("1.0.0")==0)srvParam->OGCVersion=WMS_VERSION_1_0_0;
-      if(Version.match("1.1.1")==0)srvParam->OGCVersion=WMS_VERSION_1_1_1;
+      if(Version.equals("1.0.0"))srvParam->OGCVersion=WMS_VERSION_1_0_0;
+      if(Version.equals("1.1.1"))srvParam->OGCVersion=WMS_VERSION_1_1_1;
       if(srvParam->OGCVersion==-1){
         CDBError("Invalid version ('%s'): only WMS 1.0.0 and WMS 1.1.1 supported",Version.c_str());
         dErrorOccured=1;
@@ -1382,13 +1433,13 @@ int CRequest::process_querystring(){
     }
     if(srvParam->OGCVersion==WMS_VERSION_1_1_1)seterrormode(WMS_EXCEPTIONS_XML_1_1_1);
     if(dFound_Exceptions!=0){
-      if(Exceptions.match("application/vnd.ogc.se_xml")==0){
+      if(Exceptions.equals("application/vnd.ogc.se_xml")){
         if(srvParam->OGCVersion==WMS_VERSION_1_1_1)seterrormode(WMS_EXCEPTIONS_XML_1_1_1);
       }
-      if(Exceptions.match("application/vnd.ogc.se_inimage")==0){
+      if(Exceptions.equals("application/vnd.ogc.se_inimage")){
         seterrormode(WMS_EXCEPTIONS_IMAGE);
       }
-      if(Exceptions.match("application/vnd.ogc.se_blank")==0){
+      if(Exceptions.equals("application/vnd.ogc.se_blank")){
         seterrormode(WMS_EXCEPTIONS_BLANKIMAGE);
       }
     }
@@ -1566,20 +1617,11 @@ int CRequest::process_querystring(){
       CDBWarning("Parameter REQUEST missing");
       dErrorOccured=1;
     }else{
-      if(REQUEST.match("GETCAPABILITIES")==0)srvParam->requestType=REQUEST_WCS_GETCAPABILITIES;
-      if(REQUEST.match("DESCRIBECOVERAGE")==0)srvParam->requestType=REQUEST_WCS_DESCRIBECOVERAGE;
-      if(REQUEST.match("GETCOVERAGE")==0)srvParam->requestType=REQUEST_WCS_GETCOVERAGE;
+      if(REQUEST.equals("GETCAPABILITIES"))srvParam->requestType=REQUEST_WCS_GETCAPABILITIES;
+      if(REQUEST.equals("DESCRIBECOVERAGE"))srvParam->requestType=REQUEST_WCS_DESCRIBECOVERAGE;
+      if(REQUEST.equals("GETCOVERAGE"))srvParam->requestType=REQUEST_WCS_GETCOVERAGE;
     }
 
-    /*if(dFound_Version==0){
-      CDBError("Parameter VERSION missing");
-      dErrorOccured=1;
-    }else{
-      if(Version.match("1.0")!=0&&Version.match("1.0.0")!=0){
-        CDBError("Invalid version: only WCS 1.0.0 supported");
-        dErrorOccured=1;
-      }
-    }*/
     if(dErrorOccured==0&&srvParam->requestType==REQUEST_WCS_DESCRIBECOVERAGE){
       if(dErrorOccured==0){
         int status =  process_wcs_describecov_request();
@@ -1683,7 +1725,7 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan){
       //Make sure we are not updating the table twice
 
       for(i=0;i<nrtablesdone;i++){
-        if(tablesdone[i].match(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str())==0){found=1;break;}
+        if(tablesdone[i].equals(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str())){found=1;break;}
       }
       if(found==0){
         status = CDBFileScanner::updatedb(srvParam->cfg->DataBase[0]->attr.parameters.c_str(),dataSources[j],tailPath,layerPathToScan);

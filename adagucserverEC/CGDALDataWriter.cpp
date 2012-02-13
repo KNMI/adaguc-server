@@ -92,7 +92,7 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
   CT::string driverName;
   
   for(size_t j=0;j<srvParam->cfg->WCS[0]->WCSFormat.size();j++){
-    if(srvParam->Format.match(srvParam->cfg->WCS[0]->WCSFormat[j]->attr.name.c_str())==0){
+    if(srvParam->Format.equals(srvParam->cfg->WCS[0]->WCSFormat[j]->attr.name.c_str())){
       driverName.copy(srvParam->cfg->WCS[0]->WCSFormat[j]->attr.driver.c_str());
       mimeType.copy(srvParam->cfg->WCS[0]->WCSFormat[j]->attr.mimetype.c_str());
       customOptions.copy(srvParam->cfg->WCS[0]->WCSFormat[j]->attr.options.c_str());
@@ -101,10 +101,10 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
   }
   srvParam->Format.toUpperCase();
   if(driverName.length()==0){
-    if(srvParam->Format.match("GEOTIFF")==0){
+    if(srvParam->Format.equals("GEOTIFF")){
       driverName.copy("GTiff");
     }
-    if(srvParam->Format.match("AAIGRID")==0){
+    if(srvParam->Format.equals("AAIGRID")){
       driverName.copy("AAIGRID");
       if(NrOfBands>1){
         CDBError("This WCS format ('%s') does not support multiple bands. Select a single image, or choose an other format.",srvParam->Format.c_str());

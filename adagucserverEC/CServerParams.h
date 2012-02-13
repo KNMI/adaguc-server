@@ -29,6 +29,13 @@ class CServerParams{
     CT::string Styles;
     CT::string Style;
     CT::string OpenDAPSource,OpenDapVariable;
+    
+    CT::string mapTitle;
+    CT::string mapSubTitle;
+    bool showDimensionsInImage;
+    bool showLegendInImage;
+    bool showNorthArrow;
+    
     COGCDims OGCDims[MAX_DIMS];
     int NumOGCDims;
     int serviceType;
@@ -56,6 +63,8 @@ class CServerParams{
       imageFormat=IMAGEFORMAT_IMAGEPNG8;
       imageMode=SERVERIMAGEMODE_8BIT;
       autoOpenDAPEnabled=-1;
+      showDimensionsInImage = false;
+      showLegendInImage = false;
   //    dataSources = NULL;
     }
     ~CServerParams(){

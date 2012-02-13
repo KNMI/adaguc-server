@@ -4,6 +4,7 @@
 #define ADAGUCSERVER_VERSION             "1.0"
 
 //CConfigReaderLayerType
+#define CConfigReaderLayerTypeUnknown     0
 #define CConfigReaderLayerTypeDataBase    1
 #define CConfigReaderLayerTypeStyled      2
 #define CConfigReaderLayerTypeCascaded    3
@@ -98,9 +99,12 @@
 #define CDATAREADER_DEBUG
 #define CCDFNETCDFIO_DEBUG
 
+
+
+#define CXMLGEN_DEBUG
 */
 
-
+#define CIMAGEDATAWRITER_DEBUG
 
 #define ENABLE_CURL
 //#define ADAGUC_USE_CAIRO

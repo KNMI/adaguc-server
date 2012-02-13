@@ -8,6 +8,8 @@
 #include "CDebugger.h"
 #include "CStopWatch.h"
 
+#define LATLONPROJECTION "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+
 void floatToString(char * string,size_t maxlen,float number);
 class CImageWarper{
 //  CNetCDFReader reader;
@@ -29,9 +31,12 @@ class CImageWarper{
     }
     projPJ sourcepj,destpj,latlonpj;
     int initreproj(CDataSource *sourceImage,CGeoParams *GeoDest,std::vector <CServerConfig::XMLE_Projection*> *prj);
+    int initreproj(const char * projString,CGeoParams *GeoDest,std::vector <CServerConfig::XMLE_Projection*> *_prj);
     int closereproj();
     int reprojpoint(double &dfx,double &dfy);
+    int reprojpoint(CPoint &p);
     int reprojpoint_inv(double &dfx,double &dfy);
+    int reprojpoint_inv(CPoint &p);
     void reprojBBOX(double *df4PixelExtent);
     int reprojfromLatLon(double &dfx,double &dfy);
     int reprojToLatLon(double &dfx,double &dfy);

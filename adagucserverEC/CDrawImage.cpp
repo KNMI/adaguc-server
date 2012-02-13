@@ -1,9 +1,6 @@
 #include "CDrawImage.h"
 
 const char *CDrawImage::className="CDrawImage";
-#ifndef ADAGUC_USE_CAIRO
-const char *CFreeType::className="CFreeType";
-#endif
 
 float convertValueToClass(float val,float interval){
   float f=int(val/interval);
@@ -15,7 +12,7 @@ CDrawImage::CDrawImage(){
 
   dImageCreated=0;
   dPaletteCreated=0;
-  
+  currentLegend = NULL;
   _bAntiAliased=false;
   _bEnableTransparency=false;
   _bEnableTrueColor=false;
@@ -129,6 +126,7 @@ int CDrawImage::printImagePng(){
   }
   return 0;
 }
+
 int CDrawImage::printImageGif(){
   if(dImageCreated==0){CDBError("print: image not created");return 1;}
   if(_bAntiAliased==true){
@@ -253,7 +251,6 @@ void CDrawImage::drawBarb(int x,int y,double direction, double strength,int colo
 
 void CDrawImage::circle(int x, int y, int r, int color) {
 	  if(_bAntiAliased==true){
-      if(currentLegend==NULL)return;
 #ifdef ADAGUC_USE_CAIRO
 	    cairo->setColor(currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],255);
 	    cairo->circle(x, y, r);
@@ -270,7 +267,6 @@ void CDrawImage::circle(int x, int y, int r, int color) {
 }
 void CDrawImage::poly(float x1,float y1,float x2,float y2,float x3, float y3, int color, bool fill){
 	  if(_bAntiAliased==true){
-      if(currentLegend==NULL)return;
 #ifdef ADAGUC_USE_CAIRO
 	    float ptx[3]={x1, x2, x3};
 	    float pty[3]={y1,y2,y3};
@@ -298,6 +294,7 @@ void CDrawImage::poly(float x1,float y1,float x2,float y2,float x3, float y3, in
 		  }
 	  }
 }
+
 void CDrawImage::line(float x1, float y1, float x2, float y2,int color){
   if(_bAntiAliased==true){
     if(currentLegend==NULL)return;
@@ -418,8 +415,9 @@ void CDrawImage::setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,u
     cairo->setColor(r,g,b,a);
     cairo-> pixel(x,y);
 #else
-    wuLine->setColor(r,g,b,a);
-    wuLine-> pixel(x,y);
+    //wuLine->setColor(r,g,b,a);
+    wuLine-> pixelBlend(x,y,r,g,b,a);
+    //wuLine->plot(x,y,r,g,b,a);
 #endif
   }else{
     if(_bEnableTrueColor){
@@ -495,7 +493,6 @@ void CDrawImage::setTextStroke(const char * text, size_t length,int x,int y, int
 void CDrawImage::drawText(int x,int y,float angle,const char *text,unsigned char colorIndex){
   
   if(_bAntiAliased==true){
-    if(currentLegend==NULL)return;
 #ifdef ADAGUC_USE_CAIRO
     cairo->setColor(currentLegend->CDIred[colorIndex],currentLegend->CDIgreen[colorIndex],currentLegend->CDIblue[colorIndex],255);
     cairo->drawText(x,y,angle,text);
@@ -504,22 +501,84 @@ void CDrawImage::drawText(int x,int y,float angle,const char *text,unsigned char
     freeType->drawFreeTypeText(x,y,angle,text);
 #endif
   }else{
-    drawTextAngle(text, strlen(text),angle, x, y, 240,8);
+    char *_text = new char[strlen(text)+1];
+    memcpy(_text,text,strlen(text)+1);
+    int tcolor=-_colors[240];
+    if(_bEnableTrueColor)tcolor=-tcolor;
+    gdImageStringFT(image, &brect[0], tcolor, fontConfig, 8.0f, angle,  x,  y, (char*)_text);
+    delete[] _text;
+    //drawTextAngle(text, strlen(text),angle, x, y, 240,8);
   }
 }
-void CDrawImage::drawTextAngle(const char * text, size_t length,double angle,int x,int y,int color,int fontSize){
-  char *_text = new char[strlen(text)+1];
-  memcpy(_text,text,strlen(text)+1);
+
+void CDrawImage::drawText(int x,int y,const char *fontfile, float size, float angle,const char *text,unsigned char colorIndex){
   
-  //gdImageStringFT(NULL,&brect[0],0,fontConfig,8.0f,angle,0,0,(char*)_text);
-  //gdImageFilledRectangle (image,brect[0]+x,brect[1]+y,brect[2]+x,brect[3]+y, _colors[0]);
-  int tcolor=-_colors[color];
-  if(_bEnableTrueColor)tcolor=-tcolor;
-  gdImageStringFT(image, &brect[0], tcolor, fontConfig, 8.0f, angle,  x,  y, (char*)_text);
-  delete[] _text;
+  if(_bAntiAliased==true){
+    #ifdef ADAGUC_USE_CAIRO
+    //TODO!!! CAIRO DOES PRINT LARGE FONTS THIS WAY.
+    cairo->setColor(currentLegend->CDIred[colorIndex],currentLegend->CDIgreen[colorIndex],currentLegend->CDIblue[colorIndex],255);
+    cairo->drawText(x,y,angle,text);
+    #else
+    CFreeType * freeType = new CFreeType (Geo->dWidth,Geo->dHeight,RGBAByteBuffer,size,fontfile);
+    freeType->setColor(currentLegend->CDIred[colorIndex],currentLegend->CDIgreen[colorIndex],currentLegend->CDIblue[colorIndex],255);
+    freeType->drawFreeTypeText(x,y,angle,text);
+    delete freeType;
+    #endif
+  }else{
+    char *_text = new char[strlen(text)+1];
+    memcpy(_text,text,strlen(text)+1);
+    int tcolor=-_colors[240];
+    if(_bEnableTrueColor)tcolor=-tcolor;
+    gdImageStringFT(image, &brect[0], tcolor, fontConfig, size, angle,  x,  y, (char*)_text);
+    delete[] _text;
+    //drawTextAngle(text, strlen(text),angle, x, y, 240,8);
+  }
 }
+/*void CDrawImage::drawTextAngle(const char * text, size_t length,double angle,int x,int y,int color,int fontSize){
+  
+  if(_bAntiAliased==true){
+    #ifdef ADAGUC_USE_CAIRO
+    cairo->setColor(currentLegend->CDIred[colorIndex],currentLegend->CDIgreen[colorIndex],currentLegend->CDIblue[colorIndex],255);
+    cairo->drawText(x,y,angle,text);
+    #else
+    freeType->setColor(currentLegend->CDIred[colorIndex],currentLegend->CDIgreen[colorIndex],currentLegend->CDIblue[colorIndex],255);
+    freeType->drawFreeTypeText(x,y,angle,text);
+    #endif
+  }else{
+    char *_text = new char[strlen(text)+1];
+    memcpy(_text,text,strlen(text)+1);
+    int tcolor=-_colors[color];
+    if(_bEnableTrueColor)tcolor=-tcolor;
+    gdImageStringFT(image, &brect[0], tcolor, fontConfig, 8.0f, angle,  x,  y, (char*)_text);
+    delete[] _text;
+  }
+  
+  
+
+}*/
 
 int CDrawImage::create685Palette(){
+  currentLegend=NULL;
+  
+  const char *paletteName685="685Palette";
+  
+  for(size_t j=0;j<legends.size();j++){
+    if(legends[j]->legendName.equals(paletteName685)){
+      CDBDebug("Found legend");
+      currentLegend=legends[j];
+      return 0;
+    }
+  }
+  
+  if(currentLegend ==NULL){
+    currentLegend = new CLegend();
+    currentLegend->id = legends.size();
+    currentLegend->legendName=paletteName685;
+    legends.push_back(currentLegend);
+  }
+  
+  if(dImageCreated==0){CDBError("createGDPalette: image not created");return 1;}
+  
   int j=0;
   for(int r=0;r<6;r++)
     for(int g=0;g<8;g++)
@@ -573,25 +632,23 @@ int CDrawImage::_createStandard(){
   return 0;
 }
 
+
 int CDrawImage::createGDPalette(CServerConfig::XMLE_Legend *legend){
-  //currentLegend = new CLegend();
-  //if(legends.size()>0)return 0;
   
   currentLegend=NULL;
   if(legend!=NULL){
     for(size_t j=0;j<legends.size();j++){
-      if(legend==legends[j]->legend){
-        CDBDebug("Found legend");
+      if(legends[j]->legendName.equals(legend->attr.name.c_str())){
         currentLegend=legends[j];
         return 0;
       }
     }
   }
   
-  if(currentLegend ==NULL){
+  if(currentLegend == NULL){
     currentLegend = new CLegend();
     currentLegend->id = legends.size();
-    currentLegend->legend=legend;
+    currentLegend->legendName=legend->attr.name.c_str();
     legends.push_back(currentLegend);
   }
   

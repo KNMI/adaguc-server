@@ -317,7 +317,7 @@ CDBDebug("Start looping dimensions");
       if(hasMultipleValues==true){
         //Get all dimension values from the db
         CT::string query;
-        query.print("select %s from %s",myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str(),tableName.c_str());
+        query.print("select %s from %s group by %s order by %s",myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str(),tableName.c_str(),myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str(),myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
 #ifdef CXMLGEN_DEBUG
 CDBDebug("Querying %s",query.c_str());
 #endif               
@@ -425,6 +425,19 @@ CDBDebug("Querying %s",query.c_str());
 }
 
 int CXMLGen::getStylesForLayer(WMSLayer * myWMSLayer){
+  CT::stringlist *styleList = CImageDataWriter::getStyleListForDataSource(myWMSLayer->dataSource);
+  if(styleList==NULL)return 1;
+  for(size_t j=0;j<styleList->size();j++){
+    WMSLayer::Style *style = new WMSLayer::Style();
+    style->name.copy(styleList->get(j));
+    myWMSLayer->styleList.push_back(style);
+  }
+  
+  
+  delete styleList;
+  return 0;
+}
+int CXMLGen::getStylesForLayer2(WMSLayer * myWMSLayer){
   
 #ifdef CXMLGEN_DEBUG
 CDBDebug("getStylesForLayer");
@@ -452,7 +465,7 @@ CDBDebug("Cascaded layer");
                 
       for(size_t s=0;s<layerStyleNames->count;s++){
         if(layerStyleNames[s].length()>0){
-                    //Check wheter we should at this style or not...
+          //Check wheter we should at this style or not...
           int dConfigStyleIndex=-1;
           if(srvParam->cfg->Style.size()>0){
             for(size_t j=0;j<srvParam->cfg->Style.size()&&dConfigStyleIndex==-1;j++){
@@ -979,7 +992,14 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc,std::vector<WMSLay
 }
 
 int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument){
+  
+  
+  
+  
   this->srvParam=_srvParam;
+  
+  
+ 
   
   
   int status=0;
@@ -1051,6 +1071,28 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
     }
   }
   
+  
+ 
+ 
+ //TEST
+/* CT::stringlist *a=CImageDataWriter::getStyleListForDataSource(myWMSLayerList[2]->dataSource);
+ printf("Layer: %s (%d)\n",myWMSLayerList[2]->dataSource->layerName.c_str(),a->size());
+ for(size_t j=0;j<a->size();j++){
+    printf("Style: %s\n",a->get(j)->c_str());
+   //printf("Style: %s\n","a");
+   }
+   //CImageDataWriter::getStyleConfigurationByName("o3_rainbow/bilinearcontour/HQ",myWMSLayerList[2]->dataSource);
+   CImageDataWriter::StyleConfiguration * styleConfig=CImageDataWriter::getStyleConfigurationByName("default/HQ",myWMSLayerList[2]->dataSource);
+   
+   if(styleConfig->hasError){
+     printf("Error\n");
+   }
+   for(size_t j=0;j<srvParam->cfg->Layer.size();j++){
+   }
+   exit(0);*/
+  
+  
+  
   serviceInfo.print("ADAGUCServer version %s, of %s %s",ADAGUCSERVER_VERSION,__DATE__,__TIME__);
   //Generate an XML document on basis of the information gathered above.
   CT::string XMLDoc;
@@ -1084,6 +1126,8 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
   }catch(int e){
     status = 1;
   }
+  
+
   
   for(size_t j=0;j<myWMSLayerList.size();j++){delete myWMSLayerList[j];myWMSLayerList[j]=NULL;}
   

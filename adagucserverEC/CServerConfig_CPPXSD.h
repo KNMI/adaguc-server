@@ -78,7 +78,7 @@ class CServerConfig:public CXMLSerializerInterface{
         }
     };
     
-    class XMLE_Font: public CXMLObjectInterface{
+    class XMLE_ContourFont: public CXMLObjectInterface{
       public:
       class Cattr{
         public:
@@ -89,7 +89,41 @@ class CServerConfig:public CXMLSerializerInterface{
         else if(equals("location",8,attrname)){attr.location.copy(attrvalue);return;}
       }
     };
-
+    class XMLE_TitleFont: public CXMLObjectInterface{
+      public:
+      class Cattr{
+      public:
+        CXMLString location,size;
+      }attr;
+      void addAttribute(const char *attrname,const char *attrvalue){
+        if(equals("size",4,attrname)){attr.size.copy(attrvalue);return;}
+        else if(equals("location",8,attrname)){attr.location.copy(attrvalue);return;}
+      }
+    };
+    class XMLE_SubTitleFont: public CXMLObjectInterface{
+      public:
+      class Cattr{
+      public:
+        CXMLString location,size;
+      }attr;
+      void addAttribute(const char *attrname,const char *attrvalue){
+        if(equals("size",4,attrname)){attr.size.copy(attrvalue);return;}
+        else if(equals("location",8,attrname)){attr.location.copy(attrvalue);return;}
+      }
+    };
+    
+    class XMLE_DimensionFont: public CXMLObjectInterface{
+    public:
+      class Cattr{
+      public:
+        CXMLString location,size;
+      }attr;
+      void addAttribute(const char *attrname,const char *attrvalue){
+        if(equals("size",4,attrname)){attr.size.copy(attrvalue);return;}
+        else if(equals("location",8,attrname)){attr.location.copy(attrvalue);return;}
+      }
+    };
+    
     class XMLE_OpenDAP: public CXMLObjectInterface{
     public:
       class Cattr{
@@ -341,10 +375,20 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_Title*> Title;
         std::vector <XMLE_Abstract*> Abstract;
         std::vector <XMLE_RootLayer*> RootLayer;
+        std::vector <XMLE_TitleFont*> TitleFont;
+        std::vector <XMLE_ContourFont*> ContourFont;
+        std::vector <XMLE_SubTitleFont*> SubTitleFont;
+        std::vector <XMLE_DimensionFont*> DimensionFont;
+        
         ~XMLE_WMS(){
           XMLE_DELOBJ(Title);
           XMLE_DELOBJ(Abstract);
           XMLE_DELOBJ(RootLayer);
+          XMLE_DELOBJ(TitleFont);
+          XMLE_DELOBJ(ContourFont);
+          XMLE_DELOBJ(SubTitleFont);
+          XMLE_DELOBJ(DimensionFont);
+          
         }
         void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value){
           CXMLSerializerInterface * base = (CXMLSerializerInterface*)baseClass;
@@ -355,6 +399,10 @@ class CServerConfig:public CXMLSerializerInterface{
             if(equals("Title",5,name)){XMLE_ADDOBJ(Title);}
             else if(equals("Abstract",8,name)){XMLE_ADDOBJ(Abstract);}
             else if(equals("RootLayer",9,name)){XMLE_ADDOBJ(RootLayer);}
+            else if(equals("TitleFont",9,name)){XMLE_ADDOBJ(TitleFont);}
+            else if(equals("ContourFont",11,name)){XMLE_ADDOBJ(ContourFont);}
+            else if(equals("SubTitleFont",12,name)){XMLE_ADDOBJ(SubTitleFont);}
+            else if(equals("DimensionFont",13,name)){XMLE_ADDOBJ(DimensionFont);}
           }
           if(pt2Class!=NULL)pt2Class->addElement(baseClass,rc-pt2Class->level,name,value);
         }
@@ -436,6 +484,30 @@ class CServerConfig:public CXMLSerializerInterface{
         }
     };
     
+    class XMLE_Position: public CXMLObjectInterface{
+    public:
+      class Cattr{
+      public:
+        CXMLString top,left,right,bottom;
+      }attr;
+      void addAttribute(const char *attrname,const char *attrvalue){
+        if(equals("top",3,attrname)){attr.top.copy(attrvalue);return;}
+        else if(equals("left",4,attrname)){attr.left.copy(attrvalue);return;}
+        else if(equals("right",5,attrname)){attr.right.copy(attrvalue);return;}
+        else if(equals("bottom",6,attrname)){attr.bottom.copy(attrvalue);return;}
+      }
+    };
+    
+    class XMLE_WMSFormat: public CXMLObjectInterface{
+    public:
+      class Cattr{
+      public:
+        CXMLString name;
+      }attr;
+      void addAttribute(const char *attrname,const char *attrvalue){
+        if(equals("name",4,attrname)){attr.name.copy(attrvalue);return;}
+      }
+    };
   
     class XMLE_Layer: public CXMLObjectInterface{
       public:
@@ -461,6 +533,8 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_Log*> Log;
         std::vector <XMLE_ShadeInterval*> ShadeInterval;
         std::vector <XMLE_ContourIntervalL*> ContourIntervalL;
+        std::vector <XMLE_ContourIntervalH*> ContourIntervalH;
+        std::vector <XMLE_SmoothingFilter*> SmoothingFilter;
         std::vector <XMLE_ValueRange*> ValueRange;
         std::vector <XMLE_ImageText*> ImageText;
         std::vector <XMLE_LatLonBox*> LatLonBox;
@@ -471,6 +545,9 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_Cache*> Cache;
         std::vector <XMLE_WMSLayer*> WMSLayer;
         std::vector <XMLE_DataPostProc*> DataPostProc;
+        std::vector <XMLE_Position*> Position;
+        std::vector <XMLE_WMSFormat*> WMSFormat;
+        
         
         
         ~XMLE_Layer(){
@@ -490,6 +567,8 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(Log);
           XMLE_DELOBJ(ShadeInterval);
           XMLE_DELOBJ(ContourIntervalL);
+          XMLE_DELOBJ(ContourIntervalH);
+          XMLE_DELOBJ(SmoothingFilter);
           XMLE_DELOBJ(ValueRange);
           XMLE_DELOBJ(ImageText);
           XMLE_DELOBJ(LatLonBox);
@@ -500,6 +579,8 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(Cache);
           XMLE_DELOBJ(WMSLayer);
           XMLE_DELOBJ(DataPostProc);
+          XMLE_DELOBJ(Position);
+          XMLE_DELOBJ(WMSFormat);
         }
         void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value){
           CXMLSerializerInterface * base = (CXMLSerializerInterface*)baseClass;
@@ -523,6 +604,7 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("Log",3,name)){XMLE_ADDOBJ(Log);}
             else if(equals("ShadeInterval",13,name)){XMLE_ADDOBJ(ShadeInterval);}
             else if(equals("ContourIntervalL",16,name)){XMLE_ADDOBJ(ContourIntervalL);}
+            else if(equals("ContourIntervalH",16,name)){XMLE_ADDOBJ(ContourIntervalH);}
             else if(equals("ValueRange",10,name)){XMLE_ADDOBJ(ValueRange);}
             else if(equals("ImageText",9,name)){XMLE_ADDOBJ(ImageText);}
             else if(equals("LatLonBox",9,name)){XMLE_ADDOBJ(LatLonBox);}
@@ -533,6 +615,9 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("Cache",5,name)){XMLE_ADDOBJ(Cache);}
             else if(equals("WMSLayer",8,name)){XMLE_ADDOBJ(WMSLayer);}
             else if(equals("DataPostProc",12,name)){XMLE_ADDOBJ(DataPostProc);}
+            else if(equals("SmoothingFilter",15,name)){XMLE_ADDOBJ(SmoothingFilter);}
+            else if(equals("Position",8,name)){XMLE_ADDOBJ(Position);}
+            else if(equals("WMSFormat",9,name)){XMLE_ADDOBJ(WMSFormat);}
             
           }
           if(pt2Class!=NULL)pt2Class->addElement(baseClass,rc-pt2Class->level,name,value);
@@ -556,7 +641,7 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_Layer*> Layer;
         std::vector <XMLE_Style*> Style;
         std::vector <XMLE_CacheDocs*> CacheDocs;
-        std::vector <XMLE_Font*> Font;
+
         std::vector <XMLE_OpenDAP*> OpenDAP;
         
         ~XMLE_Configuration(){
@@ -571,7 +656,6 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(Layer);
           XMLE_DELOBJ(Style);
           XMLE_DELOBJ(CacheDocs);
-          XMLE_DELOBJ(Font);
           XMLE_DELOBJ(OpenDAP);
         }
         void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value){
@@ -584,7 +668,6 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("WMS",3,name)){XMLE_ADDOBJ(WMS);}
             else if(equals("WCS",3,name)){XMLE_ADDOBJ(WCS);}
             else if(equals("Path",4,name)){XMLE_ADDOBJ(Path);}
-            else if(equals("Font",4,name)){XMLE_ADDOBJ(Font);}
             else if(equals("TempDir",7,name)){XMLE_ADDOBJ(TempDir);}
             else if(equals("OnlineResource",14,name)){XMLE_ADDOBJ(OnlineResource);}
             else if(equals("DataBase",8,name)){XMLE_ADDOBJ(DataBase);}

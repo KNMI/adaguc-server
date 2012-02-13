@@ -15,3 +15,8 @@ float parseFloat(const char *pszValue){
   float fValue=(float)atof(pszValue);
   return fValue;  
 }
+
+double parseDouble(const char *pszValue){
+  double fValue=(double)atof(pszValue);
+  return fValue;  
+}

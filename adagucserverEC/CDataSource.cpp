@@ -99,23 +99,6 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Confi
     data->variableName.copy(cfgLayer->Variable[j]->value.c_str());
     dataObject.push_back(data);
   }
-  //Defaults to database
-  dLayerType=CConfigReaderLayerTypeDataBase;
-  if(cfgLayer->attr.type.equals("database")){
-    dLayerType=CConfigReaderLayerTypeDataBase;
-  }
-  if(cfgLayer->attr.type.equals("styled")){
-    dLayerType=CConfigReaderLayerTypeStyled;
-  }
-  if(cfgLayer->attr.type.equals("cascaded")){
-    dLayerType=CConfigReaderLayerTypeCascaded;
-  }
-  
-  //Deprecated
-  if(cfgLayer->attr.type.equals("file")){
-    dLayerType=CConfigReaderLayerTypeDataBase;//CConfigReaderLayerTypeFile;
-  }
-
   //Set the layername
   CT::string layerUniqueName;
   if(_layerName==NULL){
@@ -129,7 +112,32 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Confi
 #ifdef CDATAREADER_DEBUG  
   CDBDebug("LayerName=\"%s\"",layerName.c_str());
 #endif  
-
+  //Defaults to database
+  dLayerType=CConfigReaderLayerTypeDataBase;
+  if(cfgLayer->attr.type.equals("database")){
+    dLayerType=CConfigReaderLayerTypeDataBase;
+  }else if(cfgLayer->attr.type.equals("styled")){
+    dLayerType=CConfigReaderLayerTypeStyled;
+  }else if(cfgLayer->attr.type.equals("cascaded")){
+    dLayerType=CConfigReaderLayerTypeCascaded;
+  }else if(cfgLayer->attr.type.equals("image")){
+    dLayerType=CConfigReaderLayerTypeCascaded;
+  }else if(cfgLayer->attr.type.equals("grid")){
+    dLayerType=CConfigReaderLayerTypeCascaded;
+  }else if(cfgLayer->attr.type.c_str()!=NULL){
+    if(strlen(cfgLayer->attr.type.c_str())>0){
+      dLayerType=CConfigReaderLayerTypeUnknown;
+      CDBError("Unknown layer type for layer %s",layerName.c_str());
+      return 1;
+    }
+  }
+  
+  //Deprecated
+  if(cfgLayer->attr.type.equals("file")){
+    dLayerType=CConfigReaderLayerTypeDataBase;//CConfigReaderLayerTypeFile;
+  }
+  
+  
   //When a database table is not configured, generate a name automatically
   if( dLayerType!=CConfigReaderLayerTypeCascaded){
     if(cfgLayer->DataBaseTable.size()==0){

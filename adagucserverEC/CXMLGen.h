@@ -74,6 +74,7 @@ class CXMLGen{
     int getWCS_1_0_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*> *myWMSLayerList);
     int getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc,std::vector<WMSLayer*> *myWMSLayerList);
     int getStylesForLayer(WMSLayer * myWMSLayer);
+    int getStylesForLayer2(WMSLayer * myWMSLayer);
     CServerParams *srvParam;
     CT::string serviceInfo;
   public:

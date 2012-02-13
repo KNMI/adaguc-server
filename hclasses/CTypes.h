@@ -112,7 +112,7 @@ class string:public basetype{
       } 
     }
     int indexOf(const char* search,size_t _length);
-    int match(const char *_value,size_t _length){
+    /*int match(const char *_value,size_t _length){
       if(_value==NULL)return -1;
       if(privatelength!=_length)return 1;
       if(strncmp(value,_value,_length)==0)return 0;
@@ -125,19 +125,22 @@ class string:public basetype{
     int match(CT::string* _string){
       if(_string==NULL)return -1;
       return match(_string->value,_string->privatelength);
-    }
+    }*/
     bool equals(const char *_value,size_t _length){
-      if(match(_value,_length)==0)return true;
+      if(_value==NULL)return false;
+      if(privatelength!=_length)return false;
+      if(strncmp(value,_value,_length)==0)return true;
       return false;
     }
     int equals(const char *_value){
-      if(match(_value)==0)return true;
-      return false;
+      if(_value==NULL)return false;
+      return equals(_value,strlen(_value));
     }
     int equals(CT::string* _string){
-      if(match(_string)==0)return true;
-      return false;
+      if(_string==NULL)return false;
+      return equals(_string->value,_string->privatelength);
     }
+    
     bool testRegEx(const char *pattern){
       int status; 
       regex_t re;

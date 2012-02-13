@@ -31,21 +31,28 @@ int CImageWarper::closereproj(){
   return 0;
 }
 
-  int CImageWarper::reprojpoint(double &dfx,double &dfy){
-    if(convertRadiansDegreesDst){
-      dfx*=DEG_TO_RAD;
-      dfy*=DEG_TO_RAD;
-    }
-    if(pj_transform(destpj,sourcepj, 1,0,&dfx,&dfy,NULL)!=0){
-      //throw("reprojpoint error");
-    }
-    if(convertRadiansDegreesSrc){
-      dfx/=DEG_TO_RAD;
-      dfy/=DEG_TO_RAD;
-    }
-    return 0;
+int CImageWarper::reprojpoint(double &dfx,double &dfy){
+  if(convertRadiansDegreesDst){
+    dfx*=DEG_TO_RAD;
+    dfy*=DEG_TO_RAD;
   }
-  
+  if(pj_transform(destpj,sourcepj, 1,0,&dfx,&dfy,NULL)!=0){
+    //throw("reprojpoint error");
+  }
+  if(convertRadiansDegreesSrc){
+    dfx/=DEG_TO_RAD;
+    dfy/=DEG_TO_RAD;
+  }
+  return 0;
+}
+int CImageWarper::reprojpoint(CPoint &p){
+  return reprojpoint(p.x,p.y);
+}
+int CImageWarper::reprojpoint_inv(CPoint &p){
+  return reprojpoint_inv(p.x,p.y);
+}
+
+
   int CImageWarper::reprojToLatLon(double &dfx,double &dfy){
     if(convertRadiansDegreesDst){
       dfx*=DEG_TO_RAD;
@@ -161,30 +168,37 @@ int CImageWarper::closereproj(){
   }
 
   int CImageWarper::initreproj(CDataSource *sourceImage,CGeoParams *GeoDest,std::vector <CServerConfig::XMLE_Projection*> *_prj){
-    prj=_prj;
-    if(prj==NULL){
-      CDBError("prj==NULL");
-      return 1;
-    }
     if(sourceImage==NULL||GeoDest==NULL){
       CDBError("sourceImage==%s||GeoDest==%s", sourceImage==NULL?"NULL":"not-null", GeoDest==NULL?"NULL":"not-null");
       return 1;
     }
     if(sourceImage->nativeProj4.c_str()==NULL){
-      sourceImage->nativeProj4.copy("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
-      CDBWarning("sourceImage->CRS.c_str()==NULL setting to default latlon");
-      //return 1;
+      sourceImage->nativeProj4.copy(LATLONPROJECTION);
+      //CDBWarning("sourceImage->CRS.c_str()==NULL setting to default latlon");
     }
-    if (!(sourcepj = pj_init_plus(sourceImage->nativeProj4.c_str()))){
-      CDBError("SetSourceProjection: Invalid projection: %s",sourceImage->nativeProj4.c_str());
+    return initreproj(sourceImage->nativeProj4.c_str(),GeoDest,_prj);
+  }
+  
+  int CImageWarper::initreproj(const char * projString,CGeoParams *GeoDest,std::vector <CServerConfig::XMLE_Projection*> *_prj){
+    if(projString==NULL){
+      projString = LATLONPROJECTION;
+    }
+    prj=_prj;
+    if(prj==NULL){
+      CDBError("prj==NULL");
+      return 1;
+    }
+
+    if (!(sourcepj = pj_init_plus(projString))){
+      CDBError("SetSourceProjection: Invalid projection: %s",projString);
       return 1;
     }
     if(sourcepj==NULL){
-      CDBError("SetSourceProjection: Invalid projection: %s",sourceImage->nativeProj4.c_str());
+      CDBError("SetSourceProjection: Invalid projection: %s",projString);
       return 1;
     }
-    if (!(latlonpj = pj_init_plus("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"))){
-      CDBError("SetLatLonProjection: Invalid projection: %s","+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
+    if (!(latlonpj = pj_init_plus(LATLONPROJECTION))){
+      CDBError("SetLatLonProjection: Invalid projection: %s",LATLONPROJECTION);
       return 1;
     }
     dMaxExtentDefined=0;
@@ -211,7 +225,8 @@ int CImageWarper::closereproj(){
       convertRadiansDegreesDst = true;
     }else convertRadiansDegreesDst =false;
     
-    if(sourceImage->nativeProj4.indexOf("longlat")>=0){
+    CT::string nativeProj4 = projString;
+    if(nativeProj4.indexOf("longlat")>=0){
       convertRadiansDegreesSrc = true;
     }else convertRadiansDegreesSrc=false;
     

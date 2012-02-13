@@ -83,6 +83,10 @@ class MyCURL{
     curl_easy_cleanup(curl_handle);
     
     length = chunk.size;
+    
+    if(length==0){
+      return 2;
+    }
     buffer = new char[chunk.size];
     memcpy(buffer,chunk.memory,chunk.size);
     
@@ -96,7 +100,7 @@ class MyCURL{
   }
   
   int static getGDImageField(const char * url, gdImagePtr &im){
-
+    int status = 0;
     CURL *curl_handle;
   
     struct MemoryStruct chunk;
@@ -132,6 +136,8 @@ class MyCURL{
       im = gdImageCreateFromGifPtr(chunk.size,chunk.memory);
       else
       im = gdImageCreateFromPngPtr(chunk.size,chunk.memory);
+    }else{
+      status=1;
     }
 
     if(chunk.memory)
@@ -140,7 +146,7 @@ class MyCURL{
     /* we're done with libcurl, so clean it up */ 
     curl_global_cleanup();
   
-    return 0;
+    return status;
   }
 
 };
