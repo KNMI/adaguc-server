@@ -626,8 +626,12 @@ int CRequest::process_all_layers(){
             CDBError("No results for query: '%s'",Query.c_str());
             return 2;
           }
-      }
-
+        }
+        if(values_path==NULL){
+          if((checkDataRestriction()&SHOW_QUERYINFO)==false)Query.copy("hidden");
+          CDBError("No results for query: '%s'",Query.c_str());
+          return 2;
+        }
         if(values_path->count==0){
           if((checkDataRestriction()&SHOW_QUERYINFO)==false)Query.copy("hidden");
           CDBError("No results for query: '%s'",Query.c_str());
@@ -772,21 +776,29 @@ int CRequest::process_all_layers(){
           
           CDBDebug("drawing titles");
           
-          int textY=5;
+          int textY=6;
+          //int prevTextY=0;
           if(srvParam->mapTitle.length()>0){
             if(srvParam->cfg->WMS[0]->TitleFont.size()==1){
               float fontSize=parseFloat(srvParam->cfg->WMS[0]->TitleFont[0]->attr.size.c_str());
-              textY+=fontSize*1.2;
-              imageDataWriter.drawText(5,textY,srvParam->cfg->WMS[0]->TitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapTitle.c_str(),240);
-              textY+=4;
+              textY+=fontSize;
+              //imageDataWriter.drawImage.rectangle(0,0,srvParam->Geo->dWidth,textY+8,CColor(255,255,255,0),CColor(255,255,255,80));
+              //imageDataWriter.drawImage.setFillC
+              imageDataWriter.drawImage.drawText(5,textY,srvParam->cfg->WMS[0]->TitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapTitle.c_str(),CColor(0,0,0,255),CColor(180,180,200,100));
+              textY+=14;
+              
+              //prevTextY=textY;
             }
           }
           if(srvParam->mapSubTitle.length()>0){
             if(srvParam->cfg->WMS[0]->SubTitleFont.size()==1){
               float fontSize=parseFloat(srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.size.c_str());
-              textY+=fontSize*1.2;
-              imageDataWriter.drawText(8,textY,srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapSubTitle.c_str(),240);
-              textY+=4;
+              textY+=fontSize;
+              
+              //imageDataWriter.drawImage.rectangle(0,prevTextY,srvParam->Geo->dWidth,textY+4,CColor(255,255,255,0),CColor(255,255,255,80));
+              imageDataWriter.drawImage.drawText(6,textY,srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapSubTitle.c_str(),CColor(0,0,0,255),CColor(180,180,200,100));
+              textY+=8;
+              //prevTextY=textY;
             }
           }
           //imageDataWriter.drawText(5,5+30+25+2+12+2,"/home/visadm/software/fonts/verdana.ttf",12,0,dataSources[0]->timeSteps[0]->timeString.c_str(),240);
@@ -797,16 +809,17 @@ int CRequest::process_all_layers(){
               float fontSize=parseFloat(srvParam->cfg->WMS[0]->DimensionFont[0]->attr.size.c_str());
               textY+=fontSize*1.2;
               message.print("%s: %s",srvParam->OGCDims[d].Name.c_str(),srvParam->OGCDims[d].Value.c_str());
-              imageDataWriter.drawText(7,textY,srvParam->cfg->WMS[0]->DimensionFont[0]->attr.location.c_str(),fontSize,0,message.c_str(),240);
+              imageDataWriter.drawText(6,textY,srvParam->cfg->WMS[0]->DimensionFont[0]->attr.location.c_str(),fontSize,0,message.c_str(),240);
               textY+=4;
             }
           }
+          
           if(srvParam->showLegendInImage){
             //Draw legend
             bool legendDrawn = false;
             for(size_t d=0;d<dataSources.size()&&legendDrawn==false;d++){
               if(dataSources[d]->dLayerType!=CConfigReaderLayerTypeCascaded){
-                status = imageDataWriter.createLegend(dataSources[d],7,srvParam->Geo->dHeight-LEGEND_HEIGHT-5);if(status != 0)throw(__LINE__);
+                status = imageDataWriter.createLegend(dataSources[d],5,srvParam->Geo->dHeight-LEGEND_HEIGHT-2);if(status != 0)throw(__LINE__);
                 legendDrawn=true;
               }
             }

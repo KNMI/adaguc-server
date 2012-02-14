@@ -188,7 +188,7 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
       
       if(srvParam->cfg->WMS[0]->ContourFont[0]->attr.size.c_str()!=NULL){
         CT::string fontSize=srvParam->cfg->WMS[0]->ContourFont[0]->attr.size.c_str();
-        drawImage.setTTFFontSize(fontSize.toInt());
+        drawImage.setTTFFontSize(fontSize.toFloat());
       }
       //CDBError("Font %s",srvParam->cfg->WMS[0]->ContourFont[0]->attr.location.c_str());
       //return 1;
@@ -1583,206 +1583,18 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
         if(status!=0){
           CDBError("drawCascadedWMS for layer %s failed",dataSource->layerName.c_str());
         }
-      }else{
-        //draw a grid in lat/lon coordinates.
-        bool useProjection = true;
-        if(useProjection){
-          int status = imageWarper.initreproj(LATLONPROJECTION,drawImage.Geo,&srvParam->cfg->Projection);
-          if(status!=0){CDBError("initreproj failed");return 1;  }
-        }
-
-        CPoint topLeft;
-        CBBOX latLonBBOX;
-        //Find lat lon BBox;
-        topLeft.x    =srvParam->Geo->dfBBOX[0];
-   
-        topLeft.y    =srvParam->Geo->dfBBOX[1];
-        if(useProjection){
-          imageWarper.reprojpoint(topLeft);
-        }
-   
-        
-           
-        latLonBBOX.left=topLeft.x;
-        latLonBBOX.right=topLeft.x;
-        latLonBBOX.top=topLeft.y;
-        latLonBBOX.bottom=topLeft.y;
-        
-        double numTestSteps = 5;
-        double numStepsX=(srvParam->Geo->dfBBOX[2]-srvParam->Geo->dfBBOX[0])/numTestSteps;
-        double numStepsY=(srvParam->Geo->dfBBOX[3]-srvParam->Geo->dfBBOX[1])/numTestSteps;
-        #ifdef CIMAGEDATAWRITER_DEBUG    
-        CDBDebug("dfBBOX: %f, %f, %f, %f",srvParam->Geo->dfBBOX[0],srvParam->Geo->dfBBOX[1],srvParam->Geo->dfBBOX[2],srvParam->Geo->dfBBOX[3]);
-        #endif
-        for(double y=srvParam->Geo->dfBBOX[1];y<srvParam->Geo->dfBBOX[3]+numStepsY;y=y+numStepsY){
-          for(double x=srvParam->Geo->dfBBOX[0];x<srvParam->Geo->dfBBOX[2]+numStepsX;x=x+numStepsX){
-            #ifdef CIMAGEDATAWRITER_DEBUG    
-            CDBDebug("xy: %f, %f",x,y);
-            #endif
-            topLeft.x=x;
-            topLeft.y=y;
-            if(useProjection){
-              imageWarper.reprojpoint(topLeft);
-            }
-            if(topLeft.x<latLonBBOX.left)latLonBBOX.left=topLeft.x;
-            if(topLeft.x>latLonBBOX.right)latLonBBOX.right=topLeft.x;
-            if(topLeft.y<latLonBBOX.top)latLonBBOX.top=topLeft.y;
-            if(topLeft.y>latLonBBOX.bottom)latLonBBOX.bottom=topLeft.y;
-          }
-        }
-       
-       #ifdef CIMAGEDATAWRITER_DEBUG    
-       CDBDebug("SIZE: %f, %f, %f, %f",latLonBBOX.left,latLonBBOX.right,latLonBBOX.top,latLonBBOX.bottom);
-        #endif
-        
-        double gridSize=10;
-        double stepSize=0.25;//gridSize/20.0f;
-        //if(stepSize<0.25)stepSize=0.25;
-        //Discretize the boundingbox to the stepsize;
-        latLonBBOX.left-=gridSize;
-        latLonBBOX.right+=gridSize;
-        latLonBBOX.top-=gridSize;
-        latLonBBOX.bottom+=gridSize;
-        latLonBBOX.left=double(int(latLonBBOX.left/gridSize))*gridSize-gridSize;
-        latLonBBOX.right=double(int(latLonBBOX.right/gridSize))*gridSize+gridSize;
-        latLonBBOX.top=double(int(latLonBBOX.top/gridSize))*gridSize-gridSize;
-        latLonBBOX.bottom=double(int(latLonBBOX.bottom/gridSize))*gridSize+gridSize;
-        
-        int numPointsX = int((latLonBBOX.right - latLonBBOX.left)/stepSize);
-        int numPointsY = int((latLonBBOX.bottom - latLonBBOX.top)/stepSize);
-        numPointsX++;
-        numPointsY++;
-        
-        //if(numPointsX>1000)numPointsX=1000;
-        //if(numPointsY>1000)numPointsY=1000;
-        
-        int numPoints = numPointsX*numPointsY;
-        
-        #ifdef CIMAGEDATAWRITER_DEBUG    
-        CDBDebug("numPointsX = %d, numPointsY = %d",numPointsX,numPointsY);
-        #endif
-        
-        CPoint *gridP = new CPoint[numPoints];
-
-        //for(double gy=latLonBBOX.top;gy<latLonBBOX.bottom;gy++){
-          //for(double gx=latLonBBOX.left;gx<latLonBBOX.right;gx++){
-        for(int y=0;y<numPointsY;y++){
-          for(int x=0;x<numPointsX;x++){
-            double gx=latLonBBOX.left+stepSize*double(x);
-            double gy=latLonBBOX.top+stepSize*double(y);
-            size_t p=x+y*numPointsX;
-            gridP[p].x=gx;
-            gridP[p].y=gy;
-            if(useProjection){
-              imageWarper.reprojpoint_inv(gridP[p]);
-            }
-            CoordinatesXYtoScreenXY(gridP[p],srvParam->Geo);
-
-          }
-        }
-        
-        #ifdef CIMAGEDATAWRITER_DEBUG    
-        CDBDebug("Drawing horizontal lines");
-        #endif
-        
-        int s=gridSize/stepSize;
-        if(s<=0)s=1;
-        CT::string message;
-        for(int y=0;y<numPointsY;y=y+s){
-          bool drawnTextLeft = false;
-          bool drawnTextRight = false;
-          for(int x=0;x<numPointsX-1;x++){
-            size_t p=x+y*numPointsX;
-            if(p<numPoints){
-              drawImage.line(gridP[p].x,gridP[p].y,gridP[p+1].x,gridP[p+1].y,248);
-              if(drawnTextRight==false){
-                if(gridP[p].x>srvParam->Geo->dWidth&&gridP[p].y>0){
-                  drawnTextRight=true;
-                  double gy=latLonBBOX.top+stepSize*double(y);
-                  message.print("%2.2f",gy);
-                  int ty=gridP[p].y;
-                  int tx=gridP[p].x-28;if(ty<8){ty=8;}if(tx>srvParam->Geo->dWidth-45)tx=srvParam->Geo->dWidth-28;
-                  tx+=7;
-                  drawImage.drawText(tx,ty,0,message.c_str(),240);
-                }
-              }
-              if(drawnTextLeft==false){
-                if(gridP[p].x>0&&gridP[p].y>0){
-                  drawnTextLeft=true;
-                  double gy=latLonBBOX.top+stepSize*double(y);
-                  message.print("%2.2f",gy);
-                  int ty=gridP[p].y;
-                  int tx=gridP[p].x;if(ty<8){ty=0;}if(tx<15)tx=0;tx+=2;
-                  drawImage.drawText(tx,ty-3,0,message.c_str(),240);
-                }
-              }
-            }
-          }
-        }
-        
-        
-        #ifdef CIMAGEDATAWRITER_DEBUG    
-        CDBDebug("Drawing vertical lines");
-        #endif        
-        for(int x=0;x<numPointsX;x=x+s){
-          bool drawnTextTop = false;
-          bool drawnTextBottom = false;
-          //CDBDebug("Drawing vertical lines %d",x);
-          for(int y=numPointsY-2;y>=0;y--){
-            //CDBDebug("Drawing vertical lines %d, %d",x,y);
-            size_t p=x+y*numPointsX;
-            if(p<numPoints){
-              drawImage.line(gridP[p].x,gridP[p].y,gridP[p+numPointsX].x,gridP[p+numPointsX].y,248);
-              
-              if(drawnTextBottom==false){
-                if(gridP[p].x>0&&gridP[p].y>srvParam->Geo->dHeight){
-                  drawnTextBottom=true;
-                  double gx=latLonBBOX.left+stepSize*double(x);
-                  message.print("%2.2f",gx);
-                  int ty=gridP[p].y;if(ty<15)ty=0;
-                  if(ty>srvParam->Geo->dHeight){
-                    ty=srvParam->Geo->dHeight;
-                  }
-                  ty-=3;
-                  int tx=gridP[p].x+3;//if(tx<8){tx=8;ty+=4;}if(ty<15)tx=1;
-                  drawImage.drawText(tx,ty,0,message.c_str(),240);
-                }
-              }    
-              
-              if(drawnTextTop==false){
-                if(gridP[p].x>0&&gridP[p].y>0){
-                  drawnTextTop=true;
-                  double gx=latLonBBOX.left+stepSize*double(x);
-                  message.print("%2.2f",gx);
-                  int ty=gridP[p].y;if(ty<15)ty=0;ty+=8;
-                  int tx=gridP[p].x+3;//if(tx<8){tx=8;ty+=4;}if(ty<15)tx=1;
-                  drawImage.drawText(tx,ty,0,message.c_str(),240);
-                }
-              }
-            }
-          }
-        }
-        //drawImage.line(gridP[p].x,gridP[p].y,gridP[p+numPointsX].x,gridP[p+numPointsX].y,248);
-        //drawImage.rectangle(projBBOX.left+10,projBBOX.top+10,projBBOX.right-10,projBBOX.bottom-10,248);
-        
-        /*for(float y=-90;y<90;y=y+5){
-          CPoint p;
-          p.x=0;p.y=y;
-          CoordinatesXYtoScreenXY(p.x,p.y,srvParam->Geo);
-          CT::string message;
-          message.print("%2.2f",y);
-          drawText(7,float(p.y)-3,srvParam->cfg->WMS[0]->DimensionFont[0]->attr.location.c_str(),7,0,message.c_str(),240);
-          drawText(srvParam->Geo->dWidth-30,float(p.y)-3,srvParam->cfg->WMS[0]->DimensionFont[0]->attr.location.c_str(),7,0,message.c_str(),240);
-          drawImage.line(0,p.y,srvParam->Geo->dWidth,p.y,0.2,240);
-        }*/
-        #ifdef CIMAGEDATAWRITER_DEBUG    
-        CDBDebug("Delete gridp");
-        #endif
-        
-        delete[] gridP;
       }
-    
     }
+    
+    
+  
+    /*drawImage.line(0,0,200,200,0.1,248);
+    drawImage.line(200,200,500,201,0.1,248);
+    
+    for(float ty=10;ty<60;ty++){
+      drawImage.line(50+ty*20,20+ty/2,70+ty*20,20+ty/2,0.1,248);
+    }*/
+  
       
     if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
       #ifdef CIMAGEDATAWRITER_DEBUG    
@@ -1831,6 +1643,210 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
           }
         }
       }
+    }
+    
+    //draw a grid in lat/lon coordinates.
+    if(dataSource->cfgLayer->Grid.size()==1){
+      double gridSize=10;
+      double precision=0.25;
+      double numTestSteps = 5;
+      CColor textColor(0,0,0,128);
+      float lineWidth=0.2;
+      
+      if(dataSource->cfgLayer->Grid[0]->attr.resolution.c_str()!=NULL){
+        gridSize = parseFloat(dataSource->cfgLayer->Grid[0]->attr.resolution.c_str());
+      }
+      precision=gridSize/10;
+      if(dataSource->cfgLayer->Grid[0]->attr.precision.c_str()!=NULL){
+        precision = parseFloat(dataSource->cfgLayer->Grid[0]->attr.precision.c_str());
+      }
+      
+      bool useProjection = true;
+      
+      if(srvParam->Geo->CRS.equals("EPSG:4326")){
+        CDBDebug("Not using projection");
+        useProjection = false;
+      }
+      
+      if(useProjection){
+        int status = imageWarper.initreproj(LATLONPROJECTION,drawImage.Geo,&srvParam->cfg->Projection);
+        if(status!=0){CDBError("initreproj failed");return 1;  }
+      }
+      
+      CPoint topLeft;
+      CBBOX latLonBBOX;
+      //Find lat lon BBox;
+      topLeft.x    =srvParam->Geo->dfBBOX[0];
+      
+      topLeft.y    =srvParam->Geo->dfBBOX[1];
+      if(useProjection){
+        imageWarper.reprojpoint(topLeft);
+      }
+      
+      
+      
+      latLonBBOX.left=topLeft.x;
+      latLonBBOX.right=topLeft.x;
+      latLonBBOX.top=topLeft.y;
+      latLonBBOX.bottom=topLeft.y;
+      
+     
+      double numStepsX=(srvParam->Geo->dfBBOX[2]-srvParam->Geo->dfBBOX[0])/numTestSteps;
+      double numStepsY=(srvParam->Geo->dfBBOX[3]-srvParam->Geo->dfBBOX[1])/numTestSteps;
+      #ifdef CIMAGEDATAWRITER_DEBUG    
+      CDBDebug("dfBBOX: %f, %f, %f, %f",srvParam->Geo->dfBBOX[0],srvParam->Geo->dfBBOX[1],srvParam->Geo->dfBBOX[2],srvParam->Geo->dfBBOX[3]);
+      #endif
+      for(double y=srvParam->Geo->dfBBOX[1];y<srvParam->Geo->dfBBOX[3]+numStepsY;y=y+numStepsY){
+        for(double x=srvParam->Geo->dfBBOX[0];x<srvParam->Geo->dfBBOX[2]+numStepsX;x=x+numStepsX){
+          #ifdef CIMAGEDATAWRITER_DEBUG    
+          CDBDebug("xy: %f, %f",x,y);
+          #endif
+          topLeft.x=x;
+          topLeft.y=y;
+          if(useProjection){
+            imageWarper.reprojpoint(topLeft);
+          }
+          if(topLeft.x<latLonBBOX.left)latLonBBOX.left=topLeft.x;
+          if(topLeft.x>latLonBBOX.right)latLonBBOX.right=topLeft.x;
+          if(topLeft.y<latLonBBOX.top)latLonBBOX.top=topLeft.y;
+          if(topLeft.y>latLonBBOX.bottom)latLonBBOX.bottom=topLeft.y;
+        }
+      }
+      
+      #ifdef CIMAGEDATAWRITER_DEBUG    
+      CDBDebug("SIZE: %f, %f, %f, %f",latLonBBOX.left,latLonBBOX.right,latLonBBOX.top,latLonBBOX.bottom);
+      #endif
+      
+    
+      latLonBBOX.left=double(int(latLonBBOX.left/gridSize))*gridSize-gridSize;
+      latLonBBOX.right=double(int(latLonBBOX.right/gridSize))*gridSize+gridSize;
+      latLonBBOX.top=double(int(latLonBBOX.top/gridSize))*gridSize-gridSize;
+      latLonBBOX.bottom=double(int(latLonBBOX.bottom/gridSize))*gridSize+gridSize;
+      
+      int numPointsX = int((latLonBBOX.right - latLonBBOX.left)/precision);
+      int numPointsY = int((latLonBBOX.bottom - latLonBBOX.top)/precision);
+      numPointsX++;
+      numPointsY++;
+      
+      int numPoints = numPointsX*numPointsY;
+      
+      #ifdef CIMAGEDATAWRITER_DEBUG    
+      CDBDebug("numPointsX = %d, numPointsY = %d",numPointsX,numPointsY);
+      #endif
+      
+      CPoint *gridP = new CPoint[numPoints];
+  
+      for(int y=0;y<numPointsY;y++){
+        for(int x=0;x<numPointsX;x++){
+          double gx=latLonBBOX.left+precision*double(x);
+          double gy=latLonBBOX.top+precision*double(y);
+          size_t p=x+y*numPointsX;
+          gridP[p].x=gx;
+          gridP[p].y=gy;
+          if(useProjection){
+            imageWarper.reprojpoint_inv(gridP[p]);
+          }
+          CoordinatesXYtoScreenXY(gridP[p],srvParam->Geo);
+          
+        }
+      }
+      
+      #ifdef CIMAGEDATAWRITER_DEBUG    
+      CDBDebug("Drawing horizontal lines");
+      #endif
+
+      bool drawText = false;
+      const char *fontLoc = NULL;
+      float fontSize = 6.0;
+      if(srvParam->cfg->WMS[0]->GridFont.size()==1){
+        
+        fontLoc = srvParam->cfg->WMS[0]->GridFont[0]->attr.location.c_str();
+        fontSize = parseFloat(srvParam->cfg->WMS[0]->GridFont[0]->attr.size.c_str());
+        drawText = true;
+      }
+      
+      int s=gridSize/precision;
+      if(s<=0)s=1;
+      CT::string message;
+      for(int y=0;y<numPointsY;y=y+s){
+        bool drawnTextLeft = false;
+        bool drawnTextRight = false;
+        for(int x=0;x<numPointsX-1;x++){
+          size_t p=x+y*numPointsX;
+          if(p<numPoints){
+            drawImage.line(gridP[p].x,gridP[p].y,gridP[p+1].x,gridP[p+1].y,lineWidth,248);
+            if(drawnTextRight==false){
+              if(gridP[p].x>srvParam->Geo->dWidth&&gridP[p].y>0){
+                drawnTextRight=true;
+                double gy=latLonBBOX.top+precision*double(y);
+                message.print("%2.1f",gy);
+                int ty=gridP[p].y;
+                int tx=gridP[p].x;if(ty<8){ty=8;}if(tx>srvParam->Geo->dWidth-30)tx=srvParam->Geo->dWidth-1;
+                tx-=17;
+                
+                if(drawText)drawImage.drawText(tx,ty-2,fontLoc,fontSize,0,message.c_str(),textColor);
+              }
+            }
+            if(drawnTextLeft==false){
+              if(gridP[p].x>0&&gridP[p].y>0){
+                drawnTextLeft=true;
+                double gy=latLonBBOX.top+precision*double(y);
+                message.print("%2.1f",gy);
+                int ty=gridP[p].y;
+                int tx=gridP[p].x;if(ty<8){ty=0;}if(tx<15)tx=0;tx+=2;
+                if(drawText)drawImage.drawText(tx,ty-2,fontLoc,fontSize,0,message.c_str(),textColor);
+              }
+            }
+          }
+        }
+      }
+      
+      
+      #ifdef CIMAGEDATAWRITER_DEBUG    
+      CDBDebug("Drawing vertical lines");
+      #endif        
+      for(int x=0;x<numPointsX;x=x+s){
+        bool drawnTextTop = false;
+        bool drawnTextBottom = false;
+        for(int y=numPointsY-2;y>=0;y--){
+          size_t p=x+y*numPointsX;
+          if(p<numPoints){
+            drawImage.line(gridP[p].x,gridP[p].y,gridP[p+numPointsX].x,gridP[p+numPointsX].y,lineWidth,248);
+            
+            if(drawnTextBottom==false){
+              if(gridP[p].x>0&&gridP[p].y>srvParam->Geo->dHeight){
+                drawnTextBottom=true;
+                double gx=latLonBBOX.left+precision*double(x);
+                message.print("%2.1f",gx);
+                int ty=gridP[p].y;if(ty<15)ty=0;
+                if(ty>srvParam->Geo->dHeight){
+                  ty=srvParam->Geo->dHeight;
+                }
+                ty-=2;
+                int tx=gridP[p].x+2;
+                if(drawText)drawImage.drawText(tx,ty,fontLoc,fontSize,0,message.c_str(),textColor);
+              }
+            }    
+            
+            if(drawnTextTop==false){
+              if(gridP[p].x>0&&gridP[p].y>0){
+                drawnTextTop=true;
+                double gx=latLonBBOX.left+precision*double(x);
+                message.print("%2.1f",gx);
+                int ty=gridP[p].y;if(ty<15)ty=0;ty+=7;
+                int tx=gridP[p].x+2;//if(tx<8){tx=8;ty+=4;}if(ty<15)tx=1;
+                if(drawText)drawImage.drawText(tx,ty,fontLoc,fontSize,0,message.c_str(),textColor);
+              }
+            }
+          }
+        }
+      }
+
+      #ifdef CIMAGEDATAWRITER_DEBUG    
+      CDBDebug("Delete gridp");
+      #endif
+      
+      delete[] gridP;
     }
   }
   
@@ -2068,10 +2084,9 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage
   int legendPositiveUp = 1;
   int dH=0;
   float cbH=LEGEND_HEIGHT-13-13;
-  float cbW=LEGEND_WIDTH/7;
+  float cbW=LEGEND_WIDTH/3;
   char szTemp[256];
   CDataReader reader;
-  
   
   /*if(renderMethod!=shadedcontour&&renderMethod!=shaded&&renderMethod!=contour){
      //When the scale factor is zero (0.0f) we need to open the data too, because we want to estimate min/max in this case.
@@ -2086,26 +2101,29 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage
   }*/
   
   RenderMethodEnum renderMethod = currentStyleConfiguration->renderMethod;
-  if(renderMethod==shadedcontour||renderMethod==shaded||renderMethod==contour){
-    //We need to open all the data, because we need to estimate min/max for legend drawing
-     status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
-  }else {
-    //When the scale factor is zero (0.0f) we need to open the data too, because we want to estimate min/max in this case.
-    // When the scale factor is given, we only need to open the header, for displaying the units.
-    if(dataSource->legendScale==0.0f){
+  if(dataSource->dataObject[0]->data==NULL){
+    if(renderMethod==shadedcontour||renderMethod==shaded||renderMethod==contour){
+      //We need to open all the data, because we need to estimate min/max for legend drawing
       status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
-    }else{
-      status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
+    }else {
+      //When the scale factor is zero (0.0f) we need to open the data too, because we want to estimate min/max in this case.
+      // When the scale factor is given, we only need to open the header, for displaying the units.
+      if(dataSource->legendScale==0.0f){
+        status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
+      }else{
+        status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
+      }
     }
-  }
-  if(status!=0){
-    CDBError("Unable to open file");
-    return 1;
+    if(status!=0){
+      CDBError("Unable to open file");
+      return 1;
+    }
   }
   //Create a legend based on status flags.
   if(dataSource->dataObject[0]->hasStatusFlag){
+    //Draw a legend with status flags
     dH=30;
-    cbW=LEGEND_WIDTH/5;cbW/=3;cbW*=3;cbW+=3;
+    cbW=LEGEND_WIDTH/3;cbW/=3;cbW*=3;cbW+=3;
     cbH=LEGEND_HEIGHT-13-13-30;
    
     size_t numFlags=dataSource->dataObject[0]->statusFlagList.size();
@@ -2121,9 +2139,13 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage
       drawImage->setText(legendMessage.c_str(),legendMessage.length(),(int)cbW+16+posX,(int)y+dH+2+posY,248,-1);  
     }
   }else if(renderMethod!=shadedcontour&&renderMethod!=shaded&&renderMethod!=contour){
-    dH=30;
-    cbW=LEGEND_WIDTH/5;
-    cbH=LEGEND_HEIGHT-13-13-30;
+    //Draw a continous legend
+    drawImage->rectangle(posX-3,posY,LEGEND_WIDTH+posX-20,LEGEND_HEIGHT+posY,CColor(255,255,255,0),CColor(200,200,200,64));
+    
+    dH=4;
+    cbW = 60.0/2.2;
+    //cbW=(float(LEGEND_WIDTH)/2.4);
+    cbH=LEGEND_HEIGHT-13-13-2;
     
     for(int j=0;j<cbH;j++){
       for(int i=0;i<cbW+2;i++){
@@ -2132,41 +2154,51 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage
       }
     }
     drawImage->rectangle(1+posX,7+dH+posY,(int)cbW+3+posX,(int)cbH+7+dH+posY,248);
+   
     float classes=8;
+    int tickRound=0;
+    if(currentStyleConfiguration->styleIndex !=-1){
+      
+      double min=getValueForColorIndex(dataSource,0);
+      double max=getValueForColorIndex(dataSource,240);
+      CServerConfig::XMLE_Style* style = srvParam->cfg->Style[currentStyleConfiguration->styleIndex];
+      if(style->Legend.size()>0){
+        if(style->Legend[0]->attr.tickinterval.c_str() != NULL){
+          double tickinterval = parseFloat(style->Legend[0]->attr.tickinterval.c_str());
+          if(tickinterval>0.0f){
+            classes=(max-min)/tickinterval;
+          }
+        }
+        if(style->Legend[0]->attr.tickround.c_str() != NULL){
+          double dftickRound = parseFloat(style->Legend[0]->attr.tickround.c_str());
+          CDBDebug("dftickRound = %f",dftickRound );
+          tickRound = round(log10(dftickRound))+3;
+          CDBDebug("tickRound = %d %f",tickRound ,log10(dftickRound));
+        }
+      }
+      //if(currentStyleConfiguration->legendClasses!=0){
+//        classes=currentStyleConfiguration->legendClasses
+  //    }
+    }
+    
     for(int j=0;j<=classes;j++){
       float c=((float(classes*legendPositiveUp-j)/classes))*(cbH);
       float v=((float(j)/classes))*(240.0f);
-      drawImage->line((int)cbW-4+posX,(int)c+7+dH+posY,(int)cbW+6+posX,(int)c+7+dH+posY,248);
-  
       v-=dataSource->legendOffset;
       v/=dataSource->legendScale;
-      if(dataSource->legendLog!=0){
-        v=pow(dataSource->legendLog,v);
+      if(dataSource->legendLog!=0){v=pow(dataSource->legendLog,v);}
+      float lineWidth=1;
+      drawImage->line((int)cbW-1+posX,(int)c+7+dH+posY,(int)cbW+6+posX,(int)c+7+dH+posY,lineWidth,248);
+      if(tickRound==0){floatToString(szTemp,255,v);}else{
+        floatToString(szTemp,255,tickRound,v);
       }
-      //snprintf(szTemp,255,"%0.2f",v);
-      //floatToString(szTemp,255,v);
-      // Rounding of legend text depends on legendInterval
-      /*float legendInterval=0.5;
-      if(legendInterval==0)return 1;
-      int textRounding=0;
-      if(legendInterval!=0){
-        float fracPart=legendInterval-int(legendInterval);
-        textRounding=-int(log10(fracPart)-0.9999999f);
-      }
-        if(textRounding<=0)sprintf(szTemp,"%d",int(v+0.5));
-        if(textRounding==1)sprintf(szTemp,"%2.1f",v);
-        if(textRounding==2)sprintf(szTemp,"%2.2f",v);
-        if(textRounding==3)sprintf(szTemp,"%2.3f",v);
-        if(textRounding==4)sprintf(szTemp,"%2.4f",v);
-        if(textRounding==5)sprintf(szTemp,"%2.5f",v);
-        if(textRounding==5)sprintf(szTemp,"%2.6f",v);
-        if(textRounding>6)sprintf(szTemp,"%f",v);*/
-      floatToString(szTemp,255,v);
-      int l=strlen(szTemp);
-      drawImage->setText(szTemp,l,(int)cbW+12+posX,(int)c+dH+posY,248,-1);
+      drawImage->setText(szTemp,strlen(szTemp),(int)cbW+12+posX,(int)c+dH+posY,248,-1);
     }
   }else{
-
+    //Draw legend with fixed intervals
+    drawImage->rectangle(posX-3,posY,LEGEND_WIDTH+posX+5,LEGEND_HEIGHT+posY,CColor(255,255,255,0),CColor(200,200,200,64));
+    
+    cbW = 90.0/3.0;
     // We always need to have the min/max of the data
     // Always to show only the occuring data values in the legend,
     // and in some cases to stretch the colors over min max
@@ -2192,6 +2224,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage
       }
     }*/
 #ifdef CIMAGEDATAWRITER_DEBUG    
+CDBDebug("LayerName = %s",dataSource->layerName.c_str());
 CDBDebug("minValue=%f maxValue=%f",minValue,maxValue);
 CDBDebug("scale=%f offset=%f",dataSource->legendScale,dataSource->legendOffset);    
 #endif
@@ -2245,17 +2278,18 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
       int cY= int((cbH-(classNr-5))+6);
       
       int dDistanceBetweenClasses=(classSizeY-10);
-      if(dDistanceBetweenClasses<4)dDistanceBetweenClasses=0;
+      if(dDistanceBetweenClasses<4){dDistanceBetweenClasses=2;};
       if(dDistanceBetweenClasses>4)dDistanceBetweenClasses=4;
       cY-=dDistanceBetweenClasses;
       int cY2=int((cbH-(classNr+classSizeY-5))+6);
       classNr+=classSizeY;
       //cY*=numClasses;
       //cY2*=numClasses;
+
       if(j<iMax)
       {
         int y=getColorIndexForValue(dataSource,v);
-        drawImage->rectangle(4,cY2,int(cbW)+7,cY,(y),248);
+        drawImage->rectangle(4+posX,cY2+posY,int(cbW)+7+posX,cY+posY,(y),248);
         if(textRounding<=0)sprintf(szTemp,"%2.0f - %2.0f",v,v+legendInterval);
         if(textRounding==1)sprintf(szTemp,"%2.1f - %2.1f",v,v+legendInterval);
         if(textRounding==2)sprintf(szTemp,"%2.2f - %2.2f",v,v+legendInterval);
@@ -2266,7 +2300,7 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
         if(textRounding>6)sprintf(szTemp,"%f - %f",v,v+legendInterval);
         //CT::string    //floatToString(szTemp,255,v);
         int l=strlen(szTemp);
-        drawImage->setText(szTemp,l,(int)cbW+14+posX,((cY+cY2)/2)-7+posY,248,-1);
+        drawImage->setText(szTemp,l,(int)cbW+12+posX,((cY+cY2)/2)-7+posY,248,-1);
       }
 
     }
@@ -2298,10 +2332,10 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
       }
     }
     //Print the units under the legend:
-    if(units.length()>0)drawImage->setText(units.c_str(),units.length(),5+posX,LEGEND_HEIGHT-15+posY,248,-1);
+    if(units.length()>0)drawImage->setText(units.c_str(),units.length(),2+posX,LEGEND_HEIGHT-14+posY,248,-1);
   }else{
     CT::string units="status flag";
-    drawImage->setText(units.c_str(),units.length(),5+posX,LEGEND_HEIGHT-15+posY,248,-1);
+    drawImage->setText(units.c_str(),units.length(),2+posX,LEGEND_HEIGHT-14+posY,248,-1);
   }
   return 0;
 }

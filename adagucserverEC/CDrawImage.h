@@ -45,6 +45,18 @@ public:
   CT::string legendName;
 };
 
+
+class CColor{
+  public:
+    unsigned char r,g,b,a;
+    CColor(unsigned char r,unsigned char g,unsigned char b,unsigned char a){
+      this->r=r;
+      this->g=g;
+      this->b=b;
+      this->a=a;
+    }
+};
+
 class CDrawImage{
   private:
     std::vector<CLegend *>legends;
@@ -73,8 +85,24 @@ class CDrawImage{
     int writeRGBAPng(int width,int height,unsigned char *RGBAByteBuffer,FILE *file,bool trueColor);
 #endif
     const char *TTFFontLocation;
-    int TTFFontSize;
+    float TTFFontSize;
     char *fontConfig ;
+    
+    static std::map<int,int> myColorMap;
+    static std::map<int,int>::iterator myColorIter;
+    int getClosestGDColor(unsigned char r,unsigned char g,unsigned char b){
+      int key = r+g*256+b*65536;
+      int color;
+      myColorIter=myColorMap.find(key);
+      if(myColorIter==myColorMap.end()){
+        color = gdImageColorClosest(image,r,g,b);
+        myColorMap[key]=color;
+      }else{
+        color=(*myColorIter).second;
+      }
+      return color;
+    }
+    
   public:
     
     int _colors[256];
@@ -95,6 +123,8 @@ class CDrawImage{
     void drawBarb(int x,int y,double direction, double strength,int color,bool toKnots,bool flip);
     void drawText(int x,int y,float angle,const char *text,unsigned char colorIndex);
     void drawText(int x,int y,const char *fontfile, float size, float angle,const char *text,unsigned char colorIndex);
+    void drawText(int x,int y,const char *fontfile, float size, float angle,const char *text,CColor fgcolor);
+    void drawText(int x,int y,const char *fontfile, float size, float angle,const char *text,CColor fgcolor,CColor bgcolor);
     //void drawTextAngle(const char * text, size_t length,double angle,int x,int y,int color,int fontSize);
     void drawVector(int x,int y,double direction, double strength,int color);
     void destroyImage();
@@ -111,6 +141,7 @@ class CDrawImage{
     void setTextStroke(const char * text, size_t length,int x,int y, int fgcolor,int bgcolor, int fontSize);
     void rectangle( int x1, int y1, int x2, int y2,int innercolor,int outercolor);
     void rectangle( int x1, int y1, int x2, int y2,int outercolor);
+    void rectangle( int x1, int y1, int x2, int y2,CColor innercolor,CColor outercolor);
     int copyPalette();
     int addImage(int delay);
     int beginAnimation();
@@ -125,7 +156,7 @@ class CDrawImage{
     bool getAntialiased(){return _bAntiAliased;}
     
     void setTTFFontLocation(const char *_TTFFontLocation){TTFFontLocation=_TTFFontLocation;  }
-    void setTTFFontSize(int _TTFFontSize){  TTFFontSize=_TTFFontSize; }
+    void setTTFFontSize(float _TTFFontSize){  TTFFontSize=_TTFFontSize; }
 };
 
 #endif

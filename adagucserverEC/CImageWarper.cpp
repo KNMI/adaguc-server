@@ -3,14 +3,11 @@
 #include <vector>
 const char * CImageWarper::className = "CImageWarper";
 
-void floatToString(char * string,size_t maxlen,float number){
-  int numdigits = 0;
 
-  if(number==0.0f)numdigits=0;else{
-    float tempp=number;
-    if (tempp<0.0001&&tempp>-0.0001)tempp+=0.000001;
-    numdigits = int(log10(fabs(tempp)));
-  }
+
+void floatToString(char * string,size_t maxlen,int numdigits,float number){
+  //snprintf(string,maxlen,"%0.2f",number);
+  //return;
   if(numdigits>-3&&numdigits<4){
     if(numdigits <= -3)snprintf(string,maxlen,"%0.5f",number);
     if(numdigits == -2)snprintf(string,maxlen,"%0.4f",number);
@@ -22,6 +19,17 @@ void floatToString(char * string,size_t maxlen,float number){
   }
   else
     snprintf(string,maxlen,"%0.3e",number);
+}
+
+void floatToString(char * string,size_t maxlen,float number){
+  int numdigits = 0;
+  
+  if(number==0.0f)numdigits=0;else{
+    float tempp=number;
+    if (tempp<0.0001&&tempp>-0.0001)tempp+=0.000001;
+    numdigits = int(log10(fabs(tempp)));
+  }
+  floatToString(string,maxlen,numdigits,number);
 }
 
 int CImageWarper::closereproj(){

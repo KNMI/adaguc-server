@@ -9,8 +9,9 @@
 #include "CStopWatch.h"
 
 #define LATLONPROJECTION "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
-
 void floatToString(char * string,size_t maxlen,float number);
+void floatToString(char * string,size_t maxlen,int numdigits,float number);
+
 class CImageWarper{
 //  CNetCDFReader reader;
   private:
@@ -44,7 +45,6 @@ class CImageWarper{
     int decodeCRS(CT::string *outputCRS, CT::string *inputCRS,std::vector <CServerConfig::XMLE_Projection*> *prj);
     int findExtent(CDataSource *sourceImage,double * dfBBOX);
     bool isProjectionRequired(){return requireReprojection;}
-    void floatToString(char * string,size_t maxlen,float number);
   };
   
 

@@ -1,3 +1,4 @@
+#include "Definitions.h"
 #ifdef ADAGUC_USE_CAIRO
 /*
  * CCairoPlotter2.h
@@ -48,7 +49,7 @@ private:
   cairo_t *cr;
   FILE *fp;
   int width, height,stride;
-  int fontSize;
+  float fontSize;
   const char *fontLocation;
   bool initializationFailed;
 #ifdef USE_FREETYPE
@@ -106,17 +107,16 @@ private:
   }
 
   static const cairo_format_t FORMAT=CAIRO_FORMAT_ARGB32;
-
-public:
-  CCairoPlotter(int width,int height, int fontSize, const char*fontLocation){
+  bool byteBufferPointerIsOwned;
+  void cairoPlotterInit(int width,int height,float fontSize, const char*fontLocation){
     this->width=width;
     this->height=height;
     this->fontSize=fontSize;
     this->fontLocation=fontLocation;
     stride=cairo_format_stride_for_width(FORMAT, width);
-    size_t bufferSize = size_t(height)*stride;
-    ARGBByteBuffer=new unsigned char[bufferSize];
-    for(size_t j=0;j<bufferSize;j++)ARGBByteBuffer[j]=0;
+    
+  
+    
     surface=cairo_image_surface_create_for_data(ARGBByteBuffer, CCairoPlotter::FORMAT, width, height, stride);
     cr=cairo_create(this->surface);
     //fprintf(stderr, "cairo status: %s\n", cairo_status_to_string(cairo_status(cr)));
@@ -124,15 +124,47 @@ public:
     rr=r/256.l; rg=g/256.;rb=b/256.;ra=1;
     fr=0;fg=0;fb=0;fa=1;
     rfr=rfg=rfb=0;rfa=1;
-
-#ifdef USE_FREETYPE
+    
+    #ifdef USE_FREETYPE
     library=NULL;
     initializationFailed=false;
-#endif
-
+    #endif
+    
     initFont();
     //CDBDebug("constructor");
   }
+public:
+  CCairoPlotter(int width,int height, float fontSize, const char*fontLocation){
+    byteBufferPointerIsOwned = true;
+    stride=cairo_format_stride_for_width(FORMAT, width);
+    size_t bufferSize = size_t(height)*stride;
+    ARGBByteBuffer = new unsigned char[bufferSize];
+    for(size_t j=0;j<bufferSize;j++)ARGBByteBuffer[j]=0;
+    cairoPlotterInit(width,height,fontSize,fontLocation);
+  }
+  
+  CCairoPlotter(int width,int height, unsigned char * _ARGBByteBuffer, float fontSize, const char*fontLocation){
+    byteBufferPointerIsOwned = false;
+    this->width=width;
+    this->height=height;
+    this->fontSize=fontSize;
+    this->fontLocation=fontLocation;
+    stride=cairo_format_stride_for_width(FORMAT, width);
+    size_t bufferSize = size_t(height)*stride;
+    //ARGBByteBuffer = new unsigned char[bufferSize];
+    this->ARGBByteBuffer = (_ARGBByteBuffer);
+    //for(size_t j=0;j<bufferSize;j++)ARGBByteBuffer[j]=0;
+    surface=cairo_image_surface_create_for_data(ARGBByteBuffer, CCairoPlotter::FORMAT, width, height, stride);
+    cr=cairo_create(this->surface);
+    #ifdef USE_FREETYPE
+    library=NULL;
+    initializationFailed=false;
+    #endif
+    
+    initFont();
+   
+  }
+  
 
   ~CCairoPlotter() {
 #ifdef USE_PANGOCAIRO
@@ -140,7 +172,10 @@ public:
 #endif
     cairo_destroy(cr);
     cairo_surface_destroy(surface);
-    delete ARGBByteBuffer;
+    if(byteBufferPointerIsOwned){
+      delete[] ARGBByteBuffer;
+      ARGBByteBuffer= NULL;
+    }
   }
 
 #ifdef USE_FREETYPE
@@ -197,45 +232,102 @@ public:
     }
     return 0;
   }
+  int drawText(int x,int y,float angle,const char *text){
+    if(text==NULL)return 0;
+    if(strlen(text)==0)return 0;
+    if(initializationFailed==true)return 1;
+    if(library==NULL){
+      int status  = initializeFreeType();
+      if(status != 0){
+        initializationFailed=true;
+        return 1;
+      }
+    };
+    FT_Matrix matrix; /* transformation matrix */
+    matrix.xx = (FT_Fixed)( cos( angle ) * 0x10000L );
+    matrix.xy = (FT_Fixed)(-sin( angle ) * 0x10000L );
+    matrix.yx = (FT_Fixed)( sin( angle ) * 0x10000L );
+    matrix.yy = (FT_Fixed)( cos( angle ) * 0x10000L ); /* the pen position in 26.6 cartesian space coordinates */
+    //Draw text :)
+    int my_target_height = 8,error;
+    int num_chars=strlen(text);
+    FT_Vector pen; /* untransformed origin */
+    pen.x = x * 64; pen.y = ( my_target_height - y ) * 64;
+    for ( int n = 0; n < num_chars; n++ ) { /* set transformation */
+      FT_Set_Transform( face, &matrix, &pen ); /* load glyph image into the  face->glyph (erase previous one) */
+      error = FT_Load_Char( face, text[n], FT_LOAD_RENDER );
+      if ( error ){CDBError("unable toFT_Load_Char");return 1;
+      }
+      /* now, draw to our target surface (convert position) */
+      renderFont( & face->glyph->bitmap,  face->glyph->bitmap_left, my_target_height -  face->glyph->bitmap_top );
+      /* increment pen position */
+      pen.x +=  face->glyph->advance.x; pen.y +=  face->glyph->advance.y;
+    }
+    return 0;
+  }
+  
+  int drawFilledText(int x,int y,float angle,const char *text){
+    if(text==NULL)return 0;
+    if(strlen(text)==0)return 0;
+    if(initializationFailed==true)return 1;
+    if(library==NULL){
+      int status  = initializeFreeType();
+      if(status != 0){
+        initializationFailed=true;
+        return 1;
+      }
+    };
+    
+    FT_Matrix matrix; /* transformation matrix */
+    /* set up matrix */
+    matrix.xx = (FT_Fixed)( cos( angle ) * 0x10000L );
+    matrix.xy = (FT_Fixed)(-sin( angle ) * 0x10000L );
+    matrix.yx = (FT_Fixed)( sin( angle ) * 0x10000L );
+    matrix.yy = (FT_Fixed)( cos( angle ) * 0x10000L ); /* the pen position in 26.6 cartesian space coordinates */
 
-   int drawText(int x,int y,float angle,const char *text){
-     //Draw text :)
-     if(initializationFailed==true)return 1;
-     if(library==NULL){
-       int status  = initializeFreeType();
-       if(status != 0){
-         initializationFailed=true;
-         return 1;
-       }
-     };
-     int error;
-     FT_GlyphSlot slot; FT_Matrix matrix; /* transformation matrix */
-     FT_Vector pen; /* untransformed origin */
-     int n;
-     int my_target_height = 8;
-     int num_chars=strlen(text);
-     slot = face->glyph; /* a small shortcut */
-     /* set up matrix */
-     matrix.xx = (FT_Fixed)( cos( angle ) * 0x10000L );
-     matrix.xy = (FT_Fixed)(-sin( angle ) * 0x10000L );
-     matrix.yx = (FT_Fixed)( sin( angle ) * 0x10000L );
-     matrix.yy = (FT_Fixed)( cos( angle ) * 0x10000L ); /* the pen position in 26.6 cartesian space coordinates */
-     /* start at (300,200) */
-     pen.x = x * 64; pen.y = ( my_target_height - y ) * 64;
-     for ( n = 0; n < num_chars; n++ ) { /* set transformation */
-       FT_Set_Transform( face, &matrix, &pen ); /* load glyph image into the slot (erase previous one) */
-       error = FT_Load_Char( face, text[n], FT_LOAD_RENDER );
-       if ( error ){
-         CDBError("unable toFT_Load_Char");
-         return 1;
-       }
-       /* now, draw to our target surface (convert position) */
-       renderFont( &slot->bitmap, slot->bitmap_left, my_target_height - slot->bitmap_top );
-       /* increment pen position */
-       pen.x += slot->advance.x; pen.y += slot->advance.y;
-     }
-     return 0;
-   }
+    //Draw text :)
+    int my_target_height = 8,error;
+    int num_chars=strlen(text);
+    int orgr=this->r;
+    int orgg=this->g;
+    int orgb=this->b;
+    int orga=this->a;
+    
+    FT_Vector pen; /* untransformed origin */
+    pen.x = x * 64; pen.y = ( my_target_height - y ) * 64;
+    setColor(255,255,255,0);
+    filledRectangle( pen.x/64-5, 
+                     my_target_height-(pen.y)/64 +8,
+                     (pen.x)/64,
+                     my_target_height-(pen.y )/64-fontSize-4);
+    for ( int n = 0; n < num_chars; n++ ) { /* set transformation */
+      FT_Set_Transform( face, &matrix, &pen ); /* load glyph image into the  face->glyph (erase previous one) */
+      error = FT_Load_Char( face, text[n], FT_LOAD_RENDER );
+      if ( error ){CDBError("unable toFT_Load_Char");return 1;
+      }
+      /* now, draw to our target surface (convert position) */
+      
+      //setFillColor(255,255,255,100);
+     
+      setColor(255,255,255,0);
+      filledRectangle( pen.x/64, 
+                       my_target_height-(pen.y)/64 +5,
+                       (pen.x+face->glyph->advance.x)/64,
+                       my_target_height-(pen.y )/64-fontSize-4);
+      setColor(orgr,orgg,orgb,orga);
+      renderFont( & face->glyph->bitmap,  face->glyph->bitmap_left, my_target_height -  face->glyph->bitmap_top );
+      /* increment pen position */
+      pen.x +=  face->glyph->advance.x; pen.y +=  face->glyph->advance.y;
+    }
+    setColor(255,255,255,0);
+    filledRectangle( pen.x/64, 
+                 my_target_height-(pen.y)/64 +5,
+                 (pen.x)/64+5,
+                 my_target_height-(pen.y )/64-fontSize-4);
+    setColor(orgr,orgg,orgb,orga);
+    return 0;
+  }
+
 #endif
 
   void initFont() {
@@ -295,12 +387,24 @@ public:
   void pixel(int x,int y, unsigned char r,unsigned char g,unsigned char b){
     if(x<0||y<0)return;
     if(x>=width||y>=height)return;
-  //  cairo_surface_flush(surface);
+    //unsigned char a = 255;
+    //this->r=r;
+    //rr=r/256.;
+    //this->g=g;
+    //rg=g/256.;
+    //this->b=b;
+    //rb=b/256.;
+    //this->a=(float)a;
+    //ra=a/256.;
+    //cairo_surface_flush(surface);
     size_t p=x*4+y*stride;
     ARGBByteBuffer[p]=b;
     ARGBByteBuffer[p+1]=g;
     ARGBByteBuffer[p+2]=r;
-    ARGBByteBuffer[p+3]=a;
+    ARGBByteBuffer[p+3]=255;
+  }
+  unsigned char *getByteBuffer(){
+    return ARGBByteBuffer;
   }
 
   void flush() {
@@ -308,7 +412,7 @@ public:
   }
 
   void rectangle(int x1,int y1,int x2,int y2){
-    cairo_rectangle(cr, x1, y1, x2-x1, y2-y1);
+    cairo_rectangle(cr, x1+0.5, y1+0.5, x2-x1, y2-y1);
     cairo_set_source_rgba(cr, rr, rg, rb, a);
     cairo_stroke(cr);
   }
@@ -331,19 +435,25 @@ public:
     cairo_set_antialias(cr, CAIRO_ANTIALIAS_DEFAULT);
     cairo_move_to(cr, x1, y1);
     cairo_line_to(cr, x2, y2);
-    cairo_set_line_width(cr, 0.5);
+    cairo_set_line_width(cr, 0.9);
     cairo_stroke(cr);
     cairo_set_antialias(cr, aa);
   }
 
   void line(float x1,float y1,float x2,float y2) {
     cairo_set_source_rgba(cr, rr, rg, rb, ra);
-    cairo_move_to(cr, x1, y1);
-    cairo_line_to(cr, x2, y2);
-    cairo_set_line_width(cr, 0.8);
+    cairo_move_to(cr, x1+0.5, y1+0.5);
+    cairo_line_to(cr, x2+0.5, y2+0.5);
+    cairo_set_line_width(cr, 0.9);
     cairo_stroke(cr);
   }
-
+  void line(float x1,float y1,float x2,float y2,float width) {
+    cairo_set_source_rgba(cr, rr, rg, rb, ra);
+    cairo_move_to(cr, x1+0.5, y1+0.5);
+    cairo_line_to(cr, x2+0.5, y2+0.5);
+    cairo_set_line_width(cr, width);
+    cairo_stroke(cr);
+  }
   cairo_status_t writeToPng(const char* fileName) {
     return cairo_surface_write_to_png(surface, fileName);
   }

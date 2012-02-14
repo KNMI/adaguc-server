@@ -1,6 +1,8 @@
 #include "CDrawImage.h"
 
 const char *CDrawImage::className="CDrawImage";
+std::map<int,int> CDrawImage::myColorMap;
+std::map<int,int>::iterator CDrawImage::myColorIter;
 
 float convertValueToClass(float val,float interval){
   float f=int(val/interval);
@@ -318,14 +320,14 @@ void CDrawImage::line(float x1,float y1,float x2,float y2,float w,int color){
     if(color>=0&&color<256){
 #ifdef ADAGUC_USE_CAIRO
       cairo->setColor(currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],255);
-      cairo->line(x1,y1,x2,y2);
+      cairo->line(x1,y1,x2,y2,w);
 #else
       wuLine->setColor(currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],255);
       wuLine->line(x1,y1,x2,y2);
 #endif
     }
   }else{
-    gdImageSetThickness(image, int(w)*2);
+    gdImageSetThickness(image, int(w)*1);
     gdImageLine(image, x1,y1,x2,y2,_colors[color]);
   }
 }
@@ -337,6 +339,7 @@ void CDrawImage::setPixelIndexed(int x,int y,int color){
     //if(color>=0&&color<256){
       if(currentLegend->CDIalpha[color]==255){
 #ifdef ADAGUC_USE_CAIRO
+    //cairo->setColor(currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],255);
     cairo-> pixel(x,y,currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color]);
 #else
     wuLine-> pixel(x,y,currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color]);
@@ -378,8 +381,6 @@ void CDrawImage::getHexColorForColorIndex(CT::string *hexValue,int color){
 }
 
 
-std::map<int,int> myColorMap;
-std::map<int,int>::iterator myColorIter;
 
 void CDrawImage::setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,unsigned char b){
   if(_bAntiAliased==true){
@@ -394,16 +395,8 @@ void CDrawImage::setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,u
     if(_bEnableTrueColor){
       gdImageSetPixel(image, x,y,r+g*256+b*65536);
     }else{
-      int key = r+g*256+b*65536;
-      int color;
-      myColorIter=myColorMap.find(key);
-      if(myColorIter==myColorMap.end()){
-        color = gdImageColorClosest(image,r,g,b);
-        myColorMap[key]=color;
-      }else{
-        color=(*myColorIter).second;
-      }
-      gdImageSetPixel(image, x,y,color);
+
+      gdImageSetPixel(image, x,y,getClosestGDColor(r,g,b));
       
     }
   }
@@ -511,27 +504,62 @@ void CDrawImage::drawText(int x,int y,float angle,const char *text,unsigned char
   }
 }
 
+
+
 void CDrawImage::drawText(int x,int y,const char *fontfile, float size, float angle,const char *text,unsigned char colorIndex){
+  CColor color(currentLegend->CDIred[colorIndex],currentLegend->CDIgreen[colorIndex],currentLegend->CDIblue[colorIndex],255);
+  drawText(x,y,fontfile, size, angle,text,color);
+}
+ 
+void CDrawImage::drawText(int x,int y,const char *fontfile, float size, float angle,const char *text,CColor fgcolor,CColor bgcolor){
+   if(_bAntiAliased==true){
+     #ifdef ADAGUC_USE_CAIRO
+     CCairoPlotter * freeType = new CCairoPlotter (Geo->dWidth,Geo->dHeight,(cairo->getByteBuffer()),size,fontfile);
+     freeType->setColor(fgcolor.r,fgcolor.g,fgcolor.b,fgcolor.a);
+     freeType->setFillColor(bgcolor.r,bgcolor.g,bgcolor.b,bgcolor.a);
+     freeType->drawFilledText(x,y,angle,text);
+     delete freeType;
+     
+     #else
+     CFreeType * freeType = new CFreeType (Geo->dWidth,Geo->dHeight,RGBAByteBuffer,size,fontfile);
+     freeType->setColor(fgcolor.r,fgcolor.g,fgcolor.b,fgcolor.a);
+     freeType->setFillColor(bgcolor.r,bgcolor.g,bgcolor.b,bgcolor.a);
+     freeType->drawFilledText(x,y,angle,text);
+     delete freeType;
+     #endif
+   }else{
+     char *_text = new char[strlen(text)+1];
+     memcpy(_text,text,strlen(text)+1);
+     int tcolor=getClosestGDColor(fgcolor.r,fgcolor.g,fgcolor.b);
+     if(_bEnableTrueColor)tcolor=-tcolor;
+     gdImageStringFT(image, &brect[0],   tcolor, fontConfig, size, angle,  x,  y, (char*)_text);
+     delete[] _text;
+   }
+ }
+ 
+void CDrawImage::drawText(int x,int y,const char *fontfile, float size, float angle,const char *text,CColor color){
+  
   
   if(_bAntiAliased==true){
     #ifdef ADAGUC_USE_CAIRO
-    //TODO!!! CAIRO DOES PRINT LARGE FONTS THIS WAY.
-    cairo->setColor(currentLegend->CDIred[colorIndex],currentLegend->CDIgreen[colorIndex],currentLegend->CDIblue[colorIndex],255);
-    cairo->drawText(x,y,angle,text);
+    CCairoPlotter * freeType = new CCairoPlotter (Geo->dWidth,Geo->dHeight,(cairo->getByteBuffer()),size,fontfile);
+    freeType->setColor(color.r,color.g,color.b,color.a);
+    freeType->drawText(x,y,angle,text);
+    delete freeType;
+    
     #else
     CFreeType * freeType = new CFreeType (Geo->dWidth,Geo->dHeight,RGBAByteBuffer,size,fontfile);
-    freeType->setColor(currentLegend->CDIred[colorIndex],currentLegend->CDIgreen[colorIndex],currentLegend->CDIblue[colorIndex],255);
+    freeType->setColor(color.r,color.g,color.b,color.a);
     freeType->drawFreeTypeText(x,y,angle,text);
     delete freeType;
     #endif
   }else{
     char *_text = new char[strlen(text)+1];
     memcpy(_text,text,strlen(text)+1);
-    int tcolor=-_colors[240];
+    int tcolor=getClosestGDColor(color.r,color.g,color.b);
     if(_bEnableTrueColor)tcolor=-tcolor;
-    gdImageStringFT(image, &brect[0], tcolor, fontConfig, size, angle,  x,  y, (char*)_text);
+    gdImageStringFT(image, &brect[0],   tcolor, fontConfig, size, angle,  x,  y, (char*)_text);
     delete[] _text;
-    //drawTextAngle(text, strlen(text),angle, x, y, 240,8);
   }
 }
 /*void CDrawImage::drawTextAngle(const char * text, size_t length,double angle,int x,int y,int color,int fontSize){
@@ -708,6 +736,22 @@ int CDrawImage::createGDPalette(CServerConfig::XMLE_Legend *legend){
     return _createStandard();
   }
   return 1;
+}
+
+void  CDrawImage::rectangle( int x1, int y1, int x2, int y2,CColor innercolor,CColor outercolor){
+  if(_bAntiAliased==true){
+  #ifdef ADAGUC_USE_CAIRO
+  cairo->setColor(innercolor.r,innercolor.g,innercolor.b,innercolor.a);
+  cairo->setFillColor(outercolor.r,outercolor.g,outercolor.b,outercolor.a);
+  cairo->filledRectangle(x1,y1,x2,y2);
+  #else
+  wuLine->setColor(innercolor.r,innercolor.g,innercolor.b,innercolor.a);
+  wuLine->setFillColor(outercolor.r,outercolor.g,outercolor.b,outercolor.a);
+  wuLine->filledRectangle(x1,y1,x2,y2);
+  #endif
+  }else{
+    //TODO
+  }
 }
 
 void CDrawImage::rectangle( int x1, int y1, int x2, int y2,int innercolor,int outercolor){

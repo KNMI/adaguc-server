@@ -11,7 +11,7 @@
 class CImageDataWriter: public CBaseDataWriterInterface{
   private:
     CImageWarper imageWarper;
-    CDrawImage drawImage;
+  
     
     CDataSource *currentDataSource;
     
@@ -56,6 +56,7 @@ class CImageDataWriter: public CBaseDataWriterInterface{
 public:
     class StyleConfiguration {
     public:
+        
       float shadeInterval,contourIntervalL,contourIntervalH;
       float legendScale,legendOffset,legendLog,legendLowerRange,legendUpperRange;
       int smoothingFilter;
@@ -112,6 +113,7 @@ private:
     static CT::stringlist *getStyleNames(std::vector <CServerConfig::XMLE_Styles*> Styles);
     static CT::stringlist *getStyleListForDataSource(CDataSource *dataSource,StyleConfiguration *styleConfig);
   public:
+    CDrawImage drawImage;
     CImageDataWriter::StyleConfiguration * currentStyleConfiguration;
     static int  getServerLegendIndexByName(const char * legendName,std::vector <CServerConfig::XMLE_Legend*> serverLegends);
     static int  getServerStyleIndexByName(const char * styleName,std::vector <CServerConfig::XMLE_Style*> serverStyles);

@@ -78,6 +78,9 @@ CDBDebug("getFileNameForLayer");
         DB.close();
         return getFileNameForLayer(myWMSLayer);
       }
+      if(values==NULL){
+        return 1;
+      }
       if(values->count>0){
 #ifdef CXMLGEN_DEBUG            
         CDBDebug("Query '%s' succeeded: Filename = %s",query.c_str(),values[0].c_str());

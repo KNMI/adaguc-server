@@ -36,7 +36,7 @@ class CServerConfig:public CXMLSerializerInterface{
         }
         class Cattr{
           public:
-            CXMLString name,type;
+            CXMLString name,type,tickround,tickinterval;
         }attr;
         void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value){
           CXMLSerializerInterface * base = (CXMLSerializerInterface*)baseClass;
@@ -52,6 +52,11 @@ class CServerConfig:public CXMLSerializerInterface{
         void addAttribute(const char *name,const char *value){
           if(equals("name",4,name)){attr.name.copy(value);return;}
           else if(equals("type",4,name)){attr.type.copy(value);return;}
+          else if(equals("tickround",9,name)){attr.tickround.copy(value);return;}
+          else if(equals("tickinterval",12,name)){attr.tickinterval.copy(value);return;}
+          
+          
+          
         }
     };
     class XMLE_Scale: public CXMLObjectInterface{};
@@ -123,7 +128,17 @@ class CServerConfig:public CXMLSerializerInterface{
         else if(equals("location",8,attrname)){attr.location.copy(attrvalue);return;}
       }
     };
-    
+    class XMLE_GridFont: public CXMLObjectInterface{
+    public:
+      class Cattr{
+      public:
+        CXMLString location,size;
+      }attr;
+      void addAttribute(const char *attrname,const char *attrvalue){
+        if(equals("size",4,attrname)){attr.size.copy(attrvalue);return;}
+        else if(equals("location",8,attrname)){attr.location.copy(attrvalue);return;}
+      }
+    };
     class XMLE_OpenDAP: public CXMLObjectInterface{
     public:
       class Cattr{
@@ -152,6 +167,7 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_ShadeInterval*> ShadeInterval;
         std::vector <XMLE_SmoothingFilter*> SmoothingFilter;
         std::vector <XMLE_StandardNames*> StandardNames;
+        
         
         ~XMLE_Style(){
           XMLE_DELOBJ(Legend);
@@ -379,6 +395,7 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_ContourFont*> ContourFont;
         std::vector <XMLE_SubTitleFont*> SubTitleFont;
         std::vector <XMLE_DimensionFont*> DimensionFont;
+        std::vector <XMLE_GridFont*> GridFont;
         
         ~XMLE_WMS(){
           XMLE_DELOBJ(Title);
@@ -388,6 +405,7 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(ContourFont);
           XMLE_DELOBJ(SubTitleFont);
           XMLE_DELOBJ(DimensionFont);
+          XMLE_DELOBJ(GridFont);
           
         }
         void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value){
@@ -397,6 +415,7 @@ class CServerConfig:public CXMLSerializerInterface{
           if(rc==1){
             pt2Class=NULL;
             if(equals("Title",5,name)){XMLE_ADDOBJ(Title);}
+            else if(equals("GridFont",8,name)){XMLE_ADDOBJ(GridFont);}
             else if(equals("Abstract",8,name)){XMLE_ADDOBJ(Abstract);}
             else if(equals("RootLayer",9,name)){XMLE_ADDOBJ(RootLayer);}
             else if(equals("TitleFont",9,name)){XMLE_ADDOBJ(TitleFont);}
@@ -509,6 +528,19 @@ class CServerConfig:public CXMLSerializerInterface{
       }
     };
   
+    
+    class XMLE_Grid: public CXMLObjectInterface{
+    public:
+      class Cattr{
+      public:
+        CXMLString name,precision,resolution;
+      }attr;
+      void addAttribute(const char *attrname,const char *attrvalue){
+        if(equals("name",4,attrname)){attr.name.copy(attrvalue);return;}
+        else if(equals("precision",9,attrname)){attr.precision.copy(attrvalue);return;}
+        else if(equals("resolution",10,attrname)){attr.resolution.copy(attrvalue);return;}
+      }
+    };
     class XMLE_Layer: public CXMLObjectInterface{
       public:
         class Cattr{
@@ -547,6 +579,7 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_DataPostProc*> DataPostProc;
         std::vector <XMLE_Position*> Position;
         std::vector <XMLE_WMSFormat*> WMSFormat;
+        std::vector <XMLE_Grid*> Grid;
         
         
         
@@ -581,6 +614,7 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(DataPostProc);
           XMLE_DELOBJ(Position);
           XMLE_DELOBJ(WMSFormat);
+          XMLE_DELOBJ(Grid);
         }
         void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value){
           CXMLSerializerInterface * base = (CXMLSerializerInterface*)baseClass;
@@ -618,6 +652,8 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("SmoothingFilter",15,name)){XMLE_ADDOBJ(SmoothingFilter);}
             else if(equals("Position",8,name)){XMLE_ADDOBJ(Position);}
             else if(equals("WMSFormat",9,name)){XMLE_ADDOBJ(WMSFormat);}
+            else if(equals("Grid",4,name)){XMLE_ADDOBJ(Grid);}
+            
             
           }
           if(pt2Class!=NULL)pt2Class->addElement(baseClass,rc-pt2Class->level,name,value);
