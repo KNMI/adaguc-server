@@ -450,7 +450,10 @@ CT::stringlist *CImageDataWriter::getStyleListForDataSource(CDataSource *dataSou
     if(styleToSearchString.equals("default")||styleToSearchString.equals("default/HQ")){
       isDefaultStyle = true;
     }
-    //if(styleToSearchString.indexOf("/")
+    /*int hqIdx=styleToSearchString.indexOf("/HQ");
+    if(hqIdx>0){
+      styleToSearchString.substring(0,hqIdx);
+    }*/
   }
   CT::stringlist *styleNames = getStyleNames(dataSource->cfgLayer->Styles);
   
@@ -620,6 +623,7 @@ int  CImageDataWriter::getServerStyleIndexByName(const char * styleName,std::vec
     return -1;
   }
   CT::string styleString = styleName;
+  if(styleString.equals("default")||styleString.equals("default/HQ"))return -1;
   for(size_t j=0;j<serverStyles.size();j++){
     if(serverStyles[j]->attr.name.c_str()!=NULL){
       if(styleString.equals(serverStyles[j]->attr.name.c_str())){
@@ -2140,7 +2144,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage
     }
   }else if(renderMethod!=shadedcontour&&renderMethod!=shaded&&renderMethod!=contour){
     //Draw a continous legend
-    drawImage->rectangle(posX-3,posY,LEGEND_WIDTH+posX-20,LEGEND_HEIGHT+posY,CColor(255,255,255,0),CColor(200,200,200,64));
+    drawImage->rectangle(posX-3,posY,LEGEND_WIDTH+posX-25,LEGEND_HEIGHT+posY,CColor(255,255,255,0),CColor(200,200,200,64));
     
     dH=4;
     cbW = 60.0/2.2;

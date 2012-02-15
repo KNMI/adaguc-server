@@ -776,7 +776,7 @@ int CRequest::process_all_layers(){
           
           CDBDebug("drawing titles");
           
-          int textY=6;
+          int textY=5;
           //int prevTextY=0;
           if(srvParam->mapTitle.length()>0){
             if(srvParam->cfg->WMS[0]->TitleFont.size()==1){
@@ -785,7 +785,7 @@ int CRequest::process_all_layers(){
               //imageDataWriter.drawImage.rectangle(0,0,srvParam->Geo->dWidth,textY+8,CColor(255,255,255,0),CColor(255,255,255,80));
               //imageDataWriter.drawImage.setFillC
               imageDataWriter.drawImage.drawText(5,textY,srvParam->cfg->WMS[0]->TitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapTitle.c_str(),CColor(0,0,0,255),CColor(180,180,200,100));
-              textY+=14;
+              textY+=12;
               
               //prevTextY=textY;
             }

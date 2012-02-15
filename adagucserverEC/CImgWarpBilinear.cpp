@@ -843,9 +843,9 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
                   col=col2;
                   
                   w=0.4;
-                  if(smallC==0){w=0.6;col=col2;}
-                  if(bigC==0){w=1.0;col=col1;}
-                  w=0.8;
+                  if(smallC==0){w=0.7;col=col2;}
+                  if(bigC==0){w=1.4;col=col1;}
+                  //w=0.8;
                   
                   if(drawLine){//&&(distanceFromStart%(linePointDistance*3)>linePointDistance*1)){
                     

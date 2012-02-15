@@ -162,7 +162,7 @@ int CServerParams::makeUniqueLayerName(CT::string *layerName,CServerConfig::XMLE
     title->value.copy(cfgLayer->Name[0]->value.c_str());
   } */ 
   layerName->concat(cfgLayer->Name[0]->value.c_str());
-  layerName->replace(".","%2E");
+  layerName->replace(".","_");
   
 
   return 0;
