@@ -387,22 +387,25 @@ public:
   void pixel(int x,int y, unsigned char r,unsigned char g,unsigned char b){
     if(x<0||y<0)return;
     if(x>=width||y>=height)return;
-    //unsigned char a = 255;
-    //this->r=r;
-    //rr=r/256.;
-    //this->g=g;
-    //rg=g/256.;
-    //this->b=b;
-    //rb=b/256.;
-    //this->a=(float)a;
-    //ra=a/256.;
-    //cairo_surface_flush(surface);
     size_t p=x*4+y*stride;
     ARGBByteBuffer[p]=b;
     ARGBByteBuffer[p+1]=g;
     ARGBByteBuffer[p+2]=r;
     ARGBByteBuffer[p+3]=255;
   }
+  
+  void getPixel(int x,int y, unsigned char &r,unsigned char &g,unsigned char &b,unsigned char a){
+    if(x<0||y<0||x>=width||y>=height){
+      r=0;b=0;g=0;a=0;
+    }
+    size_t p=x*4+y*stride;
+    b=ARGBByteBuffer[p];
+    g=ARGBByteBuffer[p+1];
+    r=ARGBByteBuffer[p+2];
+    a=ARGBByteBuffer[p+3];
+  }
+  
+  
   unsigned char *getByteBuffer(){
     return ARGBByteBuffer;
   }

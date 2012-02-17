@@ -819,7 +819,14 @@ int CRequest::process_all_layers(){
             bool legendDrawn = false;
             for(size_t d=0;d<dataSources.size()&&legendDrawn==false;d++){
               if(dataSources[d]->dLayerType!=CConfigReaderLayerTypeCascaded){
-                status = imageDataWriter.createLegend(dataSources[d],5,srvParam->Geo->dHeight-LEGEND_HEIGHT-2);if(status != 0)throw(__LINE__);
+                CDrawImage legendImage;
+                legendImage.createImage(&imageDataWriter.drawImage,LEGEND_WIDTH,LEGEND_HEIGHT);
+                
+                status = imageDataWriter.createLegend(dataSources[d],&legendImage);if(status != 0)throw(__LINE__);
+                int posX=5;
+                int posY=imageDataWriter.drawImage.Geo->dHeight-(legendImage.Geo->dHeight+5);
+                imageDataWriter.drawImage.rectangle(posX,posY,legendImage.Geo->dWidth+posX,legendImage.Geo->dHeight+posY,CColor(255,255,255,0),CColor(255,255,255,200));
+                imageDataWriter.drawImage.draw(posX,posY,0,0,&legendImage);
                 legendDrawn=true;
               }
             }
@@ -860,7 +867,7 @@ int CRequest::process_all_layers(){
         if(srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
           CImageDataWriter ImageDataWriter;
           status = ImageDataWriter.init(srvParam,dataSources[j],1);if(status != 0)throw(__LINE__);
-          status = ImageDataWriter.createLegend(dataSources[j],0,0);if(status != 0)throw(__LINE__);
+          status = ImageDataWriter.createLegend(dataSources[j],&ImageDataWriter.drawImage);if(status != 0)throw(__LINE__);
           status = ImageDataWriter.end();if(status != 0)throw(__LINE__);
         }
         // WMS GetMetaData

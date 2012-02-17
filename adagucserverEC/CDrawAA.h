@@ -105,6 +105,19 @@ class CXiaolinWuLine:public CPlotter{
     RGBAByteBuffer[p+3]=a;
 
   }
+  
+  void getPixel(int x,int y, unsigned char &r,unsigned char &g,unsigned char &b,unsigned char &a){
+    if(x<0||y<0||x>=width||y>=height){
+      r=0;b=0;g=0;a=0;
+    }
+    size_t p=x+y*width;p*=4;
+    r=RGBAByteBuffer[p+0];
+    g=RGBAByteBuffer[p+1];
+    b=RGBAByteBuffer[p+2];
+    a=RGBAByteBuffer[p+3];    
+  }
+  
+  
   void pixelBlend(int x,int y, unsigned char r,unsigned char g,unsigned char b,unsigned char a){
     if(x<0||y<0)return;
     if(x>=width||y>=height)return;

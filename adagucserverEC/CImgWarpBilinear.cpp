@@ -490,7 +490,7 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
 #ifdef CImgWarpBilinear_DEBUG 
   CDBDebug("scale=%f offset=%f",dataSource->legendScale,dataSource->legendOffset);
 #endif  
-  bool drawHQ = drawImage->getAntialiased();
+  bool drawHQ = drawImage->getTrueColor();
   drawHQ=true;
   int col1=244;
   int col2=243;

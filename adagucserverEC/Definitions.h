@@ -28,7 +28,7 @@
 #define REQUEST_UPDATEDB                  100
 
 //Legend
-#define LEGEND_WIDTH                      100
+#define LEGEND_WIDTH                      160
 #define LEGEND_HEIGHT                     200
 
 //WMS versions
@@ -106,9 +106,10 @@
 
 #define CIMAGEDATAWRITER_DEBUG
 #define CXMLGEN_DEBUG
+#define MEASURETIME
 
 #define ENABLE_CURL
-#define ADAGUC_USE_CAIRO
+//#define ADAGUC_USE_CAIRO
 #define ADAGUC_USE_GDAL
 #endif
 

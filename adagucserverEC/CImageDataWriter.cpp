@@ -173,12 +173,12 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   if(_setTransparencyAndBGColor(this->srvParam,&drawImage)!=0)return 1;
   if(srvParam->imageMode==SERVERIMAGEMODE_RGBA||srvParam->Styles.indexOf("HQ")>0){
     drawImage.setTrueColor(true);
-    drawImage.setAntiAliased(true);
+    //drawImage.setAntiAliased(true);
   }
   if(dataSource->cfgLayer->WMSFormat.size()>0){
     if(dataSource->cfgLayer->WMSFormat[0]->attr.name.equals("image/png32")){
       drawImage.setTrueColor(true);
-      drawImage.setAntiAliased(true);
+      //drawImage.setAntiAliased(true);
     }
   }
   //Set font location
@@ -276,7 +276,7 @@ int CImageDataWriter::makeStyleConfig(StyleConfiguration *styleConfig,CDataSourc
   styleConfig->renderMethod = getRenderMethodFromString(&renderMethodString);
   if(styleConfig->renderMethod == undefined){errorMessage.print("rendermethod %s",renderMethod); }
   styleConfig->styleIndex   = getServerStyleIndexByName(styleName,dataSource->cfg->Style);
-  if(styleConfig->styleIndex == -1){errorMessage.print("styleIndex %s",styleName); }
+  //if(styleConfig->styleIndex == -1){errorMessage.print("styleIndex %s",styleName); }
   styleConfig->legendIndex  = getServerLegendIndexByName(legendName,dataSource->cfg->Legend);
   if(styleConfig->legendIndex == -1){errorMessage.print("legendIndex %s",legendName); }
   
@@ -443,9 +443,12 @@ CT::stringlist *CImageDataWriter::getStyleListForDataSource(CDataSource *dataSou
   CServerConfig::XMLE_Configuration *serverCFG = dataSource->cfg;
   CT::string styleToSearchString;
   bool isDefaultStyle = false;
+  bool returnStringList = true;
   
   if(styleConfig!=NULL){
     styleConfig->hasError=false;
+    returnStringList=false;
+    delete stringList;stringList = NULL;
     styleToSearchString.copy(&styleConfig->styleCompositionName);
     if(styleToSearchString.equals("default")||styleToSearchString.equals("default/HQ")){
       isDefaultStyle = true;
@@ -469,16 +472,18 @@ CT::stringlist *CImageDataWriter::getStyleListForDataSource(CDataSource *dataSou
       //Lookup the style index in the servers configuration
       int dStyleIndex=getServerStyleIndexByName(styleNames->get(i)->c_str(),serverCFG->Style);
       if(dStyleIndex==-1){
-        if(!styleNames->get(i)->equals("default")){
-          CDBError("Style %s not found for layer %s",styleNames->get(i)->c_str(),dataSource->layerName.c_str());
-          delete styleNames;styleNames = NULL;
-          return NULL;
-        }else{
-          CT::string * styleName = new CT::string();
-          styleName->copy("default");
-          stringList->push_back(styleName);
-          delete styleNames;styleNames = NULL;
-          return stringList;
+        if(returnStringList){
+          if(!styleNames->get(i)->equals("default")){
+            CDBError("Style %s not found for layer %s",styleNames->get(i)->c_str(),dataSource->layerName.c_str());
+            delete styleNames;styleNames = NULL;
+            return NULL;
+          }else{
+            CT::string * styleName = new CT::string();
+            styleName->copy("default");
+            stringList->push_back(styleName);
+            delete styleNames;styleNames = NULL;
+            return stringList;
+          }
         }
       }
       CServerConfig::XMLE_Style* style = NULL;
@@ -499,7 +504,7 @@ CT::stringlist *CImageDataWriter::getStyleListForDataSource(CDataSource *dataSou
             }else{
               styleName->print("%s/%s",styleNames->get(i)->c_str(),renderMethods->get(r)->c_str());
             }
-            stringList->push_back(styleName);
+            
 
             //StyleConfiguration mode, try to find which stylename we want our StyleConfiguration for.
             if(styleConfig!=NULL){
@@ -510,11 +515,12 @@ CT::stringlist *CImageDataWriter::getStyleListForDataSource(CDataSource *dataSou
                 // We found the correspondign legend/style and rendermethod corresponding with the requested stylename!
                 // Now fill in the StyleConfiguration Object.
                 makeStyleConfig(styleConfig,dataSource,styleNames->get(i)->c_str(),legendList->get(l)->c_str(),renderMethods->get(r)->c_str());
-                
+                delete styleName;
                 //Stop with iterating:
                 throw(__LINE__);
               }
             }
+            if(returnStringList)stringList->push_back(styleName);else delete styleName;
           }
         }
       }
@@ -1012,11 +1018,7 @@ CDBDebug("initializeLegend");
   return dLegendIndex;
 #endif  
 }
-int CImageDataWriter::createLegend(CDataSource *dataSource, int posX,int posY){
-  status = createLegend(dataSource,&drawImage, posX,posY);
-  //if(status != 0)return 1;
-  return status;//end();
-}
+
 
 double CImageDataWriter::convertValue(CDFType type,void *data,size_t ptr){
   double pixel = 0.0f;
@@ -2084,7 +2086,9 @@ int CImageDataWriter::getColorIndexForValue(CDataSource *dataSource,float value)
   return int(val);
 }
 
-int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage, int posX,int posY){
+
+
+int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendImage){
   int legendPositiveUp = 1;
   int dH=0;
   float cbH=LEGEND_HEIGHT-13-13;
@@ -2123,11 +2127,16 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage
       return 1;
     }
   }
+  int pLeft=0;
+  int pTop=0;
+ 
+ 
   //Create a legend based on status flags.
   if(dataSource->dataObject[0]->hasStatusFlag){
     //Draw a legend with status flags
     dH=30;
-    cbW=LEGEND_WIDTH/3;cbW/=3;cbW*=3;cbW+=3;
+    //cbW=LEGEND_WIDTH/3;cbW/=3;cbW*=3;cbW+=3;
+    cbW = 90.0/4.0;
     cbH=LEGEND_HEIGHT-13-13-30;
    
     size_t numFlags=dataSource->dataObject[0]->statusFlagList.size();
@@ -2135,17 +2144,15 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage
       float y=j*18+(cbH-numFlags*18+8);
       double value=dataSource->dataObject[0]->statusFlagList[j]->value;
       int c=getColorIndexForValue(dataSource,value);
-      drawImage->rectangle(5+posX,int(2+dH+y)+posY,(int)cbW+9+posX,(int)y+2+dH+12+posY,c,248);
+      legendImage->rectangle(1+pLeft,int(2+dH+y)+pTop,(int)cbW+9+pLeft,(int)y+2+dH+12+pTop,c,248);
       CT::string flagMeaning;
       CDataSource::getFlagMeaningHumanReadable(&flagMeaning,&dataSource->dataObject[0]->statusFlagList,value);
       CT::string legendMessage;
       legendMessage.print("%d %s",(int)value,flagMeaning.c_str());
-      drawImage->setText(legendMessage.c_str(),legendMessage.length(),(int)cbW+16+posX,(int)y+dH+2+posY,248,-1);  
+      legendImage->setText(legendMessage.c_str(),legendMessage.length(),(int)cbW+15+pLeft,(int)y+dH+2+pTop,248,-1);  
     }
   }else if(renderMethod!=shadedcontour&&renderMethod!=shaded&&renderMethod!=contour){
     //Draw a continous legend
-    drawImage->rectangle(posX-3,posY,LEGEND_WIDTH+posX-25,LEGEND_HEIGHT+posY,CColor(255,255,255,0),CColor(200,200,200,64));
-    
     dH=4;
     cbW = 60.0/2.2;
     //cbW=(float(LEGEND_WIDTH)/2.4);
@@ -2154,10 +2161,10 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage
     for(int j=0;j<cbH;j++){
       for(int i=0;i<cbW+2;i++){
         float c=(float(cbH*legendPositiveUp-j)/cbH)*240.0f;
-        drawImage->setPixelIndexed(i+1+posX,j+7+dH+posY,int(c+1));
+        legendImage->setPixelIndexed(i+pLeft,j+7+dH+pTop,int(c+1));
       }
     }
-    drawImage->rectangle(1+posX,7+dH+posY,(int)cbW+3+posX,(int)cbH+7+dH+posY,248);
+    legendImage->rectangle(pLeft,7+dH+pTop,(int)cbW+3+pLeft,(int)cbH+7+dH+pTop,248);
    
     float classes=8;
     int tickRound=0;
@@ -2192,15 +2199,15 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *drawImage
       v/=dataSource->legendScale;
       if(dataSource->legendLog!=0){v=pow(dataSource->legendLog,v);}
       float lineWidth=1;
-      drawImage->line((int)cbW-1+posX,(int)c+7+dH+posY,(int)cbW+6+posX,(int)c+7+dH+posY,lineWidth,248);
+      legendImage->line((int)cbW-1+pLeft,(int)c+7+dH+pTop,(int)cbW+6+pLeft,(int)c+7+dH+pTop,lineWidth,248);
       if(tickRound==0){floatToString(szTemp,255,v);}else{
         floatToString(szTemp,255,tickRound,v);
       }
-      drawImage->setText(szTemp,strlen(szTemp),(int)cbW+12+posX,(int)c+dH+posY,248,-1);
+      legendImage->setText(szTemp,strlen(szTemp),(int)cbW+12+pLeft,(int)c+dH+pTop,248,-1);
     }
+    
   }else{
     //Draw legend with fixed intervals
-    drawImage->rectangle(posX-3,posY,LEGEND_WIDTH+posX+5,LEGEND_HEIGHT+posY,CColor(255,255,255,0),CColor(200,200,200,64));
     
     cbW = 90.0/3.0;
     // We always need to have the min/max of the data
@@ -2293,7 +2300,7 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
       if(j<iMax)
       {
         int y=getColorIndexForValue(dataSource,v);
-        drawImage->rectangle(4+posX,cY2+posY,int(cbW)+7+posX,cY+posY,(y),248);
+        legendImage->rectangle(4+pLeft,cY2+pTop,int(cbW)+7+pLeft,cY+pTop,(y),248);
         if(textRounding<=0)sprintf(szTemp,"%2.0f - %2.0f",v,v+legendInterval);
         if(textRounding==1)sprintf(szTemp,"%2.1f - %2.1f",v,v+legendInterval);
         if(textRounding==2)sprintf(szTemp,"%2.2f - %2.2f",v,v+legendInterval);
@@ -2304,7 +2311,7 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
         if(textRounding>6)sprintf(szTemp,"%f - %f",v,v+legendInterval);
         //CT::string    //floatToString(szTemp,255,v);
         int l=strlen(szTemp);
-        drawImage->setText(szTemp,l,(int)cbW+12+posX,((cY+cY2)/2)-7+posY,248,-1);
+        legendImage->setText(szTemp,l,(int)cbW+12+pLeft,((cY+cY2)/2)-7+pTop,248,-1);
       }
 
     }
@@ -2315,10 +2322,10 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
     float c=(float(cbH*legendPositiveUp-j)/cbH)*240.0f;
     if((int(v*1000)%1000)==0){
         
-    drawImage->line((int)cbW-4,(int)c+7+dH,(int)cbW+6,(int)c+7+dH,248);
+    legendImage->line((int)cbW-4,(int)c+7+dH,(int)cbW+6,(int)c+7+dH,248);
     floatToString(szTemp,255,v);
     int l=strlen(szTemp);
-    drawImage->setText(szTemp,l,(int)cbW+8,(int)c+dH,248,0);
+    legendImage->setText(szTemp,l,(int)cbW+8,(int)c+dH,248,0);
   }
       
   }*/
@@ -2336,11 +2343,15 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
       }
     }
     //Print the units under the legend:
-    if(units.length()>0)drawImage->setText(units.c_str(),units.length(),2+posX,LEGEND_HEIGHT-14+posY,248,-1);
+    if(units.length()>0)legendImage->setText(units.c_str(),units.length(),2+pLeft,LEGEND_HEIGHT-14+pTop,248,-1);
   }else{
     CT::string units="status flag";
-    drawImage->setText(units.c_str(),units.length(),2+posX,LEGEND_HEIGHT-14+posY,248,-1);
+    legendImage->setText(units.c_str(),units.length(),2+pLeft,LEGEND_HEIGHT-14+pTop,248,-1);
   }
+  
+  legendImage->crop(5);
+
+  
   return 0;
 }
 
