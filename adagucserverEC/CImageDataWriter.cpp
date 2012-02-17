@@ -2166,7 +2166,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
     }
     legendImage->rectangle(pLeft,7+dH+pTop,(int)cbW+3+pLeft,(int)cbH+7+dH+pTop,248);
    
-    float classes=8;
+    float classes=6;
     int tickRound=0;
     if(currentStyleConfiguration->styleIndex !=-1){
       
