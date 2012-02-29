@@ -1,5 +1,6 @@
 #INSTALLDIR=/data/apps/rcc/MaartenP/install
 INSTALLDIR=/nobackup/users/plieger/software/install
+INSTALLDIR=/nobackup/users/vreedede/build
 #INSTALLDIR=/home/visadm/software/install
 #INSTALLDIR=/data/data1/mapserver/
 #INSTALLDIR2=/data/data1/software/install/
