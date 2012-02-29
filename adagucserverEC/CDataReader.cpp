@@ -464,7 +464,7 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
         //Get proj4_params
         CDF::Attribute *proj4Attr = projVar->getAttributeNE("proj4_params");
         if (proj4Attr!=NULL) proj4Attr = projVar->getAttributeNE("proj4");
-        if(proj4Attr!=NULL)dataSource->nativeProj4.copy((char*)proj4Attr->data);
+        if(proj4Attr==NULL)dataSource->nativeProj4.copy((char*)proj4Attr->data);
         //else {CDBWarning("proj4_params not found in variable %s",(char*)projvarnameAttr->data);}
         //Get EPSG_code
         CDF::Attribute *epsgAttr = projVar->getAttributeNE("EPSG_code");
