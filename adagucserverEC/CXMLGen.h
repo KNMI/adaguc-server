@@ -43,6 +43,10 @@ class WMSLayer{
       isQuerable=0;
       hasError=0;
       dataSource=NULL;
+      dfLatLonBBOX[0]=-180;
+      dfLatLonBBOX[1]=-90;
+      dfLatLonBBOX[2]=180;
+      dfLatLonBBOX[3]=90;
     }
     ~WMSLayer(){
       delete dataSource;dataSource = NULL;
@@ -82,14 +86,14 @@ class CXMLGen{
     int WCSDescribeCoverage(CServerParams *srvParam,CT::string *XMLDocument);
     int replace(const char *keyword,const char*replace,char*buf);
     int replace_one(const char *keyword,const char*replace,char*buf);
-    CT::string *TimePositions;
+    //CT::string *TimePositions;
     
     CXMLGen(){
-      TimePositions=NULL;
+      //TimePositions=NULL;
     }
     ~CXMLGen(){
-      if(TimePositions!=NULL)delete[] TimePositions;
-      TimePositions=NULL;
+      //if(TimePositions!=NULL)delete[] TimePositions;
+      //TimePositions=NULL;
     }
 };
 

@@ -155,10 +155,10 @@ int CRequest::getDocFromDocCache(CSimpleStore *simpleStore,CT::string *docName,C
   //Check if the configuration file is modified
   //Get configration file modification time
   CT::string configModificationDate;
-  struct tm* clock;				// create a time structure
-  struct stat attrib;			// create a file attribute structure
-  stat(srvParam->configFileName.c_str(), &attrib);		// get the attributes of afile.txt
-  clock = gmtime(&(attrib.st_mtime));	// Get the last modified time and put it into the time structure
+  struct tm* clock;       // create a time structure
+  struct stat attrib;     // create a file attribute structure
+  stat(srvParam->configFileName.c_str(), &attrib);    // get the attributes of afile.txt
+  clock = gmtime(&(attrib.st_mtime)); // Get the last modified time and put it into the time structure
   char buffer [80];
   //strftime (buffer,80,"%I:%M%p.",clock);
   strftime (buffer,80,"%Y-%m-%dT%H:%M:%SZ",clock);
@@ -839,7 +839,7 @@ int CRequest::process_all_layers(){
         }
     
         if(srvParam->requestType==REQUEST_WCS_GETCOVERAGE){
-	  #ifdef ADAGUC_USE_GDAL
+    #ifdef ADAGUC_USE_GDAL
           CGDALDataWriter GDALDataWriter;
           status = GDALDataWriter.init(srvParam,dataSources[j],dataSources[j]->getNumTimeSteps());if(status != 0)throw(__LINE__);
           for(int k=0;k<dataSources[j]->getNumTimeSteps();k++){
@@ -847,7 +847,7 @@ int CRequest::process_all_layers(){
             status = GDALDataWriter.addData(dataSources);if(status != 0)throw(__LINE__);
           }
           status = GDALDataWriter.end();if(status != 0)throw(__LINE__);
-	  #endif
+    #endif
         }
     
         if(srvParam->requestType==REQUEST_WMS_GETFEATUREINFO){
@@ -1168,10 +1168,12 @@ int CRequest::process_querystring(){
             Version.copy(&values[1]);
             dFound_Version=1;
           }
-        }else{
+        }
+        //ARCGIS user Friendliness, version can be defined multiple times.
+        /*else{
           CDBWarning("Version already defined");
           dErrorOccured=1;
-        }
+        }*/
       }
 
       // Exceptions parameter

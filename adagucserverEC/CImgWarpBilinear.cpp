@@ -4,35 +4,35 @@
 
 
 const char *CImgWarpBilinear::className="CImgWarpBilinear";
- void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDrawImage *drawImage){
-   #ifdef CImgWarpBilinear_DEBUG
-   CDBDebug("Render");
-   #endif
-   int dImageWidth=drawImage->Geo->dWidth+1;
-   int dImageHeight=drawImage->Geo->dHeight+1;
-   
-   double dfSourceExtW=(sourceImage->dfBBOX[2]-sourceImage->dfBBOX[0]);
-   double dfSourceExtH=(sourceImage->dfBBOX[1]-sourceImage->dfBBOX[3]);
-   double dfSourceW = double(sourceImage->dWidth);
-   double dfSourceH = double(sourceImage->dHeight);
-   double dfSourcedExtW=dfSourceExtW/dfSourceW;
-   double dfSourcedExtH=dfSourceExtH/dfSourceH;
-   double dfSourceOrigX=sourceImage->dfBBOX[0];
-   double dfSourceOrigY=sourceImage->dfBBOX[3];
+void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDrawImage *drawImage){
+  #ifdef CImgWarpBilinear_DEBUG
+  CDBDebug("Render");
+  #endif
+  int dImageWidth=drawImage->Geo->dWidth+1;
+  int dImageHeight=drawImage->Geo->dHeight+1;
+  
+  double dfSourceExtW=(sourceImage->dfBBOX[2]-sourceImage->dfBBOX[0]);
+  double dfSourceExtH=(sourceImage->dfBBOX[1]-sourceImage->dfBBOX[3]);
+  double dfSourceW = double(sourceImage->dWidth);
+  double dfSourceH = double(sourceImage->dHeight);
+  double dfSourcedExtW=dfSourceExtW/dfSourceW;
+  double dfSourcedExtH=dfSourceExtH/dfSourceH;
+  double dfSourceOrigX=sourceImage->dfBBOX[0];
+  double dfSourceOrigY=sourceImage->dfBBOX[3];
     
-   double dfDestExtW = drawImage->Geo->dfBBOX[2]-drawImage->Geo->dfBBOX[0];
-   double dfDestExtH = drawImage->Geo->dfBBOX[1]-drawImage->Geo->dfBBOX[3];
-   double dfDestOrigX = drawImage->Geo->dfBBOX[0];
-   double dfDestOrigY = drawImage->Geo->dfBBOX[3];
-   double dfDestW = double(dImageWidth);
-   double dfDestH = double(dImageHeight);
-   double hCellSizeX = (dfSourceExtW/dfSourceW)/2.0f;
-   double hCellSizeY = (dfSourceExtH/dfSourceH)/2.0f;
-   double dfPixelExtent[4];
-   int dPixelExtent[4];
-   bool tryToOptimizeExtent=false;
-   
-   if(tryToOptimizeExtent){
+  double dfDestExtW = drawImage->Geo->dfBBOX[2]-drawImage->Geo->dfBBOX[0];
+  double dfDestExtH = drawImage->Geo->dfBBOX[1]-drawImage->Geo->dfBBOX[3];
+  double dfDestOrigX = drawImage->Geo->dfBBOX[0];
+  double dfDestOrigY = drawImage->Geo->dfBBOX[3];
+  double dfDestW = double(dImageWidth);
+  double dfDestH = double(dImageHeight);
+  double hCellSizeX = (dfSourceExtW/dfSourceW)/2.0f;
+  double hCellSizeY = (dfSourceExtH/dfSourceH)/2.0f;
+  double dfPixelExtent[4];
+  int dPixelExtent[4];
+  bool tryToOptimizeExtent=false;
+  
+  if(tryToOptimizeExtent){
         //Reproject the boundingbox from the destination bbox: 
       for(int j=0;j<4;j++)dfPixelExtent[j]=drawImage->Geo->dfBBOX[j];  
     #ifdef CImgWarpBilinear_DEBUG
@@ -86,109 +86,109 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
       if(dPixelExtent[1]<0)dPixelExtent[1]=0;
       if(dPixelExtent[2]>sourceImage->dWidth)dPixelExtent[2]=sourceImage->dWidth;
       if(dPixelExtent[3]>sourceImage->dHeight)dPixelExtent[3]=sourceImage->dHeight;
-   }else{
+  }else{
       dPixelExtent[0]=0;
       dPixelExtent[1]=0;
       dPixelExtent[2]=sourceImage->dWidth;
       dPixelExtent[3]=sourceImage->dHeight;
-   }
-   
+  }
+  
     //Get width and height of the pixel extent
-   int dPixelDestW=dPixelExtent[2]-dPixelExtent[0];
-   int dPixelDestH=dPixelExtent[3]-dPixelExtent[1];
-   size_t numDestPixels = dPixelDestW*dPixelDestH;
-   
-   //TODO increase field resolution in order to create better contour plots.
-   
-   //Allocate memory
-   #ifdef CImgWarpBilinear_DEBUG
-   CDBDebug("Allocate, numDestPixels %d x %d",dPixelDestW,dPixelDestH);
-   #endif
-   int *dpDestX = new int[numDestPixels];
-   int *dpDestY = new int[numDestPixels];
-   class ValueClass{
-     public:
-       ValueClass(){
-         fpValues=NULL;
-         valueData=NULL;
-       }
-       ~ValueClass(){
-         if(fpValues!=NULL){delete[] fpValues;fpValues=NULL;}
-         if(valueData!=NULL){delete[] valueData;valueData=NULL;}
-       }
-       float *fpValues;
-       float *valueData;
-   };
-   ValueClass *valObj = new ValueClass[sourceImage->dataObject.size()];
-   for(size_t dNr=0;dNr<sourceImage->dataObject.size();dNr++){
-     #ifdef CImgWarpBilinear_DEBUG
-     CDBDebug("Allocating valObj nr %d: numDestPixels %d x %d",dNr,dPixelDestW,dPixelDestH);
-     CDBDebug("Allocating valObj nr %d: imageSize %d x %d",dNr,dImageWidth,dImageHeight);
-     #endif
-     valObj[dNr].fpValues = new float [numDestPixels];
-     valObj[dNr].valueData = new float[dImageWidth*dImageHeight];
-   }
-   
-   if(!sourceImage->dataObject[0]->hasNodataValue){
+  int dPixelDestW=dPixelExtent[2]-dPixelExtent[0];
+  int dPixelDestH=dPixelExtent[3]-dPixelExtent[1];
+  size_t numDestPixels = dPixelDestW*dPixelDestH;
+  
+  //TODO increase field resolution in order to create better contour plots.
+  
+  //Allocate memory
+  #ifdef CImgWarpBilinear_DEBUG
+  CDBDebug("Allocate, numDestPixels %d x %d",dPixelDestW,dPixelDestH);
+  #endif
+  int *dpDestX = new int[numDestPixels];
+  int *dpDestY = new int[numDestPixels];
+  class ValueClass{
+    public:
+      ValueClass(){
+        fpValues=NULL;
+        valueData=NULL;
+      }
+      ~ValueClass(){
+        if(fpValues!=NULL){delete[] fpValues;fpValues=NULL;}
+        if(valueData!=NULL){delete[] valueData;valueData=NULL;}
+      }
+      float *fpValues;
+      float *valueData;
+  };
+  ValueClass *valObj = new ValueClass[sourceImage->dataObject.size()];
+  for(size_t dNr=0;dNr<sourceImage->dataObject.size();dNr++){
+    #ifdef CImgWarpBilinear_DEBUG
+    CDBDebug("Allocating valObj nr %d: numDestPixels %d x %d",dNr,dPixelDestW,dPixelDestH);
+    CDBDebug("Allocating valObj nr %d: imageSize %d x %d",dNr,dImageWidth,dImageHeight);
+    #endif
+    valObj[dNr].fpValues = new float [numDestPixels];
+    valObj[dNr].valueData = new float[dImageWidth*dImageHeight];
+  }
+  
+  if(!sourceImage->dataObject[0]->hasNodataValue){
       /* When the datasource has no nodata value, assign -9999.0f */
       #ifdef CImgWarpBilinear_DEBUG
       CDBDebug("Source image has no NoDataValue, assigning -9999.0f");
       #endif
-     sourceImage->dataObject[0]->dfNodataValue=-9999.0f;
-     sourceImage->dataObject[0]->hasNodataValue=true;
-   }else{
-     /* Create a real nodata value instead of a nanf. */
+    sourceImage->dataObject[0]->dfNodataValue=-9999.0f;
+    sourceImage->dataObject[0]->hasNodataValue=true;
+  }else{
+    /* Create a real nodata value instead of a nanf. */
 
-     if(!(sourceImage->dataObject[0]->dfNodataValue==sourceImage->dataObject[0]->dfNodataValue)){
-       #ifdef CImgWarpBilinear_DEBUG
-       CDBDebug("Source image has no nodata value NaNf, changing this to -9999.0f");
-       #endif
-       sourceImage->dataObject[0]->dfNodataValue=-9999.0f;
-     }
-   }
-   //Get the nodatavalue
-   float fNodataValue = sourceImage->dataObject[0]->dfNodataValue ;
-   
-   //Reproject all the points 
-   #ifdef CImgWarpBilinear_DEBUG
-   CDBDebug("Nodata value = %f",fNodataValue);
-   
-   StopWatch_Stop("Start Reprojecting all the points");
-   char temp[32];
-   CDF::getCDFDataTypeName(temp,31,sourceImage->dataObject[0]->dataType);
-   CDBDebug("datatype: %s",temp);
-   for(int j=0;j<4;j++){
-     CDBDebug("dPixelExtent[%d]=%d",j,dPixelExtent[j]);
+    if(!(sourceImage->dataObject[0]->dfNodataValue==sourceImage->dataObject[0]->dfNodataValue)){
+      #ifdef CImgWarpBilinear_DEBUG
+      CDBDebug("Source image has no nodata value NaNf, changing this to -9999.0f");
+      #endif
+      sourceImage->dataObject[0]->dfNodataValue=-9999.0f;
     }
-   #endif
-   
-   for(int y=dPixelExtent[1];y<dPixelExtent[3];y++){
-     for(int x=dPixelExtent[0];x<dPixelExtent[2];x++){
-       size_t p = size_t((x-(dPixelExtent[0]))+((y-(dPixelExtent[1]))*dPixelDestW));
-       double destX,destY;
-       destX=dfSourcedExtW*double(x)+dfSourceOrigX;
-       destY=dfSourcedExtH*double(y)+dfSourceOrigY;
-       destX+=hCellSizeX;
-       destY+=hCellSizeY;
-       //CDBDebug("%f - %f",destX,destY);
-       //TODO:
-       //int status = 
-           warper->reprojpoint_inv(destX,destY);
-       
-       destX-=dfDestOrigX;
-       destY-=dfDestOrigY;
-       destX/=dfDestExtW;
-       destY/=dfDestExtH;
-       destX*=dfDestW;
-       destY*=dfDestH;
-       dpDestX[p]=(int)destX;//2-200;
-       dpDestY[p]=(int)destY;//2+200;
-       //CDBDebug("%f - %f s:%d x:%d  y:%d  p:%d",destX,destY,status,x,y,p);
+  }
+  //Get the nodatavalue
+  float fNodataValue = sourceImage->dataObject[0]->dfNodataValue ;
+  
+  //Reproject all the points 
+  #ifdef CImgWarpBilinear_DEBUG
+  CDBDebug("Nodata value = %f",fNodataValue);
+  
+  StopWatch_Stop("Start Reprojecting all the points");
+  char temp[32];
+  CDF::getCDFDataTypeName(temp,31,sourceImage->dataObject[0]->dataType);
+  CDBDebug("datatype: %s",temp);
+  for(int j=0;j<4;j++){
+    CDBDebug("dPixelExtent[%d]=%d",j,dPixelExtent[j]);
+    }
+  #endif
+  
+  for(int y=dPixelExtent[1];y<dPixelExtent[3];y++){
+    for(int x=dPixelExtent[0];x<dPixelExtent[2];x++){
+      size_t p = size_t((x-(dPixelExtent[0]))+((y-(dPixelExtent[1]))*dPixelDestW));
+      double destX,destY;
+      destX=dfSourcedExtW*double(x)+dfSourceOrigX;
+      destY=dfSourcedExtH*double(y)+dfSourceOrigY;
+      destX+=hCellSizeX;
+      destY+=hCellSizeY;
+      //CDBDebug("%f - %f",destX,destY);
+      //TODO:
+      //int status = 
+          warper->reprojpoint_inv(destX,destY);
+      
+      destX-=dfDestOrigX;
+      destY-=dfDestOrigY;
+      destX/=dfDestExtW;
+      destY/=dfDestExtH;
+      destX*=dfDestW;
+      destY*=dfDestH;
+      dpDestX[p]=(int)destX;//2-200;
+      dpDestY[p]=(int)destY;//2+200;
+      //CDBDebug("%f - %f s:%d x:%d  y:%d  p:%d",destX,destY,status,x,y,p);
         //drawImage->setPixel(dpDestX[p],dpDestY[p],248);
-       for(size_t varNr=0;varNr<sourceImage->dataObject.size();varNr++){
-         void *data=sourceImage->dataObject[varNr]->data;
-         float *fpValues=valObj[varNr].fpValues;
-         
+      for(size_t varNr=0;varNr<sourceImage->dataObject.size();varNr++){
+        void *data=sourceImage->dataObject[varNr]->data;
+        float *fpValues=valObj[varNr].fpValues;
+        
         switch(sourceImage->dataObject[varNr]->dataType){
           case CDF_CHAR:
             fpValues[p]= ((signed char*)data)[x+y*sourceImage->dWidth];
@@ -222,11 +222,11 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
           //if(valObj[0].fpValues[p]==fNodataValue)valObj[0].fpValues[p]=0;
           //valObj[0].fpValues[p]+=10.0f;
       }
-     }
-   }
-   
-   //return;
-   
+    }
+  }
+  
+  //return;
+  
   #ifdef CImgWarpBilinear_DEBUG
   StopWatch_Stop("reprojection finished");
   #endif
@@ -311,16 +311,16 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
   float *valueData=valObj[0].valueData;
   
   //Draw bilinear
-   if(drawMap==true&&enableShade==false){
-     for(int y=0;y<dImageHeight;y++){
-       for(int x=0;x<dImageWidth;x++){
-         setValuePixel(sourceImage,drawImage,x,y,valueData[x+y*dImageWidth]);
-       }
-     }
-   }
+  if(drawMap==true&&enableShade==false){
+    for(int y=0;y<dImageHeight;y++){
+      for(int x=0;x<dImageWidth;x++){
+        setValuePixel(sourceImage,drawImage,x,y,valueData[x+y*dImageWidth]);
+      }
+    }
+  }
     //Wind VECTOR
-   if(enableVector||enableBarb)
-   {
+  if(enableVector||enableBarb)
+  {
     if(sourceImage->dataObject.size()==2){
       int firstXPos=0;
       int firstYPos=0;
@@ -346,8 +346,8 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
       int stepx=1;
       int stepy=1;
       if(enableContour==false&&enableShade==false&&drawMap==false){
-	stepy=vectorDensityPy;
-	stepx=vectorDensityPx;
+  stepy=vectorDensityPy;
+  stepx=vectorDensityPx;
       }
       for(int y=firstYPos-vectorDensityPx;y<dImageHeight;y=y+stepy){
         for(int x=firstXPos-vectorDensityPy;x<dImageWidth;x=x+stepx){
@@ -360,8 +360,8 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
             v=valObj[1].valueData[p];
             
             if(u==u&&v==v&&
-               (u!=fNodataValue)&&
-               (v!=fNodataValue))
+              (u!=fNodataValue)&&
+              (v!=fNodataValue))
             {
               if(u==0){
                 if(v<=0)direction=0;else direction=pi;
@@ -373,7 +373,7 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
               }
               strength=sqrt(u*u+v*v);
               valObj[0].valueData[p]=strength;
-	      
+        
               if(drawMap==true){       
                 setValuePixel(sourceImage,drawImage,x,y,strength);
               }else{
@@ -425,7 +425,7 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
       }
     }
 
-   }
+  }
     //Make Contour if desired
     //drawContour(valueData,fNodataValue,500,5000,drawImage);
     if(enableContour||enableShade){
@@ -457,15 +457,15 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
           setValuePixel(sourceImage,drawImage,x,y,valObj[0].valueData[x+y*dImageWidth]);
         }
       }
- }*/
+}*/
 
     //Clean up
-   delete[] dpDestX;
-   delete[] dpDestY;
-   delete[] valObj;
- }
- 
- 
+  delete[] dpDestX;
+  delete[] dpDestY;
+  delete[] valObj;
+}
+
+
   
 void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float interval,float smallContInterval,float bigContInterval,CDataSource *dataSource,CDrawImage *drawImage,bool drawLine, bool drawShade, bool drawText){
   float val[4];
@@ -490,8 +490,7 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
 #ifdef CImgWarpBilinear_DEBUG 
   CDBDebug("scale=%f offset=%f",dataSource->legendScale,dataSource->legendOffset);
 #endif  
-  bool drawHQ = drawImage->getTrueColor();
-  drawHQ=true;
+
   int col1=244;
   int col2=243;
   int drawnTextY=0;
@@ -501,27 +500,26 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
   //float idval=int(ival+0.5);
   //  if(idval<1)idval=1;
   //TODO
-  //return ;
-  char szTemp[200];
+  
+  char szTemp[8192];
   int dImageWidth=drawImage->Geo->dWidth+1;
   int dImageHeight=drawImage->Geo->dHeight+1;
-   
+  
   size_t imageSize=(dImageHeight+0)*(dImageWidth+1);
-   #ifdef CImgWarpBilinear_DEBUG
-   CDBDebug("imagesize = %d",(int)imageSize);
-   #endif
+  #ifdef CImgWarpBilinear_DEBUG
+  CDBDebug("imagesize = %d",(int)imageSize);
+  #endif
   unsigned int *distance = NULL;
-  if(drawHQ){
-    distance = new unsigned int[imageSize];
-    memset (distance,0,imageSize*sizeof(unsigned int));
-  }
+
+  distance = new unsigned int[imageSize];
+  memset (distance,0,imageSize*sizeof(unsigned int));
   
   #ifdef CImgWarpBilinear_DEBUG
   CDBDebug("distance field cleared");
   #endif
   
   
- /* for(int y=0;y<dImageHeight;y++){
+/* for(int y=0;y<dImageHeight;y++){
     for(int x=0;x<dImageWidth+1;x++){
       size_t p1 = size_t(x+y*dImageWidth);
       //valueData[p1]=100.0f;
@@ -552,8 +550,8 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
       valueData[x+y*dImageWidth]=a;
     }
   }*/
-  
-  
+
+
   float allowedDifference=ival/100000;
   if(1==1){
     #ifdef CImgWarpBilinear_TIME
@@ -561,8 +559,10 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
     #endif
     //TODO "pleister" om contourlijnen goed te krijgen.
     float substractVal=ival/100;
+    CDBDebug("*** substractVal=%f ival=%f",substractVal,ival);
+    //substractVal=0.01;
     for(int y=0;y<dImageHeight;y++){
-      for(int x=0;x<dImageWidth+1;x++){
+      for(int x=0;x<dImageWidth;x++){
         //float a=int(valueData[x+y*dImageWidth]/allowedDifference);
         //a*=allowedDifference;
         valueData[x+y*dImageWidth]-=substractVal;
@@ -576,9 +576,11 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
   }
   #ifdef CImgWarpBilinear_DEBUG
   CDBDebug("start shade/contour with nodatavalue %f",fNodataValue);
-  size_t p1 = size_t(0+0*dImageWidth);
-  CDBDebug("Field value at (0,0) = %f",valueData[p1]);
+  //size_t p1 = size_t(0+0*dImageWidth);
+  //CDBDebug("Field value at (0,0) = %f",valueData[p1]);
   #endif
+  
+
   for(int y=0;y<dImageHeight-1;y++){
     for(int x=0;x<dImageWidth-1;x++){
       size_t p1 = size_t(x+y*dImageWidth);
@@ -586,8 +588,7 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
       val[1] = valueData[p1+1];
       val[2] = valueData[p1+dImageWidth];
       val[3] = valueData[p1+dImageWidth+1];
-      if(val[0]!=fNodataValue&&val[1]!=fNodataValue&&
-        val[2]!=fNodataValue&&val[3]!=fNodataValue&&
+      if(val[0]!=fNodataValue&&val[1]!=fNodataValue&&val[2]!=fNodataValue&&val[3]!=fNodataValue&&
         val[0]==val[0]&&val[1]==val[1]&&val[2]==val[2]&&val[3]==val[3]
         ){
         float min,max;
@@ -610,25 +611,9 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
         }
         if((max-min)/ival<3&&(max-min)/ival>1&&difference>allowedDifference){
           for(double c=min;c<max;c=c+ival){
-           if((val[0]>=c&&val[1]<c)||(val[0]>c&&val[1]<=c)||(val[0]<c&&val[1]>=c)||(val[0]<=c&&val[1]>c)||
-               (val[0]>c&&val[2]<=c)||(val[0]>=c&&val[2]<c)||(val[0]<=c&&val[2]>c)||(val[0]<c&&val[2]>=c))
-  //          if(((val[0]>=c&&val[1]<c)||(val[0]<=c&&val[1]>c))||
-    //            ((val[0]>=c&&val[2]<c)||(val[0]<=c&&val[2]>c)))
+          if((val[0]>=c&&val[1]<c)||(val[0]>c&&val[1]<=c)||(val[0]<c&&val[1]>=c)||(val[0]<=c&&val[1]>c)||
+              (val[0]>c&&val[2]<=c)||(val[0]>=c&&val[2]<c)||(val[0]<=c&&val[2]>c)||(val[0]<c&&val[2]>=c))
             {
-              
-              /*int bigC;int smallC;
-              int modulo=int((bigContInterval/ival)+0.5f);
-              if(modulo>0){
-                bigC=(int((fabs(val[0])/ival)+0.5f))%modulo;
-              }else bigC=1;
-              modulo=int((smallContInterval/ival)+0.5f);
-              if(modulo>0){
-                smallC=(int((fabs(val[0])/ival)+0.5f))%modulo;
-              }else smallC=1;
-              
-              
-              if(smallC==0||bigC==0)*/
-              if(drawHQ){
                 float c = valueData[x+y*dImageWidth];
                 int bigC;int smallC;int modulo;
                 modulo=int((bigContInterval/ival)+0.5f);
@@ -638,40 +623,7 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
                 if(bigC==0||smallC==0){
                   distance[x+y*dImageWidth]=1;
                 }
-                
-              }else{
-                if(drawLine){
-                  /*int bigC;
-                  int modulo=int((bigContInterval/ival)+0.5f);
-                  if(modulo>0){
-                    bigC=(int((fabs(c)/ival)+0.5f))%modulo;
-                  }else bigC=1;
-                  
-                  if(bigC==0){
-                    for(int y1=-1;y1<1;y1++){
-                      for(int x1=-1;x1<1;x1++){
-                        drawImage->setPixelIndexed(x+x1,y+y1,col1);
-                        //drawImage->setPixelIndexed(x,y,col2);
-                      }
-                    }
-                  }else{
-                    drawImage->setPixelIndexed(x,y,col2);
-                  }*/
-                }
-                if(drawText){
-                  if((x%50==0)&&(drawnTextY==0)){
-                    //floatToString(szTemp,255,c);
-                    sprintf(szTemp,"%6.1f",c);
-                    int l=strlen(szTemp);
-                    
-                    drawImage->rectangle(x-1,y-1,x+2,y+2, 241,248);
-                    drawImage->setText(szTemp,l,x-l*3,y-13,248,-1);
-                    drawnTextY=35;
-                    drawnTextX=25;
-                  }
-                }
               }
-            }
           }
         }
       }
@@ -679,24 +631,13 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
     }
     if(drawnTextY>0)drawnTextY--;
   }
-   #ifdef CImgWarpBilinear_DEBUG
+  #ifdef CImgWarpBilinear_DEBUG
   CDBDebug("finished shade/contour");
   #endif
-  /*
-  for(float f=0;f<3.141592654*2;f=f+0.001){
-    int x = (int)(cos(f)*250)+500;
-    int y = (int)(sin(f)*250)+500;
-    if(!drawHQ)drawImage->setPixelIndexed(x,y,245);else{
-          if(x>0&&y>0&&x<dImageWidth&&y<dImageHeight){
-            distance[x+(y)*dImageWidth]=1;    
-          }
-    }
 
-}*/
-  
-  if(!drawHQ)return;
-  
-
+  #ifdef CImgWarpBilinear_DEBUG
+  CDBDebug("Starting to draw lines and text");
+  #endif
   
   //Start tr
 //  int xdir[]={0,0,-1,-1,-1, 0, 1, 1, 1,0,-1,-2,-2,-2,-2,-2,-1, 0, 1, 2, 2, 2, 2, 2, 1, 0};
@@ -725,7 +666,7 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
         y=secondDirY;
         for(j=0;j<25;j++){
           if(x+xdir[j]>=1&&x+xdir[j]<dImageWidth-1&&
-             y+ydir[j]>=1&&y+ydir[j]<dImageHeight-1){
+            y+ydir[j]>=1&&y+ydir[j]<dImageHeight-1){
             if(distance[x+xdir[j]+(y+ydir[j])*dImageWidth]==1){
               x=x+xdir[j];
               y=y+ydir[j];
@@ -887,7 +828,7 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
                       drawImage->line(startX,startY+1,x,y+1,w,col);
                       //drawImage->moveTo(startX,startY);//,x+1,y+1,w,col);
                       //drawImage->lineTo(x,y);//,x+1,y+1,w,col);
-                       //drawImage->endLine(col1);//,x+1,y+1,w,col);
+                      //drawImage->endLine(col1);//,x+1,y+1,w,col);
                       //drawImage->setPixelIndexed(startX,startY,241);
                     }
                   }else lastXdir=-10;
@@ -904,7 +845,7 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
             drawImage->line(x+lastXdir*2,y+lastYdir+1,startX-lastXdir*2,startY-lastYdir+1,w,col);
             
           }
-         
+        
         }
         x=tx;y=ty;
         //return;
@@ -912,7 +853,16 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
     }
     
   }
+  
+  #ifdef CImgWarpBilinear_DEBUG
+  CDBDebug("Deleting distance[]");
+  #endif
+  
   delete[] distance;
+  #ifdef CImgWarpBilinear_DEBUG
+  CDBDebug("Finisched drawing lines and text");
+  #endif
+  
 }
 
 

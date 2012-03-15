@@ -2109,6 +2109,12 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
   float cbH=LEGEND_HEIGHT-13-13;
   float cbW=LEGEND_WIDTH/3;
   char szTemp[256];
+  
+  if(dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
+    CDBDebug("GetLegendGraphic for cascaded WMS is not yet supported");
+    return 0;
+  }
+  
   CDataReader reader;
   
   /*if(renderMethod!=shadedcontour&&renderMethod!=shaded&&renderMethod!=contour){
