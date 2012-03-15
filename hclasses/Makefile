@@ -1,4 +1,5 @@
 HOME=/nobackup/users/plieger/software/install
+HOME=/nobackup/users/vreedede/build
 
 INCLUDEDIR=$(HOME)/include  
 

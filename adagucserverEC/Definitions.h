@@ -81,7 +81,7 @@
 //#define CDATAREADER_DEBUG
 //#define CCDFNETCDFIO_DEBUG
 //Debug settings:
-/*
+
 #define CIMAGEDATAWRITER_DEBUG
 #define CDATAREADER_DEBUG
 
@@ -102,7 +102,7 @@
 
 
 #define CXMLGEN_DEBUG
-*/
+
 
 #define CIMAGEDATAWRITER_DEBUG
 #define CXMLGEN_DEBUG
