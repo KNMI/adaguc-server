@@ -514,8 +514,11 @@ CT::stringlist *CImageDataWriter::getStyleListForDataSource(CDataSource *dataSou
               if(styleToSearchString.equals(styleName)||isDefaultStyle==true){
                 // We found the correspondign legend/style and rendermethod corresponding with the requested stylename!
                 // Now fill in the StyleConfiguration Object.
-                makeStyleConfig(styleConfig,dataSource,styleNames->get(i)->c_str(),legendList->get(l)->c_str(),renderMethods->get(r)->c_str());
+                int status = makeStyleConfig(styleConfig,dataSource,styleNames->get(i)->c_str(),legendList->get(l)->c_str(),renderMethods->get(r)->c_str());
                 delete styleName;
+                if(status == -1){
+                  styleConfig->hasError=true;
+                }
                 //Stop with iterating:
                 throw(__LINE__);
               }
@@ -688,9 +691,15 @@ CDBDebug("initializeLegend");
 #endif
   CT::stringlist *layerstyles = styles.splitN(",");
   int layerIndex=dataSource->datasourceIndex;
-  if(layerIndex<0)layerIndex=0;
-  if(layerIndex>=layerstyles->size())layerIndex=layerstyles->size()-1;
-  styleName=layerstyles->get(layerIndex)->c_str();
+  if(layerstyles->size()!=0){
+    //Make sure default layer index is within the right bounds.
+    if(layerIndex<0)layerIndex=0;
+    if(layerIndex>layerstyles->size()-1)layerIndex=layerstyles->size()-1;
+    styleName=layerstyles->get(layerIndex)->c_str();
+    if(styleName.length()==0){
+      styleName.copy("default");
+    }
+  }
   delete layerstyles;
   delete currentStyleConfiguration;
   currentStyleConfiguration=CImageDataWriter::getStyleConfigurationByName(styleName.c_str(),dataSource);
