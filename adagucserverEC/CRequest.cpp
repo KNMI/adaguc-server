@@ -1469,6 +1469,25 @@ int CRequest::process_querystring(){
           CDBWarning("Parameter FORMAT missing");
           dErrorOccured=1;
         }else{
+          
+          //Mapping
+          for(size_t j=0;j<srvParam->cfg->WMS[0]->WMSFormat.size();j++){
+            if(srvParam->Format.equals(srvParam->cfg->WMS[0]->WMSFormat[j]->attr.name.c_str())){
+              if(srvParam->cfg->WMS[0]->WMSFormat[j]->attr.format.c_str()!=NULL){
+                srvParam->Format.copy(srvParam->cfg->WMS[0]->WMSFormat[j]->attr.format.c_str());
+              }
+              break;
+            }
+          }
+          /*if(dataSource->cfgLayer->WMSFormat.size()>0){
+            if(dataSource->cfgLayer->WMSFormat[0]->attr.name.equals("image/png32")){
+              drawImage.setTrueColor(true);
+            }
+            if(dataSource->cfgLayer->WMSFormat[0]->attr.format.equals("image/png32")){
+              drawImage.setTrueColor(true);
+            }
+          }*/
+          
           // Set format
           if(srvParam->Format.indexOf("24")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG32;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
           else if(srvParam->Format.indexOf("32")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG32;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}

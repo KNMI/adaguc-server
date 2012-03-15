@@ -175,10 +175,16 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
     drawImage.setTrueColor(true);
     //drawImage.setAntiAliased(true);
   }
+  
+  
+  
+  // WMS Format in layer always overrides all
   if(dataSource->cfgLayer->WMSFormat.size()>0){
     if(dataSource->cfgLayer->WMSFormat[0]->attr.name.equals("image/png32")){
       drawImage.setTrueColor(true);
-      //drawImage.setAntiAliased(true);
+    }
+    if(dataSource->cfgLayer->WMSFormat[0]->attr.format.equals("image/png32")){
+      drawImage.setTrueColor(true);
     }
   }
   //Set font location

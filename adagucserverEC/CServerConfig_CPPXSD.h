@@ -28,6 +28,19 @@ class CServerConfig:public CXMLSerializerInterface{
           }
         }
     };
+    
+    class XMLE_WMSFormat: public CXMLObjectInterface{
+    public:
+      class Cattr{
+      public:
+        CXMLString name,format;
+      }attr;
+      void addAttribute(const char *attrname,const char *attrvalue){
+        if(equals("name",4,attrname)){attr.name.copy(attrvalue);return;}
+        else if(equals("format",6,attrname)){attr.format.copy(attrvalue);return;}
+      }
+    };
+    
     class XMLE_Legend: public CXMLObjectInterface{
       public:
         std::vector <XMLE_palette*> palette;
@@ -396,6 +409,7 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_SubTitleFont*> SubTitleFont;
         std::vector <XMLE_DimensionFont*> DimensionFont;
         std::vector <XMLE_GridFont*> GridFont;
+        std::vector <XMLE_WMSFormat*> WMSFormat;
         
         ~XMLE_WMS(){
           XMLE_DELOBJ(Title);
@@ -406,6 +420,7 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(SubTitleFont);
           XMLE_DELOBJ(DimensionFont);
           XMLE_DELOBJ(GridFont);
+          XMLE_DELOBJ(WMSFormat);
           
         }
         void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value){
@@ -418,10 +433,12 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("GridFont",8,name)){XMLE_ADDOBJ(GridFont);}
             else if(equals("Abstract",8,name)){XMLE_ADDOBJ(Abstract);}
             else if(equals("RootLayer",9,name)){XMLE_ADDOBJ(RootLayer);}
+            else if(equals("WMSFormat",9,name)){XMLE_ADDOBJ(WMSFormat);}
             else if(equals("TitleFont",9,name)){XMLE_ADDOBJ(TitleFont);}
             else if(equals("ContourFont",11,name)){XMLE_ADDOBJ(ContourFont);}
             else if(equals("SubTitleFont",12,name)){XMLE_ADDOBJ(SubTitleFont);}
             else if(equals("DimensionFont",13,name)){XMLE_ADDOBJ(DimensionFont);}
+            
           }
           if(pt2Class!=NULL)pt2Class->addElement(baseClass,rc-pt2Class->level,name,value);
         }
@@ -517,16 +534,6 @@ class CServerConfig:public CXMLSerializerInterface{
       }
     };
     
-    class XMLE_WMSFormat: public CXMLObjectInterface{
-    public:
-      class Cattr{
-      public:
-        CXMLString name;
-      }attr;
-      void addAttribute(const char *attrname,const char *attrvalue){
-        if(equals("name",4,attrname)){attr.name.copy(attrvalue);return;}
-      }
-    };
   
     
     class XMLE_Grid: public CXMLObjectInterface{
