@@ -86,7 +86,7 @@ class CDrawImage{
 #endif
     const char *TTFFontLocation;
     float TTFFontSize;
-    char *fontConfig ;
+    //char *fontConfig ;
     
     static std::map<int,int> myColorMap;
     static std::map<int,int>::iterator myColorIter;

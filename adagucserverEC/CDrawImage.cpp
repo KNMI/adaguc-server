@@ -1,3 +1,4 @@
+
 #include "CDrawImage.h"
 
 const char *CDrawImage::className="CDrawImage";
@@ -27,8 +28,14 @@ CDrawImage::CDrawImage(){
   freeType=NULL;
   RGBAByteBuffer=NULL;
 #endif
+  
   TTFFontLocation = "/usr/X11R6/lib/X11/fonts/truetype/verdana.ttf";
+  const char *fontLoc=getenv("ADAGUC_FONT");
+  if(fontLoc!=NULL){
+    TTFFontLocation = strdup(fontLoc);
+  }
   TTFFontSize = 9;
+  //CDBDebug("TTFFontLocation = %s",TTFFontLocation);
 }
 void CDrawImage::destroyImage(){
   if(_bEnableTrueColor==false){
@@ -100,7 +107,7 @@ int CDrawImage::createImage(CGeoParams *_Geo){
       image = gdImageCreateTrueColor(Geo->dWidth,Geo->dHeight);
       gdImageSaveAlpha( image, true );
     }
-    fontConfig = (char*)"verdana"; /* fontconfig pattern */
+    //TTFFontLocation = (char*)"verdana"; /* fontconfig pattern */
     gdFTUseFontConfig(1);
   }
   dImageCreated=1;
@@ -451,9 +458,9 @@ void CDrawImage::setText(const char * text, size_t length,int x,int y,int color,
     char *pszText=new char[length+1];
     strncpy(pszText,text,length);
     pszText[length]='\0';
-    if(fontSize==-1)gdImageString (image, gdFontSmall, x,  y, (unsigned char *)pszText, color);
-    if(fontSize==0)gdImageString (image, gdFontMediumBold, x,  y, (unsigned char *)pszText, color);
-    if(fontSize==1)gdImageString (image, gdFontLarge, x,  y, (unsigned char *)pszText, color);
+    if(fontSize==-1)gdImageString (image, gdFontSmall, x,  y, (unsigned char *)pszText,_colors[color]);
+    if(fontSize==0)gdImageString (image, gdFontMediumBold, x,  y, (unsigned char *)pszText, _colors[color]);
+    if(fontSize==1)gdImageString (image, gdFontLarge, x,  y, (unsigned char *)pszText, _colors[color]);
     delete[] pszText;
   }
 }
@@ -461,6 +468,7 @@ void CDrawImage::setText(const char * text, size_t length,int x,int y,int color,
 void CDrawImage::setTextStroke(const char * text, size_t length,int x,int y, int fgcolor,int bgcolor, int fontSize){
   if(_bEnableTrueColor==true){
     //Not yet supported...
+    setText(text, length,x,y,fgcolor,fontSize);
   }else{
     fgcolor=colors[fgcolor];
     bgcolor=colors[bgcolor];
@@ -498,7 +506,7 @@ void CDrawImage::drawText(int x,int y,float angle,const char *text,unsigned char
     memcpy(_text,text,strlen(text)+1);
     int tcolor=-_colors[240];
     if(_bEnableTrueColor)tcolor=-tcolor;
-    gdImageStringFT(image, &brect[0], tcolor, fontConfig, 8.0f, angle,  x,  y, (char*)_text);
+    gdImageStringFT(image, &brect[0], tcolor, (char*)TTFFontLocation, 8.0f, angle,  x,  y, (char*)_text);
     delete[] _text;
     //drawTextAngle(text, strlen(text),angle, x, y, 240,8);
   }
@@ -532,7 +540,7 @@ void CDrawImage::drawText(int x,int y,const char *fontfile, float size, float an
      memcpy(_text,text,strlen(text)+1);
      int tcolor=getClosestGDColor(fgcolor.r,fgcolor.g,fgcolor.b);
      if(_bEnableTrueColor)tcolor=-tcolor;
-     gdImageStringFT(image, &brect[0],   tcolor, fontConfig, size, angle,  x,  y, (char*)_text);
+     gdImageStringFT(image, &brect[0],   tcolor, (char*)TTFFontLocation, size, angle,  x,  y, (char*)_text);
      delete[] _text;
    }
  }
@@ -558,7 +566,7 @@ void CDrawImage::drawText(int x,int y,const char *fontfile, float size, float an
     memcpy(_text,text,strlen(text)+1);
     int tcolor=getClosestGDColor(color.r,color.g,color.b);
     if(_bEnableTrueColor)tcolor=-tcolor;
-    gdImageStringFT(image, &brect[0],   tcolor, fontConfig, size, angle,  x,  y, (char*)_text);
+    gdImageStringFT(image, &brect[0],   tcolor, (char*)TTFFontLocation, size, angle,  x,  y, (char*)_text);
     delete[] _text;
   }
 }
@@ -577,7 +585,7 @@ void CDrawImage::drawText(int x,int y,const char *fontfile, float size, float an
     memcpy(_text,text,strlen(text)+1);
     int tcolor=-_colors[color];
     if(_bEnableTrueColor)tcolor=-tcolor;
-    gdImageStringFT(image, &brect[0], tcolor, fontConfig, 8.0f, angle,  x,  y, (char*)_text);
+    gdImageStringFT(image, &brect[0], tcolor, TTFFontLocation, 8.0f, angle,  x,  y, (char*)_text);
     delete[] _text;
   }
   
@@ -587,7 +595,7 @@ void CDrawImage::drawText(int x,int y,const char *fontfile, float size, float an
 
 int CDrawImage::create685Palette(){
   currentLegend=NULL;
-  
+  //CDBDebug("Create 685Palette");
   const char *paletteName685="685Palette";
   
   for(size_t j=0;j<legends.size();j++){
@@ -672,7 +680,7 @@ int CDrawImage::createGDPalette(CServerConfig::XMLE_Legend *legend){
       }
     }
   }
-  
+  //CDBDebug("Create legend %s",legend->attr.name.c_str());
   if(currentLegend == NULL){
     currentLegend = new CLegend();
     currentLegend->id = legends.size();
@@ -826,7 +834,7 @@ int CDrawImage::copyPalette(){
       if(_bEnableTransparency){
         gdImageColorTransparent(image,_colors[255]);
       }
-      CDBDebug("CopyPalette");
+      //CDBDebug("CopyPalette");
       for(int j=0;j<255;j++){
         _colors[j] = gdImageColorAllocate(image,currentLegend->CDIred[j],currentLegend->CDIgreen[j],currentLegend->CDIblue[j]); 
       }

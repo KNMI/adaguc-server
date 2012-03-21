@@ -1595,11 +1595,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
         
     if(dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
       CDBDebug("Drawing cascaded WMS (grid/logo/external");
-      
-
-      
       if(dataSource->cfgLayer->WMSLayer.size()==1){
-      
         status = drawCascadedWMS(dataSource,dataSource->cfgLayer->WMSLayer[0]->attr.service.c_str(),dataSource->cfgLayer->WMSLayer[0]->attr.layer.c_str(),true);
         if(status!=0){
           CDBError("drawCascadedWMS for layer %s failed",dataSource->layerName.c_str());
@@ -1657,6 +1653,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
         if(status == 0){
           if(dataSource->cfgLayer->ImageText.size()>0){
             size_t len=strlen(dataSource->cfgLayer->ImageText[0]->value.c_str());
+            CDBDebug("Watermark: %s",dataSource->cfgLayer->ImageText[0]->value.c_str());
             drawImage.setTextStroke(dataSource->cfgLayer->ImageText[0]->value.c_str(),
                                     len,
                                     int(drawImage.Geo->dWidth/2-len*3),
@@ -2111,7 +2108,9 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
   char szTemp[256];
   
   if(dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
+    
     CDBDebug("GetLegendGraphic for cascaded WMS is not yet supported");
+    legendImage->crop(5);
     return 0;
   }
   

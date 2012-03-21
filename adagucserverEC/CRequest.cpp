@@ -655,7 +655,7 @@ int CRequest::process_all_layers(){
           CDataSource::TimeStep * timeStep = new CDataSource::TimeStep();
           dataSources[j]->timeSteps.push_back(timeStep);
           timeStep->fileName.copy(values_path[k].c_str());
-          CDBDebug("%s",timeStep->fileName.c_str());
+          //CDBDebug("%s",timeStep->fileName.c_str());
           timeStep->timeString.copy(date_time[k].c_str());
           //For each timesteps a new set of dimensions is added with corresponding dim array indices.
           for(size_t i=0;i<dataSources[j]->requiredDims.size();i++){
@@ -774,7 +774,7 @@ int CRequest::process_all_layers(){
             }
           }
           
-          CDBDebug("drawing titles");
+          //CDBDebug("drawing titles");
           
           int textY=5;
           //int prevTextY=0;
