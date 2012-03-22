@@ -20,6 +20,7 @@ CImageDataWriter::RenderMethodEnum CImageDataWriter::getRenderMethodFromString(C
   else if(renderMethodString->equals("vector"))renderMethod=vector;
   else if(renderMethodString->equals("barb"))renderMethod=barb;
   else if(renderMethodString->equals("barbcontour"))renderMethod=barbcontour;
+  else if(renderMethodString->equals("barbcontourshaded"))renderMethod=barbcontourshaded;
   else if(renderMethodString->equals("shaded"))renderMethod=shaded;
   else if(renderMethodString->equals("contour"))renderMethod=contour;
   else if(renderMethodString->equals("shadedcontour"))renderMethod=shadedcontour;
@@ -37,6 +38,7 @@ void CImageDataWriter::getRenderMethodAsString(CT::string *renderMethodString, R
   else if(renderMethod == vector)renderMethodString->copy("vector");
   else if(renderMethod == barb)renderMethodString->copy("barb");
   else if(renderMethod == barbcontour)renderMethodString->copy("barbcontour");
+  else if(renderMethod == barbcontourshaded)renderMethodString->copy("barbcontourshaded");
   else if(renderMethod == shaded)renderMethodString->copy("shaded");
   else if(renderMethod == contour)renderMethodString->copy("contour");
   else if(renderMethod == shadedcontour)renderMethodString->copy("shadedcontour");
@@ -1300,6 +1302,7 @@ if(renderMethod==contour){CDBDebug("contour");}*/
      renderMethod==vectorcontour||
      renderMethod==barb||
      renderMethod==barbcontour||
+     renderMethod==barbcontourshaded||
      renderMethod==shaded||
      renderMethod==shadedcontour||
      renderMethod==vectorcontourshaded
@@ -1317,8 +1320,9 @@ if(renderMethod==contour){CDBDebug("contour");}*/
     if(renderMethod==nearestcontour)drawContour=true;
     if(renderMethod==contour||renderMethod==shadedcontour||renderMethod==vectorcontour||renderMethod==vectorcontourshaded)drawContour=true;
     if(renderMethod==vector||renderMethod==vectorcontour||renderMethod==vectorcontourshaded)drawVector=true;
-    if(renderMethod==shaded||renderMethod==shadedcontour||renderMethod==vectorcontourshaded)drawShaded=true;
+    if(renderMethod==shaded||renderMethod==shadedcontour||renderMethod==vectorcontourshaded||renderMethod==barbcontourshaded)drawShaded=true;
     if(renderMethod==barbcontour) { drawContour=true; drawBarb=true; }
+    if(renderMethod==barbcontourshaded) { drawContour=true; drawBarb=true; }
     if(renderMethod==barb) drawBarb=true;
     if(drawMap==true)bilinearSettings.printconcat("drawMap=true;");
     if(drawVector==true)bilinearSettings.printconcat("drawVector=true;");

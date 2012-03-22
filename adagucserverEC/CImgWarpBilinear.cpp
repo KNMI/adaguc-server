@@ -308,8 +308,8 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
   #ifdef CImgWarpBilinear_DEBUG
   CDBDebug("Start converting float bitmap to graphics");
   #endif
+
   float *valueData=valObj[0].valueData;
-  
   //Draw bilinear
    if(drawMap==true&&enableShade==false){
      for(int y=0;y<dImageHeight;y++){
@@ -319,6 +319,7 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
      }
    }
     //Wind VECTOR
+    std::vector<CalculatedWindVector> windVectors; //holds windVectors after calculation to draw them on top
    if(enableVector||enableBarb)
    {
     if(sourceImage->dataObject.size()==2){
@@ -415,8 +416,10 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
                     //CDBDebug("nativeCoordX=%f nativeCoordY=%f",nativeCoordX,nativeCoordY);
                     //CDBDebug("projectedShiftedNCoordX=%f projectedShiftedNCoordY=%f",projectedShiftedNCoordX,projectedShiftedNCoordY);         
                     
-                  if (enableVector) drawImage->drawVector(x,y,direction,strength,240);
-                  if (enableBarb) drawImage->drawBarb(x,y,direction,strength,240,convertToKnots,flip);
+                    CalculatedWindVector wv(x, y, direction, strength,convertToKnots,flip);
+                    windVectors.push_back(wv);
+//                  if (enableVector) drawImage->drawVector(x,y,direction,strength,240);
+//                  if (enableBarb) drawImage->drawBarb(x,y,direction,strength,240,convertToKnots,flip);
                 }
               }
             }else valObj[0].valueData[p]=sourceImage->dataObject[0]->dfNodataValue;
@@ -430,7 +433,7 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
     //drawContour(valueData,fNodataValue,500,5000,drawImage);
     if(enableContour||enableShade){
       drawContour(valueData,fNodataValue,shadeInterval,contourSmallInterval,contourBigInterval,
-                  sourceImage,drawImage,enableContour,enableShade,enableContour);
+	   sourceImage,drawImage,enableContour,enableShade,enableContour);
     }
     
     /*
@@ -458,6 +461,24 @@ const char *CImgWarpBilinear::className="CImgWarpBilinear";
         }
       }
  }*/
+
+//                  if (enableVector) drawImage->drawVector(x,y,direction,strength,240);
+//                  if (enableBarb) drawImage->drawBarb(x,y,direction,strength,240,convertToKnots,flip);
+//                    
+    if (enableVector) {
+      CalculatedWindVector wv;
+      for (size_t sz=0; sz<windVectors.size();sz++) {
+        wv=windVectors[sz];
+        drawImage->drawVector(wv.x, wv.y, wv.dir, wv.strength, 240);
+      }
+    }                 
+    if (enableBarb) {
+      CalculatedWindVector wv;
+      for (size_t sz=0; sz<windVectors.size();sz++) {
+        wv=windVectors[sz];
+        drawImage->drawBarb(wv.x, wv.y, wv.dir, wv.strength, 240,wv.convertToKnots,wv.flip);
+      }
+    }                 
 
     //Clean up
    delete[] dpDestX;

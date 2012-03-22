@@ -3,6 +3,23 @@
 #include <stdlib.h>
 #include "CImageWarperRenderInterface.h"
 
+
+class CalculatedWindVector {
+public: 
+  CalculatedWindVector() {}
+  CalculatedWindVector(int x, int y, double dir, double strength, bool convertToKnots, bool flip) {
+    this->x=x;
+    this->y=y;
+    this->dir=dir;
+    this->strength=strength;
+    this->convertToKnots=convertToKnots;
+    this->flip=flip;
+  }
+  int x, y;
+  double dir, strength;
+  bool convertToKnots, flip;
+};
+
 class CImgWarpBilinear:public CImageWarperRenderInterface{
   private:
     bool drawMap,enableContour,enableVector,enableBarb,enableShade;

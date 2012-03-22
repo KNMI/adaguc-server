@@ -51,7 +51,7 @@ class CImageDataWriter: public CBaseDataWriterInterface{
         };
         std::vector <Element*>elements;
     };
-    enum RenderMethodEnum { undefined,nearest, bilinear, contour, vector, barb, barbcontour, shaded,shadedcontour,vectorcontour,vectorcontourshaded,nearestcontour,bilinearcontour};
+    enum RenderMethodEnum { undefined,nearest, bilinear, contour, vector, barb, barbcontour, barbcontourshaded, shaded,shadedcontour,vectorcontour,vectorcontourshaded,nearestcontour,bilinearcontour};
     
 public:
     class StyleConfiguration {
