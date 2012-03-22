@@ -1,3 +1,4 @@
+
 #include "CDrawImage.h"
 
 const char *CDrawImage::className="CDrawImage";
@@ -15,11 +16,11 @@ CDrawImage::CDrawImage(){
   dImageCreated=0;
   dPaletteCreated=0;
   currentLegend = NULL;
-  _bAntiAliased=false;
+  _bEnableTrueColor=false;
   _bEnableTransparency=false;
   _bEnableTrueColor=false;
   dNumImages = 0;
-  Geo = new CGeoParams;
+  Geo= new CGeoParams(); 
 #ifdef ADAGUC_USE_CAIRO
   cairo=NULL;
 #else
@@ -27,44 +28,52 @@ CDrawImage::CDrawImage(){
   freeType=NULL;
   RGBAByteBuffer=NULL;
 #endif
+  
   TTFFontLocation = "/usr/X11R6/lib/X11/fonts/truetype/verdana.ttf";
+  const char *fontLoc=getenv("ADAGUC_FONT");
+  if(fontLoc!=NULL){
+    TTFFontLocation = strdup(fontLoc);
+  }
   TTFFontSize = 9;
+  //CDBDebug("TTFFontLocation = %s",TTFFontLocation);
 }
 void CDrawImage::destroyImage(){
-  if(_bAntiAliased==false){
+  if(_bEnableTrueColor==false){
     if(dPaletteCreated==1){
       for(int j=0;j<256;j++)if(_colors[j]!=-1)gdImageColorDeallocate(image,_colors[j]);
     }
     dPaletteCreated=0;
   }
   if(dImageCreated==1){
-    if(_bAntiAliased==false){
+    if(_bEnableTrueColor==false){
       gdImageDestroy(image);
     };  
   }
   dImageCreated=0;
-}
-
-CDrawImage::~CDrawImage(){
-  destroyImage();
   
   for(size_t j=0;j<legends.size();j++){
     delete legends[j];
   }
-  
-  delete Geo; Geo=NULL;
-#ifdef ADAGUC_USE_CAIRO
+  legends.clear();
+ 
+  #ifdef ADAGUC_USE_CAIRO
   delete cairo; cairo=NULL;
-#else
+  #else
   delete wuLine;wuLine=NULL;
   delete freeType;freeType=NULL;
-
+  
   delete RGBAByteBuffer;RGBAByteBuffer=NULL;
-#endif
+  #endif
+}
+
+CDrawImage::~CDrawImage(){
+  destroyImage();
+  delete Geo; Geo=NULL;
 }
 
 
 int CDrawImage::createImage(int _dW,int _dH){
+ 
   Geo->dWidth=_dW;
   Geo->dHeight=_dH;
   return createImage(Geo);
@@ -76,9 +85,9 @@ int CDrawImage::createImage(CGeoParams *_Geo){
 #endif  
   
   if(dImageCreated==1){CDBError("createImage: image already created");return 1;}
-  //CDBDebug("_bAntiAliased: %d, _bEnableTrueColor:%d",_bAntiAliased,_bEnableTrueColor);
+  
   Geo->copy(_Geo);
-  if(_bAntiAliased==true){
+  if(_bEnableTrueColor==true){
     //Always true color
 #ifdef ADAGUC_USE_CAIRO
     cairo = new CCairoPlotter(Geo->dWidth, Geo->dHeight, TTFFontSize, TTFFontLocation );
@@ -86,21 +95,19 @@ int CDrawImage::createImage(CGeoParams *_Geo){
     size_t imageSize=0;
     imageSize=Geo->dWidth * Geo->dHeight * 4;
     RGBAByteBuffer = new unsigned char[imageSize];
-    for(size_t j=0;j<imageSize;j=j+1){
-      RGBAByteBuffer[j]=0;
-    }
+    for(size_t j=0;j<imageSize;j=j+1){RGBAByteBuffer[j]=0;}
     wuLine = new CXiaolinWuLine(Geo->dWidth,Geo->dHeight,RGBAByteBuffer);
     freeType = new CFreeType (Geo->dWidth,Geo->dHeight,RGBAByteBuffer,TTFFontSize,TTFFontLocation);
 #endif
   }
-  if(_bAntiAliased==false){
+  if(_bEnableTrueColor==false){
     if(_bEnableTrueColor==false){
       image = gdImageCreate(Geo->dWidth,Geo->dHeight);
     }else{
       image = gdImageCreateTrueColor(Geo->dWidth,Geo->dHeight);
       gdImageSaveAlpha( image, true );
     }
-    fontConfig = (char*)"verdana"; /* fontconfig pattern */
+    //TTFFontLocation = (char*)"verdana"; /* fontconfig pattern */
     gdFTUseFontConfig(1);
   }
   dImageCreated=1;
@@ -115,7 +122,7 @@ int CDrawImage::createImage(CGeoParams *_Geo){
 int CDrawImage::printImagePng(){
   if(dImageCreated==0){CDBError("print: image not created");return 1;}
   
-  if(_bAntiAliased==true){
+  if(_bEnableTrueColor==true){
     //writeAGGPng();
 #ifdef ADAGUC_USE_CAIRO
     cairo->writeToPngStream(stdout);
@@ -123,7 +130,7 @@ int CDrawImage::printImagePng(){
     writeRGBAPng(Geo->dWidth,Geo->dHeight,RGBAByteBuffer,stdout,true);
 #endif
   }
-  if(_bAntiAliased==false){
+  if(_bEnableTrueColor==false){
     gdImagePng(image, stdout);
   }
   return 0;
@@ -131,11 +138,11 @@ int CDrawImage::printImagePng(){
 
 int CDrawImage::printImageGif(){
   if(dImageCreated==0){CDBError("print: image not created");return 1;}
-  if(_bAntiAliased==true){
-    CDBError("Antialiasing with gif images is not supported");
+  if(_bEnableTrueColor==true){
+    CDBError("TrueColor with gif images is not supported");
     return 1;
   }
-  if(_bAntiAliased==false){
+  if(_bEnableTrueColor==false){
     gdImageGif(image, stdout);
   }
   return 0;
@@ -197,12 +204,12 @@ void CDrawImage::drawBarb(int x,int y,double direction, double strength,int colo
   int rest=(strengthInKnots % 50)%10;
   int nhalfBarbs;
   if (rest<=2) {
-	  nhalfBarbs=0;
+  nhalfBarbs=0;
   }else if (rest<=7) {
-	  nhalfBarbs=1;
+  nhalfBarbs=1;
   } else {
-	  nhalfBarbs=0;
-	  nBarbs++;
+  nhalfBarbs=0;
+  nBarbs++;
   }
   int barbLength=14*(flip?-1:1);
 
@@ -219,32 +226,32 @@ void CDrawImage::drawBarb(int x,int y,double direction, double strength,int colo
 
   int pos=0;
   for (int i=0;i<nPennants;i++) {
-	  double wx3=wx2-pos*dx1/nrPos;
-	  double wy3=wy2-pos*dy1/nrPos;
-	  double hx3=wx3+cos(direction+pi/2)*barbLength;
-	  double hy3=wy3+sin(direction+pi/2)*barbLength;
-	  pos++;
-	  double wx4=wx2-pos*dx1/nrPos;
-	  double wy4=wy2-pos*dy1/nrPos;
+  double wx3=wx2-pos*dx1/nrPos;
+  double wy3=wy2-pos*dy1/nrPos;
+  double hx3=wx3+cos(direction+pi/2)*barbLength;
+  double hy3=wy3+sin(direction+pi/2)*barbLength;
+  pos++;
+  double wx4=wx2-pos*dx1/nrPos;
+  double wy4=wy2-pos*dy1/nrPos;
     poly(wx3,wy3,hx3,hy3,wx4, wy4, color, true);
   }
   if (nPennants>0) pos++;
   for (int i=0; i<nBarbs;i++) {
-	  double wx3=wx2-pos*dx1/nrPos;
-	  double wy3=wy2-pos*dy1/nrPos;
-	  double hx3=wx3+cos(direction+pi/2)*barbLength;
-	  double hy3=wy3+sin(direction+pi/2)*barbLength;
-	  line(wx3, wy3, hx3, hy3, color);
-	  pos++;
+  double wx3=wx2-pos*dx1/nrPos;
+  double wy3=wy2-pos*dy1/nrPos;
+  double hx3=wx3+cos(direction+pi/2)*barbLength;
+  double hy3=wy3+sin(direction+pi/2)*barbLength;
+  line(wx3, wy3, hx3, hy3, color);
+  pos++;
   }
 
   if (nhalfBarbs>0){
-	  double wx3=wx2-pos*dx1/nrPos;
-	  double wy3=wy2-pos*dy1/nrPos;
-	  double hx3=wx3+cos(direction+pi/2)*barbLength/3;
-	  double hy3=wy3+sin(direction+pi/2)*barbLength/3;
+  double wx3=wx2-pos*dx1/nrPos;
+  double wy3=wy2-pos*dy1/nrPos;
+  double hx3=wx3+cos(direction+pi/2)*barbLength/3;
+  double hy3=wy3+sin(direction+pi/2)*barbLength/3;
     line(wx3, wy3, hx3, hy3, color);
-	  pos++;
+  pos++;
   }
 
   line(wx1,wy1,wx2,wy2,color);
@@ -252,53 +259,53 @@ void CDrawImage::drawBarb(int x,int y,double direction, double strength,int colo
 }
 
 void CDrawImage::circle(int x, int y, int r, int color) {
-	  if(_bAntiAliased==true){
+  if(_bEnableTrueColor==true){
 #ifdef ADAGUC_USE_CAIRO
-	    cairo->setColor(currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],255);
-	    cairo->circle(x, y, r);
+    cairo->setColor(currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],255);
+    cairo->circle(x, y, r);
 #else
         wuLine->setColor(currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],255);
-	      wuLine->line(x-r,y,x,y+r);
-	      wuLine->line(x,y+r,x+r,y);
-	      wuLine->line(x+r,y,x,y-r);
-	      wuLine->line(x,y-r,x-r,y);
+      wuLine->line(x-r,y,x,y+r);
+      wuLine->line(x,y+r,x+r,y);
+      wuLine->line(x+r,y,x,y-r);
+      wuLine->line(x,y-r,x-r,y);
 #endif
-	  }else {
-		  gdImageArc(image, x, y, 8, 8, 0, 360, _colors[color]);
-	  }
+  }else {
+    gdImageArc(image, x, y, 8, 8, 0, 360, _colors[color]);
+  }
 }
 void CDrawImage::poly(float x1,float y1,float x2,float y2,float x3, float y3, int color, bool fill){
-	  if(_bAntiAliased==true){
+  if(_bEnableTrueColor==true){
 #ifdef ADAGUC_USE_CAIRO
-	    float ptx[3]={x1, x2, x3};
-	    float pty[3]={y1,y2,y3};
-	    cairo->setFillColor(currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],255);
-	    cairo->poly(ptx, pty, 3, true, fill);
+    float ptx[3]={x1, x2, x3};
+    float pty[3]={y1,y2,y3};
+    cairo->setFillColor(currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],255);
+    cairo->poly(ptx, pty, 3, true, fill);
 #else
       wuLine->setColor(currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],255);
-	    wuLine->line(x1,y1,x2,y2);
-	    wuLine->line(x2,y2,x3,y3);
+    wuLine->line(x1,y1,x2,y2);
+    wuLine->line(x2,y2,x3,y3);
 #endif
-	  } else {
-		  gdPoint pt[4];
-		  pt[0].x=x1;
-		  pt[1].x=x2;
-		  pt[2].x=x3;
-		  pt[3].x=x1;
-		  pt[0].y=y1;
-		  pt[1].y=y2;
-		  pt[2].y=y3;
-		  pt[3].y=y1;
-		  if (fill) {
-  		    gdImageFilledPolygon(image, pt, 4, _colors[color]);
-		  } else {
-  		    gdImagePolygon(image, pt, 4, _colors[color]);
-		  }
-	  }
+  } else {
+    gdPoint pt[4];
+    pt[0].x=x1;
+    pt[1].x=x2;
+    pt[2].x=x3;
+    pt[3].x=x1;
+    pt[0].y=y1;
+    pt[1].y=y2;
+    pt[2].y=y3;
+    pt[3].y=y1;
+    if (fill) {
+        gdImageFilledPolygon(image, pt, 4, _colors[color]);
+    } else {
+        gdImagePolygon(image, pt, 4, _colors[color]);
+    }
+  }
 }
 
 void CDrawImage::line(float x1, float y1, float x2, float y2,int color){
-  if(_bAntiAliased==true){
+  if(_bEnableTrueColor==true){
     if(currentLegend==NULL)return;
     if(color>=0&&color<256){
 #ifdef ADAGUC_USE_CAIRO
@@ -315,7 +322,7 @@ void CDrawImage::line(float x1, float y1, float x2, float y2,int color){
   }
 }
 void CDrawImage::line(float x1,float y1,float x2,float y2,float w,int color){
-  if(_bAntiAliased==true){
+  if(_bEnableTrueColor==true){
     if(currentLegend==NULL)return;
     if(color>=0&&color<256){
 #ifdef ADAGUC_USE_CAIRO
@@ -334,7 +341,7 @@ void CDrawImage::line(float x1,float y1,float x2,float y2,float w,int color){
 
 
 void CDrawImage::setPixelIndexed(int x,int y,int color){
-  if(_bAntiAliased==true){
+  if(_bEnableTrueColor==true){
     if(currentLegend==NULL)return;
     //if(color>=0&&color<256){
       if(currentLegend->CDIalpha[color]==255){
@@ -352,7 +359,7 @@ void CDrawImage::setPixelIndexed(int x,int y,int color){
 }
 
 void CDrawImage::setPixelTrueColor(int x,int y,unsigned int color){
-  if(_bAntiAliased==true){
+  if(_bEnableTrueColor==true){
     //if(_bEnableTrueColor){
 #ifdef ADAGUC_USE_CAIRO
     cairo->pixel(x,y,color,color/256,color/(256*256));
@@ -383,7 +390,7 @@ void CDrawImage::getHexColorForColorIndex(CT::string *hexValue,int color){
 
 
 void CDrawImage::setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,unsigned char b){
-  if(_bAntiAliased==true){
+  if(_bEnableTrueColor==true){
 #ifdef ADAGUC_USE_CAIRO
     cairo->setColor(r,g,b,255);
     cairo->pixel(x,y);
@@ -403,7 +410,7 @@ void CDrawImage::setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,u
 }
 
 void CDrawImage::setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,unsigned char b,unsigned char a){
-  if(_bAntiAliased==true){
+  if(_bEnableTrueColor==true){
 #ifdef ADAGUC_USE_CAIRO
     cairo->setColor(r,g,b,a);
     cairo-> pixel(x,y);
@@ -434,7 +441,7 @@ void CDrawImage::setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,u
   }
 }
 void CDrawImage::setText(const char * text, size_t length,int x,int y,int color,int fontSize){
-  if(_bAntiAliased==true){
+  if(_bEnableTrueColor==true){
     if(currentLegend==NULL)return;
 //    agg::rgba8 colStr(currentLegend->CDIred[color], currentLegend->CDIgreen[color], currentLegend->CDIblue[color],255);
   //  drawFreeTypeText( x, y+11, 0,text,colStr);
@@ -451,16 +458,17 @@ void CDrawImage::setText(const char * text, size_t length,int x,int y,int color,
     char *pszText=new char[length+1];
     strncpy(pszText,text,length);
     pszText[length]='\0';
-    if(fontSize==-1)gdImageString (image, gdFontSmall, x,  y, (unsigned char *)pszText, color);
-    if(fontSize==0)gdImageString (image, gdFontMediumBold, x,  y, (unsigned char *)pszText, color);
-    if(fontSize==1)gdImageString (image, gdFontLarge, x,  y, (unsigned char *)pszText, color);
+    if(fontSize==-1)gdImageString (image, gdFontSmall, x,  y, (unsigned char *)pszText,_colors[color]);
+    if(fontSize==0)gdImageString (image, gdFontMediumBold, x,  y, (unsigned char *)pszText, _colors[color]);
+    if(fontSize==1)gdImageString (image, gdFontLarge, x,  y, (unsigned char *)pszText, _colors[color]);
     delete[] pszText;
   }
 }
 
 void CDrawImage::setTextStroke(const char * text, size_t length,int x,int y, int fgcolor,int bgcolor, int fontSize){
-  if(_bAntiAliased==true){
+  if(_bEnableTrueColor==true){
     //Not yet supported...
+    setText(text, length,x,y,fgcolor,fontSize);
   }else{
     fgcolor=colors[fgcolor];
     bgcolor=colors[bgcolor];
@@ -485,7 +493,7 @@ void CDrawImage::setTextStroke(const char * text, size_t length,int x,int y, int
 
 void CDrawImage::drawText(int x,int y,float angle,const char *text,unsigned char colorIndex){
   
-  if(_bAntiAliased==true){
+  if(_bEnableTrueColor==true){
 #ifdef ADAGUC_USE_CAIRO
     cairo->setColor(currentLegend->CDIred[colorIndex],currentLegend->CDIgreen[colorIndex],currentLegend->CDIblue[colorIndex],255);
     cairo->drawText(x,y,angle,text);
@@ -498,7 +506,7 @@ void CDrawImage::drawText(int x,int y,float angle,const char *text,unsigned char
     memcpy(_text,text,strlen(text)+1);
     int tcolor=-_colors[240];
     if(_bEnableTrueColor)tcolor=-tcolor;
-    gdImageStringFT(image, &brect[0], tcolor, fontConfig, 8.0f, angle,  x,  y, (char*)_text);
+    gdImageStringFT(image, &brect[0], tcolor, (char*)TTFFontLocation, 8.0f, angle,  x,  y, (char*)_text);
     delete[] _text;
     //drawTextAngle(text, strlen(text),angle, x, y, 240,8);
   }
@@ -512,7 +520,7 @@ void CDrawImage::drawText(int x,int y,const char *fontfile, float size, float an
 }
  
 void CDrawImage::drawText(int x,int y,const char *fontfile, float size, float angle,const char *text,CColor fgcolor,CColor bgcolor){
-   if(_bAntiAliased==true){
+  if(_bEnableTrueColor==true){
      #ifdef ADAGUC_USE_CAIRO
      CCairoPlotter * freeType = new CCairoPlotter (Geo->dWidth,Geo->dHeight,(cairo->getByteBuffer()),size,fontfile);
      freeType->setColor(fgcolor.r,fgcolor.g,fgcolor.b,fgcolor.a);
@@ -532,7 +540,7 @@ void CDrawImage::drawText(int x,int y,const char *fontfile, float size, float an
      memcpy(_text,text,strlen(text)+1);
      int tcolor=getClosestGDColor(fgcolor.r,fgcolor.g,fgcolor.b);
      if(_bEnableTrueColor)tcolor=-tcolor;
-     gdImageStringFT(image, &brect[0],   tcolor, fontConfig, size, angle,  x,  y, (char*)_text);
+     gdImageStringFT(image, &brect[0],   tcolor, (char*)TTFFontLocation, size, angle,  x,  y, (char*)_text);
      delete[] _text;
    }
  }
@@ -540,7 +548,7 @@ void CDrawImage::drawText(int x,int y,const char *fontfile, float size, float an
 void CDrawImage::drawText(int x,int y,const char *fontfile, float size, float angle,const char *text,CColor color){
   
   
-  if(_bAntiAliased==true){
+  if(_bEnableTrueColor==true){
     #ifdef ADAGUC_USE_CAIRO
     CCairoPlotter * freeType = new CCairoPlotter (Geo->dWidth,Geo->dHeight,(cairo->getByteBuffer()),size,fontfile);
     freeType->setColor(color.r,color.g,color.b,color.a);
@@ -558,13 +566,13 @@ void CDrawImage::drawText(int x,int y,const char *fontfile, float size, float an
     memcpy(_text,text,strlen(text)+1);
     int tcolor=getClosestGDColor(color.r,color.g,color.b);
     if(_bEnableTrueColor)tcolor=-tcolor;
-    gdImageStringFT(image, &brect[0],   tcolor, fontConfig, size, angle,  x,  y, (char*)_text);
+    gdImageStringFT(image, &brect[0],   tcolor, (char*)TTFFontLocation, size, angle,  x,  y, (char*)_text);
     delete[] _text;
   }
 }
 /*void CDrawImage::drawTextAngle(const char * text, size_t length,double angle,int x,int y,int color,int fontSize){
   
-  if(_bAntiAliased==true){
+  if(_bEnableTrueColor==true){
     #ifdef ADAGUC_USE_CAIRO
     cairo->setColor(currentLegend->CDIred[colorIndex],currentLegend->CDIgreen[colorIndex],currentLegend->CDIblue[colorIndex],255);
     cairo->drawText(x,y,angle,text);
@@ -577,7 +585,7 @@ void CDrawImage::drawText(int x,int y,const char *fontfile, float size, float an
     memcpy(_text,text,strlen(text)+1);
     int tcolor=-_colors[color];
     if(_bEnableTrueColor)tcolor=-tcolor;
-    gdImageStringFT(image, &brect[0], tcolor, fontConfig, 8.0f, angle,  x,  y, (char*)_text);
+    gdImageStringFT(image, &brect[0], tcolor, TTFFontLocation, 8.0f, angle,  x,  y, (char*)_text);
     delete[] _text;
   }
   
@@ -587,7 +595,7 @@ void CDrawImage::drawText(int x,int y,const char *fontfile, float size, float an
 
 int CDrawImage::create685Palette(){
   currentLegend=NULL;
-  
+  //CDBDebug("Create 685Palette");
   const char *paletteName685="685Palette";
   
   for(size_t j=0;j<legends.size();j++){
@@ -672,7 +680,7 @@ int CDrawImage::createGDPalette(CServerConfig::XMLE_Legend *legend){
       }
     }
   }
-  
+  //CDBDebug("Create legend %s",legend->attr.name.c_str());
   if(currentLegend == NULL){
     currentLegend = new CLegend();
     currentLegend->id = legends.size();
@@ -739,7 +747,7 @@ int CDrawImage::createGDPalette(CServerConfig::XMLE_Legend *legend){
 }
 
 void  CDrawImage::rectangle( int x1, int y1, int x2, int y2,CColor innercolor,CColor outercolor){
-  if(_bAntiAliased==true){
+  if(_bEnableTrueColor==true){
   #ifdef ADAGUC_USE_CAIRO
   cairo->setColor(innercolor.r,innercolor.g,innercolor.b,innercolor.a);
   cairo->setFillColor(outercolor.r,outercolor.g,outercolor.b,outercolor.a);
@@ -757,7 +765,7 @@ void  CDrawImage::rectangle( int x1, int y1, int x2, int y2,CColor innercolor,CC
 void CDrawImage::rectangle( int x1, int y1, int x2, int y2,int innercolor,int outercolor){
   if(currentLegend==NULL)return;
   if(innercolor>=0&&innercolor<240){
-    if(_bAntiAliased==true){
+    if(_bEnableTrueColor==true){
       
 #ifdef ADAGUC_USE_CAIRO
       cairo->setColor(currentLegend->CDIred[outercolor],currentLegend->CDIgreen[outercolor],currentLegend->CDIblue[outercolor],255);
@@ -798,7 +806,7 @@ void CDrawImage::rectangle( int x1, int y1, int x2, int y2,int innercolor,int ou
 }
 
 void CDrawImage::rectangle( int x1, int y1, int x2, int y2,int outercolor){
-  if(_bAntiAliased==true){
+  if(_bEnableTrueColor==true){
     line( x1, y1, x2, y1,1,outercolor);
     line( x2, y1, x2, y2,1,outercolor);
     line( x2, y2, x1, y2,1,outercolor);
@@ -818,7 +826,7 @@ int CDrawImage::addColor(int Color,unsigned char R,unsigned char G,unsigned char
 
 int CDrawImage::copyPalette(){
   
-  if(_bAntiAliased==false){
+  if(_bEnableTrueColor==false){
     
     //Only one legend is supported for palette based images.
     if(dPaletteCreated==0){
@@ -826,9 +834,11 @@ int CDrawImage::copyPalette(){
       if(_bEnableTransparency){
         gdImageColorTransparent(image,_colors[255]);
       }
+      //CDBDebug("CopyPalette");
       for(int j=0;j<255;j++){
         _colors[j] = gdImageColorAllocate(image,currentLegend->CDIred[j],currentLegend->CDIgreen[j],currentLegend->CDIblue[j]); 
       }
+      gdTranspColor=gdImageGetTransparent(image);
     }
   
   }
@@ -896,6 +906,124 @@ void CDrawImage::setTrueColor(bool enable){
   _bEnableTrueColor=enable;
 }
 
+
+bool CDrawImage::isPixelTransparent(int &x,int &y){
+  if(!_bEnableTrueColor){
+    int color = gdImageGetPixel(image, x, y);
+    if(color!=gdTranspColor||127!=gdImageAlpha(image,color)){
+      return false;
+    }
+    return true;
+  }else{
+
+    unsigned char r,g,b,a;
+    #ifdef ADAGUC_USE_CAIRO
+    cairo-> getPixel(x,y,r,g,b,a);
+    #else
+    wuLine-> getPixel(x,y,r,g,b,a);
+    #endif
+    if(a==0)return true;else return false;
+  }
+  return false;
+}
+
+/**
+ * Returns a value indicating how width the image is based on whether there are pixels set.
+ * Useful for cropping the image
+ */
+
+void CDrawImage:: getCanvasSize(int &x1,int &y1,int &w,int &h){
+  w=0;
+  x1=Geo->dWidth;
+  for(int y=0;y<Geo->dHeight;y++){
+    for(int x=w;x<Geo->dWidth;x++)if(!isPixelTransparent(x,y))w=x;
+    for(int x=0;x<x1;x++)if(!isPixelTransparent(x,y))x1=x;
+  }
+ 
+  w=w-x1+1;
+  
+  h=0;
+  y1=Geo->dHeight;
+  
+  for(int x=x1;x<w;x++){
+    for(int y=h;y<Geo->dHeight;y++)if(!isPixelTransparent(x,y))h=y;
+    for(int y=0;y<y1;y++)if(!isPixelTransparent(x,y))y1=y;
+  }
+
+  h=h-y1+1;
+  if(w<0)w=0;
+  if(h<0)h=0;
+}
+
+int CDrawImage::clonePalette(CDrawImage *drawImage){
+  currentLegend = new CLegend();
+  currentLegend->id = legends.size();
+  currentLegend->legendName=drawImage->currentLegend->legendName.c_str();
+  legends.push_back(currentLegend);
+  for(int j=0;j<256;j++){
+    currentLegend->CDIred[j]=drawImage->currentLegend->CDIred[j];
+    currentLegend->CDIgreen[j]=drawImage->currentLegend->CDIgreen[j];
+    currentLegend->CDIblue[j]=drawImage->currentLegend->CDIblue[j];
+    currentLegend->CDIalpha[j]=drawImage->currentLegend->CDIalpha[j];
+  }
+  BGColorR=drawImage->BGColorR;
+  BGColorG=drawImage->BGColorG;
+  BGColorB=drawImage->BGColorB;
+  copyPalette();  
+}
+
+/**
+ * Creates a new image with the same settings but with different size as the source image
+ */
+int CDrawImage::createImage(CDrawImage *image,int width,int height){
+  setTrueColor(image->getTrueColor());
+  enableTransparency(_bEnableTransparency);
+  createImage(width,height);
+  clonePalette(image);
+  return 0;
+}
+
+int CDrawImage::setCanvasSize(int x,int y,int width,int height){
+  CDrawImage temp;
+  temp.createImage(this,width,height);
+  temp.draw(0,0,x,y,this);
+  destroyImage();
+  createImage(&temp,width,height);
+  draw(0,0,0,0,&temp);
+  temp.destroyImage();
+}
+
+int CDrawImage::draw(int destx, int desty,int sourcex,int sourcey,CDrawImage *simage){
+unsigned char r,g,b,a;
+  for(int y=0;y<simage->Geo->dHeight;y++){
+    for(int x=0;x<simage->Geo->dWidth;x++){
+      int sx=x+sourcex;int sy=y+sourcey;int dx=x+destx;int dy=y+desty;
+      if(sx>=0&&sy>=0&&dx>=0&&dy>=0&&
+        sx<simage->Geo->dWidth&&sy<simage->Geo->dHeight&&dx<Geo->dWidth&&dy<Geo->dHeight){
+        if(_bEnableTrueColor){
+        #ifdef ADAGUC_USE_CAIRO
+        simage->cairo->getPixel(sx,sy,r,g,b,a);
+      cairo-> pixelBlend(dx,dy,r,g,b,a);
+        #else
+        simage->wuLine->getPixel(sx,sy,r,g,b,a);
+        wuLine-> pixelBlend(dx,dy,r,g,b,a);
+        #endif
+        }else{
+          int color = gdImageGetPixel(simage->image, x+sourcex, y+sourcey);
+          gdImageSetPixel(image,x+destx,y+desty,color);
+        }
+      }
+    }
+  }
+  return 0;
+}
+void CDrawImage::crop(int padding){
+  int x,y,w,h;
+  //CDBDebug("Current = 0, 0, %d, %d",Geo->dWidth,Geo->dHeight);
+  getCanvasSize(x,y,w,h);
+  //CDBDebug("New     = %d, %d, %d, %d",x,y,w,h);
+  setCanvasSize(x-padding,y-padding,w+padding*2,h+padding*2);
+}
 
 #ifndef ADAGUC_USE_CAIRO
 int CDrawImage::writeRGBAPng(int width,int height,unsigned char *RGBAByteBuffer,FILE *file,bool trueColor){

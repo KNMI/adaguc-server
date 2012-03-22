@@ -74,7 +74,7 @@ class CDrawImage{
     unsigned char BGColorR,BGColorG,BGColorB;
     bool _bEnableTransparency;
     bool _bEnableTrueColor;
-    bool _bAntiAliased;
+    //bool _bAntiAliased;
     int brect[8];
 #ifdef ADAGUC_USE_CAIRO
     CCairoPlotter *cairo;
@@ -86,7 +86,7 @@ class CDrawImage{
 #endif
     const char *TTFFontLocation;
     float TTFFontSize;
-    char *fontConfig ;
+    //char *fontConfig ;
     
     static std::map<int,int> myColorMap;
     static std::map<int,int>::iterator myColorIter;
@@ -102,7 +102,7 @@ class CDrawImage{
       }
       return color;
     }
-    
+    int gdTranspColor;
   public:
     
     int _colors[256];
@@ -114,11 +114,12 @@ class CDrawImage{
     ~CDrawImage();
     int createImage(int _dW,int _dH);
     int createImage(CGeoParams *_Geo);
+    int createImage(CDrawImage *image,int width,int height);
     int printImagePng();
     int printImageGif();
     int createGDPalette(CServerConfig::XMLE_Legend *palette);
-
     int create685Palette();
+    int clonePalette(CDrawImage *drawImage);
     
     void drawBarb(int x,int y,double direction, double strength,int color,bool toKnots,bool flip);
     void drawText(int x,int y,float angle,const char *text,unsigned char colorIndex);
@@ -152,11 +153,18 @@ class CDrawImage{
     void setTrueColor(bool enable);
     bool getTrueColor(){return _bEnableTrueColor;}
     
-    void setAntiAliased(bool enable){      _bAntiAliased=enable;   };
-    bool getAntialiased(){return _bAntiAliased;}
+    //void setAntiAliased(bool enable){      _bAntiAliased=enable;   };
+    //bool getAntialiased(){return _bAntiAliased;}
     
     void setTTFFontLocation(const char *_TTFFontLocation){TTFFontLocation=_TTFFontLocation;  }
     void setTTFFontSize(float _TTFFontSize){  TTFFontSize=_TTFFontSize; }
+    bool isPixelTransparent(int &x,int &y);
+    void getCanvasSize(int &x,int &y,int &w,int &h);
+    
+    int setCanvasSize(int x,int y,int width,int height);
+    int draw(int destx, int desty,int sourcex,int sourcey,CDrawImage *simage);
+    void crop(int padding);
+    
 };
 
 #endif

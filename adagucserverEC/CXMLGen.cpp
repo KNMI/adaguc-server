@@ -182,11 +182,13 @@ int CXMLGen::getProjectionInformationForLayer(WMSLayer * myWMSLayer){
 #ifdef CXMLGEN_DEBUG
 CDBDebug("getProjectionInformationForLayer");
 #endif   
-  if(myWMSLayer->dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
-#ifdef CXMLGEN_DEBUG    
-CDBDebug("Cascaded layer");
-#endif    
-  return 0;
+ if(myWMSLayer->dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
+  #ifdef CXMLGEN_DEBUG    
+  CDBDebug("Cascaded layer");
+  #endif    
+    if(myWMSLayer->dataSource->cfgLayer->LatLonBox.size()==0){
+      return 0;
+    }
   }
   
   CGeoParams geo;
@@ -195,6 +197,10 @@ CDBDebug("Cascaded layer");
   for(size_t p=0;p< srvParam->cfg->Projection.size();p++){
     geo.CRS.copy(srvParam->cfg->Projection[p]->attr.id.c_str());
     status =  warper.initreproj(myWMSLayer->dataSource,&geo,&srvParam->cfg->Projection);
+    
+    #ifdef CXMLGEN_DEBUG    
+    if(status!=0){CDBDebug("Unable to initialize projection ");}
+    #endif   
     if(status!=0)return 1;
     // Find the max extent of the image
     WMSLayer::Projection * myProjection = new WMSLayer::Projection();
@@ -210,6 +216,7 @@ CDBDebug("Cascaded layer");
     if(srvParam->cfg->Projection[p]->attr.id.equals("EPSG:4326")){
       for(int k=0;k<4;k++)myWMSLayer->dfLatLonBBOX[k]=myProjection->dfBBOX[k];
     }
+    
     warper.closereproj();
   }
   return 0;
@@ -246,9 +253,13 @@ CDBDebug("Check");
     }*/
 #ifdef CXMLGEN_DEBUG
 CDBDebug("Start looping dimensions");
+CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimension.size());
 #endif         
     for(size_t i=0;i<myWMSLayer->dataSource->cfgLayer->Dimension.size();i++){
-    
+      #ifdef CXMLGEN_DEBUG
+      CDBDebug("%d = %s",i,myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
+      #endif         
+      
       
       //Create a new dim to store in the layer
       WMSLayer::Dim *dim=new WMSLayer::Dim();myWMSLayer->dimList.push_back(dim);
@@ -304,6 +315,7 @@ CDBDebug("Start looping dimensions");
 #endif                    
                     myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.copy(iso8601timeRes.c_str());
                     myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.units.copy("ISO8601");
+                    
                     hasMultipleValues=false;
                   }
                 }catch(int e){
@@ -316,7 +328,7 @@ CDBDebug("Start looping dimensions");
         }
         
       }
-      //This is a multival dim.
+      //This is a multival dim, defined as val1,val2,val3,val4,val5,etc...
       if(hasMultipleValues==true){
         //Get all dimension values from the db
         CT::string query;
@@ -357,7 +369,7 @@ CDBDebug("Querying %s",query.c_str());
         delete[] values;
       }
 
-      //This is an interval
+      //This is an interval defined as start/stop/resolution
       if(hasMultipleValues==false){
         // Retrieve the max dimension value
         CT::string query;
@@ -374,6 +386,8 @@ CDBDebug("Querying %s",query.c_str());
         delete[] values;
               // Retrieve all values for time position
         //    if(srvParam->serviceType==SERVICE_WCS){
+          
+          /*
         query.print("select %s from %s",myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str(),tableName.c_str());
         values = DB.query_select(query.c_str(),0);
         if(values == NULL){CDBError("Query failed");DB.close();return 1;}
@@ -390,7 +404,8 @@ CDBDebug("Querying %s",query.c_str());
             TimePositions[l].count=values[l].count;
           }
         }
-        delete[] values;
+        delete[] values;*/
+        
         if(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.c_str()==NULL){
           //TODO
           CDBError("Dimension interval '%d' not defined",i);return 1;
@@ -418,7 +433,12 @@ CDBDebug("Querying %s",query.c_str());
             dim->defaultValue.copy(&defaultV);
           }
           //dim->defaultValue.copy(szMinTime);dim->defaultValue.concat("Z");
-          dim->values.print("%sZ/%sZ/%s",szMinTime,szMaxTime,pszInterval);
+          CT::string minTime=szMinTime;
+          if(minTime.equals(szMaxTime)){
+            dim->values.print("%sZ",szMinTime);
+          }else{
+            dim->values.print("%sZ/%sZ/%s",szMinTime,szMaxTime,pszInterval);
+          }
         }
       }
     }
@@ -604,6 +624,11 @@ int CXMLGen::getWMS_1_0_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
 }
 
 
+
+
+bool compareStringCase( const string& s1, const string& s2 ) {
+  return strcmp( s1.c_str(), s2.c_str() ) <= 0;
+}
 int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*> *myWMSLayerList){
   CFile header;
   CT::string OnlineResource(srvParam->cfg->OnlineResource[0]->attr.value.c_str());
@@ -635,7 +660,8 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
       if(j>=groupKeys.size())groupKeys.push_back(key);
     }
     //Sort the groups alphabetically
-    std::sort(groupKeys.begin(), groupKeys.end());
+    std::sort(groupKeys.begin(), groupKeys.end(),compareStringCase);
+    
     
     //Loop through the groups
     int currentGroupDepth=0;
@@ -1009,9 +1035,10 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
   std::vector<WMSLayer*> myWMSLayerList;
   
   for(size_t j=0;j<srvParam->cfg->Layer.size();j++){
+   
     bool hideLayer=false;
     if(srvParam->cfg->Layer[j]->attr.hidden.equals("true"))hideLayer=true;
-    
+ 
    
     if(hideLayer==false){
       //For web: URL encoding is necessary
@@ -1026,6 +1053,19 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
       WMSLayer *myWMSLayer = new WMSLayer();myWMSLayerList.push_back(myWMSLayer);
       CT::string layerUniqueName;
       if(srvParam->makeUniqueLayerName(&layerUniqueName,srvParam->cfg->Layer[j])!=0)myWMSLayer->hasError=true;
+      
+      bool foundWMSLayer = false;
+      for(size_t i=0;i<srvParam->WMSLayers->count;i++){
+        if(srvParam->WMSLayers[i].equals(&layerUniqueName)){
+          foundWMSLayer = true;
+          break;
+        }
+      }
+      if(foundWMSLayer == false){
+       //WMS layer is not in the list, so we can skip it already
+        myWMSLayer->hasError=true;
+      }
+      
       if(myWMSLayer->hasError==false){
         
         myWMSLayer->name.copy(&layerUniqueName);
@@ -1048,35 +1088,63 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
         
         if(myWMSLayer->hasError==false){status = getDataSourceForLayer(myWMSLayer,reader);if(status != 0)myWMSLayer->hasError=1;}
         
+        if(myWMSLayer->dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
+          myWMSLayer->isQuerable=0;
+          if(srvParam->serviceType==SERVICE_WCS){
+            myWMSLayer->hasError=true;
+          }
+        }
         //Generate a common projection list information
         if(myWMSLayer->hasError==false){status = getProjectionInformationForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;}
         
         //Get the dimensions and its extents for this layer
         if(myWMSLayer->hasError==false){status = getDimsForLayer(myWMSLayer,reader);if(status != 0)myWMSLayer->hasError=1;}
-        
+      
+      
         //Auto configure styles
         if(myWMSLayer->hasError==false){
           if(myWMSLayer->dataSource->cfgLayer->Styles.size()==0){
             if(myWMSLayer->dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
+              
               status=CDataReader::autoConfigureStyles(myWMSLayer->dataSource);
               if(status != 0){myWMSLayer->hasError=1;CDBError("Unable to autoconfigure styles for layer %s",layerUniqueName.c_str());}
             }
           }
         }
         
+        
+        
         reader->close();
+        
         delete reader;reader=NULL;
         
         //Get the defined styles for this layer
         status = getStylesForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;
-        //CDBDebug("OK");
+      
       }
     }
   }
   
   
- 
- 
+  //Remove layers which have an error
+  for(size_t j=0;j<myWMSLayerList.size();j++){
+    if(myWMSLayerList[j]->hasError){
+      delete myWMSLayerList[j];
+      myWMSLayerList.erase (myWMSLayerList.begin()+j);
+      j--;
+    }
+  }
+  #ifdef CXMLGEN_DEBUG    
+  if(myWMSLayerList.size()>0){
+    CT::string finalLayerList;
+    finalLayerList=myWMSLayerList[0]->name.c_str();
+    for(size_t j=1;j<myWMSLayerList.size();j++){
+      finalLayerList.printconcat(",%s",myWMSLayerList[j]->name.c_str());
+    }
+    CDBDebug("Final layerlist: \"%s\"",finalLayerList.c_str());
+  }
+  
+  #endif
  //TEST
 /* CT::stringlist *a=CImageDataWriter::getStyleListForDataSource(myWMSLayerList[2]->dataSource);
  printf("Layer: %s (%d)\n",myWMSLayerList[2]->dataSource->layerName.c_str(),a->size());

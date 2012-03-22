@@ -32,9 +32,13 @@ void printerrorImage(void *_drawImage){
   if(error_raised==0)return ;
 
   CDrawImage *drawImage=(CDrawImage*)_drawImage;
+  
+  const char *exceptionText = "OGC inimage Exception";
+  drawImage->setText(exceptionText,strlen(exceptionText),12,5, 241,0);
+  
   CT::string errormsg(errormsgs),*messages,*sp,concat;
   messages=errormsg.split("\n");
-  int y=0;
+  int y=1;
   size_t w=70,characters=0;
   for(size_t i=0;i<messages->count;i++){
     sp=messages[i].split(" ");
@@ -60,9 +64,11 @@ void printerrorImage(void *_drawImage){
   y=(y-1)*15+26;
       //drawImage.rectangle(5,3,errImageWidth-1,(y-1)*15+20,252,0);
   drawImage->line(3,3,errImageWidth-1,3,254);
-  drawImage->line(3,3,5,y,254);
+  drawImage->line(3,3,3,y,254);
   drawImage->line(3,y,errImageWidth-1,y,251);
   drawImage->line(errImageWidth-1,3,errImageWidth-1,y,251);
+  
+  
   delete [] messages;
 }
 

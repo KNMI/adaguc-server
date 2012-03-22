@@ -87,7 +87,7 @@ private:
     std::vector<GetFeatureInfoResult*> getFeatureInfoResultList;
     
     DEF_ERRORFUNCTION();
-    int createLegend(CDataSource *sourceImage,CDrawImage *drawImage, int posX, int posY);
+
     int warpImage(CDataSource *sourceImage,CDrawImage *drawImage);
   
     CServerParams *srvParam;
@@ -128,7 +128,7 @@ private:
       delete currentStyleConfiguration;currentStyleConfiguration = NULL;
     }
     
-    int createLegend(CDataSource *sourceImage, int posX,int posY);
+    int createLegend(CDataSource *sourceImage,CDrawImage *legendImage);
     int getFeatureInfo(CDataSource *sourceImage,int dX,int dY);
     int createAnimation();
     void setDate(const char *date);
