@@ -22,7 +22,7 @@ public:
 
 class CImgWarpBilinear:public CImageWarperRenderInterface{
   private:
-    bool drawMap,enableContour,enableVector,enableBarb,enableShade;
+    bool drawMap,enableContour,enableVector,enableBarb,enableShade,drawGridVectors;
     float shadeInterval,contourSmallInterval,contourBigInterval;
     int smoothingFilter;
     class Point{
@@ -40,6 +40,7 @@ class CImgWarpBilinear:public CImageWarperRenderInterface{
       enableBarb=false;
       enableShade=false;
       smoothingFilter=1;
+      drawGridVectors=false;
     }
     ~CImgWarpBilinear(){
       for(size_t j=0;j<minimaPoints.size();j++)delete minimaPoints[j];
@@ -91,6 +92,10 @@ class CImgWarpBilinear:public CImageWarperRenderInterface{
           if(values[0].equals("contourBigInterval")){
             contourBigInterval=values[1].toFloat();
             if(contourBigInterval==0.0f){CDBWarning("invalid value given for contourBigInterval %s",pszSettings);}
+          }
+          
+          if (values[0].equals("drawGridVectors")) {
+            drawGridVectors=values[1].equals("true");
           }
         }
         delete[] values;

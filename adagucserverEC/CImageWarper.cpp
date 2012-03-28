@@ -73,8 +73,7 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
     dfy/=DEG_TO_RAD;    
     return 0;
   }
-  
-  
+
   int CImageWarper::reprojfromLatLon(double &dfx,double &dfy){
     dfx*=DEG_TO_RAD;
     dfy*=DEG_TO_RAD;
@@ -89,6 +88,36 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
     }
     return 0;
   }
+
+ 
+  int CImageWarper::reprojModelToLatLon(double &dfx,double &dfy){
+    if(convertRadiansDegreesSrc){
+      dfx*=DEG_TO_RAD;
+      dfy*=DEG_TO_RAD;
+    }
+    if(pj_transform(sourcepj,latlonpj,1,0,&dfx,&dfy,NULL)!=0){
+      //throw("reprojfromLatLon error");
+    }
+    dfx/=DEG_TO_RAD;
+    dfy/=DEG_TO_RAD;    
+    return 0;
+  }
+  
+  int CImageWarper::reprojModelFromLatLon(double &dfx,double &dfy){
+    dfx*=DEG_TO_RAD;
+    dfy*=DEG_TO_RAD;
+    
+    if(pj_transform(latlonpj,sourcepj,1,0,&dfx,&dfy,NULL)!=0){
+      //throw("reprojfromLatLon error");
+    }
+    //if(status!=0)CDBDebug("DestPJ: %s",GeoDest->CRS.c_str());
+    if(convertRadiansDegreesSrc){
+      dfx/=DEG_TO_RAD;
+      dfy/=DEG_TO_RAD;
+    }
+    return 0;
+  }
+    
   
   int CImageWarper::reprojpoint_inv(double &dfx,double &dfy){
     

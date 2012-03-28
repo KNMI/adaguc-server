@@ -1,8 +1,6 @@
 #include "CImgWarpBilinear.h"
 #include <gd.h>
 
-
-
 const char *CImgWarpBilinear::className="CImgWarpBilinear";
 void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDrawImage *drawImage){
   #ifdef CImgWarpBilinear_DEBUG
@@ -59,7 +57,6 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
         float t1=dfPixelExtent[0];dfPixelExtent[0]=dfPixelExtent[2];dfPixelExtent[2]=t1;
       }
 
-
       //Convert the pixel extent to integer values
       //Also stretch the BBOX a bit, to hide edge effects
       
@@ -93,6 +90,7 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
       dPixelExtent[3]=sourceImage->dHeight;
   }
   
+
     //Get width and height of the pixel extent
   int dPixelDestW=dPixelExtent[2]-dPixelExtent[0];
   int dPixelDestH=dPixelExtent[3]-dPixelExtent[1];
@@ -104,7 +102,7 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
   #ifdef CImgWarpBilinear_DEBUG
   CDBDebug("Allocate, numDestPixels %d x %d",dPixelDestW,dPixelDestH);
   #endif
-  int *dpDestX = new int[numDestPixels];
+  int *dpDestX = new int[numDestPixels];//refactor to numGridPoints
   int *dpDestY = new int[numDestPixels];
   class ValueClass{
     public:
@@ -122,8 +120,8 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
   ValueClass *valObj = new ValueClass[sourceImage->dataObject.size()];
   for(size_t dNr=0;dNr<sourceImage->dataObject.size();dNr++){
     #ifdef CImgWarpBilinear_DEBUG
-    CDBDebug("Allocating valObj nr %d: numDestPixels %d x %d",dNr,dPixelDestW,dPixelDestH);
-    CDBDebug("Allocating valObj nr %d: imageSize %d x %d",dNr,dImageWidth,dImageHeight);
+    CDBDebug("Allocating valObj[%d].fpValues: numDestPixels %d x %d",dNr,dPixelDestW,dPixelDestH);
+    CDBDebug("Allocating valObj[%d].valueData: imageSize %d x %d",dNr,dImageWidth,dImageHeight);
     #endif
     valObj[dNr].fpValues = new float [numDestPixels];
     valObj[dNr].valueData = new float[dImageWidth*dImageHeight];
@@ -184,7 +182,7 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
       dpDestX[p]=(int)destX;//2-200;
       dpDestY[p]=(int)destY;//2+200;
       //CDBDebug("%f - %f s:%d x:%d  y:%d  p:%d",destX,destY,status,x,y,p);
-        //drawImage->setPixel(dpDestX[p],dpDestY[p],248);
+      //  drawImage->setPixelIndexed(dpDestX[p],dpDestY[p],240);
       for(size_t varNr=0;varNr<sourceImage->dataObject.size();varNr++){
         void *data=sourceImage->dataObject[varNr]->data;
         float *fpValues=valObj[varNr].fpValues;
@@ -224,12 +222,127 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
       }
     }
   }
-  
-  //return;
-  
   #ifdef CImgWarpBilinear_DEBUG
   StopWatch_Stop("reprojection finished");
   #endif
+  
+  //return;
+  //If there are 2 components, we have wind u and v.
+  //Use Jacobians for rotating u and v
+  //After calculations 
+  bool gridRelative=true;
+
+  if (sourceImage->dataObject.size()>1) {
+    // Check standard_name/var_name for first vector component
+    // if x_wind/grid_east_wind of y_wind/grid_northward_wind then gridRelative=true
+    // if eastward_wind/northward_wind then gridRelative=false
+    // default is gridRelative=true
+//    CT::string standard_name;
+//    standard_name=
+  #ifdef CImgWarpBilinear_DEBUG
+  StopWatch_Stop("u/v rotation started");
+  #endif
+    double delta=0.01;
+    double deltaLon;
+    double deltaLat;
+    float *uValues=valObj[0].fpValues;
+    float *vValues=valObj[1].fpValues;
+    double X=dfSourceOrigX;
+    double XLon=X+dfSourcedExtW;
+    double XLat=X;
+    double Y=dfSourceOrigY;
+    double YLon=Y;
+    double YLat=Y+dfSourcedExtH;
+    warper->reprojModelToLatLon(X,Y);
+    warper->reprojModelToLatLon(XLon, YLon);
+    warper->reprojModelToLatLon(XLat, YLat);
+    if ((YLat-Y)>0){
+      deltaLat=delta;
+    } else {
+      deltaLat=-delta;
+    }
+    if ((XLon-X)>0) {
+      deltaLon=delta;
+    } else {
+      deltaLon=-delta;
+    }  
+    for(int y=dPixelExtent[1];y<dPixelExtent[3];y=y+1){
+      for(int x=dPixelExtent[0];x<dPixelExtent[2];x=x+1){
+        size_t p = size_t((x-(dPixelExtent[0]))+((y-(dPixelExtent[1]))*dPixelDestW));
+        if ((uValues[p]!=fNodataValue)&&(vValues[p]!=fNodataValue)) {
+          double modelX, modelY;
+          if (x==dPixelExtent[2]-1) {
+            modelX=dfSourcedExtW*double(x-1)+dfSourceOrigX;
+          } else {
+            modelX=dfSourcedExtW*double(x)+dfSourceOrigX;
+          }  
+          if (y==dPixelExtent[3]-1) {
+            modelY=dfSourcedExtH*double(y-1)+dfSourceOrigY;
+          } else {
+            modelY=dfSourcedExtH*double(y)+dfSourceOrigY;
+          }
+          double modelXLat, modelYLat;
+          double modelXLon, modelYLon;
+          if (gridRelative) {
+            modelXLon=modelX+dfSourcedExtW;
+            modelYLon=modelY;
+            modelXLat=modelX;
+            modelYLat=modelY+dfSourcedExtH;
+//            if (y==0) { CDBDebug("modelXY[%d,%d] {%d} (%f, %f) (%f,%f) (%f,%f) =>", x, y, gridRelative, modelX, modelY, modelXLon, modelYLon, modelXLat, modelYLat);}
+            warper->reprojpoint_inv(modelX,modelY); // model to vis proj.
+            warper->reprojpoint_inv(modelXLon, modelYLon);
+            warper->reprojpoint_inv(modelXLat, modelYLat);
+          } else {
+            warper->reprojModelToLatLon(modelX, modelY); // model to latlon proj.
+            modelXLon=modelX+deltaLon; // latlons
+            modelYLon=modelY;
+            modelXLat=modelX;
+            modelYLat=modelY+deltaLat;
+//            if (y==0) { CDBDebug("modelXY[%d,%d] {%d} {%f,%f} (%f,%f) (%f,%f) =>", x, y, gridRelative, modelX, modelY, modelXLon, modelYLon, modelXLat, modelYLat);}
+
+//            warper->reprojModelFromLatLon(modelX, modelY);
+/*            warper->reprojModelFromLatLon(modelXLat, modelYLat);
+            warper->reprojModelFromLatLon(modelXLon, modelYLon);            
+            warper->reprojpoint_inv(modelX, modelY);
+            warper->reprojpoint_inv(modelXLon, modelYLon);
+            warper->reprojpoint_inv(modelXLat, modelYLat);*/
+       
+            warper->reprojfromLatLon(modelX, modelY); // latlon to vis proj.
+            warper->reprojfromLatLon(modelXLon, modelYLon);
+            warper->reprojfromLatLon(modelXLat, modelYLat);
+
+          }
+//          drawImage->circle(modelX, modelY,3, 240);
+          double distLon=hypot(modelXLon-modelX, modelYLon-modelY);
+          double distLat=hypot(modelXLat-modelX, modelYLat-modelY);
+//          if (y==0) { CDBDebug("(%f, %f) (%f,%f) (%f,%f): %f, %f {%d}\n", modelX,modelY, modelXLon, modelYLon, modelXLat, modelYLat, distLon, distLat, gridRelative); }
+
+          double VJaa=(modelXLon-modelX)/distLon;
+          double VJab=(modelXLat-modelX)/distLat;
+          double VJba=(modelYLon-modelY)/distLon;
+          double VJbb=(modelYLat-modelY)/distLat;
+//          if (y==0) { CDBDebug("(%f, %f, %f,%f)\n", VJaa, VJab, VJba, VJbb);}
+        
+//          uValues[p]=6;
+//          vValues[p]=6;
+          double magnitude=hypot(uValues[p], vValues[p]);
+          double uu;
+          double vv;
+          uu = VJaa*uValues[p]+VJab*vValues[p];
+          vv = VJba*uValues[p]+VJbb*vValues[p];
+
+//           if (y==0) {CDBDebug("(%f, %f) ==> (%f,%f)", uValues[p], vValues[p], uu, vv);}
+          double newMagnitude = hypot(uu, vv);
+          uValues[p]=uu*magnitude/newMagnitude;
+          vValues[p]=vv*magnitude/newMagnitude;
+//           if (y==0) {CDBDebug("==> (%f,%f)",uValues[p], vValues[p]);}  
+        }
+      }
+    }
+  #ifdef CImgWarpBilinear_DEBUG
+  StopWatch_Stop("u/v rotation finished");
+  #endif
+  }
 
   for(size_t varNr=0;varNr<sourceImage->dataObject.size();varNr++){
     float *fpValues=valObj[varNr].fpValues;
@@ -310,8 +423,8 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
   #endif
 
   float *valueData=valObj[0].valueData;
-  //Draw bilinear
-  if(drawMap==true&&enableShade==false){
+  //Draw bilinear, simple variable
+  if(drawMap==true&&enableShade==false&&enableVector==false&&enableBarb==false){
     for(int y=0;y<dImageHeight;y++){
       for(int x=0;x<dImageWidth;x++){
         setValuePixel(sourceImage,drawImage,x,y,valueData[x+y*dImageWidth]);
@@ -319,9 +432,8 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
     }
   }
     //Wind VECTOR
-    std::vector<CalculatedWindVector> windVectors; //holds windVectors after calculation to draw them on top
-   if(enableVector||enableBarb)
-   {
+   std::vector<CalculatedWindVector> windVectors; //holds windVectors after calculation to draw them on top
+   if((enableVector||enableBarb)){
     if(sourceImage->dataObject.size()==2){
       int firstXPos=0;
       int firstYPos=0;
@@ -344,94 +456,119 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
       double direction;
       double strength;
       double pi=3.141592654;
-      int stepx=1;
-      int stepy=1;
-      if(enableContour==false&&enableShade==false&&drawMap==false){
-  stepy=vectorDensityPy;
-  stepx=vectorDensityPx;
+      int stepx=vectorDensityPx; //Raster stride at barb distances
+      int stepy=vectorDensityPy;
+      // If contouring, drawMap or shading is wanted, step through all destination raster points
+      if(enableContour||enableShade||drawMap){
+        stepy=1;
+        stepx=1;
       }
+      //Loops through complete destination image in screen coord.
       for(int y=firstYPos-vectorDensityPx;y<dImageHeight;y=y+stepy){
         for(int x=firstXPos-vectorDensityPy;x<dImageWidth;x=x+stepx){
+          //        CDBDebug("pos: %d,%d", x, y);
           if(x>=0&&y>=0){
-            size_t p = size_t(x+y*dImageWidth);
+            size_t p = size_t(x+y*dImageWidth); //pointer in dest. image
+            //          CDBDebug("pos: %d,%d ==> p", x, y, p);
             
-          //valObj[0].fpValues;
-          //drawImage->setPixel(dpDestX[p],dpDestY[p],240);
-            u=-valObj[0].valueData[p];
+            //valObj[0].fpValues;
+            //drawImage->setPixel(dpDestX[p],dpDestY[p],240);
+            u=valObj[0].valueData[p];
             v=valObj[1].valueData[p];
             
-            if(u==u&&v==v&&
-              (u!=fNodataValue)&&
-              (v!=fNodataValue))
-            {
-              if(u==0){
-                if(v<=0)direction=0;else direction=pi;
-                //strength=v;
-              }else{
-                direction=atan(v/u);
-                if(u>0)direction+=pi;
-                
-              }
+            if((u!=fNodataValue)&&(v!=fNodataValue)){
+              direction=atan2(v,u)+pi;
               strength=sqrt(u*u+v*v);
               valObj[0].valueData[p]=strength;
-        
+              
               if(drawMap==true){       
                 setValuePixel(sourceImage,drawImage,x,y,strength);
-              }else{
-                if((int(x-firstXPos)%vectorDensityPy==0&&(y-firstYPos)%vectorDensityPx==0)||(enableContour==false&&enableShade==false)){
-                              strength=(strength)*1.0;
-                    
-                    //Calculate coordinates from requested coordinate system
-                    double projectedCoordX=((double(x)/double(dImageWidth))*(drawImage->Geo->dfBBOX[2]-drawImage->Geo->dfBBOX[0]))+drawImage->Geo->dfBBOX[0];;
-                    double projectedCoordY=((double(dImageHeight-y)/double(dImageHeight))*(drawImage->Geo->dfBBOX[3]-drawImage->Geo->dfBBOX[1]))+drawImage->Geo->dfBBOX[1];;
-                    
-                    //CDBDebug("W= d H=%d",dImageWidth,dImageHeight);
-                    //CDBDebug("BBOX= %f,%f,%f,%f",drawImage->Geo->dfBBOX[0],drawImage->Geo->dfBBOX[1],drawImage->Geo->dfBBOX[2],drawImage->Geo->dfBBOX[3]);
-                    
-                    //CDBDebug("x=%d y=%d",x,y);
-                    //CDBDebug("projectedCoordX=%f projectedCoordY=%f",projectedCoordX,projectedCoordY);
-                    double nativeCoordX=projectedCoordX;
-                    double nativeCoordY=projectedCoordY;
-                    
-                    //warper->reprojpoint(nativeCoordX,nativeCoordY);
-                    //warper->reprojpoint(projectedShiftedNCoordX,projectedShiftedNCoordY);
-                    
-                    
-                    warper->reprojToLatLon(nativeCoordX,nativeCoordY);
-
-                    int flip=nativeCoordY<0; //Remember if we have to flip barb dir for southern hemisphere
-                    //CDBDebug("lon=%f lat=%f",nativeCoordX,nativeCoordY);
-                    double projectedShiftedNCoordX=nativeCoordX;
-                    double projectedShiftedNCoordY=nativeCoordY+1.25;
-                    warper->reprojfromLatLon(projectedShiftedNCoordX,projectedShiftedNCoordY);
-                    //CDBDebug("projectedCoordX=%f projectedCoordY=%f",projectedCoordX,projectedCoordY);
-                    //CDBDebug("projectedShiftedNCoordX=%f projectedShiftedNCoordY=%f",projectedShiftedNCoordX,projectedShiftedNCoordY);
-                    
-                    double uShifted=projectedShiftedNCoordX-projectedCoordX;
-                    double vShifted=projectedShiftedNCoordY-projectedCoordY;
-                    double directionShifted=0;
-                    //direction = -pi/2;strength=15;
-                    directionShifted=atan2(uShifted,vShifted);
-                    direction+=directionShifted;
-                    //CDBDebug("nativeCoordX=%f nativeCoordY=%f",nativeCoordX,nativeCoordY);
-                    //CDBDebug("projectedShiftedNCoordX=%f projectedShiftedNCoordY=%f",projectedShiftedNCoordX,projectedShiftedNCoordY);         
-                    
-                    CalculatedWindVector wv(x, y, direction, strength,convertToKnots,flip);
-                    windVectors.push_back(wv);
-//                  if (enableVector) drawImage->drawVector(x,y,direction,strength,240);
-//                  if (enableBarb) drawImage->drawBarb(x,y,direction,strength,240,convertToKnots,flip);
-                }
               }
-            }else valObj[0].valueData[p]=sourceImage->dataObject[0]->dfNodataValue;
+              if (!drawGridVectors) {
+                if((int(x-firstXPos)%vectorDensityPy==0&&(y-firstYPos)%vectorDensityPx==0)||(enableContour==false&&enableShade==false)){
+                  strength=(strength)*1.0;
+                  
+                  //Calculate coordinates from requested coordinate system
+                  double projectedCoordX=((double(x)/double(dImageWidth))*(drawImage->Geo->dfBBOX[2]-drawImage->Geo->dfBBOX[0]))+drawImage->Geo->dfBBOX[0];;
+                  double projectedCoordY=((double(dImageHeight-y)/double(dImageHeight))*(drawImage->Geo->dfBBOX[3]-drawImage->Geo->dfBBOX[1]))+drawImage->Geo->dfBBOX[1];;
+                  
+                  //CDBDebug("W= d H=%d",dImageWidth,dImageHeight);
+                  //CDBDebug("BBOX= %f,%f,%f,%f",drawImage->Geo->dfBBOX[0],drawImage->Geo->dfBBOX[1],drawImage->Geo->dfBBOX[2],drawImage->Geo->dfBBOX[3]);
+                  
+                  
+                  warper->reprojToLatLon(projectedCoordX,projectedCoordY);
+                  
+                  int flip=projectedCoordY<0; //Remember if we have to flip barb dir for southern hemisphere
+                  
+                  CalculatedWindVector wv(x, y, direction, strength,convertToKnots,flip);
+//                  drawImage->circle(x,y,2, 240);
+                  windVectors.push_back(wv);
+                  //                  if (enableVector) drawImage->drawVector(x,y,direction,strength,240);
+                  //                  if (enableBarb) drawImage->drawBarb(x,y,direction,strength,240,convertToKnots,flip);
+              }
+              }
+            }else valObj[0].valueData[p]=sourceImage->dataObject[0]->dfNodataValue; //Set speeed to nodata if u OR v == no data
           }
         }
       }
     }
-
-  }
-    //Make Contour if desired
-    //drawContour(valueData,fNodataValue,500,5000,drawImage);
-    if(enableContour||enableShade){
+    
+   } 
+   
+   if(((enableVector||enableBarb)&&drawGridVectors)){
+     int wantedSpacing=30;
+     int distPoint=hypot(dpDestX[1]-dpDestX[0], dpDestY[1]-dpDestY[0]);
+     
+     int stepx=int(float(wantedSpacing)/distPoint+0.5);
+     if (stepx<1) stepx=1;
+     int stepy=stepx;
+     if(sourceImage->dataObject.size()==2){
+       for(int y=dPixelExtent[1];y<dPixelExtent[3];y=y+stepy){ //TODO Refactor to GridExtent
+         for(int x=dPixelExtent[0];x<dPixelExtent[2];x=x+stepx){
+           size_t p = size_t((x-(dPixelExtent[0]))+((y-(dPixelExtent[1]))*dPixelDestW));
+           double destX,destY;
+           // size_t pSrcData = size_t(x+y*dfSourceW);//TODO Refactor to GridWidth
+           
+           //Skip rest if x,y outside drawArea
+           if ((dpDestX[p]>=0)&&(dpDestX[p]<dImageWidth)&&(dpDestY[p]>=0)&&(dpDestY[p]<dImageHeight)){
+             double direction;
+             double pi=3.141592654;
+             double strength;
+             bool convertToKnots=true;
+             double u=valObj[0].fpValues[p];
+             double v=valObj[1].fpValues[p];
+             //             drawImage->circle(dpDestX[p], dpDestY[p]pi, 2, 246);
+             
+             if((u!=fNodataValue)&&(v!=fNodataValue)) {
+               direction=atan2(v,u)+pi;
+               
+               strength=sqrt(u*u+v*v);
+               //               valObj[0].valueData[p]=strength;
+               
+               //Calculate coordinates from requested coordinate system to determine barb flip
+               double projectedCoordX=((double(x)/double(dImageWidth))*(drawImage->Geo->dfBBOX[2]-drawImage->Geo->dfBBOX[0]))+drawImage->Geo->dfBBOX[0];;
+               double projectedCoordY=((double(dImageHeight-y)/double(dImageHeight))*(drawImage->Geo->dfBBOX[3]-drawImage->Geo->dfBBOX[1]))+drawImage->Geo->dfBBOX[1];;
+               warper->reprojToLatLon(projectedCoordX,projectedCoordY);
+               
+               int flip=projectedCoordY<0; //Remember if we have to flip barb dir for southern hemisphere
+               
+               //Project x,y source grid indexes topi vis. space
+               double modelX=dfSourcedExtW*double(x)+dfSourceOrigX;
+               double modelY=dfSourcedExtH*double(y)+dfSourceOrigY;
+               warper->reprojpoint_inv(modelX,modelY); // model to vis proj.
+               
+               //               if (y==0) {CDBDebug("PLOT %d,%d at %d,%d {%f} (%f,%f)", x, y, dpDestX[p], dpDestY[p], p, direction, strength);}
+               CalculatedWindVector wv(dpDestX[p], dpDestY[p], direction, strength,convertToKnots,flip);
+               windVectors.push_back(wv);
+           }
+         }
+       }
+     }
+     }
+   }
+     //Make Contour if desired
+     //drawContour(valueData,fNodataValue,500,5000,drawImage);
+     if(enableContour||enableShade){
       drawContour(valueData,fNodataValue,shadeInterval,contourSmallInterval,contourBigInterval,
 	   sourceImage,drawImage,enableContour,enableShade,enableContour);
     }

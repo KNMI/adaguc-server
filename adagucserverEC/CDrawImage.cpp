@@ -156,8 +156,11 @@ void CDrawImage::drawVector(int x,int y,double direction, double strength,int co
     return;
   }
   
+//   direction=direction-pi;
+//   if (direction<0) direction=direction+2*pi; //Barbs point to where the wind comes from
+
   dx1=cos(direction)*(strength);
-  dy1=sin(direction)*(strength);
+  dy1=-sin(direction)*(strength); 
   
   // arrow shaft
   wx1=double(x)-dx1;wy1=double(y)-dy1;
@@ -167,14 +170,14 @@ void CDrawImage::drawVector(int x,int y,double direction, double strength,int co
 
   // arrow "feathers"
   float hx1,hy1,hx2,hy2;
-  hx1=wx2+cos(direction-0.7f)*(strength/1.8f);
-  hy1=wy2+sin(direction-0.7f)*(strength/1.8f);
-  hx2=wx2+cos(direction+0.7f)*(strength/1.8f);
-  hy2=wy2+sin(direction+0.7f)*(strength/1.8f);
+  hx1=wx1-cos(direction-0.7f)*(strength/1.8f);
+  hy1=wy1+sin(direction-0.7f)*(strength/1.8f);
+  hx2=wx1-cos(direction+0.7f)*(strength/1.8f);
+  hy2=wy1+sin(direction+0.7f)*(strength/1.8f);
   
   line(wx1,wy1,wx2,wy2,color);
-  line(wx2,wy2,hx1,hy1,color);
-  line(wx2,wy2,hx2,hy2,color);
+  line(wx1,wy1,hx1,hy1,color);
+  line(wx1,wy1,hx2,hy2,color);
 }
 
 #define MSTOKNOTS (3600/1852)
@@ -191,12 +194,14 @@ void CDrawImage::drawBarb(int x,int y,double direction, double strength,int colo
 
   if(strengthInKnots<=2){
 	// draw a circle
-    circle(x, y, 6, 240);
+    circle(x, y, 6, color);
     return;
   }
 
   float pi=3.141592;
 
+  //direction=direction+pi;
+  
   int shaftLength=30;
 
   int nPennants=strengthInKnots/50;
@@ -211,13 +216,10 @@ void CDrawImage::drawBarb(int x,int y,double direction, double strength,int colo
   nhalfBarbs=0;
   nBarbs++;
   }
-  int barbLength=14*(flip?-1:1);
-
-  direction=direction-pi;
-  if (direction<0) direction=direction+2*pi; //Barbs point to where the wind comes from
+  int barbLength=14*(flip?1:-1);
 
   dx1=cos(direction)*(shaftLength);
-  dy1=sin(direction)*(shaftLength);
+  dy1=-sin(direction)*(shaftLength);
 
   wx1=double(x);wy1=double(y);  //wind barb root
   wx2=double(x)+dx1;wy2=double(y)+dy1;  //wind barb top
@@ -229,7 +231,7 @@ void CDrawImage::drawBarb(int x,int y,double direction, double strength,int colo
   double wx3=wx2-pos*dx1/nrPos;
   double wy3=wy2-pos*dy1/nrPos;
   double hx3=wx3+cos(direction+pi/2)*barbLength;
-  double hy3=wy3+sin(direction+pi/2)*barbLength;
+  double hy3=wy3-sin(direction+pi/2)*barbLength;
   pos++;
   double wx4=wx2-pos*dx1/nrPos;
   double wy4=wy2-pos*dy1/nrPos;
@@ -239,8 +241,9 @@ void CDrawImage::drawBarb(int x,int y,double direction, double strength,int colo
   for (int i=0; i<nBarbs;i++) {
   double wx3=wx2-pos*dx1/nrPos;
   double wy3=wy2-pos*dy1/nrPos;
-  double hx3=wx3+cos(direction+pi/2)*barbLength;
-  double hy3=wy3+sin(direction+pi/2)*barbLength;
+  double hx3=wx3+cos(direction+1.3*pi/2)*barbLength;
+  double hy3=wy3-sin(direction+1.3*pi/2)*barbLength;
+
   line(wx3, wy3, hx3, hy3, color);
   pos++;
   }
@@ -248,14 +251,13 @@ void CDrawImage::drawBarb(int x,int y,double direction, double strength,int colo
   if (nhalfBarbs>0){
   double wx3=wx2-pos*dx1/nrPos;
   double wy3=wy2-pos*dy1/nrPos;
-  double hx3=wx3+cos(direction+pi/2)*barbLength/3;
-  double hy3=wy3+sin(direction+pi/2)*barbLength/3;
+  double hx3=wx3+cos(direction+1.3*pi/2)*barbLength/3;
+  double hy3=wy3-sin(direction+1.3*pi/2)*barbLength/3;
     line(wx3, wy3, hx3, hy3, color);
   pos++;
   }
 
   line(wx1,wy1,wx2,wy2,color);
-
 }
 
 void CDrawImage::circle(int x, int y, int r, int color) {

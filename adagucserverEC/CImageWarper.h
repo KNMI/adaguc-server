@@ -38,6 +38,8 @@ class CImageWarper{
     int reprojpoint(CPoint &p);
     int reprojpoint_inv(double &dfx,double &dfy);
     int reprojpoint_inv(CPoint &p);
+    int reprojModelToLatLon(double &dfx,double &dfy);
+    int reprojModelFromLatLon(double &dfx,double &dfy);
     void reprojBBOX(double *df4PixelExtent);
     int reprojfromLatLon(double &dfx,double &dfy);
     int reprojToLatLon(double &dfx,double &dfy);

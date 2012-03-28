@@ -20,6 +20,7 @@ CImageDataWriter::RenderMethodEnum CImageDataWriter::getRenderMethodFromString(C
   else if(renderMethodString->equals("vector"))renderMethod=vector;
   else if(renderMethodString->equals("barb"))renderMethod=barb;
   else if(renderMethodString->equals("barbcontour"))renderMethod=barbcontour;
+  else if(renderMethodString->equals("barbshaded"))renderMethod=barbshaded;
   else if(renderMethodString->equals("barbcontourshaded"))renderMethod=barbcontourshaded;
   else if(renderMethodString->equals("shaded"))renderMethod=shaded;
   else if(renderMethodString->equals("contour"))renderMethod=contour;
@@ -27,8 +28,16 @@ CImageDataWriter::RenderMethodEnum CImageDataWriter::getRenderMethodFromString(C
   else if(renderMethodString->equals("vectorcontour"))renderMethod=vectorcontour;
   else if(renderMethodString->equals("nearestcontour"))renderMethod=nearestcontour;
   else if(renderMethodString->equals("bilinearcontour"))renderMethod=bilinearcontour;
+  else if(renderMethodString->equals("vectorshaded"))renderMethod=vectorshaded;
   else if(renderMethodString->equals("vectorcontourshaded"))renderMethod=vectorcontourshaded;
-  
+  else if(renderMethodString->equals("thinvector"))renderMethod=thinvector;
+  else if(renderMethodString->equals("thinvectorcontour"))renderMethod=thinvectorcontour;
+  else if(renderMethodString->equals("thinvectorcontourshaded"))renderMethod=thinvectorcontourshaded;
+  else if(renderMethodString->equals("thinvectorshaded"))renderMethod=thinvectorshaded;
+  else if(renderMethodString->equals("thinbarb"))renderMethod=thinbarb;
+  else if(renderMethodString->equals("thinbarbcontour"))renderMethod=thinbarbcontour;
+  else if(renderMethodString->equals("thinbarbshaded"))renderMethod=thinbarbshaded;
+  else if(renderMethodString->equals("thinbarbcontourshaded"))renderMethod=thinbarbcontourshaded;
   return renderMethod;
 }
 
@@ -46,6 +55,14 @@ void CImageDataWriter::getRenderMethodAsString(CT::string *renderMethodString, R
   else if(renderMethod == nearestcontour)renderMethodString->copy("nearestcontour");
   else if(renderMethod == bilinearcontour)renderMethodString->copy("bilinearcontour");
   else if(renderMethod == vectorcontourshaded)renderMethodString->copy("vectorcontourshaded");
+  else if(renderMethod == thinvector)renderMethodString->copy("thinvector");
+  else if(renderMethod == thinvectorcontour)renderMethodString->copy("thinvectorcontour");
+  else if(renderMethod == thinvectorshaded)renderMethodString->copy("thinvectorshaded");
+  else if(renderMethod == thinvectorcontourshaded)renderMethodString->copy("thinvectorcontourshaded");
+  else if(renderMethod == thinbarb)renderMethodString->copy("thinbarb");
+  else if(renderMethod == thinbarbcontour)renderMethodString->copy("thinbarbcontour");
+  else if(renderMethod == thinbarbshaded)renderMethodString->copy("thinbarbshaded");
+  else if(renderMethod == thinbarbcontourshaded)renderMethodString->copy("thinbarbcontourshaded");
   else renderMethodString->copy("!!!no string!!!");
 }
 
@@ -1315,14 +1332,12 @@ if(renderMethod==contour){CDBDebug("contour");}*/
      renderMethod==bilinear||
      renderMethod==bilinearcontour||
      renderMethod==contour||
-     renderMethod==vector||
-     renderMethod==vectorcontour||
-     renderMethod==barb||
-     renderMethod==barbcontour||
-     renderMethod==barbcontourshaded||
      renderMethod==shaded||
      renderMethod==shadedcontour||
-     renderMethod==vectorcontourshaded
+     renderMethod==vector||renderMethod==vectorshaded||renderMethod==vectorcontour||renderMethod==vectorcontourshaded||
+     renderMethod==barb||renderMethod==barbshaded||renderMethod==barbcontour||renderMethod==barbcontourshaded||
+     renderMethod==thinvector||renderMethod==thinvectorshaded||renderMethod==thinvectorcontour||renderMethod==thinvectorcontourshaded||
+     renderMethod==thinbarb||renderMethod==thinbarbshaded||renderMethod==thinbarbcontour||renderMethod==thinbarbcontourshaded
     )
   {
     imageWarperRenderer = new CImgWarpBilinear();
@@ -1332,20 +1347,30 @@ if(renderMethod==contour){CDBDebug("contour");}*/
     bool drawVector=false;
     bool drawBarb=false;
     bool drawShaded=false;
+    bool drawGridVectors=false;
     if(renderMethod==bilinear||renderMethod==bilinearcontour)drawMap=true;
     if(renderMethod==bilinearcontour)drawContour=true;
     if(renderMethod==nearestcontour)drawContour=true;
     if(renderMethod==contour||renderMethod==shadedcontour||renderMethod==vectorcontour||renderMethod==vectorcontourshaded)drawContour=true;
-    if(renderMethod==vector||renderMethod==vectorcontour||renderMethod==vectorcontourshaded)drawVector=true;
+    if(renderMethod==vector||renderMethod==vectorcontour||renderMethod==vectorshaded||renderMethod==vectorcontourshaded)drawVector=true;
+    if(renderMethod==thinvector||renderMethod==thinvectorcontour||renderMethod==thinvectorshaded||renderMethod==thinvectorcontourshaded){ drawVector=true;drawGridVectors=true;}
+    if(renderMethod==thinbarb||renderMethod==thinbarbcontour||renderMethod==thinbarbshaded||renderMethod==thinbarbcontourshaded) {drawBarb=true; drawGridVectors=true;}
+    if(renderMethod==thinbarbcontour||renderMethod==thinbarbcontourshaded) {drawBarb=true; drawGridVectors=true;drawContour=true;}
     if(renderMethod==shaded||renderMethod==shadedcontour||renderMethod==vectorcontourshaded||renderMethod==barbcontourshaded)drawShaded=true;
+    if(renderMethod==vectorshaded||renderMethod==thinvectorshaded||renderMethod==thinvectorcontourshaded)drawShaded=true;
+    if(renderMethod==barbshaded||renderMethod==thinbarbshaded||renderMethod==thinbarbcontourshaded)drawShaded=true;
     if(renderMethod==barbcontour) { drawContour=true; drawBarb=true; }
-    if(renderMethod==barbcontourshaded) { drawContour=true; drawBarb=true; }
+    if(renderMethod==vectorcontour) { drawContour=true; drawVector=true; }
+    if(renderMethod==vectorcontourshaded||renderMethod==thinvectorcontourshaded) { drawShaded=true; drawContour=true; drawVector=true; }
+    if(renderMethod==vectorcontour||renderMethod==thinvectorcontour) { drawVector=true; drawContour=true;}
+    if(renderMethod==barbcontourshaded||renderMethod==thinbarbcontourshaded) { drawShaded=true; drawContour=true; drawBarb=true; }
     if(renderMethod==barb) drawBarb=true;
     if(drawMap==true)bilinearSettings.printconcat("drawMap=true;");
     if(drawVector==true)bilinearSettings.printconcat("drawVector=true;");
     if(drawBarb==true)bilinearSettings.printconcat("drawBarb=true;");
     if(drawShaded==true)bilinearSettings.printconcat("drawShaded=true;");
     if(drawContour==true)bilinearSettings.printconcat("drawContour=true;");
+    if (drawGridVectors)bilinearSettings.printconcat("drawGridVectors=true;");
     bilinearSettings.printconcat("smoothingFilter=%d;",currentStyleConfiguration->smoothingFilter);
     if(drawContour==true||drawShaded==true){
       bilinearSettings.printconcat("shadeInterval=%0.12f;contourSmallInterval=%0.12f;contourBigInterval=%0.12f;",

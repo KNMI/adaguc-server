@@ -76,6 +76,8 @@
 #define ALLOW_METADATA 8
 #define SHOW_QUERYINFO 16 
 
+#define CImgWarpBilinear_DEBUG
+#define CImgWarpBilinear_TIME
 //#define MEASURETIME
 
 //#define CDATAREADER_DEBUG
