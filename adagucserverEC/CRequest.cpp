@@ -819,15 +819,31 @@ int CRequest::process_all_layers(){
             bool legendDrawn = false;
             for(size_t d=0;d<dataSources.size()&&legendDrawn==false;d++){
               if(dataSources[d]->dLayerType!=CConfigReaderLayerTypeCascaded){
-                CDrawImage legendImage;
-                legendImage.createImage(&imageDataWriter.drawImage,LEGEND_WIDTH,LEGEND_HEIGHT);
-                
-                status = imageDataWriter.createLegend(dataSources[d],&legendImage);if(status != 0)throw(__LINE__);
-                int posX=4;
-                int posY=imageDataWriter.drawImage.Geo->dHeight-(legendImage.Geo->dHeight+4);
-                imageDataWriter.drawImage.rectangle(posX,posY,legendImage.Geo->dWidth+posX+1,legendImage.Geo->dHeight+posY+1,CColor(255,255,255,0),CColor(255,255,255,100));
-                imageDataWriter.drawImage.draw(posX,posY,0,0,&legendImage);
-                legendDrawn=true;
+                if(1==0){
+                  CDrawImage legendImage;
+                  legendImage.createImage(&imageDataWriter.drawImage,LEGEND_WIDTH,imageDataWriter.drawImage.Geo->dHeight-8);
+                  status = imageDataWriter.createLegend(dataSources[d],&legendImage);if(status != 0)throw(__LINE__);
+                  int posX=4;
+                  int posY=imageDataWriter.drawImage.Geo->dHeight-(legendImage.Geo->dHeight+4);
+                  imageDataWriter.drawImage.rectangle(posX,posY,legendImage.Geo->dWidth+posX+1,legendImage.Geo->dHeight+posY+1,CColor(255,255,255,0),CColor(255,255,255,100));
+                  imageDataWriter.drawImage.draw(posX,posY,0,0,&legendImage);
+                  legendDrawn=true;
+                }
+                if(1==1){
+                  int padding=3;
+                  int minimumLegendWidth=80;
+                  CDrawImage legendImage;
+                  int legendWidth = imageDataWriter.drawImage.Geo->dWidth/10;
+                  if(legendWidth<minimumLegendWidth)legendWidth=minimumLegendWidth;
+                  legendImage.createImage(&imageDataWriter.drawImage,legendWidth,imageDataWriter.drawImage.Geo->dHeight-padding*2+1);
+                  status = imageDataWriter.createLegend(dataSources[d],&legendImage);if(status != 0)throw(__LINE__);
+                  int posX=imageDataWriter.drawImage.Geo->dWidth-(legendImage.Geo->dWidth+padding);
+                  int posY=imageDataWriter.drawImage.Geo->dHeight-(legendImage.Geo->dHeight+padding);
+                  imageDataWriter.drawImage.rectangle(posX,posY,legendImage.Geo->dWidth+posX+1,legendImage.Geo->dHeight+posY+1,CColor(255,255,255,0),CColor(255,255,255,100));
+                  imageDataWriter.drawImage.draw(posX,posY,0,0,&legendImage);
+                  legendDrawn=true;
+                  
+                }
               }
             }
           }

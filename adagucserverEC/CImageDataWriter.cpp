@@ -2130,63 +2130,70 @@ int CImageDataWriter::getColorIndexForValue(CDataSource *dataSource,float value)
 
 
 int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendImage){
+  
+  enum LegendType { undefined,continous,discrete,statusflag,cascaded};
+  LegendType legendType=undefined;
+  bool estimateMinMax=false;
   int legendPositiveUp = 1;
-  int dH=0;
-  float cbH=LEGEND_HEIGHT-13-13;
-  float cbW=LEGEND_WIDTH/3;
+  float legendWidth = legendImage->Geo->dWidth;
+  float legendHeight = legendImage->Geo->dHeight;
+  int pLeft=4;
+  int pTop=0;
   char szTemp[256];
   
   if(dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
-    
+    legendType = cascaded;
     CDBDebug("GetLegendGraphic for cascaded WMS is not yet supported");
-    legendImage->crop(5);
+    legendImage->crop(4);
     return 0;
   }
   
   CDataReader reader;
-  
-  /*if(renderMethod!=shadedcontour&&renderMethod!=shaded&&renderMethod!=contour){
-     //When the scale factor is zero (0.0f) we need to open the data too, because we want to estimate min/max in this case.
-     // When the scale factor is given, we only need to open the header, for displaying the units.
-    if(dataSource->legendScale==0.0f){
-      status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL,cacheLocation.c_str());
-    }else{
-      status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER,cacheLocation.c_str());
-    }
-  }else {
-    status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL,cacheLocation.c_str());
-  }*/
-  
   RenderMethodEnum renderMethod = currentStyleConfiguration->renderMethod;
+
+  if(renderMethod==shadedcontour||renderMethod==shaded||renderMethod==contour){
+    //We need to open all the data, because we need to estimate min/max for legend drawing
+    estimateMinMax = true;
+  }else {
+    //When the scale factor is zero (0.0f) we need to open the data too, because we want to estimate min/max in this case.
+    //When the scale factor is given, we only need to open the header, for displaying the units.
+    if(dataSource->legendScale==0.0f){
+      estimateMinMax = true;
+    }else{
+      estimateMinMax = false;
+    }
+  }
+  
   if(dataSource->dataObject[0]->data==NULL){
-    if(renderMethod==shadedcontour||renderMethod==shaded||renderMethod==contour){
-      //We need to open all the data, because we need to estimate min/max for legend drawing
+  if(estimateMinMax){
       status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
-    }else {
-      //When the scale factor is zero (0.0f) we need to open the data too, because we want to estimate min/max in this case.
-      // When the scale factor is given, we only need to open the header, for displaying the units.
-      if(dataSource->legendScale==0.0f){
-        status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
-      }else{
-        status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
-      }
+    }else{
+      status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
     }
     if(status!=0){
       CDBError("Unable to open file");
       return 1;
     }
   }
-  int pLeft=0;
-  int pTop=0;
- 
- 
-  //Create a legend based on status flags.
+  
+  //Determine legendtype.
   if(dataSource->dataObject[0]->hasStatusFlag){
-    //Draw a legend with status flags
-    dH=30;
+    legendType = statusflag;
+  }else if(renderMethod!=shadedcontour&&renderMethod!=shaded&&renderMethod!=contour){
+    legendType = continous;
+  }else {
+    legendType = discrete;
+  }
+ 
+ 
+  
+  
+  //Create a legend based on status flags.
+  if( legendType == statusflag ){
+    int dH=30;
     //cbW=LEGEND_WIDTH/3;cbW/=3;cbW*=3;cbW+=3;
-    cbW = 90.0/4.0;
-    cbH=LEGEND_HEIGHT-13-13-30;
+    float cbW = legendWidth/8;
+    float cbH = legendHeight-13-13-30;
    
     size_t numFlags=dataSource->dataObject[0]->statusFlagList.size();
     for(size_t j=0;j<numFlags;j++){
@@ -2200,15 +2207,19 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
       legendMessage.print("%d %s",(int)value,flagMeaning.c_str());
       legendImage->setText(legendMessage.c_str(),legendMessage.length(),(int)cbW+15+pLeft,(int)y+dH+2+pTop,248,-1);  
     }
-  }else if(renderMethod!=shadedcontour&&renderMethod!=shaded&&renderMethod!=contour){
-    //Draw a continous legend
-    dH=4;
-    cbW = 60.0/2.2;
-    //cbW=(float(LEGEND_WIDTH)/2.4);
-    cbH=LEGEND_HEIGHT-13-13-2;
+    CT::string units="status flag";
+    legendImage->setText(units.c_str(),units.length(),2+pLeft,legendHeight-14+pTop,248,-1);
+    legendImage->crop(4,4);
+  }
+  
+  //Draw a continous legend
+  if( legendType == continous ){
+    float cbW = legendWidth/8;
+    float cbH = legendHeight-13-13;
+    int dH=0;
     
     for(int j=0;j<cbH;j++){
-      for(int i=0;i<cbW+2;i++){
+      for(int i=0;i<cbW+3;i++){
         float c=(float(cbH*legendPositiveUp-j)/cbH)*240.0f;
         legendImage->setPixelIndexed(i+pLeft,j+7+dH+pTop,int(c+1));
       }
@@ -2252,13 +2263,24 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
       if(tickRound==0){floatToString(szTemp,255,v);}else{
         floatToString(szTemp,255,tickRound,v);
       }
-      legendImage->setText(szTemp,strlen(szTemp),(int)cbW+12+pLeft,(int)c+dH+pTop,248,-1);
+      legendImage->setText(szTemp,strlen(szTemp),(int)cbW+10+pLeft,(int)c+dH+pTop+1,248,-1);
     }
     
-  }else{
-    //Draw legend with fixed intervals
-    
-    cbW = 90.0/3.0;
+    //Get units
+    CT::string units;
+    if(dataSource->dataObject[0]->units.length()>0){
+      units.concat(&dataSource->dataObject[0]->units);
+    }
+    if(units.length()>0)legendImage->setText(units.c_str(),units.length(),2+pLeft,legendHeight-14+pTop,248,-1);
+    legendImage->crop(4,-1);    
+  }
+  
+  //Draw legend with fixed intervals
+  if( legendType == discrete ){
+    float cbW = legendWidth/8;
+    float cbH = legendHeight-13-13;
+    int dH=0;
+    //cbW = 90.0/3.0;
     // We always need to have the min/max of the data
     // Always to show only the occuring data values in the legend,
     // and in some cases to stretch the colors over min max
@@ -2360,7 +2382,7 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
         if(textRounding>6)sprintf(szTemp,"%f - %f",v,v+legendInterval);
         //CT::string    //floatToString(szTemp,255,v);
         int l=strlen(szTemp);
-        legendImage->setText(szTemp,l,(int)cbW+12+pLeft,((cY+cY2)/2)-7+pTop,248,-1);
+        legendImage->setText(szTemp,l,(int)cbW+10+pLeft,((cY+cY2)/2)-7+pTop,248,-1);
       }
 
     }
@@ -2378,27 +2400,20 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
   }
       
   }*/
-    
+    //Get units
+    CT::string units;
+    if(dataSource->dataObject[0]->units.length()>0){
+      units.concat(&dataSource->dataObject[0]->units);
+    }
+    if(units.length()>0)legendImage->setText(units.c_str(),units.length(),2+pLeft,legendHeight-14+pTop,248,-1);
+    legendImage->crop(4,4);
   }
   
 
   reader.close();
-  if(dataSource->dataObject[0]->hasStatusFlag==false){
-    //Get units
-    CT::string units;
-    if(status==0){
-      if(dataSource->dataObject[0]->units.length()>0){
-        units.concat(&dataSource->dataObject[0]->units);
-      }
-    }
-    //Print the units under the legend:
-    if(units.length()>0)legendImage->setText(units.c_str(),units.length(),2+pLeft,LEGEND_HEIGHT-14+pTop,248,-1);
-  }else{
-    CT::string units="status flag";
-    legendImage->setText(units.c_str(),units.length(),2+pLeft,LEGEND_HEIGHT-14+pTop,248,-1);
-  }
+ 
   
-  legendImage->crop(5);
+
 
   
   return 0;

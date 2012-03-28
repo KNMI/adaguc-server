@@ -1023,12 +1023,35 @@ unsigned char r,g,b,a;
   }
   return 0;
 }
-void CDrawImage::crop(int padding){
+/**
+ * Crops image 
+ * @param int paddingW the padding to keep in pixels in width. Set to -1 if no crop in width is desired
+ * @param int paddingH the padding to keep in pixels in height. Set to -1 if no crop in height is desired
+ */
+void CDrawImage::crop(int paddingW, int paddingH){
   int x,y,w,h;
-  //CDBDebug("Current = 0, 0, %d, %d",Geo->dWidth,Geo->dHeight);
   getCanvasSize(x,y,w,h);
-  //CDBDebug("New     = %d, %d, %d, %d",x,y,w,h);
-  setCanvasSize(x-padding,y-padding,w+padding*2,h+padding*2);
+  int x1=x-paddingW;
+  int y1=y-paddingH;
+  int w1=w+paddingW*2;
+  int h1=h+paddingH*2;
+  if(x1<0)x1=0;if(y1<0)y1=0;
+  if(x1>Geo->dWidth)x1=Geo->dWidth;if(y1>Geo->dHeight)y1=Geo->dHeight;
+  if(paddingW<0){
+    x1=0;w1=Geo->dWidth;
+  }
+  if(paddingH<0){
+    y1=0;h1=Geo->dHeight;
+  }
+  setCanvasSize(x1,y1,w1,h1);
+}
+
+/**
+ * Crops image with desired padding
+ * @param padding The number of empty pixels surrounding the new image
+ */
+void CDrawImage::crop(int padding){
+  crop(padding,padding);
 }
 
 #ifndef ADAGUC_USE_CAIRO
