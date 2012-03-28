@@ -784,7 +784,7 @@ int CRequest::process_all_layers(){
               textY+=fontSize;
               //imageDataWriter.drawImage.rectangle(0,0,srvParam->Geo->dWidth,textY+8,CColor(255,255,255,0),CColor(255,255,255,80));
               //imageDataWriter.drawImage.setFillC
-              imageDataWriter.drawImage.drawText(5,textY,srvParam->cfg->WMS[0]->TitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapTitle.c_str(),CColor(0,0,0,255),CColor(180,180,200,100));
+              imageDataWriter.drawImage.drawText(5,textY,srvParam->cfg->WMS[0]->TitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapTitle.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
               textY+=12;
               
               //prevTextY=textY;
@@ -796,7 +796,7 @@ int CRequest::process_all_layers(){
               textY+=fontSize;
               
               //imageDataWriter.drawImage.rectangle(0,prevTextY,srvParam->Geo->dWidth,textY+4,CColor(255,255,255,0),CColor(255,255,255,80));
-              imageDataWriter.drawImage.drawText(6,textY,srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapSubTitle.c_str(),CColor(0,0,0,255),CColor(180,180,200,100));
+              imageDataWriter.drawImage.drawText(6,textY,srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapSubTitle.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
               textY+=8;
               //prevTextY=textY;
             }
@@ -809,7 +809,7 @@ int CRequest::process_all_layers(){
               float fontSize=parseFloat(srvParam->cfg->WMS[0]->DimensionFont[0]->attr.size.c_str());
               textY+=fontSize*1.2;
               message.print("%s: %s",srvParam->OGCDims[d].Name.c_str(),srvParam->OGCDims[d].Value.c_str());
-              imageDataWriter.drawText(6,textY,srvParam->cfg->WMS[0]->DimensionFont[0]->attr.location.c_str(),fontSize,0,message.c_str(),240);
+              imageDataWriter.drawImage.drawText(6,textY,srvParam->cfg->WMS[0]->DimensionFont[0]->attr.location.c_str(),fontSize,0,message.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
               textY+=4;
             }
           }
