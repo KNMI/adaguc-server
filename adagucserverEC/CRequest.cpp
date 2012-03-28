@@ -823,9 +823,9 @@ int CRequest::process_all_layers(){
                 legendImage.createImage(&imageDataWriter.drawImage,LEGEND_WIDTH,LEGEND_HEIGHT);
                 
                 status = imageDataWriter.createLegend(dataSources[d],&legendImage);if(status != 0)throw(__LINE__);
-                int posX=5;
-                int posY=imageDataWriter.drawImage.Geo->dHeight-(legendImage.Geo->dHeight+5);
-                imageDataWriter.drawImage.rectangle(posX,posY,legendImage.Geo->dWidth+posX,legendImage.Geo->dHeight+posY,CColor(255,255,255,0),CColor(255,255,255,200));
+                int posX=4;
+                int posY=imageDataWriter.drawImage.Geo->dHeight-(legendImage.Geo->dHeight+4);
+                imageDataWriter.drawImage.rectangle(posX,posY,legendImage.Geo->dWidth+posX+1,legendImage.Geo->dHeight+posY+1,CColor(255,255,255,0),CColor(255,255,255,100));
                 imageDataWriter.drawImage.draw(posX,posY,0,0,&legendImage);
                 legendDrawn=true;
               }

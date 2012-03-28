@@ -980,6 +980,10 @@ int CDrawImage::clonePalette(CDrawImage *drawImage){
 int CDrawImage::createImage(CDrawImage *image,int width,int height){
   setTrueColor(image->getTrueColor());
   enableTransparency(_bEnableTransparency);
+  setTTFFontLocation(image->TTFFontLocation);
+  
+  setTTFFontSize(image->TTFFontSize);
+    
   createImage(width,height);
   clonePalette(image);
   return 0;
