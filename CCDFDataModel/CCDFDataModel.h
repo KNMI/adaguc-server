@@ -47,6 +47,10 @@ namespace CDF{
   // Data must be freed by using free()
   int allocateData(CDFType type,void **p,size_t length);
   int freeData(void **p);
+  
+  static CT::string lastErrorMessage;
+  
+  
   //Copies data from one array to another and performs type conversion
   //Destdata must be a pointer to an empty array with non-void type
   class DataCopier{
@@ -114,6 +118,22 @@ namespace CDF{
         data=NULL;
         length=0;
       }
+      
+      
+      Attribute(const char *attrName,const char *attrString){
+        data=NULL;
+        length=0;
+        name.copy(attrName);
+        setData(CDF_CHAR,attrString,strlen(attrString));
+      }
+      
+      Attribute(const char *attrName,CDFType type,const void *dataToSet,size_t dataLength){
+        data=NULL;
+        length=0;
+        name.copy(attrName);
+        setData(type,dataToSet,dataLength);
+      }
+      
       ~Attribute(){
         if(data!=NULL)freeData(&data);data=NULL;
       }
@@ -125,6 +145,7 @@ namespace CDF{
         this->setData(attribute->type,attribute->data,attribute->size());
         return 0;
       }
+      
       int setData(CDFType type,const void *dataToSet,size_t dataLength){
         if(data!=NULL)freeData(&data);data=NULL;
         length=dataLength;
@@ -333,6 +354,7 @@ namespace CDF{
             return attributes[j];
           }
         }
+        lastErrorMessage.print("attribute %s not found",name);
         throw(CDF_E_ATTNOTFOUND);
         return NULL;
       }
@@ -377,6 +399,13 @@ namespace CDF{
             attributes.erase(attributes.begin()+j);
           }
         }
+        return 0;
+      }
+      int removeAttributes(){
+        for(size_t j=0;j<attributes.size();j++){
+          delete attributes[j];attributes[j]=NULL;
+        }
+        attributes.clear();
         return 0;
       }
       int setAttribute(const char *attrName,CDFType attrType,const void *attrData,size_t attrLen){
@@ -775,7 +804,9 @@ class CDFObject:public CDF::Variable{
 };
 namespace CDF{
   void dump(CDFObject* cdfObject,CT::string* dumpString);
+  void dump(CDF::Variable* cdfVariable,CT::string* dumpString);
   void _dumpPrintAttributes(const char *variableName, std::vector<CDF::Attribute *>attributes,CT::string *dumpString);
+
 };
 
 class CDFReader{

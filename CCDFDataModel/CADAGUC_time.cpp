@@ -28,7 +28,7 @@ CADAGUC_time::CADAGUC_time(const char * DateSince){
   }
  // strncpy(stpszDateSince,DateSince,ADAGUC_TIME_MAX_STR_LEN);stpszDateSince[ADAGUC_TIME_MAX_STR_LEN]='\0';
   if (utInit("") != 0) {
-    CDBError("Couldn't initialize Unidata units library, try setting UDUNITS_PATH to udunits.dat or try setting UDUNITS2_XML_PATH to udunits2.xml");throw(1);return;
+    CDBError("Couldn't initialize Unidata units library, try setting UDUNITS_PATH to udunits.dat");exit(1);
   }
   
   size_t l=strlen(stpszDateSince);
@@ -37,10 +37,7 @@ CADAGUC_time::CADAGUC_time(const char * DateSince){
     if(stpszDateSince[j]=='Z')stpszDateSince[j]=32;
   }
   if(utScan(stpszDateSince,&dataunits) != 0)  {
-	CT::string *s=new CT::string("internal error: udu_fmt_time can't parse data unit string: ");
-	s->concat(stpszDateSince);
-    CDBError(s->c_str());
-    delete s;
+    CDBError("internal error: udu_fmt_time can't parse data unit string");
   }
   //char szTemp[ADAGUC_TIME_MAX_STR_LEN+1]; snprintf(szTemp,ADAGUC_TIME_MAX_STR_LEN,"UDUNITS initialized with [%s]",DateSince);CDBDebug(szTemp);
 }

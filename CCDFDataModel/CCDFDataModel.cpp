@@ -117,6 +117,11 @@ void CDF::_dumpPrintAttributes(const char *variableName, std::vector<CDF::Attrib
     dumpString->printconcat(" ;\n");
   }
 }
+
+void CDF::dump(CDF::Variable* cdfVariable,CT::string* dumpString){
+  _dumpPrintAttributes(cdfVariable->name.c_str(),cdfVariable->attributes,dumpString);
+}
+
 void CDF::dump(CDFObject* cdfObject,CT::string* dumpString){
   //print dimensions:
   char temp[1024];

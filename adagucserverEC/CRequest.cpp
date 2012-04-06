@@ -830,7 +830,7 @@ int CRequest::process_all_layers(){
                   legendDrawn=true;
                 }
                 if(1==1){
-                  int padding=3;
+                  int padding=1;
                   int minimumLegendWidth=80;
                   CDrawImage legendImage;
                   int legendWidth = imageDataWriter.drawImage.Geo->dWidth/10;
@@ -839,7 +839,7 @@ int CRequest::process_all_layers(){
                   status = imageDataWriter.createLegend(dataSources[d],&legendImage);if(status != 0)throw(__LINE__);
                   int posX=imageDataWriter.drawImage.Geo->dWidth-(legendImage.Geo->dWidth+padding);
                   int posY=imageDataWriter.drawImage.Geo->dHeight-(legendImage.Geo->dHeight+padding);
-                  imageDataWriter.drawImage.rectangle(posX,posY,legendImage.Geo->dWidth+posX+1,legendImage.Geo->dHeight+posY+1,CColor(255,255,255,0),CColor(255,255,255,100));
+                  imageDataWriter.drawImage.rectangle(posX,posY,legendImage.Geo->dWidth+posX+1,legendImage.Geo->dHeight+posY+1,CColor(255,255,255,0),CColor(255,255,255,180));
                   imageDataWriter.drawImage.draw(posX,posY,0,0,&legendImage);
                   legendDrawn=true;
                   

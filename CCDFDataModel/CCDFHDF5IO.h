@@ -21,18 +21,6 @@ class CDFHDF5Reader :public CDFReader{
       if(H5Tequal(type,H5T_NATIVE_UINT)>0)return CDF_UINT;
       if(H5Tequal(type,H5T_NATIVE_FLOAT)>0)return CDF_FLOAT;
       if(H5Tequal(type,H5T_NATIVE_DOUBLE)>0)return CDF_DOUBLE;
-      
-      if(H5Tequal(type,H5T_NATIVE_LONG)>0)return CDF_INT;
-      if(H5Tequal(type,H5T_NATIVE_ULONG)>0)return CDF_UINT;
-      
-      if(H5Tequal(type,H5T_NATIVE_LLONG)>0){
-        CDBWarning("Warning: HDF5 type H5T_NATIVE_LLONG is not supported",type);
-      }
-       if(H5Tequal(type,H5T_NATIVE_ULLONG)>0){
-        CDBWarning("Warning: HDF5 type H5T_NATIVE_ULLONG is not supported",type);
-      }
-      
-      //CDBWarning("Warning: unknown HDF5 type (%d)",type);
       return CDF_NONE;
     }
     DEF_ERRORFUNCTION();
@@ -94,20 +82,16 @@ class CDFHDF5Reader :public CDFReader{
           hid_t HDF5_attr_memtype = H5Tget_native_type(HDF5_attr_type, H5T_DIR_ASCEND);
           hsize_t stSize = H5Aget_storage_size(HDF5_attribute)/sizeof(int);
           CDF::Attribute *attr = new CDF::Attribute();
-          attributes.push_back(attr);
           attr->setName(attName);
           
           attr->type=typeConversion(HDF5_attr_memtype);
           attr->length=stSize;
           if(attr->length==0)attr->length=1;//TODO
           //printf("%s %d\n",attName,stSize);
-          if(CDF::allocateData(attr->type,&attr->data,attr->length+1)!=0){
-            CDBError("Unable to allocateData for attribute %s",attr->name.c_str());
-            throw(__LINE__);
-          }
+          CDF::allocateData(attr->type,&attr->data,attr->length+1);
           
           status   = H5Aread(HDF5_attribute, HDF5_attr_memtype, attr->data);
-
+          attributes.push_back(attr);
           status   = H5Tclose(HDF5_attr_memtype);
         }
         
@@ -118,7 +102,7 @@ class CDFHDF5Reader :public CDFReader{
           attr->setName(attName);
           attr->type=CDF_FLOAT;
           attr->length=stSize;
-          if(CDF::allocateData(attr->type,&attr->data,attr->length+1)){throw(__LINE__);}
+          CDF::allocateData(attr->type,&attr->data,attr->length+1);
           
           status   = H5Aread(HDF5_attribute, H5T_NATIVE_FLOAT, attr->data);
           attributes.push_back(attr);
@@ -131,14 +115,9 @@ class CDFHDF5Reader :public CDFReader{
           attr->setName(attName);
           attr->type=CDF_CHAR;
           attr->length=stSize;
-          if(CDF::allocateData(attr->type,&attr->data,attr->length+1)){throw(__LINE__);}
-          
+          CDF::allocateData(attr->type,&attr->data,attr->length+1);
           status   = H5Aread(HDF5_attribute, HDF5_attr_type, attr->data);
-          
-          size_t stringLength=strlen((char*)attr->data);
-          if(attr->length>stringLength)attr->length=stringLength+1;
           ((char*)attr->data)[attr->length]='\0';
-          
           //CDBDebug("attr %s = %d = %s",attName,attr->length,attr->data);
           
           attributes.push_back(attr);
@@ -171,7 +150,7 @@ class CDFHDF5Reader :public CDFReader{
       var->isDimension=true;
       var->dimensionlinks.push_back(dim);
       var->type=CDF_DOUBLE;
-      if(CDF::allocateData(var->type,&var->data,dim->length)){throw(__LINE__);}
+      CDF::allocateData(var->type,&var->data,dim->length);
       for(size_t i=0;i<dim->length;i++)((float*)var->data)[i]=0.0f;
       var->setSize(dim->length);
       cdfObject->variables.push_back(var);
@@ -248,67 +227,60 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
                 }else snprintf(varName,1023,"%s",name);
 
                 int cdfType = typeConversion(datasetNativeType);
-                if(cdfType!=CDF_NONE){
-                    //CDBError("Unknown type for dataset %s",varName);
-                    //return;
-                  //}
-  #ifdef CCDFHDF5IO_DEBUG      
-  char tempType[20];
-  CDF::getCDFDataTypeName(tempType,19,cdfType);
-  CDBDebug("DataType is %s",tempType);
-  #endif
-                  
-                  hid_t   HDF5_dataspace = H5Dget_space(datasetID);    /* dataspace handle */
-                  int     ndims          = H5Sget_simple_extent_ndims(HDF5_dataspace);
-                if(ndims>19){
-                    CDBError("Maximum number of 20 dimensions supported, got %d dimensions",ndims);
-                    return;
-                  }                
-                  hsize_t dims_out[20];
-                  H5Sget_simple_extent_dims(HDF5_dataspace, dims_out, NULL);
-                  CDF::Variable * var=cdfObject->getVariableNE(varName);
-                  if(var==NULL){
-                    var= new CDF::Variable();
-                    cdfObject->variables.push_back(var);
-                  }
-                  var->type=cdfType;
-                  var->isDimension=false;
-                  var->setName(varName);
-                  
-  #ifdef CCDFHDF5IO_DEBUG      
-  CDBDebug("Adding %s",varName);
-  #endif
-                  var->id= cdfObject->variables.size();
-                  var->setCDFReaderPointer(this);
-                  readAttributes(var->attributes,datasetID);
-  #ifdef CCDFHDF5IO_DEBUG      
-  CDBDebug("%s.%s",groupName,name);
-  #endif
-                  CDF::Dimension *dim ;
-    
-                  for(int d=0;d<ndims;d++){
-  #ifdef CCDFHDF5IO_DEBUG      
-  CDBDebug("Dim size %d=%d\t",d,(size_t)dims_out[d]);
-  #endif
-                    //Make fake dimensions
-                    char dimname[20];snprintf(dimname,19,"dim_%d",d);
-                    if(ndims==2){
-                      if(d==0)dimname[4]='y';
-                      if(d==1)dimname[4]='x';
-                    }
-  #ifdef CCDFHDF5IO_DEBUG      
-  CDBDebug("Making dimension %s",dimname);
-  #endif                  
-                    dim = makeDimension(dimname,dims_out[d]);
-                    var->dimensionlinks.push_back(dim);
-                  }
-                  //printf("\n");
-                  
-                  H5Sclose(HDF5_dataspace);
-                  H5Tclose(datasetNativeType);
-                }else{
-                  //CDBWarning("Unknown type for dataset %s",varName);
+#ifdef CCDFHDF5IO_DEBUG      
+char tempType[20];
+CDF::getCDFDataTypeName(tempType,19,cdfType);
+CDBDebug("DataType is %s",tempType);
+#endif
+                
+                hid_t   HDF5_dataspace = H5Dget_space(datasetID);    /* dataspace handle */
+                int     ndims          = H5Sget_simple_extent_ndims(HDF5_dataspace);
+              if(ndims>19){
+                  CDBError("Maximum number of 20 dimensions supported, got %d dimensions",ndims);
+                  return;
+                }                
+                hsize_t dims_out[20];
+                H5Sget_simple_extent_dims(HDF5_dataspace, dims_out, NULL);
+                CDF::Variable * var=cdfObject->getVariableNE(varName);
+                if(var==NULL){
+                  var= new CDF::Variable();
+                  cdfObject->variables.push_back(var);
                 }
+                var->type=cdfType;
+                var->isDimension=false;
+                var->setName(varName);
+                
+#ifdef CCDFHDF5IO_DEBUG      
+CDBDebug("Adding %s",varName);
+#endif
+                var->id= cdfObject->variables.size();
+                var->setCDFReaderPointer(this);
+                readAttributes(var->attributes,datasetID);
+#ifdef CCDFHDF5IO_DEBUG      
+CDBDebug("%s.%s",groupName,name);
+#endif
+                CDF::Dimension *dim ;
+  
+                for(int d=0;d<ndims;d++){
+#ifdef CCDFHDF5IO_DEBUG      
+CDBDebug("Dim size %d=%d\t",d,(size_t)dims_out[d]);
+#endif
+                  //Make fake dimensions
+                  char dimname[20];snprintf(dimname,19,"dim_%d",d);
+                  if(ndims==2){
+                    if(d==0)dimname[4]='y';
+                    if(d==1)dimname[4]='x';
+                  }
+#ifdef CCDFHDF5IO_DEBUG      
+CDBDebug("Making dimension %s",dimname);
+#endif                  
+                  dim = makeDimension(dimname,dims_out[d]);
+                  var->dimensionlinks.push_back(dim);
+                }
+                //printf("\n");
+                
+                H5Sclose(HDF5_dataspace);
+                H5Tclose(datasetNativeType);
               }
               H5Tclose(datasetType);
             }
@@ -384,8 +356,8 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
       CDF::Dimension *dimY=var->dimensionlinks[0];
       CDF::Variable *varX=cdfObject->getVariableNE(dimX->name.c_str());
       CDF::Variable *varY=cdfObject->getVariableNE(dimY->name.c_str());
-      if(CDF::allocateData(varX->type,&varX->data,dimX->length)){throw(__LINE__);}
-      if(CDF::allocateData(varY->type,&varY->data,dimY->length)){throw(__LINE__);}
+      CDF::allocateData(varX->type,&varX->data,dimX->length);
+      CDF::allocateData(varY->type,&varY->data,dimY->length);
       
       varX->setName("x");
       varY->setName("y");
@@ -445,7 +417,7 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
       double offset;
       status = adTime->YYYYMMDDTHHMMSSTimeToOffset(offset,szADAGUCTime);
       time->setSize(1);
-      if(CDF::allocateData(time->type,&time->data,time->getSize())){throw(__LINE__);}
+      CDF::allocateData(time->type,&time->data,time->getSize());
       ((double*)time->data)[0]=offset;
       if(status!=0){
         CDBError("Could not initialize time: %s",szADAGUCTime);
@@ -651,7 +623,7 @@ CDBDebug("convertKNMIHDF5toCF()");
             totalVariableSize*=mem_count[d];;
           }
           var->setSize(totalVariableSize);
-          if(CDF::allocateData(type,&var->data,var->getSize())){throw(__LINE__);}
+          CDF::allocateData(type,&var->data,var->getSize());
           hid_t HDF5_memspace = H5Screate_simple(2,mem_count,NULL);
           H5Sselect_hyperslab(HDF5_memspace,H5S_SELECT_SET,mem_start, NULL,mem_count, NULL);
           H5Sselect_hyperslab(HDF5_dataspace,H5S_SELECT_SET,data_start, NULL,data_count, NULL);
@@ -727,7 +699,7 @@ CDBDebug("convertKNMIHDF5toCF()");
           }
 
           var->setSize(totalVariableSize);
-          if(CDF::allocateData(type,&var->data,var->getSize())){throw(__LINE__);}
+          CDF::allocateData(type,&var->data,var->getSize());
           hid_t HDF5_memspace = H5Screate_simple(2,mem_count,NULL);
           H5Sselect_hyperslab(HDF5_memspace,H5S_SELECT_SET,mem_start, NULL,mem_count, NULL);
           H5Sselect_hyperslab(HDF5_dataspace,H5S_SELECT_SET,mem_start, NULL,mem_count, NULL);
