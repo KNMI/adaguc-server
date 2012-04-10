@@ -509,7 +509,7 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
   
   CDirReader dirReader;
   
-  CDBDebug("*** Starting update layer [\"%s\"] ***",dataSource->cfgLayer->Name[0]->value.c_str());
+  CDBDebug("*** Starting update layer '%s' ***",dataSource->cfgLayer->Name[0]->value.c_str());
   
   if(searchFileNames(&dirReader,dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),tailPath.c_str())!=0)return 0;
   
@@ -592,7 +592,7 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
            #endif  
   status = DB.close();if(status!=0)return 1;
 
-  CDBDebug("*** Finished update layer [\"%s\"] ***\n",dataSource->cfgLayer->Name[0]->value.c_str());
+  CDBDebug("*** Finished update layer '%s' ***\n",dataSource->cfgLayer->Name[0]->value.c_str());
   //printStatus("OK","HOi %s","Maarten");
   return 0;
 }
@@ -637,7 +637,7 @@ int CDBFileScanner::searchFileNames(CDirReader *dirReader,const char * path,cons
       return 1;
     }
   }
-  CDBDebug("Found %d file(s) in directory",int(dirReader->fileList.size()));
+  CDBDebug("Found %d file(s)",int(dirReader->fileList.size()));
   return 0;
 }
 
