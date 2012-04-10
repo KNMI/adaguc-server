@@ -12,7 +12,7 @@ CCOMPILER=g++ -march=core2 -mtune=core2 -msse -msse2 -msse3 -mssse3 -mfpmath=sse
 #CCOMPILER=g++ -march=k8-sse3 -mtune=k8-sse3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 -I $(INCLUDEDIR)  
 
 
-OBJECTS = CCDFDataModel.o  CCDFNetCDFIO.o CADAGUC_time.o CCDFHDF5IO.o 
+OBJECTS = CCDFDataModel.o  CCDFNetCDFIO.o CADAGUC_time.o CCDFHDF5IO.o CProj4ToCF.o
 #OBJECTS = CCDFDataModel.o  CCDFNetCDFIO.o 
 
 

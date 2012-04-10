@@ -1,7 +1,8 @@
 #include "CDBFileScanner.h"
 const char *CDBFileScanner::className="CDBFileScanner";
+std::vector <CT::string> CDBFileScanner::tableNamesDone;
 
-#define MAX_STR_LEN 8191
+#define ISO8601TIME_LEN 32
 
 
 /*int CDBFileScanner::addIndexToTable(CPGSQLDB *DB,const char *tableName, const char * dimName){
@@ -31,6 +32,11 @@ const char *CDBFileScanner::className="CDBFileScanner";
   return 0;
 }*/
 
+
+/**
+ * 
+ * @return Positive on error, zero on succes, negative on skip.
+ */
 int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,int &removeNonExistingFiles){
   int status = 0;
   CT::string query;
@@ -46,6 +52,19 @@ int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,in
     //Create database tableNames
     CT::string tableName(dataSource->cfgLayer->DataBaseTable[0]->value.c_str());
     CServerParams::makeCorrectTableName(&tableName,&dimName);
+    
+    CDBDebug("Updating dimension '%s' with table '%s'",dimName.c_str(),tableName.c_str());
+
+    //Check whether we already did this table in this scan
+    for(size_t t=0;t<tableNamesDone.size();t++){
+      if(tableNamesDone[t].equals(tableName.c_str())){
+        CDBDebug("SKIPPING: Already scanned %s",tableName.c_str());
+        return -1;
+      }
+    }
+    //Remember that we are doing this scan
+    tableNamesDone.push_back(CT::string(tableName.c_str()));
+    
     //Create column names
     CT::string tableColumns("path varchar (255)");
     if(isTimeDim==true){
@@ -64,7 +83,7 @@ int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,in
     tableColumns.printconcat(", PRIMARY KEY (path, %s)",dimName.c_str());
     
     //CDBDebug("Check table %s with columns  %s ...\t",tableName.c_str(),tableColumns.c_str());
-    CDBDebug("Check table %s ",tableName.c_str());
+    //CDBDebug("Check table %s ",tableName.c_str());
     status = DB->checkTable(tableName.c_str(),tableColumns.c_str());
     //if(status == 0){CDBDebug("OK: Table is available");}
     if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tableName.c_str(),tableColumns.c_str()); DB->close();return 1;  }
@@ -85,7 +104,7 @@ int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,in
       if(removeNonExistingFiles==1){
         tableName_temp.concat("_temp");
       }
-      CDBDebug("Making empty temporary table %s ... ",tableName_temp.c_str());
+      //CDBDebug("Making empty temporary table %s ... ",tableName_temp.c_str());
       CDBDebug("Check table %s ...\t",tableName.c_str());
       status=DB->checkTable(tableName_temp.c_str(),tableColumns.c_str());
       if(status==0){
@@ -128,7 +147,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
   try{
     //Loop dimensions and files
     //CDBDebug("Checking files that are already in the database...");
-    char ISOTime[MAX_STR_LEN+1];
+    char ISOTime[ISO8601TIME_LEN+1];
     size_t numberOfFilesAddedFromDB=0;
     
     //Setup variables like tableNames and timedims for each dimension
@@ -185,6 +204,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
         dimensionTextList.concat(")");
       }
       for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
+        numberOfFilesAddedFromDB=0;
         int fileExistsInDB=0;
         //If we are messing in the non-temporary table (e.g.removeNonExistingFiles==0)
         //we need to make a transaction to make sure a file is not added twice
@@ -324,7 +344,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                         }
                       }else{
                         VALUES.copy("");
-                        ADTime->PrintISOTime(ISOTime,MAX_STR_LEN,dimValues[i]);status = 0;//TODO make PrintISOTime return a 0 if succeeded
+                        ADTime->PrintISOTime(ISOTime,ISO8601TIME_LEN,dimValues[i]);status = 0;//TODO make PrintISOTime return a 0 if succeeded
                         if(status == 0){
                           ISOTime[19]='Z';ISOTime[20]='\0';
                           VALUES.print("VALUES ('%s','%s','%d','%s')",dirReader->fileList[j]->fullName.c_str(),ISOTime,int(i),fileDate.c_str());
@@ -430,7 +450,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
 
 
 int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT::string *_tailPath,CT::string *_layerPathToScan){
-  
+ 
   if(dataSource->dLayerType!=CConfigReaderLayerTypeDataBase)return 0;
   
   //We only need to update the provided path in layerPathToScan. We will simply ignore the other directories
@@ -457,7 +477,6 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
   CPGSQLDB DB;
   
   //Copy tailpath (can be provided to scan only certain subdirs)
-  
   CT::string tailPath(_tailPath);
   
   CDirReader::makeCleanPath(&tailPath);
@@ -476,7 +495,10 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
   
   if(searchFileNames(&dirReader,dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),tailPath.c_str())!=0)return 0;
   
-  if(dirReader.fileList.size()==0)return 0;
+  if(dirReader.fileList.size()==0){
+    CDBError("No files found for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
+    return 0;
+  }
   
   /*----------- Connect to DB --------------*/
   //CDBDebug("Connecting to DB ...\t");
@@ -490,40 +512,43 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
     status = DB.query("SET client_min_messages TO WARNING");
     if(status != 0 )throw(__LINE__);
     
-    //First check and create all tables...
+    //First check and create all tables... returns zero on success, positive on error, negative on already done.
     status = createDBUpdateTables(&DB,dataSource,removeNonExistingFiles);
-    if(status != 0 )throw(__LINE__);
-           
-           //CDBDebug("removeNonExistingFiles = %d\n",removeNonExistingFiles);
-    //We need to do a transaction if we want to remove files from the existing table
-    if(removeNonExistingFiles==1){
-      //CDBDebug("BEGIN");
-      #ifdef USEQUERYTRANSACTIONS      
-      status = DB.query("BEGIN"); if(status!=0)throw(__LINE__);
-      #endif      
+    if(status > 0 ){
+      throw(__LINE__);
     }
-    
-    
-    //Loop Through all files
-    status = DBLoopFiles(&DB,dataSource,removeNonExistingFiles,&dirReader);
-    if(status != 0 )throw(__LINE__);
-           
-           //In case of a complete update, the data is written in a temporary table
-    //Rename the table to the correct one (remove _temp)
-    if(removeNonExistingFiles==1){
-      for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
-        CT::string dimName(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
-        CT::string tableName(dataSource->cfgLayer->DataBaseTable[0]->value.c_str());
-        CServerParams::makeCorrectTableName(&tableName,&dimName);
-        CDBDebug("Renaming temporary table... %s",tableName.c_str());
-        CT::string query;
-        //Drop old table
-        query.print("drop table %s",tableName.c_str());
-        if(DB.query(query.c_str())!=0){CDBError("Query %s failed",query.c_str());DB.close();throw(__LINE__);}
-        //Rename new table to old table name
-        query.print("alter table %s_temp rename to %s",tableName.c_str(),tableName.c_str());
-        if(DB.query(query.c_str())!=0){CDBError("Query %s failed",query.c_str());DB.close();throw(__LINE__);}
-        if(status!=0){throw(__LINE__);}
+    if(status == 0){
+            
+      //We need to do a transaction if we want to remove files from the existing table
+      if(removeNonExistingFiles==1){
+        //CDBDebug("BEGIN");
+        #ifdef USEQUERYTRANSACTIONS      
+        status = DB.query("BEGIN"); if(status!=0)throw(__LINE__);
+        #endif      
+      }
+      
+      
+      //Loop Through all files
+      status = DBLoopFiles(&DB,dataSource,removeNonExistingFiles,&dirReader);
+      if(status != 0 )throw(__LINE__);
+            
+            //In case of a complete update, the data is written in a temporary table
+      //Rename the table to the correct one (remove _temp)
+      if(removeNonExistingFiles==1){
+        for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
+          CT::string dimName(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+          CT::string tableName(dataSource->cfgLayer->DataBaseTable[0]->value.c_str());
+          CServerParams::makeCorrectTableName(&tableName,&dimName);
+          //CDBDebug("Renaming temporary table... %s",tableName.c_str());
+          CT::string query;
+          //Drop old table
+          query.print("drop table %s",tableName.c_str());
+          if(DB.query(query.c_str())!=0){CDBError("Query %s failed",query.c_str());DB.close();throw(__LINE__);}
+          //Rename new table to old table name
+          query.print("alter table %s_temp rename to %s",tableName.c_str(),tableName.c_str());
+          if(DB.query(query.c_str())!=0){CDBError("Query %s failed",query.c_str());DB.close();throw(__LINE__);}
+          if(status!=0){throw(__LINE__);}
+        }
       }
     }
     

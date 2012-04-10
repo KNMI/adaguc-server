@@ -1757,7 +1757,7 @@ int CRequest::process_querystring(){
 
 
 int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan){
-
+ 
   int status;
   //Fill in all data sources from the configuratin object
   size_t numberOfLayers = srvParam->cfg->Layer.size();
@@ -1778,20 +1778,22 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan){
   for(size_t j=0;j<numberOfLayers;j++){
     if(dataSources[j]->dLayerType==CConfigReaderLayerTypeDataBase){
 
-      int i,found=0;
-      //Make sure we are not updating the table twice
-
-      for(i=0;i<nrtablesdone;i++){
-        if(tablesdone[i].equals(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str())){found=1;break;}
-      }
-      if(found==0){
+//       int i,found=0;
+//       //Make sure we are not updating the table twice
+// 
+//       for(i=0;i<nrtablesdone;i++){
+//         if(tablesdone[i].equals(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str())){found=1;break;}
+//       }
+//       if(found==0){
         status = CDBFileScanner::updatedb(srvParam->cfg->DataBase[0]->attr.parameters.c_str(),dataSources[j],tailPath,layerPathToScan);
         if(status !=0){CDBError("Could not update db for: %s",dataSources[j]->cfgLayer->Name[0]->value.c_str());return 1;}
-
+/*
         //Remember that we did this table allready
         tablesdone[nrtablesdone].copy(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str());
         nrtablesdone++;
-      }
+      }else{
+        CDBDebug("Layer %s is already done",dataSources[j]->cfgLayer->Name[0]->value.c_str());
+      }*/
     }
   }
 

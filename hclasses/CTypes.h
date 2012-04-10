@@ -64,6 +64,11 @@ namespace CT{
 
 class string:public basetype{
   private:
+    
+    //Safety constructors
+    //string(string  &f) throw ();
+    //string & operator = (string &m) throw ();
+    
     int allocated;
     size_t privatelength; // Length of string
     size_t bufferlength;  // Length of buffer
@@ -75,6 +80,12 @@ class string:public basetype{
     char *value;
     void init(){value=NULL;count=0;allocated=0;privatelength=0;bufferlength=0;}
     public:
+    
+    //Copy constructor
+    string(string const &f){
+      init();copy(f.value,f.privatelength);
+    }
+    
     string& operator= (string const& f){
       if (this == &f) return *this;   // Gracefully handle self assignment
       init();copy(f.value,f.privatelength);
@@ -265,6 +276,9 @@ class string:public basetype{
       int dValue=(int)atoi(value);
       return dValue;  
     }
+    
+
+    
 
   };
 

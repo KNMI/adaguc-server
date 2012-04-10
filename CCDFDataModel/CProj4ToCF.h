@@ -4,7 +4,6 @@
 
 #include <stdio.h>
 #include <iostream>
-#include <algorithm>
 #include <vector>
 #include <sys/stat.h>
 #include <CTypes.h>
