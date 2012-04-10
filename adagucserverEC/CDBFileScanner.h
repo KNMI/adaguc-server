@@ -18,7 +18,7 @@ private:
   static int createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,int &removeNonExistingFiles);
   static int DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeNonExistingFiles,CDirReader *dirReader);
   static std::vector <CT::string> tableNamesDone;
-  
+  static bool isTableAlreadyScanned(CT::string *tableName);
   //static int addIndexToTable(CPGSQLDB *DB,const char *tableName, const char * dimName);
 public:
   /**
