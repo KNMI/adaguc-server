@@ -72,7 +72,7 @@ int CServerParams::lookupTableName(CT::string *tableName,const char *path,const 
   // Database collumns: path filter tablename
   
   CT::string filterString="FILTER_";filterString.concat(filter);
-  CT::string pathString="PATH";pathString.concat(path);
+  CT::string pathString="PATH_";pathString.concat(path);
   CT::string lookupTableName = "pathfiltertablelookup";
   CT::string tableColumns("path varchar (255), filter varchar (255), tablename varchar (255)");
   CT::string mvRecordQuery;
