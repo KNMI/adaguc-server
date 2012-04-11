@@ -48,6 +48,7 @@ class CImgWarpBilinear:public CImageWarperRenderInterface{
     }
     void render(CImageWarper *warper,CDataSource *sourceImage,CDrawImage *drawImage);
     int set(const char *pszSettings){
+      fprintf(stderr, "CImgWarpBilinear.set(%s)\n", pszSettings);
       //"drawMap=false;drawContour=true;contourSmallInterval=1.0;contourBigInterval=10.0;"
       if(pszSettings==NULL)return 0;
       if(strlen(pszSettings)==0)return 0;

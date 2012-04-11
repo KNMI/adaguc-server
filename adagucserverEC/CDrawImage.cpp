@@ -156,28 +156,27 @@ void CDrawImage::drawVector(int x,int y,double direction, double strength,int co
     return;
   }
   
-//   direction=direction-pi;
-//   if (direction<0) direction=direction+2*pi; //Barbs point to where the wind comes from
-
+  strength=strength/2;
   dx1=cos(direction)*(strength);
-  dy1=-sin(direction)*(strength); 
+  dy1=sin(direction)*(strength); 
   
   // arrow shaft
-  wx1=double(x)-dx1;wy1=double(y)-dy1;
-  wx2=double(x)+dx1;wy2=double(y)+dy1;
+  wx1=double(x)+dx1;wy1=double(y)-dy1; // arrow point
+  wx2=double(x)-dx1;wy2=double(y)+dy1;
 
-  strength=(-3-strength);
+  strength=(3+strength);
 
-  // arrow "feathers"
+  // arrow point
   float hx1,hy1,hx2,hy2;
-  hx1=wx1-cos(direction-0.7f)*(strength/1.8f);
-  hy1=wy1+sin(direction-0.7f)*(strength/1.8f);
-  hx2=wx1-cos(direction+0.7f)*(strength/1.8f);
-  hy2=wy1+sin(direction+0.7f)*(strength/1.8f);
+  hx1=wx1+cos(direction-2.5)*(strength/2.8f);
+  hy1=wy1-sin(direction-2.5)*(strength/2.8f);
+  hx2=wx1+cos(direction+2.5)*(strength/2.8f);
+  hy2=wy1-sin(direction+2.5)*(strength/2.8f);
   
   line(wx1,wy1,wx2,wy2,color);
   line(wx1,wy1,hx1,hy1,color);
   line(wx1,wy1,hx2,hy2,color);
+  circle(x, y, 1, color);
 }
 
 #define MSTOKNOTS (3600/1852)
@@ -219,40 +218,46 @@ void CDrawImage::drawBarb(int x,int y,double direction, double strength,int colo
   int barbLength=14*(flip?1:-1);
 
   dx1=cos(direction)*(shaftLength);
-  dy1=-sin(direction)*(shaftLength);
+  dy1=sin(direction)*(shaftLength);
+  
+  wx1=double(x);wy1=double(y);  //wind barb top (flag side)
+  wx2=double(x)+dx1;wy2=double(y)-dy1;  //wind barb root
 
-  wx1=double(x);wy1=double(y);  //wind barb root
-  wx2=double(x)+dx1;wy2=double(y)+dy1;  //wind barb top
-
+  circle(wx2, wy2, 2, color);
   int nrPos=10;
 
   int pos=0;
   for (int i=0;i<nPennants;i++) {
-  double wx3=wx2-pos*dx1/nrPos;
-  double wy3=wy2-pos*dy1/nrPos;
-  double hx3=wx3+cos(direction+pi/2)*barbLength;
-  double hy3=wy3-sin(direction+pi/2)*barbLength;
+  double wx3=wx1+pos*dx1/nrPos;
+  double wy3=wy1-pos*dy1/nrPos;
+  double hx3=wx3+cos(pi+direction+pi/2)*barbLength;
+  double hy3=wy3-sin(pi+direction+pi/2)*barbLength;
   pos++;
-  double wx4=wx2-pos*dx1/nrPos;
-  double wy4=wy2-pos*dy1/nrPos;
+  double wx4=wx1+pos*dx1/nrPos;
+  double wy4=wy1-pos*dy1/nrPos;
     poly(wx3,wy3,hx3,hy3,wx4, wy4, color, true);
   }
   if (nPennants>0) pos++;
   for (int i=0; i<nBarbs;i++) {
-  double wx3=wx2-pos*dx1/nrPos;
+/*  double wx3=wx2-pos*dx1/nrPos;
   double wy3=wy2-pos*dy1/nrPos;
-  double hx3=wx3+cos(direction+1.3*pi/2)*barbLength;
-  double hy3=wy3-sin(direction+1.3*pi/2)*barbLength;
+  double hx3=wx3+cos(direction+0.8*pi/2)*barbLength; //was: +cos
+  double hy3=wy3+sin(direction+0.8*pi/2)*barbLength; // was: -sin*/
+  double wx3=wx1+pos*dx1/nrPos;
+  double wy3=wy1-pos*dy1/nrPos;
+  double hx3=wx3-cos(pi/2-direction+1.9*pi/2)*barbLength; //was: +cos
+  double hy3=wy3-sin(pi/2-direction+1.9*pi/2)*barbLength; // was: -sin
 
   line(wx3, wy3, hx3, hy3, color);
   pos++;
   }
 
+  if ((nPennants+nBarbs)==0) pos++;
   if (nhalfBarbs>0){
-  double wx3=wx2-pos*dx1/nrPos;
-  double wy3=wy2-pos*dy1/nrPos;
-  double hx3=wx3+cos(direction+1.3*pi/2)*barbLength/3;
-  double hy3=wy3-sin(direction+1.3*pi/2)*barbLength/3;
+  double wx3=wx1+pos*dx1/nrPos;
+  double wy3=wy1-pos*dy1/nrPos;
+  double hx3=wx3-cos(pi/2-direction+1.9*pi/2)*barbLength/2;
+  double hy3=wy3-sin(pi/2-direction+1.9*pi/2)*barbLength/2;
     line(wx3, wy3, hx3, hy3, color);
   pos++;
   }

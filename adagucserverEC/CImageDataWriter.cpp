@@ -1355,7 +1355,7 @@ if(renderMethod==contour){CDBDebug("contour");}*/
     if(renderMethod==vector||renderMethod==vectorcontour||renderMethod==vectorshaded||renderMethod==vectorcontourshaded)drawVector=true;
     if(renderMethod==thinvector||renderMethod==thinvectorcontour||renderMethod==thinvectorshaded||renderMethod==thinvectorcontourshaded){ drawVector=true;drawGridVectors=true;}
     if(renderMethod==thinbarb||renderMethod==thinbarbcontour||renderMethod==thinbarbshaded||renderMethod==thinbarbcontourshaded) {drawBarb=true; drawGridVectors=true;}
-    if(renderMethod==thinbarbcontour||renderMethod==thinbarbcontourshaded) {drawBarb=true; drawGridVectors=true;drawContour=true;}
+    if(renderMethod==thinbarbcontour||renderMethod==thinbarbcontourshaded) {drawContour=true;}
     if(renderMethod==shaded||renderMethod==shadedcontour||renderMethod==vectorcontourshaded||renderMethod==barbcontourshaded)drawShaded=true;
     if(renderMethod==vectorshaded||renderMethod==thinvectorshaded||renderMethod==thinvectorcontourshaded)drawShaded=true;
     if(renderMethod==barbshaded||renderMethod==thinbarbshaded||renderMethod==thinbarbcontourshaded)drawShaded=true;
@@ -1364,7 +1364,7 @@ if(renderMethod==contour){CDBDebug("contour");}*/
     if(renderMethod==vectorcontourshaded||renderMethod==thinvectorcontourshaded) { drawShaded=true; drawContour=true; drawVector=true; }
     if(renderMethod==vectorcontour||renderMethod==thinvectorcontour) { drawVector=true; drawContour=true;}
     if(renderMethod==barbcontourshaded||renderMethod==thinbarbcontourshaded) { drawShaded=true; drawContour=true; drawBarb=true; }
-    if(renderMethod==barb) drawBarb=true;
+    if((renderMethod==barb)||(renderMethod==barbshaded)) drawBarb=true;
     if(drawMap==true)bilinearSettings.printconcat("drawMap=true;");
     if(drawVector==true)bilinearSettings.printconcat("drawVector=true;");
     if(drawBarb==true)bilinearSettings.printconcat("drawBarb=true;");
@@ -1377,7 +1377,7 @@ if(renderMethod==contour){CDBDebug("contour");}*/
                                    currentStyleConfiguration->shadeInterval,currentStyleConfiguration->contourIntervalL,currentStyleConfiguration->contourIntervalH);
       //bilinearSettings.printconcat("textScaleFactor=%f;textOffsetFactor=%f;",textScaleFactor,textOffsetFactor);
     }
-    //CDBDebug("bilinearSettings.c_str() %s",bilinearSettings.c_str());
+    CDBDebug("bilinearSettings.c_str() %s",bilinearSettings.c_str());
     imageWarperRenderer->set(bilinearSettings.c_str());
     imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
     delete imageWarperRenderer;
