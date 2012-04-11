@@ -10,6 +10,7 @@
 #include "CCDFDataModel.h"
 #include "CCDFNetCDFIO.h"
 #include "CCDFHDF5IO.h"
+#include "CProj4ToCF.h"
 #include "CStopWatch.h"
 #include <sys/stat.h>
 #include "CDBFileScanner.h"

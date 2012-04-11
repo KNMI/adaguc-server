@@ -66,12 +66,13 @@ void CServerParams::getCacheDirectory(CT::string *cacheFileName){
   cacheFileName->concat(&cacheName);
 }
 
+
 int CServerParams::lookupTableName(CT::string *tableName,const char *path,const char *filter){
   // This makes use of a lookup table to find the tablename belonging to the filter and path combinations.
   // Database collumns: path filter tablename
   
   CT::string filterString="FILTER_";filterString.concat(filter);
-  CT::string pathString="PATH";pathString.concat(path);
+  CT::string pathString="PATH_";pathString.concat(path);
   CT::string lookupTableName = "pathfiltertablelookup";
   CT::string tableColumns("path varchar (255), filter varchar (255), tablename varchar (255)");
   CT::string mvRecordQuery;
@@ -109,7 +110,7 @@ int CServerParams::lookupTableName(CT::string *tableName,const char *path,const 
     rec = DB.query_select(mvRecordQuery.c_str(),0); if(rec==NULL){CDBError("Unable to count records: \"%s\"",mvRecordQuery.c_str());DB.close();return 1;  }
     int numRecords=rec[0].toInt();
     delete[] rec;
-    tableName->printconcat("_%d",numRecords);
+    tableName->print("ID_%d",numRecords);
     mvRecordQuery.print("INSERT INTO %s values (E'%s',E'%s',E'%s')",lookupTableName.c_str(),pathString.c_str(),filterString.c_str(),tableName->c_str());
     status = DB.query(mvRecordQuery.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",mvRecordQuery.c_str());DB.close();return 1;  }
   }

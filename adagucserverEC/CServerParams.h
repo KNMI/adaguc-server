@@ -81,6 +81,14 @@ class CServerParams{
       tableName->toLowerCase();
     }
     
+    /**
+     * Makes use of a lookup table to find the tablename belonging to the filter and path combinations.
+     * 
+     * @param tableName The CT::string which will be filled with new data after completion
+     * @param path The path of the layer
+     * @param filter The filter of the layer
+     * @return Zero on succes, non-zero on failure.
+     */
     int lookupTableName(CT::string *tableName,const char *path,const char *filter);
 
 

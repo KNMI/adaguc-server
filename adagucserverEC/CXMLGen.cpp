@@ -341,14 +341,23 @@ CDBDebug("Querying %s",query.c_str());
         if(values->count>0){
           //if(srvParam->requestType==REQUEST_WMS_GETCAPABILITIES)
           {
-            if(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.units.c_str()==NULL){
-              CDBError("No units specified for dim %s in layer %s",
-                      myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str(),
-                      myWMSLayer->dataSource->layerName.c_str());
-              return 1;
-            }
+            
             dim->name.copy(myWMSLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
-            dim->units.copy(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.units.c_str());
+            
+            //Try to get units from the variable
+            dim->units.copy("NA");
+            if(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.units.c_str()==NULL){
+              CT::string units;
+              try{
+                myWMSLayer->dataSource->dataObject[0]->cdfObject->getVariable(dim->name.c_str())->getAttribute("units")->getDataAsString(&units);
+                dim->units.copy(&units);
+              }catch(int e){}
+            }else{
+              //Units are configured in the configuration file.
+              dim->units.copy(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.units.c_str());
+            }
+            
+            
             dim->hasMultipleValues=1;
             if(isTimeDim==true){
               for(size_t j=0;j<size_t(values->count);j++){

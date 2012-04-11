@@ -21,6 +21,9 @@ namespace CT{
     //printf("pushing2 %s %d\n",val->c_str(),stringList.size());
     return stringList;
   }
+  
+  
+  
  /*void string::splitN( stringlist stringList,const char * _value){
     stringList.free();
     const char *fo = strstr(value,_value);

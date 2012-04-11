@@ -830,7 +830,7 @@ int CRequest::process_all_layers(){
                   legendDrawn=true;
                 }
                 if(1==1){
-                  int padding=3;
+                  int padding=1;
                   int minimumLegendWidth=80;
                   CDrawImage legendImage;
                   int legendWidth = imageDataWriter.drawImage.Geo->dWidth/10;
@@ -839,7 +839,7 @@ int CRequest::process_all_layers(){
                   status = imageDataWriter.createLegend(dataSources[d],&legendImage);if(status != 0)throw(__LINE__);
                   int posX=imageDataWriter.drawImage.Geo->dWidth-(legendImage.Geo->dWidth+padding);
                   int posY=imageDataWriter.drawImage.Geo->dHeight-(legendImage.Geo->dHeight+padding);
-                  imageDataWriter.drawImage.rectangle(posX,posY,legendImage.Geo->dWidth+posX+1,legendImage.Geo->dHeight+posY+1,CColor(255,255,255,0),CColor(255,255,255,100));
+                  imageDataWriter.drawImage.rectangle(posX,posY,legendImage.Geo->dWidth+posX+1,legendImage.Geo->dHeight+posY+1,CColor(255,255,255,0),CColor(255,255,255,180));
                   imageDataWriter.drawImage.draw(posX,posY,0,0,&legendImage);
                   legendDrawn=true;
                   
@@ -1757,7 +1757,7 @@ int CRequest::process_querystring(){
 
 
 int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan){
-
+ 
   int status;
   //Fill in all data sources from the configuratin object
   size_t numberOfLayers = srvParam->cfg->Layer.size();
@@ -1778,20 +1778,22 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan){
   for(size_t j=0;j<numberOfLayers;j++){
     if(dataSources[j]->dLayerType==CConfigReaderLayerTypeDataBase){
 
-      int i,found=0;
-      //Make sure we are not updating the table twice
-
-      for(i=0;i<nrtablesdone;i++){
-        if(tablesdone[i].equals(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str())){found=1;break;}
-      }
-      if(found==0){
+//       int i,found=0;
+//       //Make sure we are not updating the table twice
+// 
+//       for(i=0;i<nrtablesdone;i++){
+//         if(tablesdone[i].equals(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str())){found=1;break;}
+//       }
+//       if(found==0){
         status = CDBFileScanner::updatedb(srvParam->cfg->DataBase[0]->attr.parameters.c_str(),dataSources[j],tailPath,layerPathToScan);
         if(status !=0){CDBError("Could not update db for: %s",dataSources[j]->cfgLayer->Name[0]->value.c_str());return 1;}
-
+/*
         //Remember that we did this table allready
         tablesdone[nrtablesdone].copy(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str());
         nrtablesdone++;
-      }
+      }else{
+        CDBDebug("Layer %s is already done",dataSources[j]->cfgLayer->Name[0]->value.c_str());
+      }*/
     }
   }
 
