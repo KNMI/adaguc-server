@@ -511,7 +511,7 @@ if((enableVector||enableBarb)){
     
     double direction;
     double strength;
-    double pi=3.141592654;
+    //double pi=3.141592654;
     int stepx=vectorDensityPx; //Raster stride at barb distances
     int stepy=vectorDensityPy;
     // If contouring, drawMap or shading is wanted, step through all destination raster points
@@ -573,7 +573,7 @@ if((enableVector||enableBarb)){
 
 if(((enableVector||enableBarb)&&drawGridVectors)){
   int wantedSpacing=30;
-  int distPoint=hypot(dpDestX[1]-dpDestX[0], dpDestY[1]-dpDestY[0]);
+  int distPoint=int(hypot(dpDestX[1]-dpDestX[0], dpDestY[1]-dpDestY[0]));
   
   int stepx=int(float(wantedSpacing)/distPoint+0.5);
   if (stepx<1) stepx=1;
@@ -583,13 +583,13 @@ if(((enableVector||enableBarb)&&drawGridVectors)){
     for(int y=dPixelExtent[1];y<dPixelExtent[3];y=y+stepy){ //TODO Refactor to GridExtent
          for(int x=dPixelExtent[0];x<dPixelExtent[2];x=x+stepx){
            size_t p = size_t((x-(dPixelExtent[0]))+((y-(dPixelExtent[1]))*dPixelDestW));
-           double destX,destY;
+           //double destX,destY;
            // size_t pSrcData = size_t(x+y*dfSourceW);//TODO Refactor to GridWidth
            
            //Skip rest if x,y outside drawArea
            if ((dpDestX[p]>=0)&&(dpDestX[p]<dImageWidth)&&(dpDestY[p]>=0)&&(dpDestY[p]<dImageHeight)){
              double direction;
-             double pi=3.141592654;
+             //double pi=3.141592654;
              double strength;
              double u=valObj[0].fpValues[p];
              double v=valObj[1].fpValues[p];
@@ -604,7 +604,7 @@ if(((enableVector||enableBarb)&&drawGridVectors)){
                //Calculate coordinates from requested coordinate system to determine barb flip
                double modelX=dfSourcedExtW*double(x)+dfSourceOrigX;
                double modelY=dfSourcedExtH*double(y)+dfSourceOrigY;
-               double XX=modelX; double YY=modelY;
+               //double XX=modelX; double YY=modelY;
                warper->reprojToLatLon(modelX,modelY);
                
                bool flip=modelY<0; //Remember if we have to flip barb dir for southern hemisphere
@@ -1144,4 +1144,3 @@ fwrite (ascii.c_str() , ascii.length() , sizeof(char) , pFile );
   
   
   }
-  

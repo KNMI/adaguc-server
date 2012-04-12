@@ -56,7 +56,7 @@ class CImageDataWriter: public CBaseDataWriterInterface{
          shaded,shadedcontour, 
          vector, vectorshaded, vectorcontour, vectorcontourshaded, thinvector, thinvectorshaded, thinvectorcontour, thinvectorcontourshaded,
          nearestcontour,bilinearcontour};
-    
+         static void calculateScaleAndOffsetFromMinMax(float &scale, float &offset,float min,float max,float log);
 public:
     class StyleConfiguration {
     public:

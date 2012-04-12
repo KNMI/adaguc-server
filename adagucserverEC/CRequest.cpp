@@ -781,7 +781,7 @@ int CRequest::process_all_layers(){
           if(srvParam->mapTitle.length()>0){
             if(srvParam->cfg->WMS[0]->TitleFont.size()==1){
               float fontSize=parseFloat(srvParam->cfg->WMS[0]->TitleFont[0]->attr.size.c_str());
-              textY+=fontSize;
+              textY+=int(fontSize);
               //imageDataWriter.drawImage.rectangle(0,0,srvParam->Geo->dWidth,textY+8,CColor(255,255,255,0),CColor(255,255,255,80));
               //imageDataWriter.drawImage.setFillC
               imageDataWriter.drawImage.drawText(5,textY,srvParam->cfg->WMS[0]->TitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapTitle.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
@@ -793,7 +793,7 @@ int CRequest::process_all_layers(){
           if(srvParam->mapSubTitle.length()>0){
             if(srvParam->cfg->WMS[0]->SubTitleFont.size()==1){
               float fontSize=parseFloat(srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.size.c_str());
-              textY+=fontSize;
+              textY+=int(fontSize);
               
               //imageDataWriter.drawImage.rectangle(0,prevTextY,srvParam->Geo->dWidth,textY+4,CColor(255,255,255,0),CColor(255,255,255,80));
               imageDataWriter.drawImage.drawText(6,textY,srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapSubTitle.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
@@ -807,7 +807,7 @@ int CRequest::process_all_layers(){
             for(int d=0;d<srvParam->NumOGCDims;d++){
               CT::string message;
               float fontSize=parseFloat(srvParam->cfg->WMS[0]->DimensionFont[0]->attr.size.c_str());
-              textY+=fontSize*1.2;
+              textY+=int(fontSize*1.2);
               message.print("%s: %s",srvParam->OGCDims[d].Name.c_str(),srvParam->OGCDims[d].Value.c_str());
               imageDataWriter.drawImage.drawText(6,textY,srvParam->cfg->WMS[0]->DimensionFont[0]->attr.location.c_str(),fontSize,0,message.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
               textY+=4;
@@ -1361,19 +1361,23 @@ int CRequest::process_querystring(){
       if(srvParam->OpenDapVariable.c_str()==NULL||srvParam->OpenDapVariable.equals("*")){
         //Try to retrieve a list of variables from the OpenDAPURL.
         srvParam->OpenDapVariable.copy("");
-        CDFObject c;
-        c.attachCDFReader(new CDFNetCDFReader());
-        int status=c.open(srvParam->OpenDAPSource.c_str());
+        
+        CDFObject * cdfObject = new CDFObject();
+        CDFNetCDFReader *cdfReader= new CDFNetCDFReader();
+        cdfObject->attachCDFReader(cdfReader);
+        int status=cdfObject->open(srvParam->OpenDAPSource.c_str());
         if(status==0){
           
-          for(size_t j=0;j<c.variables.size();j++){
-            if(c.variables[j]->dimensionlinks.size()>=2){
+          for(size_t j=0;j<cdfObject->variables.size();j++){
+            if(cdfObject->variables[j]->dimensionlinks.size()>=2){
               if(srvParam->OpenDapVariable.length()>0)srvParam->OpenDapVariable.concat(",");
-              srvParam->OpenDapVariable.concat(c.variables[j]->name.c_str());
-              CDBDebug("%s",c.variables[j]->name.c_str());
+              srvParam->OpenDapVariable.concat(cdfObject->variables[j]->name.c_str());
+              CDBDebug("%s",cdfObject->variables[j]->name.c_str());
             }
           }
         }
+        delete cdfReader;
+        delete cdfObject;
         if(srvParam->OpenDapVariable.length()==0)status=1;
         if(status!=0){
           CDBError("A source parameter without a variable parameter is given");
@@ -1773,8 +1777,8 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan){
   srvParam->requestType=REQUEST_UPDATEDB;
 
   //CDataReader reader;
-  CT::string tablesdone[numberOfLayers];
-  int nrtablesdone=0;
+  //CT::string tablesdone[numberOfLayers];
+  //int nrtablesdone=0;
   for(size_t j=0;j<numberOfLayers;j++){
     if(dataSources[j]->dLayerType==CConfigReaderLayerTypeDataBase){
 

@@ -284,6 +284,21 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   return 0;
 }
 
+
+/**
+ * 
+ */
+void CImageDataWriter::calculateScaleAndOffsetFromMinMax(float &scale, float &offset,float min,float max,float log){
+  if(log!=0.0f){
+    CDBDebug("LOG = %f",log);
+    min=log10(min);
+    max=log10(max);
+  }
+    
+  scale=240/(max-min);
+  offset=min*(-scale);
+}
+
 /**
  * 
  * 
@@ -378,8 +393,9 @@ int CImageDataWriter::makeStyleConfig(StyleConfiguration *styleConfig,CDataSourc
     #ifdef CIMAGEDATAWRITER_DEBUG          
     CDBDebug("Found min and max in layer configuration");
     #endif      
-    s->legendScale=240/(max-min);
-    s->legendOffset=min*(-s->legendScale);
+    calculateScaleAndOffsetFromMinMax(s->legendScale,s->legendOffset,min,max,s->legendLog);
+    //s->legendScale=240/(max-min);
+    //s->legendOffset=min*(-s->legendScale);
   }
     
   //Some safety checks, we cannot create contourlines with negative values.
@@ -483,7 +499,20 @@ CT::stringlist *CImageDataWriter::getStyleListForDataSource(CDataSource *dataSou
       styleToSearchString.substring(0,hqIdx);
     }*/
   }
+  
+  
+  //Auto configure styles, if no legends or styles are defined
+  if(dataSource->cfgLayer->Styles.size()==0&&dataSource->cfgLayer->Legend.size()==0){
+    if(CDataReader::autoConfigureStyles(dataSource)!=0){
+      //CDBError("Unable to autoconfigure styles");
+      //delete stringList;stringList = NULL;
+      //return NULL;
+    }
+  }
+    
   CT::stringlist *styleNames = getStyleNames(dataSource->cfgLayer->Styles);
+ 
+  
   
   //We always skip the style "default" if there are more styles.
   size_t start=0;if(styleNames->size()>1)start=1;
@@ -517,7 +546,10 @@ CT::stringlist *CImageDataWriter::getStyleListForDataSource(CDataSource *dataSou
       legendList = getLegendListForDataSource(dataSource,style);
       if(legendList==NULL){
         CDBError("No legends defined for layer %s",dataSource->layerName.c_str());
-        delete styleNames;
+        delete styleNames;styleNames = NULL;
+        delete stringList;stringList = NULL;
+        delete renderMethods;renderMethods= NULL;
+        if(styleConfig!=NULL){styleConfig->hasError=true;}
         return NULL;
       }
       for(size_t l=0;l<legendList->size();l++){
@@ -582,7 +614,7 @@ CImageDataWriter::StyleConfiguration *CImageDataWriter::getStyleConfigurationByN
   #ifdef CIMAGEDATAWRITER_DEBUG    
   CDBDebug("getStyleConfigurationByName for layer %s",dataSource->layerName.c_str());
   #endif
-  CServerConfig::XMLE_Configuration *serverCFG = dataSource->cfg;
+  //CServerConfig::XMLE_Configuration *serverCFG = dataSource->cfg;
   StyleConfiguration *styleConfig = new StyleConfiguration ();
   styleConfig->styleCompositionName=styleName;
   getStyleListForDataSource(dataSource,styleConfig);
@@ -640,6 +672,7 @@ CT::stringlist *CImageDataWriter::getStyleNames(std::vector <CServerConfig::XMLE
       }
     }
   }
+
   return stringList;
 }
 
@@ -703,7 +736,7 @@ CDBDebug("initializeLegend");
     CDBError("srvParam==NULL");
     return -1;
   }
-  int dLegendIndex=-1;
+  //int dLegendIndex=-1;
   if(_setTransparencyAndBGColor(srvParam,&drawImage)!=0){
     CDBError("Unable to do setTransparencyAndBGColor");
     return -1;
@@ -719,7 +752,7 @@ CDBDebug("initializeLegend");
   if(layerstyles->size()!=0){
     //Make sure default layer index is within the right bounds.
     if(layerIndex<0)layerIndex=0;
-    if(layerIndex>layerstyles->size()-1)layerIndex=layerstyles->size()-1;
+    if(layerIndex>((int)layerstyles->size())-1)layerIndex=layerstyles->size()-1;
     styleName=layerstyles->get(layerIndex)->c_str();
     if(styleName.length()==0){
       styleName.copy("default");
@@ -730,6 +763,7 @@ CDBDebug("initializeLegend");
   currentStyleConfiguration=CImageDataWriter::getStyleConfigurationByName(styleName.c_str(),dataSource);
   if(currentStyleConfiguration->hasError){
     CDBError("Unable to configure style %s for layer %s\n",styleName.c_str(),dataSource->layerName.c_str());
+   
     return -1;
   }
   
@@ -746,6 +780,7 @@ CDBDebug("initializeLegend");
   
   currentDataSource = dataSource;
   return 0;
+  
 #ifdef NOTDADA  
   /* GET LEGEND INFORMATION From the layer itself
    * Lookup the legend name defined in the layers configuration in all available legends 
@@ -767,8 +802,9 @@ CDBDebug("initializeLegend");
   if(dataSource->cfgLayer->Min.size()>0&&dataSource->cfgLayer->Max.size()>0){
       float min=parseFloat(dataSource->cfgLayer->Min[0]->value.c_str());
       float max=parseFloat(dataSource->cfgLayer->Max[0]->value.c_str());
-      dataSource->legendScale=240/(max-min);
-      dataSource->legendOffset=min*(-dataSource->legendScale);
+      //dataSource->legendScale=240/(max-min);
+      //dataSource->legendOffset=min*(-dataSource->legendScale);
+      calculateScaleAndOffsetFromMinMax(dataSource->legendScale,dataSource->legendOffset,min,max,dataSources->legendLog);
     }
   if(dataSource->cfgLayer->Log.size()>0){
     dataSource->legendLog=parseFloat(dataSource->cfgLayer->Log[0]->value.c_str());
@@ -971,8 +1007,9 @@ CDBDebug("initializeLegend");
     if(cfgStyle->Min.size()>0&&cfgStyle->Max.size()>0){
       float min=parseFloat(cfgStyle->Min[0]->value.c_str());
       float max=parseFloat(cfgStyle->Max[0]->value.c_str());
-      dataSource->legendScale=240/(max-min);
-      dataSource->legendOffset=min*(-dataSource->legendScale);
+      //dataSource->legendScale=240/(max-min);
+      //dataSource->legendOffset=min*(-dataSource->legendScale);
+      calculateScaleAndOffsetFromMinMax(dataSource->legendScale,dataSource->legendOffset,min,max,dataSources->legendLog);
     }
     
     
@@ -1018,8 +1055,9 @@ CDBDebug("initializeLegend");
 #endif      
       float min=parseFloat(dataSource->cfgLayer->Min[0]->value.c_str());
       float max=parseFloat(dataSource->cfgLayer->Max[0]->value.c_str());
-      dataSource->legendScale=240/(max-min);
-      dataSource->legendOffset=min*(-dataSource->legendScale);
+      //dataSource->legendScale=240/(max-min);
+      //dataSource->legendOffset=min*(-dataSource->legendScale);
+      calculateScaleAndOffsetFromMinMax(dataSource->legendScale,dataSource->legendOffset,min,max,dataSources->legendLog);
     }
     
     
@@ -1775,7 +1813,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
       numPointsX++;
       numPointsY++;
       
-      int numPoints = numPointsX*numPointsY;
+      size_t numPoints = numPointsX*numPointsY;
       
       #ifdef CIMAGEDATAWRITER_DEBUG    
       CDBDebug("numPointsX = %d, numPointsY = %d",numPointsX,numPointsY);
@@ -1812,7 +1850,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
         drawText = true;
       }
       
-      int s=gridSize/precision;
+      int s=int(gridSize/precision);
       if(s<=0)s=1;
       CT::string message;
       for(int y=0;y<numPointsY;y=y+s){
@@ -1827,8 +1865,8 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
                 drawnTextRight=true;
                 double gy=latLonBBOX.top+precision*double(y);
                 message.print("%2.1f",gy);
-                int ty=gridP[p].y;
-                int tx=gridP[p].x;if(ty<8){ty=8;}if(tx>srvParam->Geo->dWidth-30)tx=srvParam->Geo->dWidth-1;
+                int ty=int(gridP[p].y);
+                int tx=int(gridP[p].x);if(ty<8){ty=8;}if(tx>srvParam->Geo->dWidth-30)tx=srvParam->Geo->dWidth-1;
                 tx-=17;
                 
                 if(drawText)drawImage.drawText(tx,ty-2,fontLoc,fontSize,0,message.c_str(),textColor);
@@ -1839,8 +1877,8 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
                 drawnTextLeft=true;
                 double gy=latLonBBOX.top+precision*double(y);
                 message.print("%2.1f",gy);
-                int ty=gridP[p].y;
-                int tx=gridP[p].x;if(ty<8){ty=0;}if(tx<15)tx=0;tx+=2;
+                int ty=int(gridP[p].y);
+                int tx=int(gridP[p].x);if(ty<8){ty=0;}if(tx<15)tx=0;tx+=2;
                 if(drawText)drawImage.drawText(tx,ty-2,fontLoc,fontSize,0,message.c_str(),textColor);
               }
             }
@@ -1865,12 +1903,12 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
                 drawnTextBottom=true;
                 double gx=latLonBBOX.left+precision*double(x);
                 message.print("%2.1f",gx);
-                int ty=gridP[p].y;if(ty<15)ty=0;
+                int ty=int(gridP[p].y);if(ty<15)ty=0;
                 if(ty>srvParam->Geo->dHeight){
                   ty=srvParam->Geo->dHeight;
                 }
                 ty-=2;
-                int tx=gridP[p].x+2;
+                int tx=int((gridP[p]).x+2);
                 if(drawText)drawImage.drawText(tx,ty,fontLoc,fontSize,0,message.c_str(),textColor);
               }
             }    
@@ -1880,8 +1918,8 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
                 drawnTextTop=true;
                 double gx=latLonBBOX.left+precision*double(x);
                 message.print("%2.1f",gx);
-                int ty=gridP[p].y;if(ty<15)ty=0;ty+=7;
-                int tx=gridP[p].x+2;//if(tx<8){tx=8;ty+=4;}if(ty<15)tx=1;
+                int ty=int(gridP[p].y);if(ty<15)ty=0;ty+=7;
+                int tx=int(gridP[p].x)+2;//if(tx<8){tx=8;ty+=4;}if(ty<15)tx=1;
                 if(drawText)drawImage.drawText(tx,ty,fontLoc,fontSize,0,message.c_str(),textColor);
               }
             }
@@ -2208,7 +2246,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
       legendImage->setText(legendMessage.c_str(),legendMessage.length(),(int)cbW+15+pLeft,(int)y+dH+2+pTop,248,-1);  
     }
     CT::string units="status flag";
-    legendImage->setText(units.c_str(),units.length(),2+pLeft,legendHeight-14+pTop,248,-1);
+    legendImage->setText(units.c_str(),units.length(),2+pLeft,int(legendHeight)-14+pTop,248,-1);
     legendImage->crop(4,4);
   }
   
@@ -2243,7 +2281,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
         if(style->Legend[0]->attr.tickround.c_str() != NULL){
           double dftickRound = parseFloat(style->Legend[0]->attr.tickround.c_str());
           CDBDebug("dftickRound = %f",dftickRound );
-          tickRound = round(log10(dftickRound))+3;
+          tickRound = int(round(log10(dftickRound))+3);
           CDBDebug("tickRound = %d %f",tickRound ,log10(dftickRound));
         }
       }
@@ -2271,7 +2309,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
     if(dataSource->dataObject[0]->units.length()>0){
       units.concat(&dataSource->dataObject[0]->units);
     }
-    if(units.length()>0)legendImage->setText(units.c_str(),units.length(),2+pLeft,legendHeight-14+pTop,248,-1);
+    if(units.length()>0)legendImage->setText(units.c_str(),units.length(),2+pLeft,int(legendHeight)-14+pTop,248,-1);
     legendImage->crop(4,-1);    
   }
   
@@ -2279,7 +2317,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
   if( legendType == discrete ){
     float cbW = legendWidth/8;
     float cbH = legendHeight-13-13;
-    int dH=0;
+    //int dH=0;
     //cbW = 90.0/3.0;
     // We always need to have the min/max of the data
     // Always to show only the occuring data values in the legend,
@@ -2405,7 +2443,7 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
     if(dataSource->dataObject[0]->units.length()>0){
       units.concat(&dataSource->dataObject[0]->units);
     }
-    if(units.length()>0)legendImage->setText(units.c_str(),units.length(),2+pLeft,legendHeight-14+pTop,248,-1);
+    if(units.length()>0)legendImage->setText(units.c_str(),units.length(),2+pLeft,int(legendHeight)-14+pTop,248,-1);
     legendImage->crop(4,4);
   }
   
