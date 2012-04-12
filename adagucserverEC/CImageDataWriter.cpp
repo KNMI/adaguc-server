@@ -504,8 +504,9 @@ CT::stringlist *CImageDataWriter::getStyleListForDataSource(CDataSource *dataSou
   //Auto configure styles, if no legends or styles are defined
   if(dataSource->cfgLayer->Styles.size()==0&&dataSource->cfgLayer->Legend.size()==0){
     if(CDataReader::autoConfigureStyles(dataSource)!=0){
-      CDBError("Unable to autoconfigure styles");
-      return NULL;
+      //CDBError("Unable to autoconfigure styles");
+      //delete stringList;stringList = NULL;
+      //return NULL;
     }
   }
     

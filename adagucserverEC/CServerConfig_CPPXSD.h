@@ -242,7 +242,16 @@ class CServerConfig:public CXMLSerializerInterface{
     };
     class XMLE_Styles: public CXMLObjectInterface{};
     class XMLE_Title: public CXMLObjectInterface{};
-    class XMLE_Name: public CXMLObjectInterface{};
+    class XMLE_Name: public CXMLObjectInterface{
+      public:
+        class Cattr{
+        public:
+          CXMLString force;
+        }attr;
+        void addAttribute(const char *name,const char *value){
+          if(equals("force",5,name)){attr.force.copy(value);return;}
+        }
+    };
     class XMLE_Abstract: public CXMLObjectInterface{};
     class XMLE_DataBaseTable: public CXMLObjectInterface{};
     class XMLE_Variable: public CXMLObjectInterface{};

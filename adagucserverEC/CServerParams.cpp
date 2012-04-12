@@ -157,13 +157,22 @@ int CServerParams::makeUniqueLayerName(CT::string *layerName,CServerConfig::XMLE
       name->value.copy(cfgLayer->Variable[0]->value.c_str());
     }
   }
+  
+  if(!cfgLayer->Name[0]->attr.force.equals("true")){
+    layerName->concat(cfgLayer->Name[0]->value.c_str());
+    layerName->replace(".","_");
+  }else{
+    layerName->copy(cfgLayer->Name[0]->value.c_str());
+  }
+  
+  
   /*if(cfgLayer->Title.size()==0){
     CServerConfig::XMLE_Title *title=new CServerConfig::XMLE_Title();
     cfgLayer->Title.push_back(title);
     title->value.copy(cfgLayer->Name[0]->value.c_str());
   } */ 
-  layerName->concat(cfgLayer->Name[0]->value.c_str());
-  layerName->replace(".","_");
+  
+  
   
 
   return 0;

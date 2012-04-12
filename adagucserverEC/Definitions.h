@@ -111,7 +111,7 @@
 #define CXMLGEN_DEBUG
 #define CCDFNETCDFIO_DEBUG
 #endif
-
+//#define CDATAREADER_DEBUG
 #define ENABLE_CURL
 #define ADAGUC_USE_CAIRO
 #define ADAGUC_USE_GDAL
