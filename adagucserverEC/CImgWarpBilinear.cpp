@@ -554,8 +554,8 @@ if((enableVector||enableBarb)){
                 
                 warper->reprojToLatLon(projectedCoordX,projectedCoordY);
                 
-                int flip=projectedCoordY<0; //Remember if we have to flip barb dir for southern hemisphere
-                flip=0;
+                bool flip=projectedCoordY<0; //Remember if we have to flip barb dir for southern hemisphere
+                flip=false;
                 CalculatedWindVector wv(x, y, direction, strength,convertToKnots,flip);
                 //                  drawImage->circle(x,y,2, 240);
                 windVectors.push_back(wv);
@@ -607,8 +607,8 @@ if(((enableVector||enableBarb)&&drawGridVectors)){
                double XX=modelX; double YY=modelY;
                warper->reprojToLatLon(modelX,modelY);
                
-               int flip=modelY<0; //Remember if we have to flip barb dir for southern hemisphere
-               flip=0;
+               bool flip=modelY<0; //Remember if we have to flip barb dir for southern hemisphere
+               flip=false;
                //                if ((fabs(projectedCoordX)<0.8)&&(fabs(projectedCoordY-52)<1)) {
 //  CDBDebug("[%d,%d] p=%d {w=%d} (%f,%f) MLL:{%f,%f} LL:{%f,%f} [%d,%d]", x, y, p, dPixelDestW, u, v, modelX, modelY, XX, YY, dpDestX[p], dpDestY[p]);
   //                }  

@@ -32,7 +32,7 @@ CDrawImage::CDrawImage(){
   TTFFontLocation = "/usr/X11R6/lib/X11/fonts/truetype/verdana.ttf";
   const char *fontLoc=getenv("ADAGUC_FONT");
   if(fontLoc!=NULL){
-    TTFFontLocation = strdup(fontLoc);
+    TTFFontLocation = strdup(fontLoc); 
   }
   TTFFontSize = 9;
   //CDBDebug("TTFFontLocation = %s",TTFFontLocation);
@@ -215,13 +215,17 @@ void CDrawImage::drawBarb(int x,int y,double direction, double strength,int colo
   nhalfBarbs=0;
   nBarbs++;
   }
-  int barbLength=14*(flip?1:-1);
 
+  float flipFactor=flip?-1:1; 
+  int barbLength=-10*flipFactor;
+  
   dx1=cos(direction)*(shaftLength);
   dy1=sin(direction)*(shaftLength);
   
-  wx1=double(x);wy1=double(y);  //wind barb top (flag side)
-  wx2=double(x)+dx1;wy2=double(y)-dy1;  //wind barb root
+/*  wx1=double(x);wy1=double(y);  //wind barb top (flag side)
+  wx2=double(x)+dx1;wy2=double(y)-dy1;  //wind barb root*/
+  wx1=double(x)-dx1;wy1=double(y)+dy1;  //wind barb top (flag side)
+  wx2=double(x);wy2=double(y);  //wind barb root
 
   circle(wx2, wy2, 2, color);
   int nrPos=10;
@@ -230,8 +234,9 @@ void CDrawImage::drawBarb(int x,int y,double direction, double strength,int colo
   for (int i=0;i<nPennants;i++) {
   double wx3=wx1+pos*dx1/nrPos;
   double wy3=wy1-pos*dy1/nrPos;
-  double hx3=wx3+cos(pi+direction+pi/2)*barbLength;
-  double hy3=wy3-sin(pi+direction+pi/2)*barbLength;
+  pos++;
+  double hx3=wx1+pos*dx1/nrPos+cos(pi+direction+pi/2)*barbLength;
+  double hy3=wy1-pos*dy1/nrPos-sin(pi+direction+pi/2)*barbLength;
   pos++;
   double wx4=wx1+pos*dx1/nrPos;
   double wy4=wy1-pos*dy1/nrPos;
@@ -239,14 +244,10 @@ void CDrawImage::drawBarb(int x,int y,double direction, double strength,int colo
   }
   if (nPennants>0) pos++;
   for (int i=0; i<nBarbs;i++) {
-/*  double wx3=wx2-pos*dx1/nrPos;
-  double wy3=wy2-pos*dy1/nrPos;
-  double hx3=wx3+cos(direction+0.8*pi/2)*barbLength; //was: +cos
-  double hy3=wy3+sin(direction+0.8*pi/2)*barbLength; // was: -sin*/
   double wx3=wx1+pos*dx1/nrPos;
   double wy3=wy1-pos*dy1/nrPos;
-  double hx3=wx3-cos(pi/2-direction+1.9*pi/2)*barbLength; //was: +cos
-  double hy3=wy3-sin(pi/2-direction+1.9*pi/2)*barbLength; // was: -sin
+  double hx3=wx3-cos(pi/2-direction+(2-float(flipFactor)*0.1)*pi/2)*barbLength; //was: +cos
+  double hy3=wy3-sin(pi/2-direction+(2-float(flipFactor)*0.1)*pi/2)*barbLength; // was: -sin
 
   line(wx3, wy3, hx3, hy3, color);
   pos++;
@@ -256,8 +257,8 @@ void CDrawImage::drawBarb(int x,int y,double direction, double strength,int colo
   if (nhalfBarbs>0){
   double wx3=wx1+pos*dx1/nrPos;
   double wy3=wy1-pos*dy1/nrPos;
-  double hx3=wx3-cos(pi/2-direction+1.9*pi/2)*barbLength/2;
-  double hy3=wy3-sin(pi/2-direction+1.9*pi/2)*barbLength/2;
+  double hx3=wx3-cos(pi/2-direction+(2-float(flipFactor)*0.1)*pi/2)*barbLength/2;
+  double hy3=wy3-sin(pi/2-direction+(2-float(flipFactor)*0.1)*pi/2)*barbLength/2;
     line(wx3, wy3, hx3, hy3, color);
   pos++;
   }
