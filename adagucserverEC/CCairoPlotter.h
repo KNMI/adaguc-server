@@ -150,7 +150,7 @@ public:
     this->fontSize=fontSize;
     this->fontLocation=fontLocation;
     stride=cairo_format_stride_for_width(FORMAT, width);
-    size_t bufferSize = size_t(height)*stride;
+    //size_t bufferSize = size_t(height)*stride;
     //ARGBByteBuffer = new unsigned char[bufferSize];
     this->ARGBByteBuffer = (_ARGBByteBuffer);
     //for(size_t j=0;j<bufferSize;j++)ARGBByteBuffer[j]=0;

@@ -255,17 +255,19 @@ CDBDebug("Check");
 CDBDebug("Start looping dimensions");
 CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimension.size());
 #endif         
+    /* Auto configure dimensions */
     for(size_t i=0;i<myWMSLayer->dataSource->cfgLayer->Dimension.size();i++){
       #ifdef CXMLGEN_DEBUG
       CDBDebug("%d = %s",i,myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
-      #endif         
-      
+      #endif    
+      //Shorthand dimName
+      const char *pszDimName = myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str();
       
       //Create a new dim to store in the layer
       WMSLayer::Dim *dim=new WMSLayer::Dim();myWMSLayer->dimList.push_back(dim);
       //Get the tablename
       CT::string tableName(myWMSLayer->layer->DataBaseTable[0]->value.c_str());
-      CT::string dimName(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
+      CT::string dimName(pszDimName);
       CServerParams::makeCorrectTableName(&tableName,&dimName);
             
       bool hasMultipleValues=false;
@@ -273,6 +275,8 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
       if(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.c_str()==NULL){
         hasMultipleValues=true;
       
+        
+        /* Automatically scan the time dimension, two types are avaible, start/stop/resolution and individual values */
         //TODO try to detect automatically the time resolution of the layer.
         if(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.equals("time")){
           CT::string units;
@@ -282,47 +286,94 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
           }catch(int e){
           }
           if(units.length()>0){
+            #ifdef CXMLGEN_DEBUG
+            CDBDebug("Time dimension units = %s",units.c_str());
+            #endif
+            
+            //Get the first 10 values from the database, and determine whether the time resolution is continous or multivalue.
+            CDB::Store *store = NULL;
             CT::string query;
-            query.print("select %s from %s limit 10",myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str(),tableName.c_str());
-            CDB::Store *store = DB.queryToStore(query.c_str());
+            query.print("select %s from %s group by %s order by %s limit 10",pszDimName,tableName.c_str(),pszDimName,pszDimName);
+            store = DB.queryToStore(query.c_str());
+            bool dataHasBeenFoundInStore = false;
             if(store!=NULL){
               if(store->size()!=0){
-                CADAGUC_time *ADTime = new CADAGUC_time(units.c_str());
-                double startTime;
-                double secondTime;
-                double stopTime;
+                dataHasBeenFoundInStore = true;
+                tm tms[store->size()];
+                
                 try{
                   for(size_t j=0;j<store->size();j++){
-                    double offset;
                     store->getRecord(j)->get("time")->setChar(10,'T');
-                    ADTime->ISOTimeToOffset(offset,store->getRecord(j)->get("time")->c_str());
-                    if(j==0)startTime=offset;
-                    if(j==1)secondTime=offset;
-                    stopTime=offset;
+                    const char *isotime = store->getRecord(j)->get("time")->c_str();
+                    #ifdef CXMLGEN_DEBUG                        
+                    CDBDebug("isotime=%s",isotime);
+                    #endif
+                    CT::string year, month, day, hour, minute, second;
+                    //tms[j].wday=0;tms[j].yday=0;tms[j].isdst=0;
+                    year  .copy(isotime+ 0,4);tms[j].tm_year=year.toInt()-1900;
+                    month .copy(isotime+ 5,2);tms[j].tm_mon=month.toInt()-1;
+                    day   .copy(isotime+ 8,2);tms[j].tm_mday=day.toInt();
+                    hour  .copy(isotime+11,2);tms[j].tm_hour=hour.toInt();
+                    minute.copy(isotime+14,2);tms[j].tm_min=minute.toInt();
+                    second.copy(isotime+17,2);tms[j].tm_sec=second.toInt();
+                    
                   }
-                  double timeResolution=secondTime-startTime;
-                  double overallTimeResolution=(stopTime-startTime)/double(store->size()-1);
+                  size_t nrTimes=store->size()-1;
+                  bool isConst = true;
+                  
+                  
                   CT::string iso8601timeRes="P";
-                  if(timeResolution==overallTimeResolution&&int(timeResolution+0.5)==int(timeResolution)){
-                    if(units.indexOf("year")>=0){iso8601timeRes.printconcat("%dY",int(timeResolution));}
-                    if(units.indexOf("month")>=0){iso8601timeRes.printconcat("%dM",int(timeResolution));}
-                    if(units.indexOf("day")>=0){iso8601timeRes.printconcat("%dD",int(timeResolution));}
-                    if(units.indexOf("hour")>=0){iso8601timeRes.printconcat("T%dH",int(timeResolution));}
-                    if(units.indexOf("minute")>=0){iso8601timeRes.printconcat("T%dM",int(timeResolution));}
-                    if(units.indexOf("second")>=0){iso8601timeRes.printconcat("T%dS",int(timeResolution));}
+                  CT::string yearPart="";
+                  if(tms[1].tm_year-tms[0].tm_year!=0){if(tms[1].tm_year-tms[0].tm_year == (tms[nrTimes].tm_year-tms[0].tm_year)/double(nrTimes))
+                    yearPart.printconcat("%dY",abs(tms[1].tm_year-tms[0].tm_year));else isConst=false;
+                  }
+                  if(tms[1].tm_mon-tms[0].tm_mon!=0){if(tms[1].tm_mon-tms[0].tm_mon == (tms[nrTimes].tm_mon-tms[0].tm_mon)/double(nrTimes))
+                    yearPart.printconcat("%dM",abs(tms[1].tm_mon-tms[0].tm_mon));else isConst=false;
+                  }
+                  if(tms[1].tm_mday-tms[0].tm_mday!=0){if(tms[1].tm_mday-tms[0].tm_mday == (tms[nrTimes].tm_mday-tms[0].tm_mday)/double(nrTimes))
+                    yearPart.printconcat("%dD",abs(tms[1].tm_mday-tms[0].tm_mday));else isConst=false;
+                  }
+                  
+                  CT::string hourPart="";
+                  if(tms[1].tm_hour-tms[0].tm_hour!=0){hourPart.printconcat("%dH",abs(tms[1].tm_hour-tms[0].tm_hour));}
+                  if(tms[1].tm_min-tms[0].tm_min!=0){hourPart.printconcat("%dM",abs(tms[1].tm_min-tms[0].tm_min));}
+                  if(tms[1].tm_sec-tms[0].tm_sec!=0){hourPart.printconcat("%dS",abs(tms[1].tm_sec-tms[0].tm_sec));}
+
+                  for(size_t j=2;j<store->size();j++){
+                    int d=abs(tms[j].tm_hour-tms[j-1].tm_hour);if(d>0){if(tms[1].tm_hour-tms[0].tm_hour!=d)isConst-false;}
+                    d=tms[j].tm_min-tms[j-1].tm_min;if(d>0){if(tms[1].tm_min-tms[0].tm_min!=d)isConst-false;}
+                    d=tms[j].tm_sec-tms[j-1].tm_sec;if(d>0){if(tms[1].tm_sec-tms[0].tm_sec!=d)isConst-false;}
+                  }
+                  
+                  //Check whether we found a time resolution
+                  if(isConst == false){
+                    hasMultipleValues=true;
+                    CDBDebug("Not a continous time dimension, multipleValues required");
+                  }else{
+                    hasMultipleValues=false;
+                  }
+                  
+                  if(isConst){
+                    if(yearPart.length()>0){
+                      iso8601timeRes.concat(&yearPart);
+                    }
+                    if(hourPart.length()>0){
+                      iso8601timeRes.concat("T");
+                      iso8601timeRes.concat(&hourPart);
+                    }
 #ifdef CXMLGEN_DEBUG                    
                     CDBDebug("Calculated a timeresolution of %s",iso8601timeRes.c_str());
 #endif                    
                     myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.copy(iso8601timeRes.c_str());
                     myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.units.copy("ISO8601");
-                    
-                    hasMultipleValues=false;
                   }
                 }catch(int e){
                 }
-                delete ADTime;
               }
               delete store;store=NULL;
+            }
+            if(dataHasBeenFoundInStore == false){
+              CDBDebug("No data available in database for dimension %s and query %s",pszDimName,query.c_str());
             }
           }
         }
@@ -332,7 +383,7 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
       if(hasMultipleValues==true){
         //Get all dimension values from the db
         CT::string query;
-        query.print("select %s from %s group by %s order by %s",myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str(),tableName.c_str(),myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str(),myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
+        query.print("select %s from %s group by %s order by %s",pszDimName,tableName.c_str(),pszDimName,pszDimName);
 #ifdef CXMLGEN_DEBUG
 CDBDebug("Querying %s",query.c_str());
 #endif               
@@ -382,13 +433,13 @@ CDBDebug("Querying %s",query.c_str());
       if(hasMultipleValues==false){
         // Retrieve the max dimension value
         CT::string query;
-        query.print("select max(%s) from %s",myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str(),tableName.c_str());
+        query.print("select max(%s) from %s",pszDimName,tableName.c_str());
         CT::string *values = DB.query_select(query.c_str(),0);
         if(values == NULL){CDBError("Query failed");DB.close();return 1;}
         if(values->count>0){snprintf(szMaxTime,31,"%s",values[0].c_str());szMaxTime[10]='T';}
         delete[] values;
               // Retrieve the minimum dimension value
-        query.print("select min(%s) from %s",myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str(),tableName.c_str());
+        query.print("select min(%s) from %s",pszDimName,tableName.c_str());
         values = DB.query_select(query.c_str(),0);
         if(values == NULL){CDBError("Query failed");DB.close();return 1;}
         if(values->count>0){snprintf(szMinTime,31,"%s",values[0].c_str());szMinTime[10]='T';}
@@ -397,7 +448,7 @@ CDBDebug("Querying %s",query.c_str());
         //    if(srvParam->serviceType==SERVICE_WCS){
           
           /*
-        query.print("select %s from %s",myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str(),tableName.c_str());
+        query.print("select %s from %s",dimName,tableName.c_str());
         values = DB.query_select(query.c_str(),0);
         if(values == NULL){CDBError("Query failed");DB.close();return 1;}
         if(values->count>0){

@@ -637,7 +637,9 @@ int CDBFileScanner::searchFileNames(CDirReader *dirReader,const char * path,cons
       return 1;
     }
   }
+  #ifdef CDATAREADER_DEBUG
   CDBDebug("Found %d file(s)",int(dirReader->fileList.size()));
+  #endif
   return 0;
 }
 

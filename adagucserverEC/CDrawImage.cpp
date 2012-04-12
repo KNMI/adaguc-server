@@ -977,6 +977,7 @@ int CDrawImage::clonePalette(CDrawImage *drawImage){
   BGColorG=drawImage->BGColorG;
   BGColorB=drawImage->BGColorB;
   copyPalette();  
+  return 0;
 }
 
 /**
@@ -1002,6 +1003,7 @@ int CDrawImage::setCanvasSize(int x,int y,int width,int height){
   createImage(&temp,width,height);
   draw(0,0,0,0,&temp);
   temp.destroyImage();
+  return 0;
 }
 
 int CDrawImage::draw(int destx, int desty,int sourcex,int sourcey,CDrawImage *simage){

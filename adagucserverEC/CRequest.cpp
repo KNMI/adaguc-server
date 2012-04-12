@@ -1361,19 +1361,23 @@ int CRequest::process_querystring(){
       if(srvParam->OpenDapVariable.c_str()==NULL||srvParam->OpenDapVariable.equals("*")){
         //Try to retrieve a list of variables from the OpenDAPURL.
         srvParam->OpenDapVariable.copy("");
-        CDFObject c;
-        c.attachCDFReader(new CDFNetCDFReader());
-        int status=c.open(srvParam->OpenDAPSource.c_str());
+        
+        CDFObject * cdfObject = new CDFObject();
+        CDFNetCDFReader *cdfReader= new CDFNetCDFReader();
+        cdfObject->attachCDFReader(cdfReader);
+        int status=cdfObject->open(srvParam->OpenDAPSource.c_str());
         if(status==0){
           
-          for(size_t j=0;j<c.variables.size();j++){
-            if(c.variables[j]->dimensionlinks.size()>=2){
+          for(size_t j=0;j<cdfObject->variables.size();j++){
+            if(cdfObject->variables[j]->dimensionlinks.size()>=2){
               if(srvParam->OpenDapVariable.length()>0)srvParam->OpenDapVariable.concat(",");
-              srvParam->OpenDapVariable.concat(c.variables[j]->name.c_str());
-              CDBDebug("%s",c.variables[j]->name.c_str());
+              srvParam->OpenDapVariable.concat(cdfObject->variables[j]->name.c_str());
+              CDBDebug("%s",cdfObject->variables[j]->name.c_str());
             }
           }
         }
+        delete cdfReader;
+        delete cdfObject;
         if(srvParam->OpenDapVariable.length()==0)status=1;
         if(status!=0){
           CDBError("A source parameter without a variable parameter is given");
@@ -1773,8 +1777,8 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan){
   srvParam->requestType=REQUEST_UPDATEDB;
 
   //CDataReader reader;
-  CT::string tablesdone[numberOfLayers];
-  int nrtablesdone=0;
+  //CT::string tablesdone[numberOfLayers];
+  //int nrtablesdone=0;
   for(size_t j=0;j<numberOfLayers;j++){
     if(dataSources[j]->dLayerType==CConfigReaderLayerTypeDataBase){
 

@@ -81,7 +81,17 @@ class CServerConfig:public CXMLSerializerInterface{
     class XMLE_ContourIntervalH: public CXMLObjectInterface{};
     class XMLE_ShadeInterval: public CXMLObjectInterface{};
     class XMLE_SmoothingFilter: public CXMLObjectInterface{};
-    class XMLE_StandardNames: public CXMLObjectInterface{};
+    class XMLE_StandardNames: public CXMLObjectInterface{
+      public:
+        class Cattr{
+        public:
+          CXMLString units,standard_name;
+        }attr;
+        void addAttribute(const char *attrname,const char *attrvalue){
+          if(equals("units",5,attrname)){attr.units.copy(attrvalue);return;}
+          else if(equals("standard_name",13,attrname)){attr.standard_name.copy(attrvalue);return;}
+        }
+    };
     
     class XMLE_Log: public CXMLObjectInterface{};
     class XMLE_ValueRange: public CXMLObjectInterface{

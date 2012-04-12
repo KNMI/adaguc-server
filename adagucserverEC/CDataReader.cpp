@@ -308,7 +308,9 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
     
     if(varNr==0){
       if(dataSource->cfgLayer->Dimension.size()==0){
+        #ifdef CDATAREADER_DEBUG  
         CDBDebug("Auto configuring dims");
+        #endif
         autoConfigureDimensions(dataSource,true);
       }
     }
@@ -1294,7 +1296,12 @@ int CDataReader::justLoadAFileHeader(CDataSource *dataSource){
   if(dataSource==NULL){CDBError("datasource == NULL");return 1;}
   if(dataSource->cfgLayer==NULL){CDBError("datasource->cfgLayer == NULL");return 1;}
   if(dataSource->dataObject.size()==0){CDBError("dataSource->dataObject.size()==0");return 1;}
-  if(dataSource->dataObject[0]->cdfVariable!=NULL){CDBDebug("already loaded: dataSource->dataObject[0]->cdfVariable!=NULL");return 0;}
+  if(dataSource->dataObject[0]->cdfVariable!=NULL){
+    #ifdef CDATAREADER_DEBUG  
+    CDBDebug("already loaded: dataSource->dataObject[0]->cdfVariable!=NULL");
+    #endif
+    return 0;
+  }
   //if(dataSource->dataObject[0]->cdfObject!=NULL){CDBError("datasource->dataObject[0]->cdfObject != NULL");return 1;}
 
   CDirReader dirReader;
@@ -1417,12 +1424,14 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource,bool tryToFindI
           if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tableName.c_str(),tableColumns.c_str()); DB.close();throw(__LINE__);  }
 
           CDF::Variable *variable=dataSource->dataObject[0]->cdfVariable;
-          CDBDebug("OK %d",variable->dimensionlinks.size()-2);
+          //CDBDebug("OK %d",variable->dimensionlinks.size()-2);
           
           // When there are no extra dims besides x and y: make a table anyway so autoconfigure_dimensions is not run 
           // Each time to find the non existing dims.
           if(variable->dimensionlinks.size()==2){
+            #ifdef CDATAREADER_DEBUG  
             CDBDebug("Creating an empty table, because variable %s has only x and y dims",variable->name.c_str());
+            #endif
             return 0;
           }
           
@@ -1473,6 +1482,7 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource,bool tryToFindI
 
 
 int CDataReader::autoConfigureStyles(CDataSource *dataSource){
+  bool useDBCache = false;
 #ifdef CDATAREADER_DEBUG     
   CDBDebug("autoConfigureStyles");
 #endif  
@@ -1487,72 +1497,98 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
   // Try to find a style corresponding the the standard_name or long_name attribute of the file.
   CServerConfig::XMLE_Styles *xmleStyle=new CServerConfig::XMLE_Styles();
   dataSource->cfgLayer->Styles.push_back(xmleStyle);
+  
   CT::string tableName = "autoconfigure_styles";
   CT::string layerTableId = dataSource->cfgLayer->DataBaseTable[0]->value.c_str();
   CT::string query;
-  query.print("SELECT * FROM %s where layerid=E'%s'",tableName.c_str(),layerTableId.c_str());
-  CPGSQLDB db;
-  if(db.connect(dataSource->cfg->DataBase[0]->attr.parameters.c_str())!=0){CDBError("Error Could not connect to the database");return 1; }
-  CDB::Store *store = db.queryToStore(query.c_str());
-  db.close(); 
-  if(store!=NULL){
-    if(store->size()!=0){
-      try{
-        xmleStyle->value.copy(store->getRecord(0)->get("styles")->c_str());
-        delete store;store=NULL;
-      }catch(int e){
-        delete store;
-        CDBError("autoConfigureStyles: DB Exception: %s for query %s",db.getErrorMessage(e),query.c_str());
-        return 1;
+  
+  if(useDBCache){
+    
+    query.print("SELECT * FROM %s where layerid=E'%s'",tableName.c_str(),layerTableId.c_str());
+    CPGSQLDB db;
+    if(db.connect(dataSource->cfg->DataBase[0]->attr.parameters.c_str())!=0){CDBError("Error Could not connect to the database");return 1; }
+    CDB::Store *store = db.queryToStore(query.c_str());
+    db.close(); 
+    if(store!=NULL){
+      if(store->size()!=0){
+        try{
+          xmleStyle->value.copy(store->getRecord(0)->get("styles")->c_str());
+          delete store;store=NULL;
+        }catch(int e){
+          delete store;
+          CDBError("autoConfigureStyles: DB Exception: %s for query %s",db.getErrorMessage(e),query.c_str());
+          return 1;
+        }
+  #ifdef CDATAREADER_DEBUG           
+        CDBDebug("Retrieved auto styles \"%s\" from db",xmleStyle->value.c_str());
+  #endif     
+        //OK!
+        return 0;
       }
-#ifdef CDATAREADER_DEBUG           
-      CDBDebug("Retrieved auto styles \"%s\" from db",xmleStyle->value.c_str());
-#endif     
-      //OK!
-      return 0;
+      delete store;
     }
-    delete store;
   }
-    //Finished!
+  
     
     // Auto style is not available in the database, so look it up in the file.
-    CT::string searchName=dataSource->dataObject[0]->variableName.c_str();
-
-    try{
-      //If the file header is not yet loaded, load it.
-      if(dataSource->dataObject[0]->cdfVariable==NULL){
-        int status=CDataReader::justLoadAFileHeader(dataSource);
-        if(status!=0){CDBError("unable to load datasource headers");return 1;}
-      }
-      dataSource->dataObject[0]->cdfVariable->getAttribute("long_name")->getDataAsString(&searchName);
-      dataSource->dataObject[0]->cdfVariable->getAttribute("standard_name")->getDataAsString(&searchName);        
-    }catch(int e){}
-  /*  if(cdfObject!=NULL){
-      //TODO CHECK
-      //Decouple references
-      dataSource->dataObject[0]->cdfObject=NULL;
-      dataSource->dataObject[0]->cdfVariable=NULL;
-      for(size_t varNr=0;varNr<dataSource->dataObject.size();varNr++){dataSource->dataObject[varNr]->cdfVariable = NULL;}
+    
+    
+    //If the file header is not yet loaded, load it.
+    if(dataSource->dataObject[0]->cdfVariable==NULL){
+      int status=CDataReader::justLoadAFileHeader(dataSource);
+      if(status!=0){CDBError("unable to load datasource headers");return 1;}
     }
-    delete cdfObject;*/
+    
+    //Get the searchname, based on variable, standard name or long name.
+    CT::string searchName=dataSource->dataObject[0]->variableName.c_str();
+    try{dataSource->dataObject[0]->cdfVariable->getAttribute("standard_name")->getDataAsString(&searchName);}catch(int e){}
+    try{dataSource->dataObject[0]->cdfVariable->getAttribute("long_name")->getDataAsString(&searchName);}catch(int e){}
+    searchName.toLowerCase();
+    
+    //Get the units
+    CT::string dataSourceUnits;
+    if(dataSource->dataObject[0]->units.length()>0){
+      dataSourceUnits = dataSource->dataObject[0]->units.c_str();
+    }
+    dataSourceUnits.toLowerCase();
+    
+    #ifdef CDATAREADER_DEBUG  
     CDBDebug("Retrieving auto styles by using fileinfo \"%s\"",searchName.c_str());
+    #endif
     // We now have the keyword searchname, with this keyword we are going to lookup all StandardName's in the server configured Styles
-    CT::string styles="auto";
+    CT::string styles="";
     for(size_t j=0;j<dataSource->cfg->Style.size();j++){
       const char *styleName=dataSource->cfg->Style[j]->attr.name.c_str();
-      CDBDebug("Searching Style \"%s\"",styleName);
+      //CDBDebug("Searching Style \"%s\"",styleName);
       if(styleName!=NULL){
         for(size_t i=0;i<dataSource->cfg->Style[j]->StandardNames.size();i++){
-          const char *cfgStandardNames=dataSource->cfg->Style[j]->StandardNames[i]->value.c_str();
-          CDBDebug("Searching StandardNames \"%s\"",cfgStandardNames);
-          if(cfgStandardNames!=NULL){
-            CT::string t=cfgStandardNames;
-            CT::stringlist *standardNameList=t.splitN(",");
+          CT::string standard_name;
+          CT::string units;
+          if(dataSource->cfg->Style[j]->StandardNames[i]->attr.standard_name.c_str()!=NULL){
+            standard_name.copy(dataSource->cfg->Style[j]->StandardNames[i]->attr.standard_name.c_str());
+          }
+          standard_name.toLowerCase();
+          if(dataSource->cfg->Style[j]->StandardNames[i]->attr.units.c_str()!=NULL){
+            units.copy(dataSource->cfg->Style[j]->StandardNames[i]->attr.units.c_str());
+          }
+          units.toLowerCase();
+          
+          
+          //CDBDebug("Searching StandardNames \"%s\"",standard_name.c_str());
+          if(standard_name.length()>0){
+            CT::stringlist *standardNameList=standard_name.splitN(",");
             for(size_t n=0;n<(*standardNameList).size();n++){
               if(searchName.indexOf((*standardNameList)[n]->c_str())!=-1){
-                CDBDebug("*** Match: \"%s\" ~~ \"%s\"",searchName.c_str(),(*standardNameList)[n]->c_str());
-                if(styles.length()!=0)styles.concat(",");
-                styles.concat(dataSource->cfg->Style[j]->attr.name.c_str());
+                bool unitsMatch = true;
+                if(dataSourceUnits.length()!=0&&units.length()!=0){
+                  unitsMatch = false;
+                  if(dataSourceUnits.equals(&units))unitsMatch = true;
+                }
+                if(unitsMatch){
+                  //CDBDebug("*** Match: \"%s\" ~~ \"%s\"",searchName.c_str(),(*standardNameList)[n]->c_str());
+                  if(styles.length()!=0)styles.concat(",");
+                  styles.concat(dataSource->cfg->Style[j]->attr.name.c_str());
+                }
               }
             }
             delete standardNameList;
@@ -1560,19 +1596,24 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
         }
       }      
     }
-    CDBDebug("Found styles \"%s\"",styles.c_str());
-    try{
-      CT::string tableColumns("layerid varchar (255), styles varchar (255)");
-      int status;
-      CPGSQLDB DB;
-      status = DB.connect(dataSource->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0){CDBError("Error Could not connect to the database");throw(__LINE__);}
-      status = DB.checkTable(tableName.c_str(),tableColumns.c_str());
-      if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tableName.c_str(),tableColumns.c_str()); DB.close();throw(__LINE__);  }
-      query.print("INSERT INTO %s values (E'%s',E'%s')",tableName.c_str(),layerTableId.c_str(),styles.c_str());
-      status = DB.query(query.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",query.c_str());DB.close();throw(__LINE__); }
-    }catch(int linenr){
-      CDBError("Exception at line %d",linenr);
-      return 1;
+    if(styles.length()!=0)styles.concat(",");
+    styles.concat("auto");
+    //CDBDebug("Found styles \"%s\"",styles.c_str());
+    if(useDBCache){
+      //Put the result back into the database.
+      try{
+        CT::string tableColumns("layerid varchar (255), styles varchar (255)");
+        int status;
+        CPGSQLDB DB;
+        status = DB.connect(dataSource->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0){CDBError("Error Could not connect to the database");throw(__LINE__);}
+        status = DB.checkTable(tableName.c_str(),tableColumns.c_str());
+        if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tableName.c_str(),tableColumns.c_str()); DB.close();throw(__LINE__);  }
+        query.print("INSERT INTO %s values (E'%s',E'%s')",tableName.c_str(),layerTableId.c_str(),styles.c_str());
+        status = DB.query(query.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",query.c_str());DB.close();throw(__LINE__); }
+      }catch(int linenr){
+        CDBError("Exception at line %d",linenr);
+        return 1;
+      }
     }
     xmleStyle->value.copy(styles.c_str());
   
