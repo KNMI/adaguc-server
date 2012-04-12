@@ -340,9 +340,10 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
                   if(tms[1].tm_sec-tms[0].tm_sec!=0){hourPart.printconcat("%dS",abs(tms[1].tm_sec-tms[0].tm_sec));}
 
                   for(size_t j=2;j<store->size();j++){
-                    int d=abs(tms[j].tm_hour-tms[j-1].tm_hour);if(d>0){if(tms[1].tm_hour-tms[0].tm_hour!=d)isConst-false;}
-                    d=tms[j].tm_min-tms[j-1].tm_min;if(d>0){if(tms[1].tm_min-tms[0].tm_min!=d)isConst-false;}
-                    d=tms[j].tm_sec-tms[j-1].tm_sec;if(d>0){if(tms[1].tm_sec-tms[0].tm_sec!=d)isConst-false;}
+                    int d=tms[j].tm_hour-tms[j-1].tm_hour;
+                    if(d>0){if(tms[1].tm_hour-tms[0].tm_hour!=d)isConst=false;}
+                    d=tms[j].tm_min-tms[j-1].tm_min;if(d>0){if(tms[1].tm_min-tms[0].tm_min!=d)isConst=false;}
+                    d=tms[j].tm_sec-tms[j-1].tm_sec;if(d>0){if(tms[1].tm_sec-tms[0].tm_sec!=d)isConst=false;}
                   }
                   
                   //Check whether we found a time resolution

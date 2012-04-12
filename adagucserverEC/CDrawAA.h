@@ -35,10 +35,10 @@ class CPlotter{
       float sr=RGBAByteBuffer[p+0];sr=sr*a1+r*a2;if(sr>255)sr=255;
       float sg=RGBAByteBuffer[p+1];sg=sg*a1+g*a2;if(sg>255)sg=255;
       float sb=RGBAByteBuffer[p+2];sb=sb*a1+b*a2;if(sb>255)sb=255;
-      RGBAByteBuffer[p+0]=sr;
-      RGBAByteBuffer[p+1]=sg;
-      RGBAByteBuffer[p+2]=sb;
-      RGBAByteBuffer[p+3]=tf;
+      RGBAByteBuffer[p+0]=(unsigned char)sr;
+      RGBAByteBuffer[p+1]=(unsigned char)sg;
+      RGBAByteBuffer[p+2]=(unsigned char)sb;
+      RGBAByteBuffer[p+3]=(unsigned char)tf;
     }
   }
 };
@@ -83,7 +83,7 @@ class CXiaolinWuLine:public CPlotter{
   }
   
   void pixel(float x,float y){
-    plot( x, y, 1);
+    plot( int(x), int(y), 1);
   }
   void pixel(int x,int y, unsigned char r,unsigned char g,unsigned char b){
     if(x<0||y<0)return;
@@ -142,10 +142,10 @@ class CXiaolinWuLine:public CPlotter{
       float sr=RGBAByteBuffer[p+0];sr=sr*a1+r*a2;if(sr>255)sr=255;
       float sg=RGBAByteBuffer[p+1];sg=sg*a1+g*a2;if(sg>255)sg=255;
       float sb=RGBAByteBuffer[p+2];sb=sb*a1+b*a2;if(sb>255)sb=255;
-      RGBAByteBuffer[p+0]=sr;
-      RGBAByteBuffer[p+1]=sg;
-      RGBAByteBuffer[p+2]=sb;
-      RGBAByteBuffer[p+3]=tf;
+      RGBAByteBuffer[p+0]=(unsigned char)sr;
+      RGBAByteBuffer[p+1]=(unsigned char)sg;
+      RGBAByteBuffer[p+2]=(unsigned char)sb;
+      RGBAByteBuffer[p+3]=(unsigned char)tf;
     }
 
   }
@@ -157,7 +157,7 @@ class CXiaolinWuLine:public CPlotter{
   }
   void filledRectangle(float x1,float y1,float x2,float y2){
     if(y1>y2)swap(y1,y2);
-    int h=y2-y1;
+    int h=int(y2-y1);
     unsigned char tr,tg,tb;float ta;
     
     tr=r;tg=g;tb=b;ta=a;
@@ -186,13 +186,13 @@ class CXiaolinWuLine:public CPlotter{
     float gradient = dy / dx;
     float y=y1;
     if(xyIsSwapped==0){
-      for(int x=x1;x<x2;x++){
-        plot(x,y,1);
+      for(int x=int(x1);x<x2;x++){
+        plot(x,int(y),1);
         y+=gradient;
       }
     }else{
-       for(int x=x1;x<x2;x++){
-        plot(y,x,1);
+       for(int x=int(x1);x<x2;x++){
+        plot(int(y),x,1);
         y+=gradient;
       }
     }
@@ -221,11 +221,11 @@ class CXiaolinWuLine:public CPlotter{
       float xpxl1 = xend ; // this will be used in the main loop
       float ypxl1 = int(yend);
       if(xyIsSwapped==0){
-        plot(xpxl1, ypxl1, rfpart(yend) * xgap);
-        plot(xpxl1, ypxl1 + 1, fpart(yend) * xgap);
+        plot(int(xpxl1), int(ypxl1), rfpart(yend) * xgap);
+        plot(int(xpxl1), int(ypxl1 + 1), fpart(yend) * xgap);
       }else{
-        plot(ypxl1, xpxl1, rfpart(yend) * xgap);
-        plot(ypxl1 + 1, xpxl1, fpart(yend) * xgap);
+        plot(int(ypxl1), int(xpxl1), rfpart(yend) * xgap);
+        plot(int(ypxl1 + 1), int(xpxl1), fpart(yend) * xgap);
       }
       float intery = yend + gradient; // first y-intersection for the main loop
       
@@ -236,23 +236,23 @@ class CXiaolinWuLine:public CPlotter{
       float xpxl2 = xend;  // this will be used in the main loop
       float ypxl2 = int(yend);
       if(xyIsSwapped==0){
-        plot (xpxl2, ypxl2, rfpart (yend) * xgap);
-        plot (xpxl2, ypxl2 + 1, fpart (yend) * xgap);
+        plot (int(xpxl2), int(ypxl2), rfpart (yend) * xgap);
+        plot (int(xpxl2), int(ypxl2 + 1), fpart (yend) * xgap);
       }else{
-        plot (ypxl2, xpxl2, rfpart (yend) * xgap);
-        plot (ypxl2 + 1, xpxl2, fpart (yend) * xgap);
+        plot (int(ypxl2), int(xpxl2), rfpart (yend) * xgap);
+        plot (int(ypxl2 + 1), int(xpxl2), fpart (yend) * xgap);
       }
       
       // main loop
       if(xyIsSwapped==0){
         for(float x = xpxl1 + 1;x< xpxl2 ;x++){
-            plot (x, int(intery), rfpart (intery));
-            plot (x, int(intery) + 1, fpart (intery));
+          plot (int(x), int(intery), rfpart (intery));
+          plot (int(x), int(intery) + 1, fpart (intery));
             intery = intery + gradient;
         }
       }else for(float x = xpxl1 + 1;x< xpxl2;x++){
-          plot (int(intery), x,rfpart (intery));
-          plot (int(intery) + 1, x,fpart (intery));
+          plot (int(intery), int(x),rfpart (intery));
+          plot (int(intery) + 1, int(x),fpart (intery));
           intery = intery + gradient;
       }
   }
@@ -310,7 +310,7 @@ class CFreeType{
       
       error = FT_Set_Char_Size( face, /* handle to face object */  
                                 0, /* char_width in 1/64th of points */ 
-                                fontSize*64, /* char_height in 1/64th of points */ 
+                                int(fontSize*64), /* char_height in 1/64th of points */ 
                                 100, /* horizontal device resolution */
                                 100 ); /* vertical device resolution */
       if ( error ) {
@@ -396,7 +396,7 @@ class CFreeType{
     int orgr=wuLine->r;
     int orgg=wuLine->g;
     int orgb=wuLine->b;
-    int orga=wuLine->a;
+    int orga=int(wuLine->a);
     
     FT_Vector pen; /* untransformed origin */
     pen.x = x * 64; pen.y = ( my_target_height - y ) * 64;

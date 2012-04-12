@@ -1850,7 +1850,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
         drawText = true;
       }
       
-      int s=gridSize/precision;
+      int s=int(gridSize/precision);
       if(s<=0)s=1;
       CT::string message;
       for(int y=0;y<numPointsY;y=y+s){
@@ -1865,8 +1865,8 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
                 drawnTextRight=true;
                 double gy=latLonBBOX.top+precision*double(y);
                 message.print("%2.1f",gy);
-                int ty=gridP[p].y;
-                int tx=gridP[p].x;if(ty<8){ty=8;}if(tx>srvParam->Geo->dWidth-30)tx=srvParam->Geo->dWidth-1;
+                int ty=int(gridP[p].y);
+                int tx=int(gridP[p].x);if(ty<8){ty=8;}if(tx>srvParam->Geo->dWidth-30)tx=srvParam->Geo->dWidth-1;
                 tx-=17;
                 
                 if(drawText)drawImage.drawText(tx,ty-2,fontLoc,fontSize,0,message.c_str(),textColor);
@@ -1877,8 +1877,8 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
                 drawnTextLeft=true;
                 double gy=latLonBBOX.top+precision*double(y);
                 message.print("%2.1f",gy);
-                int ty=gridP[p].y;
-                int tx=gridP[p].x;if(ty<8){ty=0;}if(tx<15)tx=0;tx+=2;
+                int ty=int(gridP[p].y);
+                int tx=int(gridP[p].x);if(ty<8){ty=0;}if(tx<15)tx=0;tx+=2;
                 if(drawText)drawImage.drawText(tx,ty-2,fontLoc,fontSize,0,message.c_str(),textColor);
               }
             }
@@ -1903,12 +1903,12 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
                 drawnTextBottom=true;
                 double gx=latLonBBOX.left+precision*double(x);
                 message.print("%2.1f",gx);
-                int ty=gridP[p].y;if(ty<15)ty=0;
+                int ty=int(gridP[p].y);if(ty<15)ty=0;
                 if(ty>srvParam->Geo->dHeight){
                   ty=srvParam->Geo->dHeight;
                 }
                 ty-=2;
-                int tx=gridP[p].x+2;
+                int tx=int((gridP[p]).x+2);
                 if(drawText)drawImage.drawText(tx,ty,fontLoc,fontSize,0,message.c_str(),textColor);
               }
             }    
@@ -1918,8 +1918,8 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
                 drawnTextTop=true;
                 double gx=latLonBBOX.left+precision*double(x);
                 message.print("%2.1f",gx);
-                int ty=gridP[p].y;if(ty<15)ty=0;ty+=7;
-                int tx=gridP[p].x+2;//if(tx<8){tx=8;ty+=4;}if(ty<15)tx=1;
+                int ty=int(gridP[p].y);if(ty<15)ty=0;ty+=7;
+                int tx=int(gridP[p].x)+2;//if(tx<8){tx=8;ty+=4;}if(ty<15)tx=1;
                 if(drawText)drawImage.drawText(tx,ty,fontLoc,fontSize,0,message.c_str(),textColor);
               }
             }
@@ -2246,7 +2246,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
       legendImage->setText(legendMessage.c_str(),legendMessage.length(),(int)cbW+15+pLeft,(int)y+dH+2+pTop,248,-1);  
     }
     CT::string units="status flag";
-    legendImage->setText(units.c_str(),units.length(),2+pLeft,legendHeight-14+pTop,248,-1);
+    legendImage->setText(units.c_str(),units.length(),2+pLeft,int(legendHeight)-14+pTop,248,-1);
     legendImage->crop(4,4);
   }
   
@@ -2281,7 +2281,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
         if(style->Legend[0]->attr.tickround.c_str() != NULL){
           double dftickRound = parseFloat(style->Legend[0]->attr.tickround.c_str());
           CDBDebug("dftickRound = %f",dftickRound );
-          tickRound = round(log10(dftickRound))+3;
+          tickRound = int(round(log10(dftickRound))+3);
           CDBDebug("tickRound = %d %f",tickRound ,log10(dftickRound));
         }
       }
@@ -2309,7 +2309,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
     if(dataSource->dataObject[0]->units.length()>0){
       units.concat(&dataSource->dataObject[0]->units);
     }
-    if(units.length()>0)legendImage->setText(units.c_str(),units.length(),2+pLeft,legendHeight-14+pTop,248,-1);
+    if(units.length()>0)legendImage->setText(units.c_str(),units.length(),2+pLeft,int(legendHeight)-14+pTop,248,-1);
     legendImage->crop(4,-1);    
   }
   
@@ -2443,7 +2443,7 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
     if(dataSource->dataObject[0]->units.length()>0){
       units.concat(&dataSource->dataObject[0]->units);
     }
-    if(units.length()>0)legendImage->setText(units.c_str(),units.length(),2+pLeft,legendHeight-14+pTop,248,-1);
+    if(units.length()>0)legendImage->setText(units.c_str(),units.length(),2+pLeft,int(legendHeight)-14+pTop,248,-1);
     legendImage->crop(4,4);
   }
   

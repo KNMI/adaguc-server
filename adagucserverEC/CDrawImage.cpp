@@ -223,7 +223,7 @@ void CDrawImage::drawBarb(int x,int y,double direction, double strength,int colo
   wx1=double(x);wy1=double(y);  //wind barb top (flag side)
   wx2=double(x)+dx1;wy2=double(y)-dy1;  //wind barb root
 
-  circle(wx2, wy2, 2, color);
+  circle(int(wx2), int(wy2), 2, color);
   int nrPos=10;
 
   int pos=0;
@@ -295,14 +295,14 @@ void CDrawImage::poly(float x1,float y1,float x2,float y2,float x3, float y3, in
 #endif
   } else {
     gdPoint pt[4];
-    pt[0].x=x1;
-    pt[1].x=x2;
-    pt[2].x=x3;
-    pt[3].x=x1;
-    pt[0].y=y1;
-    pt[1].y=y2;
-    pt[2].y=y3;
-    pt[3].y=y1;
+    pt[0].x=int(x1);
+    pt[1].x=int(x2);
+    pt[2].x=int(x3);
+    pt[3].x=int(x1);
+    pt[0].y=int(y1);
+    pt[1].y=int(y2);
+    pt[2].y=int(y3);
+    pt[3].y=int(y1);
     if (fill) {
         gdImageFilledPolygon(image, pt, 4, _colors[color]);
     } else {
@@ -325,7 +325,7 @@ void CDrawImage::line(float x1, float y1, float x2, float y2,int color){
 #endif
     }
   }else{
-    gdImageLine(image, x1,y1,x2,y2,_colors[color]);
+    gdImageLine(image, int(x1),int(y1),int(x2),int(y2),_colors[color]);
   }
 }
 void CDrawImage::line(float x1,float y1,float x2,float y2,float w,int color){
@@ -342,7 +342,7 @@ void CDrawImage::line(float x1,float y1,float x2,float y2,float w,int color){
     }
   }else{
     gdImageSetThickness(image, int(w)*1);
-    gdImageLine(image, x1,y1,x2,y2,_colors[color]);
+    gdImageLine(image, int(x1),int(y1),int(x2),int(y2),_colors[color]);
   }
 }
 

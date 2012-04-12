@@ -573,7 +573,7 @@ if((enableVector||enableBarb)){
 
 if(((enableVector||enableBarb)&&drawGridVectors)){
   int wantedSpacing=30;
-  int distPoint=hypot(dpDestX[1]-dpDestX[0], dpDestY[1]-dpDestY[0]);
+  int distPoint=int(hypot(dpDestX[1]-dpDestX[0], dpDestY[1]-dpDestY[0]));
   
   int stepx=int(float(wantedSpacing)/distPoint+0.5);
   if (stepx<1) stepx=1;
@@ -1144,4 +1144,3 @@ fwrite (ascii.c_str() , ascii.length() , sizeof(char) , pFile );
   
   
   }
-  
