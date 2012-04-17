@@ -30,7 +30,7 @@ class CDataReader{
     ~CDataReader(){close();}
   
     
-    static int autoConfigureDimensions(CDataSource *dataSource,bool tryToFindInterval);
+    static int autoConfigureDimensions(CDataSource *dataSource);
     static int autoConfigureStyles(CDataSource *dataSource);
     static int justLoadAFileHeader(CDataSource *dataSource);
     static int getCacheFileName(CDataSource *dataSource,CT::string *cacheName);

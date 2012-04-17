@@ -48,8 +48,12 @@ bool CDBFileScanner::isTableAlreadyScanned(CT::string *tableName){
 int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,int &removeNonExistingFiles){
   int status = 0;
   CT::string query;
-//  CDBDebug("createDBUpdateTables");
-  //First check and create all tables...
+  
+  if(dataSource->cfgLayer->Dimension.size()==0){
+    CDataReader::autoConfigureDimensions(dataSource);
+  }
+  
+  //Check and create all tables...
   for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
   
     bool isTimeDim = false;

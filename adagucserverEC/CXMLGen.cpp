@@ -37,7 +37,7 @@ CDBDebug("getFileNameForLayer");
   if(myWMSLayer->dataSource->dLayerType==CConfigReaderLayerTypeDataBase||
     myWMSLayer->dataSource->dLayerType==CConfigReaderLayerTypeStyled){
       if(myWMSLayer->dataSource->cfgLayer->Dimension.size()==0){
-        if(CDataReader::autoConfigureDimensions(myWMSLayer->dataSource,true)!=0){
+        if(CDataReader::autoConfigureDimensions(myWMSLayer->dataSource)!=0){
           CDBError("Unable to autoconfigure dimensions");
           return 1;
         }
@@ -196,20 +196,30 @@ CDBDebug("getProjectionInformationForLayer");
   int status;  
   for(size_t p=0;p< srvParam->cfg->Projection.size();p++){
     geo.CRS.copy(srvParam->cfg->Projection[p]->attr.id.c_str());
+  
     status =  warper.initreproj(myWMSLayer->dataSource,&geo,&srvParam->cfg->Projection);
-    
+   
     #ifdef CXMLGEN_DEBUG    
-    if(status!=0){CDBDebug("Unable to initialize projection ");}
+    if(status!=0){
+      warper.closereproj();
+      CDBDebug("Unable to initialize projection ");
+      
+    }
     #endif   
-    if(status!=0)return 1;
+    if(status!=0){
+      warper.closereproj();
+      return 1;
+    }
+  
     // Find the max extent of the image
     WMSLayer::Projection * myProjection = new WMSLayer::Projection();
     myWMSLayer->projectionList.push_back(myProjection);
-    
+  
     //Set the projection string
     myProjection->name.copy(srvParam->cfg->Projection[p]->attr.id.c_str());
-    
+   
     //Calculate the extent for this projection
+    
     warper.findExtent(myWMSLayer->dataSource,myProjection->dfBBOX);
 
     //Calculate the latlonBBOX

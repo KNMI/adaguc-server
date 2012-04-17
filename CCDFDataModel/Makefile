@@ -1,5 +1,5 @@
-#HOME=/nobackup/users/plieger/software/install
-HOME=/nobackup/users/vreedede/build
+HOME=/nobackup/users/plieger/software/install
+#HOME=/nobackup/users/vreedede/build
 #HOME=/home/plieger/software/install
 #HOME=/data/data1/software/install
 #HOME=/data/data1/mapserver

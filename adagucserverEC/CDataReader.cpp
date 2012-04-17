@@ -311,7 +311,7 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
         #ifdef CDATAREADER_DEBUG  
         CDBDebug("Auto configuring dims");
         #endif
-        autoConfigureDimensions(dataSource,true);
+        autoConfigureDimensions(dataSource);
       }
     }
   
@@ -481,6 +481,7 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
           if(status==0){
             //Projection string was created, set it in the datasource.
             dataSource->nativeProj4.copy(projString.c_str());
+            CDBDebug("Autogen proj4 string: %s",projString.c_str());
           }
         }
         
@@ -1341,7 +1342,7 @@ int CDataReader::justLoadAFileHeader(CDataSource *dataSource){
 }
 
 
-int CDataReader::autoConfigureDimensions(CDataSource *dataSource,bool tryToFindInterval){
+int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
   
 
   // Auto configure dimensions, in case they are not configured by the user.

@@ -442,7 +442,7 @@ int CRequest::process_all_layers(){
       // When there are no dims, we can get the filename from the config
       if(dataSources[j]->cfgLayer->Dimension.size()==0){
        
-        CDataReader::autoConfigureDimensions(dataSources[j],true);
+        CDataReader::autoConfigureDimensions(dataSources[j]);
         
       }
       if(dataSources[j]->cfgLayer->Dimension.size()!=0){

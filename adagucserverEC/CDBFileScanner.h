@@ -3,6 +3,7 @@
 
 #include "CDebugger.h"
 #include "CStopWatch.h"
+#include "CDataReader.h"
 #include "CDFObjectStore.h"
 #include "CServerError.h"
 #include "CDirReader.h"
