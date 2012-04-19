@@ -1329,24 +1329,17 @@ int CRequest::process_querystring(){
   }
   if(SERVICE.equals("WMS"))srvParam->serviceType=SERVICE_WMS;
   if(SERVICE.equals("WCS"))srvParam->serviceType=SERVICE_WCS;
-
-
   
-  //srvParam->OpenDAPSource="/net/bhw262/nobackup/users/vreedede/ECMWF/U11_1313650800.nc";
-  
-    // If an Opendapsource is used, the LAYERS indicate which value should be visualised.
-    // Add configuration layers to the XML object to make things work
-    if(srvParam->OpenDAPSource.c_str()!=NULL){
-      
     
-      
-      
+    // Configure the server automically based on an OpenDAP resource
+    if(srvParam->OpenDAPSource.c_str()!=NULL){
       if(srvParam->isAutoOpenDAPEnabled()==false){
         CDBError("Automatic OpenDAP is not enabled");
         readyerror();exit(0);
       }
       
       bool isValidOpenDAPURL = false;
+      //TODO should be placed in a a more generaic place
       if(srvParam->OpenDAPSource.indexOf("http://")==0)isValidOpenDAPURL=true;
       if(srvParam->OpenDAPSource.indexOf("https://")==0)isValidOpenDAPURL=true;
       if(srvParam->OpenDAPSource.indexOf("dodsc://")==0)isValidOpenDAPURL=true;
@@ -1358,16 +1351,14 @@ int CRequest::process_querystring(){
         readyerror();exit(0);
       }
       
+      //Generate the list of OpenDAP variables automatically based on the variables available in the OpenDAP dataset
       if(srvParam->OpenDapVariable.c_str()==NULL||srvParam->OpenDapVariable.equals("*")){
         //Try to retrieve a list of variables from the OpenDAPURL.
         srvParam->OpenDapVariable.copy("");
-        
-        CDFObject * cdfObject = new CDFObject();
-        CDFNetCDFReader *cdfReader= new CDFNetCDFReader();
-        cdfObject->attachCDFReader(cdfReader);
-        int status=cdfObject->open(srvParam->OpenDAPSource.c_str());
-        if(status==0){
-          
+        //Open the opendap resource
+        CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObject(NULL,srvParam->OpenDAPSource.c_str());
+        //int status=cdfObject->open(srvParam->OpenDAPSource.c_str());
+        if(cdfObject!=NULL){
           for(size_t j=0;j<cdfObject->variables.size();j++){
             if(cdfObject->variables[j]->dimensionlinks.size()>=2){
               if(srvParam->OpenDapVariable.length()>0)srvParam->OpenDapVariable.concat(",");
@@ -1376,15 +1367,91 @@ int CRequest::process_querystring(){
             }
           }
         }
-        delete cdfReader;
-        delete cdfObject;
+        int status=0;
         if(srvParam->OpenDapVariable.length()==0)status=1;
         if(status!=0){
           CDBError("A source parameter without a variable parameter is given");
           readyerror();exit(0);
         }
       }
+      
+      //Generate a generic title for this OpenDAP service, based on the title element in the OPeNDAP header
+      //Open the opendap resource
+      CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObject(NULL,srvParam->OpenDAPSource.c_str());
+      //int status=cdfObject->open(srvParam->OpenDAPSource.c_str());
+      if(cdfObject==NULL){
+        CDBError("Unable to open resource %s",srvParam->OpenDAPSource.c_str());
+        readyerror();exit(0);
+      }
+      
+      CT::string serverTitle="";
+      try{cdfObject->getAttribute("title")->getDataAsString(&serverTitle);}catch(int e){}
+       
+      if(serverTitle.length()>0){
+        if(srvParam->cfg->WMS.size()>0){
+          if(srvParam->cfg->WMS[0]->Title.size()>0){
+            CT::string title="ADAGUC_AUTO_WMS_";
+            title.concat(serverTitle.c_str());
+            srvParam->cfg->WMS[0]->Title[0]->value.copy(title.c_str());
+          }
+          if(srvParam->cfg->WMS[0]->RootLayer.size()>0){
+            if(srvParam->cfg->WMS[0]->RootLayer[0]->Title.size()>0){
+              CT::string title="WMS of  ";
+              title.concat(serverTitle.c_str());
+              srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->value.copy(title.c_str());
+            }
+          }          
+        }
+        if(srvParam->cfg->WCS.size()>0){
+          if(srvParam->cfg->WCS[0]->Title.size()>0){
+            CT::string title="ADAGUC_AUTO_WCS_";
+            title.concat(serverTitle.c_str());
+            srvParam->cfg->WCS[0]->Title[0]->value.copy(title.c_str());
+          }
+        }
+      }
+      
+      CT::string serverSummary="";
+      CT::string serverDescription="";
+      CT::string serverSource="";
+      CT::string serverReferences="";
+      CT::string serverInstitution="";
+      CT::string serverHistory="";
+      CT::string serverComments="";
+      CT::string serverDisclaimer="";
+      
+      
+      
+      try{cdfObject->getAttribute("summary")->getDataAsString(&serverSummary);}catch(int e){}
+      try{cdfObject->getAttribute("description")->getDataAsString(&serverDescription);}catch(int e){}
+      try{cdfObject->getAttribute("source")->getDataAsString(&serverSource);}catch(int e){}
+      try{cdfObject->getAttribute("references")->getDataAsString(&serverReferences);}catch(int e){}
+      try{cdfObject->getAttribute("institution")->getDataAsString(&serverInstitution);}catch(int e){}
+      try{cdfObject->getAttribute("history")->getDataAsString(&serverHistory);}catch(int e){}
+      try{cdfObject->getAttribute("comments")->getDataAsString(&serverComments);}catch(int e){}
+      try{cdfObject->getAttribute("disclaimer")->getDataAsString(&serverDisclaimer);}catch(int e){}
+      
+      CT::string serverAbstract="";
+      if(serverInstitution.length()>0){serverAbstract.printconcat("Institution: '%s'.\n",serverInstitution.c_str());}
+      if(serverSummary.length()>0){serverAbstract.printconcat("Summary: '%s'.\n",serverSummary.c_str());}
+      if(serverDescription.length()>0){serverAbstract.printconcat("Description: '%s'.\n",serverDescription.c_str());}
+      if(serverSource.length()>0){serverAbstract.printconcat("Source: '%s'.\n",serverSource.c_str());}
+      if(serverReferences.length()>0){serverAbstract.printconcat("References: '%s'.\n",serverReferences.c_str());}
+      if(serverHistory.length()>0){serverAbstract.printconcat("History: '%s'.\n",serverHistory.c_str());}
+      if(serverComments.length()>0){serverAbstract.printconcat("Comments: '%s'.\n",serverComments.c_str());}
+      if(serverDisclaimer.length()>0){serverAbstract.printconcat("Disclaimer: '%s'.\n",serverDisclaimer.c_str());}
+
+     
+      if(serverAbstract.length()>0){
+        if(srvParam->cfg->WMS.size()>0){
+          if(srvParam->cfg->WMS[0]->Abstract.size()>0){
+            srvParam->cfg->WMS[0]->Abstract[0]->value.copy(serverAbstract.c_str());
+          }
+        }
+      }
+     
     
+      //Generate layers based on the OpenDAP variables
       CT::stringlist *variables=srvParam->OpenDapVariable.splitN(",");
       for(size_t j=0;j<variables->size();j++){
         CServerConfig::XMLE_Layer *xmleLayer=new CServerConfig::XMLE_Layer();

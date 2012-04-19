@@ -8,6 +8,7 @@
 #ifdef ADAGUC_USE_GDAL
 #include "CGDALDataWriter.h"
 #endif
+#include "CDFObjectStore.h"
 #include "CImageDataWriter.h"
 #include "CDebugger.h"
 

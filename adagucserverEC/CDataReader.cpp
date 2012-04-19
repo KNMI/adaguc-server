@@ -255,8 +255,8 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
     CDBDebug("Reading from Cache file");
 #endif
     cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource,uniqueIDFor2DField.c_str());
-    if(cdfObject==NULL){return 1;}
-    status = cdfObject->open(uniqueIDFor2DField.c_str());
+    //if(cdfObject==NULL){return 1;}
+    //status = cdfObject->open(uniqueIDFor2DField.c_str());
     int timeStep = dataSource->getCurrentTimeStep();
     for(size_t j=0;j<dataSource->timeSteps[timeStep]->dims.dimensions.size();j++){
       dataSource->timeSteps[timeStep]->dims.dimensions[0]->index=0;
@@ -272,9 +272,9 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
 #ifdef CDATAREADER_DEBUG            
     CDBDebug("Reading directly without Cache: %s",FileName.c_str());
 #endif    
-    status = cdfObject->open(FileName.c_str());
+    //status = cdfObject->open(FileName.c_str());
   }
-   if(status != 0){CDBError("Unable to read file %s",FileName.c_str());return 1;}
+   //if(status != 0){CDBError("Unable to read file %s",FileName.c_str());return 1;}
 #ifdef MEASURETIME
   StopWatch_Stop("file opened");
 #endif
@@ -1320,14 +1320,14 @@ int CDataReader::justLoadAFileHeader(CDataSource *dataSource){
     if(cdfObject == NULL)throw(__LINE__);
 
     
-       CDBDebug("Opening %s",dirReader.fileList[0]->fullName.c_str());
+      /* CDBDebug("Opening %s",dirReader.fileList[0]->fullName.c_str());
     int status = cdfObject->open(dirReader.fileList[0]->fullName.c_str());
     
  
     if(status!=0){
       CDBError("Unable to open file '%s'",dirReader.fileList[0]->fullName.c_str());
       throw(__LINE__);
-    }
+    }*/
     
     
    dataSource->attachCDFObject(cdfObject);

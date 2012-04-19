@@ -25,7 +25,7 @@ class CXMLString{
       if(p!=NULL){free(p);p=NULL;}
     }
     void copy(const char *p){
-      //if(this->p!=NULL){free(this->p);}
+      //if(this->p!=NULL){free(this->p);}//TODO
       this->p=strdup(p);
     }
     const char *c_str(){

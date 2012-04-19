@@ -5,21 +5,26 @@ const char *CDFObjectStore::className="CDFObjectStore";
 
 extern CDFObjectStore cdfObjectStore;
 CDFObjectStore cdfObjectStore;
-
+/**
+ * Get a CDFReader based on information in the datasource. In the Layer element this can be configured with <DataReader>HDF5</DataReader>
+ * @param dataSource The configured datasource or NULL pointer. NULL pointer defaults to a NetCDF/OPeNDAP reader
+ */
 CDFReader *CDFObjectStore::getCDFReader(CDataSource *dataSource){
   //Do we have a datareader defined in the configuration file?
   //if(cdfReader !=NULL){delete cdfReader;cdfReader = NULL;}
   CDFReader *cdfReader = NULL;
   
   // CDFObject *cdfObject=dataSource->dataObject[0]->cdfObject;
-  if(dataSource->cfgLayer->DataReader.size()>0){
-    if(dataSource->cfgLayer->DataReader[0]->value.equals("HDF5")){
-      #ifdef CDATAREADER_DEBUG
-      CDBDebug("Creating HDF5 reader");
-      #endif
-      cdfReader = new CDFHDF5Reader();
-      CDFHDF5Reader * hdf5Reader = (CDFHDF5Reader*)cdfReader;
-      hdf5Reader->enableKNMIHDF5toCFConversion();
+  if(dataSource!=NULL){
+    if(dataSource->cfgLayer->DataReader.size()>0){
+      if(dataSource->cfgLayer->DataReader[0]->value.equals("HDF5")){
+        #ifdef CDATAREADER_DEBUG
+        CDBDebug("Creating HDF5 reader");
+        #endif
+        cdfReader = new CDFHDF5Reader();
+        CDFHDF5Reader * hdf5Reader = (CDFHDF5Reader*)cdfReader;
+        hdf5Reader->enableKNMIHDF5toCFConversion();
+      }
     }
   }
   //Defaults to the netcdf reader
@@ -32,17 +37,19 @@ CDFReader *CDFObjectStore::getCDFReader(CDataSource *dataSource){
   return cdfReader;
 }
 
-
+/**
+ * Get a CDFObject based with opened and configured CDF reader for a filename/OPeNDAP url and a dataSource.
+ * @param dataSource The configured datasource or NULL pointer. NULL pointer defaults to a NetCDF/OPeNDAP reader
+ * @param fileName The filename to read.
+ */
 CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,const char *fileName){
-  bool returnNew=false;
-  if(returnNew==false){
-    for(size_t j=0;j<fileNames.size();j++){
-      if(fileNames[j]->equals(fileName)){
-        #ifdef CDATAREADER_DEBUG                          
-        CDBDebug("Found CDFObject with filename %s",fileName);
-        #endif            
-        return cdfObjects[j];
-      }
+  //TODO this function should open the CDFObject as well.
+  for(size_t j=0;j<fileNames.size();j++){
+    if(fileNames[j]->equals(fileName)){
+      #ifdef CDATAREADER_DEBUG                          
+      CDBDebug("Found CDFObject with filename %s",fileName);
+      #endif            
+      return cdfObjects[j];
     }
   }
   #ifdef CDATAREADER_DEBUG              
@@ -52,17 +59,29 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,const char *file
   CDFObject *cdfObject = new CDFObject();
   CDFReader *cdfReader = CDFObjectStore::getCDFReader(dataSource);
   if(cdfReader==NULL){
-    CDBError("Unable to get a reader for source %s",dataSource->cfgLayer->Name[0]->value.c_str());
+    if(dataSource!=NULL){
+      CDBError("Unable to get a reader for source %s",dataSource->cfgLayer->Name[0]->value.c_str());
+    }
     throw(1);
+    //return NULL;
   }
   cdfObject->attachCDFReader(cdfReader);
   
-  if(returnNew==false){
-    //Push everything into the store
-    fileNames.push_back(new CT::string(fileName));
-    cdfObjects.push_back(cdfObject);
-    cdfReaders.push_back(cdfReader);
+  //Open the object.
+  CDBDebug("Opening %s",fileName);
+  int status = cdfObject->open(fileName);
+  if(status!=0){
+    //TODO in case of basic/digest authentication, username and password is currently also listed....
+    CDBError("Unable to open file '%s'",fileName);
+    return NULL;
   }
+  
+  
+ 
+    //Push everything into the store
+  fileNames.push_back(new CT::string(fileName));
+  cdfObjects.push_back(cdfObject);
+  cdfReaders.push_back(cdfReader);
   return cdfObject;
 }
 CDFObjectStore *CDFObjectStore::getCDFObjectStore(){return &cdfObjectStore;};
@@ -83,7 +102,9 @@ CDFObject *CDFObjectStore::deleteCDFObject(CDFObject **cdfObject){
   return NULL;
 }
 
-
+/**
+ * Clean the CDFObject store and throw away all readers and objects
+ */
 void CDFObjectStore::clear(){
   
   for(size_t j=0;j<fileNames.size();j++){

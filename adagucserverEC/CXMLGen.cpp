@@ -303,7 +303,7 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
             //Get the first 10 values from the database, and determine whether the time resolution is continous or multivalue.
             CDB::Store *store = NULL;
             CT::string query;
-            query.print("select %s from %s group by %s order by %s limit 10",pszDimName,tableName.c_str(),pszDimName,pszDimName);
+            query.print("select %s from %s group by %s order by %s limit 100",pszDimName,tableName.c_str(),pszDimName,pszDimName);
             store = DB.queryToStore(query.c_str());
             bool dataHasBeenFoundInStore = false;
             if(store!=NULL){
