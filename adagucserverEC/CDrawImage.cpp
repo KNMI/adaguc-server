@@ -329,6 +329,25 @@ void CDrawImage::line(float x1, float y1, float x2, float y2,int color){
     gdImageLine(image, int(x1),int(y1),int(x2),int(y2),_colors[color]);
   }
 }
+
+void CDrawImage::line(float x1, float y1, float x2, float y2,CColor ccolor){
+  if(_bEnableTrueColor==true){
+    if(currentLegend==NULL)return;
+    #ifdef ADAGUC_USE_CAIRO
+    cairo->setColor(ccolor.r,ccolor.g,ccolor.b,ccolor.a);
+    cairo->line(x1,y1,x2,y2);
+    #else
+    wuLine->setColor(ccolor.r,ccolor.g,ccolor.b,ccolor.a);
+    //wuLine->setColor(0,255,0,255);
+    wuLine->line(x1,y1,x2,y2);
+    #endif
+    
+  }else{
+    int gdcolor=getClosestGDColor(ccolor.r,ccolor.g,ccolor.b);
+    gdImageLine(image, int(x1),int(y1),int(x2),int(y2),_colors[gdcolor]);
+  }
+}
+
 void CDrawImage::line(float x1,float y1,float x2,float y2,float w,int color){
   if(_bEnableTrueColor==true){
     if(currentLegend==NULL)return;
@@ -766,7 +785,13 @@ void  CDrawImage::rectangle( int x1, int y1, int x2, int y2,CColor innercolor,CC
   wuLine->filledRectangle(x1,y1,x2,y2);
   #endif
   }else{
-    //TODO
+    int gdinnercolor=getClosestGDColor(innercolor.r,innercolor.g,innercolor.b);
+    int gdoutercolor=getClosestGDColor(outercolor.r,outercolor.g,outercolor.b);
+    if(innercolor.a==255){
+      gdImageFilledRectangle (image,x1+1,y1+1,x2-1,y2-1, colors[gdinnercolor]);
+    }
+    gdImageRectangle (image,x1,y1,x2,y2, colors[gdoutercolor]);
+    
   }
 }
 

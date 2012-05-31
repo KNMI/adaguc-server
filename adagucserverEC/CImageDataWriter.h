@@ -10,6 +10,9 @@
 
 class CImageDataWriter: public CBaseDataWriterInterface{
   private:
+    
+   
+    
     CImageWarper imageWarper;
   
     
@@ -37,7 +40,7 @@ class CImageDataWriter: public CBaseDataWriterInterface{
         double lat_coordinate,lon_coordinate;
 
         CT::string layerName;
-
+        CDataSource *dataSource;
         class Element{
         public:
           CT::string value;
@@ -87,7 +90,7 @@ public:
       }
     };
 private:
-    
+    static int getTextForValue(CT::string *tv,float v,StyleConfiguration *currentStyleConfiguration);
     std::vector<GetFeatureInfoResult*> getFeatureInfoResultList;
     
     DEF_ERRORFUNCTION();

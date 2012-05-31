@@ -130,6 +130,7 @@ class CDrawImage{
     void drawVector(int x,int y,double direction, double strength,int color);
     void destroyImage();
     void line(float x1,float y1,float x2,float y2,int color);
+    void line(float x1,float y1,float x2,float y2,CColor color);
     void line(float x1,float y1,float x2,float y2,float w,int color);
     void poly(float x1, float y1, float x2, float y2, float x3, float y3, int c, bool fill);
     void circle(int x, int y, int r, int color);

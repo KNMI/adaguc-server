@@ -268,7 +268,7 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
   }else{
     //We just open the file in the standard way, without cache
     cdfObject=CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource,FileName.c_str());
-    if(cdfObject==NULL){return 1;}
+    if(cdfObject==NULL){CDBError("Unable to het CDFObject from store");return 1;}
 #ifdef CDATAREADER_DEBUG            
     CDBDebug("Reading directly without Cache: %s",FileName.c_str());
 #endif    
@@ -289,7 +289,10 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
   
   CDF::Variable *var[dataSource->dataObject.size()+1];
 
-  if(dataSource->attachCDFObject(cdfObject)!=0)return 1;
+  if(dataSource->attachCDFObject(cdfObject)!=0){
+    CDBError("Unable to attach CDFObject");
+    return 1;
+  }
   for(size_t varNr=0;varNr<dataSource->dataObject.size();varNr++){
     
     var[varNr] = dataSource->dataObject[varNr]->cdfVariable;//cdfObject->getVariableNE(dataSource->dataObject[varNr]->variableName.c_str());
@@ -544,7 +547,7 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
       if(add_offset!=NULL){
         add_offset->getData(&dataSource->dataObject[varNr]->dfadd_offset,1);
       }else dataSource->dataObject[varNr]->dfadd_offset=0;
-    }else dataSource->dataObject[varNr]->scaleOffsetIsApplied=false;
+    }//else dataSource->dataObject[varNr]->scaleOffsetIsApplied=false;
     
     //DataPostProc: Here our datapostprocessor comes into action!
     for(size_t dpi=0;dpi<dataSource->cfgLayer->DataPostProc.size();dpi++){
@@ -743,7 +746,7 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
           case CDF_UINT  : {uint   *s=(uint  *)vs;uint   *d=(uint  *)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
           case CDF_FLOAT : {float  *s=(float *)vs;float  *d=(float *)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
           case CDF_DOUBLE: {double *s=(double*)vs;double *d=(double*)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
-          default: CDBError("Unknown data type"); return 1;
+          default: {CDBError("Unknown data type"); return 1;}
         }
         //We will replace our old memory block with the new one, but we have to free our old one first.
         free(var[varNr]->data);
@@ -1107,14 +1110,14 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
       const char buffer[] = { "temp_data\n" };
       pFile = fopen ( uniqueIDFor2DFieldTmp.c_str() , "wb" );
       if(pFile==NULL){
-        CDBDebug("*** Unable to write to cache file");
+        CDBError("Unable to write to cache file");
         return 1;
       }
       size_t bytesWritten = fwrite (buffer , sizeof(char),10 , pFile );
       fflush (pFile);   
       fclose (pFile);
       if(bytesWritten!=10){
-        CDBDebug("*** Failed to Claim the cache  file %d",bytesWritten);
+        CDBError("*** Failed to Claim the cache  file %d",bytesWritten);
         workingOnCache=true;
       }else {
         CDBDebug("*** [2/4] Succesfully claimed the cache file");
@@ -1569,6 +1572,7 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
             standard_name.copy(dataSource->cfg->Style[j]->StandardNames[i]->attr.standard_name.c_str());
           }
           standard_name.toLowerCase();
+          standard_name.replace("_"," ");
           if(dataSource->cfg->Style[j]->StandardNames[i]->attr.units.c_str()!=NULL){
             units.copy(dataSource->cfg->Style[j]->StandardNames[i]->attr.units.c_str());
           }
@@ -1595,7 +1599,7 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
             delete standardNameList;
           }
         }
-      }      
+      }     
     }
     if(styles.length()!=0)styles.concat(",");
     styles.concat("auto");

@@ -246,8 +246,9 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
     if(status != 0) return 1;
   }
   if(requestType==REQUEST_WMS_GETFEATUREINFO){
+    status = drawImage.createImage(512,256);
     drawImage.Geo->copy(srvParam->Geo);
-    return 0;
+    //return 0;
   }
   
   //Create 6-8-5 palette for cascaded layer
@@ -1118,7 +1119,7 @@ int CImageDataWriter::getFeatureInfo(CDataSource *dataSource,int dX,int dY){
   // Create a new getFeatureInfoResult object and push it into the vector.
   GetFeatureInfoResult  *getFeatureInfoResult = new GetFeatureInfoResult();
   getFeatureInfoResultList.push_back(getFeatureInfoResult);
-    
+  getFeatureInfoResult->dataSource=dataSource;
 //  status  = imageWarper.getFeatureInfo(&getFeatureInfoHeader,&temp,dataSource,drawImage.Geo,dX,dY);
   
   //int CImageWarper::getFeatureInfo(CT::string *Header,CT::string *Result,CDataSource *dataSource,CGeoParams *GeoDest,int dX, int dY){
@@ -1938,6 +1939,30 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
   //drawCascadedWMS("http://bhlbontw.knmi.nl/rcc/download/ensembles/cgi-bin/basemaps.cgi?","country_lines",true);
   return status;
 }
+
+
+int CImageDataWriter::getTextForValue(CT::string *tv,float v,StyleConfiguration *currentStyleConfiguration){
+  
+  int textRounding=0;
+  if(currentStyleConfiguration==NULL){
+    return 1;
+  }
+  float legendInterval=currentStyleConfiguration->shadeInterval;
+  if(legendInterval!=0){
+    float fracPart=legendInterval-int(legendInterval);
+    textRounding=-int(log10(fracPart)-0.9999999f);
+  }
+  if(textRounding<=0)tv->print("%2.0f",v);
+  if(textRounding==1)tv->print("%2.1f",v);
+  if(textRounding==2)tv->print("%2.2f",v);
+  if(textRounding==3)tv->print("%2.3",v);
+  if(textRounding==4)tv->print("%2.4f",v);
+  if(textRounding==5)tv->print("%2.5f",v);
+  if(textRounding==5)tv->print("%2.6f",v);
+  if(textRounding>6)tv->print("%f",v);
+  return 0;
+}
+
 int CImageDataWriter::end(){
   #ifdef CIMAGEDATAWRITER_DEBUG    
   CDBDebug("end");
@@ -1946,11 +1971,13 @@ int CImageDataWriter::end(){
   if(writerStatus==finished){CDBError("Already finished");return 1;}
   writerStatus=finished;
   if(requestType==REQUEST_WMS_GETFEATUREINFO){
-    enum ResultFormats {textplain,texthtml,textxml, applicationvndogcgml};
+    enum ResultFormats {textplain,texthtml,textxml, applicationvndogcgml,imagepng};
     ResultFormats resultFormat=texthtml;
     
     if(srvParam->InfoFormat.equals("text/plain"))resultFormat=textplain;
     if(srvParam->InfoFormat.equals("text/xml"))resultFormat=textxml;
+    if(srvParam->InfoFormat.equals("image/png"))resultFormat=imagepng;
+    
     if(srvParam->InfoFormat.equals("application/vnd.ogc.gml"))resultFormat=textxml;//applicationvndogcgml;
     
 
@@ -2089,6 +2116,192 @@ int CImageDataWriter::end(){
       printf("%s",resultXML.c_str());
       
     }
+    
+    if(resultFormat==imagepng){
+      printf("%s%c%c\n","Content-Type:image/png",13,10);
+      if(getFeatureInfoResultList.size()==0){
+        CDBError("Query returned no results");
+        return 1;
+      }
+      
+      float width=srvParam->Geo->dWidth,height=srvParam->Geo->dHeight;
+      float plotHeight=(height*0.80);
+      float plotOffsetY=(height*0.1);
+      float plotWidth=(width*0.90);
+      float plotOffsetX=(width*0.06);
+      CDrawImage linePlot;
+      linePlot.setTrueColor(true);
+      
+      //Set font location
+      const char *fontLocation = NULL;
+      if(srvParam->cfg->WMS[0]->ContourFont.size()!=0){
+        if(srvParam->cfg->WMS[0]->ContourFont[0]->attr.location.c_str()!=NULL){
+          fontLocation=srvParam->cfg->WMS[0]->ContourFont[0]->attr.location.c_str();
+        }else {
+          CDBError("In <Font>, attribute \"location\" missing");
+          return 1;
+        }
+      }
+      
+      linePlot.createImage(int(width),int(height));
+      
+      
+      linePlot.create685Palette();
+      linePlot.rectangle(0,0,width-1,height-1,CColor(0,0,0,255),CColor(255,255,255,255));
+      
+      
+      size_t nrOfTimeSteps = getFeatureInfoResultList.size();
+      size_t nrOfElements = getFeatureInfoResultList[0]->elements.size();
+      
+      
+
+      
+      
+      float values[nrOfElements*nrOfTimeSteps];
+      
+      float minValue[nrOfElements];
+      float maxValue[nrOfElements];
+      
+      
+      //Find min and max values
+      for(size_t elNr=0;elNr<nrOfElements;elNr++){
+        bool foundFirstValue=false;  
+        for(size_t j=0;j<nrOfTimeSteps;j++){
+          GetFeatureInfoResult *g1 = getFeatureInfoResultList[j];
+          GetFeatureInfoResult::Element * e1=g1->elements[elNr];
+          float value = e1->value.toFloat();
+          if(e1->value.c_str()[0]>60)value=NAN;;
+          //if(e1->value.equals(
+          
+          values[j+elNr*nrOfTimeSteps] = value;
+          if(value==value){
+            if(foundFirstValue==false){
+              minValue[elNr]=value;
+              maxValue[elNr]=value;
+              foundFirstValue=true;
+            }else{
+              if(value<minValue[elNr])minValue[elNr]=value;
+              if(value>maxValue[elNr])maxValue[elNr]=value;
+            }
+          }
+        }
+      }
+      
+      minValue[0]=currentStyleConfiguration->legendLowerRange;
+      maxValue[0]=currentStyleConfiguration->legendUpperRange;
+      
+      
+      CDataSource * dataSource=getFeatureInfoResultList[0]->dataSource;
+      float classes=6;
+      int tickRound=0;
+      if(currentStyleConfiguration->styleIndex !=-1){
+        
+        double min=getValueForColorIndex(dataSource,0);
+        double max=getValueForColorIndex(dataSource,240);
+        minValue[0]=min;
+        maxValue[0]=max;
+        CServerConfig::XMLE_Style* style = srvParam->cfg->Style[currentStyleConfiguration->styleIndex];
+        if(style->Legend.size()>0){
+          if(style->Legend[0]->attr.tickinterval.c_str() != NULL){
+            double tickinterval = parseFloat(style->Legend[0]->attr.tickinterval.c_str());
+            if(tickinterval>0.0f){
+              classes=(max-min)/tickinterval;
+            }
+          }
+          if(style->Legend[0]->attr.tickround.c_str() != NULL){
+            double dftickRound = parseFloat(style->Legend[0]->attr.tickround.c_str());
+            CDBDebug("dftickRound = %f",dftickRound );
+            tickRound = int(round(log10(dftickRound))+3);
+            CDBDebug("tickRound = %d %f",tickRound ,log10(dftickRound));
+          }
+        }
+        //if(currentStyleConfiguration->legendClasses!=0){
+          //        classes=currentStyleConfiguration->legendClasses
+          //    }
+      }
+      
+      linePlot.rectangle(plotOffsetX,plotOffsetY,plotWidth+plotOffsetX,plotHeight+plotOffsetY,CColor(0,0,0,255),CColor(240,240,240,255));
+      
+      for(int j=0;j<=classes;j++){
+        char szTemp[256];
+        float c=((float(classes-j)/classes))*(plotHeight);
+        float v=((float(j)/classes))*(240.0f);
+        v-=dataSource->legendOffset;
+        v/=dataSource->legendScale;
+        if(dataSource->legendLog!=0){v=pow(dataSource->legendLog,v);}
+     
+        //linePlot.line((int)cbW-1+pLeft,(int)c+7+dH+pTop,(int)cbW+6+pLeft,(int)c+7+dH+pTop,lineWidth,248);
+        if(j!=0)linePlot.line(plotOffsetX,(int)c+plotOffsetY-0.5,plotOffsetX+plotWidth,(int)c+plotOffsetY-0.5,CColor(128,128,128,128));
+        if(tickRound==0){floatToString(szTemp,255,v);}else{
+          floatToString(szTemp,255,tickRound,v);
+        }
+        //linePlot.setText(szTemp,strlen(szTemp),0,(int)c+plotOffsetY,248,-1);
+        linePlot.drawText(2,(int)c+plotOffsetY+3,fontLocation,6,0,szTemp,CColor(255,0,0,255),CColor(255,255,255,0));
+      }
+  
+      
+      for(size_t elNr=0;elNr<nrOfElements;elNr++){
+        CDBDebug("elNr %d has minValue %f and maxValue %f",elNr,minValue[elNr],maxValue[elNr]);
+      }
+
+      
+     
+      
+      float stepX=float(plotWidth);
+      if(nrOfTimeSteps>1){
+        stepX=float(plotWidth)/float(nrOfTimeSteps-1);;
+      }
+      
+      
+      for(size_t j=0;j<nrOfTimeSteps;j++){
+        int x1=plotOffsetX+(float(j)*float(stepX));
+        linePlot.line(x1,plotOffsetY,x1,plotOffsetY+plotHeight,CColor(128,128,128,128));
+      }
+
+      size_t timeStepsToLoop = nrOfTimeSteps;
+      if(timeStepsToLoop>1)timeStepsToLoop--;
+      for(size_t elNr=0;elNr<nrOfElements;elNr++){
+        for(size_t j=0;j<timeStepsToLoop;j++){
+
+          float v1=values[j+elNr*nrOfTimeSteps];
+          float v2=v1;
+          if(j<nrOfTimeSteps-1){
+            v2=values[j+1+elNr*nrOfTimeSteps];
+          }
+          if(v1==v1&&v2==v2){
+            if(v1<minValue[elNr])v1=minValue[elNr];
+            if(v2<minValue[elNr])v2=minValue[elNr];
+            if(v1>maxValue[elNr])v1=maxValue[elNr];
+            if(v2>maxValue[elNr])v2=maxValue[elNr];
+            //resultXML.printconcat("      <VarName>%s</VarName>\n",e->var_name.c_str());
+            //resultXML.printconcat("      <Value units=\"%s\">%s</Value>\n",e->units.c_str(),e->value.c_str());
+            //resultXML.printconcat("      <Dimension name=\"time\">%s</Dimension>\n",e->time.c_str());
+            int y1=plotOffsetY+plotHeight-((v1-minValue[elNr])/(maxValue[elNr]-minValue[elNr]))*plotHeight;
+            int y2=plotOffsetY+plotHeight-((v2-minValue[elNr])/(maxValue[elNr]-minValue[elNr]))*plotHeight;
+            int x1=plotOffsetX+(float(j)*float(stepX));
+            int x2=plotOffsetX+(float(j+1)*float(stepX));
+            
+            linePlot.line(x1,y1,x2,y2,CColor(255,0,0,255));
+          }
+          //CDBDebug("%f == %d",v1,y1);
+         // linePlot.drawText(5+j*10,y1,fontLocation,8,3.1415/2.0,e1->time.c_str(),CColor(255,0,0,255),CColor(255,255,255,0));
+      }
+      }
+      
+      CT::string title;
+      GetFeatureInfoResult::Element * e=getFeatureInfoResultList[0]->elements[0];
+      title.print("%s - %s (%s)",e->var_name.c_str(),e->feature_name.c_str(),e->units.c_str());
+      linePlot.drawText(plotWidth/2-float(title.length())*2.5,15,fontLocation,8,0,title.c_str(),CColor(255,0,0,255),CColor(255,255,255,0));
+      
+      GetFeatureInfoResult::Element * e2=getFeatureInfoResultList[getFeatureInfoResultList.size()-1]->elements[0];
+      title.print("(%s / %s)",e->time.c_str(),e2->time.c_str());
+      linePlot.drawText(plotWidth/2-float(title.length())*2.5,15+plotHeight+plotOffsetY,fontLocation,8,0,title.c_str(),CColor(255,0,0,255),CColor(255,255,255,0));
+      
+      linePlot.printImagePng();
+      CDBDebug("Done!");
+    }
+    
+    
     for(size_t j=0;j<getFeatureInfoResultList.size();j++){delete getFeatureInfoResultList[j];getFeatureInfoResultList[j]=NULL; } getFeatureInfoResultList.clear();
   }
   if(requestType!=REQUEST_WMS_GETMAP&&requestType!=REQUEST_WMS_GETLEGENDGRAPHIC)return 0;

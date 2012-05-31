@@ -602,7 +602,7 @@ int CRequest::process_all_layers(){
             Query.printconcat(" and a0.path=a%d.path",i);
           }
         }
-        Query.concat(" limit 32");
+        Query.concat(" limit 366");
         //CDBDebug(Query.c_str());
         if(timeValidationError==true){
           if((checkDataRestriction()&SHOW_QUERYINFO)==false)Query.copy("hidden");
