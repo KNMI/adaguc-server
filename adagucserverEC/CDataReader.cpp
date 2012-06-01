@@ -854,10 +854,10 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
     if(dataSource->statistics==NULL){
       
       
-      CT::string dumpString;
-      CDF::dump(cdfObject,&dumpString);
+      //CT::string dumpString;
+      //CDF::dump(cdfObject,&dumpString);
       //CDBDebug("\nSTART\n%s\nEND\n",dumpString.c_str());
-      writeLogFile2(dumpString.c_str());
+      //writeLogFile2(dumpString.c_str());
       
       dataSource->statistics = new CDataSource::Statistics();
       dataSource->statistics->calculate(dataSource);

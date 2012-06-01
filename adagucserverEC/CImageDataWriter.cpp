@@ -124,7 +124,7 @@ int CImageDataWriter::drawCascadedWMS(CDataSource * dataSource, const char *serv
   for(int k=0;k<srvParam->NumOGCDims;k++){
     url.printconcat("&%s=%s",srvParam->OGCDims[k].Name.c_str(),srvParam->OGCDims[k].Value.c_str());
   }
-  CDBDebug(url.c_str());
+  //CDBDebug(url.c_str());
   gdImagePtr gdImage;
   
 
@@ -1663,7 +1663,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
     
         
     if(dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
-      CDBDebug("Drawing cascaded WMS (grid/logo/external");
+      //CDBDebug("Drawing cascaded WMS (grid/logo/external");
       if(dataSource->cfgLayer->WMSLayer.size()==1){
         status = drawCascadedWMS(dataSource,dataSource->cfgLayer->WMSLayer[0]->attr.service.c_str(),dataSource->cfgLayer->WMSLayer[0]->attr.layer.c_str(),true);
         if(status!=0){
@@ -1738,7 +1738,8 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
       double precision=0.25;
       double numTestSteps = 5;
       CColor textColor(0,0,0,128);
-      float lineWidth=0.2;
+      float lineWidth=0.1;
+      int lineColor= 247;
       
       if(dataSource->cfgLayer->Grid[0]->attr.resolution.c_str()!=NULL){
         gridSize = parseFloat(dataSource->cfgLayer->Grid[0]->attr.resolution.c_str());
@@ -1751,7 +1752,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
       bool useProjection = true;
       
       if(srvParam->Geo->CRS.equals("EPSG:4326")){
-        CDBDebug("Not using projection");
+        //CDBDebug("Not using projection");
         useProjection = false;
       }
       
@@ -1861,7 +1862,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
         for(int x=0;x<numPointsX-1;x++){
           size_t p=x+y*numPointsX;
           if(p<numPoints){
-            drawImage.line(gridP[p].x,gridP[p].y,gridP[p+1].x,gridP[p+1].y,lineWidth,248);
+            drawImage.line(gridP[p].x,gridP[p].y,gridP[p+1].x,gridP[p+1].y,lineWidth,lineColor);
             if(drawnTextRight==false){
               if(gridP[p].x>srvParam->Geo->dWidth&&gridP[p].y>0){
                 drawnTextRight=true;
@@ -1898,7 +1899,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
         for(int y=numPointsY-2;y>=0;y--){
           size_t p=x+y*numPointsX;
           if(p<numPoints){
-            drawImage.line(gridP[p].x,gridP[p].y,gridP[p+numPointsX].x,gridP[p+numPointsX].y,lineWidth,248);
+            drawImage.line(gridP[p].x,gridP[p].y,gridP[p+numPointsX].x,gridP[p+numPointsX].y,lineWidth,lineColor);
             
             if(drawnTextBottom==false){
               if(gridP[p].x>0&&gridP[p].y>srvParam->Geo->dHeight){
@@ -2494,9 +2495,9 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
         }
         if(style->Legend[0]->attr.tickround.c_str() != NULL){
           double dftickRound = parseFloat(style->Legend[0]->attr.tickround.c_str());
-          CDBDebug("dftickRound = %f",dftickRound );
+          //CDBDebug("dftickRound = %f",dftickRound );
           tickRound = int(round(log10(dftickRound))+3);
-          CDBDebug("tickRound = %d %f",tickRound ,log10(dftickRound));
+          //CDBDebug("tickRound = %d %f",tickRound ,log10(dftickRound));
         }
       }
       //if(currentStyleConfiguration->legendClasses!=0){

@@ -597,7 +597,7 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
   status = DB.close();if(status!=0)return 1;
 
   CDBDebug("*** Finished update layer '%s' ***\n",dataSource->cfgLayer->Name[0]->value.c_str());
-  //printStatus("OK","HOi %s","Maarten");
+
   return 0;
 }
 

@@ -464,7 +464,7 @@ CDBDebug("Querying %s",query.c_str());
                 //2011-01-01T22:00:01Z
                 //01234567890123456789
                 values[j].setChar(10,'T');
-                values[j].setChar(19,'Z');
+                values[j].concat("Z");
               }
             }
             dim->defaultValue.copy(values[0].c_str());

@@ -2,7 +2,7 @@
 const char *CDFObjectStore::className="CDFObjectStore";
 
 
-#define MAX_OPEN_FILES 32
+#define MAX_OPEN_FILES 128
 extern CDFObjectStore cdfObjectStore;
 CDFObjectStore cdfObjectStore;
 /**
@@ -71,7 +71,9 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,const char *file
   cdfObject->attachCDFReader(cdfReader);
   
   //Open the object.
+  #ifdef CDATAREADER_DEBUG           
   CDBDebug("Opening %s",fileName);
+  #endif
   int status = cdfObject->open(fileName);
   if(status!=0){
     //TODO in case of basic/digest authentication, username and password is currently also listed....

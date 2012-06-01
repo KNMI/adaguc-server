@@ -96,13 +96,14 @@ int CRequest::setConfigFile(const char *pszConfigFile){
       
     
       try{
-        const char * baseDir="/nobackup/users/plieger/projects/euro4m/euro4m02data/";
+        const char * baseDir=srvParam->cfg->Layer[j]->FilePath[0]->value.c_str();
         
         CDirReader dirReader;
-        if(dirReader.listDirRecursive(baseDir,"^.*nc$")!=0){
+        CDBFileScanner::searchFileNames(&dirReader,baseDir,srvParam->cfg->Layer[j]->FilePath[0]->attr.filter.c_str(),NULL);
+        /*if(dirReader.listDirRecursive(baseDir,"^.*nc$")!=0){
           CDBError("Unable to list directory '%s'",baseDir);
           throw(__LINE__);
-        }
+        }*/
         if(dirReader.fileList.size()==0){
           CDBError("Could not find any file in directory '%s'",baseDir);
           throw(__LINE__);
@@ -1948,9 +1949,20 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan){
   
   CT::string cacheFileName;
   srvParam->getCacheFileName(&cacheFileName);
-  //printf("\nInvalidating cachefile %s...\n",cacheFileName.c_str());
-  if(cacheFileName.length()>0){
-    remove(cacheFileName.c_str());
+  
+  //Remove the cache file, but check first wether it exists or not.
+  struct stat stFileInfo;
+  int intStat;
+  intStat = stat(cacheFileName.c_str(),&stFileInfo);
+  CT::string cacheBuffer;
+  //The file exists, so remove it.
+  if(intStat == 0) {
+    CDBDebug("Removing cachefile %s ",cacheFileName.c_str());
+    if(cacheFileName.length()>0){
+      if(remove(cacheFileName.c_str())!=0){
+        CDBError("Unable to remove cachefile %s, please do it manually.",cacheFileName.c_str());
+      }
+    }
   }
   /*
   CSimpleStore simpleStore;
