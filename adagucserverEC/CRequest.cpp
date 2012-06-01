@@ -73,6 +73,7 @@ int CRequest::setConfigFile(const char *pszConfigFile){
     CDBError("Invalid XML file %s",pszConfigFile);
     return 1;
   }
+  //Check for mandatory attributes
   for(size_t j=0;j<srvParam->cfg->Layer.size();j++){
     if(srvParam->cfg->Layer[j]->attr.type.equals("database")){
       if(srvParam->cfg->Layer[j]->Variable.size()==0){
@@ -83,6 +84,79 @@ int CRequest::setConfigFile(const char *pszConfigFile){
         CDBError("Configuration error at layer %d: <FilePath> not defined",j);
         return 1;
       }
+    }
+  }
+  //Check for autoscan elements
+  for(size_t j=0;j<srvParam->cfg->Layer.size();j++){
+    if(srvParam->cfg->Layer[j]->attr.type.equals("autoscan")){
+      if(srvParam->cfg->Layer[j]->FilePath.size()==0){
+        CDBError("Configuration error at layer %d: <FilePath> not defined",j);
+        return 1;
+      }
+      
+    
+      try{
+        const char * baseDir="/nobackup/users/plieger/projects/euro4m/euro4m02data/";
+        
+        CDirReader dirReader;
+        if(dirReader.listDirRecursive(baseDir,"^.*nc$")!=0){
+          CDBError("Unable to list directory '%s'",baseDir);
+          throw(__LINE__);
+        }
+        if(dirReader.fileList.size()==0){
+          CDBError("Could not find any file in directory '%s'",baseDir);
+          throw(__LINE__);
+        }
+        for(size_t j=0;j<dirReader.fileList.size();j++){
+          CT::string baseDirStr = baseDir;
+          CT::string groupName = dirReader.fileList[j]->fullName.c_str();
+          CT::string baseName = dirReader.fileList[j]->fullName.c_str();
+          groupName.substring(baseDirStr.length(),-1);
+          //int lastSlash = baseName.lastIndexOf("/")+1;
+          //baseName.substring(lastSlash,-1);
+          
+        
+        
+       
+      
+          //Open file
+          CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObject(NULL,dirReader.fileList[j]->fullName.c_str());
+          if(cdfObject == NULL){CDBError("Unable to read file %s",dirReader.fileList[j]->fullName.c_str());throw(__LINE__);}
+          
+          //List variables
+          for(size_t v=0;v<cdfObject->variables.size();v++){
+            CDF::Variable *var=cdfObject->variables[v];
+            if(var->isDimension==false){
+              if(var->dimensionlinks.size()>=2){
+                CServerConfig::XMLE_Layer *xmleLayer=new CServerConfig::XMLE_Layer();
+                CServerConfig::XMLE_Group* xmleGroup = new CServerConfig::XMLE_Group();
+                CServerConfig::XMLE_Variable* xmleVariable = new CServerConfig::XMLE_Variable();
+                CServerConfig::XMLE_FilePath* xmleFilePath = new CServerConfig::XMLE_FilePath();
+                CServerConfig::XMLE_Cache* xmleCache = new CServerConfig::XMLE_Cache();
+                xmleCache->attr.enabled.copy("false");
+                xmleLayer->attr.type.copy("database");
+                xmleVariable->value.copy(var->name.c_str());
+                xmleFilePath->value.copy(dirReader.fileList[j]->fullName.c_str());
+                xmleGroup->attr.value.copy(groupName.c_str());
+                xmleLayer->Variable.push_back(xmleVariable);
+                xmleLayer->FilePath.push_back(xmleFilePath);
+                xmleLayer->Cache.push_back(xmleCache);
+                xmleLayer->Group.push_back(xmleGroup);
+                srvParam->cfg->Layer.push_back(xmleLayer);              
+              }
+            }
+          }
+    
+          
+          
+        }
+        
+        
+        
+      }catch(int line){
+        return 1;
+      }
+      
     }
   }
   return status;
@@ -1828,7 +1902,7 @@ int CRequest::process_querystring(){
 
 
 int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan){
- 
+  int errorHasOccured = 0;
   int status;
   //Fill in all data sources from the configuratin object
   size_t numberOfLayers = srvParam->cfg->Layer.size();
@@ -1857,7 +1931,7 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan){
 //       }
 //       if(found==0){
         status = CDBFileScanner::updatedb(srvParam->cfg->DataBase[0]->attr.parameters.c_str(),dataSources[j],tailPath,layerPathToScan);
-        if(status !=0){CDBError("Could not update db for: %s",dataSources[j]->cfgLayer->Name[0]->value.c_str());return 1;}
+        if(status !=0){CDBError("Could not update db for: %s",dataSources[j]->cfgLayer->Name[0]->value.c_str());errorHasOccured++;}
 /*
         //Remember that we did this table allready
         tablesdone[nrtablesdone].copy(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str());
@@ -1883,9 +1957,12 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan){
   status = getDocFromDocCache(&simpleStore,NULL,NULL);  
   simpleStore.setStringAttribute("configModificationDate","needsupdate!");
   if(storeDocumentCache(&simpleStore)!=0)return 1;*/
-  
-  CDBDebug("***** Finished DB Update *****");
-  return 0;
+  if(errorHasOccured){
+    CDBDebug("***** Finished DB Update with %d errors *****",errorHasOccured);
+  }else{
+    CDBDebug("***** Finished DB Update *****");
+  }
+  return errorHasOccured;
 }
 
 

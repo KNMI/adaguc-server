@@ -119,8 +119,8 @@ int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,in
         if(status==0){
           //Table already exists....
           CDBError("*** WARNING: Temporary table %s already exists. Is another process updating the database? ***",tableName_temp.c_str());
-          CDBDebug("*** DROPPING TEMPORARY TABLE: %s",query.c_str());
           query.print("drop table %s",tableName_temp.c_str());
+          CDBDebug("*** DROPPING TEMPORARY TABLE: %s",query.c_str());
           if(DB->query(query.c_str())!=0){
             CDBError("Query %s failed",query.c_str());
             DB->close();

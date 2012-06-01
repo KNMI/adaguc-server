@@ -531,6 +531,7 @@ CT::stringlist *CImageDataWriter::getStyleListForDataSource(CDataSource *dataSou
           if(!styleNames->get(i)->equals("default")){
             CDBError("Style %s not found for layer %s",styleNames->get(i)->c_str(),dataSource->layerName.c_str());
             delete styleNames;styleNames = NULL;
+            delete stringList;stringList = NULL;
             return NULL;
           }else{
             CT::string * styleName = new CT::string();

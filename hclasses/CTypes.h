@@ -190,6 +190,8 @@ class string:public basetype{
       return 0;
     }
     int replace(const char *substr,size_t substrl,const char *newString,size_t newStringl){
+      if(this->privatelength==0)return 0;
+      if(this->value==NULL)return 0;
       CT::string thisString;
       thisString.copy(value,privatelength);
       std::vector<int>occurences;

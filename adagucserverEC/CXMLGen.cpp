@@ -32,19 +32,24 @@ CDBDebug("getFileNameForLayer");
   }
 
   int status;
-  
+ 
  
   if(myWMSLayer->dataSource->dLayerType==CConfigReaderLayerTypeDataBase||
     myWMSLayer->dataSource->dLayerType==CConfigReaderLayerTypeStyled){
       if(myWMSLayer->dataSource->cfgLayer->Dimension.size()==0){
+       
         if(CDataReader::autoConfigureDimensions(myWMSLayer->dataSource)!=0){
           CDBError("Unable to autoconfigure dimensions");
           return 1;
         }
+       
       }
-    
+     
       //Check if any dimension is given:
       if(myWMSLayer->layer->Dimension.size()==0){
+        #ifdef CXMLGEN_DEBUG        
+        CDBDebug("Layer %s has no dimensions",myWMSLayer->dataSource->layerName.c_str());
+        #endif   
         //If not, just return the filename
         CDirReader dirReader;
         CDBFileScanner::searchFileNames(&dirReader,myWMSLayer->dataSource->cfgLayer->FilePath[0]->value.c_str(),myWMSLayer->dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),NULL);
@@ -56,7 +61,7 @@ CDBDebug("getFileNameForLayer");
         return 0;
       }
       CPGSQLDB DB;
-      
+     
       status = DB.connect(srvParam->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0)return 1;
       CT::string tableName(myWMSLayer->layer->DataBaseTable[0]->value.c_str());
 #ifdef CXMLGEN_DEBUG        
@@ -69,6 +74,8 @@ CDBDebug("getFileNameForLayer");
 #ifdef CXMLGEN_DEBUG              
       CDBDebug("query %s",query.c_str());        
 #endif      
+      
+      bool databaseError = false;
       CT::string *values = DB.query_select(query.c_str(),0);
       if(values == NULL&&srvParam->isAutoOpenDAPEnabled()==true){
         CDBDebug("Query '%s' failed. Now trying to update the database.",query.c_str());
@@ -79,19 +86,30 @@ CDBDebug("getFileNameForLayer");
         return getFileNameForLayer(myWMSLayer);
       }
       if(values==NULL){
-        return 1;
+        CDBError("No files found for %s",myWMSLayer->dataSource->layerName.c_str());
+        databaseError=true;
       }
-      if(values->count>0){
-#ifdef CXMLGEN_DEBUG            
-        CDBDebug("Query '%s' succeeded: Filename = %s",query.c_str(),values[0].c_str());
-#endif        
-        myWMSLayer->fileName.copy(&values[0]);
+        if(databaseError == false){
+        if(values->count>0){
+  #ifdef CXMLGEN_DEBUG            
+          CDBDebug("Query '%s' succeeded: Filename = %s",query.c_str(),values[0].c_str());
+  #endif        
+          myWMSLayer->fileName.copy(&values[0]);
+        }else{
+          //The file is not in the database, probably an error during the database scan has been detected earlier.
+          //Ignore the file for now too
+          CDBError("Query '%s' not succeeded",query.c_str(),myWMSLayer->layer->FilePath[0]->value.c_str());
+          databaseError=true;
+        }
+        delete[] values;
       }
-      delete[] values;
       DB.close();
 #ifdef CXMLGEN_DEBUG                  
       CDBDebug("/Database");  
 #endif      
+      if(databaseError){
+        return 1;
+      }
     }
     //If this layer is a file type layer (not a database type layer) TODO type file is deprecated...
     if(myWMSLayer->layer->attr.type.equals("file")){
@@ -104,29 +122,47 @@ CDBDebug("getFileNameForLayer");
       pathFileName.concat(&myWMSLayer->fileName);
       myWMSLayer->fileName.copy(pathFileName.c_str(),pathFileName.length());
     }
+   
     return 0;
 }
 
+
+/**
+ * 
+ * 
+ */
 int CXMLGen::getDataSourceForLayer(WMSLayer * myWMSLayer, CDataReader *reader){
 #ifdef CXMLGEN_DEBUG
 CDBDebug("getDataSourceForLayer");
 #endif 
    //Is this a cascaded WMS server?
   if(myWMSLayer->dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
-  #ifdef CXMLGEN_DEBUG    
-  CDBDebug("Cascaded layer");
-  #endif    
-  if(myWMSLayer->dataSource->cfgLayer->Title.size()!=0){
-    myWMSLayer->title.copy(myWMSLayer->dataSource->cfgLayer->Title[0]->value.c_str());
-  }else{
-    myWMSLayer->title.copy(myWMSLayer->dataSource->cfgLayer->Name[0]->value.c_str());
+    #ifdef CXMLGEN_DEBUG    
+    CDBDebug("Cascaded layer");
+    #endif    
+    if(myWMSLayer->dataSource->cfgLayer->Title.size()!=0){
+      myWMSLayer->title.copy(myWMSLayer->dataSource->cfgLayer->Title[0]->value.c_str());
+    }else{
+      myWMSLayer->title.copy(myWMSLayer->dataSource->cfgLayer->Name[0]->value.c_str());
+    }
+    return 0;
   }
-  return 0;
+  if(myWMSLayer->fileName.c_str()==NULL){
+    CDBError("No file name specified for layer %s",myWMSLayer->dataSource->layerName.c_str());
+    return 1;
   }
-  //CDBDebug("Reading %s",myWMSLayer->fileName.c_str());
 
+#ifdef CXMLGEN_DEBUG    
+  CDBDebug("Setting filename for database layer: '%s'",myWMSLayer->fileName.c_str());
+#endif      
+
+myWMSLayer->dataSource->addTimeStep(myWMSLayer->fileName.c_str(),"");
   
-  myWMSLayer->dataSource->addTimeStep(myWMSLayer->fileName.c_str(),"");
+#ifdef CXMLGEN_DEBUG    
+  CDBDebug("Getting filename for database layer: '%s'",myWMSLayer->dataSource->getFileName());
+#endif      
+  
+  
 
   
   //Is this a local file based WMS server?
@@ -359,7 +395,9 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
                   //Check whether we found a time resolution
                   if(isConst == false){
                     hasMultipleValues=true;
+#ifdef CXMLGEN_DEBUG    
                     CDBDebug("Not a continous time dimension, multipleValues required");
+#endif      
                   }else{
                     hasMultipleValues=false;
                   }
@@ -1106,7 +1144,9 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
   std::vector<WMSLayer*> myWMSLayerList;
   
   for(size_t j=0;j<srvParam->cfg->Layer.size();j++){
-   
+    if(srvParam->cfg->Layer[j]->attr.type.equals("autoscan")){
+      continue;
+    }
     bool hideLayer=false;
     if(srvParam->cfg->Layer[j]->attr.hidden.equals("true"))hideLayer=true;
  
@@ -1153,50 +1193,51 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
 
         //Get a default file name for this layer to obtain some information
         status = getFileNameForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;
-        
-        //Try to open the file, and make a datasource for the layer
-        CDataReader *reader = new CDataReader();
-        
-        if(myWMSLayer->hasError==false){status = getDataSourceForLayer(myWMSLayer,reader);if(status != 0)myWMSLayer->hasError=1;}
-        
-        if(myWMSLayer->dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
-          myWMSLayer->isQuerable=0;
-          if(srvParam->serviceType==SERVICE_WCS){
-            myWMSLayer->hasError=true;
-          }
-        }
-        //Generate a common projection list information
-        if(myWMSLayer->hasError==false){status = getProjectionInformationForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;}
-        
-        //Get the dimensions and its extents for this layer
-        if(myWMSLayer->hasError==false){status = getDimsForLayer(myWMSLayer,reader);if(status != 0)myWMSLayer->hasError=1;}
-      
-      
-        //Auto configure styles
-        if(myWMSLayer->hasError==false){
-          if(myWMSLayer->dataSource->cfgLayer->Styles.size()==0){
-            if(myWMSLayer->dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
-              
-              status=CDataReader::autoConfigureStyles(myWMSLayer->dataSource);
-              if(status != 0){myWMSLayer->hasError=1;CDBError("Unable to autoconfigure styles for layer %s",layerUniqueName.c_str());}
+        if(myWMSLayer->hasError == false){
+          //Try to open the file, and make a datasource for the layer
+          CDataReader *reader = new CDataReader();
+          
+          if(myWMSLayer->hasError==false){status = getDataSourceForLayer(myWMSLayer,reader);if(status != 0)myWMSLayer->hasError=1;}
+          
+          if(myWMSLayer->dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
+            myWMSLayer->isQuerable=0;
+            if(srvParam->serviceType==SERVICE_WCS){
+              myWMSLayer->hasError=true;
             }
           }
+          //Generate a common projection list information
+          if(myWMSLayer->hasError==false){status = getProjectionInformationForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;}
+          
+          //Get the dimensions and its extents for this layer
+          if(myWMSLayer->hasError==false){status = getDimsForLayer(myWMSLayer,reader);if(status != 0)myWMSLayer->hasError=1;}
+        
+        
+          //Auto configure styles
+          if(myWMSLayer->hasError==false){
+            if(myWMSLayer->dataSource->cfgLayer->Styles.size()==0){
+              if(myWMSLayer->dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
+                
+                status=CDataReader::autoConfigureStyles(myWMSLayer->dataSource);
+                if(status != 0){myWMSLayer->hasError=1;CDBError("Unable to autoconfigure styles for layer %s",layerUniqueName.c_str());}
+              }
+            }
+          }
+          
+          
+          
+          reader->close();
+          
+          delete reader;reader=NULL;
+          
+          //Get the defined styles for this layer
+          status = getStylesForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;
         }
-        
-        
-        
-        reader->close();
-        
-        delete reader;reader=NULL;
-        
-        //Get the defined styles for this layer
-        status = getStylesForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;
       
       }
     }
   }
   
-  
+
   //Remove layers which have an error
   for(size_t j=0;j<myWMSLayerList.size();j++){
     if(myWMSLayerList[j]->hasError){

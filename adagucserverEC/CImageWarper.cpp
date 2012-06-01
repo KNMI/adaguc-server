@@ -353,6 +353,18 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
     dfBBOX[0]=minx1;
     dfBBOX[2]=maxx1;
     
+    if(dMaxExtentDefined==0){
+      //CDBDebug("sourceImage->nativeProj4 %s %d",sourceImage->nativeProj4.c_str(), sourceImage->nativeProj4.indexOf("geos")>0);
+      if( sourceImage->nativeProj4.indexOf("geos")>0){
+        dfMaxExtent[0]=-80;
+        dfMaxExtent[1]=-80;
+        dfMaxExtent[2]=80;
+        dfMaxExtent[3]=80;
+        reprojfromLatLon(dfMaxExtent[0],dfMaxExtent[1]);
+        reprojfromLatLon(dfMaxExtent[2],dfMaxExtent[3]);
+        dMaxExtentDefined=1;
+      }
+    }
     
     //Check if values are within allowable extent:
     if(dMaxExtentDefined==1){

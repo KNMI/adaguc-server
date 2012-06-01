@@ -317,7 +317,7 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
         autoConfigureDimensions(dataSource);
       }
     }
-  
+    
 
     //Check if our variable has a statusflag
     std::vector<CDataSource::StatusFlag*> *statusFlagList=&dataSource->dataObject[0]->statusFlagList;
@@ -331,13 +331,25 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
     dataSource->dataObject[0]->hasStatusFlag=hasStatusFlag;
     //CDBDebug("Getting info for variable %s",dataSource->dataObject[varNr]->variableName.c_str());
   }
-
+  
   // It is possible to skip every N cell in x and y. When set to 1, all data is displayed.
   // When set to 2, every second datacell is displayed, etc...
   
  
   // Retrieve X, Y Dimensions and Width, Height
   dataSource->dNetCDFNumDims = var[0]->dimensionlinks.size();
+  
+  if(dataSource->dNetCDFNumDims<2){
+    CDBError("Variable %s has less than two dimensions", var[0]->name.c_str());
+    return 1;
+  }
+  
+  #ifdef CDATAREADER_DEBUG  
+  CDBDebug("Number of dimensions = %d",dataSource->dNetCDFNumDims);
+  #endif
+  
+  
+  
   int dimXIndex=dataSource->dNetCDFNumDims-1;
   int dimYIndex=dataSource->dNetCDFNumDims-2;
   
@@ -345,8 +357,10 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
 
   //If our X dimension has a character y/lat in it, XY dims are probably swapped.
   CT::string dimensionXName=var[0]->dimensionlinks[dimXIndex]->name.c_str();
+  
   dimensionXName.toLowerCase();
   if(dimensionXName.indexOf("y")!=-1||dimensionXName.indexOf("lat")!=-1)swapXYDimensions=true;
+  
   //swapXYDimensions=true;
   if(swapXYDimensions){
     dimXIndex=dataSource->dNetCDFNumDims-2;
@@ -355,6 +369,7 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
   
   CDF::Dimension *dimX=var[0]->dimensionlinks[dimXIndex];
   CDF::Dimension *dimY=var[0]->dimensionlinks[dimYIndex];
+  
   if(dimX==NULL||dimY==NULL){CDBError("X and or Y dims not found...");return 1;}
   
   int stride2DMap=1;
@@ -411,7 +426,7 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
       return 1;
     }
  // }
-  
+ 
   // Calculate cellsize based on read X,Y dims
   double *dfdim_X=(double*)varX->data;
   double *dfdim_Y=(double*)varY->data;
@@ -833,10 +848,17 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
     }
   }
   
-  //Use autoscale of legendcolors when the scale factor has been set to zero.
+  //Use autoscale of legendcolors when the legendscale factor has been set to zero.
   if(dataSource->legendScale==0.0f)dataSource->stretchMinMax=true;else dataSource->stretchMinMax=false;
   if(dataSource->stretchMinMax){
     if(dataSource->statistics==NULL){
+      
+      
+      CT::string dumpString;
+      CDF::dump(cdfObject,&dumpString);
+      //CDBDebug("\nSTART\n%s\nEND\n",dumpString.c_str());
+      writeLogFile2(dumpString.c_str());
+      
       dataSource->statistics = new CDataSource::Statistics();
       dataSource->statistics->calculate(dataSource);
       #ifdef MEASURETIME
@@ -1413,7 +1435,7 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
     if(dataSource->dataObject[0]->cdfVariable==NULL){CDBDebug("dataSource->dataObject[0]->cdfVariable==NULL");throw(__LINE__);}
     //CDBDebug("OK %d",dataSource->cfgLayer->Dimension.size());
     if(dataSource->cfgLayer->Dimension.size()==0){
-    
+      
       
       //No dimensions are configured by the user, try to configure them automatically here.
       if(dataSource->dataObject[0]->cdfVariable->dimensionlinks.size()>=2){
@@ -1426,7 +1448,7 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
           status = DB.connect(dataSource->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0){CDBError("Error Could not connect to the database");throw(__LINE__);}
           status = DB.checkTable(tableName.c_str(),tableColumns.c_str());
           if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tableName.c_str(),tableColumns.c_str()); DB.close();throw(__LINE__);  }
-
+          
           CDF::Variable *variable=dataSource->dataObject[0]->cdfVariable;
           //CDBDebug("OK %d",variable->dimensionlinks.size()-2);
           
@@ -1440,6 +1462,7 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
           }
           
           for(size_t d=0;d<variable->dimensionlinks.size()-2;d++){
+            
             CDF::Dimension *dim=variable->dimensionlinks[d];
             if(dim!=NULL){
               CDF::Variable *dimVar=dataSource->dataObject[0]->cdfObject->getVariable(dim->name.c_str());
@@ -1466,6 +1489,7 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
               CDBDebug("variable->dimensionlinks[d]");
             }
           }
+          
         }catch(int e){
           CT::string errorMessage;CDF::getErrorMessage(&errorMessage,e); CDBDebug("Unable to configure dims automatically: %s (%d)",errorMessage.c_str(),e);    
           throw(e);
@@ -1486,6 +1510,7 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
 
 
 int CDataReader::autoConfigureStyles(CDataSource *dataSource){
+  
   bool useDBCache = false;
 #ifdef CDATAREADER_DEBUG     
   CDBDebug("autoConfigureStyles");
@@ -1562,24 +1587,34 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
     // We now have the keyword searchname, with this keyword we are going to lookup all StandardName's in the server configured Styles
     CT::string styles="";
     for(size_t j=0;j<dataSource->cfg->Style.size();j++){
+      
       const char *styleName=dataSource->cfg->Style[j]->attr.name.c_str();
       //CDBDebug("Searching Style \"%s\"",styleName);
-      if(styleName!=NULL){
+      
+      if(styleName!=NULL)
+        {
         for(size_t i=0;i<dataSource->cfg->Style[j]->StandardNames.size();i++){
+          
           CT::string standard_name;
           CT::string units;
+          
           if(dataSource->cfg->Style[j]->StandardNames[i]->attr.standard_name.c_str()!=NULL){
+            
             standard_name.copy(dataSource->cfg->Style[j]->StandardNames[i]->attr.standard_name.c_str());
           }
+          
           standard_name.toLowerCase();
           standard_name.replace("_"," ");
+          
           if(dataSource->cfg->Style[j]->StandardNames[i]->attr.units.c_str()!=NULL){
+            
             units.copy(dataSource->cfg->Style[j]->StandardNames[i]->attr.units.c_str());
           }
           units.toLowerCase();
           
-          
-          //CDBDebug("Searching StandardNames \"%s\"",standard_name.c_str());
+          #ifdef CDATAREADER_DEBUG  
+          CDBDebug("Searching StandardNames \"%s\"",standard_name.c_str());
+          #endif
           if(standard_name.length()>0){
             CT::stringlist *standardNameList=standard_name.splitN(",");
             for(size_t n=0;n<(*standardNameList).size();n++){
@@ -1590,13 +1625,19 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
                   if(dataSourceUnits.equals(&units))unitsMatch = true;
                 }
                 if(unitsMatch){
-                  //CDBDebug("*** Match: \"%s\" ~~ \"%s\"",searchName.c_str(),(*standardNameList)[n]->c_str());
+                  #ifdef CDATAREADER_DEBUG  
+                  CDBDebug("*** Match: \"%s\" ~~ \"%s\"",searchName.c_str(),(*standardNameList)[n]->c_str());
+                  #endif
                   if(styles.length()!=0)styles.concat(",");
                   styles.concat(dataSource->cfg->Style[j]->attr.name.c_str());
                 }
               }
             }
             delete standardNameList;
+          }
+          if(standard_name.equals("*")){
+            if(styles.length()!=0)styles.concat(",");
+            styles.concat(dataSource->cfg->Style[j]->attr.name.c_str());
           }
         }
       }     

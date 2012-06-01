@@ -50,13 +50,13 @@ class CDataSource{
 #ifdef MEASURETIME
   StopWatch_Stop("Start min/max calculation");
 #endif
- 
+      //CDBDebug("nodataval %f",(T)dataObject->dfNodataValue);
         T _min=(T)0.0f,_max=(T)0.0f;
         int firstDone=0;
         for(size_t p=0;p<size;p++){
           T v=data[p];
 
-          if((((double)v)!=dataObject->dfNodataValue||(!dataObject->hasNodataValue))&&v==v){
+          if((((T)v)!=(T)dataObject->dfNodataValue||(!dataObject->hasNodataValue))&&v==v){
             if(firstDone==0){
               _min=v;_max=v;
               firstDone=1;

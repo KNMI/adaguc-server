@@ -2,7 +2,7 @@
 const char *CDFObjectStore::className="CDFObjectStore";
 
 
-
+#define MAX_OPEN_FILES 32
 extern CDFObjectStore cdfObjectStore;
 CDFObjectStore cdfObjectStore;
 /**
@@ -52,6 +52,9 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,const char *file
       return cdfObjects[j];
     }
   }
+  if(cdfObjects.size()>MAX_OPEN_FILES){
+    deleteCDFObject(&cdfObjects[0]);
+  }
   #ifdef CDATAREADER_DEBUG              
   CDBDebug("Creating CDFObject with filename %s",fileName);
   #endif      
@@ -89,6 +92,7 @@ CDFObjectStore *CDFObjectStore::getCDFObjectStore(){return &cdfObjectStore;};
 CDFObject *CDFObjectStore::deleteCDFObject(CDFObject **cdfObject){
   for(size_t j=0;j<cdfObjects.size();j++){
     if(cdfObjects[j]==(*cdfObject)){
+      CDBDebug("Closing %s",fileNames[j]->c_str());
       delete cdfObjects[j];cdfObjects[j]=NULL;(*cdfObject)=NULL;
       delete fileNames[j]; fileNames[j] = NULL;
       delete cdfReaders[j];cdfReaders[j] = NULL;
