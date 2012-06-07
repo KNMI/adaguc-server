@@ -108,7 +108,9 @@ int CRequest::setConfigFile(const char *pszConfigFile){
           CDBError("Could not find any file in directory '%s'",baseDir);
           throw(__LINE__);
         }
+        size_t nrOfFileErrors=0;
         for(size_t j=0;j<dirReader.fileList.size();j++){
+          try{
           CT::string baseDirStr = baseDir;
           CT::string groupName = dirReader.fileList[j]->fullName.c_str();
           CT::string baseName = dirReader.fileList[j]->fullName.c_str();
@@ -148,11 +150,14 @@ int CRequest::setConfigFile(const char *pszConfigFile){
             }
           }
     
-          
+          }catch(int e){
+            nrOfFileErrors++;
+          }
           
         }
-        
-        
+        if(nrOfFileErrors!=0){
+          CDBError("%d files are not readable",nrOfFileErrors);
+        }
         
       }catch(int line){
         return 1;
@@ -1112,6 +1117,16 @@ int CRequest::process_querystring(){
         delete[] bboxvalues;
         dFound_BBOX=1;
       }
+      
+      if(value0Cap.equals("FIGWIDTH")){
+        srvParam->figWidth=atoi(values[1].c_str());
+        if(srvParam->figWidth<1)srvParam->figWidth=-1;
+      }
+      if(value0Cap.equals("FIGHEIGHT")){
+        srvParam->figHeight=atoi(values[1].c_str());
+        if(srvParam->figHeight<1)srvParam->figHeight=-1;
+      }
+      
       // Width Parameters
       if(value0Cap.equals("WIDTH")){
         srvParam->Geo->dWidth=atoi(values[1].c_str());
@@ -1643,15 +1658,7 @@ int CRequest::process_querystring(){
               break;
             }
           }
-          /*if(dataSource->cfgLayer->WMSFormat.size()>0){
-            if(dataSource->cfgLayer->WMSFormat[0]->attr.name.equals("image/png32")){
-              drawImage.setTrueColor(true);
-            }
-            if(dataSource->cfgLayer->WMSFormat[0]->attr.format.equals("image/png32")){
-              drawImage.setTrueColor(true);
-            }
-          }*/
-          
+    
           // Set format
           if(srvParam->Format.indexOf("24")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG32;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
           else if(srvParam->Format.indexOf("32")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG32;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
@@ -1752,9 +1759,6 @@ int CRequest::process_querystring(){
           if(status != 0) {
             if(status!=2){
               CDBError("WMS GetFeatureInfo Request failed");
-            }else {
-              printf("%s%c%c\n","Content-Type:text/plain",13,10);
-              printf("No results from query.");
             }
             return 1;
           }
@@ -1891,12 +1895,11 @@ int CRequest::process_querystring(){
       return process_wcs_getcap_request();
     }
   }
+  //An error occured, stopping..
   if(dErrorOccured==1){
-    //CDBError("An error occured, stopping...");
     return 0;
   }
   CDBWarning("Invalid value for request. Supported requests are: getcapabilities, getmap, getfeatureinfo and getlegendgraphic");
-//  StopWatch_Time("QUERY_STRING parsed");
 
   return 0;
 }
@@ -1918,35 +1921,14 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan){
 
   srvParam->requestType=REQUEST_UPDATEDB;
 
-  //CDataReader reader;
-  //CT::string tablesdone[numberOfLayers];
-  //int nrtablesdone=0;
   for(size_t j=0;j<numberOfLayers;j++){
     if(dataSources[j]->dLayerType==CConfigReaderLayerTypeDataBase){
-
-//       int i,found=0;
-//       //Make sure we are not updating the table twice
-// 
-//       for(i=0;i<nrtablesdone;i++){
-//         if(tablesdone[i].equals(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str())){found=1;break;}
-//       }
-//       if(found==0){
         status = CDBFileScanner::updatedb(srvParam->cfg->DataBase[0]->attr.parameters.c_str(),dataSources[j],tailPath,layerPathToScan);
         if(status !=0){CDBError("Could not update db for: %s",dataSources[j]->cfgLayer->Name[0]->value.c_str());errorHasOccured++;}
-/*
-        //Remember that we did this table allready
-        tablesdone[nrtablesdone].copy(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str());
-        nrtablesdone++;
-      }else{
-        CDBDebug("Layer %s is already done",dataSources[j]->cfgLayer->Name[0]->value.c_str());
-      }*/
     }
   }
 
-  
-  
   //invalidate cache
-  
   CT::string cacheFileName;
   srvParam->getCacheFileName(&cacheFileName);
   

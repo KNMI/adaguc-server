@@ -2127,6 +2127,8 @@ int CImageDataWriter::end(){
       }
       
       float width=srvParam->Geo->dWidth,height=srvParam->Geo->dHeight;
+      if(srvParam->figWidth>1)width=srvParam->figWidth;
+      if(srvParam->figHeight>1)height=srvParam->figHeight;
       float plotHeight=(height*0.80);
       float plotOffsetY=(height*0.1);
       float plotWidth=(width*0.90);

@@ -518,6 +518,9 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
     }
   }
   //CDBDebug("proj4=%s",dataSource->nativeProj4.c_str());
+  
+  
+  
   //Determine dataSource->dataObject[0]->dataType of the variable we are going to read
   for(size_t varNr=0;varNr<dataSource->dataObject.size();varNr++){
     dataSource->dataObject[varNr]->dataType=var[varNr]->type;
@@ -538,12 +541,13 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
       dataSource->dataObject[varNr]->units.copy((char*)varUnits->data);
     }else dataSource->dataObject[varNr]->units.copy("");
   
-    // Check for packed data / scaleOffsetIsApplied
+    // Check for packed data / hasScaleOffset
+  
     CDF::Attribute *scale_factor = var[varNr]->getAttributeNE("scale_factor");
+    CDF::Attribute *add_offset = var[varNr]->getAttributeNE("add_offset");
     if(scale_factor!=NULL){
       //Scale and offset will be applied further downwards in this function.
-      //We already set it to true, so we know we have to process it.
-      dataSource->dataObject[varNr]->scaleOffsetIsApplied=true;
+      dataSource->dataObject[varNr]->hasScaleOffset=true;
       // Currently two unpacked data types are supported (CF-1.4): float and double
       if(scale_factor->type==CDF_FLOAT){
         dataSource->dataObject[varNr]->dataType=CDF_FLOAT;
@@ -558,37 +562,46 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
     
       //Internally we use always double for scale and offset parameters:
       scale_factor->getData(&dataSource->dataObject[varNr]->dfscale_factor,1);
-      CDF::Attribute *add_offset = var[varNr]->getAttributeNE("add_offset");
+      
       if(add_offset!=NULL){
         add_offset->getData(&dataSource->dataObject[varNr]->dfadd_offset,1);
       }else dataSource->dataObject[varNr]->dfadd_offset=0;
-    }//else dataSource->dataObject[varNr]->scaleOffsetIsApplied=false;
+    }
     
     //DataPostProc: Here our datapostprocessor comes into action!
     for(size_t dpi=0;dpi<dataSource->cfgLayer->DataPostProc.size();dpi++){
       CServerConfig::XMLE_DataPostProc * proc = dataSource->cfgLayer->DataPostProc[dpi];
-       //Algorithm ax+b:
+      //Algorithm ax+b:
       if(proc->attr.algorithm.equals("ax+b")){
-        dataSource->dataObject[varNr]->scaleOffsetIsApplied=true;
+        dataSource->dataObject[varNr]->hasScaleOffset=true;
         dataSource->dataObject[varNr]->dataType=CDF_DOUBLE;
-       
+      
         //Apply offset
         if(proc->attr.b.c_str()!=NULL){
           CT::string b;
           b.copy(proc->attr.b.c_str());
-          dataSource->dataObject[varNr]->dfadd_offset+=b.toDouble();
+          if(add_offset==NULL){
+            dataSource->dataObject[varNr]->dfadd_offset=b.toDouble();
+          }else{
+            dataSource->dataObject[varNr]->dfadd_offset+=b.toDouble();
+          }
         }
         //Apply scale
         if(proc->attr.a.c_str()!=NULL){
           CT::string a;
           a.copy(proc->attr.a.c_str());
-          dataSource->dataObject[varNr]->dfscale_factor*=a.toDouble();
+          if(scale_factor==NULL){
+            dataSource->dataObject[varNr]->dfscale_factor=a.toDouble();
+          }else{
+            dataSource->dataObject[varNr]->dfscale_factor*=a.toDouble();
+          }
         }
       }
       //Apply units:
       if(proc->attr.units.c_str()!=NULL){
-         dataSource->dataObject[varNr]->units=proc->attr.units.c_str();
+        dataSource->dataObject[varNr]->units=proc->attr.units.c_str();
       }
+    
     }
     
     //Important!: The CDF datamodel needs to now the new datatype as well, in order to do right lon warping.
@@ -713,12 +726,7 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
       fillValue->getData(&dfNoData,1);
     }else hasNodataValue=false;
     
-    #ifdef CDATAREADER_DEBUG   
-    /*CDBDebug("--- varNR [%d], name=\"%s\"",varNr,var[varNr]->name.c_str());
-    for(size_t d=0;d<var[varNr]->dimensionlinks.size();d++){
-      CDBDebug("%s  \tstart: %d\tcount %d\tstride %d",var[varNr]->dimensionlinks[d]->name.c_str(),start[d],count[d],stride[d]);
-    }*/
-    #endif
+   
     
     
     #ifdef MEASURETIME
@@ -733,6 +741,13 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
     #endif
     
     var[varNr]->readData(dataSource->dataObject[varNr]->dataType,start,count,stride);
+    #ifdef CDATAREADER_DEBUG   
+    CDBDebug("--- varNR [%d], name=\"%s\"",varNr,var[varNr]->name.c_str());
+    for(size_t d=0;d<var[varNr]->dimensionlinks.size();d++){
+      CDBDebug("%s  \tstart: %d\tcount %d\tstride %d",var[varNr]->dimensionlinks[d]->name.c_str(),start[d],count[d],stride[d]);
+    }
+    #endif
+    dataSource->dataObject[varNr]->appliedScaleOffset = false;
     
     #ifdef MEASURETIME
     StopWatch_Stop("data read");
@@ -771,11 +786,15 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
     }
     
     //Apply the scale and offset factor on the data
-    if(dataSource->dataObject[varNr]->scaleOffsetIsApplied == true && cacheAvailable == false ){
+    if(dataSource->dataObject[varNr]->appliedScaleOffset == false && dataSource->dataObject[varNr]->hasScaleOffset && cacheAvailable == false ){
+      dataSource->dataObject[varNr]->appliedScaleOffset=true;
+      
       double dfscale_factor = dataSource->dataObject[varNr]->dfscale_factor;
       double dfadd_offset = dataSource->dataObject[varNr]->dfadd_offset;
       //CDBDebug("dfNoData=%f",dfNoData*dfscale_factor);
-
+      #ifdef CDATAREADER_DEBUG   
+      CDBDebug("Applying scale and offset with %f and %f",dfscale_factor,dfadd_offset);
+      #endif
       /*if(dataSource->dataObject[varNr]->dataType==CDF_FLOAT){
         //Preserve the original nodata value, so it remains a nice short rounded number.
         float fNoData=dfNoData;
@@ -1473,7 +1492,9 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
               try{dimVar->getAttribute("units")->getDataAsString(&units);}catch(int e){}
               //try{dimVar->getAttribute("standard_name")->getDataAsString(&standard_name);}catch(int e){}
               OGCDimName.copy(&standard_name);
+              #ifdef CDATAREADER_DEBUG  
               CDBDebug("Datasource %s: Dim %s; units %s; standard_name %s",dataSource->layerName.c_str(),dim->name.c_str(),units.c_str(),standard_name.c_str());
+              #endif
               CServerConfig::XMLE_Dimension *xmleDim=new CServerConfig::XMLE_Dimension();
               dataSource->cfgLayer->Dimension.push_back(xmleDim);
               xmleDim->value.copy(OGCDimName.c_str());

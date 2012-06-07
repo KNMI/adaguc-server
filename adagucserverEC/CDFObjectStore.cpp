@@ -78,6 +78,8 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,const char *file
   if(status!=0){
     //TODO in case of basic/digest authentication, username and password is currently also listed....
     CDBError("Unable to open file '%s'",fileName);
+    delete cdfObject;
+    delete cdfReader;
     return NULL;
   }
   
@@ -94,7 +96,7 @@ CDFObjectStore *CDFObjectStore::getCDFObjectStore(){return &cdfObjectStore;};
 CDFObject *CDFObjectStore::deleteCDFObject(CDFObject **cdfObject){
   for(size_t j=0;j<cdfObjects.size();j++){
     if(cdfObjects[j]==(*cdfObject)){
-      CDBDebug("Closing %s",fileNames[j]->c_str());
+      //CDBDebug("Closing %s",fileNames[j]->c_str());
       delete cdfObjects[j];cdfObjects[j]=NULL;(*cdfObject)=NULL;
       delete fileNames[j]; fileNames[j] = NULL;
       delete cdfReaders[j];cdfReaders[j] = NULL;

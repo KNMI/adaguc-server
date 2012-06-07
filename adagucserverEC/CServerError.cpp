@@ -3,28 +3,25 @@
 
 
 
-static char errormsgs[ERRORMSGS_SIZE];
-static int errormsgs_ptr=0;
+//static char errormsgs[ERRORMSGS_SIZE];
+
+static std::vector<CT::string> errormsgs;
+
+
 static int error_raised=0;
 static int cerror_mode=0;//0 = text 1 = image 2 = XML
 static int errImageWidth=640;
 static int errImageHeight=480;
 static int errImageFormat=IMAGEFORMAT_IMAGEPNG8;
-void printerror(const char * text)
-{
+void printerror(const char * text){
   error_raised=1;
-  if(errormsgs_ptr>ERRORMSGS_SIZE)return;
-  size_t messageLength=strlen(text);
-  strncpy(errormsgs+errormsgs_ptr,text,ERRORMSGS_SIZE-1-errormsgs_ptr);
-  //strncat(errormsgs+errormsgs_ptr,"\n",ERRORMSGS_SIZE-1-errormsgs_ptr-1);
-  errormsgs_ptr+=messageLength;
- 
+  errormsgs.push_back(CT::string(text));
 }
 void seterrormode(int errormode){
   cerror_mode=errormode;
 }
 void resetErrors(){
-  errormsgs[0]='\0';
+  errormsgs.clear();
   error_raised=0;
 }
 
@@ -36,13 +33,13 @@ void printerrorImage(void *_drawImage){
   const char *exceptionText = "OGC inimage Exception";
   drawImage->setText(exceptionText,strlen(exceptionText),12,5, 241,0);
   
-  CT::string errormsg(errormsgs),*messages,*sp,concat;
-  messages=errormsg.split("\n");
+ 
+ 
   int y=1;
-  size_t w=70,characters=0;
-  for(size_t i=0;i<messages->count;i++){
-    sp=messages[i].split(" ");
-    concat.copy("");
+  size_t w=drawImage->Geo->dWidth/6,characters=0;
+  for(size_t i=0;i<errormsgs.size()-1;i++){
+    CT::string *sp=errormsgs[i].split(" ");
+    CT::string concat ="";
     for(size_t k=0;k<sp->count;k++){
       if(characters+sp[k].length()<w){
         concat.concat(&sp[k]);
@@ -69,7 +66,7 @@ void printerrorImage(void *_drawImage){
   drawImage->line(errImageWidth-1,3,errImageWidth-1,y,251);
   
   
-  delete [] messages;
+ 
 }
 
 bool errorsOccured(){
@@ -84,12 +81,13 @@ void readyerror(){
 
 
   if(error_raised==0)return ;
-  if(errormsgs[0]=='\0')return;
+  if(errormsgs.size()==0)return;
 
   if(cerror_mode==EXCEPTIONS_PLAINTEXT){//Plain text
-//    fprintf(stderr,"%s<br>\n",errormsgs);
     printf("%s%c%c\n","Content-type: text/plain",13,10);  
-    fprintf(stdout,"%s",errormsgs);
+    for(size_t j=0;j<errormsgs.size();j++){
+      fprintf(stdout,"%s",errormsgs[j].c_str());
+    }
     return;
   }
   if(cerror_mode==WMS_EXCEPTIONS_XML_1_1_1){//XML exception
@@ -99,15 +97,11 @@ void readyerror(){
     fprintf(stdout,"<ServiceExceptionReport version=\"1.1.1\">\n");
     fprintf(stdout,"  <ServiceException>\n");
     
-    
-    CT::string errormsg(errormsgs),*messages;
-    messages=errormsg.split("\n");
     fprintf(stdout,"    ");
-    for(size_t j=0;j<messages->count;j++){
-      fprintf(stdout,"%s",messages[j].c_str());
-      if(j+1<messages->count)fprintf(stdout,";\n");
+    for(size_t j=0;j<errormsgs.size();j++){
+      fprintf(stdout,"%s",errormsgs[j].c_str());
+      if(j+1<errormsgs.size())fprintf(stdout,";\n");
     }
-    delete[] messages;
     fprintf(stdout,"\n  </ServiceException>\n");
     fprintf(stdout,"</ServiceExceptionReport>\n");
     return;

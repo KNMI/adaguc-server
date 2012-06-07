@@ -23,6 +23,9 @@ class CServerParams{
     CT::string InfoFormat;
     int imageFormat;
     int imageMode;
+    
+    //figWidth and figHeight override normal width and height to shape a getfeatureinfo graph
+    int figWidth,figHeight;
     CT::string BGColor;
     bool Transparent;
     CGeoParams * Geo;
@@ -65,6 +68,8 @@ class CServerParams{
       autoOpenDAPEnabled=-1;
       showDimensionsInImage = false;
       showLegendInImage = false;
+      figWidth=-1;
+      figHeight=-1;
   //    dataSources = NULL;
     }
     ~CServerParams(){

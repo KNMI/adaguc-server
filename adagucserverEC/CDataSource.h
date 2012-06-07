@@ -29,7 +29,7 @@ class CDataSource{
     public:
       DataClass();
       ~DataClass();
-      bool hasStatusFlag,hasNodataValue,scaleOffsetIsApplied;
+      bool hasStatusFlag,hasNodataValue,appliedScaleOffset,hasScaleOffset;
       double dfNodataValue,dfscale_factor,dfadd_offset;
       void *data;
 

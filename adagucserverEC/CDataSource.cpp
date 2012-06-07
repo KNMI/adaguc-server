@@ -6,6 +6,8 @@ const char *CDataSource::className = "CDataSource";
 /************************************/
 CDataSource::DataClass::DataClass(){
   hasStatusFlag=false;
+  appliedScaleOffset = false;
+  hasScaleOffset = false;
   cdfVariable = NULL;
   cdfObject=NULL;
   dfadd_offset=0;
