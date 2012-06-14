@@ -22,7 +22,22 @@ namespace CT{
     return stringList;
   }
   
-  
+  stringlistS string::splitS(const char * _value){
+    stringlistS stringList;
+    const char *fo = strstr(value,_value);
+    const char *prevFo=value;
+    // if(fo==NULL)return stringList;
+    while(fo!=NULL){
+      stringList.push_back(CT::string(prevFo,(fo-prevFo)));
+      prevFo=fo+1;
+      fo = strstr(fo+1,_value);
+    }
+    if(strlen(prevFo)>0){
+      stringList.push_back(CT::string(prevFo));
+    }
+    //printf("pushing2 %s %d\n",val->c_str(),stringList.size());
+    return stringList;
+  }
   
  /*void string::splitN( stringlist stringList,const char * _value){
     stringList.free();

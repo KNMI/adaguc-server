@@ -162,14 +162,17 @@ class CServerConfig:public CXMLSerializerInterface{
         else if(equals("location",8,attrname)){attr.location.copy(attrvalue);return;}
       }
     };
-    class XMLE_OpenDAP: public CXMLObjectInterface{
+    class XMLE_AutoResource: public CXMLObjectInterface{
     public:
       class Cattr{
       public:
-        CXMLString enableautoopendap;
+        CXMLString enableautoopendap, enablelocalfile, realpath;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("enableautoopendap",17,attrname)){attr.enableautoopendap.copy(attrvalue);return;}
+        else if(equals("realpath",8,attrname)){attr.realpath.copy(attrvalue);return;}
+        else if(equals("enablelocalfile",15,attrname)){attr.enablelocalfile.copy(attrvalue);return;}
+        
       }
     };
     
@@ -703,8 +706,7 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_Layer*> Layer;
         std::vector <XMLE_Style*> Style;
         std::vector <XMLE_CacheDocs*> CacheDocs;
-
-        std::vector <XMLE_OpenDAP*> OpenDAP;
+        std::vector <XMLE_AutoResource*> AutoResource;
         
         ~XMLE_Configuration(){
           XMLE_DELOBJ(Legend);
@@ -718,7 +720,7 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(Layer);
           XMLE_DELOBJ(Style);
           XMLE_DELOBJ(CacheDocs);
-          XMLE_DELOBJ(OpenDAP);
+          XMLE_DELOBJ(AutoResource);
         }
         void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value){
           CXMLSerializerInterface * base = (CXMLSerializerInterface*)baseClass;
@@ -737,7 +739,7 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("Layer",5,name)){XMLE_ADDOBJ(Layer);}
             else if(equals("Style",5,name)){XMLE_ADDOBJ(Style);}
             else if(equals("CacheDocs",9,name)){XMLE_ADDOBJ(CacheDocs);}
-            else if(equals("OpenDAP",7,name)){XMLE_ADDOBJ(OpenDAP);}
+            else if(equals("AutoResource",12,name)){XMLE_ADDOBJ(AutoResource);}
           }
           if(pt2Class!=NULL)pt2Class->addElement(baseClass,rc-pt2Class->level,name,value);
         }

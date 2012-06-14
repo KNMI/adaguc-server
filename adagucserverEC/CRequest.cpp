@@ -694,7 +694,13 @@ int CRequest::process_all_layers(){
 
         //Execute the query
         values_path = DB.query_select(Query.c_str(),0);
-        if(values_path==NULL&&srvParam->isAutoOpenDAPEnabled()){
+        
+        /**
+         * If no values were found in the database / no results have been found for a query:
+         * Maybe the database needs to be updated automatically.
+         * This is only enabled when autoresource has been enabled.
+         */
+        if(values_path==NULL&&srvParam->isAutoResourceEnabled()){
           //TODO disable automatic update for certain cases!
           CDBDebug("No results for query: Trying to update the database automatically.");
         
@@ -1055,7 +1061,7 @@ int CRequest::process_querystring(){
   int dFound_Styles=0;
   int dFound_Style=0;
   
-  int dFound_OpenDAPSource=0;
+  int dFound_autoResourceLocation=0;
   int dFound_OpenDAPVariable=0;
   
   char * data;
@@ -1297,19 +1303,19 @@ int CRequest::process_querystring(){
 
 
       //Opendap source parameter
-      if(dFound_OpenDAPSource==0){
+      if(dFound_autoResourceLocation==0){
         if(value0Cap.equals("SOURCE")){
-          if(srvParam->OpenDAPSource.c_str()==NULL){
-            srvParam->OpenDAPSource.copy(values[1].c_str());
+          if(srvParam->autoResourceLocation.c_str()==NULL){
+            srvParam->autoResourceLocation.copy(values[1].c_str());
           }
-          dFound_OpenDAPSource=1;
+          dFound_autoResourceLocation=1;
         }
       }
       //Opendap variable parameter
        if(dFound_OpenDAPVariable==0){
         if(value0Cap.equals("VARIABLE")){
-          if(srvParam->OpenDapVariable.c_str()==NULL){
-            srvParam->OpenDapVariable.copy(values[1].c_str());
+          if(srvParam->autoResourceVariable.c_str()==NULL){
+            srvParam->autoResourceVariable.copy(values[1].c_str());
           }
           dFound_OpenDAPVariable=1;
         }
@@ -1422,56 +1428,89 @@ int CRequest::process_querystring(){
   
     
     // Configure the server automically based on an OpenDAP resource
-    if(srvParam->OpenDAPSource.c_str()!=NULL){
-      if(srvParam->isAutoOpenDAPEnabled()==false){
-        CDBError("Automatic OpenDAP is not enabled");
-        readyerror();exit(0);
+    if(srvParam->autoResourceLocation.c_str()!=NULL){
+      if(srvParam->isAutoResourceEnabled()==false){
+        CDBError("Automatic resource is not enabled");
+        //readyerror();
+        return 1;
       }
       
-      bool isValidOpenDAPURL = false;
+      bool isValidResource = false;
       //TODO should be placed in a a more generaic place
-      if(srvParam->OpenDAPSource.indexOf("http://")==0)isValidOpenDAPURL=true;
-      if(srvParam->OpenDAPSource.indexOf("https://")==0)isValidOpenDAPURL=true;
-      if(srvParam->OpenDAPSource.indexOf("dodsc://")==0)isValidOpenDAPURL=true;
-      if(srvParam->OpenDAPSource.indexOf("dods://")==0)isValidOpenDAPURL=true;
-      if(srvParam->OpenDAPSource.indexOf("ncdods://")==0)isValidOpenDAPURL=true;
-
-      if(isValidOpenDAPURL==false){
+      if(srvParam->isAutoOpenDAPResourceEnabled()){
+        if(srvParam->autoResourceLocation.indexOf("http://")==0)isValidResource=true;
+        if(srvParam->autoResourceLocation.indexOf("https://")==0)isValidResource=true;
+        if(srvParam->autoResourceLocation.indexOf("dodsc://")==0)isValidResource=true;
+        if(srvParam->autoResourceLocation.indexOf("dods://")==0)isValidResource=true;
+        if(srvParam->autoResourceLocation.indexOf("ncdods://")==0)isValidResource=true;
+      }
+      
+      //Error messages should be the same for the different attempts, otherwise someone can find out the directory structure 
+      bool showInvalidPathMessage = false;
+      
+      if(isValidResource==false){
+        if(srvParam->isAutoLocalFileResourceEnabled()){
+          char resolvedPath[PATH_MAX];
+          
+          //Make a realpath
+          if(realpath(srvParam->autoResourceLocation.c_str(),resolvedPath)==NULL){
+            CDBDebug("LOCALFILEACCESS: The path %s is invalid",resolvedPath);
+            showInvalidPathMessage=true;
+          }
+          //If succesfull, check if the resolved path is valid.
+          if(!showInvalidPathMessage){
+            CDBDebug("Resolved path = %s",resolvedPath);
+            if(!srvParam->checkValidPath(resolvedPath)){
+              CDBDebug("LOCALFILEACCESS: The path %s is not in one of the servers configured realpaths",resolvedPath);
+              showInvalidPathMessage=true;
+            }
+          }
+          if(showInvalidPathMessage){
+            CDBError("Invalid path");
+            return 1;
+          }
+          
+          isValidResource=true;
+          
+        }
+      }
+      
+      if(isValidResource==false){
         CDBError("Invalid OpenDAP URL");
-        readyerror();exit(0);
+        readyerror();return 1;
       }
       
       //Generate the list of OpenDAP variables automatically based on the variables available in the OpenDAP dataset
-      if(srvParam->OpenDapVariable.c_str()==NULL||srvParam->OpenDapVariable.equals("*")){
+      if(srvParam->autoResourceVariable.c_str()==NULL||srvParam->autoResourceVariable.equals("*")){
         //Try to retrieve a list of variables from the OpenDAPURL.
-        srvParam->OpenDapVariable.copy("");
+        srvParam->autoResourceVariable.copy("");
         //Open the opendap resource
-        CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObject(NULL,srvParam->OpenDAPSource.c_str());
-        //int status=cdfObject->open(srvParam->OpenDAPSource.c_str());
+        CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObject(NULL,srvParam->autoResourceLocation.c_str());
+        //int status=cdfObject->open(srvParam->autoResourceLocation.c_str());
         if(cdfObject!=NULL){
           for(size_t j=0;j<cdfObject->variables.size();j++){
             if(cdfObject->variables[j]->dimensionlinks.size()>=2){
-              if(srvParam->OpenDapVariable.length()>0)srvParam->OpenDapVariable.concat(",");
-              srvParam->OpenDapVariable.concat(cdfObject->variables[j]->name.c_str());
+              if(srvParam->autoResourceVariable.length()>0)srvParam->autoResourceVariable.concat(",");
+              srvParam->autoResourceVariable.concat(cdfObject->variables[j]->name.c_str());
               CDBDebug("%s",cdfObject->variables[j]->name.c_str());
             }
           }
         }
         int status=0;
-        if(srvParam->OpenDapVariable.length()==0)status=1;
+        if(srvParam->autoResourceVariable.length()==0)status=1;
         if(status!=0){
           CDBError("A source parameter without a variable parameter is given");
-          readyerror();exit(0);
+          return 1;
         }
       }
       
       //Generate a generic title for this OpenDAP service, based on the title element in the OPeNDAP header
       //Open the opendap resource
-      CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObject(NULL,srvParam->OpenDAPSource.c_str());
-      //int status=cdfObject->open(srvParam->OpenDAPSource.c_str());
+      CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObject(NULL,srvParam->autoResourceLocation.c_str());
+      //int status=cdfObject->open(srvParam->autoResourceLocation.c_str());
       if(cdfObject==NULL){
-        CDBError("Unable to open resource %s",srvParam->OpenDAPSource.c_str());
-        readyerror();exit(0);
+        CDBError("Unable to open resource %s",srvParam->autoResourceLocation.c_str());
+        return 1;
       }
       
       CT::string serverTitle="";
@@ -1542,7 +1581,7 @@ int CRequest::process_querystring(){
      
     
       //Generate layers based on the OpenDAP variables
-      CT::stringlist *variables=srvParam->OpenDapVariable.splitN(",");
+      CT::stringlist *variables=srvParam->autoResourceVariable.splitN(",");
       for(size_t j=0;j<variables->size();j++){
         CServerConfig::XMLE_Layer *xmleLayer=new CServerConfig::XMLE_Layer();
         CServerConfig::XMLE_Variable* xmleVariable = new CServerConfig::XMLE_Variable();
@@ -1551,7 +1590,7 @@ int CRequest::process_querystring(){
         xmleCache->attr.enabled.copy("false");
         xmleLayer->attr.type.copy("database");
         xmleVariable->value.copy((*variables)[j]->c_str());
-        xmleFilePath->value.copy(srvParam->OpenDAPSource.c_str());
+        xmleFilePath->value.copy(srvParam->autoResourceLocation.c_str());
         xmleFilePath->attr.filter.copy("*");
         xmleLayer->Variable.push_back(xmleVariable);
         xmleLayer->FilePath.push_back(xmleFilePath);
@@ -1562,15 +1601,15 @@ int CRequest::process_querystring(){
       //Adjust online resource in order to pass on variable and source parameters
       CT::string onlineResource=srvParam->cfg->OnlineResource[0]->attr.value.c_str();
       CT::string stringToAdd;
-      stringToAdd.concat("&source=");stringToAdd.concat(srvParam->OpenDAPSource.c_str());
-      stringToAdd.concat("&variable=");stringToAdd.concat(srvParam->OpenDapVariable.c_str());
+      stringToAdd.concat("&source=");stringToAdd.concat(srvParam->autoResourceLocation.c_str());
+      stringToAdd.concat("&variable=");stringToAdd.concat(srvParam->autoResourceVariable.c_str());
       stringToAdd.concat("&");
       stringToAdd.encodeURL();
       onlineResource.concat(stringToAdd.c_str());
       srvParam->cfg->OnlineResource[0]->attr.value.copy(onlineResource.c_str());
-      CDBDebug("%s -- %s",srvParam->OpenDapVariable.c_str(),srvParam->OpenDAPSource.c_str());
+      CDBDebug("%s -- %s",srvParam->autoResourceVariable.c_str(),srvParam->autoResourceLocation.c_str());
       
-      //CDBError("A");readyerror();exit(0);
+      //CDBError("A");return 1;
       delete variables;
       
       

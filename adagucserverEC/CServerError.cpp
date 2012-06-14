@@ -83,7 +83,7 @@ void readyerror(){
   if(error_raised==0)return ;
   if(errormsgs.size()==0)return;
 
-  if(cerror_mode==EXCEPTIONS_PLAINTEXT){//Plain text
+  if(cerror_mode==EXCEPTIONS_PLAINTEXT||cerror_mode==0){//Plain text
     printf("%s%c%c\n","Content-type: text/plain",13,10);  
     for(size_t j=0;j<errormsgs.size();j++){
       fprintf(stdout,"%s",errormsgs[j].c_str());

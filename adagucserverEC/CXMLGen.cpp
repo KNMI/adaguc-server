@@ -77,7 +77,7 @@ CDBDebug("getFileNameForLayer");
       
       bool databaseError = false;
       CT::string *values = DB.query_select(query.c_str(),0);
-      if(values == NULL&&srvParam->isAutoOpenDAPEnabled()==true){
+      if(values == NULL&&srvParam->isAutoLocalFileResourceEnabled()==true){
         CDBDebug("Query '%s' failed. Now trying to update the database.",query.c_str());
         //CDBDebug("Start update db for layer %s",myWMSLayer->name.c_str());
         status = CDBFileScanner::updatedb(srvParam->cfg->DataBase[0]->attr.parameters.c_str(),myWMSLayer->dataSource,NULL,NULL);

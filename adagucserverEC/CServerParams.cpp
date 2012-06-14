@@ -1,6 +1,32 @@
 #include "CServerParams.h"
 const char *CServerParams::className="CServerParams";
 
+CServerParams::CServerParams(){
+  
+  WMSLayers=NULL;
+  serviceType=-1;
+  requestType=-1;
+  OGCVersion=-1;
+  NumOGCDims=0;
+  Transparent=false;
+  enableDocumentCache=true;
+  configObj = new CServerConfig();
+  Geo = new CGeoParams;
+  imageFormat=IMAGEFORMAT_IMAGEPNG8;
+  imageMode=SERVERIMAGEMODE_8BIT;
+  autoOpenDAPEnabled=-1;
+  autoLocalFileResourceEnabled = -1;
+  showDimensionsInImage = false;
+  showLegendInImage = false;
+  figWidth=-1;
+  figHeight=-1;
+}
+
+CServerParams::~CServerParams(){
+  if(WMSLayers!=NULL){delete[] WMSLayers;WMSLayers=NULL;}
+  if(configObj!=NULL){delete configObj;configObj=NULL;}
+  if(Geo!=NULL){delete Geo;Geo=NULL;}
+}
 
 void CServerParams::getCacheFileName(CT::string *cacheFileName){
   CT::string cacheName("WMSCACHE");
@@ -176,4 +202,56 @@ int CServerParams::makeUniqueLayerName(CT::string *layerName,CServerConfig::XMLE
   
 
   return 0;
+}
+
+
+
+bool CServerParams::isAutoOpenDAPResourceEnabled(){
+  if(autoOpenDAPEnabled==-1){
+    autoOpenDAPEnabled = 0;
+    if(cfg->AutoResource.size()>0){
+      if(cfg->AutoResource[0]->attr.enableautoopendap.equals("true"))autoOpenDAPEnabled = 1;
+    }
+  }
+  if(autoOpenDAPEnabled==0)return false;else return true;
+  return false;
+}
+
+bool CServerParams::isAutoLocalFileResourceEnabled(){
+  if(autoLocalFileResourceEnabled==-1){
+    autoLocalFileResourceEnabled = 0;
+    if(cfg->AutoResource.size()>0){
+      if(cfg->AutoResource[0]->attr.enablelocalfile.equals("true"))autoLocalFileResourceEnabled = 1;
+    }
+  }
+  if(autoLocalFileResourceEnabled==0)return false;else return true;
+  return false;
+}
+
+bool CServerParams::isAutoResourceEnabled(){
+  if(isAutoOpenDAPResourceEnabled()||isAutoLocalFileResourceEnabled())return true;
+  return false;
+}
+
+bool CServerParams::checkValidPath(const char *path){
+  if(cfg->AutoResource.size()>0){
+    if(cfg->AutoResource[0]->attr.realpath.c_str()!=NULL){
+      CT::string pathToCheck = path;
+      CT::string realPath = cfg->AutoResource[0]->attr.realpath.c_str();
+      CT::stringlistS realPaths= realPath.splitS(",");
+      for(size_t j=0;j<realPaths.size();j++){
+        CDBDebug("%d = %s vs %s",j,realPaths[j].c_str(),path);
+        if(pathToCheck.indexOf(realPaths[j].c_str())==0){
+          return true;
+        }
+      }
+      
+    }
+  }
+  return false;
+}
+
+void CServerParams::encodeTableName(CT::string *tableName){
+  tableName->replace("/","_");
+  tableName->toLowerCase();
 }

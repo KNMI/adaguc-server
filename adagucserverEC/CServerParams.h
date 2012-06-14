@@ -13,7 +13,7 @@
 class CServerParams{
   DEF_ERRORFUNCTION();
   private:
-  int autoOpenDAPEnabled;
+    int autoOpenDAPEnabled,autoLocalFileResourceEnabled;
   public:
     double dfResX,dfResY;
     int dWCS_RES_OR_WH;
@@ -24,14 +24,16 @@ class CServerParams{
     int imageFormat;
     int imageMode;
     
-    //figWidth and figHeight override normal width and height to shape a getfeatureinfo graph
+    /*
+     * figWidth and figHeight override normal width and height to shape a getfeatureinfo graph
+     */
     int figWidth,figHeight;
     CT::string BGColor;
     bool Transparent;
     CGeoParams * Geo;
     CT::string Styles;
     CT::string Style;
-    CT::string OpenDAPSource,OpenDapVariable;
+    CT::string autoResourceLocation,autoResourceVariable;
     
     CT::string mapTitle;
     CT::string mapSubTitle;
@@ -47,48 +49,35 @@ class CServerParams{
     int WCS_GoNative;
     bool enableDocumentCache;
    
-    //int skipErrorsSilently;
-// CDataSource *dataSources;
     CServerConfig *configObj;
     CServerConfig::XMLE_Configuration *cfg;
     CT::string configFileName;
-    CServerParams(){
-      //skipErrorsSilently=1;
-      WMSLayers=NULL;
-      serviceType=-1;
-      requestType=-1;
-      OGCVersion=-1;
-      NumOGCDims=0;
-      Transparent=false;
-      enableDocumentCache=true;
-      configObj = new CServerConfig();
-      Geo = new CGeoParams;
-      imageFormat=IMAGEFORMAT_IMAGEPNG8;
-      imageMode=SERVERIMAGEMODE_8BIT;
-      autoOpenDAPEnabled=-1;
-      showDimensionsInImage = false;
-      showLegendInImage = false;
-      figWidth=-1;
-      figHeight=-1;
-  //    dataSources = NULL;
-    }
-    ~CServerParams(){
-      if(WMSLayers!=NULL){delete[] WMSLayers;WMSLayers=NULL;}
-    //  if(dataSources!=NULL){delete[] dataSources;dataSources=NULL;}
-      if(configObj!=NULL){delete configObj;configObj=NULL;}
-      if(Geo!=NULL){delete Geo;Geo=NULL;}
-    }
     
+    /**
+     * Constructor
+     */
+    CServerParams();
+    
+    /** 
+     * Destructor
+     */
+    ~CServerParams();
+    
+    /** 
+     * Function which generates a unique layername from the Layer's configuration
+     * @param layerName the returned name
+     * @param cfgLayer the configuration object of the corresponding layer
+     */
     int makeUniqueLayerName(CT::string *layerName,CServerConfig::XMLE_Layer *cfgLayer);
     
-    void encodeTableName(CT::string *tableName){
-      tableName->replace("/","_");
-      tableName->toLowerCase();
-    }
+    /**
+     * Replaces illegal characters in a tableName
+     * @param the tableName with the characters to be tested. Same string is filled with the new name
+     */
+    void encodeTableName(CT::string *tableName);
     
     /**
      * Makes use of a lookup table to find the tablename belonging to the filter and path combinations.
-     * 
      * @param tableName The CT::string which will be filled with new data after completion
      * @param path The path of the layer
      * @param filter The filter of the layer
@@ -97,21 +86,71 @@ class CServerParams{
     int lookupTableName(CT::string *tableName,const char *path,const char *filter);
 
 
+    /**
+     * Get the filename of the cachefile used for XML caching. 
+     * The filename is automatically constructed or can be set by the user in the configuration file alternatively.
+     * 
+     * @param cacheFileName The CT::string to be filled with the filename
+     */
     void getCacheFileName(CT::string *cacheFileName);
+    
+    /**
+     * Get the directory used for XML and netcdf caching. 
+     * The filename is automatically constructed or can be set by the user in the configuration file alternatively.
+     * 
+     * @param cacheFileName The CT::string to be filled with the filename
+     */
     void getCacheDirectory(CT::string *cacheFileName);
-    bool isAutoOpenDAPEnabled(){
-      if(autoOpenDAPEnabled==-1){
-        autoOpenDAPEnabled = 0;
-        if(cfg->OpenDAP.size()>0){
-          if(cfg->OpenDAP[0]->attr.enableautoopendap.equals("true"))autoOpenDAPEnabled = 1;
-        }
-      }
-      if(autoOpenDAPEnabled==0)return false;else return true;
-      return false;
-    }
-    //Table names need to be different between time and height.
-    // Therefore create unique tablenames like tablename_time and tablename_height
+
+    
+    /**
+     * Function which can be used to check whether automatic resources have been enabled or not
+     * The resource can be provided to the ADAGUC service via the KVP parameter "SOURCE=OPeNDAPURL/FILE"
+     * The function read the config file once, for consecutive checks the value is stored in a variable
+     * 
+     * @return true: AutoResource is enabled
+     */
+    bool isAutoResourceEnabled();
+    
+    /**
+     * Function which can be used to check whether automatic OPeNDAP URL reading has been enabled or not
+     * The OPeNDAP URL can be provided to the ADAGUC service via the KVP parameter "SOURCE=OPeNDAPURL"
+     * The function read the config file once, for consecutive checks the value is stored in a variable
+     * 
+     * @return true: OPeNDAP URL's are supported 
+     */
+    bool isAutoOpenDAPResourceEnabled();
+    
+    /**
+     * Function which can be used to check whether automatic local file reading has been enabled or not
+     * The OPeNDAP URL can be provided to the ADAGUC service via the KVP parameter "SOURCE=OPeNDAPURL"
+     * The function read the config file once, for consecutive checks the value is stored in a variable
+     * 
+     * @return true: File locations are supported 
+     */
+    bool isAutoLocalFileResourceEnabled();
+    
+    /** 
+     * This function generates generic table names based on dimension names:
+     * Table names need to be different between time and height, therefore create unique tablenames like tablename_time and tablename_height
+     * The function also replaces illegal characters.
+     * 
+     * @param tableName The default table name which will be changed to a correct name
+     * @param dimName The dimension name which will be appended to the table name
+     */
+    
     static void makeCorrectTableName(CT::string *tableName,CT::string *dimName);
+    
+    /** 
+     * Check wether the resourcelocation is whithin the servers configured realpath. In the servers configuration a comma separated list of realpaths can be configured.
+     * @param resourceLocation The location to check for
+     * @return true means valid location
+     */
+    bool checkValidPath(const char *path);
+    
+    /** 
+     * Generic function which will be showed when a WCS is requested while it is not compiled in
+     */    
     static void showWCSNotEnabledErrorMessage();
 };
 

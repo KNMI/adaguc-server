@@ -35,8 +35,39 @@ namespace CT{
     void add(T2 t){
       push_back(t);
     }
+ 
+    
   };
   #define stringlist list<CT::string*>
+  
+  template <class T3>
+  class listS:public std::vector<T3>{
+  public:
+    ~listS(){
+    }
+ 
+    void add(T3 t){
+      push_back(t);
+    }
+    
+    listS(){
+    }
+    
+    //Copy constructor
+    listS(listS <T3>const &f){
+      for(size_t j=0;j<f.size();j++){
+        add(f[j]);
+      }
+      
+    }
+    
+    /*list& operator= (list const& f){
+  }
+  list& operator= (const char*const &f){
+  } */   
+    
+  };
+  #define stringlistS listS<CT::string>
 
   
   
@@ -181,6 +212,7 @@ class string:public basetype{
     void encodeURL();
     string * split(const char * _value);
     stringlist* splitN(const char * _value);
+    stringlistS splitS(const char * _value);
     //void splitN(stringlist,const char * _value);
     void print(const char *a, ...);
     void printconcat(const char *a, ...);
