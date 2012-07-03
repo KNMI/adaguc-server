@@ -1,21 +1,14 @@
-HOME=/nobackup/users/plieger/software/install
-#HOME=/nobackup/users/vreedede/build
-#HOME=/home/plieger/software/install
-#HOME=/data/data1/software/install
-#HOME=/data/data1/mapserver
-INCLUDEDIR=$(HOME)/include -I ../hclasses  -I /usr/include/libxml2/ -I /usr/include/udunits2/
+INCLUDEDIR=-I../hclasses  -I/usr/include/libxml2/ -I/usr/include/udunits2/ $(CPPFLAGS) $(LDFLAGS)
 
-CCOMPILER=g++ -Wall -I $(INCLUDEDIR) 
+CCOMPILER=g++ -Wall $(INCLUDEDIR) 
+
 #optimalization options:
-#CCOMPILER=g++ -march=pentium4 -mtune=pentium4 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 -I $(INCLUDEDIR) 
-CCOMPILER=g++ -march=core2 -mtune=core2 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 -I $(INCLUDEDIR) 
-#CCOMPILER=g++ -O2 -I $(INCLUDEDIR)
-#CCOMPILER=g++ -march=k8-sse3 -mtune=k8-sse3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 -I $(INCLUDEDIR)  
-
+#CCOMPILER=g++ -march=pentium4 -mtune=pentium4 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 $(INCLUDEDIR) 
+CCOMPILER=g++ -march=core2 -mtune=core2 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 $(INCLUDEDIR) 
+#CCOMPILER=g++ -O2 $(INCLUDEDIR)
+#CCOMPILER=g++ -march=k8-sse3 -mtune=k8-sse3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 $(INCLUDEDIR)  
 
 OBJECTS = CCDFDataModel.o  CCDFNetCDFIO.o CADAGUC_time.o CCDFHDF5IO.o CProj4ToCF.o
-#OBJECTS = CCDFDataModel.o  CCDFNetCDFIO.o 
-
 
 EXECUTABLE= CCDFDataModel
 
