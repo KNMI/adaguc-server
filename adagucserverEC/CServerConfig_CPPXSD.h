@@ -162,17 +162,45 @@ class CServerConfig:public CXMLSerializerInterface{
         else if(equals("location",8,attrname)){attr.location.copy(attrvalue);return;}
       }
     };
-    class XMLE_AutoResource: public CXMLObjectInterface{
+    
+    
+    class XMLE_Dir: public CXMLObjectInterface{
     public:
       class Cattr{
-      public:
-        CXMLString enableautoopendap, enablelocalfile, realpath;
+        public:
+        CXMLString basedir, prefix;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
+        if(equals("prefix",6,attrname)){attr.prefix.copy(attrvalue);return;}
+        else if(equals("basedir",7,attrname)){attr.basedir.copy(attrvalue);return;}        
+      }
+    };
+    
+    class XMLE_AutoResource: public CXMLObjectInterface{
+    public:
+      std::vector <XMLE_Dir*> Dir;
+      ~XMLE_AutoResource(){
+        XMLE_DELOBJ(Dir);
+      }
+      class Cattr{
+      public:
+        CXMLString enableautoopendap, enablelocalfile;
+      }attr;
+      
+      void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value){
+        CXMLSerializerInterface * base = (CXMLSerializerInterface*)baseClass;
+        base->currentNode=(CXMLObjectInterface*)this;
+        if(rc==0)if(value!=NULL)this->value.copy(value);
+        if(rc==1){
+          pt2Class=NULL;
+          if(equals("Dir",3,name)){XMLE_ADDOBJ(Dir);}
+        }
+        if(pt2Class!=NULL)pt2Class->addElement(baseClass,rc-pt2Class->level,name,value);
+      }
+      
+      void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("enableautoopendap",17,attrname)){attr.enableautoopendap.copy(attrvalue);return;}
-        else if(equals("realpath",8,attrname)){attr.realpath.copy(attrvalue);return;}
-        else if(equals("enablelocalfile",15,attrname)){attr.enablelocalfile.copy(attrvalue);return;}
-        
+        else if(equals("enablelocalfile",15,attrname)){attr.enablelocalfile.copy(attrvalue);return;}        
       }
     };
     

@@ -233,20 +233,69 @@ bool CServerParams::isAutoResourceEnabled(){
   return false;
 }
 
-bool CServerParams::checkValidPath(const char *path){
+bool CServerParams::checkResolvePath(const char *path,CT::string *resolvedPath){
   if(cfg->AutoResource.size()>0){
-    if(cfg->AutoResource[0]->attr.realpath.c_str()!=NULL){
-      CT::string pathToCheck = path;
-      CT::string realPath = cfg->AutoResource[0]->attr.realpath.c_str();
-      CT::stringlistS realPaths= realPath.splitS(",");
-      for(size_t j=0;j<realPaths.size();j++){
-        CDBDebug("%d = %s vs %s",j,realPaths[j].c_str(),path);
-        if(pathToCheck.indexOf(realPaths[j].c_str())==0){
-          return true;
-        }
+    //Needs to be configured otherwise it will be denied.
+    if(cfg->AutoResource[0]->Dir.size()==0){
+      CDBDebug("No Dir elements defined");
+      return false;
+    }
+    
+    //Check for valid tokens
+    const char *validPATHTokens="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/_-+:.";
+    size_t pathLength=strlen(path);
+    size_t allowedTokenLength=strlen(validPATHTokens);
+    
+    for(size_t j=0;j<pathLength;j++){
+      bool isInvalid = true;
+      for(size_t i=0;i<allowedTokenLength;i++){
+        if(path[j]==validPATHTokens[i]){isInvalid=false;break;}
+      }
+      if(isInvalid){
+        CDBDebug("Invalid token '%c' in '%s'",path[j],path);
+        return false;
       }
       
+      //Check for sequences
+      if(j>0){
+        if(path[j-1]=='.'&&path[j]=='.'){
+          CDBDebug("Invalid sequence in '%s'",path);
+          return false;
+        }
+      }
     }
+  
+    
+    for(size_t d=0;d<cfg->AutoResource[0]->Dir.size();d++){
+      const char *baseDir =cfg->AutoResource[0]->Dir[d]->attr.basedir.c_str();
+      const char *dirPrefix=cfg->AutoResource[0]->Dir[d]->attr.prefix.c_str();
+      
+      if(baseDir!=NULL&&dirPrefix!=NULL){
+        //Prepend the prefix to make the absolute path
+        CT::string pathToCheck;
+        pathToCheck.print("%s/%s",dirPrefix,path);
+        
+        //Make a realpath
+        char szResolvedPath[PATH_MAX];
+        if(realpath(pathToCheck.c_str(),szResolvedPath)==NULL){
+          //CDBDebug("basedir='%s', prefix='%s', inputpath='%s', absolutepath='%s'",baseDir,dirPrefix,path,pathToCheck.c_str());
+          CDBDebug("LOCALFILEACCESS: Invalid path '%s'",pathToCheck.c_str());
+        }else{
+          //Check if the resolved path is within the basedir
+          //CDBDebug("basedir='%s', prefix='%s', inputpath='%s', absolutepath='%s'",baseDir,dirPrefix,path,pathToCheck.c_str());
+          CT::string resolvedPathStr=szResolvedPath;
+          if(resolvedPathStr.indexOf(baseDir)==0){
+            resolvedPath->copy(szResolvedPath);
+            return true;
+          }
+        }
+      }else{
+        if(baseDir==NULL){CDBDebug("basedir not defined");}
+        if(dirPrefix==NULL){CDBDebug("prefix not defined");}
+      }
+    }
+  }else{
+    CDBDebug("No AutoResource enabled");
   }
   return false;
 }

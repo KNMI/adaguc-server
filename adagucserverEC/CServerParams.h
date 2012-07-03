@@ -1,5 +1,7 @@
 #ifndef CServerParams_H
 #define CServerParams_H
+#include <limits.h> 
+#include <stdlib.h>
 #include "CDebugger.h"
 #include "CTypes.h"
 #include "Definitions.h"
@@ -33,7 +35,13 @@ class CServerParams{
     CGeoParams * Geo;
     CT::string Styles;
     CT::string Style;
-    CT::string autoResourceLocation,autoResourceVariable;
+    
+    //given location by the KVP key source=<value> parameter
+    CT::string autoResourceLocation;
+    //internalAutoResourceLocation is the internal location used and can differ from the given location by the KVP key source=<value> parameter
+    CT::string internalAutoResourceLocation;
+    //autoResourceVariable is given by the KVP key variable=<value> parameter.
+    CT::string autoResourceVariable;
     
     CT::string mapTitle;
     CT::string mapSubTitle;
@@ -144,9 +152,10 @@ class CServerParams{
     /** 
      * Check wether the resourcelocation is whithin the servers configured realpath. In the servers configuration a comma separated list of realpaths can be configured.
      * @param resourceLocation The location to check for
+     * @param resolvedPath The resolvedPath if a instantiated CT::string pointer is given. 
      * @return true means valid location
      */
-    bool checkValidPath(const char *path);
+    bool checkResolvePath(const char *path,CT::string *resolvedPath);
     
     /** 
      * Generic function which will be showed when a WCS is requested while it is not compiled in
