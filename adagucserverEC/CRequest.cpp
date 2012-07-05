@@ -94,8 +94,9 @@ int CRequest::setConfigFile(const char *pszConfigFile){
         return 1;
       }
       
-    
+      bool layerConfigCacheAvailable = false;
       try{
+        /* Create the list of layers from a directory list */
         const char * baseDir=srvParam->cfg->Layer[j]->FilePath[0]->value.c_str();
         
         CDirReader dirReader;
@@ -953,24 +954,24 @@ int CRequest::process_all_layers(){
         }
     
         if(srvParam->requestType==REQUEST_WMS_GETFEATUREINFO){
-          CImageDataWriter ImageDataWriter;
-          status = ImageDataWriter.init(srvParam,dataSources[j],dataSources[j]->getNumTimeSteps());if(status != 0)throw(__LINE__);
+          CImageDataWriter imageDataWriter;
+          status = imageDataWriter.init(srvParam,dataSources[j],dataSources[j]->getNumTimeSteps());if(status != 0)throw(__LINE__);
           for(int k=0;k<dataSources[j]->getNumTimeSteps();k++){
             dataSources[j]->setTimeStep(k);
-            status = ImageDataWriter.getFeatureInfo(dataSources[j],
+            status = imageDataWriter.getFeatureInfo(dataSources[j],
                 int(srvParam->dX),
                 int(srvParam->dY));
             if(status != 0)throw(__LINE__);
           }
-          status = ImageDataWriter.end();if(status != 0)throw(__LINE__);
+          status = imageDataWriter.end();if(status != 0)throw(__LINE__);
         }
         
         // WMS Getlegendgraphic
         if(srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
-          CImageDataWriter ImageDataWriter;
-          status = ImageDataWriter.init(srvParam,dataSources[j],1);if(status != 0)throw(__LINE__);
-          status = ImageDataWriter.createLegend(dataSources[j],&ImageDataWriter.drawImage);if(status != 0)throw(__LINE__);
-          status = ImageDataWriter.end();if(status != 0)throw(__LINE__);
+          CImageDataWriter imageDataWriter;
+          status = imageDataWriter.init(srvParam,dataSources[j],1);if(status != 0)throw(__LINE__);
+          status = imageDataWriter.createLegend(dataSources[j],&imageDataWriter.drawImage);if(status != 0)throw(__LINE__);
+          status = imageDataWriter.end();if(status != 0)throw(__LINE__);
         }
         // WMS GetMetaData
         if(srvParam->requestType==REQUEST_WMS_GETMETADATA){

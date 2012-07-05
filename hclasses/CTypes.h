@@ -126,6 +126,28 @@ class string:public basetype{
       this->copy(f);
       return *this;
     }      
+    
+    string& operator+= (string const& f){
+      if (this == &f) return *this;   // Gracefully handle self assignment
+      concat(f.value,f.privatelength);
+      return *this;
+    }
+    string& operator+= (const char*const &f){
+      this->concat(f);
+      return *this;
+    }
+    
+    string& operator+ (string const& f){
+      if (this == &f) return *this;   // Gracefully handle self assignment
+      concat(f.value,f.privatelength);
+      
+      return *this;
+    }
+    string& operator+ (const char*const &f){
+      this->concat(f);
+      return *this;
+    }
+    
     string(){init();}
     string(const char * _value,size_t _length){init();copy(_value,_length);}
     string(const char * _value){init();copy(_value,strlen(_value));}
@@ -203,6 +225,11 @@ class string:public basetype{
       for(size_t j=privatelength-1;j>=0;j--){if(value[j]!=' '){e=j;break;}}
       substring(s,e+1);
     }
+    string trimr(){
+      CT::string r;r.copy(value,privatelength);
+      r.trim();
+      return r;
+    }
     int lastIndexOf(const char* search,size_t _length);
     int lastIndexOf(const char* search){return lastIndexOf(search,strlen(search));};
     void toUnicode();
@@ -278,6 +305,14 @@ class string:public basetype{
     int replace(const char *substr,const char *newString){
       return replace(substr,strlen(substr),newString,strlen(newString));
     }
+    
+    CT::string replacer(const char * old,const char *newstr){
+      string r;
+      r.copy(value,privatelength);
+      r.replace(old,newstr);
+      return r;
+    }
+    
 
     int substring(CT::string *string, size_t start,size_t end){
       if(start<0||start>=string->privatelength||end-start<=0){

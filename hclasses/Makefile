@@ -1,4 +1,4 @@
-INCLUDEDIR=.
+INCLUDEDIR=. -I/usr/include/libxml2/ $(CPPFLAGS) $(LDFLAGS)
 
 CCOMPILER=g++ -Wall -I $(INCLUDEDIR) 
 #optimalization options:
@@ -7,7 +7,7 @@ CCOMPILER=g++ -march=core2 -mtune=core2 -msse -msse2 -msse3 -mssse3 -mfpmath=sse
 #CCOMPILER=g++ -O2 -I $(INCLUDEDIR)
 #CCOMPILER=g++ -march=k8-sse3 -mtune=k8-sse3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 -I $(INCLUDEDIR)  
 
-OBJECTS = CDirReader.o  CTypes.o CDebugger.o 
+OBJECTS = CDirReader.o  CTypes.o CDebugger.o CXMLParser.o
 
 EXECUTABLE= hclasses
 

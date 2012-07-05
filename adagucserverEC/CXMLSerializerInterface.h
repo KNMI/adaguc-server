@@ -13,6 +13,9 @@
 #define XMLE_ADDOBJ(variableName){ pt2Class=new XMLE_##variableName();pt2Class->level=rc;variableName.push_back(((XMLE_##variableName*)pt2Class));}
 #define XMLE_DELOBJ(variableName){ {for(size_t j=0;j<variableName.size();j++){delete variableName[j];}}}
 
+/**
+ * Simple string element with limited functionality. All string values in CXMLObjectInterface will have this type.
+ */
 class CXMLString{
   private:
 	char *p;
@@ -40,6 +43,10 @@ class CXMLString{
       return true;
     }
 };
+
+/**
+ * Base objects
+ */
 class CXMLObjectInterface{
   public:
     CXMLObjectInterface(){
@@ -52,6 +59,11 @@ class CXMLObjectInterface{
     virtual void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value);
     virtual void addAttribute(const char *name,const char *value){}
 };
+
+/**
+ * Serializes XML according to a defined class structure to nested lists of objects 
+ * Inherits the CXMLObjectInterface base object
+ */
 class CXMLSerializerInterface:public CXMLObjectInterface{
   private:
     int recursiveDepth;
@@ -140,8 +152,23 @@ class CXMLSerializerInterface:public CXMLObjectInterface{
   }
 };
 
+/**
+ * parses a character string to int
+ * @param pszValue The string to parse
+ */
 int parseInt(const char *pszValue);
+
+
+/**
+ * parses a character string to float
+ * @param pszValue The string to parse
+ */
 float parseFloat(const char *pszValue);
+
+/**
+ * parses a character string to double
+ * @param pszValue The string to parse
+ */
 double parseDouble(const char *pszValue);
 
 #endif

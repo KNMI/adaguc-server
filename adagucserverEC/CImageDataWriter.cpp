@@ -242,7 +242,12 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   if(requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
     //drawImage.setAntiAliased(false);
     //drawImage.setTrueColor(false);
-    status = drawImage.createImage(LEGEND_WIDTH,LEGEND_HEIGHT);
+    int w = LEGEND_WIDTH;
+    int h = LEGEND_HEIGHT;
+    if(srvParam->Geo->dWidth!=1)w=srvParam->Geo->dWidth;
+    if(srvParam->Geo->dHeight!=1)h=srvParam->Geo->dHeight;
+    
+    status = drawImage.createImage(w,h);
     if(status != 0) return 1;
   }
   if(requestType==REQUEST_WMS_GETFEATUREINFO){
