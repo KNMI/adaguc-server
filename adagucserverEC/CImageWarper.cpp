@@ -149,7 +149,7 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
     outputCRS->copy(inputCRS);
     dMaxExtentDefined=0;
     //CDBDebug("Check");
-    outputCRS->decodeURL();
+    outputCRS->decodeURLSelf();
     //CDBDebug("Check");
     //CDBDebug("Check %d",(*prj).size());
     for(size_t j=0;j<(*prj).size();j++){

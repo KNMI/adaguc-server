@@ -168,12 +168,12 @@ int CImageDataWriter::drawCascadedWMS(CDataSource * dataSource, const char *serv
       }
       gdImageDestroy(gdImage);
     }else{
-      CT::string u=url.c_str();u.encodeURL();
+      CT::string u=url.c_str();u.encodeURLSelf();
       CDBError("Invalid image %s",u.c_str());
       return 1;
     }
   }else{
-    CT::string u=url.c_str();u.encodeURL();
+    CT::string u=url.c_str();u.encodeURLSelf();
     CDBError("Unable to get image %s",u.c_str());
     return 1;
   }
@@ -313,12 +313,12 @@ void CImageDataWriter::calculateScaleAndOffsetFromMinMax(float &scale, float &of
 int CImageDataWriter::makeStyleConfig(StyleConfiguration *styleConfig,CDataSource *dataSource,const char *styleName,const char *legendName,const char *renderMethod){
   CT::string errorMessage;
   CT::string renderMethodString = renderMethod;
-  CT::stringlist *sl = renderMethodString.splitN("/");
-  if(sl->size()==2){
-    renderMethodString.copy(sl->get(0));
-    if(sl->get(1)->equals("HQ")){CDBDebug("32bitmode");}
+  CT::StackList<CT::string> sl = renderMethodString.splitToStack("/");
+  if(sl.size()==2){
+    renderMethodString.copy(&sl[0]);
+    if(sl[1].equals("HQ")){CDBDebug("32bitmode");}
   }
-  delete sl;
+
   styleConfig->renderMethod = getRenderMethodFromString(&renderMethodString);
   if(styleConfig->renderMethod == undefined){errorMessage.print("rendermethod %s",renderMethod); }
   styleConfig->styleIndex   = getServerStyleIndexByName(styleName,dataSource->cfg->Style);
@@ -430,7 +430,7 @@ int CImageDataWriter::makeStyleConfig(StyleConfiguration *styleConfig,CDataSourc
  */
 
 
-CT::stringlist *CImageDataWriter::getLegendListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style* style){
+CT::PointerList<CT::string*> *CImageDataWriter::getLegendListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style* style){
   
   if(dataSource->cfgLayer->Legend.size()>0){
     return getLegendNames(dataSource->cfgLayer->Legend);
@@ -450,7 +450,7 @@ CT::stringlist *CImageDataWriter::getLegendListForDataSource(CDataSource *dataSo
  * @param style pointer to the style to find the rendermethods for
  * @return stringlist with the list of available rendermethods.
  */
-CT::stringlist *CImageDataWriter::getRenderMethodListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style* style){
+CT::PointerList<CT::string*> *CImageDataWriter::getRenderMethodListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style* style){
   //List all the desired rendermethods
   CT::string renderMethodList;
   
@@ -468,7 +468,7 @@ CT::stringlist *CImageDataWriter::getRenderMethodListForDataSource(CDataSource *
   if(renderMethodList.length()==0){
     renderMethodList.copy(CImageDataWriter::RenderMethodStringList);
   }
-  return  renderMethodList.splitN(",");;
+  return  renderMethodList.splitToPointer(",");;
 }
 
 /**
@@ -481,12 +481,12 @@ CT::stringlist *CImageDataWriter::getRenderMethodListForDataSource(CDataSource *
  * @param styleConfig pointer to the StyleConfiguration object to be filled in. 
  * @return the stringlist with all possible stylenames
  */
-CT::stringlist *CImageDataWriter::getStyleListForDataSource(CDataSource *dataSource){
+CT::PointerList<CT::string*> *CImageDataWriter::getStyleListForDataSource(CDataSource *dataSource){
   return getStyleListForDataSource(dataSource,NULL);
 }
 
-CT::stringlist *CImageDataWriter::getStyleListForDataSource(CDataSource *dataSource,StyleConfiguration *styleConfig){
-  CT::stringlist *stringList = new CT::stringlist();
+CT::PointerList<CT::string*> *CImageDataWriter::getStyleListForDataSource(CDataSource *dataSource,StyleConfiguration *styleConfig){
+  CT::PointerList<CT::string*> *stringList = new CT::PointerList<CT::string*>();
   CServerConfig::XMLE_Configuration *serverCFG = dataSource->cfg;
   CT::string styleToSearchString;
   bool isDefaultStyle = false;
@@ -516,15 +516,15 @@ CT::stringlist *CImageDataWriter::getStyleListForDataSource(CDataSource *dataSou
     }
   }
     
-  CT::stringlist *styleNames = getStyleNames(dataSource->cfgLayer->Styles);
+  CT::PointerList<CT::string*> *styleNames = getStyleNames(dataSource->cfgLayer->Styles);
  
   
   
   //We always skip the style "default" if there are more styles.
   size_t start=0;if(styleNames->size()>1)start=1;
   
-  CT::stringlist *renderMethods = NULL;
-  CT::stringlist *legendList = NULL;
+  CT::PointerList<CT::string*> *renderMethods = NULL;
+  CT::PointerList<CT::string*> *legendList = NULL;
   //Loop over the styles.
   try{
     for(size_t i=start;i<styleNames->size();i++){
@@ -634,21 +634,20 @@ CImageDataWriter::StyleConfiguration *CImageDataWriter::getStyleConfigurationByN
  * @param Legend a XMLE_Legend object configured in a style or in a layer
  * @return Pointer to a new stringlist with all possible legend names, must be deleted with delete. Is NULL on failure.
  */
-CT::stringlist *CImageDataWriter::getLegendNames(std::vector <CServerConfig::XMLE_Legend*> Legend){
+CT::PointerList<CT::string*> *CImageDataWriter::getLegendNames(std::vector <CServerConfig::XMLE_Legend*> Legend){
   if(Legend.size()==0){CDBError("No legends defined");return NULL;}
-  CT::stringlist *stringList = new CT::stringlist();
+  CT::PointerList<CT::string*> *stringList = new CT::PointerList<CT::string*>();
   
   for(size_t j=0;j<Legend.size();j++){
     CT::string legendValue=Legend[j]->value.c_str();
-    CT::stringlist * l1=legendValue.splitN(",");
-    for(size_t i=0;i<l1->size();i++){
-      if(l1->get(i)->length()>0){
+    CT::StackList<CT::string> l1=legendValue.splitToStack(",");
+    for(size_t i=0;i<l1.size();i++){
+      if(l1[i].length()>0){
         CT::string * val = new CT::string();
         stringList->push_back(val);
-        val->copy(l1->get(i));
+        val->copy(&l1[i]);
       }
     }
-    delete l1;
   }
   return stringList;
 }
@@ -658,8 +657,8 @@ CT::stringlist *CImageDataWriter::getLegendNames(std::vector <CServerConfig::XML
  * @param Style a pointer to XMLE_Style vector configured in a layer
  * @return Pointer to a new stringlist with all possible style names, must be deleted with delete. Is NULL on failure.
  */
-CT::stringlist *CImageDataWriter::getStyleNames(std::vector <CServerConfig::XMLE_Styles*> Styles){
-  CT::stringlist *stringList = new CT::stringlist();
+CT::PointerList<CT::string*> *CImageDataWriter::getStyleNames(std::vector <CServerConfig::XMLE_Styles*> Styles){
+  CT::PointerList<CT::string*> *stringList = new CT::PointerList<CT::string*>();
   CT::string * val = new CT::string();
   stringList->push_back(val);
   val->copy("default");
@@ -667,15 +666,14 @@ CT::stringlist *CImageDataWriter::getStyleNames(std::vector <CServerConfig::XMLE
     if(Styles[j]->value.c_str()!=NULL){
       CT::string StyleValue=Styles[j]->value.c_str();
       if(StyleValue.length()>0){
-        CT::stringlist * l1=StyleValue.splitN(",");
-        for(size_t i=0;i<l1->size();i++){
-          if(l1->get(i)->length()>0){
+        CT::StackList<CT::string>  l1=StyleValue.splitToStack(",");
+        for(size_t i=0;i<l1.size();i++){
+          if(l1[i].length()>0){
             CT::string * val = new CT::string();
             stringList->push_back(val);
-            val->copy(l1->get(i));
+            val->copy(&l1[i]);
           }
         }
-        delete l1;
       }
     }
   }
@@ -754,18 +752,18 @@ CDBDebug("initializeLegend");
  #ifdef CIMAGEDATAWRITER_DEBUG    
   CDBDebug("Server Styles=%s",srvParam->Styles.c_str());
 #endif
-  CT::stringlist *layerstyles = styles.splitN(",");
+  CT::StackList<CT::string> layerstyles = styles.splitToStack(",");
   int layerIndex=dataSource->datasourceIndex;
-  if(layerstyles->size()!=0){
+  if(layerstyles.size()!=0){
     //Make sure default layer index is within the right bounds.
     if(layerIndex<0)layerIndex=0;
-    if(layerIndex>((int)layerstyles->size())-1)layerIndex=layerstyles->size()-1;
-    styleName=layerstyles->get(layerIndex)->c_str();
+    if(layerIndex>((int)layerstyles.size())-1)layerIndex=layerstyles.size()-1;
+    styleName=layerstyles[layerIndex].c_str();
     if(styleName.length()==0){
       styleName.copy("default");
     }
   }
-  delete layerstyles;
+
   delete currentStyleConfiguration;
   currentStyleConfiguration=CImageDataWriter::getStyleConfigurationByName(styleName.c_str(),dataSource);
   if(currentStyleConfiguration->hasError){
@@ -839,7 +837,7 @@ CDBDebug("initializeLegend");
   //Try to find the default rendermethod from the layers style object
   if(dataSource->cfgLayer->Styles.size()==1){
     CT::string styles(dataSource->cfgLayer->Styles[0]->value.c_str());
-    CT::string *layerstyles = styles.split(",");
+    CT::string *layerstyles = styles.splitToArray(",");
     if(layerstyles->count>0){
       dLayerStyleIndex=0;
       layerStyleName.copy(&layerstyles[0]);
@@ -852,7 +850,7 @@ CDBDebug("initializeLegend");
         }
         if(srvParam->cfg->Style[j]->RenderMethod.size()==1){
           CT::string renderMethodList(srvParam->cfg->Style[j]->RenderMethod[0]->value.c_str());
-          CT::string *renderMethods = renderMethodList.split(",");
+          CT::string *renderMethods = renderMethodList.splitToArray(",");
           if(renderMethods->count>0){
             renderMethod=getRenderMethodFromString(&renderMethods[0]);
           }
@@ -869,13 +867,13 @@ CDBDebug("initializeLegend");
   //If a rendermethod is given in the layers config, use the first one as default
   if(dataSource->cfgLayer->RenderMethod.size()==1){
     CT::string tmp(dataSource->cfgLayer->RenderMethod[0]->value.c_str());
-    CT::string *renderMethodList = tmp.split(",");
+    CT::string *renderMethodList = tmp.splitToArray(",");
     renderMethod=getRenderMethodFromString(&renderMethodList[0]);
     delete[] renderMethodList;
   }
   //styles=temperature/nearestneighbour
   //Get legend for the layer by using layers style
-  CT::string *requestStyle=srvParam->Styles.split(",");
+  CT::string *requestStyle=srvParam->Styles.splitToArray(",");
   bool isDefaultStyle=false;
   
   
@@ -895,12 +893,12 @@ CDBDebug("initializeLegend");
           CT::string *legendStyle=NULL;
           if(srvParam->requestType==REQUEST_WMS_GETMAP||srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
             CT::string styles(dataSource->cfgLayer->Styles[0]->value.c_str());
-            CT::string *layerstyles = styles.split(",");
+            CT::string *layerstyles = styles.splitToArray(",");
             //If default, take the first style...
             if(isDefaultStyle){
               layerStyle->copy(&layerstyles[0]);
             }
-            legendStyle=layerStyle->split("/");
+            legendStyle=layerStyle->splitToArray("/");
             //if(!layerStyle->equals("default")){
               for(size_t j=0;j<layerstyles->count;j++){
                 if(layerstyles[j].equals(legendStyle[0].c_str())){
@@ -913,7 +911,7 @@ CDBDebug("initializeLegend");
               dLayerStyleIndex=0;
               layerStyleName.copy(&layerstyles[dLayerStyleIndex]);
               delete[] legendStyle;
-              legendStyle=layerStyleName.split("/");
+              legendStyle=layerStyleName.splitToArray("/");
               CDBDebug("layerStyleName %s",layerStyleName.c_str());
           }*/
             delete[] layerstyles;
@@ -974,9 +972,9 @@ CDBDebug("initializeLegend");
         if(cfgStyle->RenderMethod.size()==1){
           //renderMethod=getRenderMethodFromString(&renderMethods[0]);
           CT::string rm=cfgStyle->RenderMethod[0]->value.c_str();
-          CT::string *rms=rm.split(",");
+          CT::string *rms=rm.splitToArray(",");
           if(rms->count>0){
-            CT::string *rms2=rms[0].split("/");
+            CT::string *rms2=rms[0].splitToArray("/");
             renderMethod=getRenderMethodFromString(&rms2[0]);
             delete[] rms2;
           }
@@ -1222,7 +1220,7 @@ int CImageDataWriter::getFeatureInfo(CDataSource *dataSource,int dX,int dY){
       CT::string standardName;attr_standard_name->getDataAsString(&standardName);
       element->standard_name.copy(&standardName);
       // Make a more clean standard name.
-      standardName.replace("_"," ");standardName.replace(" status flag","");
+      standardName.replaceSelf("_"," ");standardName.replaceSelf(" status flag","");
       element->feature_name.copy(&standardName);
     }
     if(element->standard_name.c_str()==NULL){
@@ -1496,17 +1494,17 @@ int CImageDataWriter::calculateData(std::vector <CDataSource*>&dataSources){
       float inputMapExprValuesLow[dataSources.size()];
       float inputMapExprValuesHigh[dataSources.size()];
       
-      CT::string *layerStyles = srvParam->Styles.split(",");
+      CT::string *layerStyles = srvParam->Styles.splitToArray(",");
       CT::string style;
 //      bool errorOccured=false;
       for(size_t j=0;j<dataSources.size();j++){
         size_t numberOfValues = 1;
-        CT::string *_style = layerStyles[j].split("|");
+        CT::string *_style = layerStyles[j].splitToArray("|");
         style.copy(&_style[0]);
         CDBDebug("STYLE == %s",style.c_str());
         if(j==0){
           //Find the conditional expression for the first layer (the boolean map)
-          CT::string *conditionals = style.split("_");
+          CT::string *conditionals = style.splitToArray("_");
           if(!conditionals[0].equals("default")&&conditionals->count!=dataSources.size()-2){
             CDBError("Incorrect number of conditional operators specified: %d  (expected %d)",
                      conditionals->count,dataSources.size()-2);
@@ -1544,7 +1542,7 @@ int CImageDataWriter::calculateData(std::vector <CDataSource*>&dataSources){
             exprVal.copy(style.c_str()+12);
             numberOfValues=1;
           }
-          CT::string *LH=exprVal.split("_and_");
+          CT::string *LH=exprVal.splitToArray("_and_");
           if(LH->count!=numberOfValues){
             CDBError("Invalid number of values in expression '%s'",style.c_str());
             hasFailed=true;
@@ -2072,14 +2070,14 @@ int CImageDataWriter::end(){
         for(size_t j=0;j<getFeatureInfoResultList.size();j++){
           GetFeatureInfoResult *g = getFeatureInfoResultList[j];
           CT::string layerName=g->layerName.c_str();
-          layerName.replace(" ","_");
-          layerName.replace("/","_");
-          layerName.replace(":","-");
+          layerName.replaceSelf(" ","_");
+          layerName.replaceSelf("/","_");
+          layerName.replaceSelf(":","-");
           
           resultXML.printconcat("  <%s_layer>\n",layerName.c_str());
           for(size_t elNR=0;elNR<g->elements.size();elNR++){
             GetFeatureInfoResult::Element * e=g->elements[elNR];
-            CT::string featureName=e->standard_name.c_str();featureName.replace(" ","_");
+            CT::string featureName=e->standard_name.c_str();featureName.replaceSelf(" ","_");
             resultXML.printconcat("    <%s_feature>\n",featureName.c_str());
             resultXML.printconcat("      <gml:location>\n");
             

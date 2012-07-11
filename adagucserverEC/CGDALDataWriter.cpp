@@ -99,7 +99,7 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
       break;
     }
   }
-  srvParam->Format.toUpperCase();
+  srvParam->Format.toUpperCaseSelf();
   if(driverName.length()==0){
     if(srvParam->Format.equals("GEOTIFF")){
       driverName.copy("GTiff");
@@ -327,7 +327,7 @@ int  CGDALDataWriter::end(){
   // Set metadata for hMemDS1
   char **papszMetadata = NULL;
   for(size_t j=0;j<metaDataList.size();j++){
-    CT::string *attrib = metaDataList[j]->split(">");
+    CT::string *attrib = metaDataList[j]->splitToArray(">");
     //attrib[1].concat("<end>");
     //CDBDebug("%s=%s",attrib[0].c_str(),attrib[1].c_str());
     papszMetadata = CSLSetNameValue(papszMetadata,attrib[0].c_str(),attrib[1].c_str());
@@ -385,9 +385,9 @@ int  CGDALDataWriter::end(){
   char ** papszOptions = NULL;
 
   if(customOptions.length()>2){
-    CT::string *co = customOptions.split(",");
+    CT::string *co = customOptions.splitToArray(",");
     for(size_t j=0;j<co->count;j++){
-      CT::string *splittedco = customOptions.split("=");
+      CT::string *splittedco = customOptions.splitToArray("=");
       papszOptions = CSLSetNameValue( papszOptions, splittedco[0].c_str(), splittedco[1].c_str() );
       delete[] splittedco;
     }

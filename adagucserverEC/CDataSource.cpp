@@ -219,7 +219,7 @@ void CDataSource::readStatusFlags(CDF::Variable * var, std::vector<CDataSource::
       if(attr_flag_values!=NULL){
         CT::string flag_meanings;
         attr_flag_meanings->getDataAsString(&flag_meanings);
-        CT::string *flagStrings=flag_meanings.split(" ");
+        CT::string *flagStrings=flag_meanings.splitToArray(" ");
         size_t nrOfFlagMeanings=flagStrings->count;
         if(nrOfFlagMeanings>0){
           size_t nrOfFlagValues=attr_flag_values->length;
@@ -234,7 +234,7 @@ void CDataSource::readStatusFlags(CDF::Variable * var, std::vector<CDataSource::
               CDataSource::StatusFlag * statusFlag = new CDataSource::StatusFlag;
               statusFlagList->push_back(statusFlag);
               statusFlag->meaning.copy(flagStrings[j].c_str());
-              //statusFlag->meaning.replace("_"," ");
+              //statusFlag->meaning.replaceSelf("_"," ");
               statusFlag->value=dfFlagValues[j];
             }
           }else {CDBError("ReadStatusFlags: nrOfFlagMeanings!=nrOfFlagValues, %d!=%d",nrOfFlagMeanings,nrOfFlagValues);}
@@ -252,7 +252,7 @@ const char *CDataSource::getFlagMeaning( std::vector<CDataSource::StatusFlag*> *
 
 void CDataSource::getFlagMeaningHumanReadable( CT::string *flagMeaning,std::vector<CDataSource::StatusFlag*> *statusFlagList,double value){
   flagMeaning->copy(getFlagMeaning(statusFlagList,value));
-  flagMeaning->replace("_"," ");
+  flagMeaning->replaceSelf("_"," ");
 }
 
 

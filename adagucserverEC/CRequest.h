@@ -45,9 +45,9 @@ class CSimpleStore{
         headerSize=a+10;
         CT::string header;
         header.copy(cacheBuffer.c_str(),a-1);
-        CT::string *lines = header.split("\n");
+        CT::string *lines = header.splitToArray("\n");
         for(size_t j=0;j<(size_t)lines->count;j++){
-          CT::string *params=lines[j].split(",");
+          CT::string *params=lines[j].splitToArray(",");
           if(params->count==4){
             if(params[0].equals("string")){
               
@@ -80,7 +80,7 @@ class CSimpleStore{
         c->concat(&attributeList[j]->name);
         c->concat(",");
         if(attributeList[j]->data.length()==0){
-          attributeList[j]->data.substring(&cacheBuffer,attributeList[j]->start+headerSize,attributeList[j]->end+headerSize);
+          attributeList[j]->data.substringSelf(&cacheBuffer,attributeList[j]->start+headerSize,attributeList[j]->end+headerSize);
         }
         size_t length=attributeList[j]->data.length();
         //One byte longer because of carriage returns
@@ -100,7 +100,7 @@ class CSimpleStore{
       for(size_t j=0;j<attributeList.size();j++){
         if(attributeList[j]->name.equals(name)){
           if(attributeList[j]->data.length()==0){
-            dest->substring(&cacheBuffer,attributeList[j]->start+headerSize,attributeList[j]->end+headerSize);
+            dest->substringSelf(&cacheBuffer,attributeList[j]->start+headerSize,attributeList[j]->end+headerSize);
             attributeList[j]->data.copy(dest);
           }else{
             dest->copy(&attributeList[j]->data);
@@ -116,7 +116,7 @@ class CSimpleStore{
       Attribute *attr=NULL;
       for(size_t j=0;j<attributeList.size();j++){
         if(attributeList[j]->data.length()==0){
-          attributeList[j]->data.substring(&cacheBuffer,attributeList[j]->start+headerSize,attributeList[j]->end+headerSize);
+          attributeList[j]->data.substringSelf(&cacheBuffer,attributeList[j]->start+headerSize,attributeList[j]->end+headerSize);
         }
         if(attributeList[j]->name.equals(name)){
           attr=attributeList[j];

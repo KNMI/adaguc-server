@@ -1,3 +1,25 @@
+/* 
+ * Copyright (C) 2012, Royal Netherlands Meteorological Institute (KNMI)
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or any 
+ * later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Project    : ADAGUC
+ *
+ * initial programmer :  M.Plieger
+ * initial date       :  20120610
+ */
+
 #ifndef CTypes_H
 #define CTypes_H
 #include <stdio.h>
@@ -10,67 +32,53 @@
 #include <regex.h>
 #include "CDebugger.h"
 
-
-
 #define END NULL
-/* !!! TODO Currently missing in netcdf lib 4.1.2 */
-//int nc_def_var_deflate(int ncid, int varid, int shuffle, int deflate,                        int deflate_level);
+
 namespace CT{
   using namespace std;
-   template <class T2>
-  class list:public std::vector<T2>{
-  public:
-    ~list(){
-      free();
-    }
-    void free(){
-      //printf("Deleting list\n");
-      for(size_t j=0;j<this->size();j++){
-        delete (*this)[j];(*this)[j]=NULL;
-      }
-    }
-    T2 get(int j){
-      return (*this)[j];
-    }
-    void add(T2 t){
-      push_back(t);
-    }
- 
-    
-  };
-  #define stringlist list<CT::string*>
   
-  template <class T3>
-  class listS:public std::vector<T3>{
-  public:
-    ~listS(){
-    }
- 
-    void add(T3 t){
-      push_back(t);
-    }
-    
-    listS(){
-    }
-    
-    //Copy constructor
-    listS(listS <T3>const &f){
-      for(size_t j=0;j<f.size();j++){
-        add(f[j]);
-      }
-      
-    }
-    
-    /*list& operator= (list const& f){
-  }
-  list& operator= (const char*const &f){
-  } */   
-    
+  /**
+   * Vector of pointers, which frees pointers upon deletion
+   */
+  template <class T2>
+  class PointerList:public std::vector<T2>{
+    public:
+    ~PointerList(){free();}
+    void free(){for(size_t j=0;j<this->size();j++){delete (*this)[j];(*this)[j]=NULL;}}
+    T2 get(int j){return (*this)[j];}
+    void add(T2 t){push_back(t);}
   };
-  #define stringlistS listS<CT::string>
 
+  /**
+   * Vector of objects on the stack
+   */
+  template <class T3>
+  class StackList:public std::vector<T3>{
+    public:
+    ~StackList(){}
+    void add(T3 t){push_back(t);}
+    StackList(){}
+    /*Copy constructor*/
+    StackList(StackList <T3>const &f){for(size_t j=0;j<f.size();j++){add(f[j]);}}
+  };
+    
+  /**
+   * Basetype object
+   */
+  class basetype{
+    public:
+         virtual void init() = 0;
+         virtual ~basetype(){}
+      int id;
+      size_t count;
+      basetype *next,*prev,*start,*end;//For linked list
+  };
   
-  
+  /**
+   * Create a linked list of objects of type basetype
+   * @param the object array to linke
+   * @param nr the length of the array
+   */
   template <class T>
   void CTlink(T *object,int nr){
     for(int j=0;j<nr;j++){
@@ -84,22 +92,8 @@ namespace CT{
     object[nr].end=&object[nr];
   }
 
-  class basetype{
-    public:
-         virtual void init() = 0;
-         virtual ~basetype(){}
-      int id;
-      size_t count;
-      basetype *next,*prev,*start,*end;//Linked list
-  };
-
 class string:public basetype{
   private:
-    
-    //Safety constructors
-    //string(string  &f) throw ();
-    //string & operator = (string &m) throw ();
-    
     int allocated;
     size_t privatelength; // Length of string
     size_t bufferlength;  // Length of buffer
@@ -110,254 +104,308 @@ class string:public basetype{
     char _fromhex(char in);
     char *value;
     void init(){value=NULL;count=0;allocated=0;privatelength=0;bufferlength=0;}
-    public:
+    DEF_ERRORFUNCTION();
+  public:
+    /**
+     * Default constructor
+     */
+    string();
     
-    //Copy constructor
-    string(string const &f){
-      init();copy(f.value,f.privatelength);
-    }
+    /**
+     *Copy constructor
+     */
+    string(string const &f);
     
-    string& operator= (string const& f){
-      if (this == &f) return *this;   // Gracefully handle self assignment
-      init();copy(f.value,f.privatelength);
-      return *this;
-    }
-    string& operator= (const char*const &f){
-      this->copy(f);
-      return *this;
-    }      
+    /**
+     * assign operator
+     * @param f The input string
+     */
+    string& operator= (string const& f);
     
-    string& operator+= (string const& f){
-      if (this == &f) return *this;   // Gracefully handle self assignment
-      concat(f.value,f.privatelength);
-      return *this;
-    }
-    string& operator+= (const char*const &f){
-      this->concat(f);
-      return *this;
-    }
+    /**
+     * assign operator
+     * @param f The input character array
+     */
+    string& operator= (const char*const &f);
     
-    string& operator+ (string const& f){
-      if (this == &f) return *this;   // Gracefully handle self assignment
-      concat(f.value,f.privatelength);
-      
-      return *this;
-    }
-    string& operator+ (const char*const &f){
-      this->concat(f);
-      return *this;
-    }
+    /**
+     * addition assignment operator
+     * @param f The input string
+     */
+    string& operator+= (string const& f);
     
-    string(){init();}
+    /**
+     * addition assignment operator
+     * @param f The input character array
+     */
+    string& operator+= (const char*const &f);
+    
+    /**
+     * addition operator
+     * @param f The input string
+     */
+    string& operator+ (string const& f);
+    
+    /**
+     * addition operator
+     * @param f The input character array
+     */
+    string& operator+ (const char*const &f);
+    
+    /**
+     * Copy constructor which initialize the string with a character array
+     * @param _value The character array to copy
+     * @param _length the length of the character array
+     */
     string(const char * _value,size_t _length){init();copy(_value,_length);}
-    string(const char * _value){init();copy(_value,strlen(_value));}
+
+    /**
+     * Copy constructor which initialize the string with a character array
+     * @param _value The character array to copy
+     */
+    string(const char * _value){
+      #ifdef CTYPES_DEBUG
+      CDBDebug("string(const char * _value)\n");
+      #endif      
+      init();copy(_value,strlen(_value));
+    }
+ 
+    /**
+     * Copy constructor which initialize the string with the contents of a string pointer
+     * @param _string Pointer to the string to copy
+     */
     string(CT::string*_string){init();copy(_string);}
+    
+    /**
+     * Destructor
+     */
     virtual ~string(){_Free();  }
 
+    /**
+     * returns length of the string
+     * @return length
+     */
     size_t length(){return privatelength;}
+    
+    /**
+     * returns the internal bufferlength of the string
+     * @return internal bufferlength
+     */
     size_t getbufferlength(){return bufferlength;}
+    
+    /**
+     * Copy a character array into the string
+     * @param _value The character array to copy
+     * @param _length the length of the character array
+     */
     void copy(const char * _value,size_t _length);
-    void copy(const CT::string*_string){
-      if(_string==NULL){_Free();return;}
-        copy(_string->value,_string->privatelength);
-        };
-        void copy(const char * _value){ if(_value==NULL){_Free();return;}copy(_value,strlen(_value));};
-    void concat(const CT::string*_string){
-      concat(_string->value,_string->privatelength);
-    }
+    
+    /**
+     * Copy a string pointer into the array
+     * @param _string Pointer to the string to copy
+     */
+    void copy(const CT::string*_string){if(_string==NULL){_Free();return;}copy(_string->value,_string->privatelength);};
+
+    /**
+     * Copy a character array into the string
+     * @param _value The character array to copy
+     */
+    void copy(const char * _value){ if(_value==NULL){_Free();return;}copy(_value,strlen(_value));};
+    
+    void concat(const CT::string*_string){concat(_string->value,_string->privatelength);}
     
     void concat(const char*_value,size_t len);
+    
     void concat(const char*_value){if(_value==NULL)return;concat(_value,strlen(_value));};
+    
     char charAt(size_t n);
-    void setChar(size_t location,const char character){
-      if(location<privatelength){
-        value[location]=character;
-        if(character=='\0')privatelength=location;
-      } 
-    }
+    
+    void setChar(size_t location,const char character);
+    
+    bool equals(const char *_value,size_t _length);
+    
+    int equals(const char *_value);
+    
+    int equals(CT::string* _string);
+    
+    bool testRegEx(const char *pattern);
+
     int indexOf(const char* search,size_t _length);
-    /*int match(const char *_value,size_t _length){
-      if(_value==NULL)return -1;
-      if(privatelength!=_length)return 1;
-      if(strncmp(value,_value,_length)==0)return 0;
-      return 1;
-    }
-    int match(const char *_value){
-      if(_value==NULL)return -1;
-      return match(_value,strlen(_value));
-    }
-    int match(CT::string* _string){
-      if(_string==NULL)return -1;
-      return match(_string->value,_string->privatelength);
-    }*/
-    bool equals(const char *_value,size_t _length){
-      if(_value==NULL)return false;
-      if(privatelength!=_length)return false;
-      if(strncmp(value,_value,_length)==0)return true;
-      return false;
-    }
-    int equals(const char *_value){
-      if(_value==NULL)return false;
-      return equals(_value,strlen(_value));
-    }
-    int equals(CT::string* _string){
-      if(_string==NULL)return false;
-      return equals(_string->value,_string->privatelength);
-    }
     
-    bool testRegEx(const char *pattern){
-      int status; 
-      regex_t re;
-      if (regcomp(&re, pattern, REG_EXTENDED|REG_NOSUB) != 0){
-        return false;
-      }
-      status = regexec(&re, value, (size_t) 0, NULL, 0);
-      regfree(&re);
-      if (status != 0) {
-        return false;
-      }
-      return true;
-    }
     int indexOf(const char* search){return indexOf(search,strlen(search));};
-    void trim(){
-      int s=-1,e=privatelength;
-      for(size_t j=0;j<privatelength;j++){if(value[j]!=' '){s=j;break;}}
-      for(size_t j=privatelength-1;j>=0;j--){if(value[j]!=' '){e=j;break;}}
-      substring(s,e+1);
-    }
-    string trimr(){
-      CT::string r;r.copy(value,privatelength);
-      r.trim();
-      return r;
-    }
+    
     int lastIndexOf(const char* search,size_t _length);
+    
     int lastIndexOf(const char* search){return lastIndexOf(search,strlen(search));};
-    void toUnicode();
-    void toUpperCase();
-    void toLowerCase();
-    void decodeURL();
-    void encodeURL();
-    string * split(const char * _value);
-    stringlist* splitN(const char * _value);
-    stringlistS splitS(const char * _value);
-    //void splitN(stringlist,const char * _value);
+    
+    /**
+     * String to unicode
+     */
+    void toUnicodeSelf();
+    
+    /**
+     * String to uppercase
+     */
+    void toUpperCaseSelf();
+    
+    /**
+     * String to lowercase
+     */
+    void toLowerCaseSelf();
+    
+    /**
+     * Decodes URL to string
+     */
+    void decodeURLSelf();
+    
+    /**
+     * Encodes string to URL
+     */
+    void encodeURLSelf();
+    
+    /**
+     * Removes spaces in this string
+     */
+    void trimSelf();
+    
+    /**
+     * Returns a new string with removed spaces
+     */
+    string trimr(){CT::string r;r.copy(value,privatelength);r.trimSelf();return r;}
+    
+    /**
+     * Function which returns an array of strings
+     * the count value is set in all string object, which indicates the length of the array
+     * @param _value The token to split the string on
+     */
+    string * splitToArray(const char * _value);
+    
+    /**
+     * Function which returns a pointer of std::vector which holds a list of string pointers 
+     * deleting the std::vector pointer will also delete the strings inside
+     * @param _value The token to split the string on
+     */
+    PointerList<CT::string*>* splitToPointer(const char * _value);
+    
+    /**
+     * Function which returns a std::vector on the stack with a list of strings allocated on the stack
+     * Data is automatically freed
+     * @param _value The token to split the string on
+     */
+    StackList<CT::string> splitToStack(const char * _value);
+    
+    /**
+     * Print like printf to this string
+     * @param a The string to print
+     */
     void print(const char *a, ...);
+    
+    /**
+     * Like printf, but concatenates the string
+     * @param a The string to print
+     */
     void printconcat(const char *a, ...);
+    
+    /**
+     * Get a character array with the string data
+     * @return the character array
+     */
     const char * c_str();
-    int substring(size_t start,size_t end){
-      substring(this, start, end);
-      return 0;
-    }
-    int replace(const char *substr,size_t substrl,const char *newString,size_t newStringl){
-      if(this->privatelength==0)return 0;
-      if(this->value==NULL)return 0;
-      CT::string thisString;
-      thisString.copy(value,privatelength);
-      std::vector<int>occurences;
-      char * tempVal = value;
-      const char *search = substr;
-      int c=0;
-      size_t oc=0;
-      do{
-        tempVal = value+oc;
-        //printf("testing '%s'\n",tempVal);
-        c=strstr (tempVal,search)-tempVal;
-        if(c>=0){
-          oc+=c;
-          //printf("!%d\n",oc);
-          occurences.push_back(oc);
-          oc+=substrl;
-        }
-      }while(c>=0&&oc<thisString.privatelength);
-      //for(size_t j=0;j<occurences.size();j++){
-//        printf("%d\n",occurences[j]);
-    //}
-      size_t newSize = privatelength+occurences.size()*(newStringl-substrl);
-      _Allocate(newSize);
-      size_t pt=0,ps=0,j=0;
-      do{
-        if(j<occurences.size()){
-          while(ps==(unsigned)occurences[j]&&j<occurences.size()){
-            for(size_t i=0;i<newStringl;i++){
-              value[pt++]=newString[i];
-            }
-            ps+=substrl;
-            j++;
-          }
-        }
-        value[pt++]=thisString.value[ps++];
-      }while(pt<newSize);
-      value[newSize]='\0';
-      //privatelength
-      privatelength=newSize;
-      //printf("newSize %d\n",privatelength);
-      return 0;      
-    }
-    int replace(CT::string *substr,CT::string *newString){
-      return replace(substr->value,substr->privatelength,newString->value,newString->privatelength);
-    }
-    int replace(const char *substr,CT::string *newString){
-      return replace(substr,strlen(substr),newString->value,newString->privatelength);
-    }
-    int replace(CT::string *substr,const char *newString){
-      return replace(substr->value,substr->privatelength,newString,strlen(newString));
-    }
-    int replace(const char *substr,const char *newString){
-      return replace(substr,strlen(substr),newString,strlen(newString));
-    }
     
-    CT::string replacer(const char * old,const char *newstr){
-      string r;
-      r.copy(value,privatelength);
-      r.replace(old,newstr);
-      return r;
-    }
+    /** Replace all strings with another string
+     * @param substr the character array to replace
+     * @param substrl the length of the character array to replace
+     * @param newString the new character array to replace with
+     * @param newStringl The length of the character array to replace with
+     * @return Zero on success
+     */
+    int replaceSelf(const char *substr,size_t substrl,const char *newString,size_t newStringl);
     
+    /** Replace all strings with another string
+     * @param substr the string to replace
+     * @param newString the new stringto replace with
+     * @return Zero on success
+     */
+    int replaceSelf(CT::string *substr,CT::string *newString){return replaceSelf(substr->value,substr->privatelength,newString->value,newString->privatelength);}
+    
+    
+    /** Replace all strings with another string
+     * @param substr the character array to replace
+     * @param newString the new string to replace with
+     * @return Zero on success
+     */
+    int replaceSelf(const char *substr,CT::string *newString){return replaceSelf(substr,strlen(substr),newString->value,newString->privatelength);}
+    
+    
+    /** Replace all strings with another string
+     * @param substr the string to replace
+     * @param newString the new character array to replace with
+     * @return Zero on success
+     */
+    int replaceSelf(CT::string *substr,const char *newString){return replaceSelf(substr->value,substr->privatelength,newString,strlen(newString));}
+    
+    /** Replace all strings with another string
+     * @param substr the character array to replace
+     * @param newString the new character array to replace with
+     * @return Zero on success
+     */
+    int replaceSelf(const char *substr,const char *newString){return replaceSelf(substr,strlen(substr),newString,strlen(newString));}
+    
+    /** Replace all strings with another string and returns the new string
+     * @param substr the character array to replace
+     * @param newString the new character array to replace with
+     * @return the subsetted string
+     */
+    CT::string replacer(const char * old,const char *newstr){string r;r.copy(value,privatelength);r.replaceSelf(old,newstr);return r;}
 
-    int substring(CT::string *string, size_t start,size_t end){
-      if(start<0||start>=string->privatelength||end-start<=0){
-        copy("");
-        return 0;
-      }
-      if(end>string->privatelength)end=string->privatelength;
-      //printf("end-start %d,%d",end,string->length());
-      //size_t l=strlen(string->value);
-      //printf("*** %s\n",string->value);
-      //if(end>l)end=l;
-      CT::string temp(string->value+start,end-start);
-      copy(&temp);
-      //printf("**** %s\n",value);
-      //printf("templength: %d\n",temp.length());
-      //privatelength=end-start;
-      //value[privatelength]='\0';
-      
-      return  0;
-    }
-    float toFloat(){
-      float fValue=(float)atof(value);
-      return fValue;  
-    }
-    double toDouble(){
-      double fValue=(double)atof(value);
-      return fValue;  
-    }
-    int toInt(){
-      int dValue=(int)atoi(value);
-      return dValue;  
-    }
+    /**
+      * Subset the string from start till end
+      * @param string Te input string to subset
+      * @param start Where to subset from
+      * @param end Where to subset to (-1 means till the end of the string)
+      * @return Zero on success
+      */
+    int substringSelf(CT::string *string, size_t start,size_t end);
     
-
+    /**
+     * Subset the string from start till end
+     * @param start Where to subset from
+     * @param end Where to subset to (-1 means till the end of the string)
+     * @return Zero on success
+     */
+    int substringSelf(size_t start,size_t end){substringSelf(this, start, end);return 0;}
     
+    /**
+     * Returns a subsetted string from start till end
+     * @param start Where to subset from
+     * @param end Where to subset to (-1 means till the end of the string)
+     * @return string with the subsetted string
+     */
+    CT::string substringr(size_t start,size_t end){CT::string r;r.substringSelf(this,start,end);return r;}
+    
+    /**
+     * Converts the string to a float number
+     */
+    float toFloat(){float fValue=(float)atof(value);return fValue;}
+    
+    /**
+     * Converts the string to a double number
+     */
+    double toDouble(){double fValue=(double)atof(value);return fValue;}
 
+    /**
+     * Converts the string to an integer number
+     */
+    int toInt(){int dValue=(int)atoi(value);return dValue;}
   };
 
-  class int32:public basetype{
+  /*class int32:public basetype{
     public:
       int value;
         void init(){count=0;};
       int32();
       int32(int _value);
-  };
+  };*/
 }
 
 #endif

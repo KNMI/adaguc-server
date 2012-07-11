@@ -58,7 +58,7 @@ int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,in
   
     bool isTimeDim = false;
     CT::string dimName(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
-    dimName.toLowerCase();
+    dimName.toLowerCaseSelf();
     if(dimName.equals("time"))isTimeDim=true;
     //How do we detect correctly wether this is a time dim?
     if(dimName.indexOf("time")!=-1)isTimeDim=true;
@@ -174,7 +174,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
     CADAGUC_time *ADTime  = NULL;
     for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
       dimNames[d].copy(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
-      dimNames[d].toLowerCase();
+      dimNames[d].toLowerCaseSelf();
       isTimeDim[d]=false;
       skipDim[d]=false;
       if(dimNames[d].equals("time"))isTimeDim[d]=true;

@@ -1,3 +1,24 @@
+/* 
+ * Copyright (C) 2012, Royal Netherlands Meteorological Institute (KNMI)
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or any 
+ * later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Project    : ADAGUC
+ *
+ * initial programmer :  M.Plieger
+ * initial date       :  20120610
+ */
 #ifndef CCDFDATAMODEL_H
 #define CCDFDATAMODEL_H
 #include <stdio.h>
@@ -105,6 +126,13 @@ namespace CDF{
   void getErrorMessage(char *errorMessage,const size_t maxlen,const int errorCode);
   void getErrorMessage(CT::string *errorMessage,const int errorCode);
   
+  /**
+   * Static function which converts an exception into a readable message
+   * @param int The value of catched exception 
+   * @return CT::string with the readable message
+   */
+  CT::string getErrorMessage(int errorCode);
+  
   /*Returns the number of bytes needed for a single element of this datatype*/
   int getTypeSize(CDFType type);
   
@@ -179,12 +207,23 @@ namespace CDF{
       int getDataAsString(CT::string *out){
         out->copy("");
         if(type==CDF_CHAR||type==CDF_UBYTE||type==CDF_BYTE){out->copy((const char*)data,length);return 0;}
-        if(type==CDF_INT||type==CDF_UINT)for(size_t n=0;n<length;n++)out->printconcat(" %d",((int*)data)[n]);
-        if(type==CDF_SHORT||type==CDF_USHORT)for(size_t n=0;n<length;n++)out->printconcat(" %ds",((short*)data)[n]);
-        if(type==CDF_FLOAT)for(size_t n=0;n<length;n++)out->printconcat(" %ff",((float*)data)[n]);
-        if(type==CDF_DOUBLE)for(size_t n=0;n<length;n++)out->printconcat(" %fdf",((double*)data)[n]);
+        if(type==CDF_INT||type==CDF_UINT)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%d",((int*)data)[n]);}
+        if(type==CDF_SHORT||type==CDF_USHORT)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%ds",((short*)data)[n]);}
+        if(type==CDF_FLOAT)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%ff",((float*)data)[n]);}
+        if(type==CDF_DOUBLE)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%fdf",((double*)data)[n]);}
         return 0;
       }
+      
+      CT::string toString(){
+        CT::string out = "";
+        getDataAsString(&out);
+        return out;
+      }
+      
+      CT::string getDataAsString(){
+        return toString();
+      }
+      
       size_t size(){
         return length;
       }
@@ -234,7 +273,9 @@ namespace CDF{
     void *cdfReaderPointer;
     void *parentCDFObject;
     public:
-      
+      void setCDFReaderPointer(void *cdfReaderPointer){
+        this->cdfReaderPointer=cdfReaderPointer;
+      }
       void setParentCDFObject(void *parentCDFObject){
         this->parentCDFObject=parentCDFObject;
       }
@@ -269,9 +310,7 @@ namespace CDF{
 #endif
         return cdfObjectList[iterativeDimIndex]->cdfObjectPointer;
       }
-      void setCDFReaderPointer(void *cdfReaderPointer){
-        this->cdfReaderPointer=cdfReaderPointer;
-      }
+
       void setCDFObjectDim(Variable *sourceVar,const char *dimName);
       void freeData(){
         if(data==NULL)return;
@@ -606,7 +645,7 @@ class CDFObject:public CDF::Variable{
                         }else{
                           size_t attrLen=0;
                           CT::string t=pszAttributeValue;
-                          CT::string *t2=t.split(",");
+                          CT::string *t2=t.splitToArray(",");
                           attrLen=t2->count;
                           double values[attrLen];
                           for(size_t attrN=0;attrN<attrLen;attrN++){
@@ -807,6 +846,8 @@ class CDFObject:public CDF::Variable{
 namespace CDF{
   void dump(CDFObject* cdfObject,CT::string* dumpString);
   void dump(CDF::Variable* cdfVariable,CT::string* dumpString);
+  CT::string dump(CDFObject* cdfObject);
+  
   void _dumpPrintAttributes(const char *variableName, std::vector<CDF::Attribute *>attributes,CT::string *dumpString);
 };
 

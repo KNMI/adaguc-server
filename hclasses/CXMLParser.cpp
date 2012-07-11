@@ -1,3 +1,25 @@
+/* 
+ * Copyright (C) 2012, Royal Netherlands Meteorological Institute (KNMI)
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or any 
+ * later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Project    : ADAGUC
+ *
+ * initial programmer :  M.Plieger
+ * initial date       :  20120610
+ */
+
 #include "CXMLParser.h"
 /**
  * Static function which converts an exception into a readable message
@@ -120,21 +142,32 @@ void CXMLParser::XMLElement::parse_element_names(xmlNode * a_node,int depth){
  */
 CT::string CXMLParser::XMLElement::toXML(XMLElement el,int depth){
   CT::string data = "";
+  bool hasValue=false;
+  if(el.getValue().replacer("\n","").trimr().length()>0){
+    hasValue=true;
+  }
+
   for(int i=0;i<depth;i++)data+="  ";
   data+=CT::string("<")+el.name;
   for(size_t j=0;j<el.getAttributes().size();j++){
     data+=CT::string(" ")+el.getAttributes().get(j).name+CT::string("=\"")+el.getAttributes().get(j).value+"\"";
   }
-  data+=">\n";
+  if(!hasValue){
+    data+=">\n";
+  }else{
+    data+=">";
+  }
+  
   for(size_t j=0;j<el.xmlElements.size();j++){
     data+=toXML(el.xmlElements.get(j),depth+1);
   }
   
-  if(el.getValue().replacer("\n","").trimr().length()>0){
-    for(int i=0;i<depth;i++)data+="  ";
-    data+=CT::string("  ")+el.getValue()+"\n";
+  if(hasValue){
+    data+=el.getValue();
+    data+= CT::string("</")+el.name+">\n";
+  }else{
+    for(int i=0;i<depth;i++)data+="  ";data+= CT::string("</")+el.name+">\n";
   }
-  for(int i=0;i<depth;i++)data+="  ";data+= CT::string("</")+el.name+">\n";
   return data;
 }
 

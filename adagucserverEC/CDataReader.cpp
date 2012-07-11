@@ -91,8 +91,8 @@ int CDataReader::getCacheFileName(CDataSource *dataSource,CT::string *uniqueIDFo
   //Make the cache unique directory name, based on the filename
   CT::string validFileName(dataSource->getFileName());
   //Replace : and / by nothing, so we can use the string as a directory name
-  validFileName.replace(":",""); 
-  validFileName.replace("/",""); 
+  validFileName.replaceSelf(":",""); 
+  validFileName.replaceSelf("/",""); 
   //Concat the filename to the cache directory
   uniqueIDFor2DField->concat(&validFileName);
   uniqueIDFor2DField->concat("cache");
@@ -358,7 +358,7 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
   //If our X dimension has a character y/lat in it, XY dims are probably swapped.
   CT::string dimensionXName=var[0]->dimensionlinks[dimXIndex]->name.c_str();
   
-  dimensionXName.toLowerCase();
+  dimensionXName.toLowerCaseSelf();
   if(dimensionXName.indexOf("y")!=-1||dimensionXName.indexOf("lat")!=-1)swapXYDimensions=true;
   
   //swapXYDimensions=true;
@@ -511,7 +511,7 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
         {
           //Make a projection code based on PROJ4: namespace
           dataSource->nativeEPSG.print("PROJ4:%s",dataSource->nativeProj4.c_str());
-          dataSource->nativeEPSG.encodeURL();
+          dataSource->nativeEPSG.encodeURLSelf();
         }
         //else {CDBWarning("EPSG_code not found in variable %s",(char*)projvarnameAttr->data);}
       }
@@ -1593,14 +1593,14 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
     CT::string searchName=dataSource->dataObject[0]->variableName.c_str();
     try{dataSource->dataObject[0]->cdfVariable->getAttribute("standard_name")->getDataAsString(&searchName);}catch(int e){}
     try{dataSource->dataObject[0]->cdfVariable->getAttribute("long_name")->getDataAsString(&searchName);}catch(int e){}
-    searchName.toLowerCase();
+    searchName.toLowerCaseSelf();
     
     //Get the units
     CT::string dataSourceUnits;
     if(dataSource->dataObject[0]->units.length()>0){
       dataSourceUnits = dataSource->dataObject[0]->units.c_str();
     }
-    dataSourceUnits.toLowerCase();
+    dataSourceUnits.toLowerCaseSelf();
     
     #ifdef CDATAREADER_DEBUG  
     CDBDebug("Retrieving auto styles by using fileinfo \"%s\"",searchName.c_str());
@@ -1624,22 +1624,23 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
             standard_name.copy(dataSource->cfg->Style[j]->StandardNames[i]->attr.standard_name.c_str());
           }
           
-          standard_name.toLowerCase();
-          standard_name.replace("_"," ");
+          standard_name.toLowerCaseSelf();
+          standard_name.replaceSelf("_"," ");
           
           if(dataSource->cfg->Style[j]->StandardNames[i]->attr.units.c_str()!=NULL){
             
             units.copy(dataSource->cfg->Style[j]->StandardNames[i]->attr.units.c_str());
           }
-          units.toLowerCase();
+          units.toLowerCaseSelf();
           
           #ifdef CDATAREADER_DEBUG  
           CDBDebug("Searching StandardNames \"%s\"",standard_name.c_str());
           #endif
           if(standard_name.length()>0){
-            CT::stringlist *standardNameList=standard_name.splitN(",");
-            for(size_t n=0;n<(*standardNameList).size();n++){
-              if(searchName.indexOf((*standardNameList)[n]->c_str())!=-1){
+            //CT::stringlist *standardNameList=standard_name.splitN(",");
+            CT::StackList<CT::string> standardNameList=standard_name.splitToStack(",");
+            for(size_t n=0;n<standardNameList.size();n++){
+              if(searchName.indexOf(standardNameList[n].c_str())!=-1){
                 bool unitsMatch = true;
                 if(dataSourceUnits.length()!=0&&units.length()!=0){
                   unitsMatch = false;
@@ -1647,14 +1648,13 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
                 }
                 if(unitsMatch){
                   #ifdef CDATAREADER_DEBUG  
-                  CDBDebug("*** Match: \"%s\" ~~ \"%s\"",searchName.c_str(),(*standardNameList)[n]->c_str());
+                  CDBDebug("*** Match: \"%s\" ~~ \"%s\"",searchName.c_str(),standardNameList[n].c_str());
                   #endif
                   if(styles.length()!=0)styles.concat(",");
                   styles.concat(dataSource->cfg->Style[j]->attr.name.c_str());
                 }
               }
             }
-            delete standardNameList;
           }
           if(standard_name.equals("*")){
             if(styles.length()!=0)styles.concat(",");

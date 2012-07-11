@@ -32,7 +32,7 @@ int CRequest::checkDataRestriction(){
   if(data != NULL){
     dr = ALLOW_NONE;
     CT::string temp(data);
-    temp.toUpperCase();
+    temp.toUpperCaseSelf();
     if(temp.equals("TRUE")){
       dr = ALLOW_NONE;
     }
@@ -40,14 +40,14 @@ int CRequest::checkDataRestriction(){
       dr = ALLOW_WCS|ALLOW_GFI|ALLOW_METADATA;
     }
     //Decompose into stringlist and check each item
-    CT::stringlist *items = temp.splitN("|");
-    for(size_t j=0;j<items->size();j++){
-      if(items->get(j)->equals("ALLOW_GFI"))dr|=ALLOW_GFI;
-      if(items->get(j)->equals("ALLOW_WCS"))dr|=ALLOW_WCS;
-      if(items->get(j)->equals("ALLOW_METADATA"))dr|=ALLOW_METADATA;
-      if(items->get(j)->equals("SHOW_QUERYINFO"))dr|=SHOW_QUERYINFO;
+    CT::StackList<CT::string> items = temp.splitToStack("|");
+    for(size_t j=0;j<items.size();j++){
+      if(items[j].equals("ALLOW_GFI"))dr|=ALLOW_GFI;
+      if(items[j].equals("ALLOW_WCS"))dr|=ALLOW_WCS;
+      if(items[j].equals("ALLOW_METADATA"))dr|=ALLOW_METADATA;
+      if(items[j].equals("SHOW_QUERYINFO"))dr|=SHOW_QUERYINFO;
     }
-    delete items;
+ 
   }
   
   dataRestriction = dr;
@@ -115,9 +115,9 @@ int CRequest::setConfigFile(const char *pszConfigFile){
           CT::string baseDirStr = baseDir;
           CT::string groupName = dirReader.fileList[j]->fullName.c_str();
           CT::string baseName = dirReader.fileList[j]->fullName.c_str();
-          groupName.substring(baseDirStr.length(),-1);
+          groupName.substringSelf(baseDirStr.length(),-1);
           //int lastSlash = baseName.lastIndexOf("/")+1;
-          //baseName.substring(lastSlash,-1);
+          //baseName.substringSelf(lastSlash,-1);
           
         
         
@@ -538,11 +538,11 @@ int CRequest::process_all_layers(){
         status = DB.connect(srvParam->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0){CDBError("Unable to connect to DB");return 1;}
         //Get the number of required dims from the given dims
         //Check if all dimensions are given
-        for(int k=0;k<srvParam->NumOGCDims;k++)srvParam->OGCDims[k].Name.toLowerCase();
+        for(int k=0;k<srvParam->NumOGCDims;k++)srvParam->OGCDims[k].Name.toLowerCaseSelf();
         int dimsfound[NC_MAX_DIMS];
         for(size_t i=0;i<dataSources[j]->cfgLayer->Dimension.size();i++){
           CT::string dimName(dataSources[j]->cfgLayer->Dimension[i]->value.c_str());
-          dimName.toLowerCase();
+          dimName.toLowerCaseSelf();
           dimsfound[i]=0;
           for(int k=0;k<srvParam->NumOGCDims;k++){
             //CDBDebug("DIM COMPARE: %s==%s",srvParam->OGCDims[k].Name.c_str(),dimName.c_str());
@@ -556,7 +556,7 @@ int CRequest::process_all_layers(){
               ogcDim->netCDFDimName.copy(dataSources[j]->cfgLayer->Dimension[i]->attr.name.c_str());
               //If we have a special styled layer, the time does not come from TIME, but from style:
               if(dataSources[0]->dLayerType==CConfigReaderLayerTypeStyled){
-                CT::string *splittedStyles=srvParam->Styles.split(",");
+                CT::string *splittedStyles=srvParam->Styles.splitToArray(",");
                 if(splittedStyles->count!=dataSources.size()){
                   status = DB.close();
                   CDBError("Number of provided layers (%d) does not match the number of provided styles (%d)",dataSources.size(),splittedStyles->count);
@@ -571,10 +571,10 @@ int CRequest::process_all_layers(){
                 
                 if(j>0){
                   //Try to find the time from the style:
-                  CT::string * stripeString = splittedStyles[j].split("|");
+                  CT::string * stripeString = splittedStyles[j].splitToArray("|");
                   if(stripeString->count==2){
                     if(stripeString[1].indexOf("time_")==0){
-                      CT::string *valuePair=stripeString[1].split("_");
+                      CT::string *valuePair=stripeString[1].splitToArray("_");
                       ogcDim->Value.copy(&valuePair[1]);
                       delete[] valuePair;
                     }
@@ -645,9 +645,9 @@ int CRequest::process_all_layers(){
                       netCDFDimName.c_str(),
                       tableName.c_str());
           CT::string queryParams(&dataSources[j]->requiredDims[i]->Value);
-          CT::string *cDims =queryParams.split(",");// Split up by commas (and put into cDims)
+          CT::string *cDims =queryParams.splitToArray(",");// Split up by commas (and put into cDims)
           for(size_t k=0;k<cDims->count;k++){
-            CT::string *sDims =cDims[k].split("/");// Split up by slashes (and put into sDims)
+            CT::string *sDims =cDims[k].splitToArray("/");// Split up by slashes (and put into sDims)
             if(sDims->count>0&&k>0)subQuery.concat("or ");
             for(size_t  l=0;l<sDims->count&&l<2;l++){
               if(sDims[l].length()>0){
@@ -1013,7 +1013,7 @@ int CRequest::process_querystring(){
     for(size_t d=0;d<srvParam->cfg->Layer[j]->Dimension.size();d++){
       CT::string *dim = new CT::string(srvParam->cfg->Layer[j]->Dimension[d]->value.c_str());
       
-      dim->toUpperCase();
+      dim->toUpperCaseSelf();
       
       bool foundDim=false;
       for(size_t i=0;i<queryDims.size();i++){
@@ -1076,16 +1076,16 @@ int CRequest::process_querystring(){
 //  CDBDebug("QUERY_STRING: %s",data);
   //  StopWatch_Time("getenv(\"QUERY_STRING\")");
   CT::string queryString(data);
-  queryString.decodeURL();
+  queryString.decodeURLSelf();
 
-  CT::string * parameters=queryString.split("&");
+  CT::string * parameters=queryString.splitToArray("&");
   CT::string value0Cap;
   for(size_t j=0;j<parameters->count;j++){
-    CT::string * values=parameters[j].split("=");
+    CT::string * values=parameters[j].splitToArray("=");
 
     // Styles parameter
     value0Cap.copy(&values[0]);
-    value0Cap.toUpperCase();
+    value0Cap.toUpperCaseSelf();
     if(value0Cap.equals("STYLES")){
       if(dFound_Styles==0){
         if(values->count==2&&values[1].length()>0){
@@ -1112,7 +1112,7 @@ int CRequest::process_querystring(){
     if(values->count>=2){
       // BBOX Parameters
       if(value0Cap.equals("BBOX")){
-        CT::string * bboxvalues=values[1].split(",");
+        CT::string * bboxvalues=values[1].splitToArray(",");
         if(bboxvalues->count==4){
           for(int j=0;j<4;j++){
             srvParam->Geo->dfBBOX[j]=atof(bboxvalues[j].c_str());
@@ -1192,7 +1192,7 @@ int CRequest::process_querystring(){
       if(value0Cap.equals("CRS")){
         if(parameters[j].length()>5){
           srvParam->Geo->CRS.copy(parameters[j].c_str()+4);
-          srvParam->Geo->CRS.decodeURL();
+          srvParam->Geo->CRS.decodeURLSelf();
           dFound_CRS=1;
         }
       }
@@ -1249,7 +1249,7 @@ int CRequest::process_querystring(){
       if(value0Cap.equals("TRANSPARENT")){
         if(dFound_Transparent==0){
           if(values[1].length()>1){
-            values[1].toUpperCase();
+            values[1].toUpperCaseSelf();
             if(values[1].equals("TRUE")){
               srvParam->Transparent=true;
             }
@@ -1327,14 +1327,14 @@ int CRequest::process_querystring(){
       if(value0Cap.equals("LAYERS")){
         if(srvParam->WMSLayers!=NULL)
           delete[] srvParam->WMSLayers;
-          srvParam->WMSLayers = values[1].split(",");
+          srvParam->WMSLayers = values[1].splitToArray(",");
         dFound_WMSLAYERS=1;
       }
       //WMS Layer parameter
       if(value0Cap.equals("LAYER")){
         if(srvParam->WMSLayers!=NULL)
           delete[] srvParam->WMSLayers;
-          srvParam->WMSLayers = values[1].split(",");
+          srvParam->WMSLayers = values[1].splitToArray(",");
         dFound_WMSLAYER=1;
       }
 
@@ -1342,7 +1342,7 @@ int CRequest::process_querystring(){
       if(value0Cap.equals("QUERY_LAYERS")){
         if(srvParam->WMSLayers!=NULL)
           delete[] srvParam->WMSLayers;
-          srvParam->WMSLayers = values[1].split(",");
+          srvParam->WMSLayers = values[1].splitToArray(",");
           if(srvParam->WMSLayers->count>1){
             CDBError("Too many layers in request");
             dErrorOccured=1;
@@ -1355,20 +1355,20 @@ int CRequest::process_querystring(){
           CDBWarning("COVERAGE already defined");
           dErrorOccured=1;
         }else{
-          srvParam->WMSLayers = values[1].split(",");
+          srvParam->WMSLayers = values[1].splitToArray(",");
         }
         dFound_WCSCOVERAGE=1;
       }
 
       // Service parameters
       if(value0Cap.equals("SERVICE")){
-        values[1].toUpperCase();
+        values[1].toUpperCaseSelf();
         SERVICE.copy(values[1].c_str(),values[1].length());
         dFound_Service=1;
       }
       // Request parameters
       if(value0Cap.equals("REQUEST")){
-        values[1].toUpperCase();
+        values[1].toUpperCaseSelf();
         REQUEST.copy(values[1].c_str(),values[1].length());
         dFound_Request=1;
       }
@@ -1394,19 +1394,19 @@ int CRequest::process_querystring(){
         }
       }
       if(value0Cap.equals("SHOWDIMS")){
-        values[1].toLowerCase();
+        values[1].toLowerCaseSelf();
         if(values[1].equals("true")){
           srvParam->showDimensionsInImage = true;
         }
       }
       if(value0Cap.equals("SHOWLEGEND")){
-        values[1].toLowerCase();
+        values[1].toLowerCaseSelf();
         if(values[1].equals("true")){
           srvParam->showLegendInImage = true;
         }
       }
       if(value0Cap.equals("SHOWNORTHARROW")){
-        values[1].toLowerCase();
+        values[1].toLowerCaseSelf();
         if(values[1].equals("true")){
           srvParam->showNorthArrow = true;
         }
@@ -1566,15 +1566,15 @@ int CRequest::process_querystring(){
      
     
       //Generate layers based on the OpenDAP variables
-      CT::stringlist *variables=srvParam->autoResourceVariable.splitN(",");
-      for(size_t j=0;j<variables->size();j++){
+      CT::StackList<CT::string> variables=srvParam->autoResourceVariable.splitToStack(",");
+      for(size_t j=0;j<variables.size();j++){
         CServerConfig::XMLE_Layer *xmleLayer=new CServerConfig::XMLE_Layer();
         CServerConfig::XMLE_Variable* xmleVariable = new CServerConfig::XMLE_Variable();
         CServerConfig::XMLE_FilePath* xmleFilePath = new CServerConfig::XMLE_FilePath();
         CServerConfig::XMLE_Cache* xmleCache = new CServerConfig::XMLE_Cache();
         xmleCache->attr.enabled.copy("false");
         xmleLayer->attr.type.copy("database");
-        xmleVariable->value.copy((*variables)[j]->c_str());
+        xmleVariable->value.copy(variables[j].c_str());
         xmleFilePath->value.copy(srvParam->internalAutoResourceLocation.c_str());
         xmleFilePath->attr.filter.copy("*");
         xmleLayer->Variable.push_back(xmleVariable);
@@ -1589,13 +1589,13 @@ int CRequest::process_querystring(){
       stringToAdd.concat("&source=");stringToAdd.concat(srvParam->autoResourceLocation.c_str());
       stringToAdd.concat("&variable=");stringToAdd.concat(srvParam->autoResourceVariable.c_str());
       stringToAdd.concat("&");
-      stringToAdd.encodeURL();
+      stringToAdd.encodeURLSelf();
       onlineResource.concat(stringToAdd.c_str());
       srvParam->cfg->OnlineResource[0]->attr.value.copy(onlineResource.c_str());
       CDBDebug("%s -- %s",srvParam->autoResourceVariable.c_str(),srvParam->autoResourceLocation.c_str());
       
       //CDBError("A");return 1;
-      delete variables;
+      
       
       
       //When an opendap source is added, we should not cache the getcapabilities

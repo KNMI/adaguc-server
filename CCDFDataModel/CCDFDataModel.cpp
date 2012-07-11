@@ -1,3 +1,24 @@
+/* 
+ * Copyright (C) 2012, Royal Netherlands Meteorological Institute (KNMI)
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or any 
+ * later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Project    : ADAGUC
+ *
+ * initial programmer :  M.Plieger
+ * initial date       :  20120610
+ */
 #include "CCDFDataModel.h"
 const char *CDF::Variable::className="Variable";
 const char *CDFObject::className="CDFObject";
@@ -88,7 +109,12 @@ void CDF::getErrorMessage(CT::string *errorMessage,const int errorCode){
   getErrorMessage(msg,1023,errorCode);
   errorMessage->copy(msg);    
 }
-  
+
+CT::string CDF::getErrorMessage(int errorCode){
+  CT::string errorMessage;
+  getErrorMessage(&errorMessage,errorCode);
+  return errorMessage;
+}
 
 
 //const char *getAttributeAsString(CDF::Attribute *attr){
@@ -120,6 +146,12 @@ void CDF::_dumpPrintAttributes(const char *variableName, std::vector<CDF::Attrib
 
 void CDF::dump(CDF::Variable* cdfVariable,CT::string* dumpString){
   _dumpPrintAttributes(cdfVariable->name.c_str(),cdfVariable->attributes,dumpString);
+}
+
+CT::string CDF::dump(CDFObject* cdfObject){
+  CT::string d;
+  dump(cdfObject,&d);
+  return d;
 }
 
 void CDF::dump(CDFObject* cdfObject,CT::string* dumpString){

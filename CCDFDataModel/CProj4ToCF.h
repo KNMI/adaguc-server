@@ -1,3 +1,25 @@
+/* 
+ * Copyright (C) 2012, Royal Netherlands Meteorological Institute (KNMI)
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or any 
+ * later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Project    : ADAGUC
+ *
+ * initial programmer :  M.Plieger
+ * initial date       :  20120610
+ */
+
 #ifndef CPROJ4TOCF_H
 #define CPROJ4TOCF_H
 
@@ -286,12 +308,12 @@ class CProj4ToCF{
       std::vector <KVP*> projKVPList;
       CT::string proj4CTString;
       proj4CTString.copy(proj4String);
-      CT::string *projElements=proj4CTString.split(" +");
+      CT::string *projElements=proj4CTString.splitToArray(" +");
       
       if(projElements->count<2){delete[] projElements;return 1;}
       for(size_t j=0;j<projElements->count;j++){
         KVP *option = new KVP();
-        CT::string *element=projElements[j].split("=");
+        CT::string *element=projElements[j].splitToArray("=");
         option->name.copy(&element[0]);
         option->value.copy(&element[1]);
         projKVPList.push_back(option);
@@ -327,9 +349,9 @@ class CProj4ToCF{
    
       projectionVariable->setAttributeText("proj4_origin",kvpProjString.c_str());
     
-      CT::string reconstrProjString = "";
-      convertCFToProj(projectionVariable,&reconstrProjString);
-      projectionVariable->setAttributeText("proj4_recons",reconstrProjString.c_str());
+      //CT::string reconstrProjString = "";
+      //convertCFToProj(projectionVariable,&reconstrProjString);
+      //projectionVariable->setAttributeText("proj4_recons",reconstrProjString.c_str());
       
       for(size_t j=0;j<projKVPList.size();j++){delete projKVPList[j];};projKVPList.clear();
       if(foundProj==0)return 1;
@@ -348,7 +370,7 @@ class CProj4ToCF{
       try{
         CT::string grid_mapping_name;
         projectionVariable->getAttribute("grid_mapping_name")->getDataAsString(&grid_mapping_name);
-        grid_mapping_name.toLowerCase();
+        grid_mapping_name.toLowerCaseSelf();
 
         if(grid_mapping_name.equals("msgnavigation")){
           // Meteosat Second Generation projection
@@ -420,7 +442,7 @@ class CProj4ToCF{
                             latitude_of_projection_origin.toDouble());
         
           
-          CT::string *stpList=standard_parallel.split(" ");
+          CT::string *stpList=standard_parallel.splitToArray(" ");
           if(stpList->count==1){
             proj4String->printconcat(" +lat_1=%f",stpList[0].toDouble());
           }

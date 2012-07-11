@@ -557,7 +557,7 @@ CDBDebug("Querying %s",query.c_str());
 }
 
 int CXMLGen::getStylesForLayer(WMSLayer * myWMSLayer){
-  CT::stringlist *styleList = CImageDataWriter::getStyleListForDataSource(myWMSLayer->dataSource);
+  CT::PointerList<CT::string*> *styleList = CImageDataWriter::getStyleListForDataSource(myWMSLayer->dataSource);
   if(styleList==NULL)return 1;
   for(size_t j=0;j<styleList->size();j++){
     WMSLayer::Style *style = new WMSLayer::Style();
@@ -590,7 +590,7 @@ CDBDebug("Cascaded layer");
     CDBDebug("Retrieved styles %s",myWMSLayer->dataSource->cfgLayer->Styles[0]->value.c_str());
 #endif    
     CT::string styles(myWMSLayer->dataSource->cfgLayer->Styles[0]->value.c_str());
-    layerStyleNames = styles.split(",");
+    layerStyleNames = styles.splitToArray(",");
     CT::string name;
     if(layerStyleNames->count>0){
                 //styleNames.push_back(layerStyleNames[0].c_str());
@@ -630,7 +630,7 @@ CDBDebug("Cascaded layer");
           if(renderMethodList.length()==0){
             renderMethodList.copy(CImageDataWriter::RenderMethodStringList);
           }
-          CT::string *renderMethods = renderMethodList.split(",");
+          CT::string *renderMethods = renderMethodList.splitToArray(",");
           for(size_t r=0;r<renderMethods->count;r++){
             if(renderMethods[r].length()>0){
                         //Check wether we should support this rendermethod or not:
@@ -652,7 +652,7 @@ CDBDebug("Cascaded layer");
                     name.print("%s/%s",layerStyleNames[s].c_str(),renderMethods[r].c_str());
                   }*/
                   name.print("%s/%s",layerStyleNames[s].c_str(),renderMethods[r].c_str());
-                  //name.encodeURL();
+                  //name.encodeURLSelf();
                   styleNames.push_back(name.c_str());
                 }
             }
@@ -684,11 +684,11 @@ int CXMLGen::getWMS_1_0_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
   int status=header.     open(srvParam->cfg->Path[0]->attr.value.c_str(),WMS_1_0_0_HEADERFILE);if(status!=0)return 1;
   
   XMLDoc->copy(header.data);
-  XMLDoc->replace("[SERVICETITLE]",srvParam->cfg->WMS[0]->Title[0]->value.c_str());
-  XMLDoc->replace("[SERVICEABSTRACT]",srvParam->cfg->WMS[0]->Abstract[0]->value.c_str());
-  XMLDoc->replace("[GLOBALLAYERTITLE]",srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->value.c_str());
-  XMLDoc->replace("[SERVICEONLINERESOURCE]",OnlineResource.c_str());
-  XMLDoc->replace("[SERVICEINFO]",serviceInfo.c_str());
+  XMLDoc->replaceSelf("[SERVICETITLE]",srvParam->cfg->WMS[0]->Title[0]->value.c_str());
+  XMLDoc->replaceSelf("[SERVICEABSTRACT]",srvParam->cfg->WMS[0]->Abstract[0]->value.c_str());
+  XMLDoc->replaceSelf("[GLOBALLAYERTITLE]",srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->value.c_str());
+  XMLDoc->replaceSelf("[SERVICEONLINERESOURCE]",OnlineResource.c_str());
+  XMLDoc->replaceSelf("[SERVICEINFO]",serviceInfo.c_str());
   if(myWMSLayerList->size()>0){
     for(size_t p=0;p<(*myWMSLayerList)[0]->projectionList.size();p++){
       WMSLayer::Projection *proj = (*myWMSLayerList)[0]->projectionList[p];
@@ -745,11 +745,11 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
   int status=header.     open(srvParam->cfg->Path[0]->attr.value.c_str(),WMS_1_1_1_HEADERFILE);if(status!=0)return 1;
   
   XMLDoc->copy(header.data);
-  XMLDoc->replace("[SERVICETITLE]",srvParam->cfg->WMS[0]->Title[0]->value.c_str());
-  XMLDoc->replace("[SERVICEABSTRACT]",srvParam->cfg->WMS[0]->Abstract[0]->value.c_str());
-  XMLDoc->replace("[GLOBALLAYERTITLE]",srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->value.c_str());
-  XMLDoc->replace("[SERVICEONLINERESOURCE]",OnlineResource.c_str());
-  XMLDoc->replace("[SERVICEINFO]",serviceInfo.c_str());
+  XMLDoc->replaceSelf("[SERVICETITLE]",srvParam->cfg->WMS[0]->Title[0]->value.c_str());
+  XMLDoc->replaceSelf("[SERVICEABSTRACT]",srvParam->cfg->WMS[0]->Abstract[0]->value.c_str());
+  XMLDoc->replaceSelf("[GLOBALLAYERTITLE]",srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->value.c_str());
+  XMLDoc->replaceSelf("[SERVICEONLINERESOURCE]",OnlineResource.c_str());
+  XMLDoc->replaceSelf("[SERVICEINFO]",serviceInfo.c_str());
   if(myWMSLayerList->size()>0){
     for(size_t p=0;p<(*myWMSLayerList)[0]->projectionList.size();p++){
       WMSLayer::Projection *proj = (*myWMSLayerList)[0]->projectionList[p];
@@ -781,12 +781,12 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
       //if(groupKeys[groupIndex].size()>0)
       {
         CT::string key=groupKeys[groupIndex].c_str();
-        CT::string *subGroups=key.split("/");
+        CT::string *subGroups=key.splitToArray("/");
         groupDepth=subGroups->count;
         
         if(groupIndex>0){
           CT::string prevKey=groupKeys[groupIndex-1].c_str();
-          CT::string *prevSubGroups=prevKey.split("/");
+          CT::string *prevSubGroups=prevKey.splitToArray("/");
           
 
           for(size_t j=subGroups->count;j<prevSubGroups->count;j++){
@@ -927,11 +927,11 @@ int CXMLGen::getWCS_1_0_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
     srvParam->cfg->WCS[0]->Abstract.push_back(new CServerConfig::XMLE_Abstract());
     srvParam->cfg->WCS[0]->Abstract[0]->value.copy(srvParam->cfg->WCS[0]->Title[0]->value.c_str());
   }
-  XMLDoc->replace("[SERVICENAME]",srvParam->cfg->WCS[0]->Title[0]->value.c_str());
-  XMLDoc->replace("[SERVICETITLE]",srvParam->cfg->WCS[0]->Name[0]->value.c_str());
-  XMLDoc->replace("[SERVICEABSTRACT]",srvParam->cfg->WCS[0]->Abstract[0]->value.c_str());
-  XMLDoc->replace("[SERVICEONLINERESOURCE]",OnlineResource.c_str());
-  XMLDoc->replace("[SERVICEINFO]",serviceInfo.c_str());
+  XMLDoc->replaceSelf("[SERVICENAME]",srvParam->cfg->WCS[0]->Title[0]->value.c_str());
+  XMLDoc->replaceSelf("[SERVICETITLE]",srvParam->cfg->WCS[0]->Name[0]->value.c_str());
+  XMLDoc->replaceSelf("[SERVICEABSTRACT]",srvParam->cfg->WCS[0]->Abstract[0]->value.c_str());
+  XMLDoc->replaceSelf("[SERVICEONLINERESOURCE]",OnlineResource.c_str());
+  XMLDoc->replaceSelf("[SERVICEINFO]",serviceInfo.c_str());
   
   if(myWMSLayerList->size()>0){
     
@@ -1007,7 +1007,7 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc,std::vector<WMSLay
   
               if(timeDimIndex>=0){
               //For information about this, visit http://www.galdosinc.com/archives/151
-                CT::string * timeDimSplit = layer->dimList[timeDimIndex]->values.split("/");
+                CT::string * timeDimSplit = layer->dimList[timeDimIndex]->values.splitToArray("/");
                 if(timeDimSplit->count==3){
                   XMLDoc->     concat("        <gml:TimePeriod>\n");
                   XMLDoc->printconcat("          <gml:begin>%s</gml:begin>\n",timeDimSplit[0].c_str());
@@ -1059,7 +1059,7 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc,std::vector<WMSLay
                 XMLDoc->concat("      <temporalDomain>\n");
                 {
               //For information about this, visit http://www.galdosinc.com/archives/151
-                  CT::string * timeDimSplit = layer->dimList[timeDimIndex]->values.split("/");
+                  CT::string * timeDimSplit = layer->dimList[timeDimIndex]->values.splitToArray("/");
                   if(timeDimSplit->count==3){
                     XMLDoc->concat("        <gml:TimePeriod>\n");
                     XMLDoc->printconcat("          <gml:begin>%s</gml:begin>\n",timeDimSplit[0].c_str());
@@ -1094,7 +1094,7 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc,std::vector<WMSLay
               for(size_t p=0;p< layer->projectionList.size();p++){
                 WMSLayer::Projection *proj = (*myWMSLayerList)[0]->projectionList[p];
                 CT::string encodedProjString(proj->name.c_str());
-                encodedProjString.encodeURL();
+                encodedProjString.encodeURLSelf();
                 XMLDoc->printconcat("      <requestResponseCRSs>%s</requestResponseCRSs>\n",
                                     encodedProjString.c_str());
               }
@@ -1153,7 +1153,7 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
    
     if(hideLayer==false){
       //For web: URL encoding is necessary
-      //layerUniqueName.encodeURL();
+      //layerUniqueName.encodeURLSelf();
       CT::string layerGroup;
       if(srvParam->cfg->Layer[j]->Group.size()>0){
         if(srvParam->cfg->Layer[j]->Group[0]->attr.value.c_str()!=NULL){

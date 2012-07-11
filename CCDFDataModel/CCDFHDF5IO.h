@@ -1,3 +1,24 @@
+/* 
+ * Copyright (C) 2012, Royal Netherlands Meteorological Institute (KNMI)
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or any 
+ * later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Project    : ADAGUC
+ *
+ * initial programmer :  M.Plieger
+ * initial date       :  20120610
+ */
 #ifndef CCDFHDF5IO_H
 #define CCDFHDF5IO_H
 #include "CCDFDataModel.h"
@@ -6,7 +27,8 @@
 #include <iostream>
 #include <hdf5.h>
 #include "CDebugger.h"
-#include "CADAGUC_time.h"
+#include "CTime.h"
+#include "CProj4ToCF.h"
 //#define CCDFHDF5IO_DEBUG
 void ncError(int line, const char *className, const char * msg,int e);
 class CDFHDF5Reader :public CDFReader{
@@ -166,6 +188,7 @@ class CDFHDF5Reader :public CDFReader{
       dim->length=len;
       CDF::Variable *var= new CDF::Variable();
       var->setCDFReaderPointer(this);
+      var->setParentCDFObject(cdfObject);
       var->setName(dimName);
       var->id=cdfObject->variables.size();
       var->isDimension=true;
@@ -218,6 +241,7 @@ CDBDebug("Getting group '%s'",name);
             var->setName(temp);
             var->id= cdfObject->variables.size();
             var->setCDFReaderPointer(this);//TODO
+            var->setParentCDFObject(cdfObject);
           //Attributes:
             readAttributes(var->attributes,newGroupID);
             cdfObject->variables.push_back(var);
@@ -280,6 +304,7 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
   #endif
                   var->id= cdfObject->variables.size();
                   var->setCDFReaderPointer(this);
+                  var->setParentCDFObject(cdfObject);
                   readAttributes(var->attributes,datasetID);
   #ifdef CCDFHDF5IO_DEBUG      
   CDBDebug("%s.%s",groupName,name);
@@ -379,7 +404,99 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
       if(overview==NULL){CDBError("variable overview not found");return 1;}
       CDF::Attribute *product_datetime_start =overview->getAttributeNE("product_datetime_start");
       if(product_datetime_start==NULL){CDBError("attribute product_datetime_start not found");return 1;}
+
+      CDF::Attribute *product_datetime_end =overview->getAttributeNE("product_datetime_end");
+      if(product_datetime_end==NULL){CDBError("attribute product_datetime_end not found");return 1;}
+
+
+      #ifdef CCDFHDF5IO_DEBUG
+      CDBDebug("Detecting time parameters");
+      #endif
+      char szStartTime[100];
+      char szEndTime[100];
+      status = HDF5ToADAGUCTime(szStartTime,(char*)product_datetime_start->data);if(status!=0){CDBError("Could not initialize time");return 1;}
+      status = HDF5ToADAGUCTime(szEndTime,(char*)product_datetime_end->data);if(status!=0){CDBError("Could not initialize time");return 1;}
+      if(HDF5ToADAGUCTime(szStartTime,(char*)product_datetime_start->data)!=0){CDBError("Could not initialize time");return 1;}
+      if(HDF5ToADAGUCTime(szEndTime,(char*)product_datetime_end->data)!=0){CDBError("Could not initialize time");return 1;}
+     
+      /* Add these obtained values in an ADAGUC way to the file */
+      CDF::Variable *product = cdfObject->getVariableNE("product");
+      if(product==NULL){
+        product = new CDF::Variable();
+        product->name = "product";
+        cdfObject->addVariable(product);
+      }
+      product->addAttribute(new CDF::Attribute("validity_start",szStartTime));
+      product->addAttribute(new CDF::Attribute("validity_stop",szEndTime));
+
+      /* Try to get additional values*/
+      CDF::Variable *image1_satellite = cdfObject->getVariableNE("image1.satellite");
+      if(image1_satellite!=NULL){
+        CDF::Attribute *image_acquisition_time =image1_satellite->getAttributeNE("image_acquisition_time");
+        CDF::Attribute *image_generation_time =image1_satellite->getAttributeNE("image_generation_time");
+        if(image_acquisition_time!=NULL){
+          char text[100];
+          if(HDF5ToADAGUCTime(text,(char*)image_acquisition_time->data)==0){
+            product->addAttribute(new CDF::Attribute("image1_acquisition_time",text));
+          }
+          if(HDF5ToADAGUCTime(text,(char*)image_generation_time->data)==0){
+            product->addAttribute(new CDF::Attribute("image1_generation_time",text));
+          }
+        }
+      }
+     
+     
+     #ifdef CCDFHDF5IO_DEBUG
+     CDBDebug("Detecting boundingbox from iso_dataset");
+     #endif
+     
+      /*Fill in bounding box in isodataset*/
+      /*
+       *                 iso_dataset:max-x = 10.9f ;
+       *                iso_dataset:min-x = 0.f ;
+       *                iso_dataset:max-y = 56.f ;
+       *                iso_dataset:min-y = 48.8f ;
+       */
+      CDF::Variable *iso_dataset = cdfObject->getVariableNE("iso_dataset");
+      if(iso_dataset==NULL){
+        iso_dataset = new CDF::Variable();
+        iso_dataset->name = "iso_dataset";
+        cdfObject->addVariable(iso_dataset);
+      }
+ 
+      try{
+     
+        CT::string productCornerString =(char *)geo->getAttribute("geo_product_corners")->toString().c_str();
+    
+        CT::StackList<CT::string> coords=productCornerString.trimr().splitToStack(" ");
+       
+        if(coords.size()>6){
+          iso_dataset->addAttribute(new CDF::Attribute("min-x",coords[0].c_str()));
+          iso_dataset->addAttribute(new CDF::Attribute("min-y",coords[1].c_str()));
+          iso_dataset->addAttribute(new CDF::Attribute("max-x",coords[4].c_str()));
+          iso_dataset->addAttribute(new CDF::Attribute("max-y",coords[5].c_str()));
+        }else{
+          #ifdef CCDFHDF5IO_DEBUG
+          CDBDebug("geo_product_corners is invalid");
+          #endif
+        }
+      }catch(int e){
+
+      }
       
+      
+      #ifdef CCDFHDF5IO_DEBUG
+      CDBDebug("Setting global values");
+      #endif
+    
+      /* Fill in global values */
+      cdfObject->addAttribute(new CDF::Attribute("Conventions","CF-1.6"));
+      cdfObject->addAttribute(new CDF::Attribute("history","Generated by KNMIHDF5 to NETCDF-CF tool"));
+      try{cdfObject->addAttribute(new CDF::Attribute("institution",(char *)overview->getAttribute("dataset_org_descr")->data));}catch(int e){}
+      try{cdfObject->addAttribute(new CDF::Attribute("source",(char *)overview->getAttribute("hdf5_url")->data));}catch(int e){}
+      try{cdfObject->addAttribute(new CDF::Attribute("references",(char *)overview->getAttribute("hdftag_url")->data));}catch(int e){}
+      try{cdfObject->addAttribute(new CDF::Attribute("title",(char *)overview->getAttribute("product_group_title")->data));}catch(int e){}
+    
       CDF::Dimension *dimX=var->dimensionlinks[1];
       CDF::Dimension *dimY=var->dimensionlinks[0];
       CDF::Variable *varX=cdfObject->getVariableNE(dimX->name.c_str());
@@ -408,16 +525,42 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
         ((double*)varY->data)[j]=y;
       }
       
-      CDF::Variable * projection = new CDF::Variable();
-      cdfObject->addVariable(projection);
-      projection->setName("projection");
-      projection->type=CDF_CHAR;
-      projection->isDimension=false;
       
-      CDF::Attribute* proj4_params = new CDF::Attribute();
-      proj4_params->setName("proj4_params");
+      #ifdef CCDFHDF5IO_DEBUG
+      CDBDebug("Detecting projection");
+      #endif
+      
+      CDF::Variable * projection = NULL;
+      projection = cdfObject->getVariableNE("projection");
+      if(projection == NULL){
+        projection = new CDF::Variable();
+        cdfObject->addVariable(projection);
+        projection->setName("projection");
+        projection->type=CDF_CHAR;
+        projection->isDimension=false;
+      }
+      
+      
+      #ifdef CCDFHDF5IO_DEBUG
+      CDBDebug("CProj4ToCF");
+      #endif
+      CProj4ToCF proj4ToCF;
+      proj4ToCF.convertProjToCF(projection,(char*)proj4attr->data);
+      #ifdef CCDFHDF5IO_DEBUG
+      CDBDebug("/CProj4ToCF");
+      #endif
+      CDF::Attribute* proj4_params = projection->getAttributeNE("proj4_params");
+      if(proj4_params==NULL){
+        proj4_params = new CDF::Attribute();
+        projection->addAttribute(proj4_params);
+        proj4_params->setName("proj4_params");
+      }
       proj4_params->setData(CDF_CHAR,proj4attr->data,proj4attr->length);
-      projection->addAttribute(proj4_params);
+      
+      
+      #ifdef CCDFHDF5IO_DEBUG
+      CDBDebug("Set time dimension");
+      #endif
       //Set time dimension
       CDF::Variable * time= new CDF::Variable();
       CDF::Dimension* timeDim= new CDF::Dimension();
@@ -432,32 +575,53 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
       time_units->setName("units");
       time_units->setData("minutes since 2000-01-01 00:00:00\0");
       time->addAttribute(time_units);
+      
+      CDF::Attribute *standard_name = new CDF::Attribute();
+      standard_name->setName("standard_name");
+      standard_name->setData("time");
+      time->addAttribute(standard_name);
+      
       time->dimensionlinks.push_back(timeDim);
+
+      
+
+
+
+      #ifdef CCDFHDF5IO_DEBUG
+      CDBDebug("CTime");
+      #endif
       //Set adaguc time
-      CADAGUC_time *adTime=new CADAGUC_time ((char*)time_units->data);
-      char szADAGUCTime[100];
-      status = HDF5ToADAGUCTime(szADAGUCTime,(char*)product_datetime_start->data);
-      if(status!=0){
-        CDBError("Could not initialize time: %s",(char*)time_units->data);
+      CTime *ctime = new CTime();
+      if(ctime->init((char*)time_units->data)!=0){
+        CDBError("Could not initialize CTIME: %s",(char*)time_units->data);
         return 1;
       }
-      //printf("%s\n",szADAGUCTime);
       double offset;
-      status = adTime->YYYYMMDDTHHMMSSTimeToOffset(offset,szADAGUCTime);
+      try{
+        offset = ctime->dateToOffset(ctime->stringToDate(szStartTime));
+      }catch(int e){
+        CT::string message=CTime::getErrorMessage(e);
+        CDBError("CTime Exception %s",message.c_str());
+        delete ctime;
+        return 1;
+      }
+    
       time->setSize(1);
       if(CDF::allocateData(time->type,&time->data,time->getSize())){throw(__LINE__);}
       ((double*)time->data)[0]=offset;
       if(status!=0){
-        CDBError("Could not initialize time: %s",szADAGUCTime);
-        delete adTime;
+        CDBError("Could not initialize time: %s",szStartTime);
+        delete ctime;
         return 1;
       }      
+      delete ctime;
       
-      delete adTime;
-      if(status!=0){
-        CDBError("Could not initialize time: %s",(char*)time_units->data);
-        return 1;
-      }
+      
+   
+      #ifdef CCDFHDF5IO_DEBUG
+      CDBDebug("Set grid_mapping for all variables");
+      #endif
+      
       //Loop through all images and set grid_mapping name
       CT::string varName;
       int v=1;
@@ -541,6 +705,13 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
         }
         v++;
       }while(var!=NULL);
+      
+ 
+      #ifdef CCDFHDF5IO_DEBUG
+      CDBDebug("convertKNMIHDF5toCF finished");
+      #endif
+      
+      
       return 0;
     }
     int open(const char *fileName){
@@ -589,7 +760,7 @@ CDBDebug("convertKNMIHDF5toCF()");
 //      CDBError("openH5GroupByName");
       hid_t HDF5_group=H5F_file;hid_t newGroupID;
       CT::string varName(variableGroupName);
-      CT::string * paths=varName.split(".");
+      CT::string * paths=varName.splitToArray(".");
       for(size_t j=0;j<paths->count-1;j++){
         
         newGroupID= H5Gopen2(HDF5_group ,paths[j].c_str(),H5P_DEFAULT);

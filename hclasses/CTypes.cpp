@@ -1,10 +1,34 @@
+/* 
+ * Copyright (C) 2012, Royal Netherlands Meteorological Institute (KNMI)
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or any 
+ * later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Project    : ADAGUC
+ *
+ * initial programmer :  M.Plieger
+ * initial date       :  20120610
+ */
+
 #include "CTypes.h"
+
+const char *CT::string::className = "CT::string";
 /* !!! TODO Currently missing in netcdf lib 4.1.2 */
 //int nc_def_var_deflate(int ncid, int varid, int shuffle, int deflate,                        int deflate_level){return 0;};
 namespace CT{
 
-  stringlist *string::splitN(const char * _value){
-    stringlist *stringList = new stringlist();
+  PointerList<CT::string*> *string::splitToPointer(const char * _value){
+    PointerList<CT::string*> *stringList = new PointerList<CT::string*>();
     const char *fo = strstr(value,_value);
     const char *prevFo=value;
    // if(fo==NULL)return stringList;
@@ -22,8 +46,8 @@ namespace CT{
     return stringList;
   }
   
-  stringlistS string::splitS(const char * _value){
-    stringlistS stringList;
+  StackList<CT::string>  string::splitToStack(const char * _value){
+    StackList<CT::string> stringList;
     const char *fo = strstr(value,_value);
     const char *prevFo=value;
     // if(fo==NULL)return stringList;
@@ -38,6 +62,10 @@ namespace CT{
     //printf("pushing2 %s %d\n",val->c_str(),stringList.size());
     return stringList;
   }
+  
+  
+  
+  
   
  /*void string::splitN( stringlist stringList,const char * _value){
     stringList.free();
@@ -55,7 +83,61 @@ namespace CT{
     //printf("pushing2 %s %d\n",val->c_str(),stringList.size());
     //return stringList;
   }*/
-  string * string::split(const char * _value){
+ 
+  string::string(){
+    #ifdef CTYPES_DEBUG
+    CDBDebug("string();\n");
+    #endif
+    init();
+  }
+ 
+  string::string(string const &f){
+    #ifdef CTYPES_DEBUG
+    CDBDebug("string(string const &f);\n");
+    #endif
+    init();copy(f.value,f.privatelength);
+  }
+  
+  string& string::operator= (string const& f){
+    #ifdef CTYPES_DEBUG
+    CDBDebug("string::operator= (string const& f);\n");
+    #endif
+    if (this == &f) return *this;  
+    _Free();init();copy(f.value,f.privatelength);
+    return *this;
+  }
+  
+  string& string::operator= (const char*const &f){
+    #ifdef CTYPES_DEBUG
+    CDBDebug("string::operator= (const char*const &f)\n");
+    #endif
+    _Free();init();this->copy(f);
+    return *this;
+  }      
+  
+  string& string::operator+= (string const& f){
+    if (this == &f) return *this;  
+    concat(f.value,f.privatelength);
+    return *this;
+  }
+  string& string::operator+= (const char*const &f){
+    this->concat(f);
+    return *this;
+  }
+  
+  string& string::operator+ (string const& f){
+    if (this == &f) return *this;  
+    concat(f.value,f.privatelength);
+    return *this;
+  }
+  
+  string& string::operator+ (const char*const &f){
+    this->concat(f);return *this;
+    
+  }
+  
+ 
+  string * string::splitToArray(const char * _value){
     string str(value,privatelength);
     void *temp[8000];
     char * pch;int n=0;
@@ -73,9 +155,10 @@ namespace CT{
       strings[j].count=n;
       delete token;
     }
-    CTlink<string>(strings,n);
+    CTlink(strings,n);
     return strings;
   };
+  
   void string::_Free(){
     if(allocated!=0){
       delete[] value;
@@ -181,7 +264,7 @@ namespace CT{
       return in;
     }
 
-    void string::toLowerCase(){
+    void string::toLowerCaseSelf(){
         char szChar;
         for(unsigned int j=0;j<privatelength;j++){
             szChar=value[j];
@@ -189,14 +272,14 @@ namespace CT{
         }
     }
 
-    void string::toUpperCase(){
+    void string::toUpperCaseSelf(){
         char szChar;
         for(unsigned int j=0;j<privatelength;j++){
             szChar=value[j];
             if(szChar>='a'&&szChar<='z')value[j]-=32;
         }
     }
-    void string::encodeURL(){
+    void string::encodeURLSelf(){
       char *pszEncode=new char[privatelength*6+1];
       int p=0;
       unsigned char szChar;
@@ -213,11 +296,11 @@ namespace CT{
       copy(pszEncode,p);
       delete [] pszEncode;
     }
-    void string::decodeURL(){
+    void string::decodeURLSelf(){
       char *pszDecode=new char[privatelength*6+1];
       int p=0;
       unsigned char szChar,d1,d2;
-      replace("+"," ");
+      replaceSelf("+"," ");
       for(unsigned int j=0;j<privatelength;j++){
         szChar=value[j];
         if(szChar=='%'){
@@ -233,7 +316,7 @@ namespace CT{
       
       delete [] pszDecode;
     }
-    void string::toUnicode(){
+    void string::toUnicodeSelf(){
         char *pszUnicode=new char[privatelength*6+1];
 
         int p=0;
@@ -275,14 +358,122 @@ namespace CT{
     const char* string::c_str(){
       return value;
     }
-    int32::int32(){
+    
+    int CT::string::replaceSelf(const char *substr,size_t substrl,const char *newString,size_t newStringl){
+      if(this->privatelength==0)return 0;
+      if(this->value==NULL)return 0;
+      CT::string thisString;
+      thisString.copy(value,privatelength);
+      std::vector<int>occurences;
+      char * tempVal = value;
+      const char *search = substr;
+      int c=0;
+      size_t oc=0;
+      do{
+        tempVal = value+oc;
+        //printf("testing '%s'\n",tempVal);
+        c=strstr (tempVal,search)-tempVal;
+        if(c>=0){
+          oc+=c;
+          //printf("!%d\n",oc);
+          occurences.push_back(oc);
+          oc+=substrl;
+        }
+      }while(c>=0&&oc<thisString.privatelength);
+      //for(size_t j=0;j<occurences.size();j++){
+        //        printf("%d\n",occurences[j]);
+      //}
+      size_t newSize = privatelength+occurences.size()*(newStringl-substrl);
+      _Allocate(newSize);
+      size_t pt=0,ps=0,j=0;
+      do{
+        if(j<occurences.size()){
+          while(ps==(unsigned)occurences[j]&&j<occurences.size()){
+            for(size_t i=0;i<newStringl;i++){
+              value[pt++]=newString[i];
+            }
+            ps+=substrl;
+            j++;
+          }
+        }
+        value[pt++]=thisString.value[ps++];
+      }while(pt<newSize);
+      value[newSize]='\0';
+      //privatelength
+      privatelength=newSize;
+      //printf("newSize %d\n",privatelength);
+      return 0;      
+    }
+    
+    void string::trimSelf(){
+      int s=-1,e=privatelength;
+      for(size_t j=0;j<privatelength;j++){if(value[j]!=' '){s=j;break;}}
+      for(size_t j=privatelength-1;j>=0;j--){if(value[j]!=' '){e=j;break;}}
+      substringSelf(s,e+1);
+    }
+    
+    int string::substringSelf(CT::string *string, size_t start,size_t end){
+      if(start<0||start>=string->privatelength||end-start<=0){
+        copy("");
+        return 0;
+      }
+      if(end>string->privatelength)end=string->privatelength;
+      CT::string temp(string->value+start,end-start);
+      copy(&temp);
+      return  0;
+    }
+    
+    bool string::testRegEx(const char *pattern){
+      int status; 
+      regex_t re;
+      if (regcomp(&re, pattern, REG_EXTENDED|REG_NOSUB) != 0){
+        return false;
+      }
+      status = regexec(&re, value, (size_t) 0, NULL, 0);
+      regfree(&re);
+      if (status != 0) {
+        return false;
+      }
+      return true;
+    }
+    
+    
+    void string::setChar(size_t location,const char character){
+      if(location<privatelength){
+        value[location]=character;
+        if(character=='\0')privatelength=location;
+      } 
+    }
+    
+    
+    
+    bool string::equals(const char *_value,size_t _length){
+      if(_value==NULL)return false;
+      if(privatelength!=_length)return false;
+      if(strncmp(value,_value,_length)==0)return true;
+      return false;
+    }
+    
+    int string::equals(const char *_value){
+      if(_value==NULL)return false;
+      return equals(_value,strlen(_value));
+    }
+    
+    int string::equals(CT::string* _string){
+      if(_string==NULL)return false;
+      return equals(_string->value,_string->privatelength);
+    }
+    
+/*    int32::int32(){
         value=0;
         init();
     }
     int32::int32(int _value){
         init();
         value=_value;
-    }
+    }*/
+    
+   
 
 
 }

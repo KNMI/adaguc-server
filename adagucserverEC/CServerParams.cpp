@@ -150,10 +150,10 @@ int CServerParams::lookupTableName(CT::string *tableName,const char *path,const 
 // Therefore create unique tablenames like tablename_time and tablename_height
 void CServerParams::makeCorrectTableName(CT::string *tableName,CT::string *dimName){
   tableName->concat("_");tableName->concat(dimName);
-  tableName->replace("-","_m_");
-  tableName->replace("+","_p_");
-  tableName->replace(".","_");
-  tableName->toLowerCase();
+  tableName->replaceSelf("-","_m_");
+  tableName->replaceSelf("+","_p_");
+  tableName->replaceSelf(".","_");
+  tableName->toLowerCaseSelf();
 }
 
 void CServerParams::showWCSNotEnabledErrorMessage(){
@@ -186,7 +186,7 @@ int CServerParams::makeUniqueLayerName(CT::string *layerName,CServerConfig::XMLE
   
   if(!cfgLayer->Name[0]->attr.force.equals("true")){
     layerName->concat(cfgLayer->Name[0]->value.c_str());
-    layerName->replace(".","_");
+    layerName->replaceSelf(".","_");
   }else{
     layerName->copy(cfgLayer->Name[0]->value.c_str());
   }
@@ -301,6 +301,6 @@ bool CServerParams::checkResolvePath(const char *path,CT::string *resolvedPath){
 }
 
 void CServerParams::encodeTableName(CT::string *tableName){
-  tableName->replace("/","_");
-  tableName->toLowerCase();
+  tableName->replaceSelf("/","_");
+  tableName->toLowerCaseSelf();
 }

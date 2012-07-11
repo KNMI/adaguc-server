@@ -53,9 +53,9 @@ class CImgWarpBilinear:public CImageWarperRenderInterface{
       if(pszSettings==NULL)return 0;
       if(strlen(pszSettings)==0)return 0;
       CT::string settings(pszSettings);
-      CT::string *nodes= settings.split(";");
+      CT::string *nodes= settings.splitToArray(";");
       for(size_t j=0;j<nodes->count;j++){
-        CT::string *values=nodes[j].split("=");
+        CT::string *values=nodes[j].splitToArray("=");
         if(values->count==2){
           if(values[0].equals("drawMap")){
             if(values[1].equals("true"))drawMap=true;

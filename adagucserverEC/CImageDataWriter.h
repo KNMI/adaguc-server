@@ -114,17 +114,17 @@ private:
     int getColorIndexForValue(CDataSource *dataSource,float value);
     int drawCascadedWMS(CDataSource *dataSource,const char *service,const char *layers,bool transparent);
     
-    static CT::stringlist *getRenderMethodListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style* style);      
-    static CT::stringlist *getLegendListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style* style);
-    static CT::stringlist *getLegendNames(std::vector <CServerConfig::XMLE_Legend*> Legend);
-    static CT::stringlist *getStyleNames(std::vector <CServerConfig::XMLE_Styles*> Styles);
-    static CT::stringlist *getStyleListForDataSource(CDataSource *dataSource,StyleConfiguration *styleConfig);
+    static CT::PointerList<CT::string*> *getRenderMethodListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style* style);      
+    static CT::PointerList<CT::string*> *getLegendListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style* style);
+    static CT::PointerList<CT::string*> *getLegendNames(std::vector <CServerConfig::XMLE_Legend*> Legend);
+    static CT::PointerList<CT::string*> *getStyleNames(std::vector <CServerConfig::XMLE_Styles*> Styles);
+    static CT::PointerList<CT::string*> *getStyleListForDataSource(CDataSource *dataSource,StyleConfiguration *styleConfig);
   public:
     CDrawImage drawImage;
     CImageDataWriter::StyleConfiguration * currentStyleConfiguration;
     static int  getServerLegendIndexByName(const char * legendName,std::vector <CServerConfig::XMLE_Legend*> serverLegends);
     static int  getServerStyleIndexByName(const char * styleName,std::vector <CServerConfig::XMLE_Style*> serverStyles);
-    static CT::stringlist *getStyleListForDataSource(CDataSource *dataSource);
+    static CT::PointerList<CT::string*> *getStyleListForDataSource(CDataSource *dataSource);
     static int makeStyleConfig(StyleConfiguration *styleConfig,CDataSource *dataSource,const char *styleName,const char *legendName,const char *renderMethod);
     static StyleConfiguration *getStyleConfigurationByName(const char *styleName,CDataSource *dataSource);
 

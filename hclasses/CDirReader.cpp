@@ -1,3 +1,25 @@
+/* 
+ * Copyright (C) 2012, Royal Netherlands Meteorological Institute (KNMI)
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or any 
+ * later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Project    : ADAGUC
+ *
+ * initial programmer :  M.Plieger
+ * initial date       :  20120610
+ */
+
 #include "CDirReader.h"
 
 
@@ -139,19 +161,19 @@ int CDirReader::listDir (const char* directory,const char *ext_filter){
 void CDirReader::makeCleanPath(CT::string *path){
   if(path==NULL)return;
   if(path->length()==0)return;
-  CT::stringlist *parts =path->splitN("/");
+  CT::StackList<CT::string>parts =path->splitToStack("/");
   if(path->c_str()[0]=='/'){
     path->copy("/");
   }else path->copy("");
-  for(size_t j=0;j<parts->size();j++){
-    if((*parts)[j]->length()>0){
-      path->concat((*parts)[j]);
-      if(j+1<parts->size()){
+  for(size_t j=0;j<parts.size();j++){
+    if(parts[j].length()>0){
+      path->concat(&(parts[j]));
+      if(j+1<parts.size()){
         path->concat("/");
       }
     }
   }
-  delete parts;
+
 }
 
 
