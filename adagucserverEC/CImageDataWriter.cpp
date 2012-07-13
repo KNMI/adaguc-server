@@ -232,7 +232,7 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   CDBDebug("opening %s",dataSource->getFileName());
   #endif  
   CDataReader reader;
-  status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
+  status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
   #ifdef CIMAGEDATAWRITER_DEBUG  
   CDBDebug("Has opened %s",dataSource->getFileName());
   #endif    

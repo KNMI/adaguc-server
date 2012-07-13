@@ -244,15 +244,26 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
     }
   }
   
+  #ifdef CCONVERTASCAT_DEBUG
+  CDBDebug("Calculated min/max : %f %f",min,max);
+  #endif
+  
   //Set statistics
   if(dataSource->stretchMinMax){
+    #ifdef CCONVERTASCAT_DEBUG
+    CDBDebug("dataSource->stretchMinMax");
+    #endif
     if(dataSource->statistics==NULL){
+      #ifdef CCONVERTASCAT_DEBUG
+      CDBDebug("Setting statistics: min/max : %f %f",min,max);
+      #endif
       dataSource->statistics = new CDataSource::Statistics();
       dataSource->statistics->setMaximum(max);
       dataSource->statistics->setMinimum(min);
+      
     }
   }
-
+  
   //Make the width and height of the new 2D ascat field the same as the viewing window
   dataSource->dWidth=dataSource->srvParams->Geo->dWidth;
   dataSource->dHeight=dataSource->srvParams->Geo->dHeight;      
@@ -274,12 +285,12 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
  
   #ifdef CCONVERTASCAT_DEBUG
   CDBDebug("Datasource bbox:%f %f %f %f",dataSource->srvParams->Geo->dfBBOX[0],dataSource->srvParams->Geo->dfBBOX[1],dataSource->srvParams->Geo->dfBBOX[2],dataSource->srvParams->Geo->dfBBOX[3]);
-  CDBDebug("Datasource width heigth %d %d",dataSource->dWidth,dataSource->dHeight);
+  CDBDebug("Datasource width height %d %d",dataSource->dWidth,dataSource->dHeight);
   CDBDebug("L2 %d %d",dataSource->dWidth,dataSource->dHeight);
   #endif
     
   //if(dataSource->srvParams->requestType==REQUEST_WMS_GETMAP||dataSource->srvParams->requestType==REQUEST_WCS_GETCOVERAGE||dataSource->srvParams->requestType==REQUEST_WMS_GETFEATUREINFO||dataSource->srvParams->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
-  if(mode==CNETCDFREADER_MODE_OPEN_ALL){
+    if(mode==CNETCDFREADER_MODE_OPEN_ALL){//&&!dataSource->srvParams->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
     #ifdef CCONVERTASCAT_DEBUG
     CDBDebug("Drawing %s",new2DVar->name.c_str());
     #endif

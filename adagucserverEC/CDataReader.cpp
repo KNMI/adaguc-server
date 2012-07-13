@@ -312,14 +312,7 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
     
     //dataSource->dataObject[varNr]->cdfVariable=var[varNr];
     
-    if(varNr==0){
-      if(dataSource->cfgLayer->Dimension.size()==0){
-        #ifdef CDATAREADER_DEBUG  
-        CDBDebug("Auto configuring dims");
-        #endif
-        autoConfigureDimensions(dataSource);
-      }
-    }
+   
     
 
     //Check if our variable has a statusflag
@@ -337,9 +330,10 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
   
   
   
+  //Use autoscale of legendcolors when the legendscale factor has been set to zero.
+  if(dataSource->legendScale==0.0f)dataSource->stretchMinMax=true;else dataSource->stretchMinMax=false;
   
-  
-  
+  //dataSource->stretchMinMax = t;
   
   /**************************************************************************************************/
   /*  LEVEL 2 ASCAT COMPAT MODE!*/
@@ -354,6 +348,15 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
   
  
   var[0]=dataSource->dataObject[0]->cdfVariable;
+  
+  
+  if(dataSource->cfgLayer->Dimension.size()==0){
+    #ifdef CDATAREADER_DEBUG  
+    CDBDebug("Auto configuring dims");
+    #endif
+    autoConfigureDimensions(dataSource);
+  }
+
   
   // It is possible to skip every N cell in x and y. When set to 1, all data is displayed.
   // When set to 2, every second datacell is displayed, etc...
@@ -437,8 +440,7 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
     }
   }
   
-  //Use autoscale of legendcolors when the legendscale factor has been set to zero.
-  if(dataSource->legendScale==0.0f)dataSource->stretchMinMax=true;else dataSource->stretchMinMax=false;
+ 
   
   
 
@@ -1468,6 +1470,7 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
       
       for(size_t j=0;j<store->size();j++){
         CServerConfig::XMLE_Dimension *xmleDim=new CServerConfig::XMLE_Dimension();
+        
         xmleDim->value.copy(store->getRecord(j)->get("ogcname")->c_str());
         xmleDim->attr.name.copy(store->getRecord(j)->get("ncname")->c_str());
         xmleDim->attr.units.copy(store->getRecord(j)->get("units")->c_str());
@@ -1477,10 +1480,12 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
         dataSource->cfgLayer->Dimension.push_back(xmleDim);
       }
       delete store;
-#ifdef CDATAREADER_DEBUG        
-        CDBDebug("Found auto dims.");
-#endif        
+      if(store->size()>1){
+        #ifdef CDATAREADER_DEBUG        
+         CDBDebug("Found auto dims.");
+        #endif        
       return 0;
+      }
     }catch(int e){
       delete store;
       CDBError("DB Exception: %s\n",db.getErrorMessage(e));
