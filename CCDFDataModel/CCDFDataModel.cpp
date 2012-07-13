@@ -104,6 +104,13 @@ void CDF::getErrorMessage(char *errorMessage,const size_t maxlen,const int error
    
 }
 
+
+CT::string CDF::getCDFDataTypeName(const int type){
+  char data[100];
+  getCDFDataTypeName(data,99,type);
+  CT::string d=data;
+  return d;
+}
 void CDF::getErrorMessage(CT::string *errorMessage,const int errorCode){
   char msg[1024];
   getErrorMessage(msg,1023,errorCode);
@@ -195,6 +202,67 @@ void CDF::dump(CDFObject* cdfObject,CT::string* dumpString){
 
 int CDF::Variable::readData(CDFType type){
   return readData(type,NULL,NULL,NULL);
+}
+
+int CDF::Variable::readData(bool applyScaleOffset){
+  return readData(-1,applyScaleOffset);
+}
+
+int CDF::Variable::readData(CDFType readType,bool applyScaleOffset){
+  if(applyScaleOffset==false){
+    return readData(type,NULL,NULL,NULL);
+  }
+  
+  double scaleFactor=1,addOffset=0,fillValue = 0;
+  bool hasFillValue = false;
+  int scaleType=type;
+  try{
+    
+    CDF::Attribute * a = getAttribute("scale_factor");
+    a->getData(&scaleFactor,1);
+    scaleType=a->type;
+  }catch(int e){}
+
+  try{
+    getAttribute("add_offset")->getData(&addOffset,1);
+  }catch(int e){}
+  try{
+    getAttribute("_FillValue")->getData(&fillValue,1);
+    hasFillValue = true;
+  }catch(int e){}
+  
+  if(readType!=-1)scaleType=readType;
+  int status = readData(scaleType,NULL,NULL,NULL);
+  if(status != 0)return status;
+  
+  //Apply scale and offset
+  if(scaleFactor!=1||addOffset!=0){
+  size_t lsize= getSize();
+    if(scaleType == CDF_FLOAT){
+      float *scaleData = (float*)data;
+      float fscale = float(scaleFactor);
+      float foffset = float(addOffset);
+      if(scaleFactor!=1||addOffset!=0){
+        for(size_t j=0;j<lsize;j++)scaleData[j]=scaleData[j]*fscale+foffset;
+        fillValue=fillValue*fscale+foffset;
+        float f=(float)fillValue;
+        if( hasFillValue)getAttribute("_FillValue")->setData(CDF_FLOAT,&f,1);
+      }
+    }
+    
+    if(scaleType == CDF_DOUBLE){
+      float *scaleData = (float*)data;
+      for(size_t j=0;j<lsize;j++)scaleData[j]=scaleData[j]*scaleFactor+addOffset;
+      fillValue=fillValue*scaleFactor+addOffset;
+      if( hasFillValue)getAttribute("_FillValue")->setData(CDF_DOUBLE,&fillValue,1);
+    }
+    removeAttribute("scale_factor");
+    removeAttribute("add_offset");
+  }
+  
+  
+  
+  
 }
 
 int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t *_stride){

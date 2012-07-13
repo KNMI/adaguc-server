@@ -323,6 +323,10 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                 }else{
                   CDF::Attribute *dimUnits = dimVar->getAttributeNE("units");
                   if(dimUnits==NULL){
+                    if(isTimeDim[d]){
+                      CDBError("No time units found for variable %s",dimVar->name.c_str());
+                      throw(__LINE__);
+                    }
                     dimVar->setAttributeText("units","1");
                     dimUnits = dimVar->getAttributeNE("units");
                   }
@@ -330,7 +334,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                 
                   //Create adaguctime structure, when this is a time dimension.
                   if(isTimeDim[d]){
-                    try{ADTime = new CADAGUC_time((char*)dimUnits->data);}catch(int e){delete ADTime;ADTime=NULL;throw(__LINE__);}
+                    try{ADTime = new CADAGUC_time((char*)dimUnits->toString().c_str());}catch(int e){delete ADTime;ADTime=NULL;throw(__LINE__);}
                   }
                   
                   //Read the dimension data

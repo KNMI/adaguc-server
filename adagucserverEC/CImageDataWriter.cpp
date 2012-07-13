@@ -225,8 +225,25 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   }
   
   
-
   
+  int status;
+  //Open the data of this dataSource
+  #ifdef CIMAGEDATAWRITER_DEBUG  
+  CDBDebug("opening %s",dataSource->getFileName());
+  #endif  
+  CDataReader reader;
+  status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
+  #ifdef CIMAGEDATAWRITER_DEBUG  
+  CDBDebug("Has opened %s",dataSource->getFileName());
+  #endif    
+  if(status!=0){
+    CDBError("Could not open file: %s",dataSource->getFileName());
+    return 1;
+  }
+  #ifdef CIMAGEDATAWRITER_DEBUG  
+  CDBDebug("opened");
+  #endif  
+  reader.close();
   //drawImage.setTrueColor(true);
   //drawImage.setAntiAliased(true);
   /*drawImage.setTrueColor(true);
@@ -486,6 +503,7 @@ CT::PointerList<CT::string*> *CImageDataWriter::getStyleListForDataSource(CDataS
 }
 
 CT::PointerList<CT::string*> *CImageDataWriter::getStyleListForDataSource(CDataSource *dataSource,StyleConfiguration *styleConfig){
+//  CDBDebug("getStyleListForDataSource");
   CT::PointerList<CT::string*> *stringList = new CT::PointerList<CT::string*>();
   CServerConfig::XMLE_Configuration *serverCFG = dataSource->cfg;
   CT::string styleToSearchString;
@@ -1252,7 +1270,7 @@ int CImageDataWriter::getFeatureInfo(CDataSource *dataSource,int dX,int dY){
     for(size_t j=0;j<dataSource->dataObject.size();j++){
       GetFeatureInfoResult::Element * element=getFeatureInfoResult->elements[j];
       size_t ptr=imx+imy*dataSource->dWidth;
-      double pixel=convertValue(dataSource->dataObject[j]->dataType,dataSource->dataObject[j]->data,ptr);
+      double pixel=convertValue(dataSource->dataObject[j]->cdfVariable->type,dataSource->dataObject[j]->cdfVariable->data,ptr);
 
       
       //Check wether this is a NoData value:
@@ -1269,39 +1287,39 @@ int CImageDataWriter::getFeatureInfo(CDataSource *dataSource,int dX,int dY){
           floatToString(szTemp,1023,pixel);
           element->value=szTemp;
 
-	      //For vectors, we will calculate angle and strength
-		  if(dataSource->dataObject.size()==2){
-			double pi=3.141592;
-  		    double pixel1=convertValue(dataSource->dataObject[0]->dataType,dataSource->dataObject[0]->data,ptr);
-  		    double pixel2=convertValue(dataSource->dataObject[1]->dataType,dataSource->dataObject[1]->data,ptr);
-  		    double windspeed=hypot(pixel1, pixel2);
-  		    windspeed=windspeed*(3600./1852.);
-  		    double angle=atan2(pixel2, pixel1);
-  		    angle=angle*180/pi;
-  		    if (angle<0) angle=angle+360;
-  		    angle=270-angle;
-  		    if (angle<0) angle=angle+360;
+          //For vectors, we will calculate angle and strength
+      if(dataSource->dataObject.size()==2){
+      double pi=3.141592;
+      double pixel1=convertValue(dataSource->dataObject[0]->cdfVariable->type,dataSource->dataObject[0]->cdfVariable->data,ptr);
+      double pixel2=convertValue(dataSource->dataObject[1]->cdfVariable->type,dataSource->dataObject[1]->cdfVariable->data,ptr);
+          double windspeed=hypot(pixel1, pixel2);
+          windspeed=windspeed*(3600./1852.);
+          double angle=atan2(pixel2, pixel1);
+          angle=angle*180/pi;
+          if (angle<0) angle=angle+360;
+          angle=270-angle;
+          if (angle<0) angle=angle+360;
 
-	    	GetFeatureInfoResult::Element *element2=new GetFeatureInfoResult::Element();
-  		    if (j==0) {
-  		      element2->long_name="wind direction";
-  		      element2->var_name="wind direction";
-  		      element2->standard_name="dir";
-  		      element2->feature_name="wind direction";
+        GetFeatureInfoResult::Element *element2=new GetFeatureInfoResult::Element();
+          if (j==0) {
+            element2->long_name="wind direction";
+            element2->var_name="wind direction";
+            element2->standard_name="dir";
+            element2->feature_name="wind direction";
               element2->value.print("%03.0f",angle);
               element2->units="degrees";
               element2->time="";
-  		    } else {
-   		      element2->long_name="wind speed";
-   		      element2->var_name="wind speed";
-   		      element2->standard_name="speed";
-   		      element2->feature_name="wind speed";
+          } else {
+             element2->long_name="wind speed";
+             element2->var_name="wind speed";
+             element2->standard_name="speed";
+             element2->feature_name="wind speed";
               element2->value.print("%03.0f",windspeed);
               element2->units="kts";
               element2->time="";
-  		    }
-  		    getFeatureInfoResult->elements.push_back(element2);
-		  }
+          }
+          getFeatureInfoResult->elements.push_back(element2);
+      }
 
         }
       }
@@ -1327,24 +1345,22 @@ void CImageDataWriter::setDate(const char *szTemp){
 }
 
 int CImageDataWriter::warpImage(CDataSource *dataSource,CDrawImage *drawImage){
-  
-  int status;
   //Open the data of this dataSource
-#ifdef CIMAGEDATAWRITER_DEBUG  
+  #ifdef CIMAGEDATAWRITER_DEBUG  
   CDBDebug("opening %s",dataSource->getFileName());
-#endif  
+  #endif  
   CDataReader reader;
   status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
-#ifdef CIMAGEDATAWRITER_DEBUG  
+  #ifdef CIMAGEDATAWRITER_DEBUG  
   CDBDebug("Has opened %s",dataSource->getFileName());
-#endif    
+  #endif    
   if(status!=0){
     CDBError("Could not open file: %s",dataSource->getFileName());
     return 1;
   }
-#ifdef CIMAGEDATAWRITER_DEBUG  
+  #ifdef CIMAGEDATAWRITER_DEBUG  
   CDBDebug("opened");
-#endif  
+  #endif  
   //Initialize projection algorithm
   status = imageWarper.initreproj(dataSource,drawImage->Geo,&srvParam->cfg->Projection);
   if(status!=0){
@@ -1420,7 +1436,7 @@ if(renderMethod==contour){CDBDebug("contour");}*/
                                    currentStyleConfiguration->shadeInterval,currentStyleConfiguration->contourIntervalL,currentStyleConfiguration->contourIntervalH);
       //bilinearSettings.printconcat("textScaleFactor=%f;textOffsetFactor=%f;",textScaleFactor,textOffsetFactor);
     }
-    CDBDebug("bilinearSettings.c_str() %s",bilinearSettings.c_str());
+    //CDBDebug("bilinearSettings.c_str() %s",bilinearSettings.c_str());
     imageWarperRenderer->set(bilinearSettings.c_str());
     imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
     delete imageWarperRenderer;
@@ -1576,7 +1592,7 @@ int CImageDataWriter::calculateData(std::vector <CDataSource*>&dataSources){
             if(dsj->dfBBOX[1]>dsj->dfBBOX[3])yj=dsj->dHeight-yj-1;
             size_t ptrj=xj+yj*dsj->dWidth;
             
-            pixel[j] = convertValue(dsj->dataObject[0]->dataType,dsj->dataObject[0]->data,ptrj);
+            pixel[j] = convertValue(dsj->dataObject[0]->cdfVariable->type,dsj->dataObject[0]->cdfVariable->data,ptrj);
             
             if(inputMapExpression[j]==between){
               if(pixel[j]>=inputMapExprValuesLow[j]&&pixel[j]<=inputMapExprValuesHigh[j])
@@ -1605,7 +1621,7 @@ int CImageDataWriter::calculateData(std::vector <CDataSource*>&dataSources){
             }
           }
           if(result==true)pixel[0]=1;else pixel[0]=0;
-          setValue(dataSources[0]->dataObject[0]->dataType,dataSources[0]->dataObject[0]->data,ptr,pixel[0]);
+          setValue(dataSources[0]->dataObject[0]->cdfVariable->type,dataSources[0]->dataObject[0]->cdfVariable->data,ptr,pixel[0]);
         }
       }
       CDBDebug("Warping with style %s",srvParam->Styles.c_str());
@@ -2393,7 +2409,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
   LegendType legendType=undefined;
   bool estimateMinMax=false;
   int legendPositiveUp = 1;
-  float legendWidth = legendImage->Geo->dWidth;
+  //float legendWidth = legendImage->Geo->dWidth;
   float legendHeight = legendImage->Geo->dHeight;
   int pLeft=4;
   int pTop=0;
@@ -2422,7 +2438,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
     }
   }
   
-  if(dataSource->dataObject[0]->data==NULL){
+  if(dataSource->dataObject[0]->cdfVariable->data==NULL){
   if(estimateMinMax){
       status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
     }else{
@@ -2450,15 +2466,26 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
   if( legendType == statusflag ){
     int dH=30;
     //cbW=LEGEND_WIDTH/3;cbW/=3;cbW*=3;cbW+=3;
-    float cbW = legendWidth/8;
+    float cbW = 20;//legendWidth/8;
     float cbH = legendHeight-13-13-30;
    
+    int blockHeight = 12;
+    int blockDistance=18;
+  
     size_t numFlags=dataSource->dataObject[0]->statusFlagList.size();
+    while(numFlags*blockDistance>legendHeight-14&&blockDistance>5){
+      blockDistance--;
+      if(blockHeight>5){
+        blockHeight--;
+      }
+    }
+    
+  
     for(size_t j=0;j<numFlags;j++){
-      float y=j*18+(cbH-numFlags*18+8);
+      float y=j*blockDistance+(cbH-numFlags*blockDistance+8);
       double value=dataSource->dataObject[0]->statusFlagList[j]->value;
       int c=getColorIndexForValue(dataSource,value);
-      legendImage->rectangle(1+pLeft,int(2+dH+y)+pTop,(int)cbW+9+pLeft,(int)y+2+dH+12+pTop,c,248);
+      legendImage->rectangle(1+pLeft,int(2+dH+y)+pTop,(int)cbW+9+pLeft,(int)y+2+dH+blockHeight+pTop,c,248);
       CT::string flagMeaning;
       CDataSource::getFlagMeaningHumanReadable(&flagMeaning,&dataSource->dataObject[0]->statusFlagList,value);
       CT::string legendMessage;
@@ -2472,7 +2499,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
   
   //Draw a continous legend
   if( legendType == continous ){
-    float cbW = legendWidth/8;
+    float cbW = 20;//legendWidth/8;
     float cbH = legendHeight-13-13;
     int dH=0;
     
@@ -2535,7 +2562,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
   
   //Draw legend with fixed intervals
   if( legendType == discrete ){
-    float cbW = legendWidth/8;
+    float cbW = 20;//legendWidth/8;
     float cbH = legendHeight-13-13;
     //int dH=0;
     //cbW = 90.0/3.0;

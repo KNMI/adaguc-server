@@ -89,17 +89,19 @@ int CRequest::setConfigFile(const char *pszConfigFile){
   //Check for autoscan elements
   for(size_t j=0;j<srvParam->cfg->Layer.size();j++){
     if(srvParam->cfg->Layer[j]->attr.type.equals("autoscan")){
+      
       if(srvParam->cfg->Layer[j]->FilePath.size()==0){
         CDBError("Configuration error at layer %d: <FilePath> not defined",j);
         return 1;
       }
       
-      bool layerConfigCacheAvailable = false;
+      //bool layerConfigCacheAvailable = false;
       try{
         /* Create the list of layers from a directory list */
         const char * baseDir=srvParam->cfg->Layer[j]->FilePath[0]->value.c_str();
         
         CDirReader dirReader;
+        CDBDebug("autoscan");
         CDBFileScanner::searchFileNames(&dirReader,baseDir,srvParam->cfg->Layer[j]->FilePath[0]->attr.filter.c_str(),NULL);
         /*if(dirReader.listDirRecursive(baseDir,"^.*nc$")!=0){
           CDBError("Unable to list directory '%s'",baseDir);
@@ -124,6 +126,7 @@ int CRequest::setConfigFile(const char *pszConfigFile){
        
       
           //Open file
+          CDBDebug("Opening file %s",dirReader.fileList[j]->fullName.c_str());
           CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObject(NULL,dirReader.fileList[j]->fullName.c_str());
           if(cdfObject == NULL){CDBError("Unable to read file %s",dirReader.fileList[j]->fullName.c_str());throw(__LINE__);}
           
@@ -767,13 +770,15 @@ int CRequest::process_all_layers(){
          //if(dataSources[j]->cfgLayer->Dimension.size()!=0){
         timeStep->fileName.copy(dataSources[j]->cfgLayer->FilePath[0]->value.c_str());
         
-        CDirReader dirReader;
+        
+        //TODO WHY IS THIS NECESSARY?
+        /*CDirReader dirReader;
         CDBFileScanner::searchFileNames(&dirReader,dataSources[j]->cfgLayer->FilePath[0]->value.c_str(),dataSources[j]->cfgLayer->FilePath[0]->attr.filter.c_str(),NULL);
         if(dirReader.fileList.size()==1){
           timeStep->fileName.copy(dirReader.fileList[0]->fullName.c_str());
         }else{
           timeStep->fileName.copy(dataSources[j]->cfgLayer->FilePath[0]->value.c_str());
-        }
+        }*/
         
         timeStep->timeString.copy("0");
         timeStep->dims.addDimension("time",0);
@@ -810,9 +815,13 @@ int CRequest::process_all_layers(){
             We want like give priority to our own internal layers, instead to external cascaded layers. This is because
             our internal layers have an exact customized legend, and we would like to use this always.
           */
+          for(size_t d=0;d<dataSources.size();d++){
+            dataSources[d]->setTimeStep(0);
+          }
           bool imageDataWriterIsInitialized = false;
           for(size_t d=0;d<dataSources.size()&&imageDataWriterIsInitialized==false;d++){
             if(dataSources[d]->dLayerType!=CConfigReaderLayerTypeCascaded){
+              //CDBDebug("INIT");
               status = imageDataWriter.init(srvParam,dataSources[d],dataSources[d]->getNumTimeSteps());if(status != 0)throw(__LINE__);
               imageDataWriterIsInitialized=true;
             }
@@ -833,6 +842,7 @@ int CRequest::process_all_layers(){
             if(dataSources[j]->dLayerType==CConfigReaderLayerTypeDataBase||
               dataSources[j]->dLayerType==CConfigReaderLayerTypeCascaded){
               //CDBDebug("!");
+            //CDBDebug("ADD");
               status = imageDataWriter.addData(dataSources);
               //CDBDebug("!");
               if(status != 0){
@@ -1470,14 +1480,21 @@ int CRequest::process_querystring(){
         //Try to retrieve a list of variables from the OpenDAPURL.
         srvParam->autoResourceVariable.copy("");
         //Open the opendap resource
+        CDBDebug("Opening opendap %s",srvParam->internalAutoResourceLocation.c_str());
         CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObject(NULL,srvParam->internalAutoResourceLocation.c_str());
         //int status=cdfObject->open(srvParam->internalAutoResourceLocation.c_str());
         if(cdfObject!=NULL){
           for(size_t j=0;j<cdfObject->variables.size();j++){
             if(cdfObject->variables[j]->dimensionlinks.size()>=2){
-              if(srvParam->autoResourceVariable.length()>0)srvParam->autoResourceVariable.concat(",");
-              srvParam->autoResourceVariable.concat(cdfObject->variables[j]->name.c_str());
-              CDBDebug("%s",cdfObject->variables[j]->name.c_str());
+              if(cdfObject->variables[j]->getAttributeNE("ADAGUC_SKIP")==NULL){
+                if(!cdfObject->variables[j]->name.equals("lon")&&
+                  !cdfObject->variables[j]->name.equals("lat")&&
+                  !cdfObject->variables[j]->name.equals("time")){
+                    if(srvParam->autoResourceVariable.length()>0)srvParam->autoResourceVariable.concat(",");
+                    srvParam->autoResourceVariable.concat(cdfObject->variables[j]->name.c_str());
+                    //CDBDebug("%s",cdfObject->variables[j]->name.c_str());
+                }
+              }
             }
           }
         }
@@ -1489,8 +1506,10 @@ int CRequest::process_querystring(){
         }
       }
       
+      
       //Generate a generic title for this OpenDAP service, based on the title element in the OPeNDAP header
       //Open the opendap resource
+      CDBDebug("Opening opendap %s",srvParam->internalAutoResourceLocation.c_str());
       CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObject(NULL,srvParam->internalAutoResourceLocation.c_str());
       //int status=cdfObject->open(srvParam->internalAutoResourceLocation.c_str());
       if(cdfObject==NULL){

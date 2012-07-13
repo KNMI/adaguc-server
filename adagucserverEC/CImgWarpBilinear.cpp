@@ -30,7 +30,7 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
   int dPixelExtent[4];
   bool tryToOptimizeExtent=false;
   
-  CDBDebug("enableBarb=%d enableVectors=%d drawGridVectors=%d", enableBarb, enableVector, drawGridVectors);
+//  CDBDebug("enableBarb=%d enableVectors=%d drawGridVectors=%d", enableBarb, enableVector, drawGridVectors);
   if(tryToOptimizeExtent){
     //Reproject the boundingbox from the destination bbox: 
     for(int j=0;j<4;j++)dfPixelExtent[j]=drawImage->Geo->dfBBOX[j];  
@@ -154,7 +154,7 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
   
   StopWatch_Stop("Start Reprojecting all the points");
   char temp[32];
-  CDF::getCDFDataTypeName(temp,31,sourceImage->dataObject[0]->dataType);
+  CDF::getCDFDataTypeName(temp,31,sourceImage->dataObject[0]->cdfVariable->type);
   CDBDebug("datatype: %s",temp);
   for(int j=0;j<4;j++){
     CDBDebug("dPixelExtent[%d]=%d",j,dPixelExtent[j]);
@@ -185,10 +185,10 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
       //CDBDebug("%f - %f s:%d x:%d  y:%d  p:%d",destX,destY,status,x,y,p);
       //  drawImage->setPixelIndexed(dpDestX[p],dpDestY[p],240);
       for(size_t varNr=0;varNr<sourceImage->dataObject.size();varNr++){
-        void *data=sourceImage->dataObject[varNr]->data;
+        void *data=sourceImage->dataObject[varNr]->cdfVariable->data;
         float *fpValues=valObj[varNr].fpValues;
         
-        switch(sourceImage->dataObject[varNr]->dataType){
+        switch(sourceImage->dataObject[varNr]->cdfVariable->type){
           case CDF_CHAR:
             fpValues[p]= ((signed char*)data)[x+y*sourceImage->dWidth];
             break;

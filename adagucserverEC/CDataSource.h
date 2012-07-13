@@ -31,12 +31,12 @@ class CDataSource{
       ~DataClass();
       bool hasStatusFlag,hasNodataValue,appliedScaleOffset,hasScaleOffset;
       double dfNodataValue,dfscale_factor,dfadd_offset;
-      void *data;
+      //void *data;
 
       std::vector<StatusFlag*> statusFlagList;
       CDF::Variable *cdfVariable;
       CDFObject *cdfObject;
-      CDFType dataType;
+      //CDFType dataType;
       CT::string variableName,units;
 
       
@@ -50,10 +50,12 @@ class CDataSource{
 #ifdef MEASURETIME
   StopWatch_Stop("Start min/max calculation");
 #endif
+  
       //CDBDebug("nodataval %f",(T)dataObject->dfNodataValue);
         T _min=(T)0.0f,_max=(T)0.0f;
         int firstDone=0;
         for(size_t p=0;p<size;p++){
+          
           T v=data[p];
 
           if((((T)v)!=(T)dataObject->dfNodataValue||(!dataObject->hasNodataValue))&&v==v){
@@ -76,6 +78,8 @@ class CDataSource{
     public:
       double getMinimum();
       double getMaximum();
+      void setMinimum(double min);
+      void setMaximum(double max);
       int calculate(CDataSource *dataSource);      // TODO this currently works only for float data
   };
   

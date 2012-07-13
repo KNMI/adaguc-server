@@ -522,7 +522,7 @@ class CProj4ToCF{
           return CPROJ4TOCF_UNSUPPORTED_PROJECTION;
         }
       }catch(int e){
-        CDBError("%s\n",CDF::lastErrorMessage.c_str());
+        //CDBError("%s\n",CDF::lastErrorMessage.c_str());
         return CPROJ4TOCF_UNSUPPORTED_PROJECTION;
       }
       

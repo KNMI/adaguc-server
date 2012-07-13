@@ -11,7 +11,7 @@ CCOMPILER=g++ -Wall $(INCLUDEDIR)
 
 #optimalization options:
 #CCOMPILER=g++ -march=pentium4 -mtune=pentium4 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 $(INCLUDEDIR) 
-CCOMPILER=g++ -march=core2 -mtune=core2 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 $(INCLUDEDIR) 
+#CCOMPILER=g++ -march=core2 -mtune=core2 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 $(INCLUDEDIR) 
 #CCOMPILER=g++ -O2 $(INCLUDEDIR)
 #CCOMPILER=g++ -march=k8-sse3 -mtune=k8-sse3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 $(INCLUDEDIR)  
 
@@ -20,7 +20,7 @@ USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lxml2 -lgd -lproj -lpq -ludunits2 -lfreetyp
 # all libs together
 LIBS = $(USERLIBS) $(LDFLAGS) -L$(INSTALLDIR2)/lib  -L/usr/lib
 
-OBJECTS = CDataReader.o CImageWarper.o CGeoParams.o CCairoPlotter.o CDrawImage.o CServerError.o CRequest.o  CXMLGen.o CServerParams.o CGDALDataWriter.o CImageDataWriter.o CXMLSerializerInterface.o CDataSource.o CStopWatch.o CImgWarpBilinear.o CImgWarpBoolean.o CImgWarpNearestNeighbour.o CPGSQLDB.o CDBFileScanner.o CDFObjectStore.o CDrawAA.o
+OBJECTS = CDataReader.o CImageWarper.o CGeoParams.o CCairoPlotter.o CDrawImage.o CServerError.o CRequest.o  CXMLGen.o CServerParams.o CGDALDataWriter.o CImageDataWriter.o CXMLSerializerInterface.o CDataSource.o CStopWatch.o CImgWarpBilinear.o CImgWarpBoolean.o CImgWarpNearestNeighbour.o CPGSQLDB.o CDBFileScanner.o CDFObjectStore.o CDrawAA.o CFillTriangle.o CConvertASCAT.o
 
 EXECUTABLE= adagucserver
 

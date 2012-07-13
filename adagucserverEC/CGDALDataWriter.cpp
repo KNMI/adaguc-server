@@ -132,16 +132,16 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
 
   // Setup data types
   datatype=GDT_Unknown;
-  if(dataSource->dataObject[0]->dataType==CDF_CHAR)  datatype = GDT_Byte;
-  if(dataSource->dataObject[0]->dataType==CDF_UBYTE)  datatype = GDT_Byte;
-  if(dataSource->dataObject[0]->dataType==CDF_SHORT) datatype = GDT_Int16;
-  if(dataSource->dataObject[0]->dataType==CDF_INT)   datatype = GDT_Int32;
-  if(dataSource->dataObject[0]->dataType==CDF_FLOAT) datatype = GDT_Float32;
-  if(dataSource->dataObject[0]->dataType==CDF_DOUBLE)datatype = GDT_Float64;
+  if(dataSource->dataObject[0]->cdfVariable->type==CDF_CHAR)  datatype = GDT_Byte;
+  if(dataSource->dataObject[0]->cdfVariable->type==CDF_UBYTE)  datatype = GDT_Byte;
+  if(dataSource->dataObject[0]->cdfVariable->type==CDF_SHORT) datatype = GDT_Int16;
+  if(dataSource->dataObject[0]->cdfVariable->type==CDF_INT)   datatype = GDT_Int32;
+  if(dataSource->dataObject[0]->cdfVariable->type==CDF_FLOAT) datatype = GDT_Float32;
+  if(dataSource->dataObject[0]->cdfVariable->type==CDF_DOUBLE)datatype = GDT_Float64;
   if(datatype==GDT_Unknown){
     char temp[100];
-    CDF::getCDFDataTypeName(temp,99,dataSource->dataObject[0]->dataType);
-    CDBError("Invalid datatype: dataSource->dataObject[0]->dataType=%s",temp);
+    CDF::getCDFDataTypeName(temp,99,dataSource->dataObject[0]->cdfVariable->type);
+    CDBError("Invalid datatype: dataSource->dataObject[0]->cdfVariable->type=%s",temp);
     return 1;
   }
   
@@ -193,7 +193,7 @@ int  CGDALDataWriter::addData(std::vector <CDataSource*>&dataSources){
   CDBDebug("copying data in addData");
   GDALRasterIO( hSrcBand, GF_Write, 0, 0,
                 dataSource->dWidth, dataSource->dHeight,
-                dataSource->dataObject[0]->data,
+                dataSource->dataObject[0]->cdfVariable->data,
                 dataSource->dWidth, dataSource->dHeight,
                 datatype, 0, 0 );
   CDBDebug("finished copying data in addData");

@@ -28,7 +28,7 @@
 #define REQUEST_UPDATEDB                  100
 
 //Legend
-#define LEGEND_WIDTH                      160
+#define LEGEND_WIDTH                      300
 #define LEGEND_HEIGHT                     200
 
 //WMS versions
@@ -76,8 +76,8 @@
 #define ALLOW_METADATA 8
 #define SHOW_QUERYINFO 16 
 
-#define CImgWarpBilinear_DEBUG
-#define CImgWarpBilinear_TIME
+//#define CImgWarpBilinear_DEBUG
+//#define CImgWarpBilinear_TIME
 //#define MEASURETIME
 
 //#define CDATAREADER_DEBUG
@@ -106,7 +106,7 @@
 #define MEASURETIME
 */
 
-#define DEBUGON
+//#define DEBUGON
 #ifdef DEBUGON
 #define CIMAGEDATAWRITER_DEBUG
 #define CDATAREADER_DEBUG
@@ -117,6 +117,12 @@
 //#define CDATAREADER_DEBUG
 //#define CCDFNETCDFIO_DEBUG
 //#define CDATAREADER_DEBUG
+
+//#define MEASURETIME
+//#define CDATAREADER_DEBUG
+//#define CIMAGEDATAWRITER_DEBUG
+//#define CDATASOURCE_DEBUG
+
 #define ENABLE_CURL
 #define ADAGUC_USE_CAIRO
 #define ADAGUC_USE_GDAL

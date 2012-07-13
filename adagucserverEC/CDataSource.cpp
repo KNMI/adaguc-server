@@ -12,7 +12,6 @@ CDataSource::DataClass::DataClass(){
   cdfObject=NULL;
   dfadd_offset=0;
   dfscale_factor=1;
-  data = NULL;
 }
 CDataSource::DataClass::~DataClass(){
   for(size_t j=0;j<statusFlagList.size();j++){
@@ -32,22 +31,29 @@ double CDataSource::Statistics::getMaximum(){
   return max;
 }
 
+void CDataSource::Statistics::setMinimum(double min){
+  this->min=min;
+}
+void CDataSource::Statistics::setMaximum(double max){
+  this->max=max;
+}
+
 // TODO this currently works only for float data
 int CDataSource::Statistics::calculate(CDataSource *dataSource){
   //Get Min and Max
   CDataSource::DataClass *dataObject = dataSource->dataObject[0];
-  if(dataObject->data!=NULL){
+  if(dataObject->cdfVariable->data!=NULL){
     size_t size = dataSource->dWidth*dataSource->dHeight;
     
-    if(dataObject->dataType==CDF_CHAR)calcMinMax((char*)dataObject->data,size,dataObject);
-    if(dataObject->dataType==CDF_BYTE)calcMinMax((char*)dataObject->data,size,dataObject);
-    if(dataObject->dataType==CDF_UBYTE)calcMinMax((unsigned char*)dataObject->data,size,dataObject);
-    if(dataObject->dataType==CDF_SHORT)calcMinMax((short*)dataObject->data,size,dataObject);
-    if(dataObject->dataType==CDF_USHORT)calcMinMax((unsigned short*)dataObject->data,size,dataObject);
-    if(dataObject->dataType==CDF_INT)calcMinMax((int*)dataObject->data,size,dataObject);
-    if(dataObject->dataType==CDF_UINT)calcMinMax((unsigned int*)dataObject->data,size,dataObject);
-    if(dataObject->dataType==CDF_FLOAT)calcMinMax((float*)dataObject->data,size,dataObject);
-    if(dataObject->dataType==CDF_DOUBLE)calcMinMax((double*)dataObject->data,size,dataObject); 
+    if(dataObject->cdfVariable->type==CDF_CHAR)calcMinMax((char*)dataObject->cdfVariable->data,size,dataObject);
+    if(dataObject->cdfVariable->type==CDF_BYTE)calcMinMax((char*)dataObject->cdfVariable->data,size,dataObject);
+    if(dataObject->cdfVariable->type==CDF_UBYTE)calcMinMax((unsigned char*)dataObject->cdfVariable->data,size,dataObject);
+    if(dataObject->cdfVariable->type==CDF_SHORT)calcMinMax((short*)dataObject->cdfVariable->data,size,dataObject);
+    if(dataObject->cdfVariable->type==CDF_USHORT)calcMinMax((unsigned short*)dataObject->cdfVariable->data,size,dataObject);
+    if(dataObject->cdfVariable->type==CDF_INT)calcMinMax((int*)dataObject->cdfVariable->data,size,dataObject);
+    if(dataObject->cdfVariable->type==CDF_UINT)calcMinMax((unsigned int*)dataObject->cdfVariable->data,size,dataObject);
+    if(dataObject->cdfVariable->type==CDF_FLOAT)calcMinMax((float*)dataObject->cdfVariable->data,size,dataObject);
+    if(dataObject->cdfVariable->type==CDF_DOUBLE)calcMinMax((double*)dataObject->cdfVariable->data,size,dataObject); 
     
   }
   return 0;
@@ -138,7 +144,7 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Confi
       return 1;
     }
   }
-  
+  //CDBDebug("cfgLayer->attr.type %s %d",cfgLayer->attr.type.c_str(),dLayerType);
   //Deprecated
   if(cfgLayer->attr.type.equals("file")){
     dLayerType=CConfigReaderLayerTypeDataBase;//CConfigReaderLayerTypeFile;
@@ -216,6 +222,9 @@ void CDataSource::readStatusFlags(CDF::Variable * var, std::vector<CDataSource::
     //We might have status flag, check if all mandatory attributes are set!
     if(attr_flag_meanings!=NULL){
       CDF::Attribute *attr_flag_values=var->getAttributeNE("flag_values");
+      if(attr_flag_values==NULL){
+        attr_flag_values=var->getAttributeNE("flag_masks");
+      }
       if(attr_flag_values!=NULL){
         CT::string flag_meanings;
         attr_flag_meanings->getDataAsString(&flag_meanings);

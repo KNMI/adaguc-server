@@ -70,7 +70,7 @@ namespace CDF{
   int freeData(void **p);
   
   
-  static CT::string lastErrorMessage;
+  
   
   
   //Copies data from one array to another and performs type conversion
@@ -132,6 +132,14 @@ namespace CDF{
    * @return CT::string with the readable message
    */
   CT::string getErrorMessage(int errorCode);
+  
+  
+  /**
+   * returns the type name as string
+   * @param type The CDF type
+   * @return string with the name
+   */
+  CT::string getCDFDataTypeName(const int type);
   
   /*Returns the number of bytes needed for a single element of this datatype*/
   int getTypeSize(CDFType type);
@@ -323,6 +331,8 @@ namespace CDF{
       }
       
       int readData(CDFType type);
+      int readData(bool applyScaleOffset);
+      int readData(CDFType type,bool applyScaleOffset);
       int readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t *stride);
       
        template <class T>
@@ -393,7 +403,6 @@ namespace CDF{
             return attributes[j];
           }
         }
-        lastErrorMessage.print("attribute %s not found",name);
         throw(CDF_E_ATTNOTFOUND);
         return NULL;
       }

@@ -1,6 +1,6 @@
 #include "CDFObjectStore.h"
 const char *CDFObjectStore::className="CDFObjectStore";
-
+#include "CConvertASCAT.h"
 
 #define MAX_OPEN_FILES 128
 extern CDFObjectStore cdfObjectStore;
@@ -43,7 +43,6 @@ CDFReader *CDFObjectStore::getCDFReader(CDataSource *dataSource){
  * @param fileName The filename to read.
  */
 CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,const char *fileName){
-  //TODO this function should open the CDFObject as well.
   for(size_t j=0;j<fileNames.size();j++){
     if(fileNames[j]->equals(fileName)){
       #ifdef CDATAREADER_DEBUG                          
@@ -84,11 +83,14 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,const char *file
   }
   
   
- 
+  
     //Push everything into the store
   fileNames.push_back(new CT::string(fileName));
   cdfObjects.push_back(cdfObject);
   cdfReaders.push_back(cdfReader);
+  
+  CConvertASCAT::convertASCATHeader(cdfObject);  
+  
   return cdfObject;
 }
 CDFObjectStore *CDFObjectStore::getCDFObjectStore(){return &cdfObjectStore;};

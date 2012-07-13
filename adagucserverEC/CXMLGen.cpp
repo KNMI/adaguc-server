@@ -1216,9 +1216,11 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
           if(myWMSLayer->hasError==false){
             if(myWMSLayer->dataSource->cfgLayer->Styles.size()==0){
               if(myWMSLayer->dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
-                
+                /*CDBDebug("cfgLayer->attr.type  %d",myWMSLayer->dataSource->dLayerType);
                 status=CDataReader::autoConfigureStyles(myWMSLayer->dataSource);
-                if(status != 0){myWMSLayer->hasError=1;CDBError("Unable to autoconfigure styles for layer %s",layerUniqueName.c_str());}
+                if(status != 0){myWMSLayer->hasError=1;CDBError("Unable to autoconfigure styles for layer %s",layerUniqueName.c_str());}*/
+                //Get the defined styles for this layer
+                status = getStylesForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;
               }
             }
           }
@@ -1229,8 +1231,7 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
           
           delete reader;reader=NULL;
           
-          //Get the defined styles for this layer
-          status = getStylesForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;
+         
         }
       
       }
