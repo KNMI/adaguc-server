@@ -7,7 +7,7 @@ CServerParams::CServerParams(){
   serviceType=-1;
   requestType=-1;
   OGCVersion=-1;
-  NumOGCDims=0;
+
   Transparent=false;
   enableDocumentCache=true;
   configObj = new CServerConfig();
@@ -26,6 +26,12 @@ CServerParams::~CServerParams(){
   if(WMSLayers!=NULL){delete[] WMSLayers;WMSLayers=NULL;}
   if(configObj!=NULL){delete configObj;configObj=NULL;}
   if(Geo!=NULL){delete Geo;Geo=NULL;}
+  for(size_t j=0;j<requestDims.size();j++){
+    delete requestDims[j];
+    requestDims[j]= NULL;
+  }
+  requestDims.clear();
+  
 }
 
 void CServerParams::getCacheFileName(CT::string *cacheFileName){

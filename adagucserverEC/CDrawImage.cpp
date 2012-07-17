@@ -348,6 +348,26 @@ void CDrawImage::line(float x1, float y1, float x2, float y2,CColor ccolor){
   }
 }
 
+
+void CDrawImage::line(float x1,float y1,float x2,float y2,float w,CColor ccolor){
+  if(_bEnableTrueColor==true){
+    if(currentLegend==NULL)return;
+
+      #ifdef ADAGUC_USE_CAIRO
+      cairo->setColor(ccolor.r,ccolor.g,ccolor.b,ccolor.a);
+      cairo->line(x1,y1,x2,y2,w);
+      #else
+      wuLine->setColor(ccolor.r,ccolor.g,ccolor.b,ccolor.a);
+      wuLine->line(x1,y1,x2,y2);
+      #endif
+    
+  }else{
+    gdImageSetThickness(image, int(w)*1);
+    int gdcolor=getClosestGDColor(ccolor.r,ccolor.g,ccolor.b);
+    gdImageLine(image, int(x1),int(y1),int(x2),int(y2),_colors[gdcolor]);
+  }
+}
+
 void CDrawImage::line(float x1,float y1,float x2,float y2,float w,int color){
   if(_bEnableTrueColor==true){
     if(currentLegend==NULL)return;
@@ -365,6 +385,7 @@ void CDrawImage::line(float x1,float y1,float x2,float y2,float w,int color){
     gdImageLine(image, int(x1),int(y1),int(x2),int(y2),_colors[color]);
   }
 }
+
 
 
 void CDrawImage::setPixelIndexed(int x,int y,int color){

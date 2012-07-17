@@ -384,6 +384,20 @@ class string:public basetype{
     CT::string substringr(size_t start,size_t end){CT::string r;r.substringSelf(this,start,end);return r;}
     
     /**
+     * Adjusts the size of the string
+     */
+    void setSize(int size){
+      if(size<0){
+        copy("",0);
+        return;
+      }
+      if(size<privatelength){
+        value[size]='\0';
+        privatelength=size;
+      }
+    }
+    
+    /**
      * Converts the string to a float number
      */
     float toFloat(){float fValue=(float)atof(value);return fValue;}

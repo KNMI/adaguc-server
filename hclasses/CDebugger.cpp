@@ -24,6 +24,7 @@
 #include "CDebugger_H2.h"
 #include <iostream>
 #include <stdlib.h>
+
  
 bool Tracer::Ready = false;
 extern Tracer NewTrace;
@@ -114,7 +115,7 @@ void operator delete (void * p)
   free (p);
 }
 
-
+#include "CTypes.h"
 void (*_printErrorStreamPointer)(const char*)=&_printErrorStream;
 void (*_printDebugStreamPointer)(const char*)=&_printDebugStream;
 void (*_printWarningStreamPointer)(const char*)=&_printWarningStream;
@@ -168,12 +169,24 @@ void _printErrorLine(const char *pszMessage,...){
   va_end (ap);
   printErrorStream("\n");
 }
+
+void makeEqualWidth(CT::string *t1){
+  //int i=t.indexOf("]")+1;
+  size_t i=t1->length();
+  //CT::string t1=t.substringr(0,i);
+  //CT::string t2=t.substringr(i,-1);
+  //size_t l=t1.length();
+  for(int j=i;j<60;j++){t1->concat(" ");}
+  // t1.concat(&t2);
+}
 void _printDebug(const char *pszMessage,...){
   char szTemp[1024];
   va_list ap;
   va_start (ap, pszMessage);
   vsnprintf ( szTemp, 1023,pszMessage, ap);
-  printDebugStream(szTemp);
+  CT::string t1=szTemp;
+  makeEqualWidth(&t1); 
+  printDebugStream(t1.c_str());
   va_end (ap);
 }
 
@@ -182,7 +195,9 @@ void _printWarning(const char *pszMessage,...){
   va_list ap;
   va_start (ap, pszMessage);
   vsnprintf ( szTemp, 1023,pszMessage, ap);
-  printWarningStream(szTemp);
+  CT::string t1=szTemp;
+  makeEqualWidth(&t1); 
+  printWarningStream(t1.c_str());
   va_end (ap);
 }
 
@@ -191,7 +206,9 @@ void _printError(const char *pszMessage,...){
   va_list ap;
   va_start (ap, pszMessage);
   vsnprintf ( szTemp, 1023,pszMessage, ap);
-  printErrorStream(szTemp);
+  CT::string t1=szTemp;
+  makeEqualWidth(&t1); 
+  printErrorStream(t1.c_str());
   va_end (ap);
 }
 

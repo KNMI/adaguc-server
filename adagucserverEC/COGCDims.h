@@ -3,8 +3,14 @@
 
 class COGCDims{
   public:
-    CT::string Name;
-    CT::string Value;
+    COGCDims(){
+    }
+    COGCDims(const char *name,const char *value){
+      this->name.copy(name);
+      this->value.copy(value);
+    }
+    CT::string name;
+    CT::string value;
     CT::string netCDFDimName;
 };
 class CCDFDims {

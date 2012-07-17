@@ -49,8 +49,8 @@ class CServerParams{
     bool showLegendInImage;
     bool showNorthArrow;
     
-    COGCDims OGCDims[MAX_DIMS];
-    int NumOGCDims;
+    
+    std::vector<COGCDims*> requestDims;
     int serviceType;
     int requestType;
     int OGCVersion;

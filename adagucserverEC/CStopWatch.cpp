@@ -1,5 +1,5 @@
 #include "CStopWatch.h"
-
+#include "CTypes.h"
 //Stopwatch functions for timing
 DEF_ERRORMAIN();
 timespec starttime,stoptime,currenttime;
@@ -36,5 +36,16 @@ void _StopWatch_Stop(const char *a, ...){
   vsnprintf (szTemp, 8192, a, ap);
   va_end (ap);
   szTemp[8192]='\0';
+  /*
+  CT::string t=szTemp;
+  int i=t.indexOf("]")+1;
+  CT::string t1=t.substringr(0,i);
+  CT::string t2=t.substringr(i,-1);
+  size_t l=t1.length();
+  for(int j=l;j<40;j++){
+    t1.concat(" ");
+  }
+  t1.concat(&t2);*/
+  
   __StopWatch_Stop(szTemp);
 }

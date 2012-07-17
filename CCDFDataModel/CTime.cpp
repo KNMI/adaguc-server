@@ -129,6 +129,33 @@ CTime::Date CTime::stringToDate(const char*szTime){
   
 }
 
+CTime::Date CTime::ISOStringToDate(const char*szTime){
+  Date date;
+  char szTemp[64];
+  safestrcpy(szTemp,szTime,4)  ;date.year=atoi(szTemp);
+  safestrcpy(szTemp,szTime+5,2);date.month=atoi(szTemp);
+  safestrcpy(szTemp,szTime+8,2);date.day=atoi(szTemp);
+  safestrcpy(szTemp,szTime+11,2);date.hour=atoi(szTemp);
+  safestrcpy(szTemp,szTime+14,2);date.minute=atoi(szTemp);
+  safestrcpy(szTemp,szTime+17,2);date.second=(float)atoi(szTemp);
+  
+  date.offset=dateToOffset(date);
+  Date checkDate=getDate(date.offset);
+  CT::string checkStr = dateToISOString(checkDate);
+  checkStr.setChar(19,'Z');
+  checkStr.setSize(20);
+  if(!checkStr.equals(szTime)){
+    CDBError("stringToDate internal error: intime is different from outtime:  \"%s\" != \"%s\"",szTime,checkStr.c_str());
+    throw CTIME_CONVERSION_ERROR;
+  }
+  if(checkDate.offset!=date.offset){
+    CDBError("stringToDate internal error: intime is different from outtime:  \"%f\" != \"%f\"",date.offset,checkDate.offset);
+    throw CTIME_CONVERSION_ERROR;
+  }
+  return date;
+  
+}
+
 
 CT::string CTime::dateToString(Date date){
   CT::string s;
@@ -139,7 +166,7 @@ CT::string CTime::dateToString(Date date){
 
 CT::string CTime::dateToISOString(Date date){
   CT::string s;
-  s.print("%04d-%02d-%02dT%02d:%02d:%09f",date.year,date.month,date.day,date.hour,date.minute,(int)date.second);
+  s.print("%04d-%02d-%02dT%02d:%02d:%09f",date.year,date.month,date.day,date.hour,date.minute,date.second);
   return s;
 }
 

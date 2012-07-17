@@ -56,6 +56,9 @@ int CRequest::checkDataRestriction(){
 
 
 int CRequest::setConfigFile(const char *pszConfigFile){
+  #ifdef MEASURETIME
+  StopWatch_Stop("Set config file");
+  #endif
   int status = srvParam->configObj->parseFile(pszConfigFile);
   if(status == 0){
     srvParam->configFileName.copy(pszConfigFile);
@@ -73,6 +76,11 @@ int CRequest::setConfigFile(const char *pszConfigFile){
     CDBError("Invalid XML file %s",pszConfigFile);
     return 1;
   }
+  
+  #ifdef MEASURETIME
+  StopWatch_Stop("Config file parsed");
+  #endif
+  
   //Check for mandatory attributes
   for(size_t j=0;j<srvParam->cfg->Layer.size();j++){
     if(srvParam->cfg->Layer[j]->attr.type.equals("database")){
@@ -169,6 +177,10 @@ int CRequest::setConfigFile(const char *pszConfigFile){
       
     }
   }
+  #ifdef MEASURETIME
+  StopWatch_Stop("Config file checked");
+  #endif
+  
   return status;
 }
 
@@ -570,65 +582,73 @@ int CRequest::process_all_layers(){
          * Get the number of required dims from the given dims
          * Check if all dimensions are given
          */
-        for(int k=0;k<srvParam->NumOGCDims;k++)srvParam->OGCDims[k].Name.toLowerCaseSelf();
+        for(int k=0;k<srvParam->requestDims.size();k++)srvParam->requestDims[k]->name.toLowerCaseSelf();
         int dimsfound[NC_MAX_DIMS];
         for(size_t i=0;i<dataSources[j]->cfgLayer->Dimension.size();i++){
           CT::string dimName(dataSources[j]->cfgLayer->Dimension[i]->value.c_str());
           dimName.toLowerCaseSelf();
           dimsfound[i]=0;
-          for(int k=0;k<srvParam->NumOGCDims;k++){
-            //CDBDebug("DIM COMPARE: %s==%s",srvParam->OGCDims[k].Name.c_str(),dimName.c_str());
-            if(srvParam->OGCDims[k].Name.equals(&dimName)){
-              //This dimension has been specified in the request, so the dimension has been found:
-              dimsfound[i]=1;
-              COGCDims *ogcDim = new COGCDims();
-              dataSources[j]->requiredDims.push_back(ogcDim);
-              ogcDim->Name.copy(&dimName);
-              ogcDim->Value.copy(&srvParam->OGCDims[k].Value);
-              ogcDim->netCDFDimName.copy(dataSources[j]->cfgLayer->Dimension[i]->attr.name.c_str());
-              //If we have a special styled layer, the time does not come from TIME, but from style:
-              if(dataSources[0]->dLayerType==CConfigReaderLayerTypeStyled){
-                CT::string *splittedStyles=srvParam->Styles.splitToArray(",");
-                if(splittedStyles->count!=dataSources.size()){
-                  status = DB.close();
-                  CDBError("Number of provided layers (%d) does not match the number of provided styles (%d)",dataSources.size(),splittedStyles->count);
-                  //for(size_t j=0;j<requiredDims.size();j++)delete requiredDims[j];
-                  return 1;
-                }
-                if(j==0){
-                  //The first boolean layer needs to be loaded with an unspecified time 
-                  //We will use 'current' to make sure something is loaded
-                  ogcDim->Value.copy("current");
-                }
-                
-                if(j>0){
-                  //Try to find the time from the style:
-                  CT::string * stripeString = splittedStyles[j].splitToArray("|");
-                  if(stripeString->count==2){
-                    if(stripeString[1].indexOf("time_")==0){
-                      CT::string *valuePair=stripeString[1].splitToArray("_");
-                      ogcDim->Value.copy(&valuePair[1]);
-                      delete[] valuePair;
-                    }
+          for(int k=0;k<srvParam->requestDims.size();k++){
+            //Check if this dim is not already added
+            bool alreadyAdded=false;
+            for(size_t l=0;l<dataSources[j]->requiredDims.size();l++){
+              if(dataSources[j]->requiredDims[i]->name.equals(&dimName)){alreadyAdded=true;break;}
+            }
+            
+            if(alreadyAdded == false){
+              //CDBDebug("DIM COMPARE: %s==%s",srvParam->requestDims[k]->name.c_str(),dimName.c_str());
+              if(srvParam->requestDims[k]->name.equals(&dimName)){
+                //This dimension has been specified in the request, so the dimension has been found:
+                dimsfound[i]=1;
+                COGCDims *ogcDim = new COGCDims();
+                dataSources[j]->requiredDims.push_back(ogcDim);
+                ogcDim->name.copy(&dimName);
+                ogcDim->value.copy(&srvParam->requestDims[k]->value);
+                ogcDim->netCDFDimName.copy(dataSources[j]->cfgLayer->Dimension[i]->attr.name.c_str());
+                //If we have a special styled layer, the time does not come from TIME, but from style:
+                if(dataSources[0]->dLayerType==CConfigReaderLayerTypeStyled){
+                  CT::string *splittedStyles=srvParam->Styles.splitToArray(",");
+                  if(splittedStyles->count!=dataSources.size()){
+                    status = DB.close();
+                    CDBError("Number of provided layers (%d) does not match the number of provided styles (%d)",dataSources.size(),splittedStyles->count);
+                    //for(size_t j=0;j<requiredDims.size();j++)delete requiredDims[j];
+                    return 1;
                   }
-                  delete[] stripeString ;
+                  if(j==0){
+                    //The first boolean layer needs to be loaded with an unspecified time 
+                    //We will use 'current' to make sure something is loaded
+                    ogcDim->value.copy("current");
+                  }
+                  
+                  if(j>0){
+                    //Try to find the time from the style:
+                    CT::string * stripeString = splittedStyles[j].splitToArray("|");
+                    if(stripeString->count==2){
+                      if(stripeString[1].indexOf("time_")==0){
+                        CT::string *valuePair=stripeString[1].splitToArray("_");
+                        ogcDim->value.copy(&valuePair[1]);
+                        delete[] valuePair;
+                      }
+                    }
+                    delete[] stripeString ;
+                  }
+                  delete[] splittedStyles;
+                  //CDBDebug("srvParam->requestDims[k]->value %d==%s",j,srvParam->requestDims[k]->value.c_str());
                 }
-                delete[] splittedStyles;
-                //CDBDebug("srvParam->OGCDims[k].Value %d==%s",j,srvParam->OGCDims[k].Value.c_str());
-              }
-              // If we have value 'current', give the dim a special status
-              if(ogcDim->Value.equals("current")){
-                dimsfound[i]=2;
-                CT::string tableName(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str());
-                CServerParams::makeCorrectTableName(&tableName,&ogcDim->netCDFDimName);
-                
-                Query.print("select max(%s) from %s",
-                        ogcDim->netCDFDimName.c_str(),
-                            tableName.c_str());
-                CT::string *temp = DB.query_select(Query.c_str(),0);
-                if(temp == NULL){CDBError("Query failed");status = DB.close(); return 1;}
-                ogcDim->Value.copy(&temp[0]);
-                delete[] temp;
+                // If we have value 'current', give the dim a special status
+                if(ogcDim->value.equals("current")){
+                  dimsfound[i]=2;
+                  CT::string tableName(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str());
+                  CServerParams::makeCorrectTableName(&tableName,&ogcDim->netCDFDimName);
+                  
+                  Query.print("select max(%s) from %s",
+                          ogcDim->netCDFDimName.c_str(),
+                              tableName.c_str());
+                  CT::string *temp = DB.query_select(Query.c_str(),0);
+                  if(temp == NULL){CDBError("Query failed");status = DB.close(); return 1;}
+                  ogcDim->value.copy(&temp[0]);
+                  delete[] temp;
+                }
               }
             }
           }
@@ -642,9 +662,9 @@ int CRequest::process_all_layers(){
             CT::string tableName(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str());
             CServerParams::makeCorrectTableName(&tableName,&netCDFDimName);
             //Add the undefined dims to the srvParams as additional dims
-            COGCDims *ogcDim = new COGCDims;
+            COGCDims *ogcDim = new COGCDims();
             dataSources[j]->requiredDims.push_back(ogcDim);
-            ogcDim->Name.copy(dataSources[j]->cfgLayer->Dimension[i]->value.c_str());
+            ogcDim->name.copy(dataSources[j]->cfgLayer->Dimension[i]->value.c_str());
             ogcDim->netCDFDimName.copy(dataSources[j]->cfgLayer->Dimension[i]->attr.name.c_str());
             //Try to find the max value for this dim name from the database
             Query.print("select max(%s) from %s",
@@ -654,7 +674,7 @@ int CRequest::process_all_layers(){
             CT::string *temp = DB.query_select(Query.c_str(),0);
             if(temp == NULL){CDBError("Query failed");status = DB.close(); return 1;}
             //Copy the value corresponding to this dim name to srvparams
-            ogcDim->Value.copy(&temp[0]);
+            ogcDim->value.copy(&temp[0]);
             delete[] temp;
           }
         }
@@ -677,7 +697,7 @@ int CRequest::process_all_layers(){
           subQuery.print("(select path,dim%s,%s from %s where ",netCDFDimName.c_str(),
                       netCDFDimName.c_str(),
                       tableName.c_str());
-          CT::string queryParams(&dataSources[j]->requiredDims[i]->Value);
+          CT::string queryParams(&dataSources[j]->requiredDims[i]->value);
           CT::string *cDims =queryParams.splitToArray(",");// Split up by commas (and put into cDims)
           for(size_t k=0;k<cDims->count;k++){
             CT::string *sDims =cDims[k].splitToArray("/");// Split up by slashes (and put into sDims)
@@ -838,6 +858,9 @@ int CRequest::process_all_layers(){
       dataSources[j]->dLayerType==CConfigReaderLayerTypeCascaded)
     {
       try{
+        for(size_t d=0;d<dataSources.size();d++){
+          dataSources[d]->setTimeStep(0);
+        }
         if(srvParam->requestType==REQUEST_WMS_GETMAP){
           CImageDataWriter imageDataWriter;
 
@@ -845,9 +868,7 @@ int CRequest::process_all_layers(){
             We want like give priority to our own internal layers, instead to external cascaded layers. This is because
             our internal layers have an exact customized legend, and we would like to use this always.
           */
-          for(size_t d=0;d<dataSources.size();d++){
-            dataSources[d]->setTimeStep(0);
-          }
+       
           bool imageDataWriterIsInitialized = false;
           for(size_t d=0;d<dataSources.size()&&imageDataWriterIsInitialized==false;d++){
             if(dataSources[d]->dLayerType!=CConfigReaderLayerTypeCascaded){
@@ -931,11 +952,11 @@ int CRequest::process_all_layers(){
           //imageDataWriter.drawText(5,5+30+25+2+12+2,"/home/visadm/software/fonts/verdana.ttf",12,0,dataSources[0]->timeSteps[0]->timeString.c_str(),240);
           if(srvParam->showDimensionsInImage){
             textY+=4;
-            for(int d=0;d<srvParam->NumOGCDims;d++){
+            for(int d=0;d<srvParam->requestDims.size();d++){
               CT::string message;
               float fontSize=parseFloat(srvParam->cfg->WMS[0]->DimensionFont[0]->attr.size.c_str());
               textY+=int(fontSize*1.2);
-              message.print("%s: %s",srvParam->OGCDims[d].Name.c_str(),srvParam->OGCDims[d].Value.c_str());
+              message.print("%s: %s",srvParam->requestDims[d]->name.c_str(),srvParam->requestDims[d]->value.c_str());
               imageDataWriter.drawImage.drawText(6,textY,srvParam->cfg->WMS[0]->DimensionFont[0]->attr.location.c_str(),fontSize,0,message.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
               textY+=4;
             }
@@ -995,8 +1016,10 @@ int CRequest::process_all_layers(){
     
         if(srvParam->requestType==REQUEST_WMS_GETFEATUREINFO){
           CImageDataWriter imageDataWriter;
+          
           status = imageDataWriter.init(srvParam,dataSources[j],dataSources[j]->getNumTimeSteps());if(status != 0)throw(__LINE__);
           for(int k=0;k<dataSources[j]->getNumTimeSteps();k++){
+            
             dataSources[j]->setTimeStep(k);
             status = imageDataWriter.getFeatureInfo(dataSources[j],
                 int(srvParam->dX),
@@ -1046,6 +1069,9 @@ return 0;
 }
 
 int CRequest::process_querystring(){
+  #ifdef MEASURETIME
+  StopWatch_Stop("Start processing query string");
+  #endif
 //  StopWatch_Time("render()");
   //First try to find all possible dimensions
   //std::vector
@@ -1237,26 +1263,21 @@ int CRequest::process_querystring(){
         }
       }
       //DIM Params
-      /*for(size_t d=0;d<queryDims.size();d++){
-        CT::string dimName("DIM_");
-        dimName.concat(queryDims[d]);
-        if(value0Cap.equals(queryDims[d])||value0Cap.equals(&dimName)){
-          
-          srvParam->OGCDims[srvParam->NumOGCDims].Name.copy(queryDims[d]->c_str());
-          srvParam->OGCDims[srvParam->NumOGCDims].Value.copy(&values[1]);
-          srvParam->NumOGCDims++;
-        }
-      }*/
-      if(value0Cap.equals("TIME")||value0Cap.equals("ELEVATION")||value0Cap.indexOf("DIM_")==0){
+      int foundDim=-1;
+      if(value0Cap.equals("TIME")||value0Cap.equals("ELEVATION")){
+        foundDim=0;
+      }else if(value0Cap.indexOf("DIM_")==0){
+        //We store the OGCdim without the DIM_ prefix
+        foundDim=4;
+      }
+      if(foundDim!=-1){
+        COGCDims *ogcDim = NULL;
+        const char *ogcDimName=value0Cap.c_str()+foundDim;
+        for(size_t j=0;j<srvParam->requestDims.size();j++){if(srvParam->requestDims[j]->name.equals(ogcDimName)){ogcDim = srvParam->requestDims[j];break;}}
+        if(ogcDim==NULL){ogcDim = new COGCDims();srvParam->requestDims.push_back(ogcDim);}else {CDBDebug("OGC Dim %s reused",ogcDimName);}
+        ogcDim->name.copy(ogcDimName);
+        ogcDim->value.copy(&values[1]);
         
-        if(value0Cap.indexOf("DIM_")==0){
-          srvParam->OGCDims[srvParam->NumOGCDims].Name.copy(value0Cap.c_str()+4);
-        }else{
-          srvParam->OGCDims[srvParam->NumOGCDims].Name.copy(value0Cap.c_str());
-        }
-         srvParam->OGCDims[srvParam->NumOGCDims].Value.copy(&values[1]);
-        //CDBDebug("DIM_ %s==%s",value0Cap.c_str(),srvParam->OGCDims[srvParam->NumOGCDims].Value.c_str());
-        srvParam->NumOGCDims++;
       }
 
       // FORMAT parameter
@@ -1456,6 +1477,9 @@ int CRequest::process_querystring(){
   }
   delete[] parameters;
 
+  #ifdef MEASURETIME
+  StopWatch_Stop("Query string processed");
+  #endif
 
   if(dFound_Service==0){
     CDBWarning("Parameter SERVICE missing");
@@ -1540,12 +1564,18 @@ int CRequest::process_querystring(){
       //Generate a generic title for this OpenDAP service, based on the title element in the OPeNDAP header
       //Open the opendap resource
       CDBDebug("Opening opendap %s",srvParam->internalAutoResourceLocation.c_str());
+      #ifdef MEASURETIME
+      StopWatch_Stop("Opening file");
+      #endif
       CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObject(NULL,srvParam->internalAutoResourceLocation.c_str());
       //int status=cdfObject->open(srvParam->internalAutoResourceLocation.c_str());
       if(cdfObject==NULL){
         CDBError("Unable to open resource %s",srvParam->autoResourceLocation.c_str());
         return 1;
       }
+      #ifdef MEASURETIME
+      StopWatch_Stop("File opened");
+      #endif
       
       CT::string serverTitle="";
       try{cdfObject->getAttribute("title")->getDataAsString(&serverTitle);}catch(int e){}
@@ -1653,6 +1683,11 @@ int CRequest::process_querystring(){
       }
       srvParam->cfg->CacheDocs[0]->attr.enabled.copy("false");
       srvParam->enableDocumentCache=false;
+      
+      #ifdef MEASURETIME
+      StopWatch_Stop("Auto opendap configured");
+      #endif
+      
     }
   
   // WMS Service

@@ -772,7 +772,8 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
     
    
     
-    if( var[varNr]->data==NULL){
+    //if( var[varNr]->data==NULL){
+      if( level2CompatMode == false){
       //#ifdef MEASURETIME
       //StopWatch_Stop("Freeing data");
       //#endif
