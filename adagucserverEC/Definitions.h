@@ -106,7 +106,7 @@
 #define MEASURETIME
 */
 
-#define DEBUGON
+//#define DEBUGON
 #ifdef DEBUGON
 #define CIMAGEDATAWRITER_DEBUG
 #define CDATAREADER_DEBUG

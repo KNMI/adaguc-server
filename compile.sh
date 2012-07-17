@@ -45,7 +45,7 @@ if [ -f adagucserver ]
 fi
 
 
-test -f ../bin && mkdir ../bin/
+test -d ../bin || mkdir ../bin/
 cp adagucserver ../bin/
 cp h5ncdump ../bin/
 echo "[OK] Everything is installed in the ./bin directory"
