@@ -1137,148 +1137,161 @@ void CImageDataWriter::setValue(CDFType type,void *data,size_t ptr,double pixel)
   if(type==CDF_FLOAT)((float*)data)[ptr]=(float)pixel;
   if(type==CDF_DOUBLE)((double*)data)[ptr]=(double)pixel;
 }
-int CImageDataWriter::getFeatureInfo(CDataSource *dataSource,int dX,int dY){
+int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int dataSourceIndex,int dX,int dY){
+ 
   // Create a new getFeatureInfoResult object and push it into the vector.
   GetFeatureInfoResult  *getFeatureInfoResult = new GetFeatureInfoResult();
   getFeatureInfoResultList.push_back(getFeatureInfoResult);
-  getFeatureInfoResult->dataSource=dataSource;
 //  status  = imageWarper.getFeatureInfo(&getFeatureInfoHeader,&temp,dataSource,drawImage.Geo,dX,dY);
   
   //int CImageWarper::getFeatureInfo(CT::string *Header,CT::string *Result,CDataSource *dataSource,CGeoParams *GeoDest,int dX, int dY){
 
-  if(dataSource==NULL){
-    CDBError("dataSource == NULL");
-    return 1;
-  }
+  
   int status;
-  CDataReader reader;
-  status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
-  if(status!=0){
-    CDBError("Could not open file: %s",dataSource->getFileName());
-    return 1;
-  }
-  status = imageWarper.initreproj(dataSource,drawImage.Geo,&srvParam->cfg->Projection);
-  if(status!=0){CDBError("initreproj failed");reader.close();return 1;  }
-  
-  //getFeatureInfoHeader.copy("");
-  double x,y,sx,sy,CoordX,CoordY;
-  int imx,imy;
-  sx=dX;
-  sy=dY;
-
-  x=double(sx)/double(drawImage.Geo->dWidth);
-  y=double(sy)/double(drawImage.Geo->dHeight);
-  x*=(drawImage.Geo->dfBBOX[2]-drawImage.Geo->dfBBOX[0]);
-  y*=(drawImage.Geo->dfBBOX[1]-drawImage.Geo->dfBBOX[3]);
-  x+=drawImage.Geo->dfBBOX[0];
-  y+=drawImage.Geo->dfBBOX[3];
-
-  CoordX=x;
-  CoordY=y;
-  imageWarper.reprojpoint(x,y);
-  
-  double nativeCoordX=x;
-  double nativeCoordY=y;
-
-  x-=dataSource->dfBBOX[0];
-  y-=dataSource->dfBBOX[1];
-  x/=(dataSource->dfBBOX[2]-dataSource->dfBBOX[0]);
-  y/=(dataSource->dfBBOX[3]-dataSource->dfBBOX[1]);
-  x*=double(dataSource->dWidth);
-  y*=double(dataSource->dHeight);
-  imx=(int)x;
-  imy=dataSource->dHeight-(int)y-1;
-
-  //Get lat/lon
-
-  // Projections coordinates in latlon
-  getFeatureInfoResult->lon_coordinate=CoordX;
-  getFeatureInfoResult->lat_coordinate=CoordY;
-
-  
-  imageWarper.reprojToLatLon(getFeatureInfoResult->lon_coordinate,getFeatureInfoResult->lat_coordinate);
-  imageWarper.closereproj();
-
-  // Pixel X and Y on the image
-  getFeatureInfoResult->x_imagePixel=dX;
-  getFeatureInfoResult->y_imagePixel=dY;
- 
-  // Projection coordinates X and Y on the image
-  getFeatureInfoResult->x_imageCoordinate=CoordX;
-  getFeatureInfoResult->y_imageCoordinate=CoordY;
-  
-  // Projection coordinates X and Y in the raster
-  getFeatureInfoResult->x_rasterCoordinate=nativeCoordX;
-  getFeatureInfoResult->y_rasterCoordinate=nativeCoordY;
-  
-  // Pixel X and Y on the raster
-  getFeatureInfoResult->x_rasterIndex=imx;
-  getFeatureInfoResult->y_rasterIndex=imy;
-  
-
-  //Copy layer name
-  getFeatureInfoResult->layerName.copy(&dataSource->layerName);
-  
-  //TODO find raster projection units and find image projection units.
-  
-  //Retrieve variable names
-  for(size_t j=0;j<dataSource->dataObject.size();j++){
-    //Create a new element and at it to the elements list.
-    GetFeatureInfoResult::Element * element = new GetFeatureInfoResult::Element();
-    getFeatureInfoResult->elements.push_back(element);
-
-    //Get variable name
-    element->var_name.copy(&dataSource->dataObject[j]->variableName);
-    //Get variable units
-    element->units.copy(&dataSource->dataObject[j]->units);
-
-    //Get variable standard name
-    CDF::Attribute * attr_standard_name=dataSource->dataObject[j]->cdfVariable->getAttributeNE("standard_name");
-    if(attr_standard_name!=NULL){
-      CT::string standardName;attr_standard_name->getDataAsString(&standardName);
-      element->standard_name.copy(&standardName);
-      // Make a more clean standard name.
-      standardName.replaceSelf("_"," ");standardName.replaceSelf(" status flag","");
-      element->feature_name.copy(&standardName);
+  for(size_t d=0;d<dataSources.size();d++){
+    CDataSource *dataSource=dataSources[d];
+    if(dataSource==NULL){
+      CDBError("dataSource == NULL");
+      return 1;
     }
-    if(element->standard_name.c_str()==NULL){
-      element->standard_name.copy(&element->var_name);
-      element->feature_name.copy(&element->var_name);
-    }
-
-    // Get variable long name
-    CDF::Attribute * attr_long_name=dataSource->dataObject[j]->cdfVariable->getAttributeNE("long_name");
-    if(attr_long_name!=NULL){
-      attr_long_name->getDataAsString(&element->long_name);
-    }else element->long_name.copy(&element->var_name);
+    //Copy layer name
+    getFeatureInfoResult->layerName.copy(&dataSource->layerName);
+    getFeatureInfoResult->dataSourceIndex=dataSourceIndex;
     
-    // Assign CDF::Variable Pointer
-    element->variable = dataSource->dataObject[j]->cdfVariable;
-    element->value="";
-    char szTemp[1024];
-    status = reader.getTimeString(szTemp);
-    if(status != 0){
-      element->time.print("Time error: %d: ",status);
-    }
-    else{
-      element->time=szTemp;
-    }
-  }
   
+    
+    CDataReader reader;
+    status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_ALL);
+    if(status!=0){
+      CDBError("Could not open file: %s",dataSource->getFileName());
+      return 1;
+    }
+    status = imageWarper.initreproj(dataSource,drawImage.Geo,&srvParam->cfg->Projection);
+    if(status!=0){CDBError("initreproj failed");reader.close();return 1;  }
+    
+    //getFeatureInfoHeader.copy("");
+    double x,y,sx,sy,CoordX,CoordY;
+    int imx,imy;
+    sx=dX;
+    sy=dY;
+
+    x=double(sx)/double(drawImage.Geo->dWidth);
+    y=double(sy)/double(drawImage.Geo->dHeight);
+    x*=(drawImage.Geo->dfBBOX[2]-drawImage.Geo->dfBBOX[0]);
+    y*=(drawImage.Geo->dfBBOX[1]-drawImage.Geo->dfBBOX[3]);
+    x+=drawImage.Geo->dfBBOX[0];
+    y+=drawImage.Geo->dfBBOX[3];
+
+    CoordX=x;
+    CoordY=y;
+    imageWarper.reprojpoint(x,y);
+    
+    double nativeCoordX=x;
+    double nativeCoordY=y;
+
+    x-=dataSource->dfBBOX[0];
+    y-=dataSource->dfBBOX[1];
+    x/=(dataSource->dfBBOX[2]-dataSource->dfBBOX[0]);
+    y/=(dataSource->dfBBOX[3]-dataSource->dfBBOX[1]);
+    x*=double(dataSource->dWidth);
+    y*=double(dataSource->dHeight);
+    imx=(int)x;
+    imy=dataSource->dHeight-(int)y-1;
+
+    //Get lat/lon
+
+    // Projections coordinates in latlon
+    getFeatureInfoResult->lon_coordinate=CoordX;
+    getFeatureInfoResult->lat_coordinate=CoordY;
+
+    
+    imageWarper.reprojToLatLon(getFeatureInfoResult->lon_coordinate,getFeatureInfoResult->lat_coordinate);
+    imageWarper.closereproj();
+
+    // Pixel X and Y on the image
+    getFeatureInfoResult->x_imagePixel=dX;
+    getFeatureInfoResult->y_imagePixel=dY;
+  
+    // Projection coordinates X and Y on the image
+    getFeatureInfoResult->x_imageCoordinate=CoordX;
+    getFeatureInfoResult->y_imageCoordinate=CoordY;
+    
+    // Projection coordinates X and Y in the raster
+    getFeatureInfoResult->x_rasterCoordinate=nativeCoordX;
+    getFeatureInfoResult->y_rasterCoordinate=nativeCoordY;
+    
+    // Pixel X and Y on the raster
+    getFeatureInfoResult->x_rasterIndex=imx;
+    getFeatureInfoResult->y_rasterIndex=imy;
+    
+
+
+    
+    //TODO find raster projection units and find image projection units.
+    
+    //Retrieve variable names
+  
+    for(size_t o=0;o<dataSource->dataObject.size();o++){
+      size_t j=d+o*dataSources.size();
+//      CDBDebug("j = %d",j);
+      //Create a new element and at it to the elements list.
+      GetFeatureInfoResult::Element * element = new GetFeatureInfoResult::Element();
+      getFeatureInfoResult->elements.push_back(element);
+      element->dataSource=dataSource;
+      //Get variable name
+      element->var_name.copy(&dataSources[d]->dataObject[o]->variableName);
+      //Get variable units
+      element->units.copy(&dataSources[d]->dataObject[o]->units);
+
+      //Get variable standard name
+      CDF::Attribute * attr_standard_name=dataSources[d]->dataObject[o]->cdfVariable->getAttributeNE("standard_name");
+      if(attr_standard_name!=NULL){
+        CT::string standardName;attr_standard_name->getDataAsString(&standardName);
+        element->standard_name.copy(&standardName);
+        // Make a more clean standard name.
+        standardName.replaceSelf("_"," ");standardName.replaceSelf(" status flag","");
+        element->feature_name.copy(&standardName);
+      }
+      if(element->standard_name.c_str()==NULL){
+        element->standard_name.copy(&element->var_name);
+        element->feature_name.copy(&element->var_name);
+      }
+
+      // Get variable long name
+      CDF::Attribute * attr_long_name=dataSources[d]->dataObject[o]->cdfVariable->getAttributeNE("long_name");
+      if(attr_long_name!=NULL){
+        attr_long_name->getDataAsString(&element->long_name);
+      }else element->long_name.copy(&element->var_name);
+      
+      // Assign CDF::Variable Pointer
+      element->variable = dataSources[d]->dataObject[o]->cdfVariable;
+      element->value="";
+      char szTemp[1024];
+      status = reader.getTimeString(szTemp);
+      if(status != 0){
+        element->time.print("Time error: %d: ",status);
+      }
+      else{
+        element->time=szTemp;
+      }
+    }
+ 
   // Retrieve corresponding values.
   if(imx>=0&&imy>=0&&imx<dataSource->dWidth&&imy<dataSource->dHeight){
-    for(size_t j=0;j<dataSource->dataObject.size();j++){
+    for(size_t o=0;o<dataSource->dataObject.size();o++){
+      size_t j=d+o*dataSources.size();  
+//      CDBDebug("j = %d",j);
       GetFeatureInfoResult::Element * element=getFeatureInfoResult->elements[j];
       size_t ptr=imx+imy*dataSource->dWidth;
-      double pixel=convertValue(dataSource->dataObject[j]->cdfVariable->type,dataSource->dataObject[j]->cdfVariable->data,ptr);
+      double pixel=convertValue(dataSource->dataObject[o]->cdfVariable->type,dataSource->dataObject[o]->cdfVariable->data,ptr);
 
       
       //Check wether this is a NoData value:
-      if((pixel!=dataSource->dataObject[j]->dfNodataValue&&dataSource->dataObject[j]->hasNodataValue==true&&pixel==pixel)||dataSource->dataObject[0]->hasNodataValue==false){
-        if(dataSource->dataObject[j]->hasStatusFlag){
+      if((pixel!=dataSource->dataObject[o]->dfNodataValue&&dataSource->dataObject[o]->hasNodataValue==true&&pixel==pixel)||dataSource->dataObject[0]->hasNodataValue==false){
+        if(dataSource->dataObject[o]->hasStatusFlag){
           //Add status flag
           CT::string flagMeaning;
-          CDataSource::getFlagMeaningHumanReadable(&flagMeaning,&dataSource->dataObject[j]->statusFlagList,pixel);
+          CDataSource::getFlagMeaningHumanReadable(&flagMeaning,&dataSource->dataObject[o]->statusFlagList,pixel);
           element->value.print("%s (%d)",flagMeaning.c_str(),(int)pixel);
           element->units="";
         }else{
@@ -1329,7 +1342,8 @@ int CImageDataWriter::getFeatureInfo(CDataSource *dataSource,int dX,int dY){
     }
 
   }
-  reader.close();
+  }
+  //reader.close();
   
   return 0;
 }
@@ -2214,7 +2228,7 @@ int CImageDataWriter::end(){
       maxValue[0]=currentStyleConfiguration->legendUpperRange;
       
       
-      CDataSource * dataSource=getFeatureInfoResultList[0]->dataSource;
+      CDataSource * dataSource=getFeatureInfoResultList[0]->elements[0]->dataSource;
       float classes=6;
       int tickRound=0;
       if(currentStyleConfiguration->styleIndex !=-1){
@@ -2264,7 +2278,7 @@ int CImageDataWriter::end(){
   
       
       for(size_t elNr=0;elNr<nrOfElements;elNr++){
-        CDBDebug("elNr %d has minValue %f and maxValue %f",elNr,minValue[elNr],maxValue[elNr]);
+        CDBDebug("elNr %s %d has minValue %f and maxValue %f",getFeatureInfoResultList[0]->elements[elNr]->var_name.c_str(),elNr,minValue[elNr],maxValue[elNr]);
       }
 
       

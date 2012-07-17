@@ -25,7 +25,42 @@ class CImageDataWriter: public CBaseDataWriterInterface{
     int nrImagesAdded;
     //CT::string getFeatureInfoResult;
     //CT::string getFeatureInfoHeader;
-
+    enum RenderMethodEnum { undefined,nearest, bilinear, contour, 
+    barb, barbshaded, barbcontour, barbcontourshaded, thinbarb, thinbarbshaded, thinbarbcontour, thinbarbcontourshaded, 
+    shaded,shadedcontour, 
+    vector, vectorshaded, vectorcontour, vectorcontourshaded, thinvector, thinvectorshaded, thinvectorcontour, thinvectorcontourshaded,
+    nearestcontour,bilinearcontour};
+    static void calculateScaleAndOffsetFromMinMax(float &scale, float &offset,float min,float max,float log);
+public:
+  class StyleConfiguration {
+  public:
+    
+    float shadeInterval,contourIntervalL,contourIntervalH;
+    float legendScale,legendOffset,legendLog,legendLowerRange,legendUpperRange;
+    int smoothingFilter;
+    bool hasLegendValueRange;
+    bool hasError;
+    RenderMethodEnum renderMethod;
+    int legendIndex;
+    int styleIndex;
+    CT::string styleCompositionName;
+    void printStyleConfig(CT::string *data){
+      data->print("shadeInterval = %f\n",shadeInterval);
+      data->printconcat("contourIntervalL = %f\n",contourIntervalL);
+      data->printconcat("contourIntervalH = %f\n",contourIntervalH);
+      data->printconcat("legendScale = %f\n",legendScale);
+      data->printconcat("legendOffset = %f\n",legendOffset);
+      data->printconcat("legendLog = %f\n",legendLog);
+      data->printconcat("hasLegendValueRange = %d\n",hasLegendValueRange);
+      data->printconcat("legendLowerRange = %f\n",legendLowerRange);
+      data->printconcat("legendUpperRange = %f\n",legendUpperRange);
+      data->printconcat("smoothingFilter = %d\n",smoothingFilter);
+      CT::string rMethodString;
+      getRenderMethodAsString(&rMethodString,renderMethod);
+      data->printconcat("renderMethod = %s",rMethodString.c_str());
+    }
+  };
+private:
     
     class GetFeatureInfoResult{
       public:
@@ -40,7 +75,8 @@ class CImageDataWriter: public CBaseDataWriterInterface{
         double lat_coordinate,lon_coordinate;
 
         CT::string layerName;
-        CDataSource *dataSource;
+        int dataSourceIndex;
+        
         class Element{
         public:
           CT::string value;
@@ -51,44 +87,12 @@ class CImageDataWriter: public CBaseDataWriterInterface{
           CT::string var_name;
           CT::string time;
           CDF::Variable *variable;
+          CDataSource *dataSource;
         };
         std::vector <Element*>elements;
     };
-    enum RenderMethodEnum { undefined,nearest, bilinear, contour, 
-         barb, barbshaded, barbcontour, barbcontourshaded, thinbarb, thinbarbshaded, thinbarbcontour, thinbarbcontourshaded, 
-         shaded,shadedcontour, 
-         vector, vectorshaded, vectorcontour, vectorcontourshaded, thinvector, thinvectorshaded, thinvectorcontour, thinvectorcontourshaded,
-         nearestcontour,bilinearcontour};
-         static void calculateScaleAndOffsetFromMinMax(float &scale, float &offset,float min,float max,float log);
-public:
-    class StyleConfiguration {
-    public:
-        
-      float shadeInterval,contourIntervalL,contourIntervalH;
-      float legendScale,legendOffset,legendLog,legendLowerRange,legendUpperRange;
-      int smoothingFilter;
-      bool hasLegendValueRange;
-      bool hasError;
-      RenderMethodEnum renderMethod;
-      int legendIndex;
-      int styleIndex;
-      CT::string styleCompositionName;
-      void printStyleConfig(CT::string *data){
-        data->print("shadeInterval = %f\n",shadeInterval);
-        data->printconcat("contourIntervalL = %f\n",contourIntervalL);
-        data->printconcat("contourIntervalH = %f\n",contourIntervalH);
-        data->printconcat("legendScale = %f\n",legendScale);
-        data->printconcat("legendOffset = %f\n",legendOffset);
-        data->printconcat("legendLog = %f\n",legendLog);
-        data->printconcat("hasLegendValueRange = %d\n",hasLegendValueRange);
-        data->printconcat("legendLowerRange = %f\n",legendLowerRange);
-        data->printconcat("legendUpperRange = %f\n",legendUpperRange);
-        data->printconcat("smoothingFilter = %d\n",smoothingFilter);
-        CT::string rMethodString;
-        getRenderMethodAsString(&rMethodString,renderMethod);
-        data->printconcat("renderMethod = %s",rMethodString.c_str());
-      }
-    };
+
+
 private:
     static int getTextForValue(CT::string *tv,float v,StyleConfiguration *currentStyleConfiguration);
     std::vector<GetFeatureInfoResult*> getFeatureInfoResultList;
@@ -136,7 +140,7 @@ private:
     }
     
     int createLegend(CDataSource *sourceImage,CDrawImage *legendImage);
-    int getFeatureInfo(CDataSource *sourceImage,int dX,int dY);
+    int getFeatureInfo(std::vector<CDataSource *>dataSources,int dataSourceIndex,int dX,int dY);
     int createAnimation();
     void setDate(const char *date);
     int calculateData(std::vector <CDataSource*> &dataSources);

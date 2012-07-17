@@ -1018,14 +1018,18 @@ int CRequest::process_all_layers(){
           CImageDataWriter imageDataWriter;
           
           status = imageDataWriter.init(srvParam,dataSources[j],dataSources[j]->getNumTimeSteps());if(status != 0)throw(__LINE__);
-          for(int k=0;k<dataSources[j]->getNumTimeSteps();k++){
+         
+            for(int k=0;k<dataSources[j]->getNumTimeSteps();k++){
             
-            dataSources[j]->setTimeStep(k);
-            status = imageDataWriter.getFeatureInfo(dataSources[j],
-                int(srvParam->dX),
-                int(srvParam->dY));
-            if(status != 0)throw(__LINE__);
-          }
+              for(size_t d=0;d<dataSources.size();d++){
+              dataSources[d]->setTimeStep(k);
+              
+            }
+              //status = imageDataWriter.getFeatureInfo(dataSources[j],int(srvParam->dX),int(srvParam->dY));if(status != 0)throw(__LINE__);
+              status = imageDataWriter.getFeatureInfo(dataSources,0,int(srvParam->dX),int(srvParam->dY));if(status != 0)throw(__LINE__);
+            }
+          
+          
           status = imageDataWriter.end();if(status != 0)throw(__LINE__);
         }
         
@@ -1404,10 +1408,10 @@ int CRequest::process_querystring(){
         if(srvParam->WMSLayers!=NULL)
           delete[] srvParam->WMSLayers;
           srvParam->WMSLayers = values[1].splitToArray(",");
-          if(srvParam->WMSLayers->count>1){
+          /*if(srvParam->WMSLayers->count>1){
             CDBError("Too many layers in request");
             dErrorOccured=1;
-          }
+          }*/
         dFound_WMSLAYER=1;
     }
       //WCS Coverage parameter
