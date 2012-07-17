@@ -1453,7 +1453,12 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
 #ifdef CDATAREADER_DEBUG
  CDBDebug("autoConfigureDimensions %s",dataSource->getLayerName());
 #endif  
-  //Try to load the auto dimension information from the database
+  
+ /** 
+  * Load dimension information about the layer from the autoconfigure_dimensions table
+  * This table stores only layerid, netcdf dimname, adaguc dimname and units
+  * Actual dimension values are not storen in this table
+  */
   CT::string query;
   CT::string tableName = "autoconfigure_dimensions";
   CT::string layerTableId = dataSource->cfgLayer->DataBaseTable[0]->value.c_str();
@@ -1480,9 +1485,13 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
         dataSource->cfgLayer->Dimension.push_back(xmleDim);
       }
       delete store;
-      if(store->size()>1){
+      if(store->size()>0){
         #ifdef CDATAREADER_DEBUG        
-         CDBDebug("Found auto dims.");
+         CDBDebug("Datasource has the following dims (%d):",dataSource->cfgLayer->Dimension.size());
+         for(size_t j=0;j<dataSource->cfgLayer->Dimension.size();j++){
+           CDBDebug("  [%d]: Dimension name\"%s\"\t units\"%s\"",j,dataSource->cfgLayer->Dimension[j]->attr.name.c_str(),dataSource->cfgLayer->Dimension[j]->attr.units.c_str());
+         }
+         CDBDebug("Found auto dims in DB, returning from line %d.",__LINE__);
         #endif        
       return 0;
       }
@@ -1492,9 +1501,10 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
     }
   }
 #ifdef CDATAREADER_DEBUG     
-  CDBDebug("autoConfigureDimensions information not in DB");
+  CDBDebug("autoConfigureDimensions information not in table %s",tableName.c_str());
 #endif  
-  //Information is not available in the database. We need to load it from a file.
+  
+  /* Dimension information is not available in the database. We need to load it from a file.*/
   #ifdef CDATAREADER_DEBUG     
   CDBDebug("justLoadAFileHeader");
   #endif
@@ -1509,10 +1519,13 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
     if(dataSource->dataObject.size()==0){CDBDebug("dataSource->dataObject.size()==0");throw(__LINE__);}
     if(dataSource->dataObject[0]->cdfVariable==NULL){CDBDebug("dataSource->dataObject[0]->cdfVariable==NULL");throw(__LINE__);}
     //CDBDebug("OK %d",dataSource->cfgLayer->Dimension.size());
+   
     if(dataSource->cfgLayer->Dimension.size()==0){
       
       
-      //No dimensions are configured by the user, try to configure them automatically here.
+      /*No dimensions are configured by the user, try to detect them from the netcdf file automatically
+       and store them in the table.
+       */
       if(dataSource->dataObject[0]->cdfVariable->dimensionlinks.size()>=2){
         
         try{
@@ -1581,6 +1594,13 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
     return 1;
   }
 
+  #ifdef CDATAREADER_DEBUG        
+  CDBDebug("Datasource has the following dims (%d):",dataSource->cfgLayer->Dimension.size());
+  for(size_t j=0;j<dataSource->cfgLayer->Dimension.size();j++){
+    CDBDebug("  [%d]: Dimension name\"%s\"\t units\"%s\"",j,dataSource->cfgLayer->Dimension[j]->attr.name.c_str(),dataSource->cfgLayer->Dimension[j]->attr.units.c_str());
+  }
+  CDBDebug("Found auto dims from NC file, returning from line %d.",__LINE__);
+  #endif       
   
   return 0;
 }

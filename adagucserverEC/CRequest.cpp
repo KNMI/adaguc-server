@@ -539,8 +539,37 @@ int CRequest::process_all_layers(){
       
         // Connect do DB
         status = DB.connect(srvParam->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0){CDBError("Unable to connect to DB");return 1;}
-        //Get the number of required dims from the given dims
-        //Check if all dimensions are given
+        
+        /*
+         * Check if all tables are available, if not update the db
+         */
+        if(srvParam->isAutoResourceEnabled()){
+          bool tableNotFound=false;
+          for(size_t i=0;i<dataSources[j]->cfgLayer->Dimension.size();i++){
+            CT::string tableName(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str());
+            CT::string dimName=dataSources[j]->cfgLayer->Dimension[i]->attr.name.c_str();
+            CT::string query;
+            CServerParams::makeCorrectTableName(&tableName,&dimName);
+            query.print("select %s from %s limit 1",dimName.c_str(),tableName.c_str());
+            CDB::Store *store = DB.queryToStore(query.c_str());
+            if(store==NULL){
+              tableNotFound=true;
+              CDBDebug("No table found for dimension %s",dimName.c_str());
+            }
+            delete store;
+            if(tableNotFound)break;
+          }
+          if(tableNotFound){
+            CDBDebug("Updating database");
+            status = CDBFileScanner::updatedb(srvParam->cfg->DataBase[0]->attr.parameters.c_str(),dataSources[j],NULL,NULL);
+            if(status !=0){CDBError("Could not update db for: %s",dataSources[j]->cfgLayer->Name[0]->value.c_str());DB.close();return 2;}
+          }
+        }
+        
+        /*
+         * Get the number of required dims from the given dims
+         * Check if all dimensions are given
+         */
         for(int k=0;k<srvParam->NumOGCDims;k++)srvParam->OGCDims[k].Name.toLowerCaseSelf();
         int dimsfound[NC_MAX_DIMS];
         for(size_t i=0;i<dataSources[j]->cfgLayer->Dimension.size();i++){
@@ -552,7 +581,7 @@ int CRequest::process_all_layers(){
             if(srvParam->OGCDims[k].Name.equals(&dimName)){
               //This dimension has been specified in the request, so the dimension has been found:
               dimsfound[i]=1;
-              COGCDims *ogcDim = new COGCDims;
+              COGCDims *ogcDim = new COGCDims();
               dataSources[j]->requiredDims.push_back(ogcDim);
               ogcDim->Name.copy(&dimName);
               ogcDim->Value.copy(&srvParam->OGCDims[k].Value);
@@ -599,6 +628,7 @@ int CRequest::process_all_layers(){
                 CT::string *temp = DB.query_select(Query.c_str(),0);
                 if(temp == NULL){CDBError("Query failed");status = DB.close(); return 1;}
                 ogcDim->Value.copy(&temp[0]);
+                delete[] temp;
               }
             }
           }
@@ -704,7 +734,7 @@ int CRequest::process_all_layers(){
          * Maybe the database needs to be updated automatically.
          * This is only enabled when autoresource has been enabled.
          */
-        if(values_path==NULL&&srvParam->isAutoResourceEnabled()){
+        /*if(values_path==NULL&&srvParam->isAutoResourceEnabled()){
           //TODO disable automatic update for certain cases!
           CDBDebug("No results for query: Trying to update the database automatically.");
         
@@ -716,7 +746,7 @@ int CRequest::process_all_layers(){
             CDBError("No results for query: '%s'",Query.c_str());
             return 2;
           }
-        }
+        }*/
         if(values_path==NULL){
           if((checkDataRestriction()&SHOW_QUERYINFO)==false)Query.copy("hidden");
           CDBError("No results for query: '%s'",Query.c_str());

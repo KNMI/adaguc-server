@@ -410,7 +410,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                 }
               }
               //delete cdfObject;cdfObject=NULL;
-              cdfObject=CDFObjectStore::getCDFObjectStore()->deleteCDFObject(&cdfObject);
+              //cdfObject=CDFObjectStore::getCDFObjectStore()->deleteCDFObject(&cdfObject);
             }catch(int linenr){
               CDBError("Exception in DBLoopFiles at line %d, msg: '%s'",linenr,DB->getError());
               CDBError(" *** SKIPPING FILE %s ***",dirReader->fileList[j]->baseName.c_str());
@@ -469,7 +469,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
   
   
   //delete cdfObject;cdfObject=NULL;
-  cdfObject=CDFObjectStore::getCDFObjectStore()->deleteCDFObject(&cdfObject);
+  //cdfObject=CDFObjectStore::getCDFObjectStore()->deleteCDFObject(&cdfObject);
   return 0;
 }
 
