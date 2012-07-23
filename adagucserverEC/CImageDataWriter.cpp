@@ -1138,7 +1138,9 @@ void CImageDataWriter::setValue(CDFType type,void *data,size_t ptr,double pixel)
   if(type==CDF_DOUBLE)((double*)data)[ptr]=(double)pixel;
 }
 int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int dataSourceIndex,int dX,int dY){
- 
+  #ifdef CIMAGEDATAWRITER_DEBUG    
+  CDBDebug("[getFeatureInfo]");
+  #endif
   // Create a new getFeatureInfoResult object and push it into the vector.
   GetFeatureInfoResult  *getFeatureInfoResult = new GetFeatureInfoResult();
   getFeatureInfoResultList.push_back(getFeatureInfoResult);
@@ -1161,7 +1163,9 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
   
     
     CDataReader reader;
-    status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_ALL);
+    status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_HEADER);
+    
+    
     if(status!=0){
       CDBError("Could not open file: %s",dataSource->getFileName());
       return 1;
@@ -1197,6 +1201,8 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
     y*=double(dataSource->dHeight);
     imx=(int)x;
     imy=dataSource->dHeight-(int)y-1;
+    
+    
 
     //Get lat/lon
 
@@ -1225,8 +1231,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
     getFeatureInfoResult->y_rasterIndex=imy;
     
 
-
-    
     //TODO find raster projection units and find image projection units.
     
     //Retrieve variable names
@@ -1266,23 +1270,34 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       // Assign CDF::Variable Pointer
       element->variable = dataSources[d]->dataObject[o]->cdfVariable;
       element->value="";
+      
+      
+      /* Get time string*/
       char szTemp[1024];
       status = reader.getTimeString(szTemp);
+      CDBDebug("TIME = szTemp = \"%s\" - %d",szTemp,status);
       if(status != 0){
         element->time.print("Time error: %d: ",status);
-      }
-      else{
-        element->time=szTemp;
+      }else{
+        element->time.copy(szTemp);
       }
     }
  
   // Retrieve corresponding values.
   if(imx>=0&&imy>=0&&imx<dataSource->dWidth&&imy<dataSource->dHeight){
+    
+    status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_ALL,imx,imy);
+    //status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_ALL);
+    //status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_ALL,0,0);
+    if(status!=0){
+      CDBError("Could not open file: %s",dataSource->getFileName());
+      return 1;
+    }
     for(size_t o=0;o<dataSource->dataObject.size();o++){
       size_t j=d+o*dataSources.size();  
 //      CDBDebug("j = %d",j);
       GetFeatureInfoResult::Element * element=getFeatureInfoResult->elements[j];
-      size_t ptr=imx+imy*dataSource->dWidth;
+      size_t ptr=0;//imx+imy*dataSource->dWidth;
       double pixel=convertValue(dataSource->dataObject[o]->cdfVariable->type,dataSource->dataObject[o]->cdfVariable->data,ptr);
 
       
@@ -1344,7 +1359,9 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
   }
   }
   //reader.close();
-  
+  #ifdef CIMAGEDATAWRITER_DEBUG    
+  CDBDebug("[/getFeatureInfo]");
+  #endif
   return 0;
 }
 int CImageDataWriter::createAnimation(){
@@ -2159,13 +2176,23 @@ int CImageDataWriter::end(){
         return 1;
       }
       
+      #ifdef CIMAGEDATAWRITER_DEBUG        
+      CDBDebug("GetFeatureInfo Format image/png");
+      #endif
       float width=srvParam->Geo->dWidth,height=srvParam->Geo->dHeight;
       if(srvParam->figWidth>1)width=srvParam->figWidth;
       if(srvParam->figHeight>1)height=srvParam->figHeight;
-      float plotHeight=(height*0.80);
-      float plotOffsetY=(height*0.1);
-      float plotWidth=(width*0.90);
+      
+      
       float plotOffsetX=(width*0.08);
+      float plotOffsetY=(height*0.1);
+      if(plotOffsetX<80)plotOffsetX=80;
+      if(plotOffsetY<35)plotOffsetY=35;
+      plotOffsetY=35;
+      
+      float plotHeight=((height-plotOffsetY-34));
+      float plotWidth=((width-plotOffsetX)*0.98);
+      
       CDrawImage linePlot;
       linePlot.setTrueColor(true);
       
@@ -2199,7 +2226,8 @@ int CImageDataWriter::end(){
       float minValue[nrOfElements];
       float maxValue[nrOfElements];
       
-      
+      minValue[0]=currentStyleConfiguration->legendLowerRange;
+      maxValue[0]=currentStyleConfiguration->legendUpperRange;
       //Find min and max values
       for(size_t elNr=0;elNr<nrOfElements;elNr++){
         bool foundFirstValue=false;  
@@ -2211,6 +2239,7 @@ int CImageDataWriter::end(){
           //if(e1->value.equals(
           
           values[j+elNr*nrOfTimeSteps] = value;
+          CDBDebug("Value= %f",value);
           if(value==value){
             if(foundFirstValue==false){
               minValue[elNr]=value;
@@ -2224,19 +2253,35 @@ int CImageDataWriter::end(){
         }
       }
       
-      minValue[0]=currentStyleConfiguration->legendLowerRange;
-      maxValue[0]=currentStyleConfiguration->legendUpperRange;
-      
-      
       CDataSource * dataSource=getFeatureInfoResultList[0]->elements[0]->dataSource;
+      
+      
+
+      if(maxValue[0]==minValue[0]){maxValue[0]=maxValue[0]+0.01;minValue[0]=minValue[0]-0.01;}
+      double min=minValue[0];
+      double max=maxValue[0];
+      //Calculate legendOffset legendScale
+      float ls=240/(max-min);
+      float lo=-(min*ls);
+      dataSource->legendScale=ls;
+      dataSource->legendOffset=lo;
+      #ifdef CIMAGEDATAWRITER_DEBUG        
+      for(size_t elNr=0;elNr<nrOfElements;elNr++){
+        CDBDebug("elNr %s %d has minValue %f and maxValue %f",getFeatureInfoResultList[0]->elements[elNr]->var_name.c_str(),elNr,minValue[elNr],maxValue[elNr]);
+      }
+      #endif
+      
+      
+
       float classes=6;
       int tickRound=0;
       if(currentStyleConfiguration->styleIndex !=-1){
         
-        double min=getValueForColorIndex(dataSource,0);
+        /*double min=getValueForColorIndex(dataSource,0);
         double max=getValueForColorIndex(dataSource,240);
         minValue[0]=min;
-        maxValue[0]=max;
+        maxValue[0]=max;*/
+    
         CServerConfig::XMLE_Style* style = srvParam->cfg->Style[currentStyleConfiguration->styleIndex];
         if(style->Legend.size()>0){
           if(style->Legend[0]->attr.tickinterval.c_str() != NULL){
@@ -2285,7 +2330,8 @@ int CImageDataWriter::end(){
      
    
       size_t timeStepsToLoop = nrOfTimeSteps;
-      if(timeStepsToLoop>1)timeStepsToLoop--;
+      //if(timeStepsToLoop>1)
+        timeStepsToLoop--;
       
       CTime *ctime = new CTime();
       ctime->init("seconds since 2100");
@@ -2295,9 +2341,14 @@ int CImageDataWriter::end(){
       
       try{
         startTimeValue=ctime->ISOStringToDate(getFeatureInfoResultList[0]->elements[0]->time.c_str()).offset;
+      }catch(int e){
+        CDBError("Time startTimeValue error %s",getFeatureInfoResultList[0]->elements[0]->time.c_str());
+      }
+      
+      try{
         stopTimeValue=ctime->ISOStringToDate(getFeatureInfoResultList[timeStepsToLoop]->elements[0]->time.c_str()).offset;
       }catch(int e){
-        CDBError("Time error %s",getFeatureInfoResultList[0]->elements[0]->time.c_str());
+        CDBError("Time stopTimeValue error %s",getFeatureInfoResultList[timeStepsToLoop]->elements[0]->time.c_str());
       }
       double timeRes = (stopTimeValue - startTimeValue)/double(timeStepsToLoop);
       CDBDebug("Time interval: [%f %f] timeRes: %f timeStepsToLoop %d",startTimeValue,stopTimeValue,timeRes,timeStepsToLoop);
@@ -2313,7 +2364,11 @@ int CImageDataWriter::end(){
         int x1=plotOffsetX+(float(j)*float(stepX));
         linePlot.line(x1,plotOffsetY,x1,plotOffsetY+plotHeight,CColor(128,128,128,128));
       }*/
-      float stepX=float(plotWidth)/((stopTimeValue - startTimeValue));
+      float stepX=float(plotWidth);
+      if(stopTimeValue - startTimeValue>0){
+        stepX=float(plotWidth)/((stopTimeValue - startTimeValue));
+      }
+      
       //stepX=float(plotWidth-stepX)/((stopTimeValue - startTimeValue));
       
       for(size_t elNr=0;elNr<nrOfElements;elNr++){
@@ -2331,15 +2386,18 @@ int CImageDataWriter::end(){
           try{
             timeVal1Date=ctime->ISOStringToDate(getFeatureInfoResultList[j]->elements[0]->time.c_str());
             timeVal1 = timeVal1Date.offset- startTimeValue;
-            timeVal2=timeVal1;
+            timeVal2=timeVal1+1;
             if(j<nrOfTimeSteps-1){
               timeVal2 = ctime->ISOStringToDate(getFeatureInfoResultList[j+1]->elements[0]->time.c_str()).offset- startTimeValue;
             }
             
           }catch(int e){CDBError("Time error %s",getFeatureInfoResultList[j]->elements[0]->time.c_str());}
           
-          int x1=plotOffsetX+(float(timeVal1)*float(stepX));
-          int x2=plotOffsetX+(float(timeVal2)*float(stepX));
+          int x1=plotOffsetX+(float(timeVal1)*(stepX));
+          int x2=plotOffsetX+(float(timeVal2)*(stepX));
+
+          //CDBDebug("******************************************************************************************************** %d %d %f %d",x1,x2,stepX,timeStepsToLoop);
+          
           
           if(timeVal1Date.hour==0&&timeVal1Date.minute==0&&timeVal1Date.second==0){
             linePlot.line(x1,plotOffsetY,x1,plotOffsetY+plotHeight,1,CColor(0,0,0,128));
@@ -2350,7 +2408,7 @@ int CImageDataWriter::end(){
             linePlot.line(x1,plotOffsetY,x1,plotOffsetY+plotHeight,0.5,CColor(128,128,128,128));
           }
           
-          if(j<timeStepsToLoop){
+          if(j<timeStepsToLoop+1){
             float v1=values[j+elNr*nrOfTimeSteps];
             float v2=v1;
             if(j<nrOfTimeSteps-1){

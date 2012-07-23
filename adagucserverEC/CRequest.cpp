@@ -556,27 +556,14 @@ int CRequest::process_all_layers(){
          * Check if all tables are available, if not update the db
          */
         if(srvParam->isAutoResourceEnabled()){
-          bool tableNotFound=false;
-          for(size_t i=0;i<dataSources[j]->cfgLayer->Dimension.size();i++){
-            CT::string tableName(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str());
-            CT::string dimName=dataSources[j]->cfgLayer->Dimension[i]->attr.name.c_str();
-            CT::string query;
-            CServerParams::makeCorrectTableName(&tableName,&dimName);
-            query.print("select %s from %s limit 1",dimName.c_str(),tableName.c_str());
-            CDB::Store *store = DB.queryToStore(query.c_str());
-            if(store==NULL){
-              tableNotFound=true;
-              CDBDebug("No table found for dimension %s",dimName.c_str());
-            }
-            delete store;
-            if(tableNotFound)break;
-          }
-          if(tableNotFound){
-            CDBDebug("Updating database");
-            status = CDBFileScanner::updatedb(srvParam->cfg->DataBase[0]->attr.parameters.c_str(),dataSources[j],NULL,NULL);
-            if(status !=0){CDBError("Could not update db for: %s",dataSources[j]->cfgLayer->Name[0]->value.c_str());DB.close();return 2;}
+          status = dataSources[j]->CDataSource::checkDimTables(&DB);
+          if(status != 0){
+            CDBError("checkAndUpdateDimTables failed");
+            return status;
           }
         }
+
+        
         
         /*
          * Get the number of required dims from the given dims
@@ -654,30 +641,15 @@ int CRequest::process_all_layers(){
           }
         }
       
-
-        // Fill in the undefined dims
-        for(size_t i=0;i<dataSources[j]->cfgLayer->Dimension.size();i++){
-          if(dimsfound[i]==0){
-            CT::string netCDFDimName(dataSources[j]->cfgLayer->Dimension[i]->attr.name.c_str());
-            CT::string tableName(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str());
-            CServerParams::makeCorrectTableName(&tableName,&netCDFDimName);
-            //Add the undefined dims to the srvParams as additional dims
-            COGCDims *ogcDim = new COGCDims();
-            dataSources[j]->requiredDims.push_back(ogcDim);
-            ogcDim->name.copy(dataSources[j]->cfgLayer->Dimension[i]->value.c_str());
-            ogcDim->netCDFDimName.copy(dataSources[j]->cfgLayer->Dimension[i]->attr.name.c_str());
-            //Try to find the max value for this dim name from the database
-            Query.print("select max(%s) from %s",
-                      dataSources[j]->cfgLayer->Dimension[i]->attr.name.c_str(),
-                      tableName.c_str());
-            //Execute the query
-            CT::string *temp = DB.query_select(Query.c_str(),0);
-            if(temp == NULL){CDBError("Query failed");status = DB.close(); return 1;}
-            //Copy the value corresponding to this dim name to srvparams
-            ogcDim->value.copy(&temp[0]);
-            delete[] temp;
-          }
+        /* Fill in the undefined dims */
+        status = dataSources[j]->CDataSource::autoCompleteDimensions(&DB);
+        if(status != 0){
+          CDBError("autoCompleteDimensions failed");
+          return status;
         }
+
+       
+      
         
         
       

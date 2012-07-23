@@ -63,37 +63,40 @@ CDBDebug("getFileNameForLayer");
       CPGSQLDB DB;
      
       status = DB.connect(srvParam->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0)return 1;
+      
+      //if(srvParam->isAutoLocalFileResourceEnabled()==true){
+      status = myWMSLayer->dataSource->checkDimTables(&DB);
+      if(status !=0){
+        CDBError("Unable to checkDimTables");
+        DB.close();
+        return 1;
+      }
+
+      //Find the first occuring filename.
       CT::string tableName(myWMSLayer->layer->DataBaseTable[0]->value.c_str());
-#ifdef CXMLGEN_DEBUG        
+      #ifdef CXMLGEN_DEBUG        
       CDBDebug("Dimension: %s",myWMSLayer->layer->Dimension[0]->attr.name.c_str());
-#endif      
+      #endif      
       CT::string dimName(myWMSLayer->layer->Dimension[0]->attr.name.c_str());
       CServerParams::makeCorrectTableName(&tableName,&dimName);
       CT::string query;
       query.print("select path from %s limit 1",tableName.c_str());
-#ifdef CXMLGEN_DEBUG              
+      #ifdef CXMLGEN_DEBUG              
       CDBDebug("query %s",query.c_str());        
-#endif      
+      #endif      
       
       bool databaseError = false;
       CT::string *values = DB.query_select(query.c_str(),0);
-      if(values == NULL&&srvParam->isAutoLocalFileResourceEnabled()==true){
-        CDBDebug("Query '%s' failed. Now trying to update the database.",query.c_str());
-        //CDBDebug("Start update db for layer %s",myWMSLayer->name.c_str());
-        status = CDBFileScanner::updatedb(srvParam->cfg->DataBase[0]->attr.parameters.c_str(),myWMSLayer->dataSource,NULL,NULL);
-        if(status !=0){CDBError("Could not update db for: %s",myWMSLayer->dataSource->cfgLayer->Name[0]->value.c_str());DB.close();return 1;}
-        DB.close();
-        return getFileNameForLayer(myWMSLayer);
-      }
+     
       if(values==NULL){
         CDBError("No files found for %s",myWMSLayer->dataSource->layerName.c_str());
         databaseError=true;
       }
-        if(databaseError == false){
+      if(databaseError == false){
         if(values->count>0){
-  #ifdef CXMLGEN_DEBUG            
+          #ifdef CXMLGEN_DEBUG            
           CDBDebug("Query '%s' succeeded: Filename = %s",query.c_str(),values[0].c_str());
-  #endif        
+          #endif        
           myWMSLayer->fileName.copy(&values[0]);
         }else{
           //The file is not in the database, probably an error during the database scan has been detected earlier.
@@ -104,9 +107,9 @@ CDBDebug("getFileNameForLayer");
         delete[] values;
       }
       DB.close();
-#ifdef CXMLGEN_DEBUG                  
+      #ifdef CXMLGEN_DEBUG                  
       CDBDebug("/Database");  
-#endif      
+      #endif      
       if(databaseError){
         return 1;
       }
@@ -352,9 +355,9 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
                   for(size_t j=0;j<store->size();j++){
                     store->getRecord(j)->get("time")->setChar(10,'T');
                     const char *isotime = store->getRecord(j)->get("time")->c_str();
-                    #ifdef CXMLGEN_DEBUG                        
+                    /*#ifdef CXMLGEN_DEBUG                        
                     CDBDebug("isotime=%s",isotime);
-                    #endif
+                    #endif*/
                     CT::string year, month, day, hour, minute, second;
                     //tms[j].wday=0;tms[j].yday=0;tms[j].isdst=0;
                     year  .copy(isotime+ 0,4);tms[j].tm_year=year.toInt()-1900;

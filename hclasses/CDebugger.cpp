@@ -176,7 +176,7 @@ void makeEqualWidth(CT::string *t1){
   //CT::string t1=t.substringr(0,i);
   //CT::string t2=t.substringr(i,-1);
   //size_t l=t1.length();
-  for(int j=i;j<60;j++){t1->concat(" ");}
+  for(int j=i;j<65;j++){t1->concat(" ");}
   // t1.concat(&t2);
 }
 void _printDebug(const char *pszMessage,...){

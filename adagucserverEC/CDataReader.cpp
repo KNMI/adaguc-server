@@ -190,9 +190,14 @@ int applyScaleAndOffsetFloat(size_t start,size_t stop,float *data,float scale,fl
 
 
 
+int CDataReader::open(CDataSource *dataSource, int mode){
+  return open(dataSource,mode,-1,-1);
+}
+int CDataReader::open(CDataSource *dataSource, int x,int y){
+  return open(dataSource,CNETCDFREADER_MODE_OPEN_ALL,x,y);
+}
 
-
-int CDataReader::open(CDataSource *_dataSource, int mode){
+int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
   //Perform some checks on pointers
   
   if(_dataSource==NULL){CDBError("Invalid dataSource");return 1;}
@@ -432,6 +437,18 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
   count[dimYIndex]=dataSource->dHeight;
   stride[dimXIndex]=stride2DMap;
   stride[dimYIndex]=stride2DMap;
+  
+  if(x!=-1&&y!=-1){
+    dataSource->dWidth=2;
+    dataSource->dHeight=2;
+    start[dimXIndex]=x;
+    start[dimYIndex]=y;
+    count[dimXIndex]=2;
+    count[dimYIndex]=2;
+    stride[dimXIndex]=1;
+    stride[dimYIndex]=1;
+  }
+  
   //Set other dimensions than X and Y.
   if(dataSource->dNetCDFNumDims>2){
     for(int j=0;j<dataSource->dNetCDFNumDims-2;j++){
@@ -447,7 +464,7 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
   
 
   size_t sta[1],sto[1];ptrdiff_t str[1];
-  sta[0]=0;str[0]=stride2DMap; sto[0]=dataSource->dWidth;
+  sta[0]=start[dimXIndex];str[0]=stride2DMap; sto[0]=dataSource->dWidth;
   //status = cdfReader->readVariableData(varX,CDF_DOUBLE,sta,sto,str);
   if(level2CompatMode == false){
   //if(varX->data==NULL){
@@ -458,7 +475,7 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
     }
   //}
   //if(varY->data==NULL){
-    sto[0]=dataSource->dHeight;
+    sta[0]=start[dimYIndex];sto[0]=dataSource->dHeight;
     status = varY->readData(CDF_DOUBLE,sta,sto,str);if(status!=0){
       CDBError("Unable to read y dimension");
       return 1;
@@ -485,7 +502,7 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
   
  
 #ifdef MEASURETIME
-  StopWatch_Stop("dimensions read");
+  StopWatch_Stop("XY dimensions read");
 #endif
 
   // Retrieve CRS
@@ -1252,18 +1269,7 @@ int CDataReader::open(CDataSource *_dataSource, int mode){
   return 0;
 }
 
-int CDataReader::close(){
 
-//  if(cdfReader!=NULL){cdfReader->close();delete cdfReader;cdfReader=NULL;}
-//  if(cdfObject!=NULL){delete cdfObject;cdfObject=NULL;}
-  /*if(dataSource!=NULL){
-    //dataSource->detachCDFObject();
-    for(size_t varNr=0;varNr<dataSource->dataObject.size();varNr++){
-      ((CDFReader*)dataSource->dataObject[varNr]->cdfObject)->close();
-    }
-  }*/
-  return 0;
-}
 int CDataReader::getTimeUnit(char * pszTime){
   CDF::Variable *timeVar = getTimeVariable();
   if(timeVar==NULL)return 1;
@@ -1346,13 +1352,14 @@ int CDataReader::getTimeString(char * pszTime){
     return 1;
   }
   if(dataSource->cfgLayer->Dimension.size()==0){
-    pszTime[0]='\0';
-    return 0;
+    snprintf(pszTime,MAX_STR_LEN,"No time dimension available");
+    CDBDebug("%s",pszTime);
+    return 1;
   }
   CDF::Variable *time = getTimeVariable();
-  if(time==NULL){return 1;}
+  if(time==NULL){CDBDebug("No time variable found");return 1;}
   CDF::Attribute *timeUnits = time->getAttributeNE("units");
-  if(timeUnits ==NULL){return 1;}
+  if(timeUnits ==NULL){CDBDebug("No time units found");return 1;}
   time->readData(CDF_DOUBLE);
   if(dataSource->dNetCDFNumDims>2){
     size_t currentTimeIndex=dataSource->getDimensionIndex(time->name.c_str());
@@ -1367,6 +1374,10 @@ int CDataReader::getTimeString(char * pszTime){
           ADTime->PrintISOTime(ISOTime,MAX_STR_LEN,timest);
           ISOTime[19]='Z';ISOTime[20]='\0';
           snprintf(pszTime,MAX_STR_LEN,"%s",ISOTime);
+        }else{
+          CDBDebug("OffsetToAdaguc failed");
+          snprintf(pszTime,MAX_STR_LEN,"No time dimension available");
+          return 1;
         }
       }catch(int e){
         CDBError("Unable to initialize CADAGUC_time");
@@ -1374,10 +1385,16 @@ int CDataReader::getTimeString(char * pszTime){
         return 1;
       }
       delete ADTime;
+    }else{
+      CDBDebug("time index out of bounds");
+      snprintf(pszTime,MAX_STR_LEN,"No time dimension available");
+      return 1;
     }
   }else{
-    snprintf(pszTime,MAX_STR_LEN,"(time missing: dims = %d)",dataSource->dNetCDFNumDims);
+    snprintf(pszTime,MAX_STR_LEN,"No time dimension available");
+    return 1;
   }
+  CDBDebug("[OK] pszTime = %s",pszTime);
   return 0;
 }
 
@@ -1431,7 +1448,10 @@ int CDataReader::justLoadAFileHeader(CDataSource *dataSource){
 
 
 int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
-
+  className="CDataReader::autoConfigureDimensions";
+  #ifdef CDATAREADER_DEBUG        
+  CDBDebug("[autoConfigureDimensions]");
+  #endif     
   if(dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
     #ifdef CDATAREADER_DEBUG        
     CDBDebug("Cascaded layers cannot have dimensions at the moment");
@@ -1485,8 +1505,9 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
 #endif        
         dataSource->cfgLayer->Dimension.push_back(xmleDim);
       }
+      size_t storeSize = store->size();
       delete store;
-      if(store->size()>0){
+      if(storeSize>0){
         #ifdef CDATAREADER_DEBUG        
          CDBDebug("Datasource has the following dims (%d):",dataSource->cfgLayer->Dimension.size());
          for(size_t j=0;j<dataSource->cfgLayer->Dimension.size();j++){
@@ -1515,6 +1536,8 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
     CDBError("justLoadAFileHeader failed");
     return 1;
   }
+  
+  CDBDebug("Dimensions: %d - %d",dataSource->cfgLayer->Dimension.size(),dataSource->dataObject[0]->cdfVariable->dimensionlinks.size());
   
   try{
     if(dataSource->dataObject.size()==0){CDBDebug("dataSource->dataObject.size()==0");throw(__LINE__);}

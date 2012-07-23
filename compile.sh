@@ -10,6 +10,7 @@ function quit {
 }
 
 cd hclasses
+rm *.o
 make
 
 if [ -f hclasses.a ]
@@ -21,6 +22,7 @@ if [ -f hclasses.a ]
   fi
 
 cd ../CCDFDataModel
+rm *.o
 make
 
 
@@ -33,6 +35,9 @@ if [ -f CCDFDataModel.a ]
   fi
   
 cd ../adagucserverEC
+rm *.o
+rm adagucserver
+rm h5ncdump
 make
 
 

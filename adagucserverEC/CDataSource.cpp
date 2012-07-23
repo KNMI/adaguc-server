@@ -1,4 +1,5 @@
 #include "CDataSource.h"
+#include "CDBFileScanner.h"
 const char *CDataSource::className = "CDataSource";
 
 /************************************/
@@ -265,4 +266,80 @@ void CDataSource::getFlagMeaningHumanReadable( CT::string *flagMeaning,std::vect
 }
 
 
+int  CDataSource::checkDimTables(CPGSQLDB *dataBaseConnection){
+  #ifdef CDATASOURCE_DEBUG
+  CDBDebug("[checkDimTables]");
+  #endif
+  bool tableNotFound=false;
+  CT::string dimName;
+  for(size_t i=0;i<cfgLayer->Dimension.size();i++){
+    CT::string tableName(cfgLayer->DataBaseTable[0]->value.c_str());
+    dimName=cfgLayer->Dimension[i]->attr.name.c_str();
+    CT::string query;
+    CServerParams::makeCorrectTableName(&tableName,&dimName);
+    query.print("select %s from %s limit 1",dimName.c_str(),tableName.c_str());
+    CDB::Store *store = dataBaseConnection->queryToStore(query.c_str());
+    if(store==NULL){
+      tableNotFound=true;
+      CDBDebug("No table found for dimension %s",dimName.c_str());
+    }
+    delete store;
+    if(tableNotFound)break;
+  }
+  if(tableNotFound){
+    if(srvParams->isAutoLocalFileResourceEnabled()==true){
+      CDBDebug("Updating database");
+      int status = CDBFileScanner::updatedb(srvParams->cfg->DataBase[0]->attr.parameters.c_str(),this,NULL,NULL);
+      if(status !=0){CDBError("Could not update db for: %s",cfgLayer->Name[0]->value.c_str());dataBaseConnection->close();return 2;}
+    }else{
+      CDBDebug("No table found for dimension %s and autoresource is disabled",dimName.c_str());
+      return 1;
+    }
+  }
+  #ifdef CDATASOURCE_DEBUG
+  CDBDebug("[/checkDimTables]");
+  #endif
+  
+  return 0;
+}
+
+int CDataSource::autoCompleteDimensions(CPGSQLDB *dataBaseConnection){
+  #ifdef CDATASOURCE_DEBUG
+  CDBDebug("[autoCompleteDimensions]");
+  #endif
+
+  for(size_t i=0;i<cfgLayer->Dimension.size();i++){
+    CT::string dimName(cfgLayer->Dimension[i]->value.c_str());
+    dimName.toLowerCaseSelf();
+    bool alreadyAdded=false;
+    for(int k=0;k<requiredDims.size();k++){
+      if(requiredDims[k]->name.equals(&dimName)){alreadyAdded=true;break;}
+    }
+    if(alreadyAdded==false){
+      CT::string netCDFDimName(cfgLayer->Dimension[i]->attr.name.c_str());
+      CT::string tableName(cfgLayer->DataBaseTable[0]->value.c_str());
+      CServerParams::makeCorrectTableName(&tableName,&netCDFDimName);
+      //Add the undefined dims to the srvParams as additional dims
+      COGCDims *ogcDim = new COGCDims();
+      requiredDims.push_back(ogcDim);
+      ogcDim->name.copy(&dimName);
+      ogcDim->netCDFDimName.copy(cfgLayer->Dimension[i]->attr.name.c_str());
+      //Try to find the max value for this dim name from the database
+      CT::string query;
+      query.print("select max(%s) from %s",
+                  cfgLayer->Dimension[i]->attr.name.c_str(),
+                  tableName.c_str());
+      //Execute the query
+      CT::string *temp = dataBaseConnection->query_select(query.c_str(),0);
+      if(temp == NULL){CDBError("query failed"); dataBaseConnection->close(); return 1;}
+      //Copy the value corresponding to this dim name to srvparams
+      ogcDim->value.copy(&temp[0]);
+      delete[] temp;
+    }
+  }
+  #ifdef CDATASOURCE_DEBUG
+  CDBDebug("[/autoCompleteDimensions]");
+  #endif
+  return 0;
+}
 

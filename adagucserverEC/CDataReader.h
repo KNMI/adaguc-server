@@ -27,7 +27,7 @@ class CDataReader{
     
   public:
     CDataReader(){}
-    ~CDataReader(){close();}
+    ~CDataReader(){}
   
     
     static int autoConfigureDimensions(CDataSource *dataSource);
@@ -45,8 +45,11 @@ class CDataReader{
     CDF::Variable *getTimeVariable();
     int getTimeUnit(char * pszTime);
     const char *getFileName(){return FileName.c_str();}
-    int open(CDataSource *dataSource,int mode);
-    int close();
+    int open(CDataSource *dataSource,int mode,int x,int y);
+    int open(CDataSource *dataSource, int x,int y);
+    int open(CDataSource *dataSource, int mode);
+    
+    int close(){return 0;};
 };
 
 #endif
