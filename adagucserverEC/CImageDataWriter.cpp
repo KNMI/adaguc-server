@@ -2236,10 +2236,10 @@ int CImageDataWriter::end(){
           GetFeatureInfoResult::Element * e1=g1->elements[elNr];
           float value = e1->value.toFloat();
           if(e1->value.c_str()[0]>60)value=NAN;;
-          //if(e1->value.equals(
+          if(e1->value.equals("nodata"))value=NAN;
           
           values[j+elNr*nrOfTimeSteps] = value;
-          CDBDebug("Value= %f",value);
+          //CDBDebug("Value= %f",value);
           if(value==value){
             if(foundFirstValue==false){
               minValue[elNr]=value;
@@ -2256,33 +2256,46 @@ int CImageDataWriter::end(){
       CDataSource * dataSource=getFeatureInfoResultList[0]->elements[0]->dataSource;
       
       
-
+      //Increase minmax if they are the same.
       if(maxValue[0]==minValue[0]){maxValue[0]=maxValue[0]+0.01;minValue[0]=minValue[0]-0.01;}
+      
+      //If autoscale is enabled, set the legendscale based on min max values.
       double min=minValue[0];
       double max=maxValue[0];
+      
+      min=minValue[0];
+      max=maxValue[0];
       //Calculate legendOffset legendScale
       float ls=240/(max-min);
       float lo=-(min*ls);
       dataSource->legendScale=ls;
       dataSource->legendOffset=lo;
+    
+      
+      
       #ifdef CIMAGEDATAWRITER_DEBUG        
       for(size_t elNr=0;elNr<nrOfElements;elNr++){
         CDBDebug("elNr %s %d has minValue %f and maxValue %f",getFeatureInfoResultList[0]->elements[elNr]->var_name.c_str(),elNr,minValue[elNr],maxValue[elNr]);
       }
       #endif
       
-      
-
+     
       float classes=6;
       int tickRound=0;
       if(currentStyleConfiguration->styleIndex !=-1){
         
-        /*double min=getValueForColorIndex(dataSource,0);
-        double max=getValueForColorIndex(dataSource,240);
-        minValue[0]=min;
-        maxValue[0]=max;*/
+        
     
         CServerConfig::XMLE_Style* style = srvParam->cfg->Style[currentStyleConfiguration->styleIndex];
+        if(style->Scale.size()>0){
+          if(parseFloat(style->Scale[0]->value.c_str())==0){
+            min=getValueForColorIndex(dataSource,0);
+            max=getValueForColorIndex(dataSource,240);
+            minValue[0]=min;
+            maxValue[0]=max;
+          }
+        }
+        
         if(style->Legend.size()>0){
           if(style->Legend[0]->attr.tickinterval.c_str() != NULL){
             double tickinterval = parseFloat(style->Legend[0]->attr.tickinterval.c_str());

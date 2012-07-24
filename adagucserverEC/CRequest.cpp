@@ -569,22 +569,35 @@ int CRequest::process_all_layers(){
          * Get the number of required dims from the given dims
          * Check if all dimensions are given
          */
+        #ifdef CREQUEST_DEBUG
+        CDBDebug("Get DIMS from query string");
+        #endif
         for(int k=0;k<srvParam->requestDims.size();k++)srvParam->requestDims[k]->name.toLowerCaseSelf();
         int dimsfound[NC_MAX_DIMS];
         for(size_t i=0;i<dataSources[j]->cfgLayer->Dimension.size();i++){
           CT::string dimName(dataSources[j]->cfgLayer->Dimension[i]->value.c_str());
           dimName.toLowerCaseSelf();
+          #ifdef CREQUEST_DEBUG
+          CDBDebug("dimName %s",dimName.c_str());
+          #endif
+          
           dimsfound[i]=0;
-          for(int k=0;k<srvParam->requestDims.size();k++){
-            //Check if this dim is not already added
-            bool alreadyAdded=false;
-            for(size_t l=0;l<dataSources[j]->requiredDims.size();l++){
-              if(dataSources[j]->requiredDims[i]->name.equals(&dimName)){alreadyAdded=true;break;}
-            }
-            
-            if(alreadyAdded == false){
-              //CDBDebug("DIM COMPARE: %s==%s",srvParam->requestDims[k]->name.c_str(),dimName.c_str());
+          //Check if this dim is not already added
+          bool alreadyAdded=false;
+          for(size_t l=0;l<dataSources[j]->requiredDims.size();l++){
+            if(dataSources[j]->requiredDims[l]->name.equals(&dimName)){alreadyAdded=true;break;}
+          }
+          
+          #ifdef CREQUEST_DEBUG
+          CDBDebug("alreadyAdded = %d",alreadyAdded);
+          #endif
+          if(alreadyAdded == false){
+            for(int k=0;k<srvParam->requestDims.size();k++){
               if(srvParam->requestDims[k]->name.equals(&dimName)){
+                #ifdef CREQUEST_DEBUG
+                CDBDebug("DIM COMPARE: %s==%s",srvParam->requestDims[k]->name.c_str(),dimName.c_str());
+                #endif
+                
                 //This dimension has been specified in the request, so the dimension has been found:
                 dimsfound[i]=1;
                 COGCDims *ogcDim = new COGCDims();
@@ -640,7 +653,10 @@ int CRequest::process_all_layers(){
             }
           }
         }
-      
+        #ifdef CREQUEST_DEBUG
+        CDBDebug("Get DIMS from query string ready");
+        #endif
+        
         /* Fill in the undefined dims */
         status = dataSources[j]->CDataSource::autoCompleteDimensions(&DB);
         if(status != 0){
@@ -1559,8 +1575,10 @@ int CRequest::process_querystring(){
       if(serverTitle.length()>0){
         if(srvParam->cfg->WMS.size()>0){
           if(srvParam->cfg->WMS[0]->Title.size()>0){
-            CT::string title="ADAGUC_AUTO_WMS_";
+            //CT::string title="ADAGUC AUTO WMS ";
+            CT::string title="";
             title.concat(serverTitle.c_str());
+            //title.replaceSelf(" ","_");
             srvParam->cfg->WMS[0]->Title[0]->value.copy(title.c_str());
           }
           if(srvParam->cfg->WMS[0]->RootLayer.size()>0){
@@ -1601,14 +1619,14 @@ int CRequest::process_querystring(){
       try{cdfObject->getAttribute("disclaimer")->getDataAsString(&serverDisclaimer);}catch(int e){}
       
       CT::string serverAbstract="";
-      if(serverInstitution.length()>0){serverAbstract.printconcat("Institution: '%s'.\n",serverInstitution.c_str());}
-      if(serverSummary.length()>0){serverAbstract.printconcat("Summary: '%s'.\n",serverSummary.c_str());}
+      if(serverInstitution.length()>0){serverAbstract.printconcat("Institution: %s.\n",serverInstitution.c_str());}
+      if(serverSummary.length()>0){serverAbstract.printconcat("Summary: %s.\n",serverSummary.c_str());}
       if(serverDescription.length()>0){serverAbstract.printconcat("Description: '%s'.\n",serverDescription.c_str());}
-      if(serverSource.length()>0){serverAbstract.printconcat("Source: '%s'.\n",serverSource.c_str());}
-      if(serverReferences.length()>0){serverAbstract.printconcat("References: '%s'.\n",serverReferences.c_str());}
-      if(serverHistory.length()>0){serverAbstract.printconcat("History: '%s'.\n",serverHistory.c_str());}
-      if(serverComments.length()>0){serverAbstract.printconcat("Comments: '%s'.\n",serverComments.c_str());}
-      if(serverDisclaimer.length()>0){serverAbstract.printconcat("Disclaimer: '%s'.\n",serverDisclaimer.c_str());}
+      if(serverSource.length()>0){serverAbstract.printconcat("Source: %s.\n",serverSource.c_str());}
+      if(serverReferences.length()>0){serverAbstract.printconcat("References: %s.\n",serverReferences.c_str());}
+      if(serverHistory.length()>0){serverAbstract.printconcat("History: %s.\n",serverHistory.c_str());}
+      if(serverComments.length()>0){serverAbstract.printconcat("Comments: %s.\n",serverComments.c_str());}
+      if(serverDisclaimer.length()>0){serverAbstract.printconcat("Disclaimer: %s.\n",serverDisclaimer.c_str());}
 
      
       if(serverAbstract.length()>0){

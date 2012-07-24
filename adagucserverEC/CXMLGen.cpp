@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 #include "CXMLGen.h"
-
+#define CXMLGEN_DEBUG
 
 const char *CFile::className="CFile";
 
@@ -195,7 +195,9 @@ CDBDebug("Database layer");
       }catch(int e){
         CT::string errorMessage;
         CDF::getErrorMessage(&errorMessage,e);
+        #ifdef CXMLGEN_DEBUG    
         CDBDebug("No long_name: %s (%d)",errorMessage.c_str(),e);
+        #endif
         try{
           CT::string attributeValue;
           myWMSLayer->dataSource->dataObject[0]->cdfVariable->getAttribute("standard_name")->getDataAsString(&attributeValue);
@@ -204,7 +206,9 @@ CDBDebug("Database layer");
         }catch(int e){
           CT::string errorMessage;
           CDF::getErrorMessage(&errorMessage,e);
+          #ifdef CXMLGEN_DEBUG    
           CDBDebug("No standard_name: %s (%d)",errorMessage.c_str(),e);
+          #endif
         }
       }
     }else{
@@ -355,33 +359,49 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
                   for(size_t j=0;j<store->size();j++){
                     store->getRecord(j)->get("time")->setChar(10,'T');
                     const char *isotime = store->getRecord(j)->get("time")->c_str();
-                    /*#ifdef CXMLGEN_DEBUG                        
-                    CDBDebug("isotime=%s",isotime);
-                    #endif*/
+                    #ifdef CXMLGEN_DEBUG    
+                    CDBDebug("isotime = %s",isotime);
+                    #endif
                     CT::string year, month, day, hour, minute, second;
-                    //tms[j].wday=0;tms[j].yday=0;tms[j].isdst=0;
                     year  .copy(isotime+ 0,4);tms[j].tm_year=year.toInt()-1900;
                     month .copy(isotime+ 5,2);tms[j].tm_mon=month.toInt()-1;
                     day   .copy(isotime+ 8,2);tms[j].tm_mday=day.toInt();
                     hour  .copy(isotime+11,2);tms[j].tm_hour=hour.toInt();
                     minute.copy(isotime+14,2);tms[j].tm_min=minute.toInt();
                     second.copy(isotime+17,2);tms[j].tm_sec=second.toInt();
-                    
                   }
                   size_t nrTimes=store->size()-1;
                   bool isConst = true;
                   
-                  
+                 
                   CT::string iso8601timeRes="P";
                   CT::string yearPart="";
-                  if(tms[1].tm_year-tms[0].tm_year!=0){if(tms[1].tm_year-tms[0].tm_year == (tms[nrTimes].tm_year-tms[0].tm_year)/double(nrTimes))
-                    yearPart.printconcat("%dY",abs(tms[1].tm_year-tms[0].tm_year));else isConst=false;
+                  if(tms[1].tm_year-tms[0].tm_year!=0){
+                    if(tms[1].tm_year-tms[0].tm_year == (tms[nrTimes].tm_year-tms[0].tm_year)/double(nrTimes)){
+                      yearPart.printconcat("%dY",abs(tms[1].tm_year-tms[0].tm_year));
+                    }
+                    else {
+                      isConst=false;
+                      #ifdef CXMLGEN_DEBUG    
+                      CDBDebug("year is irregular");
+                      #endif  
+                    }
                   }
                   if(tms[1].tm_mon-tms[0].tm_mon!=0){if(tms[1].tm_mon-tms[0].tm_mon == (tms[nrTimes].tm_mon-tms[0].tm_mon)/double(nrTimes))
-                    yearPart.printconcat("%dM",abs(tms[1].tm_mon-tms[0].tm_mon));else isConst=false;
+                    yearPart.printconcat("%dM",abs(tms[1].tm_mon-tms[0].tm_mon));else {
+                      isConst=false;
+                      #ifdef CXMLGEN_DEBUG    
+                      CDBDebug("month is irregular");
+                      #endif  
+                    }
                   }
                   if(tms[1].tm_mday-tms[0].tm_mday!=0){if(tms[1].tm_mday-tms[0].tm_mday == (tms[nrTimes].tm_mday-tms[0].tm_mday)/double(nrTimes))
-                    yearPart.printconcat("%dD",abs(tms[1].tm_mday-tms[0].tm_mday));else isConst=false;
+                    yearPart.printconcat("%dD",abs(tms[1].tm_mday-tms[0].tm_mday));else {
+                      isConst=false;
+                      #ifdef CXMLGEN_DEBUG    
+                      CDBDebug("day irregular");
+                      #endif  
+                    }
                   }
                   
                   CT::string hourPart="";
@@ -389,11 +409,16 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
                   if(tms[1].tm_min-tms[0].tm_min!=0){hourPart.printconcat("%dM",abs(tms[1].tm_min-tms[0].tm_min));}
                   if(tms[1].tm_sec-tms[0].tm_sec!=0){hourPart.printconcat("%dS",abs(tms[1].tm_sec-tms[0].tm_sec));}
 
+                  int sd=(tms[1].tm_hour*3600+tms[1].tm_min*60+tms[1].tm_sec)-(tms[0].tm_hour*3600+tms[0].tm_min*60+tms[0].tm_sec);
                   for(size_t j=2;j<store->size();j++){
-                    int d=tms[j].tm_hour-tms[j-1].tm_hour;
-                    if(d>0){if(tms[1].tm_hour-tms[0].tm_hour!=d)isConst=false;}
-                    d=tms[j].tm_min-tms[j-1].tm_min;if(d>0){if(tms[1].tm_min-tms[0].tm_min!=d)isConst=false;}
-                    d=tms[j].tm_sec-tms[j-1].tm_sec;if(d>0){if(tms[1].tm_sec-tms[0].tm_sec!=d)isConst=false;}
+                    int d=(tms[j].tm_hour*3600+tms[j].tm_min*60+tms[j].tm_sec)-(tms[j-1].tm_hour*3600+tms[j-1].tm_min*60+tms[j-1].tm_sec);
+                    if(d>0){if(sd!=d){
+                        isConst=false;
+                        #ifdef CXMLGEN_DEBUG    
+                        CDBDebug("hour/min/sec is irregular %d ",j);
+                        #endif  
+                      }
+                    }
                   }
                   
                   //Check whether we found a time resolution
@@ -403,6 +428,9 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
                     CDBDebug("Not a continous time dimension, multipleValues required");
 #endif      
                   }else{
+                    #ifdef CXMLGEN_DEBUG    
+                    CDBDebug("Continous time dimension, Time resolution needs to be calculated");
+                    #endif    
                     hasMultipleValues=false;
                   }
                   
@@ -1221,8 +1249,9 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
           if(myWMSLayer->hasError==false){
             if(myWMSLayer->dataSource->cfgLayer->Styles.size()==0){
               if(myWMSLayer->dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
-                
+                #ifdef CXMLGEN_DEBUG    
                 CDBDebug("cfgLayer->attr.type  %d",myWMSLayer->dataSource->dLayerType);
+                #endif
                 status=CDataReader::autoConfigureStyles(myWMSLayer->dataSource);
                 if(status != 0){myWMSLayer->hasError=1;CDBError("Unable to autoconfigure styles for layer %s",layerUniqueName.c_str());}
                 //Get the defined styles for this layer

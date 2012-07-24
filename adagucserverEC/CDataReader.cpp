@@ -61,6 +61,7 @@ void writeLogFile2(const char * msg){
 
 
 int CDataReader::getCacheFileName(CDataSource *dataSource,CT::string *uniqueIDFor2DField){
+  className="CDataReader::getCacheFileName";
   if(dataSource==NULL)return 1;
   if(dataSource->srvParams==NULL)return 1;
 #ifdef CDATAREADER_DEBUG    
@@ -198,6 +199,7 @@ int CDataReader::open(CDataSource *dataSource, int x,int y){
 }
 
 int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
+  className="CDataReader::open";
   //Perform some checks on pointers
   
   if(_dataSource==NULL){CDBError("Invalid dataSource");return 1;}
@@ -1399,6 +1401,7 @@ int CDataReader::getTimeString(char * pszTime){
 }
 
 int CDataReader::justLoadAFileHeader(CDataSource *dataSource){
+  className="CDataReader::justLoadAFileHeader";
   if(dataSource==NULL){CDBError("datasource == NULL");return 1;}
   if(dataSource->cfgLayer==NULL){CDBError("datasource->cfgLayer == NULL");return 1;}
   if(dataSource->dataObject.size()==0){CDBError("dataSource->dataObject.size()==0");return 1;}
@@ -1631,6 +1634,7 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
 
 
 int CDataReader::autoConfigureStyles(CDataSource *dataSource){
+  className="CDataReader::autoConfigureStyles";
   if(dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
     #ifdef CDATAREADER_DEBUG        
     CDBDebug("Cascaded layers cannot have dimensions at the moment");

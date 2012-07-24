@@ -273,7 +273,7 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
   
   int CImageWarper::findExtent(CDataSource *sourceImage,double * dfBBOX){
   // Find the outermost corners of the image
-    
+  //CDBDebug("findExtent for %s",destinationCRS.c_str());
     bool useLatLonSourceProj =false;
     //Maybe it is defined in the configuration file:
     if(sourceImage->cfgLayer->LatLonBox.size()>0){
@@ -295,71 +295,64 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
         dfBBOX[2]=sourceImage->dfBBOX[0];
       }
     }
-    double tempy;//tempx
+    double tempy;
     double miny1=dfBBOX[1];
-   // double miny2=dfBBOX[1];
     double maxy1=dfBBOX[3];
-    //double maxy2=dfBBOX[3];
     double minx1=dfBBOX[0];
     double minx2=dfBBOX[0];
     double maxx1=dfBBOX[2];
     double maxx2=dfBBOX[2];
-//    CDBDebug("source: %f %f %f %f",dfBBOX[0],dfBBOX[1],dfBBOX[2],dfBBOX[3]);
-    /*tempx=dfBBOX[0];
-    reprojpoint_inv(tempx,miny1);
-    tempx=dfBBOX[2];
-    reprojpoint_inv(tempx,miny2);
-    if(miny1>miny2)miny1=miny2;*/
 
     try{
-      for(int x=0;x<3;x++){
-        double step = x;step=step/2.0f;
-        double out=dfBBOX[3];
-        double ratio = dfBBOX[0]*(1-step)+dfBBOX[2]*step;
-        double in = ratio;
-        if(useLatLonSourceProj)reprojfromLatLon(in,out);else reprojpoint_inv(in,out);
-      // CDBDebug("1: %f == %f  == %f ",ratio,out,HUGE_VAL);
-        if(maxy1<out||x==0)maxy1=out;
-        in=ratio;
-        out=dfBBOX[1];
-        if(useLatLonSourceProj)reprojfromLatLon(in,out);else reprojpoint_inv(in,out);
-      // CDBDebug("3: %f == %f ",ratio,out);
-        if(miny1>out||x==0)miny1=out;
-        
-        //tempx=dfBBOX[2];
-        //reprojpoint_inv(tempx,maxy2);
-        //if(maxy1<maxy2)maxy1=maxy2;
+      double nrTestX=9;
+      double nrTestY=9;
+      bool foundFirst = false;
+      for(int y=0;y<int(nrTestY)+1;y++){
+        for(int x=0;x<int(nrTestX)+1;x++){
+          double stepX = double(x)/nrTestX;
+          double stepY = double(y)/nrTestY;
+          
+          
+          double testPosX = dfBBOX[0]*(1-stepX)+dfBBOX[2]*stepX;
+          double testPosY = dfBBOX[1]*(1-stepY)+dfBBOX[3]*stepY;
+          double inY = testPosY;
+          double inX = testPosX;
+          if(useLatLonSourceProj){
+            //Boundingbox is given in the projection definition, it is always given in latlon so we need to project it to the current projection
+            reprojfromLatLon(inX,inY);
+          }else {
+            reprojpoint_inv(inX,inY);
+          }
+          if(foundFirst == false){
+            foundFirst = true;
+            minx1=inX;
+            maxx1=inX;
+            miny1=inY;
+            maxy1=inY;
+          }
+          if(inX<minx1)minx1=inX;
+          if(inY<miny1)miny1=inY;
+          if(inX>maxx1)maxx1=inX;
+          if(inY>maxy1)maxy1=inY;
+        }
       }
     }catch(...){
       CDBError("Unable to reproject");
       return 1;
     }
-    //CDBDebug("miny3:%f \tmaxy:%f ",miny1,maxy1);
-    tempy=dfBBOX[1];
-    if(useLatLonSourceProj)reprojfromLatLon(minx1,tempy);else reprojpoint_inv(minx1,tempy);
-    tempy=dfBBOX[3];
-    if(useLatLonSourceProj)reprojfromLatLon(minx2,tempy);else reprojpoint_inv(minx2,tempy);
-    if(minx1>minx2)minx1=minx2;
 
-    tempy=dfBBOX[1];
-    if(useLatLonSourceProj)reprojfromLatLon(maxx1,tempy);else reprojpoint_inv(maxx1,tempy);
-
-    tempy=dfBBOX[3];
-    if(useLatLonSourceProj)reprojfromLatLon(maxx2,tempy);else reprojpoint_inv(maxx2,tempy);
-    if(maxx1<maxx2)maxx1=maxx2;
-    
     dfBBOX[1]=miny1;
     dfBBOX[3]=maxy1;
     dfBBOX[0]=minx1;
     dfBBOX[2]=maxx1;
     
-    if(dMaxExtentDefined==0){
+    if(dMaxExtentDefined==0&&1==1){
       //CDBDebug("sourceImage->nativeProj4 %s %d",sourceImage->nativeProj4.c_str(), sourceImage->nativeProj4.indexOf("geos")>0);
       if( sourceImage->nativeProj4.indexOf("geos")>0){
-        dfMaxExtent[0]=-80;
-        dfMaxExtent[1]=-80;
-        dfMaxExtent[2]=80;
-        dfMaxExtent[3]=80;
+        dfMaxExtent[0]=-79;
+        dfMaxExtent[1]=-79;
+        dfMaxExtent[2]=79;
+        dfMaxExtent[3]=79;
         reprojfromLatLon(dfMaxExtent[0],dfMaxExtent[1]);
         reprojfromLatLon(dfMaxExtent[2],dfMaxExtent[3]);
         dMaxExtentDefined=1;
@@ -375,7 +368,7 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
 
     }
 
-//    CDBDebug("out: %f %f %f %f",dfBBOX[0],dfBBOX[1],dfBBOX[2],dfBBOX[3]);
+    //CDBDebug("out: %f %f %f %f",dfBBOX[0],dfBBOX[1],dfBBOX[2],dfBBOX[3]);
     return 0;
   }
   void CImageWarper::reprojBBOX(double *df4PixelExtent){

@@ -296,7 +296,7 @@ public:
             sample_sy=line_dy1+rcy_3*y;
             if(sample_sy>=dfSourceBBOX[1]&&sample_sy<dfSourceBBOX[3])
             {
-              srcpixel_x=int(((sample_sx-dfImageBBOX[0])/(dfImageBBOX[2]-dfImageBBOX[0]))*(width+0.5));
+              srcpixel_x=int(((sample_sx-dfImageBBOX[0])/(dfImageBBOX[2]-dfImageBBOX[0]))*(width));
               if(srcpixel_x>=0&&srcpixel_x<width){
                 srcpixel_y=int(((sample_sy-dfImageBBOX[1])/(dfImageBBOX[3]-dfImageBBOX[1]))*height);
                 if(srcpixel_y>=0&&srcpixel_y<height)
@@ -486,24 +486,24 @@ private:
             curTileSettings=&drawTileSettings[tileId];
             curTileSettings->id=tileId;
             if(status != 0)curTileSettings->id=(-tileId)-1;//This one does not need to be done.
-        for(int j=0;j<4;j++){
-          curTileSettings->x_corners[j]=x_corners[j];
-          curTileSettings->y_corners[j]=y_corners[j];
-        }
-        //Some safety checks when odd files come out of the projection algorithm
-        if((x_corners[0]>=DBL_MAX||x_corners[0]<=-DBL_MAX)&&x_div==1&&x_div==1){
-          curTileSettings->x_corners[0]=drawImage->Geo->dfBBOX[2];
-          curTileSettings->x_corners[1]=drawImage->Geo->dfBBOX[2];
-          curTileSettings->x_corners[2]=drawImage->Geo->dfBBOX[0];
-          curTileSettings->x_corners[3]=drawImage->Geo->dfBBOX[0];
-          curTileSettings->y_corners[0]=drawImage->Geo->dfBBOX[3];
-          curTileSettings->y_corners[1]=drawImage->Geo->dfBBOX[1];
-          curTileSettings->y_corners[2]=drawImage->Geo->dfBBOX[1];
-          curTileSettings->y_corners[3]=drawImage->Geo->dfBBOX[3];
-        }
-        curTileSettings->tile_offset_x=int(double(x)*tile_width);
-        curTileSettings->tile_offset_y=int(double(y)*tile_height);
-        curTileSettings->drawTile=drawTileClass;
+            for(int j=0;j<4;j++){
+              curTileSettings->x_corners[j]=x_corners[j];
+              curTileSettings->y_corners[j]=y_corners[j];
+            }
+            //Some safety checks when odd files come out of the projection algorithm
+            if((x_corners[0]>=DBL_MAX||x_corners[0]<=-DBL_MAX)&&x_div==1&&x_div==1){
+              curTileSettings->x_corners[0]=drawImage->Geo->dfBBOX[2];
+              curTileSettings->x_corners[1]=drawImage->Geo->dfBBOX[2];
+              curTileSettings->x_corners[2]=drawImage->Geo->dfBBOX[0];
+              curTileSettings->x_corners[3]=drawImage->Geo->dfBBOX[0];
+              curTileSettings->y_corners[0]=drawImage->Geo->dfBBOX[3];
+              curTileSettings->y_corners[1]=drawImage->Geo->dfBBOX[1];
+              curTileSettings->y_corners[2]=drawImage->Geo->dfBBOX[1];
+              curTileSettings->y_corners[3]=drawImage->Geo->dfBBOX[3];
+            }
+            curTileSettings->tile_offset_x=int(double(x)*tile_width);
+            curTileSettings->tile_offset_y=int(double(y)*tile_height);
+            curTileSettings->drawTile=drawTileClass;
           }
         }
         

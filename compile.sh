@@ -38,7 +38,7 @@ cd ../adagucserverEC
 rm *.o
 rm adagucserver
 rm h5ncdump
-make
+make -j4
 
 
 if [ -f adagucserver ]
