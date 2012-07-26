@@ -70,8 +70,10 @@ int CTime::init(const char *units){
   char szUnits[l+1];szUnits[l]='\0';
     for(size_t j=0;j<l;j++){
       szUnits[j]=units[j];
+      if(szUnits[j]=='U')szUnits[j]=32;
       if(szUnits[j]=='T')szUnits[j]=32;
-             if(szUnits[j]=='Z')szUnits[j]=32;
+      if(szUnits[j]=='C')szUnits[j]=32;
+      if(szUnits[j]=='Z')szUnits[j]=32;
     }
     
     if(utScan(szUnits,&dataunits) != 0)  {

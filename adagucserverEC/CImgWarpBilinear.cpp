@@ -439,16 +439,16 @@ for(size_t varNr=0;varNr<sourceImage->dataObject.size();varNr++){
             yP[0]=dpDestY[p00]; yP[1]=dpDestY[p10]; yP[2]=int(cy);
             xP[0]=dpDestX[p00]; xP[1]=dpDestX[p10]; xP[2]=int(cx);
             vP[0]=fpValues[p00];vP[1]=fpValues[p10];vP[2]=cv;
-            fillTriangle(valueData, vP, dImageWidth,dImageHeight, xP,yP);
+            fillTriangleGouraud(valueData, vP, dImageWidth,dImageHeight, xP,yP);
             //Fill right side
             yP[0]=dpDestY[p11];xP[0]=dpDestX[p11];vP[0]=fpValues[p11];
-            fillTriangle(valueData, vP, dImageWidth,dImageHeight, xP,yP);
+            fillTriangleGouraud(valueData, vP, dImageWidth,dImageHeight, xP,yP);
             //Fill lower side
             yP[1]=dpDestY[p01];xP[1]=dpDestX[p01];vP[1]=fpValues[p01];
-            fillTriangle(valueData, vP, dImageWidth,dImageHeight, xP,yP);
+            fillTriangleGouraud(valueData, vP, dImageWidth,dImageHeight, xP,yP);
             //fill left side
             yP[0]=dpDestY[p00];xP[0]=dpDestX[p00];vP[0]=fpValues[p00];
-            fillTriangle(valueData, vP, dImageWidth,dImageHeight, xP,yP);
+            fillTriangleGouraud(valueData, vP, dImageWidth,dImageHeight, xP,yP);
           }
         }
         /*}else{
@@ -459,10 +459,10 @@ for(size_t varNr=0;varNr<sourceImage->dataObject.size();varNr++){
          *        yP[0]=dpDestY[p00]; yP[1]=dpDestY[p10]; yP[2]=dpDestY[p11];
          *        xP[0]=dpDestX[p00]; xP[1]=dpDestX[p10]; xP[2]=dpDestX[p11];
          *        vP[0]=fpValues[p00];vP[1]=fpValues[p10];vP[2]=fpValues[p11];
-         *        fillTriangle(valueData, vP, dImageWidth,dImageHeight, xP,yP);
+         *        fillTriangleGouraud(valueData, vP, dImageWidth,dImageHeight, xP,yP);
          *              //Fill lower left side
          *        yP[1]=dpDestY[p01];xP[1]=dpDestX[p01];vP[1]=fpValues[p01];
-         *        fillTriangle(valueData, vP, dImageWidth,dImageHeight, xP,yP);
+         *        fillTriangleGouraud(valueData, vP, dImageWidth,dImageHeight, xP,yP);
         }
         }*/
         }

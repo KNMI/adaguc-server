@@ -33,7 +33,9 @@ CADAGUC_time::CADAGUC_time(const char * DateSince){
   
   size_t l=strlen(stpszDateSince);
   for(size_t j=0;j<l;j++){
+    if(stpszDateSince[j]=='U')stpszDateSince[j]=32;
     if(stpszDateSince[j]=='T')stpszDateSince[j]=32;
+    if(stpszDateSince[j]=='C')stpszDateSince[j]=32;
     if(stpszDateSince[j]=='Z')stpszDateSince[j]=32;
   }
   if(utScan(stpszDateSince,&dataunits) != 0)  {

@@ -33,9 +33,12 @@ void floatToString(char * string,size_t maxlen,float number){
 }
 
 int CImageWarper::closereproj(){
-  pj_free(sourcepj);
-  pj_free(destpj);
-  pj_free(latlonpj);
+  if(initialized){
+    pj_free(sourcepj);
+    pj_free(destpj);
+    pj_free(latlonpj);
+  }
+  initialized=false;
   return 0;
 }
 
@@ -204,16 +207,16 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
     return 0;
   }
 
-  int CImageWarper::initreproj(CDataSource *sourceImage,CGeoParams *GeoDest,std::vector <CServerConfig::XMLE_Projection*> *_prj){
-    if(sourceImage==NULL||GeoDest==NULL){
-      CDBError("sourceImage==%s||GeoDest==%s", sourceImage==NULL?"NULL":"not-null", GeoDest==NULL?"NULL":"not-null");
+  int CImageWarper::initreproj(CDataSource *dataSource,CGeoParams *GeoDest,std::vector <CServerConfig::XMLE_Projection*> *_prj){
+    if(dataSource==NULL||GeoDest==NULL){
+      CDBError("dataSource==%s||GeoDest==%s", dataSource==NULL?"NULL":"not-null", GeoDest==NULL?"NULL":"not-null");
       return 1;
     }
-    if(sourceImage->nativeProj4.c_str()==NULL){
-      sourceImage->nativeProj4.copy(LATLONPROJECTION);
-      //CDBWarning("sourceImage->CRS.c_str()==NULL setting to default latlon");
+    if(dataSource->nativeProj4.c_str()==NULL){
+      dataSource->nativeProj4.copy(LATLONPROJECTION);
+      //CDBWarning("dataSource->CRS.c_str()==NULL setting to default latlon");
     }
-    return initreproj(sourceImage->nativeProj4.c_str(),GeoDest,_prj);
+    return initreproj(dataSource->nativeProj4.c_str(),GeoDest,_prj);
   }
   
   int CImageWarper::initreproj(const char * projString,CGeoParams *GeoDest,std::vector <CServerConfig::XMLE_Projection*> *_prj){
@@ -247,6 +250,9 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
       CDBError("SetDestProjection: Invalid projection: %s",destinationCRS.c_str());
       return 1;
     }
+    initialized = true;
+    //CDBDebug("sourceProjection = %s destinationCRS = %s",projString,destinationCRS.c_str());
+    
     // Check if we have a projected coordinate system
     //  projUV p,pout;;
     requireReprojection=false;
@@ -271,13 +277,13 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
 
   }
   
-  int CImageWarper::findExtent(CDataSource *sourceImage,double * dfBBOX){
+  int CImageWarper::findExtent(CDataSource *dataSource,double * dfBBOX){
   // Find the outermost corners of the image
   //CDBDebug("findExtent for %s",destinationCRS.c_str());
     bool useLatLonSourceProj =false;
     //Maybe it is defined in the configuration file:
-    if(sourceImage->cfgLayer->LatLonBox.size()>0){
-      CServerConfig::XMLE_LatLonBox* box = sourceImage->cfgLayer->LatLonBox[0];
+    if(dataSource->cfgLayer->LatLonBox.size()>0){
+      CServerConfig::XMLE_LatLonBox* box = dataSource->cfgLayer->LatLonBox[0];
       dfBBOX[1]=box->attr.miny;
       dfBBOX[3]=box->attr.maxy;
       dfBBOX[0]=box->attr.minx;
@@ -285,14 +291,14 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
       useLatLonSourceProj=true;
       
     }else{
-      for(int k=0;k<4;k++)dfBBOX[k]=sourceImage->dfBBOX[k];
+      for(int k=0;k<4;k++)dfBBOX[k]=dataSource->dfBBOX[k];
       if(dfBBOX[1]>dfBBOX[3]){
-        dfBBOX[1]=sourceImage->dfBBOX[3];
-        dfBBOX[3]=sourceImage->dfBBOX[1];
+        dfBBOX[1]=dataSource->dfBBOX[3];
+        dfBBOX[3]=dataSource->dfBBOX[1];
       }
       if(dfBBOX[0]>dfBBOX[2]){
-        dfBBOX[0]=sourceImage->dfBBOX[2];
-        dfBBOX[2]=sourceImage->dfBBOX[0];
+        dfBBOX[0]=dataSource->dfBBOX[2];
+        dfBBOX[2]=dataSource->dfBBOX[0];
       }
     }
     double tempy;
@@ -347,8 +353,8 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
     dfBBOX[2]=maxx1;
     
     if(dMaxExtentDefined==0&&1==1){
-      //CDBDebug("sourceImage->nativeProj4 %s %d",sourceImage->nativeProj4.c_str(), sourceImage->nativeProj4.indexOf("geos")>0);
-      if( sourceImage->nativeProj4.indexOf("geos")>0){
+      //CDBDebug("dataSource->nativeProj4 %s %d",dataSource->nativeProj4.c_str(), dataSource->nativeProj4.indexOf("geos")>0);
+      if( dataSource->nativeProj4.indexOf("geos")>0){
         dfMaxExtent[0]=-79;
         dfMaxExtent[1]=-79;
         dfMaxExtent[2]=79;

@@ -391,7 +391,7 @@ class string:public basetype{
         copy("",0);
         return;
       }
-      if(size<privatelength){
+      if(size<int(privatelength)){
         value[size]='\0';
         privatelength=size;
       }

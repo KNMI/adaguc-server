@@ -259,10 +259,7 @@ int CDF::Variable::readData(CDFType readType,bool applyScaleOffset){
     removeAttribute("scale_factor");
     removeAttribute("add_offset");
   }
-  
-  
-  
-  
+  return 0;  
 }
 
 int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t *_stride){

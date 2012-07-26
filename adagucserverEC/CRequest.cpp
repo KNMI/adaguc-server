@@ -392,10 +392,16 @@ int CRequest::process_wcs_describecov_request(){
 }
 
 int CRequest::process_wms_getmap_request(){
-  if(srvParam->WMSLayers!=NULL)
+  if(srvParam->WMSLayers!=NULL){
+    CT::string message = "WMS GETMAP ";
     for(size_t j=0;j<srvParam->WMSLayers->count;j++){
-      CDBDebug("WMS GETMAP for layers (%d) %s",j,srvParam->WMSLayers[j].c_str());
+      if(j>0)message.concat(",");
+      message.printconcat("(%d) %s",j,srvParam->WMSLayers[j].c_str());
     }
+    CDBDebug(message.c_str());
+  }else{
+    CDBDebug("WMS GETMAP no layers");
+  }
   return process_all_layers();
 }
 
@@ -1526,7 +1532,7 @@ int CRequest::process_querystring(){
         //Try to retrieve a list of variables from the OpenDAPURL.
         srvParam->autoResourceVariable.copy("");
         //Open the opendap resource
-        CDBDebug("Opening opendap %s",srvParam->internalAutoResourceLocation.c_str());
+        //CDBDebug("OGC REQUEST Remote resource %s",srvParam->internalAutoResourceLocation.c_str());
         CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObject(NULL,srvParam->internalAutoResourceLocation.c_str());
         //int status=cdfObject->open(srvParam->internalAutoResourceLocation.c_str());
         if(cdfObject!=NULL){
@@ -1555,7 +1561,7 @@ int CRequest::process_querystring(){
       
       //Generate a generic title for this OpenDAP service, based on the title element in the OPeNDAP header
       //Open the opendap resource
-      CDBDebug("Opening opendap %s",srvParam->internalAutoResourceLocation.c_str());
+      //CDBDebug("Opening opendap %s",srvParam->internalAutoResourceLocation.c_str());
       #ifdef MEASURETIME
       StopWatch_Stop("Opening file");
       #endif
@@ -1665,7 +1671,7 @@ int CRequest::process_querystring(){
       stringToAdd.encodeURLSelf();
       onlineResource.concat(stringToAdd.c_str());
       srvParam->cfg->OnlineResource[0]->attr.value.copy(onlineResource.c_str());
-      CDBDebug("%s -- %s",srvParam->autoResourceVariable.c_str(),srvParam->autoResourceLocation.c_str());
+      CDBDebug("OGC REQUEST RESOURCE %s:%s",srvParam->internalAutoResourceLocation.c_str(),srvParam->autoResourceVariable.c_str());//,srvParam->autoResourceLocation.c_str(),);
       
       //CDBError("A");return 1;
       
@@ -1810,18 +1816,7 @@ int CRequest::process_querystring(){
         srvParam->dY=0;
         srvParam->requestType=REQUEST_WMS_GETFEATUREINFO;
       }
-      
-      if(dFound_Width==0){
-        CDBWarning("Parameter WIDTH missing");
-        dErrorOccured=1;
-      }
-      if(dFound_Height==0){
-        CDBWarning("Parameter HEIGHT missing");
-        dErrorOccured=1;
-      }
-      
-      // When error is image, utilize full image size
-      setErrorImageSize(srvParam->Geo->dWidth,srvParam->Geo->dHeight,srvParam->imageFormat);
+   
       
     
       
@@ -1829,6 +1824,27 @@ int CRequest::process_querystring(){
         CDBWarning("Parameter BBOX missing");
         dErrorOccured=1;
       }
+      
+      
+      if(dFound_Width==0&&dFound_Height==0){
+        CDBWarning("Parameter WIDTH or HEIGHT missing");
+        dErrorOccured=1;
+      }
+      
+      if(dFound_Width==0){
+        float r=fabs(srvParam->Geo->dfBBOX[3]-srvParam->Geo->dfBBOX[1])/fabs(srvParam->Geo->dfBBOX[2]-srvParam->Geo->dfBBOX[0]);
+        srvParam->Geo->dWidth=int(float(srvParam->Geo->dHeight)/r);
+      }
+        
+      if(dFound_Height==0){
+        float r=fabs(srvParam->Geo->dfBBOX[3]-srvParam->Geo->dfBBOX[1])/fabs(srvParam->Geo->dfBBOX[2]-srvParam->Geo->dfBBOX[0]);
+        srvParam->Geo->dHeight=int(float(srvParam->Geo->dWidth)*r);
+      }
+        
+      
+      // When error is image, utilize full image size
+      setErrorImageSize(srvParam->Geo->dWidth,srvParam->Geo->dHeight,srvParam->imageFormat);
+      
       if(dFound_SRS==0){
         CDBWarning("Parameter SRS missing");
         dErrorOccured=1;

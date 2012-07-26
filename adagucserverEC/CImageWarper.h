@@ -21,17 +21,22 @@ class CImageWarper{
     bool convertRadiansDegreesDst,convertRadiansDegreesSrc,requireReprojection;
     DEF_ERRORFUNCTION();
     unsigned char pixel;
-    CDataSource * _sourceImage;
+    CDataSource * _dataSource;
     CGeoParams * _geoDest;
     CT::string destinationCRS;
     int _decodeCRS(CT::string *CRS);
     std::vector <CServerConfig::XMLE_Projection*> *prj;
+    bool initialized;
   public:
     CImageWarper(){
       prj=NULL;
+      sourcepj=NULL;
+      destpj=NULL;
+      latlonpj=NULL;
+      initialized =false;
     }
     projPJ sourcepj,destpj,latlonpj;
-    int initreproj(CDataSource *sourceImage,CGeoParams *GeoDest,std::vector <CServerConfig::XMLE_Projection*> *prj);
+    int initreproj(CDataSource *dataSource,CGeoParams *GeoDest,std::vector <CServerConfig::XMLE_Projection*> *prj);
     int initreproj(const char * projString,CGeoParams *GeoDest,std::vector <CServerConfig::XMLE_Projection*> *_prj);
     int closereproj();
     int reprojpoint(double &dfx,double &dfy);
@@ -45,7 +50,7 @@ class CImageWarper{
     int reprojToLatLon(double &dfx,double &dfy);
     int decodeCRS(CT::string *outputCRS, CT::string *inputCRS);
     int decodeCRS(CT::string *outputCRS, CT::string *inputCRS,std::vector <CServerConfig::XMLE_Projection*> *prj);
-    int findExtent(CDataSource *sourceImage,double * dfBBOX);
+    int findExtent(CDataSource *dataSource,double * dfBBOX);
     bool isProjectionRequired(){return requireReprojection;}
   };
   

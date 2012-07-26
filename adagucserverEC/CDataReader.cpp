@@ -2,9 +2,11 @@
 #include <math.h>
 
 #include "CConvertASCAT.h"
+#include "CConvertADAGUCVector.h"
+
 const char *CDataReader::className="CDataReader";
 
-
+//#define CDATAREADER_DEBUG
 #define uchar unsigned char
 #define MAX_STR_LEN 8191
 
@@ -346,7 +348,8 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
   /*  LEVEL 2 ASCAT COMPAT MODE!*/
   /**************************************************************************************************/
   bool level2CompatMode = false;
-  if(CConvertASCAT::convertASCATData(dataSource,mode)==0)level2CompatMode=true;     
+  if(CConvertASCAT::convertASCATData(dataSource,mode)==0)level2CompatMode=true;
+  if(CConvertADAGUCVector::convertADAGUCVectorData(dataSource,mode)==0)level2CompatMode=true;     
   
   
   /*CT::string dumpString;
@@ -535,7 +538,7 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
     //Read projection attributes from the file
     CDF::Attribute *projvarnameAttr = var[0]->getAttributeNE("grid_mapping");
     if(projvarnameAttr!=NULL){
-      CDF::Variable * projVar = cdfObject->getVariableNE((char*)projvarnameAttr->data);
+      CDF::Variable * projVar = cdfObject->getVariableNE(projvarnameAttr->toString().c_str());
       if(projVar==NULL){CDBWarning("projection variable '%s' not found",(char*)projvarnameAttr->data);}
       else {
         //Get proj4_params according to ADAGUC metadata
@@ -574,7 +577,12 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
       }
     }
   }
-  //CDBDebug("proj4=%s",dataSource->nativeProj4.c_str());
+  #ifdef CDATAREADER_DEBUG
+  CDBDebug("PROJ4 = [%s]",dataSource->nativeProj4.c_str());
+  #endif
+  //     CDF::dump(cdfObject,&dumpString);
+  //CDBDebug("\nSTART\n%s\nEND\n",dumpString.c_str());
+  //writeLogFile2(dumpString.c_str());
   
   
   
@@ -1184,10 +1192,10 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
 #ifdef CDATAREADER_DEBUG
     
     
-    CT::string dumpString;
+    /*CT::string dumpString;
     CDF::dump(cdfObject,&dumpString);
     CDBDebug("DUMP For file to write:");
-    writeLogFile2(dumpString.c_str());
+    writeLogFile2(dumpString.c_str());*/
 #endif
     CDFNetCDFWriter netCDFWriter(cdfObject);
     netCDFWriter.disableReadData();
@@ -1368,7 +1376,7 @@ int CDataReader::getTimeString(char * pszTime){
     if(currentTimeIndex>=0&&currentTimeIndex<time->getSize()){
       CADAGUC_time *ADTime = NULL;
       try{
-        ADTime = new CADAGUC_time((char*)timeUnits->data);
+        ADTime = new CADAGUC_time(timeUnits->toString().c_str());
         stADAGUC_time timest;
         int status = ADTime->OffsetToAdaguc(timest,((double*)time->data)[currentTimeIndex]);
         if(status == 0){
@@ -1396,7 +1404,7 @@ int CDataReader::getTimeString(char * pszTime){
     snprintf(pszTime,MAX_STR_LEN,"No time dimension available");
     return 1;
   }
-  CDBDebug("[OK] pszTime = %s",pszTime);
+  //CDBDebug("[OK] pszTime = %s",pszTime);
   return 0;
 }
 

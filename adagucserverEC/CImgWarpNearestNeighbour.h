@@ -1,8 +1,9 @@
-#ifndef CImgWarpNearestNeighbour_H
-#define CImgWarpNearestNeighbour_H
+#ifndef CIMGWARPNEARESTNEIGHBOUR_H
+#define CIMGWARPNEARESTNEIGHBOUR_H
 #include <float.h>
 #include <pthread.h>
 #include "CImageWarperRenderInterface.h"
+
 
 /**
  *  This interface represents the tile rendering classes.
@@ -10,7 +11,7 @@
 class CDrawTileObjInterface{
 public:
   virtual void init(CDataSource *dataSource,CDrawImage *drawImage,int tileWidth,int tileHeight) = 0;
-  virtual int drawTile(double *x_corners,double *y_corners,int &dDestX,int &dDestY) = 0;
+  virtual int drawTile(float *x_corners,float *y_corners,int &dDestX,int &dDestY) = 0;
   virtual ~CDrawTileObjInterface(){
   }
 };
@@ -78,7 +79,7 @@ public:
   ~CDrawTileObjByteCache(){
     deleteArray(&buf);
   }
-  int drawTile(double *x_corners,double *y_corners,int &dDestX,int &dDestY){
+  int drawTile(float *x_corners,float *y_corners,int &dDestX,int &dDestY){
     CDFType dataType=dataSource->dataObject[0]->cdfVariable->type;
     void *data=dataSource->dataObject[0]->cdfVariable->data;
     switch(dataType){
@@ -95,7 +96,7 @@ public:
     return 1;
   }
   template <class T>
-  int myDrawRawTile(T*data,double *x_corners,double *y_corners,int &dDestX,int &dDestY){
+  int myDrawRawTile(T*data,float *x_corners,float *y_corners,int &dDestX,int &dDestY){
     float sample_sy,sample_sx;
     float line_dx1,line_dy1,line_dx2,line_dy2;
     float rcx_1,rcy_1,rcx_2,rcy_2,rcx_3,rcy_3;
@@ -188,9 +189,12 @@ public:
  *  This class is very fast for large datasets, with low zoom levels (zoomed out completely)
  */
 class CDrawTileObj:public CDrawTileObjInterface{
+private:
+  DEF_ERRORFUNCTION();
 public:
   float x_div,y_div;
-  float dfSourceBBOX[4],dfImageBBOX[4];
+  float dfSourceBBOX[4];
+  float fImageBBOX[4];
   float dfNodataValue;
   float legendLowerRange;
   float legendUpperRange;
@@ -207,7 +211,7 @@ public:
     x_div=tileWidth+1;y_div=tileHeight+1;
     for(int k=0;k<4;k++){
       dfSourceBBOX[k]=dataSource->dfBBOX[k];
-      dfImageBBOX[k]=dataSource->dfBBOX[k];
+      fImageBBOX[k]=dataSource->dfBBOX[k];
     }
     
     //Look whether BBOX was swapped in y dir
@@ -232,7 +236,7 @@ public:
     legendScale = dataSource->legendScale;
     legendOffset = dataSource->legendOffset;
   }
-  int drawTile(double *x_corners,double *y_corners,int &dDestX,int &dDestY){
+  int drawTile(float *x_corners,float *y_corners,int &dDestX,int &dDestY){
     CDFType dataType=dataSource->dataObject[0]->cdfVariable->type;
     void *data=dataSource->dataObject[0]->cdfVariable->data;
     switch(dataType){
@@ -249,7 +253,10 @@ public:
     return 1;
   }
   template <class T>
-  int myDrawRawTile(T*data,double *x_corners,double *y_corners,int &dDestX,int &dDestY){
+  int myDrawRawTile(T*data,float *x_corners,float *y_corners,int &dDestX,int &dDestY){
+    #ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
+    CDBDebug("myDrawRawTile %f, %f, %f, %f, %f, %f %f %f",dfSourceBBOX[0],dfSourceBBOX[1],dfSourceBBOX[2],dfSourceBBOX[3],width,height,x_div,y_div);
+    #endif 
     float sample_sy,sample_sx;
     float line_dx1,line_dy1,line_dx2,line_dy2;
     float rcx_1,rcy_1,rcx_2,rcy_2,rcx_3,rcy_3;
@@ -261,22 +268,48 @@ public:
     rcy_1= (y_corners[0] - y_corners[3])/x_div;
     rcx_2= (x_corners[1] - x_corners[2])/x_div;
     rcy_2= (y_corners[1] - y_corners[2])/x_div;
-    for(k=0;k<4;k++)
+    for(k=0;k<4;k++){
       if(fabs(x_corners[k]-x_corners[0])>=fabs(dfSourceBBOX[2]-dfSourceBBOX[0]))break;
-      if(k==4){
-        for(k=0;k<4;k++)
-          if(x_corners[k]>dfSourceBBOX[0]&&x_corners[k]<dfSourceBBOX[2])break;
-          if(k==4)return __LINE__;
-      }
+    }
+    if(k==4){
       for(k=0;k<4;k++)
-        if(fabs(y_corners[k]-y_corners[0])>=fabs(dfSourceBBOX[3]-dfSourceBBOX[1]))break;
-        if(k==4){
-          for(k=0;k<4;k++)
-            if(y_corners[k]>dfSourceBBOX[1]&&y_corners[k]<dfSourceBBOX[3])break;
-            if(k==4)return __LINE__;
-        }
-        
-        line_dx1= x_corners[3];
+        if(x_corners[k]>dfSourceBBOX[0]&&x_corners[k]<dfSourceBBOX[2])break;
+        if(k==4)return __LINE__;
+    }
+    for(k=0;k<4;k++){
+      if(fabs(y_corners[k]-y_corners[0])>=fabs(dfSourceBBOX[3]-dfSourceBBOX[1]))break;
+    }
+    if(k==4){
+      for(k=0;k<4;k++)
+        if(y_corners[k]>dfSourceBBOX[1]&&y_corners[k]<dfSourceBBOX[3])break;
+        if(k==4)return __LINE__;
+    }
+    float fSourceBBOX[4];
+    fSourceBBOX[0]=(float)dfSourceBBOX[0];
+    fSourceBBOX[1]=(float)dfSourceBBOX[1];
+    fSourceBBOX[2]=(float)dfSourceBBOX[2];
+    fSourceBBOX[3]=(float)dfSourceBBOX[3];
+        /*
+         * [D: CImgWarpNearestNeighbour.h, 490 in CImgWarpNearestNeighbour]   2012-07-25T09:52:02Z x_div, y_div:  1 1
+         * [D: CImgWarpNearestNeighbour.h, 491 in CImgWarpNearestNeighbour]   2012-07-25T09:52:02Z datasource:  6.668803 54.172408 100.846018 -15.367730
+         * [D: CImgWarpNearestNeighbour.h, 492 in CImgWarpNearestNeighbour]   2012-07-25T09:52:02Z destination: 6.668803 -15.367730 100.846018 54.172408
+         * [D: CImgWarpNearestNeighbour.h, 371 in CImgWarpNearestNeighbour]   2012-07-25T09:52:02Z Drawing tile 0
+         * [D: CImgWarpNearestNeighbour.h, 375 in CImgWarpNearestNeighbour]   2012-07-25T09:52:02Z Drawing tile id 0
+         * [D: CImgWarpNearestNeighbour.h, 257 in CDrawTileObj]               2012-07-25T09:52:02Z myDrawRawTile 6.668803, -15.367729, 100.846016, 54.172409
+         * 
+         * 
+         * [D: CImgWarpNearestNeighbour.h, 490 in CImgWarpNearestNeighbour]   2012-07-25T09:53:06Z x_div, y_div:  1 1
+         * [D: CImgWarpNearestNeighbour.h, 491 in CImgWarpNearestNeighbour]   2012-07-25T09:53:06Z datasource:  14.914277 46.821022 109.091492 -22.719116
+         * [D: CImgWarpNearestNeighbour.h, 492 in CImgWarpNearestNeighbour]   2012-07-25T09:53:06Z destination: 14.914277 -22.719116 109.091492 46.821022
+         * [D: CImgWarpNearestNeighbour.h, 371 in CImgWarpNearestNeighbour]   2012-07-25T09:53:06Z Drawing tile 0
+         * [D: CImgWarpNearestNeighbour.h, 375 in CImgWarpNearestNeighbour]   2012-07-25T09:53:06Z Drawing tile id 0
+         * [D: CImgWarpNearestNeighbour.h, 257 in CDrawTileObj]               2012-07-25T09:53:06Z myDrawRawTile 14.914276, -22.719116, 109.091492, 46.821022
+         * 
+         */
+      #ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
+      CDBDebug("myDrawRawTile %f, %f, %f, %f, %f, %f %f %f",fSourceBBOX[0],fSourceBBOX[1],fSourceBBOX[2],fSourceBBOX[3],width,height,x_div,y_div);
+      #endif
+      line_dx1= x_corners[3];
       line_dx2= x_corners[2];
       line_dy1= y_corners[3];
       line_dy2= y_corners[2];
@@ -291,14 +324,14 @@ public:
         for(y=0;y<=y_div;y=y+1){
           dstpixel_y=int(y)+dDestY-1;
           sample_sx=line_dx1+rcx_3*float(y);
-          if(sample_sx>=dfSourceBBOX[0]&&sample_sx<dfSourceBBOX[2])
+          if(sample_sx>=fSourceBBOX[0]&&sample_sx<fSourceBBOX[2])
           {
             sample_sy=line_dy1+rcy_3*y;
-            if(sample_sy>=dfSourceBBOX[1]&&sample_sy<dfSourceBBOX[3])
+            if(sample_sy>=fSourceBBOX[1]&&sample_sy<fSourceBBOX[3])
             {
-              srcpixel_x=int(((sample_sx-dfImageBBOX[0])/(dfImageBBOX[2]-dfImageBBOX[0]))*(width));
+              srcpixel_x=int(((sample_sx-fImageBBOX[0])/(fImageBBOX[2]-fImageBBOX[0]))*(width));
               if(srcpixel_x>=0&&srcpixel_x<width){
-                srcpixel_y=int(((sample_sy-dfImageBBOX[1])/(dfImageBBOX[3]-dfImageBBOX[1]))*height);
+                srcpixel_y=int(((sample_sy-fImageBBOX[1])/(fImageBBOX[3]-fImageBBOX[1]))*height);
                 if(srcpixel_y>=0&&srcpixel_y<height)
                 {
                   imgpointer=srcpixel_x+(height-1-srcpixel_y)*width;
@@ -345,7 +378,7 @@ private:
   class DrawTileSettings{
   public:
     int id;
-    double y_corners[4],x_corners[4];
+    float y_corners[4],x_corners[4];
     int tile_offset_x,tile_offset_y;
     CDrawTileObjInterface *drawTile;
   };
@@ -361,27 +394,36 @@ private:
     DrawMultipleTileSettings *dmf = (DrawMultipleTileSettings *)arg;
     for(int j=dmf->startTile;j<dmf->endTile&&j<dmf->numberOfTiles;j++){
       DrawTileSettings *ct = &dmf->ct[j];
+      #ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
+      CDBDebug("Drawing tile %d",j);
+      #endif 
       if(ct->id>=0){
-        ct->drawTile->drawTile(ct->x_corners,ct->y_corners,ct->tile_offset_x,ct->tile_offset_y);
+        #ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
+        CDBDebug("Drawing tile id %d",ct->id);
+        #endif 
+        int status = ct->drawTile->drawTile(ct->x_corners,ct->y_corners,ct->tile_offset_x,ct->tile_offset_y);
+        /*if(status!=0){
+          CDBError("Unable to draw tile at line %d",status);
+        }*/
       }
     }
     return arg;
   }
   //Reproject the corners of the tiles
-  double y_corners[4],x_corners[4];
+  float y_corners[4],x_corners[4];
   double dfMaskBBOX[4];
-  int reproj(CImageWarper *warper,CDataSource *dataSource,CGeoParams *GeoDest,double dfx,double dfy,double x_div,double y_div){
+  int reproj(CImageWarper *warper,CDataSource *dataSource,CGeoParams *GeoDest,float dfx,float dfy,float x_div,float y_div){
     double psx[4];
     double psy[4];
-    double dfTiledBBOX[4];
-    double dfTileW=(GeoDest->dfBBOX[2]-GeoDest->dfBBOX[0])/double(x_div);
-    double dfTileH=(GeoDest->dfBBOX[3]-GeoDest->dfBBOX[1])/double(y_div);
+    float dfTiledBBOX[4];
+    float dfTileW=(GeoDest->dfBBOX[2]-GeoDest->dfBBOX[0])/float(x_div);
+    float dfTileH=(GeoDest->dfBBOX[3]-GeoDest->dfBBOX[1])/float(y_div);
     
     dfTiledBBOX[0]=GeoDest->dfBBOX[0]+dfTileW*dfx;
     dfTiledBBOX[1]=GeoDest->dfBBOX[1]+dfTileH*dfy;
     dfTiledBBOX[2]=dfTiledBBOX[0]+(dfTileW);
     dfTiledBBOX[3]=dfTiledBBOX[1]+(dfTileH);
-    double dfSourceBBOX[4];
+    float dfSourceBBOX[4];
     for(int k=0;k<4;k++)dfSourceBBOX[k]=dfMaskBBOX[k];
     if(dfMaskBBOX[3]<dfMaskBBOX[1]){
       dfSourceBBOX[1]=dfMaskBBOX[3];
@@ -439,7 +481,7 @@ private:
     }*/
     
     //CDBDebug("Render");
-    //This enables wether bunches of tiles are divided allong threads.
+    //This enables if tiles are divided allong threads.
     int numThreads=4;
     //Threading is not needed when only one thread is specified.
     bool useThreading=true;
@@ -455,8 +497,8 @@ private:
       //When we are drawing just one tile, threading is not needed
       useThreading=false;
     }
-    double tile_width=(double(drawImage->Geo->dWidth)/double(x_div));
-    double tile_height=(double(drawImage->Geo->dHeight)/double(y_div));
+    float tile_width=(float(drawImage->Geo->dWidth)/float(x_div));
+    float tile_height=(float(drawImage->Geo->dHeight)/float(y_div));
     
     //Setup the renderer to draw the tiles with.We do not keep the calculated results for CDF_CHAR (faster)
         CDrawTileObjInterface *drawTileClass= NULL;
@@ -473,9 +515,12 @@ private:
         //drawTileClass = new CDrawTileObjByteCache();           //Do not keep the calculated results for CDF_CHAR
         //drawTileClass = new CDrawTileObj();  //keep the calculated results
         drawTileClass->init(dataSource,drawImage,(int)tile_width,(int)tile_height);
-        //CDBDebug("b %f %f %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[1],dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
-        //CDBDebug("d %f %f %f %f",drawImage->Geo->dfBBOX[0],drawImage->Geo->dfBBOX[1],drawImage->Geo->dfBBOX[2],drawImage->Geo->dfBBOX[3]);
         
+        #ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
+        CDBDebug("x_div, y_div:  %d %d",x_div,y_div);
+        CDBDebug("datasource:  %f %f %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[1],dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
+        CDBDebug("destination: %f %f %f %f",drawImage->Geo->dfBBOX[0],drawImage->Geo->dfBBOX[1],drawImage->Geo->dfBBOX[2],drawImage->Geo->dfBBOX[3]);
+        #endif 
         int numberOfTiles=x_div*y_div;
         DrawTileSettings *drawTileSettings = new DrawTileSettings[numberOfTiles];
         DrawTileSettings *curTileSettings;
@@ -501,8 +546,8 @@ private:
               curTileSettings->y_corners[2]=drawImage->Geo->dfBBOX[1];
               curTileSettings->y_corners[3]=drawImage->Geo->dfBBOX[3];
             }
-            curTileSettings->tile_offset_x=int(double(x)*tile_width);
-            curTileSettings->tile_offset_y=int(double(y)*tile_height);
+            curTileSettings->tile_offset_x=int(float(x)*tile_width);
+            curTileSettings->tile_offset_y=int(float(y)*tile_height);
             curTileSettings->drawTile=drawTileClass;
           }
         }

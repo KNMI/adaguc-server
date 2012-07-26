@@ -1,5 +1,5 @@
 #include "CImageDataWriter.h"
-
+//#define CIMAGEDATAWRITER_DEBUG
 
 
 const char * CImageDataWriter::className = "CImageDataWriter";
@@ -227,23 +227,25 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   
   
   int status;
-  //Open the data of this dataSource
-  #ifdef CIMAGEDATAWRITER_DEBUG  
-  CDBDebug("opening %s",dataSource->getFileName());
-  #endif  
-  CDataReader reader;
-  status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
-  #ifdef CIMAGEDATAWRITER_DEBUG  
-  CDBDebug("Has opened %s",dataSource->getFileName());
-  #endif    
-  if(status!=0){
-    CDBError("Could not open file: %s",dataSource->getFileName());
-    return 1;
+  if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
+    //Open the data of this dataSource
+    #ifdef CIMAGEDATAWRITER_DEBUG  
+    CDBDebug("opening %s",dataSource->getFileName());
+    #endif  
+    CDataReader reader;
+    status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
+    #ifdef CIMAGEDATAWRITER_DEBUG  
+    CDBDebug("Has opened %s",dataSource->getFileName());
+    #endif    
+    if(status!=0){
+      CDBError("Could not open file: %s",dataSource->getFileName());
+      return 1;
+    }
+    #ifdef CIMAGEDATAWRITER_DEBUG  
+    CDBDebug("opened");
+    #endif  
+    reader.close();
   }
-  #ifdef CIMAGEDATAWRITER_DEBUG  
-  CDBDebug("opened");
-  #endif  
-  reader.close();
   //drawImage.setTrueColor(true);
   //drawImage.setAntiAliased(true);
   /*drawImage.setTrueColor(true);
@@ -1148,9 +1150,13 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
   
   //int CImageWarper::getFeatureInfo(CT::string *Header,CT::string *Result,CDataSource *dataSource,CGeoParams *GeoDest,int dX, int dY){
 
-  
+
   int status;
   for(size_t d=0;d<dataSources.size();d++){
+    bool openAll = false;
+    if(dataSources[d]->dataObject[0]->cdfVariable->getAttributeNE("ADAGUC_VECTOR")!=NULL){
+      openAll =true;
+    }  
     CDataSource *dataSource=dataSources[d];
     if(dataSource==NULL){
       CDBError("dataSource == NULL");
@@ -1163,13 +1169,22 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
   
     
     CDataReader reader;
-    status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_HEADER);
+    if(openAll){
+      CDBDebug("OPEN ALL");
+      status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_ALL);
+    }else{
+      CDBDebug("OPEN HEADER");
+      status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_HEADER);
+    }
     
     
     if(status!=0){
       CDBError("Could not open file: %s",dataSource->getFileName());
       return 1;
     }
+    #ifdef CIMAGEDATAWRITER_DEBUG  
+    CDBDebug("initreproj %s",dataSource->nativeProj4.c_str());
+    #endif
     status = imageWarper.initreproj(dataSource,drawImage.Geo,&srvParam->cfg->Projection);
     if(status!=0){CDBError("initreproj failed");reader.close();return 1;  }
     
@@ -1275,7 +1290,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       /* Get time string*/
       char szTemp[1024];
       status = reader.getTimeString(szTemp);
-      CDBDebug("TIME = szTemp = \"%s\" - %d",szTemp,status);
+      //CDBDebug("TIME = szTemp = \"%s\" - %d",szTemp,status);
       if(status != 0){
         element->time.print("Time error: %d: ",status);
       }else{
@@ -1284,11 +1299,16 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
     }
  
   // Retrieve corresponding values.
+  
   if(imx>=0&&imy>=0&&imx<dataSource->dWidth&&imy<dataSource->dHeight){
     
-    status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_ALL,imx,imy);
-    //status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_ALL);
-    //status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_ALL,0,0);
+    
+    if(openAll){
+      //status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_ALL);
+    }else{
+      status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_ALL,imx,imy);
+    }
+
     if(status!=0){
       CDBError("Could not open file: %s",dataSource->getFileName());
       return 1;
@@ -1297,7 +1317,10 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       size_t j=d+o*dataSources.size();  
 //      CDBDebug("j = %d",j);
       GetFeatureInfoResult::Element * element=getFeatureInfoResult->elements[j];
-      size_t ptr=0;//imx+imy*dataSource->dWidth;
+      size_t ptr=0;
+      if(openAll){
+        ptr=imx+imy*dataSource->dWidth;
+      }
       double pixel=convertValue(dataSource->dataObject[o]->cdfVariable->type,dataSource->dataObject[o]->cdfVariable->data,ptr);
 
       
@@ -1393,6 +1416,9 @@ int CImageDataWriter::warpImage(CDataSource *dataSource,CDrawImage *drawImage){
   CDBDebug("opened");
   #endif  
   //Initialize projection algorithm
+  #ifdef CIMAGEDATAWRITER_DEBUG  
+  CDBDebug("initreproj %s",dataSource->nativeProj4.c_str());
+  #endif
   status = imageWarper.initreproj(dataSource,drawImage->Geo,&srvParam->cfg->Projection);
   if(status!=0){
     CDBError("initreproj failed");
@@ -1525,6 +1551,9 @@ int CImageDataWriter::calculateData(std::vector <CDataSource*>&dataSources){
     dataSource=dataSources[0];
     
     if(hasFailed==false){
+      #ifdef CIMAGEDATAWRITER_DEBUG  
+      CDBDebug("initreproj %s",dataSource->nativeProj4.c_str());
+      #endif
       status = imageWarper.initreproj(dataSource,drawImage.Geo,&srvParam->cfg->Projection);
       if(status!=0){
         CDBError("initreproj failed");
@@ -1807,6 +1836,9 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
       }
       
       if(useProjection){
+        #ifdef CIMAGEDATAWRITER_DEBUG  
+        CDBDebug("initreproj latlon");
+        #endif
         int status = imageWarper.initreproj(LATLONPROJECTION,drawImage.Geo,&srvParam->cfg->Projection);
         if(status!=0){CDBError("initreproj failed");return 1;  }
       }

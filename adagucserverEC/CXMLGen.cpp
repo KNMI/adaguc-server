@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 #include "CXMLGen.h"
-#define CXMLGEN_DEBUG
+//#define CXMLGEN_DEBUG
 
 const char *CFile::className="CFile";
 
@@ -360,7 +360,7 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
                     store->getRecord(j)->get("time")->setChar(10,'T');
                     const char *isotime = store->getRecord(j)->get("time")->c_str();
                     #ifdef CXMLGEN_DEBUG    
-                    CDBDebug("isotime = %s",isotime);
+//                    CDBDebug("isotime = %s",isotime);
                     #endif
                     CT::string year, month, day, hour, minute, second;
                     year  .copy(isotime+ 0,4);tms[j].tm_year=year.toInt()-1900;
@@ -410,7 +410,7 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
                   if(tms[1].tm_sec-tms[0].tm_sec!=0){hourPart.printconcat("%dS",abs(tms[1].tm_sec-tms[0].tm_sec));}
 
                   int sd=(tms[1].tm_hour*3600+tms[1].tm_min*60+tms[1].tm_sec)-(tms[0].tm_hour*3600+tms[0].tm_min*60+tms[0].tm_sec);
-                  for(size_t j=2;j<store->size();j++){
+                  for(size_t j=2;j<store->size()&&isConst;j++){
                     int d=(tms[j].tm_hour*3600+tms[j].tm_min*60+tms[j].tm_sec)-(tms[j-1].tm_hour*3600+tms[j-1].tm_min*60+tms[j-1].tm_sec);
                     if(d>0){if(sd!=d){
                         isConst=false;

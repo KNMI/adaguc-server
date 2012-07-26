@@ -1,23 +1,22 @@
-#include "CConvertASCAT.h"
+#include "CConvertADAGUCVector.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
-
-#define CCONVERTASCAT_DEBUG
-
-const char *CConvertASCAT::className="CConvertASCAT";
+//#define CCONVERTADAGUCVECTOR_DEBUG
+const char *CConvertADAGUCVector::className="CConvertADAGUCVector";
 
 /**
  * This function adjusts the cdfObject by creating virtual 2D variables
  */
-int CConvertASCAT::convertASCATHeader( CDFObject *cdfObject ){
-  //Check whether this is really an ascat file
+int CConvertADAGUCVector::convertADAGUCVectorHeader( CDFObject *cdfObject ){
+  //Check whether this is really an adaguc file
   try{
-    cdfObject->getDimension("NUMROWS");
-    cdfObject->getDimension("NUMCELLS");
+    cdfObject->getDimension("nv");
+    cdfObject->getDimension("time");
+    cdfObject->getVariable("product");
   }catch(int e){
     return 1;
   }
-  
+  CDBDebug("THIS IS ADAGUC VECTOR DATA");
   bool hasTimeData = false;
   
   //Is there a time variable
@@ -65,7 +64,7 @@ int CConvertASCAT::convertASCATHeader( CDFObject *cdfObject ){
               }
             }
           }
-          #ifdef CCONVERTASCAT_DEBUG
+          #ifdef CCONVERTADAGUCVECTOR_DEBUG
           CDBDebug("firstTimeValue  = %f",firstTimeValue );
           #endif
           //Set the time data
@@ -75,10 +74,10 @@ int CConvertASCAT::convertASCATHeader( CDFObject *cdfObject ){
     }
   }
 
-  //Standard bounding box of ascat data is worldwide
+  //Standard bounding box of adaguc data is worldwide
   double dfBBOX[]={-180,-90,180,90};
   
-  //Default size of ascat 2dField is 2x2
+  //Default size of adaguc 2dField is 2x2
   int width=2;
   int height=2;
   
@@ -136,17 +135,31 @@ int CConvertASCAT::convertASCATHeader( CDFObject *cdfObject ){
   for(size_t v=0;v<cdfObject->variables.size();v++){
     CDF::Variable *var = cdfObject->variables[v];
     if(var->isDimension==false){
-      if(!var->name.equals("time2D")&&!var->name.equals("time")&&!var->name.equals("lon")&&!var->name.equals("lat")){
+      if(!var->name.equals("time2D")&&
+        !var->name.equals("time")&&
+        !var->name.equals("lon")&&
+        !var->name.equals("lat")&&
+        !var->name.equals("lat_bnds")&&
+        !var->name.equals("lon_bnds")&&
+        !var->name.equals("custom")&&
+        !var->name.equals("projection")&&
+        !var->name.equals("product")&&
+        !var->name.equals("iso_dataset")&&
+        !var->name.equals("tile_properties")
+      ){
         varsToConvert.add(CT::string(var->name.c_str()));
+      }
+      if(var->name.equals("projection")){
+        var->setAttributeText("ADAGUC_SKIP","true");
       }
     }
   }
   
-  //Create the new 2D field variiables based on the swath variables
+  //Create the new 2D field variables based on the swath variables
   for(size_t v=0;v<varsToConvert.size();v++){
     CDF::Variable *swathVar=cdfObject->getVariable(varsToConvert[v].c_str());
     
-    #ifdef CCONVERTASCAT_DEBUG
+    #ifdef CCONVERTADAGUCVECTOR_DEBUG
     CDBDebug("Converting %s",swathVar->name.c_str());
     #endif
     
@@ -180,8 +193,10 @@ int CConvertASCAT::convertASCATHeader( CDFObject *cdfObject ){
     //Scale and offset are already applied
     new2DVar->removeAttribute("scale_factor");
     new2DVar->removeAttribute("add_offset");
+    
     new2DVar->type=CDF_FLOAT;
   }
+ 
   return 0;
 }
 
@@ -191,25 +206,25 @@ int CConvertASCAT::convertASCATHeader( CDFObject *cdfObject ){
 /**
  * This function draws the virtual 2D variable into a new 2D field
  */
-int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
-  #ifdef CCONVERTASCAT_DEBUG
-  CDBDebug("convertASCATData");
+int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource,int mode){
+  #ifdef CCONVERTADAGUCVECTOR_DEBUG
+  CDBDebug("convertADAGUCVectorData");
   #endif
   CDFObject *cdfObject = dataSource->dataObject[0]->cdfObject;
   try{
-    cdfObject->getDimension("NUMROWS");
-    cdfObject->getDimension("NUMCELLS");
+    cdfObject->getDimension("nv");
+    cdfObject->getDimension("time");
+    cdfObject->getVariable("product");
   }catch(int e){
     return 1;
   }
+  CDBDebug("THIS IS ADAGUC VECTOR DATA");
   
   CDF::Variable *new2DVar;
   new2DVar = dataSource->dataObject[0]->cdfVariable;
   
   CDF::Variable *swathVar;
   CT::string origSwathName=new2DVar->name.c_str();
-  
-
   origSwathName.concat("_backup");
   swathVar=cdfObject->getVariableNE(origSwathName.c_str());
   if(swathVar==NULL){
@@ -220,8 +235,8 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
   CDF::Variable *swathLat;
  
   try{
-    swathLon = cdfObject->getVariable("lon");
-    swathLat = cdfObject->getVariable("lat");
+    swathLon = cdfObject->getVariable("lon_bnds");
+    swathLat = cdfObject->getVariable("lat_bnds");
   }catch(int e){
     CDBError("lat or lon variables not found");
     return 1;
@@ -236,12 +251,17 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
   if(fillValue!=NULL){
     dataSource->dataObject[0]->hasNodataValue=true;
     fillValue->getData(&dataSource->dataObject[0]->dfNodataValue,1);
-    #ifdef CCONVERTASCAT_DEBUG
+    #ifdef CCONVERTADAGUCVECTOR_DEBUG
     CDBDebug("_FillValue = %f",dataSource->dataObject[0]->dfNodataValue);
     #endif
     float f=dataSource->dataObject[0]->dfNodataValue;
     new2DVar->getAttribute("_FillValue")->setData(CDF_FLOAT,&f,1);
-  }else dataSource->dataObject[0]->hasNodataValue=false;
+  }else {
+    dataSource->dataObject[0]->hasNodataValue=true;
+    dataSource->dataObject[0]->dfNodataValue=-9999999;
+    float f=dataSource->dataObject[0]->dfNodataValue;
+    new2DVar->setAttribute("_FillValue",CDF_FLOAT,&f,1);
+  }
   
   //Detect minimum and maximum values
   float fill = (float)dataSource->dataObject[0]->dfNodataValue;
@@ -256,17 +276,17 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
     }
   }
   
-  #ifdef CCONVERTASCAT_DEBUG
+  #ifdef CCONVERTADAGUCVECTOR_DEBUG
   CDBDebug("Calculated min/max : %f %f",min,max);
   #endif
   
   //Set statistics
   if(dataSource->stretchMinMax){
-    #ifdef CCONVERTASCAT_DEBUG
+    #ifdef CCONVERTADAGUCVECTOR_DEBUG
     CDBDebug("dataSource->stretchMinMax");
     #endif
     if(dataSource->statistics==NULL){
-      #ifdef CCONVERTASCAT_DEBUG
+      #ifdef CCONVERTADAGUCVECTOR_DEBUG
       CDBDebug("Setting statistics: min/max : %f %f",min,max);
       #endif
       dataSource->statistics = new CDataSource::Statistics();
@@ -275,7 +295,7 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
     }
   }
   
-  //Make the width and height of the new 2D ascat field the same as the viewing window
+  //Make the width and height of the new 2D adaguc field the same as the viewing window
   dataSource->dWidth=dataSource->srvParams->Geo->dWidth;
   dataSource->dHeight=dataSource->srvParams->Geo->dHeight;      
   
@@ -294,14 +314,17 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
   double offsetX=dataSource->srvParams->Geo->dfBBOX[0];
   double offsetY=dataSource->srvParams->Geo->dfBBOX[1];
  
-  #ifdef CCONVERTASCAT_DEBUG
-  CDBDebug("Datasource bbox:%f %f %f %f",dataSource->srvParams->Geo->dfBBOX[0],dataSource->srvParams->Geo->dfBBOX[1],dataSource->srvParams->Geo->dfBBOX[2],dataSource->srvParams->Geo->dfBBOX[3]);
-  CDBDebug("Datasource width height %d %d",dataSource->dWidth,dataSource->dHeight);
-  CDBDebug("L2 %d %d",dataSource->dWidth,dataSource->dHeight);
-  #endif
+ 
+  
+
+  
+  
+  
 
   if(mode==CNETCDFREADER_MODE_OPEN_ALL){
-    #ifdef CCONVERTASCAT_DEBUG
+   
+    
+    #ifdef CCONVERTADAGUCVECTOR_DEBUG
     CDBDebug("Drawing %s",new2DVar->name.c_str());
     #endif
     
@@ -338,8 +361,14 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
     CDF::allocateData(new2DVar->type,&(new2DVar->data),fieldSize);
     
     //Draw data!
-    for(size_t j=0;j<fieldSize;j++){
-      ((float*)dataSource->dataObject[0]->cdfVariable->data)[j]=(float)dataSource->dataObject[0]->dfNodataValue;
+    if(dataSource->dataObject[0]->hasNodataValue){
+      for(size_t j=0;j<fieldSize;j++){
+        ((float*)dataSource->dataObject[0]->cdfVariable->data)[j]=(float)dataSource->dataObject[0]->dfNodataValue;
+      }
+    }else{
+      for(size_t j=0;j<fieldSize;j++){
+        ((float*)dataSource->dataObject[0]->cdfVariable->data)[j]=NAN;
+      }
     }
     
     float *sdata = ((float*)dataSource->dataObject[0]->cdfVariable->data);
@@ -347,15 +376,15 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
     float *lonData=(float*)swathLon->data;
     float *latData=(float*)swathLat->data;
     
-    int numRows=swathVar->dimensionlinks[0]->getSize();
-    int numCells=swathVar->dimensionlinks[1]->getSize();
-    #ifdef CCONVERTASCAT_DEBUG
-    CDBDebug("numRows %d numCells %d",numRows,numCells);
+    int numTimes=swathVar->dimensionlinks[0]->getSize();
+    
+    #ifdef CCONVERTADAGUCVECTOR_DEBUG
+    CDBDebug("numTimes %d ",numTimes);
     #endif
     
-    float *swathData = (float*)swathVar->data;
     
-    
+
+  
     CImageWarper imageWarper;
     bool projectionRequired=false;
     if(dataSource->srvParams->Geo->CRS.length()>0){
@@ -375,6 +404,15 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
         projectionVar->setAttributeText("proj4_params",dataSource->nativeProj4.c_str());
       }
     }
+    
+    
+    #ifdef CCONVERTADAGUCVECTOR_DEBUG
+    CDBDebug("Datasource CRS = %s nativeproj4 = %s",dataSource->nativeEPSG.c_str(),dataSource->nativeProj4.c_str());
+    CDBDebug("Datasource bbox:%f %f %f %f",dataSource->srvParams->Geo->dfBBOX[0],dataSource->srvParams->Geo->dfBBOX[1],dataSource->srvParams->Geo->dfBBOX[2],dataSource->srvParams->Geo->dfBBOX[3]);
+    CDBDebug("Datasource width height %d %d",dataSource->dWidth,dataSource->dHeight);
+    #endif
+    
+    
     if(projectionRequired){
       int status = imageWarper.initreproj(dataSource,dataSource->srvParams->Geo,&dataSource->srvParams->cfg->Projection);
       if(status !=0 ){
@@ -382,65 +420,66 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
         return 1;
       }
     }
+  
+    float *swathData = (float*)swathVar->data;
     
-    
-    for(int rowNr=0;rowNr<numRows;rowNr++){ 
-      for(int cellNr=0;cellNr<numCells;cellNr++){
-        
-        int pSwath = cellNr+rowNr * numCells;
-        
-        int bo = (rowNr == 0 ?numCells:-numCells);
-        
-        double lons[4],lats[4];
-        float vals[4];
-        lons[0] = (float)lonData[pSwath];
-        lons[1] = (float)lonData[pSwath+(cellNr==0?1:-1)];
-        lons[2] = (float)lonData[pSwath+bo];
-        lons[3] = (float)lonData[pSwath+bo+(cellNr==0?1:-1)];
-        
-        lats[0] = (float)latData[pSwath];
-        lats[1] = (float)latData[pSwath+(cellNr==0?1:-1)];
-        lats[2] = (float)latData[pSwath+bo];
-        lats[3] = (float)latData[pSwath+bo+(cellNr==0?1:-1)];
-        
-        vals[0] = swathData[pSwath];
-        vals[1]= swathData[pSwath+(cellNr==0?1:-1)];
-        vals[2] = swathData[pSwath+bo];
-        vals[3] = swathData[pSwath+bo+(cellNr==0?1:-1)];
-        
-        bool tileHasNoData = false;
-        
-        bool tileIsTooLarge=false;
-        bool moveTile=false;
-        
-        for(int j=0;j<4;j++){
-          if(lons[j]==fill){tileIsTooLarge=true;break;}
-          if(lons[j]>185)moveTile=true;
-        }
-        float lon0 ;
-        float lat0;
-        if(tileIsTooLarge==false){
-          for(int j=0;j<4;j++){
-            if(moveTile==true)lons[j]-=360;
-            if(lons[j]<-280)lons[j]+=360;
-            if(j==0){
-              lon0 =lons[0];
-              lat0 =lats[0];
-            }
-            if(fabs(lon0-lons[j])>5)tileIsTooLarge=true;
-            if(fabs(lat0-lats[j])>5)tileIsTooLarge=true;
+    for(int timeNr=0;timeNr<numTimes;timeNr++){ 
+      int pSwath = timeNr;
+      
+      double lons[4],lats[4];
+      float vals[4];
+      lons[0] = (float)lonData[pSwath*4+0];
+      lons[1] = (float)lonData[pSwath*4+1];
+      lons[2] = (float)lonData[pSwath*4+3];
+      lons[3] = (float)lonData[pSwath*4+2];
+      
+      lats[0] = (float)latData[pSwath*4+0];
+      lats[1] = (float)latData[pSwath*4+1];
+      lats[2] = (float)latData[pSwath*4+3];
+      lats[3] = (float)latData[pSwath*4+2];
+      
+      vals[0] = swathData[pSwath];
+      vals[1]=  swathData[pSwath];
+      vals[2] = swathData[pSwath];
+      vals[3] = swathData[pSwath];
+      
+      
+      bool tileHasNoData = false;
+      
+      bool tileIsTooLarge=false;
+      bool moveTile=false;
+      
+      for(int j=0;j<4;j++){
+        if(lons[j]==fill){tileIsTooLarge=true;break;}
+        if(lons[j]>185)moveTile=true;
+      }
 
-            if(vals[j]==fill)tileHasNoData=true;
-          }
-        }
-        //vals[0]=10;
-        vals[1]=vals[0];
-        vals[2]=vals[0];
-        vals[3]=vals[0];
-       
         
+      float lon0 ;
+      float lat0;
+     
+      if(tileIsTooLarge==false){
+        for(int j=0;j<4;j++){
+          if(moveTile==true)lons[j]-=360;
+          if(lons[j]<-280)lons[j]+=360;
+          if(j==0){
+            lon0 =lons[0];
+            lat0 =lats[0];
+          }else{
+            if(fabs(lon0-lons[j])>1)tileIsTooLarge=true;
+            if(fabs(lat0-lats[j])>1)tileIsTooLarge=true;
+          }
+       
+          if(vals[j]==fill)tileHasNoData=true;
+        }
+      }
+      //vals[0]=10;
+      vals[1]=vals[0];
+      vals[2]=vals[0];
+      vals[3]=vals[0];
+      int dlons[4],dlats[4];
+      if(tileHasNoData==false){
         if(tileIsTooLarge==false){
-          int dlons[4],dlats[4];
           for(int j=0;j<4;j++){
             if(projectionRequired)imageWarper.reprojfromLatLon(lons[j],lats[j]);
             dlons[j]=(lons[j]-offsetX)/cellSizeX;
@@ -448,16 +487,15 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
           }
           
           fillQuadGouraud(sdata, vals, dataSource->dWidth,dataSource->dHeight, dlons,dlats);
-          
-
-          
         }
       }
     }
+   
     imageWarper.closereproj();
+   
   }
-  #ifdef CCONVERTASCAT_DEBUG
-  CDBDebug("/convertASCATData");
+  #ifdef CCONVERTADAGUCVECTOR_DEBUG
+  CDBDebug("/convertADAGUCVectorData");
   #endif
   return 0;
 }
