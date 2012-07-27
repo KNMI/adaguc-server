@@ -105,6 +105,7 @@ class CDataSource{
   //Used for scaling the legend to the palette range of 0-240
   float legendScale,legendOffset,legendLog,legendLowerRange,legendUpperRange;
   bool legendValueRange;
+  CT::string styleName;
 
   //Number of metadata items
   size_t nrMetadataItems;

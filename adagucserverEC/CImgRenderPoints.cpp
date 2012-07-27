@@ -11,7 +11,7 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
     std::vector<PointDV> *p2=&dataSource->dataObject[1]->points;
     size_t l=p1->size();
     size_t s=1;
-    while(l/s>1000){
+    while(l/s>(80*32)){
       s=s+s;
     };
     l=p1->size();

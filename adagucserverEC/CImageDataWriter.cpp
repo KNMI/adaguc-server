@@ -786,6 +786,8 @@ CDBDebug("initializeLegend");
   }
 
   delete currentStyleConfiguration;
+  
+  dataSource->styleName=&styleName;
   currentStyleConfiguration=CImageDataWriter::getStyleConfigurationByName(styleName.c_str(),dataSource);
   if(currentStyleConfiguration->hasError){
     CDBError("Unable to configure style %s for layer %s\n",styleName.c_str(),dataSource->layerName.c_str());

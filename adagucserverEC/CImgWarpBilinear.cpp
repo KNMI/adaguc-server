@@ -30,7 +30,7 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
   int dPixelExtent[4];
   bool tryToOptimizeExtent=false;
   
-//  CDBDebug("enableBarb=%d enableVectors=%d drawGridVectors=%d", enableBarb, enableVector, drawGridVectors);
+  //  CDBDebug("enableBarb=%d enableVectors=%d drawGridVectors=%d", enableBarb, enableVector, drawGridVectors);
   if(tryToOptimizeExtent){
     //Reproject the boundingbox from the destination bbox: 
     for(int j=0;j<4;j++)dfPixelExtent[j]=drawImage->Geo->dfBBOX[j];  
@@ -233,7 +233,8 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
   //After calculations 
   bool gridRelative=true;
   
-  if (sourceImage->dataObject.size()>1) {
+  //TODO this should be enabled when U and V components are available. otherwise it should do nothing.
+  if (sourceImage->dataObject.size()>1&&(enableVector||enableBarb)){
     // Check standard_name/var_name for first vector component
     // if x_wind/grid_east_wind of y_wind/grid_northward_wind then gridRelative=true
     // if eastward_wind/northward_wind then gridRelative=false
@@ -246,14 +247,14 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
     if (standard_name.equals("x_wind")||standard_name.equals("grid_eastward_wind")||
       standard_name.equals("y_wind")||standard_name.equals("grid_northward_wind")) {
       gridRelative=true;
-    } else {
+      } else {
         gridRelative=false;
-    }
-    CDBDebug("Grid propery gridRelative=%d", gridRelative);
+      }
+      CDBDebug("Grid propery gridRelative=%d", gridRelative);
     
-#ifdef CImgWarpBilinear_DEBUG
-    StopWatch_Stop("u/v rotation started");
-#endif
+    #ifdef CImgWarpBilinear_DEBUG
+      StopWatch_Stop("u/v rotation started");
+      #endif
       double delta=0.01;
       double deltaLon;
       double deltaLat;
@@ -282,7 +283,7 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
       double signLon=(dfSourceExtW<0)?-1:1; // sign for adaptation of Jacobian to grid organisation
       double signLat=(dfSourceExtH<0)?-1:1; // sign for adaptation of Jacobian to grid organisation
       CDBDebug("deltaLon %f deltaLat %f signLon %f signLat %f", deltaLon, deltaLat, signLon, signLat);
-
+      
       for(int y=dPixelExtent[1];y<dPixelExtent[3];y=y+1){
         for(int x=dPixelExtent[0];x<dPixelExtent[2];x=x+1){
           size_t p = size_t((x-(dPixelExtent[0]))+((y-(dPixelExtent[1]))*dPixelDestW));
@@ -306,11 +307,11 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
               modelYLon=modelY;
               modelXLat=modelX;
               modelYLat=modelY+dfSourcedExtH;
-//              if (y==0) { CDBDebug("modelXY[%d,%d] {%d} (%f, %f) (%f,%f) (%f,%f) =>", x, y, gridRelative, modelX, modelY, modelXLon, modelYLon, modelXLat, modelYLat);}
+              //              if (y==0) { CDBDebug("modelXY[%d,%d] {%d} (%f, %f) (%f,%f) (%f,%f) =>", x, y, gridRelative, modelX, modelY, modelXLon, modelYLon, modelXLat, modelYLat);}
               warper->reprojpoint_inv(modelX,modelY); // model to vis proj.
               warper->reprojpoint_inv(modelXLon, modelYLon);
               warper->reprojpoint_inv(modelXLat, modelYLat);
-//              if (y==0) { CDBDebug("modelXY[%d,%d] {%d} (%f, %f) (%f,%f) (%f,%f) =>", x, y, gridRelative, modelX, modelY, modelXLon, modelYLon, modelXLat, modelYLat);}
+              //              if (y==0) { CDBDebug("modelXY[%d,%d] {%d} (%f, %f) (%f,%f) (%f,%f) =>", x, y, gridRelative, modelX, modelY, modelXLon, modelYLon, modelXLat, modelYLat);}
               double distLon=hypot(modelXLon-modelX, modelYLon-modelY);
               double distLat=hypot(modelXLat-modelX, modelYLat-modelY);
               //          if (y==0) { CDBDebug("(%f, %f) (%f,%f) (%f,%f): %f, %f {%d}\n", modelX,modelY, modelXLon, modelYLon, modelXLat, modelYLat, distLon, distLat, gridRelative); }
@@ -349,24 +350,24 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
               warper->reprojfromLatLon(modelX, modelY); // latlon to vis proj.
               warper->reprojfromLatLon(modelXLon, modelYLon);
               warper->reprojfromLatLon(modelXLat, modelYLat);
-
+              
               if (y==0) { CDBDebug("modelXY[%d,%d] {%d} {%f,%f} (%f,%f) (%f,%f) =>", x, y, gridRelative, modelX, modelY, modelXLon, modelYLon, modelXLat, modelYLat);}
               
               double distLon=hypot(modelXLon-modelX, modelYLon-modelY);
               double distLat=hypot(modelXLat-modelX, modelYLat-modelY);
-            
+              
               VJaa=(modelXLon-modelX)/distLon;
               VJab=(modelXLat-modelX)/distLat;
               VJba=(modelYLon-modelY)/distLon;
               VJbb=(modelYLat-modelY)/distLat;
-
+              
               if (y==0) { CDBDebug("jaco: %f,%f,%f,%f\n", VJaa, VJab, VJba, VJbb);}
               
               double magnitude=hypot(uValues[p], vValues[p]);
               double uu;
               double vv;
-/*              uu = VJaa*uValues[p]+VJab*vValues[p];
-              vv = VJba*uValues[p]+VJbb*vValues[p];*/
+              /*              uu = VJaa*uValues[p]+VJab*vValues[p];
+               *              vv = VJba*uValues[p]+VJbb*vValues[p];*/
               vv = VJaa*uValues[p]+VJab*vValues[p];
               uu =-( VJba*uValues[p]+VJbb*vValues[p]);
               
@@ -375,20 +376,20 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
               uValues[p]=uu*magnitude/newMagnitude;
               vValues[p]=vv*magnitude/newMagnitude;
               //           if (y==0) {CDBDebug("==> (%f,%f)",uValues[p], vValues[p]);}    
-//              uValues[p]=6;
-//              vValues[p]=0;
-    
-            }
-            //          drawImage->circle(modelX, modelY,3, 240);
-            //          if (y==0) { CDBDebug("(%f, %f, %f,%f)\n", VJaa, VJab, VJba, VJbb);}
-            
-//                      uValues[p]=0;
-//                    vValues[p]=6;
-//             double u = uValues[p];
-//             uValues[p]=vValues[p];
-//             vValues[p]=uValues[p];
-
-  }
+              //              uValues[p]=6;
+              //              vValues[p]=0;
+              
+      }
+      //          drawImage->circle(modelX, modelY,3, 240);
+      //          if (y==0) { CDBDebug("(%f, %f, %f,%f)\n", VJaa, VJab, VJba, VJbb);}
+      
+      //                      uValues[p]=0;
+      //                    vValues[p]=6;
+      //             double u = uValues[p];
+      //             uValues[p]=vValues[p];
+      //             vValues[p]=uValues[p];
+      
+}
 }
 }
 #ifdef CImgWarpBilinear_DEBUG
@@ -411,7 +412,7 @@ for(size_t varNr=0;varNr<sourceImage->dataObject.size();varNr++){
   size_t drawImageSize = dImageWidth*dImageHeight;
   //Set default nodata values
   for(size_t j=0;j<drawImageSize;j++)valueData[j]=fNodataValue;
-               //start drawing triangles
+  //start drawing triangles
   #if defined(CImgWarpBilinear_DEBUG) || defined(CImgWarpBilinear_TIME)
   StopWatch_Stop("Start triangle generation");
   #endif
@@ -463,9 +464,9 @@ for(size_t varNr=0;varNr<sourceImage->dataObject.size();varNr++){
          *              //Fill lower left side
          *        yP[1]=dpDestY[p01];xP[1]=dpDestX[p01];vP[1]=fpValues[p01];
          *        fillTriangleGouraud(valueData, vP, dImageWidth,dImageHeight, xP,yP);
-        }
-        }*/
-        }
+         }
+    }*/
+    }
   }
 }
 
@@ -501,8 +502,10 @@ if((enableVector||enableBarb)){
     units=sourceImage->dataObject[0]->units;
     CDBDebug("units = %s", units.c_str());
     if (!(units.equals("kts")||units.equals("knots"))) convertToKnots=true;
-         
-         //Number of pixels between the vectors:
+    
+    
+    
+    //Number of pixels between the vectors:
     int vectorDensityPy=50;//22;
     int vectorDensityPx=50;//22;
     firstXPos=int(tx)%vectorDensityPy;
@@ -577,520 +580,520 @@ if(((enableVector||enableBarb)&&drawGridVectors)){
   
   int stepx=int(float(wantedSpacing)/distPoint+0.5);
   if (stepx<1) stepx=1;
-         int stepy=stepx;
+  int stepy=stepx;
   if(sourceImage->dataObject.size()==2){
     bool doprint=true;
     for(int y=dPixelExtent[1];y<dPixelExtent[3];y=y+stepy){ //TODO Refactor to GridExtent
-         for(int x=dPixelExtent[0];x<dPixelExtent[2];x=x+stepx){
-           size_t p = size_t((x-(dPixelExtent[0]))+((y-(dPixelExtent[1]))*dPixelDestW));
-           //double destX,destY;
-           // size_t pSrcData = size_t(x+y*dfSourceW);//TODO Refactor to GridWidth
-           
-           //Skip rest if x,y outside drawArea
-           if ((dpDestX[p]>=0)&&(dpDestX[p]<dImageWidth)&&(dpDestY[p]>=0)&&(dpDestY[p]<dImageHeight)){
-             double direction;
-             //double pi=3.141592654;
-             double strength;
-             double u=valObj[0].fpValues[p];
-             double v=valObj[1].fpValues[p];
-             //             drawImage->circle(dpDestX[p], dpDestY[p]pi, 2, 246);
-             
-             if((u!=fNodataValue)&&(v!=fNodataValue)) {
-               direction=atan2(v,u);
-               
-               strength=sqrt(u*u+v*v);
-               //               valObj[0].valueData[p]=strength;
-               
-               //Calculate coordinates from requested coordinate system to determine barb flip
-               double modelX=dfSourcedExtW*double(x)+dfSourceOrigX;
-               double modelY=dfSourcedExtH*double(y)+dfSourceOrigY;
-               //double XX=modelX; double YY=modelY;
-               warper->reprojToLatLon(modelX,modelY);
-               
-               bool flip=modelY<0; //Remember if we have to flip barb dir for southern hemisphere
-               flip=false;
-               //                if ((fabs(projectedCoordX)<0.8)&&(fabs(projectedCoordY-52)<1)) {
-//  CDBDebug("[%d,%d] p=%d {w=%d} (%f,%f) MLL:{%f,%f} LL:{%f,%f} [%d,%d]", x, y, p, dPixelDestW, u, v, modelX, modelY, XX, YY, dpDestX[p], dpDestY[p]);
-  //                }  
-  //Project x,y source grid indexes topi vis. space
-//  double modelX=dfSourcedExtW*double(x)+dfSourceOrigX;
-//  double modelY=dfSourcedExtH*double(y)+dfSourceOrigY;
-//  warper->reprojpoint_inv(modelX,modelY); // model to vis proj.
-  
-  //               if (y==0) {CDBDebug("PLOT %d,%d at %d,%d {%f} (%f,%f)", x, y, dpDestX[p], dpDestY[p], p, direction, strength);}
-  CalculatedWindVector wv(dpDestX[p], dpDestY[p], direction, strength,convertToKnots,flip);
-  windVectors.push_back(wv);
+        for(int x=dPixelExtent[0];x<dPixelExtent[2];x=x+stepx){
+          size_t p = size_t((x-(dPixelExtent[0]))+((y-(dPixelExtent[1]))*dPixelDestW));
+          //double destX,destY;
+          // size_t pSrcData = size_t(x+y*dfSourceW);//TODO Refactor to GridWidth
+          
+          //Skip rest if x,y outside drawArea
+          if ((dpDestX[p]>=0)&&(dpDestX[p]<dImageWidth)&&(dpDestY[p]>=0)&&(dpDestY[p]<dImageHeight)){
+            double direction;
+            //double pi=3.141592654;
+            double strength;
+            double u=valObj[0].fpValues[p];
+            double v=valObj[1].fpValues[p];
+            //             drawImage->circle(dpDestX[p], dpDestY[p]pi, 2, 246);
+            
+            if((u!=fNodataValue)&&(v!=fNodataValue)) {
+              direction=atan2(v,u);
+              
+              strength=sqrt(u*u+v*v);
+              //               valObj[0].valueData[p]=strength;
+              
+              //Calculate coordinates from requested coordinate system to determine barb flip
+              double modelX=dfSourcedExtW*double(x)+dfSourceOrigX;
+              double modelY=dfSourcedExtH*double(y)+dfSourceOrigY;
+              //double XX=modelX; double YY=modelY;
+              warper->reprojToLatLon(modelX,modelY);
+              
+              bool flip=modelY<0; //Remember if we have to flip barb dir for southern hemisphere
+              flip=false;
+              //                if ((fabs(projectedCoordX)<0.8)&&(fabs(projectedCoordY-52)<1)) {
+                //  CDBDebug("[%d,%d] p=%d {w=%d} (%f,%f) MLL:{%f,%f} LL:{%f,%f} [%d,%d]", x, y, p, dPixelDestW, u, v, modelX, modelY, XX, YY, dpDestX[p], dpDestY[p]);
+              //                }  
+              //Project x,y source grid indexes topi vis. space
+              //  double modelX=dfSourcedExtW*double(x)+dfSourceOrigX;
+              //  double modelY=dfSourcedExtH*double(y)+dfSourceOrigY;
+              //  warper->reprojpoint_inv(modelX,modelY); // model to vis proj.
+              
+              //               if (y==0) {CDBDebug("PLOT %d,%d at %d,%d {%f} (%f,%f)", x, y, dpDestX[p], dpDestY[p], p, direction, strength);}
+              CalculatedWindVector wv(dpDestX[p], dpDestY[p], direction, strength,convertToKnots,flip);
+              windVectors.push_back(wv);
+            }
+          }
+        }
+        doprint=false;
+    }
   }
+}
+//Make Contour if desired
+//drawContour(valueData,fNodataValue,500,5000,drawImage);
+if(enableContour||enableShade){
+  drawContour(valueData,fNodataValue,shadeInterval,contourSmallInterval,contourBigInterval,
+              sourceImage,drawImage,enableContour,enableShade,enableContour);
+}
+
+/*
+ *    for(int y=dPixelExtent[1];y<dPixelExtent[3];y++){
+ *    for(int x=dPixelExtent[0];x<dPixelExtent[2];x++){
+ *    size_t p = size_t((x-(dPixelExtent[0]))+((y-(dPixelExtent[1]))*dPixelDestW));
+ *    for(int y1=-2;y1<4;y1++){
+ *    for(int x1=-2;x1<4;x1++){
+ *    drawImage->setPixel(dpDestX[p]+x1,dpDestY[p]+y1,248);
+ * }
+ * }
+ * 
+ * for(int y1=-1;y1<3;y1++){
+ *  for(int x1=-1;x1<3;x1++){
+ *  setValuePixel(sourceImage,drawImage,dpDestX[p]+x1,dpDestY[p]+y1,fpValues[p]);
+ }
+ }
+ }
+ }*/
+/*if(drawMap==true)
+ *    {
+ *      for(int y=0;y<dImageHeight;y++){
+ *        for(int x=0;x<dImageWidth;x++){
+ *          setValuePixel(sourceImage,drawImage,x,y,valObj[0].valueData[x+y*dImageWidth]);
+ * }
+ * }
+ * }*/
+
+//                  if (enableVector) drawImage->drawVector(x,y,direction,strength,240);
+//                  if (enableBarb) drawImage->drawBarb(x,y,direction,strength,240,convertToKnots,flip);
+//                    
+if (enableVector) {
+  CalculatedWindVector wv;
+  for (size_t sz=0; sz<windVectors.size();sz++) {
+    wv=windVectors[sz];
+    drawImage->drawVector(wv.x, wv.y, wv.dir, wv.strength, 240);
+  }
+}                 
+if (enableBarb) {
+  CalculatedWindVector wv;
+  for (size_t sz=0; sz<windVectors.size();sz++) {
+    wv=windVectors[sz];
+    drawImage->drawBarb(wv.x, wv.y, wv.dir, wv.strength, 240,wv.convertToKnots,wv.flip);
+  }
+}                 
+
+//Clean up
+delete[] dpDestX;
+delete[] dpDestY;
+delete[] valObj;
+ }
+ 
+ 
+ 
+ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float interval,float smallContInterval,float bigContInterval,CDataSource *dataSource,CDrawImage *drawImage,bool drawLine, bool drawShade, bool drawText){
+   float val[4];
+   //drawText=false;
+   
+   
+   //When using min/max stretching, the classes need to be extended according to its shade itnerval
+   if(dataSource->stretchMinMax==true){
+     if(dataSource->statistics!=NULL){
+       float legendInterval=interval;
+       float minValue=(float)dataSource->statistics->getMinimum();
+       float maxValue=(float)dataSource->statistics->getMaximum();
+       float iMin=convertValueToClass(minValue,legendInterval);
+       float iMax=convertValueToClass(maxValue,legendInterval)+legendInterval;
+       //Calculate new scale and offset for this:
+       float ls=240/((iMax-iMin));
+       float lo=-(iMin*ls);
+       dataSource->legendScale=ls;
+       dataSource->legendOffset=lo;
+     }
+   }
+   #ifdef CImgWarpBilinear_DEBUG 
+   CDBDebug("scale=%f offset=%f",dataSource->legendScale,dataSource->legendOffset);
+   #endif  
+   
+   int col1=244;
+   int col2=243;
+   int drawnTextY=0;
+   int drawnTextX=0;
+   float ival = interval;
+   //   float ivalLine = interval;
+   //float idval=int(ival+0.5);
+   //  if(idval<1)idval=1;
+   //TODO
+   
+   char szTemp[8192];
+   int dImageWidth=drawImage->Geo->dWidth+1;
+   int dImageHeight=drawImage->Geo->dHeight+1;
+   
+   size_t imageSize=(dImageHeight+0)*(dImageWidth+1);
+   #ifdef CImgWarpBilinear_DEBUG
+   CDBDebug("imagesize = %d",(int)imageSize);
+   #endif
+   unsigned int *distance = NULL;
+   
+   distance = new unsigned int[imageSize];
+   memset (distance,0,imageSize*sizeof(unsigned int));
+   
+   #ifdef CImgWarpBilinear_DEBUG
+   CDBDebug("distance field cleared");
+   #endif
+   
+   
+   /* for(int y=0;y<dImageHeight;y++){
+    *    for(int x=0;x<dImageWidth+1;x++){
+    *      size_t p1 = size_t(x+y*dImageWidth);
+    *      //valueData[p1]=100.0f;
+   }
+   }*/
+   /*FILE * pFile;
+    *  pFile = fopen ( "/nobackup/users/plieger/eclipseworkspace/cpp/adagucserver-2011-02-04/adagucserverEC/src/test.bin" , "wb" );
+    *  CT::string ascii;
+    *  ascii.printconcat("nrcols %d\n",dImageWidth);
+    *  ascii.printconcat("nrrows %d\n",dImageHeight);
+    *  ascii.printconcat("xllcorner 0\n");
+    *  ascii.printconcat("yllcorner 0\n");
+    *  ascii.printconcat("cellsize 1\n");
+    *  
+    *  for(int y=0;y<dImageHeight;y++){
+    *    for(int x=0;x<dImageWidth+1;x++){
+    *      ascii.printconcat("%0.2f ",valueData[x+y*dImageWidth]);
+   }
+   ascii.concat("\n");
+   }
+   fwrite (ascii.c_str() , ascii.length() , sizeof(char) , pFile );
+   fclose (pFile);*/
+   /*float allowedDifference=(1.0f/(1000/ival));
+    *  for(int y=0;y<dImageHeight;y++){
+    *    for(int x=0;x<dImageWidth+1;x++){
+    *      float a=int(valueData[x+y*dImageWidth]/allowedDifference);
+    *      a*=allowedDifference;
+    *      valueData[x+y*dImageWidth]=a;
+   }
+   }*/
+   
+   
+   float allowedDifference=ival/100000;
+   if(1==1){
+     #ifdef CImgWarpBilinear_TIME
+     StopWatch_Stop("substracting ival/100");
+     #endif
+     //TODO "pleister" om contourlijnen goed te krijgen.
+     float substractVal=ival/100;
+     CDBDebug("*** substractVal=%f ival=%f",substractVal,ival);
+     //substractVal=0.01;
+     for(int y=0;y<dImageHeight;y++){
+       for(int x=0;x<dImageWidth;x++){
+         //float a=int(valueData[x+y*dImageWidth]/allowedDifference);
+         //a*=allowedDifference;
+         valueData[x+y*dImageWidth]-=substractVal;
+         //valueData[x+y*dImageWidth]-=0.1;
+       }
+     }
+     fNodataValue-=substractVal;
+     #ifdef CImgWarpBilinear_TIME
+     StopWatch_Stop("finished substracting ival/100");
+     #endif
+   }
+   #ifdef CImgWarpBilinear_DEBUG
+   CDBDebug("start shade/contour with nodatavalue %f",fNodataValue);
+   //size_t p1 = size_t(0+0*dImageWidth);
+   //CDBDebug("Field value at (0,0) = %f",valueData[p1]);
+   #endif
+   
+   
+   for(int y=0;y<dImageHeight-1;y++){
+     for(int x=0;x<dImageWidth-1;x++){
+       size_t p1 = size_t(x+y*dImageWidth);
+       val[0] = valueData[p1];
+       val[1] = valueData[p1+1];
+       val[2] = valueData[p1+dImageWidth];
+       val[3] = valueData[p1+dImageWidth+1];
+       if(val[0]!=fNodataValue&&val[1]!=fNodataValue&&val[2]!=fNodataValue&&val[3]!=fNodataValue&&
+         val[0]==val[0]&&val[1]==val[1]&&val[2]==val[2]&&val[3]==val[3]
+       ){
+         float min,max;
+         min=val[0];max=val[0];
+         for(int j=1;j<3;j++){
+           if(val[j]<min)min=val[j];
+           if(val[j]>max)max=val[j];
+         }
+         float difference=max-min;
+         
+         min=convertValueToClass(min,ival);
+         max=convertValueToClass(max,ival)+ival;
+         
+         if(drawShade){
+           //setValuePixel(dataSource,drawImage,x,y,(min+max)/2);
+           
+           setValuePixel(dataSource,drawImage,x,y,min);
+           
+           //setValuePixel(dataSource,drawImage,x,y,val[0]);
+         }
+         if((max-min)/ival<3&&(max-min)/ival>1&&difference>allowedDifference){
+           for(double c=min;c<max;c=c+ival){
+             if((val[0]>=c&&val[1]<c)||(val[0]>c&&val[1]<=c)||(val[0]<c&&val[1]>=c)||(val[0]<=c&&val[1]>c)||
+               (val[0]>c&&val[2]<=c)||(val[0]>=c&&val[2]<c)||(val[0]<=c&&val[2]>c)||(val[0]<c&&val[2]>=c))
+             {
+               float c = valueData[x+y*dImageWidth];
+               int bigC;int smallC;int modulo;
+               modulo=int((bigContInterval/ival)+0.5f);
+               if(modulo>0){bigC=(int((fabs(c)/ival)+0.5f))%modulo;}else bigC=1;
+               modulo=int((smallContInterval/ival)+0.5f);
+               if(modulo>0){smallC=(int((fabs(c)/ival)+0.5f))%modulo;}else smallC=1;
+               if(bigC==0||smallC==0){
+                 distance[x+y*dImageWidth]=1;
+               }
              }
            }
-           doprint=false;
          }
-    }
-  }
-  //Make Contour if desired
-  //drawContour(valueData,fNodataValue,500,5000,drawImage);
-  if(enableContour||enableShade){
-    drawContour(valueData,fNodataValue,shadeInterval,contourSmallInterval,contourBigInterval,
-                sourceImage,drawImage,enableContour,enableShade,enableContour);
-  }
-  
-  /*
-   *    for(int y=dPixelExtent[1];y<dPixelExtent[3];y++){
-   *    for(int x=dPixelExtent[0];x<dPixelExtent[2];x++){
-   *    size_t p = size_t((x-(dPixelExtent[0]))+((y-(dPixelExtent[1]))*dPixelDestW));
-   *    for(int y1=-2;y1<4;y1++){
-   *    for(int x1=-2;x1<4;x1++){
-   *    drawImage->setPixel(dpDestX[p]+x1,dpDestY[p]+y1,248);
-}
-}
-
-for(int y1=-1;y1<3;y1++){
-  for(int x1=-1;x1<3;x1++){
-  setValuePixel(sourceImage,drawImage,dpDestX[p]+x1,dpDestY[p]+y1,fpValues[p]);
-}
-}
-}
-}*/
-  /*if(drawMap==true)
-   *    {
-   *      for(int y=0;y<dImageHeight;y++){
-   *        for(int x=0;x<dImageWidth;x++){
-   *          setValuePixel(sourceImage,drawImage,x,y,valObj[0].valueData[x+y*dImageWidth]);
-}
-}
-}*/
-  
-  //                  if (enableVector) drawImage->drawVector(x,y,direction,strength,240);
-  //                  if (enableBarb) drawImage->drawBarb(x,y,direction,strength,240,convertToKnots,flip);
-  //                    
-  if (enableVector) {
-    CalculatedWindVector wv;
-    for (size_t sz=0; sz<windVectors.size();sz++) {
-      wv=windVectors[sz];
-      drawImage->drawVector(wv.x, wv.y, wv.dir, wv.strength, 240);
-    }
-  }                 
-  if (enableBarb) {
-    CalculatedWindVector wv;
-    for (size_t sz=0; sz<windVectors.size();sz++) {
-      wv=windVectors[sz];
-      drawImage->drawBarb(wv.x, wv.y, wv.dir, wv.strength, 240,wv.convertToKnots,wv.flip);
-    }
-  }                 
-  
-  //Clean up
-  delete[] dpDestX;
-  delete[] dpDestY;
-  delete[] valObj;
-}
-
-
-
-void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float interval,float smallContInterval,float bigContInterval,CDataSource *dataSource,CDrawImage *drawImage,bool drawLine, bool drawShade, bool drawText){
-  float val[4];
-  //drawText=false;
-  
-  
-  //When using min/max stretching, the classes need to be extended according to its shade itnerval
-  if(dataSource->stretchMinMax==true){
-    if(dataSource->statistics!=NULL){
-      float legendInterval=interval;
-      float minValue=(float)dataSource->statistics->getMinimum();
-      float maxValue=(float)dataSource->statistics->getMaximum();
-      float iMin=convertValueToClass(minValue,legendInterval);
-      float iMax=convertValueToClass(maxValue,legendInterval)+legendInterval;
-      //Calculate new scale and offset for this:
-      float ls=240/((iMax-iMin));
-      float lo=-(iMin*ls);
-      dataSource->legendScale=ls;
-      dataSource->legendOffset=lo;
-    }
-  }
-  #ifdef CImgWarpBilinear_DEBUG 
-  CDBDebug("scale=%f offset=%f",dataSource->legendScale,dataSource->legendOffset);
-  #endif  
-  
-  int col1=244;
-  int col2=243;
-  int drawnTextY=0;
-  int drawnTextX=0;
-  float ival = interval;
-  //   float ivalLine = interval;
-  //float idval=int(ival+0.5);
-  //  if(idval<1)idval=1;
-  //TODO
-  
-  char szTemp[8192];
-  int dImageWidth=drawImage->Geo->dWidth+1;
-  int dImageHeight=drawImage->Geo->dHeight+1;
-  
-  size_t imageSize=(dImageHeight+0)*(dImageWidth+1);
-  #ifdef CImgWarpBilinear_DEBUG
-  CDBDebug("imagesize = %d",(int)imageSize);
-  #endif
-  unsigned int *distance = NULL;
-  
-  distance = new unsigned int[imageSize];
-  memset (distance,0,imageSize*sizeof(unsigned int));
-  
-  #ifdef CImgWarpBilinear_DEBUG
-  CDBDebug("distance field cleared");
-  #endif
-  
-  
-  /* for(int y=0;y<dImageHeight;y++){
-   *    for(int x=0;x<dImageWidth+1;x++){
-   *      size_t p1 = size_t(x+y*dImageWidth);
-   *      //valueData[p1]=100.0f;
-}
-}*/
-  /*FILE * pFile;
-   *  pFile = fopen ( "/nobackup/users/plieger/eclipseworkspace/cpp/adagucserver-2011-02-04/adagucserverEC/src/test.bin" , "wb" );
-   *  CT::string ascii;
-   *  ascii.printconcat("nrcols %d\n",dImageWidth);
-   *  ascii.printconcat("nrrows %d\n",dImageHeight);
-   *  ascii.printconcat("xllcorner 0\n");
-   *  ascii.printconcat("yllcorner 0\n");
-   *  ascii.printconcat("cellsize 1\n");
-   *  
-   *  for(int y=0;y<dImageHeight;y++){
-   *    for(int x=0;x<dImageWidth+1;x++){
-   *      ascii.printconcat("%0.2f ",valueData[x+y*dImageWidth]);
-}
-ascii.concat("\n");
-}
-fwrite (ascii.c_str() , ascii.length() , sizeof(char) , pFile );
-  fclose (pFile);*/
-  /*float allowedDifference=(1.0f/(1000/ival));
-   *  for(int y=0;y<dImageHeight;y++){
-   *    for(int x=0;x<dImageWidth+1;x++){
-   *      float a=int(valueData[x+y*dImageWidth]/allowedDifference);
-   *      a*=allowedDifference;
-   *      valueData[x+y*dImageWidth]=a;
-}
-}*/
-  
-  
-  float allowedDifference=ival/100000;
-  if(1==1){
-    #ifdef CImgWarpBilinear_TIME
-    StopWatch_Stop("substracting ival/100");
-    #endif
-    //TODO "pleister" om contourlijnen goed te krijgen.
-    float substractVal=ival/100;
-    CDBDebug("*** substractVal=%f ival=%f",substractVal,ival);
-    //substractVal=0.01;
-    for(int y=0;y<dImageHeight;y++){
-      for(int x=0;x<dImageWidth;x++){
-        //float a=int(valueData[x+y*dImageWidth]/allowedDifference);
-        //a*=allowedDifference;
-        valueData[x+y*dImageWidth]-=substractVal;
-        //valueData[x+y*dImageWidth]-=0.1;
-      }
-    }
-    fNodataValue-=substractVal;
-    #ifdef CImgWarpBilinear_TIME
-    StopWatch_Stop("finished substracting ival/100");
-    #endif
-  }
-  #ifdef CImgWarpBilinear_DEBUG
-  CDBDebug("start shade/contour with nodatavalue %f",fNodataValue);
-  //size_t p1 = size_t(0+0*dImageWidth);
-  //CDBDebug("Field value at (0,0) = %f",valueData[p1]);
-  #endif
-  
-  
-  for(int y=0;y<dImageHeight-1;y++){
-    for(int x=0;x<dImageWidth-1;x++){
-      size_t p1 = size_t(x+y*dImageWidth);
-      val[0] = valueData[p1];
-      val[1] = valueData[p1+1];
-      val[2] = valueData[p1+dImageWidth];
-      val[3] = valueData[p1+dImageWidth+1];
-      if(val[0]!=fNodataValue&&val[1]!=fNodataValue&&val[2]!=fNodataValue&&val[3]!=fNodataValue&&
-        val[0]==val[0]&&val[1]==val[1]&&val[2]==val[2]&&val[3]==val[3]
-      ){
-        float min,max;
-        min=val[0];max=val[0];
-        for(int j=1;j<3;j++){
-          if(val[j]<min)min=val[j];
-                   if(val[j]>max)max=val[j];
-        }
-        float difference=max-min;
-        
-        min=convertValueToClass(min,ival);
-        max=convertValueToClass(max,ival)+ival;
-        
-        if(drawShade){
-          //setValuePixel(dataSource,drawImage,x,y,(min+max)/2);
-          
-          setValuePixel(dataSource,drawImage,x,y,min);
-          
-          //setValuePixel(dataSource,drawImage,x,y,val[0]);
-        }
-        if((max-min)/ival<3&&(max-min)/ival>1&&difference>allowedDifference){
-          for(double c=min;c<max;c=c+ival){
-            if((val[0]>=c&&val[1]<c)||(val[0]>c&&val[1]<=c)||(val[0]<c&&val[1]>=c)||(val[0]<=c&&val[1]>c)||
-              (val[0]>c&&val[2]<=c)||(val[0]>=c&&val[2]<c)||(val[0]<=c&&val[2]>c)||(val[0]<c&&val[2]>=c))
-            {
-              float c = valueData[x+y*dImageWidth];
-              int bigC;int smallC;int modulo;
-              modulo=int((bigContInterval/ival)+0.5f);
-              if(modulo>0){bigC=(int((fabs(c)/ival)+0.5f))%modulo;}else bigC=1;
-                   modulo=int((smallContInterval/ival)+0.5f);
-                   if(modulo>0){smallC=(int((fabs(c)/ival)+0.5f))%modulo;}else smallC=1;
-                   if(bigC==0||smallC==0){
-                     distance[x+y*dImageWidth]=1;
+       }
+       if(drawnTextX>0)drawnTextX--;
+     }
+     if(drawnTextY>0)drawnTextY--;
+   }
+   #ifdef CImgWarpBilinear_DEBUG
+   CDBDebug("finished shade/contour");
+   #endif
+   
+   #ifdef CImgWarpBilinear_DEBUG
+   CDBDebug("Starting to draw lines and text");
+   #endif
+   
+   //Start tr
+   //  int xdir[]={0,0,-1,-1,-1, 0, 1, 1, 1,0,-1,-2,-2,-2,-2,-2,-1, 0, 1, 2, 2, 2, 2, 2, 1, 0};
+   //  int ydir[]={0,1, 1, 0,-1,-1,-1, 0, 1,2, 2, 2, 1, 0,-1,-2,-2,-2,-2,-2,-1, 0, 1, 2, 2, 0};
+   
+   int xdir[]={0,-1, 0, 1,-1,-1, 1, 1,0,-1,-2,-2,-2,-2,-2,-1, 0, 1, 2, 2, 2, 2, 2, 1, 0};
+   int ydir[]={1,0 ,-1, 0, 1,-1,-1, 1,2, 2, 2, 1, 0,-1,-2,-2,-2,-2,-2,-1, 0, 1, 2, 2, 0};
+   
+   //  int xdir[]={0,0,-1,-1,-1, 0, 1, 1, 1};
+   //int ydir[]={0,1, 1, 0,-1,-1,-1, 0, 1};
+   ;
+   
+   //A line can be traversed in two directions:
+   int secondDirX,secondDirY;
+   bool secondDirAvailable=false;
+   
+   
+   int linePointDistance=6;
+   
+   for(int y=0;y<dImageHeight;y++){
+     for(int x=0;x<dImageWidth;x++){        
+       if(secondDirAvailable){
+         int j;
+         secondDirAvailable=false;
+         x=secondDirX;
+         y=secondDirY;
+         for(j=0;j<25;j++){
+           if(x+xdir[j]>=1&&x+xdir[j]<dImageWidth-1&&
+             y+ydir[j]>=1&&y+ydir[j]<dImageHeight-1){
+             if(distance[x+xdir[j]+(y+ydir[j])*dImageWidth]==1){
+               x=x+xdir[j];
+               y=y+ydir[j];
+               //{CDBDebug("FOUND SECOND DIR");};
+               //drawImage->line(x,y,x+4,y+4,2,240);
+               break;
+             }
+             }
+         }
+       }
+       
+       int maxneighbordist=(int)distance[x+y*dImageWidth];
+       if(maxneighbordist==1){
+         distance[x+y*dImageWidth]=2;
+         maxneighbordist++;
+         int j,tx=x,ty=y;
+         int startX=x,startY=y;
+         
+         if(secondDirAvailable==false){
+           secondDirAvailable=true;
+           secondDirX=x;secondDirY=y;
+         }
+         
+         //drawImage->line(x,y,x+4,y+4,2,244);
+         int col=col2;
+         float w;
+         
+         int lastXdir=-10,lastYdir;
+         int distanceFromStart=0;
+         int drawnText=0;
+         int busyDrawingText=0;
+         int drawTextStartX=0;
+         int drawTextStartY=0;
+         int needToDrawText=0;
+         int textAreaLeft=25;//int(float(dImageWidth)*(1.0f/10.0f));
+         int textAreaRight=dImageWidth-25;//int(float(dImageWidth)*(9.0f/10.0f));
+         do{
+           for(j=0;j<24;j++){
+             if(x+xdir[j]>=1&&x+xdir[j]<dImageWidth-1&&
+               y+ydir[j]>=1&&y+ydir[j]<dImageHeight-1){
+               int d=distance[x+xdir[j]+(y+ydir[j])*dImageWidth];
+             //(abs(startY-y)<2)
+               
+               if(drawText){
+                 if(d%500==499){
+                   drawnText=0;needToDrawText=0;
+                 }
+                 if(needToDrawText==0){
+                   if((d%100==29)&&x>textAreaLeft&&x<textAreaRight&&y>24&&y<dImageHeight-25&&drawnText==0){
+                     needToDrawText=1;
                    }
-            }
-          }
-        }
-      }
-      if(drawnTextX>0)drawnTextX--;
-    }
-    if(drawnTextY>0)drawnTextY--;
-  }
-  #ifdef CImgWarpBilinear_DEBUG
-  CDBDebug("finished shade/contour");
-  #endif
-  
-  #ifdef CImgWarpBilinear_DEBUG
-  CDBDebug("Starting to draw lines and text");
-  #endif
-  
-  //Start tr
-  //  int xdir[]={0,0,-1,-1,-1, 0, 1, 1, 1,0,-1,-2,-2,-2,-2,-2,-1, 0, 1, 2, 2, 2, 2, 2, 1, 0};
-  //  int ydir[]={0,1, 1, 0,-1,-1,-1, 0, 1,2, 2, 2, 1, 0,-1,-2,-2,-2,-2,-2,-1, 0, 1, 2, 2, 0};
-  
-  int xdir[]={0,-1, 0, 1,-1,-1, 1, 1,0,-1,-2,-2,-2,-2,-2,-1, 0, 1, 2, 2, 2, 2, 2, 1, 0};
-  int ydir[]={1,0 ,-1, 0, 1,-1,-1, 1,2, 2, 2, 1, 0,-1,-2,-2,-2,-2,-2,-1, 0, 1, 2, 2, 0};
-  
-  //  int xdir[]={0,0,-1,-1,-1, 0, 1, 1, 1};
-  //int ydir[]={0,1, 1, 0,-1,-1,-1, 0, 1};
-  ;
-  
-  //A line can be traversed in two directions:
-  int secondDirX,secondDirY;
-  bool secondDirAvailable=false;
-  
-  
-  int linePointDistance=6;
-  
-  for(int y=0;y<dImageHeight;y++){
-    for(int x=0;x<dImageWidth;x++){        
-      if(secondDirAvailable){
-        int j;
-        secondDirAvailable=false;
-        x=secondDirX;
-        y=secondDirY;
-        for(j=0;j<25;j++){
-          if(x+xdir[j]>=1&&x+xdir[j]<dImageWidth-1&&
-            y+ydir[j]>=1&&y+ydir[j]<dImageHeight-1){
-            if(distance[x+xdir[j]+(y+ydir[j])*dImageWidth]==1){
-              x=x+xdir[j];
-              y=y+ydir[j];
-              //{CDBDebug("FOUND SECOND DIR");};
-              //drawImage->line(x,y,x+4,y+4,2,240);
-              break;
-              }
-            }
-            }
-        }
-        
-        int maxneighbordist=(int)distance[x+y*dImageWidth];
-        if(maxneighbordist==1){
-          distance[x+y*dImageWidth]=2;
-          maxneighbordist++;
-          int j,tx=x,ty=y;
-          int startX=x,startY=y;
-          
-          if(secondDirAvailable==false){
-            secondDirAvailable=true;
-            secondDirX=x;secondDirY=y;
-          }
-          
-          //drawImage->line(x,y,x+4,y+4,2,244);
-          int col=col2;
-          float w;
-          
-          int lastXdir=-10,lastYdir;
-          int distanceFromStart=0;
-          int drawnText=0;
-          int busyDrawingText=0;
-          int drawTextStartX=0;
-          int drawTextStartY=0;
-          int needToDrawText=0;
-          int textAreaLeft=25;//int(float(dImageWidth)*(1.0f/10.0f));
-          int textAreaRight=dImageWidth-25;//int(float(dImageWidth)*(9.0f/10.0f));
-          do{
-            for(j=0;j<24;j++){
-              if(x+xdir[j]>=1&&x+xdir[j]<dImageWidth-1&&
-                y+ydir[j]>=1&&y+ydir[j]<dImageHeight-1){
-                int d=distance[x+xdir[j]+(y+ydir[j])*dImageWidth];
-              //(abs(startY-y)<2)
-                
-                if(drawText){
-                  if(d%500==499){
-                    drawnText=0;needToDrawText=0;
-                  }
-                  if(needToDrawText==0){
-                    if((d%100==29)&&x>textAreaLeft&&x<textAreaRight&&y>24&&y<dImageHeight-25&&drawnText==0){
-                      needToDrawText=1;
-                    }
-                  }else{
-                    if(drawnText==0){
-                      if(lastXdir!=-10&&lastYdir==0){
-                        if(abs(startY-y)==0&&d>25){
-                          //drawImage->line(x,y,x+4,y+4,2,240);
-                          drawTextStartX=x;
-                          drawTextStartY=y;
-                          drawnText=1;
-                          needToDrawText=0;
-                          float c = valueData[x+y*dImageWidth];
-                          //Calculate which value we need to print for the contourBigInterval
-                          //Add the half of the interval in order to make sure that we are always in the upper bin.
-                          float m=convertValueToClass(c+ival/2,ival);
-                          
-                          int textRounding=0;
-                          if(ival!=0){
-                            float fracPart=ival-int(ival);
-                            textRounding=-int(log10(fracPart)-0.9999999f);
-                          }
-                          float valToPrint=m;//(m*textScaleFactor+textOffsetFactor);
-                          if(textRounding<=0)sprintf(szTemp,"%2.0f",valToPrint);
-                                                if(textRounding==1)sprintf(szTemp,"%2.1f",valToPrint);
-                                                   if(textRounding==2)sprintf(szTemp,"%2.2f",valToPrint);
-                                                      if(textRounding==3)sprintf(szTemp,"%2.3f",valToPrint);
-                                                         if(textRounding==4)sprintf(szTemp,"%2.4f",valToPrint);
-                                                         if(textRounding==5)sprintf(szTemp,"%2.5f",valToPrint);
-                                                         if(textRounding>6)sprintf(szTemp,"%f",valToPrint);
-                                                         /*if(float(int(interval))==interval&&int(m)==m){
-                                                          *                          snprintf(szTemp,10,"%d",int(m*textScaleFactor+textOffsetFactor));
-                                                         }else{
-                                                           //floatToString(szTemp,255,m*textScaleFactor+textOffsetFactor);
-                                                           snprintf(szTemp,10,"%6.1f",(m*textScaleFactor+textOffsetFactor));
-                                                         }*/
-                                                         busyDrawingText=int(float(strlen(szTemp))*1.3)+2;
-                        }
-                      }
-                    }
-                  }
-                }
-                if(d==1){
-                  lastXdir=xdir[j];
-                  lastYdir=ydir[j];
-                  x=x+lastXdir;
-                  y=y+lastYdir;
-                  //drawImage->setPixelIndexed(x,y,maxneighbordist%255);
-                  maxneighbordist++;
-                  distance[x+y*dImageWidth]=maxneighbordist;
-                  
-                  distanceFromStart = maxneighbordist-3;
-                  
-                  if(distanceFromStart%linePointDistance==0){
-                    
-                    //Contour type calculations
-                    float c = valueData[x+y*dImageWidth];
-                    int bigC;int smallC;int modulo;
-                    modulo=int((bigContInterval/ival)+0.5f);
-                    if(modulo>0){bigC=(int((fabs(c)/ival)+0.5f))%modulo;}else bigC=1;
-           modulo=int((smallContInterval/ival)+0.5f);
-           if(modulo>0){smallC=(int((fabs(c)/ival)+0.5f))%modulo;}else smallC=1;
-           
-           
-           col1=241;
-           col2=241;
-           col=col2;
-           
-           w=0.4;
-           if(smallC==0){w=0.7;col=col2;}
-           if(bigC==0){w=1.4;col=col1;}
-           //w=0.8;
-           
-           if(drawLine){//&&(distanceFromStart%(linePointDistance*3)>linePointDistance*1)){
-             
-             if(busyDrawingText>0){
-               busyDrawingText--;
-               //busyDrawingText=0;
-               if(busyDrawingText==0){
-                 
-                 //snprintf(szTemp,5,"%f",m);
-                 float l=strlen(szTemp);
-                 double angle;
-                 if(y-drawTextStartY!=0){
-                   angle=atan((double(y-drawTextStartY))/(double(drawTextStartX-x)));
-                 }else angle=0;
-                            float cx=(drawTextStartX+x)/2;
-                 float cy=(drawTextStartY+y)/2;
-                 float tx=cx;
-                 float ty=cy;
-                 //drawImage->rectangle(tx-1,ty-1,tx+1,ty+1, 241,248);
-                 float ca=cos(angle);
-                 float sa=sin(angle);
-                 
-                 float offX=((ca*l*2.3)+(sa*-2.3));
-                 float offY=(-(sa*l*3.0)+(ca*-2.3));
-                 tx-=offX;
-                 ty-=offY;
-                 //drawImage->drawText( int(tx), int(ty), angle,8,szTemp,agg::rgba8(255,255,255,240));
-                 drawImage->drawText( int(tx)+1, int(ty)+1, angle,szTemp,240);
-                 //Draw a line under the text
-                 /*if(l<3&&1==2){
-                  *                          float a=3.1415f/4;
-                  *                          float o=10;
-                  *                          drawImage->line(int(cx+cos(angle-a)*o),int(cy-sin(angle-a)*o),
-                  *                                      int(cx+cos(angle-(a+(3.1415f/2)))*o),int(cy-sin(angle-(a+(3.1415f/2)))*o),0.5,240);
-               }*/
+                 }else{
+                   if(drawnText==0){
+                     if(lastXdir!=-10&&lastYdir==0){
+                       if(abs(startY-y)==0&&d>25){
+                         //drawImage->line(x,y,x+4,y+4,2,240);
+                         drawTextStartX=x;
+                         drawTextStartY=y;
+                         drawnText=1;
+                         needToDrawText=0;
+                         float c = valueData[x+y*dImageWidth];
+                         //Calculate which value we need to print for the contourBigInterval
+                         //Add the half of the interval in order to make sure that we are always in the upper bin.
+                         float m=convertValueToClass(c+ival/2,ival);
+                         
+                         int textRounding=0;
+                         if(ival!=0){
+                           float fracPart=ival-int(ival);
+                           textRounding=-int(log10(fracPart)-0.9999999f);
+                         }
+                         float valToPrint=m;//(m*textScaleFactor+textOffsetFactor);
+                         if(textRounding<=0)sprintf(szTemp,"%2.0f",valToPrint);
+                         if(textRounding==1)sprintf(szTemp,"%2.1f",valToPrint);
+                         if(textRounding==2)sprintf(szTemp,"%2.2f",valToPrint);
+                         if(textRounding==3)sprintf(szTemp,"%2.3f",valToPrint);
+                         if(textRounding==4)sprintf(szTemp,"%2.4f",valToPrint);
+                         if(textRounding==5)sprintf(szTemp,"%2.5f",valToPrint);
+                         if(textRounding>6)sprintf(szTemp,"%f",valToPrint);
+                         /*if(float(int(interval))==interval&&int(m)==m){
+                          *                          snprintf(szTemp,10,"%d",int(m*textScaleFactor+textOffsetFactor));
+                         }else{
+                           //floatToString(szTemp,255,m*textScaleFactor+textOffsetFactor);
+                           snprintf(szTemp,10,"%6.1f",(m*textScaleFactor+textOffsetFactor));
+                         }*/
+                         busyDrawingText=int(float(strlen(szTemp))*1.3)+2;
+                         }
+                         }
+                       }
+                     }
+                   }
+                   if(d==1){
+                     lastXdir=xdir[j];
+                     lastYdir=ydir[j];
+                     x=x+lastXdir;
+                     y=y+lastYdir;
+                     //drawImage->setPixelIndexed(x,y,maxneighbordist%255);
+                     maxneighbordist++;
+                     distance[x+y*dImageWidth]=maxneighbordist;
+                     
+                     distanceFromStart = maxneighbordist-3;
+                     
+                     if(distanceFromStart%linePointDistance==0){
+                       
+                       //Contour type calculations
+                       float c = valueData[x+y*dImageWidth];
+                       int bigC;int smallC;int modulo;
+                       modulo=int((bigContInterval/ival)+0.5f);
+                       if(modulo>0){bigC=(int((fabs(c)/ival)+0.5f))%modulo;}else bigC=1;
+                       modulo=int((smallContInterval/ival)+0.5f);
+                       if(modulo>0){smallC=(int((fabs(c)/ival)+0.5f))%modulo;}else smallC=1;
+                       
+                       
+                       col1=241;
+                       col2=241;
+                       col=col2;
+                       
+                       w=0.4;
+                       if(smallC==0){w=0.7;col=col2;}
+                       if(bigC==0){w=1.4;col=col1;}
+                       //w=0.8;
+                       
+                       if(drawLine){//&&(distanceFromStart%(linePointDistance*3)>linePointDistance*1)){
+                         
+                         if(busyDrawingText>0){
+                           busyDrawingText--;
+                           //busyDrawingText=0;
+                           if(busyDrawingText==0){
+                             
+                             //snprintf(szTemp,5,"%f",m);
+                             float l=strlen(szTemp);
+                             double angle;
+                             if(y-drawTextStartY!=0){
+                               angle=atan((double(y-drawTextStartY))/(double(drawTextStartX-x)));
+                             }else angle=0;
+                             float cx=(drawTextStartX+x)/2;
+                             float cy=(drawTextStartY+y)/2;
+                             float tx=cx;
+                             float ty=cy;
+                             //drawImage->rectangle(tx-1,ty-1,tx+1,ty+1, 241,248);
+                             float ca=cos(angle);
+                             float sa=sin(angle);
+                             
+                             float offX=((ca*l*2.3)+(sa*-2.3));
+                             float offY=(-(sa*l*3.0)+(ca*-2.3));
+                             tx-=offX;
+                             ty-=offY;
+                             //drawImage->drawText( int(tx), int(ty), angle,8,szTemp,agg::rgba8(255,255,255,240));
+                             drawImage->drawText( int(tx)+1, int(ty)+1, angle,szTemp,240);
+                             //Draw a line under the text
+                             /*if(l<3&&1==2){
+                              *                          float a=3.1415f/4;
+                              *                          float o=10;
+                              *                          drawImage->line(int(cx+cos(angle-a)*o),int(cy-sin(angle-a)*o),
+                              *                                      int(cx+cos(angle-(a+(3.1415f/2)))*o),int(cy-sin(angle-(a+(3.1415f/2)))*o),0.5,240);
+                             }*/
+                             
+                           }
+                         }else{
+                           drawImage->line(startX,startY+1,x,y+1,w,col);
+                           //drawImage->moveTo(startX,startY);//,x+1,y+1,w,col);
+                           //drawImage->lineTo(x,y);//,x+1,y+1,w,col);
+                           //drawImage->endLine(col1);//,x+1,y+1,w,col);
+                           //drawImage->setPixelIndexed(startX,startY,241);
+                         }
+                       }else lastXdir=-10;
+                       startX=x;startY=y;
+                     }
+                     j=0;
+                     //break;
+                   }
+                 }
+               }
+               }while(j<24);
+               if(drawLine){
+                 if(lastXdir!=-10&&distanceFromStart > 1){
+                   drawImage->line(x+lastXdir*2,y+lastYdir+1,startX-lastXdir*2,startY-lastYdir+1,w,col);
+                   
+                 }
                  
                }
-             }else{
-               drawImage->line(startX,startY+1,x,y+1,w,col);
-               //drawImage->moveTo(startX,startY);//,x+1,y+1,w,col);
-               //drawImage->lineTo(x,y);//,x+1,y+1,w,col);
-               //drawImage->endLine(col1);//,x+1,y+1,w,col);
-               //drawImage->setPixelIndexed(startX,startY,241);
-             }
-           }else lastXdir=-10;
-                            startX=x;startY=y;
-                  }
-                  j=0;
-           //break;
-                }
-                }
-            }
-          }while(j<24);
-          if(drawLine){
-            if(lastXdir!=-10&&distanceFromStart > 1){
-              drawImage->line(x+lastXdir*2,y+lastYdir+1,startX-lastXdir*2,startY-lastYdir+1,w,col);
-              
-            }
-            
-          }
-          x=tx;y=ty;
-          //return;
-        }
-      }
-      
-    }
-    
-    #ifdef CImgWarpBilinear_DEBUG
-    CDBDebug("Deleting distance[]");
-    #endif
-    
-    delete[] distance;
-    #ifdef CImgWarpBilinear_DEBUG
-    CDBDebug("Finisched drawing lines and text");
-    #endif
-    
-  }
-  
-  
-  void CImgWarpBilinear::smoothData(float *valueData,float fNodataValue,int smoothWindow, int W,int H){
-    //SmootH!
-    #ifdef CImgWarpBilinear_TIME
-    StopWatch_Stop("[SmoothData]");
-    #endif
-    if(smoothWindow==0)return;//No smoothing.
+               x=tx;y=ty;
+               //return;
+           }
+         }
+         
+       }
+       
+       #ifdef CImgWarpBilinear_DEBUG
+       CDBDebug("Deleting distance[]");
+       #endif
+       
+       delete[] distance;
+       #ifdef CImgWarpBilinear_DEBUG
+       CDBDebug("Finisched drawing lines and text");
+       #endif
+       
+     }
+     
+     
+     void CImgWarpBilinear::smoothData(float *valueData,float fNodataValue,int smoothWindow, int W,int H){
+       //SmootH!
+       #ifdef CImgWarpBilinear_TIME
+       StopWatch_Stop("[SmoothData]");
+       #endif
+       if(smoothWindow==0)return;//No smoothing.
   size_t drawImageSize = W*H;
   float *valueData2 = new float[W*H];
   int smw=smoothWindow;
@@ -1143,4 +1146,5 @@ fwrite (ascii.c_str() , ascii.length() , sizeof(char) , pFile );
   #endif
   
   
-  }
+}
+     

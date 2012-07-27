@@ -397,7 +397,11 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
       }
     }
     
-    
+    bool drawBilinear=false;
+    CDBDebug("styleName + %s",dataSource->styleName.c_str());
+    if(dataSource->styleName.indexOf("bilinear")>=0){
+      drawBilinear=true;
+    }
     for(int rowNr=0;rowNr<numRows;rowNr++){ 
       for(int cellNr=0;cellNr<numCells;cellNr++){
         int pSwath = cellNr+rowNr * numCells;
@@ -437,16 +441,26 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
             if(fabs(lon0-lons[j])>5)tileIsTooLarge=true;
             if(fabs(lat0-lats[j])>5)tileIsTooLarge=true;
           }
-          if(tileIsTooLarge==false){
+         
             for(size_t d=0;d<nrDataObjects;d++){
               float *sdata = ((float*)dataSource->dataObject[d]->cdfVariable->data);
               float *swathData = (float*)swathVar[d]->data;
               float vals[4];
               vals[0] = swathData[pSwath];
-              vals[1]=vals[0];//vals[1] = swathData[pSwath+(cellNr==0?1:-1)];
-              vals[2]=vals[0];//vals[2] = swathData[pSwath+bo];
-              vals[3]=vals[0];//vals[3] = swathData[pSwath+bo+(cellNr==0?1:-1)];
+
+              if(drawBilinear){
+                vals[1] = swathData[pSwath+(cellNr==0?1:-1)];
+                vals[2] = swathData[pSwath+bo];
+                vals[3] = swathData[pSwath+bo+(cellNr==0?1:-1)];
+              }else{
+                vals[1]=vals[0];
+                vals[2]=vals[0];
+                vals[3]=vals[0];
+              }
+              
               if(vals[0]==fill)tileHasNoData=true;
+            
+              
               if(tileHasNoData==false){
                 int dlons[4],dlats[4];
                 for(int j=0;j<4;j++){
@@ -457,7 +471,13 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
                 if(dlons[0]>=0&&dlons[0]<dataSource->dWidth&&dlats[0]>0&&dlats[0]<dataSource->dHeight){
                   dataSource->dataObject[d]->points.push_back(PointDV(dlons[0],dlats[0],vals[0]));
                 }
-                fillQuadGouraud(sdata, vals, dataSource->dWidth,dataSource->dHeight, dlons,dlats);
+                if(vals[1]==fill)tileHasNoData=true;
+                if(vals[2]==fill)tileHasNoData=true;
+                if(vals[3]==fill)tileHasNoData=true;
+                if(tileHasNoData==false){
+                  if(tileIsTooLarge==false){
+                    fillQuadGouraud(sdata, vals, dataSource->dWidth,dataSource->dHeight, dlons,dlats);
+                }
               }
             }
           }
