@@ -42,6 +42,26 @@ public:
   }      
 };
 
+/**
+ * Class which represent discrete points
+ */
+class PointD{
+public:
+  PointD(int &x,int &y){
+    this->x=x;
+    this->y=y;
+  }
+  int x,y;
+};
+class PointDV{
+public:
+  PointDV(int &x,int &y,float &v){
+    this->x=x;
+    this->y=y;
+    this->v=v;
+  }
+  int x,y,v;
+};    
 
 void CoordinatesXYtoScreenXY(double &x,double &y,CGeoParams *geoParam);
 void CoordinatesXYtoScreenXY(CPoint &p,CGeoParams *geoParam);

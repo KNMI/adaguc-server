@@ -2,7 +2,7 @@
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
 
-#define CCONVERTASCAT_DEBUG
+//#define CCONVERTASCAT_DEBUG
 
 const char *CConvertASCAT::className="CConvertASCAT";
 
@@ -24,7 +24,7 @@ int CConvertASCAT::convertASCATHeader( CDFObject *cdfObject ){
   CDF::Variable *origT = cdfObject->getVariableNE("time");
   if(origT!=NULL){
     hasTimeData=true;
-
+    
     //Create a new time dimension for the new 2D fields.
     CDF::Dimension *dimT=new CDF::Dimension();
     dimT->name="time2D";
@@ -74,7 +74,7 @@ int CConvertASCAT::convertASCATHeader( CDFObject *cdfObject ){
       }catch(int e){}
     }
   }
-
+  
   //Standard bounding box of ascat data is worldwide
   double dfBBOX[]={-180,-90,180,90};
   
@@ -106,7 +106,7 @@ int CConvertASCAT::convertASCATHeader( CDFObject *cdfObject ){
     varX->dimensionlinks.push_back(dimX);
     cdfObject->addVariable(varX);
     CDF::allocateData(CDF_DOUBLE,&varX->data,dimX->length);
-
+    
     //For y 
     dimY=new CDF::Dimension();
     dimY->name="y";
@@ -202,23 +202,25 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
   }catch(int e){
     return 1;
   }
+  size_t nrDataObjects = dataSource->dataObject.size();
+  CDF::Variable *new2DVar[nrDataObjects];
+  CDF::Variable *swathVar[nrDataObjects];
   
-  CDF::Variable *new2DVar;
-  new2DVar = dataSource->dataObject[0]->cdfVariable;
-  
-  CDF::Variable *swathVar;
-  CT::string origSwathName=new2DVar->name.c_str();
-  
-
-  origSwathName.concat("_backup");
-  swathVar=cdfObject->getVariableNE(origSwathName.c_str());
-  if(swathVar==NULL){
-    CDBError("Unable to find orignal swath variable with name %s",origSwathName.c_str());
-    return 1;
+  for(size_t d=0;d<nrDataObjects;d++){
+    new2DVar[d] = dataSource->dataObject[d]->cdfVariable;
+    CT::string origSwathName=new2DVar[d]->name.c_str();
+    origSwathName.concat("_backup");
+    swathVar[d]=cdfObject->getVariableNE(origSwathName.c_str());
+    if(swathVar[d]==NULL){
+      CDBError("Unable to find orignal swath variable with name %s",origSwathName.c_str());
+      return 1;
+    }
   }
+  
+  
   CDF::Variable *swathLon;
   CDF::Variable *swathLat;
- 
+  
   try{
     swathLon = cdfObject->getVariable("lon");
     swathLat = cdfObject->getVariable("lat");
@@ -226,28 +228,35 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
     CDBError("lat or lon variables not found");
     return 1;
   }
-
+  
   //Read original data first 
-  swathVar->readData(CDF_FLOAT,true);
+  for(size_t d=0;d<nrDataObjects;d++){
+    swathVar[d]->readData(CDF_FLOAT,true);
+    CDF::Attribute *fillValue = swathVar[d]->getAttributeNE("_FillValue");
+    if(fillValue!=NULL){
+      dataSource->dataObject[d]->hasNodataValue=true;
+      fillValue->getData(&dataSource->dataObject[d]->dfNodataValue,1);
+      #ifdef CCONVERTASCAT_DEBUG
+      CDBDebug("_FillValue = %f",dataSource->dataObject[d]->dfNodataValue);
+      #endif
+      float f=dataSource->dataObject[d]->dfNodataValue;
+      new2DVar[d]->getAttribute("_FillValue")->setData(CDF_FLOAT,&f,1);
+    }else dataSource->dataObject[d]->hasNodataValue=false;
+  }
+  
   swathLon->readData(CDF_FLOAT,true);
   swathLat->readData(CDF_FLOAT,true);
- 
-  CDF::Attribute *fillValue = swathVar->getAttributeNE("_FillValue");
-  if(fillValue!=NULL){
-    dataSource->dataObject[0]->hasNodataValue=true;
-    fillValue->getData(&dataSource->dataObject[0]->dfNodataValue,1);
-    #ifdef CCONVERTASCAT_DEBUG
-    CDBDebug("_FillValue = %f",dataSource->dataObject[0]->dfNodataValue);
-    #endif
-    float f=dataSource->dataObject[0]->dfNodataValue;
-    new2DVar->getAttribute("_FillValue")->setData(CDF_FLOAT,&f,1);
-  }else dataSource->dataObject[0]->hasNodataValue=false;
   
-  //Detect minimum and maximum values
+  
   float fill = (float)dataSource->dataObject[0]->dfNodataValue;
   float min = fill;float max=fill;
-  for(size_t j=0;j<swathVar->getSize();j++){
-    float v=((float*)swathVar->data)[j];
+  //Detect minimum and maximum values
+  
+  
+  
+  size_t l=swathVar[0]->getSize();
+  for(size_t j=0;j<l;j++){
+    float v=((float*)swathVar[0]->data)[j];
     if(v!=fill){
       if(min==fill)min=v;
       if(max==fill)max=v;
@@ -255,10 +264,11 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
       if(v>max)max=v;
     }
   }
-  
   #ifdef CCONVERTASCAT_DEBUG
   CDBDebug("Calculated min/max : %f %f",min,max);
   #endif
+  
+  
   
   //Set statistics
   if(dataSource->stretchMinMax){
@@ -293,23 +303,23 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
   double cellSizeY=(dataSource->srvParams->Geo->dfBBOX[3]-dataSource->srvParams->Geo->dfBBOX[1])/double(dataSource->dHeight);
   double offsetX=dataSource->srvParams->Geo->dfBBOX[0];
   double offsetY=dataSource->srvParams->Geo->dfBBOX[1];
- 
+  
   #ifdef CCONVERTASCAT_DEBUG
   CDBDebug("Datasource bbox:%f %f %f %f",dataSource->srvParams->Geo->dfBBOX[0],dataSource->srvParams->Geo->dfBBOX[1],dataSource->srvParams->Geo->dfBBOX[2],dataSource->srvParams->Geo->dfBBOX[3]);
   CDBDebug("Datasource width height %d %d",dataSource->dWidth,dataSource->dHeight);
   CDBDebug("L2 %d %d",dataSource->dWidth,dataSource->dHeight);
   #endif
-
+  
   if(mode==CNETCDFREADER_MODE_OPEN_ALL){
     #ifdef CCONVERTASCAT_DEBUG
-    CDBDebug("Drawing %s",new2DVar->name.c_str());
+    CDBDebug("Drawing %s",new2DVar[0]->name.c_str());
     #endif
     
     CDF::Dimension *dimX;
     CDF::Dimension *dimY;
     CDF::Variable *varX ;
     CDF::Variable *varY;
-  
+    
     //Create new dimensions and variables (X,Y,T)
     dimX=cdfObject->getDimension("x");
     dimX->setSize(dataSource->dWidth);
@@ -334,33 +344,37 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
     }
     
     size_t fieldSize = dataSource->dWidth*dataSource->dHeight;
-    new2DVar->setSize(fieldSize);
-    CDF::allocateData(new2DVar->type,&(new2DVar->data),fieldSize);
     
-    //Draw data!
-    for(size_t j=0;j<fieldSize;j++){
-      ((float*)dataSource->dataObject[0]->cdfVariable->data)[j]=(float)dataSource->dataObject[0]->dfNodataValue;
+    //Allocate and clear data
+    for(size_t d=0;d<nrDataObjects;d++){
+      new2DVar[d]->setSize(fieldSize);
+      CDF::allocateData(new2DVar[d]->type,&(new2DVar[d]->data),fieldSize);
+      for(size_t j=0;j<fieldSize;j++){
+        ((float*)dataSource->dataObject[d]->cdfVariable->data)[j]=(float)dataSource->dataObject[d]->dfNodataValue;
+      }
     }
     
-    float *sdata = ((float*)dataSource->dataObject[0]->cdfVariable->data);
+    
     
     float *lonData=(float*)swathLon->data;
     float *latData=(float*)swathLat->data;
     
-    int numRows=swathVar->dimensionlinks[0]->getSize();
-    int numCells=swathVar->dimensionlinks[1]->getSize();
+    int numRows=swathVar[0]->dimensionlinks[0]->getSize();
+    int numCells=swathVar[0]->dimensionlinks[1]->getSize();
     #ifdef CCONVERTASCAT_DEBUG
     CDBDebug("numRows %d numCells %d",numRows,numCells);
     #endif
     
-    float *swathData = (float*)swathVar->data;
+    
     
     
     CImageWarper imageWarper;
     bool projectionRequired=false;
     if(dataSource->srvParams->Geo->CRS.length()>0){
       projectionRequired=true;
-      new2DVar->setAttributeText("grid_mapping","customgridprojection");
+      for(size_t d=0;d<nrDataObjects;d++){
+        new2DVar[d]->setAttributeText("grid_mapping","customgridprojection");
+      }
       if(cdfObject->getVariableNE("customgridprojection")==NULL){
         CDF::Variable *projectionVar = new CDF::Variable();
         projectionVar->name.copy("customgridprojection");
@@ -386,13 +400,9 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
     
     for(int rowNr=0;rowNr<numRows;rowNr++){ 
       for(int cellNr=0;cellNr<numCells;cellNr++){
-        
         int pSwath = cellNr+rowNr * numCells;
-        
         int bo = (rowNr == 0 ?numCells:-numCells);
-        
         double lons[4],lats[4];
-        float vals[4];
         lons[0] = (float)lonData[pSwath];
         lons[1] = (float)lonData[pSwath+(cellNr==0?1:-1)];
         lons[2] = (float)lonData[pSwath+bo];
@@ -403,10 +413,7 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
         lats[2] = (float)latData[pSwath+bo];
         lats[3] = (float)latData[pSwath+bo+(cellNr==0?1:-1)];
         
-        vals[0] = swathData[pSwath];
-        vals[1]= swathData[pSwath+(cellNr==0?1:-1)];
-        vals[2] = swathData[pSwath+bo];
-        vals[3] = swathData[pSwath+bo+(cellNr==0?1:-1)];
+        
         
         bool tileHasNoData = false;
         
@@ -417,9 +424,9 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
           if(lons[j]==fill){tileIsTooLarge=true;break;}
           if(lons[j]>185)moveTile=true;
         }
-        float lon0 ;
-        float lat0;
         if(tileIsTooLarge==false){
+          float lon0 ;
+          float lat0;
           for(int j=0;j<4;j++){
             if(moveTile==true)lons[j]-=360;
             if(lons[j]<-280)lons[j]+=360;
@@ -429,28 +436,31 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
             }
             if(fabs(lon0-lons[j])>5)tileIsTooLarge=true;
             if(fabs(lat0-lats[j])>5)tileIsTooLarge=true;
-
-            if(vals[j]==fill)tileHasNoData=true;
           }
-        }
-        //vals[0]=10;
-        vals[1]=vals[0];
-        vals[2]=vals[0];
-        vals[3]=vals[0];
-       
-        
-        if(tileIsTooLarge==false){
-          int dlons[4],dlats[4];
-          for(int j=0;j<4;j++){
-            if(projectionRequired)imageWarper.reprojfromLatLon(lons[j],lats[j]);
-            dlons[j]=(lons[j]-offsetX)/cellSizeX;
-            dlats[j]=(lats[j]-offsetY)/cellSizeY;
+          if(tileIsTooLarge==false){
+            for(size_t d=0;d<nrDataObjects;d++){
+              float *sdata = ((float*)dataSource->dataObject[d]->cdfVariable->data);
+              float *swathData = (float*)swathVar[d]->data;
+              float vals[4];
+              vals[0] = swathData[pSwath];
+              vals[1]=vals[0];//vals[1] = swathData[pSwath+(cellNr==0?1:-1)];
+              vals[2]=vals[0];//vals[2] = swathData[pSwath+bo];
+              vals[3]=vals[0];//vals[3] = swathData[pSwath+bo+(cellNr==0?1:-1)];
+              if(vals[0]==fill)tileHasNoData=true;
+              if(tileHasNoData==false){
+                int dlons[4],dlats[4];
+                for(int j=0;j<4;j++){
+                  if(projectionRequired)imageWarper.reprojfromLatLon(lons[j],lats[j]);
+                  dlons[j]=(lons[j]-offsetX)/cellSizeX;
+                  dlats[j]=(lats[j]-offsetY)/cellSizeY;
+                }
+                if(dlons[0]>=0&&dlons[0]<dataSource->dWidth&&dlats[0]>0&&dlats[0]<dataSource->dHeight){
+                  dataSource->dataObject[d]->points.push_back(PointDV(dlons[0],dlats[0],vals[0]));
+                }
+                fillQuadGouraud(sdata, vals, dataSource->dWidth,dataSource->dHeight, dlons,dlats);
+              }
+            }
           }
-          
-          fillQuadGouraud(sdata, vals, dataSource->dWidth,dataSource->dHeight, dlons,dlats);
-          
-
-          
         }
       }
     }

@@ -6,6 +6,7 @@
 #include "CImgWarpNearestNeighbour.h"
 #include "CImgWarpBilinear.h"
 #include "CImgWarpBoolean.h"
+#include "CImgRenderPoints.h"
 #include "CMyCURL.h"
 
 class CImageDataWriter: public CBaseDataWriterInterface{
@@ -28,6 +29,7 @@ class CImageDataWriter: public CBaseDataWriterInterface{
     enum RenderMethodEnum { undefined,nearest, bilinear, contour, 
     barb, barbshaded, barbcontour, barbcontourshaded, thinbarb, thinbarbshaded, thinbarbcontour, thinbarbcontourshaded, 
     shaded,shadedcontour, 
+    point,
     vector, vectorshaded, vectorcontour, vectorcontourshaded, thinvector, thinvectorshaded, thinvectorcontour, thinvectorcontourshaded,
     nearestcontour,bilinearcontour};
     static void calculateScaleAndOffsetFromMinMax(float &scale, float &offset,float min,float max,float log);

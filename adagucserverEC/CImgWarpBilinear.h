@@ -26,12 +26,9 @@ class CImgWarpBilinear:public CImageWarperRenderInterface{
     bool drawMap,enableContour,enableVector,enableBarb,enableShade,drawGridVectors;
     float shadeInterval,contourSmallInterval,contourBigInterval;
     int smoothingFilter;
-    class Point{
-      public:
-        int x,y;
-    };
-    std::vector<Point*> minimaPoints;
-    std::vector<Point*> maximaPoints;
+    
+    std::vector<PointD*> minimaPoints;
+    std::vector<PointD*> maximaPoints;
     DEF_ERRORFUNCTION();
   public:
     CImgWarpBilinear(){

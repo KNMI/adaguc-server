@@ -13,6 +13,7 @@ CDataSource::DataClass::DataClass(){
   cdfObject=NULL;
   dfadd_offset=0;
   dfscale_factor=1;
+  std::vector <CPoint> points;
 }
 CDataSource::DataClass::~DataClass(){
   for(size_t j=0;j<statusFlagList.size();j++){

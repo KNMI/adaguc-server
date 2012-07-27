@@ -8,6 +8,51 @@ int CRequest::runRequest(){
   return status;
 }
 
+
+void CRequest::addXMLLayerToConfig(CServerParams *srvParam,std::vector<CT::string>*variableNames, const char *group,const char *location){
+  CServerConfig::XMLE_Layer *xmleLayer=new CServerConfig::XMLE_Layer();
+  CServerConfig::XMLE_FilePath* xmleFilePath = new CServerConfig::XMLE_FilePath();
+  
+  CServerConfig::XMLE_Cache* xmleCache = new CServerConfig::XMLE_Cache();
+  xmleCache->attr.enabled.copy("false");
+  xmleLayer->attr.type.copy("database");
+  xmleFilePath->value.copy(location);
+  xmleFilePath->attr.filter.copy("*");
+  
+  if(group!=NULL){
+    CServerConfig::XMLE_Group* xmleGroup = new CServerConfig::XMLE_Group();
+    xmleGroup->attr.value.copy(group);
+    xmleLayer->Group.push_back(xmleGroup);
+  }
+  
+  for(size_t j=0;j<variableNames->size();j++){
+    CServerConfig::XMLE_Variable* xmleVariable = new CServerConfig::XMLE_Variable();
+    xmleVariable->value.copy((*variableNames)[j].c_str());
+    xmleLayer->Variable.push_back(xmleVariable);
+  }
+  if(variableNames->size()==2){
+    CT::string newName;
+    newName.print("%s + %s",(*variableNames)[0].c_str(),(*variableNames)[1].c_str());
+    
+    CServerConfig::XMLE_Title* xmleTitle = new CServerConfig::XMLE_Title();
+    xmleTitle->value.copy(newName.c_str());
+    xmleLayer->Title.push_back(xmleTitle);
+    
+    CServerConfig::XMLE_Name* xmleName = new CServerConfig::XMLE_Name();
+    
+    newName.replaceSelf("+","and");
+    newName.replaceSelf(" ","_");
+    newName.encodeURLSelf();
+    xmleName->value.copy(newName.c_str());
+    xmleLayer->Name.push_back(xmleName);
+    
+  }
+  
+  xmleLayer->FilePath.push_back(xmleFilePath);
+  xmleLayer->Cache.push_back(xmleCache);
+  srvParam->cfg->Layer.push_back(xmleLayer);
+}
+
 int CRequest::dataRestriction = -1;
 
 /**
@@ -138,11 +183,13 @@ int CRequest::setConfigFile(const char *pszConfigFile){
           CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObject(NULL,dirReader.fileList[j]->fullName.c_str());
           if(cdfObject == NULL){CDBError("Unable to read file %s",dirReader.fileList[j]->fullName.c_str());throw(__LINE__);}
           
+          std::vector<CT::string> variables;
           //List variables
           for(size_t v=0;v<cdfObject->variables.size();v++){
             CDF::Variable *var=cdfObject->variables[v];
             if(var->isDimension==false){
               if(var->dimensionlinks.size()>=2){
+                variables.push_back(new CT::string(var->name.c_str()));
                 CServerConfig::XMLE_Layer *xmleLayer=new CServerConfig::XMLE_Layer();
                 CServerConfig::XMLE_Group* xmleGroup = new CServerConfig::XMLE_Group();
                 CServerConfig::XMLE_Variable* xmleVariable = new CServerConfig::XMLE_Variable();
@@ -161,7 +208,9 @@ int CRequest::setConfigFile(const char *pszConfigFile){
               }
             }
           }
-    
+          
+          
+         
           }catch(int e){
             nrOfFileErrors++;
           }
@@ -1647,20 +1696,36 @@ int CRequest::process_querystring(){
       //Generate layers based on the OpenDAP variables
       CT::StackList<CT::string> variables=srvParam->autoResourceVariable.splitToStack(",");
       for(size_t j=0;j<variables.size();j++){
-        CServerConfig::XMLE_Layer *xmleLayer=new CServerConfig::XMLE_Layer();
-        CServerConfig::XMLE_Variable* xmleVariable = new CServerConfig::XMLE_Variable();
-        CServerConfig::XMLE_FilePath* xmleFilePath = new CServerConfig::XMLE_FilePath();
-        CServerConfig::XMLE_Cache* xmleCache = new CServerConfig::XMLE_Cache();
-        xmleCache->attr.enabled.copy("false");
-        xmleLayer->attr.type.copy("database");
-        xmleVariable->value.copy(variables[j].c_str());
-        xmleFilePath->value.copy(srvParam->internalAutoResourceLocation.c_str());
-        xmleFilePath->attr.filter.copy("*");
-        xmleLayer->Variable.push_back(xmleVariable);
-        xmleLayer->FilePath.push_back(xmleFilePath);
-        xmleLayer->Cache.push_back(xmleCache);
-        srvParam->cfg->Layer.push_back(xmleLayer);
+        std::vector<CT::string> variableNames;
+        variableNames.push_back(variables[j].c_str());
+        addXMLLayerToConfig(srvParam,&variableNames,NULL,srvParam->internalAutoResourceLocation.c_str());
       }
+      
+      //Find derived wind parameters
+      std::vector<CT::string> detectStrings;
+      for(size_t v=0;v<variables.size();v++){
+        int dirLoc=variables[v].indexOf("_dir");
+        if(dirLoc>0){
+          detectStrings.push_back(variables[v].substringr(0,dirLoc));
+        }
+      }
+      
+      //Detect  <...>_speed and <...>_dir for ASCAT data
+      CT::string searchVar;
+      for(size_t v=0;v<detectStrings.size();v++){
+        CDBDebug("detectStrings %s",detectStrings[v].c_str());
+        searchVar.print("%s_speed",detectStrings[v].c_str());
+        CDF::Variable *varSpeed = cdfObject->getVariableNE(searchVar.c_str());
+        searchVar.print("%s_dir",detectStrings[v].c_str());
+        CDF::Variable *varDirection = cdfObject->getVariableNE(searchVar.c_str());
+        if(varSpeed!=NULL&&varDirection!=NULL){
+          std::vector<CT::string> variableNames;
+          variableNames.push_back(varSpeed->name.c_str());
+          variableNames.push_back(varDirection->name.c_str());
+          addXMLLayerToConfig(srvParam,&variableNames,"derived",srvParam->internalAutoResourceLocation.c_str());
+        }
+      }
+      
       
       //Adjust online resource in order to pass on variable and source parameters
       CT::string onlineResource=srvParam->cfg->OnlineResource[0]->attr.value.c_str();

@@ -38,6 +38,7 @@ CImageDataWriter::RenderMethodEnum CImageDataWriter::getRenderMethodFromString(C
   else if(renderMethodString->equals("thinbarbcontour"))renderMethod=thinbarbcontour;
   else if(renderMethodString->equals("thinbarbshaded"))renderMethod=thinbarbshaded;
   else if(renderMethodString->equals("thinbarbcontourshaded"))renderMethod=thinbarbcontourshaded;
+  else if(renderMethodString->equals("point"))renderMethod=point;
   return renderMethod;
 }
 
@@ -1337,49 +1338,47 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
           char szTemp[1024];
           floatToString(szTemp,1023,pixel);
           element->value=szTemp;
-
           //For vectors, we will calculate angle and strength
-      if(dataSource->dataObject.size()==2){
-      double pi=3.141592;
-      double pixel1=convertValue(dataSource->dataObject[0]->cdfVariable->type,dataSource->dataObject[0]->cdfVariable->data,ptr);
-      double pixel2=convertValue(dataSource->dataObject[1]->cdfVariable->type,dataSource->dataObject[1]->cdfVariable->data,ptr);
-          double windspeed=hypot(pixel1, pixel2);
-          windspeed=windspeed*(3600./1852.);
-          double angle=atan2(pixel2, pixel1);
-          angle=angle*180/pi;
-          if (angle<0) angle=angle+360;
-          angle=270-angle;
-          if (angle<0) angle=angle+360;
-
-        GetFeatureInfoResult::Element *element2=new GetFeatureInfoResult::Element();
-          if (j==0) {
-            element2->long_name="wind direction";
-            element2->var_name="wind direction";
-            element2->standard_name="dir";
-            element2->feature_name="wind direction";
-              element2->value.print("%03.0f",angle);
-              element2->units="degrees";
-              element2->time="";
-          } else {
-             element2->long_name="wind speed";
-             element2->var_name="wind speed";
-             element2->standard_name="speed";
-             element2->feature_name="wind speed";
-              element2->value.print("%03.0f",windspeed);
-              element2->units="kts";
-              element2->time="";
+          if(dataSource->dataObject.size()==2){
+            if(dataSource->dataObject[0]->cdfVariable->name.indexOf("speed")==-1){
+              double pi=3.141592;
+              double pixel1=convertValue(dataSource->dataObject[0]->cdfVariable->type,dataSource->dataObject[0]->cdfVariable->data,ptr);
+              double pixel2=convertValue(dataSource->dataObject[1]->cdfVariable->type,dataSource->dataObject[1]->cdfVariable->data,ptr);
+              double windspeed=hypot(pixel1, pixel2);
+              windspeed=windspeed*(3600./1852.);
+              double angle=atan2(pixel2, pixel1);
+              angle=angle*180/pi;
+              if (angle<0) angle=angle+360;
+              angle=270-angle;
+              if (angle<0) angle=angle+360;
+              GetFeatureInfoResult::Element *element2=new GetFeatureInfoResult::Element();
+                if (j==0) {
+                  element2->long_name="wind direction";
+                  element2->var_name="wind direction";
+                  element2->standard_name="dir";
+                  element2->feature_name="wind direction";
+                    element2->value.print("%03.0f",angle);
+                    element2->units="degrees";
+                    element2->time="";
+                } else {
+                  element2->long_name="wind speed";
+                  element2->var_name="wind speed";
+                  element2->standard_name="speed";
+                  element2->feature_name="wind speed";
+                    element2->value.print("%03.0f",windspeed);
+                    element2->units="kts";
+                    element2->time="";
+                }
+                getFeatureInfoResult->elements.push_back(element2);
+              }
+            }
           }
-          getFeatureInfoResult->elements.push_back(element2);
-      }
-
+        }
+        else {
+          element->value="nodata";
         }
       }
-      else {
-        element->value="nodata";
-      }
     }
-
-  }
   }
   //reader.close();
   #ifdef CIMAGEDATAWRITER_DEBUG    
@@ -1438,12 +1437,18 @@ if(renderMethod==contour){CDBDebug("contour");}*/
 
   CImageWarperRenderInterface *imageWarperRenderer;
   RenderMethodEnum renderMethod = currentStyleConfiguration->renderMethod;
+  /**
+   * Use fast nearest neighbourrenderer
+   */
   if(renderMethod==nearest||renderMethod==nearestcontour){
     imageWarperRenderer = new CImgWarpNearestNeighbour();
     imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
     delete imageWarperRenderer;
   }
   
+  /**
+   * Use bilinear renderer
+   */
   if(renderMethod==nearestcontour||
      renderMethod==bilinear||
      renderMethod==bilinearcontour||
@@ -1495,6 +1500,16 @@ if(renderMethod==contour){CDBDebug("contour");}*/
     }
     //CDBDebug("bilinearSettings.c_str() %s",bilinearSettings.c_str());
     imageWarperRenderer->set(bilinearSettings.c_str());
+    imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
+    delete imageWarperRenderer;
+  }
+  
+  /**
+   * Use point renderer
+   */
+  if(1==1){
+    imageWarperRenderer = new CImgRenderPoints();
+    imageWarperRenderer->set("");
     imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
     delete imageWarperRenderer;
   }

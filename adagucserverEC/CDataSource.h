@@ -10,6 +10,8 @@
 #include "COGCDims.h"
 #include "CStopWatch.h"
 #include "CPGSQLDB.h"
+
+
 /**
  * This class represents data to be used further in the server. Specific  metadata and data is filled in by CDataReader
  * This class is used for both image drawing (WMS) and data output (WCS)
@@ -24,22 +26,19 @@ class CDataSource{
       CT::string meaning;
       double value;
   };
-    
+
   class DataClass{
     public:
       DataClass();
       ~DataClass();
       bool hasStatusFlag,hasNodataValue,appliedScaleOffset,hasScaleOffset;
       double dfNodataValue,dfscale_factor,dfadd_offset;
-      //void *data;
-
       std::vector<StatusFlag*> statusFlagList;
       CDF::Variable *cdfVariable;
       CDFObject *cdfObject;
-      //CDFType dataType;
-      CT::string variableName,units;
-
       
+      CT::string variableName,units;
+      std::vector<PointDV> points;
   };
   
   class Statistics{

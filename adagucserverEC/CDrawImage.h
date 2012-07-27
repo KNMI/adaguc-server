@@ -57,6 +57,7 @@ class CColor{
     }
 };
 
+
 class CDrawImage{
   private:
     std::vector<CLegend *>legends;

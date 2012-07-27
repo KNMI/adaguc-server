@@ -148,6 +148,7 @@ private:
     int generateOGCGetCapabilities(CT::string *XMLdocument);
     int generateOGCDescribeCoverage(CT::string *XMLdocument);
     static int dataRestriction;
+    void addXMLLayerToConfig(CServerParams *srvParam,std::vector<CT::string>*variableNames, const char *group, const char *location);
   public:
     CRequest(){
       srvParam=new CServerParams();
