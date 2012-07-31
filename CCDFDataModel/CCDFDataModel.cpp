@@ -32,6 +32,7 @@ int CDF::getTypeSize(CDFType type){
   if(type == CDF_INT || type == CDF_UINT)return 4;
   if(type == CDF_FLOAT)return 4;
   if(type == CDF_DOUBLE)return 8;
+  if(type == CDF_STRING)return sizeof(char*);
   return 0;
 }
 
@@ -76,6 +77,7 @@ void CDF::getCDFDataTypeName(char *name,const size_t maxlen,const int type){
   if(type==CDF_UBYTE )snprintf(name,maxlen,"CDF_UBYTE");
   if(type==CDF_USHORT)snprintf(name,maxlen,"CDF_USHORT");
   if(type==CDF_UINT  )snprintf(name,maxlen,"CDF_UINT");
+  if(type==CDF_STRING)snprintf(name,maxlen,"CDF_STRING");
 }
 
 void CDF::getCDataTypeName(char *name,const size_t maxlen,const int type){
@@ -90,6 +92,7 @@ void CDF::getCDataTypeName(char *name,const size_t maxlen,const int type){
   if(type==CDF_UBYTE )snprintf(name,maxlen,"ubyte");
   if(type==CDF_USHORT)snprintf(name,maxlen,"ushort");
   if(type==CDF_UINT  )snprintf(name,maxlen,"uint");
+  if(type==CDF_STRING)snprintf(name,maxlen,"char*");
 }
 
 void CDF::getErrorMessage(char *errorMessage,const size_t maxlen,const int errorCode){

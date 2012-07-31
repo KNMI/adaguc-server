@@ -2,6 +2,7 @@
 const char *CDFObjectStore::className="CDFObjectStore";
 #include "CConvertASCAT.h"
 #include "CConvertADAGUCVector.h"
+#include "CConvertADAGUCPoint.h"
 
 #define MAX_OPEN_FILES 128
 extern CDFObjectStore cdfObjectStore;
@@ -91,7 +92,8 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,const char *file
   cdfReaders.push_back(cdfReader);
   
   CConvertASCAT::convertASCATHeader(cdfObject);
-  CConvertADAGUCVector::convertADAGUCVectorHeader(cdfObject);  
+  CConvertADAGUCVector::convertADAGUCVectorHeader(cdfObject);
+  CConvertADAGUCPoint::convertADAGUCPointHeader(cdfObject);  
   
   return cdfObject;
 }

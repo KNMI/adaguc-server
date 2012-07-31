@@ -468,8 +468,10 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
                   dlons[j]=(lons[j]-offsetX)/cellSizeX;
                   dlats[j]=(lats[j]-offsetY)/cellSizeY;
                 }
-                if(dlons[0]>=0&&dlons[0]<dataSource->dWidth&&dlats[0]>0&&dlats[0]<dataSource->dHeight){
-                  dataSource->dataObject[d]->points.push_back(PointDV(dlons[0],dlats[0],vals[0]));
+                if(dataSource->dataObject.size()==2){
+                  if(dlons[0]>=0&&dlons[0]<dataSource->dWidth&&dlats[0]>0&&dlats[0]<dataSource->dHeight){
+                    dataSource->dataObject[d]->points.push_back(PointDV(dlons[0],dlats[0],vals[0]));
+                  }
                 }
                 if(vals[1]==fill)tileHasNoData=true;
                 if(vals[2]==fill)tileHasNoData=true;

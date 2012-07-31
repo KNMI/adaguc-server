@@ -55,12 +55,20 @@ public:
 };
 class PointDV{
 public:
+  PointDV(int &x,int &y,float &v,const char *id){
+    this->x=x;
+    this->y=y;
+    this->v=v;
+    this->id=id;
+  }
   PointDV(int &x,int &y,float &v){
     this->x=x;
     this->y=y;
     this->v=v;
   }
-  int x,y,v;
+  int x,y;
+  float v;
+  CT::string id;
 };    
 
 void CoordinatesXYtoScreenXY(double &x,double &y,CGeoParams *geoParam);

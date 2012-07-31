@@ -1,5 +1,5 @@
 #include "CImageDataWriter.h"
-//#define CIMAGEDATAWRITER_DEBUG
+#define CIMAGEDATAWRITER_DEBUG
 
 
 const char * CImageDataWriter::className = "CImageDataWriter";
@@ -1158,6 +1158,9 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
   for(size_t d=0;d<dataSources.size();d++){
     bool openAll = false;
     if(dataSources[d]->dataObject[0]->cdfVariable->getAttributeNE("ADAGUC_VECTOR")!=NULL){
+      openAll =true;
+    }  
+    if(dataSources[d]->dataObject[0]->cdfVariable->getAttributeNE("ADAGUC_POINT")!=NULL){
       openAll =true;
     }  
     CDataSource *dataSource=dataSources[d];

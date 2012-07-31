@@ -36,16 +36,17 @@
 
 /* Types supported by CDF */
 typedef int CDFType;
-#define CDF_NONE    0 /* Unknown */
-#define CDF_BYTE    1 /* signed 1 byte integer */
-#define CDF_CHAR    2 /* ISO/ASCII character */
-#define CDF_SHORT   3 /* signed 2 byte integer */
-#define CDF_INT     4 /* signed 4 byte integer */
-#define CDF_FLOAT   5 /* single precision floating point number */
-#define CDF_DOUBLE  6 /* double precision floating point number */
-#define CDF_UBYTE   7 /* unsigned 1 byte int */
-#define CDF_USHORT  8 /* unsigned 2-byte int */
-#define CDF_UINT    9 /* unsigned 4-byte int */
+#define CDF_NONE    0  /* Unknown */
+#define CDF_BYTE    1  /* signed 1 byte integer */
+#define CDF_CHAR    2  /* ISO/ASCII character */
+#define CDF_SHORT   3  /* signed 2 byte integer */
+#define CDF_INT     4  /* signed 4 byte integer */
+#define CDF_FLOAT   5  /* single precision floating point number */
+#define CDF_DOUBLE  6  /* double precision floating point number */
+#define CDF_UBYTE   7  /* unsigned 1 byte int */
+#define CDF_USHORT  8  /* unsigned 2-byte int */
+#define CDF_UINT    9  /* unsigned 4-byte int */
+#define CDF_STRING  10 /* variable string */
 
 /* Possible error codes, thrown by CDF */
 typedef int CDFError;
@@ -81,6 +82,10 @@ namespace CDF{
       int copy(T *destdata,void *sourcedata,CDFType sourcetype,size_t destinationOffset,size_t sourceOffset,size_t length){
         size_t dsto=destinationOffset;
         size_t srco=sourceOffset;
+        if(sourcetype==CDF_STRING){
+          //CDBError("Unable to copy CDF_STRING");
+          return 1;
+        }
         if(sourcetype==CDF_CHAR||sourcetype==CDF_BYTE)for(size_t t=0;t<length;t++){destdata[t+dsto]=(T)((char*)sourcedata)[t+srco];}
         if(sourcetype==CDF_CHAR||sourcetype==CDF_UBYTE)for(size_t t=0;t<length;t++){destdata[t+dsto]=(T)((unsigned char*)sourcedata)[t+srco];}
         if(sourcetype==CDF_SHORT)for(size_t t=0;t<length;t++){destdata[t+dsto]=(T)((short*)sourcedata)[t+srco];}
@@ -96,6 +101,10 @@ namespace CDF{
         return copy(destdata,sourcedata,sourcetype,0,0,length);
       }
     int copy(void *destdata,void *sourcedata,CDFType sourcetype,size_t destinationOffset,size_t sourceOffset,size_t length){
+      if(sourcetype==CDF_STRING){
+        //CDBError("Unable to copy CDF_STRING");
+        return 1;
+      }
       switch(sourcetype){
         case CDF_CHAR:copy((char*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
         case CDF_BYTE:copy((char*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
@@ -372,7 +381,16 @@ namespace CDF{
         parentCDFObject=NULL;
       }
       ~Variable(){
+        
+        
         for(size_t j=0;j<attributes.size();j++){if(attributes[j]!=NULL){delete attributes[j];attributes[j]=NULL;}}
+        if(type==CDF_STRING){
+          //CDBDebug("~Variable() %s %d",name.c_str(),getSize());
+          for(size_t j=0;j<getSize();j++){
+            //CDBDebug("%s\n",((const char**)data)[j]);
+            free(((char**)data)[j]);
+          }
+        }
         if(data!=NULL){CDF::freeData(&data);data=NULL;}
         for(size_t j=0;j<cdfObjectList.size();j++){if(cdfObjectList[j]!=NULL){delete cdfObjectList[j];cdfObjectList[j]=NULL;}}
       }

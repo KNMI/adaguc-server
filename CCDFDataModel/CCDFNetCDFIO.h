@@ -141,6 +141,7 @@ class CDFNetCDFReader :public CDFReader{
     if(type==NC_UINT)return CDF_UINT;
     if(type==NC_FLOAT)return CDF_FLOAT;
     if(type==NC_DOUBLE)return CDF_DOUBLE;
+    if(type==NC_STRING)return CDF_STRING;
     return CDF_DOUBLE;
   }
   DEF_ERRORFUNCTION();
@@ -350,6 +351,9 @@ CDBDebug("closing");
       else if(type==CDF_INT)status = nc_get_var_int(root_id,var->id,(int*)var->data);
       else if(type==CDF_FLOAT)status = nc_get_var_float(root_id,var->id,(float*)var->data);
       else if(type==CDF_DOUBLE)status = nc_get_var_double(root_id,var->id,(double*)var->data);
+      else if(type==CDF_STRING){
+        status = nc_get_var_string(root_id,var->id,(char**)var->data);
+      }
       else {
         CDBError("Unable to determine netcdf type\n");
         return 1;
@@ -441,6 +445,7 @@ class CDFNetCDFWriter{
       if(type==CDF_UINT)return NC_UINT;
       if(type==CDF_FLOAT)return NC_FLOAT;
       if(type==CDF_DOUBLE)return NC_DOUBLE;
+      if(type==CDF_STRING)return NC_STRING;
       return NC_DOUBLE;
     }
     bool writeData;
@@ -526,7 +531,7 @@ class CDFNetCDFWriter{
         dim->setName(cdfObject->dimensions[j]->name.c_str());
         dim->length=cdfObject->dimensions[j]->length;
         status = nc_def_dim(root_id,dim->name.c_str() , dim->length, &dim->id);
-        if(status!=NC_NOERR){ncError(__LINE__,className,"nc_def_dim: ",status);return 1;}
+        if(status!=NC_NOERR){ncError(__LINE__,className,"nc_def_dim: ",status);delete dim;return 1;}
         dimensions.push_back(dim);
       }
    
@@ -605,10 +610,12 @@ class CDFNetCDFWriter{
               }
               
               //copy data
+              #ifdef CCDFNETCDFIO_DEBUG     
               CT::string message;
               message.print("%d/%d Copying data for variable %s: total %d bytes",
                             nrVarsWritten+1,cdfObject->variables.size(),variableInfo.c_str(),int(totalVariableSize)*CDF::getTypeSize(variable->type));
               CDBDebug("%s",message.c_str());
+              #endif
               //Copy attributes for this specific variable
               for(size_t i=0;i<variable->attributes.size();i++){
                 if(!variable->attributes[i]->name.equals("CLASS")){
@@ -782,7 +789,9 @@ class CDFNetCDFWriter{
         }
 #endif        
         
+       
         status = nc_put_vara(root_id,nc_var_id,start,count,variable->data);
+       
         //printf("Fake put vara\n");
         if(status!=NC_NOERR){
           CDBError("For variable %s:",variable->name.c_str());

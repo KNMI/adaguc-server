@@ -3,6 +3,7 @@
 
 #include "CConvertASCAT.h"
 #include "CConvertADAGUCVector.h"
+#include "CConvertADAGUCPoint.h"
 
 const char *CDataReader::className="CDataReader";
 
@@ -349,7 +350,8 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
   /**************************************************************************************************/
   bool level2CompatMode = false;
   if(CConvertASCAT::convertASCATData(dataSource,mode)==0)level2CompatMode=true;
-  if(CConvertADAGUCVector::convertADAGUCVectorData(dataSource,mode)==0)level2CompatMode=true;     
+  if(CConvertADAGUCVector::convertADAGUCVectorData(dataSource,mode)==0)level2CompatMode=true;
+  if(CConvertADAGUCPoint::convertADAGUCPointData(dataSource,mode)==0)level2CompatMode=true;     
   
   
   /*CT::string dumpString;

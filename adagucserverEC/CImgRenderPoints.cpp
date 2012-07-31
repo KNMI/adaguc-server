@@ -2,6 +2,29 @@
 const char *CImgRenderPoints::className="CImgRenderPoints";
 
 void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDrawImage*drawImage){
+  if(dataSource->dataObject.size()==1){
+    std::vector<PointDV> *p1=&dataSource->dataObject[0]->points;
+    size_t l=p1->size();
+    size_t s=1;
+    while(l/s>(80*32)){
+      s=s+s;
+    };
+    l=p1->size();
+    CT::string t;
+    for(size_t j=0;j<l;j=j+s){
+      int x=(*p1)[j].x+1;
+      int y=dataSource->dHeight-(*p1)[j].y-1;
+      float v=(*p1)[j].v;
+      drawImage->circle(x,y, 3, 240);
+      t.print("%0.1f",v);
+      drawImage->setText(t.c_str(), t.length(),x-t.length()*3,y+5, 240,0);
+      if((*p1)[j].id.length()>0){
+        drawImage->setText((*p1)[j].id.c_str(), (*p1)[j].id.length(),x-(*p1)[j].id.length()*3,y-18, 240,0);
+      }
+    }
+  }
+  
+  
   if(dataSource->dataObject.size()==2){
     CT::string varName1=dataSource->dataObject[0]->cdfVariable->name.c_str();
     CT::string varName2=dataSource->dataObject[1]->cdfVariable->name.c_str();
