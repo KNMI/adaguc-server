@@ -1726,6 +1726,20 @@ int CRequest::process_querystring(){
         }
       }
       
+      //Detect dd and ff for wind direction and wind speed
+      if(1==1){
+        CDF::Variable *varSpeed = cdfObject->getVariableNE("ff");
+        CDF::Variable *varDirection = cdfObject->getVariableNE("dd");
+        if(varSpeed!=NULL&&varDirection!=NULL){
+          std::vector<CT::string> variableNames;
+          variableNames.push_back(varSpeed->name.c_str());
+          variableNames.push_back(varDirection->name.c_str());
+          addXMLLayerToConfig(srvParam,&variableNames,"derived",srvParam->internalAutoResourceLocation.c_str());
+        }
+      }
+      
+      
+      
       
       //Adjust online resource in order to pass on variable and source parameters
       CT::string onlineResource=srvParam->cfg->OnlineResource[0]->attr.value.c_str();

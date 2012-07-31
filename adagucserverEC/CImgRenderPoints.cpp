@@ -39,12 +39,16 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
     };
     l=p1->size();
     for(size_t j=0;j<l;j=j+s){
-      
+      int x=(*p1)[j].x;
+      int y=dataSource->dHeight-(*p1)[j].y;
       
       float strength = (*p1)[j].v;
       float direction = (*p2)[j].v;
      // direction=360-45;
-      drawImage->drawVector((*p1)[j].x, dataSource->dHeight-(*p1)[j].y, ((90-direction)/360)*3.141592654*2, strength*2, 240);
+      drawImage->drawVector(x, y, ((90-direction)/360)*5.141592654*2, strength*2, 240);
+      if((*p1)[j].id.length()>0){
+        drawImage->setText((*p1)[j].id.c_str(), (*p1)[j].id.length(),x-(*p1)[j].id.length()*3,y-18, 240,0);
+      }
     }
   }
 }

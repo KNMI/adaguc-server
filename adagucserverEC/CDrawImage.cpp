@@ -176,7 +176,8 @@ void CDrawImage::drawVector(int x,int y,double direction, double strength,int co
   line(wx1,wy1,wx2,wy2,color);
   line(wx1,wy1,hx1,hy1,color);
   line(wx1,wy1,hx2,hy2,color);
-  circle(x, y, 1, color);
+  setPixelIndexed(x, y, 254);
+  //circle(x+1, y+1, 1, color);
 }
 
 #define MSTOKNOTS (3600/1852)

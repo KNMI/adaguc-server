@@ -1345,7 +1345,20 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
           element->value=szTemp;
           //For vectors, we will calculate angle and strength
           if(dataSource->dataObject.size()==2){
-            if(dataSource->dataObject[0]->cdfVariable->name.indexOf("speed")==-1){
+            
+            //Skip KTS calculation if input data is not u and v vectors.
+            bool skipKTSCalc = false;
+            try{
+              if(dataSource->dataObject[0]->cdfVariable->getAttribute("units")->toString().indexOf("m/s")>=0){
+                skipKTSCalc =true;
+              }
+            }catch(int e){}
+            
+            if(dataSource->dataObject[0]->cdfVariable->name.indexOf("speed")>=0){
+              skipKTSCalc =true;
+            }
+            
+            if(!skipKTSCalc){
               double pi=3.141592;
               double pixel1=convertValue(dataSource->dataObject[0]->cdfVariable->type,dataSource->dataObject[0]->cdfVariable->data,ptr);
               double pixel2=convertValue(dataSource->dataObject[1]->cdfVariable->type,dataSource->dataObject[1]->cdfVariable->data,ptr);
@@ -1376,6 +1389,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
                 }
                 getFeatureInfoResult->elements.push_back(element2);
               }
+              
             }
           }
         }
