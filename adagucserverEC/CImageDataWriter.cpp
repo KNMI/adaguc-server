@@ -2871,16 +2871,16 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
         numClasses=int((maxValue-minValue)/legendInterval);
       }
     }*/
-#ifdef CIMAGEDATAWRITER_DEBUG    
-CDBDebug("LayerName = %s",dataSource->layerName.c_str());
-CDBDebug("minValue=%f maxValue=%f",minValue,maxValue);
-CDBDebug("scale=%f offset=%f",dataSource->legendScale,dataSource->legendOffset);    
-#endif
-    float iMin=convertValueToClass(minValue,legendInterval);
-    float iMax=convertValueToClass(maxValue,legendInterval)+legendInterval;
-#ifdef CIMAGEDATAWRITER_DEBUG        
-CDBDebug("iMin=%f iMax=%f",iMin,iMax);
-#endif
+    #ifdef CIMAGEDATAWRITER_DEBUG    
+    CDBDebug("LayerName = %s",dataSource->layerName.c_str());
+    CDBDebug("minValue=%f maxValue=%f",minValue,maxValue);
+    CDBDebug("scale=%f offset=%f",dataSource->legendScale,dataSource->legendOffset);    
+    #endif
+        float iMin=convertValueToClass(minValue,legendInterval);
+        float iMax=convertValueToClass(maxValue,legendInterval)+legendInterval;
+    #ifdef CIMAGEDATAWRITER_DEBUG        
+    CDBDebug("iMin=%f iMax=%f",iMin,iMax);
+    #endif
 
     //In case of auto scale and autooffset we will stretch the colors over the min/max values
     //Calculate new scale and offset for the new min/max:
@@ -2892,9 +2892,9 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
       dataSource->legendScale=ls;
       dataSource->legendOffset=lo;
     }
-#ifdef CIMAGEDATAWRITER_DEBUG        
-    CDBDebug("scale=%f offset=%f",dataSource->legendScale,dataSource->legendOffset);
-#endif    
+    #ifdef CIMAGEDATAWRITER_DEBUG        
+        CDBDebug("scale=%f offset=%f",dataSource->legendScale,dataSource->legendOffset);
+    #endif    
     //floatToString(szTemp,255,iMax);
    
     
@@ -2937,18 +2937,20 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
       if(j<iMax)
       {
         int y=getColorIndexForValue(dataSource,v);
-        legendImage->rectangle(4+pLeft,cY2+pTop,int(cbW)+7+pLeft,cY+pTop,(y),248);
-        if(textRounding<=0)sprintf(szTemp,"%2.0f - %2.0f",v,v+legendInterval);
-        if(textRounding==1)sprintf(szTemp,"%2.1f - %2.1f",v,v+legendInterval);
-        if(textRounding==2)sprintf(szTemp,"%2.2f - %2.2f",v,v+legendInterval);
-        if(textRounding==3)sprintf(szTemp,"%2.3f - %2.3f",v,v+legendInterval);
-        if(textRounding==4)sprintf(szTemp,"%2.4f - %2.4f",v,v+legendInterval);
-        if(textRounding==5)sprintf(szTemp,"%2.5f - %2.5f",v,v+legendInterval);
-        if(textRounding==5)sprintf(szTemp,"%2.6f - %2.6f",v,v+legendInterval);
-        if(textRounding>6)sprintf(szTemp,"%f - %f",v,v+legendInterval);
-        //CT::string    //floatToString(szTemp,255,v);
-        int l=strlen(szTemp);
-        legendImage->setText(szTemp,l,(int)cbW+10+pLeft,((cY+cY2)/2)-7+pTop,248,-1);
+        if(legendImage->isColorTransparent(y)==false){
+          legendImage->rectangle(4+pLeft,cY2+pTop,int(cbW)+7+pLeft,cY+pTop,(y),248);
+          if(textRounding<=0)sprintf(szTemp,"%2.0f - %2.0f",v,v+legendInterval);
+          if(textRounding==1)sprintf(szTemp,"%2.1f - %2.1f",v,v+legendInterval);
+          if(textRounding==2)sprintf(szTemp,"%2.2f - %2.2f",v,v+legendInterval);
+          if(textRounding==3)sprintf(szTemp,"%2.3f - %2.3f",v,v+legendInterval);
+          if(textRounding==4)sprintf(szTemp,"%2.4f - %2.4f",v,v+legendInterval);
+          if(textRounding==5)sprintf(szTemp,"%2.5f - %2.5f",v,v+legendInterval);
+          if(textRounding==5)sprintf(szTemp,"%2.6f - %2.6f",v,v+legendInterval);
+          if(textRounding>6)sprintf(szTemp,"%f - %f",v,v+legendInterval);
+          //CT::string    //floatToString(szTemp,255,v);
+          int l=strlen(szTemp);
+          legendImage->setText(szTemp,l,(int)cbW+10+pLeft,((cY+cY2)/2)-7+pTop,248,-1);
+        }
       }
 
     }

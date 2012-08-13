@@ -162,6 +162,7 @@ class CDrawImage{
     void setTTFFontLocation(const char *_TTFFontLocation){TTFFontLocation=_TTFFontLocation;  }
     void setTTFFontSize(float _TTFFontSize){  TTFFontSize=_TTFFontSize; }
     bool isPixelTransparent(int &x,int &y);
+    bool isColorTransparent(int &color);
     void getCanvasSize(int &x,int &y,int &w,int &h);
     
     int setCanvasSize(int x,int y,int width,int height);

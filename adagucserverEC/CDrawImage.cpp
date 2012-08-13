@@ -89,15 +89,29 @@ int CDrawImage::createImage(CGeoParams *_Geo){
   if(dImageCreated==1){CDBError("createImage: image already created");return 1;}
   
   Geo->copy(_Geo);
+  CDBDebug("BLA %d",_bEnableTrueColor);
   if(_bEnableTrueColor==true){
     //Always true color
 #ifdef ADAGUC_USE_CAIRO
-    cairo = new CCairoPlotter(Geo->dWidth, Geo->dHeight, TTFFontSize, TTFFontLocation );
+    unsigned char A=0;
+    if(_bEnableTransparency==false){
+      A=255;
+    }
+    cairo = new CCairoPlotter(Geo->dWidth, Geo->dHeight, TTFFontSize, TTFFontLocation ,BGColorR,BGColorG,BGColorB,A);
 #else
     size_t imageSize=0;
     imageSize=Geo->dWidth * Geo->dHeight * 4;
     RGBAByteBuffer = new unsigned char[imageSize];
-    for(size_t j=0;j<imageSize;j=j+1){RGBAByteBuffer[j]=0;}
+    if(_bEnableTransparency){
+      for(size_t j=0;j<imageSize;j=j+1){RGBAByteBuffer[j]=0;}
+    }else{
+      for(size_t j=0;j<imageSize/4;j=j+1){
+        RGBAByteBuffer[j*4+0]=BGColorR;
+        RGBAByteBuffer[j*4+1]=BGColorG;
+        RGBAByteBuffer[j*4+2]=BGColorB;
+        RGBAByteBuffer[j*4+3]=255;
+      }
+//    }
     wuLine = new CXiaolinWuLine(Geo->dWidth,Geo->dHeight,RGBAByteBuffer);
     freeType = new CFreeType (Geo->dWidth,Geo->dHeight,RGBAByteBuffer,TTFFontSize,TTFFontLocation);
 #endif
@@ -985,6 +999,16 @@ bool CDrawImage::isPixelTransparent(int &x,int &y){
     #endif
     if(a==0)return true;else return false;
   }
+  return false;
+}
+
+
+bool CDrawImage::isColorTransparent(int &color){
+  if(currentLegend==NULL){
+    return true;
+  }
+  if(color<0||color>=240)return true;
+  if(currentLegend->CDIred[color]==0&&currentLegend->CDIgreen[color]==0&&currentLegend->CDIblue[color]==0)return true;
   return false;
 }
 

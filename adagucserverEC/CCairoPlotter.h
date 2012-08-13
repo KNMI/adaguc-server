@@ -134,12 +134,17 @@ private:
     //CDBDebug("constructor");
   }
 public:
-  CCairoPlotter(int width,int height, float fontSize, const char*fontLocation){
+  CCairoPlotter(int width,int height, float fontSize, const char*fontLocation,unsigned char r,unsigned char g,unsigned char b,unsigned char a){
     byteBufferPointerIsOwned = true;
     stride=cairo_format_stride_for_width(FORMAT, width);
     size_t bufferSize = size_t(height)*stride;
     ARGBByteBuffer = new unsigned char[bufferSize];
-    for(size_t j=0;j<bufferSize;j++)ARGBByteBuffer[j]=0;
+    for(size_t j=0;j<bufferSize/4;j++){
+      ARGBByteBuffer[j*4+0]=a;
+      ARGBByteBuffer[j*4+1]=r;
+      ARGBByteBuffer[j*4+2]=g;
+      ARGBByteBuffer[j*4+3]=b;
+    }
     cairoPlotterInit(width,height,fontSize,fontLocation);
   }
   
