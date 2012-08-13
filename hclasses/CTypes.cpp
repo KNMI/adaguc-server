@@ -95,6 +95,7 @@ namespace CT{
     #ifdef CTYPES_DEBUG
     CDBDebug("string(string const &f);\n");
     #endif
+    if(&f==NULL){init();return;}
     init();copy(f.value,f.privatelength);
   }
   
@@ -102,6 +103,7 @@ namespace CT{
     #ifdef CTYPES_DEBUG
     CDBDebug("string::operator= (string const& f);\n");
     #endif
+    if(&f==NULL){init();return *this;}
     if (this == &f) return *this;  
     _Free();init();copy(f.value,f.privatelength);
     return *this;
@@ -111,6 +113,7 @@ namespace CT{
     #ifdef CTYPES_DEBUG
     CDBDebug("string::operator= (const char*const &f)\n");
     #endif
+    if(&f==NULL){init();return *this;}
     _Free();init();this->copy(f);
     return *this;
   }      

@@ -494,6 +494,7 @@ public:
 
   void circle(int x, int y, int r) {
     cairo_arc(cr, x, y, r, 0, 2*M_PI);
+    cairo_set_line_width(cr, 1);
     cairo_stroke(cr);
   }
 

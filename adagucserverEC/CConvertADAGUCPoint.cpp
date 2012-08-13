@@ -1,7 +1,7 @@
 #include "CConvertADAGUCPoint.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
-#define CCONVERTADAGUCPOINT_DEBUG
+//#define CCONVERTADAGUCPOINT_DEBUG
 const char *CConvertADAGUCPoint::className="CConvertADAGUCPoint";
 
 
@@ -111,7 +111,7 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
   }catch(int e){
     return 1;
   }
-  CDBDebug("THIS IS ADAGUC POINT DATA");
+  //CDBDebug("THIS IS ADAGUC POINT DATA");
 
   
  
@@ -133,7 +133,7 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
   
   double dfBBOX[]={lonMinMax.min,latMinMax.min,lonMinMax.max,latMinMax.max};
   //double dfBBOX[]={-180,-90,180,90};
-  CDBDebug("Datasource dfBBOX:%f %f %f %f",dfBBOX[0],dfBBOX[1],dfBBOX[2],dfBBOX[3]);
+  //CDBDebug("Datasource dfBBOX:%f %f %f %f",dfBBOX[0],dfBBOX[1],dfBBOX[2],dfBBOX[3]);
   
   //Default size of adaguc 2dField is 2x2
   int width=2;
@@ -276,7 +276,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
   }catch(int e){
     return 1;
   }
-  CDBDebug("THIS IS ADAGUC POINT DATA");
+  //CDBDebug("THIS IS ADAGUC POINT DATA");
   
   
   CDF::Variable *pointLon;
@@ -514,7 +514,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
     
     
     int dateDimIndex=dataSource->getDimensionIndex("time");
-    CDBDebug("Date DIM %d numStations = %d",dateDimIndex,numStations);
+    //CDBDebug("Date DIM %d numStations = %d",dateDimIndex,numStations);
    
     for(int stationNr=0;stationNr<numStations;stationNr++){ 
       int pPoint = stationNr*numDates+dateDimIndex;//*numStations;
@@ -537,23 +537,13 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
           }
          
           
-          CDBDebug("P %d %d %f",dlon,dlat,val);
+          //CDBDebug("P %d %d %f",dlon,dlat,val);
           if(dlon>=0&&dlat>=0&&dlon<dataSource->dWidth&&dlat<dataSource->dHeight){
           
             dataSource->dataObject[d]->points.push_back(PointDV(dlon,dlat,val,id));
-          }
-        
-          for(int y=-4;y<5;y++){
-            for(int x=-4;x<5;x++){
-              int dlon=(lon-offsetX)/cellSizeX;
-              int dlat=(lat-offsetY)/cellSizeY;
-              dlon+=x;
-              dlat+=y;
-              if(dlon>=0&&dlat>=0&&dlon<dataSource->dWidth&&dlat<dataSource->dHeight){
-                sdata[dlon+dlat*dataSource->dWidth]=val;
-              }
-            }
-          }
+          }        
+          
+          drawCircle(sdata,val,dataSource->dWidth,dataSource->dHeight,dlon-1,dlat,5);
         }
       }
     }

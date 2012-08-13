@@ -913,23 +913,29 @@ int CRequest::process_all_layers(){
           */
        
           bool imageDataWriterIsInitialized = false;
+          int dataSourceToUse=0;
           for(size_t d=0;d<dataSources.size()&&imageDataWriterIsInitialized==false;d++){
             if(dataSources[d]->dLayerType!=CConfigReaderLayerTypeCascaded){
               //CDBDebug("INIT");
               status = imageDataWriter.init(srvParam,dataSources[d],dataSources[d]->getNumTimeSteps());if(status != 0)throw(__LINE__);
               imageDataWriterIsInitialized=true;
+              dataSourceToUse=d;
             }
           }
+          
           //There are only cascaded layers, so we intiialize the imagedatawriter with this the first layer.
           if(imageDataWriterIsInitialized==false){
             status = imageDataWriter.init(srvParam,dataSources[0],dataSources[0]->getNumTimeSteps());if(status != 0)throw(__LINE__);
+            dataSourceToUse=0;
             imageDataWriterIsInitialized=true;
           }
           
+          //CDBDebug("using datasource %d",dataSourceToUse);
+          
           //When we have multiple timesteps, we will create an animation.
-          if(dataSources[0]->getNumTimeSteps()>1)imageDataWriter.createAnimation();
+          if(dataSources[dataSourceToUse]->getNumTimeSteps()>1)imageDataWriter.createAnimation();
     
-          for(size_t k=0;k<(size_t)dataSources[0]->getNumTimeSteps();k++){
+          for(size_t k=0;k<(size_t)dataSources[dataSourceToUse]->getNumTimeSteps();k++){
             for(size_t d=0;d<dataSources.size();d++){
               dataSources[d]->setTimeStep(k);
             }
@@ -943,13 +949,13 @@ int CRequest::process_all_layers(){
                 //Adding data failed:
                 //Do not ruin an animation if one timestep fails to load.
                 //If there is a single time step then throw an exception otherwise continue.
-                if(dataSources[0]->getNumTimeSteps()==1){
+                if(dataSources[dataSourceToUse]->getNumTimeSteps()==1){
                   //Not an animation, so throw an exception
                   CDBError("Unable to convert datasource %s to image",dataSources[j]->layerName.c_str());
                   throw(__LINE__);
                 }else{
                   //This is an animation, report an error and continue with adding images.
-                  CDBError("Unable to load datasource %s at line %d",dataSources[0]->dataObject[0]->variableName.c_str(),__LINE__);
+                  CDBError("Unable to load datasource %s at line %d",dataSources[dataSourceToUse]->dataObject[0]->variableName.c_str(),__LINE__);
                 }
               }
             }
@@ -957,10 +963,11 @@ int CRequest::process_all_layers(){
               //Special styled layer for GEOMON project
               status = imageDataWriter.calculateData(dataSources);if(status != 0)throw(__LINE__);
             }
-            if(dataSources[j]->getNumTimeSteps()>1){
+            if(dataSources[dataSourceToUse]->getNumTimeSteps()>1){
               //Print the animation data into the image
               char szTemp[1024];
-              snprintf(szTemp,1023,"%s UTC",dataSources[0]->timeSteps[k]->timeString.c_str());
+              snprintf(szTemp,1023,"%s UTC",dataSources[dataSourceToUse]->timeSteps[k]->timeString.c_str());
+              //CDBDebug("timestring %s",szTemp);
               imageDataWriter.setDate(szTemp);
             }
           }

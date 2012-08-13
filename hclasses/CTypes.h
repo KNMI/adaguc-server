@@ -20,6 +20,7 @@
  * initial date       :  20120610
  */
 
+//#define CTYPES_DEBUG
 #ifndef CTypes_H
 #define CTypes_H
 #include <stdio.h>
@@ -33,6 +34,11 @@
 #include "CDebugger.h"
 
 #define END NULL
+
+#ifndef CTYPESCOMPATON
+#define toLowerCaser toLowerCase
+#endif 
+
 
 namespace CT{
   using namespace std;
@@ -252,6 +258,16 @@ class string:public basetype{
      * String to lowercase
      */
     void toLowerCaseSelf();
+    
+    /**
+     * Return lowercase string
+     */
+    CT::string toLowerCaser(){
+      CT::string t;
+      t.copy(value,privatelength);
+      t.toLowerCaseSelf();
+      return t;
+    }
     
     /**
      * Decodes URL to string

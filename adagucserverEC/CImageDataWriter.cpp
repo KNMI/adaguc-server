@@ -1,5 +1,5 @@
 #include "CImageDataWriter.h"
-#define CIMAGEDATAWRITER_DEBUG
+//#define CIMAGEDATAWRITER_DEBUG
 
 
 const char * CImageDataWriter::className = "CImageDataWriter";
@@ -1156,33 +1156,42 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
 
   int status;
   for(size_t d=0;d<dataSources.size();d++){
+    #ifdef CIMAGEDATAWRITER_DEBUG    
+    CDBDebug("Processing dataSource %d",d);
+    #endif
+   
     bool openAll = false;
-    if(dataSources[d]->dataObject[0]->cdfVariable->getAttributeNE("ADAGUC_VECTOR")!=NULL){
-      openAll =true;
-    }  
-    if(dataSources[d]->dataObject[0]->cdfVariable->getAttributeNE("ADAGUC_POINT")!=NULL){
-      openAll =true;
-    }  
+    if(dataSources[d]->dataObject[0]->cdfVariable!=NULL){
+      if(dataSources[d]->dataObject[0]->cdfVariable->getAttributeNE("ADAGUC_VECTOR")!=NULL){
+        openAll =true;
+      }  
+     
+      if(dataSources[d]->dataObject[0]->cdfVariable->getAttributeNE("ADAGUC_POINT")!=NULL){
+        openAll =true;
+      }  
+    }
+   
     CDataSource *dataSource=dataSources[d];
     if(dataSource==NULL){
       CDBError("dataSource == NULL");
       return 1;
     }
+   
     //Copy layer name
     getFeatureInfoResult->layerName.copy(&dataSource->layerName);
     getFeatureInfoResult->dataSourceIndex=dataSourceIndex;
     
-  
+   
     
     CDataReader reader;
     if(openAll){
-      CDBDebug("OPEN ALL");
+      //CDBDebug("OPEN ALL");
       status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_ALL);
     }else{
-      CDBDebug("OPEN HEADER");
+      //CDBDebug("OPEN HEADER");
       status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_HEADER);
     }
-    
+   
     
     if(status!=0){
       CDBError("Could not open file: %s",dataSource->getFileName());
@@ -1290,7 +1299,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       
       // Assign CDF::Variable Pointer
       element->variable = dataSources[d]->dataObject[o]->cdfVariable;
-      element->value="";
+      element->value="nodata";
       
       
       /* Get time string*/
@@ -1305,14 +1314,25 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
     }
  
   // Retrieve corresponding values.
-  
+  #ifdef CIMAGEDATAWRITER_DEBUG  
+  CDBDebug("imx:%d imy:%d dataSource->dWidth:%d dataSource->dHeight:%d",imx,imy,dataSource->dWidth,dataSource->dHeight);
+  #endif
   if(imx>=0&&imy>=0&&imx<dataSource->dWidth&&imy<dataSource->dHeight){
     
     
     if(openAll){
       //status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_ALL);
     }else{
+      #ifdef CIMAGEDATAWRITER_DEBUG 
+      CDBDebug("Reading datasource %d for %d,%d",d,imx,imy);
+      #endif
+      
       status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_ALL,imx,imy);
+      
+      #ifdef CIMAGEDATAWRITER_DEBUG 
+      CDBDebug("Done");
+      #endif
+      
     }
 
     if(status!=0){
@@ -1322,14 +1342,27 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
     for(size_t o=0;o<dataSource->dataObject.size();o++){
       size_t j=d+o*dataSources.size();  
 //      CDBDebug("j = %d",j);
+      
+      
+      #ifdef CIMAGEDATAWRITER_DEBUG 
+      CDBDebug("Accessing element %d",j);
+      #endif
+      
       GetFeatureInfoResult::Element * element=getFeatureInfoResult->elements[j];
+
       size_t ptr=0;
       if(openAll){
         ptr=imx+imy*dataSource->dWidth;
       }
+      
+      #ifdef CIMAGEDATAWRITER_DEBUG 
+      CDBDebug("ptr = %d",ptr);
+      #endif
       double pixel=convertValue(dataSource->dataObject[o]->cdfVariable->type,dataSource->dataObject[o]->cdfVariable->data,ptr);
 
-      
+      #ifdef CIMAGEDATAWRITER_DEBUG 
+      CDBDebug("pixel value = %f",pixel);
+      #endif
       //Check wether this is a NoData value:
       if((pixel!=dataSource->dataObject[o]->dfNodataValue&&dataSource->dataObject[o]->hasNodataValue==true&&pixel==pixel)||dataSource->dataObject[0]->hasNodataValue==false){
         if(dataSource->dataObject[o]->hasStatusFlag){
@@ -1343,22 +1376,33 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
           char szTemp[1024];
           floatToString(szTemp,1023,pixel);
           element->value=szTemp;
+          
+          #ifdef CIMAGEDATAWRITER_DEBUG 
+          CDBDebug("dataSource->dataObject.size()==%d",dataSource->dataObject.size());
+          #endif
+          
           //For vectors, we will calculate angle and strength
           if(dataSource->dataObject.size()==2){
-            
+           
             //Skip KTS calculation if input data is not u and v vectors.
+            
+           
+          
             bool skipKTSCalc = false;
             try{
+             
               if(dataSource->dataObject[0]->cdfVariable->getAttribute("units")->toString().indexOf("m/s")>=0){
                 skipKTSCalc =true;
               }
+             
             }catch(int e){}
-            
+           
             if(dataSource->dataObject[0]->cdfVariable->name.indexOf("speed")>=0){
               skipKTSCalc =true;
             }
-            
+           
             if(!skipKTSCalc){
+             
               double pi=3.141592;
               double pixel1=convertValue(dataSource->dataObject[0]->cdfVariable->type,dataSource->dataObject[0]->cdfVariable->data,ptr);
               double pixel2=convertValue(dataSource->dataObject[1]->cdfVariable->type,dataSource->dataObject[1]->cdfVariable->data,ptr);
@@ -1391,17 +1435,24 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
               }
               
             }
+           
           }
+         
         }
         else {
+         
           element->value="nodata";
         }
+       
       }
+     
     }
+   
   }
+ 
   //reader.close();
-  #ifdef CIMAGEDATAWRITER_DEBUG    
-  CDBDebug("[/getFeatureInfo]");
+  #ifdef CIMAGEDATAWRITER_DEBUG 
+  CDBDebug("[/getFeatureInfo %d]",getFeatureInfoResultList.size());
   #endif
   return 0;
 }
@@ -2083,7 +2134,7 @@ int CImageDataWriter::getTextForValue(CT::string *tv,float v,StyleConfiguration 
 
 int CImageDataWriter::end(){
   #ifdef CIMAGEDATAWRITER_DEBUG    
-  CDBDebug("end");
+  CDBDebug("end, number of GF results: %d",getFeatureInfoResultList.size());
   #endif
   if(writerStatus==uninitialized){CDBError("Not initialized");return 1;}
   if(writerStatus==finished){CDBError("Already finished");return 1;}
@@ -2099,6 +2150,7 @@ int CImageDataWriter::end(){
     if(srvParam->InfoFormat.equals("application/vnd.ogc.gml"))resultFormat=textxml;//applicationvndogcgml;
     
 
+    /* Text plain and text html */
     if(resultFormat==textplain||resultFormat==texthtml){
       CT::string resultHTML;
       if(resultFormat==textplain){
@@ -2132,17 +2184,21 @@ int CImageDataWriter::end(){
           }
         }
         if(resultFormat==texthtml)resultHTML.printconcat("<hr>\n");
-      
+        //CDBDebug("getFeatureInfoResultList.size() %d",getFeatureInfoResultList.size());
         for(size_t j=0;j<getFeatureInfoResultList.size();j++){
+          
           GetFeatureInfoResult *g = getFeatureInfoResultList[j];
+         
           for(size_t elNR=0;elNR<g->elements.size();elNR++){
             GetFeatureInfoResult::Element * e=g->elements[elNR];
             if(g->elements.size()>1){
               resultHTML.printconcat("%d: ",elNR);
             }
+            //CDBDebug(" %d elements.size() %d value '%s'",j,g->elements.size(),e->value.c_str());
             if(e->value.length()>0){
               if(resultFormat==texthtml){
-                resultHTML.printconcat("%s: <b>%s</b>",e->time.c_str(),e->value.c_str());}else{
+                resultHTML.printconcat("%s: <b>%s</b>",e->time.c_str(),e->value.c_str());
+              }else{
                 resultHTML.printconcat("%s: %s",e->time.c_str(),e->value.c_str());             
               }
               if(e->units.length()>0){
@@ -2166,6 +2222,7 @@ int CImageDataWriter::end(){
       printf("%s",resultHTML.c_str());
     }
     
+    /* Text XML */
     if(resultFormat==textxml){
       
       CT::string resultXML;
@@ -2235,6 +2292,7 @@ int CImageDataWriter::end(){
       
     }
     
+    /* image/png */
     if(resultFormat==imagepng){
       printf("%s%c%c\n","Content-Type:image/png",13,10);
       if(getFeatureInfoResultList.size()==0){

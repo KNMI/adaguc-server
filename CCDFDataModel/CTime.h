@@ -105,6 +105,7 @@ class CTime{
    */
   Date stringToDate(const char*szTime);
   
+
   /**
    * Converts YYYY-mm-ddThh:mm:ss string to Date
    * Throws integer CTIME_CONVERSION_ERROR when fails.
@@ -112,6 +113,16 @@ class CTime{
    * @return The Date
    */
   Date ISOStringToDate(const char*szTime);
+  
+  /**
+   * Converts YYYYmmddThhmmss string to Date
+   * Converts YYYY-mm-ddThh:mm:ss string to Date
+   * Throws integer CTIME_CONVERSION_ERROR when fails.
+   * @param szTime the time string to convert
+   * @return The Date
+   */
+  Date freeDateStringToDate(const char*szTime);
+  
   
   /**
    * Converts date object to string
@@ -126,6 +137,8 @@ class CTime{
    * @param string Format YYYY-mm-ddThh:mm:ss
    */
   CT::string dateToISOString(Date date);
+  
+
 };
 #endif
 

@@ -1,6 +1,6 @@
 #include "CDataReader.h"
 #include <math.h>
-
+#include <float.h>
 #include "CConvertASCAT.h"
 #include "CConvertADAGUCVector.h"
 #include "CConvertADAGUCPoint.h"
@@ -335,6 +335,9 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
     bool hasStatusFlag=false;
     if(statusFlagList->size()>0)hasStatusFlag=true;
     dataSource->dataObject[0]->hasStatusFlag=hasStatusFlag;
+    
+    
+    dataSource->dataObject[varNr]->points.clear();
     //CDBDebug("Getting info for variable %s",dataSource->dataObject[varNr]->variableName.c_str());
   }
   
@@ -972,6 +975,26 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
     dataSource->legendScale=ls;
     dataSource->legendOffset=lo;
   }
+  
+  //Check for infinities
+  if(dataSource->legendScale!=dataSource->legendScale||
+    dataSource->legendScale==INFINITY||
+    dataSource->legendScale==NAN||
+    dataSource->legendScale==-INFINITY){
+    dataSource->legendScale=1;
+  }
+  if(dataSource->legendOffset!=dataSource->legendOffset||
+    dataSource->legendOffset==INFINITY||
+    dataSource->legendOffset==NAN||
+    dataSource->legendOffset==-INFINITY){
+    dataSource->legendOffset=0;
+  }
+  
+  #ifdef CDATAREADER_DEBUG    
+  CDBDebug("dataSource->legendScale = %f, dataSource->legendOffset = %f",INFINITY,FLT_MIN);
+  CDBDebug("dataSource->legendScale = %f, dataSource->legendOffset = %f",dataSource->legendScale,dataSource->legendOffset);
+  #endif    
+  
 #ifdef MEASURETIME
   StopWatch_Stop("all read");
 #endif

@@ -171,3 +171,17 @@ void fillQuadGouraud(float  *data, float  *values, int W,int H, int *xP,int *yP)
   cornerX[2]=(int)  cx   ;cornerY[2]=(int) cy    ;cornerV[2]=cv;
   fillTriangleGouraud(data, cornerV, W,H, cornerX,cornerY);
 }
+
+void drawCircle(float *data,float value,int W,int H,int orgx,int orgy,int radius){
+  for(int y=-radius; y<=radius; y++){
+    for(int x=-radius; x<=radius; x++){
+      if(x*x+y*y < radius*radius){
+        int nx=orgx+x;
+        int ny=orgy+y;
+        if(nx>=0&&ny>=0&&nx<W&&ny<H){
+          data[nx+ny*W]=value;
+        }
+      }
+    }
+  }
+}

@@ -119,7 +119,7 @@ CTime::Date CTime::stringToDate(const char*szTime){
   date.offset=dateToOffset(date);
   Date checkDate=getDate(date.offset);
   CT::string checkStr = dateToString(checkDate);
-  if(!checkStr.equals(szTime)){
+  if(!checkStr.equals(szTime,15)){
     CDBError("stringToDate internal error: intime is different from outtime:  \"%s\" != \"%s\"",szTime,checkStr.c_str());
     throw CTIME_CONVERSION_ERROR;
   }
@@ -171,4 +171,60 @@ CT::string CTime::dateToISOString(Date date){
   s.print("%04d-%02d-%02dT%02d:%02d:%09f",date.year,date.month,date.day,date.hour,date.minute,date.second);
   return s;
 }
+
+CTime::Date CTime::freeDateStringToDate(const char*szTime){
+  size_t len = strlen(szTime);
+  if(len<14){
+    CDBError("datestring %s has invalid length %d",szTime,len);
+    throw CTIME_CONVERSION_ERROR;
+  }
+  //2010-01-01T00:00:00.000000
+  //2010-01-01T00:00:00.000000
+  //012345678901234567890
+  if(szTime[4]=='-'&&szTime[7]=='-'&&szTime[13]==':'&&szTime[16]==':'){
+    CT::string date="";
+    date.concat(szTime+0,4);
+    date.concat("-");
+    date.concat(szTime+5,2);
+    date.concat("-");
+    date.concat(szTime+8,2);
+    date.concat("T");
+    date.concat(szTime+11,2);
+    date.concat(":");
+    date.concat(szTime+14,2);
+    date.concat(":");
+    date.concat(szTime+17,2);
+    date.concat("Z");
+    return ISOStringToDate(date.c_str());
+  }
+  
+  //20041201T00:00:00.000000
+  //012345678901234567890
+  if(szTime[8]=='T'&&szTime[11]==':'&&szTime[14]==':'){
+    CT::string date="";
+    date.concat(szTime+0,8);
+    date.concat("T");
+    date.concat(szTime+9,2);
+   
+    date.concat(szTime+12,2);
+ 
+    date.concat(szTime+15,2);
+    date.concat("Z");
+    return stringToDate(date.c_str());
+  }
+  //20100101T000000
+  //012345678901234567890
+  if(szTime[8]=='T'){
+    CT::string date="";
+    date.concat(szTime+0,8);
+    date.concat("T");
+    date.concat(szTime+9,6);
+    date.concat("Z");
+    return stringToDate(date.c_str());
+  }
+  //CDBError("Format for date string \"%s\" not recognised",szTime);
+  throw CTIME_CONVERSION_ERROR;
+  return CTime::Date();
+}
+
 

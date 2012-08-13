@@ -12,7 +12,7 @@ float convertValueToClass(float val,float interval){
 }
 
 CDrawImage::CDrawImage(){
-
+  //CDBDebug("[CONS] CDrawImage");
   dImageCreated=0;
   dPaletteCreated=0;
   currentLegend = NULL;
@@ -38,6 +38,7 @@ CDrawImage::CDrawImage(){
   //CDBDebug("TTFFontLocation = %s",TTFFontLocation);
 }
 void CDrawImage::destroyImage(){
+  //CDBDebug("[destroy] CDrawImage");
   if(_bEnableTrueColor==false){
     if(dPaletteCreated==1){
       for(int j=0;j<256;j++)if(_colors[j]!=-1)gdImageColorDeallocate(image,_colors[j]);
@@ -67,6 +68,7 @@ void CDrawImage::destroyImage(){
 }
 
 CDrawImage::~CDrawImage(){
+  //CDBDebug("[DESC] CDrawImage");
   destroyImage();
   delete Geo; Geo=NULL;
 }
@@ -272,6 +274,7 @@ void CDrawImage::circle(int x, int y, int r, int color) {
 #ifdef ADAGUC_USE_CAIRO
     cairo->setColor(currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],255);
     cairo->circle(x, y, r);
+    //cairo->line(x1,y1,x2,y2,w);
 #else
         wuLine->setColor(currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],255);
       wuLine->line(x-r,y,x,y+r);
@@ -280,7 +283,7 @@ void CDrawImage::circle(int x, int y, int r, int color) {
       wuLine->line(x,y-r,x-r,y);
 #endif
   }else {
-    gdImageArc(image, x, y, 8, 8, 0, 360, _colors[color]);
+    gdImageArc(image, x, y, r*2+1, r*2+1, 0, 360, _colors[color]);
   }
 }
 void CDrawImage::poly(float x1,float y1,float x2,float y2,float x3, float y3, int color, bool fill){
@@ -390,8 +393,10 @@ void CDrawImage::line(float x1,float y1,float x2,float y2,float w,int color){
 
 
 void CDrawImage::setPixelIndexed(int x,int y,int color){
+  
   if(_bEnableTrueColor==true){
     if(currentLegend==NULL)return;
+    
     //if(color>=0&&color<256){
       if(currentLegend->CDIalpha[color]==255){
 #ifdef ADAGUC_USE_CAIRO
@@ -931,6 +936,7 @@ int CDrawImage::addImage(int delay){
     image = gdImageCreateTrueColor(Geo->dWidth,Geo->dHeight);
     gdImageSaveAlpha( image, true );
   }
+  dImageCreated=1;
   currentLegend=legends[0];    
   copyPalette();
   

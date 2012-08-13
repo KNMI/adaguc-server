@@ -24,4 +24,6 @@ void fillTriangleGouraud(float  *data, float  *values, int W,int H, int *xP,int 
  */
 void fillQuadGouraud(float  *data, float  *values, int W,int H, int *xP,int *yP);
 
+void drawCircle(float *data,float value,int W,int H,int orgx,int orgy,int radius);
+
 #endif
