@@ -93,11 +93,11 @@ int CDrawImage::createImage(CGeoParams *_Geo){
   if(_bEnableTrueColor==true){
     //Always true color
 #ifdef ADAGUC_USE_CAIRO
-    unsigned char A=0;
     if(_bEnableTransparency==false){
-      A=255;
+      cairo = new CCairoPlotter(Geo->dWidth, Geo->dHeight, TTFFontSize, TTFFontLocation ,BGColorR,BGColorG,BGColorB,255);
+    }else{
+      cairo = new CCairoPlotter(Geo->dWidth, Geo->dHeight, TTFFontSize, TTFFontLocation ,0,0,0,0);
     }
-    cairo = new CCairoPlotter(Geo->dWidth, Geo->dHeight, TTFFontSize, TTFFontLocation ,BGColorR,BGColorG,BGColorB,A);
 #else
     size_t imageSize=0;
     imageSize=Geo->dWidth * Geo->dHeight * 4;
