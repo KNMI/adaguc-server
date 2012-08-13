@@ -487,7 +487,9 @@ if(drawMap==true&&enableShade==false&&enableVector==false&&enableBarb==false){
 //Wind VECTOR
 std::vector<CalculatedWindVector> windVectors; //holds windVectors after calculation to draw them on top
 bool convertToKnots=false; //default is false
-if((enableVector||enableBarb)){
+//if((enableVector||enableBarb))
+{
+  
   if(sourceImage->dataObject.size()==2){
     int firstXPos=0;
     int firstYPos=0;
@@ -1089,6 +1091,7 @@ delete[] valObj;
      
      
      void CImgWarpBilinear::smoothData(float *valueData,float fNodataValue,int smoothWindow, int W,int H){
+       
        //SmootH!
        #ifdef CImgWarpBilinear_TIME
        StopWatch_Stop("[SmoothData]");
