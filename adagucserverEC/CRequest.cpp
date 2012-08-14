@@ -627,7 +627,7 @@ int CRequest::process_all_layers(){
         #ifdef CREQUEST_DEBUG
         CDBDebug("Get DIMS from query string");
         #endif
-        for(int k=0;k<srvParam->requestDims.size();k++)srvParam->requestDims[k]->name.toLowerCaseSelf();
+        for(size_t k=0;k<srvParam->requestDims.size();k++)srvParam->requestDims[k]->name.toLowerCaseSelf();
         int dimsfound[NC_MAX_DIMS];
         for(size_t i=0;i<dataSources[j]->cfgLayer->Dimension.size();i++){
           CT::string dimName(dataSources[j]->cfgLayer->Dimension[i]->value.c_str());
@@ -647,7 +647,7 @@ int CRequest::process_all_layers(){
           CDBDebug("alreadyAdded = %d",alreadyAdded);
           #endif
           if(alreadyAdded == false){
-            for(int k=0;k<srvParam->requestDims.size();k++){
+            for(size_t k=0;k<srvParam->requestDims.size();k++){
               if(srvParam->requestDims[k]->name.equals(&dimName)){
                 #ifdef CREQUEST_DEBUG
                 CDBDebug("DIM COMPARE: %s==%s",srvParam->requestDims[k]->name.c_str(),dimName.c_str());
@@ -1002,7 +1002,7 @@ int CRequest::process_all_layers(){
           //imageDataWriter.drawText(5,5+30+25+2+12+2,"/home/visadm/software/fonts/verdana.ttf",12,0,dataSources[0]->timeSteps[0]->timeString.c_str(),240);
           if(srvParam->showDimensionsInImage){
             textY+=4;
-            for(int d=0;d<srvParam->requestDims.size();d++){
+            for(size_t d=0;d<srvParam->requestDims.size();d++){
               CT::string message;
               float fontSize=parseFloat(srvParam->cfg->WMS[0]->DimensionFont[0]->attr.size.c_str());
               textY+=int(fontSize*1.2);
@@ -1185,17 +1185,15 @@ int CRequest::process_querystring(){
   int dFound_autoResourceLocation=0;
   int dFound_OpenDAPVariable=0;
   
-  char * data;
-  data=getenv("QUERY_STRING");
+  const char * pszQueryString=getenv("QUERY_STRING");
   
-  if(data==NULL){
-    data=strdup("SERVICE=WMS&request=getcapabilities");
-    //data=strdup("SERVICE=WMS&request=getmap&width=10&height=10&styles=&BBOX=0,50,10,60&srs=EPSG:4326&format=image/png&layers=temperature");
+  
+  if(pszQueryString==NULL){
+    pszQueryString=strdup("SERVICE=WMS&request=getcapabilities");
     CGI=0;
   }else CGI=1;
-//  CDBDebug("QUERY_STRING: %s",data);
-  //  StopWatch_Time("getenv(\"QUERY_STRING\")");
-  CT::string queryString(data);
+
+  CT::string queryString(pszQueryString);
   queryString.decodeURLSelf();
 
   CT::string * parameters=queryString.splitToArray("&");

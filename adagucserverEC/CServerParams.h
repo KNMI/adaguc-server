@@ -161,6 +161,11 @@ class CServerParams{
      * Generic function which will be showed when a WCS is requested while it is not compiled in
      */    
     static void showWCSNotEnabledErrorMessage();
+    
+    /**
+     * Get online resource
+     */
+    CT::string getOnlineResource();
 };
 
 

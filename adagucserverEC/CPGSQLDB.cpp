@@ -21,12 +21,14 @@ CPGSQLDB::~CPGSQLDB(){
 }
 
 int CPGSQLDB::close(){
+  //CDBDebug("[DISCONNECT]");
   if(dConnected == 1){clearResult();PQfinish(connection);}
   dConnected = 0;
   return 0;
 }
 
 int CPGSQLDB::connect(const char * pszOptions){
+  //CDBDebug("[CONNECT]");
   LastErrorMsg[0]='\0';
   if(dConnected == 1)return 0;
   connection = PQconnectdb(pszOptions);

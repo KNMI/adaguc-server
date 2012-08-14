@@ -301,13 +301,13 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
         dfBBOX[2]=dataSource->dfBBOX[0];
       }
     }
-    double tempy;
+    //double tempy;
     double miny1=dfBBOX[1];
     double maxy1=dfBBOX[3];
     double minx1=dfBBOX[0];
-    double minx2=dfBBOX[0];
+    //double minx2=dfBBOX[0];
     double maxx1=dfBBOX[2];
-    double maxx2=dfBBOX[2];
+    //double maxx2=dfBBOX[2];
 
     try{
       double nrTestX=9;

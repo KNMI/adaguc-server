@@ -711,15 +711,15 @@ CDBDebug("Cascaded layer");
 
 int CXMLGen::getWMS_1_0_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*> *myWMSLayerList){
   CFile header;
-  CT::string OnlineResource(srvParam->cfg->OnlineResource[0]->attr.value.c_str());
-  OnlineResource.concat("SERVICE=WMS&amp;");
+  CT::string onlineResource = srvParam->getOnlineResource();
+  onlineResource.concat("SERVICE=WMS&amp;");
   int status=header.     open(srvParam->cfg->Path[0]->attr.value.c_str(),WMS_1_0_0_HEADERFILE);if(status!=0)return 1;
   
   XMLDoc->copy(header.data);
   XMLDoc->replaceSelf("[SERVICETITLE]",srvParam->cfg->WMS[0]->Title[0]->value.c_str());
   XMLDoc->replaceSelf("[SERVICEABSTRACT]",srvParam->cfg->WMS[0]->Abstract[0]->value.c_str());
   XMLDoc->replaceSelf("[GLOBALLAYERTITLE]",srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->value.c_str());
-  XMLDoc->replaceSelf("[SERVICEONLINERESOURCE]",OnlineResource.c_str());
+  XMLDoc->replaceSelf("[SERVICEONLINERESOURCE]",onlineResource.c_str());
   XMLDoc->replaceSelf("[SERVICEINFO]",serviceInfo.c_str());
   if(myWMSLayerList->size()>0){
     for(size_t p=0;p<(*myWMSLayerList)[0]->projectionList.size();p++){
@@ -772,15 +772,15 @@ bool compareStringCase( const string& s1, const string& s2 ) {
 }
 int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*> *myWMSLayerList){
   CFile header;
-  CT::string OnlineResource(srvParam->cfg->OnlineResource[0]->attr.value.c_str());
-  OnlineResource.concat("SERVICE=WMS&amp;");
+  CT::string onlineResource = srvParam->getOnlineResource();
+  onlineResource.concat("SERVICE=WMS&amp;");
   int status=header.     open(srvParam->cfg->Path[0]->attr.value.c_str(),WMS_1_1_1_HEADERFILE);if(status!=0)return 1;
   
   XMLDoc->copy(header.data);
   XMLDoc->replaceSelf("[SERVICETITLE]",srvParam->cfg->WMS[0]->Title[0]->value.c_str());
   XMLDoc->replaceSelf("[SERVICEABSTRACT]",srvParam->cfg->WMS[0]->Abstract[0]->value.c_str());
   XMLDoc->replaceSelf("[GLOBALLAYERTITLE]",srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->value.c_str());
-  XMLDoc->replaceSelf("[SERVICEONLINERESOURCE]",OnlineResource.c_str());
+  XMLDoc->replaceSelf("[SERVICEONLINERESOURCE]",onlineResource.c_str());
   XMLDoc->replaceSelf("[SERVICEINFO]",serviceInfo.c_str());
   if(myWMSLayerList->size()>0){
     for(size_t p=0;p<(*myWMSLayerList)[0]->projectionList.size();p++){
@@ -907,7 +907,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
               XMLDoc->printconcat("    <LegendURL width=\"%d\" height=\"%d\">",LEGEND_WIDTH,LEGEND_HEIGHT);
               XMLDoc->concat("       <Format>image/png</Format>");
               XMLDoc->printconcat("       <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:type=\"simple\" xlink:href=\"%s&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=%s&amp;format=image/png&amp;STYLE=%s\"/>"
-                  ,OnlineResource.c_str(),layer->name.c_str(),style->name.c_str());
+                  ,onlineResource.c_str(),layer->name.c_str(),style->name.c_str());
               XMLDoc->concat("    </LegendURL>");
               XMLDoc->concat("  </Style>");
             
@@ -941,8 +941,8 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
 
 int CXMLGen::getWCS_1_0_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*> *myWMSLayerList){
   CFile header;
-  CT::string OnlineResource(srvParam->cfg->OnlineResource[0]->attr.value.c_str());
-  OnlineResource.concat("SERVICE=WCS&amp;");
+  CT::string onlineResource = srvParam->getOnlineResource();
+  onlineResource.concat("SERVICE=WCS&amp;");
   int status=header.     open(srvParam->cfg->Path[0]->attr.value.c_str(),WCS_1_0_HEADERFILE);if(status!=0)return 1;
   
   XMLDoc->copy(header.data);
@@ -962,7 +962,7 @@ int CXMLGen::getWCS_1_0_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
   XMLDoc->replaceSelf("[SERVICENAME]",srvParam->cfg->WCS[0]->Title[0]->value.c_str());
   XMLDoc->replaceSelf("[SERVICETITLE]",srvParam->cfg->WCS[0]->Name[0]->value.c_str());
   XMLDoc->replaceSelf("[SERVICEABSTRACT]",srvParam->cfg->WCS[0]->Abstract[0]->value.c_str());
-  XMLDoc->replaceSelf("[SERVICEONLINERESOURCE]",OnlineResource.c_str());
+  XMLDoc->replaceSelf("[SERVICEONLINERESOURCE]",onlineResource.c_str());
   XMLDoc->replaceSelf("[SERVICEINFO]",serviceInfo.c_str());
   
   if(myWMSLayerList->size()>0){

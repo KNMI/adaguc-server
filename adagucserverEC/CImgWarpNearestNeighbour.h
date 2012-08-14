@@ -397,7 +397,8 @@ private:
         #ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
         CDBDebug("Drawing tile id %d",ct->id);
         #endif 
-        int status = ct->drawTile->drawTile(ct->x_corners,ct->y_corners,ct->tile_offset_x,ct->tile_offset_y);
+        //int status = 
+        ct->drawTile->drawTile(ct->x_corners,ct->y_corners,ct->tile_offset_x,ct->tile_offset_y);
         /*if(status!=0){
           CDBError("Unable to draw tile at line %d",status);
         }*/

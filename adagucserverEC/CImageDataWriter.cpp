@@ -122,7 +122,7 @@ int CImageDataWriter::drawCascadedWMS(CDataSource * dataSource, const char *serv
                   drawImage.Geo->dfBBOX[3]);
   url.printconcat("&SRS=%s",drawImage.Geo->CRS.c_str());
   url.printconcat("&LAYERS=%s",layers);
-  for(int k=0;k<srvParam->requestDims.size();k++){
+  for(size_t k=0;k<srvParam->requestDims.size();k++){
     url.printconcat("&%s=%s",srvParam->requestDims[k]->name.c_str(),srvParam->requestDims[k]->value.c_str());
   }
   //CDBDebug(url.c_str());
@@ -1266,7 +1266,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
     //Retrieve variable names
   
     for(size_t o=0;o<dataSource->dataObject.size();o++){
-      size_t j=d+o*dataSources.size();
+      //size_t j=d+o*dataSources.size();
 //      CDBDebug("j = %d",j);
       //Create a new element and at it to the elements list.
       GetFeatureInfoResult::Element * element = new GetFeatureInfoResult::Element();
@@ -1406,16 +1406,15 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
               double pi=3.141592;
               double pixel1=convertValue(dataSource->dataObject[0]->cdfVariable->type,dataSource->dataObject[0]->cdfVariable->data,ptr);
               double pixel2=convertValue(dataSource->dataObject[1]->cdfVariable->type,dataSource->dataObject[1]->cdfVariable->data,ptr);
-             
-             
+              double windspeed=hypot(pixel1, pixel2);
+              windspeed=windspeed*(3600./1852.);
+              double angle=atan2(pixel2, pixel1);
+              angle=angle*180/pi;
+              if (angle<0) angle=angle+360;
+              angle=270-angle;
+              if (angle<0) angle=angle+360;
               GetFeatureInfoResult::Element *element2=new GetFeatureInfoResult::Element();
-              getFeatureInfoResult->elements.push_back(element2);
                 if (j==0) {
-                  double angle=atan2(pixel2, pixel1);
-                  angle=angle*180/pi;
-                  if (angle<0) angle=angle+360;
-                  angle=270-angle;
-                  if (angle<0) angle=angle+360;
                   element2->long_name="wind direction";
                   element2->var_name="wind direction";
                   element2->standard_name="dir";
@@ -1424,28 +1423,15 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
                     element2->units="degrees";
                     element2->time="";
                 } else {
-                  double windspeed=hypot(pixel1, pixel2);
-                  double windspeedKTS=windspeed*(3600./1852.);
                   element2->long_name="wind speed";
                   element2->var_name="wind speed";
                   element2->standard_name="speed";
                   element2->feature_name="wind speed";
-                  element2->value.print("%03.0f",windspeedKTS);
-                  element2->units="kts";
-                  element2->time="";
-                  
-                  GetFeatureInfoResult::Element *windspeedOrigElement=new GetFeatureInfoResult::Element();
-                  getFeatureInfoResult->elements.push_back(windspeedOrigElement);
-                  windspeedOrigElement->long_name="wind speed";
-                  windspeedOrigElement->var_name="wind speed";
-                  windspeedOrigElement->standard_name="speed";
-                  windspeedOrigElement->feature_name="wind speed";
-                  windspeedOrigElement->value.print("%03.0f",windspeed);
-                  windspeedOrigElement->units="m/s";
-                  windspeedOrigElement->time="";
-
+                    element2->value.print("%03.0f",windspeed);
+                    element2->units="kts";
+                    element2->time="";
                 }
-                
+                getFeatureInfoResult->elements.push_back(element2);
               }
               
             }
@@ -2871,16 +2857,16 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
         numClasses=int((maxValue-minValue)/legendInterval);
       }
     }*/
-    #ifdef CIMAGEDATAWRITER_DEBUG    
-    CDBDebug("LayerName = %s",dataSource->layerName.c_str());
-    CDBDebug("minValue=%f maxValue=%f",minValue,maxValue);
-    CDBDebug("scale=%f offset=%f",dataSource->legendScale,dataSource->legendOffset);    
-    #endif
-        float iMin=convertValueToClass(minValue,legendInterval);
-        float iMax=convertValueToClass(maxValue,legendInterval)+legendInterval;
-    #ifdef CIMAGEDATAWRITER_DEBUG        
-    CDBDebug("iMin=%f iMax=%f",iMin,iMax);
-    #endif
+#ifdef CIMAGEDATAWRITER_DEBUG    
+CDBDebug("LayerName = %s",dataSource->layerName.c_str());
+CDBDebug("minValue=%f maxValue=%f",minValue,maxValue);
+CDBDebug("scale=%f offset=%f",dataSource->legendScale,dataSource->legendOffset);    
+#endif
+    float iMin=convertValueToClass(minValue,legendInterval);
+    float iMax=convertValueToClass(maxValue,legendInterval)+legendInterval;
+#ifdef CIMAGEDATAWRITER_DEBUG        
+CDBDebug("iMin=%f iMax=%f",iMin,iMax);
+#endif
 
     //In case of auto scale and autooffset we will stretch the colors over the min/max values
     //Calculate new scale and offset for the new min/max:
@@ -2892,9 +2878,9 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
       dataSource->legendScale=ls;
       dataSource->legendOffset=lo;
     }
-    #ifdef CIMAGEDATAWRITER_DEBUG        
-        CDBDebug("scale=%f offset=%f",dataSource->legendScale,dataSource->legendOffset);
-    #endif    
+#ifdef CIMAGEDATAWRITER_DEBUG        
+    CDBDebug("scale=%f offset=%f",dataSource->legendScale,dataSource->legendOffset);
+#endif    
     //floatToString(szTemp,255,iMax);
    
     
@@ -2937,20 +2923,18 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
       if(j<iMax)
       {
         int y=getColorIndexForValue(dataSource,v);
-        if(legendImage->isColorTransparent(y)==false){
-          legendImage->rectangle(4+pLeft,cY2+pTop,int(cbW)+7+pLeft,cY+pTop,(y),248);
-          if(textRounding<=0)sprintf(szTemp,"%2.0f - %2.0f",v,v+legendInterval);
-          if(textRounding==1)sprintf(szTemp,"%2.1f - %2.1f",v,v+legendInterval);
-          if(textRounding==2)sprintf(szTemp,"%2.2f - %2.2f",v,v+legendInterval);
-          if(textRounding==3)sprintf(szTemp,"%2.3f - %2.3f",v,v+legendInterval);
-          if(textRounding==4)sprintf(szTemp,"%2.4f - %2.4f",v,v+legendInterval);
-          if(textRounding==5)sprintf(szTemp,"%2.5f - %2.5f",v,v+legendInterval);
-          if(textRounding==5)sprintf(szTemp,"%2.6f - %2.6f",v,v+legendInterval);
-          if(textRounding>6)sprintf(szTemp,"%f - %f",v,v+legendInterval);
-          //CT::string    //floatToString(szTemp,255,v);
-          int l=strlen(szTemp);
-          legendImage->setText(szTemp,l,(int)cbW+10+pLeft,((cY+cY2)/2)-7+pTop,248,-1);
-        }
+        legendImage->rectangle(4+pLeft,cY2+pTop,int(cbW)+7+pLeft,cY+pTop,(y),248);
+        if(textRounding<=0)sprintf(szTemp,"%2.0f - %2.0f",v,v+legendInterval);
+        if(textRounding==1)sprintf(szTemp,"%2.1f - %2.1f",v,v+legendInterval);
+        if(textRounding==2)sprintf(szTemp,"%2.2f - %2.2f",v,v+legendInterval);
+        if(textRounding==3)sprintf(szTemp,"%2.3f - %2.3f",v,v+legendInterval);
+        if(textRounding==4)sprintf(szTemp,"%2.4f - %2.4f",v,v+legendInterval);
+        if(textRounding==5)sprintf(szTemp,"%2.5f - %2.5f",v,v+legendInterval);
+        if(textRounding==5)sprintf(szTemp,"%2.6f - %2.6f",v,v+legendInterval);
+        if(textRounding>6)sprintf(szTemp,"%f - %f",v,v+legendInterval);
+        //CT::string    //floatToString(szTemp,255,v);
+        int l=strlen(szTemp);
+        legendImage->setText(szTemp,l,(int)cbW+10+pLeft,((cY+cY2)/2)-7+pTop,248,-1);
       }
 
     }

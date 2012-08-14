@@ -313,7 +313,7 @@ int CDataSource::autoCompleteDimensions(CPGSQLDB *dataBaseConnection){
     CT::string dimName(cfgLayer->Dimension[i]->value.c_str());
     dimName.toLowerCaseSelf();
     bool alreadyAdded=false;
-    for(int k=0;k<requiredDims.size();k++){
+    for(size_t k=0;k<requiredDims.size();k++){
       if(requiredDims[k]->name.equals(&dimName)){alreadyAdded=true;break;}
     }
     if(alreadyAdded==false){

@@ -310,3 +310,23 @@ void CServerParams::encodeTableName(CT::string *tableName){
   tableName->replaceSelf("/","_");
   tableName->toLowerCaseSelf();
 }
+
+
+
+CT::string CServerParams::getOnlineResource(){
+  CT::string onlineResource=cfg->OnlineResource[0]->attr.value.c_str();
+  //A full path is given
+  if(onlineResource.indexOf("http",4)==0){
+    return onlineResource;
+  }
+  //Only the last part is given, we need to prepend the HTTP_HOST environment variable.
+  const char *pszHTTPHost=getenv("HTTP_HOST");
+  if(pszHTTPHost==NULL){
+    CDBError("Unable to determine HTTP_HOST");
+    return "";
+  }
+  CT::string httpHost="http://";
+  httpHost.concat(pszHTTPHost);
+  httpHost.concat(&onlineResource);
+  return httpHost;
+}

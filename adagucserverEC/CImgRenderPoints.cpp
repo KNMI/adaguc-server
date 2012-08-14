@@ -54,4 +54,5 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
   }
 }
 int CImgRenderPoints::set(const char*){
+  return 0;
 }

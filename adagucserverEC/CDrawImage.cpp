@@ -89,7 +89,7 @@ int CDrawImage::createImage(CGeoParams *_Geo){
   if(dImageCreated==1){CDBError("createImage: image already created");return 1;}
   
   Geo->copy(_Geo);
-  CDBDebug("BLA %d",_bEnableTrueColor);
+  //CDBDebug("BLA %d",_bEnableTrueColor);
   if(_bEnableTrueColor==true){
     //Always true color
 #ifdef ADAGUC_USE_CAIRO
