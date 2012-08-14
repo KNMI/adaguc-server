@@ -203,6 +203,10 @@ int CDataReader::open(CDataSource *dataSource, int x,int y){
 
 int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
   className="CDataReader::open";
+  
+  #ifdef MEASURETIME
+  StopWatch_Stop("function entry");
+  #endif
   //Perform some checks on pointers
   
   if(_dataSource==NULL){CDBError("Invalid dataSource");return 1;}

@@ -1,6 +1,10 @@
 #include "CImageDataWriter.h"
 //#define CIMAGEDATAWRITER_DEBUG
 
+std::map<std::string,CImageDataWriter::ProjCacheInfo> CImageDataWriter::projCacheMap;
+std::map<std::string,CImageDataWriter::ProjCacheInfo>::iterator CImageDataWriter::projCacheIter;
+
+
 
 const char * CImageDataWriter::className = "CImageDataWriter";
 const char * CImageDataWriter::RenderMethodStringList="nearest";//, bilinear, contour, vector, barb, barbcontour, shaded,shadedcontour,vectorcontour,vectorcontourshaded,nearestcontour,bilinearcontour";
@@ -1142,7 +1146,15 @@ void CImageDataWriter::setValue(CDFType type,void *data,size_t ptr,double pixel)
   if(type==CDF_FLOAT)((float*)data)[ptr]=(float)pixel;
   if(type==CDF_DOUBLE)((double*)data)[ptr]=(double)pixel;
 }
+
+
+
 int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int dataSourceIndex,int dX,int dY){
+  
+  #ifdef MEASURETIME
+  StopWatch_Stop("getFeatureInfo");
+  #endif
+  
   #ifdef CIMAGEDATAWRITER_DEBUG    
   CDBDebug("[getFeatureInfo]");
   #endif
@@ -1197,78 +1209,115 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       CDBError("Could not open file: %s",dataSource->getFileName());
       return 1;
     }
-    #ifdef CIMAGEDATAWRITER_DEBUG  
-    CDBDebug("initreproj %s",dataSource->nativeProj4.c_str());
+    
+    
+    //(89,26)       (5.180666,52.101790)    (5.180666,52.101790)
+    
+    //double CoordX=5.180666,CoordY=52.101790;
+    //double nativeCoordX=5.180666,nativeCoordY=52.101790;
+    //double lonX=5.180666,lonY=52.101790;
+    //int imx=89,imy=26;
+    
+    CT::string ckey;
+    ckey.print("%d%d%s",dX,dY,dataSource->nativeProj4.c_str());
+    std::string key=ckey.c_str();
+    ProjCacheInfo projCacheInfo ;
+    
+    #ifdef MEASURETIME
+    StopWatch_Stop("projCacheInfo");
     #endif
-    status = imageWarper.initreproj(dataSource,drawImage.Geo,&srvParam->cfg->Projection);
-    if(status!=0){CDBError("initreproj failed");reader.close();return 1;  }
     
-    //getFeatureInfoHeader.copy("");
-    double x,y,sx,sy,CoordX,CoordY;
-    int imx,imy;
-    sx=dX;
-    sy=dY;
+    try{
 
-    x=double(sx)/double(drawImage.Geo->dWidth);
-    y=double(sy)/double(drawImage.Geo->dHeight);
-    x*=(drawImage.Geo->dfBBOX[2]-drawImage.Geo->dfBBOX[0]);
-    y*=(drawImage.Geo->dfBBOX[1]-drawImage.Geo->dfBBOX[3]);
-    x+=drawImage.Geo->dfBBOX[0];
-    y+=drawImage.Geo->dfBBOX[3];
+      
+      projCacheIter=projCacheMap.find(key);
+      if(projCacheIter==projCacheMap.end()){
+        throw 1;
+      }
+      projCacheInfo = (*projCacheIter).second;
+      
+      #ifdef MEASURETIME
+      StopWatch_Stop("found cache projCacheInfo");
+      #endif
+    }catch(int e){
+ 
+      #ifdef CIMAGEDATAWRITER_DEBUG  
+      CDBDebug("initreproj %s",dataSource->nativeProj4.c_str());
+      #endif
+      status = imageWarper.initreproj(dataSource,drawImage.Geo,&srvParam->cfg->Projection);
+      if(status!=0){CDBError("initreproj failed");reader.close();return 1;  }
+      
 
-    CoordX=x;
-    CoordY=y;
-    imageWarper.reprojpoint(x,y);
+      //getFeatureInfoHeader.copy("");
+      double x,y,sx,sy;
+      sx=dX;
+      sy=dY;
+
+      x=double(sx)/double(drawImage.Geo->dWidth);
+      y=double(sy)/double(drawImage.Geo->dHeight);
+      x*=(drawImage.Geo->dfBBOX[2]-drawImage.Geo->dfBBOX[0]);
+      y*=(drawImage.Geo->dfBBOX[1]-drawImage.Geo->dfBBOX[3]);
+      x+=drawImage.Geo->dfBBOX[0];
+      y+=drawImage.Geo->dfBBOX[3];
+
+      projCacheInfo.CoordX=x;
+      projCacheInfo.CoordY=y;
+
+      imageWarper.reprojpoint(x,y);
+      projCacheInfo.nativeCoordX=x;
+      projCacheInfo.nativeCoordY=y;
+
+      x-=dataSource->dfBBOX[0];
+      y-=dataSource->dfBBOX[1];
+      x/=(dataSource->dfBBOX[2]-dataSource->dfBBOX[0]);
+      y/=(dataSource->dfBBOX[3]-dataSource->dfBBOX[1]);
+      x*=double(dataSource->dWidth);
+      y*=double(dataSource->dHeight);
+      projCacheInfo.imx=(int)x;
+      projCacheInfo.imy=dataSource->dHeight-(int)y-1;
+
+      projCacheInfo.lonX=projCacheInfo.CoordX;
+      projCacheInfo.lonY=projCacheInfo.CoordY;
+      //Get lat/lon
+      imageWarper.reprojToLatLon(projCacheInfo.lonX,projCacheInfo.lonY);
+      imageWarper.closereproj();
+      projCacheMap[key]=projCacheInfo;
+    }
     
-    double nativeCoordX=x;
-    double nativeCoordY=y;
-
-    x-=dataSource->dfBBOX[0];
-    y-=dataSource->dfBBOX[1];
-    x/=(dataSource->dfBBOX[2]-dataSource->dfBBOX[0]);
-    y/=(dataSource->dfBBOX[3]-dataSource->dfBBOX[1]);
-    x*=double(dataSource->dWidth);
-    y*=double(dataSource->dHeight);
-    imx=(int)x;
-    imy=dataSource->dHeight-(int)y-1;
+    #ifdef MEASURETIME
+    StopWatch_Stop("/projCacheInfo");
+    #endif
+    //CDBDebug("ProjRes = (%d,%d)(%f,%f)(%f,%f)(%f,%f)",imx,imy,CoordX,CoordY,nativeCoordX,nativeCoordY,lonX,lonY);
     
-    
-
-    //Get lat/lon
-
     // Projections coordinates in latlon
-    getFeatureInfoResult->lon_coordinate=CoordX;
-    getFeatureInfoResult->lat_coordinate=CoordY;
-
+    getFeatureInfoResult->lon_coordinate=projCacheInfo.lonX;
+    getFeatureInfoResult->lat_coordinate=projCacheInfo.lonY;
     
-    imageWarper.reprojToLatLon(getFeatureInfoResult->lon_coordinate,getFeatureInfoResult->lat_coordinate);
-    imageWarper.closereproj();
-
     // Pixel X and Y on the image
     getFeatureInfoResult->x_imagePixel=dX;
     getFeatureInfoResult->y_imagePixel=dY;
   
     // Projection coordinates X and Y on the image
-    getFeatureInfoResult->x_imageCoordinate=CoordX;
-    getFeatureInfoResult->y_imageCoordinate=CoordY;
+    getFeatureInfoResult->x_imageCoordinate=projCacheInfo.CoordX;
+    getFeatureInfoResult->y_imageCoordinate=projCacheInfo.CoordY;
     
     // Projection coordinates X and Y in the raster
-    getFeatureInfoResult->x_rasterCoordinate=nativeCoordX;
-    getFeatureInfoResult->y_rasterCoordinate=nativeCoordY;
+    getFeatureInfoResult->x_rasterCoordinate=projCacheInfo.nativeCoordX;
+    getFeatureInfoResult->y_rasterCoordinate=projCacheInfo.nativeCoordY;
     
     // Pixel X and Y on the raster
-    getFeatureInfoResult->x_rasterIndex=imx;
-    getFeatureInfoResult->y_rasterIndex=imy;
+    getFeatureInfoResult->x_rasterIndex=projCacheInfo.imx;
+    getFeatureInfoResult->y_rasterIndex=projCacheInfo.imy;
     
 
     //TODO find raster projection units and find image projection units.
     
     //Retrieve variable names
-  
     for(size_t o=0;o<dataSource->dataObject.size();o++){
       //size_t j=d+o*dataSources.size();
 //      CDBDebug("j = %d",j);
       //Create a new element and at it to the elements list.
+      
       GetFeatureInfoResult::Element * element = new GetFeatureInfoResult::Element();
       getFeatureInfoResult->elements.push_back(element);
       element->dataSource=dataSource;
@@ -1300,34 +1349,35 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       // Assign CDF::Variable Pointer
       element->variable = dataSources[d]->dataObject[o]->cdfVariable;
       element->value="nodata";
+    
       
-      
+      element->time.copy(&dataSources[d]->timeSteps[dataSources[d]->getCurrentTimeStep()]->timeString);
       /* Get time string*/
-      char szTemp[1024];
+      /*char szTemp[1024];
       status = reader.getTimeString(szTemp);
       //CDBDebug("TIME = szTemp = \"%s\" - %d",szTemp,status);
       if(status != 0){
         element->time.print("Time error: %d: ",status);
       }else{
         element->time.copy(szTemp);
-      }
+      }*/
+   
     }
- 
   // Retrieve corresponding values.
   #ifdef CIMAGEDATAWRITER_DEBUG  
   CDBDebug("imx:%d imy:%d dataSource->dWidth:%d dataSource->dHeight:%d",imx,imy,dataSource->dWidth,dataSource->dHeight);
   #endif
-  if(imx>=0&&imy>=0&&imx<dataSource->dWidth&&imy<dataSource->dHeight){
+  if(projCacheInfo.imx>=0&&projCacheInfo.imy>=0&&projCacheInfo.imx<dataSource->dWidth&&projCacheInfo.imy<dataSource->dHeight){
     
     
     if(openAll){
       //status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_ALL);
     }else{
       #ifdef CIMAGEDATAWRITER_DEBUG 
-      CDBDebug("Reading datasource %d for %d,%d",d,imx,imy);
+      CDBDebug("Reading datasource %d for %d,%d",d,projCacheInfo.imx,projCacheInfo.imy);
       #endif
       
-      status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_ALL,imx,imy);
+      status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_ALL,projCacheInfo.imx,projCacheInfo.imy);
       
       #ifdef CIMAGEDATAWRITER_DEBUG 
       CDBDebug("Done");
@@ -1352,7 +1402,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
 
       size_t ptr=0;
       if(openAll){
-        ptr=imx+imy*dataSource->dWidth;
+        ptr=projCacheInfo.imx+projCacheInfo.imy*dataSource->dWidth;
       }
       
       #ifdef CIMAGEDATAWRITER_DEBUG 

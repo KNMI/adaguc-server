@@ -839,7 +839,8 @@ int CRequest::process_all_layers(){
           dataSources[j]->timeSteps.push_back(timeStep);
           timeStep->fileName.copy(values_path[k].c_str());
           //CDBDebug("%s",timeStep->fileName.c_str());
-          timeStep->timeString.copy(date_time[k].c_str());
+          timeStep->timeString.print("%sZ",date_time[k].c_str());
+          timeStep->timeString.setChar(10,'T');
           //For each timesteps a new set of dimensions is added with corresponding dim array indices.
           for(size_t i=0;i<dataSources[j]->requiredDims.size();i++){
             timeStep->dims.addDimension(dataSources[j]->requiredDims[i]->netCDFDimName.c_str(),atoi(dimValues[i][k].c_str()));
@@ -1070,11 +1071,9 @@ int CRequest::process_all_layers(){
           status = imageDataWriter.init(srvParam,dataSources[j],dataSources[j]->getNumTimeSteps());if(status != 0)throw(__LINE__);
          
             for(int k=0;k<dataSources[j]->getNumTimeSteps();k++){
-            
               for(size_t d=0;d<dataSources.size();d++){
-              dataSources[d]->setTimeStep(k);
-              
-            }
+                dataSources[d]->setTimeStep(k);
+              }
               //status = imageDataWriter.getFeatureInfo(dataSources[j],int(srvParam->dX),int(srvParam->dY));if(status != 0)throw(__LINE__);
               status = imageDataWriter.getFeatureInfo(dataSources,0,int(srvParam->dX),int(srvParam->dY));if(status != 0)throw(__LINE__);
             }

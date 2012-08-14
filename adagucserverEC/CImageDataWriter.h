@@ -1,5 +1,8 @@
 #ifndef CImageDataWriter_H
 #define CImageDataWriter_H
+#include <string>
+#include <map>
+
 #include "Definitions.h"
 #include "CStopWatch.h"
 #include "CIBaseDataWriterInterface.h"
@@ -12,7 +15,17 @@
 class CImageDataWriter: public CBaseDataWriterInterface{
   private:
     
-   
+    class ProjCacheInfo{
+    public:
+      double CoordX,CoordY;
+      double nativeCoordX,nativeCoordY;
+      double lonX,lonY;
+      int imx,imy;
+    };
+    
+    static std::map<std::string,CImageDataWriter::ProjCacheInfo> projCacheMap;
+    static std::map<std::string,CImageDataWriter::ProjCacheInfo>::iterator projCacheIter;
+  
     
     CImageWarper imageWarper;
   
