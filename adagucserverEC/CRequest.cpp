@@ -598,7 +598,7 @@ int CRequest::process_all_layers(){
       }
       if(dataSources[j]->cfgLayer->Dimension.size()!=0){
         CPGSQLDB DB;
-        CT::string Query;
+        CT::string query;
         CT::string *values_path=NULL;
         CT::string *values_dim=NULL;
         CT::string *date_time=NULL;
@@ -696,11 +696,11 @@ int CRequest::process_all_layers(){
                   CT::string tableName(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str());
                   CServerParams::makeCorrectTableName(&tableName,&ogcDim->netCDFDimName);
                   
-                  Query.print("select max(%s) from %s",
+                  query.print("select max(%s) from %s",
                           ogcDim->netCDFDimName.c_str(),
                               tableName.c_str());
-                  CT::string *temp = DB.query_select(Query.c_str(),0);
-                  if(temp == NULL){CDBError("Query failed");status = DB.close(); return 1;}
+                  CT::string *temp = DB.query_select(query.c_str(),0);
+                  if(temp == NULL){CDBError("query failed");status = DB.close(); return 1;}
                   ogcDim->value.copy(&temp[0]);
                   delete[] temp;
                 }
@@ -722,15 +722,16 @@ int CRequest::process_all_layers(){
        
       
         
-        
       
-
-        Query.print("select a0.path");
+      
+        CT::string queryOrderedDESC;
+        queryOrderedDESC.print("select a0.path");
         for(size_t i=0;i<dataSources[j]->requiredDims.size();i++){
-          Query.printconcat(",%s,dim%s",dataSources[j]->requiredDims[i]->netCDFDimName.c_str(),dataSources[j]->requiredDims[i]->netCDFDimName.c_str());
+          queryOrderedDESC.printconcat(",%s,dim%s",dataSources[j]->requiredDims[i]->netCDFDimName.c_str(),dataSources[j]->requiredDims[i]->netCDFDimName.c_str());
+          
         }
         
-        Query.concat(" from ");
+        queryOrderedDESC.concat(" from ");
         bool timeValidationError = false;
         for(size_t i=0;i<dataSources[j]->requiredDims.size();i++){
           CT::string netCDFDimName(&dataSources[j]->requiredDims[i]->netCDFDimName);
@@ -768,29 +769,35 @@ int CRequest::process_all_layers(){
             delete[] sDims;
           }
           delete[] cDims;
-          subQuery.printconcat("ORDER BY %s)a%d ",netCDFDimName.c_str(),i);
+          subQuery.printconcat("ORDER BY %s DESC)a%d ",netCDFDimName.c_str(),i);
           if(i<dataSources[j]->requiredDims.size()-1)subQuery.concat(",");
-          Query.concat(&subQuery);
+          queryOrderedDESC.concat(&subQuery);
         }
         //Join by path
         if(dataSources[j]->requiredDims.size()>1){
-          Query.concat(" where a0.path=a1.path");
+          queryOrderedDESC.concat(" where a0.path=a1.path");
           for(size_t i=2;i<dataSources[j]->requiredDims.size();i++){
-            Query.printconcat(" and a0.path=a%d.path",i);
+            queryOrderedDESC.printconcat(" and a0.path=a%d.path",i);
           }
         }
-        Query.concat(" limit 366");
-        //CDBDebug(Query.c_str());
+        queryOrderedDESC.concat(" limit 366");
+      
         if(timeValidationError==true){
-          if((checkDataRestriction()&SHOW_QUERYINFO)==false)Query.copy("hidden");
-          CDBError("Query fails regular expression: '%s'",Query.c_str());
+          if((checkDataRestriction()&SHOW_QUERYINFO)==false)queryOrderedDESC.copy("hidden");
+          CDBError("queryOrderedDESC fails regular expression: '%s'",queryOrderedDESC.c_str());
           status = DB.close();
           return 1;
         }
         
-
+        query.print("select * from (%s)T order by ",queryOrderedDESC.c_str());
+        query.concat(&dataSources[j]->requiredDims[0]->netCDFDimName);
+        for(size_t i=1;i<dataSources[j]->requiredDims.size();i++){
+          query.printconcat(",%s",dataSources[j]->requiredDims[i]->netCDFDimName.c_str());
+        }
+        
+        //CDBDebug(query.c_str());
         //Execute the query
-        values_path = DB.query_select(Query.c_str(),0);
+        values_path = DB.query_select(query.c_str(),0);
         
         /**
          * If no values were found in the database / no results have been found for a query:
@@ -803,34 +810,34 @@ int CRequest::process_all_layers(){
         
           status = CDBFileScanner::updatedb(srvParam->cfg->DataBase[0]->attr.parameters.c_str(),dataSources[j],NULL,NULL);
           if(status !=0){CDBError("Could not update db for: %s",dataSources[j]->cfgLayer->Name[0]->value.c_str());DB.close();return 2;}
-          values_path = DB.query_select(Query.c_str(),0);
+          values_path = DB.query_select(query.c_str(),0);
           if(values_path==NULL){
-            if((checkDataRestriction()&SHOW_QUERYINFO)==false)Query.copy("hidden");
-            CDBError("No results for query: '%s'",Query.c_str());
+            if((checkDataRestriction()&SHOW_QUERYINFO)==false)query.copy("hidden");
+            CDBError("No results for query: '%s'",query.c_str());
             return 2;
           }
         }*/
         if(values_path==NULL){
-          if((checkDataRestriction()&SHOW_QUERYINFO)==false)Query.copy("hidden");
-          CDBError("No results for query: '%s'",Query.c_str());
+          if((checkDataRestriction()&SHOW_QUERYINFO)==false)query.copy("hidden");
+          CDBError("No results for query: '%s'",query.c_str());
           return 2;
         }
         if(values_path->count==0){
-          if((checkDataRestriction()&SHOW_QUERYINFO)==false)Query.copy("hidden");
-          CDBError("No results for query: '%s'",Query.c_str());
+          if((checkDataRestriction()&SHOW_QUERYINFO)==false)query.copy("hidden");
+          CDBError("No results for query: '%s'",query.c_str());
           delete[] values_path;
           status = DB.close();
           return 2;
         }
         //Get timestring
-        date_time = DB.query_select(Query.c_str(),1);
-        if(date_time == NULL){CDBError("Query failed");status = DB.close(); return 1;}
+        date_time = DB.query_select(query.c_str(),1);
+        if(date_time == NULL){CDBError("query failed");status = DB.close(); return 1;}
         
         
         //Now get the dimensions
         std::vector <CT::string*> dimValues;
         for(size_t i=0;i<dataSources[j]->requiredDims.size();i++){
-          CT::string *t=DB.query_select(Query.c_str(),2+i*2);
+          CT::string *t=DB.query_select(query.c_str(),2+i*2);
           dimValues.push_back(t);
         }
               
@@ -1529,7 +1536,7 @@ int CRequest::process_querystring(){
   delete[] parameters;
 
   #ifdef MEASURETIME
-  StopWatch_Stop("Query string processed");
+  StopWatch_Stop("query string processed");
   #endif
 
   if(dFound_Service==0){

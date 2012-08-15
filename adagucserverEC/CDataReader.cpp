@@ -348,7 +348,10 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
   
   
   //Use autoscale of legendcolors when the legendscale factor has been set to zero.
-  if(dataSource->legendScale==0.0f)dataSource->stretchMinMax=true;else dataSource->stretchMinMax=false;
+  if(dataSource->statistics==NULL){
+//    CDBDebug("legendscale %f %d %d",dataSource->legendScale,dataSource->isConfigured,dataSource->currentAnimationStep);
+    if(dataSource->legendScale==0.0f)dataSource->stretchMinMax=true;else dataSource->stretchMinMax=false;
+  }
   
   //dataSource->stretchMinMax = t;
   
@@ -457,10 +460,11 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
     dataSource->dHeight=2;
     start[dimXIndex]=x;
     start[dimYIndex]=y;
-    count[dimXIndex]=2;
-    count[dimYIndex]=2;
+    count[dimXIndex]=1;
+    count[dimYIndex]=1;
     stride[dimXIndex]=1;
     stride[dimYIndex]=1;
+    //CDBDebug("%d %d",x,y);
   }
   
   //Set other dimensions than X and Y.
@@ -557,7 +561,7 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
         if (proj4Attr==NULL) proj4Attr = projVar->getAttributeNE("proj4");
         
         //If a proj4 string was found set it in the datasource.
-        if(proj4Attr!=NULL)dataSource->nativeProj4.copy((char*)proj4Attr->data);
+        if(proj4Attr!=NULL)dataSource->nativeProj4.copy(proj4Attr->toString().c_str());
         
         //if still not found, try to compose a proj4 string based on Climate and Forecast Conventions
         if (proj4Attr==NULL){

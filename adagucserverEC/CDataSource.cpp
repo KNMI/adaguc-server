@@ -82,6 +82,7 @@ CDataSource::CDataSource(){
   cfgLayer = NULL;
   cfg=NULL;
   datasourceIndex=0;
+
 }
 
 CDataSource::~CDataSource(){

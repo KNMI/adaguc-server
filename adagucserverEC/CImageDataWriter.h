@@ -51,7 +51,11 @@ public:
   public:
     
     float shadeInterval,contourIntervalL,contourIntervalH;
-    float legendScale,legendOffset,legendLog,legendLowerRange,legendUpperRange;
+    float legendScale,legendOffset,legendLog;
+    
+    //Values in which the legend is valid
+    
+    float legendLowerRange,legendUpperRange;
     int smoothingFilter;
     bool hasLegendValueRange;
     bool hasError;

@@ -1273,8 +1273,18 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       y/=(dataSource->dfBBOX[3]-dataSource->dfBBOX[1]);
       x*=double(dataSource->dWidth);
       y*=double(dataSource->dHeight);
-      projCacheInfo.imx=(int)x;
-      projCacheInfo.imy=dataSource->dHeight-(int)y-1;
+      //CDBDebug("%f %f",x,y);
+
+      if(x<0){
+        projCacheInfo.imx=-1;
+      }else{
+        projCacheInfo.imx=x;
+      }
+      if(y<0){
+        projCacheInfo.imy=-1;
+      }else{
+        projCacheInfo.imy=dataSource->dHeight-(int)y-1;
+      }
 
       projCacheInfo.lonX=projCacheInfo.CoordX;
       projCacheInfo.lonY=projCacheInfo.CoordY;
@@ -1287,7 +1297,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
     #ifdef MEASURETIME
     StopWatch_Stop("/projCacheInfo");
     #endif
-    //CDBDebug("ProjRes = (%d,%d)(%f,%f)(%f,%f)(%f,%f)",imx,imy,CoordX,CoordY,nativeCoordX,nativeCoordY,lonX,lonY);
+    //CDBDebug("ProjRes = (%d,%d)(%f,%f)(%f,%f)(%f,%f)",projCacheInfo.imx,projCacheInfo.imy,projCacheInfo.CoordX,projCacheInfo.CoordY,projCacheInfo.nativeCoordX,projCacheInfo.nativeCoordY,projCacheInfo.lonX,projCacheInfo.lonY);
     
     // Projections coordinates in latlon
     getFeatureInfoResult->lon_coordinate=projCacheInfo.lonX;
@@ -1365,13 +1375,13 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
     }
   // Retrieve corresponding values.
   #ifdef CIMAGEDATAWRITER_DEBUG  
-  CDBDebug("imx:%d imy:%d dataSource->dWidth:%d dataSource->dHeight:%d",imx,imy,dataSource->dWidth,dataSource->dHeight);
+  CDBDebug("imx:%d imy:%d dataSource->dWidth:%d dataSource->dHeight:%d",projCacheInfo.imx,projCacheInfo.imy,dataSource->dWidth,dataSource->dHeight);
   #endif
   if(projCacheInfo.imx>=0&&projCacheInfo.imy>=0&&projCacheInfo.imx<dataSource->dWidth&&projCacheInfo.imy<dataSource->dHeight){
     
     
     if(openAll){
-      //status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_ALL);
+      //Already open
     }else{
       #ifdef CIMAGEDATAWRITER_DEBUG 
       CDBDebug("Reading datasource %d for %d,%d",d,projCacheInfo.imx,projCacheInfo.imy);
@@ -2342,8 +2352,15 @@ int CImageDataWriter::end(){
       
     }
     
-    /* image/png */
+    /*************************************************************************************************************************************/
+    /* image/png image/png image/png image/png image/png image/png image/png image/png image/png image/png image/png image/png image/png */
+    /*************************************************************************************************************************************/
+    
     if(resultFormat==imagepng){
+      #ifdef MEASURETIME
+      StopWatch_Stop("Start creating image");
+      #endif
+      
       printf("%s%c%c\n","Content-Type:image/png",13,10);
       if(getFeatureInfoResultList.size()==0){
         CDBError("Query returned no results");
@@ -2399,11 +2416,11 @@ int CImageDataWriter::end(){
       
       float minValue[nrOfElements];
       float maxValue[nrOfElements];
-      
-      minValue[0]=currentStyleConfiguration->legendLowerRange;
-      maxValue[0]=currentStyleConfiguration->legendUpperRange;
+     
       //Find min and max values
       for(size_t elNr=0;elNr<nrOfElements;elNr++){
+        //CDataSource * dataSource=getFeatureInfoResultList[0]->elements[elNr]->dataSource;
+        
         bool foundFirstValue=false;  
         for(size_t j=0;j<nrOfTimeSteps;j++){
           GetFeatureInfoResult *g1 = getFeatureInfoResultList[j];
@@ -2427,23 +2444,32 @@ int CImageDataWriter::end(){
         }
       }
       
-      CDataSource * dataSource=getFeatureInfoResultList[0]->elements[0]->dataSource;
+      for(size_t elNr=0;elNr<nrOfElements;elNr++){
+        CDataSource *d=getFeatureInfoResultList[0]->elements[elNr]->dataSource;
+        CDBDebug("For datasource %s %d  %f",d->layerName.c_str(),d->stretchMinMax,d->legendScale);
+        if(getFeatureInfoResultList[0]->elements[elNr]->dataSource->stretchMinMax==false){
+          
+          minValue[elNr]=getValueForColorIndex(getFeatureInfoResultList[0]->elements[elNr]->dataSource,0);
+          maxValue[elNr]=getValueForColorIndex(getFeatureInfoResultList[0]->elements[elNr]->dataSource,240);
+        
+        }
+      }
+      
+      
       
       
       //Increase minmax if they are the same.
       if(maxValue[0]==minValue[0]){maxValue[0]=maxValue[0]+0.01;minValue[0]=minValue[0]-0.01;}
       
       //If autoscale is enabled, set the legendscale based on min max values.
-      double min=minValue[0];
-      double max=maxValue[0];
-      
-      min=minValue[0];
-      max=maxValue[0];
-      //Calculate legendOffset legendScale
-      float ls=240/(max-min);
-      float lo=-(min*ls);
-      dataSource->legendScale=ls;
-      dataSource->legendOffset=lo;
+      for(size_t elNr=0;elNr<nrOfElements;elNr++){
+        CDataSource *d=getFeatureInfoResultList[0]->elements[elNr]->dataSource;
+        float ls=240/(maxValue[elNr]-minValue[elNr]);
+        float lo=-(minValue[elNr]*ls);
+        d->legendScale=ls;
+        d->legendOffset=lo;
+      }
+   
     
       
       
@@ -2461,20 +2487,20 @@ int CImageDataWriter::end(){
         
     
         CServerConfig::XMLE_Style* style = srvParam->cfg->Style[currentStyleConfiguration->styleIndex];
-        if(style->Scale.size()>0){
+        /*if(style->Scale.size()>0){
           if(parseFloat(style->Scale[0]->value.c_str())==0){
             min=getValueForColorIndex(dataSource,0);
             max=getValueForColorIndex(dataSource,240);
             minValue[0]=min;
             maxValue[0]=max;
           }
-        }
+        }*/
         
         if(style->Legend.size()>0){
           if(style->Legend[0]->attr.tickinterval.c_str() != NULL){
             double tickinterval = parseFloat(style->Legend[0]->attr.tickinterval.c_str());
             if(tickinterval>0.0f){
-              classes=(max-min)/tickinterval;
+              classes=(maxValue[0]-minValue[0])/tickinterval;
             }
           }
           if(style->Legend[0]->attr.tickround.c_str() != NULL){
@@ -2490,7 +2516,7 @@ int CImageDataWriter::end(){
       }
       
       linePlot.rectangle(plotOffsetX,plotOffsetY,plotWidth+plotOffsetX,plotHeight+plotOffsetY,CColor(0,0,0,255),CColor(240,240,240,255));
-      
+      CDataSource * dataSource=getFeatureInfoResultList[0]->elements[0]->dataSource;
       for(int j=0;j<=classes;j++){
         char szTemp[256];
         float c=((float(classes-j)/classes))*(plotHeight);
@@ -2509,9 +2535,9 @@ int CImageDataWriter::end(){
       }
   
       
-      for(size_t elNr=0;elNr<nrOfElements;elNr++){
+      /*for(size_t elNr=0;elNr<nrOfElements;elNr++){
         CDBDebug("elNr %s %d has minValue %f and maxValue %f",getFeatureInfoResultList[0]->elements[elNr]->var_name.c_str(),elNr,minValue[elNr],maxValue[elNr]);
-      }
+      }*/
 
       
      
@@ -2537,8 +2563,8 @@ int CImageDataWriter::end(){
       }catch(int e){
         CDBError("Time stopTimeValue error %s",getFeatureInfoResultList[timeStepsToLoop]->elements[0]->time.c_str());
       }
-      double timeRes = (stopTimeValue - startTimeValue)/double(timeStepsToLoop);
-      CDBDebug("Time interval: [%f %f] timeRes: %f timeStepsToLoop %d",startTimeValue,stopTimeValue,timeRes,timeStepsToLoop);
+      //double timeRes = (stopTimeValue - startTimeValue)/double(timeStepsToLoop);
+      //CDBDebug("Time interval: [%f %f] timeRes: %f timeStepsToLoop %d",startTimeValue,stopTimeValue,timeRes,timeStepsToLoop);
       
       
       /*float stepX=float(plotWidth);
@@ -2638,7 +2664,11 @@ int CImageDataWriter::end(){
       linePlot.drawText(plotWidth/2-float(title.length())*2.5,25+plotHeight+plotOffsetY,fontLocation,8,0,title.c_str(),CColor(0,0,0,255),CColor(255,255,255,0));
       
       linePlot.printImagePng();
-      CDBDebug("Done!");
+      #ifdef MEASURETIME
+      StopWatch_Stop("/Start creating image");
+      #endif
+      
+      //CDBDebug("Done!");
     }
     
     
@@ -2667,7 +2697,20 @@ StopWatch_Stop("Drawing finished");
   //Static image
   int status=0;
   if(srvParam->imageFormat==IMAGEFORMAT_IMAGEPNG8||srvParam->imageFormat==IMAGEFORMAT_IMAGEPNG32){
+    
+    //printf("%s%c%c","Cache-Control: max-age=3600, must-revalidate",13,10);
+    //printf("%s%c%c","Pragma: no-cache",13,10);
+    //printf("%s%c%c","Cache-Control:no-store,no-cache,must-revalidate,post-check=0,pre-check=0",13,10);
+    //printf("%s%c%c","Expires: Fri, 17 Aug 2012:19:41 GMT");
+    //printf("%s%c%c","Last-Modified: Thu, 01 Jan 1970 00:00:00 GMT",13,10);
+    //printf("%s\n","ETag: \"3e86-410-3596fbbc\"");
     printf("%s%c%c\n","Content-Type:image/png",13,10);
+    
+    
+    
+
+    
+    
     status=drawImage.printImagePng();
   }else if(srvParam->imageFormat==IMAGEFORMAT_IMAGEGIF){
     printf("%s%c%c\n","Content-Type:image/gif",13,10);

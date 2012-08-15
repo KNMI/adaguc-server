@@ -143,6 +143,7 @@ class CDataSource{
 
   //Configured?
   bool isConfigured;
+  
 
   //Numver of dims
   int dNetCDFNumDims;

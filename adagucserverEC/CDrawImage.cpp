@@ -35,6 +35,11 @@ CDrawImage::CDrawImage(){
     TTFFontLocation = strdup(fontLoc); 
   }
   TTFFontSize = 9;
+  
+  BGColorR=0;
+  BGColorG=0;
+  BGColorB=0;
+  
   //CDBDebug("TTFFontLocation = %s",TTFFontLocation);
 }
 void CDrawImage::destroyImage(){
