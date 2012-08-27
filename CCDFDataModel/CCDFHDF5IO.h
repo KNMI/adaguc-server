@@ -29,7 +29,7 @@
 #include "CDebugger.h"
 #include "CTime.h"
 #include "CProj4ToCF.h"
-//#define CCDFHDF5IO_DEBUG
+#define CCDFHDF5IO_DEBUG
 void ncError(int line, const char *className, const char * msg,int e);
 class CDFHDF5Reader :public CDFReader{
   private:
@@ -56,6 +56,25 @@ class CDFHDF5Reader :public CDFReader{
       
       //CDBWarning("Warning: unknown HDF5 type (%d)",type);
       return CDF_NONE;
+    }
+    
+    
+    hid_t cdfTypeToHDFType(CDFType type ){
+      switch (type){
+        case CDF_BYTE  : return H5T_NATIVE_SCHAR; break;
+        case CDF_UBYTE  : return H5T_NATIVE_UCHAR; break;
+        case CDF_CHAR  : return H5T_NATIVE_CHAR; break;
+        case CDF_SHORT  : return H5T_NATIVE_SHORT; break;
+        case CDF_USHORT  : return H5T_NATIVE_USHORT; break;
+        case CDF_INT  : return H5T_NATIVE_INT; break;
+        case CDF_UINT  : return H5T_NATIVE_UINT; break;
+        case CDF_FLOAT  : return H5T_NATIVE_FLOAT; break;
+        case CDF_DOUBLE  : return H5T_NATIVE_DOUBLE; break;
+      }
+        
+      
+      CDBWarning("Warning: unknown CDFType type (%d)",type);
+      return H5T_NATIVE_DOUBLE;
     }
     DEF_ERRORFUNCTION();
   
@@ -335,7 +354,7 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
                   //CDBWarning("Unknown type for dataset %s",varName);
                 }
               }
-              H5Tclose(datasetType);
+              //H5Tclose(datasetType);
             }
             
 
@@ -845,7 +864,8 @@ CDBDebug("convertKNMIHDF5toCF()");
           hid_t HDF5_memspace = H5Screate_simple(2,mem_count,NULL);
           H5Sselect_hyperslab(HDF5_memspace,H5S_SELECT_SET,mem_start, NULL,mem_count, NULL);
           H5Sselect_hyperslab(HDF5_dataspace,H5S_SELECT_SET,data_start, NULL,data_count, NULL);
-          hid_t datasetType=H5Dget_type(datasetID);
+          //hid_t datasetType=H5Dget_type(datasetID);
+          hid_t datasetType=cdfTypeToHDFType(type);
           H5Dread(datasetID,datasetType,HDF5_memspace,HDF5_dataspace,H5P_DEFAULT,var->data);
           
           /*          
@@ -868,7 +888,7 @@ CDBDebug("convertKNMIHDF5toCF()");
         }
         }*/
           
-          H5Tclose(datasetType);
+          //H5Tclose(datasetType);
           H5Sclose(HDF5_memspace);
           H5Sclose(HDF5_dataspace);
           H5Dclose(datasetID);
@@ -924,8 +944,8 @@ CDBDebug("convertKNMIHDF5toCF()");
           hid_t HDF5_memspace = H5Screate_simple(2,mem_count,NULL);
           H5Sselect_hyperslab(HDF5_memspace,H5S_SELECT_SET,mem_start, NULL,mem_count, NULL);
           H5Sselect_hyperslab(HDF5_dataspace,H5S_SELECT_SET,mem_start, NULL,mem_count, NULL);
-          hid_t datasetType=H5Dget_type(datasetID);
-          
+          //hid_t datasetType=H5Dget_type(datasetID);
+          hid_t datasetType=cdfTypeToHDFType(type);
           //datasetType
           H5Dread(datasetID,datasetType,HDF5_memspace,HDF5_dataspace,H5P_DEFAULT,var->data);
           
@@ -941,7 +961,7 @@ CDBDebug("convertKNMIHDF5toCF()");
             }
         }*/
           
-          H5Tclose(datasetType);
+          //H5Tclose(datasetType);
           H5Sclose(HDF5_memspace);
           H5Sclose(HDF5_dataspace);
           H5Dclose(datasetID);

@@ -7,7 +7,7 @@
 
 const char *CDataReader::className="CDataReader";
 
-//#define CDATAREADER_DEBUG
+#define CDATAREADER_DEBUG
 #define uchar unsigned char
 #define MAX_STR_LEN 8191
 
@@ -886,7 +886,7 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
       double dfadd_offset = dataSource->dataObject[varNr]->dfadd_offset;
       //CDBDebug("dfNoData=%f",dfNoData*dfscale_factor);
       #ifdef CDATAREADER_DEBUG   
-      CDBDebug("Applying scale and offset with %f and %f (var size=%d)",dfscale_factor,dfadd_offset,var[varNr]->getSize());
+      CDBDebug("Applying scale and offset with %f and %f (var size=%d) type=%s",dfscale_factor,dfadd_offset,var[varNr]->getSize(),CDF::getCDFDataTypeName(dataSource->dataObject[varNr]->cdfVariable->type).c_str());
       #endif
       /*if(dataSource->dataObject[varNr]->dataType==CDF_FLOAT){
         //Preserve the original nodata value, so it remains a nice short rounded number.
