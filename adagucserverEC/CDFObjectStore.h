@@ -17,6 +17,7 @@ private:
   std::vector <CDFObject*> cdfObjects;
   std::vector <CDFReader*> cdfReaders;
   static CDFReader *getCDFReader(CDataSource *dataSource);
+  static CDFReader *getCDFReader(const char *fileName);
   DEF_ERRORFUNCTION();
 public:
   ~CDFObjectStore(){

@@ -329,17 +329,22 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
           }else {
             reprojpoint_inv(inX,inY);
           }
-          if(foundFirst == false){
-            foundFirst = true;
-            minx1=inX;
-            maxx1=inX;
-            miny1=inY;
-            maxy1=inY;
+          double latX=inX,lonY=inY;
+          reprojToLatLon(latX,lonY);
+          if(latX>-180&&latX<180&&lonY>-90&&lonY<90){
+            if(foundFirst == false){
+              foundFirst = true;
+              minx1=inX;
+              maxx1=inX;
+              miny1=inY;
+              maxy1=inY;
+            }
+            //CDBDebug("testPos (%f;%f)\t proj (%f;%f)",testPosX,testPosY,latX,lonY);
+            if(inX<minx1)minx1=inX;
+            if(inY<miny1)miny1=inY;
+            if(inX>maxx1)maxx1=inX;
+            if(inY>maxy1)maxy1=inY;
           }
-          if(inX<minx1)minx1=inX;
-          if(inY<miny1)miny1=inY;
-          if(inX>maxx1)maxx1=inX;
-          if(inY>maxy1)maxy1=inY;
         }
       }
     }catch(...){
@@ -354,11 +359,11 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
     
     if(dMaxExtentDefined==0&&1==1){
       //CDBDebug("dataSource->nativeProj4 %s %d",dataSource->nativeProj4.c_str(), dataSource->nativeProj4.indexOf("geos")>0);
-      if( dataSource->nativeProj4.indexOf("geos")>0){
-        dfMaxExtent[0]=-79;
-        dfMaxExtent[1]=-79;
-        dfMaxExtent[2]=79;
-        dfMaxExtent[3]=79;
+      if( dataSource->nativeProj4.indexOf("geos")!=-1){
+        dfMaxExtent[0]=-82*2;
+        dfMaxExtent[1]=-82;
+        dfMaxExtent[2]=82*2;
+        dfMaxExtent[3]=82;
         reprojfromLatLon(dfMaxExtent[0],dfMaxExtent[1]);
         reprojfromLatLon(dfMaxExtent[2],dfMaxExtent[3]);
         dMaxExtentDefined=1;

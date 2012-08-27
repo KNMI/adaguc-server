@@ -239,6 +239,34 @@ bool CServerParams::isAutoResourceEnabled(){
   return false;
 }
 
+
+bool CServerParams::checkIfPathHasValidTokens(const char *path){
+  //Check for valid tokens
+  const char *validPATHTokens="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/_-+:.";
+  size_t pathLength=strlen(path);
+  size_t allowedTokenLength=strlen(validPATHTokens);
+  for(size_t j=0;j<pathLength;j++){
+    bool isInvalid = true;
+    for(size_t i=0;i<allowedTokenLength;i++){
+      if(path[j]==validPATHTokens[i]){isInvalid=false;break;}
+    }
+    if(isInvalid){
+      CDBDebug("Invalid token '%c' in '%s'",path[j],path);
+      return false;
+    }
+    
+    //Check for sequences
+    if(j>0){
+      if(path[j-1]=='.'&&path[j]=='.'){
+        CDBDebug("Invalid sequence in '%s'",path);
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+
 bool CServerParams::checkResolvePath(const char *path,CT::string *resolvedPath){
   if(cfg->AutoResource.size()>0){
     //Needs to be configured otherwise it will be denied.
@@ -247,30 +275,7 @@ bool CServerParams::checkResolvePath(const char *path,CT::string *resolvedPath){
       return false;
     }
     
-    //Check for valid tokens
-    const char *validPATHTokens="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/_-+:.";
-    size_t pathLength=strlen(path);
-    size_t allowedTokenLength=strlen(validPATHTokens);
-    
-    for(size_t j=0;j<pathLength;j++){
-      bool isInvalid = true;
-      for(size_t i=0;i<allowedTokenLength;i++){
-        if(path[j]==validPATHTokens[i]){isInvalid=false;break;}
-      }
-      if(isInvalid){
-        CDBDebug("Invalid token '%c' in '%s'",path[j],path);
-        return false;
-      }
-      
-      //Check for sequences
-      if(j>0){
-        if(path[j-1]=='.'&&path[j]=='.'){
-          CDBDebug("Invalid sequence in '%s'",path);
-          return false;
-        }
-      }
-    }
-  
+    if(checkIfPathHasValidTokens(path)==false)return false;
     
     for(size_t d=0;d<cfg->AutoResource[0]->Dir.size();d++){
       const char *baseDir =cfg->AutoResource[0]->Dir[d]->attr.basedir.c_str();

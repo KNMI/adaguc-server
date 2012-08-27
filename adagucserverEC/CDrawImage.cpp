@@ -302,7 +302,7 @@ void CDrawImage::circle(int x, int y, int r, int color) {
       wuLine->line(x,y-r,x-r,y);
 #endif
   }else {
-    gdImageArc(image, x, y, r*2+1, r*2+1, 0, 360, _colors[color]);
+    gdImageArc(image, x-1, y-1, r*2+1, r*2+1, 0, 360, _colors[color]);
   }
 }
 void CDrawImage::poly(float x1,float y1,float x2,float y2,float x3, float y3, int color, bool fill){

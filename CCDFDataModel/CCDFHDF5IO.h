@@ -555,7 +555,15 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
         projection->addAttribute(proj4_params);
         proj4_params->setName("proj4_params");
       }
-      proj4_params->setData(CDF_CHAR,proj4attr->data,proj4attr->length);
+      
+      
+      //Most KNMI files have wrong projection definition, replace nsper by geos,
+      CT::string projectionString;
+      projectionString.copy((char*)proj4attr->data,proj4attr->length);
+      projectionString.replaceSelf("nsper","geos");
+      
+      
+      proj4_params->setData(CDF_CHAR,projectionString.c_str(),projectionString.length());
       
       
       #ifdef CCDFHDF5IO_DEBUG
@@ -622,6 +630,12 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
       CDBDebug("Set grid_mapping for all variables");
       #endif
       
+      
+      for(size_t j=0;j<cdfObject->variables.size();j++){
+        cdfObject->variables[j]->setAttributeText("ADAGUC_SKIP","true");
+      }
+      
+      
       //Loop through all images and set grid_mapping name
       CT::string varName;
       int v=1;
@@ -632,6 +646,9 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
         varName.print("image%d.image_data",v);
         var = cdfObject->getVariableNE(varName.c_str());
         if(var!=NULL){
+          
+          var->removeAttribute("ADAGUC_SKIP");
+          
           CDF::Attribute* grid_mapping= new CDF::Attribute();
           grid_mapping->setName("grid_mapping");
           grid_mapping->setData(CDF_CHAR,(char*)"projection\0",11);
@@ -785,7 +802,9 @@ CDBDebug("convertKNMIHDF5toCF()");
     }
     void closeH5GroupByName(const char *variableGroupName){
       while(opengroups.size()>0){
+        #ifdef CCDFHDF5IO_DEBUG
         CDBDebug("closing with id %d",opengroups.back());
+        #endif
         opengroups.pop_back();
       }
     }
@@ -874,9 +893,12 @@ CDBDebug("convertKNMIHDF5toCF()");
         //CDBWarning("Not reading any data because it is already in memory");
         return 0;
       }
+      
+      #ifdef CCDFHDF5IO_DEBUG
       char typeName[32];
       CDF::getCDFDataTypeName(typeName,31,type);
       CDBDebug("Reading %s == %s with type %s",var->name.c_str(),var->orgName.c_str(),typeName);
+      #endif 
       
       char varName[1024];
       hid_t HDF5_group=openH5GroupByName(varName,1023,var->orgName.c_str());
