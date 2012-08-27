@@ -270,6 +270,12 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
 #ifdef CDATAREADER_DEBUG        
     CDBDebug("Reading from Cache file");
 #endif
+    
+    //Remove DataReader configuration, because cache file is always netcdf.
+    if(dataSource->cfgLayer->DataReader.size()>0){
+      dataSource->cfgLayer->DataReader[0]->value.copy("NC");
+    }
+    
     cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource,uniqueIDFor2DField.c_str());
     //if(cdfObject==NULL){return 1;}
     //status = cdfObject->open(uniqueIDFor2DField.c_str());

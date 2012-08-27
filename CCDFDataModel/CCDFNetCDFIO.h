@@ -348,7 +348,9 @@ CDBDebug("closing");
       if(type==CDF_BYTE)status = nc_get_var_ubyte(root_id,var->id,(unsigned char*)var->data);
       else if(type==CDF_CHAR)status = nc_get_var_text(root_id,var->id,(char*)var->data);
       else if(type==CDF_SHORT)status = nc_get_var_short(root_id,var->id,(short*)var->data);
+      else if(type==CDF_USHORT)status = nc_get_var_ushort(root_id,var->id,(unsigned short*)var->data);
       else if(type==CDF_INT)status = nc_get_var_int(root_id,var->id,(int*)var->data);
+      else if(type==CDF_UINT)status = nc_get_var_uint(root_id,var->id,(unsigned int*)var->data);
       else if(type==CDF_FLOAT)status = nc_get_var_float(root_id,var->id,(float*)var->data);
       else if(type==CDF_DOUBLE)status = nc_get_var_double(root_id,var->id,(double*)var->data);
       else if(type==CDF_STRING){
@@ -401,7 +403,9 @@ CDBDebug("closing");
         if(type==CDF_BYTE||type==CDF_UBYTE)status = nc_get_vars_ubyte(root_id,var->id,start,count,stride,(unsigned char*)var->data);
         else if(type==CDF_CHAR)status = nc_get_vars_text(root_id,var->id,start,count,stride,(char*)var->data);
         else if(type==CDF_SHORT)status = nc_get_vars_short(root_id,var->id,start,count,stride,(short*)var->data);
+        else if(type==CDF_USHORT)status = nc_get_vars_ushort(root_id,var->id,start,count,stride,(unsigned short*)var->data);
         else if(type==CDF_INT)status = nc_get_vars_int(root_id,var->id,start,count,stride,(int*)var->data);
+        else if(type==CDF_UINT)status = nc_get_vars_uint(root_id,var->id,start,count,stride,(unsigned int*)var->data);
         else if(type==CDF_FLOAT)status = nc_get_vars_float(root_id,var->id,start,count,stride,(float*)var->data);
         else if(type==CDF_DOUBLE)status = nc_get_vars_double(root_id,var->id,start,count,stride,(double*)var->data);
         else {
@@ -415,7 +419,9 @@ CDBDebug("closing");
         if(type==CDF_BYTE||type==CDF_UBYTE)status = nc_get_vara_ubyte(root_id,var->id,start,count,(unsigned char*)var->data);
         else if(type==CDF_CHAR)status = nc_get_vara_text(root_id,var->id,start,count,(char*)var->data);
         else if(type==CDF_SHORT)status = nc_get_vara_short(root_id,var->id,start,count,(short*)var->data);
+        else if(type==CDF_USHORT)status = nc_get_vara_ushort(root_id,var->id,start,count,(unsigned short*)var->data);
         else if(type==CDF_INT)status = nc_get_vara_int(root_id,var->id,start,count,(int*)var->data);
+        else if(type==CDF_UINT)status = nc_get_vara_uint(root_id,var->id,start,count,(unsigned int*)var->data);
         else if(type==CDF_FLOAT)status = nc_get_vara_float(root_id,var->id,start,count,(float*)var->data);
         else if(type==CDF_DOUBLE)status = nc_get_vara_double(root_id,var->id,start,count,(double*)var->data);
         else {
