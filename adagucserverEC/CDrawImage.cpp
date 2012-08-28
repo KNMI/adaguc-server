@@ -122,13 +122,7 @@ int CDrawImage::createImage(CGeoParams *_Geo){
 #endif
   }
   if(_bEnableTrueColor==false){
-    if(_bEnableTrueColor==false){
-      image = gdImageCreate(Geo->dWidth,Geo->dHeight);
-    }else{
-      image = gdImageCreateTrueColor(Geo->dWidth,Geo->dHeight);
-      gdImageSaveAlpha( image, true );
-    }
-    //TTFFontLocation = (char*)"verdana"; /* fontconfig pattern */
+    image = gdImageCreate(Geo->dWidth,Geo->dHeight);
     gdFTUseFontConfig(1);
   }
   dImageCreated=1;
@@ -367,7 +361,7 @@ void CDrawImage::line(float x1, float y1, float x2, float y2,CColor ccolor){
     
   }else{
     int gdcolor=getClosestGDColor(ccolor.r,ccolor.g,ccolor.b);
-    gdImageLine(image, int(x1),int(y1),int(x2),int(y2),_colors[gdcolor]);
+    gdImageLine(image, int(x1),int(y1),int(x2),int(y2),gdcolor);
   }
 }
 
@@ -387,7 +381,7 @@ void CDrawImage::line(float x1,float y1,float x2,float y2,float w,CColor ccolor)
   }else{
     gdImageSetThickness(image, int(w)*1);
     int gdcolor=getClosestGDColor(ccolor.r,ccolor.g,ccolor.b);
-    gdImageLine(image, int(x1),int(y1),int(x2),int(y2),_colors[gdcolor]);
+    gdImageLine(image, int(x1),int(y1),int(x2),int(y2),gdcolor);
   }
 }
 
@@ -822,21 +816,21 @@ int CDrawImage::createGDPalette(CServerConfig::XMLE_Legend *legend){
 void  CDrawImage::rectangle( int x1, int y1, int x2, int y2,CColor innercolor,CColor outercolor){
   if(_bEnableTrueColor==true){
   #ifdef ADAGUC_USE_CAIRO
-  cairo->setColor(innercolor.r,innercolor.g,innercolor.b,innercolor.a);
-  cairo->setFillColor(outercolor.r,outercolor.g,outercolor.b,outercolor.a);
+  cairo->setFillColor(innercolor.r,innercolor.g,innercolor.b,innercolor.a);
+  cairo->setColor(outercolor.r,outercolor.g,outercolor.b,outercolor.a);
   cairo->filledRectangle(x1,y1,x2,y2);
   #else
-  wuLine->setColor(innercolor.r,innercolor.g,innercolor.b,innercolor.a);
-  wuLine->setFillColor(outercolor.r,outercolor.g,outercolor.b,outercolor.a);
+  wuLine->setFillColor(innercolor.r,innercolor.g,innercolor.b,innercolor.a);
+  wuLine->setColor(outercolor.r,outercolor.g,outercolor.b,outercolor.a);
   wuLine->filledRectangle(x1,y1,x2,y2);
   #endif
   }else{
     int gdinnercolor=getClosestGDColor(innercolor.r,innercolor.g,innercolor.b);
     int gdoutercolor=getClosestGDColor(outercolor.r,outercolor.g,outercolor.b);
     if(innercolor.a==255){
-      gdImageFilledRectangle (image,x1+1,y1+1,x2-1,y2-1, colors[gdinnercolor]);
+      gdImageFilledRectangle (image,x1+1,y1+1,x2-1,y2-1, gdinnercolor);
     }
-    gdImageRectangle (image,x1,y1,x2,y2, colors[gdoutercolor]);
+    gdImageRectangle (image,x1,y1,x2,y2, gdoutercolor);
     
   }
 }

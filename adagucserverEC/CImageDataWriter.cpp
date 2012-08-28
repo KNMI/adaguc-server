@@ -320,7 +320,7 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
  */
 void CImageDataWriter::calculateScaleAndOffsetFromMinMax(float &scale, float &offset,float min,float max,float log){
   if(log!=0.0f){
-    CDBDebug("LOG = %f",log);
+    //CDBDebug("LOG = %f",log);
     min=log10(min);
     max=log10(max);
   }
@@ -2200,12 +2200,13 @@ int CImageDataWriter::end(){
   if(writerStatus==finished){CDBError("Already finished");return 1;}
   writerStatus=finished;
   if(requestType==REQUEST_WMS_GETFEATUREINFO){
-    enum ResultFormats {textplain,texthtml,textxml, applicationvndogcgml,imagepng};
+    enum ResultFormats {textplain,texthtml,textxml, applicationvndogcgml,imagepng,imagegif};
     ResultFormats resultFormat=texthtml;
     
     if(srvParam->InfoFormat.equals("text/plain"))resultFormat=textplain;
     if(srvParam->InfoFormat.equals("text/xml"))resultFormat=textxml;
     if(srvParam->InfoFormat.equals("image/png"))resultFormat=imagepng;
+    if(srvParam->InfoFormat.equals("image/gif"))resultFormat=imagegif;
     
     if(srvParam->InfoFormat.equals("application/vnd.ogc.gml"))resultFormat=textxml;//applicationvndogcgml;
     
@@ -2356,12 +2357,12 @@ int CImageDataWriter::end(){
     /* image/png image/png image/png image/png image/png image/png image/png image/png image/png image/png image/png image/png image/png */
     /*************************************************************************************************************************************/
     
-    if(resultFormat==imagepng){
+    if(resultFormat==imagepng||resultFormat==imagegif){
       #ifdef MEASURETIME
       StopWatch_Stop("Start creating image");
       #endif
       
-      printf("%s%c%c\n","Content-Type:image/png",13,10);
+     
       if(getFeatureInfoResultList.size()==0){
         CDBError("Query returned no results");
         return 1;
@@ -2385,7 +2386,10 @@ int CImageDataWriter::end(){
       float plotWidth=((width-plotOffsetX)*0.98);
       
       CDrawImage linePlot;
-      linePlot.setTrueColor(true);
+      if(resultFormat==imagepng){
+        linePlot.setTrueColor(true);
+      }
+      
       
       //Set font location
       const char *fontLocation = NULL;
@@ -2398,11 +2402,28 @@ int CImageDataWriter::end(){
         }
       }
       
+      
+      if(resultFormat==imagegif){
+        linePlot.setTrueColor(false);
+        linePlot.setBGColor(255,255,255);
+      
+      }
+      
       linePlot.createImage(int(width),int(height));
       
       
+      
       linePlot.create685Palette();
-      linePlot.rectangle(0,0,width-1,height-1,CColor(0,0,0,255),CColor(255,255,255,255));
+      
+      
+      linePlot.rectangle(0,0,width-1,height-1,CColor(255,255,255,255),CColor(0,0,0,255));
+      /*
+      for(int x=0;x<256;x++){
+        linePlot.line(x,0,x,200,x);
+      }
+      for(int x=0;x<256;x++){
+        linePlot.line(x,200,x,400,CColor(x,x,x,255));
+      }*/
       
       
       size_t nrOfTimeSteps = getFeatureInfoResultList.size();
@@ -2444,35 +2465,31 @@ int CImageDataWriter::end(){
         }
       }
       
+      
+      //Determine min max based on given datasource settings (scale/offset/log or min/max/log in config file)
       for(size_t elNr=0;elNr<nrOfElements;elNr++){
         CDataSource *d=getFeatureInfoResultList[0]->elements[elNr]->dataSource;
-        CDBDebug("For datasource %s %d  %f",d->layerName.c_str(),d->stretchMinMax,d->legendScale);
         if(getFeatureInfoResultList[0]->elements[elNr]->dataSource->stretchMinMax==false){
-          
           minValue[elNr]=getValueForColorIndex(getFeatureInfoResultList[0]->elements[elNr]->dataSource,0);
           maxValue[elNr]=getValueForColorIndex(getFeatureInfoResultList[0]->elements[elNr]->dataSource,240);
-        
         }
       }
-      
-      
-      
       
       //Increase minmax if they are the same.
       if(maxValue[0]==minValue[0]){maxValue[0]=maxValue[0]+0.01;minValue[0]=minValue[0]-0.01;}
       
-      //If autoscale is enabled, set the legendscale based on min max values.
+      //If autoscale is enabled, set the legendscale according to found min max values.
       for(size_t elNr=0;elNr<nrOfElements;elNr++){
         CDataSource *d=getFeatureInfoResultList[0]->elements[elNr]->dataSource;
-        float ls=240/(maxValue[elNr]-minValue[elNr]);
-        float lo=-(minValue[elNr]*ls);
-        d->legendScale=ls;
-        d->legendOffset=lo;
+        if(d->stretchMinMax){
+          float ls=240/(maxValue[elNr]-minValue[elNr]);
+          float lo=-(minValue[elNr]*ls);
+          d->legendScale=ls;
+          d->legendOffset=lo;
+        }
       }
    
     
-      
-      
       #ifdef CIMAGEDATAWRITER_DEBUG        
       for(size_t elNr=0;elNr<nrOfElements;elNr++){
         CDBDebug("elNr %s %d has minValue %f and maxValue %f",getFeatureInfoResultList[0]->elements[elNr]->var_name.c_str(),elNr,minValue[elNr],maxValue[elNr]);
@@ -2483,19 +2500,7 @@ int CImageDataWriter::end(){
       float classes=6;
       int tickRound=0;
       if(currentStyleConfiguration->styleIndex !=-1){
-        
-        
-    
         CServerConfig::XMLE_Style* style = srvParam->cfg->Style[currentStyleConfiguration->styleIndex];
-        /*if(style->Scale.size()>0){
-          if(parseFloat(style->Scale[0]->value.c_str())==0){
-            min=getValueForColorIndex(dataSource,0);
-            max=getValueForColorIndex(dataSource,240);
-            minValue[0]=min;
-            maxValue[0]=max;
-          }
-        }*/
-        
         if(style->Legend.size()>0){
           if(style->Legend[0]->attr.tickinterval.c_str() != NULL){
             double tickinterval = parseFloat(style->Legend[0]->attr.tickinterval.c_str());
@@ -2505,18 +2510,17 @@ int CImageDataWriter::end(){
           }
           if(style->Legend[0]->attr.tickround.c_str() != NULL){
             double dftickRound = parseFloat(style->Legend[0]->attr.tickround.c_str());
-            CDBDebug("dftickRound = %f",dftickRound );
             tickRound = int(round(log10(dftickRound))+3);
-            CDBDebug("tickRound = %d %f",tickRound ,log10(dftickRound));
           }
         }
-        //if(currentStyleConfiguration->legendClasses!=0){
-          //        classes=currentStyleConfiguration->legendClasses
-          //    }
       }
       
-      linePlot.rectangle(plotOffsetX,plotOffsetY,plotWidth+plotOffsetX,plotHeight+plotOffsetY,CColor(0,0,0,255),CColor(240,240,240,255));
+      //TODO
+      linePlot.rectangle(plotOffsetX,plotOffsetY,plotWidth+plotOffsetX,plotHeight+plotOffsetY,CColor(240,240,240,255),CColor(0,0,0,255));
       CDataSource * dataSource=getFeatureInfoResultList[0]->elements[0]->dataSource;
+      
+      //CDBDebug("LEGEND: scale %f offset %f",dataSource->legendScale,dataSource->legendOffset);
+      
       for(int j=0;j<=classes;j++){
         char szTemp[256];
         float c=((float(classes-j)/classes))*(plotHeight);
@@ -2628,25 +2632,18 @@ int CImageDataWriter::end(){
               v2=values[j+1+elNr*nrOfTimeSteps];
             }
             if(v1==v1&&v2==v2){
-              if(v1<minValue[elNr])v1=minValue[elNr];
-              if(v2<minValue[elNr])v2=minValue[elNr];
-              if(v1>maxValue[elNr])v1=maxValue[elNr];
-              if(v2>maxValue[elNr])v2=maxValue[elNr];
-              //resultXML.printconcat("      <VarName>%s</VarName>\n",e->var_name.c_str());
-              //resultXML.printconcat("      <Value units=\"%s\">%s</Value>\n",e->units.c_str(),e->value.c_str());
-              //resultXML.printconcat("      <Dimension name=\"time\">%s</Dimension>\n",e->time.c_str());
-              int y1=plotOffsetY+plotHeight-((v1-minValue[elNr])/(maxValue[elNr]-minValue[elNr]))*plotHeight;
-              int y2=plotOffsetY+plotHeight-((v2-minValue[elNr])/(maxValue[elNr]-minValue[elNr]))*plotHeight;
-            
-              
-              CColor color=CColor(255,255,255,255);
-              if(elNr==0){color=CColor(0,0,255,255);}
-              if(elNr==1){color=CColor(0,255,0,255);}
-              if(elNr==2){color=CColor(255,0,0,255);}
-              if(elNr==3){color=CColor(255,128,0,255);}
-              if(elNr==4){color=CColor(0,255,128,255);}
-              if(elNr==5){color=CColor(255,0,128,255);}
-              linePlot.line(x1,y1,x2,y2,2,color);
+              if(v1>minValue[elNr]&&v1<maxValue[elNr]&&v2>minValue[elNr]&&v2<maxValue[elNr]){
+                int y1=plotOffsetY+plotHeight-((v1-minValue[elNr])/(maxValue[elNr]-minValue[elNr]))*plotHeight;
+                int y2=plotOffsetY+plotHeight-((v2-minValue[elNr])/(maxValue[elNr]-minValue[elNr]))*plotHeight;
+                CColor color=CColor(255,255,255,255);
+                if(elNr==0){color=CColor(0,0,255,255);}
+                if(elNr==1){color=CColor(0,255,0,255);}
+                if(elNr==2){color=CColor(255,0,0,255);}
+                if(elNr==3){color=CColor(255,128,0,255);}
+                if(elNr==4){color=CColor(0,255,128,255);}
+                if(elNr==5){color=CColor(255,0,128,255);}
+                linePlot.line(x1,y1,x2,y2,2,color);
+              }
             }
           }
           //CDBDebug("%f == %d",v1,y1);
@@ -2663,7 +2660,14 @@ int CImageDataWriter::end(){
       title.print("(%s / %s)",e->time.c_str(),e2->time.c_str());
       linePlot.drawText(plotWidth/2-float(title.length())*2.5,25+plotHeight+plotOffsetY,fontLocation,8,0,title.c_str(),CColor(0,0,0,255),CColor(255,255,255,0));
       
-      linePlot.printImagePng();
+      if(resultFormat==imagepng){
+        printf("%s%c%c\n","Content-Type:image/png",13,10);
+        linePlot.printImagePng();
+      }
+      if(resultFormat==imagegif){
+        printf("%s%c%c\n","Content-Type:image/gif",13,10);
+        linePlot.printImageGif();
+      }
       #ifdef MEASURETIME
       StopWatch_Stop("/Start creating image");
       #endif
@@ -2887,16 +2891,12 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
         }
         if(style->Legend[0]->attr.tickround.c_str() != NULL){
           double dftickRound = parseFloat(style->Legend[0]->attr.tickround.c_str());
-          //CDBDebug("dftickRound = %f",dftickRound );
           tickRound = int(round(log10(dftickRound))+3);
-          //CDBDebug("tickRound = %d %f",tickRound ,log10(dftickRound));
         }
       }
-      //if(currentStyleConfiguration->legendClasses!=0){
-//        classes=currentStyleConfiguration->legendClasses
-  //    }
     }
     
+    //CDBDebug("LEGEND: scale %f offset %f",dataSource->legendScale,dataSource->legendOffset);
     for(int j=0;j<=classes;j++){
       float c=((float(classes*legendPositiveUp-j)/classes))*(cbH);
       float v=((float(j)/classes))*(240.0f);

@@ -50,13 +50,16 @@ class CDataSource{
 #endif
       if(dataObject.size()==1){
         T* data = (T*)dataObject[0]->cdfVariable->data;
-      //CDBDebug("nodataval %f",(T)dataObject->dfNodataValue);
+        
+        //CDBDebug("nodataval %f",(T)dataObject[0]->dfNodataValue);
+        
         T _min=(T)0.0f,_max=(T)0.0f;
         int firstDone=0;
         for(size_t p=0;p<size;p++){
           
           T v=data[p];
 
+          //CDBDebug("Value %d =  %f",p,(double)v);
           if((((T)v)!=(T)dataObject[0]->dfNodataValue||(!dataObject[0]->hasNodataValue))&&v==v){
             if(firstDone==0){
               _min=v;_max=v;
@@ -105,6 +108,10 @@ class CDataSource{
       }
       double min,max;
     public:
+      Statistics(){
+        min=0;
+        max=0;
+      }
       double getMinimum();
       double getMaximum();
       void setMinimum(double min);

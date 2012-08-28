@@ -7,7 +7,7 @@
 
 const char *CDataReader::className="CDataReader";
 
-#define CDATAREADER_DEBUG
+//#define CDATAREADER_DEBUG
 #define uchar unsigned char
 #define MAX_STR_LEN 8191
 
@@ -962,8 +962,13 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
 
 
   if(dataSource->stretchMinMax){
+    #ifdef CDATAREADER_DEBUG
+    CDBDebug("MinMax calculation required");
+    #endif    
     if(dataSource->statistics==NULL){
-      
+      #ifdef CDATAREADER_DEBUG
+      CDBDebug("No statistics available");
+      #endif    
       
       //CDBDebug("SOFAR");
       dataSource->statistics = new CDataSource::Statistics();
@@ -1005,7 +1010,6 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
   }
   
   #ifdef CDATAREADER_DEBUG    
-  CDBDebug("dataSource->legendScale = %f, dataSource->legendOffset = %f",INFINITY,FLT_MIN);
   CDBDebug("dataSource->legendScale = %f, dataSource->legendOffset = %f",dataSource->legendScale,dataSource->legendOffset);
   #endif    
   
