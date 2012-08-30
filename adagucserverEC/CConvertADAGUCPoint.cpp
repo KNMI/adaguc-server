@@ -524,8 +524,8 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
       lon = (double)lonData[pGeo];
       lat = (double)latData[pGeo];
       if(projectionRequired)imageWarper.reprojfromLatLon(lon,lat);
-      int dlon=(lon-offsetX)/cellSizeX;
-      int dlat=(lat-offsetY)/cellSizeY;
+      int dlon=int((lon-offsetX)/cellSizeX);
+      int dlat=int((lat-offsetY)/cellSizeY);
       
       for(size_t d=0;d<nrDataObjects;d++){
         float val = ((float*)pointVar[d]->data)[pPoint];

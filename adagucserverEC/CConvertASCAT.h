@@ -9,5 +9,3 @@ class CConvertASCAT{
   static int convertASCATData(CDataSource *dataSource,int mode);
 };
 #endif
-
-  

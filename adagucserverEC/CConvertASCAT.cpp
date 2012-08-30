@@ -465,8 +465,8 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
                 int dlons[4],dlats[4];
                 for(int j=0;j<4;j++){
                   if(projectionRequired)imageWarper.reprojfromLatLon(lons[j],lats[j]);
-                  dlons[j]=(lons[j]-offsetX)/cellSizeX;
-                  dlats[j]=(lats[j]-offsetY)/cellSizeY;
+                  dlons[j]=int((lons[j]-offsetX)/cellSizeX);
+                  dlats[j]=int((lats[j]-offsetY)/cellSizeY);
                 }
                 if(dataSource->dataObject.size()==2){
                   if(dlons[0]>=0&&dlons[0]<dataSource->dWidth&&dlats[0]>0&&dlats[0]<dataSource->dHeight){

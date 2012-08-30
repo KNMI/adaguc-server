@@ -9,5 +9,3 @@ class CConvertADAGUCPoint{
   static int convertADAGUCPointData(CDataSource *dataSource,int mode);
 };
 #endif
-
-  

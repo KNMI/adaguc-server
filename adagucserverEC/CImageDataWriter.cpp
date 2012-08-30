@@ -1278,7 +1278,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       if(x<0){
         projCacheInfo.imx=-1;
       }else{
-        projCacheInfo.imx=x;
+        projCacheInfo.imx=int(x);
       }
       if(y<0){
         projCacheInfo.imy=-1;
@@ -2416,7 +2416,7 @@ int CImageDataWriter::end(){
       linePlot.create685Palette();
       
       
-      linePlot.rectangle(0,0,width-1,height-1,CColor(255,255,255,255),CColor(0,0,0,255));
+      linePlot.rectangle(0,0,int(width-1),int(height-1),CColor(255,255,255,255),CColor(0,0,0,255));
       /*
       for(int x=0;x<256;x++){
         linePlot.line(x,0,x,200,x);
@@ -2468,7 +2468,6 @@ int CImageDataWriter::end(){
       
       //Determine min max based on given datasource settings (scale/offset/log or min/max/log in config file)
       for(size_t elNr=0;elNr<nrOfElements;elNr++){
-        CDataSource *d=getFeatureInfoResultList[0]->elements[elNr]->dataSource;
         if(getFeatureInfoResultList[0]->elements[elNr]->dataSource->stretchMinMax==false){
           minValue[elNr]=getValueForColorIndex(getFeatureInfoResultList[0]->elements[elNr]->dataSource,0);
           maxValue[elNr]=getValueForColorIndex(getFeatureInfoResultList[0]->elements[elNr]->dataSource,240);
@@ -2516,7 +2515,7 @@ int CImageDataWriter::end(){
       }
       
       //TODO
-      linePlot.rectangle(plotOffsetX,plotOffsetY,plotWidth+plotOffsetX,plotHeight+plotOffsetY,CColor(240,240,240,255),CColor(0,0,0,255));
+      linePlot.rectangle(int(plotOffsetX),int(plotOffsetY),int(plotWidth+plotOffsetX),int(plotHeight+plotOffsetY),CColor(240,240,240,255),CColor(0,0,0,255));
       CDataSource * dataSource=getFeatureInfoResultList[0]->elements[0]->dataSource;
       
       //CDBDebug("LEGEND: scale %f offset %f",dataSource->legendScale,dataSource->legendOffset);
@@ -2535,7 +2534,7 @@ int CImageDataWriter::end(){
           floatToString(szTemp,255,tickRound,v);
         }
         //linePlot.setText(szTemp,strlen(szTemp),0,(int)c+plotOffsetY,248,-1);
-        linePlot.drawText(4,(int)c+plotOffsetY+3,fontLocation,8,0,szTemp,CColor(0,0,0,255),CColor(255,255,255,0));
+        linePlot.drawText(4,int(c+plotOffsetY+3),fontLocation,8,0,szTemp,CColor(0,0,0,255),CColor(255,255,255,0));
       }
   
       
@@ -2610,8 +2609,8 @@ int CImageDataWriter::end(){
             
           }catch(int e){CDBError("Time error %s",getFeatureInfoResultList[j]->elements[0]->time.c_str());}
           
-          int x1=plotOffsetX+(float(timeVal1)*(stepX));
-          int x2=plotOffsetX+(float(timeVal2)*(stepX));
+          int x1=int(plotOffsetX+(float(timeVal1)*(stepX)));
+          int x2=int(plotOffsetX+(float(timeVal2)*(stepX)));
 
           //CDBDebug("******************************************************************************************************** %d %d %f %d",x1,x2,stepX,timeStepsToLoop);
           
@@ -2620,7 +2619,7 @@ int CImageDataWriter::end(){
             linePlot.line(x1,plotOffsetY,x1,plotOffsetY+plotHeight,1,CColor(0,0,0,128));
             char szTemp[256];
             snprintf(szTemp,255,"%d",timeVal1Date.day);
-            linePlot.drawText(x1-strlen(szTemp)*3,plotOffsetY+plotHeight+10,fontLocation,6,0,szTemp,CColor(0,0,0,255),CColor(255,255,255,0));
+            linePlot.drawText(x1-strlen(szTemp)*3,int(plotOffsetY+plotHeight+10),fontLocation,6,0,szTemp,CColor(0,0,0,255),CColor(255,255,255,0));
           }else{
             linePlot.line(x1,plotOffsetY,x1,plotOffsetY+plotHeight,0.5,CColor(128,128,128,128));
           }
@@ -2633,8 +2632,8 @@ int CImageDataWriter::end(){
             }
             if(v1==v1&&v2==v2){
               if(v1>minValue[elNr]&&v1<maxValue[elNr]&&v2>minValue[elNr]&&v2<maxValue[elNr]){
-                int y1=plotOffsetY+plotHeight-((v1-minValue[elNr])/(maxValue[elNr]-minValue[elNr]))*plotHeight;
-                int y2=plotOffsetY+plotHeight-((v2-minValue[elNr])/(maxValue[elNr]-minValue[elNr]))*plotHeight;
+                int y1=int(plotOffsetY+plotHeight-((v1-minValue[elNr])/(maxValue[elNr]-minValue[elNr]))*plotHeight);
+                int y2=int(plotOffsetY+plotHeight-((v2-minValue[elNr])/(maxValue[elNr]-minValue[elNr]))*plotHeight);
                 CColor color=CColor(255,255,255,255);
                 if(elNr==0){color=CColor(0,0,255,255);}
                 if(elNr==1){color=CColor(0,255,0,255);}
@@ -2654,11 +2653,11 @@ int CImageDataWriter::end(){
       CT::string title;
       GetFeatureInfoResult::Element * e=getFeatureInfoResultList[0]->elements[0];
       title.print("%s - %s (%s)",e->var_name.c_str(),e->feature_name.c_str(),e->units.c_str());
-      linePlot.drawText(plotWidth/2-float(title.length())*2.5,22,fontLocation,10,0,title.c_str(),CColor(0,0,0,255),CColor(255,255,255,0));
+      linePlot.drawText(int(plotWidth/2-float(title.length())*2.5),22,fontLocation,10,0,title.c_str(),CColor(0,0,0,255),CColor(255,255,255,0));
       
       GetFeatureInfoResult::Element * e2=getFeatureInfoResultList[getFeatureInfoResultList.size()-1]->elements[0];
       title.print("(%s / %s)",e->time.c_str(),e2->time.c_str());
-      linePlot.drawText(plotWidth/2-float(title.length())*2.5,25+plotHeight+plotOffsetY,fontLocation,8,0,title.c_str(),CColor(0,0,0,255),CColor(255,255,255,0));
+      linePlot.drawText(int(plotWidth/2-float(title.length())*2.5),int(25+plotHeight+plotOffsetY),fontLocation,8,0,title.c_str(),CColor(0,0,0,255),CColor(255,255,255,0));
       
       if(resultFormat==imagepng){
         printf("%s%c%c\n","Content-Type:image/png",13,10);

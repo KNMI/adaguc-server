@@ -88,7 +88,7 @@ class CDataSource{
           
           if(((((T)v)!=(T)dataObject[0]->dfNodataValue||(!dataObject[0]->hasNodataValue))&&v==v)&&
             ((((T)u)!=(T)dataObject[0]->dfNodataValue||(!dataObject[0]->hasNodataValue))&&u==u)){
-            s=hypot(u,v);
+            s=(T)hypot(u,v);
             if(firstDone==0){
               _min=s;_max=s;
               firstDone=1;

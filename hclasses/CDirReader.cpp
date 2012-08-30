@@ -207,5 +207,6 @@ int CDirReader::getFileDate(CT::string *date, const char *file){
   char buffer [80];
   strftime (buffer,80,"%Y-%m-%dT%H:%M:%SZ",clock);
   date->copy(buffer);
+  return 0;
 }
 

@@ -116,7 +116,7 @@ int CDrawImage::createImage(CGeoParams *_Geo){
         RGBAByteBuffer[j*4+2]=BGColorB;
         RGBAByteBuffer[j*4+3]=255;
       }
-//    }
+    }
     wuLine = new CXiaolinWuLine(Geo->dWidth,Geo->dHeight,RGBAByteBuffer);
     freeType = new CFreeType (Geo->dWidth,Geo->dHeight,RGBAByteBuffer,TTFFontSize,TTFFontLocation);
 #endif
@@ -233,7 +233,7 @@ void CDrawImage::drawBarb(int x,int y,double direction, double strength,int colo
   }
 
   float flipFactor=flip?-1:1; 
-  int barbLength=-10*flipFactor;
+  int barbLength=int(-10*flipFactor);
   
   dx1=cos(direction)*(shaftLength);
   dy1=sin(direction)*(shaftLength);

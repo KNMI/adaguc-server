@@ -482,8 +482,8 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource,int mo
         if(tileIsTooLarge==false){
           for(int j=0;j<4;j++){
             if(projectionRequired)imageWarper.reprojfromLatLon(lons[j],lats[j]);
-            dlons[j]=(lons[j]-offsetX)/cellSizeX;
-            dlats[j]=(lats[j]-offsetY)/cellSizeY;
+            dlons[j]=int((lons[j]-offsetX)/cellSizeX);
+            dlats[j]=int((lats[j]-offsetY)/cellSizeY);
           }
           
           fillQuadGouraud(sdata, vals, dataSource->dWidth,dataSource->dHeight, dlons,dlats);
