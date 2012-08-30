@@ -1466,15 +1466,16 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
               double pi=3.141592;
               double pixel1=convertValue(dataSource->dataObject[0]->cdfVariable->type,dataSource->dataObject[0]->cdfVariable->data,ptr);
               double pixel2=convertValue(dataSource->dataObject[1]->cdfVariable->type,dataSource->dataObject[1]->cdfVariable->data,ptr);
-              double windspeed=hypot(pixel1, pixel2);
-              windspeed=windspeed*(3600./1852.);
-              double angle=atan2(pixel2, pixel1);
-              angle=angle*180/pi;
-              if (angle<0) angle=angle+360;
-              angle=270-angle;
-              if (angle<0) angle=angle+360;
+             
+             
               GetFeatureInfoResult::Element *element2=new GetFeatureInfoResult::Element();
+              getFeatureInfoResult->elements.push_back(element2);
                 if (j==0) {
+                  double angle=atan2(pixel2, pixel1);
+                  angle=angle*180/pi;
+                  if (angle<0) angle=angle+360;
+                  angle=270-angle;
+                  if (angle<0) angle=angle+360;
                   element2->long_name="wind direction";
                   element2->var_name="wind direction";
                   element2->standard_name="dir";
@@ -1483,15 +1484,28 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
                     element2->units="degrees";
                     element2->time="";
                 } else {
+                  double windspeed=hypot(pixel1, pixel2);
+                  double windspeedKTS=windspeed*(3600./1852.);
                   element2->long_name="wind speed";
                   element2->var_name="wind speed";
                   element2->standard_name="speed";
                   element2->feature_name="wind speed";
-                    element2->value.print("%03.0f",windspeed);
-                    element2->units="kts";
-                    element2->time="";
+                  element2->value.print("%03.0f",windspeedKTS);
+                  element2->units="kts";
+                  element2->time="";
+                  
+                  GetFeatureInfoResult::Element *windspeedOrigElement=new GetFeatureInfoResult::Element();
+                  getFeatureInfoResult->elements.push_back(windspeedOrigElement);
+                  windspeedOrigElement->long_name="wind speed";
+                  windspeedOrigElement->var_name="wind speed";
+                  windspeedOrigElement->standard_name="speed";
+                  windspeedOrigElement->feature_name="wind speed";
+                  windspeedOrigElement->value.print("%03.0f",windspeed);
+                  windspeedOrigElement->units="m/s";
+                  windspeedOrigElement->time="";
+
                 }
-                getFeatureInfoResult->elements.push_back(element2);
+                
               }
               
             }
