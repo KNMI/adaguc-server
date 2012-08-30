@@ -9,5 +9,3 @@ class CConvertADAGUCVector{
   static int convertADAGUCVectorData(CDataSource *dataSource,int mode);
 };
 #endif
-
-  

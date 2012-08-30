@@ -139,3 +139,4 @@ class CImgWarpBilinear:public CImageWarperRenderInterface{
 };
 
 #endif
+

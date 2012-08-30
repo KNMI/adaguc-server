@@ -270,6 +270,12 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
 #ifdef CDATAREADER_DEBUG        
     CDBDebug("Reading from Cache file");
 #endif
+    
+    //Remove DataReader configuration, because cache file is always netcdf.
+    if(dataSource->cfgLayer->DataReader.size()>0){
+      dataSource->cfgLayer->DataReader[0]->value.copy("NC");
+    }
+    
     cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource,uniqueIDFor2DField.c_str());
     //if(cdfObject==NULL){return 1;}
     //status = cdfObject->open(uniqueIDFor2DField.c_str());
@@ -880,7 +886,7 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
       double dfadd_offset = dataSource->dataObject[varNr]->dfadd_offset;
       //CDBDebug("dfNoData=%f",dfNoData*dfscale_factor);
       #ifdef CDATAREADER_DEBUG   
-      CDBDebug("Applying scale and offset with %f and %f (var size=%d)",dfscale_factor,dfadd_offset,var[varNr]->getSize());
+      CDBDebug("Applying scale and offset with %f and %f (var size=%d) type=%s",dfscale_factor,dfadd_offset,var[varNr]->getSize(),CDF::getCDFDataTypeName(dataSource->dataObject[varNr]->cdfVariable->type).c_str());
       #endif
       /*if(dataSource->dataObject[varNr]->dataType==CDF_FLOAT){
         //Preserve the original nodata value, so it remains a nice short rounded number.
@@ -956,8 +962,13 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
 
 
   if(dataSource->stretchMinMax){
+    #ifdef CDATAREADER_DEBUG
+    CDBDebug("MinMax calculation required");
+    #endif    
     if(dataSource->statistics==NULL){
-      
+      #ifdef CDATAREADER_DEBUG
+      CDBDebug("No statistics available");
+      #endif    
       
       //CDBDebug("SOFAR");
       dataSource->statistics = new CDataSource::Statistics();
@@ -999,7 +1010,6 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
   }
   
   #ifdef CDATAREADER_DEBUG    
-  CDBDebug("dataSource->legendScale = %f, dataSource->legendOffset = %f",INFINITY,FLT_MIN);
   CDBDebug("dataSource->legendScale = %f, dataSource->legendOffset = %f",dataSource->legendScale,dataSource->legendOffset);
   #endif    
   

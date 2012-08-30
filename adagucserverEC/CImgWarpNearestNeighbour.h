@@ -200,7 +200,7 @@ public:
   double legendUpperRange;
   double legendValueRange;
   double hasNodataValue;
-  double width,height;
+  int width,height;
   float legendLog,legendScale,legendOffset;
   CDataSource * dataSource;
   CDrawImage *drawImage;

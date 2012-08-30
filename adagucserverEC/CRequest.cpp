@@ -17,7 +17,7 @@ void CRequest::addXMLLayerToConfig(CServerParams *srvParam,std::vector<CT::strin
   xmleCache->attr.enabled.copy("false");
   xmleLayer->attr.type.copy("database");
   xmleFilePath->value.copy(location);
-  xmleFilePath->attr.filter.copy("*");
+  xmleFilePath->attr.filter.copy("");
   
   if(group!=NULL){
     CServerConfig::XMLE_Group* xmleGroup = new CServerConfig::XMLE_Group();
@@ -1031,7 +1031,7 @@ int CRequest::process_all_layers(){
                   status = imageDataWriter.createLegend(dataSources[d],&legendImage);if(status != 0)throw(__LINE__);
                   int posX=4;
                   int posY=imageDataWriter.drawImage.Geo->dHeight-(legendImage.Geo->dHeight+4);
-                  imageDataWriter.drawImage.rectangle(posX,posY,legendImage.Geo->dWidth+posX+1,legendImage.Geo->dHeight+posY+1,CColor(255,255,255,0),CColor(255,255,255,100));
+                  imageDataWriter.drawImage.rectangle(posX,posY,legendImage.Geo->dWidth+posX+1,legendImage.Geo->dHeight+posY+1,CColor(255,255,255,100),CColor(255,255,255,0));
                   imageDataWriter.drawImage.draw(posX,posY,0,0,&legendImage);
                   legendDrawn=true;
                 }
@@ -1045,7 +1045,7 @@ int CRequest::process_all_layers(){
                   status = imageDataWriter.createLegend(dataSources[d],&legendImage);if(status != 0)throw(__LINE__);
                   int posX=imageDataWriter.drawImage.Geo->dWidth-(legendImage.Geo->dWidth+padding);
                   int posY=imageDataWriter.drawImage.Geo->dHeight-(legendImage.Geo->dHeight+padding);
-                  imageDataWriter.drawImage.rectangle(posX,posY,legendImage.Geo->dWidth+posX+1,legendImage.Geo->dHeight+posY+1,CColor(255,255,255,0),CColor(255,255,255,180));
+                  imageDataWriter.drawImage.rectangle(posX,posY,legendImage.Geo->dWidth+posX+1,legendImage.Geo->dHeight+posY+1,CColor(255,255,255,180),CColor(255,255,255,0));
                   imageDataWriter.drawImage.draw(posX,posY,0,0,&legendImage);
                   legendDrawn=true;
                   
@@ -1573,9 +1573,12 @@ int CRequest::process_querystring(){
       //Error messages should be the same for the different attempts, otherwise someone can find out the directory structure 
       if(isValidResource==false){
         if(srvParam->isAutoLocalFileResourceEnabled()){
-          
+          if(srvParam->checkIfPathHasValidTokens(srvParam->autoResourceLocation.c_str())==false){
+            CDBError("Invalid token(s), unable to read file %s",srvParam->autoResourceLocation.c_str());
+            return 1;
+          }
           if(srvParam->checkResolvePath(srvParam->autoResourceLocation.c_str(),&srvParam->internalAutoResourceLocation)==false){
-            CDBError("Invalid path");
+            CDBError("Unable to resolve path for file %s",srvParam->autoResourceLocation.c_str());
             return 1;
           }
           isValidResource=true;
@@ -1613,7 +1616,7 @@ int CRequest::process_querystring(){
         int status=0;
         if(srvParam->autoResourceVariable.length()==0)status=1;
         if(status!=0){
-          CDBError("A source parameter without a variable parameter is given");
+          CDBError("Unable to load dataset");
           return 1;
         }
       }

@@ -45,7 +45,7 @@ int CDataSource::Statistics::calculate(CDataSource *dataSource){
   //Get Min and Max
   CDataSource::DataClass *dataObject = dataSource->dataObject[0];
   if(dataObject->cdfVariable->data!=NULL){
-    size_t size = dataSource->dWidth*dataSource->dHeight;
+    size_t size = dataObject->cdfVariable->getSize();//dataSource->dWidth*dataSource->dHeight;
     
     if(dataObject->cdfVariable->type==CDF_CHAR)calcMinMax<char>(size,dataSource->dataObject);
     if(dataObject->cdfVariable->type==CDF_BYTE)calcMinMax<char>(size,dataSource->dataObject);

@@ -149,6 +149,13 @@ class CServerParams{
     
     static void makeCorrectTableName(CT::string *tableName,CT::string *dimName);
     
+    /**
+     * Check whether a filepath or urlpath contains valid tokens or not
+     * @param path The filepath or urlpath to check
+     * @return true on valid, false on invalid
+     */
+    bool checkIfPathHasValidTokens(const char *path);
+    
     /** 
      * Check wether the resourcelocation is whithin the servers configured realpath. In the servers configuration a comma separated list of realpaths can be configured.
      * @param resourceLocation The location to check for
@@ -163,7 +170,7 @@ class CServerParams{
     static void showWCSNotEnabledErrorMessage();
     
     /**
-     * Get online resource
+     * Get configured online resource
      */
     CT::string getOnlineResource();
 };

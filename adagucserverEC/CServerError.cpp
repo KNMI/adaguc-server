@@ -15,7 +15,13 @@ static int errImageHeight=480;
 static int errImageFormat=IMAGEFORMAT_IMAGEPNG8;
 void printerror(const char * text){
   error_raised=1;
-  errormsgs.push_back(CT::string(text));
+  CT::string t=text;
+  
+  //Remove "[E: file,line] spaces"
+  t.substringSelf(t.indexOf("]")+1,-1);
+  t.trimSelf();
+  
+  errormsgs.push_back(t);
 }
 void seterrormode(int errormode){
   cerror_mode=errormode;

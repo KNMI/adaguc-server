@@ -7,6 +7,7 @@ const char *CDFObjectStore::className="CDFObjectStore";
 #define MAX_OPEN_FILES 128
 extern CDFObjectStore cdfObjectStore;
 CDFObjectStore cdfObjectStore;
+bool EXTRACT_HDF_NC_VERBOSE = false;
 /**
  * Get a CDFReader based on information in the datasource. In the Layer element this can be configured with <DataReader>HDF5</DataReader>
  * @param dataSource The configured datasource or NULL pointer. NULL pointer defaults to a NetCDF/OPeNDAP reader
@@ -27,6 +28,8 @@ CDFReader *CDFObjectStore::getCDFReader(CDataSource *dataSource){
         CDFHDF5Reader * hdf5Reader = (CDFHDF5Reader*)cdfReader;
         hdf5Reader->enableKNMIHDF5toCFConversion();
       }
+    }else{
+      cdfReader=getCDFReader(dataSource->getFileName());
     }
   }
   //Defaults to the netcdf reader
@@ -38,6 +41,62 @@ CDFReader *CDFObjectStore::getCDFReader(CDataSource *dataSource){
   }
   return cdfReader;
 }
+
+
+/**
+ * Get a CDFReader based on fileName information, currently based on extension.
+ * @param fileName The fileName
+ * @return The CDFReader
+ */
+CDFReader *CDFObjectStore::getCDFReader(const char *fileName){
+  CDFReader *cdfReader = NULL;
+  if(fileName!=NULL){
+    CT::string name=fileName;
+    int a=name.indexOf(".h5");
+    if(a!=-1){
+      if(a==int(name.length())-3){
+        if(EXTRACT_HDF_NC_VERBOSE){
+          CDBDebug("Creating HDF5 reader");
+        }
+        cdfReader = new CDFHDF5Reader();
+        CDFHDF5Reader * hdf5Reader = (CDFHDF5Reader*)cdfReader;
+        hdf5Reader->enableKNMIHDF5toCFConversion();
+      }
+    }
+    if(cdfReader==NULL){
+      a=name.indexOf(".he5");
+      if(a!=-1){
+        if(a==int(name.length())-4){
+          if(EXTRACT_HDF_NC_VERBOSE){
+            CDBDebug("Creating HDF EOS 5 reader");
+          }
+          cdfReader = new CDFHDF5Reader();
+        }
+      }
+    }
+    if(cdfReader==NULL){
+      a=name.indexOf(".hdf");
+      if(a!=-1){
+        if(a==int(name.length())-4){
+          if(EXTRACT_HDF_NC_VERBOSE){
+            CDBDebug("Creating HDF reader");
+          }
+          cdfReader = new CDFHDF5Reader();
+        }
+      }
+    }
+  }
+  //Defaults to the netcdf reader
+  if(cdfReader==NULL){
+    if(EXTRACT_HDF_NC_VERBOSE){
+      CDBDebug("Creating NetCDF reader");
+    }
+    cdfReader = new CDFNetCDFReader();
+  }
+  return cdfReader;
+}
+
+
 
 /**
  * Get a CDFObject based with opened and configured CDF reader for a filename/OPeNDAP url and a dataSource.
@@ -61,7 +120,15 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,const char *file
   #endif      
   //CDFObject not found: Create one
   CDFObject *cdfObject = new CDFObject();
-  CDFReader *cdfReader = CDFObjectStore::getCDFReader(dataSource);
+  CDFReader *cdfReader = NULL;
+  
+  if(dataSource!=NULL){
+    cdfReader = CDFObjectStore::getCDFReader(dataSource);
+  }else{
+    //Get a reader based on file extension
+    cdfReader = CDFObjectStore::getCDFReader(fileName);
+  }
+  
   if(cdfReader==NULL){
     if(dataSource!=NULL){
       CDBError("Unable to get a reader for source %s",dataSource->cfgLayer->Name[0]->value.c_str());
@@ -69,6 +136,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,const char *file
     throw(1);
     //return NULL;
   }
+  
   cdfObject->attachCDFReader(cdfReader);
   
   //Open the object.
