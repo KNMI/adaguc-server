@@ -425,7 +425,7 @@ int  CGDALDataWriter::end(){
     //CDBDebug("File opened: size = %d",endPos);
     CDBDebug("Now start streaming %d bytes to the client with mimetype %s",endPos,mimeType.c_str());
     
-    printf("Content-Transfer-Encoding: binary\r\n");
+    //printf("Content-Transfer-Encoding: binary\n");
 //    printf("Content-Length: %d\r\n",endPos); 
     printf("%s%c%c\n",mimeType.c_str(),13,10);
     for(size_t j=0;j<endPos;j++)putchar(getc(fp));

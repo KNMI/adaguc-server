@@ -34,15 +34,17 @@
 class CCDFWarper{
   private:
   DEF_ERRORFUNCTION();
-  bool lonWarpNeeded;size_t lonWarpStartIndex,enableLonWarp;
+  bool lonWarpNeeded;size_t lonWarpStartIndex;
   
   public:
+    bool enableLonWarp;
   CCDFWarper(){
     lonWarpNeeded=false;
     lonWarpStartIndex = 0;
-    enableLonWarp=true;//true;
+    enableLonWarp=false;//true;//true;
   }
   
+
   int warpLonData(CDF::Variable *variable){
     //Apply longitude warping of the data
     //Longitude data must be already present in order to make variable warping available.
@@ -250,6 +252,10 @@ class CDFNetCDFReader :public CDFReader{
     }
     ~CDFNetCDFReader(){
       close();
+    }
+    
+    void enableLonWarp(bool enableLonWarp){
+      warper.enableLonWarp=enableLonWarp;
     }
     
     int open(const char *fileName){
