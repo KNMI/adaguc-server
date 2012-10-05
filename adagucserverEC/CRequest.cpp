@@ -50,6 +50,22 @@ void CRequest::addXMLLayerToConfig(CServerParams *srvParam,std::vector<CT::strin
   
   xmleLayer->FilePath.push_back(xmleFilePath);
   xmleLayer->Cache.push_back(xmleCache);
+  
+  //Set imagetext property
+  if(srvParam->cfg->AutoResource.size()>0){
+    if(srvParam->cfg->AutoResource[0]->ImageText.size()>0){
+      CServerConfig::XMLE_ImageText *xmleImageText=new CServerConfig::XMLE_ImageText();
+      xmleLayer->ImageText.push_back(xmleImageText);
+      if(srvParam->cfg->AutoResource[0]->ImageText[0]->value.c_str()!=NULL){
+        xmleImageText->value.copy(srvParam->cfg->AutoResource[0]->ImageText[0]->value.c_str());
+      }
+      if(srvParam->cfg->AutoResource[0]->ImageText[0]->attr.attribute.c_str()!=NULL){
+        xmleImageText->attr.attribute.copy(srvParam->cfg->AutoResource[0]->ImageText[0]->attr.attribute.c_str());
+      }
+      
+    }
+  }
+  
   srvParam->cfg->Layer.push_back(xmleLayer);
 }
 
@@ -1813,9 +1829,6 @@ int CRequest::process_querystring(){
         }
       }
       
-      
-      
-      
       //Adjust online resource in order to pass on variable and source parameters
       CT::string onlineResource=srvParam->cfg->OnlineResource[0]->attr.value.c_str();
       CT::string stringToAdd;
@@ -1827,7 +1840,6 @@ int CRequest::process_querystring(){
       srvParam->cfg->OnlineResource[0]->attr.value.copy(onlineResource.c_str());
       CDBDebug("OGC REQUEST RESOURCE %s:%s",srvParam->internalAutoResourceLocation.c_str(),srvParam->autoResourceVariable.c_str());//,srvParam->autoResourceLocation.c_str(),);
       
-      //CDBError("A");return 1;
       
       
       

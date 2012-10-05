@@ -176,11 +176,24 @@ class CServerConfig:public CXMLSerializerInterface{
       }
     };
     
+    class XMLE_ImageText: public CXMLObjectInterface{
+    public:
+      class Cattr{
+      public:
+        CXMLString attribute;
+      }attr;
+      void addAttribute(const char *attrname,const char *attrvalue){
+        if(equals("attribute",9,attrname)){attr.attribute.copy(attrvalue);return;}
+      }
+    };
+    
     class XMLE_AutoResource: public CXMLObjectInterface{
     public:
       std::vector <XMLE_Dir*> Dir;
+      std::vector <XMLE_ImageText*> ImageText;
       ~XMLE_AutoResource(){
         XMLE_DELOBJ(Dir);
+        XMLE_DELOBJ(ImageText);
       }
       class Cattr{
       public:
@@ -193,7 +206,8 @@ class CServerConfig:public CXMLSerializerInterface{
         if(rc==0)if(value!=NULL)this->value.copy(value);
         if(rc==1){
           pt2Class=NULL;
-          if(equals("Dir",3,name)){XMLE_ADDOBJ(Dir);}
+          if(equals("Dir",3,name)){XMLE_ADDOBJ(Dir);} 
+          else if(equals("ImageText",9,name)){XMLE_ADDOBJ(ImageText);}
         }
         if(pt2Class!=NULL)pt2Class->addElement(baseClass,rc-pt2Class->level,name,value);
       }
@@ -297,7 +311,7 @@ class CServerConfig:public CXMLSerializerInterface{
           if(equals("filter",6,name)){attr.filter.copy(value);return;}
         }
     };
-    class XMLE_ImageText: public CXMLObjectInterface{};
+    
     class XMLE_Group: public CXMLObjectInterface{
       public:
       class Cattr{

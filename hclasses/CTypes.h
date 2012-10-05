@@ -135,6 +135,19 @@ class string:public basetype{
     string& operator= (const char*const &f);
     
     /**
+     * assign operator
+     * @param f The input integer (checking for 0 or NULL pointer);
+     */
+/*    
+ *    TODO DOES NOT WORK YET
+ *    string& operator= (int const& f){
+      #ifdef CTYPES_DEBUG
+      CDBDebug("string::operator= (int *const &f)\n");
+      #endif
+      init();return *this;
+    }*/
+    
+    /**
      * addition assignment operator
      * @param f The input string
      */

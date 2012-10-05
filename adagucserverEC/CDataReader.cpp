@@ -7,7 +7,7 @@
 
 const char *CDataReader::className="CDataReader";
 
-#define CDATAREADER_DEBUG
+//#define CDATAREADER_DEBUG
 #define uchar unsigned char
 #define MAX_STR_LEN 8191
 
@@ -533,7 +533,7 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
   dataSource->dfBBOX[3]=dfdim_Y[0]-dataSource->dfCellSizeY/2.0f;;
   
 
-  CDBDebug("%d %f %f",dataSource->dWidth,dfdim_X[dataSource->dWidth-1],dfdim_X[0]);
+//  CDBDebug("%d %f %f",dataSource->dWidth,dfdim_X[dataSource->dWidth-1],dfdim_X[0]);
   
   if(dimensionXName.equals("col")){
     dataSource->dfBBOX[2]=dfdim_X[0]-dataSource->dfCellSizeX/2.0f;
