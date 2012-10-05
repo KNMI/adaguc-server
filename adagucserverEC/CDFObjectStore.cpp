@@ -92,6 +92,8 @@ CDFReader *CDFObjectStore::getCDFReader(const char *fileName){
       CDBDebug("Creating NetCDF reader");
     }
     cdfReader = new CDFNetCDFReader();
+    //((CDFNetCDFReader*)cdfReader)->enableLonWarp(true);
+    
   }
   return cdfReader;
 }
@@ -158,10 +160,14 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,const char *file
   fileNames.push_back(new CT::string(fileName));
   cdfObjects.push_back(cdfObject);
   cdfReaders.push_back(cdfReader);
+
+  bool level2CompatMode = false;
   
-  CConvertASCAT::convertASCATHeader(cdfObject);
-  CConvertADAGUCVector::convertADAGUCVectorHeader(cdfObject);
-  CConvertADAGUCPoint::convertADAGUCPointHeader(cdfObject);  
+  if(CConvertASCAT::convertASCATHeader(cdfObject)==0){level2CompatMode=true;};
+  if(CConvertADAGUCVector::convertADAGUCVectorHeader(cdfObject)==0){level2CompatMode=true;};
+  if(CConvertADAGUCPoint::convertADAGUCPointHeader(cdfObject)==0){level2CompatMode=true;};
+  
+  
   
   return cdfObject;
 }
