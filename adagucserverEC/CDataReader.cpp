@@ -446,7 +446,11 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
   if(cacheAvailable){
     stride2DMap=1;
   }
-  //stride2DMap=32;
+  stride2DMap=1;
+  
+  if(level2CompatMode){
+    stride2DMap=1;
+  }
   
   dataSource->dWidth=dimX->length/stride2DMap;
   dataSource->dHeight=dimY->length/stride2DMap;

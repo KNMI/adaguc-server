@@ -202,6 +202,7 @@ public:
   double hasNodataValue;
   int width,height;
   float legendLog,legendScale,legendOffset;
+  float legendLogAsLog;
   CDataSource * dataSource;
   CDrawImage *drawImage;
   //size_t prev_imgpointer;
@@ -233,6 +234,11 @@ public:
     width = dataSource->dWidth;
     height = dataSource->dHeight;
     legendLog = dataSource->legendLog;
+    if(legendLog>0){
+      legendLogAsLog = log10(legendLog);
+    }else{
+      legendLogAsLog = 0;
+    }
     legendScale = dataSource->legendScale;
     legendOffset = dataSource->legendOffset;
   }
@@ -338,11 +344,12 @@ public:
                   if(!isNodata)if(legendValueRange)if(val<legendLowerRange||val>legendUpperRange)isNodata=true;
                   if(!isNodata){
                     if(legendLog!=0){
-                      if(val==0)val=1e-10;
-                      val=log10(val)/log10(legendLog);
+                      if(val>0){
+                        val=log10(val)/legendLogAsLog;
+                      }
                     }
-                    val*=legendScale;
-                    val+=legendOffset;
+                    val=val*legendScale+legendOffset;
+                    //val+=legendOffset;
                     if(val>=239)val=239;else if(val<0)val=0;
                     //drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,drawImage->colors[(unsigned char)val]);
                     drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,(int)val);
