@@ -165,11 +165,12 @@ namespace CT{
   void string::_Free(){
     if(allocated!=0){
       delete[] value;
-      value = NULL;
-      privatelength=0;
-      bufferlength=0;
-      allocated=0;
+   
     }
+    value = NULL;
+    privatelength=0;
+    bufferlength=0;
+    allocated=0;
   }
   void string::_Allocate(int _length){
     _Free();

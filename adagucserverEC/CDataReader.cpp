@@ -370,6 +370,7 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
   if(CConvertADAGUCPoint::convertADAGUCPointData(dataSource,mode)==0)level2CompatMode=true;     
   
   
+
   /*CT::string dumpString;
   CDF::dump(cdfObject,&dumpString);
   writeLogFile2(dumpString.c_str());*/
@@ -437,7 +438,7 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
  if(varX==NULL||varY==NULL){CDBError("X and or Y vars not found...");return 1;}
   
   int stride2DMap=1;
-  while(dimX->length/stride2DMap>360){
+  while(dimX->length/stride2DMap>360*4){
     stride2DMap++;
   }
   
@@ -446,6 +447,10 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
     stride2DMap=1;
   }
   stride2DMap=1;
+  
+  if(level2CompatMode){
+    stride2DMap=1;
+  }
   
   dataSource->dWidth=dimX->length/stride2DMap;
   dataSource->dHeight=dimY->length/stride2DMap;
@@ -498,6 +503,11 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
       return 1;
     }
   //}
+  
+  
+  
+  
+  
   //if(varY->data==NULL){
     sta[0]=start[dimYIndex];sto[0]=dataSource->dHeight;
     status = varY->readData(CDF_DOUBLE,sta,sto,str);if(status!=0){
@@ -506,9 +516,18 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
     }
  // }
   }
+  
+
+  
   // Calculate cellsize based on read X,Y dims
   double *dfdim_X=(double*)varX->data;
   double *dfdim_Y=(double*)varY->data;
+  
+  
+  
+  
+  
+  
   dataSource->dfCellSizeX=(dfdim_X[dataSource->dWidth-1]-dfdim_X[0])/double(dataSource->dWidth-1);
   dataSource->dfCellSizeY=(dfdim_Y[dataSource->dHeight-1]-dfdim_Y[0])/double(dataSource->dHeight-1);
   // Calculate BBOX
@@ -516,6 +535,9 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
   dataSource->dfBBOX[1]=dfdim_Y[dataSource->dHeight-1]+dataSource->dfCellSizeY/2.0f;
   dataSource->dfBBOX[2]=dfdim_X[dataSource->dWidth-1]+dataSource->dfCellSizeX/2.0f;
   dataSource->dfBBOX[3]=dfdim_Y[0]-dataSource->dfCellSizeY/2.0f;;
+  
+
+//  CDBDebug("%d %f %f",dataSource->dWidth,dfdim_X[dataSource->dWidth-1],dfdim_X[0]);
   
   if(dimensionXName.equals("col")){
     dataSource->dfBBOX[2]=dfdim_X[0]-dataSource->dfCellSizeX/2.0f;

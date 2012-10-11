@@ -1878,12 +1878,16 @@ int CImageDataWriter::calculateData(std::vector <CDataSource*>&dataSources){
     if(status != 0)return status;
     
     if(status == 0){
+      
+      
       if(dataSource->cfgLayer->ImageText.size()>0){
-        size_t len=strlen(dataSource->cfgLayer->ImageText[0]->value.c_str());
-        drawImage.setTextStroke(dataSource->cfgLayer->ImageText[0]->value.c_str(),
-                                len,
-                                int(drawImage.Geo->dWidth/2-len*3),
-                                drawImage.Geo->dHeight-16,240,254,-1);
+        if(dataSource->cfgLayer->ImageText[0]->value.c_str()!=NULL){
+          size_t len=strlen(dataSource->cfgLayer->ImageText[0]->value.c_str());
+          drawImage.setTextStroke(dataSource->cfgLayer->ImageText[0]->value.c_str(),
+                                  len,
+                                  int(drawImage.Geo->dWidth/2-len*3),
+                                  drawImage.Geo->dHeight-16,240,254,-1);
+        }
       }
     }
   
@@ -1971,13 +1975,34 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
       
       if(j==dataSources.size()-1){
         if(status == 0){
+          CDBDebug("IMAGETEXT");
           if(dataSource->cfgLayer->ImageText.size()>0){
-            size_t len=strlen(dataSource->cfgLayer->ImageText[0]->value.c_str());
-            CDBDebug("Watermark: %s",dataSource->cfgLayer->ImageText[0]->value.c_str());
-            drawImage.setTextStroke(dataSource->cfgLayer->ImageText[0]->value.c_str(),
-                                    len,
-                                    int(drawImage.Geo->dWidth/2-len*3),
-                                    drawImage.Geo->dHeight-16,240,254,-1);
+            CDBDebug("IMAGETEXT");
+            CT::string imageText = "";
+            if(dataSource->cfgLayer->ImageText[0]->value.c_str()!=NULL){
+              imageText.copy(dataSource->cfgLayer->ImageText[0]->value.c_str());
+            }
+            CDBDebug("IMAGETEXT %s %d",dataSource->cfgLayer->ImageText[0]->attr.attribute.c_str(),dataSource->cfgLayer->ImageText.size());
+            //Determine ImageText based on configured netcdf attribute
+            const char *attrToSearch=dataSource->cfgLayer->ImageText[0]->attr.attribute.c_str();
+            if(attrToSearch!=NULL){
+              CDBDebug("Determining ImageText based on netcdf attribute %s",attrToSearch);
+              try{
+                CDF::Attribute *attr=dataSource->dataObject[0]->cdfObject->getAttribute(attrToSearch);
+                if(attr->length>0){
+                  imageText.copy(attrToSearch);
+                  imageText.concat(": ");
+                  imageText.concat(attr->toString().c_str());
+                }
+              }catch(int e){
+              }
+            }
+            
+            if(imageText.length()>0){
+              size_t len=imageText.length();
+              CDBDebug("Watermark: %s",imageText.c_str());
+              drawImage.setTextStroke(imageText.c_str(),len,int(drawImage.Geo->dWidth/2-len*3),drawImage.Geo->dHeight-16,240,254,-1);
+            }
           }
         }
       }

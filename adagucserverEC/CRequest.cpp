@@ -50,6 +50,22 @@ void CRequest::addXMLLayerToConfig(CServerParams *srvParam,std::vector<CT::strin
   
   xmleLayer->FilePath.push_back(xmleFilePath);
   xmleLayer->Cache.push_back(xmleCache);
+  
+  //Set imagetext property
+  if(srvParam->cfg->AutoResource.size()>0){
+    if(srvParam->cfg->AutoResource[0]->ImageText.size()>0){
+      CServerConfig::XMLE_ImageText *xmleImageText=new CServerConfig::XMLE_ImageText();
+      xmleLayer->ImageText.push_back(xmleImageText);
+      if(srvParam->cfg->AutoResource[0]->ImageText[0]->value.c_str()!=NULL){
+        xmleImageText->value.copy(srvParam->cfg->AutoResource[0]->ImageText[0]->value.c_str());
+      }
+      if(srvParam->cfg->AutoResource[0]->ImageText[0]->attr.attribute.c_str()!=NULL){
+        xmleImageText->attr.attribute.copy(srvParam->cfg->AutoResource[0]->ImageText[0]->attr.attribute.c_str());
+      }
+      
+    }
+  }
+  
   srvParam->cfg->Layer.push_back(xmleLayer);
 }
 
@@ -87,6 +103,7 @@ int CRequest::checkDataRestriction(){
     //Decompose into stringlist and check each item
     CT::StackList<CT::string> items = temp.splitToStack("|");
     for(size_t j=0;j<items.size();j++){
+      items[j].replaceSelf("\"","");
       if(items[j].equals("ALLOW_GFI"))dr|=ALLOW_GFI;
       if(items[j].equals("ALLOW_WCS"))dr|=ALLOW_WCS;
       if(items[j].equals("ALLOW_METADATA"))dr|=ALLOW_METADATA;
@@ -1549,6 +1566,66 @@ int CRequest::process_querystring(){
   if(SERVICE.equals("WMS"))srvParam->serviceType=SERVICE_WMS;
   if(SERVICE.equals("WCS"))srvParam->serviceType=SERVICE_WCS;
   
+  if(dErrorOccured==0&&srvParam->serviceType==SERVICE_WMS){
+    
+    
+    
+    //Default is 1.1.1
+    
+    srvParam->OGCVersion=WMS_VERSION_1_1_1;
+    
+    if(dFound_Request==0){
+      CDBWarning("Parameter REQUEST missing");
+      dErrorOccured=1;
+    }else{
+      if(REQUEST.equals("GETCAPABILITIES"))srvParam->requestType=REQUEST_WMS_GETCAPABILITIES;
+      if(REQUEST.equals("GETMAP"))srvParam->requestType=REQUEST_WMS_GETMAP;
+      if(REQUEST.equals("GETFEATUREINFO"))srvParam->requestType=REQUEST_WMS_GETFEATUREINFO;
+      if(REQUEST.equals("GETPOINTVALUE"))srvParam->requestType=REQUEST_WMS_GETPOINTVALUE;
+      if(REQUEST.equals("GETLEGENDGRAPHIC"))srvParam->requestType=REQUEST_WMS_GETLEGENDGRAPHIC;
+      if(REQUEST.equals("GETMETADATA"))srvParam->requestType=REQUEST_WMS_GETMETADATA;
+      if(REQUEST.equals("GETSTYLES"))srvParam->requestType=REQUEST_WMS_GETSTYLES;
+    }
+    
+    //For getlegend graphic the parameter is style, not styles
+    if(dFound_Style==0){
+      srvParam->Style.copy("");
+    }else{
+      //For getlegend graphic the parameter is style, not styles
+      if(srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
+        srvParam->Styles.copy(&srvParam->Style);
+      }
+    }
+    
+    // Check the version
+    if(dFound_Version!=0){
+      srvParam->OGCVersion=WMS_VERSION_1_1_1;
+      if(Version.equals("1.0.0"))srvParam->OGCVersion=WMS_VERSION_1_0_0;
+      if(Version.equals("1.1.1"))srvParam->OGCVersion=WMS_VERSION_1_1_1;
+      if(srvParam->OGCVersion==-1){
+        CDBError("Invalid version ('%s'): only WMS 1.0.0 and WMS 1.1.1 supported",Version.c_str());
+        dErrorOccured=1;
+      }
+    }
+    // Set the exception response
+    if(srvParam->OGCVersion==WMS_VERSION_1_0_0){
+      seterrormode(EXCEPTIONS_PLAINTEXT);
+      if(srvParam->requestType==REQUEST_WMS_GETMAP)seterrormode(WMS_EXCEPTIONS_IMAGE);
+      if(srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC)seterrormode(WMS_EXCEPTIONS_IMAGE);
+    }
+    if(srvParam->OGCVersion==WMS_VERSION_1_1_1)seterrormode(WMS_EXCEPTIONS_XML_1_1_1);
+    if(dFound_Exceptions!=0){
+      if(Exceptions.equals("application/vnd.ogc.se_xml")){
+        if(srvParam->OGCVersion==WMS_VERSION_1_1_1)seterrormode(WMS_EXCEPTIONS_XML_1_1_1);
+      }
+      if(Exceptions.equals("application/vnd.ogc.se_inimage")){
+        seterrormode(WMS_EXCEPTIONS_IMAGE);
+      }
+      if(Exceptions.equals("application/vnd.ogc.se_blank")){
+        seterrormode(WMS_EXCEPTIONS_BLANKIMAGE);
+      }
+    }
+  }
     
     // Configure the server automically based on an OpenDAP resource
     if(srvParam->autoResourceLocation.c_str()!=NULL){
@@ -1752,9 +1829,6 @@ int CRequest::process_querystring(){
         }
       }
       
-      
-      
-      
       //Adjust online resource in order to pass on variable and source parameters
       CT::string onlineResource=srvParam->cfg->OnlineResource[0]->attr.value.c_str();
       CT::string stringToAdd;
@@ -1766,7 +1840,6 @@ int CRequest::process_querystring(){
       srvParam->cfg->OnlineResource[0]->attr.value.copy(onlineResource.c_str());
       CDBDebug("OGC REQUEST RESOURCE %s:%s",srvParam->internalAutoResourceLocation.c_str(),srvParam->autoResourceVariable.c_str());//,srvParam->autoResourceLocation.c_str(),);
       
-      //CDBError("A");return 1;
       
       
       
@@ -1789,7 +1862,7 @@ int CRequest::process_querystring(){
     
     
     //Default is 1.1.1
-
+/*
     srvParam->OGCVersion=WMS_VERSION_1_1_1;
 
     if(dFound_Request==0){
@@ -1842,7 +1915,7 @@ int CRequest::process_querystring(){
       if(Exceptions.equals("application/vnd.ogc.se_blank")){
         seterrormode(WMS_EXCEPTIONS_BLANKIMAGE);
       }
-    }
+    }*/
     
     if(srvParam->requestType==REQUEST_WMS_GETMAP||srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
         if(dFound_Format==0){
