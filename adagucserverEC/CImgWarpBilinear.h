@@ -21,11 +21,104 @@ public:
   bool convertToKnots, flip;
 };
 
+class ShadeDefinition{
+public:
+  float min,max;
+  bool foundColor;
+  CColor fillColor;
+  ShadeDefinition(float min,float max,CColor fillColor,bool foundColor){
+    this->min=min;
+    this->max=max;
+    this->fillColor=fillColor;
+    this->foundColor=foundColor;
+  }
+};
+
+class ContourDefinition{
+public:
+  ContourDefinition(){
+    lineWidth=1;
+    linecolor.r=0;
+    linecolor.g=0;
+    linecolor.b=0;
+    linecolor.a=255;
+    textcolor.r=0;
+    textcolor.g=0;
+    textcolor.b=0;
+    textcolor.a=0;
+    continuousInterval=0;
+    textFormat="%f";
+  }
+  
+  std::vector<float> definedIntervals;
+  float continuousInterval;
+  float lineWidth;
+  CT::string textFormat;
+  CColor linecolor;
+  CColor textcolor;
+  
+  ContourDefinition(float lineWidth,CColor linecolor,CColor textcolor,const char *_definedIntervals,const char *_textFormat){
+    this->lineWidth=lineWidth;
+    this->linecolor=linecolor;
+    this->textcolor=textcolor;
+    this->continuousInterval=continuousInterval;
+    
+    if(_definedIntervals!=NULL){
+      CT::string defIntervalString=_definedIntervals;
+      CT::string *defIntervalList = defIntervalString.splitToArray(",");
+      for(size_t j=0;j<defIntervalList->count;j++){
+        definedIntervals.push_back( defIntervalList[j].toFloat());
+      }
+      delete[] defIntervalList;
+    }
+    
+    
+    if(_textFormat!=NULL){
+      if(strlen(_textFormat)>1){
+        this->textFormat=_textFormat;
+        return;
+      }
+    }
+    
+  }
+  
+  ContourDefinition(float lineWidth,CColor linecolor,CColor textcolor, float continuousInterval,const char *_textFormat){
+    
+    this->lineWidth=lineWidth;
+    this->linecolor=linecolor;
+    this->textcolor=textcolor;
+    this->continuousInterval=continuousInterval;
+    
+    if(_textFormat!=NULL){
+      if(strlen(_textFormat)>1){
+        this->textFormat=_textFormat;
+        return;
+      }
+    }
+    
+    float fracPart=continuousInterval-int(continuousInterval);
+    int textRounding=-int(log10(fracPart)-0.9999999f);
+    if(textRounding<=0)textFormat="%2.0f";
+    if(textRounding==1)textFormat="%2.1f";
+    if(textRounding==2)textFormat="%2.2f";
+    if(textRounding==3)textFormat="%2.3f";
+    if(textRounding==4)textFormat="%2.4f";
+    if(textRounding==5)textFormat="%2.5f";
+    if(textRounding>=6)textFormat="%f";
+  }
+};
+
+
 class CImgWarpBilinear:public CImageWarperRenderInterface{
   private:
     bool drawMap,enableContour,enableVector,enableBarb,enableShade,drawGridVectors;
-    float shadeInterval,contourSmallInterval,contourBigInterval;
+    float shadeInterval;
     int smoothingFilter;
+    
+    
+    std::vector<ContourDefinition> contourDefinitions;
+    std::vector<ShadeDefinition> shadeDefinitions;
+
     
     std::vector<PointD*> minimaPoints;
     std::vector<PointD*> maximaPoints;
@@ -39,76 +132,37 @@ class CImgWarpBilinear:public CImageWarperRenderInterface{
       enableShade=false;
       smoothingFilter=1;
       drawGridVectors=false;
+    
+      
     }
     ~CImgWarpBilinear(){
       for(size_t j=0;j<minimaPoints.size();j++)delete minimaPoints[j];
       for(size_t j=0;j<maximaPoints.size();j++)delete maximaPoints[j];
     }
     void render(CImageWarper *warper,CDataSource *sourceImage,CDrawImage *drawImage);
-    int set(const char *pszSettings){
-      //fprintf(stderr, "CImgWarpBilinear.set(%s)\n", pszSettings);
-      //"drawMap=false;drawContour=true;contourSmallInterval=1.0;contourBigInterval=10.0;"
-      if(pszSettings==NULL)return 0;
-      if(strlen(pszSettings)==0)return 0;
-      CT::string settings(pszSettings);
-      CT::string *nodes= settings.splitToArray(";");
-      for(size_t j=0;j<nodes->count;j++){
-        CT::string *values=nodes[j].splitToArray("=");
-        if(values->count==2){
-          if(values[0].equals("drawMap")){
-            if(values[1].equals("true"))drawMap=true;
-            if(values[1].equals("false"))drawMap=false;
-          }
-          if(values[0].equals("drawContour")){
-            if(values[1].equals("true"))enableContour=true;
-            if(values[1].equals("false"))enableContour=false;
-          }
-          if(values[0].equals("drawShaded")){
-            if(values[1].equals("true"))enableShade=true;
-            if(values[1].equals("false"))enableShade=false;
-          }
-          if(values[0].equals("drawVector")){
-            if(values[1].equals("true"))enableVector=true;
-            if(values[1].equals("false"))enableVector=false;
-          }
-          if(values[0].equals("drawBarb")){
-            if(values[1].equals("true"))enableBarb=true;
-            if(values[1].equals("false"))enableBarb=false;
-          }
-          if(values[0].equals("contourSmallInterval")){
-            contourSmallInterval=values[1].toFloat();
-            if(contourSmallInterval==0.0f){CDBWarning("invalid value given for contourSmallInterval: %s",pszSettings);}
-          }
-          if(values[0].equals("shadeInterval")){
-            shadeInterval=values[1].toFloat();
-            if(shadeInterval==0.0f){CDBWarning("invalid value given for shadeInterval %s",pszSettings);}
-          }
-          if(values[0].equals("smoothingFilter")){
-            smoothingFilter=values[1].toInt();
-            if(smoothingFilter<0||smoothingFilter>20){CDBWarning("invalid value given for smoothingFilter %s",pszSettings);}
-          }
-          
-          if(values[0].equals("contourBigInterval")){
-            contourBigInterval=values[1].toFloat();
-            if(contourBigInterval==0.0f){CDBWarning("invalid value given for contourBigInterval %s",pszSettings);}
-          }
-          
-          if (values[0].equals("drawGridVectors")) {
-            drawGridVectors=values[1].equals("true");
-          }
-        }
-        delete[] values;
+    int set(const char *pszSettings);
+    
+    int getPixelIndexForValue(CDataSource*sourceImage,double val){
+      bool isNodata=false;
+      
+      if(sourceImage->dataObject[0]->hasNodataValue){
+        if(val==sourceImage->dataObject[0]->dfNodataValue)isNodata=true;
+        if(!(val==val))isNodata=true;
       }
-      delete[] nodes;
+      if(!isNodata)
+        if(sourceImage->legendValueRange==1)
+          if(val<sourceImage->legendLowerRange||val>sourceImage->legendUpperRange)isNodata=true;
+          if(!isNodata){
+            if(sourceImage->legendLog!=0)val=log10(val+.000001)/log10(sourceImage->legendLog);
+            val*=sourceImage->legendScale;
+            val+=sourceImage->legendOffset;
+            if(val>=239)val=239;else if(val<0)val=0;
+            return val;
+          }
       return 0;
     }
     
     void setValuePixel(CDataSource*sourceImage,CDrawImage*drawImage,int destX,int destY,double val){
-/*  if(destX<0)return;
-      if(destY<0)return;
-      if(destX>drawImage->Geo->dWidth-1)return;
-      if(destY>drawImage->Geo->dHeight-1)return;
-      if(!sourceImage->dataObject[0]->hasNodataValue)if(val==-9999z)return;*/
       bool isNodata=false;
       
       if(sourceImage->dataObject[0]->hasNodataValue){
@@ -124,18 +178,12 @@ class CImgWarpBilinear:public CImageWarperRenderInterface{
         val+=sourceImage->legendOffset;
         if(val>=239)val=239;else if(val<0)val=0;
         drawImage->setPixelIndexed(destX,destY,(unsigned char)val);
-      }//else drawImage->setPixelIndexed(destX,destY,248);
+      }
     }
 
-    void drawContour(float *valueData,float fNodataValue,float interval,float smallContInterval,float bigContInterval,CDataSource *dataSource,CDrawImage *drawImage,bool drawLine, bool drawShade, bool drawText);
-
-
+    void drawContour(float *valueData,float fNodataValue,float interval, std::vector<ContourDefinition> *pContourDefinitions,CDataSource *dataSource,CDrawImage *drawImage,bool drawLine, bool drawShade, bool drawText);
     void smoothData(float *valueData,float fNodataValue,int smoothWindow, int W,int H);
 
-
-
-
-   
 };
 
 #endif

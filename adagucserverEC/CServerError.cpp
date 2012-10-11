@@ -20,8 +20,10 @@ void printerror(const char * text){
   //Remove "[E: file,line] spaces"
   t.substringSelf(t.indexOf("]")+1,-1);
   t.trimSelf();
-  
-  errormsgs.push_back(t);
+  t.replaceSelf("\n","");
+  if(t.length()>0){
+    errormsgs.push_back(t);
+  }
 }
 void seterrormode(int errormode){
   cerror_mode=errormode;
@@ -103,10 +105,10 @@ void readyerror(){
     fprintf(stdout,"<ServiceExceptionReport version=\"1.1.1\">\n");
     fprintf(stdout,"  <ServiceException>\n");
     
-    fprintf(stdout,"    ");
+    
     for(size_t j=0;j<errormsgs.size();j++){
-      fprintf(stdout,"%s",errormsgs[j].c_str());
-      if(j+1<errormsgs.size())fprintf(stdout,";\n");
+      fprintf(stdout,"    %s;\n",errormsgs[j].c_str());
+      //if(j+1<errormsgs.size())fprintf(stdout,";\n");
     }
     fprintf(stdout,"\n  </ServiceException>\n");
     fprintf(stdout,"</ServiceExceptionReport>\n");

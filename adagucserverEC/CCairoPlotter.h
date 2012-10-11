@@ -485,6 +485,28 @@ public:
     cairo_set_antialias(cr, aa);
   }
 
+
+  void moveTo(float x1,float y1) {
+    cairo_move_to(cr, x1+0.5, y1+0.5);
+  }
+  void lineTo(float x1,float y1) {
+    cairo_set_source_rgba(cr, rr, rg, rb, ra);
+    cairo_line_to(cr, x1+0.5, y1+0.5);
+    cairo_set_line_width(cr, 0.9);
+    cairo_stroke(cr);
+  }
+  
+  void lineTo(float x1,float y1,float width) {
+    cairo_set_source_rgba(cr, rr, rg, rb, ra);
+    cairo_set_line_width(cr,width);
+    cairo_line_to(cr, x1+0.5, y1+0.5);
+
+  }
+  void endLine(){
+    cairo_set_line_join (cr, CAIRO_LINE_JOIN_MITER); 
+    cairo_stroke(cr);
+  }
+  
   void line(float x1,float y1,float x2,float y2) {
     cairo_set_source_rgba(cr, rr, rg, rb, ra);
     cairo_move_to(cr, x1+0.5, y1+0.5);

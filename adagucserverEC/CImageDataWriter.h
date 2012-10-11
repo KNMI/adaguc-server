@@ -52,14 +52,17 @@ public:
     
     float shadeInterval,contourIntervalL,contourIntervalH;
     float legendScale,legendOffset,legendLog;
-    
-    //Values in which the legend is valid
-    
-    float legendLowerRange,legendUpperRange;
+    float legendLowerRange,legendUpperRange;//Values in which values are visible (ValueRange)
     int smoothingFilter;
     bool hasLegendValueRange;
     bool hasError;
+    bool legendHasFixedMinMax; //True to fix the classes in the legend, False to determine automatically which values occur.
+    double legendTickInterval;
+    double legendTickRound;
+    
     RenderMethodEnum renderMethod;
+    std::vector<CServerConfig::XMLE_ContourLine*>*contourLines;
+    std::vector<CServerConfig::XMLE_ShadeInterval*>*shadeIntervals;
     int legendIndex;
     int styleIndex;
     CT::string styleCompositionName;
@@ -78,6 +81,7 @@ public:
       getRenderMethodAsString(&rMethodString,renderMethod);
       data->printconcat("renderMethod = %s",rMethodString.c_str());
     }
+    
   };
 private:
     

@@ -49,11 +49,21 @@ public:
 class CColor{
   public:
     unsigned char r,g,b,a;
+    CColor(){
+    }
     CColor(unsigned char r,unsigned char g,unsigned char b,unsigned char a){
       this->r=r;
       this->g=g;
       this->b=b;
       this->a=a;
+    }
+    CColor(const char *color){
+      if(color[0]=='#')if(strlen(color)==7){
+        r  =((color[1]>64)?color[1]-55:color[1]-48)*16+((color[2]>64)?color[2]-55:color[2]-48);
+        g=((color[3]>64)?color[3]-55:color[3]-48)*16+((color[4]>64)?color[4]-55:color[4]-48);
+        b =((color[5]>64)?color[5]-55:color[5]-48)*16+((color[6]>64)?color[6]-55:color[6]-48);
+        a=255;
+      }
     }
 };
 
@@ -104,6 +114,7 @@ class CDrawImage{
       return color;
     }
     int gdTranspColor;
+    float lineMoveToX,lineMoveToY;
   public:
     
     int _colors[256];
@@ -124,6 +135,7 @@ class CDrawImage{
     
     void drawBarb(int x,int y,double direction, double strength,int color,bool toKnots,bool flip);
     void drawText(int x,int y,float angle,const char *text,unsigned char colorIndex);
+    void drawText(int x,int y,float angle,const char *text,CColor fgcolor);
     void drawText(int x,int y,const char *fontfile, float size, float angle,const char *text,unsigned char colorIndex);
     void drawText(int x,int y,const char *fontfile, float size, float angle,const char *text,CColor fgcolor);
     void drawText(int x,int y,const char *fontfile, float size, float angle,const char *text,CColor fgcolor,CColor bgcolor);
@@ -134,18 +146,25 @@ class CDrawImage{
     void line(float x1,float y1,float x2,float y2,CColor color);
     void line(float x1,float y1,float x2,float y2,float w,int color);
     void line(float x1,float y1,float x2,float y2,float w,CColor color);
+    void moveTo(float x1,float y1);
+    void lineTo(float x1,float y1,float w,CColor color);
+    void endLine();
+    
     void poly(float x1, float y1, float x2, float y2, float x3, float y3, int c, bool fill);
     void circle(int x, int y, int r, int color);
     void setPixelIndexed(int x,int y,int color);
     void setPixelTrueColor(int x,int y,unsigned int color);
     void setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,unsigned char b);
     void setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,unsigned char b,unsigned char a);
+    void setPixel(int x,int y,CColor &color);
+    //int getClosestColorIndex(CColor color);
     void getHexColorForColorIndex(CT::string *hexValue,int colorIndex);
     void setText(const char * text, size_t length,int x,int y, int color,int fontSize);
     void setTextStroke(const char * text, size_t length,int x,int y, int fgcolor,int bgcolor, int fontSize);
     void rectangle( int x1, int y1, int x2, int y2,int innercolor,int outercolor);
     void rectangle( int x1, int y1, int x2, int y2,int outercolor);
     void rectangle( int x1, int y1, int x2, int y2,CColor innercolor,CColor outercolor);
+    CColor getColorForIndex(int index);
     int copyPalette();
     int addImage(int delay);
     int beginAnimation();

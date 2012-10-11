@@ -365,6 +365,67 @@ void CDrawImage::line(float x1, float y1, float x2, float y2,CColor ccolor){
   }
 }
 
+void CDrawImage::moveTo(float x1,float y1){
+  if(_bEnableTrueColor==true){
+    if(currentLegend==NULL)return;
+    #ifdef ADAGUC_USE_CAIRO
+    cairo->moveTo(x1,y1);
+    #else
+    lineMoveToX=x1;
+    lineMoveToY=y1;
+    #endif
+    
+  }else{
+    lineMoveToX=x1;
+    lineMoveToY=y1;
+  }
+}
+
+void CDrawImage::lineTo(float x2, float y2,float w,CColor ccolor){
+  if(_bEnableTrueColor==true){
+    if(currentLegend==NULL)return;
+    #ifdef ADAGUC_USE_CAIRO
+    cairo->setColor(ccolor.r,ccolor.g,ccolor.b,ccolor.a);
+    cairo->lineTo(x2,y2,w);
+    #else
+    wuLine->setColor(ccolor.r,ccolor.g,ccolor.b,ccolor.a);
+    //wuLine->setColor(0,255,0,255);
+    wuLine->line(lineMoveToX,lineMoveToY,x2,y2);
+    lineMoveToX=x2;lineMoveToY=y2;
+    #endif
+    
+  }else{
+    int gdcolor=getClosestGDColor(ccolor.r,ccolor.g,ccolor.b);
+    gdImageLine(image, int(lineMoveToX),int(lineMoveToY),int(x2),int(y2),gdcolor);
+    lineMoveToX=x2;lineMoveToY=y2;
+  }
+  
+}
+
+void CDrawImage::endLine(){
+  if(_bEnableTrueColor==true){
+    if(currentLegend==NULL)return;
+    #ifdef ADAGUC_USE_CAIRO
+    cairo->endLine();
+    #else
+    
+    #endif
+    
+  }else{
+    
+  }
+}
+
+CColor CDrawImage::getColorForIndex(int colorIndex){
+  CColor color;
+  if(currentLegend==NULL)return color;
+  if(colorIndex>=0&&colorIndex<256){
+    color =CColor(currentLegend->CDIred[colorIndex],currentLegend->CDIgreen[colorIndex],currentLegend->CDIblue[colorIndex],255);
+  }
+  return color;
+}
+
+
 
 void CDrawImage::line(float x1,float y1,float x2,float y2,float w,CColor ccolor){
   if(_bEnableTrueColor==true){
@@ -425,6 +486,8 @@ void CDrawImage::setPixelIndexed(int x,int y,int color){
   }
 }
 
+
+
 void CDrawImage::setPixelTrueColor(int x,int y,unsigned int color){
   if(_bEnableTrueColor==true){
     //if(_bEnableTrueColor){
@@ -476,35 +539,61 @@ void CDrawImage::setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,u
   }
 }
 
+void CDrawImage::setPixel(int x,int y,CColor &color){
+  if(_bEnableTrueColor==true){
+    #ifdef ADAGUC_USE_CAIRO
+    cairo->setColor(color.r,color.g,color.b,color.a);
+    cairo-> pixel(x,y);
+    #else
+    wuLine-> pixelBlend(x,y,color.r,color.g,color.b,color.a);
+    #endif
+  }else{
+    int key = color.r+color.g*256+color.b*65536;
+    int icolor;
+    myColorIter=myColorMap.find(key);
+    if(myColorIter==myColorMap.end()){
+      icolor = gdImageColorClosest(image,color.r,color.g,color.b);
+      myColorMap[key]=icolor;
+    }else{
+      icolor=(*myColorIter).second;
+    }
+    gdImageSetPixel(image, x,y,icolor);
+  }
+}
+
+/*(int CDrawImage::getClosestColorIndex(CColor color){
+  return  gdImageColorClosest(image,color.r,color.g,color.b);
+  int key = color.r+color.g*256+color.b*65536;
+  int icolor;
+  myColorIter=myColorMap.find(key);
+  if(myColorIter==myColorMap.end()){
+    icolor = gdImageColorClosest(image,color.r,color.g,color.b);
+    myColorMap[key]=icolor;
+  }else{
+    icolor=(*myColorIter).second;
+  }
+  return icolor;
+}*/
+
 void CDrawImage::setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,unsigned char b,unsigned char a){
   if(_bEnableTrueColor==true){
 #ifdef ADAGUC_USE_CAIRO
     cairo->setColor(r,g,b,a);
     cairo-> pixel(x,y);
 #else
-    //wuLine->setColor(r,g,b,a);
     wuLine-> pixelBlend(x,y,r,g,b,a);
-    //wuLine->plot(x,y,r,g,b,a);
 #endif
   }else{
-    if(_bEnableTrueColor){
-      gdImageSetPixel(image, x,y,r+g*256+b*65536);
-    }else{
-      if(_bEnableTrueColor){
-        gdImageSetPixel(image, x,y,r+g*256+b*65536);
+      int key = r+g*256+b*65536;
+      int color;
+      myColorIter=myColorMap.find(key);
+      if(myColorIter==myColorMap.end()){
+        color = gdImageColorClosest(image,r,g,b);
+        myColorMap[key]=color;
       }else{
-        int key = r+g*256+b*65536;
-        int color;
-        myColorIter=myColorMap.find(key);
-        if(myColorIter==myColorMap.end()){
-          color = gdImageColorClosest(image,r,g,b);
-          myColorMap[key]=color;
-        }else{
-          color=(*myColorIter).second;
-        }
-        gdImageSetPixel(image, x,y,color);
+        color=(*myColorIter).second;
       }
-    }
+      gdImageSetPixel(image, x,y,color);
   }
 }
 void CDrawImage::setText(const char * text, size_t length,int x,int y,int color,int fontSize){
@@ -559,19 +648,23 @@ void CDrawImage::setTextStroke(const char * text, size_t length,int x,int y, int
 }
 
 void CDrawImage::drawText(int x,int y,float angle,const char *text,unsigned char colorIndex){
-  
+  CDrawImage::drawText( x, y, angle,text,CColor (currentLegend->CDIred[colorIndex],currentLegend->CDIgreen[colorIndex],currentLegend->CDIblue[colorIndex],255));
+}
+
+void CDrawImage::drawText(int x,int y,float angle,const char *text,CColor fgcolor){
   if(_bEnableTrueColor==true){
 #ifdef ADAGUC_USE_CAIRO
-    cairo->setColor(currentLegend->CDIred[colorIndex],currentLegend->CDIgreen[colorIndex],currentLegend->CDIblue[colorIndex],255);
+    cairo->setColor(fgcolor.r,fgcolor.g,fgcolor.b,fgcolor.a);
     cairo->drawText(x,y,angle,text);
 #else
-    freeType->setColor(currentLegend->CDIred[colorIndex],currentLegend->CDIgreen[colorIndex],currentLegend->CDIblue[colorIndex],255);
+    freeType->setColor(fgcolor.r,fgcolor.g,fgcolor.b,fgcolor.a);
     freeType->drawFreeTypeText(x,y,angle,text);
 #endif
   }else{
     char *_text = new char[strlen(text)+1];
     memcpy(_text,text,strlen(text)+1);
-    int tcolor=-_colors[240];
+    int tcolor=getClosestGDColor(fgcolor.r,fgcolor.g,fgcolor.b);
+    if(_bEnableTrueColor)tcolor=-tcolor;
     if(_bEnableTrueColor)tcolor=-tcolor;
     gdImageStringFT(image, &brect[0], tcolor, (char*)TTFFontLocation, 8.0f, angle,  x,  y, (char*)_text);
     delete[] _text;
