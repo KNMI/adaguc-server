@@ -49,7 +49,7 @@ class CServerConfig:public CXMLSerializerInterface{
         }
         class Cattr{
           public:
-            CXMLString name,type,tickround,tickinterval;
+            CXMLString name,type,tickround,tickinterval,fixedclasses;
         }attr;
         void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value){
           CXMLSerializerInterface * base = (CXMLSerializerInterface*)baseClass;
@@ -67,6 +67,7 @@ class CServerConfig:public CXMLSerializerInterface{
           else if(equals("type",4,name)){attr.type.copy(value);return;}
           else if(equals("tickround",9,name)){attr.tickround.copy(value);return;}
           else if(equals("tickinterval",12,name)){attr.tickinterval.copy(value);return;}
+          else if(equals("fixedclasses",12,name)){attr.fixedclasses.copy(value);return;}
           
           
           
@@ -77,9 +78,42 @@ class CServerConfig:public CXMLSerializerInterface{
     class XMLE_Min: public CXMLObjectInterface{};
     class XMLE_Max: public CXMLObjectInterface{};
     
+    /*Deprecated*/
     class XMLE_ContourIntervalL: public CXMLObjectInterface{};
+    /*Deprecated*/
     class XMLE_ContourIntervalH: public CXMLObjectInterface{};
-    class XMLE_ShadeInterval: public CXMLObjectInterface{};
+    
+    class XMLE_ContourLine: public CXMLObjectInterface{
+    public:
+      class Cattr{
+      public:
+        CXMLString width,linecolor,textcolor,classes,interval,textformatting;
+      }attr;
+      void addAttribute(const char *attrname,const char *attrvalue){
+        if(equals("width",5,attrname)){attr.width.copy(attrvalue);return;}
+        else if(equals("linecolor",9,attrname)){attr.linecolor.copy(attrvalue);return;}
+        else if(equals("textcolor",9,attrname)){attr.textcolor.copy(attrvalue);return;}
+        else if(equals("classes",7,attrname)){attr.classes.copy(attrvalue);return;}
+        else if(equals("interval",8,attrname)){attr.interval.copy(attrvalue);return;}
+        else if(equals("textformatting",14,attrname)){attr.textformatting.copy(attrvalue);return;}
+      }
+    };
+    
+    
+    class XMLE_ShadeInterval: public CXMLObjectInterface{
+      public:
+      class Cattr{
+      public:
+        CXMLString min,max,label,fillcolor;
+      }attr;
+      void addAttribute(const char *attrname,const char *attrvalue){
+        if(equals("min",3,attrname)){attr.min.copy(attrvalue);return;}
+        else if(equals("max",3,attrname)){attr.max.copy(attrvalue);return;}
+        else if(equals("label",5,attrname)){attr.label.copy(attrvalue);return;}
+        else if(equals("fillcolor",9,attrname)){attr.fillcolor.copy(attrvalue);return;}
+      }
+    };
+    
     class XMLE_SmoothingFilter: public CXMLObjectInterface{};
     class XMLE_StandardNames: public CXMLObjectInterface{
       public:
@@ -233,6 +267,8 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_ValueRange*> ValueRange;
         std::vector <XMLE_RenderMethod*> RenderMethod;
         std::vector <XMLE_ShadeInterval*> ShadeInterval;
+        std::vector <XMLE_ContourLine*> ContourLine;
+        
         std::vector <XMLE_SmoothingFilter*> SmoothingFilter;
         std::vector <XMLE_StandardNames*> StandardNames;
         
@@ -249,6 +285,7 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(ContourIntervalH);
           XMLE_DELOBJ(RenderMethod);
           XMLE_DELOBJ(ShadeInterval);
+          XMLE_DELOBJ(ContourLine);
           XMLE_DELOBJ(SmoothingFilter);
           XMLE_DELOBJ(StandardNames);
           
@@ -274,6 +311,7 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("ContourIntervalH",16,name)){XMLE_ADDOBJ(ContourIntervalH);}
             else if(equals("RenderMethod",12,name)){XMLE_ADDOBJ(RenderMethod);}
             else if(equals("ShadeInterval",13,name)){XMLE_ADDOBJ(ShadeInterval);}
+            else if(equals("ContourLine",11,name)){XMLE_ADDOBJ(ContourLine);}
             else if(equals("SmoothingFilter",15,name)){XMLE_ADDOBJ(SmoothingFilter);}
             else if(equals("StandardNames",13,name)){XMLE_ADDOBJ(StandardNames);}
             
@@ -635,6 +673,7 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_Max*> Max;
         std::vector <XMLE_Log*> Log;
         std::vector <XMLE_ShadeInterval*> ShadeInterval;
+        std::vector <XMLE_ContourLine*> ContourLine;
         std::vector <XMLE_ContourIntervalL*> ContourIntervalL;
         std::vector <XMLE_ContourIntervalH*> ContourIntervalH;
         std::vector <XMLE_SmoothingFilter*> SmoothingFilter;
@@ -670,6 +709,7 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(Max);
           XMLE_DELOBJ(Log);
           XMLE_DELOBJ(ShadeInterval);
+          XMLE_DELOBJ(ContourLine);
           XMLE_DELOBJ(ContourIntervalL);
           XMLE_DELOBJ(ContourIntervalH);
           XMLE_DELOBJ(SmoothingFilter);
@@ -708,6 +748,7 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("Max",3,name)){XMLE_ADDOBJ(Max);}            
             else if(equals("Log",3,name)){XMLE_ADDOBJ(Log);}
             else if(equals("ShadeInterval",13,name)){XMLE_ADDOBJ(ShadeInterval);}
+            else if(equals("ContourLine",11,name)){XMLE_ADDOBJ(ContourLine);}
             else if(equals("ContourIntervalL",16,name)){XMLE_ADDOBJ(ContourIntervalL);}
             else if(equals("ContourIntervalH",16,name)){XMLE_ADDOBJ(ContourIntervalH);}
             else if(equals("ValueRange",10,name)){XMLE_ADDOBJ(ValueRange);}

@@ -7,16 +7,19 @@ void CXMLObjectInterface::addElement(CXMLObjectInterface *baseClass,int rc, cons
 }
 
 int parseInt(const char *pszValue){
+  if(pszValue==NULL)return 0;
   int dValue=atoi(pszValue);
   return dValue;  
 }
 
 float parseFloat(const char *pszValue){
+  if(pszValue==NULL)return 0;
   float fValue=(float)atof(pszValue);
   return fValue;  
 }
 
 double parseDouble(const char *pszValue){
+  if(pszValue==NULL)return 0;
   double fValue=(double)atof(pszValue);
   return fValue;  
 }
