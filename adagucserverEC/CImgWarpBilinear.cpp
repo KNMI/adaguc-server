@@ -260,16 +260,11 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
       double deltaLat;
       float *uValues=valObj[0].fpValues;
       float *vValues=valObj[1].fpValues;
-      double X=dfSourceOrigX;
-      double XLon=X+dfSourcedExtW;
-      double XLat=X;
-      double Y=dfSourceOrigY;
-      double YLon=Y;
-      double YLat=Y+dfSourcedExtH;
-      CDBDebug("Data raster: %f,%f with %f,%f lon: (%f,%f) lat: (%f,%f)\n", X, Y,dfSourcedExtW, dfSourcedExtH, XLon, YLon, XLat, YLat);
-      warper->reprojModelToLatLon(X,Y);
-      warper->reprojModelToLatLon(XLon, YLon);
-      warper->reprojModelToLatLon(XLat, YLat);
+      CDBDebug("Data raster: %f,%f with %f,%f (%f,%f) ll: (%d,%d) ur: (%d,%d) [%d,%d]\n", 
+               dfSourceOrigX, dfSourceOrigY, dfSourcedExtW, dfSourcedExtH,
+               dfSourceExtW, dfSourceExtH,
+               dPixelExtent[0], dPixelExtent[1], dPixelExtent[2], dPixelExtent[3],
+               dPixelDestW, dPixelDestH);
       if (dfSourcedExtH<0){
         deltaLat=-delta;
       } else {
@@ -280,6 +275,8 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
       } else {
         deltaLon=-delta;
       }
+      deltaLat=+delta; //TODO Check this (and delete previous 2 if blocks)
+      deltaLon=delta;
       double signLon=(dfSourceExtW<0)?-1:1; // sign for adaptation of Jacobian to grid organisation
       double signLat=(dfSourceExtH<0)?-1:1; // sign for adaptation of Jacobian to grid organisation
       CDBDebug("deltaLon %f deltaLat %f signLon %f signLat %f", deltaLon, deltaLat, signLon, signLat);
@@ -302,6 +299,10 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
             double modelXLat, modelYLat;
             double modelXLon, modelYLon;
             double VJaa,VJab,VJba,VJbb;
+
+
+//            uValues[p]=0; 
+//            vValues[p]=6;
             if (gridRelative) {
               modelXLon=modelX+dfSourcedExtW;
               modelYLon=modelY;
@@ -340,18 +341,12 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
               modelYLat=modelY+deltaLat;
               //            if (y==0) { CDBDebug("modelXY[%d,%d] {%d} {%f,%f} (%f,%f) (%f,%f) =>", x, y, gridRelative, modelX, modelY, modelXLon, modelYLon, modelXLat, modelYLat);}
               
-              //            warper->reprojModelFromLatLon(modelX, modelY);
-              /*            warper->reprojModelFromLatLon(modelXLat, modelYLat);
-               *            warper->reprojModelFromLatLon(modelXLon, modelYLon);            
-               *            warper->reprojpoint_inv(modelX, modelY);
-               *            warper->reprojpoint_inv(modelXLon, modelYLon);
-               *            warper->reprojpoint_inv(modelXLat, modelYLat);*/
-              if (y==0) { CDBDebug("modelXY[%d,%d] {%d} {%f,%f} (%f,%f) (%f,%f) =>", x, y, gridRelative, modelX, modelY, modelXLon, modelYLon, modelXLat, modelYLat);}
+//              if (y==0) { CDBDebug("modelXY[%d,%d] {%d} {%f,%f} (%f,%f) (%f,%f) =>", x, y, gridRelative, modelX, modelY, modelXLon, modelYLon, modelXLat, modelYLat);}
               warper->reprojfromLatLon(modelX, modelY); // latlon to vis proj.
               warper->reprojfromLatLon(modelXLon, modelYLon);
               warper->reprojfromLatLon(modelXLat, modelYLat);
               
-              if (y==0) { CDBDebug("modelXY[%d,%d] {%d} {%f,%f} (%f,%f) (%f,%f) =>", x, y, gridRelative, modelX, modelY, modelXLon, modelYLon, modelXLat, modelYLat);}
+//              if (y==0) { CDBDebug("modelXY[%d,%d] {%d} {%f,%f} (%f,%f) (%f,%f) =>", x, y, gridRelative, modelX, modelY, modelXLon, modelYLon, modelXLat, modelYLat);}
               
               double distLon=hypot(modelXLon-modelX, modelYLon-modelY);
               double distLat=hypot(modelXLat-modelX, modelYLat-modelY);
@@ -361,15 +356,17 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
               VJba=(modelYLon-modelY)/distLon;
               VJbb=(modelYLat-modelY)/distLat;
               
-              if (y==0) { CDBDebug("jaco: %f,%f,%f,%f\n", VJaa, VJab, VJba, VJbb);}
+//              if (y==0) { CDBDebug("jaco: %f,%f,%f,%f\n", VJaa, VJab, VJba, VJbb);}
               
               double magnitude=hypot(uValues[p], vValues[p]);
               double uu;
               double vv;
-              /*              uu = VJaa*uValues[p]+VJab*vValues[p];
-               *              vv = VJba*uValues[p]+VJbb*vValues[p];*/
-              vv = VJaa*uValues[p]+VJab*vValues[p];
-              uu =-( VJba*uValues[p]+VJbb*vValues[p]);
+//
+//              vv = VJaa*uValues[p]+VJab*vValues[p];
+//              uu =-( VJba*uValues[p]+VJbb*vValues[p]);
+//
+              uu = VJaa*uValues[p]+VJab*vValues[p];
+              vv = VJba*uValues[p]+VJbb*vValues[p];              
               
               //           if (y==0) {CDBDebug("(%f, %f) ==> (%f,%f)", uValues[p], vValues[p], uu, vv);}
               double newMagnitude = hypot(uu, vv);
@@ -378,17 +375,7 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
               //           if (y==0) {CDBDebug("==> (%f,%f)",uValues[p], vValues[p]);}    
               //              uValues[p]=6;
               //              vValues[p]=0;
-              
       }
-      //          drawImage->circle(modelX, modelY,3, 240);
-      //          if (y==0) { CDBDebug("(%f, %f, %f,%f)\n", VJaa, VJab, VJba, VJbb);}
-      
-      //                      uValues[p]=0;
-      //                    vValues[p]=6;
-      //             double u = uValues[p];
-      //             uValues[p]=vValues[p];
-      //             vValues[p]=uValues[p];
-      
 }
 }
 }
@@ -623,6 +610,7 @@ if(((enableVector||enableBarb)&&drawGridVectors)){
               //  warper->reprojpoint_inv(modelX,modelY); // model to vis proj.
               
               //               if (y==0) {CDBDebug("PLOT %d,%d at %d,%d {%f} (%f,%f)", x, y, dpDestX[p], dpDestY[p], p, direction, strength);}
+
               CalculatedWindVector wv(dpDestX[p], dpDestY[p], direction, strength,convertToKnots,flip);
               windVectors.push_back(wv);
             }
