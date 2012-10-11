@@ -12,7 +12,7 @@
 
 #define USE_FREETYPE
 
-//#define USE_PANGOCAIRO
+#define USE_PANGOCAIRO
 #ifdef USE_PANGOCAIRO
   #define PANGO_FONT_OPTIONS
 #endif
@@ -63,6 +63,7 @@ private:
   unsigned char r,g,b;float a;
   void plot(int x, int y, float alpha){
 //    fprintf(stderr, "plot([%d,%d], %d,%d,%d,%f)\n", x, y, r, g, b,a);
+//     
     cairo_surface_flush(surface);
     //plot the pixel at (x, y) with brightness c (where 0 ≤ c ≤ 1)
     if(x<0||y<0)return;
@@ -119,7 +120,7 @@ private:
     
     surface=cairo_image_surface_create_for_data(ARGBByteBuffer, CCairoPlotter::FORMAT, width, height, stride);
     cr=cairo_create(this->surface);
-    //fprintf(stderr, "cairo status: %s\n", cairo_status_to_string(cairo_status(cr)));
+//    fprintf(stderr, "cairo status: %s\n", cairo_status_to_string(cairo_status(cr)));
     r=0;g=0;b=0;a=255;
     rr=r/256.l; rg=g/256.;rb=b/256.;ra=1;
     fr=0;fg=0;fb=0;fa=1;
