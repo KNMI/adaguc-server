@@ -12,7 +12,7 @@
 
 #define USE_FREETYPE
 
-#define USE_PANGOCAIRO
+//#define USE_PANGOCAIRO
 #ifdef USE_PANGOCAIRO
   #define PANGO_FONT_OPTIONS
 #endif

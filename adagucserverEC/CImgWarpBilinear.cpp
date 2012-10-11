@@ -1115,7 +1115,7 @@ delete[] valObj;
           //Draw last connecting line segment
           if(drawLine){
             if(lastXdir!=-10&&distanceFromStart > 1){
-            //  drawImage->line(x+lastXdir*2,y+lastYdir+1,startX-lastXdir*2,startY-lastYdir+1,w,linecolor);
+              drawImage->line(x+lastXdir*2,y+lastYdir,startX-lastXdir*2,startY-lastYdir,w,linecolor);
             }
           }
           x=tx;y=ty;
