@@ -253,6 +253,19 @@ class CServerConfig:public CXMLSerializerInterface{
     };
     
     
+    class XMLE_NameMapping: public CXMLObjectInterface{
+    public:
+      class Cattr{
+      public:
+        CXMLString name,title,abstract;
+      }attr;
+      void addAttribute(const char *attrname,const char *attrvalue){
+        if(equals("name",4,attrname)){attr.name.copy(attrvalue);return;}
+        else if(equals("title",5,attrname)){attr.title.copy(attrvalue);return;}
+        else if(equals("abstract",8,attrname)){attr.abstract.copy(attrvalue);return;}
+      }
+    };
+    
     class XMLE_RenderMethod: public CXMLObjectInterface{};
     class XMLE_Style: public CXMLObjectInterface{
       public:
@@ -268,7 +281,7 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_RenderMethod*> RenderMethod;
         std::vector <XMLE_ShadeInterval*> ShadeInterval;
         std::vector <XMLE_ContourLine*> ContourLine;
-        
+        std::vector <XMLE_NameMapping*> NameMapping;
         std::vector <XMLE_SmoothingFilter*> SmoothingFilter;
         std::vector <XMLE_StandardNames*> StandardNames;
         
@@ -286,6 +299,7 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(RenderMethod);
           XMLE_DELOBJ(ShadeInterval);
           XMLE_DELOBJ(ContourLine);
+          XMLE_DELOBJ(NameMapping);
           XMLE_DELOBJ(SmoothingFilter);
           XMLE_DELOBJ(StandardNames);
           
@@ -297,9 +311,10 @@ class CServerConfig:public CXMLSerializerInterface{
         void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value){
           CXMLSerializerInterface * base = (CXMLSerializerInterface*)baseClass;
           base->currentNode=(CXMLObjectInterface*)this;
+          pt2Class=NULL;
           if(rc==0)if(value!=NULL)this->value.copy(value);
           if(rc==1){
-            pt2Class=NULL;
+           
             if(equals("Legend",6,name)){XMLE_ADDOBJ(Legend);}
             else if(equals("Scale",5,name)){XMLE_ADDOBJ(Scale);}
             else if(equals("Offset",6,name)){XMLE_ADDOBJ(Offset);}
@@ -312,13 +327,15 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("RenderMethod",12,name)){XMLE_ADDOBJ(RenderMethod);}
             else if(equals("ShadeInterval",13,name)){XMLE_ADDOBJ(ShadeInterval);}
             else if(equals("ContourLine",11,name)){XMLE_ADDOBJ(ContourLine);}
+            else if(equals("NameMapping",11,name)){XMLE_ADDOBJ(NameMapping);}
             else if(equals("SmoothingFilter",15,name)){XMLE_ADDOBJ(SmoothingFilter);}
             else if(equals("StandardNames",13,name)){XMLE_ADDOBJ(StandardNames);}
             
            
           }
-          if(pt2Class!=NULL)pt2Class->addElement(baseClass,rc-pt2Class->level,name,value);
+          if(pt2Class!=NULL){pt2Class->addElement(baseClass,rc-pt2Class->level,name,value);pt2Class=NULL;}
         }
+        
         void addAttribute(const char *name,const char *value){
           if(equals("name",4,name)){attr.name.copy(value);return;}
         }
@@ -730,9 +747,10 @@ class CServerConfig:public CXMLSerializerInterface{
         void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value){
           CXMLSerializerInterface * base = (CXMLSerializerInterface*)baseClass;
           base->currentNode=(CXMLObjectInterface*)this;
+          pt2Class=NULL;
           if(rc==0)if(value!=NULL)this->value.copy(value);
           if(rc==1){
-            pt2Class=NULL;
+          
             if(equals("Name",4,name)){XMLE_ADDOBJ(Name);}
             else if(equals("Group",5,name)){XMLE_ADDOBJ(Group);}
             else if(equals("Title",5,name)){XMLE_ADDOBJ(Title);}
@@ -768,7 +786,7 @@ class CServerConfig:public CXMLSerializerInterface{
             
             
           }
-          if(pt2Class!=NULL)pt2Class->addElement(baseClass,rc-pt2Class->level,name,value);
+          if(pt2Class!=NULL){pt2Class->addElement(baseClass,rc-pt2Class->level,name,value);  pt2Class=NULL;}
         }
         void addAttribute(const char *attrname,const char *attrvalue){
           if(equals("type",4,attrname)){attr.type.copy(attrvalue);return;}
@@ -837,7 +855,7 @@ class CServerConfig:public CXMLSerializerInterface{
       if(pt2Class!=NULL)pt2Class->addElement(baseClass,rc-pt2Class->level,name,value);
     }
     void addAttributeEntry(const char *name,const char *value){
-      if(currentNode!=NULL){
+      if(currentNode!=NULL&&pt2Class!=NULL){
         currentNode->addAttribute(name,value);
       }
     }

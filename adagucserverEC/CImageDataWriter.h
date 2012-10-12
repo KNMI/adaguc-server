@@ -66,6 +66,9 @@ public:
     int legendIndex;
     int styleIndex;
     CT::string styleCompositionName;
+    CT::string styleTitle;
+    CT::string styleAbstract;
+    
     void printStyleConfig(CT::string *data){
       data->print("shadeInterval = %f\n",shadeInterval);
       data->printconcat("contourIntervalL = %f\n",contourIntervalL);
@@ -146,6 +149,7 @@ private:
     static CT::PointerList<CT::string*> *getLegendNames(std::vector <CServerConfig::XMLE_Legend*> Legend);
     static CT::PointerList<CT::string*> *getStyleNames(std::vector <CServerConfig::XMLE_Styles*> Styles);
     static CT::PointerList<CT::string*> *getStyleListForDataSource(CDataSource *dataSource,StyleConfiguration *styleConfig);
+    
   public:
     CDrawImage drawImage;
     CImageDataWriter::StyleConfiguration * currentStyleConfiguration;

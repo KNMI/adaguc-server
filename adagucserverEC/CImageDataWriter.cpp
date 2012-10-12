@@ -539,10 +539,27 @@ CT::PointerList<CT::string*> *CImageDataWriter::getRenderMethodListForDataSource
  * This function calls getStyleListForDataSource in mode (1).
  * 
  * @param dataSource pointer to the datasource to find the stylelist for
- * @return the stringlist with all possible stylenames
+ * @return the stringlist with all possible stylenames. Pointer should be deleted with delete!
  */
 CT::PointerList<CT::string*> *CImageDataWriter::getStyleListForDataSource(CDataSource *dataSource){
   return getStyleListForDataSource(dataSource,NULL);
+}
+
+/**
+ * Returns a new StyleConfiguration object which contains all settings for the corresponding styles. This function calls getStyleListForDataSource in mode(2).
+ * @param styleName
+ * @param serverCFG
+ * @return A new StyleConfiguration which must be deleted with delete.
+ */
+CImageDataWriter::StyleConfiguration *CImageDataWriter::getStyleConfigurationByName(const char *styleName,CDataSource *dataSource){
+  #ifdef CIMAGEDATAWRITER_DEBUG    
+  CDBDebug("getStyleConfigurationByName for layer %s",dataSource->layerName.c_str());
+  #endif
+  //CServerConfig::XMLE_Configuration *serverCFG = dataSource->cfg;
+  StyleConfiguration *styleConfig = new StyleConfiguration ();
+  styleConfig->styleCompositionName=styleName;
+  getStyleListForDataSource(dataSource,styleConfig);
+  return styleConfig;
 }
 
 /**
@@ -611,6 +628,17 @@ CT::PointerList<CT::string*> *CImageDataWriter::getStyleListForDataSource(CDataS
       }
       CServerConfig::XMLE_Style* style = NULL;
       if(dStyleIndex!=-1)style=serverCFG->Style[dStyleIndex];
+      
+      
+      if(style!=NULL&&styleConfig!=NULL){
+        for(size_t j=0;j<style->NameMapping.size();j++){
+          if(styleConfig->styleCompositionName.equals(style->NameMapping[j]->attr.name.c_str())){
+            styleConfig->styleTitle.copy(style->NameMapping[j]->attr.title.c_str());
+            styleConfig->styleAbstract.copy(style->NameMapping[j]->attr.abstract.c_str());
+          }
+        }
+        
+      }
     
       
       renderMethods = getRenderMethodListForDataSource(dataSource,style);
@@ -676,22 +704,6 @@ CT::PointerList<CT::string*> *CImageDataWriter::getStyleListForDataSource(CDataS
   return stringList;
 }
 
-/**
- * Returns a new StyleConfiguration object which contains all settings for the corresponding styles.
- * @param styleName
- * @param serverCFG
- * @return A new StyleConfiguration which must be deleted with delete.
- */
-CImageDataWriter::StyleConfiguration *CImageDataWriter::getStyleConfigurationByName(const char *styleName,CDataSource *dataSource){
-  #ifdef CIMAGEDATAWRITER_DEBUG    
-  CDBDebug("getStyleConfigurationByName for layer %s",dataSource->layerName.c_str());
-  #endif
-  //CServerConfig::XMLE_Configuration *serverCFG = dataSource->cfg;
-  StyleConfiguration *styleConfig = new StyleConfiguration ();
-  styleConfig->styleCompositionName=styleName;
-  getStyleListForDataSource(dataSource,styleConfig);
-  return styleConfig;
-}
 
 /**
  * Returns a stringlist with all possible legends available for this Legend config object.

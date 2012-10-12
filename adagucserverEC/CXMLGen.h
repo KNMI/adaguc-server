@@ -38,6 +38,8 @@ class WMSLayer{
     class Style{
       public:
         CT::string name;
+        CT::string title;
+        CT::string abstract;
     };
     WMSLayer(){
       isQuerable=0;

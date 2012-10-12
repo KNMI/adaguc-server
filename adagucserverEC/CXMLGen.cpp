@@ -592,9 +592,23 @@ int CXMLGen::getStylesForLayer(WMSLayer * myWMSLayer){
   CT::PointerList<CT::string*> *styleList = CImageDataWriter::getStyleListForDataSource(myWMSLayer->dataSource);
   if(styleList==NULL)return 1;
   for(size_t j=0;j<styleList->size();j++){
+    CImageDataWriter::StyleConfiguration *styleConfiguration = CImageDataWriter::getStyleConfigurationByName(styleList->get(j)->c_str(),myWMSLayer->dataSource);
+      
+    if(styleConfiguration->hasError){
+      CDBError("Style %s has an error",styleList->get(j)->c_str());      
+    }
+    
     WMSLayer::Style *style = new WMSLayer::Style();
     style->name.copy(styleList->get(j));
+    if(styleConfiguration->styleTitle.length()>0){
+      style->title.copy(styleConfiguration->styleTitle.c_str());
+    }else{
+      style->title.copy(styleList->get(j));
+    }
+    style->abstract.copy(styleConfiguration->styleAbstract.c_str());
     myWMSLayer->styleList.push_back(style);
+    
+    delete styleConfiguration;
   }
   
   
@@ -901,9 +915,12 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
             for(size_t s=0;s<layer->styleList.size();s++){
               WMSLayer::Style * style = layer->styleList[s];
               
+              
+              
               XMLDoc->concat("   <Style>");
               XMLDoc->printconcat("    <Name>%s</Name>",style->name.c_str());
-              XMLDoc->printconcat("    <Title>%s</Title>",style->name.c_str());
+              XMLDoc->printconcat("    <Title>%s</Title>",style->title.c_str());
+              if(style->abstract.length()>0){XMLDoc->printconcat("    <Abstract>%s</Abstract>",style->abstract.c_str());}
               XMLDoc->printconcat("    <LegendURL width=\"%d\" height=\"%d\">",LEGEND_WIDTH,LEGEND_HEIGHT);
               XMLDoc->concat("       <Format>image/png</Format>");
               XMLDoc->printconcat("       <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:type=\"simple\" xlink:href=\"%s&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=%s&amp;format=image/png&amp;STYLE=%s\"/>"
@@ -1295,23 +1312,7 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
   }
   
   #endif
- //TEST
-/* CT::stringlist *a=CImageDataWriter::getStyleListForDataSource(myWMSLayerList[2]->dataSource);
- printf("Layer: %s (%d)\n",myWMSLayerList[2]->dataSource->layerName.c_str(),a->size());
- for(size_t j=0;j<a->size();j++){
-    printf("Style: %s\n",a->get(j)->c_str());
-   //printf("Style: %s\n","a");
-   }
-   //CImageDataWriter::getStyleConfigurationByName("o3_rainbow/bilinearcontour/HQ",myWMSLayerList[2]->dataSource);
-   CImageDataWriter::StyleConfiguration * styleConfig=CImageDataWriter::getStyleConfigurationByName("default/HQ",myWMSLayerList[2]->dataSource);
-   
-   if(styleConfig->hasError){
-     printf("Error\n");
-   }
-   for(size_t j=0;j<srvParam->cfg->Layer.size();j++){
-   }
-   exit(0);*/
-  
+
   
   
   serviceInfo.print("ADAGUCServer version %s, of %s %s",ADAGUCSERVER_VERSION,__DATE__,__TIME__);
