@@ -395,7 +395,9 @@ for(size_t varNr=0;varNr<sourceImage->dataObject.size();varNr++){
   smoothData(fpValues,fNodataValue,smoothingFilter, dPixelDestW,dPixelDestH);
   
   //Draw the obtained raster by using triangle tesselation (eg gouraud shading)
-  int xP[3],yP[3];
+  int xP[4],yP[4];
+  float vP[4];
+  
   size_t drawImageSize = dImageWidth*dImageHeight;
   //Set default nodata values
   for(size_t j=0;j<drawImageSize;j++)valueData[j]=fNodataValue;
@@ -404,6 +406,21 @@ for(size_t varNr=0;varNr<sourceImage->dataObject.size();varNr++){
   StopWatch_Stop("Start triangle generation");
   #endif
   
+  /*
+   * 
+   * float cubicInterpolate (float p[4], float x) {
+   *  return p[1] + 0.5 * x*(p[2] - p[0] + x*(2.0*p[0] - 5.0*p[1] + 4.0*p[2] - p[3] + x*(3.0*(p[1] - p[2]) + p[3] - p[0])));
+   }
+   
+   float bicubicInterpolate (float p[4][4], float x, float y) {
+     float arr[4];
+     arr[0] = cubicInterpolate(p[0], y);
+     arr[1] = cubicInterpolate(p[1], y);
+     arr[2] = cubicInterpolate(p[2], y);
+     arr[3] = cubicInterpolate(p[3], y);
+     return cubicInterpolate(arr, x);
+   }
+   */
   for(int y=dPixelExtent[1];y<dPixelExtent[3]-1;y=y+1){
     for(int x=dPixelExtent[0];x<dPixelExtent[2]-1;x=x+1){
       size_t p = size_t((x-(dPixelExtent[0]))+((y-(dPixelExtent[1]))*dPixelDestW));
@@ -411,50 +428,48 @@ for(size_t varNr=0;varNr<sourceImage->dataObject.size();varNr++){
       size_t p10=p+1;
       size_t p01=p+dPixelDestW;
       size_t p11=p+1+dPixelDestW;
-      float cx=(dpDestX[p00]+dpDestX[p01]+dpDestX[p10]+dpDestX[p11])/4.0f;
-      float cy=(dpDestY[p00]+dpDestY[p01]+dpDestY[p10]+dpDestY[p11])/4.0f;
-      if(cx>-3000&&cx<6000&&
-        cy>-3000&&cy<6000){
-        float cv = (fpValues[p00]+fpValues[p01]+fpValues[p10]+fpValues[p11])/4.0f;
-      //Fill in the poly
-        //By Using triangles
-        float vP[3];
-        //if(1==1){
-          if(fpValues[p00]!=fNodataValue&&fpValues[p10]!=fNodataValue&&
-            fpValues[p01]!=fNodataValue&&fpValues[p11]!=fNodataValue)
-          {
-            //Fill upper side
-            yP[0]=dpDestY[p00]; yP[1]=dpDestY[p10]; yP[2]=int(cy);
-            xP[0]=dpDestX[p00]; xP[1]=dpDestX[p10]; xP[2]=int(cx);
-            vP[0]=fpValues[p00];vP[1]=fpValues[p10];vP[2]=cv;
-            fillTriangleGouraud(valueData, vP, dImageWidth,dImageHeight, xP,yP);
-            //Fill right side
-            yP[0]=dpDestY[p11];xP[0]=dpDestX[p11];vP[0]=fpValues[p11];
-            fillTriangleGouraud(valueData, vP, dImageWidth,dImageHeight, xP,yP);
-            //Fill lower side
-            yP[1]=dpDestY[p01];xP[1]=dpDestX[p01];vP[1]=fpValues[p01];
-            fillTriangleGouraud(valueData, vP, dImageWidth,dImageHeight, xP,yP);
-            //fill left side
-            yP[0]=dpDestY[p00];xP[0]=dpDestX[p00];vP[0]=fpValues[p00];
-            fillTriangleGouraud(valueData, vP, dImageWidth,dImageHeight, xP,yP);
+      
+      
+      
+      if(fpValues[p00]!=fNodataValue&&fpValues[p10]!=fNodataValue&&
+        fpValues[p01]!=fNodataValue&&fpValues[p11]!=fNodataValue)
+      {
+        yP[0]=dpDestY[p00]; yP[1]=dpDestY[p01]; yP[2]=dpDestY[p10]; yP[3]=dpDestY[p11];
+        xP[0]=dpDestX[p00]; xP[1]=dpDestX[p01]; xP[2]=dpDestX[p10]; xP[3]=dpDestX[p11];
+        vP[0]=fpValues[p00]; vP[1]=fpValues[p01]; vP[2]=fpValues[p10]; vP[3]=fpValues[p11]; 
+        
+        fillQuadGouraud(valueData,vP,  dImageWidth,dImageHeight, xP,yP);
+        
+        /*for(int iy=-15;iy<16;iy++){
+          for(int ix=-15;ix<16;ix++){
+            if(iy+dpDestY[p00]>0&&ix+dpDestX[p00]>0&&iy+dpDestY[p00]<dImageHeight&&ix+dpDestX[p00]<dImageWidth){
+              valueData[(iy+dpDestY[p00])*dImageWidth+ix+dpDestX[p00]]=fpValues[p00];
+            }
           }
-        }
-        /*}else{
-         *        if(fpValues[p00]!=fNodataValue&&fpValues[p10]!=fNodataValue&&
-         *        fpValues[p01]!=fNodataValue&&fpValues[p11]!=fNodataValue)
-         *        {
-         *                //Fill upper right side
-         *        yP[0]=dpDestY[p00]; yP[1]=dpDestY[p10]; yP[2]=dpDestY[p11];
-         *        xP[0]=dpDestX[p00]; xP[1]=dpDestX[p10]; xP[2]=dpDestX[p11];
-         *        vP[0]=fpValues[p00];vP[1]=fpValues[p10];vP[2]=fpValues[p11];
-         *        fillTriangleGouraud(valueData, vP, dImageWidth,dImageHeight, xP,yP);
-         *              //Fill lower left side
-         *        yP[1]=dpDestY[p01];xP[1]=dpDestX[p01];vP[1]=fpValues[p01];
-         *        fillTriangleGouraud(valueData, vP, dImageWidth,dImageHeight, xP,yP);
-         }
-    }*/
+        }*/
+      }
     }
   }
+  
+  
+  /*(for(int y=dPixelExtent[1];y<dPixelExtent[3]-3;y=y+1){
+    for(int x=dPixelExtent[0];x<dPixelExtent[2]-3;x=x+1){
+      size_t p = size_t((x-(dPixelExtent[0]))+((y-(dPixelExtent[1]))*dPixelDestW));
+      size_t p00=p;
+      size_t p10=p+1;
+      size_t p01=p+dPixelDestW;
+      size_t p11=p+1+dPixelDestW;
+      
+      size_t pc00=p;
+      size_t pc01=p+1;
+      size_t pc02=p+2;
+      size_t pc03=p+3;
+      
+      
+      float a = -0.5*fpValues[pc00]+
+      
+    }
+  }*/
 }
 
 //Copy pointerdatabitmap to graphics
@@ -898,6 +913,7 @@ delete[] valObj;
        shadeColorB[snr]=color.b;
      }
    }
+   int lastShadeDef=0;
    for(int y=0;y<dImageHeight-1;y++){
      for(int x=0;x<dImageWidth-1;x++){
        size_t p1 = size_t(x+y*dImageWidth);
@@ -915,11 +931,20 @@ delete[] valObj;
            if(interval!=0){
               setValuePixel(dataSource,drawImage,x,y,convertValueToClass(val[0],interval));
            }else{
-             for(snr=0;snr<numShadeDefs;snr++){
-               if(val[0]>=shadeDefMin[snr])if(val[0]<shadeDefMax[snr]){
-                 drawImage->setPixelTrueColor(x,y,shadeColorR[snr],shadeColorG[snr],shadeColorB[snr]);
-                 break;
-               }
+             int done=numShadeDefs;
+             if(val[0]>=shadeDefMin[lastShadeDef]&&val[0]<shadeDefMax[lastShadeDef]){
+               done=0;
+            }else{
+              do{
+                lastShadeDef++;if(lastShadeDef>numShadeDefs)lastShadeDef=0;
+                done--;
+                if(val[0]>=shadeDefMin[lastShadeDef]&&val[0]<shadeDefMax[lastShadeDef]){
+                  done=0;
+                }
+              }while(done>0);
+             }
+             if(done==0){
+               drawImage->setPixelTrueColor(x,y,shadeColorR[lastShadeDef],shadeColorG[lastShadeDef],shadeColorB[lastShadeDef]);
              }
            }
          }

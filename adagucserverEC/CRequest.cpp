@@ -2240,6 +2240,8 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan){
   }else{
     CDBDebug("***** Finished DB Update *****");
   }
+  
+  CDFObjectStore::getCDFObjectStore()->clear();
   return errorHasOccured;
 }
 

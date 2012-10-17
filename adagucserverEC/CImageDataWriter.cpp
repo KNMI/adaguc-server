@@ -368,7 +368,7 @@ int CImageDataWriter::makeStyleConfig(StyleConfiguration *styleConfig,CDataSourc
   s->legendLog = 0.0f;
   s->legendLowerRange = 0.0f;
   s->legendUpperRange = 0.0f;
-  s->smoothingFilter = 1;
+  s->smoothingFilter = 0;
   s->hasLegendValueRange = false;
   
   
@@ -629,17 +629,7 @@ CT::PointerList<CT::string*> *CImageDataWriter::getStyleListForDataSource(CDataS
       CServerConfig::XMLE_Style* style = NULL;
       if(dStyleIndex!=-1)style=serverCFG->Style[dStyleIndex];
       
-      
-      if(style!=NULL&&styleConfig!=NULL){
-        for(size_t j=0;j<style->NameMapping.size();j++){
-          if(styleConfig->styleCompositionName.equals(style->NameMapping[j]->attr.name.c_str())){
-            styleConfig->styleTitle.copy(style->NameMapping[j]->attr.title.c_str());
-            styleConfig->styleAbstract.copy(style->NameMapping[j]->attr.abstract.c_str());
-          }
-        }
-        
-      }
-    
+     
       
       renderMethods = getRenderMethodListForDataSource(dataSource,style);
       legendList = getLegendListForDataSource(dataSource,style);
@@ -671,6 +661,21 @@ CT::PointerList<CT::string*> *CImageDataWriter::getStyleListForDataSource(CDataS
               if(styleToSearchString.equals(styleName)||isDefaultStyle==true){
                 // We found the correspondign legend/style and rendermethod corresponding with the requested stylename!
                 // Now fill in the StyleConfiguration Object.
+                
+                
+                if(style!=NULL){
+                  
+                  for(size_t j=0;j<style->NameMapping.size();j++){
+                    if(renderMethods->get(r)->equals(style->NameMapping[j]->attr.name.c_str())){
+                      styleConfig->styleTitle.copy(style->NameMapping[j]->attr.title.c_str());
+                      styleConfig->styleAbstract.copy(style->NameMapping[j]->attr.abstract.c_str());
+                      break;
+                    }
+                  }
+                  
+                }
+                
+                
                 int status = makeStyleConfig(styleConfig,dataSource,styleNames->get(i)->c_str(),legendList->get(l)->c_str(),renderMethods->get(r)->c_str());
                 delete styleName;
                 if(status == -1){
@@ -1389,7 +1394,7 @@ if(renderMethod==contour){CDBDebug("contour");}*/
     if(drawContour==true)bilinearSettings.printconcat("drawContour=true;");
     if (drawGridVectors)bilinearSettings.printconcat("drawGridVectors=true;");
     bilinearSettings.printconcat("smoothingFilter=%d;",currentStyleConfiguration->smoothingFilter);
-    if(drawContour==true||drawShaded==true){
+    if(drawShaded==true){
       bilinearSettings.printconcat("shadeInterval=%0.12f;contourBigInterval=%0.12f;contourSmallInterval=%0.12f;",
                                    currentStyleConfiguration->shadeInterval,currentStyleConfiguration->contourIntervalH,currentStyleConfiguration->contourIntervalL);
       
@@ -1403,6 +1408,8 @@ if(renderMethod==contour){CDBDebug("contour");}*/
           }
         }
       }
+    }
+    if(drawContour==true){
       
       if(currentStyleConfiguration->contourLines!=NULL){
         for(size_t j=0;j<currentStyleConfiguration->contourLines->size();j++){
@@ -1446,7 +1453,7 @@ if(renderMethod==contour){CDBDebug("contour");}*/
    * Use point renderer
    */
   if(1==1){
-    CDBDebug("CImgRenderPoints()");
+    //CDBDebug("CImgRenderPoints()");
     imageWarperRenderer = new CImgRenderPoints();
     imageWarperRenderer->set("");
     imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
@@ -1757,14 +1764,14 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
       
       if(j==dataSources.size()-1){
         if(status == 0){
-          CDBDebug("IMAGETEXT");
+          
           if(dataSource->cfgLayer->ImageText.size()>0){
-            CDBDebug("IMAGETEXT");
+          
             CT::string imageText = "";
             if(dataSource->cfgLayer->ImageText[0]->value.c_str()!=NULL){
               imageText.copy(dataSource->cfgLayer->ImageText[0]->value.c_str());
             }
-            CDBDebug("IMAGETEXT %s %d",dataSource->cfgLayer->ImageText[0]->attr.attribute.c_str(),dataSource->cfgLayer->ImageText.size());
+          
             //Determine ImageText based on configured netcdf attribute
             const char *attrToSearch=dataSource->cfgLayer->ImageText[0]->attr.attribute.c_str();
             if(attrToSearch!=NULL){

@@ -316,7 +316,9 @@ public:
       line_dy1= y_corners[3];
       line_dy2= y_corners[2];
       bool isNodata=false;
-      float val;
+      T val;
+      T nodataValue=(T)dfNodataValue;
+      
       size_t imgpointer;
       for(x=0;x<=x_div;x++){
         line_dx1+=rcx_1;line_dx2+=rcx_2;line_dy1+=rcy_1;line_dy2+=rcy_2;
@@ -340,17 +342,18 @@ public:
                   //imgpointer=srcpixel_x+(dHeight-1-srcpixel_y)*dWidth;
                   val=data[imgpointer];
                   isNodata=false;
-                  if(hasNodataValue){if(val==dfNodataValue)isNodata=true;else if(!(val==val))isNodata=true;}
+                  if(hasNodataValue){if(val==nodataValue)isNodata=true;else if(!(val==val))isNodata=true;}
                   if(!isNodata)if(legendValueRange)if(val<legendLowerRange||val>legendUpperRange)isNodata=true;
                   if(!isNodata){
                     if(legendLog!=0){
                       if(val>0){
                         val=log10(val)/legendLogAsLog;
-                      }
+                      }else val=-legendOffset;
                     }
                     val=val*legendScale+legendOffset;
                     //val+=legendOffset;
                     if(val>=239)val=239;else if(val<0)val=0;
+                    
                     //drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,drawImage->colors[(unsigned char)val]);
                     drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,(int)val);
                   }
