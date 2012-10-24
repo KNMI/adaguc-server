@@ -55,7 +55,8 @@ class CGDALDataWriter: public CBaseDataWriterInterface{
     double dfNoData;
     DEF_ERRORFUNCTION();
     CDataSource *_dataSource;
-    void generateGetCoverageFileName(char *pszTempFileName);
+    void generateUniqueGetCoverageFileName(char *pszTempFileName);
+    CT::string generateGetCoverageFileName();
     void generateString(char *s, const int len);
   public:
     CGDALDataWriter(){

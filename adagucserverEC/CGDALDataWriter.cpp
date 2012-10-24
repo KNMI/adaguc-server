@@ -216,7 +216,7 @@ int  CGDALDataWriter::end(){
   //CDBDebug("END");
   // Generate a temporary filename for storage
   char szTempFileName[MAX_STR_LEN+1];
-  generateGetCoverageFileName(szTempFileName);
+  generateUniqueGetCoverageFileName(szTempFileName);
   //CDBDebug("END");
   tmpFileName.copy(srvParam->cfg->TempDir[0]->attr.value.c_str());
   tmpFileName.concat("/");
@@ -424,9 +424,10 @@ int  CGDALDataWriter::end(){
     fseek( fp, 0L, SEEK_SET );
     //CDBDebug("File opened: size = %d",endPos);
     CDBDebug("Now start streaming %d bytes to the client with mimetype %s",endPos,mimeType.c_str());
-    
-    //printf("Content-Transfer-Encoding: binary\n");
-//    printf("Content-Length: %d\r\n",endPos); 
+    printf("Content-Disposition: attachment; filename=%s\n",generateGetCoverageFileName().c_str());
+    printf("Content-Description: File Transfer\n");
+    printf("Content-Transfer-Encoding: binary\n");
+    printf("Content-Length :%d\n",endPos); 
     printf("%s%c%c\n",mimeType.c_str(),13,10);
     for(size_t j=0;j<endPos;j++)putchar(getc(fp));
     fclose(fp);
@@ -484,21 +485,54 @@ void CGDALDataWriter::generateString(char *s, const int _len) {
   s[len] = 0;
   //CDBDebug("generateString");
 }
-void CGDALDataWriter::generateGetCoverageFileName(char *pszTempFileName){
-  //CDBDebug("generateGetCoverageFileName");
+CT::string CGDALDataWriter::generateGetCoverageFileName(){
+  CT::string humanReadableString;
+  humanReadableString.copy(srvParam->Format.c_str());
+  humanReadableString.concat("_");
+  humanReadableString.concat(_dataSource->dataObject[0]->variableName.c_str());
+  
+  
+  
+  for(size_t i=0;i<_dataSource->requiredDims.size();i++){
+    humanReadableString.printconcat("_%s",_dataSource->requiredDims[i]->value.c_str());
+  }
+  
+  humanReadableString.replaceSelf(":","_");
+  humanReadableString.replaceSelf(".","_");
+  
+  
+  CT::string extension=".bin";
+  CT::string formatUpperCase;
+  formatUpperCase.copy(srvParam->Format.c_str());
+  formatUpperCase.toUpperCaseSelf();
+  if(formatUpperCase.equals("AAIGRID")){
+    extension=".asc";
+  }
+  if(formatUpperCase.indexOf("NETCDF")!=-1){
+    extension=".nc";
+  }
+  if(formatUpperCase.indexOf("TIF")!=-1){
+    extension=".tif";
+  }
+  humanReadableString.concat(extension.c_str());
+  
+  return humanReadableString;
+}
+void CGDALDataWriter::generateUniqueGetCoverageFileName(char *pszTempFileName){
+  //CDBDebug("generateUniqueGetCoverageFileName");
   int len,offset;
   char szRandomPart[MAX_STR_LEN+1];
   char szTemp[MAX_STR_LEN+1];
   generateString(szRandomPart,12);
   snprintf(pszTempFileName,MAX_STR_LEN,
            "FORMAT--_VARIABLENAME_BBOX0_BBOX2_BBOX3_BBOX4_WIDTH_HEIGH_RESX-_RESY-_CONFIG--_DIM_DIM_DIM_PROJECTION_RAND------------______.tmp");
-  //CDBDebug("generateGetCoverageFileName");
+  //CDBDebug("generateUniqueGetCoverageFileName");
   for(int j=0;j<118;j++)pszTempFileName[j]='_';pszTempFileName[MAX_STR_LEN]='\0';
-  //CDBDebug("generateGetCoverageFileName");
+  //CDBDebug("generateUniqueGetCoverageFileName");
   //Format
   strncpy(pszTempFileName+0,srvParam->Format.c_str(),8);
   for(int j=srvParam->Format.length();j<8;j++)pszTempFileName[j]='_';
-  //CDBDebug("generateGetCoverageFileName");
+  //CDBDebug("generateUniqueGetCoverageFileName");
   //VariableName
   offset=9;
   strncpy(pszTempFileName+offset,_dataSource->dataObject[0]->variableName.c_str(),10);
@@ -525,7 +559,7 @@ void CGDALDataWriter::generateGetCoverageFileName(char *pszTempFileName){
   strncpy(pszTempFileName+offset,szTemp,6);
   len=strlen(szTemp);
   for(int j=len+offset;j<offset+6;j++)pszTempFileName[j]='_';
-  //CDBDebug("generateGetCoverageFileName");
+  //CDBDebug("generateUniqueGetCoverageFileName");
   //Width
   offset=50;
   snprintf(szTemp,MAX_STR_LEN,"%d",srvParam->Geo->dWidth);
@@ -567,7 +601,7 @@ void CGDALDataWriter::generateGetCoverageFileName(char *pszTempFileName){
     for(int j=len+offset;j<offset+3;j++)pszTempFileName[j]='_';
   }
   //Projection
-  //CDBDebug("generateGetCoverageFileName");
+  //CDBDebug("generateUniqueGetCoverageFileName");
   offset=102;
   snprintf(szTemp,MAX_STR_LEN,"%s",srvParam->Geo->CRS.c_str());
   strncpy(pszTempFileName+offset,szTemp,10);
@@ -585,6 +619,6 @@ void CGDALDataWriter::generateGetCoverageFileName(char *pszTempFileName){
     if(!isalnum(pszTempFileName[j])&&pszTempFileName[j]!='.')pszTempFileName[j]='_';
   }
   pszTempFileName[128]='\0';
-  //CDBDebug("generateGetCoverageFileName");
+  //CDBDebug("generateUniqueGetCoverageFileName");
 }
 //#endif
