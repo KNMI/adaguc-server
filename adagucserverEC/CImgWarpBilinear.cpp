@@ -1,6 +1,6 @@
 #include "CImgWarpBilinear.h"
 #include <gd.h>
-
+DEF_ERRORMAIN();
 const char *CImgWarpBilinear::className="CImgWarpBilinear";
 void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDrawImage *drawImage){
   #ifdef CImgWarpBilinear_DEBUG
@@ -764,21 +764,23 @@ delete[] valObj;
       //Check for continuous intervals
       if(s->continuousInterval!=0){
         if(checkContourRegularInterval(val,s->continuousInterval)){
+           //CDBDebug("Match for %f ",val);
           return 1;
         }
       }
       //Check for defined intervals
-      if(s->definedIntervals.size()>0){
-        for(size_t j=0;j<s->definedIntervals.size();j++){
-          float c= s->definedIntervals[j];
-          if((val[0]>=c&&val[1]<c)||(val[0]>c&&val[1]<=c)||(val[0]<c&&val[1]>=c)||(val[0]<=c&&val[1]>c)||
-            (val[0]>c&&val[2]<=c)||(val[0]>=c&&val[2]<c)||(val[0]<=c&&val[2]>c)||(val[0]<c&&val[2]>=c))
-          {
-          
-            return 1;
-          }
+      
+      for(size_t j=0;j<s->definedIntervals.size();j++){
+        float c= s->definedIntervals[j];
+        //CDBDebug("Match for %f == %f",val[0],c);
+        if((val[0]>=c&&val[1]<c)||(val[0]>c&&val[1]<=c)||(val[0]<c&&val[1]>=c)||(val[0]<=c&&val[1]>c)||
+          (val[0]>c&&val[2]<=c)||(val[0]>=c&&val[2]<c)||(val[0]<=c&&val[2]>c)||(val[0]<c&&val[2]>=c))
+        {
+          //CDBDebug("Match for %f == %f",val[0],c);
+          return 1;
         }
       }
+    
     }
     
     return 0;
@@ -933,24 +935,24 @@ delete[] valObj;
            }else{
              int done=numShadeDefs;
              if(val[0]>=shadeDefMin[lastShadeDef]&&val[0]<shadeDefMax[lastShadeDef]){
-               done=0;
+               done=-1;
             }else{
               do{
-                lastShadeDef++;if(lastShadeDef>numShadeDefs)lastShadeDef=0;
+                lastShadeDef++;if(lastShadeDef>numShadeDefs-1)lastShadeDef=0;
                 done--;
                 if(val[0]>=shadeDefMin[lastShadeDef]&&val[0]<shadeDefMax[lastShadeDef]){
-                  done=0;
+                  done=-1;
                 }
               }while(done>0);
              }
-             if(done==0){
+             if(done==-1){
                drawImage->setPixelTrueColor(x,y,shadeColorR[lastShadeDef],shadeColorG[lastShadeDef],shadeColorB[lastShadeDef]);
              }
            }
          }
          //Draw contourlines
          if(drawLine||drawText){
-           if(checkIfContourRequired(val,pContourDefinitions)){
+           if(checkIfContourRequired(val,pContourDefinitions)==1){
              distance[p1]=1;
            }
          }

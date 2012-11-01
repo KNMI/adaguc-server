@@ -343,7 +343,7 @@ int CImageDataWriter::makeStyleConfig(StyleConfiguration *styleConfig,CDataSourc
   CT::StackList<CT::string> sl = renderMethodString.splitToStack("/");
   if(sl.size()==2){
     renderMethodString.copy(&sl[0]);
-    if(sl[1].equals("HQ")){CDBDebug("32bitmode");}
+    //if(sl[1].equals("HQ")){CDBDebug("32bitmode");}
   }
 
   styleConfig->renderMethod = getRenderMethodFromString(&renderMethodString);
@@ -2717,7 +2717,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
     double min=getValueForColorIndex(dataSource,0);
     double max=getValueForColorIndex(dataSource,240);
     if(currentStyleConfiguration->legendTickInterval>0.0f){
-      classes=(max-min)/currentStyleConfiguration->legendTickInterval;
+      classes=(max-min)/double(currentStyleConfiguration->legendTickInterval);
       
     }
     if(currentStyleConfiguration->legendTickRound>0){
@@ -2725,18 +2725,20 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
     }
     
     //CDBDebug("LEGEND: scale %f offset %f",dataSource->legendScale,dataSource->legendOffset);
-    for(int j=0;j<=classes;j++){
+    for(int j=0;j<=classes+1;j++){
       float c=((float(classes*legendPositiveUp-j)/classes))*(cbH);
       float v=((float(j)/classes))*(240.0f);
       v-=dataSource->legendOffset;
       v/=dataSource->legendScale;
       if(dataSource->legendLog!=0){v=pow(dataSource->legendLog,v);}
-      float lineWidth=1;
-      legendImage->line((int)cbW-1+pLeft,(int)c+7+dH+pTop,(int)cbW+6+pLeft,(int)c+7+dH+pTop,lineWidth,248);
-      if(tickRound==0){floatToString(szTemp,255,v);}else{
-        floatToString(szTemp,255,tickRound,v);
+      if(v<=max){
+        float lineWidth=1;
+        legendImage->line((int)cbW-1+pLeft,(int)c+7+dH+pTop,(int)cbW+6+pLeft,(int)c+7+dH+pTop,lineWidth,248);
+        if(tickRound==0){floatToString(szTemp,255,v);}else{
+          floatToString(szTemp,255,tickRound,v);
+        }
+        legendImage->setText(szTemp,strlen(szTemp),(int)cbW+10+pLeft,(int)c+dH+pTop+1,248,-1);
       }
-      legendImage->setText(szTemp,strlen(szTemp),(int)cbW+10+pLeft,(int)c+dH+pTop+1,248,-1);
     }
     
     //Get units

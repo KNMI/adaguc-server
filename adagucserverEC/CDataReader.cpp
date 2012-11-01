@@ -1799,8 +1799,9 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
     for(size_t j=0;j<dataSource->cfg->Style.size();j++){
       
       const char *styleName=dataSource->cfg->Style[j]->attr.name.c_str();
-      //CDBDebug("Searching Style \"%s\"",styleName);
-      
+      #ifdef CDATAREADER_DEBUG  
+      CDBDebug("Searching Style \"%s\"",styleName);
+      #endif
       if(styleName!=NULL)
         {
         for(size_t i=0;i<dataSource->cfg->Style[j]->StandardNames.size();i++){
@@ -1814,7 +1815,7 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
           }
           
           standard_name.toLowerCaseSelf();
-          standard_name.replaceSelf("_"," ");
+          //standard_name.replaceSelf("_"," ");
           
           if(dataSource->cfg->Style[j]->StandardNames[i]->attr.units.c_str()!=NULL){
             

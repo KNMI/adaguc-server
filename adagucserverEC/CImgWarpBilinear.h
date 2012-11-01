@@ -142,11 +142,11 @@ class CImgWarpBilinear:public CImageWarperRenderInterface{
     void render(CImageWarper *warper,CDataSource *sourceImage,CDrawImage *drawImage);
     int set(const char *pszSettings);
     
-    int getPixelIndexForValue(CDataSource*sourceImage,double val){
+    int getPixelIndexForValue(CDataSource*sourceImage,float val){
       bool isNodata=false;
       
       if(sourceImage->dataObject[0]->hasNodataValue){
-        if(val==sourceImage->dataObject[0]->dfNodataValue)isNodata=true;
+        if(val==float(sourceImage->dataObject[0]->dfNodataValue))isNodata=true;
         if(!(val==val))isNodata=true;
       }
       if(!isNodata)
@@ -162,13 +162,14 @@ class CImgWarpBilinear:public CImageWarperRenderInterface{
       return 0;
     }
     
-    void setValuePixel(CDataSource*sourceImage,CDrawImage*drawImage,int destX,int destY,double val){
+    void setValuePixel(CDataSource*sourceImage,CDrawImage*drawImage,int destX,int destY,float val){
       bool isNodata=false;
       
       if(sourceImage->dataObject[0]->hasNodataValue){
-        if(val==sourceImage->dataObject[0]->dfNodataValue)isNodata=true;
-        if(!(val==val))isNodata=true;
+        if(val==float(sourceImage->dataObject[0]->dfNodataValue)){isNodata=true;  return;}
+        if(!(val==val)){isNodata=true;  return;}
       }
+    
       if(!isNodata)
         if(sourceImage->legendValueRange==1)
           if(val<sourceImage->legendLowerRange||val>sourceImage->legendUpperRange)isNodata=true;

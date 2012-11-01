@@ -500,6 +500,12 @@ CDBDebug("Querying %s",query.c_str());
               }
             }
             dim->defaultValue.copy(values[0].c_str());
+            
+            const char *pszDefaultV=myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.defaultV.c_str();
+            if(pszDefaultV!=NULL){
+              dim->defaultValue.copy(pszDefaultV);
+            }
+          
             dim->values.copy(&values[0]);
             for(size_t j=1;j<size_t(values->count);j++){
               dim->values.printconcat(",%s",values[j].c_str());
