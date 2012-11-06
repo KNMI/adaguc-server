@@ -1193,7 +1193,9 @@ unsigned char r,g,b,a;
         #endif
         }else{
           int color = gdImageGetPixel(simage->image, x+sourcex, y+sourcey);
-          gdImageSetPixel(image,x+destx,y+desty,color);
+          if(!isColorTransparent(color)){
+            gdImageSetPixel(image,x+destx,y+desty,color);
+          }
         }
       }
     }

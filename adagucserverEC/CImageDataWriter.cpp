@@ -2229,10 +2229,7 @@ int CImageDataWriter::end(){
       float plotHeight=((height-plotOffsetY-34));
       float plotWidth=((width-plotOffsetX)*0.98);
       
-      CDrawImage linePlot;
-      if(resultFormat==imagepng){
-        linePlot.setTrueColor(true);
-      }
+     
       
       
       //Set font location
@@ -2247,26 +2244,38 @@ int CImageDataWriter::end(){
       }
       
       
-      if(resultFormat==imagegif){
-        linePlot.setTrueColor(false);
-        linePlot.setBGColor(255,255,255);
-      
+      //Initialization of whole canvas
+      CDrawImage plotCanvas;
+        CDrawImage lineCanvas;
+      if(resultFormat==imagepng){
+        plotCanvas.setTrueColor(true);
+        lineCanvas.setTrueColor(true);
       }
+      if(resultFormat==imagegif){
+        plotCanvas.setTrueColor(false);
+        plotCanvas.setBGColor(255,255,255);
+        lineCanvas.setTrueColor(false);
+        //lineCanvas.setBGColor(255,255,255);
+        lineCanvas.enableTransparency(true);
+      }
+      plotCanvas.createImage(int(width),int(height));
+      plotCanvas.create685Palette();
+   
+
+      lineCanvas.createImage(plotWidth,plotHeight);
+      lineCanvas.create685Palette();
       
-      linePlot.createImage(int(width),int(height));
+      //lineCanvas.rectangle(0,0,1000,1000,CColor(0,0,255,255),CColor(0,0,0,255));
+      //lineCanvas.line(-100,-100,500,500,0.5,CColor(0,0,0,128));
+    
       
-      
-      
-      linePlot.create685Palette();
-      
-      
-      linePlot.rectangle(0,0,int(width-1),int(height-1),CColor(255,255,255,255),CColor(0,0,0,255));
+      plotCanvas.rectangle(0,0,int(width-1),int(height-1),CColor(255,255,255,255),CColor(0,0,0,255));
       /*
       for(int x=0;x<256;x++){
-        linePlot.line(x,0,x,200,x);
+        plotCanvas.line(x,0,x,200,x);
       }
       for(int x=0;x<256;x++){
-        linePlot.line(x,200,x,400,CColor(x,x,x,255));
+        plotCanvas.line(x,200,x,400,CColor(x,x,x,255));
       }*/
       
       
@@ -2351,7 +2360,7 @@ int CImageDataWriter::end(){
       }
       
       //TODO
-      linePlot.rectangle(int(plotOffsetX),int(plotOffsetY),int(plotWidth+plotOffsetX),int(plotHeight+plotOffsetY),CColor(240,240,240,255),CColor(0,0,0,255));
+      plotCanvas.rectangle(int(plotOffsetX),int(plotOffsetY),int(plotWidth+plotOffsetX),int(plotHeight+plotOffsetY),CColor(240,240,240,255),CColor(0,0,0,255));
       CDataSource * dataSource=getFeatureInfoResultList[0]->elements[0]->dataSource;
       
       //CDBDebug("LEGEND: scale %f offset %f",dataSource->legendScale,dataSource->legendOffset);
@@ -2364,13 +2373,13 @@ int CImageDataWriter::end(){
         v/=dataSource->legendScale;
         if(dataSource->legendLog!=0){v=pow(dataSource->legendLog,v);}
      
-        //linePlot.line((int)cbW-1+pLeft,(int)c+7+dH+pTop,(int)cbW+6+pLeft,(int)c+7+dH+pTop,lineWidth,248);
-        if(j!=0)linePlot.line(plotOffsetX,(int)c+plotOffsetY,plotOffsetX+plotWidth,(int)c+plotOffsetY,0.5,CColor(0,0,0,128));
+        //plotCanvas.line((int)cbW-1+pLeft,(int)c+7+dH+pTop,(int)cbW+6+pLeft,(int)c+7+dH+pTop,lineWidth,248);
+        if(j!=0)plotCanvas.line(plotOffsetX,(int)c+plotOffsetY,plotOffsetX+plotWidth,(int)c+plotOffsetY,0.5,CColor(0,0,0,128));
         if(tickRound==0){floatToString(szTemp,255,v);}else{
           floatToString(szTemp,255,tickRound,v);
         }
-        //linePlot.setText(szTemp,strlen(szTemp),0,(int)c+plotOffsetY,248,-1);
-        linePlot.drawText(4,int(c+plotOffsetY+3),fontLocation,8,0,szTemp,CColor(0,0,0,255),CColor(255,255,255,0));
+        //plotCanvas.setText(szTemp,strlen(szTemp),0,(int)c+plotOffsetY,248,-1);
+        plotCanvas.drawText(4,int(c+plotOffsetY+3),fontLocation,8,0,szTemp,CColor(0,0,0,255),CColor(255,255,255,0));
       }
   
       
@@ -2414,7 +2423,7 @@ int CImageDataWriter::end(){
       
       for(size_t j=0;j<nrOfTimeSteps;j++){
         int x1=plotOffsetX+(float(j)*float(stepX));
-        linePlot.line(x1,plotOffsetY,x1,plotOffsetY+plotHeight,CColor(128,128,128,128));
+        plotCanvas.line(x1,plotOffsetY,x1,plotOffsetY+plotHeight,CColor(128,128,128,128));
       }*/
       float stepX=float(plotWidth);
       if(stopTimeValue - startTimeValue>0){
@@ -2446,18 +2455,18 @@ int CImageDataWriter::end(){
           }catch(int e){CDBError("Time error %s",getFeatureInfoResultList[j]->elements[0]->time.c_str());}
           
           int x1=int(plotOffsetX+(float(timeVal1)*(stepX)));
-          int x2=int(plotOffsetX+(float(timeVal2)*(stepX)));
+          //int x2=int(plotOffsetX+(float(timeVal2)*(stepX)));
 
           //CDBDebug("******************************************************************************************************** %d %d %f %d",x1,x2,stepX,timeStepsToLoop);
           
           
           if(timeVal1Date.hour==0&&timeVal1Date.minute==0&&timeVal1Date.second==0){
-            linePlot.line(x1,plotOffsetY,x1,plotOffsetY+plotHeight,1,CColor(0,0,0,128));
+            plotCanvas.line(x1,plotOffsetY,x1,plotOffsetY+plotHeight,1,CColor(0,0,0,128));
             char szTemp[256];
             snprintf(szTemp,255,"%d",timeVal1Date.day);
-            linePlot.drawText(x1-strlen(szTemp)*3,int(plotOffsetY+plotHeight+10),fontLocation,6,0,szTemp,CColor(0,0,0,255),CColor(255,255,255,0));
+            plotCanvas.drawText(x1-strlen(szTemp)*3,int(plotOffsetY+plotHeight+10),fontLocation,6,0,szTemp,CColor(0,0,0,255),CColor(255,255,255,0));
           }else{
-            linePlot.line(x1,plotOffsetY,x1,plotOffsetY+plotHeight,0.5,CColor(128,128,128,128));
+            plotCanvas.line(x1,plotOffsetY,x1,plotOffsetY+plotHeight,0.5,CColor(128,128,128,128));
           }
           
           if(j<timeStepsToLoop+1){
@@ -2467,41 +2476,44 @@ int CImageDataWriter::end(){
               v2=values[j+1+elNr*nrOfTimeSteps];
             }
             if(v1==v1&&v2==v2){
-              if(v1>minValue[elNr]&&v1<maxValue[elNr]&&v2>minValue[elNr]&&v2<maxValue[elNr]){
-                int y1=int(plotOffsetY+plotHeight-((v1-minValue[elNr])/(maxValue[elNr]-minValue[elNr]))*plotHeight);
-                int y2=int(plotOffsetY+plotHeight-((v2-minValue[elNr])/(maxValue[elNr]-minValue[elNr]))*plotHeight);
-                CColor color=CColor(255,255,255,255);
-                if(elNr==0){color=CColor(0,0,255,255);}
-                if(elNr==1){color=CColor(0,255,0,255);}
-                if(elNr==2){color=CColor(255,0,0,255);}
-                if(elNr==3){color=CColor(255,128,0,255);}
-                if(elNr==4){color=CColor(0,255,128,255);}
-                if(elNr==5){color=CColor(255,0,128,255);}
-                linePlot.line(x1,y1,x2,y2,2,color);
-              }
+              int x1=int(0+(float(timeVal1)*(stepX)));
+              int x2=int(0+(float(timeVal2)*(stepX)));
+              //if(v1>minValue[elNr]&&v1<maxValue[elNr]&&v2>minValue[elNr]&&v2<maxValue[elNr]){
+              //}
+              int y1=int(0+plotHeight-((v1-minValue[elNr])/(maxValue[elNr]-minValue[elNr]))*plotHeight);
+              int y2=int(0+plotHeight-((v2-minValue[elNr])/(maxValue[elNr]-minValue[elNr]))*plotHeight);
+              CColor color=CColor(255,255,255,255);
+              if(elNr==0){color=CColor(0,0,255,255);}
+              if(elNr==1){color=CColor(0,255,0,255);}
+              if(elNr==2){color=CColor(255,0,0,255);}
+              if(elNr==3){color=CColor(255,128,0,255);}
+              if(elNr==4){color=CColor(0,255,128,255);}
+              if(elNr==5){color=CColor(255,0,128,255);}
+              lineCanvas.line(x1,y1,x2,y2,2,color);
+              
             }
           }
           //CDBDebug("%f == %d",v1,y1);
-         // linePlot.drawText(5+j*10,y1,fontLocation,8,3.1415/2.0,e1->time.c_str(),CColor(255,0,0,255),CColor(255,255,255,0));
+         // plotCanvas.drawText(5+j*10,y1,fontLocation,8,3.1415/2.0,e1->time.c_str(),CColor(255,0,0,255),CColor(255,255,255,0));
         }
       }
       delete ctime;
       CT::string title;
       GetFeatureInfoResult::Element * e=getFeatureInfoResultList[0]->elements[0];
       title.print("%s - %s (%s)",e->var_name.c_str(),e->feature_name.c_str(),e->units.c_str());
-      linePlot.drawText(int(plotWidth/2-float(title.length())*2.5),22,fontLocation,10,0,title.c_str(),CColor(0,0,0,255),CColor(255,255,255,0));
+      plotCanvas.drawText(int(plotWidth/2-float(title.length())*2.5),22,fontLocation,10,0,title.c_str(),CColor(0,0,0,255),CColor(255,255,255,0));
       
       GetFeatureInfoResult::Element * e2=getFeatureInfoResultList[getFeatureInfoResultList.size()-1]->elements[0];
       title.print("(%s / %s)",e->time.c_str(),e2->time.c_str());
-      linePlot.drawText(int(plotWidth/2-float(title.length())*2.5),int(25+plotHeight+plotOffsetY),fontLocation,8,0,title.c_str(),CColor(0,0,0,255),CColor(255,255,255,0));
-      
+      plotCanvas.drawText(int(plotWidth/2-float(title.length())*2.5),int(25+plotHeight+plotOffsetY),fontLocation,8,0,title.c_str(),CColor(0,0,0,255),CColor(255,255,255,0));
+        plotCanvas.draw(plotOffsetX, plotOffsetY,0,0,&lineCanvas);
       if(resultFormat==imagepng){
         printf("%s%c%c\n","Content-Type:image/png",13,10);
-        linePlot.printImagePng();
+        plotCanvas.printImagePng();
       }
       if(resultFormat==imagegif){
         printf("%s%c%c\n","Content-Type:image/gif",13,10);
-        linePlot.printImageGif();
+        plotCanvas.printImageGif();
       }
       #ifdef MEASURETIME
       StopWatch_Stop("/Start creating image");
