@@ -1223,12 +1223,12 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
    
         char szTemp[1024];
         floatToString(szTemp, 1023, pixel1); //New val
-        strncat(szTemp1, " ",1023);
-        strncat(szTemp1, szTemp,1023);
+//        strncat(szTemp1, " ",1023);
+//        strncat(szTemp1, szTemp,1023);
 	getFeatureInfoResult->elements[0]->value=szTemp1;
         floatToString(szTemp, 1023, pixel2); //New val
-        strncat(szTemp2, " ",1023);
-        strncat(szTemp2, szTemp,1023);
+//        strncat(szTemp2, " ",1023);
+//        strncat(szTemp2, szTemp,1023);
 	getFeatureInfoResult->elements[1]->value=szTemp2;
       }
       double windspeed=hypot(pixel1, pixel2);
@@ -1246,17 +1246,19 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       element2->feature_name="wind direction";
       element2->value.print("%03.0f",angle);
       element2->units="degrees";
-      element2->time="";
+//      element2->time="";
+      element2->time.copy(&dataSources[d]->timeSteps[dataSources[d]->getCurrentTimeStep()]->timeString);
       
       GetFeatureInfoResult::Element *windspeedOrigElement=new GetFeatureInfoResult::Element();
       getFeatureInfoResult->elements.push_back(windspeedOrigElement);
       windspeedOrigElement->long_name="wind speed";
       windspeedOrigElement->var_name="wind speed";
-      windspeedOrigElement->standard_name="speed";
+      windspeedOrigElement->standard_name="speed1";
       windspeedOrigElement->feature_name="wind speed";
       windspeedOrigElement->value.print("%03.0f",windspeed);
       windspeedOrigElement->units=dataSource->dataObject[0]->cdfVariable->getAttribute("units")->toString();
-      windspeedOrigElement->time="";
+//      windspeedOrigElement->time="";
+      windspeedOrigElement->time.copy(&dataSources[d]->timeSteps[dataSources[d]->getCurrentTimeStep()]->timeString);
 
       //Skip KTS calculation if input data is not u and v vectors in m/s.
       bool skipKTSCalc = true;
@@ -1272,11 +1274,12 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
 	double windspeedKTS=windspeed*(3600./1852.);
 	element3->long_name="wind speed";
 	element3->var_name="wind speed";
-	element3->standard_name="speed";
+	element3->standard_name="speed2";
 	element3->feature_name="wind speed";
 	element3->value.print("%03.0f",windspeedKTS);
 	element3->units="kts";
-	element3->time="";
+//	element3->time="";
+        element3->time.copy(&dataSources[d]->timeSteps[dataSources[d]->getCurrentTimeStep()]->timeString);
       }
     }
   }
