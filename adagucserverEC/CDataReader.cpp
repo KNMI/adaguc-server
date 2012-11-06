@@ -1730,7 +1730,7 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
     
   }
   
-  // Try to find a style corresponding the the standard_name or long_name attribute of the file.
+  // Try to find a style corresponding the the standard_name attribute of the file.
   CServerConfig::XMLE_Styles *xmleStyle=new CServerConfig::XMLE_Styles();
   dataSource->cfgLayer->Styles.push_back(xmleStyle);
   
@@ -1781,7 +1781,7 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
     //Get the searchname, based on variable, standard name or long name.
     CT::string searchName=dataSource->dataObject[0]->variableName.c_str();
     try{dataSource->dataObject[0]->cdfVariable->getAttribute("standard_name")->getDataAsString(&searchName);}catch(int e){}
-    try{dataSource->dataObject[0]->cdfVariable->getAttribute("long_name")->getDataAsString(&searchName);}catch(int e){}
+    
     searchName.toLowerCaseSelf();
     
     //Get the units
@@ -1830,7 +1830,7 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
             //CT::stringlist *standardNameList=standard_name.splitN(",");
             CT::StackList<CT::string> standardNameList=standard_name.splitToStack(",");
             for(size_t n=0;n<standardNameList.size();n++){
-              if(searchName.indexOf(standardNameList[n].c_str())!=-1){
+              if(searchName.equals(standardNameList[n].c_str())){
                 bool unitsMatch = true;
                 if(dataSourceUnits.length()!=0&&units.length()!=0){
                   unitsMatch = false;
@@ -1838,7 +1838,7 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
                 }
                 if(unitsMatch){
                   #ifdef CDATAREADER_DEBUG  
-                  CDBDebug("*** Match: \"%s\" ~~ \"%s\"",searchName.c_str(),standardNameList[n].c_str());
+                  CDBDebug("*** Match: \"%s\"== \"%s\"",searchName.c_str(),standardNameList[n].c_str());
                   #endif
                   if(styles.length()!=0)styles.concat(",");
                   styles.concat(dataSource->cfg->Style[j]->attr.name.c_str());
