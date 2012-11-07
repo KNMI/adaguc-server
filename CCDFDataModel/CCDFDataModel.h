@@ -275,7 +275,7 @@ namespace CDF{
         return newDim;
       }
   };
-  
+
   
   class Variable{
     private:
@@ -289,7 +289,21 @@ namespace CDF{
     std::vector<CDFObjectClass *> cdfObjectList;
     void *cdfReaderPointer;
     void *parentCDFObject;
+    bool hasCustomReader;
+
     public:
+      class CustomReader{
+        public:
+          virtual int readData(CDF::Variable *thisVar,void *data,size_t *start,size_t *count,ptrdiff_t *stride) = 0;
+      };
+  private:
+        CustomReader * customReader;
+  public:
+      void setCustomReader(CustomReader *customReader){
+        hasCustomReader=true;
+        this->customReader = customReader;
+      };
+      
       void setCDFReaderPointer(void *cdfReaderPointer){
         this->cdfReaderPointer=cdfReaderPointer;
       }
@@ -343,6 +357,8 @@ namespace CDF{
       int readData(bool applyScaleOffset);
       int readData(CDFType type,bool applyScaleOffset);
       int readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t *stride);
+      int readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t *stride,bool applyScaleOffset);
+      
       
        template <class T>
       T getDataAt(int index){

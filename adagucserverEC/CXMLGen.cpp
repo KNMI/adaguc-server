@@ -464,7 +464,11 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
       if(hasMultipleValues==true){
         //Get all dimension values from the db
         CT::string query;
-        query.print("select %s from %s group by %s order by %s",pszDimName,tableName.c_str(),pszDimName,pszDimName);
+        if(isTimeDim){
+          query.print("select %s from %s group by %s order by %s",pszDimName,tableName.c_str(),pszDimName,pszDimName);
+        }else{
+          query.print("select distinct %s,dim%s from %s order by dim%s,%s",pszDimName,pszDimName,tableName.c_str(),pszDimName,pszDimName);
+        }
 #ifdef CXMLGEN_DEBUG
 CDBDebug("Querying %s",query.c_str());
 #endif               

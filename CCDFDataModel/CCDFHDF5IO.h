@@ -29,7 +29,7 @@
 #include "CDebugger.h"
 #include "CTime.h"
 #include "CProj4ToCF.h"
-#define CCDFHDF5IO_DEBUG
+//#define CCDFHDF5IO_DEBUG
 void ncError(int line, const char *className, const char * msg,int e);
 class CDFHDF5Reader :public CDFReader{
   private:

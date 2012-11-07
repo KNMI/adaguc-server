@@ -4,7 +4,7 @@ std::vector <CT::string> CDBFileScanner::tableNamesDone;
 
 #define ISO8601TIME_LEN 32
 
-
+//#define CDATAREADER_DEBUG
 /*int CDBFileScanner::addIndexToTable(CPGSQLDB *DB,const char *tableName, const char * dimName){
   return 0;
   // Test if the table exists , if not create the table
@@ -45,7 +45,7 @@ bool CDBFileScanner::isTableAlreadyScanned(CT::string *tableName){
  * 
  * @return Positive on error, zero on succes, negative on skip.
  */
-int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,int &removeNonExistingFiles){
+int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,int &removeNonExistingFiles,CDirReader *dirReader){
   int status = 0;
   CT::string query;
   
@@ -79,7 +79,42 @@ int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,in
       if(isTimeDim==true){
         tableColumns.printconcat(", %s timestamp, dim%s int",dimName.c_str(),dimName.c_str());
       }else{
-        tableColumns.printconcat(", %s varchar (16), dim%s int",dimName.c_str(),dimName.c_str());
+        try{
+          CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource,dirReader->fileList[0]->fullName.c_str());
+          if(cdfObject == NULL){
+            throw(__LINE__);
+          }
+          CDF::Variable *dimVar = cdfObject->getVariableNE(dimName.c_str());
+          if(dimVar==NULL){
+            CDBError("File dimension '%s' not found.",dimName.c_str());
+            throw(__LINE__);
+          }
+          
+          bool hasStatusFlag=false;
+          std::vector<CDataSource::StatusFlag*> statusFlagList;
+          CDataSource::readStatusFlags(dimVar,&statusFlagList);
+          if(statusFlagList.size()>0)hasStatusFlag=true;
+          for(size_t i=0;i<statusFlagList.size();i++)delete statusFlagList[i];
+          statusFlagList.clear();
+          if(hasStatusFlag){
+            tableColumns.printconcat(", %s varchar (16), dim%s int",dimName.c_str(),dimName.c_str());
+          }else{
+            switch(dimVar->type){
+              case CDF_FLOAT:
+              case CDF_DOUBLE:
+              tableColumns.printconcat(", %s real, dim%s int",dimName.c_str(),dimName.c_str());break;
+              case CDF_STRING:
+              tableColumns.printconcat(", %s varchar (16), dim%s int",dimName.c_str(),dimName.c_str());break;
+              default:
+              tableColumns.printconcat(", %s int, dim%s int",dimName.c_str(),dimName.c_str());break;
+            }          
+          }
+        }catch(int e){
+          CDBError("Exception defining table structure at line %d",e);
+          DB->close();
+          return 1;
+        }
+        
       }
       
       // Put the file date in the database, in order to be able to detect whether a file has been changed in a later stage.       
@@ -249,7 +284,8 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
           if(pathValues == NULL){CDBError("Query failed");DB->close();throw(__LINE__);}
           if(pathValues->count==1){fileExistsInDB=1;}else{fileExistsInDB=0;}
           delete[] pathValues;
-            
+          
+          
           //Move this record from the nontemporary table into the temporary table
           if(fileExistsInDB == 1&&removeNonExistingFiles==1){
             //The file resides already in the nontemporary table, copy it into the temporary table
@@ -264,10 +300,11 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
               tableNames[d].c_str(),
               dirReader->fileList[j]->fullName.c_str()
             );*/
-            mvRecordQuery.print("INSERT INTO %s select * from %s where path = '%s'",
+            mvRecordQuery.print("INSERT INTO %s select * from %s where path = '%s' order by dim%s",
                                 tableNames_temp[d].c_str(),                             
                                 tableNames[d].c_str(),
-                                dirReader->fileList[j]->fullName.c_str()
+                                dirReader->fileList[j]->fullName.c_str(),
+                                dataSource->cfgLayer->Dimension[d]->attr.name.c_str()
             );
             //printf("%s\n",mvRecordQuery.c_str());
             if(j%1000==0&&d==0){
@@ -337,8 +374,20 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                     try{ADTime = new CADAGUC_time((char*)dimUnits->toString().c_str());}catch(int e){delete ADTime;ADTime=NULL;throw(__LINE__);}
                   }
                   
-                  //Read the dimension data
-                  status = dimVar->readData(CDF_DOUBLE);if(status!=0){
+                  #ifdef CDATAREADER_DEBUG
+                  CDBDebug("Dimension type = %s",CDF::getCDFDataTypeName(dimVar->type).c_str());
+                  #endif
+                  
+                  //Strings do never fit in a double.
+                  if(dimVar->type!=CDF_STRING){
+                    //Read the dimension data
+                    status = dimVar->readData(CDF_DOUBLE);
+                  }else{
+                    //Read the dimension data
+                    status = dimVar->readData(CDF_STRING);
+                  }
+                  
+                  if(status!=0){
                     CDBError("Unable to read variable data for %s",dimVar->name.c_str());
                     throw(__LINE__);
                   }
@@ -350,31 +399,53 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                   if(statusFlagList.size()>0)hasStatusFlag=true;
                   
                   int exceptionAtLineNr=0;
+                  
+       
+                  
                   try{
                     const double *dimValues=(double*)dimVar->data;
                     for(size_t i=0;i<dimDim->length;i++){
+                      
                       if(dimValues[i]!=NC_FILL_DOUBLE){
-                        if(isTimeDim[d]==false){
-                          if(hasStatusFlag==true){
-                            VALUES.print("VALUES ('%s','%s','%d','%s')",dirReader->fileList[j]->fullName.c_str(),CDataSource::getFlagMeaning( &statusFlagList,double(dimValues[i])),int(i),fileDate.c_str());
-                          }
-                          if(hasStatusFlag==false){
-                            switch(dimVar->type){
-                              case CDF_UINT:
-                              case CDF_INT:
-                                VALUES.print("VALUES ('%s','%d','%d','%s')",dirReader->fileList[j]->fullName.c_str(),int(dimValues[i]),int(i),fileDate.c_str());break;
-                              default:
-                                VALUES.print("VALUES ('%s','%f','%d','%s')",dirReader->fileList[j]->fullName.c_str(),double(dimValues[i]),int(i),fileDate.c_str());
+                        
+                        //Insert individual values of type char, short, int, float, double
+                        if(dimVar->type!=CDF_STRING){
+                          if(isTimeDim[d]==false){
+                            if(hasStatusFlag==true){
+                              VALUES.print("VALUES ('%s','%s','%d','%s')",
+                                           dirReader->fileList[j]->fullName.c_str(),
+                                           CDataSource::getFlagMeaning( &statusFlagList,double(dimValues[i])),
+                                           int(i),
+                                           fileDate.c_str());
+                            }
+                            if(hasStatusFlag==false){
+                              switch(dimVar->type){
+                                case CDF_FLOAT:
+                                case CDF_DOUBLE:
+                                  VALUES.print("VALUES ('%s','%f','%d','%s')",dirReader->fileList[j]->fullName.c_str(),double(dimValues[i]),int(i),fileDate.c_str());
+                                default:
+                                  VALUES.print("VALUES ('%s','%d','%d','%s')",dirReader->fileList[j]->fullName.c_str(),int(dimValues[i]),int(i),fileDate.c_str());break;
+                                  
+                              }
+                            }
+                          }else{
+                            VALUES.copy("");
+                            ADTime->PrintISOTime(ISOTime,ISO8601TIME_LEN,dimValues[i]);status = 0;//TODO make PrintISOTime return a 0 if succeeded
+                            if(status == 0){
+                              ISOTime[19]='Z';ISOTime[20]='\0';
+                              VALUES.print("VALUES ('%s','%s','%d','%s')",dirReader->fileList[j]->fullName.c_str(),ISOTime,int(i),fileDate.c_str());
                             }
                           }
-                        }else{
-                          VALUES.copy("");
-                          ADTime->PrintISOTime(ISOTime,ISO8601TIME_LEN,dimValues[i]);status = 0;//TODO make PrintISOTime return a 0 if succeeded
-                          if(status == 0){
-                            ISOTime[19]='Z';ISOTime[20]='\0';
-                            VALUES.print("VALUES ('%s','%s','%d','%s')",dirReader->fileList[j]->fullName.c_str(),ISOTime,int(i),fileDate.c_str());
-                          }
                         }
+                        
+                        //Insert individual values of type string
+                        if(dimVar->type==CDF_STRING){
+                          
+                          const char *str=((char**)dimVar->data)[i];
+                          
+                          VALUES.print("VALUES ('%s','%s','%d','%s')",dirReader->fileList[j]->fullName.c_str(),str,int(i),fileDate.c_str());
+                        }
+                        
                         
                         //Insert record into DB.
                         if(VALUES.length()>0){
@@ -539,7 +610,7 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
     if(status != 0 )throw(__LINE__);
     
     //First check and create all tables... returns zero on success, positive on error, negative on already done.
-    status = createDBUpdateTables(&DB,dataSource,removeNonExistingFiles);
+    status = createDBUpdateTables(&DB,dataSource,removeNonExistingFiles,&dirReader);
     if(status > 0 ){
       throw(__LINE__);
     }

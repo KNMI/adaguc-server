@@ -16,7 +16,7 @@
 class CDBFileScanner{
 private:
   DEF_ERRORFUNCTION();
-  static int createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,int &removeNonExistingFiles);
+  static int createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,int &removeNonExistingFiles,CDirReader *dirReader);
   static int DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeNonExistingFiles,CDirReader *dirReader);
   static std::vector <CT::string> tableNamesDone;
   static bool isTableAlreadyScanned(CT::string *tableName);

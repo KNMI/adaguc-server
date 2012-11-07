@@ -212,8 +212,21 @@ int CDF::Variable::readData(bool applyScaleOffset){
 }
 
 int CDF::Variable::readData(CDFType readType,bool applyScaleOffset){
+  return readData(readType,NULL,NULL,NULL,applyScaleOffset);
+}
+
+
+
+/**
+ * Reads data
+ * @param readType The datatype to read. When -1 is given, this is determined automatically
+ * @param applyScaleOffset Whether or not to apply scale and offset
+ */
+int CDF::Variable::readData(CDFType readType,size_t *_start,size_t *_count,ptrdiff_t *_stride,bool applyScaleOffset){
+
+  
   if(applyScaleOffset==false){
-    return readData(type,NULL,NULL,NULL);
+    return readData(type,_start,_count,_stride);
   }
   
   double scaleFactor=1,addOffset=0,fillValue = 0;
@@ -235,7 +248,7 @@ int CDF::Variable::readData(CDFType readType,bool applyScaleOffset){
   }catch(int e){}
   
   if(readType!=-1)scaleType=readType;
-  int status = readData(scaleType,NULL,NULL,NULL);
+  int status = readData(scaleType,_start,_count,_stride);
   if(status != 0)return status;
   
   //Apply scale and offset
@@ -259,8 +272,8 @@ int CDF::Variable::readData(CDFType readType,bool applyScaleOffset){
       fillValue=fillValue*scaleFactor+addOffset;
       if( hasFillValue)getAttribute("_FillValue")->setData(CDF_DOUBLE,&fillValue,1);
     }
-    removeAttribute("scale_factor");
-    removeAttribute("add_offset");
+    //removeAttribute("scale_factor");
+    //removeAttribute("add_offset");
   }
   return 0;  
 }
@@ -269,6 +282,11 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
 #ifdef CCDFDATAMODEL_DEBUG          
   CDBDebug("reading variable %s",name.c_str());
 #endif  
+ 
+  
+  
+  
+  
   //TODO needs to cope correctly with cdfReader.
   if(data!=NULL){
 #ifdef CCDFDATAMODEL_DEBUG            
@@ -276,12 +294,7 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
 #endif     
     return 0;
   }
-  //TODO NEEDS BETTER CHECKS
-  if(cdfReaderPointer==NULL){
-    CDBError("No CDFReader defined for variable %s",name.c_str());
-    return 1;
-  }
-  
+
   
   
   //Check for iterative dimension
@@ -340,7 +353,7 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
         CDFObject *tCDFObject= (CDFObject *)getCDFObjectPointer(start,count);
         if(tCDFObject==NULL){CDBError("Unable to read variable %s because tCDFObject==NULL",name.c_str());throw(CDF_E_ERROR);}
         //Get the variable from this reader
-        Variable *tVar=tCDFObject->getVariable(name.c_str());
+       
         //
         for(size_t d=0;d<dimensionlinks.size();d++){
           if(useStartCountStride){
@@ -355,17 +368,34 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
         }
         count[iterativeDimIndex]=1;
         //Read the data!
-        if(tVar->readData(type,start,count,stride)!=0)throw(__LINE__);
-        //Put the read data chunk in our destination variable
-#ifdef CCDFDATAMODEL_DEBUG                
-        CDBDebug("Copying %d elements to variable %s",tVar->getSize(),name.c_str());
-#endif        
-        dataCopier.copy(data,tVar->data,type,dataReadOffset,0,tVar->getSize());dataReadOffset+=tVar->getSize();
-        //Free the read data
-#ifdef CCDFDATAMODEL_DEBUG                
-        CDBDebug("Free tVar %s",tVar->name.c_str());
-#endif        
-        tVar->freeData();
+        
+         if(!hasCustomReader){
+          //TODO NEEDS BETTER CHECKS
+          if(cdfReaderPointer==NULL){
+            CDBError("No CDFReader defined for variable %s",name.c_str());
+             delete[] start;delete[] count;delete[] stride;
+            return 1;
+          }
+          Variable *tVar=tCDFObject->getVariable(name.c_str());
+          if(tVar->readData(type,start,count,stride)!=0)throw(__LINE__);
+          //Put the read data chunk in our destination variable
+  #ifdef CCDFDATAMODEL_DEBUG                
+          CDBDebug("Copying %d elements to variable %s",tVar->getSize(),name.c_str());
+  #endif        
+          dataCopier.copy(data,tVar->data,type,dataReadOffset,0,tVar->getSize());dataReadOffset+=tVar->getSize();
+          //Free the read data
+  #ifdef CCDFDATAMODEL_DEBUG                
+          CDBDebug("Free tVar %s",tVar->name.c_str());
+  #endif        
+          tVar->freeData();
+        }
+        
+        
+        
+        if(hasCustomReader){
+          status = customReader->readData(this,data,_start,count,stride);
+        }
+        
 #ifdef CCDFDATAMODEL_DEBUG                
         CDBDebug("Variable->data==NULL: %d",data==NULL);
 #endif        
@@ -377,9 +407,17 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
       }
     }
     delete[] start;delete[] count;delete[] stride;
+    if(status!=0)return 1;
   }
   
   if(needsDimIteration==false){
+    
+      //TODO NEEDS BETTER CHECKS
+    if(cdfReaderPointer==NULL){
+      CDBError("No CDFReader defined for variable %s",name.c_str());
+      return 1;
+    }
+    
     CDFReader *cdfReader = (CDFReader *)cdfReaderPointer;
     int status =0;
     bool useStartCountStride=false;if(_start!=NULL&&_count!=NULL){
@@ -404,6 +442,8 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
       return 1;
     }
   }
+//  CDBDebug("Data for %s read %d",name.c_str(),data!=NULL);
+  
   return 0;
 }
 
