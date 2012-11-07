@@ -422,9 +422,9 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                               switch(dimVar->type){
                                 case CDF_FLOAT:
                                 case CDF_DOUBLE:
-                                  VALUES.print("VALUES ('%s','%f','%d','%s')",dirReader->fileList[j]->fullName.c_str(),double(dimValues[i]),int(i),fileDate.c_str());
+                                  VALUES.print("VALUES ('%s',%f,'%d','%s')",dirReader->fileList[j]->fullName.c_str(),double(dimValues[i]),int(i),fileDate.c_str());break;
                                 default:
-                                  VALUES.print("VALUES ('%s','%d','%d','%s')",dirReader->fileList[j]->fullName.c_str(),int(dimValues[i]),int(i),fileDate.c_str());break;
+                                  VALUES.print("VALUES ('%s',%d,'%d','%s')",dirReader->fileList[j]->fullName.c_str(),int(dimValues[i]),int(i),fileDate.c_str());break;
                                   
                               }
                             }
