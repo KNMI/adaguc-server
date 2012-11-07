@@ -1,6 +1,7 @@
 #include "CFillTriangle.h"
 
 void fillTriangleGouraud(float  *data, float  *values, int W,int H, int *xP,int *yP){
+  
   if(xP[0]<0&&xP[1]<0&&xP[2]<0)return;
   if(xP[0]>=W&&xP[1]>=W&&xP[2]>=W)return;
   if(yP[0]<0&&yP[1]<0&&yP[2]<0)return;
@@ -109,6 +110,7 @@ void fillTriangleGouraud(float  *data, float  *values, int W,int H, int *xP,int 
     
     
 void fillQuadGouraud(float  *data, float  *values, int W,int H, int *xP,int *yP){
+  
   if(xP[0]<0&&xP[1]<0&&xP[2]<0&&xP[3]<0)return;
   if(xP[0]>=W&&xP[1]>=W&&xP[2]>=W&&xP[3]>=W)return;
   if(yP[0]<0&&yP[1]<0&&yP[2]<0&&yP[3]<0)return;
@@ -141,7 +143,6 @@ void fillQuadGouraud(float  *data, float  *values, int W,int H, int *xP,int *yP)
     return;
   }
   
-  //sofia in zwolle isala kliniek 4e verdiepuing ic
   
   
   float cornerV[3];
@@ -170,6 +171,9 @@ void fillQuadGouraud(float  *data, float  *values, int W,int H, int *xP,int *yP)
   cornerX[1]=(int)xP[0];cornerY[1]=(int)yP[0];cornerV[1]=values[0];
   cornerX[2]=(int)  cx   ;cornerY[2]=(int) cy    ;cornerV[2]=cv;
   fillTriangleGouraud(data, cornerV, W,H, cornerX,cornerY);
+  
+  
+  
 }
 
 void drawCircle(float *data,float value,int W,int H,int orgx,int orgy,int radius){

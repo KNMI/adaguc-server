@@ -1218,7 +1218,7 @@ int CRequest::process_querystring(){
 
   CT::string queryString(pszQueryString);
   queryString.decodeURLSelf();
-
+  CDBDebug("QueryString: \"%s\"",queryString.c_str());
   CT::string * parameters=queryString.splitToArray("&");
   CT::string value0Cap;
   for(size_t j=0;j<parameters->count;j++){

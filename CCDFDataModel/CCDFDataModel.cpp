@@ -223,7 +223,12 @@ int CDF::Variable::readData(CDFType readType,bool applyScaleOffset){
  * @param applyScaleOffset Whether or not to apply scale and offset
  */
 int CDF::Variable::readData(CDFType readType,size_t *_start,size_t *_count,ptrdiff_t *_stride,bool applyScaleOffset){
-
+ if(data!=NULL){
+#ifdef CCDFDATAMODEL_DEBUG            
+     CDBDebug("Data is already defined");
+#endif     
+    return 0;
+  }
   
   if(applyScaleOffset==false){
     return readData(type,_start,_count,_stride);
