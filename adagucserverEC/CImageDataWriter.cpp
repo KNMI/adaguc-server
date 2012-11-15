@@ -2071,9 +2071,12 @@ int CImageDataWriter::end(){
       }else{
         GetFeatureInfoResult *g = getFeatureInfoResultList[0];
         if(resultFormat==texthtml){
-          resultHTML.printconcat("coordinates (%0.2f , %0.2f)<br>\n",g->x_imageCoordinate,g->y_imageCoordinate);
+          //resultHTML.printconcat("coordinates (%0.2f , %0.2f)<br>\n",g->x_imageCoordinate,g->y_imageCoordinate);
+          resultHTML.printconcat("<b>Coordinates</b> - (lon=%0.2f; lat=%0.2f)<br>\n",g->lon_coordinate,g->lat_coordinate);
+          
         }else{
-          resultHTML.printconcat("coordinates (%0.2f , %0.2f)\n",g->x_imageCoordinate,g->y_imageCoordinate);
+          //resultHTML.printconcat("coordinates (%0.2f , %0.2f)\n",g->x_imageCoordinate,g->y_imageCoordinate);
+          resultHTML.printconcat("Coordinates - (lon=%0.2f; lat=%0.2f)\n",g->lon_coordinate,g->lat_coordinate);
         }
         
       
@@ -2471,6 +2474,7 @@ int CImageDataWriter::end(){
           
           if(j<timeStepsToLoop+1){
             float v1=values[j+elNr*nrOfTimeSteps];
+          
             float v2=v1;
             if(j<nrOfTimeSteps-1){
               v2=values[j+1+elNr*nrOfTimeSteps];
@@ -2480,8 +2484,27 @@ int CImageDataWriter::end(){
               int x2=int(0+(float(timeVal2)*(stepX)));
               //if(v1>minValue[elNr]&&v1<maxValue[elNr]&&v2>minValue[elNr]&&v2<maxValue[elNr]){
               //}
-              int y1=int(0+plotHeight-((v1-minValue[elNr])/(maxValue[elNr]-minValue[elNr]))*plotHeight);
-              int y2=int(0+plotHeight-((v2-minValue[elNr])/(maxValue[elNr]-minValue[elNr]))*plotHeight);
+              CDBDebug("V1 = %f",v1);
+              float v1l=v1;
+              if(v1l>0){
+                if(dataSource->legendLog!=0){v1l=log10(v1l)/log10(dataSource->legendLog);}
+                v1l*=dataSource->legendScale;
+                v1l+=dataSource->legendOffset;
+                v1l/=240.0;
+              }else v1l=0;
+         
+              
+              float v2l=v2;
+              if(v2l>0){
+                if(dataSource->legendLog!=0){v2l=log10(v2l)/log10(dataSource->legendLog);}
+                v2l*=dataSource->legendScale;
+                v2l+=dataSource->legendOffset;
+                v2l/=240.0;
+              }else v2l=0;
+         
+
+              int y1=int((1-v1l)*plotHeight);
+              int y2=int((1-v2l)*plotHeight);
               CColor color=CColor(255,255,255,255);
               if(elNr==0){color=CColor(0,0,255,255);}
               if(elNr==1){color=CColor(0,255,0,255);}

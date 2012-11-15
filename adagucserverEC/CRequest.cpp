@@ -200,13 +200,13 @@ int CRequest::setConfigFile(const char *pszConfigFile){
           CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObject(NULL,dirReader.fileList[j]->fullName.c_str());
           if(cdfObject == NULL){CDBError("Unable to read file %s",dirReader.fileList[j]->fullName.c_str());throw(__LINE__);}
           
-          std::vector<CT::string> variables;
+          //std::vector<CT::string> variables;
           //List variables
           for(size_t v=0;v<cdfObject->variables.size();v++){
             CDF::Variable *var=cdfObject->variables[v];
             if(var->isDimension==false){
               if(var->dimensionlinks.size()>=2){
-                variables.push_back(new CT::string(var->name.c_str()));
+               // variables.push_back(new CT::string(var->name.c_str()));
                 CServerConfig::XMLE_Layer *xmleLayer=new CServerConfig::XMLE_Layer();
                 CServerConfig::XMLE_Group* xmleGroup = new CServerConfig::XMLE_Group();
                 CServerConfig::XMLE_Variable* xmleVariable = new CServerConfig::XMLE_Variable();
