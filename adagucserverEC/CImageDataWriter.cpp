@@ -322,8 +322,8 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
 void CImageDataWriter::calculateScaleAndOffsetFromMinMax(float &scale, float &offset,float min,float max,float log){
   if(log!=0.0f){
     //CDBDebug("LOG = %f",log);
-    min=log10(min);
-    max=log10(max);
+    min=log10(min)/log10(log);
+    max=log10(max)/log10(log);
   }
     
   scale=240/(max-min);
@@ -2484,14 +2484,14 @@ int CImageDataWriter::end(){
               int x2=int(0+(float(timeVal2)*(stepX)));
               //if(v1>minValue[elNr]&&v1<maxValue[elNr]&&v2>minValue[elNr]&&v2<maxValue[elNr]){
               //}
-              CDBDebug("V1 = %f",v1);
+
               float v1l=v1;
               if(v1l>0){
                 if(dataSource->legendLog!=0){v1l=log10(v1l)/log10(dataSource->legendLog);}
                 v1l*=dataSource->legendScale;
                 v1l+=dataSource->legendOffset;
                 v1l/=240.0;
-              }else v1l=0;
+              }else v1l=-dataSource->legendOffset;
          
               
               float v2l=v2;
@@ -2500,7 +2500,7 @@ int CImageDataWriter::end(){
                 v2l*=dataSource->legendScale;
                 v2l+=dataSource->legendOffset;
                 v2l/=240.0;
-              }else v2l=0;
+              }else v2l=-dataSource->legendOffset;
          
 
               int y1=int((1-v1l)*plotHeight);
@@ -2744,7 +2744,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
     for(int j=0;j<cbH;j++){
       for(int i=0;i<cbW+3;i++){
         float c=(float(cbH*legendPositiveUp-j)/cbH)*240.0f;
-        legendImage->setPixelIndexed(i+pLeft,j+7+dH+pTop,int(c+1));
+        legendImage->setPixelIndexed(i+pLeft,j+7+dH+pTop,int(c));
       }
     }
     legendImage->rectangle(pLeft,7+dH+pTop,(int)cbW+3+pLeft,(int)cbH+7+dH+pTop,248);

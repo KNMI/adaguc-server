@@ -331,7 +331,7 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
           }
           double latX=inX,lonY=inY;
           reprojToLatLon(latX,lonY);
-          if(latX>-180&&latX<180&&lonY>-90&&lonY<90){
+          if(latX>-200&&latX<400&&lonY>-90&&lonY<90){
             if(foundFirst == false){
               foundFirst = true;
               minx1=inX;

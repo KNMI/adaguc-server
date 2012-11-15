@@ -978,7 +978,7 @@ void CDrawImage::rectangle( int x1, int y1, int x2, int y2,int outercolor){
     line( x2, y2, x1, y2,1,outercolor);
     line( x1, y2, x1, y1,1,outercolor);
   }else{
-    gdImageRectangle (image,x1,y1,x2,y2, outercolor);
+    gdImageRectangle (image,x1,y1,x2,y2, colors[outercolor]);
   }
 }
 
@@ -1096,10 +1096,11 @@ bool CDrawImage::isPixelTransparent(int &x,int &y){
 
 
 bool CDrawImage::isColorTransparent(int &color){
+  
   if(currentLegend==NULL){
     return true;
   }
-  if(color<0||color>=240)return true;
+  if(color<0||color>255)return true;
   if(currentLegend->CDIred[color]==0&&currentLegend->CDIgreen[color]==0&&currentLegend->CDIblue[color]==0)return true;
   return false;
 }
