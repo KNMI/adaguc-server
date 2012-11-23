@@ -1,7 +1,7 @@
 #include "CDBFileScanner.h"
 const char *CDBFileScanner::className="CDBFileScanner";
 std::vector <CT::string> CDBFileScanner::tableNamesDone;
-#define CDATAREADER_DEBUG
+//#define CDATAREADER_DEBUG
 #define ISO8601TIME_LEN 32
 
 //#define CDATAREADER_DEBUG
