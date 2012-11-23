@@ -1681,6 +1681,12 @@ int CRequest::process_querystring(){
               if(cdfObject->variables[j]->getAttributeNE("ADAGUC_SKIP")==NULL){
                 if(!cdfObject->variables[j]->name.equals("lon")&&
                   !cdfObject->variables[j]->name.equals("lat")&&
+                  !cdfObject->variables[j]->name.equals("lon_bounds")&&
+                  !cdfObject->variables[j]->name.equals("lat_bounds")&&
+                  !cdfObject->variables[j]->name.equals("time_bounds")&&
+                  !cdfObject->variables[j]->name.equals("lon_bnds")&&
+                  !cdfObject->variables[j]->name.equals("lat_bnds")&&
+                  !cdfObject->variables[j]->name.equals("time_bnds")&&
                   !cdfObject->variables[j]->name.equals("time")){
                     if(srvParam->autoResourceVariable.length()>0)srvParam->autoResourceVariable.concat(",");
                     srvParam->autoResourceVariable.concat(cdfObject->variables[j]->name.c_str());

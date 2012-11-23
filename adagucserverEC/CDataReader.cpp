@@ -192,7 +192,24 @@ int applyScaleAndOffsetFloat(size_t start,size_t stop,float *data,float scale,fl
   return errorOccured;
 }*/
 
-
+class Proc{
+  public:
+  template <class T>
+  static void swapPixelsAtLocation(int location,T*data,int width,int height){
+    T temp1,temp2;
+    for(int y=0;y<height;y++){
+      for(int x=0;x<width;x++){
+        if(x<location&&x<location+width){
+          temp1=data[x+y*width];
+          temp2=data[x+location+y*width];
+          data[x+y*width]=temp2;
+          data[x+location+y*width]=temp1;
+        }
+        
+      }
+    }
+  }
+};
 
 int CDataReader::open(CDataSource *dataSource, int mode){
   return open(dataSource,mode,-1,-1);
@@ -435,7 +452,7 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
  //Read X and Y dimension data completely.
  CDF::Variable *varX=cdfObject->getVariableNE(dimX->name.c_str());
  CDF::Variable *varY=cdfObject->getVariableNE(dimY->name.c_str());
- if(varX==NULL||varY==NULL){CDBError("X and or Y vars not found...");return 1;}
+ if(varX==NULL||varY==NULL){CDBError("X ('%s') and or Y ('%s') vars not found...",dimX->name.c_str(),dimY->name.c_str());return 1;}
   
   int stride2DMap=1;
   while(dimX->length/stride2DMap>360*4){
@@ -546,7 +563,7 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
     dataSource->dfBBOX[1]=dfdim_Y[0]-dataSource->dfCellSizeY/2.0f;;
   }
   
- 
+
 #ifdef MEASURETIME
   StopWatch_Stop("XY dimensions read");
 #endif
@@ -621,6 +638,28 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
   #ifdef CDATAREADER_DEBUG
   CDBDebug("PROJ4 = [%s]",dataSource->nativeProj4.c_str());
   #endif
+  
+  // Lon transformation is used to swap datasets from 0-360 degrees to -180 till 180 degrees
+  //Swap data from >180 degrees to domain of -180 till 180 in case of lat lon source data
+  int useLonTransformation = 0;
+  
+  if(level2CompatMode==false){
+
+    if( dataSource->nativeProj4.indexOf("+proj=longlat")==0){
+      size_t j=0;
+      for(j=0;j<varX->getSize();j++){
+
+        if(((double*)varX->data)[j]>=180.0)break;
+      }
+      if(j!=0){
+        useLonTransformation=j;
+        dataSource->dfBBOX[0]-=180;
+        dataSource->dfBBOX[2]-=180;
+
+      }
+    }
+  }
+ 
   //     CDF::dump(cdfObject,&dumpString);
   //CDBDebug("\nSTART\n%s\nEND\n",dumpString.c_str());
   //writeLogFile2(dumpString.c_str());
@@ -841,7 +880,7 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
    
     
     //if( var[varNr]->data==NULL){
-      if( level2CompatMode == false){
+    if( level2CompatMode == false){
       //#ifdef MEASURETIME
       //StopWatch_Stop("Freeing data");
       //#endif
@@ -854,6 +893,23 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
       #endif
       
       var[varNr]->readData(var[varNr]->type,start,count,stride);
+      
+      //Swap data from >180 degrees to domain of -180 till 180 in case of lat lon source data
+      if(useLonTransformation!=0){
+        int splitPX=useLonTransformation;
+        switch (var[varNr]->type){
+          case CDF_CHAR  : Proc::swapPixelsAtLocation(splitPX,(char*)var[varNr]->data,dataSource->dWidth,dataSource->dHeight);break;
+          case CDF_BYTE  : Proc::swapPixelsAtLocation(splitPX,(char*)var[varNr]->data,dataSource->dWidth,dataSource->dHeight);break;
+          case CDF_UBYTE : Proc::swapPixelsAtLocation(splitPX,(uchar*)var[varNr]->data,dataSource->dWidth,dataSource->dHeight);break;
+          case CDF_SHORT : Proc::swapPixelsAtLocation(splitPX,(short*)var[varNr]->data,dataSource->dWidth,dataSource->dHeight);break;
+          case CDF_USHORT: Proc::swapPixelsAtLocation(splitPX,(ushort*)var[varNr]->data,dataSource->dWidth,dataSource->dHeight);break;
+          case CDF_INT   : Proc::swapPixelsAtLocation(splitPX,(int*)var[varNr]->data,dataSource->dWidth,dataSource->dHeight);break;
+          case CDF_UINT  : Proc::swapPixelsAtLocation(splitPX,(unsigned int*)var[varNr]->data,dataSource->dWidth,dataSource->dHeight);break;
+          case CDF_FLOAT : Proc::swapPixelsAtLocation(splitPX,(float*)var[varNr]->data,dataSource->dWidth,dataSource->dHeight);break;
+          case CDF_DOUBLE: Proc::swapPixelsAtLocation(splitPX,(double*)var[varNr]->data,dataSource->dWidth,dataSource->dHeight);break;
+          default: {CDBError("Unknown data type"); return 1;}
+        }
+      }
   
       #ifdef CDATAREADER_DEBUG   
       CDBDebug("--- varNR [%d], name=\"%s\"",varNr,var[varNr]->name.c_str());

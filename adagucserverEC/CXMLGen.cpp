@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 #include "CXMLGen.h"
-//#define CXMLGEN_DEBUG
+#define CXMLGEN_DEBUG
 
 const char *CFile::className="CFile";
 
@@ -377,7 +377,7 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
                   CT::string iso8601timeRes="P";
                   CT::string yearPart="";
                   if(tms[1].tm_year-tms[0].tm_year!=0){
-                    if(tms[1].tm_year-tms[0].tm_year == (tms[nrTimes].tm_year-tms[0].tm_year)/double(nrTimes)){
+                    if(tms[1].tm_year-tms[0].tm_year == (tms[nrTimes<10?nrTimes:10].tm_year-tms[0].tm_year)/double(nrTimes<10?nrTimes:10)){
                       yearPart.printconcat("%dY",abs(tms[1].tm_year-tms[0].tm_year));
                     }
                     else {
@@ -387,7 +387,7 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
                       #endif  
                     }
                   }
-                  if(tms[1].tm_mon-tms[0].tm_mon!=0){if(tms[1].tm_mon-tms[0].tm_mon == (tms[nrTimes].tm_mon-tms[0].tm_mon)/double(nrTimes))
+                  if(tms[1].tm_mon-tms[0].tm_mon!=0){if(tms[1].tm_mon-tms[0].tm_mon == (tms[nrTimes<10?nrTimes:10].tm_mon-tms[0].tm_mon)/double(nrTimes<10?nrTimes:10))
                     yearPart.printconcat("%dM",abs(tms[1].tm_mon-tms[0].tm_mon));else {
                       isConst=false;
                       #ifdef CXMLGEN_DEBUG    
@@ -395,11 +395,16 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
                       #endif  
                     }
                   }
-                  if(tms[1].tm_mday-tms[0].tm_mday!=0){if(tms[1].tm_mday-tms[0].tm_mday == (tms[nrTimes].tm_mday-tms[0].tm_mday)/double(nrTimes))
+                  
+                  
+                  if(tms[1].tm_mday-tms[0].tm_mday!=0){if(tms[1].tm_mday-tms[0].tm_mday == (tms[nrTimes<10?nrTimes:10].tm_mday-tms[0].tm_mday)/double(nrTimes<10?nrTimes:10))
                     yearPart.printconcat("%dD",abs(tms[1].tm_mday-tms[0].tm_mday));else {
                       isConst=false;
                       #ifdef CXMLGEN_DEBUG    
                       CDBDebug("day irregular");
+                      for(size_t j=0;j<nrTimes;j++){
+                        CDBDebug("Day %d = %d",j,tms[j].tm_mday);
+                      }
                       #endif  
                     }
                   }
@@ -599,6 +604,9 @@ CDBDebug("Querying %s",query.c_str());
 }
 
 int CXMLGen::getStylesForLayer(WMSLayer * myWMSLayer){
+  if(myWMSLayer->dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
+    return 0;
+  }
   CT::PointerList<CT::string*> *styleList = CImageDataWriter::getStyleListForDataSource(myWMSLayer->dataSource);
   if(styleList==NULL)return 1;
   for(size_t j=0;j<styleList->size();j++){

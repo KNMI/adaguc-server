@@ -553,8 +553,9 @@ CT::PointerList<CT::string*> *CImageDataWriter::getStyleListForDataSource(CDataS
  */
 CImageDataWriter::StyleConfiguration *CImageDataWriter::getStyleConfigurationByName(const char *styleName,CDataSource *dataSource){
   #ifdef CIMAGEDATAWRITER_DEBUG    
-  CDBDebug("getStyleConfigurationByName for layer %s",dataSource->layerName.c_str());
+  CDBDebug("getStyleConfigurationByName for layer %s with name %s",dataSource->layerName.c_str(),styleName);
   #endif
+  
   //CServerConfig::XMLE_Configuration *serverCFG = dataSource->cfg;
   StyleConfiguration *styleConfig = new StyleConfiguration ();
   styleConfig->styleCompositionName=styleName;

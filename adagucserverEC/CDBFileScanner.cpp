@@ -1,7 +1,7 @@
 #include "CDBFileScanner.h"
 const char *CDBFileScanner::className="CDBFileScanner";
 std::vector <CT::string> CDBFileScanner::tableNamesDone;
-
+#define CDATAREADER_DEBUG
 #define ISO8601TIME_LEN 32
 
 //#define CDATAREADER_DEBUG
@@ -404,8 +404,12 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                   
                   try{
                     const double *dimValues=(double*)dimVar->data;
+                    
+                    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                    //Start looping over every netcdf dimension element
+                    
                     for(size_t i=0;i<dimDim->length;i++){
-                      
+                    
                       if(dimValues[i]!=NC_FILL_DOUBLE){
                         
                         //Insert individual values of type char, short, int, float, double
@@ -429,12 +433,15 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                               }
                             }
                           }else{
+                            //VALUES.print("VALUES ('%s','2%0.3d%s','%d','%s')","/nobackup/users/plieger/projects/data/sdpkdc/is-enes/prc_day_EC-EARTH_historical_r13i1p1_19500101-19591231.nc",int(i),"-10-01T00:00:00Z",int(i),"2012-10-01T00:00:00Z");
+                                        
                             VALUES.copy("");
                             ADTime->PrintISOTime(ISOTime,ISO8601TIME_LEN,dimValues[i]);status = 0;//TODO make PrintISOTime return a 0 if succeeded
                             if(status == 0){
                               ISOTime[19]='Z';ISOTime[20]='\0';
                               VALUES.print("VALUES ('%s','%s','%d','%s')",dirReader->fileList[j]->fullName.c_str(),ISOTime,int(i),fileDate.c_str());
                             }
+                            CDBDebug("%s",VALUES.c_str());
                           }
                         }
                         
@@ -451,7 +458,8 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                         if(VALUES.length()>0){
                           //Add the record to the temporary table.
                           queryString.print("INSERT into %s %s",tableNames_temp[d].c_str(),VALUES.c_str());
-                          status = DB->query(queryString.c_str()); 
+                          status =  DB->query(queryString.c_str()); 
+                          //CDBDebug("(1) Querying %s",queryString.c_str());
                           if(status!=0){
                             CDBError("Query failed: %s",queryString.c_str());
                             throw(__LINE__);
@@ -463,6 +471,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                             //Later this table will be dropped, but it will remain more up to date during scanning this way.
                             queryString.print("INSERT into %s %s",tableNames[d].c_str(),VALUES.c_str());
                             DB->query(queryString.c_str()); 
+                           
                           }
                         }
                       }
