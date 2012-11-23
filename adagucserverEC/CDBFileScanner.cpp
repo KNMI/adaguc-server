@@ -441,7 +441,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                               ISOTime[19]='Z';ISOTime[20]='\0';
                               VALUES.print("VALUES ('%s','%s','%d','%s')",dirReader->fileList[j]->fullName.c_str(),ISOTime,int(i),fileDate.c_str());
                             }
-                            CDBDebug("%s",VALUES.c_str());
+                            //CDBDebug("%s",VALUES.c_str());
                           }
                         }
                         

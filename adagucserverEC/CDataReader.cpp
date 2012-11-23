@@ -648,10 +648,11 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
     if( dataSource->nativeProj4.indexOf("+proj=longlat")==0){
       size_t j=0;
       for(j=0;j<varX->getSize();j++){
-
+        //CDBDebug("%d == %f",j,((double*)varX->data)[j]);
         if(((double*)varX->data)[j]>=180.0)break;
       }
-      if(j!=0){
+      //CDBDebug("FINAL: %d == %f",j,((double*)varX->data)[j]);
+      if(j!=varX->getSize()){
         useLonTransformation=j;
         dataSource->dfBBOX[0]-=180;
         dataSource->dfBBOX[2]-=180;
