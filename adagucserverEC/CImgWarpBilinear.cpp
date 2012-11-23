@@ -1,6 +1,6 @@
 #include "CImgWarpBilinear.h"
 #include <gd.h>
-DEF_ERRORMAIN();
+//DEF_ERRORMAIN();
 const char *CImgWarpBilinear::className="CImgWarpBilinear";
 void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDrawImage *drawImage){
   #ifdef CImgWarpBilinear_DEBUG
@@ -586,7 +586,7 @@ if(((enableVector||enableBarb)&&drawGridVectors)){
   if (stepx<1) stepx=1;
   int stepy=stepx;
   if(sourceImage->dataObject.size()==2){
-    bool doprint=true;
+    //bool doprint=true;
     for(int y=dPixelExtent[1];y<dPixelExtent[3];y=y+stepy){ //TODO Refactor to GridExtent
         for(int x=dPixelExtent[0];x<dPixelExtent[2];x=x+stepx){
           size_t p = size_t((x-(dPixelExtent[0]))+((y-(dPixelExtent[1]))*dPixelDestW));
@@ -631,7 +631,7 @@ if(((enableVector||enableBarb)&&drawGridVectors)){
             }
           }
         }
-        doprint=false;
+        //doprint=false;
     }
   }
 }

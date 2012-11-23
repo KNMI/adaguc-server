@@ -282,7 +282,7 @@ CDBDebug("getDimsForLayer");
   char szMaxTime[32];
   char szMinTime[32];
   //char szInterval[32];
-  int hastimedomain = 0;
+  //int hastimedomain = 0;
 
 // Dimensions
   if(myWMSLayer->dataSource->dLayerType==CConfigReaderLayerTypeDataBase||
@@ -563,7 +563,7 @@ CDBDebug("Querying %s",query.c_str());
         }
         //strncpy(szInterval,myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.c_str(),32);szInterval[31]='\0';
         const char *pszInterval=myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.c_str();
-            hastimedomain = 1;
+           // hastimedomain = 1;
         //if(srvParam->requestType==REQUEST_WMS_GETCAPABILITIES)
         {
           CT::string dimUnits("ISO8601");

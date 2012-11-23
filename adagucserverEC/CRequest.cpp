@@ -645,7 +645,7 @@ int CRequest::process_all_layers(){
         CDBDebug("Get DIMS from query string");
         #endif
         for(size_t k=0;k<srvParam->requestDims.size();k++)srvParam->requestDims[k]->name.toLowerCaseSelf();
-        int dimsfound[NC_MAX_DIMS];
+        //int dimsfound[NC_MAX_DIMS];
         for(size_t i=0;i<dataSources[j]->cfgLayer->Dimension.size();i++){
           CT::string dimName(dataSources[j]->cfgLayer->Dimension[i]->value.c_str());
           dimName.toLowerCaseSelf();
@@ -653,7 +653,7 @@ int CRequest::process_all_layers(){
           CDBDebug("dimName %s",dimName.c_str());
           #endif
           
-          dimsfound[i]=0;
+          //dimsfound[i]=0;
           //Check if this dim is not already added
           bool alreadyAdded=false;
           for(size_t l=0;l<dataSources[j]->requiredDims.size();l++){
@@ -671,7 +671,7 @@ int CRequest::process_all_layers(){
                 #endif
                 
                 //This dimension has been specified in the request, so the dimension has been found:
-                dimsfound[i]=1;
+                //dimsfound[i]=1;
                 COGCDims *ogcDim = new COGCDims();
                 dataSources[j]->requiredDims.push_back(ogcDim);
                 ogcDim->name.copy(&dimName);
@@ -709,7 +709,7 @@ int CRequest::process_all_layers(){
                 }
                 // If we have value 'current', give the dim a special status
                 if(ogcDim->value.equals("current")){
-                  dimsfound[i]=2;
+                  //dimsfound[i]=2;
                   CT::string tableName(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str());
                   CServerParams::makeCorrectTableName(&tableName,&ogcDim->netCDFDimName);
                   
@@ -1189,7 +1189,7 @@ int CRequest::process_querystring(){
   int dFound_BBOX=0;
   int dFound_SRS=0;
   int dFound_CRS=0;
-  int dFound_Debug=0;
+  //int dFound_Debug=0;
   int dFound_Request=0;
   int dFound_Service=0;
   int dFound_Format=0;
@@ -1515,7 +1515,7 @@ int CRequest::process_querystring(){
         if(values[1].equals("ON")){
           printf("%s%c%c\n","Content-Type:text/plain",13,10);
           printf("Debug mode:ON\nDebug messages:<br>\r\n\r\n");
-          dFound_Debug=1;
+          //dFound_Debug=1;
         }
       }
       

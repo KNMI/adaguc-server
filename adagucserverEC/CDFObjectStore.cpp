@@ -163,9 +163,9 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,const char *file
 
   bool level2CompatMode = false;
   
-  if(CConvertASCAT::convertASCATHeader(cdfObject)==0){level2CompatMode=true;};
-  if(CConvertADAGUCVector::convertADAGUCVectorHeader(cdfObject)==0){level2CompatMode=true;};
-  if(CConvertADAGUCPoint::convertADAGUCPointHeader(cdfObject)==0){level2CompatMode=true;};
+  if(!level2CompatMode)if(CConvertASCAT::convertASCATHeader(cdfObject)==0){level2CompatMode=true;};
+  if(!level2CompatMode)if(CConvertADAGUCVector::convertADAGUCVectorHeader(cdfObject)==0){level2CompatMode=true;};
+  if(!level2CompatMode)if(CConvertADAGUCPoint::convertADAGUCPointHeader(cdfObject)==0){level2CompatMode=true;};
   
   
   

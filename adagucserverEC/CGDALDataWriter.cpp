@@ -427,7 +427,7 @@ int  CGDALDataWriter::end(){
     printf("Content-Disposition: attachment; filename=%s\n",generateGetCoverageFileName().c_str());
     printf("Content-Description: File Transfer\n");
     printf("Content-Transfer-Encoding: binary\n");
-    printf("Content-Length :%d\n",endPos); 
+    printf("Content-Length :%lu\n",endPos); 
     printf("%s%c%c\n",mimeType.c_str(),13,10);
     for(size_t j=0;j<endPos;j++)putchar(getc(fp));
     fclose(fp);

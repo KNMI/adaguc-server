@@ -19,6 +19,9 @@
  * initial programmer :  M.Plieger
  * initial date       :  20120610
  */
+//See http://lkml.org/lkml/2011/7/26/488, GCC 4.6.0 produces false positives, line below fixes this.
+//#pragma GCC diagnostic ignored "-Wunused-variable"
+
 #ifndef CCDFNETCDFIO_H
 #define CCDFNETCDFIO_H
 #include "CCDFDataModel.h"
@@ -28,6 +31,10 @@
 #include <netcdf.h>
 #include <math.h>
 #include "CDebugger.h"
+
+
+
+ 
 //#define CCDFNETCDFIO_DEBUG
 //#ifdef CCDFNETCDFIO_DEBUG        
 //#include "CStopWatch.h"
@@ -211,9 +218,10 @@ class CDFNetCDFReader :public CDFReader{
       status = nc_inq_var(root_id,j,name,&type,&ndims,dimids,&natt);
       if(status!=NC_NOERR){ncError(__LINE__,className,"nc_inq_var: ",status);return 1;}
       //Only add non existing variables...
-      CDF::Variable* existingVariable = NULL;
+      //CDF::Variable* existingVariable = NULL;
       try{
-        existingVariable=cdfObject->getVariable(name);
+        //existingVariable=
+        cdfObject->getVariable(name);
       }catch(...){
         //printf("%s\n",name);
         CDF::Variable * var = new CDF::Variable();

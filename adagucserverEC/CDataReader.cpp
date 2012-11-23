@@ -11,7 +11,7 @@ const char *CDataReader::className="CDataReader";
 #define uchar unsigned char
 #define MAX_STR_LEN 8191
 
-
+/*
 
 void writeLogFile2(const char * msg){
   char * logfile=getenv("ADAGUC_LOGFILE");
@@ -33,7 +33,7 @@ void writeLogFile2(const char * msg){
       fclose (pFile);
     }//else CDBError("Unable to write logfile %s",logfile);
   }
-}
+}*/
 
 /*void printStatus(const char *status,const char *a,...){
   va_list ap;
@@ -365,9 +365,9 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
   /*  LEVEL 2 ASCAT COMPAT MODE!*/
   /**************************************************************************************************/
   bool level2CompatMode = false;
-  if(CConvertASCAT::convertASCATData(dataSource,mode)==0)level2CompatMode=true;
-  if(CConvertADAGUCVector::convertADAGUCVectorData(dataSource,mode)==0)level2CompatMode=true;
-  if(CConvertADAGUCPoint::convertADAGUCPointData(dataSource,mode)==0)level2CompatMode=true;     
+  if(!level2CompatMode)if(CConvertASCAT::convertASCATData(dataSource,mode)==0)level2CompatMode=true;
+  if(!level2CompatMode)if(CConvertADAGUCVector::convertADAGUCVectorData(dataSource,mode)==0)level2CompatMode=true;
+  if(!level2CompatMode)if(CConvertADAGUCPoint::convertADAGUCPointData(dataSource,mode)==0)level2CompatMode=true;     
   
   
 
