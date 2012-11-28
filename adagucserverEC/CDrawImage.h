@@ -38,6 +38,10 @@ float convertValueToClass(float val,float interval);
 #include "CDrawAA.h"
 #endif 
 
+#define COLORTYPE_INDEXED 1;
+#define COLORTYPE_RGBA    2;
+#define COLORTYPE_ARGB    3;
+
 class CLegend{
 public:
   int id;
@@ -152,6 +156,7 @@ class CDrawImage{
     
     void poly(float x1, float y1, float x2, float y2, float x3, float y3, int c, bool fill);
     void circle(int x, int y, int r, int color);
+    void circle(int x, int y, int r, int color,float lineWidth);
     void setPixelIndexed(int x,int y,int color);
     void setPixelTrueColor(int x,int y,unsigned int color);
     void setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,unsigned char b);
@@ -188,6 +193,15 @@ class CDrawImage{
     int draw(int destx, int desty,int sourcex,int sourcey,CDrawImage *simage);
     void crop(int paddingW,int paddingH);
     void crop(int padding);
+    /**
+     * Returns canvas memory in case of true color images
+     */
+    unsigned char* const getCanvasMemory();
+    
+    /**
+     * Returns canvas colortype
+     */
+    int getCanvasColorType();
     
     
 };

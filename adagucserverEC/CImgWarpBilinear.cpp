@@ -1054,7 +1054,7 @@ delete[] valObj;
                           ContourType contourType=getContourInformation(val,pContourDefinitions);
                           if(contourType.contourDefinition!=NULL){
                             if(contourType.text.length()>0){
-                              snprintf(szTemp,8000,contourType.text.c_str());
+                              snprintf(szTemp,8000,"%s",contourType.text.c_str());
                               busyDrawingText=int(float(strlen(szTemp))*1.3)+2;
                             }
                           }

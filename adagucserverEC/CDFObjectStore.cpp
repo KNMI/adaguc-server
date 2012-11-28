@@ -167,6 +167,12 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,const char *file
   if(!level2CompatMode)if(CConvertADAGUCVector::convertADAGUCVectorHeader(cdfObject)==0){level2CompatMode=true;};
   if(!level2CompatMode)if(CConvertADAGUCPoint::convertADAGUCPointHeader(cdfObject)==0){level2CompatMode=true;};
   
+  /*  try{
+    cdfObject->getVariable("natural")->setAttributeText("grid_mapping","projection");
+    cdfObject->getVariable("time")->setAttributeText("units","seconds since 2012");
+  }catch(int e){
+  }*/
+   
   
   
   return cdfObject;

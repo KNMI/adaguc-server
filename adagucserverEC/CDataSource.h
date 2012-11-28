@@ -38,7 +38,7 @@ class CDataSource{
       CDFObject *cdfObject;
       
       CT::string variableName,units;
-      std::vector<PointDV> points;
+      std::vector<PointDVWithLatLon> points;
   };
   
   class Statistics{

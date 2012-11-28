@@ -540,7 +540,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
           //CDBDebug("P %d %d %f",dlon,dlat,val);
           if(dlon>=0&&dlat>=0&&dlon<dataSource->dWidth&&dlat<dataSource->dHeight){
           
-            dataSource->dataObject[d]->points.push_back(PointDV(dlon,dlat,val,id));
+            dataSource->dataObject[d]->points.push_back(PointDVWithLatLon(dlon,dlat,lon,lat,val,id));
           }        
           
           drawCircle(sdata,val,dataSource->dWidth,dataSource->dHeight,dlon-1,dlat,5);

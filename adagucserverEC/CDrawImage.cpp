@@ -201,7 +201,7 @@ void CDrawImage::drawVector(int x,int y,double direction, double strength,int co
 
 void CDrawImage::drawBarb(int x,int y,double direction, double strength,int color, bool toKnots, bool flip){
   double wx1,wy1,wx2,wy2,dx1,dy1;
-
+  float lineWidth=0.60;
   int strengthInKnots=round(strength);
   if (toKnots) {
     strengthInKnots = round(strength*3600/1852.);
@@ -243,7 +243,7 @@ void CDrawImage::drawBarb(int x,int y,double direction, double strength,int colo
   wx1=double(x)-dx1;wy1=double(y)+dy1;  //wind barb top (flag side)
   wx2=double(x);wy2=double(y);  //wind barb root
 
-  circle(int(wx2), int(wy2), 2, color);
+  circle(int(wx2), int(wy2), 2, color,lineWidth);
   int nrPos=10;
 
   int pos=0;
@@ -265,7 +265,7 @@ void CDrawImage::drawBarb(int x,int y,double direction, double strength,int colo
   double hx3=wx3-cos(pi/2-direction+(2-float(flipFactor)*0.1)*pi/2)*barbLength; //was: +cos
   double hy3=wy3-sin(pi/2-direction+(2-float(flipFactor)*0.1)*pi/2)*barbLength; // was: -sin
 
-  line(wx3, wy3, hx3, hy3, color);
+  line(wx3, wy3, hx3, hy3, lineWidth,color);
   pos++;
   }
 
@@ -275,18 +275,19 @@ void CDrawImage::drawBarb(int x,int y,double direction, double strength,int colo
   double wy3=wy1-pos*dy1/nrPos;
   double hx3=wx3-cos(pi/2-direction+(2-float(flipFactor)*0.1)*pi/2)*barbLength/2;
   double hy3=wy3-sin(pi/2-direction+(2-float(flipFactor)*0.1)*pi/2)*barbLength/2;
-    line(wx3, wy3, hx3, hy3, color);
+    line(wx3, wy3, hx3, hy3,lineWidth, color);
   pos++;
   }
 
-  line(wx1,wy1,wx2,wy2,color);
+  line(wx1,wy1,wx2,wy2,lineWidth,color);
 }
 
-void CDrawImage::circle(int x, int y, int r, int color) {
-  if(_bEnableTrueColor==true){
+
+void CDrawImage::circle(int x, int y, int r, int color,float lineWidth) {
+    if(_bEnableTrueColor==true){
 #ifdef ADAGUC_USE_CAIRO
     cairo->setColor(currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],255);
-    cairo->circle(x, y, r);
+    cairo->circle(x, y, r,lineWidth);
     //cairo->line(x1,y1,x2,y2,w);
 #else
         wuLine->setColor(currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],255);
@@ -299,6 +300,13 @@ void CDrawImage::circle(int x, int y, int r, int color) {
     gdImageArc(image, x-1, y-1, r*2+1, r*2+1, 0, 360, _colors[color]);
   }
 }
+
+
+void CDrawImage::circle(int x, int y, int r, int color) {
+  circle(x,y,r,color,1.0);
+}
+
+
 void CDrawImage::poly(float x1,float y1,float x2,float y2,float x3, float y3, int color, bool fill){
   if(_bEnableTrueColor==true){
 #ifdef ADAGUC_USE_CAIRO
@@ -1341,3 +1349,29 @@ int CDrawImage::writeRGBAPng(int width,int height,unsigned char *RGBAByteBuffer,
   return 0;
 }
 #endif
+
+
+unsigned char* const CDrawImage::getCanvasMemory(){
+  if(_bEnableTrueColor==false){
+    CDBError("Unable to return canvas memory for indexed colors");
+    return NULL;
+  }
+#ifdef ADAGUC_USE_CAIRO
+  return cairo->getByteBuffer();
+#else
+  return RGBAByteBuffer;
+#endif
+  
+}
+
+int CDrawImage::getCanvasColorType(){
+  if(_bEnableTrueColor==false){
+    return COLORTYPE_INDEXED;
+  }
+#ifdef ADAGUC_USE_CAIRO
+ return COLORTYPE_ARGB;
+#else
+  return COLORTYPE_RGBA;
+#endif
+ 
+}

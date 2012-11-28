@@ -7,6 +7,7 @@
 #include "CStopWatch.h"
 #include "CIBaseDataWriterInterface.h"
 #include "CImgWarpNearestNeighbour.h"
+#include "CImgWarpNearestRGBA.h"
 #include "CImgWarpBilinear.h"
 #include "CImgWarpBoolean.h"
 #include "CImgRenderPoints.h"
@@ -44,7 +45,7 @@ class CImageDataWriter: public CBaseDataWriterInterface{
     shaded,shadedcontour, 
     point,
     vector, vectorshaded, vectorcontour, vectorcontourshaded, thinvector, thinvectorshaded, thinvectorcontour, thinvectorcontourshaded,
-    nearestcontour,bilinearcontour};
+    nearestcontour,bilinearcontour,rgba};
     static void calculateScaleAndOffsetFromMinMax(float &scale, float &offset,float min,float max,float log);
 public:
   class StyleConfiguration {

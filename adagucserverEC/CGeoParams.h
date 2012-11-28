@@ -43,7 +43,7 @@ public:
 };
 
 /**
- * Class which represent discrete points
+ * Class which represent discrete points as integer
  */
 class PointD{
 public:
@@ -53,6 +53,10 @@ public:
   }
   int x,y;
 };
+
+/**
+ * Class which represent discrete points as integer with float values
+ */
 class PointDV{
 public:
   PointDV(int &x,int &y,float &v,const char *id){
@@ -68,6 +72,41 @@ public:
   }
   int x,y;
   float v;
+  CT::string id;
+};    
+
+/**
+ * Class which represent discrete points as integer with float values and latlon as double values
+ */
+class PointDVWithLatLon{
+public:
+  PointDVWithLatLon(int &x,int &y,double &lon,double &lat,float &v,const char *id){
+    this->x=x;
+    this->y=y;
+    this->v=v;
+    this->lon=lon;
+    this->lat=lat;
+    this->id=id;
+    rotation=0;
+  }
+  PointDVWithLatLon(int &x,int &y,double &lon,double &lat,float &v){
+    this->x=x;
+    this->y=y;
+    this->v=v;
+    this->lon=lon;
+    this->lat=lat;
+    rotation=0;
+  }
+    PointDVWithLatLon(int &x,int &y,double &lon,double &lat,float &v,double &rotation){
+    this->x=x;
+    this->y=y;
+    this->v=v;
+    this->lon=lon;
+    this->lat=lat;
+    this->rotation=rotation;
+  }
+  int x,y;
+  float v,lon,lat,rotation;
   CT::string id;
 };    
 

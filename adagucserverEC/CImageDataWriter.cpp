@@ -44,6 +44,7 @@ CImageDataWriter::RenderMethodEnum CImageDataWriter::getRenderMethodFromString(C
   else if(renderMethodString->equals("thinbarbshaded"))renderMethod=thinbarbshaded;
   else if(renderMethodString->equals("thinbarbcontourshaded"))renderMethod=thinbarbcontourshaded;
   else if(renderMethodString->equals("point"))renderMethod=point;
+  else if(renderMethodString->equals("rgba"))renderMethod=rgba;
   return renderMethod;
 }
 
@@ -201,7 +202,7 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
     //drawImage.setAntiAliased(true);
   }
   
-  
+   drawImage.setTrueColor(true);
   
   // WMS Format in layer always overrides all
   if(dataSource->cfgLayer->WMSFormat.size()>0){
@@ -1352,6 +1353,15 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   }
   
   /**
+   * Use RGBA renderer
+   */
+    if(renderMethod==rgba){
+    imageWarperRenderer = new CImgWarpNearestRGBA();
+    imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
+    delete imageWarperRenderer;
+  }
+  
+  /**
    * Use bilinear renderer
    */
   if(renderMethod==nearestcontour||
@@ -1807,7 +1817,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
       double precision=0.25;
       double numTestSteps = 5;
       CColor textColor(0,0,0,128);
-      float lineWidth=0.1;
+      float lineWidth=0.25;
       int lineColor= 247;
       
       if(dataSource->cfgLayer->Grid[0]->attr.resolution.c_str()!=NULL){

@@ -135,6 +135,8 @@ private:
     //CDBDebug("constructor");
   }
 public:
+
+  
   CCairoPlotter(int width,int height, float fontSize, const char*fontLocation,unsigned char r,unsigned char g,unsigned char b,unsigned char a){
     byteBufferPointerIsOwned = true;
     stride=cairo_format_stride_for_width(FORMAT, width);
@@ -532,6 +534,11 @@ public:
     cairo_stroke(cr);
   }
 
+  void circle(int x, int y, int r,float lineWidth) {
+    cairo_arc(cr, x, y, r, 0, 2*M_PI);
+    cairo_set_line_width(cr, lineWidth);
+    cairo_stroke(cr);
+  }
   void poly(float x[], float y[], int n, bool closePath, bool fill) {
     cairo_move_to(cr, x[0], y[0]);
     for (int i=1; i<n; i++){

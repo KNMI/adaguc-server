@@ -441,7 +441,7 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
             if(fabs(lon0-lons[j])>5)tileIsTooLarge=true;
             if(fabs(lat0-lats[j])>5)tileIsTooLarge=true;
           }
-         
+            int dlons[4],dlats[4];double rotation;
             for(size_t d=0;d<nrDataObjects;d++){
               float *sdata = ((float*)dataSource->dataObject[d]->cdfVariable->data);
               float *swathData = (float*)swathVar[d]->data;
@@ -458,27 +458,49 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
                 vals[3]=vals[0];
               }
               
-              if(vals[0]==fill)tileHasNoData=true;
-            
-              
-              if(tileHasNoData==false){
-                int dlons[4],dlats[4];
-                for(int j=0;j<4;j++){
-                  if(projectionRequired)imageWarper.reprojfromLatLon(lons[j],lats[j]);
-                  dlons[j]=int((lons[j]-offsetX)/cellSizeX);
-                  dlats[j]=int((lats[j]-offsetY)/cellSizeY);
-                }
-                if(dataSource->dataObject.size()==2){
-                  if(dlons[0]>=0&&dlons[0]<dataSource->dWidth&&dlats[0]>0&&dlats[0]<dataSource->dHeight){
-                    dataSource->dataObject[d]->points.push_back(PointDV(dlons[0],dlats[0],vals[0]));
-                  }
-                }
+              if(d==0){
+                if(vals[0]==fill)tileHasNoData=true;
                 if(vals[1]==fill)tileHasNoData=true;
                 if(vals[2]==fill)tileHasNoData=true;
                 if(vals[3]==fill)tileHasNoData=true;
-                if(tileHasNoData==false){
-                  if(tileIsTooLarge==false){
-                    fillQuadGouraud(sdata, vals, dataSource->dWidth,dataSource->dHeight, dlons,dlats);
+              }
+            
+            rotation=0;
+            if(tileHasNoData==false){
+              if(d==0){
+                double latOffSetForRot=lats[0]-0.01;
+                double lonOffSetForRot=lons[0];
+                if(projectionRequired){
+                  imageWarper.reprojfromLatLon(lonOffSetForRot,latOffSetForRot);
+                }
+                for(int j=0;j<4;j++){
+                  if(projectionRequired){
+                    if(imageWarper.reprojfromLatLon(lons[j],lats[j])!=0){tileHasNoData=true;break;}
+                  }
+                  dlons[j]=int((lons[j]-offsetX)/cellSizeX);
+                  dlats[j]=int((lats[j]-offsetY)/cellSizeY);
+                }
+                if(projectionRequired){
+                  double dy=lats[0] - latOffSetForRot;
+                  double dx=lons[0] - lonOffSetForRot;
+                  rotation= -(atan2(dy,dx)/(3.141592654))*180-90;
+               
+                }
+                
+               }
+               if(tileHasNoData==false){
+                  if(dataSource->dataObject.size()==2){
+                    if(dlons[0]>=0&&dlons[0]<dataSource->dWidth&&dlats[0]>0&&dlats[0]<dataSource->dHeight){
+                      if(tileIsTooLarge==false){
+                        dataSource->dataObject[d]->points.push_back(PointDVWithLatLon(dlons[0],dlats[0],lons[0],lats[0],vals[0],rotation));
+                      }
+                    }
+                  }
+            
+                  if(tileHasNoData==false){
+                    if(tileIsTooLarge==false){
+                      fillQuadGouraud(sdata, vals, dataSource->dWidth,dataSource->dHeight, dlons,dlats);
+                  }
                 }
               }
             }

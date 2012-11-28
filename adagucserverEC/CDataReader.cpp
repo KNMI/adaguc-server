@@ -323,7 +323,7 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
   thisCDFObject=cdfObject;
   if(cdfObject==NULL){return 1;}*/
 
-   
+
  // dataSource->cdfObject=cdfObject;
   
   CDF::Variable *var[dataSource->dataObject.size()+1];

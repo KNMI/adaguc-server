@@ -5,6 +5,8 @@
 #include "CImageWarperRenderInterface.h"
 
 
+//#define CIMGWARPNEARESTNEIGHBOUR_DEBUG
+
 /**
  *  This interface represents the tile rendering classes.
  */
@@ -261,7 +263,7 @@ public:
   template <class T>
   int myDrawRawTile(T*data,double *x_corners,double *y_corners,int &dDestX,int &dDestY){
     #ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
-    CDBDebug("myDrawRawTile %f, %f, %f, %f, %f, %f %f %f",dfSourceBBOX[0],dfSourceBBOX[1],dfSourceBBOX[2],dfSourceBBOX[3],width,height,x_div,y_div);
+    CDBDebug("myDrawRawTile %f, %f, %f, %f, %d, %d %f %f",dfSourceBBOX[0],dfSourceBBOX[1],dfSourceBBOX[2],dfSourceBBOX[3],width,height,x_div,y_div);
     #endif 
     double sample_sy,sample_sx;
     double line_dx1,line_dy1,line_dx2,line_dy2;
@@ -309,12 +311,16 @@ public:
          * 
          */
       #ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
-      CDBDebug("myDrawRawTile %f, %f, %f, %f, %f, %f %f %f",dfSourceBBOX[0],dfSourceBBOX[1],dfSourceBBOX[2],dfSourceBBOX[3],width,height,x_div,y_div);
+      CDBDebug("myDrawRawTile %f, %f, %f, %f, %d, %d %f %f",dfSourceBBOX[0],dfSourceBBOX[1],dfSourceBBOX[2],dfSourceBBOX[3],width,height,x_div,y_div);
       #endif
       line_dx1= x_corners[3];
       line_dx2= x_corners[2];
       line_dy1= y_corners[3];
       line_dy2= y_corners[2];
+      
+//      CDBDebug("lines: %f %f %f %f",line_dx1,line_dx2,line_dy1,line_dy2);
+   //   CDBDebug("rcs: %f %f %f %f",rcx_1,rcy_1,rcx_2,rcy_2);
+      
       bool isNodata=false;
       T val;
       T nodataValue=(T)dfNodataValue;
@@ -326,18 +332,23 @@ public:
         rcy_3= (line_dy2 -line_dy1)/y_div;
         dstpixel_x=int(x)+dDestX;
         for(y=0;y<=y_div;y=y+1){
+          
           dstpixel_y=y+dDestY-1;
           sample_sx=line_dx1+rcx_3*double(y);
+          //CDBDebug("Drawing1 sx:%f l:%f rc:%f y:%d between %f-%f",sample_sx,line_dx1,rcx_3,y,dfSourceBBOX[0],dfSourceBBOX[2]);
           if(sample_sx>=dfSourceBBOX[0]&&sample_sx<dfSourceBBOX[2])
           {
+           //  CDBDebug("Drawing2");
             sample_sy=line_dy1+rcy_3*y;
             if(sample_sy>=dfSourceBBOX[1]&&sample_sy<dfSourceBBOX[3])
             {
+               //CDBDebug("Drawing3");
               srcpixel_x=int(((sample_sx-dfImageBBOX[0])/(dfImageBBOX[2]-dfImageBBOX[0]))*(width));
               if(srcpixel_x>=0&&srcpixel_x<width){
+                //  CDBDebug("Drawing4");
                 srcpixel_y=int(((sample_sy-dfImageBBOX[1])/(dfImageBBOX[3]-dfImageBBOX[1]))*height);
-                if(srcpixel_y>=0&&srcpixel_y<height)
-                {
+                if(srcpixel_y>=0&&srcpixel_y<height){
+                  //  CDBDebug("Drawing4");
                   imgpointer=srcpixel_x+(height-1-srcpixel_y)*width;
                   //imgpointer=srcpixel_x+(dHeight-1-srcpixel_y)*dWidth;
                   val=data[imgpointer];
@@ -442,41 +453,55 @@ private:
       (dfTiledBBOX[1]>dfSourceBBOX[1]-dfTileH&&dfTiledBBOX[1]<dfSourceBBOX[3]+dfTileH)&&
       (dfTiledBBOX[3]>dfSourceBBOX[1]-dfTileH&&dfTiledBBOX[3]<dfSourceBBOX[3]+dfTileH)
     )
-      ;else return 1;
-      psx[0]=dfTiledBBOX[2];
-      psx[1]=dfTiledBBOX[2];
-      psx[2]=dfTiledBBOX[0];
-      psx[3]=dfTiledBBOX[0];
-      psy[0]=dfTiledBBOX[1];
-      psy[1]=dfTiledBBOX[3];
-      psy[2]=dfTiledBBOX[3];
-      psy[3]=dfTiledBBOX[1];
-      CT::string destinationCRS;
-      warper->decodeCRS(&destinationCRS,&GeoDest->CRS);
-      if(destinationCRS.indexOf("longlat")>=0){
-        for(int j=0;j<4;j++){
-          psx[j]*=DEG_TO_RAD;
-          psy[j]*=DEG_TO_RAD;
-        }
+    {}else{ return 1;}
+    psx[0]=dfTiledBBOX[2];
+    psx[1]=dfTiledBBOX[2];
+    psx[2]=dfTiledBBOX[0];
+    psx[3]=dfTiledBBOX[0];
+    psy[0]=dfTiledBBOX[1];
+    psy[1]=dfTiledBBOX[3];
+    psy[2]=dfTiledBBOX[3];
+    psy[3]=dfTiledBBOX[1];
+    if(warper->isProjectionRequired()){
+    //return 0;
+    
+    CT::string destinationCRS;
+    warper->decodeCRS(&destinationCRS,&GeoDest->CRS);
+    if(destinationCRS.indexOf("longlat")>=0){
+      for(int j=0;j<4;j++){
+        psx[j]*=DEG_TO_RAD;
+        psy[j]*=DEG_TO_RAD;
       }
-      pj_transform(warper->destpj,warper->sourcepj, 4,0,psx,psy,NULL);
-      if(dataSource->nativeProj4.indexOf("longlat")>=0)
-        for(int j=0;j<4;j++){
-          psx[j]/=DEG_TO_RAD;
-          psy[j]/=DEG_TO_RAD;
-        }
-        x_corners[0]=psx[1];
-      y_corners[0]=psy[1];
-      
-      x_corners[1]=psx[0];
-      y_corners[1]=psy[0];
-      
-      x_corners[2]=psx[3];
-      y_corners[2]=psy[3];
-      
-      x_corners[3]=psx[2];
-      y_corners[3]=psy[2];
-      return 0;
+    }
+
+    
+    if(pj_transform(warper->destpj,warper->sourcepj, 4,0,psx,psy,NULL)){
+      CDBDebug("Unable to do pj_transform");
+    }
+
+    
+    if(dataSource->nativeProj4.indexOf("longlat")>=0)
+      for(int j=0;j<4;j++){
+        psx[j]/=DEG_TO_RAD;
+        psy[j]/=DEG_TO_RAD;
+      }
+    }
+    x_corners[0]=psx[1];
+    y_corners[0]=psy[1];
+    
+    x_corners[1]=psx[0];
+    y_corners[1]=psy[0];
+    
+    x_corners[2]=psx[3];
+    y_corners[2]=psy[3];
+    
+    x_corners[3]=psx[2];
+    y_corners[3]=psy[2];
+    
+   /*for(int j=0;j<4;j++){
+      CDBDebug("xcorners: %f %f", x_corners[j],y_corners[j]);
+    }*/
+    return 0;
   }
   
   //Setup projection and all other settings for the tiles to draw

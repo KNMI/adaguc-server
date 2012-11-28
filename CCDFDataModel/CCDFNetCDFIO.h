@@ -356,7 +356,7 @@ CDBDebug("closing");
 #endif      
       var->setSize(totalVariableSize);
       CDF::allocateData(type,&var->data,var->getSize());
-      
+     
       //printf("%s\n",var->name.c_str());
       //if(var->name.equals("azidiff"))return 0;
       if(type==CDF_BYTE)status = nc_get_var_ubyte(root_id,var->id,(unsigned char*)var->data);
@@ -368,6 +368,7 @@ CDBDebug("closing");
       else if(type==CDF_FLOAT)status = nc_get_var_float(root_id,var->id,(float*)var->data);
       else if(type==CDF_DOUBLE)status = nc_get_var_double(root_id,var->id,(double*)var->data);
       else if(type==CDF_STRING){
+      
         status = nc_get_var_string(root_id,var->id,(char**)var->data);
       }
       else {
@@ -377,7 +378,7 @@ CDBDebug("closing");
       if(status!=NC_NOERR){
         char typeName[254];
         CDF::getCDFDataTypeName(typeName,255,var->type);
-        CDBError("Problem with variable %s of type %s:",var->name.c_str(),typeName);
+        CDBError("Problem with variable %s of type %s (requested %s):",var->name.c_str(),typeName,CDF::getCDFDataTypeName(type).c_str());
         ncError(__LINE__,className,"nc_get_var: ",status);
         return 1;
         
