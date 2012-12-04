@@ -10,8 +10,30 @@
 #include "CGeoParams.h"
 #include "CPGSQLDB.h"
 
-#define MAX_DIMS 10
+//#define MAX_DIMS 10
 
+/**
+ * See http://www.resc.rdg.ac.uk/trac/ncWMS/wiki/WmsExtensions
+ */
+class CWMSExtensions{
+public:
+  CWMSExtensions(){
+    opacity=100;
+    colorScaleRangeSet = false;
+    numColorBands=-1;
+    logScale =false;
+  }
+  double opacity;//0 = fully transparent, 100 = fully opaque (default). Only applies to image formats that support partial pixel transparency (e.g. PNG). This parameter is redundant if the client application can set image opacity (e.g. Google Earth). 
+  double colorScaleRangeMin;
+  double colorScaleRangeMax;
+  bool colorScaleRangeSet;
+  int numColorBands;
+  bool logScale;
+};
+
+/**
+ * Global server settings, initialized at the start, accesible from almost everywhere
+ */
 class CServerParams{
   DEF_ERRORFUNCTION();
   private:
@@ -25,7 +47,7 @@ class CServerParams{
     CT::string InfoFormat;
     int imageFormat;
     int imageMode;
-    
+    CWMSExtensions wmsExtensions;
     /*
      * figWidth and figHeight override normal width and height to shape a getfeatureinfo graph
      */

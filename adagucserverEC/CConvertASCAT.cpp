@@ -467,6 +467,7 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
             
             rotation=0;
             if(tileHasNoData==false){
+              double origLon=lons[0],origLat=lats[0];
               if(d==0){
                 double latOffSetForRot=lats[0]-0.01;
                 double lonOffSetForRot=lons[0];
@@ -492,7 +493,14 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
                   if(dataSource->dataObject.size()==2){
                     if(dlons[0]>=0&&dlons[0]<dataSource->dWidth&&dlats[0]>0&&dlats[0]<dataSource->dHeight){
                       if(tileIsTooLarge==false){
-                        dataSource->dataObject[d]->points.push_back(PointDVWithLatLon(dlons[0],dlats[0],lons[0],lats[0],vals[0],rotation));
+                      //  if(d==1)vals[0]=0;
+                        if(d==0){
+                          //Wind direction in ascat has an oceanographic convention, for meteorological symbols it should be shifted 180 degrees.
+                          rotation+=180;
+                        }
+                
+                        
+                        dataSource->dataObject[d]->points.push_back(PointDVWithLatLon(dlons[0],dlats[0],origLon,origLat,vals[0],rotation));
                       }
                     }
                   }

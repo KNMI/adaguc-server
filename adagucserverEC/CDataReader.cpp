@@ -1670,7 +1670,7 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
     return 1;
   }
   
-  CDBDebug("Dimensions: %d - %d",dataSource->cfgLayer->Dimension.size(),dataSource->dataObject[0]->cdfVariable->dimensionlinks.size());
+//  CDBDebug("Dimensions: %d - %d",dataSource->cfgLayer->Dimension.size(),dataSource->dataObject[0]->cdfVariable->dimensionlinks.size());
   
   try{
     if(dataSource->dataObject.size()==0){CDBDebug("dataSource->dataObject.size()==0");throw(__LINE__);}

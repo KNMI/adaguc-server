@@ -89,6 +89,7 @@ class CDrawImage{
     unsigned char BGColorR,BGColorG,BGColorB;
     bool _bEnableTransparency;
     bool _bEnableTrueColor;
+    unsigned char backgroundAlpha;
     //bool _bAntiAliased;
     int brect[8];
 #ifdef ADAGUC_USE_CAIRO
@@ -188,6 +189,13 @@ class CDrawImage{
     bool isPixelTransparent(int &x,int &y);
     bool isColorTransparent(int &color);
     void getCanvasSize(int &x,int &y,int &w,int &h);
+    
+    /**
+     * @param alpha The transparency of the resulting image written as PNG: 0 is transparent, 255 is opaque
+     */
+    void setBackGroundAlpha(unsigned char alpha){
+      backgroundAlpha=alpha;
+    }
     
     int setCanvasSize(int x,int y,int width,int height);
     int draw(int destx, int desty,int sourcex,int sourcey,CDrawImage *simage);

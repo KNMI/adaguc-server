@@ -1205,6 +1205,9 @@ int CRequest::process_querystring(){
   int dFound_Styles=0;
   int dFound_Style=0;
   
+  
+
+  
   int dFound_autoResourceLocation=0;
   int dFound_OpenDAPVariable=0;
   
@@ -1547,6 +1550,31 @@ int CRequest::process_querystring(){
           srvParam->showNorthArrow = true;
         }
       }
+      
+      //http://www.resc.rdg.ac.uk/trac/ncWMS/wiki/WmsExtensions
+      if(value0Cap.equals("OPACITY")){
+        srvParam->wmsExtensions.opacity = values[1].toDouble();
+      }  
+      if(value0Cap.equals("COLORSCALERANGE")){
+        CT::string *valuesC=values[1].splitToArray(",");
+        if(valuesC->count==2){
+          srvParam->wmsExtensions.colorScaleRangeMin = valuesC[0].toDouble();
+          srvParam->wmsExtensions.colorScaleRangeMax = valuesC[1].toDouble();
+          srvParam->wmsExtensions.colorScaleRangeSet=true;
+          
+        }
+        delete[] valuesC;
+      }  
+      if(value0Cap.equals("NUMCOLORBANDS")){
+        srvParam->wmsExtensions.numColorBands = values[1].toInt();
+      }  
+      if(value0Cap.equals("LOGSCALE")){
+        values[1].toLowerCaseSelf();
+        if(values[1].equals("true")){
+          srvParam->wmsExtensions.logScale = true;
+        }
+      }  
+      
     }
     delete[] values;
   }

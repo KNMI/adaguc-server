@@ -265,6 +265,9 @@ CDBDebug("getProjectionInformationForLayer");
     
     warper.findExtent(myWMSLayer->dataSource,myProjection->dfBBOX);
 
+    #ifdef CXMLGEN_DEBUG    
+        CDBDebug("PROJ=%s\tBBOX=(%f,%f,%f,%f)",myProjection->name.c_str(),myProjection->dfBBOX[0],myProjection->dfBBOX[1],myProjection->dfBBOX[2],myProjection->dfBBOX[3]);
+    #endif
     //Calculate the latlonBBOX
     if(srvParam->cfg->Projection[p]->attr.id.equals("EPSG:4326")){
       for(int k=0;k<4;k++)myWMSLayer->dfLatLonBBOX[k]=myProjection->dfBBOX[k];

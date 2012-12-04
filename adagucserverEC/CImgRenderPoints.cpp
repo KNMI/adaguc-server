@@ -50,9 +50,9 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
      // direction=360-45;
       //drawImage->drawVector(x, y, ((90-direction)/360)*3.141592654*2, strength*2, 240);
       if(lat>0){
-       drawImage->drawBarb(x, y, ((270-direction)/360)*3.141592654*2, strength*2, 240,false,false);
+       drawImage->drawBarb(x, y, ((90-direction)/360)*3.141592654*2, strength*2, 240,false,false);
       }else{
-        drawImage->drawBarb(x, y, ((270-direction)/360)*3.141592654*2, strength*2, 240,false,true);
+        drawImage->drawBarb(x, y, ((90-direction)/360)*3.141592654*2, strength*2, 240,false,true);
       }
        //void drawBarb(int x,int y,double direction, double strength,int color,bool toKnots,bool flip);
       if((*p1)[j].id.length()>0){

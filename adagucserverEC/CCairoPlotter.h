@@ -583,8 +583,15 @@ public:
 #endif
   }
 #endif //USE_FREETYPE
-
   void writeToPngStream(FILE *fp) {
+    cairo_surface_flush(surface);
+    this->fp=fp;
+    cairo_surface_write_to_png_stream(surface, writerFunc, (void *)fp);
+  }
+  
+  void writeToPngStream(FILE *fp,float alpha) {
+    cairo_set_operator (cr,CAIRO_OPERATOR_DEST_IN);
+    cairo_paint_with_alpha (cr, alpha);
     cairo_surface_flush(surface);
     this->fp=fp;
     cairo_surface_write_to_png_stream(surface, writerFunc, (void *)fp);

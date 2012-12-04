@@ -202,7 +202,15 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
     //drawImage.setAntiAliased(true);
   }
   
-   drawImage.setTrueColor(true);
+   if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
+      if(initializeLegend(srvParam,dataSource)!=0)return 1;
+   }
+   if(currentStyleConfiguration!=NULL){
+    if(currentStyleConfiguration->renderMethod==rgba){
+
+     drawImage.setTrueColor(true);
+  }
+   }
   
   // WMS Format in layer always overrides all
   if(dataSource->cfgLayer->WMSFormat.size()>0){
@@ -231,7 +239,10 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
     }
   }
   
-  
+  //Set background opacity, if applicable
+  if(srvParam->wmsExtensions.opacity<100){
+    drawImage.setBackGroundAlpha((unsigned char )(float(srvParam->wmsExtensions.opacity)*2.55));
+  }
   
   int status;
   if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
@@ -296,7 +307,7 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
 
   //Create palette for internal WNS layer
   if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
-    if(initializeLegend(srvParam,dataSource)!=0)return 1;
+//    if(initializeLegend(srvParam,dataSource)!=0)return 1;
     status = drawImage.createGDPalette(srvParam->cfg->Legend[currentStyleConfiguration->legendIndex]);
     if(status != 0){
       CDBError("Unknown palette type for %s",srvParam->cfg->Legend[currentStyleConfiguration->legendIndex]->attr.name.c_str());
@@ -457,6 +468,23 @@ int CImageDataWriter::makeStyleConfig(StyleConfiguration *styleConfig,CDataSourc
       styleConfig->legendHasFixedMinMax=true;
     }
   }
+  
+  //Min and max can again be overriden by WMS extension settings
+  if( dataSource->srvParams->wmsExtensions.colorScaleRangeSet){
+    minMaxSet=true;
+    min=dataSource->srvParams->wmsExtensions.colorScaleRangeMin;
+    max=dataSource->srvParams->wmsExtensions.colorScaleRangeMax;
+  }
+  //Log can again be overriden by WMS extension settings
+  if(dataSource->srvParams->wmsExtensions.logScale){
+    s->legendLog=10;
+  }
+      
+  if(dataSource->srvParams->wmsExtensions.numColorBands !=-1){
+    s->shadeInterval=dataSource->srvParams->wmsExtensions.numColorBands;
+    s->contourIntervalL=dataSource->srvParams->wmsExtensions.numColorBands;
+  }
+        
   
   
   //When min and max are given, calculate the scale and offset according to min and max.
@@ -2704,11 +2732,17 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
     legendType = statusflag;
   }else if(renderMethod!=shadedcontour&&renderMethod!=shaded&&renderMethod!=contour){
     legendType = continous;
-  }else {
+  }else{
     legendType = discrete;
   }
+  
+  if(renderMethod==rgba){
+    legendType=cascaded;
+  }
  
- 
+ if(legendType == cascaded){
+     legendImage->crop(1,1);
+ }
   
   
   //Create a legend based on status flags.

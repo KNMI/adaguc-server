@@ -39,7 +39,7 @@ CDrawImage::CDrawImage(){
   BGColorR=0;
   BGColorG=0;
   BGColorB=0;
-  
+  backgroundAlpha=255;
   //CDBDebug("TTFFontLocation = %s",TTFFontLocation);
 }
 void CDrawImage::destroyImage(){
@@ -114,7 +114,7 @@ int CDrawImage::createImage(CGeoParams *_Geo){
         RGBAByteBuffer[j*4+0]=BGColorR;
         RGBAByteBuffer[j*4+1]=BGColorG;
         RGBAByteBuffer[j*4+2]=BGColorB;
-        RGBAByteBuffer[j*4+3]=255;
+        RGBAByteBuffer[j*4+3]=backgroundAlpha;
       }
     }
     wuLine = new CXiaolinWuLine(Geo->dWidth,Geo->dHeight,RGBAByteBuffer);
@@ -140,7 +140,11 @@ int CDrawImage::printImagePng(){
   if(_bEnableTrueColor==true){
     //writeAGGPng();
 #ifdef ADAGUC_USE_CAIRO
-    cairo->writeToPngStream(stdout);
+    if(backgroundAlpha!=255){
+      cairo->writeToPngStream(stdout,float(backgroundAlpha)/255);
+    }else{
+      cairo->writeToPngStream(stdout);
+    }
 #else
     writeRGBAPng(Geo->dWidth,Geo->dHeight,RGBAByteBuffer,stdout,true);
 #endif
@@ -201,7 +205,7 @@ void CDrawImage::drawVector(int x,int y,double direction, double strength,int co
 
 void CDrawImage::drawBarb(int x,int y,double direction, double strength,int color, bool toKnots, bool flip){
   double wx1,wy1,wx2,wy2,dx1,dy1;
-  float lineWidth=0.60;
+  float lineWidth=0.50;
   int strengthInKnots=round(strength);
   if (toKnots) {
     strengthInKnots = round(strength*3600/1852.);
@@ -209,7 +213,7 @@ void CDrawImage::drawBarb(int x,int y,double direction, double strength,int colo
 
   if(strengthInKnots<=2){
 	// draw a circle
-    circle(x, y, 6, color);
+    circle(x, y, 6, color,lineWidth);
     return;
   }
 
