@@ -2489,33 +2489,36 @@ int CImageDataWriter::end(){
               //}
 
               float v1l=v1;
-              if(v1l>0){
-                if(dataSource->legendLog!=0){v1l=log10(v1l)/log10(dataSource->legendLog);}
-                v1l*=dataSource->legendScale;
-                v1l+=dataSource->legendOffset;
-                v1l/=240.0;
-              }else v1l=-dataSource->legendOffset;
-         
-              
               float v2l=v2;
-              if(v2l>0){
-                if(dataSource->legendLog!=0){v2l=log10(v2l)/log10(dataSource->legendLog);}
-                v2l*=dataSource->legendScale;
-                v2l+=dataSource->legendOffset;
-                v2l/=240.0;
-              }else v2l=-dataSource->legendOffset;
-         
+              bool noData=false;
+              if(dataSource->legendLog!=0){
+                if ((v1>0)&&(v2>0)){
+		  v1l=log10(v1l)/log10(dataSource->legendLog);
+		  v2l=log10(v2l)/log10(dataSource->legendLog);
+		} else {
+		  noData=true;
+		}
+              }
 
-              int y1=int((1-v1l)*plotHeight);
-              int y2=int((1-v2l)*plotHeight);
-              CColor color=CColor(255,255,255,255);
-              if(elNr==0){color=CColor(0,0,255,255);}
-              if(elNr==1){color=CColor(0,255,0,255);}
-              if(elNr==2){color=CColor(255,0,0,255);}
-              if(elNr==3){color=CColor(255,128,0,255);}
-              if(elNr==4){color=CColor(0,255,128,255);}
-              if(elNr==5){color=CColor(255,0,128,255);}
-              lineCanvas.line(x1,y1,x2,y2,2,color);
+	      v1l*=dataSource->legendScale;
+	      v1l+=dataSource->legendOffset;
+	      v1l/=240.0;
+	      v2l*=dataSource->legendScale;
+	      v2l+=dataSource->legendOffset;
+	      v2l/=240.0;
+         
+              if (!noData) {
+		int y1=int((1-v1l)*plotHeight);
+		int y2=int((1-v2l)*plotHeight);
+		CColor color=CColor(255,255,255,255);
+		if(elNr==0){color=CColor(0,0,255,255);}
+		if(elNr==1){color=CColor(0,255,0,255);}
+		if(elNr==2){color=CColor(255,0,0,255);}
+		if(elNr==3){color=CColor(255,128,0,255);}
+		if(elNr==4){color=CColor(0,255,128,255);}
+		if(elNr==5){color=CColor(255,0,128,255);}
+		lineCanvas.line(x1,y1,x2,y2,2,color);
+              }
               
             }
           }
