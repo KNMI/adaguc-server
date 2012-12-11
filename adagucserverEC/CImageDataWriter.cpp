@@ -1257,14 +1257,16 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       windspeedOrigElement->standard_name="speed1";
       windspeedOrigElement->feature_name="wind speed";
       windspeedOrigElement->value.print("%03.0f",windspeed);
-      windspeedOrigElement->units=dataSource->dataObject[0]->cdfVariable->getAttribute("units")->toString();
+      windspeedOrigElement->units=dataSource->dataObject[0]->units;
+//      windspeedOrigElement->units=dataSource->dataObject[0]->cdfVariable->getAttribute("units")->toString();
 //      windspeedOrigElement->time="";
       windspeedOrigElement->time.copy(&dataSources[d]->timeSteps[dataSources[d]->getCurrentTimeStep()]->timeString);
 
       //Skip KTS calculation if input data is not u and v vectors in m/s.
       bool skipKTSCalc = true;
       try{
-	if(dataSource->dataObject[0]->cdfVariable->getAttribute("units")->toString().indexOf("m/s")>=0){
+//	if(dataSource->dataObject[0]->cdfVariable->getAttribute("units")->toString().indexOf("m/s")>=0){
+	if(dataSource->dataObject[0]->units.indexOf("m/s")>=0){
 	  skipKTSCalc =false;
 	}
       }catch(int e){}
