@@ -1,5 +1,8 @@
 #include "CImgWarpBilinear.h"
 #include <gd.h>
+
+//#define CImgWarpBilinear_DEBUG
+
 //DEF_ERRORMAIN();
 const char *CImgWarpBilinear::className="CImgWarpBilinear";
 void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDrawImage *drawImage){
@@ -250,7 +253,9 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
       } else {
         gridRelative=false;
       }
+      #ifdef CImgWarpBilinear_DEBUG
       CDBDebug("Grid propery gridRelative=%d", gridRelative);
+      #endif
     
     #ifdef CImgWarpBilinear_DEBUG
       StopWatch_Stop("u/v rotation started");
@@ -260,11 +265,13 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
       double deltaLat;
       float *uValues=valObj[0].fpValues;
       float *vValues=valObj[1].fpValues;
+      #ifdef CImgWarpBilinear_DEBUG
       CDBDebug("Data raster: %f,%f with %f,%f (%f,%f) ll: (%d,%d) ur: (%d,%d) [%d,%d]\n", 
                dfSourceOrigX, dfSourceOrigY, dfSourcedExtW, dfSourcedExtH,
                dfSourceExtW, dfSourceExtH,
                dPixelExtent[0], dPixelExtent[1], dPixelExtent[2], dPixelExtent[3],
                dPixelDestW, dPixelDestH);
+      #endif
       if (dfSourcedExtH<0){
         deltaLat=-delta;
       } else {
@@ -279,7 +286,9 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
       deltaLon=delta;
       double signLon=(dfSourceExtW<0)?-1:1; // sign for adaptation of Jacobian to grid organisation
       double signLat=(dfSourceExtH<0)?-1:1; // sign for adaptation of Jacobian to grid organisation
+      #ifdef CImgWarpBilinear_DEBUG
       CDBDebug("deltaLon %f deltaLat %f signLon %f signLat %f", deltaLon, deltaLat, signLon, signLat);
+      #endif
       
       for(int y=dPixelExtent[1];y<dPixelExtent[3];y=y+1){
         for(int x=dPixelExtent[0];x<dPixelExtent[2];x=x+1){
@@ -504,7 +513,9 @@ bool convertToKnots=false; //default is false
     //Derive convertToKnots from units
     CT::string units="m/s";
     units=sourceImage->dataObject[0]->units;
+    #ifdef CImgWarpBilinear_DEBUG
     CDBDebug("units = %s", units.c_str());
+    #endif
     if (!(units.equals("kts")||units.equals("knots"))) convertToKnots=true;
     
     

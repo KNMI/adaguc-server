@@ -1521,7 +1521,7 @@ if(renderMethod==contour){CDBDebug("contour");}*/
         
         //bilinearSettings.printconcat("textScaleFactor=%f;textOffsetFactor=%f;",textScaleFactor,textOffsetFactor);
       }
-      CDBDebug("bilinearSettings.c_str() %s",bilinearSettings.c_str());
+      //CDBDebug("bilinearSettings.c_str() %s",bilinearSettings.c_str());
       imageWarperRenderer->set(bilinearSettings.c_str());
       imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
       delete imageWarperRenderer;
@@ -1533,14 +1533,16 @@ if(renderMethod==contour){CDBDebug("contour");}*/
    */
   //if(renderMethod==barb||renderMethod==vector||renderMethod==point){
   if(renderMethod&RM_BARB||renderMethod&RM_VECTOR||renderMethod&RM_POINT||renderMethod==RM_NEAREST){
-    //CDBDebug("CImgRenderPoints()");
-    
-    imageWarperRenderer = new CImgRenderPoints();
-    CT::string renderMethodAsString;
-    getRenderMethodAsString(&renderMethodAsString,renderMethod);
-    imageWarperRenderer->set(renderMethodAsString.c_str());
-    imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
-    delete imageWarperRenderer;
+    if(dataSource->dataObject[0]->points.size()!=0){
+      //CDBDebug("CImgRenderPoints()");
+      
+      imageWarperRenderer = new CImgRenderPoints();
+      CT::string renderMethodAsString;
+      getRenderMethodAsString(&renderMethodAsString,renderMethod);
+      imageWarperRenderer->set(renderMethodAsString.c_str());
+      imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
+      delete imageWarperRenderer;
+    }
   }
   
 #ifdef MEASURETIME
