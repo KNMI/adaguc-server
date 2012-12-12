@@ -405,10 +405,10 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
     int convertKNMIHDF5toCF(){
       //Fill in dim ranges
       CDF::Variable *var = cdfObject->getVariableNE("image1.image_data");
-      if(var==NULL){CDBError("variable image1.image_data not found");return 1;}
+      //if(var==NULL){CDBError("variable image1.image_data not found");return 1;}
       CDF::Variable *geo = cdfObject->getVariableNE("geographic");
       if(geo==NULL){CDBError("variable geographic not found");return 1;}
-      if(var->dimensionlinks.size()!=2){CDBError("variable does not have 2 dims");return 1;}
+      //if(var->dimensionlinks.size()!=2){CDBError("variable does not have 2 dims");return 1;}
       CDF::Variable *proj = cdfObject->getVariableNE("geographic.map_projection");
       if(proj==NULL){CDBError("variable geographic.map_projection not found");return 1;}
       CDF::Attribute *cellsizeXattr =geo->getAttributeNE("geo_pixel_size_x");
@@ -516,6 +516,7 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
       try{cdfObject->addAttribute(new CDF::Attribute("references",(char *)overview->getAttribute("hdftag_url")->data));}catch(int e){}
       try{cdfObject->addAttribute(new CDF::Attribute("title",(char *)overview->getAttribute("product_group_title")->data));}catch(int e){}
     
+      if(var==NULL)return 0;
       CDF::Dimension *dimX=var->dimensionlinks[1];
       CDF::Dimension *dimY=var->dimensionlinks[0];
       CDF::Variable *varX=cdfObject->getVariableNE(dimX->name.c_str());

@@ -7,7 +7,7 @@
 
 const char *CDataReader::className="CDataReader";
 
-//#define CDATAREADER_DEBUG
+#define CDATAREADER_DEBUG
 #define uchar unsigned char
 #define MAX_STR_LEN 8191
 
@@ -660,6 +660,9 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
       }
     }
   }
+  #ifdef CDATAREADER_DEBUG
+    CDBDebug("BBOX = [%f,%f,%f,%f]", dataSource->dfBBOX[0], dataSource->dfBBOX[1], dataSource->dfBBOX[2], dataSource->dfBBOX[3]);
+  #endif
  
   //     CDF::dump(cdfObject,&dumpString);
   //CDBDebug("\nSTART\n%s\nEND\n",dumpString.c_str());

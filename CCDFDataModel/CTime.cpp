@@ -212,6 +212,7 @@ CTime::Date CTime::freeDateStringToDate(const char*szTime){
     date.concat("Z");
     return stringToDate(date.c_str());
   }
+  
   //20100101T000000
   //012345678901234567890
   if(szTime[8]=='T'){
@@ -222,7 +223,28 @@ CTime::Date CTime::freeDateStringToDate(const char*szTime){
     date.concat("Z");
     return stringToDate(date.c_str());
   }
+  
+  //2008-05-13T12:10Z
+  //012345678901234567890
+  if(szTime[4]=='-'&&szTime[7]=='-'&&szTime[10]=='T'&&szTime[13]==':'&&szTime[16]=='Z'){
+    CT::string date="";
+    date.concat(szTime+0,4);
+    date.concat("-");
+    date.concat(szTime+5,2);
+    date.concat("-");
+    date.concat(szTime+8,2);
+    date.concat("T");
+    date.concat(szTime+11,2);
+    date.concat(":");
+    date.concat(szTime+14,2);
+    date.concat(":");
+    date.concat("00",2);
+    date.concat("Z");
+    return ISOStringToDate(date.c_str());
+  }
+  
   //CDBError("Format for date string \"%s\" not recognised",szTime);
+  
   throw CTIME_CONVERSION_ERROR;
   return CTime::Date();
 }

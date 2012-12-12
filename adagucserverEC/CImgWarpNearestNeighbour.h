@@ -5,7 +5,7 @@
 #include "CImageWarperRenderInterface.h"
 
 
-//#define CIMGWARPNEARESTNEIGHBOUR_DEBUG
+#define CIMGWARPNEARESTNEIGHBOUR_DEBUG
 
 /**
  *  This interface represents the tile rendering classes.
@@ -263,7 +263,7 @@ public:
   template <class T>
   int myDrawRawTile(T*data,double *x_corners,double *y_corners,int &dDestX,int &dDestY){
     #ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
-    CDBDebug("myDrawRawTile %f, %f, %f, %f, %d, %d %f %f",dfSourceBBOX[0],dfSourceBBOX[1],dfSourceBBOX[2],dfSourceBBOX[3],width,height,x_div,y_div);
+//    CDBDebug("myDrawRawTile %f, %f, %f, %f, %d, %d %f %f",dfSourceBBOX[0],dfSourceBBOX[1],dfSourceBBOX[2],dfSourceBBOX[3],width,height,x_div,y_div);
     #endif 
     double sample_sy,sample_sx;
     double line_dx1,line_dy1,line_dx2,line_dy2;
@@ -282,7 +282,12 @@ public:
     if(k==4){
       for(k=0;k<4;k++)
         if(x_corners[k]>dfSourceBBOX[0]&&x_corners[k]<dfSourceBBOX[2])break;
-        if(k==4)return __LINE__;
+        if(k==4){
+           #ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
+          CDBDebug("Return @ %d because %f<%f && %f>%f",__LINE__,x_corners[0],dfSourceBBOX[0],x_corners[0],dfSourceBBOX[2]);
+          #endif
+          return __LINE__;
+        }
     }
     for(k=0;k<4;k++){
       if(fabs(y_corners[k]-y_corners[0])>=fabs(dfSourceBBOX[3]-dfSourceBBOX[1]))break;
@@ -290,8 +295,14 @@ public:
     if(k==4){
       for(k=0;k<4;k++)
         if(y_corners[k]>dfSourceBBOX[1]&&y_corners[k]<dfSourceBBOX[3])break;
-        if(k==4)return __LINE__;
+        if(k==4){
+          #ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
+          //CDBDebug("Return @ %d",__LINE__);
+          #endif
+          return __LINE__;
+        }
     }
+    
   
         /*
          * [D: CImgWarpNearestNeighbour.h, 490 in CImgWarpNearestNeighbour]   2012-07-25T09:52:02Z x_div, y_div:  1 1
@@ -412,11 +423,11 @@ private:
     for(int j=dmf->startTile;j<dmf->endTile&&j<dmf->numberOfTiles;j++){
       DrawTileSettings *ct = &dmf->ct[j];
       #ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
-      CDBDebug("Drawing tile %d",j);
+      //CDBDebug("Drawing tile %d",j);
       #endif 
       if(ct->id>=0){
         #ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
-        CDBDebug("Drawing tile id %d",ct->id);
+        //CDBDebug("Drawing tile id %d",ct->id);
         #endif 
         //int status = 
         ct->drawTile->drawTile(ct->x_corners,ct->y_corners,ct->tile_offset_x,ct->tile_offset_y);
@@ -498,9 +509,9 @@ private:
     x_corners[3]=psx[2];
     y_corners[3]=psy[2];
     
-   /*for(int j=0;j<4;j++){
-      CDBDebug("xcorners: %f %f", x_corners[j],y_corners[j]);
-    }*/
+   for(int j=0;j<4;j++){
+      CDBDebug("xcorners:%d = %f %f",j, x_corners[j],y_corners[j]);
+    }
     return 0;
   }
   

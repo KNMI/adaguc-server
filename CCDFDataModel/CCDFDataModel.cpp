@@ -310,9 +310,9 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
   }
   
   if(needsDimIteration==true){
-    CDF::Dimension * iterativeDim;
+    //CDF::Dimension * iterativeDim;
     bool useStartCountStride=false;if(_start!=NULL&&_count!=NULL){useStartCountStride=true;}
-    iterativeDim=dimensionlinks[iterativeDimIndex];
+    //iterativeDim=dimensionlinks[iterativeDimIndex];
     //Make start and count params.
     size_t *start = new size_t[dimensionlinks.size()];
     size_t *count = new size_t[dimensionlinks.size()];
