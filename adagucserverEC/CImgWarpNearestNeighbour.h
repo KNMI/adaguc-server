@@ -5,7 +5,7 @@
 #include "CImageWarperRenderInterface.h"
 
 
-#define CIMGWARPNEARESTNEIGHBOUR_DEBUG
+//#define CIMGWARPNEARESTNEIGHBOUR_DEBUG
 
 /**
  *  This interface represents the tile rendering classes.
@@ -322,7 +322,7 @@ public:
          * 
          */
       #ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
-      CDBDebug("myDrawRawTile %f, %f, %f, %f, %d, %d %f %f",dfSourceBBOX[0],dfSourceBBOX[1],dfSourceBBOX[2],dfSourceBBOX[3],width,height,x_div,y_div);
+      //CDBDebug("myDrawRawTile %f, %f, %f, %f, %d, %d %f %f",dfSourceBBOX[0],dfSourceBBOX[1],dfSourceBBOX[2],dfSourceBBOX[3],width,height,x_div,y_div);
       #endif
       line_dx1= x_corners[3];
       line_dx2= x_corners[2];
@@ -509,9 +509,7 @@ private:
     x_corners[3]=psx[2];
     y_corners[3]=psy[2];
     
-   for(int j=0;j<4;j++){
-      CDBDebug("xcorners:%d = %f %f",j, x_corners[j],y_corners[j]);
-    }
+
     return 0;
   }
   

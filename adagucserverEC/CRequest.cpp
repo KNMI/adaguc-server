@@ -797,7 +797,7 @@ int CRequest::process_all_layers(){
             queryOrderedDESC.printconcat(" and a0.path=a%d.path",i);
           }
         }
-        queryOrderedDESC.concat(" limit 366");
+        queryOrderedDESC.concat(" limit 24*6");
       
         if(timeValidationError==true){
           if((checkDataRestriction()&SHOW_QUERYINFO)==false)queryOrderedDESC.copy("hidden");

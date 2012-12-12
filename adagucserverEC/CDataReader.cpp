@@ -7,7 +7,7 @@
 
 const char *CDataReader::className="CDataReader";
 
-#define CDATAREADER_DEBUG
+//#define CDATAREADER_DEBUG
 #define uchar unsigned char
 #define MAX_STR_LEN 8191
 
@@ -571,7 +571,7 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
   // Retrieve CRS
   
   //Check if projection is overidden in the config file
-  if(dataSource->cfgLayer->Projection.size()==1){
+  if(dataSource->cfgLayer->Projection.size()!=0){
     //Read projection information from configuration
     if(dataSource->cfgLayer->Projection[0]->attr.id.c_str()!=NULL){
       dataSource->nativeEPSG.copy(dataSource->cfgLayer->Projection[0]->attr.id.c_str());
