@@ -17,11 +17,19 @@ CImageDataWriter::CImageDataWriter(){
   currentDataSource = NULL;
 }
 
-CImageDataWriter::RenderMethodEnum CImageDataWriter::getRenderMethodFromString(CT::string *renderMethodString){
-  RenderMethodEnum renderMethod;
-  renderMethod=undefined;
-  if(renderMethodString->equals("bilinear"))renderMethod=bilinear;
-  else if(renderMethodString->equals("nearest"))renderMethod=nearest;
+CImageDataWriter::RenderMethod CImageDataWriter::getRenderMethodFromString(CT::string *renderMethodString){
+  RenderMethod renderMethod = RM_UNDEFINED;
+  if(renderMethodString->indexOf("nearest" )!=-1)renderMethod|=RM_NEAREST;
+  if(renderMethodString->indexOf("bilinear")!=-1)renderMethod|=RM_BILINEAR;
+  if(renderMethodString->indexOf("shaded"  )!=-1)renderMethod|=RM_SHADED;
+  if(renderMethodString->indexOf("contour" )!=-1)renderMethod|=RM_CONTOUR;
+  if(renderMethodString->indexOf("point"   )!=-1)renderMethod|=RM_POINT;
+  if(renderMethodString->indexOf("vector"  )!=-1)renderMethod|=RM_VECTOR;
+  if(renderMethodString->indexOf("barb"    )!=-1)renderMethod|=RM_BARB;
+  if(renderMethodString->indexOf("thin")!=-1)renderMethod|=RM_THIN;
+  if(renderMethodString->indexOf("rgba")!=-1)renderMethod|=RM_RGBA;
+  
+  /*else if(renderMethodString->equals("nearest"))renderMethod=nearest;
   else if(renderMethodString->equals("vector"))renderMethod=vector;
   else if(renderMethodString->equals("barb"))renderMethod=barb;
   else if(renderMethodString->equals("barbcontour"))renderMethod=barbcontour;
@@ -44,13 +52,26 @@ CImageDataWriter::RenderMethodEnum CImageDataWriter::getRenderMethodFromString(C
   else if(renderMethodString->equals("thinbarbshaded"))renderMethod=thinbarbshaded;
   else if(renderMethodString->equals("thinbarbcontourshaded"))renderMethod=thinbarbcontourshaded;
   else if(renderMethodString->equals("point"))renderMethod=point;
-  else if(renderMethodString->equals("rgba"))renderMethod=rgba;
+  else if(renderMethodString->equals("rgba"))renderMethod=rgba;*/
   return renderMethod;
 }
 
-void CImageDataWriter::getRenderMethodAsString(CT::string *renderMethodString, RenderMethodEnum renderMethod){
-  if(renderMethod == undefined)renderMethodString->copy("undefined");
-  else if(renderMethod == nearest)renderMethodString->copy("nearest");
+void CImageDataWriter::getRenderMethodAsString(CT::string *renderMethodString, RenderMethod renderMethod){
+  
+  if(renderMethod == RM_UNDEFINED){renderMethodString->copy("undefined");return;}
+  renderMethodString->copy("");
+  if(renderMethod & RM_NEAREST)renderMethodString->concat("nearest");
+  if(renderMethod & RM_BILINEAR)renderMethodString->concat("bilinear");
+  if(renderMethod & RM_SHADED)renderMethodString->concat("shaded");
+  if(renderMethod & RM_CONTOUR)renderMethodString->concat("contour");
+  if(renderMethod & RM_POINT)renderMethodString->concat("point");
+  if(renderMethod & RM_VECTOR)renderMethodString->concat("vector");
+  if(renderMethod & RM_BARB)renderMethodString->concat("barb");
+  if(renderMethod & RM_THIN)renderMethodString->concat("thin");
+  if(renderMethod & RM_RGBA)renderMethodString->concat("rgba");
+  
+  
+  /*else if(renderMethod == nearest)renderMethodString->copy("nearest");
   else if(renderMethod == vector)renderMethodString->copy("vector");
   else if(renderMethod == barb)renderMethodString->copy("barb");
   else if(renderMethod == barbcontour)renderMethodString->copy("barbcontour");
@@ -70,7 +91,7 @@ void CImageDataWriter::getRenderMethodAsString(CT::string *renderMethodString, R
   else if(renderMethod == thinbarbcontour)renderMethodString->copy("thinbarbcontour");
   else if(renderMethod == thinbarbshaded)renderMethodString->copy("thinbarbshaded");
   else if(renderMethod == thinbarbcontourshaded)renderMethodString->copy("thinbarbcontourshaded");
-  else renderMethodString->copy("!!!no string!!!");
+  else renderMethodString->copy("!!!no string!!!");*/
 }
 
 int CImageDataWriter::_setTransparencyAndBGColor(CServerParams *srvParam,CDrawImage* drawImage){
@@ -206,11 +227,10 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
       if(initializeLegend(srvParam,dataSource)!=0)return 1;
    }
    if(currentStyleConfiguration!=NULL){
-    if(currentStyleConfiguration->renderMethod==rgba){
-
-     drawImage.setTrueColor(true);
+    if(currentStyleConfiguration->renderMethod&RM_RGBA){
+      drawImage.setTrueColor(true);
+    }
   }
-   }
   
   // WMS Format in layer always overrides all
   if(dataSource->cfgLayer->WMSFormat.size()>0){
@@ -359,7 +379,7 @@ int CImageDataWriter::makeStyleConfig(StyleConfiguration *styleConfig,CDataSourc
   }
 
   styleConfig->renderMethod = getRenderMethodFromString(&renderMethodString);
-  if(styleConfig->renderMethod == undefined){errorMessage.print("rendermethod %s",renderMethod); }
+  if(styleConfig->renderMethod == RM_UNDEFINED){errorMessage.print("rendermethod %s",renderMethod); }
   styleConfig->styleIndex   = getServerStyleIndexByName(styleName,dataSource->cfg->Style);
   //if(styleConfig->styleIndex == -1){errorMessage.print("styleIndex %s",styleName); }
   styleConfig->legendIndex  = getServerLegendIndexByName(legendName,dataSource->cfg->Legend);
@@ -1372,11 +1392,11 @@ if(renderMethod==nearestcontour){CDBDebug("nearestcontour");}
 if(renderMethod==contour){CDBDebug("contour");}*/
 
   CImageWarperRenderInterface *imageWarperRenderer;
-  RenderMethodEnum renderMethod = currentStyleConfiguration->renderMethod;
+  RenderMethod renderMethod = currentStyleConfiguration->renderMethod;
   /**
    * Use fast nearest neighbourrenderer
    */
-  if(renderMethod==nearest||renderMethod==nearestcontour){
+  if(renderMethod&RM_NEAREST){
     imageWarperRenderer = new CImgWarpNearestNeighbour();
     imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
     delete imageWarperRenderer;
@@ -1385,7 +1405,7 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   /**
    * Use RGBA renderer
    */
-    if(renderMethod==rgba){
+    if(renderMethod&RM_RGBA){
     imageWarperRenderer = new CImgWarpNearestRGBA();
     imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
     delete imageWarperRenderer;
@@ -1394,7 +1414,7 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   /**
    * Use bilinear renderer
    */
-  if(renderMethod==nearestcontour||
+  /*if(renderMethod==nearestcontour||
      renderMethod==bilinear||
      renderMethod==bilinearcontour||
      renderMethod==contour||
@@ -1404,102 +1424,121 @@ if(renderMethod==contour){CDBDebug("contour");}*/
      renderMethod==barb||renderMethod==barbshaded||renderMethod==barbcontour||renderMethod==barbcontourshaded||
      renderMethod==thinvector||renderMethod==thinvectorshaded||renderMethod==thinvectorcontour||renderMethod==thinvectorcontourshaded||
      renderMethod==thinbarb||renderMethod==thinbarbshaded||renderMethod==thinbarbcontour||renderMethod==thinbarbcontourshaded
-    )
-  {
-    imageWarperRenderer = new CImgWarpBilinear();
-    CT::string bilinearSettings;
-    bool drawMap=false;
-    bool drawContour=false;
-    bool drawVector=false;
-    bool drawBarb=false;
-    bool drawShaded=false;
-    bool drawGridVectors=false;
-    if(renderMethod==bilinear||renderMethod==bilinearcontour)drawMap=true;
-    if(renderMethod==bilinearcontour)drawContour=true;
-    if(renderMethod==nearestcontour)drawContour=true;
-    if(renderMethod==contour||renderMethod==shadedcontour||renderMethod==vectorcontour||renderMethod==vectorcontourshaded)drawContour=true;
-    if(renderMethod==vector||renderMethod==vectorcontour||renderMethod==vectorshaded||renderMethod==vectorcontourshaded)drawVector=true;
-    if(renderMethod==thinvector||renderMethod==thinvectorcontour||renderMethod==thinvectorshaded||renderMethod==thinvectorcontourshaded){ drawVector=true;drawGridVectors=true;}
-    if(renderMethod==thinbarb||renderMethod==thinbarbcontour||renderMethod==thinbarbshaded||renderMethod==thinbarbcontourshaded) {drawBarb=true; drawGridVectors=true;}
-    if(renderMethod==thinbarbcontour||renderMethod==thinbarbcontourshaded) {drawContour=true;}
-    if(renderMethod==shaded||renderMethod==shadedcontour||renderMethod==vectorcontourshaded||renderMethod==barbcontourshaded)drawShaded=true;
-    if(renderMethod==vectorshaded||renderMethod==thinvectorshaded||renderMethod==thinvectorcontourshaded)drawShaded=true;
-    if(renderMethod==barbshaded||renderMethod==thinbarbshaded||renderMethod==thinbarbcontourshaded)drawShaded=true;
-    if(renderMethod==barbcontour) { drawContour=true; drawBarb=true; }
-    if(renderMethod==vectorcontour) { drawContour=true; drawVector=true; }
-    if(renderMethod==vectorcontourshaded||renderMethod==thinvectorcontourshaded) { drawShaded=true; drawContour=true; drawVector=true; }
-    if(renderMethod==vectorcontour||renderMethod==thinvectorcontour) { drawVector=true; drawContour=true;}
-    if(renderMethod==barbcontourshaded||renderMethod==thinbarbcontourshaded) { drawShaded=true; drawContour=true; drawBarb=true; }
-    if((renderMethod==barb)||(renderMethod==barbshaded)) drawBarb=true;
-    if(drawMap==true)bilinearSettings.printconcat("drawMap=true;");
-    if(drawVector==true)bilinearSettings.printconcat("drawVector=true;");
-    if(drawBarb==true)bilinearSettings.printconcat("drawBarb=true;");
-    if(drawShaded==true)bilinearSettings.printconcat("drawShaded=true;");
-    if(drawContour==true)bilinearSettings.printconcat("drawContour=true;");
-    if (drawGridVectors)bilinearSettings.printconcat("drawGridVectors=true;");
-    bilinearSettings.printconcat("smoothingFilter=%d;",currentStyleConfiguration->smoothingFilter);
-    if(drawShaded==true){
-      bilinearSettings.printconcat("shadeInterval=%0.12f;contourBigInterval=%0.12f;contourSmallInterval=%0.12f;",
-                                   currentStyleConfiguration->shadeInterval,currentStyleConfiguration->contourIntervalH,currentStyleConfiguration->contourIntervalL);
+    )*/
+  if(renderMethod&RM_CONTOUR||renderMethod&RM_BILINEAR||renderMethod&RM_SHADED||renderMethod&RM_VECTOR||renderMethod&RM_BARB||renderMethod&RM_THIN)  {
+    if(dataSource->dataObject[0]->points.size()==0){
+      imageWarperRenderer = new CImgWarpBilinear();
+      CT::string bilinearSettings;
+      bool drawMap=false;
+      bool drawContour=false;
+      bool drawVector=false;
+      bool drawBarb=false;
+      bool drawShaded=false;
+      bool drawGridVectors=false;
       
-      if(currentStyleConfiguration->shadeIntervals!=NULL){
-        for(size_t j=0;j<currentStyleConfiguration->shadeIntervals->size();j++){
-          CServerConfig::XMLE_ShadeInterval *shadeInterval=((*currentStyleConfiguration->shadeIntervals)[j]);
-          if(shadeInterval->attr.min.c_str()!=NULL&&shadeInterval->attr.max.c_str()!=NULL){
-            bilinearSettings.printconcat("shading=min(%s)$max(%s)$",shadeInterval->attr.min.c_str(),shadeInterval->attr.max.c_str());
-            if(shadeInterval->attr.fillcolor.c_str()!=NULL){bilinearSettings.printconcat("$fillcolor(%s)$",shadeInterval->attr.fillcolor.c_str());}
-            bilinearSettings.printconcat(";");
+      if(renderMethod&RM_BILINEAR)drawMap=true;
+      if(renderMethod&RM_CONTOUR)drawContour=true;
+      if(renderMethod&RM_VECTOR)drawVector=true;
+      if(renderMethod&RM_SHADED)drawShaded=true;
+      if(renderMethod&RM_BARB)drawBarb=true;
+      if(renderMethod&RM_THIN)drawGridVectors=true;
+      
+      
+      
+      
+      /*if(renderMethod==bilinear||renderMethod==bilinearcontour)drawMap=true;
+      if(renderMethod==bilinearcontour)drawContour=true;
+      if(renderMethod==nearestcontour)drawContour=true;
+      if(renderMethod==contour||renderMethod==shadedcontour||renderMethod==vectorcontour||renderMethod==vectorcontourshaded)drawContour=true;
+      if(renderMethod==vector||renderMethod==vectorcontour||renderMethod==vectorshaded||renderMethod==vectorcontourshaded)drawVector=true;
+      if(renderMethod==thinvector||renderMethod==thinvectorcontour||renderMethod==thinvectorshaded||renderMethod==thinvectorcontourshaded){ drawVector=true;drawGridVectors=true;}
+      if(renderMethod==thinbarb||renderMethod==thinbarbcontour||renderMethod==thinbarbshaded||renderMethod==thinbarbcontourshaded) {drawBarb=true; drawGridVectors=true;}
+      if(renderMethod==thinbarbcontour||renderMethod==thinbarbcontourshaded) {drawContour=true;}
+      if(renderMethod==shaded||renderMethod==shadedcontour||renderMethod==vectorcontourshaded||renderMethod==barbcontourshaded)drawShaded=true;
+      if(renderMethod==vectorshaded||renderMethod==thinvectorshaded||renderMethod==thinvectorcontourshaded)drawShaded=true;
+      if(renderMethod==barbshaded||renderMethod==thinbarbshaded||renderMethod==thinbarbcontourshaded)drawShaded=true;
+      if(renderMethod==barbcontour) { drawContour=true; drawBarb=true; }
+      if(renderMethod==vectorcontour) { drawContour=true; drawVector=true; }
+      if(renderMethod==vectorcontourshaded||renderMethod==thinvectorcontourshaded) { drawShaded=true; drawContour=true; drawVector=true; }
+      if(renderMethod==vectorcontour||renderMethod==thinvectorcontour) { drawVector=true; drawContour=true;}
+      if(renderMethod==barbcontourshaded||renderMethod==thinbarbcontourshaded) { drawShaded=true; drawContour=true; drawBarb=true; }
+      if((renderMethod==barb)||(renderMethod==barbshaded)) drawBarb=true;*/
+      
+      
+      if(drawMap==true)bilinearSettings.printconcat("drawMap=true;");
+      if(drawVector==true)bilinearSettings.printconcat("drawVector=true;");
+      if(drawBarb==true)bilinearSettings.printconcat("drawBarb=true;");
+      if(drawShaded==true)bilinearSettings.printconcat("drawShaded=true;");
+      if(drawContour==true)bilinearSettings.printconcat("drawContour=true;");
+      if (drawGridVectors)bilinearSettings.printconcat("drawGridVectors=true;");
+      bilinearSettings.printconcat("smoothingFilter=%d;",currentStyleConfiguration->smoothingFilter);
+      if(drawShaded==true){
+        bilinearSettings.printconcat("shadeInterval=%0.12f;contourBigInterval=%0.12f;contourSmallInterval=%0.12f;",
+                                    currentStyleConfiguration->shadeInterval,currentStyleConfiguration->contourIntervalH,currentStyleConfiguration->contourIntervalL);
+        
+        if(currentStyleConfiguration->shadeIntervals!=NULL){
+          for(size_t j=0;j<currentStyleConfiguration->shadeIntervals->size();j++){
+            CServerConfig::XMLE_ShadeInterval *shadeInterval=((*currentStyleConfiguration->shadeIntervals)[j]);
+            if(shadeInterval->attr.min.c_str()!=NULL&&shadeInterval->attr.max.c_str()!=NULL){
+              bilinearSettings.printconcat("shading=min(%s)$max(%s)$",shadeInterval->attr.min.c_str(),shadeInterval->attr.max.c_str());
+              if(shadeInterval->attr.fillcolor.c_str()!=NULL){bilinearSettings.printconcat("$fillcolor(%s)$",shadeInterval->attr.fillcolor.c_str());}
+              bilinearSettings.printconcat(";");
+            }
           }
         }
       }
-    }
-    if(drawContour==true){
-      
-      if(currentStyleConfiguration->contourLines!=NULL){
-        for(size_t j=0;j<currentStyleConfiguration->contourLines->size();j++){
-          CServerConfig::XMLE_ContourLine * contourLine=((*currentStyleConfiguration->contourLines)[j]);
-          //Check if we have a interval contour line or a contourline with separate classes
-          if(contourLine->attr.interval.c_str()!=NULL){
-            //ContourLine interval
-            bilinearSettings.printconcat("contourline=");
-            if(contourLine->attr.width.c_str()!=NULL){bilinearSettings.printconcat("width(%s)$",contourLine->attr.width.c_str());}
-            if(contourLine->attr.linecolor.c_str()!=NULL){bilinearSettings.printconcat("linecolor(%s)$",contourLine->attr.linecolor.c_str());}
-            if(contourLine->attr.textcolor.c_str()!=NULL){bilinearSettings.printconcat("textcolor(%s)$",contourLine->attr.textcolor.c_str());}
-            if(contourLine->attr.interval.c_str()!=NULL){bilinearSettings.printconcat("interval(%s)$",contourLine->attr.interval.c_str());}
-            if(contourLine->attr.textformatting.c_str()!=NULL){bilinearSettings.printconcat("textformatting(%s)$",contourLine->attr.textformatting.c_str());}
-            bilinearSettings.printconcat(";");
+      if(drawContour==true){
+        
+        if(currentStyleConfiguration->contourLines!=NULL){
+          for(size_t j=0;j<currentStyleConfiguration->contourLines->size();j++){
+            CServerConfig::XMLE_ContourLine * contourLine=((*currentStyleConfiguration->contourLines)[j]);
+            //Check if we have a interval contour line or a contourline with separate classes
+            if(contourLine->attr.interval.c_str()!=NULL){
+              //ContourLine interval
+              bilinearSettings.printconcat("contourline=");
+              if(contourLine->attr.width.c_str()!=NULL){bilinearSettings.printconcat("width(%s)$",contourLine->attr.width.c_str());}
+              if(contourLine->attr.linecolor.c_str()!=NULL){bilinearSettings.printconcat("linecolor(%s)$",contourLine->attr.linecolor.c_str());}
+              if(contourLine->attr.textcolor.c_str()!=NULL){bilinearSettings.printconcat("textcolor(%s)$",contourLine->attr.textcolor.c_str());}
+              if(contourLine->attr.interval.c_str()!=NULL){bilinearSettings.printconcat("interval(%s)$",contourLine->attr.interval.c_str());}
+              if(contourLine->attr.textformatting.c_str()!=NULL){bilinearSettings.printconcat("textformatting(%s)$",contourLine->attr.textformatting.c_str());}
+              bilinearSettings.printconcat(";");
+            }
+            if(contourLine->attr.classes.c_str()!=NULL){
+              //ContourLine classes
+              bilinearSettings.printconcat("contourline=");
+              if(contourLine->attr.width.c_str()!=NULL){bilinearSettings.printconcat("width(%s)$",contourLine->attr.width.c_str());}
+              if(contourLine->attr.linecolor.c_str()!=NULL){bilinearSettings.printconcat("linecolor(%s)$",contourLine->attr.linecolor.c_str());}
+              if(contourLine->attr.textcolor.c_str()!=NULL){bilinearSettings.printconcat("textcolor(%s)$",contourLine->attr.textcolor.c_str());}
+              if(contourLine->attr.classes.c_str()!=NULL){bilinearSettings.printconcat("classes(%s)$",contourLine->attr.classes.c_str());}
+              if(contourLine->attr.textformatting.c_str()!=NULL){bilinearSettings.printconcat("textformatting(%s)$",contourLine->attr.textformatting.c_str());}
+              bilinearSettings.printconcat(";");
+            }
+            
           }
-          if(contourLine->attr.classes.c_str()!=NULL){
-            //ContourLine classes
-            bilinearSettings.printconcat("contourline=");
-            if(contourLine->attr.width.c_str()!=NULL){bilinearSettings.printconcat("width(%s)$",contourLine->attr.width.c_str());}
-            if(contourLine->attr.linecolor.c_str()!=NULL){bilinearSettings.printconcat("linecolor(%s)$",contourLine->attr.linecolor.c_str());}
-            if(contourLine->attr.textcolor.c_str()!=NULL){bilinearSettings.printconcat("textcolor(%s)$",contourLine->attr.textcolor.c_str());}
-            if(contourLine->attr.classes.c_str()!=NULL){bilinearSettings.printconcat("classes(%s)$",contourLine->attr.classes.c_str());}
-            if(contourLine->attr.textformatting.c_str()!=NULL){bilinearSettings.printconcat("textformatting(%s)$",contourLine->attr.textformatting.c_str());}
-            bilinearSettings.printconcat(";");
-          }
-          
+          //bilinearSettings.printconcat("%s","contourline=width(3.5)$color(#0000FF)$interval(6)$textformat(%f);");
+          //bilinearSettings.printconcat("%s","contourline=width(1.0)$color(#00FF00)classes(5.5,7.7)$textformat(%2.1f);");
         }
-        //bilinearSettings.printconcat("%s","contourline=width(3.5)$color(#0000FF)$interval(6)$textformat(%f);");
-        //bilinearSettings.printconcat("%s","contourline=width(1.0)$color(#00FF00)classes(5.5,7.7)$textformat(%2.1f);");
+        
+        //bilinearSettings.printconcat("textScaleFactor=%f;textOffsetFactor=%f;",textScaleFactor,textOffsetFactor);
       }
-      
-      //bilinearSettings.printconcat("textScaleFactor=%f;textOffsetFactor=%f;",textScaleFactor,textOffsetFactor);
+      CDBDebug("bilinearSettings.c_str() %s",bilinearSettings.c_str());
+      imageWarperRenderer->set(bilinearSettings.c_str());
+      imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
+      delete imageWarperRenderer;
     }
-    CDBDebug("bilinearSettings.c_str() %s",bilinearSettings.c_str());
-    imageWarperRenderer->set(bilinearSettings.c_str());
-    imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
-    delete imageWarperRenderer;
   }
   
   /**
    * Use point renderer
    */
-  if(1==1){
+  //if(renderMethod==barb||renderMethod==vector||renderMethod==point){
+  if(renderMethod&RM_BARB||renderMethod&RM_VECTOR||renderMethod&RM_POINT||renderMethod==RM_NEAREST){
     //CDBDebug("CImgRenderPoints()");
+    
     imageWarperRenderer = new CImgRenderPoints();
-    imageWarperRenderer->set("");
+    CT::string renderMethodAsString;
+    getRenderMethodAsString(&renderMethodAsString,renderMethod);
+    imageWarperRenderer->set(renderMethodAsString.c_str());
     imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
     delete imageWarperRenderer;
   }
@@ -1819,7 +1858,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
             //Determine ImageText based on configured netcdf attribute
             const char *attrToSearch=dataSource->cfgLayer->ImageText[0]->attr.attribute.c_str();
             if(attrToSearch!=NULL){
-              CDBDebug("Determining ImageText based on netcdf attribute %s",attrToSearch);
+              //CDBDebug("Determining ImageText based on netcdf attribute %s",attrToSearch);
               try{
                 CDF::Attribute *attr=dataSource->dataObject[0]->cdfObject->getAttribute(attrToSearch);
                 if(attr->length>0){
@@ -1833,7 +1872,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
             
             if(imageText.length()>0){
               size_t len=imageText.length();
-              CDBDebug("Watermark: %s",imageText.c_str());
+              //CDBDebug("Watermark: %s",imageText.c_str());
               drawImage.setTextStroke(imageText.c_str(),len,int(drawImage.Geo->dWidth/2-len*3),drawImage.Geo->dHeight-16,240,254,-1);
             }
           }
@@ -2702,9 +2741,10 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
   }
   
   CDataReader reader;
-  RenderMethodEnum renderMethod = currentStyleConfiguration->renderMethod;
+  RenderMethod renderMethod = currentStyleConfiguration->renderMethod;
 
-  if(renderMethod==shadedcontour||renderMethod==shaded||renderMethod==contour){
+  //if(renderMethod==shadedcontour||renderMethod==shaded||renderMethod==contour){
+  if(renderMethod&RM_SHADED||renderMethod&RM_CONTOUR){
     //We need to open all the data, because we need to estimate min/max for legend drawing
     estimateMinMax = true;
     if(currentStyleConfiguration->legendHasFixedMinMax==true){
@@ -2735,13 +2775,13 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
   //Determine legendtype.
   if(dataSource->dataObject[0]->hasStatusFlag){
     legendType = statusflag;
-  }else if(renderMethod!=shadedcontour&&renderMethod!=shaded&&renderMethod!=contour){
+  }else if(!(renderMethod&RM_SHADED||renderMethod&RM_CONTOUR)){
     legendType = continous;
   }else{
     legendType = discrete;
   }
   
-  if(renderMethod==rgba){
+  if(renderMethod&RM_RGBA){
     legendType=cascaded;
   }
  

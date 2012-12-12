@@ -1,4 +1,5 @@
 #include "CDBFileScanner.h"
+#include "CDebugger.h"
 const char *CDBFileScanner::className="CDBFileScanner";
 std::vector <CT::string> CDBFileScanner::tableNamesDone;
 //#define CDATAREADER_DEBUG
@@ -139,6 +140,8 @@ int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,in
         //CDBDebug("OK: Table %s created, (check for unavailable files is off);",tableName);
         //if( addIndexToTable(DB,tableName.c_str(),dimName.c_str()) != 0)return 1;
       }
+      
+      
       
       if(removeNonExistingFiles==1){
         //The temporary table should always be dropped before filling.  
@@ -379,6 +382,8 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                   CDBDebug("Dimension type = %s",CDF::getCDFDataTypeName(dimVar->type).c_str());
                   #endif
                   
+                  
+                  CDBDebug("Reading dimension %s of length %d",dimVar->name.c_str(),dimDim->getSize());
                   //Strings do never fit in a double.
                   if(dimVar->type!=CDF_STRING){
                     //Read the dimension data
@@ -387,6 +392,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                     //Read the dimension data
                     status = dimVar->readData(CDF_STRING);
                   }
+                  CDBDebug("/Reading dimension %s of length %d",dimVar->name.c_str(),dimDim->getSize());
                   
                   if(status!=0){
                     CDBError("Unable to read variable data for %s",dimVar->name.c_str());
@@ -517,22 +523,8 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
         
         
         //End of dimloop, start inserting our collected records in one statement
-        
-        queryString.print("INSERT into %s VALUES ",tableNames_temp[d].c_str());
-        queryString.concat(&multiInsertCache);
-        CDBDebug("Inserting %d bytes",queryString.length());
-        status =  DB->query(queryString.c_str()); 
-        if(status!=0){
-          CDBError("Query failed: %s",queryString.c_str());
-          throw(__LINE__);
-        }
-        CDBDebug("/Inserting %d bytes",queryString.length());
-        
-        if(removeNonExistingFiles==1){
-          //We are adding the query above to the temporary table if removeNonExistingFiles==1;
-          //Lets add it also to the non temporary table for convenience
-          //Later this table will be dropped, but it will remain more up to date during scanning this way.
-          queryString.print("INSERT into %s VALUES ",tableNames[d].c_str());
+        if(multiInsertCache.length()>0){
+          queryString.print("INSERT into %s VALUES ",tableNames_temp[d].c_str());
           queryString.concat(&multiInsertCache);
           CDBDebug("Inserting %d bytes",queryString.length());
           status =  DB->query(queryString.c_str()); 
@@ -541,6 +533,21 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
             throw(__LINE__);
           }
           CDBDebug("/Inserting %d bytes",queryString.length());
+          
+          if(removeNonExistingFiles==1){
+            //We are adding the query above to the temporary table if removeNonExistingFiles==1;
+            //Lets add it also to the non temporary table for convenience
+            //Later this table will be dropped, but it will remain more up to date during scanning this way.
+            queryString.print("INSERT into %s VALUES ",tableNames[d].c_str());
+            queryString.concat(&multiInsertCache);
+            CDBDebug("Inserting %d bytes",queryString.length());
+            status =  DB->query(queryString.c_str()); 
+            if(status!=0){
+              CDBError("Query failed: %s",queryString.c_str());
+              throw(__LINE__);
+            }
+            CDBDebug("/Inserting %d bytes",queryString.length());
+          }
         }
       }
     }

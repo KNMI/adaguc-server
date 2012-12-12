@@ -218,7 +218,7 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource,int mo
   }catch(int e){
     return 1;
   }
-  CDBDebug("THIS IS ADAGUC VECTOR DATA");
+  //CDBDebug("THIS IS ADAGUC VECTOR DATA");
   
   CDF::Variable *new2DVar;
   new2DVar = dataSource->dataObject[0]->cdfVariable;

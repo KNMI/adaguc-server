@@ -2,7 +2,7 @@
 #define CImageDataWriter_H
 #include <string>
 #include <map>
-
+#include "CDebugger.h"
 #include "Definitions.h"
 #include "CStopWatch.h"
 #include "CIBaseDataWriterInterface.h"
@@ -12,6 +12,21 @@
 #include "CImgWarpBoolean.h"
 #include "CImgRenderPoints.h"
 #include "CMyCURL.h"
+
+//Possible rendermethods
+#define RM_UNDEFINED   0
+#define RM_NEAREST     1
+#define RM_BILINEAR    2
+#define RM_SHADED      4
+#define RM_CONTOUR     8
+#define RM_POINT       16
+#define RM_VECTOR      32
+#define RM_BARB        64
+#define RM_THIN        256
+#define RM_RGBA        512
+
+
+
 
 class CImageDataWriter: public CBaseDataWriterInterface{
   private:
@@ -40,14 +55,10 @@ class CImageDataWriter: public CBaseDataWriterInterface{
     int nrImagesAdded;
     //CT::string getFeatureInfoResult;
     //CT::string getFeatureInfoHeader;
-    enum RenderMethodEnum { undefined,nearest, bilinear, contour, 
-    barb, barbshaded, barbcontour, barbcontourshaded, thinbarb, thinbarbshaded, thinbarbcontour, thinbarbcontourshaded, 
-    shaded,shadedcontour, 
-    point,
-    vector, vectorshaded, vectorcontour, vectorcontourshaded, thinvector, thinvectorshaded, thinvectorcontour, thinvectorcontourshaded,
-    nearestcontour,bilinearcontour,rgba};
+   // enum RenderMethodEnum { undefined,nearest, bilinear, contour,     barb, barbshaded, barbcontour, barbcontourshaded, thinbarb, thinbarbshaded, thinbarbcontour, thinbarbcontourshaded,     shaded,shadedcontour,     point,    vector, vectorshaded, vectorcontour, vectorcontourshaded, thinvector, thinvectorshaded, thinvectorcontour, thinvectorcontourshaded,    nearestcontour,bilinearcontour,rgba};
     static void calculateScaleAndOffsetFromMinMax(float &scale, float &offset,float min,float max,float log);
 public:
+  typedef unsigned int RenderMethod;
   class StyleConfiguration {
   public:
     
@@ -61,7 +72,7 @@ public:
     double legendTickInterval;
     double legendTickRound;
     
-    RenderMethodEnum renderMethod;
+    RenderMethod renderMethod;
     std::vector<CServerConfig::XMLE_ContourLine*>*contourLines;
     std::vector<CServerConfig::XMLE_ShadeInterval*>*shadeIntervals;
     int legendIndex;
@@ -81,6 +92,7 @@ public:
       data->printconcat("legendLowerRange = %f\n",legendLowerRange);
       data->printconcat("legendUpperRange = %f\n",legendUpperRange);
       data->printconcat("smoothingFilter = %d\n",smoothingFilter);
+      //TODO
       CT::string rMethodString;
       getRenderMethodAsString(&rMethodString,renderMethod);
       data->printconcat("renderMethod = %s",rMethodString.c_str());
@@ -136,8 +148,8 @@ private:
 
     //int smoothingFilter;
     //RenderMethodEnum renderMethod;
-    static RenderMethodEnum getRenderMethodFromString(CT::string *renderMethodString);
-    static void getRenderMethodAsString(CT::string *renderMethodString, RenderMethodEnum renderMethod);
+    static RenderMethod getRenderMethodFromString(CT::string *renderMethodString);
+    static void getRenderMethodAsString(CT::string *renderMethodString, RenderMethod renderMethod);
     double convertValue(CDFType type,void *data,size_t p);
     void setValue(CDFType type,void *data,size_t ptr,double pixel);
     int _setTransparencyAndBGColor(CServerParams *srvParam,CDrawImage* drawImage);

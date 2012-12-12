@@ -175,6 +175,8 @@ void CDrawImage::drawVector(int x,int y,double direction, double strength,int co
     return;
   }
   
+  float lineWidth=0.50;
+  
   strength=strength/2;
   dx1=cos(direction)*(strength);
   dy1=sin(direction)*(strength); 
@@ -192,10 +194,10 @@ void CDrawImage::drawVector(int x,int y,double direction, double strength,int co
   hx2=wx1+cos(direction+2.5)*(strength/2.8f);
   hy2=wy1-sin(direction+2.5)*(strength/2.8f);
   
-  line(wx1,wy1,wx2,wy2,color);
-  line(wx1,wy1,hx1,hy1,color);
-  line(wx1,wy1,hx2,hy2,color);
-  setPixelIndexed(x, y, 254);
+  line(wx1,wy1,wx2,wy2,lineWidth,color);
+  line(wx1,wy1,hx1,hy1,lineWidth,color);
+  line(wx1,wy1,hx2,hy2,lineWidth,color);
+  setPixelIndexed(x, y, 252);
   //circle(x+1, y+1, 1, color);
 }
 

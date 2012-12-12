@@ -45,6 +45,9 @@ void CRequest::addXMLLayerToConfig(CServerParams *srvParam,std::vector<CT::strin
     newName.encodeURLSelf();
     xmleName->value.copy(newName.c_str());
     xmleLayer->Name.push_back(xmleName);
+    CServerConfig::XMLE_RenderMethod* xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
+    xmleRenderMethod->value.copy("vector_nearest,barb_nearest,vector,barb,nearest");
+    xmleLayer->RenderMethod.push_back(xmleRenderMethod);
     
   }
   
@@ -1209,7 +1212,7 @@ int CRequest::process_querystring(){
 
   
   int dFound_autoResourceLocation=0;
-  int dFound_OpenDAPVariable=0;
+  //int dFound_OpenDAPVariable=0;
   
   const char * pszQueryString=getenv("QUERY_STRING");
   
@@ -1221,7 +1224,7 @@ int CRequest::process_querystring(){
 
   CT::string queryString(pszQueryString);
   queryString.decodeURLSelf();
-  CDBDebug("QueryString: \"%s\"",queryString.c_str());
+//  CDBDebug("QueryString: \"%s\"",queryString.c_str());
   CT::string * parameters=queryString.splitToArray("&");
   CT::string value0Cap;
   for(size_t j=0;j<parameters->count;j++){
@@ -1451,7 +1454,7 @@ int CRequest::process_querystring(){
           dFound_autoResourceLocation=1;
         }
       }
-      //Opendap variable parameter
+     /* //Opendap variable parameter
        if(dFound_OpenDAPVariable==0){
         if(value0Cap.equals("VARIABLE")){
           if(srvParam->autoResourceVariable.c_str()==NULL){
@@ -1459,7 +1462,7 @@ int CRequest::process_querystring(){
           }
           dFound_OpenDAPVariable=1;
         }
-      }
+      }*/
       
       
       //WMS Layers parameter
@@ -1838,7 +1841,7 @@ int CRequest::process_querystring(){
       //Detect  <...>_speed and <...>_dir for ASCAT data
       CT::string searchVar;
       for(size_t v=0;v<detectStrings.size();v++){
-        CDBDebug("detectStrings %s",detectStrings[v].c_str());
+        //CDBDebug("detectStrings %s",detectStrings[v].c_str());
         searchVar.print("%s_speed",detectStrings[v].c_str());
         CDF::Variable *varSpeed = cdfObject->getVariableNE(searchVar.c_str());
         searchVar.print("%s_dir",detectStrings[v].c_str());
@@ -1867,7 +1870,7 @@ int CRequest::process_querystring(){
       CT::string onlineResource=srvParam->cfg->OnlineResource[0]->attr.value.c_str();
       CT::string stringToAdd;
       stringToAdd.concat("&source=");stringToAdd.concat(srvParam->autoResourceLocation.c_str());
-      stringToAdd.concat("&variable=");stringToAdd.concat(srvParam->autoResourceVariable.c_str());
+      //stringToAdd.concat("&variable=");stringToAdd.concat(srvParam->autoResourceVariable.c_str());
       stringToAdd.concat("&");
       stringToAdd.encodeURLSelf();
       onlineResource.concat(stringToAdd.c_str());

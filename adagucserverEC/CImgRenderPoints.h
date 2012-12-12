@@ -4,6 +4,7 @@
 class CImgRenderPoints:public CImageWarperRenderInterface{
 private:
   DEF_ERRORFUNCTION();
+  CT::string settings;
 public:
   void render(CImageWarper*, CDataSource*, CDrawImage*);
   int set(const char*);
