@@ -452,7 +452,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                           
                           const char *str=((char**)dimVar->data)[i];
                           
-                          VALUES.print("VALUES ('%s','%s','%d','%s')",dirReader->fileList[j]->fullName.c_str(),str,int(i),fileDate.c_str());
+                          VALUES.print("('%s','%s','%d','%s')",dirReader->fileList[j]->fullName.c_str(),str,int(i),fileDate.c_str());
                         }
                         
                         
