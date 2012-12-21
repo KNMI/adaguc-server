@@ -1,5 +1,7 @@
+//#define CIMGWARPNEARESTRGBA_DEBUG
 #include "CImgWarpNearestRGBA.h"
 const char *CImgWarpNearestRGBA::className="CImgWarpNearestRGBA";
+const char *CDrawTileObjBGRA::className="CDrawTileObjBGRA";
 int CDrawTileObjBGRA::drawTile(double *x_corners,double *y_corners,int &dDestX,int &dDestY){
     uint *data=(uint*)dataSource->dataObject[0]->cdfVariable->data;
     uint *imageData = (uint*)drawImage->getCanvasMemory();
