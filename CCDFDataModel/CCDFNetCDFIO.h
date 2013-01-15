@@ -359,7 +359,7 @@ CDBDebug("closing");
      
       //printf("%s\n",var->name.c_str());
       //if(var->name.equals("azidiff"))return 0;
-      if(type==CDF_BYTE)status = nc_get_var_ubyte(root_id,var->id,(unsigned char*)var->data);
+      if(type==CDF_BYTE||type==CDF_UBYTE)status = nc_get_var_ubyte(root_id,var->id,(unsigned char*)var->data);
       else if(type==CDF_CHAR)status = nc_get_var_text(root_id,var->id,(char*)var->data);
       else if(type==CDF_SHORT)status = nc_get_var_short(root_id,var->id,(short*)var->data);
       else if(type==CDF_USHORT)status = nc_get_var_ushort(root_id,var->id,(unsigned short*)var->data);
@@ -765,11 +765,11 @@ class CDFNetCDFWriter{
           
                 status = nc_def_var_chunking(root_id,nc_var_id,0 ,chunkSizes);
                 if(status!=NC_NOERR){ncError(__LINE__,className,"nc_def_var_chunking: ",status);return 1;}
-                status = nc_def_var_deflate(root_id,nc_var_id,shuffle ,deflate, deflate_level);
-                if(status!=NC_NOERR){ncError(__LINE__,className,"nc_def_var_deflate: ",status);return 1;}
-                if(listNCCommands){
-                  NCCommands.printconcat("nc_def_var_deflate(root_id,var_id_%d,shuffle ,deflate, deflate_level);\n",j);
-                } 
+                //status = nc_def_var_deflate(root_id,nc_var_id,shuffle ,deflate, deflate_level);
+                //if(status!=NC_NOERR){ncError(__LINE__,className,"nc_def_var_deflate: ",status);return 1;}
+                //if(listNCCommands){
+                  //NCCommands.printconcat("nc_def_var_deflate(root_id,var_id_%d,shuffle ,deflate, deflate_level);\n",j);
+                //} 
                 
               }
               

@@ -398,7 +398,6 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
     }
     
     bool drawBilinear=false;
-    CDBDebug("styleName + %s",dataSource->styleName.c_str());
     if(dataSource->styleName.indexOf("bilinear")>=0){
       drawBilinear=true;
     }

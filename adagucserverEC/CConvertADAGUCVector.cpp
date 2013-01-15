@@ -16,7 +16,7 @@ int CConvertADAGUCVector::convertADAGUCVectorHeader( CDFObject *cdfObject ){
   }catch(int e){
     return 1;
   }
-  CDBDebug("THIS IS ADAGUC VECTOR DATA");
+ //CDBDebug("THIS IS ADAGUC VECTOR DATA");
   bool hasTimeData = false;
   
   //Is there a time variable

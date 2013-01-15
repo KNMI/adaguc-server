@@ -3,6 +3,7 @@ const char *CDFObjectStore::className="CDFObjectStore";
 #include "CConvertASCAT.h"
 #include "CConvertADAGUCVector.h"
 #include "CConvertADAGUCPoint.h"
+#include "CDataReader.h"
 
 #define MAX_OPEN_FILES 128
 extern CDFObjectStore cdfObjectStore;
@@ -12,7 +13,7 @@ bool EXTRACT_HDF_NC_VERBOSE = false;
  * Get a CDFReader based on information in the datasource. In the Layer element this can be configured with <DataReader>HDF5</DataReader>
  * @param dataSource The configured datasource or NULL pointer. NULL pointer defaults to a NetCDF/OPeNDAP reader
  */
-CDFReader *CDFObjectStore::getCDFReader(CDataSource *dataSource){
+CDFReader *CDFObjectStore::getCDFReader(CDataSource *dataSource,const char *fileName){
   //Do we have a datareader defined in the configuration file?
   //if(cdfReader !=NULL){delete cdfReader;cdfReader = NULL;}
   CDFReader *cdfReader = NULL;
@@ -29,7 +30,7 @@ CDFReader *CDFObjectStore::getCDFReader(CDataSource *dataSource){
         hdf5Reader->enableKNMIHDF5toCFConversion();
       }
     }else{
-      cdfReader=getCDFReader(dataSource->getFileName());
+      cdfReader=getCDFReader(fileName);
     }
   }
   //Defaults to the netcdf reader
@@ -49,6 +50,7 @@ CDFReader *CDFObjectStore::getCDFReader(CDataSource *dataSource){
  * @return The CDFReader
  */
 CDFReader *CDFObjectStore::getCDFReader(const char *fileName){
+
   CDFReader *cdfReader = NULL;
   if(fileName!=NULL){
     CT::string name=fileName;
@@ -89,7 +91,7 @@ CDFReader *CDFObjectStore::getCDFReader(const char *fileName){
   //Defaults to the netcdf reader
   if(cdfReader==NULL){
     if(EXTRACT_HDF_NC_VERBOSE){
-      CDBDebug("Creating NetCDF reader");
+      CDBDebug("Creating NetCDF reader %s",fileName);
     }
     cdfReader = new CDFNetCDFReader();
     //((CDFNetCDFReader*)cdfReader)->enableLonWarp(true);
@@ -98,18 +100,33 @@ CDFReader *CDFObjectStore::getCDFReader(const char *fileName){
   return cdfReader;
 }
 
+CDFObject *CDFObjectStore::getCDFObjectHeader(CServerParams *srvParams,const char *fileName){
+  
+    return getCDFObject(NULL,srvParams,fileName);
+}
 
 
 /**
- * Get a CDFObject based with opened and configured CDF reader for a filename/OPeNDAP url and a dataSource.
- * @param dataSource The configured datasource or NULL pointer. NULL pointer defaults to a NetCDF/OPeNDAP reader
- * @param fileName The filename to read.
- */
+* Get a CDFObject based with opened and configured CDF reader for a filename/OPeNDAP url and a dataSource.
+* @param dataSource The configured datasource or NULL pointer. NULL pointer defaults to a NetCDF/OPeNDAP reader
+* @param fileName The filename to read.
+*/
 CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,const char *fileName){
+  return getCDFObject(dataSource,NULL,fileName);
+}
+  
+
+CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *srvParams,const char *fileName){
+  
+  CT::string uniqueIDForFile = fileName;
+  if(srvParams!=NULL){
+    uniqueIDForFile.concat("_header_");
+  }
+  
   for(size_t j=0;j<fileNames.size();j++){
-    if(fileNames[j]->equals(fileName)){
+    if(fileNames[j]->equals(uniqueIDForFile.c_str())){
       #ifdef CDATAREADER_DEBUG                          
-      CDBDebug("Found CDFObject with filename %s",fileName);
+      CDBDebug("Found CDFObject with filename %s",uniqueIDForFile.c_str());
       #endif            
       return cdfObjects[j];
     }
@@ -120,15 +137,59 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,const char *file
   #ifdef CDATAREADER_DEBUG              
   CDBDebug("Creating CDFObject with filename %s",fileName);
   #endif      
-  //CDFObject not found: Create one
+ 
+  
+  //Open the object.
+  #ifdef CDATAREADER_DEBUG           
+  CDBDebug("Opening %s",fileName);
+  #endif
+  
+  //Open header
+  
+  CT::string cacheName;
+  bool hasCacheLocation = false;
+
+  if(srvParams!=NULL){
+    srvParams->getCacheDirectory(&cacheName);
+    if(cacheName.length()>0)hasCacheLocation = true;
+    //Do not build a cache of cachefiles
+    if(cacheName.indexOf(fileName)!=-1){
+      CDBDebug("This is already a cache file: %s",fileName);
+      hasCacheLocation = false;
+    }
+  }
+  
+  
+  Cache cache;
+  
+  if(hasCacheLocation){
+    CT::string validFileName(fileName);
+    validFileName.replaceSelf(":",""); validFileName.replaceSelf("/",""); 
+    cacheName.concat("/");cacheName.concat(&validFileName);cacheName.concat("_ncheader.nc");
+    cache.check(cacheName.c_str());
+  }
+
+  
+  const char *fileLocationToOpen = fileName;
+
+  if(cache.cacheIsAvailable()){
+    fileLocationToOpen = cacheName.c_str();
+    CDBDebug("Opening from cache: %s",fileLocationToOpen );
+  }else{
+    fileLocationToOpen = fileName;
+    CDBDebug("Opening from file: %s",fileLocationToOpen );
+  }
+  
+  
+   //CDFObject not found: Create one
   CDFObject *cdfObject = new CDFObject();
   CDFReader *cdfReader = NULL;
   
   if(dataSource!=NULL){
-    cdfReader = CDFObjectStore::getCDFReader(dataSource);
+    cdfReader = CDFObjectStore::getCDFReader(dataSource,fileLocationToOpen);
   }else{
     //Get a reader based on file extension
-    cdfReader = CDFObjectStore::getCDFReader(fileName);
+    cdfReader = CDFObjectStore::getCDFReader(fileLocationToOpen);
   }
   
   if(cdfReader==NULL){
@@ -136,28 +197,40 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,const char *file
       CDBError("Unable to get a reader for source %s",dataSource->cfgLayer->Name[0]->value.c_str());
     }
     throw(1);
-    //return NULL;
   }
   
   cdfObject->attachCDFReader(cdfReader);
   
-  //Open the object.
-  #ifdef CDATAREADER_DEBUG           
-  CDBDebug("Opening %s",fileName);
-  #endif
-  int status = cdfObject->open(fileName);
+  
+  int status = cdfObject->open(fileLocationToOpen);
+  
   if(status!=0){
     //TODO in case of basic/digest authentication, username and password is currently also listed....
-    CDBError("Unable to open file '%s'",fileName);
+    CDBError("Unable to open file '%s'",fileLocationToOpen);
     delete cdfObject;
     delete cdfReader;
     return NULL;
   }
   
+  if(cache.saveCacheFile()){
+    //Save cache
+    CDFNetCDFWriter netCDFWriter(cdfObject);
+    netCDFWriter.disableVariableWrite();
+    netCDFWriter.setNetCDFMode(4);
+    try{
+      //TODO disable compression
+      CDBDebug("Saving cache file: %s",cache.getCacheFileNameToWrite() );
+      netCDFWriter.write(cache.getCacheFileNameToWrite());
+    }catch(int e){
+      CDBError("Exception %d in writing cache file",e);
+      return NULL;
+    }
+    cache.releaseCacheFile();
+  }
   
   
-    //Push everything into the store
-  fileNames.push_back(new CT::string(fileName));
+  //Push everything into the store
+  fileNames.push_back(new CT::string(uniqueIDForFile.c_str()));
   cdfObjects.push_back(cdfObject);
   cdfReaders.push_back(cdfReader);
 

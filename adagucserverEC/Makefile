@@ -7,7 +7,7 @@ CCDFDATAMODELOBJ = $(CCDFDATAMODEL)/CCDFDataModel.a
 #INCLUDEDIR=$(SRCLIBS)/include -I $(HELPERCLASSES) -I $(CCDFDATAMODEL) -I /usr/include/libxml2/ -I/usr/include/udunits2/ -I/usr/include/gdal/ -I $(SRCLIBS)/include/freetype2 -I $($INSTALLDIR2)/include/freetype2 -I /data/data1/software/install/include/freetype2 -I /data/data1/software/install/include/ -I/usr/include/freetype2/ -I /usr/include/postgresql/ -I /usr/include/cairo/
 INCLUDEDIR=-I $(HELPERCLASSES) -I $(CCDFDATAMODEL) -I/usr/include/libxml2/ -I/usr/include/gdal/ -I/usr/include/udunits2/ -I/usr/include/freetype2/ -I/usr/include/postgresql/ -I/usr/include/cairo/ $(CPPFLAGS)
 
-CCOMPILER=g++ -Wall -Wunused-but-set-variable $(INCLUDEDIR) 
+CCOMPILER=g++ -Wall $(INCLUDEDIR) 
 
 #optimalization options:
 #CCOMPILER=g++ -march=pentium4 -mtune=pentium4 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 $(INCLUDEDIR) 

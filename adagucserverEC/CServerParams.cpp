@@ -57,12 +57,15 @@ void CServerParams::getCacheFileName(CT::string *cacheFileName){
       cacheName.setChar(j,c);
     }
   }
-  //append .dat extension
-  cacheName.concat(".dat");
+  
+
   //Insert the tmp dir in the beginning
   cacheFileName->copy(cfg->TempDir[0]->attr.value.c_str());
   cacheFileName->concat("/");
   cacheFileName->concat(&cacheName);
+//  CDBDebug("Make pub dir %s",cacheFileName->c_str());
+  CDirReader::makePublicDirectory(cacheFileName->c_str());
+  cacheFileName->concat("/simplecachestore.dat");
 }
 
 
@@ -106,7 +109,7 @@ int CServerParams::lookupTableName(CT::string *tableName,const char *path,const 
   CT::string filterString="FILTER_";filterString.concat(filter);
   CT::string pathString="PATH_";pathString.concat(path);
   CT::string lookupTableName = "pathfiltertablelookup";
-  CT::string tableColumns("path varchar (255), filter varchar (255), tablename varchar (255)");
+  CT::string tableColumns("path varchar (511), filter varchar (255), tablename varchar (255)");
   CT::string mvRecordQuery;
   int status;
   CPGSQLDB DB;

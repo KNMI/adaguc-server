@@ -210,3 +210,27 @@ int CDirReader::getFileDate(CT::string *date, const char *file){
   return 0;
 }
 
+
+void CDirReader::makePublicDirectory(const char *dirname){
+  if(dirname==NULL)return;
+  struct stat stFileInfo;
+  int intStat = stat(dirname,&stFileInfo);
+  if(intStat != 0){
+    CT::string directory = dirname;
+    CT::string *directorySplitted = directory.splitToArray("/");
+    directory="";
+    for(size_t j=0;j<directorySplitted->count;j++){
+      directory.concat("/");
+      directory.concat(directorySplitted[j].c_str());
+      const char *part = directory.c_str();
+      int intStat = stat(part,&stFileInfo);
+      if(intStat != 0){
+        CDBDebug("making dir %s",part);
+        mode_t permissions = S_IRWXU|S_IRWXG|S_IRWXO;
+        mkdir (part,permissions);
+        chmod(part,0777);
+      }
+    }
+    delete []directorySplitted;
+  }
+}

@@ -14,7 +14,7 @@ void CRequest::addXMLLayerToConfig(CServerParams *srvParam,std::vector<CT::strin
   CServerConfig::XMLE_FilePath* xmleFilePath = new CServerConfig::XMLE_FilePath();
   
   CServerConfig::XMLE_Cache* xmleCache = new CServerConfig::XMLE_Cache();
-  xmleCache->attr.enabled.copy("false");
+  xmleCache->attr.enabled.copy("true");
   xmleLayer->attr.type.copy("database");
   xmleFilePath->value.copy(location);
   xmleFilePath->attr.filter.copy("");
@@ -200,7 +200,7 @@ int CRequest::setConfigFile(const char *pszConfigFile){
       
           //Open file
           CDBDebug("Opening file %s",dirReader.fileList[j]->fullName.c_str());
-          CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObject(NULL,dirReader.fileList[j]->fullName.c_str());
+          CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(srvParam,dirReader.fileList[j]->fullName.c_str());
           if(cdfObject == NULL){CDBError("Unable to read file %s",dirReader.fileList[j]->fullName.c_str());throw(__LINE__);}
           
           //std::vector<CT::string> variables;
@@ -1662,6 +1662,23 @@ int CRequest::process_querystring(){
     if(srvParam->autoResourceLocation.c_str()!=NULL){
       srvParam->internalAutoResourceLocation=srvParam->autoResourceLocation.c_str();
       
+         
+      //When an opendap source is added, we should add unique id to the cachefile
+      if(srvParam->cfg->CacheDocs.size()==0){
+        srvParam->cfg->CacheDocs.push_back(new CServerConfig::XMLE_CacheDocs());
+      }
+      srvParam->cfg->CacheDocs[0]->attr.enabled.copy("true");
+      srvParam->enableDocumentCache=true;
+      
+       CT::string validFileName(srvParam->internalAutoResourceLocation.c_str());
+      //Replace : and / by nothing, so we can use the string as a directory name
+      validFileName.replaceSelf(":",""); 
+      validFileName.replaceSelf("/","");
+      validFileName.replaceSelf("\\",""); 
+      
+      srvParam->cfg->CacheDocs[0]->attr.cachefile.copy(validFileName.c_str());
+      
+      
       if(srvParam->isAutoResourceEnabled()==false){
         CDBError("Automatic resource is not enabled");
         //readyerror();
@@ -1704,7 +1721,7 @@ int CRequest::process_querystring(){
         srvParam->autoResourceVariable.copy("");
         //Open the opendap resource
         //CDBDebug("OGC REQUEST Remote resource %s",srvParam->internalAutoResourceLocation.c_str());
-        CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObject(NULL,srvParam->internalAutoResourceLocation.c_str());
+        CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(srvParam,srvParam->internalAutoResourceLocation.c_str());
         //int status=cdfObject->open(srvParam->internalAutoResourceLocation.c_str());
         if(cdfObject!=NULL){
           for(size_t j=0;j<cdfObject->variables.size();j++){
@@ -1742,7 +1759,7 @@ int CRequest::process_querystring(){
       #ifdef MEASURETIME
       StopWatch_Stop("Opening file");
       #endif
-      CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObject(NULL,srvParam->internalAutoResourceLocation.c_str());
+      CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(srvParam,srvParam->internalAutoResourceLocation.c_str());
       //int status=cdfObject->open(srvParam->internalAutoResourceLocation.c_str());
       if(cdfObject==NULL){
         CDBError("Unable to open resource %s",srvParam->autoResourceLocation.c_str());
@@ -1879,14 +1896,7 @@ int CRequest::process_querystring(){
       
       
       
-      
-      //When an opendap source is added, we should not cache the getcapabilities
-      if(srvParam->cfg->CacheDocs.size()==0){
-        srvParam->cfg->CacheDocs.push_back(new CServerConfig::XMLE_CacheDocs());
-      }
-      srvParam->cfg->CacheDocs[0]->attr.enabled.copy("false");
-      srvParam->enableDocumentCache=false;
-      
+   
       #ifdef MEASURETIME
       StopWatch_Stop("Auto opendap configured");
       #endif

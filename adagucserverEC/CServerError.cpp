@@ -96,7 +96,7 @@ void readyerror(){
     for(size_t j=0;j<errormsgs.size();j++){
       fprintf(stdout,"%s",errormsgs[j].c_str());
     }
-    return;
+    resetErrors();return;
   }
   if(cerror_mode==WMS_EXCEPTIONS_XML_1_1_1){//XML exception
     printf("%s%c%c\n","Content-Type:text/xml",13,10);  
@@ -112,7 +112,7 @@ void readyerror(){
     }
     fprintf(stdout,"\n  </ServiceException>\n");
     fprintf(stdout,"</ServiceExceptionReport>\n");
-    return;
+    resetErrors();return;
   }
   if(cerror_mode==WMS_EXCEPTIONS_IMAGE||cerror_mode==WMS_EXCEPTIONS_BLANKIMAGE){//Image
     CDrawImage drawImage;
@@ -136,7 +136,9 @@ void readyerror(){
       printf("%s%c%c\n","Content-Type:image/png",13,10);
       drawImage.printImagePng();
     }
+     resetErrors();return;
   }
+ 
 }
 
 void printdebug(const char * text,int prioritylevel)

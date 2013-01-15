@@ -37,8 +37,6 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
   if(dataSource->dataObject.size()==2){
     CT::string varName1=dataSource->dataObject[0]->cdfVariable->name.c_str();
     CT::string varName2=dataSource->dataObject[1]->cdfVariable->name.c_str();
-    CDBDebug("varName1 = %s",varName1.c_str());
-    CDBDebug("varName2 = %s",varName2.c_str());
     std::vector<PointDVWithLatLon> *p1=&dataSource->dataObject[0]->points;
     std::vector<PointDVWithLatLon> *p2=&dataSource->dataObject[1]->points;
     

@@ -37,25 +37,16 @@ class CImageDataWriter: public CBaseDataWriterInterface{
       double nativeCoordX,nativeCoordY;
       double lonX,lonY;
       int imx,imy;
+      int dWidth,dHeight;
     };
-    
     static std::map<std::string,CImageDataWriter::ProjCacheInfo> projCacheMap;
     static std::map<std::string,CImageDataWriter::ProjCacheInfo>::iterator projCacheIter;
-  
-    
     CImageWarper imageWarper;
-  
-    
     CDataSource *currentDataSource;
-    
     int requestType;
     int status;
-   
     int animation;
     int nrImagesAdded;
-    //CT::string getFeatureInfoResult;
-    //CT::string getFeatureInfoHeader;
-   // enum RenderMethodEnum { undefined,nearest, bilinear, contour,     barb, barbshaded, barbcontour, barbcontourshaded, thinbarb, thinbarbshaded, thinbarbcontour, thinbarbcontourshaded,     shaded,shadedcontour,     point,    vector, vectorshaded, vectorcontour, vectorcontourshaded, thinvector, thinvectorshaded, thinvectorcontour, thinvectorcontourshaded,    nearestcontour,bilinearcontour,rgba};
     static void calculateScaleAndOffsetFromMinMax(float &scale, float &offset,float min,float max,float log);
 public:
   typedef unsigned int RenderMethod;

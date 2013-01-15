@@ -54,6 +54,13 @@ class CDirReader{
     static void makeCleanPath(CT::string *path);
     static int getFileDate(CT::string *date,const char *file);
     int testRegEx(const char *string,const char *pattern);
+
+    /**
+     * Create a public directory writable for everybody 
+     * A directory chain can also be given (like mkdir -p)
+     * @param dirname 
+     */
+    static void makePublicDirectory(const char *dirname);
 };
 #endif
 

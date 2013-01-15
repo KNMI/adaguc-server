@@ -28,31 +28,7 @@ CImageDataWriter::RenderMethod CImageDataWriter::getRenderMethodFromString(CT::s
   if(renderMethodString->indexOf("barb"    )!=-1)renderMethod|=RM_BARB;
   if(renderMethodString->indexOf("thin")!=-1)renderMethod|=RM_THIN;
   if(renderMethodString->indexOf("rgba")!=-1)renderMethod|=RM_RGBA;
-  
-  /*else if(renderMethodString->equals("nearest"))renderMethod=nearest;
-  else if(renderMethodString->equals("vector"))renderMethod=vector;
-  else if(renderMethodString->equals("barb"))renderMethod=barb;
-  else if(renderMethodString->equals("barbcontour"))renderMethod=barbcontour;
-  else if(renderMethodString->equals("barbshaded"))renderMethod=barbshaded;
-  else if(renderMethodString->equals("barbcontourshaded"))renderMethod=barbcontourshaded;
-  else if(renderMethodString->equals("shaded"))renderMethod=shaded;
-  else if(renderMethodString->equals("contour"))renderMethod=contour;
-  else if(renderMethodString->equals("shadedcontour"))renderMethod=shadedcontour;
-  else if(renderMethodString->equals("vectorcontour"))renderMethod=vectorcontour;
-  else if(renderMethodString->equals("nearestcontour"))renderMethod=nearestcontour;
-  else if(renderMethodString->equals("bilinearcontour"))renderMethod=bilinearcontour;
-  else if(renderMethodString->equals("vectorshaded"))renderMethod=vectorshaded;
-  else if(renderMethodString->equals("vectorcontourshaded"))renderMethod=vectorcontourshaded;
-  else if(renderMethodString->equals("thinvector"))renderMethod=thinvector;
-  else if(renderMethodString->equals("thinvectorcontour"))renderMethod=thinvectorcontour;
-  else if(renderMethodString->equals("thinvectorcontourshaded"))renderMethod=thinvectorcontourshaded;
-  else if(renderMethodString->equals("thinvectorshaded"))renderMethod=thinvectorshaded;
-  else if(renderMethodString->equals("thinbarb"))renderMethod=thinbarb;
-  else if(renderMethodString->equals("thinbarbcontour"))renderMethod=thinbarbcontour;
-  else if(renderMethodString->equals("thinbarbshaded"))renderMethod=thinbarbshaded;
-  else if(renderMethodString->equals("thinbarbcontourshaded"))renderMethod=thinbarbcontourshaded;
-  else if(renderMethodString->equals("point"))renderMethod=point;
-  else if(renderMethodString->equals("rgba"))renderMethod=rgba;*/
+ 
   return renderMethod;
 }
 
@@ -70,28 +46,7 @@ void CImageDataWriter::getRenderMethodAsString(CT::string *renderMethodString, R
   if(renderMethod & RM_THIN)renderMethodString->concat("thin");
   if(renderMethod & RM_RGBA)renderMethodString->concat("rgba");
   
-  
-  /*else if(renderMethod == nearest)renderMethodString->copy("nearest");
-  else if(renderMethod == vector)renderMethodString->copy("vector");
-  else if(renderMethod == barb)renderMethodString->copy("barb");
-  else if(renderMethod == barbcontour)renderMethodString->copy("barbcontour");
-  else if(renderMethod == barbcontourshaded)renderMethodString->copy("barbcontourshaded");
-  else if(renderMethod == shaded)renderMethodString->copy("shaded");
-  else if(renderMethod == contour)renderMethodString->copy("contour");
-  else if(renderMethod == shadedcontour)renderMethodString->copy("shadedcontour");
-  else if(renderMethod == vectorcontour)renderMethodString->copy("vectorcontour");
-  else if(renderMethod == nearestcontour)renderMethodString->copy("nearestcontour");
-  else if(renderMethod == bilinearcontour)renderMethodString->copy("bilinearcontour");
-  else if(renderMethod == vectorcontourshaded)renderMethodString->copy("vectorcontourshaded");
-  else if(renderMethod == thinvector)renderMethodString->copy("thinvector");
-  else if(renderMethod == thinvectorcontour)renderMethodString->copy("thinvectorcontour");
-  else if(renderMethod == thinvectorshaded)renderMethodString->copy("thinvectorshaded");
-  else if(renderMethod == thinvectorcontourshaded)renderMethodString->copy("thinvectorcontourshaded");
-  else if(renderMethod == thinbarb)renderMethodString->copy("thinbarb");
-  else if(renderMethod == thinbarbcontour)renderMethodString->copy("thinbarbcontour");
-  else if(renderMethod == thinbarbshaded)renderMethodString->copy("thinbarbshaded");
-  else if(renderMethod == thinbarbcontourshaded)renderMethodString->copy("thinbarbcontourshaded");
-  else renderMethodString->copy("!!!no string!!!");*/
+ 
 }
 
 int CImageDataWriter::_setTransparencyAndBGColor(CServerParams *srvParam,CDrawImage* drawImage){
@@ -958,14 +913,17 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
   GetFeatureInfoResult  *getFeatureInfoResult = new GetFeatureInfoResult();
   getFeatureInfoResultList.push_back(getFeatureInfoResult);
 
-  int status;
+  int status = 0;
+  
   for(size_t d=0;d<dataSources.size();d++){
     #ifdef CIMAGEDATAWRITER_DEBUG    
     CDBDebug("Processing dataSource %d",d);
     #endif
    
+    bool headerIsAvailable = false;
     bool openAll = false;
     if(dataSources[d]->dataObject[0]->cdfVariable!=NULL){
+      headerIsAvailable=true;
       if(dataSources[d]->dataObject[0]->cdfVariable->getAttributeNE("ADAGUC_VECTOR")!=NULL){
         openAll =true;
       }  
@@ -988,18 +946,23 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
    
     
     CDataReader reader;
-    if(openAll){
-      //CDBDebug("OPEN ALL");
-      status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_ALL);
-    }else{
-      //CDBDebug("OPEN HEADER");
-      status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_HEADER);
-    }
-   
+    //if(!headerIsAvailable)
+    {
+      if(openAll){
+        //CDBDebug("OPEN ALL");
+        status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_ALL);
+      }else{
+        //CDBDebug("OPEN HEADER");
+        if(!headerIsAvailable){
+          status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_HEADER);
+        }
+      }
     
-    if(status!=0){
-      CDBError("Could not open file: %s",dataSource->getFileName());
-      return 1;
+      
+      if(status!=0){
+        CDBError("Could not open file: %s",dataSource->getFileName());
+        return 1;
+      }
     }
     
     
@@ -1063,6 +1026,8 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       x*=double(dataSource->dWidth);
       y*=double(dataSource->dHeight);
       //CDBDebug("%f %f",x,y);
+      projCacheInfo.dWidth=dataSource->dWidth;
+      projCacheInfo.dHeight=dataSource->dHeight;
 
       if(x<0){
         projCacheInfo.imx=-1;
@@ -1175,9 +1140,9 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
     }
   // Retrieve corresponding values.
   #ifdef CIMAGEDATAWRITER_DEBUG  
-  CDBDebug("imx:%d imy:%d dataSource->dWidth:%d dataSource->dHeight:%d",projCacheInfo.imx,projCacheInfo.imy,dataSource->dWidth,dataSource->dHeight);
+  CDBDebug("imx:%d imy:%d projCacheInfo.dWidth:%d projCacheInfo.dHeight:%d",projCacheInfo.imx,projCacheInfo.imy,projCacheInfo.dWidth,projCacheInfo.dHeight);
   #endif
-  if(projCacheInfo.imx>=0&&projCacheInfo.imy>=0&&projCacheInfo.imx<dataSource->dWidth&&projCacheInfo.imy<dataSource->dHeight){
+  if(projCacheInfo.imx>=0&&projCacheInfo.imy>=0&&projCacheInfo.imx<projCacheInfo.dWidth&&projCacheInfo.imy<projCacheInfo.dHeight){
     
     
     if(openAll){
@@ -1210,7 +1175,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
 
       size_t ptr=0;
       if(openAll){
-        ptr=projCacheInfo.imx+projCacheInfo.imy*dataSource->dWidth;
+        ptr=projCacheInfo.imx+projCacheInfo.imy*projCacheInfo.dWidth;
       }
       
       #ifdef CIMAGEDATAWRITER_DEBUG 
@@ -1251,7 +1216,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
     if(dataSource->dataObject.size()==2){
       size_t ptr=0;
       if(openAll){
-        ptr=projCacheInfo.imx+projCacheInfo.imy*dataSource->dWidth;
+        ptr=projCacheInfo.imx+projCacheInfo.imy*projCacheInfo.dWidth;
       }
 
       double pi=3.141592;

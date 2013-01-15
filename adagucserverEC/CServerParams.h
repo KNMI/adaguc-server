@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include "CDebugger.h"
 #include "CTypes.h"
+#include "CDirReader.h"
 #include "Definitions.h"
 #include "CServerConfig_CPPXSD.h"
 #include "COGCDims.h"

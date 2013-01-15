@@ -1,5 +1,6 @@
 #ifndef CDATASOURCE_H
 #define CDATASOURCE_H
+#include <math.h>
 #include "CXMLSerializerInterface.h"
 #include "CServerParams.h"
 #include "CServerConfig_CPPXSD.h"
@@ -51,9 +52,19 @@ class CDataSource{
       if(dataObject.size()==1){
         T* data = (T*)dataObject[0]->cdfVariable->data;
         
+        CDFType type=dataObject[0]->cdfVariable->type;
+        
         //CDBDebug("nodataval %f",(T)dataObject[0]->dfNodataValue);
         
-        T _min=(T)0.0f,_max=(T)0.0f;
+        T _min=(T)0.0f,_max=(T)1.0f;
+        
+        T maxInf=(T)INFINITY;
+        T minInf=(T)-INFINITY;
+        
+        bool checkInfinity = false;
+        if(type==CDF_FLOAT||type==CDF_DOUBLE)checkInfinity=true;
+        
+        //CDBDebug("MINMAX %f %f %s",(double)maxInf,(double)minInf,CDF::getCDFDataTypeName(type).c_str());
         int firstDone=0;
         for(size_t p=0;p<size;p++){
           
@@ -61,12 +72,16 @@ class CDataSource{
 
           //CDBDebug("Value %d =  %f",p,(double)v);
           if((((T)v)!=(T)dataObject[0]->dfNodataValue||(!dataObject[0]->hasNodataValue))&&v==v){
-            if(firstDone==0){
-              _min=v;_max=v;
-              firstDone=1;
-            }else{
-              if(v<_min)_min=v;
-              if(v>_max)_max=v;
+            if((checkInfinity&&v!=maxInf&&v!=minInf)||(!checkInfinity))
+            {
+            
+              if(firstDone==0){
+                _min=v;_max=v;
+                firstDone=1;
+              }else{
+                if(v<_min)_min=v;
+                if(v>_max)_max=v;
+              }
             }
           }
         }

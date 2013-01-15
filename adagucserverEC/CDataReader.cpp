@@ -64,7 +64,7 @@ void writeLogFile2(const char * msg){
 
 
 int CDataReader::getCacheFileName(CDataSource *dataSource,CT::string *uniqueIDFor2DField){
-  className="CDataReader::getCacheFileName";
+  
   if(dataSource==NULL)return 1;
   if(dataSource->srvParams==NULL)return 1;
 #ifdef CDATAREADER_DEBUG    
@@ -78,16 +78,11 @@ int CDataReader::getCacheFileName(CDataSource *dataSource,CT::string *uniqueIDFo
 #endif  
   uniqueIDFor2DField->copy(cacheLocation.c_str());
   uniqueIDFor2DField->concat("/");
-  struct stat stFileInfo;
-  int timeStep = dataSource->getCurrentTimeStep();
-  int intStat = stat(uniqueIDFor2DField->c_str(),&stFileInfo);
-  //Directory structure needs to be created for all the cache files.
-  if(intStat != 0){
-    CDBDebug("making dir %s",uniqueIDFor2DField->c_str());
-    mode_t permissions = S_IRWXU|S_IRWXG|S_IRWXO;
-    mkdir (uniqueIDFor2DField->c_str(),permissions);
-    chmod(uniqueIDFor2DField->c_str(),0777);
-  }
+  
+  
+  
+  CDirReader::makePublicDirectory(uniqueIDFor2DField->c_str());
+  
   
   if(dataSource->getFileName()==NULL){
      CDBError("No filename for datasource");
@@ -103,17 +98,11 @@ int CDataReader::getCacheFileName(CDataSource *dataSource,CT::string *uniqueIDFo
   uniqueIDFor2DField->concat(&validFileName);
   uniqueIDFor2DField->concat("cache");
 
-  //Check wether the specific cache file directory exists
-  intStat = stat(uniqueIDFor2DField->c_str(),&stFileInfo);
-  if(intStat != 0){
-    CDBDebug("making dir %s",uniqueIDFor2DField->c_str());
-    mode_t permissions = S_IRWXU|S_IRWXG|S_IRWXO;
-    mkdir (uniqueIDFor2DField->c_str(),permissions);
-    chmod(uniqueIDFor2DField->c_str(),0777);
-  }
-  
+  CDirReader::makePublicDirectory(uniqueIDFor2DField->c_str());
   
   //Now make the filename, based on variable name and dimension properties
+  int timeStep = dataSource->getCurrentTimeStep();
+    
   uniqueIDFor2DField->concat("/");
   uniqueIDFor2DField->concat(dataSource->dataObject[0]->variableName.c_str());
 #ifdef CDATAREADER_DEBUG    
@@ -219,7 +208,7 @@ int CDataReader::open(CDataSource *dataSource, int x,int y){
 }
 
 int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
-  className="CDataReader::open";
+  
   
   #ifdef MEASURETIME
   StopWatch_Stop("function entry");
@@ -257,17 +246,24 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
   
   //Check wether we should use cache or not (in case of OpenDAP, this speeds up things a lot)
   if(enableDataCache==true){
-    //Create a temporary filename, which we can move in other to avoid read/write conflicts.
-    uniqueIDFor2DFieldTmp.copy(&uniqueIDFor2DField);  
-    uniqueIDFor2DFieldTmp.concat("_tmp");
 
     
     struct stat stFileInfo;
     //Test wether the cache file is already available (in this case we do not need above tmp name)
-    int intStat = stat(uniqueIDFor2DField.c_str(),&stFileInfo);if(intStat != 0)saveFieldFile = true;else {
+    int intStat = stat(uniqueIDFor2DField.c_str(),&stFileInfo);
+    if(intStat != 0){
+      if(mode == CNETCDFREADER_MODE_OPEN_ALL){
+        saveFieldFile = true;
+      }
+    }else {
+      
       cacheAvailable=true;
     }
     
+    //Create a temporary filename, which we can move in other to avoid read/write conflicts.
+    uniqueIDFor2DFieldTmp.copy(&uniqueIDFor2DField);  
+    uniqueIDFor2DFieldTmp.concat("_tmp");
+
     //Test wether the tmp file already exists, in this case another process is working on the cache
     intStat = stat(uniqueIDFor2DFieldTmp.c_str(),&stFileInfo);
     if(intStat == 0){workingOnCache=true;}
@@ -293,18 +289,24 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
       dataSource->cfgLayer->DataReader[0]->value.copy("NC");
     }
     
+    
+    
+    //CDBDebug("Opening cachefile %s with mode %d",uniqueIDFor2DField.c_str(),mode);
     cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource,uniqueIDFor2DField.c_str());
     //if(cdfObject==NULL){return 1;}
     //status = cdfObject->open(uniqueIDFor2DField.c_str());
-    int timeStep = dataSource->getCurrentTimeStep();
-    for(size_t j=0;j<dataSource->timeSteps[timeStep]->dims.dimensions.size();j++){
-      dataSource->timeSteps[timeStep]->dims.dimensions[0]->index=0;
+    if(mode == CNETCDFREADER_MODE_OPEN_ALL){
+      int timeStep = dataSource->getCurrentTimeStep();
+      for(size_t j=0;j<dataSource->timeSteps[timeStep]->dims.dimensions.size();j++){
+        dataSource->timeSteps[timeStep]->dims.dimensions[j]->index=0;
+      }
     }
     
     
     
 
   }else{
+    //CDBDebug("Opening realfile %s with mode %d",FileName.c_str(),mode);
     //We just open the file in the standard way, without cache
     cdfObject=CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource,FileName.c_str());
     if(cdfObject==NULL){CDBError("Unable to het CDFObject from store");return 1;}
@@ -385,8 +387,8 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
   if(!level2CompatMode)if(CConvertASCAT::convertASCATData(dataSource,mode)==0)level2CompatMode=true;
   if(!level2CompatMode)if(CConvertADAGUCVector::convertADAGUCVectorData(dataSource,mode)==0)level2CompatMode=true;
   if(!level2CompatMode)if(CConvertADAGUCPoint::convertADAGUCPointData(dataSource,mode)==0)level2CompatMode=true;     
-  
-  
+  if(level2CompatMode)enableDataCache=false;
+  if(mode!=CNETCDFREADER_MODE_OPEN_ALL)enableDataCache=false;
 
   /*CT::string dumpString;
   CDF::dump(cdfObject,&dumpString);
@@ -492,6 +494,7 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
     count[dimYIndex]=1;
     stride[dimXIndex]=1;
     stride[dimYIndex]=1;
+    enableDataCache=false;
     //CDBDebug("%d %d",x,y);
   }
   
@@ -571,7 +574,7 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
   // Retrieve CRS
   
   //Check if projection is overidden in the config file
-  if(dataSource->cfgLayer->Projection.size()!=0){
+  if(dataSource->cfgLayer->Projection.size()==1){
     //Read projection information from configuration
     if(dataSource->cfgLayer->Projection[0]->attr.id.c_str()!=NULL){
       dataSource->nativeEPSG.copy(dataSource->cfgLayer->Projection[0]->attr.id.c_str());
@@ -617,7 +620,7 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
           if(status==0){
             //Projection string was created, set it in the datasource.
             dataSource->nativeProj4.copy(projString.c_str());
-            CDBDebug("Autogen proj4 string: %s",projString.c_str());
+           // CDBDebug("Autogen proj4 string: %s",projString.c_str());
           }
         }
         
@@ -643,7 +646,7 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
   //Swap data from >180 degrees to domain of -180 till 180 in case of lat lon source data
   int useLonTransformation = 0;
   
-  if(level2CompatMode==false){
+  if(level2CompatMode==false&&!cacheAvailable){
 
     if( dataSource->nativeProj4.indexOf("+proj=longlat")==0){
       size_t j=0;
@@ -656,13 +659,14 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
         useLonTransformation=j;
         dataSource->dfBBOX[0]-=180;
         dataSource->dfBBOX[2]-=180;
-
+        if(saveFieldFile){
+          for(j=0;j<varX->getSize();j++){
+            ((double*)varX->data)[j]-=180.0;
+          }
+        }
       }
     }
   }
-  #ifdef CDATAREADER_DEBUG
-    CDBDebug("BBOX = [%f,%f,%f,%f]", dataSource->dfBBOX[0], dataSource->dfBBOX[1], dataSource->dfBBOX[2], dataSource->dfBBOX[3]);
-  #endif
  
   //     CDF::dump(cdfObject,&dumpString);
   //CDBDebug("\nSTART\n%s\nEND\n",dumpString.c_str());
@@ -899,7 +903,7 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
       var[varNr]->readData(var[varNr]->type,start,count,stride);
       
       //Swap data from >180 degrees to domain of -180 till 180 in case of lat lon source data
-      if(useLonTransformation!=0){
+      if(useLonTransformation!=0&&!cacheAvailable){
         int splitPX=useLonTransformation;
         switch (var[varNr]->type){
           case CDF_CHAR  : Proc::swapPixelsAtLocation(splitPX,(char*)var[varNr]->data,dataSource->dWidth,dataSource->dHeight);break;
@@ -930,7 +934,7 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
     
     
     //Swap X, Y dimensions so that pointer x+y*w works correctly
-    if(cacheAvailable!=true){
+    if(!cacheAvailable){
       //Cached data was already swapped. Because we have stored the result of this object in the cache.
       if(swapXYDimensions){
         size_t imgSize=dataSource->dHeight*dataSource->dWidth;
@@ -1041,9 +1045,9 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
     }
   }
 
+  
 
-
-  if(dataSource->stretchMinMax){
+  if(dataSource->stretchMinMax&&((dataSource->dWidth!=2||dataSource->dHeight!=2))){
     #ifdef CDATAREADER_DEBUG
     CDBDebug("MinMax calculation required");
     #endif    
@@ -1234,7 +1238,7 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
       if(keepVariable[v]==0)deleteVarNames.push_back(new CT::string(&cdfObject->variables[v]->name));
     }
     for(size_t i=0;i<deleteVarNames.size();i++){
-      CDBDebug("Removing variable %s",deleteVarNames[i]->c_str());
+      //CDBDebug("Removing variable %s",deleteVarNames[i]->c_str());
       cdfObject->removeVariable(deleteVarNames[i]->c_str());
       delete deleteVarNames[i];
     }
@@ -1280,7 +1284,7 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
         /*for(size_t j=0;j<cdfObject->variables.size();j++){
     cdfObject->variables[j]->type=CDF_DOUBLE;
   }*/
-    CDBDebug("DONE");  
+    //CDBDebug("DONE");  
    
     //Read the dimensions
     for(size_t j=0;j<dataSource->timeSteps[timeStep]->dims.dimensions.size();j++){
@@ -1322,11 +1326,9 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
     CDBDebug("DUMP For file to write:");
     writeLogFile2(dumpString.c_str());*/
 #endif
-    CDFNetCDFWriter netCDFWriter(cdfObject);
-    netCDFWriter.disableReadData();
-        
-        //netCDFWriter.disableVariableWrite();
-        //uniqueIDFor2DField.concat("nep");
+
+
+    
     //Is some kind of process working on any of the cache files?
     FILE * pFile = NULL;  
     pFile = fopen ( uniqueIDFor2DFieldTmp.c_str() , "r" );
@@ -1369,7 +1371,8 @@ int CDataReader::open(CDataSource *_dataSource,int mode,int x,int y){
           
       CDBDebug("*** [3/4] Writing cache file %s",uniqueIDFor2DFieldTmp.c_str());
           
-          
+      CDFNetCDFWriter netCDFWriter(cdfObject);
+      netCDFWriter.disableReadData();
       netCDFWriter.setNetCDFMode(4);
       //TODO disable compression
       //netCDFWriter.setDeflate(0);
@@ -1534,7 +1537,7 @@ int CDataReader::getTimeString(char * pszTime){
 }
 
 int CDataReader::justLoadAFileHeader(CDataSource *dataSource){
-  className="CDataReader::justLoadAFileHeader";
+  
   if(dataSource==NULL){CDBError("datasource == NULL");return 1;}
   if(dataSource->cfgLayer==NULL){CDBError("datasource->cfgLayer == NULL");return 1;}
   if(dataSource->dataObject.size()==0){CDBError("dataSource->dataObject.size()==0");return 1;}
@@ -1557,7 +1560,7 @@ int CDataReader::justLoadAFileHeader(CDataSource *dataSource){
       dirReader.fileList[0]->fullName.copy(cachefileName.c_str());
     }*/
     
-    CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource,dirReader.fileList[0]->fullName.c_str());
+    CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource->srvParams,dirReader.fileList[0]->fullName.c_str());
     if(cdfObject == NULL)throw(__LINE__);
 
     
@@ -1584,7 +1587,7 @@ int CDataReader::justLoadAFileHeader(CDataSource *dataSource){
 
 
 int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
-  className="CDataReader::autoConfigureDimensions";
+  
   #ifdef CDATAREADER_DEBUG        
   CDBDebug("[autoConfigureDimensions]");
   #endif     
@@ -1767,7 +1770,7 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
 
 
 int CDataReader::autoConfigureStyles(CDataSource *dataSource){
-  className="CDataReader::autoConfigureStyles";
+  
   if(dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
     #ifdef CDATAREADER_DEBUG        
     CDBDebug("Cascaded layers cannot have dimensions at the moment");
@@ -1855,7 +1858,10 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
     CDBDebug("Retrieving auto styles by using fileinfo \"%s\"",searchName.c_str());
     #endif
     // We now have the keyword searchname, with this keyword we are going to lookup all StandardName's in the server configured Styles
-    CT::string styles="";
+    
+    
+    std::vector<CT::string> styleList;
+    
     for(size_t j=0;j<dataSource->cfg->Style.size();j++){
       
       const char *styleName=dataSource->cfg->Style[j]->attr.name.c_str();
@@ -1900,21 +1906,33 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
                   #ifdef CDATAREADER_DEBUG  
                   CDBDebug("*** Match: \"%s\"== \"%s\"",searchName.c_str(),standardNameList[n].c_str());
                   #endif
-                  if(styles.length()!=0)styles.concat(",");
-                  styles.concat(dataSource->cfg->Style[j]->attr.name.c_str());
+                  styleList.push_back(dataSource->cfg->Style[j]->attr.name.c_str());
+                  //if(styles.length()!=0)styles.concat(",");
+                  //styles.concat(dataSource->cfg->Style[j]->attr.name.c_str());
                 }
               }
             }
           }
           if(standard_name.equals("*")){
-            if(styles.length()!=0)styles.concat(",");
-            styles.concat(dataSource->cfg->Style[j]->attr.name.c_str());
+            //if(styles.length()!=0)styles.concat(",");
+            //styles.concat(dataSource->cfg->Style[j]->attr.name.c_str());
+            styleList.push_back(dataSource->cfg->Style[j]->attr.name.c_str());
           }
         }
       }     
     }
-    if(styles.length()!=0)styles.concat(",");
-    styles.concat("auto");
+    
+    
+    
+    CT::string styles="";
+    
+    for(size_t j=0;j<styleList.size();j++){
+       if(styles.length()!=0)styles.concat(",");
+       styles.concat(styleList[j].c_str());
+    }
+    
+    if(styles.length()==0) styles="auto";
+    
     //CDBDebug("Found styles \"%s\"",styles.c_str());
     if(useDBCache){
       //Put the result back into the database.

@@ -76,7 +76,7 @@ int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,in
       CDBDebug("Updating dimension '%s' with table '%s'",dimName.c_str(),tableName.c_str());
       
       //Create column names
-      CT::string tableColumns("path varchar (255)");
+      CT::string tableColumns("path varchar (511)");
       if(isTimeDim==true){
         tableColumns.printconcat(", %s timestamp, dim%s int",dimName.c_str(),dimName.c_str());
       }else{

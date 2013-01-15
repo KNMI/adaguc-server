@@ -7,6 +7,7 @@
 #include "CCDFDataModel.h"
 #include "CCDFNetCDFIO.h"
 #include "CCDFHDF5IO.h"
+#include "CCache.h"
 
 //Datasource can share multiple cdfObjects
 //A cdfObject is allways opened using a dataSource path/filter combo
@@ -21,7 +22,7 @@ private:
    * Get a CDFReader based on information in the datasource. In the Layer element this can be configured with <DataReader>HDF5</DataReader>
    * @param dataSource The configured datasource or NULL pointer. NULL pointer defaults to a NetCDF/OPeNDAP reader
    */
-  static CDFReader *getCDFReader(CDataSource *dataSource);
+  static CDFReader *getCDFReader(CDataSource *dataSource,const char *fileName);
   
   /**
    * Get a CDFReader based on fileName information, currently based on extension.
@@ -29,6 +30,10 @@ private:
    * @return The CDFReader
    */
   static CDFReader *getCDFReader(const char *fileName);
+  
+  
+  CDFObject* getCDFObject(CDataSource *dataSource,CServerParams *srvParams,const char *fileName);
+  
   DEF_ERRORFUNCTION();
 public:
   ~CDFObjectStore(){
@@ -46,6 +51,10 @@ public:
    * @param fileName The filename to read.
    */
   CDFObject *getCDFObject(CDataSource *dataSource,const char *fileName);
+  
+  CDFObject *getCDFObjectHeader(CServerParams *srvParams,const char *fileName);
+  
+  
   CDFObject *deleteCDFObject(CDFObject **cdfObject);
   
   /**
