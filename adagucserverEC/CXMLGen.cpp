@@ -134,7 +134,7 @@ CDBDebug("getFileNameForLayer");
  * 
  * 
  */
-int CXMLGen::getDataSourceForLayer(WMSLayer * myWMSLayer, CDataReader *reader){
+int CXMLGen::getDataSourceForLayer(WMSLayer * myWMSLayer){
 #ifdef CXMLGEN_DEBUG
 CDBDebug("getDataSourceForLayer");
 #endif 
@@ -173,7 +173,9 @@ myWMSLayer->dataSource->addTimeStep(myWMSLayer->fileName.c_str(),"");
 #ifdef CXMLGEN_DEBUG    
 CDBDebug("Database layer");
 #endif      
-    int status = reader->open(myWMSLayer->dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
+     CDataReader reader;
+     //CNETCDFREADER_MODE_OPEN_DIMENSIONS
+    int status = reader.open(myWMSLayer->dataSource,CNETCDFREADER_MODE_OPEN_DIMENSIONS);
     //int status = CDataReader::justLoadAFileHeader(myWMSLayer->dataSource);
     if(status!=0){
     
@@ -201,7 +203,7 @@ CDBDebug("Database layer");
         try{
           CT::string attributeValue;
           myWMSLayer->dataSource->dataObject[0]->cdfVariable->getAttribute("standard_name")->getDataAsString(&attributeValue);
-          CDBDebug("attributeValue %s",attributeValue.c_str());
+          //CDBDebug("attributeValue %s",attributeValue.c_str());
           myWMSLayer->title.copy(attributeValue.c_str());
         }catch(int e){
           CT::string errorMessage;
@@ -278,7 +280,7 @@ CDBDebug("getProjectionInformationForLayer");
   return 0;
 }
 
-int CXMLGen::getDimsForLayer(WMSLayer * myWMSLayer,CDataReader *reader){
+int CXMLGen::getDimsForLayer(WMSLayer * myWMSLayer){
 #ifdef CXMLGEN_DEBUG
 CDBDebug("getDimsForLayer");
 #endif     
@@ -1266,9 +1268,9 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
         status = getFileNameForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;
         if(myWMSLayer->hasError == false){
           //Try to open the file, and make a datasource for the layer
-          CDataReader *reader = new CDataReader();
+        
           
-          if(myWMSLayer->hasError==false){status = getDataSourceForLayer(myWMSLayer,reader);if(status != 0)myWMSLayer->hasError=1;}
+          if(myWMSLayer->hasError==false){status = getDataSourceForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;}
           
           if(myWMSLayer->dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
             myWMSLayer->isQuerable=0;
@@ -1280,7 +1282,7 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
           if(myWMSLayer->hasError==false){status = getProjectionInformationForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;}
           
           //Get the dimensions and its extents for this layer
-          if(myWMSLayer->hasError==false){status = getDimsForLayer(myWMSLayer,reader);if(status != 0)myWMSLayer->hasError=1;}
+          if(myWMSLayer->hasError==false){status = getDimsForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;}
         
         
           //Auto configure styles
@@ -1299,12 +1301,7 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
           }
           
           
-          
-          reader->close();
-          
-          delete reader;reader=NULL;
-          
-          
+    
           //Get the defined styles for this layer
           status = getStylesForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;
         }

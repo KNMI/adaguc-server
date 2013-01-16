@@ -15,15 +15,13 @@
 #include <sys/stat.h>
 #include "CDBFileScanner.h"
 #include "CDFObjectStore.h"
-
+#include "CCache.h"
 class CDataReader{
   private:
     DEF_ERRORFUNCTION();
     CDataSource *dataSource;
-    //CDFReader * cdfReader;
-    CDFObject *thisCDFObject;
 
-    CT::string FileName;
+ 
     
   public:
     CDataReader(){}
@@ -48,23 +46,17 @@ class CDataReader{
      */
     static int getCacheFileName(CDataSource *dataSource,CT::string *cacheName);
     
-    //static int getCacheFileName(CServerParams *srvParams,CT::string *uniqueIDFor2DField,const char *fileName);
-    
     static int getTimeDimIndex( CDFObject *cdfObject, CDF::Variable * var);
     
     static CDF::Variable *getTimeVariable( CDFObject *cdfObject, CDF::Variable * var);
     
-    void dump(CT::string *dumpString){
-      CDF::dump(thisCDFObject,dumpString);
-    }
-    
     int getTimeString(char * pszTime);
     CDF::Variable *getTimeVariable();
     int getTimeUnit(char * pszTime);
-    const char *getFileName(){return FileName.c_str();}
     int open(CDataSource *dataSource,int mode,int x,int y);
     int open(CDataSource *dataSource, int x,int y);
     int open(CDataSource *dataSource, int mode);
+    int parseDimensions(CDataSource *dataSource,int mode,int x,int y,CCache *cache);
     
     int close(){return 0;};
 };

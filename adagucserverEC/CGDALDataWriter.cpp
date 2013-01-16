@@ -201,7 +201,7 @@ int  CGDALDataWriter::addData(std::vector <CDataSource*>&dataSources){
   status = reader.getTimeString(szTemp);
   if(status==0)Times[currentBandNr].copy(szTemp);else Times[currentBandNr].copy("");
   // Get filename
-  CT::string basename(reader.getFileName());
+  CT::string basename(dataSource->getFileName());
   int offset = basename.lastIndexOf("/")+1;
   if(offset<0)offset=0;if(offset>MAX_STR_LEN)offset=0;
   InputProducts[currentBandNr].copy(basename.c_str()+offset);

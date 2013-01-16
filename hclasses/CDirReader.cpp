@@ -225,12 +225,12 @@ void CDirReader::makePublicDirectory(const char *dirname){
       const char *part = directory.c_str();
       int intStat = stat(part,&stFileInfo);
       if(intStat != 0){
-        CDBDebug("making dir %s",part);
+        //CDBDebug("making dir %s",part);
         mode_t permissions = S_IRWXU|S_IRWXG|S_IRWXO;
         mkdir (part,permissions);
         chmod(part,0777);
       }
     }
-    delete []directorySplitted;
+    delete[] directorySplitted;
   }
 }

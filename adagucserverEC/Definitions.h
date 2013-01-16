@@ -63,10 +63,10 @@
 #define DEFAULT_FONT                       "./fonts/FreeSans.ttf"
 
 //CNetCDFReader opening options
-#define CNETCDFREADER_MODE_OPEN_HEADER    1
-#define CNETCDFREADER_MODE_OPEN_ALL       2
-#define CNETCDFREADER_MODE_GET_METADATA   3
-
+#define CNETCDFREADER_MODE_OPEN_HEADER     1
+#define CNETCDFREADER_MODE_OPEN_ALL        2
+#define CNETCDFREADER_MODE_GET_METADATA    3
+#define CNETCDFREADER_MODE_OPEN_DIMENSIONS 4
 
 
 //Web Coverage restriction and Get Feature Info restriction

@@ -72,9 +72,9 @@ class CXMLGen{
   private:
     DEF_ERRORFUNCTION();
     int getFileNameForLayer(WMSLayer * myWMSLayer);
-    int getDataSourceForLayer(WMSLayer * myWMSLayer,CDataReader *reader);
+    int getDataSourceForLayer(WMSLayer * myWMSLayer);
     int getProjectionInformationForLayer(WMSLayer * myWMSLayer);
-    int getDimsForLayer(WMSLayer * myWMSLayer,CDataReader *reader);
+    int getDimsForLayer(WMSLayer * myWMSLayer);
     int getWMS_1_0_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*> *myWMSLayerList);
     int getWMS_1_1_1_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*> *myWMSLayerList);
     int getWCS_1_0_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*> *myWMSLayerList);

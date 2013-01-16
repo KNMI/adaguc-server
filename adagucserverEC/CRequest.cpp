@@ -199,7 +199,7 @@ int CRequest::setConfigFile(const char *pszConfigFile){
        
       
           //Open file
-          CDBDebug("Opening file %s",dirReader.fileList[j]->fullName.c_str());
+          //CDBDebug("Opening file %s",dirReader.fileList[j]->fullName.c_str());
           CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(srvParam,dirReader.fileList[j]->fullName.c_str());
           if(cdfObject == NULL){CDBError("Unable to read file %s",dirReader.fileList[j]->fullName.c_str());throw(__LINE__);}
           
@@ -388,13 +388,13 @@ int CRequest::getDocFromDocCache(CSimpleStore *simpleStore,CT::string *docName,C
     //Read and Provide the xml document!  
     int status = simpleStore->getCTStringAttribute(docName->c_str(),document);
     if(status!=0){
-      CDBDebug("Unable to get document %s from cache",docName->c_str());
+      //CDBDebug("Unable to get document %s from cache",docName->c_str());
       cacheNeedsRefresh=true;
     }
   }
   if(cacheNeedsRefresh==true){
     simpleStore->setStringAttribute("configModificationDate",configModificationDate.c_str());
-    CDBDebug("cacheNeedsRefresh==true");
+    //CDBDebug("cacheNeedsRefresh==true");
     return 2;
   }
   return 0;
@@ -431,7 +431,7 @@ int CRequest::process_wms_getcap_request(){
     //if(status==2, the store is ok, but not up to date
     if(status==2)storeNeedsUpdate=true;
     if(storeNeedsUpdate){
-      CDBDebug("Generating a new document with name %s",documentName.c_str());
+      //CDBDebug("Generating a new document with name %s",documentName.c_str());
       int status = generateOGCGetCapabilities(&XMLdocument);if(status!=0)return 1;
       //Store this document  
       simpleStore.setStringAttribute(documentName.c_str(),XMLdocument.c_str());
@@ -1127,9 +1127,8 @@ int CRequest::process_all_layers(){
             throw(__LINE__);
           }
           
-          CT::string dumpString;
+          CT::string dumpString=CDF::dump(dataSources[j]->dataObject[0]->cdfObject);
           
-          reader.dump(&dumpString);
           printf("%s",dumpString.c_str());
           reader.close();
 
@@ -1720,7 +1719,7 @@ int CRequest::process_querystring(){
         //Try to retrieve a list of variables from the OpenDAPURL.
         srvParam->autoResourceVariable.copy("");
         //Open the opendap resource
-        //CDBDebug("OGC REQUEST Remote resource %s",srvParam->internalAutoResourceLocation.c_str());
+        CDBDebug("OGC REQUEST Remote resource %s",srvParam->internalAutoResourceLocation.c_str());
         CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(srvParam,srvParam->internalAutoResourceLocation.c_str());
         //int status=cdfObject->open(srvParam->internalAutoResourceLocation.c_str());
         if(cdfObject!=NULL){
@@ -1759,6 +1758,7 @@ int CRequest::process_querystring(){
       #ifdef MEASURETIME
       StopWatch_Stop("Opening file");
       #endif
+      //CDBDebug("Opening %s",srvParam->internalAutoResourceLocation.c_str());
       CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(srvParam,srvParam->internalAutoResourceLocation.c_str());
       //int status=cdfObject->open(srvParam->internalAutoResourceLocation.c_str());
       if(cdfObject==NULL){
@@ -1892,7 +1892,7 @@ int CRequest::process_querystring(){
       stringToAdd.encodeURLSelf();
       onlineResource.concat(stringToAdd.c_str());
       srvParam->cfg->OnlineResource[0]->attr.value.copy(onlineResource.c_str());
-      CDBDebug("OGC REQUEST RESOURCE %s:%s",srvParam->internalAutoResourceLocation.c_str(),srvParam->autoResourceVariable.c_str());//,srvParam->autoResourceLocation.c_str(),);
+      //CDBDebug("OGC REQUEST RESOURCE %s",srvParam->internalAutoResourceLocation.c_str());//,srvParam->autoResourceLocation.c_str(),);
       
       
       

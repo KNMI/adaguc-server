@@ -166,7 +166,31 @@ class CDataSource{
   //Configured?
   bool isConfigured;
   
-
+  
+  //Used for vectors and points
+  bool level2CompatMode;
+  
+  //The index of the X and Y dimension in the variable dimensionlist (not the id's from the netcdf file)
+  int dimXIndex;
+  int dimYIndex;
+  
+  //The striding of the read 2D map
+  int stride2DMap;
+  
+  
+  // Lon transformation is used to swap datasets from 0-360 degrees to -180 till 180 degrees
+  //Swap data from >180 degrees to domain of -180 till 180 in case of lat lon source data
+  int useLonTransformation;
+  
+  //Sometimes X and Y need to be swapped, this boolean indicates whether it should or not.
+  bool swapXYDimensions;
+  
+  //X and Y variables of the 2D field
+  CDF::Variable *varX;
+  CDF::Variable *varY;
+   
+  
+  
   //Numver of dims
   int dNetCDFNumDims;
   int dLayerType;

@@ -107,7 +107,10 @@ void readyerror(){
     
     
     for(size_t j=0;j<errormsgs.size();j++){
-      fprintf(stdout,"    %s;\n",errormsgs[j].c_str());
+      CT::string msg=errormsgs[j].c_str();
+      msg.replaceSelf("<","&lt;");
+      msg.replaceSelf("<","&gt;");
+      fprintf(stdout,"    %s;\n",msg.c_str());
       //if(j+1<errormsgs.size())fprintf(stdout,";\n");
     }
     fprintf(stdout,"\n  </ServiceException>\n");

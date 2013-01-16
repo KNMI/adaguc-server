@@ -2,10 +2,10 @@
 #include "CDebugger.h"
 const char *CDBFileScanner::className="CDBFileScanner";
 std::vector <CT::string> CDBFileScanner::tableNamesDone;
-//#define CDATAREADER_DEBUG
+//#define CDBFILESCANNER_DEBUG
 #define ISO8601TIME_LEN 32
 
-//#define CDATAREADER_DEBUG
+//#define CDBFILESCANNER_DEBUG
 /*int CDBFileScanner::addIndexToTable(CPGSQLDB *DB,const char *tableName, const char * dimName){
   return 0;
   // Test if the table exists , if not create the table
@@ -244,7 +244,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
     
     for(size_t j=0;j<dirReader->fileList.size();j++){
       //Loop through all configured dimensions.
-      #ifdef CDATAREADER_DEBUG
+      #ifdef CDBFILESCANNER_DEBUG
       CDBDebug("Loop through all configured dimensions.");
       #endif
       
@@ -333,14 +333,14 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                 dimensionTextList.c_str(),
                 dirReader->fileList[j]->baseName.c_str());
               };
-              #ifdef CDATAREADER_DEBUG
+              #ifdef CDBFILESCANNER_DEBUG
               CDBDebug("Creating new CDFObject");
               #endif
               cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource,dirReader->fileList[j]->fullName.c_str());
               if(cdfObject == NULL)throw(__LINE__);
               
               //Open the file
-              #ifdef CDATAREADER_DEBUG
+              #ifdef CDBFILESCANNER_DEBUG
               CDBDebug("Opening file %s",dirReader->fileList[j]->fullName.c_str());
               #endif
               
@@ -349,7 +349,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                 CDBError("Unable to open file '%s'",dirReader->fileList[j]->fullName.c_str());
                 throw(__LINE__);
               }
-              #ifdef CDATAREADER_DEBUG
+              #ifdef CDBFILESCANNER_DEBUG
               CDBDebug("File opened.");
               #endif
               
@@ -378,12 +378,14 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                     try{ADTime = new CADAGUC_time((char*)dimUnits->toString().c_str());}catch(int e){delete ADTime;ADTime=NULL;throw(__LINE__);}
                   }
                   
-                  #ifdef CDATAREADER_DEBUG
+                  #ifdef CDBFILESCANNER_DEBUG
                   CDBDebug("Dimension type = %s",CDF::getCDFDataTypeName(dimVar->type).c_str());
                   #endif
                   
-                  
+                  #ifdef CDBFILESCANNER_DEBUG
                   CDBDebug("Reading dimension %s of length %d",dimVar->name.c_str(),dimDim->getSize());
+                  #endif
+                  
                   //Strings do never fit in a double.
                   if(dimVar->type!=CDF_STRING){
                     //Read the dimension data
@@ -526,7 +528,9 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
         if(multiInsertCache.length()>0){
           queryString.print("INSERT into %s VALUES ",tableNames_temp[d].c_str());
           queryString.concat(&multiInsertCache);
+          #ifdef CDBFILESCANNER_DEBUG
           CDBDebug("Inserting %d bytes",queryString.length());
+          #endif
           status =  DB->query(queryString.c_str()); 
           if(status!=0){
             CDBError("Query failed: %s",queryString.c_str());
@@ -766,7 +770,7 @@ int CDBFileScanner::searchFileNames(CDirReader *dirReader,const char * path,cons
       return 1;
     }
   }
-  #ifdef CDATAREADER_DEBUG
+  #ifdef CDBFILESCANNER_DEBUG
   CDBDebug("Found %d file(s)",int(dirReader->fileList.size()));
   #endif
   return 0;

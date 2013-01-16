@@ -82,7 +82,11 @@ CDataSource::CDataSource(){
   cfgLayer = NULL;
   cfg=NULL;
   datasourceIndex=0;
-
+  level2CompatMode=false;
+  useLonTransformation = 0;
+  swapXYDimensions = false;
+  varX = NULL;
+  varY = NULL;
 }
 
 CDataSource::~CDataSource(){
