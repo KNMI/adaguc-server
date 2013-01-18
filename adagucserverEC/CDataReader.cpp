@@ -7,7 +7,9 @@
 
 const char *CDataReader::className="CDataReader";
 
-//#define CDATAREADER_DEBUG
+#define CDATAREADER_DEBUG
+#define MEASURETIME
+
 #define uchar unsigned char
 #define MAX_STR_LEN 8191
 
@@ -500,13 +502,13 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
   CDFObject *cdfObject = NULL;
   
   
-  if(mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS || mode == CNETCDFREADER_MODE_GET_METADATA || mode == CNETCDFREADER_MODE_OPEN_HEADER ){
+  if(mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS  || mode == CNETCDFREADER_MODE_OPEN_HEADER ){
     cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource->srvParams,dataSourceFilename.c_str());
    
     enableDataCache = false;
   }
   
-  if(mode == CNETCDFREADER_MODE_OPEN_ALL){
+  if(mode == CNETCDFREADER_MODE_OPEN_ALL|| mode == CNETCDFREADER_MODE_GET_METADATA){
     if(cache.cacheIsAvailable()){
       //Remove DataReader configuration, because cache file is always netcdf.
       if(dataSource->cfgLayer->DataReader.size()>0){
@@ -580,6 +582,9 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
   }
   
   if(mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS){
+#ifdef CDATAREADER_DEBUG
+    CDBDebug("Dimensions parsed");
+#endif
     return 0;
   }
   
@@ -634,6 +639,10 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
   
   //Determine dataSource->dataObject[0]->dataType of the variable we are going to read
   for(size_t varNr=0;varNr<dataSource->dataObject.size();varNr++){
+    
+    #ifdef CDATAREADER_DEBUG
+    CDBDebug("Working on variable %s",dataSource->dataObject[varNr]->cdfVariable->name.c_str());
+    #endif
     //dataSource->dataObject[varNr]->dataType=var[varNr]->type;
     /*if(var[varNr]->type==CDF_CHAR||var[varNr]->type==CDF_BYTE)dataSource->dataObject[varNr]->dataType=CDF_CHAR;
     if(var[varNr]->type==CDF_UBYTE)dataSource->dataObject[varNr]->dataType=CDF_UBYTE;
@@ -726,6 +735,10 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
 
 
   if(mode==CNETCDFREADER_MODE_GET_METADATA){
+    #ifdef CDATAREADER_DEBUG
+    CDBDebug("Get metadata");
+    #endif
+
    
     dataSource->nrMetadataItems=0;
     char szTemp[MAX_STR_LEN+1];
@@ -814,15 +827,15 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
         dataSource->metaData[nrAttributes++].copy(szTemp);
       }
     }
+    #ifdef CDATAREADER_DEBUG
+    CDBDebug("Metadata Finished.");
+    #endif
     return 0;
   }
 
 
   if(mode==CNETCDFREADER_MODE_OPEN_ALL){
-      // Read the variable
-      //char szTemp[1024];
-      //CDF::getCDFDataTypeName(szTemp,1023, dataSource->dataObject[0]->dataType);
-      //CDBDebug("Datatype: %s",szTemp);
+    
   #ifdef MEASURETIME
     StopWatch_Stop("start reading image data");
   #endif
@@ -1260,38 +1273,6 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
   return 0;
 }
 
-
-int CDataReader::getTimeUnit(char * pszTime){
-  CDF::Variable *timeVar = getTimeVariable();
-  if(timeVar==NULL)return 1;
-  CDF::Attribute *timeUnits = timeVar->getAttributeNE("units");
-  if(timeUnits ==NULL){return 1;}
-  snprintf(pszTime,MAX_STR_LEN,"%s",(char*)timeUnits->data);
-  return 0;
-  /*
-  //TODO We assume that the first configured DIM is always time. This might be not the case!
-  if(dataSource->isConfigured==false){
-    CDBError("dataSource is not configured");
-    return 1;
-  }
-  CDFObject *cdfObject=dataSource->dataObject[0]->cdfObject;
-  if(cdfObject==NULL){
-    CDBError("CNetCDFReader is not opened");
-    return 1;
-  }
-  if(dataSource->cfgLayer->Dimension.size()==0){
-    pszTime[0]='\0';
-    return 0;
-  }
-  pszTime[0]='\0';
-  CDF::Variable *time = cdfObject->getVariableNE(dataSource->cfgLayer->Dimension[0]->attr.name.c_str());
-  if(time==NULL){return 1;}
-  CDF::Attribute *timeUnits = time->getAttributeNE("units");
-  if(timeUnits ==NULL){return 1;}
-  snprintf(pszTime,MAX_STR_LEN,"%s",(char*)timeUnits->data);
-  return 0;*/
-}
-
 int CDataReader::getTimeDimIndex( CDFObject *cdfObject, CDF::Variable * var){
   if(var == NULL || cdfObject == NULL)return -1;
   if(var->dimensionlinks.size()==0){return -1;}
@@ -1320,22 +1301,19 @@ CDF::Variable *CDataReader::getTimeVariable( CDFObject *cdfObject, CDF::Variable
   return cdfObject->getVariableNE(var->dimensionlinks[timeDimIndex]->name.c_str());
 }
 
-CDF::Variable *CDataReader::getTimeVariable(){
-  if(dataSource->isConfigured==false){
-    CDBError("dataSource is not configured");
-    return NULL;
-  }
-  CDFObject *cdfObject=dataSource->dataObject[0]->cdfObject;
-  CDF::Variable * cdfVariable=dataSource->dataObject[0]->cdfVariable;
-  if(cdfObject==NULL||cdfVariable==NULL){
-    CDBError("CNetCDFReader is not opened");
-    return NULL;
-  }
-  return getTimeVariable(cdfObject,cdfVariable);
+
+CT::string CDataReader::getTimeUnit(CDataSource *dataSource){
+  CDF::Variable *time = getTimeVariable(dataSource->dataObject[0]->cdfObject,dataSource->dataObject[0]->cdfVariable);
+  if(time == NULL){CDBDebug("No time variable found");throw(1);}
+  CDF::Attribute *timeUnits = time->getAttributeNE("units");
+  if(timeUnits == NULL){CDBDebug("No time units found");throw(2);}
+  
+  CT::string timeUnitsString=timeUnits->toString().c_str();
+  
+  return timeUnitsString;
 }
 
-
-int CDataReader::getTimeString(char * pszTime){
+int CDataReader::getTimeString(CDataSource *dataSource,char * pszTime){
   //TODO We assume that the first configured DIM is always time. This might be not the case!
   pszTime[0]='\0';
   if(dataSource->isConfigured==false){
@@ -1347,7 +1325,7 @@ int CDataReader::getTimeString(char * pszTime){
     CDBDebug("%s",pszTime);
     return 1;
   }
-  CDF::Variable *time = getTimeVariable();
+  CDF::Variable *time = getTimeVariable(dataSource->dataObject[0]->cdfObject,dataSource->dataObject[0]->cdfVariable);
   if(time==NULL){CDBDebug("No time variable found");return 1;}
   CDF::Attribute *timeUnits = time->getAttributeNE("units");
   if(timeUnits ==NULL){CDBDebug("No time units found");return 1;}
@@ -1389,6 +1367,8 @@ int CDataReader::getTimeString(char * pszTime){
   return 0;
 }
 
+
+
 int CDataReader::justLoadAFileHeader(CDataSource *dataSource){
   
   if(dataSource==NULL){CDBError("datasource == NULL");return 1;}
@@ -1400,32 +1380,16 @@ int CDataReader::justLoadAFileHeader(CDataSource *dataSource){
     #endif
     return 0;
   }
-  //if(dataSource->dataObject[0]->cdfObject!=NULL){CDBError("datasource->dataObject[0]->cdfObject != NULL");return 1;}
-
   CDirReader dirReader;
   if(CDBFileScanner::searchFileNames(&dirReader,dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),NULL)!=0){CDBError("Could not find any filename");return 1; }
   if(dirReader.fileList.size()==0){CDBError("dirReader.fileList.size()==0");return 1; }
   //Open a file
   try{
-    /*CT::string cachefileName;
-    if(getCacheFileName(dataSource,&cachefileName)!=0){
-      CDBDebug("cachefileName: %s",cachefileName.c_str());
-      dirReader.fileList[0]->fullName.copy(cachefileName.c_str());
-    }*/
-    //CDBDebug("Opening HEADER %s",dirReader.fileList[0]->fullName.c_str());
+
     CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource->srvParams,dirReader.fileList[0]->fullName.c_str());
     if(cdfObject == NULL)throw(__LINE__);
 
-    
-      /* CDBDebug("Opening %s",dirReader.fileList[0]->fullName.c_str());
-    int status = cdfObject->open(dirReader.fileList[0]->fullName.c_str());
-    
- 
-    if(status!=0){
-      CDBError("Unable to open file '%s'",dirReader.fileList[0]->fullName.c_str());
-      throw(__LINE__);
-    }*/
-    
+
     
    dataSource->attachCDFObject(cdfObject);
    

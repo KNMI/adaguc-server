@@ -19,9 +19,6 @@
 class CDataReader{
   private:
     DEF_ERRORFUNCTION();
-    CDataSource *dataSource;
-
- 
     
   public:
     CDataReader(){}
@@ -50,9 +47,21 @@ class CDataReader{
     
     static CDF::Variable *getTimeVariable( CDFObject *cdfObject, CDF::Variable * var);
     
-    int getTimeString(char * pszTime);
-    CDF::Variable *getTimeVariable();
-    int getTimeUnit(char * pszTime);
+    /**
+     * Get current time string for datasource based on the current timestep
+     * @param dataSource 
+     * @param charachter array where an ISO8601 time string fits in
+     * @return zero on success
+     */
+    int getTimeString(CDataSource *dataSource,char * pszTime);
+    
+    /**
+     * Get time units for this datasource, throws exception of int when failed.
+     * @param dataSource
+     * @return time units for this datasource
+     */
+    CT::string getTimeUnit(CDataSource* dataSource);
+
     int open(CDataSource *dataSource,int mode,int x,int y);
     int open(CDataSource *dataSource, int x,int y);
     int open(CDataSource *dataSource, int mode);

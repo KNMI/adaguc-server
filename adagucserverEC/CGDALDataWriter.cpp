@@ -1,11 +1,14 @@
 //#ifdef ADAGUC_USE_GDAL
 #include "CGDALDataWriter.h"
 
+#define CGDALDATAWRITER_DEBUG
 
 const char * CGDALDataWriter::className = "CGDALDataWriter";
 
 int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int _NrOfBands){
-  //CDBDebug("INIT");
+#ifdef CGDALDATAWRITER_DEBUG  
+  CDBDebug("INIT");
+#endif
   srvParam=_srvParam;
   NrOfBands=_NrOfBands;
   int status;
@@ -16,13 +19,16 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
     srvParam->Geo->CRS.copy(&temp);
   }
   // Load metadata from the dataSource
-  //CDBDebug("CNETCDFREADER_MODE_GET_METADATA");
+#ifdef CGDALDATAWRITER_DEBUG
+  CDBDebug("CNETCDFREADER_MODE_GET_METADATA");
+#endif
   status = reader.open(dataSource,CNETCDFREADER_MODE_GET_METADATA);
   if(status!=0){
     CDBError("Could not open file: %s",dataSource->getFileName());return 1;
   }
-  //CDBDebug("/CNETCDFREADER_MODE_GET_METADATA");
- // Copy metadata
+#ifdef CGDALDATAWRITER_DEBUG  
+  CDBDebug("/CNETCDFREADER_MODE_GET_METADATA");
+#endif
   for(size_t j=0;j<dataSource->nrMetadataItems;j++){
     CT::string *metaDataItem = new CT::string();
     metaDataItem->copy(&dataSource->metaData[j]);
@@ -34,12 +40,29 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
   metaDataItem->copy("product#[C]variables>");
   metaDataItem->concat(dataSource->dataObject[0]->variableName.c_str());
   metaDataList.push_back(metaDataItem);
-  //CDBDebug("_dataSource->variableName.c_str() %s",_dataSource->getVariableName());
+#ifdef CGDALDATAWRITER_DEBUG  
+  CDBDebug("dataSource->dataObject[0]->variableName.c_str() %s",dataSource->dataObject[0]->variableName.c_str());
+#endif
 
   // Get Time unit
-  status = reader.getTimeUnit(szTemp);
-  if(status == 0)TimeUnit.copy(szTemp);else TimeUnit.copy("");
+#ifdef CGDALDATAWRITER_DEBUG  
+  CDBDebug("Get time units");
+#endif  
+  
+  try{
+    TimeUnit = reader.getTimeUnit(dataSource);
+  }catch(int e){
+    TimeUnit = "";
+  }
+  
+#ifdef CGDALDATAWRITER_DEBUG  
+  CDBDebug("Time unit: %s",TimeUnit.c_str());
+#endif  
+  
   reader.close();
+#ifdef CGDALDATAWRITER_DEBUG  
+  CDBDebug("Reader closed");
+#endif  
 
 
 
@@ -145,9 +168,11 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
     return 1;
   }
   
-//  char dataTypeName[256];
-//  CDF::getCDFDataTypeName(dataTypeName,255,dataSource->dataObject[0]->dataType);
-//  CDBDebug("Dataset datatype = %s sizeof(short)=%d",dataTypeName,sizeof(short));
+#ifdef CGDALDATAWRITER_DEBUG  
+  char dataTypeName[256];
+  CDF::getCDFDataTypeName(dataTypeName,255,dataSource->dataObject[0]->cdfVariable->type);
+  CDBDebug("Dataset datatype = %s sizeof(short)=%d",dataTypeName,sizeof(short));
+#endif  
   
   
   hMemDS2 = GDALCreate( hMemDriver2, "memory_dataset_2",
@@ -169,13 +194,19 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
   InputProducts=new CT::string[NrOfBands+1];
   if(Times!=NULL)delete[] Times;
   Times=new CT::string[NrOfBands+1];
-  //CDBDebug("/INIT");
+  
+#ifdef CGDALDATAWRITER_DEBUG  
+  CDBDebug("/INIT");
+#endif
   return 0;
 
 
 }
 
 int  CGDALDataWriter::addData(std::vector <CDataSource*>&dataSources){
+#ifdef CGDALDATAWRITER_DEBUG
+  CDBDebug("addData");
+#endif
   int status;
   CDataSource *dataSource = dataSources[0];
   status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
@@ -183,22 +214,29 @@ int  CGDALDataWriter::addData(std::vector <CDataSource*>&dataSources){
     CDBError("Could not open file: %s",dataSource->getFileName());
     return 1;
   }
-  //CDBDebug("Reading %s for bandnr %d",dataSource->getFileName(),currentBandNr);
+#ifdef CGDALDATAWRITER_DEBUG
+  CDBDebug("Reading %s for bandnr %d",dataSource->getFileName(),currentBandNr);
+#endif
   GDALRasterBandH hSrcBand = GDALGetRasterBand( hMemDS2, currentBandNr+1 );
   if(dataSource->dataObject[0]->hasNodataValue==1){
     dfNoData=dataSource->dataObject[0]->dfNodataValue;
     GDALSetRasterNoDataValue(hSrcBand, dfNoData);
   }
-  //printf("<br>Nodata1=[%f]<br>\n",dfNoData);
+  
+#ifdef CGDALDATAWRITER_DEBUG  
   CDBDebug("copying data in addData");
+#endif
+  
   GDALRasterIO( hSrcBand, GF_Write, 0, 0,
                 dataSource->dWidth, dataSource->dHeight,
                 dataSource->dataObject[0]->cdfVariable->data,
                 dataSource->dWidth, dataSource->dHeight,
                 datatype, 0, 0 );
+#ifdef CGDALDATAWRITER_DEBUG  
   CDBDebug("finished copying data in addData");
+#endif
   // Get time
-  status = reader.getTimeString(szTemp);
+  status = reader.getTimeString(dataSource,szTemp);
   if(status==0)Times[currentBandNr].copy(szTemp);else Times[currentBandNr].copy("");
   // Get filename
   CT::string basename(dataSource->getFileName());
@@ -207,23 +245,30 @@ int  CGDALDataWriter::addData(std::vector <CDataSource*>&dataSources){
   InputProducts[currentBandNr].copy(basename.c_str()+offset);
   reader.close();
   currentBandNr++;
-  //CDBDebug("/addData");
+#ifdef CGDALDATAWRITER_DEBUG
+  CDBDebug("/addData");
+#endif  
   return 0;
 
 }
 
 int  CGDALDataWriter::end(){
-  //CDBDebug("END");
+#ifdef CGDALDATAWRITER_DEBUG  
+  CDBDebug("END");
+#endif
+  
   // Generate a temporary filename for storage
   char szTempFileName[MAX_STR_LEN+1];
   generateUniqueGetCoverageFileName(szTempFileName);
-  //CDBDebug("END");
+  
   tmpFileName.copy(srvParam->cfg->TempDir[0]->attr.value.c_str());
   tmpFileName.concat("/");
   tmpFileName.concat(szTempFileName);
+#ifdef CGDALDATAWRITER_DEBUG    
   CDBDebug("Generating a tmp file with name");
   CDBDebug("%s",szTempFileName);
-  //CDBDebug("Check");
+#endif
+  
   // Warp the image from hMemDS2 to hMemDS1
   GDALDataType eDT;
   eDT = GDALGetRasterDataType(GDALGetRasterBand(hMemDS2,1));
