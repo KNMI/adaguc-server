@@ -11,7 +11,7 @@ const char *CDataReader::className="CDataReader";
 #define uchar unsigned char
 #define MAX_STR_LEN 8191
 
-/*
+
 
 void writeLogFile2(const char * msg){
   char * logfile=getenv("ADAGUC_LOGFILE");
@@ -33,7 +33,7 @@ void writeLogFile2(const char * msg){
       fclose (pFile);
     }//else CDBError("Unable to write logfile %s",logfile);
   }
-}*/
+}
 
 /*void printStatus(const char *status,const char *a,...){
   va_list ap;
@@ -224,8 +224,8 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
   int status = 0;
 
   CDF::Variable * dataSourceVar=dataSource->dataObject[0]->cdfVariable;
-  
-  
+  CDFObject *cdfObject = dataSource->dataObject[0]->cdfObject;
+ 
   if(dataSource->cfgLayer->Dimension.size()==0){
     #ifdef CDATAREADER_DEBUG  
     CDBDebug("Auto configuring dims");
@@ -251,7 +251,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
   #endif
   
   
-  
+ 
   dataSource->dimXIndex=dataSource->dNetCDFNumDims-1;
   dataSource->dimYIndex=dataSource->dNetCDFNumDims-2;
   
@@ -274,16 +274,16 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
   
   if(dimX==NULL||dimY==NULL){CDBError("X and or Y dims not found...");return 1;}
  
- 
+
  #ifdef CDATAREADER_DEBUG  
  CDBDebug("Found xy dims for var %s:  %s and %s",dataSourceVar->name.c_str(),dimX->name.c_str(),dimY->name.c_str());
  #endif
- CDFObject *cdfObject = dataSource->dataObject[0]->cdfObject;
+
  //Read X and Y dimension data completely.
  dataSource->varX=cdfObject->getVariableNE(dimX->name.c_str());
  dataSource->varY=cdfObject->getVariableNE(dimY->name.c_str());
  if(dataSource->varX==NULL||dataSource->varY==NULL){CDBError("X ('%s') and or Y ('%s') vars not found...",dimX->name.c_str(),dimY->name.c_str());return 1;}
-  
+ 
   dataSource->stride2DMap=1;
   while(dimX->length/dataSource->stride2DMap>360*4){
     dataSource->stride2DMap++;
@@ -322,15 +322,19 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
     sta[0]=start[dataSource->dimXIndex];str[0]=dataSource->stride2DMap; sto[0]=dataSource->dWidth;
     if(x!=-1){sta[0]=x;str[0]=1;sto[0]=1;}
     //CDBDebug("[%d %d %d] for %s/%s",sta[0],str[0],sto[0],dataSourceVar->name.c_str(),dataSource->varX->name.c_str());
+   
+    
+    
+  
     status = dataSource->varX->readData(CDF_DOUBLE,sta,sto,str);
     if(status!=0){
-      CDBError("Unable to read x dimension");
+      CDBError("Unable to read x dimension with name %s for variable %s",dataSource->varX->name.c_str(),dataSourceVar->name.c_str());
       return 1;
     }
     sta[0]=start[dataSource->dimYIndex];sto[0]=dataSource->dHeight;
     if(y!=-1){sta[0]=y;str[0]=1;sto[0]=1;}
     status = dataSource->varY->readData(CDF_DOUBLE,sta,sto,str);if(status!=0){
-      CDBError("Unable to read y dimension");
+      CDBError("Unable to read y dimension for variable %s",dataSourceVar->name.c_str());
       return 1;
     }
   }
@@ -444,22 +448,16 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
         //CDBDebug("%d == %f",j,((double*)dataSource->varX->data)[j]);
         if(((double*)dataSource->varX->data)[j]>=180.0)break;
       }
-      //CDBDebug("FINAL: %d == %f",j,((double*)dataSource->varX->data)[j]);
       if(j!=dataSource->varX->getSize()){
         dataSource->useLonTransformation=j;
         dataSource->dfBBOX[0]-=180;
         dataSource->dfBBOX[2]-=180;
         
         //When cache is available, the 2D field is already stored as a lontransformed field. We should not do this again.
-        //Te lat/lons are always kept original
+        //The lat/lons are always kept original, so they needed to be shifted (done above)
         if(cache->cacheIsAvailable()){
           dataSource->useLonTransformation = 0;
         }
-        /*if(cache->saveCacheFile()){
-          for(j=0;j<dataSource->varX->getSize();j++){
-            ((double*)dataSource->varX->data)[j]-=180.0;
-          }
-        }*/
       }
     }
   }
@@ -504,6 +502,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
   
   if(mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS || mode == CNETCDFREADER_MODE_GET_METADATA || mode == CNETCDFREADER_MODE_OPEN_HEADER ){
     cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource->srvParams,dataSourceFilename.c_str());
+   
     enableDataCache = false;
   }
   
@@ -568,6 +567,12 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
     dataSource->dataObject[varNr]->points.clear();
   }
 
+  /* CT::string dumpString;
+   CDF::dump(cdfObject,&dumpString);
+  CDBDebug("\nSTART\n%s\nEND\n",dumpString.c_str());
+  writeLogFile2(dumpString.c_str());*/
+  
+ 
   
   if(parseDimensions(dataSource,mode,x,y,&cache)!=0){
     CDBError("Unable to parseDimensions");
@@ -624,10 +629,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
     //CDBDebug("%d %d",x,y);
   }
  
-  //     CDF::dump(cdfObject,&dumpString);
-  //CDBDebug("\nSTART\n%s\nEND\n",dumpString.c_str());
-  //writeLogFile2(dumpString.c_str());
-  
+
   
   
   //Determine dataSource->dataObject[0]->dataType of the variable we are going to read
@@ -1499,7 +1501,7 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
       delete store;
       if(storeSize>0){
         #ifdef CDATAREADER_DEBUG        
-         CDBDebug("Datasource has the following dims (%d):",dataSource->cfgLayer->Dimension.size());
+         CDBDebug("Datasource has the following extra dims (%d):",dataSource->cfgLayer->Dimension.size());
          for(size_t j=0;j<dataSource->cfgLayer->Dimension.size();j++){
            CDBDebug("  [%d]: Dimension name\"%s\"\t units\"%s\"",j,dataSource->cfgLayer->Dimension[j]->attr.name.c_str(),dataSource->cfgLayer->Dimension[j]->attr.units.c_str());
          }

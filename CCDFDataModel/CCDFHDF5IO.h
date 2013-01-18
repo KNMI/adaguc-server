@@ -521,6 +521,8 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
       CDF::Dimension *dimY=var->dimensionlinks[0];
       CDF::Variable *varX=cdfObject->getVariableNE(dimX->name.c_str());
       CDF::Variable *varY=cdfObject->getVariableNE(dimY->name.c_str());
+      
+ 
       if(CDF::allocateData(varX->type,&varX->data,dimX->length)){throw(__LINE__);}
       if(CDF::allocateData(varY->type,&varY->data,dimY->length)){throw(__LINE__);}
       
@@ -529,18 +531,23 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
       dimX->setName("x");
       dimY->setName("y");
       
+           
+      #ifdef CCDFHDF5IO_DEBUG
+      CDBDebug("Creating virtual dimensions x and y");
+      #endif
+      
       double cellSizeX,cellSizeY,offsetX,offsetY;
       cellsizeXattr->getData(&cellSizeX,1);
       cellsizeYattr->getData(&cellSizeY,1);
       offsetXattr->getData(&offsetX,1);
       offsetYattr->getData(&offsetY,1);
       
-      for(size_t j=0;j<dimX->length;j=j+(dimX->length-1)){
+      for(size_t j=0;j<dimX->length;j=j+1){
         double x=(offsetX+double(j))*cellSizeX+cellSizeX/2;
         ((double*)varX->data)[j]=x;
       }
       
-      for(size_t j=0;j<dimY->length;j=j+(dimY->length-1)){
+      for(size_t j=0;j<dimY->length;j=j+1){
         double y=(offsetY+float(j))*cellSizeY+cellSizeY/2;
         ((double*)varY->data)[j]=y;
       }

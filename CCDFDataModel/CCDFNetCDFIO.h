@@ -985,7 +985,7 @@ class CDFNetCDFWriter{
 #ifdef CCDFNETCDFIO_DEBUG                        
         CDBDebug("Free variable %s",variable->name.c_str());
 #endif        
-        variable->freeData();
+        if(!variable->isDimension)variable->freeData();
       }
       return 0;
     }
