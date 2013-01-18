@@ -436,7 +436,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
   //Swap data from >180 degrees to domain of -180 till 180 in case of lat lon source data
   dataSource->useLonTransformation = 0;
   
-  if(dataSource->level2CompatMode==false&&!cache->cacheIsAvailable()){
+  if(dataSource->level2CompatMode==false){
 
     if( dataSource->nativeProj4.indexOf("+proj=longlat")==0){
       size_t j=0;
@@ -449,11 +449,17 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
         dataSource->useLonTransformation=j;
         dataSource->dfBBOX[0]-=180;
         dataSource->dfBBOX[2]-=180;
-        if(cache->saveCacheFile()){
+        
+        //When cache is available, the 2D field is already stored as a lontransformed field. We should not do this again.
+        //Te lat/lons are always kept original
+        if(cache->cacheIsAvailable()){
+          dataSource->useLonTransformation = 0;
+        }
+        /*if(cache->saveCacheFile()){
           for(j=0;j<dataSource->varX->getSize();j++){
             ((double*)dataSource->varX->data)[j]-=180.0;
           }
-        }
+        }*/
       }
     }
   }
