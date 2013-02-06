@@ -224,6 +224,7 @@ class CDataSource{
   int getCurrentTimeStep();
   size_t getDimensionIndex(const char *name);
   size_t getDimensionIndex(int i);
+  CCDFDims *getCDFDims();
   int getNumTimeSteps();
   const char *getLayerName();
   

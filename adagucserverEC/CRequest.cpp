@@ -753,6 +753,8 @@ int CRequest::process_all_layers(){
         
         queryOrderedDESC.concat(" from ");
         bool timeValidationError = false;
+        
+        //Compose the query
         for(size_t i=0;i<dataSources[j]->requiredDims.size();i++){
           CT::string netCDFDimName(&dataSources[j]->requiredDims[i]->netCDFDimName);
           CT::string tableName(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str());
@@ -773,6 +775,7 @@ int CRequest::process_all_layers(){
                   if(!checkTimeFormat(sDims[l]))timeValidationError=true;
                   subQuery.printconcat("%s = '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
                 }
+                
                 //TODO Currently only start/stop is supported, start/stop/resolution is not supported yet.
                 if(sDims->count>=2){
                   if(l==0){
@@ -793,6 +796,7 @@ int CRequest::process_all_layers(){
           if(i<dataSources[j]->requiredDims.size()-1)subQuery.concat(",");
           queryOrderedDESC.concat(&subQuery);
         }
+        
         //Join by path
         if(dataSources[j]->requiredDims.size()>1){
           queryOrderedDESC.concat(" where a0.path=a1.path");
@@ -815,28 +819,9 @@ int CRequest::process_all_layers(){
           query.printconcat(",%s",dataSources[j]->requiredDims[i]->netCDFDimName.c_str());
         }
         
-        //CDBDebug(query.c_str());
         //Execute the query
+        CDBDebug("%s",query.c_str());
         values_path = DB.query_select(query.c_str(),0);
-        
-        /**
-         * If no values were found in the database / no results have been found for a query:
-         * Maybe the database needs to be updated automatically.
-         * This is only enabled when autoresource has been enabled.
-         */
-        /*if(values_path==NULL&&srvParam->isAutoResourceEnabled()){
-          //TODO disable automatic update for certain cases!
-          CDBDebug("No results for query: Trying to update the database automatically.");
-        
-          status = CDBFileScanner::updatedb(srvParam->cfg->DataBase[0]->attr.parameters.c_str(),dataSources[j],NULL,NULL);
-          if(status !=0){CDBError("Could not update db for: %s",dataSources[j]->cfgLayer->Name[0]->value.c_str());DB.close();return 2;}
-          values_path = DB.query_select(query.c_str(),0);
-          if(values_path==NULL){
-            if((checkDataRestriction()&SHOW_QUERYINFO)==false)query.copy("hidden");
-            CDBError("No results for query: '%s'",query.c_str());
-            return 2;
-          }
-        }*/
         if(values_path==NULL){
           if((checkDataRestriction()&SHOW_QUERYINFO)==false)query.copy("hidden");
           CDBError("No results for query: '%s'",query.c_str());
@@ -849,16 +834,21 @@ int CRequest::process_all_layers(){
           status = DB.close();
           return 2;
         }
+   
         //Get timestring
         date_time = DB.query_select(query.c_str(),1);
         if(date_time == NULL){CDBError("query failed");status = DB.close(); return 1;}
         
-        
         //Now get the dimensions
+        std::vector <CT::string*> dimIndices;
         std::vector <CT::string*> dimValues;
         for(size_t i=0;i<dataSources[j]->requiredDims.size();i++){
           CT::string *t=DB.query_select(query.c_str(),2+i*2);
-          dimValues.push_back(t);
+          //Note we are pushing an array of strings here...
+          dimIndices.push_back(t);
+          
+          CT::string *t2=DB.query_select(query.c_str(),1+i*2);
+          dimValues.push_back(t2);
         }
               
         for(size_t k=0;k<values_path->count;k++){
@@ -870,12 +860,15 @@ int CRequest::process_all_layers(){
           timeStep->timeString.setChar(10,'T');
           //For each timesteps a new set of dimensions is added with corresponding dim array indices.
           for(size_t i=0;i<dataSources[j]->requiredDims.size();i++){
-            timeStep->dims.addDimension(dataSources[j]->requiredDims[i]->netCDFDimName.c_str(),atoi(dimValues[i][k].c_str()));
+            timeStep->dims.addDimension(dataSources[j]->requiredDims[i]->netCDFDimName.c_str(),dimValues[i][k].c_str(),atoi(dimIndices[i][k].c_str()));
           }
         }
 
         status = DB.close();  if(status!=0)return 1;
       
+        for(size_t j=0;j<dimIndices.size();j++){
+          delete[] dimIndices[j]; 
+        }
         for(size_t j=0;j<dimValues.size();j++){
           delete[] dimValues[j]; 
         }
@@ -883,42 +876,25 @@ int CRequest::process_all_layers(){
         delete[] values_dim;
         delete[] date_time;
       }else{
-        
-        //This layer has no dimensions
-        //We need to add one timestep with data.
+        //This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.        
         CDataSource::TimeStep * timeStep = new CDataSource::TimeStep();
         dataSources[j]->timeSteps.push_back(timeStep);
-         //if(dataSources[j]->cfgLayer->Dimension.size()!=0){
         timeStep->fileName.copy(dataSources[j]->cfgLayer->FilePath[0]->value.c_str());
-        
-        
-        //TODO WHY IS THIS NECESSARY?
-        /*CDirReader dirReader;
-        CDBFileScanner::searchFileNames(&dirReader,dataSources[j]->cfgLayer->FilePath[0]->value.c_str(),dataSources[j]->cfgLayer->FilePath[0]->attr.filter.c_str(),NULL);
-        if(dirReader.fileList.size()==1){
-          timeStep->fileName.copy(dirReader.fileList[0]->fullName.c_str());
-        }else{
-          timeStep->fileName.copy(dataSources[j]->cfgLayer->FilePath[0]->value.c_str());
-        }*/
-        
         timeStep->timeString.copy("0");
-        timeStep->dims.addDimension("time",0);
-        
+        timeStep->dims.addDimension("time","0",0);
       }
     }
+    
     if(dataSources[j]->dLayerType==CConfigReaderLayerTypeCascaded){
-       
-        //This layer has no dimensions
-        //We need to add one timestep with data.
+        //This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
         CDataSource::TimeStep * timeStep = new CDataSource::TimeStep();
         dataSources[j]->timeSteps.push_back(timeStep);
-         //if(dataSources[j]->cfgLayer->Dimension.size()!=0){
         timeStep->fileName.copy("");
         timeStep->timeString.copy("0");
-        timeStep->dims.addDimension("time",0);
-        
+        timeStep->dims.addDimension("time","0",0);
     }
   }
+  
   int j=0;
   
     /**************************************/
@@ -935,7 +911,7 @@ int CRequest::process_all_layers(){
         if(srvParam->requestType==REQUEST_WMS_GETMAP){
           CImageDataWriter imageDataWriter;
 
-          /*
+          /**
             We want like give priority to our own internal layers, instead to external cascaded layers. This is because
             our internal layers have an exact customized legend, and we would like to use this always.
           */
@@ -951,14 +927,12 @@ int CRequest::process_all_layers(){
             }
           }
           
-          //There are only cascaded layers, so we intiialize the imagedatawriter with this the first layer.
+          //There are only cascaded layers, so we intialize the imagedatawriter with this the first layer.
           if(imageDataWriterIsInitialized==false){
             status = imageDataWriter.init(srvParam,dataSources[0],dataSources[0]->getNumTimeSteps());if(status != 0)throw(__LINE__);
             dataSourceToUse=0;
             imageDataWriterIsInitialized=true;
           }
-          
-          //CDBDebug("using datasource %d",dataSourceToUse);
           
           //When we have multiple timesteps, we will create an animation.
           if(dataSources[dataSourceToUse]->getNumTimeSteps()>1)imageDataWriter.createAnimation();
@@ -969,14 +943,13 @@ int CRequest::process_all_layers(){
             }
             if(dataSources[j]->dLayerType==CConfigReaderLayerTypeDataBase||
               dataSources[j]->dLayerType==CConfigReaderLayerTypeCascaded){
-              //CDBDebug("!");
-            //CDBDebug("ADD");
               status = imageDataWriter.addData(dataSources);
-              //CDBDebug("!");
               if(status != 0){
-                //Adding data failed:
-                //Do not ruin an animation if one timestep fails to load.
-                //If there is a single time step then throw an exception otherwise continue.
+                /**
+                 * Adding data failed:
+                 * Do not ruin an animation if one timestep fails to load.
+                 * If there is a single time step then throw an exception otherwise continue.
+                 */
                 if(dataSources[dataSourceToUse]->getNumTimeSteps()==1){
                   //Not an animation, so throw an exception
                   CDBError("Unable to convert datasource %s to image",dataSources[j]->layerName.c_str());
@@ -995,12 +968,9 @@ int CRequest::process_all_layers(){
               //Print the animation data into the image
               char szTemp[1024];
               snprintf(szTemp,1023,"%s UTC",dataSources[dataSourceToUse]->timeSteps[k]->timeString.c_str());
-              //CDBDebug("timestring %s",szTemp);
               imageDataWriter.setDate(szTemp);
             }
           }
-          
-          //CDBDebug("drawing titles");
           
           int textY=5;
           //int prevTextY=0;
@@ -1008,26 +978,19 @@ int CRequest::process_all_layers(){
             if(srvParam->cfg->WMS[0]->TitleFont.size()==1){
               float fontSize=parseFloat(srvParam->cfg->WMS[0]->TitleFont[0]->attr.size.c_str());
               textY+=int(fontSize);
-              //imageDataWriter.drawImage.rectangle(0,0,srvParam->Geo->dWidth,textY+8,CColor(255,255,255,0),CColor(255,255,255,80));
-              //imageDataWriter.drawImage.setFillC
               imageDataWriter.drawImage.drawText(5,textY,srvParam->cfg->WMS[0]->TitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapTitle.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
               textY+=12;
-              
-              //prevTextY=textY;
             }
           }
           if(srvParam->mapSubTitle.length()>0){
             if(srvParam->cfg->WMS[0]->SubTitleFont.size()==1){
               float fontSize=parseFloat(srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.size.c_str());
               textY+=int(fontSize);
-              
-              //imageDataWriter.drawImage.rectangle(0,prevTextY,srvParam->Geo->dWidth,textY+4,CColor(255,255,255,0),CColor(255,255,255,80));
               imageDataWriter.drawImage.drawText(6,textY,srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapSubTitle.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
               textY+=8;
-              //prevTextY=textY;
             }
           }
-          //imageDataWriter.drawText(5,5+30+25+2+12+2,"/home/visadm/software/fonts/verdana.ttf",12,0,dataSources[0]->timeSteps[0]->timeString.c_str(),240);
+
           if(srvParam->showDimensionsInImage){
             textY+=4;
             for(size_t d=0;d<srvParam->requestDims.size();d++){
@@ -1097,13 +1060,12 @@ int CRequest::process_all_layers(){
           
           status = imageDataWriter.init(srvParam,dataSources[j],dataSources[j]->getNumTimeSteps());if(status != 0)throw(__LINE__);
          
-            for(int k=0;k<dataSources[j]->getNumTimeSteps();k++){
-              for(size_t d=0;d<dataSources.size();d++){
-                dataSources[d]->setTimeStep(k);
-              }
-              //status = imageDataWriter.getFeatureInfo(dataSources[j],int(srvParam->dX),int(srvParam->dY));if(status != 0)throw(__LINE__);
+//             for(int k=0;k<dataSources[j]->getNumTimeSteps();k++){
+//               for(size_t d=0;d<dataSources.size();d++){
+//                 dataSources[d]->setTimeStep(k);
+//               }
               status = imageDataWriter.getFeatureInfo(dataSources,0,int(srvParam->dX),int(srvParam->dY));if(status != 0)throw(__LINE__);
-            }
+//             }
           
           
           status = imageDataWriter.end();if(status != 0)throw(__LINE__);

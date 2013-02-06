@@ -221,6 +221,10 @@ const char *CDataSource::getLayerName(){
 }
 
 
+CCDFDims *CDataSource::getCDFDims(){
+  return &timeSteps[currentAnimationStep]->dims;
+}
+
 void CDataSource::readStatusFlags(CDF::Variable * var, std::vector<CDataSource::StatusFlag*> *statusFlagList){
   for(size_t i=0;i<statusFlagList->size();i++)delete (*statusFlagList)[i];
   statusFlagList->clear();

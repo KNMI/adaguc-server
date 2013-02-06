@@ -118,6 +118,7 @@ private:
           CT::string time;
           CDF::Variable *variable;
           CDataSource *dataSource;
+          CCDFDims cdfDims;
         };
         std::vector <Element*>elements;
     };
