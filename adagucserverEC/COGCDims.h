@@ -11,6 +11,7 @@ class COGCDims{
     }
     CT::string name;
     CT::string value;
+    std::vector<CT::string>allValues;
     CT::string netCDFDimName;
 };
 class CCDFDims {
@@ -19,6 +20,7 @@ class CCDFDims {
       public:
       CT::string name;
       CT::string value;
+
       size_t index;
     };
     ~CCDFDims (){

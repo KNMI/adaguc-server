@@ -770,6 +770,7 @@ int CRequest::process_all_layers(){
             if(sDims->count>0&&k>0)subQuery.concat("or ");
             for(size_t  l=0;l<sDims->count&&l<2;l++){
               if(sDims[l].length()>0){
+                dataSources[j]->requiredDims[i]->allValues.push_back(sDims[l].c_str());
                 if(l>0)subQuery.concat("and ");
                 if(sDims->count==1){
                   if(!checkTimeFormat(sDims[l]))timeValidationError=true;

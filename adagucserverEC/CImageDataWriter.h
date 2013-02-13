@@ -90,7 +90,7 @@ public:
     }
     
   };
-private:
+public:
     
     class GetFeatureInfoResult{
       public:
