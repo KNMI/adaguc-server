@@ -16,6 +16,7 @@ CServerParams::CServerParams(){
   imageMode=SERVERIMAGEMODE_8BIT;
   autoOpenDAPEnabled=-1;
   autoLocalFileResourceEnabled = -1;
+  autoResourceCacheEnabled = -1;
   showDimensionsInImage = false;
   showLegendInImage = false;
   figWidth=-1;
@@ -213,6 +214,16 @@ int CServerParams::makeUniqueLayerName(CT::string *layerName,CServerConfig::XMLE
   return 0;
 }
 
+bool CServerParams::isAutoResourceCacheEnabled(){
+  if(autoResourceCacheEnabled==-1){
+     autoResourceCacheEnabled = 1;
+    if(cfg->AutoResource.size()>0){
+      if(!cfg->AutoResource[0]->attr.enablecache.equals("true"))autoResourceCacheEnabled = 0;
+    }
+  }
+  if(autoResourceCacheEnabled==0)return false;
+  return true;
+}
 
 
 bool CServerParams::isAutoOpenDAPResourceEnabled(){

@@ -482,6 +482,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
   bool enableDataCache=false;
   if(dataSource->cfgLayer->Cache.size()>0){
     if(dataSource->cfgLayer->Cache[0]->attr.enabled.equals("true")){
+      
       enableDataCache=true;
        //Get cachefilename
       if(getCacheFileName(dataSource,&cacheFilename)!=0){

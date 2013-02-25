@@ -38,7 +38,7 @@ public:
 class CServerParams{
   DEF_ERRORFUNCTION();
   private:
-    int autoOpenDAPEnabled,autoLocalFileResourceEnabled;
+    int autoOpenDAPEnabled,autoLocalFileResourceEnabled,autoResourceCacheEnabled;
   public:
     double dfResX,dfResY;
     int dWCS_RES_OR_WH;
@@ -133,6 +133,11 @@ class CServerParams{
      */
     void getCacheDirectory(CT::string *cacheFileName);
 
+    /**
+     * Function which checks whether remote resources should be cached or not
+     * @return true if enablecache attribute in AutoResource is undefined or set to true 
+     */
+    bool isAutoResourceCacheEnabled();
     
     /**
      * Function which can be used to check whether automatic resources have been enabled or not

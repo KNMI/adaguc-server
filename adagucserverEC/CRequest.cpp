@@ -13,8 +13,7 @@ void CRequest::addXMLLayerToConfig(CServerParams *srvParam,std::vector<CT::strin
   CServerConfig::XMLE_Layer *xmleLayer=new CServerConfig::XMLE_Layer();
   CServerConfig::XMLE_FilePath* xmleFilePath = new CServerConfig::XMLE_FilePath();
   
-  CServerConfig::XMLE_Cache* xmleCache = new CServerConfig::XMLE_Cache();
-  xmleCache->attr.enabled.copy("true");
+ 
   xmleLayer->attr.type.copy("database");
   xmleFilePath->value.copy(location);
   xmleFilePath->attr.filter.copy("");
@@ -52,7 +51,12 @@ void CRequest::addXMLLayerToConfig(CServerParams *srvParam,std::vector<CT::strin
   }
   
   xmleLayer->FilePath.push_back(xmleFilePath);
-  xmleLayer->Cache.push_back(xmleCache);
+  
+  if(srvParam->isAutoResourceCacheEnabled()){
+    CServerConfig::XMLE_Cache* xmleCache = new CServerConfig::XMLE_Cache();
+    xmleCache->attr.enabled.copy("true");
+    xmleLayer->Cache.push_back(xmleCache);
+  }
   
   //Set imagetext property
   if(srvParam->cfg->AutoResource.size()>0){

@@ -231,7 +231,7 @@ class CServerConfig:public CXMLSerializerInterface{
       }
       class Cattr{
       public:
-        CXMLString enableautoopendap, enablelocalfile;
+        CXMLString enableautoopendap, enablelocalfile,enablecache;
       }attr;
       
       void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value){
@@ -248,6 +248,7 @@ class CServerConfig:public CXMLSerializerInterface{
       
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("enableautoopendap",17,attrname)){attr.enableautoopendap.copy(attrvalue);return;}
+        else if(equals("enablecache",11,attrname)){attr.enablecache.copy(attrvalue);return;}        
         else if(equals("enablelocalfile",15,attrname)){attr.enablelocalfile.copy(attrvalue);return;}        
       }
     };
