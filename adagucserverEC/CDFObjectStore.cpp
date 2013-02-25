@@ -181,7 +181,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *s
     //CDBDebug("Making public directory %s",cacheName.c_str());
     CDirReader::makePublicDirectory(cacheName.c_str());
     cacheName.concat(&validFileName);cacheName.concat("_ncheader.nc");
-    cache.check(cacheName.c_str());
+    cache.checkCacheSystemReady(cacheName.c_str());
     
     if(cache.saveCacheFile()){
       int status = cache.claimCacheFile();

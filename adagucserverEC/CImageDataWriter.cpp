@@ -1,5 +1,5 @@
 #include "CImageDataWriter.h"
-#define CIMAGEDATAWRITER_DEBUG
+//#define CIMAGEDATAWRITER_DEBUG
 
 void doJacoIntoLatLon(double &u, double &v, double lo, double la, float deltaX, float deltaY, CImageWarper *warper);
 std::map<std::string,CImageDataWriter::ProjCacheInfo> CImageDataWriter::projCacheMap;

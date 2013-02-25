@@ -410,6 +410,7 @@ int CRequest::generateOGCGetCapabilities(CT::string *XMLdocument){
   }
   return XMLGen.OGCGetCapabilities(srvParam,XMLdocument);
 }
+
 int CRequest::generateOGCDescribeCoverage(CT::string *XMLdocument){
   CXMLGen XMLGen;
   for(size_t j=0;j<srvParam->WMSLayers->count;j++){
@@ -417,6 +418,7 @@ int CRequest::generateOGCDescribeCoverage(CT::string *XMLdocument){
   }
   return XMLGen.OGCGetCapabilities(srvParam,XMLdocument);
 }
+
 int CRequest::process_wms_getcap_request(){
   CDBDebug("WMS GETCAPABILITIES");
   
@@ -432,16 +434,18 @@ int CRequest::process_wms_getcap_request(){
     if(status==2)storeNeedsUpdate=true;
     if(storeNeedsUpdate){
       //CDBDebug("Generating a new document with name %s",documentName.c_str());
-      int status = generateOGCGetCapabilities(&XMLdocument);if(status!=0)return 1;
+      int status = generateOGCGetCapabilities(&XMLdocument);if(status==CXMLGEN_FATAL_ERROR_OCCURED)return 1;
       //Store this document  
-      simpleStore.setStringAttribute(documentName.c_str(),XMLdocument.c_str());
-      if(storeDocumentCache(&simpleStore)!=0)return 1;
+      if(status==0){
+        simpleStore.setStringAttribute(documentName.c_str(),XMLdocument.c_str());
+        if(storeDocumentCache(&simpleStore)!=0)return 1;
+      }
     }else{
       CDBDebug("Providing document from store with name %s",documentName.c_str());
     }
   }else{
     //Do not use cache
-    int status = generateOGCGetCapabilities(&XMLdocument);if(status!=0)return 1;
+    int status = generateOGCGetCapabilities(&XMLdocument);;if(status==CXMLGEN_FATAL_ERROR_OCCURED)return 1;
   }
   printf("%s%c%c\n","Content-Type:text/xml",13,10);
   printf("%s",XMLdocument.c_str());
@@ -587,7 +591,7 @@ int CRequest::process_all_layers(){
         //Do not use cache
         status = generateOGCDescribeCoverage(&XMLDocument);if(status!=0)return 1;
     }*/
-      status = generateOGCDescribeCoverage(&XMLDocument);if(status!=0)return 1;
+      status = generateOGCDescribeCoverage(&XMLDocument);if(status==CXMLGEN_FATAL_ERROR_OCCURED)return 1;
       printf("%s%c%c\n","Content-Type:text/xml",13,10);
       printf("%s",XMLDocument.c_str());
       return 0;
@@ -821,7 +825,7 @@ int CRequest::process_all_layers(){
         }
         
         //Execute the query
-        CDBDebug("%s",query.c_str());
+        //CDBDebug("%s",query.c_str());
         values_path = DB.query_select(query.c_str(),0);
         if(values_path==NULL){
           if((checkDataRestriction()&SHOW_QUERYINFO)==false)query.copy("hidden");

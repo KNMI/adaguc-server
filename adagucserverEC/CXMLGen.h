@@ -16,6 +16,8 @@
 #include "CImageDataWriter.h"
 #include "CRequest.h"
 
+#define CXMLGEN_FATAL_ERROR_OCCURED 1
+#define CXML_NON_FATAL_ERRORS_OCCURED 100
 
 
 

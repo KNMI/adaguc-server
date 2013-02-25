@@ -7,7 +7,7 @@
 
 const char *CDataReader::className="CDataReader";
 
-#define CDATAREADER_DEBUG
+//#define CDATAREADER_DEBUG
 //#define MEASURETIME
 
 #define uchar unsigned char
@@ -492,7 +492,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
   
   //Check wether we should use cache or not (in case of OpenDAP, this speeds up things a lot)
   if(enableDataCache){
-    cache.check(cacheFilename.c_str());
+    cache.checkCacheSystemReady(cacheFilename.c_str());
   }
   
   if(mode!=CNETCDFREADER_MODE_OPEN_ALL||x!=-1||y!=-1){
@@ -553,7 +553,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
     CDBError("Unable to attach CDFObject");
     return 1;
   }
-  
+
   
   //Shorthand pointer
   CDF::Variable *var[dataSource->dataObject.size()+1];

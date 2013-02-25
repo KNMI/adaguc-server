@@ -1367,18 +1367,24 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
     status = 1;
   }
   
+  bool errorsHaveOccured=false;
 
   
-  for(size_t j=0;j<myWMSLayerList.size();j++){delete myWMSLayerList[j];myWMSLayerList[j]=NULL;}
+  for(size_t j=0;j<myWMSLayerList.size();j++){
+    if(myWMSLayerList[j]->hasError)errorsHaveOccured=true;
+    delete myWMSLayerList[j];myWMSLayerList[j]=NULL;
+  }
   
   if(status != 0){
     CDBError("XML gen failed!");
-    return 1;
+    return CXMLGEN_FATAL_ERROR_OCCURED;
   }
   XMLDocument->concat(&XMLDoc);
   
   
   
   resetErrors();
+  
+  if(errorsHaveOccured)return CXML_NON_FATAL_ERRORS_OCCURED;
   return 0;
 }

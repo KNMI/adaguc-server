@@ -20,13 +20,23 @@ CCache::~CCache(){
 }
 
 bool CCache::saveCacheFile(){
+#ifdef CCACHE_DEBUG
+  if(saveFieldFile){
+    CDBDebug("Cache not available from %s",this->fileName.c_str());
+  }
+#endif
   return saveFieldFile;
 }
 bool CCache::cacheIsAvailable(){
+#ifdef CCACHE_DEBUG
+  if(cacheAvailable){
+    CDBDebug("Cache available from %s",this->fileName.c_str());
+  }
+#endif
   return cacheAvailable;
 }
 
-void CCache::check(const char *szfileName){
+void CCache::checkCacheSystemReady(const char *szfileName){
   if(szfileName == NULL)return;
   this->fileName = szfileName;
   claimedCacheFileName = szfileName;
@@ -52,26 +62,32 @@ bool CCache::isCacheFileBusy(){
   FILE *pFile = fopen ( claimedCacheFileName.c_str() , "r" );
   if(pFile != NULL){
     fclose (pFile);
+    #ifdef CCACHE_DEBUG
+    CDBDebug("Cache busy \"%s\"",claimedCacheFileName.c_str());
+    #endif
     return true;
   }
+  #ifdef CCACHE_DEBUG
+  CDBDebug("Cache not busy \"%s\"",claimedCacheFileName.c_str());
+  #endif
   return false;
 }
 
 bool CCache::isCacheFileBusyBlocking(){
   if(fileName.length()==0)return false;
-  int maxTries = 40;
+  int maxTries = 60;//Wait 60 seconds.
   int currentTries=maxTries;
   
   //Is some kind of process working on any of the cache files?
   do{
     if(isCacheFileBusy()){
       if(currentTries<=0){
-        CDBDebug("!!! A process is working already 10 seconds on %s, skipping wait",fileName.c_str());
+        CDBDebug("!!! A process is working already 60 seconds on %s, skipping wait",fileName.c_str());
         return true;
       }else{
         CDBDebug("Another process is working on %s, waiting... %d",fileName.c_str(),maxTries-currentTries+1);
-        //Wait 0.5 second and try again
-        usleep(250000);
+        //Wait 1 second and try again
+        usleep(1000000);
       }
     }else return false;
     currentTries--;
@@ -96,6 +112,9 @@ int CCache::releaseCacheFile(){
     return 1;
   }
   rename(f.c_str(),fileName.c_str());
+  #ifdef CCACHE_DEBUG
+  CDBDebug("Claimed cachefile released");
+  #endif
   return 0;
 }
 
@@ -104,22 +123,36 @@ const char *CCache::getCacheFileNameToWrite(){
 }
 
 int CCache::claimCacheFile (){
+  #ifdef CCACHE_DEBUG
+  CDBDebug("Start claiming cache");
+  #endif
   saveFieldFile = false; 
-  if(isCacheFileBusy())return 3;
-  if(isCacheFileAvailable(fileName.c_str()))return 4;
+  if(isCacheFileAvailable(fileName.c_str())){
+    CDBDebug("claimCacheFile: Cache is already available for %s", fileName.c_str());
+    return 4;
+  }
+  if(isCacheFileBusy()){
+    CDBDebug("claimCacheFile: Cache is already working on %s", claimedCacheFileName.c_str());
+    return 3;
+  }
   const char buffer[] = { "temp_data\n" };
   FILE *pFile = fopen ( claimedCacheFileName.c_str() , "wb" );
   if(pFile==NULL){
+    CDBError("claimCacheFile: Unable to open cachefile %s",claimedCacheFileName.c_str());
     return 1;
   }
   size_t bytesWritten = fwrite (buffer , sizeof(char),10 , pFile );
   fflush (pFile);   
   fclose (pFile);
   if(bytesWritten!=10){
+    CDBError("claimCacheFile: Unable to write to cachefile %s",claimedCacheFileName.c_str());
     return 2;
   }
   saveFieldFile = true;
   cacheFileClaimed = true;
+  #ifdef CCACHE_DEBUG
+  CDBDebug("Cache claimed \"%s\"",claimedCacheFileName.c_str());
+  #endif
   return 0;
 }
 
@@ -131,6 +164,9 @@ void CCache::removeClaimedCachefile(){
       remove(claimedCacheFileName.c_str());
     }
   }
+  #ifdef CCACHE_DEBUG
+  CDBDebug("Claimed cachefile removed");
+  #endif
   cacheFileClaimed = false;
   saveFieldFile = false;
 }
