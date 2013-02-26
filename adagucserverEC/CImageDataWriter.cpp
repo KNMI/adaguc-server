@@ -64,7 +64,7 @@ CImageDataWriter::RenderMethod CImageDataWriter::getRenderMethodFromString(CT::s
   if(renderMethodString->indexOf("barb"    )!=-1)renderMethod|=RM_BARB;
   if(renderMethodString->indexOf("thin")!=-1)renderMethod|=RM_THIN;
   if(renderMethodString->indexOf("rgba")!=-1)renderMethod|=RM_RGBA;
- 
+
   return renderMethod;
 }
 
@@ -82,7 +82,7 @@ void CImageDataWriter::getRenderMethodAsString(CT::string *renderMethodString, R
   if(renderMethod & RM_THIN)renderMethodString->concat("thin");
   if(renderMethod & RM_RGBA)renderMethodString->concat("rgba");
   
- 
+
 }
 
 int CImageDataWriter::_setTransparencyAndBGColor(CServerParams *srvParam,CDrawImage* drawImage){
@@ -214,10 +214,10 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
     //drawImage.setAntiAliased(true);
   }
   
-   if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
+  if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
       if(initializeLegend(srvParam,dataSource)!=0)return 1;
-   }
-   if(currentStyleConfiguration!=NULL){
+  }
+  if(currentStyleConfiguration!=NULL){
     if(currentStyleConfiguration->renderMethod&RM_RGBA){
       drawImage.setTrueColor(true);
     }
@@ -340,8 +340,8 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
 
 
 /**
- * 
- */
+* 
+*/
 void CImageDataWriter::calculateScaleAndOffsetFromMinMax(float &scale, float &offset,float min,float max,float log){
   if(log!=0.0f){
     //CDBDebug("LOG = %f",log);
@@ -354,12 +354,12 @@ void CImageDataWriter::calculateScaleAndOffsetFromMinMax(float &scale, float &of
 }
 
 /**
- * Fills in the styleConfig object based on datasource,stylename, legendname and rendermethod
- * 
- * @param styleConfig
- * 
- * 
- */
+* Fills in the styleConfig object based on datasource,stylename, legendname and rendermethod
+* 
+* @param styleConfig
+* 
+* 
+*/
 int CImageDataWriter::makeStyleConfig(StyleConfiguration *styleConfig,CDataSource *dataSource,const char *styleName,const char *legendName,const char *renderMethod){
   CT::string errorMessage;
   CT::string renderMethodString = renderMethod;
@@ -527,11 +527,11 @@ int CImageDataWriter::makeStyleConfig(StyleConfiguration *styleConfig,CDataSourc
 
 
 /**
- * Returns a stringlist with all available legends for this datasource and chosen style.
- * @param dataSource pointer to the datasource 
- * @param style pointer to the style to find the legends for
- * @return stringlist with the list of available legends.
- */
+* Returns a stringlist with all available legends for this datasource and chosen style.
+* @param dataSource pointer to the datasource 
+* @param style pointer to the style to find the legends for
+* @return stringlist with the list of available legends.
+*/
 
 
 CT::PointerList<CT::string*> *CImageDataWriter::getLegendListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style* style){
@@ -549,11 +549,11 @@ CT::PointerList<CT::string*> *CImageDataWriter::getLegendListForDataSource(CData
 
 
 /**
- * Returns a stringlist with all available rendermethods for this datasource and chosen style.
- * @param dataSource pointer to the datasource 
- * @param style pointer to the style to find the rendermethods for
- * @return stringlist with the list of available rendermethods.
- */
+* Returns a stringlist with all available rendermethods for this datasource and chosen style.
+* @param dataSource pointer to the datasource 
+* @param style pointer to the style to find the rendermethods for
+* @return stringlist with the list of available rendermethods.
+*/
 CT::PointerList<CT::string*> *CImageDataWriter::getRenderMethodListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style* style){
   //List all the desired rendermethods
   CT::string renderMethodList;
@@ -576,21 +576,21 @@ CT::PointerList<CT::string*> *CImageDataWriter::getRenderMethodListForDataSource
 }
 
 /**
- * This function calls getStyleListForDataSource in mode (1).
- * 
- * @param dataSource pointer to the datasource to find the stylelist for
- * @return the stringlist with all possible stylenames. Pointer should be deleted with delete!
- */
+* This function calls getStyleListForDataSource in mode (1).
+* 
+* @param dataSource pointer to the datasource to find the stylelist for
+* @return the stringlist with all possible stylenames. Pointer should be deleted with delete!
+*/
 CT::PointerList<CT::string*> *CImageDataWriter::getStyleListForDataSource(CDataSource *dataSource){
   return getStyleListForDataSource(dataSource,NULL);
 }
 
 /**
- * Returns a new StyleConfiguration object which contains all settings for the corresponding styles. This function calls getStyleListForDataSource in mode(2).
- * @param styleName
- * @param serverCFG
- * @return A new StyleConfiguration which must be deleted with delete.
- */
+* Returns a new StyleConfiguration object which contains all settings for the corresponding styles. This function calls getStyleListForDataSource in mode(2).
+* @param styleName
+* @param serverCFG
+* @return A new StyleConfiguration which must be deleted with delete.
+*/
 CImageDataWriter::StyleConfiguration *CImageDataWriter::getStyleConfigurationByName(const char *styleName,CDataSource *dataSource){
   #ifdef CIMAGEDATAWRITER_DEBUG    
   CDBDebug("getStyleConfigurationByName for layer %s with name %s",dataSource->layerName.c_str(),styleName);
@@ -604,15 +604,15 @@ CImageDataWriter::StyleConfiguration *CImageDataWriter::getStyleConfigurationByN
 }
 
 /**
- * This function has two modes, return a string list (1) or (2) configure a StyleConfiguration object.
- *   (1) Returns a stringlist with all possible style names for a datasource, when styleConfig is set to NULL.
- *   (2) When a styleConfig is provided, this function fills in the provided StyleConfiguration object, 
- *   the styleCompositionName needs to be set in advance (The stylename usually given in the request string)
- * 
- * @param dataSource pointer to the datasource to find the stylelist for
- * @param styleConfig pointer to the StyleConfiguration object to be filled in. 
- * @return the stringlist with all possible stylenames
- */
+* This function has two modes, return a string list (1) or (2) configure a StyleConfiguration object.
+*   (1) Returns a stringlist with all possible style names for a datasource, when styleConfig is set to NULL.
+*   (2) When a styleConfig is provided, this function fills in the provided StyleConfiguration object, 
+*   the styleCompositionName needs to be set in advance (The stylename usually given in the request string)
+* 
+* @param dataSource pointer to the datasource to find the stylelist for
+* @param styleConfig pointer to the StyleConfiguration object to be filled in. 
+* @return the stringlist with all possible stylenames
+*/
 CT::PointerList<CT::string*> *CImageDataWriter::getStyleListForDataSource(CDataSource *dataSource,StyleConfiguration *styleConfig){
 //  CDBDebug("getStyleListForDataSource");
   CT::PointerList<CT::string*> *stringList = new CT::PointerList<CT::string*>();
@@ -670,7 +670,7 @@ CT::PointerList<CT::string*> *CImageDataWriter::getStyleListForDataSource(CDataS
       CServerConfig::XMLE_Style* style = NULL;
       if(dStyleIndex!=-1)style=serverCFG->Style[dStyleIndex];
       
-     
+    
       
       renderMethods = getRenderMethodListForDataSource(dataSource,style);
       legendList = getLegendListForDataSource(dataSource,style);
@@ -752,11 +752,11 @@ CT::PointerList<CT::string*> *CImageDataWriter::getStyleListForDataSource(CDataS
 
 
 /**
- * Returns a stringlist with all possible legends available for this Legend config object.
- * This is usually a configured legend element in a layer, or a configured legend element in a style.
- * @param Legend a XMLE_Legend object configured in a style or in a layer
- * @return Pointer to a new stringlist with all possible legend names, must be deleted with delete. Is NULL on failure.
- */
+* Returns a stringlist with all possible legends available for this Legend config object.
+* This is usually a configured legend element in a layer, or a configured legend element in a style.
+* @param Legend a XMLE_Legend object configured in a style or in a layer
+* @return Pointer to a new stringlist with all possible legend names, must be deleted with delete. Is NULL on failure.
+*/
 CT::PointerList<CT::string*> *CImageDataWriter::getLegendNames(std::vector <CServerConfig::XMLE_Legend*> Legend){
   if(Legend.size()==0){CDBError("No legends defined");return NULL;}
   CT::PointerList<CT::string*> *stringList = new CT::PointerList<CT::string*>();
@@ -776,10 +776,10 @@ CT::PointerList<CT::string*> *CImageDataWriter::getLegendNames(std::vector <CSer
 }
 
 /**
- * Returns a stringlist with all possible styles available for this style config object.
- * @param Style a pointer to XMLE_Style vector configured in a layer
- * @return Pointer to a new stringlist with all possible style names, must be deleted with delete. Is NULL on failure.
- */
+* Returns a stringlist with all possible styles available for this style config object.
+* @param Style a pointer to XMLE_Style vector configured in a layer
+* @return Pointer to a new stringlist with all possible style names, must be deleted with delete. Is NULL on failure.
+*/
 CT::PointerList<CT::string*> *CImageDataWriter::getStyleNames(std::vector <CServerConfig::XMLE_Styles*> Styles){
   CT::PointerList<CT::string*> *stringList = new CT::PointerList<CT::string*>();
   CT::string * val = new CT::string();
@@ -807,11 +807,11 @@ CT::PointerList<CT::string*> *CImageDataWriter::getStyleNames(std::vector <CServ
 
 
 /**
- * Retrieves the position of for the requested style name in the servers configured style elements.
- * @param styleName The name of the style to locate
- * @param serverStyles Pointer to the servers configured styles.
- * @return The style index as integer, points to the position in the servers configured styles. Is -1 on failure.
- */
+* Retrieves the position of for the requested style name in the servers configured style elements.
+* @param styleName The name of the style to locate
+* @param serverStyles Pointer to the servers configured styles.
+* @return The style index as integer, points to the position in the servers configured styles. Is -1 on failure.
+*/
 int  CImageDataWriter::getServerStyleIndexByName(const char * styleName,std::vector <CServerConfig::XMLE_Style*> serverStyles){
   if(styleName==NULL){
     CDBError("No style name provided");
@@ -831,11 +831,11 @@ int  CImageDataWriter::getServerStyleIndexByName(const char * styleName,std::vec
 }
 
 /**
- * Retrieves the position of for the requested legend name in the servers configured legend elements.
- * @param legendName The name of the legend to locate
- * @param serverLegends Pointer to the servers configured legends.
- * @return The legend index as integer, points to the position in the servers configured legends. Is -1 on failure.
- */
+* Retrieves the position of for the requested legend name in the servers configured legend elements.
+* @param legendName The name of the legend to locate
+* @param serverLegends Pointer to the servers configured legends.
+* @return The legend index as integer, points to the position in the servers configured legends. Is -1 on failure.
+*/
 int  CImageDataWriter::getServerLegendIndexByName(const char * legendName,std::vector <CServerConfig::XMLE_Legend*> serverLegends){
   int dLegendIndex=-1;
   CT::string legendString = legendName;
@@ -891,7 +891,7 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
   currentStyleConfiguration=CImageDataWriter::getStyleConfigurationByName(styleName.c_str(),dataSource);
   if(currentStyleConfiguration->hasError){
     CDBError("Unable to configure style %s for layer %s\n",styleName.c_str(),dataSource->layerName.c_str());
-   
+  
     return -1;
   }
   
@@ -935,7 +935,6 @@ void CImageDataWriter::setValue(CDFType type,void *data,size_t ptr,double pixel)
 }
 
 
-
 int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int dataSourceIndex,int dX,int dY){
   
   #ifdef MEASURETIME
@@ -943,20 +942,19 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
   #endif
   
   #ifdef CIMAGEDATAWRITER_DEBUG    
-  CDBDebug("[getFeatureInfo]");
+  CDBDebug("[getFeatureInfo] %d, %d, [%d,%d]", dataSources.size(), dataSourceIndex, dX, dY);
   #endif
   // Create a new getFeatureInfoResult object and push it into the vector.
   int status = 0;
   
   for(size_t d=0;d<dataSources.size();d++){
-     GetFeatureInfoResult  *getFeatureInfoResult = new GetFeatureInfoResult();
-     getFeatureInfoResultList.push_back(getFeatureInfoResult);
-     
-     
+    GetFeatureInfoResult  *getFeatureInfoResult = new GetFeatureInfoResult();
+    getFeatureInfoResultList.push_back(getFeatureInfoResult);
+    
     for(int step=0;step<dataSources[d]->getNumTimeSteps();step++){
       dataSources[d]->setTimeStep(step);
       #ifdef CIMAGEDATAWRITER_DEBUG    
-      CDBDebug("Processing dataSource %d with %d/%d timesteps",d,step,dataSources[d]->getNumTimeSteps());
+      CDBDebug("Processing dataSource %d with step %d of %d timesteps",d,step,dataSources[d]->getNumTimeSteps());
       #endif
     
       bool headerIsAvailable = false;
@@ -982,8 +980,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       //Copy layer name
       getFeatureInfoResult->layerName.copy(&dataSource->layerName);
       getFeatureInfoResult->dataSourceIndex=dataSourceIndex;
-      
-    
       
       CDataReader reader;
       //if(!headerIsAvailable)
@@ -1113,11 +1109,33 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       getFeatureInfoResult->x_rasterIndex=projCacheInfo.imx;
       getFeatureInfoResult->y_rasterIndex=projCacheInfo.imy;
       
+      if(projCacheInfo.imx>=0&&projCacheInfo.imy>=0&&projCacheInfo.imx<projCacheInfo.dWidth&&projCacheInfo.imy<projCacheInfo.dHeight){
+        if(!openAll){
+          #ifdef CIMAGEDATAWRITER_DEBUG 
+          CDBDebug("Reading datasource %d for %d,%d",d,projCacheInfo.imx,projCacheInfo.imy);
+          #endif
+          
+          status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_ALL,projCacheInfo.imx,projCacheInfo.imy);
+          
+          #ifdef CIMAGEDATAWRITER_DEBUG 
+          CDBDebug("Done");
+          #endif
+          
+        }
+
+        if(status!=0){
+          CDBError("Could not open file: %s",dataSource->getFileName());
+          return 1;
+        }
+      }
 
       //TODO find raster projection units and find image projection units.
       
+      //Determine if this is a GridRelative vector product
+      bool windVectorProduct=false;
       bool gridRelative=false;
       if (dataSource->dataObject.size()>1){
+        windVectorProduct=true;
         // Check standard_name/var_name for first vector component
         // if x_wind/grid_east_wind of y_wind/grid_northward_wind then gridRelative=true
         // if eastward_wind/northward_wind then gridRelative=false
@@ -1133,99 +1151,76 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         } else {
           gridRelative=false;
         }
+        #ifdef CIMAGEDATAWRITER_DEBUG 
         CDBDebug("Grid propery gridRelative=%d", gridRelative);
+        #endif
       }
-      //
-      //
-      //Retrieve variable names
-      for(size_t o=0;o<dataSource->dataObject.size();o++){
-        //size_t j=d+o*dataSources.size();
-  //      CDBDebug("j = %d",j);
-        //Create a new element and at it to the elements list.
-        
-        GetFeatureInfoResult::Element * element = new GetFeatureInfoResult::Element();
-        getFeatureInfoResult->elements.push_back(element);
-        element->dataSource=dataSource;
-        //Get variable name
-        element->var_name.copy(&dataSources[d]->dataObject[o]->variableName);
-        //Get variable units
-        element->units.copy(&dataSources[d]->dataObject[o]->units);
+          
 
-        //Get variable standard name
-        CDF::Attribute * attr_standard_name=dataSources[d]->dataObject[o]->cdfVariable->getAttributeNE("standard_name");
-        if(attr_standard_name!=NULL){
-          CT::string standardName;attr_standard_name->getDataAsString(&standardName);
-          element->standard_name.copy(&standardName);
-          // Make a more clean standard name.
-          standardName.replaceSelf("_"," ");standardName.replaceSelf(" status flag","");
-          element->feature_name.copy(&standardName);
-        }
-        if(element->standard_name.c_str()==NULL){
-          element->standard_name.copy(&element->var_name);
-          element->feature_name.copy(&element->var_name);
-        }
-
-        // Get variable long name
-        CDF::Attribute * attr_long_name=dataSources[d]->dataObject[o]->cdfVariable->getAttributeNE("long_name");
-        if(attr_long_name!=NULL){
-          attr_long_name->getDataAsString(&element->long_name);
-        }else element->long_name.copy(&element->var_name);
-        
-        // Assign CDF::Variable Pointer
-        element->variable = dataSources[d]->dataObject[o]->cdfVariable;
-        element->value="nodata";
-      
-        element->time.copy(&dataSources[d]->timeSteps[dataSources[d]->getCurrentTimeStep()]->timeString);
-        
-        CCDFDims * cdfDims = dataSources[d]->getCDFDims();
-        CT::string value,name;
-        for(size_t j=0;j<dataSources[d]->requiredDims.size();j++){
-          value=cdfDims->getDimensionValue(j);
-          name=cdfDims->getDimensionName(j);
-          if(name.equals("time")){
-            value=element->time.c_str();
-          }
-          element->cdfDims.addDimension(name.c_str(),value.c_str(),cdfDims->getDimensionIndex(j));
-        }
-    
-      }
-    // Retrieve corresponding values.
-    #ifdef CIMAGEDATAWRITER_DEBUG  
-    CDBDebug("imx:%d imy:%d projCacheInfo.dWidth:%d projCacheInfo.dHeight:%d",projCacheInfo.imx,projCacheInfo.imy,projCacheInfo.dWidth,projCacheInfo.dHeight);
-    #endif
-    if(projCacheInfo.imx>=0&&projCacheInfo.imy>=0&&projCacheInfo.imx<projCacheInfo.dWidth&&projCacheInfo.imy<projCacheInfo.dHeight){
-      
-    
-    if(openAll){
-      //Already open
-    }else{
-      #ifdef CIMAGEDATAWRITER_DEBUG 
-      CDBDebug("Reading datasource %d for %d,%d",d,projCacheInfo.imx,projCacheInfo.imy);
-      #endif
-      
-      status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_ALL,projCacheInfo.imx,projCacheInfo.imy);
-      
-      #ifdef CIMAGEDATAWRITER_DEBUG 
-      CDBDebug("Done");
-      #endif
-      
-    }
-
-    if(status!=0){
-      CDBError("Could not open file: %s",dataSource->getFileName());
-      return 1;
-    }
-    
-    CDBDebug("%d time steps and %d objects",dataSource->getNumTimeSteps(),dataSource->dataObject.size());
-    //size_t nrOfTimeSteps = dataSource->getNumTimeSteps();
+    //Retrieve variable names
     for(size_t o=0;o<dataSource->dataObject.size();o++){
-        size_t j=step*dataSource->dataObject.size()+o;//+o*dataSources.size();  
-        
+      //size_t j=d+o*dataSources.size();
+//      CDBDebug("j = %d",j);
+      //Create a new element and at it to the elements list.
+      
+      GetFeatureInfoResult::Element * element = new GetFeatureInfoResult::Element();
+      getFeatureInfoResult->elements.push_back(element);
+      element->dataSource=dataSource;
+      //Get variable name
+      element->var_name.copy(&dataSources[d]->dataObject[o]->variableName);
+      //Get variable units
+      element->units.copy(&dataSources[d]->dataObject[o]->units);
+
+      //Get variable standard name
+      CDF::Attribute * attr_standard_name=dataSources[d]->dataObject[o]->cdfVariable->getAttributeNE("standard_name");
+      if(attr_standard_name!=NULL){
+        CT::string standardName;attr_standard_name->getDataAsString(&standardName);
+        element->standard_name.copy(&standardName);
+        // Make a more clean standard name.
+        standardName.replaceSelf("_"," ");standardName.replaceSelf(" status flag","");
+        element->feature_name.copy(&standardName);
+      }
+      if(element->standard_name.c_str()==NULL){
+        element->standard_name.copy(&element->var_name);
+        element->feature_name.copy(&element->var_name);
+      }
+
+      // Get variable long name
+      CDF::Attribute * attr_long_name=dataSources[d]->dataObject[o]->cdfVariable->getAttributeNE("long_name");
+      if(attr_long_name!=NULL){
+        attr_long_name->getDataAsString(&element->long_name);
+      }else element->long_name.copy(&element->var_name);
+      
+      // Assign CDF::Variable Pointer
+      element->variable = dataSources[d]->dataObject[o]->cdfVariable;
+      element->value="nodata";
+    
+      element->time.copy(&dataSources[d]->timeSteps[dataSources[d]->getCurrentTimeStep()]->timeString);
+      
+      CCDFDims * cdfDims = dataSources[d]->getCDFDims();
+      CT::string value,name;
+      for(size_t j=0;j<dataSources[d]->requiredDims.size();j++){
+        value=cdfDims->getDimensionValue(j);
+        name=cdfDims->getDimensionName(j);
+        if(name.indexOf("time")==0){
+          value=element->time.c_str();
+        }
+        element->cdfDims.addDimension(name.c_str(),value.c_str(),cdfDims->getDimensionIndex(j));
+      }
+  
+      #ifdef CIMAGEDATAWRITER_DEBUG  
+      CDBDebug("getFeatureInfoResult->elements has %d elements\n", getFeatureInfoResult->elements.size());
+      #endif
+      // Retrieve corresponding values.
+      #ifdef CIMAGEDATAWRITER_DEBUG  
+      CDBDebug("imx:%d imy:%d projCacheInfo.dWidth:%d projCacheInfo.dHeight:%d",projCacheInfo.imx,projCacheInfo.imy,projCacheInfo.dWidth,projCacheInfo.dHeight);
+      #endif
+      if(projCacheInfo.imx>=0&&projCacheInfo.imy>=0&&projCacheInfo.imx<projCacheInfo.dWidth&&projCacheInfo.imy<projCacheInfo.dHeight){
         #ifdef CIMAGEDATAWRITER_DEBUG 
         CDBDebug("Accessing element %d",j);
         #endif
         
-        GetFeatureInfoResult::Element * element=getFeatureInfoResult->elements[j];
+        //GetFeatureInfoResult::Element * element=getFeatureInfoResult->elements[j];
 
         size_t ptr=0;
         if(openAll){
@@ -1240,31 +1235,33 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         #ifdef CIMAGEDATAWRITER_DEBUG 
         CDBDebug("pixel value = %f",pixel);
         #endif
+        //Fill in the actual data value
         //Check whether this is a NoData value:
         if((pixel!=dataSource->dataObject[o]->dfNodataValue&&dataSource->dataObject[o]->hasNodataValue==true&&pixel==pixel)||
-          dataSource->dataObject[0]->hasNodataValue==false){
-          if (!gridRelative) {
-            if(dataSource->dataObject[o]->hasStatusFlag){
-              //Add status flag
-              CT::string flagMeaning;
-              CDataSource::getFlagMeaningHumanReadable(&flagMeaning,&dataSource->dataObject[o]->statusFlagList,pixel);
-              element->value.print("%s (%d)",flagMeaning.c_str(),(int)pixel);
-              element->units="";
-            }else{
-              //Add raster value
-              char szTemp[1024];
-              floatToString(szTemp,1023,pixel);
-              element->value=szTemp;
-            }
+          dataSource->dataObject[o]->hasNodataValue==false){
+          if(dataSource->dataObject[o]->hasStatusFlag){
+            //Add status flag
+            CT::string flagMeaning;
+            CDataSource::getFlagMeaningHumanReadable(&flagMeaning,&dataSource->dataObject[o]->statusFlagList,pixel);
+            element->value.print("%s (%d)",flagMeaning.c_str(),(int)pixel);
+            element->units="";
+          }else{
+            //Add raster value
+            char szTemp[1024];
+            floatToString(szTemp,1023,pixel);
+            element->value=szTemp;
           }
+          #ifdef CIMAGEDATAWRITER_DEBUG 
+          CDBDebug("Element value == %s",element->value.c_str());
+          #endif
         }else {
           element->value="nodata";
+          #ifdef CIMAGEDATAWRITER_DEBUG 
+          CDBDebug("Element value == %s",element->value.c_str());
+          #endif
         }
-        #ifdef CIMAGEDATAWRITER_DEBUG 
-        CDBDebug("Element value == %s",element->value.c_str());
-        #endif
+       }
       }
-    }
 
       //reader.close();
       #ifdef CIMAGEDATAWRITER_DEBUG 
@@ -1282,27 +1279,24 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         double pixel1=convertValue(dataSource->dataObject[0]->cdfVariable->type,dataSource->dataObject[0]->cdfVariable->data,ptr);
         double pixel2=convertValue(dataSource->dataObject[1]->cdfVariable->type,dataSource->dataObject[1]->cdfVariable->data,ptr);
         if (gridRelative)  {
-  //        pixel1=6.0;
-  //        pixel2=6.0;
     //Add raster value
-    char szTemp1[1024];
-    floatToString(szTemp1,1023,pixel1); //Orig. val
-    char szTemp2[1024];
-    floatToString(szTemp2,1023,pixel2); //Orig. val
+          #ifdef CIMAGEDATAWRITER_DEBUG 
           CDBDebug("Let's do the Jacobian!!!");
+          #endif
           status = imageWarper.initreproj(dataSource,drawImage.Geo,&srvParam->cfg->Projection);
-          CDBDebug("doJacoIntoLatLon(%f,%f,%f, %f, %f, %f)\n", pixel1,pixel2, projCacheInfo.lonX,projCacheInfo.lonY,0.01,0.01);
+          #ifdef CIMAGEDATAWRITER_DEBUG 
+          CDBDebug("doJacoIntoLatLon(%f,%f,%f, %f, %f, %f)", pixel1,pixel2, projCacheInfo.lonX,projCacheInfo.lonY,0.01,0.01);
+          #endif
           doJacoIntoLatLon(pixel1, pixel2, projCacheInfo.lonX, projCacheInfo.lonY, 0.01, 0.01, &imageWarper);
           imageWarper.closereproj();
     
           char szTemp[1024];
           floatToString(szTemp, 1023, pixel1); //New val
-          getFeatureInfoResult->elements[0]->value=szTemp1;
+          getFeatureInfoResult->elements[getFeatureInfoResult->elements.size()-2]->value=szTemp;
           floatToString(szTemp, 1023, pixel2); //New val
-          getFeatureInfoResult->elements[1]->value=szTemp2;
+          getFeatureInfoResult->elements[getFeatureInfoResult->elements.size()-1]->value=szTemp;
         }
-        double windspeed=hypot(pixel1, pixel2);
-
+        
         GetFeatureInfoResult::Element *element2=new GetFeatureInfoResult::Element();
         CCDFDims * cdfDims = dataSources[d]->getCDFDims();
         CT::string value,name;
@@ -1310,35 +1304,35 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         for(size_t j=0;j<dataSources[d]->requiredDims.size();j++){
           value=cdfDims->getDimensionValue(j);
           name=cdfDims->getDimensionName(j);
-          if(name.equals("time")){
+          if(name.indexOf("time")==0){
             value=element2->time.c_str();
           }
           element2->cdfDims.addDimension(name.c_str(),value.c_str(),cdfDims->getDimensionIndex(j));
         }
         element2->dataSource= dataSource;
         getFeatureInfoResult->elements.push_back(element2);
-        double angle=atan2(pixel2, pixel1);
-        angle=angle*180/pi;
-        if (angle<0) angle=angle+360;
-        angle=270-angle;
+        double angle=270-atan2(pixel2, pixel1)*180/pi;
+        if (angle>360) angle-=360;
         if (angle<0) angle=angle+360;
         element2->long_name="wind direction";
         element2->var_name="wind direction";
         element2->standard_name="dir";
         element2->feature_name="wind direction";
-        element2->value.print("%03.0f",angle);
+        element2->value.print("%3.0f",angle);
         element2->units="degrees";
-        
-  //      element2->time="";
+        #ifdef CIMAGEDATAWRITER_DEBUG 
+        CDBDebug("pushed wind dir %f for step %d [%d]", angle, step, getFeatureInfoResult->elements.size());
+        #endif
         element2->time.copy(&dataSources[d]->timeSteps[dataSources[d]->getCurrentTimeStep()]->timeString);
         
+        double windspeed=hypot(pixel1, pixel2);
         GetFeatureInfoResult::Element *windspeedOrigElement=new GetFeatureInfoResult::Element();
         windspeedOrigElement->dataSource= dataSource;
         windspeedOrigElement->time.copy(&dataSources[d]->timeSteps[dataSources[d]->getCurrentTimeStep()]->timeString);
         for(size_t j=0;j<dataSources[d]->requiredDims.size();j++){
           value=cdfDims->getDimensionValue(j);
           name=cdfDims->getDimensionName(j);
-          if(name.equals("time")){
+          if(name.indexOf("time")==0){
             value=windspeedOrigElement->time.c_str();
           }
           windspeedOrigElement->cdfDims.addDimension(name.c_str(),value.c_str(),cdfDims->getDimensionIndex(j));
@@ -1348,47 +1342,46 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         windspeedOrigElement->var_name="wind speed";
         windspeedOrigElement->standard_name="speed1";
         windspeedOrigElement->feature_name="wind speed";
-        windspeedOrigElement->value.print("%03.0f",windspeed);
+        windspeedOrigElement->value.print("%3.1f",windspeed);
         windspeedOrigElement->units=dataSource->dataObject[0]->units;
-        
-  //      windspeedOrigElement->units=dataSource->dataObject[0]->cdfVariable->getAttribute("units")->toString();
-  //      windspeedOrigElement->time="";
         windspeedOrigElement->time.copy(&dataSources[d]->timeSteps[dataSources[d]->getCurrentTimeStep()]->timeString);
+        #ifdef CIMAGEDATAWRITER_DEBUG 
+        CDBDebug("pushed wind speed %f for step %d [%d]", windspeed, step, getFeatureInfoResult->elements.size());
+        #endif
 
         //Skip KTS calculation if input data is not u and v vectors in m/s.
         bool skipKTSCalc = true;
         try{
-  //        if(dataSource->dataObject[0]->cdfVariable->getAttribute("units")->toString().indexOf("m/s")>=0){
-    if(dataSource->dataObject[0]->units.indexOf("m/s")>=0){
-      skipKTSCalc =false;
-    }
+          if(dataSource->dataObject[0]->units.indexOf("m/s")>=0){
+            skipKTSCalc =false;
+          }
         }catch(int e){}
       
         if(!skipKTSCalc){
-    GetFeatureInfoResult::Element *element3=new GetFeatureInfoResult::Element();
-    element3->dataSource= dataSource;
-    element3->time.copy(&dataSources[d]->timeSteps[dataSources[d]->getCurrentTimeStep()]->timeString);
-    CCDFDims * cdfDims = dataSources[d]->getCDFDims();CT::string value,name;
-    for(size_t j=0;j<dataSources[d]->requiredDims.size();j++){
-      value=cdfDims->getDimensionValue(j);
-      name=cdfDims->getDimensionName(j);
-      if(name.equals("time")){
-     //   value=element3->time.c_str();
-      }
-      element3->cdfDims.addDimension(name.c_str(),value.c_str(),cdfDims->getDimensionIndex(j));
-    }
-    getFeatureInfoResult->elements.push_back(element3);
-    double windspeedKTS=windspeed*(3600./1852.);
-    element3->long_name="wind speed";
-    element3->var_name="wind speed";
-    element3->standard_name="speed2";
-    element3->feature_name="wind speed kts";
-    element3->value.print("%03.0f",windspeedKTS);
-    
-    
-    element3->units="kts";
-  //        element3->time="";
+          GetFeatureInfoResult::Element *element3=new GetFeatureInfoResult::Element();
+          element3->dataSource= dataSource;
           element3->time.copy(&dataSources[d]->timeSteps[dataSources[d]->getCurrentTimeStep()]->timeString);
+          CCDFDims * cdfDims = dataSources[d]->getCDFDims();CT::string value,name;
+          for(size_t j=0;j<dataSources[d]->requiredDims.size();j++){
+            value=cdfDims->getDimensionValue(j);
+            name=cdfDims->getDimensionName(j);
+            if(name.indexOf("time")==0){
+              value=windspeedOrigElement->time.c_str();
+            }
+            element3->cdfDims.addDimension(name.c_str(),value.c_str(),cdfDims->getDimensionIndex(j));
+          }
+          getFeatureInfoResult->elements.push_back(element3);
+          double windspeedKTS=windspeed*(3600./1852.);
+          element3->long_name="wind speed";
+          element3->var_name="wind speed";
+          element3->standard_name="speed2";
+          element3->feature_name="wind speed kts";
+          element3->value.print("%3.1f",windspeedKTS);
+          element3->units="kts";
+          element3->time.copy(&dataSources[d]->timeSteps[dataSources[d]->getCurrentTimeStep()]->timeString);
+          #ifdef CIMAGEDATAWRITER_DEBUG 
+          CDBDebug("pushed wind speed KTS %f for step %d [%d]\n", windspeedKTS, step, getFeatureInfoResult->elements.size());
+          #endif
         }
       }
     }
@@ -1398,6 +1391,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
   #endif
   return 0;
 }
+
 
 int CImageDataWriter::createAnimation(){
   printf("%s%c%c\n","Content-Type:image/gif",13,10);
@@ -1451,8 +1445,8 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   CImageWarperRenderInterface *imageWarperRenderer;
   RenderMethod renderMethod = currentStyleConfiguration->renderMethod;
   /**
-   * Use fast nearest neighbourrenderer
-   */
+  * Use fast nearest neighbourrenderer
+  */
   if(renderMethod&RM_NEAREST){
     imageWarperRenderer = new CImgWarpNearestNeighbour();
     imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
@@ -1460,8 +1454,8 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   }
   
   /**
-   * Use RGBA renderer
-   */
+  * Use RGBA renderer
+  */
     if(renderMethod&RM_RGBA){
     imageWarperRenderer = new CImgWarpNearestRGBA();
     imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
@@ -1469,18 +1463,18 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   }
   
   /**
-   * Use bilinear renderer
-   */
+  * Use bilinear renderer
+  */
   /*if(renderMethod==nearestcontour||
-     renderMethod==bilinear||
-     renderMethod==bilinearcontour||
-     renderMethod==contour||
-     renderMethod==shaded||
-     renderMethod==shadedcontour||
-     renderMethod==vector||renderMethod==vectorshaded||renderMethod==vectorcontour||renderMethod==vectorcontourshaded||
-     renderMethod==barb||renderMethod==barbshaded||renderMethod==barbcontour||renderMethod==barbcontourshaded||
-     renderMethod==thinvector||renderMethod==thinvectorshaded||renderMethod==thinvectorcontour||renderMethod==thinvectorcontourshaded||
-     renderMethod==thinbarb||renderMethod==thinbarbshaded||renderMethod==thinbarbcontour||renderMethod==thinbarbcontourshaded
+    renderMethod==bilinear||
+    renderMethod==bilinearcontour||
+    renderMethod==contour||
+    renderMethod==shaded||
+    renderMethod==shadedcontour||
+    renderMethod==vector||renderMethod==vectorshaded||renderMethod==vectorcontour||renderMethod==vectorcontourshaded||
+    renderMethod==barb||renderMethod==barbshaded||renderMethod==barbcontour||renderMethod==barbcontourshaded||
+    renderMethod==thinvector||renderMethod==thinvectorshaded||renderMethod==thinvectorcontour||renderMethod==thinvectorcontourshaded||
+    renderMethod==thinbarb||renderMethod==thinbarbshaded||renderMethod==thinbarbcontour||renderMethod==thinbarbcontourshaded
     )*/
   if(renderMethod&RM_CONTOUR||renderMethod&RM_BILINEAR||renderMethod&RM_SHADED||renderMethod&RM_VECTOR||renderMethod&RM_BARB||renderMethod&RM_THIN)  {
     if(dataSource->dataObject[0]->points.size()==0){
@@ -1586,8 +1580,8 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   }
   
   /**
-   * Use point renderer
-   */
+  * Use point renderer
+  */
   //if(renderMethod==barb||renderMethod==vector||renderMethod==point){
   if(renderMethod&RM_BARB||renderMethod&RM_VECTOR||renderMethod&RM_POINT||renderMethod==RM_NEAREST){
     if(dataSource->dataObject[0]->points.size()!=0){
@@ -1621,7 +1615,7 @@ int CImageDataWriter::calculateData(std::vector <CDataSource*>&dataSources){
   Keywords: "and","between","notbetween","lessthan","greaterthan","time","|"
   Example: between_10.0_and_20.0|time_1990-01-01T00:00:00Z
   Note: after "|" always a time is specified with time_
-   */
+  */
 
 //  int status;
 
@@ -1686,7 +1680,7 @@ int CImageDataWriter::calculateData(std::vector <CDataSource*>&dataSources){
           CT::string *conditionals = style.splitToArray("_");
           if(!conditionals[0].equals("default")&&conditionals->count!=dataSources.size()-2){
             CDBError("Incorrect number of conditional operators specified: %d  (expected %d)",
-                     conditionals->count,dataSources.size()-2);
+                    conditionals->count,dataSources.size()-2);
             hasFailed=true;
           }else{
             for(size_t i=0;i<conditionals->count;i++){
@@ -1827,7 +1821,7 @@ int CImageDataWriter::calculateData(std::vector <CDataSource*>&dataSources){
 }
 int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
 #ifdef CIMAGEDATAWRITER_DEBUG  
-   CDBDebug("addData");
+  CDBDebug("addData");
 #endif   
   int status = 0;
   
@@ -1874,9 +1868,9 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
       #endif
       if(j!=0){
         /*
-         * Reinitialize legend for other type of legends, if possible (in true color mode it is always the case
-         * For j==0, the legend is already initialized previously
-         */
+        * Reinitialize legend for other type of legends, if possible (in true color mode it is always the case
+        * For j==0, the legend is already initialized previously
+        */
         #ifdef CIMAGEDATAWRITER_DEBUG
         CDBDebug("REINITLEGEND");
         #endif
@@ -1988,7 +1982,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
       latLonBBOX.top=topLeft.y;
       latLonBBOX.bottom=topLeft.y;
       
-     
+    
       double numStepsX=(srvParam->Geo->dfBBOX[2]-srvParam->Geo->dfBBOX[0])/numTestSteps;
       double numStepsY=(srvParam->Geo->dfBBOX[3]-srvParam->Geo->dfBBOX[1])/numTestSteps;
       #ifdef CIMAGEDATAWRITER_DEBUG    
@@ -2363,7 +2357,7 @@ int CImageDataWriter::end(){
       StopWatch_Stop("Start creating image");
       #endif
       
-     
+    
       if(getFeatureInfoResultList.size()==0){
         CDBError("Query returned no results");
         return 1;
@@ -2386,7 +2380,7 @@ int CImageDataWriter::end(){
       float plotHeight=((height-plotOffsetY-34));
       float plotWidth=((width-plotOffsetX)*0.98);
       
-     
+    
       
       
       //Set font location
@@ -2423,8 +2417,7 @@ int CImageDataWriter::end(){
       
       
       size_t nrOfLayers = getFeatureInfoResultList.size();
-      size_t nrOfElements = getFeatureInfoResultList[0]->elements.size();
-       
+//      size_t nrOfElements = getFeatureInfoResultList[0]->elements.size();
       
       std::vector<PlotObject*> plotObjects;
       
@@ -2436,21 +2429,21 @@ int CImageDataWriter::end(){
         size_t nrOfElements = getFeatureInfoResultList[layerNr]->elements.size();
         
         for(size_t elNr=0;elNr<nrOfElements;elNr++){
-           GetFeatureInfoResult::Element * element = getFeatureInfoResultList[layerNr]->elements[elNr];
-           bool featureNameFound=false;
-           for(size_t j=0;j<features[layerNr].size();j++){
-             if(features[layerNr][j].equals(&element->feature_name)){featureNameFound=true;break;}
-           }
-           if(!featureNameFound){
-             features[layerNr].push_back(element->feature_name.c_str());
-             numDims[layerNr].push_back(element->cdfDims.dimensions.size());
-           }else{
-             for(size_t j=0;j<features[layerNr].size();j++){
-               CDBDebug("%d %d %s\tDims:%d",layerNr,j,features[layerNr][j].c_str(),numDims[layerNr][j]);
-             }
+          GetFeatureInfoResult::Element * element = getFeatureInfoResultList[layerNr]->elements[elNr];
+          bool featureNameFound=false;
+          for(size_t j=0;j<features[layerNr].size();j++){
+            if(features[layerNr][j].equals(&element->feature_name)){featureNameFound=true;break;}
+          }
+          if(!featureNameFound){
+            features[layerNr].push_back(element->feature_name.c_str());
+            numDims[layerNr].push_back(element->cdfDims.dimensions.size());
+          }else{
+            for(size_t j=0;j<features[layerNr].size();j++){
+              CDBDebug("%d %d %s\tDims:%d",layerNr,j,features[layerNr][j].c_str(),numDims[layerNr][j]);
+            }
 
-             break;
-           }
+            break;
+          }
         }
       }
       for(size_t layerNr=0;layerNr<nrOfLayers;layerNr++){
@@ -2480,7 +2473,7 @@ int CImageDataWriter::end(){
               plotObject->name.concat("/");
               plotObject->name.concat(features[layerNr][featureNr].c_str());
               for(size_t j=1;j<element->cdfDims.dimensions.size();j++){
-                 plotObject->name.concat(" @");
+                plotObject->name.concat(" @");
                 plotObject->name.concat(element->cdfDims.dimensions[j]->value.c_str());
               }
 
@@ -2516,7 +2509,7 @@ int CImageDataWriter::end(){
       
 
       
-       
+      
       CTime *ctime = new CTime();
       ctime->init("seconds since 1950");
       
@@ -2538,7 +2531,7 @@ int CImageDataWriter::end(){
         }
         
         try{
-           maxDate=ctime->ISOStringToDate(plotObject->elements[plotObject->length-1]->time.c_str()).offset;
+          maxDate=ctime->ISOStringToDate(plotObject->elements[plotObject->length-1]->time.c_str()).offset;
         }catch(int e){
           CDBError("Time stopTimeValue error %s",plotObject->elements[plotObject->length-1]->time.c_str());
         }
@@ -2605,7 +2598,7 @@ int CImageDataWriter::end(){
       CDBDebug("Dates: %s/%s",startDateString.c_str(),stopDateString.c_str());
 
       
-     
+    
       float classes=6;
       int tickRound=0;
 
@@ -2627,7 +2620,7 @@ int CImageDataWriter::end(){
         v-=dataSource->legendOffset;
         v/=dataSource->legendScale;
         if(dataSource->legendLog!=0){v=pow(dataSource->legendLog,v);}
-     
+    
         if(j!=0)plotCanvas.line(plotOffsetX,(int)c+plotOffsetY,plotOffsetX+plotWidth,(int)c+plotOffsetY,0.5,CColor(0,0,0,128));
         if(tickRound==0){floatToString(szTemp,255,v);}else{
           floatToString(szTemp,255,tickRound,v);
@@ -2661,12 +2654,12 @@ int CImageDataWriter::end(){
       }
       double timeWidth=(stopTimeValue-startTimeValue);
         for(size_t i=0;i<plotObject->length-1;i++){
-           CTime::Date timePos1=ctime->ISOStringToDate(plotObject->elements[i]->time.c_str());
-           CTime::Date timePos2=ctime->ISOStringToDate(plotObject->elements[i+1]->time.c_str());
-           double x1=((timePos1.offset-startTimeValue)/timeWidth)*plotWidth;
-           double x2=((timePos2.offset-startTimeValue)/timeWidth)*plotWidth;
+          CTime::Date timePos1=ctime->ISOStringToDate(plotObject->elements[i]->time.c_str());
+          CTime::Date timePos2=ctime->ISOStringToDate(plotObject->elements[i+1]->time.c_str());
+          double x1=((timePos1.offset-startTimeValue)/timeWidth)*plotWidth;
+          double x2=((timePos2.offset-startTimeValue)/timeWidth)*plotWidth;
         
-           if(plotNr==0){
+          if(plotNr==0){
           if(timePos1.hour==0&&timePos1.minute==0&&timePos1.second==0){
             plotCanvas.line(x1+plotOffsetX,plotOffsetY,x1+plotOffsetX,plotOffsetY+plotHeight,1,CColor(0,0,0,128));
             char szTemp[256];
@@ -2675,7 +2668,7 @@ int CImageDataWriter::end(){
           }else{
             plotCanvas.line(x1+plotOffsetX,plotOffsetY,x1+plotOffsetX,plotOffsetY+plotHeight,0.5,CColor(128,128,128,128));
           }
-           }
+          }
           
             float v1=plotObject->values[i];
             float v2=plotObject->values[i+1];
@@ -2711,8 +2704,8 @@ int CImageDataWriter::end(){
         }
       }
   /*
-     
-   
+    
+  
       size_t timeStepsToLoop = nrOfTimeSteps;
       //if(timeStepsToLoop>1)
         timeStepsToLoop--;
@@ -2750,7 +2743,7 @@ int CImageDataWriter::end(){
         //
         
         
-       
+      
         
         for(size_t j=0;j<timeStepsToLoop+1;j++){
           
@@ -2813,7 +2806,7 @@ int CImageDataWriter::end(){
               v2l*=dataSource->legendScale;
               v2l+=dataSource->legendOffset;
               v2l/=240.0;
-         
+        
               if (!noData) {
                 int y1=int((1-v1l)*plotHeight);
                 int y2=int((1-v2l)*plotHeight);
@@ -2830,7 +2823,7 @@ int CImageDataWriter::end(){
             }
           }
           //CDBDebug("%f == %d",v1,y1);
-         // plotCanvas.drawText(5+j*10,y1,fontLocation,8,3.1415/2.0,e1->time.c_str(),CColor(255,0,0,255),CColor(255,255,255,0));
+        // plotCanvas.drawText(5+j*10,y1,fontLocation,8,3.1415/2.0,e1->time.c_str(),CColor(255,0,0,255),CColor(255,255,255,0));
         }
       }*/
       delete ctime;
@@ -3020,10 +3013,10 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
   if(renderMethod&RM_RGBA){
     legendType=cascaded;
   }
- 
- if(legendType == cascaded){
-     legendImage->crop(1,1);
- }
+
+if(legendType == cascaded){
+    legendImage->crop(1,1);
+}
   
   
   //Create a legend based on status flags.
@@ -3032,7 +3025,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
     //cbW=LEGEND_WIDTH/3;cbW/=3;cbW*=3;cbW+=3;
     float cbW = 20;//legendWidth/8;
     float cbH = legendHeight-13-13-30;
-   
+  
     int blockHeight = 12;
     int blockDistance=18;
   
@@ -3074,7 +3067,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
       }
     }
     legendImage->rectangle(pLeft,7+dH+pTop,(int)cbW+3+pLeft,(int)cbH+7+dH+pTop,248);
-   
+  
 
     float classes=6;
     int tickRound=0;
@@ -3188,8 +3181,8 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
     
     
     /**
-     * Defined blocks based on defined interval
-     */
+    * Defined blocks based on defined interval
+    */
     
     if(definedLegendOnShadeClasses){
       char szTemp[1024];
@@ -3284,7 +3277,7 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
   
 
   reader.close();
- 
+
   
 
 
