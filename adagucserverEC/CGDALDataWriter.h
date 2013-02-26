@@ -1,3 +1,5 @@
+#include "Definitions.h"
+#ifdef ADAGUC_USE_GDAL
 #ifndef CGDALDataWriter_H
 #define CGDALDataWriter_H
 #include "CServerParams.h"
@@ -19,7 +21,7 @@
 #include "CImageWarper.h"
 
 #include "CXMLGen.h"
-#include "Definitions.h"
+
 #include "CPGSQLDB.h"
 #include "CDataReader.h"
 #include "CADAGUC_time.h"
@@ -76,4 +78,5 @@ class CGDALDataWriter: public CBaseDataWriterInterface{
     int addData(std::vector <CDataSource*> &dataSources);
     int end();
 };
+#endif
 #endif
