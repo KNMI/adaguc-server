@@ -105,7 +105,8 @@ int CPGSQLDB::query(const char *pszQuery){
   clearResult();
   return 0;
 }
-CT::string* CPGSQLDB::query_select(const char *pszQuery,int dColumn){
+CT::string* CPGSQLDB::query_select_deprecated(const char *pszQuery,int dColumn){
+//  CDBDebug("query_select %d %s",dColumn,pszQuery);
   LastErrorMsg[0]='\0';
   int i;
   if(dConnected == 0){
@@ -132,15 +133,19 @@ CT::string* CPGSQLDB::query_select(const char *pszQuery,int dColumn){
   clearResult();
   return strings;
 }
-CT::string* CPGSQLDB::query_select(const char *pszQuery){
-  return query_select(pszQuery,0);
+CT::string* CPGSQLDB::query_select_deprecated(const char *pszQuery){
+  return query_select_deprecated(pszQuery,0);
 }
 
 
-CDB::Store* CPGSQLDB::queryToStore(const char *pszQuery){
+CDB::Store* CPGSQLDB::queryToStore(const char *pszQuery,bool throwException){
+ // CDBDebug("query_select %s",pszQuery);
   LastErrorMsg[0]='\0';
 
   if(dConnected == 0){
+    if(throwException){
+      throw CDB_CONNECTION_ERROR;
+    }
     CDBError("queryToStore: Not connected to DB");
     return NULL;
   }
@@ -152,12 +157,18 @@ CDB::Store* CPGSQLDB::queryToStore(const char *pszQuery){
     //snprintf(szTemp,CPGSQLDB_MAX_STR_LEN,"query_select: %s failed",pszQuery);
     //CDBError(szTemp);
     clearResult();
+    if(throwException){
+      throw CDB_QUERYFAILED;
+    }
     return NULL;
   }
   size_t numCols=PQnfields(result);
   size_t numRows=PQntuples(result);
   if(numCols==0){
     clearResult();
+    if(throwException){
+      throw CDB_NODATA;
+    }
     return NULL;
   }
   ColumnModel *colModel = new ColumnModel(PQnfields(result));

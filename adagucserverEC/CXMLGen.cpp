@@ -86,25 +86,28 @@ CDBDebug("getFileNameForLayer");
       #endif      
       
       bool databaseError = false;
-      CT::string *values = DB.query_select(query.c_str(),0);
+      
+      
+      
+      CDB::Store *values = DB.queryToStore(query.c_str());
      
       if(values==NULL){
         CDBError("No files found for %s",myWMSLayer->dataSource->layerName.c_str());
         databaseError=true;
       }
       if(databaseError == false){
-        if(values->count>0){
+        if(values->getSize()>0){
           #ifdef CXMLGEN_DEBUG            
-          CDBDebug("Query '%s' succeeded: Filename = %s",query.c_str(),values[0].c_str());
+          CDBDebug("Query '%s' succeeded: Filename = %s",query.c_str(),values->getRecord(0)->get(0)->c_str());
           #endif        
-          myWMSLayer->fileName.copy(&values[0]);
+          myWMSLayer->fileName.copy(values->getRecord(0)->get(0));
         }else{
           //The file is not in the database, probably an error during the database scan has been detected earlier.
           //Ignore the file for now too
           CDBError("Query '%s' not succeeded",query.c_str(),myWMSLayer->layer->FilePath[0]->value.c_str());
           databaseError=true;
         }
-        delete[] values;
+        delete values;
       }
       DB.close();
       #ifdef CXMLGEN_DEBUG                  
@@ -482,9 +485,9 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
 #ifdef CXMLGEN_DEBUG
 CDBDebug("Querying %s",query.c_str());
 #endif               
-        CT::string *values = DB.query_select(query.c_str(),0);
+        CDB::Store *values = DB.queryToStore(query.c_str());
         if(values == NULL){CDBError("Query failed \"%s\"",query.c_str());DB.close();return 1;}
-        if(values->count>0){
+        if(values->getSize()>0){
           //if(srvParam->requestType==REQUEST_WMS_GETCAPABILITIES)
           {
             
@@ -506,28 +509,28 @@ CDBDebug("Querying %s",query.c_str());
             
             dim->hasMultipleValues=1;
             if(isTimeDim==true){
-              for(size_t j=0;j<size_t(values->count);j++){
+              for(size_t j=0;j<values->getSize();j++){
                 //2011-01-01T22:00:01Z
                 //01234567890123456789
-                values[j].setChar(10,'T');
-                values[j].concat("Z");
+                values->getRecord(j)->get(0)->setChar(10,'T');
+                values->getRecord(j)->get(0)->concat("Z");
               }
             }
-            dim->defaultValue.copy(values[0].c_str());
+            dim->defaultValue.copy(values->getRecord(0)->get(0));
             
             const char *pszDefaultV=myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.defaultV.c_str();
             if(pszDefaultV!=NULL){
               dim->defaultValue.copy(pszDefaultV);
             }
           
-            dim->values.copy(&values[0]);
-            for(size_t j=1;j<size_t(values->count);j++){
-              dim->values.printconcat(",%s",values[j].c_str());
+            dim->values.copy(values->getRecord(0)->get(0));
+            for(size_t j=1;j<values->getSize();j++){
+              dim->values.printconcat(",%s",values->getRecord(j)->get(0)->c_str());
             }
             
           }
         }
-        delete[] values;
+        delete values;
       }
 
       //This is an interval defined as start/stop/resolution
@@ -535,16 +538,21 @@ CDBDebug("Querying %s",query.c_str());
         // Retrieve the max dimension value
         CT::string query;
         query.print("select max(%s) from %s",pszDimName,tableName.c_str());
-        CT::string *values = DB.query_select(query.c_str(),0);
+        CDB::Store *values = DB.queryToStore(query.c_str());
         if(values == NULL){CDBError("Query failed");DB.close();return 1;}
-        if(values->count>0){snprintf(szMaxTime,31,"%s",values[0].c_str());szMaxTime[10]='T';}
-        delete[] values;
+        if(values->getSize()>0){snprintf(szMaxTime,31,"%s",values->getRecord(0)->get(0)->c_str());szMaxTime[10]='T';}
+        delete values;
               // Retrieve the minimum dimension value
         query.print("select min(%s) from %s",pszDimName,tableName.c_str());
-        values = DB.query_select(query.c_str(),0);
+        values = DB.queryToStore(query.c_str());
         if(values == NULL){CDBError("Query failed");DB.close();return 1;}
-        if(values->count>0){snprintf(szMinTime,31,"%s",values[0].c_str());szMinTime[10]='T';}
-        delete[] values;
+        if(values->getSize()>0){snprintf(szMinTime,31,"%s",values->getRecord(0)->get(0)->c_str());szMinTime[10]='T';}
+        delete values;
+        
+        
+        
+        
+        
               // Retrieve all values for time position
         //    if(srvParam->serviceType==SERVICE_WCS){
           

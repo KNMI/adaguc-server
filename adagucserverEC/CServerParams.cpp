@@ -129,23 +129,25 @@ int CServerParams::lookupTableName(CT::string *tableName,const char *path,const 
   //Check wether a table exists with this path and filter combination.
   bool lookupTableIsAvailable=false;
   mvRecordQuery.print("SELECT * FROM %s where path=E'%s' and filter=E'%s'",lookupTableName.c_str(),pathString.c_str(),filterString.c_str());
-  CT::string *rec = DB.query_select(mvRecordQuery.c_str(),2); if(rec==NULL){CDBError("Unable to select records: \"%s\"",mvRecordQuery.c_str());DB.close();return 1;  }
-  if(rec->count==1){
-    tableName->copy(&rec[0]);
+  CDB::Store *rec = DB.queryToStore(mvRecordQuery.c_str()); 
+  if(rec==NULL){CDBError("Unable to select records: \"%s\"",mvRecordQuery.c_str());DB.close();return 1;  }
+  if(rec->getSize()==1){
+    tableName->copy(rec->getRecord(0)->get(2));
     lookupTableIsAvailable=true;
   }
-  if(rec->count>1){
+  if(rec->getSize()>1){
     CDBError("Path filter combination has more than 1 lookuptable");
     return 1;
   }
-  delete[] rec;
+  delete rec;
   
   //Add a new lookuptable with an unique id.
   if(lookupTableIsAvailable==false){
     mvRecordQuery.print("SELECT COUNT(*) FROM %s",lookupTableName.c_str());
-    rec = DB.query_select(mvRecordQuery.c_str(),0); if(rec==NULL){CDBError("Unable to count records: \"%s\"",mvRecordQuery.c_str());DB.close();return 1;  }
-    int numRecords=rec[0].toInt();
-    delete[] rec;
+    rec = DB.queryToStore(mvRecordQuery.c_str()); 
+    if(rec==NULL){CDBError("Unable to count records: \"%s\"",mvRecordQuery.c_str());DB.close();return 1;  }
+    int numRecords=rec->getRecord(0)->get(0)->toInt();
+    delete rec;
     tableName->print("ID_%d",numRecords);
     mvRecordQuery.print("INSERT INTO %s values (E'%s',E'%s',E'%s')",lookupTableName.c_str(),pathString.c_str(),filterString.c_str(),tableName->c_str());
     status = DB.query(mvRecordQuery.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",mvRecordQuery.c_str());DB.close();return 1;  }

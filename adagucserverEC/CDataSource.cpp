@@ -312,7 +312,7 @@ int  CDataSource::checkDimTables(CPGSQLDB *dataBaseConnection){
   
   return 0;
 }
-
+/*
 int CDataSource::autoCompleteDimensions(CPGSQLDB *dataBaseConnection){
   #ifdef CDATASOURCE_DEBUG
   CDBDebug("[autoCompleteDimensions]");
@@ -352,4 +352,4 @@ int CDataSource::autoCompleteDimensions(CPGSQLDB *dataBaseConnection){
   #endif
   return 0;
 }
-
+*/

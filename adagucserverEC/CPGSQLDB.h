@@ -15,6 +15,7 @@
 #define CDB_CONNECTION_ERROR            3
 #define CDB_TABLE_CREATION_ERROR        4
 #define CDB_NODATA                      5
+#define CDB_QUERYFAILED                 6
 class CDB{
 public:
   const char *getErrorMessage(int e){
@@ -68,6 +69,9 @@ public:
         return columnModel;
       }
 
+      CT::string *get(int index){
+        return get((size_t)index);
+      }  
       CT::string *get(size_t index){
         if(index>=size)throw(CDB_INDEX_OUT_OF_BOUNDS);
         return &(values[index]);
@@ -137,10 +141,24 @@ class CPGSQLDB:public CDB{
     int connect(const char * pszOptions);
     int checkTable(const char * pszTableName,const char *pszColumns);
     int query(const char *pszQuery);
-    CT::string* query_select(const char *pszQuery);
-    CT::string* query_select(const char *pszQuery,int dColumn);
+    CT::string* query_select_deprecated(const char *pszQuery);
+    CT::string* query_select_deprecated(const char *pszQuery,int dColumn);
+    /**
+      * Queries to a store
+      * @param pszQuery The query to execute
+      * @param throwException Throw an (int) exception with a CDB_ERROR code if something fails
+      * @return CDB::Store containing the results. Returns NULL or throws exceptions when fails.
+      */
+    Store* queryToStore(const char *pszQuery,bool throwException);
     
-    Store* queryToStore(const char *pszQuery);
+    /**
+      * Queries to a store
+      * @param pszQuery The query to execute
+      * @return CDB::Store containing the results. Returns NULL when fails.
+      */
+    Store* queryToStore(const char *pszQuery){
+      return queryToStore(pszQuery,false);
+    }
 };
 #endif
 

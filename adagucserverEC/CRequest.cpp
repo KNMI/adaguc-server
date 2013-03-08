@@ -8,7 +8,27 @@ int CRequest::runRequest(){
   return status;
 }
 
-
+void writeLogFile3(const char * msg){
+  char * logfile=getenv("ADAGUC_LOGFILE");
+  if(logfile!=NULL){
+    FILE * pFile = NULL;
+    pFile = fopen (logfile , "a" );
+    if(pFile != NULL){
+      fputs  (msg, pFile );
+      if(strncmp(msg,"[D:",3)==0||strncmp(msg,"[W:",3)==0||strncmp(msg,"[E:",3)==0){
+        time_t myTime = time(NULL);
+        tm *myUsableTime = localtime(&myTime);
+        char szTemp[128];
+        snprintf(szTemp,127,"%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ ",
+                 myUsableTime->tm_year+1900,myUsableTime->tm_mon+1,myUsableTime->tm_mday,
+                 myUsableTime->tm_hour,myUsableTime->tm_min,myUsableTime->tm_sec
+                );
+        fputs  (szTemp, pFile );
+      }
+      fclose (pFile);
+    }//else CDBError("Unable to write logfile %s",logfile);
+  }
+}
 void CRequest::addXMLLayerToConfig(CServerParams *srvParam,std::vector<CT::string>*variableNames, const char *group,const char *location){
   CServerConfig::XMLE_Layer *xmleLayer=new CServerConfig::XMLE_Layer();
   CServerConfig::XMLE_FilePath* xmleFilePath = new CServerConfig::XMLE_FilePath();
@@ -504,6 +524,266 @@ bool CRequest::checkTimeFormat(CT::string& timeToCheck){
   return isValidTime;*/
 }
 
+
+int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *srvParam){
+  int status = 0;
+  try{
+    CPGSQLDB DB;
+    CT::string query;
+  
+    // Connect do DB
+    status = DB.connect(srvParam->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0){CDBError("Unable to connect to DB");return 1;}
+    
+    /*
+      * Check if all tables are available, if not update the db
+      */
+    if(srvParam->isAutoResourceEnabled()){
+      status = dataSource->CDataSource::checkDimTables(&DB);
+      if(status != 0){
+        CDBError("checkAndUpdateDimTables failed");
+        return status;
+      }
+    }
+    
+    /*
+      * Get the number of required dims from the given dims
+      * Check if all dimensions are given
+      */
+    #ifdef CREQUEST_DEBUG
+    CDBDebug("Get DIMS from query string");
+    #endif
+    for(size_t k=0;k<srvParam->requestDims.size();k++)srvParam->requestDims[k]->name.toLowerCaseSelf();
+    
+    for(size_t i=0;i<dataSource->cfgLayer->Dimension.size();i++){
+      CT::string dimName(dataSource->cfgLayer->Dimension[i]->value.c_str());
+      dimName.toLowerCaseSelf();
+      #ifdef CREQUEST_DEBUG
+      CDBDebug("dimName %s",dimName.c_str());
+      #endif
+      //Check if this dim is not already added
+      bool alreadyAdded=false;
+      for(size_t l=0;l<dataSource->requiredDims.size();l++){
+        if(dataSource->requiredDims[l]->name.equals(&dimName)){alreadyAdded=true;break;}
+      }
+      
+      #ifdef CREQUEST_DEBUG
+      CDBDebug("alreadyAdded = %d",alreadyAdded);
+      #endif
+      if(alreadyAdded == false){
+        for(size_t k=0;k<srvParam->requestDims.size();k++){
+          if(srvParam->requestDims[k]->name.equals(&dimName)){
+            #ifdef CREQUEST_DEBUG
+            CDBDebug("DIM COMPARE: %s==%s",srvParam->requestDims[k]->name.c_str(),dimName.c_str());
+            #endif
+            
+            //This dimension has been specified in the request, so the dimension has been found:
+            COGCDims *ogcDim = new COGCDims();
+            dataSource->requiredDims.push_back(ogcDim);
+            ogcDim->name.copy(&dimName);
+            ogcDim->value.copy(&srvParam->requestDims[k]->value);
+            ogcDim->netCDFDimName.copy(dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
+
+            // If we have value 'current', give the dim a special status
+            if(ogcDim->value.equals("current")){
+              CT::string tableName(dataSource->cfgLayer->DataBaseTable[0]->value.c_str());
+              CServerParams::makeCorrectTableName(&tableName,&ogcDim->netCDFDimName);
+              
+              query.print("select max(%s) from %s",ogcDim->netCDFDimName.c_str(),tableName.c_str());
+              CDB::Store *maxStore = DB.queryToStore(query.c_str());
+              if(maxStore == NULL){CDBError("query failed");status = DB.close(); return 1;}
+              ogcDim->value.copy(maxStore->getRecord(0)->get(0));
+              delete maxStore;
+            }
+          }
+        }
+      }
+    }
+    #ifdef CREQUEST_DEBUG
+    CDBDebug("Get DIMS from query string ready");
+    #endif
+    
+    /* Fill in the undefined dims */
+    
+    for(size_t i=0;i<dataSource->cfgLayer->Dimension.size();i++){
+      CT::string dimName(dataSource->cfgLayer->Dimension[i]->value.c_str());
+      dimName.toLowerCaseSelf();
+      bool alreadyAdded=false;
+      for(size_t k=0;k<dataSource->requiredDims.size();k++){
+        if(dataSource->requiredDims[k]->name.equals(&dimName)){alreadyAdded=true;break;}
+      }
+      if(alreadyAdded==false){
+        CT::string netCDFDimName(dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
+        CT::string tableName(dataSource->cfgLayer->DataBaseTable[0]->value.c_str());
+        CServerParams::makeCorrectTableName(&tableName,&netCDFDimName);
+        //Add the undefined dims to the srvParams as additional dims
+        COGCDims *ogcDim = new COGCDims();
+        dataSource->requiredDims.push_back(ogcDim);
+        ogcDim->name.copy(&dimName);
+        ogcDim->netCDFDimName.copy(dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
+        //Try to find the max value for this dim name from the database
+        CT::string query;
+        query.print("select max(%s) from %s",
+                    dataSource->cfgLayer->Dimension[i]->attr.name.c_str(),
+                    tableName.c_str());
+        //Execute the query
+        CDB::Store *maxStore = DB.queryToStore(query.c_str());
+        if(maxStore == NULL){CDBError("query failed");status = DB.close(); return 1;}
+        ogcDim->value.copy(maxStore->getRecord(0)->get(0));
+        delete maxStore;
+      }
+    }        
+  
+    CT::string queryOrderedDESC;
+    queryOrderedDESC.print("select a0.path");
+    for(size_t i=0;i<dataSource->requiredDims.size();i++){
+      queryOrderedDESC.printconcat(",%s,dim%s",dataSource->requiredDims[i]->netCDFDimName.c_str(),dataSource->requiredDims[i]->netCDFDimName.c_str());
+      
+    }
+    
+    queryOrderedDESC.concat(" from ");
+    bool timeValidationError = false;
+    
+    //Compose the query
+    for(size_t i=0;i<dataSource->requiredDims.size();i++){
+      CT::string netCDFDimName(&dataSource->requiredDims[i]->netCDFDimName);
+      CT::string tableName(dataSource->cfgLayer->DataBaseTable[0]->value.c_str());
+      CServerParams::makeCorrectTableName(&tableName,&netCDFDimName);
+      CT::string subQuery;
+      subQuery.print("(select path,dim%s,%s from %s where ",netCDFDimName.c_str(),
+                  netCDFDimName.c_str(),
+                  tableName.c_str());
+      CT::string queryParams(&dataSource->requiredDims[i]->value);
+      CT::string *cDims =queryParams.splitToArray(",");// Split up by commas (and put into cDims)
+      for(size_t k=0;k<cDims->count;k++){
+        CT::string *sDims =cDims[k].splitToArray("/");// Split up by slashes (and put into sDims)
+        if(sDims->count>0&&k>0)subQuery.concat("or ");
+        for(size_t  l=0;l<sDims->count&&l<2;l++){
+          if(sDims[l].length()>0){
+            //dataSource->requiredDims[i]->allValues.push_back(sDims[l].c_str());
+            //CDBDebug("requiredDims %d %s",i,sDims[l].c_str());
+            if(l>0)subQuery.concat("and ");
+            if(sDims->count==1){
+              if(!checkTimeFormat(sDims[l]))timeValidationError=true;
+              subQuery.printconcat("%s = '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
+            }
+            
+            //TODO Currently only start/stop is supported, start/stop/resolution is not supported yet.
+            if(sDims->count>=2){
+              if(l==0){
+                if(!checkTimeFormat(sDims[l]))timeValidationError=true;
+                subQuery.printconcat("%s >= '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
+              }
+              if(l==1){
+                if(!checkTimeFormat(sDims[l]))timeValidationError=true;
+                subQuery.printconcat("%s <= '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
+              }
+            }
+          }
+        }
+        delete[] sDims;
+      }
+      delete[] cDims;
+      if(i==0){
+        subQuery.printconcat("ORDER BY %s DESC limit 24*6)a%d ",netCDFDimName.c_str(),i);
+      }else{
+        subQuery.printconcat("ORDER BY %s DESC)a%d ",netCDFDimName.c_str(),i);
+      }
+      //subQuery.printconcat("ORDER BY %s DESC)a%d ",netCDFDimName.c_str(),i);
+      if(i<dataSource->requiredDims.size()-1)subQuery.concat(",");
+      queryOrderedDESC.concat(&subQuery);
+    }
+    
+    //Join by path
+    if(dataSource->requiredDims.size()>1){
+      queryOrderedDESC.concat(" where a0.path=a1.path");
+      for(size_t i=2;i<dataSource->requiredDims.size();i++){
+        queryOrderedDESC.printconcat(" and a0.path=a%d.path",i);
+      }
+    }
+    
+    //writeLogFile3(queryOrderedDESC.c_str());
+    //writeLogFile3("\n");
+    //queryOrderedDESC.concat(" limit 40");
+  
+    if(timeValidationError==true){
+      if((checkDataRestriction()&SHOW_QUERYINFO)==false)queryOrderedDESC.copy("hidden");
+      CDBError("queryOrderedDESC fails regular expression: '%s'",queryOrderedDESC.c_str());
+      status = DB.close();
+      return 1;
+    }
+    
+    query.print("select * from (%s)T order by ",queryOrderedDESC.c_str());
+    query.concat(&dataSource->requiredDims[0]->netCDFDimName);
+    for(size_t i=1;i<dataSource->requiredDims.size();i++){
+      query.printconcat(",%s",dataSource->requiredDims[i]->netCDFDimName.c_str());
+    }
+    
+    //Execute the query
+    
+      //writeLogFile3(query.c_str());
+      //writeLogFile3("\n");
+    //values_path = DB.query_select(query.c_str(),0);
+    
+    CDB::Store *store = NULL;
+    try{
+      store = DB.queryToStore(query.c_str(),true);
+    }catch(int e){
+      CDBDebug("Query failed with code %d",e);
+      DB.close();
+      return 1;
+    }
+    
+    if(store == NULL){
+      if((checkDataRestriction()&SHOW_QUERYINFO)==false)query.copy("hidden");
+      CDBError("No results for query: '%s'",query.c_str());
+      DB.close();
+      return 2;
+    }
+    if(store->getSize() == 0){
+      if((checkDataRestriction()&SHOW_QUERYINFO)==false)query.copy("hidden");
+      CDBError("No results for query: '%s'",query.c_str());
+      delete store;
+      DB.close();
+      return 2;
+    }
+          
+    for(size_t k=0;k<store->getSize();k++){
+      CDB::Record *record = store->getRecord(k);
+      CDataSource::TimeStep * timeStep = new CDataSource::TimeStep();
+      dataSource->timeSteps.push_back(timeStep);
+      //timeStep->fileName.copy(values_path[k].c_str());
+      timeStep->fileName.copy(record->get(0)->c_str());
+      //CDBDebug("%s",timeStep->fileName.c_str());
+      //timeStep->timeString.print("%sZ",date_time[k].c_str());
+      timeStep->timeString.print("%sZ",record->get(1)->c_str());
+      timeStep->timeString.setChar(10,'T');
+      
+      
+      //For each timesteps a new set of dimensions is added with corresponding dim array indices.
+      for(size_t i=0;i<dataSource->requiredDims.size();i++){
+        timeStep->dims.addDimension(dataSource->requiredDims[i]->netCDFDimName.c_str(),record->get(1+i*2)->c_str(),atoi(record->get(2+i*2)->c_str()));
+        
+        //CDBDebug("%s %s",dataSource->requiredDims[i]->netCDFDimName.c_str(),dataSource->requiredDims[i]->value.c_str());
+        //CDBDebug("%s = %s",record->get(1+i*2)->c_str(),record->get(2+i*2)->c_str());
+        dataSource->requiredDims[i]->addValue(record->get(1+i*2)->c_str());
+        //dataSource->requiredDims[i]->allValues.push_back(sDims[l].c_str());
+      }
+    }
+    
+    
+    for(size_t i=0;i<dataSource->requiredDims.size();i++){
+      CDBDebug("%d There are %d values for dimension %s",i,dataSource->requiredDims[i]->uniqueValues.size(),dataSource->requiredDims[i]->netCDFDimName.c_str());  
+    }
+
+    status = DB.close();  if(status!=0)return 1;
+    delete store;
+  }catch(int i){
+    CDBError("%d",i);
+    return 2;
+  }
+  return 0;
+}
+
 int CRequest::process_all_layers(){
   CT::string pathFileName;
   
@@ -625,265 +905,13 @@ int CRequest::process_all_layers(){
         
       }
       if(dataSources[j]->cfgLayer->Dimension.size()!=0){
-        CPGSQLDB DB;
-        CT::string query;
-        CT::string *values_path=NULL;
-        CT::string *values_dim=NULL;
-        CT::string *date_time=NULL;
-        //char szPartialQuery[MAX_STR_LEN+1];
-      
-        // Connect do DB
-        status = DB.connect(srvParam->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0){CDBError("Unable to connect to DB");return 1;}
-        
-        /*
-         * Check if all tables are available, if not update the db
-         */
-        if(srvParam->isAutoResourceEnabled()){
-          status = dataSources[j]->CDataSource::checkDimTables(&DB);
-          if(status != 0){
-            CDBError("checkAndUpdateDimTables failed");
-            return status;
-          }
-        }
-
-        
-        
-        /*
-         * Get the number of required dims from the given dims
-         * Check if all dimensions are given
-         */
-        #ifdef CREQUEST_DEBUG
-        CDBDebug("Get DIMS from query string");
-        #endif
-        for(size_t k=0;k<srvParam->requestDims.size();k++)srvParam->requestDims[k]->name.toLowerCaseSelf();
-        //int dimsfound[NC_MAX_DIMS];
-        for(size_t i=0;i<dataSources[j]->cfgLayer->Dimension.size();i++){
-          CT::string dimName(dataSources[j]->cfgLayer->Dimension[i]->value.c_str());
-          dimName.toLowerCaseSelf();
-          #ifdef CREQUEST_DEBUG
-          CDBDebug("dimName %s",dimName.c_str());
-          #endif
-          
-          //dimsfound[i]=0;
-          //Check if this dim is not already added
-          bool alreadyAdded=false;
-          for(size_t l=0;l<dataSources[j]->requiredDims.size();l++){
-            if(dataSources[j]->requiredDims[l]->name.equals(&dimName)){alreadyAdded=true;break;}
-          }
-          
-          #ifdef CREQUEST_DEBUG
-          CDBDebug("alreadyAdded = %d",alreadyAdded);
-          #endif
-          if(alreadyAdded == false){
-            for(size_t k=0;k<srvParam->requestDims.size();k++){
-              if(srvParam->requestDims[k]->name.equals(&dimName)){
-                #ifdef CREQUEST_DEBUG
-                CDBDebug("DIM COMPARE: %s==%s",srvParam->requestDims[k]->name.c_str(),dimName.c_str());
-                #endif
-                
-                //This dimension has been specified in the request, so the dimension has been found:
-                //dimsfound[i]=1;
-                COGCDims *ogcDim = new COGCDims();
-                dataSources[j]->requiredDims.push_back(ogcDim);
-                ogcDim->name.copy(&dimName);
-                ogcDim->value.copy(&srvParam->requestDims[k]->value);
-                ogcDim->netCDFDimName.copy(dataSources[j]->cfgLayer->Dimension[i]->attr.name.c_str());
-                //If we have a special styled layer, the time does not come from TIME, but from style:
-                if(dataSources[0]->dLayerType==CConfigReaderLayerTypeStyled){
-                  CT::string *splittedStyles=srvParam->Styles.splitToArray(",");
-                  if(splittedStyles->count!=dataSources.size()){
-                    status = DB.close();
-                    CDBError("Number of provided layers (%d) does not match the number of provided styles (%d)",dataSources.size(),splittedStyles->count);
-                    //for(size_t j=0;j<requiredDims.size();j++)delete requiredDims[j];
-                    return 1;
-                  }
-                  if(j==0){
-                    //The first boolean layer needs to be loaded with an unspecified time 
-                    //We will use 'current' to make sure something is loaded
-                    ogcDim->value.copy("current");
-                  }
-                  
-                  if(j>0){
-                    //Try to find the time from the style:
-                    CT::string * stripeString = splittedStyles[j].splitToArray("|");
-                    if(stripeString->count==2){
-                      if(stripeString[1].indexOf("time_")==0){
-                        CT::string *valuePair=stripeString[1].splitToArray("_");
-                        ogcDim->value.copy(&valuePair[1]);
-                        delete[] valuePair;
-                      }
-                    }
-                    delete[] stripeString ;
-                  }
-                  delete[] splittedStyles;
-                  //CDBDebug("srvParam->requestDims[k]->value %d==%s",j,srvParam->requestDims[k]->value.c_str());
-                }
-                // If we have value 'current', give the dim a special status
-                if(ogcDim->value.equals("current")){
-                  //dimsfound[i]=2;
-                  CT::string tableName(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str());
-                  CServerParams::makeCorrectTableName(&tableName,&ogcDim->netCDFDimName);
-                  
-                  query.print("select max(%s) from %s",
-                          ogcDim->netCDFDimName.c_str(),
-                              tableName.c_str());
-                  CT::string *temp = DB.query_select(query.c_str(),0);
-                  if(temp == NULL){CDBError("query failed");status = DB.close(); return 1;}
-                  ogcDim->value.copy(&temp[0]);
-                  delete[] temp;
-                }
-              }
-            }
-          }
-        }
-        #ifdef CREQUEST_DEBUG
-        CDBDebug("Get DIMS from query string ready");
-        #endif
-        
-        /* Fill in the undefined dims */
-        status = dataSources[j]->CDataSource::autoCompleteDimensions(&DB);
-        if(status != 0){
-          CDBError("autoCompleteDimensions failed");
-          return status;
-        }
-
-       
-      
-        
-      
-      
-        CT::string queryOrderedDESC;
-        queryOrderedDESC.print("select a0.path");
-        for(size_t i=0;i<dataSources[j]->requiredDims.size();i++){
-          queryOrderedDESC.printconcat(",%s,dim%s",dataSources[j]->requiredDims[i]->netCDFDimName.c_str(),dataSources[j]->requiredDims[i]->netCDFDimName.c_str());
-          
-        }
-        
-        queryOrderedDESC.concat(" from ");
-        bool timeValidationError = false;
-        
-        //Compose the query
-        for(size_t i=0;i<dataSources[j]->requiredDims.size();i++){
-          CT::string netCDFDimName(&dataSources[j]->requiredDims[i]->netCDFDimName);
-          CT::string tableName(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str());
-          CServerParams::makeCorrectTableName(&tableName,&netCDFDimName);
-          CT::string subQuery;
-          subQuery.print("(select path,dim%s,%s from %s where ",netCDFDimName.c_str(),
-                      netCDFDimName.c_str(),
-                      tableName.c_str());
-          CT::string queryParams(&dataSources[j]->requiredDims[i]->value);
-          CT::string *cDims =queryParams.splitToArray(",");// Split up by commas (and put into cDims)
-          for(size_t k=0;k<cDims->count;k++){
-            CT::string *sDims =cDims[k].splitToArray("/");// Split up by slashes (and put into sDims)
-            if(sDims->count>0&&k>0)subQuery.concat("or ");
-            for(size_t  l=0;l<sDims->count&&l<2;l++){
-              if(sDims[l].length()>0){
-                dataSources[j]->requiredDims[i]->allValues.push_back(sDims[l].c_str());
-                if(l>0)subQuery.concat("and ");
-                if(sDims->count==1){
-                  if(!checkTimeFormat(sDims[l]))timeValidationError=true;
-                  subQuery.printconcat("%s = '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
-                }
-                
-                //TODO Currently only start/stop is supported, start/stop/resolution is not supported yet.
-                if(sDims->count>=2){
-                  if(l==0){
-                    if(!checkTimeFormat(sDims[l]))timeValidationError=true;
-                    subQuery.printconcat("%s >= '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
-                  }
-                  if(l==1){
-                    if(!checkTimeFormat(sDims[l]))timeValidationError=true;
-                    subQuery.printconcat("%s <= '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
-                  }
-                }
-              }
-            }
-            delete[] sDims;
-          }
-          delete[] cDims;
-          subQuery.printconcat("ORDER BY %s DESC)a%d ",netCDFDimName.c_str(),i);
-          if(i<dataSources[j]->requiredDims.size()-1)subQuery.concat(",");
-          queryOrderedDESC.concat(&subQuery);
-        }
-        
-        //Join by path
-        if(dataSources[j]->requiredDims.size()>1){
-          queryOrderedDESC.concat(" where a0.path=a1.path");
-          for(size_t i=2;i<dataSources[j]->requiredDims.size();i++){
-            queryOrderedDESC.printconcat(" and a0.path=a%d.path",i);
-          }
-        }
-        queryOrderedDESC.concat(" limit 24*6");
-      
-        if(timeValidationError==true){
-          if((checkDataRestriction()&SHOW_QUERYINFO)==false)queryOrderedDESC.copy("hidden");
-          CDBError("queryOrderedDESC fails regular expression: '%s'",queryOrderedDESC.c_str());
-          status = DB.close();
+        if(getDimValuesForDataSource(dataSources[j],srvParam)!=0){
+          CDBError("Unable to fill in dimensions");
           return 1;
         }
-        
-        query.print("select * from (%s)T order by ",queryOrderedDESC.c_str());
-        query.concat(&dataSources[j]->requiredDims[0]->netCDFDimName);
-        for(size_t i=1;i<dataSources[j]->requiredDims.size();i++){
-          query.printconcat(",%s",dataSources[j]->requiredDims[i]->netCDFDimName.c_str());
-        }
-        
-        //Execute the query
-        //CDBDebug("%s",query.c_str());
-        values_path = DB.query_select(query.c_str(),0);
-        if(values_path==NULL){
-          if((checkDataRestriction()&SHOW_QUERYINFO)==false)query.copy("hidden");
-          CDBError("No results for query: '%s'",query.c_str());
-          return 2;
-        }
-        if(values_path->count==0){
-          if((checkDataRestriction()&SHOW_QUERYINFO)==false)query.copy("hidden");
-          CDBError("No results for query: '%s'",query.c_str());
-          delete[] values_path;
-          status = DB.close();
-          return 2;
-        }
-   
-        //Get timestring
-        date_time = DB.query_select(query.c_str(),1);
-        if(date_time == NULL){CDBError("query failed");status = DB.close(); return 1;}
-        
-        //Now get the dimensions
-        std::vector <CT::string*> dimIndices;
-        std::vector <CT::string*> dimValues;
-        for(size_t i=0;i<dataSources[j]->requiredDims.size();i++){
-          CT::string *t=DB.query_select(query.c_str(),2+i*2);
-          //Note we are pushing an array of strings here...
-          dimIndices.push_back(t);
-          
-          CT::string *t2=DB.query_select(query.c_str(),1+i*2);
-          dimValues.push_back(t2);
-        }
-              
-        for(size_t k=0;k<values_path->count;k++){
-          CDataSource::TimeStep * timeStep = new CDataSource::TimeStep();
-          dataSources[j]->timeSteps.push_back(timeStep);
-          timeStep->fileName.copy(values_path[k].c_str());
-          //CDBDebug("%s",timeStep->fileName.c_str());
-          timeStep->timeString.print("%sZ",date_time[k].c_str());
-          timeStep->timeString.setChar(10,'T');
-          //For each timesteps a new set of dimensions is added with corresponding dim array indices.
-          for(size_t i=0;i<dataSources[j]->requiredDims.size();i++){
-            timeStep->dims.addDimension(dataSources[j]->requiredDims[i]->netCDFDimName.c_str(),dimValues[i][k].c_str(),atoi(dimIndices[i][k].c_str()));
-          }
-        }
-
-        status = DB.close();  if(status!=0)return 1;
-      
-        for(size_t j=0;j<dimIndices.size();j++){
-          delete[] dimIndices[j]; 
-        }
-        for(size_t j=0;j<dimValues.size();j++){
-          delete[] dimValues[j]; 
-        }
-        delete[] values_path;
+        /*delete[] values_path;
         delete[] values_dim;
-        delete[] date_time;
+        delete[] date_time;*/
       }else{
         //This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.        
         CDataSource::TimeStep * timeStep = new CDataSource::TimeStep();

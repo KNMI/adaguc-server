@@ -213,7 +213,7 @@ class CDataSource{
   static void readStatusFlags(CDF::Variable * var, std::vector<CDataSource::StatusFlag*> *statusFlagList);
   static const char *getFlagMeaning(std::vector<CDataSource::StatusFlag*> *statusFlagList,double value);
   static void getFlagMeaningHumanReadable(CT::string *flagMeaning ,std::vector<CDataSource::StatusFlag*> *statusFlagList,double value);
-  int autoCompleteDimensions(CPGSQLDB *dataBaseConnection);
+  //int autoCompleteDimensions(CPGSQLDB *dataBaseConnection);
   int checkDimTables(CPGSQLDB *dataBaseConnection);
   
   

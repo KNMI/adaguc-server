@@ -284,10 +284,10 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
           //Check if file already resides in the nontemporary database
           query.print("select path from %s where path = '%s' and filedate = '%s' and filedate is not NULL limit 1",tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),fileDate.c_str());
           //CDBDebug("Checking: %s", query.c_str());
-          CT::string *pathValues = DB->query_select(query.c_str(),0);
+          CDB::Store *pathValues = DB->queryToStore(query.c_str());
           if(pathValues == NULL){CDBError("Query failed");DB->close();throw(__LINE__);}
-          if(pathValues->count==1){fileExistsInDB=1;}else{fileExistsInDB=0;}
-          delete[] pathValues;
+          if(pathValues->getSize()==1){fileExistsInDB=1;}else{fileExistsInDB=0;}
+          delete pathValues;
           
           
           //Move this record from the nontemporary table into the temporary table
