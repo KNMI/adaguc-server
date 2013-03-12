@@ -2,7 +2,6 @@
 #define CImageDataWriter_H
 #include <string>
 #include <map>
-#include "CDebugger.h"
 #include "Definitions.h"
 #include "CStopWatch.h"
 #include "CIBaseDataWriterInterface.h"
@@ -12,6 +11,7 @@
 #include "CImgWarpBoolean.h"
 #include "CImgRenderPoints.h"
 #include "CMyCURL.h"
+#include "CDebugger.h"
 
 //Possible rendermethods
 #define RM_UNDEFINED   0
