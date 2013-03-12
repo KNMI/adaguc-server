@@ -1,6 +1,7 @@
 #ifndef CRequest_H
 #define CRequest_H
 #include <sys/stat.h>
+#include "CImageDataWriter.h"
 #include "CServerParams.h"
 #include "CDataSource.h"
 #include "CStopWatch.h"
@@ -9,7 +10,6 @@
 #include "CGDALDataWriter.h"
 #endif
 #include "CDFObjectStore.h"
-#include "CImageDataWriter.h"
 #include "CDebugger.h"
 
 class CSimpleStore{

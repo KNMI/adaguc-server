@@ -6,15 +6,15 @@
 
 
 
+#include "CImageDataWriter.h"
 #include "CServerError.h"
 #include "CDataReader.h"
 #include "CImageWarper.h"
 #include "CDrawImage.h"
 #include "CPGSQLDB.h"
 #include "CDataSource.h"
-#include "CDebugger.h"
-#include "CImageDataWriter.h"
 #include "CRequest.h"
+#include "CDebugger.h"
 
 #define CXMLGEN_FATAL_ERROR_OCCURED 1
 #define CXML_NON_FATAL_ERRORS_OCCURED 100
