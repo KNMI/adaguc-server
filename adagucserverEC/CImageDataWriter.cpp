@@ -2401,6 +2401,7 @@ int CImageDataWriter::end(){
 //      typedef std::vector<std::string> dimVec;
 //      typedef std::vector<dimVec> vectorDimVec;
 
+      bool first=true;
       for (size_t j=0; j<getFeatureInfoResultList.size(); j++) {
 //        CDBDebug("gfi len: %d of %d (%d el)\n", j, getFeatureInfoResultList.size(), getFeatureInfoResultList[j]->elements.size());
         GetFeatureInfoResult *g=getFeatureInfoResultList[j];
@@ -2451,7 +2452,7 @@ int CImageDataWriter::end(){
 //         }
       
 //        CDBDebug("GFI[%d of %d] %d\n", j, getFeatureInfoResultList.size(), g->elements.size());
-        bool first=true;
+//        bool first=true;
         for (int feat=0; feat<nrFeatures; feat++) {
           bool addInfo=true;
           for (size_t elNR=feat; elNR<g->elements.size(); elNR+=nrFeatures) {
