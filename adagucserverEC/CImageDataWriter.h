@@ -38,6 +38,7 @@ class CImageDataWriter: public CBaseDataWriterInterface{
       double lonX,lonY;
       int imx,imy;
       int dWidth,dHeight;
+      double dX,dY;
     };
     static std::map<std::string,CImageDataWriter::ProjCacheInfo> projCacheMap;
     static std::map<std::string,CImageDataWriter::ProjCacheInfo>::iterator projCacheIter;
