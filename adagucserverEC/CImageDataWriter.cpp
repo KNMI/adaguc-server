@@ -3,9 +3,24 @@
 #include <sstream>
 #include <algorithm>
 #include "CImageDataWriter.h"
-//#define CIMAGEDATAWRITER_DEBUG
+
+#ifndef M_PI
+#define M_PI            3.14159265358979323846  // pi 
+#endif
+
+#ifndef  rad2deg
+#define  rad2deg  (180./M_PI)   // conversion for rad to deg 
+#endif
+
+#ifndef  deg2rad
+#define  deg2rad  (M_PI/180.)   // conversion for deg to rad 
+#endif
+
+#define CIMAGEDATAWRITER_DEBUG
 
 void doJacoIntoLatLon(double &u, double &v, double lo, double la, float deltaX, float deltaY, CImageWarper *warper);
+void rotateUvNorth(double &u, double &v, double rlo, double rla, float deltaX, float deltaY, CImageWarper *warper);
+
 std::map<std::string,CImageDataWriter::ProjCacheInfo> CImageDataWriter::projCacheMap;
 std::map<std::string,CImageDataWriter::ProjCacheInfo>::iterator CImageDataWriter::projCacheIter;
 
@@ -1084,6 +1099,8 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         //CDBDebug("%f %f",x,y);
         projCacheInfo.dWidth=dataSource->dWidth;
         projCacheInfo.dHeight=dataSource->dHeight;
+        projCacheInfo.dX=(dataSource->dfBBOX[2]-dataSource->dfBBOX[0])/double(dataSource->dWidth);
+        projCacheInfo.dY=(dataSource->dfBBOX[3]-dataSource->dfBBOX[1])/double(dataSource->dHeight);
 
         if(x<0){
           projCacheInfo.imx=-1;
@@ -1237,7 +1254,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       #endif
       if(projCacheInfo.imx>=0&&projCacheInfo.imy>=0&&projCacheInfo.imx<projCacheInfo.dWidth&&projCacheInfo.imy<projCacheInfo.dHeight){
         #ifdef CIMAGEDATAWRITER_DEBUG 
-        CDBDebug("Accessing element %d",j);
+//        CDBDebug("Accessing element %d",j);
         #endif
         
         //GetFeatureInfoResult::Element * element=getFeatureInfoResult->elements[j];
@@ -1300,14 +1317,19 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         double pixel2=convertValue(dataSource->dataObject[1]->cdfVariable->type,dataSource->dataObject[1]->cdfVariable->data,ptr);
         if (gridRelative)  {
     //Add raster value
-          #ifdef CIMAGEDATAWRITER_DEBUG 
-          CDBDebug("Let's do the Jacobian!!!");
-          #endif
+
           status = imageWarper.initreproj(dataSource,drawImage.Geo,&srvParam->cfg->Projection);
+#ifdef ORIGINAL_JABOBIAN
           #ifdef CIMAGEDATAWRITER_DEBUG 
           CDBDebug("doJacoIntoLatLon(%f,%f,%f, %f, %f, %f)", pixel1,pixel2, projCacheInfo.lonX,projCacheInfo.lonY,0.01,0.01);
           #endif
           doJacoIntoLatLon(pixel1, pixel2, projCacheInfo.lonX, projCacheInfo.lonY, 0.01, 0.01, &imageWarper);
+#else
+          #ifdef CIMAGEDATAWRITER_DEBUG 
+          CDBDebug("Rot_UV_North(%f,%f,%f, %f, %f, %f)", pixel1,pixel2, projCacheInfo.lonX,projCacheInfo.lonY,0.01,0.01);
+          #endif
+          rotateUvNorth(pixel1, pixel2, projCacheInfo.nativeCoordX, projCacheInfo.nativeCoordY, 0.01, 0.01, &imageWarper);
+#endif
           imageWarper.closereproj();
     
           char szTemp[1024];
@@ -2422,7 +2444,7 @@ int CImageDataWriter::end(){
           }
         }
         int nrFeatures=features.size();
-        int nrFeatureVals=getFeatureInfoResultList[j]->elements.size()/nrFeatures;
+//        int nrFeatureVals=getFeatureInfoResultList[j]->elements.size()/nrFeatures;
 //         CDBDebug("%d features with len=%d\n", nrFeatures, nrFeatureVals);
         
         //Find available dimensions
@@ -2471,7 +2493,6 @@ int CImageDataWriter::end(){
               resultJSON.printconcat(",\"point\":{\"SRS\":\"%s\", \"coords\":\"%f,%f\"}", "EPSG:4326", g->lon_coordinate, g->lat_coordinate);
               resultJSON.printconcat(",\"dims\":[");
               
-              bool printed=false;
               for (size_t d=0; d<e->cdfDims.dimensions.size();d++) {
                 if (d>0) resultJSON.printconcat(",");
                 resultJSON.printconcat("\"%s\"", dimNames[d].c_str()); 
@@ -2496,7 +2517,7 @@ int CImageDataWriter::end(){
             for (size_t d=0; d<e->cdfDims.dimensions.size();d++) {
               dimValKeyTerms.at(dimLookup[d])=e->cdfDims.dimensions[d]->value.c_str();
             }
-            for (size_t d=0; d<nrDims; d++) {
+            for (size_t d=0; d<(size_t)nrDims; d++) {
               if (d>0) dimValKey+=",";
               dimValKey+=dimValKeyTerms[d];
             }
@@ -3463,4 +3484,155 @@ int CImageDataWriter::drawText(int x,int y,const char * fontlocation, float size
               u=uu*magnitude/newMagnitude;
               v=vv*magnitude/newMagnitude;
               
-}
+    }
+    
+    void rotateUvNorth(double &u, double &v, double rlo, double rla, float deltaX, float deltaY, CImageWarper *warper) {
+      fprintf(stderr, "rotateUvNorth(%f,%f,%f,%f,%f,%f)\n", u, v, rlo, rla, deltaX, deltaY);
+              double lon_pnt0, lat_pnt0;
+              double lon_pntEast, lat_pntEast;
+              double lon_pntNorth, lat_pntNorth;
+              double dLatEast, dLonEast;
+              double dLatNorth, dLonNorth;
+              double xpntEastSph,ypntEastSph, zpntEastSph;
+              double xpntNorthSph, ypntNorthSph, zpntNorthSph;
+              double xpntNorthSphRot, ypntNorthSphRot, zpntNorthSphRot;    
+              double xpnt0Sph, ypnt0Sph, zpnt0Sph;
+              double xnormSph, ynormSph, znormSph;
+              double xncross,  yncross,  zncross;
+              double vecAngle;
+              double VJaa,VJab,VJba,VJbb;
+              double magnitude, newMagnitude;
+              double uu;
+              double vv;
+#define radians(aDeg) (deg2rad*aDeg)
+#define NormVector(vec0,vec1,vec2) {\
+    double vecLen = sqrt(vec0*vec0 + vec1*vec1 + vec2*vec2);\
+    vec0 = vec0/vecLen; vec1 = vec1/vecLen; vec2 = vec2/vecLen; }
+    
+#define CrossProd(vecx0,vecx1,vecx2, vecy0,vecy1,vecy2, vecz0,vecz1,vecz2) {\
+    vecz0 = vecx1*vecy2 - vecy1*vecx2;\
+    vecz1 = vecx2*vecy0 - vecy2*vecx0;\
+    vecz2 = vecx0*vecy1 - vecy0*vecx1; }
+    
+              lon_pnt0=rlo;
+              lat_pnt0=rla;
+              lon_pntEast=lon_pnt0+deltaX;
+              lat_pntEast=lat_pnt0;
+              lon_pntNorth=lon_pnt0;
+              lat_pntNorth=lat_pnt0+deltaY;
+              warper->reprojModelToLatLon(lon_pnt0, lat_pnt0);
+              warper->reprojModelToLatLon(lon_pntNorth, lat_pntNorth);
+              warper->reprojModelToLatLon(lon_pntEast, lat_pntEast);
+              
+              // (lon_pntNorth, lat_pntNorth)
+              //     ^
+              //     |       (lon_pntCenter, lat_pntCenter)   center of the cell-diagonal
+              //     |
+              // (lon_pnt0,lat_pnt0) ----> (lon_pntEast,lat_pntEast)
+              
+              //lon_pntCenter = 0.5*(lon_pntNorth + lon_pntEast);
+              //lat_pntCenter = 0.5*(lat_pntNorth + lat_pntEast);
+              //lon_pnt0 -= lon_pntCenter; lon_pntEast -= lon_pntCenter; lon_pntNorth -= lon_pntCenter; 
+              //lat_pnt0 -= lat_pntCenter; lat_pntEast -= lat_pntCenter; lat_pntNorth -= lat_pntCenter; 
+              
+              // This is the local coordinate system of a grid cell where we have (u,v) at location (xpnt0,ypnt0).
+              
+              // The local coordinate system is now centered around (lon_pnt0,lat_pnt0)
+              // The vector towards north pole at this location will be (0,1,0)
+              // The tangent plane at this location is XY wil a normal (0, 0, 1)
+              
+              // Nummerical approach using projection onto a unit sphere
+              dLonNorth = radians(lon_pntNorth); dLatNorth = radians(lat_pntNorth);
+              xpntNorthSph = cos(dLatNorth) * cos(dLonNorth);
+              ypntNorthSph = cos(dLatNorth) * sin(dLonNorth); // # Get [dLonNorth,dLatNorth] on the unit sphere.
+              zpntNorthSph = sin(dLatNorth);                   //# Only XY plane is needed.
+              dLonEast = radians(lon_pntEast); dLatEast = radians(lat_pntEast);
+              xpntEastSph = cos(dLatEast) * cos(dLonEast);
+              ypntEastSph = cos(dLatEast) * sin(dLonEast);  // # Get [dLonEast,dLatEast] on the unit sphere.
+              zpntEastSph = sin(dLatEast);                  // # Only XY plane is needed.       
+              lon_pnt0 = radians(lon_pnt0); lat_pnt0 = radians(lat_pnt0);
+              xpnt0Sph = cos(lat_pnt0) * cos(lon_pnt0);
+              ypnt0Sph = cos(lat_pnt0) * sin(lon_pnt0);   // # Get [lon_pnt0,lat_pnt0] on the unit sphere.
+              zpnt0Sph = sin(lat_pnt0);                   // # Only XY plane is needed.
+              
+              xpntEastSph -= xpnt0Sph; ypntEastSph -= ypnt0Sph; zpntEastSph -= zpnt0Sph;  // make vectors from points
+              xpntNorthSph-= xpnt0Sph, ypntNorthSph-= ypnt0Sph; zpntNorthSph-= zpnt0Sph;
+            
+              NormVector( xpntEastSph,  ypntEastSph,  zpntEastSph );  // vecx
+              NormVector( xpntNorthSph, ypntNorthSph, zpntNorthSph );  // vecy
+              
+              //vecz = CrossProd(vecx,vecy)
+              CrossProd( xpntEastSph,  ypntEastSph,  zpntEastSph,  xpntNorthSph, ypntNorthSph, zpntNorthSph, \
+                        xnormSph, ynormSph, znormSph);  // vec z
+              //# vecn = (0.0,0.0,1.0)                   // up-vector in a global coordinate system
+              //# Project vecn onto plane XY, where plane-normal is vecz
+              //# vecnProjXY = vecn - D*vecz;   D= a*x1+b*y1+c*z1;  vecz=(a,b,c); vecn=(x1,y1,z1)=(0,0,1)
+              //#                               D= vecz[2]*1;
+              //# vecyRot = NormVector( (0.0 - vecz[2]*vecz[0],0.0  - vecz[2]*vecz[1], 1.0  - vecz[2]*vecz[2]) )
+
+              //double Dist =  xnormSph * 0.0 +  ynormSph * 0.0 + znormSph * 1.0; // Left out for optimization
+              xpntNorthSphRot =     - znormSph*xnormSph;  // xpntNorthSphRot = 0.0 - Dist*xnormSph;
+              ypntNorthSphRot =     - znormSph*ynormSph;  // ypntNorthSphRot = 0.0 - Dist*ynormSph;
+              zpntNorthSphRot = 1.0 - znormSph*znormSph;  // zpntNorthSphRot = 1.0 - Dist*znormSph;
+              NormVector(xpntNorthSphRot, ypntNorthSphRot, zpntNorthSphRot);
+              
+              // This would create in 3D the rotated Easting vector; but we don't need it in this routine.
+              // Left out to optimize computation
+              // CrossProd( xpntNorthSphRot, ypntNorthSphRot, zpntNorthSphRot, xnormSph, ynormSph, znormSph,
+              //            xpntEastSph,  ypntEastSphRot,  zpntEastSphRot ); //vecxRot = CrossProd(vecy,vecz)
+              
+              vecAngle = acos( (xpntNorthSph*xpntNorthSphRot + ypntNorthSph*ypntNorthSphRot + zpntNorthSph*zpntNorthSphRot) ) ;
+              // Determine the sign of the angle
+              CrossProd( xpntNorthSphRot, ypntNorthSphRot, zpntNorthSphRot, xpntNorthSph, ypntNorthSph, zpntNorthSph,\
+                        xncross,  yncross,  zncross); 
+              if ( (xncross*xnormSph + yncross*ynormSph + zncross*znormSph) > 0.0)  // dotProduct
+                  vecAngle *=-1.0;
+              
+              xpntNorthSph = sin(vecAngle);    // Rotate the point/vector (0,1) around Z-axis with vecAngle
+              ypntNorthSph = cos(vecAngle);
+              xpntEastSph  =   ypntNorthSph;   // Rotate the same point/vector around Z-axis with 90 degrees
+              ypntEastSph  =  -xpntNorthSph;
+              
+              //zpntNorthSph = 0; zpntEastSph = 0;  // not needed in 2D
+              
+              // 1) Build the rotation matrix and put the axes-base vectors into the matrix
+              VJaa = xpntEastSph ;
+              VJab = xpntNorthSph;
+              VJba = ypntEastSph ;
+              VJbb = ypntNorthSph; 
+              
+
+//                   if ( (x<3) && (y<3) )
+//                   {
+//                       CDBDebug("grid point [%03d,%03d] with latlon[%3.6f,%3.6f]; (lon_pntNorth, lat_pntNorth) = [%3.6f,%3.6f]; dLonNorth=%3.6f; dLatNorth=%3.6f (Northing grid relative) ",\
+//                               x,y, rad2deg*lon_pnt0, rad2deg*lat_pnt0,lon_pntNorth, lat_pntNorth, rad2deg*dLonNorth, rad2deg*dLatNorth );
+//                     CDBDebug("grid point [%03d,%03d] with latlon[%3.6f,%3.6f]; (lon_pntEast,lat_pntEast    )= [%3.6f,%3.6f]; dLonEast =%3.6f; dLatEast =%3.6f (Easting grid relative ) ",\
+//                               x,y, rad2deg*lon_pnt0, rad2deg*lat_pnt0,lon_pntEast,lat_pntEast, rad2deg*dLonEast, rad2deg*dLatEast );
+//                       //cdoPrint("(xpntNorthSph, ypntNorthSph)= [%3.6f,%3.6f]; (xpntEastSph,ypntEastSph) = [%3.6f,%3.6f];",\
+//                       //         xpntNorthSph, ypntNorthSph, xpntEastSph,ypntEastSph );
+//                       //vecAngle = rad2deg * acos( (xpntEastSph*xpntNorthSph + ypntEastSph*ypntNorthSph + zpntEastSph*zpntNorthSph) );
+//                       vecAngle = rad2deg * acos( (xpntEastSph*xpntNorthSph + ypntEastSph*ypntNorthSph) );
+//                       CDBDebug("(xpntNorthSph, ypntNorthSph, zpntNorthSph)= [%3.6f,%3.6f,%3.6f]; (xpntEastSph,ypntEastSph, zpntEastSph) = [%3.6f,%3.6f,%3.6f]; vecAngle= %3.6f",\
+//                               xpntNorthSph, ypntNorthSph, zpntNorthSph, xpntEastSph, ypntEastSph, zpntEastSph, vecAngle );
+//                       CDBDebug("rotation matrix for grid point [%03d,%03d] with latlon[%3.6f,%3.6f]: (VJaa, VJab, VJba, VJbb) = (%3.6f,%3.6f,%3.6f,%3.6f)",\
+//                               x,y, rad2deg*lon_pnt0, rad2deg*lat_pnt0, VJaa, VJab, VJba, VJbb);
+//                   }
+                      
+
+              // 2) Transform the UV vector with jacobian matrix
+//              u = 0.0;  v = 6.0; // test: 6 m/s along the easting direction of the grid
+              magnitude=hypot(u, v);  // old vector magnitude in the model space
+              //(uu) =   (VJaa VJab) * ( u )
+              //(vv)     (VJba VJbb)   ( v )
+              uu = VJaa*u+VJab*v;
+              vv = VJba*u+VJbb*v;
+              //(uu) =   (VJaa VJab VJac) * ( u )
+              //(vv)     (VJba VJbb VJbc)   ( v )
+              //(ww)     (VJba VJbb VJcc)   ( w )
+
+              // 3) Apply scaling of the vector so that the vector keeps the original length (model space)
+              newMagnitude = hypot(uu, vv);
+              u = uu*magnitude/newMagnitude;
+              v = vv*magnitude/newMagnitude;
+              
+    }
