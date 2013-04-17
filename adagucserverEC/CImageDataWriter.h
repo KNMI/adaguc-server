@@ -11,6 +11,7 @@
 #include "CImgWarpBoolean.h"
 #include "CImgRenderPoints.h"
 #include "CMyCURL.h"
+#include "CXMLParser.h"
 #include "CDebugger.h"
 
 //Possible rendermethods

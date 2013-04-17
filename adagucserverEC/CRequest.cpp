@@ -771,9 +771,9 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
     }
     
     
-    for(size_t i=0;i<dataSource->requiredDims.size();i++){
-      CDBDebug("%d There are %d values for dimension %s",i,dataSource->requiredDims[i]->uniqueValues.size(),dataSource->requiredDims[i]->netCDFDimName.c_str());  
-    }
+//     for(size_t i=0;i<dataSource->requiredDims.size();i++){
+//       CDBDebug("%d There are %d values for dimension %s",i,dataSource->requiredDims[i]->uniqueValues.size(),dataSource->requiredDims[i]->netCDFDimName.c_str());  
+//     }
 
     status = DB.close();  if(status!=0)return 1;
     delete store;
@@ -1205,7 +1205,7 @@ int CRequest::process_querystring(){
   int dFound_Exceptions=0;
   int dFound_Styles=0;
   int dFound_Style=0;
-  
+  int dFound_JSONP=0;
   
 
   
@@ -1574,7 +1574,20 @@ int CRequest::process_querystring(){
         if(values[1].equals("true")){
           srvParam->wmsExtensions.logScale = true;
         }
-      }  
+      } 
+      // JSONP parameter
+      if(value0Cap.equals("JSONP")){
+        if(dFound_JSONP==0){
+          if(values[1].length()>1){
+            srvParam->JSONP.copy(&values[1]);
+            dFound_JSONP=1;
+          }
+        }else{
+          CDBWarning("JSONP already defined");
+          dErrorOccured=1;
+        }
+      }
+
       
     }
     delete[] values;

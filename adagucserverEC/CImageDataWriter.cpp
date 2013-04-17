@@ -16,7 +16,7 @@
 #define  deg2rad  (M_PI/180.)   // conversion for deg to rad 
 #endif
 
-#define CIMAGEDATAWRITER_DEBUG
+//#define CIMAGEDATAWRITER_DEBUG
 
 void doJacoIntoLatLon(double &u, double &v, double lo, double la, float deltaX, float deltaY, CImageWarper *warper);
 void rotateUvNorth(double &u, double &v, double rlo, double rla, float deltaX, float deltaY, CImageWarper *warper);
@@ -748,9 +748,7 @@ CT::PointerList<CT::string*> *CImageDataWriter::getStyleListForDataSource(CDataS
                       break;
                     }
                   }
-                  
                 }
-                
                 
                 int status = makeStyleConfig(styleConfig,dataSource,styleNames->get(i)->c_str(),legendList->get(l)->c_str(),renderMethods->get(r)->c_str());
                 delete styleName;
@@ -2251,8 +2249,8 @@ int CImageDataWriter::end(){
     
     if(srvParam->InfoFormat.equals("application/vnd.ogc.gml"))resultFormat=textxml;//applicationvndogcgml;
     if(srvParam->InfoFormat.equals("application/json"))resultFormat=json;
-    
 
+    
     /* Text plain and text html */
     if(resultFormat==textplain||resultFormat==texthtml){
       CT::string resultHTML;
@@ -2415,15 +2413,19 @@ int CImageDataWriter::end(){
     }
 
     if (resultFormat==json) {
-      CDBDebug("CREATING JSON");
       CT::string resultJSON;
-      resultJSON.print("%s%c%c\n","Content-Type:application/json",13,10);
+      if (srvParam->JSONP.length()==0) {
+        CDBDebug("CREATING JSON");
+        resultJSON.print("%s%c%c\n","Content-Type: application/json",13,10);
+      } else {
+        CDBDebug("CREATING JSONP %s",srvParam->JSONP.c_str() );
+        resultJSON.print("%s%c%c\n","Content-Type: application/javascript",13,10);
+      }
       
-      resultJSON.printconcat("[\n");
-//      typedef std::vector<std::string> dimVec;
-//      typedef std::vector<dimVec> vectorDimVec;
-
-      bool first=true;
+      CXMLParser::XMLElement rootElement;
+ 
+      rootElement.setName("root");
+                
       for (size_t j=0; j<getFeatureInfoResultList.size(); j++) {
 //        CDBDebug("gfi len: %d of %d (%d el)\n", j, getFeatureInfoResultList.size(), getFeatureInfoResultList[j]->elements.size());
         GetFeatureInfoResult *g=getFeatureInfoResultList[j];
@@ -2444,15 +2446,12 @@ int CImageDataWriter::end(){
           }
         }
         int nrFeatures=features.size();
-//        int nrFeatureVals=getFeatureInfoResultList[j]->elements.size()/nrFeatures;
-//         CDBDebug("%d features with len=%d\n", nrFeatures, nrFeatureVals);
         
         //Find available dimensions
 #define isTimeDim(d) (std::string(d->name.c_str()).find("time")==0) //TODO Refactor into utility function
         GetFeatureInfoResult::Element* e=g->elements[0];
 
         int nrDims=e->cdfDims.dimensions.size();
-        std::vector<std::string> dimNames(nrDims);
         int dimLookup[nrDims]; //position of each dimension in cdfDims.dimensions
         bool timeDimFound=false;
         for (int d=0; d<nrDims; d++) {
@@ -2460,110 +2459,88 @@ int CImageDataWriter::end(){
           std::string dimName(e->dataSource->requiredDims[d]->name.c_str());
           if (isTimeDim(e->cdfDims.dimensions[d])) {
             timeDimFound=true;
-            dimLookup[d]=nrDims-1;
+            dimLookup[nrDims-1]=d;
           } else if (!timeDimFound) {
             dimLookup[d]=d;
           } else {
-            dimLookup[d]=d-1;
+            dimLookup[d-1]=d;
           }
-          dimNames.at(dimLookup[d])=std::string(dimName.c_str());
-        }
+         }
 
-//         for (int i=0; i<dimNames.size(); i++) {
-//           CDBDebug("dimNames[%d]=%s [%d]", i, dimNames[i].c_str(), dimLookup[i]);
-//         }
-      
-//        CDBDebug("GFI[%d of %d] %d\n", j, getFeatureInfoResultList.size(), g->elements.size());
-//        bool first=true;
         for (int feat=0; feat<nrFeatures; feat++) {
-          bool addInfo=true;
+          GetFeatureInfoResult::Element *e=g->elements[feat];
+          CT::string featureName=e->feature_name.c_str();
+          featureName.replaceSelf(" ", "_");
+          
+          CXMLParser::XMLElement paramElement("param");
+          paramElement.add(CXMLParser::XMLElement("name", featureName.c_str()));
+          paramElement.add(CXMLParser::XMLElement("standard_name", e->standard_name.c_str()));
+          paramElement.add(CXMLParser::XMLElement("units", e->units.c_str()));
+          
+          CXMLParser::XMLElement point("point");
+          point.add(CXMLParser::XMLElement("SRS", "EPSG:4326"));
+          CT::string coord;
+          coord.print("%f,%f", g->lon_coordinate, g->lat_coordinate);
+          point.add(CXMLParser::XMLElement("coords", coord.c_str()));
+          paramElement.add(point);
+          for (size_t d=0; d<e->cdfDims.dimensions.size();d++) {
+//            paramElement.add(CXMLParser::XMLElement("dims", e->cdfDims.dimensions[dimLookup[d]]->name.c_str()));
+              paramElement.add(CXMLParser::XMLElement("dims", e->dataSource->requiredDims[dimLookup[d]]->name.c_str()));
+          }                  
+          
+          std::map<std::string, std::string>dataMap;
           for (size_t elNR=feat; elNR<g->elements.size(); elNR+=nrFeatures) {
             GetFeatureInfoResult::Element *e=g->elements[elNR];
-            CT::string featureName=e->feature_name.c_str();
-            featureName.replaceSelf(" ", "_");
-            if (addInfo) {
-              if (first) {
-                first=false;
-              } else {
-                resultJSON.printconcat(",");
-              }
-              resultJSON.printconcat("{\"name\":\"%s\"", featureName.c_str());
-              resultJSON.printconcat(",\"standard_name\":\"%s\"", e->standard_name.c_str());
-              resultJSON.printconcat(",\"units\":\"%s\"", e->units.c_str());
-              resultJSON.printconcat(",\"point\":{\"SRS\":\"%s\", \"coords\":\"%f,%f\"}", "EPSG:4326", g->lon_coordinate, g->lat_coordinate);
-              resultJSON.printconcat(",\"dims\":[");
-              
-              for (size_t d=0; d<e->cdfDims.dimensions.size();d++) {
-                if (d>0) resultJSON.printconcat(",");
-                resultJSON.printconcat("\"%s\"", dimNames[d].c_str()); 
-              }
-              resultJSON.printconcat("] ");
-              addInfo=false;
-            } 
-            //put in data values
+
+            CT::string dimString="";
+            for (size_t d=0; d<e->cdfDims.dimensions.size(); d++) {
+              dimString.printconcat("%s,", e->cdfDims.dimensions[dimLookup[d]]->value.c_str());
+            }
+            dataMap[dimString.c_str()]=e->value.c_str();
+            
           }
           
-//         CDBDebug("resultJSON[1]:%s\n", resultJSON.c_str());
-//          resultJSON.printconcat(" }}");
+          std::map<std::string,std::string>::iterator dkit  ;
+          CXMLParser::XMLElement root("data");
+
+          CXMLParser::XMLElement *elP = &root;
           
-//       }
+          for (dkit=dataMap.begin(); dkit!=dataMap.end(); ++dkit){
+            CT::string key = dkit->first.c_str();
+            CT::string value= dkit->second.c_str();
+            
+            CT::string *dimValues = key.splitToArray(",");
+            elP = &root;
+            for(size_t i=0;i<dimValues->count;i++){
+              try{
+                elP=elP->get(dimValues[i].c_str());
+              }catch(int e){
+                elP=elP->add(dimValues[i].c_str());
+              }
+            }
+            elP->setValue(value.c_str());
+            delete[] dimValues;
+          }
         
-          //Gather all data with dimensions values as key
-          std::map<std::string, GetFeatureInfoResult::Element*> dataMap;
-          for (size_t elNR=feat; elNR<g->elements.size(); elNR+=nrFeatures) {
-            GetFeatureInfoResult::Element *e=g->elements[elNR];
-            std::string dimValKey;
-            std::vector<std::string>dimValKeyTerms(nrDims);
-            for (size_t d=0; d<e->cdfDims.dimensions.size();d++) {
-              dimValKeyTerms.at(dimLookup[d])=e->cdfDims.dimensions[d]->value.c_str();
-            }
-            for (size_t d=0; d<(size_t)nrDims; d++) {
-              if (d>0) dimValKey+=",";
-              dimValKey+=dimValKeyTerms[d];
-            }
-            dataMap[dimValKey]=e;
-          }
-
-
-          //output data from a cartesian product of dimension values (time as last dim)
-          resultJSON.printconcat(",\"data\":{");
-
- 
-          std::vector<std::string>lastDimValue(nrDims);
-
-          for (std::map<std::string, GetFeatureInfoResult::Element*>::iterator iter = dataMap.begin(); iter!=dataMap.end(); ++iter) {
-            GetFeatureInfoResult::Element*e=iter->second;
-//            CDBDebug("%s %s", iter->first.c_str(), e->value.c_str());
-            std::vector<std::string>dimVal=split(iter->first, ',');
-            for (int d=0; d<nrDims-1;d++) {
-//              CDBDebug("dimVal[%d]=%s", d, dimVal[d].c_str());
-              if (lastDimValue[d]!=dimVal[d]) {
-//                CDBDebug("dim[%d] changed from %s to %s (%d)", d, lastDimValue[d].c_str(), dimVal[d].c_str(), nrDims-d);
-                for (int i=d; i<nrDims-1; i++) {
-                  if (resultJSON.charAt(resultJSON.length()-1)==',') {
-                    resultJSON.setChar(resultJSON.length()-1,'}');
-                  } else if (resultJSON.charAt(resultJSON.length()-1)!='{') resultJSON.printconcat("}");
-                }
-                if (resultJSON.charAt(resultJSON.length()-1)=='}') resultJSON.printconcat(",");
-                resultJSON.printconcat("\"%s\":{", dimVal[d].c_str());
-                lastDimValue[d]=dimVal[d];
-              } else {
-                if (resultJSON.charAt(resultJSON.length()-1)!=',') resultJSON.printconcat(",");
-              }
-              
-            }
-//            CDBDebug("%s: %s", dimVal[nrDims-1].c_str(), e->value.c_str());
-            resultJSON.printconcat("\"%s\": \"%s\"", dimVal[nrDims-1].c_str(), e->value.c_str());
-          }
-          for (int i=0;i<nrDims; i++) resultJSON.printconcat("}");   // Close open JSON fields
-
-          resultJSON.printconcat("}"); // End of "data": {...}
+          paramElement.add(root);
+          rootElement.add(paramElement);
         }
+
       }
-      resultJSON.printconcat("]");
+
 
       resetErrors();
-      printf("%s", resultJSON.c_str());
+      if (srvParam->JSONP.length()==0) {      
+        resultJSON.concat(&rootElement.getList("param").toJSON());
+        printf("%s", resultJSON.c_str());
+      } else {
+        resultJSON.concat(srvParam->JSONP.c_str());
+        resultJSON.concat("(");
+        resultJSON.concat(&rootElement.getList("param").toJSON());
+        resultJSON.concat(");");
+        printf("%s", resultJSON.c_str());
+      }
+
     }
     
     /*************************************************************************************************************************************/
