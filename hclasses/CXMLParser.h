@@ -27,7 +27,7 @@
 #include <stdio.h>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
-#include <CTypes.h>
+#include "CTypes.h"
 
 #define CXMLPARSER_ATTR_NOT_FOUND 1
 #define CXMLPARSER_ELEMENT_NOT_FOUND 2
@@ -119,23 +119,45 @@ class CXMLParser{
       return *this;
      }
      
-      XMLElement();
+     XMLElement();
+     
+     XMLElement(const char *name){
+       this->name = name;
+     }
+     
+     XMLElement(const char *name,const char *value){
+       this->name = name;
+       this->value = value;
+     }
+      
       
     /**
      *  List/Vector of XML Elements
      */
-    class XMLElements:public std::vector<XMLElement> {
+    class XMLElementList:public std::vector<XMLElement> {};
+    
+    /**
+     *  List/Vector of XML Element pointers
+     */
+    class XMLElementPointerList:public std::vector<XMLElement*> {
       public:
-        XMLElement get(size_t nr);
-        void add(XMLElement element);
-        /**
-         * getFirst returns the first XMLElement
-         */
-        XMLElement getFirst();
+        XMLElement *get(size_t nr);
+        void add(XMLElement *element);
+        CT::string toJSON(){
+          CT::string json = "[";
+          for(size_t j=0;j<size();j++){
+            if(j>0)json+=",";
+            CT::string subdata = get(j)->toJSON();
+            json.concat((subdata.c_str()+1),subdata.length()-3);
+          }
+          json+="]";
+          return json;
+        }
+
     };
     
     private:
-    XMLElements xmlElements;
+    XMLElementList xmlElements;
     XMLAttributes xmlAttributes;
 
     CT::string value;
@@ -171,12 +193,26 @@ class CXMLParser{
      * @param depth the current recursive depth
      */
     CT::string toXML(XMLElement el,int depth);
+    
+    /**
+     * Converts XMLElements and attributes to a jsonstring recursively
+     * @param el The XMLElement to convert
+     * @param depth the current recursive depth
+     */
+    CT::string toJSON(XMLElement el,int depth);
           
     public: 
     /**
      * toString converts the current XMLElement to string
      */
     CT::string toString();
+    
+    /**
+     * toJSON converts the current XMLElement to json
+     */
+    CT::string toJSON();
+    
+    
     /**
      * toString converts the current XMLElement to string
      */
@@ -192,7 +228,7 @@ class CXMLParser{
      * getElements returns the XMLElement list of this element
      * @return the XMLElement list of this element
      */
-    XMLElements getElements();
+    XMLElementList *getElements();
     
     /**
      * getAttrValue Returns the value of the attribute with the specified name
@@ -204,18 +240,23 @@ class CXMLParser{
     /**
      * getFirst returns the first XMLElement
      */
-    XMLElement getFirst();
+    XMLElement *getFirst();
+    
+    /**
+     * getFirst returns the last XMLElement
+     */
+    XMLElement *getLast();
     
     /**
      * getList returns all elements with the specified name
      * @param name The name of the elements to return
      */
-    XMLElements getList(const char *name);
+    XMLElementPointerList getList(const char *name);
     /**
      * getList returns all elements with the specified name
      * @param name The name of the elements to return
      */
-    XMLElement get(const char *name);
+    XMLElement *get(const char *name);
     
     /**
      * getName returns the name of this XML element
@@ -227,7 +268,55 @@ class CXMLParser{
      */
     CT::string getValue();
     
+    /**
+     * set Name and Value of XML element
+     */
+    void setNameValue(const char *name,const char *value){
+      this->name = name;
+      this->value = value;
+    }
+    
+    /**
+     * Set the name of the XML element
+     */
+    void setName(const char *name){
+      this->name = name;
+    }
+    
+    /**
+     * Set the value of the xml element
+     */
+    void setValue(const char *value){
+      this->value = value;
+    }
+    
+    /**
+     * Add XMLElement
+     */
+    XMLElement * add(XMLElement el){
+      xmlElements.push_back(el);
+      return &xmlElements[xmlElements.size()-1];
+    }
+    
+    /**
+     * Add XMLElement with name and value
+     */
+     XMLElement * add(const char *name, const char*value){
+      XMLElement el;
+      el.setNameValue(name,value);
+      xmlElements.push_back(el);
+       return &xmlElements[xmlElements.size()-1];
+    }
   
+    /** 
+     * Add xmlAttibute
+     */
+    void add(XMLAttribute at){
+      xmlAttributes.add(at);
+    }
+    
+    
+    
     /**
      * Parses a string to XMLElement structure
      * throws integer CXMLPARSER_INVALID_XML if invalid
