@@ -1583,7 +1583,7 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   * Use point renderer
   */
   //if(renderMethod==barb||renderMethod==vector||renderMethod==point){
-  if(renderMethod&RM_BARB||renderMethod&RM_VECTOR||renderMethod&RM_POINT||renderMethod==RM_NEAREST){
+  if(renderMethod&RM_BARB||renderMethod&RM_VECTOR||renderMethod&RM_POINT){//||renderMethod==RM_NEAREST){
     if(dataSource->dataObject[0]->points.size()!=0){
       //CDBDebug("CImgRenderPoints()");
       

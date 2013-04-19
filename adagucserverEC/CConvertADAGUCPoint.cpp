@@ -126,11 +126,21 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
     CDBError("lat or lon variables not found");
     return 1;
   }
+  
+  
+  #ifdef MEASURETIME
+    StopWatch_Stop("ADAGUC POINT DATA");
+  #endif
   pointLon->readData(CDF_FLOAT,true);
   pointLat->readData(CDF_FLOAT,true);
+  #ifdef MEASURETIME
+    StopWatch_Stop("DATA READ");
+  #endif
   MinMax lonMinMax = getMinMax(pointLon);
   MinMax latMinMax = getMinMax(pointLat);
-  
+  #ifdef MEASURETIME
+    StopWatch_Stop("MIN/MAX Calculated");
+  #endif
   double dfBBOX[]={lonMinMax.min,latMinMax.min,lonMinMax.max,latMinMax.max};
   //double dfBBOX[]={-180,-90,180,90};
   //CDBDebug("Datasource dfBBOX:%f %f %f %f",dfBBOX[0],dfBBOX[1],dfBBOX[2],dfBBOX[3]);
@@ -195,6 +205,10 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
     }
   }
   
+  #ifdef MEASURETIME
+    StopWatch_Stop("2D Coordinate dimensions created");
+  #endif
+  
   //Make a list of variables which will be available as 2D fields  
   CT::StackList<CT::string> varsToConvert;
   for(size_t v=0;v<cdfObject->variables.size();v++){
@@ -256,6 +270,11 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
     
     new2DVar->type=CDF_FLOAT;
   }
+  
+  #ifdef MEASURETIME
+    StopWatch_Stop("Header done");
+  #endif
+
  
   return 0;
 }
@@ -270,6 +289,8 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
   #ifdef CCONVERTADAGUCPOINT_DEBUG
   CDBDebug("convertADAGUCPointData");
   #endif
+
+
   CDFObject *cdfObject0 = dataSource->dataObject[0]->cdfObject;
   try{
     if(cdfObject0->getAttribute("featureType")->toString().equals("timeSeries")==false)return 1;
@@ -278,7 +299,10 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
   }
   //CDBDebug("THIS IS ADAGUC POINT DATA");
   
-  
+  #ifdef MEASURETIME
+    StopWatch_Stop("Reading data");
+  #endif
+    
   CDF::Variable *pointLon;
   CDF::Variable *pointLat;
   
@@ -313,10 +337,42 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
   pointLon->readData(CDF_FLOAT,true);
   pointLat->readData(CDF_FLOAT,true);
   
+  #ifdef MEASURETIME
+    StopWatch_Stop("Lat and lon read");
+  #endif
+  
+  int dateDimIndex=dataSource->getDimensionIndex("time");
+  
+  int numStations=pointVar[0]->dimensionlinks[0]->getSize();
+  int numDates=pointVar[0]->dimensionlinks[1]->getSize();
+  int numDims = 2;
+  #ifdef CCONVERTADAGUCPOINT_DEBUG
+    CDBDebug("numStations %d ",numStations);
+    CDBDebug("numDates %d ",numDates);
+    CDBDebug("numDims %d ",numDims);
+  #endif
+
+   
+  size_t start[numDims];
+  size_t count[numDims];
+  ptrdiff_t stride[numDims];
+    
+  #ifdef MEASURETIME
+    StopWatch_Stop("Lat and lon read");
+  #endif
+    
+  for(int j=0;j<numDims;j++){start[j]=0; count[j]=1;stride[j]=1;}
   for(size_t d=0;d<nrDataObjects;d++){
-    pointVar[d]->readData(CDF_FLOAT,true);
+    count[0]=pointVar[d]->dimensionlinks[0]->getSize();
+    start[1]=dateDimIndex;
+    pointVar[d]->readData(CDF_FLOAT,start,count,stride);
+    //pointVar[d]->readData(CDF_FLOAT,true);
   }
   
+  #ifdef MEASURETIME
+    StopWatch_Stop("Variables read");
+  #endif
+
   
   for(size_t d=0;d<nrDataObjects;d++){
     CDF::Attribute *fillValue = pointVar[d]->getAttributeNE("_FillValue");
@@ -336,6 +392,10 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
     }
   }
   
+  #ifdef MEASURETIME
+    StopWatch_Stop("FillValues set");
+  #endif
+  
   //Detect minimum and maximum values
   float fill = (float)dataSource->dataObject[0]->dfNodataValue;
   float min = fill;float max=fill;
@@ -348,7 +408,12 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
       if(v>max)max=v;
     }
   }
+
   
+  #ifdef MEASURETIME
+    StopWatch_Stop("Min max calculated");
+  #endif
+
   #ifdef CCONVERTADAGUCPOINT_DEBUG
   CDBDebug("Calculated min/max : %f %f",min,max);
   #endif
@@ -367,6 +432,11 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
       dataSource->statistics->setMinimum(min);
     }
   }
+  
+  #ifdef MEASURETIME
+    StopWatch_Stop("Statistics set");
+  #endif
+
   
   //Make the width and height of the new 2D adaguc field the same as the viewing window
   dataSource->dWidth=dataSource->srvParams->Geo->dWidth;
@@ -431,7 +501,10 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
       ((double*)varY->data)[j]=y;
     }
     
-    
+    #ifdef MEASURETIME
+      StopWatch_Stop("Dimensions set");
+    #endif
+
     
     //Allocate 2D field
     for(size_t d=0;d<nrDataObjects;d++){
@@ -452,18 +525,16 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
     }
     
     
-    
+    #ifdef MEASURETIME
+      StopWatch_Stop("2D Field allocated");
+    #endif
+      
     float *lonData=(float*)pointLon->data;
     float *latData=(float*)pointLat->data;
     
-    int numStations=pointVar[0]->dimensionlinks[0]->getSize();
-    int numDates=pointVar[0]->dimensionlinks[1]->getSize();
+   
     
-    #ifdef CCONVERTADAGUCPOINT_DEBUG
-    CDBDebug("numStations %d ",numStations);
-    CDBDebug("numDates %d ",numDates);
-    #endif
-    
+  
     
 
   
@@ -513,11 +584,11 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
     }
     
     
-    int dateDimIndex=dataSource->getDimensionIndex("time");
+    
     //CDBDebug("Date DIM %d numStations = %d",dateDimIndex,numStations);
    
     for(int stationNr=0;stationNr<numStations;stationNr++){ 
-      int pPoint = stationNr*numDates+dateDimIndex;//*numStations;
+      int pPoint = stationNr+0;//dateDimIndex;//*numStations;
       int pGeo = stationNr;
       //CDBDebug("stationNr %d dateDimIndex %d,pPoint DIM %d",stationNr,dateDimIndex,pPoint);
       double lat,lon;
@@ -547,7 +618,9 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
         }
       }
     }
-   
+    #ifdef MEASURETIME
+      StopWatch_Stop("Points added");
+    #endif
     imageWarper.closereproj();
    
   }

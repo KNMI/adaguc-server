@@ -20,6 +20,7 @@
  * initial date       :  20120610
  */
 
+
 #include "CXMLParser.h"
 /**
  * Static function which converts an exception into a readable message
@@ -55,7 +56,7 @@ void CXMLParser::XMLAttributes::add(XMLAttribute attribute){
 void CXMLParser::XMLElement::copy(XMLElement const &f){
   this->name=f.name;
   this->value=f.value;
-  for(size_t j=0;j<f.xmlElements.size();j++)xmlElements.add(XMLElement(f.xmlElements[j]));
+  for(size_t j=0;j<f.xmlElements.size();j++)xmlElements.push_back(XMLElement(f.xmlElements[j]));
   for(size_t j=0;j<f.xmlAttributes.size();j++)xmlAttributes.add(XMLAttribute(f.xmlAttributes[j]));
 }
 
@@ -64,23 +65,41 @@ void CXMLParser::XMLElement::copy(XMLElement const &f){
 CXMLParser::XMLElement::XMLElement(){
 }
 
-CXMLParser::XMLElement CXMLParser::XMLElement::XMLElements::get(size_t nr){
+// CXMLParser::XMLElement CXMLParser::XMLElement::XMLElements::get(size_t nr){
+//   if(nr>size()||nr+1>size())throw CXMLPARSER_ELEMENT_OUT_OF_BOUNDS;
+//   return (*this)[nr];
+// }
+// 
+// 
+// void CXMLParser::XMLElement::XMLElements::add(XMLElement element){
+//   this->push_back(element);
+// }
+
+
+CXMLParser::XMLElement *CXMLParser::XMLElement::XMLElementPointerList::get(size_t nr){
   if(nr>size()||nr+1>size())throw CXMLPARSER_ELEMENT_OUT_OF_BOUNDS;
   return (*this)[nr];
 }
-
-
-void CXMLParser::XMLElement::XMLElements::add(XMLElement element){
+void CXMLParser::XMLElement::XMLElementPointerList::add(XMLElement *element){
   this->push_back(element);
 }
+
 
 /**
  * getFirst returns the first XMLElement
  */
-CXMLParser::XMLElement CXMLParser::XMLElement::XMLElements::getFirst(){
-  if(size()==0)throw CXMLPARSER_ELEMENT_OUT_OF_BOUNDS;
-  return this->get(0);
-}
+// CXMLParser::XMLElement CXMLParser::XMLElement::XMLElements::getFirst(){
+//   if(size()==0)throw CXMLPARSER_ELEMENT_OUT_OF_BOUNDS;
+//   return this->get(0);
+// }
+
+/**
+ * getFirst returns the last XMLElement
+ */
+// CXMLParser::XMLElement CXMLParser::XMLElement::XMLElements::getLast(){
+//   if(size()==0)throw CXMLPARSER_ELEMENT_OUT_OF_BOUNDS;
+//   return this->get(this->size()-1);
+// }
 
 /**
  * Constructor which parses libXmlNode
@@ -159,7 +178,7 @@ CT::string CXMLParser::XMLElement::toXML(XMLElement el,int depth){
   }
   
   for(size_t j=0;j<el.xmlElements.size();j++){
-    data+=toXML(el.xmlElements.get(j),depth+1);
+    data+=toXML(el.xmlElements[j],depth+1);
   }
   
   if(hasValue){
@@ -178,6 +197,95 @@ CT::string CXMLParser::XMLElement::toString(){
   CT::string data ="";
   data="<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
   data+=toXML((*this),0);
+  return data;
+}
+
+
+CT::string CXMLParser::XMLElement::toJSON(XMLElement el,int depth){
+  CT::string data;
+  std::vector<CT::string>done;
+
+  if(el.xmlAttributes.size()>0){
+    CXMLParser::XMLElement xmlattr("xmlattr");
+    for(size_t j=0;j<el.xmlAttributes.size();j++){
+        xmlattr.add(CXMLParser::XMLElement(el.xmlAttributes[j].name.c_str(),el.xmlAttributes[j].value.c_str()));
+    }
+    el.add(xmlattr);
+  }
+
+  for(size_t j=0;j<el.xmlElements.size();j++){
+    const char *name = el.xmlElements[j].name.c_str();
+    bool alreadyDone = false;
+    for(size_t i=0;i<done.size();i++){
+      if(done[i].equals(name)){alreadyDone = true;break;}
+    }
+    if(alreadyDone == false){
+      done.push_back(name);
+      CXMLParser::XMLElement::XMLElementPointerList els = el.getList(name);
+      if(els.size()>1){
+        if(j>0)data+=",";
+        data+= "\"";data+=el.xmlElements[j].name.c_str();data+= "\"";
+        data+=":[";
+        for(size_t i=0;i<els.size();i++){
+          CT::string value = els[i]->getValue().replacer("\n","").trimr();
+          CT::string subdata = toJSON(*(els[i]),depth++);;
+          if(subdata.length()>0){
+            if(i>0)data+=",";
+            data+="{";
+            data+=&subdata;
+            data+="}";
+          }
+          if(value.length()>0){
+            if(i>0)data+=",";else{
+              if(subdata.length()>0){
+                data+=",";
+              }
+            }
+            data+= "\"";
+            data+= value.c_str();
+            data+= "\"";
+          }
+        }
+        data+="]";
+      }else{
+        bool hasValues = false;
+        CT::string value = el.xmlElements[j].value;
+        if(value.length()>0){
+          value=value.replacer("\n","").trimr();
+          if(value.length()>0){
+            hasValues = true;
+          }
+        }
+        if(j>0)data+=",";
+        data+="\"";
+        data+=name;
+        data+="\":";
+        if(hasValues){
+          data+="\"";
+          data+=value.c_str();
+         data+="\"";
+        }else{
+          data+="{";
+        }
+        CT::string subdata = toJSON(el.xmlElements[j],depth++);
+        if(hasValues&&subdata.length()>0)data+=",";
+        if(subdata.length()>0){
+          data+=subdata;
+        }
+        if(!hasValues){
+          data+="}";
+        }
+      }
+    }
+  }
+  return data;
+}
+
+CT::string CXMLParser::XMLElement::toJSON(){
+  CT::string data ="";
+  data="[{";
+  data+=toJSON((*this),0);
+  data+="}]\n";
   return data;
 }
 
@@ -202,8 +310,8 @@ CXMLParser::XMLAttributes CXMLParser::XMLElement::getAttributes(){
  * getElements returns the XMLElement list of this element
  * @return the XMLElement list of this element
  */
-CXMLParser::XMLElement::XMLElements CXMLParser::XMLElement::getElements(){
-  return xmlElements;
+CXMLParser::XMLElement::XMLElementList* CXMLParser::XMLElement::getElements(){
+  return &xmlElements;
 }
 
 /**
@@ -221,20 +329,29 @@ CT::string CXMLParser::XMLElement::getAttrValue(const char *name){
 /**
  * getFirst returns the first XMLElement
  */
-CXMLParser::XMLElement CXMLParser::XMLElement::getFirst(){
-  return xmlElements.get(0);
+CXMLParser::XMLElement* CXMLParser::XMLElement::getFirst(){
+  if(xmlElements.size()==0)throw CXMLPARSER_ELEMENT_OUT_OF_BOUNDS;
+  return &xmlElements[0];
+}
+
+/**
+ * getFirst returns the last XMLElement
+ */
+CXMLParser::XMLElement* CXMLParser::XMLElement::getLast(){
+  if(xmlElements.size()==0)throw CXMLPARSER_ELEMENT_OUT_OF_BOUNDS;
+  return &xmlElements[(xmlElements.size()-1)];
 }
 
 /**
  * getList returns all elements with the specified name
  * @param name The name of the elements to return
  */
-CXMLParser::XMLElement::XMLElements CXMLParser::XMLElement::getList(const char *name){
-  XMLElements elements;
+CXMLParser::XMLElement::XMLElementPointerList CXMLParser::XMLElement::getList(const char *name){
+  XMLElementPointerList elements;
   for(size_t j=0;j<xmlElements.size();j++){
     if(xmlElements[j].name.equals(name)){
       //printf("Found %s\n",name);
-      elements.add(xmlElements[j]);
+      elements.add(&xmlElements[j]);
     }
   }
   if(elements.size()==0){
@@ -243,15 +360,14 @@ CXMLParser::XMLElement::XMLElements CXMLParser::XMLElement::getList(const char *
   return elements;
 }
 /**
- * getList returns all elements with the specified name
+ * get returns the elements with the specified name
  * @param name The name of the elements to return
  */
-CXMLParser::XMLElement CXMLParser::XMLElement::get(const char *name){
-  XMLElements elements;
+CXMLParser::XMLElement *CXMLParser::XMLElement::get(const char *name){
   for(size_t j=0;j<xmlElements.size();j++){
     if(xmlElements[j].name.equals(name)){
       //printf("Found %s\n",name);
-      return xmlElements[j];
+      return &xmlElements[j];
     }
   }
   throw CXMLPARSER_ELEMENT_NOT_FOUND;
@@ -268,6 +384,10 @@ CT::string CXMLParser::XMLElement::getName(){
  * getValue returns the value of this XML element
  */
 CT::string CXMLParser::XMLElement::getValue(){
+  if(value.c_str() == NULL){
+    //value = "";
+    return "";
+  }
   return value;
 }
 
