@@ -1,9 +1,21 @@
 #include "CImgWarpBilinear.h"
 #include <gd.h>
 
-//#define CImgWarpBilinear_DEBUG
+#ifndef M_PI
+#define M_PI            3.14159265358979323846  // pi 
+#endif
 
-//DEF_ERRORMAIN();
+#ifndef  rad2deg
+#define  rad2deg  (180./M_PI)   // conversion for rad to deg 
+#endif
+
+#ifndef  deg2rad
+#define  deg2rad  (M_PI/180.)   // conversion for deg to rad 
+#endif
+
+#define CImgWarpBilinear_DEBUG
+
+DEF_ERRORMAIN();
 const char *CImgWarpBilinear::className="CImgWarpBilinear";
 void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDrawImage *drawImage){
   #ifdef CImgWarpBilinear_DEBUG
@@ -86,7 +98,7 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
     if(dPixelExtent[0]<0)dPixelExtent[0]=0;
     if(dPixelExtent[1]<0)dPixelExtent[1]=0;
     if(dPixelExtent[2]>sourceImage->dWidth)dPixelExtent[2]=sourceImage->dWidth;
-    if(dPixelExtent[3]>sourceImage->dHeight)dPixelExtent[3]=sourceImage->dHeight;
+    if(dPixelExtent[3]>sourceImage->dHeight)dPixelExtent[3]=sourceImage->dHeight; 
   }else{
     dPixelExtent[0]=0;
     dPixelExtent[1]=0;
@@ -161,7 +173,7 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
   CDBDebug("datatype: %s",temp);
   for(int j=0;j<4;j++){
     CDBDebug("dPixelExtent[%d]=%d",j,dPixelExtent[j]);
-  }
+  } 
   #endif
   
   for(int y=dPixelExtent[1];y<dPixelExtent[3];y++){
@@ -250,9 +262,9 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
     if (standard_name.equals("x_wind")||standard_name.equals("grid_eastward_wind")||
       standard_name.equals("y_wind")||standard_name.equals("grid_northward_wind")) {
       gridRelative=true;
-      } else {
-        gridRelative=false;
-      }
+    } else {
+      gridRelative=false;
+    }
       #ifdef CImgWarpBilinear_DEBUG
       CDBDebug("Grid propery gridRelative=%d", gridRelative);
       #endif
@@ -269,7 +281,7 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
       CDBDebug("Data raster: %f,%f with %f,%f (%f,%f) ll: (%d,%d) ur: (%d,%d) [%d,%d]\n", 
                dfSourceOrigX, dfSourceOrigY, dfSourcedExtW, dfSourcedExtH,
                dfSourceExtW, dfSourceExtH,
-               dPixelExtent[0], dPixelExtent[1], dPixelExtent[2], dPixelExtent[3],
+               dPixelExtent[0], dPixelExtent[1], dPixelExtent[2], dPixelExtent[3], 
                dPixelDestW, dPixelDestH);
       #endif
       if (dfSourcedExtH<0){
@@ -284,10 +296,10 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
       }
       deltaLat=+delta; //TODO Check this (and delete previous 2 if blocks)
       deltaLon=delta;
-      double signLon=(dfSourceExtW<0)?-1:1; // sign for adaptation of Jacobian to grid organisation
-      double signLat=(dfSourceExtH<0)?-1:1; // sign for adaptation of Jacobian to grid organisation
+//       double signLon=(dfSourceExtW<0)?-1:1; // sign for adaptation of Jacobian to grid organisation
+//       double signLat=(dfSourceExtH<0)?-1:1; // sign for adaptation of Jacobian to grid organisation
       #ifdef CImgWarpBilinear_DEBUG
-      CDBDebug("deltaLon %f deltaLat %f signLon %f signLat %f", deltaLon, deltaLat, signLon, signLat);
+  //    CDBDebug("deltaLon %f deltaLat %f signLon %f signLat %f", deltaLon, deltaLat, signLon, signLat);
       #endif
       
       for(int y=dPixelExtent[1];y<dPixelExtent[3];y=y+1){
@@ -305,6 +317,12 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
             } else {
               modelY=dfSourcedExtH*double(y)+dfSourceOrigY;
             }
+//             if ((x<3)&&(y<3)) {
+//               double modelX_P=modelX;
+//               double modelY_P=modelY;
+//               warper->reprojModelToLatLon(modelX_P, modelY_P);
+//               CDBDebug("modelX,modelY=[%f,%f]: %f,%f", modelX, modelY, modelX_P, modelY_P);
+//             }
             double modelXLat, modelYLat;
             double modelXLon, modelYLon;
             double VJaa,VJab,VJba,VJbb;
@@ -313,14 +331,15 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
 //            uValues[p]=0; 
 //            vValues[p]=6;
             if (gridRelative) {
+#ifdef ORIGINAL_JACO
               modelXLon=modelX+dfSourcedExtW;
               modelYLon=modelY;
               modelXLat=modelX;
               modelYLat=modelY+dfSourcedExtH;
               //              if (y==0) { CDBDebug("modelXY[%d,%d] {%d} (%f, %f) (%f,%f) (%f,%f) =>", x, y, gridRelative, modelX, modelY, modelXLon, modelYLon, modelXLat, modelYLat);}
-              warper->reprojpoint_inv(modelX,modelY); // model to vis proj.
-              warper->reprojpoint_inv(modelXLon, modelYLon);
-              warper->reprojpoint_inv(modelXLat, modelYLat);
+              warper->reprojModelToLatLon(modelX,modelY); // model to vis proj.
+              warper->reprojModelToLatLon(modelXLon, modelYLon);
+              warper->reprojModelToLatLon(modelXLat, modelYLat);
               //              if (y==0) { CDBDebug("modelXY[%d,%d] {%d} (%f, %f) (%f,%f) (%f,%f) =>", x, y, gridRelative, modelX, modelY, modelXLon, modelYLon, modelXLat, modelYLat);}
               double distLon=hypot(modelXLon-modelX, modelYLon-modelY);
               double distLat=hypot(modelXLat-modelX, modelYLat-modelY);
@@ -341,8 +360,166 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
               uValues[p]=uu*magnitude/newMagnitude;
               vValues[p]=vv*magnitude/newMagnitude;
               //           if (y==0) {CDBDebug("==> (%f,%f)",uValues[p], vValues[p]);}  
+#else
+              double lon_pnt0, lat_pnt0;
+              double lon_pntEast, lat_pntEast;
+              double lon_pntNorth, lat_pntNorth;
+              double dLatNorth, dLonNorth;
+              double xpntEastSph,ypntEastSph;
+              double xpntNorthSph, ypntNorthSph, zpntNorthSph;
+              double xpntNorthSphRot, ypntNorthSphRot, zpntNorthSphRot;    
+              double xpnt0Sph, ypnt0Sph, zpnt0Sph;
+              double xnormSph, ynormSph, znormSph;
+              double xncross,  yncross,  zncross;
+              double vecAngle;
+              double VJaa,VJab,VJba,VJbb;
+              double u,v;
+              double magnitude, newMagnitude;
+              double uu;
+              double vv;
+#define radians(aDeg) (deg2rad*aDeg)
+#define NormVector(vec0,vec1,vec2) {\
+    double vecLen = sqrt(vec0*vec0 + vec1*vec1 + vec2*vec2);\
+    vec0 = vec0/vecLen; vec1 = vec1/vecLen; vec2 = vec2/vecLen; }
+    
+#define CrossProd(vecx0,vecx1,vecx2, vecy0,vecy1,vecy2, vecz0,vecz1,vecz2) {\
+    vecz0 = vecx1*vecy2 - vecy1*vecx2;\
+    vecz1 = vecx2*vecy0 - vecy2*vecx0;\
+    vecz2 = vecx0*vecy1 - vecy0*vecx1; }
+    
+//              for ( j = 0; j < ny; j++ ) {
+//                for ( i = 0; i < nx; i++ ) {
+              lon_pnt0=dfSourcedExtW*double(x)+dfSourceOrigX;
+              lat_pnt0=dfSourcedExtH*double(y)+dfSourceOrigY;
+#ifdef ORG
+              lon_pntEast=lon_pnt0+dfSourcedExtW;
+              lat_pntEast=lat_pnt0;
+              lon_pntNorth=lon_pnt0;
+               if (dfSourceExtH<0) 
+                 lat_pntNorth=lat_pnt0-dfSourcedExtH;
+               else
+                 lat_pntNorth=lat_pnt0+dfSourcedExtH;
+#else
+              lon_pntEast=lon_pnt0+fabs(dfSourcedExtW);
+              lat_pntEast=lat_pnt0;
+              lon_pntNorth=lon_pnt0;
+              lat_pntNorth=lat_pnt0+fabs(dfSourcedExtH);
+#endif
+              warper->reprojModelToLatLon(lon_pnt0, lat_pnt0);
+              warper->reprojModelToLatLon(lon_pntNorth, lat_pntNorth);
+              warper->reprojModelToLatLon(lon_pntEast, lat_pntEast);
               
-            } else {
+              // (lon_pntNorth, lat_pntNorth)
+              //     ^
+              //     |       (lon_pntCenter, lat_pntCenter)   center of the cell-diagonal
+              //     |
+              // (lon_pnt0,lat_pnt0) ----> (lon_pntEast,lat_pntEast)
+              
+              //lon_pntCenter = 0.5*(lon_pntNorth + lon_pntEast);
+              //lat_pntCenter = 0.5*(lat_pntNorth + lat_pntEast);
+              //lon_pnt0 -= lon_pntCenter; lon_pntEast -= lon_pntCenter; lon_pntNorth -= lon_pntCenter; 
+              //lat_pnt0 -= lat_pntCenter; lat_pntEast -= lat_pntCenter; lat_pntNorth -= lat_pntCenter; 
+              
+              // This is the local coordinate system of a grid cell where we have (u,v) at location (xpnt0,ypnt0).
+              
+              // The local coordinate system is now centered around (lon_pnt0,lat_pnt0)
+              // The vector towards north pole at this location will be (0,1,0)
+              // The tangent plane at this location is XY wil a normal (0, 0, 1)
+              
+              // Nummerical approach using projection onto a unit sphere
+              dLonNorth = radians(lon_pntNorth); dLatNorth = radians(lat_pntNorth);
+              xpntNorthSph = cos(dLatNorth) * cos(dLonNorth);
+              ypntNorthSph = cos(dLatNorth) * sin(dLonNorth); // # Get [dLonNorth,dLatNorth] on the unit sphere.
+              zpntNorthSph = sin(dLatNorth);                   //# Only XY plane is needed.
+                            
+              lon_pnt0 = radians(lon_pnt0); lat_pnt0 = radians(lat_pnt0);
+              xpnt0Sph = cos(lat_pnt0) * cos(lon_pnt0);
+              ypnt0Sph = cos(lat_pnt0) * sin(lon_pnt0);   // # Get [lon_pnt0,lat_pnt0] on the unit sphere.
+              zpnt0Sph = sin(lat_pnt0);                   // # Only XY plane is needed.
+              
+              xpntNorthSph-= xpnt0Sph, ypntNorthSph-= ypnt0Sph; zpntNorthSph-= zpnt0Sph;
+            
+              NormVector( xpntNorthSph, ypntNorthSph, zpntNorthSph );  // vecy
+              
+
+              xnormSph = xpnt0Sph;  ynormSph = ypnt0Sph; znormSph = zpnt0Sph;
+              NormVector( xnormSph, ynormSph, znormSph );  // normal vector to the sphere at the point pnt0Sph
+              //# vecn = (0.0,0.0,1.0)                   // up-vector in a global coordinate system
+              //# Project vecn onto plane XY, where plane-normal is vecz
+              //# vecnProjXY = vecn - D*vecz;   D= a*x1+b*y1+c*z1;  vecz=(a,b,c); vecn=(x1,y1,z1)=(0,0,1)
+              //#                               D= vecz[2]*1;
+              //# vecyRot = NormVector( (0.0 - vecz[2]*vecz[0],0.0  - vecz[2]*vecz[1], 1.0  - vecz[2]*vecz[2]) )
+
+              //double Dist =  xnormSph * 0.0 +  ynormSph * 0.0 + znormSph * 1.0; // Left out for optimization
+              xpntNorthSphRot =     - znormSph*xnormSph;  // xpntNorthSphRot = 0.0 - Dist*xnormSph;
+              ypntNorthSphRot =     - znormSph*ynormSph;  // ypntNorthSphRot = 0.0 - Dist*ynormSph;
+              zpntNorthSphRot = 1.0 - znormSph*znormSph;  // zpntNorthSphRot = 1.0 - Dist*znormSph;
+              NormVector(xpntNorthSphRot, ypntNorthSphRot, zpntNorthSphRot);
+              
+              // This would create in 3D the rotated Easting vector; but we don't need it in this routine.
+              // Left out to optimize computation
+              // CrossProd( xpntNorthSphRot, ypntNorthSphRot, zpntNorthSphRot, xnormSph, ynormSph, znormSph,
+              //            xpntEastSph,  ypntEastSphRot,  zpntEastSphRot ); //vecxRot = CrossProd(vecy,vecz)
+              
+              vecAngle = acos( (xpntNorthSph*xpntNorthSphRot + ypntNorthSph*ypntNorthSphRot + zpntNorthSph*zpntNorthSphRot) ) ;
+              // Determine the sign of the angle
+              CrossProd( xpntNorthSphRot, ypntNorthSphRot, zpntNorthSphRot, xpntNorthSph, ypntNorthSph, zpntNorthSph,\
+                        xncross,  yncross,  zncross); 
+              if ( (xncross*xnormSph + yncross*ynormSph + zncross*znormSph) > 0.0)  // dotProduct
+                  vecAngle *=-1.0;
+              
+              xpntNorthSph = sin(vecAngle);    // Rotate the point/vector (0,1) around Z-axis with vecAngle
+              ypntNorthSph = cos(vecAngle);
+              xpntEastSph  =   ypntNorthSph;   // Rotate the same point/vector around Z-axis with 90 degrees
+              ypntEastSph  =  -xpntNorthSph;
+              
+              //zpntNorthSph = 0; zpntEastSph = 0;  // not needed in 2D
+              
+              // 1) Build the rotation matrix and put the axes-base vectors into the matrix
+              VJaa = xpntEastSph ;
+              VJab = xpntNorthSph;
+              VJba = ypntEastSph ;
+              VJbb = ypntNorthSph; 
+              
+
+//                   if ( (x<3) && (y<3) )
+//                   {
+//                       CDBDebug("grid point [%03d,%03d] with latlon[%3.6f,%3.6f]; (lon_pntNorth, lat_pntNorth) = [%3.6f,%3.6f]; dLonNorth=%3.6f; dLatNorth=%3.6f (Northing grid relative) ",\
+//                               x,y, rad2deg*lon_pnt0, rad2deg*lat_pnt0,lon_pntNorth, lat_pntNorth, rad2deg*dLonNorth, rad2deg*dLatNorth );
+//                     CDBDebug("grid point [%03d,%03d] with latlon[%3.6f,%3.6f]; (lon_pntEast,lat_pntEast    )= [%3.6f,%3.6f]; dLonEast =%3.6f; dLatEast =%3.6f (Easting grid relative ) ",\
+//                               x,y, rad2deg*lon_pnt0, rad2deg*lat_pnt0,lon_pntEast,lat_pntEast, rad2deg*dLonEast, rad2deg*dLatEast );
+//                       //cdoPrint("(xpntNorthSph, ypntNorthSph)= [%3.6f,%3.6f]; (xpntEastSph,ypntEastSph) = [%3.6f,%3.6f];",\
+//                       //         xpntNorthSph, ypntNorthSph, xpntEastSph,ypntEastSph );
+//                       //vecAngle = rad2deg * acos( (xpntEastSph*xpntNorthSph + ypntEastSph*ypntNorthSph + zpntEastSph*zpntNorthSph) );
+//                       vecAngle = rad2deg * acos( (xpntEastSph*xpntNorthSph + ypntEastSph*ypntNorthSph) );
+//                       CDBDebug("(xpntNorthSph, ypntNorthSph, zpntNorthSph)= [%3.6f,%3.6f,%3.6f]; (xpntEastSph,ypntEastSph, zpntEastSph) = [%3.6f,%3.6f,%3.6f]; vecAngle= %3.6f",\
+//                               xpntNorthSph, ypntNorthSph, zpntNorthSph, xpntEastSph, ypntEastSph, zpntEastSph, vecAngle );
+//                       CDBDebug("rotation matrix for grid point [%03d,%03d] with latlon[%3.6f,%3.6f]: (VJaa, VJab, VJba, VJbb) = (%3.6f,%3.6f,%3.6f,%3.6f)",\
+//                               x,y, rad2deg*lon_pnt0, rad2deg*lat_pnt0, VJaa, VJab, VJba, VJbb);
+//                   }
+                      
+
+              // 2) Transform the UV vector with jacobian matrix
+              u = uValues[p]; v=vValues[p];
+//              u = 0.0;  v = 6.0; // test: 6 m/s along the easting direction of the grid
+              magnitude=hypot(u, v);  // old vector magnitude in the model space
+              //(uu) =   (VJaa VJab) * ( u )
+              //(vv)     (VJba VJbb)   ( v )
+              uu = VJaa*u+VJab*v;
+              vv = VJba*u+VJbb*v;
+              //(uu) =   (VJaa VJab VJac) * ( u )
+              //(vv)     (VJba VJbb VJbc)   ( v )
+              //(ww)     (VJba VJbb VJcc)   ( w )
+
+              // 3) Apply scaling of the vector so that the vector keeps the original length (model space)
+              newMagnitude = hypot(uu, vv);
+              uValues[p] = uu*magnitude/newMagnitude;
+              vValues[p] = vv*magnitude/newMagnitude;
+//                } 
+//              }    
+#endif              
+            } //else {
+//#ifdef ORIGINAL_JACO
               warper->reprojModelToLatLon(modelX, modelY); // model to latlon proj.
               modelXLon=modelX+deltaLon; // latlons
               modelYLon=modelY;
@@ -364,7 +541,7 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
               VJab=(modelXLat-modelX)/distLat;
               VJba=(modelYLon-modelY)/distLon;
               VJbb=(modelYLat-modelY)/distLat;
-              
+            
 //              if (y==0) { CDBDebug("jaco: %f,%f,%f,%f\n", VJaa, VJab, VJba, VJbb);}
               
               double magnitude=hypot(uValues[p], vValues[p]);
@@ -377,14 +554,15 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
               uu = VJaa*uValues[p]+VJab*vValues[p];
               vv = VJba*uValues[p]+VJbb*vValues[p];              
               
-              //           if (y==0) {CDBDebug("(%f, %f) ==> (%f,%f)", uValues[p], vValues[p], uu, vv);}
+//                         if (y==0) {CDBDebug("(%f, %f) ==> (%f,%f) [%f,%f,%f,%f]", uValues[p], vValues[p], uu, vv, VJaa,VJab,VJba,VJbb);}
               double newMagnitude = hypot(uu, vv);
               uValues[p]=uu*magnitude/newMagnitude;
               vValues[p]=vv*magnitude/newMagnitude;
               //           if (y==0) {CDBDebug("==> (%f,%f)",uValues[p], vValues[p]);}    
               //              uValues[p]=6;
               //              vValues[p]=0;
-      }
+//#endif
+//      }
 }
 }
 }
@@ -590,12 +768,16 @@ bool convertToKnots=false; //default is false
 } 
 
 if(((enableVector||enableBarb)&&drawGridVectors)){
-  int wantedSpacing=30;
-  int distPoint=int(hypot(dpDestX[1]-dpDestX[0], dpDestY[1]-dpDestY[0]));
+  int wantedSpacing=40;
+//  int distPoint=int(hypot(dpDestX[1]-dpDestX[0], dpDestY[1]-dpDestY[0]));
+//  int distPoint=int(hypot(dpDestX[numDestPixels/2+1]-dpDestX[numDestPixels/2], dpDestY[numDestPixels/2+1]-dpDestY[numDestPixels/2]));
+  float distPoint=hypot(dpDestX[numDestPixels/2+1]-dpDestX[numDestPixels/2], dpDestY[numDestPixels/2+1]-dpDestY[numDestPixels/2]);
   
   int stepx=int(float(wantedSpacing)/distPoint+0.5);
   if (stepx<1) stepx=1;
   int stepy=stepx;
+  CDBDebug("Vector thinning: %d %d (%d,%f)", stepx, stepy, wantedSpacing, distPoint);
+  CDBDebug("<%d>%f,%f %f,%f",numDestPixels/2 , dpDestX[numDestPixels/2], dpDestX[numDestPixels/2+1], dpDestY[numDestPixels/2], dpDestY[numDestPixels/2+1]);
   if(sourceImage->dataObject.size()==2){
     //bool doprint=true;
     for(int y=dPixelExtent[1];y<dPixelExtent[3];y=y+stepy){ //TODO Refactor to GridExtent
@@ -1167,7 +1349,7 @@ delete[] valObj;
        
        delete[] distance;
        #ifdef CImgWarpBilinear_DEBUG
-       CDBDebug("Finisched drawing lines and text");
+       CDBDebug("Finished drawing lines and text");
        #endif
        
      }

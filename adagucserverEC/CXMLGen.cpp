@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 #include "CXMLGen.h"
-//#define CXMLGEN_DEBUG
+#define CXMLGEN_DEBUG
 
 const char *CFile::className="CFile";
 
