@@ -51,4 +51,21 @@ void CCairoPlotter::pixelBlend(int x,int y, unsigned char r,unsigned char g,unsi
     }
     
   }
+  
+    void CCairoPlotter::pixel(int x,int y, unsigned char r,unsigned char g,unsigned char b,unsigned char a){
+    if(x<0||y<0)return;
+    if(x>=width||y>=height)return;
+    size_t p=x*4+y*stride;
+    if(a!=255){
+    ARGBByteBuffer[p]=(float(b)/256.0)*float(a);
+    ARGBByteBuffer[p+1]=(float(g)/256.0)*float(a);
+    ARGBByteBuffer[p+2]=(float(r)/256.0)*float(a);
+    ARGBByteBuffer[p+3]=a;
+    }else{
+      ARGBByteBuffer[p]=b;
+    ARGBByteBuffer[p+1]=g;
+    ARGBByteBuffer[p+2]=r;
+    ARGBByteBuffer[p+3]=255;
+    }
+  }
 #endif

@@ -7,9 +7,12 @@ class CServerConfig:public CXMLSerializerInterface{
   public:
     class XMLE_palette: public CXMLObjectInterface{
       public:
+        XMLE_palette(){
+          attr.alpha=255;
+        }
         class Cattr{
           public:
-            int min,max,index,red,green,blue;
+            int min,max,index,red,green,blue,alpha;
         }attr;
         void addAttribute(const char *name,const char *value){
           if(     equals("min",3,name)){attr.min=parseInt(value);return;}
@@ -17,12 +20,17 @@ class CServerConfig:public CXMLSerializerInterface{
           else if(equals("red",3,name)){attr.red=parseInt(value);return;}
           else if(equals("blue",4,name)){attr.blue=parseInt(value);return;}
           else if(equals("green",5,name)){attr.green=parseInt(value);return;}
+          else if(equals("alpha",5,name)){attr.alpha=parseInt(value);return;}
           else if(equals("index",5,name)){attr.index=parseInt(value);return;}
           else if(equals("color",5,name)){//Hex color like: #A41D23
-            if(value[0]=='#')if(strlen(value)==7){
+            if(value[0]=='#')if(strlen(value)==7||strlen(value)==9){
+              
               attr.red  =((value[1]>64)?value[1]-55:value[1]-48)*16+((value[2]>64)?value[2]-55:value[2]-48);
               attr.green=((value[3]>64)?value[3]-55:value[3]-48)*16+((value[4]>64)?value[4]-55:value[4]-48);
               attr.blue =((value[5]>64)?value[5]-55:value[5]-48)*16+((value[6]>64)?value[6]-55:value[6]-48);
+              if(strlen(value)==9){
+                attr.alpha =((value[7]>64)?value[7]-55:value[7]-48)*16+((value[8]>64)?value[8]-55:value[8]-48);
+              }
             }
             return;
           }

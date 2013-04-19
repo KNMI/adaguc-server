@@ -187,7 +187,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *s
     }
     
     if(cache.saveCacheFile()){
-      int status = cache.claimCacheFile();
+      cache.claimCacheFile();
     }
   }
 

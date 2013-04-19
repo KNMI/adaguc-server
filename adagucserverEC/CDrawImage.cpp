@@ -484,7 +484,6 @@ void CDrawImage::setPixelIndexed(int x,int y,int color){
   
   if(_bEnableTrueColor==true){
     if(currentLegend==NULL)return;
-    
     //if(color>=0&&color<256){
       if(currentLegend->CDIalpha[color]==255){
 #ifdef ADAGUC_USE_CAIRO
@@ -493,6 +492,16 @@ void CDrawImage::setPixelIndexed(int x,int y,int color){
 #else
     wuLine-> pixel(x,y,currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color]);
 #endif
+      }else{
+        if(currentLegend->CDIalpha[color]>0){
+          #ifdef ADAGUC_USE_CAIRO
+              //cairo->setColor(currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],255);
+              cairo-> pixel(x,y,currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],currentLegend->CDIalpha[color]);
+          #else
+              wuLine-> pixel(x,y,currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],currentLegend->CDIalpha[color]);
+          #endif
+
+        }
       }
     //}
   }else{
@@ -879,7 +888,7 @@ int CDrawImage::createGDPalette(CServerConfig::XMLE_Legend *legend){
   if(legend->attr.type.equals("colorRange")){
     int controle=0;
     float cx;
-    float rc[3];
+    float rc[4];
     for(size_t j=0;j<legend->palette.size()-1&&controle<240;j++){
       if(legend->palette[j]->attr.index>255)legend->palette[j]->attr.index=255;
       if(legend->palette[j]->attr.index<0)  legend->palette[j]->attr.index=0;
@@ -890,18 +899,25 @@ int CDrawImage::createGDPalette(CServerConfig::XMLE_Legend *legend){
       rc[0]=float(legend->palette[j+1]->attr.red  -legend->palette[j]->attr.red)/dif;
       rc[1]=float(legend->palette[j+1]->attr.green-legend->palette[j]->attr.green)/dif;
       rc[2]=float(legend->palette[j+1]->attr.blue -legend->palette[j]->attr.blue)/dif;
+      rc[3]=float(legend->palette[j+1]->attr.alpha -legend->palette[j]->attr.alpha)/dif;
 
   
       for(int i=legend->palette[j]->attr.index;i<legend->palette[j+1]->attr.index&&controle<240;i++){
         if(i!=controle){CDBError("Invalid color table");return 1;}
         cx=float(controle-legend->palette[j]->attr.index);
-        currentLegend->CDIred[controle]=int(rc[0]*cx)+legend->palette[j]->attr.red;
+        currentLegend->CDIred[controle]  =int(rc[0]*cx)+legend->palette[j]->attr.red;
         currentLegend->CDIgreen[controle]=int(rc[1]*cx)+legend->palette[j]->attr.green;
-        currentLegend->CDIblue[controle]=int(rc[2]*cx)+legend->palette[j]->attr.blue;
+        currentLegend->CDIblue[controle] =int(rc[2]*cx)+legend->palette[j]->attr.blue;
+        currentLegend->CDIalpha[controle]=int(rc[3]*cx)+legend->palette[j]->attr.alpha;
         if(currentLegend->CDIred[i]==0)currentLegend->CDIred[i]=1;//for transparency
         controle++;
       }
     }
+    
+    for(int j=0;j<240;j++){
+      CDBDebug("%d %d %d %d",currentLegend->CDIred[j],currentLegend->CDIgreen[j],currentLegend->CDIblue[j],currentLegend->CDIalpha[j]);
+    }
+    
     return _createStandard();
   }
   if(legend->attr.type.equals("interval")){
@@ -911,6 +927,7 @@ int CDrawImage::createGDPalette(CServerConfig::XMLE_Legend *legend){
           currentLegend->CDIred[i]=legend->palette[j]->attr.red;
           currentLegend->CDIgreen[i]=legend->palette[j]->attr.green;
           currentLegend->CDIblue[i]=legend->palette[j]->attr.blue;
+          currentLegend->CDIalpha[i]=legend->palette[j]->attr.alpha;
           if(currentLegend->CDIred[i]==0)currentLegend->CDIred[i]=1;//for transparency
         }
       }
