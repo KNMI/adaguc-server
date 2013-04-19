@@ -481,22 +481,6 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
               VJba = ypntEastSph ;
               VJbb = ypntNorthSph; 
               
-
-//                   if ( (x<3) && (y<3) )
-//                   {
-//                       CDBDebug("grid point [%03d,%03d] with latlon[%3.6f,%3.6f]; (lon_pntNorth, lat_pntNorth) = [%3.6f,%3.6f]; dLonNorth=%3.6f; dLatNorth=%3.6f (Northing grid relative) ",\
-//                               x,y, rad2deg*lon_pnt0, rad2deg*lat_pnt0,lon_pntNorth, lat_pntNorth, rad2deg*dLonNorth, rad2deg*dLatNorth );
-//                     CDBDebug("grid point [%03d,%03d] with latlon[%3.6f,%3.6f]; (lon_pntEast,lat_pntEast    )= [%3.6f,%3.6f]; dLonEast =%3.6f; dLatEast =%3.6f (Easting grid relative ) ",\
-//                               x,y, rad2deg*lon_pnt0, rad2deg*lat_pnt0,lon_pntEast,lat_pntEast, rad2deg*dLonEast, rad2deg*dLatEast );
-//                       //cdoPrint("(xpntNorthSph, ypntNorthSph)= [%3.6f,%3.6f]; (xpntEastSph,ypntEastSph) = [%3.6f,%3.6f];",\
-//                       //         xpntNorthSph, ypntNorthSph, xpntEastSph,ypntEastSph );
-//                       //vecAngle = rad2deg * acos( (xpntEastSph*xpntNorthSph + ypntEastSph*ypntNorthSph + zpntEastSph*zpntNorthSph) );
-//                       vecAngle = rad2deg * acos( (xpntEastSph*xpntNorthSph + ypntEastSph*ypntNorthSph) );
-//                       CDBDebug("(xpntNorthSph, ypntNorthSph, zpntNorthSph)= [%3.6f,%3.6f,%3.6f]; (xpntEastSph,ypntEastSph, zpntEastSph) = [%3.6f,%3.6f,%3.6f]; vecAngle= %3.6f",\
-//                               xpntNorthSph, ypntNorthSph, zpntNorthSph, xpntEastSph, ypntEastSph, zpntEastSph, vecAngle );
-//                       CDBDebug("rotation matrix for grid point [%03d,%03d] with latlon[%3.6f,%3.6f]: (VJaa, VJab, VJba, VJbb) = (%3.6f,%3.6f,%3.6f,%3.6f)",\
-//                               x,y, rad2deg*lon_pnt0, rad2deg*lat_pnt0, VJaa, VJab, VJba, VJbb);
-//                   }
                       
 
               // 2) Transform the UV vector with jacobian matrix

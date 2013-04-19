@@ -344,7 +344,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
   int dateDimIndex=dataSource->getDimensionIndex("time");
   
   int numStations=pointVar[0]->dimensionlinks[0]->getSize();
-  int numDates=pointVar[0]->dimensionlinks[1]->getSize();
+  //int numDates=pointVar[0]->dimensionlinks[1]->getSize();
   int numDims = 2;
   #ifdef CCONVERTADAGUCPOINT_DEBUG
     CDBDebug("numStations %d ",numStations);

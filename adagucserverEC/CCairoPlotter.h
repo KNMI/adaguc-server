@@ -410,6 +410,8 @@ public:
     ARGBByteBuffer[p+3]=255;
   }
   
+   void pixel(int x,int y, unsigned char r,unsigned char g,unsigned char b,unsigned char a);
+  
   void getPixel(int x,int y, unsigned char &r,unsigned char &g,unsigned char &b,unsigned char &a){
     if(x<0||y<0||x>=width||y>=height){
       r=0;b=0;g=0;a=0;
@@ -495,9 +497,9 @@ public:
     cairo_set_line_width(cr, width);
     cairo_stroke(cr);
   }
-  cairo_status_t writeToPng(const char* fileName) {
+  /*cairo_status_t writeToPng(const char* fileName) {
     return cairo_surface_write_to_png(surface, fileName);
-  }
+  }*/
 
   void circle(int x, int y, int r) {
     cairo_arc(cr, x, y, r, 0, 2*M_PI);
