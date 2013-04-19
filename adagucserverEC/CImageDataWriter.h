@@ -2,7 +2,6 @@
 #define CImageDataWriter_H
 #include <string>
 #include <map>
-#include "CDebugger.h"
 #include "Definitions.h"
 #include "CStopWatch.h"
 #include "CIBaseDataWriterInterface.h"
@@ -12,6 +11,8 @@
 #include "CImgWarpBoolean.h"
 #include "CImgRenderPoints.h"
 #include "CMyCURL.h"
+#include "CXMLParser.h"
+#include "CDebugger.h"
 
 //Possible rendermethods
 #define RM_UNDEFINED   0
@@ -38,6 +39,7 @@ class CImageDataWriter: public CBaseDataWriterInterface{
       double lonX,lonY;
       int imx,imy;
       int dWidth,dHeight;
+      double dX,dY;
     };
     static std::map<std::string,CImageDataWriter::ProjCacheInfo> projCacheMap;
     static std::map<std::string,CImageDataWriter::ProjCacheInfo>::iterator projCacheIter;
