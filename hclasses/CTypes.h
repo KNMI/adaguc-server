@@ -233,6 +233,8 @@ class string:public basetype{
     
     void concat(const CT::string*_string){concat(_string->value,_string->privatelength);}
     
+    void concat(const CT::string _string){concat(_string.value,_string.privatelength);}
+    
     void concat(const char*_value,size_t len);
     
     void concat(const char*_value){if(_value==NULL)return;concat(_value,strlen(_value));};

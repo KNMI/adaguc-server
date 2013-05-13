@@ -9,7 +9,7 @@ CServerParams::CServerParams(){
   OGCVersion=-1;
 
   Transparent=false;
-  enableDocumentCache=true;
+  enableDocumentCache=false;
   configObj = new CServerConfig();
   Geo = new CGeoParams;
   imageFormat=IMAGEFORMAT_IMAGEPNG8;
@@ -102,15 +102,54 @@ void CServerParams::getCacheDirectory(CT::string *cacheFileName){
   cacheFileName->concat(&cacheName);
 }
 
+#include <ctime>
+#include <sys/time.h>
+const CT::string randomString(const int len) {
+    char s[len+1];
+    
+    timeval curTime;
+    gettimeofday(&curTime, NULL);
+    srand((curTime.tv_sec * 1000) + (curTime.tv_usec / 1000));
+    
+    static const char alphanum[] =
+        "0123456789"
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz";
+
+    for (int i = 0; i < len; ++i) {
+        s[i] = alphanum[rand() % (sizeof(alphanum) - 1)];
+    }
+
+    s[len] = 0;
+    CT::string r=s;
+    return r;
+}
+
+CT::string currentDateTime() {
+    timeval curTime;
+    gettimeofday(&curTime, NULL);
+    int milli = curTime.tv_usec / 1000;
+
+    char buffer [80];
+    strftime(buffer, 80, "%Y-%m-%dT%H:%M:%S", localtime(&curTime.tv_sec));
+
+    char currentTime[84] = "";
+    sprintf(currentTime, "%s:%dZ", buffer, milli);
+   
+
+    return currentTime;
+}
 
 int CServerParams::lookupTableName(CT::string *tableName,const char *path,const char *filter){
+  
+ 
   // This makes use of a lookup table to find the tablename belonging to the filter and path combinations.
   // Database collumns: path filter tablename
   
   CT::string filterString="FILTER_";filterString.concat(filter);
   CT::string pathString="PATH_";pathString.concat(path);
   CT::string lookupTableName = "pathfiltertablelookup";
-  CT::string tableColumns("path varchar (511), filter varchar (255), tablename varchar (255)");
+  CT::string tableColumns("path varchar (511), filter varchar (255), tablename varchar (255), UNIQUE (path,filter) ");
   CT::string mvRecordQuery;
   int status;
   CPGSQLDB DB;
@@ -126,7 +165,8 @@ int CServerParams::lookupTableName(CT::string *tableName,const char *path,const 
   //if(status == 2){CDBDebug("OK: Table %s is created",lookupTableName.c_str());  }
 
   
-  //Check wether a table exists with this path and filter combination.
+  //Check wether a records exists with this path and filter combination.
+  
   bool lookupTableIsAvailable=false;
   mvRecordQuery.print("SELECT * FROM %s where path=E'%s' and filter=E'%s'",lookupTableName.c_str(),pathString.c_str(),filterString.c_str());
   CDB::Store *rec = DB.queryToStore(mvRecordQuery.c_str()); 
@@ -137,19 +177,24 @@ int CServerParams::lookupTableName(CT::string *tableName,const char *path,const 
   }
   if(rec->getSize()>1){
     CDBError("Path filter combination has more than 1 lookuptable");
+    delete rec;
+    DB.close();
     return 1;
   }
   delete rec;
   
   //Add a new lookuptable with an unique id.
   if(lookupTableIsAvailable==false){
-    mvRecordQuery.print("SELECT COUNT(*) FROM %s",lookupTableName.c_str());
-    rec = DB.queryToStore(mvRecordQuery.c_str()); 
-    if(rec==NULL){CDBError("Unable to count records: \"%s\"",mvRecordQuery.c_str());DB.close();return 1;  }
-    int numRecords=rec->getRecord(0)->get(0)->toInt();
-    delete rec;
-    tableName->print("ID_%d",numRecords);
+    CT::string randomTableString = "table";
+    randomTableString.concat(currentDateTime());
+    randomTableString.concat(randomString(20));
+    randomTableString.replaceSelf(":","");
+    randomTableString.replaceSelf("-","");
+    randomTableString.replaceSelf("Z",""); 
+    
+    tableName -> copy(randomTableString.c_str());
     mvRecordQuery.print("INSERT INTO %s values (E'%s',E'%s',E'%s')",lookupTableName.c_str(),pathString.c_str(),filterString.c_str(),tableName->c_str());
+    CDBDebug("%s",mvRecordQuery.c_str());
     status = DB.query(mvRecordQuery.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",mvRecordQuery.c_str());DB.close();return 1;  }
   }
   //Close the database

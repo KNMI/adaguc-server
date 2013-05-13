@@ -914,9 +914,9 @@ int CDrawImage::createGDPalette(CServerConfig::XMLE_Legend *legend){
       }
     }
     
-    for(int j=0;j<240;j++){
+    /*for(int j=0;j<240;j++){
       CDBDebug("%d %d %d %d",currentLegend->CDIred[j],currentLegend->CDIgreen[j],currentLegend->CDIblue[j],currentLegend->CDIalpha[j]);
-    }
+    }*/
     
     return _createStandard();
   }
