@@ -1678,8 +1678,8 @@ int CRequest::process_querystring(){
       if(srvParam->cfg->CacheDocs.size()==0){
         srvParam->cfg->CacheDocs.push_back(new CServerConfig::XMLE_CacheDocs());
       }
-      srvParam->cfg->CacheDocs[0]->attr.enabled.copy("true");
-      srvParam->enableDocumentCache=true;
+      //srvParam->cfg->CacheDocs[0]->attr.enabled.copy("true");
+      //srvParam->enableDocumentCache=true;
       
        CT::string validFileName(srvParam->internalAutoResourceLocation.c_str());
       //Replace : and / by nothing, so we can use the string as a directory name
@@ -1840,6 +1840,10 @@ int CRequest::process_querystring(){
       if(serverComments.length()>0){serverAbstract.printconcat("Comments: %s.\n",serverComments.c_str());}
       if(serverDisclaimer.length()>0){serverAbstract.printconcat("Disclaimer: %s.\n",serverDisclaimer.c_str());}
 
+      //Replace invalid XML tokens with valid ones
+      serverAbstract.replaceSelf("@" ," at ");
+      serverAbstract.replaceSelf("<" ,"[");
+      serverAbstract.replaceSelf(">" ,"]");
      
       if(serverAbstract.length()>0){
         if(srvParam->cfg->WMS.size()>0){

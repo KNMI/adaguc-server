@@ -47,6 +47,7 @@ bool CDBFileScanner::isTableAlreadyScanned(CT::string *tableName){
  * @return Positive on error, zero on succes, negative on skip.
  */
 int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,int &removeNonExistingFiles,CDirReader *dirReader){
+ ;
   int status = 0;
   CT::string query;
   
@@ -616,7 +617,7 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
       
       //If this is another directory we will simply ignore it.
       if(layerPath.equals(&layerPathToScan)==false){
-        CDBError("Skipping %s==%s\n",layerPath.c_str(),layerPathToScan.c_str());
+        //CDBError("Skipping %s==%s\n",layerPath.c_str(),layerPathToScan.c_str());
         return 0;
       }
     }
