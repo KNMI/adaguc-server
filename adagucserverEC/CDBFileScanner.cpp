@@ -66,9 +66,13 @@ int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,in
     if(dimName.indexOf("time")!=-1)isTimeDim=true;
     
     //Create database tableNames
-    CT::string tableName(dataSource->cfgLayer->DataBaseTable[0]->value.c_str());
-    CServerParams::makeCorrectTableName(&tableName,&dimName);
-    
+    CT::string tableName;
+    try{
+      tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
+    }catch(int e){
+      CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
+      return 1;
+    }
 
 
     //Check whether we already did this table in this scan
@@ -229,8 +233,17 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
         tableColumns[d].printconcat(", %s varchar (16), dim%s int",dimNames[d].c_str(),dimNames[d].c_str());
       }*/
       //Create database tableNames
-      tableNames[d].copy(dataSource->cfgLayer->DataBaseTable[0]->value.c_str());
-      CServerParams::makeCorrectTableName(&(tableNames[d]),&(dimNames[d]));
+      //tableNames[d].copy(dataSource->cfgLayer->DataBaseTable[0]->value.c_str());
+      //CServerParams::makeCorrectTableName(&(tableNames[d]),&(dimNames[d]));
+      
+      
+      try{
+        tableNames[d] = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimNames[d].c_str());
+      }catch(int e){
+        CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimNames[d].c_str());
+        return 1;
+      }
+      
       //Create temporary tableName
       tableNames_temp[d].copy(&(tableNames[d]));
       if(removeNonExistingFiles==1){
@@ -688,8 +701,15 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
       //Rename the table to the correct one (remove _temp)
       for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
         CT::string dimName(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
-        CT::string tableName(dataSource->cfgLayer->DataBaseTable[0]->value.c_str());
-        CServerParams::makeCorrectTableName(&tableName,&dimName);
+
+        CT::string tableName;
+        try{
+          tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
+        }catch(int e){
+          CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
+          return 1;
+        }
+          
         bool skip = isTableAlreadyScanned(&tableName);
         //bool skip = false;
         if(skip == false){

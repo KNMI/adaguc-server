@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 #include "CXMLGen.h"
-//#define CXMLGEN_DEBUG
+#define CXMLGEN_DEBUG
 
 const char *CFile::className="CFile";
 
@@ -73,12 +73,20 @@ CDBDebug("getFileNameForLayer");
       }
 
       //Find the first occuring filename.
-      CT::string tableName(myWMSLayer->layer->DataBaseTable[0]->value.c_str());
-      #ifdef CXMLGEN_DEBUG        
-      CDBDebug("Dimension: %s",myWMSLayer->layer->Dimension[0]->attr.name.c_str());
-      #endif      
+      CT::string tableName;
       CT::string dimName(myWMSLayer->layer->Dimension[0]->attr.name.c_str());
-      CServerParams::makeCorrectTableName(&tableName,&dimName);
+      try{
+        tableName = srvParam->lookupTableName(myWMSLayer->layer->FilePath[0]->value.c_str(),myWMSLayer->layer->FilePath[0]->attr.filter.c_str(),dimName.c_str());
+      }catch(int e){
+        CDBError("Unable to create tableName from '%s' '%s' '%s'",myWMSLayer->layer->FilePath[0]->value.c_str(),myWMSLayer->layer->FilePath[0]->attr.filter.c_str(),dimName.c_str());
+        return 1;
+      }
+
+      
+      
+      
+      
+      
       CT::string query;
       query.print("select path from %s limit 1",tableName.c_str());
       #ifdef CXMLGEN_DEBUG              
@@ -327,10 +335,15 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
       //Create a new dim to store in the layer
       WMSLayer::Dim *dim=new WMSLayer::Dim();myWMSLayer->dimList.push_back(dim);
       //Get the tablename
-      CT::string tableName(myWMSLayer->layer->DataBaseTable[0]->value.c_str());
-      CT::string dimName(pszDimName);
-      CServerParams::makeCorrectTableName(&tableName,&dimName);
-            
+      CT::string tableName;
+      try{
+        tableName = srvParam->lookupTableName(myWMSLayer->layer->FilePath[0]->value.c_str(),myWMSLayer->layer->FilePath[0]->attr.filter.c_str(),pszDimName);
+      }catch(int e){
+        CDBError("Unable to create tableName from '%s' '%s' '%s'",myWMSLayer->layer->FilePath[0]->value.c_str(),myWMSLayer->layer->FilePath[0]->attr.filter.c_str(), pszDimName);
+        return 1;
+      }
+      
+      
       bool hasMultipleValues=false;
       bool isTimeDim=false;
       if(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.c_str()==NULL){

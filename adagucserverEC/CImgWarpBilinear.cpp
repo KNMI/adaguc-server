@@ -13,7 +13,7 @@
 #define  deg2rad  (M_PI/180.)   // conversion for deg to rad 
 #endif
 
-#define CImgWarpBilinear_DEBUG
+//#define CImgWarpBilinear_DEBUG
 
 DEF_ERRORMAIN();
 const char *CImgWarpBilinear::className="CImgWarpBilinear";

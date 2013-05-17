@@ -110,12 +110,12 @@ class CServerParams{
     
     /**
      * Makes use of a lookup table to find the tablename belonging to the filter and path combinations.
-     * @param tableName The CT::string which will be filled with new data after completion
      * @param path The path of the layer
      * @param filter The filter of the layer
-     * @return Zero on succes, non-zero on failure.
+     * @param filter The dimension of the layer, can be NULL if not used.
+     * @return Tablename on succes, throws integer exception on failure.
      */
-    int lookupTableName(CT::string *tableName,const char *path,const char *filter);
+    CT::string lookupTableName(const char *path,const char *filter, const char * dimension);
 
 
     /**

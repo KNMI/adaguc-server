@@ -159,7 +159,7 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Confi
   
   
   //When a database table is not configured, generate a name automatically
-  if( dLayerType!=CConfigReaderLayerTypeCascaded){
+  /*if( dLayerType!=CConfigReaderLayerTypeCascaded){
     if(cfgLayer->DataBaseTable.size()==0){
         CServerConfig::XMLE_DataBaseTable *dbtable=new CServerConfig::XMLE_DataBaseTable();
         cfgLayer->DataBaseTable.push_back(dbtable);
@@ -172,7 +172,7 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Confi
         srvParams->encodeTableName(&tableName);
         dbtable->value.copy(tableName.c_str());
     }
-  }
+  }*/
 
   isConfigured=true;
   return 0;
@@ -283,10 +283,17 @@ int  CDataSource::checkDimTables(CPGSQLDB *dataBaseConnection){
   bool tableNotFound=false;
   CT::string dimName;
   for(size_t i=0;i<cfgLayer->Dimension.size();i++){
-    CT::string tableName(cfgLayer->DataBaseTable[0]->value.c_str());
     dimName=cfgLayer->Dimension[i]->attr.name.c_str();
+    
+    CT::string tableName;
+    try{
+      tableName = srvParams->lookupTableName(cfgLayer->FilePath[0]->value.c_str(),cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
+    }catch(int e){
+      CDBError("Unable to create tableName from '%s' '%s' '%s'",cfgLayer->FilePath[0]->value.c_str(),cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
+      return 1;
+    }
+    
     CT::string query;
-    CServerParams::makeCorrectTableName(&tableName,&dimName);
     query.print("select %s from %s limit 1",dimName.c_str(),tableName.c_str());
     CDB::Store *store = dataBaseConnection->queryToStore(query.c_str());
     if(store==NULL){

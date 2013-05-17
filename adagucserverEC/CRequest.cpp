@@ -585,8 +585,15 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
 
             // If we have value 'current', give the dim a special status
             if(ogcDim->value.equals("current")){
-              CT::string tableName(dataSource->cfgLayer->DataBaseTable[0]->value.c_str());
-              CServerParams::makeCorrectTableName(&tableName,&ogcDim->netCDFDimName);
+              CT::string tableName;
+              
+              try{
+                tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), ogcDim->netCDFDimName.c_str());
+              }catch(int e){
+                CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), ogcDim->netCDFDimName.c_str());
+                return 1;
+              }
+              
               
               query.print("select max(%s) from %s",ogcDim->netCDFDimName.c_str(),tableName.c_str());
               CDB::Store *maxStore = DB.queryToStore(query.c_str());
@@ -613,8 +620,16 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
       }
       if(alreadyAdded==false){
         CT::string netCDFDimName(dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
-        CT::string tableName(dataSource->cfgLayer->DataBaseTable[0]->value.c_str());
-        CServerParams::makeCorrectTableName(&tableName,&netCDFDimName);
+
+        CT::string tableName;
+        try{
+          tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str());
+        }catch(int e){
+          CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str());
+          return 1;
+        }
+
+        
         //Add the undefined dims to the srvParams as additional dims
         COGCDims *ogcDim = new COGCDims();
         dataSource->requiredDims.push_back(ogcDim);
@@ -646,8 +661,15 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
     //Compose the query
     for(size_t i=0;i<dataSource->requiredDims.size();i++){
       CT::string netCDFDimName(&dataSource->requiredDims[i]->netCDFDimName);
-      CT::string tableName(dataSource->cfgLayer->DataBaseTable[0]->value.c_str());
-      CServerParams::makeCorrectTableName(&tableName,&netCDFDimName);
+
+      CT::string tableName;
+      try{
+        tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str());
+      }catch(int e){
+        CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str());
+        return 1;
+      }
+
       CT::string subQuery;
       subQuery.print("(select path,dim%s,%s from %s where ",netCDFDimName.c_str(),
                   netCDFDimName.c_str(),

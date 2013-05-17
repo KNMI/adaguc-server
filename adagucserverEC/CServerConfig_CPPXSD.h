@@ -362,7 +362,7 @@ class CServerConfig:public CXMLSerializerInterface{
         }
     };
     class XMLE_Abstract: public CXMLObjectInterface{};
-    class XMLE_DataBaseTable: public CXMLObjectInterface{};
+    //class XMLE_DataBaseTable: public CXMLObjectInterface{};
     class XMLE_Variable: public CXMLObjectInterface{};
     class XMLE_DataReader: public CXMLObjectInterface{};
     class XMLE_FilePath: public CXMLObjectInterface{
@@ -687,7 +687,7 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_Name*> Name;
         std::vector <XMLE_Group*> Group;
         std::vector <XMLE_Title*> Title;
-        std::vector <XMLE_DataBaseTable*> DataBaseTable;
+        //std::vector <XMLE_DataBaseTable*> DataBaseTable;
         std::vector <XMLE_Variable*> Variable;
         std::vector <XMLE_FilePath*> FilePath;
         std::vector <XMLE_DataReader*> DataReader;
@@ -723,7 +723,7 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(Name);
           XMLE_DELOBJ(Group);
           XMLE_DELOBJ(Title);
-          XMLE_DELOBJ(DataBaseTable);
+          //XMLE_DELOBJ(DataBaseTable);
           XMLE_DELOBJ(Variable);
           XMLE_DELOBJ(FilePath);
           XMLE_DELOBJ(DataReader);
@@ -763,7 +763,7 @@ class CServerConfig:public CXMLSerializerInterface{
             if(equals("Name",4,name)){XMLE_ADDOBJ(Name);}
             else if(equals("Group",5,name)){XMLE_ADDOBJ(Group);}
             else if(equals("Title",5,name)){XMLE_ADDOBJ(Title);}
-            else if(equals("DataBaseTable",13,name)){XMLE_ADDOBJ(DataBaseTable);}
+            //else if(equals("DataBaseTable",13,name)){XMLE_ADDOBJ(DataBaseTable);}
             else if(equals("Variable",8,name)){XMLE_ADDOBJ(Variable);}
             else if(equals("FilePath",8,name)){XMLE_ADDOBJ(FilePath);}
             else if(equals("DataReader",10,name)){XMLE_ADDOBJ(DataReader);}

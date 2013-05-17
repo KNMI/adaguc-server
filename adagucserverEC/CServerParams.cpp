@@ -104,12 +104,26 @@ void CServerParams::getCacheDirectory(CT::string *cacheFileName){
 
 #include <ctime>
 #include <sys/time.h>
+#include <stdio.h>
+#define USE_DEVRANDOM
+
+
+
 const CT::string randomString(const int len) {
     char s[len+1];
     
     timeval curTime;
     gettimeofday(&curTime, NULL);
+    
+#ifdef USE_DEVRANDOM
+    FILE* randomData = fopen("/dev/random", "r");
+    int myRandomInteger;
+    fread(&myRandomInteger, sizeof myRandomInteger,1,randomData);
+    srand(myRandomInteger);
+    fclose(randomData);
+#else
     srand((curTime.tv_sec * 1000) + (curTime.tv_usec / 1000));
+#endif
     
     static const char alphanum[] =
         "0123456789"
@@ -134,72 +148,87 @@ CT::string currentDateTime() {
     strftime(buffer, 80, "%Y-%m-%dT%H:%M:%S", localtime(&curTime.tv_sec));
 
     char currentTime[84] = "";
-    sprintf(currentTime, "%s:%dZ", buffer, milli);
+    sprintf(currentTime, "%s:%03dZ", buffer, milli);
    
 
     return currentTime;
 }
 
-int CServerParams::lookupTableName(CT::string *tableName,const char *path,const char *filter){
-  
+CT::string CServerParams::lookupTableName(const char *path,const char *filter, const char * dimension){
+  CT::string tableName;
  
   // This makes use of a lookup table to find the tablename belonging to the filter and path combinations.
   // Database collumns: path filter tablename
   
-  CT::string filterString="FILTER_";filterString.concat(filter);
-  CT::string pathString="PATH_";pathString.concat(path);
+  CT::string filterString="F_";filterString.concat(filter);
+  CT::string pathString="P_";pathString.concat(path);
+  CT::string dimString="";if(dimension != NULL){dimString.concat(dimension);}
+  
   CT::string lookupTableName = "pathfiltertablelookup";
-  CT::string tableColumns("path varchar (511), filter varchar (255), tablename varchar (255), UNIQUE (path,filter) ");
+  CT::string tableColumns("path varchar (511), filter varchar (511), dimension varchar (511), tablename varchar (63), UNIQUE (path,filter,dimension) ");
   CT::string mvRecordQuery;
   int status;
   CPGSQLDB DB;
   const char *pszDBParams = this->cfg->DataBase[0]->attr.parameters.c_str();
   status = DB.connect(pszDBParams);if(status!=0){
     CDBError("Error Could not connect to the database with parameters: [%s]",pszDBParams);
-    return 1;
+    throw(1);
   }
 
   status = DB.checkTable(lookupTableName.c_str(),tableColumns.c_str());
   //if(status == 0){CDBDebug("OK: Table %s is available",lookupTableName.c_str());}
-  if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",lookupTableName.c_str(),tableColumns.c_str()); DB.close();return 1;  }
+  if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",lookupTableName.c_str(),tableColumns.c_str()); DB.close();throw(1);  }
   //if(status == 2){CDBDebug("OK: Table %s is created",lookupTableName.c_str());  }
 
   
   //Check wether a records exists with this path and filter combination.
   
   bool lookupTableIsAvailable=false;
-  mvRecordQuery.print("SELECT * FROM %s where path=E'%s' and filter=E'%s'",lookupTableName.c_str(),pathString.c_str(),filterString.c_str());
-  CDB::Store *rec = DB.queryToStore(mvRecordQuery.c_str()); 
-  if(rec==NULL){CDBError("Unable to select records: \"%s\"",mvRecordQuery.c_str());DB.close();return 1;  }
-  if(rec->getSize()==1){
-    tableName->copy(rec->getRecord(0)->get(2));
+  
+  
+  
+  if(dimString.length()>1){
+    mvRecordQuery.print("SELECT * FROM %s where path=E'%s' and filter=E'%s' and dimension=E'%s'",
+                        lookupTableName.c_str(),pathString.c_str(),filterString.c_str(),dimString.c_str());
+  }else{
     lookupTableIsAvailable=true;
+    mvRecordQuery.print("SELECT * FROM %s where path=E'%s' and filter=E'%s'",
+                        lookupTableName.c_str(),pathString.c_str(),filterString.c_str());
   }
-  if(rec->getSize()>1){
+  CDB::Store *rec = DB.queryToStore(mvRecordQuery.c_str()); 
+  if(rec==NULL){CDBError("Unable to select records: \"%s\"",mvRecordQuery.c_str());DB.close();throw(1);  }
+  if(rec->getSize()>0){
+    tableName.copy(rec->getRecord(0)->get(3));
+    
+    lookupTableIsAvailable = true;
+    
+  }
+  /*if(rec->getSize()>1){
     CDBError("Path filter combination has more than 1 lookuptable");
     delete rec;
     DB.close();
-    return 1;
-  }
+    throw(1);
+  }*/
   delete rec;
   
   //Add a new lookuptable with an unique id.
   if(lookupTableIsAvailable==false){
-    CT::string randomTableString = "table";
+    CT::string randomTableString = "t";
     randomTableString.concat(currentDateTime());
+    randomTableString.concat("_");
     randomTableString.concat(randomString(20));
     randomTableString.replaceSelf(":","");
     randomTableString.replaceSelf("-","");
     randomTableString.replaceSelf("Z",""); 
     
-    tableName -> copy(randomTableString.c_str());
-    mvRecordQuery.print("INSERT INTO %s values (E'%s',E'%s',E'%s')",lookupTableName.c_str(),pathString.c_str(),filterString.c_str(),tableName->c_str());
+    tableName.copy(randomTableString.c_str());
+    mvRecordQuery.print("INSERT INTO %s values (E'%s',E'%s',E'%s',E'%s')",lookupTableName.c_str(),pathString.c_str(),filterString.c_str(),dimString.c_str(),tableName.c_str());
     CDBDebug("%s",mvRecordQuery.c_str());
-    status = DB.query(mvRecordQuery.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",mvRecordQuery.c_str());DB.close();return 1;  }
+    status = DB.query(mvRecordQuery.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",mvRecordQuery.c_str());DB.close();throw(1);  }
   }
   //Close the database
   DB.close();
-  return 0;
+  return tableName;
 }
 
 
