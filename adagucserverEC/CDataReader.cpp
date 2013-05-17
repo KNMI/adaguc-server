@@ -1426,7 +1426,7 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
   }
   if(dataSource==NULL){CDBDebug("datasource == NULL");return 1;}
   if(dataSource->cfgLayer==NULL){CDBDebug("datasource->cfgLayer == NULL");return 1;}
-  if(dataSource->cfgLayer->DataBaseTable.size()==0){CDBDebug("dataSource->cfgLayer->DataBaseTable.size()==0");return 1;}
+
   
 #ifdef CDATAREADER_DEBUG
  CDBDebug("autoConfigureDimensions %s",dataSource->getLayerName());
@@ -1439,7 +1439,16 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
   */
   CT::string query;
   CT::string tableName = "autoconfigure_dimensions";
-  CT::string layerTableId = dataSource->cfgLayer->DataBaseTable[0]->value.c_str();
+  
+  CT::string layerTableId;
+  try{
+    layerTableId = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), NULL);
+  }catch(int e){
+    CDBError("Unable to get layerTableId for autoconfigure_dimensions");
+    return 1;
+  }
+  
+  
   layerTableId.concat("_");layerTableId.concat(dataSource->getLayerName());
   query.print("SELECT * FROM %s where layerid=E'%s'",tableName.c_str(),layerTableId.c_str());
   CPGSQLDB db;
@@ -1606,17 +1615,20 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
 
   if(dataSource->cfgLayer->Legend.size()!=0){return 0;};//Configured by user, auto styles is not required
 
-  if(dataSource->cfgLayer->DataBaseTable.size()==0){
-    CDBDebug("For %s: dataSource->cfgLayer->DataBaseTable.size()==0",dataSource->getLayerName());return 1;
-    
-  }
+  
   
   // Try to find a style corresponding the the standard_name attribute of the file.
   CServerConfig::XMLE_Styles *xmleStyle=new CServerConfig::XMLE_Styles();
   dataSource->cfgLayer->Styles.push_back(xmleStyle);
   
   CT::string tableName = "autoconfigure_styles";
-  CT::string layerTableId = dataSource->cfgLayer->DataBaseTable[0]->value.c_str();
+  CT::string layerTableId;
+  try{
+    layerTableId = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), NULL);
+  }catch(int e){
+    CDBError("Unable to get layerTableId for autoconfigure_styles");
+    return 1;
+  }
   CT::string query;
   
   if(useDBCache){
