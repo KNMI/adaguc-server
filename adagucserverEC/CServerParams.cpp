@@ -187,7 +187,7 @@ CT::string CServerParams::lookupTableName(const char *path,const char *filter, c
   
   CT::string filterString="F_";filterString.concat(filter);
   CT::string pathString="P_";pathString.concat(path);
-  CT::string dimString="";if(dimension != NULL){dimString.concat(dimension);}
+  CT::string dimString="";if(dimension != NULL){dimString.concat(dimension);dimString.toLowerCaseSelf();}
   
   CT::string lookupTableName = "pathfiltertablelookup";
   CT::string tableColumns("path varchar (511), filter varchar (511), dimension varchar (511), tablename varchar (63), UNIQUE (path,filter,dimension) ");

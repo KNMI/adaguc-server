@@ -40,7 +40,7 @@
 
 //#define CImgWarpBilinear_DEBUG
 
-DEF_ERRORMAIN();
+//DEF_ERRORMAIN();
 const char *CImgWarpBilinear::className="CImgWarpBilinear";
 void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDrawImage *drawImage){
   #ifdef CImgWarpBilinear_DEBUG
