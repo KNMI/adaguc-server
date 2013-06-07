@@ -28,8 +28,12 @@
 #include <vector>
 const char * CImageWarper::className = "CImageWarper";
 
-
-
+extern ProjectionStore projectionStore;
+ProjectionStore projectionStore;
+ProjectionStore *ProjectionStore::getProjectionStore(){
+  return &projectionStore;
+}
+  
 void floatToString(char * string,size_t maxlen,int numdigits,float number){
   //snprintf(string,maxlen,"%0.2f",number);
   //return;
@@ -301,8 +305,8 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
       convertRadiansDegreesDst = true;
     }else convertRadiansDegreesDst =false;
     
-    CT::string nativeProj4 = projString;
-    if(nativeProj4.indexOf("longlat")>=0){
+    sourceCRSString = projString;
+    if(sourceCRSString.indexOf("longlat")>=0){
       convertRadiansDegreesSrc = true;
     }else convertRadiansDegreesSrc=false;
     
@@ -312,6 +316,8 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
   
   int CImageWarper::findExtent(CDataSource *dataSource,double * dfBBOX){
   // Find the outermost corners of the image
+  
+  
   //CDBDebug("findExtent for %s",destinationCRS.c_str());
     bool useLatLonSourceProj =false;
     //Maybe it is defined in the configuration file:
@@ -334,6 +340,44 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
         dfBBOX[2]=dataSource->dfBBOX[0];
       }
     }
+    
+
+    
+    ProjectionKey pKey(dfBBOX,dfMaxExtent,sourceCRSString,destinationCRS);
+
+    for(size_t j=0;j<projectionStore.keys.size();j++){
+      if(projectionStore.keys[j].isSet == true){
+        bool match = true;
+        if(!projectionStore.keys[j].destinationCRS.equals(pKey.destinationCRS.c_str()))match=false;
+        //if(!match){CDBDebug("DESTCRS DO NOT MATCH");}
+        if(match){
+          for(int i=0;i<4;i++){
+            if(projectionStore.keys[j].bbox[i] != pKey.bbox[i]){
+              //CDBDebug("%f != %f",projectionStore.keys[j].bbox[i],pKey.bbox[i]);
+              match = false;break;
+            }
+          }
+          //if(!match){CDBDebug("BBOX DO NOT MATCH");}
+          if(match){
+            if(!projectionStore.keys[j].sourceCRS.equals(pKey.sourceCRS.c_str()))match=false;
+            //if(!match){CDBDebug("SOURCECRS DO NOT MATCH");}
+            if(match){
+              for(int i=0;i<4;i++){
+                dfBBOX[i] = projectionStore.keys[j].foundExtent[i];
+              }
+              //CDBDebug("FOUND PROJECTION KEY");
+              return 0;
+            }
+          }
+        }
+      }
+    }
+    //CDBDebug("PROJECTION NOT FOUND, START CALCULATION");
+   
+    
+    
+    
+    
     //double tempy;
     double miny1=dfBBOX[1];
     double maxy1=dfBBOX[3];
@@ -417,7 +461,9 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
         for(int j=0;j<4;j++)dfBBOX[j]=dfMaxExtent[j];
 
     }
-
+    
+    pKey.setFoundExtent(dfBBOX);
+    projectionStore.keys.push_back(pKey);
     //CDBDebug("out: %f %f %f %f",dfBBOX[0],dfBBOX[1],dfBBOX[2],dfBBOX[3]);
     return 0;
   }

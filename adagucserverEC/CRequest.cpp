@@ -30,6 +30,7 @@ int CRequest::CGI=0;
 int CRequest::runRequest(){
   int status=process_querystring();
   CDFObjectStore::getCDFObjectStore()->clear();
+  ProjectionStore::getProjectionStore()->clear();
   return status;
 }
 

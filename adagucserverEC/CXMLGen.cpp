@@ -28,7 +28,7 @@
 #include <vector>
 #include <string>
 #include "CXMLGen.h"
-#define CXMLGEN_DEBUG
+//#define CXMLGEN_DEBUG
 
 const char *CFile::className="CFile";
 
@@ -190,18 +190,11 @@ CDBDebug("getDataSourceForLayer");
     CDBError("No file name specified for layer %s",myWMSLayer->dataSource->layerName.c_str());
     return 1;
   }
-
-#ifdef CXMLGEN_DEBUG    
-  CDBDebug("Setting filename for database layer: '%s'",myWMSLayer->fileName.c_str());
-#endif      
+   
 
 myWMSLayer->dataSource->addTimeStep(myWMSLayer->fileName.c_str(),"");
   
-#ifdef CXMLGEN_DEBUG    
-  CDBDebug("Getting filename for database layer: '%s'",myWMSLayer->dataSource->getFileName());
-#endif      
-  
-  
+
 
   
   //Is this a local file based WMS server?
@@ -264,9 +257,6 @@ int CXMLGen::getProjectionInformationForLayer(WMSLayer * myWMSLayer){
 CDBDebug("getProjectionInformationForLayer");
 #endif   
  if(myWMSLayer->dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
-  #ifdef CXMLGEN_DEBUG    
-  CDBDebug("Cascaded layer");
-  #endif    
     if(myWMSLayer->dataSource->cfgLayer->LatLonBox.size()==0){
       return 0;
     }
