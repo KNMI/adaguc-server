@@ -1,6 +1,0 @@
-Content-Type:text/plain
-
-coordinates (5.00 , 53.00)
-precipitation - precipitation flux
-2011-06-17T15:55:00Z: 4.532e-04 kg/m2/h
-

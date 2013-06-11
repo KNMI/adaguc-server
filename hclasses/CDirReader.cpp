@@ -1,3 +1,28 @@
+/******************************************************************************
+ * 
+ * Project:  Helper classes
+ * Purpose:  Generic functions
+ * Author:   Maarten Plieger, plieger "at" knmi.nl
+ * Date:     2013-06-01
+ *
+ ******************************************************************************
+ *
+ * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
+ ******************************************************************************/
+
 #include "CDirReader.h"
 
 
@@ -139,19 +164,19 @@ int CDirReader::listDir (const char* directory,const char *ext_filter){
 void CDirReader::makeCleanPath(CT::string *path){
   if(path==NULL)return;
   if(path->length()==0)return;
-  CT::stringlist *parts =path->splitN("/");
+  CT::StackList<CT::string>parts =path->splitToStack("/");
   if(path->c_str()[0]=='/'){
     path->copy("/");
   }else path->copy("");
-  for(size_t j=0;j<parts->size();j++){
-    if((*parts)[j]->length()>0){
-      path->concat((*parts)[j]);
-      if(j+1<parts->size()){
+  for(size_t j=0;j<parts.size();j++){
+    if(parts[j].length()>0){
+      path->concat(&(parts[j]));
+      if(j+1<parts.size()){
         path->concat("/");
       }
     }
   }
-  delete parts;
+
 }
 
 
@@ -185,5 +210,30 @@ int CDirReader::getFileDate(CT::string *date, const char *file){
   char buffer [80];
   strftime (buffer,80,"%Y-%m-%dT%H:%M:%SZ",clock);
   date->copy(buffer);
+  return 0;
 }
 
+
+void CDirReader::makePublicDirectory(const char *dirname){
+  if(dirname==NULL)return;
+  struct stat stFileInfo;
+  int intStat = stat(dirname,&stFileInfo);
+  if(intStat != 0){
+    CT::string directory = dirname;
+    CT::string *directorySplitted = directory.splitToArray("/");
+    directory="";
+    for(size_t j=0;j<directorySplitted->count;j++){
+      directory.concat("/");
+      directory.concat(directorySplitted[j].c_str());
+      const char *part = directory.c_str();
+      int intStat = stat(part,&stFileInfo);
+      if(intStat != 0){
+        //CDBDebug("making dir %s",part);
+        mode_t permissions = S_IRWXU|S_IRWXG|S_IRWXO;
+        mkdir (part,permissions);
+        chmod(part,0777);
+      }
+    }
+    delete[] directorySplitted;
+  }
+}
