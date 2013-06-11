@@ -1,7 +1,32 @@
+/******************************************************************************
+ * 
+ * Project:  ADAGUC Server
+ * Purpose:  ADAGUC OGC Server
+ * Author:   Maarten Plieger, plieger "at" knmi.nl
+ * Date:     2013-06-01
+ *
+ ******************************************************************************
+ *
+ * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
+ ******************************************************************************/
+
 #ifndef Definitions_H
 #define Definitions_H
 
-#define ADAGUCSERVER_VERSION             "1.0"
+#define ADAGUCSERVER_VERSION             "1.1"
 
 //CConfigReaderLayerType
 #define CConfigReaderLayerTypeUnknown     0
@@ -28,7 +53,7 @@
 #define REQUEST_UPDATEDB                  100
 
 //Legend
-#define LEGEND_WIDTH                      160
+#define LEGEND_WIDTH                      300
 #define LEGEND_HEIGHT                     200
 
 //WMS versions
@@ -63,10 +88,10 @@
 #define DEFAULT_FONT                       "./fonts/FreeSans.ttf"
 
 //CNetCDFReader opening options
-#define CNETCDFREADER_MODE_OPEN_HEADER    1
-#define CNETCDFREADER_MODE_OPEN_ALL       2
-#define CNETCDFREADER_MODE_GET_METADATA   3
-
+#define CNETCDFREADER_MODE_OPEN_HEADER     1
+#define CNETCDFREADER_MODE_OPEN_ALL        2
+#define CNETCDFREADER_MODE_GET_METADATA    3
+#define CNETCDFREADER_MODE_OPEN_DIMENSIONS 4
 
 
 //Web Coverage restriction and Get Feature Info restriction
@@ -76,8 +101,8 @@
 #define ALLOW_METADATA 8
 #define SHOW_QUERYINFO 16 
 
-#define CImgWarpBilinear_DEBUG
-#define CImgWarpBilinear_TIME
+//#define CImgWarpBilinear_DEBUG
+//#define CImgWarpBilinear_TIME
 //#define MEASURETIME
 
 //#define CDATAREADER_DEBUG
@@ -100,16 +125,36 @@
 
 #define CDATAREADER_DEBUG
 #define CCDFNETCDFIO_DEBUG
-
-
-
 #define CXMLGEN_DEBUG
-
-
 #define CIMAGEDATAWRITER_DEBUG
 #define CXMLGEN_DEBUG
 #define MEASURETIME
 */
+
+//#define DEBUGON
+#ifdef DEBUGON
+#define CDATASOURCE_DEBUG
+#define CREQUEST_DEBUG
+#define CIMAGEDATAWRITER_DEBUG
+#define CDATAREADER_DEBUG
+#define CXMLGEN_DEBUG
+#define CCDFNETCDFIO_DEBUG
+#define CCONVERTASCAT_DEBUG
+#define MEASURETIME
+#define CIMGWARPNEARESTNEIGHBOUR_DEBUG
+#endif
+//#define MEASURETIME
+//#define CCDFNETCDFIO_DEBUG
+//#define CXMLGEN_DEBUG
+//#define CDATAREADER_DEBUG
+//#define CCDFNETCDFIO_DEBUG
+//#define CDATAREADER_DEBUG
+
+//#define MEASURETIME
+//#define CDATAREADER_DEBUG
+//#define CIMAGEDATAWRITER_DEBUG
+//#define CDATASOURCE_DEBUG
+
 #define ENABLE_CURL
 #define ADAGUC_USE_CAIRO
 #define ADAGUC_USE_GDAL

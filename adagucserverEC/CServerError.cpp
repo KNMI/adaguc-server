@@ -1,30 +1,60 @@
+/******************************************************************************
+ * 
+ * Project:  ADAGUC Server
+ * Purpose:  ADAGUC OGC Server
+ * Author:   Maarten Plieger, plieger "at" knmi.nl
+ * Date:     2013-06-01
+ *
+ ******************************************************************************
+ *
+ * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
+ ******************************************************************************/
+
 #include "CServerError.h"
 #define ERRORMSGS_SIZE 30000 
 
 
 
-static char errormsgs[ERRORMSGS_SIZE];
-static int errormsgs_ptr=0;
+//static char errormsgs[ERRORMSGS_SIZE];
+
+static std::vector<CT::string> errormsgs;
+
+
 static int error_raised=0;
 static int cerror_mode=0;//0 = text 1 = image 2 = XML
 static int errImageWidth=640;
 static int errImageHeight=480;
 static int errImageFormat=IMAGEFORMAT_IMAGEPNG8;
-void printerror(const char * text)
-{
+void printerror(const char * text){
   error_raised=1;
-  if(errormsgs_ptr>ERRORMSGS_SIZE)return;
-  size_t messageLength=strlen(text);
-  strncpy(errormsgs+errormsgs_ptr,text,ERRORMSGS_SIZE-1-errormsgs_ptr);
-  //strncat(errormsgs+errormsgs_ptr,"\n",ERRORMSGS_SIZE-1-errormsgs_ptr-1);
-  errormsgs_ptr+=messageLength;
- 
+  CT::string t=text;
+  
+  //Remove "[E: file,line] spaces"
+  t.substringSelf(t.indexOf("]")+1,-1);
+  t.trimSelf();
+  t.replaceSelf("\n","");
+  if(t.length()>0){
+    errormsgs.push_back(t);
+  }
 }
 void seterrormode(int errormode){
   cerror_mode=errormode;
 }
 void resetErrors(){
-  errormsgs[0]='\0';
+  errormsgs.clear();
   error_raised=0;
 }
 
@@ -36,13 +66,13 @@ void printerrorImage(void *_drawImage){
   const char *exceptionText = "OGC inimage Exception";
   drawImage->setText(exceptionText,strlen(exceptionText),12,5, 241,0);
   
-  CT::string errormsg(errormsgs),*messages,*sp,concat;
-  messages=errormsg.split("\n");
+ 
+ 
   int y=1;
-  size_t w=70,characters=0;
-  for(size_t i=0;i<messages->count;i++){
-    sp=messages[i].split(" ");
-    concat.copy("");
+  size_t w=drawImage->Geo->dWidth/6,characters=0;
+  for(size_t i=0;i<errormsgs.size()-1;i++){
+    CT::string *sp=errormsgs[i].splitToArray(" ");
+    CT::string concat ="";
     for(size_t k=0;k<sp->count;k++){
       if(characters+sp[k].length()<w){
         concat.concat(&sp[k]);
@@ -69,7 +99,7 @@ void printerrorImage(void *_drawImage){
   drawImage->line(errImageWidth-1,3,errImageWidth-1,y,251);
   
   
-  delete [] messages;
+ 
 }
 
 bool errorsOccured(){
@@ -84,13 +114,14 @@ void readyerror(){
 
 
   if(error_raised==0)return ;
-  if(errormsgs[0]=='\0')return;
+  if(errormsgs.size()==0)return;
 
-  if(cerror_mode==EXCEPTIONS_PLAINTEXT){//Plain text
-//    fprintf(stderr,"%s<br>\n",errormsgs);
+  if(cerror_mode==EXCEPTIONS_PLAINTEXT||cerror_mode==0){//Plain text
     printf("%s%c%c\n","Content-type: text/plain",13,10);  
-    fprintf(stdout,"%s",errormsgs);
-    return;
+    for(size_t j=0;j<errormsgs.size();j++){
+      fprintf(stdout,"%s",errormsgs[j].c_str());
+    }
+    resetErrors();return;
   }
   if(cerror_mode==WMS_EXCEPTIONS_XML_1_1_1){//XML exception
     printf("%s%c%c\n","Content-Type:text/xml",13,10);  
@@ -100,17 +131,16 @@ void readyerror(){
     fprintf(stdout,"  <ServiceException>\n");
     
     
-    CT::string errormsg(errormsgs),*messages;
-    messages=errormsg.split("\n");
-    fprintf(stdout,"    ");
-    for(size_t j=0;j<messages->count;j++){
-      fprintf(stdout,"%s",messages[j].c_str());
-      if(j+1<messages->count)fprintf(stdout,";\n");
+    for(size_t j=0;j<errormsgs.size();j++){
+      CT::string msg=errormsgs[j].c_str();
+      msg.replaceSelf("<","&lt;");
+      msg.replaceSelf("<","&gt;");
+      fprintf(stdout,"    %s;\n",msg.c_str());
+      //if(j+1<errormsgs.size())fprintf(stdout,";\n");
     }
-    delete[] messages;
     fprintf(stdout,"\n  </ServiceException>\n");
     fprintf(stdout,"</ServiceExceptionReport>\n");
-    return;
+    resetErrors();return;
   }
   if(cerror_mode==WMS_EXCEPTIONS_IMAGE||cerror_mode==WMS_EXCEPTIONS_BLANKIMAGE){//Image
     CDrawImage drawImage;
@@ -134,7 +164,9 @@ void readyerror(){
       printf("%s%c%c\n","Content-Type:image/png",13,10);
       drawImage.printImagePng();
     }
+     resetErrors();return;
   }
+ 
 }
 
 void printdebug(const char * text,int prioritylevel)

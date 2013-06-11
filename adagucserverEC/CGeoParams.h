@@ -1,3 +1,28 @@
+/******************************************************************************
+ * 
+ * Project:  ADAGUC Server
+ * Purpose:  ADAGUC OGC Server
+ * Author:   Maarten Plieger, plieger "at" knmi.nl
+ * Date:     2013-06-01
+ *
+ ******************************************************************************
+ *
+ * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
+ ******************************************************************************/
+
 #ifndef CGeoParams_H
 #define CGeoParams_H
 #include "CTypes.h"
@@ -42,6 +67,73 @@ public:
   }      
 };
 
+/**
+ * Class which represent discrete points as integer
+ */
+class PointD{
+public:
+  PointD(int &x,int &y){
+    this->x=x;
+    this->y=y;
+  }
+  int x,y;
+};
+
+/**
+ * Class which represent discrete points as integer with float values
+ */
+class PointDV{
+public:
+  PointDV(int &x,int &y,float &v,const char *id){
+    this->x=x;
+    this->y=y;
+    this->v=v;
+    this->id=id;
+  }
+  PointDV(int &x,int &y,float &v){
+    this->x=x;
+    this->y=y;
+    this->v=v;
+  }
+  int x,y;
+  float v;
+  CT::string id;
+};    
+
+/**
+ * Class which represent discrete points as integer with float values and latlon as double values
+ */
+class PointDVWithLatLon{
+public:
+  PointDVWithLatLon(int &x,int &y,double &lon,double &lat,float &v,const char *id){
+    this->x=x;
+    this->y=y;
+    this->v=v;
+    this->lon=lon;
+    this->lat=lat;
+    this->id=id;
+    rotation=0;
+  }
+  PointDVWithLatLon(int &x,int &y,double &lon,double &lat,float &v){
+    this->x=x;
+    this->y=y;
+    this->v=v;
+    this->lon=lon;
+    this->lat=lat;
+    rotation=0;
+  }
+    PointDVWithLatLon(int &x,int &y,double &lon,double &lat,float &v,double &rotation){
+    this->x=x;
+    this->y=y;
+    this->v=v;
+    this->lon=lon;
+    this->lat=lat;
+    this->rotation=rotation;
+  }
+  int x,y;
+  float v,lon,lat,rotation;
+  CT::string id;
+};    
 
 void CoordinatesXYtoScreenXY(double &x,double &y,CGeoParams *geoParam);
 void CoordinatesXYtoScreenXY(CPoint &p,CGeoParams *geoParam);

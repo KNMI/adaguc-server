@@ -1,3 +1,28 @@
+/******************************************************************************
+ * 
+ * Project:  ADAGUC Server
+ * Purpose:  ADAGUC OGC Server
+ * Author:   Maarten Plieger, plieger "at" knmi.nl
+ * Date:     2013-06-01
+ *
+ ******************************************************************************
+ *
+ * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
+ ******************************************************************************/
+
 #include "CRequest.h"
 const char *CRequest::className="CRequest";
 int CRequest::CGI=0;
@@ -5,7 +30,96 @@ int CRequest::CGI=0;
 int CRequest::runRequest(){
   int status=process_querystring();
   CDFObjectStore::getCDFObjectStore()->clear();
+  ProjectionStore::getProjectionStore()->clear();
   return status;
+}
+
+void writeLogFile3(const char * msg){
+  char * logfile=getenv("ADAGUC_LOGFILE");
+  if(logfile!=NULL){
+    FILE * pFile = NULL;
+    pFile = fopen (logfile , "a" );
+    if(pFile != NULL){
+      fputs  (msg, pFile );
+      if(strncmp(msg,"[D:",3)==0||strncmp(msg,"[W:",3)==0||strncmp(msg,"[E:",3)==0){
+        time_t myTime = time(NULL);
+        tm *myUsableTime = localtime(&myTime);
+        char szTemp[128];
+        snprintf(szTemp,127,"%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ ",
+                 myUsableTime->tm_year+1900,myUsableTime->tm_mon+1,myUsableTime->tm_mday,
+                 myUsableTime->tm_hour,myUsableTime->tm_min,myUsableTime->tm_sec
+                );
+        fputs  (szTemp, pFile );
+      }
+      fclose (pFile);
+    }//else CDBError("Unable to write logfile %s",logfile);
+  }
+}
+void CRequest::addXMLLayerToConfig(CServerParams *srvParam,std::vector<CT::string>*variableNames, const char *group,const char *location){
+  CServerConfig::XMLE_Layer *xmleLayer=new CServerConfig::XMLE_Layer();
+  CServerConfig::XMLE_FilePath* xmleFilePath = new CServerConfig::XMLE_FilePath();
+  
+ 
+  xmleLayer->attr.type.copy("database");
+  xmleFilePath->value.copy(location);
+  xmleFilePath->attr.filter.copy("");
+  
+  if(group!=NULL){
+    CServerConfig::XMLE_Group* xmleGroup = new CServerConfig::XMLE_Group();
+    xmleGroup->attr.value.copy(group);
+    xmleLayer->Group.push_back(xmleGroup);
+  }
+  
+  for(size_t j=0;j<variableNames->size();j++){
+    CServerConfig::XMLE_Variable* xmleVariable = new CServerConfig::XMLE_Variable();
+    xmleVariable->value.copy((*variableNames)[j].c_str());
+    xmleLayer->Variable.push_back(xmleVariable);
+  }
+  if(variableNames->size()==2){
+    CT::string newName;
+    newName.print("%s + %s",(*variableNames)[0].c_str(),(*variableNames)[1].c_str());
+    
+    CServerConfig::XMLE_Title* xmleTitle = new CServerConfig::XMLE_Title();
+    xmleTitle->value.copy(newName.c_str());
+    xmleLayer->Title.push_back(xmleTitle);
+    
+    CServerConfig::XMLE_Name* xmleName = new CServerConfig::XMLE_Name();
+    
+    newName.replaceSelf("+","and");
+    newName.replaceSelf(" ","_");
+    newName.encodeURLSelf();
+    xmleName->value.copy(newName.c_str());
+    xmleLayer->Name.push_back(xmleName);
+    CServerConfig::XMLE_RenderMethod* xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
+    xmleRenderMethod->value.copy("vector_nearest,barb_nearest,vector,barb,nearest");
+    xmleLayer->RenderMethod.push_back(xmleRenderMethod);
+    
+  }
+  
+  xmleLayer->FilePath.push_back(xmleFilePath);
+  
+  if(srvParam->isAutoResourceCacheEnabled()){
+    CServerConfig::XMLE_Cache* xmleCache = new CServerConfig::XMLE_Cache();
+    xmleCache->attr.enabled.copy("true");
+    xmleLayer->Cache.push_back(xmleCache);
+  }
+  
+  //Set imagetext property
+  if(srvParam->cfg->AutoResource.size()>0){
+    if(srvParam->cfg->AutoResource[0]->ImageText.size()>0){
+      CServerConfig::XMLE_ImageText *xmleImageText=new CServerConfig::XMLE_ImageText();
+      xmleLayer->ImageText.push_back(xmleImageText);
+      if(srvParam->cfg->AutoResource[0]->ImageText[0]->value.c_str()!=NULL){
+        xmleImageText->value.copy(srvParam->cfg->AutoResource[0]->ImageText[0]->value.c_str());
+      }
+      if(srvParam->cfg->AutoResource[0]->ImageText[0]->attr.attribute.c_str()!=NULL){
+        xmleImageText->attr.attribute.copy(srvParam->cfg->AutoResource[0]->ImageText[0]->attr.attribute.c_str());
+      }
+      
+    }
+  }
+  
+  srvParam->cfg->Layer.push_back(xmleLayer);
 }
 
 int CRequest::dataRestriction = -1;
@@ -32,7 +146,7 @@ int CRequest::checkDataRestriction(){
   if(data != NULL){
     dr = ALLOW_NONE;
     CT::string temp(data);
-    temp.toUpperCase();
+    temp.toUpperCaseSelf();
     if(temp.equals("TRUE")){
       dr = ALLOW_NONE;
     }
@@ -40,14 +154,15 @@ int CRequest::checkDataRestriction(){
       dr = ALLOW_WCS|ALLOW_GFI|ALLOW_METADATA;
     }
     //Decompose into stringlist and check each item
-    CT::stringlist *items = temp.splitN("|");
-    for(size_t j=0;j<items->size();j++){
-      if(items->get(j)->equals("ALLOW_GFI"))dr|=ALLOW_GFI;
-      if(items->get(j)->equals("ALLOW_WCS"))dr|=ALLOW_WCS;
-      if(items->get(j)->equals("ALLOW_METADATA"))dr|=ALLOW_METADATA;
-      if(items->get(j)->equals("SHOW_QUERYINFO"))dr|=SHOW_QUERYINFO;
+    CT::StackList<CT::string> items = temp.splitToStack("|");
+    for(size_t j=0;j<items.size();j++){
+      items[j].replaceSelf("\"","");
+      if(items[j].equals("ALLOW_GFI"))dr|=ALLOW_GFI;
+      if(items[j].equals("ALLOW_WCS"))dr|=ALLOW_WCS;
+      if(items[j].equals("ALLOW_METADATA"))dr|=ALLOW_METADATA;
+      if(items[j].equals("SHOW_QUERYINFO"))dr|=SHOW_QUERYINFO;
     }
-    delete items;
+ 
   }
   
   dataRestriction = dr;
@@ -56,6 +171,9 @@ int CRequest::checkDataRestriction(){
 
 
 int CRequest::setConfigFile(const char *pszConfigFile){
+  #ifdef MEASURETIME
+  StopWatch_Stop("Set config file");
+  #endif
   int status = srvParam->configObj->parseFile(pszConfigFile);
   if(status == 0){
     srvParam->configFileName.copy(pszConfigFile);
@@ -73,6 +191,12 @@ int CRequest::setConfigFile(const char *pszConfigFile){
     CDBError("Invalid XML file %s",pszConfigFile);
     return 1;
   }
+  
+  #ifdef MEASURETIME
+  StopWatch_Stop("Config file parsed");
+  #endif
+  
+  //Check for mandatory attributes
   for(size_t j=0;j<srvParam->cfg->Layer.size();j++){
     if(srvParam->cfg->Layer[j]->attr.type.equals("database")){
       if(srvParam->cfg->Layer[j]->Variable.size()==0){
@@ -85,6 +209,97 @@ int CRequest::setConfigFile(const char *pszConfigFile){
       }
     }
   }
+  //Check for autoscan elements
+  for(size_t j=0;j<srvParam->cfg->Layer.size();j++){
+    if(srvParam->cfg->Layer[j]->attr.type.equals("autoscan")){
+      
+      if(srvParam->cfg->Layer[j]->FilePath.size()==0){
+        CDBError("Configuration error at layer %d: <FilePath> not defined",j);
+        return 1;
+      }
+      
+      //bool layerConfigCacheAvailable = false;
+      try{
+        /* Create the list of layers from a directory list */
+        const char * baseDir=srvParam->cfg->Layer[j]->FilePath[0]->value.c_str();
+        
+        CDirReader dirReader;
+        CDBDebug("autoscan");
+        CDBFileScanner::searchFileNames(&dirReader,baseDir,srvParam->cfg->Layer[j]->FilePath[0]->attr.filter.c_str(),NULL);
+        /*if(dirReader.listDirRecursive(baseDir,"^.*nc$")!=0){
+          CDBError("Unable to list directory '%s'",baseDir);
+          throw(__LINE__);
+        }*/
+        if(dirReader.fileList.size()==0){
+          CDBError("Could not find any file in directory '%s'",baseDir);
+          throw(__LINE__);
+        }
+        size_t nrOfFileErrors=0;
+        for(size_t j=0;j<dirReader.fileList.size();j++){
+          try{
+          CT::string baseDirStr = baseDir;
+          CT::string groupName = dirReader.fileList[j]->fullName.c_str();
+          CT::string baseName = dirReader.fileList[j]->fullName.c_str();
+          groupName.substringSelf(baseDirStr.length(),-1);
+          //int lastSlash = baseName.lastIndexOf("/")+1;
+          //baseName.substringSelf(lastSlash,-1);
+          
+        
+        
+       
+      
+          //Open file
+          //CDBDebug("Opening file %s",dirReader.fileList[j]->fullName.c_str());
+          CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(srvParam,dirReader.fileList[j]->fullName.c_str());
+          if(cdfObject == NULL){CDBError("Unable to read file %s",dirReader.fileList[j]->fullName.c_str());throw(__LINE__);}
+          
+          //std::vector<CT::string> variables;
+          //List variables
+          for(size_t v=0;v<cdfObject->variables.size();v++){
+            CDF::Variable *var=cdfObject->variables[v];
+            if(var->isDimension==false){
+              if(var->dimensionlinks.size()>=2){
+               // variables.push_back(new CT::string(var->name.c_str()));
+                CServerConfig::XMLE_Layer *xmleLayer=new CServerConfig::XMLE_Layer();
+                CServerConfig::XMLE_Group* xmleGroup = new CServerConfig::XMLE_Group();
+                CServerConfig::XMLE_Variable* xmleVariable = new CServerConfig::XMLE_Variable();
+                CServerConfig::XMLE_FilePath* xmleFilePath = new CServerConfig::XMLE_FilePath();
+                CServerConfig::XMLE_Cache* xmleCache = new CServerConfig::XMLE_Cache();
+                xmleCache->attr.enabled.copy("false");
+                xmleLayer->attr.type.copy("database");
+                xmleVariable->value.copy(var->name.c_str());
+                xmleFilePath->value.copy(dirReader.fileList[j]->fullName.c_str());
+                xmleGroup->attr.value.copy(groupName.c_str());
+                xmleLayer->Variable.push_back(xmleVariable);
+                xmleLayer->FilePath.push_back(xmleFilePath);
+                xmleLayer->Cache.push_back(xmleCache);
+                xmleLayer->Group.push_back(xmleGroup);
+                srvParam->cfg->Layer.push_back(xmleLayer);              
+              }
+            }
+          }
+          
+          
+         
+          }catch(int e){
+            nrOfFileErrors++;
+          }
+          
+        }
+        if(nrOfFileErrors!=0){
+          CDBError("%d files are not readable",nrOfFileErrors);
+        }
+        
+      }catch(int line){
+        return 1;
+      }
+      
+    }
+  }
+  #ifdef MEASURETIME
+  StopWatch_Stop("Config file checked");
+  #endif
+  
   return status;
 }
 
@@ -223,13 +438,13 @@ int CRequest::getDocFromDocCache(CSimpleStore *simpleStore,CT::string *docName,C
     //Read and Provide the xml document!  
     int status = simpleStore->getCTStringAttribute(docName->c_str(),document);
     if(status!=0){
-      CDBDebug("Unable to get document %s from cache",docName->c_str());
+      //CDBDebug("Unable to get document %s from cache",docName->c_str());
       cacheNeedsRefresh=true;
     }
   }
   if(cacheNeedsRefresh==true){
     simpleStore->setStringAttribute("configModificationDate",configModificationDate.c_str());
-    CDBDebug("cacheNeedsRefresh==true");
+    //CDBDebug("cacheNeedsRefresh==true");
     return 2;
   }
   return 0;
@@ -245,6 +460,7 @@ int CRequest::generateOGCGetCapabilities(CT::string *XMLdocument){
   }
   return XMLGen.OGCGetCapabilities(srvParam,XMLdocument);
 }
+
 int CRequest::generateOGCDescribeCoverage(CT::string *XMLdocument){
   CXMLGen XMLGen;
   for(size_t j=0;j<srvParam->WMSLayers->count;j++){
@@ -252,6 +468,7 @@ int CRequest::generateOGCDescribeCoverage(CT::string *XMLdocument){
   }
   return XMLGen.OGCGetCapabilities(srvParam,XMLdocument);
 }
+
 int CRequest::process_wms_getcap_request(){
   CDBDebug("WMS GETCAPABILITIES");
   
@@ -266,17 +483,19 @@ int CRequest::process_wms_getcap_request(){
     //if(status==2, the store is ok, but not up to date
     if(status==2)storeNeedsUpdate=true;
     if(storeNeedsUpdate){
-      CDBDebug("Generating a new document with name %s",documentName.c_str());
-      int status = generateOGCGetCapabilities(&XMLdocument);if(status!=0)return 1;
+      //CDBDebug("Generating a new document with name %s",documentName.c_str());
+      int status = generateOGCGetCapabilities(&XMLdocument);if(status==CXMLGEN_FATAL_ERROR_OCCURED)return 1;
       //Store this document  
-      simpleStore.setStringAttribute(documentName.c_str(),XMLdocument.c_str());
-      if(storeDocumentCache(&simpleStore)!=0)return 1;
+      if(status==0){
+        simpleStore.setStringAttribute(documentName.c_str(),XMLdocument.c_str());
+        if(storeDocumentCache(&simpleStore)!=0)return 1;
+      }
     }else{
       CDBDebug("Providing document from store with name %s",documentName.c_str());
     }
   }else{
     //Do not use cache
-    int status = generateOGCGetCapabilities(&XMLdocument);if(status!=0)return 1;
+    int status = generateOGCGetCapabilities(&XMLdocument);;if(status==CXMLGEN_FATAL_ERROR_OCCURED)return 1;
   }
   printf("%s%c%c\n","Content-Type:text/xml",13,10);
   printf("%s",XMLdocument.c_str());
@@ -296,10 +515,16 @@ int CRequest::process_wcs_describecov_request(){
 }
 
 int CRequest::process_wms_getmap_request(){
-  if(srvParam->WMSLayers!=NULL)
+  if(srvParam->WMSLayers!=NULL){
+    CT::string message = "WMS GETMAP ";
     for(size_t j=0;j<srvParam->WMSLayers->count;j++){
-      CDBDebug("WMS GETMAP for layers (%d) %s",j,srvParam->WMSLayers[j].c_str());
+      if(j>0)message.concat(",");
+      message.printconcat("(%d) %s",j,srvParam->WMSLayers[j].c_str());
     }
+    CDBDebug(message.c_str());
+  }else{
+    CDBDebug("WMS GETMAP no layers");
+  }
   return process_all_layers();
 }
 
@@ -323,6 +548,288 @@ bool CRequest::checkTimeFormat(CT::string& timeToCheck){
     isValidTime = timeToCheck.testRegEx(timeFormats[j].pattern);
   }
   return isValidTime;*/
+}
+
+
+int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *srvParam){
+  int status = 0;
+  try{
+    CPGSQLDB DB;
+    CT::string query;
+  
+    // Connect do DB
+    status = DB.connect(srvParam->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0){CDBError("Unable to connect to DB");return 1;}
+    
+    /*
+      * Check if all tables are available, if not update the db
+      */
+    if(srvParam->isAutoResourceEnabled()){
+      status = dataSource->CDataSource::checkDimTables(&DB);
+      if(status != 0){
+        CDBError("checkAndUpdateDimTables failed");
+        return status;
+      }
+    }
+    
+    /*
+      * Get the number of required dims from the given dims
+      * Check if all dimensions are given
+      */
+    #ifdef CREQUEST_DEBUG
+    CDBDebug("Get DIMS from query string");
+    #endif
+    for(size_t k=0;k<srvParam->requestDims.size();k++)srvParam->requestDims[k]->name.toLowerCaseSelf();
+    
+    for(size_t i=0;i<dataSource->cfgLayer->Dimension.size();i++){
+      CT::string dimName(dataSource->cfgLayer->Dimension[i]->value.c_str());
+      dimName.toLowerCaseSelf();
+      #ifdef CREQUEST_DEBUG
+      CDBDebug("dimName %s",dimName.c_str());
+      #endif
+      //Check if this dim is not already added
+      bool alreadyAdded=false;
+      for(size_t l=0;l<dataSource->requiredDims.size();l++){
+        if(dataSource->requiredDims[l]->name.equals(&dimName)){alreadyAdded=true;break;}
+      }
+      
+      #ifdef CREQUEST_DEBUG
+      CDBDebug("alreadyAdded = %d",alreadyAdded);
+      #endif
+      if(alreadyAdded == false){
+        for(size_t k=0;k<srvParam->requestDims.size();k++){
+          if(srvParam->requestDims[k]->name.equals(&dimName)){
+            #ifdef CREQUEST_DEBUG
+            CDBDebug("DIM COMPARE: %s==%s",srvParam->requestDims[k]->name.c_str(),dimName.c_str());
+            #endif
+            
+            //This dimension has been specified in the request, so the dimension has been found:
+            COGCDims *ogcDim = new COGCDims();
+            dataSource->requiredDims.push_back(ogcDim);
+            ogcDim->name.copy(&dimName);
+            ogcDim->value.copy(&srvParam->requestDims[k]->value);
+            ogcDim->netCDFDimName.copy(dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
+
+            // If we have value 'current', give the dim a special status
+            if(ogcDim->value.equals("current")){
+              CT::string tableName;
+              
+              try{
+                tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), ogcDim->netCDFDimName.c_str());
+              }catch(int e){
+                CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), ogcDim->netCDFDimName.c_str());
+                return 1;
+              }
+              
+              
+              query.print("select max(%s) from %s",ogcDim->netCDFDimName.c_str(),tableName.c_str());
+              CDB::Store *maxStore = DB.queryToStore(query.c_str());
+              if(maxStore == NULL){CDBError("query failed");status = DB.close(); return 1;}
+              ogcDim->value.copy(maxStore->getRecord(0)->get(0));
+              delete maxStore;
+            }
+          }
+        }
+      }
+    }
+    #ifdef CREQUEST_DEBUG
+    CDBDebug("Get DIMS from query string ready");
+    #endif
+    
+    /* Fill in the undefined dims */
+    
+    for(size_t i=0;i<dataSource->cfgLayer->Dimension.size();i++){
+      CT::string dimName(dataSource->cfgLayer->Dimension[i]->value.c_str());
+      dimName.toLowerCaseSelf();
+      bool alreadyAdded=false;
+      for(size_t k=0;k<dataSource->requiredDims.size();k++){
+        if(dataSource->requiredDims[k]->name.equals(&dimName)){alreadyAdded=true;break;}
+      }
+      if(alreadyAdded==false){
+        CT::string netCDFDimName(dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
+
+        CT::string tableName;
+        try{
+          tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str());
+        }catch(int e){
+          CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str());
+          return 1;
+        }
+
+        
+        //Add the undefined dims to the srvParams as additional dims
+        COGCDims *ogcDim = new COGCDims();
+        dataSource->requiredDims.push_back(ogcDim);
+        ogcDim->name.copy(&dimName);
+        ogcDim->netCDFDimName.copy(dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
+        //Try to find the max value for this dim name from the database
+        CT::string query;
+        query.print("select max(%s) from %s",
+                    dataSource->cfgLayer->Dimension[i]->attr.name.c_str(),
+                    tableName.c_str());
+        //Execute the query
+        CDB::Store *maxStore = DB.queryToStore(query.c_str());
+        if(maxStore == NULL){CDBError("query failed");status = DB.close(); return 1;}
+        ogcDim->value.copy(maxStore->getRecord(0)->get(0));
+        delete maxStore;
+      }
+    }        
+  
+    CT::string queryOrderedDESC;
+    queryOrderedDESC.print("select a0.path");
+    for(size_t i=0;i<dataSource->requiredDims.size();i++){
+      queryOrderedDESC.printconcat(",%s,dim%s",dataSource->requiredDims[i]->netCDFDimName.c_str(),dataSource->requiredDims[i]->netCDFDimName.c_str());
+      
+    }
+    
+    queryOrderedDESC.concat(" from ");
+    bool timeValidationError = false;
+    
+    //Compose the query
+    for(size_t i=0;i<dataSource->requiredDims.size();i++){
+      CT::string netCDFDimName(&dataSource->requiredDims[i]->netCDFDimName);
+
+      CT::string tableName;
+      try{
+        tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str());
+      }catch(int e){
+        CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str());
+        return 1;
+      }
+
+      CT::string subQuery;
+      subQuery.print("(select path,dim%s,%s from %s where ",netCDFDimName.c_str(),
+                  netCDFDimName.c_str(),
+                  tableName.c_str());
+      CT::string queryParams(&dataSource->requiredDims[i]->value);
+      CT::string *cDims =queryParams.splitToArray(",");// Split up by commas (and put into cDims)
+      for(size_t k=0;k<cDims->count;k++){
+        CT::string *sDims =cDims[k].splitToArray("/");// Split up by slashes (and put into sDims)
+        if(sDims->count>0&&k>0)subQuery.concat("or ");
+        for(size_t  l=0;l<sDims->count&&l<2;l++){
+          if(sDims[l].length()>0){
+            //dataSource->requiredDims[i]->allValues.push_back(sDims[l].c_str());
+            //CDBDebug("requiredDims %d %s",i,sDims[l].c_str());
+            if(l>0)subQuery.concat("and ");
+            if(sDims->count==1){
+              if(!checkTimeFormat(sDims[l]))timeValidationError=true;
+              subQuery.printconcat("%s = '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
+            }
+            
+            //TODO Currently only start/stop is supported, start/stop/resolution is not supported yet.
+            if(sDims->count>=2){
+              if(l==0){
+                if(!checkTimeFormat(sDims[l]))timeValidationError=true;
+                subQuery.printconcat("%s >= '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
+              }
+              if(l==1){
+                if(!checkTimeFormat(sDims[l]))timeValidationError=true;
+                subQuery.printconcat("%s <= '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
+              }
+            }
+          }
+        }
+        delete[] sDims;
+      }
+      delete[] cDims;
+      if(i==0){
+        subQuery.printconcat("ORDER BY %s DESC limit 24*6)a%d ",netCDFDimName.c_str(),i);
+      }else{
+        subQuery.printconcat("ORDER BY %s DESC)a%d ",netCDFDimName.c_str(),i);
+      }
+      //subQuery.printconcat("ORDER BY %s DESC)a%d ",netCDFDimName.c_str(),i);
+      if(i<dataSource->requiredDims.size()-1)subQuery.concat(",");
+      queryOrderedDESC.concat(&subQuery);
+    }
+    
+    //Join by path
+    if(dataSource->requiredDims.size()>1){
+      queryOrderedDESC.concat(" where a0.path=a1.path");
+      for(size_t i=2;i<dataSource->requiredDims.size();i++){
+        queryOrderedDESC.printconcat(" and a0.path=a%d.path",i);
+      }
+    }
+    
+    //writeLogFile3(queryOrderedDESC.c_str());
+    //writeLogFile3("\n");
+    //queryOrderedDESC.concat(" limit 40");
+  
+    if(timeValidationError==true){
+      if((checkDataRestriction()&SHOW_QUERYINFO)==false)queryOrderedDESC.copy("hidden");
+      CDBError("queryOrderedDESC fails regular expression: '%s'",queryOrderedDESC.c_str());
+      status = DB.close();
+      return 1;
+    }
+    
+    query.print("select * from (%s)T order by ",queryOrderedDESC.c_str());
+    query.concat(&dataSource->requiredDims[0]->netCDFDimName);
+    for(size_t i=1;i<dataSource->requiredDims.size();i++){
+      query.printconcat(",%s",dataSource->requiredDims[i]->netCDFDimName.c_str());
+    }
+    
+    //Execute the query
+    
+      //writeLogFile3(query.c_str());
+      //writeLogFile3("\n");
+    //values_path = DB.query_select(query.c_str(),0);
+    
+    CDB::Store *store = NULL;
+    try{
+      store = DB.queryToStore(query.c_str(),true);
+    }catch(int e){
+      CDBDebug("Query failed with code %d",e);
+      DB.close();
+      return 1;
+    }
+    
+    if(store == NULL){
+      if((checkDataRestriction()&SHOW_QUERYINFO)==false)query.copy("hidden");
+      CDBError("No results for query: '%s'",query.c_str());
+      DB.close();
+      return 2;
+    }
+    if(store->getSize() == 0){
+      if((checkDataRestriction()&SHOW_QUERYINFO)==false)query.copy("hidden");
+      CDBError("No results for query: '%s'",query.c_str());
+      delete store;
+      DB.close();
+      return 2;
+    }
+          
+    for(size_t k=0;k<store->getSize();k++){
+      CDB::Record *record = store->getRecord(k);
+      CDataSource::TimeStep * timeStep = new CDataSource::TimeStep();
+      dataSource->timeSteps.push_back(timeStep);
+      //timeStep->fileName.copy(values_path[k].c_str());
+      timeStep->fileName.copy(record->get(0)->c_str());
+      //CDBDebug("%s",timeStep->fileName.c_str());
+      //timeStep->timeString.print("%sZ",date_time[k].c_str());
+      timeStep->timeString.print("%sZ",record->get(1)->c_str());
+      timeStep->timeString.setChar(10,'T');
+      
+      
+      //For each timesteps a new set of dimensions is added with corresponding dim array indices.
+      for(size_t i=0;i<dataSource->requiredDims.size();i++){
+        timeStep->dims.addDimension(dataSource->requiredDims[i]->netCDFDimName.c_str(),record->get(1+i*2)->c_str(),atoi(record->get(2+i*2)->c_str()));
+        
+        //CDBDebug("%s %s",dataSource->requiredDims[i]->netCDFDimName.c_str(),dataSource->requiredDims[i]->value.c_str());
+        //CDBDebug("%s = %s",record->get(1+i*2)->c_str(),record->get(2+i*2)->c_str());
+        dataSource->requiredDims[i]->addValue(record->get(1+i*2)->c_str());
+        //dataSource->requiredDims[i]->allValues.push_back(sDims[l].c_str());
+      }
+    }
+    
+    
+//     for(size_t i=0;i<dataSource->requiredDims.size();i++){
+//       CDBDebug("%d There are %d values for dimension %s",i,dataSource->requiredDims[i]->uniqueValues.size(),dataSource->requiredDims[i]->netCDFDimName.c_str());  
+//     }
+
+    status = DB.close();  if(status!=0)return 1;
+    delete store;
+  }catch(int i){
+    CDBError("%d",i);
+    return 2;
+  }
+  return 0;
 }
 
 int CRequest::process_all_layers(){
@@ -416,7 +923,7 @@ int CRequest::process_all_layers(){
         //Do not use cache
         status = generateOGCDescribeCoverage(&XMLDocument);if(status!=0)return 1;
     }*/
-      status = generateOGCDescribeCoverage(&XMLDocument);if(status!=0)return 1;
+      status = generateOGCDescribeCoverage(&XMLDocument);if(status==CXMLGEN_FATAL_ERROR_OCCURED)return 1;
       printf("%s%c%c\n","Content-Type:text/xml",13,10);
       printf("%s",XMLDocument.c_str());
       return 0;
@@ -442,270 +949,37 @@ int CRequest::process_all_layers(){
       // When there are no dims, we can get the filename from the config
       if(dataSources[j]->cfgLayer->Dimension.size()==0){
        
-        CDataReader::autoConfigureDimensions(dataSources[j],true);
+        CDataReader::autoConfigureDimensions(dataSources[j]);
         
       }
       if(dataSources[j]->cfgLayer->Dimension.size()!=0){
-        CPGSQLDB DB;
-        CT::string Query;
-        CT::string *values_path=NULL;
-        CT::string *values_dim=NULL;
-        CT::string *date_time=NULL;
-        //char szPartialQuery[MAX_STR_LEN+1];
-      
-        // Connect do DB
-        status = DB.connect(srvParam->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0){CDBError("Unable to connect to DB");return 1;}
-        //Get the number of required dims from the given dims
-        //Check if all dimensions are given
-        for(int k=0;k<srvParam->NumOGCDims;k++)srvParam->OGCDims[k].Name.toLowerCase();
-        int dimsfound[NC_MAX_DIMS];
-        for(size_t i=0;i<dataSources[j]->cfgLayer->Dimension.size();i++){
-          CT::string dimName(dataSources[j]->cfgLayer->Dimension[i]->value.c_str());
-          dimName.toLowerCase();
-          dimsfound[i]=0;
-          for(int k=0;k<srvParam->NumOGCDims;k++){
-            //CDBDebug("DIM COMPARE: %s==%s",srvParam->OGCDims[k].Name.c_str(),dimName.c_str());
-            if(srvParam->OGCDims[k].Name.equals(&dimName)){
-              //This dimension has been specified in the request, so the dimension has been found:
-              dimsfound[i]=1;
-              COGCDims *ogcDim = new COGCDims;
-              dataSources[j]->requiredDims.push_back(ogcDim);
-              ogcDim->Name.copy(&dimName);
-              ogcDim->Value.copy(&srvParam->OGCDims[k].Value);
-              ogcDim->netCDFDimName.copy(dataSources[j]->cfgLayer->Dimension[i]->attr.name.c_str());
-              //If we have a special styled layer, the time does not come from TIME, but from style:
-              if(dataSources[0]->dLayerType==CConfigReaderLayerTypeStyled){
-                CT::string *splittedStyles=srvParam->Styles.split(",");
-                if(splittedStyles->count!=dataSources.size()){
-                  status = DB.close();
-                  CDBError("Number of provided layers (%d) does not match the number of provided styles (%d)",dataSources.size(),splittedStyles->count);
-                  //for(size_t j=0;j<requiredDims.size();j++)delete requiredDims[j];
-                  return 1;
-                }
-                if(j==0){
-                  //The first boolean layer needs to be loaded with an unspecified time 
-                  //We will use 'current' to make sure something is loaded
-                  ogcDim->Value.copy("current");
-                }
-                
-                if(j>0){
-                  //Try to find the time from the style:
-                  CT::string * stripeString = splittedStyles[j].split("|");
-                  if(stripeString->count==2){
-                    if(stripeString[1].indexOf("time_")==0){
-                      CT::string *valuePair=stripeString[1].split("_");
-                      ogcDim->Value.copy(&valuePair[1]);
-                      delete[] valuePair;
-                    }
-                  }
-                  delete[] stripeString ;
-                }
-                delete[] splittedStyles;
-                //CDBDebug("srvParam->OGCDims[k].Value %d==%s",j,srvParam->OGCDims[k].Value.c_str());
-              }
-              // If we have value 'current', give the dim a special status
-              if(ogcDim->Value.equals("current")){
-                dimsfound[i]=2;
-                CT::string tableName(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str());
-                CServerParams::makeCorrectTableName(&tableName,&ogcDim->netCDFDimName);
-                
-                Query.print("select max(%s) from %s",
-                        ogcDim->netCDFDimName.c_str(),
-                            tableName.c_str());
-                CT::string *temp = DB.query_select(Query.c_str(),0);
-                if(temp == NULL){CDBError("Query failed");status = DB.close(); return 1;}
-                ogcDim->Value.copy(&temp[0]);
-              }
-            }
-          }
-        }
-      
-
-        // Fill in the undefined dims
-        for(size_t i=0;i<dataSources[j]->cfgLayer->Dimension.size();i++){
-          if(dimsfound[i]==0){
-            CT::string netCDFDimName(dataSources[j]->cfgLayer->Dimension[i]->attr.name.c_str());
-            CT::string tableName(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str());
-            CServerParams::makeCorrectTableName(&tableName,&netCDFDimName);
-            //Add the undefined dims to the srvParams as additional dims
-            COGCDims *ogcDim = new COGCDims;
-            dataSources[j]->requiredDims.push_back(ogcDim);
-            ogcDim->Name.copy(dataSources[j]->cfgLayer->Dimension[i]->value.c_str());
-            ogcDim->netCDFDimName.copy(dataSources[j]->cfgLayer->Dimension[i]->attr.name.c_str());
-            //Try to find the max value for this dim name from the database
-            Query.print("select max(%s) from %s",
-                      dataSources[j]->cfgLayer->Dimension[i]->attr.name.c_str(),
-                      tableName.c_str());
-            //Execute the query
-            CT::string *temp = DB.query_select(Query.c_str(),0);
-            if(temp == NULL){CDBError("Query failed");status = DB.close(); return 1;}
-            //Copy the value corresponding to this dim name to srvparams
-            ogcDim->Value.copy(&temp[0]);
-            delete[] temp;
-          }
-        }
-        
-        
-      
-
-        Query.print("select a0.path");
-        for(size_t i=0;i<dataSources[j]->requiredDims.size();i++){
-          Query.printconcat(",%s,dim%s",dataSources[j]->requiredDims[i]->netCDFDimName.c_str(),dataSources[j]->requiredDims[i]->netCDFDimName.c_str());
-        }
-        
-        Query.concat(" from ");
-        bool timeValidationError = false;
-        for(size_t i=0;i<dataSources[j]->requiredDims.size();i++){
-          CT::string netCDFDimName(&dataSources[j]->requiredDims[i]->netCDFDimName);
-          CT::string tableName(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str());
-          CServerParams::makeCorrectTableName(&tableName,&netCDFDimName);
-          CT::string subQuery;
-          subQuery.print("(select path,dim%s,%s from %s where ",netCDFDimName.c_str(),
-                      netCDFDimName.c_str(),
-                      tableName.c_str());
-          CT::string queryParams(&dataSources[j]->requiredDims[i]->Value);
-          CT::string *cDims =queryParams.split(",");// Split up by commas (and put into cDims)
-          for(size_t k=0;k<cDims->count;k++){
-            CT::string *sDims =cDims[k].split("/");// Split up by slashes (and put into sDims)
-            if(sDims->count>0&&k>0)subQuery.concat("or ");
-            for(size_t  l=0;l<sDims->count&&l<2;l++){
-              if(sDims[l].length()>0){
-                if(l>0)subQuery.concat("and ");
-                if(sDims->count==1){
-                  if(!checkTimeFormat(sDims[l]))timeValidationError=true;
-                  subQuery.printconcat("%s = '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
-                }
-                //TODO Currently only start/stop is supported, start/stop/resolution is not supported yet.
-                if(sDims->count>=2){
-                  if(l==0){
-                    if(!checkTimeFormat(sDims[l]))timeValidationError=true;
-                    subQuery.printconcat("%s >= '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
-                  }
-                  if(l==1){
-                    if(!checkTimeFormat(sDims[l]))timeValidationError=true;
-                    subQuery.printconcat("%s <= '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
-                  }
-                }
-              }
-            }
-            delete[] sDims;
-          }
-          delete[] cDims;
-          subQuery.printconcat("ORDER BY %s)a%d ",netCDFDimName.c_str(),i);
-          if(i<dataSources[j]->requiredDims.size()-1)subQuery.concat(",");
-          Query.concat(&subQuery);
-        }
-        //Join by path
-        if(dataSources[j]->requiredDims.size()>1){
-          Query.concat(" where a0.path=a1.path");
-          for(size_t i=2;i<dataSources[j]->requiredDims.size();i++){
-            Query.printconcat(" and a0.path=a%d.path",i);
-          }
-        }
-        Query.concat(" limit 32");
-        //CDBDebug(Query.c_str());
-        if(timeValidationError==true){
-          if((checkDataRestriction()&SHOW_QUERYINFO)==false)Query.copy("hidden");
-          CDBError("Query fails regular expression: '%s'",Query.c_str());
-          status = DB.close();
+        if(getDimValuesForDataSource(dataSources[j],srvParam)!=0){
+          CDBError("Unable to fill in dimensions");
           return 1;
         }
-        
-
-        //Execute the query
-        values_path = DB.query_select(Query.c_str(),0);
-        if(values_path==NULL&&srvParam->isAutoOpenDAPEnabled()){
-          //TODO disable automatic update for certain cases!
-          CDBDebug("No results for query: Trying to update the database automatically.");
-        
-          status = CDBFileScanner::updatedb(srvParam->cfg->DataBase[0]->attr.parameters.c_str(),dataSources[j],NULL,NULL);
-          if(status !=0){CDBError("Could not update db for: %s",dataSources[j]->cfgLayer->Name[0]->value.c_str());DB.close();return 2;}
-          values_path = DB.query_select(Query.c_str(),0);
-          if(values_path==NULL){
-            if((checkDataRestriction()&SHOW_QUERYINFO)==false)Query.copy("hidden");
-            CDBError("No results for query: '%s'",Query.c_str());
-            return 2;
-          }
-        }
-        if(values_path==NULL){
-          if((checkDataRestriction()&SHOW_QUERYINFO)==false)Query.copy("hidden");
-          CDBError("No results for query: '%s'",Query.c_str());
-          return 2;
-        }
-        if(values_path->count==0){
-          if((checkDataRestriction()&SHOW_QUERYINFO)==false)Query.copy("hidden");
-          CDBError("No results for query: '%s'",Query.c_str());
-          delete[] values_path;
-          status = DB.close();
-          return 2;
-        }
-        //Get timestring
-        date_time = DB.query_select(Query.c_str(),1);
-        if(date_time == NULL){CDBError("Query failed");status = DB.close(); return 1;}
-        
-        
-        //Now get the dimensions
-        std::vector <CT::string*> dimValues;
-        for(size_t i=0;i<dataSources[j]->requiredDims.size();i++){
-          CT::string *t=DB.query_select(Query.c_str(),2+i*2);
-          dimValues.push_back(t);
-        }
-              
-        for(size_t k=0;k<values_path->count;k++){
-          CDataSource::TimeStep * timeStep = new CDataSource::TimeStep();
-          dataSources[j]->timeSteps.push_back(timeStep);
-          timeStep->fileName.copy(values_path[k].c_str());
-          //CDBDebug("%s",timeStep->fileName.c_str());
-          timeStep->timeString.copy(date_time[k].c_str());
-          //For each timesteps a new set of dimensions is added with corresponding dim array indices.
-          for(size_t i=0;i<dataSources[j]->requiredDims.size();i++){
-            timeStep->dims.addDimension(dataSources[j]->requiredDims[i]->netCDFDimName.c_str(),atoi(dimValues[i][k].c_str()));
-          }
-        }
-
-        status = DB.close();  if(status!=0)return 1;
-      
-        for(size_t j=0;j<dimValues.size();j++){
-          delete[] dimValues[j]; 
-        }
-        delete[] values_path;
+        /*delete[] values_path;
         delete[] values_dim;
-        delete[] date_time;
+        delete[] date_time;*/
       }else{
-        
-        //This layer has no dimensions
-        //We need to add one timestep with data.
+        //This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.        
         CDataSource::TimeStep * timeStep = new CDataSource::TimeStep();
         dataSources[j]->timeSteps.push_back(timeStep);
-         //if(dataSources[j]->cfgLayer->Dimension.size()!=0){
         timeStep->fileName.copy(dataSources[j]->cfgLayer->FilePath[0]->value.c_str());
-        
-        CDirReader dirReader;
-        CDBFileScanner::searchFileNames(&dirReader,dataSources[j]->cfgLayer->FilePath[0]->value.c_str(),dataSources[j]->cfgLayer->FilePath[0]->attr.filter.c_str(),NULL);
-        if(dirReader.fileList.size()==1){
-          timeStep->fileName.copy(dirReader.fileList[0]->fullName.c_str());
-        }else{
-          timeStep->fileName.copy(dataSources[j]->cfgLayer->FilePath[0]->value.c_str());
-        }
-        
         timeStep->timeString.copy("0");
-        timeStep->dims.addDimension("time",0);
-        
+        timeStep->dims.addDimension("time","0",0);
       }
     }
+    
     if(dataSources[j]->dLayerType==CConfigReaderLayerTypeCascaded){
-       
-        //This layer has no dimensions
-        //We need to add one timestep with data.
+        //This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
         CDataSource::TimeStep * timeStep = new CDataSource::TimeStep();
         dataSources[j]->timeSteps.push_back(timeStep);
-         //if(dataSources[j]->cfgLayer->Dimension.size()!=0){
         timeStep->fileName.copy("");
         timeStep->timeString.copy("0");
-        timeStep->dims.addDimension("time",0);
-        
+        timeStep->dims.addDimension("time","0",0);
     }
   }
+  
   int j=0;
   
     /**************************************/
@@ -716,49 +990,58 @@ int CRequest::process_all_layers(){
       dataSources[j]->dLayerType==CConfigReaderLayerTypeCascaded)
     {
       try{
+        for(size_t d=0;d<dataSources.size();d++){
+          dataSources[d]->setTimeStep(0);
+        }
         if(srvParam->requestType==REQUEST_WMS_GETMAP){
           CImageDataWriter imageDataWriter;
 
-          /*
+          /**
             We want like give priority to our own internal layers, instead to external cascaded layers. This is because
             our internal layers have an exact customized legend, and we would like to use this always.
           */
+       
           bool imageDataWriterIsInitialized = false;
+          int dataSourceToUse=0;
           for(size_t d=0;d<dataSources.size()&&imageDataWriterIsInitialized==false;d++){
             if(dataSources[d]->dLayerType!=CConfigReaderLayerTypeCascaded){
+              //CDBDebug("INIT");
               status = imageDataWriter.init(srvParam,dataSources[d],dataSources[d]->getNumTimeSteps());if(status != 0)throw(__LINE__);
               imageDataWriterIsInitialized=true;
+              dataSourceToUse=d;
             }
           }
-          //There are only cascaded layers, so we intiialize the imagedatawriter with this the first layer.
+          
+          //There are only cascaded layers, so we intialize the imagedatawriter with this the first layer.
           if(imageDataWriterIsInitialized==false){
             status = imageDataWriter.init(srvParam,dataSources[0],dataSources[0]->getNumTimeSteps());if(status != 0)throw(__LINE__);
+            dataSourceToUse=0;
             imageDataWriterIsInitialized=true;
           }
           
           //When we have multiple timesteps, we will create an animation.
-          if(dataSources[0]->getNumTimeSteps()>1)imageDataWriter.createAnimation();
+          if(dataSources[dataSourceToUse]->getNumTimeSteps()>1)imageDataWriter.createAnimation();
     
-          for(size_t k=0;k<(size_t)dataSources[0]->getNumTimeSteps();k++){
+          for(size_t k=0;k<(size_t)dataSources[dataSourceToUse]->getNumTimeSteps();k++){
             for(size_t d=0;d<dataSources.size();d++){
               dataSources[d]->setTimeStep(k);
             }
             if(dataSources[j]->dLayerType==CConfigReaderLayerTypeDataBase||
               dataSources[j]->dLayerType==CConfigReaderLayerTypeCascaded){
-              //CDBDebug("!");
               status = imageDataWriter.addData(dataSources);
-              //CDBDebug("!");
               if(status != 0){
-                //Adding data failed:
-                //Do not ruin an animation if one timestep fails to load.
-                //If there is a single time step then throw an exception otherwise continue.
-                if(dataSources[0]->getNumTimeSteps()==1){
+                /**
+                 * Adding data failed:
+                 * Do not ruin an animation if one timestep fails to load.
+                 * If there is a single time step then throw an exception otherwise continue.
+                 */
+                if(dataSources[dataSourceToUse]->getNumTimeSteps()==1){
                   //Not an animation, so throw an exception
                   CDBError("Unable to convert datasource %s to image",dataSources[j]->layerName.c_str());
                   throw(__LINE__);
                 }else{
                   //This is an animation, report an error and continue with adding images.
-                  CDBError("Unable to load datasource %s at line %d",dataSources[0]->dataObject[0]->variableName.c_str(),__LINE__);
+                  CDBError("Unable to load datasource %s at line %d",dataSources[dataSourceToUse]->dataObject[0]->variableName.c_str(),__LINE__);
                 }
               }
             }
@@ -766,49 +1049,40 @@ int CRequest::process_all_layers(){
               //Special styled layer for GEOMON project
               status = imageDataWriter.calculateData(dataSources);if(status != 0)throw(__LINE__);
             }
-            if(dataSources[j]->getNumTimeSteps()>1){
+            if(dataSources[dataSourceToUse]->getNumTimeSteps()>1){
               //Print the animation data into the image
               char szTemp[1024];
-              snprintf(szTemp,1023,"%s UTC",dataSources[0]->timeSteps[k]->timeString.c_str());
+              snprintf(szTemp,1023,"%s UTC",dataSources[dataSourceToUse]->timeSteps[k]->timeString.c_str());
               imageDataWriter.setDate(szTemp);
             }
           }
-          
-          //CDBDebug("drawing titles");
           
           int textY=5;
           //int prevTextY=0;
           if(srvParam->mapTitle.length()>0){
             if(srvParam->cfg->WMS[0]->TitleFont.size()==1){
               float fontSize=parseFloat(srvParam->cfg->WMS[0]->TitleFont[0]->attr.size.c_str());
-              textY+=fontSize;
-              //imageDataWriter.drawImage.rectangle(0,0,srvParam->Geo->dWidth,textY+8,CColor(255,255,255,0),CColor(255,255,255,80));
-              //imageDataWriter.drawImage.setFillC
+              textY+=int(fontSize);
               imageDataWriter.drawImage.drawText(5,textY,srvParam->cfg->WMS[0]->TitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapTitle.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
               textY+=12;
-              
-              //prevTextY=textY;
             }
           }
           if(srvParam->mapSubTitle.length()>0){
             if(srvParam->cfg->WMS[0]->SubTitleFont.size()==1){
               float fontSize=parseFloat(srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.size.c_str());
-              textY+=fontSize;
-              
-              //imageDataWriter.drawImage.rectangle(0,prevTextY,srvParam->Geo->dWidth,textY+4,CColor(255,255,255,0),CColor(255,255,255,80));
+              textY+=int(fontSize);
               imageDataWriter.drawImage.drawText(6,textY,srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapSubTitle.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
               textY+=8;
-              //prevTextY=textY;
             }
           }
-          //imageDataWriter.drawText(5,5+30+25+2+12+2,"/home/visadm/software/fonts/verdana.ttf",12,0,dataSources[0]->timeSteps[0]->timeString.c_str(),240);
+
           if(srvParam->showDimensionsInImage){
             textY+=4;
-            for(int d=0;d<srvParam->NumOGCDims;d++){
+            for(size_t d=0;d<srvParam->requestDims.size();d++){
               CT::string message;
               float fontSize=parseFloat(srvParam->cfg->WMS[0]->DimensionFont[0]->attr.size.c_str());
-              textY+=fontSize*1.2;
-              message.print("%s: %s",srvParam->OGCDims[d].Name.c_str(),srvParam->OGCDims[d].Value.c_str());
+              textY+=int(fontSize*1.2);
+              message.print("%s: %s",srvParam->requestDims[d]->name.c_str(),srvParam->requestDims[d]->value.c_str());
               imageDataWriter.drawImage.drawText(6,textY,srvParam->cfg->WMS[0]->DimensionFont[0]->attr.location.c_str(),fontSize,0,message.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
               textY+=4;
             }
@@ -825,7 +1099,7 @@ int CRequest::process_all_layers(){
                   status = imageDataWriter.createLegend(dataSources[d],&legendImage);if(status != 0)throw(__LINE__);
                   int posX=4;
                   int posY=imageDataWriter.drawImage.Geo->dHeight-(legendImage.Geo->dHeight+4);
-                  imageDataWriter.drawImage.rectangle(posX,posY,legendImage.Geo->dWidth+posX+1,legendImage.Geo->dHeight+posY+1,CColor(255,255,255,0),CColor(255,255,255,100));
+                  imageDataWriter.drawImage.rectangle(posX,posY,legendImage.Geo->dWidth+posX+1,legendImage.Geo->dHeight+posY+1,CColor(255,255,255,100),CColor(255,255,255,0));
                   imageDataWriter.drawImage.draw(posX,posY,0,0,&legendImage);
                   legendDrawn=true;
                 }
@@ -839,7 +1113,7 @@ int CRequest::process_all_layers(){
                   status = imageDataWriter.createLegend(dataSources[d],&legendImage);if(status != 0)throw(__LINE__);
                   int posX=imageDataWriter.drawImage.Geo->dWidth-(legendImage.Geo->dWidth+padding);
                   int posY=imageDataWriter.drawImage.Geo->dHeight-(legendImage.Geo->dHeight+padding);
-                  imageDataWriter.drawImage.rectangle(posX,posY,legendImage.Geo->dWidth+posX+1,legendImage.Geo->dHeight+posY+1,CColor(255,255,255,0),CColor(255,255,255,180));
+                  imageDataWriter.drawImage.rectangle(posX,posY,legendImage.Geo->dWidth+posX+1,legendImage.Geo->dHeight+posY+1,CColor(255,255,255,180),CColor(255,255,255,0));
                   imageDataWriter.drawImage.draw(posX,posY,0,0,&legendImage);
                   legendDrawn=true;
                   
@@ -867,24 +1141,27 @@ int CRequest::process_all_layers(){
         }
     
         if(srvParam->requestType==REQUEST_WMS_GETFEATUREINFO){
-          CImageDataWriter ImageDataWriter;
-          status = ImageDataWriter.init(srvParam,dataSources[j],dataSources[j]->getNumTimeSteps());if(status != 0)throw(__LINE__);
-          for(int k=0;k<dataSources[j]->getNumTimeSteps();k++){
-            dataSources[j]->setTimeStep(k);
-            status = ImageDataWriter.getFeatureInfo(dataSources[j],
-                int(srvParam->dX),
-                int(srvParam->dY));
-            if(status != 0)throw(__LINE__);
-          }
-          status = ImageDataWriter.end();if(status != 0)throw(__LINE__);
+          CImageDataWriter imageDataWriter;
+          
+          status = imageDataWriter.init(srvParam,dataSources[j],dataSources[j]->getNumTimeSteps());if(status != 0)throw(__LINE__);
+         
+//             for(int k=0;k<dataSources[j]->getNumTimeSteps();k++){
+//               for(size_t d=0;d<dataSources.size();d++){
+//                 dataSources[d]->setTimeStep(k);
+//               }
+              status = imageDataWriter.getFeatureInfo(dataSources,0,int(srvParam->dX),int(srvParam->dY));if(status != 0)throw(__LINE__);
+//             }
+          
+          
+          status = imageDataWriter.end();if(status != 0)throw(__LINE__);
         }
         
         // WMS Getlegendgraphic
         if(srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
-          CImageDataWriter ImageDataWriter;
-          status = ImageDataWriter.init(srvParam,dataSources[j],1);if(status != 0)throw(__LINE__);
-          status = ImageDataWriter.createLegend(dataSources[j],&ImageDataWriter.drawImage);if(status != 0)throw(__LINE__);
-          status = ImageDataWriter.end();if(status != 0)throw(__LINE__);
+          CImageDataWriter imageDataWriter;
+          status = imageDataWriter.init(srvParam,dataSources[j],1);if(status != 0)throw(__LINE__);
+          status = imageDataWriter.createLegend(dataSources[j],&imageDataWriter.drawImage);if(status != 0)throw(__LINE__);
+          status = imageDataWriter.end();if(status != 0)throw(__LINE__);
         }
         // WMS GetMetaData
         if(srvParam->requestType==REQUEST_WMS_GETMETADATA){
@@ -897,9 +1174,8 @@ int CRequest::process_all_layers(){
             throw(__LINE__);
           }
           
-          CT::string dumpString;
+          CT::string dumpString=CDF::dump(dataSources[j]->dataObject[0]->cdfObject);
           
-          reader.dump(&dumpString);
           printf("%s",dumpString.c_str());
           reader.close();
 
@@ -919,6 +1195,9 @@ return 0;
 }
 
 int CRequest::process_querystring(){
+  #ifdef MEASURETIME
+  StopWatch_Stop("Start processing query string");
+  #endif
 //  StopWatch_Time("render()");
   //First try to find all possible dimensions
   //std::vector
@@ -926,7 +1205,7 @@ int CRequest::process_querystring(){
     for(size_t d=0;d<srvParam->cfg->Layer[j]->Dimension.size();d++){
       CT::string *dim = new CT::string(srvParam->cfg->Layer[j]->Dimension[d]->value.c_str());
       
-      dim->toUpperCase();
+      dim->toUpperCaseSelf();
       
       bool foundDim=false;
       for(size_t i=0;i<queryDims.size();i++){
@@ -959,7 +1238,7 @@ int CRequest::process_querystring(){
   int dFound_BBOX=0;
   int dFound_SRS=0;
   int dFound_CRS=0;
-  int dFound_Debug=0;
+  //int dFound_Debug=0;
   int dFound_Request=0;
   int dFound_Service=0;
   int dFound_Format=0;
@@ -974,31 +1253,32 @@ int CRequest::process_querystring(){
   int dFound_Exceptions=0;
   int dFound_Styles=0;
   int dFound_Style=0;
+  int dFound_JSONP=0;
   
-  int dFound_OpenDAPSource=0;
-  int dFound_OpenDAPVariable=0;
+
   
-  char * data;
-  data=getenv("QUERY_STRING");
+  int dFound_autoResourceLocation=0;
+  //int dFound_OpenDAPVariable=0;
   
-  if(data==NULL){
-    data=strdup("SERVICE=WMS&request=getcapabilities");
-    //data=strdup("SERVICE=WMS&request=getmap&width=10&height=10&styles=&BBOX=0,50,10,60&srs=EPSG:4326&format=image/png&layers=temperature");
+  const char * pszQueryString=getenv("QUERY_STRING");
+  
+  
+  if(pszQueryString==NULL){
+    pszQueryString=strdup("SERVICE=WMS&request=getcapabilities");
     CGI=0;
   }else CGI=1;
-//  CDBDebug("QUERY_STRING: %s",data);
-  //  StopWatch_Time("getenv(\"QUERY_STRING\")");
-  CT::string queryString(data);
-  queryString.decodeURL();
 
-  CT::string * parameters=queryString.split("&");
+  CT::string queryString(pszQueryString);
+  queryString.decodeURLSelf();
+//  CDBDebug("QueryString: \"%s\"",queryString.c_str());
+  CT::string * parameters=queryString.splitToArray("&");
   CT::string value0Cap;
   for(size_t j=0;j<parameters->count;j++){
-    CT::string * values=parameters[j].split("=");
+    CT::string * values=parameters[j].splitToArray("=");
 
     // Styles parameter
     value0Cap.copy(&values[0]);
-    value0Cap.toUpperCase();
+    value0Cap.toUpperCaseSelf();
     if(value0Cap.equals("STYLES")){
       if(dFound_Styles==0){
         if(values->count==2&&values[1].length()>0){
@@ -1025,7 +1305,7 @@ int CRequest::process_querystring(){
     if(values->count>=2){
       // BBOX Parameters
       if(value0Cap.equals("BBOX")){
-        CT::string * bboxvalues=values[1].split(",");
+        CT::string * bboxvalues=values[1].splitToArray(",");
         if(bboxvalues->count==4){
           for(int j=0;j<4;j++){
             srvParam->Geo->dfBBOX[j]=atof(bboxvalues[j].c_str());
@@ -1037,6 +1317,16 @@ int CRequest::process_querystring(){
         delete[] bboxvalues;
         dFound_BBOX=1;
       }
+      
+      if(value0Cap.equals("FIGWIDTH")){
+        srvParam->figWidth=atoi(values[1].c_str());
+        if(srvParam->figWidth<1)srvParam->figWidth=-1;
+      }
+      if(value0Cap.equals("FIGHEIGHT")){
+        srvParam->figHeight=atoi(values[1].c_str());
+        if(srvParam->figHeight<1)srvParam->figHeight=-1;
+      }
+      
       // Width Parameters
       if(value0Cap.equals("WIDTH")){
         srvParam->Geo->dWidth=atoi(values[1].c_str());
@@ -1095,31 +1385,26 @@ int CRequest::process_querystring(){
       if(value0Cap.equals("CRS")){
         if(parameters[j].length()>5){
           srvParam->Geo->CRS.copy(parameters[j].c_str()+4);
-          srvParam->Geo->CRS.decodeURL();
+          srvParam->Geo->CRS.decodeURLSelf();
           dFound_CRS=1;
         }
       }
       //DIM Params
-      /*for(size_t d=0;d<queryDims.size();d++){
-        CT::string dimName("DIM_");
-        dimName.concat(queryDims[d]);
-        if(value0Cap.equals(queryDims[d])||value0Cap.equals(&dimName)){
-          
-          srvParam->OGCDims[srvParam->NumOGCDims].Name.copy(queryDims[d]->c_str());
-          srvParam->OGCDims[srvParam->NumOGCDims].Value.copy(&values[1]);
-          srvParam->NumOGCDims++;
-        }
-      }*/
-      if(value0Cap.equals("TIME")||value0Cap.equals("ELEVATION")||value0Cap.indexOf("DIM_")==0){
+      int foundDim=-1;
+      if(value0Cap.equals("TIME")||value0Cap.equals("ELEVATION")){
+        foundDim=0;
+      }else if(value0Cap.indexOf("DIM_")==0){
+        //We store the OGCdim without the DIM_ prefix
+        foundDim=4;
+      }
+      if(foundDim!=-1){
+        COGCDims *ogcDim = NULL;
+        const char *ogcDimName=value0Cap.c_str()+foundDim;
+        for(size_t j=0;j<srvParam->requestDims.size();j++){if(srvParam->requestDims[j]->name.equals(ogcDimName)){ogcDim = srvParam->requestDims[j];break;}}
+        if(ogcDim==NULL){ogcDim = new COGCDims();srvParam->requestDims.push_back(ogcDim);}else {CDBDebug("OGC Dim %s reused",ogcDimName);}
+        ogcDim->name.copy(ogcDimName);
+        ogcDim->value.copy(&values[1]);
         
-        if(value0Cap.indexOf("DIM_")==0){
-          srvParam->OGCDims[srvParam->NumOGCDims].Name.copy(value0Cap.c_str()+4);
-        }else{
-          srvParam->OGCDims[srvParam->NumOGCDims].Name.copy(value0Cap.c_str());
-        }
-         srvParam->OGCDims[srvParam->NumOGCDims].Value.copy(&values[1]);
-        //CDBDebug("DIM_ %s==%s",value0Cap.c_str(),srvParam->OGCDims[srvParam->NumOGCDims].Value.c_str());
-        srvParam->NumOGCDims++;
       }
 
       // FORMAT parameter
@@ -1152,7 +1437,7 @@ int CRequest::process_querystring(){
       if(value0Cap.equals("TRANSPARENT")){
         if(dFound_Transparent==0){
           if(values[1].length()>1){
-            values[1].toUpperCase();
+            values[1].toUpperCaseSelf();
             if(values[1].equals("TRUE")){
               srvParam->Transparent=true;
             }
@@ -1207,37 +1492,37 @@ int CRequest::process_querystring(){
 
 
       //Opendap source parameter
-      if(dFound_OpenDAPSource==0){
+      if(dFound_autoResourceLocation==0){
         if(value0Cap.equals("SOURCE")){
-          if(srvParam->OpenDAPSource.c_str()==NULL){
-            srvParam->OpenDAPSource.copy(values[1].c_str());
+          if(srvParam->autoResourceLocation.c_str()==NULL){
+            srvParam->autoResourceLocation.copy(values[1].c_str());
           }
-          dFound_OpenDAPSource=1;
+          dFound_autoResourceLocation=1;
         }
       }
-      //Opendap variable parameter
+     /* //Opendap variable parameter
        if(dFound_OpenDAPVariable==0){
         if(value0Cap.equals("VARIABLE")){
-          if(srvParam->OpenDapVariable.c_str()==NULL){
-            srvParam->OpenDapVariable.copy(values[1].c_str());
+          if(srvParam->autoResourceVariable.c_str()==NULL){
+            srvParam->autoResourceVariable.copy(values[1].c_str());
           }
           dFound_OpenDAPVariable=1;
         }
-      }
+      }*/
       
       
       //WMS Layers parameter
       if(value0Cap.equals("LAYERS")){
         if(srvParam->WMSLayers!=NULL)
           delete[] srvParam->WMSLayers;
-          srvParam->WMSLayers = values[1].split(",");
+          srvParam->WMSLayers = values[1].splitToArray(",");
         dFound_WMSLAYERS=1;
       }
       //WMS Layer parameter
       if(value0Cap.equals("LAYER")){
         if(srvParam->WMSLayers!=NULL)
           delete[] srvParam->WMSLayers;
-          srvParam->WMSLayers = values[1].split(",");
+          srvParam->WMSLayers = values[1].splitToArray(",");
         dFound_WMSLAYER=1;
       }
 
@@ -1245,11 +1530,11 @@ int CRequest::process_querystring(){
       if(value0Cap.equals("QUERY_LAYERS")){
         if(srvParam->WMSLayers!=NULL)
           delete[] srvParam->WMSLayers;
-          srvParam->WMSLayers = values[1].split(",");
-          if(srvParam->WMSLayers->count>1){
+          srvParam->WMSLayers = values[1].splitToArray(",");
+          /*if(srvParam->WMSLayers->count>1){
             CDBError("Too many layers in request");
             dErrorOccured=1;
-          }
+          }*/
         dFound_WMSLAYER=1;
     }
       //WCS Coverage parameter
@@ -1258,20 +1543,20 @@ int CRequest::process_querystring(){
           CDBWarning("COVERAGE already defined");
           dErrorOccured=1;
         }else{
-          srvParam->WMSLayers = values[1].split(",");
+          srvParam->WMSLayers = values[1].splitToArray(",");
         }
         dFound_WCSCOVERAGE=1;
       }
 
       // Service parameters
       if(value0Cap.equals("SERVICE")){
-        values[1].toUpperCase();
+        values[1].toUpperCaseSelf();
         SERVICE.copy(values[1].c_str(),values[1].length());
         dFound_Service=1;
       }
       // Request parameters
       if(value0Cap.equals("REQUEST")){
-        values[1].toUpperCase();
+        values[1].toUpperCaseSelf();
         REQUEST.copy(values[1].c_str(),values[1].length());
         dFound_Request=1;
       }
@@ -1282,7 +1567,7 @@ int CRequest::process_querystring(){
         if(values[1].equals("ON")){
           printf("%s%c%c\n","Content-Type:text/plain",13,10);
           printf("Debug mode:ON\nDebug messages:<br>\r\n\r\n");
-          dFound_Debug=1;
+          //dFound_Debug=1;
         }
       }
       
@@ -1297,28 +1582,69 @@ int CRequest::process_querystring(){
         }
       }
       if(value0Cap.equals("SHOWDIMS")){
-        values[1].toLowerCase();
+        values[1].toLowerCaseSelf();
         if(values[1].equals("true")){
           srvParam->showDimensionsInImage = true;
         }
       }
       if(value0Cap.equals("SHOWLEGEND")){
-        values[1].toLowerCase();
+        values[1].toLowerCaseSelf();
         if(values[1].equals("true")){
           srvParam->showLegendInImage = true;
         }
       }
       if(value0Cap.equals("SHOWNORTHARROW")){
-        values[1].toLowerCase();
+        values[1].toLowerCaseSelf();
         if(values[1].equals("true")){
           srvParam->showNorthArrow = true;
         }
       }
+      
+      //http://www.resc.rdg.ac.uk/trac/ncWMS/wiki/WmsExtensions
+      if(value0Cap.equals("OPACITY")){
+        srvParam->wmsExtensions.opacity = values[1].toDouble();
+      }  
+      if(value0Cap.equals("COLORSCALERANGE")){
+        CT::string *valuesC=values[1].splitToArray(",");
+        if(valuesC->count==2){
+          srvParam->wmsExtensions.colorScaleRangeMin = valuesC[0].toDouble();
+          srvParam->wmsExtensions.colorScaleRangeMax = valuesC[1].toDouble();
+          srvParam->wmsExtensions.colorScaleRangeSet=true;
+          
+        }
+        delete[] valuesC;
+      }  
+      if(value0Cap.equals("NUMCOLORBANDS")){
+        srvParam->wmsExtensions.numColorBands = values[1].toInt();
+      }  
+      if(value0Cap.equals("LOGSCALE")){
+        values[1].toLowerCaseSelf();
+        if(values[1].equals("true")){
+          srvParam->wmsExtensions.logScale = true;
+        }
+      } 
+      // JSONP parameter
+      if(value0Cap.equals("JSONP")){
+        if(dFound_JSONP==0){
+          if(values[1].length()>1){
+            srvParam->JSONP.copy(&values[1]);
+            dFound_JSONP=1;
+          }
+        }else{
+          CDBWarning("JSONP already defined");
+          dErrorOccured=1;
+        }
+      }
+
+      
     }
     delete[] values;
   }
   delete[] parameters;
 
+  #ifdef MEASURETIME
+  StopWatch_Stop("query string processed");
+  #endif
 
   if(dFound_Service==0){
     CDBWarning("Parameter SERVICE missing");
@@ -1329,96 +1655,316 @@ int CRequest::process_querystring(){
   }
   if(SERVICE.equals("WMS"))srvParam->serviceType=SERVICE_WMS;
   if(SERVICE.equals("WCS"))srvParam->serviceType=SERVICE_WCS;
-
-
   
-  //srvParam->OpenDAPSource="/net/bhw262/nobackup/users/vreedede/ECMWF/U11_1313650800.nc";
-  
-    // If an Opendapsource is used, the LAYERS indicate which value should be visualised.
-    // Add configuration layers to the XML object to make things work
-    if(srvParam->OpenDAPSource.c_str()!=NULL){
-      
+  if(dErrorOccured==0&&srvParam->serviceType==SERVICE_WMS){
     
+    
+    
+    //Default is 1.1.1
+    
+    srvParam->OGCVersion=WMS_VERSION_1_1_1;
+    
+    if(dFound_Request==0){
+      CDBWarning("Parameter REQUEST missing");
+      dErrorOccured=1;
+    }else{
+      if(REQUEST.equals("GETCAPABILITIES"))srvParam->requestType=REQUEST_WMS_GETCAPABILITIES;
+      if(REQUEST.equals("GETMAP"))srvParam->requestType=REQUEST_WMS_GETMAP;
+      if(REQUEST.equals("GETFEATUREINFO"))srvParam->requestType=REQUEST_WMS_GETFEATUREINFO;
+      if(REQUEST.equals("GETPOINTVALUE"))srvParam->requestType=REQUEST_WMS_GETPOINTVALUE;
+      if(REQUEST.equals("GETLEGENDGRAPHIC"))srvParam->requestType=REQUEST_WMS_GETLEGENDGRAPHIC;
+      if(REQUEST.equals("GETMETADATA"))srvParam->requestType=REQUEST_WMS_GETMETADATA;
+      if(REQUEST.equals("GETSTYLES"))srvParam->requestType=REQUEST_WMS_GETSTYLES;
+    }
+    
+    //For getlegend graphic the parameter is style, not styles
+    if(dFound_Style==0){
+      srvParam->Style.copy("");
+    }else{
+      //For getlegend graphic the parameter is style, not styles
+      if(srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
+        srvParam->Styles.copy(&srvParam->Style);
+      }
+    }
+    
+    // Check the version
+    if(dFound_Version!=0){
+      srvParam->OGCVersion=WMS_VERSION_1_1_1;
+      if(Version.equals("1.0.0"))srvParam->OGCVersion=WMS_VERSION_1_0_0;
+      if(Version.equals("1.1.1"))srvParam->OGCVersion=WMS_VERSION_1_1_1;
+      if(srvParam->OGCVersion==-1){
+        CDBError("Invalid version ('%s'): only WMS 1.0.0 and WMS 1.1.1 supported",Version.c_str());
+        dErrorOccured=1;
+      }
+    }
+    // Set the exception response
+    if(srvParam->OGCVersion==WMS_VERSION_1_0_0){
+      seterrormode(EXCEPTIONS_PLAINTEXT);
+      if(srvParam->requestType==REQUEST_WMS_GETMAP)seterrormode(WMS_EXCEPTIONS_IMAGE);
+      if(srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC)seterrormode(WMS_EXCEPTIONS_IMAGE);
+    }
+    if(srvParam->OGCVersion==WMS_VERSION_1_1_1)seterrormode(WMS_EXCEPTIONS_XML_1_1_1);
+    if(dFound_Exceptions!=0){
+      if(Exceptions.equals("application/vnd.ogc.se_xml")){
+        if(srvParam->OGCVersion==WMS_VERSION_1_1_1)seterrormode(WMS_EXCEPTIONS_XML_1_1_1);
+      }
+      if(Exceptions.equals("application/vnd.ogc.se_inimage")){
+        seterrormode(WMS_EXCEPTIONS_IMAGE);
+      }
+      if(Exceptions.equals("application/vnd.ogc.se_blank")){
+        seterrormode(WMS_EXCEPTIONS_BLANKIMAGE);
+      }
+    }
+  }
+    
+    // Configure the server automically based on an OpenDAP resource
+    if(srvParam->autoResourceLocation.c_str()!=NULL){
+      srvParam->internalAutoResourceLocation=srvParam->autoResourceLocation.c_str();
+      
+         
+      //When an opendap source is added, we should add unique id to the cachefile
+      if(srvParam->cfg->CacheDocs.size()==0){
+        srvParam->cfg->CacheDocs.push_back(new CServerConfig::XMLE_CacheDocs());
+      }
+      //srvParam->cfg->CacheDocs[0]->attr.enabled.copy("true");
+      //srvParam->enableDocumentCache=true;
+      
+       CT::string validFileName(srvParam->internalAutoResourceLocation.c_str());
+      //Replace : and / by nothing, so we can use the string as a directory name
+      validFileName.replaceSelf(":",""); 
+      validFileName.replaceSelf("/","");
+      validFileName.replaceSelf("\\",""); 
+      
+      srvParam->cfg->CacheDocs[0]->attr.cachefile.copy(validFileName.c_str());
       
       
-      if(srvParam->isAutoOpenDAPEnabled()==false){
-        CDBError("Automatic OpenDAP is not enabled");
-        readyerror();exit(0);
+      if(srvParam->isAutoResourceEnabled()==false){
+        CDBError("Automatic resource is not enabled");
+        //readyerror();
+        return 1;
       }
       
-      bool isValidOpenDAPURL = false;
-      if(srvParam->OpenDAPSource.indexOf("http://")==0)isValidOpenDAPURL=true;
-      if(srvParam->OpenDAPSource.indexOf("https://")==0)isValidOpenDAPURL=true;
-      if(srvParam->OpenDAPSource.indexOf("dodsc://")==0)isValidOpenDAPURL=true;
-      if(srvParam->OpenDAPSource.indexOf("dods://")==0)isValidOpenDAPURL=true;
-      if(srvParam->OpenDAPSource.indexOf("ncdods://")==0)isValidOpenDAPURL=true;
-
-      if(isValidOpenDAPURL==false){
+      bool isValidResource = false;
+      //TODO should be placed in a a more generaic place
+      if(srvParam->isAutoOpenDAPResourceEnabled()){
+        if(srvParam->autoResourceLocation.indexOf("http://")==0)isValidResource=true;
+        if(srvParam->autoResourceLocation.indexOf("https://")==0)isValidResource=true;
+        if(srvParam->autoResourceLocation.indexOf("dodsc://")==0)isValidResource=true;
+        if(srvParam->autoResourceLocation.indexOf("dods://")==0)isValidResource=true;
+        if(srvParam->autoResourceLocation.indexOf("ncdods://")==0)isValidResource=true;
+      }
+      
+      //Error messages should be the same for the different attempts, otherwise someone can find out the directory structure 
+      if(isValidResource==false){
+        if(srvParam->isAutoLocalFileResourceEnabled()){
+          if(srvParam->checkIfPathHasValidTokens(srvParam->autoResourceLocation.c_str())==false){
+            CDBError("Invalid token(s), unable to read file %s",srvParam->autoResourceLocation.c_str());
+            return 1;
+          }
+          if(srvParam->checkResolvePath(srvParam->autoResourceLocation.c_str(),&srvParam->internalAutoResourceLocation)==false){
+            CDBError("Unable to resolve path for file %s",srvParam->autoResourceLocation.c_str());
+            return 1;
+          }
+          isValidResource=true;
+        }
+      }
+      
+      if(isValidResource==false){
         CDBError("Invalid OpenDAP URL");
-        readyerror();exit(0);
+        readyerror();return 1;
       }
       
-      if(srvParam->OpenDapVariable.c_str()==NULL||srvParam->OpenDapVariable.equals("*")){
+      //Generate the list of OpenDAP variables automatically based on the variables available in the OpenDAP dataset
+      if(srvParam->autoResourceVariable.c_str()==NULL||srvParam->autoResourceVariable.equals("*")){
         //Try to retrieve a list of variables from the OpenDAPURL.
-        srvParam->OpenDapVariable.copy("");
-        CDFObject c;
-        c.attachCDFReader(new CDFNetCDFReader());
-        int status=c.open(srvParam->OpenDAPSource.c_str());
-        if(status==0){
-          
-          for(size_t j=0;j<c.variables.size();j++){
-            if(c.variables[j]->dimensionlinks.size()>=2){
-              if(srvParam->OpenDapVariable.length()>0)srvParam->OpenDapVariable.concat(",");
-              srvParam->OpenDapVariable.concat(c.variables[j]->name.c_str());
-              CDBDebug("%s",c.variables[j]->name.c_str());
+        srvParam->autoResourceVariable.copy("");
+        //Open the opendap resource
+        CDBDebug("OGC REQUEST Remote resource %s",srvParam->internalAutoResourceLocation.c_str());
+        CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(srvParam,srvParam->internalAutoResourceLocation.c_str());
+        //int status=cdfObject->open(srvParam->internalAutoResourceLocation.c_str());
+        if(cdfObject!=NULL){
+          for(size_t j=0;j<cdfObject->variables.size();j++){
+            if(cdfObject->variables[j]->dimensionlinks.size()>=2){
+              if(cdfObject->variables[j]->getAttributeNE("ADAGUC_SKIP")==NULL){
+                if(!cdfObject->variables[j]->name.equals("lon")&&
+                  !cdfObject->variables[j]->name.equals("lat")&&
+                  !cdfObject->variables[j]->name.equals("lon_bounds")&&
+                  !cdfObject->variables[j]->name.equals("lat_bounds")&&
+                  !cdfObject->variables[j]->name.equals("time_bounds")&&
+                  !cdfObject->variables[j]->name.equals("lon_bnds")&&
+                  !cdfObject->variables[j]->name.equals("lat_bnds")&&
+                  !cdfObject->variables[j]->name.equals("time_bnds")&&
+                  !cdfObject->variables[j]->name.equals("time")){
+                    if(srvParam->autoResourceVariable.length()>0)srvParam->autoResourceVariable.concat(",");
+                    srvParam->autoResourceVariable.concat(cdfObject->variables[j]->name.c_str());
+                    //CDBDebug("%s",cdfObject->variables[j]->name.c_str());
+                }
+              }
             }
           }
         }
-        if(srvParam->OpenDapVariable.length()==0)status=1;
+        int status=0;
+        if(srvParam->autoResourceVariable.length()==0)status=1;
         if(status!=0){
-          CDBError("A source parameter without a variable parameter is given");
-          readyerror();exit(0);
+          CDBError("Unable to load dataset");
+          return 1;
         }
       }
+      
+      
+      //Generate a generic title for this OpenDAP service, based on the title element in the OPeNDAP header
+      //Open the opendap resource
+      //CDBDebug("Opening opendap %s",srvParam->internalAutoResourceLocation.c_str());
+      #ifdef MEASURETIME
+      StopWatch_Stop("Opening file");
+      #endif
+      //CDBDebug("Opening %s",srvParam->internalAutoResourceLocation.c_str());
+      CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(srvParam,srvParam->internalAutoResourceLocation.c_str());
+      //int status=cdfObject->open(srvParam->internalAutoResourceLocation.c_str());
+      if(cdfObject==NULL){
+        CDBError("Unable to open resource %s",srvParam->autoResourceLocation.c_str());
+        return 1;
+      }
+      #ifdef MEASURETIME
+      StopWatch_Stop("File opened");
+      #endif
+      
+      CT::string serverTitle="";
+      try{cdfObject->getAttribute("title")->getDataAsString(&serverTitle);}catch(int e){}
+       
+      if(serverTitle.length()>0){
+        if(srvParam->cfg->WMS.size()>0){
+          if(srvParam->cfg->WMS[0]->Title.size()>0){
+            //CT::string title="ADAGUC AUTO WMS ";
+            CT::string title="";
+            title.concat(serverTitle.c_str());
+            //title.replaceSelf(" ","_");
+            srvParam->cfg->WMS[0]->Title[0]->value.copy(title.c_str());
+          }
+          if(srvParam->cfg->WMS[0]->RootLayer.size()>0){
+            if(srvParam->cfg->WMS[0]->RootLayer[0]->Title.size()>0){
+              CT::string title="WMS of  ";
+              title.concat(serverTitle.c_str());
+              srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->value.copy(title.c_str());
+            }
+          }          
+        }
+        if(srvParam->cfg->WCS.size()>0){
+          if(srvParam->cfg->WCS[0]->Title.size()>0){
+            CT::string title="ADAGUC_AUTO_WCS_";
+            title.concat(serverTitle.c_str());
+            srvParam->cfg->WCS[0]->Title[0]->value.copy(title.c_str());
+          }
+        }
+      }
+      
+      CT::string serverSummary="";
+      CT::string serverDescription="";
+      CT::string serverSource="";
+      CT::string serverReferences="";
+      CT::string serverInstitution="";
+      CT::string serverHistory="";
+      CT::string serverComments="";
+      CT::string serverDisclaimer="";
+      
+      
+      
+      try{cdfObject->getAttribute("summary")->getDataAsString(&serverSummary);}catch(int e){}
+      try{cdfObject->getAttribute("description")->getDataAsString(&serverDescription);}catch(int e){}
+      try{cdfObject->getAttribute("source")->getDataAsString(&serverSource);}catch(int e){}
+      try{cdfObject->getAttribute("references")->getDataAsString(&serverReferences);}catch(int e){}
+      try{cdfObject->getAttribute("institution")->getDataAsString(&serverInstitution);}catch(int e){}
+      try{cdfObject->getAttribute("history")->getDataAsString(&serverHistory);}catch(int e){}
+      try{cdfObject->getAttribute("comments")->getDataAsString(&serverComments);}catch(int e){}
+      try{cdfObject->getAttribute("disclaimer")->getDataAsString(&serverDisclaimer);}catch(int e){}
+      
+      CT::string serverAbstract="";
+      if(serverInstitution.length()>0){serverAbstract.printconcat("Institution: %s.\n",serverInstitution.c_str());}
+      if(serverSummary.length()>0){serverAbstract.printconcat("Summary: %s.\n",serverSummary.c_str());}
+      if(serverDescription.length()>0){serverAbstract.printconcat("Description: '%s'.\n",serverDescription.c_str());}
+      if(serverSource.length()>0){serverAbstract.printconcat("Source: %s.\n",serverSource.c_str());}
+      if(serverReferences.length()>0){serverAbstract.printconcat("References: %s.\n",serverReferences.c_str());}
+      if(serverHistory.length()>0){serverAbstract.printconcat("History: %s.\n",serverHistory.c_str());}
+      if(serverComments.length()>0){serverAbstract.printconcat("Comments: %s.\n",serverComments.c_str());}
+      if(serverDisclaimer.length()>0){serverAbstract.printconcat("Disclaimer: %s.\n",serverDisclaimer.c_str());}
+
+      //Replace invalid XML tokens with valid ones
+      serverAbstract.replaceSelf("@" ," at ");
+      serverAbstract.replaceSelf("<" ,"[");
+      serverAbstract.replaceSelf(">" ,"]");
+     
+      if(serverAbstract.length()>0){
+        if(srvParam->cfg->WMS.size()>0){
+          if(srvParam->cfg->WMS[0]->Abstract.size()>0){
+            srvParam->cfg->WMS[0]->Abstract[0]->value.copy(serverAbstract.c_str());
+          }
+        }
+      }
+     
     
-      CT::stringlist *variables=srvParam->OpenDapVariable.splitN(",");
-      for(size_t j=0;j<variables->size();j++){
-        CServerConfig::XMLE_Layer *xmleLayer=new CServerConfig::XMLE_Layer();
-        CServerConfig::XMLE_Variable* xmleVariable = new CServerConfig::XMLE_Variable();
-        CServerConfig::XMLE_FilePath* xmleFilePath = new CServerConfig::XMLE_FilePath();
-        CServerConfig::XMLE_Cache* xmleCache = new CServerConfig::XMLE_Cache();
-        xmleCache->attr.enabled.copy("false");
-        xmleLayer->attr.type.copy("database");
-        xmleVariable->value.copy((*variables)[j]->c_str());
-        xmleFilePath->value.copy(srvParam->OpenDAPSource.c_str());
-        xmleFilePath->attr.filter.copy("*");
-        xmleLayer->Variable.push_back(xmleVariable);
-        xmleLayer->FilePath.push_back(xmleFilePath);
-        xmleLayer->Cache.push_back(xmleCache);
-        srvParam->cfg->Layer.push_back(xmleLayer);
+      //Generate layers based on the OpenDAP variables
+      CT::StackList<CT::string> variables=srvParam->autoResourceVariable.splitToStack(",");
+      for(size_t j=0;j<variables.size();j++){
+        std::vector<CT::string> variableNames;
+        variableNames.push_back(variables[j].c_str());
+        addXMLLayerToConfig(srvParam,&variableNames,NULL,srvParam->internalAutoResourceLocation.c_str());
+      }
+      
+      //Find derived wind parameters
+      std::vector<CT::string> detectStrings;
+      for(size_t v=0;v<variables.size();v++){
+        int dirLoc=variables[v].indexOf("_dir");
+        if(dirLoc>0){
+          detectStrings.push_back(variables[v].substringr(0,dirLoc));
+        }
+      }
+      
+      //Detect  <...>_speed and <...>_dir for ASCAT data
+      CT::string searchVar;
+      for(size_t v=0;v<detectStrings.size();v++){
+        //CDBDebug("detectStrings %s",detectStrings[v].c_str());
+        searchVar.print("%s_speed",detectStrings[v].c_str());
+        CDF::Variable *varSpeed = cdfObject->getVariableNE(searchVar.c_str());
+        searchVar.print("%s_dir",detectStrings[v].c_str());
+        CDF::Variable *varDirection = cdfObject->getVariableNE(searchVar.c_str());
+        if(varSpeed!=NULL&&varDirection!=NULL){
+          std::vector<CT::string> variableNames;
+          variableNames.push_back(varSpeed->name.c_str());
+          variableNames.push_back(varDirection->name.c_str());
+          addXMLLayerToConfig(srvParam,&variableNames,"derived",srvParam->internalAutoResourceLocation.c_str());
+        }
+      }
+      
+      //Detect dd and ff for wind direction and wind speed
+      if(1==1){
+        CDF::Variable *varSpeed = cdfObject->getVariableNE("ff");
+        CDF::Variable *varDirection = cdfObject->getVariableNE("dd");
+        if(varSpeed!=NULL&&varDirection!=NULL){
+          std::vector<CT::string> variableNames;
+          variableNames.push_back(varSpeed->name.c_str());
+          variableNames.push_back(varDirection->name.c_str());
+          addXMLLayerToConfig(srvParam,&variableNames,"derived",srvParam->internalAutoResourceLocation.c_str());
+        }
       }
       
       //Adjust online resource in order to pass on variable and source parameters
       CT::string onlineResource=srvParam->cfg->OnlineResource[0]->attr.value.c_str();
       CT::string stringToAdd;
-      stringToAdd.concat("&source=");stringToAdd.concat(srvParam->OpenDAPSource.c_str());
-      stringToAdd.concat("&variable=");stringToAdd.concat(srvParam->OpenDapVariable.c_str());
+      stringToAdd.concat("&source=");stringToAdd.concat(srvParam->autoResourceLocation.c_str());
+      //stringToAdd.concat("&variable=");stringToAdd.concat(srvParam->autoResourceVariable.c_str());
       stringToAdd.concat("&");
-      stringToAdd.encodeURL();
+      stringToAdd.encodeURLSelf();
       onlineResource.concat(stringToAdd.c_str());
       srvParam->cfg->OnlineResource[0]->attr.value.copy(onlineResource.c_str());
-      CDBDebug("%s -- %s",srvParam->OpenDapVariable.c_str(),srvParam->OpenDAPSource.c_str());
-      
-      //CDBError("A");readyerror();exit(0);
-      delete variables;
+      //CDBDebug("OGC REQUEST RESOURCE %s",srvParam->internalAutoResourceLocation.c_str());//,srvParam->autoResourceLocation.c_str(),);
       
       
-      //When an opendap source is added, we should not cache the getcapabilities
-      if(srvParam->cfg->CacheDocs.size()==0){
-        srvParam->cfg->CacheDocs.push_back(new CServerConfig::XMLE_CacheDocs());
-      }
-      srvParam->cfg->CacheDocs[0]->attr.enabled.copy("false");
-      srvParam->enableDocumentCache=false;
+      
+   
+      #ifdef MEASURETIME
+      StopWatch_Stop("Auto opendap configured");
+      #endif
+      
     }
   
   // WMS Service
@@ -1427,7 +1973,7 @@ int CRequest::process_querystring(){
     
     
     //Default is 1.1.1
-
+/*
     srvParam->OGCVersion=WMS_VERSION_1_1_1;
 
     if(dFound_Request==0){
@@ -1480,7 +2026,7 @@ int CRequest::process_querystring(){
       if(Exceptions.equals("application/vnd.ogc.se_blank")){
         seterrormode(WMS_EXCEPTIONS_BLANKIMAGE);
       }
-    }
+    }*/
     
     if(srvParam->requestType==REQUEST_WMS_GETMAP||srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
         if(dFound_Format==0){
@@ -1497,15 +2043,7 @@ int CRequest::process_querystring(){
               break;
             }
           }
-          /*if(dataSource->cfgLayer->WMSFormat.size()>0){
-            if(dataSource->cfgLayer->WMSFormat[0]->attr.name.equals("image/png32")){
-              drawImage.setTrueColor(true);
-            }
-            if(dataSource->cfgLayer->WMSFormat[0]->attr.format.equals("image/png32")){
-              drawImage.setTrueColor(true);
-            }
-          }*/
-          
+    
           // Set format
           if(srvParam->Format.indexOf("24")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG32;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
           else if(srvParam->Format.indexOf("32")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG32;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
@@ -1555,18 +2093,7 @@ int CRequest::process_querystring(){
         srvParam->dY=0;
         srvParam->requestType=REQUEST_WMS_GETFEATUREINFO;
       }
-      
-      if(dFound_Width==0){
-        CDBWarning("Parameter WIDTH missing");
-        dErrorOccured=1;
-      }
-      if(dFound_Height==0){
-        CDBWarning("Parameter HEIGHT missing");
-        dErrorOccured=1;
-      }
-      
-      // When error is image, utilize full image size
-      setErrorImageSize(srvParam->Geo->dWidth,srvParam->Geo->dHeight,srvParam->imageFormat);
+   
       
     
       
@@ -1574,6 +2101,27 @@ int CRequest::process_querystring(){
         CDBWarning("Parameter BBOX missing");
         dErrorOccured=1;
       }
+      
+      
+      if(dFound_Width==0&&dFound_Height==0){
+        CDBWarning("Parameter WIDTH or HEIGHT missing");
+        dErrorOccured=1;
+      }
+      
+      if(dFound_Width==0){
+        float r=fabs(srvParam->Geo->dfBBOX[3]-srvParam->Geo->dfBBOX[1])/fabs(srvParam->Geo->dfBBOX[2]-srvParam->Geo->dfBBOX[0]);
+        srvParam->Geo->dWidth=int(float(srvParam->Geo->dHeight)/r);
+      }
+        
+      if(dFound_Height==0){
+        float r=fabs(srvParam->Geo->dfBBOX[3]-srvParam->Geo->dfBBOX[1])/fabs(srvParam->Geo->dfBBOX[2]-srvParam->Geo->dfBBOX[0]);
+        srvParam->Geo->dHeight=int(float(srvParam->Geo->dWidth)*r);
+      }
+        
+      
+      // When error is image, utilize full image size
+      setErrorImageSize(srvParam->Geo->dWidth,srvParam->Geo->dHeight,srvParam->imageFormat);
+      
       if(dFound_SRS==0){
         CDBWarning("Parameter SRS missing");
         dErrorOccured=1;
@@ -1606,9 +2154,6 @@ int CRequest::process_querystring(){
           if(status != 0) {
             if(status!=2){
               CDBError("WMS GetFeatureInfo Request failed");
-            }else {
-              printf("%s%c%c\n","Content-Type:text/plain",13,10);
-              printf("No results from query.");
             }
             return 1;
           }
@@ -1745,19 +2290,18 @@ int CRequest::process_querystring(){
       return process_wcs_getcap_request();
     }
   }
+  //An error occured, stopping..
   if(dErrorOccured==1){
-    //CDBError("An error occured, stopping...");
     return 0;
   }
   CDBWarning("Invalid value for request. Supported requests are: getcapabilities, getmap, getfeatureinfo and getlegendgraphic");
-//  StopWatch_Time("QUERY_STRING parsed");
 
   return 0;
 }
 
 
 int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan){
-
+  int errorHasOccured = 0;
   int status;
   //Fill in all data sources from the configuratin object
   size_t numberOfLayers = srvParam->cfg->Layer.size();
@@ -1772,47 +2316,44 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan){
 
   srvParam->requestType=REQUEST_UPDATEDB;
 
-  //CDataReader reader;
-  CT::string tablesdone[numberOfLayers];
-  int nrtablesdone=0;
   for(size_t j=0;j<numberOfLayers;j++){
     if(dataSources[j]->dLayerType==CConfigReaderLayerTypeDataBase){
-
-      int i,found=0;
-      //Make sure we are not updating the table twice
-
-      for(i=0;i<nrtablesdone;i++){
-        if(tablesdone[i].equals(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str())){found=1;break;}
-      }
-      if(found==0){
         status = CDBFileScanner::updatedb(srvParam->cfg->DataBase[0]->attr.parameters.c_str(),dataSources[j],tailPath,layerPathToScan);
-        if(status !=0){CDBError("Could not update db for: %s",dataSources[j]->cfgLayer->Name[0]->value.c_str());return 1;}
-
-        //Remember that we did this table allready
-        tablesdone[nrtablesdone].copy(dataSources[j]->cfgLayer->DataBaseTable[0]->value.c_str());
-        nrtablesdone++;
-      }
+        if(status !=0){CDBError("Could not update db for: %s",dataSources[j]->cfgLayer->Name[0]->value.c_str());errorHasOccured++;}
     }
   }
 
-  
-  
   //invalidate cache
-  
   CT::string cacheFileName;
   srvParam->getCacheFileName(&cacheFileName);
-  //printf("\nInvalidating cachefile %s...\n",cacheFileName.c_str());
-  if(cacheFileName.length()>0){
-    remove(cacheFileName.c_str());
+  
+  //Remove the cache file, but check first wether it exists or not.
+  struct stat stFileInfo;
+  int intStat;
+  intStat = stat(cacheFileName.c_str(),&stFileInfo);
+  CT::string cacheBuffer;
+  //The file exists, so remove it.
+  if(intStat == 0) {
+    CDBDebug("Removing cachefile %s ",cacheFileName.c_str());
+    if(cacheFileName.length()>0){
+      if(remove(cacheFileName.c_str())!=0){
+        CDBError("Unable to remove cachefile %s, please do it manually.",cacheFileName.c_str());
+      }
+    }
   }
   /*
   CSimpleStore simpleStore;
   status = getDocFromDocCache(&simpleStore,NULL,NULL);  
   simpleStore.setStringAttribute("configModificationDate","needsupdate!");
   if(storeDocumentCache(&simpleStore)!=0)return 1;*/
+  if(errorHasOccured){
+    CDBDebug("***** Finished DB Update with %d errors *****",errorHasOccured);
+  }else{
+    CDBDebug("***** Finished DB Update *****");
+  }
   
-  CDBDebug("***** Finished DB Update *****");
-  return 0;
+  CDFObjectStore::getCDFObjectStore()->clear();
+  return errorHasOccured;
 }
 
 

@@ -1,3 +1,28 @@
+/******************************************************************************
+ * 
+ * Project:  Generic common data format
+ * Purpose:  Generic Data model to read netcdf and hdf5
+ * Author:   Maarten Plieger, plieger "at" knmi.nl
+ * Date:     2013-06-01
+ *
+ ******************************************************************************
+ *
+ * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
+ ******************************************************************************/
+
 #include "CCDFDataModel.h"
 const char *CDF::Variable::className="Variable";
 const char *CDFObject::className="CDFObject";
@@ -11,6 +36,7 @@ int CDF::getTypeSize(CDFType type){
   if(type == CDF_INT || type == CDF_UINT)return 4;
   if(type == CDF_FLOAT)return 4;
   if(type == CDF_DOUBLE)return 8;
+  if(type == CDF_STRING)return sizeof(char*);
   return 0;
 }
 
@@ -55,6 +81,7 @@ void CDF::getCDFDataTypeName(char *name,const size_t maxlen,const int type){
   if(type==CDF_UBYTE )snprintf(name,maxlen,"CDF_UBYTE");
   if(type==CDF_USHORT)snprintf(name,maxlen,"CDF_USHORT");
   if(type==CDF_UINT  )snprintf(name,maxlen,"CDF_UINT");
+  if(type==CDF_STRING)snprintf(name,maxlen,"CDF_STRING");
 }
 
 void CDF::getCDataTypeName(char *name,const size_t maxlen,const int type){
@@ -69,6 +96,7 @@ void CDF::getCDataTypeName(char *name,const size_t maxlen,const int type){
   if(type==CDF_UBYTE )snprintf(name,maxlen,"ubyte");
   if(type==CDF_USHORT)snprintf(name,maxlen,"ushort");
   if(type==CDF_UINT  )snprintf(name,maxlen,"uint");
+  if(type==CDF_STRING)snprintf(name,maxlen,"char*");
 }
 
 void CDF::getErrorMessage(char *errorMessage,const size_t maxlen,const int errorCode){
@@ -83,12 +111,24 @@ void CDF::getErrorMessage(char *errorMessage,const size_t maxlen,const int error
    
 }
 
+
+CT::string CDF::getCDFDataTypeName(const int type){
+  char data[100];
+  getCDFDataTypeName(data,99,type);
+  CT::string d=data;
+  return d;
+}
 void CDF::getErrorMessage(CT::string *errorMessage,const int errorCode){
   char msg[1024];
   getErrorMessage(msg,1023,errorCode);
   errorMessage->copy(msg);    
 }
-  
+
+CT::string CDF::getErrorMessage(int errorCode){
+  CT::string errorMessage;
+  getErrorMessage(&errorMessage,errorCode);
+  return errorMessage;
+}
 
 
 //const char *getAttributeAsString(CDF::Attribute *attr){
@@ -120,6 +160,12 @@ void CDF::_dumpPrintAttributes(const char *variableName, std::vector<CDF::Attrib
 
 void CDF::dump(CDF::Variable* cdfVariable,CT::string* dumpString){
   _dumpPrintAttributes(cdfVariable->name.c_str(),cdfVariable->attributes,dumpString);
+}
+
+CT::string CDF::dump(CDFObject* cdfObject){
+  CT::string d;
+  dump(cdfObject,&d);
+  return d;
 }
 
 void CDF::dump(CDFObject* cdfObject,CT::string* dumpString){
@@ -165,10 +211,93 @@ int CDF::Variable::readData(CDFType type){
   return readData(type,NULL,NULL,NULL);
 }
 
+int CDF::Variable::readData(bool applyScaleOffset){
+  return readData(-1,applyScaleOffset);
+}
+
+int CDF::Variable::readData(CDFType readType,bool applyScaleOffset){
+  return readData(readType,NULL,NULL,NULL,applyScaleOffset);
+}
+
+
+
+/**
+ * Reads data
+ * @param readType The datatype to read. When -1 is given, this is determined automatically
+ * @param applyScaleOffset Whether or not to apply scale and offset
+ */
+int CDF::Variable::readData(CDFType readType,size_t *_start,size_t *_count,ptrdiff_t *_stride,bool applyScaleOffset){
+ if(data!=NULL&&type!=readType){freeData();}
+ if(data!=NULL){
+#ifdef CCDFDATAMODEL_DEBUG            
+     CDBDebug("Data is already defined");
+#endif     
+    return 0;
+  }
+  
+  if(applyScaleOffset==false){
+    return readData(type,_start,_count,_stride);
+  }
+  
+  double scaleFactor=1,addOffset=0,fillValue = 0;
+  bool hasFillValue = false;
+  int scaleType=type;
+  try{
+    
+    CDF::Attribute * a = getAttribute("scale_factor");
+    a->getData(&scaleFactor,1);
+    scaleType=a->type;
+  }catch(int e){}
+
+  try{
+    getAttribute("add_offset")->getData(&addOffset,1);
+  }catch(int e){}
+  try{
+    getAttribute("_FillValue")->getData(&fillValue,1);
+    hasFillValue = true;
+  }catch(int e){}
+  
+  if(readType!=-1)scaleType=readType;
+  int status = readData(scaleType,_start,_count,_stride);
+  if(status != 0)return status;
+  
+  //Apply scale and offset
+  if(scaleFactor!=1||addOffset!=0){
+  size_t lsize= getSize();
+    if(scaleType == CDF_FLOAT){
+      float *scaleData = (float*)data;
+      float fscale = float(scaleFactor);
+      float foffset = float(addOffset);
+      if(scaleFactor!=1||addOffset!=0){
+        for(size_t j=0;j<lsize;j++)scaleData[j]=scaleData[j]*fscale+foffset;
+        fillValue=fillValue*fscale+foffset;
+        float f=(float)fillValue;
+        if( hasFillValue)getAttribute("_FillValue")->setData(CDF_FLOAT,&f,1);
+      }
+    }
+    
+    if(scaleType == CDF_DOUBLE){
+      float *scaleData = (float*)data;
+      for(size_t j=0;j<lsize;j++)scaleData[j]=scaleData[j]*scaleFactor+addOffset;
+      fillValue=fillValue*scaleFactor+addOffset;
+      if( hasFillValue)getAttribute("_FillValue")->setData(CDF_DOUBLE,&fillValue,1);
+    }
+    //removeAttribute("scale_factor");
+    //removeAttribute("add_offset");
+  }
+  return 0;  
+}
+
 int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t *_stride){
+  
 #ifdef CCDFDATAMODEL_DEBUG          
   CDBDebug("reading variable %s",name.c_str());
 #endif  
+ if(data!=NULL&&type!=this->type){freeData();}
+  
+  
+  
+  
   //TODO needs to cope correctly with cdfReader.
   if(data!=NULL){
 #ifdef CCDFDATAMODEL_DEBUG            
@@ -176,12 +305,7 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
 #endif     
     return 0;
   }
-  //TODO NEEDS BETTER CHECKS
-  if(cdfReaderPointer==NULL){
-    CDBError("No CDFReader defined for variable %s",name.c_str());
-    return 1;
-  }
-  
+
   
   
   //Check for iterative dimension
@@ -192,9 +316,9 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
   }
   
   if(needsDimIteration==true){
-    CDF::Dimension * iterativeDim;
+    //CDF::Dimension * iterativeDim;
     bool useStartCountStride=false;if(_start!=NULL&&_count!=NULL){useStartCountStride=true;}
-    iterativeDim=dimensionlinks[iterativeDimIndex];
+    //iterativeDim=dimensionlinks[iterativeDimIndex];
     //Make start and count params.
     size_t *start = new size_t[dimensionlinks.size()];
     size_t *count = new size_t[dimensionlinks.size()];
@@ -240,7 +364,7 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
         CDFObject *tCDFObject= (CDFObject *)getCDFObjectPointer(start,count);
         if(tCDFObject==NULL){CDBError("Unable to read variable %s because tCDFObject==NULL",name.c_str());throw(CDF_E_ERROR);}
         //Get the variable from this reader
-        Variable *tVar=tCDFObject->getVariable(name.c_str());
+       
         //
         for(size_t d=0;d<dimensionlinks.size();d++){
           if(useStartCountStride){
@@ -255,17 +379,34 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
         }
         count[iterativeDimIndex]=1;
         //Read the data!
-        if(tVar->readData(type,start,count,stride)!=0)throw(__LINE__);
-        //Put the read data chunk in our destination variable
-#ifdef CCDFDATAMODEL_DEBUG                
-        CDBDebug("Copying %d elements to variable %s",tVar->getSize(),name.c_str());
-#endif        
-        dataCopier.copy(data,tVar->data,type,dataReadOffset,0,tVar->getSize());dataReadOffset+=tVar->getSize();
-        //Free the read data
-#ifdef CCDFDATAMODEL_DEBUG                
-        CDBDebug("Free tVar %s",tVar->name.c_str());
-#endif        
-        tVar->freeData();
+        
+         if(!hasCustomReader){
+          //TODO NEEDS BETTER CHECKS
+          if(cdfReaderPointer==NULL){
+            CDBError("No CDFReader defined for variable %s",name.c_str());
+             delete[] start;delete[] count;delete[] stride;
+            return 1;
+          }
+          Variable *tVar=tCDFObject->getVariable(name.c_str());
+          if(tVar->readData(type,start,count,stride)!=0)throw(__LINE__);
+          //Put the read data chunk in our destination variable
+  #ifdef CCDFDATAMODEL_DEBUG                
+          CDBDebug("Copying %d elements to variable %s",tVar->getSize(),name.c_str());
+  #endif        
+          dataCopier.copy(data,tVar->data,type,dataReadOffset,0,tVar->getSize());dataReadOffset+=tVar->getSize();
+          //Free the read data
+  #ifdef CCDFDATAMODEL_DEBUG                
+          CDBDebug("Free tVar %s",tVar->name.c_str());
+  #endif        
+          tVar->freeData();
+        }
+        
+        
+        
+        if(hasCustomReader){
+          status = customReader->readData(this,data,_start,count,stride);
+        }
+        
 #ifdef CCDFDATAMODEL_DEBUG                
         CDBDebug("Variable->data==NULL: %d",data==NULL);
 #endif        
@@ -277,9 +418,17 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
       }
     }
     delete[] start;delete[] count;delete[] stride;
+    if(status!=0)return 1;
   }
   
   if(needsDimIteration==false){
+    
+      //TODO NEEDS BETTER CHECKS
+    if(cdfReaderPointer==NULL){
+      CDBError("No CDFReader defined for variable %s",name.c_str());
+      return 1;
+    }
+    
     CDFReader *cdfReader = (CDFReader *)cdfReaderPointer;
     int status =0;
     bool useStartCountStride=false;if(_start!=NULL&&_count!=NULL){
@@ -304,6 +453,8 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
       return 1;
     }
   }
+//  CDBDebug("Data for %s read %d",name.c_str(),data!=NULL);
+  
   return 0;
 }
 

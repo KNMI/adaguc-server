@@ -1,3 +1,28 @@
+/******************************************************************************
+ * 
+ * Project:  ADAGUC Server
+ * Purpose:  ADAGUC OGC Server
+ * Author:   Maarten Plieger, plieger "at" knmi.nl
+ * Date:     2013-06-01
+ *
+ ******************************************************************************
+ *
+ * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
+ ******************************************************************************/
+
 #include "CPGSQLDB.h"
 const char *CPGSQLDB::className="CPGSQLDB";
 void CPGSQLDB::clearResult(){
@@ -21,12 +46,14 @@ CPGSQLDB::~CPGSQLDB(){
 }
 
 int CPGSQLDB::close(){
+  //CDBDebug("[DISCONNECT]");
   if(dConnected == 1){clearResult();PQfinish(connection);}
   dConnected = 0;
   return 0;
 }
 
 int CPGSQLDB::connect(const char * pszOptions){
+  //CDBDebug("[CONNECT]");
   LastErrorMsg[0]='\0';
   if(dConnected == 1)return 0;
   connection = PQconnectdb(pszOptions);
@@ -103,7 +130,8 @@ int CPGSQLDB::query(const char *pszQuery){
   clearResult();
   return 0;
 }
-CT::string* CPGSQLDB::query_select(const char *pszQuery,int dColumn){
+CT::string* CPGSQLDB::query_select_deprecated(const char *pszQuery,int dColumn){
+//  CDBDebug("query_select %d %s",dColumn,pszQuery);
   LastErrorMsg[0]='\0';
   int i;
   if(dConnected == 0){
@@ -130,15 +158,19 @@ CT::string* CPGSQLDB::query_select(const char *pszQuery,int dColumn){
   clearResult();
   return strings;
 }
-CT::string* CPGSQLDB::query_select(const char *pszQuery){
-  return query_select(pszQuery,0);
+CT::string* CPGSQLDB::query_select_deprecated(const char *pszQuery){
+  return query_select_deprecated(pszQuery,0);
 }
 
 
-CDB::Store* CPGSQLDB::queryToStore(const char *pszQuery){
+CDB::Store* CPGSQLDB::queryToStore(const char *pszQuery,bool throwException){
+ // CDBDebug("query_select %s",pszQuery);
   LastErrorMsg[0]='\0';
 
   if(dConnected == 0){
+    if(throwException){
+      throw CDB_CONNECTION_ERROR;
+    }
     CDBError("queryToStore: Not connected to DB");
     return NULL;
   }
@@ -150,12 +182,18 @@ CDB::Store* CPGSQLDB::queryToStore(const char *pszQuery){
     //snprintf(szTemp,CPGSQLDB_MAX_STR_LEN,"query_select: %s failed",pszQuery);
     //CDBError(szTemp);
     clearResult();
+    if(throwException){
+      throw CDB_QUERYFAILED;
+    }
     return NULL;
   }
   size_t numCols=PQnfields(result);
   size_t numRows=PQntuples(result);
   if(numCols==0){
     clearResult();
+    if(throwException){
+      throw CDB_NODATA;
+    }
     return NULL;
   }
   ColumnModel *colModel = new ColumnModel(PQnfields(result));

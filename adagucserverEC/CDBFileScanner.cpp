@@ -1,9 +1,36 @@
+/******************************************************************************
+ * 
+ * Project:  ADAGUC Server
+ * Purpose:  ADAGUC OGC Server
+ * Author:   Maarten Plieger, plieger "at" knmi.nl
+ * Date:     2013-06-01
+ *
+ ******************************************************************************
+ *
+ * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
+ ******************************************************************************/
+
 #include "CDBFileScanner.h"
+#include "CDebugger.h"
 const char *CDBFileScanner::className="CDBFileScanner";
+std::vector <CT::string> CDBFileScanner::tableNamesDone;
+//#define CDBFILESCANNER_DEBUG
+#define ISO8601TIME_LEN 32
 
-#define MAX_STR_LEN 8191
-
-
+//#define CDBFILESCANNER_DEBUG
 /*int CDBFileScanner::addIndexToTable(CPGSQLDB *DB,const char *tableName, const char * dimName){
   return 0;
   // Test if the table exists , if not create the table
@@ -31,104 +58,176 @@ const char *CDBFileScanner::className="CDBFileScanner";
   return 0;
 }*/
 
-int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,int &removeNonExistingFiles){
+bool CDBFileScanner::isTableAlreadyScanned(CT::string *tableName){
+  for(size_t t=0;t<tableNamesDone.size();t++){
+    if(tableNamesDone[t].equals(tableName->c_str())){
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * 
+ * @return Positive on error, zero on succes, negative on skip.
+ */
+int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,int &removeNonExistingFiles,CDirReader *dirReader){
+ ;
   int status = 0;
   CT::string query;
-  //First check and create all tables...
+  
+  if(dataSource->cfgLayer->Dimension.size()==0){
+    CDataReader::autoConfigureDimensions(dataSource);
+  }
+  
+  //Check and create all tables...
   for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
+  
     bool isTimeDim = false;
     CT::string dimName(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
-    dimName.toLowerCase();
+    dimName.toLowerCaseSelf();
     if(dimName.equals("time"))isTimeDim=true;
     //How do we detect correctly wether this is a time dim?
     if(dimName.indexOf("time")!=-1)isTimeDim=true;
     
     //Create database tableNames
-    CT::string tableName(dataSource->cfgLayer->DataBaseTable[0]->value.c_str());
-    CServerParams::makeCorrectTableName(&tableName,&dimName);
-    //Create column names
-    CT::string tableColumns("path varchar (255)");
-    if(isTimeDim==true){
-      tableColumns.printconcat(", %s timestamp, dim%s int",dimName.c_str(),dimName.c_str());
-    }else{
-      tableColumns.printconcat(", %s varchar (16), dim%s int",dimName.c_str(),dimName.c_str());
+    CT::string tableName;
+    try{
+      tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
+    }catch(int e){
+      CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
+      return 1;
     }
-    
-    // Put the file date in the database, in order to be able to detect whether a file has been changed in a later stage.       
-    
-    //if(d==0){
-      tableColumns.printconcat(", filedate timestamp");
-    //}
-    
-    //Unique constraint / PRIMARY KEY
-    tableColumns.printconcat(", PRIMARY KEY (path, %s)",dimName.c_str());
-    
-    //CDBDebug("Check table %s with columns  %s ...\t",tableName.c_str(),tableColumns.c_str());
-    CDBDebug("Check table %s ",tableName.c_str());
-    status = DB->checkTable(tableName.c_str(),tableColumns.c_str());
-    //if(status == 0){CDBDebug("OK: Table is available");}
-    if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tableName.c_str(),tableColumns.c_str()); DB->close();return 1;  }
-    if(status == 2){
-      removeNonExistingFiles=0;
-      //removeExisting files can be set back to zero, because there are no files to remove (table is created)
-      //note the int &removeNonExistingFiles as parameter of this function!
-      //(Setting the value will have effect outside this function)
-      //CDBDebug("OK: Table %s created, (check for unavailable files is off);",tableName);
-      //if( addIndexToTable(DB,tableName.c_str(),dimName.c_str()) != 0)return 1;
-    }
-    
-    if(removeNonExistingFiles==1){
-      //The temporary table should always be dropped before filling.  
-      //We will do a complete new update, so store everything in an new table
-      //Later we will rename this table
-      CT::string tableName_temp(&tableName);
-      if(removeNonExistingFiles==1){
-        tableName_temp.concat("_temp");
-      }
-      CDBDebug("Making empty temporary table %s ... ",tableName_temp.c_str());
-      CDBDebug("Check table %s ...\t",tableName.c_str());
-      status=DB->checkTable(tableName_temp.c_str(),tableColumns.c_str());
-      if(status==0){
-        //Table already exists....
-        query.print("drop table %s",tableName_temp.c_str());
-        CDBError("*** Warning! Temporary table already exists!!! IS ANOTHER PROCESS UPDATING THE DB ALREADY? ***");
-        CDBDebug("*** DROPPING TEMPORARY TABLE: %s",query.c_str());
-        if(DB->query(query.c_str())!=0){
-          CDBError("Query %s failed",query.c_str());
+
+
+    //Check whether we already did this table in this scan
+    bool skip = isTableAlreadyScanned(&tableName);
+    if(skip==false){
+      CDBDebug("Updating dimension '%s' with table '%s'",dimName.c_str(),tableName.c_str());
+      
+      //Create column names
+      CT::string tableColumns("path varchar (511)");
+      if(isTimeDim==true){
+        tableColumns.printconcat(", %s timestamp, dim%s int",dimName.c_str(),dimName.c_str());
+      }else{
+        try{
+          CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource,dirReader->fileList[0]->fullName.c_str());
+          if(cdfObject == NULL){
+            throw(__LINE__);
+          }
+          CDF::Variable *dimVar = cdfObject->getVariableNE(dimName.c_str());
+          if(dimVar==NULL){
+            CDBError("File dimension '%s' not found.",dimName.c_str());
+            throw(__LINE__);
+          }
+          
+          bool hasStatusFlag=false;
+          std::vector<CDataSource::StatusFlag*> statusFlagList;
+          CDataSource::readStatusFlags(dimVar,&statusFlagList);
+          if(statusFlagList.size()>0)hasStatusFlag=true;
+          for(size_t i=0;i<statusFlagList.size();i++)delete statusFlagList[i];
+          statusFlagList.clear();
+          if(hasStatusFlag){
+            tableColumns.printconcat(", %s varchar (16), dim%s int",dimName.c_str(),dimName.c_str());
+          }else{
+            switch(dimVar->type){
+              case CDF_FLOAT:
+              case CDF_DOUBLE:
+              tableColumns.printconcat(", %s real, dim%s int",dimName.c_str(),dimName.c_str());break;
+              case CDF_STRING:
+              tableColumns.printconcat(", %s varchar (16), dim%s int",dimName.c_str(),dimName.c_str());break;
+              default:
+              tableColumns.printconcat(", %s int, dim%s int",dimName.c_str(),dimName.c_str());break;
+            }          
+          }
+        }catch(int e){
+          CDBError("Exception defining table structure at line %d",e);
           DB->close();
           return 1;
         }
-        CDBDebug("Check table %s ... ",tableName_temp.c_str());
-        status = DB->checkTable(tableName_temp.c_str(),tableColumns.c_str());
-        if(status == 0){CDBDebug("OK: Table is available");}
-        if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tableName_temp.c_str(),tableColumns.c_str()); DB->close();return 1;  }
-        if(status == 2){CDBDebug("OK: Table %s created",tableName_temp.c_str());
-          //Create a index on these files:
-          //if(addIndexToTable(DB,tableName_temp.c_str(),dimName.c_str())!= 0)return 1;
-        }
+        
       }
       
-      if(status == 0 || status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tableName_temp.c_str(),tableColumns.c_str()); DB->close();return 1;  }
+      // Put the file date in the database, in order to be able to detect whether a file has been changed in a later stage.       
+      
+      //if(d==0){
+        tableColumns.printconcat(", filedate timestamp");
+      //}
+      
+      //Unique constraint / PRIMARY KEY
+      tableColumns.printconcat(", PRIMARY KEY (path, %s)",dimName.c_str());
+      
+      //CDBDebug("Check table %s with columns  %s ...\t",tableName.c_str(),tableColumns.c_str());
+      //CDBDebug("Check table %s ",tableName.c_str());
+      status = DB->checkTable(tableName.c_str(),tableColumns.c_str());
+      //if(status == 0){CDBDebug("OK: Table is available");}
+      if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tableName.c_str(),tableColumns.c_str()); DB->close();return 1;  }
       if(status == 2){
-        //OK, Table did not exist, is created.
-        //Create a index on these files:
-        //if(addIndexToTable(DB,tableName_temp.c_str(),dimName.c_str()) != 0)return 1;
+        removeNonExistingFiles=0;
+        //removeExisting files can be set back to zero, because there are no files to remove (table is created)
+        //note the int &removeNonExistingFiles as parameter of this function!
+        //(Setting the value will have effect outside this function)
+        //CDBDebug("OK: Table %s created, (check for unavailable files is off);",tableName);
+        //if( addIndexToTable(DB,tableName.c_str(),dimName.c_str()) != 0)return 1;
+      }
+      
+      
+      
+      if(removeNonExistingFiles==1){
+        //The temporary table should always be dropped before filling.  
+        //We will do a complete new update, so store everything in an new table
+        //Later we will rename this table
+        CT::string tableName_temp(&tableName);
+        if(removeNonExistingFiles==1){
+          tableName_temp.concat("_temp");
+        }
+        //CDBDebug("Making empty temporary table %s ... ",tableName_temp.c_str());
+        //CDBDebug("Check table %s ...\t",tableName.c_str());
+        status=DB->checkTable(tableName_temp.c_str(),tableColumns.c_str());
+        if(status==0){
+          //Table already exists....
+          CDBError("*** WARNING: Temporary table %s already exists. Is another process updating the database? ***",tableName_temp.c_str());
+          query.print("drop table %s",tableName_temp.c_str());
+          CDBDebug("*** DROPPING TEMPORARY TABLE: %s",query.c_str());
+          if(DB->query(query.c_str())!=0){
+            CDBError("Query %s failed",query.c_str());
+            DB->close();
+            return 1;
+          }
+          CDBDebug("Check table %s ... ",tableName_temp.c_str());
+          status = DB->checkTable(tableName_temp.c_str(),tableColumns.c_str());
+          if(status == 0){CDBDebug("OK: Table is available");}
+          if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tableName_temp.c_str(),tableColumns.c_str()); DB->close();return 1;  }
+          if(status == 2){CDBDebug("OK: Table %s created",tableName_temp.c_str());
+            //Create a index on these files:
+            //if(addIndexToTable(DB,tableName_temp.c_str(),dimName.c_str())!= 0)return 1;
+          }
+        }
+        
+        if(status == 0 || status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tableName_temp.c_str(),tableColumns.c_str()); DB->close();return 1;  }
+        if(status == 2){
+          //OK, Table did not exist, is created.
+          //Create a index on these files:
+          //if(addIndexToTable(DB,tableName_temp.c_str(),dimName.c_str()) != 0)return 1;
+        }
       }
     }
-    
+      
   }
   return 0;
 }
 
 int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeNonExistingFiles,CDirReader *dirReader){
+//  CDBDebug("DBLoopFiles");
   CT::string query;
   CDFObject *cdfObject = NULL;
   int status = 0;
+  CT::string multiInsertCache;
 
   try{
     //Loop dimensions and files
     //CDBDebug("Checking files that are already in the database...");
-    char ISOTime[MAX_STR_LEN+1];
+    char ISOTime[ISO8601TIME_LEN+1];
     size_t numberOfFilesAddedFromDB=0;
     
     //Setup variables like tableNames and timedims for each dimension
@@ -138,13 +237,15 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
     //CT::string tableColumns[numDims];
     CT::string tableNames[numDims];
     CT::string tableNames_temp[numDims];
+    bool skipDim[numDims];
     CT::string queryString;
     CT::string VALUES;
     CADAGUC_time *ADTime  = NULL;
     for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
       dimNames[d].copy(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
-      dimNames[d].toLowerCase();
+      dimNames[d].toLowerCaseSelf();
       isTimeDim[d]=false;
+      skipDim[d]=false;
       if(dimNames[d].equals("time"))isTimeDim[d]=true;
       //TODO: implement use of standardname? How do we detect correctly wether this is a time dim?
       if(dimNames[d].indexOf("time")!=-1)isTimeDim[d]=true;
@@ -157,18 +258,32 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
         tableColumns[d].printconcat(", %s varchar (16), dim%s int",dimNames[d].c_str(),dimNames[d].c_str());
       }*/
       //Create database tableNames
-      tableNames[d].copy(dataSource->cfgLayer->DataBaseTable[0]->value.c_str());
-      CServerParams::makeCorrectTableName(&(tableNames[d]),&(dimNames[d]));
+      //tableNames[d].copy(dataSource->cfgLayer->DataBaseTable[0]->value.c_str());
+      //CServerParams::makeCorrectTableName(&(tableNames[d]),&(dimNames[d]));
+      
+      
+      try{
+        tableNames[d] = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimNames[d].c_str());
+      }catch(int e){
+        CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimNames[d].c_str());
+        return 1;
+      }
+      
       //Create temporary tableName
       tableNames_temp[d].copy(&(tableNames[d]));
       if(removeNonExistingFiles==1){
         tableNames_temp[d].concat("_temp");
       }
+      
+      skipDim[d] = isTableAlreadyScanned(&tableNames[d]);
+      if(skipDim[d]){
+        CDBDebug("Skipping dimension '%s' with table '%s': already scanned.",dimNames[d].c_str(),tableNames[d].c_str());
+      }
     }
     
     for(size_t j=0;j<dirReader->fileList.size();j++){
       //Loop through all configured dimensions.
-      #ifdef CDATAREADER_DEBUG
+      #ifdef CDBFILESCANNER_DEBUG
       CDBDebug("Loop through all configured dimensions.");
       #endif
       
@@ -185,210 +300,305 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
         dimensionTextList.concat(")");
       }
       for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
-        int fileExistsInDB=0;
-        //If we are messing in the non-temporary table (e.g.removeNonExistingFiles==0)
-        //we need to make a transaction to make sure a file is not added twice
-        //If removeNonExistingFiles==1, we are using the temporary table
-        //Which is already locked by a transaction 
-        if(removeNonExistingFiles==0){
-          #ifdef USEQUERYTRANSACTIONS                
-          status = DB->query("BEGIN"); if(status!=0)throw(__LINE__);
-          #endif          
-        }
-        
-        //Delete files with non-matching creation date 
-        query.print("delete from %s where path = '%s' and (filedate != '%s' or filedate is NULL)",tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),fileDate.c_str());
-        //CDBDebug("Deleting: %s", query.c_str());
-        status = DB->query(query.c_str()); if(status!=0)throw(__LINE__);
-
-        //Check if file already resides in the nontemporary database
-        query.print("select path from %s where path = '%s' and filedate = '%s' and filedate is not NULL limit 1",tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),fileDate.c_str());
-        //CDBDebug("Checking: %s", query.c_str());
-        CT::string *pathValues = DB->query_select(query.c_str(),0);
-        if(pathValues == NULL){CDBError("Query failed");DB->close();throw(__LINE__);}
-        if(pathValues->count==1){fileExistsInDB=1;}else{fileExistsInDB=0;}
-        delete[] pathValues;
+        multiInsertCache = "";
+        if(skipDim[d] == false){
           
-        //Move this record from the nontemporary table into the temporary table
-        if(fileExistsInDB == 1&&removeNonExistingFiles==1){
-          //The file resides already in the nontemporary table, copy it into the temporary table
-          // Now check wether the file date has changed
-          
-          
-          CT::string mvRecordQuery;
-         /* mvRecordQuery.print("INSERT INTO %s select path,%s,dim%s from %s where path = '%s'",
-            tableNames_temp[d].c_str(),
-            dimNames[d].c_str(),
-            dimNames[d].c_str(),
-            tableNames[d].c_str(),
-            dirReader->fileList[j]->fullName.c_str()
-          );*/
-          mvRecordQuery.print("INSERT INTO %s select * from %s where path = '%s'",
-                              tableNames_temp[d].c_str(),                             
-                              tableNames[d].c_str(),
-                              dirReader->fileList[j]->fullName.c_str()
-          );
-          //printf("%s\n",mvRecordQuery.c_str());
-          if(j%1000==0&&d==0){
-            CDBDebug("Re-using record %d/%d %s\t %s",
-            (int)j,
-            (int)dirReader->fileList.size(),
-            dimensionTextList.c_str(),
-            dirReader->fileList[j]->baseName.c_str());
+          numberOfFilesAddedFromDB=0;
+          int fileExistsInDB=0;
+          //If we are messing in the non-temporary table (e.g.removeNonExistingFiles==0)
+          //we need to make a transaction to make sure a file is not added twice
+          //If removeNonExistingFiles==1, we are using the temporary table
+          //Which is already locked by a transaction 
+          if(removeNonExistingFiles==0){
+            #ifdef USEQUERYTRANSACTIONS                
+            status = DB->query("BEGIN"); if(status!=0)throw(__LINE__);
+            #endif          
           }
-          if(DB->query(mvRecordQuery.c_str())!=0){CDBError("Query %s failed",mvRecordQuery.c_str());throw(__LINE__);}
-          numberOfFilesAddedFromDB++;
-        }
-        
-        //The file metadata does not already reside in the db.
-        //Therefore we need to read information from it
-        if(fileExistsInDB == 0){
-          try{
-            if(d==0){
-              CDBDebug("Adding fileNo %d/%d %s\t %s",
+          
+          //Delete files with non-matching creation date 
+          query.print("delete from %s where path = '%s' and (filedate != '%s' or filedate is NULL)",tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),fileDate.c_str());
+          //CDBDebug("Deleting: %s", query.c_str());
+          status = DB->query(query.c_str()); if(status!=0)throw(__LINE__);
+
+          //Check if file already resides in the nontemporary database
+          query.print("select path from %s where path = '%s' and filedate = '%s' and filedate is not NULL limit 1",tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),fileDate.c_str());
+          //CDBDebug("Checking: %s", query.c_str());
+          CDB::Store *pathValues = DB->queryToStore(query.c_str());
+          if(pathValues == NULL){CDBError("Query failed");DB->close();throw(__LINE__);}
+          if(pathValues->getSize()==1){fileExistsInDB=1;}else{fileExistsInDB=0;}
+          delete pathValues;
+          
+          
+          //Move this record from the nontemporary table into the temporary table
+          if(fileExistsInDB == 1&&removeNonExistingFiles==1){
+            //The file resides already in the nontemporary table, copy it into the temporary table
+            // Now check wether the file date has changed
+            
+            
+            CT::string mvRecordQuery;
+          /* mvRecordQuery.print("INSERT INTO %s select path,%s,dim%s from %s where path = '%s'",
+              tableNames_temp[d].c_str(),
+              dimNames[d].c_str(),
+              dimNames[d].c_str(),
+              tableNames[d].c_str(),
+              dirReader->fileList[j]->fullName.c_str()
+            );*/
+            mvRecordQuery.print("INSERT INTO %s select * from %s where path = '%s' order by dim%s",
+                                tableNames_temp[d].c_str(),                             
+                                tableNames[d].c_str(),
+                                dirReader->fileList[j]->fullName.c_str(),
+                                dataSource->cfgLayer->Dimension[d]->attr.name.c_str()
+            );
+            //printf("%s\n",mvRecordQuery.c_str());
+            if(j%1000==0&&d==0){
+              CDBDebug("Re-using record %d/%d %s\t %s",
               (int)j,
               (int)dirReader->fileList.size(),
               dimensionTextList.c_str(),
               dirReader->fileList[j]->baseName.c_str());
-            };
-            #ifdef CDATAREADER_DEBUG
-            CDBDebug("Creating new CDFObject");
-            #endif
-            cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource,dirReader->fileList[j]->fullName.c_str());
-            if(cdfObject == NULL)throw(__LINE__);
-            
-            //Open the file
-            #ifdef CDATAREADER_DEBUG
-            CDBDebug("Opening file %s",dirReader->fileList[j]->fullName.c_str());
-            #endif
-            
-            status = cdfObject->open(dirReader->fileList[j]->fullName.c_str());
-            if(status!=0){
-              CDBError("Unable to open file '%s'",dirReader->fileList[j]->fullName.c_str());
-              throw(__LINE__);
             }
-            #ifdef CDATAREADER_DEBUG
-            CDBDebug("File opened.");
-            #endif
-            
-            if(status==0){
-              CDF::Dimension * dimDim = cdfObject->getDimensionNE(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
-              CDF::Variable *  dimVar = cdfObject->getVariableNE(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
-              if(dimDim==NULL||dimVar==NULL){
-                CDBError("In file %s",dirReader->fileList[j]->fullName.c_str());
-                CDBError("For variable '%s' dimension '%s' not found",dataSource->cfgLayer->Variable[0]->value.c_str(),
-                  dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
-                throw(__LINE__);
-              }else{
-                CDF::Attribute *dimUnits = dimVar->getAttributeNE("units");
-                if(dimUnits==NULL){
-                  dimVar->setAttributeText("units","1");
-                  dimUnits = dimVar->getAttributeNE("units");
-                }
-                
+            if(DB->query(mvRecordQuery.c_str())!=0){CDBError("Query %s failed",mvRecordQuery.c_str());throw(__LINE__);}
+            numberOfFilesAddedFromDB++;
+          }
+          
+          //The file metadata does not already reside in the db.
+          //Therefore we need to read information from it
+          if(fileExistsInDB == 0){
+            try{
+              if(d==0){
+                CDBDebug("Adding fileNo %d/%d %s\t %s",
+                (int)j,
+                (int)dirReader->fileList.size(),
+                dimensionTextList.c_str(),
+                dirReader->fileList[j]->baseName.c_str());
+              };
+              #ifdef CDBFILESCANNER_DEBUG
+              CDBDebug("Creating new CDFObject");
+              #endif
+              cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource,dirReader->fileList[j]->fullName.c_str());
+              if(cdfObject == NULL)throw(__LINE__);
               
-                //Create adaguctime structure, when this is a time dimension.
-                if(isTimeDim[d]){
-                  try{ADTime = new CADAGUC_time((char*)dimUnits->data);}catch(int e){delete ADTime;ADTime=NULL;throw(__LINE__);}
-                }
-                
-                //Read the dimension data
-                status = dimVar->readData(CDF_DOUBLE);if(status!=0){
-                  CDBError("Unable to read variable data for %s",dimVar->name.c_str());
+              //Open the file
+              #ifdef CDBFILESCANNER_DEBUG
+              CDBDebug("Opening file %s",dirReader->fileList[j]->fullName.c_str());
+              #endif
+              
+              status = cdfObject->open(dirReader->fileList[j]->fullName.c_str());
+              if(status!=0){
+                CDBError("Unable to open file '%s'",dirReader->fileList[j]->fullName.c_str());
+                throw(__LINE__);
+              }
+              #ifdef CDBFILESCANNER_DEBUG
+              CDBDebug("File opened.");
+              #endif
+              
+              if(status==0){
+                CDF::Dimension * dimDim = cdfObject->getDimensionNE(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+                CDF::Variable *  dimVar = cdfObject->getVariableNE(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+                if(dimDim==NULL||dimVar==NULL){
+                  CDBError("In file %s",dirReader->fileList[j]->fullName.c_str());
+                  CDBError("For variable '%s' dimension '%s' not found",dataSource->cfgLayer->Variable[0]->value.c_str(),
+                    dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
                   throw(__LINE__);
-                }
+                }else{
+                  CDF::Attribute *dimUnits = dimVar->getAttributeNE("units");
+                  if(dimUnits==NULL){
+                    if(isTimeDim[d]){
+                      CDBError("No time units found for variable %s",dimVar->name.c_str());
+                      throw(__LINE__);
+                    }
+                    dimVar->setAttributeText("units","1");
+                    dimUnits = dimVar->getAttributeNE("units");
+                  }
+                  
                 
-                //Check for status flag dimensions
-                bool hasStatusFlag = false;
-                std::vector<CDataSource::StatusFlag*> statusFlagList;
-                CDataSource::readStatusFlags(dimVar,&statusFlagList);
-                if(statusFlagList.size()>0)hasStatusFlag=true;
-                
-                int exceptionAtLineNr=0;
-                try{
-                  const double *dimValues=(double*)dimVar->data;
-                  for(size_t i=0;i<dimDim->length;i++){
-                    if(dimValues[i]!=NC_FILL_DOUBLE){
-                      if(isTimeDim[d]==false){
-                        if(hasStatusFlag==true){
-                          VALUES.print("VALUES ('%s','%s','%d','%s')",dirReader->fileList[j]->fullName.c_str(),CDataSource::getFlagMeaning( &statusFlagList,double(dimValues[i])),int(i),fileDate.c_str());
-                        }
-                        if(hasStatusFlag==false){
-                          switch(dimVar->type){
-                            case CDF_UINT:
-                            case CDF_INT:
-                              VALUES.print("VALUES ('%s','%d','%d','%s')",dirReader->fileList[j]->fullName.c_str(),int(dimValues[i]),int(i),fileDate.c_str());break;
-                            default:
-                              VALUES.print("VALUES ('%s','%f','%d','%s')",dirReader->fileList[j]->fullName.c_str(),double(dimValues[i]),int(i),fileDate.c_str());
+                  //Create adaguctime structure, when this is a time dimension.
+                  if(isTimeDim[d]){
+                    try{ADTime = new CADAGUC_time((char*)dimUnits->toString().c_str());}catch(int e){delete ADTime;ADTime=NULL;throw(__LINE__);}
+                  }
+                  
+                  #ifdef CDBFILESCANNER_DEBUG
+                  CDBDebug("Dimension type = %s",CDF::getCDFDataTypeName(dimVar->type).c_str());
+                  #endif
+                  
+                  #ifdef CDBFILESCANNER_DEBUG
+                  CDBDebug("Reading dimension %s of length %d",dimVar->name.c_str(),dimDim->getSize());
+                  #endif
+                  
+                  //Strings do never fit in a double.
+                  if(dimVar->type!=CDF_STRING){
+                    //Read the dimension data
+                    status = dimVar->readData(CDF_DOUBLE);
+                  }else{
+                    //Read the dimension data
+                    status = dimVar->readData(CDF_STRING);
+                  }
+                  CDBDebug("/Reading dimension %s of length %d",dimVar->name.c_str(),dimDim->getSize());
+                  
+                  if(status!=0){
+                    CDBError("Unable to read variable data for %s",dimVar->name.c_str());
+                    throw(__LINE__);
+                  }
+                  
+                  //Check for status flag dimensions
+                  bool hasStatusFlag = false;
+                  std::vector<CDataSource::StatusFlag*> statusFlagList;
+                  CDataSource::readStatusFlags(dimVar,&statusFlagList);
+                  if(statusFlagList.size()>0)hasStatusFlag=true;
+                  
+                  int exceptionAtLineNr=0;
+                  
+       
+                  
+                  try{
+                    const double *dimValues=(double*)dimVar->data;
+                    
+                    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                    //Start looping over every netcdf dimension element
+                    
+                    for(size_t i=0;i<dimDim->length;i++){
+                      if(dimValues[i]!=NC_FILL_DOUBLE){
+                        //Insert individual values of type char, short, int, float, double
+                        if(dimVar->type!=CDF_STRING){
+                          if(isTimeDim[d]==false){
+                            if(hasStatusFlag==true){
+                              VALUES.print("('%s','%s','%d','%s')",
+                                           dirReader->fileList[j]->fullName.c_str(),
+                                           CDataSource::getFlagMeaning( &statusFlagList,double(dimValues[i])),
+                                           int(i),
+                                           fileDate.c_str());
+                            }
+                            if(hasStatusFlag==false){
+                              switch(dimVar->type){
+                                case CDF_FLOAT:
+                                case CDF_DOUBLE:
+                                  VALUES.print("('%s',%f,'%d','%s')",dirReader->fileList[j]->fullName.c_str(),double(dimValues[i]),int(i),fileDate.c_str());break;
+                                default:
+                                  VALUES.print("('%s',%d,'%d','%s')",dirReader->fileList[j]->fullName.c_str(),int(dimValues[i]),int(i),fileDate.c_str());break;
+                              }
+                            }
+                          }else{
+                            VALUES.copy("");
+                            ADTime->PrintISOTime(ISOTime,ISO8601TIME_LEN,dimValues[i]);status = 0;//TODO make PrintISOTime return a 0 if succeeded
+                            if(status == 0){
+                              ISOTime[19]='Z';ISOTime[20]='\0';
+                              VALUES.print("('%s','%s','%d','%s')",dirReader->fileList[j]->fullName.c_str(),ISOTime,int(i),fileDate.c_str());
+                            }
+                            
                           }
                         }
-                      }else{
-                        VALUES.copy("");
-                        ADTime->PrintISOTime(ISOTime,MAX_STR_LEN,dimValues[i]);status = 0;//TODO make PrintISOTime return a 0 if succeeded
-                        if(status == 0){
-                          ISOTime[19]='Z';ISOTime[20]='\0';
-                          VALUES.print("VALUES ('%s','%s','%d','%s')",dirReader->fileList[j]->fullName.c_str(),ISOTime,int(i),fileDate.c_str());
+                        
+                        //Insert individual values of type string
+                        if(dimVar->type==CDF_STRING){
+                          
+                          const char *str=((char**)dimVar->data)[i];
+                          
+                          VALUES.print("('%s','%s','%d','%s')",dirReader->fileList[j]->fullName.c_str(),str,int(i),fileDate.c_str());
                         }
-                      }
-                      
-                      //Insert record into DB.
-                      if(VALUES.length()>0){
-                        //Add the record to the temporary table.
-                        queryString.print("INSERT into %s %s",tableNames_temp[d].c_str(),VALUES.c_str());
-                        status = DB->query(queryString.c_str()); 
-                        if(status!=0){
-                          CDBError("Query failed: %s",queryString.c_str());
-                          throw(__LINE__);
-                        }
-                        //CDBDebug("queryString= %s",queryString.c_str());
-                        if(removeNonExistingFiles==1){
-                          //We are adding the query above to the temporary table if removeNonExistingFiles==1;
-                          //Lets add it also to the non temporary table for convenience
-                          //Later this table will be dropped, but it will remain more up to date during scanning this way.
-                          queryString.print("INSERT into %s %s",tableNames[d].c_str(),VALUES.c_str());
-                          DB->query(queryString.c_str()); 
+                        
+                        
+                        //Insert record into DB.
+                        if(VALUES.length()>0){
+                          if(multiInsertCache.length()>0){
+                            multiInsertCache.concat(",");
+                          }
+                          multiInsertCache.concat(&VALUES);
+                          /*
+                          
+                          CDBDebug("%s",VALUES.c_str());
+                          //Add the record to the temporary table.
+                          queryString.print("INSERT into %s VALUES %s",tableNames_temp[d].c_str(),VALUES.c_str());
+                          status =  DB->query(queryString.c_str()); 
+                          //CDBDebug("(1) Querying %s",queryString.c_str());
+                          if(status!=0){
+                            CDBError("Query failed: %s",queryString.c_str());
+                            throw(__LINE__);
+                          }
+                          //CDBDebug("queryString= %s",queryString.c_str());
+                          if(removeNonExistingFiles==1){
+                            //We are adding the query above to the temporary table if removeNonExistingFiles==1;
+                            //Lets add it also to the non temporary table for convenience
+                            //Later this table will be dropped, but it will remain more up to date during scanning this way.
+                            queryString.print("INSERT into %s VALUES %s",tableNames[d].c_str(),VALUES.c_str());
+                            DB->query(queryString.c_str()); 
+                           
+                          }*/
                         }
                       }
                     }
+                  }catch(int linenr){
+                    exceptionAtLineNr=linenr;
                   }
-                }catch(int linenr){
-                  exceptionAtLineNr=linenr;
+                  //Cleanup statusflags
+                  for(size_t i=0;i<statusFlagList.size();i++)delete statusFlagList[i];
+                  statusFlagList.clear();
+                  
+                  //Cleanup adaguctime structure
+                  if(isTimeDim[d]){delete ADTime;ADTime=NULL;}
+                  
+                  if(exceptionAtLineNr!=0)throw(exceptionAtLineNr);
                 }
-                //Cleanup statusflags
-                for(size_t i=0;i<statusFlagList.size();i++)delete statusFlagList[i];
-                statusFlagList.clear();
-                
-                //Cleanup adaguctime structure
-                if(isTimeDim[d]){delete ADTime;ADTime=NULL;}
-                
-                if(exceptionAtLineNr!=0)throw(exceptionAtLineNr);
               }
+              //delete cdfObject;cdfObject=NULL;
+              //cdfObject=CDFObjectStore::getCDFObjectStore()->deleteCDFObject(&cdfObject);
+            }catch(int linenr){
+              CDBError("Exception in DBLoopFiles at line %d, msg: '%s'",linenr,DB->getError());
+              CDBError(" *** SKIPPING FILE %s ***",dirReader->fileList[j]->baseName.c_str());
+              //Close cdfObject. this is only needed if an exception occurs, otherwise it does nothing...
+              //delete cdfObject;cdfObject=NULL;
+              delete ADTime;ADTime=NULL;
+              cdfObject=CDFObjectStore::getCDFObjectStore()->deleteCDFObject(&cdfObject);
             }
-            //delete cdfObject;cdfObject=NULL;
-            cdfObject=CDFObjectStore::getCDFObjectStore()->deleteCDFObject(&cdfObject);
-          }catch(int linenr){
-            CDBError("Exception in DBLoopFiles at line %d, msg: '%s'",linenr,DB->getError());
-            CDBError(" *** SKIPPING FILE %s ***",dirReader->fileList[j]->baseName.c_str());
-            //Close cdfObject. this is only needed if an exception occurs, otherwise it does nothing...
-            //delete cdfObject;cdfObject=NULL;
-            delete ADTime;ADTime=NULL;
-            cdfObject=CDFObjectStore::getCDFObjectStore()->deleteCDFObject(&cdfObject);
+          }
+          //If we are messing in the non-temporary table (e.g.removeNonExistingFiles==0)
+          //we need to make a transaction to make sure a file is not added twice
+          //If removeNonExistingFiles==1, we are using the temporary table
+          //Which is already locked by a transaction 
+          if(removeNonExistingFiles==0){
+            //CDBDebug("COMMIT");
+            #ifdef USEQUERYTRANSACTIONS                
+            status = DB->query("COMMIT"); if(status!=0)throw(__LINE__);
+            #endif          
           }
         }
-        //If we are messing in the non-temporary table (e.g.removeNonExistingFiles==0)
-        //we need to make a transaction to make sure a file is not added twice
-        //If removeNonExistingFiles==1, we are using the temporary table
-        //Which is already locked by a transaction 
-        if(removeNonExistingFiles==0){
-          //CDBDebug("COMMIT");
-          #ifdef USEQUERYTRANSACTIONS                
-          status = DB->query("COMMIT"); if(status!=0)throw(__LINE__);
-          #endif          
+        
+        
+        //End of dimloop, start inserting our collected records in one statement
+        if(multiInsertCache.length()>0){
+          queryString.print("INSERT into %s VALUES ",tableNames_temp[d].c_str());
+          queryString.concat(&multiInsertCache);
+          #ifdef CDBFILESCANNER_DEBUG
+          CDBDebug("Inserting %d bytes",queryString.length());
+          #endif
+          status =  DB->query(queryString.c_str()); 
+          if(status!=0){
+            CDBError("Query failed: %s",queryString.c_str());
+            throw(__LINE__);
+          }
+          CDBDebug("/Inserting %d bytes",queryString.length());
+          
+          if(removeNonExistingFiles==1){
+            //We are adding the query above to the temporary table if removeNonExistingFiles==1;
+            //Lets add it also to the non temporary table for convenience
+            //Later this table will be dropped, but it will remain more up to date during scanning this way.
+            queryString.print("INSERT into %s VALUES ",tableNames[d].c_str());
+            queryString.concat(&multiInsertCache);
+            CDBDebug("Inserting %d bytes",queryString.length());
+            status =  DB->query(queryString.c_str()); 
+            if(status!=0){
+              CDBError("Query failed: %s",queryString.c_str());
+              throw(__LINE__);
+            }
+            CDBDebug("/Inserting %d bytes",queryString.length());
+          }
         }
       }
     }
+    
+    
+    
     if(status != 0){CDBError(DB->getError());throw(__LINE__);}
-    if(numberOfFilesAddedFromDB!=0){CDBDebug("%d files not scanned, they were already in the database",numberOfFilesAddedFromDB);}
+    if(numberOfFilesAddedFromDB!=0){CDBDebug("%d file(s) were already in the database",numberOfFilesAddedFromDB);}
     
     
     bool checkForDuplicateEntries=false;
@@ -423,14 +633,14 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
   
   
   //delete cdfObject;cdfObject=NULL;
-  cdfObject=CDFObjectStore::getCDFObjectStore()->deleteCDFObject(&cdfObject);
+  //cdfObject=CDFObjectStore::getCDFObjectStore()->deleteCDFObject(&cdfObject);
   return 0;
 }
 
 
 
 int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT::string *_tailPath,CT::string *_layerPathToScan){
-  
+ 
   if(dataSource->dLayerType!=CConfigReaderLayerTypeDataBase)return 0;
   
   //We only need to update the provided path in layerPathToScan. We will simply ignore the other directories
@@ -445,7 +655,7 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
       
       //If this is another directory we will simply ignore it.
       if(layerPath.equals(&layerPathToScan)==false){
-        CDBError("Skipping %s==%s\n",layerPath.c_str(),layerPathToScan.c_str());
+        //CDBError("Skipping %s==%s\n",layerPath.c_str(),layerPathToScan.c_str());
         return 0;
       }
     }
@@ -457,7 +667,6 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
   CPGSQLDB DB;
   
   //Copy tailpath (can be provided to scan only certain subdirs)
-  
   CT::string tailPath(_tailPath);
   
   CDirReader::makeCleanPath(&tailPath);
@@ -472,11 +681,14 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
   
   CDirReader dirReader;
   
-  CDBDebug("*** Starting update layer [\"%s\"] ***",dataSource->cfgLayer->Name[0]->value.c_str());
+  CDBDebug("*** Starting update layer '%s' ***",dataSource->cfgLayer->Name[0]->value.c_str());
   
   if(searchFileNames(&dirReader,dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),tailPath.c_str())!=0)return 0;
   
-  if(dirReader.fileList.size()==0)return 0;
+  if(dirReader.fileList.size()==0){
+    CDBError("No files found for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
+    return 0;
+  }
   
   /*----------- Connect to DB --------------*/
   //CDBDebug("Connecting to DB ...\t");
@@ -490,40 +702,57 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
     status = DB.query("SET client_min_messages TO WARNING");
     if(status != 0 )throw(__LINE__);
     
-    //First check and create all tables...
-    status = createDBUpdateTables(&DB,dataSource,removeNonExistingFiles);
-    if(status != 0 )throw(__LINE__);
-           
-           //CDBDebug("removeNonExistingFiles = %d\n",removeNonExistingFiles);
-    //We need to do a transaction if we want to remove files from the existing table
-    if(removeNonExistingFiles==1){
-      //CDBDebug("BEGIN");
-      #ifdef USEQUERYTRANSACTIONS      
-      status = DB.query("BEGIN"); if(status!=0)throw(__LINE__);
-      #endif      
+    //First check and create all tables... returns zero on success, positive on error, negative on already done.
+    status = createDBUpdateTables(&DB,dataSource,removeNonExistingFiles,&dirReader);
+    if(status > 0 ){
+      throw(__LINE__);
     }
-    
-    
-    //Loop Through all files
-    status = DBLoopFiles(&DB,dataSource,removeNonExistingFiles,&dirReader);
-    if(status != 0 )throw(__LINE__);
-           
-           //In case of a complete update, the data is written in a temporary table
-    //Rename the table to the correct one (remove _temp)
-    if(removeNonExistingFiles==1){
+    if(status == 0){
+            
+      //We need to do a transaction if we want to remove files from the existing table
+      if(removeNonExistingFiles==1){
+        //CDBDebug("BEGIN");
+        #ifdef USEQUERYTRANSACTIONS      
+        status = DB.query("BEGIN"); if(status!=0)throw(__LINE__);
+        #endif      
+      }
+      
+      
+      //Loop Through all files
+      status = DBLoopFiles(&DB,dataSource,removeNonExistingFiles,&dirReader);
+      if(status != 0 )throw(__LINE__);
+            
+      //In case of a complete update, the data is written in a temporary table
+      //Rename the table to the correct one (remove _temp)
       for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
         CT::string dimName(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
-        CT::string tableName(dataSource->cfgLayer->DataBaseTable[0]->value.c_str());
-        CServerParams::makeCorrectTableName(&tableName,&dimName);
-        CDBDebug("Renaming temporary table... %s",tableName.c_str());
-        CT::string query;
-        //Drop old table
-        query.print("drop table %s",tableName.c_str());
-        if(DB.query(query.c_str())!=0){CDBError("Query %s failed",query.c_str());DB.close();throw(__LINE__);}
-        //Rename new table to old table name
-        query.print("alter table %s_temp rename to %s",tableName.c_str(),tableName.c_str());
-        if(DB.query(query.c_str())!=0){CDBError("Query %s failed",query.c_str());DB.close();throw(__LINE__);}
-        if(status!=0){throw(__LINE__);}
+
+        CT::string tableName;
+        try{
+          tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
+        }catch(int e){
+          CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
+          return 1;
+        }
+          
+        bool skip = isTableAlreadyScanned(&tableName);
+        //bool skip = false;
+        if(skip == false){
+          //Remember that we have completed this scan
+          tableNamesDone.push_back(CT::string(tableName.c_str()));
+          
+          if(removeNonExistingFiles==1){
+            CDBDebug("Renaming temporary table '%s_temp' to '%s'",tableName.c_str(),tableName.c_str());
+            CT::string query;
+            //Drop old table
+            query.print("drop table %s",tableName.c_str());
+            if(DB.query(query.c_str())!=0){CDBError("Query %s failed",query.c_str());DB.close();throw(__LINE__);}
+            //Rename new table to old table name
+            query.print("alter table %s_temp rename to %s",tableName.c_str(),tableName.c_str());
+            if(DB.query(query.c_str())!=0){CDBError("Query %s failed",query.c_str());DB.close();throw(__LINE__);}
+            if(status!=0){throw(__LINE__);}
+          }
+        }
       }
     }
     
@@ -542,8 +771,8 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
            #endif  
   status = DB.close();if(status!=0)return 1;
 
-  CDBDebug("*** Finished update layer [\"%s\"] ***\n",dataSource->cfgLayer->Name[0]->value.c_str());
-  //printStatus("OK","HOi %s","Maarten");
+  CDBDebug("*** Finished update layer '%s' ***\n",dataSource->cfgLayer->Name[0]->value.c_str());
+
   return 0;
 }
 
@@ -587,7 +816,9 @@ int CDBFileScanner::searchFileNames(CDirReader *dirReader,const char * path,cons
       return 1;
     }
   }
-  CDBDebug("Found %d file(s) in directory",int(dirReader->fileList.size()));
+  #ifdef CDBFILESCANNER_DEBUG
+  CDBDebug("Found %d file(s)",int(dirReader->fileList.size()));
+  #endif
   return 0;
 }
 

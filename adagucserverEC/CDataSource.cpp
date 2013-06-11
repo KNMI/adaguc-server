@@ -1,4 +1,30 @@
+/******************************************************************************
+ * 
+ * Project:  ADAGUC Server
+ * Purpose:  ADAGUC OGC Server
+ * Author:   Maarten Plieger, plieger "at" knmi.nl
+ * Date:     2013-06-01
+ *
+ ******************************************************************************
+ *
+ * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
+ ******************************************************************************/
+
 #include "CDataSource.h"
+#include "CDBFileScanner.h"
 const char *CDataSource::className = "CDataSource";
 
 /************************************/
@@ -6,11 +32,13 @@ const char *CDataSource::className = "CDataSource";
 /************************************/
 CDataSource::DataClass::DataClass(){
   hasStatusFlag=false;
+  appliedScaleOffset = false;
+  hasScaleOffset = false;
   cdfVariable = NULL;
   cdfObject=NULL;
   dfadd_offset=0;
   dfscale_factor=1;
-  data = NULL;
+  std::vector <CPoint> points;
 }
 CDataSource::DataClass::~DataClass(){
   for(size_t j=0;j<statusFlagList.size();j++){
@@ -30,22 +58,29 @@ double CDataSource::Statistics::getMaximum(){
   return max;
 }
 
+void CDataSource::Statistics::setMinimum(double min){
+  this->min=min;
+}
+void CDataSource::Statistics::setMaximum(double max){
+  this->max=max;
+}
+
 // TODO this currently works only for float data
 int CDataSource::Statistics::calculate(CDataSource *dataSource){
   //Get Min and Max
   CDataSource::DataClass *dataObject = dataSource->dataObject[0];
-  if(dataObject->data!=NULL){
-    size_t size = dataSource->dWidth*dataSource->dHeight;
+  if(dataObject->cdfVariable->data!=NULL){
+    size_t size = dataObject->cdfVariable->getSize();//dataSource->dWidth*dataSource->dHeight;
     
-    if(dataObject->dataType==CDF_CHAR)calcMinMax((char*)dataObject->data,size,dataObject);
-    if(dataObject->dataType==CDF_BYTE)calcMinMax((char*)dataObject->data,size,dataObject);
-    if(dataObject->dataType==CDF_UBYTE)calcMinMax((unsigned char*)dataObject->data,size,dataObject);
-    if(dataObject->dataType==CDF_SHORT)calcMinMax((short*)dataObject->data,size,dataObject);
-    if(dataObject->dataType==CDF_USHORT)calcMinMax((unsigned short*)dataObject->data,size,dataObject);
-    if(dataObject->dataType==CDF_INT)calcMinMax((int*)dataObject->data,size,dataObject);
-    if(dataObject->dataType==CDF_UINT)calcMinMax((unsigned int*)dataObject->data,size,dataObject);
-    if(dataObject->dataType==CDF_FLOAT)calcMinMax((float*)dataObject->data,size,dataObject);
-    if(dataObject->dataType==CDF_DOUBLE)calcMinMax((double*)dataObject->data,size,dataObject); 
+    if(dataObject->cdfVariable->type==CDF_CHAR)calcMinMax<char>(size,dataSource->dataObject);
+    if(dataObject->cdfVariable->type==CDF_BYTE)calcMinMax<char>(size,dataSource->dataObject);
+    if(dataObject->cdfVariable->type==CDF_UBYTE)calcMinMax<unsigned char>(size,dataSource->dataObject);
+    if(dataObject->cdfVariable->type==CDF_SHORT)calcMinMax<short>(size,dataSource->dataObject);
+    if(dataObject->cdfVariable->type==CDF_USHORT)calcMinMax<unsigned short>(size,dataSource->dataObject);
+    if(dataObject->cdfVariable->type==CDF_INT)calcMinMax<int>(size,dataSource->dataObject);
+    if(dataObject->cdfVariable->type==CDF_UINT)calcMinMax<unsigned int>(size,dataSource->dataObject);
+    if(dataObject->cdfVariable->type==CDF_FLOAT)calcMinMax<float>(size,dataSource->dataObject);
+    if(dataObject->cdfVariable->type==CDF_DOUBLE)calcMinMax<double>(size,dataSource->dataObject); 
     
   }
   return 0;
@@ -72,6 +107,11 @@ CDataSource::CDataSource(){
   cfgLayer = NULL;
   cfg=NULL;
   datasourceIndex=0;
+  level2CompatMode=false;
+  useLonTransformation = 0;
+  swapXYDimensions = false;
+  varX = NULL;
+  varY = NULL;
 }
 
 CDataSource::~CDataSource(){
@@ -105,11 +145,13 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Confi
   if(_layerName==NULL){
     if(srvParams->makeUniqueLayerName(&layerUniqueName,cfgLayer)!=0)layerUniqueName="undefined";
     _layerName=layerUniqueName.c_str();
+    
   }
+  
   //A layername has to start with a letter (not numeric value);
   if(isalpha(_layerName[0])==0)layerName="ID_";else layerName="";
-  
   layerName.concat(_layerName);
+  
 #ifdef CDATAREADER_DEBUG  
   CDBDebug("LayerName=\"%s\"",layerName.c_str());
 #endif  
@@ -125,6 +167,8 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Confi
     dLayerType=CConfigReaderLayerTypeCascaded;
   }else if(cfgLayer->attr.type.equals("grid")){
     dLayerType=CConfigReaderLayerTypeCascaded;
+  }else if(cfgLayer->attr.type.equals("autoscan")){
+    dLayerType=CConfigReaderLayerTypeUnknown;
   }else if(cfgLayer->attr.type.c_str()!=NULL){
     if(strlen(cfgLayer->attr.type.c_str())>0){
       dLayerType=CConfigReaderLayerTypeUnknown;
@@ -132,7 +176,7 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Confi
       return 1;
     }
   }
-  
+  //CDBDebug("cfgLayer->attr.type %s %d",cfgLayer->attr.type.c_str(),dLayerType);
   //Deprecated
   if(cfgLayer->attr.type.equals("file")){
     dLayerType=CConfigReaderLayerTypeDataBase;//CConfigReaderLayerTypeFile;
@@ -140,7 +184,7 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Confi
   
   
   //When a database table is not configured, generate a name automatically
-  if( dLayerType!=CConfigReaderLayerTypeCascaded){
+  /*if( dLayerType!=CConfigReaderLayerTypeCascaded){
     if(cfgLayer->DataBaseTable.size()==0){
         CServerConfig::XMLE_DataBaseTable *dbtable=new CServerConfig::XMLE_DataBaseTable();
         cfgLayer->DataBaseTable.push_back(dbtable);
@@ -153,7 +197,7 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Confi
         srvParams->encodeTableName(&tableName);
         dbtable->value.copy(tableName.c_str());
     }
-  }
+  }*/
 
   isConfigured=true;
   return 0;
@@ -202,6 +246,10 @@ const char *CDataSource::getLayerName(){
 }
 
 
+CCDFDims *CDataSource::getCDFDims(){
+  return &timeSteps[currentAnimationStep]->dims;
+}
+
 void CDataSource::readStatusFlags(CDF::Variable * var, std::vector<CDataSource::StatusFlag*> *statusFlagList){
   for(size_t i=0;i<statusFlagList->size();i++)delete (*statusFlagList)[i];
   statusFlagList->clear();
@@ -210,10 +258,13 @@ void CDataSource::readStatusFlags(CDF::Variable * var, std::vector<CDataSource::
     //We might have status flag, check if all mandatory attributes are set!
     if(attr_flag_meanings!=NULL){
       CDF::Attribute *attr_flag_values=var->getAttributeNE("flag_values");
+      if(attr_flag_values==NULL){
+        attr_flag_values=var->getAttributeNE("flag_masks");
+      }
       if(attr_flag_values!=NULL){
         CT::string flag_meanings;
         attr_flag_meanings->getDataAsString(&flag_meanings);
-        CT::string *flagStrings=flag_meanings.split(" ");
+        CT::string *flagStrings=flag_meanings.splitToArray(" ");
         size_t nrOfFlagMeanings=flagStrings->count;
         if(nrOfFlagMeanings>0){
           size_t nrOfFlagValues=attr_flag_values->length;
@@ -228,7 +279,7 @@ void CDataSource::readStatusFlags(CDF::Variable * var, std::vector<CDataSource::
               CDataSource::StatusFlag * statusFlag = new CDataSource::StatusFlag;
               statusFlagList->push_back(statusFlag);
               statusFlag->meaning.copy(flagStrings[j].c_str());
-              //statusFlag->meaning.replace("_"," ");
+              //statusFlag->meaning.replaceSelf("_"," ");
               statusFlag->value=dfFlagValues[j];
             }
           }else {CDBError("ReadStatusFlags: nrOfFlagMeanings!=nrOfFlagValues, %d!=%d",nrOfFlagMeanings,nrOfFlagValues);}
@@ -246,8 +297,91 @@ const char *CDataSource::getFlagMeaning( std::vector<CDataSource::StatusFlag*> *
 
 void CDataSource::getFlagMeaningHumanReadable( CT::string *flagMeaning,std::vector<CDataSource::StatusFlag*> *statusFlagList,double value){
   flagMeaning->copy(getFlagMeaning(statusFlagList,value));
-  flagMeaning->replace("_"," ");
+  flagMeaning->replaceSelf("_"," ");
 }
 
 
+int  CDataSource::checkDimTables(CPGSQLDB *dataBaseConnection){
+  #ifdef CDATASOURCE_DEBUG
+  CDBDebug("[checkDimTables]");
+  #endif
+  bool tableNotFound=false;
+  CT::string dimName;
+  for(size_t i=0;i<cfgLayer->Dimension.size();i++){
+    dimName=cfgLayer->Dimension[i]->attr.name.c_str();
+    
+    CT::string tableName;
+    try{
+      tableName = srvParams->lookupTableName(cfgLayer->FilePath[0]->value.c_str(),cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
+    }catch(int e){
+      CDBError("Unable to create tableName from '%s' '%s' '%s'",cfgLayer->FilePath[0]->value.c_str(),cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
+      return 1;
+    }
+    
+    CT::string query;
+    query.print("select %s from %s limit 1",dimName.c_str(),tableName.c_str());
+    CDB::Store *store = dataBaseConnection->queryToStore(query.c_str());
+    if(store==NULL){
+      tableNotFound=true;
+      CDBDebug("No table found for dimension %s",dimName.c_str());
+    }
+    delete store;
+    if(tableNotFound)break;
+  }
+  if(tableNotFound){
+    if(srvParams->isAutoLocalFileResourceEnabled()==true){
+      CDBDebug("Updating database");
+      int status = CDBFileScanner::updatedb(srvParams->cfg->DataBase[0]->attr.parameters.c_str(),this,NULL,NULL);
+      if(status !=0){CDBError("Could not update db for: %s",cfgLayer->Name[0]->value.c_str());dataBaseConnection->close();return 2;}
+    }else{
+      CDBDebug("No table found for dimension %s and autoresource is disabled",dimName.c_str());
+      return 1;
+    }
+  }
+  #ifdef CDATASOURCE_DEBUG
+  CDBDebug("[/checkDimTables]");
+  #endif
+  
+  return 0;
+}
+/*
+int CDataSource::autoCompleteDimensions(CPGSQLDB *dataBaseConnection){
+  #ifdef CDATASOURCE_DEBUG
+  CDBDebug("[autoCompleteDimensions]");
+  #endif
 
+  for(size_t i=0;i<cfgLayer->Dimension.size();i++){
+    CT::string dimName(cfgLayer->Dimension[i]->value.c_str());
+    dimName.toLowerCaseSelf();
+    bool alreadyAdded=false;
+    for(size_t k=0;k<requiredDims.size();k++){
+      if(requiredDims[k]->name.equals(&dimName)){alreadyAdded=true;break;}
+    }
+    if(alreadyAdded==false){
+      CT::string netCDFDimName(cfgLayer->Dimension[i]->attr.name.c_str());
+      CT::string tableName(cfgLayer->DataBaseTable[0]->value.c_str());
+      CServerParams::makeCorrectTableName(&tableName,&netCDFDimName);
+      //Add the undefined dims to the srvParams as additional dims
+      COGCDims *ogcDim = new COGCDims();
+      requiredDims.push_back(ogcDim);
+      ogcDim->name.copy(&dimName);
+      ogcDim->netCDFDimName.copy(cfgLayer->Dimension[i]->attr.name.c_str());
+      //Try to find the max value for this dim name from the database
+      CT::string query;
+      query.print("select max(%s) from %s",
+                  cfgLayer->Dimension[i]->attr.name.c_str(),
+                  tableName.c_str());
+      //Execute the query
+      CT::string *temp = dataBaseConnection->query_select(query.c_str(),0);
+      if(temp == NULL){CDBError("query failed"); dataBaseConnection->close(); return 1;}
+      //Copy the value corresponding to this dim name to srvparams
+      ogcDim->value.copy(&temp[0]);
+      delete[] temp;
+    }
+  }
+  #ifdef CDATASOURCE_DEBUG
+  CDBDebug("[/autoCompleteDimensions]");
+  #endif
+  return 0;
+}
+*/

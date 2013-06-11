@@ -1,3 +1,28 @@
+/******************************************************************************
+ * 
+ * Project:  ADAGUC Server
+ * Purpose:  ADAGUC OGC Server
+ * Author:   Maarten Plieger, plieger "at" knmi.nl
+ * Date:     2013-06-01
+ *
+ ******************************************************************************
+ *
+ * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
+ ******************************************************************************/
+
 #ifndef CImageWarper_H
 #define CImageWarper_H
 #include "CServerParams.h"
@@ -11,27 +36,79 @@
 #define LATLONPROJECTION "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
 void floatToString(char * string,size_t maxlen,float number);
 void floatToString(char * string,size_t maxlen,int numdigits,float number);
+class ProjectionKey{
+public:
+  double bbox[4];//Original boundingbox to look for
+  double foundExtent[4];
+  double dfMaxExtent[4];
+  bool isSet;
+  CT::string destinationCRS;//Projection to convert to
+  CT::string sourceCRS;//Projection to convert from
+  ProjectionKey(double *_box,double *_dfMaxExtent,CT::string source,CT::string dest){
+    for(int j=0;j<4;j++){
+      bbox[j]=_box[j];
+      dfMaxExtent[j]=_dfMaxExtent[j];
+    }
+    sourceCRS = source;
+    destinationCRS = dest;
+    isSet = false;
+  }
+  ProjectionKey(){
+  }
+  void setFoundExtent(double *_foundExtent){
+    for(int j=0;j<4;j++){
+      foundExtent[j]=_foundExtent[j];
+    }
+    isSet = true;
+  }
+};
+
+class ProjectionStore{
+public:
+  std::vector <ProjectionKey> keys;
+  ProjectionStore(){
+  }
+  ~ProjectionStore(){
+    clear();
+  }
+  
+  static ProjectionStore *getProjectionStore();
+  
+  
+  void clear(){
+    keys.clear();
+  }
+};
+
+
 
 class CImageWarper{
 //  CNetCDFReader reader;
   private:
 
+    
     double dfMaxExtent[4];
     int dMaxExtentDefined;
     bool convertRadiansDegreesDst,convertRadiansDegreesSrc,requireReprojection;
     DEF_ERRORFUNCTION();
     unsigned char pixel;
-    CDataSource * _sourceImage;
-    CGeoParams * _geoDest;
+    CDataSource * _dataSource;
+    //CGeoParams * _geoDest;
+    CT::string sourceCRSString;
     CT::string destinationCRS;
     int _decodeCRS(CT::string *CRS);
     std::vector <CServerConfig::XMLE_Projection*> *prj;
+    bool initialized;
   public:
     CImageWarper(){
       prj=NULL;
+      sourcepj=NULL;
+      destpj=NULL;
+      latlonpj=NULL;
+      initialized =false;
     }
     projPJ sourcepj,destpj,latlonpj;
-    int initreproj(CDataSource *sourceImage,CGeoParams *GeoDest,std::vector <CServerConfig::XMLE_Projection*> *prj);
+    int initreproj(CDataSource *dataSource,CGeoParams *GeoDest,std::vector <CServerConfig::XMLE_Projection*> *prj);
     int initreproj(const char * projString,CGeoParams *GeoDest,std::vector <CServerConfig::XMLE_Projection*> *_prj);
     int closereproj();
     int reprojpoint(double &dfx,double &dfy);
@@ -45,7 +122,7 @@ class CImageWarper{
     int reprojToLatLon(double &dfx,double &dfy);
     int decodeCRS(CT::string *outputCRS, CT::string *inputCRS);
     int decodeCRS(CT::string *outputCRS, CT::string *inputCRS,std::vector <CServerConfig::XMLE_Projection*> *prj);
-    int findExtent(CDataSource *sourceImage,double * dfBBOX);
+    int findExtent(CDataSource *dataSource,double * dfBBOX);
     bool isProjectionRequired(){return requireReprojection;}
   };
   

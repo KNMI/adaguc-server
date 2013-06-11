@@ -1,3 +1,28 @@
+/******************************************************************************
+ * 
+ * Project:  ADAGUC Server
+ * Purpose:  ADAGUC OGC Server
+ * Author:   Ernst de Vreede vreedede "at" knmi.nl
+ * Date:     2013-06-01
+ *
+ ******************************************************************************
+ *
+ * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
+ ******************************************************************************/
+
 #include "Definitions.h"
 #ifdef ADAGUC_USE_CAIRO
 /*
@@ -63,6 +88,7 @@ private:
   unsigned char r,g,b;float a;
   void plot(int x, int y, float alpha){
 //    fprintf(stderr, "plot([%d,%d], %d,%d,%d,%f)\n", x, y, r, g, b,a);
+//     
     cairo_surface_flush(surface);
     //plot the pixel at (x, y) with brightness c (where 0 ≤ c ≤ 1)
     if(x<0||y<0)return;
@@ -119,7 +145,7 @@ private:
     
     surface=cairo_image_surface_create_for_data(ARGBByteBuffer, CCairoPlotter::FORMAT, width, height, stride);
     cr=cairo_create(this->surface);
-    //fprintf(stderr, "cairo status: %s\n", cairo_status_to_string(cairo_status(cr)));
+//    fprintf(stderr, "cairo status: %s\n", cairo_status_to_string(cairo_status(cr)));
     r=0;g=0;b=0;a=255;
     rr=r/256.l; rg=g/256.;rb=b/256.;ra=1;
     fr=0;fg=0;fb=0;fa=1;
@@ -134,12 +160,25 @@ private:
     //CDBDebug("constructor");
   }
 public:
-  CCairoPlotter(int width,int height, float fontSize, const char*fontLocation){
+
+  
+  CCairoPlotter(int width,int height, float fontSize, const char*fontLocation,unsigned char r,unsigned char g,unsigned char b,unsigned char a){
     byteBufferPointerIsOwned = true;
     stride=cairo_format_stride_for_width(FORMAT, width);
     size_t bufferSize = size_t(height)*stride;
     ARGBByteBuffer = new unsigned char[bufferSize];
-    for(size_t j=0;j<bufferSize;j++)ARGBByteBuffer[j]=0;
+    if(a==0&&r==0&&g==0&&b==0){
+      for(size_t j=0;j<bufferSize;j++){
+        ARGBByteBuffer[j]=0;
+      }
+    }else{
+      for(size_t j=0;j<bufferSize/4;j++){
+        ARGBByteBuffer[j*4+0]=a;
+        ARGBByteBuffer[j*4+1]=r;
+        ARGBByteBuffer[j*4+2]=g;
+        ARGBByteBuffer[j*4+3]=b;
+      }
+    }
     cairoPlotterInit(width,height,fontSize,fontLocation);
   }
   
@@ -150,7 +189,7 @@ public:
     this->fontSize=fontSize;
     this->fontLocation=fontLocation;
     stride=cairo_format_stride_for_width(FORMAT, width);
-    size_t bufferSize = size_t(height)*stride;
+    //size_t bufferSize = size_t(height)*stride;
     //ARGBByteBuffer = new unsigned char[bufferSize];
     this->ARGBByteBuffer = (_ARGBByteBuffer);
     //for(size_t j=0;j<bufferSize;j++)ARGBByteBuffer[j]=0;
@@ -384,37 +423,8 @@ public:
     plot( x, y, 1);
   }
 
-  void pixelBlend(int x,int y, unsigned char r,unsigned char g,unsigned char b,unsigned char a){
-    if(x<0||y<0)return;
-    if(x>=width||y>=height)return;
-    float a1=1-(float(a)/255);//*alpha;
-    if(a1==0){
-      
-      size_t p=x*4+y*stride;
-      ARGBByteBuffer[p+2]=r;
-      ARGBByteBuffer[p+1]=g;
-      ARGBByteBuffer[p+0]=b;
-      ARGBByteBuffer[p+3]=255;
-    }else{
-      size_t p=x*4+y*stride;
-      // ALpha is increased
-      float sf=ARGBByteBuffer[p+3];  
-      float alphaRatio=(1-sf/255);
-      float tf=sf+a*alphaRatio;if(tf>255)tf=255;  
-      if(sf==0.0f)a1=0;
-      float a2=1-a1;//1-alphaRatio;
-      //CDBDebug("Ratio: a1=%2.2f a2=%2.2f",a1,sf);
-      
-      float sr=ARGBByteBuffer[p+2];sr=sr*a1+r*a2;if(sr>255)sr=255;
-      float sg=ARGBByteBuffer[p+1];sg=sg*a1+g*a2;if(sg>255)sg=255;
-      float sb=ARGBByteBuffer[p+0];sb=sb*a1+b*a2;if(sb>255)sb=255;
-      ARGBByteBuffer[p+2]=sr;
-      ARGBByteBuffer[p+1]=sg;
-      ARGBByteBuffer[p+0]=sb;
-      ARGBByteBuffer[p+3]=tf;
-    }
-    
-  }
+  void pixelBlend(int x,int y, unsigned char r,unsigned char g,unsigned char b,unsigned char a);
+  
   void pixel(int x,int y, unsigned char r,unsigned char g,unsigned char b){
     if(x<0||y<0)return;
     if(x>=width||y>=height)return;
@@ -424,6 +434,8 @@ public:
     ARGBByteBuffer[p+2]=r;
     ARGBByteBuffer[p+3]=255;
   }
+  
+   void pixel(int x,int y, unsigned char r,unsigned char g,unsigned char b,unsigned char a);
   
   void getPixel(int x,int y, unsigned char &r,unsigned char &g,unsigned char &b,unsigned char &a){
     if(x<0||y<0||x>=width||y>=height){
@@ -474,6 +486,28 @@ public:
     cairo_set_antialias(cr, aa);
   }
 
+
+  void moveTo(float x1,float y1) {
+    cairo_move_to(cr, x1+0.5, y1+0.5);
+  }
+  void lineTo(float x1,float y1) {
+    cairo_set_source_rgba(cr, rr, rg, rb, ra);
+    cairo_line_to(cr, x1+0.5, y1+0.5);
+    cairo_set_line_width(cr, 0.9);
+    cairo_stroke(cr);
+  }
+  
+  void lineTo(float x1,float y1,float width) {
+    cairo_set_source_rgba(cr, rr, rg, rb, ra);
+    cairo_set_line_width(cr,width);
+    cairo_line_to(cr, x1+0.5, y1+0.5);
+
+  }
+  void endLine(){
+    cairo_set_line_join (cr, CAIRO_LINE_JOIN_MITER); 
+    cairo_stroke(cr);
+  }
+  
   void line(float x1,float y1,float x2,float y2) {
     cairo_set_source_rgba(cr, rr, rg, rb, ra);
     cairo_move_to(cr, x1+0.5, y1+0.5);
@@ -488,15 +522,21 @@ public:
     cairo_set_line_width(cr, width);
     cairo_stroke(cr);
   }
-  cairo_status_t writeToPng(const char* fileName) {
+  /*cairo_status_t writeToPng(const char* fileName) {
     return cairo_surface_write_to_png(surface, fileName);
-  }
+  }*/
 
   void circle(int x, int y, int r) {
     cairo_arc(cr, x, y, r, 0, 2*M_PI);
+    cairo_set_line_width(cr, 1);
     cairo_stroke(cr);
   }
 
+  void circle(int x, int y, int r,float lineWidth) {
+    cairo_arc(cr, x, y, r, 0, 2*M_PI);
+    cairo_set_line_width(cr, lineWidth);
+    cairo_stroke(cr);
+  }
   void poly(float x[], float y[], int n, bool closePath, bool fill) {
     cairo_move_to(cr, x[0], y[0]);
     for (int i=1; i<n; i++){
@@ -541,8 +581,15 @@ public:
 #endif
   }
 #endif //USE_FREETYPE
-
   void writeToPngStream(FILE *fp) {
+    cairo_surface_flush(surface);
+    this->fp=fp;
+    cairo_surface_write_to_png_stream(surface, writerFunc, (void *)fp);
+  }
+  
+  void writeToPngStream(FILE *fp,float alpha) {
+    cairo_set_operator (cr,CAIRO_OPERATOR_DEST_IN);
+    cairo_paint_with_alpha (cr, alpha);
     cairo_surface_flush(surface);
     this->fp=fp;
     cairo_surface_write_to_png_stream(surface, writerFunc, (void *)fp);

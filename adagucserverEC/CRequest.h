@@ -1,6 +1,32 @@
+/******************************************************************************
+ * 
+ * Project:  ADAGUC Server
+ * Purpose:  ADAGUC OGC Server
+ * Author:   Maarten Plieger, plieger "at" knmi.nl
+ * Date:     2013-06-01
+ *
+ ******************************************************************************
+ *
+ * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
+ ******************************************************************************/
+
 #ifndef CRequest_H
 #define CRequest_H
 #include <sys/stat.h>
+#include "CImageDataWriter.h"
 #include "CServerParams.h"
 #include "CDataSource.h"
 #include "CStopWatch.h"
@@ -8,7 +34,7 @@
 #ifdef ADAGUC_USE_GDAL
 #include "CGDALDataWriter.h"
 #endif
-#include "CImageDataWriter.h"
+#include "CDFObjectStore.h"
 #include "CDebugger.h"
 
 class CSimpleStore{
@@ -44,9 +70,9 @@ class CSimpleStore{
         headerSize=a+10;
         CT::string header;
         header.copy(cacheBuffer.c_str(),a-1);
-        CT::string *lines = header.split("\n");
+        CT::string *lines = header.splitToArray("\n");
         for(size_t j=0;j<(size_t)lines->count;j++){
-          CT::string *params=lines[j].split(",");
+          CT::string *params=lines[j].splitToArray(",");
           if(params->count==4){
             if(params[0].equals("string")){
               
@@ -79,7 +105,7 @@ class CSimpleStore{
         c->concat(&attributeList[j]->name);
         c->concat(",");
         if(attributeList[j]->data.length()==0){
-          attributeList[j]->data.substring(&cacheBuffer,attributeList[j]->start+headerSize,attributeList[j]->end+headerSize);
+          attributeList[j]->data.substringSelf(&cacheBuffer,attributeList[j]->start+headerSize,attributeList[j]->end+headerSize);
         }
         size_t length=attributeList[j]->data.length();
         //One byte longer because of carriage returns
@@ -99,7 +125,7 @@ class CSimpleStore{
       for(size_t j=0;j<attributeList.size();j++){
         if(attributeList[j]->name.equals(name)){
           if(attributeList[j]->data.length()==0){
-            dest->substring(&cacheBuffer,attributeList[j]->start+headerSize,attributeList[j]->end+headerSize);
+            dest->substringSelf(&cacheBuffer,attributeList[j]->start+headerSize,attributeList[j]->end+headerSize);
             attributeList[j]->data.copy(dest);
           }else{
             dest->copy(&attributeList[j]->data);
@@ -115,7 +141,7 @@ class CSimpleStore{
       Attribute *attr=NULL;
       for(size_t j=0;j<attributeList.size();j++){
         if(attributeList[j]->data.length()==0){
-          attributeList[j]->data.substring(&cacheBuffer,attributeList[j]->start+headerSize,attributeList[j]->end+headerSize);
+          attributeList[j]->data.substringSelf(&cacheBuffer,attributeList[j]->start+headerSize,attributeList[j]->end+headerSize);
         }
         if(attributeList[j]->name.equals(name)){
           attr=attributeList[j];
@@ -147,6 +173,8 @@ private:
     int generateOGCGetCapabilities(CT::string *XMLdocument);
     int generateOGCDescribeCoverage(CT::string *XMLdocument);
     static int dataRestriction;
+    void addXMLLayerToConfig(CServerParams *srvParam,std::vector<CT::string>*variableNames, const char *group, const char *location);
+    int getDimValuesForDataSource(CDataSource *dataSource,CServerParams *srvParam);
   public:
     CRequest(){
       srvParam=new CServerParams();

@@ -1,7 +1,33 @@
+/******************************************************************************
+ * 
+ * Project:  Helper classes
+ * Purpose:  Generic functions
+ * Author:   Maarten Plieger, plieger "at" knmi.nl
+ * Date:     2013-06-01
+ *
+ ******************************************************************************
+ *
+ * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
+ ******************************************************************************/
+
 #include "CDebugger_H.h"
 #include "CDebugger_H2.h"
 #include <iostream>
 #include <stdlib.h>
+
  
 bool Tracer::Ready = false;
 extern Tracer NewTrace;
@@ -92,7 +118,7 @@ void operator delete (void * p)
   free (p);
 }
 
-
+#include "CTypes.h"
 void (*_printErrorStreamPointer)(const char*)=&_printErrorStream;
 void (*_printDebugStreamPointer)(const char*)=&_printDebugStream;
 void (*_printWarningStreamPointer)(const char*)=&_printWarningStream;
@@ -146,12 +172,24 @@ void _printErrorLine(const char *pszMessage,...){
   va_end (ap);
   printErrorStream("\n");
 }
+
+void makeEqualWidth(CT::string *t1){
+  //int i=t.indexOf("]")+1;
+  size_t i=t1->length();
+  //CT::string t1=t.substringr(0,i);
+  //CT::string t2=t.substringr(i,-1);
+  //size_t l=t1.length();
+  for(int j=i;j<67;j++){t1->concat(" ");}
+  // t1.concat(&t2);
+}
 void _printDebug(const char *pszMessage,...){
   char szTemp[1024];
   va_list ap;
   va_start (ap, pszMessage);
   vsnprintf ( szTemp, 1023,pszMessage, ap);
-  printDebugStream(szTemp);
+  CT::string t1=szTemp;
+  makeEqualWidth(&t1); 
+  printDebugStream(t1.c_str());
   va_end (ap);
 }
 
@@ -160,7 +198,9 @@ void _printWarning(const char *pszMessage,...){
   va_list ap;
   va_start (ap, pszMessage);
   vsnprintf ( szTemp, 1023,pszMessage, ap);
-  printWarningStream(szTemp);
+  CT::string t1=szTemp;
+  makeEqualWidth(&t1); 
+  printWarningStream(t1.c_str());
   va_end (ap);
 }
 
@@ -169,7 +209,9 @@ void _printError(const char *pszMessage,...){
   va_list ap;
   va_start (ap, pszMessage);
   vsnprintf ( szTemp, 1023,pszMessage, ap);
-  printErrorStream(szTemp);
+  CT::string t1=szTemp;
+  makeEqualWidth(&t1); 
+  printErrorStream(t1.c_str());
   va_end (ap);
 }
 

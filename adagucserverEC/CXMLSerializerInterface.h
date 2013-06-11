@@ -1,3 +1,28 @@
+/******************************************************************************
+ * 
+ * Project:  ADAGUC Server
+ * Purpose:  ADAGUC OGC Server
+ * Author:   Maarten Plieger, plieger "at" knmi.nl
+ * Date:     2013-06-01
+ *
+ ******************************************************************************
+ *
+ * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
+ ******************************************************************************/
+
 #ifndef CXMLSerializerInterface_H
 #define CXMLSerializerInterface_H
 #include <iostream>
@@ -13,6 +38,9 @@
 #define XMLE_ADDOBJ(variableName){ pt2Class=new XMLE_##variableName();pt2Class->level=rc;variableName.push_back(((XMLE_##variableName*)pt2Class));}
 #define XMLE_DELOBJ(variableName){ {for(size_t j=0;j<variableName.size();j++){delete variableName[j];}}}
 
+/**
+ * Simple string element with limited functionality. All string values in CXMLObjectInterface will have this type.
+ */
 class CXMLString{
   private:
 	char *p;
@@ -25,14 +53,14 @@ class CXMLString{
       if(p!=NULL){free(p);p=NULL;}
     }
     void copy(const char *p){
-      //if(this->p!=NULL){free(this->p);}
+      //if(this->p!=NULL){free(this->p);}//TODO
       this->p=strdup(p);
     }
     const char *c_str(){
       return (const char*)p;
     }
     bool equals(const char *val2){
-      if(p==NULL)return false;
+      if(p==NULL||val2==NULL)return false;
       size_t lenval1=strlen(p);
       size_t lenval2=strlen(val2);
       if(lenval1!=lenval2)return false;
@@ -40,6 +68,10 @@ class CXMLString{
       return true;
     }
 };
+
+/**
+ * Base objects
+ */
 class CXMLObjectInterface{
   public:
     CXMLObjectInterface(){
@@ -52,6 +84,11 @@ class CXMLObjectInterface{
     virtual void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value);
     virtual void addAttribute(const char *name,const char *value){}
 };
+
+/**
+ * Serializes XML according to a defined class structure to nested lists of objects 
+ * Inherits the CXMLObjectInterface base object
+ */
 class CXMLSerializerInterface:public CXMLObjectInterface{
   private:
     int recursiveDepth;
@@ -140,8 +177,23 @@ class CXMLSerializerInterface:public CXMLObjectInterface{
   }
 };
 
+/**
+ * parses a character string to int
+ * @param pszValue The string to parse
+ */
 int parseInt(const char *pszValue);
+
+
+/**
+ * parses a character string to float
+ * @param pszValue The string to parse
+ */
 float parseFloat(const char *pszValue);
+
+/**
+ * parses a character string to double
+ * @param pszValue The string to parse
+ */
 double parseDouble(const char *pszValue);
 
 #endif

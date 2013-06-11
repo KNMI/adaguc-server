@@ -1,11 +1,40 @@
-//#ifdef ADAGUC_USE_GDAL
+/******************************************************************************
+ * 
+ * Project:  ADAGUC Server
+ * Purpose:  ADAGUC OGC Server
+ * Author:   Maarten Plieger, plieger "at" knmi.nl
+ * Date:     2013-06-01
+ *
+ ******************************************************************************
+ *
+ * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
+ ******************************************************************************/
+
+#include "Definitions.h"
+#ifdef ADAGUC_USE_GDAL
 #include "CGDALDataWriter.h"
 
+//#define CGDALDATAWRITER_DEBUG
 
 const char * CGDALDataWriter::className = "CGDALDataWriter";
 
 int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int _NrOfBands){
-  //CDBDebug("INIT");
+#ifdef CGDALDATAWRITER_DEBUG  
+  CDBDebug("INIT");
+#endif
   srvParam=_srvParam;
   NrOfBands=_NrOfBands;
   int status;
@@ -16,13 +45,16 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
     srvParam->Geo->CRS.copy(&temp);
   }
   // Load metadata from the dataSource
-  //CDBDebug("CNETCDFREADER_MODE_GET_METADATA");
+#ifdef CGDALDATAWRITER_DEBUG
+  CDBDebug("CNETCDFREADER_MODE_GET_METADATA");
+#endif
   status = reader.open(dataSource,CNETCDFREADER_MODE_GET_METADATA);
   if(status!=0){
     CDBError("Could not open file: %s",dataSource->getFileName());return 1;
   }
-  //CDBDebug("/CNETCDFREADER_MODE_GET_METADATA");
- // Copy metadata
+#ifdef CGDALDATAWRITER_DEBUG  
+  CDBDebug("/CNETCDFREADER_MODE_GET_METADATA");
+#endif
   for(size_t j=0;j<dataSource->nrMetadataItems;j++){
     CT::string *metaDataItem = new CT::string();
     metaDataItem->copy(&dataSource->metaData[j]);
@@ -34,12 +66,29 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
   metaDataItem->copy("product#[C]variables>");
   metaDataItem->concat(dataSource->dataObject[0]->variableName.c_str());
   metaDataList.push_back(metaDataItem);
-  //CDBDebug("_dataSource->variableName.c_str() %s",_dataSource->getVariableName());
+#ifdef CGDALDATAWRITER_DEBUG  
+  CDBDebug("dataSource->dataObject[0]->variableName.c_str() %s",dataSource->dataObject[0]->variableName.c_str());
+#endif
 
   // Get Time unit
-  status = reader.getTimeUnit(szTemp);
-  if(status == 0)TimeUnit.copy(szTemp);else TimeUnit.copy("");
+#ifdef CGDALDATAWRITER_DEBUG  
+  CDBDebug("Get time units");
+#endif  
+  
+  try{
+    TimeUnit = reader.getTimeUnit(dataSource);
+  }catch(int e){
+    TimeUnit = "";
+  }
+  
+#ifdef CGDALDATAWRITER_DEBUG  
+  CDBDebug("Time unit: %s",TimeUnit.c_str());
+#endif  
+  
   reader.close();
+#ifdef CGDALDATAWRITER_DEBUG  
+  CDBDebug("Reader closed");
+#endif  
 
 
 
@@ -99,7 +148,7 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
       break;
     }
   }
-  srvParam->Format.toUpperCase();
+  srvParam->Format.toUpperCaseSelf();
   if(driverName.length()==0){
     if(srvParam->Format.equals("GEOTIFF")){
       driverName.copy("GTiff");
@@ -132,22 +181,24 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
 
   // Setup data types
   datatype=GDT_Unknown;
-  if(dataSource->dataObject[0]->dataType==CDF_CHAR)  datatype = GDT_Byte;
-  if(dataSource->dataObject[0]->dataType==CDF_UBYTE)  datatype = GDT_Byte;
-  if(dataSource->dataObject[0]->dataType==CDF_SHORT) datatype = GDT_Int16;
-  if(dataSource->dataObject[0]->dataType==CDF_INT)   datatype = GDT_Int32;
-  if(dataSource->dataObject[0]->dataType==CDF_FLOAT) datatype = GDT_Float32;
-  if(dataSource->dataObject[0]->dataType==CDF_DOUBLE)datatype = GDT_Float64;
+  if(dataSource->dataObject[0]->cdfVariable->type==CDF_CHAR)  datatype = GDT_Byte;
+  if(dataSource->dataObject[0]->cdfVariable->type==CDF_UBYTE)  datatype = GDT_Byte;
+  if(dataSource->dataObject[0]->cdfVariable->type==CDF_SHORT) datatype = GDT_Int16;
+  if(dataSource->dataObject[0]->cdfVariable->type==CDF_INT)   datatype = GDT_Int32;
+  if(dataSource->dataObject[0]->cdfVariable->type==CDF_FLOAT) datatype = GDT_Float32;
+  if(dataSource->dataObject[0]->cdfVariable->type==CDF_DOUBLE)datatype = GDT_Float64;
   if(datatype==GDT_Unknown){
     char temp[100];
-    CDF::getCDFDataTypeName(temp,99,dataSource->dataObject[0]->dataType);
-    CDBError("Invalid datatype: dataSource->dataObject[0]->dataType=%s",temp);
+    CDF::getCDFDataTypeName(temp,99,dataSource->dataObject[0]->cdfVariable->type);
+    CDBError("Invalid datatype: dataSource->dataObject[0]->cdfVariable->type=%s",temp);
     return 1;
   }
   
-//  char dataTypeName[256];
-//  CDF::getCDFDataTypeName(dataTypeName,255,dataSource->dataObject[0]->dataType);
-//  CDBDebug("Dataset datatype = %s sizeof(short)=%d",dataTypeName,sizeof(short));
+#ifdef CGDALDATAWRITER_DEBUG  
+  char dataTypeName[256];
+  CDF::getCDFDataTypeName(dataTypeName,255,dataSource->dataObject[0]->cdfVariable->type);
+  CDBDebug("Dataset datatype = %s sizeof(short)=%d",dataTypeName,sizeof(short));
+#endif  
   
   
   hMemDS2 = GDALCreate( hMemDriver2, "memory_dataset_2",
@@ -169,13 +220,19 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
   InputProducts=new CT::string[NrOfBands+1];
   if(Times!=NULL)delete[] Times;
   Times=new CT::string[NrOfBands+1];
-  //CDBDebug("/INIT");
+  
+#ifdef CGDALDATAWRITER_DEBUG  
+  CDBDebug("/INIT");
+#endif
   return 0;
 
 
 }
 
 int  CGDALDataWriter::addData(std::vector <CDataSource*>&dataSources){
+#ifdef CGDALDATAWRITER_DEBUG
+  CDBDebug("addData");
+#endif
   int status;
   CDataSource *dataSource = dataSources[0];
   status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
@@ -183,47 +240,61 @@ int  CGDALDataWriter::addData(std::vector <CDataSource*>&dataSources){
     CDBError("Could not open file: %s",dataSource->getFileName());
     return 1;
   }
-  //CDBDebug("Reading %s for bandnr %d",dataSource->getFileName(),currentBandNr);
+#ifdef CGDALDATAWRITER_DEBUG
+  CDBDebug("Reading %s for bandnr %d",dataSource->getFileName(),currentBandNr);
+#endif
   GDALRasterBandH hSrcBand = GDALGetRasterBand( hMemDS2, currentBandNr+1 );
   if(dataSource->dataObject[0]->hasNodataValue==1){
     dfNoData=dataSource->dataObject[0]->dfNodataValue;
     GDALSetRasterNoDataValue(hSrcBand, dfNoData);
   }
-  //printf("<br>Nodata1=[%f]<br>\n",dfNoData);
+  
+#ifdef CGDALDATAWRITER_DEBUG  
   CDBDebug("copying data in addData");
+#endif
+  
   GDALRasterIO( hSrcBand, GF_Write, 0, 0,
                 dataSource->dWidth, dataSource->dHeight,
-                dataSource->dataObject[0]->data,
+                dataSource->dataObject[0]->cdfVariable->data,
                 dataSource->dWidth, dataSource->dHeight,
                 datatype, 0, 0 );
+#ifdef CGDALDATAWRITER_DEBUG  
   CDBDebug("finished copying data in addData");
+#endif
   // Get time
-  status = reader.getTimeString(szTemp);
+  status = reader.getTimeString(dataSource,szTemp);
   if(status==0)Times[currentBandNr].copy(szTemp);else Times[currentBandNr].copy("");
   // Get filename
-  CT::string basename(reader.getFileName());
+  CT::string basename(dataSource->getFileName());
   int offset = basename.lastIndexOf("/")+1;
   if(offset<0)offset=0;if(offset>MAX_STR_LEN)offset=0;
   InputProducts[currentBandNr].copy(basename.c_str()+offset);
   reader.close();
   currentBandNr++;
-  //CDBDebug("/addData");
+#ifdef CGDALDATAWRITER_DEBUG
+  CDBDebug("/addData");
+#endif  
   return 0;
 
 }
 
 int  CGDALDataWriter::end(){
-  //CDBDebug("END");
+#ifdef CGDALDATAWRITER_DEBUG  
+  CDBDebug("END");
+#endif
+  
   // Generate a temporary filename for storage
   char szTempFileName[MAX_STR_LEN+1];
-  generateGetCoverageFileName(szTempFileName);
-  //CDBDebug("END");
+  generateUniqueGetCoverageFileName(szTempFileName);
+  
   tmpFileName.copy(srvParam->cfg->TempDir[0]->attr.value.c_str());
   tmpFileName.concat("/");
   tmpFileName.concat(szTempFileName);
+#ifdef CGDALDATAWRITER_DEBUG    
   CDBDebug("Generating a tmp file with name");
   CDBDebug("%s",szTempFileName);
-  //CDBDebug("Check");
+#endif
+  
   // Warp the image from hMemDS2 to hMemDS1
   GDALDataType eDT;
   eDT = GDALGetRasterDataType(GDALGetRasterBand(hMemDS2,1));
@@ -327,7 +398,7 @@ int  CGDALDataWriter::end(){
   // Set metadata for hMemDS1
   char **papszMetadata = NULL;
   for(size_t j=0;j<metaDataList.size();j++){
-    CT::string *attrib = metaDataList[j]->split(">");
+    CT::string *attrib = metaDataList[j]->splitToArray(">");
     //attrib[1].concat("<end>");
     //CDBDebug("%s=%s",attrib[0].c_str(),attrib[1].c_str());
     papszMetadata = CSLSetNameValue(papszMetadata,attrib[0].c_str(),attrib[1].c_str());
@@ -385,9 +456,9 @@ int  CGDALDataWriter::end(){
   char ** papszOptions = NULL;
 
   if(customOptions.length()>2){
-    CT::string *co = customOptions.split(",");
+    CT::string *co = customOptions.splitToArray(",");
     for(size_t j=0;j<co->count;j++){
-      CT::string *splittedco = customOptions.split("=");
+      CT::string *splittedco = customOptions.splitToArray("=");
       papszOptions = CSLSetNameValue( papszOptions, splittedco[0].c_str(), splittedco[1].c_str() );
       delete[] splittedco;
     }
@@ -424,9 +495,10 @@ int  CGDALDataWriter::end(){
     fseek( fp, 0L, SEEK_SET );
     //CDBDebug("File opened: size = %d",endPos);
     CDBDebug("Now start streaming %d bytes to the client with mimetype %s",endPos,mimeType.c_str());
-    
-    printf("Content-Transfer-Encoding: binary\r\n");
-//    printf("Content-Length: %d\r\n",endPos); 
+    printf("Content-Disposition: attachment; filename=%s\n",generateGetCoverageFileName().c_str());
+    printf("Content-Description: File Transfer\n");
+    printf("Content-Transfer-Encoding: binary\n");
+    printf("Content-Length :%lu\n",endPos); 
     printf("%s%c%c\n",mimeType.c_str(),13,10);
     for(size_t j=0;j<endPos;j++)putchar(getc(fp));
     fclose(fp);
@@ -484,21 +556,54 @@ void CGDALDataWriter::generateString(char *s, const int _len) {
   s[len] = 0;
   //CDBDebug("generateString");
 }
-void CGDALDataWriter::generateGetCoverageFileName(char *pszTempFileName){
-  //CDBDebug("generateGetCoverageFileName");
+CT::string CGDALDataWriter::generateGetCoverageFileName(){
+  CT::string humanReadableString;
+  humanReadableString.copy(srvParam->Format.c_str());
+  humanReadableString.concat("_");
+  humanReadableString.concat(_dataSource->dataObject[0]->variableName.c_str());
+  
+  
+  
+  for(size_t i=0;i<_dataSource->requiredDims.size();i++){
+    humanReadableString.printconcat("_%s",_dataSource->requiredDims[i]->value.c_str());
+  }
+  
+  humanReadableString.replaceSelf(":","_");
+  humanReadableString.replaceSelf(".","_");
+  
+  
+  CT::string extension=".bin";
+  CT::string formatUpperCase;
+  formatUpperCase.copy(srvParam->Format.c_str());
+  formatUpperCase.toUpperCaseSelf();
+  if(formatUpperCase.equals("AAIGRID")){
+    extension=".asc";
+  }
+  if(formatUpperCase.indexOf("NETCDF")!=-1){
+    extension=".nc";
+  }
+  if(formatUpperCase.indexOf("TIF")!=-1){
+    extension=".tif";
+  }
+  humanReadableString.concat(extension.c_str());
+  
+  return humanReadableString;
+}
+void CGDALDataWriter::generateUniqueGetCoverageFileName(char *pszTempFileName){
+  //CDBDebug("generateUniqueGetCoverageFileName");
   int len,offset;
   char szRandomPart[MAX_STR_LEN+1];
   char szTemp[MAX_STR_LEN+1];
   generateString(szRandomPart,12);
   snprintf(pszTempFileName,MAX_STR_LEN,
            "FORMAT--_VARIABLENAME_BBOX0_BBOX2_BBOX3_BBOX4_WIDTH_HEIGH_RESX-_RESY-_CONFIG--_DIM_DIM_DIM_PROJECTION_RAND------------______.tmp");
-  //CDBDebug("generateGetCoverageFileName");
+  //CDBDebug("generateUniqueGetCoverageFileName");
   for(int j=0;j<118;j++)pszTempFileName[j]='_';pszTempFileName[MAX_STR_LEN]='\0';
-  //CDBDebug("generateGetCoverageFileName");
+  //CDBDebug("generateUniqueGetCoverageFileName");
   //Format
   strncpy(pszTempFileName+0,srvParam->Format.c_str(),8);
   for(int j=srvParam->Format.length();j<8;j++)pszTempFileName[j]='_';
-  //CDBDebug("generateGetCoverageFileName");
+  //CDBDebug("generateUniqueGetCoverageFileName");
   //VariableName
   offset=9;
   strncpy(pszTempFileName+offset,_dataSource->dataObject[0]->variableName.c_str(),10);
@@ -525,7 +630,7 @@ void CGDALDataWriter::generateGetCoverageFileName(char *pszTempFileName){
   strncpy(pszTempFileName+offset,szTemp,6);
   len=strlen(szTemp);
   for(int j=len+offset;j<offset+6;j++)pszTempFileName[j]='_';
-  //CDBDebug("generateGetCoverageFileName");
+  //CDBDebug("generateUniqueGetCoverageFileName");
   //Width
   offset=50;
   snprintf(szTemp,MAX_STR_LEN,"%d",srvParam->Geo->dWidth);
@@ -567,7 +672,7 @@ void CGDALDataWriter::generateGetCoverageFileName(char *pszTempFileName){
     for(int j=len+offset;j<offset+3;j++)pszTempFileName[j]='_';
   }
   //Projection
-  //CDBDebug("generateGetCoverageFileName");
+  //CDBDebug("generateUniqueGetCoverageFileName");
   offset=102;
   snprintf(szTemp,MAX_STR_LEN,"%s",srvParam->Geo->CRS.c_str());
   strncpy(pszTempFileName+offset,szTemp,10);
@@ -585,6 +690,6 @@ void CGDALDataWriter::generateGetCoverageFileName(char *pszTempFileName){
     if(!isalnum(pszTempFileName[j])&&pszTempFileName[j]!='.')pszTempFileName[j]='_';
   }
   pszTempFileName[128]='\0';
-  //CDBDebug("generateGetCoverageFileName");
+  //CDBDebug("generateUniqueGetCoverageFileName");
 }
-//#endif
+#endif

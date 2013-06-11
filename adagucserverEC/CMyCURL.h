@@ -1,7 +1,32 @@
+/******************************************************************************
+ * 
+ * Project:  ADAGUC Server
+ * Purpose:  ADAGUC OGC Server
+ * Author:   Maarten Plieger, plieger "at" knmi.nl
+ * Date:     2013-06-01
+ *
+ ******************************************************************************
+ *
+ * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
+ ******************************************************************************/
+
 #ifdef ENABLE_CURL
 #ifndef CMYCURL_H
 #define CMYCURL_H
-#include "Definitions.h"
+//#include "Definitions.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -49,7 +74,7 @@ class MyCURL{
   }
   public:
   
-  int static get(const char * url,char * &buffer, size_t &length){
+  int static getbuffer(const char * url,char * &buffer, size_t &length){
     if(buffer!=NULL)return 1;
     CURL *curl_handle;
   
@@ -87,11 +112,12 @@ class MyCURL{
     if(length==0){
       return 2;
     }
-    buffer = new char[chunk.size];
-    memcpy(buffer,chunk.memory,chunk.size);
+    //buffer = new char[chunk.size];
+    //memcpy(buffer,chunk.memory,chunk.size);
     
-    if(chunk.memory)
-      free(chunk.memory);
+    buffer=chunk.memory;
+    //if(chunk.memory)
+//      free(chunk.memory);
   
     /* we're done with libcurl, so clean it up */ 
     curl_global_cleanup();
@@ -133,9 +159,12 @@ class MyCURL{
     curl_easy_cleanup(curl_handle);
     if(chunk.size>4){
       if(chunk.memory[0]=='G')
-      im = gdImageCreateFromGifPtr(chunk.size,chunk.memory);
+        im = gdImageCreateFromGifPtr(chunk.size,chunk.memory);
+      else if ((unsigned char)chunk.memory[0]==0xFF&&(unsigned char)chunk.memory[1]==0xD8)
+        im = gdImageCreateFromJpegPtr(chunk.size,chunk.memory);
       else
-      im = gdImageCreateFromPngPtr(chunk.size,chunk.memory);
+        im = gdImageCreateFromPngPtr(chunk.size,chunk.memory);
+      
     }else{
       status=1;
     }
