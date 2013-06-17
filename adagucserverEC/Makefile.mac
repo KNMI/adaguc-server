@@ -17,7 +17,7 @@ CCOMPILER=g++ -Wall $(INCLUDEDIR)
 #CCOMPILER=g++ -O2 $(INCLUDEDIR)
 #CCOMPILER=g++ -march=k8-sse3 -mtune=k8-sse3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 $(INCLUDEDIR)  
 
-USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lxml2 -lgd -lproj -lpq -ludunits2 -lfreetype -lgd -lpng -lpthread -lcurl -lcairo -lgdal -lrt
+USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lxml2 -lgd -lproj -lpq -ludunits2 -lfreetype -lgd -lpng -lpthread -lcurl -lcairo -lgdal 
 
 # all libs together
 LIBS = $(USERLIBS) $(LDFLAGS) -L$(INSTALLDIR2)/lib  

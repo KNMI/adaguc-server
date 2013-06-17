@@ -27,6 +27,7 @@
 #define CSTOPWATCH_H
 #include <stdlib.h>
 #include <time.h>
+#include <sys/time.h>
 #include "CDebugger.h"
 #include <stdio.h>
 #include <stdarg.h>

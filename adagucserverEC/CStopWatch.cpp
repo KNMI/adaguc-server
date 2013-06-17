@@ -32,7 +32,14 @@ double CSTOPWATCH_H_prevTime = 0;
 int content_type_provided = 0;
 int firstTime=0;
 void StopWatch_Start(){
+#if _POSIX_TIMERS > 0
   clock_gettime(CLOCK_REALTIME, &starttime);
+#else
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  starttime.tv_sec = tv.tv_sec;
+  starttime.tv_nsec = tv.tv_usec*1000;
+#endif
   double start,stop;
   start = double(starttime.tv_nsec)/1000000+starttime.tv_sec*1000;
   stop  = double(stoptime.tv_nsec)/1000000+stoptime.tv_sec*1000;
@@ -40,7 +47,14 @@ void StopWatch_Start(){
   CSTOPWATCH_H_prevTime =stop;
 }
 void __StopWatch_Stop(const char *msg){
+#if _POSIX_TIMERS > 0
   clock_gettime(CLOCK_REALTIME, &stoptime);
+#else
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  stoptime.tv_sec = tv.tv_sec;
+  stoptime.tv_nsec = tv.tv_usec*1000;
+#endif
   double start,stop;
   start = double(starttime.tv_nsec)/1000000+starttime.tv_sec*1000;
   stop  = double(stoptime.tv_nsec)/1000000+stoptime.tv_sec*1000;
