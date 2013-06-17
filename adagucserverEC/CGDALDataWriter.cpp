@@ -537,7 +537,14 @@ void CGDALDataWriter::generateString(char *s, const int _len) {
   int len=_len-1;
   timespec timevar;
   
+#if _POSIX_TIMERS > 0
   clock_gettime(CLOCK_REALTIME, &timevar);
+#else
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  timevar.tv_sec = tv.tv_sec;
+  timevar.tv_nsec = tv.tv_usec*1000;
+#endif
   //CDBDebug("generateString");
   //double dfTime;= double((unsigned)timevar.tv_nsec)+double(timevar.tv_sec)*1000000000.0f;
   unsigned int dTime = (unsigned int)(timevar.tv_nsec);
