@@ -30,7 +30,7 @@
 #include "CImageWarperRenderInterface.h"
 
 
-//#define CIMGWARPNEARESTNEIGHBOUR_DEBUG
+#define CIMGWARPNEARESTNEIGHBOUR_DEBUG
 
 /**
  *  This interface represents the tile rendering classes.
@@ -252,6 +252,9 @@ public:
       dfSourceBBOX[0]=dataSource->dfBBOX[2];
       dfSourceBBOX[2]=dataSource->dfBBOX[0];
     }
+    
+ 
+    
     
     dfNodataValue    = dataSource->dataObject[0]->dfNodataValue ;
     legendValueRange = dataSource->legendValueRange;
@@ -580,6 +583,16 @@ private:
         }
         //drawTileClass = new CDrawTileObjByteCache();           //Do not keep the calculated results for CDF_CHAR
         //drawTileClass = new CDrawTileObj();  //keep the calculated results
+        
+        //Reproj back and forth datasource boundingbox
+        warper->reprojpoint_inv(dataSource->dfBBOX[0],dataSource->dfBBOX[1]);
+        warper->reprojpoint(dataSource->dfBBOX[0],dataSource->dfBBOX[1]);
+        
+        warper->reprojpoint_inv(dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
+        warper->reprojpoint(dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
+        
+        
+     
         drawTileClass->init(dataSource,drawImage,(int)tile_width,(int)tile_height);
         
         #ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
@@ -587,6 +600,8 @@ private:
         CDBDebug("datasource:  %f %f %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[1],dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
         CDBDebug("destination: %f %f %f %f",drawImage->Geo->dfBBOX[0],drawImage->Geo->dfBBOX[1],drawImage->Geo->dfBBOX[2],drawImage->Geo->dfBBOX[3]);
         #endif 
+        
+       
         int numberOfTiles=x_div*y_div;
         DrawTileSettings *drawTileSettings = new DrawTileSettings[numberOfTiles];
         DrawTileSettings *curTileSettings;

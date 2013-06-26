@@ -142,6 +142,24 @@ void readyerror(){
     fprintf(stdout,"</ServiceExceptionReport>\n");
     resetErrors();return;
   }
+  if(cerror_mode==WMS_EXCEPTIONS_XML_1_3_0){//XML exception
+    printf("%s%c%c\n","Content-Type:text/xml",13,10);  
+    fprintf(stdout,"<?xml version='1.0' encoding=\"ISO-8859-1\" standalone=\"no\" ?>\n");
+    fprintf(stdout,"<ServiceExceptionReport version=\"1.3.0\"  xmlns=\"http://www.opengis.net/ogc\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.opengis.net/ogc http://schemas.opengis.net/wms/1.3.0/exceptions_1_3_0.xsd\">\n");
+    fprintf(stdout,"  <ServiceException code=\"OperationNotSupported\">\n");
+    
+    
+    for(size_t j=0;j<errormsgs.size();j++){
+      CT::string msg=errormsgs[j].c_str();
+      msg.replaceSelf("<","&lt;");
+      msg.replaceSelf("<","&gt;");
+      fprintf(stdout,"    %s;\n",msg.c_str());
+      //if(j+1<errormsgs.size())fprintf(stdout,";\n");
+    }
+    fprintf(stdout,"\n  </ServiceException>\n");
+    fprintf(stdout,"</ServiceExceptionReport>\n");
+    resetErrors();return;
+  }
   if(cerror_mode==WMS_EXCEPTIONS_IMAGE||cerror_mode==WMS_EXCEPTIONS_BLANKIMAGE){//Image
     CDrawImage drawImage;
     drawImage.setBGColor(255,255,255);

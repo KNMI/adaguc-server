@@ -76,6 +76,7 @@ class WMSLayer{
       dfLatLonBBOX[1]=-90;
       dfLatLonBBOX[2]=180;
       dfLatLonBBOX[3]=90;
+      abstract="";
     }
     ~WMSLayer(){
       delete dataSource;dataSource = NULL;
@@ -84,7 +85,7 @@ class WMSLayer{
       for(size_t j=0;j<styleList.size();j++){delete styleList[j];styleList[j]=NULL;}
     }
     CServerConfig::XMLE_Layer * layer;
-    CT::string name,title,group,fileName;
+    CT::string name,title,group,abstract,fileName;
     int isQuerable,hasError;
     CDataSource *dataSource;
     std::vector<Projection*> projectionList;
@@ -104,6 +105,7 @@ class CXMLGen{
     int getDimsForLayer(WMSLayer * myWMSLayer);
     int getWMS_1_0_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*> *myWMSLayerList);
     int getWMS_1_1_1_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*> *myWMSLayerList);
+    int getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*> *myWMSLayerList);
     int getWCS_1_0_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*> *myWMSLayerList);
     int getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc,std::vector<WMSLayer*> *myWMSLayerList);
     int getStylesForLayer(WMSLayer * myWMSLayer);

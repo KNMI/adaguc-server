@@ -466,7 +466,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
   // Lon transformation is used to swap datasets from 0-360 degrees to -180 till 180 degrees
   //Swap data from >180 degrees to domain of -180 till 180 in case of lat lon source data
   dataSource->useLonTransformation = 0;
-  
+  return 0;
   if(dataSource->level2CompatMode==false){
 
     if( dataSource->nativeProj4.indexOf("+proj=longlat")==0){

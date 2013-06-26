@@ -37,6 +37,10 @@ int CXMLGen::WCSDescribeCoverage(CServerParams *srvParam,CT::string *XMLDocument
   return OGCGetCapabilities(srvParam,XMLDocument);
 }
 
+bool compareStringCase( const string& s1, const string& s2 ) {
+  return strcmp( s1.c_str(), s2.c_str() ) <= 0;
+}
+
 int CXMLGen::getFileNameForLayer(WMSLayer * myWMSLayer){
 #ifdef CXMLGEN_DEBUG
 CDBDebug("getFileNameForLayer");
@@ -840,9 +844,7 @@ int CXMLGen::getWMS_1_0_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
 
 
 
-bool compareStringCase( const string& s1, const string& s2 ) {
-  return strcmp( s1.c_str(), s2.c_str() ) <= 0;
-}
+
 int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*> *myWMSLayerList){
   CFile header;
   CT::string onlineResource = srvParam->getOnlineResource();
@@ -1012,6 +1014,189 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
     }
   }
   XMLDoc->concat("    </Layer>\n  </Capability>\n</WMT_MS_Capabilities>\n");
+  return 0;
+}
+
+int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*> *myWMSLayerList){
+  CFile header;
+  CT::string onlineResource = srvParam->getOnlineResource();
+  onlineResource.concat("SERVICE=WMS&amp;");
+  int status=header.     open(srvParam->cfg->Path[0]->attr.value.c_str(),WMS_1_3_0_HEADERFILE);if(status!=0)return 1;
+  
+  XMLDoc->copy(header.data);
+  XMLDoc->replaceSelf("[SERVICETITLE]",srvParam->cfg->WMS[0]->Title[0]->value.c_str());
+  XMLDoc->replaceSelf("[SERVICEABSTRACT]",srvParam->cfg->WMS[0]->Abstract[0]->value.c_str());
+  XMLDoc->replaceSelf("[GLOBALLAYERTITLE]",srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->value.c_str());
+  XMLDoc->replaceSelf("[SERVICEONLINERESOURCE]",onlineResource.c_str());
+  XMLDoc->replaceSelf("[SERVICEINFO]",serviceInfo.c_str());
+  if(myWMSLayerList->size()>0){
+    for(size_t p=0;p<(*myWMSLayerList)[0]->projectionList.size();p++){
+      WMSLayer::Projection *proj = (*myWMSLayerList)[0]->projectionList[p];
+      XMLDoc->concat("<CRS>"); 
+      XMLDoc->concat(&proj->name);
+      XMLDoc->concat("</CRS>\n");
+    }
+    
+    //Make a unique list of all groups
+    std::vector <std::string>  groupKeys;
+    for(size_t lnr=0;lnr<myWMSLayerList->size();lnr++){
+      WMSLayer *layer = (*myWMSLayerList)[lnr];
+      std::string key="";
+      if(layer->group.length()>0)key=layer->group.c_str();
+      size_t j=0;
+      for(j=0;j<groupKeys.size();j++){if(groupKeys[j]==key)break;}
+      if(j>=groupKeys.size())groupKeys.push_back(key);
+    }
+    //Sort the groups alphabetically
+    std::sort(groupKeys.begin(), groupKeys.end(),compareStringCase);
+    
+    
+    //Loop through the groups
+    int currentGroupDepth=0;
+    for(size_t groupIndex=0;groupIndex<groupKeys.size();groupIndex++){
+      //CDBError("group %s",groupKeys[groupIndex].c_str());
+      int groupDepth=0;
+      
+      //if(groupKeys[groupIndex].size()>0)
+      {
+        CT::string key=groupKeys[groupIndex].c_str();
+        CT::string *subGroups=key.splitToArray("/");
+        groupDepth=subGroups->count;
+        
+        if(groupIndex>0){
+          CT::string prevKey=groupKeys[groupIndex-1].c_str();
+          CT::string *prevSubGroups=prevKey.splitToArray("/");
+          
+
+          for(size_t j=subGroups->count;j<prevSubGroups->count;j++){
+            //CDBError("<");
+            currentGroupDepth--;
+            XMLDoc->concat("</Layer>\n");
+          }
+            
+          //CDBError("subGroups->count %d",subGroups->count);
+          //CDBError("prevSubGroups->count %d",prevSubGroups->count);
+          int removeGroups=0;
+          for(size_t j=0;j<subGroups->count&&j<prevSubGroups->count;j++){
+            //CDBError("CC %d",j);
+            if(subGroups[j].equals(&prevSubGroups[j])==false||removeGroups==1){
+              removeGroups=1;
+              //CDBError("!=%d %s!=%s",j,subGroups[j].c_str(),prevSubGroups[j].c_str());
+              //CDBError("<");
+              XMLDoc->concat("</Layer>\n");
+              currentGroupDepth--;
+              //break;
+            }
+          }
+          //CDBDebug("!!! %d",currentGroupDepth);
+          for(size_t j=currentGroupDepth;j<subGroups->count;j++){
+            XMLDoc->concat("<Layer>\n");
+            XMLDoc->concat("<Title>");
+            //CDBError("> %s",subGroups[j].c_str());
+            XMLDoc->concat(subGroups[j].c_str());
+            XMLDoc->concat("</Title>\n");
+          }
+            
+          delete[] prevSubGroups;
+        }
+        else{
+          for(size_t j=0;j<subGroups->count;j++){
+            XMLDoc->concat("<Layer>\n");
+            XMLDoc->concat("<Title>");
+            //CDBError("> %s grpupindex %d",subGroups[j].c_str(),groupIndex);
+            XMLDoc->concat(subGroups[j].c_str());
+            XMLDoc->concat("</Title>\n");
+          }
+        }
+        delete[] subGroups;
+        currentGroupDepth=groupDepth;
+        //CDBDebug("currentGroupDepth = %d",currentGroupDepth);
+      }
+      
+      for(size_t lnr=0;lnr<myWMSLayerList->size();lnr++){
+        WMSLayer *layer = (*myWMSLayerList)[lnr];
+        if(layer->group.equals(groupKeys[groupIndex].c_str())){
+          //CDBError("layer %d %s",groupDepth,layer->name.c_str());
+          if(layer->hasError==0){
+            XMLDoc->printconcat("<Layer queryable=\"%d\" opaque=\"0\" cascaded=\"0\">\n",layer->isQuerable);
+            XMLDoc->concat("<Name>"); XMLDoc->concat(&layer->name);XMLDoc->concat("</Name>\n");
+            XMLDoc->concat("<Title>"); XMLDoc->concat(&layer->title);XMLDoc->concat("</Title>\n");
+            XMLDoc->concat("<Abstract>"); XMLDoc->concat(&layer->abstract);XMLDoc->concat("</Abstract>\n");
+            
+            XMLDoc->printconcat("<EX_GeographicBoundingBox>\n"
+                                "  <westBoundLongitude>%f</westBoundLongitude>\n"
+                                "  <eastBoundLongitude>%f</eastBoundLongitude>\n"
+                                "  <southBoundLatitude>%f</southBoundLatitude>\n"
+                                "  <northBoundLatitude>%f</northBoundLatitude>\n"
+                                "</EX_GeographicBoundingBox>",
+                                layer->dfLatLonBBOX[0],layer->dfLatLonBBOX[2],layer->dfLatLonBBOX[1],layer->dfLatLonBBOX[3]);
+            
+            for(size_t p=0;p<layer->projectionList.size();p++){
+              WMSLayer::Projection *proj = layer->projectionList[p];
+              /*XMLDoc->concat("<SRS>"); 
+              XMLDoc->concat(&proj->name);
+              XMLDoc->concat("</SRS>\n");*/
+              //TODO EPSG:4326 YX reversal...
+              if(srvParam->checkBBOXXYOrder()==true){
+                XMLDoc->printconcat("<BoundingBox CRS=\"%s\" minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\" />\n",proj->name.c_str(),proj->dfBBOX[1],proj->dfBBOX[0],proj->dfBBOX[3],proj->dfBBOX[2]);
+              }else{
+                XMLDoc->printconcat("<BoundingBox CRS=\"%s\" minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\" />\n",proj->name.c_str(),proj->dfBBOX[0],proj->dfBBOX[1],proj->dfBBOX[2],proj->dfBBOX[3]);
+              }
+            }
+            
+            
+            //Dims
+            for(size_t d=0;d<layer->dimList.size();d++){
+              WMSLayer::Dim * dim = layer->dimList[d];
+              XMLDoc->printconcat("<Dimension name=\"%s\" units=\"%s\" default=\"%s\" multipleValues=\"%d\" nearestValue=\"0\">",dim->name.c_str(),dim->units.c_str(),dim->defaultValue.c_str(),1);
+              XMLDoc->concat(dim->values.c_str());
+              XMLDoc->concat("</Dimension>\n");
+            }
+            
+            //Styles
+            for(size_t s=0;s<layer->styleList.size();s++){
+              WMSLayer::Style * style = layer->styleList[s];
+              
+              
+              
+              XMLDoc->concat("   <Style>");
+              XMLDoc->printconcat("    <Name>%s</Name>",style->name.c_str());
+              XMLDoc->printconcat("    <Title>%s</Title>",style->title.c_str());
+              if(style->abstract.length()>0){
+                XMLDoc->printconcat("    <Abstract>%s</Abstract>",style->abstract.c_str());
+              }
+              XMLDoc->printconcat("    <LegendURL width=\"%d\" height=\"%d\">",LEGEND_WIDTH,LEGEND_HEIGHT);
+              XMLDoc->concat("       <Format>image/png</Format>");
+              XMLDoc->printconcat("       <OnlineResource xlink:type=\"simple\" xlink:href=\"%s&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=%s&amp;format=image/png&amp;STYLE=%s\"/>"
+                  ,onlineResource.c_str(),layer->name.c_str(),style->name.c_str());
+              XMLDoc->concat("    </LegendURL>");
+              XMLDoc->concat("  </Style>");
+            
+              //TODO THIS will change
+              if(layer->dataSource->cfgLayer->MetadataURL.size()>0){
+                XMLDoc->concat("   <MetadataURL type=\"TC211\">\n");
+                XMLDoc->concat("     <Format>text/xml</Format>\n");
+                XMLDoc->printconcat("     <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:type=\"simple\" xlink:href=\"%s\"/>",layer->dataSource->cfgLayer->MetadataURL[0]->value.c_str());
+                XMLDoc->concat("   </MetadataURL>\n");
+              } 
+            }
+            XMLDoc->concat("</Layer>\n");
+          }else{
+            CDBError("Skipping layer %s",layer->name.c_str());
+          }
+        }
+      }
+      
+      
+      
+    }
+    
+    //CDBDebug("** %d",currentGroupDepth);
+    for(int j=0;j<currentGroupDepth;j++){
+      XMLDoc->concat("</Layer>\n");
+    }
+  }
+  XMLDoc->concat("    </Layer>\n  </Capability>\n</WMS_Capabilities>\n");
   return 0;
 }
 
@@ -1380,6 +1565,9 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
     if(srvParam->OGCVersion==WMS_VERSION_1_1_1){
       status = getWMS_1_1_1_Capabilities(&XMLDoc,&myWMSLayerList);
     }
+    if(srvParam->OGCVersion==WMS_VERSION_1_3_0){
+      status = getWMS_1_3_0_Capabilities(&XMLDoc,&myWMSLayerList);
+    }
   }
   try{
     if(srvParam->requestType==REQUEST_WCS_GETCAPABILITIES){
@@ -1412,7 +1600,7 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
   }
   
   if(status != 0){
-    CDBError("XML gen failed!");
+    CDBError("XML geneneration failed, please check logs. ");
     return CXMLGEN_FATAL_ERROR_OCCURED;
   }
   XMLDocument->concat(&XMLDoc);
