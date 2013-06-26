@@ -451,3 +451,11 @@ CT::string CServerParams::getOnlineResource(){
   httpHost.concat(&onlineResource);
   return httpHost;
 }
+
+
+bool CServerParams::checkBBOXXYOrder(){
+  if(OGCVersion == WMS_VERSION_1_3_0){
+    if(Geo->CRS.equals("EPSG:4326"))return true;
+  }
+  return false;
+}

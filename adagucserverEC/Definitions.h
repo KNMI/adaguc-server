@@ -59,6 +59,7 @@
 //WMS versions
 #define WMS_VERSION_1_0_0                 1
 #define WMS_VERSION_1_1_1                 2
+#define WMS_VERSION_1_3_0                 3
 
 //Exceptions
 #define EXCEPTIONS_PLAINTEXT              0
@@ -66,6 +67,7 @@
 #define WMS_EXCEPTIONS_BLANKIMAGE         2
 #define WMS_EXCEPTIONS_XML_1_1_1          3
 #define WCS_EXCEPTIONS_XML_1_0_0          4
+#define WMS_EXCEPTIONS_XML_1_3_0          5
 
 //Image formats
 #define IMAGEFORMAT_IMAGEPNG8             0
@@ -82,6 +84,7 @@
 // XMLGen templates
 #define WMS_1_0_0_HEADERFILE              "./XMLTemplates/WMS_1.0.0_GetCapabilities_Header.dat"
 #define WMS_1_1_1_HEADERFILE              "./XMLTemplates/WMS_1.1.1_GetCapabilities_Header.dat"
+#define WMS_1_3_0_HEADERFILE              "./XMLTemplates/WMS_1.3.0_GetCapabilities_Header.dat"
 #define WCS_1_0_HEADERFILE                "./XMLTemplates/WCS_1.0.0_GetCapabilities_Header.dat"
 
 

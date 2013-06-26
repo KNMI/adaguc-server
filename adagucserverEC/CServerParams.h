@@ -227,6 +227,11 @@ class CServerParams{
      * Get configured online resource
      */
     CT::string getOnlineResource();
+    
+    /**
+     * Determine whether boundingbox y and x are swapped, for example the case with WMS 1.3.0 and EPSG:4326
+     */
+    bool checkBBOXXYOrder();
 };
 
 

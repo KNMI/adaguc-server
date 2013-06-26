@@ -1233,6 +1233,8 @@ int CRequest::process_querystring(){
   int dFound_Height=0;
   int dFound_X=0;
   int dFound_Y=0;
+  int dFound_I=0;
+  int dFound_J=0;
   int dFound_RESX=0;
   int dFound_RESY=0;
   int dFound_BBOX=0;
@@ -1365,20 +1367,29 @@ int CRequest::process_querystring(){
         dFound_RESY=1;
       }
 
-      // X Parameter
+      // X/I Parameters
       if(strncmp(value0Cap.c_str(),"X",1)==0&&value0Cap.length()==1){
         srvParam->dX=atof(values[1].c_str());
         dFound_X=1;
       }
-      // Y Parameter
+      if(strncmp(value0Cap.c_str(),"I",1)==0&&value0Cap.length()==1){
+        srvParam->dX=atof(values[1].c_str());
+        dFound_I=1;
+      }
+      // Y/J Parameter
       if(strncmp(value0Cap.c_str(),"Y",1)==0&&value0Cap.length()==1){
         srvParam->dY=atof(values[1].c_str());
         dFound_Y=1;
+      }
+      if(strncmp(value0Cap.c_str(),"J",1)==0&&value0Cap.length()==1){
+        srvParam->dY=atof(values[1].c_str());
+        dFound_J=1;
       }
       // SRS / CRS Parameters
       if(value0Cap.equals("SRS")){
         if(parameters[j].length()>5){
           srvParam->Geo->CRS.copy(parameters[j].c_str()+4);
+          srvParam->Geo->CRS.decodeURLSelf();
           dFound_SRS=1;
         }
       }
@@ -1660,9 +1671,9 @@ int CRequest::process_querystring(){
     
     
     
-    //Default is 1.1.1
+    //Default is 1.3.0
     
-    srvParam->OGCVersion=WMS_VERSION_1_1_1;
+    srvParam->OGCVersion=WMS_VERSION_1_3_0;
     
     if(dFound_Request==0){
       CDBWarning("Parameter REQUEST missing");
@@ -1687,13 +1698,15 @@ int CRequest::process_querystring(){
       }
     }
     
+    seterrormode(WMS_EXCEPTIONS_XML_1_1_1);
     // Check the version
     if(dFound_Version!=0){
-      srvParam->OGCVersion=WMS_VERSION_1_1_1;
+      srvParam->OGCVersion=-1;//WMS_VERSION_1_1_1;
       if(Version.equals("1.0.0"))srvParam->OGCVersion=WMS_VERSION_1_0_0;
       if(Version.equals("1.1.1"))srvParam->OGCVersion=WMS_VERSION_1_1_1;
+      if(Version.equals("1.3.0"))srvParam->OGCVersion=WMS_VERSION_1_3_0;
       if(srvParam->OGCVersion==-1){
-        CDBError("Invalid version ('%s'): only WMS 1.0.0 and WMS 1.1.1 supported",Version.c_str());
+        CDBError("Invalid version ('%s'): WMS 1.0.0, WMS 1.1.1 and WMS 1.3.0 are supported",Version.c_str());
         dErrorOccured=1;
       }
     }
@@ -1703,7 +1716,28 @@ int CRequest::process_querystring(){
       if(srvParam->requestType==REQUEST_WMS_GETMAP)seterrormode(WMS_EXCEPTIONS_IMAGE);
       if(srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC)seterrormode(WMS_EXCEPTIONS_IMAGE);
     }
-    if(srvParam->OGCVersion==WMS_VERSION_1_1_1)seterrormode(WMS_EXCEPTIONS_XML_1_1_1);
+    
+    if(srvParam->OGCVersion==WMS_VERSION_1_1_1){
+      seterrormode(WMS_EXCEPTIONS_XML_1_1_1);
+    }
+    
+    if(srvParam->OGCVersion==WMS_VERSION_1_3_0){
+      seterrormode(WMS_EXCEPTIONS_XML_1_3_0);
+      
+      if(srvParam->checkBBOXXYOrder()==true){
+        //BBOX swap
+        double dfBBOX[4];
+        for(int j=0;j<4;j++){
+          dfBBOX[j] = srvParam->Geo->dfBBOX[j];
+        }
+        srvParam->Geo->dfBBOX[0] = dfBBOX[1];
+        srvParam->Geo->dfBBOX[1] = dfBBOX[0];
+        srvParam->Geo->dfBBOX[2] = dfBBOX[3];
+        srvParam->Geo->dfBBOX[3] = dfBBOX[2];
+      }
+      
+    }
+    
     if(dFound_Exceptions!=0){
       if(Exceptions.equals("application/vnd.ogc.se_xml")){
         if(srvParam->OGCVersion==WMS_VERSION_1_1_1)seterrormode(WMS_EXCEPTIONS_XML_1_1_1);
@@ -2122,10 +2156,20 @@ int CRequest::process_querystring(){
       // When error is image, utilize full image size
       setErrorImageSize(srvParam->Geo->dWidth,srvParam->Geo->dHeight,srvParam->imageFormat);
       
-      if(dFound_SRS==0){
-        CDBWarning("Parameter SRS missing");
-        dErrorOccured=1;
+      if(srvParam->OGCVersion==WMS_VERSION_1_0_0 || srvParam->OGCVersion==WMS_VERSION_1_1_1){
+        if(dFound_SRS==0){
+          CDBWarning("Parameter SRS missing");
+          dErrorOccured=1;
+        }
       }
+      
+      if(srvParam->OGCVersion==WMS_VERSION_1_3_0 ){
+        if(dFound_CRS==0){
+          CDBWarning("Parameter CRS missing");
+          dErrorOccured=1;
+        }
+      }
+      
       
       if(dFound_WMSLAYERS==0){
         CDBWarning("Parameter LAYERS missing");
@@ -2142,14 +2186,28 @@ int CRequest::process_querystring(){
         }
       
         if(srvParam->requestType==REQUEST_WMS_GETFEATUREINFO){
-          if(dFound_X==0){
-            CDBWarning("Parameter X missing");
-            dErrorOccured=1;
+          if(srvParam->OGCVersion == WMS_VERSION_1_0_0 || srvParam->OGCVersion == WMS_VERSION_1_1_1){
+            if(dFound_X==0){
+              CDBWarning("Parameter X missing");
+              dErrorOccured=1;
+            }
+            if(dFound_Y==0){
+              CDBWarning("Parameter Y missing");
+              dErrorOccured=1;
+            }
           }
-          if(dFound_Y==0){
-            CDBWarning("Parameter Y missing");
-            dErrorOccured=1;
+          
+          if(srvParam->OGCVersion == WMS_VERSION_1_3_0){
+            if(dFound_I==0){
+              CDBWarning("Parameter I missing");
+              dErrorOccured=1;
+            }
+            if(dFound_J==0){
+              CDBWarning("Parameter J missing");
+              dErrorOccured=1;
+            }
           }
+          
           int status =  process_wms_getfeatureinfo_request();
           if(status != 0) {
             if(status!=2){
@@ -2179,7 +2237,7 @@ int CRequest::process_querystring(){
     if(dErrorOccured==0&&srvParam->requestType==REQUEST_WMS_GETCAPABILITIES){
       int status = process_wms_getcap_request();
       if(status!=0){
-        CDBError("getcapabilities has failed");
+        CDBError("GetCapabilities failed");
       }
       return status;
     }
