@@ -230,8 +230,10 @@ class CServerParams{
     
     /**
      * Determine whether boundingbox y and x are swapped, for example the case with WMS 1.3.0 and EPSG:4326
+     * @param projName Optional, can be set to NULL, in that case the global CRS/SRS server setting is used.
+     * @return true means that BBOX order is reversed, e.g. y1,x1,y2,x2
      */
-    bool checkBBOXXYOrder();
+    bool checkBBOXXYOrder(const char *projName);
 };
 
 

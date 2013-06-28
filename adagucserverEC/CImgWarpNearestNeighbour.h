@@ -30,7 +30,7 @@
 #include "CImageWarperRenderInterface.h"
 
 
-#define CIMGWARPNEARESTNEIGHBOUR_DEBUG
+//#define CIMGWARPNEARESTNEIGHBOUR_DEBUG
 
 /**
  *  This interface represents the tile rendering classes.
@@ -397,12 +397,12 @@ public:
                   if(!isNodata){
                     if(legendLog!=0){
                       if(val>0){
-                        val=log10(val)/legendLogAsLog;
-                      }else val=-legendOffset;
+                        val=(T)(log10(val)/legendLogAsLog);
+                      }else val=(T)(-legendOffset);
                     }
-                    val=val*legendScale+legendOffset;
+                    val=(T)(val*legendScale+legendOffset);
                     //val+=legendOffset;
-                    if(val>=239)val=239;else if(val<0)val=0;
+                    if(val>=239)val=239;else if(val<=0)val=0;
                     
                     //drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,drawImage->colors[(unsigned char)val]);
                     drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,(int)val);

@@ -887,12 +887,12 @@ int CRequest::process_all_layers(){
 
   int status;
   if(srvParam->serviceType==SERVICE_WMS){
-    if(srvParam->Geo->dWidth>8000){
-      CDBError("Parameter WIDTH must be smaller than 8000");
+    if(srvParam->Geo->dWidth>8192){
+      CDBError("Parameter WIDTH must be smaller than 8192");
       return 1;
     }
-    if(srvParam->Geo->dHeight>8000){
-    CDBError("Parameter HEIGHT must be smaller than 8000");
+    if(srvParam->Geo->dHeight>8192){
+    CDBError("Parameter HEIGHT must be smaller than 8192");
     return 1;
     }
   }
@@ -1265,6 +1265,7 @@ int CRequest::process_querystring(){
   const char * pszQueryString=getenv("QUERY_STRING");
   
   
+  
   if(pszQueryString==NULL){
     pszQueryString=strdup("SERVICE=WMS&request=getcapabilities");
     CGI=0;
@@ -1272,15 +1273,35 @@ int CRequest::process_querystring(){
 
   CT::string queryString(pszQueryString);
   queryString.decodeURLSelf();
-//  CDBDebug("QueryString: \"%s\"",queryString.c_str());
+  CDBDebug("QueryString: \"%s\"",queryString.c_str());
   CT::string * parameters=queryString.splitToArray("&");
   CT::string value0Cap;
   for(size_t j=0;j<parameters->count;j++){
-    CT::string * values=parameters[j].splitToArray("=");
+    CT::string values[2];
+   
+    int equalPos = parameters[j].indexOf("=");//splitToArray("=");
+
+    if(equalPos!=-1){
+      
+      values[0] = parameters[j].substringr(0,equalPos);
+      values[1] = parameters[j].c_str()+equalPos+1;
+      values[0].count = 2;
+    }else{
+      
+      values[0] = parameters[j].c_str();
+      values[1] = "";
+      values[0].count = 1;
+    }
+
+  
+    //values[1] = value
+    //=parameters[j].splitToArray("=");
 
     // Styles parameter
     value0Cap.copy(&values[0]);
     value0Cap.toUpperCaseSelf();
+    
+      
     if(value0Cap.equals("STYLES")){
       if(dFound_Styles==0){
         if(values->count==2&&values[1].length()>0){
@@ -1649,7 +1670,7 @@ int CRequest::process_querystring(){
 
       
     }
-    delete[] values;
+
   }
   delete[] parameters;
 
@@ -1724,7 +1745,7 @@ int CRequest::process_querystring(){
     if(srvParam->OGCVersion==WMS_VERSION_1_3_0){
       seterrormode(WMS_EXCEPTIONS_XML_1_3_0);
       
-      if(srvParam->checkBBOXXYOrder()==true){
+      if(srvParam->checkBBOXXYOrder(NULL)==true){
         //BBOX swap
         double dfBBOX[4];
         for(int j=0;j<4;j++){
@@ -1746,6 +1767,12 @@ int CRequest::process_querystring(){
         seterrormode(WMS_EXCEPTIONS_IMAGE);
       }
       if(Exceptions.equals("application/vnd.ogc.se_blank")){
+        seterrormode(WMS_EXCEPTIONS_BLANKIMAGE);
+      }
+      if(Exceptions.equals("INIMAGE")){
+        seterrormode(WMS_EXCEPTIONS_IMAGE);
+      }
+      if(Exceptions.equals("BLANK")){
         seterrormode(WMS_EXCEPTIONS_BLANKIMAGE);
       }
     }
@@ -2079,6 +2106,7 @@ int CRequest::process_querystring(){
           }
     
           // Set format
+          CDBDebug("FORMAT: %s",srvParam->Format.c_str());
           if(srvParam->Format.indexOf("24")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG32;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
           else if(srvParam->Format.indexOf("32")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG32;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
           else if(srvParam->Format.indexOf("8")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8;srvParam->imageMode=SERVERIMAGEMODE_8BIT;}
@@ -2442,3 +2470,4 @@ int CRequest::getDocumentCacheName(CT::string *documentName,CServerParams *srvPa
   }
   return 0;
 }
+

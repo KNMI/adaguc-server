@@ -249,6 +249,15 @@ CDBDebug("Database layer");
     }else{
       myWMSLayer->title.copy(myWMSLayer->dataSource->cfgLayer->Title[0]->value.c_str());
     }
+    
+    
+    //Get abstract for layer
+    if( myWMSLayer->dataSource->cfgLayer->Abstract.size()>0){
+      const char *v = myWMSLayer->dataSource->cfgLayer->Abstract[0]->value.c_str();
+      if(v !=NULL){
+        myWMSLayer->abstract.copy(v);
+      }
+    }
     return 0;
   }
   CDBWarning("Unknown layer type");
@@ -990,9 +999,11 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
               XMLDoc->concat("  </Style>");
             
               if(layer->dataSource->cfgLayer->MetadataURL.size()>0){
+                CT::string layerMetaDataURL = (*myWMSLayerList)[0]->dataSource->cfgLayer->MetadataURL[0]->value.c_str();
+                layerMetaDataURL.replaceSelf("&","&amp;");
                 XMLDoc->concat("   <MetadataURL type=\"TC211\">\n");
                 XMLDoc->concat("     <Format>text/xml</Format>\n");
-                XMLDoc->printconcat("     <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:type=\"simple\" xlink:href=\"%s\"/>",layer->dataSource->cfgLayer->MetadataURL[0]->value.c_str());
+                XMLDoc->printconcat("     <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:type=\"simple\" xlink:href=\"%s\"/>",layerMetaDataURL.c_str());
                 XMLDoc->concat("   </MetadataURL>\n");
               } 
             }
@@ -1026,9 +1037,141 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
   XMLDoc->copy(header.data);
   XMLDoc->replaceSelf("[SERVICETITLE]",srvParam->cfg->WMS[0]->Title[0]->value.c_str());
   XMLDoc->replaceSelf("[SERVICEABSTRACT]",srvParam->cfg->WMS[0]->Abstract[0]->value.c_str());
-  XMLDoc->replaceSelf("[GLOBALLAYERTITLE]",srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->value.c_str());
+  //XMLDoc->replaceSelf("[GLOBALLAYERTITLE]",srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->value.c_str());
   XMLDoc->replaceSelf("[SERVICEONLINERESOURCE]",onlineResource.c_str());
   XMLDoc->replaceSelf("[SERVICEINFO]",serviceInfo.c_str());
+  
+  
+  int useINSPIREScenario = 0; //{ 0 == default WMS service, 1 == extended inspire capabilities scenario 1, 2 == extended inspire capabilities scenario 2}
+  bool inspireMetadata = false;
+  
+  CT::string datasetMetaDataURL;
+  if(srvParam->cfg->WMS[0]->MetadataURL.size()==1){            
+    if(srvParam->cfg->WMS[0]->MetadataURL[0]->value.c_str()!=NULL){
+      datasetMetaDataURL = srvParam->cfg->WMS[0]->MetadataURL[0]->value.c_str();
+      datasetMetaDataURL.replaceSelf("&","&amp;");
+    }
+  }
+  
+  if(datasetMetaDataURL.length()>0){
+    useINSPIREScenario = 1;
+  }
+  
+  
+  //Use inspire scenario 1.
+  if(useINSPIREScenario>0){
+    // *** Enablle INSPIRE ***         
+    inspireMetadata = true;        
+    
+    /*Scenario 1*/    
+    if(useINSPIREScenario==1){
+      XMLDoc->concat("<inspire_vs:ExtendedCapabilities>\n");
+      XMLDoc->concat("  <inspire_common:MetadataUrl xsi:type=\"inspire_common:resourceLocatorType\">\n");
+      XMLDoc->printconcat("    <inspire_common:URL>%s</inspire_common:URL>\n",datasetMetaDataURL.c_str());
+      XMLDoc->concat("    <inspire_common:MediaType>application/vnd.ogc.csw.GetRecordByIdResponse_xml</inspire_common:MediaType>\n");
+      XMLDoc->concat("  </inspire_common:MetadataUrl>\n");
+      XMLDoc->concat("  <inspire_common:SupportedLanguages xsi:type=\"inspire_common:supportedLanguagesType\">\n");
+      XMLDoc->concat("    <inspire_common:DefaultLanguage>\n");
+      XMLDoc->concat("      <inspire_common:Language>eng</inspire_common:Language>\n");
+      XMLDoc->concat("    </inspire_common:DefaultLanguage>\n");
+      XMLDoc->concat("    <inspire_common:SupportedLanguage>\n");
+      XMLDoc->concat("      <inspire_common:Language>eng</inspire_common:Language>\n");
+      XMLDoc->concat("    </inspire_common:SupportedLanguage>\n");
+      XMLDoc->concat("  </inspire_common:SupportedLanguages>\n");
+      XMLDoc->concat("  <inspire_common:ResponseLanguage>\n");
+      XMLDoc->concat("    <inspire_common:Language>eng</inspire_common:Language>\n");
+      XMLDoc->concat("  </inspire_common:ResponseLanguage>\n");
+      XMLDoc->concat("</inspire_vs:ExtendedCapabilities>\n");
+    }
+
+
+    /*Scenario 2*/
+    if(useINSPIREScenario==2){
+      XMLDoc->concat("<inspire_vs:ExtendedCapabilities>\n");
+      XMLDoc->concat("  <inspire_common:ResourceLocator>\n");
+      XMLDoc->concat("    <inspire_common:URL></inspire_common:URL>\n");
+      XMLDoc->concat("  </inspire_common:ResourceLocator>\n");
+      XMLDoc->concat("  <inspire_common:ResourceType>service</inspire_common:ResourceType>\n");
+      XMLDoc->concat("  <inspire_common:TemporalReference>\n");
+      XMLDoc->concat("  </inspire_common:TemporalReference>\n");
+      XMLDoc->concat("\n");
+      XMLDoc->concat("  <inspire_common:Conformity>\n");
+      XMLDoc->concat("    <inspire_common:Specification>\n");
+      XMLDoc->concat("      <inspire_common:Title>D2.8.III.13-14 Data Specification on Atmospheric Conditions – Guidelines</inspire_common:Title>\n");
+      XMLDoc->concat("      <inspire_common:DateOfPublication>2012-04-20</inspire_common:DateOfPublication>\n");
+      XMLDoc->concat("    </inspire_common:Specification>\n");
+      XMLDoc->concat("    <inspire_common:Degree>conformant</inspire_common:Degree>\n");
+      XMLDoc->concat("  </inspire_common:Conformity>\n");
+      XMLDoc->concat("\n");
+      XMLDoc->concat("  <inspire_common:MetadataPointOfContact>\n");
+      XMLDoc->concat("    <inspire_common:OrganisationName>KNMI</inspire_common:OrganisationName>\n");
+      XMLDoc->concat("    <inspire_common:EmailAddress>adaguc@knmi.nl</inspire_common:EmailAddress>\n");
+      XMLDoc->concat("  </inspire_common:MetadataPointOfContact>\n");
+      XMLDoc->concat("\n");
+      XMLDoc->concat("  <inspire_common:MetadataDate>2015-01-01</inspire_common:MetadataDate>\n");
+      XMLDoc->concat("  <inspire_common:SpatialDataServiceType>view</inspire_common:SpatialDataServiceType>\n");
+      XMLDoc->concat("  <inspire_common:MandatoryKeyword>\n");
+      XMLDoc->concat("    <inspire_common:KeywordValue>infoMapAccessService</inspire_common:KeywordValue>\n");
+      XMLDoc->concat("  </inspire_common:MandatoryKeyword>\n");
+      XMLDoc->concat("\n");
+      XMLDoc->concat("  <inspire_common:Keyword>\n");
+      XMLDoc->concat("    <inspire_common:OriginatingControlledVocabulary>\n");
+      XMLDoc->concat("      <inspire_common:Title>AC-MF Data Type</inspire_common:Title>\n");
+      XMLDoc->concat("      <inspire_common:DateOfCreation>2012-04-20</inspire_common:DateOfCreation>\n");
+      XMLDoc->concat("      <inspire_common:URI>urn:x-inspire:specification:DS-AC-MF:dataType</inspire_common:URI>\n");
+      XMLDoc->concat("      <inspire_common:ResourceLocator>\n");
+      XMLDoc->concat("        <inspire_common:URL></inspire_common:URL>\n");
+      XMLDoc->concat("      </inspire_common:ResourceLocator>\n");
+      XMLDoc->concat("    </inspire_common:OriginatingControlledVocabulary>\n");
+      XMLDoc->concat("    <inspire_common:KeywordValue>prediction</inspire_common:KeywordValue>\n");
+      XMLDoc->concat("  </inspire_common:Keyword>\n");
+      XMLDoc->concat("\n");
+      XMLDoc->concat("  <inspire_common:SupportedLanguages>\n");
+      XMLDoc->concat("    <inspire_common:DefaultLanguage>\n");
+      XMLDoc->concat("      <inspire_common:Language>eng</inspire_common:Language>\n");
+      XMLDoc->concat("    </inspire_common:DefaultLanguage>\n");
+      XMLDoc->concat("    <inspire_common:SupportedLanguage>\n");
+      XMLDoc->concat("      <inspire_common:Language>dut</inspire_common:Language>\n");
+      XMLDoc->concat("    </inspire_common:SupportedLanguage>\n");
+      XMLDoc->concat("  </inspire_common:SupportedLanguages>\n");
+      XMLDoc->concat("  <inspire_common:ResponseLanguage>\n");
+      XMLDoc->concat("    <inspire_common:Language>eng</inspire_common:Language>\n");
+      XMLDoc->concat("  </inspire_common:ResponseLanguage>\n");
+      XMLDoc->concat("</inspire_vs:ExtendedCapabilities>\n");
+    }    
+    
+    
+    //Set INSPIRE SCHEMA
+    CT::string inspirexsi=
+      "xmlns:inspire_common=\"http://inspire.ec.europa.eu/schemas/common/1.0\"\n"
+      "xmlns:inspire_vs=\"http://inspire.ec.europa.eu/schemas/inspire_vs/1.0\"\n"
+      "xsi:schemaLocation=\"http://inspire.ec.europa.eu/schemas/inspire_vs/1.0 http://inspire.ec.europa.eu/schemas/inspire_vs/1.0/inspire_vs.xsd\"\n";
+    XMLDoc->replaceSelf("[SCHEMADEFINITION]",inspirexsi.c_str());
+    
+    //Set INSPIRE layer keywords
+    if(srvParam->cfg->WMS[0]->Keywords.size()==1){            
+      if(srvParam->cfg->WMS[0]->Keywords[0]->value.c_str()!=NULL){
+      XMLDoc->concat("<KeywordList>\n");
+      CT::string keyWords = srvParam->cfg->WMS[0]->Keywords[0]->value.c_str();
+      CT::string* keywordList = keyWords.splitToArray(",");
+      for(size_t j=0;j<keywordList->count;j++){
+        XMLDoc->printconcat("<Keyword>%s</Keyword>\n",keywordList[j].c_str()); // TODO
+      }
+      delete[] keywordList;
+      XMLDoc->concat("</KeywordList>\n");
+      }
+    }
+  }else{
+    //Default WMS 1.3.0 service
+    CT::string wms130xsi="xsi:schemaLocation=\"http://www.opengis.net/wms http://schemas.opengis.net/wms/1.3.0/capabilities_1_3_0.xsd\"\n";
+    XMLDoc->replaceSelf("[SCHEMADEFINITION]",wms130xsi.c_str());
+  }
+  
+
+  XMLDoc->concat("<Layer>\n");
+  XMLDoc->printconcat("<Title>%s</Title>\n",srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->value.c_str());
+  
+    
   if(myWMSLayerList->size()>0){
     for(size_t p=0;p<(*myWMSLayerList)[0]->projectionList.size();p++){
       WMSLayer::Projection *proj = (*myWMSLayerList)[0]->projectionList[p];
@@ -1036,6 +1179,24 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
       XMLDoc->concat(&proj->name);
       XMLDoc->concat("</CRS>\n");
     }
+    for(size_t p=0;p<(*myWMSLayerList)[0]->projectionList.size();p++){
+      WMSLayer::Projection *proj = (*myWMSLayerList)[0]->projectionList[p];
+      if(srvParam->checkBBOXXYOrder(proj->name.c_str())==true){
+        XMLDoc->printconcat("<BoundingBox CRS=\"%s\" minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\" />\n",proj->name.c_str(),proj->dfBBOX[1],proj->dfBBOX[0],proj->dfBBOX[3],proj->dfBBOX[2]);
+      }else{
+        XMLDoc->printconcat("<BoundingBox CRS=\"%s\" minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\" />\n",proj->name.c_str(),proj->dfBBOX[0],proj->dfBBOX[1],proj->dfBBOX[2],proj->dfBBOX[3]);
+      }
+    }
+   
+    if((*myWMSLayerList)[0]->dataSource->cfgLayer->MetadataURL.size()>0){            
+      CT::string layerMetaDataURL = (*myWMSLayerList)[0]->dataSource->cfgLayer->MetadataURL[0]->value.c_str();
+      layerMetaDataURL.replaceSelf("&","&amp;");
+      XMLDoc->concat("  <MetadataURL type=\"ISO19115:2005\">\n");
+      XMLDoc->concat("     <Format>application/gml+xml; version=3.2</Format>\n");
+      XMLDoc->printconcat("     <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>",layerMetaDataURL.c_str());
+      XMLDoc->concat("  </MetadataURL>\n");
+    }
+      
     
     //Make a unique list of all groups
     std::vector <std::string>  groupKeys;
@@ -1121,8 +1282,17 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
             XMLDoc->printconcat("<Layer queryable=\"%d\" opaque=\"0\" cascaded=\"0\">\n",layer->isQuerable);
             XMLDoc->concat("<Name>"); XMLDoc->concat(&layer->name);XMLDoc->concat("</Name>\n");
             XMLDoc->concat("<Title>"); XMLDoc->concat(&layer->title);XMLDoc->concat("</Title>\n");
-            XMLDoc->concat("<Abstract>"); XMLDoc->concat(&layer->abstract);XMLDoc->concat("</Abstract>\n");
-            
+            //TODO
+          
+            if(layer->abstract.length()>0){
+              XMLDoc->concat("<Abstract>"); XMLDoc->concat(&layer->abstract);XMLDoc->concat("</Abstract>\n");
+            }
+            //XMLDoc->concat("<Keyword>"); XMLDoc->concat(&layer->abstract);XMLDoc->concat("</Keyword>\n");
+         
+
+            if(layer->dataSource->cfgLayer->MetadataURL.size()>0){
+                XMLDoc->concat("  <KeywordList><Keyword>precipitation_amount</Keyword></KeywordList>\n");
+            }
             XMLDoc->printconcat("<EX_GeographicBoundingBox>\n"
                                 "  <westBoundLongitude>%f</westBoundLongitude>\n"
                                 "  <eastBoundLongitude>%f</eastBoundLongitude>\n"
@@ -1133,11 +1303,8 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
             
             for(size_t p=0;p<layer->projectionList.size();p++){
               WMSLayer::Projection *proj = layer->projectionList[p];
-              /*XMLDoc->concat("<SRS>"); 
-              XMLDoc->concat(&proj->name);
-              XMLDoc->concat("</SRS>\n");*/
-              //TODO EPSG:4326 YX reversal...
-              if(srvParam->checkBBOXXYOrder()==true){
+              
+              if(srvParam->checkBBOXXYOrder(proj->name.c_str())==true){
                 XMLDoc->printconcat("<BoundingBox CRS=\"%s\" minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\" />\n",proj->name.c_str(),proj->dfBBOX[1],proj->dfBBOX[0],proj->dfBBOX[3],proj->dfBBOX[2]);
               }else{
                 XMLDoc->printconcat("<BoundingBox CRS=\"%s\" minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\" />\n",proj->name.c_str(),proj->dfBBOX[0],proj->dfBBOX[1],proj->dfBBOX[2],proj->dfBBOX[3]);
@@ -1152,7 +1319,10 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
               XMLDoc->concat(dim->values.c_str());
               XMLDoc->concat("</Dimension>\n");
             }
-            
+            if(inspireMetadata){
+              XMLDoc->concat(" <AuthorityURL name=\"NL.KNMI\"><OnlineResource xlink:href=\"http://knmi.nl/\" /></AuthorityURL>\n");
+              XMLDoc->concat("  <Identifier authority=\"NL.KNMI\">id_value</Identifier>\n");
+              }
             //Styles
             for(size_t s=0;s<layer->styleList.size();s++){
               WMSLayer::Style * style = layer->styleList[s];
@@ -1172,14 +1342,9 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
               XMLDoc->concat("    </LegendURL>");
               XMLDoc->concat("  </Style>");
             
-              //TODO THIS will change
-              if(layer->dataSource->cfgLayer->MetadataURL.size()>0){
-                XMLDoc->concat("   <MetadataURL type=\"TC211\">\n");
-                XMLDoc->concat("     <Format>text/xml</Format>\n");
-                XMLDoc->printconcat("     <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:type=\"simple\" xlink:href=\"%s\"/>",layer->dataSource->cfgLayer->MetadataURL[0]->value.c_str());
-                XMLDoc->concat("   </MetadataURL>\n");
-              } 
+
             }
+ 
             XMLDoc->concat("</Layer>\n");
           }else{
             CDBError("Skipping layer %s",layer->name.c_str());

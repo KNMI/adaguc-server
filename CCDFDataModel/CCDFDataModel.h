@@ -298,6 +298,7 @@ namespace CDF{
     public:
       class CustomReader{
         public:
+          virtual ~CustomReader(){}
           virtual int readData(CDF::Variable *thisVar,void *data,size_t *start,size_t *count,ptrdiff_t *stride) = 0;
       };
   private:

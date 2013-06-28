@@ -182,7 +182,7 @@ class CImgWarpBilinear:public CImageWarperRenderInterface{
             val*=sourceImage->legendScale;
             val+=sourceImage->legendOffset;
             if(val>=239)val=239;else if(val<0)val=0;
-            return val;
+            return int(val);
           }
       return 0;
     }

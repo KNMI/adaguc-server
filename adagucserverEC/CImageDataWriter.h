@@ -79,7 +79,10 @@ public:
   typedef unsigned int RenderMethod;
   class StyleConfiguration {
   public:
-    
+    StyleConfiguration(){
+      legendTickInterval = 0;
+      legendTickRound = 0.1;
+    }
     float shadeInterval,contourIntervalL,contourIntervalH;
     float legendScale,legendOffset,legendLog;
     float legendLowerRange,legendUpperRange;//Values in which values are visible (ValueRange)
