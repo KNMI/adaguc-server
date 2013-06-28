@@ -96,6 +96,7 @@ void CServerParams::getCacheFileName(CT::string *cacheFileName){
 
 
 void CServerParams::getCacheDirectory(CT::string *cacheFileName){
+ 
   //CDBDebug("getCacheDirectory");
   CT::string cacheName("WMSCACHE");
   bool useProvidedCacheFileName=false;
@@ -453,9 +454,15 @@ CT::string CServerParams::getOnlineResource(){
 }
 
 
-bool CServerParams::checkBBOXXYOrder(){
+bool CServerParams::checkBBOXXYOrder(const char *projName){
   if(OGCVersion == WMS_VERSION_1_3_0){
-    if(Geo->CRS.equals("EPSG:4326"))return true;
+    CT::string projNameString;
+    if(projName == NULL){
+      projNameString = Geo->CRS.c_str();
+    }else{
+      projNameString = projName;
+    }
+    if(projNameString.equals("EPSG:4326"))return true;
   }
   return false;
 }

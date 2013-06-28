@@ -376,6 +376,11 @@ class CServerConfig:public CXMLSerializerInterface{
     };
     class XMLE_Styles: public CXMLObjectInterface{};
     class XMLE_Title: public CXMLObjectInterface{};
+    
+
+    class XMLE_Keywords: public CXMLObjectInterface{};
+    class XMLE_MetadataURL: public CXMLObjectInterface{};        
+  
     class XMLE_Name: public CXMLObjectInterface{
       public:
         class Cattr{
@@ -563,6 +568,10 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_DimensionFont*> DimensionFont;
         std::vector <XMLE_GridFont*> GridFont;
         std::vector <XMLE_WMSFormat*> WMSFormat;
+        std::vector <XMLE_Keywords*> Keywords;
+        std::vector <XMLE_MetadataURL*> MetadataURL;
+        
+        
         
         ~XMLE_WMS(){
           XMLE_DELOBJ(Title);
@@ -574,6 +583,9 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(DimensionFont);
           XMLE_DELOBJ(GridFont);
           XMLE_DELOBJ(WMSFormat);
+          XMLE_DELOBJ(Keywords);
+          XMLE_DELOBJ(MetadataURL);
+          
           
         }
         void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value){
@@ -591,7 +603,8 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("ContourFont",11,name)){XMLE_ADDOBJ(ContourFont);}
             else if(equals("SubTitleFont",12,name)){XMLE_ADDOBJ(SubTitleFont);}
             else if(equals("DimensionFont",13,name)){XMLE_ADDOBJ(DimensionFont);}
-            
+            else if(equals("Keywords",8,name)){XMLE_ADDOBJ(Keywords);}
+            else if(equals("MetadataURL",11,name)){XMLE_ADDOBJ(MetadataURL);}
           }
           if(pt2Class!=NULL)pt2Class->addElement(baseClass,rc-pt2Class->level,name,value);
         }
@@ -636,16 +649,7 @@ class CServerConfig:public CXMLSerializerInterface{
           else if(equals("cachefile",9,attrname)){attr.cachefile.copy(attrvalue);return;}
         }
     };
-    class XMLE_MetadataURL: public CXMLObjectInterface{
-      public:
-        class Cattr{
-          public:
-            CXMLString value;
-        }attr;
-        void addAttribute(const char *attrname,const char *attrvalue){
-          if(equals("value",5,attrname)){attr.value.copy(attrvalue);return;}
-        }
-    };
+  
     
     class XMLE_WMSLayer: public CXMLObjectInterface{
       public:
@@ -712,6 +716,8 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_Name*> Name;
         std::vector <XMLE_Group*> Group;
         std::vector <XMLE_Title*> Title;
+        std::vector <XMLE_Abstract*> Abstract;
+        
         //std::vector <XMLE_DataBaseTable*> DataBaseTable;
         std::vector <XMLE_Variable*> Variable;
         std::vector <XMLE_FilePath*> FilePath;
@@ -748,6 +754,7 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(Name);
           XMLE_DELOBJ(Group);
           XMLE_DELOBJ(Title);
+          XMLE_DELOBJ(Abstract);
           //XMLE_DELOBJ(DataBaseTable);
           XMLE_DELOBJ(Variable);
           XMLE_DELOBJ(FilePath);
@@ -788,6 +795,7 @@ class CServerConfig:public CXMLSerializerInterface{
             if(equals("Name",4,name)){XMLE_ADDOBJ(Name);}
             else if(equals("Group",5,name)){XMLE_ADDOBJ(Group);}
             else if(equals("Title",5,name)){XMLE_ADDOBJ(Title);}
+            else if(equals("Abstract",8,name)){XMLE_ADDOBJ(Abstract);}
             //else if(equals("DataBaseTable",13,name)){XMLE_ADDOBJ(DataBaseTable);}
             else if(equals("Variable",8,name)){XMLE_ADDOBJ(Variable);}
             else if(equals("FilePath",8,name)){XMLE_ADDOBJ(FilePath);}

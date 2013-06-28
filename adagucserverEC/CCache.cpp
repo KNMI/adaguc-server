@@ -102,21 +102,29 @@ bool CCache::isCacheFileBusyBlocking(){
   if(fileName.length()==0)return false;
   int maxTries = 60;//Wait 60 seconds.
   int currentTries=maxTries;
-  
+  bool cacheWasLocked = false;
   //Is some kind of process working on any of the cache files?
   do{
     if(isCacheFileBusy()){
+      cacheWasLocked = true;
       if(currentTries<=0){
         CDBDebug("!!! A process is working already 60 seconds on %s, skipping wait",fileName.c_str());
         return true;
       }else{
         CDBDebug("Another process is working on %s, waiting... %d",fileName.c_str(),maxTries-currentTries+1);
+        
         //Wait 1 second and try again
         usleep(1000000);
       }
-    }else return false;
+    }else {
+      if(cacheWasLocked){
+        CDBDebug("Another process has finished working on %s",fileName.c_str());
+      }
+      return false;
+    }
     currentTries--;
   }while(currentTries>0);
+  
   return false;        
 }
 

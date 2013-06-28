@@ -2257,13 +2257,14 @@ int CImageDataWriter::getTextForValue(CT::string *tv,float v,StyleConfiguration 
 }
 
 int CImageDataWriter::end(){
-  #ifdef CIMAGEDATAWRITER_DEBUG    
-  CDBDebug("end, number of GF results: %d",getFeatureInfoResultList.size());
-  #endif
+ 
   if(writerStatus==uninitialized){CDBError("Not initialized");return 1;}
   if(writerStatus==finished){CDBError("Already finished");return 1;}
   writerStatus=finished;
   if(requestType==REQUEST_WMS_GETFEATUREINFO){
+    #ifdef CIMAGEDATAWRITER_DEBUG    
+      CDBDebug("end, number of GF results: %d",getFeatureInfoResultList.size());
+    #endif
     enum ResultFormats {textplain,texthtml,textxml, applicationvndogcgml,imagepng,imagegif,json};
     ResultFormats resultFormat=texthtml;
     
@@ -2830,9 +2831,11 @@ int CImageDataWriter::end(){
       float classes=((overallMaxValue-overallMinValue)/significantDigits)*2;
       int tickRound=0;
 
+      CDBDebug("tickinterval = %f",currentStyleConfiguration->legendTickInterval);
       if(currentStyleConfiguration->legendTickInterval>0.0f){
         classes=(plotObjects[0]->minValue-plotObjects[0]->maxValue)/currentStyleConfiguration->legendTickInterval;
       }
+      
       if(currentStyleConfiguration->legendTickRound>0){
         tickRound = int(round(log10(currentStyleConfiguration->legendTickRound))+3);
       }
@@ -2878,7 +2881,7 @@ int CImageDataWriter::end(){
       }
       plotCanvas.createImage(int(width),int(height));
       plotCanvas.create685Palette();
-      lineCanvas.createImage(plotWidth,plotHeight);
+      lineCanvas.createImage(int(plotWidth),int(plotHeight));
       lineCanvas.create685Palette();
       //lineCanvas.rectangle(0,0,int(plotWidth/2),int(plotHeight),CColor(255,255,255,255),CColor(255,255,255,255));
       lineCanvas.rectangle(-1,-1,int(plotWidth+1),int(plotHeight+1),CColor(255,255,255,255),CColor(255,255,255,255));
@@ -2898,7 +2901,7 @@ int CImageDataWriter::end(){
         size_t tp=tx*rows+ty;
         if(tp<nrOfPlotObjectsForTitle){
           CT::string title=plotObjects[tp]->name.c_str();
-          int x = tx*((width-80)/cols)+80;
+          int x = int(tx*((width-80)/cols)+80);
           int y=12+ty*10;
           plotCanvas.rectangle(x-30,y-7,x-5,y,getColorForPlot(tp,plotObjects.size()),CColor(0,0,0,128));
           plotCanvas.drawText(x,y,fontLocation,7,0,title.c_str(),CColor(0,0,0,255),CColor(255,255,255,0));
@@ -2917,7 +2920,7 @@ int CImageDataWriter::end(){
     
         //if(j!=0)
         lineCanvas.line(0,(int)c,plotWidth,(int)c,0.5,CColor(0,0,128,128));
-        if(tickRound==0){floatToString(szTemp,255,1/significantDigits+1,v);}else{
+        if(tickRound==0){floatToString(szTemp,255,int(1/significantDigits+1),v);}else{
           floatToString(szTemp,255,tickRound,v);
         }
         plotCanvas.drawText(5,int(c+plotOffsetY+3),fontLocation,8,0,szTemp,CColor(0,0,0,255),CColor(255,255,255,0));
@@ -2941,11 +2944,11 @@ int CImageDataWriter::end(){
             if(timePos1.hour==0&&timePos1.minute==0&&timePos1.second==0){
               lineCanvas.line(x1,0,x1,plotHeight,1.5,CColor(0,0,0,255));
               char szTemp[256];snprintf(szTemp,255,"%d",timePos1.day);
-              plotCanvas.drawText(x1-strlen(szTemp)*4+plotOffsetX+1,int(plotOffsetY+plotHeight+12),fontLocation,9,0,szTemp,CColor(0,0,0,255),CColor(255,255,255,0));
+              plotCanvas.drawText(int(x1-strlen(szTemp)*4+plotOffsetX+1),int(plotOffsetY+plotHeight+12),fontLocation,9,0,szTemp,CColor(0,0,0,255),CColor(255,255,255,0));
             }else if(timePos1.minute==0&&timePos1.second==0){
               lineCanvas.line(x1,0,x1,plotHeight,0.5,CColor(0,0,128,128));
               char szTemp[256];snprintf(szTemp,255,"%d",timePos1.hour);
-              plotCanvas.drawText(x1-strlen(szTemp)*2+plotOffsetX+1,int(plotOffsetY+plotHeight+8),fontLocation,5,0,szTemp,CColor(0,0,0,192),CColor(255,255,255,0));
+              plotCanvas.drawText(int(x1-strlen(szTemp)*2+plotOffsetX+1),int(plotOffsetY+plotHeight+8),fontLocation,5,0,szTemp,CColor(0,0,0,192),CColor(255,255,255,0));
             }else{
               lineCanvas.line(x1,0,x1,plotHeight,0.5,CColor(128,128,128,128));
             }
@@ -2996,7 +2999,7 @@ int CImageDataWriter::end(){
       //GetFeatureInfoResult::Element * e2=getFeatureInfoResultList[getFeatureInfoResultList.size()-1]->elements[0];
       title.print("Dates: %s till %s",startDateString.c_str(),stopDateString.c_str());
       plotCanvas.drawText(int(plotWidth/2-float(title.length())*2.5),int(height-5),fontLocation,8,0,title.c_str(),CColor(0,0,0,255),CColor(255,255,255,0));
-        plotCanvas.draw(plotOffsetX, plotOffsetY,0,0,&lineCanvas);
+        plotCanvas.draw(int(plotOffsetX), int(plotOffsetY),0,0,&lineCanvas);
       if(resultFormat==imagepng){
         printf("%s%c%c\n","Content-Type:image/png",13,10);
         plotCanvas.printImagePng();
@@ -3040,7 +3043,7 @@ StopWatch_Stop("Drawing finished");
   //Static image
   int status=0;
   if(srvParam->imageFormat==IMAGEFORMAT_IMAGEPNG8||srvParam->imageFormat==IMAGEFORMAT_IMAGEPNG32){
-    
+    CDBDebug("LegendGraphic PNG");
     //printf("%s%c%c","Cache-Control: max-age=3600, must-revalidate",13,10);
     //printf("%s%c%c","Pragma: no-cache",13,10);
     //printf("%s%c%c","Cache-Control:no-store,no-cache,must-revalidate,post-check=0,pre-check=0",13,10);
@@ -3056,9 +3059,11 @@ StopWatch_Stop("Drawing finished");
     
     status=drawImage.printImagePng();
   }else if(srvParam->imageFormat==IMAGEFORMAT_IMAGEGIF){
+    CDBDebug("LegendGraphic GIF");
     printf("%s%c%c\n","Content-Type:image/gif",13,10);
     status=drawImage.printImageGif();
   }else {
+    CDBDebug("LegendGraphic PNG");
     printf("%s%c%c\n","Content-Type:image/png",13,10);
     status=drawImage.printImagePng();
   }
@@ -3230,13 +3235,15 @@ if(legendType == cascaded){
     int tickRound=0;
     double min=getValueForColorIndex(dataSource,0);
     double max=getValueForColorIndex(dataSource,240);
-    if(currentStyleConfiguration->legendTickInterval>0.0f){
-      classes=(max-min)/double(currentStyleConfiguration->legendTickInterval);
+   
+    if(currentStyleConfiguration->legendTickInterval>0){
+      classes=(max-min)/currentStyleConfiguration->legendTickInterval;
       
     }
     if(currentStyleConfiguration->legendTickRound>0){
       tickRound = int(round(log10(currentStyleConfiguration->legendTickRound))+3);
     }
+
     
     //CDBDebug("LEGEND: scale %f offset %f",dataSource->legendScale,dataSource->legendOffset);
     for(int j=0;j<=classes+1;j++){

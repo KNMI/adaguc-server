@@ -261,7 +261,7 @@ public:
 
     error = FT_Set_Char_Size( face, /* handle to face object */
                               0, /* char_width in 1/64th of points */
-                              fontSize*64, /* char_height in 1/64th of points */
+                              int(fontSize*64), /* char_height in 1/64th of points */
                               100, /* horizontal device resolution */
                               100 ); /* vertical device resolution */
     if ( error ) {
@@ -330,7 +330,7 @@ public:
     int orgr=this->r;
     int orgg=this->g;
     int orgb=this->b;
-    int orga=this->a;
+    int orga=int(this->a);
     
     FT_Vector pen; /* untransformed origin */
     pen.x = x * 64; pen.y = ( my_target_height - y ) * 64;
@@ -338,7 +338,7 @@ public:
     filledRectangle( pen.x/64-5, 
                      my_target_height-(pen.y)/64 +8,
                      (pen.x)/64,
-                     my_target_height-(pen.y )/64-fontSize-4);
+                     my_target_height-(pen.y )/64-int(fontSize)-4);
     for ( int n = 0; n < num_chars; n++ ) { /* set transformation */
       FT_Set_Transform( face, &matrix, &pen ); /* load glyph image into the  face->glyph (erase previous one) */
       error = FT_Load_Char( face, text[n], FT_LOAD_RENDER );
@@ -352,7 +352,7 @@ public:
       filledRectangle( pen.x/64, 
                        my_target_height-(pen.y)/64 +5,
                        (pen.x+face->glyph->advance.x)/64,
-                       my_target_height-(pen.y )/64-fontSize-4);
+                       my_target_height-(pen.y )/64-int(fontSize)-4);
       setColor(orgr,orgg,orgb,orga);
       renderFont( & face->glyph->bitmap,  face->glyph->bitmap_left, my_target_height -  face->glyph->bitmap_top );
       /* increment pen position */
@@ -362,7 +362,7 @@ public:
     filledRectangle( pen.x/64, 
                  my_target_height-(pen.y)/64 +5,
                  (pen.x)/64+5,
-                 my_target_height-(pen.y )/64-fontSize-4);
+                 my_target_height-(pen.y )/64-int(fontSize)-4);
     setColor(orgr,orgg,orgb,orga);
     return 0;
   }

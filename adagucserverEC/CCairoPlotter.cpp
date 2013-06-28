@@ -62,10 +62,10 @@ void CCairoPlotter::pixelBlend(int x,int y, unsigned char r,unsigned char g,unsi
       float sr=ARGBByteBuffer[p+2];sr=sr*a1+r*a2;if(sr>255)sr=255;
       float sg=ARGBByteBuffer[p+1];sg=sg*a1+g*a2;if(sg>255)sg=255;
       float sb=ARGBByteBuffer[p+0];sb=sb*a1+b*a2;if(sb>255)sb=255;
-      ARGBByteBuffer[p+2]=sr;
-      ARGBByteBuffer[p+1]=sg;
-      ARGBByteBuffer[p+0]=sb;
-      ARGBByteBuffer[p+3]=tf;
+      ARGBByteBuffer[p+2]=(unsigned char)sr;
+      ARGBByteBuffer[p+1]=(unsigned char)sg;
+      ARGBByteBuffer[p+0]=(unsigned char)sb;
+      ARGBByteBuffer[p+3]=(unsigned char)tf;
       
     }
     
@@ -76,9 +76,9 @@ void CCairoPlotter::pixelBlend(int x,int y, unsigned char r,unsigned char g,unsi
     if(x>=width||y>=height)return;
     size_t p=x*4+y*stride;
     if(a!=255){
-    ARGBByteBuffer[p]=(float(b)/256.0)*float(a);
-    ARGBByteBuffer[p+1]=(float(g)/256.0)*float(a);
-    ARGBByteBuffer[p+2]=(float(r)/256.0)*float(a);
+    ARGBByteBuffer[p]=(unsigned char)((float(b)/256.0)*float(a));
+    ARGBByteBuffer[p+1]=(unsigned char)((float(g)/256.0)*float(a));
+    ARGBByteBuffer[p+2]=(unsigned char)((float(r)/256.0)*float(a));
     ARGBByteBuffer[p+3]=a;
     }else{
       ARGBByteBuffer[p]=b;

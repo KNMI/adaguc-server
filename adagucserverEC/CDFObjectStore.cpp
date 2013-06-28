@@ -194,6 +194,11 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *s
       CDBDebug("This is already a cache file: %s",fileName);
       hasCacheLocation = false;
     }
+    
+    if(!srvParams->isAutoResourceCacheEnabled()){
+      hasCacheLocation = false;
+    }
+    
   }
   
   
