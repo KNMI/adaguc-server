@@ -3218,41 +3218,127 @@ if(legendType == cascaded){
   
   //Draw a continous legend
   if( legendType == continous ){
-    float cbW = 20;//legendWidth/8;
+    
+    bool drawUpperTriangle = false;
+    bool drawLowerTriangle = false;
+    
+    if(currentStyleConfiguration->hasLegendValueRange){
+      drawUpperTriangle = true;
+      drawLowerTriangle = true;
+    
+      float minValue = getValueForColorIndex(dataSource,0);
+      float maxValue = getValueForColorIndex(dataSource,240);
+      if(currentStyleConfiguration->legendLowerRange>=minValue){
+        drawLowerTriangle = false;
+      }
+      if(currentStyleConfiguration->legendUpperRange<=maxValue){
+        drawUpperTriangle = false;
+      }
+    }
+    
+    
+    
+    float triangleShape = 1.1;
+    
+
+    
+    float cbW = 19;//legendWidth/8;
+    float triangleHeight = int(cbW/triangleShape);
     float cbH = legendHeight-13-13;
     int dH=0;
     
-    for(int j=0;j<cbH;j++){
-      for(int i=0;i<cbW+3;i++){
-        float c=(float(cbH*legendPositiveUp-j)/cbH)*240.0f;
-        legendImage->setPixelIndexed(i+pLeft,j+7+dH+pTop,int(c));
-      }
+    if(drawUpperTriangle){
+      dH+=triangleHeight;
+      cbH-=triangleHeight;
     }
-    legendImage->rectangle(pLeft,7+dH+pTop,(int)cbW+3+pLeft,(int)cbH+7+dH+pTop,248);
-  
+    if(drawLowerTriangle){
+      cbH-=triangleHeight;
+    }
+    
+    
+    
+    int minColor;
+    int maxColor;
+    for(int j=0;j<cbH;j++){
+      //for(int i=0;i<cbW+3;i++){
+        float c=(float(cbH*legendPositiveUp-(j+1))/cbH)*240.0f;
+        //legendImage->setPixelIndexed(i+pLeft,j+7+dH+pTop,int(c));
+        legendImage->line(pLeft,j+7+dH+pTop,pLeft+(int)cbW+1,j+7+dH+pTop,int(c));
+        if(j==0)minColor = int(c);
+        maxColor = int(c);
+     // }
+    }
+    //legendImage->rectangle(pLeft,7+dH+pTop,(int)cbW+3+pLeft,(int)cbH+7+dH+pTop,248);
+    
+    legendImage->line(pLeft,7+dH+pTop,pLeft,(int)cbH+7+dH+pTop,0.5,248);
+    legendImage->line((int)cbW+1+pLeft,7+dH+pTop,(int)cbW+1+pLeft,(int)cbH+7+dH+pTop,0.5,248);
+    
+        
+    
+    int triangleLX= pLeft;
+    int triangleRX= (int)cbW+1+pLeft;
+    int triangle1BY= 7+dH+pTop-1
+    ;
+    int triangleMX = (int)cbW+pLeft-int(cbW/2.0);
+    int triangle1TY = 7+dH+pTop-triangleHeight;
+    
+    int triangle2TY= (int)cbH+7+dH+pTop;
+    int triangle2BY = (int)cbH+7+dH+pTop+triangleHeight;
+    
+    if(drawUpperTriangle){
+      //Draw upper triangle
+      for(int j=0;j<(triangle1BY-triangle1TY)+1;j++){
+        int dx=int((float(j)/float(triangle1BY-triangle1TY))*cbW/2.0);
+        //int dx=int((float(j)/float((triangle2BY-triangle2TY)))*cbW/2.0);
+        legendImage->line(triangleLX+dx,triangle1BY-j,triangleRX-dx-0.5,triangle1BY-j,minColor);
+      }
+      legendImage->line(triangleLX,triangle1BY,triangleMX,triangle1TY-1,0.5,248);
+      legendImage->line(triangleRX,triangle1BY,triangleMX,triangle1TY-1,0.5,248);
+    }else{
+      legendImage->line(triangleLX,triangle1BY+1,triangleRX,triangle1BY+1,0.8,248);
+    }
+    
+    if(drawLowerTriangle){
+      //Draw lower triangle
+      for(int j=0;j<(triangle2BY-triangle2TY)+1;j++){
+        int dx=int((float(j)/float((triangle2BY-triangle2TY)))*cbW/2.0);
+        legendImage->line(triangleLX+dx+1,triangle2TY+j,triangleRX-dx,triangle2TY+j,maxColor);
+      }
 
-    float classes=6;
+      legendImage->line(triangleLX,triangle2TY,triangleMX,triangle2BY+1,0.5,248);
+      legendImage->line(triangleRX,triangle2TY,triangleMX,triangle2BY+1,0.5,248);
+    }else{
+      legendImage->line(triangleLX,triangle2TY,triangleRX,triangle2TY,0.8,248);
+    }
+
+    double classes=6;
     int tickRound=0;
     double min=getValueForColorIndex(dataSource,0);
     double max=getValueForColorIndex(dataSource,240);
    
     if(currentStyleConfiguration->legendTickInterval>0){
       classes=(max-min)/currentStyleConfiguration->legendTickInterval;
-      
     }
+    
+          
+    if(dataSource->srvParams->wmsExtensions.numColorBands !=-1){
+      classes=int((max-min)/double(dataSource->srvParams->wmsExtensions.numColorBands)+0.5);
+    }
+    
     if(currentStyleConfiguration->legendTickRound>0){
       tickRound = int(round(log10(currentStyleConfiguration->legendTickRound))+3);
     }
 
     
     //CDBDebug("LEGEND: scale %f offset %f",dataSource->legendScale,dataSource->legendOffset);
-    for(int j=0;j<=classes+1;j++){
-      float c=((float(classes*legendPositiveUp-j)/classes))*(cbH);
-      float v=((float(j)/classes))*(240.0f);
+    for(int j=0;j<=classes;j++){
+      double c=((double(classes*legendPositiveUp-j)/classes))*(cbH);
+      double v=((double(j)/classes))*(240.0f);
       v-=dataSource->legendOffset;
       v/=dataSource->legendScale;
       if(dataSource->legendLog!=0){v=pow(dataSource->legendLog,v);}
-      if(v<=max){
+      //if(v<=max)
+      {
         float lineWidth=1;
         legendImage->line((int)cbW-1+pLeft,(int)c+7+dH+pTop,(int)cbW+6+pLeft,(int)c+7+dH+pTop,lineWidth,248);
         if(tickRound==0){floatToString(szTemp,255,v);}else{
