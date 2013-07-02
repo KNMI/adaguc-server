@@ -38,13 +38,13 @@ void floatToString(char * string,size_t maxlen,int numdigits,float number){
   //snprintf(string,maxlen,"%0.2f",number);
   //return;
   if(numdigits>-3&&numdigits<4){
-    if(numdigits <= -3)snprintf(string,maxlen,"%0.5f",number);
-    if(numdigits == -2)snprintf(string,maxlen,"%0.4f",number);
-    if(numdigits == -1)snprintf(string,maxlen,"%0.3f",number);
-    if(numdigits == 0)snprintf(string,maxlen,"%0.3f",number);
-    if(numdigits == 1)snprintf(string,maxlen,"%0.2f",number);
-    if(numdigits == 2)snprintf(string,maxlen,"%0.1f",number);
-    if(numdigits >= 3)snprintf(string,maxlen,"%0.0f",number);
+    if(numdigits <= -3)snprintf(string,maxlen,"%0.5f",float(floor(number*100000.0+0.5)/100000));
+    if(numdigits == -2)snprintf(string,maxlen,"%0.4f",float(floor(number*10000.0+0.5)/10000));
+    if(numdigits == -1)snprintf(string,maxlen,"%0.3f",float(floor(number*1000.0+0.5)/1000));
+    if(numdigits == 0)snprintf(string,maxlen,"%0.3f",float(floor(number*1000.0+0.5)/1000));
+    if(numdigits == 1)snprintf(string,maxlen,"%0.2f",float(floor(number*100.0+0.5)/100));
+    if(numdigits == 2)snprintf(string,maxlen,"%0.1f",float(floor(number*10.0+0.5)/10));
+    if(numdigits >= 3)snprintf(string,maxlen,"%0.0f",float(floor(number+0.5)));
   }
   else
     snprintf(string,maxlen,"%0.3e",number);
