@@ -554,6 +554,12 @@ int CImageDataWriter::makeStyleConfig(StyleConfiguration *styleConfig,CDataSourc
   if(dataSource->srvParams->wmsExtensions.numColorBands !=-1){
     s->shadeInterval=dataSource->srvParams->wmsExtensions.numColorBands;
     s->contourIntervalL=dataSource->srvParams->wmsExtensions.numColorBands;
+    if(dataSource->srvParams->wmsExtensions.numColorBands>0&&dataSource->srvParams->wmsExtensions.numColorBands<300){
+      s->legendTickInterval=int((max-min)/double(dataSource->srvParams->wmsExtensions.numColorBands)+0.5);
+      //s->legendTickRound = s->legendTickInterval;//pow(10,(log10(s->legendTickInterval)-1));
+      //if(s->legendTickRound > 0.1)s->legendTickRound =0.1;
+      // 
+    }
   }
         
   
@@ -3237,12 +3243,14 @@ if(legendType == cascaded){
     }
     
     
+       drawUpperTriangle = true;
+      drawLowerTriangle = true;
     
     float triangleShape = 1.1;
     
 
     
-    float cbW = 19;//legendWidth/8;
+    float cbW = 12;//legendWidth/8;
     float triangleHeight = int(cbW/triangleShape);
     float cbH = legendHeight-13-13;
     int dH=0;
@@ -3292,21 +3300,21 @@ if(legendType == cascaded){
         //int dx=int((float(j)/float((triangle2BY-triangle2TY)))*cbW/2.0);
         legendImage->line(triangleLX+dx,triangle1BY-j,triangleRX-dx-0.5,triangle1BY-j,minColor);
       }
-      legendImage->line(triangleLX,triangle1BY,triangleMX,triangle1TY-1,0.5,248);
-      legendImage->line(triangleRX,triangle1BY,triangleMX,triangle1TY-1,0.5,248);
+      legendImage->line(triangleLX,triangle1BY,triangleMX,triangle1TY-1,0.6,248);
+      legendImage->line(triangleRX,triangle1BY,triangleMX,triangle1TY-1,0.6,248);
     }else{
-      legendImage->line(triangleLX,triangle1BY+1,triangleRX,triangle1BY+1,0.8,248);
+      legendImage->line(triangleLX,triangle1BY+1,triangleRX,triangle1BY+1,0.6,248);
     }
     
     if(drawLowerTriangle){
       //Draw lower triangle
       for(int j=0;j<(triangle2BY-triangle2TY)+1;j++){
         int dx=int((float(j)/float((triangle2BY-triangle2TY)))*cbW/2.0);
-        legendImage->line(triangleLX+dx+1,triangle2TY+j,triangleRX-dx,triangle2TY+j,maxColor);
+        legendImage->line(triangleLX+dx+0.5,triangle2TY+j,triangleRX-dx-0.5,triangle2TY+j,maxColor);
       }
 
-      legendImage->line(triangleLX,triangle2TY,triangleMX,triangle2BY+1,0.5,248);
-      legendImage->line(triangleRX,triangle2TY,triangleMX,triangle2BY+1,0.5,248);
+      legendImage->line(triangleLX,triangle2TY,triangleMX,triangle2BY+1,0.6,248);
+      legendImage->line(triangleRX,triangle2TY,triangleMX,triangle2BY+1,0.6,248);
     }else{
       legendImage->line(triangleLX,triangle2TY,triangleRX,triangle2TY,0.8,248);
     }
@@ -3317,13 +3325,12 @@ if(legendType == cascaded){
     double max=getValueForColorIndex(dataSource,240);
    
     if(currentStyleConfiguration->legendTickInterval>0){
-      classes=(max-min)/currentStyleConfiguration->legendTickInterval;
+      //classes=(max-min)/currentStyleConfiguration->legendTickInterval;
+      classes=int((max-min)/double(currentStyleConfiguration->legendTickInterval)+0.5);
     }
     
-          
-    if(dataSource->srvParams->wmsExtensions.numColorBands !=-1){
-      classes=int((max-min)/double(dataSource->srvParams->wmsExtensions.numColorBands)+0.5);
-    }
+    
+    
     
     if(currentStyleConfiguration->legendTickRound>0){
       tickRound = int(round(log10(currentStyleConfiguration->legendTickRound))+3);
@@ -3337,9 +3344,10 @@ if(legendType == cascaded){
       v-=dataSource->legendOffset;
       v/=dataSource->legendScale;
       if(dataSource->legendLog!=0){v=pow(dataSource->legendLog,v);}
+      
       //if(v<=max)
       {
-        float lineWidth=1;
+        float lineWidth=0.8;
         legendImage->line((int)cbW-1+pLeft,(int)c+7+dH+pTop,(int)cbW+6+pLeft,(int)c+7+dH+pTop,lineWidth,248);
         if(tickRound==0){floatToString(szTemp,255,v);}else{
           floatToString(szTemp,255,tickRound,v);
