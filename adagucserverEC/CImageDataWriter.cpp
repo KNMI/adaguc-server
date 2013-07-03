@@ -3083,7 +3083,7 @@ StopWatch_Stop("Drawing finished");
   return status;
 }
 float CImageDataWriter::getValueForColorIndex(CDataSource *dataSource,int index){
-  /*if(dataSource->stretchMinMax){
+  if(dataSource->stretchMinMax){
     if(dataSource->statistics==NULL){
       dataSource->statistics = new CDataSource::Statistics();
       dataSource->statistics->calculate(dataSource);
@@ -3095,9 +3095,9 @@ float CImageDataWriter::getValueForColorIndex(CDataSource *dataSource,int index)
     float lo=-(minValue*ls);
     dataSource->legendScale=ls;
     dataSource->legendOffset=lo;
-    CDBDebug("max=%f; min=%f",maxValue,minValue);
-    CDBDebug("scale=%f; offset=%f",ls,lo);
-  }  */
+    //CDBDebug("max=%f; min=%f",maxValue,minValue);
+    //CDBDebug("scale=%f; offset=%f",ls,lo);
+  }  
   float v=index;
   v-=dataSource->legendOffset;
   v/=dataSource->legendScale;
