@@ -745,6 +745,34 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
           }
           
       
+          //Try to detect calibration_formulas and convert them to scale_factor and add_offset attributes
+          CDF::Attribute *calibration_formulas = calibration->getAttributeNE("calibration_formulas"); 
+          if(calibration_formulas != NULL){
+            CT::string formula = calibration_formulas->getDataAsString();
+            //CDBDebug("Formula: %s",formula.c_str());
+            int rightPartFormulaPos = formula.indexOf("=");
+            int multiplicationSignPos = formula.indexOf("*");
+            int additionSignPos = formula.indexOf("+");
+            if(rightPartFormulaPos != -1 && multiplicationSignPos !=-1 && additionSignPos !=-1){
+              
+              float multiplicationFactor = formula.substring(rightPartFormulaPos+1,multiplicationSignPos).trim().toFloat();
+              float additionFactor = formula.substring(additionSignPos+1,formula.length()).trim().toFloat();
+              //CDBDebug("* = '%s' '%f' and + = '%s' '%f'",multiplicationFactorStr.c_str(),additionFactorStr.c_str(),multiplicationFactor,additionFactor);
+              CDBDebug("Formula %s provides y='%f'*x+'%f'",formula.c_str(),multiplicationFactor,additionFactor);
+              CDF::Attribute* add_offset = new CDF::Attribute();
+              add_offset->setName("add_offset");
+              add_offset->setData(CDF_FLOAT,&additionFactor,1);
+              var->addAttribute(add_offset);
+              
+              CDF::Attribute* scale_factor = new CDF::Attribute();
+              scale_factor->setName("scale_factor");
+              scale_factor->setData(CDF_FLOAT,&multiplicationFactor,1);
+              var->addAttribute(scale_factor);
+            }
+          }
+          
+      
+          
           
           /*CDF::Attribute* nodata = new CDF::Attribute();
           nodata->setName("_FillValue");

@@ -42,6 +42,8 @@
 #ifndef CTYPESCOMPATON
 #define toLowerCaser toLowerCase
 #define replacer replace
+#define trimr trim
+#define substringr substring
 #endif 
 
 
