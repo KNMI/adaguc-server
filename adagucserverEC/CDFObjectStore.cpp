@@ -312,9 +312,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *s
   if(!level2CompatMode)if(CConvertADAGUCVector::convertADAGUCVectorHeader(cdfObject)==0){level2CompatMode=true;};
   if(!level2CompatMode)if(CConvertADAGUCPoint::convertADAGUCPointHeader(cdfObject)==0){level2CompatMode=true;};
   
-  CT::string dump = CDF::dump(cdfObject);
   
-  fprintf(stderr,"%s\n",dump.c_str());
   return cdfObject;
 }
 CDFObjectStore *CDFObjectStore::getCDFObjectStore(){return &cdfObjectStore;};
