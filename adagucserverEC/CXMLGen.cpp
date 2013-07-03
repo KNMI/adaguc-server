@@ -1173,6 +1173,7 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
   
     
   if(myWMSLayerList->size()>0){
+
     for(size_t p=0;p<(*myWMSLayerList)[0]->projectionList.size();p++){
       WMSLayer::Projection *proj = (*myWMSLayerList)[0]->projectionList[p];
       XMLDoc->concat("<CRS>"); 
@@ -1215,6 +1216,9 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
     //Loop through the groups
     int currentGroupDepth=0;
     for(size_t groupIndex=0;groupIndex<groupKeys.size();groupIndex++){
+#ifdef CXMLGEN_DEBUG
+ CDBDebug("group %s",groupKeys[groupIndex].c_str());
+#endif
       //CDBError("group %s",groupKeys[groupIndex].c_str());
       int groupDepth=0;
       
@@ -1276,8 +1280,17 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
       
       for(size_t lnr=0;lnr<myWMSLayerList->size();lnr++){
         WMSLayer *layer = (*myWMSLayerList)[lnr];
+#ifdef CXMLGEN_DEBUG
+          CDBDebug("Comparing %s == %s",layer->group.c_str(),groupKeys[groupIndex].c_str());
+#endif
+        
+        
         if(layer->group.equals(groupKeys[groupIndex].c_str())){
-          //CDBError("layer %d %s",groupDepth,layer->name.c_str());
+#ifdef CXMLGEN_DEBUG
+          CDBDebug("layer %d %s",groupDepth,layer->name.c_str());
+#endif
+
+
           if(layer->hasError==0){
             XMLDoc->printconcat("<Layer queryable=\"%d\" opaque=\"0\" cascaded=\"0\">\n",layer->isQuerable);
             XMLDoc->concat("<Name>"); XMLDoc->concat(&layer->name);XMLDoc->concat("</Name>\n");
@@ -1613,7 +1626,7 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
       //For web: URL encoding is necessary
       //layerUniqueName.encodeURLSelf();
       
-      CT::string layerGroup;
+      CT::string layerGroup = "";
       if(srvParam->cfg->Layer[j]->Group.size()>0){
         if(srvParam->cfg->Layer[j]->Group[0]->attr.value.c_str()!=NULL){
           layerGroup.copy(srvParam->cfg->Layer[j]->Group[0]->attr.value.c_str());

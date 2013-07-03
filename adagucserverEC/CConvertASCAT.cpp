@@ -37,11 +37,15 @@ const char *CConvertASCAT::className="CConvertASCAT";
 int CConvertASCAT::convertASCATHeader( CDFObject *cdfObject ){
   //Check whether this is really an ascat file
   try{
-    cdfObject->getDimension("NUMROWS");
-    cdfObject->getDimension("NUMCELLS");
+    cdfObject->getDimensionIgnoreCase("NUMROWS");
+    cdfObject->getDimensionIgnoreCase("NUMCELLS");
   }catch(int e){
     return 1;
   }
+  
+#ifdef CCONVERTASCAT_DEBUG
+  CDBDebug("HEADER: This is ascat data");
+#endif
   
   bool hasTimeData = false;
   
@@ -217,17 +221,24 @@ int CConvertASCAT::convertASCATHeader( CDFObject *cdfObject ){
  * This function draws the virtual 2D variable into a new 2D field
  */
 int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
-  #ifdef CCONVERTASCAT_DEBUG
-  CDBDebug("convertASCATData");
-  #endif
+
   CDFObject *cdfObject = dataSource->dataObject[0]->cdfObject;
   try{
-    cdfObject->getDimension("NUMROWS");
-    cdfObject->getDimension("NUMCELLS");
+    cdfObject->getDimensionIgnoreCase("NUMROWS");
+    cdfObject->getDimensionIgnoreCase("NUMCELLS");
   }catch(int e){
     return 1;
   }
+ 
+  
+  
   size_t nrDataObjects = dataSource->dataObject.size();
+  if(nrDataObjects<=0)return 1;
+   
+  #ifdef CCONVERTASCAT_DEBUG
+  
+  CDBDebug("convertASCATData %s",dataSource->dataObject[0]->cdfVariable->name.c_str());
+  #endif
   CDF::Variable *new2DVar[nrDataObjects];
   CDF::Variable *swathVar[nrDataObjects];
   

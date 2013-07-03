@@ -455,19 +455,54 @@ namespace CT{
     
     bool string::equals(const char *_value,size_t _length){
       if(_value==NULL)return false;
+      if(value==NULL)return false;
       if(privatelength!=_length)return false;
+      if(privatelength == 0)return true;
       if(strncmp(value,_value,_length)==0)return true;
       return false;
     }
     
-    int string::equals(const char *_value){
+    bool string::equals(const char *_value){
       if(_value==NULL)return false;
       return equals(_value,strlen(_value));
     }
     
-    int string::equals(CT::string* _string){
+    bool string::equals(CT::string* _string){
       if(_string==NULL)return false;
       return equals(_string->value,_string->privatelength);
+    }
+        
+    bool string::equals(CT::string _string){
+      if(_string.value==NULL)return false;
+      return equals(_string.value,_string.privatelength);
+    }
+    
+    bool string::equalsIgnoreCase(const char *_value,size_t _length){
+      if(_value==NULL)return false;
+      if(value==NULL)return false;
+      if(privatelength!=_length)return false;
+      if(privatelength == 0)return true;
+      CT::string selfLowerCase = value;
+      CT::string testValueLowerCase = _value;
+      selfLowerCase.toLowerCaseSelf();
+      testValueLowerCase.toLowerCaseSelf();
+      if(strncmp(selfLowerCase.c_str(),testValueLowerCase.c_str(),testValueLowerCase.length())==0)return true;
+      return false;
+    }
+    
+    bool string::equalsIgnoreCase(const char *_value){
+      if(_value==NULL)return false;
+      return equalsIgnoreCase(_value,strlen(_value));
+    }
+    
+    bool string::equalsIgnoreCase(CT::string* _string){
+      if(_string==NULL)return false;
+      return equalsIgnoreCase(_string->value,_string->privatelength);
+    }
+    
+    bool string::equalsIgnoreCase(CT::string _string){
+      if(_string.value==NULL)return false;
+      return equalsIgnoreCase(_string.value,_string.privatelength);
     }
     
 /*    int32::int32(){

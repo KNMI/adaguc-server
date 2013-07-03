@@ -3049,7 +3049,7 @@ StopWatch_Stop("Drawing finished");
   //Static image
   int status=0;
   if(srvParam->imageFormat==IMAGEFORMAT_IMAGEPNG8||srvParam->imageFormat==IMAGEFORMAT_IMAGEPNG32){
-    CDBDebug("LegendGraphic PNG");
+    //CDBDebug("LegendGraphic PNG");
     //printf("%s%c%c","Cache-Control: max-age=3600, must-revalidate",13,10);
     //printf("%s%c%c","Pragma: no-cache",13,10);
     //printf("%s%c%c","Cache-Control:no-store,no-cache,must-revalidate,post-check=0,pre-check=0",13,10);
@@ -3065,11 +3065,11 @@ StopWatch_Stop("Drawing finished");
     
     status=drawImage.printImagePng();
   }else if(srvParam->imageFormat==IMAGEFORMAT_IMAGEGIF){
-    CDBDebug("LegendGraphic GIF");
+    //CDBDebug("LegendGraphic GIF");
     printf("%s%c%c\n","Content-Type:image/gif",13,10);
     status=drawImage.printImageGif();
   }else {
-    CDBDebug("LegendGraphic PNG");
+    //CDBDebug("LegendGraphic PNG");
     printf("%s%c%c\n","Content-Type:image/png",13,10);
     status=drawImage.printImagePng();
   }
