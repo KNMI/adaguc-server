@@ -38,8 +38,10 @@
 
 #define END NULL
 
+
 #ifndef CTYPESCOMPATON
 #define toLowerCaser toLowerCase
+#define replacer replace
 #endif 
 
 
@@ -234,32 +236,114 @@ class string:public basetype{
      */
     void copy(const char * _value){ if(_value==NULL){_Free();return;}copy(_value,strlen(_value));};
     
+    /**
+     * Appends a pointer to a string object to this string object
+     * @param string* The string pointer to append
+     */
     void concat(const CT::string*_string){concat(_string->value,_string->privatelength);}
     
+    /**
+     * Appends a string object to this string object
+     * @param string The string to append
+     */
     void concat(const CT::string _string){concat(_string.value,_string.privatelength);}
     
+    /**
+     * Appends an array of characters with specified length to this string object
+     * @param value The character array to append
+     * @param len The length of the character array
+     */
     void concat(const char*_value,size_t len);
-    
+
+    /**
+     * Appends an array of characters terminated with a '\0' character.
+     * @param value The 0-terminated character array to append
+     */
     void concat(const char*_value){if(_value==NULL)return;concat(_value,strlen(_value));};
     
-    char charAt(size_t n);
+    /**
+     * Returns the char value at the specified index.
+     * @param index The index of the character to get.
+     */
+    char charAt(size_t index);
     
+    /**
+     * Sets a character in the string object at specified location
+     * @param location The location to set
+     * @param character The character to set
+     */
     void setChar(size_t location,const char character);
     
-    bool equals(const char *_value,size_t _length);
+    /**
+     * Compares this string to the specified object. The result is true if the given argument is not null and representing the same sequence of characters as this object.
+     * @param value The character array to compare
+     * @param length The length of the character array to compare
+     */
+    bool equals(const char *value,size_t length);
     
-    int equals(const char *_value);
+    /**
+     * Compares this string to the specified object. The result is true if the given argument is not null and representing the same sequence of characters as this object.
+     * @param value  The 0-terminated character array to compare
+     */
+    bool equals(const char *value);
     
-    int equals(CT::string* _string);
+    /**
+     * Compares this string to the specified object. The result is true if the given argument is not null and representing the same sequence of characters as this object.
+     * @param string*  Pointer to the string object to compare
+     */
+    bool equals(CT::string* string);
+
+    /**
+     * Compares this string to the specified object. The result is true if the given argument is not null and representing the same sequence of characters as this object.
+     * @param string Copy of the string object to compare
+     */
+    bool equals(CT::string string);
+
+    bool equalsIgnoreCase(const char *_value,size_t _length);
     
+    bool equalsIgnoreCase(const char *_value);
+    
+    bool equalsIgnoreCase(CT::string* _string);
+    
+    bool equalsIgnoreCase(CT::string string);
+    
+    /**
+     * Tests for a posix regular expression against the string object, returns true if matches.
+     * @param pattern The 0-terminated character array containing the regular expression
+     */
     bool testRegEx(const char *pattern);
 
-    int indexOf(const char* search,size_t _length);
+    /**
+     * Returns the index within this string of the first occurrence of the specified character. 
+     * If a character with value ch occurs in the character sequence represented by this String object, then the index of the first such occurrence is returned
+     * @param search The character array to look for
+     * @param length The length of the character array
+     * @return -1 if not found, otherwise the index of the character sequence in this string object
+     */
+    int indexOf(const char* search,size_t length);
     
+    /**
+     * Returns the index within this string of the first occurrence of the specified character. 
+     * If a character with value ch occurs in the character sequence represented by this String object, then the index of the first such occurrence is returned
+     * @param search The 0-terminated character array to look for
+     * @return -1 if not found, otherwise the index of the character sequence in this string object
+     */
     int indexOf(const char* search){return indexOf(search,strlen(search));};
     
+    /**
+     * Returns the index within this string of the last occurrence of the specified character
+     * @param search The character array to look for
+     * @param length The length of the character array
+     * @return -1 if not found, otherwise the last index of the character sequence in this string object
+     */
     int lastIndexOf(const char* search,size_t _length);
     
+    /**
+     * Returns the index within this string of the last occurrence of the specified character
+     * @param search The character array to look for
+     * @param search The 0-terminated character array to look for
+     * @return -1 if not found, otherwise the last index of the character sequence in this string object
+     */
     int lastIndexOf(const char* search){return lastIndexOf(search,strlen(search));};
     
     /**

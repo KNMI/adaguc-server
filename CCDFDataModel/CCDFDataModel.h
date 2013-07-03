@@ -447,7 +447,12 @@ namespace CDF{
       }
       Attribute * getAttributeNE(const char *name){try{return getAttribute(name);}catch(int e){return NULL;}}
       
-      Dimension * getDimension(const char *name){
+      /**
+       * Returns the dimension for given name. Throws error code  when something goes wrong
+       * @param name The name of the dimension to look for
+       * @return Pointer to the dimension
+       */
+      Dimension* getDimension(const char *name){
         for(size_t j=0;j<dimensionlinks.size();j++){
           if(dimensionlinks[j]->name.equals(name)){
             return dimensionlinks[j];
@@ -456,6 +461,17 @@ namespace CDF{
         throw(CDF_E_DIMNOTFOUND);
         return NULL;
       }
+      
+      Dimension* getDimensionIgnoreCase(const char *name){
+        for(size_t j=0;j<dimensionlinks.size();j++){
+          if(dimensionlinks[j]->name.equalsIgnoreCase(name)){
+            return dimensionlinks[j];
+          }
+        }
+        throw(CDF_E_DIMNOTFOUND);
+        return NULL;
+      }
+      
       Dimension * getDimensionNE(const char *name){try{return getDimension(name);}catch(int e){return NULL;}}
 
       int getDimensionIndexNE(const char *name){
@@ -778,8 +794,12 @@ class CDFObject:public CDF::Variable{
     }
     
       
-    
-    CDF::Variable * getVariable(const char *name){
+    /**
+      * Returns the variable for given name. Throws error code  when something goes wrong
+      * @param name The name of the dimension to look for
+      * @return The variable pointer
+      */    
+    CDF::Variable *getVariable(const char *name){
       if(strncmp("NC_GLOBAL",name,9)==0){
         return this;
       }
@@ -791,6 +811,20 @@ class CDFObject:public CDF::Variable{
       throw(CDF_E_VARNOTFOUND);
       return NULL;
     }
+    
+   CDF::Variable *getVariableIgnoreCase(const char *name){
+      if(strncmp("NC_GLOBAL",name,9)==0){
+        return this;
+      }
+      for(size_t j=0;j<variables.size();j++){
+        if(variables[j]->name.equalsIgnoreCase(name)){
+          return variables[j];
+        }
+      }
+      throw(CDF_E_VARNOTFOUND);
+      return NULL;
+    }
+    
     CDF::Variable * getVariableNE(const char *name){
       try{return getVariable(name);}catch(int e){return NULL;}
     }
@@ -832,6 +866,17 @@ class CDFObject:public CDF::Variable{
       throw(CDF_E_DIMNOTFOUND);
       return NULL;
     }
+    
+    CDF::Dimension * getDimensionIgnoreCase(const char *name){
+      for(size_t j=0;j<dimensions.size();j++){
+        if(dimensions[j]->name.equalsIgnoreCase(name)){
+          return dimensions[j];
+        }
+      }
+      throw(CDF_E_DIMNOTFOUND);
+      return NULL;
+    }
+    
     CDF::Dimension * getDimensionNE(const char *name){
       try{return getDimension(name);}catch(int e){return NULL;}
     }

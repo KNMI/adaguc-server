@@ -1273,7 +1273,7 @@ int CRequest::process_querystring(){
 
   CT::string queryString(pszQueryString);
   queryString.decodeURLSelf();
-  CDBDebug("QueryString: \"%s\"",queryString.c_str());
+  //CDBDebug("QueryString: \"%s\"",queryString.c_str());
   CT::string * parameters=queryString.splitToArray("&");
   CT::string value0Cap;
   for(size_t j=0;j<parameters->count;j++){
@@ -2106,7 +2106,7 @@ int CRequest::process_querystring(){
           }
     
           // Set format
-          CDBDebug("FORMAT: %s",srvParam->Format.c_str());
+          //CDBDebug("FORMAT: %s",srvParam->Format.c_str());
           if(srvParam->Format.indexOf("24")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG32;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
           else if(srvParam->Format.indexOf("32")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG32;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
           else if(srvParam->Format.indexOf("8")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8;srvParam->imageMode=SERVERIMAGEMODE_8BIT;}

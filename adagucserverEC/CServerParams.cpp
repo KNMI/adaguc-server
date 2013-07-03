@@ -359,7 +359,7 @@ bool CServerParams::isAutoResourceEnabled(){
 
 bool CServerParams::checkIfPathHasValidTokens(const char *path){
   //Check for valid tokens
-  const char *validPATHTokens="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/_-+:. ";
+  const char *validPATHTokens="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/_-+:. ,";
   size_t pathLength=strlen(path);
   size_t allowedTokenLength=strlen(validPATHTokens);
   for(size_t j=0;j<pathLength;j++){
