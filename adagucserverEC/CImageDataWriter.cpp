@@ -2497,7 +2497,16 @@ int CImageDataWriter::end(){
           } else {
             dimLookup[d-1]=d;
           }
-         }
+        }
+
+//#ifdef use_LAYER
+//        CXMLParser::XMLElement layerElement("layer");
+//        CT::string layerName=g->layerName.c_str();
+//        layerName.replaceSelf("/", "_");
+//        layerName.replaceSelf(" ", "_");
+//        layerName.replaceSelf(":", "-");
+//        paramElement.add(CXMLParser::XMLElement("name", layerName.c_str()));
+//#endif
 
         for (int feat=0; feat<nrFeatures; feat++) {
           GetFeatureInfoResult::Element *e=g->elements[feat];
@@ -2505,7 +2514,7 @@ int CImageDataWriter::end(){
           featureName.replaceSelf(" ", "_");
           
           CXMLParser::XMLElement paramElement("param");
-          paramElement.add(CXMLParser::XMLElement("name", featureName.c_str()));
+          paramElement.add(CXMLParser::XMLElement("name", e->var_name.c_str()));
           paramElement.add(CXMLParser::XMLElement("standard_name", e->standard_name.c_str()));
           paramElement.add(CXMLParser::XMLElement("units", e->units.c_str()));
           
@@ -2533,16 +2542,16 @@ int CImageDataWriter::end(){
           }
           
           std::map<std::string,std::string>::iterator dkit  ;
-          CXMLParser::XMLElement root("data");
+          CXMLParser::XMLElement data("data");
 
-          CXMLParser::XMLElement *elP = &root;
+          CXMLParser::XMLElement *elP = &data;
           
           for (dkit=dataMap.begin(); dkit!=dataMap.end(); ++dkit){
             CT::string key = dkit->first.c_str();
             CT::string value= dkit->second.c_str();
             
             CT::string *dimValues = key.splitToArray(",");
-            elP = &root;
+            elP = &data;
             for(size_t i=0;i<dimValues->count;i++){
               try{
                 elP=elP->get(dimValues[i].c_str());
@@ -2554,21 +2563,30 @@ int CImageDataWriter::end(){
             delete[] dimValues;
           }
         
-          paramElement.add(root);
+          paramElement.add(data);
+//          layerElement.add(paramElement);
           rootElement.add(paramElement);
         }
-
+//        rootElement.add(layerElement);
       }
 
 
       resetErrors();
       if (srvParam->JSONP.length()==0) {      
+#ifdef use_PARAM
+        resultJSON.concat(rootElement.getList("layer").toJSON().c_str());
+#else
         resultJSON.concat(rootElement.getList("param").toJSON().c_str());
+#endif
         printf("%s", resultJSON.c_str());
       } else {
         resultJSON.concat(srvParam->JSONP.c_str());
         resultJSON.concat("(");
+#ifdef use_PARAM
+        resultJSON.concat(rootElement.getList("layer").toJSON().c_str());
+#else
         resultJSON.concat(rootElement.getList("param").toJSON().c_str());
+#endif
         resultJSON.concat(");");
         printf("%s", resultJSON.c_str());
       }
