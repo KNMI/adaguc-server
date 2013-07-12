@@ -25,6 +25,7 @@
 
 #include <sys/stat.h>
 #include "CTypes.h"
+#include "CDirReader.h"
 #ifndef CCACHE_H
 #define CCACHE_H
 
@@ -74,7 +75,17 @@ class CCache{
   static bool isCacheFileAvailable(const char *fileName);
 
   public:
-    
+    class Lock{
+    private:
+      CT::string claimedLockFile;
+      CT::string claimedLockID;
+      bool isEnabled;
+    public:
+      Lock();
+      ~Lock();
+      int claim(const char *cacheDir, const char *identifier,bool enable);
+      void release();
+    };
   /**
     * Constructor
     */

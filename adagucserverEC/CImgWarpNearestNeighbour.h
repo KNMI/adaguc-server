@@ -585,11 +585,33 @@ private:
         //drawTileClass = new CDrawTileObj();  //keep the calculated results
         
         //Reproj back and forth datasource boundingbox
-        warper->reprojpoint_inv(dataSource->dfBBOX[0],dataSource->dfBBOX[1]);
-        warper->reprojpoint(dataSource->dfBBOX[0],dataSource->dfBBOX[1]);
+        double y1=dataSource->dfBBOX[1];
+        double y2=dataSource->dfBBOX[3];
+        double x1=dataSource->dfBBOX[0];
+        double x2=dataSource->dfBBOX[2];
         
-        warper->reprojpoint_inv(dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
-        warper->reprojpoint(dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
+        if(y2<y1){
+            if(y1>-360&&y2<360&&x1>-720&&x2<720){
+              
+              double checkBBOX[4];
+              for(int j=0;j<4;j++)checkBBOX[j]=dataSource->dfBBOX[j];
+              
+              CDBDebug("Current BBOX:  %f %f %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[1],dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
+              bool hasError = false;
+              if(warper->reprojpoint_inv(checkBBOX[0],checkBBOX[1])!=0)hasError=true;  
+              if(warper->reprojpoint(checkBBOX[0],checkBBOX[1])!=0)hasError=true;  
+              
+              if(warper->reprojpoint_inv(checkBBOX[2],checkBBOX[3])!=0)hasError=true;  
+              if(warper->reprojpoint(checkBBOX[2],checkBBOX[3])!=0)hasError=true;  
+              
+              if(hasError == false){
+                for(int j=0;j<4;j++)dataSource->dfBBOX[j] = checkBBOX[j];
+              }
+              
+              //checkBBOX
+              CDBDebug("New BBOX:  %f %f %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[1],dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
+          }
+        }
         
         
      

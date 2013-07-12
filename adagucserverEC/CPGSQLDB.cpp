@@ -96,12 +96,17 @@ int CPGSQLDB::checkTable(const char * pszTableName,const char *pszColumns){
   // No table exists yet
   if(i == PQntuples(result)){
     clearResult();
+  
     snprintf(query_string,255,"CREATE TABLE %s (%s)",pszTableName,pszColumns);
+    
     result = PQexec(connection, query_string);                   /* send the query */
     if (PQresultStatus(result) != PGRES_COMMAND_OK)         /* did the query fail? */
     {
+       
+       snprintf(LastErrorMsg,CPGSQLDB_MAX_STR_LEN,"%s: %s (%s)", PQresStatus(PQresultStatus(result) ),PQresultErrorMessage(result),query_string);
+       
       //snprintf(szTemp,CPGSQLDB_MAX_STR_LEN,"checkTable: CREATE TABLE %s failed",pszTableName);
-      //CDBError(szTemp);
+      //CDBError(LastErrorMsg);
       clearResult();
       return 1;
     }
@@ -109,6 +114,7 @@ int CPGSQLDB::checkTable(const char * pszTableName,const char *pszColumns){
     clearResult();
     return 2;
   }
+
   clearResult();
   return 0;
 }
@@ -122,6 +128,7 @@ int CPGSQLDB::query(const char *pszQuery){
   result = PQexec(connection, pszQuery);
   if (PQresultStatus(result) != PGRES_COMMAND_OK)         /* did the query fail? */
   {
+    snprintf(LastErrorMsg,CPGSQLDB_MAX_STR_LEN,"%s: %s (%s)", PQresStatus(PQresultStatus(result) ),PQresultErrorMessage(result),pszQuery);
     //snprintf(szTemp,CPGSQLDB_MAX_STR_LEN,"query: [%s] failed: %s",pszQuery,PQerrorMessage(connection));
     //CDBError(szTemp);
     clearResult();

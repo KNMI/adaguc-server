@@ -776,7 +776,9 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
     try{
       store = DB.queryToStore(query.c_str(),true);
     }catch(int e){
-      CDBDebug("Query failed with code %d",e);
+      if((checkDataRestriction()&SHOW_QUERYINFO)==false)query.copy("hidden");
+      
+      CDBDebug("Query failed with code %d (%s)",e,query.c_str());
       DB.close();
       return 1;
     }
@@ -1953,6 +1955,7 @@ int CRequest::process_querystring(){
       serverAbstract.replaceSelf("@" ," at ");
       serverAbstract.replaceSelf("<" ,"[");
       serverAbstract.replaceSelf(">" ,"]");
+      serverAbstract.replaceSelf("&" ,"&amp;");
      
       if(serverAbstract.length()>0){
         if(srvParam->cfg->WMS.size()>0){
@@ -2380,7 +2383,14 @@ int CRequest::process_querystring(){
   if(dErrorOccured==1){
     return 0;
   }
-  CDBWarning("Invalid value for request. Supported requests are: getcapabilities, getmap, getfeatureinfo and getlegendgraphic");
+  if(srvParam->serviceType==SERVICE_WCS){
+    CDBWarning("Invalid value for request. Supported requests are: getcapabilities, describecoverage and getcoverage");
+  }else if(srvParam->serviceType==SERVICE_WMS){
+    CDBWarning("Invalid value for request. Supported requests are: getcapabilities, getmap, getfeatureinfo, getpointvalue, getmetadata and getlegendgraphic");
+  }else{
+    CDBWarning("Unknown service");
+  }
+  
 
   return 0;
 }

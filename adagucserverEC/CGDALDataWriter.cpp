@@ -170,7 +170,7 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
   GDALAllRegister();
   hOutputDriver = GDALGetDriverByName(driverName.c_str());
   if( hOutputDriver == NULL ){
-    CDBError("Failed to find GDAL driver: [%s]",driverName.c_str());return 1;
+    CDBError("Failed to find GDAL driver: \"%s\"",driverName.c_str());return 1;
   }
 
   // Init memory drivers
@@ -498,7 +498,7 @@ int  CGDALDataWriter::end(){
     printf("Content-Disposition: attachment; filename=%s\n",generateGetCoverageFileName().c_str());
     printf("Content-Description: File Transfer\n");
     printf("Content-Transfer-Encoding: binary\n");
-    printf("Content-Length :%lu\n",endPos); 
+    printf("Content-Length: %lu\n",endPos); 
     printf("%s%c%c\n",mimeType.c_str(),13,10);
     for(size_t j=0;j<endPos;j++)putchar(getc(fp));
     fclose(fp);
@@ -591,6 +591,19 @@ CT::string CGDALDataWriter::generateGetCoverageFileName(){
   }
   if(formatUpperCase.indexOf("TIF")!=-1){
     extension=".tif";
+  }
+  
+  if(formatUpperCase.indexOf("IMAGE/PNG")!=-1){
+    extension=".png";
+  }
+  if(formatUpperCase.indexOf("IMAGE/BMP")!=-1){
+    extension=".bmp";
+  }
+  if(formatUpperCase.indexOf("IMAGE/GIF")!=-1){
+    extension=".gif";
+  }
+  if(formatUpperCase.indexOf("IMAGE/JPG")!=-1){
+    extension=".jpg";
   }
   humanReadableString.concat(extension.c_str());
   
