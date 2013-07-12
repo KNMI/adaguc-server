@@ -108,7 +108,7 @@ CDataSource::CDataSource(){
   cfg=NULL;
   datasourceIndex=0;
   level2CompatMode=false;
-  useLonTransformation = 0;
+  useLonTransformation = -1;
   swapXYDimensions = false;
   varX = NULL;
   varY = NULL;
@@ -302,6 +302,14 @@ void CDataSource::getFlagMeaningHumanReadable( CT::string *flagMeaning,std::vect
 
 
 int  CDataSource::checkDimTables(CPGSQLDB *dataBaseConnection){
+  CCache::Lock lock;
+  CT::string identifier = "checkDimTables";  identifier.concat(cfgLayer->FilePath[0]->value.c_str());  identifier.concat("/");  identifier.concat(cfgLayer->FilePath[0]->attr.filter.c_str());  
+  CT::string cacheDirectory = "";
+  srvParams->getCacheDirectory(&cacheDirectory);
+  if(cacheDirectory.length()>0){
+    lock.claim(cacheDirectory.c_str(),identifier.c_str(),srvParams->isAutoResourceEnabled());
+  }
+  
   #ifdef CDATASOURCE_DEBUG
   CDBDebug("[checkDimTables]");
   #endif
@@ -341,7 +349,7 @@ int  CDataSource::checkDimTables(CPGSQLDB *dataBaseConnection){
   #ifdef CDATASOURCE_DEBUG
   CDBDebug("[/checkDimTables]");
   #endif
-  
+  lock.release();
   return 0;
 }
 /*

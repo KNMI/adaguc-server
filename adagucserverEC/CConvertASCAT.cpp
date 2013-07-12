@@ -36,6 +36,11 @@ const char *CConvertASCAT::className="CConvertASCAT";
  */
 int CConvertASCAT::convertASCATHeader( CDFObject *cdfObject ){
   //Check whether this is really an ascat file
+  if(cdfObject->getDimensionNE("nXtrack")!=NULL&&cdfObject->getDimensionNE("nTimes")!=NULL){
+    try{cdfObject->getDimension("nXtrack")->name="NUMCELLS";}catch(int e){}
+    try{cdfObject->getDimension("nTimes")->name="NUMROWS";}catch(int e){}
+  }
+  
   try{
     cdfObject->getDimensionIgnoreCase("NUMROWS");
     cdfObject->getDimensionIgnoreCase("NUMCELLS");
@@ -43,9 +48,9 @@ int CConvertASCAT::convertASCATHeader( CDFObject *cdfObject ){
     return 1;
   }
   
-#ifdef CCONVERTASCAT_DEBUG
-  CDBDebug("HEADER: This is ascat data");
-#endif
+
+  CDBDebug("Using CConvertASCAT.h");
+
   
   bool hasTimeData = false;
   
@@ -165,7 +170,7 @@ int CConvertASCAT::convertASCATHeader( CDFObject *cdfObject ){
   for(size_t v=0;v<cdfObject->variables.size();v++){
     CDF::Variable *var = cdfObject->variables[v];
     if(var->isDimension==false){
-      if(!var->name.equals("time2D")&&!var->name.equals("time")&&!var->name.equals("lon")&&!var->name.equals("lat")){
+      if(!var->name.equals("time2D")&&!var->name.equals("time")&&!var->name.equals("lon")&&!var->name.equals("lat")&&!var->name.equals("longitude")&&!var->name.equals("latitude")){
         varsToConvert.add(CT::string(var->name.c_str()));
       }
     }
@@ -221,8 +226,14 @@ int CConvertASCAT::convertASCATHeader( CDFObject *cdfObject ){
  * This function draws the virtual 2D variable into a new 2D field
  */
 int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
-
+ 
   CDFObject *cdfObject = dataSource->dataObject[0]->cdfObject;
+  if(cdfObject->getDimensionNE("nXtrack")!=NULL&&cdfObject->getDimensionNE("nTimes")!=NULL){
+    try{cdfObject->getDimension("nXtrack")->name="NUMCELLS";}catch(int e){}
+    try{cdfObject->getDimension("nTimes")->name="NUMROWS";}catch(int e){}
+  }
+  
+  
   try{
     cdfObject->getDimensionIgnoreCase("NUMROWS");
     cdfObject->getDimensionIgnoreCase("NUMCELLS");
@@ -261,8 +272,12 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
     swathLon = cdfObject->getVariable("lon");
     swathLat = cdfObject->getVariable("lat");
   }catch(int e){
-    CDBError("lat or lon variables not found");
-    return 1;
+    try{
+      swathLon = cdfObject->getVariable("longitude");
+      swathLat = cdfObject->getVariable("latitude");
+    }catch(int e){
+      CDBError("lat or lon variables not found");
+    }
   }
   
   //Read original data first 

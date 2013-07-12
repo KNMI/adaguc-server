@@ -24,10 +24,10 @@
  ******************************************************************************/
 
 #include "CCache.h"
-
+#include <signal.h>
 const char *CCache::className="CCache";
 
-CCache::CCache(){
+CCache::CCache(){ 
   saveFieldFile = false;
   cacheAvailable = false;
   cacheFileClaimed = false;
@@ -62,6 +62,7 @@ bool CCache::cacheIsAvailable(){
 }
 
 void CCache::checkCacheSystemReady(const char *szfileName){
+ 
   if(szfileName == NULL)return;
   this->fileName = szfileName;
   claimedCacheFileName = szfileName;
@@ -71,6 +72,7 @@ void CCache::checkCacheSystemReady(const char *szfileName){
     saveFieldFile = false;
     cacheAvailable=false;
   }else{
+    
     //Cache is not busy: Check if the cachefile is available
     if(CCache::isCacheFileAvailable(szfileName)){
       //Cache is available
@@ -99,6 +101,7 @@ bool CCache::isCacheFileBusy(){
 }
 
 bool CCache::isCacheFileBusyBlocking(){
+ 
   if(fileName.length()==0)return false;
   int maxTries = 60;//Wait 60 seconds.
   int currentTries=maxTries;
@@ -168,16 +171,23 @@ int CCache::claimCacheFile (){
     CDBDebug("claimCacheFile: Cache is already working on %s", claimedCacheFileName.c_str());
     return 3;
   }
-  const char buffer[] = { "temp_data\n" };
+  //const char buffer[] = { "temp_data\n" };
+  
+  char buffer[20];
+  int procID = int(getpid());
+  snprintf(buffer,19,"%d",procID);
+  size_t length = strlen(buffer);
+  if(length>19)length=19;
+  
   FILE *pFile = fopen ( claimedCacheFileName.c_str() , "wb" );
   if(pFile==NULL){
     CDBError("claimCacheFile: Unable to open cachefile %s",claimedCacheFileName.c_str());
     return 1;
   }
-  size_t bytesWritten = fwrite (buffer , sizeof(char),10 , pFile );
+  size_t bytesWritten = fwrite (buffer , sizeof(char),length , pFile );
   fflush (pFile);   
   fclose (pFile);
-  if(bytesWritten!=10){
+  if(bytesWritten!=length){
     CDBError("claimCacheFile: Unable to write to cachefile %s",claimedCacheFileName.c_str());
     return 2;
   }
@@ -204,3 +214,108 @@ void CCache::removeClaimedCachefile(){
   saveFieldFile = false;
 }
 
+
+CCache::Lock::Lock(){
+  claimedLockFile = "";
+  claimedLockID = "";
+  isEnabled = false;
+}
+CCache::Lock::~Lock(){
+  release();
+}
+int CCache::Lock::claim(const char *cacheDir, const char *identifier,bool enable){
+  isEnabled = enable;
+  if(isEnabled == false)return 0;
+ 
+  if(cacheDir == NULL || identifier == NULL)return 0;
+  
+  CDirReader::makePublicDirectory(cacheDir);
+
+  if(claimedLockFile.length()>0){
+    CDBError("Already claimed! %s",claimedLockID.c_str());
+    
+  }else{
+    CT::string myid = "CCacheLock_";
+    myid.concat(identifier);
+    claimedLockID = identifier;
+    myid.replaceSelf(":",""); myid.replaceSelf("/",""); 
+    claimedLockFile = cacheDir;
+    claimedLockFile.concat("/");
+    claimedLockFile.concat(&myid);
+  }
+  FILE *pFile = NULL;
+  
+  //Check if the file exists...
+  
+  int maxTries = 1200;//Wait 120 seconds.
+  bool wasLocked = false;
+  do{
+    pFile = fopen ( claimedLockFile.c_str() , "r" );
+    if(pFile != NULL){ 
+      wasLocked = true;
+      
+      //Read by which process the file was locked
+      size_t thePIDThatIsLocking = 0;
+      fseek (pFile , 0 , SEEK_END);
+      size_t fileSize = ftell (pFile);
+      rewind (pFile);
+      char *buffer = (char*) malloc (sizeof(char)*fileSize);
+      if (buffer == NULL) {CDBError ("Memory error",stderr); exit (2);}
+      size_t result = fread (buffer,1,fileSize,pFile);
+      if (result != fileSize) {CDBError ("Reading error",stderr);}else{
+        CT::string s = buffer;
+        thePIDThatIsLocking = s.toInt();
+      }
+      free(buffer);
+      
+      //Check if the process locking this file is still running
+      int status = kill(thePIDThatIsLocking,0);
+      if(status == -1){
+        CDBError("WARNING: Locked %s by procID %d which is not running, continuing...", claimedLockID.c_str() ,thePIDThatIsLocking);
+        maxTries = 0;
+      }else{
+        CDBDebug("LOCKED %s by procID %d, waiting %f seconds", claimedLockID.c_str() ,thePIDThatIsLocking,float(maxTries)/10.0);
+      }
+      fclose (pFile);
+      usleep(100000);
+      maxTries--;
+    }
+  }while(pFile != NULL&&maxTries>0);
+  if(wasLocked){CDBDebug("LOCK FREED %s,", claimedLockID.c_str() );}
+
+ // const char buffer[] = { "temp_data\n" };
+  
+  char buffer[20];
+  int procID = int(getpid());
+  snprintf(buffer,19,"%d",procID);
+  size_t length = strlen(buffer);
+  if(length>19)length=19;
+  
+  pFile = fopen ( claimedLockFile.c_str() , "wb" );
+  if(pFile==NULL){
+    CDBError("LOCK: Unable to create lockfile %s",claimedLockFile.c_str());
+    return 1;
+  }
+  size_t bytesWritten = fwrite (buffer , sizeof(char),length , pFile );
+  fflush (pFile);   
+  fclose (pFile);
+  if(bytesWritten!=length){
+    CDBError("LOCK: Unable to write to lockfile %s",claimedLockFile.c_str());
+    return 2;
+  }
+  if(chmod(claimedLockFile.c_str(),0777)<0){
+    CDBError("LOCK: Unable to change permissions of lockfile %s",claimedLockFile.c_str());
+    return 3;
+  }
+  
+  //CDBDebug("LOCK Claimed: %s", claimedLockFile.c_str() );
+  return 0;
+}
+
+void CCache::Lock::release(){
+  if(isEnabled == false)return;
+  if( claimedLockFile.length()==0)return;
+  //CDBDebug("LOCK release %s",claimedLockID.c_str());
+  remove(claimedLockFile.c_str());
+  claimedLockFile = "";
+}

@@ -136,7 +136,7 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
   }catch(int e){
     return 1;
   }
-  //CDBDebug("THIS IS ADAGUC POINT DATA");
+  CDBDebug("Using CConvertADAGUCPoint.h");
 
   
  

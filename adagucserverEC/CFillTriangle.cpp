@@ -133,13 +133,18 @@ void fillTriangleGouraud(float  *data, float  *values, int W,int H, int *xP,int 
   }
 }
     
-    
+#include <limits.h>
 void fillQuadGouraud(float  *data, float  *values, int W,int H, int *xP,int *yP){
+    
+
   
+
   if(xP[0]<0&&xP[1]<0&&xP[2]<0&&xP[3]<0)return;
   if(xP[0]>=W&&xP[1]>=W&&xP[2]>=W&&xP[3]>=W)return;
   if(yP[0]<0&&yP[1]<0&&yP[2]<0&&yP[3]<0)return;
   if(yP[0]>=H&&yP[1]>=H&&yP[2]>=H&&yP[3]>=H)return;
+  
+  
   
   int minX=xP[0];
   if(minX>xP[1])minX=xP[1];
@@ -161,12 +166,53 @@ void fillQuadGouraud(float  *data, float  *values, int W,int H, int *xP,int *yP)
   if(maxY<yP[2])maxY=yP[2];
   if(maxY<yP[3])maxY=yP[3];
   
+  
+  if(minX==maxX||minY==maxY){
+    return;
+  }
+  if(minX == INT_MIN)return;
+  if(minY == INT_MIN)return;
+  if(maxX == INT_MAX)return;
+  if(maxY == INT_MAX)return;
+
+ /*        
+  int diag1X,diag2X,diag1Y,diag2Y;
+
+  
+  diag1X=(xP[2]-xP[0]);
+  diag2X=(xP[3]-xP[1]);
+  diag1Y=(yP[2]-yP[0]);
+  diag2Y=(yP[3]-yP[1]);
+
+  if((diag1X == 0 && diag1Y == 0) || (diag2X == 0 && diag2Y == 0)){
+    //data[xP[0]+yP[0]*W]=values[0];
+   // return;
+  }
+  {
+    float diag1=sqrt(diag1X*diag1X+diag1Y*diag1Y);
+    float diag2=sqrt(diag2X*diag2X+diag2Y*diag2Y);
+    float area = (diag1*diag2)/2.0f;
+    if(area <= 0){
+      data[xP[0]+yP[0]*W]=values[0];
+      return;
+    }
+  
+  }*/
+  
   //Does the quad cover the complete field?
   if(minX<0&&minY<0&&maxX>=W&&maxY>H){
     size_t l=W*H;
-    for(size_t j=0;j<l;j++)data[j]=values[0];
+    float a= values[0];
+    for(size_t j=0;j<l;j++)data[j]=a;
     return;
   }
+ 
+ 
+//   if(minX<0)return;
+//   if(minY<0)return;
+//   if(maxX>W)return;
+//   if(maxY>W)return;
+
   
   
   

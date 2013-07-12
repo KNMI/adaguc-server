@@ -724,7 +724,7 @@ class CDFNetCDFWriter{
             {
               int dimIDS[numDims+1];
               int NCCommandID[numDims+1];
-              size_t chunkSizes[numDims+1];
+              //size_t chunkSizes[numDims+1];
               size_t totalVariableSize = 0;
               //Find dim and chunk info
               CT::string variableInfo(name);
@@ -737,7 +737,7 @@ class CDFNetCDFWriter{
                     if(totalVariableSize==0)totalVariableSize=1;
                     //CDBDebug("EQUALS: %s %d",dimensions[k]->name.c_str(),dimIDS[i]);  
                     totalVariableSize*=dimensions[k]->length;
-                    chunkSizes[i]=dimensions[k]->length;
+                    //chunkSizes[i]=dimensions[k]->length;
                     variableInfo.printconcat("%s=%d",dimensions[k]->name.c_str(),dimensions[k]->length);
                     if(i+1<numDims)variableInfo.concat(",");
                   }
@@ -766,11 +766,11 @@ class CDFNetCDFWriter{
               } 
 
               //Set chunking and deflate options
-              chunkSizes[0]=1;
+              //chunkSizes[0]=1;
               if(netcdfMode>=4&&numDims>0&&1==1){
           
-                status = nc_def_var_chunking(root_id,nc_var_id,0 ,chunkSizes);
-                if(status!=NC_NOERR){ncError(__LINE__,className,"nc_def_var_chunking: ",status);return 1;}
+                //status = nc_def_var_chunking(root_id,nc_var_id,0 ,chunkSizes);
+                //if(status!=NC_NOERR){ncError(__LINE__,className,"nc_def_var_chunking: ",status);return 1;}
                 //status = nc_def_var_deflate(root_id,nc_var_id,shuffle ,deflate, deflate_level);
                 //if(status!=NC_NOERR){ncError(__LINE__,className,"nc_def_var_deflate: ",status);return 1;}
                 //if(listNCCommands){

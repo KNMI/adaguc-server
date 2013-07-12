@@ -26,6 +26,8 @@
 #include "CServerParams.h"
 const char *CServerParams::className="CServerParams";
 
+//std::map<std::string id,std::string table> CServerParams::lookupTableNameCacheMap;
+
 CServerParams::CServerParams(){
   
   WMSLayers=NULL;
@@ -180,8 +182,30 @@ CT::string currentDateTime() {
     return currentTime;
 }
 
+
+//Must become atomic between processes.
+
 CT::string CServerParams::lookupTableName(const char *path,const char *filter, const char * dimension){
+  CT::string identifier = "lookupTableName_";  identifier.concat(path);  identifier.concat("/");  identifier.concat(filter);  
+  if(dimension!=NULL){identifier.concat("/");identifier.concat(dimension);}
   CT::string tableName;
+  
+  std::map<std::string,std::string>::iterator it=lookupTableNameCacheMap.find(identifier.c_str());
+  if(it!=lookupTableNameCacheMap.end()){
+    tableName = (*it).second.c_str();
+    //CDBDebug("Returning tablename  %s from map",tableName.c_str());
+    return tableName;
+  }
+  
+  CCache::Lock lock;
+  CT::string cacheDirectory = "";
+  getCacheDirectory(&cacheDirectory);
+  if(cacheDirectory.length()>0){
+    lock.claim(cacheDirectory.c_str(),identifier.c_str(),isAutoResourceEnabled());
+  }
+
+  
+ 
  
   // This makes use of a lookup table to find the tablename belonging to the filter and path combinations.
   // Database collumns: path filter tablename
@@ -189,6 +213,8 @@ CT::string CServerParams::lookupTableName(const char *path,const char *filter, c
   CT::string filterString="F_";filterString.concat(filter);
   CT::string pathString="P_";pathString.concat(path);
   CT::string dimString="";if(dimension != NULL){dimString.concat(dimension);dimString.toLowerCaseSelf();}
+  
+// CDBDebug("lookupTableName %s",identifier.c_str());
   
   CT::string lookupTableName = "pathfiltertablelookup";
   CT::string tableColumns("path varchar (511), filter varchar (511), dimension varchar (511), tablename varchar (63), UNIQUE (path,filter,dimension) ");
@@ -200,61 +226,88 @@ CT::string CServerParams::lookupTableName(const char *path,const char *filter, c
     CDBError("Error Could not connect to the database with parameters: [%s]",pszDBParams);
     throw(1);
   }
+  
 
-  status = DB.checkTable(lookupTableName.c_str(),tableColumns.c_str());
-  //if(status == 0){CDBDebug("OK: Table %s is available",lookupTableName.c_str());}
-  if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",lookupTableName.c_str(),tableColumns.c_str()); DB.close();throw(1);  }
-  //if(status == 2){CDBDebug("OK: Table %s is created",lookupTableName.c_str());  }
+  try{
 
-  
-  //Check wether a records exists with this path and filter combination.
-  
-  bool lookupTableIsAvailable=false;
-  
-  
-  
-  if(dimString.length()>1){
-    mvRecordQuery.print("SELECT * FROM %s where path=E'%s' and filter=E'%s' and dimension=E'%s'",
-                        lookupTableName.c_str(),pathString.c_str(),filterString.c_str(),dimString.c_str());
-  }else{
-    lookupTableIsAvailable=true;
-    mvRecordQuery.print("SELECT * FROM %s where path=E'%s' and filter=E'%s'",
-                        lookupTableName.c_str(),pathString.c_str(),filterString.c_str());
-  }
-  CDB::Store *rec = DB.queryToStore(mvRecordQuery.c_str()); 
-  if(rec==NULL){CDBError("Unable to select records: \"%s\"",mvRecordQuery.c_str());DB.close();throw(1);  }
-  if(rec->getSize()>0){
-    tableName.copy(rec->getRecord(0)->get(3));
+    status = DB.checkTable(lookupTableName.c_str(),tableColumns.c_str());
+    //if(status == 0){CDBDebug("OK: Table %s is available",lookupTableName.c_str());}
+    if(status == 1){
+      CDBError("FAIL: Table %s could not be created: %s",lookupTableName.c_str(),tableColumns.c_str());
+      CDBError("Error: %s",DB.getError());    
+      DB.close();
+      throw(1);  
+    }
+    //if(status == 2){CDBDebug("OK: Table %s is created",lookupTableName.c_str());  }
+
     
-    lookupTableIsAvailable = true;
+    //Check wether a records exists with this path and filter combination.
     
-  }
-  /*if(rec->getSize()>1){
-    CDBError("Path filter combination has more than 1 lookuptable");
+    bool lookupTableIsAvailable=false;
+    
+    
+    
+    if(dimString.length()>1){
+      mvRecordQuery.print("SELECT * FROM %s where path=E'%s' and filter=E'%s' and dimension=E'%s'",
+                          lookupTableName.c_str(),pathString.c_str(),filterString.c_str(),dimString.c_str());
+    }else{
+      mvRecordQuery.print("SELECT * FROM %s where path=E'%s' and filter=E'%s'",
+                          lookupTableName.c_str(),pathString.c_str(),filterString.c_str());
+    }
+    CDB::Store *rec = DB.queryToStore(mvRecordQuery.c_str()); 
+    if(rec==NULL){CDBError("Unable to select records: \"%s\"",mvRecordQuery.c_str());DB.close();throw(1);  }
+    if(rec->getSize()>0){
+      tableName.copy(rec->getRecord(0)->get(3));
+      if(tableName.length()>0){
+        lookupTableIsAvailable = true;
+      }
+      
+    }
+    /*if(rec->getSize()>1){
+      CDBError("Path filter combination has more than 1 lookuptable");
+      delete rec;
+      DB.close();
+      throw(1);
+    }*/
     delete rec;
-    DB.close();
-    throw(1);
-  }*/
-  delete rec;
-  
-  //Add a new lookuptable with an unique id.
-  if(lookupTableIsAvailable==false){
-    CT::string randomTableString = "t";
-    randomTableString.concat(currentDateTime());
-    randomTableString.concat("_");
-    randomTableString.concat(randomString(20));
-    randomTableString.replaceSelf(":","");
-    randomTableString.replaceSelf("-","");
-    randomTableString.replaceSelf("Z",""); 
     
-    tableName.copy(randomTableString.c_str());
-    tableName.toLowerCaseSelf();
-    mvRecordQuery.print("INSERT INTO %s values (E'%s',E'%s',E'%s',E'%s')",lookupTableName.c_str(),pathString.c_str(),filterString.c_str(),dimString.c_str(),tableName.c_str());
-    CDBDebug("%s",mvRecordQuery.c_str());
-    status = DB.query(mvRecordQuery.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",mvRecordQuery.c_str());DB.close();throw(1);  }
+    //Add a new lookuptable with an unique id.
+    if(lookupTableIsAvailable==false){
+    
+      CT::string randomTableString = "t";
+      randomTableString.concat(currentDateTime());
+      randomTableString.concat("_");
+      randomTableString.concat(randomString(20));
+      randomTableString.replaceSelf(":","");
+      randomTableString.replaceSelf("-","");
+      randomTableString.replaceSelf("Z",""); 
+      
+      tableName.copy(randomTableString.c_str());
+      tableName.toLowerCaseSelf();
+      mvRecordQuery.print("INSERT INTO %s values (E'%s',E'%s',E'%s',E'%s')",lookupTableName.c_str(),pathString.c_str(),filterString.c_str(),dimString.c_str(),tableName.c_str());
+      CDBDebug("%s",mvRecordQuery.c_str());
+      status = DB.query(mvRecordQuery.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",mvRecordQuery.c_str());DB.close();throw(1);  }
+    }
+    //Close the database
+  }catch(int e){
+
+    DB.close();
+    lock.release();
+    throw(e);
   }
-  //Close the database
   DB.close();
+  
+  if(tableName.length()>0){
+    //CDBDebug("Pushing %s with id %s",tableName.c_str(),identifier.c_str());
+    lookupTableNameCacheMap.insert(std::pair<std::string,std::string>(identifier.c_str(),tableName.c_str()));
+  }
+  
+  lock.release();
+  if(tableName.length()<=0){
+    CDBError("Unable to generate lookup table name for %s",identifier.c_str());
+    throw(1);
+  }
+  
   return tableName;
 }
 

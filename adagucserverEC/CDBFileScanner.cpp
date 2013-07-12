@@ -76,6 +76,11 @@ int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,in
   int status = 0;
   CT::string query;
   
+  
+
+  
+  
+  
   if(dataSource->cfgLayer->Dimension.size()==0){
     CDataReader::autoConfigureDimensions(dataSource);
   }
@@ -170,7 +175,7 @@ int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,in
         //CDBDebug("OK: Table %s created, (check for unavailable files is off);",tableName);
         //if( addIndexToTable(DB,tableName.c_str(),dimName.c_str()) != 0)return 1;
       }
-      
+      //TODO set removeNonExistingFiles =0 when no records are in table
       
       
       if(removeNonExistingFiles==1){
@@ -214,6 +219,7 @@ int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,in
     }
       
   }
+
   return 0;
 }
 
@@ -357,7 +363,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
               dimensionTextList.c_str(),
               dirReader->fileList[j]->baseName.c_str());
             }
-            if(DB->query(mvRecordQuery.c_str())!=0){CDBError("Query %s failed",mvRecordQuery.c_str());throw(__LINE__);}
+            if(DB->query(mvRecordQuery.c_str())!=0){CDBError("Query %s failed (%s)",mvRecordQuery.c_str(),DB->getError());throw(__LINE__);}
             numberOfFilesAddedFromDB++;
           }
           
@@ -642,7 +648,15 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
 int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT::string *_tailPath,CT::string *_layerPathToScan){
  
   if(dataSource->dLayerType!=CConfigReaderLayerTypeDataBase)return 0;
-  
+ 
+  CCache::Lock lock;
+  CT::string identifier = "updatedb";  identifier.concat(dataSource->cfgLayer->FilePath[0]->value.c_str());  identifier.concat("/");  identifier.concat(dataSource->cfgLayer->FilePath[0]->attr.filter.c_str());  
+  CT::string cacheDirectory = "";
+  dataSource->srvParams->getCacheDirectory(&cacheDirectory);
+  if(cacheDirectory.length()>0){
+    lock.claim(cacheDirectory.c_str(),identifier.c_str(),dataSource->srvParams->isAutoResourceEnabled());
+  }
+
   //We only need to update the provided path in layerPathToScan. We will simply ignore the other directories
   if(_layerPathToScan!=NULL){
     if(_layerPathToScan->length()!=0){
@@ -772,7 +786,7 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
   status = DB.close();if(status!=0)return 1;
 
   CDBDebug("*** Finished update layer '%s' ***\n",dataSource->cfgLayer->Name[0]->value.c_str());
-
+  lock.release();
   return 0;
 }
 

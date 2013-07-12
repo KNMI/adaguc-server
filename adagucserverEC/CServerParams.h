@@ -35,7 +35,9 @@
 #include "COGCDims.h"
 #include "CGeoParams.h"
 #include "CPGSQLDB.h"
-
+#include "CCache.h"
+#include <map>
+#include <string>
 //#define MAX_DIMS 10
 
 /**
@@ -64,6 +66,8 @@ class CServerParams{
   DEF_ERRORFUNCTION();
   private:
     int autoOpenDAPEnabled,autoLocalFileResourceEnabled,autoResourceCacheEnabled;
+    std::map <std::string ,std::string> lookupTableNameCacheMap;
+    
   public:
     double dfResX,dfResY;
     int dWCS_RES_OR_WH;

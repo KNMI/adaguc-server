@@ -39,6 +39,7 @@
 #include <cpl_conv.h>
 #include <ogr_spatialref.h>
 #include <ctype.h>
+#include "CDebugger.h"
 #include "CTypes.h"
 #include "CServerError.h"
 #include "CDrawImage.h"

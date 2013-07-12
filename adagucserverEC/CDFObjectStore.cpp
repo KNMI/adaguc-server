@@ -28,6 +28,7 @@ const char *CDFObjectStore::className="CDFObjectStore";
 #include "CConvertASCAT.h"
 #include "CConvertADAGUCVector.h"
 #include "CConvertADAGUCPoint.h"
+#include "CConvertCurvilinear.h"
 #include "CDataReader.h"
 //#define CDFOBJECTSTORE_DEBUG
 #define MAX_OPEN_FILES 128
@@ -204,6 +205,10 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *s
   
   CCache cache;
   
+  //Too much trouble, so swicth caching of headers of.
+  hasCacheLocation = false;
+  
+  
   if(hasCacheLocation){
     CT::string validFileName(fileName);
     validFileName.replaceSelf(":",""); validFileName.replaceSelf("/",""); 
@@ -211,6 +216,8 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *s
     //CDBDebug("Making public directory %s",cacheName.c_str());
     CDirReader::makePublicDirectory(cacheName.c_str());
     cacheName.concat(&validFileName);cacheName.concat("_ncheader.nc");
+    
+ 
     
     if(srvParams->isAutoResourceCacheEnabled()){
       cache.checkCacheSystemReady(cacheName.c_str());
@@ -255,11 +262,12 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *s
     throw(1);
   }
   
+ // CDBDebug("opening");
   cdfObject->attachCDFReader(cdfReader);
   
-  
+ 
   int status = cdfObject->open(fileLocationToOpen);
-  
+   //CDBDebug("opened");
   if(status!=0){
     //TODO in case of basic/digest authentication, username and password is currently also listed....
     CDBError("Unable to open file '%s'",fileLocationToOpen);
@@ -268,7 +276,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *s
     return NULL;
   }
   
-
+ 
   
   if(cache.saveCacheFile()){
     /*int status = cache.claimCacheFile();
@@ -297,7 +305,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *s
       cache.releaseCacheFile();
     }
   }
-  
+   
   
   //Push everything into the store
   fileNames.push_back(new CT::string(uniqueIDForFile.c_str()));
@@ -307,11 +315,15 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *s
   
 
   bool level2CompatMode = false;
-  
+   
   if(!level2CompatMode)if(CConvertASCAT::convertASCATHeader(cdfObject)==0){level2CompatMode=true;};
+   
   if(!level2CompatMode)if(CConvertADAGUCVector::convertADAGUCVectorHeader(cdfObject)==0){level2CompatMode=true;};
+   
   if(!level2CompatMode)if(CConvertADAGUCPoint::convertADAGUCPointHeader(cdfObject)==0){level2CompatMode=true;};
-  
+   
+  if(!level2CompatMode)if(CConvertCurvilinear::convertCurvilinearHeader(cdfObject)==0){level2CompatMode=true;};
+    
   
   return cdfObject;
 }

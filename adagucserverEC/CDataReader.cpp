@@ -29,6 +29,7 @@
 #include "CConvertASCAT.h"
 #include "CConvertADAGUCVector.h"
 #include "CConvertADAGUCPoint.h"
+#include "CConvertCurvilinear.h"
 
 const char *CDataReader::className="CDataReader";
 
@@ -211,19 +212,44 @@ int applyScaleAndOffsetFloat(size_t start,size_t stop,float *data,float scale,fl
 class Proc{
   public:
   template <class T>
-  static void swapPixelsAtLocation(int location,T*data,int width,int height){
-    T temp1,temp2;
+  static void swapPixelsAtLocation(CDataSource *dataSource,T*data){
+   //T temp1,temp2;
+   int width = dataSource->dWidth;
+   int height = dataSource->dHeight;
+   dataSource->dWidth=int(360.0/dataSource->dfCellSizeX);
+   //dataSource->dHeight=360;
+    dataSource->dfBBOX[0]=-180;
+    dataSource->dfBBOX[2]=180;
+    
+    
+    //void **a = &dataSource->dataObject[0]->cdfVariable->data;
+  //  dataSource->dWidth=720;
+   // dataSource->dHeight=360;
+    //((T)dataSource->dataObject[0]->cdfVariable)
+    void *newData = NULL;
+    CDF::allocateData(dataSource->dataObject[0]->cdfVariable->type,&newData,dataSource->dWidth*dataSource->dHeight);
+    T*oldData = (T*)dataSource->dataObject[0]->cdfVariable->data;
+    data = (T*)newData;
     for(int y=0;y<height;y++){
       for(int x=0;x<width;x++){
-        if(x<location&&x<location+width){
+         //dataSource->varX[0]
+        //if(x>dataSource->useLonTransformation)
+        //int x1=x+dataSource->useLonTransformation;
+        
+        T value = oldData[x+y*width];
+        data[x+y*dataSource->dWidth]=value;
+        /*if(x<location&&x<location+width){
           temp1=data[x+y*width];
           temp2=data[x+location+y*width];
           data[x+y*width]=temp2;
           data[x+location+y*width]=temp1;
-        }
-        
+        }*/
+        //data[x+y*width]=NAN;
       }
     }
+    
+   CDF::freeData(&dataSource->dataObject[0]->cdfVariable->data);
+   (dataSource->dataObject[0]->cdfVariable->data)=newData;
   }
 };
 
@@ -246,8 +272,11 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
   dataSource->level2CompatMode = false;
   if(!dataSource->level2CompatMode)if(CConvertASCAT::convertASCATData(dataSource,mode)==0)dataSource->level2CompatMode=true;
   if(!dataSource->level2CompatMode)if(CConvertADAGUCVector::convertADAGUCVectorData(dataSource,mode)==0)dataSource->level2CompatMode=true;
-  if(!dataSource->level2CompatMode)if(CConvertADAGUCPoint::convertADAGUCPointData(dataSource,mode)==0)dataSource->level2CompatMode=true;     
-  
+  if(!dataSource->level2CompatMode)if(CConvertADAGUCPoint::convertADAGUCPointData(dataSource,mode)==0)dataSource->level2CompatMode=true;
+  if(!dataSource->level2CompatMode)if(CConvertCurvilinear::convertCurvilinearData(dataSource,mode)==0)dataSource->level2CompatMode=true;     
+  if(dataSource->level2CompatMode){
+   cache->removeClaimedCachefile();
+  }
   int status = 0;
 
   CDF::Variable * dataSourceVar=dataSource->dataObject[0]->cdfVariable;
@@ -441,7 +470,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
           if(status==0){
             //Projection string was created, set it in the datasource.
             dataSource->nativeProj4.copy(projString.c_str());
-           // CDBDebug("Autogen proj4 string: %s",projString.c_str());
+            CDBDebug("Autogen proj4 string: %s",projString.c_str());
           }
         }
         
@@ -465,7 +494,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
   
   // Lon transformation is used to swap datasets from 0-360 degrees to -180 till 180 degrees
   //Swap data from >180 degrees to domain of -180 till 180 in case of lat lon source data
-  dataSource->useLonTransformation = 0;
+  dataSource->useLonTransformation = -1;
   return 0;
   if(dataSource->level2CompatMode==false){
 
@@ -477,13 +506,13 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
       }
       if(j!=dataSource->varX->getSize()){
         dataSource->useLonTransformation=j;
-        dataSource->dfBBOX[0]-=180;
-        dataSource->dfBBOX[2]-=180;
+        dataSource->dfBBOX[0]=-180;
+        dataSource->dfBBOX[2]=180;
         
         //When cache is available, the 2D field is already stored as a lontransformed field. We should not do this again.
         //The lat/lons are always kept original, so they needed to be shifted (done above)
         if(cache->cacheIsAvailable()){
-          dataSource->useLonTransformation = 0;
+          dataSource->useLonTransformation = -1;
         }
       }
     }
@@ -557,13 +586,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
         }
       }
     }else{
-      if(enableDataCache){
-        if(cache.saveCacheFile()){
-          if(cache.claimCacheFile()!=0){
-            enableDataCache = false;
-          }
-        }
-      }
+      
       //We just open the file in the standard way, without cache
       //CDBDebug("Opening realfile %s with mode %d",dataSourceFilename.c_str(),mode);
       cdfObject=CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource,dataSourceFilename.c_str());
@@ -606,7 +629,17 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
     CDBError("Unable to parseDimensions");
     return 1;
   }
-  
+  if(dataSource->level2CompatMode){
+   
+    enableDataCache=false;
+  }
+  if(enableDataCache){
+    if(cache.saveCacheFile()){
+      if(cache.claimCacheFile()!=0){
+        enableDataCache = false;
+      }
+    }
+  }
   if(mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS){
 #ifdef CDATAREADER_DEBUG
     CDBDebug("Dimensions parsed");
@@ -620,10 +653,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
     if(dataSource->legendScale==0.0f)dataSource->stretchMinMax=true;else dataSource->stretchMinMax=false;
   }
  
-  if(dataSource->level2CompatMode){
-    cache.removeClaimedCachefile();
-    enableDataCache=false;
-  }
+  
   
   
   size_t start[dataSource->dNetCDFNumDims+1];
@@ -903,18 +933,18 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
         }
         
         //Swap data from >180 degrees to domain of -180 till 180 in case of lat lon source data
-        if(dataSource->useLonTransformation!=0&&!cache.cacheIsAvailable()){
-          int splitPX=dataSource->useLonTransformation;
+        if(dataSource->useLonTransformation!=-1&&!cache.cacheIsAvailable()){
+          //int splitPX=dataSource->useLonTransformation;
           switch (var[varNr]->type){
-            case CDF_CHAR  : Proc::swapPixelsAtLocation(splitPX,(char*)var[varNr]->data,dataSource->dWidth,dataSource->dHeight);break;
-            case CDF_BYTE  : Proc::swapPixelsAtLocation(splitPX,(char*)var[varNr]->data,dataSource->dWidth,dataSource->dHeight);break;
-            case CDF_UBYTE : Proc::swapPixelsAtLocation(splitPX,(uchar*)var[varNr]->data,dataSource->dWidth,dataSource->dHeight);break;
-            case CDF_SHORT : Proc::swapPixelsAtLocation(splitPX,(short*)var[varNr]->data,dataSource->dWidth,dataSource->dHeight);break;
-            case CDF_USHORT: Proc::swapPixelsAtLocation(splitPX,(ushort*)var[varNr]->data,dataSource->dWidth,dataSource->dHeight);break;
-            case CDF_INT   : Proc::swapPixelsAtLocation(splitPX,(int*)var[varNr]->data,dataSource->dWidth,dataSource->dHeight);break;
-            case CDF_UINT  : Proc::swapPixelsAtLocation(splitPX,(unsigned int*)var[varNr]->data,dataSource->dWidth,dataSource->dHeight);break;
-            case CDF_FLOAT : Proc::swapPixelsAtLocation(splitPX,(float*)var[varNr]->data,dataSource->dWidth,dataSource->dHeight);break;
-            case CDF_DOUBLE: Proc::swapPixelsAtLocation(splitPX,(double*)var[varNr]->data,dataSource->dWidth,dataSource->dHeight);break;
+            case CDF_CHAR  : Proc::swapPixelsAtLocation(dataSource,(char*)var[varNr]->data);break;
+            case CDF_BYTE  : Proc::swapPixelsAtLocation(dataSource,(char*)var[varNr]->data);break;
+            case CDF_UBYTE : Proc::swapPixelsAtLocation(dataSource,(uchar*)var[varNr]->data);break;
+            case CDF_SHORT : Proc::swapPixelsAtLocation(dataSource,(short*)var[varNr]->data);break;
+            case CDF_USHORT: Proc::swapPixelsAtLocation(dataSource,(ushort*)var[varNr]->data);break;
+            case CDF_INT   : Proc::swapPixelsAtLocation(dataSource,(int*)var[varNr]->data);break;
+            case CDF_UINT  : Proc::swapPixelsAtLocation(dataSource,(unsigned int*)var[varNr]->data);break;
+            case CDF_FLOAT : Proc::swapPixelsAtLocation(dataSource,(float*)var[varNr]->data);break;
+            case CDF_DOUBLE: Proc::swapPixelsAtLocation(dataSource,(double*)var[varNr]->data);break;
             default: {CDBError("Unknown data type"); return 1;}
           }
         }
@@ -1149,6 +1179,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
     //CDBDebug("Cache: %d %d %d",enableDataCache,cache.cacheIsAvailable(),cache.saveCacheFile());
     //Write the cache file if neccessary.
     if(enableDataCache==true&&cache.saveCacheFile()&&mode == CNETCDFREADER_MODE_OPEN_ALL){
+      
       /*int cacheStatus = cache.claimCacheFile();
       if(cacheStatus!=0){
         //CDBError("Cache file could not be claimed: %d %s",cacheStatus,cache.getCacheFileNameToWrite());
@@ -1241,6 +1272,23 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
       //Adjust dimensions for the single object:
       dataSource->varX->type=CDF_DOUBLE;
       dataSource->varY->type=CDF_DOUBLE;
+      
+      //Adjust fillvalues
+      
+      try{
+        double fillValueVarX;
+        dataSource->varX->getAttribute("_FillValue")->getData(&fillValueVarX,1);
+        dataSource->varX->setAttribute("_FillValue",CDF_DOUBLE,&fillValueVarX,1);
+      }catch(int e){
+      }
+       
+      try{
+        double fillValueVarY;
+        dataSource->varY->getAttribute("_FillValue")->getData(&fillValueVarY,1);
+        dataSource->varY->setAttribute("_FillValue",CDF_DOUBLE,&fillValueVarY,1);
+      }catch(int e){
+      }
+      
       try{
         //Reduce dimension sizes because of striding
         cdfObject->getDimension(dataSource->varX->name.c_str())->setSize(cdfObject->getDimension(dataSource->varX->name.c_str())->getSize()/dataSource->stride2DMap);
@@ -1263,6 +1311,12 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
           if(var->readData(CDF_DOUBLE)!=0){
             CDBError("Unable to read variable %s",var->name.c_str());
             return 1;
+          }
+          try{
+            double dimFillValue;
+            var->getAttribute("_FillValue")->getData(&dimFillValue,1);
+            var->setAttribute("_FillValue",CDF_DOUBLE,&dimFillValue,1);
+          }catch(int e){
           }
           double dimValue[var->getSize()];
           CDF::dataCopier.copy(dimValue,var->data,var->type,var->getSize());
@@ -1473,6 +1527,14 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
     return 1;
   }
   
+  CCache::Lock lock;
+  CT::string identifier = "autoConfigureDimensions";  identifier.concat(dataSource->cfgLayer->FilePath[0]->value.c_str());  identifier.concat("/");  identifier.concat(dataSource->cfgLayer->FilePath[0]->attr.filter.c_str());  
+  CT::string cacheDirectory = "";
+  dataSource->srvParams->getCacheDirectory(&cacheDirectory);
+  if(cacheDirectory.length()>0){
+    lock.claim(cacheDirectory.c_str(),identifier.c_str(),dataSource->srvParams->isAutoResourceEnabled());
+  }
+
   
   layerTableId.concat("_");layerTableId.concat(dataSource->getLayerName());
   query.print("SELECT * FROM %s where layerid=E'%s'",tableName.c_str(),layerTableId.c_str());
@@ -1616,7 +1678,7 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
   }
   CDBDebug("Found auto dims from NC file, returning from line %d.",__LINE__);
   #endif       
-  
+  lock.release();
   return 0;
 }
 
