@@ -2464,7 +2464,7 @@ int CRequest::getDocumentCacheName(CT::string *documentName,CServerParams *srvPa
       documentName->copy("WMS_1_1_1_GetCapabilities");
     }
     if(srvParam->OGCVersion==WMS_VERSION_1_3_0){
-      documentName->copy("WMS_1_1_1_GetCapabilities");
+      documentName->copy("WMS_1_3_0_GetCapabilities");
     }
   }
   if(srvParam->requestType==REQUEST_WCS_GETCAPABILITIES){
