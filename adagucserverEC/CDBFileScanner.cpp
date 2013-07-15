@@ -463,34 +463,36 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                     //Start looping over every netcdf dimension element
                     
                     for(size_t i=0;i<dimDim->length;i++){
-                      if(dimValues[i]!=NC_FILL_DOUBLE){
+                     
                         //Insert individual values of type char, short, int, float, double
                         if(dimVar->type!=CDF_STRING){
-                          if(isTimeDim[d]==false){
-                            if(hasStatusFlag==true){
-                              VALUES.print("('%s','%s','%d','%s')",
-                                           dirReader->fileList[j]->fullName.c_str(),
-                                           CDataSource::getFlagMeaning( &statusFlagList,double(dimValues[i])),
-                                           int(i),
-                                           fileDate.c_str());
-                            }
-                            if(hasStatusFlag==false){
-                              switch(dimVar->type){
-                                case CDF_FLOAT:
-                                case CDF_DOUBLE:
-                                  VALUES.print("('%s',%f,'%d','%s')",dirReader->fileList[j]->fullName.c_str(),double(dimValues[i]),int(i),fileDate.c_str());break;
-                                default:
-                                  VALUES.print("('%s',%d,'%d','%s')",dirReader->fileList[j]->fullName.c_str(),int(dimValues[i]),int(i),fileDate.c_str());break;
+                         if(dimValues[i]!=NC_FILL_DOUBLE){
+                            if(isTimeDim[d]==false){
+                              if(hasStatusFlag==true){
+                                VALUES.print("('%s','%s','%d','%s')",
+                                            dirReader->fileList[j]->fullName.c_str(),
+                                            CDataSource::getFlagMeaning( &statusFlagList,double(dimValues[i])),
+                                            int(i),
+                                            fileDate.c_str());
                               }
+                              if(hasStatusFlag==false){
+                                switch(dimVar->type){
+                                  case CDF_FLOAT:
+                                  case CDF_DOUBLE:
+                                    VALUES.print("('%s',%f,'%d','%s')",dirReader->fileList[j]->fullName.c_str(),double(dimValues[i]),int(i),fileDate.c_str());break;
+                                  default:
+                                    VALUES.print("('%s',%d,'%d','%s')",dirReader->fileList[j]->fullName.c_str(),int(dimValues[i]),int(i),fileDate.c_str());break;
+                                }
+                              }
+                            }else{
+                              VALUES.copy("");
+                              ADTime->PrintISOTime(ISOTime,ISO8601TIME_LEN,dimValues[i]);status = 0;//TODO make PrintISOTime return a 0 if succeeded
+                              if(status == 0){
+                                ISOTime[19]='Z';ISOTime[20]='\0';
+                                VALUES.print("('%s','%s','%d','%s')",dirReader->fileList[j]->fullName.c_str(),ISOTime,int(i),fileDate.c_str());
+                              }
+                              
                             }
-                          }else{
-                            VALUES.copy("");
-                            ADTime->PrintISOTime(ISOTime,ISO8601TIME_LEN,dimValues[i]);status = 0;//TODO make PrintISOTime return a 0 if succeeded
-                            if(status == 0){
-                              ISOTime[19]='Z';ISOTime[20]='\0';
-                              VALUES.print("('%s','%s','%d','%s')",dirReader->fileList[j]->fullName.c_str(),ISOTime,int(i),fileDate.c_str());
-                            }
-                            
                           }
                         }
                         
@@ -530,7 +532,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                            
                           }*/
                         }
-                      }
+                      
                     }
                   }catch(int linenr){
                     exceptionAtLineNr=linenr;

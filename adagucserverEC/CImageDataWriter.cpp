@@ -1081,7 +1081,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       #ifdef MEASURETIME
       StopWatch_Stop("projCacheInfo");
       #endif
-      
+      bool   isOutsideBBOX = false;
       try{
         projCacheIter=projCacheMap.find(key);
         if(projCacheIter==projCacheMap.end()){
@@ -1104,13 +1104,29 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         double x,y,sx,sy;
         sx=dX;
         sy=dY;
-
+   
         x=double(sx)/double(drawImage.Geo->dWidth);
         y=double(sy)/double(drawImage.Geo->dHeight);
         x*=(drawImage.Geo->dfBBOX[2]-drawImage.Geo->dfBBOX[0]);
         y*=(drawImage.Geo->dfBBOX[1]-drawImage.Geo->dfBBOX[3]);
         x+=drawImage.Geo->dfBBOX[0];
         y+=drawImage.Geo->dfBBOX[3];
+        
+        isOutsideBBOX = false;
+
+        if( dataSource->srvParams->isLonLatProjection(&dataSource->nativeProj4)){     
+          if(dataSource->dfBBOX[2]>180||dataSource->dfBBOX[0]<-180){
+            if(x>=-180&&x<180){
+              
+              while(x>=dataSource->dfBBOX[2])x-=360;
+              while(x<dataSource->dfBBOX[0])x+=360;
+            }else {
+              isOutsideBBOX=true;
+            }
+          }
+
+        }
+        //while(sx>180)sx-=360;
 
         projCacheInfo.CoordX=x;
         projCacheInfo.CoordY=y;
@@ -1175,7 +1191,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       getFeatureInfoResult->x_rasterIndex=projCacheInfo.imx;
       getFeatureInfoResult->y_rasterIndex=projCacheInfo.imy;
       
-      if(projCacheInfo.imx>=0&&projCacheInfo.imy>=0&&projCacheInfo.imx<projCacheInfo.dWidth&&projCacheInfo.imy<projCacheInfo.dHeight){
+      if(projCacheInfo.imx>=0&&projCacheInfo.imy>=0&&projCacheInfo.imx<projCacheInfo.dWidth&&projCacheInfo.imy<projCacheInfo.dHeight&&isOutsideBBOX==false){
         if(!openAll){
           #ifdef CIMAGEDATAWRITER_DEBUG 
           CDBDebug("Reading datasource %d for %d,%d",d,projCacheInfo.imx,projCacheInfo.imy);
@@ -1193,7 +1209,19 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
           CDBError("Could not open file: %s",dataSource->getFileName());
           return 1;
         }
+      }else{
+        GetFeatureInfoResult::Element * element = new GetFeatureInfoResult::Element();
+        element->dataSource=dataSource;
+        //Get variable name
+        element->var_name.copy(&dataSources[d]->dataObject[d]->variableName);
+        //Get variable units
+        element->units.copy(&dataSources[d]->dataObject[d]->units);
+        element->value="nodata";
+        getFeatureInfoResult->elements.push_back(element);
+        isOutsideBBOX = true;
       }
+      
+      if(isOutsideBBOX == false){
 
       //TODO find raster projection units and find image projection units.
       
@@ -1303,7 +1331,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         #endif
         //Fill in the actual data value
         //Check whether this is a NoData value:
-        if((pixel!=dataSource->dataObject[o]->dfNodataValue&&dataSource->dataObject[o]->hasNodataValue==true&&pixel==pixel)||
+        if((pixel!=dataSource->dataObject[o]->dfNodataValue&&dataSource->dataObject[o]->hasNodataValue==true&&pixel==pixel&&isOutsideBBOX==false)||
           dataSource->dataObject[o]->hasNodataValue==false){
           if(dataSource->dataObject[o]->hasStatusFlag){
             //Add status flag
@@ -1454,6 +1482,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
           CDBDebug("pushed wind speed KTS %f for step %d [%d]\n", windspeedKTS, step, getFeatureInfoResult->elements.size());
           #endif
         }
+      }
       }
     }
   }

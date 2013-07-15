@@ -519,3 +519,11 @@ bool CServerParams::checkBBOXXYOrder(const char *projName){
   }
   return false;
 }
+
+
+bool CServerParams::isLonLatProjection(CT::string *projectionName){
+  if(projectionName->indexOf("+proj=longlat")==0){
+    return true;
+  }
+  return false;
+}

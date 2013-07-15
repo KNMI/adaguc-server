@@ -238,6 +238,9 @@ class CServerParams{
      * @return true means that BBOX order is reversed, e.g. y1,x1,y2,x2
      */
     bool checkBBOXXYOrder(const char *projName);
+    
+    bool isLonLatProjection(CT::string *projectionName);
+    
 };
 
 

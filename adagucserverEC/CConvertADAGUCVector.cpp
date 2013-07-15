@@ -512,15 +512,19 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource,int mo
       vals[2]=vals[0];
       vals[3]=vals[0];
       int dlons[4],dlats[4];
+      bool projectionIsOk = true;
       if(tileHasNoData==false){
         if(tileIsTooLarge==false){
           for(int j=0;j<4;j++){
-            if(projectionRequired)imageWarper.reprojfromLatLon(lons[j],lats[j]);
+            if(projectionRequired){
+              if(imageWarper.reprojfromLatLon(lons[j],lats[j])!=0)projectionIsOk = false;
+            }
             dlons[j]=int((lons[j]-offsetX)/cellSizeX);
             dlats[j]=int((lats[j]-offsetY)/cellSizeY);
           }
-          
-          fillQuadGouraud(sdata, vals, dataSource->dWidth,dataSource->dHeight, dlons,dlats);
+          if(projectionIsOk){
+            fillQuadGouraud(sdata, vals, dataSource->dWidth,dataSource->dHeight, dlons,dlats);
+          }
         }
       }
     }
