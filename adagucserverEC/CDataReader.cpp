@@ -211,15 +211,46 @@ int applyScaleAndOffsetFloat(size_t start,size_t stop,float *data,float scale,fl
 
 class Proc{
   public:
+    DEF_ERRORFUNCTION();
   template <class T>
   static void swapPixelsAtLocation(CDataSource *dataSource,T*data){
+    
    //T temp1,temp2;
-   int width = dataSource->dWidth;
-   int height = dataSource->dHeight;
+   CDBDebug("Applying LON warp to -180 till 180 on the original data");
+   
+   int origWidth = dataSource->dWidth;
    dataSource->dWidth=int(360.0/dataSource->dfCellSizeX);
-   //dataSource->dHeight=360;
-    dataSource->dfBBOX[0]=-180;
-    dataSource->dfBBOX[2]=180;
+   
+   double origBBOXLeft = ((double*)dataSource->varX->data)[0]-dataSource->dfCellSizeX/2;
+   double origBBOXRight = ((double*)dataSource->varX->data)[dataSource->varX->getSize()-1]+dataSource->dfCellSizeX/2;
+   double origBBOXWidth = (origBBOXRight - origBBOXLeft) ;
+   
+   //CDBDebug("BBOXW:(%f %f) origWidth: %d newWidth: %d cellSize: %f",origBBOXLeft,origBBOXLeft,origWidth,dataSource->dWidth,dataSource->dfCellSizeX);
+   
+   dataSource->dfBBOX[0] = origBBOXLeft;
+   dataSource->dfBBOX[2] = origBBOXRight;
+   CDBDebug("Old bbox = %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[2]);
+   while( dataSource->dfBBOX[0]>-180){dataSource->dfBBOX[0]-=dataSource->dfCellSizeX;}
+   while(dataSource->dfBBOX[0]<-180){ dataSource->dfBBOX[0]+=dataSource->dfCellSizeX;}
+   dataSource->dfBBOX[2]=dataSource->dfBBOX[0]+360;
+   
+   
+   /*int discrete = -180/dataSource->dfCellSizeX;
+   discrete*=dataSource->dfCellSizeX;
+   dataSource->dfBBOX[0]=discrete;
+    discrete = 180/dataSource->dfCellSizeX;
+   discrete*=dataSource->dfCellSizeX;
+   dataSource->dfBBOX[2]=discrete;*/
+   
+   
+   
+   
+   double nodataValue = (T)dataSource->dataObject[0]->dfNodataValue;
+   if(dataSource->dataObject[0]->hasNodataValue == false){
+     dataSource->dataObject[0]->hasNodataValue = true;
+     dataSource->dataObject[0]->dfNodataValue = INFINITY; 
+     nodataValue=dataSource->dataObject[0]->dfNodataValue ;
+   }
     
     
     //void **a = &dataSource->dataObject[0]->cdfVariable->data;
@@ -227,24 +258,26 @@ class Proc{
    // dataSource->dHeight=360;
     //((T)dataSource->dataObject[0]->cdfVariable)
     void *newData = NULL;
-    CDF::allocateData(dataSource->dataObject[0]->cdfVariable->type,&newData,dataSource->dWidth*dataSource->dHeight);
+    size_t imageSize = dataSource->dWidth*dataSource->dHeight;
+    if(imageSize==0)imageSize=1;
+    CDF::allocateData(dataSource->dataObject[0]->cdfVariable->type,&newData,imageSize);
+    for(size_t j=0;j<imageSize;j++){
+      ((T*)newData)[j]=(T)nodataValue;
+    }
+    
     T*oldData = (T*)dataSource->dataObject[0]->cdfVariable->data;
     data = (T*)newData;
-    for(int y=0;y<height;y++){
-      for(int x=0;x<width;x++){
-         //dataSource->varX[0]
-        //if(x>dataSource->useLonTransformation)
-        //int x1=x+dataSource->useLonTransformation;
+    for(int y=0;y<dataSource->dHeight;y++){
+      for(int x=0;x<origWidth;x=x+1){
+        double lonX=((double(x)/double(origWidth))*origBBOXWidth)+origBBOXLeft;
+        while(lonX<-180)lonX+=360;
+        while(lonX>=180)lonX-=360;
         
-        T value = oldData[x+y*width];
-        data[x+y*dataSource->dWidth]=value;
-        /*if(x<location&&x<location+width){
-          temp1=data[x+y*width];
-          temp2=data[x+location+y*width];
-          data[x+y*width]=temp2;
-          data[x+location+y*width]=temp1;
-        }*/
-        //data[x+y*width]=NAN;
+        int newXIndex = floor((((lonX-dataSource->dfBBOX[0])/360))*double(dataSource->dWidth)+0.5);
+        T value = oldData[x+y*origWidth];
+        if(newXIndex>=0&&newXIndex<dataSource->dWidth){
+          data[newXIndex+y*dataSource->dWidth]=value;
+        }
       }
     }
     
@@ -252,6 +285,8 @@ class Proc{
    (dataSource->dataObject[0]->cdfVariable->data)=newData;
   }
 };
+
+const char *Proc::className="Proc";
 
 int CDataReader::open(CDataSource *dataSource, int mode){
   return open(dataSource,mode,-1,-1);
@@ -289,6 +324,13 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
     autoConfigureDimensions(dataSource);
   }
 
+  bool singleCellMode = false;
+  
+  if(x!=-1&&y!=-1){
+    singleCellMode = true;
+  }
+  
+  //CDBDebug("singlecellmode: %d %d %d",x,y,singleCellMode);
   
   // It is possible to skip every N cell in x and y. When set to 1, all data is displayed.
   // When set to 2, every second datacell is displayed, etc...
@@ -358,6 +400,11 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
   dataSource->dWidth=dimX->length/dataSource->stride2DMap;
   dataSource->dHeight=dimY->length/dataSource->stride2DMap;
   
+  if(singleCellMode){
+    dataSource->dWidth=2;
+    dataSource->dHeight=2;
+  }
+  
   size_t start[dataSource->dNetCDFNumDims+1];
   
   //Everything starts at zero
@@ -376,7 +423,8 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
     size_t sta[1],sto[1];ptrdiff_t str[1];
     
     sta[0]=start[dataSource->dimXIndex];str[0]=dataSource->stride2DMap; sto[0]=dataSource->dWidth;
-    if(x!=-1){sta[0]=x;str[0]=1;sto[0]=1;}
+    
+    if(singleCellMode){sta[0]=0;str[0]=1;sto[0]=2;}
     //CDBDebug("[%d %d %d] for %s/%s",sta[0],str[0],sto[0],dataSourceVar->name.c_str(),dataSource->varX->name.c_str());
    
     
@@ -388,9 +436,15 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
       return 1;
     }
     sta[0]=start[dataSource->dimYIndex];sto[0]=dataSource->dHeight;
-    if(y!=-1){sta[0]=y;str[0]=1;sto[0]=1;}
+    if(singleCellMode){
+      sta[0]=0;str[0]=1;sto[0]=2;
+      
+    }
     status = dataSource->varY->readData(CDF_DOUBLE,sta,sto,str);if(status!=0){
       CDBError("Unable to read y dimension for variable %s",dataSourceVar->name.c_str());
+      for(size_t j=0;j<dataSource->varY->dimensionlinks.size();j++){
+            CDBDebug("For var %s, reading dim %s of size %d (%d %d %d)", dataSource->varY->name.c_str(),dataSource->varY->dimensionlinks[j]->name.c_str(),dataSource->varY->dimensionlinks[j]->getSize(),sta[j],sto[j],str[j]);
+          }
       return 1;
     }
   }
@@ -400,8 +454,13 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
   double *dfdim_Y=(double*)dataSource->varY->data;
   
   
+
+   
+  
   dataSource->dfCellSizeX=(dfdim_X[dataSource->dWidth-1]-dfdim_X[0])/double(dataSource->dWidth-1);
   dataSource->dfCellSizeY=(dfdim_Y[dataSource->dHeight-1]-dfdim_Y[0])/double(dataSource->dHeight-1);
+  
+  //CDBDebug("cX: %f W: %d BBOXL: %f BBOXR: %f",dataSource->dfCellSizeX,dataSource->dWidth,dfdim_X[0],dfdim_X[dataSource->dWidth-1]);
   // Calculate BBOX
   dataSource->dfBBOX[0]=dfdim_X[0]-dataSource->dfCellSizeX/2.0f;
   dataSource->dfBBOX[1]=dfdim_Y[dataSource->dHeight-1]+dataSource->dfCellSizeY/2.0f;
@@ -494,20 +553,34 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
   
   // Lon transformation is used to swap datasets from 0-360 degrees to -180 till 180 degrees
   //Swap data from >180 degrees to domain of -180 till 180 in case of lat lon source data
-  dataSource->useLonTransformation = -1;
-  return 0;
+  
+  
+  if(singleCellMode == true){
+    dataSource->useLonTransformation = -1;
+    return 0;
+  }
+  if(dataSource->srvParams->requestType==REQUEST_WMS_GETFEATUREINFO||dataSource->srvParams->requestType==REQUEST_WMS_GETPOINTVALUE){
+    dataSource->useLonTransformation = -1;
+    return 0;
+  }
+  
   if(dataSource->level2CompatMode==false){
-
-    if( dataSource->nativeProj4.indexOf("+proj=longlat")==0){
+  
+    
+    if( dataSource->srvParams->isLonLatProjection(&dataSource->nativeProj4)){
       size_t j=0;
       for(j=0;j<dataSource->varX->getSize();j++){
         //CDBDebug("%d == %f",j,((double*)dataSource->varX->data)[j]);
         if(((double*)dataSource->varX->data)[j]>=180.0)break;
+        if(((double*)dataSource->varX->data)[j]<=-180.0)break;
       }
       if(j!=dataSource->varX->getSize()){
         dataSource->useLonTransformation=j;
-        dataSource->dfBBOX[0]=-180;
-        dataSource->dfBBOX[2]=180;
+        //dataSource->dfBBOX[0]=-180;
+        //dataSource->dfBBOX[2]=180;
+        while( dataSource->dfBBOX[0]>-180){dataSource->dfBBOX[0]-=dataSource->dfCellSizeX;}
+        while(dataSource->dfBBOX[0]<-180){ dataSource->dfBBOX[0]+=dataSource->dfCellSizeX;}
+        dataSource->dfBBOX[2]=dataSource->dfBBOX[0]+360;
         
         //When cache is available, the 2D field is already stored as a lontransformed field. We should not do this again.
         //The lat/lons are always kept original, so they needed to be shifted (done above)
@@ -527,6 +600,15 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
   //Perform some checks on pointers
   if(dataSource==NULL){CDBError("Invalid dataSource");return 1;}
   if(dataSource->getFileName()==NULL){CDBError("Invalid NetCDF filename (NULL)");return 1;}
+  
+  //CDBDebug("Open %d %d %d",mode,x,y);
+  
+  bool singleCellMode = false;
+  
+  if(x!=-1&&y!=-1){
+    singleCellMode = true;
+  }
+  
   CT::string dataSourceFilename;
   dataSourceFilename.copy(dataSource->getFileName());
  
@@ -550,7 +632,10 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
     cache.checkCacheSystemReady(cacheFilename.c_str());
   }
   
-  if(mode!=CNETCDFREADER_MODE_OPEN_ALL||x!=-1||y!=-1){
+  if(mode!=CNETCDFREADER_MODE_OPEN_ALL){
+    enableDataCache=false;
+  }
+  if(singleCellMode){
     enableDataCache=false;
   }
    
@@ -677,7 +762,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
     }
   }
   
-  if(x!=-1&&y!=-1){
+  if(singleCellMode){
     dataSource->dWidth=2;
     dataSource->dHeight=2;
     start[dataSource->dimXIndex]=x;
@@ -897,20 +982,19 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
   #endif
     //for(size_t varNr=0;varNr<dataSource->dataObject.size();varNr++)
       
-    double dfNoData = 0;
-    bool hasNodataValue =false;;
-    
-    for(size_t varNr=0;varNr<dataSource->dataObject.size();varNr++)
-    {
-      
+  
+ 
+    for(size_t varNr=0;varNr<dataSource->dataObject.size();varNr++)    {
+       // double dfNoData = 0;
       #ifdef MEASURETIME
       StopWatch_Stop("Reading _FillValue");
       #endif
       CDF::Attribute *fillValue = var[varNr]->getAttributeNE("_FillValue");
       if(fillValue!=NULL){
-        hasNodataValue=true;
-        fillValue->getData(&dfNoData,1);
-      }else hasNodataValue=false;
+        
+        fillValue->getData(&dataSource->dataObject[varNr]->dfNodataValue,1);
+        dataSource->dataObject[varNr]->hasNodataValue = true;
+      }else dataSource->dataObject[varNr]->hasNodataValue=false;
       
     
       
@@ -927,8 +1011,15 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
         StopWatch_Stop("start reading data");
         #endif
         
+         
+         
         if(var[varNr]->readData(var[varNr]->type,start,count,stride)!=0){
           CDBError("Unable to read data for variable %s in file %s",var[varNr]->name.c_str(),dataSource->getFileName());
+          
+          for(size_t j=0;j<var[varNr]->dimensionlinks.size();j++){
+            CDBDebug("%s %d %d %d",var[varNr]->dimensionlinks[j]->name.c_str(),start[j],count[j],stride[j]);
+          }
+          
           return 1;
         }
         
@@ -1000,7 +1091,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
         
         double dfscale_factor = dataSource->dataObject[varNr]->dfscale_factor;
         double dfadd_offset = dataSource->dataObject[varNr]->dfadd_offset;
-        //CDBDebug("dfNoData=%f",dfNoData*dfscale_factor);
+        
         #ifdef CDATAREADER_DEBUG   
         CDBDebug("Applying scale and offset with %f and %f (var size=%d) type=%s",dfscale_factor,dfadd_offset,var[varNr]->getSize(),CDF::getCDFDataTypeName(dataSource->dataObject[varNr]->cdfVariable->type).c_str());
         #endif
@@ -1019,7 +1110,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
         }*/
         if(dataSource->dataObject[varNr]->cdfVariable->type==CDF_FLOAT){
           //Preserve the original nodata value, so it remains a nice short rounded number.
-          float fNoData=(float)dfNoData;
+          float fNoData=(float)dataSource->dataObject[varNr]->dfNodataValue;
           float fscale_factor=(float)dfscale_factor;
           float fadd_offset=(float)dfadd_offset;
           // packed data to be unpacked to FLOAT:
@@ -1031,7 +1122,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
             }
           }
           //Convert the nodata type
-          dfNoData=fNoData*fscale_factor+fadd_offset;
+          dataSource->dataObject[varNr]->dfNodataValue=fNoData*fscale_factor+fadd_offset;
         }
         
         if(dataSource->dataObject[varNr]->cdfVariable->type==CDF_DOUBLE){
@@ -1041,7 +1132,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
             _data[j]=_data[j]*dfscale_factor+dfadd_offset;
           }
           //Convert the nodata type
-          dfNoData=dfNoData*dfscale_factor+dfadd_offset;
+          dataSource->dataObject[varNr]->dfNodataValue=dataSource->dataObject[varNr]->dfNodataValue*dfscale_factor+dfadd_offset;
         }
       }
       
@@ -1050,8 +1141,8 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
       #endif
       
 
-      dataSource->dataObject[varNr]->dfNodataValue=dfNoData;
-      dataSource->dataObject[varNr]->hasNodataValue=hasNodataValue;
+   
+      
       
       /*In order to write good cache files we need to modify
         our cdfobject. Data is now unpacked, so we need to remove
@@ -1066,11 +1157,11 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
       //var[varNr]->type=dataSource->dataObject[varNr]->dataType;
       
       //Reset _FillValue to correct datatype and adjust scale and offset values.
-      if(hasNodataValue){
+      if( dataSource->dataObject[varNr]->dfNodataValue){
         CDF::Attribute *fillValue = var[varNr]->getAttributeNE("_FillValue");
         if(fillValue!=NULL){
-          if(var[varNr]->type==CDF_FLOAT){float fNoData=(float)dfNoData;fillValue->setData(CDF_FLOAT,&fNoData,1);}
-          if(var[varNr]->type==CDF_DOUBLE)fillValue->setData(CDF_DOUBLE,&dfNoData,1);
+          if(var[varNr]->type==CDF_FLOAT){float fNoData=(float)dataSource->dataObject[varNr]->dfNodataValue;fillValue->setData(CDF_FLOAT,&fNoData,1);}
+          if(var[varNr]->type==CDF_DOUBLE)fillValue->setData(CDF_DOUBLE,&dataSource->dataObject[varNr]->dfNodataValue,1);
         }
       }
     }
