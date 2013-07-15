@@ -381,8 +381,10 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
  dataSource->varX=cdfObject->getVariableNE(dimX->name.c_str());
  dataSource->varY=cdfObject->getVariableNE(dimY->name.c_str());
  if(dataSource->varX==NULL||dataSource->varY==NULL){CDBError("X ('%s') and or Y ('%s') vars not found...",dimX->name.c_str(),dimY->name.c_str());return 1;}
- 
+
   dataSource->stride2DMap=1;
+  
+  
   while(dimX->length/dataSource->stride2DMap>360*4){
     dataSource->stride2DMap++;
   }
@@ -420,16 +422,11 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
   }
 
   if(dataSource->level2CompatMode == false){
+      
     size_t sta[1],sto[1];ptrdiff_t str[1];
-    
     sta[0]=start[dataSource->dimXIndex];str[0]=dataSource->stride2DMap; sto[0]=dataSource->dWidth;
-    
     if(singleCellMode){sta[0]=0;str[0]=1;sto[0]=2;}
     //CDBDebug("[%d %d %d] for %s/%s",sta[0],str[0],sto[0],dataSourceVar->name.c_str(),dataSource->varX->name.c_str());
-   
-    
-    
-  
     status = dataSource->varX->readData(CDF_DOUBLE,sta,sto,str);
     if(status!=0){
       CDBError("Unable to read x dimension with name %s for variable %s",dataSource->varX->name.c_str(),dataSourceVar->name.c_str());
@@ -448,18 +445,20 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
       return 1;
     }
   }
-  
+
   // Calculate cellsize based on read X,Y dims
   double *dfdim_X=(double*)dataSource->varX->data;
   double *dfdim_Y=(double*)dataSource->varY->data;
   
+  if(dfdim_X == NULL || dfdim_Y == NULL){
+    CDBError("For variable '%s': No data available for '%s' or '%s' dimensions",dataSourceVar->name.c_str(),dataSource->varX->name.c_str(),dataSource->varY->name.c_str());
+    return 1;
+  }
   
-
-   
+  //CDBDebug("SOFAR %d %d %d %d",dataSource->dWidth,dataSource->dHeight,dfdim_X,dfdim_Y);
   
   dataSource->dfCellSizeX=(dfdim_X[dataSource->dWidth-1]-dfdim_X[0])/double(dataSource->dWidth-1);
   dataSource->dfCellSizeY=(dfdim_Y[dataSource->dHeight-1]-dfdim_Y[0])/double(dataSource->dHeight-1);
-  
   //CDBDebug("cX: %f W: %d BBOXL: %f BBOXR: %f",dataSource->dfCellSizeX,dataSource->dWidth,dfdim_X[0],dfdim_X[dataSource->dWidth-1]);
   // Calculate BBOX
   dataSource->dfBBOX[0]=dfdim_X[0]-dataSource->dfCellSizeX/2.0f;
@@ -475,7 +474,6 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
     dataSource->dfBBOX[1]=dfdim_Y[0]-dataSource->dfCellSizeY/2.0f;;
   }
   
-
 #ifdef MEASURETIME
   StopWatch_Stop("XY dimensions read");
 #endif
@@ -553,14 +551,14 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
   
   // Lon transformation is used to swap datasets from 0-360 degrees to -180 till 180 degrees
   //Swap data from >180 degrees to domain of -180 till 180 in case of lat lon source data
-  
+   dataSource->useLonTransformation = -1;
   
   if(singleCellMode == true){
-    dataSource->useLonTransformation = -1;
+
     return 0;
   }
   if(dataSource->srvParams->requestType==REQUEST_WMS_GETFEATUREINFO||dataSource->srvParams->requestType==REQUEST_WMS_GETPOINTVALUE){
-    dataSource->useLonTransformation = -1;
+  
     return 0;
   }
   
@@ -1177,7 +1175,6 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
         CDBDebug("No statistics available");
         #endif    
         
-        //CDBDebug("SOFAR");
         dataSource->statistics = new CDataSource::Statistics();
         //TODO
         dataSource->statistics->calculate(dataSource);
