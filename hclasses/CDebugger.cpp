@@ -27,7 +27,7 @@
 #include "CDebugger_H2.h"
 #include <iostream>
 #include <stdlib.h>
-
+#include <new>   
  
 bool Tracer::Ready = false;
 extern Tracer NewTrace;
@@ -104,14 +104,14 @@ void operator delete (void * p, char const * file, int line)
     NewTrace.Remove (p);
   free (p);
 }
-void * operator new (size_t size)
+void * operator new (std::size_t mem,const std::nothrow_t&)
 {
-  void * p = malloc (size);
+  void * p = malloc (mem);
   if (Tracer::Ready)
     NewTrace.Add (p, "?", 0);
   return p;
 }
-void operator delete (void * p)
+void operator delete (void * p,const std::nothrow_t&)
 {
   if (Tracer::Ready)
     NewTrace.Remove (p);

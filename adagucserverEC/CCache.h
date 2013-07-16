@@ -28,7 +28,7 @@
 #include "CDirReader.h"
 #ifndef CCACHE_H
 #define CCACHE_H
-
+#include <unistd.h>
 /**
  * Helper class for cache files. 
  * The cache system uses a temporary file to write intermediate results.
