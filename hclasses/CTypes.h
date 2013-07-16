@@ -59,7 +59,7 @@ namespace CT{
     ~PointerList(){free();}
     void free(){for(size_t j=0;j<this->size();j++){delete (*this)[j];(*this)[j]=NULL;}}
     T2 get(int j){return (*this)[j];}
-    void add(T2 t){push_back(t);}
+    void add(T2 t){this->push_back(t);}
   };
 
   /**
@@ -69,7 +69,7 @@ namespace CT{
   class StackList:public std::vector<T3>{
     public:
     ~StackList(){}
-    void add(T3 t){push_back(t);}
+    void add(T3 t){this->push_back(t);}
     StackList(){}
     /*Copy constructor*/
     StackList(StackList <T3>const &f){for(size_t j=0;j<f.size();j++){add(f[j]);}}
