@@ -29,6 +29,7 @@
 #define CGDALDataWriter_H
 #include "CServerParams.h"
 #include "CDataSource.h"
+#include "CDataReader.h"
 #include "gdalwarper.h"
 #include <gdal.h>
 #include <gdal_pam.h>

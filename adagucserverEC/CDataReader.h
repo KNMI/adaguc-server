@@ -41,6 +41,7 @@
 #include "CDBFileScanner.h"
 #include "CDFObjectStore.h"
 #include "CCache.h"
+
 class CDataReader{
   private:
     DEF_ERRORFUNCTION();

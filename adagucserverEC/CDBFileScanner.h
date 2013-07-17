@@ -34,7 +34,7 @@
 #include "CDirReader.h"
 #include "CPGSQLDB.h"
 #include "CADAGUC_time.h"
-#include "adagucserver.h"
+//#include "adagucserver.h"
 
 /**
  * Class which scans files and updates the database.

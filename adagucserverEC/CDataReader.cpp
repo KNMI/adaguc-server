@@ -273,7 +273,7 @@ class Proc{
         while(lonX<-180)lonX+=360;
         while(lonX>=180)lonX-=360;
         
-        int newXIndex = floor((((lonX-dataSource->dfBBOX[0])/360))*double(dataSource->dWidth)+0.5);
+        int newXIndex = int(floor((((lonX-dataSource->dfBBOX[0])/360))*double(dataSource->dWidth)+0.5));
         T value = oldData[x+y*origWidth];
         if(newXIndex>=0&&newXIndex<dataSource->dWidth){
           data[newXIndex+y*dataSource->dWidth]=value;

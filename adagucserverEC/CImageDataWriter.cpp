@@ -3303,7 +3303,7 @@ if(legendType == cascaded){
     int dH=0;
     
     if(drawUpperTriangle){
-      dH+=triangleHeight;
+      dH+=int(triangleHeight);
       cbH-=triangleHeight;
     }
     if(drawLowerTriangle){
@@ -3335,10 +3335,10 @@ if(legendType == cascaded){
     int triangle1BY= 7+dH+pTop-1
     ;
     int triangleMX = (int)cbW+pLeft-int(cbW/2.0);
-    int triangle1TY = 7+dH+pTop-triangleHeight;
+    int triangle1TY = int(7+dH+pTop-triangleHeight);
     
     int triangle2TY= (int)cbH+7+dH+pTop;
-    int triangle2BY = (int)cbH+7+dH+pTop+triangleHeight;
+    int triangle2BY = int(cbH+7+dH+pTop+triangleHeight);
     
     if(drawUpperTriangle){
       //Draw upper triangle
