@@ -26,6 +26,7 @@
 #ifndef CCDFDATAMODEL_H
 #define CCDFDATAMODEL_H
 #include <stdio.h>
+#include <stddef.h>
 #include <vector>
 #include <iostream>
 #include "CDebugger.h"

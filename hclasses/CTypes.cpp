@@ -400,6 +400,7 @@ namespace CT{
             }
             ps+=substrl;
             j++;
+            if (j>=occurences.size()) break;
           }
         }
         value[pt++]=thisString.value[ps++];

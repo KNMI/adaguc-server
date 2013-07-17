@@ -37,7 +37,7 @@ int CXMLGen::WCSDescribeCoverage(CServerParams *srvParam,CT::string *XMLDocument
   return OGCGetCapabilities(srvParam,XMLDocument);
 }
 
-bool compareStringCase( const string& s1, const string& s2 ) {
+bool compareStringCase( const std::string& s1, const std::string& s2 ) {
   return strcmp( s1.c_str(), s2.c_str() ) <= 0;
 }
 
