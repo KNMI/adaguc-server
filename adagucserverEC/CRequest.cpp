@@ -530,7 +530,7 @@ int CRequest::process_wms_getmap_request(){
 
 
 
-const char *timeFormatAllowedChars="0123456789:TZ-/. _ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+const char *timeFormatAllowedChars="0123456789:TZ-/. _ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz()";
 bool CRequest::checkTimeFormat(CT::string& timeToCheck){
   if(timeToCheck.length()<1)return false;
 //  bool isValidTime = false;

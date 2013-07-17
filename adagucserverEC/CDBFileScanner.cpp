@@ -133,14 +133,14 @@ int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,in
           for(size_t i=0;i<statusFlagList.size();i++)delete statusFlagList[i];
           statusFlagList.clear();
           if(hasStatusFlag){
-            tableColumns.printconcat(", %s varchar (16), dim%s int",dimName.c_str(),dimName.c_str());
+            tableColumns.printconcat(", %s varchar (64), dim%s int",dimName.c_str(),dimName.c_str());
           }else{
             switch(dimVar->type){
               case CDF_FLOAT:
               case CDF_DOUBLE:
               tableColumns.printconcat(", %s real, dim%s int",dimName.c_str(),dimName.c_str());break;
               case CDF_STRING:
-              tableColumns.printconcat(", %s varchar (16), dim%s int",dimName.c_str(),dimName.c_str());break;
+              tableColumns.printconcat(", %s varchar (64), dim%s int",dimName.c_str(),dimName.c_str());break;
               default:
               tableColumns.printconcat(", %s int, dim%s int",dimName.c_str(),dimName.c_str());break;
             }          
@@ -580,7 +580,9 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
           #endif
           status =  DB->query(queryString.c_str()); 
           if(status!=0){
-            CDBError("Query failed: %s",queryString.c_str());
+            CDBError("Query failed:");
+            writeLogFile(queryString.c_str());
+            writeLogFile("\n");
             throw(__LINE__);
           }
           CDBDebug("/Inserting %d bytes",queryString.length());

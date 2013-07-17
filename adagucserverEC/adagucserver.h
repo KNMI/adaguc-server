@@ -28,6 +28,9 @@
 #include "CRequest.h"
 #include "CServerError.h"
 #include "Definitions.h"
+
+void writeLogFile(const char * msg);
+
 #endif
 
  /* ADAGUCSERVEREC_H_ */
