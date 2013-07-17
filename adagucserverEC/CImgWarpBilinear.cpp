@@ -1533,3 +1533,4 @@ int CImgWarpBilinear::set(const char *pszSettings){
   delete[] nodes;
   return 0;
 }
+

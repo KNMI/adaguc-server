@@ -25,6 +25,7 @@
 
 #include "CDBFileScanner.h"
 #include "CDebugger.h"
+#include "adagucserver.h"
 const char *CDBFileScanner::className="CDBFileScanner";
 std::vector <CT::string> CDBFileScanner::tableNamesDone;
 //#define CDBFILESCANNER_DEBUG
