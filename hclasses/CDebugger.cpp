@@ -104,14 +104,14 @@ void operator delete (void * p, char const * file, int line)
     NewTrace.Remove (p);
   free (p);
 }
-void * operator new (std::size_t mem,const std::nothrow_t&)
+void * operator new (std::size_t mem)
 {
   void * p = malloc (mem);
   if (Tracer::Ready)
     NewTrace.Add (p, "?", 0);
   return p;
 }
-void operator delete (void * p,const std::nothrow_t&)
+void operator delete (void * p)
 {
   if (Tracer::Ready)
     NewTrace.Remove (p);

@@ -122,7 +122,6 @@ int runRequest(){
 }
 
 int main(int argc, const char *argv[]){
-  
 
   // Initialize error functions
   seterrormode(EXCEPTIONS_PLAINTEXT);
