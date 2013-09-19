@@ -461,6 +461,41 @@ int CRequest::generateOGCGetCapabilities(CT::string *XMLdocument){
   return XMLGen.OGCGetCapabilities(srvParam,XMLdocument);
 }
 
+int CRequest::generateGetReferenceTimes(CT::string *result){
+    //Set WMSLayers:
+  
+  std::set<std::string>WMSGroups ;
+  for(size_t j=0;j<srvParam->cfg->Layer.size();j++){
+    CT::string groupName;
+    srvParam->makeLayerGroupName(&groupName,srvParam->cfg->Layer[j]);
+    if (groupName.testRegEx("[[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]]_[[:digit:]][[:digit:]]")) {
+      CT::string ymd=groupName.substringr(0,8);
+      CT::string hh=groupName.substringr(9,11);
+      ymd.concat(hh);
+      ymd.concat("00");
+      WMSGroups.insert(ymd.c_str());
+    } else if (groupName.testRegEx("[[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]]")) {
+      groupName.concat("00");
+      WMSGroups.insert(groupName.c_str());
+    } else if (groupName.testRegEx("[[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]]")) {
+      WMSGroups.insert(groupName.c_str());
+    }
+  }
+  result->copy("[");
+  bool first=true;
+  for (std::set<std::string>::reverse_iterator it=WMSGroups.rbegin(); it!=WMSGroups.rend(); ++it) {
+    if (!first) {
+      result->concat(",");
+    }
+    first=false;
+    result->concat("\"");
+    result->concat((*it).c_str());
+    result->concat("\"");
+  }
+  result->concat("]");
+  return 0;
+}
+
 int CRequest::generateOGCDescribeCoverage(CT::string *XMLdocument){
   CXMLGen XMLGen;
   for(size_t j=0;j<srvParam->WMSLayers->count;j++){
@@ -499,6 +534,47 @@ int CRequest::process_wms_getcap_request(){
   }
   printf("%s%c%c\n","Content-Type:text/xml",13,10);
   printf("%s",XMLdocument.c_str());
+  
+
+  
+  return 0;
+}
+
+int CRequest::process_wms_getreferencetimes_request(){
+  CDBDebug("WMS GETREFERENCETIMES");
+  
+  CT::string XMLdocument;
+  if(srvParam->enableDocumentCache==true){
+    CSimpleStore simpleStore;
+    CT::string documentName;
+    bool storeNeedsUpdate=false;
+    int status = getDocumentCacheName(&documentName,srvParam);if(status!=0)return 1;
+    //Try to get the getcapabilities document from the store:
+    status = getDocFromDocCache(&simpleStore,&documentName,&XMLdocument);if(status==1)return 1;
+    //if(status==2, the store is ok, but not up to date
+    if(status==2)storeNeedsUpdate=true;
+    if(storeNeedsUpdate){
+      //CDBDebug("Generating a new document with name %s",documentName.c_str());
+      int status = generateGetReferenceTimes(&XMLdocument);if(status==CXMLGEN_FATAL_ERROR_OCCURED)return 1;
+      //Store this document  
+      if(status==0){
+        simpleStore.setStringAttribute(documentName.c_str(),XMLdocument.c_str());
+        if(storeDocumentCache(&simpleStore)!=0)return 1;
+      }
+    }else{
+      CDBDebug("Providing document from store with name %s",documentName.c_str());
+    }
+  }else{
+    //Do not use cache
+    int status = generateGetReferenceTimes(&XMLdocument);;if(status==CXMLGEN_FATAL_ERROR_OCCURED)return 1;
+  }
+  if (srvParam->JSONP.length()==0) {
+    printf("%s%c%c\n","Content-Type: application/json ",13,10);
+    printf("%s",XMLdocument.c_str());
+  } else {
+    printf("%s%c%c\n","Content-Type: text/javascript ",13,10);
+    printf("%s(%s)",srvParam->JSONP.c_str(),XMLdocument.c_str());
+  }
   
 
   
@@ -1709,6 +1785,7 @@ int CRequest::process_querystring(){
       if(REQUEST.equals("GETLEGENDGRAPHIC"))srvParam->requestType=REQUEST_WMS_GETLEGENDGRAPHIC;
       if(REQUEST.equals("GETMETADATA"))srvParam->requestType=REQUEST_WMS_GETMETADATA;
       if(REQUEST.equals("GETSTYLES"))srvParam->requestType=REQUEST_WMS_GETSTYLES;
+      if(REQUEST.equals("GETREFERENCETIMES"))srvParam->requestType=REQUEST_WMS_GETREFERENCETIMES;
     }
     
     //For getlegend graphic the parameter is style, not styles
@@ -2092,6 +2169,14 @@ int CRequest::process_querystring(){
       }
     }*/
     
+    if (srvParam->requestType==REQUEST_WMS_GETREFERENCETIMES) {
+      int status =  process_wms_getreferencetimes_request();
+      if(status != 0) {
+	CDBError("WMS GetReferenceTimes Request failed");
+	return 1;
+      }
+      return 0;
+    }
     if(srvParam->requestType==REQUEST_WMS_GETMAP||srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
         if(dFound_Format==0){
           CDBWarning("Parameter FORMAT missing");
@@ -2124,7 +2209,7 @@ int CRequest::process_querystring(){
       (
         srvParam->requestType==REQUEST_WMS_GETMAP||
         srvParam->requestType==REQUEST_WMS_GETFEATUREINFO||
-        srvParam->requestType==REQUEST_WMS_GETPOINTVALUE        
+        srvParam->requestType==REQUEST_WMS_GETPOINTVALUE
       )){
       
       if(srvParam->requestType==REQUEST_WMS_GETFEATUREINFO||srvParam->requestType==REQUEST_WMS_GETPOINTVALUE){
@@ -2466,6 +2551,9 @@ int CRequest::getDocumentCacheName(CT::string *documentName,CServerParams *srvPa
     if(srvParam->OGCVersion==WMS_VERSION_1_3_0){
       documentName->copy("WMS_1_3_0_GetCapabilities");
     }
+  }
+  if(srvParam->requestType==REQUEST_WMS_GETREFERENCETIMES){
+    documentName->copy("WMS_1_3_0_GetReferenceTimes");
   }
   if(srvParam->requestType==REQUEST_WCS_GETCAPABILITIES){
     if(srvParam->OGCVersion==WCS_VERSION_1_0){
