@@ -38,6 +38,15 @@
 #define  deg2rad  (M_PI/180.)   // conversion for deg to rad 
 #endif
 
+
+#define CONTOURDEFINITIONLOOKUPTYPE unsigned char
+#define CONTOURDEFINITIONLOOKUPLENGTH 16
+#define DISTANCEFIELDTYPE unsigned short
+
+/*#define CONTOURDEFINITIONLOOKUPTYPE unsigned short
+  #define CONTOURDEFINITIONLOOKUPLENGTH 256
+*/
+
 //#define CImgWarpBilinear_DEBUG
 
 //DEF_ERRORMAIN();
@@ -844,7 +853,7 @@ if(enableContour||enableShade){
   
   
   
-  drawContour(valueData,fNodataValue,shadeInterval,&contourDefinitions,sourceImage,drawImage,enableContour,enableShade,enableContour);
+  drawContour(valueData,fNodataValue,shadeInterval,sourceImage,drawImage,enableContour,enableShade,enableContour);
 }
 
 /*
@@ -951,35 +960,42 @@ delete[] valObj;
   
 
   
-  class ContourType{
-  public:
-      ContourDefinition *contourDefinition;    
-      CT::string text;
-  };
+
   
   /**
    * Check if this requires contours
+   * @returns 16 bits unsigned short, 
+   * where first 8 bytes represent which contourDefinition to use, incremented with one, 
+   * and last 8 bytes represent which defined interval to use (in case when classes are defined)
+   * When Zero is returned, no contours should be used.
+   * e.g:
+   * contourDefinitionIndex = ((returnValue-1)%CONTOURDEFINITIONLOOKUPLENGTH)
+   * definedIntervalIndex = returnValue/CONTOURDEFINITIONLOOKUPLENGTH
    */
-  int checkIfContourRequired(float *val,std::vector<ContourDefinition> *contourDefinitions){
-    for(size_t j=0;j<contourDefinitions->size();j++){
-      ContourDefinition *s=&(*contourDefinitions)[j];
-      //Check for continuous intervals
-      if(s->continuousInterval!=0){
-        if(checkContourRegularInterval(val,s->continuousInterval)){
-           //CDBDebug("Match for %f ",val);
-          return 1;
-        }
-      }
-      //Check for defined intervals
+  
+  unsigned short CImgWarpBilinear::checkIfContourRequired(float *val){
+    for(size_t j=0;j<contourDefinitions.size();j++){
       
-      for(size_t j=0;j<s->definedIntervals.size();j++){
-        float c= s->definedIntervals[j];
-        //CDBDebug("Match for %f == %f",val[0],c);
-        if((val[0]>=c&&val[1]<c)||(val[0]>c&&val[1]<=c)||(val[0]<c&&val[1]>=c)||(val[0]<=c&&val[1]>c)||
-          (val[0]>c&&val[2]<=c)||(val[0]>=c&&val[2]<c)||(val[0]<=c&&val[2]>c)||(val[0]<c&&val[2]>=c))
-        {
-          //CDBDebug("Match for %f == %f",val[0],c);
-          return 1;
+      //Check for defined intervals
+      if(contourDefinitions[j].definedIntervals.size()>0){
+        for(size_t i=0;i<contourDefinitions[j].definedIntervals.size();i++){
+          float c= contourDefinitions[j].definedIntervals[i];
+          //(val[0]>=c&&val[1]<c)||(val[0]>c&&val[1]<=c)||(val[0]<c&&val[1]>=c)||(val[0]<=c&&val[1]>c)||
+          //(val[0]>c&&val[2]<=c)||(val[0]>=c&&val[2]<c)||(val[0]<=c&&val[2]>c)||(val[0]<c&&val[2]>=c)
+          if(
+            (val[0]>=c&&val[1]<c)||(val[0]>c&&val[1]<=c)||(val[0]<c&&val[1]>=c)||(val[0]<=c&&val[1]>c)||
+          (val[0]>c&&val[2]<=c)||(val[0]>=c&&val[2]<c)||(val[0]<=c&&val[2]>c)||(val[0]<c&&val[2]>=c)
+          
+          ){
+            return j+i*CONTOURDEFINITIONLOOKUPLENGTH+1;
+          }
+        }
+      }else{
+        //Check for continuous intervals
+        if(contourDefinitions[j].continuousInterval!=0.0){
+          if(checkContourRegularInterval(val,contourDefinitions[j].continuousInterval)){
+            return j+1;
+          }
         }
       }
     
@@ -988,46 +1004,8 @@ delete[] valObj;
     return 0;
   }
   
-  /**
-   * Get contour information including text
-   */
-  ContourType getContourInformation(float *val,std::vector<ContourDefinition> *contourDefinitions){
-    ContourType contourType;
-    contourType.contourDefinition=NULL;
-    
-    for(size_t j=0;j<contourDefinitions->size();j++){
-      ContourDefinition *s=&(*contourDefinitions)[j];
-      //Check for continuous intervals
-      if(s->continuousInterval!=0){
-        if(checkContourRegularInterval(val,s->continuousInterval)){
-          contourType.contourDefinition=s;
-          float binnedValue=convertValueToClass(val[0]+s->continuousInterval/2,s->continuousInterval);
-          contourType.text.print(s->textFormat.c_str(),binnedValue);
-          return contourType;
-        }
-      }
-      //Check for defined intervals
-      if(s->definedIntervals.size()>0){
-        for(size_t j=0;j<s->definedIntervals.size();j++){
-          float c= s->definedIntervals[j];
-          if((val[0]>=c&&val[1]<c)||(val[0]>c&&val[1]<=c)||(val[0]<c&&val[1]>=c)||(val[0]<=c&&val[1]>c)||
-            (val[0]>c&&val[2]<=c)||(val[0]>=c&&val[2]<c)||(val[0]<=c&&val[2]>c)||(val[0]<c&&val[2]>=c))
-          {
-            contourType.contourDefinition=s; 
-            //s->textFormat="%2.1f";
-            contourType.text.print(s->textFormat.c_str(),c);
-            //contourType.text.print("%2.1f",c);
-            return contourType;
-          }
-        }
-      }
-    }
-    
-    return contourType;
-  }
  
- 
- void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float interval, std::vector<ContourDefinition> *pContourDefinitions,CDataSource *dataSource,CDrawImage *drawImage,bool drawLine, bool drawShade, bool drawText){
+ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float interval,CDataSource *dataSource,CDrawImage *drawImage,bool drawLine, bool drawShade, bool drawText){
   
    //When using min/max stretching, the shadeclasses need to be extended according to its shade interval
    if(dataSource->stretchMinMax==true){
@@ -1066,8 +1044,11 @@ delete[] valObj;
    #endif
    
    //Create a distance field, this is where the line information will be put in.
-   unsigned int *distance = new unsigned int[imageSize];
-   memset (distance,0,imageSize*sizeof(unsigned int));
+   DISTANCEFIELDTYPE *distance = new DISTANCEFIELDTYPE[imageSize];
+   memset (distance,0,imageSize*sizeof(DISTANCEFIELDTYPE));
+   
+   CONTOURDEFINITIONLOOKUPTYPE *contourLineDefinitionLookUp = new CONTOURDEFINITIONLOOKUPTYPE[imageSize];
+   memset (contourLineDefinitionLookUp,0,imageSize*sizeof(CONTOURDEFINITIONLOOKUPTYPE));
    
 
    
@@ -1154,7 +1135,8 @@ delete[] valObj;
          }
          //Draw contourlines
          if(drawLine||drawText){
-           if(checkIfContourRequired(val,pContourDefinitions)==1){
+           contourLineDefinitionLookUp[p1] = checkIfContourRequired(val);
+           if(contourLineDefinitionLookUp[p1]!=0){
              distance[p1]=1;
            }
          }
@@ -1231,10 +1213,11 @@ delete[] valObj;
             for(j=0;j<24;j++){
               if(x+xdir[j]>=1&&x+xdir[j]<dImageWidth-1&&
                 y+ydir[j]>=1&&y+ydir[j]<dImageHeight-1){
-                int d=distance[x+xdir[j]+(y+ydir[j])*dImageWidth];
+                size_t curP = x+xdir[j]+(y+ydir[j])*dImageWidth;
+                int d=distance[curP];
               
                 //Calculate whether we need to draw some text (busyDrawingText)
-                if(drawText){
+                if(drawText&&busyDrawingText==0){
                   if(d%500==499){
                     drawnText=0;needToDrawText=0;
                   }
@@ -1251,14 +1234,17 @@ delete[] valObj;
                           drawTextStartY=y;
                           drawnText=1;
                           needToDrawText=0;
-
-                          
-                          ContourType contourType=getContourInformation(val,pContourDefinitions);
-                          if(contourType.contourDefinition!=NULL){
-                            if(contourType.text.length()>0){
-                              snprintf(szTemp,8000,"%s",contourType.text.c_str());
-                              busyDrawingText=int(float(strlen(szTemp))*1.3)+2;
+                          unsigned int index = contourLineDefinitionLookUp[curP];
+                          if(index != 0){
+                            ContourDefinition *contourDefinition = &contourDefinitions[(index-1)%CONTOURDEFINITIONLOOKUPLENGTH];
+                            if(index<CONTOURDEFINITIONLOOKUPLENGTH){
+                                float binnedValue=convertValueToClass(val[0]+contourDefinition->continuousInterval/2,contourDefinition->continuousInterval);
+                                snprintf(szTemp,8000,contourDefinition->textFormat.c_str(),binnedValue);
+                            }else{
+                              int definedIntervalIndex = (index-1)/CONTOURDEFINITIONLOOKUPLENGTH;
+                              snprintf(szTemp,8000,contourDefinition->textFormat.c_str(),contourDefinition->definedIntervals[definedIntervalIndex]);
                             }
+                            busyDrawingText=int(float(strlen(szTemp))*1.3)+2;
                           }
                         }
                       }
@@ -1291,12 +1277,14 @@ delete[] valObj;
                     textcolor=CColor(0,0,0,255);
                     w=0.4;
                     
-                    ContourType contourType=getContourInformation(val,pContourDefinitions);
-                    if(contourType.contourDefinition!=NULL){
-                      linecolor=contourType.contourDefinition->linecolor;
-                      textcolor=contourType.contourDefinition->textcolor;
-                      w=contourType.contourDefinition->lineWidth;
+                    unsigned int index = contourLineDefinitionLookUp[p];
+                    if(index != 0){
+                      ContourDefinition *contourDefinition = &contourDefinitions[(index-1)%CONTOURDEFINITIONLOOKUPLENGTH];
+                      linecolor=contourDefinition->linecolor;
+                      textcolor=contourDefinition->textcolor;
+                      w=contourDefinition->lineWidth;
                     }
+                    
                     
                     if(drawLine){
 
@@ -1357,6 +1345,7 @@ delete[] valObj;
        #endif
        
        delete[] distance;
+       delete[] contourLineDefinitionLookUp;
        #ifdef CImgWarpBilinear_DEBUG
        CDBDebug("Finished drawing lines and text");
        #endif
@@ -1507,22 +1496,28 @@ int CImgWarpBilinear::set(const char *pszSettings){
           CT::string *kvp=lineSettings[l].splitToArray("(");
           if(kvp->count==2){
             int endOfKVP = kvp[1].lastIndexOf(")");
+            CDBDebug("B '%s'",kvp[1].c_str());
             if(endOfKVP!=-1){
               kvp[1].setSize(endOfKVP);
             }
+            CDBDebug("A '%s'",kvp[1].c_str());
+            
             if(kvp[0].equals("width"))lineWidth=kvp[1].toFloat();
             if(kvp[0].equals("interval")){
-              //CDBDebug("kvp[1].toFloat() interval = '%s'",kvp[1].c_str());
+              CDBDebug("kvp[1].toFloat() interval = '%s'",kvp[1].c_str());
               interval=kvp[1].toFloat();
             }
-            if(kvp[0].equals("classes")){classes.copy(kvp[1].c_str());}
+            if(kvp[0].equals("classes")){
+              classes.copy(kvp[1].c_str());
+              CDBDebug("kvp[1].toFloat() classes = '%s'",kvp[1].c_str());
+            }
             if(kvp[0].equals("linecolor")){kvp[1].setSize(7);linecolor=CColor(kvp[1].c_str());}
             if(kvp[0].equals("textcolor")){kvp[1].setSize(7);textcolor=CColor(kvp[1].c_str());}
-            if(kvp[0].equals("textformatting")){textformat.copy(kvp[1].c_str(),kvp[1].length()-1);}
+            if(kvp[0].equals("textformatting")){textformat.copy(kvp[1].c_str(),kvp[1].length());}
           }
           delete[] kvp;
         }
-        if(interval!=0.0){
+        if(interval!=0.0&&classes.length()==0){
           contourDefinitions.push_back(ContourDefinition(lineWidth,linecolor, textcolor,interval,textformat.c_str()));
         }else{
           if(classes.length()>0){
