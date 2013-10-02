@@ -100,7 +100,7 @@ int CDataReader::getCacheFileName(CDataSource *dataSource,CT::string *cacheFilen
 #endif
   
   CT::string cacheLocation;dataSource->srvParams->getCacheDirectory(&cacheLocation);
-  if(cacheLocation.c_str()==NULL)return 1;else if(cacheLocation.length()==0)return 1;  
+  if(cacheLocation.empty())return 1;else if(cacheLocation.length()==0)return 1;  
 #ifdef CDATAREADER_DEBUG  
   CDBDebug("/GetCacheFileName");
 #endif  
@@ -483,14 +483,14 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
   //Check if projection is overidden in the config file
   if(dataSource->cfgLayer->Projection.size()==1){
     //Read projection information from configuration
-    if(dataSource->cfgLayer->Projection[0]->attr.id.c_str()!=NULL){
+    if(dataSource->cfgLayer->Projection[0]->attr.id.empty()==false){
       dataSource->nativeEPSG.copy(dataSource->cfgLayer->Projection[0]->attr.id.c_str());
     }else{
       dataSource->nativeEPSG.copy("EPSG:4326");
       //dataSource->nativeEPSG.copy("unknown");
     }
     //Read proj4 string
-    if(dataSource->cfgLayer->Projection[0]->attr.proj4.c_str()!=NULL){
+    if(dataSource->cfgLayer->Projection[0]->attr.proj4.empty()==false){
       dataSource->nativeProj4.copy(dataSource->cfgLayer->Projection[0]->attr.proj4.c_str());
     }
     else {
@@ -840,7 +840,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
         dataSource->dataObject[varNr]->cdfVariable->type=CDF_DOUBLE;
       
         //Apply offset
-        if(proc->attr.b.c_str()!=NULL){
+        if(proc->attr.b.empty()==false){
           CT::string b;
           b.copy(proc->attr.b.c_str());
           if(add_offset==NULL){
@@ -850,7 +850,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
           }
         }
         //Apply scale
-        if(proc->attr.a.c_str()!=NULL){
+        if(proc->attr.a.empty()==false){
           CT::string a;
           a.copy(proc->attr.a.c_str());
           if(scale_factor==NULL){
@@ -861,7 +861,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
         }
       }
       //Apply units:
-      if(proc->attr.units.c_str()!=NULL){
+      if(proc->attr.units.empty()==false){
         dataSource->dataObject[varNr]->units=proc->attr.units.c_str();
       }
     
@@ -1241,8 +1241,8 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
         
         float fa=72,fb=75; 
         
-        if(proc->attr.b.c_str()!=NULL){CT::string b;b.copy(proc->attr.b.c_str());fb=b.toDouble();}
-        if(proc->attr.a.c_str()!=NULL){CT::string a;a.copy(proc->attr.a.c_str());fa=a.toDouble();}
+        if(proc->attr.b.empty()==false){CT::string b;b.copy(proc->attr.b.c_str());fb=b.toDouble();}
+        if(proc->attr.a.empty()==false){CT::string a;a.copy(proc->attr.a.c_str());fa=a.toDouble();}
         
         for(size_t j=0;j<l;j++){
           //if((data2[j]<72&&data1[j]<72&&data3[j]!=fNodata3)||(data2[j]>75))data1[j]=fNodata1;//else data1[j]=1;
@@ -1880,7 +1880,7 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
           CT::string standard_name;
           CT::string units;
           
-          if(dataSource->cfg->Style[j]->StandardNames[i]->attr.standard_name.c_str()!=NULL){
+          if(dataSource->cfg->Style[j]->StandardNames[i]->attr.standard_name.empty()==false){
             
             standard_name.copy(dataSource->cfg->Style[j]->StandardNames[i]->attr.standard_name.c_str());
           }
@@ -1888,7 +1888,7 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
           standard_name.toLowerCaseSelf();
           //standard_name.replaceSelf("_"," ");
           
-          if(dataSource->cfg->Style[j]->StandardNames[i]->attr.units.c_str()!=NULL){
+          if(dataSource->cfg->Style[j]->StandardNames[i]->attr.units.empty()==false){
             
             units.copy(dataSource->cfg->Style[j]->StandardNames[i]->attr.units.c_str());
           }

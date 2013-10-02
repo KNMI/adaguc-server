@@ -219,10 +219,10 @@ int CImageDataWriter::drawCascadedWMS(CDataSource * dataSource, const char *serv
       int offsety=0;
       if(dataSource->cfgLayer->Position.size()>0){
         CServerConfig::XMLE_Position * pos=dataSource->cfgLayer->Position[0];
-        if(pos->attr.right.c_str()!=NULL)offsetx=(drawImage.Geo->dWidth-w)-parseInt(pos->attr.right.c_str());
-        if(pos->attr.bottom.c_str()!=NULL)offsety=(drawImage.Geo->dHeight-h)-parseInt(pos->attr.bottom.c_str());
-        if(pos->attr.left.c_str()!=NULL)offsetx=parseInt(pos->attr.left.c_str());
-        if(pos->attr.top.c_str()!=NULL)offsety=parseInt(pos->attr.top.c_str());
+        if(pos->attr.right.empty()==false)offsetx=(drawImage.Geo->dWidth-w)-parseInt(pos->attr.right.c_str());
+        if(pos->attr.bottom.empty()==false)offsety=(drawImage.Geo->dHeight-h)-parseInt(pos->attr.bottom.c_str());
+        if(pos->attr.left.empty()==false)offsetx=parseInt(pos->attr.left.c_str());
+        if(pos->attr.top.empty()==false)offsety=parseInt(pos->attr.top.c_str());
         
       }
       
@@ -294,10 +294,10 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   }
   //Set font location
   if(srvParam->cfg->WMS[0]->ContourFont.size()!=0){
-    if(srvParam->cfg->WMS[0]->ContourFont[0]->attr.location.c_str()!=NULL){
+    if(srvParam->cfg->WMS[0]->ContourFont[0]->attr.location.empty()==false){
       drawImage.setTTFFontLocation(srvParam->cfg->WMS[0]->ContourFont[0]->attr.location.c_str());
       
-      if(srvParam->cfg->WMS[0]->ContourFont[0]->attr.size.c_str()!=NULL){
+      if(srvParam->cfg->WMS[0]->ContourFont[0]->attr.size.empty()==false){
         CT::string fontSize=srvParam->cfg->WMS[0]->ContourFont[0]->attr.size.c_str();
         drawImage.setTTFFontSize(fontSize.toFloat());
       }
@@ -486,10 +486,10 @@ int CImageDataWriter::makeStyleConfig(StyleConfiguration *styleConfig,CDataSourc
     s->shadeIntervals=&style->ShadeInterval;
     
     if(style->Legend.size()>0){
-      if(style->Legend[0]->attr.tickinterval.c_str() != NULL){
+      if(style->Legend[0]->attr.tickinterval.empty()==false){
         styleConfig->legendTickInterval = parseDouble(style->Legend[0]->attr.tickinterval.c_str());
       }
-      if(style->Legend[0]->attr.tickround.c_str() != NULL){
+      if(style->Legend[0]->attr.tickround.empty()==false){
         styleConfig->legendTickRound = parseDouble(style->Legend[0]->attr.tickround.c_str());
       }
       if(style->Legend[0]->attr.fixedclasses.equals("true")){
@@ -529,10 +529,10 @@ int CImageDataWriter::makeStyleConfig(StyleConfiguration *styleConfig,CDataSourc
   }
   
   if(layer->Legend.size()>0){
-    if(layer->Legend[0]->attr.tickinterval.c_str() != NULL){
+    if(layer->Legend[0]->attr.tickinterval.empty()==false){
       styleConfig->legendTickInterval = parseDouble(layer->Legend[0]->attr.tickinterval.c_str());
     }
-    if(layer->Legend[0]->attr.tickround.c_str() != NULL){
+    if(layer->Legend[0]->attr.tickround.empty()==false){
       styleConfig->legendTickRound = parseDouble(layer->Legend[0]->attr.tickround.c_str());
     }
     if(layer->Legend[0]->attr.fixedclasses.equals("true")){
@@ -850,7 +850,7 @@ CT::PointerList<CT::string*> *CImageDataWriter::getStyleNames(std::vector <CServ
   stringList->push_back(val);
   val->copy("default");
   for(size_t j=0;j<Styles.size();j++){
-    if(Styles[j]->value.c_str()!=NULL){
+    if(Styles[j]->value.empty()==false){
       CT::string StyleValue=Styles[j]->value.c_str();
       if(StyleValue.length()>0){
         CT::StackList<CT::string>  l1=StyleValue.splitToStack(",");
@@ -884,7 +884,7 @@ int  CImageDataWriter::getServerStyleIndexByName(const char * styleName,std::vec
   CT::string styleString = styleName;
   if(styleString.equals("default")||styleString.equals("default/HQ"))return -1;
   for(size_t j=0;j<serverStyles.size();j++){
-    if(serverStyles[j]->attr.name.c_str()!=NULL){
+    if(serverStyles[j]->attr.name.empty()==false){
       if(styleString.equals(serverStyles[j]->attr.name.c_str())){
         return j;
       }
@@ -1274,7 +1274,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         standardName.replaceSelf("_"," ");standardName.replaceSelf(" status flag","");
         element->feature_name.copy(&standardName);
       }
-      if(element->standard_name.c_str()==NULL){
+      if(element->standard_name.empty()){
         element->standard_name.copy(&element->var_name);
         element->feature_name.copy(&element->var_name);
       }
@@ -1630,9 +1630,9 @@ if(renderMethod==contour){CDBDebug("contour");}*/
         if(currentStyleConfiguration->shadeIntervals!=NULL){
           for(size_t j=0;j<currentStyleConfiguration->shadeIntervals->size();j++){
             CServerConfig::XMLE_ShadeInterval *shadeInterval=((*currentStyleConfiguration->shadeIntervals)[j]);
-            if(shadeInterval->attr.min.c_str()!=NULL&&shadeInterval->attr.max.c_str()!=NULL){
+            if(shadeInterval->attr.min.empty()==false&&shadeInterval->attr.max.empty()==false){
               bilinearSettings.printconcat("shading=min(%s)$max(%s)$",shadeInterval->attr.min.c_str(),shadeInterval->attr.max.c_str());
-              if(shadeInterval->attr.fillcolor.c_str()!=NULL){bilinearSettings.printconcat("$fillcolor(%s)$",shadeInterval->attr.fillcolor.c_str());}
+              if(shadeInterval->attr.fillcolor.empty()==false){bilinearSettings.printconcat("$fillcolor(%s)$",shadeInterval->attr.fillcolor.c_str());}
               bilinearSettings.printconcat(";");
             }
           }
@@ -1644,24 +1644,24 @@ if(renderMethod==contour){CDBDebug("contour");}*/
           for(size_t j=0;j<currentStyleConfiguration->contourLines->size();j++){
             CServerConfig::XMLE_ContourLine * contourLine=((*currentStyleConfiguration->contourLines)[j]);
             //Check if we have a interval contour line or a contourline with separate classes
-            if(contourLine->attr.interval.c_str()!=NULL){
+            if(contourLine->attr.interval.empty()==false){
               //ContourLine interval
               bilinearSettings.printconcat("contourline=");
-              if(contourLine->attr.width.c_str()!=NULL){bilinearSettings.printconcat("width(%s)$",contourLine->attr.width.c_str());}
-              if(contourLine->attr.linecolor.c_str()!=NULL){bilinearSettings.printconcat("linecolor(%s)$",contourLine->attr.linecolor.c_str());}
-              if(contourLine->attr.textcolor.c_str()!=NULL){bilinearSettings.printconcat("textcolor(%s)$",contourLine->attr.textcolor.c_str());}
-              if(contourLine->attr.interval.c_str()!=NULL){bilinearSettings.printconcat("interval(%s)$",contourLine->attr.interval.c_str());}
-              if(contourLine->attr.textformatting.c_str()!=NULL){bilinearSettings.printconcat("textformatting(%s)$",contourLine->attr.textformatting.c_str());}
+              if(contourLine->attr.width.empty()==false){bilinearSettings.printconcat("width(%s)$",contourLine->attr.width.c_str());}
+              if(contourLine->attr.linecolor.empty()==false){bilinearSettings.printconcat("linecolor(%s)$",contourLine->attr.linecolor.c_str());}
+              if(contourLine->attr.textcolor.empty()==false){bilinearSettings.printconcat("textcolor(%s)$",contourLine->attr.textcolor.c_str());}
+              if(contourLine->attr.interval.empty()==false){bilinearSettings.printconcat("interval(%s)$",contourLine->attr.interval.c_str());}
+              if(contourLine->attr.textformatting.empty()==false){bilinearSettings.printconcat("textformatting(%s)$",contourLine->attr.textformatting.c_str());}
               bilinearSettings.printconcat(";");
             }
-            if(contourLine->attr.classes.c_str()!=NULL){
+            if(contourLine->attr.classes.empty()==false){
               //ContourLine classes
               bilinearSettings.printconcat("contourline=");
-              if(contourLine->attr.width.c_str()!=NULL){bilinearSettings.printconcat("width(%s)$",contourLine->attr.width.c_str());}
-              if(contourLine->attr.linecolor.c_str()!=NULL){bilinearSettings.printconcat("linecolor(%s)$",contourLine->attr.linecolor.c_str());}
-              if(contourLine->attr.textcolor.c_str()!=NULL){bilinearSettings.printconcat("textcolor(%s)$",contourLine->attr.textcolor.c_str());}
-              if(contourLine->attr.classes.c_str()!=NULL){bilinearSettings.printconcat("classes(%s)$",contourLine->attr.classes.c_str());}
-              if(contourLine->attr.textformatting.c_str()!=NULL){bilinearSettings.printconcat("textformatting(%s)$",contourLine->attr.textformatting.c_str());}
+              if(contourLine->attr.width.empty()==false){bilinearSettings.printconcat("width(%s)$",contourLine->attr.width.c_str());}
+              if(contourLine->attr.linecolor.empty()==false){bilinearSettings.printconcat("linecolor(%s)$",contourLine->attr.linecolor.c_str());}
+              if(contourLine->attr.textcolor.empty()==false){bilinearSettings.printconcat("textcolor(%s)$",contourLine->attr.textcolor.c_str());}
+              if(contourLine->attr.classes.empty()==false){bilinearSettings.printconcat("classes(%s)$",contourLine->attr.classes.c_str());}
+              if(contourLine->attr.textformatting.empty()==false){bilinearSettings.printconcat("textformatting(%s)$",contourLine->attr.textformatting.c_str());}
               bilinearSettings.printconcat(";");
             }
             
@@ -1906,7 +1906,7 @@ int CImageDataWriter::calculateData(std::vector <CDataSource*>&dataSources){
       
       
       if(dataSource->cfgLayer->ImageText.size()>0){
-        if(dataSource->cfgLayer->ImageText[0]->value.c_str()!=NULL){
+        if(dataSource->cfgLayer->ImageText[0]->value.empty()==false){
           size_t len=strlen(dataSource->cfgLayer->ImageText[0]->value.c_str());
           drawImage.setTextStroke(dataSource->cfgLayer->ImageText[0]->value.c_str(),
                                   len,
@@ -2004,7 +2004,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
           if(dataSource->cfgLayer->ImageText.size()>0){
           
             CT::string imageText = "";
-            if(dataSource->cfgLayer->ImageText[0]->value.c_str()!=NULL){
+            if(dataSource->cfgLayer->ImageText[0]->value.empty()==false){
               imageText.copy(dataSource->cfgLayer->ImageText[0]->value.c_str());
             }
           
@@ -2042,11 +2042,11 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
       float lineWidth=0.25;
       int lineColor= 247;
       
-      if(dataSource->cfgLayer->Grid[0]->attr.resolution.c_str()!=NULL){
+      if(dataSource->cfgLayer->Grid[0]->attr.resolution.empty()==false){
         gridSize = parseFloat(dataSource->cfgLayer->Grid[0]->attr.resolution.c_str());
       }
       precision=gridSize/10;
-      if(dataSource->cfgLayer->Grid[0]->attr.precision.c_str()!=NULL){
+      if(dataSource->cfgLayer->Grid[0]->attr.precision.empty()==false){
         precision = parseFloat(dataSource->cfgLayer->Grid[0]->attr.precision.c_str());
       }
       
@@ -2651,7 +2651,7 @@ int CImageDataWriter::end(){
       //Set font location
       const char *fontLocation = NULL;
       if(srvParam->cfg->WMS[0]->ContourFont.size()!=0){
-        if(srvParam->cfg->WMS[0]->ContourFont[0]->attr.location.c_str()!=NULL){
+        if(srvParam->cfg->WMS[0]->ContourFont[0]->attr.location.empty()==false){
           fontLocation=srvParam->cfg->WMS[0]->ContourFont[0]->attr.location.c_str();
         }else {
           CDBError("In <Font>, attribute \"location\" missing");
@@ -3493,11 +3493,11 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
       char szTemp[1024];
       for(size_t j=0;j<currentStyleConfiguration->shadeIntervals->size();j++){
         CServerConfig::XMLE_ShadeInterval *s=(*currentStyleConfiguration->shadeIntervals)[j];
-        if(s->attr.min.c_str()!=NULL&&s->attr.max.c_str()!=NULL){
+        if(s->attr.min.empty()==false&&s->attr.max.empty()==false){
           int cY1 = int(cbH-(j*12));
           int cY2 = int(cbH-(((j+1)*12)-2));
           CColor color;
-          if(s->attr.fillcolor.c_str()!=NULL){
+          if(s->attr.fillcolor.empty()==false){
             color=CColor(s->attr.fillcolor.c_str());
           }else{
             color=legendImage->getColorForIndex(getColorIndexForValue(dataSource,parseFloat(s->attr.min.c_str())));
@@ -3505,7 +3505,7 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
           
           legendImage->rectangle(4+pLeft,cY2+pTop,int(cbW)+7+pLeft,cY1+pTop,color,CColor(0,0,0,255));
           
-          if(s->attr.label.c_str()==NULL){
+          if(s->attr.label.empty()){
             snprintf(szTemp,1000,"%s - %s",s->attr.min.c_str(),s->attr.max.c_str());
           }else{
             snprintf(szTemp,1000,"%s",s->attr.label.c_str());

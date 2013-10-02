@@ -59,6 +59,10 @@ class CXMLString{
     const char *c_str(){
       return (const char*)p;
     }
+    bool empty(){
+      if(p==NULL)return true;
+      return false;
+    }
     bool equals(const char *val2){
       if(p==NULL||val2==NULL)return false;
       size_t lenval1=strlen(p);

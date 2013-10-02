@@ -109,10 +109,10 @@ void CRequest::addXMLLayerToConfig(CServerParams *srvParam,std::vector<CT::strin
     if(srvParam->cfg->AutoResource[0]->ImageText.size()>0){
       CServerConfig::XMLE_ImageText *xmleImageText=new CServerConfig::XMLE_ImageText();
       xmleLayer->ImageText.push_back(xmleImageText);
-      if(srvParam->cfg->AutoResource[0]->ImageText[0]->value.c_str()!=NULL){
+      if(srvParam->cfg->AutoResource[0]->ImageText[0]->value.empty()==false){
         xmleImageText->value.copy(srvParam->cfg->AutoResource[0]->ImageText[0]->value.c_str());
       }
-      if(srvParam->cfg->AutoResource[0]->ImageText[0]->attr.attribute.c_str()!=NULL){
+      if(srvParam->cfg->AutoResource[0]->ImageText[0]->attr.attribute.empty()==false){
         xmleImageText->attr.attribute.copy(srvParam->cfg->AutoResource[0]->ImageText[0]->attr.attribute.c_str());
       }
       
@@ -1528,7 +1528,7 @@ int CRequest::process_querystring(){
       //Opendap source parameter
       if(dFound_autoResourceLocation==0){
         if(value0Cap.equals("SOURCE")){
-          if(srvParam->autoResourceLocation.c_str()==NULL){
+          if(srvParam->autoResourceLocation.empty()){
             srvParam->autoResourceLocation.copy(values[1].c_str());
           }
           dFound_autoResourceLocation=1;
@@ -1537,7 +1537,7 @@ int CRequest::process_querystring(){
      /* //Opendap variable parameter
        if(dFound_OpenDAPVariable==0){
         if(value0Cap.equals("VARIABLE")){
-          if(srvParam->autoResourceVariable.c_str()==NULL){
+          if(srvParam->autoResourceVariable.empty()){
             srvParam->autoResourceVariable.copy(values[1].c_str());
           }
           dFound_OpenDAPVariable=1;
@@ -1781,7 +1781,7 @@ int CRequest::process_querystring(){
   }
     
     // Configure the server automically based on an OpenDAP resource
-    if(srvParam->autoResourceLocation.c_str()!=NULL){
+    if(srvParam->autoResourceLocation.empty()==false){
       srvParam->internalAutoResourceLocation=srvParam->autoResourceLocation.c_str();
       
          
@@ -1838,7 +1838,7 @@ int CRequest::process_querystring(){
       }
       
       //Generate the list of OpenDAP variables automatically based on the variables available in the OpenDAP dataset
-      if(srvParam->autoResourceVariable.c_str()==NULL||srvParam->autoResourceVariable.equals("*")){
+      if(srvParam->autoResourceVariable.empty()||srvParam->autoResourceVariable.equals("*")){
         //Try to retrieve a list of variables from the OpenDAPURL.
         srvParam->autoResourceVariable.copy("");
         //Open the opendap resource
@@ -2101,7 +2101,7 @@ int CRequest::process_querystring(){
           //Mapping
           for(size_t j=0;j<srvParam->cfg->WMS[0]->WMSFormat.size();j++){
             if(srvParam->Format.equals(srvParam->cfg->WMS[0]->WMSFormat[j]->attr.name.c_str())){
-              if(srvParam->cfg->WMS[0]->WMSFormat[j]->attr.format.c_str()!=NULL){
+              if(srvParam->cfg->WMS[0]->WMSFormat[j]->attr.format.empty()==false){
                 srvParam->Format.copy(srvParam->cfg->WMS[0]->WMSFormat[j]->attr.format.c_str());
               }
               break;

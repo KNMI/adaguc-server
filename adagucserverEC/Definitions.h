@@ -26,7 +26,7 @@
 #ifndef Definitions_H
 #define Definitions_H
 
-#define ADAGUCSERVER_VERSION             "1.3"
+#define ADAGUCSERVER_VERSION             "1.4"
 
 //CConfigReaderLayerType
 #define CConfigReaderLayerTypeUnknown     0
@@ -158,7 +158,7 @@
 //#define CIMAGEDATAWRITER_DEBUG
 //#define CDATASOURCE_DEBUG
 
-#define ENABLE_CURL
+//#define ENABLE_CURL in Makefile
 #define ADAGUC_USE_CAIRO
 #define ADAGUC_USE_GDAL
 #endif

@@ -30,6 +30,7 @@
 #include <string.h>
 
 
+#include "CInspire.h"
 
 #include "CImageDataWriter.h"
 #include "CServerError.h"

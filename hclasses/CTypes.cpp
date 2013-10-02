@@ -88,22 +88,23 @@ namespace CT{
  
   string::string(){
     #ifdef CTYPES_DEBUG
-    CDBDebug("string();\n");
+    printf("string();\n");
     #endif
     init();
   }
  
   string::string(string const &f){
     #ifdef CTYPES_DEBUG
-    CDBDebug("string(string const &f);\n");
+    printf("string(string const &f);\n");
     #endif
+
     if(&f==NULL){init();return;}
     init();copy(f.value,f.privatelength);
   }
   
   string& string::operator= (string const& f){
     #ifdef CTYPES_DEBUG
-    CDBDebug("string::operator= (string const& f);\n");
+    printf("string::operator= (string const& f);\n");
     #endif
     if(&f==NULL){init();return *this;}
     if (this == &f) return *this;  
@@ -113,7 +114,7 @@ namespace CT{
   
   string& string::operator= (const char*const &f){
     #ifdef CTYPES_DEBUG
-    CDBDebug("string::operator= (const char*const &f)\n");
+    printf("string::operator= (const char*const &f)\n");
     #endif
     if(&f==NULL){init();return *this;}
     _Free();init();this->copy(f);
@@ -362,6 +363,9 @@ namespace CT{
       concat(szTemp);
     }
     const char* string::c_str(){
+      if(value == NULL){
+        return "";
+      }
       return value;
     }
     

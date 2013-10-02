@@ -336,14 +336,14 @@ class CProj4ToCF{
           if(projKVPList[j]->value.equals("sterea")){  initObliqueStereographicPerspective(projectionVariable,projKVPList);foundProj=1;}
         }
       }
-      if(projectionVariable->name.c_str()==NULL)projectionVariable->name="projection";
+      if(projectionVariable->name.empty())projectionVariable->name="projection";
   
       projectionVariable->setAttributeText("proj4_params",proj4String);
       CT::string kvpProjString = "";
       for(size_t j=0;j<projKVPList.size();j++){
       
         if(projKVPList[j]->name.equals("proj")==false){
-          if(projKVPList[j]->value.c_str()!=NULL){
+          if(projKVPList[j]->value.empty()==false){
             kvpProjString.printconcat(" +%s=%f",projKVPList[j]->name.c_str(),projKVPList[j]->value.toDouble());
           }          
         }else{

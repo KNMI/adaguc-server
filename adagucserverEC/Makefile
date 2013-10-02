@@ -12,7 +12,7 @@ CCOMPILER=g++ -Wall $(INCLUDEDIR)
 
 #optimalization options:
 #CCOMPILER=g++ -march=pentium4 -mtune=pentium4 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 $(INCLUDEDIR) 
-#CCOMPILER=g++ -march=core2 -mtune=core2 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 $(INCLUDEDIR) 
+CCOMPILER=g++ -march=core2 -mtune=core2 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 $(INCLUDEDIR) 
 #CCOMPILER=g++ -O2 $(INCLUDEDIR)
 #CCOMPILER=g++ -march=k8-sse3 -mtune=k8-sse3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 $(INCLUDEDIR)  
 
@@ -22,17 +22,17 @@ USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lxml2 -lgd -lproj -lpq -ludunits2 -lfreetyp
 LIBS = $(USERLIBS) $(LDFLAGS) -L$(INSTALLDIR2)/lib  
 #-L/usr/lib64
 
-OBJECTS = CDataReader.o COGCDims.o CImageWarper.o CGeoParams.o CCairoPlotter.o CDrawImage.o CServerError.o CRequest.o  CXMLGen.o CServerParams.o CGDALDataWriter.o CImageDataWriter.o CXMLSerializerInterface.o CDataSource.o CStopWatch.o CImgWarpBilinear.o CImgWarpBoolean.o CImgWarpNearestNeighbour.o CImgWarpNearestRGBA.o CPGSQLDB.o CDBFileScanner.o CDFObjectStore.o CDrawAA.o CFillTriangle.o CConvertASCAT.o CConvertADAGUCVector.o CConvertADAGUCPoint.o CImgRenderPoints.o CCache.o CConvertCurvilinear.o
+OBJECTS = CDataReader.o COGCDims.o CImageWarper.o CGeoParams.o CCairoPlotter.o CDrawImage.o CServerError.o CRequest.o  CXMLGen.o CServerParams.o CGDALDataWriter.o CImageDataWriter.o CXMLSerializerInterface.o CDataSource.o CStopWatch.o CImgWarpBilinear.o CImgWarpBoolean.o CImgWarpNearestNeighbour.o CImgWarpNearestRGBA.o CPGSQLDB.o CDBFileScanner.o CDFObjectStore.o CDrawAA.o CFillTriangle.o CConvertASCAT.o CConvertADAGUCVector.o CConvertADAGUCPoint.o CImgRenderPoints.o CCache.o CConvertCurvilinear.o CInspire.o
 
 EXECUTABLE= adagucserver
 
 default: $(EXECUTABLE)
 $(EXECUTABLE): $(OBJECTS) $(EXECUTABLE).o h5ncdump.o
-	g++ $(EXECUTABLE).o $(OBJECTS) $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  $(EXECUTABLE) $(LIBS)
+	g++ $(EXECUTABLE).o $(OBJECTS) $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  $(EXECUTABLE) $(LIBS) 
 	g++ "h5ncdump.o" $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  "h5ncdump" $(LIBS)
 
 %.o: %.cpp
-	$(CCOMPILER) -c $< -o $@
+	$(CCOMPILER) -c $< -o $@  -DENABLE_CURL
 
 clean:
 	rm $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE).o h5ncdump.o h5ncdump

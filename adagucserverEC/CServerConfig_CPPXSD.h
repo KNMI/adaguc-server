@@ -378,8 +378,33 @@ class CServerConfig:public CXMLSerializerInterface{
     class XMLE_Title: public CXMLObjectInterface{};
     
 
-    class XMLE_Keywords: public CXMLObjectInterface{};
-    class XMLE_MetadataURL: public CXMLObjectInterface{};        
+    //class XMLE_Keywords: public CXMLObjectInterface{};
+    class XMLE_MetadataURL: public CXMLObjectInterface{};
+    
+    class XMLE_AuthorityURL: public CXMLObjectInterface{
+      public:
+        class Cattr{
+        public:
+          CXMLString name,onlineresource;
+        }attr;
+        void addAttribute(const char *name,const char *value){
+          if(equals("name",4,name)){attr.name.copy(value);return;}
+          else if(equals("onlineresource",14,name)){attr.onlineresource.copy(value);return;}
+        }
+    };        
+    
+    class XMLE_Identifier: public CXMLObjectInterface{
+      public:
+        class Cattr{
+        public:
+          CXMLString authority,id;
+        }attr;
+        void addAttribute(const char *name,const char *value){
+          if(equals("id",2,name)){attr.id.copy(value);return;}
+          else if(equals("authority",9,name)){attr.authority.copy(value);return;}
+          
+        }
+    };        
   
     class XMLE_Name: public CXMLObjectInterface{
       public:
@@ -533,6 +558,7 @@ class CServerConfig:public CXMLSerializerInterface{
           if(equals("options",7,attrname)){attr.options.copy(attrvalue);return;}
         }
     };
+    
     class XMLE_RootLayer: public CXMLObjectInterface{
       public:
         std::vector <XMLE_Name*> Name;
@@ -557,6 +583,32 @@ class CServerConfig:public CXMLSerializerInterface{
         }
     };
 
+    class XMLE_Inspire: public CXMLObjectInterface{
+      public:
+      std::vector <XMLE_MetadataURL*> MetadataURL;
+      std::vector <XMLE_AuthorityURL*> AuthorityURL;
+      std::vector <XMLE_Identifier*> Identifier;
+      ~XMLE_Inspire(){
+          XMLE_DELOBJ(MetadataURL);
+          XMLE_DELOBJ(AuthorityURL);
+          XMLE_DELOBJ(Identifier);
+      }
+      
+      void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value){
+        CXMLSerializerInterface * base = (CXMLSerializerInterface*)baseClass;
+        base->currentNode=(CXMLObjectInterface*)this;
+        if(rc==0)if(value!=NULL)this->value.copy(value);
+        if(rc==1){
+          pt2Class=NULL;
+          if(equals("MetadataURL",11,name)){XMLE_ADDOBJ(MetadataURL);}
+          else if(equals("AuthorityURL",12,name)){XMLE_ADDOBJ(AuthorityURL);}
+          else if(equals("Identifier",10,name)){XMLE_ADDOBJ(Identifier);}
+        }
+        if(pt2Class!=NULL)pt2Class->addElement(baseClass,rc-pt2Class->level,name,value);
+      }  
+    };
+    
+    
     class XMLE_WMS: public CXMLObjectInterface{
       public:
         std::vector <XMLE_Title*> Title;
@@ -568,8 +620,10 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_DimensionFont*> DimensionFont;
         std::vector <XMLE_GridFont*> GridFont;
         std::vector <XMLE_WMSFormat*> WMSFormat;
-        std::vector <XMLE_Keywords*> Keywords;
-        std::vector <XMLE_MetadataURL*> MetadataURL;
+        
+        std::vector <XMLE_Inspire*> Inspire;
+
+         
         
         
         
@@ -583,8 +637,9 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(DimensionFont);
           XMLE_DELOBJ(GridFont);
           XMLE_DELOBJ(WMSFormat);
-          XMLE_DELOBJ(Keywords);
-          XMLE_DELOBJ(MetadataURL);
+          //XMLE_DELOBJ(Keywords);
+
+          XMLE_DELOBJ(Inspire);
           
           
         }
@@ -603,8 +658,9 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("ContourFont",11,name)){XMLE_ADDOBJ(ContourFont);}
             else if(equals("SubTitleFont",12,name)){XMLE_ADDOBJ(SubTitleFont);}
             else if(equals("DimensionFont",13,name)){XMLE_ADDOBJ(DimensionFont);}
-            else if(equals("Keywords",8,name)){XMLE_ADDOBJ(Keywords);}
-            else if(equals("MetadataURL",11,name)){XMLE_ADDOBJ(MetadataURL);}
+            else if(equals("Inspire",7,name)){XMLE_ADDOBJ(Inspire);}
+            //else if(equals("Keywords",8,name)){XMLE_ADDOBJ(Keywords);}
+            //else if(equals("MetadataURL",11,name)){XMLE_ADDOBJ(MetadataURL);}
           }
           if(pt2Class!=NULL)pt2Class->addElement(baseClass,rc-pt2Class->level,name,value);
         }

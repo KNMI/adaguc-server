@@ -98,7 +98,7 @@ public:
       //Set font location
       const char *fontLocation = NULL;
       if(srvParam->cfg->WMS[0]->ContourFont.size()!=0){
-        if(srvParam->cfg->WMS[0]->ContourFont[0]->attr.location.c_str()!=NULL){
+        if(srvParam->cfg->WMS[0]->ContourFont[0]->attr.location.empty()==false){
           fontLocation=srvParam->cfg->WMS[0]->ContourFont[0]->attr.location.c_str();
         }else {
           CDBError("In <Font>, attribute \"location\" missing");

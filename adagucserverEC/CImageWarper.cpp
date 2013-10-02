@@ -259,9 +259,9 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
       CDBError("dataSource==%s||GeoDest==%s", dataSource==NULL?"NULL":"not-null", GeoDest==NULL?"NULL":"not-null");
       return 1;
     }
-    if(dataSource->nativeProj4.c_str()==NULL){
+    if(dataSource->nativeProj4.empty()){
       dataSource->nativeProj4.copy(LATLONPROJECTION);
-      //CDBWarning("dataSource->CRS.c_str()==NULL setting to default latlon");
+      //CDBWarning("dataSource->CRS.empty() setting to default latlon");
     }
     return initreproj(dataSource->nativeProj4.c_str(),GeoDest,_prj);
   }
