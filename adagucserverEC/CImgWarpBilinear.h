@@ -59,6 +59,8 @@ public:
   }
 };
 
+
+  
 class ContourDefinition{
 public:
   ContourDefinition(){
@@ -134,12 +136,14 @@ public:
 };
 
 
+
 class CImgWarpBilinear:public CImageWarperRenderInterface{
   private:
     bool drawMap,enableContour,enableVector,enableBarb,enableShade,drawGridVectors;
     float shadeInterval;
     int smoothingFilter;
     
+    unsigned short checkIfContourRequired(float *val);
     
     std::vector<ContourDefinition> contourDefinitions;
     std::vector<ShadeDefinition> shadeDefinitions;
@@ -207,7 +211,7 @@ class CImgWarpBilinear:public CImageWarperRenderInterface{
       }
     }
 
-    void drawContour(float *valueData,float fNodataValue,float interval, std::vector<ContourDefinition> *pContourDefinitions,CDataSource *dataSource,CDrawImage *drawImage,bool drawLine, bool drawShade, bool drawText);
+    void drawContour(float *valueData,float fNodataValue,float interval,CDataSource *dataSource,CDrawImage *drawImage,bool drawLine, bool drawShade, bool drawText);
     void smoothData(float *valueData,float fNodataValue,int smoothWindow, int W,int H);
 
 };
