@@ -370,6 +370,26 @@ int CServerParams::makeUniqueLayerName(CT::string *layerName,CServerConfig::XMLE
   return 0;
 }
 
+int CServerParams::makeLayerGroupName(CT::string *groupName,CServerConfig::XMLE_Layer *cfgLayer){
+  /*
+  if(cfgLayer->Variable.size()!=0){
+  _layerName=cfgLayer->Variable[0]->value.c_str();
+}*/
+  
+  CT::string layerName;
+  groupName->copy("");
+  if(cfgLayer->Group.size()==1){
+    if(cfgLayer->Group[0]->attr.value.c_str()!=NULL){
+      CT::string layerName(cfgLayer->Group[0]->attr.value.c_str());
+      CT::string *groupElements=layerName.splitToArray("/");
+      groupName->copy(groupElements[0].c_str());
+      delete[] groupElements;
+    }
+  }
+
+  return 0;
+}
+
 bool CServerParams::isAutoResourceCacheEnabled(){
   if(autoResourceCacheEnabled==-1){
      autoResourceCacheEnabled = 1;

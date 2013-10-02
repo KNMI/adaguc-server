@@ -50,6 +50,7 @@
 #define REQUEST_WMS_GETMETADATA           8
 #define REQUEST_WMS_GETSTYLES             9
 #define REQUEST_WMS_GETPOINTVALUE         10
+#define REQUEST_WMS_GETREFERENCETIMES     11
 #define REQUEST_UPDATEDB                  100
 
 //Legend

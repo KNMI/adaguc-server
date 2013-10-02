@@ -1929,14 +1929,14 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
     
     
     
-    CT::string styles="auto";
+    CT::string styles="";
     
     for(size_t j=0;j<styleList.size();j++){
        if(styles.length()!=0)styles.concat(",");
        styles.concat(styleList[j].c_str());
     }
     
-    //if(styles.length()==0) styles="auto";
+    if(styles.length()==0) styles="auto";
     
     //CDBDebug("Found styles \"%s\"",styles.c_str());
     if(useDBCache){

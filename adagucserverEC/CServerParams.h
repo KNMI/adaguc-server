@@ -131,6 +131,12 @@ class CServerParams{
      */
     int makeUniqueLayerName(CT::string *layerName,CServerConfig::XMLE_Layer *cfgLayer);
     
+    /** 
+     * Function which generates a group name from the Layer's configuration
+     * @param groupName the returned name
+     * @param cfgLayer the configuration object of the corresponding layer
+     */
+    int makeLayerGroupName(CT::string *groupName,CServerConfig::XMLE_Layer *cfgLayer);
     /**
      * Replaces illegal characters in a tableName
      * @param the tableName with the characters to be tested. Same string is filled with the new name

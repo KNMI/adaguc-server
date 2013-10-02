@@ -26,6 +26,7 @@
 #ifndef CRequest_H
 #define CRequest_H
 #include <sys/stat.h>
+#include <set>
 #include "CImageDataWriter.h"
 #include "CServerParams.h"
 #include "CDataSource.h"
@@ -36,6 +37,7 @@
 #endif
 #include "CDFObjectStore.h"
 #include "CDebugger.h"
+
 
 class CSimpleStore{
   private:
@@ -171,6 +173,7 @@ private:
     int getDocumentCacheName(CT::string *documentName,CServerParams *srvParam);
     int storeDocumentCache(CSimpleStore *simpleStore);
     int generateOGCGetCapabilities(CT::string *XMLdocument);
+    int generateGetReferenceTimes(CT::string *result);
     int generateOGCDescribeCoverage(CT::string *XMLdocument);
     static int dataRestriction;
     void addXMLLayerToConfig(CServerParams *srvParam,std::vector<CT::string>*variableNames, const char *group, const char *location);
@@ -205,6 +208,7 @@ private:
     int process_wcs_describecov_request();
     int process_wcs_getcoverage_request();
     int process_all_layers();
+    int process_wms_getreferencetimes_request();
     int updatedb(CT::string *tailPath,CT::string *layerPathToScan);
     bool checkTimeFormat(CT::string& timeToCheck);
     int runRequest();
