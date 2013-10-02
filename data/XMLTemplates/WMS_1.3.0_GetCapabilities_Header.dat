@@ -14,21 +14,14 @@
         <KeywordList>
             <Keyword>view</Keyword>
             <Keyword>infoMapAccessService</Keyword>
-            <Keyword>keyword</Keyword>
             <Keyword>[SERVICEINFO] </Keyword>
         </KeywordList>
         <OnlineResource xlink:type="simple" xlink:href="[SERVICEONLINERESOURCE]"/>
         <ContactInformation>
-            <ContactPersonPrimary>
-                <ContactPerson>adaguc</ContactPerson>
-                <ContactOrganization>adaguc.knmi.nl</ContactOrganization>
-            </ContactPersonPrimary>
-            <ContactVoiceTelephone>-</ContactVoiceTelephone>
-            <ContactElectronicMailAddress>adaguc@knmi.nl</ContactElectronicMailAddress>
+          [CONTACTINFORMATION]
         </ContactInformation>
-        <Fees>none</Fees>
-        <AccessConstraints>none</AccessConstraints>
-        <!--<LayerLimit>1</LayerLimit>-->
+        <Fees>no conditions apply</Fees>
+        <AccessConstraints>None</AccessConstraints>
         <MaxWidth>8192</MaxWidth>
         <MaxHeight>8192</MaxHeight>
     </Service>

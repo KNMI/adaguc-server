@@ -45,8 +45,7 @@
 #define trimr trim
 #define substringr substring
 #endif 
-
-
+//#define CTYPES_DEBUG
 namespace CT{
   using namespace std;
   
@@ -191,7 +190,7 @@ class string:public basetype{
      */
     string(const char * _value){
       #ifdef CTYPES_DEBUG
-      CDBDebug("string(const char * _value)\n");
+      printf("string(const char * _value == %s)\n",_value);
       #endif      
       init();copy(_value,strlen(_value));
     }
@@ -531,6 +530,17 @@ class string:public basetype{
      * Converts the string to an integer number
      */
     int toInt(){int dValue=(int)atoi(value);return dValue;}
+    
+    /** 
+     * Test whether string is empty or not
+     */
+    bool empty(){
+      if(privatelength == 0){
+        return true;
+      }
+      if(value == NULL)return true;
+      return false;
+    }
   };
 
 }

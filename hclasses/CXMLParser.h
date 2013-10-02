@@ -64,8 +64,8 @@ int main(){
   
   try{
     element.parse(xmlData);
-    printf("xml:\n%s\n",element.getFirst().toString().c_str());
-    printf("%s\n",element.get("playlist").getList("song").get(1).toString().c_str());
+    printf("xml:\n%s\n",element.getFirst()->toString().c_str());
+    printf("%s\n",element.get("playlist")->getList("song").get(1)->toString().c_str());
   }catch(int e){
     CT::string message=CXMLParser::getErrorMessage(e);
     printf("%s\n",message.c_str());

@@ -386,8 +386,7 @@ CT::string CXMLParser::XMLElement::getName(){
  * getValue returns the value of this XML element
  */
 CT::string CXMLParser::XMLElement::getValue(){
-  if(value.c_str() == NULL){
-    //value = "";
+  if(value.empty()){
     return "";
   }
   return value;

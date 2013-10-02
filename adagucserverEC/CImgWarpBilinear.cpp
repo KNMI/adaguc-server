@@ -907,7 +907,7 @@ delete[] valObj;
   * @return True on contour with this interval needed, false on do nothing.
   */
  int checkContourRegularInterval(float *val,float contourinterval){
-   if(contourinterval==0)return 0;
+   if(contourinterval==0.0f)return 0;
    float allowedDifference=contourinterval/100000;
    float min,max;
    min=val[0];max=val[0];
@@ -1505,15 +1505,24 @@ int CImgWarpBilinear::set(const char *pszSettings){
         CT::string *lineSettings=values[1].splitToArray("$");
         for(size_t l=0;l<lineSettings->count;l++){
           CT::string *kvp=lineSettings[l].splitToArray("(");
-          if(kvp[0].equals("width"))lineWidth=kvp[1].toFloat();
-          if(kvp[0].equals("interval"))interval=kvp[1].toFloat();
-          if(kvp[0].equals("classes")){classes.copy(kvp[1].c_str());}
-          if(kvp[0].equals("linecolor")){kvp[1].setSize(7);linecolor=CColor(kvp[1].c_str());}
-          if(kvp[0].equals("textcolor")){kvp[1].setSize(7);textcolor=CColor(kvp[1].c_str());}
-          if(kvp[0].equals("textformatting")){textformat.copy(kvp[1].c_str(),kvp[1].length()-1);}
+          if(kvp->count==2){
+            int endOfKVP = kvp[1].lastIndexOf(")");
+            if(endOfKVP!=-1){
+              kvp[1].setSize(endOfKVP);
+            }
+            if(kvp[0].equals("width"))lineWidth=kvp[1].toFloat();
+            if(kvp[0].equals("interval")){
+              //CDBDebug("kvp[1].toFloat() interval = '%s'",kvp[1].c_str());
+              interval=kvp[1].toFloat();
+            }
+            if(kvp[0].equals("classes")){classes.copy(kvp[1].c_str());}
+            if(kvp[0].equals("linecolor")){kvp[1].setSize(7);linecolor=CColor(kvp[1].c_str());}
+            if(kvp[0].equals("textcolor")){kvp[1].setSize(7);textcolor=CColor(kvp[1].c_str());}
+            if(kvp[0].equals("textformatting")){textformat.copy(kvp[1].c_str(),kvp[1].length()-1);}
+          }
           delete[] kvp;
         }
-        if(interval!=0){
+        if(interval!=0.0){
           contourDefinitions.push_back(ContourDefinition(lineWidth,linecolor, textcolor,interval,textformat.c_str()));
         }else{
           if(classes.length()>0){

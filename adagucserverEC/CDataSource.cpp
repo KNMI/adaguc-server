@@ -169,7 +169,7 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Confi
     dLayerType=CConfigReaderLayerTypeCascaded;
   }else if(cfgLayer->attr.type.equals("autoscan")){
     dLayerType=CConfigReaderLayerTypeUnknown;
-  }else if(cfgLayer->attr.type.c_str()!=NULL){
+  }else if(cfgLayer->attr.type.empty()==false){
     if(strlen(cfgLayer->attr.type.c_str())>0){
       dLayerType=CConfigReaderLayerTypeUnknown;
       CDBError("Unknown layer type for layer %s",layerName.c_str());
@@ -190,7 +190,7 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Confi
         cfgLayer->DataBaseTable.push_back(dbtable);
         //Create a table name based on the filepath and its filter.
         CT::string tableName=layerName.c_str();
-        if(cfgLayer->FilePath[0]->attr.filter.c_str()==NULL){
+        if(cfgLayer->FilePath[0]->attr.filter.empty()){
           cfgLayer->FilePath[0]->attr.filter.copy("\\.nc");
         }
         srvParams->lookupTableName(&tableName,cfgLayer->FilePath[0]->value.c_str(),cfgLayer->FilePath[0]->attr.filter.c_str());

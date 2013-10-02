@@ -190,7 +190,7 @@ CDBDebug("getDataSourceForLayer");
     }
     return 0;
   }
-  if(myWMSLayer->fileName.c_str()==NULL){
+  if(myWMSLayer->fileName.empty()){
     CDBError("No file name specified for layer %s",myWMSLayer->dataSource->layerName.c_str());
     return 1;
   }
@@ -374,7 +374,7 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
       
       bool hasMultipleValues=false;
       bool isTimeDim=false;
-      if(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.c_str()==NULL){
+      if(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.empty()){
         hasMultipleValues=true;
       
         
@@ -536,7 +536,7 @@ CDBDebug("Querying %s",query.c_str());
             
             //Try to get units from the variable
             dim->units.copy("NA");
-            if(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.units.c_str()==NULL){
+            if(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.units.empty()){
               CT::string units;
               try{
                 myWMSLayer->dataSource->dataObject[0]->cdfObject->getVariable(dim->name.c_str())->getAttribute("units")->getDataAsString(&units);
@@ -616,7 +616,7 @@ CDBDebug("Querying %s",query.c_str());
         }
         delete[] values;*/
         
-        if(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.c_str()==NULL){
+        if(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.empty()){
           //TODO
           CDBError("Dimension interval '%d' not defined",i);return 1;
         }
@@ -626,7 +626,7 @@ CDBDebug("Querying %s",query.c_str());
         //if(srvParam->requestType==REQUEST_WMS_GETCAPABILITIES)
         {
           CT::string dimUnits("ISO8601");
-          if(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.units.c_str()!=NULL){
+          if(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.units.empty()==false){
             dimUnits.copy(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.units.c_str());
           }
           dim->name.copy(myWMSLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
@@ -997,16 +997,17 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
                   ,onlineResource.c_str(),layer->name.c_str(),style->name.c_str());
               XMLDoc->concat("    </LegendURL>");
               XMLDoc->concat("  </Style>");
-            
-              if(layer->dataSource->cfgLayer->MetadataURL.size()>0){
-                CT::string layerMetaDataURL = (*myWMSLayerList)[0]->dataSource->cfgLayer->MetadataURL[0]->value.c_str();
-                layerMetaDataURL.replaceSelf("&","&amp;");
-                XMLDoc->concat("   <MetadataURL type=\"TC211\">\n");
-                XMLDoc->concat("     <Format>text/xml</Format>\n");
-                XMLDoc->printconcat("     <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:type=\"simple\" xlink:href=\"%s\"/>",layerMetaDataURL.c_str());
-                XMLDoc->concat("   </MetadataURL>\n");
-              } 
             }
+            
+            if(layer->dataSource->cfgLayer->MetadataURL.size()>0){
+              CT::string layerMetaDataURL = (*myWMSLayerList)[0]->dataSource->cfgLayer->MetadataURL[0]->value.c_str();
+              layerMetaDataURL.replaceSelf("&","&amp;");
+              XMLDoc->concat("   <MetadataURL type=\"TC211\">\n");
+              XMLDoc->concat("     <Format>text/xml</Format>\n");
+              XMLDoc->printconcat("     <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:type=\"simple\" xlink:href=\"%s\"/>",layerMetaDataURL.c_str());
+              XMLDoc->concat("   </MetadataURL>\n");
+            } 
+            
             XMLDoc->concat("        <ScaleHint min=\"0\" max=\"10000\" />\n");
             XMLDoc->concat("</Layer>\n");
           }else{
@@ -1043,13 +1044,15 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
   
   
   int useINSPIREScenario = 0; //{ 0 == default WMS service, 1 == extended inspire capabilities scenario 1, 2 == extended inspire capabilities scenario 2}
-  bool inspireMetadata = false;
+  bool inspireMetadataIsAvailable = false;
   
   CT::string datasetMetaDataURL;
-  if(srvParam->cfg->WMS[0]->MetadataURL.size()==1){            
-    if(srvParam->cfg->WMS[0]->MetadataURL[0]->value.c_str()!=NULL){
-      datasetMetaDataURL = srvParam->cfg->WMS[0]->MetadataURL[0]->value.c_str();
-      datasetMetaDataURL.replaceSelf("&","&amp;");
+  if(srvParam->cfg->WMS[0]->Inspire.size()==1){
+    if(srvParam->cfg->WMS[0]->Inspire[0]->MetadataURL.size()==1){            
+      if(srvParam->cfg->WMS[0]->Inspire[0]->MetadataURL[0]->value.empty()==false){
+        datasetMetaDataURL = srvParam->cfg->WMS[0]->Inspire[0]->MetadataURL[0]->value.c_str();
+        datasetMetaDataURL.replaceSelf("&","&amp;");
+      }
     }
   }
   
@@ -1057,14 +1060,29 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
     useINSPIREScenario = 1;
   }
   
-  
+   CInspire::InspireMetadataFromCSW inspireMetadata ;
   //Use inspire scenario 1.
   if(useINSPIREScenario>0){
     // *** Enablle INSPIRE ***         
-    inspireMetadata = true;        
+    inspireMetadataIsAvailable = true;        
+    
+    //Download CSW information
+   
+    try{
+      CT::string URL = datasetMetaDataURL.c_str();
+      URL.replaceSelf("&amp;","&");
+      inspireMetadata = CInspire::readInspireMetadataFromCSW(URL.c_str());
+    }catch(int a){
+      CT::string URL = datasetMetaDataURL.c_str();
+      
+      URL.replaceSelf("&","&amp;");
+      CDBError("Unable to read from catalog service: %s, Inspire CSW Service : \"%s\"",CInspire::getErrorMessage(a).c_str(),URL.c_str());
+      return 1;
+    }
     
     /*Scenario 1*/    
     if(useINSPIREScenario==1){
+      
       XMLDoc->concat("<inspire_vs:ExtendedCapabilities>\n");
       XMLDoc->concat("  <inspire_common:MetadataUrl xsi:type=\"inspire_common:resourceLocatorType\">\n");
       XMLDoc->printconcat("    <inspire_common:URL>%s</inspire_common:URL>\n",datasetMetaDataURL.c_str());
@@ -1148,30 +1166,34 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
       "xsi:schemaLocation=\"http://inspire.ec.europa.eu/schemas/inspire_vs/1.0 http://inspire.ec.europa.eu/schemas/inspire_vs/1.0/inspire_vs.xsd\"\n";
     XMLDoc->replaceSelf("[SCHEMADEFINITION]",inspirexsi.c_str());
     
-    //Set INSPIRE layer keywords
-    if(srvParam->cfg->WMS[0]->Keywords.size()==1){            
-      if(srvParam->cfg->WMS[0]->Keywords[0]->value.c_str()!=NULL){
-      XMLDoc->concat("<KeywordList>\n");
-      CT::string keyWords = srvParam->cfg->WMS[0]->Keywords[0]->value.c_str();
-      CT::string* keywordList = keyWords.splitToArray(",");
-      for(size_t j=0;j<keywordList->count;j++){
-        XMLDoc->printconcat("<Keyword>%s</Keyword>\n",keywordList[j].c_str()); // TODO
-      }
-      delete[] keywordList;
-      XMLDoc->concat("</KeywordList>\n");
-      }
-    }
+
+      
+    
+    //Set INSPIRE contact information
+    CT::string contactInformation="";
+    contactInformation.printconcat("    <ContactPersonPrimary>");
+    contactInformation.printconcat("      <ContactPerson>%s</ContactPerson>",inspireMetadata.pointOfContact.c_str());
+    contactInformation.printconcat("      <ContactOrganization>%s</ContactOrganization>",inspireMetadata.organisationName.c_str());
+    contactInformation.printconcat("    </ContactPersonPrimary>");
+    contactInformation.printconcat("    <ContactVoiceTelephone>%s</ContactVoiceTelephone>",inspireMetadata.voiceTelephone.c_str());
+    contactInformation.printconcat("    <ContactElectronicMailAddress>%s</ContactElectronicMailAddress>",inspireMetadata.email.c_str());
+
+    XMLDoc->replaceSelf("[CONTACTINFORMATION]",contactInformation.c_str());
+    
+    XMLDoc->replaceSelf("[INSPIRE::ABSTRACT]",inspireMetadata.abstract.c_str());
+    
   }else{
     //Default WMS 1.3.0 service
     CT::string wms130xsi="xsi:schemaLocation=\"http://www.opengis.net/wms http://schemas.opengis.net/wms/1.3.0/capabilities_1_3_0.xsd\"\n";
     XMLDoc->replaceSelf("[SCHEMADEFINITION]",wms130xsi.c_str());
+     XMLDoc->replaceSelf("[CONTACTINFORMATION]","");
   }
   
 
   XMLDoc->concat("<Layer>\n");
   XMLDoc->printconcat("<Title>%s</Title>\n",srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->value.c_str());
   
-    
+  
   if(myWMSLayerList->size()>0){
 
     for(size_t p=0;p<(*myWMSLayerList)[0]->projectionList.size();p++){
@@ -1189,13 +1211,21 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
       }
     }
    
-    if((*myWMSLayerList)[0]->dataSource->cfgLayer->MetadataURL.size()>0){            
-      CT::string layerMetaDataURL = (*myWMSLayerList)[0]->dataSource->cfgLayer->MetadataURL[0]->value.c_str();
-      layerMetaDataURL.replaceSelf("&","&amp;");
+    
+    
+ 
+      
+      if(inspireMetadataIsAvailable){
+    XMLDoc->replaceSelf("[INSPIRE::TITLE]",inspireMetadata.title.c_str());    
+  
+  
+  
+      
       XMLDoc->concat("  <MetadataURL type=\"ISO19115:2005\">\n");
       XMLDoc->concat("     <Format>application/gml+xml; version=3.2</Format>\n");
-      XMLDoc->printconcat("     <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>",layerMetaDataURL.c_str());
+      XMLDoc->printconcat("     <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>",datasetMetaDataURL.c_str());
       XMLDoc->concat("  </MetadataURL>\n");
+      
     }
       
     
@@ -1300,12 +1330,20 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
             if(layer->abstract.length()>0){
               XMLDoc->concat("<Abstract>"); XMLDoc->concat(&layer->abstract);XMLDoc->concat("</Abstract>\n");
             }
+            if(inspireMetadataIsAvailable){           
+              //Set INSPIRE layer keywords
+              XMLDoc->concat("<KeywordList>\n");
+              for(size_t j=0;j<inspireMetadata.keywords.size();j++){
+                XMLDoc->printconcat("<Keyword>%s</Keyword>\n",inspireMetadata.keywords[j].c_str()); // TODO
+              }
+              XMLDoc->concat("</KeywordList>\n");
+            }
             //XMLDoc->concat("<Keyword>"); XMLDoc->concat(&layer->abstract);XMLDoc->concat("</Keyword>\n");
          
 
-            if(layer->dataSource->cfgLayer->MetadataURL.size()>0){
+            /*if(layer->dataSource->cfgLayer->MetadataURL.size()>0){
                 XMLDoc->concat("  <KeywordList><Keyword>precipitation_amount</Keyword></KeywordList>\n");
-            }
+            }*/
             XMLDoc->printconcat("<EX_GeographicBoundingBox>\n"
                                 "  <westBoundLongitude>%f</westBoundLongitude>\n"
                                 "  <eastBoundLongitude>%f</eastBoundLongitude>\n"
@@ -1324,7 +1362,25 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
               }
             }
             
-            
+            if((*myWMSLayerList)[0]->dataSource->cfgLayer->MetadataURL.size()>0){            
+              CT::string layerMetaDataURL = (*myWMSLayerList)[0]->dataSource->cfgLayer->MetadataURL[0]->value.c_str();
+              layerMetaDataURL.replaceSelf("&","&amp;");
+              XMLDoc->concat("  <MetadataURL type=\"ISO19115:2005\">\n");
+              XMLDoc->concat("     <Format>application/gml+xml; version=3.2</Format>\n");
+              XMLDoc->printconcat("     <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>",layerMetaDataURL.c_str());
+              XMLDoc->concat("  </MetadataURL>\n");
+            }else if(inspireMetadataIsAvailable){
+//               XMLDoc->concat("  <MetadataURL type=\"ISO19115:2005\">\n");
+//               XMLDoc->concat("     <Format>application/gml+xml; version=3.2</Format>\n");
+//               XMLDoc->printconcat("     <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>",datasetMetaDataURL.c_str());
+//               XMLDoc->concat("  </MetadataURL>\n");
+              
+            }
+
+    
+   
+
+
             //Dims
             for(size_t d=0;d<layer->dimList.size();d++){
               WMSLayer::Dim * dim = layer->dimList[d];
@@ -1332,10 +1388,25 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
               XMLDoc->concat(dim->values.c_str());
               XMLDoc->concat("</Dimension>\n");
             }
-            if(inspireMetadata){
-              XMLDoc->concat(" <AuthorityURL name=\"NL.KNMI\"><OnlineResource xlink:href=\"http://knmi.nl/\" /></AuthorityURL>\n");
-              XMLDoc->concat("  <Identifier authority=\"NL.KNMI\">id_value</Identifier>\n");
+            if(inspireMetadataIsAvailable){
+              CT::string authorityName = "unknown";
+              CT::string authorityOnlineResource = "unknown";
+              CT::string identifierAuthority = "unknown";
+              CT::string identifierId = "unknown";
+              if(srvParam->cfg->WMS[0]->Inspire.size()==1){
+                if(srvParam->cfg->WMS[0]->Inspire[0]->AuthorityURL.size()==1){        
+                  if(!srvParam->cfg->WMS[0]->Inspire[0]->AuthorityURL[0]->attr.name.empty())authorityName = srvParam->cfg->WMS[0]->Inspire[0]->AuthorityURL[0]->attr.name.c_str();
+                  if(!srvParam->cfg->WMS[0]->Inspire[0]->AuthorityURL[0]->attr.onlineresource.empty())authorityOnlineResource = srvParam->cfg->WMS[0]->Inspire[0]->AuthorityURL[0]->attr.onlineresource.c_str();
+                }
+                if(srvParam->cfg->WMS[0]->Inspire[0]->Identifier.size()==1){        
+                  if(!srvParam->cfg->WMS[0]->Inspire[0]->Identifier[0]->attr.authority.empty())identifierAuthority = srvParam->cfg->WMS[0]->Inspire[0]->Identifier[0]->attr.authority.c_str();
+                  if(!srvParam->cfg->WMS[0]->Inspire[0]->Identifier[0]->attr.id.empty())identifierId = srvParam->cfg->WMS[0]->Inspire[0]->Identifier[0]->attr.id.c_str();
+                }
               }
+              XMLDoc->printconcat(" <AuthorityURL name=\"%s\"><OnlineResource xlink:href=\"%s\" /></AuthorityURL>\n",authorityName.c_str(),authorityOnlineResource.c_str());
+              XMLDoc->printconcat(" <Identifier authority=\"%s\">%s</Identifier>\n",identifierAuthority.c_str(),identifierId.c_str());
+            }
+            
             //Styles
             for(size_t s=0;s<layer->styleList.size();s++){
               WMSLayer::Style * style = layer->styleList[s];
@@ -1628,7 +1699,7 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
       
       CT::string layerGroup = "";
       if(srvParam->cfg->Layer[j]->Group.size()>0){
-        if(srvParam->cfg->Layer[j]->Group[0]->attr.value.c_str()!=NULL){
+        if(srvParam->cfg->Layer[j]->Group[0]->attr.value.empty()==false){
           layerGroup.copy(srvParam->cfg->Layer[j]->Group[0]->attr.value.c_str());
         }
       }

@@ -67,7 +67,7 @@ void CServerParams::getCacheFileName(CT::string *cacheFileName){
   bool useProvidedCacheFileName=false;
   //Check wether a cachefile has been provided in the config
   if(cfg->CacheDocs.size()>0){
-    if(cfg->CacheDocs[0]->attr.cachefile.c_str()!=NULL){
+    if(cfg->CacheDocs[0]->attr.cachefile.empty()==false){
       useProvidedCacheFileName=true;
       cacheName.concat("_");
       cacheName.concat(cfg->CacheDocs[0]->attr.cachefile.c_str());
@@ -104,7 +104,7 @@ void CServerParams::getCacheDirectory(CT::string *cacheFileName){
   bool useProvidedCacheFileName=false;
   //Check wether a cachefile has been provided in the config
   if(cfg->CacheDocs.size()>0){
-    if(cfg->CacheDocs[0]->attr.cachefile.c_str()!=NULL){
+    if(cfg->CacheDocs[0]->attr.cachefile.empty()==false){
       useProvidedCacheFileName=true;
       cacheName.concat("_");
       cacheName.concat(cfg->CacheDocs[0]->attr.cachefile.c_str());
@@ -335,7 +335,7 @@ int CServerParams::makeUniqueLayerName(CT::string *layerName,CServerConfig::XMLE
   
   layerName->copy("");
   if(cfgLayer->Group.size()==1){
-    if(cfgLayer->Group[0]->attr.value.c_str()!=NULL){
+    if(cfgLayer->Group[0]->attr.value.empty()==false){
       layerName->copy(cfgLayer->Group[0]->attr.value.c_str());
       layerName->concat("/");
     }
