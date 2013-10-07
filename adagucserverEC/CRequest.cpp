@@ -175,9 +175,22 @@ int CRequest::setConfigFile(const char *pszConfigFile){
   StopWatch_Stop("Set config file");
   #endif
   int status = srvParam->configObj->parseFile(pszConfigFile);
-  if(status == 0){
+  if(status == 0 && srvParam->configObj->Configuration.size()==1){
     srvParam->configFileName.copy(pszConfigFile);
     srvParam->cfg=srvParam->configObj->Configuration[0];
+    
+    //Include additional config files
+    for(size_t j=0;j<srvParam->cfg->Include.size();j++){
+      if(srvParam->cfg->Include[j]->attr.location.empty()==false){
+        CDBDebug("Include '%s'",srvParam->cfg->Include[j]->attr.location.c_str());
+        status = srvParam->configObj->parseFile(srvParam->cfg->Include[j]->attr.location.c_str());
+        if(status != 0){
+          CDBError("There is an error with include '%s'",srvParam->cfg->Include[j]->attr.location.c_str());
+          return 1;
+        }
+      }
+    }
+    
     if(srvParam->cfg->CacheDocs.size()==1){
       if(srvParam->cfg->CacheDocs[0]->attr.enabled.equals("true")){
         srvParam->enableDocumentCache=true;
@@ -526,7 +539,9 @@ int CRequest::process_wms_getcap_request(){
         if(storeDocumentCache(&simpleStore)!=0)return 1;
       }
     }else{
-      CDBDebug("Providing document from store with name %s",documentName.c_str());
+      CT::string cacheFileName;
+      srvParam->getCacheFileName(&cacheFileName);
+      CDBDebug("Providing document from store '%s' with name '%s'",cacheFileName.c_str(),documentName.c_str());
     }
   }else{
     //Do not use cache
@@ -1334,6 +1349,7 @@ int CRequest::process_querystring(){
   int dFound_Styles=0;
   int dFound_Style=0;
   int dFound_JSONP=0;
+  int dFound_Dataset=0;
   
 
   
@@ -1610,6 +1626,15 @@ int CRequest::process_querystring(){
           dFound_autoResourceLocation=1;
         }
       }
+      
+      if(dFound_Dataset==0){
+        if(value0Cap.equals("DATASET")){
+          if(srvParam->datasetLocation.empty()){
+            srvParam->datasetLocation.copy(values[1].c_str());
+          }
+          dFound_Dataset=1;
+        }
+      }
      /* //Opendap variable parameter
        if(dFound_OpenDAPVariable==0){
         if(value0Cap.equals("VARIABLE")){
@@ -1856,36 +1881,103 @@ int CRequest::process_querystring(){
       }
     }
   }
+  
+  
+    //Configure the server based an an available dataset
+    if(srvParam->datasetLocation.empty()==false&&dErrorOccured==0){
+      //datasetLocation is usually an inspire dataset unique identifier
+
+      //Check if dataset extension is enabled           
+      bool datasetEnabled = false;
+      if(srvParam->cfg->Dataset.size()==1){
+        if(srvParam->cfg->Dataset[0]->attr.enabled.equals("true")&&srvParam->cfg->Dataset[0]->attr.location.empty()==false){
+          datasetEnabled = true;
+        }
+      }
+      
+      if(datasetEnabled==false){
+        CDBError("Dataset is not enabled for this service. ");
+        return 1;
+      }
+      
+      if(CServerParams::checkForValidTokens(srvParam->datasetLocation.c_str(),"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-")==false){
+        CDBError("Invalid dataset name. ");
+        return 1;
+      }
+      
+      
+      CT::string datasetConfigFile = srvParam->cfg->Dataset[0]->attr.location.c_str();
+      
+      datasetConfigFile.printconcat("/%s.xml",srvParam->datasetLocation.c_str());
+      
+      CDBDebug("Found dataset %s",datasetConfigFile.c_str());
+      
+      //Check whether this config file exists.
+      struct stat stFileInfo;
+      int intStat;
+      intStat = stat(datasetConfigFile.c_str(),&stFileInfo);
+      CT::string cacheBuffer;
+      //The file exists, so remove it.
+      if(intStat != 0) {
+        CDBDebug("Dataset config file does not exist: %s ",datasetConfigFile.c_str());
+        CDBError("No such dataset");
+        return 1;
+      }
+
+      //Add the dataset file to the current configuration      
+      int status = srvParam->configObj->parseFile(datasetConfigFile.c_str());
+      if(status!=0){
+        CDBError("Invalid dataset configuration file. ");
+        return 1;
+      }
+      
+      //Adjust online resource in order to pass on dataset parameters
+      CT::string onlineResource=srvParam->cfg->OnlineResource[0]->attr.value.c_str();
+      CT::string stringToAdd;
+      stringToAdd.concat("dataset=");stringToAdd.concat(srvParam->datasetLocation.c_str());
+      stringToAdd.concat("&amp;");
+      onlineResource.concat(stringToAdd.c_str());
+      srvParam->cfg->OnlineResource[0]->attr.value.copy(onlineResource.c_str());
+     
+      //Adjust unique cache file identifier for each dataset.
+      if(srvParam->cfg->CacheDocs.size()==0){srvParam->cfg->CacheDocs.push_back(new CServerConfig::XMLE_CacheDocs());}
+      CT::string validFileName;
+      validFileName.print("dataset_%s",srvParam->datasetLocation.c_str());
+      srvParam->cfg->CacheDocs[0]->attr.cachefile.copy(validFileName.c_str());
+      
+      //Disable autoResourceLocation
+      srvParam->autoResourceLocation="";
+      
+      //DONE check if dataset has valid tokens [OK]
+      //DONE check if sub config file exists for this identifier [OK]
+      //DONE load config file and add it to existing object. [OK]
+      //DONE Adjust online resource: provide dataset [OK]
+      //DONE Adjust unique cache file identifier for each dataset. [OK]
+      //DONE  Disable autoResourceLocation [OK]
+      //TODO check if WMS INSPIRE global metadata URL can be the same for all services      
+    }
     
     // Configure the server automically based on an OpenDAP resource
     if(srvParam->autoResourceLocation.empty()==false){
       srvParam->internalAutoResourceLocation=srvParam->autoResourceLocation.c_str();
       
-         
+      //Create unique CACHE identifier for this resource
       //When an opendap source is added, we should add unique id to the cachefile
-      if(srvParam->cfg->CacheDocs.size()==0){
-        srvParam->cfg->CacheDocs.push_back(new CServerConfig::XMLE_CacheDocs());
-      }
-      //srvParam->cfg->CacheDocs[0]->attr.enabled.copy("true");
-      //srvParam->enableDocumentCache=true;
-      
-       CT::string validFileName(srvParam->internalAutoResourceLocation.c_str());
-      //Replace : and / by nothing, so we can use the string as a directory name
+      if(srvParam->cfg->CacheDocs.size()==0){srvParam->cfg->CacheDocs.push_back(new CServerConfig::XMLE_CacheDocs());}
+      CT::string validFileName(srvParam->internalAutoResourceLocation.c_str());
+      //Replace : and / by nothing, so we can use the string as a directory name for cache documents
       validFileName.replaceSelf(":",""); 
       validFileName.replaceSelf("/","");
       validFileName.replaceSelf("\\",""); 
-      
       srvParam->cfg->CacheDocs[0]->attr.cachefile.copy(validFileName.c_str());
-      
       
       if(srvParam->isAutoResourceEnabled()==false){
         CDBError("Automatic resource is not enabled");
-        //readyerror();
         return 1;
       }
       
       bool isValidResource = false;
-      //TODO should be placed in a a more generaic place
+      //TODO should be placed in a a more generic place
       if(srvParam->isAutoOpenDAPResourceEnabled()){
         if(srvParam->autoResourceLocation.indexOf("http://")==0)isValidResource=true;
         if(srvParam->autoResourceLocation.indexOf("https://")==0)isValidResource=true;
@@ -1894,7 +1986,7 @@ int CRequest::process_querystring(){
         if(srvParam->autoResourceLocation.indexOf("ncdods://")==0)isValidResource=true;
       }
       
-      //Error messages should be the same for the different attempts, otherwise someone can find out the directory structure 
+      //Error messages should be the unique for different 'dir' attempts, otherwise someone can find out directory structures
       if(isValidResource==false){
         if(srvParam->isAutoLocalFileResourceEnabled()){
           if(srvParam->checkIfPathHasValidTokens(srvParam->autoResourceLocation.c_str())==false){
@@ -2484,7 +2576,7 @@ int CRequest::process_querystring(){
 int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan){
   int errorHasOccured = 0;
   int status;
-  //Fill in all data sources from the configuratin object
+  //Fill in all data sources from the configuration object
   size_t numberOfLayers = srvParam->cfg->Layer.size();
 
   for(size_t layerNo=0;layerNo<numberOfLayers;layerNo++){
