@@ -36,6 +36,7 @@
 
 
 #define XMLE_ADDOBJ(variableName){ pt2Class=new XMLE_##variableName();pt2Class->level=rc;variableName.push_back(((XMLE_##variableName*)pt2Class));}
+#define XMLE_SETOBJ(variableName){ pt2Class=variableName[0];}
 #define XMLE_DELOBJ(variableName){ {for(size_t j=0;j<variableName.size();j++){delete variableName[j];}}}
 
 /**

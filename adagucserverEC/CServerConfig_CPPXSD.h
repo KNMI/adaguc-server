@@ -286,6 +286,28 @@ class CServerConfig:public CXMLSerializerInterface{
       }
     };
     
+    class XMLE_Dataset: public CXMLObjectInterface{
+    public:
+      class Cattr{
+      public:
+        CXMLString enabled,location;
+      }attr;
+      void addAttribute(const char *attrname,const char *attrvalue){
+        if(equals("enabled",7,attrname)){attr.enabled.copy(attrvalue);return;}
+        else if(equals("location",8,attrname)){attr.location.copy(attrvalue);return;}
+      }
+    };
+    
+    class XMLE_Include: public CXMLObjectInterface{
+    public:
+      class Cattr{
+      public:
+        CXMLString location;
+      }attr;
+      void addAttribute(const char *attrname,const char *attrvalue){
+        if(equals("location",8,attrname)){attr.location.copy(attrvalue);return;}
+      }
+    };
     
     class XMLE_NameMapping: public CXMLObjectInterface{
     public:
@@ -906,6 +928,8 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_Style*> Style;
         std::vector <XMLE_CacheDocs*> CacheDocs;
         std::vector <XMLE_AutoResource*> AutoResource;
+        std::vector <XMLE_Dataset*> Dataset;
+        std::vector <XMLE_Include*> Include;
         
         ~XMLE_Configuration(){
           XMLE_DELOBJ(Legend);
@@ -920,6 +944,8 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(Style);
           XMLE_DELOBJ(CacheDocs);
           XMLE_DELOBJ(AutoResource);
+          XMLE_DELOBJ(Dataset);
+          XMLE_DELOBJ(Include);
         }
         void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value){
           CXMLSerializerInterface * base = (CXMLSerializerInterface*)baseClass;
@@ -939,6 +965,8 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("Style",5,name)){XMLE_ADDOBJ(Style);}
             else if(equals("CacheDocs",9,name)){XMLE_ADDOBJ(CacheDocs);}
             else if(equals("AutoResource",12,name)){XMLE_ADDOBJ(AutoResource);}
+            else if(equals("Dataset",7,name)){XMLE_ADDOBJ(Dataset);}
+            else if(equals("Include",7,name)){XMLE_ADDOBJ(Include);}
           }
           if(pt2Class!=NULL)pt2Class->addElement(baseClass,rc-pt2Class->level,name,value);
         }
@@ -948,7 +976,14 @@ class CServerConfig:public CXMLSerializerInterface{
       base->currentNode=(CXMLObjectInterface*)this;
       if(rc==0){
         pt2Class=NULL;
-        if(equals("Configuration",13,name)){XMLE_ADDOBJ(Configuration);}
+        if(equals("Configuration",13,name)){
+          if(Configuration.size()==0){
+            XMLE_ADDOBJ(Configuration);
+          }else{
+             XMLE_SETOBJ(Configuration);
+          }
+          
+        }
       }
       if(pt2Class!=NULL)pt2Class->addElement(baseClass,rc-pt2Class->level,name,value);
     }

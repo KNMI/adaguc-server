@@ -90,6 +90,9 @@ class CServerParams{
     
     //given location by the KVP key source=<value> parameter
     CT::string autoResourceLocation;
+    
+    CT::string datasetLocation;
+    
     //internalAutoResourceLocation is the internal location used and can differ from the given location by the KVP key source=<value> parameter
     CT::string internalAutoResourceLocation;
     //autoResourceVariable is given by the KVP key variable=<value> parameter.
@@ -218,7 +221,15 @@ class CServerParams{
      * @param path The filepath or urlpath to check
      * @return true on valid, false on invalid
      */
-    bool checkIfPathHasValidTokens(const char *path);
+    static bool checkIfPathHasValidTokens(const char *path);
+    
+    /**
+     * Generic function which checks for custom tokens
+     * @param path The string sequence to check
+     * @param validTokens The string with a list of allowed tokens
+     * @return true on valid, false on invalid
+     */
+    static bool checkForValidTokens(const char *path,const char *validTokens);
     
     /** 
      * Check wether the resourcelocation is whithin the servers configured realpath. In the servers configuration a comma separated list of realpaths can be configured.
