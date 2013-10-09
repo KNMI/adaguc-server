@@ -28,6 +28,7 @@
 #include "CRequest.h"
 #include "CServerError.h"
 #include "Definitions.h"
+#include "CGetFileInfo.h"
 
 void writeLogFile(const char * msg);
 

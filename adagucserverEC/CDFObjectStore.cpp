@@ -360,3 +360,30 @@ void CDFObjectStore::clear(){
   cdfReaders.clear();
   cdfObjects.clear();
 }
+
+
+CT::StackList<CT::string> CDFObjectStore::getListOfVisualizableVariables(CDFObject *cdfObject){
+  CT::StackList<CT::string> variableList;  
+  
+  if(cdfObject!=NULL){
+    for(size_t j=0;j<cdfObject->variables.size();j++){
+      if(cdfObject->variables[j]->dimensionlinks.size()>=2){
+        if(cdfObject->variables[j]->getAttributeNE("ADAGUC_SKIP")==NULL){
+          if(!cdfObject->variables[j]->name.equals("lon")&&
+            !cdfObject->variables[j]->name.equals("lat")&&
+            !cdfObject->variables[j]->name.equals("lon_bounds")&&
+            !cdfObject->variables[j]->name.equals("lat_bounds")&&
+            !cdfObject->variables[j]->name.equals("time_bounds")&&
+            !cdfObject->variables[j]->name.equals("lon_bnds")&&
+            !cdfObject->variables[j]->name.equals("lat_bnds")&&
+            !cdfObject->variables[j]->name.equals("time_bnds")&&
+            !cdfObject->variables[j]->name.equals("time")){
+              variableList.push_back(cdfObject->variables[j]->name.c_str());
+          }
+        }
+      }
+    }
+  }
+  return variableList;
+}
+

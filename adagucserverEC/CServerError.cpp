@@ -24,7 +24,7 @@
  ******************************************************************************/
 
 #include "CServerError.h"
-#define ERRORMSGS_SIZE 30000 
+//#define ERRORMSGS_SIZE 30000 
 
 
 
@@ -119,7 +119,7 @@ void readyerror(){
   if(cerror_mode==EXCEPTIONS_PLAINTEXT||cerror_mode==0){//Plain text
     printf("%s%c%c\n","Content-type: text/plain",13,10);  
     for(size_t j=0;j<errormsgs.size();j++){
-      fprintf(stdout,"%s",errormsgs[j].c_str());
+      fprintf(stdout,"%s\n",errormsgs[j].c_str());
     }
     resetErrors();return;
   }
