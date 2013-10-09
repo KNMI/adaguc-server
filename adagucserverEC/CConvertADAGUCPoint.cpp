@@ -642,7 +642,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
             dataSource->dataObject[d]->points.push_back(PointDVWithLatLon(dlon,dlat,lon,lat,val,id));
           }        
           
-          drawCircle(sdata,val,dataSource->dWidth,dataSource->dHeight,dlon-1,dlat,10);
+          drawCircle(sdata,val,dataSource->dWidth,dataSource->dHeight,dlon-1,dlat,8);
         }
       }
     }
