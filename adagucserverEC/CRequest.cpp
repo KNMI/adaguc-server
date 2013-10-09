@@ -1900,15 +1900,19 @@ int CRequest::process_querystring(){
         return 1;
       }
       
-      if(CServerParams::checkForValidTokens(srvParam->datasetLocation.c_str(),"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-")==false){
+      if(CServerParams::checkForValidTokens(srvParam->datasetLocation.c_str(),"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-:/.")==false){
         CDBError("Invalid dataset name. ");
         return 1;
       }
       
+      CT::string internalDatasetLocation = srvParam->datasetLocation.c_str();
+      
+      internalDatasetLocation.replaceSelf(":","_");
+      internalDatasetLocation.replaceSelf("/","_");
       
       CT::string datasetConfigFile = srvParam->cfg->Dataset[0]->attr.location.c_str();
       
-      datasetConfigFile.printconcat("/%s.xml",srvParam->datasetLocation.c_str());
+      datasetConfigFile.printconcat("/%s.xml",internalDatasetLocation.c_str());
       
       CDBDebug("Found dataset %s",datasetConfigFile.c_str());
       
@@ -1942,7 +1946,7 @@ int CRequest::process_querystring(){
       //Adjust unique cache file identifier for each dataset.
       if(srvParam->cfg->CacheDocs.size()==0){srvParam->cfg->CacheDocs.push_back(new CServerConfig::XMLE_CacheDocs());}
       CT::string validFileName;
-      validFileName.print("dataset_%s",srvParam->datasetLocation.c_str());
+      validFileName.print("dataset_%s",internalDatasetLocation.c_str());
       srvParam->cfg->CacheDocs[0]->attr.cachefile.copy(validFileName.c_str());
       
       //Disable autoResourceLocation
@@ -1953,7 +1957,8 @@ int CRequest::process_querystring(){
       //DONE load config file and add it to existing object. [OK]
       //DONE Adjust online resource: provide dataset [OK]
       //DONE Adjust unique cache file identifier for each dataset. [OK]
-      //DONE  Disable autoResourceLocation [OK]
+      //DONE Disable autoResourceLocation [OK]
+      //Done Escape identifier, : and / tokens to _
       //TODO check if WMS INSPIRE global metadata URL can be the same for all services      
     }
     

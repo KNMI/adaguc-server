@@ -131,8 +131,9 @@ int main(int argc, const char *argv[]){
 
   //Check if a database update was requested
   if(argc>=2){
+    
     if(strncmp(argv[1],"--updatedb",10)==0){
-      CDBDebug("***** Starting DB update *****\n");
+      CDBDebug("***** Starting DB update *****");
       CRequest request;
       int configSet = 0;
       CT::string tailPath,layerPathToScan;
@@ -153,8 +154,8 @@ int main(int argc, const char *argv[]){
         }
       }
       if(configSet == 0){
-        CDBError("Error: Configuration file is not set: use '--updatedb --config configfile.xml'\n" );
-        CDBError("And --tailpath for scanning specific sub directory, specify --path for a absolute path to update\n" );
+        CDBError("Error: Configuration file is not set: use '--updatedb --config configfile.xml'" );
+        CDBError("And --tailpath for scanning specific sub directory, specify --path for a absolute path to update" );
 
         return 0;
       }
@@ -167,6 +168,31 @@ int main(int argc, const char *argv[]){
       status = request.updatedb(&tailPath,&layerPathToScan);
       if(status != 0){
         CDBError("Error occured in updating the database");
+      }
+      readyerror();
+      return status;
+    }
+    
+    if(strncmp(argv[1],"--getlayers",11)==0){
+      int status = 0;
+      if(argc>=3){
+        if(strncmp(argv[2],"--file",6)==0){
+          if(argc>=4){
+            //CDBDebug("Getting layers for file parameter = '%s'",argv[3]);
+            CT::string fileInfo = CGetFileInfo::getLayersForFile(argv[3]);
+            printf("%s\n",fileInfo.c_str());
+            status = 0;
+          }else{
+            CDBError("--file parameter empty");
+            status=1;
+          }
+        }else{
+          CDBError("--file parameter missing");
+          status=1;
+        }
+      }else{
+        CDBError("--file parameter missing");
+        status=1;
       }
       readyerror();
       return status;

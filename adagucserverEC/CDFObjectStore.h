@@ -79,6 +79,7 @@ public:
   
   CDFObject *getCDFObjectHeader(CServerParams *srvParams,const char *fileName);
   
+  static CT::StackList<CT::string> getListOfVisualizableVariables(CDFObject *cdfObject);
   
   CDFObject *deleteCDFObject(CDFObject **cdfObject);
   
