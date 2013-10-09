@@ -390,7 +390,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
   for(size_t d=0;d<nrDataObjects;d++){
     count[0]=pointVar[d]->dimensionlinks[0]->getSize();
     start[1]=dateDimIndex;
-    pointVar[d]->readData(CDF_FLOAT,start,count,stride);
+    pointVar[d]->readData(CDF_FLOAT,start,count,stride,true);
     //pointVar[d]->readData(CDF_FLOAT,true);
   }
   
@@ -616,12 +616,15 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
       int pPoint = stationNr+0;//dateDimIndex;//*numStations;
       int pGeo = stationNr;
       //CDBDebug("stationNr %d dateDimIndex %d,pPoint DIM %d",stationNr,dateDimIndex,pPoint);
-      double lat,lon;
-      lon = (double)lonData[pGeo];
-      lat = (double)latData[pGeo];
-      if(projectionRequired)imageWarper.reprojfromLatLon(lon,lat);
-      int dlon=int((lon-offsetX)/cellSizeX);
-      int dlat=int((lat-offsetY)/cellSizeY);
+   
+      double lon = (double)lonData[pGeo];
+      double lat = (double)latData[pGeo];
+      double projectedX = lon;
+      double projectedY = lat;
+      
+      if(projectionRequired)imageWarper.reprojfromLatLon(projectedX,projectedY);
+      int dlon=int((projectedX-offsetX)/cellSizeX);
+      int dlat=int((projectedY-offsetY)/cellSizeY);
       
       for(size_t d=0;d<nrDataObjects;d++){
         float val = ((float*)pointVar[d]->data)[pPoint];
@@ -639,7 +642,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
             dataSource->dataObject[d]->points.push_back(PointDVWithLatLon(dlon,dlat,lon,lat,val,id));
           }        
           
-          drawCircle(sdata,val,dataSource->dWidth,dataSource->dHeight,dlon-1,dlat,5);
+          drawCircle(sdata,val,dataSource->dWidth,dataSource->dHeight,dlon-1,dlat,10);
         }
       }
     }

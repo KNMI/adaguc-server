@@ -1204,7 +1204,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
       dataSource->legendScale==INFINITY||
       dataSource->legendScale==NAN||
       dataSource->legendScale==-INFINITY){
-      dataSource->legendScale=1;
+      dataSource->legendScale=240;
     }
     if(dataSource->legendOffset!=dataSource->legendOffset||
       dataSource->legendOffset==INFINITY||

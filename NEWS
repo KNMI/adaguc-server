@@ -1,6 +1,9 @@
 ADAGUC NEWS
 --------
 
+- Added Dataset configuration option to load additional datasets through the URL
+- Added Include configuration option to include additional configuration files
+
 Version 1.4 October 2013
 - Inspire view services support
 
