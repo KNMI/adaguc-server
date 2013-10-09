@@ -3331,7 +3331,11 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
     legendType = continous;
   }else{
     if(!(renderMethod&RM_SHADED)){
-      legendType = cascaded;
+      if(renderMethod&RM_NEAREST){
+        legendType = continous;
+      }else{
+        legendType = cascaded;
+      }
     }else{
       legendType = discrete;
     }
