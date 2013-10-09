@@ -3280,8 +3280,9 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
   int legendPositiveUp = 1;
   //float legendWidth = legendImage->Geo->dWidth;
   float legendHeight = legendImage->Geo->dHeight;
+  if(legendHeight>200)legendHeight=200;
   int pLeft=4;
-  int pTop=0;
+  int pTop=legendImage->Geo->dHeight-legendHeight;
   char szTemp[256];
   
   if(dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
@@ -3329,7 +3330,11 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
   }else if(!(renderMethod&RM_SHADED||renderMethod&RM_CONTOUR)){
     legendType = continous;
   }else{
-    legendType = discrete;
+    if(!(renderMethod&RM_SHADED)){
+      legendType = cascaded;
+    }else{
+      legendType = discrete;
+    }
   }
   
   if(renderMethod&RM_RGBA){
@@ -3517,7 +3522,7 @@ if(legendType == cascaded){
       units.concat(&dataSource->dataObject[0]->units);
     }
     if(units.length()>0)legendImage->setText(units.c_str(),units.length(),2+pLeft,int(legendHeight)-14+pTop,248,-1);
-    legendImage->crop(4,-1);    
+    legendImage->crop(4,4);    
   }
   
   //Draw legend with fixed intervals
