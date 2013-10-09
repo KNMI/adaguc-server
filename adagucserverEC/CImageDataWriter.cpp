@@ -1043,6 +1043,9 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
     
       //Copy layer name
       getFeatureInfoResult->layerName.copy(&dataSource->layerName);
+      getFeatureInfoResult->layerTitle.copy(&dataSource->layerName);
+      
+
       getFeatureInfoResult->dataSourceIndex=dataSourceIndex;
       
       CDataReader reader;
@@ -1309,6 +1312,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       #ifdef CIMAGEDATAWRITER_DEBUG  
       CDBDebug("imx:%d imy:%d projCacheInfo.dWidth:%d projCacheInfo.dHeight:%d",projCacheInfo.imx,projCacheInfo.imy,projCacheInfo.dWidth,projCacheInfo.dHeight);
       #endif
+      bool hasData = false;
       if(projCacheInfo.imx>=0&&projCacheInfo.imy>=0&&projCacheInfo.imx<projCacheInfo.dWidth&&projCacheInfo.imy<projCacheInfo.dHeight){
         #ifdef CIMAGEDATAWRITER_DEBUG 
 //        CDBDebug("Accessing element %d",j);
@@ -1331,6 +1335,8 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         #endif
         //Fill in the actual data value
         //Check whether this is a NoData value:
+       
+        
         if((pixel!=dataSource->dataObject[o]->dfNodataValue&&dataSource->dataObject[o]->hasNodataValue==true&&pixel==pixel&&isOutsideBBOX==false)||
           dataSource->dataObject[o]->hasNodataValue==false){
           if(dataSource->dataObject[o]->hasStatusFlag){
@@ -1348,15 +1354,60 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
           #ifdef CIMAGEDATAWRITER_DEBUG 
           CDBDebug("Element value == %s",element->value.c_str());
           #endif
+          
+          hasData = true;
         }else {
+        
           element->value="nodata";
           #ifdef CIMAGEDATAWRITER_DEBUG 
           CDBDebug("Element value == %s",element->value.c_str());
           #endif
+          }
         }
-       }
+       
+        if(dataSource->dataObject[o]->points.size()>0&&hasData==true){
+          float closestDistance =0;
+          int closestIndex =0;
+          
+          for(size_t j=0;j<dataSource->dataObject[o]->points.size();j++){
+            PointDVWithLatLon point = dataSource->dataObject[o]->points[j];
+            float distance = hypot(point.lon-getFeatureInfoResult->lon_coordinate,point.lat-getFeatureInfoResult->lat_coordinate);
+            if(distance<closestDistance||j==0){
+              closestIndex=j;
+              closestDistance = distance;
+            }
+          }
+          
+          
+          PointDVWithLatLon point = dataSource->dataObject[o]->points[closestIndex];
+          
+          GetFeatureInfoResult::Element *pointID=new GetFeatureInfoResult::Element();
+          pointID->dataSource= dataSource;
+          pointID->time.copy(&dataSources[d]->timeSteps[dataSources[d]->getCurrentTimeStep()]->timeString);
+          for(size_t j=0;j<dataSources[d]->requiredDims.size();j++){
+            value=cdfDims->getDimensionValue(j);
+            name=cdfDims->getDimensionName(j);
+            if(name.indexOf("time")==0){
+              value=pointID->time.c_str();
+            }
+            pointID->cdfDims.addDimension(name.c_str(),value.c_str(),cdfDims->getDimensionIndex(j));
+          }
+          getFeatureInfoResult->elements.push_back(pointID);
+          pointID->long_name="Station ID";
+          pointID->var_name="stationid";
+          pointID->standard_name="stationid";
+          pointID->feature_name="stationid";
+          pointID->value.print("%s",point.id.c_str());
+          pointID->units="";
+          
+          char szTemp[1024];
+          floatToString(szTemp,1023,point.v);
+          element->value=szTemp;
+          element->value=szTemp;
+          
+            
+        }
       }
-
       //reader.close();
       #ifdef CIMAGEDATAWRITER_DEBUG 
       CDBDebug("dataSource->dataObject.size()==%d",dataSource->dataObject.size());
@@ -1484,6 +1535,12 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         }
       }
       }
+    }
+  }
+  
+  for(size_t j=0;j<getFeatureInfoResultList.size();j++){
+    if(getFeatureInfoResultList[j]->elements.size()>0){
+      getFeatureInfoResultList[j]->layerTitle = getFeatureInfoResultList[j]->elements[0]->long_name;
     }
   }
   #ifdef CIMAGEDATAWRITER_DEBUG 
@@ -2356,34 +2413,70 @@ int CImageDataWriter::end(){
           
           GetFeatureInfoResult *g = getFeatureInfoResultList[j];
           
+    
           
           if(resultFormat==texthtml){
-            resultHTML.printconcat("<hr/><b>%s</b><br/>\n",g->layerName.c_str());
+            resultHTML.printconcat("<hr/><b>%s (%s)</b><br/>\n",g->layerTitle.c_str(),g->layerName.c_str());
           }
           else{
-            resultHTML.printconcat("%s\n",g->layerName.c_str());
+            resultHTML.printconcat("%s (%s)\n",g->layerTitle.c_str(),g->layerName.c_str());
+          }
+          
+          CT::string currentTimeString = "";
+          
+          if(resultFormat==texthtml){
+            resultHTML.printconcat("<table>");
           }
           for(size_t elNR=0;elNR<g->elements.size();elNR++){
             GetFeatureInfoResult::Element * e=g->elements[elNR];
-            if(g->elements.size()>1){
-              resultHTML.printconcat("%d: ",elNR);
+            
+            if(currentTimeString.equals(e->time.c_str())==false){
+              if(resultFormat==texthtml){
+                resultHTML.printconcat("%s<br/>",e->time.c_str());
+              }else{
+                resultHTML.printconcat("%s\n",e->time.c_str());
+              }
+              currentTimeString = e->time.c_str();
             }
-            CDBDebug(" %d elements.size() %d value '%s'",j,g->elements.size(),e->value.c_str());
+            
+            
+            //CDBDebug(" %d elements.size() %d value '%s'",j,g->elements.size(),e->value.c_str());
+            
+            if(resultFormat==texthtml){
+              resultHTML.printconcat("<tr>");
+            }
+            if(resultFormat==texthtml){
+              resultHTML.printconcat("<td>&nbsp;</td>");
+            }else{
+              resultHTML.printconcat("  ");
+            }
+            if(g->elements.size()>1){
+              if(resultFormat==texthtml){
+                resultHTML.printconcat("<td>%d)</td>",elNR);
+              }else{
+                resultHTML.printconcat("%d) ",elNR);
+              }
+            }
             if(e->value.length()>0){
               if(resultFormat==texthtml){
-                resultHTML.printconcat("%s: %s <b>%s</b>",e->time.c_str(),e->var_name.c_str(),e->value.c_str());
+                resultHTML.printconcat("<td>%s</td><td><b>%s</b></td>",e->long_name.c_str(),e->value.c_str());
               }else{
-                resultHTML.printconcat("%s: %s %s",e->time.c_str(),e->var_name.c_str(),e->value.c_str());
+                resultHTML.printconcat("  %s %s",e->long_name.c_str(),e->value.c_str());
               }
               if(e->units.length()>0){
                 if(!e->value.equals("nodata")&&!e->value.equals("")){
-                  resultHTML.printconcat(" %s",e->units.c_str());
+                  if(resultFormat==texthtml){
+                    resultHTML.printconcat("<td> %s</td>",e->units.c_str());
+                  }else{
+                    resultHTML.printconcat(" %s",e->units.c_str());
+                  }
                 }
               }
-            }/*else{
-              resultHTML.printconcat("%s: -",e->time.c_str());
-            }*/
-            if(resultFormat==texthtml)resultHTML.printconcat("<br>\n");else resultHTML.printconcat("\n");
+            }
+            if(resultFormat==texthtml)resultHTML.printconcat("</tr>\n");else resultHTML.printconcat("\n");
+          }
+          if(resultFormat==texthtml){
+            resultHTML.printconcat("</table>");
           }
         }
 
@@ -3142,6 +3235,20 @@ float CImageDataWriter::getValueForColorIndex(CDataSource *dataSource,int index)
     float lo=-(minValue*ls);
     dataSource->legendScale=ls;
     dataSource->legendOffset=lo;
+    
+    //Check for infinities
+    if(
+      dataSource->legendScale!=dataSource->legendScale||
+      dataSource->legendScale==INFINITY||
+      dataSource->legendScale==NAN||
+      dataSource->legendScale==-INFINITY||
+      dataSource->legendOffset!=dataSource->legendOffset||
+      dataSource->legendOffset==INFINITY||
+      dataSource->legendOffset==NAN||
+      dataSource->legendOffset==-INFINITY){
+      dataSource->legendScale=240.0;
+      dataSource->legendOffset=0;
+    }
     //CDBDebug("max=%f; min=%f",maxValue,minValue);
     //CDBDebug("scale=%f; offset=%f",ls,lo);
   }  
@@ -3383,13 +3490,14 @@ if(legendType == cascaded){
       tickRound = int(round(log10(currentStyleConfiguration->legendTickRound))+3);
     }
 
-    
+     
     //CDBDebug("LEGEND: scale %f offset %f",dataSource->legendScale,dataSource->legendOffset);
     for(int j=0;j<=classes;j++){
       double c=((double(classes*legendPositiveUp-j)/classes))*(cbH);
       double v=((double(j)/classes))*(240.0f);
       v-=dataSource->legendOffset;
-      v/=dataSource->legendScale;
+      
+      if(dataSource->legendScale != 0)v/=dataSource->legendScale;
       if(dataSource->legendLog!=0){v=pow(dataSource->legendLog,v);}
       
       //if(v<=max)
@@ -3469,6 +3577,19 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
       float lo=-(iMin*ls);
       dataSource->legendScale=ls;
       dataSource->legendOffset=lo;
+      //Check for infinities
+     if(
+      dataSource->legendScale!=dataSource->legendScale||
+      dataSource->legendScale==INFINITY||
+      dataSource->legendScale==NAN||
+      dataSource->legendScale==-INFINITY||
+      dataSource->legendOffset!=dataSource->legendOffset||
+      dataSource->legendOffset==INFINITY||
+      dataSource->legendOffset==NAN||
+      dataSource->legendOffset==-INFINITY){
+      dataSource->legendScale=240.0;
+      dataSource->legendOffset=0;
+    }
     }
     
     

@@ -52,14 +52,14 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
       int x=(*p1)[j].x;
       int y=dataSource->dHeight-(*p1)[j].y;
       float v=(*p1)[j].v;
-      drawImage->circle(x,y, 5, 240);
+      drawImage->circle(x,y, 10, 240);
       if(drawText){
         //drawImage->setPixelIndexed(x,y, 240);
         t.print("%0.1f",v);
-        drawImage->setText(t.c_str(), t.length(),x-t.length()*3,y+5, 240,0);
-        if((*p1)[j].id.length()>0){
+        drawImage->setText(t.c_str(), t.length(),x-t.length()*3,y+10, 240,0);
+        /*if((*p1)[j].id.length()>0){
           drawImage->setText((*p1)[j].id.c_str(), (*p1)[j].id.length(),x-(*p1)[j].id.length()*3,y-18, 240,0);
-        }
+        }*/
       }
     }
   }

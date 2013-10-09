@@ -135,6 +135,7 @@ public:
         double lat_coordinate,lon_coordinate;
 
         CT::string layerName;
+        CT::string layerTitle;
         int dataSourceIndex;
         
         class Element{
