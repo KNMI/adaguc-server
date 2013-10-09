@@ -970,7 +970,7 @@ delete[] valObj;
    * When Zero is returned, no contours should be used.
    * e.g:
    * contourDefinitionIndex = ((returnValue-1)%CONTOURDEFINITIONLOOKUPLENGTH)
-   * definedIntervalIndex = returnValue/CONTOURDEFINITIONLOOKUPLENGTH
+   * definedIntervalIndex within contourDefinition= returnValue/CONTOURDEFINITIONLOOKUPLENGTH
    */
   
   unsigned short CImgWarpBilinear::checkIfContourRequired(float *val){
@@ -1035,6 +1035,7 @@ delete[] valObj;
    //TODO
    
    char szTemp[8192];
+   szTemp[0]='\0';
    int dImageWidth=drawImage->Geo->dWidth+1;
    int dImageHeight=drawImage->Geo->dHeight+1;
    
@@ -1237,7 +1238,7 @@ delete[] valObj;
                           unsigned int index = contourLineDefinitionLookUp[curP];
                           if(index != 0){
                             ContourDefinition *contourDefinition = &contourDefinitions[(index-1)%CONTOURDEFINITIONLOOKUPLENGTH];
-                            if(index<CONTOURDEFINITIONLOOKUPLENGTH){
+                            if(contourDefinition->definedIntervals.size()==0){
                                 float binnedValue=convertValueToClass(val[0]+contourDefinition->continuousInterval/2,contourDefinition->continuousInterval);
                                 snprintf(szTemp,8000,contourDefinition->textFormat.c_str(),binnedValue);
                             }else{
@@ -1317,6 +1318,7 @@ delete[] valObj;
                           tx-=offX;
                           ty-=offY;
                           drawImage->drawText( int(tx)+1, int(ty)+1, angle,szTemp,textcolor);
+                          szTemp[0]='\0';
                         }
                       }
                     }else lastXdir=-10;
