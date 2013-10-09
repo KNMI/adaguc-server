@@ -520,6 +520,8 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
         CT::string query;
         if(isTimeDim){
           query.print("select %s from %s group by %s order by %s",pszDimName,tableName.c_str(),pszDimName,pszDimName);
+          
+         
         }else{
           query.print("select distinct %s,dim%s from %s order by dim%s,%s",pszDimName,pszDimName,tableName.c_str(),pszDimName,pszDimName);
         }
@@ -555,6 +557,16 @@ CDBDebug("Querying %s",query.c_str());
                 //01234567890123456789
                 values->getRecord(j)->get(0)->setChar(10,'T');
                 values->getRecord(j)->get(0)->concat("Z");
+              }
+               const char *pszDefaultV=myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.defaultV.c_str();
+              CT::string defaultV;if(pszDefaultV!=NULL)defaultV=pszDefaultV;
+              
+              if(defaultV.length()==0||defaultV.equals("max",3)){
+                dim->defaultValue.copy(values->getRecord(values->getSize()-1)->get(0)->c_str());dim->defaultValue.concat("Z");
+              }else if(defaultV.equals("min",3)){
+                dim->defaultValue.copy(values->getRecord(0)->get(0)->c_str());dim->defaultValue.concat("Z");
+              }else {
+                dim->defaultValue.copy(&defaultV);
               }
             }
             dim->defaultValue.copy(values->getRecord(0)->get(0));
