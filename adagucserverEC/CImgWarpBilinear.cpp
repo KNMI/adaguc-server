@@ -970,7 +970,7 @@ delete[] valObj;
    * When Zero is returned, no contours should be used.
    * e.g:
    * contourDefinitionIndex = ((returnValue-1)%CONTOURDEFINITIONLOOKUPLENGTH)
-   * definedIntervalIndex within contourDefinition= returnValue/CONTOURDEFINITIONLOOKUPLENGTH
+   * definedIntervalIndex within contourDefinition= (returnValue/CONTOURDEFINITIONLOOKUPLENGTH)-1
    */
   
   unsigned short CImgWarpBilinear::checkIfContourRequired(float *val){
@@ -987,7 +987,7 @@ delete[] valObj;
           (val[0]>c&&val[2]<=c)||(val[0]>=c&&val[2]<c)||(val[0]<=c&&val[2]>c)||(val[0]<c&&val[2]>=c)
           
           ){
-            return j+i*CONTOURDEFINITIONLOOKUPLENGTH+1;
+            return j+(i+1)*CONTOURDEFINITIONLOOKUPLENGTH+1;
           }
         }
       }else{
@@ -1036,6 +1036,9 @@ delete[] valObj;
    
    char szTemp[8192];
    szTemp[0]='\0';
+   float currentTextValue = 0;
+   int contourDefinitionIndex = -1;
+   
    int dImageWidth=drawImage->Geo->dWidth+1;
    int dImageHeight=drawImage->Geo->dHeight+1;
    
@@ -1236,16 +1239,21 @@ delete[] valObj;
                           drawnText=1;
                           needToDrawText=0;
                           unsigned int index = contourLineDefinitionLookUp[curP];
-                          if(index != 0){
-                            ContourDefinition *contourDefinition = &contourDefinitions[(index-1)%CONTOURDEFINITIONLOOKUPLENGTH];
-                            if(contourDefinition->definedIntervals.size()==0){
-                                float binnedValue=convertValueToClass(val[0]+contourDefinition->continuousInterval/2,contourDefinition->continuousInterval);
-                                snprintf(szTemp,8000,contourDefinition->textFormat.c_str(),binnedValue);
+                          if(index > 0){
+                            
+                            contourDefinitionIndex = (index-1)%CONTOURDEFINITIONLOOKUPLENGTH;
+                            int definedIntervalIndex = ((index-1)/CONTOURDEFINITIONLOOKUPLENGTH)-1;
+                            
+                            ContourDefinition *contourDefinition = &contourDefinitions[contourDefinitionIndex];
+                            if(definedIntervalIndex==-1){
+                              currentTextValue = convertValueToClass(val[0]+contourDefinition->continuousInterval/2,contourDefinition->continuousInterval);
                             }else{
-                              int definedIntervalIndex = (index-1)/CONTOURDEFINITIONLOOKUPLENGTH;
-                              snprintf(szTemp,8000,contourDefinition->textFormat.c_str(),contourDefinition->definedIntervals[definedIntervalIndex]);
+                              currentTextValue = contourDefinition->definedIntervals[definedIntervalIndex];
                             }
+                            snprintf(szTemp,8000,contourDefinition->textFormat.c_str(),currentTextValue);
                             busyDrawingText=int(float(strlen(szTemp))*1.3)+2;
+                          }else{
+                            contourDefinitionIndex = -1;
                           }
                         }
                       }
@@ -1277,22 +1285,102 @@ delete[] valObj;
                     linecolor=CColor(0,0,0,255);
                     textcolor=CColor(0,0,0,255);
                     w=0.4;
-                    
-                    unsigned int index = contourLineDefinitionLookUp[p];
-                    if(index != 0){
-                      ContourDefinition *contourDefinition = &contourDefinitions[(index-1)%CONTOURDEFINITIONLOOKUPLENGTH];
+                    if(contourDefinitionIndex!=-1){
+                      ContourDefinition *contourDefinition = &contourDefinitions[contourDefinitionIndex];
                       linecolor=contourDefinition->linecolor;
                       textcolor=contourDefinition->textcolor;
                       w=contourDefinition->lineWidth;
                     }
-                    
+//                     //unsigned int index = contourLineDefinitionLookUp[p];
+//                     //if(index != 0)
+//                     {
+//                       int contourDefinitionIndex = -1;
+//                       int closestContourIntervalIntervalIndex = -1;
+//                       float closestIntervalIntervalDistance = 0;
+//                       bool firstIntervalContourEntry =false;
+//                       
+//                       
+//                       int closestContourDefinedIntervalIndex = -1;
+//                       float closestDefinedIntervalDistance = 0;
+//                       bool firstDefinedContourEntry =false;
+//                       
+//                       for(size_t j=0;j<contourDefinitions.size();j++){
+//                         ContourDefinition *contourDefinition = &contourDefinitions[j];
+//                         if(contourDefinition->definedIntervals.size()==0){
+//                           float interval = contourDefinition->continuousInterval;
+//                           if(interval>0){
+//                             float value = currentTextValue;
+//                             
+//                             float closestInterval = interval;
+//                           
+//                             while(value<closestInterval){
+//                               closestInterval-=interval;
+//                             }
+//                             while(value>closestInterval){
+//                               closestInterval+=interval;
+//                             }
+//                             
+//                             float closestLeft = closestInterval-value;
+//                             float closestRight = value-(closestInterval-interval);
+//                             float distance = closestLeft<closestRight?closestLeft:closestRight;
+//                             if(closestIntervalIntervalDistance>distance || firstIntervalContourEntry == false){
+//                               firstIntervalContourEntry = true;
+//                               closestIntervalIntervalDistance = distance;
+//                               closestContourIntervalIntervalIndex = j;
+//                             }
+//                             
+//                             //CDBDebug("CONTINOUS: %d %f %f ",j,value,distance);
+//                           }
+//                         }else{
+//                           for(size_t i=0;i<contourDefinition->definedIntervals.size();i++){
+//                             float distance = fabs(currentTextValue-contourDefinition->definedIntervals[i]);
+//                             if(closestDefinedIntervalDistance>distance || firstDefinedContourEntry==false){
+//                               firstDefinedContourEntry = true;
+//                               closestDefinedIntervalDistance = distance;
+//                               closestContourDefinedIntervalIndex = j;
+//                             }
+//                           }
+//                         }
+//                       }
+//                       
+//                       if(closestContourIntervalIntervalIndex !=-1 && closestContourDefinedIntervalIndex !=-1){
+//                         if(closestDefinedIntervalDistance<closestIntervalIntervalDistance){
+//                            contourDefinitionIndex = closestContourDefinedIntervalIndex;
+//                         }else{
+//                            contourDefinitionIndex = closestContourIntervalIntervalIndex;
+//                         }
+//                       }else{
+//                         if(closestContourIntervalIntervalIndex !=-1){
+//                           //CDBDebug("Closest continuous = %d with %f for %f",contourDefinitionIndex,contourDefinitions[contourDefinitionIndex].continuousInterval,val[0]);
+//                           contourDefinitionIndex = closestContourIntervalIntervalIndex;
+//                         }
+// 
+//                         if(closestContourDefinedIntervalIndex != -1){
+//                           if(closestContourDefinedIntervalIndex == 2){
+//                             CDBDebug("Closest defined = %d for %f",closestContourDefinedIntervalIndex,val[0]);
+//                           }
+//                           contourDefinitionIndex = closestContourDefinedIntervalIndex;
+//                           
+//                         }
+//                       }
+//                       
+//                       if(contourDefinitionIndex != -1){
+//                         ContourDefinition *contourDefinition = &contourDefinitions[contourDefinitionIndex];
+//                         linecolor=contourDefinition->linecolor;
+//                         textcolor=contourDefinition->textcolor;
+//                         w=contourDefinition->lineWidth;
+//                       }else{
+//                         linecolor=CColor(0,0,255,255);;
+//                         textcolor=CColor(0,0,255,255);;
+//                         w=0.1;
+//                       }
+//                     }
+//                     
                     
                     if(drawLine){
 
                       //Draw Line, no text
                       if(busyDrawingText<=0){
-                        //drawImage->lineTo(startX,startY,x,y,w,linecolor);
-                        
                         drawImage->lineTo(x,y,w,linecolor);
                       }
                       
@@ -1461,11 +1549,17 @@ int CImgWarpBilinear::set(const char *pszSettings){
       
 
       if(values[0].equals("contourBigInterval")){
-        contourDefinitions.push_back(ContourDefinition(1.4,CColor(0,0,0,255),CColor(0,0,0,255), values[1].toFloat(),NULL));
+        float f = values[1].toFloat();
+        if(f>0){
+          contourDefinitions.push_back(ContourDefinition(1.4,CColor(0,0,0,255),CColor(0,0,0,255), f,NULL));
+        }
       }
       
       if(values[0].equals("contourSmallInterval")){
-        contourDefinitions.push_back(ContourDefinition(0.7,CColor(0,0,0,255),CColor(0,0,0,255), values[1].toFloat(),NULL));
+        float f = values[1].toFloat();
+        if(f>0){
+          contourDefinitions.push_back(ContourDefinition(0.7,CColor(0,0,0,255),CColor(0,0,0,255), f,NULL));
+        }
       }
       
       if(values[0].equals("shading")){
@@ -1498,15 +1592,12 @@ int CImgWarpBilinear::set(const char *pszSettings){
           CT::string *kvp=lineSettings[l].splitToArray("(");
           if(kvp->count==2){
             int endOfKVP = kvp[1].lastIndexOf(")");
-            CDBDebug("B '%s'",kvp[1].c_str());
             if(endOfKVP!=-1){
               kvp[1].setSize(endOfKVP);
             }
-            CDBDebug("A '%s'",kvp[1].c_str());
             
             if(kvp[0].equals("width"))lineWidth=kvp[1].toFloat();
             if(kvp[0].equals("interval")){
-              CDBDebug("kvp[1].toFloat() interval = '%s'",kvp[1].c_str());
               interval=kvp[1].toFloat();
             }
             if(kvp[0].equals("classes")){
@@ -1519,13 +1610,15 @@ int CImgWarpBilinear::set(const char *pszSettings){
           }
           delete[] kvp;
         }
-        if(interval!=0.0&&classes.length()==0){
-          contourDefinitions.push_back(ContourDefinition(lineWidth,linecolor, textcolor,interval,textformat.c_str()));
+      
+        if(classes.length()>0){
+          contourDefinitions.push_back(ContourDefinition(lineWidth,linecolor, textcolor,classes.c_str(),textformat.c_str()));
         }else{
-          if(classes.length()>0){
-            contourDefinitions.push_back(ContourDefinition(lineWidth,linecolor, textcolor,classes.c_str(),textformat.c_str()));
+          if(interval>0){
+            contourDefinitions.push_back(ContourDefinition(lineWidth,linecolor, textcolor,interval,textformat.c_str()));
           }
         }
+      
         delete[] lineSettings;
       }
    
