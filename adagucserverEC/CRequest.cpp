@@ -1252,7 +1252,10 @@ int CRequest::process_all_layers(){
         // WMS Getlegendgraphic
         if(srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
           CImageDataWriter imageDataWriter;
+          
+          
           status = imageDataWriter.init(srvParam,dataSources[j],1);if(status != 0)throw(__LINE__);
+         //imageDataWriter.drawImage.crop(10,10);
           status = imageDataWriter.createLegend(dataSources[j],&imageDataWriter.drawImage);if(status != 0)throw(__LINE__);
           status = imageDataWriter.end();if(status != 0)throw(__LINE__);
         }

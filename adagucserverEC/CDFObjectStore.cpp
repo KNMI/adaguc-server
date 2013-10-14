@@ -156,9 +156,11 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,const char *file
 CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *srvParams,const char *fileName){
   
   CT::string uniqueIDForFile = fileName;
-  if(srvParams!=NULL){
+  
+   //Too much trouble, so swicth caching of headers of.
+  /*if(srvParams!=NULL){
     uniqueIDForFile.concat("_header_");
-  }
+  }*/
   
   for(size_t j=0;j<fileNames.size();j++){
     if(fileNames[j]->equals(uniqueIDForFile.c_str())){

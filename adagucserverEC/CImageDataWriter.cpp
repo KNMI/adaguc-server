@@ -263,6 +263,7 @@ int CImageDataWriter::drawCascadedWMS(CDataSource * dataSource, const char *serv
 }
 
 int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int NrOfBands){
+  int status = 0;
   #ifdef CIMAGEDATAWRITER_DEBUG    
   CDBDebug("init");
   #endif
@@ -277,9 +278,20 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
       if(initializeLegend(srvParam,dataSource)!=0)return 1;
   }
+  
+
   if(currentStyleConfiguration!=NULL){
+  
     if(currentStyleConfiguration->renderMethod&RM_RGBA){
+    
       drawImage.setTrueColor(true);
+      if(   srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
+      
+        writerStatus=initialized;
+        drawImage.createImage(40,20);
+        drawImage.create685Palette();
+        return 0;
+      }
     }
   }
   
@@ -315,8 +327,8 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
     drawImage.setBackGroundAlpha((unsigned char )(float(srvParam->wmsExtensions.opacity)*2.55));
   }
   
-  int status;
-  if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
+
+  if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded&&1==2){
     //Open the data of this dataSource
     #ifdef CIMAGEDATAWRITER_DEBUG  
     CDBDebug("opening %s",dataSource->getFileName());
@@ -342,12 +354,14 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   writerStatus=initialized;
   animation = 0;
   nrImagesAdded = 0;
-  requestType=srvParam->requestType;
-  if(requestType==REQUEST_WMS_GETMAP){
+
+  if(srvParam->requestType==REQUEST_WMS_GETMAP){
+  
     status = drawImage.createImage(srvParam->Geo);
+  
     if(status != 0) return 1;
   }
-  if(requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
+  if(srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
     //drawImage.setAntiAliased(false);
     //drawImage.setTrueColor(false);
     int w = LEGEND_WIDTH;
@@ -358,7 +372,7 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
     status = drawImage.createImage(w,h);
     if(status != 0) return 1;
   }
-  if(requestType==REQUEST_WMS_GETFEATUREINFO){
+  if(srvParam->requestType==REQUEST_WMS_GETFEATUREINFO){
     status = drawImage.createImage(512,256);
     drawImage.Geo->copy(srvParam->Geo);
     //return 0;
@@ -366,6 +380,7 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   
   //Create 6-8-5 palette for cascaded layer
   if(dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
+  
     #ifdef CIMAGEDATAWRITER_DEBUG    
     CDBDebug("create685Palette");
     #endif
@@ -376,22 +391,19 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
     }
   }
 
-  //Create palette for internal WNS layer
-  if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
-//    if(initializeLegend(srvParam,dataSource)!=0)return 1;
-    status = drawImage.createGDPalette(srvParam->cfg->Legend[currentStyleConfiguration->legendIndex]);
-    if(status != 0){
-      CDBError("Unknown palette type for %s",srvParam->cfg->Legend[currentStyleConfiguration->legendIndex]->attr.name.c_str());
-      return 1;
+  if(currentStyleConfiguration!=NULL){
+    if(currentStyleConfiguration->legendIndex != -1){
+      //Create palette for internal WNS layer
+      if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
+    //    if(initializeLegend(srvParam,dataSource)!=0)return 1;
+        status = drawImage.createGDPalette(srvParam->cfg->Legend[currentStyleConfiguration->legendIndex]);
+        if(status != 0){
+          CDBError("Unknown palette type for %s",srvParam->cfg->Legend[currentStyleConfiguration->legendIndex]->attr.name.c_str());
+          return 1;
+        }
+      }
     }
   }
-  if(requestType==REQUEST_WMS_GETMAP){
-    /*---------Add cascaded background map now------------------------------------*/
-    //drawCascadedWMS("http://geoservices.knmi.nl/cgi-bin/worldmaps.cgi?","world_raster",false);
-    //drawCascadedWMS("http://bhlbontw.knmi.nl/rcc/download/ensembles/cgi-bin/basemaps.cgi?","world_eca,country",true);
-    /*----------------------------------------------------------------------------*/
-  }
-  
   #ifdef CIMAGEDATAWRITER_DEBUG    
   CDBDebug("/init");
   #endif
@@ -699,19 +711,48 @@ CT::PointerList<CT::string*> *CImageDataWriter::getStyleListForDataSource(CDataS
     }
   }
   
-
+  CT::PointerList<CT::string*> *renderMethods = NULL;
+  CT::PointerList<CT::string*> *legendList = NULL;
+  
   //Auto configure styles, if no legends or styles are defined
   if(dataSource->cfgLayer->Styles.size()==0&&dataSource->cfgLayer->Legend.size()==0){
-    CDataReader::autoConfigureStyles(dataSource);
+    
+    renderMethods = getRenderMethodListForDataSource(dataSource,NULL);
+    if(renderMethods->size()>0){
+      //For cascaded and rgba layers, no styles need to be defined
+      if((getRenderMethodFromString(renderMethods->get(0))&RM_RGBA)){
+        CDBDebug("%s",renderMethods->get(0)->c_str());
+        delete renderMethods ; 
+        if(styleConfig!=NULL){
+          CDBDebug("Setting rendermethod RM_RGBA");
+          styleConfig->styleTitle.copy("rgba");
+          styleConfig->styleAbstract.copy("rgba");
+          styleConfig->renderMethod = RM_RGBA;
+        }
+        //CT::string * styleName = new CT::string();
+        //styleName->copy("default");
+        //stringList->push_back(renderMethods->get(0)->c_str());
+        //stringList->push_back(styleName);
+        if(stringList!=NULL){
+          CT::string * styleName = new CT::string();
+          styleName->copy(renderMethods->get(0)->c_str());
+          stringList->push_back(styleName);
+        }
+        return stringList;
+        
+      }
+      CDataReader::autoConfigureStyles(dataSource);
+    }
   }
+  
+  delete renderMethods ;  renderMethods  = NULL;
     
   CT::PointerList<CT::string*> *styleNames = getStyleNames(dataSource->cfgLayer->Styles);
 
   //We always skip the style "default" if there are more styles.
   size_t start=0;if(styleNames->size()>1)start=1;
   
-  CT::PointerList<CT::string*> *renderMethods = NULL;
-  CT::PointerList<CT::string*> *legendList = NULL;
+
   //Loop over the styles.
   try{
     for(size_t i=start;i<styleNames->size();i++){
@@ -1563,6 +1604,7 @@ void CImageDataWriter::setDate(const char *szTemp){
 
 int CImageDataWriter::warpImage(CDataSource *dataSource,CDrawImage *drawImage){
   //Open the data of this dataSource
+  int status = 0;
   #ifdef CIMAGEDATAWRITER_DEBUG  
   CDBDebug("opening %s",dataSource->getFileName());
   #endif  
@@ -2349,11 +2391,11 @@ int CImageDataWriter::getTextForValue(CT::string *tv,float v,StyleConfiguration 
 }
 
 int CImageDataWriter::end(){
- 
+  int status = 0;
   if(writerStatus==uninitialized){CDBError("Not initialized");return 1;}
   if(writerStatus==finished){CDBError("Already finished");return 1;}
   writerStatus=finished;
-  if(requestType==REQUEST_WMS_GETFEATUREINFO){
+  if(srvParam->requestType==REQUEST_WMS_GETFEATUREINFO){
     #ifdef CIMAGEDATAWRITER_DEBUG    
       CDBDebug("end, number of GF results: %d",getFeatureInfoResultList.size());
     #endif
@@ -3166,7 +3208,7 @@ int CImageDataWriter::end(){
     
     for(size_t j=0;j<getFeatureInfoResultList.size();j++){delete getFeatureInfoResultList[j];getFeatureInfoResultList[j]=NULL; } getFeatureInfoResultList.clear();
   }
-  if(requestType!=REQUEST_WMS_GETMAP&&requestType!=REQUEST_WMS_GETLEGENDGRAPHIC)return 0;
+  if(srvParam->requestType!=REQUEST_WMS_GETMAP&&srvParam->requestType!=REQUEST_WMS_GETLEGENDGRAPHIC)return 0;
   
   
   //Output WMS getmap results
@@ -3187,7 +3229,7 @@ StopWatch_Stop("Drawing finished");
 #endif
 
   //Static image
-  int status=0;
+
   if(srvParam->imageFormat==IMAGEFORMAT_IMAGEPNG8||srvParam->imageFormat==IMAGEFORMAT_IMAGEPNG32){
     //CDBDebug("LegendGraphic PNG");
     //printf("%s%c%c","Cache-Control: max-age=3600, must-revalidate",13,10);
@@ -3272,7 +3314,8 @@ int CImageDataWriter::getColorIndexForValue(CDataSource *dataSource,float value)
 
 
 int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendImage){
-  
+ 
+  int status = 0;
   enum LegendType { undefined,continous,discrete,statusflag,cascaded};
   LegendType legendType=undefined;
   bool estimateMinMax=false;
@@ -3295,6 +3338,18 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
   CDataReader reader;
   RenderMethod renderMethod = currentStyleConfiguration->renderMethod;
 
+  if(renderMethod&RM_RGBA){
+      
+      legendImage->setText("RGBA",5,0,0,248,-1);  
+      legendImage->crop(2,2);
+      return 0;
+  }
+
+  if(legendType == cascaded){
+      legendImage->crop(2,2);
+      return 0;
+  }
+  
   //if(renderMethod==shadedcontour||renderMethod==shaded||renderMethod==contour){
   if(renderMethod&RM_SHADED||renderMethod&RM_CONTOUR){
     //We need to open all the data, because we need to estimate min/max for legend drawing
@@ -3311,18 +3366,18 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
       estimateMinMax = false;
     }
   }
-  
-  if(dataSource->dataObject[0]->cdfVariable->data==NULL){
+   
+  //if(dataSource->dataObject[0]->cdfVariable->data==NULL){
   if(estimateMinMax){
-      status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
-    }else{
-      status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
-    }
-    if(status!=0){
-      CDBError("Unable to open file");
-      return 1;
-    }
+    status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
+  }else{
+    status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
   }
+  if(status!=0){
+    CDBError("Unable to open file");
+    return 1;
+  }
+  //}
   
   //Determine legendtype.
   if(dataSource->dataObject[0]->hasStatusFlag){
@@ -3331,7 +3386,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
     legendType = continous;
   }else{
     if(!(renderMethod&RM_SHADED)){
-      if(renderMethod&RM_NEAREST){
+      if(renderMethod&RM_NEAREST || renderMethod&RM_BILINEAR){
         legendType = continous;
       }else{
         legendType = cascaded;
@@ -3341,14 +3396,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
     }
   }
   
-  if(renderMethod&RM_RGBA){
-    legendType=cascaded;
-  }
 
-if(legendType == cascaded){
-    legendImage->crop(1,1);
-}
-  
   
   //Create a legend based on status flags.
   if( legendType == statusflag ){
