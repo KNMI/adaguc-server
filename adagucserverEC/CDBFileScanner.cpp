@@ -803,7 +803,7 @@ int CDBFileScanner::searchFileNames(CDirReader *dirReader,const char * path,cons
   }
   CT::string filePath=path;//dataSource->cfgLayer->FilePath[0]->value.c_str();
   if(tailPath!=NULL)filePath.concat(tailPath);
-  if(filePath.lastIndexOf(".nc")>0||filePath.indexOf("http://")>=0||filePath.indexOf("https://")>=0||filePath.indexOf("dodsc://")>=0){
+  if(filePath.lastIndexOf(".nc")==filePath.length()-3||filePath.indexOf("http://")==0||filePath.indexOf("https://")==0||filePath.indexOf("dodsc://")==0){
     //Add single file or opendap URL.
     CFileObject * fileObject = new CFileObject();
     fileObject->fullName.copy(&filePath);
