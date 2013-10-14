@@ -3334,7 +3334,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
     legendImage->crop(4);
     return 0;
   }
-  
+ 
   CDataReader reader;
   RenderMethod renderMethod = currentStyleConfiguration->renderMethod;
 
@@ -3430,7 +3430,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
     }
     CT::string units="status flag";
     legendImage->setText(units.c_str(),units.length(),2+pLeft,int(legendHeight)-14+pTop,248,-1);
-    legendImage->crop(4,4);
+    //legendImage->crop(4,4);
   }
   
   //Draw a continous legend
@@ -3574,7 +3574,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
       units.concat(&dataSource->dataObject[0]->units);
     }
     if(units.length()>0)legendImage->setText(units.c_str(),units.length(),2+pLeft,int(legendHeight)-14+pTop,248,-1);
-    legendImage->crop(4,4);    
+    //legendImage->crop(4,4);    
   }
   
   //Draw legend with fixed intervals
@@ -3755,7 +3755,7 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
       units.concat(&dataSource->dataObject[0]->units);
     }
     if(units.length()>0)legendImage->setText(units.c_str(),units.length(),2+pLeft,int(legendHeight)-14+pTop,248,-1);
-    legendImage->crop(4,4);
+    //legendImage->crop(4,4);
   }
   
 
@@ -3764,7 +3764,7 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
   
 
 
-  
+  legendImage->crop(4,4);
   return 0;
 }
 
