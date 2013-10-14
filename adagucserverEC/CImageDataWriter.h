@@ -70,8 +70,8 @@ class CImageDataWriter: public CBaseDataWriterInterface{
     static std::map<std::string,CImageDataWriter::ProjCacheInfo>::iterator projCacheIter;
     CImageWarper imageWarper;
     CDataSource *currentDataSource;
-    int requestType;
-    int status;
+    //int requestType;
+    //int status;
     int animation;
     int nrImagesAdded;
     static void calculateScaleAndOffsetFromMinMax(float &scale, float &offset,float min,float max,float log);
@@ -82,6 +82,8 @@ public:
     StyleConfiguration(){
       legendTickInterval = 0;
       legendTickRound = 0.1;
+      legendIndex = -1;
+      styleIndex = -1;
     }
     float shadeInterval,contourIntervalL,contourIntervalH;
     float legendScale,legendOffset,legendLog;
