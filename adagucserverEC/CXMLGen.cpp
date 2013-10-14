@@ -558,23 +558,18 @@ CDBDebug("Querying %s",query.c_str());
                 values->getRecord(j)->get(0)->setChar(10,'T');
                 values->getRecord(j)->get(0)->concat("Z");
               }
-               const char *pszDefaultV=myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.defaultV.c_str();
-              CT::string defaultV;if(pszDefaultV!=NULL)defaultV=pszDefaultV;
-              
-              if(defaultV.length()==0||defaultV.equals("max",3)){
-                dim->defaultValue.copy(values->getRecord(values->getSize()-1)->get(0)->c_str());dim->defaultValue.concat("Z");
-              }else if(defaultV.equals("min",3)){
-                dim->defaultValue.copy(values->getRecord(0)->get(0)->c_str());dim->defaultValue.concat("Z");
-              }else {
-                dim->defaultValue.copy(&defaultV);
-              }
             }
-            dim->defaultValue.copy(values->getRecord(0)->get(0));
-            
             const char *pszDefaultV=myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.defaultV.c_str();
-            if(pszDefaultV!=NULL){
-              dim->defaultValue.copy(pszDefaultV);
+            CT::string defaultV;if(pszDefaultV!=NULL)defaultV=pszDefaultV;
+            
+            if(defaultV.length()==0||defaultV.equals("max",3)){
+              dim->defaultValue.copy(values->getRecord(values->getSize()-1)->get(0)->c_str());
+            }else if(defaultV.equals("min",3)){
+              dim->defaultValue.copy(values->getRecord(0)->get(0)->c_str());
+            }else {
+              dim->defaultValue.copy(&defaultV);
             }
+            
           
             dim->values.copy(values->getRecord(0)->get(0));
             for(size_t j=1;j<values->getSize();j++){
