@@ -269,13 +269,16 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   #endif
   if(writerStatus!=uninitialized){CDBError("Already initialized");return 1;}
   this->srvParam=srvParam;
+  
   if(_setTransparencyAndBGColor(this->srvParam,&drawImage)!=0)return 1;
   if(srvParam->imageMode==SERVERIMAGEMODE_RGBA||srvParam->Styles.indexOf("HQ")>0){
     drawImage.setTrueColor(true);
     //drawImage.setAntiAliased(true);
   }
   
+  
   if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
+    
       if(initializeLegend(srvParam,dataSource)!=0)return 1;
   }
   
@@ -1055,18 +1058,15 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
   for(size_t d=0;d<dataSources.size();d++){
     GetFeatureInfoResult  *getFeatureInfoResult = new GetFeatureInfoResult();
     getFeatureInfoResultList.push_back(getFeatureInfoResult);
-    
-    for(int step=0;step<dataSources[d]->getNumTimeSteps();step++){
-      dataSources[d]->setTimeStep(step);
-      #ifdef CIMAGEDATAWRITER_DEBUG    
-      CDBDebug("Processing dataSource %d with step %d of %d timesteps",d,step,dataSources[d]->getNumTimeSteps());
-      #endif
-    
-      bool headerIsAvailable = false;
-      bool openAll = false;
-      
+    bool headerIsAvailable = false;
+    bool openAll = false;
+    if(dataSources[d]->dataObject.size()>0){
       if(dataSources[d]->dataObject[0]->cdfVariable!=NULL){
-        headerIsAvailable=true;
+        if(dataSources[d]->isConfigured){
+          if(dataSources[d]->nativeProj4.length()>0){
+            headerIsAvailable=true;
+          }
+        }
         if(dataSources[d]->dataObject[0]->cdfVariable->getAttributeNE("ADAGUC_VECTOR")!=NULL){
           openAll =true;
         }  
@@ -1075,13 +1075,23 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
           openAll =true;
         }  
       }
+    }
+  
+    CDataSource *dataSource=dataSources[d];
+    if(dataSource==NULL){
+      CDBError("dataSource == NULL");
+      return 1;
+    }
     
-      CDataSource *dataSource=dataSources[d];
-      if(dataSource==NULL){
-        CDBError("dataSource == NULL");
-        return 1;
-      }
+    for(int step=0;step<dataSources[d]->getNumTimeSteps();step++){
+      dataSources[d]->setTimeStep(step);
+      #ifdef CIMAGEDATAWRITER_DEBUG    
+      CDBDebug("Processing dataSource %d with step %d of %d timesteps",d,step,dataSources[d]->getNumTimeSteps());
+      #endif
     
+    
+      
+
       //Copy layer name
       getFeatureInfoResult->layerName.copy(&dataSource->layerName);
       getFeatureInfoResult->layerTitle.copy(&dataSource->layerName);
@@ -1094,10 +1104,17 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       {
         if(openAll){
           //CDBDebug("OPEN ALL");
+          #ifdef CIMAGEDATAWRITER_DEBUG    
+            CDBDebug("OPEN ALL");
+          #endif
           status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_ALL);
         }else{
           //CDBDebug("OPEN HEADER");
+          #ifdef CIMAGEDATAWRITER_DEBUG    
+            CDBDebug("OPEN Header %d",headerIsAvailable);
+          #endif
           if(!headerIsAvailable){
+            headerIsAvailable = true;
             status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_HEADER);
           }
         }
@@ -1126,6 +1143,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       StopWatch_Stop("projCacheInfo");
       #endif
       bool   isOutsideBBOX = false;
+      bool projInvertedFirst = true;
       try{
         projCacheIter=projCacheMap.find(key);
         if(projCacheIter==projCacheMap.end()){
@@ -1139,7 +1157,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       }catch(int e){
   
         #ifdef CIMAGEDATAWRITER_DEBUG  
-        CDBDebug("initreproj %s",dataSource->nativeProj4.c_str());
+        CDBDebug("initreproj with proj string '%s'",dataSource->nativeProj4.c_str());
         #endif
         status = imageWarper.initreproj(dataSource,drawImage.Geo,&srvParam->cfg->Projection);
         if(status!=0){CDBError("initreproj failed");reader.close();return 1;  }
@@ -1157,7 +1175,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         y+=drawImage.Geo->dfBBOX[3];
         
         isOutsideBBOX = false;
-
+        projInvertedFirst = false;
         if( dataSource->srvParams->isLonLatProjection(&dataSource->nativeProj4)){     
           if(dataSource->dfBBOX[2]>180||dataSource->dfBBOX[0]<-180){
             if(x>=-180&&x<180){
@@ -1169,12 +1187,39 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
             }
           }
 
+        }else{
+          double y1=dataSource->dfBBOX[1];
+          double y2=dataSource->dfBBOX[3];
+          double x1=dataSource->dfBBOX[0];
+          double x2=dataSource->dfBBOX[2];
+          if(y2<y1){
+            if(y1>-360&&y2<360&&x1>-720&&x2<720){
+              projInvertedFirst = true;
+              double checkBBOX[4];
+                for(int j=0;j<4;j++)checkBBOX[j]=dataSource->dfBBOX[j];
+                
+                CDBDebug("Current BBOX:  %f %f %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[1],dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
+                bool hasError = false;
+                if(imageWarper.reprojpoint_inv(checkBBOX[0],checkBBOX[1])!=0)hasError=true;  
+                if(imageWarper.reprojpoint(checkBBOX[0],checkBBOX[1])!=0)hasError=true;  
+                
+                if(imageWarper.reprojpoint_inv(checkBBOX[2],checkBBOX[3])!=0)hasError=true;  
+                if(imageWarper.reprojpoint(checkBBOX[2],checkBBOX[3])!=0)hasError=true;  
+                
+                if(hasError == false){
+                  for(int j=0;j<4;j++)dataSource->dfBBOX[j] = checkBBOX[j];
+                }
+                
+            }
+          }
         }
         //while(sx>180)sx-=360;
 
         projCacheInfo.CoordX=x;
         projCacheInfo.CoordY=y;
 
+
+        
         imageWarper.reprojpoint(x,y);
         projCacheInfo.nativeCoordX=x;
         projCacheInfo.nativeCoordY=y;
