@@ -41,6 +41,8 @@
 #define  deg2rad  (M_PI/180.)   // conversion for deg to rad 
 #endif
 
+CT::string months[] = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
+
 //#define CIMAGEDATAWRITER_DEBUG
 
 void doJacoIntoLatLon(double &u, double &v, double lo, double la, float deltaX, float deltaY, CImageWarper *warper);
@@ -1058,9 +1060,9 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
   for(size_t d=0;d<dataSources.size();d++){
     GetFeatureInfoResult  *getFeatureInfoResult = new GetFeatureInfoResult();
     getFeatureInfoResultList.push_back(getFeatureInfoResult);
-    bool headerIsAvailable = false;
+     bool headerIsAvailable = false;
     bool openAll = false;
-    if(dataSources[d]->dataObject.size()>0){
+    if(dataSources[d]->dataObject.size()>0){ 
       if(dataSources[d]->dataObject[0]->cdfVariable!=NULL){
         if(dataSources[d]->isConfigured){
           if(dataSources[d]->nativeProj4.length()>0){
@@ -1085,11 +1087,8 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
     
     for(int step=0;step<dataSources[d]->getNumTimeSteps();step++){
       dataSources[d]->setTimeStep(step);
-      #ifdef CIMAGEDATAWRITER_DEBUG    
-      CDBDebug("Processing dataSource %d with step %d of %d timesteps",d,step,dataSources[d]->getNumTimeSteps());
-      #endif
     
-    
+   
       
 
       //Copy layer name
@@ -1126,7 +1125,10 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         }
       }
       
-      
+      #ifdef CIMAGEDATAWRITER_DEBUG    
+      CDBDebug("Processing dataSource %d with step %d of %d timesteps (%d) %f",d,step,dataSources[d]->getNumTimeSteps(),dataSources[d]->dataObject[0]->hasNodataValue,dataSources[d]->dataObject[0]->dfNodataValue);
+      #endif
+
       //(89,26)       (5.180666,52.101790)    (5.180666,52.101790)
       
       //double CoordX=5.180666,CoordY=52.101790;
@@ -1423,7 +1425,8 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         //Check whether this is a NoData value:
        
         
-        if((pixel!=dataSource->dataObject[o]->dfNodataValue&&dataSource->dataObject[o]->hasNodataValue==true&&pixel==pixel&&isOutsideBBOX==false)||
+        if(
+          (pixel!=dataSource->dataObject[o]->dfNodataValue&&dataSource->dataObject[o]->hasNodataValue==true&&pixel==pixel&&isOutsideBBOX==false)||
           dataSource->dataObject[o]->hasNodataValue==false){
           if(dataSource->dataObject[o]->hasStatusFlag){
             //Add status flag
@@ -1489,7 +1492,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
           char szTemp[1024];
           floatToString(szTemp,1023,point.v);
           element->value=szTemp;
-          element->value=szTemp;
+          
           
             
         }
@@ -2519,7 +2522,7 @@ int CImageDataWriter::end(){
             
             if(currentTimeString.equals(e->time.c_str())==false){
               if(resultFormat==texthtml){
-                resultHTML.printconcat("%s<br/>",e->time.c_str());
+                resultHTML.printconcat("<tr><td>%s</td></tr>",e->time.c_str());
               }else{
                 resultHTML.printconcat("%s\n",e->time.c_str());
               }
@@ -2953,6 +2956,8 @@ int CImageDataWriter::end(){
       float overallMinValue = 0,overallMaxValue = 1;
       bool overallMinMaxValueDone = false;
       bool overallMinMaxValueWasEstimated = false;
+        
+      CDBDebug("Start minmax calc");
       
       for(size_t j=0;j<plotObjects.size();j++){
         PlotObject *plotObject = plotObjects[j];
@@ -2982,59 +2987,74 @@ int CImageDataWriter::end(){
           if(stopTimeValue<maxDate)stopTimeValue=maxDate;
         }
         
-        
-        bool firstDone = false;
-        plotObject->minValue = 0;
-        plotObject->maxValue = 1;
-        
-        //Find min and max values
-        for(size_t i=0;i<plotObject->length;i++){
-          GetFeatureInfoResult::Element * element = plotObject->elements[i];
-          double value = element->value.toFloat();
-          if(element->value.c_str()[0]>60)value=NAN;;
-          if(element->value.equals("nodata"))value=NAN;
-          plotObject->values[i]=value;
+//         //if(j==0)
+//         {
+          bool firstDone = false;
+          plotObject->minValue = 0;
+          plotObject->maxValue = 0;
           
-          if(value == value){
-            if(firstDone == false){
-              plotObject->minValue = value;
-              plotObject->maxValue = value;
-              firstDone = true;
+          //Find min and max values
+          
+          for(size_t i=0;i<plotObject->length;i++){
+            GetFeatureInfoResult::Element * element = plotObject->elements[i];
+            //if(i%2==0)
+            {
+              double value = element->value.toFloat();
+              if(element->value.c_str()[0]>60)value=NAN;;
+              if(element->value.equals("nodata"))value=NAN;
+              plotObject->values[i]=value;
+              
+              if(value == value){
+                if(firstDone == false){
+                  plotObject->minValue = value;
+                  plotObject->maxValue = value;
+                  firstDone = true;
+                }
+                
+                if(plotObject->minValue>value)plotObject->minValue = value;
+                if(plotObject->maxValue<value)plotObject->maxValue = value;
+                
+              }
             }
-            
-            if(plotObject->minValue>value)plotObject->minValue = value;
-            if(plotObject->maxValue<value)plotObject->maxValue = value;
-            
           }
-        }
+          
         
-        //Minmax is fixed by layer settings:
-        if(plotObject->elements[0]->dataSource != NULL){
-          if(!plotObject->elements[0]->dataSource->stretchMinMax){
-            //Determine min max based on given datasource settings (scale/offset/log or min/max/log in config file)
-            plotObject->minValue=getValueForColorIndex(plotObject->elements[0]->dataSource,0);
-            plotObject->maxValue=getValueForColorIndex(plotObject->elements[0]->dataSource,240);
-          }else{
-            overallMinMaxValueWasEstimated = true;
+          
+          //Minmax is fixed by layer settings:
+          if(plotObject->elements[0]->dataSource != NULL){
+            if(plotObject->elements[0]->dataSource->stretchMinMax == false){
+              //Determine min max based on given datasource settings (scale/offset/log or min/max/log in config file)
+              plotObject->minValue=getValueForColorIndex(plotObject->elements[0]->dataSource,0);
+              plotObject->maxValue=getValueForColorIndex(plotObject->elements[0]->dataSource,240);
+            }else{
+              overallMinMaxValueWasEstimated = true;
+            }
           }
-        }
+          
+          //Increase minmax if they are the same.
+          if(fabs(plotObject->minValue-plotObject->maxValue)<0.1){
+            plotObject->minValue=plotObject->minValue-1;
+            plotObject->maxValue=plotObject->maxValue+1;
+          }
+            //plotObject->minValue=plotObject->minValue-2;
+            //plotObject->maxValue=plotObject->maxValue+2;
+//         }else{
+//           //If not first plot:
+//           plotObject->minValue = overallMinValue;
+//           plotObject->maxValue = overallMaxValue;
+//         }    
         
-        //Increase minmax if they are the same.
-        if(plotObject->minValue==plotObject->maxValue){
-          plotObject->minValue=plotObject->minValue+0.01;
-          plotObject->maxValue=plotObject->maxValue-0.01;
-        }
-        
-        if(!overallMinMaxValueDone){
+        if(overallMinMaxValueDone == false){
+          overallMinMaxValueDone=true;
           overallMinValue = plotObject->minValue;
           overallMaxValue = plotObject->maxValue;
         }else{
-          overallMinMaxValueDone=true;
-          if(overallMinValue>plotObject->minValue)overallMinValue = plotObject->minValue;
-          if(overallMaxValue<plotObject->maxValue)overallMaxValue = plotObject->maxValue;
+
+         // if(overallMinValue>plotObject->minValue)overallMinValue = plotObject->minValue;
+         // if(overallMaxValue<plotObject->maxValue)overallMaxValue = plotObject->maxValue;
         }
-        //CDBDebug("%f %f",plotObject->minValue,plotObject->maxValue);
       }
+  
       
       float significantDigits = 0.1;
      
@@ -3064,10 +3084,11 @@ int CImageDataWriter::end(){
       float classes=((overallMaxValue-overallMinValue)/significantDigits)*2;
       int tickRound=0;
 
-      CDBDebug("tickinterval = %f",currentStyleConfiguration->legendTickInterval);
+      //CDBDebug("tickinterval = %f",currentStyleConfiguration->legendTickInterval);
       if(currentStyleConfiguration->legendTickInterval>0.0f){
         classes=(plotObjects[0]->minValue-plotObjects[0]->maxValue)/currentStyleConfiguration->legendTickInterval;
       }
+      
       
       if(currentStyleConfiguration->legendTickRound>0){
         tickRound = int(round(log10(currentStyleConfiguration->legendTickRound))+3);
@@ -3086,7 +3107,7 @@ int CImageDataWriter::end(){
       if(nrOfPlotObjectsForTitle>9)nrOfPlotObjectsForTitle=9;
       int cols=1,rows=1;
       
-      if(nrOfPlotObjectsForTitle>1)cols=2;
+      if(nrOfPlotObjectsForTitle>2)cols=2;
       if(nrOfPlotObjectsForTitle>5)cols=3;
       rows=int(float(nrOfPlotObjectsForTitle)/float(cols)+0.5);
       
@@ -3097,7 +3118,7 @@ int CImageDataWriter::end(){
       if(plotOffsetX<50)plotOffsetX=50;
 
       float plotHeight=((height-plotOffsetY-30));
-      float plotWidth=((width-plotOffsetX)*0.98);
+      float plotWidth=((width-plotOffsetX)*0.96);
       
       CDrawImage plotCanvas;
       CDrawImage lineCanvas;
@@ -3153,7 +3174,8 @@ int CImageDataWriter::end(){
     
         //if(j!=0)
         lineCanvas.line(0,(int)c,plotWidth,(int)c,0.5,CColor(0,0,128,128));
-        if(tickRound==0){floatToString(szTemp,255,int(1/significantDigits+1),v);}else{
+        if(tickRound==0){
+          floatToString(szTemp,255,overallMinValue,overallMaxValue,v);}else{
           floatToString(szTemp,255,tickRound,v);
         }
         plotCanvas.drawText(5,int(c+plotOffsetY+3),fontLocation,8,0,szTemp,CColor(0,0,0,255),CColor(255,255,255,0));
@@ -3167,25 +3189,88 @@ int CImageDataWriter::end(){
 
       if(plotObjects.size()>5)lineWidth=0.3;
         
+
+      
+      enum GraphTimeResType { monthly,daily,hourly,minutely};
+      GraphTimeResType graphTimeResType = monthly;
+      if(plotObject->length>1){
+        CTime::Date timePosA=ctime->ISOStringToDate(plotObject->elements[0]->time.c_str());
+        CTime::Date timePosB=ctime->ISOStringToDate(plotObject->elements[1]->time.c_str());
+        float timeRes = timePosB.offset-timePosA.offset;
+        if(timeRes<=3600*24){
+          graphTimeResType = daily;
+        }
+        if(timeRes<=3600*6){
+          graphTimeResType = hourly;
+        }
+        if(timeRes<1800){
+          graphTimeResType = minutely;
+        }
         
+        //CDBDebug("%f seconds %d ",timePosB.offset-timePosA.offset,graphTimeResType);
+      }
+      
       double timeWidth=(stopTimeValue-startTimeValue);
         for(size_t i=0;i<plotObject->length;i++){
           CTime::Date timePos1=ctime->ISOStringToDate(plotObject->elements[i]->time.c_str());
+          
+          
           double x1=((timePos1.offset-startTimeValue)/timeWidth)*plotWidth;
+        
+          
+          
           
           if(plotNr==0){
-            if(timePos1.hour==0&&timePos1.minute==0&&timePos1.second==0){
-              lineCanvas.line(x1,0,x1,plotHeight,1.5,CColor(0,0,0,255));
-              char szTemp[256];snprintf(szTemp,255,"%d",timePos1.day);
-              plotCanvas.drawText(int(x1-strlen(szTemp)*4+plotOffsetX+1),int(plotOffsetY+plotHeight+12),fontLocation,9,0,szTemp,CColor(0,0,0,255),CColor(255,255,255,0));
-            }else if(timePos1.minute==0&&timePos1.second==0){
-              lineCanvas.line(x1,0,x1,plotHeight,0.5,CColor(0,0,128,128));
-              char szTemp[256];snprintf(szTemp,255,"%d",timePos1.hour);
-              plotCanvas.drawText(int(x1-strlen(szTemp)*2+plotOffsetX+1),int(plotOffsetY+plotHeight+8),fontLocation,5,0,szTemp,CColor(0,0,0,192),CColor(255,255,255,0));
-            }else{
-              lineCanvas.line(x1,0,x1,plotHeight,0.5,CColor(128,128,128,128));
+            
+            if(graphTimeResType == hourly){
+            
+              if(timePos1.hour==0&&timePos1.minute==0&&timePos1.second==0){
+                lineCanvas.line(x1,0,x1,plotHeight,1.1,CColor(64,64,64,200));
+                 CT::string text;
+                if(timePos1.day!=1){
+                  text.print("%d-%s",timePos1.day,months[timePos1.month-1].c_str());
+                }else{
+                  text.print("%s",months[timePos1.month-1].c_str());
+                }
+                
+                
+                plotCanvas.drawText(int(x1-text.length()*4+plotOffsetX+1),int(plotOffsetY+plotHeight+16),fontLocation,8,0,text.c_str(),CColor(0,0,0,255),CColor(255,255,255,0));
+              }else if(timePos1.minute==0&&timePos1.second==0){
+                lineCanvas.line(x1,0,x1,plotHeight,0.5,CColor(0,0,128,128));
+                char szTemp[256];snprintf(szTemp,255,"%d",timePos1.hour);
+                plotCanvas.drawText(int(x1-strlen(szTemp)*2+plotOffsetX+1),int(plotOffsetY+plotHeight+8),fontLocation,5,0,szTemp,CColor(0,0,0,192),CColor(255,255,255,0));
+              }else{
+                lineCanvas.line(x1,0,x1,plotHeight,0.5,CColor(128,128,128,128));
+              }
+            }
+            
+            if(graphTimeResType == daily)
+            {
+            
+              if(timePos1.day==1&&timePos1.hour==0&&timePos1.minute==0&&timePos1.second==0||i==0){
+                lineCanvas.line(x1,0,x1,plotHeight,1.1,CColor(64,64,64,200));
+                
+                
+                
+                CT::string text;
+                if(timePos1.day!=1){
+                  text.print("%d-%s",timePos1.day,months[timePos1.month-1].c_str());
+                }else{
+                  text.print("%s",months[timePos1.month-1].c_str());
+                }
+                
+                
+                plotCanvas.drawText(int(x1-text.length()*4+plotOffsetX+1),int(plotOffsetY+plotHeight+12),fontLocation,8,0,text.c_str(),CColor(0,0,0,255),CColor(255,255,255,0));
+              }else if(timePos1.hour==0&&timePos1.minute==0&&timePos1.second==0){
+                //lineCanvas.line(x1,0,x1,plotHeight,0.5,CColor(0,0,128,128));
+                //char szTemp[256];snprintf(szTemp,255,"%d",timePos1.hour);
+                //plotCanvas.drawText(int(x1-strlen(szTemp)*2+plotOffsetX+1),int(plotOffsetY+plotHeight+8),fontLocation,5,0,szTemp,CColor(0,0,0,192),CColor(255,255,255,0));
+              }else{
+                //lineCanvas.line(x1,0,x1,plotHeight,0.5,CColor(128,128,128,128));
+              }
             }
           }
+        
           if(i<plotObject->length-1){
             CTime::Date timePos2=ctime->ISOStringToDate(plotObject->elements[i+1]->time.c_str());
           
@@ -3230,7 +3315,7 @@ int CImageDataWriter::end(){
       
       
       //GetFeatureInfoResult::Element * e2=getFeatureInfoResultList[getFeatureInfoResultList.size()-1]->elements[0];
-      title.print("Dates: %s till %s",startDateString.c_str(),stopDateString.c_str());
+      title.print("%s till %s",startDateString.c_str(),stopDateString.c_str());
       plotCanvas.drawText(int(plotWidth/2-float(title.length())*2.5),int(height-5),fontLocation,8,0,title.c_str(),CColor(0,0,0,255),CColor(255,255,255,0));
         plotCanvas.draw(int(plotOffsetX), int(plotOffsetY),0,0,&lineCanvas);
       if(resultFormat==imagepng){
@@ -3310,35 +3395,38 @@ StopWatch_Stop("Drawing finished");
   return status;
 }
 float CImageDataWriter::getValueForColorIndex(CDataSource *dataSource,int index){
-  if(dataSource->stretchMinMax){
-    if(dataSource->statistics==NULL){
-      dataSource->statistics = new CDataSource::Statistics();
-      dataSource->statistics->calculate(dataSource);
-    }
-    float minValue=(float)dataSource->statistics->getMinimum();
-    float maxValue=(float)dataSource->statistics->getMaximum();
-    //maxValue+=10;
-    float ls=240/(maxValue-minValue);
-    float lo=-(minValue*ls);
-    dataSource->legendScale=ls;
-    dataSource->legendOffset=lo;
-    
-    //Check for infinities
-    if(
-      dataSource->legendScale!=dataSource->legendScale||
-      dataSource->legendScale==INFINITY||
-      dataSource->legendScale==NAN||
-      dataSource->legendScale==-INFINITY||
-      dataSource->legendOffset!=dataSource->legendOffset||
-      dataSource->legendOffset==INFINITY||
-      dataSource->legendOffset==NAN||
-      dataSource->legendOffset==-INFINITY){
-      dataSource->legendScale=240.0;
-      dataSource->legendOffset=0;
-    }
-    //CDBDebug("max=%f; min=%f",maxValue,minValue);
-    //CDBDebug("scale=%f; offset=%f",ls,lo);
-  }  
+//   if(dataSource->stretchMinMax){
+//     if(dataSource->stretchMinMaxDone == false){
+//     if(dataSource->statistics==NULL){
+//       dataSource->statistics = new CDataSource::Statistics();
+//       dataSource->statistics->calculate(dataSource);
+//     }
+//     float minValue=(float)dataSource->statistics->getMinimum();
+//     float maxValue=(float)dataSource->statistics->getMaximum();
+//    // CDBDebug("%f %f",minValue,maxValue);
+//     //maxValue+=10;
+//     float ls=240/(maxValue-minValue);
+//     float lo=-(minValue*ls);
+//     dataSource->legendScale=ls;
+//     dataSource->legendOffset=lo;
+//     
+//     //Check for infinities
+//     if(
+//       dataSource->legendScale!=dataSource->legendScale||
+//       dataSource->legendScale==INFINITY||
+//       dataSource->legendScale==NAN||
+//       dataSource->legendScale==-INFINITY||
+//       dataSource->legendOffset!=dataSource->legendOffset||
+//       dataSource->legendOffset==INFINITY||
+//       dataSource->legendOffset==NAN||
+//       dataSource->legendOffset==-INFINITY){
+//       dataSource->legendScale=240.0;
+//       dataSource->legendOffset=0;
+//     }
+//     //CDBDebug("max=%f; min=%f",maxValue,minValue);
+//     //CDBDebug("scale=%f; offset=%f",ls,lo);
+//     }
+//   }  
   float v=index;
   v-=dataSource->legendOffset;
   v/=dataSource->legendScale;
@@ -3499,8 +3587,8 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
     }
     
     
-       drawUpperTriangle = true;
-      drawLowerTriangle = true;
+    drawUpperTriangle = true;
+    drawLowerTriangle = true;
     
     float triangleShape = 1.1;
     
@@ -3606,7 +3694,9 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
       {
         float lineWidth=0.8;
         legendImage->line((int)cbW-1+pLeft,(int)c+7+dH+pTop,(int)cbW+6+pLeft,(int)c+7+dH+pTop,lineWidth,248);
-        if(tickRound==0){floatToString(szTemp,255,v);}else{
+        if(tickRound==0){
+          floatToString(szTemp,255,min,max,v);
+        }else{
           floatToString(szTemp,255,tickRound,v);
         }
         legendImage->setText(szTemp,strlen(szTemp),(int)cbW+10+pLeft,(int)c+dH+pTop+1,248,-1);

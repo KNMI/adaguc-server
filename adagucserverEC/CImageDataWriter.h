@@ -81,7 +81,7 @@ public:
   public:
     StyleConfiguration(){
       legendTickInterval = 0;
-      legendTickRound = 0.1;
+      legendTickRound = 0.0;
       legendIndex = -1;
       styleIndex = -1;
     }
@@ -115,6 +115,8 @@ public:
       data->printconcat("legendLowerRange = %f\n",legendLowerRange);
       data->printconcat("legendUpperRange = %f\n",legendUpperRange);
       data->printconcat("smoothingFilter = %d\n",smoothingFilter);
+      data->printconcat("legendTickRound = %f\n",legendTickRound);
+      data->printconcat("legendTickInterval = %f\n",legendTickInterval);
       //TODO
       CT::string rMethodString;
       getRenderMethodAsString(&rMethodString,renderMethod);

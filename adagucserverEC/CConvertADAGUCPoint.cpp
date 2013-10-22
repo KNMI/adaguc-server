@@ -282,9 +282,32 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
     //Copy variable attributes
     for(size_t j=0;j<pointVar->attributes.size();j++){
       CDF::Attribute *a =pointVar->attributes[j];
-      new2DVar->setAttribute(a->name.c_str(),a->type,a->data,a->length);
-      new2DVar->setAttributeText("ADAGUC_POINT","true");
+      if(a->name.equals("_FillValue")){
+        float scaleFactor=1,addOffset=0,fillValue=0;;
+        try{
+          pointVar->getAttribute("scale_factor")->getData(&scaleFactor,1);
+        }catch(int e){}
+        try{
+          pointVar->getAttribute("add_offset")->getData(&addOffset,1);
+        }catch(int e){}
+        try{
+          pointVar->getAttribute("_FillValue")->getData(&fillValue,1);
+        }catch(int e){}
+        fillValue*=scaleFactor+addOffset;
+        new2DVar->setAttribute("_FillValue",CDF_FLOAT,&fillValue,1);
+      }else{
+        new2DVar->setAttribute(a->name.c_str(),a->type,a->data,a->length);
+      }
+      
     }
+    new2DVar->setAttributeText("ADAGUC_POINT","true");
+    
+    if(new2DVar->getAttributeNE("_FillValue")==NULL){
+      float f=-9999999;
+      new2DVar->setAttribute("_FillValue",CDF_FLOAT,&f,1);
+    }
+    
+
     
     //The swath variable is not directly plotable, so skip it
     pointVar->setAttributeText("ADAGUC_SKIP","true");
@@ -373,7 +396,6 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
   int numDims = 2;
   #ifdef CCONVERTADAGUCPOINT_DEBUG
     CDBDebug("numStations %d ",numStations);
-    CDBDebug("numDates %d ",numDates);
     CDBDebug("numDims %d ",numDims);
   #endif
 
@@ -398,22 +420,16 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
     StopWatch_Stop("Variables read");
   #endif
 
-  
+
   for(size_t d=0;d<nrDataObjects;d++){
-    CDF::Attribute *fillValue = pointVar[d]->getAttributeNE("_FillValue");
+  
+    CDF::Attribute *fillValue = new2DVar[d]->getAttributeNE("_FillValue");
     if(fillValue!=NULL){
       dataSource->dataObject[d]->hasNodataValue=true;
       fillValue->getData(&dataSource->dataObject[d]->dfNodataValue,1);
       #ifdef CCONVERTADAGUCPOINT_DEBUG
       CDBDebug("_FillValue = %f",dataSource->dataObject[d]->dfNodataValue);
       #endif
-      float f=dataSource->dataObject[d]->dfNodataValue;
-      new2DVar[d]->getAttribute("_FillValue")->setData(CDF_FLOAT,&f,1);
-    }else {
-      dataSource->dataObject[d]->hasNodataValue=true;
-      dataSource->dataObject[d]->dfNodataValue=-9999999;
-      float f=dataSource->dataObject[d]->dfNodataValue;
-      new2DVar[d]->setAttribute("_FillValue",CDF_FLOAT,&f,1);
     }
   }
   
@@ -423,32 +439,35 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
   
   //Detect minimum and maximum values
   float fill = (float)dataSource->dataObject[0]->dfNodataValue;
-  float min = fill;float max=fill;
-  for(size_t j=0;j<pointVar[0]->getSize();j++){
-    float v=((float*)pointVar[0]->data)[j];
-    if(v!=fill){
-      if(min==fill)min=v;
-      if(max==fill)max=v;
-      if(v<min)min=v;
-      if(v>max)max=v;
-    }
-  }
-
-  
-  #ifdef MEASURETIME
-    StopWatch_Stop("Min max calculated");
-  #endif
-
-  #ifdef CCONVERTADAGUCPOINT_DEBUG
-  CDBDebug("Calculated min/max : %f %f",min,max);
-  #endif
+ 
   
   //Set statistics
-  if(dataSource->stretchMinMax){
+  if(dataSource->stretchMinMax) 
+  {
+    if(dataSource->stretchMinMaxDone == false){
     #ifdef CCONVERTADAGUCPOINT_DEBUG
     CDBDebug("dataSource->stretchMinMax");
     #endif
     if(dataSource->statistics==NULL){
+      float min = fill;float max=fill;
+      for(size_t j=0;j<pointVar[0]->getSize();j++){
+        float v=((float*)pointVar[0]->data)[j];
+        if(v!=fill){
+          if(min==fill)min=v;
+          if(max==fill)max=v;
+          if(v<min)min=v;
+          if(v>max)max=v;
+        }
+      }
+
+      
+      #ifdef MEASURETIME
+        StopWatch_Stop("Min max calculated");
+      #endif
+
+      #ifdef CCONVERTADAGUCPOINT_DEBUG
+      CDBDebug("Calculated min/max : %f %f",min,max);
+      #endif
       #ifdef CCONVERTADAGUCPOINT_DEBUG
       CDBDebug("Setting statistics: min/max : %f %f",min,max);
       #endif
@@ -456,7 +475,12 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
       dataSource->statistics->setMaximum(max);
       dataSource->statistics->setMinimum(min);
     }
+     
+    }
+
   }
+  
+  
   
   #ifdef MEASURETIME
     StopWatch_Stop("Statistics set");
@@ -584,14 +608,14 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
         projectionVar->setAttributeText("proj4_params",dataSource->nativeProj4.c_str());
       }
     }
-    
+   /* 
     
     #ifdef CCONVERTADAGUCPOINT_DEBUG
     CDBDebug("Datasource CRS = %s nativeproj4 = %s",dataSource->nativeEPSG.c_str(),dataSource->nativeProj4.c_str());
     CDBDebug("Datasource bbox:%f %f %f %f",dataSource->srvParams->Geo->dfBBOX[0],dataSource->srvParams->Geo->dfBBOX[1],dataSource->srvParams->Geo->dfBBOX[2],dataSource->srvParams->Geo->dfBBOX[3]);
     CDBDebug("Datasource width height %d %d",dataSource->dWidth,dataSource->dHeight);
     #endif
-    
+    */
     
     if(projectionRequired){
       int status = imageWarper.initreproj(dataSource,dataSource->srvParams->Geo,&dataSource->srvParams->cfg->Projection);

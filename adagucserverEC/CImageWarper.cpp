@@ -44,7 +44,7 @@ void floatToString(char * string,size_t maxlen,int numdigits,float number){
     if(numdigits == 0)snprintf(string,maxlen,"%0.3f",float(floor(number*1000.0+0.5)/1000));
     if(numdigits == 1)snprintf(string,maxlen,"%0.2f",float(floor(number*100.0+0.5)/100));
     if(numdigits == 2)snprintf(string,maxlen,"%0.1f",float(floor(number*10.0+0.5)/10));
-    if(numdigits >= 3)snprintf(string,maxlen,"%0.0f",float(floor(number+0.5)));
+    if(numdigits >= 3)snprintf(string,maxlen,"%0.1f",float(floor(number+0.5)));
   }
   else
     snprintf(string,maxlen,"%0.3e",number);
@@ -55,10 +55,17 @@ void floatToString(char * string,size_t maxlen,float number){
   
   if(number==0.0f)numdigits=0;else{
     float tempp=number;
-    if (tempp<0.0001&&tempp>-0.0001)tempp+=0.000001;
-    numdigits = int(log10(fabs(tempp)));
+    if (tempp<0.00000001&&tempp>-0.00000001)tempp+=0.00000001;
+    numdigits = int(log10(fabs(tempp)))+1;
+    
   }
   floatToString(string,maxlen,numdigits,number);
+}
+
+void floatToString(char * string,size_t maxlen,float min, float max,float number){
+  float range = fabs(max-min);
+  int digits=log10(range)+1;
+  floatToString(string,maxlen,digits,number);
 }
 
 int CImageWarper::closereproj(){
