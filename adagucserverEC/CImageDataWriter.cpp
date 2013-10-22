@@ -164,13 +164,15 @@ int CImageDataWriter::_setTransparencyAndBGColor(CServerParams *srvParam,CDrawIm
         CDBError("BGCOLOR does not comply to format 0xRRGGBB");
         return 1;
       }
-      unsigned char hexa[8];
-      memcpy(hexa,srvParam->BGColor.c_str()+2,6);
+      int hexa[8];
+      
       for(size_t j=0;j<6;j++){
+        hexa[j]=srvParam->BGColor.charAt(j+2);
         hexa[j]-=48;
         if(hexa[j]>16)hexa[j]-=7;
       }
       drawImage->setBGColor(hexa[0]*16+hexa[1],hexa[2]*16+hexa[3],hexa[4]*16+hexa[5]);
+      
     }else{
       drawImage->setBGColor(255,255,255);
     }
@@ -378,9 +380,9 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
     if(status != 0) return 1;
   }
   if(srvParam->requestType==REQUEST_WMS_GETFEATUREINFO){
-    status = drawImage.createImage(512,256);
+    //status = drawImage.createImage(2,2);
     drawImage.Geo->copy(srvParam->Geo);
-    //return 0;
+    return 0;
   }
   
   //Create 6-8-5 palette for cascaded layer
@@ -655,7 +657,22 @@ CT::PointerList<CT::string*> *CImageDataWriter::getRenderMethodListForDataSource
   if(renderMethodList.length()==0){
     renderMethodList.copy(CImageDataWriter::RenderMethodStringList);
   }
-  return  renderMethodList.splitToPointer(",");;
+  
+  CT::PointerList<CT::string*> * renderMethods = renderMethodList.splitToPointer(",");
+  if(dataSource!=NULL){
+    if(dataSource->dataObject.size()>0){
+      if(dataSource->dataObject[0]->cdfObject!=NULL){
+        
+        try{
+          if(dataSource->dataObject[0]->cdfObject->getAttribute("featureType")->toString().equals("timeSeries")){
+            renderMethods->insert(renderMethods->begin(),1,new CT::string("pointnearest"));
+          }
+        }catch(int e){
+        }
+      }
+    }
+  }
+  return  renderMethods;
 }
 
 /**
@@ -3126,6 +3143,13 @@ int CImageDataWriter::end(){
         plotCanvas.setTrueColor(true);
         lineCanvas.setTrueColor(true);
         lineCanvas.enableTransparency(true);
+        //plotCanvas.enableTransparency(true);
+        //drawImage.enableTransparency(true);
+        //plotCanvas.setBGColor(0,0,255);
+        if(_setTransparencyAndBGColor(srvParam,&plotCanvas)!=0){
+          CDBError("Unable to do setTransparencyAndBGColor");
+          return -1;
+        }
       }
       if(resultFormat==imagegif){
         plotCanvas.setTrueColor(false);
@@ -3137,14 +3161,22 @@ int CImageDataWriter::end(){
       plotCanvas.create685Palette();
       lineCanvas.createImage(int(plotWidth),int(plotHeight));
       lineCanvas.create685Palette();
+      //plotCanvas.rectangle(-1,-1,int(width+1),int(height+1),CColor(0,0,255,1),CColor(0,0,0,255));        
+      //plotCanvas.line(0,0,200,100,CColor(0,0,255,255));
+      
+        //      printf("%s%c%c\n","Content-Type:image/png",13,10);
+        //plotCanvas.printImagePng();
+        //return 0;
       //lineCanvas.rectangle(0,0,int(plotWidth/2),int(plotHeight),CColor(255,255,255,255),CColor(255,255,255,255));
-      lineCanvas.rectangle(-1,-1,int(plotWidth+1),int(plotHeight+1),CColor(255,255,255,255),CColor(255,255,255,255));
-      plotCanvas.rectangle(-1,-1,int(width+1),int(height+1),CColor(255,255,255,255),CColor(0,0,0,255));
+      //lineCanvas.rectangle(-1,-1,int(plotWidth+1),int(plotHeight+1),CColor(255,255,255,255),CColor(255,255,255,255));
+      
       
          
       //TODO
-      plotCanvas.rectangle(int(plotOffsetX-1),int(plotOffsetY-1),int(plotWidth+plotOffsetX),int(plotHeight+plotOffsetY),CColor(255,255,255,255),CColor(0,0,0,128));
-   
+      //plotCanvas.line(int(plotOffsetX-1),int(plotOffsetY-1),int(plotWidth+plotOffsetX),int(plotHeight+plotOffsetY),0);
+      plotCanvas.line(int(plotWidth+plotOffsetX),int(plotOffsetY-1),int(plotWidth+plotOffsetX),int(plotHeight+plotOffsetY),0.5,CColor(70,70,70,255));
+      plotCanvas.line(int(plotOffsetX-1),int(plotOffsetY-1),int(plotWidth+plotOffsetX),int(plotOffsetY-1),0.5,CColor(70,70,70,255));
+      plotCanvas.line(int(plotOffsetX-1),int(plotWidth+plotOffsetX),int(plotWidth+plotOffsetX),int(plotWidth+plotOffsetX),0.5,CColor(70,70,70,255));
       
       //Draw Title
       CT::string title;
