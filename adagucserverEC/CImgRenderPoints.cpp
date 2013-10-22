@@ -53,6 +53,7 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
       int y=dataSource->dHeight-(*p1)[j].y;
       float v=(*p1)[j].v;
       drawImage->circle(x,y, 8, 240,0.65);
+      drawImage->circle(x,y, 1, 240,0.65);
       if(drawText){
         //drawImage->setPixelIndexed(x,y, 240);
         t.print("%0.1f",v);

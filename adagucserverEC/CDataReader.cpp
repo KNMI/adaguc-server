@@ -1773,7 +1773,7 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
   
   if(dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
     #ifdef CDATAREADER_DEBUG        
-    CDBDebug("Cascaded layers cannot have dimensions at the moment");
+    CDBDebug("Cascaded layers cannot have styles at the moment");
     #endif     
     return 0;
   }

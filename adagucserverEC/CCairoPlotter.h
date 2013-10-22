@@ -173,10 +173,10 @@ public:
       }
     }else{
       for(size_t j=0;j<bufferSize/4;j++){
-        ARGBByteBuffer[j*4+0]=a;
-        ARGBByteBuffer[j*4+1]=r;
-        ARGBByteBuffer[j*4+2]=g;
-        ARGBByteBuffer[j*4+3]=b;
+        ARGBByteBuffer[j*4+3]=a;
+        ARGBByteBuffer[j*4+2]=r;
+        ARGBByteBuffer[j*4+1]=g;
+        ARGBByteBuffer[j*4+0]=b;
       }
     }
     cairoPlotterInit(width,height,fontSize,fontLocation);
