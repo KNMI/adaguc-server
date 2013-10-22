@@ -168,9 +168,9 @@ class CDataSource{
   int datasourceIndex;
   int currentAnimationStep;
   std::vector <TimeStep*> timeSteps;
-  bool stretchMinMax;
+  bool stretchMinMax,stretchMinMaxDone;
   std::vector <COGCDims*> requiredDims;
-  Statistics *statistics;
+  Statistics *statistics; // is NULL when not available
   //The actual dataset data (can have multiple variables)
   std::vector <DataClass *> dataObject;
   //source image parameters

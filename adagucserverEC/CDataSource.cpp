@@ -93,6 +93,7 @@ int CDataSource::Statistics::calculate(CDataSource *dataSource){
 
 CDataSource::CDataSource(){
   stretchMinMax=false;
+  stretchMinMaxDone = false;
   isConfigured=false;
   legendScale=1;
   legendOffset=0;

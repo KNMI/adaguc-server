@@ -613,6 +613,13 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
   CCache cache;
   CT::string cacheFilename;
 
+  //Use autoscale of legendcolors when the legendscale factor has been set to zero.
+  if(dataSource->stretchMinMaxDone == false){
+    if(dataSource->legendScale==0.0f)dataSource->stretchMinMax=true;else dataSource->stretchMinMax=false;
+  }
+ 
+  
+  
   bool enableDataCache=false;
   if(dataSource->cfgLayer->Cache.size()>0){
     if(dataSource->cfgLayer->Cache[0]->attr.enabled.equals("true")){
@@ -731,12 +738,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
   }
   
 
-  //Use autoscale of legendcolors when the legendscale factor has been set to zero.
-  if(dataSource->statistics==NULL){
-    if(dataSource->legendScale==0.0f)dataSource->stretchMinMax=true;else dataSource->stretchMinMax=false;
-  }
- 
-  
+
   
   
   size_t start[dataSource->dNetCDFNumDims+1];
@@ -1166,37 +1168,33 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
 
     
 
-    if(dataSource->stretchMinMax&&((dataSource->dWidth!=2||dataSource->dHeight!=2))){
-      #ifdef CDATAREADER_DEBUG
-      CDBDebug("MinMax calculation required");
-      #endif    
-      if(dataSource->statistics==NULL){
-        #ifdef CDATAREADER_DEBUG
-        CDBDebug("No statistics available");
+    if(dataSource->stretchMinMax){//&&((dataSource->dWidth!=2||dataSource->dHeight!=2))){
+      if(dataSource->stretchMinMaxDone == false){
+        if(dataSource->statistics==NULL){
+          #ifdef CDATAREADER_DEBUG
+          CDBDebug("No statistics available");
+          #endif    
+          dataSource->statistics = new CDataSource::Statistics();
+          dataSource->statistics->calculate(dataSource);
+          #ifdef MEASURETIME
+          StopWatch_Stop("Calculated statistics");
+          #endif
+        }
+        float min=(float)dataSource->statistics->getMinimum();
+        float max=(float)dataSource->statistics->getMaximum();
+        #ifdef CDATAREADER_DEBUG    
+          CDBDebug("Statistics: Min = %f, Max = %f",min,max);
         #endif    
         
-        dataSource->statistics = new CDataSource::Statistics();
-        //TODO
-        dataSource->statistics->calculate(dataSource);
-        //dataSource->statistics->setMinimum(0);
-        //dataSource->statistics->setMaximum(100);
-        #ifdef MEASURETIME
-        StopWatch_Stop("Calculated statistics");
-        #endif
+        //Make sure that there is always a range in between the min and max.
+        if(max==min)max=min+0.1;
+        //Calculate legendOffset legendScale
+        float ls=240/(max-min);
+        float lo=-(min*ls);
+        dataSource->legendScale=ls;
+        dataSource->legendOffset=lo;
+        dataSource->stretchMinMaxDone = true;
       }
-      float min=(float)dataSource->statistics->getMinimum();
-      float max=(float)dataSource->statistics->getMaximum();
-  #ifdef CDATAREADER_DEBUG    
-      CDBDebug("Min = %f, Max = %f",min,max);
-  #endif    
-      
-      //Make sure that there is always a range in between the min and max.
-      if(max==min)max=min+0.1;
-      //Calculate legendOffset legendScale
-      float ls=240/(max-min);
-      float lo=-(min*ls);
-      dataSource->legendScale=ls;
-      dataSource->legendOffset=lo;
     }
     
     //Check for infinities
