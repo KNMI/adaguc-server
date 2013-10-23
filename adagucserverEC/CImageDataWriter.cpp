@@ -2474,7 +2474,7 @@ int CImageDataWriter::end(){
     if(srvParam->InfoFormat.equals("image/png"))resultFormat=imagepng;
     if(srvParam->InfoFormat.equals("image/gif"))resultFormat=imagegif;
     
-    if(srvParam->InfoFormat.equals("application/vnd.ogc.gml"))resultFormat=textxml;//applicationvndogcgml;
+    if(srvParam->InfoFormat.equals("application/vnd.ogc.gml"))resultFormat=applicationvndogcgml;
     if(srvParam->InfoFormat.equals("application/json"))resultFormat=json;
 
     
@@ -2599,8 +2599,93 @@ int CImageDataWriter::end(){
     }
     
     /* Text XML */
-    if(resultFormat==textxml){
+    if(resultFormat==applicationvndogcgml){
       CDBDebug("CREATING GML");
+      CT::string resultXML;
+      resultXML.print("%s%c%c\n","Content-Type:text/xml",13,10);
+      resultXML.printconcat("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n");
+      resultXML.printconcat("  <FeatureCollection\n");
+       resultXML.printconcat("          xmlns:gml=\"http://www.opengis.net/gml\"\n");
+       resultXML.printconcat("          xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n");
+       resultXML.printconcat("          xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n");
+
+      if(getFeatureInfoResultList.size()==0){
+        CDBError("Query returned no results");
+        return 1;
+      }else{
+        for(size_t j=0;j<getFeatureInfoResultList.size();j++){
+          GetFeatureInfoResult *g = getFeatureInfoResultList[j];
+          CT::string layerName=g->layerName.c_str();
+          layerName.replaceSelf(" ","_");
+          layerName.replaceSelf("/","_");
+          layerName.replaceSelf(":","-");
+          
+          
+         // resultXML.printconcat("  <%s_layer>\n",layerName.c_str());
+          resultXML.printconcat("  <gml:featureMember>\n",layerName.c_str());
+          CDBDebug("GFI[%d of %d] %d\n", j, getFeatureInfoResultList.size(), g->elements.size());
+          for(size_t elNR=0;elNR<g->elements.size();elNR++){
+            GetFeatureInfoResult::Element * e=g->elements[elNR];
+            CT::string featureName=e->feature_name.c_str();featureName.replaceSelf(" ","_");
+            resultXML.printconcat("    <%s_feature>\n",featureName.c_str());
+//             resultXML.concat("  <gml:boundedBy>\n");
+//             resultXML.concat("  <gml:Box srsName=\"http://www.opengis.net/gml/srs/epsg.xml#4326\">\n");
+//             resultXML.concat("  <gml:coordinates decimal=\".\" cs=\",\" ts=\" \">-111.05265,40.994305 -104.051201,45.002853</gml:coordinates>\n");
+//             resultXML.concat("  </gml:Box>\n");
+//             resultXML.concat("  </gml:boundedBy>\n");
+
+            resultXML.printconcat("          <gml:pos>%f,%f</gml:pos>\n",g->lon_coordinate,g->lat_coordinate);
+            resultXML.printconcat("      <gml:location>\n");
+            
+            resultXML.printconcat("        <gml:Point srsName=\"EPSG:4326\">\n");
+            resultXML.printconcat("          <gml:pos>%f,%f</gml:pos>\n",g->lon_coordinate,g->lat_coordinate);
+            resultXML.printconcat("        </gml:Point>\n");
+            
+            if(!srvParam->Geo->CRS.equals("EPSG:4326")){
+              resultXML.printconcat("        <gml:Point srsName=\"%s\">\n",srvParam->Geo->CRS.c_str());
+              resultXML.printconcat("          <gml:pos>%f %f</gml:pos>\n",g->x_imageCoordinate,g->y_imageCoordinate);
+              resultXML.printconcat("        </gml:Point>\n");
+            }
+
+            /*resultXML.printconcat("        <gml:Point srsName=\"%s\">\n","image:xyindices");
+            resultXML.printconcat("          <gml:pos>%d %d</gml:pos>\n",g->x_imagePixel,g->y_imagePixel);
+            resultXML.printconcat("        </gml:Point>\n");*/
+
+            resultXML.printconcat("        <gml:Point srsName=\"%s\">\n","raster:coordinates");
+            resultXML.printconcat("          <gml:pos>%f %f</gml:pos>\n",g->x_rasterCoordinate,g->y_rasterCoordinate);
+            resultXML.printconcat("        </gml:Point>\n");
+
+            resultXML.printconcat("        <gml:Point srsName=\"%s\">\n","raster:xyindices");
+            resultXML.printconcat("          <gml:pos>%d %d</gml:pos>\n",g->x_rasterIndex,g->y_rasterIndex);
+            resultXML.printconcat("        </gml:Point>\n");
+
+            
+            resultXML.printconcat("      </gml:location>\n");
+            resultXML.printconcat("      <FeatureName>%s</FeatureName>\n",featureName.c_str());
+            resultXML.printconcat("      <StandardName>%s</StandardName>\n",e->standard_name.c_str());
+            resultXML.printconcat("      <LongName>%s</LongName>\n",e->long_name.c_str());
+            resultXML.printconcat("      <VarName>%s</VarName>\n",e->var_name.c_str());
+            resultXML.printconcat("      <Value units=\"%s\">%s</Value>\n",e->units.c_str(),e->value.c_str());
+            //resultXML.printconcat("      <Dimension name=\"time\">%s</Dimension>\n",e->time.c_str());
+            for(size_t d=0;d<e->cdfDims.dimensions.size();d++){
+              //TODO MUST BECOME THE OGC DIMNAME
+              //resultXML.printconcat("      <Dimension name=\"%s\" index=\"%d\">%s</Dimension>\n",e->cdfDims.dimensions[d]->name.c_str(),e->cdfDims.dimensions[d]->index,e->cdfDims.dimensions[d]->value.c_str());
+              resultXML.printconcat("      <Dimension name=\"%s\" index=\"%d\">%s</Dimension>\n",e->dataSource->requiredDims[d]->name.c_str(),e->cdfDims.dimensions[d]->index,e->cdfDims.dimensions[d]->value.c_str());
+            }
+            
+            resultXML.printconcat("    </%s_feature>\n",featureName.c_str());
+          }
+          //resultXML.printconcat("  </%s_layer>\n",layerName.c_str());
+          resultXML.printconcat("  </gml:featureMember>\n",layerName.c_str());
+        }
+      }
+      resultXML.printconcat(" </FeatureCollection>\n");
+      resetErrors();
+      printf("%s",resultXML.c_str());
+    }
+    
+   if(resultFormat==textxml){
+      CDBDebug("CREATING XML");
       CT::string resultXML;
       resultXML.print("%s%c%c\n","Content-Type:text/xml",13,10);
       resultXML.printconcat("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n");
