@@ -3443,18 +3443,19 @@ float CImageDataWriter::getValueForColorIndex(CDataSource *dataSource,int index)
 //     dataSource->legendOffset=lo;
 //     
 //     //Check for infinities
-//     if(
-//       dataSource->legendScale!=dataSource->legendScale||
-//       dataSource->legendScale==INFINITY||
-//       dataSource->legendScale==NAN||
-//       dataSource->legendScale==-INFINITY||
-//       dataSource->legendOffset!=dataSource->legendOffset||
-//       dataSource->legendOffset==INFINITY||
-//       dataSource->legendOffset==NAN||
-//       dataSource->legendOffset==-INFINITY){
-//       dataSource->legendScale=240.0;
-//       dataSource->legendOffset=0;
-//     }
+    if(
+      dataSource->legendScale!=dataSource->legendScale||
+      dataSource->legendScale==INFINITY||
+      dataSource->legendScale==NAN||
+      dataSource->legendScale==0.0||
+      dataSource->legendScale==-INFINITY||
+      dataSource->legendOffset!=dataSource->legendOffset||
+      dataSource->legendOffset==INFINITY||
+      dataSource->legendOffset==NAN||
+      dataSource->legendOffset==-INFINITY){
+      dataSource->legendScale=240.0;
+      dataSource->legendOffset=0;
+    }
 //     //CDBDebug("max=%f; min=%f",maxValue,minValue);
 //     //CDBDebug("scale=%f; offset=%f",ls,lo);
 //     }
@@ -3479,7 +3480,9 @@ int CImageDataWriter::getColorIndexForValue(CDataSource *dataSource,float value)
 
 
 int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendImage){
- 
+  #ifdef CIMAGEDATAWRITER_DEBUG        
+    CDBDebug("createLegend");
+  #endif
   int status = 0;
   enum LegendType { undefined,continous,discrete,statusflag,cascaded};
   LegendType legendType=undefined;
@@ -3534,8 +3537,14 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
    
   //if(dataSource->dataObject[0]->cdfVariable->data==NULL){
   if(estimateMinMax){
+    #ifdef CIMAGEDATAWRITER_DEBUG        
+    CDBDebug("Opening CNETCDFREADER_MODE_OPEN_ALL");
+    #endif
     status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
   }else{
+    #ifdef CIMAGEDATAWRITER_DEBUG        
+    CDBDebug("Opening CNETCDFREADER_MODE_OPEN_HEADER");
+    #endif
     status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
   }
   if(status!=0){
@@ -3788,6 +3797,9 @@ CDBDebug("scale=%f offset=%f",dataSource->legendScale,dataSource->legendOffset);
 #endif
     float iMin=convertValueToClass(minValue,legendInterval);
     float iMax=convertValueToClass(maxValue,legendInterval)+legendInterval;
+    
+        
+    
 #ifdef CIMAGEDATAWRITER_DEBUG        
 CDBDebug("iMin=%f iMax=%f",iMin,iMax);
 #endif
@@ -3799,6 +3811,11 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
       //Calculate new scale and offset for the new min/max:
       float ls=240/((iMax-iMin));
       float lo=-(iMin*ls);
+      if(ls == 0){
+        ls=240;
+        lo=0;
+        
+      }
       dataSource->legendScale=ls;
       dataSource->legendOffset=lo;
       //Check for infinities

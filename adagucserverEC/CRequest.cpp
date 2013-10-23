@@ -171,15 +171,41 @@ int CRequest::checkDataRestriction(){
 
 
 int CRequest::setConfigFile(const char *pszConfigFile){
+  if(pszConfigFile == NULL){
+    CDBError("No config file set");
+    return 1;
+  }
   #ifdef MEASURETIME
-  StopWatch_Stop("Set config file");
+  StopWatch_Stop("Set config file %s",pszConfigFile);
   #endif
-  int status = srvParam->configObj->parseFile(pszConfigFile);
+  
+  CT::string configFile = pszConfigFile;
+  CT::StackList<CT::string> configFileList=configFile.splitToStack(",");
+  
+  //Parse the main configuration file
+  int status = srvParam->configObj->parseFile(configFileList[0].c_str());
+  
   if(status == 0 && srvParam->configObj->Configuration.size()==1){
+ 
+    
+    
+     //Include additional config files given as argument
+    if(configFileList.size()>1){
+      for(size_t j=1;j<configFileList.size();j++){
+          CDBDebug("Include '%s'",configFileList[j].c_str());
+          status = srvParam->configObj->parseFile(configFileList[j].c_str());
+          if(status != 0){
+            CDBError("There is an error with include '%s'",configFileList[j].c_str());
+            return 1;
+          }
+        
+      }
+    }
+    
     srvParam->configFileName.copy(pszConfigFile);
     srvParam->cfg=srvParam->configObj->Configuration[0];
     
-    //Include additional config files
+    //Include additional config files given in the include statement of the config file
     for(size_t j=0;j<srvParam->cfg->Include.size();j++){
       if(srvParam->cfg->Include[j]->attr.location.empty()==false){
         CDBDebug("Include '%s'",srvParam->cfg->Include[j]->attr.location.c_str());
@@ -1943,7 +1969,7 @@ int CRequest::process_querystring(){
       //Adjust online resource in order to pass on dataset parameters
       CT::string onlineResource=srvParam->cfg->OnlineResource[0]->attr.value.c_str();
       CT::string stringToAdd;
-      stringToAdd.concat("dataset=");stringToAdd.concat(srvParam->datasetLocation.c_str());
+      stringToAdd.concat("DATASET=");stringToAdd.concat(srvParam->datasetLocation.c_str());
       stringToAdd.concat("&amp;");
       onlineResource.concat(stringToAdd.c_str());
       srvParam->cfg->OnlineResource[0]->attr.value.copy(onlineResource.c_str());

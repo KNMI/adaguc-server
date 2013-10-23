@@ -175,24 +175,32 @@ int main(int argc, const char *argv[]){
     
     if(strncmp(argv[1],"--getlayers",11)==0){
       int status = 0;
-      if(argc>=3){
-        if(strncmp(argv[2],"--file",6)==0){
-          if(argc>=4){
-            //CDBDebug("Getting layers for file parameter = '%s'",argv[3]);
-            CT::string fileInfo = CGetFileInfo::getLayersForFile(argv[3]);
-            printf("%s\n",fileInfo.c_str());
-            status = 0;
-          }else{
-            CDBError("--file parameter empty");
-            status=1;
-          }
-        }else{
-          CDBError("--file parameter missing");
-          status=1;
-        }
+      CT::string file;
+      CT::string inspireDatasetCSW;
+      
+      for(size_t j=0;j<argc;j++){
+        CT::string argument = argv[j];
+        if(j+1<argc&&argument.equals("--file"))file = argv[j+1];
+        if(j+1<argc&&argument.equals("--inspiredatasetcsw"))inspireDatasetCSW = argv[j+1];
+        
+      }
+      if(file.empty()){
+         CDBError("--file parameter missing");
+         status=1;
       }else{
-        CDBError("--file parameter missing");
-        status=1;
+        
+        setWarningFunction(serverWarningFunction);
+        setDebugFunction(serverDebugFunction);
+        
+        CT::string fileInfo = CGetFileInfo::getLayersForFile(file.c_str());
+        if(inspireDatasetCSW.empty() == false){
+          inspireDatasetCSW.encodeXMLSelf();
+          CT::string inspireDatasetCSWXML;
+          inspireDatasetCSWXML.print("<!--header-->\n\n  <WMS>\n    <Inspire>\n      <DatasetCSW>%s</DatasetCSW>\n    </Inspire>\n  </WMS>",inspireDatasetCSW.c_str());
+          fileInfo.replaceSelf("<!--header-->",inspireDatasetCSWXML.c_str());
+        }
+        printf("%s\n",fileInfo.c_str());
+        status = 0;
       }
       readyerror();
       return status;

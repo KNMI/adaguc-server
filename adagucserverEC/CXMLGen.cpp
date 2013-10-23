@@ -962,7 +962,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
         if(layer->group.equals(groupKeys[groupIndex].c_str())){
           //CDBError("layer %d %s",groupDepth,layer->name.c_str());
           if(layer->hasError==0){
-            XMLDoc->printconcat("<Layer queryable=\"%d\" opaque=\"0\" cascaded=\"0\">\n",layer->isQuerable);
+            XMLDoc->printconcat("<Layer queryable=\"%d\" opaque=\"1\" cascaded=\"%d\">\n",layer->isQuerable,layer->dataSource->dLayerType==CConfigReaderLayerTypeCascaded?1:0);
             XMLDoc->concat("<Name>"); XMLDoc->concat(&layer->name);XMLDoc->concat("</Name>\n");
             XMLDoc->concat("<Title>"); XMLDoc->concat(&layer->title);XMLDoc->concat("</Title>\n");
             
@@ -997,7 +997,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
               XMLDoc->concat("   <Style>");
               XMLDoc->printconcat("    <Name>%s</Name>",style->name.c_str());
               XMLDoc->printconcat("    <Title>%s</Title>",style->title.c_str());
-              if(style->abstract.length()>0){XMLDoc->printconcat("    <Abstract>%s</Abstract>",style->abstract.c_str());}
+              if(style->abstract.length()>0){XMLDoc->printconcat("    <Abstract>%s</Abstract>",style->abstract.encodeXML().c_str());}
               XMLDoc->printconcat("    <LegendURL width=\"%d\" height=\"%d\">",LEGEND_WIDTH,LEGEND_HEIGHT);
               XMLDoc->concat("       <Format>image/png</Format>");
               XMLDoc->printconcat("       <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:type=\"simple\" xlink:href=\"%s&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=%s&amp;format=image/png&amp;STYLE=%s\"/>"
@@ -1053,17 +1053,27 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
   int useINSPIREScenario = 0; //{ 0 == default WMS service, 1 == extended inspire capabilities scenario 1, 2 == extended inspire capabilities scenario 2}
   bool inspireMetadataIsAvailable = false;
   
-  CT::string datasetMetaDataURL;
+  CT::string datasetCSWURL;
+  CT::string viewServiceCSWURL;
+  
+  
+  
   if(srvParam->cfg->WMS[0]->Inspire.size()==1){
-    if(srvParam->cfg->WMS[0]->Inspire[0]->MetadataURL.size()==1){            
-      if(srvParam->cfg->WMS[0]->Inspire[0]->MetadataURL[0]->value.empty()==false){
-        datasetMetaDataURL = srvParam->cfg->WMS[0]->Inspire[0]->MetadataURL[0]->value.c_str();
-        datasetMetaDataURL.replaceSelf("&","&amp;");
+    if(srvParam->cfg->WMS[0]->Inspire[0]->ViewServiceCSW.size()==1){            
+      if(srvParam->cfg->WMS[0]->Inspire[0]->ViewServiceCSW[0]->value.empty()==false){
+        viewServiceCSWURL = srvParam->cfg->WMS[0]->Inspire[0]->ViewServiceCSW[0]->value.c_str();
+        viewServiceCSWURL.replaceSelf("&","&amp;");
+      }
+    }
+    if(srvParam->cfg->WMS[0]->Inspire[0]->DatasetCSW.size()==1){            
+      if(srvParam->cfg->WMS[0]->Inspire[0]->DatasetCSW[0]->value.empty()==false){
+        datasetCSWURL = srvParam->cfg->WMS[0]->Inspire[0]->DatasetCSW[0]->value.c_str();
+        datasetCSWURL.replaceSelf("&","&amp;");
       }
     }
   }
   
-  if(datasetMetaDataURL.length()>0){
+  if(viewServiceCSWURL.length()>0&&datasetCSWURL.length()>0){
     useINSPIREScenario = 1;
   }
   
@@ -1076,11 +1086,11 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
     //Download CSW information
    
     try{
-      CT::string URL = datasetMetaDataURL.c_str();
+      CT::string URL = datasetCSWURL.c_str();
       URL.replaceSelf("&amp;","&");
       inspireMetadata = CInspire::readInspireMetadataFromCSW(URL.c_str());
     }catch(int a){
-      CT::string URL = datasetMetaDataURL.c_str();
+      CT::string URL = datasetCSWURL.c_str();
       
       URL.replaceSelf("&","&amp;");
       CDBError("Unable to read from catalog service: %s, Inspire CSW Service : \"%s\"",CInspire::getErrorMessage(a).c_str(),URL.c_str());
@@ -1092,7 +1102,7 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
       
       XMLDoc->concat("<inspire_vs:ExtendedCapabilities>\n");
       XMLDoc->concat("  <inspire_common:MetadataUrl xsi:type=\"inspire_common:resourceLocatorType\">\n");
-      XMLDoc->printconcat("    <inspire_common:URL>%s</inspire_common:URL>\n",datasetMetaDataURL.c_str());
+      XMLDoc->printconcat("    <inspire_common:URL>%s</inspire_common:URL>\n",viewServiceCSWURL.c_str());
       XMLDoc->concat("    <inspire_common:MediaType>application/vnd.ogc.csw.GetRecordByIdResponse_xml</inspire_common:MediaType>\n");
       XMLDoc->concat("  </inspire_common:MetadataUrl>\n");
       XMLDoc->concat("  <inspire_common:SupportedLanguages xsi:type=\"inspire_common:supportedLanguagesType\">\n");
@@ -1222,17 +1232,12 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
     
  
       
-      if(inspireMetadataIsAvailable){
-    XMLDoc->replaceSelf("[INSPIRE::TITLE]",inspireMetadata.title.c_str());    
-  
-  
-  
-      
+    if(inspireMetadataIsAvailable){
+      XMLDoc->replaceSelf("[INSPIRE::TITLE]",inspireMetadata.title.c_str());    
       XMLDoc->concat("  <MetadataURL type=\"ISO19115:2005\">\n");
       XMLDoc->concat("     <Format>application/gml+xml; version=3.2</Format>\n");
-      XMLDoc->printconcat("     <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>",datasetMetaDataURL.c_str());
+      XMLDoc->printconcat("     <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>",datasetCSWURL.c_str());
       XMLDoc->concat("  </MetadataURL>\n");
-      
     }
       
     
@@ -1329,13 +1334,13 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
 
 
           if(layer->hasError==0){
-            XMLDoc->printconcat("<Layer queryable=\"%d\" opaque=\"0\" cascaded=\"0\">\n",layer->isQuerable);
+            XMLDoc->printconcat("<Layer queryable=\"%d\" opaque=\"1\" cascaded=\"%d\">\n",layer->isQuerable,layer->dataSource->dLayerType==CConfigReaderLayerTypeCascaded?1:0);
             XMLDoc->concat("<Name>"); XMLDoc->concat(&layer->name);XMLDoc->concat("</Name>\n");
             XMLDoc->concat("<Title>"); XMLDoc->concat(&layer->title);XMLDoc->concat("</Title>\n");
             //TODO
           
             if(layer->abstract.length()>0){
-              XMLDoc->concat("<Abstract>"); XMLDoc->concat(&layer->abstract);XMLDoc->concat("</Abstract>\n");
+              XMLDoc->concat("<Abstract>"); XMLDoc->concat(layer->abstract.encodeXML().c_str());XMLDoc->concat("</Abstract>\n");
             }
             if(inspireMetadataIsAvailable){           
               //Set INSPIRE layer keywords

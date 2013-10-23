@@ -599,7 +599,11 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
   if(dataSource==NULL){CDBError("Invalid dataSource");return 1;}
   if(dataSource->getFileName()==NULL){CDBError("Invalid NetCDF filename (NULL)");return 1;}
   
-  //CDBDebug("Open %d %d %d",mode,x,y);
+  #ifdef CDATAREADER_DEBUG
+    CDBDebug("Open mode:%d x:%d y:%d",mode,x,y);
+#endif
+  
+  
   
   bool singleCellMode = false;
   
@@ -782,7 +786,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
   for(size_t varNr=0;varNr<dataSource->dataObject.size();varNr++){
     
     #ifdef CDATAREADER_DEBUG
-    CDBDebug("Working on variable %s",dataSource->dataObject[varNr]->cdfVariable->name.c_str());
+    CDBDebug("Working on variable %s, %d/%d",dataSource->dataObject[varNr]->cdfVariable->name.c_str(),varNr,dataSource->dataObject.size());
     #endif
     //dataSource->dataObject[varNr]->dataType=var[varNr]->type;
     /*if(var[varNr]->type==CDF_CHAR||var[varNr]->type==CDF_BYTE)dataSource->dataObject[varNr]->dataType=CDF_CHAR;
@@ -871,8 +875,15 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
     
     //Important!: The CDF datamodel needs to now the new datatype as well, in order to do right lon warping.
     //var[varNr]->type=dataSource->dataObject[varNr]->dataType;
+    
+     #ifdef CDATAREADER_DEBUG
+    CDBDebug("/Finished Working on variable %s",dataSource->dataObject[varNr]->cdfVariable->name.c_str());
+    #endif
   }
-
+  
+  #ifdef CDATAREADER_DEBUG
+    CDBDebug("OK");
+  #endif
 
 
   if(mode==CNETCDFREADER_MODE_GET_METADATA){
@@ -974,9 +985,15 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
     return 0;
   }
 
+  #ifdef CDATAREADER_DEBUG
+    CDBDebug("OK");
+  #endif
 
   if(mode==CNETCDFREADER_MODE_OPEN_ALL){
-    
+      #ifdef CDATAREADER_DEBUG
+    CDBDebug("CNETCDFREADER_MODE_OPEN_ALL");
+  #endif
+
   #ifdef MEASURETIME
     StopWatch_Stop("start reading image data");
   #endif
@@ -1436,6 +1453,9 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
       return 0;
     }
   }
+  #ifdef CDATAREADER_DEBUG
+    CDBDebug("/Finished datareader");
+  #endif
   return 0;
 }
 

@@ -605,13 +605,20 @@ class CServerConfig:public CXMLSerializerInterface{
         }
     };
 
+    
+    class XMLE_ViewServiceCSW: public CXMLObjectInterface{};
+    class XMLE_DatasetCSW: public CXMLObjectInterface{};
+    
+    
     class XMLE_Inspire: public CXMLObjectInterface{
       public:
-      std::vector <XMLE_MetadataURL*> MetadataURL;
+      std::vector <XMLE_ViewServiceCSW*> ViewServiceCSW;
+      std::vector <XMLE_DatasetCSW*> DatasetCSW;
       std::vector <XMLE_AuthorityURL*> AuthorityURL;
       std::vector <XMLE_Identifier*> Identifier;
       ~XMLE_Inspire(){
-          XMLE_DELOBJ(MetadataURL);
+          XMLE_DELOBJ(ViewServiceCSW);
+          XMLE_DELOBJ(DatasetCSW);
           XMLE_DELOBJ(AuthorityURL);
           XMLE_DELOBJ(Identifier);
       }
@@ -622,7 +629,8 @@ class CServerConfig:public CXMLSerializerInterface{
         if(rc==0)if(value!=NULL)this->value.copy(value);
         if(rc==1){
           pt2Class=NULL;
-          if(equals("MetadataURL",11,name)){XMLE_ADDOBJ(MetadataURL);}
+          if(equals("ViewServiceCSW",14,name)){XMLE_ADDOBJ(ViewServiceCSW);}
+          else if(equals("DatasetCSW",10,name)){XMLE_ADDOBJ(DatasetCSW);}
           else if(equals("AuthorityURL",12,name)){XMLE_ADDOBJ(AuthorityURL);}
           else if(equals("Identifier",10,name)){XMLE_ADDOBJ(Identifier);}
         }
@@ -680,7 +688,7 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("ContourFont",11,name)){XMLE_ADDOBJ(ContourFont);}
             else if(equals("SubTitleFont",12,name)){XMLE_ADDOBJ(SubTitleFont);}
             else if(equals("DimensionFont",13,name)){XMLE_ADDOBJ(DimensionFont);}
-            else if(equals("Inspire",7,name)){XMLE_ADDOBJ(Inspire);}
+            else if(equals("Inspire",7,name)){XMLE_SETOBJ(Inspire);}
             //else if(equals("Keywords",8,name)){XMLE_ADDOBJ(Keywords);}
             //else if(equals("MetadataURL",11,name)){XMLE_ADDOBJ(MetadataURL);}
           }
@@ -954,8 +962,8 @@ class CServerConfig:public CXMLSerializerInterface{
           if(rc==1){
             pt2Class=NULL;
             if(equals("Legend",6,name)){XMLE_ADDOBJ(Legend);}
-            else if(equals("WMS",3,name)){XMLE_ADDOBJ(WMS);}
-            else if(equals("WCS",3,name)){XMLE_ADDOBJ(WCS);}
+            else if(equals("WMS",3,name)){XMLE_SETOBJ(WMS);}
+            else if(equals("WCS",3,name)){XMLE_SETOBJ(WCS);}
             else if(equals("Path",4,name)){XMLE_ADDOBJ(Path);}
             else if(equals("TempDir",7,name)){XMLE_ADDOBJ(TempDir);}
             else if(equals("OnlineResource",14,name)){XMLE_ADDOBJ(OnlineResource);}
@@ -977,12 +985,7 @@ class CServerConfig:public CXMLSerializerInterface{
       if(rc==0){
         pt2Class=NULL;
         if(equals("Configuration",13,name)){
-          if(Configuration.size()==0){
-            XMLE_ADDOBJ(Configuration);
-          }else{
-             XMLE_SETOBJ(Configuration);
-          }
-          
+          XMLE_SETOBJ(Configuration);
         }
       }
       if(pt2Class!=NULL)pt2Class->addElement(baseClass,rc-pt2Class->level,name,value);

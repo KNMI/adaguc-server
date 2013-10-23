@@ -383,6 +383,14 @@ class string:public basetype{
     void encodeURLSelf();
     
     /**
+     * Encodes string using XML encoding
+     */
+    void encodeXMLSelf();
+    static CT::string encodeXML(CT::string stringToEncode);
+    CT::string encodeXML();
+      
+    
+    /**
      * Removes spaces in this string
      */
     void trimSelf();
