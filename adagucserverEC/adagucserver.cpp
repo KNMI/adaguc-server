@@ -177,15 +177,18 @@ int main(int argc, const char *argv[]){
       int status = 0;
       CT::string file;
       CT::string inspireDatasetCSW;
+      CT::string datasetPath;
       
       for(size_t j=0;j<argc;j++){
         CT::string argument = argv[j];
         if(j+1<argc&&argument.equals("--file"))file = argv[j+1];
         if(j+1<argc&&argument.equals("--inspiredatasetcsw"))inspireDatasetCSW = argv[j+1];
+        if(j+1<argc&&argument.equals("--datasetpath"))datasetPath = argv[j+1];
         
       }
       if(file.empty()){
          CDBError("--file parameter missing");
+         CDBError("Optional parameters are: --datasetpath <path> and --inspiredatasetcsw <cswurl>");
          status=1;
       }else{
         
@@ -198,6 +201,11 @@ int main(int argc, const char *argv[]){
           CT::string inspireDatasetCSWXML;
           inspireDatasetCSWXML.print("<!--header-->\n\n  <WMS>\n    <Inspire>\n      <DatasetCSW>%s</DatasetCSW>\n    </Inspire>\n  </WMS>",inspireDatasetCSW.c_str());
           fileInfo.replaceSelf("<!--header-->",inspireDatasetCSWXML.c_str());
+          
+          if(datasetPath.empty() == false){
+            fileInfo.replaceSelf("[DATASETPATH]",datasetPath.c_str());
+          }
+          
         }
         printf("%s\n",fileInfo.c_str());
         status = 0;
