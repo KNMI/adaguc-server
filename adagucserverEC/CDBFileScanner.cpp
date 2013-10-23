@@ -166,6 +166,9 @@ int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,in
       //CDBDebug("Check table %s with columns  %s ...\t",tableName.c_str(),tableColumns.c_str());
       //CDBDebug("Check table %s ",tableName.c_str());
       status = DB->checkTable(tableName.c_str(),tableColumns.c_str());
+      
+      CDBDebug("Checking filetable %s",tableName.c_str());
+      
       //if(status == 0){CDBDebug("OK: Table is available");}
       if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tableName.c_str(),tableColumns.c_str()); DB->close();return 1;  }
       if(status == 2){
@@ -674,7 +677,7 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
       
       //If this is another directory we will simply ignore it.
       if(layerPath.equals(&layerPathToScan)==false){
-        //CDBError("Skipping %s==%s\n",layerPath.c_str(),layerPathToScan.c_str());
+        CDBDebug ("Skipping %s==%s\n",layerPath.c_str(),layerPathToScan.c_str());
         return 0;
       }
     }

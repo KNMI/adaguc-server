@@ -323,6 +323,33 @@ namespace CT{
       
       delete [] pszDecode;
     }
+    
+     
+      
+    CT::string string::encodeXML(CT::string stringToEncode){
+      stringToEncode.encodeXMLSelf();
+      return stringToEncode;
+    }
+    
+    CT::string string::encodeXML(){
+      CT::string str = this->c_str();
+      str.encodeXMLSelf();
+      return str;
+    }
+
+    void string::encodeXMLSelf(){
+      replaceSelf("&amp;","&");
+      replaceSelf("&","&amp;");
+      
+      replaceSelf("&lt;","<");
+      replaceSelf("<","&lt;");
+      
+      replaceSelf("&gt;","<");
+      replaceSelf("<","&gt;");
+    }
+
+    
+    
     void string::toUnicodeSelf(){
         char *pszUnicode=new char[privatelength*6+1];
 

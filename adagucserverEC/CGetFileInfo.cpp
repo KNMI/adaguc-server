@@ -3,6 +3,7 @@
 
 const char *CGetFileInfo::className="CGetFileInfo";
 
+
 CT::string CGetFileInfo::getLayersForFile(const char *filename){
   int status = 0;
   CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObject(NULL,filename);
@@ -20,6 +21,8 @@ CT::string CGetFileInfo::getLayersForFile(const char *filename){
     fileInfo+="<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n";
     fileInfo+="<Configuration>\n";
     fileInfo+="\n";
+    fileInfo+="  <!--header-->\n";
+    fileInfo+="\n";
        
     for(size_t j=0;j<variableList.size();j++){
       //printf("%s\n",variableList[j].c_str());
@@ -29,9 +32,28 @@ CT::string CGetFileInfo::getLayersForFile(const char *filename){
       CT::string name = variableList[j].c_str();
       
       CT::string title = variableList[j].c_str();
+      
+      CT::string filePath = CDirReader::makeCleanPath(filename);
+      
+      filePath.setSize(filePath.lastIndexOf("/")+1);
+      
+      
+      
+      
       try{
         title = var->getAttribute("long_name")->toString();
       }catch(int e){
+      }
+      
+      CT::string abstract = title;
+      
+      try{
+        abstract = var->getAttribute("abstract")->toString();
+      }catch(int e){
+        try{
+          abstract = var->getAttribute("description")->toString();
+        }catch(int e){
+        }
       }
       
       CT::string standardName = "";
@@ -48,18 +70,19 @@ CT::string CGetFileInfo::getLayersForFile(const char *filename){
       }
       
       fileInfo+="  <Layer type=\"database\">\n";
-      fileInfo+="    <FilePath filter=\".*\\.nc$\">[DATASETDIRECTORY]</FilePath>\n";
-      fileInfo.printconcat("    <Name>%s</Name>\n",name.c_str());
-      fileInfo.printconcat("    <Title>%s</Title>\n",title.c_str());
-      fileInfo.printconcat("    <Variable>%s</Variable>\n",variableList[j].c_str());
-      fileInfo.printconcat("    <MetadataURL>[METADATAURL]</MetadataURL>\n");
-      fileInfo.printconcat("    <Abstract>test abstract</Abstract>\n");
+      fileInfo.printconcat("    <FilePath filter=\".*\\.nc$\">%s</FilePath>\n",filePath.encodeXML().c_str());
+      fileInfo.printconcat("    <Name>%s</Name>\n",name.encodeXML().c_str());
+      fileInfo.printconcat("    <Title>%s</Title>\n",title.encodeXML().c_str());
+      fileInfo.printconcat("    <Variable>%s</Variable>\n",variableList[j].encodeXML().c_str());
+      //fileInfo.printconcat("    <MetadataURL>[METADATAURL]</MetadataURL>\n");
+      fileInfo.printconcat("    <Abstract>%s</Abstract>\n",abstract.encodeXML().c_str());
       fileInfo+="  </Layer>\n";
       fileInfo+="\n";  
     }
     
 
-    
+    fileInfo+="  <!--footer-->\n";
+    fileInfo+="\n";
     fileInfo+="</Configuration>\n";
   }catch(int e){
     
