@@ -364,6 +364,18 @@ int CRequest::process_wms_getfeatureinfo_request(){
       CDBDebug("WMS GETFEATUREINFO %s",srvParam->WMSLayers[j].c_str());
     }
   return process_all_layers();
+//   CFile header;
+//   int status=header.     open("/nobackup/users/plieger/cpp/adagucserver/adagucserver/data/","./XMLTemplates/WMS_1.3.0_GetFeatureInfo_GML_WFS.dat");
+//   
+//   if(status!=0){
+//     CDBError("Not fouind");
+//     return 1;
+//   }
+//   CT::string XMLDoc;
+//   XMLDoc.copy(header.data);
+//   printf("%s%c%c\n","Content-Type:text/xml",13,10);
+//   printf("%s",XMLDoc.c_str());
+//   return 0;
 }
 
 int CRequest::process_wcs_getcoverage_request(){
