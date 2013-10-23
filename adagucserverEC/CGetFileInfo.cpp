@@ -33,9 +33,8 @@ CT::string CGetFileInfo::getLayersForFile(const char *filename){
       
       CT::string title = variableList[j].c_str();
       
-      CT::string filePath = CDirReader::makeCleanPath(filename);
-      
-      filePath.setSize(filePath.lastIndexOf("/")+1);
+      //CT::string filePath = CDirReader::makeCleanPath(filename);
+      //filePath.setSize(filePath.lastIndexOf("/")+1);
       
       
       
@@ -62,15 +61,15 @@ CT::string CGetFileInfo::getLayersForFile(const char *filename){
       }catch(int e){
       }
       
-      if(standardName.length()>0){
+      /*if(standardName.length()>0){
         
        if(standardName.equals(variableList[j].c_str())==false){
           name.printconcat("_%s",standardName.c_str());
         }
-      }
+      }*/
       
       fileInfo+="  <Layer type=\"database\">\n";
-      fileInfo.printconcat("    <FilePath filter=\".*\\.nc$\">%s</FilePath>\n",filePath.encodeXML().c_str());
+      fileInfo.printconcat("    <FilePath filter=\".*\\.nc$\">%s</FilePath>\n","[DATASETPATH]");
       fileInfo.printconcat("    <Name>%s</Name>\n",name.encodeXML().c_str());
       fileInfo.printconcat("    <Title>%s</Title>\n",title.encodeXML().c_str());
       fileInfo.printconcat("    <Variable>%s</Variable>\n",variableList[j].encodeXML().c_str());
