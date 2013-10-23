@@ -371,12 +371,14 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   if(srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
     //drawImage.setAntiAliased(false);
     //drawImage.setTrueColor(false);
+    
     int w = LEGEND_WIDTH;
     int h = LEGEND_HEIGHT;
     if(srvParam->Geo->dWidth!=1)w=srvParam->Geo->dWidth;
     if(srvParam->Geo->dHeight!=1)h=srvParam->Geo->dHeight;
     
     status = drawImage.createImage(w,h);
+    
     if(status != 0) return 1;
   }
   if(srvParam->requestType==REQUEST_WMS_GETFEATUREINFO){
@@ -3512,7 +3514,11 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
       legendImage->crop(2,2);
       return 0;
   }
-
+  //legendImage->enableTransparency(true);
+      //legendImage->rectangle(0,0,20,20,CColor(0,255,0,0),CColor(0,0,255,0));
+      //legendImage->setText("RGBA",5,0,0,255,-1);  
+      //legendImage->crop(40,40);
+      //return 0;
   if(legendType == cascaded){
       legendImage->crop(2,2);
       return 0;
@@ -3750,7 +3756,8 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
       units.concat(&dataSource->dataObject[0]->units);
     }
     if(units.length()>0)legendImage->setText(units.c_str(),units.length(),2+pLeft,int(legendHeight)-14+pTop,248,-1);
-    //legendImage->crop(4,4);    
+    //legendImage->crop(2,2);    
+    //return 0;
   }
   
   //Draw legend with fixed intervals

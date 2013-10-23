@@ -1243,6 +1243,7 @@ unsigned char r,g,b,a;
         #ifdef ADAGUC_USE_CAIRO
         simage->cairo->getPixel(sx,sy,r,g,b,a);
         cairo-> pixelBlend(dx,dy,r,g,b,a);
+        //cairo-> pixel(dx,dy,r,g,b,a);
         #else
         simage->wuLine->getPixel(sx,sy,r,g,b,a);
         wuLine-> pixelBlend(dx,dy,r,g,b,a);
