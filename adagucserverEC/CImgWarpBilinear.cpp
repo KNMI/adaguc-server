@@ -41,7 +41,7 @@
 
 #define CONTOURDEFINITIONLOOKUPTYPE unsigned char
 #define CONTOURDEFINITIONLOOKUPLENGTH 16
-#define DISTANCEFIELDTYPE unsigned short
+#define DISTANCEFIELDTYPE unsigned char
 
 /*#define CONTOURDEFINITIONLOOKUPTYPE unsigned short
   #define CONTOURDEFINITIONLOOKUPLENGTH 256
@@ -915,20 +915,18 @@ delete[] valObj;
   * @param contourinterval The regular number to check against
   * @return True on contour with this interval needed, false on do nothing.
   */
- int checkContourRegularInterval(float *val,float contourinterval){
-   if(contourinterval==0.0f)return 0;
+ int checkContourRegularInterval(float *val,float &contourinterval){
    float allowedDifference=contourinterval/100000;
-   float min,max;
-   min=val[0];max=val[0];
-   for(int j=1;j<4;j++){
-     if(val[j]<min)min=val[j];
-     if(val[j]>max)max=val[j];
-   }
-   min=convertValueToClass(min,contourinterval);
-   max=convertValueToClass(max,contourinterval)+contourinterval;
-   float difference=max-min;
-   if((max-min)/contourinterval<3&&(max-min)/contourinterval>1&&difference>allowedDifference){
-     for(double c=min;c<max;c=c+contourinterval){
+   float a,b;
+   a = (val[0]<val[1]?val[0]:val[1]);b = (val[2]<val[3]?val[2]:val[3]);
+   float min=a<b?a:b;
+   a = (val[0]>val[1]?val[0]:val[1]);b = (val[2]>val[3]?val[2]:val[3]);
+   float max=a>b?a:b;
+   float iMin=int(min/contourinterval); if(min<0)iMin-=1;iMin*=contourinterval;
+   float iMax=int(max/contourinterval); if(max<0)iMax-=1;iMax*=contourinterval+contourinterval;
+   float difference=iMax-iMin;
+   if((iMax-iMin)/contourinterval<3&&(iMax-iMin)/contourinterval>1&&difference>allowedDifference){
+     for(double c=iMin;c<iMax;c=c+contourinterval){
        if((val[0]>=c&&val[1]<c)||(val[0]>c&&val[1]<=c)||(val[0]<c&&val[1]>=c)||(val[0]<=c&&val[1]>c)||
          (val[0]>c&&val[2]<=c)||(val[0]>=c&&val[2]<c)||(val[0]<=c&&val[2]>c)||(val[0]<c&&val[2]>=c))
        {
@@ -1005,445 +1003,9 @@ delete[] valObj;
   }
   
  
- void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float interval,CDataSource *dataSource,CDrawImage *drawImage,bool drawLine, bool drawShade, bool drawText){
-  
-   //When using min/max stretching, the shadeclasses need to be extended according to its shade interval
-   if(dataSource->stretchMinMax==true){
-     if(dataSource->statistics!=NULL){
-       float legendInterval=interval;
-       float minValue=(float)dataSource->statistics->getMinimum();
-       float maxValue=(float)dataSource->statistics->getMaximum();
-       float iMin=convertValueToClass(minValue,legendInterval);
-       float iMax=convertValueToClass(maxValue,legendInterval)+legendInterval;
-       //Calculate new scale and offset for this:
-       float ls=240/((iMax-iMin));
-       float lo=-(iMin*ls);
-       dataSource->legendScale=ls;
-       dataSource->legendOffset=lo;
-     }
-   }
-   #ifdef CImgWarpBilinear_DEBUG 
-   CDBDebug("scale=%f offset=%f",dataSource->legendScale,dataSource->legendOffset);
-   #endif  
-   
-   
-  
-   float ival = interval;
-   //   float ivalLine = interval;
-   //float idval=int(ival+0.5);
-   //  if(idval<1)idval=1;
-   //TODO
-   
-   char szTemp[8192];
-   szTemp[0]='\0';
-   float currentTextValue = 0;
-   int contourDefinitionIndex = -1;
-   
-   int dImageWidth=drawImage->Geo->dWidth+1;
-   int dImageHeight=drawImage->Geo->dHeight+1;
-   
-   size_t imageSize=(dImageHeight+0)*(dImageWidth+1);
-   #ifdef CImgWarpBilinear_DEBUG
-   CDBDebug("imagesize = %d",(int)imageSize);
-   #endif
-   
-   //Create a distance field, this is where the line information will be put in.
-   DISTANCEFIELDTYPE *distance = new DISTANCEFIELDTYPE[imageSize];
-   memset (distance,0,imageSize*sizeof(DISTANCEFIELDTYPE));
-   
-   CONTOURDEFINITIONLOOKUPTYPE *contourLineDefinitionLookUp = new CONTOURDEFINITIONLOOKUPTYPE[imageSize];
-   memset (contourLineDefinitionLookUp,0,imageSize*sizeof(CONTOURDEFINITIONLOOKUPTYPE));
-   
-
-   
-   //TODO "pleister" om contourlijnen goed te krijgen.
-   if(1==2){
-     #ifdef CImgWarpBilinear_TIME
-     StopWatch_Stop("substracting ival/100");
-     #endif
-
-     float substractVal=ival/100;
-     for(int y=0;y<dImageHeight;y++){
-       for(int x=0;x<dImageWidth;x++){
-         valueData[x+y*dImageWidth]-=substractVal;
-       }
-     }
-     fNodataValue-=substractVal;
-     #ifdef CImgWarpBilinear_TIME
-     StopWatch_Stop("finished substracting ival/100");
-     #endif
-   }
-   
-   #ifdef CImgWarpBilinear_DEBUG
-   CDBDebug("start shade/contour with nodatavalue %f",fNodataValue);
-   #endif
-  
-   float val[4];
-   
-   int snr=0;
-   int numShadeDefs=(int)shadeDefinitions.size();
-   float shadeDefMin[numShadeDefs];
-   float shadeDefMax[numShadeDefs];
-   unsigned char shadeColorR[numShadeDefs];
-   unsigned char shadeColorG[numShadeDefs];
-   unsigned char shadeColorB[numShadeDefs];
-   for(snr=0;snr<numShadeDefs;snr++){
-     shadeDefMin[snr]=shadeDefinitions[snr].min;
-     shadeDefMax[snr]=shadeDefinitions[snr].max;
-     
-     if(shadeDefinitions[snr].foundColor){
-      shadeColorR[snr]=shadeDefinitions[snr].fillColor.r;
-      shadeColorG[snr]=shadeDefinitions[snr].fillColor.g;
-      shadeColorB[snr]=shadeDefinitions[snr].fillColor.b;
-     }else{
-       CColor color=drawImage->getColorForIndex(getPixelIndexForValue(dataSource,shadeDefMin[snr]));
-       shadeColorR[snr]=color.r;
-       shadeColorG[snr]=color.g;
-       shadeColorB[snr]=color.b;
-     }
-   }
-   int lastShadeDef=0;
-   for(int y=0;y<dImageHeight-1;y++){
-     for(int x=0;x<dImageWidth-1;x++){
-       size_t p1 = size_t(x+y*dImageWidth);
-       val[0] = valueData[p1];
-       val[1] = valueData[p1+1];
-       val[2] = valueData[p1+dImageWidth];
-       val[3] = valueData[p1+dImageWidth+1];
-       
-       //Check if all pixels have values...
-       if(val[0]!=fNodataValue&&val[1]!=fNodataValue&&val[2]!=fNodataValue&&val[3]!=fNodataValue&&
-         val[0]==val[0]&&val[1]==val[1]&&val[2]==val[2]&&val[3]==val[3]
-       ){
-         //Draw shading
-         if(drawShade){
-           if(interval!=0){
-              setValuePixel(dataSource,drawImage,x,y,convertValueToClass(val[0],interval));
-           }else{
-             int done=numShadeDefs;
-             if(val[0]>=shadeDefMin[lastShadeDef]&&val[0]<shadeDefMax[lastShadeDef]){
-               done=-1;
-            }else{
-              do{
-                lastShadeDef++;if(lastShadeDef>numShadeDefs-1)lastShadeDef=0;
-                done--;
-                if(val[0]>=shadeDefMin[lastShadeDef]&&val[0]<shadeDefMax[lastShadeDef]){
-                  done=-1;
-                }
-              }while(done>0);
-             }
-             if(done==-1){
-               drawImage->setPixelTrueColor(x,y,shadeColorR[lastShadeDef],shadeColorG[lastShadeDef],shadeColorB[lastShadeDef]);
-             }
-           }
-         }
-         //Draw contourlines
-         if(drawLine||drawText){
-           contourLineDefinitionLookUp[p1] = checkIfContourRequired(val);
-           if(contourLineDefinitionLookUp[p1]!=0){
-             distance[p1]=1;
-           }
-         }
-       }
-     }
-   }
-
-   #ifdef CImgWarpBilinear_DEBUG
-   CDBDebug("finished shade/contour");
-   #endif
-
-    #ifdef CImgWarpBilinear_DEBUG
-    CDBDebug("Starting to draw lines and text");
-    #endif
-    
-    int xdir[]={0,-1, 0, 1,-1,-1, 1, 1,0,-1,-2,-2,-2,-2,-2,-1, 0, 1, 2, 2, 2, 2, 2, 1, 0}; //25 possible directions to try;
-    int ydir[]={1,0 ,-1, 0, 1,-1,-1, 1,2, 2, 2, 1, 0,-1,-2,-2,-2,-2,-2,-1, 0, 1, 2, 2, 0};
-    //A line can be traversed in two directions:
-    int secondDirX,secondDirY;
-    bool secondDirAvailable=false;
-    int linePointDistance=5;
-    
-    //Loop distance image and create lines (lines need to be done in two directions)
-    for(int y=0;y<dImageHeight;y++){
-      for(int x=0;x<dImageWidth;x++){     
-        if(secondDirAvailable){
-          secondDirAvailable=false;
-          x=secondDirX;
-          y=secondDirY;
-          for(int j=0;j<25;j++){
-            if(x+xdir[j]>=1&&x+xdir[j]<dImageWidth-1&&
-              y+ydir[j]>=1&&y+ydir[j]<dImageHeight-1){
-              if(distance[x+xdir[j]+(y+ydir[j])*dImageWidth]==1){
-                x=x+xdir[j];
-                y=y+ydir[j];
-                break;
-              }
-            }  
-          }
-        }
-        
-        int maxneighbordist=(int)distance[x+y*dImageWidth];
-        
-        //1 means that there is a line, but algorithm has not been there yet.
-        if(maxneighbordist==1){
-          //2 means that we are working on contour lines
-          distance[x+y*dImageWidth]=2;
-          maxneighbordist++;
-          int j,tx=x,ty=y;
-          int startX=x,startY=y;
-          
-          //Remember the start of this line segment to traverse later in opposite direction
-          if(secondDirAvailable==false){
-            secondDirAvailable=true;
-            secondDirX=x;secondDirY=y;
-          }
-          
-          //int col;
-          CColor linecolor;
-          CColor textcolor;
-          float w;
-          
-          int lastXdir=-10,lastYdir;
-          int distanceFromStart=0;
-          int drawnText=0;
-          int busyDrawingText=0;
-          int drawTextStartX=0;
-          int drawTextStartY=0;
-          int needToDrawText=0;
-          int textAreaLeft=25;//int(float(dImageWidth)*(1.0f/10.0f));
-          int textAreaRight=dImageWidth-25;//int(float(dImageWidth)*(9.0f/10.0f));
-          drawImage->moveTo(x,y);
-          do{
-            for(j=0;j<24;j++){
-              if(x+xdir[j]>=1&&x+xdir[j]<dImageWidth-1&&
-                y+ydir[j]>=1&&y+ydir[j]<dImageHeight-1){
-                size_t curP = x+xdir[j]+(y+ydir[j])*dImageWidth;
-                int d=distance[curP];
-              
-                //Calculate whether we need to draw some text (busyDrawingText)
-                if(drawText&&busyDrawingText==0){
-                  if(d%500==499){
-                    drawnText=0;needToDrawText=0;
-                  }
-                  if(needToDrawText==0){
-                    if((d%100==29)&&x>textAreaLeft&&x<textAreaRight&&y>24&&y<dImageHeight-25&&drawnText==0){
-                      needToDrawText=1;
-                    }
-                  }else{
-                    if(drawnText==0){
-                      if(lastXdir!=-10&&lastYdir==0){
-                        if(abs(startY-y)==0&&d>25){
-                          //drawImage->line(x,y,x+4,y+4,2,240);
-                          drawTextStartX=x;
-                          drawTextStartY=y;
-                          drawnText=1;
-                          needToDrawText=0;
-                          unsigned int index = contourLineDefinitionLookUp[curP];
-                          if(index > 0){
-                            
-                            contourDefinitionIndex = (index-1)%CONTOURDEFINITIONLOOKUPLENGTH;
-                            int definedIntervalIndex = ((index-1)/CONTOURDEFINITIONLOOKUPLENGTH)-1;
-                            
-                            ContourDefinition *contourDefinition = &contourDefinitions[contourDefinitionIndex];
-                            if(definedIntervalIndex==-1){
-                              currentTextValue = convertValueToClass(val[0]+contourDefinition->continuousInterval/2,contourDefinition->continuousInterval);
-                            }else{
-                              currentTextValue = contourDefinition->definedIntervals[definedIntervalIndex];
-                            }
-                            snprintf(szTemp,8000,contourDefinition->textFormat.c_str(),currentTextValue);
-                            busyDrawingText=int(float(strlen(szTemp))*1.3)+2;
-                          }else{
-                            contourDefinitionIndex = -1;
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-                //\DrawText
-                
-                
-                //Line segment not yet done
-                if(d==1){
-                  lastXdir=xdir[j];
-                  lastYdir=ydir[j];
-                  x=x+lastXdir;
-                  y=y+lastYdir;
-                  maxneighbordist++;
-                  size_t p=x+y*dImageWidth;
-                  
-                  val[0] = valueData[p];
-                  val[1] = valueData[p+1];
-                  val[2] = valueData[p+dImageWidth];
-                  val[3] = valueData[p+dImageWidth+1];
-                  
-                  distance[p]=maxneighbordist;
-                  
-                  distanceFromStart = maxneighbordist-3;
-                  
-                  if(distanceFromStart%linePointDistance==0){
-                    linecolor=CColor(0,0,0,255);
-                    textcolor=CColor(0,0,0,255);
-                    w=0.4;
-                    if(contourDefinitionIndex!=-1){
-                      ContourDefinition *contourDefinition = &contourDefinitions[contourDefinitionIndex];
-                      linecolor=contourDefinition->linecolor;
-                      textcolor=contourDefinition->textcolor;
-                      w=contourDefinition->lineWidth;
-                    }
-//                     //unsigned int index = contourLineDefinitionLookUp[p];
-//                     //if(index != 0)
-//                     {
-//                       int contourDefinitionIndex = -1;
-//                       int closestContourIntervalIntervalIndex = -1;
-//                       float closestIntervalIntervalDistance = 0;
-//                       bool firstIntervalContourEntry =false;
-//                       
-//                       
-//                       int closestContourDefinedIntervalIndex = -1;
-//                       float closestDefinedIntervalDistance = 0;
-//                       bool firstDefinedContourEntry =false;
-//                       
-//                       for(size_t j=0;j<contourDefinitions.size();j++){
-//                         ContourDefinition *contourDefinition = &contourDefinitions[j];
-//                         if(contourDefinition->definedIntervals.size()==0){
-//                           float interval = contourDefinition->continuousInterval;
-//                           if(interval>0){
-//                             float value = currentTextValue;
-//                             
-//                             float closestInterval = interval;
-//                           
-//                             while(value<closestInterval){
-//                               closestInterval-=interval;
-//                             }
-//                             while(value>closestInterval){
-//                               closestInterval+=interval;
-//                             }
-//                             
-//                             float closestLeft = closestInterval-value;
-//                             float closestRight = value-(closestInterval-interval);
-//                             float distance = closestLeft<closestRight?closestLeft:closestRight;
-//                             if(closestIntervalIntervalDistance>distance || firstIntervalContourEntry == false){
-//                               firstIntervalContourEntry = true;
-//                               closestIntervalIntervalDistance = distance;
-//                               closestContourIntervalIntervalIndex = j;
-//                             }
-//                             
-//                             //CDBDebug("CONTINOUS: %d %f %f ",j,value,distance);
-//                           }
-//                         }else{
-//                           for(size_t i=0;i<contourDefinition->definedIntervals.size();i++){
-//                             float distance = fabs(currentTextValue-contourDefinition->definedIntervals[i]);
-//                             if(closestDefinedIntervalDistance>distance || firstDefinedContourEntry==false){
-//                               firstDefinedContourEntry = true;
-//                               closestDefinedIntervalDistance = distance;
-//                               closestContourDefinedIntervalIndex = j;
-//                             }
-//                           }
-//                         }
-//                       }
-//                       
-//                       if(closestContourIntervalIntervalIndex !=-1 && closestContourDefinedIntervalIndex !=-1){
-//                         if(closestDefinedIntervalDistance<closestIntervalIntervalDistance){
-//                            contourDefinitionIndex = closestContourDefinedIntervalIndex;
-//                         }else{
-//                            contourDefinitionIndex = closestContourIntervalIntervalIndex;
-//                         }
-//                       }else{
-//                         if(closestContourIntervalIntervalIndex !=-1){
-//                           //CDBDebug("Closest continuous = %d with %f for %f",contourDefinitionIndex,contourDefinitions[contourDefinitionIndex].continuousInterval,val[0]);
-//                           contourDefinitionIndex = closestContourIntervalIntervalIndex;
-//                         }
-// 
-//                         if(closestContourDefinedIntervalIndex != -1){
-//                           if(closestContourDefinedIntervalIndex == 2){
-//                             CDBDebug("Closest defined = %d for %f",closestContourDefinedIntervalIndex,val[0]);
-//                           }
-//                           contourDefinitionIndex = closestContourDefinedIntervalIndex;
-//                           
-//                         }
-//                       }
-//                       
-//                       if(contourDefinitionIndex != -1){
-//                         ContourDefinition *contourDefinition = &contourDefinitions[contourDefinitionIndex];
-//                         linecolor=contourDefinition->linecolor;
-//                         textcolor=contourDefinition->textcolor;
-//                         w=contourDefinition->lineWidth;
-//                       }else{
-//                         linecolor=CColor(0,0,255,255);;
-//                         textcolor=CColor(0,0,255,255);;
-//                         w=0.1;
-//                       }
-//                     }
-//                     
-                    
-                    if(drawLine){
-
-                      //Draw Line, no text
-                      if(busyDrawingText<=0){
-                        drawImage->lineTo(x,y,w,linecolor);
-                      }
-                      
-                      //Draw the text, draw no line
-                      if(busyDrawingText>0){
-                        drawImage->moveTo(x,y);
-                        busyDrawingText--;
-                        if(busyDrawingText==0){
-                          //Really draw text when busyDrawingText is zero
-                          float l=strlen(szTemp);
-                          double angle;
-                          if(y-drawTextStartY!=0){
-                            angle=atan((double(y-drawTextStartY))/(double(drawTextStartX-x)));
-                          }else angle=0;
-                          float cx=(drawTextStartX+x)/2;
-                          float cy=(drawTextStartY+y)/2;
-                          float tx=cx;
-                          float ty=cy;
-                          float ca=cos(angle);
-                          float sa=sin(angle);
-                          float offX=((ca*l*2.3)+(sa*-2.3));
-                          float offY=(-(sa*l*3.0)+(ca*-2.3));
-                          tx-=offX;
-                          ty-=offY;
-                          drawImage->drawText( int(tx)+1, int(ty)+1, angle,szTemp,textcolor);
-                          szTemp[0]='\0';
-                        }
-                      }
-                    }else lastXdir=-10;
-                    startX=x;startY=y;
-                  }
-                  j=0;
-                }
-              }
-            }
-          }while(j<24);
-          drawImage->endLine();
-          
-          //Draw last connecting line segment
-          if(drawLine){
-            if(lastXdir!=-10&&distanceFromStart > 1){
-              drawImage->line(x+lastXdir*2,y+lastYdir,startX-lastXdir*2,startY-lastYdir,w,linecolor);
-            }
-          }
-          x=tx;y=ty;
-        }
-      }
-    }
-
-       #ifdef CImgWarpBilinear_DEBUG
-       CDBDebug("Deleting distance[]");
-       #endif
-       
-       delete[] distance;
-       delete[] contourLineDefinitionLookUp;
-       #ifdef CImgWarpBilinear_DEBUG
-       CDBDebug("Finished drawing lines and text");
-       #endif
-       
-     }
      
      
-     void CImgWarpBilinear::smoothData(float *valueData,float fNodataValue,int smoothWindow, int W,int H){
+void CImgWarpBilinear::smoothData(float *valueData,float fNodataValue,int smoothWindow, int W,int H){
        
        //SmootH!
        #ifdef CImgWarpBilinear_TIME
@@ -1633,3 +1195,387 @@ int CImgWarpBilinear::set(const char *pszSettings){
   return 0;
 }
 
+
+int xdir[]={-1, 1, 0, 0,-1, 1,-1, 1};
+int ydir[]={ 0, 0, 1,-1,-1,-1, 1, 1};
+void traverseLine(CDrawImage * drawImage,DISTANCEFIELDTYPE *distance,float *valueField,int lineX,int lineY,int dImageWidth,int dImageHeight,float lineWidth,CColor lineColor,CColor textColor,ContourDefinition *contourDefinition,DISTANCEFIELDTYPE lineMask,bool forwardOrBackwards,bool drawText){
+  drawImage->moveTo(lineX,lineY);
+  bool foundLine = true;
+  size_t p = lineX+lineY*dImageWidth;
+  int lineDistance = 5;
+  int textDistance = 150;
+  int textBusy=0;
+  
+  int textDCounter =10;
+  if(forwardOrBackwards == false)textDCounter = textDistance;
+  int ld = lineDistance;
+  float currentTextValue;
+  CT::string text = "";
+  int textXStart,textYStart,textXEnd,textYEnd;
+  
+  while(foundLine){
+    //distance[p]&=~lineMask;
+    distance[p]=0;
+    foundLine = false;
+    for(int j=0;j<8;j++){
+      int tx = lineX+xdir[j];
+      int ty = lineY+ydir[j];
+        
+      if(tx>=0&&tx<dImageWidth&&ty>=0&&ty<dImageHeight){
+        p = lineX+xdir[j]+(lineY+ydir[j])*dImageWidth;
+        if(distance[p]&lineMask){
+
+          lineX=tx;
+          lineY=ty;
+          foundLine = true;
+          break;
+        }
+      }  
+    }
+   
+    
+    
+    
+    ld--;
+    if(ld<=0||foundLine == false){
+      textDCounter--;
+      
+      if(drawText)
+      {
+        if(textDCounter < 1){
+          textDCounter = textDistance;
+          
+          
+          if(contourDefinition->definedIntervals.size()>0){
+            //Check for intervals
+            float v = valueField[p];
+            float closestValue;
+            float definedIntervalIndex = 0;
+            for(size_t j=0;j<contourDefinition->definedIntervals.size();j++){
+              float c =contourDefinition->definedIntervals[j];
+              float d= fabs(v-c);
+              if(j==0)closestValue = d;else{
+                if(d<closestValue)closestValue=d;
+                definedIntervalIndex = j;
+              }
+              
+            }
+            currentTextValue = contourDefinition->definedIntervals[definedIntervalIndex];
+
+          }else{
+            currentTextValue = convertValueToClass(valueField[p]+contourDefinition->continuousInterval/2,contourDefinition->continuousInterval);
+          }
+
+        
+          
+          text.print(contourDefinition->textFormat.c_str(),currentTextValue);
+          textBusy = 3+text.length()*2;;
+          textXStart = lineX;
+          textYStart = lineY;
+        }
+        if(textBusy>0)textBusy--;
+        
+        if(textBusy == 2 ){
+          textXEnd = lineX;
+          textYEnd = lineY;
+
+
+        
+          
+          
+
+          
+          
+          double angle;
+          if(textYEnd-textYStart!=0){
+
+            angle=atan((double(textYEnd-textYStart))/(double(textXStart-textXEnd)));
+
+          }else angle=0;
+          float cx=(textXStart+textXEnd)/2;
+          float cy=(textYStart+textYEnd)/2;
+          float tx=cx;
+          float ty=cy;
+          float ca=cos(angle);
+          float sa=sin(angle);
+          float offX=((ca*text.length()*2.3)+(sa*-2.3));
+          float offY=(-(sa*text.length()*3.0)+(ca*-2.3));
+          tx-=offX;
+          ty-=offY;
+          drawImage->drawText( int(tx)+1, int(ty)+1, angle,text.c_str(),textColor);
+          
+        }
+        
+        if(textBusy == 1){
+          drawImage->moveTo(lineX,lineY);
+        }
+      }
+      if(textBusy == 0 ){
+       
+
+
+        
+        drawImage->lineTo(lineX,lineY,lineWidth,lineColor);
+      }
+      ld = lineDistance;
+    }
+  }
+  drawImage->endLine();
+}
+
+
+void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float interval,CDataSource *dataSource,CDrawImage *drawImage,bool drawLine, bool drawShade, bool drawText){
+  
+   //When using min/max stretching, the shadeclasses need to be extended according to its shade interval
+   if(dataSource->stretchMinMax==true){
+     if(dataSource->statistics!=NULL){
+       float legendInterval=interval;
+       float minValue=(float)dataSource->statistics->getMinimum();
+       float maxValue=(float)dataSource->statistics->getMaximum();
+       float iMin=convertValueToClass(minValue,legendInterval);
+       float iMax=convertValueToClass(maxValue,legendInterval)+legendInterval;
+       //Calculate new scale and offset for this:
+       float ls=240/((iMax-iMin));
+       float lo=-(iMin*ls);
+       dataSource->legendScale=ls;
+       dataSource->legendOffset=lo;
+     }
+   }
+   #ifdef CImgWarpBilinear_DEBUG 
+   CDBDebug("scale=%f offset=%f",dataSource->legendScale,dataSource->legendOffset);
+   #endif  
+   
+   
+  
+   float ival = interval;
+   //   float ivalLine = interval;
+   //float idval=int(ival+0.5);
+   //  if(idval<1)idval=1;
+   //TODO
+   
+   char szTemp[8192];
+   szTemp[0]='\0';
+   float currentTextValue = 0;
+   int contourDefinitionIndex = -1;
+   
+   int dImageWidth=drawImage->Geo->dWidth+1;
+   int dImageHeight=drawImage->Geo->dHeight+1;
+   
+   size_t imageSize=(dImageHeight+0)*(dImageWidth+1);
+   #ifdef CImgWarpBilinear_DEBUG
+   CDBDebug("imagesize = %d",(int)imageSize);
+   #endif
+   
+   //Create a distance field, this is where the line information will be put in.
+   DISTANCEFIELDTYPE *distance = new DISTANCEFIELDTYPE[imageSize];
+  
+  
+/*   
+
+   
+   //TODO "pleister" om contourlijnen goed te krijgen.
+   if(1==2){
+     #ifdef CImgWarpBilinear_TIME
+     StopWatch_Stop("substracting ival/100");
+     #endif
+
+     float substractVal=ival/100;
+     for(int y=0;y<dImageHeight;y++){
+       for(int x=0;x<dImageWidth;x++){
+         valueData[x+y*dImageWidth]-=substractVal;
+       }
+     }
+     fNodataValue-=substractVal;
+     #ifdef CImgWarpBilinear_TIME
+     StopWatch_Stop("finished substracting ival/100");
+     #endif
+   }*/
+   
+   #ifdef CImgWarpBilinear_DEBUG
+   CDBDebug("start shade/contour with nodatavalue %f",fNodataValue);
+   #endif
+  
+   float val[4];
+   
+   int snr=0;
+   int numShadeDefs=(int)shadeDefinitions.size();
+   float shadeDefMin[numShadeDefs];
+   float shadeDefMax[numShadeDefs];
+   unsigned char shadeColorR[numShadeDefs];
+   unsigned char shadeColorG[numShadeDefs];
+   unsigned char shadeColorB[numShadeDefs];
+   for(snr=0;snr<numShadeDefs;snr++){
+     shadeDefMin[snr]=shadeDefinitions[snr].min;
+     shadeDefMax[snr]=shadeDefinitions[snr].max;
+     
+     if(shadeDefinitions[snr].foundColor){
+      shadeColorR[snr]=shadeDefinitions[snr].fillColor.r;
+      shadeColorG[snr]=shadeDefinitions[snr].fillColor.g;
+      shadeColorB[snr]=shadeDefinitions[snr].fillColor.b;
+     }else{
+       CColor color=drawImage->getColorForIndex(getPixelIndexForValue(dataSource,shadeDefMin[snr]));
+       shadeColorR[snr]=color.r;
+       shadeColorG[snr]=color.g;
+       shadeColorB[snr]=color.b;
+     }
+   }
+   int lastShadeDef=0;
+   //Shade
+   for(int y=0;y<dImageHeight-1;y++){
+     for(int x=0;x<dImageWidth-1;x++){
+       size_t p1 = size_t(x+y*dImageWidth);
+       val[0] = valueData[p1];
+       val[1] = valueData[p1+1];
+       val[2] = valueData[p1+dImageWidth];
+       val[3] = valueData[p1+dImageWidth+1];
+       
+       //Check if all pixels have values...
+       if(val[0]!=fNodataValue&&val[1]!=fNodataValue&&val[2]!=fNodataValue&&val[3]!=fNodataValue&&
+         val[0]==val[0]&&val[1]==val[1]&&val[2]==val[2]&&val[3]==val[3]
+       ){
+         //Draw shading
+         if(drawShade){
+           if(interval!=0){
+              setValuePixel(dataSource,drawImage,x,y,convertValueToClass(val[0],interval));
+           }else{
+             int done=numShadeDefs;
+             if(val[0]>=shadeDefMin[lastShadeDef]&&val[0]<shadeDefMax[lastShadeDef]){
+               done=-1;
+            }else{
+              do{
+                lastShadeDef++;if(lastShadeDef>numShadeDefs-1)lastShadeDef=0;
+                done--;
+                if(val[0]>=shadeDefMin[lastShadeDef]&&val[0]<shadeDefMax[lastShadeDef]){
+                  done=-1;
+                }
+              }while(done>0);
+             }
+             if(done==-1){
+               drawImage->setPixelTrueColor(x,y,shadeColorR[lastShadeDef],shadeColorG[lastShadeDef],shadeColorB[lastShadeDef]);
+             }
+           }
+         }
+       }
+     }
+   }
+   
+   
+   
+   
+
+
+    
+    //int xdir[]={0,-1, 0, 1,-1,-1, 1, 1,0,-1,-2,-2,-2,-2,-2,-1, 0, 1, 2, 2, 2, 2, 2, 1, 0}; //25 possible directions to try;
+    //int ydir[]={1,0 ,-1, 0, 1,-1,-1, 1,2, 2, 2, 1, 0,-1,-2,-2,-2,-2,-2,-1, 0, 1, 2, 2, 0};
+    //int xdir[]={0, 1, 1,  1, 0,-1,-1,-1};
+    //int ydir[]={1, 1, 0, -1,-1,-1, 0, 1};
+
+    
+    int linePointDistance=5;
+    float lineWidth= 4;
+    CColor lineColor = CColor(0,0,0,255);
+    CColor textColor = CColor(0,0,0,255);
+    
+   
+
+    //Determine contour lines
+    memset (distance,0,imageSize*sizeof(DISTANCEFIELDTYPE));
+  
+    for(int y=0;y<dImageHeight-1;y++){
+      for(int x=0;x<dImageWidth-1;x++){
+        size_t p1 = size_t(x+y*dImageWidth);
+        val[0] = valueData[p1];
+        val[1] = valueData[p1+1];
+        val[2] = valueData[p1+dImageWidth];
+        val[3] = valueData[p1+dImageWidth+1];
+        
+        //Check if all pixels have values...
+        if(val[0]!=fNodataValue&&val[1]!=fNodataValue&&val[2]!=fNodataValue&&val[3]!=fNodataValue&&
+          val[0]==val[0]&&val[1]==val[1]&&val[2]==val[2]&&val[3]==val[3]
+        ){
+          //Draw contourlines
+          if(drawLine||drawText){
+            int mask=1;
+            for(size_t j=0;j<contourDefinitions.size();j++){
+              if(contourDefinitions[j].definedIntervals.size()>0){
+                //Check for intervals
+                for(size_t i=0;i<contourDefinitions[j].definedIntervals.size();i++){
+                  float c= contourDefinitions[j].definedIntervals[i];
+                  if(
+                    (val[0]>=c&&val[1]<c)||(val[0]>c&&val[1]<=c)||(val[0]<c&&val[1]>=c)||(val[0]<=c&&val[1]>c)||
+                    (val[0]>c&&val[2]<=c)||(val[0]>=c&&val[2]<c)||(val[0]<=c&&val[2]>c)||(val[0]<c&&val[2]>=c)
+                
+                  ){
+                    distance[p1]|=mask;
+                    break;
+                  }
+                }
+              }else{
+                //Check for continuous lines
+                if(contourDefinitions[j].continuousInterval!=0.0){
+                  float contourinterval = contourDefinitions[j].continuousInterval;
+                  float allowedDifference=contourinterval/100000;
+                  float a,b;
+                  a = (val[0]<val[1]?val[0]:val[1]);b = (val[2]<val[3]?val[2]:val[3]);
+                  //float min=a<b?a:b;
+                  a = (val[0]>val[1]?val[0]:val[1]);b = (val[2]>val[3]?val[2]:val[3]);
+                  //float max=a>b?a:b;
+                  float min,max;
+                  min=val[0];max=val[0];
+                  for(int j=1;j<4;j++){
+                    if(val[j]<min)min=val[j];
+                    if(val[j]>max)max=val[j];
+                  }
+                  float iMin=int(min/contourinterval); if(min<0)iMin-=1;iMin*=contourinterval;
+                  float iMax=int(max/contourinterval); if(max<0)iMax-=1;iMax*=contourinterval;
+                  iMax+=contourinterval;
+                  float difference=iMax-iMin;
+                  if((iMax-iMin)/contourinterval<3&&(iMax-iMin)/contourinterval>1&&difference>allowedDifference){
+                    for(double c=iMin;c<iMax;c=c+contourinterval){
+                      if((val[0]>=c&&val[1]<c)||(val[0]>c&&val[1]<=c)||(val[0]<c&&val[1]>=c)||(val[0]<=c&&val[1]>c)||
+                        (val[0]>c&&val[2]<=c)||(val[0]>=c&&val[2]<c)||(val[0]<=c&&val[2]>c)||(val[0]<c&&val[2]>=c))
+                      {
+                        distance[p1]|=mask;
+                        break;
+                      }
+                    }
+                  }
+              }
+            }
+            mask=mask+mask;
+          }
+        }
+      }
+    }
+  }
+      
+  DISTANCEFIELDTYPE lineMask = 1;
+  for(size_t j=0;j<contourDefinitions.size();j++){
+    lineColor=contourDefinitions[j].linecolor;
+    textColor=contourDefinitions[j].textcolor;
+    lineWidth=contourDefinitions[j].lineWidth;
+    for(int y=0;y<dImageHeight;y++){
+      for(int x=0;x<dImageWidth;x++){     
+        size_t p = x+y*dImageWidth;
+        if(distance[p]&lineMask){
+          traverseLine(drawImage,distance,valueData,x,y,dImageWidth,dImageHeight,lineWidth,lineColor,textColor,&contourDefinitions[j],lineMask,true,drawText);
+          traverseLine(drawImage,distance,valueData,x,y,dImageWidth,dImageHeight,lineWidth,lineColor,textColor,&contourDefinitions[j],lineMask,false,drawText);
+        }
+      }
+    }
+    lineMask=lineMask+lineMask;
+  }
+    
+
+  #ifdef CImgWarpBilinear_DEBUG
+  CDBDebug("Deleting distance[]");
+  #endif
+  
+  delete[] distance;
+  
+  #ifdef CImgWarpBilinear_DEBUG
+  CDBDebug("Finished drawing lines and text");
+  #endif
+       
+}
+ 
