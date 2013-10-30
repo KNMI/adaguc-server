@@ -1202,7 +1202,7 @@ void traverseLine(CDrawImage * drawImage,DISTANCEFIELDTYPE *distance,float *valu
   drawImage->moveTo(lineX,lineY);
   bool foundLine = true;
   size_t p = lineX+lineY*dImageWidth;
-  int lineDistance = 5;
+  int lineDistance = 4;
   int textDistance = 500;
   int textBusy=0;
   
@@ -1255,8 +1255,10 @@ void traverseLine(CDrawImage * drawImage,DISTANCEFIELDTYPE *distance,float *valu
               float c =contourDefinition->definedIntervals[j];
               float d= fabs(v-c);
               if(j==0)closestValue = d;else{
-                if(d<closestValue)closestValue=d;
-                definedIntervalIndex = j;
+                if(d<closestValue){
+                  closestValue=d;
+                  definedIntervalIndex = j;
+                }
               }
               
             }
@@ -1269,13 +1271,13 @@ void traverseLine(CDrawImage * drawImage,DISTANCEFIELDTYPE *distance,float *valu
         
           
           text.print(contourDefinition->textFormat.c_str(),currentTextValue);
-          textBusy = 3+text.length()*2;;
+          textBusy = 2+text.length()*2;;
           textXStart = lineX;
           textYStart = lineY;
         }
         if(textBusy>0)textBusy--;
         
-        if(textBusy == 2 ){
+        if(textBusy == 2 ||(textBusy>0&&foundLine==false)){
           textXEnd = lineX;
           textYEnd = lineY;
 
