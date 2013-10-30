@@ -1203,7 +1203,7 @@ void traverseLine(CDrawImage * drawImage,DISTANCEFIELDTYPE *distance,float *valu
   bool foundLine = true;
   size_t p = lineX+lineY*dImageWidth;
   int lineDistance = 5;
-  int textDistance = 150;
+  int textDistance = 500;
   int textBusy=0;
   
   int textDCounter =10;
@@ -1404,6 +1404,7 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
    unsigned char shadeColorR[numShadeDefs];
    unsigned char shadeColorG[numShadeDefs];
    unsigned char shadeColorB[numShadeDefs];
+   unsigned char shadeColorA[numShadeDefs];
    for(snr=0;snr<numShadeDefs;snr++){
      shadeDefMin[snr]=shadeDefinitions[snr].min;
      shadeDefMax[snr]=shadeDefinitions[snr].max;
@@ -1412,11 +1413,13 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
       shadeColorR[snr]=shadeDefinitions[snr].fillColor.r;
       shadeColorG[snr]=shadeDefinitions[snr].fillColor.g;
       shadeColorB[snr]=shadeDefinitions[snr].fillColor.b;
+      shadeColorA[snr]=shadeDefinitions[snr].fillColor.a;
      }else{
        CColor color=drawImage->getColorForIndex(getPixelIndexForValue(dataSource,shadeDefMin[snr]));
        shadeColorR[snr]=color.r;
        shadeColorG[snr]=color.g;
        shadeColorB[snr]=color.b;
+       shadeColorA[snr]=color.a;
      }
    }
    int lastShadeDef=0;
@@ -1451,7 +1454,7 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
               }while(done>0);
              }
              if(done==-1){
-               drawImage->setPixelTrueColor(x,y,shadeColorR[lastShadeDef],shadeColorG[lastShadeDef],shadeColorB[lastShadeDef]);
+               drawImage->setPixelTrueColor(x,y,shadeColorR[lastShadeDef],shadeColorG[lastShadeDef],shadeColorB[lastShadeDef],shadeColorA[lastShadeDef]);
              }
            }
          }

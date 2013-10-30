@@ -458,7 +458,7 @@ CColor CDrawImage::getColorForIndex(int colorIndex){
   CColor color;
   if(currentLegend==NULL)return color;
   if(colorIndex>=0&&colorIndex<256){
-    color =CColor(currentLegend->CDIred[colorIndex],currentLegend->CDIgreen[colorIndex],currentLegend->CDIblue[colorIndex],255);
+    color =CColor(currentLegend->CDIred[colorIndex],currentLegend->CDIgreen[colorIndex],currentLegend->CDIblue[colorIndex],currentLegend->CDIalpha[colorIndex]);
   }
   return color;
 }
