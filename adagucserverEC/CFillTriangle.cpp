@@ -24,8 +24,125 @@
  ******************************************************************************/
 
 #include "CFillTriangle.h"
+typedef short disc;
 
-void fillTriangleGouraud(float  *data, float  *values, int W,int H, int *xP,int *yP){
+void fillTriangleGouraud(float *data, float *values, int W,int H, int *xP,int *yP){
+  //Sort the vertices in Y direction
+  if(xP[0]<0&&xP[1]<0&&xP[2]<0)return;
+  if(xP[0]>=W&&xP[1]>=W&&xP[2]>=W)return;
+  if(yP[0]<0&&yP[1]<0&&yP[2]<0)return;
+  if(yP[0]>=H&&yP[1]>=H&&yP[2]>=H)return;  
+
+  
+  unsigned short lower;
+  unsigned short middle;
+  unsigned short upper;
+  
+  if(yP[0]<yP[1]){
+    if(yP[0]<yP[2]){
+      lower=0;
+      if(yP[1]<yP[2]){
+        middle=1;
+        upper=2;
+      }else{
+        middle=2;
+        upper=1;
+      }
+    }else{
+      middle=0;
+      lower=2;
+      upper=1;
+    }
+  }else{
+    if(yP[1]<yP[2]){
+      lower=1;
+      if(yP[0]<yP[2]){
+        middle=0;
+        upper=2;
+      }else{
+        middle=2;
+        upper=0;
+      }
+    }else{
+      middle=1;
+      lower=2;
+      upper=0;
+    }
+  }
+  
+  int X1 = xP[lower];
+  int X2 = xP[middle];
+  int X3 = xP[upper];
+  int Y1 = yP[lower];
+  int Y2 = yP[middle];
+  int Y3 = yP[upper];
+  
+  if(Y1 == Y3)return;
+  
+  if(Y2==Y1&&Y3==Y2)return;
+  
+  
+  float V1 = values[lower];
+  float V2 = values[middle];
+  float V3 = values[upper];
+
+  float rcl = float(X3-X1)/float(Y3-Y1);
+  float rcvl = (V3-V1)/float(Y3-Y1);
+  
+  
+  if(Y2!=Y1){
+    float rca = float(X2-X1)/float(Y2-Y1);
+    float rcva = (V2-V1)/float(Y2-Y1);
+
+  
+    disc sy = (Y1>=H)?H-1:Y1<0?0:Y1;
+    disc ey = (Y2>=H)?H-1:Y2<0?0:Y2;
+    
+    for(disc y=sy;y<ey;y++){
+      disc xL = rcl*float(y-Y1)+X1;
+      disc xA = rca*float(y-Y1)+X1;
+      float vL = rcvl*float(y-Y1)+V1;
+      float vA = rcva*float(y-Y1)+V1;
+      disc x1,x2;
+      float v1,v2;
+      if(xL<xA){x1=xL;x2=xA;v1=vL;v2=vA;}else{x2=xL;x1=xA;v1=vA;v2=vL;}
+      float rcxv = float(v2-v1)/float(x2-x1);
+      disc sx = (x1>=W)?W-1:x1<0?0:x1;
+      disc ex = (x2>=W)?W-1:x2<0?0:x2;
+      for(disc x=sx;x<ex;x++){
+        data[x+y*W]=rcxv*float(x-x1)+v1;
+      }
+    }
+  }
+  
+  if(Y3 != Y2){
+    float rcb = float(X3-X2)/float(Y3-Y2);
+    float rcvb = (V3-V2)/float(Y3-Y2);
+ 
+  
+    disc sy = (Y2>=H)?H-1:Y2<0?0:Y2;
+    disc ey = (Y3>=H)?H-1:Y3<0?0:Y3;
+    for(disc y=sy;y<ey;y++){
+      disc xL = rcl*float(y-Y1)+X1;
+      disc xB = rcb*float(y-Y2)+X2;
+      float vL = rcvl*float(y-Y1)+V1;
+      float vB = rcvb*float(y-Y2)+V2;
+      disc x1,x2;
+      float v1,v2;
+      if(xL<xB){x1=xL;x2=xB;v1=vL;v2=vB;}else{x2=xL;x1=xB;v1=vB;v2=vL;}
+      float rcxv = float(v2-v1)/float(x2-x1);
+      disc sx = (x1>=W)?W-1:x1<0?0:x1;
+      disc ex = (x2>=W)?W-1:x2<0?0:x2;
+      for(disc x=sx;x<ex;x++){
+          data[x+y*W]=rcxv*float(x-x1)+v1;;
+      }
+    } 
+    
+  }
+  
+}
+
+void __fillTriangleGouraud2(float  *data, float  *values, int W,int H, int *xP,int *yP){
   
   if(xP[0]<0&&xP[1]<0&&xP[2]<0)return;
   if(xP[0]>=W&&xP[1]>=W&&xP[2]>=W)return;
@@ -241,6 +358,8 @@ void fillQuadGouraud(float  *data, float  *values, int W,int H, int *xP,int *yP)
   cornerX[0]=(int)xP[2];cornerY[0]=(int)yP[2];cornerV[0]=values[2];
   cornerX[1]=(int)xP[0];cornerY[1]=(int)yP[0];cornerV[1]=values[0];
   cornerX[2]=(int)  cx   ;cornerY[2]=(int) cy    ;cornerV[2]=cv;
+  
+
   fillTriangleGouraud(data, cornerV, W,H, cornerX,cornerY);
   
   

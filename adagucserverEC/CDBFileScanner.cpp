@@ -91,10 +91,10 @@ int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,in
   
     bool isTimeDim = false;
     CT::string dimName(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
-    dimName.toLowerCaseSelf();
-    if(dimName.equals("time"))isTimeDim=true;
+    //dimName.toLowerCaseSelf();
+    if(dimName.toLowerCase().equals("time"))isTimeDim=true;
     //How do we detect correctly wether this is a time dim?
-    if(dimName.indexOf("time")!=-1)isTimeDim=true;
+    if(dimName.toLowerCase().indexOf("time")!=-1)isTimeDim=true;
     
     //Create database tableNames
     CT::string tableName;
@@ -123,7 +123,7 @@ int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,in
           }
           CDF::Variable *dimVar = cdfObject->getVariableNE(dimName.c_str());
           if(dimVar==NULL){
-            CDBError("File dimension '%s' not found.",dimName.c_str());
+            CDBError("Dimension '%s' not found.",dimName.c_str());
             throw(__LINE__);
           }
           
