@@ -1566,13 +1566,22 @@ int CDataReader::justLoadAFileHeader(CDataSource *dataSource){
     #endif
     return 0;
   }
-  CDirReader dirReader;
-  if(CDBFileScanner::searchFileNames(&dirReader,dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),NULL)!=0){CDBError("Could not find any filename");return 1; }
-  if(dirReader.fileList.size()==0){CDBError("dirReader.fileList.size()==0");return 1; }
+  
+  const char *fileName = NULL;
+  
+  fileName = dataSource->getFileName();
+  
+  if(fileName == NULL){
+    CDirReader dirReader;
+    if(CDBFileScanner::searchFileNames(&dirReader,dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),NULL)!=0){CDBError("Could not find any filename");return 1; }
+    if(dirReader.fileList.size()==0){CDBError("dirReader.fileList.size()==0");return 1; }
+    
+    fileName = dirReader.fileList[0]->fullName.c_str();
+  }
   //Open a file
   try{
 
-    CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource->srvParams,dirReader.fileList[0]->fullName.c_str());
+    CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource->srvParams,fileName);
     if(cdfObject == NULL)throw(__LINE__);
 
 
