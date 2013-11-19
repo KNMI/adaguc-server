@@ -1570,17 +1570,22 @@ int CDataReader::justLoadAFileHeader(CDataSource *dataSource){
   const char *fileName = NULL;
   
   fileName = dataSource->getFileName();
+  //CDBDebug("Loading header [%s]",fileName);
   
+  CDirReader dirReader; // Must stay outside the next statement in order to keep the pointer to fileName sane.
   if(fileName == NULL){
-    CDirReader dirReader;
+    
     if(CDBFileScanner::searchFileNames(&dirReader,dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),NULL)!=0){CDBError("Could not find any filename");return 1; }
     if(dirReader.fileList.size()==0){CDBError("dirReader.fileList.size()==0");return 1; }
     
     fileName = dirReader.fileList[0]->fullName.c_str();
+    //CDBDebug("Loading header [%s]",fileName);
   }
+  
+  
   //Open a file
   try{
-
+    //CDBDebug("Loading header [%s]",fileName);
     CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource->srvParams,fileName);
     if(cdfObject == NULL)throw(__LINE__);
 
