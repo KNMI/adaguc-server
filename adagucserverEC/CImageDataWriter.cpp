@@ -1435,7 +1435,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         #ifdef CIMAGEDATAWRITER_DEBUG 
         CDBDebug("ptr = %d",ptr);
         #endif
-        double pixel=convertValue(dataSource->dataObject[o]->cdfVariable->type,dataSource->dataObject[o]->cdfVariable->data,ptr);
+        double pixel=convertValue(dataSource->dataObject[o]->cdfVariable->getType(),dataSource->dataObject[o]->cdfVariable->data,ptr);
 
         #ifdef CIMAGEDATAWRITER_DEBUG 
         CDBDebug("pixel value = %f",pixel);
@@ -1529,8 +1529,8 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         }
 
         double pi=3.141592;
-        double pixel1=convertValue(dataSource->dataObject[0]->cdfVariable->type,dataSource->dataObject[0]->cdfVariable->data,ptr);
-        double pixel2=convertValue(dataSource->dataObject[1]->cdfVariable->type,dataSource->dataObject[1]->cdfVariable->data,ptr);
+        double pixel1=convertValue(dataSource->dataObject[0]->cdfVariable->getType(),dataSource->dataObject[0]->cdfVariable->data,ptr);
+        double pixel2=convertValue(dataSource->dataObject[1]->cdfVariable->getType(),dataSource->dataObject[1]->cdfVariable->data,ptr);
         if (gridRelative)  {
     //Add raster value
 
@@ -2015,7 +2015,7 @@ int CImageDataWriter::calculateData(std::vector <CDataSource*>&dataSources){
             if(dsj->dfBBOX[1]>dsj->dfBBOX[3])yj=dsj->dHeight-yj-1;
             size_t ptrj=xj+yj*dsj->dWidth;
             
-            pixel[j] = convertValue(dsj->dataObject[0]->cdfVariable->type,dsj->dataObject[0]->cdfVariable->data,ptrj);
+            pixel[j] = convertValue(dsj->dataObject[0]->cdfVariable->getType(),dsj->dataObject[0]->cdfVariable->data,ptrj);
             
             if(inputMapExpression[j]==between){
               if(pixel[j]>=inputMapExprValuesLow[j]&&pixel[j]<=inputMapExprValuesHigh[j])
@@ -2044,7 +2044,7 @@ int CImageDataWriter::calculateData(std::vector <CDataSource*>&dataSources){
             }
           }
           if(result==true)pixel[0]=1;else pixel[0]=0;
-          setValue(dataSources[0]->dataObject[0]->cdfVariable->type,dataSources[0]->dataObject[0]->cdfVariable->data,ptr,pixel[0]);
+          setValue(dataSources[0]->dataObject[0]->cdfVariable->getType(),dataSources[0]->dataObject[0]->cdfVariable->data,ptr,pixel[0]);
         }
       }
       CDBDebug("Warping with style %s",srvParam->Styles.c_str());

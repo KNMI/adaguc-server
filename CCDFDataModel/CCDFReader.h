@@ -23,25 +23,26 @@
  * 
  ******************************************************************************/
 
-#ifndef CCDFDATAMODEL_H
-#define CCDFDATAMODEL_H
+#ifndef CCDFREADER_H
+#define CCDFREADER_H
 
-//#define CCDFDATAMODEL_DEBUG
-
-#include "CCDFTypes.h"
-#include "CCDFAttribute.h"
-#include "CCDFDimension.h"
+#include "CCDFDataModel.h"
 #include "CCDFVariable.h"
 #include "CCDFObject.h"
-#include "CCDFReader.h"
-#include "CCDFWarper.h"
-namespace CDF{
-  
-  void dump(CDFObject* cdfObject,CT::string* dumpString);
-  void dump(CDF::Variable* cdfVariable,CT::string* dumpString);
-  CT::string dump(CDFObject* cdfObject);
-  void _dumpPrintAttributes(const char *variableName, std::vector<CDF::Attribute *>attributes,CT::string *dumpString);
-  
-};
+
+  class CDFReader{
+    public:
+      CDFReader(){}
+      virtual ~CDFReader(){}
+      CDFObject *cdfObject;
+      virtual int open(const char *fileName) = 0;
+      virtual int close() = 0;
+      
+      //These two function may only be used by the variable class itself (TODO create friend class, protected?).
+      virtual int _readVariableData(CDF::Variable *var, CDFType type) = 0;
+      //Allocates and reads the variable data
+      virtual int _readVariableData(CDF::Variable *var,CDFType type,size_t *start,size_t *count,ptrdiff_t  *stride) = 0;
+  };
+
 
 #endif

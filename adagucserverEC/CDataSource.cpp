@@ -72,15 +72,15 @@ int CDataSource::Statistics::calculate(CDataSource *dataSource){
   if(dataObject->cdfVariable->data!=NULL){
     size_t size = dataObject->cdfVariable->getSize();//dataSource->dWidth*dataSource->dHeight;
     
-    if(dataObject->cdfVariable->type==CDF_CHAR)calcMinMax<char>(size,dataSource->dataObject);
-    if(dataObject->cdfVariable->type==CDF_BYTE)calcMinMax<char>(size,dataSource->dataObject);
-    if(dataObject->cdfVariable->type==CDF_UBYTE)calcMinMax<unsigned char>(size,dataSource->dataObject);
-    if(dataObject->cdfVariable->type==CDF_SHORT)calcMinMax<short>(size,dataSource->dataObject);
-    if(dataObject->cdfVariable->type==CDF_USHORT)calcMinMax<unsigned short>(size,dataSource->dataObject);
-    if(dataObject->cdfVariable->type==CDF_INT)calcMinMax<int>(size,dataSource->dataObject);
-    if(dataObject->cdfVariable->type==CDF_UINT)calcMinMax<unsigned int>(size,dataSource->dataObject);
-    if(dataObject->cdfVariable->type==CDF_FLOAT)calcMinMax<float>(size,dataSource->dataObject);
-    if(dataObject->cdfVariable->type==CDF_DOUBLE)calcMinMax<double>(size,dataSource->dataObject); 
+    if(dataObject->cdfVariable->getType()==CDF_CHAR)calcMinMax<char>(size,dataSource->dataObject);
+    if(dataObject->cdfVariable->getType()==CDF_BYTE)calcMinMax<char>(size,dataSource->dataObject);
+    if(dataObject->cdfVariable->getType()==CDF_UBYTE)calcMinMax<unsigned char>(size,dataSource->dataObject);
+    if(dataObject->cdfVariable->getType()==CDF_SHORT)calcMinMax<short>(size,dataSource->dataObject);
+    if(dataObject->cdfVariable->getType()==CDF_USHORT)calcMinMax<unsigned short>(size,dataSource->dataObject);
+    if(dataObject->cdfVariable->getType()==CDF_INT)calcMinMax<int>(size,dataSource->dataObject);
+    if(dataObject->cdfVariable->getType()==CDF_UINT)calcMinMax<unsigned int>(size,dataSource->dataObject);
+    if(dataObject->cdfVariable->getType()==CDF_FLOAT)calcMinMax<float>(size,dataSource->dataObject);
+    if(dataObject->cdfVariable->getType()==CDF_DOUBLE)calcMinMax<double>(size,dataSource->dataObject); 
     
   }
   return 0;

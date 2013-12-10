@@ -107,7 +107,7 @@ public:
     deleteArray(&buf);
   }
   int drawTile(float *x_corners,float *y_corners,int &dDestX,int &dDestY){
-    CDFType dataType=dataSource->dataObject[0]->cdfVariable->type;
+    CDFType dataType=dataSource->dataObject[0]->cdfVariable->getType();
     void *data=dataSource->dataObject[0]->cdfVariable->data;
     switch(dataType){
       case CDF_CHAR  : return myDrawRawTile((char*)data,x_corners,y_corners,dDestX,dDestY);break;
@@ -273,7 +273,7 @@ public:
     legendOffset = dataSource->legendOffset;
   }
   int drawTile(double *x_corners,double *y_corners,int &dDestX,int &dDestY){
-    CDFType dataType=dataSource->dataObject[0]->cdfVariable->type;
+    CDFType dataType=dataSource->dataObject[0]->cdfVariable->getType();
     void *data=dataSource->dataObject[0]->cdfVariable->data;
     switch(dataType){
       case CDF_CHAR  : return myDrawRawTile((char*)data,x_corners,y_corners,dDestX,dDestY);break;
@@ -571,9 +571,9 @@ private:
     
     //Setup the renderer to draw the tiles with.We do not keep the calculated results for CDF_CHAR (faster)
         CDrawTileObjInterface *drawTileClass= NULL;
-        if(dataSource->dataObject[0]->cdfVariable->type==CDF_CHAR||
-          dataSource->dataObject[0]->cdfVariable->type==CDF_BYTE||
-          dataSource->dataObject[0]->cdfVariable->type==CDF_UBYTE
+        if(dataSource->dataObject[0]->cdfVariable->getType()==CDF_CHAR||
+          dataSource->dataObject[0]->cdfVariable->getType()==CDF_BYTE||
+          dataSource->dataObject[0]->cdfVariable->getType()==CDF_UBYTE
         ){
           drawTileClass = new CDrawTileObj();           //Do not keep the calculated results for CDF_CHAR
           

@@ -181,22 +181,22 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
 
   // Setup data types
   datatype=GDT_Unknown;
-  if(dataSource->dataObject[0]->cdfVariable->type==CDF_CHAR)  datatype = GDT_Byte;
-  if(dataSource->dataObject[0]->cdfVariable->type==CDF_UBYTE)  datatype = GDT_Byte;
-  if(dataSource->dataObject[0]->cdfVariable->type==CDF_SHORT) datatype = GDT_Int16;
-  if(dataSource->dataObject[0]->cdfVariable->type==CDF_INT)   datatype = GDT_Int32;
-  if(dataSource->dataObject[0]->cdfVariable->type==CDF_FLOAT) datatype = GDT_Float32;
-  if(dataSource->dataObject[0]->cdfVariable->type==CDF_DOUBLE)datatype = GDT_Float64;
+  if(dataSource->dataObject[0]->cdfVariable->getType()==CDF_CHAR)  datatype = GDT_Byte;
+  if(dataSource->dataObject[0]->cdfVariable->getType()==CDF_UBYTE)  datatype = GDT_Byte;
+  if(dataSource->dataObject[0]->cdfVariable->getType()==CDF_SHORT) datatype = GDT_Int16;
+  if(dataSource->dataObject[0]->cdfVariable->getType()==CDF_INT)   datatype = GDT_Int32;
+  if(dataSource->dataObject[0]->cdfVariable->getType()==CDF_FLOAT) datatype = GDT_Float32;
+  if(dataSource->dataObject[0]->cdfVariable->getType()==CDF_DOUBLE)datatype = GDT_Float64;
   if(datatype==GDT_Unknown){
     char temp[100];
-    CDF::getCDFDataTypeName(temp,99,dataSource->dataObject[0]->cdfVariable->type);
-    CDBError("Invalid datatype: dataSource->dataObject[0]->cdfVariable->type=%s",temp);
+    CDF::getCDFDataTypeName(temp,99,dataSource->dataObject[0]->cdfVariable->getType());
+    CDBError("Invalid datatype: dataSource->dataObject[0]->cdfVariable->getType()=%s",temp);
     return 1;
   }
   
 #ifdef CGDALDATAWRITER_DEBUG  
   char dataTypeName[256];
-  CDF::getCDFDataTypeName(dataTypeName,255,dataSource->dataObject[0]->cdfVariable->type);
+  CDF::getCDFDataTypeName(dataTypeName,255,dataSource->dataObject[0]->cdfVariable->getType());
   CDBDebug("Dataset datatype = %s sizeof(short)=%d",dataTypeName,sizeof(short));
 #endif  
   
@@ -424,8 +424,21 @@ int  CGDALDataWriter::end(){
 
       char **papszMetadata = NULL;
       double offset;
-      CADAGUC_time *ADTime = new CADAGUC_time(TimeUnit.c_str());
-      int status=ADTime->ISOTimeToOffset(offset,Times[b].c_str());
+      //CADAGUC_time *ADTime = new CADAGUC_time(TimeUnit.c_str());
+      CTime adagucTime;
+      try{
+        adagucTime.init(TimeUnit.c_str());
+        offset = adagucTime.dateToOffset(adagucTime.ISOStringToDate(Times[b].c_str()));
+        snprintf(szTemp,MAX_STR_LEN,"DIMENSION#time");
+        snprintf(szTemp2,MAX_STR_LEN,"%f",offset);
+        papszMetadata = CSLSetNameValue(papszMetadata,szTemp,szTemp2);
+
+      }catch(int e){
+        snprintf(szTemp,MAX_STR_LEN,"DIMENSION#time");
+        snprintf(szTemp2,MAX_STR_LEN,"%s",Times[b].c_str());
+        papszMetadata = CSLSetNameValue(papszMetadata,szTemp,szTemp2);
+      }
+      /*int status=ADTime->ISOTimeToOffset(offset,Times[b].c_str());
       if(status==0){
         snprintf(szTemp,MAX_STR_LEN,"DIMENSION#time");
         snprintf(szTemp2,MAX_STR_LEN,"%f",offset);
@@ -435,7 +448,7 @@ int  CGDALDataWriter::end(){
         snprintf(szTemp2,MAX_STR_LEN,"%s",Times[b].c_str());
         papszMetadata = CSLSetNameValue(papszMetadata,szTemp,szTemp2);
       }
-      delete ADTime;
+      delete ADTime;*/
 
       snprintf(szTemp,MAX_STR_LEN,"UNITS#time");
       snprintf(szTemp2,MAX_STR_LEN,"%s",TimeUnit.c_str());

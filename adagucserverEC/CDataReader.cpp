@@ -260,7 +260,7 @@ class Proc{
     void *newData = NULL;
     size_t imageSize = dataSource->dWidth*dataSource->dHeight;
     if(imageSize==0)imageSize=1;
-    CDF::allocateData(dataSource->dataObject[0]->cdfVariable->type,&newData,imageSize);
+    CDF::allocateData(dataSource->dataObject[0]->cdfVariable->getType(),&newData,imageSize);
     for(size_t j=0;j<imageSize;j++){
       ((T*)newData)[j]=(T)nodataValue;
     }
@@ -788,14 +788,14 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
     #ifdef CDATAREADER_DEBUG
     CDBDebug("Working on variable %s, %d/%d",dataSource->dataObject[varNr]->cdfVariable->name.c_str(),varNr,dataSource->dataObject.size());
     #endif
-    //dataSource->dataObject[varNr]->dataType=var[varNr]->type;
-    /*if(var[varNr]->type==CDF_CHAR||var[varNr]->type==CDF_BYTE)dataSource->dataObject[varNr]->dataType=CDF_CHAR;
-    if(var[varNr]->type==CDF_UBYTE)dataSource->dataObject[varNr]->dataType=CDF_UBYTE;
+    //dataSource->dataObject[varNr]->dataType=var[varNr]->getType();
+    /*if(var[varNr]->getType()==CDF_CHAR||var[varNr]->getType()==CDF_BYTE)dataSource->dataObject[varNr]->dataType=CDF_CHAR;
+    if(var[varNr]->getType()==CDF_UBYTE)dataSource->dataObject[varNr]->dataType=CDF_UBYTE;
     
-    if(var[varNr]->type==CDF_SHORT||var[varNr]->type==CDF_USHORT)dataSource->dataObject[varNr]->dataType=CDF_SHORT;
-    if(var[varNr]->type==CDF_INT||var[varNr]->type==CDF_UINT)dataSource->dataObject[varNr]->dataType=CDF_INT;
-    if(var[varNr]->type==CDF_FLOAT)dataSource->dataObject[varNr]->dataType=CDF_FLOAT;
-    if(var[varNr]->type==CDF_DOUBLE)dataSource->dataObject[varNr]->dataType=CDF_DOUBLE;
+    if(var[varNr]->getType()==CDF_SHORT||var[varNr]->getType()==CDF_USHORT)dataSource->dataObject[varNr]->dataType=CDF_SHORT;
+    if(var[varNr]->getType()==CDF_INT||var[varNr]->getType()==CDF_UINT)dataSource->dataObject[varNr]->dataType=CDF_INT;
+    if(var[varNr]->getType()==CDF_FLOAT)dataSource->dataObject[varNr]->dataType=CDF_FLOAT;
+    if(var[varNr]->getType()==CDF_DOUBLE)dataSource->dataObject[varNr]->dataType=CDF_DOUBLE;
     if(dataSource->dataObject[varNr]->dataType==CDF_NONE){
       CDBError("Invalid dataSource->dataObject[varNr]->dataType");
       return 1;
@@ -815,14 +815,14 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
       dataSource->dataObject[varNr]->hasScaleOffset=true;
       // Currently two unpacked data types are supported (CF-1.4): float and double
       
-      dataSource->dataObject[varNr]->cdfVariable->type=CDF_FLOAT;
+      dataSource->dataObject[varNr]->cdfVariable->setType(CDF_FLOAT);
       
-      if(scale_factor->type==CDF_FLOAT){
+      if(scale_factor->getType()==CDF_FLOAT){
         //dataSource->dataObject[varNr]->dataType=CDF_FLOAT;
-        dataSource->dataObject[varNr]->cdfVariable->type=CDF_FLOAT;
+        dataSource->dataObject[varNr]->cdfVariable->setType(CDF_FLOAT);
       }
-      if(scale_factor->type==CDF_DOUBLE){
-        dataSource->dataObject[varNr]->cdfVariable->type=CDF_DOUBLE;
+      if(scale_factor->getType()==CDF_DOUBLE){
+        dataSource->dataObject[varNr]->cdfVariable->setType(CDF_DOUBLE);
       }
     
       //char dataTypeName[256];
@@ -843,7 +843,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
       //Algorithm ax+b:
       if(proc->attr.algorithm.equals("ax+b")){
         dataSource->dataObject[varNr]->hasScaleOffset=true;
-        dataSource->dataObject[varNr]->cdfVariable->type=CDF_DOUBLE;
+        dataSource->dataObject[varNr]->cdfVariable->setType(CDF_DOUBLE);
       
         //Apply offset
         if(proc->attr.b.empty()==false){
@@ -874,7 +874,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
     }
     
     //Important!: The CDF datamodel needs to now the new datatype as well, in order to do right lon warping.
-    //var[varNr]->type=dataSource->dataObject[varNr]->dataType;
+    //var[varNr]->getType()=dataSource->dataObject[varNr]->dataType;
     
      #ifdef CDATAREADER_DEBUG
     CDBDebug("/Finished Working on variable %s",dataSource->dataObject[varNr]->cdfVariable->name.c_str());
@@ -927,7 +927,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
         attribute=attributes[j];
         szType[1]='\0';
         AttrValue.copy("");
-        switch (attribute->type){
+        switch (attribute->getType()){
           case CDF_CHAR:{
             szType[0]='C';//char
             AttrValue.copy((char*)attribute->data);
@@ -1030,7 +1030,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
         
          
          
-        if(var[varNr]->readData(var[varNr]->type,start,count,stride)!=0){
+        if(var[varNr]->readData(var[varNr]->getType(),start,count,stride)!=0){
           CDBError("Unable to read data for variable %s in file %s",var[varNr]->name.c_str(),dataSource->getFileName());
           
           for(size_t j=0;j<var[varNr]->dimensionlinks.size();j++){
@@ -1043,7 +1043,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
         //Swap data from >180 degrees to domain of -180 till 180 in case of lat lon source data
         if(dataSource->useLonTransformation!=-1&&!cache.cacheIsAvailable()){
           //int splitPX=dataSource->useLonTransformation;
-          switch (var[varNr]->type){
+          switch (var[varNr]->getType()){
             case CDF_CHAR  : Proc::swapPixelsAtLocation(dataSource,(char*)var[varNr]->data);break;
             case CDF_BYTE  : Proc::swapPixelsAtLocation(dataSource,(char*)var[varNr]->data);break;
             case CDF_UBYTE : Proc::swapPixelsAtLocation(dataSource,(uchar*)var[varNr]->data);break;
@@ -1081,9 +1081,9 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
           void *vs=var[varNr]->data;     //source data
         
           //Allocate data for our new memory block
-          CDF::allocateData(var[varNr]->type,&vd,imgSize);
+          CDF::allocateData(var[varNr]->getType(),&vd,imgSize);
           //TODO This could also be solved using a template. But this works fine.
-          switch (var[varNr]->type){
+          switch (var[varNr]->getType()){
             case CDF_CHAR  : {char   *s=(char  *)vs;char   *d=(char  *)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
             case CDF_BYTE  : {char   *s=(char  *)vs;char   *d=(char  *)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
             case CDF_UBYTE : {uchar  *s=(uchar *)vs;uchar  *d=(uchar *)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
@@ -1110,7 +1110,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
         double dfadd_offset = dataSource->dataObject[varNr]->dfadd_offset;
         
         #ifdef CDATAREADER_DEBUG   
-        CDBDebug("Applying scale and offset with %f and %f (var size=%d) type=%s",dfscale_factor,dfadd_offset,var[varNr]->getSize(),CDF::getCDFDataTypeName(dataSource->dataObject[varNr]->cdfVariable->type).c_str());
+        CDBDebug("Applying scale and offset with %f and %f (var size=%d) type=%s",dfscale_factor,dfadd_offset,var[varNr]->getSize(),CDF::getCDFDataTypeName(dataSource->dataObject[varNr]->cdfVariable->getType()).c_str());
         #endif
         /*if(dataSource->dataObject[varNr]->dataType==CDF_FLOAT){
           //Preserve the original nodata value, so it remains a nice short rounded number.
@@ -1125,7 +1125,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
             }
           }
         }*/
-        if(dataSource->dataObject[varNr]->cdfVariable->type==CDF_FLOAT){
+        if(dataSource->dataObject[varNr]->cdfVariable->getType()==CDF_FLOAT){
           //Preserve the original nodata value, so it remains a nice short rounded number.
           float fNoData=(float)dataSource->dataObject[varNr]->dfNodataValue;
           float fscale_factor=(float)dfscale_factor;
@@ -1142,7 +1142,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
           dataSource->dataObject[varNr]->dfNodataValue=fNoData*fscale_factor+fadd_offset;
         }
         
-        if(dataSource->dataObject[varNr]->cdfVariable->type==CDF_DOUBLE){
+        if(dataSource->dataObject[varNr]->cdfVariable->getType()==CDF_DOUBLE){
           // packed data to be unpacked to DOUBLE:
           double *_data=(double*)var[varNr]->data;
           for(size_t j=0;j<var[varNr]->getSize();j++){
@@ -1171,14 +1171,14 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
       var[varNr]->removeAttribute("add_offset");
       
       //Set original var datatype correctly for the cdfobject 
-      //var[varNr]->type=dataSource->dataObject[varNr]->dataType;
+      //var[varNr]->getType()=dataSource->dataObject[varNr]->dataType;
       
       //Reset _FillValue to correct datatype and adjust scale and offset values.
       if( dataSource->dataObject[varNr]->dfNodataValue){
         CDF::Attribute *fillValue = var[varNr]->getAttributeNE("_FillValue");
         if(fillValue!=NULL){
-          if(var[varNr]->type==CDF_FLOAT){float fNoData=(float)dataSource->dataObject[varNr]->dfNodataValue;fillValue->setData(CDF_FLOAT,&fNoData,1);}
-          if(var[varNr]->type==CDF_DOUBLE)fillValue->setData(CDF_DOUBLE,&dataSource->dataObject[varNr]->dfNodataValue,1);
+          if(var[varNr]->getType()==CDF_FLOAT){float fNoData=(float)dataSource->dataObject[varNr]->dfNodataValue;fillValue->setData(CDF_FLOAT,&fNoData,1);}
+          if(var[varNr]->getType()==CDF_DOUBLE)fillValue->setData(CDF_DOUBLE,&dataSource->dataObject[varNr]->dfNodataValue,1);
         }
       }
     }
@@ -1373,8 +1373,8 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
       }
       
       //Adjust dimensions for the single object:
-      dataSource->varX->type=CDF_DOUBLE;
-      dataSource->varY->type=CDF_DOUBLE;
+      dataSource->varX->setType(CDF_DOUBLE);
+      dataSource->varY->setType(CDF_DOUBLE);
       
       //Adjust fillvalues
       
@@ -1422,7 +1422,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
           }catch(int e){
           }
           double dimValue[var->getSize()];
-          CDF::dataCopier.copy(dimValue,var->data,var->type,var->getSize());
+          CDF::DataCopier::copy(dimValue,var->data,var->getType(),var->getSize());
           size_t index=dataSource->timeSteps[timeStep]->dims.dimensions[0]->index;
           var->setSize(1);
           dim->length=1;
@@ -1519,27 +1519,21 @@ int CDataReader::getTimeString(CDataSource *dataSource,char * pszTime){
   if(dataSource->dNetCDFNumDims>2){
     size_t currentTimeIndex=dataSource->getDimensionIndex(time->name.c_str());
     if(currentTimeIndex>=0&&currentTimeIndex<time->getSize()){
-      CADAGUC_time *ADTime = NULL;
+      CTime adagucTime;
       try{
-        ADTime = new CADAGUC_time(timeUnits->toString().c_str());
-        stADAGUC_time timest;
-        int status = ADTime->OffsetToAdaguc(timest,((double*)time->data)[currentTimeIndex]);
-        if(status == 0){
-          char ISOTime[MAX_STR_LEN+1];
-          ADTime->PrintISOTime(ISOTime,MAX_STR_LEN,timest);
-          ISOTime[19]='Z';ISOTime[20]='\0';
-          snprintf(pszTime,MAX_STR_LEN,"%s",ISOTime);
-        }else{
-          CDBDebug("OffsetToAdaguc failed");
-          snprintf(pszTime,MAX_STR_LEN,"No time dimension available");
-          return 1;
+        adagucTime.init(timeUnits->toString().c_str());
+        CT::string isoString = "No time dimension available";
+        try{
+          adagucTime.dateToISOString(adagucTime.getDate(((double*)time->data)[currentTimeIndex]));
+        }catch(int e){
         }
+        snprintf(pszTime,MAX_STR_LEN,"%s",isoString.c_str());
+        
       }catch(int e){
-        CDBError("Unable to initialize CADAGUC_time");
-        delete ADTime;
+        CDBError("Unable to initialize CTime with units %s",timeUnits->toString().c_str());
         return 1;
       }
-      delete ADTime;
+
     }else{
       CDBDebug("time index out of bounds");
       snprintf(pszTime,MAX_STR_LEN,"No time dimension available");

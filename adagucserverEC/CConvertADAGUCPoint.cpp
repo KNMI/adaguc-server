@@ -199,7 +199,7 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
     dimX->setSize(width);
     cdfObject->addDimension(dimX);
     varX = new CDF::Variable();
-    varX->type=CDF_DOUBLE;
+    varX->setType(CDF_DOUBLE);
     varX->name.copy("x");
     varX->isDimension=true;
     varX->dimensionlinks.push_back(dimX);
@@ -212,7 +212,7 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
     dimY->setSize(height);
     cdfObject->addDimension(dimY);
     varY = new CDF::Variable();
-    varY->type=CDF_DOUBLE;
+    varY->setType(CDF_DOUBLE);
     varY->name.copy("y");
     varY->isDimension=true;
     varY->dimensionlinks.push_back(dimY);
@@ -275,7 +275,7 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
     new2DVar->dimensionlinks.push_back(dimY);
     new2DVar->dimensionlinks.push_back(dimX);
     
-    new2DVar->type=pointVar->type;
+    new2DVar->setType(pointVar->getType());
     new2DVar->name=pointVar->name.c_str();
     pointVar->name.concat("_backup");
     
@@ -296,7 +296,7 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
         fillValue*=scaleFactor+addOffset;
         new2DVar->setAttribute("_FillValue",CDF_FLOAT,&fillValue,1);
       }else{
-        new2DVar->setAttribute(a->name.c_str(),a->type,a->data,a->length);
+        new2DVar->setAttribute(a->name.c_str(),a->getType(),a->data,a->length);
       }
       
     }
@@ -316,7 +316,7 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
     new2DVar->removeAttribute("scale_factor");
     new2DVar->removeAttribute("add_offset");
     
-    new2DVar->type=CDF_FLOAT;
+    new2DVar->setType(CDF_FLOAT);
   }
   
   #ifdef MEASURETIME
@@ -559,7 +559,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
     for(size_t d=0;d<nrDataObjects;d++){
       size_t fieldSize = dataSource->dWidth*dataSource->dHeight;
       new2DVar[d]->setSize(fieldSize);
-      CDF::allocateData(new2DVar[d]->type,&(new2DVar[d]->data),fieldSize);
+      CDF::allocateData(new2DVar[d]->getType(),&(new2DVar[d]->data),fieldSize);
       
       //Fill in nodata
       if(dataSource->dataObject[d]->hasNodataValue){

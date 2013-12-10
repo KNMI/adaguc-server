@@ -85,7 +85,7 @@ class CTime{
   
   /**
    * Turns double value into a date object
-   * Throws integer CTIME_CONVERSION_ERROR when failes
+   * Throws integer CTIME_CONVERSION_ERROR when fails
    * @param offset The value to convert to date
    * @return the date object
    */
