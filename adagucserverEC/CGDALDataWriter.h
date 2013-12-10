@@ -51,7 +51,7 @@
 
 #include "CPGSQLDB.h"
 #include "CDataReader.h"
-#include "CADAGUC_time.h"
+//#include "CADAGUC_time.h"
 
 #include "CIBaseDataWriterInterface.h"
 #define MAX_STR_LEN 8191

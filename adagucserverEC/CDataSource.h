@@ -77,7 +77,7 @@ class CDataSource{
       if(dataObject.size()==1){
         T* data = (T*)dataObject[0]->cdfVariable->data;
         
-        CDFType type=dataObject[0]->cdfVariable->type;
+        CDFType type=dataObject[0]->cdfVariable->getType();
         
         //CDBDebug("nodataval %f",(T)dataObject[0]->dfNodataValue);
         

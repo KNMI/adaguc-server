@@ -23,25 +23,41 @@
  * 
  ******************************************************************************/
 
-#ifndef CCDFDATAMODEL_H
-#define CCDFDATAMODEL_H
+#ifndef CCDFDIMENSION_H
+#define CCDFDIMENSION_H
 
-//#define CCDFDATAMODEL_DEBUG
-
-#include "CCDFTypes.h"
-#include "CCDFAttribute.h"
-#include "CCDFDimension.h"
-#include "CCDFVariable.h"
-#include "CCDFObject.h"
-#include "CCDFReader.h"
-#include "CCDFWarper.h"
 namespace CDF{
-  
-  void dump(CDFObject* cdfObject,CT::string* dumpString);
-  void dump(CDF::Variable* cdfVariable,CT::string* dumpString);
-  CT::string dump(CDFObject* cdfObject);
-  void _dumpPrintAttributes(const char *variableName, std::vector<CDF::Attribute *>attributes,CT::string *dumpString);
-  
-};
+  class Dimension{
+    
+    public:
+      Dimension(){
+        isIterative=false;
+        length=0;
+      }
+      CT::string name;
+      size_t length;
+      bool isIterative;
+      int id;
+      size_t getSize(){
+        return length;
+      }
+      void setSize(size_t _length){
+        length=_length;
+      }
+      void setName(const char *value){
+        name.copy(value);
+      }
+      //Returns a new copy of this dimension
+      Dimension *clone(){
+        Dimension *newDim = new Dimension ();
+        newDim->name=name.c_str();
+        newDim->length=length;
+        newDim->isIterative=isIterative;
+        newDim->id=id;
+        return newDim;
+      }
+  };
+}
 
 #endif
+

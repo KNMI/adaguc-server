@@ -23,25 +23,46 @@
  * 
  ******************************************************************************/
 
-#ifndef CCDFDATAMODEL_H
-#define CCDFDATAMODEL_H
-
-//#define CCDFDATAMODEL_DEBUG
-
-#include "CCDFTypes.h"
-#include "CCDFAttribute.h"
-#include "CCDFDimension.h"
-#include "CCDFVariable.h"
 #include "CCDFObject.h"
 #include "CCDFReader.h"
-#include "CCDFWarper.h"
-namespace CDF{
-  
-  void dump(CDFObject* cdfObject,CT::string* dumpString);
-  void dump(CDF::Variable* cdfVariable,CT::string* dumpString);
-  CT::string dump(CDFObject* cdfObject);
-  void _dumpPrintAttributes(const char *variableName, std::vector<CDF::Attribute *>attributes,CT::string *dumpString);
-  
-};
 
-#endif
+const char *CDFObject::className="CDFObject";
+
+CDFObject::~CDFObject(){
+  clear();
+}
+
+int CDFObject::attachCDFReader(void *reader){
+  CDFReader *r=(CDFReader*)reader;
+  r->cdfObject=this;
+  this->reader=r;
+  return 0;
+}
+void CDFObject::clear(){
+  for(size_t j=0;j<dimensions.size();j++){delete dimensions[j];dimensions[j]=NULL;}
+  for(size_t j=0;j<variables.size();j++){delete variables[j];variables[j]=NULL;}
+}
+
+int CDFObject::open(const char *fileName){
+  //CDBDebug("Opening file %s (current =%s)",fileName,currentFile.c_str());
+  if(currentFile.equals(fileName)){
+    //CDBDebug("OK: Current file is already open");
+    return 0;
+  }
+  CDFReader *r=(CDFReader*)reader;
+   if(r==NULL){
+    CDBError("No reader attached");return 1;
+  }
+  clear();
+  currentFile.copy(fileName);
+  return r->open(fileName);
+}
+
+int CDFObject::close(){
+  if(reader==NULL){
+    CDBError("No reader attached");return 1;
+  }
+  CDBDebug("Closing reader");
+  CDFReader *r=(CDFReader*)reader;
+  return r->close();
+}

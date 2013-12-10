@@ -237,9 +237,9 @@ private:
     
     //Setup the renderer to draw the tiles with.We do not keep the calculated results for CDF_CHAR (faster)
         CDrawTileObjBGRA *drawTileClass= NULL;
-        if(dataSource->dataObject[0]->cdfVariable->type==CDF_CHAR||
-          dataSource->dataObject[0]->cdfVariable->type==CDF_BYTE||
-          dataSource->dataObject[0]->cdfVariable->type==CDF_UBYTE
+        if(dataSource->dataObject[0]->cdfVariable->getType()==CDF_CHAR||
+          dataSource->dataObject[0]->cdfVariable->getType()==CDF_BYTE||
+          dataSource->dataObject[0]->cdfVariable->getType()==CDF_UBYTE
         ){
           drawTileClass = new CDrawTileObjBGRA();           //Do not keep the calculated results for CDF_CHAR
           

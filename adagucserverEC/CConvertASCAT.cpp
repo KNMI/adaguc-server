@@ -67,7 +67,7 @@ int CConvertASCAT::convertASCATHeader( CDFObject *cdfObject ){
     
     //Create a new time variable for the new 2D fields.
     CDF::Variable *varT = new CDF::Variable();
-    varT->type=CDF_DOUBLE;
+    varT->setType(CDF_DOUBLE);
     varT->name.copy(dimT->name.c_str());
     varT->setAttributeText("standard_name","time");
     varT->setAttributeText("long_name","time");
@@ -134,7 +134,7 @@ int CConvertASCAT::convertASCATHeader( CDFObject *cdfObject ){
     dimX->setSize(width);
     cdfObject->addDimension(dimX);
     varX = new CDF::Variable();
-    varX->type=CDF_DOUBLE;
+    varX->setType(CDF_DOUBLE);
     varX->name.copy("x");
     varX->isDimension=true;
     varX->dimensionlinks.push_back(dimX);
@@ -147,7 +147,7 @@ int CConvertASCAT::convertASCATHeader( CDFObject *cdfObject ){
     dimY->setSize(height);
     cdfObject->addDimension(dimY);
     varY = new CDF::Variable();
-    varY->type=CDF_DOUBLE;
+    varY->setType(CDF_DOUBLE);
     varY->name.copy("y");
     varY->isDimension=true;
     varY->dimensionlinks.push_back(dimY);
@@ -197,14 +197,14 @@ int CConvertASCAT::convertASCATHeader( CDFObject *cdfObject ){
     new2DVar->dimensionlinks.push_back(dimY);
     new2DVar->dimensionlinks.push_back(dimX);
     
-    new2DVar->type=swathVar->type;
+    new2DVar->setType(swathVar->getType());
     new2DVar->name=swathVar->name.c_str();
     swathVar->name.concat("_backup");
     
     //Copy variable attributes
     for(size_t j=0;j<swathVar->attributes.size();j++){
       CDF::Attribute *a =swathVar->attributes[j];
-      new2DVar->setAttribute(a->name.c_str(),a->type,a->data,a->length);
+      new2DVar->setAttribute(a->name.c_str(),a->getType(),a->data,a->length);
       new2DVar->setAttributeText("ADAGUC_VECTOR","true");
     }
     
@@ -214,7 +214,7 @@ int CConvertASCAT::convertASCATHeader( CDFObject *cdfObject ){
     //Scale and offset are already applied
     new2DVar->removeAttribute("scale_factor");
     new2DVar->removeAttribute("add_offset");
-    new2DVar->type=CDF_FLOAT;
+    new2DVar->setType(CDF_FLOAT);
   }
   return 0;
 }
@@ -399,7 +399,7 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
     //Allocate and clear data
     for(size_t d=0;d<nrDataObjects;d++){
       new2DVar[d]->setSize(fieldSize);
-      CDF::allocateData(new2DVar[d]->type,&(new2DVar[d]->data),fieldSize);
+      CDF::allocateData(new2DVar[d]->getType(),&(new2DVar[d]->data),fieldSize);
       for(size_t j=0;j<fieldSize;j++){
         ((float*)dataSource->dataObject[d]->cdfVariable->data)[j]=(float)dataSource->dataObject[d]->dfNodataValue;
       }

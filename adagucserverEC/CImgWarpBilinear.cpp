@@ -203,7 +203,7 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
   
   StopWatch_Stop("Start Reprojecting all the points");
   char temp[32];
-  CDF::getCDFDataTypeName(temp,31,sourceImage->dataObject[0]->cdfVariable->type);
+  CDF::getCDFDataTypeName(temp,31,sourceImage->dataObject[0]->cdfVariable->getType());
   CDBDebug("datatype: %s",temp);
   for(int j=0;j<4;j++){
     CDBDebug("dPixelExtent[%d]=%d",j,dPixelExtent[j]);
@@ -237,7 +237,7 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
         void *data=sourceImage->dataObject[varNr]->cdfVariable->data;
         float *fpValues=valObj[varNr].fpValues;
         
-        switch(sourceImage->dataObject[varNr]->cdfVariable->type){
+        switch(sourceImage->dataObject[varNr]->cdfVariable->getType()){
           case CDF_CHAR:
             fpValues[p]= ((signed char*)data)[x+y*sourceImage->dWidth];
             break;

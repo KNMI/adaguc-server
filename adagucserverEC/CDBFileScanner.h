@@ -33,7 +33,7 @@
 #include "CServerError.h"
 #include "CDirReader.h"
 #include "CPGSQLDB.h"
-#include "CADAGUC_time.h"
+//#include "CADAGUC_time.h"
 //#include "adagucserver.h"
 
 /**

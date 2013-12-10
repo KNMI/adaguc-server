@@ -25,6 +25,7 @@
 
 #ifndef CCDFHDF5IO_H
 #define CCDFHDF5IO_H
+
 #include "CCDFDataModel.h"
 #include <stdio.h>
 #include <vector>
@@ -216,8 +217,9 @@ class CDFHDF5Reader :public CDFReader{
       var->id=cdfObject->variables.size();
       var->isDimension=true;
       var->dimensionlinks.push_back(dim);
-      var->type=CDF_DOUBLE;
-      if(CDF::allocateData(var->type,&var->data,dim->length)){throw(__LINE__);}
+      var->currentType=CDF_DOUBLE;
+      var->nativeType=CDF_DOUBLE;
+      if(CDF::allocateData(var->currentType,&var->data,dim->length)){throw(__LINE__);}
       for(size_t i=0;i<dim->length;i++)((float*)var->data)[i]=0.0f;
       var->setSize(dim->length);
       cdfObject->variables.push_back(var);
@@ -259,7 +261,8 @@ CDBDebug("Getting group '%s'",name);
 
           
             CDF::Variable * var = new CDF::Variable();
-            var->type=CDF_CHAR;
+            var->currentType=CDF_CHAR;
+            var->nativeType=CDF_CHAR;
             var->isDimension=false;
             var->setName(temp);
             var->id= cdfObject->variables.size();
@@ -318,7 +321,8 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
                     var= new CDF::Variable();
                     cdfObject->variables.push_back(var);
                   }
-                  var->type=cdfType;
+                  var->currentType=cdfType;
+                  var->nativeType=cdfType;
                   var->isDimension=false;
                   var->setName(varName);
                   
@@ -527,8 +531,8 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
       CDF::Variable *varY=cdfObject->getVariableNE(dimY->name.c_str());
       
  
-      if(CDF::allocateData(varX->type,&varX->data,dimX->length)){throw(__LINE__);}
-      if(CDF::allocateData(varY->type,&varY->data,dimY->length)){throw(__LINE__);}
+      if(CDF::allocateData(varX->currentType,&varX->data,dimX->length)){throw(__LINE__);}
+      if(CDF::allocateData(varY->currentType,&varY->data,dimY->length)){throw(__LINE__);}
       
       varX->setName("x");
       varY->setName("y");
@@ -567,7 +571,8 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
         projection = new CDF::Variable();
         cdfObject->addVariable(projection);
         projection->setName("projection");
-        projection->type=CDF_CHAR;
+        projection->currentType=CDF_CHAR;
+        projection->nativeType=CDF_CHAR;
         projection->isDimension=false;
       }
       
@@ -608,7 +613,8 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
       time->setName("time");
       timeDim->setName("time");
       timeDim->length=1;
-      time->type=CDF_DOUBLE;
+      time->currentType=CDF_DOUBLE;
+      time->nativeType=CDF_DOUBLE;
       time->isDimension=true;
       CDF::Attribute *time_units = new CDF::Attribute();
       time_units->setName("units");
@@ -646,7 +652,7 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
       }
     
       time->setSize(1);
-      if(CDF::allocateData(time->type,&time->data,time->getSize())){throw(__LINE__);}
+      if(CDF::allocateData(time->currentType,&time->data,time->getSize())){throw(__LINE__);}
       ((double*)time->data)[0]=offset;
       if(status!=0){
         CDBError("Could not initialize time: %s",szStartTime);
@@ -721,21 +727,21 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
               {
                 CDF::Attribute* noDataAttr = new CDF::Attribute();
                 noDataAttr->setName("_FillValue");
-                char attrType[256];CDF::getCDFDataTypeName(attrType,255,var->type);
+                char attrType[256];CDF::getCDFDataTypeName(attrType,255,var->currentType);
 #ifdef CCDFHDF5IO_DEBUG                      
                 CDBDebug("%s: Setting type %s",var->name.c_str(),attrType);
 #endif                
 
-                switch(var->type){
-                  case CDF_CHAR  : {char   nodata=(char)dfNodata;noDataAttr->setData(var->type,&nodata,1);};break;
-                  case CDF_BYTE  : {char   nodata=(char)dfNodata;noDataAttr->setData(var->type,&nodata,1);};break;
-                  case CDF_UBYTE : {unsigned char nodata=(unsigned char)dfNodata;noDataAttr->setData(var->type,&nodata,1);};break;
-                  case CDF_SHORT : {short  nodata=(short)dfNodata;noDataAttr->setData(var->type,&nodata,1);};break;
-                  case CDF_USHORT: {unsigned short nodata=(unsigned short)dfNodata;noDataAttr->setData(var->type,&nodata,1);};break;
-                  case CDF_INT   : {int    nodata=(int)dfNodata;noDataAttr->setData(var->type,&nodata,1);};break;
-                  case CDF_UINT  : {unsigned int nodata=(unsigned int)dfNodata;noDataAttr->setData(var->type,&nodata,1);};break;
-                  case CDF_FLOAT : {float  nodata=(float)dfNodata;noDataAttr->setData(var->type,&nodata,1);};break;
-                  case CDF_DOUBLE: {double nodata=(double)dfNodata;noDataAttr->setData(var->type,&nodata,1);};break;
+                switch(var->currentType){
+                  case CDF_CHAR  : {char   nodata=(char)dfNodata;noDataAttr->setData(var->currentType,&nodata,1);};break;
+                  case CDF_BYTE  : {char   nodata=(char)dfNodata;noDataAttr->setData(var->currentType,&nodata,1);};break;
+                  case CDF_UBYTE : {unsigned char nodata=(unsigned char)dfNodata;noDataAttr->setData(var->currentType,&nodata,1);};break;
+                  case CDF_SHORT : {short  nodata=(short)dfNodata;noDataAttr->setData(var->currentType,&nodata,1);};break;
+                  case CDF_USHORT: {unsigned short nodata=(unsigned short)dfNodata;noDataAttr->setData(var->currentType,&nodata,1);};break;
+                  case CDF_INT   : {int    nodata=(int)dfNodata;noDataAttr->setData(var->currentType,&nodata,1);};break;
+                  case CDF_UINT  : {unsigned int nodata=(unsigned int)dfNodata;noDataAttr->setData(var->currentType,&nodata,1);};break;
+                  case CDF_FLOAT : {float  nodata=(float)dfNodata;noDataAttr->setData(var->currentType,&nodata,1);};break;
+                  case CDF_DOUBLE: {double nodata=(double)dfNodata;noDataAttr->setData(var->currentType,&nodata,1);};break;
 
                   
                 }
@@ -776,7 +782,7 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
           
           /*CDF::Attribute* nodata = new CDF::Attribute();
           nodata->setName("_FillValue");
-          nodata->setData(var->type,0,1);
+          nodata->setData(var->currentType,0,1);
           var->addAttribute(nodata);*/
         }
         v++;

@@ -136,7 +136,7 @@ int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,in
           if(hasStatusFlag){
             tableColumns.printconcat(", %s varchar (64), dim%s int",dimName.c_str(),dimName.c_str());
           }else{
-            switch(dimVar->type){
+            switch(dimVar->getType()){
               case CDF_FLOAT:
               case CDF_DOUBLE:
               tableColumns.printconcat(", %s real, dim%s int",dimName.c_str(),dimName.c_str());break;
@@ -237,7 +237,8 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
   try{
     //Loop dimensions and files
     //CDBDebug("Checking files that are already in the database...");
-    char ISOTime[ISO8601TIME_LEN+1];
+    //char ISOTime[ISO8601TIME_LEN+1];
+    CT::string isoString;
     size_t numberOfFilesAddedFromDB=0;
     
     //Setup variables like tableNames and timedims for each dimension
@@ -250,7 +251,8 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
     bool skipDim[numDims];
     CT::string queryString;
     CT::string VALUES;
-    CADAGUC_time *ADTime  = NULL;
+    //CADAGUC_time *ADTime  = NULL;
+    CTime adagucTime;
     for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
       dimNames[d].copy(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
       dimNames[d].toLowerCaseSelf();
@@ -424,11 +426,18 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                 
                   //Create adaguctime structure, when this is a time dimension.
                   if(isTimeDim[d]){
-                    try{ADTime = new CADAGUC_time((char*)dimUnits->toString().c_str());}catch(int e){delete ADTime;ADTime=NULL;throw(__LINE__);}
+                    try{
+                      //ADTime = new CADAGUC_time((char*)dimUnits->toString().c_str());
+                      adagucTime.reset();
+                      adagucTime.init((char*)dimUnits->toString().c_str());
+                    }catch(int e){
+                      CDBDebug("Exception occurred during time initialization: %d",e);
+                      //delete ADTime;ADTime=NULL;
+                      throw(__LINE__);}
                   }
                   
                   #ifdef CDBFILESCANNER_DEBUG
-                  CDBDebug("Dimension type = %s",CDF::getCDFDataTypeName(dimVar->type).c_str());
+                  CDBDebug("Dimension type = %s",CDF::getCDFDataTypeName(dimVar->getType()).c_str());
                   #endif
                   
                   #ifdef CDBFILESCANNER_DEBUG
@@ -436,7 +445,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                   #endif
                   
                   //Strings do never fit in a double.
-                  if(dimVar->type!=CDF_STRING){
+                  if(dimVar->getType()!=CDF_STRING){
                     //Read the dimension data
                     status = dimVar->readData(CDF_DOUBLE);
                   }else{
@@ -469,7 +478,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                     for(size_t i=0;i<dimDim->length;i++){
                      
                         //Insert individual values of type char, short, int, float, double
-                        if(dimVar->type!=CDF_STRING){
+                        if(dimVar->getType()!=CDF_STRING){
                          if(dimValues[i]!=NC_FILL_DOUBLE){
                             if(isTimeDim[d]==false){
                               if(hasStatusFlag==true){
@@ -480,7 +489,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                                             fileDate.c_str());
                               }
                               if(hasStatusFlag==false){
-                                switch(dimVar->type){
+                                switch(dimVar->getType()){
                                   case CDF_FLOAT:
                                   case CDF_DOUBLE:
                                     VALUES.print("('%s',%f,'%d','%s')",dirReader->fileList[j]->fullName.c_str(),double(dimValues[i]),int(i),fileDate.c_str());break;
@@ -490,10 +499,20 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                               }
                             }else{
                               VALUES.copy("");
-                              ADTime->PrintISOTime(ISOTime,ISO8601TIME_LEN,dimValues[i]);status = 0;//TODO make PrintISOTime return a 0 if succeeded
-                              if(status == 0){
-                                ISOTime[19]='Z';ISOTime[20]='\0';
-                                VALUES.print("('%s','%s','%d','%s')",dirReader->fileList[j]->fullName.c_str(),ISOTime,int(i),fileDate.c_str());
+                              
+                              //ADTime->PrintISOTime(ISOTime,ISO8601TIME_LEN,dimValues[i]);status = 0;//TODO make PrintISOTime return a 0 if succeeded
+                              
+                              try{
+                                isoString = adagucTime.dateToISOString(adagucTime.getDate(dimValues[i]));
+                                
+                                isoString.setSize(19);
+                                isoString.concat("Z");
+                                                                //ISOTime[19]='Z';ISOTime[20]='\0';
+                                VALUES.print("('%s','%s','%d','%s')",dirReader->fileList[j]->fullName.c_str(),isoString.c_str(),int(i),fileDate.c_str());
+                                //CDBDebug("VALUES = [%s]",VALUES.c_str());
+
+                              }catch(int e){
+                                CDBDebug("Exception occurred during time conversion: %d",e);
                               }
                               
                             }
@@ -501,7 +520,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                         }
                         
                         //Insert individual values of type string
-                        if(dimVar->type==CDF_STRING){
+                        if(dimVar->getType()==CDF_STRING){
                           
                           const char *str=((char**)dimVar->data)[i];
                           
@@ -546,7 +565,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                   statusFlagList.clear();
                   
                   //Cleanup adaguctime structure
-                  if(isTimeDim[d]){delete ADTime;ADTime=NULL;}
+                  
                   
                   if(exceptionAtLineNr!=0)throw(exceptionAtLineNr);
                 }
@@ -558,7 +577,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
               CDBError(" *** SKIPPING FILE %s ***",dirReader->fileList[j]->baseName.c_str());
               //Close cdfObject. this is only needed if an exception occurs, otherwise it does nothing...
               //delete cdfObject;cdfObject=NULL;
-              delete ADTime;ADTime=NULL;
+
               cdfObject=CDFObjectStore::getCDFObjectStore()->deleteCDFObject(&cdfObject);
             }
           }
