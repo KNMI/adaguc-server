@@ -184,7 +184,9 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
   if(dataSource->dataObject[0]->cdfVariable->getType()==CDF_CHAR)  datatype = GDT_Byte;
   if(dataSource->dataObject[0]->cdfVariable->getType()==CDF_UBYTE)  datatype = GDT_Byte;
   if(dataSource->dataObject[0]->cdfVariable->getType()==CDF_SHORT) datatype = GDT_Int16;
+  if(dataSource->dataObject[0]->cdfVariable->getType()==CDF_USHORT) datatype = GDT_UInt16;
   if(dataSource->dataObject[0]->cdfVariable->getType()==CDF_INT)   datatype = GDT_Int32;
+  if(dataSource->dataObject[0]->cdfVariable->getType()==CDF_UINT)   datatype = GDT_UInt32;
   if(dataSource->dataObject[0]->cdfVariable->getType()==CDF_FLOAT) datatype = GDT_Float32;
   if(dataSource->dataObject[0]->cdfVariable->getType()==CDF_DOUBLE)datatype = GDT_Float64;
   if(datatype==GDT_Unknown){
