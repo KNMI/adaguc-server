@@ -116,7 +116,13 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
 #ifdef CCDFDATAMODEL_DEBUG          
   CDBDebug("reading variable %s",name.c_str());
 #endif  
- if(data!=NULL&&type!=this->currentType){freeData();}
+ if(data!=NULL&&type!=this->currentType){
+   #ifdef CCDFDATAMODEL_DEBUG          
+  CDBDebug("Freeing orignal variable %s",name.c_str());
+#endif  
+   freeData();
+   
+  }
   
   
   

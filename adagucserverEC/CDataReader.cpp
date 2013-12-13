@@ -446,20 +446,28 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
     }
   }
 
+  
+  
   // Calculate cellsize based on read X,Y dims
   double *dfdim_X=(double*)dataSource->varX->data;
   double *dfdim_Y=(double*)dataSource->varY->data;
+  
+//   CDBDebug("dfdim_X :");
+//   for(int j=0;j<dataSource->dWidth;j++){
+//     CDBDebug("dfdim_X %d / %f",j,dfdim_X[j]);
+//   }
   
   if(dfdim_X == NULL || dfdim_Y == NULL){
     CDBError("For variable '%s': No data available for '%s' or '%s' dimensions",dataSourceVar->name.c_str(),dataSource->varX->name.c_str(),dataSource->varY->name.c_str());
     return 1;
   }
   
-  //CDBDebug("SOFAR %d %d %d %d",dataSource->dWidth,dataSource->dHeight,dfdim_X,dfdim_Y);
+  //CDBDebug("SOFAR %d %d %f %f",dataSource->dWidth,dataSource->dHeight,dfdim_X[0],dfdim_Y[0]);
   
   dataSource->dfCellSizeX=(dfdim_X[dataSource->dWidth-1]-dfdim_X[0])/double(dataSource->dWidth-1);
   dataSource->dfCellSizeY=(dfdim_Y[dataSource->dHeight-1]-dfdim_Y[0])/double(dataSource->dHeight-1);
-  //CDBDebug("cX: %f W: %d BBOXL: %f BBOXR: %f",dataSource->dfCellSizeX,dataSource->dWidth,dfdim_X[0],dfdim_X[dataSource->dWidth-1]);
+  
+  CDBDebug("cX: %f W: %d BBOXL: %f BBOXR: %f",dataSource->dfCellSizeX,dataSource->dWidth,dfdim_X[0],dfdim_X[dataSource->dWidth-1]);
   // Calculate BBOX
   dataSource->dfBBOX[0]=dfdim_X[0]-dataSource->dfCellSizeX/2.0f;
   dataSource->dfBBOX[1]=dfdim_Y[dataSource->dHeight-1]+dataSource->dfCellSizeY/2.0f;
@@ -562,17 +570,25 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
     return 0;
   }
   
-  if(dataSource->level2CompatMode==false){
+  
+  
+  if(dataSource->level2CompatMode==false && dataSource->dfCellSizeX > 0){
   
     
     if( dataSource->srvParams->isLonLatProjection(&dataSource->nativeProj4)){
       size_t j=0;
+      
+      
+      
       for(j=0;j<dataSource->varX->getSize();j++){
         //CDBDebug("%d == %f",j,((double*)dataSource->varX->data)[j]);
         if(((double*)dataSource->varX->data)[j]>=180.0)break;
         if(((double*)dataSource->varX->data)[j]<=-180.0)break;
       }
+      
+      
       if(j!=dataSource->varX->getSize()){
+        CDBDebug("OK %f",dataSource->dfCellSizeX);
         dataSource->useLonTransformation=j;
         //dataSource->dfBBOX[0]=-180;
         //dataSource->dfBBOX[2]=180;
@@ -582,12 +598,15 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
         
         //When cache is available, the 2D field is already stored as a lontransformed field. We should not do this again.
         //The lat/lons are always kept original, so they needed to be shifted (done above)
+        
         if(cache->cacheIsAvailable()){
           dataSource->useLonTransformation = -1;
         }
       }
+      
     }
   }
+  
   return 0;
 }
 
@@ -717,12 +736,15 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
   CDBDebug("\nSTART\n%s\nEND\n",dumpString.c_str());
   writeLogFile2(dumpString.c_str());*/
   
- 
+  
   
   if(parseDimensions(dataSource,mode,x,y,&cache)!=0){
     CDBError("Unable to parseDimensions");
     return 1;
   }
+  
+  
+  
   if(dataSource->level2CompatMode){
    
     enableDataCache=false;
@@ -742,7 +764,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
   }
   
 
-
+  
   
   
   size_t start[dataSource->dNetCDFNumDims+1];
@@ -756,7 +778,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
   stride[dataSource->dimXIndex]=dataSource->stride2DMap;
   stride[dataSource->dimYIndex]=dataSource->stride2DMap;
   
- 
+  
   
   //Set other dimensions than X and Y.
   if(dataSource->dNetCDFNumDims>2){
@@ -882,7 +904,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
   }
   
   #ifdef CDATAREADER_DEBUG
-    CDBDebug("OK");
+    
   #endif
 
 
@@ -986,7 +1008,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
   }
 
   #ifdef CDATAREADER_DEBUG
-    CDBDebug("OK");
+    
   #endif
 
   if(mode==CNETCDFREADER_MODE_OPEN_ALL){
