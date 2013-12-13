@@ -1099,8 +1099,12 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
     
     /*Scenario 1*/    
     if(useINSPIREScenario==1){
+      CT::string inspirexsi=
+      "xmlns:inspire_common=\"http://inspire.ec.europa.eu/schemas/common/1.0\"\n"
+      "xmlns:inspire_vs=\"http://inspire.ec.europa.eu/schemas/inspire_vs/1.0\"\n"
+      "xsi:schemaLocation=\"http://inspire.ec.europa.eu/schemas/inspire_vs/1.0 http://inspire.ec.europa.eu/schemas/inspire_vs/1.0/inspire_vs.xsd\"\n";
       
-      XMLDoc->concat("<inspire_vs:ExtendedCapabilities>\n");
+      XMLDoc->printconcat("<inspire_vs:ExtendedCapabilities xsi:type=\"%s\">\n",inspirexsi.c_str());
       XMLDoc->concat("  <inspire_common:MetadataUrl xsi:type=\"inspire_common:resourceLocatorType\">\n");
       XMLDoc->printconcat("    <inspire_common:URL>%s</inspire_common:URL>\n",viewServiceCSWURL.c_str());
       XMLDoc->concat("    <inspire_common:MediaType>application/vnd.ogc.csw.GetRecordByIdResponse_xml</inspire_common:MediaType>\n");
@@ -1177,13 +1181,14 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
     
     
     //Set INSPIRE SCHEMA
-    CT::string inspirexsi=
+    /*CT::string inspirexsi=
       "xmlns:inspire_common=\"http://inspire.ec.europa.eu/schemas/common/1.0\"\n"
       "xmlns:inspire_vs=\"http://inspire.ec.europa.eu/schemas/inspire_vs/1.0\"\n"
       "xsi:schemaLocation=\"http://inspire.ec.europa.eu/schemas/inspire_vs/1.0 http://inspire.ec.europa.eu/schemas/inspire_vs/1.0/inspire_vs.xsd\"\n";
-    XMLDoc->replaceSelf("[SCHEMADEFINITION]",inspirexsi.c_str());
+    XMLDoc->replaceSelf("[SCHEMADEFINITION]",inspirexsi.c_str());*/
     
-
+    CT::string wms130xsi="xsi:schemaLocation=\"http://www.opengis.net/wms http://schemas.opengis.net/wms/1.3.0/capabilities_1_3_0.xsd\"\n";
+    XMLDoc->replaceSelf("[SCHEMADEFINITION]",wms130xsi.c_str());
       
     
     //Set INSPIRE contact information
@@ -1203,7 +1208,7 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
     //Default WMS 1.3.0 service
     CT::string wms130xsi="xsi:schemaLocation=\"http://www.opengis.net/wms http://schemas.opengis.net/wms/1.3.0/capabilities_1_3_0.xsd\"\n";
     XMLDoc->replaceSelf("[SCHEMADEFINITION]",wms130xsi.c_str());
-     XMLDoc->replaceSelf("[CONTACTINFORMATION]","");
+    XMLDoc->replaceSelf("[CONTACTINFORMATION]","");
   }
   
 

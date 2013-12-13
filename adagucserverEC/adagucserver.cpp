@@ -125,9 +125,7 @@ int main(int argc, const char *argv[]){
 
   // Initialize error functions
   seterrormode(EXCEPTIONS_PLAINTEXT);
-  #ifdef MEASURETIME
-  StopWatch_Start();
-  #endif
+
 
   //Check if a database update was requested
   if(argc>=2){
@@ -218,6 +216,11 @@ int main(int argc, const char *argv[]){
   setErrorFunction(serverErrorFunction);
   setWarningFunction(serverWarningFunction);
   setDebugFunction(serverDebugFunction);
+  
+#ifdef MEASURETIME
+  StopWatch_Start();
+#endif
+  
   runRequest();
   //Display errors if any
   readyerror();
