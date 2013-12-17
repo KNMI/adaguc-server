@@ -467,7 +467,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
   dataSource->dfCellSizeX=(dfdim_X[dataSource->dWidth-1]-dfdim_X[0])/double(dataSource->dWidth-1);
   dataSource->dfCellSizeY=(dfdim_Y[dataSource->dHeight-1]-dfdim_Y[0])/double(dataSource->dHeight-1);
   
-  CDBDebug("cX: %f W: %d BBOXL: %f BBOXR: %f",dataSource->dfCellSizeX,dataSource->dWidth,dfdim_X[0],dfdim_X[dataSource->dWidth-1]);
+  //CDBDebug("cX: %f W: %d BBOXL: %f BBOXR: %f",dataSource->dfCellSizeX,dataSource->dWidth,dfdim_X[0],dfdim_X[dataSource->dWidth-1]);
   // Calculate BBOX
   dataSource->dfBBOX[0]=dfdim_X[0]-dataSource->dfCellSizeX/2.0f;
   dataSource->dfBBOX[1]=dfdim_Y[dataSource->dHeight-1]+dataSource->dfCellSizeY/2.0f;

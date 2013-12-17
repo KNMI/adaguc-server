@@ -178,6 +178,14 @@ int CXMLGen::getDataSourceForLayer(WMSLayer * myWMSLayer){
 #ifdef CXMLGEN_DEBUG
 CDBDebug("getDataSourceForLayer");
 #endif 
+
+    //Get abstract for layer
+    if( myWMSLayer->dataSource->cfgLayer->Abstract.size()>0){
+      const char *v = myWMSLayer->dataSource->cfgLayer->Abstract[0]->value.c_str();
+      if(v !=NULL){
+        myWMSLayer->abstract.copy(v);
+      }
+    }
    //Is this a cascaded WMS server?
   if(myWMSLayer->dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
     #ifdef CXMLGEN_DEBUG    
@@ -198,7 +206,6 @@ CDBDebug("getDataSourceForLayer");
 
 myWMSLayer->dataSource->addTimeStep(myWMSLayer->fileName.c_str(),"");
   
-
 
   
   //Is this a local file based WMS server?
@@ -251,13 +258,7 @@ CDBDebug("Database layer");
     }
     
     
-    //Get abstract for layer
-    if( myWMSLayer->dataSource->cfgLayer->Abstract.size()>0){
-      const char *v = myWMSLayer->dataSource->cfgLayer->Abstract[0]->value.c_str();
-      if(v !=NULL){
-        myWMSLayer->abstract.copy(v);
-      }
-    }
+   
     return 0;
   }
   CDBWarning("Unknown layer type");
@@ -552,6 +553,7 @@ CDBDebug("Querying %s",query.c_str());
             
             dim->hasMultipleValues=1;
             if(isTimeDim==true){
+              dim->units.copy("ISO8601");
               for(size_t j=0;j<values->getSize();j++){
                 //2011-01-01T22:00:01Z
                 //01234567890123456789
@@ -1104,10 +1106,13 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
       "xmlns:inspire_vs=\"http://inspire.ec.europa.eu/schemas/inspire_vs/1.0\"\n"
       "xsi:schemaLocation=\"http://inspire.ec.europa.eu/schemas/inspire_vs/1.0 http://inspire.ec.europa.eu/schemas/inspire_vs/1.0/inspire_vs.xsd\"\n";
       
-      XMLDoc->printconcat("<inspire_vs:ExtendedCapabilities xsi:type=\"%s\">\n",inspirexsi.c_str());
+      XMLDoc->printconcat("<inspire_vs:ExtendedCapabilities %s>\n",inspirexsi.c_str());
       XMLDoc->concat("  <inspire_common:MetadataUrl xsi:type=\"inspire_common:resourceLocatorType\">\n");
       XMLDoc->printconcat("    <inspire_common:URL>%s</inspire_common:URL>\n",viewServiceCSWURL.c_str());
-      XMLDoc->concat("    <inspire_common:MediaType>application/vnd.ogc.csw.GetRecordByIdResponse_xml</inspire_common:MediaType>\n");
+      //XMLDoc->concat("    <inspire_common:MediaType>application/vnd.ogc.csw.GetRecordByIdResponse_xml</inspire_common:MediaType>\n");
+      XMLDoc->concat("    <inspire_common:MediaType>application/vnd.iso.19139+xml</inspire_common:MediaType>\n");
+      
+      
       XMLDoc->concat("  </inspire_common:MetadataUrl>\n");
       XMLDoc->concat("  <inspire_common:SupportedLanguages xsi:type=\"inspire_common:supportedLanguagesType\">\n");
       XMLDoc->concat("    <inspire_common:DefaultLanguage>\n");
@@ -1389,7 +1394,7 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
             }else if(inspireMetadataIsAvailable){
 //               XMLDoc->concat("  <MetadataURL type=\"ISO19115:2005\">\n");
 //               XMLDoc->concat("     <Format>application/gml+xml; version=3.2</Format>\n");
-//               XMLDoc->printconcat("     <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>",datasetMetaDataURL.c_str());
+//               XMLDoc->printconcat("     <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>",datasetCSWURL.c_str());
 //               XMLDoc->concat("  </MetadataURL>\n");
               
             }
