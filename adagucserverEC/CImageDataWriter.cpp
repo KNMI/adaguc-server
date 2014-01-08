@@ -1531,11 +1531,17 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         double pi=3.141592;
         double pixel1=convertValue(dataSource->dataObject[0]->cdfVariable->getType(),dataSource->dataObject[0]->cdfVariable->data,ptr);
         double pixel2=convertValue(dataSource->dataObject[1]->cdfVariable->getType(),dataSource->dataObject[1]->cdfVariable->data,ptr);
-        if (gridRelative)  {
+
+        bool windDataValid = (((pixel1==pixel1&&isOutsideBBOX==false&&dataSource->dataObject[0]->hasNodataValue==true&&pixel1!=dataSource->dataObject[0]->dfNodataValue)||
+          dataSource->dataObject[0]->hasNodataValue==false)&&
+           ((pixel2==pixel2&&isOutsideBBOX==false&&dataSource->dataObject[1]->hasNodataValue==true&&pixel2!=dataSource->dataObject[1]->dfNodataValue)||
+          dataSource->dataObject[1]->hasNodataValue==false)) ;
+        {
+        if (gridRelative&&windDataValid==true)  {
     //Add raster value
 
           status = imageWarper.initreproj(dataSource,drawImage.Geo,&srvParam->cfg->Projection);
-#ifdef ORIGINAL_JABOBIAN
+#ifdef ORIGINAL_JACOBIAN
           #ifdef CIMAGEDATAWRITER_DEBUG 
           CDBDebug("doJacoIntoLatLon(%f,%f,%f, %f, %f, %f)", pixel1,pixel2, projCacheInfo.lonX,projCacheInfo.lonY,0.01,0.01);
           #endif
@@ -1569,21 +1575,25 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         }
         element2->dataSource= dataSource;
         getFeatureInfoResult->elements.push_back(element2);
-        double angle=270-atan2(pixel2, pixel1)*180/pi;
-        if (angle>360) angle-=360;
-        if (angle<0) angle=angle+360;
         element2->long_name="wind direction";
         element2->var_name="wind direction";
         element2->standard_name="dir";
         element2->feature_name="wind direction";
-        element2->value.print("%3.0f",angle);
         element2->units="degrees";
+
+        if (windDataValid) {
+          double angle=270-atan2(pixel2, pixel1)*180/pi;
+          if (angle>360) angle-=360;
+          if (angle<0) angle=angle+360;
+          element2->value.print("%3.0f",angle);
+        } else {
+          element2->value.print("%s", "nodata");
+        }
         #ifdef CIMAGEDATAWRITER_DEBUG 
-        CDBDebug("pushed wind dir %f for step %d [%d]", angle, step, getFeatureInfoResult->elements.size());
+        CDBDebug("pushed wind dir %s for step %d [%d]", element2->value.c_str(), step, getFeatureInfoResult->elements.size());
         #endif
         element2->time.copy(&dataSources[d]->timeSteps[dataSources[d]->getCurrentTimeStep()]->timeString);
         
-        double windspeed=hypot(pixel1, pixel2);
         GetFeatureInfoResult::Element *windspeedOrigElement=new GetFeatureInfoResult::Element();
         windspeedOrigElement->dataSource= dataSource;
         windspeedOrigElement->time.copy(&dataSources[d]->timeSteps[dataSources[d]->getCurrentTimeStep()]->timeString);
@@ -1600,11 +1610,16 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         windspeedOrigElement->var_name="wind speed";
         windspeedOrigElement->standard_name="speed1";
         windspeedOrigElement->feature_name="wind speed";
-        windspeedOrigElement->value.print("%3.1f",windspeed);
         windspeedOrigElement->units=dataSource->dataObject[0]->units;
         windspeedOrigElement->time.copy(&dataSources[d]->timeSteps[dataSources[d]->getCurrentTimeStep()]->timeString);
+        if (windDataValid) {
+          double windspeed=hypot(pixel1, pixel2);
+          windspeedOrigElement->value.print("%3.1f",windspeed);
+        } else {
+          windspeedOrigElement->value.print("%s","nodata");
+        }
         #ifdef CIMAGEDATAWRITER_DEBUG 
-        CDBDebug("pushed wind speed %f for step %d [%d]", windspeed, step, getFeatureInfoResult->elements.size());
+        CDBDebug("pushed wind speed %s for step %d [%d]",windspeedOrigElement->value.c_str() , step, getFeatureInfoResult->elements.size());
         #endif
 
         //Skip KTS calculation if input data is not u and v vectors in m/s.
@@ -1629,18 +1644,23 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
             element3->cdfDims.addDimension(name.c_str(),value.c_str(),cdfDims->getDimensionIndex(j));
           }
           getFeatureInfoResult->elements.push_back(element3);
-          double windspeedKTS=windspeed*(3600./1852.);
           element3->long_name="wind speed";
           element3->var_name="wind speed";
           element3->standard_name="speed2";
           element3->feature_name="wind speed kts";
-          element3->value.print("%3.1f",windspeedKTS);
           element3->units="kts";
           element3->time.copy(&dataSources[d]->timeSteps[dataSources[d]->getCurrentTimeStep()]->timeString);
+          if (windDataValid) {
+            double windspeedKTS=hypot(pixel1, pixel2)*(3600./1852.);
+            element3->value.print("%3.1f",windspeedKTS);
+          } else {
+            element3->value.print("%s", "nodata");
+          }
           #ifdef CIMAGEDATAWRITER_DEBUG 
-          CDBDebug("pushed wind speed KTS %f for step %d [%d]\n", windspeedKTS, step, getFeatureInfoResult->elements.size());
+          CDBDebug("pushed wind speed KTS %f for step %d [%d]\n", element3->value.c_str(), step, getFeatureInfoResult->elements.size());
           #endif
         }
+      }
       }
       }
     }
@@ -3366,7 +3386,7 @@ int CImageDataWriter::end(){
             if(graphTimeResType == daily)
             {
             
-              if(timePos1.day==1&&timePos1.hour==0&&timePos1.minute==0&&timePos1.second==0||i==0){
+              if((timePos1.day==1&&timePos1.hour==0&&timePos1.minute==0&&timePos1.second==0)||i==0){
                 lineCanvas.line(x1,0,x1,plotHeight,1.1,CColor(64,64,64,200));
                 
                 
