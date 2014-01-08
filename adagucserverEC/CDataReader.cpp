@@ -1033,10 +1033,8 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
         
         fillValue->getData(&dataSource->dataObject[varNr]->dfNodataValue,1);
         dataSource->dataObject[varNr]->hasNodataValue = true;
-        CDBDebug("Found fillValue att with value %f",dataSource->dataObject[varNr]->dfNodataValue);
       }else {
         dataSource->dataObject[varNr]->hasNodataValue=false;
-        CDBDebug("No fillValue att found");
       }
       
       
