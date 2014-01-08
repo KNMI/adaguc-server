@@ -1033,7 +1033,12 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
         
         fillValue->getData(&dataSource->dataObject[varNr]->dfNodataValue,1);
         dataSource->dataObject[varNr]->hasNodataValue = true;
-      }else dataSource->dataObject[varNr]->hasNodataValue=false;
+        CDBDebug("Found fillValue att with value %f",dataSource->dataObject[varNr]->dfNodataValue);
+      }else {
+        dataSource->dataObject[varNr]->hasNodataValue=false;
+        CDBDebug("No fillValue att found");
+      }
+      
       
     
       
@@ -1182,12 +1187,14 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
 
    
       
-      
-      /*In order to write good cache files we need to modify
-        our cdfobject. Data is now unpacked, so we need to remove
-        scale_factor and add_offset attributes and change datatypes 
-        of the data and _FillValue 
-      */
+   /**
+    *Cache is deprecated since 2014-01-01
+    *   
+//       In order to write good cache files we need to modify
+//         our cdfobject. Data is now unpacked, so we need to remove
+//         scale_factor and add_offset attributes and change datatypes 
+//         of the data and _FillValue 
+//       
       //remove scale_factor and add_offset attributes, otherwise they are stored in the cachefile again and reapplied over and over again.
       var[varNr]->removeAttribute("scale_factor");
       var[varNr]->removeAttribute("add_offset");
@@ -1196,13 +1203,13 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
       //var[varNr]->getType()=dataSource->dataObject[varNr]->dataType;
       
       //Reset _FillValue to correct datatype and adjust scale and offset values.
-      if( dataSource->dataObject[varNr]->dfNodataValue){
+      if( dataSource->dataObject[varNr]->hasNodataValue){
         CDF::Attribute *fillValue = var[varNr]->getAttributeNE("_FillValue");
         if(fillValue!=NULL){
           if(var[varNr]->getType()==CDF_FLOAT){float fNoData=(float)dataSource->dataObject[varNr]->dfNodataValue;fillValue->setData(CDF_FLOAT,&fNoData,1);}
           if(var[varNr]->getType()==CDF_DOUBLE)fillValue->setData(CDF_DOUBLE,&dataSource->dataObject[varNr]->dfNodataValue,1);
         }
-      }
+      }*/
     }
 
     
