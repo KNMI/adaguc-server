@@ -258,7 +258,8 @@ class Proc{
    // dataSource->dHeight=360;
     //((T)dataSource->dataObject[0]->cdfVariable)
     void *newData = NULL;
-    size_t imageSize = dataSource->dWidth*dataSource->dHeight;
+    size_t imageSize = size_t(dataSource->dWidth)*size_t(dataSource->dHeight);
+    CDBDebug(" Image size = %d %d %d", imageSize,dataSource->dWidth,dataSource->dHeight);
     if(imageSize==0)imageSize=1;
     CDF::allocateData(dataSource->dataObject[0]->cdfVariable->getType(),&newData,imageSize);
     for(size_t j=0;j<imageSize;j++){
@@ -283,6 +284,7 @@ class Proc{
     
    CDF::freeData(&dataSource->dataObject[0]->cdfVariable->data);
    (dataSource->dataObject[0]->cdfVariable->data)=newData;
+   dataSource->dataObject[0]->cdfVariable->setSize(imageSize);
   }
 };
 
@@ -576,31 +578,34 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
   
     
     if( dataSource->srvParams->isLonLatProjection(&dataSource->nativeProj4)){
-      size_t j=0;
-      
-      
-      
-      for(j=0;j<dataSource->varX->getSize();j++){
-        //CDBDebug("%d == %f",j,((double*)dataSource->varX->data)[j]);
-        if(((double*)dataSource->varX->data)[j]>=180.0)break;
-        if(((double*)dataSource->varX->data)[j]<=-180.0)break;
-      }
-      
-      
-      if(j!=dataSource->varX->getSize()){
-        CDBDebug("OK %f",dataSource->dfCellSizeX);
-        dataSource->useLonTransformation=j;
-        //dataSource->dfBBOX[0]=-180;
-        //dataSource->dfBBOX[2]=180;
-        while( dataSource->dfBBOX[0]>-180){dataSource->dfBBOX[0]-=dataSource->dfCellSizeX;}
-        while(dataSource->dfBBOX[0]<-180){ dataSource->dfBBOX[0]+=dataSource->dfCellSizeX;}
-        dataSource->dfBBOX[2]=dataSource->dfBBOX[0]+360;
+      //If the lon variable name contains an X, it is probably not longitude.
+      if(dataSource->varX->name.indexOf("x")==-1&&dataSource->varX->name.indexOf("X")==-1){
+        size_t j=0;
         
-        //When cache is available, the 2D field is already stored as a lontransformed field. We should not do this again.
-        //The lat/lons are always kept original, so they needed to be shifted (done above)
         
-        if(cache->cacheIsAvailable()){
-          dataSource->useLonTransformation = -1;
+        
+        for(j=0;j<dataSource->varX->getSize();j++){
+          //CDBDebug("%d == %f",j,((double*)dataSource->varX->data)[j]);
+          if(((double*)dataSource->varX->data)[j]>=180.0)break;
+          if(((double*)dataSource->varX->data)[j]<=-180.0)break;
+        }
+        
+        
+        if(j!=dataSource->varX->getSize()){
+          CDBDebug("OK %f",dataSource->dfCellSizeX);
+          dataSource->useLonTransformation=j;
+          //dataSource->dfBBOX[0]=-180;
+          //dataSource->dfBBOX[2]=180;
+          while( dataSource->dfBBOX[0]>-180){dataSource->dfBBOX[0]-=dataSource->dfCellSizeX;}
+          while(dataSource->dfBBOX[0]<-180){ dataSource->dfBBOX[0]+=dataSource->dfCellSizeX;}
+          dataSource->dfBBOX[2]=dataSource->dfBBOX[0]+360;
+          
+          //When cache is available, the 2D field is already stored as a lontransformed field. We should not do this again.
+          //The lat/lons are always kept original, so they needed to be shifted (done above)
+          
+          if(cache->cacheIsAvailable()){
+            dataSource->useLonTransformation = -1;
+          }
         }
       }
       
@@ -797,8 +802,10 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
     count[dataSource->dimYIndex]=1;
     stride[dataSource->dimXIndex]=1;
     stride[dataSource->dimYIndex]=1;
-    
-    //CDBDebug("%d %d",x,y);
+    #ifdef CDATAREADER_DEBUG
+     CDBDebug("Single cell mode for x,y: (%d, %d)",x,y);
+    #endif
+   
   }
  
 
@@ -894,18 +901,11 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
       }
     
     }
-    
-    //Important!: The CDF datamodel needs to now the new datatype as well, in order to do right lon warping.
-    //var[varNr]->getType()=dataSource->dataObject[varNr]->dataType;
-    
+
      #ifdef CDATAREADER_DEBUG
     CDBDebug("/Finished Working on variable %s",dataSource->dataObject[varNr]->cdfVariable->name.c_str());
     #endif
   }
-  
-  #ifdef CDATAREADER_DEBUG
-    
-  #endif
 
 
   if(mode==CNETCDFREADER_MODE_GET_METADATA){
@@ -1053,7 +1053,12 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
         StopWatch_Stop("start reading data");
         #endif
         
-         
+        #ifdef CDATAREADER_DEBUG   
+        CDBDebug("--- varNR [%d], name=\"%s\"",varNr,var[varNr]->name.c_str());
+        for(size_t d=0;d<var[varNr]->dimensionlinks.size();d++){
+          CDBDebug("%s  \tstart: %d\tcount %d\tstride %d",var[varNr]->dimensionlinks[d]->name.c_str(),start[d],count[d],stride[d]);
+        }
+        #endif 
          
         if(var[varNr]->readData(var[varNr]->getType(),start,count,stride)!=0){
           CDBError("Unable to read data for variable %s in file %s",var[varNr]->name.c_str(),dataSource->getFileName());
@@ -1082,12 +1087,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
           }
         }
     
-        #ifdef CDATAREADER_DEBUG   
-        CDBDebug("--- varNR [%d], name=\"%s\"",varNr,var[varNr]->name.c_str());
-        for(size_t d=0;d<var[varNr]->dimensionlinks.size();d++){
-          CDBDebug("%s  \tstart: %d\tcount %d\tstride %d",var[varNr]->dimensionlinks[d]->name.c_str(),start[d],count[d],stride[d]);
-        }
-        #endif
+
       }
       dataSource->dataObject[varNr]->appliedScaleOffset = false;
       
@@ -1171,8 +1171,10 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
           // packed data to be unpacked to DOUBLE:
           double *_data=(double*)var[varNr]->data;
           for(size_t j=0;j<var[varNr]->getSize();j++){
+            //if(j%10000==0){CDBError("%d = %f",j,_data[j]);}
             _data[j]=_data[j]*dfscale_factor+dfadd_offset;
           }
+
           //Convert the nodata type
           dataSource->dataObject[varNr]->dfNodataValue=dataSource->dataObject[varNr]->dfNodataValue*dfscale_factor+dfadd_offset;
         }

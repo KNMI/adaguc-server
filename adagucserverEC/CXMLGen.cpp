@@ -267,9 +267,9 @@ CDBDebug("Database layer");
 
 
 int CXMLGen::getProjectionInformationForLayer(WMSLayer * myWMSLayer){
-#ifdef CXMLGEN_DEBUG
-CDBDebug("getProjectionInformationForLayer");
-#endif   
+ #ifdef CXMLGEN_DEBUG
+ CDBDebug("getProjectionInformationForLayer");
+ #endif   
  if(myWMSLayer->dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
     if(myWMSLayer->dataSource->cfgLayer->LatLonBox.size()==0){
       return 0;

@@ -108,10 +108,10 @@ void CCairoPlotter::pixelBlend(int x,int y, unsigned char newR,unsigned char new
   if(x>=width||y>=height)return;
   size_t p=x*4+y*stride;
   if(newA!=255){
-    unsigned char oldB = ARGBByteBuffer[p];
-    unsigned char oldG = ARGBByteBuffer[p+1];
-    unsigned char oldR = ARGBByteBuffer[p+2];
-    unsigned char oldA = ARGBByteBuffer[p+3];
+    //unsigned char oldB = ARGBByteBuffer[p];
+    //unsigned char oldG = ARGBByteBuffer[p+1];
+    //unsigned char oldR = ARGBByteBuffer[p+2];
+    //unsigned char oldA = ARGBByteBuffer[p+3];
     ARGBByteBuffer[p]=newB;
     ARGBByteBuffer[p+1]=newG;
     ARGBByteBuffer[p+2]=newR;
