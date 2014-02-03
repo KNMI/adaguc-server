@@ -1164,7 +1164,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       StopWatch_Stop("projCacheInfo");
       #endif
       bool   isOutsideBBOX = false;
-      bool projInvertedFirst = true;
+      //bool projInvertedFirst = true;
       try{
         projCacheIter=projCacheMap.find(key);
         if(projCacheIter==projCacheMap.end()){
@@ -1196,36 +1196,32 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         y+=drawImage.Geo->dfBBOX[3];
         
         isOutsideBBOX = false;
-        projInvertedFirst = false;
-        if( dataSource->srvParams->isLonLatProjection(&dataSource->nativeProj4)){     
-          if(dataSource->dfBBOX[2]>180||dataSource->dfBBOX[0]<-180){
-            if(x>=-180&&x<180){
-              
-              while(x>=dataSource->dfBBOX[2])x-=360;
-              while(x<dataSource->dfBBOX[0])x+=360;
-            }else {
-              isOutsideBBOX=true;
-            }
-          }
+        //projInvertedFirst = false;
 
-        }else{
+        //else
+        {
+          
           double y1=dataSource->dfBBOX[1];
           double y2=dataSource->dfBBOX[3];
           double x1=dataSource->dfBBOX[0];
           double x2=dataSource->dfBBOX[2];
           if(y2<y1){
             if(y1>-360&&y2<360&&x1>-720&&x2<720){
-              projInvertedFirst = true;
+              //projInvertedFirst = true;
               double checkBBOX[4];
                 for(int j=0;j<4;j++)checkBBOX[j]=dataSource->dfBBOX[j];
                 
-                CDBDebug("Current BBOX:  %f %f %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[1],dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
+                //CDBDebug("Current BBOX:  %f %f %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[1],dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
                 bool hasError = false;
                 if(imageWarper.reprojpoint_inv(checkBBOX[0],checkBBOX[1])!=0)hasError=true;  
                 if(imageWarper.reprojpoint(checkBBOX[0],checkBBOX[1])!=0)hasError=true;  
                 
                 if(imageWarper.reprojpoint_inv(checkBBOX[2],checkBBOX[3])!=0)hasError=true;  
                 if(imageWarper.reprojpoint(checkBBOX[2],checkBBOX[3])!=0)hasError=true;  
+                
+                if(checkBBOX[2]+200<dataSource->dfBBOX[2]){
+                  checkBBOX[2]+=360;
+                }
                 
                 if(hasError == false){
                   for(int j=0;j<4;j++)dataSource->dfBBOX[j] = checkBBOX[j];
@@ -1242,6 +1238,24 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
 
         
         imageWarper.reprojpoint(x,y);
+        CDBDebug("X is : %f",x);
+        if( dataSource->srvParams->isLonLatProjection(&dataSource->nativeProj4)){     
+          CDBDebug("Is latlon %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[2]);
+          //if(dataSource->dfBBOX[2]>180||dataSource->dfBBOX[0]<-180){
+            CDBDebug("X is : %f %d %d",x,x>=-180,x<180);
+            if(x>=-180&&x<180){
+               CDBDebug("X is inside: %d",x);
+               
+            //  while(x>=dataSource->dfBBOX[2])x-=360;
+              while(x<dataSource->dfBBOX[0])x+=360;
+            }else {
+               CDBDebug("X2 is outside: %f",x);
+              isOutsideBBOX=true;
+            }
+          //}
+
+        }
+        
         projCacheInfo.nativeCoordX=x;
         projCacheInfo.nativeCoordY=y;
 

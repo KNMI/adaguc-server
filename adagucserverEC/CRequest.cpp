@@ -836,12 +836,48 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
         if(sDims->count>0&&k>0)subQuery.concat("or ");
         for(size_t  l=0;l<sDims->count&&l<2;l++){
           if(sDims[l].length()>0){
+            
+            //Determine column type (timestamp, integer, real)
+            bool isRealType = false;
+            CT::string dataTypeQuery;
+            dataTypeQuery.print("select data_type from information_schema.columns where table_name = '%s' and column_name = '%s'",tableName.c_str(),netCDFDimName.c_str());
+            try{
+              CDB::Store * dataType = DB.queryToStore(dataTypeQuery.c_str(),true);
+              if(dataType!=NULL){
+                if(dataType->getSize()==1){
+                  if(dataType->getRecord(0)->get(0)->equals("real")){
+                    isRealType = true;
+                  }
+                }
+              }
+              delete dataType;
+            }catch(int e){
+              if((checkDataRestriction()&SHOW_QUERYINFO)==false)query.copy("hidden");
+              CDBError("Unable to determine column type: '%s'",query.c_str());
+              DB.close();
+              return 12;
+            }
+          
             //dataSource->requiredDims[i]->allValues.push_back(sDims[l].c_str());
             //CDBDebug("requiredDims %d %s",i,sDims[l].c_str());
             if(l>0)subQuery.concat("and ");
             if(sDims->count==1){
+              
               if(!checkTimeFormat(sDims[l]))timeValidationError=true;
-              subQuery.printconcat("%s = '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
+              
+              if(isRealType == false){
+                subQuery.printconcat("%s = '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
+              }
+              
+              //This query gets the closest value from the table.
+              if(isRealType){
+                subQuery.printconcat("abs(%s - %s) = (select min(abs(%s - %s)) from %s)",
+                                    sDims[l].c_str(),
+                                    netCDFDimName.c_str(),
+                                    sDims[l].c_str(),
+                                    netCDFDimName.c_str(),
+                                    tableName.c_str());
+              }
             }
             
             //TODO Currently only start/stop is supported, start/stop/resolution is not supported yet.
@@ -2074,7 +2110,8 @@ int CRequest::process_querystring(){
                   !cdfObject->variables[j]->name.equals("lon_bnds")&&
                   !cdfObject->variables[j]->name.equals("lat_bnds")&&
                   !cdfObject->variables[j]->name.equals("time_bnds")&&
-                  !cdfObject->variables[j]->name.equals("time")){
+                  !cdfObject->variables[j]->name.equals("time")&&
+                  (cdfObject->variables[j]->name.indexOf("_bnds")==-1)){
                     if(srvParam->autoResourceVariable.length()>0)srvParam->autoResourceVariable.concat(",");
                     srvParam->autoResourceVariable.concat(cdfObject->variables[j]->name.c_str());
                     //CDBDebug("%s",cdfObject->variables[j]->name.c_str());

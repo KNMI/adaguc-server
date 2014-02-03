@@ -55,9 +55,13 @@ class CCDFWarper{
     //EG 0-360 to -180 till -180
     //TODO This function only works on a single 2D datafield!
     if(enableLonWarp){
+      
+      CDBDebug("Warping data");
+      
       //Find and warp lon variable
       if(variable->name.equals("lon")){
         if(variable->dimensionlinks.size()==1){
+          
           //CDBDebug("Warplon: Found variable lon");
           double *lonData = new double[variable->getSize()];
           CDF::DataCopier::copy(lonData,CDF_DOUBLE,variable->data,variable->getType(),0,0,variable->getSize());

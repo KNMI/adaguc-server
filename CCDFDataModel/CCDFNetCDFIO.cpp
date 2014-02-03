@@ -160,7 +160,7 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type,size_t *
   var->setSize(totalVariableSize);
   
   #ifdef CCDFNETCDFIO_DEBUG        
-  CDBDebug("Allocating data for variable");
+  CDBDebug("Allocating data for variable %s, type: %s, size: %d",var->name.c_str(),CDF::getCDFDataTypeName(var->currentType).c_str(),var->getSize());
   #endif
   CDF::allocateData(type,&var->data,var->getSize());
   
@@ -253,9 +253,7 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type,size_t *
   
   
   
-  #ifdef CCDFNETCDFIO_DEBUG        
-  CDBDebug("Warping data");
-  #endif
+  
   warper.warpLonData(var);
 
   #ifdef CCDFNETCDFIO_DEBUG        

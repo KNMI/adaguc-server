@@ -1349,16 +1349,16 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
    
    
   
-   float ival = interval;
+   //float ival = interval;
    //   float ivalLine = interval;
    //float idval=int(ival+0.5);
    //  if(idval<1)idval=1;
    //TODO
    
-   char szTemp[8192];
-   szTemp[0]='\0';
-   float currentTextValue = 0;
-   int contourDefinitionIndex = -1;
+   //char szTemp[8192];
+   //szTemp[0]='\0';
+   //float currentTextValue = 0;
+   //int contourDefinitionIndex = -1;
    
    int dImageWidth=drawImage->Geo->dWidth+1;
    int dImageHeight=drawImage->Geo->dHeight+1;
@@ -1476,7 +1476,7 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
     //int ydir[]={1, 1, 0, -1,-1,-1, 0, 1};
 
     
-    int linePointDistance=5;
+    //int linePointDistance=5;
     float lineWidth= 4;
     CColor lineColor = CColor(0,0,0,255);
     CColor textColor = CColor(0,0,0,255);
@@ -1520,11 +1520,11 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
                 if(contourDefinitions[j].continuousInterval!=0.0){
                   float contourinterval = contourDefinitions[j].continuousInterval;
                   float allowedDifference=contourinterval/100000;
-                  float a,b;
+                  /*float a,b;
                   a = (val[0]<val[1]?val[0]:val[1]);b = (val[2]<val[3]?val[2]:val[3]);
                   //float min=a<b?a:b;
                   a = (val[0]>val[1]?val[0]:val[1]);b = (val[2]>val[3]?val[2]:val[3]);
-                  //float max=a>b?a:b;
+                  //float max=a>b?a:b;*/
                   float min,max;
                   min=val[0];max=val[0];
                   for(int j=1;j<4;j++){

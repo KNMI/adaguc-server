@@ -26,9 +26,13 @@
 #ifndef CCONVERTCURVILINEAR_H
 #define CCONVERTCURVILINEAR_H
 #include "CDataSource.h"
+#include "CImageWarper.h"
 class CConvertCurvilinear{
   private:
+  
+  
   DEF_ERRORFUNCTION();
+  static double *getBBOXFromLatLonFields( CDF::Variable *swathMiddleLon, CDF::Variable *swathMiddleLat);
   public:
   static int convertCurvilinearHeader(CDFObject *cdfObject);
   static int convertCurvilinearData(CDataSource *dataSource,int mode);
