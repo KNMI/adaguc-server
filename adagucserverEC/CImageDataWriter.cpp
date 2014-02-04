@@ -44,6 +44,7 @@
 CT::string months[] = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
 
 //#define CIMAGEDATAWRITER_DEBUG
+//#define MEASURETIME
 
 void doJacoIntoLatLon(double &u, double &v, double lo, double la, float deltaX, float deltaY, CImageWarper *warper);
 void rotateUvNorth(double &u, double &v, double rlo, double rla, float deltaX, float deltaY, CImageWarper *warper);
@@ -1117,6 +1118,10 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
 
       getFeatureInfoResult->dataSourceIndex=dataSourceIndex;
       
+      #ifdef CIMAGEDATAWRITER_DEBUG    
+      CDBDebug("Processing dataSource %d with step %d of %d timesteps (%d) %f",d,step,dataSources[d]->getNumTimeSteps(),dataSources[d]->dataObject[0]->hasNodataValue,dataSources[d]->dataObject[0]->dfNodataValue);
+      #endif
+
       CDataReader reader;
       //if(!headerIsAvailable)
       {
@@ -1144,9 +1149,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         }
       }
       
-      #ifdef CIMAGEDATAWRITER_DEBUG    
-      CDBDebug("Processing dataSource %d with step %d of %d timesteps (%d) %f",d,step,dataSources[d]->getNumTimeSteps(),dataSources[d]->dataObject[0]->hasNodataValue,dataSources[d]->dataObject[0]->dfNodataValue);
-      #endif
 
       //(89,26)       (5.180666,52.101790)    (5.180666,52.101790)
       
@@ -1238,18 +1240,15 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
 
         
         imageWarper.reprojpoint(x,y);
-        CDBDebug("X is : %f",x);
         if( dataSource->srvParams->isLonLatProjection(&dataSource->nativeProj4)){     
           CDBDebug("Is latlon %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[2]);
           //if(dataSource->dfBBOX[2]>180||dataSource->dfBBOX[0]<-180){
             CDBDebug("X is : %f %d %d",x,x>=-180,x<180);
             if(x>=-180&&x<180){
-               CDBDebug("X is inside: %d",x);
                
             //  while(x>=dataSource->dfBBOX[2])x-=360;
               while(x<dataSource->dfBBOX[0])x+=360;
             }else {
-               CDBDebug("X2 is outside: %f",x);
               isOutsideBBOX=true;
             }
           //}
@@ -1413,7 +1412,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       element->variable = dataSources[d]->dataObject[o]->cdfVariable;
       element->value="nodata";
     
-      element->time.copy(&dataSources[d]->timeSteps[dataSources[d]->getCurrentTimeStep()]->timeString);
+      element->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
       
       CCDFDims * cdfDims = dataSources[d]->getCDFDims();
       CT::string value,name;
@@ -1423,6 +1422,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         if(name.indexOf("time")==0){
           value=element->time.c_str();
         }
+        //CDBDebug("%d) %s == %s == %d",j,name.c_str(),value.c_str(),cdfDims->getDimensionIndex(j));
         element->cdfDims.addDimension(name.c_str(),value.c_str(),cdfDims->getDimensionIndex(j));
       }
   
@@ -1435,9 +1435,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       #endif
       bool hasData = false;
       if(projCacheInfo.imx>=0&&projCacheInfo.imy>=0&&projCacheInfo.imx<projCacheInfo.dWidth&&projCacheInfo.imy<projCacheInfo.dHeight){
-        #ifdef CIMAGEDATAWRITER_DEBUG 
-//        CDBDebug("Accessing element %d",j);
-        #endif
+
         
         //GetFeatureInfoResult::Element * element=getFeatureInfoResult->elements[j];
 
@@ -1505,7 +1503,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
           
           GetFeatureInfoResult::Element *pointID=new GetFeatureInfoResult::Element();
           pointID->dataSource= dataSource;
-          pointID->time.copy(&dataSources[d]->timeSteps[dataSources[d]->getCurrentTimeStep()]->timeString);
+          pointID->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
           for(size_t j=0;j<dataSources[d]->requiredDims.size();j++){
             value=cdfDims->getDimensionValue(j);
             name=cdfDims->getDimensionName(j);
@@ -1578,7 +1576,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         GetFeatureInfoResult::Element *element2=new GetFeatureInfoResult::Element();
         CCDFDims * cdfDims = dataSources[d]->getCDFDims();
         CT::string value,name;
-        element2->time.copy(&dataSources[d]->timeSteps[dataSources[d]->getCurrentTimeStep()]->timeString);
+        element2->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
         for(size_t j=0;j<dataSources[d]->requiredDims.size();j++){
           value=cdfDims->getDimensionValue(j);
           name=cdfDims->getDimensionName(j);
@@ -1606,11 +1604,11 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         #ifdef CIMAGEDATAWRITER_DEBUG 
         CDBDebug("pushed wind dir %s for step %d [%d]", element2->value.c_str(), step, getFeatureInfoResult->elements.size());
         #endif
-        element2->time.copy(&dataSources[d]->timeSteps[dataSources[d]->getCurrentTimeStep()]->timeString);
+        element2->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
         
         GetFeatureInfoResult::Element *windspeedOrigElement=new GetFeatureInfoResult::Element();
         windspeedOrigElement->dataSource= dataSource;
-        windspeedOrigElement->time.copy(&dataSources[d]->timeSteps[dataSources[d]->getCurrentTimeStep()]->timeString);
+        windspeedOrigElement->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
         for(size_t j=0;j<dataSources[d]->requiredDims.size();j++){
           value=cdfDims->getDimensionValue(j);
           name=cdfDims->getDimensionName(j);
@@ -1625,7 +1623,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         windspeedOrigElement->standard_name="speed1";
         windspeedOrigElement->feature_name="wind speed";
         windspeedOrigElement->units=dataSource->dataObject[0]->units;
-        windspeedOrigElement->time.copy(&dataSources[d]->timeSteps[dataSources[d]->getCurrentTimeStep()]->timeString);
+        windspeedOrigElement->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
         if (windDataValid) {
           double windspeed=hypot(pixel1, pixel2);
           windspeedOrigElement->value.print("%3.1f",windspeed);
@@ -1647,7 +1645,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         if(!skipKTSCalc){
           GetFeatureInfoResult::Element *element3=new GetFeatureInfoResult::Element();
           element3->dataSource= dataSource;
-          element3->time.copy(&dataSources[d]->timeSteps[dataSources[d]->getCurrentTimeStep()]->timeString);
+          element3->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
           CCDFDims * cdfDims = dataSources[d]->getCDFDims();CT::string value,name;
           for(size_t j=0;j<dataSources[d]->requiredDims.size();j++){
             value=cdfDims->getDimensionValue(j);
@@ -1663,7 +1661,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
           element3->standard_name="speed2";
           element3->feature_name="wind speed kts";
           element3->units="kts";
-          element3->time.copy(&dataSources[d]->timeSteps[dataSources[d]->getCurrentTimeStep()]->timeString);
+          element3->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
           if (windDataValid) {
             double windspeedKTS=hypot(pixel1, pixel2)*(3600./1852.);
             element3->value.print("%3.1f",windspeedKTS);
@@ -2701,10 +2699,10 @@ int CImageDataWriter::end(){
             resultXML.printconcat("      <VarName>%s</VarName>\n",e->var_name.c_str());
             resultXML.printconcat("      <Value units=\"%s\">%s</Value>\n",e->units.c_str(),e->value.c_str());
             //resultXML.printconcat("      <Dimension name=\"time\">%s</Dimension>\n",e->time.c_str());
-            for(size_t d=0;d<e->cdfDims.dimensions.size();d++){
+            for(size_t d=0;d<e->cdfDims.getNumDimensions();d++){
               //TODO MUST BECOME THE OGC DIMNAME
               //resultXML.printconcat("      <Dimension name=\"%s\" index=\"%d\">%s</Dimension>\n",e->cdfDims.dimensions[d]->name.c_str(),e->cdfDims.dimensions[d]->index,e->cdfDims.dimensions[d]->value.c_str());
-              resultXML.printconcat("      <Dimension name=\"%s\" index=\"%d\">%s</Dimension>\n",e->dataSource->requiredDims[d]->name.c_str(),e->cdfDims.dimensions[d]->index,e->cdfDims.dimensions[d]->value.c_str());
+              resultXML.printconcat("      <Dimension name=\"%s\" index=\"%d\">%s</Dimension>\n",e->dataSource->requiredDims[d]->name.c_str(),e->cdfDims.getDimensionIndex(d),e->cdfDims.getDimensionValue(d).c_str());
             }
             
             resultXML.printconcat("    </%s_feature>\n",featureName.c_str());
@@ -2777,10 +2775,10 @@ int CImageDataWriter::end(){
             resultXML.printconcat("      <VarName>%s</VarName>\n",e->var_name.c_str());
             resultXML.printconcat("      <Value units=\"%s\">%s</Value>\n",e->units.c_str(),e->value.c_str());
             //resultXML.printconcat("      <Dimension name=\"time\">%s</Dimension>\n",e->time.c_str());
-            for(size_t d=0;d<e->cdfDims.dimensions.size();d++){
+            for(size_t d=0;d<e->cdfDims.getNumDimensions();d++){
               //TODO MUST BECOME THE OGC DIMNAME
               //resultXML.printconcat("      <Dimension name=\"%s\" index=\"%d\">%s</Dimension>\n",e->cdfDims.dimensions[d]->name.c_str(),e->cdfDims.dimensions[d]->index,e->cdfDims.dimensions[d]->value.c_str());
-              resultXML.printconcat("      <Dimension name=\"%s\" index=\"%d\">%s</Dimension>\n",e->dataSource->requiredDims[d]->name.c_str(),e->cdfDims.dimensions[d]->index,e->cdfDims.dimensions[d]->value.c_str());
+              resultXML.printconcat("      <Dimension name=\"%s\" index=\"%d\">%s</Dimension>\n",e->dataSource->requiredDims[d]->name.c_str(),e->cdfDims.getDimensionIndex(d),e->cdfDims.getDimensionValue(d).c_str());
             }
             
             resultXML.printconcat("    </%s_feature>\n",featureName.c_str());
@@ -2830,16 +2828,16 @@ int CImageDataWriter::end(){
         int nrFeatures=features.size();
         
         //Find available dimensions
-#define isTimeDim(d) (std::string(d->name.c_str()).find("time")==0) //TODO Refactor into utility function
+
         GetFeatureInfoResult::Element* e=g->elements[0];
 
-        int nrDims=e->cdfDims.dimensions.size();
+        int nrDims=e->cdfDims.getNumDimensions();
         int dimLookup[nrDims]; //position of each dimension in cdfDims.dimensions
         bool timeDimFound=false;
         for (int d=0; d<nrDims; d++) {
 //           std::string dimName(e->cdfDims.dimensions[d]->name.c_str());
           std::string dimName(e->dataSource->requiredDims[d]->name.c_str());
-          if (isTimeDim(e->cdfDims.dimensions[d])) {
+          if (e->cdfDims.isTimeDimension(d)) {
             timeDimFound=true;
             dimLookup[nrDims-1]=d;
           } else if (!timeDimFound) {
@@ -2874,7 +2872,7 @@ int CImageDataWriter::end(){
           coord.print("%f,%f", g->lon_coordinate, g->lat_coordinate);
           point.add(CXMLParser::XMLElement("coords", coord.c_str()));
           paramElement.add(point);
-          for (size_t d=0; d<e->cdfDims.dimensions.size();d++) {
+          for (size_t d=0; d<e->cdfDims.getNumDimensions();d++) {
 //            paramElement.add(CXMLParser::XMLElement("dims", e->cdfDims.dimensions[dimLookup[d]]->name.c_str()));
               paramElement.add(CXMLParser::XMLElement("dims", e->dataSource->requiredDims[dimLookup[d]]->name.c_str()));
           }                  
@@ -2884,8 +2882,8 @@ int CImageDataWriter::end(){
             GetFeatureInfoResult::Element *e=g->elements[elNR];
 
             CT::string dimString="";
-            for (size_t d=0; d<e->cdfDims.dimensions.size(); d++) {
-              dimString.printconcat("%s,", e->cdfDims.dimensions[dimLookup[d]]->value.c_str());
+            for (size_t d=0; d<e->cdfDims.getNumDimensions(); d++) {
+              dimString.printconcat("%s,", e->cdfDims.getDimensionValue(dimLookup[d]).c_str());
             }
             dataMap[dimString.c_str()]=e->value.c_str();
             
@@ -3004,7 +3002,7 @@ int CImageDataWriter::end(){
           }
           if(!featureNameFound){
             features[layerNr].push_back(element->feature_name.c_str());
-            numDims[layerNr].push_back(element->cdfDims.dimensions.size());
+            numDims[layerNr].push_back(element->cdfDims.getNumDimensions());
           }else{
             /*for(size_t j=0;j<features[layerNr].size();j++){
               CDBDebug("%d %d %s\tDims:%d",layerNr,j,features[layerNr][j].c_str(),numDims[layerNr][j]);
@@ -3044,9 +3042,9 @@ int CImageDataWriter::end(){
               if(element->units.length()>0){
                 plotObject->name.printconcat(" (%s)",element->units.c_str());
               }
-              for(size_t j=1;j<element->cdfDims.dimensions.size();j++){
+              for(size_t j=1;j<element->cdfDims.getNumDimensions();j++){
                 plotObject->name.concat(" @");
-                plotObject->name.concat(element->cdfDims.dimensions[j]->value.c_str());
+                plotObject->name.concat(element->cdfDims.getDimensionValue(j));
               }
 
               plotObject->units=&element->units;
@@ -3065,7 +3063,7 @@ int CImageDataWriter::end(){
               
                   /*
                   CT::string dims = "";
-                  for(size_t d=1;d<element->cdfDims.dimensions.size();d++){
+                  for(size_t d=1;d<element->cdfDims.getNumDimensions();d++){
                     dims.printconcat("%s ",element->cdfDims.dimensions[d]->value.c_str());
                   }
                   CDBDebug("%s %s",features[layerNr][featureNr].c_str(),dims.c_str());
@@ -3347,17 +3345,23 @@ int CImageDataWriter::end(){
       enum GraphTimeResType { monthly,daily,hourly,minutely};
       GraphTimeResType graphTimeResType = monthly;
       if(plotObject->length>1){
-        CTime::Date timePosA=ctime->ISOStringToDate(plotObject->elements[0]->time.c_str());
-        CTime::Date timePosB=ctime->ISOStringToDate(plotObject->elements[1]->time.c_str());
-        float timeRes = timePosB.offset-timePosA.offset;
-        if(timeRes<=3600*24){
+        try{
+          CTime::Date timePosA=ctime->ISOStringToDate(plotObject->elements[0]->time.c_str());
+          CTime::Date timePosB=ctime->ISOStringToDate(plotObject->elements[1]->time.c_str());
+          float timeRes = timePosB.offset-timePosA.offset;
+          if(timeRes<=3600*24){
+            graphTimeResType = daily;
+          }
+          if(timeRes<=3600*6){
+            graphTimeResType = hourly;
+          }
+          if(timeRes<1800){
+            graphTimeResType = minutely;
+          }
+            
+        }catch(int e){
+          CDBError("Time conversion exception for %s or %s",plotObject->elements[0]->time.c_str(),plotObject->elements[1]->time.c_str());
           graphTimeResType = daily;
-        }
-        if(timeRes<=3600*6){
-          graphTimeResType = hourly;
-        }
-        if(timeRes<1800){
-          graphTimeResType = minutely;
         }
         
         //CDBDebug("%f seconds %d ",timePosB.offset-timePosA.offset,graphTimeResType);
@@ -3365,7 +3369,12 @@ int CImageDataWriter::end(){
       
       double timeWidth=(stopTimeValue-startTimeValue);
         for(size_t i=0;i<plotObject->length;i++){
-          CTime::Date timePos1=ctime->ISOStringToDate(plotObject->elements[i]->time.c_str());
+          CTime::Date timePos1;
+          try{
+            timePos1=ctime->ISOStringToDate(plotObject->elements[i]->time.c_str());
+          }catch(int e){
+            CDBError("Time conversion exception for %s",plotObject->elements[i]->time.c_str());
+          }
           
           
           double x1=((timePos1.offset-startTimeValue)/timeWidth)*plotWidth;

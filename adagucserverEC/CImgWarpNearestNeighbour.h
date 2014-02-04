@@ -596,7 +596,7 @@ private:
                 double checkBBOX[4];
                 for(int j=0;j<4;j++)checkBBOX[j]=dataSource->dfBBOX[j];
                 
-                CDBDebug("Current BBOX:  %f %f %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[1],dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
+                //CDBDebug("Current BBOX:  %f %f %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[1],dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
                 bool hasError = false;
                 if(warper->reprojpoint_inv(checkBBOX[0],checkBBOX[1])!=0)hasError=true;  
                 if(warper->reprojpoint(checkBBOX[0],checkBBOX[1])!=0)hasError=true;  
@@ -609,7 +609,7 @@ private:
                 }
                 
                 //checkBBOX
-                CDBDebug("New BBOX:  %f %f %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[1],dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
+                //CDBDebug("New BBOX:  %f %f %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[1],dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
               }
           }
         }

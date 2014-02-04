@@ -936,7 +936,7 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
       //writeLogFile3(query.c_str());
       //writeLogFile3("\n");
     //values_path = DB.query_select(query.c_str(),0);
-    
+    CDBDebug("%s",query.c_str());
     CDB::Store *store = NULL;
     try{
       store = DB.queryToStore(query.c_str(),true);
@@ -970,8 +970,8 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
       timeStep->fileName.copy(record->get(0)->c_str());
       //CDBDebug("%s",timeStep->fileName.c_str());
       //timeStep->timeString.print("%sZ",date_time[k].c_str());
-      timeStep->timeString.print("%sZ",record->get(1)->c_str());
-      timeStep->timeString.setChar(10,'T');
+      //timeStep->timeString.print("%sZ",record->get(1)->c_str());
+      //timeStep->timeString.setChar(10,'T');
       
       
       //For each timesteps a new set of dimensions is added with corresponding dim array indices.
@@ -1132,7 +1132,7 @@ int CRequest::process_all_layers(){
         CDataSource::TimeStep * timeStep = new CDataSource::TimeStep();
         dataSources[j]->timeSteps.push_back(timeStep);
         timeStep->fileName.copy(dataSources[j]->cfgLayer->FilePath[0]->value.c_str());
-        timeStep->timeString.copy("0");
+        //timeStep->timeString.copy("0");
         timeStep->dims.addDimension("time","0",0);
       }
     }
@@ -1142,7 +1142,7 @@ int CRequest::process_all_layers(){
         CDataSource::TimeStep * timeStep = new CDataSource::TimeStep();
         dataSources[j]->timeSteps.push_back(timeStep);
         timeStep->fileName.copy("");
-        timeStep->timeString.copy("0");
+        //timeStep->timeString.copy("0");
         timeStep->dims.addDimension("time","0",0);
     }
   }
@@ -1219,7 +1219,7 @@ int CRequest::process_all_layers(){
             if(dataSources[dataSourceToUse]->getNumTimeSteps()>1){
               //Print the animation data into the image
               char szTemp[1024];
-              snprintf(szTemp,1023,"%s UTC",dataSources[dataSourceToUse]->timeSteps[k]->timeString.c_str());
+              snprintf(szTemp,1023,"%s UTC",dataSources[dataSourceToUse]->getDimensionValueForNameAndStep("time",k).c_str());
               imageDataWriter.setDate(szTemp);
             }
           }

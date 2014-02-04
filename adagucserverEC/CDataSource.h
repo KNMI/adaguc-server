@@ -162,13 +162,27 @@ class CDataSource{
   class TimeStep{
     public:
       CT::string fileName;   //Filename of the file to load
-      CT::string timeString; //String of the current time
+      //CT::string timeString; //String of the current time
       CCDFDims   dims;//Dimension index in the corresponding name and file
   };
   int datasourceIndex;
   int currentAnimationStep;
+  
+  /**
+   * The amount of steps in this datasource
+   */
   std::vector <TimeStep*> timeSteps;
+  
+  /**
+   * Returns the value for a certain dimension and step
+   */
+  CT::string getDimensionValueForNameAndStep(const char *dimName,int dimStep);
+  
   bool stretchMinMax,stretchMinMaxDone;
+  
+  /**
+   * The required dimensions for this datasource
+   */
   std::vector <COGCDims*> requiredDims;
   Statistics *statistics; // is NULL when not available
   //The actual dataset data (can have multiple variables)
@@ -243,7 +257,7 @@ class CDataSource{
   
   
   int setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Configuration *_cfg,CServerConfig::XMLE_Layer * _cfgLayer,const char *_layerName, int layerIndex);
-  void addTimeStep(const char * pszName,const char *pszTimeString);
+  void addStep(const char * fileName, CCDFDims *dims);
   const char *getFileName();
   void setTimeStep(int timeStep);
   int getCurrentTimeStep();

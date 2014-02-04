@@ -88,7 +88,7 @@ void writeLogFile2(const char * msg){
 
 
 
-
+/*
 
 
 int CDataReader::getCacheFileName(CDataSource *dataSource,CT::string *cacheFilename){
@@ -147,7 +147,7 @@ int CDataReader::getCacheFileName(CDataSource *dataSource,CT::string *cacheFilen
   
   
   return 0;
-}
+}*/
 
 /**
  * Function to apply quickly scale and offset to a float data array
@@ -298,7 +298,7 @@ int CDataReader::open(CDataSource *dataSource, int x,int y){
 }
 
 
-int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,CCache *cache){
+int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y){
   
   
 
@@ -311,9 +311,9 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
   if(!dataSource->level2CompatMode)if(CConvertADAGUCVector::convertADAGUCVectorData(dataSource,mode)==0)dataSource->level2CompatMode=true;
   if(!dataSource->level2CompatMode)if(CConvertADAGUCPoint::convertADAGUCPointData(dataSource,mode)==0)dataSource->level2CompatMode=true;
   if(!dataSource->level2CompatMode)if(CConvertCurvilinear::convertCurvilinearData(dataSource,mode)==0)dataSource->level2CompatMode=true;     
-  if(dataSource->level2CompatMode){
-   cache->removeClaimedCachefile();
-  }
+//   if(dataSource->level2CompatMode){
+//    cache->removeClaimedCachefile();
+//   }
   int status = 0;
 
   CDF::Variable * dataSourceVar=dataSource->dataObject[0]->cdfVariable;
@@ -392,9 +392,9 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
   }
   
   //When we are reading from cache, the file has been written based on strided data
-  if(cache->cacheIsAvailable()){
-    dataSource->stride2DMap=1;
-  }
+//   if(cache->cacheIsAvailable()){
+//     dataSource->stride2DMap=1;
+//   }
   dataSource->stride2DMap=1;
   
   if(dataSource->level2CompatMode){
@@ -603,9 +603,9 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y,C
           //When cache is available, the 2D field is already stored as a lontransformed field. We should not do this again.
           //The lat/lons are always kept original, so they needed to be shifted (done above)
           
-          if(cache->cacheIsAvailable()){
-            dataSource->useLonTransformation = -1;
-          }
+//           if(cache->cacheIsAvailable()){
+//             dataSource->useLonTransformation = -1;
+//           }
         }
       }
       
@@ -638,7 +638,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
   CT::string dataSourceFilename;
   dataSourceFilename.copy(dataSource->getFileName());
  
-  CCache cache;
+  //CCache cache;
   CT::string cacheFilename;
 
   //Use autoscale of legendcolors when the legendscale factor has been set to zero.
@@ -648,68 +648,41 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
  
   
   
-  bool enableDataCache=false;
-  if(dataSource->cfgLayer->Cache.size()>0){
-    if(dataSource->cfgLayer->Cache[0]->attr.enabled.equals("true")){
-      
-      enableDataCache=true;
-       //Get cachefilename
-      if(getCacheFileName(dataSource,&cacheFilename)!=0){
-        enableDataCache=false;
-      }
-    }
-  }
+//   bool enableDataCache=false;
+//   if(dataSource->cfgLayer->Cache.size()>0){
+//     if(dataSource->cfgLayer->Cache[0]->attr.enabled.equals("true")){
+//       
+//       enableDataCache=true;
+//        //Get cachefilename
+//       if(getCacheFileName(dataSource,&cacheFilename)!=0){
+//         enableDataCache=false;
+//       }
+//     }
+//   }
   
   //Check wether we should use cache or not (in case of OpenDAP, this speeds up things a lot)
-  if(enableDataCache){
-    cache.checkCacheSystemReady(cacheFilename.c_str());
-  }
-  
-  if(mode!=CNETCDFREADER_MODE_OPEN_ALL){
-    enableDataCache=false;
-  }
-  if(singleCellMode){
-    enableDataCache=false;
-  }
-   
+//   if(enableDataCache){
+//     cache.checkCacheSystemReady(cacheFilename.c_str());
+//   }
+//   
+//   if(mode!=CNETCDFREADER_MODE_OPEN_ALL){
+//     enableDataCache=false;
+//   }
+//   if(singleCellMode){
+//     enableDataCache=false;
+//   }
+//    
   CDFObject *cdfObject = NULL;
   
   
   if(mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS  || mode == CNETCDFREADER_MODE_OPEN_HEADER ){
     cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource->srvParams,dataSourceFilename.c_str());
    
-    enableDataCache = false;
+//     enableDataCache = false;
   }
   
   if(mode == CNETCDFREADER_MODE_OPEN_ALL|| mode == CNETCDFREADER_MODE_GET_METADATA){
-    if(cache.cacheIsAvailable()){
-      //Remove DataReader configuration, because cache file is always netcdf.
-      if(dataSource->cfgLayer->DataReader.size()>0){
-        dataSource->cfgLayer->DataReader[0]->value.copy("NC");
-      }
-      
-      //if(mode == CNETCDFREADER_MODE_OPEN_HEADER){
-        //cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource->srvParams,dataSourceFilename.c_str());
-      //}else 
-      {
-        //CDBDebug("Opening cachefile %s with mode %d",cacheFilename.c_str(),mode);
-        cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource,cacheFilename.c_str());
-        
-        if(mode == CNETCDFREADER_MODE_OPEN_ALL){
-          //In case of cache, just one timestep is stored
-          int timeStep = dataSource->getCurrentTimeStep();
-          for(size_t j=0;j<dataSource->timeSteps[timeStep]->dims.dimensions.size();j++){
-            dataSource->timeSteps[timeStep]->dims.dimensions[j]->index=0;
-          }
-        }
-      }
-    }else{
-      
-      //We just open the file in the standard way, without cache
-      //CDBDebug("Opening realfile %s with mode %d",dataSourceFilename.c_str(),mode);
-      cdfObject=CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource,dataSourceFilename.c_str());
-    
-    }
+    cdfObject=CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource,dataSourceFilename.c_str());
   }
 
   //Check whether we really have a cdfObject
@@ -743,24 +716,24 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
   
   
   
-  if(parseDimensions(dataSource,mode,x,y,&cache)!=0){
+  if(parseDimensions(dataSource,mode,x,y)!=0){
     CDBError("Unable to parseDimensions");
     return 1;
   }
   
   
   
-  if(dataSource->level2CompatMode){
-   
-    enableDataCache=false;
-  }
-  if(enableDataCache){
-    if(cache.saveCacheFile()){
-      if(cache.claimCacheFile()!=0){
-        enableDataCache = false;
-      }
-    }
-  }
+//   if(dataSource->level2CompatMode){
+//    
+//     enableDataCache=false;
+//   }
+//   if(enableDataCache){
+//     if(cache.saveCacheFile()){
+//       if(cache.claimCacheFile()!=0){
+//         enableDataCache = false;
+//       }
+//     }
+//   }
   if(mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS){
 #ifdef CDATAREADER_DEBUG
     CDBDebug("Dimensions parsed");
@@ -1071,7 +1044,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
         }
         
         //Swap data from >180 degrees to domain of -180 till 180 in case of lat lon source data
-        if(dataSource->useLonTransformation!=-1&&!cache.cacheIsAvailable()){
+        if(dataSource->useLonTransformation!=-1){
           //int splitPX=dataSource->useLonTransformation;
           switch (var[varNr]->getType()){
             case CDF_CHAR  : Proc::swapPixelsAtLocation(dataSource,(char*)var[varNr]->data);break;
@@ -1097,38 +1070,38 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
       
       
       //Swap X, Y dimensions so that pointer x+y*w works correctly
-      if(!cache.cacheIsAvailable()){
-        //Cached data was already swapped. Because we have stored the result of this object in the cache.
-        if(dataSource->swapXYDimensions){
-          size_t imgSize=dataSource->dHeight*dataSource->dWidth;
-          size_t w=dataSource->dWidth;size_t h=dataSource->dHeight;size_t x,y;
-          void *vd=NULL;                 //destination data
-          void *vs=var[varNr]->data;     //source data
-        
-          //Allocate data for our new memory block
-          CDF::allocateData(var[varNr]->getType(),&vd,imgSize);
-          //TODO This could also be solved using a template. But this works fine.
-          switch (var[varNr]->getType()){
-            case CDF_CHAR  : {char   *s=(char  *)vs;char   *d=(char  *)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
-            case CDF_BYTE  : {char   *s=(char  *)vs;char   *d=(char  *)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
-            case CDF_UBYTE : {uchar  *s=(uchar *)vs;uchar  *d=(uchar *)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
-            case CDF_SHORT : {short  *s=(short *)vs;short  *d=(short *)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
-            case CDF_USHORT: {ushort *s=(ushort*)vs;ushort *d=(ushort*)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
-            case CDF_INT   : {int    *s=(int   *)vs;int    *d=(int   *)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
-            case CDF_UINT  : {uint   *s=(uint  *)vs;uint   *d=(uint  *)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
-            case CDF_FLOAT : {float  *s=(float *)vs;float  *d=(float *)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
-            case CDF_DOUBLE: {double *s=(double*)vs;double *d=(double*)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
-            default: {CDBError("Unknown data type"); return 1;}
-          }
-          //We will replace our old memory block with the new one, but we have to free our old one first.
-          free(var[varNr]->data);
-          //Replace the memory block.
-          var[varNr]->data=vd;
-        }
-      }
+    
+
+      if(dataSource->swapXYDimensions){
+        size_t imgSize=dataSource->dHeight*dataSource->dWidth;
+        size_t w=dataSource->dWidth;size_t h=dataSource->dHeight;size_t x,y;
+        void *vd=NULL;                 //destination data
+        void *vs=var[varNr]->data;     //source data
       
+        //Allocate data for our new memory block
+        CDF::allocateData(var[varNr]->getType(),&vd,imgSize);
+        //TODO This could also be solved using a template. But this works fine.
+        switch (var[varNr]->getType()){
+          case CDF_CHAR  : {char   *s=(char  *)vs;char   *d=(char  *)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
+          case CDF_BYTE  : {char   *s=(char  *)vs;char   *d=(char  *)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
+          case CDF_UBYTE : {uchar  *s=(uchar *)vs;uchar  *d=(uchar *)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
+          case CDF_SHORT : {short  *s=(short *)vs;short  *d=(short *)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
+          case CDF_USHORT: {ushort *s=(ushort*)vs;ushort *d=(ushort*)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
+          case CDF_INT   : {int    *s=(int   *)vs;int    *d=(int   *)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
+          case CDF_UINT  : {uint   *s=(uint  *)vs;uint   *d=(uint  *)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
+          case CDF_FLOAT : {float  *s=(float *)vs;float  *d=(float *)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
+          case CDF_DOUBLE: {double *s=(double*)vs;double *d=(double*)vd;for(y=0;y<h;y++)for(x=0;x<w;x++){d[x+y*w]=s[y+x*h];}}break;
+          default: {CDBError("Unknown data type"); return 1;}
+        }
+        //We will replace our old memory block with the new one, but we have to free our old one first.
+        free(var[varNr]->data);
+        //Replace the memory block.
+        var[varNr]->data=vd;
+      }
+    
+     
       //Apply the scale and offset factor on the data
-      if(dataSource->dataObject[varNr]->appliedScaleOffset == false && dataSource->dataObject[varNr]->hasScaleOffset && cache.cacheIsAvailable() == false ){
+      if(dataSource->dataObject[varNr]->appliedScaleOffset == false && dataSource->dataObject[varNr]->hasScaleOffset){
         dataSource->dataObject[varNr]->appliedScaleOffset=true;
         
         double dfscale_factor = dataSource->dataObject[varNr]->dfscale_factor;
@@ -1307,180 +1280,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
       StopWatch_Stop("Data postprocessing completed");
       #endif
     }
-  
-    //CDBDebug("Cache: %d %d %d",enableDataCache,cache.cacheIsAvailable(),cache.saveCacheFile());
-    //Write the cache file if neccessary.
-    if(enableDataCache==true&&cache.saveCacheFile()&&mode == CNETCDFREADER_MODE_OPEN_ALL){
-      
-      /*int cacheStatus = cache.claimCacheFile();
-      if(cacheStatus!=0){
-        //CDBError("Cache file could not be claimed: %d %s",cacheStatus,cache.getCacheFileNameToWrite());
-        return 0;
-      }
-      if(cache.saveCacheFile()==false){
-        CDBError("Cache file could not be saved");
-        return 0;
-      }*/
-      int keepVariable[cdfObject->variables.size()];
-      int keepDimension[cdfObject->dimensions.size()];
-      //By default throw away everything
-      for(size_t v=0;v<cdfObject->variables.size();v++)keepVariable[v]=0;
-      for(size_t v=0;v<cdfObject->dimensions.size();v++)keepDimension[v]=0;        
-      //CDBDebug("Writing to %s",cacheFilename.c_str());
 
-      //keep the concerning variable itself
-      for(size_t v=0;v<dataSource->dataObject.size();v++){
-        CDF::Variable * var=dataSource->dataObject[v]->cdfVariable;
-        try{
-          keepVariable[cdfObject->getVariableIndex(var->name.c_str())]=1;
-        }catch(int e){}
-      }
-      
-      //Make a list of required dimensions
-      for(size_t v=0;v<cdfObject->variables.size();v++){
-        try{
-          if(keepVariable[v]==1){
-            //Loop through dim links
-            CDF::Variable *var = cdfObject->variables[v];
-            for(size_t d=0;d<var->dimensionlinks.size();d++){
-              try{
-                keepDimension[cdfObject->getDimensionIndex(var->dimensionlinks[d]->name.c_str())]=1;
-              }catch(int e){
-                CT::string errMsg;
-                CDF::getErrorMessage(&errMsg,e);
-                CDBDebug("Dim %s %s",var->dimensionlinks[d]->name.c_str(),errMsg.c_str());
-                
-              }
-              try{
-                keepVariable[cdfObject->getVariableIndex(var->dimensionlinks[d]->name.c_str())]=1;
-              }catch(int e){
-                CT::string errMsg;
-                CDF::getErrorMessage(&errMsg,e);
-                CDBDebug("Var %s %s",var->dimensionlinks[d]->name.c_str(),errMsg.c_str());
-                
-              }                  
-            }
-          }
-        }catch(int e){}
-      }
-      
-      //Make a list of required variables
-      for(size_t v=0;v<dataSource->dataObject.size();v++){
-        for(size_t w=0;w<cdfObject->variables.size();w++){
-          //Metadata variables often have no dimensions. We want to keep them to show info to the user.
-          if(keepVariable[w]==0){
-            if(cdfObject->variables[w]->dimensionlinks.size()<2){
-              keepVariable[w]=1;
-              cdfObject->variables[w]->dimensionlinks.resize(0);
-            }
-          }
-        }
-      }
-
-      //Remove variables
-      std::vector<CT::string *> deleteVarNames;
-      for(size_t v=0;v<cdfObject->variables.size();v++){
-        if(keepVariable[v]==0)deleteVarNames.push_back(new CT::string(&cdfObject->variables[v]->name));
-      }
-      for(size_t i=0;i<deleteVarNames.size();i++){
-
-        cdfObject->removeVariable(deleteVarNames[i]->c_str());
-        
-        delete deleteVarNames[i];
-      }
-      deleteVarNames.clear();
-      
-      //Remove dimensions
-      for(size_t d=0;d<cdfObject->dimensions.size();d++){
-        if(keepDimension[d]==0)deleteVarNames.push_back(new CT::string(&cdfObject->dimensions[d]->name));
-      }
-      for(size_t i=0;i<deleteVarNames.size();i++){
-        //CDBDebug("Removing dimensions %s",deleteVarNames[i]->c_str());
-        cdfObject->removeDimension(deleteVarNames[i]->c_str());
-        cdfObject->removeVariable(deleteVarNames[i]->c_str());
-        delete deleteVarNames[i];
-      }
-      
-      //Adjust dimensions for the single object:
-      dataSource->varX->setType(CDF_DOUBLE);
-      dataSource->varY->setType(CDF_DOUBLE);
-      
-      //Adjust fillvalues
-      
-      try{
-        double fillValueVarX;
-        dataSource->varX->getAttribute("_FillValue")->getData(&fillValueVarX,1);
-        dataSource->varX->setAttribute("_FillValue",CDF_DOUBLE,&fillValueVarX,1);
-      }catch(int e){
-      }
-       
-      try{
-        double fillValueVarY;
-        dataSource->varY->getAttribute("_FillValue")->getData(&fillValueVarY,1);
-        dataSource->varY->setAttribute("_FillValue",CDF_DOUBLE,&fillValueVarY,1);
-      }catch(int e){
-      }
-      
-      try{
-        //Reduce dimension sizes because of striding
-        cdfObject->getDimension(dataSource->varX->name.c_str())->setSize(cdfObject->getDimension(dataSource->varX->name.c_str())->getSize()/dataSource->stride2DMap);
-        cdfObject->getDimension(dataSource->varY->name.c_str())->setSize(cdfObject->getDimension(dataSource->varY->name.c_str())->getSize()/dataSource->stride2DMap);
-        //CDBDebug("dfdim_X[0] %f-%f",dfdim_X[0],dfdim_X[dataSource->dWidth-1]);
-        double *dfdim_X=(double*)dataSource->varX->data;
-        double *dfdim_Y=(double*)dataSource->varY->data;
-        for(size_t j=0;j<cdfObject->getDimension(dataSource->varX->name.c_str())->getSize();j++)((double*)dataSource->varX->data)[j]=dfdim_X[j];
-        for(size_t j=0;j<cdfObject->getDimension(dataSource->varY->name.c_str())->getSize();j++)((double*)dataSource->varY->data)[j]=dfdim_Y[j];
-      }catch(int e){}
-      
-      //Read the dimensions
-      int timeStep = dataSource->getCurrentTimeStep();
-      for(size_t j=0;j<dataSource->timeSteps[timeStep]->dims.dimensions.size();j++){
-        CDF::Dimension *dim = cdfObject->getDimensionNE(dataSource->timeSteps[timeStep]->dims.dimensions[j]->name.c_str());
-        if(dim!=NULL){
-          CDF::Variable *var = cdfObject->getVariableNE(dataSource->timeSteps[timeStep]->dims.dimensions[j]->name.c_str());
-          if(var==NULL){CDBError("var is null");return 1;}
-          //CDBDebug("Cache Reading variable %s"    ,var->name.c_str());
-          if(var->readData(CDF_DOUBLE)!=0){
-            CDBError("Unable to read variable %s",var->name.c_str());
-            return 1;
-          }
-          try{
-            double dimFillValue;
-            var->getAttribute("_FillValue")->getData(&dimFillValue,1);
-            var->setAttribute("_FillValue",CDF_DOUBLE,&dimFillValue,1);
-          }catch(int e){
-          }
-          double dimValue[var->getSize()];
-          CDF::DataCopier::copy(dimValue,var->data,var->getType(),var->getSize());
-          size_t index=dataSource->timeSteps[timeStep]->dims.dimensions[0]->index;
-          var->setSize(1);
-          dim->length=1;
-          ((double*)var->data)[0]=dimValue[index];
-        }
-      }
-
-      //Write cachefile
-      
-      CDFNetCDFWriter netCDFWriter(cdfObject);
-      netCDFWriter.disableReadData();
-      netCDFWriter.setNetCDFMode(4);
-      //TODO disable compression
-      //netCDFWriter.setDeflate(0);
-      try{
-        if(netCDFWriter.write(cache.getCacheFileNameToWrite())!=0){
-          CDBError("Unable to write cachefile");
-          cache.removeClaimedCachefile();
-          return 0;
-        }
-      }catch(int e){
-        CDBError("Exception %d in writing cache file",e);
-        cache.removeClaimedCachefile();
-        return 1;
-      }
-      cache.releaseCacheFile();
-    
-      return 0;
-    }
   }
   #ifdef CDATAREADER_DEBUG
     CDBDebug("/Finished datareader");

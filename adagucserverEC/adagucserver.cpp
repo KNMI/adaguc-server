@@ -177,7 +177,7 @@ int main(int argc, const char *argv[]){
       CT::string inspireDatasetCSW;
       CT::string datasetPath;
       
-      for(size_t j=0;j<argc;j++){
+      for(int j=0;j<argc;j++){
         CT::string argument = argv[j];
         if(j+1<argc&&argument.equals("--file"))file = argv[j+1];
         if(j+1<argc&&argument.equals("--inspiredatasetcsw"))inspireDatasetCSW = argv[j+1];

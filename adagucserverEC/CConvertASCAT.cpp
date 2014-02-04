@@ -179,42 +179,44 @@ int CConvertASCAT::convertASCATHeader( CDFObject *cdfObject ){
   //Create the new 2D field variiables based on the swath variables
   for(size_t v=0;v<varsToConvert.size();v++){
     CDF::Variable *swathVar=cdfObject->getVariable(varsToConvert[v].c_str());
-    
-    #ifdef CCONVERTASCAT_DEBUG
-    CDBDebug("Converting %s",swathVar->name.c_str());
-    #endif
-    
-    CDF::Variable *new2DVar = new CDF::Variable();
-    cdfObject->addVariable(new2DVar);
-    
-    //Assign X,Y,T dims 
-    if(hasTimeData){
-      CDF::Variable *newTimeVar=cdfObject->getVariableNE("time2D");             
-      if(newTimeVar!=NULL){
-        new2DVar->dimensionlinks.push_back(newTimeVar->dimensionlinks[0]);
+    if(swathVar->dimensionlinks.size()>=2)
+    {
+      #ifdef CCONVERTASCAT_DEBUG
+      CDBDebug("Converting %s",swathVar->name.c_str());
+      #endif
+      
+      CDF::Variable *new2DVar = new CDF::Variable();
+      cdfObject->addVariable(new2DVar);
+      
+      //Assign X,Y,T dims 
+      if(hasTimeData){
+        CDF::Variable *newTimeVar=cdfObject->getVariableNE("time2D");             
+        if(newTimeVar!=NULL){
+          new2DVar->dimensionlinks.push_back(newTimeVar->dimensionlinks[0]);
+        }
       }
+      new2DVar->dimensionlinks.push_back(dimY);
+      new2DVar->dimensionlinks.push_back(dimX);
+      
+      new2DVar->setType(swathVar->getType());
+      new2DVar->name=swathVar->name.c_str();
+      swathVar->name.concat("_backup");
+      
+      //Copy variable attributes
+      for(size_t j=0;j<swathVar->attributes.size();j++){
+        CDF::Attribute *a =swathVar->attributes[j];
+        new2DVar->setAttribute(a->name.c_str(),a->getType(),a->data,a->length);
+        new2DVar->setAttributeText("ADAGUC_VECTOR","true");
+      }
+      
+      //The swath variable is not directly plotable, so skip it
+      swathVar->setAttributeText("ADAGUC_SKIP","true");
+      
+      //Scale and offset are already applied
+      new2DVar->removeAttribute("scale_factor");
+      new2DVar->removeAttribute("add_offset");
+      new2DVar->setType(CDF_FLOAT);
     }
-    new2DVar->dimensionlinks.push_back(dimY);
-    new2DVar->dimensionlinks.push_back(dimX);
-    
-    new2DVar->setType(swathVar->getType());
-    new2DVar->name=swathVar->name.c_str();
-    swathVar->name.concat("_backup");
-    
-    //Copy variable attributes
-    for(size_t j=0;j<swathVar->attributes.size();j++){
-      CDF::Attribute *a =swathVar->attributes[j];
-      new2DVar->setAttribute(a->name.c_str(),a->getType(),a->data,a->length);
-      new2DVar->setAttributeText("ADAGUC_VECTOR","true");
-    }
-    
-    //The swath variable is not directly plotable, so skip it
-    swathVar->setAttributeText("ADAGUC_SKIP","true");
-    
-    //Scale and offset are already applied
-    new2DVar->removeAttribute("scale_factor");
-    new2DVar->removeAttribute("add_offset");
-    new2DVar->setType(CDF_FLOAT);
   }
   return 0;
 }

@@ -204,7 +204,7 @@ CDBDebug("getDataSourceForLayer");
   }
    
 
-myWMSLayer->dataSource->addTimeStep(myWMSLayer->fileName.c_str(),"");
+  myWMSLayer->dataSource->addStep(myWMSLayer->fileName.c_str(),NULL);
   
 
   
