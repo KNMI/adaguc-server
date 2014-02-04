@@ -387,15 +387,17 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y){
   dataSource->stride2DMap=1;
   
   
-  while(dimX->length/dataSource->stride2DMap>360*4){
+  while(dimX->length/dataSource->stride2DMap>5000){
     dataSource->stride2DMap++;
   }
-  
+  if(dataSource->stride2DMap != 1){
+    CDBDebug("dataSource->stride2DMap == %d",dataSource->stride2DMap);
+  }
   //When we are reading from cache, the file has been written based on strided data
 //   if(cache->cacheIsAvailable()){
 //     dataSource->stride2DMap=1;
 //   }
-  dataSource->stride2DMap=1;
+  //dataSource->stride2DMap=1;
   
   if(dataSource->level2CompatMode){
     dataSource->stride2DMap=1;
