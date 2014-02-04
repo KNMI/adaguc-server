@@ -89,15 +89,13 @@ CDBDebug("getFileNameForLayer");
         }
         return 0;
       }
-      CPGSQLDB DB;
-     
-      status = DB.connect(srvParam->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0)return 1;
+      CPGSQLDB *DB = srvParam->getDataBaseConnection();
+      status = DB->connect(srvParam->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0)return 1;
       
       //if(srvParam->isAutoLocalFileResourceEnabled()==true){
-      status = myWMSLayer->dataSource->checkDimTables(&DB);
+      status = myWMSLayer->dataSource->checkDimTables(DB);
       if(status !=0){
         CDBError("Unable to checkDimTables");
-        DB.close();
         return 1;
       }
 
@@ -126,7 +124,7 @@ CDBDebug("getFileNameForLayer");
       
       
       
-      CDB::Store *values = DB.queryToStore(query.c_str());
+      CDB::Store *values = DB->queryToStore(query.c_str());
      
       if(values==NULL){
         CDBError("No files found for %s",myWMSLayer->dataSource->layerName.c_str());
@@ -146,7 +144,7 @@ CDBDebug("getFileNameForLayer");
         }
         delete values;
       }
-      DB.close();
+
       #ifdef CXMLGEN_DEBUG                  
       CDBDebug("/Database");  
       #endif      
@@ -335,8 +333,8 @@ CDBDebug("getDimsForLayer");
 #ifdef CXMLGEN_DEBUG
 CDBDebug("DB Connect");
 #endif   
-    CPGSQLDB DB;
-    int status = DB.connect(srvParam->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0)return 1;
+    CPGSQLDB *DB = srvParam->getDataBaseConnection();
+    int status = DB->connect(srvParam->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0)return 1;
 #ifdef CXMLGEN_DEBUG
 CDBDebug("Check");
 #endif      
@@ -401,7 +399,7 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
             CDB::Store *store = NULL;
             CT::string query;
             query.print("select %s from %s group by %s order by %s limit 100",pszDimName,tableName.c_str(),pszDimName,pszDimName);
-            store = DB.queryToStore(query.c_str());
+            store = DB->queryToStore(query.c_str());
             bool dataHasBeenFoundInStore = false;
             if(store!=NULL){
               if(store->size()!=0){
@@ -532,8 +530,8 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
 #ifdef CXMLGEN_DEBUG
 CDBDebug("Querying %s",query.c_str());
 #endif               
-        CDB::Store *values = DB.queryToStore(query.c_str());
-        if(values == NULL){CDBError("Query failed \"%s\"",query.c_str());DB.close();return 1;}
+        CDB::Store *values = DB->queryToStore(query.c_str());
+        if(values == NULL){CDBError("Query failed \"%s\"",query.c_str());return 1;}
         if(values->getSize()>0){
           //if(srvParam->requestType==REQUEST_WMS_GETCAPABILITIES)
           {
@@ -592,14 +590,14 @@ CDBDebug("Querying %s",query.c_str());
         // Retrieve the max dimension value
         CT::string query;
         query.print("select max(%s) from %s",pszDimName,tableName.c_str());
-        CDB::Store *values = DB.queryToStore(query.c_str());
-        if(values == NULL){CDBError("Query failed");DB.close();return 1;}
+        CDB::Store *values = DB->queryToStore(query.c_str());
+        if(values == NULL){CDBError("Query failed");return 1;}
         if(values->getSize()>0){snprintf(szMaxTime,31,"%s",values->getRecord(0)->get(0)->c_str());szMaxTime[10]='T';}
         delete values;
               // Retrieve the minimum dimension value
         query.print("select min(%s) from %s",pszDimName,tableName.c_str());
-        values = DB.queryToStore(query.c_str());
-        if(values == NULL){CDBError("Query failed");DB.close();return 1;}
+        values = DB->queryToStore(query.c_str());
+        if(values == NULL){CDBError("Query failed");return 1;}
         if(values->getSize()>0){snprintf(szMinTime,31,"%s",values->getRecord(0)->get(0)->c_str());szMinTime[10]='T';}
         delete values;
         
@@ -665,7 +663,7 @@ CDBDebug("Querying %s",query.c_str());
         }
       }
     }
-    DB.close();
+
     }
     return 0;
 }

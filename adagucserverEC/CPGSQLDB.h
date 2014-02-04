@@ -162,7 +162,7 @@ class CPGSQLDB:public CDB{
     const char *getError();
     CPGSQLDB();
     ~CPGSQLDB();
-    int close();
+    int close2();
     int connect(const char * pszOptions);
     int checkTable(const char * pszTableName,const char *pszColumns);
     int query(const char *pszQuery);

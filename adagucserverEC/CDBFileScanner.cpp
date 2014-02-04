@@ -43,7 +43,7 @@ std::vector <CT::string> CDBFileScanner::tableNamesDone;
   CDBDebug("%s",query.c_str());
   if(DB->query(query.c_str())!=0){
     CDBError("Query %s failed",query.c_str());
-    DB->close();
+    
     return 1;
   }
   
@@ -52,7 +52,7 @@ std::vector <CT::string> CDBFileScanner::tableNamesDone;
   CDBDebug("%s",query.c_str());
   if(DB->query(query.c_str())!=0){
     CDBError("Query %s failed",query.c_str());
-    DB->close();
+    
     return 1;
   }
   
@@ -148,7 +148,6 @@ int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,in
           }
         }catch(int e){
           CDBError("Exception defining table structure at line %d",e);
-          DB->close();
           return 1;
         }
         
@@ -170,7 +169,7 @@ int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,in
       CDBDebug("Checking filetable %s",tableName.c_str());
       
       //if(status == 0){CDBDebug("OK: Table is available");}
-      if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tableName.c_str(),tableColumns.c_str()); DB->close();return 1;  }
+      if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tableName.c_str(),tableColumns.c_str()); return 1;  }
       if(status == 2){
         removeNonExistingFiles=0;
         //removeExisting files can be set back to zero, because there are no files to remove (table is created)
@@ -200,20 +199,20 @@ int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,in
           CDBDebug("*** DROPPING TEMPORARY TABLE: %s",query.c_str());
           if(DB->query(query.c_str())!=0){
             CDBError("Query %s failed",query.c_str());
-            DB->close();
+            
             return 1;
           }
           CDBDebug("Check table %s ... ",tableName_temp.c_str());
           status = DB->checkTable(tableName_temp.c_str(),tableColumns.c_str());
           if(status == 0){CDBDebug("OK: Table is available");}
-          if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tableName_temp.c_str(),tableColumns.c_str()); DB->close();return 1;  }
+          if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tableName_temp.c_str(),tableColumns.c_str()); return 1;  }
           if(status == 2){CDBDebug("OK: Table %s created",tableName_temp.c_str());
             //Create a index on these files:
             //if(addIndexToTable(DB,tableName_temp.c_str(),dimName.c_str())!= 0)return 1;
           }
         }
         
-        if(status == 0 || status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tableName_temp.c_str(),tableColumns.c_str()); DB->close();return 1;  }
+        if(status == 0 || status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tableName_temp.c_str(),tableColumns.c_str()); return 1;  }
         if(status == 2){
           //OK, Table did not exist, is created.
           //Create a index on these files:
@@ -300,9 +299,9 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
       #endif
       
       
-      CT::string fileDate;
-      CDirReader::getFileDate(&fileDate,dirReader->fileList[j]->fullName.c_str());
-      if(fileDate.length()<10)fileDate.copy("1970-01-01T00:00:00Z");
+      CT::string fileDate = dataSource->srvParams->getFileDate(dirReader->fileList[j]->fullName.c_str());
+
+      
       CT::string dimensionTextList="none";
       if(dataSource->cfgLayer->Dimension.size()>0){
         dimensionTextList.print("(%s",dataSource->cfgLayer->Dimension[0]->attr.name.c_str());
@@ -336,7 +335,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
           query.print("select path from %s where path = '%s' and filedate = '%s' and filedate is not NULL limit 1",tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),fileDate.c_str());
           //CDBDebug("Checking: %s", query.c_str());
           CDB::Store *pathValues = DB->queryToStore(query.c_str());
-          if(pathValues == NULL){CDBError("Query failed");DB->close();throw(__LINE__);}
+          if(pathValues == NULL){CDBError("Query failed");throw(__LINE__);}
           if(pathValues->getSize()==1){fileExistsInDB=1;}else{fileExistsInDB=0;}
           delete pathValues;
           
@@ -705,7 +704,7 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
   int removeNonExistingFiles=1;
   
   int status;
-  CPGSQLDB DB;
+  CPGSQLDB *DB = dataSource->srvParams->getDataBaseConnection();
   
   //Copy tailpath (can be provided to scan only certain subdirs)
   CT::string tailPath(_tailPath);
@@ -733,18 +732,18 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
   
   /*----------- Connect to DB --------------*/
   //CDBDebug("Connecting to DB ...\t");
-  status = DB.connect(pszDBParams);if(status!=0){
+  status = DB->connect(pszDBParams);if(status!=0){
     CDBError("FAILED: Unable to connect to the database with parameters: [%s]",pszDBParams);
     return 1;
   }
 
   try{ 
     
-    status = DB.query("SET client_min_messages TO WARNING");
+    status = DB->query("SET client_min_messages TO WARNING");
     if(status != 0 )throw(__LINE__);
     
     //First check and create all tables... returns zero on success, positive on error, negative on already done.
-    status = createDBUpdateTables(&DB,dataSource,removeNonExistingFiles,&dirReader);
+    status = createDBUpdateTables(DB,dataSource,removeNonExistingFiles,&dirReader);
     if(status > 0 ){
       throw(__LINE__);
     }
@@ -754,13 +753,13 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
       if(removeNonExistingFiles==1){
         //CDBDebug("BEGIN");
         #ifdef USEQUERYTRANSACTIONS      
-        status = DB.query("BEGIN"); if(status!=0)throw(__LINE__);
+        status = DB->query("BEGIN"); if(status!=0)throw(__LINE__);
         #endif      
       }
       
       
       //Loop Through all files
-      status = DBLoopFiles(&DB,dataSource,removeNonExistingFiles,&dirReader);
+      status = DBLoopFiles(DB,dataSource,removeNonExistingFiles,&dirReader);
       if(status != 0 )throw(__LINE__);
             
       //In case of a complete update, the data is written in a temporary table
@@ -787,10 +786,10 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
             CT::string query;
             //Drop old table
             query.print("drop table %s",tableName.c_str());
-            if(DB.query(query.c_str())!=0){CDBError("Query %s failed",query.c_str());DB.close();throw(__LINE__);}
+            if(DB->query(query.c_str())!=0){CDBError("Query %s failed",query.c_str());throw(__LINE__);}
             //Rename new table to old table name
             query.print("alter table %s_temp rename to %s",tableName.c_str(),tableName.c_str());
-            if(DB.query(query.c_str())!=0){CDBError("Query %s failed",query.c_str());DB.close();throw(__LINE__);}
+            if(DB->query(query.c_str())!=0){CDBError("Query %s failed",query.c_str());throw(__LINE__);}
             if(status!=0){throw(__LINE__);}
           }
         }
@@ -801,16 +800,16 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
   catch(int linenr){
     CDBError("Exception in updatedb at line %d",linenr);
     #ifdef USEQUERYTRANSACTIONS                    
-    if(removeNonExistingFiles==1)status = DB.query("COMMIT");
+    if(removeNonExistingFiles==1)status = DB->query("COMMIT");
            #endif    
-    status = DB.close();return 1;
+    return 1;
   }
   // Close DB
   //CDBDebug("COMMIT");
   #ifdef USEQUERYTRANSACTIONS                  
-  if(removeNonExistingFiles==1)status = DB.query("COMMIT");
+  if(removeNonExistingFiles==1)status = DB->query("COMMIT");
            #endif  
-  status = DB.close();if(status!=0)return 1;
+  
 
   CDBDebug("*** Finished update layer '%s' ***\n",dataSource->cfgLayer->Name[0]->value.c_str());
   lock.release();

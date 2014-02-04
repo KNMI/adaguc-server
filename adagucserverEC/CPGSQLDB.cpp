@@ -42,20 +42,23 @@ CPGSQLDB::CPGSQLDB(){
 }
 
 CPGSQLDB::~CPGSQLDB(){
-  close();
+  close2();
 }
 
-int CPGSQLDB::close(){
-  //CDBDebug("[DISCONNECT]");
-  if(dConnected == 1){clearResult();PQfinish(connection);}
+int CPGSQLDB::close2(){
+  
+  if(dConnected == 1){
+    CDBDebug("[DB DISCONNECT]");
+    clearResult();PQfinish(connection);
+  }
   dConnected = 0;
   return 0;
 }
 
 int CPGSQLDB::connect(const char * pszOptions){
-  //CDBDebug("[CONNECT]");
   LastErrorMsg[0]='\0';
   if(dConnected == 1)return 0;
+  CDBDebug("[DB CONNECT]");
   connection = PQconnectdb(pszOptions);
   if (PQstatus(connection) == CONNECTION_BAD){
     snprintf(szTemp,CPGSQLDB_MAX_STR_LEN,"Connection to database failed: %s",PQerrorMessage(connection));

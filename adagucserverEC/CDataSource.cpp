@@ -331,20 +331,46 @@ int  CDataSource::checkDimTables(CPGSQLDB *dataBaseConnection){
     }
     
     CT::string query;
-    query.print("select %s from %s limit 1",dimName.c_str(),tableName.c_str());
+    query.print("select path,filedate,%s from %s limit 1",dimName.c_str(),tableName.c_str());
     CDB::Store *store = dataBaseConnection->queryToStore(query.c_str());
     if(store==NULL){
       tableNotFound=true;
       CDBDebug("No table found for dimension %s",dimName.c_str());
     }
+    
+    if(tableNotFound == false){
+      if(srvParams->isAutoLocalFileResourceEnabled()==true){
+        try{
+        CT::string databaseTime = store->getRecord(0)->get(1);if(databaseTime.length()<20){databaseTime.concat("Z");}databaseTime.setChar(10,'T');
+        
+        CT::string fileDate = srvParams->getFileDate(store->getRecord(0)->get(0)->c_str());
+        
+        
+        
+        if(databaseTime.equals(fileDate)==false){
+          CDBDebug("Table was found, %s ~ %s : %d",fileDate.c_str(),databaseTime.c_str(),databaseTime.equals(fileDate));
+          tableNotFound = true;
+        }
+        
+        }catch(int e){
+          CDBError("Unable to get filedate from database");
+        }
+        
+          
+      }
+    }
+    
     delete store;
     if(tableNotFound)break;
   }
+  
+  
+  
   if(tableNotFound){
     if(srvParams->isAutoLocalFileResourceEnabled()==true){
       CDBDebug("Updating database");
       int status = CDBFileScanner::updatedb(srvParams->cfg->DataBase[0]->attr.parameters.c_str(),this,NULL,NULL);
-      if(status !=0){CDBError("Could not update db for: %s",cfgLayer->Name[0]->value.c_str());dataBaseConnection->close();return 2;}
+      if(status !=0){CDBError("Could not update db for: %s",cfgLayer->Name[0]->value.c_str());return 2;}
     }else{
       CDBDebug("No table found for dimension %s and autoresource is disabled",dimName.c_str());
       return 1;

@@ -67,7 +67,8 @@ class CServerParams{
   private:
     int autoOpenDAPEnabled,autoLocalFileResourceEnabled,autoResourceCacheEnabled;
     std::map <std::string ,std::string> lookupTableNameCacheMap;
-    
+    CPGSQLDB *dataBaseConnection;
+    std::map <std::string ,std::string> lookupTableFileModificationDateMap;
   public:
     double dfResX,dfResY;
     int dWCS_RES_OR_WH;
@@ -78,6 +79,15 @@ class CServerParams{
     int imageFormat;
     int imageMode;
     CWMSExtensions wmsExtensions;
+    
+    CPGSQLDB *getDataBaseConnection(){
+      if(dataBaseConnection == NULL)dataBaseConnection = new CPGSQLDB();
+      return dataBaseConnection;
+    }
+    
+    
+    CT::string getFileDate(const char *fileName);
+    
     /*
      * figWidth and figHeight override normal width and height to shape a getfeatureinfo graph
      */
