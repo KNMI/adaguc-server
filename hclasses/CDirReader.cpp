@@ -57,7 +57,7 @@ int CDirReader::listDirRecursive(const char* directory,const char *ext_filter){
       CFileObject * fileObject = new CFileObject();
       fileList.push_back(fileObject);
       fileObject->fullName.copy(directory);
-      makeCleanPathSelf(&fileObject->fullName);
+      makeCleanPath(&fileObject->fullName);
       fileObject->baseName.copy(&fileObject->fullName);
     }else{
       //CDBError("Regexp failed.");
@@ -91,7 +91,7 @@ int CDirReader::_ReadDir(const char* directory,const char *ext_filter,int recurs
           fileObject->fullName.copy(directory,dir_len);
           fileObject->fullName.concat("/",1);
           fileObject->fullName.concat(ep->d_name,filename_len);
-          makeCleanPathSelf(&fileObject->fullName);
+          makeCleanPath(&fileObject->fullName);
           fileObject->baseName.copy(ep->d_name,filename_len);
           cdp=opendir(fileObject->fullName.c_str());
           if(cdp)fileObject->isDir=1;else fileObject->isDir=0;
@@ -146,7 +146,7 @@ int CDirReader::listDir (const char* directory,const char *ext_filter){
           fileObject->fullName.copy(directory,dir_len);
           fileObject->fullName.concat("/",1);
           fileObject->fullName.concat(ep->d_name,filename_len);
-          makeCleanPathSelf(&fileObject->fullName);
+          makeCleanPath(&fileObject->fullName);
           fileObject->baseName.copy(ep->d_name,filename_len);
           cdp=opendir(fileObject->fullName.c_str());
           if(cdp)fileObject->isDir=1;else fileObject->isDir=0;
@@ -161,7 +161,7 @@ int CDirReader::listDir (const char* directory,const char *ext_filter){
 }
 
 //Removes the double //'s from the string and makes sure that the string does not end with a /
-void CDirReader::makeCleanPathSelf(CT::string *path){
+void CDirReader::makeCleanPath(CT::string *path){
   if(path==NULL)return;
   if(path->length()==0)return;
   CT::StackList<CT::string>parts =path->splitToStack("/");
@@ -179,12 +179,6 @@ void CDirReader::makeCleanPathSelf(CT::string *path){
 
 }
 
-
-CT::string CDirReader::makeCleanPath(CT::string path){
-  if(path.empty())return "";
-  makeCleanPathSelf(&path);
-  return path;
-}
 
 int CDirReader::testRegEx(const char *string,const char *pattern){
   //printf("Testing '%s' == '%s': ",string,pattern);

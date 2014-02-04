@@ -8,7 +8,7 @@ CCOMPILER=g++ -march=core2 -mtune=core2 -msse -msse2 -msse3 -mssse3 -mfpmath=sse
 #CCOMPILER=g++ -O2 -I $(INCLUDEDIR)
 #CCOMPILER=g++ -march=k8-sse3 -mtune=k8-sse3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 -I $(INCLUDEDIR)  
 
-OBJECTS = CDirReader.o  CTypes.o CDebugger.o CXMLParser.o CHTTPTools.o
+OBJECTS =  CTypes.o CXMLParser.o CDebugger.o CDirReader.o
 
 EXECUTABLE= hclasses
 
@@ -23,3 +23,4 @@ clean:
 	rm $(OBJECTS) $(EXECUTABLE).a
 
 
+	
