@@ -103,7 +103,7 @@ int CConvertCurvilinear::convertCurvilinearHeader( CDFObject *cdfObject ){
   }
   
   CDBDebug("Using CConvertCurvilinear.h");
-  bool hasTimeData = false;
+  //bool hasTimeData = false;
   
   //Is there a time variable
  /* CDF::Variable *origT = cdfObject->getVariableNE("time");

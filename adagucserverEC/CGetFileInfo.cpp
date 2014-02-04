@@ -5,7 +5,6 @@ const char *CGetFileInfo::className="CGetFileInfo";
 
 
 CT::string CGetFileInfo::getLayersForFile(const char *filename){
-  int status = 0;
   CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObject(NULL,filename);
 
   CT::string fileInfo="";

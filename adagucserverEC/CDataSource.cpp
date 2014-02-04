@@ -204,11 +204,14 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Confi
   return 0;
 }
 
-void CDataSource::addTimeStep(const char * pszName,const char *pszTimeString){
+void CDataSource::addStep(const char * fileName, CCDFDims *dims){
   TimeStep * timeStep = new TimeStep();
   timeSteps.push_back(timeStep);
-  timeStep->fileName.copy(pszName);
-  timeStep->timeString.copy(pszTimeString);
+  timeStep->fileName.copy(fileName);
+  if(dims!=NULL){
+    timeStep->dims.copy(dims);
+  }
+  //timeStep->timeString.copy(pszTimeString);
   //timeStep->dims=dims;
   if(timeSteps.size()==1)setTimeStep(currentAnimationStep);
 }
@@ -353,6 +356,11 @@ int  CDataSource::checkDimTables(CPGSQLDB *dataBaseConnection){
   lock.release();
   return 0;
 }
+
+CT::string CDataSource::getDimensionValueForNameAndStep(const char *dimName,int dimStep){
+  return timeSteps[dimStep]->dims.getDimensionValue(dimName);
+}
+
 /*
 int CDataSource::autoCompleteDimensions(CPGSQLDB *dataBaseConnection){
   #ifdef CDATASOURCE_DEBUG

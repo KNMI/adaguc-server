@@ -58,7 +58,6 @@ class COGCDims{
 class CCDFDims {
   private:
   DEF_ERRORFUNCTION();
-  public:
     class NetCDFDim{
       public:
       CT::string name;
@@ -66,11 +65,17 @@ class CCDFDims {
       size_t index;
     };
     std::vector <NetCDFDim*> dimensions;  
+    int getArrayIndexForName(const char *name);
+  public:
     ~CCDFDims ();
     void addDimension(const char *name,const char *value,size_t index);
     size_t getDimensionIndex(const char *name);
     size_t getDimensionIndex(int j);
-    const char *getDimensionValue(int j);
+    size_t getNumDimensions();
+    bool isTimeDimension(int j);
+    CT::string getDimensionValue(const char *name);
+    CT::string getDimensionValue(int j);
     const char *getDimensionName(int j);
+    void copy(CCDFDims * dim);
 };
 #endif

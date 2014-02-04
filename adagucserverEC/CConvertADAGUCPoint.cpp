@@ -27,6 +27,7 @@
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
 //#define CCONVERTADAGUCPOINT_DEBUG
+//#define MEASURETIME
 const char *CConvertADAGUCPoint::className="CConvertADAGUCPoint";
 
 
@@ -391,6 +392,10 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
   
   int dateDimIndex=dataSource->getDimensionIndex("time");
   
+  #ifdef CCONVERTADAGUCPOINT_DEBUG
+  CDBDebug("dateDimIndex = %d",dateDimIndex);
+  #endif 
+  
   int numStations=pointVar[0]->dimensionlinks[0]->getSize();
   //int numDates=pointVar[0]->dimensionlinks[1]->getSize();
   int numDims = 2;
@@ -410,8 +415,12 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
     
   for(int j=0;j<numDims;j++){start[j]=0; count[j]=1;stride[j]=1;}
   for(size_t d=0;d<nrDataObjects;d++){
-    count[0]=pointVar[d]->dimensionlinks[0]->getSize();
+    count[0]=pointVar[d]->dimensionlinks[0]->getSize();//Num stations.
     start[1]=dateDimIndex;
+    #ifdef CCONVERTADAGUCPOINT_DEBUG
+    CDBDebug("Reading %s with time index %d ",pointVar[d]->name.c_str(),dateDimIndex);
+    #endif
+    pointVar[d]->freeData();
     pointVar[d]->readData(CDF_FLOAT,start,count,stride,true);
     //pointVar[d]->readData(CDF_FLOAT,true);
   }

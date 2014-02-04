@@ -67,7 +67,7 @@ class CDataReader{
      * @param cacheName
      * @return Zero on success.
      */
-    static int getCacheFileName(CDataSource *dataSource,CT::string *cacheName);
+    //static int getCacheFileName(CDataSource *dataSource,CT::string *cacheName);
     
     static int getTimeDimIndex( CDFObject *cdfObject, CDF::Variable * var);
     
@@ -91,7 +91,7 @@ class CDataReader{
     int open(CDataSource *dataSource,int mode,int x,int y);
     int open(CDataSource *dataSource, int x,int y);
     int open(CDataSource *dataSource, int mode);
-    int parseDimensions(CDataSource *dataSource,int mode,int x,int y,CCache *cache);
+    int parseDimensions(CDataSource *dataSource,int mode,int x,int y);
     
     int close(){return 0;};
 };

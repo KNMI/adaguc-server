@@ -26,6 +26,8 @@
 #include "COGCDims.h"
 const char * CCDFDims::className = "CCDFDims";
 
+
+
 void COGCDims::addValue(const char *value){
   for(size_t j=0;j<uniqueValues.size();j++){
     if(uniqueValues[j].equals(value))return;
@@ -64,18 +66,66 @@ size_t CCDFDims::getDimensionIndex(const char *name){
   }
   return 0;
 }
+
+int CCDFDims::getArrayIndexForName(const char *name){
+  for(size_t j=0;j<dimensions.size();j++){
+    if(dimensions[j]->name.equals(name)){
+      return j;
+    }
+  }
+  return -1;
+}
+
 size_t CCDFDims::getDimensionIndex(int j){
   if(j<0)return 0;
   if(size_t(j)>dimensions.size())return 0;
   return dimensions[j]->index;
 }
-const char *CCDFDims::getDimensionValue(int j){
-  if(j<0)return 0;
-  if(size_t(j)>dimensions.size())return 0;
-  return dimensions[j]->value.c_str();
+CT::string CCDFDims::getDimensionValue(int j){
+  if(j<0)return "NULL";
+  if(size_t(j)>dimensions.size())return "NULL";
+  if(isTimeDimension(j)){
+    CT::string value = dimensions[j]->value.c_str();
+    //Format to YYYY-MM-DDTHH:MM:SSZ
+    //          01234567890123456789
+    if(value.length()<20){
+      value.concat("Z");
+    }
+    value.setChar(10,'T');
+    return value;
+  }
+  return dimensions[j]->value;
 }
+
+CT::string CCDFDims::getDimensionValue(const char *name){
+  return getDimensionValue(getArrayIndexForName(name));
+}
+
 const char *CCDFDims::getDimensionName(int j){
   if(j<0)return 0;
   if(size_t(j)>dimensions.size())return 0;
   return dimensions[j]->name.c_str();
 }
+
+void CCDFDims::copy(CCDFDims * dim){
+  if(dim!=NULL){
+    for(size_t j=0;j<dim->dimensions.size();j++){
+      addDimension(dim->dimensions[j]->name.c_str(),dim->dimensions[j]->value.c_str(),dim->dimensions[j]->index);
+      
+    }
+  }
+}
+
+size_t CCDFDims::getNumDimensions(){
+  return dimensions.size();
+}
+
+bool CCDFDims::isTimeDimension(int j){
+  const char *dimName = getDimensionName(j);
+  if(dimName!=NULL){
+    CT::string dimTimeName = dimName;
+    if(dimTimeName.indexOf("time")!=-1)return true;
+  }
+  return false;
+}
+
