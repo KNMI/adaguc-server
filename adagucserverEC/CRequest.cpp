@@ -659,7 +659,7 @@ int CRequest::process_wms_getmap_request(){
 
 
 
-const char *timeFormatAllowedChars="0123456789:TZ-/. _ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz()";
+const char *timeFormatAllowedChars="0123456789:TZ-/. _ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz()*";
 bool CRequest::checkTimeFormat(CT::string& timeToCheck){
   if(timeToCheck.length()<1)return false;
 //  bool isValidTime = false;
@@ -826,78 +826,84 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
       }
 
       CT::string subQuery;
-      subQuery.print("(select path,dim%s,%s from %s where ",netCDFDimName.c_str(),
+      subQuery.print("(select path,dim%s,%s from %s ",netCDFDimName.c_str(),
                   netCDFDimName.c_str(),
                   tableName.c_str());
       CT::string queryParams(&dataSource->requiredDims[i]->value);
-      CT::string *cDims =queryParams.splitToArray(",");// Split up by commas (and put into cDims)
-      for(size_t k=0;k<cDims->count;k++){
-        CT::string *sDims =cDims[k].splitToArray("/");// Split up by slashes (and put into sDims)
-        if(sDims->count>0&&k>0)subQuery.concat("or ");
-        for(size_t  l=0;l<sDims->count&&l<2;l++){
-          if(sDims[l].length()>0){
-            
-            //Determine column type (timestamp, integer, real)
-            bool isRealType = false;
-            CT::string dataTypeQuery;
-            dataTypeQuery.print("select data_type from information_schema.columns where table_name = '%s' and column_name = '%s'",tableName.c_str(),netCDFDimName.c_str());
-            try{
-              CDB::Store * dataType = DB.queryToStore(dataTypeQuery.c_str(),true);
-              if(dataType!=NULL){
-                if(dataType->getSize()==1){
-                  if(dataType->getRecord(0)->get(0)->equals("real")){
-                    isRealType = true;
+      if(queryParams.equals("*")==false){
+        CT::string *cDims =queryParams.splitToArray(",");// Split up by commas (and put into cDims)
+        for(size_t k=0;k<cDims->count;k++){
+          CT::string *sDims =cDims[k].splitToArray("/");// Split up by slashes (and put into sDims)
+          
+          if(k==0){
+            subQuery.concat("where ");
+          }
+          if(sDims->count>0&&k>0)subQuery.concat("or ");
+          for(size_t  l=0;l<sDims->count&&l<2;l++){
+            if(sDims[l].length()>0){
+              
+              //Determine column type (timestamp, integer, real)
+              bool isRealType = false;
+              CT::string dataTypeQuery;
+              dataTypeQuery.print("select data_type from information_schema.columns where table_name = '%s' and column_name = '%s'",tableName.c_str(),netCDFDimName.c_str());
+              try{
+                CDB::Store * dataType = DB.queryToStore(dataTypeQuery.c_str(),true);
+                if(dataType!=NULL){
+                  if(dataType->getSize()==1){
+                    if(dataType->getRecord(0)->get(0)->equals("real")){
+                      isRealType = true;
+                    }
                   }
                 }
+                delete dataType;
+              }catch(int e){
+                if((checkDataRestriction()&SHOW_QUERYINFO)==false)query.copy("hidden");
+                CDBError("Unable to determine column type: '%s'",query.c_str());
+                DB.close();
+                return 12;
               }
-              delete dataType;
-            }catch(int e){
-              if((checkDataRestriction()&SHOW_QUERYINFO)==false)query.copy("hidden");
-              CDBError("Unable to determine column type: '%s'",query.c_str());
-              DB.close();
-              return 12;
-            }
-          
-            //dataSource->requiredDims[i]->allValues.push_back(sDims[l].c_str());
-            //CDBDebug("requiredDims %d %s",i,sDims[l].c_str());
-            if(l>0)subQuery.concat("and ");
-            if(sDims->count==1){
-              
-              if(!checkTimeFormat(sDims[l]))timeValidationError=true;
-              
-              if(isRealType == false){
-                subQuery.printconcat("%s = '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
-              }
-              
-              //This query gets the closest value from the table.
-              if(isRealType){
-                subQuery.printconcat("abs(%s - %s) = (select min(abs(%s - %s)) from %s)",
-                                    sDims[l].c_str(),
-                                    netCDFDimName.c_str(),
-                                    sDims[l].c_str(),
-                                    netCDFDimName.c_str(),
-                                    tableName.c_str());
-              }
-            }
             
-            //TODO Currently only start/stop is supported, start/stop/resolution is not supported yet.
-            if(sDims->count>=2){
-              if(l==0){
+              //dataSource->requiredDims[i]->allValues.push_back(sDims[l].c_str());
+              //CDBDebug("requiredDims %d %s",i,sDims[l].c_str());
+              if(l>0)subQuery.concat("and ");
+              if(sDims->count==1){
+                
                 if(!checkTimeFormat(sDims[l]))timeValidationError=true;
-                subQuery.printconcat("%s >= '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
+                
+                if(isRealType == false){
+                  subQuery.printconcat("%s = '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
+                }
+                
+                //This query gets the closest value from the table.
+                if(isRealType){
+                  subQuery.printconcat("abs(%s - %s) = (select min(abs(%s - %s)) from %s)",
+                                      sDims[l].c_str(),
+                                      netCDFDimName.c_str(),
+                                      sDims[l].c_str(),
+                                      netCDFDimName.c_str(),
+                                      tableName.c_str());
+                }
               }
-              if(l==1){
-                if(!checkTimeFormat(sDims[l]))timeValidationError=true;
-                subQuery.printconcat("%s <= '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
+              
+              //TODO Currently only start/stop is supported, start/stop/resolution is not supported yet.
+              if(sDims->count>=2){
+                if(l==0){
+                  if(!checkTimeFormat(sDims[l]))timeValidationError=true;
+                  subQuery.printconcat("%s >= '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
+                }
+                if(l==1){
+                  if(!checkTimeFormat(sDims[l]))timeValidationError=true;
+                  subQuery.printconcat("%s <= '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
+                }
               }
             }
           }
+          delete[] sDims;
         }
-        delete[] sDims;
+        delete[] cDims;
       }
-      delete[] cDims;
       if(i==0){
-        subQuery.printconcat("ORDER BY %s DESC limit 24*6)a%d ",netCDFDimName.c_str(),i);
+        subQuery.printconcat("ORDER BY %s DESC limit 24*12)a%d ",netCDFDimName.c_str(),i);
       }else{
         subQuery.printconcat("ORDER BY %s DESC)a%d ",netCDFDimName.c_str(),i);
       }

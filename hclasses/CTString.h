@@ -1,27 +1,27 @@
 /******************************************************************************
- * 
- * Project:  Helper classes
- * Purpose:  Generic functions
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
- *
- ******************************************************************************
- *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * 
- ******************************************************************************/
+* 
+* Project:  Helper classes
+* Purpose:  Generic functions
+* Author:   Maarten Plieger, plieger "at" knmi.nl
+* Date:     2013-06-01
+*
+******************************************************************************
+*
+* Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+* 
+*      http://www.apache.org/licenses/LICENSE-2.0
+* 
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+* 
+******************************************************************************/
 
 #ifndef CTSTRING_H
 #define CTSTRING_H
@@ -29,6 +29,7 @@
 #include "CTypes.h"
 #include "CTStringRef.h"
 
+#define CTSTRINGSTACKLENGTH 62
 namespace CT{
 
     
@@ -42,8 +43,21 @@ namespace CT{
     const char* strrstr(const char *x, const char *y);
     char _tohex(char in);
     char _fromhex(char in);
-    char *value;
-    void init(){value=NULL;count=0;allocated=0;privatelength=0;bufferlength=0;}
+    char stackValue[CTSTRINGSTACKLENGTH+1];
+    bool useStack;
+    char *heapValue;
+    void init(){useStack=true;heapValue=NULL;stackValue[0]=0;count=0;allocated=0;privatelength=0;bufferlength=CTSTRINGSTACKLENGTH;}
+    char *getValuePointer(){
+      return useStack?stackValue:heapValue;
+    }
+    void moveStackToHeap(){
+      if(useStack){
+        useStack = false;
+        heapValue=new char[privatelength+1];
+        allocated=1;
+        strncpy (heapValue,stackValue, privatelength);
+      }
+    }
     DEF_ERRORFUNCTION();
   public:
     /**
@@ -157,7 +171,10 @@ namespace CT{
     * Copy a string pointer into the array
     * @param _string Pointer to the string to copy
     */
-    void copy(const CT::string*_string){if(_string==NULL){_Free();return;}copy(_string->value,_string->privatelength);};
+    void copy(const CT::string*_string){
+      if(_string==NULL){_Free();return;}
+      copy(_string->useStack?_string->stackValue:_string->heapValue,_string->privatelength);      
+    };
 
     /**
     * Copy a character array into the string
@@ -169,13 +186,13 @@ namespace CT{
     * Appends a pointer to a string object to this string object
     * @param string* The string pointer to append
     */
-    void concat(const CT::string*_string){concat(_string->value,_string->privatelength);}
+    void concat(const CT::string*_string){concat(_string->useStack?_string->stackValue:_string->heapValue,_string->privatelength);}
     
     /**
     * Appends a string object to this string object
     * @param string The string to append
     */
-    void concat(const CT::string _string){concat(_string.value,_string.privatelength);}
+    void concat(const CT::string _string){concat(_string.useStack?_string.stackValue:_string.heapValue,_string.privatelength);}
     
     /**
     * Appends an array of characters with specified length to this string object
@@ -295,7 +312,7 @@ namespace CT{
     */
     CT::string toLowerCaser(){
       CT::string t;
-      t.copy(value,privatelength);
+      t.copy(c_str(),privatelength);
       t.toLowerCaseSelf();
       return t;
     }
@@ -310,9 +327,9 @@ namespace CT{
     */
     void encodeURLSelf();
     
-     /**
-     * Encodes string using XML encoding
-     */
+    /**
+    * Encodes string using XML encoding
+    */
     void encodeXMLSelf();
     static CT::string encodeXML(CT::string stringToEncode);
     CT::string encodeXML();
@@ -325,7 +342,7 @@ namespace CT{
     /**
     * Returns a new string with removed spaces
     */
-    string trimr(){CT::string r;r.copy(value,privatelength);r.trimSelf();return r;}
+    string trimr(){CT::string r;r.copy(c_str(),privatelength);r.trimSelf();return r;}
     
     /**
     * Function which returns an array of strings
@@ -388,7 +405,7 @@ namespace CT{
     * @param newString the new stringto replace with
     * @return Zero on success
     */
-    int replaceSelf(CT::string *substr,CT::string *newString){return replaceSelf(substr->value,substr->privatelength,newString->value,newString->privatelength);}
+    int replaceSelf(CT::string *substr,CT::string *newString){return replaceSelf(substr->c_str(),substr->privatelength,newString->c_str(),newString->privatelength);}
     
     
     /** Replace all strings with another string
@@ -396,7 +413,7 @@ namespace CT{
     * @param newString the new string to replace with
     * @return Zero on success
     */
-    int replaceSelf(const char *substr,CT::string *newString){return replaceSelf(substr,strlen(substr),newString->value,newString->privatelength);}
+    int replaceSelf(const char *substr,CT::string *newString){return replaceSelf(substr,strlen(substr),newString->c_str(),newString->privatelength);}
     
     
     /** Replace all strings with another string
@@ -404,7 +421,7 @@ namespace CT{
     * @param newString the new character array to replace with
     * @return Zero on success
     */
-    int replaceSelf(CT::string *substr,const char *newString){return replaceSelf(substr->value,substr->privatelength,newString,strlen(newString));}
+    int replaceSelf(CT::string *substr,const char *newString){return replaceSelf(substr->c_str(),substr->privatelength,newString,strlen(newString));}
     
     /** Replace all strings with another string
     * @param substr the character array to replace
@@ -418,7 +435,7 @@ namespace CT{
     * @param newString the new character array to replace with
     * @return the subsetted string
     */
-    CT::string replacer(const char * old,const char *newstr){string r;r.copy(value,privatelength);r.replaceSelf(old,newstr);return r;}
+    CT::string replacer(const char * old,const char *newstr){string r;r.copy(c_str(),privatelength);r.replaceSelf(old,newstr);return r;}
 
     /**
       * Subset the string from start till end
@@ -454,7 +471,7 @@ namespace CT{
         return;
       }
       if(size<int(privatelength)){
-        value[size]='\0';
+        getValuePointer()[size]='\0';
         privatelength=size;
       }
     }
@@ -462,17 +479,17 @@ namespace CT{
     /**
     * Converts the string to a float number
     */
-    float toFloat(){float fValue=(float)atof(value);return fValue;}
+    float toFloat(){float fValue=(float)atof(c_str());return fValue;}
     
     /**
     * Converts the string to a double number
     */
-    double toDouble(){double fValue=(double)atof(value);return fValue;}
+    double toDouble(){double fValue=(double)atof(c_str());return fValue;}
 
     /**
     * Converts the string to an integer number
     */
-    int toInt(){int dValue=(int)atoi(value);return dValue;}
+    int toInt(){int dValue=(int)atoi(c_str());return dValue;}
     
     /** 
     * Test whether string is empty or not
@@ -481,7 +498,9 @@ namespace CT{
       if(privatelength == 0){
         return true;
       }
-      if(value == NULL)return true;
+      if(useStack == false){
+        if(heapValue == NULL)return true;
+      }
       return false;
     }
   };

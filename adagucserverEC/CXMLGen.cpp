@@ -382,7 +382,10 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
         /* Automatically scan the time dimension, two types are avaible, start/stop/resolution and individual values */
         //TODO try to detect automatically the time resolution of the layer.
         CT::string varName=myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str();
-        if(varName.indexOf("time")>=0){
+        //CDBDebug("VarName = [%s]",varName.c_str());
+        int ind = varName.indexOf("time");
+        if(ind>=0){
+          //CDBDebug("VarName = [%s] and this is a time dim at %d!",varName.c_str(),ind);
           CT::string units;
           isTimeDim=true;
           try{

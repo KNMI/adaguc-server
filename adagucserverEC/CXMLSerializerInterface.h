@@ -32,6 +32,7 @@
 #include <string.h>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
+#include "CTypes.h"
 #include "CDebugger.h"
 
 
@@ -42,38 +43,39 @@
 /**
  * Simple string element with limited functionality. All string values in CXMLObjectInterface will have this type.
  */
-class CXMLString{
-  private:
-	char *p;
-  public:
-
-    CXMLString(){
-      p=NULL;
-    }
-    ~CXMLString(){
-      if(p!=NULL){free(p);p=NULL;}
-    }
-    void copy(const char *p){
-      //if(this->p!=NULL){free(this->p);}//TODO
-      this->p=strdup(p);
-    }
-    const char *c_str(){
-      return (const char*)p;
-    }
-    bool empty(){
-      if(p==NULL)return true;
-      return false;
-    }
-    bool equals(const char *val2){
-      if(p==NULL||val2==NULL)return false;
-      size_t lenval1=strlen(p);
-      size_t lenval2=strlen(val2);
-      if(lenval1!=lenval2)return false;
-      for(size_t j=0;j<lenval1;j++)if(p[j]!=val2[j])return false;
-      return true;
-    }
+// class CXMLString{
+//   private:
+// 	char *p;
+//   public:
+// 
+//     CXMLString(){
+//       p=NULL;
+//     }
+//     ~CXMLString(){
+//       if(p!=NULL){free(p);p=NULL;}
+//     }
+//     void copy(const char *p){
+//       //if(this->p!=NULL){free(this->p);}//TODO
+//       this->p=strdup(p);
+//     }
+//     const char *c_str(){
+//       return (const char*)p;
+//     }
+//     bool empty(){
+//       if(p==NULL)return true;
+//       return false;
+//     }
+//     bool equals(const char *val2){
+//       if(p==NULL||val2==NULL)return false;
+//       size_t lenval1=strlen(p);
+//       size_t lenval2=strlen(val2);
+//       if(lenval1!=lenval2)return false;
+//       for(size_t j=0;j<lenval1;j++)if(p[j]!=val2[j])return false;
+//       return true;
+//     }
+// };
+class CXMLString :public CT::string{
 };
-
 /**
  * Base objects
  */
