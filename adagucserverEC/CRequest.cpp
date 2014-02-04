@@ -23,11 +23,16 @@
  * 
  ******************************************************************************/
 
+//#define CREQUEST_DEBUG
+//#define MEASURETIME
+
 #include "CRequest.h"
 const char *CRequest::className="CRequest";
 int CRequest::CGI=0;
 
+//Entry point for all runs
 int CRequest::runRequest(){
+  
   int status=process_querystring();
   CDFObjectStore::getCDFObjectStore()->clear();
   ProjectionStore::getProjectionStore()->clear();
@@ -683,17 +688,17 @@ bool CRequest::checkTimeFormat(CT::string& timeToCheck){
 int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *srvParam){
   int status = 0;
   try{
-    CPGSQLDB DB;
+    CPGSQLDB * DB = srvParam->getDataBaseConnection();
     CT::string query;
   
     // Connect do DB
-    status = DB.connect(srvParam->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0){CDBError("Unable to connect to DB");return 1;}
+    status = DB->connect(srvParam->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0){CDBError("Unable to connect to DB");return 1;}
     
     /*
       * Check if all tables are available, if not update the db
       */
     if(srvParam->isAutoResourceEnabled()){
-      status = dataSource->CDataSource::checkDimTables(&DB);
+      status = dataSource->CDataSource::checkDimTables(DB);
       if(status != 0){
         CDBError("checkAndUpdateDimTables failed");
         return status;
@@ -751,8 +756,8 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
               
               
               query.print("select max(%s) from %s",ogcDim->netCDFDimName.c_str(),tableName.c_str());
-              CDB::Store *maxStore = DB.queryToStore(query.c_str());
-              if(maxStore == NULL){CDBError("query failed");status = DB.close(); return 1;}
+              CDB::Store *maxStore = DB->queryToStore(query.c_str());
+              if(maxStore == NULL){CDBError("query failed"); return 1;}
               ogcDim->value.copy(maxStore->getRecord(0)->get(0));
               delete maxStore;
             }
@@ -796,8 +801,8 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
                     dataSource->cfgLayer->Dimension[i]->attr.name.c_str(),
                     tableName.c_str());
         //Execute the query
-        CDB::Store *maxStore = DB.queryToStore(query.c_str());
-        if(maxStore == NULL){CDBError("query failed");status = DB.close(); return 1;}
+        CDB::Store *maxStore = DB->queryToStore(query.c_str());
+        if(maxStore == NULL){CDBError("query failed");return 1;}
         ogcDim->value.copy(maxStore->getRecord(0)->get(0));
         delete maxStore;
       }
@@ -847,7 +852,7 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
               CT::string dataTypeQuery;
               dataTypeQuery.print("select data_type from information_schema.columns where table_name = '%s' and column_name = '%s'",tableName.c_str(),netCDFDimName.c_str());
               try{
-                CDB::Store * dataType = DB.queryToStore(dataTypeQuery.c_str(),true);
+                CDB::Store * dataType = DB->queryToStore(dataTypeQuery.c_str(),true);
                 if(dataType!=NULL){
                   if(dataType->getSize()==1){
                     if(dataType->getRecord(0)->get(0)->equals("real")){
@@ -859,7 +864,6 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
               }catch(int e){
                 if((checkDataRestriction()&SHOW_QUERYINFO)==false)query.copy("hidden");
                 CDBError("Unable to determine column type: '%s'",query.c_str());
-                DB.close();
                 return 12;
               }
             
@@ -927,7 +931,6 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
     if(timeValidationError==true){
       if((checkDataRestriction()&SHOW_QUERYINFO)==false)queryOrderedDESC.copy("hidden");
       CDBError("queryOrderedDESC fails regular expression: '%s'",queryOrderedDESC.c_str());
-      status = DB.close();
       return 1;
     }
     
@@ -945,26 +948,24 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
     CDBDebug("%s",query.c_str());
     CDB::Store *store = NULL;
     try{
-      store = DB.queryToStore(query.c_str(),true);
+      store = DB->queryToStore(query.c_str(),true);
     }catch(int e){
       if((checkDataRestriction()&SHOW_QUERYINFO)==false)query.copy("hidden");
       
       CDBDebug("Query failed with code %d (%s)",e,query.c_str());
-      DB.close();
       return 1;
     }
     
     if(store == NULL){
       if((checkDataRestriction()&SHOW_QUERYINFO)==false)query.copy("hidden");
       CDBError("No results for query: '%s'",query.c_str());
-      DB.close();
       return 2;
     }
     if(store->getSize() == 0){
       if((checkDataRestriction()&SHOW_QUERYINFO)==false)query.copy("hidden");
       CDBError("No results for query: '%s'",query.c_str());
       delete store;
-      DB.close();
+
       return 2;
     }
           
@@ -996,7 +997,6 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
 //       CDBDebug("%d There are %d values for dimension %s",i,dataSource->requiredDims[i]->uniqueValues.size(),dataSource->requiredDims[i]->netCDFDimName.c_str());  
 //     }
 
-    status = DB.close();  if(status!=0)return 1;
     delete store;
   }catch(int i){
     CDBError("%d",i);

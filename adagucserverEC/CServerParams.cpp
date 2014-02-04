@@ -48,6 +48,7 @@ CServerParams::CServerParams(){
   showLegendInImage = false;
   figWidth=-1;
   figHeight=-1;
+  dataBaseConnection = NULL;
 }
 
 CServerParams::~CServerParams(){
@@ -59,7 +60,11 @@ CServerParams::~CServerParams(){
     requestDims[j]= NULL;
   }
   requestDims.clear();
-  
+  if(dataBaseConnection != NULL){
+    dataBaseConnection->close2();
+    delete dataBaseConnection;
+    dataBaseConnection = NULL;
+  }
 }
 
 void CServerParams::getCacheFileName(CT::string *cacheFileName){
@@ -193,7 +198,7 @@ CT::string CServerParams::lookupTableName(const char *path,const char *filter, c
   std::map<std::string,std::string>::iterator it=lookupTableNameCacheMap.find(identifier.c_str());
   if(it!=lookupTableNameCacheMap.end()){
     tableName = (*it).second.c_str();
-    //CDBDebug("Returning tablename  %s from map",tableName.c_str());
+    //CDBDebug("Returning tablename %s from map",tableName.c_str());
     return tableName;
   }
   
@@ -220,9 +225,9 @@ CT::string CServerParams::lookupTableName(const char *path,const char *filter, c
   CT::string tableColumns("path varchar (511), filter varchar (511), dimension varchar (511), tablename varchar (63), UNIQUE (path,filter,dimension) ");
   CT::string mvRecordQuery;
   int status;
-  CPGSQLDB DB;
+  CPGSQLDB *DB = getDataBaseConnection();
   const char *pszDBParams = this->cfg->DataBase[0]->attr.parameters.c_str();
-  status = DB.connect(pszDBParams);if(status!=0){
+  status = DB->connect(pszDBParams);if(status!=0){
     CDBError("Error Could not connect to the database with parameters: [%s]",pszDBParams);
     throw(1);
   }
@@ -230,12 +235,11 @@ CT::string CServerParams::lookupTableName(const char *path,const char *filter, c
 
   try{
 
-    status = DB.checkTable(lookupTableName.c_str(),tableColumns.c_str());
+    status = DB->checkTable(lookupTableName.c_str(),tableColumns.c_str());
     //if(status == 0){CDBDebug("OK: Table %s is available",lookupTableName.c_str());}
     if(status == 1){
       CDBError("FAIL: Table %s could not be created: %s",lookupTableName.c_str(),tableColumns.c_str());
-      CDBError("Error: %s",DB.getError());    
-      DB.close();
+      CDBError("Error: %s",DB->getError());    
       throw(1);  
     }
     //if(status == 2){CDBDebug("OK: Table %s is created",lookupTableName.c_str());  }
@@ -254,8 +258,8 @@ CT::string CServerParams::lookupTableName(const char *path,const char *filter, c
       mvRecordQuery.print("SELECT * FROM %s where path=E'%s' and filter=E'%s'",
                           lookupTableName.c_str(),pathString.c_str(),filterString.c_str());
     }
-    CDB::Store *rec = DB.queryToStore(mvRecordQuery.c_str()); 
-    if(rec==NULL){CDBError("Unable to select records: \"%s\"",mvRecordQuery.c_str());DB.close();throw(1);  }
+    CDB::Store *rec = DB->queryToStore(mvRecordQuery.c_str()); 
+    if(rec==NULL){CDBError("Unable to select records: \"%s\"",mvRecordQuery.c_str());throw(1);  }
     if(rec->getSize()>0){
       tableName.copy(rec->getRecord(0)->get(3));
       if(tableName.length()>0){
@@ -263,12 +267,7 @@ CT::string CServerParams::lookupTableName(const char *path,const char *filter, c
       }
       
     }
-    /*if(rec->getSize()>1){
-      CDBError("Path filter combination has more than 1 lookuptable");
-      delete rec;
-      DB.close();
-      throw(1);
-    }*/
+   
     delete rec;
     
     //Add a new lookuptable with an unique id.
@@ -286,16 +285,14 @@ CT::string CServerParams::lookupTableName(const char *path,const char *filter, c
       tableName.toLowerCaseSelf();
       mvRecordQuery.print("INSERT INTO %s values (E'%s',E'%s',E'%s',E'%s')",lookupTableName.c_str(),pathString.c_str(),filterString.c_str(),dimString.c_str(),tableName.c_str());
       CDBDebug("%s",mvRecordQuery.c_str());
-      status = DB.query(mvRecordQuery.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",mvRecordQuery.c_str());DB.close();throw(1);  }
+      status = DB->query(mvRecordQuery.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",mvRecordQuery.c_str());throw(1);  }
     }
     //Close the database
   }catch(int e){
 
-    DB.close();
     lock.release();
     throw(e);
   }
-  DB.close();
   
   if(tableName.length()>0){
     //CDBDebug("Pushing %s with id %s",tableName.c_str(),identifier.c_str());
@@ -549,4 +546,21 @@ bool CServerParams::isLonLatProjection(CT::string *projectionName){
     return true;
   }
   return false;
+}
+
+
+CT::string CServerParams::getFileDate(const char *fileName){
+  
+  std::map<std::string,std::string>::iterator it=lookupTableFileModificationDateMap.find(fileName);
+  if(it!=lookupTableFileModificationDateMap.end()){
+    CT::string filemoddate = (*it).second.c_str();
+    //CDBDebug("Returning filedate %s from map",filemoddate.c_str());
+    return filemoddate;
+  }
+  CT::string fileDate;
+  CDirReader::getFileDate(&fileDate,fileName);
+  if(fileDate.length()<10)fileDate.copy("1970-01-01T00:00:00Z");
+  
+   lookupTableFileModificationDateMap.insert(std::pair<std::string,std::string>(fileName,fileDate.c_str()));
+  return fileDate;
 }

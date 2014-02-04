@@ -178,10 +178,10 @@ private:
     static int dataRestriction;
     void addXMLLayerToConfig(CServerParams *srvParam,std::vector<CT::string>*variableNames, const char *group, const char *location);
     int getDimValuesForDataSource(CDataSource *dataSource,CServerParams *srvParam);
+    
   public:
     CRequest(){
       srvParam=new CServerParams();
-      
     }
     ~CRequest(){
       for(size_t j=0;j<dataSources.size();j++){

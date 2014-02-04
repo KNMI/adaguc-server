@@ -1483,11 +1483,11 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
   
   layerTableId.concat("_");layerTableId.concat(dataSource->getLayerName());
   query.print("SELECT * FROM %s where layerid=E'%s'",tableName.c_str(),layerTableId.c_str());
-  CPGSQLDB db;
+  CPGSQLDB *db = dataSource->srvParams->getDataBaseConnection();
 
-  if(db.connect(dataSource->cfg->DataBase[0]->attr.parameters.c_str())!=0){CDBError("Error Could not connect to the database");return 1; }
-  CDB::Store *store = db.queryToStore(query.c_str());
-  db.close(); 
+  if(db->connect(dataSource->cfg->DataBase[0]->attr.parameters.c_str())!=0){CDBError("Error Could not connect to the database");return 1; }
+  CDB::Store *store = db->queryToStore(query.c_str());
+
   if(store!=NULL){
     
     try{
@@ -1517,7 +1517,7 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
       }
     }catch(int e){
       delete store;
-      CDBError("DB Exception: %s\n",db.getErrorMessage(e));
+      CDBError("DB Exception: %s\n",db->getErrorMessage(e));
     }
   }
 #ifdef CDATAREADER_DEBUG     
@@ -1554,10 +1554,10 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
           //Create the database table
           CT::string tableColumns("layerid varchar (255), ncname varchar (255), ogcname varchar (255), units varchar (255)");
           int status;
-          CPGSQLDB DB;
-          status = DB.connect(dataSource->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0){CDBError("Error Could not connect to the database");throw(__LINE__);}
-          status = DB.checkTable(tableName.c_str(),tableColumns.c_str());
-          if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tableName.c_str(),tableColumns.c_str()); DB.close();throw(__LINE__);  }
+          CPGSQLDB *DB = dataSource->srvParams->getDataBaseConnection();
+          status = DB->connect(dataSource->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0){CDBError("Error Could not connect to the database");throw(__LINE__);}
+          status = DB->checkTable(tableName.c_str(),tableColumns.c_str());
+          if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tableName.c_str(),tableColumns.c_str()); throw(__LINE__);  }
           
           CDF::Variable *variable=dataSource->dataObject[0]->cdfVariable;
           //CDBDebug("OK %d",variable->dimensionlinks.size()-2);
@@ -1595,7 +1595,7 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
               
               //Store the data in the db for quick access.
               query.print("INSERT INTO %s values (E'%s',E'%s',E'%s',E'%s')",tableName.c_str(),layerTableId.c_str(),standard_name.c_str(),OGCDimName.c_str(),units.c_str());
-              status = DB.query(query.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",query.c_str());DB.close();throw(__LINE__); }
+              status = DB->query(query.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",query.c_str());throw(__LINE__); }
                       
             }else{
               CDBDebug("variable->dimensionlinks[d]");
@@ -1666,10 +1666,10 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
   if(useDBCache){
     
     query.print("SELECT * FROM %s where layerid=E'%s'",tableName.c_str(),layerTableId.c_str());
-    CPGSQLDB db;
-    if(db.connect(dataSource->cfg->DataBase[0]->attr.parameters.c_str())!=0){CDBError("Error Could not connect to the database");return 1; }
-    CDB::Store *store = db.queryToStore(query.c_str());
-    db.close(); 
+    CPGSQLDB * db = dataSource->srvParams->getDataBaseConnection();
+    if(db->connect(dataSource->cfg->DataBase[0]->attr.parameters.c_str())!=0){CDBError("Error Could not connect to the database");return 1; }
+    CDB::Store *store = db->queryToStore(query.c_str());
+
     if(store!=NULL){
       if(store->size()!=0){
         try{
@@ -1677,7 +1677,7 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
           delete store;store=NULL;
         }catch(int e){
           delete store;
-          CDBError("autoConfigureStyles: DB Exception: %s for query %s",db.getErrorMessage(e),query.c_str());
+          CDBError("autoConfigureStyles: DB Exception: %s for query %s",db->getErrorMessage(e),query.c_str());
           return 1;
         }
   #ifdef CDATAREADER_DEBUG           
@@ -1801,12 +1801,12 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
       try{
         CT::string tableColumns("layerid varchar (255), styles varchar (255)");
         int status;
-        CPGSQLDB DB;
-        status = DB.connect(dataSource->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0){CDBError("Error Could not connect to the database");throw(__LINE__);}
-        status = DB.checkTable(tableName.c_str(),tableColumns.c_str());
-        if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tableName.c_str(),tableColumns.c_str()); DB.close();throw(__LINE__);  }
+        CPGSQLDB *DB = dataSource->srvParams->getDataBaseConnection();
+        status = DB->connect(dataSource->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0){CDBError("Error Could not connect to the database");throw(__LINE__);}
+        status = DB->checkTable(tableName.c_str(),tableColumns.c_str());
+        if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tableName.c_str(),tableColumns.c_str()); throw(__LINE__);  }
         query.print("INSERT INTO %s values (E'%s',E'%s')",tableName.c_str(),layerTableId.c_str(),styles.c_str());
-        status = DB.query(query.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",query.c_str());DB.close();throw(__LINE__); }
+        status = DB->query(query.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",query.c_str());throw(__LINE__); }
       }catch(int linenr){
         CDBError("Exception at line %d",linenr);
         return 1;
