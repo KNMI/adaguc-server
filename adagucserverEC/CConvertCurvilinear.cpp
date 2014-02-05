@@ -72,6 +72,14 @@ double* CConvertCurvilinear::getBBOXFromLatLonFields( CDF::Variable *swathMiddle
   dfBBOX[1]=miny;
   dfBBOX[2]=maxx;
   dfBBOX[3]=maxy;
+  
+  if(dfBBOX[2] - dfBBOX[0]>300){
+    if((dfBBOX[0] + dfBBOX[2])/2>170&&(dfBBOX[0] + dfBBOX[2])/2<190){
+      dfBBOX[0]-=180;
+      dfBBOX[2]-=180;
+    }
+  }
+  
   return dfBBOX ;
 }
 
