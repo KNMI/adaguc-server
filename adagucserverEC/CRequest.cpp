@@ -1282,6 +1282,7 @@ int CRequest::process_all_layers(){
                   CDrawImage legendImage;
                   int legendWidth = imageDataWriter.drawImage.Geo->dWidth/10;
                   if(legendWidth<minimumLegendWidth)legendWidth=minimumLegendWidth;
+                  legendImage.enableTransparency(true);
                   legendImage.createImage(&imageDataWriter.drawImage,legendWidth,imageDataWriter.drawImage.Geo->dHeight-padding*2+2);
                   status = imageDataWriter.createLegend(dataSources[d],&legendImage);if(status != 0)throw(__LINE__);
                   int posX=imageDataWriter.drawImage.Geo->dWidth-(legendImage.Geo->dWidth+padding);

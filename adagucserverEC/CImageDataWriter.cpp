@@ -3621,7 +3621,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
   int legendPositiveUp = 1;
   //float legendWidth = legendImage->Geo->dWidth;
   float legendHeight = legendImage->Geo->dHeight;
-  if(legendHeight>200)legendHeight=200;
+  
   int pLeft=4;
   int pTop=legendImage->Geo->dHeight-legendHeight;
   char szTemp[256];
@@ -3643,7 +3643,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
       return 0;
   }
   //legendImage->enableTransparency(true);
-      //legendImage->rectangle(0,0,20,20,CColor(0,255,0,0),CColor(0,0,255,0));
+      //legendImage->rectangle(0,0,20,20,CColor(255,255,255,255),CColor(255,255,255,255));
       //legendImage->setText("RGBA",5,0,0,255,-1);  
       //legendImage->crop(40,40);
       //return 0;
@@ -3704,6 +3704,9 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
     }
   }
   
+  if(legendType==continous){
+    if(legendHeight>280)legendHeight=280;
+  }
 
   
   //Create a legend based on status flags.

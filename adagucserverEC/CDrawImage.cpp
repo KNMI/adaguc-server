@@ -1211,7 +1211,7 @@ int CDrawImage::clonePalette(CDrawImage *drawImage){
  */
 int CDrawImage::createImage(CDrawImage *image,int width,int height){
   setTrueColor(image->getTrueColor());
-  enableTransparency(_bEnableTransparency);
+  enableTransparency(image->_bEnableTransparency);
   setTTFFontLocation(image->TTFFontLocation);
   
   setTTFFontSize(image->TTFFontSize);
@@ -1233,7 +1233,7 @@ int CDrawImage::setCanvasSize(int x,int y,int width,int height){
 }
 
 int CDrawImage::draw(int destx, int desty,int sourcex,int sourcey,CDrawImage *simage){
-unsigned char r,g,b,a;
+  unsigned char r,g,b,a;
   for(int y=0;y<simage->Geo->dHeight;y++){
     for(int x=0;x<simage->Geo->dWidth;x++){
       int sx=x+sourcex;int sy=y+sourcey;int dx=x+destx;int dy=y+desty;
@@ -1242,7 +1242,10 @@ unsigned char r,g,b,a;
         if(_bEnableTrueColor){
         #ifdef ADAGUC_USE_CAIRO
         simage->cairo->getPixel(sx,sy,r,g,b,a);
+        
         cairo-> pixelBlend(dx,dy,r,g,b,a);
+        
+      //cairo-> pixelBlend(dx,dy,128,128,128,int(dy)%255);
         //cairo-> pixel(dx,dy,r,g,b,a);
         #else
         simage->wuLine->getPixel(sx,sy,r,g,b,a);
@@ -1265,6 +1268,7 @@ unsigned char r,g,b,a;
  * @param int paddingH the padding to keep in pixels in height. Set to -1 if no crop in height is desired
  */
 void CDrawImage::crop(int paddingW, int paddingH){
+  
   int x,y,w,h;
   getCanvasSize(x,y,w,h);
   int x1=x-paddingW;
