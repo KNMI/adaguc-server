@@ -115,7 +115,7 @@ CTime::Date CTime::getDate(double offset){
     int yyyymm = int(offset);
     date.year = int(yyyymm/100);
     date.month = yyyymm-(int(yyyymm/100)*100);
-    date.day = 0;
+    date.day = 1;
     date.hour = 0;
     date.minute = 0;
     date.second = 0;
