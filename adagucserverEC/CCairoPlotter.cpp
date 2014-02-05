@@ -108,14 +108,27 @@ void CCairoPlotter::pixelBlend(int x,int y, unsigned char newR,unsigned char new
   if(x>=width||y>=height)return;
   size_t p=x*4+y*stride;
   if(newA!=255){
-    //unsigned char oldB = ARGBByteBuffer[p];
-    //unsigned char oldG = ARGBByteBuffer[p+1];
-    //unsigned char oldR = ARGBByteBuffer[p+2];
-    //unsigned char oldA = ARGBByteBuffer[p+3];
-    ARGBByteBuffer[p]=newB;
-    ARGBByteBuffer[p+1]=newG;
-    ARGBByteBuffer[p+2]=newR;
-    ARGBByteBuffer[p+3]=newA;
+    float oldB = float(ARGBByteBuffer[p]);
+    float oldG = float(ARGBByteBuffer[p+1]);
+    float oldR = float(ARGBByteBuffer[p+2]);
+    float oldA = float(ARGBByteBuffer[p+3]);
+    
+    //float alpha = float(newA)/255.;
+  
+    //float nalpha = 1-alpha;
+    
+    
+    float alphaRatio=(1-oldA/255);
+    float tf=oldA+float(newA)*alphaRatio;if(tf>255)tf=255;  
+    float a1=1-(float(newA)/255);//*alpha;
+    if(oldA==0.0f)a1=0;
+    float a2=1-a1;//1-alphaRatio;
+    
+    ARGBByteBuffer[p]  =float(newB)*a2+oldB*a1;
+    ARGBByteBuffer[p+1]=float(newG)*a2+oldG*a1;
+    ARGBByteBuffer[p+2]=float(newR)*a2+oldR*a1;
+    ARGBByteBuffer[p+3]=tf;//float(newA)*alpha+oldA*nalpha;
+    //pixel(x,y,ARGBByteBuffer[p+2], ARGBByteBuffer[p+1], ARGBByteBuffer[p], ARGBByteBuffer[p+3]);
   }else{
   
   
