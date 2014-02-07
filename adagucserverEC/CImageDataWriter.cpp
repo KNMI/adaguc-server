@@ -667,7 +667,7 @@ CT::PointerList<CT::string*> *CImageDataWriter::getRenderMethodListForDataSource
       if(dataSource->dataObject[0]->cdfObject!=NULL){
         
         try{
-          if(dataSource->dataObject[0]->cdfObject->getAttribute("featureType")->toString().equals("timeSeries")){
+          if(dataSource->dataObject[0]->cdfObject->getAttribute("featureType")->toString().equals("timeSeries")||dataSource->dataObject[0]->cdfObject->getAttribute("featureType")->toString().equals("point")){
             renderMethods->insert(renderMethods->begin(),1,new CT::string("pointnearest"));
           }
         }catch(int e){
@@ -1500,30 +1500,30 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
           
           
           PointDVWithLatLon point = dataSource->dataObject[o]->points[closestIndex];
-          
-          GetFeatureInfoResult::Element *pointID=new GetFeatureInfoResult::Element();
-          pointID->dataSource= dataSource;
-          pointID->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
-          for(size_t j=0;j<dataSources[d]->requiredDims.size();j++){
-            value=cdfDims->getDimensionValue(j);
-            name=cdfDims->getDimensionName(j);
-            if(name.indexOf("time")==0){
-              value=pointID->time.c_str();
+          for(size_t p=0;p<point.paramList.size();p++){
+            GetFeatureInfoResult::Element *pointID=new GetFeatureInfoResult::Element();
+            pointID->dataSource= dataSource;
+            pointID->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
+            for(size_t j=0;j<dataSources[d]->requiredDims.size();j++){
+              value=cdfDims->getDimensionValue(j);
+              name=cdfDims->getDimensionName(j);
+              if(name.indexOf("time")==0){
+                value=pointID->time.c_str();
+              }
+              pointID->cdfDims.addDimension(name.c_str(),value.c_str(),cdfDims->getDimensionIndex(j));
             }
-            pointID->cdfDims.addDimension(name.c_str(),value.c_str(),cdfDims->getDimensionIndex(j));
+            getFeatureInfoResult->elements.push_back(pointID);
+            pointID->long_name=point.paramList[p].description;
+            pointID->var_name=point.paramList[p].key;
+            pointID->standard_name=point.paramList[p].key;
+            pointID->feature_name=point.paramList[p].key;
+            pointID->value=point.paramList[p].value;
+            pointID->units="";
+            
+            /*char szTemp[1024];
+            floatToString(szTemp,1023,point.v);
+            element->value=szTemp;*/
           }
-          getFeatureInfoResult->elements.push_back(pointID);
-          pointID->long_name="Station ID";
-          pointID->var_name="stationid";
-          pointID->standard_name="stationid";
-          pointID->feature_name="stationid";
-          pointID->value.print("%s",point.id.c_str());
-          pointID->units="";
-          
-          char szTemp[1024];
-          floatToString(szTemp,1023,point.v);
-          element->value=szTemp;
-          
           
             
         }
@@ -2581,7 +2581,7 @@ int CImageDataWriter::end(){
             }
             
             
-            //CDBDebug(" %d elements.size() %d value '%s'",j,g->elements.size(),e->value.c_str());
+            CDBDebug(" %d elements.size() %d value '%s'",j,g->elements.size(),e->value.c_str());
             
             if(resultFormat==texthtml){
               resultHTML.printconcat("<tr>");
@@ -2593,9 +2593,9 @@ int CImageDataWriter::end(){
             }
             if(g->elements.size()>1){
               if(resultFormat==texthtml){
-                resultHTML.printconcat("<td>%d)</td>",elNR);
+                resultHTML.printconcat("<td>-</td>");
               }else{
-                resultHTML.printconcat("%d) ",elNR);
+                resultHTML.printconcat("- ");
               }
             }
             if(e->value.length()>0){
@@ -2620,8 +2620,9 @@ int CImageDataWriter::end(){
             resultHTML.printconcat("</table>");
           }
         }
-
+        
       }
+ 
       
       if(resultFormat==texthtml)resultHTML.printconcat("</html>\n");else resultHTML.printconcat("\n");
       resetErrors();
@@ -2629,7 +2630,7 @@ int CImageDataWriter::end(){
       
       printf("%s",resultHTML.c_str());
     }
-    
+ 
     /* Text XML */
     if(resultFormat==applicationvndogcgml){
       CDBDebug("CREATING GML");

@@ -43,7 +43,7 @@
 #define CDB_QUERYFAILED                 6
 class CDB{
 public:
-  const char *getErrorMessage(int e){
+  static const char *getErrorMessage(int e){
     if(e==CDB_UNKNOWN_ERROR)return "CDB_UNKNOWN_ERROR";
     if(e==CDB_UNKNOWN_COLUMNNAME)return "CDB_UNKNOWN_COLUMNNAME";
     if(e==CDB_INDEX_OUT_OF_BOUNDS)return "CDB_INDEX_OUT_OF_BOUNDS";

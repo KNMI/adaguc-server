@@ -390,6 +390,10 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y){
   while(dimX->length/dataSource->stride2DMap>5000){
     dataSource->stride2DMap++;
   }
+  
+  
+  dataSource->stride2DMap=1;
+  
   if(dataSource->stride2DMap != 1){
     CDBDebug("dataSource->stride2DMap == %d",dataSource->stride2DMap);
   }
@@ -429,6 +433,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y){
       
     size_t sta[1],sto[1];ptrdiff_t str[1];
     sta[0]=start[dataSource->dimXIndex];str[0]=dataSource->stride2DMap; sto[0]=dataSource->dWidth;
+    
     if(singleCellMode){sta[0]=0;str[0]=1;sto[0]=2;}
     //CDBDebug("[%d %d %d] for %s/%s",sta[0],str[0],sto[0],dataSourceVar->name.c_str(),dataSource->varX->name.c_str());
     status = dataSource->varX->readData(CDF_DOUBLE,sta,sto,str);
@@ -436,11 +441,13 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y){
       CDBError("Unable to read x dimension with name %s for variable %s",dataSource->varX->name.c_str(),dataSourceVar->name.c_str());
       return 1;
     }
-    sta[0]=start[dataSource->dimYIndex];sto[0]=dataSource->dHeight;
+    
+    sta[0]=start[dataSource->dimYIndex];str[0]=dataSource->stride2DMap; sto[0]=dataSource->dHeight;
     if(singleCellMode){
       sta[0]=0;str[0]=1;sto[0]=2;
       
     }
+    
     status = dataSource->varY->readData(CDF_DOUBLE,sta,sto,str);if(status!=0){
       CDBError("Unable to read y dimension for variable %s",dataSourceVar->name.c_str());
       for(size_t j=0;j<dataSource->varY->dimensionlinks.size();j++){
@@ -1028,12 +1035,12 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
         StopWatch_Stop("start reading data");
         #endif
         
-        #ifdef CDATAREADER_DEBUG   
+        //#ifdef CDATAREADER_DEBUG   
         CDBDebug("--- varNR [%d], name=\"%s\"",varNr,var[varNr]->name.c_str());
         for(size_t d=0;d<var[varNr]->dimensionlinks.size();d++){
           CDBDebug("%s  \tstart: %d\tcount %d\tstride %d",var[varNr]->dimensionlinks[d]->name.c_str(),start[d],count[d],stride[d]);
         }
-        #endif 
+        //#endif 
          
         if(var[varNr]->readData(var[varNr]->getType(),start,count,stride)!=0){
           CDBError("Unable to read data for variable %s in file %s",var[varNr]->name.c_str(),dataSource->getFileName());

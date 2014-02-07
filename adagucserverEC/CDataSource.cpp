@@ -341,19 +341,20 @@ int  CDataSource::checkDimTables(CPGSQLDB *dataBaseConnection){
     if(tableNotFound == false){
       if(srvParams->isAutoLocalFileResourceEnabled()==true){
         try{
-        CT::string databaseTime = store->getRecord(0)->get(1);if(databaseTime.length()<20){databaseTime.concat("Z");}databaseTime.setChar(10,'T');
-        
-        CT::string fileDate = srvParams->getFileDate(store->getRecord(0)->get(0)->c_str());
-        
-        
-        
-        if(databaseTime.equals(fileDate)==false){
-          CDBDebug("Table was found, %s ~ %s : %d",fileDate.c_str(),databaseTime.c_str(),databaseTime.equals(fileDate));
-          tableNotFound = true;
-        }
-        
+          CT::string databaseTime = store->getRecord(0)->get(1);if(databaseTime.length()<20){databaseTime.concat("Z");}databaseTime.setChar(10,'T');
+          
+          CT::string fileDate = srvParams->getFileDate(store->getRecord(0)->get(0)->c_str());
+          
+          
+          
+          if(databaseTime.equals(fileDate)==false){
+            //CDBDebug("Table was found, %s ~ %s : %d",fileDate.c_str(),databaseTime.c_str(),databaseTime.equals(fileDate));
+            tableNotFound = true;
+          }
+          
         }catch(int e){
-          CDBError("Unable to get filedate from database");
+          CDBDebug("Unable to get filedate from database, error: %s",CDB::getErrorMessage(e));
+          tableNotFound = true;
         }
         
           
@@ -368,6 +369,23 @@ int  CDataSource::checkDimTables(CPGSQLDB *dataBaseConnection){
   
   if(tableNotFound){
     if(srvParams->isAutoLocalFileResourceEnabled()==true){
+      for(size_t i=0;i<cfgLayer->Dimension.size();i++){
+        dimName=cfgLayer->Dimension[i]->attr.name.c_str();
+      
+        CT::string tableName;
+        try{
+          tableName = srvParams->lookupTableName(cfgLayer->FilePath[0]->value.c_str(),cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
+        }catch(int e){
+          CDBError("Unable to create tableName from '%s' '%s' '%s'",cfgLayer->FilePath[0]->value.c_str(),cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
+          return 1;
+        }
+       
+        CDBDebug("Dropping old table (if exists)",tableName.c_str());
+        CT::string query = CT::string("drop table ")+tableName;
+        CDBDebug("%s",query.c_str());
+        dataBaseConnection->query(query.c_str());
+      }
+      
       CDBDebug("Updating database");
       int status = CDBFileScanner::updatedb(srvParams->cfg->DataBase[0]->attr.parameters.c_str(),this,NULL,NULL);
       if(status !=0){CDBError("Could not update db for: %s",cfgLayer->Name[0]->value.c_str());return 2;}
