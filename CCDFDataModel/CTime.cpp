@@ -208,7 +208,13 @@ CT::string CTime::dateToString(Date date){
 
 CT::string CTime::dateToISOString(Date date){
   CT::string s;
-  s.print("%04d-%02d-%02dT%02d:%02d:%09f",date.year,date.month,date.day,date.hour,date.minute,date.second);
+  int seconds = int(date.second);
+  int milliseconds = int((date.second-seconds)*1000)  ;
+  if(milliseconds!=0){
+    s.print("%04d-%02d-%02dT%02d:%02d:%02d.%03dZ",date.year,date.month,date.day,date.hour,date.minute,seconds,milliseconds);
+  }else{
+    s.print("%04d-%02d-%02dT%02d:%02d:%02dZ",date.year,date.month,date.day,date.hour,date.minute,seconds);
+  }
   return s;
 }
 

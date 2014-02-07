@@ -26,6 +26,28 @@
 #ifndef CGeoParams_H
 #define CGeoParams_H
 #include "CTypes.h"
+#include <math.h>
+//static float  NegativeNaN = log(-1) ;
+
+class CKeyValue{
+  public:
+    CT::string key;
+    CT::string description;
+    CT::string value;
+    
+    CKeyValue(const CT::string &key,const CT::string &desrciption,const CT::string &value){
+      this->key=key;
+      this->description=description;
+      this->value=value;
+    }
+    CKeyValue(const char *key,const char * description,const char *value){
+      this->key=key;
+      this->description=description;
+      this->value=value;
+    }
+};
+
+
 class CGeoParams{
   public:
     int dWidth,dHeight;
@@ -105,15 +127,6 @@ public:
  */
 class PointDVWithLatLon{
 public:
-  PointDVWithLatLon(int &x,int &y,double &lon,double &lat,float &v,const char *id){
-    this->x=x;
-    this->y=y;
-    this->v=v;
-    this->lon=lon;
-    this->lat=lat;
-    this->id=id;
-    rotation=0;
-  }
   PointDVWithLatLon(int &x,int &y,double &lon,double &lat,float &v){
     this->x=x;
     this->y=y;
@@ -122,7 +135,7 @@ public:
     this->lat=lat;
     rotation=0;
   }
-    PointDVWithLatLon(int &x,int &y,double &lon,double &lat,float &v,double &rotation){
+  PointDVWithLatLon(int &x,int &y,double &lon,double &lat,float &v,double &rotation){
     this->x=x;
     this->y=y;
     this->v=v;
@@ -132,7 +145,9 @@ public:
   }
   int x,y;
   float v,lon,lat,rotation;
-  CT::string id;
+  
+  std::vector<CKeyValue> paramList;
+  
 };    
 
 void CoordinatesXYtoScreenXY(double &x,double &y,CGeoParams *geoParam);

@@ -133,7 +133,7 @@ MinMax getMinMax(CDF::Variable *var){
 int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
   //Check whether this is really an adaguc file
   try{
-    if(cdfObject->getAttribute("featureType")->toString().equals("timeSeries")==false)return 1;
+    if(cdfObject->getAttribute("featureType")->toString().equals("timeSeries")==false&&cdfObject->getAttribute("featureType")->toString().equals("point")==false)return 1;
   }catch(int e){
     return 1;
   }
@@ -185,10 +185,10 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
   CDF::Dimension *dimY = cdfObject->getDimensionNE("y");
   CDF::Dimension *dimT = cdfObject->getDimensionNE("time");
   
-  if(dimT==NULL){
-    CDBError("No time dimension found");
-    return 1;
-  }
+//   if(dimT==NULL){
+//     CDBError("No time dimension found");
+//     return 1;
+//   }
   
   CDF::Variable *varX = cdfObject->getVariableNE("x");
   CDF::Variable *varY = cdfObject->getVariableNE("y");
@@ -240,22 +240,25 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
   for(size_t v=0;v<cdfObject->variables.size();v++){
     CDF::Variable *var = cdfObject->variables[v];
     if(var->isDimension==false){
-      if(!var->name.equals("time2D")&&
-        !var->name.equals("time")&&
-        !var->name.equals("lon")&&
-        !var->name.equals("lat")&&
-        !var->name.equals("lat_bnds")&&
-        !var->name.equals("lon_bnds")&&
-        !var->name.equals("custom")&&
-        !var->name.equals("projection")&&
-        !var->name.equals("product")&&
-        !var->name.equals("iso_dataset")&&
-        !var->name.equals("tile_properties")
-      ){
-        varsToConvert.add(CT::string(var->name.c_str()));
-      }
-      if(var->name.equals("projection")){
-        var->setAttributeText("ADAGUC_SKIP","true");
+      //if(var->getType()!=CDF_STRING)
+      {
+        if(!var->name.equals("time2D")&&
+          !var->name.equals("time")&&
+          !var->name.equals("lon")&&
+          !var->name.equals("lat")&&
+          !var->name.equals("lat_bnds")&&
+          !var->name.equals("lon_bnds")&&
+          !var->name.equals("custom")&&
+          !var->name.equals("projection")&&
+          !var->name.equals("product")&&
+          !var->name.equals("iso_dataset")&&
+          !var->name.equals("tile_properties")
+        ){
+          varsToConvert.add(CT::string(var->name.c_str()));
+        }
+        if(var->name.equals("projection")){
+          var->setAttributeText("ADAGUC_SKIP","true");
+        }
       }
     }
   }
@@ -270,13 +273,19 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
     
     CDF::Variable *new2DVar = new CDF::Variable();
     cdfObject->addVariable(new2DVar);
+   
     
     //Assign X,Y,T dims 
-    new2DVar->dimensionlinks.push_back(dimT);
+    if(dimT!=NULL)new2DVar->dimensionlinks.push_back(dimT);
     new2DVar->dimensionlinks.push_back(dimY);
     new2DVar->dimensionlinks.push_back(dimX);
     
-    new2DVar->setType(pointVar->getType());
+    //new2DVar->setType(pointVar->getType());
+    
+    
+    new2DVar->setType(CDF_FLOAT);
+    
+    
     new2DVar->name=pointVar->name.c_str();
     pointVar->name.concat("_backup");
     
@@ -303,10 +312,12 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
     }
     new2DVar->setAttributeText("ADAGUC_POINT","true");
     
-    if(new2DVar->getAttributeNE("_FillValue")==NULL){
-      float f=-9999999;
-      new2DVar->setAttribute("_FillValue",CDF_FLOAT,&f,1);
-    }
+    //if(new2DVar->getType()!=CDF_STRING){
+      if(new2DVar->getAttributeNE("_FillValue")==NULL){
+        float f=-9999999;
+        new2DVar->setAttribute("_FillValue",CDF_FLOAT,&f,1);
+      }
+    //}
     
 
     
@@ -317,7 +328,7 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
     new2DVar->removeAttribute("scale_factor");
     new2DVar->removeAttribute("add_offset");
     
-    new2DVar->setType(CDF_FLOAT);
+   
   }
   
   #ifdef MEASURETIME
@@ -342,7 +353,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
 
   CDFObject *cdfObject0 = dataSource->dataObject[0]->cdfObject;
   try{
-    if(cdfObject0->getAttribute("featureType")->toString().equals("timeSeries")==false)return 1;
+    if(cdfObject0->getAttribute("featureType")->toString().equals("timeSeries")==false&&cdfObject0->getAttribute("featureType")->toString().equals("point")==false)return 1;
   }catch(int e){
     return 1;
   }
@@ -421,7 +432,11 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
     CDBDebug("Reading %s with time index %d ",pointVar[d]->name.c_str(),dateDimIndex);
     #endif
     pointVar[d]->freeData();
-    pointVar[d]->readData(CDF_FLOAT,start,count,stride,true);
+    if(pointVar[d]->nativeType!=CDF_STRING){
+      pointVar[d]->readData(CDF_FLOAT,start,count,stride,true);
+    }else{
+      pointVar[d]->readData(CDF_STRING,start,count,stride,true);
+    }
     //pointVar[d]->readData(CDF_FLOAT,true);
   }
   
@@ -570,7 +585,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
       new2DVar[d]->setSize(fieldSize);
       CDF::allocateData(new2DVar[d]->getType(),&(new2DVar[d]->data),fieldSize);
       
-      //Fill in nodata
+    //Fill in nodata
       if(dataSource->dataObject[d]->hasNodataValue){
         for(size_t j=0;j<fieldSize;j++){
           ((float*)dataSource->dataObject[d]->cdfVariable->data)[j]=(float)dataSource->dataObject[d]->dfNodataValue;
@@ -637,8 +652,33 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
     
     //Read ID's
     CDF::Variable *pointID = cdfObject0->getVariableNE("station");
+    if(pointID == NULL){
+       pointID = cdfObject0->getVariableNE("location_backup");
+    }
     if(pointID!=NULL){
       pointID->readData(CDF_STRING);
+    }
+    
+    //Read dates for obs
+    bool hasTimeValuePerObs = false;
+    CTime obsTime;
+    double *obsTimeData = NULL;
+    CDF::Variable * timeVarPerObs =  cdfObject0->getVariableNE("time");
+      if(timeVarPerObs!= NULL){
+      if(timeVarPerObs->isDimension == false){
+        if(timeVarPerObs->dimensionlinks[0]->getSize(),pointVar[0]->dimensionlinks[0]->getSize()){
+          CDF::Attribute* timeStringAttr = timeVarPerObs->getAttributeNE("units");
+          if(timeStringAttr !=NULL){
+              if(timeStringAttr -> data != NULL){
+              if(obsTime.init((const char*)timeStringAttr ->data)==0){
+                hasTimeValuePerObs = true;
+                timeVarPerObs->readData(CDF_DOUBLE,start,count,stride,true);
+                obsTimeData = (double*)timeVarPerObs->data;
+              }
+            }
+          }
+        }
+      }
     }
     
     
@@ -658,24 +698,61 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
       if(projectionRequired)imageWarper.reprojfromLatLon(projectedX,projectedY);
       int dlon=int((projectedX-offsetX)/cellSizeX);
       int dlat=int((projectedY-offsetY)/cellSizeY);
-      
+      if(dlon>=0&&dlat>=0&&dlon<dataSource->dWidth&&dlat<dataSource->dHeight){
       for(size_t d=0;d<nrDataObjects;d++){
-        float val = ((float*)pointVar[d]->data)[pPoint];
         float *sdata = ((float*)dataSource->dataObject[d]->cdfVariable->data);
-        if(val!=fill){
-          const char *id="";
-          if(pointID!=NULL){
-            id=((const char**)pointID->data)[pGeo];
+        
+        if(pointVar[d]->currentType==CDF_STRING){
+          float v = NAN;
+          //CDBDebug("pushing stationNr %d dateDimIndex %d,pPoint DIM %d",stationNr,dateDimIndex,pPoint);
+          dataSource->dataObject[d]->points.push_back(PointDVWithLatLon(dlon,dlat,lon,lat,v));//,((const char**)pointVar[d]->data)[pPoint]));
+          const char * key = pointVar[d]->name.c_str();
+          const char * description = key;
+          try{
+            description = (const char*)pointVar[d]->getAttribute("long_name")->data;
+            
+          }catch(int e){
           }
-         
+          dataSource->dataObject[d]->points.back().paramList.push_back(CKeyValue(key,description ,((const char**)pointVar[d]->data)[pPoint]));
+          float a = 0;
+          drawCircle(sdata,a,dataSource->dWidth,dataSource->dHeight,dlon-1,dlat,8);
+        }
+        if(pointVar[d]->currentType==CDF_FLOAT){
+          float val  = ((float*)pointVar[d]->data)[pPoint];
+        
           
-          //CDBDebug("P %d %d %f",dlon,dlat,val);
-          if(dlon>=0&&dlat>=0&&dlon<dataSource->dWidth&&dlat<dataSource->dHeight){
-          
-            dataSource->dataObject[d]->points.push_back(PointDVWithLatLon(dlon,dlat,lon,lat,val,id));
-          }        
-          
-          drawCircle(sdata,val,dataSource->dWidth,dataSource->dHeight,dlon-1,dlat,8);
+          if(val!=fill){
+           
+            
+            //CDBDebug("P %d %d %f",dlon,dlat,val);
+            
+              dataSource->dataObject[d]->points.push_back(PointDVWithLatLon(dlon,dlat,lon,lat,val));//,id));
+              if(pointID!=NULL){
+              
+                const char * key = pointID->name.c_str();
+                const char * description = key;
+                try{
+                  description = (const char*)pointID->getAttribute("long_name")->data;
+                }catch(int e){
+                }
+                dataSource->dataObject[d]->points.back().paramList.push_back(CKeyValue(key,description ,((const char**)pointID->data)[pGeo]));
+              }
+              drawCircle(sdata,val,dataSource->dWidth,dataSource->dHeight,dlon-1,dlat,8);
+            }        
+            
+            
+          }
+          if(hasTimeValuePerObs){
+            const char * key = timeVarPerObs->name.c_str();
+            const char * description = key;
+            try{
+              description = (const char*)timeVarPerObs->getAttribute("long_name")->data;
+            }catch(int e){
+            }
+            //obsTimeData
+            
+            dataSource->dataObject[d]->points.back().paramList.push_back(CKeyValue(key,description ,obsTime.dateToISOString(obsTime.getDate(obsTimeData[pPoint])).c_str()));
+          }
         }
       }
     }
