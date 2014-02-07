@@ -1035,12 +1035,12 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
         StopWatch_Stop("start reading data");
         #endif
         
-        //#ifdef CDATAREADER_DEBUG   
+        #ifdef CDATAREADER_DEBUG   
         CDBDebug("--- varNR [%d], name=\"%s\"",varNr,var[varNr]->name.c_str());
         for(size_t d=0;d<var[varNr]->dimensionlinks.size();d++){
           CDBDebug("%s  \tstart: %d\tcount %d\tstride %d",var[varNr]->dimensionlinks[d]->name.c_str(),start[d],count[d],stride[d]);
         }
-        //#endif 
+        #endif 
          
         if(var[varNr]->readData(var[varNr]->getType(),start,count,stride)!=0){
           CDBError("Unable to read data for variable %s in file %s",var[varNr]->name.c_str(),dataSource->getFileName());

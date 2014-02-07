@@ -2581,7 +2581,7 @@ int CImageDataWriter::end(){
             }
             
             
-            CDBDebug(" %d elements.size() %d value '%s'",j,g->elements.size(),e->value.c_str());
+            //CDBDebug(" %d elements.size() %d value '%s'",j,g->elements.size(),e->value.c_str());
             
             if(resultFormat==texthtml){
               resultHTML.printconcat("<tr>");
