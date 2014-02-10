@@ -124,10 +124,10 @@ void CCairoPlotter::pixelBlend(int x,int y, unsigned char newR,unsigned char new
     if(oldA==0.0f)a1=0;
     float a2=1-a1;//1-alphaRatio;
     
-    ARGBByteBuffer[p]  =float(newB)*a2+oldB*a1;
-    ARGBByteBuffer[p+1]=float(newG)*a2+oldG*a1;
-    ARGBByteBuffer[p+2]=float(newR)*a2+oldR*a1;
-    ARGBByteBuffer[p+3]=tf;//float(newA)*alpha+oldA*nalpha;
+    ARGBByteBuffer[p]  =(unsigned char)(float(newB)*a2+oldB*a1);
+    ARGBByteBuffer[p+1]=(unsigned char)(float(newG)*a2+oldG*a1);
+    ARGBByteBuffer[p+2]=(unsigned char)(float(newR)*a2+oldR*a1);
+    ARGBByteBuffer[p+3]=(unsigned char)tf;//float(newA)*alpha+oldA*nalpha;
     //pixel(x,y,ARGBByteBuffer[p+2], ARGBByteBuffer[p+1], ARGBByteBuffer[p], ARGBByteBuffer[p+3]);
   }else{
   

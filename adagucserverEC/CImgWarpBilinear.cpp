@@ -1250,7 +1250,7 @@ void traverseLine(CDrawImage * drawImage,DISTANCEFIELDTYPE *distance,float *valu
             //Check for intervals
             float v = valueField[p];
             float closestValue;
-            float definedIntervalIndex = 0;
+            int definedIntervalIndex = 0;
             for(size_t j=0;j<contourDefinition->definedIntervals.size();j++){
               float c =contourDefinition->definedIntervals[j];
               float d= fabs(v-c);
@@ -1583,4 +1583,3 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
   #endif
        
 }
- 

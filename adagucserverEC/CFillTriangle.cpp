@@ -99,8 +99,8 @@ void fillTriangleGouraud(float *data, float *values, int W,int H, int *xP,int *y
     disc ey = (Y2>=H)?H-1:Y2<0?0:Y2;
     
     for(disc y=sy;y<ey;y++){
-      disc xL = rcl*float(y-Y1)+X1;
-      disc xA = rca*float(y-Y1)+X1;
+      disc xL = (disc)(rcl*float(y-Y1)+X1);
+      disc xA = (disc)(rca*float(y-Y1)+X1);
       float vL = rcvl*float(y-Y1)+V1;
       float vA = rcva*float(y-Y1)+V1;
       disc x1,x2;
@@ -123,8 +123,8 @@ void fillTriangleGouraud(float *data, float *values, int W,int H, int *xP,int *y
     disc sy = (Y2>=H)?H-1:Y2<0?0:Y2;
     disc ey = (Y3>=H)?H-1:Y3<0?0:Y3;
     for(disc y=sy;y<ey;y++){
-      disc xL = rcl*float(y-Y1)+X1;
-      disc xB = rcb*float(y-Y2)+X2;
+      disc xL = (disc)(rcl*float(y-Y1)+X1);
+      disc xB = (disc)(rcb*float(y-Y2)+X2);
       float vL = rcvl*float(y-Y1)+V1;
       float vB = rcvb*float(y-Y2)+V2;
       disc x1,x2;

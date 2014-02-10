@@ -64,7 +64,7 @@ void floatToString(char * string,size_t maxlen,float number){
 
 void floatToString(char * string,size_t maxlen,float min, float max,float number){
   float range = fabs(max-min);
-  int digits=log10(range)+1;
+  int digits=(int)log10(range)+1;
   floatToString(string,maxlen,digits,number);
 }
 
