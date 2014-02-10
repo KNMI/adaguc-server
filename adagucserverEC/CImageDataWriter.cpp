@@ -3624,7 +3624,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
   float legendHeight = legendImage->Geo->dHeight;
   
   int pLeft=4;
-  int pTop=legendImage->Geo->dHeight-legendHeight;
+  int pTop=(int)(legendImage->Geo->dHeight-legendHeight);
   char szTemp[256];
   
   if(dataSource->dLayerType==CConfigReaderLayerTypeCascaded){

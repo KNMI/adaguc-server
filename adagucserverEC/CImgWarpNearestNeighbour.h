@@ -400,12 +400,12 @@ public:
                         val=(T)(log10(val)/legendLogAsLog);
                       }else val=(T)(-legendOffset);
                     }
-                    val=(T)(val*legendScale+legendOffset);
+                    int pcolorind=(int)(val*legendScale+legendOffset);
                     //val+=legendOffset;
-                    if(val>=239)val=239;else if(val<=0)val=0;
+                    if(pcolorind>=239)pcolorind=239;else if(pcolorind<=0)pcolorind=0;
                     
                     //drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,drawImage->colors[(unsigned char)val]);
-                    drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,(int)val);
+                    drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,pcolorind);
                   }
                 }
               }
