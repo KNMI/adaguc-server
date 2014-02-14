@@ -324,7 +324,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *s
    
   if(!level2CompatMode)if(CConvertADAGUCPoint::convertADAGUCPointHeader(cdfObject)==0){level2CompatMode=true;};
    
-  if(!level2CompatMode)if(CConvertCurvilinear::convertCurvilinearHeader(cdfObject)==0){level2CompatMode=true;};
+  if(!level2CompatMode)if(CConvertCurvilinear::convertCurvilinearHeader(cdfObject,srvParams)==0){level2CompatMode=true;};
     
   
   return cdfObject;

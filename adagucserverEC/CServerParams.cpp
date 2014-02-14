@@ -284,7 +284,7 @@ CT::string CServerParams::lookupTableName(const char *path,const char *filter, c
       tableName.copy(randomTableString.c_str());
       tableName.toLowerCaseSelf();
       mvRecordQuery.print("INSERT INTO %s values (E'%s',E'%s',E'%s',E'%s')",lookupTableName.c_str(),pathString.c_str(),filterString.c_str(),dimString.c_str(),tableName.c_str());
-      CDBDebug("%s",mvRecordQuery.c_str());
+      //CDBDebug("%s",mvRecordQuery.c_str());
       status = DB->query(mvRecordQuery.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",mvRecordQuery.c_str());throw(1);  }
     }
     //Close the database

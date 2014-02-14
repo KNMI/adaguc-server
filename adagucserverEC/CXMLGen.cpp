@@ -81,7 +81,7 @@ CDBDebug("getFileNameForLayer");
         #endif   
         //If not, just return the filename
         CDirReader dirReader;
-        CDBFileScanner::searchFileNames(&dirReader,myWMSLayer->dataSource->cfgLayer->FilePath[0]->value.c_str(),myWMSLayer->dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),NULL);
+        CDBFileScanner::searchFileNames(&dirReader,myWMSLayer->dataSource->cfgLayer->FilePath[0]->value.c_str(),myWMSLayer->dataSource->cfgLayer->FilePath[0]->attr.filter,NULL);
         if(dirReader.fileList.size()==1){
           myWMSLayer->fileName.copy(dirReader.fileList[0]->fullName.c_str());
         }else{

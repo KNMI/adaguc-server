@@ -199,7 +199,7 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
 #ifdef CGDALDATAWRITER_DEBUG  
   char dataTypeName[256];
   CDF::getCDFDataTypeName(dataTypeName,255,dataSource->dataObject[0]->cdfVariable->getType());
-  CDBDebug("Dataset datatype = %s sizeof(short)=%d",dataTypeName,sizeof(short));
+  CDBDebug("Dataset datatype = %s WH = [%d,%d], NrOfBands = [%d]",dataTypeName,dataSource->dWidth,dataSource->dHeight,NrOfBands);
 #endif  
   
   
@@ -238,6 +238,8 @@ int  CGDALDataWriter::addData(std::vector <CDataSource*>&dataSources){
   int status;
   CDataSource *dataSource = dataSources[0];
   status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
+ 
+  
   if(status!=0){
     CDBError("Could not open file: %s",dataSource->getFileName());
     return 1;
@@ -252,7 +254,8 @@ int  CGDALDataWriter::addData(std::vector <CDataSource*>&dataSources){
   }
   
 #ifdef CGDALDATAWRITER_DEBUG  
-  CDBDebug("copying data in addData");
+  CDBDebug("copying data in addData, WH= [%d,%d] type = %s", dataSource->dWidth, dataSource->dHeight, CDF::getCDFDataTypeName(dataSource->dataObject[0]->cdfVariable->getType()).c_str());
+
 #endif
   
   GDALRasterIO( hSrcBand, GF_Write, 0, 0,
