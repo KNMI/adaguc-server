@@ -945,7 +945,9 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
       //writeLogFile3(query.c_str());
       //writeLogFile3("\n");
     //values_path = DB.query_select(query.c_str(),0);
+    #ifdef CREQUEST_DEBUG
     CDBDebug("%s",query.c_str());
+    #endif
     CDB::Store *store = NULL;
     try{
       store = DB->queryToStore(query.c_str(),true);
@@ -1137,7 +1139,19 @@ int CRequest::process_all_layers(){
         //This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.        
         CDataSource::TimeStep * timeStep = new CDataSource::TimeStep();
         dataSources[j]->timeSteps.push_back(timeStep);
-        timeStep->fileName.copy(dataSources[j]->cfgLayer->FilePath[0]->value.c_str());
+        
+
+        CDirReader dirReader;
+        if(CDBFileScanner::searchFileNames(&dirReader,dataSources[j]->cfgLayer->FilePath[0]->value.c_str(),dataSources[j]->cfgLayer->FilePath[0]->attr.filter,NULL)!=0){
+          CDBError("Could not find any filename");
+          return 1; 
+        }
+        
+        if(dirReader.fileList.size()==0){
+          CDBError("dirReader.fileList.size()==0");return 1;
+        }
+        
+        timeStep->fileName.copy( dirReader.fileList[0]->fullName.c_str());
         //timeStep->timeString.copy("0");
         timeStep->dims.addDimension("time","0",0);
       }
@@ -1454,7 +1468,10 @@ int CRequest::process_querystring(){
   //CDBDebug("QueryString: \"%s\"",queryString.c_str());
   CT::string * parameters=queryString.splitToArray("&");
   CT::string value0Cap;
+  
+  #ifdef CREQUEST_DEBUG
   CDBDebug("Parsing query string parameters");
+  #endif
   for(size_t j=0;j<parameters->count;j++){
     CT::string values[2];
    
@@ -1589,14 +1606,14 @@ int CRequest::process_querystring(){
       if(value0Cap.equals("SRS")){
         if(parameters[j].length()>5){
           srvParam->Geo->CRS.copy(parameters[j].c_str()+4);
-          srvParam->Geo->CRS.decodeURLSelf();
+          //srvParam->Geo->CRS.decodeURLSelf();
           dFound_SRS=1;
         }
       }
       if(value0Cap.equals("CRS")){
         if(parameters[j].length()>5){
           srvParam->Geo->CRS.copy(parameters[j].c_str()+4);
-          srvParam->Geo->CRS.decodeURLSelf();
+          //srvParam->Geo->CRS.decodeURLSelf();
           dFound_CRS=1;
         }
       }
@@ -1862,7 +1879,19 @@ int CRequest::process_querystring(){
   }
   delete[] parameters;
 
-  CDBDebug("Finished parsing query string parameters");
+  if(dFound_Width == 0 && dFound_Height == 0){
+    if(dFound_BBOX && dFound_RESX && dFound_RESY){
+      srvParam->Geo->dWidth=int(((srvParam->Geo->dfBBOX[2]-srvParam->Geo->dfBBOX[0])/srvParam->dfResX));
+      srvParam->Geo->dHeight=int(((srvParam->Geo->dfBBOX[1]-srvParam->Geo->dfBBOX[3])/srvParam->dfResY));
+      srvParam->Geo->dHeight=abs(srvParam->Geo->dHeight);
+      #ifdef CREQUEST_DEBUG
+      CDBDebug("Calculated width height based on resx resy %d,%d",srvParam->Geo->dWidth,srvParam->Geo->dHeight);
+      #endif
+    }
+  }
+  #ifdef CREQUEST_DEBUG
+    CDBDebug("Finished parsing query string parameters");
+  #endif
   #ifdef MEASURETIME
   StopWatch_Stop("query string processed");
   #endif
@@ -1878,8 +1907,9 @@ int CRequest::process_querystring(){
   if(SERVICE.equals("WCS"))srvParam->serviceType=SERVICE_WCS;
   
   if(dErrorOccured==0&&srvParam->serviceType==SERVICE_WMS){
+    #ifdef CREQUEST_DEBUG
     CDBDebug("Getting parameters for WMS service");
-    
+    #endif
     
     //Default is 1.3.0
     
@@ -2537,7 +2567,7 @@ int CRequest::process_querystring(){
       return 0;
     }
     if(dErrorOccured==0&&srvParam->requestType==REQUEST_WCS_GETCOVERAGE){
-
+      CDBDebug("WCS");
       if(dFound_Width==0&&dFound_Height==0&&dFound_RESX==0&&dFound_RESY==0&&dFound_BBOX==0&&dFound_CRS==0)srvParam->WCS_GoNative=1;else{
         srvParam->WCS_GoNative = 0;
         if(dFound_RESX==0||dFound_RESY==0){
@@ -2551,6 +2581,7 @@ int CRequest::process_querystring(){
           }
           srvParam->dWCS_RES_OR_WH = 0;
         }else if(dFound_Width==0||dFound_Height==0){
+            CDBDebug("NOWH");
           if(dFound_RESX==0){
             CDBWarning("Parameter RESX missing");
             dErrorOccured=1;
@@ -2560,6 +2591,7 @@ int CRequest::process_querystring(){
             dErrorOccured=1;
           }
           srvParam->dWCS_RES_OR_WH = 1;
+         
         }
         if(dFound_BBOX==0){
           CDBWarning("Parameter BBOX missing");

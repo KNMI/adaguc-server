@@ -55,7 +55,7 @@ public:
    * @param expr: The regular expression to reject/accept each individual file on. When NULL is provided, *.nc is used as default.
    * @param tailPath: The path under the root path to be scanned.
    */
-  static int searchFileNames(CDirReader *dirReader,const char * path,const char * expr,const char *tailPath);
+  static int searchFileNames(CDirReader *dirReader,const char * path,CT::string expr,const char *tailPath);
   
   /**
    * Updates the database for a specified dataSource

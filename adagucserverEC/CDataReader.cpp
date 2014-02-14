@@ -683,6 +683,9 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
 //    
   CDFObject *cdfObject = NULL;
   
+ #ifdef CDATAREADER_DEBUG
+  CDBDebug("Opening %s",dataSourceFilename.c_str());
+#endif
   
   if(mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS  || mode == CNETCDFREADER_MODE_OPEN_HEADER ){
     cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource->srvParams,dataSourceFilename.c_str());
@@ -1407,7 +1410,7 @@ int CDataReader::justLoadAFileHeader(CDataSource *dataSource){
   CDirReader dirReader; // Must stay outside the next statement in order to keep the pointer to fileName sane.
   if(fileName == NULL){
     
-    if(CDBFileScanner::searchFileNames(&dirReader,dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),NULL)!=0){CDBError("Could not find any filename");return 1; }
+    if(CDBFileScanner::searchFileNames(&dirReader,dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter,NULL)!=0){CDBError("Could not find any filename");return 1; }
     if(dirReader.fileList.size()==0){CDBError("dirReader.fileList.size()==0");return 1; }
     
     fileName = dirReader.fileList[0]->fullName.c_str();

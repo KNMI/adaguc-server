@@ -86,7 +86,7 @@ double* CConvertCurvilinear::getBBOXFromLatLonFields( CDF::Variable *swathMiddle
 /**
  * This function adjusts the cdfObject by creating virtual 2D variables
  */
-int CConvertCurvilinear::convertCurvilinearHeader( CDFObject *cdfObject ){
+int CConvertCurvilinear::convertCurvilinearHeader( CDFObject *cdfObject,CServerParams *srvParams ){
   if(cdfObject->getVariableNE("lat_vertices")!=NULL&&cdfObject->getVariableNE("lon_vertices")!=NULL&&cdfObject->getDimensionNE("vertices")!=NULL){
     try{cdfObject->getDimension("vertices")->name="bounds";}catch(int e){}
     try{cdfObject->getVariableNE("lat_vertices")->name="lat_bnds";}catch(int e){}
@@ -202,6 +202,14 @@ int CConvertCurvilinear::convertCurvilinearHeader( CDFObject *cdfObject ){
   //Default size of adaguc 2dField is 2x2
   int width=2;
   int height=2;
+  
+  
+  if(srvParams->Geo->dWidth>1&&srvParams->Geo->dHeight>1){
+    width  = srvParams->Geo->dWidth;
+    height = srvParams->Geo->dHeight;
+  }
+  
+  
   
   double cellSizeX=(dfBBOX[2]-dfBBOX[0])/double(width);
   double cellSizeY=(dfBBOX[3]-dfBBOX[1])/double(height);
@@ -519,7 +527,7 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource,int mode
    
     
     #ifdef CCONVERTCURVILINEAR_DEBUG
-    CDBDebug("Drawing %s",new2DVar->name.c_str());
+    CDBDebug("Drawing %s with WH = [%d,%d]",new2DVar->name.c_str(),dataSource->dWidth,dataSource->dHeight);
     #endif
     
     CDF::Dimension *dimX;
@@ -622,7 +630,7 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource,int mode
      * Bilinear rendering is based on gouraud shading using the center of each quads by using lat and lon variables, while nearest neighbour rendering is based on lat_bnds and lat_bnds variables, drawing the corners of the quads..
      */
       
-
+ //drawBilinear=true;
     //Bilinear rendering
     if(drawBilinear){
      

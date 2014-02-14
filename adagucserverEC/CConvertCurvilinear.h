@@ -34,7 +34,7 @@ class CConvertCurvilinear{
   DEF_ERRORFUNCTION();
   static double *getBBOXFromLatLonFields( CDF::Variable *swathMiddleLon, CDF::Variable *swathMiddleLat);
   public:
-  static int convertCurvilinearHeader(CDFObject *cdfObject);
+  static int convertCurvilinearHeader(CDFObject *cdfObject,CServerParams *srvParams);
   static int convertCurvilinearData(CDataSource *dataSource,int mode);
 };
 #endif

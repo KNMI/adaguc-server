@@ -817,14 +817,14 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
 }
 
 
-int CDBFileScanner::searchFileNames(CDirReader *dirReader,const char * path,const char * expr,const char *tailPath){
+int CDBFileScanner::searchFileNames(CDirReader *dirReader,const char * path,CT::string expr,const char *tailPath){
   if(path==NULL){
     CDBError("No path defined");
     return 1;
   }
   CT::string filePath=path;//dataSource->cfgLayer->FilePath[0]->value.c_str();
   if(tailPath!=NULL)filePath.concat(tailPath);
-  if(filePath.lastIndexOf(".nc")==int(filePath.length()-3)||filePath.indexOf("http://")==0||filePath.indexOf("https://")==0||filePath.indexOf("dodsc://")==0){
+  if(filePath.lastIndexOf(".nc")==int(filePath.length()-3)||filePath.lastIndexOf(".h5")==int(filePath.length()-3)||filePath.indexOf("http://")==0||filePath.indexOf("https://")==0||filePath.indexOf("dodsc://")==0){
     //Add single file or opendap URL.
     CFileObject * fileObject = new CFileObject();
     fileObject->fullName.copy(&filePath);
@@ -835,11 +835,11 @@ int CDBFileScanner::searchFileNames(CDirReader *dirReader,const char * path,cons
     //Read directory
     dirReader->makeCleanPath(&filePath);
     try{
-      CT::string fileFilterExpr("\\.nc");
-      if(expr!=NULL){//dataSource->cfgLayer->FilePath[0]->attr.filter.c_str()
-        fileFilterExpr.copy(expr);
+      CT::string fileFilterExpr(".*\\.nc$");
+      if(expr.empty()==false){//dataSource->cfgLayer->FilePath[0]->attr.filter.c_str()
+        fileFilterExpr.copy(&expr);
       }
-      CDBDebug("Reading directory %s with filter %s",filePath.c_str(),fileFilterExpr.c_str()); 
+      //CDBDebug("Reading directory %s with filter %s",filePath.c_str(),fileFilterExpr.c_str()); 
       dirReader->listDirRecursive(filePath.c_str(),fileFilterExpr.c_str());
       
       //Delete all files that start with a "." from the filelist.
@@ -856,6 +856,7 @@ int CDBFileScanner::searchFileNames(CDirReader *dirReader,const char * path,cons
       return 1;
     }
   }
+  //CDBDebug("%s",dirReader->fileList[0]->fullName.c_str());
   #ifdef CDBFILESCANNER_DEBUG
   CDBDebug("Found %d file(s)",int(dirReader->fileList.size()));
   #endif
