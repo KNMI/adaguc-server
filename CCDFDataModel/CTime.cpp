@@ -29,8 +29,6 @@ const char *CTime::className="CTime";
 utUnit CTime::dataunits;
 bool CTime::isInitialized;
 
-int CTime::mode = CTIME_MODE_UTCALENDAR;
-
 void CTime::safestrcpy(char *s1,const char*s2,size_t size_s1){
   strncpy(s1,s2,size_s1);
   s1[size_s1]='\0';
@@ -60,26 +58,13 @@ void CTime::reset(){
 int CTime::init(const char *units){
   if(isInitialized){
     if(!currentUnit.equals(units)){
-      if(mode == CTIME_MODE_UTCALENDAR){
-        CDBError("UDUNITS library already initialized with %s",currentUnit.c_str());
-      }
-      if(mode == CTIME_MODE_YYYYMM){
-        CDBError("CTIME_MODE_YYYYMM: Already initialized with %s",currentUnit.c_str());
-      }
+      CDBError("UDUNITS library already initialized with %s",currentUnit.c_str());
       return 1;
     }
     return 0;
   }
   currentUnit=units;
   
-  //Mode is in YYYYMM format
-  if(currentUnit.indexOf("YYYYMM")>=0){
-    mode = CTIME_MODE_YYYYMM;
-    isInitialized=true;
-    return 0;
-  }
-  
-  //Try udunits
   if (utInit("") != 0) {
     CDBError("Couldn't initialize Unidata units library, try setting UDUNITS_PATH to udunits.dat or try setting UDUNITS2_XML_PATH to udunits2.xml");
     return 1;
@@ -87,22 +72,20 @@ int CTime::init(const char *units){
   
   size_t l=strlen(units);
   char szUnits[l+1];szUnits[l]='\0';
-  for(size_t j=0;j<l;j++){
-    szUnits[j]=units[j];
-    if(szUnits[j]=='U')szUnits[j]=32;
-    if(szUnits[j]=='T')szUnits[j]=32;
-    if(szUnits[j]=='C')szUnits[j]=32;
-    if(szUnits[j]=='Z')szUnits[j]=32;
-  }
-  
-  if(utScan(szUnits,&dataunits) != 0)  {
-    CDBError("internal error: udu_fmt_time can't parse data unit string: %s",szUnits);
-    return 1;
-  }
-  mode = CTIME_MODE_UTCALENDAR;
-  
-  isInitialized=true;
-  return 0;
+    for(size_t j=0;j<l;j++){
+      szUnits[j]=units[j];
+      if(szUnits[j]=='U')szUnits[j]=32;
+      if(szUnits[j]=='T')szUnits[j]=32;
+      if(szUnits[j]=='C')szUnits[j]=32;
+      if(szUnits[j]=='Z')szUnits[j]=32;
+    }
+    
+    if(utScan(szUnits,&dataunits) != 0)  {
+      CDBError("internal error: udu_fmt_time can't parse data unit string: %s",szUnits);
+      return 1;
+    }
+    isInitialized=true;
+    return 0;
 }
 
 
@@ -110,43 +93,30 @@ int CTime::init(const char *units){
 CTime::Date CTime::getDate(double offset){
   Date date;
   date.offset=offset;
-
-  if(mode == CTIME_MODE_YYYYMM){
-    int yyyymm = int(offset);
-    date.year = int(yyyymm/100);
-    date.month = yyyymm-(int(yyyymm/100)*100);
-    date.day = 1;
-    date.hour = 0;
-    date.minute = 0;
-    date.second = 0;
+  float second;
+  if(utCalendar(date.offset,&dataunits,&date.year,&date.month,&date.day,&date.hour,&date.minute,&second)!=0) {
+    CDBError("OffsetToAdaguc: Internal error: utCalendar");throw CTIME_CONVERSION_ERROR;
+    
   }
-  
-  if(mode == CTIME_MODE_UTCALENDAR){
-    if(utCalendar(date.offset,&dataunits,&date.year,&date.month,&date.day,&date.hour,&date.minute,&date.second)!=0) {
-      CDBError("OffsetToAdaguc: Internal error: utCalendar");throw CTIME_CONVERSION_ERROR;
-    }
-  }
+  date.second = double(second);
   return date;
 }
 
 
 double CTime::dateToOffset( Date date){
   double offset;
-  
-  if(mode == CTIME_MODE_YYYYMM){
-    return int(date.year)*100+int(date.month);
-  }
-  
-  if(mode == CTIME_MODE_UTCALENDAR){
-    if(utInvCalendar(date.year,date.month,date.day,date.hour,date.minute,(int)date.second,&dataunits,&offset) != 0){
-      CDBError("DateToOffset: Internal error: utInvCalendar");throw CTIME_CONVERSION_ERROR;
-    }
+  if(utInvCalendar(date.year,date.month,date.day,date.hour,date.minute,date.second,&dataunits,&offset) != 0){
+    CDBError("DateToOffset: Internal error: utInvCalendar");throw CTIME_CONVERSION_ERROR;
   }
   return offset;
 }
 
 CTime::Date CTime::stringToDate(const char*szTime){
-  
+  size_t timeLength = strlen(szTime);
+  if(timeLength<15){
+     CDBError("stringToDate internal error: invalid time format:",szTime);
+     throw CTIME_CONVERSION_ERROR;
+  }
   Date date;
   char szTemp[64];
   safestrcpy(szTemp,szTime,4)  ;date.year=atoi(szTemp);
@@ -155,7 +125,10 @@ CTime::Date CTime::stringToDate(const char*szTime){
   safestrcpy(szTemp,szTime+9,2);date.hour=atoi(szTemp);
   safestrcpy(szTemp,szTime+11,2);date.minute=atoi(szTemp);
   safestrcpy(szTemp,szTime+13,2);date.second=(float)atoi(szTemp);
-  
+  if(timeLength>18){
+    safestrcpy(szTemp,szTime+16,3);date.second+=((float)atoi(szTemp))/1000;
+  }
+//  CDBDebug("szTime %s %s %f",szTime,szTemp,date.second);
   date.offset=dateToOffset(date);
   Date checkDate=getDate(date.offset);
   CT::string checkStr = dateToString(checkDate);
@@ -201,20 +174,24 @@ CTime::Date CTime::ISOStringToDate(const char*szTime){
 
 CT::string CTime::dateToString(Date date){
   CT::string s;
-  s.print("%04d%02d%02dT%02d%02d%02d",date.year,date.month,date.day,date.hour,date.minute,(int)date.second);
+  float second=date.second;
+  int minute = date.minute;
+  if(date.second>59){
+    second-=60;minute+=1;
+  }
+  s.print("%04d%02d%02dT%02d%02d%02d",date.year,date.month,date.day,date.hour,minute,(int)second);
   return s;
 }
 
 
 CT::string CTime::dateToISOString(Date date){
   CT::string s;
-  int seconds = int(date.second);
-  int milliseconds = int((date.second-seconds)*1000)  ;
-  if(milliseconds!=0){
-    s.print("%04d-%02d-%02dT%02d:%02d:%02d.%03dZ",date.year,date.month,date.day,date.hour,date.minute,seconds,milliseconds);
-  }else{
-    s.print("%04d-%02d-%02dT%02d:%02d:%02dZ",date.year,date.month,date.day,date.hour,date.minute,seconds);
+  float second=date.second;
+  int minute = date.minute;
+  if(date.second>59){
+    second-=60;minute+=1;
   }
+  s.print("%04d-%02d-%02dT%02d:%02d:%09f",date.year,date.month,date.day,date.hour,minute,second);
   return s;
 }
 
