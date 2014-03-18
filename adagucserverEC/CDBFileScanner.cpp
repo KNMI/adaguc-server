@@ -726,7 +726,7 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
   if(searchFileNames(&dirReader,dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),tailPath.c_str())!=0)return 0;
   
   if(dirReader.fileList.size()==0){
-    CDBError("No files found for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
+    CDBWarning("No files found for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
     return 0;
   }
   

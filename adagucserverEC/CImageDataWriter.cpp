@@ -43,7 +43,7 @@
 
 CT::string months[] = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
 
-//#define CIMAGEDATAWRITER_DEBUG
+#define CIMAGEDATAWRITER_DEBUG
 //#define MEASURETIME
 
 void doJacoIntoLatLon(double &u, double &v, double lo, double la, float deltaX, float deltaY, CImageWarper *warper);
@@ -1003,6 +1003,7 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
   #ifdef CIMAGEDATAWRITER_DEBUG    
   CDBDebug("Server Styles=%s",srvParam->Styles.c_str());
   #endif
+  CDBDebug("Server Styles=%s",srvParam->Styles.c_str());
   CT::StackList<CT::string> layerstyles = styles.splitToStack(",");
   int layerIndex=dataSource->datasourceIndex;
   if(layerstyles.size()!=0){
@@ -1467,9 +1468,10 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
             element->units="";
           }else{
             //Add raster value
-            char szTemp[1024];
-            floatToString(szTemp,1023,pixel);
-            element->value=szTemp;
+            //char szTemp[1024];
+            //floatToString(szTemp,1023,pixel);
+            
+            element->value.print("%f",pixel);//=szTemp;
           }
           #ifdef CIMAGEDATAWRITER_DEBUG 
           CDBDebug("Element value == %s",element->value.c_str());
