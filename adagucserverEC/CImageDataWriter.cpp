@@ -1550,131 +1550,137 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
           dataSource->dataObject[0]->hasNodataValue==false)&&
            ((pixel2==pixel2&&isOutsideBBOX==false&&dataSource->dataObject[1]->hasNodataValue==true&&pixel2!=dataSource->dataObject[1]->dfNodataValue)||
           dataSource->dataObject[1]->hasNodataValue==false)) ;
-        {
-        if (gridRelative&&windDataValid==true)  {
-    //Add raster value
-
-          status = imageWarper.initreproj(dataSource,drawImage.Geo,&srvParam->cfg->Projection);
-#ifdef ORIGINAL_JACOBIAN
-          #ifdef CIMAGEDATAWRITER_DEBUG 
-          CDBDebug("doJacoIntoLatLon(%f,%f,%f, %f, %f, %f)", pixel1,pixel2, projCacheInfo.lonX,projCacheInfo.lonY,0.01,0.01);
-          #endif
-          doJacoIntoLatLon(pixel1, pixel2, projCacheInfo.lonX, projCacheInfo.lonY, 0.01, 0.01, &imageWarper);
-#else
-          #ifdef CIMAGEDATAWRITER_DEBUG 
-          CDBDebug("Rot_UV_North(%f,%f,%f, %f, %f, %f)", pixel1,pixel2, projCacheInfo.lonX,projCacheInfo.lonY,0.01,0.01);
-          #endif
-          rotateUvNorth(pixel1, pixel2, projCacheInfo.nativeCoordX, projCacheInfo.nativeCoordY, 0.01, 0.01, &imageWarper);
-#endif
-          imageWarper.closereproj();
-    
-          char szTemp[1024];
-          floatToString(szTemp, 1023, pixel1); //New val
-          getFeatureInfoResult->elements[getFeatureInfoResult->elements.size()-2]->value=szTemp;
-          floatToString(szTemp, 1023, pixel2); //New val
-          getFeatureInfoResult->elements[getFeatureInfoResult->elements.size()-1]->value=szTemp;
-        }
         
-        GetFeatureInfoResult::Element *element2=new GetFeatureInfoResult::Element();
-        CCDFDims * cdfDims = dataSources[d]->getCDFDims();
-        CT::string value,name;
-        element2->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
-        for(size_t j=0;j<dataSources[d]->requiredDims.size();j++){
-          value=cdfDims->getDimensionValue(j);
-          name=cdfDims->getDimensionName(j);
-          if(name.indexOf("time")==0){
-            value=element2->time.c_str();
-          }
-          element2->cdfDims.addDimension(name.c_str(),value.c_str(),cdfDims->getDimensionIndex(j));
-        }
-        element2->dataSource= dataSource;
-        getFeatureInfoResult->elements.push_back(element2);
-        element2->long_name="wind direction";
-        element2->var_name="wind direction";
-        element2->standard_name="dir";
-        element2->feature_name="wind direction";
-        element2->units="degrees";
-
-        if (windDataValid) {
-          double angle=270-atan2(pixel2, pixel1)*180/pi;
-          if (angle>360) angle-=360;
-          if (angle<0) angle=angle+360;
-          element2->value.print("%3.0f",angle);
-        } else {
-          element2->value.print("%s", "nodata");
-        }
-        #ifdef CIMAGEDATAWRITER_DEBUG 
-        CDBDebug("pushed wind dir %s for step %d [%d]", element2->value.c_str(), step, getFeatureInfoResult->elements.size());
-        #endif
-        element2->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
         
-        GetFeatureInfoResult::Element *windspeedOrigElement=new GetFeatureInfoResult::Element();
-        windspeedOrigElement->dataSource= dataSource;
-        windspeedOrigElement->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
-        for(size_t j=0;j<dataSources[d]->requiredDims.size();j++){
-          value=cdfDims->getDimensionValue(j);
-          name=cdfDims->getDimensionName(j);
-          if(name.indexOf("time")==0){
-            value=windspeedOrigElement->time.c_str();
-          }
-          windspeedOrigElement->cdfDims.addDimension(name.c_str(),value.c_str(),cdfDims->getDimensionIndex(j));
-        }
-        getFeatureInfoResult->elements.push_back(windspeedOrigElement);
-        windspeedOrigElement->long_name="wind speed";
-        windspeedOrigElement->var_name="wind speed";
-        windspeedOrigElement->standard_name="speed1";
-        windspeedOrigElement->feature_name="wind speed";
-        windspeedOrigElement->units=dataSource->dataObject[0]->units;
-        windspeedOrigElement->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
-        if (windDataValid) {
-          double windspeed=hypot(pixel1, pixel2);
-          windspeedOrigElement->value.print("%3.1f",windspeed);
-        } else {
-          windspeedOrigElement->value.print("%s","nodata");
-        }
-        #ifdef CIMAGEDATAWRITER_DEBUG 
-        CDBDebug("pushed wind speed %s for step %d [%d]",windspeedOrigElement->value.c_str() , step, getFeatureInfoResult->elements.size());
-        #endif
+        /**
+         * Derived wind vector calculation is now based on U and V, this gives incorrect results when using rotation and strength.
+         * To prevent wrong answers in GFI this is disabled.
+         */
+        if(false){
+          if (gridRelative&&windDataValid==true)  {
+      //Add raster value
 
-        //Skip KTS calculation if input data is not u and v vectors in m/s.
-        bool skipKTSCalc = true;
-        try{
-          if(dataSource->dataObject[0]->units.indexOf("m/s")>=0){
-            skipKTSCalc =false;
-          }
-        }catch(int e){}
+            status = imageWarper.initreproj(dataSource,drawImage.Geo,&srvParam->cfg->Projection);
+  #ifdef ORIGINAL_JACOBIAN
+            #ifdef CIMAGEDATAWRITER_DEBUG 
+            CDBDebug("doJacoIntoLatLon(%f,%f,%f, %f, %f, %f)", pixel1,pixel2, projCacheInfo.lonX,projCacheInfo.lonY,0.01,0.01);
+            #endif
+            doJacoIntoLatLon(pixel1, pixel2, projCacheInfo.lonX, projCacheInfo.lonY, 0.01, 0.01, &imageWarper);
+  #else
+            #ifdef CIMAGEDATAWRITER_DEBUG 
+            CDBDebug("Rot_UV_North(%f,%f,%f, %f, %f, %f)", pixel1,pixel2, projCacheInfo.lonX,projCacheInfo.lonY,0.01,0.01);
+            #endif
+            rotateUvNorth(pixel1, pixel2, projCacheInfo.nativeCoordX, projCacheInfo.nativeCoordY, 0.01, 0.01, &imageWarper);
+  #endif
+            imageWarper.closereproj();
       
-        if(!skipKTSCalc){
-          GetFeatureInfoResult::Element *element3=new GetFeatureInfoResult::Element();
-          element3->dataSource= dataSource;
-          element3->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
-          CCDFDims * cdfDims = dataSources[d]->getCDFDims();CT::string value,name;
+            char szTemp[1024];
+            floatToString(szTemp, 1023, pixel1); //New val
+            getFeatureInfoResult->elements[getFeatureInfoResult->elements.size()-2]->value=szTemp;
+            floatToString(szTemp, 1023, pixel2); //New val
+            getFeatureInfoResult->elements[getFeatureInfoResult->elements.size()-1]->value=szTemp;
+          }
+          
+          GetFeatureInfoResult::Element *element2=new GetFeatureInfoResult::Element();
+          CCDFDims * cdfDims = dataSources[d]->getCDFDims();
+          CT::string value,name;
+          element2->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
+          for(size_t j=0;j<dataSources[d]->requiredDims.size();j++){
+            value=cdfDims->getDimensionValue(j);
+            name=cdfDims->getDimensionName(j);
+            if(name.indexOf("time")==0){
+              value=element2->time.c_str();
+            }
+            element2->cdfDims.addDimension(name.c_str(),value.c_str(),cdfDims->getDimensionIndex(j));
+          }
+          element2->dataSource= dataSource;
+          getFeatureInfoResult->elements.push_back(element2);
+          element2->long_name="wind direction";
+          element2->var_name="wind direction";
+          element2->standard_name="dir";
+          element2->feature_name="wind direction";
+          element2->units="degrees";
+
+          if (windDataValid) {
+            double angle=270-atan2(pixel2, pixel1)*180/pi;
+            if (angle>360) angle-=360;
+            if (angle<0) angle=angle+360;
+            element2->value.print("%3.0f",angle);
+          } else {
+            element2->value.print("%s", "nodata");
+          }
+          #ifdef CIMAGEDATAWRITER_DEBUG 
+          CDBDebug("pushed wind dir %s for step %d [%d]", element2->value.c_str(), step, getFeatureInfoResult->elements.size());
+          #endif
+          element2->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
+          
+          GetFeatureInfoResult::Element *windspeedOrigElement=new GetFeatureInfoResult::Element();
+          windspeedOrigElement->dataSource= dataSource;
+          windspeedOrigElement->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
           for(size_t j=0;j<dataSources[d]->requiredDims.size();j++){
             value=cdfDims->getDimensionValue(j);
             name=cdfDims->getDimensionName(j);
             if(name.indexOf("time")==0){
               value=windspeedOrigElement->time.c_str();
             }
-            element3->cdfDims.addDimension(name.c_str(),value.c_str(),cdfDims->getDimensionIndex(j));
+            windspeedOrigElement->cdfDims.addDimension(name.c_str(),value.c_str(),cdfDims->getDimensionIndex(j));
           }
-          getFeatureInfoResult->elements.push_back(element3);
-          element3->long_name="wind speed";
-          element3->var_name="wind speed";
-          element3->standard_name="speed2";
-          element3->feature_name="wind speed kts";
-          element3->units="kts";
-          element3->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
+          getFeatureInfoResult->elements.push_back(windspeedOrigElement);
+          windspeedOrigElement->long_name="wind speed";
+          windspeedOrigElement->var_name="wind speed";
+          windspeedOrigElement->standard_name="speed1";
+          windspeedOrigElement->feature_name="wind speed";
+          windspeedOrigElement->units=dataSource->dataObject[0]->units;
+          windspeedOrigElement->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
           if (windDataValid) {
-            double windspeedKTS=hypot(pixel1, pixel2)*(3600./1852.);
-            element3->value.print("%3.1f",windspeedKTS);
+            double windspeed=hypot(pixel1, pixel2);
+            windspeedOrigElement->value.print("%3.1f",windspeed);
           } else {
-            element3->value.print("%s", "nodata");
+            windspeedOrigElement->value.print("%s","nodata");
           }
           #ifdef CIMAGEDATAWRITER_DEBUG 
-          CDBDebug("pushed wind speed KTS %f for step %d [%d]\n", element3->value.c_str(), step, getFeatureInfoResult->elements.size());
+          CDBDebug("pushed wind speed %s for step %d [%d]",windspeedOrigElement->value.c_str() , step, getFeatureInfoResult->elements.size());
           #endif
+
+          //Skip KTS calculation if input data is not u and v vectors in m/s.
+          bool skipKTSCalc = true;
+          try{
+            if(dataSource->dataObject[0]->units.indexOf("m/s")>=0){
+              skipKTSCalc =false;
+            }
+          }catch(int e){}
+        
+          if(!skipKTSCalc){
+            GetFeatureInfoResult::Element *element3=new GetFeatureInfoResult::Element();
+            element3->dataSource= dataSource;
+            element3->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
+            CCDFDims * cdfDims = dataSources[d]->getCDFDims();CT::string value,name;
+            for(size_t j=0;j<dataSources[d]->requiredDims.size();j++){
+              value=cdfDims->getDimensionValue(j);
+              name=cdfDims->getDimensionName(j);
+              if(name.indexOf("time")==0){
+                value=windspeedOrigElement->time.c_str();
+              }
+              element3->cdfDims.addDimension(name.c_str(),value.c_str(),cdfDims->getDimensionIndex(j));
+            }
+            getFeatureInfoResult->elements.push_back(element3);
+            element3->long_name="wind speed";
+            element3->var_name="wind speed";
+            element3->standard_name="speed2";
+            element3->feature_name="wind speed kts";
+            element3->units="kts";
+            element3->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
+            if (windDataValid) {
+              double windspeedKTS=hypot(pixel1, pixel2)*(3600./1852.);
+              element3->value.print("%3.1f",windspeedKTS);
+            } else {
+              element3->value.print("%s", "nodata");
+            }
+            #ifdef CIMAGEDATAWRITER_DEBUG 
+            CDBDebug("pushed wind speed KTS %f for step %d [%d]\n", element3->value.c_str(), step, getFeatureInfoResult->elements.size());
+            #endif
+          }
         }
-      }
       }
       }
     }
