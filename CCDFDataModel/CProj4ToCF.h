@@ -265,6 +265,18 @@ class CProj4ToCF{
       v=getProj4ValueF("a"      ,projKVPList,6377397.155,convertToM);     projectionVariable->addAttribute(new CDF::Attribute("semi_major_axis"                       ,CDF_FLOAT,&v,1));
       v=getProj4ValueF("b"      ,projKVPList,6356079,convertToM);     projectionVariable->addAttribute(new CDF::Attribute("semi_minor_axis"                        ,CDF_FLOAT,&v,1));
     }
+    
+    void initLatitudeLongitude(CDF::Variable *projectionVariable, std::vector <KVP*> projKVPList){
+      //+proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.9999079 +x_0=155000 +y_0=463000 +ellps=bessel +units=m +no_defs
+      //TODO ellps=bessel is not supported!
+      projectionVariable->removeAttributes();
+      float v = 0;
+      projectionVariable->addAttribute(new CDF::Attribute("grid_mapping_name","latitude_longitude"));
+      v=getProj4ValueF("lat_0"  ,projKVPList,0);                     projectionVariable->addAttribute(new CDF::Attribute("latitude_of_projection_origin" ,CDF_FLOAT,&v,1));
+      v=getProj4ValueF("lon_0"  ,projKVPList,0);                     projectionVariable->addAttribute(new CDF::Attribute("longitude_of_central_meridian" ,CDF_FLOAT,&v,1));
+      v=getProj4ValueF("a"      ,projKVPList,6377397.155,convertToM);projectionVariable->addAttribute(new CDF::Attribute("semi_major_axis" ,CDF_FLOAT,&v,1));
+      v=getProj4ValueF("b"      ,projKVPList,6356079,convertToM);    projectionVariable->addAttribute(new CDF::Attribute("semi_minor_axis"     ,CDF_FLOAT,&v,1));
+    }
 
     int convertBackAndFort(const char *projString,CDF::Variable *projectionVariable){
       CProj4ToCF proj4ToCF;
@@ -334,6 +346,7 @@ class CProj4ToCF{
           if(projKVPList[j]->value.equals("lcc")){  initLCCPerspective(projectionVariable,projKVPList);foundProj=1;}
           if(projKVPList[j]->value.equals("ob_tran")){  initRPPerspective(projectionVariable,projKVPList);foundProj=1;}
           if(projKVPList[j]->value.equals("sterea")){  initObliqueStereographicPerspective(projectionVariable,projKVPList);foundProj=1;}
+          if(projKVPList[j]->value.equals("latitude_longitude")){  initLatitudeLongitude(projectionVariable,projKVPList);foundProj=1;}
         }
       }
       if(projectionVariable->name.empty())projectionVariable->name="projection";
@@ -520,8 +533,28 @@ class CProj4ToCF{
                              semi_minor_axis.toDouble(),
                              false_easting.toDouble(),
                              false_northing.toDouble());
-        }
-        else{
+        }else if(grid_mapping_name.equals("latitude_longitude")){
+          CT::string latitude_of_projection_origin = "0";
+          CT::string longitude_of_central_meridian = "0";
+          
+          //Get latitude_of_projection_origin
+          try{projectionVariable->getAttribute("latitude_of_projection_origin")->getDataAsString(&latitude_of_projection_origin);}catch(int e){};
+          //Get central_meridian
+          try{projectionVariable->getAttribute("longitude_of_central_meridian")->getDataAsString(&longitude_of_central_meridian);}catch(int e){};
+          try{projectionVariable->getAttribute("central_meridian")->getDataAsString(&longitude_of_central_meridian);}catch(int e){};
+
+          //Get common stuffs
+          CT::string semi_major_axis = "6377397.155";//299.1528128,f=a/(a-b) b=(-(a/f))+a   (-(6377397.155/299.1528128))+6377397.155 = 6356079
+          CT::string semi_minor_axis = "6356079";
+          try{projectionVariable->getAttribute("semi_major_axis")->getDataAsString(&semi_major_axis);}catch(int e){};
+          try{projectionVariable->getAttribute("semi_minor_axis")->getDataAsString(&semi_minor_axis);}catch(int e){};
+          
+          proj4String->print("+proj=longlat +ellps=WGS84 +datum=WGS84 +lat_0=%f +lon_0=%f +a=%f +b=%f +no_defs",
+                             latitude_of_projection_origin.toDouble(),
+                             longitude_of_central_meridian.toDouble(),
+                             semi_major_axis.toDouble(),
+                             semi_minor_axis.toDouble());
+        }else{
           CDBError("Projection '%s' not supported",grid_mapping_name.c_str());
           return CPROJ4TOCF_UNSUPPORTED_PROJECTION;
         }
