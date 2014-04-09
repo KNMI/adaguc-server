@@ -323,7 +323,10 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y){
     #ifdef CDATAREADER_DEBUG  
     CDBDebug("Auto configuring dims");
     #endif
-    autoConfigureDimensions(dataSource);
+    if(autoConfigureDimensions(dataSource)!=0){
+      CDBError("Unable to configure dimensions automatically");
+      return 1;
+    }
   }
 
   bool singleCellMode = false;
@@ -1559,8 +1562,8 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
        and store them in the table.
        */
       if(dataSource->dataObject[0]->cdfVariable->dimensionlinks.size()>=2){
-        
-        try{
+        std::vector<CT::string> queriesToDoOnSuccess;
+        //try{
           //Create the database table
           CT::string tableColumns("layerid varchar (255), ncname varchar (255), ogcname varchar (255), units varchar (255)");
           int status;
@@ -1605,23 +1608,64 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
               
               //Store the data in the db for quick access.
               query.print("INSERT INTO %s values (E'%s',E'%s',E'%s',E'%s')",tableName.c_str(),layerTableId.c_str(),standard_name.c_str(),OGCDimName.c_str(),units.c_str());
-              status = DB->query(query.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",query.c_str());throw(__LINE__); }
+              queriesToDoOnSuccess.push_back(query);
+              
+              //status = DB->query(query.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",query.c_str());throw(__LINE__); }
                       
             }else{
               CDBDebug("variable->dimensionlinks[d]");
             }
           }
           
-        }catch(int e){
-          CT::string errorMessage;CDF::getErrorMessage(&errorMessage,e); CDBDebug("Unable to configure dims automatically: %s (%d)",errorMessage.c_str(),e);    
-          throw(e);
-        }
+          //Check for global variable with standard_name forecast_reference_time 
+          CDFObject *cdfObject = dataSource->dataObject[0]->cdfObject;
+          for(size_t j=0;j<cdfObject->variables.size();j++){
+            try{
+              if(cdfObject->variables[j]->getAttribute("standard_name")->toString().equals("forecast_reference_time") == true){
+                CDBDebug("Found forecast_reference_time variable with name %s",cdfObject->variables[j]->name.c_str());
+                CT::string units = "";
+                try{
+                  cdfObject->variables[j]->getAttribute("units")->toString();
+                }catch(int e){
+                  CDBError("No units found for forecast_reference_time variable");
+                  throw(e);
+                }
+                
+                CServerConfig::XMLE_Dimension *xmleDim=new CServerConfig::XMLE_Dimension();
+                dataSource->cfgLayer->Dimension.push_back(xmleDim);
+                xmleDim->value.copy("reference_time");
+                xmleDim->attr.name.copy(cdfObject->variables[j]->name.c_str());
+                xmleDim->attr.units.copy(units.c_str()); 
+                
+                //Store the data in the db for quick access.
+                query.print("INSERT INTO %s values (E'%s',E'%s',E'%s',E'%s')",tableName.c_str(),layerTableId.c_str(),"forecast_reference_time","reference_time",units.c_str());
+                queriesToDoOnSuccess.push_back(query);
+                //status = DB->query(query.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",query.c_str());throw(__LINE__); }
+              }
+            }catch(int e){
+            }
+          }
+          
+          //Do all the queries
+          for(size_t j=0;j<queriesToDoOnSuccess.size();j++){
+            CT::string query = queriesToDoOnSuccess[j];
+            status = DB->query(query.c_str()); 
+            if(status!=0){
+              CDBError("Unable to insert records: \"%s\"",query.c_str());
+              throw(__LINE__); 
+            }
+          }
+          
+        //}catch(int e){
+        //  CT::string errorMessage;CDF::getErrorMessage(&errorMessage,e); CDBDebug("Unable to configure dims automatically: %s (%d)",errorMessage.c_str(),e);    
+        //  throw(__LINE__);
+        //}
       }
       
      
     }
   }catch(int linenr){
-    CDBDebug("Exp at line %d",linenr);
+    CDBDebug("Exception at line %d",linenr);
 
     return 1;
   }

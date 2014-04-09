@@ -173,7 +173,8 @@ private:
     int getDocumentCacheName(CT::string *documentName,CServerParams *srvParam);
     int storeDocumentCache(CSimpleStore *simpleStore);
     int generateOGCGetCapabilities(CT::string *XMLdocument);
-    int generateGetReferenceTimes(CT::string *result);
+    int generateGetReferenceTimes(CDataSource *dataSource);
+    int generateGetReferenceTimesDoc(CT::string *result,CDataSource *dataSource);
     int generateOGCDescribeCoverage(CT::string *XMLdocument);
     static int dataRestriction;
     void addXMLLayerToConfig(CServerParams *srvParam,std::vector<CT::string>*variableNames, const char *group, const char *location);
