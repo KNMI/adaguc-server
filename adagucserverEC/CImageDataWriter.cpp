@@ -43,7 +43,7 @@
 
 CT::string months[] = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
 
-#define CIMAGEDATAWRITER_DEBUG
+//#define CIMAGEDATAWRITER_DEBUG
 //#define MEASURETIME
 
 void doJacoIntoLatLon(double &u, double &v, double lo, double la, float deltaX, float deltaY, CImageWarper *warper);

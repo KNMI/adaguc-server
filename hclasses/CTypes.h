@@ -22,7 +22,9 @@
  * limitations under the License.
  * 
  ******************************************************************************/
-
+#define CTYPES_USESTACK false
+//#define CTSTRINGSTACKLENGTH 62
+#define CTSTRINGSTACKLENGTH 0
 
 #ifndef CTypes_H
 #define CTypes_H
@@ -49,7 +51,6 @@
 #include "CTString.h"
 #include "CTStringRef.h"
 //#define CTYPES_DEBUG
-
 
 
 #endif

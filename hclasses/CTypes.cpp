@@ -276,7 +276,7 @@ CT::StackList<CT::stringref> CT::stringref::splitToStackReferences(const char * 
     }
     heapValue = NULL;
     stackValue[0]=0;
-    useStack = true;
+    useStack = CTYPES_USESTACK;
     privatelength=0;
     bufferlength=CTSTRINGSTACKLENGTH;
     allocated=0;
@@ -289,7 +289,7 @@ CT::StackList<CT::stringref> CT::stringref::splitToStackReferences(const char * 
       heapValue=new char[_length+1];
     }else{
       
-      useStack = true;
+      useStack = CTYPES_USESTACK;
     }
     allocated=1;
   }

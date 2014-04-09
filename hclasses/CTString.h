@@ -29,7 +29,7 @@
 #include "CTypes.h"
 #include "CTStringRef.h"
 
-#define CTSTRINGSTACKLENGTH 62
+
 namespace CT{
 
     
@@ -46,7 +46,7 @@ namespace CT{
     char stackValue[CTSTRINGSTACKLENGTH+1];
     bool useStack;
     char *heapValue;
-    void init(){useStack=true;heapValue=NULL;stackValue[0]=0;count=0;allocated=0;privatelength=0;bufferlength=CTSTRINGSTACKLENGTH;}
+    void init(){useStack=CTYPES_USESTACK;heapValue=NULL;stackValue[0]=0;count=0;allocated=0;privatelength=0;bufferlength=CTSTRINGSTACKLENGTH;}
     char *getValuePointer(){
       return useStack?stackValue:heapValue;
     }
