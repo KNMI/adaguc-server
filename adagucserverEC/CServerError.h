@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <CDebugger.h>
 #include "CDrawImage.h"
+enum ServiceExceptionCode { OperationNotSupported, InvalidDimensionValue};
 void printerror(const char * text);
 void printdebug(const char * text,int prioritylevel);
 void seterrormode(int errormode);
@@ -36,5 +37,7 @@ void printerrorImage(void * drawImage);
 void resetErrors();
 bool errorsOccured();
 void setErrorImageSize(int w,int h,int format);
+void setExceptionType(ServiceExceptionCode code);
+const char * getExceptionCodeText(ServiceExceptionCode code);
 #endif
 

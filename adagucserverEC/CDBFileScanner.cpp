@@ -83,7 +83,10 @@ int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,in
   
   
   if(dataSource->cfgLayer->Dimension.size()==0){
-    CDataReader::autoConfigureDimensions(dataSource);
+    if(CDataReader::autoConfigureDimensions(dataSource)!=0){
+      CDBError("Unable to configure dimensions automatically");
+      return 1;
+    }
   }
   
   //Check and create all tables...
@@ -242,6 +245,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
     
     //Setup variables like tableNames and timedims for each dimension
     size_t numDims=dataSource->cfgLayer->Dimension.size();
+    
     bool isTimeDim[numDims];
     CT::string dimNames[numDims];
     //CT::string tableColumns[numDims];
@@ -253,6 +257,8 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
     //CADAGUC_time *ADTime  = NULL;
     CTime adagucTime;
     for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
+      
+     
       dimNames[d].copy(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
       dimNames[d].toLowerCaseSelf();
       isTimeDim[d]=false;
@@ -260,18 +266,8 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
       if(dimNames[d].equals("time"))isTimeDim[d]=true;
       //TODO: implement use of standardname? How do we detect correctly wether this is a time dim?
       if(dimNames[d].indexOf("time")!=-1)isTimeDim[d]=true;
-      //Create column names
-      /*tableColumns[d].copy("path varchar (255)");
-      if(isTimeDim[d]==true){
-        tableColumns[d].printconcat(", %s timestamp, dim%s int",dimNames[d].c_str(),dimNames[d].c_str());
-      }else{
-        //tableColumns[d].printconcat(", %s real, dim%s int",dimNames[d].c_str(),dimNames[d].c_str());
-        tableColumns[d].printconcat(", %s varchar (16), dim%s int",dimNames[d].c_str(),dimNames[d].c_str());
-      }*/
-      //Create database tableNames
-      //tableNames[d].copy(dataSource->cfgLayer->DataBaseTable[0]->value.c_str());
-      //CServerParams::makeCorrectTableName(&(tableNames[d]),&(dimNames[d]));
-      
+
+      CDBDebug("Found dimension %d with name %s",d,dimNames[d].c_str());
       
       try{
         tableNames[d] = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimNames[d].c_str());
@@ -404,8 +400,28 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
               #endif
               
               if(status==0){
-                CDF::Dimension * dimDim = cdfObject->getDimensionNE(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+                //Check for the configured dimensions or scalar variables
+                //1 )Is this a scalar?
                 CDF::Variable *  dimVar = cdfObject->getVariableNE(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+                CDF::Dimension * dimDim = cdfObject->getDimensionNE(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+                
+                //Check for scalar variable
+                if(dimVar!=NULL&&dimDim==NULL){
+                  if(dimVar->dimensionlinks.size() == 0){
+                    CDBDebug("Found scalar variable %s with no dimension. Creating dim",dimVar->name.c_str());
+                    
+                    dimDim = new CDF::Dimension();
+                    dimDim->name = dimVar->name;
+                    dimDim->setSize(1);
+                    cdfObject->addDimension(dimDim);
+                    dimVar->dimensionlinks.push_back(dimDim);
+                    
+                  }
+                }
+                
+                
+                
+                
                 if(dimDim==NULL||dimVar==NULL){
                   CDBError("In file %s",dirReader->fileList[j]->fullName.c_str());
                   CDBError("For variable '%s' dimension '%s' not found",dataSource->cfgLayer->Variable[0]->value.c_str(),

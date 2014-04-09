@@ -517,38 +517,129 @@ int CRequest::generateOGCGetCapabilities(CT::string *XMLdocument){
   return XMLGen.OGCGetCapabilities(srvParam,XMLdocument);
 }
 
-int CRequest::generateGetReferenceTimes(CT::string *result){
-    //Set WMSLayers:
+
+int CRequest::generateGetReferenceTimesDoc(CT::string *result,CDataSource *dataSource){
+  bool hasReferenceTimeDimension = false;
+  CT::string dimName = "";//forecast_reference_time";
+  for(size_t l=0;l<dataSource->cfgLayer->Dimension.size();l++){
+    if(dataSource->cfgLayer->Dimension[l]->value.equals("reference_time")){
+      dimName = dataSource->cfgLayer->Dimension[l]->attr.name.c_str();
+      hasReferenceTimeDimension=true;
+      break;
+    }
+  }
   
-  std::set<std::string>WMSGroups ;
-  for(size_t j=0;j<srvParam->cfg->Layer.size();j++){
-    CT::string groupName;
-    srvParam->makeLayerGroupName(&groupName,srvParam->cfg->Layer[j]);
-    if (groupName.testRegEx("[[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]]_[[:digit:]][[:digit:]]")) {
-      CT::string ymd=groupName.substringr(0,8);
-      CT::string hh=groupName.substringr(9,11);
-      ymd.concat(hh);
-      ymd.concat("00");
-      WMSGroups.insert(ymd.c_str());
-    } else if (groupName.testRegEx("[[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]]")) {
-      groupName.concat("00");
-      WMSGroups.insert(groupName.c_str());
-    } else if (groupName.testRegEx("[[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]]")) {
-      WMSGroups.insert(groupName.c_str());
+  if(hasReferenceTimeDimension){
+    CT::string tableName;
+   
+    try{
+      tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
+    }catch(int e){
+      CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
+      return 1;
     }
-  }
-  result->copy("[");
-  bool first=true;
-  for (std::set<std::string>::reverse_iterator it=WMSGroups.rbegin(); it!=WMSGroups.rend(); ++it) {
-    if (!first) {
-      result->concat(",");
+    CT::string query;
+    query.print("select %s from %s",dimName.c_str(),tableName.c_str());
+    CPGSQLDB * DB = srvParam->getDataBaseConnection();
+  
+    // Connect do DB
+    int status = DB->connect(srvParam->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0){CDBError("Unable to connect to DB");return 1;}
+  
+    CDB::Store *store = DB->queryToStore(query.c_str());
+    if(store == NULL){
+      setExceptionType(InvalidDimensionValue);
+      CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
+      //if((checkDataRestriction()&SHOW_QUERYINFO)==false){
+        CDBError("Query was '%s'",query.c_str());
+      //}
+      return 1;
     }
-    first=false;
-    result->concat("\"");
-    result->concat((*it).c_str());
-    result->concat("\"");
+    result->copy("[");
+    bool first=true;
+    for(size_t k=0;k<store->getSize();k++){
+      if (!first) {
+        result->concat(",");
+      }
+      first=false;
+      result->concat("\"");
+      result->concat(store->getRecord(k)->get(0)->c_str());
+      result->concat("\"");
+    } 
+    result->concat("]");
+    delete store;
+    return 0;
+  }else{
+    //Set WMSLayers:
+    std::set<std::string>WMSGroups ;
+    for(size_t j=0;j<srvParam->cfg->Layer.size();j++){
+      CT::string groupName;
+      srvParam->makeLayerGroupName(&groupName,srvParam->cfg->Layer[j]);
+      if (groupName.testRegEx("[[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]]_[[:digit:]][[:digit:]]")) {
+        CT::string ymd=groupName.substringr(0,8);
+        CT::string hh=groupName.substringr(9,11);
+        ymd.concat(hh);
+        ymd.concat("00");
+        WMSGroups.insert(ymd.c_str());
+      } else if (groupName.testRegEx("[[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]]")) {
+        groupName.concat("00");
+        WMSGroups.insert(groupName.c_str());
+      } else if (groupName.testRegEx("[[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]]")) {
+        WMSGroups.insert(groupName.c_str());
+      }
+    }
+    result->copy("[");
+    bool first=true;
+    for (std::set<std::string>::reverse_iterator it=WMSGroups.rbegin(); it!=WMSGroups.rend(); ++it) {
+      if (!first) {
+        result->concat(",");
+      }
+      first=false;
+      result->concat("\"");
+      result->concat((*it).c_str());
+      result->concat("\"");
+    }
+    result->concat("]");
   }
-  result->concat("]");
+  return 0;
+}
+
+
+int CRequest::generateGetReferenceTimes(CDataSource *dataSource){
+  CT::string XMLdocument;
+  if(srvParam->enableDocumentCache==true){
+    CSimpleStore simpleStore;
+    CT::string documentName;
+    bool storeNeedsUpdate=false;
+    int status = getDocumentCacheName(&documentName,srvParam);if(status!=0)return 1;
+    //Try to get the getcapabilities document from the store:
+    status = getDocFromDocCache(&simpleStore,&documentName,&XMLdocument);if(status==1)return 1;
+    //if(status==2, the store is ok, but not up to date
+    if(status==2)storeNeedsUpdate=true;
+    if(storeNeedsUpdate){
+      //CDBDebug("Generating a new document with name %s",documentName.c_str());
+      int status = generateGetReferenceTimesDoc(&XMLdocument,dataSource);if(status==CXMLGEN_FATAL_ERROR_OCCURED)return 1;
+      //Store this document  
+      if(status==0){
+        simpleStore.setStringAttribute(documentName.c_str(),XMLdocument.c_str());
+        if(storeDocumentCache(&simpleStore)!=0)return 1;
+      }
+    }else{
+      CDBDebug("Providing document from store with name %s",documentName.c_str());
+    }
+  }else{
+    //Do not use cache
+    int status = generateGetReferenceTimesDoc(&XMLdocument,dataSource);;if(status==CXMLGEN_FATAL_ERROR_OCCURED)return 1;
+  }
+  if (srvParam->JSONP.length()==0) {
+    printf("%s%c%c\n","Content-Type: application/json ",13,10);
+    printf("%s",XMLdocument.c_str());
+  } else {
+    printf("%s%c%c\n","Content-Type: text/javascript ",13,10);
+    printf("%s(%s)",srvParam->JSONP.c_str(),XMLdocument.c_str());
+  }
+  
+
+  
   return 0;
 }
 
@@ -600,44 +691,9 @@ int CRequest::process_wms_getcap_request(){
 
 int CRequest::process_wms_getreferencetimes_request(){
   CDBDebug("WMS GETREFERENCETIMES");
-  
-  CT::string XMLdocument;
-  if(srvParam->enableDocumentCache==true){
-    CSimpleStore simpleStore;
-    CT::string documentName;
-    bool storeNeedsUpdate=false;
-    int status = getDocumentCacheName(&documentName,srvParam);if(status!=0)return 1;
-    //Try to get the getcapabilities document from the store:
-    status = getDocFromDocCache(&simpleStore,&documentName,&XMLdocument);if(status==1)return 1;
-    //if(status==2, the store is ok, but not up to date
-    if(status==2)storeNeedsUpdate=true;
-    if(storeNeedsUpdate){
-      //CDBDebug("Generating a new document with name %s",documentName.c_str());
-      int status = generateGetReferenceTimes(&XMLdocument);if(status==CXMLGEN_FATAL_ERROR_OCCURED)return 1;
-      //Store this document  
-      if(status==0){
-        simpleStore.setStringAttribute(documentName.c_str(),XMLdocument.c_str());
-        if(storeDocumentCache(&simpleStore)!=0)return 1;
-      }
-    }else{
-      CDBDebug("Providing document from store with name %s",documentName.c_str());
-    }
-  }else{
-    //Do not use cache
-    int status = generateGetReferenceTimes(&XMLdocument);;if(status==CXMLGEN_FATAL_ERROR_OCCURED)return 1;
-  }
-  if (srvParam->JSONP.length()==0) {
-    printf("%s%c%c\n","Content-Type: application/json ",13,10);
-    printf("%s",XMLdocument.c_str());
-  } else {
-    printf("%s%c%c\n","Content-Type: text/javascript ",13,10);
-    printf("%s(%s)",srvParam->JSONP.c_str(),XMLdocument.c_str());
-  }
-  
-
-  
-  return 0;
+  return process_all_layers();
 }
+
 
 int CRequest::process_wcs_getcap_request(){
   CDBDebug("WCS GETCAPABILITIES");
@@ -714,6 +770,11 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
     #endif
     for(size_t k=0;k<srvParam->requestDims.size();k++)srvParam->requestDims[k]->name.toLowerCaseSelf();
     
+    bool hasReferenceTimeDimension = false;
+    for(size_t l=0;l<dataSource->cfgLayer->Dimension.size();l++){
+      if(dataSource->cfgLayer->Dimension[l]->value.equals("reference_time")){hasReferenceTimeDimension=true;break;}
+    }
+    
     for(size_t i=0;i<dataSource->cfgLayer->Dimension.size();i++){
       CT::string dimName(dataSource->cfgLayer->Dimension[i]->value.c_str());
       dimName.toLowerCaseSelf();
@@ -754,12 +815,47 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
                 return 1;
               }
               
-              
-              query.print("select max(%s) from %s",ogcDim->netCDFDimName.c_str(),tableName.c_str());
-              CDB::Store *maxStore = DB->queryToStore(query.c_str());
-              if(maxStore == NULL){CDBError("query failed"); return 1;}
-              ogcDim->value.copy(maxStore->getRecord(0)->get(0));
-              delete maxStore;
+              if(hasReferenceTimeDimension == false){
+                //For observations, take the latest:
+                query.print("select max(%s) from %s",ogcDim->netCDFDimName.c_str(),tableName.c_str());
+                CDB::Store *maxStore = DB->queryToStore(query.c_str());
+                if(maxStore == NULL){
+                  setExceptionType(InvalidDimensionValue);
+                  CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
+                  CDBError("query failed"); return 1;
+                }
+                ogcDim->value.copy(maxStore->getRecord(0)->get(0));
+                delete maxStore;
+              }else{
+                //For models with a reference_time, select the nearest time to current system clock
+                
+                //For time:
+                if(dataSource->cfgLayer->Dimension[i]->value.equals("time")){
+                
+                  query.print("SELECT %s,abs(EXTRACT(EPOCH FROM (%s - now()))) as t from %s order by t asc limit 1",ogcDim->netCDFDimName.c_str(),ogcDim->netCDFDimName.c_str(),tableName.c_str());
+                  CDB::Store *maxStore = DB->queryToStore(query.c_str());
+                  if(maxStore == NULL){
+                    setExceptionType(InvalidDimensionValue);
+                    CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
+                    CDBError("query failed"); return 1;
+                  }
+                  ogcDim->value.copy(maxStore->getRecord(0)->get(0));
+                  
+                  delete maxStore;
+                  CDBDebug("%s %s",ogcDim->netCDFDimName.c_str(),ogcDim->value.c_str());
+                }else{
+                  //For other dimensions than time take the latest
+                  query.print("select max(%s) from %s",ogcDim->netCDFDimName.c_str(),tableName.c_str());
+                  CDB::Store *maxStore = DB->queryToStore(query.c_str());
+                  if(maxStore == NULL){
+                    setExceptionType(InvalidDimensionValue);
+                    CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
+                    CDBError("query failed"); return 1;
+                  }
+                  ogcDim->value.copy(maxStore->getRecord(0)->get(0));
+                  delete maxStore;
+                }
+              }
             }
           }
         }
@@ -802,7 +898,11 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
                     tableName.c_str());
         //Execute the query
         CDB::Store *maxStore = DB->queryToStore(query.c_str());
-        if(maxStore == NULL){CDBError("query failed");return 1;}
+        if(maxStore == NULL){
+          setExceptionType(InvalidDimensionValue);
+          CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
+          CDBError("query failed");return 1;
+        }
         ogcDim->value.copy(maxStore->getRecord(0)->get(0));
         delete maxStore;
       }
@@ -953,18 +1053,23 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
       store = DB->queryToStore(query.c_str(),true);
     }catch(int e){
       if((checkDataRestriction()&SHOW_QUERYINFO)==false)query.copy("hidden");
-      
+      setExceptionType(InvalidDimensionValue);
+      CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
       CDBDebug("Query failed with code %d (%s)",e,query.c_str());
       return 1;
     }
     
     if(store == NULL){
       if((checkDataRestriction()&SHOW_QUERYINFO)==false)query.copy("hidden");
+      setExceptionType(InvalidDimensionValue);
+      CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
       CDBError("No results for query: '%s'",query.c_str());
       return 2;
     }
     if(store->getSize() == 0){
       if((checkDataRestriction()&SHOW_QUERYINFO)==false)query.copy("hidden");
+      setExceptionType(InvalidDimensionValue);
+      CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
       CDBError("No results for query: '%s'",query.c_str());
       delete store;
 
@@ -1124,7 +1229,10 @@ int CRequest::process_all_layers(){
       // When there are no dims, we can get the filename from the config
       if(dataSources[j]->cfgLayer->Dimension.size()==0){
        
-        CDataReader::autoConfigureDimensions(dataSources[j]);
+        if(CDataReader::autoConfigureDimensions(dataSources[j])!=0){
+          CDBError("Unable to configure dimensions automatically");
+          return 1;
+        }
         
       }
       if(dataSources[j]->cfgLayer->Dimension.size()!=0){
@@ -1265,11 +1373,14 @@ int CRequest::process_all_layers(){
 
           if(srvParam->showDimensionsInImage){
             textY+=4;
-            for(size_t d=0;d<srvParam->requestDims.size();d++){
+            CDataSource *dataSource = dataSources[dataSourceToUse];
+            size_t nDims = dataSource->requiredDims.size();
+            
+            for(size_t d=0;d<nDims;d++){
               CT::string message;
               float fontSize=parseFloat(srvParam->cfg->WMS[0]->DimensionFont[0]->attr.size.c_str());
               textY+=int(fontSize*1.2);
-              message.print("%s: %s",srvParam->requestDims[d]->name.c_str(),srvParam->requestDims[d]->value.c_str());
+              message.print("%s: %s",dataSource->requiredDims[d]->name.c_str(),dataSource->requiredDims[d]->value.c_str());
               imageDataWriter.drawImage.drawText(6,textY,srvParam->cfg->WMS[0]->DimensionFont[0]->attr.location.c_str(),fontSize,0,message.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
               textY+=4;
             }
@@ -1370,6 +1481,13 @@ int CRequest::process_all_layers(){
           printf("%s",dumpString.c_str());
           reader.close();
 
+        }
+        
+        if(srvParam->requestType==REQUEST_WMS_GETREFERENCETIMES){
+          status = generateGetReferenceTimes(dataSources[j]);
+          if(status != 0){
+            throw(__LINE__);
+          }
         }
       }
       catch(int i){
@@ -1820,7 +1938,7 @@ int CRequest::process_querystring(){
       }
       if(value0Cap.equals("SHOWDIMS")){
         values[1].toLowerCaseSelf();
-        if(values[1].equals("true")){
+        if(!values[1].equals("false")){
           srvParam->showDimensionsInImage = true;
         }
       }
