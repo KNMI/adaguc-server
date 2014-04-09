@@ -400,6 +400,9 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
               #endif
               
               if(status==0){
+                #ifdef CDBFILESCANNER_DEBUG
+                CDBDebug("Looking for %s",dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+                #endif
                 //Check for the configured dimensions or scalar variables
                 //1 )Is this a scalar?
                 CDF::Variable *  dimVar = cdfObject->getVariableNE(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
