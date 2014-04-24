@@ -50,6 +50,8 @@
 #define RM_BARB        64
 #define RM_THIN        256
 #define RM_RGBA        512
+#define RM_VOLUME      1024
+
 
 
 

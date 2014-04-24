@@ -127,6 +127,7 @@ CImageDataWriter::RenderMethod CImageDataWriter::getRenderMethodFromString(CT::s
   if(renderMethodString->indexOf("barb"    )!=-1)renderMethod|=RM_BARB;
   if(renderMethodString->indexOf("thin")!=-1)renderMethod|=RM_THIN;
   if(renderMethodString->indexOf("rgba")!=-1)renderMethod|=RM_RGBA;
+  if(renderMethodString->indexOf("volume")!=-1)renderMethod|=RM_VOLUME;
 
   return renderMethod;
 }
@@ -144,6 +145,7 @@ void CImageDataWriter::getRenderMethodAsString(CT::string *renderMethodString, R
   if(renderMethod & RM_BARB)renderMethodString->concat("barb");
   if(renderMethod & RM_THIN)renderMethodString->concat("thin");
   if(renderMethod & RM_RGBA)renderMethodString->concat("rgba");
+  if(renderMethod & RM_VOLUME)renderMethodString->concat("volume");
   
 
 }
@@ -1889,7 +1891,7 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   * Use point renderer
   */
   //if(renderMethod==barb||renderMethod==vector||renderMethod==point){
-  if(renderMethod&RM_BARB||renderMethod&RM_VECTOR||renderMethod&RM_POINT){//||renderMethod==RM_NEAREST){
+  if(renderMethod&RM_BARB||renderMethod&RM_VECTOR||renderMethod&RM_POINT||renderMethod&RM_VOLUME){//||renderMethod==RM_NEAREST){
     if(dataSource->dataObject[0]->points.size()!=0){
       //CDBDebug("CImgRenderPoints()");
       
