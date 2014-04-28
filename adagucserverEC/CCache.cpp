@@ -235,7 +235,7 @@ int CCache::Lock::claim(const char *cacheDir, const char *identifier,bool enable
     CDBError("Already claimed! %s",claimedLockID.c_str());
     
   }else{
-    CT::string myid = "CCacheLock_";
+    CT::string myid = "lock_";
     myid.concat(identifier);
     claimedLockID = identifier;
     myid.replaceSelf(":",""); myid.replaceSelf("/",""); 

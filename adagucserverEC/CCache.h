@@ -37,10 +37,10 @@
  * 
  * Methods should be called in the following order:
  * 1) cache.check($cachefile)        : Initialization of cache system.
- * 2) cache.cacheIsAvailable()       :  Returns true if valid cachefile is available
+ * 2) cache.cacheIsAvailable()       :  Returns true if valid cachefile is available, cached data is available for usage
  * 3) cache.saveCacheFile()          :  Returns true if cachesystem is ready to save a cachefile 
  * 4) cache.getCacheFileNameToWrite(): Filename to write (same as $cachefile, but with _tmp appended)
- * 5) cache.releaseCacheFile()       : Temporary cache file is moved and ready for other processes.
+ * 5) cache.releaseCacheFile()       : Temporary cache file is moved by CCCACHE and is immediately available for waiting other processes.
  */
 
 class CCache{
