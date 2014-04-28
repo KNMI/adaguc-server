@@ -1486,7 +1486,7 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
   }
   
   CCache::Lock lock;
-  CT::string identifier = "autoConfigureDimensions";  identifier.concat(dataSource->cfgLayer->FilePath[0]->value.c_str());  identifier.concat("/");  identifier.concat(dataSource->cfgLayer->FilePath[0]->attr.filter.c_str());  
+  CT::string identifier = "ad";  identifier.concat(dataSource->cfgLayer->FilePath[0]->value.c_str());  identifier.concat("/");  identifier.concat(dataSource->cfgLayer->FilePath[0]->attr.filter.c_str());  
   CT::string cacheDirectory = "";
   dataSource->srvParams->getCacheDirectory(&cacheDirectory);
   if(cacheDirectory.length()>0){
