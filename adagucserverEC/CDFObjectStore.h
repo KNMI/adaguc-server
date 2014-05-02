@@ -58,7 +58,7 @@ private:
   
   
   CDFObject* getCDFObject(CDataSource *dataSource,CServerParams *srvParams,const char *fileName);
-  
+  CDFObject *deleteCDFObject(CDFObject **cdfObject);
   DEF_ERRORFUNCTION();
 public:
   ~CDFObjectStore(){
@@ -81,19 +81,13 @@ public:
   
   static CT::StackList<CT::string> getListOfVisualizableVariables(CDFObject *cdfObject);
   
-  CDFObject *deleteCDFObject(CDFObject **cdfObject);
+  
   
   /**
    * Clean the CDFObject store and throw away all readers and objects
    */
   void clear();
 };
-/*extern CDFObjectStore cdfObjectStore;
-CDFObjectStore cdfObjectStore;
-CDFReader *getCDFReader(CDataSource *dataSource);
-CDFObject *getCDFObject(CDataSource *dataSource,const char *fileName);
-CDFObjectStore *getCDFObjectStore();
-CDFObject *deleteCDFObject(CDFObject **cdfObject);
-void clear();*/
+
 
 #endif

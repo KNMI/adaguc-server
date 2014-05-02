@@ -35,6 +35,7 @@ int CRequest::runRequest(){
   
   int status=process_querystring();
   CDFObjectStore::getCDFObjectStore()->clear();
+  CDFStore::clear();
   ProjectionStore::getProjectionStore()->clear();
   return status;
 }
@@ -2290,7 +2291,7 @@ int CRequest::process_querystring(){
       #ifdef MEASURETIME
       StopWatch_Stop("Opening file");
       #endif
-      CDBDebug("Opening %s",srvParam->internalAutoResourceLocation.c_str());
+      //CDBDebug("Opening %s",srvParam->internalAutoResourceLocation.c_str());
       CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(srvParam,srvParam->internalAutoResourceLocation.c_str());
       //int status=cdfObject->open(srvParam->internalAutoResourceLocation.c_str());
       if(cdfObject==NULL){
@@ -2813,6 +2814,7 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan){
   }
   
   CDFObjectStore::getCDFObjectStore()->clear();
+  CDFStore::clear();
   return errorHasOccured;
 }
 

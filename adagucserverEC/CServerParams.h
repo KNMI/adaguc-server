@@ -180,7 +180,7 @@ class CServerParams{
      * 
      * @param cacheFileName The CT::string to be filled with the filename
      */
-    void getCacheDirectory(CT::string *cacheFileName);
+    void _getCacheDirectory(CT::string *cacheFileName);
 
     /**
      * Function which checks whether remote resources should be cached or not

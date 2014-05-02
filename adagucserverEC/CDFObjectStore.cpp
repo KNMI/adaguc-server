@@ -131,11 +131,7 @@ CDFObject *CDFObjectStore::getCDFObjectHeader(CServerParams *srvParams,const cha
       CDBError("srvParams == NULL");
       return NULL;
     }
-    #ifdef CDFOBJECTSTORE_DEBUG
-    CT::string cacheName;
-    srvParams->getCacheDirectory(&cacheName);
-    CDBDebug("Opening header %s with cachedir %s",fileName,cacheName.c_str());
-    #endif
+
     return getCDFObject(NULL,srvParams,fileName);
 }
 
@@ -146,22 +142,14 @@ CDFObject *CDFObjectStore::getCDFObjectHeader(CServerParams *srvParams,const cha
 * @param fileName The filename to read.
 */
 CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,const char *fileName){
-#ifdef CDFOBJECTSTORE_DEBUG
-  CDBDebug("Opening data %s",fileName);
-#endif
   return getCDFObject(dataSource,NULL,fileName);
 }
   
 
 CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *srvParams,const char *fileName){
-  
   CT::string uniqueIDForFile = fileName;
   
-   //Too much trouble, so swicth caching of headers of.
-  /*if(srvParams!=NULL){
-    uniqueIDForFile.concat("_header_");
-  }*/
-  
+
   for(size_t j=0;j<fileNames.size();j++){
     if(fileNames[j]->equals(uniqueIDForFile.c_str())){
       #ifdef CDFOBJECTSTORE_DEBUG                          
@@ -185,65 +173,18 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *s
   
   //Open header
   
-  CT::string cacheName;
-  bool hasCacheLocation = false;
+  
 
-  if(srvParams!=NULL){
-    srvParams->getCacheDirectory(&cacheName);
-    if(cacheName.length()>0)hasCacheLocation = true;
-    //CDBDebug("cacheName = %s",cacheName.c_str());
-    //Do not build a cache of cachefiles
-    if(cacheName.indexOf(fileName)!=-1){
-      CDBDebug("This is already a cache file: %s",fileName);
-      hasCacheLocation = false;
-    }
-    
-    if(!srvParams->isAutoResourceCacheEnabled()){
-      hasCacheLocation = false;
-    }
-    
-  }
   
   
-  CCache cache;
-  
-  //Too much trouble, so swicth caching of headers of.
-  hasCacheLocation = false;
-  
-  
-  if(hasCacheLocation){
-    CT::string validFileName(fileName);
-    validFileName.replaceSelf(":",""); validFileName.replaceSelf("/",""); 
-    cacheName.concat("/");
-    //CDBDebug("Making public directory %s",cacheName.c_str());
-    CDirReader::makePublicDirectory(cacheName.c_str());
-    cacheName.concat(&validFileName);cacheName.concat("_ncheader.nc");
-    
- 
-    
-    if(srvParams->isAutoResourceCacheEnabled()){
-      cache.checkCacheSystemReady(cacheName.c_str());
-    }
-    
-    if(cache.saveCacheFile()){
-      cache.claimCacheFile();
-    }
-  }
 
   
   const char *fileLocationToOpen = fileName;
-
-  if(cache.cacheIsAvailable()){
-    fileLocationToOpen = cacheName.c_str();
-    if(EXTRACT_HDF_NC_VERBOSE){
-      CDBDebug("Opening from cache: %s",fileLocationToOpen );
-    }
-  }else{
-    fileLocationToOpen = fileName;
-    if(EXTRACT_HDF_NC_VERBOSE){
-      CDBDebug("Opening from file: %s",fileLocationToOpen );
-    }
+ 
+  if(EXTRACT_HDF_NC_VERBOSE){
+    CDBDebug("Opening from file: %s",fileLocationToOpen );
   }
+  
   
   
    //CDFObject not found: Create one
@@ -264,10 +205,24 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *s
     throw(1);
   }
   
- // CDBDebug("opening");
+ 
+  CDFCache* cdfCache = NULL;
+
+  if(srvParams!=NULL){
+ 
+    CT::string cacheDir = srvParams->cfg->TempDir[0]->attr.value.c_str();
+    //srvParams->getCacheDirectory(&cacheDir);
+    if(cacheDir.length()>0){
+      if(srvParams->isAutoResourceCacheEnabled()){
+        cdfCache = new CDFCache(cacheDir);
+        cdfReader->cdfCache = cdfCache;
+      }
+    }
+  }
+  
+  
   cdfObject->attachCDFReader(cdfReader);
   
- 
   int status = cdfObject->open(fileLocationToOpen);
    //CDBDebug("opened");
   if(status!=0){
@@ -275,40 +230,15 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *s
     CDBError("Unable to open file '%s'",fileLocationToOpen);
     delete cdfObject;
     delete cdfReader;
+    delete cdfCache;
     return NULL;
   }
   
  
   
-  if(cache.saveCacheFile()){
-    /*int status = cache.claimCacheFile();
-    if(status != 0){
-      CDBError("Unable to claim Cachefile: %d %s",status,cache.getCacheFileNameToWrite());
-    }
-    if(status == 0)*/
-    {
-      //CDBDebug("Start saving cache %d",cache.saveCacheFile());
-      //Save cache
-      
-      try{
-        //TODO disable compression
-        if(EXTRACT_HDF_NC_VERBOSE){
-          CDBDebug("Saving cache file: %s",cache.getCacheFileNameToWrite() );
-        }
-        CDFNetCDFWriter netCDFWriter(cdfObject);
-        netCDFWriter.disableVariableWrite();
-        netCDFWriter.setNetCDFMode(4);
-        netCDFWriter.write(cache.getCacheFileNameToWrite());
-      }catch(int e){
-        CDBError("Exception %d in writing cache file",e);
-        cache.removeClaimedCachefile();
-        return NULL;
-      }
-      cache.releaseCacheFile();
-    }
-  }
-   
   
+   
+  //CDBDebug("PUSHING %s",uniqueIDForFile.c_str());
   //Push everything into the store
   fileNames.push_back(new CT::string(uniqueIDForFile.c_str()));
   cdfObjects.push_back(cdfObject);
@@ -333,11 +263,13 @@ CDFObjectStore *CDFObjectStore::getCDFObjectStore(){return &cdfObjectStore;};
 
 
 CDFObject *CDFObjectStore::deleteCDFObject(CDFObject **cdfObject){
+  CDBDebug("Deleting CDFObject");
   for(size_t j=0;j<cdfObjects.size();j++){
     if(cdfObjects[j]==(*cdfObject)){
       //CDBDebug("Closing %s",fileNames[j]->c_str());
       delete cdfObjects[j];cdfObjects[j]=NULL;(*cdfObject)=NULL;
       delete fileNames[j]; fileNames[j] = NULL;
+      delete cdfReaders[j]->cdfCache;cdfReaders[j]->cdfCache = NULL;
       delete cdfReaders[j];cdfReaders[j] = NULL;
       cdfReaders.erase(cdfReaders.begin()+j);
       cdfObjects.erase(cdfObjects.begin()+j);
@@ -356,6 +288,7 @@ void CDFObjectStore::clear(){
   for(size_t j=0;j<fileNames.size();j++){
     delete fileNames[j]; fileNames[j] = NULL;
     delete cdfObjects[j];cdfObjects[j] = NULL;
+    delete cdfReaders[j]->cdfCache;cdfReaders[j]->cdfCache = NULL;
     delete cdfReaders[j];cdfReaders[j] = NULL;
   }
   fileNames.clear();
