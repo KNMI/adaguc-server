@@ -1005,7 +1005,7 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
   #ifdef CIMAGEDATAWRITER_DEBUG    
   CDBDebug("Server Styles=%s",srvParam->Styles.c_str());
   #endif
-  CDBDebug("Server Styles=%s",srvParam->Styles.c_str());
+  //TODO CHECK CDBDebug("Server Styles=%s",srvParam->Styles.c_str());
   CT::StackList<CT::string> layerstyles = styles.splitToStack(",");
   int layerIndex=dataSource->datasourceIndex;
   if(layerstyles.size()!=0){

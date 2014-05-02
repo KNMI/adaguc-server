@@ -127,7 +127,7 @@ CDBDebug("getFileNameForLayer");
       CDB::Store *values = DB->queryToStore(query.c_str());
      
       if(values==NULL){
-        CDBError("No files found for %s",myWMSLayer->dataSource->layerName.c_str());
+        CDBError("No files found for %s and query %s",myWMSLayer->dataSource->layerName.c_str(),query.c_str());
         databaseError=true;
       }
       if(databaseError == false){

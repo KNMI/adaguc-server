@@ -23,29 +23,53 @@
  * 
  ******************************************************************************/
 
-#ifndef CCDFREADER_H
-#define CCDFREADER_H
+#ifndef CCDFCACHE_H
+#define CCDFCACHE_H
 
-#include "CCDFDataModel.h"
-#include "CCDFVariable.h"
+#include "CCache.h"
+
+#include <stdio.h>
+#include <vector>
+#include <iostream>
+#include "CDebugger.h"
+#include "CTypes.h"
+#include <sys/stat.h>
+#include "CDirReader.h"
 #include "CCDFObject.h"
-#include "CCDFCache.h"
+//#define CCDFCACHE_DEBUG
 
-  class CDFReader{
-    public:
-      CT::string fileName;
-      CDFReader(){cdfObject = NULL;cdfCache = NULL;}
-      virtual ~CDFReader(){}
-      CDFObject *cdfObject;
-      CDFCache * cdfCache;
-      virtual int open(const char *fileName) = 0;
-      virtual int close() = 0;
-      
-      //These two function may only be used by the variable class itself (TODO create friend class, protected?).
-      virtual int _readVariableData(CDF::Variable *var, CDFType type) = 0;
-      //Allocates and reads the variable data
-      virtual int _readVariableData(CDF::Variable *var,CDFType type,size_t *start,size_t *count,ptrdiff_t  *stride) = 0;
-  };
+
+class CDFCache{
+private:
+  CCache* cache;
+  CT::string cacheDir;
+  
+  CCache* getCCache(const char * directory, const char *fileName);
+  
+  int writeBinaryData(const char * filename,void **data,CDFType type, size_t varSize);
+  int readBinaryData(const char * filename,void **data, CDFType type, size_t &varSize);
+public:
+  DEF_ERRORFUNCTION();
+   
+  CDFCache(){
+    cache = NULL;
+  }
+  CDFCache(CT::string cacheDir){
+    //CDBDebug("DIRECTORY %s",cacheDir.c_str());
+    this->cacheDir = cacheDir;
+    cache = NULL;
+  }
+  ~CDFCache(){
+    delete cache;
+  }
+  // Saves or returns size and data.
+  int readVariableData(CDF::Variable *var, CDFType type,size_t *start,size_t *count,ptrdiff_t *stride, bool readOrWrite);
+  
+  // Saves or returns the netcdf header
+  int open(const char *fileName,CDFObject *cdfObject,bool readOrWrite);
+};
 
 
 #endif
+
+
