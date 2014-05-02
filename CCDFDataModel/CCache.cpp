@@ -149,11 +149,11 @@ void CCache::checkCacheSystemReady(const char *directory, const char *szfileName
   CT::string myid = "";
   myid.concat(szfileName);
   myid.replaceSelf(":","_");
-  myid.replaceSelf("/","_"); 
+  //myid.replaceSelf("/","_"); 
   
   int maxlength = CCACHE_MAXFILELENGTH;
   size_t nrStrings = (myid.length()/maxlength)+1;
-  CT::string myidinparts = "cache";
+  CT::string myidinparts = "adaguc/cache";
   for(size_t j=0;j<nrStrings;j++){
     if(myidinparts.length()>0){
       myidinparts+="/";
@@ -386,11 +386,11 @@ int CCache::Lock::claim(const char *cacheDir, const char *identifier,bool enable
     CT::string myid = "";
     myid.concat(identifier);
     myid.replaceSelf(":","_");
-    myid.replaceSelf("/","_"); 
+    //myid.replaceSelf("/","_"); 
     
     int maxlength = CCACHE_MAXFILELENGTH;
     size_t nrStrings = (myid.length()/maxlength)+1;
-    CT::string myidinparts = "locks";
+    CT::string myidinparts = "adaguc/locks";
     for(size_t j=0;j<nrStrings;j++){
       if(myidinparts.length()>0){
         myidinparts+="/";
