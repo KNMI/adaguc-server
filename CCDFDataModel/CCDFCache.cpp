@@ -142,7 +142,7 @@ int CDFCache::writeBinaryData(const char * filename,void **data, CDFType type, s
 
 
 int CDFCache::open(const char *fileName,CDFObject *cdfObject,bool readOrWrite){
-  CT::string key = "header_";
+  CT::string key = "headers/";
   key.concat(fileName);
   CCache * cache = getCCache(cacheDir.c_str(),key.c_str());
  
@@ -219,7 +219,7 @@ int CDFCache::open(const char *fileName,CDFObject *cdfObject,bool readOrWrite){
 
 int CDFCache::readVariableData(CDF::Variable *var, CDFType type,size_t *start,size_t *count,ptrdiff_t *stride,bool readOrWrite){
   
-  CT::string key = "variables";
+  CT::string key = "variables/";
   
   bool hasFileName = false;
   CDFObject * cdfObject = (CDFObject*)var->getCDFObjectPointer(start,count);
