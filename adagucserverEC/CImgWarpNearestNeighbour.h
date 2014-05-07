@@ -43,174 +43,7 @@ public:
   }
 };
 
-/**
- *  This tile rendering class stores calculated results in a byte field. 
- *  When the same source pixel of the source dataset is requested again, its values can be retrieved from the bytecache.
- *  This is slow for very large datasets, because the bytecachefield needs to have the same dimensions as the source dataset.
- *  This one is especially usefull on int, float and double types of datasources.
- */
-/*class CDrawTileObjByteCache:public CDrawTileObjInterface{
-private:
-  DEF_ERRORFUNCTION();
-public:
-  float x_div,y_div;
-  float dfSourceBBOX[4],dfImageBBOX[4];
-  float dfNodataValue;
-  float legendLowerRange;
-  float legendUpperRange;
-  bool legendValueRange;
-  bool hasNodataValue;
-  int dWidth,dHeight;
-  float legendLog,legendScale,legendOffset;
-  unsigned char *buf;
-  CDataSource * dataSource;
-  CDrawImage *drawImage;
-  void init(CDataSource *dataSource,CDrawImage *drawImage,int tileWidth,int tileHeight){
-    this->dataSource = dataSource;
-    this->drawImage = drawImage;
-    x_div=tileWidth;y_div=tileHeight;
-    for(int k=0;k<4;k++){
-      dfSourceBBOX[k]=dataSource->dfBBOX[k];
-      dfImageBBOX[k]=dataSource->dfBBOX[k];
-    }
-    
-    //Look whether BBOX was swapped in y dir
-    if(dataSource->dfBBOX[3]<dataSource->dfBBOX[1]){
-      dfSourceBBOX[1]=dataSource->dfBBOX[3];
-      dfSourceBBOX[3]=dataSource->dfBBOX[1];
-    }
-    //Look whether BBOX was swapped in x dir
-    if(dataSource->dfBBOX[2]<dataSource->dfBBOX[0]){
-      dfSourceBBOX[0]=dataSource->dfBBOX[2];
-      dfSourceBBOX[2]=dataSource->dfBBOX[0];
-    }
-    
-    dfNodataValue    = dataSource->dataObject[0]->dfNodataValue ;
-    legendValueRange = dataSource->legendValueRange;
-    legendLowerRange = dataSource->legendLowerRange;
-    legendUpperRange = dataSource->legendUpperRange;
-    hasNodataValue   = dataSource->dataObject[0]->hasNodataValue;
-    dWidth = dataSource->dWidth;
-    dHeight = dataSource->dHeight;
-    legendLog = dataSource->legendLog;
-    legendScale = dataSource->legendScale;
-    legendOffset = dataSource->legendOffset;
-    // Allocate the Byte Buffer
-    size_t imageSize=dataSource->dWidth*dataSource->dHeight;
-    allocateArray(&buf,imageSize);
-    memset ( buf, 255, imageSize);
-  }
-  CDrawTileObjByteCache(){
-    buf=NULL;
-  }
-  ~CDrawTileObjByteCache(){
-    deleteArray(&buf);
-  }
-  int drawTile(float *x_corners,float *y_corners,int &dDestX,int &dDestY){
-    CDFType dataType=dataSource->dataObject[0]->cdfVariable->getType();
-    void *data=dataSource->dataObject[0]->cdfVariable->data;
-    switch(dataType){
-      case CDF_CHAR  : return myDrawRawTile((char*)data,x_corners,y_corners,dDestX,dDestY);break;
-      case CDF_BYTE  : return myDrawRawTile((char*)data,x_corners,y_corners,dDestX,dDestY);break;
-      case CDF_UBYTE : return myDrawRawTile((unsigned char*)data,x_corners,y_corners,dDestX,dDestY);break;
-      case CDF_SHORT : return myDrawRawTile((short*)data,x_corners,y_corners,dDestX,dDestY);break;
-      case CDF_USHORT: return myDrawRawTile((ushort*)data,x_corners,y_corners,dDestX,dDestY);break;
-      case CDF_INT   : return myDrawRawTile((int*)data,x_corners,y_corners,dDestX,dDestY);break;
-      case CDF_UINT  : return myDrawRawTile((uint*)data,x_corners,y_corners,dDestX,dDestY);break;
-      case CDF_FLOAT : return myDrawRawTile((float*)data,x_corners,y_corners,dDestX,dDestY);break;
-      case CDF_DOUBLE: return myDrawRawTile((double*)data,x_corners,y_corners,dDestX,dDestY);break;
-    }
-    return 1;
-  }
-  template <class T>
-  int myDrawRawTile(T*data,float *x_corners,float *y_corners,int &dDestX,int &dDestY){
-    float sample_sy,sample_sx;
-    float line_dx1,line_dy1,line_dx2,line_dy2;
-    float rcx_1,rcy_1,rcx_2,rcy_2,rcx_3,rcy_3;
-    int x,y;
-    int srcpixel_x,srcpixel_y;
-    int dstpixel_x,dstpixel_y;
-    int k;
-    rcx_1= (x_corners[0] - x_corners[3])/x_div;
-    rcy_1= (y_corners[0] - y_corners[3])/x_div;
-    rcx_2= (x_corners[1] - x_corners[2])/x_div;
-    rcy_2= (y_corners[1] - y_corners[2])/x_div;
-    
-    for(k=0;k<4;k++)
-      if(fabs(x_corners[k]-x_corners[0])>=fabs(dfSourceBBOX[2]-dfSourceBBOX[0]))break;
-      if(k==4){
-        for(k=0;k<4;k++)
-          if(x_corners[k]>dfSourceBBOX[0]&&x_corners[k]<dfSourceBBOX[2])break;
-          if(k==4){
-            return __LINE__;
-          }
-      }
-      for(k=0;k<4;k++)
-        if(fabs(y_corners[k]-y_corners[0])>=fabs(dfSourceBBOX[3]-dfSourceBBOX[1]))break;
-        if(k==4){
-          for(k=0;k<4;k++)
-            if(y_corners[k]>dfSourceBBOX[1]&&y_corners[k]<dfSourceBBOX[3])break;
-            if(k==4)return __LINE__;
-        }
-        line_dx1= x_corners[3];
-      line_dx2= x_corners[2];
-      line_dy1= y_corners[3];
-      line_dy2= y_corners[2];
-      bool isNodata=false;
-      float val;
-      size_t imgpointer;
-      for(x=0;x<=x_div;x++){
-        line_dx1+=rcx_1;line_dx2+=rcx_2;line_dy1+=rcy_1;line_dy2+=rcy_2;
-        rcx_3= (line_dx2 -line_dx1)/y_div;
-        rcy_3= (line_dy2 -line_dy1)/y_div;
-        dstpixel_x=int(x)+dDestX;
-        for(y=0;y<=y_div;y=y+1){
-          dstpixel_y=int(y)+dDestY;
-          sample_sx=line_dx1+rcx_3*y;
-          if(sample_sx>=dfSourceBBOX[0]&&sample_sx<dfSourceBBOX[2]){
-            sample_sy=line_dy1+rcy_3*y;
-            if(sample_sy>=dfSourceBBOX[1]&&sample_sy<dfSourceBBOX[3]){
-              srcpixel_x=int(((sample_sx-dfImageBBOX[0])/(dfImageBBOX[2]-dfImageBBOX[0]))*dWidth);
-              if(srcpixel_x>=0&&srcpixel_x<dWidth){
-                srcpixel_y=int(((sample_sy-dfImageBBOX[1])/(dfImageBBOX[3]-dfImageBBOX[1]))*dHeight);
-                if(srcpixel_y>=0&&srcpixel_y<dHeight){
-                  imgpointer=srcpixel_x+(dHeight-1-srcpixel_y)*dWidth;
-                  //254 Means nodata
-                  //255 Means not been there yet.
-                  if(buf[imgpointer]!=254){
-                    if(buf[imgpointer]==255){
-                      val=data[imgpointer];
-                      isNodata=false;
-                      //if(x==10&&y==10)CDBDebug("val ==(T)dfNodataValue %f==%f  (%d) %d",val,dfNodataValue,(val==dfNodataValue),hasNodataValue);
-                      if(hasNodataValue){if(val==dfNodataValue)isNodata=true;else if(!(val==val))isNodata=true;}
-                      if(!isNodata)if(legendValueRange)if(val<legendLowerRange||val>legendUpperRange)isNodata=true;
-                      if(!isNodata){
-                        if(legendLog!=0){
-                          if(val==0)val=1e-10;
-                          val=log10(val)/log10(legendLog);
-                        }
-                        val*=legendScale;
-                        val+=legendOffset;
-                        if(val>=239)val=239;else if(val<0)val=0;
-                        buf[imgpointer]=(unsigned char)val;
-                        //drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,drawImage->colors[buf[imgpointer]]);
-                        drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,buf[imgpointer]);
-                      }else buf[imgpointer]=254;
-                    }else{
-                      //drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,drawImage->colors[buf[imgpointer]]);
-                      drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,buf[imgpointer]);
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-      return 0;
-  }
-};
-*/
+
 /**
  *  This tile just runs over the datasource field, and calculates the destination pixel color over and over again when it is requested twice.
  *  This class is very fast for large datasets, with low zoom levels (zoomed out completely)
@@ -425,6 +258,10 @@ public:
 class CImgWarpNearestNeighbour:public CImageWarperRenderInterface{
 private:
   DEF_ERRORFUNCTION();
+  
+  
+  static void drawTriangle(CDrawImage *drawImage, int *xP,int *yP, int &value);
+  
   int set(const char *settings){
     return 0;
   }
@@ -541,13 +378,269 @@ private:
     return 0;
   }
   
+  
+  template <class T>
+  void _render(CImageWarper *warper,CDataSource *dataSource,CDrawImage *drawImage){
+    
+    int stride = 1;
+    
+    int dataWidth = dataSource->dWidth/stride;
+    int dataHeight = dataSource->dHeight/stride;
+    int imageWidth = drawImage->Geo->dWidth;
+    int imageHeight = drawImage->Geo->dHeight;
+    bool destNeedsDegreeRadianConversion = false;
+    bool sourceNeedsDegreeRadianConversion = false;
+    
+      //Reproj back and forth datasource boundingbox
+    double y1=dataSource->dfBBOX[1];
+    double y2=dataSource->dfBBOX[3];
+    double x1=dataSource->dfBBOX[0];
+    double x2=dataSource->dfBBOX[2];
+  
+    if(y2<y1){
+        if(y1>-360&&y2<360&&x1>-720&&x2<720){
+          if(dataSource->srvParams->isLonLatProjection(&dataSource->nativeProj4)==false){
+            double checkBBOX[4];
+            for(int j=0;j<4;j++)checkBBOX[j]=dataSource->dfBBOX[j];
+            
+            //CDBDebug("Current BBOX:  %f %f %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[1],dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
+            bool hasError = false;
+            if(warper->reprojpoint_inv(checkBBOX[0],checkBBOX[1])!=0)hasError=true;  
+            if(warper->reprojpoint(checkBBOX[0],checkBBOX[1])!=0)hasError=true;  
+            
+            if(warper->reprojpoint_inv(checkBBOX[2],checkBBOX[3])!=0)hasError=true;  
+            if(warper->reprojpoint(checkBBOX[2],checkBBOX[3])!=0)hasError=true;  
+            
+            if(hasError == false){
+              for(int j=0;j<4;j++)dataSource->dfBBOX[j] = checkBBOX[j];
+            }
+            
+            //checkBBOX
+            //CDBDebug("New BBOX:  %f %f %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[1],dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
+          }
+      }
+    }
+//     
+    double dfSourceExtW=(dataSource->dfBBOX[2]-dataSource->dfBBOX[0]);
+    double dfSourceExtH=(dataSource->dfBBOX[1]-dataSource->dfBBOX[3]);
+    double dfSourceW = double(dataWidth*stride);
+    double dfSourceH = double(dataHeight*stride);
+    double dfSourcedExtW=dfSourceExtW/dfSourceW;
+    double dfSourcedExtH=dfSourceExtH/dfSourceH;
+    double dfSourceOrigX=dataSource->dfBBOX[0];
+    double dfSourceOrigY=dataSource->dfBBOX[3];
+    
+    double dfDestExtW = drawImage->Geo->dfBBOX[2]-drawImage->Geo->dfBBOX[0];
+    double dfDestExtH = drawImage->Geo->dfBBOX[1]-drawImage->Geo->dfBBOX[3];
+    double dfDestOrigX = drawImage->Geo->dfBBOX[0];
+    double dfDestOrigY = drawImage->Geo->dfBBOX[3];
+
+    
+    double multiDestX = double(imageWidth+1)/dfDestExtW;
+    double multiDestY = double(imageHeight+1)/dfDestExtH;
+    
+    size_t dataSize = (dataWidth+1) * (dataHeight+1);
+
+    
+    CT::string destinationCRS;
+    warper->decodeCRS(&destinationCRS,&drawImage->Geo->CRS);
+    if(destinationCRS.indexOf("longlat")>=0){
+      destNeedsDegreeRadianConversion = true;
+    }
+    if(dataSource->nativeProj4.indexOf("longlat")>=0){
+      sourceNeedsDegreeRadianConversion = true;
+    }
+    
+    
+    CDBDebug("SRC: %d %s",sourceNeedsDegreeRadianConversion,dataSource->nativeProj4.c_str());
+    CDBDebug("DST: %d %s",destNeedsDegreeRadianConversion,destinationCRS.c_str());
+    
+    double *px = new double[dataSize];
+    double *py = new double[dataSize];
+    char *skip = new char[dataSize];
+    
+    CDBDebug("(%f,%f)  %f %f",dfSourceOrigX,dfSourceOrigY,dfSourcedExtW,dfSourcedExtH);
+    
+    
+    
+    for(int y=0;y<dataHeight+1;y++){
+      for(int x=0;x<dataWidth+1;x++){
+        size_t p = x+y*(dataWidth+1);
+        px[p] =dfSourcedExtW*double(x*stride)+dfSourceOrigX;
+        py[p] =dfSourcedExtH*double(y*stride)+dfSourceOrigY;
+        skip[p] = false;
+      }
+    }
+    
+    if(warper->isProjectionRequired()){
+      
+      if(sourceNeedsDegreeRadianConversion){
+        for(size_t j=0;j<dataSize;j++){
+          px[j]*=DEG_TO_RAD;
+          py[j]*=DEG_TO_RAD;
+        }
+      }
+      
+      for(size_t j=0;j<dataSize;j++){if(j<10){CDBDebug("%f %f",px[j],py[j]);}}
+        
+      if(pj_transform(warper->sourcepj,warper->destpj, dataSize,0,px,py,NULL)){
+        CDBDebug("Unable to do pj_transform");
+      }
+
+      CDBDebug("--");
+
+      if(destNeedsDegreeRadianConversion){
+        for(size_t j=0;j<dataSize;j++){
+          if(j<10){CDBDebug("%f %f",px[j],py[j]);}
+          px[j]/=DEG_TO_RAD;
+          py[j]/=DEG_TO_RAD;
+        }
+      }
+    }
+
+    CDBDebug("--");
+    for(size_t j=0;j<dataSize;j++){
+      if(px[j]>-DBL_MAX&&px[j]<DBL_MAX){
+        px[j]-=dfDestOrigX;
+        py[j]-=dfDestOrigY;
+        px[j]*=multiDestX;
+        py[j]*=multiDestY;
+      }else{
+        skip[j]=true;        
+      }
+    }
+    CDBDebug("--");
+    for(size_t j=0;j<dataSize;j++){if(j<10){CDBDebug("%f %f",px[j],py[j]);}}
+    
+
+
+
+    
+    double avgDX = 0;
+    //double avgDY = 0;
+    
+    double dfNodataValue    = dataSource->dataObject[0]->dfNodataValue ;
+    double legendValueRange = dataSource->legendValueRange;
+    double legendLowerRange = dataSource->legendLowerRange;
+    double legendUpperRange = dataSource->legendUpperRange;
+    bool hasNodataValue   = dataSource->dataObject[0]->hasNodataValue;
+    float nodataValue = (float)dfNodataValue;
+    float legendLog = dataSource->legendLog;
+    float legendLogAsLog;
+    if(legendLog>0){
+      legendLogAsLog = log10(legendLog);
+    }else{
+      legendLogAsLog = 0;
+    }
+    float legendScale = dataSource->legendScale;
+    float legendOffset = dataSource->legendOffset;
+    
+    
+    
+    T *data=(T*)dataSource->dataObject[0]->cdfVariable->data;
+    for(int y=0;y<dataHeight;y++){
+      for(int x=0;x<dataWidth;x++){
+        T val= data[x*stride+(y*stride)*(dataWidth*stride)];
+        bool isNodata=false;
+        if(hasNodataValue){if(val==nodataValue)isNodata=true;else if(!(val==val))isNodata=true;}
+        if(!isNodata)if(legendValueRange)if(val<legendLowerRange||val>legendUpperRange)isNodata=true;
+        if(!isNodata){
+          if(legendLog!=0){
+            if(val>0){
+              val=(T)(log10(val)/legendLogAsLog);
+            }else val=(T)(-legendOffset);
+          }
+          int pcolorind=(int)(val*legendScale+legendOffset);
+          //val+=legendOffset;
+          if(pcolorind>=239)pcolorind=239;else if(pcolorind<=0)pcolorind=0;
+
+          size_t p=x+y*(dataWidth+1);
+          if(skip[p]==false&&skip[p+1]==false&&skip[p+dataWidth+1]==false&&skip[p+dataWidth+2]==false){
+            double px1 = px[p];
+            double px2 = px[p+1];
+            double px3 = px[p+dataWidth+2];
+            double px4 = px[p+dataWidth+1];
+
+            double py1 = py[p];
+            double py2 = py[p+1];
+            double py3 = py[p+dataWidth+2];
+            double py4 = py[p+dataWidth+1];
+
+
+            double mX = (px1+px2+px3+px4)/4;
+            double mY = (py1+py2+py3+py4)/4;
+            int xP[3];
+            int yP[3];
+            xP[0] = px1;
+            xP[1] = px2;
+            xP[2] = mX;
+
+            yP[0] = py1;
+            yP[1] = py2;
+            yP[2] = mY;
+            
+            bool doDraw = true;
+            if(x==0){
+              avgDX = fabs(xP[1]-xP[0]);
+            }
+  //           if(y==0){
+  //             avgDY = fabs(yP[1]-yP[0]);
+  //           }
+            if(x==dataWidth-1){
+              double newDX = fabs(xP[1]-xP[0]);
+              if(newDX>avgDX*4){
+                doDraw = false;
+              }
+            }
+  //           if(y==dataHeight-1){
+  //             double newDY = fabs(yP[1]-yP[0]);
+  //             if(newDY>avgDY*5){
+  //               doDraw = false;
+  //             }
+  //           }
+            drawImage->setPixelIndexed(mX,mY,pcolorind);
+            if(doDraw){
+              
+              drawTriangle(drawImage, xP,yP, pcolorind);
+
+              xP[0] = px3;
+              yP[0] = py3;
+              drawTriangle(drawImage, xP,yP, pcolorind);
+
+              xP[1]=px4;
+              yP[1]=py4;
+              drawTriangle(drawImage, xP,yP, pcolorind);
+
+              xP[0] = px1;
+              yP[0] = py1;
+              drawTriangle(drawImage, xP,yP, pcolorind);
+            }
+          }
+        }
+      }
+    }
+    
+    delete[] px;
+    delete[] py;
+    delete[] skip;
+  }
   //Setup projection and all other settings for the tiles to draw
   void render(CImageWarper *warper,CDataSource *dataSource,CDrawImage *drawImage){
-    /*for(int y=0;y<drawImage->Geo->dHeight;y++){
-      for(int x=0;x<drawImage->Geo->dWidth;x++){
-        drawImage->setPixelIndexed(x,y,10);
+    if(dataSource->dWidth*dataSource->dHeight<1000*1000||warper->isProjectionRequired()==false){
+      CDFType dataType=dataSource->dataObject[0]->cdfVariable->getType();
+        switch(dataType){
+        case CDF_CHAR  : return _render<char>(warper,dataSource,drawImage);break;
+        case CDF_BYTE  : return _render<char>(warper,dataSource,drawImage);break;
+        case CDF_UBYTE : return _render<unsigned char>(warper,dataSource,drawImage);break;
+        case CDF_SHORT : return _render<short>(warper,dataSource,drawImage);break;
+        case CDF_USHORT: return _render<ushort>(warper,dataSource,drawImage);break;
+        case CDF_INT   : return _render<int>(warper,dataSource,drawImage);break;
+        case CDF_UINT  : return _render<uint>(warper,dataSource,drawImage);break;
+        case CDF_FLOAT : return _render<float>(warper,dataSource,drawImage);break;
+        case CDF_DOUBLE: return _render<double>(warper,dataSource,drawImage);break;
       }
-    }*/
+      return;
+    }
     
     //CDBDebug("Render");
     //This enables if tiles are divided allong threads.
@@ -559,6 +652,9 @@ private:
          warper->findExtent(dataSource,dfMaskBBOX);
     int x_div=drawImage->Geo->dWidth/16;
     int y_div=drawImage->Geo->dHeight/16;
+//     int x_div=drawImage->Geo->dWidth;
+//     int y_div=drawImage->Geo->dHeight;
+     //useThreading=false;
     if(warper->isProjectionRequired()==false){
       //CDBDebug("No reprojection required");
       x_div=1;

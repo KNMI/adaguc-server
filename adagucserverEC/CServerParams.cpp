@@ -403,8 +403,8 @@ bool CServerParams::isAutoResourceCacheEnabled(){
       if(!cfg->AutoResource[0]->attr.enablecache.equals("true"))autoResourceCacheEnabled = 0;
     }
   }
-  if(autoResourceCacheEnabled==0)return false;
-  return true;
+  if(autoResourceCacheEnabled==1)return true;
+  return false;
 }
 
 
