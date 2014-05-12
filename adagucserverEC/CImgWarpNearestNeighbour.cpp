@@ -96,12 +96,14 @@ void CImgWarpNearestNeighbour::drawTriangle(CDrawImage *drawImage, int *xP,int *
   float rcl = float(X3-X1)/float(Y3-Y1);
  
   
-  if(Y2!=Y1){
+  if(Y2!=Y1&&Y1<H&&Y2>0){
+    
     float rca = float(X2-X1)/float(Y2-Y1);
 
   
-    short sy = (Y1>=H)?H-1:Y1<0?0:Y1;
-    short ey = (Y2>=H)?H-1:Y2<0?0:Y2;
+    short sy = (Y1<0)?0:Y1;
+    short ey = (Y2>H)?H:Y2;
+    
     
     for(short y=sy;y<ey;y++){
       short xL = (short)(rcl*float(y-Y1)+X1);
@@ -111,22 +113,24 @@ void CImgWarpNearestNeighbour::drawTriangle(CDrawImage *drawImage, int *xP,int *
       short x1,x2;
    
       if(xL<xA){x1=xL;x2=xA;}else{x2=xL;x1=xA;}
-   
-      short sx = (x1>=W)?W-1:x1<0?0:x1;
-      short ex = (x2>=W)?W-1:x2<0?0:x2;
-      for(short x=sx;x<ex;x++){
-        drawImage->setPixelIndexed(x,y,value);
+      if(x1<W&&x2>0){
+        short sx = (x1<0)?0:x1;
+        short ex = (x2>W)?W:x2;//<0?0:x2;
+        for(short x=sx;x<ex;x++){
+          drawImage->setPixelIndexed(x,y,value);
+        }
       }
     }
   }
   
-  if(Y3 != Y2){
+  if(Y3 != Y2&&Y2<H&&Y3>0){
     float rcb = float(X3-X2)/float(Y3-Y2);
   
  
   
-    short sy = (Y2>=H)?H-1:Y2<0?0:Y2;
-    short ey = (Y3>=H)?H-1:Y3<0?0:Y3;
+    short sy = (Y2<0)?0:Y2;
+    short ey = (Y3>H)?H:Y3;
+    
     for(short y=sy;y<ey;y++){
       short xL = (short)(rcl*float(y-Y1)+X1);
       short xB = (short)(rcb*float(y-Y2)+X2);
@@ -136,10 +140,12 @@ void CImgWarpNearestNeighbour::drawTriangle(CDrawImage *drawImage, int *xP,int *
   
       if(xL<xB){x1=xL;x2=xB;}else{x2=xL;x1=xB;}
     
-      short sx = (x1>=W)?W-1:x1<0?0:x1;
-      short ex = (x2>=W)?W-1:x2<0?0:x2;
-      for(short x=sx;x<ex;x++){
-        drawImage->setPixelIndexed(x,y,value);
+      if(x1<W&&x2>0){
+        short sx = (x1<0)?0:x1;
+        short ex = (x2>W)?W:x2;//<0?0:x2;
+        for(short x=sx;x<ex;x++){
+          drawImage->setPixelIndexed(x,y,value);
+        }
       }
     } 
     

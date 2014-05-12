@@ -262,6 +262,7 @@ private:
   
   static void drawTriangle(CDrawImage *drawImage, int *xP,int *yP, int &value);
   
+  
   int set(const char *settings){
     return 0;
   }
@@ -378,12 +379,263 @@ private:
     return 0;
   }
   
+  template <class T>
+  void _plot(CImageWarper *warper,CDataSource *dataSource,CDrawImage *drawImage){
+    double dfNodataValue    = dataSource->dataObject[0]->dfNodataValue ;
+    double legendValueRange = dataSource->legendValueRange;
+    double legendLowerRange = dataSource->legendLowerRange;
+    double legendUpperRange = dataSource->legendUpperRange;
+    bool hasNodataValue   = dataSource->dataObject[0]->hasNodataValue;
+    float nodataValue = (float)dfNodataValue;
+    float legendLog = dataSource->legendLog;
+    float legendLogAsLog;
+    if(legendLog>0){
+    legendLogAsLog = log10(legendLog);
+    }else{
+    legendLogAsLog = 0;
+    }
+    float legendScale = dataSource->legendScale;
+    float legendOffset = dataSource->legendOffset;
+        
+    T *data=(T*)dataSource->dataObject[0]->cdfVariable->data;
+    for(int y=0;y<drawImage->Geo->dHeight;y++){
+      for(int x=0;x<drawImage->Geo->dWidth;x++){
+          T val= data[x+y*drawImage->Geo->dWidth];
+          bool isNodata=false;
+          if(hasNodataValue){if(val==nodataValue)isNodata=true;else if(!(val==val))isNodata=true;}
+          if(!isNodata)if(legendValueRange)if(val<legendLowerRange||val>legendUpperRange)isNodata=true;
+          if(!isNodata){
+            if(legendLog!=0){
+              if(val>0){
+                val=(T)(log10(val)/legendLogAsLog);
+              }else val=(T)(-legendOffset);
+            }
+            int pcolorind=(int)(val*legendScale+legendOffset);
+            //val+=legendOffset;
+            if(pcolorind>=239)pcolorind=239;else if(pcolorind<=0)pcolorind=0;
+
+            drawImage->setPixelIndexed(x,drawImage->Geo->dHeight-y,pcolorind);
+        }
+      }
+    }
+  }
+  
+  class Settings{
+  public:
+    double dfNodataValue;
+    double legendValueRange;
+    double legendLowerRange;
+    double legendUpperRange;
+    bool hasNodataValue;
+    float nodataValue;
+    float legendLog;
+    float legendLogAsLog;
+    float legendScale;
+    float legendOffset;
+  };
+
+  template <class T>
+  void drawTriangle(CDrawImage *drawImage, int *xP,int *yP, CDataSource *dataSource,size_t *indexX,size_t *indexY,int stride,Settings *settings){
+   //Sort the vertices in Y direction
+    int W = drawImage->Geo->dWidth;
+    int H = drawImage->Geo->dHeight;
+    if(xP[0]<0&&xP[1]<0&&xP[2]<0)return;
+    if(xP[0]>=W&&xP[1]>=W&&xP[2]>=W)return;
+    if(yP[0]<0&&yP[1]<0&&yP[2]<0)return;
+    if(yP[0]>=H&&yP[1]>=H&&yP[2]>=H)return;  
+
+    
+    T *data=(T*)dataSource->dataObject[0]->cdfVariable->data;
+
+    
+    unsigned short lower;
+    unsigned short middle;
+    unsigned short upper;
+    
+    if(yP[0]<yP[1]){
+      if(yP[0]<yP[2]){
+        lower=0;
+        if(yP[1]<yP[2]){
+          middle=1;
+          upper=2;
+        }else{
+          middle=2;
+          upper=1;
+        }
+      }else{
+        middle=0;
+        lower=2;
+        upper=1;
+      }
+    }else{
+      if(yP[1]<yP[2]){
+        lower=1;
+        if(yP[0]<yP[2]){
+          middle=0;
+          upper=2;
+        }else{
+          middle=2;
+          upper=0;
+        }
+      }else{
+        middle=1;
+        lower=2;
+        upper=0;
+      }
+    }
+    
+    int X1 = xP[lower];
+    int X2 = xP[middle];
+    int X3 = xP[upper];
+    int Y1 = yP[lower];
+    int Y2 = yP[middle];
+    int Y3 = yP[upper];
+    
+    if(Y1 == Y3)return;
+    
+    if(Y2==Y1&&Y3==Y2)return;
+    
+    //x*stride+(y*stride)*(dataWidth*stride)
+    
+    float VX1 = indexX[lower];
+    float VX2 = indexX[middle];
+    float VX3 = indexX[upper];
+    
+    float VY1 = indexY[lower];
+    float VY2 = indexY[middle];
+    float VY3 = indexY[upper];
+
+    float rcl = float(X3-X1)/float(Y3-Y1);
+    float rcvxl = (VX3-VX1)/float(Y3-Y1);
+    float rcvyl = (VY3-VY1)/float(Y3-Y1);
+    
+    
+    if(Y2!=Y1&&Y1<H&&Y2>0){
+      float rca = float(X2-X1)/float(Y2-Y1);
+      float rcvxa = (VX2-VX1)/float(Y2-Y1);
+      float rcvya = (VY2-VY1)/float(Y2-Y1);
+
+    
+      short sy = (Y1<0)?0:Y1;
+      short ey = (Y2>H)?H:Y2;
+      
+      for(short y=sy;y<ey;y++){
+        short xL = (short)(rcl*float(y-Y1)+X1);
+        short xA = (short)(rca*float(y-Y1)+X1);
+        float vxL = rcvxl*float(y-Y1)+VX1;
+        float vxA = rcvxa*float(y-Y1)+VX1;
+        float vyL = rcvyl*float(y-Y1)+VY1;
+        float vyA = rcvya*float(y-Y1)+VY1;
+        short x1,x2;
+        float vx1,vx2,vy1,vy2;
+        if(xL<xA){x1=xL;x2=xA;vx1=vxL;vx2=vxA;vy1=vyL;vy2=vyA;}else{x2=xL;x1=xA;vx1=vxA;vx2=vxL;vy1=vyA;vy2=vyL;}
+        if(x1<W&&x2>0){
+          short sx = (x1<0)?0:x1;
+          short ex = (x2>W)?W:x2;
+          float rcxvx = float(vx2-vx1)/float(x2-x1);
+          float rcxvy = float(vy2-vy1)/float(x2-x1);
+          for(short x=sx;x<ex;x++){
+            //data[x+y*W]=rcxv*float(x-x1)+v1;
+            int vx = rcxvx*float(x-x1)+vx1;
+            int vy = rcxvy*float(x-x1)+vy1;
+  //           int v = vy;
+  //           if(v<0)v=0;if(v>239)v=239;
+  //           drawImage->setPixelIndexed(x,y,v);
+            if(vx>=0&&vy>=0&&vx<dataSource->dWidth+1&&vy<dataSource->dHeight){
+              T val= data[vx+vy*dataSource->dWidth];
+              bool isNodata=false;
+              if(settings->hasNodataValue){if(val==settings->nodataValue)isNodata=true;else if(!(val==val))isNodata=true;}
+              if(!isNodata)if(settings->legendValueRange)if(val<settings->legendLowerRange||val>settings->legendUpperRange)isNodata=true;
+              if(!isNodata){
+                if(settings->legendLog!=0){
+                  if(val>0){
+                    val=(T)(log10(val)/settings->legendLogAsLog);
+                  }else val=(T)(-settings->legendOffset);
+                }
+                int pcolorind=(int)(val*settings->legendScale+settings->legendOffset);
+                //val+=legendOffset;
+                if(pcolorind>=239)pcolorind=239;else if(pcolorind<=0)pcolorind=0;
+                drawImage->setPixelIndexed(x,y,pcolorind);
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    if(Y3 != Y2&&Y2<H&&Y3>0){
+      float rcb = float(X3-X2)/float(Y3-Y2);
+      float rcvxb = (VX3-VX2)/float(Y3-Y2);
+      float rcvyb = (VY3-VY2)/float(Y3-Y2);
+   
+      short sy = (Y2<0)?0:Y2;
+      short ey = (Y3>H)?H:Y3;
+      
+      for(short y=sy;y<ey;y++){
+        
+     
+        short xL = (short)(rcl*float(y-Y1)+X1);
+        short xB = (short)(rcb*float(y-Y2)+X2);
+        float vxL = rcvxl*float(y-Y1)+VX1;
+        float vxB = rcvxb*float(y-Y2)+VX2;
+        float vyL = rcvyl*float(y-Y1)+VY1;
+        float vyB = rcvyb*float(y-Y2)+VY2;
+        short x1,x2;
+        float vx1,vx2,vy1,vy2;
+        if(xL<xB){x1=xL;x2=xB;vx1=vxL;vx2=vxB;vy1=vyL;vy2=vyB;}else{x2=xL;x1=xB;vx1=vxB;vx2=vxL;vy1=vyB;vy2=vyL;}
+        if(x1<W&&x2>0){
+          short sx = (x1<0)?0:x1;
+          short ex = (x2>W)?W:x2;
+          float rcxvx = float(vx2-vx1)/float(x2-x1);
+          float rcxvy = float(vy2-vy1)/float(x2-x1);
+          
+          for(short x=sx;x<ex;x++){
+            int vx = rcxvx*float(x-x1)+vx1;
+            int vy = rcxvy*float(x-x1)+vy1;
+  //           int v=vy;
+  //           if(v<0)v=0;if(v>239)v=239;
+  //           drawImage->setPixelIndexed(x,y,v);
+            if(vx>=0&&vy>=0&&vx<dataSource->dWidth+1&&vy<dataSource->dHeight){
+              T val= data[vx+vy*dataSource->dWidth];
+              bool isNodata=false;
+              if(settings->hasNodataValue){if(val==settings->nodataValue)isNodata=true;else if(!(val==val))isNodata=true;}
+              if(!isNodata)if(settings->legendValueRange)if(val<settings->legendLowerRange||val>settings->legendUpperRange)isNodata=true;
+              if(!isNodata){
+                if(settings->legendLog!=0){
+                  if(val>0){
+                    val=(T)(log10(val)/settings->legendLogAsLog);
+                  }else val=(T)(-settings->legendOffset);
+                }
+                int pcolorind=(int)(val*settings->legendScale+settings->legendOffset);
+                //val+=legendOffset;
+                if(pcolorind>=239)pcolorind=239;else if(pcolorind<=0)pcolorind=0;
+                drawImage->setPixelIndexed(x,y,pcolorind);
+              }
+            }
+          }
+        } 
+      }
+    }
+    
+  }
+
   
   template <class T>
   void _render(CImageWarper *warper,CDataSource *dataSource,CDrawImage *drawImage){
     
-    int stride = 1;
+    size_t orgDataSize = dataSource->dWidth*dataSource->dHeight;
     
+    float stride = 1;
+    
+      
+    while(orgDataSize/(stride*stride)>256*256){
+      stride++;
+    }
+    
+    //stride=100;
+    //stride=1;
+    int stridei = stride+0.5;
+    CDBDebug("STRIDE = %d",stridei);
     int dataWidth = dataSource->dWidth/stride;
     int dataHeight = dataSource->dHeight/stride;
     int imageWidth = drawImage->Geo->dWidth;
@@ -396,7 +648,10 @@ private:
     double y2=dataSource->dfBBOX[3];
     double x1=dataSource->dfBBOX[0];
     double x2=dataSource->dfBBOX[2];
-  
+    
+    
+
+    
     if(y2<y1){
         if(y1>-360&&y2<360&&x1>-720&&x2<720){
           if(dataSource->srvParams->isLonLatProjection(&dataSource->nativeProj4)==false){
@@ -452,14 +707,14 @@ private:
     }
     
     
-    CDBDebug("SRC: %d %s",sourceNeedsDegreeRadianConversion,dataSource->nativeProj4.c_str());
-    CDBDebug("DST: %d %s",destNeedsDegreeRadianConversion,destinationCRS.c_str());
+//     CDBDebug("SRC: %d %s",sourceNeedsDegreeRadianConversion,dataSource->nativeProj4.c_str());
+//     CDBDebug("DST: %d %s",destNeedsDegreeRadianConversion,destinationCRS.c_str());
     
     double *px = new double[dataSize];
     double *py = new double[dataSize];
     char *skip = new char[dataSize];
     
-    CDBDebug("(%f,%f)  %f %f",dfSourceOrigX,dfSourceOrigY,dfSourcedExtW,dfSourcedExtH);
+//     CDBDebug("(%f,%f)  %f %f",dfSourceOrigX,dfSourceOrigY,dfSourcedExtW,dfSourcedExtH);
     
     
     
@@ -481,24 +736,24 @@ private:
         }
       }
       
-      for(size_t j=0;j<dataSize;j++){if(j<10){CDBDebug("%f %f",px[j],py[j]);}}
+//       for(size_t j=0;j<dataSize;j++){if(j<10){CDBDebug("%f %f",px[j],py[j]);}}
         
       if(pj_transform(warper->sourcepj,warper->destpj, dataSize,0,px,py,NULL)){
         CDBDebug("Unable to do pj_transform");
       }
 
-      CDBDebug("--");
+//       CDBDebug("--");
 
       if(destNeedsDegreeRadianConversion){
         for(size_t j=0;j<dataSize;j++){
-          if(j<10){CDBDebug("%f %f",px[j],py[j]);}
+          //if(j<10){CDBDebug("%f %f",px[j],py[j]);}
           px[j]/=DEG_TO_RAD;
           py[j]/=DEG_TO_RAD;
         }
       }
     }
 
-    CDBDebug("--");
+//     CDBDebug("--");
     for(size_t j=0;j<dataSize;j++){
       if(px[j]>-DBL_MAX&&px[j]<DBL_MAX){
         px[j]-=dfDestOrigX;
@@ -509,53 +764,128 @@ private:
         skip[j]=true;        
       }
     }
-    CDBDebug("--");
-    for(size_t j=0;j<dataSize;j++){if(j<10){CDBDebug("%f %f",px[j],py[j]);}}
+//     CDBDebug("--");
+//     for(size_t j=0;j<dataSize;j++){if(j<10){CDBDebug("%f %f",px[j],py[j]);}}
     
 
 
 
     
     double avgDX = 0;
-    //double avgDY = 0;
+    double avgDY = 0;
     
-    double dfNodataValue    = dataSource->dataObject[0]->dfNodataValue ;
-    double legendValueRange = dataSource->legendValueRange;
-    double legendLowerRange = dataSource->legendLowerRange;
-    double legendUpperRange = dataSource->legendUpperRange;
-    bool hasNodataValue   = dataSource->dataObject[0]->hasNodataValue;
-    float nodataValue = (float)dfNodataValue;
-    float legendLog = dataSource->legendLog;
-    float legendLogAsLog;
-    if(legendLog>0){
-      legendLogAsLog = log10(legendLog);
+    Settings settings;
+    
+    settings.dfNodataValue    = dataSource->dataObject[0]->dfNodataValue ;
+    settings.legendValueRange = dataSource->legendValueRange;
+    settings.legendLowerRange = dataSource->legendLowerRange;
+    settings.legendUpperRange = dataSource->legendUpperRange;
+    settings.hasNodataValue   = dataSource->dataObject[0]->hasNodataValue;
+    settings.nodataValue = (float)settings.dfNodataValue;
+    settings.legendLog = dataSource->legendLog;
+    if(settings.legendLog>0){
+      settings.legendLogAsLog = log10(settings.legendLog);
     }else{
-      legendLogAsLog = 0;
+      settings.legendLogAsLog = 0;
     }
-    float legendScale = dataSource->legendScale;
-    float legendOffset = dataSource->legendOffset;
+    settings.legendScale = dataSource->legendScale;
+    settings.legendOffset = dataSource->legendOffset;
     
-    
-    
-    T *data=(T*)dataSource->dataObject[0]->cdfVariable->data;
-    for(int y=0;y<dataHeight;y++){
-      for(int x=0;x<dataWidth;x++){
-        T val= data[x*stride+(y*stride)*(dataWidth*stride)];
-        bool isNodata=false;
-        if(hasNodataValue){if(val==nodataValue)isNodata=true;else if(!(val==val))isNodata=true;}
-        if(!isNodata)if(legendValueRange)if(val<legendLowerRange||val>legendUpperRange)isNodata=true;
-        if(!isNodata){
-          if(legendLog!=0){
-            if(val>0){
-              val=(T)(log10(val)/legendLogAsLog);
-            }else val=(T)(-legendOffset);
-          }
-          int pcolorind=(int)(val*legendScale+legendOffset);
-          //val+=legendOffset;
-          if(pcolorind>=239)pcolorind=239;else if(pcolorind<=0)pcolorind=0;
+    if(1==2){
 
+    
+      T *data=(T*)dataSource->dataObject[0]->cdfVariable->data;
+      for(int y=0;y<dataHeight;y++){
+        for(int x=0;x<dataWidth;x++){
+      
+          T val= data[x*stridei+(y*stridei)*(dataWidth*stridei)];
+          bool isNodata=false;
+          if(settings.hasNodataValue){if(val==settings.nodataValue)isNodata=true;else if(!(val==val))isNodata=true;}
+          if(!isNodata)if(settings.legendValueRange)if(val<settings.legendLowerRange||val>settings.legendUpperRange)isNodata=true;
+          if(!isNodata){
+            if(settings.legendLog!=0){
+              if(val>0){
+                val=(T)(log10(val)/settings.legendLogAsLog);
+              }else val=(T)(-settings.legendOffset);
+            }
+            int pcolorind=(int)(val*settings.legendScale+settings.legendOffset);
+            //val+=legendOffset;
+            if(pcolorind>=239)pcolorind=239;else if(pcolorind<=0)pcolorind=0;
+
+            size_t p=x+y*(dataWidth+1);
+            if(skip[p]==false&&skip[p+1]==false&&skip[p+dataWidth+1]==false&&skip[p+dataWidth+2]==false){
+              double px1 = px[p];
+              double px2 = px[p+1];
+              double px3 = px[p+dataWidth+2];
+              double px4 = px[p+dataWidth+1];
+
+              double py1 = py[p];
+              double py2 = py[p+1];
+              double py3 = py[p+dataWidth+2];
+              double py4 = py[p+dataWidth+1];
+
+
+              double mX = (px1+px2+px3+px4)/4;
+              double mY = (py1+py2+py3+py4)/4;
+              int xP[3];
+              int yP[3];
+              xP[0] = px1;
+              xP[1] = px2;
+              xP[2] = mX;
+
+              yP[0] = py1;
+              yP[1] = py2;
+              yP[2] = mY;
+              
+              bool doDraw = true;
+              if(x==0){
+                avgDX = fabs(xP[1]-xP[0]);
+              }
+              if(y==0){
+                avgDY = fabs(yP[1]-yP[0]);
+              }
+              if(x==dataWidth-1){
+                double newDX = fabs(xP[1]-xP[0]);
+                if(newDX>avgDX*4){
+                  doDraw = false;
+                }
+              }
+              if(y==dataHeight-1){
+                double newDY = fabs(yP[1]-yP[0]);
+                if(newDY>avgDY*5){
+                  doDraw = false;
+                }
+              }
+              
+              if(doDraw){
+                drawTriangle(drawImage, xP,yP, pcolorind);
+
+                xP[0] = px3;
+                yP[0] = py3;
+                drawTriangle(drawImage, xP,yP, pcolorind);
+
+                xP[1]=px4;
+                yP[1]=py4;
+                drawTriangle(drawImage, xP,yP, pcolorind);
+
+                xP[0] = px1;
+                yP[0] = py1;
+                drawTriangle(drawImage, xP,yP, pcolorind);
+              
+              }
+            }
+          }
+        }
+      }
+    }
+      else{
+      for(int y=0;y<dataHeight;y++){
+        for(int x=0;x<dataWidth;x++){
+                  
+              
           size_t p=x+y*(dataWidth+1);
-          if(skip[p]==false&&skip[p+1]==false&&skip[p+dataWidth+1]==false&&skip[p+dataWidth+2]==false){
+          if(skip[p]==false&&skip[p+1]==false&&skip[p+dataWidth+1]==false&&skip[p+dataWidth+2]==false)
+          {
             double px1 = px[p];
             double px2 = px[p+1];
             double px3 = px[p+dataWidth+2];
@@ -583,42 +913,66 @@ private:
             if(x==0){
               avgDX = fabs(xP[1]-xP[0]);
             }
-  //           if(y==0){
-  //             avgDY = fabs(yP[1]-yP[0]);
-  //           }
+            if(y==0){
+              avgDY = fabs(yP[1]-yP[0]);
+            }
             if(x==dataWidth-1){
               double newDX = fabs(xP[1]-xP[0]);
               if(newDX>avgDX*4){
                 doDraw = false;
               }
             }
-  //           if(y==dataHeight-1){
-  //             double newDY = fabs(yP[1]-yP[0]);
-  //             if(newDY>avgDY*5){
-  //               doDraw = false;
-  //             }
-  //           }
-            drawImage->setPixelIndexed(mX,mY,pcolorind);
+            if(y==dataHeight-1){
+              double newDY = fabs(yP[1]-yP[0]);
+              if(newDY>avgDY*5){
+                doDraw = false;
+              }
+            }
+            
             if(doDraw){
-              
-              drawTriangle(drawImage, xP,yP, pcolorind);
+              //Quad texture
+            
+              xP[0] = px1;
+              xP[1] = px2;
+              xP[2] = mX;
 
+              yP[0] = py1;
+              yP[1] = py2;
+              yP[2] = mY;
+              size_t xs[3],ys[3];
+              xs[0]=x*stride-stride/2+stride/2;
+              xs[1]=x*stride+stride/2+stride/2;
+              xs[2]=x*stride+stride/2;
+              ys[0]=y*stride-stride/2+stride/2;
+              ys[1]=y*stride-stride/2+stride/2;
+              ys[2]=y*stride+stride/2;
+              drawTriangle<T>(drawImage, xP,yP, dataSource,xs,ys,stride,&settings);
+              
               xP[0] = px3;
               yP[0] = py3;
-              drawTriangle(drawImage, xP,yP, pcolorind);
+              xs[0]=x*stride+stride/2+stride/2;
+              ys[0]=y*stride+stride/2+stride/2;
+              drawTriangle<T>(drawImage, xP,yP, dataSource,xs,ys,stride,&settings);
 
               xP[1]=px4;
               yP[1]=py4;
-              drawTriangle(drawImage, xP,yP, pcolorind);
+              xs[1]=x*stride-stride/2+stride/2;
+              ys[1]=y*stride+stride/2+stride/2;
+
+              drawTriangle<T>(drawImage, xP,yP, dataSource,xs,ys,stride,&settings);
 
               xP[0] = px1;
               yP[0] = py1;
-              drawTriangle(drawImage, xP,yP, pcolorind);
+              xs[0]=x*stride-stride/2+stride/2;
+              ys[0]=y*stride-stride/2+stride/2;
+              drawTriangle<T>(drawImage, xP,yP, dataSource,xs,ys,stride,&settings);
             }
           }
         }
       }
     }
+  
+  
     
     delete[] px;
     delete[] py;
@@ -626,7 +980,36 @@ private:
   }
   //Setup projection and all other settings for the tiles to draw
   void render(CImageWarper *warper,CDataSource *dataSource,CDrawImage *drawImage){
-    if(dataSource->dWidth*dataSource->dHeight<1000*1000||warper->isProjectionRequired()==false){
+    
+    
+    bool fieldsAreIdentical = true;
+    if((float)dataSource->dfBBOX[0] != (float)drawImage->Geo->dfBBOX[0]){fieldsAreIdentical = false;}
+    if((float)dataSource->dfBBOX[1] != (float)drawImage->Geo->dfBBOX[3]){fieldsAreIdentical = false;}
+    if((float)dataSource->dfBBOX[2] != (float)drawImage->Geo->dfBBOX[2]){fieldsAreIdentical = false;}
+    if((float)dataSource->dfBBOX[3] != (float)drawImage->Geo->dfBBOX[1]){fieldsAreIdentical = false;}
+    if((int)dataSource->dWidth != (int)drawImage->Geo->dWidth){fieldsAreIdentical = false;}
+    
+    if(fieldsAreIdentical){
+      CDBDebug("fieldsAreIdentical: using _plot");
+      CDFType dataType=dataSource->dataObject[0]->cdfVariable->getType();
+        switch(dataType){
+        case CDF_CHAR  : return _plot<char>(warper,dataSource,drawImage);break;
+        case CDF_BYTE  : return _plot<char>(warper,dataSource,drawImage);break;
+        case CDF_UBYTE : return _plot<unsigned char>(warper,dataSource,drawImage);break;
+        case CDF_SHORT : return _plot<short>(warper,dataSource,drawImage);break;
+        case CDF_USHORT: return _plot<ushort>(warper,dataSource,drawImage);break;
+        case CDF_INT   : return _plot<int>(warper,dataSource,drawImage);break;
+        case CDF_UINT  : return _plot<uint>(warper,dataSource,drawImage);break;
+        case CDF_FLOAT : return _plot<float>(warper,dataSource,drawImage);break;
+        case CDF_DOUBLE: return _plot<double>(warper,dataSource,drawImage);break;
+      }
+      return;
+    }else{
+      CDBDebug("fieldsAre NOT Identical");
+    }
+    
+    if(dataSource->dWidth*dataSource->dHeight<512*512||1==1){
+      CDBDebug("field is small enough for precies renderer: using _render");
       CDFType dataType=dataSource->dataObject[0]->cdfVariable->getType();
         switch(dataType){
         case CDF_CHAR  : return _render<char>(warper,dataSource,drawImage);break;
