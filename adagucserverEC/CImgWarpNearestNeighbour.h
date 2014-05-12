@@ -436,6 +436,8 @@ private:
 
   template <class T>
   void drawTriangle(CDrawImage *drawImage, int *xP,int *yP, CDataSource *dataSource,size_t *indexX,size_t *indexY,int stride,Settings *settings){
+    
+
    //Sort the vertices in Y direction
     int W = drawImage->Geo->dWidth;
     int H = drawImage->Geo->dHeight;
@@ -448,9 +450,9 @@ private:
     T *data=(T*)dataSource->dataObject[0]->cdfVariable->data;
 
     
-    unsigned short lower;
-    unsigned short middle;
-    unsigned short upper;
+    unsigned int lower;
+    unsigned int middle;
+    unsigned int upper;
     
     if(yP[0]<yP[1]){
       if(yP[0]<yP[2]){
@@ -495,6 +497,10 @@ private:
     
     if(Y2==Y1&&Y3==Y2)return;
     
+    
+
+    
+    
     //x*stride+(y*stride)*(dataWidth*stride)
     
     float VX1 = indexX[lower];
@@ -516,25 +522,26 @@ private:
       float rcvya = (VY2-VY1)/float(Y2-Y1);
 
     
-      short sy = (Y1<0)?0:Y1;
-      short ey = (Y2>H)?H:Y2;
+      int sy = (Y1<0)?0:Y1;
+      int ey = (Y2>H)?H:Y2;
       
-      for(short y=sy;y<ey;y++){
-        short xL = (short)(rcl*float(y-Y1)+X1);
-        short xA = (short)(rca*float(y-Y1)+X1);
+      for(int y=sy;y<ey;y++){
+        int xL = (int)(rcl*float(y-Y1)+X1);
+        int xA = (int)(rca*float(y-Y1)+X1);
         float vxL = rcvxl*float(y-Y1)+VX1;
         float vxA = rcvxa*float(y-Y1)+VX1;
         float vyL = rcvyl*float(y-Y1)+VY1;
         float vyA = rcvya*float(y-Y1)+VY1;
-        short x1,x2;
+        int x1,x2;
         float vx1,vx2,vy1,vy2;
         if(xL<xA){x1=xL;x2=xA;vx1=vxL;vx2=vxA;vy1=vyL;vy2=vyA;}else{x2=xL;x1=xA;vx1=vxA;vx2=vxL;vy1=vyA;vy2=vyL;}
         if(x1<W&&x2>0){
-          short sx = (x1<0)?0:x1;
-          short ex = (x2>W)?W:x2;
+          int sx = (x1<0)?0:x1;
+          int ex = (x2>W)?W:x2;
           float rcxvx = float(vx2-vx1)/float(x2-x1);
           float rcxvy = float(vy2-vy1)/float(x2-x1);
-          for(short x=sx;x<ex;x++){
+          for(int x=sx;x<ex;x++){
+            
             //data[x+y*W]=rcxv*float(x-x1)+v1;
             int vx = rcxvx*float(x-x1)+vx1;
             int vy = rcxvy*float(x-x1)+vy1;
@@ -568,28 +575,28 @@ private:
       float rcvxb = (VX3-VX2)/float(Y3-Y2);
       float rcvyb = (VY3-VY2)/float(Y3-Y2);
    
-      short sy = (Y2<0)?0:Y2;
-      short ey = (Y3>H)?H:Y3;
+      int sy = (Y2<0)?0:Y2;
+      int ey = (Y3>H)?H:Y3;
       
-      for(short y=sy;y<ey;y++){
+      for(int y=sy;y<ey;y++){
         
      
-        short xL = (short)(rcl*float(y-Y1)+X1);
-        short xB = (short)(rcb*float(y-Y2)+X2);
+        int xL = (int)(rcl*float(y-Y1)+X1);
+        int xB = (int)(rcb*float(y-Y2)+X2);
         float vxL = rcvxl*float(y-Y1)+VX1;
         float vxB = rcvxb*float(y-Y2)+VX2;
         float vyL = rcvyl*float(y-Y1)+VY1;
         float vyB = rcvyb*float(y-Y2)+VY2;
-        short x1,x2;
+        int x1,x2;
         float vx1,vx2,vy1,vy2;
         if(xL<xB){x1=xL;x2=xB;vx1=vxL;vx2=vxB;vy1=vyL;vy2=vyB;}else{x2=xL;x1=xB;vx1=vxB;vx2=vxL;vy1=vyB;vy2=vyL;}
         if(x1<W&&x2>0){
-          short sx = (x1<0)?0:x1;
-          short ex = (x2>W)?W:x2;
+          int sx = (x1<0)?0:x1;
+          int ex = (x2>W)?W:x2;
           float rcxvx = float(vx2-vx1)/float(x2-x1);
           float rcxvy = float(vy2-vy1)/float(x2-x1);
           
-          for(short x=sx;x<ex;x++){
+          for(int x=sx;x<ex;x++){
             int vx = rcxvx*float(x-x1)+vx1;
             int vy = rcxvy*float(x-x1)+vy1;
   //           int v=vy;
@@ -617,6 +624,10 @@ private:
       }
     }
     
+//     drawImage->line(X1,Y1,X2,Y2,240);
+//     drawImage->line(X1,Y1,X3,Y3,240);
+//     drawImage->line(X2,Y2,X3,Y3,240);
+    
   }
 
   
@@ -628,16 +639,16 @@ private:
     float stride = 1;
     
       
-    while(orgDataSize/(stride*stride)>256*256){
-      stride++;
+    while(orgDataSize/(stride*stride)>512*256){
+      stride*=2;
     }
     
     //stride=100;
-    //stride=1;
+    //stride=32;
     int stridei = stride+0.5;
     CDBDebug("STRIDE = %d",stridei);
-    int dataWidth = dataSource->dWidth/stride;
-    int dataHeight = dataSource->dHeight/stride;
+    int dataWidth = (float(dataSource->dWidth)/stride+0.0);
+    int dataHeight = (float(dataSource->dHeight)/stride+0.0);
     int imageWidth = drawImage->Geo->dWidth;
     int imageHeight = drawImage->Geo->dHeight;
     bool destNeedsDegreeRadianConversion = false;
@@ -678,8 +689,8 @@ private:
 //     
     double dfSourceExtW=(dataSource->dfBBOX[2]-dataSource->dfBBOX[0]);
     double dfSourceExtH=(dataSource->dfBBOX[1]-dataSource->dfBBOX[3]);
-    double dfSourceW = double(dataWidth*stride);
-    double dfSourceH = double(dataHeight*stride);
+    double dfSourceW = double(dataSource->dWidth);
+    double dfSourceH = double(dataSource->dHeight);
     double dfSourcedExtW=dfSourceExtW/dfSourceW;
     double dfSourcedExtH=dfSourceExtH/dfSourceH;
     double dfSourceOrigX=dataSource->dfBBOX[0];
@@ -760,6 +771,7 @@ private:
         py[j]-=dfDestOrigY;
         px[j]*=multiDestX;
         py[j]*=multiDestY;
+        
       }else{
         skip[j]=true;        
       }
@@ -838,8 +850,10 @@ private:
               yP[2] = mY;
               
               bool doDraw = true;
+              
               if(x==0){
                 avgDX = fabs(xP[1]-xP[0]);
+                
               }
               if(y==0){
                 avgDY = fabs(yP[1]-yP[0]);
@@ -856,6 +870,8 @@ private:
                   doDraw = false;
                 }
               }
+              
+        
               
               if(doDraw){
                 drawTriangle(drawImage, xP,yP, pcolorind);
@@ -879,6 +895,7 @@ private:
       }
     }
       else{
+        bool firstPixel = true;
       for(int y=0;y<dataHeight;y++){
         for(int x=0;x<dataWidth;x++){
                   
@@ -896,42 +913,21 @@ private:
             double py3 = py[p+dataWidth+2];
             double py4 = py[p+dataWidth+1];
 
-
-            double mX = (px1+px2+px3+px4)/4;
-            double mY = (py1+py2+py3+py4)/4;
-            int xP[3];
-            int yP[3];
-            xP[0] = px1;
-            xP[1] = px2;
-            xP[2] = mX;
-
-            yP[0] = py1;
-            yP[1] = py2;
-            yP[2] = mY;
-            
-            bool doDraw = true;
-            if(x==0){
-              avgDX = fabs(xP[1]-xP[0]);
-            }
-            if(y==0){
-              avgDY = fabs(yP[1]-yP[0]);
-            }
-            if(x==dataWidth-1){
-              double newDX = fabs(xP[1]-xP[0]);
-              if(newDX>avgDX*4){
-                doDraw = false;
-              }
-            }
-            if(y==dataHeight-1){
-              double newDY = fabs(yP[1]-yP[0]);
-              if(newDY>avgDY*5){
-                doDraw = false;
-              }
-            }
-            
-            if(doDraw){
-              //Quad texture
-            
+//             if(
+//               (px1>=0&&px1<imageWidth)||
+//               (px2>=0&&px2<imageWidth)||
+//               (px3>=0&&px3<imageWidth)||
+//               (px4>=0&&px4<imageWidth)||
+//               (py1>=0&&py1<imageHeight)||
+//               (py2>=0&&py2<imageHeight)||
+//               (py3>=0&&py3<imageHeight)||
+//               (py4>=0&&py4<imageHeight))
+            {
+              
+              double mX = (px1+px2+px3+px4)/4;
+              double mY = (py1+py2+py3+py4)/4;
+              int xP[3];
+              int yP[3];
               xP[0] = px1;
               xP[1] = px2;
               xP[2] = mX;
@@ -939,33 +935,68 @@ private:
               yP[0] = py1;
               yP[1] = py2;
               yP[2] = mY;
-              size_t xs[3],ys[3];
-              xs[0]=x*stride-stride/2+stride/2;
-              xs[1]=x*stride+stride/2+stride/2;
-              xs[2]=x*stride+stride/2;
-              ys[0]=y*stride-stride/2+stride/2;
-              ys[1]=y*stride-stride/2+stride/2;
-              ys[2]=y*stride+stride/2;
-              drawTriangle<T>(drawImage, xP,yP, dataSource,xs,ys,stride,&settings);
               
-              xP[0] = px3;
-              yP[0] = py3;
-              xs[0]=x*stride+stride/2+stride/2;
-              ys[0]=y*stride+stride/2+stride/2;
-              drawTriangle<T>(drawImage, xP,yP, dataSource,xs,ys,stride,&settings);
+              bool doDraw = true;
+              
+              
+              if(firstPixel){
+                float dX=xP[1]-xP[0];
+                float dY=yP[1]-yP[0];
+                avgDX = fabs(sqrt(dX*dX+dY*dY));
+                firstPixel = false;
+              }else{
+              
+              if(x==dataWidth-1||y==dataHeight-1){
+                float dX=xP[1]-xP[0];
+                float dY=yP[1]-yP[0];
+                double newDX = fabs(sqrt(dX*dX+dY*dY));
+               
+                if(newDX>avgDX*10){
+                   CDBDebug("%f %f",avgDX,newDX);
+                    doDraw = false;
+                  }
+                }
+              }
 
-              xP[1]=px4;
-              yP[1]=py4;
-              xs[1]=x*stride-stride/2+stride/2;
-              ys[1]=y*stride+stride/2+stride/2;
+              if(doDraw)
+              {
+                //Quad texture
+              
+                xP[0] = px1;
+                xP[1] = px2;
+                xP[2] = mX;
 
-              drawTriangle<T>(drawImage, xP,yP, dataSource,xs,ys,stride,&settings);
+                yP[0] = py1;
+                yP[1] = py2;
+                yP[2] = mY;
+                size_t xs[3],ys[3];
+                xs[0]=x*stride-stride/2+stride/2;
+                xs[1]=x*stride+stride/2+stride/2;
+                xs[2]=x*stride+stride/2;
+                ys[0]=y*stride-stride/2+stride/2;
+                ys[1]=y*stride-stride/2+stride/2;
+                ys[2]=y*stride+stride/2;
+                drawTriangle<T>(drawImage, xP,yP, dataSource,xs,ys,stride,&settings);
+                
+                xP[0] = px3;
+                yP[0] = py3;
+                xs[0]=x*stride+stride/2+stride/2;
+                ys[0]=y*stride+stride/2+stride/2;
+                drawTriangle<T>(drawImage, xP,yP, dataSource,xs,ys,stride,&settings);
 
-              xP[0] = px1;
-              yP[0] = py1;
-              xs[0]=x*stride-stride/2+stride/2;
-              ys[0]=y*stride-stride/2+stride/2;
-              drawTriangle<T>(drawImage, xP,yP, dataSource,xs,ys,stride,&settings);
+                xP[1]=px4;
+                yP[1]=py4;
+                xs[1]=x*stride-stride/2+stride/2;
+                ys[1]=y*stride+stride/2+stride/2;
+
+                drawTriangle<T>(drawImage, xP,yP, dataSource,xs,ys,stride,&settings);
+
+                xP[0] = px1;
+                yP[0] = py1;
+                xs[0]=x*stride-stride/2+stride/2;
+                ys[0]=y*stride-stride/2+stride/2;
+                drawTriangle<T>(drawImage, xP,yP, dataSource,xs,ys,stride,&settings);
+              }
             }
           }
         }
