@@ -261,6 +261,7 @@ private:
   
   
   static void drawTriangle(CDrawImage *drawImage, int *xP,int *yP, int &value);
+  static void drawTriangleBil(CDrawImage *drawImage, float * destField,int *xP,int *yP, float *values);
   
   
   int set(const char *settings){
@@ -635,12 +636,13 @@ private:
   void _render(CImageWarper *warper,CDataSource *dataSource,CDrawImage *drawImage){
     
     size_t orgDataSize = dataSource->dWidth*dataSource->dHeight;
+    bool drawBil = false;
+    double stride = 1;
     
-    float stride = 1;
-    
-      
-    while(orgDataSize/(stride*stride)>512*256){
-      stride*=2;
+    if(!drawBil){  
+      while(orgDataSize/(stride*stride)>512*256){
+        stride*=2;
+      }
     }
     
     //stride=100;
@@ -689,6 +691,8 @@ private:
 //     
     double dfSourceExtW=(dataSource->dfBBOX[2]-dataSource->dfBBOX[0]);
     double dfSourceExtH=(dataSource->dfBBOX[1]-dataSource->dfBBOX[3]);
+    double dfCellSizeX = dataSource->dfCellSizeX;
+    double dfCellSizeY = dataSource->dfCellSizeY;
     double dfSourceW = double(dataSource->dWidth);
     double dfSourceH = double(dataSource->dHeight);
     double dfSourcedExtW=dfSourceExtW/dfSourceW;
@@ -728,13 +732,23 @@ private:
 //     CDBDebug("(%f,%f)  %f %f",dfSourceOrigX,dfSourceOrigY,dfSourcedExtW,dfSourcedExtH);
     
     
-    
-    for(int y=0;y<dataHeight+1;y++){
-      for(int x=0;x<dataWidth+1;x++){
-        size_t p = x+y*(dataWidth+1);
-        px[p] =dfSourcedExtW*double(x*stride)+dfSourceOrigX;
-        py[p] =dfSourcedExtH*double(y*stride)+dfSourceOrigY;
-        skip[p] = false;
+    if(drawBil){
+      for(int y=0;y<dataHeight+1;y++){
+        for(int x=0;x<dataWidth+1;x++){
+          size_t p = x+y*(dataWidth+1);
+          px[p] =dfSourcedExtW*double(x)+dfSourceOrigX+dfCellSizeX/2.0;
+          py[p] =dfSourcedExtH*double(y)+dfSourceOrigY+dfCellSizeY/2.0;
+          skip[p] = false;
+        }
+      }
+    }else{
+      for(int y=0;y<dataHeight+1;y++){
+        for(int x=0;x<dataWidth+1;x++){
+          size_t p = x+y*(dataWidth+1);
+          px[p] =dfSourcedExtW*double(x*stride)+dfSourceOrigX;
+          py[p] =dfSourcedExtH*double(y*stride)+dfSourceOrigY;
+          skip[p] = false;
+        }
       }
     }
     
@@ -776,15 +790,10 @@ private:
         skip[j]=true;        
       }
     }
-//     CDBDebug("--");
-//     for(size_t j=0;j<dataSize;j++){if(j<10){CDBDebug("%f %f",px[j],py[j]);}}
-    
-
-
-
-    
+   
     double avgDX = 0;
     double avgDY = 0;
+    
     
     Settings settings;
     
@@ -803,27 +812,41 @@ private:
     settings.legendScale = dataSource->styleConfiguration->legendScale;
     settings.legendOffset = dataSource->styleConfiguration->legendOffset;
     
-    if(1==2){
+    if(drawBil){
 
-    
+      float *destField = new float[imageWidth*imageHeight];
       T *data=(T*)dataSource->dataObject[0]->cdfVariable->data;
+   
       for(int y=0;y<dataHeight;y++){
         for(int x=0;x<dataWidth;x++){
       
-          T val= data[x*stridei+(y*stridei)*(dataWidth*stridei)];
+          
           bool isNodata=false;
-          if(settings.hasNodataValue){if(val==settings.nodataValue)isNodata=true;else if(!(val==val))isNodata=true;}
-          if(!isNodata)if(settings.legendValueRange)if(val<settings.legendLowerRange||val>settings.legendUpperRange)isNodata=true;
+          
+          
+          T val[4];
+          val[0] = data[x+(y)*(dataWidth)];
+          val[1] = data[x+1+(y)*(dataWidth)];
+          val[2] = data[x+(y+1)*(dataWidth)];
+          val[3] = data[x+1+(y+1)*(dataWidth)];
+          for(int j=0;j<4&&!isNodata;j++){
+            if(settings.hasNodataValue){if(val[j]==settings.nodataValue)isNodata=true;else if(!(val[j]==val[j]))isNodata=true;}
+            if(!isNodata)if(settings.legendValueRange)if(val[j]<settings.legendLowerRange||val[j]>settings.legendUpperRange)isNodata=true;
+          }
+          
+          
           if(!isNodata){
-            if(settings.legendLog!=0){
-              if(val>0){
-                val=(T)(log10(val)/settings.legendLogAsLog);
-              }else val=(T)(-settings.legendOffset);
+            int pcolorind[4];
+            for(int j=0;j<4;j++){
+              if(settings.legendLog!=0){
+                if(val[j]>0){
+                  val[j]=(T)(log10(val[j])/settings.legendLogAsLog);
+                }else val[j]=(T)(-settings.legendOffset);
+              }
+              pcolorind[j]=(int)(val[j]*settings.legendScale+settings.legendOffset);
+              
+              if(pcolorind[j]>=239)pcolorind[j]=239;else if(pcolorind[j]<=0)pcolorind[j]=0;
             }
-            int pcolorind=(int)(val*settings.legendScale+settings.legendOffset);
-            //val+=legendOffset;
-            if(pcolorind>=239)pcolorind=239;else if(pcolorind<=0)pcolorind=0;
-
             size_t p=x+y*(dataWidth+1);
             if(skip[p]==false&&skip[p+1]==false&&skip[p+dataWidth+1]==false&&skip[p+dataWidth+2]==false){
               double px1 = px[p];
@@ -835,67 +858,70 @@ private:
               double py2 = py[p+1];
               double py3 = py[p+dataWidth+2];
               double py4 = py[p+dataWidth+1];
-
-
-              double mX = (px1+px2+px3+px4)/4;
-              double mY = (py1+py2+py3+py4)/4;
-              int xP[3];
-              int yP[3];
-              xP[0] = px1;
-              xP[1] = px2;
-              xP[2] = mX;
-
-              yP[0] = py1;
-              yP[1] = py2;
-              yP[2] = mY;
-              
               bool doDraw = true;
               
-              if(x==0){
-                avgDX = fabs(xP[1]-xP[0]);
-                
-              }
-              if(y==0){
-                avgDY = fabs(yP[1]-yP[0]);
-              }
+              if(x==0)avgDX = px1;
+              if(y==0)avgDY = py1;
+              
               if(x==dataWidth-1){
-                double newDX = fabs(xP[1]-xP[0]);
-                if(newDX>avgDX*4){
+                if(fabs(avgDX-px2)>dfCellSizeX){
                   doDraw = false;
                 }
               }
               if(y==dataHeight-1){
-                double newDY = fabs(yP[1]-yP[0]);
-                if(newDY>avgDY*5){
+                if(fabs(avgDY-py4)>dfCellSizeY){
                   doDraw = false;
                 }
               }
               
-        
-              
               if(doDraw){
-                drawTriangle(drawImage, xP,yP, pcolorind);
+                float values [4];
+          
+                double mX = (px1+px2+px3+px4)/4;
+                double mY = (py1+py2+py3+py4)/4;
+                
+                float middleValue = (pcolorind[0]+pcolorind[1]+pcolorind[2]+pcolorind[3])/4;
+                
+                int xP[3];
+                int yP[3];
+                xP[0] = px1;
+                xP[1] = px2;
+                xP[2] = mX;
+
+                yP[0] = py1;
+                yP[1] = py2;
+                yP[2] = mY;
+                
+                values[0] = pcolorind[0];
+                values[1] = pcolorind[1];
+                values[2] = middleValue;
+              
+            
+                //drawTriangleBil(CDrawImage *drawImage, int *xP,int *yP, float *values);
+                drawTriangleBil(drawImage,destField,xP,yP, values);
 
                 xP[0] = px3;
                 yP[0] = py3;
-                drawTriangle(drawImage, xP,yP, pcolorind);
+                values[0]=pcolorind[3];
+                drawTriangleBil(drawImage,destField, xP,yP, values);
 
                 xP[1]=px4;
                 yP[1]=py4;
-                drawTriangle(drawImage, xP,yP, pcolorind);
+                values[1]=pcolorind[2];
+                drawTriangleBil(drawImage,destField, xP,yP, values);
 
                 xP[0] = px1;
                 yP[0] = py1;
-                drawTriangle(drawImage, xP,yP, pcolorind);
-              
+                values[0]=pcolorind[0];
+                drawTriangleBil(drawImage,destField, xP,yP, values);
+               
               }
             }
           }
         }
       }
-    }
-      else{
-        bool firstPixel = true;
+    }else{
+      
       for(int y=0;y<dataHeight;y++){
         for(int x=0;x<dataWidth;x++){
                   
@@ -912,6 +938,24 @@ private:
             double py2 = py[p+1];
             double py3 = py[p+dataWidth+2];
             double py4 = py[p+dataWidth+1];
+            bool doDraw = true;
+            
+            if(x==0)avgDX = px1;
+            if(y==0)avgDY = py1;
+            
+            if(x==dataWidth-1){
+              if(fabs(avgDX-px2)>dfCellSizeX){
+                doDraw = false;
+              }
+            }
+            if(y==dataHeight-1){
+              if(fabs(avgDY-py4)>dfCellSizeY){
+                doDraw = false;
+              }
+            }
+            
+            if(doDraw)
+            {
 
 //             if(
 //               (px1>=0&&px1<imageWidth)||
@@ -936,41 +980,8 @@ private:
               yP[1] = py2;
               yP[2] = mY;
               
-              bool doDraw = true;
-              
-              
-              if(firstPixel){
-                float dX=xP[1]-xP[0];
-                float dY=yP[1]-yP[0];
-                avgDX = fabs(sqrt(dX*dX+dY*dY));
-                if(avgDX>0){
-                  firstPixel = false;
-                }
-              }else{
-              
-              if(x==dataWidth-1||y==dataHeight-1){
-                float dX=xP[1]-xP[0];
-                float dY=yP[1]-yP[0];
-                double newDX = fabs(sqrt(dX*dX+dY*dY));
-               
-                if(newDX>avgDX*(dfSourceW/4)){
-                   //CDBDebug("%f %f",avgDX,newDX);
-                    doDraw = false;
-                  }
-                }
-              }
 
-              if(doDraw)
-              {
-                //Quad texture
-              
-                xP[0] = px1;
-                xP[1] = px2;
-                xP[2] = mX;
 
-                yP[0] = py1;
-                yP[1] = py2;
-                yP[2] = mY;
                 size_t xs[3],ys[3];
                 xs[0]=x*stride-stride/2+stride/2;
                 xs[1]=x*stride+stride/2+stride/2;
