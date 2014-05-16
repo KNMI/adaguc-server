@@ -90,20 +90,20 @@ public:
     
     
     dfNodataValue    = dataSource->dataObject[0]->dfNodataValue ;
-    legendValueRange = dataSource->legendValueRange;
-    legendLowerRange = dataSource->legendLowerRange;
-    legendUpperRange = dataSource->legendUpperRange;
+    legendValueRange = dataSource->styleConfiguration->hasLegendValueRange;
+    legendLowerRange = dataSource->styleConfiguration->legendLowerRange;
+    legendUpperRange = dataSource->styleConfiguration->legendUpperRange;
     hasNodataValue   = dataSource->dataObject[0]->hasNodataValue;
     width = dataSource->dWidth;
     height = dataSource->dHeight;
-    legendLog = dataSource->legendLog;
+    legendLog = dataSource->styleConfiguration->legendLog;
     if(legendLog>0){
       legendLogAsLog = log10(legendLog);
     }else{
       legendLogAsLog = 0;
     }
-    legendScale = dataSource->legendScale;
-    legendOffset = dataSource->legendOffset;
+    legendScale = dataSource->styleConfiguration->legendScale;
+    legendOffset = dataSource->styleConfiguration->legendOffset;
   }
   int drawTile(double *x_corners,double *y_corners,int &dDestX,int &dDestY){
     CDFType dataType=dataSource->dataObject[0]->cdfVariable->getType();
@@ -382,20 +382,20 @@ private:
   template <class T>
   void _plot(CImageWarper *warper,CDataSource *dataSource,CDrawImage *drawImage){
     double dfNodataValue    = dataSource->dataObject[0]->dfNodataValue ;
-    double legendValueRange = dataSource->legendValueRange;
-    double legendLowerRange = dataSource->legendLowerRange;
-    double legendUpperRange = dataSource->legendUpperRange;
+    double legendValueRange = dataSource->styleConfiguration->hasLegendValueRange;
+    double legendLowerRange = dataSource->styleConfiguration->legendLowerRange;
+    double legendUpperRange = dataSource->styleConfiguration->legendUpperRange;
     bool hasNodataValue   = dataSource->dataObject[0]->hasNodataValue;
     float nodataValue = (float)dfNodataValue;
-    float legendLog = dataSource->legendLog;
+    float legendLog = dataSource->styleConfiguration->legendLog;
     float legendLogAsLog;
     if(legendLog>0){
     legendLogAsLog = log10(legendLog);
     }else{
     legendLogAsLog = 0;
     }
-    float legendScale = dataSource->legendScale;
-    float legendOffset = dataSource->legendOffset;
+    float legendScale = dataSource->styleConfiguration->legendScale;
+    float legendOffset = dataSource->styleConfiguration->legendOffset;
         
     T *data=(T*)dataSource->dataObject[0]->cdfVariable->data;
     for(int y=0;y<drawImage->Geo->dHeight;y++){
@@ -789,19 +789,19 @@ private:
     Settings settings;
     
     settings.dfNodataValue    = dataSource->dataObject[0]->dfNodataValue ;
-    settings.legendValueRange = dataSource->legendValueRange;
-    settings.legendLowerRange = dataSource->legendLowerRange;
-    settings.legendUpperRange = dataSource->legendUpperRange;
+    settings.legendValueRange = dataSource->styleConfiguration->hasLegendValueRange;
+    settings.legendLowerRange = dataSource->styleConfiguration->legendLowerRange;
+    settings.legendUpperRange = dataSource->styleConfiguration->legendUpperRange;
     settings.hasNodataValue   = dataSource->dataObject[0]->hasNodataValue;
     settings.nodataValue = (float)settings.dfNodataValue;
-    settings.legendLog = dataSource->legendLog;
+    settings.legendLog = dataSource->styleConfiguration->legendLog;
     if(settings.legendLog>0){
       settings.legendLogAsLog = log10(settings.legendLog);
     }else{
       settings.legendLogAsLog = 0;
     }
-    settings.legendScale = dataSource->legendScale;
-    settings.legendOffset = dataSource->legendOffset;
+    settings.legendScale = dataSource->styleConfiguration->legendScale;
+    settings.legendOffset = dataSource->styleConfiguration->legendOffset;
     
     if(1==2){
 
@@ -943,7 +943,9 @@ private:
                 float dX=xP[1]-xP[0];
                 float dY=yP[1]-yP[0];
                 avgDX = fabs(sqrt(dX*dX+dY*dY));
-                firstPixel = false;
+                if(avgDX>0){
+                  firstPixel = false;
+                }
               }else{
               
               if(x==dataWidth-1||y==dataHeight-1){
@@ -951,8 +953,8 @@ private:
                 float dY=yP[1]-yP[0];
                 double newDX = fabs(sqrt(dX*dX+dY*dY));
                
-                if(newDX>avgDX*10){
-                   CDBDebug("%f %f",avgDX,newDX);
+                if(newDX>avgDX*(dfSourceW/4)){
+                   //CDBDebug("%f %f",avgDX,newDX);
                     doDraw = false;
                   }
                 }

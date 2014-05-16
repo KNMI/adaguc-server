@@ -172,7 +172,10 @@ int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,in
       CDBDebug("Checking filetable %s",tableName.c_str());
       
       //if(status == 0){CDBDebug("OK: Table is available");}
-      if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tableName.c_str(),tableColumns.c_str()); return 1;  }
+      if(status == 1){
+        CDBError("\nFAIL: Table %s could not be created: %s",tableName.c_str(),tableColumns.c_str()); 
+        CDBError(DB->getError());
+        return 1;  }
       if(status == 2){
         removeNonExistingFiles=0;
         //removeExisting files can be set back to zero, because there are no files to remove (table is created)
@@ -716,7 +719,7 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
       
       //If this is another directory we will simply ignore it.
       if(layerPath.equals(&layerPathToScan)==false){
-        CDBDebug ("Skipping %s==%s\n",layerPath.c_str(),layerPathToScan.c_str());
+        //CDBDebug ("Skipping %s==%s\n",layerPath.c_str(),layerPathToScan.c_str());
         return 0;
       }
     }
@@ -766,6 +769,7 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
     //First check and create all tables... returns zero on success, positive on error, negative on already done.
     status = createDBUpdateTables(DB,dataSource,removeNonExistingFiles,&dirReader);
     if(status > 0 ){
+
       throw(__LINE__);
     }
     

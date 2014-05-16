@@ -675,23 +675,23 @@ int CXMLGen::getStylesForLayer(WMSLayer * myWMSLayer){
   CT::PointerList<CT::string*> *styleList = CImageDataWriter::getStyleListForDataSource(myWMSLayer->dataSource);
   if(styleList==NULL)return 1;
   for(size_t j=0;j<styleList->size();j++){
-    CImageDataWriter::StyleConfiguration *styleConfiguration = CImageDataWriter::getStyleConfigurationByName(styleList->get(j)->c_str(),myWMSLayer->dataSource);
+    CImageDataWriter::getStyleConfigurationByName(styleList->get(j)->c_str(),myWMSLayer->dataSource);
       
-    if(styleConfiguration->hasError){
+    if(myWMSLayer->dataSource->styleConfiguration->hasError){
       CDBError("Style %s has an error",styleList->get(j)->c_str());      
     }
     
     WMSLayer::Style *style = new WMSLayer::Style();
     style->name.copy(styleList->get(j));
-    if(styleConfiguration->styleTitle.length()>0){
-      style->title.copy(styleConfiguration->styleTitle.c_str());
+    if(myWMSLayer->dataSource->styleConfiguration->styleTitle.length()>0){
+      style->title.copy(myWMSLayer->dataSource->styleConfiguration->styleTitle.c_str());
     }else{
       style->title.copy(styleList->get(j));
     }
-    style->abstract.copy(styleConfiguration->styleAbstract.c_str());
+    style->abstract.copy(myWMSLayer->dataSource->styleConfiguration->styleAbstract.c_str());
     myWMSLayer->styleList.push_back(style);
     
-    delete styleConfiguration;
+
   }
   
   

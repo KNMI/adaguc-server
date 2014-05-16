@@ -451,7 +451,7 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
     }
     
     bool drawBilinear=false;
-    if(dataSource->styleName.indexOf("bilinear")>=0){
+    if(dataSource->styleConfiguration->styleCompositionName.indexOf("bilinear")>=0){
       drawBilinear=true;
     }
     for(int rowNr=0;rowNr<numRows;rowNr++){ 
