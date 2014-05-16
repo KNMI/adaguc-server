@@ -663,7 +663,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
 
   //Use autoscale of legendcolors when the legendscale factor has been set to zero.
   if(dataSource->stretchMinMaxDone == false){
-    if(dataSource->legendScale==0.0f)dataSource->stretchMinMax=true;else dataSource->stretchMinMax=false;
+    if(dataSource->styleConfiguration->legendScale==0.0f)dataSource->stretchMinMax=true;else dataSource->stretchMinMax=false;
   }
  
   
@@ -1233,28 +1233,28 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
         //Calculate legendOffset legendScale
         float ls=240/(max-min);
         float lo=-(min*ls);
-        dataSource->legendScale=ls;
-        dataSource->legendOffset=lo;
+        dataSource->styleConfiguration->legendScale=ls;
+        dataSource->styleConfiguration->legendOffset=lo;
         dataSource->stretchMinMaxDone = true;
       }
     }
     
     //Check for infinities
-    if(dataSource->legendScale!=dataSource->legendScale||
-      dataSource->legendScale==INFINITY||
-      dataSource->legendScale==NAN||
-      dataSource->legendScale==-INFINITY){
-      dataSource->legendScale=240;
+    if(dataSource->styleConfiguration->legendScale!=dataSource->styleConfiguration->legendScale||
+      dataSource->styleConfiguration->legendScale==INFINITY||
+      dataSource->styleConfiguration->legendScale==NAN||
+      dataSource->styleConfiguration->legendScale==-INFINITY){
+      dataSource->styleConfiguration->legendScale=240;
     }
-    if(dataSource->legendOffset!=dataSource->legendOffset||
-      dataSource->legendOffset==INFINITY||
-      dataSource->legendOffset==NAN||
-      dataSource->legendOffset==-INFINITY){
-      dataSource->legendOffset=0;
+    if(dataSource->styleConfiguration->legendOffset!=dataSource->styleConfiguration->legendOffset||
+      dataSource->styleConfiguration->legendOffset==INFINITY||
+      dataSource->styleConfiguration->legendOffset==NAN||
+      dataSource->styleConfiguration->legendOffset==-INFINITY){
+      dataSource->styleConfiguration->legendOffset=0;
     }
     
     #ifdef CDATAREADER_DEBUG    
-    CDBDebug("dataSource->legendScale = %f, dataSource->legendOffset = %f",dataSource->legendScale,dataSource->legendOffset);
+    CDBDebug("dataSource->styleConfiguration->legendScale = %f, dataSource->styleConfiguration->legendOffset = %f",dataSource->styleConfiguration->legendScale,dataSource->styleConfiguration->legendOffset);
     #endif    
     
   #ifdef MEASURETIME

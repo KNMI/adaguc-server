@@ -93,8 +93,13 @@ int CPGSQLDB::checkTable(const char * pszTableName,const char *pszColumns){
 
   for (i = 0; i < PQntuples(result); i++){
     char *pqval=PQgetvalue(result, i, 1);
-    if(strncmp(pszTableName,pqval,strlen(pszTableName))==0&&
-       strlen(pqval)==strlen(pszTableName))break;
+    if(strncmp(pszTableName,pqval,strlen(pszTableName))==0&&strlen(pqval)==strlen(pszTableName)){
+      clearResult();
+      //CDBDebug("Found: %s == %s",pqval,pszTableName);
+      return 0;
+    }else{
+      //CDBDebug("Found: [%s] != [%s]",pqval,pszTableName);
+    }
   }
   // No table exists yet
   if(i == PQntuples(result)){

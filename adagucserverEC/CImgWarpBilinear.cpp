@@ -1339,8 +1339,8 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
        //Calculate new scale and offset for this:
        float ls=240/((iMax-iMin));
        float lo=-(iMin*ls);
-       dataSource->legendScale=ls;
-       dataSource->legendOffset=lo;
+       dataSource->styleConfiguration->legendScale=ls;
+       dataSource->styleConfiguration->legendOffset=lo;
      }
    }
    #ifdef CImgWarpBilinear_DEBUG 

@@ -95,12 +95,12 @@ CDataSource::CDataSource(){
   stretchMinMax=false;
   stretchMinMaxDone = false;
   isConfigured=false;
-  legendScale=1;
-  legendOffset=0;
-  legendLog=0.0f;
-  legendLowerRange=0;
-  legendUpperRange=0;
-  legendValueRange=0;
+//   legendScale=1;
+//   legendOffset=0;
+//   legendLog=0.0f;
+//   legendLowerRange=0;
+//   legendUpperRange=0;
+//   legendValueRange=0;
   metaData=NULL;
   statistics=NULL;
   currentAnimationStep=0;
@@ -113,6 +113,10 @@ CDataSource::CDataSource(){
   swapXYDimensions = false;
   varX = NULL;
   varY = NULL;
+  
+ // CDBDebug("C");
+  styleConfiguration = new CStyleConfiguration ();
+  
 }
 
 CDataSource::~CDataSource(){
@@ -127,6 +131,12 @@ CDataSource::~CDataSource(){
   }
   for(size_t j=0;j<requiredDims.size();j++)delete requiredDims[j];
   if(statistics!=NULL)delete statistics;statistics=NULL;
+  
+  //CDBDebug("D");
+  if(styleConfiguration!=NULL){
+    delete styleConfiguration;
+    styleConfiguration = NULL;
+  }
 }
 
 int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Configuration *_cfg,CServerConfig::XMLE_Layer * _cfgLayer,const char *_layerName,int layerIndex){

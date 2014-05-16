@@ -36,7 +36,7 @@
 #include "COGCDims.h"
 #include "CStopWatch.h"
 #include "CPGSQLDB.h"
-
+#include "CStyleConfiguration.h"
 
 /**
  * This class represents data to be used further in the server. Specific  metadata and data is filled in by CDataReader
@@ -46,12 +46,15 @@ class CDataSource{
   private:
    DEF_ERRORFUNCTION();
  
+   
   public:
   class StatusFlag{
     public:
       CT::string meaning;
       double value;
   };
+  
+  CStyleConfiguration *styleConfiguration;
 
   class DataClass{
     public:
@@ -194,9 +197,9 @@ class CDataSource{
   CT::string nativeProj4;
 
   //Used for scaling the legend to the palette range of 0-240
-  float legendScale,legendOffset,legendLog,legendLowerRange,legendUpperRange;
+  /*float legendScale,legendOffset,legendLog,legendLowerRange,legendUpperRange;
   bool legendValueRange;
-  CT::string styleName;
+  CT::string styleName;*/
 
   //Number of metadata items
   size_t nrMetadataItems;
