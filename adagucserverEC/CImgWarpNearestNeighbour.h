@@ -814,112 +814,112 @@ private:
     
     if(drawBil){
 
-      float *destField = new float[imageWidth*imageHeight];
-      T *data=(T*)dataSource->dataObject[0]->cdfVariable->data;
-   
-      for(int y=0;y<dataHeight;y++){
-        for(int x=0;x<dataWidth;x++){
-      
-          
-          bool isNodata=false;
-          
-          
-          T val[4];
-          val[0] = data[x+(y)*(dataWidth)];
-          val[1] = data[x+1+(y)*(dataWidth)];
-          val[2] = data[x+(y+1)*(dataWidth)];
-          val[3] = data[x+1+(y+1)*(dataWidth)];
-          for(int j=0;j<4&&!isNodata;j++){
-            if(settings.hasNodataValue){if(val[j]==settings.nodataValue)isNodata=true;else if(!(val[j]==val[j]))isNodata=true;}
-            if(!isNodata)if(settings.legendValueRange)if(val[j]<settings.legendLowerRange||val[j]>settings.legendUpperRange)isNodata=true;
-          }
-          
-          
-          if(!isNodata){
-            int pcolorind[4];
-            for(int j=0;j<4;j++){
-              if(settings.legendLog!=0){
-                if(val[j]>0){
-                  val[j]=(T)(log10(val[j])/settings.legendLogAsLog);
-                }else val[j]=(T)(-settings.legendOffset);
-              }
-              pcolorind[j]=(int)(val[j]*settings.legendScale+settings.legendOffset);
-              
-              if(pcolorind[j]>=239)pcolorind[j]=239;else if(pcolorind[j]<=0)pcolorind[j]=0;
-            }
-            size_t p=x+y*(dataWidth+1);
-            if(skip[p]==false&&skip[p+1]==false&&skip[p+dataWidth+1]==false&&skip[p+dataWidth+2]==false){
-              double px1 = px[p];
-              double px2 = px[p+1];
-              double px3 = px[p+dataWidth+2];
-              double px4 = px[p+dataWidth+1];
-
-              double py1 = py[p];
-              double py2 = py[p+1];
-              double py3 = py[p+dataWidth+2];
-              double py4 = py[p+dataWidth+1];
-              bool doDraw = true;
-              
-              if(x==0)avgDX = px1;
-              if(y==0)avgDY = py1;
-              
-              if(x==dataWidth-1){
-                if(fabs(avgDX-px2)>dfCellSizeX){
-                  doDraw = false;
-                }
-              }
-              if(y==dataHeight-1){
-                if(fabs(avgDY-py4)>dfCellSizeY){
-                  doDraw = false;
-                }
-              }
-              
-              if(doDraw){
-                float values [4];
-          
-                double mX = (px1+px2+px3+px4)/4;
-                double mY = (py1+py2+py3+py4)/4;
-                
-                float middleValue = (pcolorind[0]+pcolorind[1]+pcolorind[2]+pcolorind[3])/4;
-                
-                int xP[3];
-                int yP[3];
-                xP[0] = px1;
-                xP[1] = px2;
-                xP[2] = mX;
-
-                yP[0] = py1;
-                yP[1] = py2;
-                yP[2] = mY;
-                
-                values[0] = pcolorind[0];
-                values[1] = pcolorind[1];
-                values[2] = middleValue;
-              
-            
-                //drawTriangleBil(CDrawImage *drawImage, int *xP,int *yP, float *values);
-                drawTriangleBil(drawImage,destField,xP,yP, values);
-
-                xP[0] = px3;
-                yP[0] = py3;
-                values[0]=pcolorind[3];
-                drawTriangleBil(drawImage,destField, xP,yP, values);
-
-                xP[1]=px4;
-                yP[1]=py4;
-                values[1]=pcolorind[2];
-                drawTriangleBil(drawImage,destField, xP,yP, values);
-
-                xP[0] = px1;
-                yP[0] = py1;
-                values[0]=pcolorind[0];
-                drawTriangleBil(drawImage,destField, xP,yP, values);
-               
-              }
-            }
-          }
-        }
-      }
+//       float *destField = new float[imageWidth*imageHeight];
+//       T *data=(T*)dataSource->dataObject[0]->cdfVariable->data;
+//    
+//       for(int y=0;y<dataHeight;y++){
+//         for(int x=0;x<dataWidth;x++){
+//       
+//           
+//           bool isNodata=false;
+//           
+//           
+//           T val[4];
+//           val[0] = data[x+(y)*(dataWidth)];
+//           val[1] = data[x+1+(y)*(dataWidth)];
+//           val[2] = data[x+(y+1)*(dataWidth)];
+//           val[3] = data[x+1+(y+1)*(dataWidth)];
+//           for(int j=0;j<4&&!isNodata;j++){
+//             if(settings.hasNodataValue){if(val[j]==settings.nodataValue)isNodata=true;else if(!(val[j]==val[j]))isNodata=true;}
+//             if(!isNodata)if(settings.legendValueRange)if(val[j]<settings.legendLowerRange||val[j]>settings.legendUpperRange)isNodata=true;
+//           }
+//           
+//           
+//           if(!isNodata){
+//             int pcolorind[4];
+//             for(int j=0;j<4;j++){
+//               if(settings.legendLog!=0){
+//                 if(val[j]>0){
+//                   val[j]=(T)(log10(val[j])/settings.legendLogAsLog);
+//                 }else val[j]=(T)(-settings.legendOffset);
+//               }
+//               pcolorind[j]=(int)(val[j]*settings.legendScale+settings.legendOffset);
+//               
+//               if(pcolorind[j]>=239)pcolorind[j]=239;else if(pcolorind[j]<=0)pcolorind[j]=0;
+//             }
+//             size_t p=x+y*(dataWidth+1);
+//             if(skip[p]==false&&skip[p+1]==false&&skip[p+dataWidth+1]==false&&skip[p+dataWidth+2]==false){
+//               double px1 = px[p];
+//               double px2 = px[p+1];
+//               double px3 = px[p+dataWidth+2];
+//               double px4 = px[p+dataWidth+1];
+// 
+//               double py1 = py[p];
+//               double py2 = py[p+1];
+//               double py3 = py[p+dataWidth+2];
+//               double py4 = py[p+dataWidth+1];
+//               bool doDraw = true;
+//               
+//               if(x==0)avgDX = px1;
+//               if(y==0)avgDY = py1;
+//               
+//               if(x==dataWidth-1){
+//                 if(fabs(avgDX-px2)>fabs(dfCellSizeX)){
+//                   doDraw = false;
+//                 }
+//               }
+//               if(y==dataHeight-1){
+//                 if(fabs(avgDY-py4)>fabs(dfCellSizeY)){
+//                   doDraw = false;
+//                 }
+//               }
+//               
+//               if(doDraw){
+//                 float values [4];
+//           
+//                 double mX = (px1+px2+px3+px4)/4;
+//                 double mY = (py1+py2+py3+py4)/4;
+//                 
+//                 float middleValue = (pcolorind[0]+pcolorind[1]+pcolorind[2]+pcolorind[3])/4;
+//                 
+//                 int xP[3];
+//                 int yP[3];
+//                 xP[0] = px1;
+//                 xP[1] = px2;
+//                 xP[2] = mX;
+// 
+//                 yP[0] = py1;
+//                 yP[1] = py2;
+//                 yP[2] = mY;
+//                 
+//                 values[0] = pcolorind[0];
+//                 values[1] = pcolorind[1];
+//                 values[2] = middleValue;
+//               
+//             
+//                 //drawTriangleBil(CDrawImage *drawImage, int *xP,int *yP, float *values);
+//                 drawTriangleBil(drawImage,destField,xP,yP, values);
+// 
+//                 xP[0] = px3;
+//                 yP[0] = py3;
+//                 values[0]=pcolorind[3];
+//                 drawTriangleBil(drawImage,destField, xP,yP, values);
+// 
+//                 xP[1]=px4;
+//                 yP[1]=py4;
+//                 values[1]=pcolorind[2];
+//                 drawTriangleBil(drawImage,destField, xP,yP, values);
+// 
+//                 xP[0] = px1;
+//                 yP[0] = py1;
+//                 values[0]=pcolorind[0];
+//                 drawTriangleBil(drawImage,destField, xP,yP, values);
+//                
+//               }
+//             }
+//           }
+//         }
+//       }
     }else{
       
       for(int y=0;y<dataHeight;y++){
@@ -940,18 +940,24 @@ private:
             double py4 = py[p+dataWidth+1];
             bool doDraw = true;
             
-            if(x==0)avgDX = px1;
-            if(y==0)avgDY = py1;
+            if(x==0)avgDX = px2;
+            if(y==0)avgDY = py4;
             
             if(x==dataWidth-1){
-              if(fabs(avgDX-px2)>dfCellSizeX){
+              if(fabs(avgDX-px1)<fabs(px1-px2)/2){
+                doDraw = false;
+              }
+              if(fabs(avgDX-px2)<fabs(px1-px2)/2){
                 doDraw = false;
               }
             }
             if(y==dataHeight-1){
-              if(fabs(avgDY-py4)>dfCellSizeY){
+              if(fabs(avgDY-py1)<fabs(py1-py4)/2){
                 doDraw = false;
               }
+//               if(fabs(avgDY-py4)<fabs(py1-py4)/2){
+//                 doDraw = false;
+//               }
             }
             
             if(doDraw)

@@ -154,6 +154,7 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
   #endif
   int *dpDestX = new int[numDestPixels];//refactor to numGridPoints
   int *dpDestY = new int[numDestPixels];
+  
   class ValueClass{
   public:
     ValueClass(){
@@ -221,7 +222,8 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
       //CDBDebug("%f - %f",destX,destY);
       //TODO:
       //int status = 
-      warper->reprojpoint_inv(destX,destY);
+      int status = warper->reprojpoint_inv(destX,destY);
+
       
       destX-=dfDestOrigX;
       destY-=dfDestOrigY;
@@ -236,7 +238,7 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
       for(size_t varNr=0;varNr<sourceImage->dataObject.size();varNr++){
         void *data=sourceImage->dataObject[varNr]->cdfVariable->data;
         float *fpValues=valObj[varNr].fpValues;
-        
+    
         switch(sourceImage->dataObject[varNr]->cdfVariable->getType()){
           case CDF_CHAR:
             fpValues[p]= ((signed char*)data)[x+y*sourceImage->dWidth];
@@ -267,6 +269,7 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
             break;
         }
         if(!(fpValues[p]==fpValues[p]))fpValues[p]=fNodataValue;
+        if(status == 1)fpValues[p]=fNodataValue;
         //if(valObj[0].fpValues[p]==fNodataValue)valObj[0].fpValues[p]=0;
         //valObj[0].fpValues[p]+=10.0f;
       }
@@ -627,18 +630,17 @@ for(size_t varNr=0;varNr<sourceImage->dataObject.size();varNr++){
    }
    */
   
-    double avgDX = 0;
-    double avgDY = 0;
-        double dfCellSizeX = sourceImage->dfCellSizeX;
-    double dfCellSizeY = sourceImage->dfCellSizeY;
-  for(int y=dPixelExtent[1];y<dPixelExtent[3];y=y+1){
+    int avgDX = 0;
+//     int avgDY = 0;
+
+  for(int y=dPixelExtent[1];y<dPixelExtent[3]-1;y=y+1){
     for(int x=dPixelExtent[0];x<dPixelExtent[2];x=x+1){
       size_t p = size_t((x-(dPixelExtent[0]))+((y-(dPixelExtent[1]))*(dPixelDestW+1)));
       size_t p00=p;
       size_t p10=p+1;
       size_t p01=p+dPixelDestW+1;
       size_t p11=p+1+dPixelDestW+1;
-      
+     
       
       if(fpValues[p00]!=fNodataValue&&fpValues[p10]!=fNodataValue&&
         fpValues[p01]!=fNodataValue&&fpValues[p11]!=fNodataValue)
@@ -648,21 +650,35 @@ for(size_t varNr=0;varNr<sourceImage->dataObject.size();varNr++){
         xP[0]=dpDestX[p00]; xP[1]=dpDestX[p01]; xP[2]=dpDestX[p10]; xP[3]=dpDestX[p11];
         vP[0]=fpValues[p00]; vP[1]=fpValues[p01]; vP[2]=fpValues[p10]; vP[3]=fpValues[p11]; 
         
+        
+        
         bool doDraw = true;
-                
-        if(x==dPixelExtent[0])avgDX = xP[0];
-        if(y==dPixelExtent[1])avgDY = yP[0];
+       
+                  
+        if(x==dPixelExtent[0])avgDX = xP[2];
+//         if(y==dPixelExtent[1])avgDY = yP[3];
         
         if(x==dPixelExtent[2]-1){
-          if(fabs(avgDX-xP[2])>dfCellSizeX){
-            doDraw = false;
+          if(abs(avgDX-xP[0])>10){
+            doDraw= false;
+          }else if(abs(avgDX-xP[2])>0){
+            if(abs(avgDX-xP[2])<abs(xP[2]-xP[0])/4){
+              doDraw = false;
+              //CDBDebug("%d %d (%d %d %d %d) ",avgDX-xP[2],xP[2]-xP[0],avgDX,xP[0],xP[1],xP[2]);
+            }
           }
         }
-        if(y==dPixelExtent[3]-1){
-          if(fabs(avgDY-yP[1])>dfCellSizeY){
-            doDraw = false;
-          }
-        }
+//         if(y==dPixelExtent[3]-1){
+//           if(abs(avgDY-yP[0])>0){
+//             if(abs(avgDY-yP[0])<abs(yP[3]-yP[0])/2){
+//               doDraw = false;
+//             }
+//           }
+//         }
+        
+        
+        
+
               
         if(doDraw){
         
@@ -927,6 +943,7 @@ if (enableBarb) {
 //Clean up
 delete[] dpDestX;
 delete[] dpDestY;
+
 delete[] valObj;
  }
  
