@@ -231,18 +231,30 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
       destY/=dfDestExtH;
       destX*=dfDestW;
       destY*=dfDestH;
+      
+      
+      
       dpDestX[p]=(int)destX;//2-200;
       dpDestY[p]=(int)destY;//2+200;
+      
+      
       //CDBDebug("%f - %f s:%d x:%d  y:%d  p:%d",destX,destY,status,x,y,p);
       //  drawImage->setPixelIndexed(dpDestX[p],dpDestY[p],240);
       for(size_t varNr=0;varNr<sourceImage->dataObject.size();varNr++){
         void *data=sourceImage->dataObject[varNr]->cdfVariable->data;
         float *fpValues=valObj[varNr].fpValues;
         int x1=x;
+        int y1=y;
         if(x1>=sourceImage->dWidth){
           x1-=sourceImage->dWidth;
         }
-        size_t sp = x1+y*sourceImage->dWidth;
+        if(y1>=sourceImage->dHeight){
+          y1-=sourceImage->dHeight;
+        }
+        //if(x1>=0&&x1<sourceImage->dWidth&&y>=0&&y<sourceImage->dHeight){
+        size_t sp = x1+y1*sourceImage->dWidth;
+        
+
         switch(sourceImage->dataObject[varNr]->cdfVariable->getType()){
           case CDF_CHAR:
             fpValues[p]= ((signed char*)data)[sp];
@@ -272,10 +284,10 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
             fpValues[p]= ((double*)data)[sp];
             break;
         }
+        //}
         if(!(fpValues[p]==fpValues[p]))fpValues[p]=fNodataValue;
         if(status == 1)fpValues[p]=fNodataValue;
-        //if(valObj[0].fpValues[p]==fNodataValue)valObj[0].fpValues[p]=0;
-        //valObj[0].fpValues[p]+=10.0f;
+
       }
     }
   }
@@ -1391,9 +1403,7 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
        dataSource->styleConfiguration->legendOffset=lo;
      }
    }
-   #ifdef CImgWarpBilinear_DEBUG 
-   CDBDebug("scale=%f offset=%f",dataSource->legendScale,dataSource->legendOffset);
-   #endif  
+ 
    
    
   
