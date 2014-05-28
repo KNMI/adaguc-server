@@ -16,7 +16,9 @@ CCOMPILER=g++ -Wall $(INCLUDEDIR)
 #CCOMPILER=g++ -O2 $(INCLUDEDIR)
 #CCOMPILER=g++ -march=k8-sse3 -mtune=k8-sse3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 $(INCLUDEDIR)  
 
-USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lxml2 -lgd -lproj -lpq -ludunits2 -lfreetype -lgd -lpng -lpthread -lcurl -lgdal -lcairo -lrt
+# USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lxml2 -lgd -lproj -lpq -ludunits2 -lfreetype -lgd -lpng -lpthread  -lrt
+
+USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lxml2 -lgd -lproj -lpq -ludunits2 -lfreetype -lgd -lpng -lpthread  -lrt -lcurl -lgdal -lcairo
 
 # all libs together
 LIBS = $(USERLIBS) $(LDFLAGS) -L$(INSTALLDIR2)/lib  
@@ -32,10 +34,13 @@ $(EXECUTABLE): $(OBJECTS) $(EXECUTABLE).o h5ncdump.o
 	g++ "h5ncdump.o" $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  "h5ncdump" $(LIBS)
 
 %.o: %.cpp
-	$(CCOMPILER) -c $< -o $@  -DENABLE_CURL
+	$(CCOMPILER) -c $< -o $@  -DENABLE_CURL -DADAGUC_USE_CAIRO -DADAGUC_USE_GDAL
+	#$(CCOMPILER) -c $< -o $@
 
 clean:
 	rm $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE).o h5ncdump.o h5ncdump
 run:
 	make
 	./$(EXECUTABLE)		
+
+

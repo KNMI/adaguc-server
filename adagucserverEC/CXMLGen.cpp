@@ -1053,15 +1053,14 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
   XMLDoc->replaceSelf("[SERVICEONLINERESOURCE]",onlineResource.c_str());
   XMLDoc->replaceSelf("[SERVICEINFO]",serviceInfo.c_str());
   
-  
-  int useINSPIREScenario = 0; //{ 0 == default WMS service, 1 == extended inspire capabilities scenario 1, 2 == extended inspire capabilities scenario 2}
-  bool inspireMetadataIsAvailable = false;
-  
-  CT::string datasetCSWURL;
+   int useINSPIREScenario = 0; //{ 0 == default WMS service, 1 == extended inspire capabilities scenario 1, 2 == extended inspire capabilities scenario 2}
+
+   bool inspireMetadataIsAvailable = false;
+   CT::string datasetCSWURL;
   CT::string viewServiceCSWURL;
-  
-  
-  
+#ifdef ENABLE_INSPIRE
+  CInspire::InspireMetadataFromCSW inspireMetadata ;
+   
   if(srvParam->cfg->WMS[0]->Inspire.size()==1){
     if(srvParam->cfg->WMS[0]->Inspire[0]->ViewServiceCSW.size()==1){            
       if(srvParam->cfg->WMS[0]->Inspire[0]->ViewServiceCSW[0]->value.empty()==false){
@@ -1081,10 +1080,12 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
     useINSPIREScenario = 1;
   }
   
-   CInspire::InspireMetadataFromCSW inspireMetadata ;
+
+#endif
   //Use inspire scenario 1.
   if(useINSPIREScenario>0){
-    // *** Enablle INSPIRE ***         
+    #ifdef ENABLE_INSPIRE
+    // *** Enable INSPIRE ***         
     inspireMetadataIsAvailable = true;        
     
     //Download CSW information
@@ -1210,14 +1211,14 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
     XMLDoc->replaceSelf("[CONTACTINFORMATION]",contactInformation.c_str());
     
     XMLDoc->replaceSelf("[INSPIRE::ABSTRACT]",inspireMetadata.abstract.c_str());
-    
+    #endif
   }else{
     //Default WMS 1.3.0 service
     CT::string wms130xsi="xsi:schemaLocation=\"http://www.opengis.net/wms http://schemas.opengis.net/wms/1.3.0/capabilities_1_3_0.xsd\"\n";
     XMLDoc->replaceSelf("[SCHEMADEFINITION]",wms130xsi.c_str());
     XMLDoc->replaceSelf("[CONTACTINFORMATION]","");
   }
-  
+
 
   XMLDoc->concat("<Layer>\n");
   XMLDoc->printconcat("<Title>%s</Title>\n",srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->value.c_str());
@@ -1242,7 +1243,7 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
    
     
     
- 
+#ifdef ENABLE_INSPIRE
       
     if(inspireMetadataIsAvailable){
       XMLDoc->replaceSelf("[INSPIRE::TITLE]",inspireMetadata.title.c_str());    
@@ -1252,7 +1253,7 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
       XMLDoc->concat("  </MetadataURL>\n");
     }
       
-    
+#endif    
     //Make a unique list of all groups
     std::vector <std::string>  groupKeys;
     for(size_t lnr=0;lnr<myWMSLayerList->size();lnr++){
@@ -1354,6 +1355,7 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
             if(layer->abstract.length()>0){
               XMLDoc->concat("<Abstract>"); XMLDoc->concat(layer->abstract.encodeXML().c_str());XMLDoc->concat("</Abstract>\n");
             }
+#ifdef ENABLE_INSPIRE
             if(inspireMetadataIsAvailable){           
               //Set INSPIRE layer keywords
               XMLDoc->concat("<KeywordList>\n");
@@ -1362,6 +1364,7 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
               }
               XMLDoc->concat("</KeywordList>\n");
             }
+#endif            
             //XMLDoc->concat("<Keyword>"); XMLDoc->concat(&layer->abstract);XMLDoc->concat("</Keyword>\n");
          
 

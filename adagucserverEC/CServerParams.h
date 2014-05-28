@@ -114,7 +114,7 @@ class CServerParams{
     bool showLegendInImage;
     bool showNorthArrow;
     
-    CT::string JSONP;
+    CT::string JSONP,queryStrURLParam;
     
     std::vector<COGCDims*> requestDims;
     int serviceType;
