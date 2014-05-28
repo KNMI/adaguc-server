@@ -133,7 +133,7 @@ void CImgWarpNearestNeighbour::drawTriangleBil(CDrawImage *drawImage, float *des
 
           for(int x=sx;x<ex;x++){
             double vx = rcxvx*double(x-x1)+vx1;
-            //drawImage->setPixelIndexed(x,y,vx);
+            drawImage->setPixelIndexed(x,y,vx);
             destField[x+y*W]=vx;
           }
         }
@@ -168,7 +168,7 @@ void CImgWarpNearestNeighbour::drawTriangleBil(CDrawImage *drawImage, float *des
           
           for(int x=sx;x<ex;x++){
             double vx = rcxvx*double(x-x1)+vx1;
-            //drawImage->setPixelIndexed(x,y,vx);
+            drawImage->setPixelIndexed(x,y,vx);
             destField[x+y*W]=vx;
           }
         } 

@@ -698,19 +698,19 @@ for(size_t varNr=0;varNr<sourceImage->dataObject.size();varNr++){
         
         
 
-              
+        
         if(doDraw){
         
           fillQuadGouraud(valueData,vP,  dImageWidth,dImageHeight, xP,yP);
         
         }
-        /*for(int iy=-15;iy<16;iy++){
-          for(int ix=-15;ix<16;ix++){
-            if(iy+dpDestY[p00]>0&&ix+dpDestX[p00]>0&&iy+dpDestY[p00]<dImageHeight&&ix+dpDestX[p00]<dImageWidth){
-              valueData[(iy+dpDestY[p00])*dImageWidth+ix+dpDestX[p00]]=fpValues[p00];
-            }
-          }
-        }*/
+//         /*for(int iy=-15;iy<16;iy++){
+//           for(int ix=-15;ix<16;ix++){
+//             if(iy+dpDestY[p00]>0&&ix+dpDestX[p00]>0&&iy+dpDestY[p00]<dImageHeight&&ix+dpDestX[p00]<dImageWidth){
+//               valueData[(iy+dpDestY[p00])*dImageWidth+ix+dpDestX[p00]]=fpValues[p00];
+//             }
+//           }
+//         }*/
       }
     }
   }

@@ -436,7 +436,7 @@ private:
   };
 
   template <class T>
-  void drawTriangle(CDrawImage *drawImage, int *xP,int *yP, CDataSource *dataSource,size_t *indexX,size_t *indexY,int stride,Settings *settings){
+  void drawTriangle(CDrawImage *drawImage, int *xP,int *yP, CDataSource *dataSource,size_t *indexX,size_t *indexY,Settings *settings){
     
 
    //Sort the vertices in Y direction
@@ -502,7 +502,7 @@ private:
 
     
     
-    //x*stride+(y*stride)*(dataWidth*stride)
+   
     
     float VX1 = indexX[lower];
     float VX2 = indexX[middle];
@@ -544,8 +544,8 @@ private:
           for(int x=sx;x<ex;x++){
             
             //data[x+y*W]=rcxv*float(x-x1)+v1;
-            int vx = rcxvx*float(x-x1)+vx1;
-            int vy = rcxvy*float(x-x1)+vy1;
+            int vx = int(rcxvx*float(x-x1)+vx1);
+            int vy = int(rcxvy*float(x-x1)+vy1);
   //           int v = vy;
   //           if(v<0)v=0;if(v>239)v=239;
   //           drawImage->setPixelIndexed(x,y,v);
@@ -590,7 +590,7 @@ private:
         float vyB = rcvyb*float(y-Y2)+VY2;
         int x1,x2;
         float vx1,vx2,vy1,vy2;
-        if(xL<xB){x1=xL;x2=xB;vx1=vxL;vx2=vxB;vy1=vyL;vy2=vyB;}else{x2=xL;x1=xB;vx1=vxB;vx2=vxL;vy1=vyB;vy2=vyL;}
+        if(xL<=xB){x1=xL;x2=xB;vx1=vxL;vx2=vxB;vy1=vyL;vy2=vyB;}else{x2=xL;x1=xB;vx1=vxB;vx2=vxL;vy1=vyB;vy2=vyL;}
         if(x1<W&&x2>0){
           int sx = (x1<0)?0:x1;
           int ex = (x2>W)?W:x2;
@@ -598,8 +598,8 @@ private:
           float rcxvy = float(vy2-vy1)/float(x2-x1);
           
           for(int x=sx;x<ex;x++){
-            int vx = rcxvx*float(x-x1)+vx1;
-            int vy = rcxvy*float(x-x1)+vy1;
+            int vx = int(rcxvx*float(x-x1)+vx1);
+            int vy = int(rcxvy*float(x-x1)+vy1);
   //           int v=vy;
   //           if(v<0)v=0;if(v>239)v=239;
   //           drawImage->setPixelIndexed(x,y,v);
@@ -640,14 +640,15 @@ private:
     double stride = 1;
     
     if(!drawBil){  
-      while(orgDataSize/(stride*stride)>512*256){
+      while(orgDataSize/(stride*stride)>512*1024){
         stride*=2;
       }
     }
     
     //stride=100;
     //stride=32;
-    int stridei = stride+0.5;
+ //  stride = 8;
+    int stridei = stride;
     CDBDebug("STRIDE = %d",stridei);
     int dataWidth = (float(dataSource->dWidth)/stride+0.0);
     int dataHeight = (float(dataSource->dHeight)/stride+0.0);
@@ -760,15 +761,9 @@ private:
           py[j]*=DEG_TO_RAD;
         }
       }
-      
-//       for(size_t j=0;j<dataSize;j++){if(j<10){CDBDebug("%f %f",px[j],py[j]);}}
-        
       if(pj_transform(warper->sourcepj,warper->destpj, dataSize,0,px,py,NULL)){
         CDBDebug("Unable to do pj_transform");
       }
-
-//       CDBDebug("--");
-
       if(destNeedsDegreeRadianConversion){
         for(size_t j=0;j<dataSize;j++){
           //if(j<10){CDBDebug("%f %f",px[j],py[j]);}
@@ -785,7 +780,7 @@ private:
         py[j]-=dfDestOrigY;
         px[j]*=multiDestX;
         py[j]*=multiDestY;
-        
+        py[j]--;
       }else{
         skip[j]=true;        
       }
@@ -921,7 +916,21 @@ private:
 //         }
 //       }
     }else{
-      
+   
+    /*  
+      for(int y=0;y<dataHeight*stride/2;y++){
+        for(int x=0;x<dataWidth*stride;x++){
+            bool onx = false;
+            bool ony = false;
+            if(y%2==0)ony = true;
+            if((x+ony)%2==0)onx = true;
+            size_t p=x+y*((dataWidth)*stride);
+            T *data=(T*)dataSource->dataObject[0]->cdfVariable->data;
+            data[p]=0;
+            if(onx)data[p]=2550;
+            
+        }
+      }*/
       for(int y=0;y<dataHeight;y++){
         for(int x=0;x<dataWidth;x++){
                   
@@ -989,32 +998,32 @@ private:
 
 
                 size_t xs[3],ys[3];
-                xs[0]=x*stride-stride/2+stride/2;
-                xs[1]=x*stride+stride/2+stride/2;
+                xs[0]=x*stride;
+                xs[1]=x*stride+stride;
                 xs[2]=x*stride+stride/2;
-                ys[0]=y*stride-stride/2+stride/2;
-                ys[1]=y*stride-stride/2+stride/2;
+                ys[0]=y*stride;
+                ys[1]=y*stride;
                 ys[2]=y*stride+stride/2;
-                drawTriangle<T>(drawImage, xP,yP, dataSource,xs,ys,stride,&settings);
+                drawTriangle<T>(drawImage, xP,yP, dataSource,xs,ys,&settings);
                 
                 xP[0] = px3;
                 yP[0] = py3;
-                xs[0]=x*stride+stride/2+stride/2;
-                ys[0]=y*stride+stride/2+stride/2;
-                drawTriangle<T>(drawImage, xP,yP, dataSource,xs,ys,stride,&settings);
+                xs[0]=x*stride+stride;
+                ys[0]=y*stride+stride;
+                drawTriangle<T>(drawImage, xP,yP, dataSource,xs,ys,&settings);
 
                 xP[1]=px4;
                 yP[1]=py4;
-                xs[1]=x*stride-stride/2+stride/2;
-                ys[1]=y*stride+stride/2+stride/2;
+                xs[1]=x*stride;
+                ys[1]=y*stride+stride;
 
-                drawTriangle<T>(drawImage, xP,yP, dataSource,xs,ys,stride,&settings);
+                drawTriangle<T>(drawImage, xP,yP, dataSource,xs,ys,&settings);
 
                 xP[0] = px1;
                 yP[0] = py1;
-                xs[0]=x*stride-stride/2+stride/2;
-                ys[0]=y*stride-stride/2+stride/2;
-                drawTriangle<T>(drawImage, xP,yP, dataSource,xs,ys,stride,&settings);
+                xs[0]=x*stride;
+                ys[0]=y*stride;
+                drawTriangle<T>(drawImage, xP,yP, dataSource,xs,ys,&settings);
               }
             }
           }

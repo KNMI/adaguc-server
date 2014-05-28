@@ -163,8 +163,8 @@
 //#define CDATASOURCE_DEBUG
 
 //#define ENABLE_CURL in Makefile
-#define ADAGUC_USE_CAIRO
-#define ADAGUC_USE_GDAL
+//#define ADAGUC_USE_CAIRO
+//#define ADAGUC_USE_GDAL
 #endif
 
 

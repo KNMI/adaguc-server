@@ -2902,18 +2902,18 @@ int CImageDataWriter::end(){
       resetErrors();
       if (srvParam->JSONP.length()==0) {      
 #ifdef use_PARAM
-        resultJSON.concat(rootElement.getList("layer").toJSON().c_str());
+        resultJSON.concat(rootElement.getList("layer").toJSON(CXMLPARSER_JSONMODE_STANDARD).c_str());
 #else
-        resultJSON.concat(rootElement.getList("param").toJSON().c_str());
+        resultJSON.concat(rootElement.getList("param").toJSON(CXMLPARSER_JSONMODE_STANDARD).c_str());
 #endif
         printf("%s", resultJSON.c_str());
       } else {
         resultJSON.concat(srvParam->JSONP.c_str());
         resultJSON.concat("(");
 #ifdef use_PARAM
-        resultJSON.concat(rootElement.getList("layer").toJSON().c_str());
+        resultJSON.concat(rootElement.getList("layer").toJSON(CXMLPARSER_JSONMODE_STANDARD).c_str());
 #else
-        resultJSON.concat(rootElement.getList("param").toJSON().c_str());
+        resultJSON.concat(rootElement.getList("param").toJSON(CXMLPARSER_JSONMODE_STANDARD).c_str());
 #endif
         resultJSON.concat(");");
         printf("%s", resultJSON.c_str());

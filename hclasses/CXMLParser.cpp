@@ -171,7 +171,7 @@ CT::string CXMLParser::XMLElement::toXML(XMLElement el,int depth){
   for(int i=0;i<depth;i++)data+="  ";
   data+=CT::string("<")+el.name;
   for(size_t j=0;j<el.getAttributes().size();j++){
-    data+=CT::string(" ")+el.getAttributes().get(j).name+CT::string("=\"")+el.getAttributes().get(j).value+"\"";
+    data+=CT::string(" ")+el.getAttributes().get(j).name+CT::string("=\"")+el.getAttributes().get(j).value.encodeXML()+"\"";
   }
   if(!hasValue){
     data+=">\n";
@@ -203,14 +203,16 @@ CT::string CXMLParser::XMLElement::toString(){
 }
 
 
-CT::string CXMLParser::XMLElement::toJSON(XMLElement el,int depth){
+CT::string CXMLParser::XMLElement::toJSON(XMLElement el,int depth,int mode){
   CT::string data;
   std::vector<CT::string>done;
 
   if(el.xmlAttributes.size()>0){
     CXMLParser::XMLElement xmlattr("xmlattr");
     for(size_t j=0;j<el.xmlAttributes.size();j++){
-        xmlattr.add(CXMLParser::XMLElement(el.xmlAttributes[j].name.c_str(),el.xmlAttributes[j].value.c_str()));
+        //xmlattr.add(CXMLParser::XMLElement(el.xmlAttributes[j].name.c_str(),el.xmlAttributes[j].value.c_str()));
+      xmlattr.add(CXMLParser::XMLElement(el.xmlAttributes[j].name.c_str(),el.xmlAttributes[j].value.c_str()));
+      
     }
     el.add(xmlattr);
   }
@@ -230,7 +232,7 @@ CT::string CXMLParser::XMLElement::toJSON(XMLElement el,int depth){
         data+=":[";
         for(size_t i=0;i<els.size();i++){
           CT::string value = els[i]->getValue().replacer("\n","").trimr();
-          CT::string subdata = toJSON(*(els[i]),depth++);;
+          CT::string subdata = toJSON(*(els[i]),depth++,mode);;
           if(subdata.length()>0){
             if(i>0)data+=",";
             data+="{";
@@ -269,7 +271,7 @@ CT::string CXMLParser::XMLElement::toJSON(XMLElement el,int depth){
         }else{
           data+="{";
         }
-        CT::string subdata = toJSON(el.xmlElements[j],depth++);
+        CT::string subdata = toJSON(el.xmlElements[j],depth++,mode);
         if(hasValues&&subdata.length()>0)data+=",";
         if(subdata.length()>0){
           data+=subdata;
@@ -283,10 +285,10 @@ CT::string CXMLParser::XMLElement::toJSON(XMLElement el,int depth){
   return data;
 }
 
-CT::string CXMLParser::XMLElement::toJSON(){
+CT::string CXMLParser::XMLElement::toJSON(int mode){
   CT::string data ="";
   data="[{";
-  data+=toJSON((*this),0);
+  data+=toJSON((*this),0,mode);
   data+="}]\n";
   return data;
 }

@@ -39,6 +39,9 @@
 #define CXMLPARSER_ELEMENT_OUT_OF_BOUNDS 4
 #define CXMLPARSER_INVALID_XML 6
 
+#define CXMLPARSER_JSONMODE_STANDARD 0
+#define CXMLPARSER_JSONMODE_CLASSIC 1
+
 
 /*Example Usage:
  
@@ -147,11 +150,11 @@ class CXMLParser{
       public:
         XMLElement *get(size_t nr);
         void add(XMLElement *element);
-        CT::string toJSON(){
+        CT::string toJSON(int mode){
           CT::string json = "[";
           for(size_t j=0;j<size();j++){
             if(j>0)json+=",";
-            CT::string subdata = get(j)->toJSON();
+            CT::string subdata = get(j)->toJSON(mode);
             json.concat((subdata.c_str()+1),subdata.length()-3);
           }
           json+="]";
@@ -203,7 +206,7 @@ class CXMLParser{
      * @param el The XMLElement to convert
      * @param depth the current recursive depth
      */
-    CT::string toJSON(XMLElement el,int depth);
+    CT::string toJSON(XMLElement el,int depth,int mode);
           
     public: 
     /**
@@ -214,7 +217,7 @@ class CXMLParser{
     /**
      * toJSON converts the current XMLElement to json
      */
-    CT::string toJSON();
+    CT::string toJSON(int mode);
     
     
     /**
