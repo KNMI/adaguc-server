@@ -231,7 +231,10 @@ CT::string CServerParams::lookupTableName(const char *path,const char *filter, c
 // CDBDebug("lookupTableName %s",identifier.c_str());
   
   CT::string lookupTableName = "pathfiltertablelookup";
+  
+  //TODO CRUCIAL setting for fast perfomance on large datasets, add Unique to enable building fast lookup indexes.
   CT::string tableColumns("path varchar (511), filter varchar (511), dimension varchar (511), tablename varchar (63), UNIQUE (path,filter,dimension) ");
+ // CT::string tableColumns("path varchar (511), filter varchar (511), dimension varchar (511), tablename varchar (63)");
   CT::string mvRecordQuery;
   int status;
   CPGSQLDB *DB = getDataBaseConnection();
