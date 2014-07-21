@@ -23,7 +23,7 @@
  * 
  ******************************************************************************/
 
-//#define CREQUEST_DEBUG
+#define CREQUEST_DEBUG
 //#define MEASURETIME
 
 #include "CRequest.h"
@@ -539,7 +539,7 @@ int CRequest::generateGetReferenceTimesDoc(CT::string *result,CDataSource *dataS
       return 1;
     }
     CT::string query;
-    query.print("select %s from %s",dimName.c_str(),tableName.c_str());
+    query.print("select %s from %s order by %s desc",dimName.c_str(),tableName.c_str(), dimName.c_str());
     CPGSQLDB * DB = srvParam->getDataBaseConnection();
   
     // Connect do DB
@@ -562,7 +562,11 @@ int CRequest::generateGetReferenceTimesDoc(CT::string *result,CDataSource *dataS
       }
       first=false;
       result->concat("\"");
-      result->concat(store->getRecord(k)->get(0)->c_str());
+      CT::string ymd;
+      ymd=store->getRecord(k)->get(0);
+      ymd.setChar(10, 'T');
+      ymd.concat("Z");
+      result->concat(ymd);
       result->concat("\"");
     } 
     result->concat("]");
@@ -634,7 +638,7 @@ int CRequest::generateGetReferenceTimes(CDataSource *dataSource){
     printf("%s%c%c\n","Content-Type: application/json ",13,10);
     printf("%s",XMLdocument.c_str());
   } else {
-    printf("%s%c%c\n","Content-Type: text/javascript ",13,10);
+    printf("%s%c%c\n","Content-Type: application/javascript ",13,10);
     printf("%s(%s)",srvParam->JSONP.c_str(),XMLdocument.c_str());
   }
   
@@ -783,6 +787,7 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
       #endif
       //Check if this dim is not already added
       bool alreadyAdded=false;
+      
       for(size_t l=0;l<dataSource->requiredDims.size();l++){
         if(dataSource->requiredDims[l]->name.equals(&dimName)){alreadyAdded=true;break;}
       }
@@ -871,6 +876,7 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
       CT::string dimName(dataSource->cfgLayer->Dimension[i]->value.c_str());
       dimName.toLowerCaseSelf();
       bool alreadyAdded=false;
+    
       for(size_t k=0;k<dataSource->requiredDims.size();k++){
         if(dataSource->requiredDims[k]->name.equals(&dimName)){alreadyAdded=true;break;}
       }
@@ -891,11 +897,71 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
         dataSource->requiredDims.push_back(ogcDim);
         ogcDim->name.copy(&dimName);
         ogcDim->netCDFDimName.copy(dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
-        //Try to find the max value for this dim name from the database
+        
+        bool isReferenceTimeDimension = false;
+        if(dataSource->cfgLayer->Dimension[i]->value.equals("reference_time")){isReferenceTimeDimension=true;}
+        
+        
         CT::string query;
-        query.print("select max(%s) from %s",
-                    dataSource->cfgLayer->Dimension[i]->attr.name.c_str(),
-                    tableName.c_str());
+        
+        if(!isReferenceTimeDimension){
+          //Try to find the max value for this dim name from the database
+          query.print("select max(%s) from %s",
+                      dataSource->cfgLayer->Dimension[i]->attr.name.c_str(),
+                      tableName.c_str());
+        }else{
+          //Try to find a reference time closest to the given time value?
+       
+          
+          //The current time is:
+          CT::string timeValue;
+          CT::string netcdfTimeDimName;
+          for(size_t j=0;j<dataSource->requiredDims.size();j++){
+            CDBDebug("DIMS: %d [%s] [%s]",j,dataSource->requiredDims[j]->name.c_str(),dataSource->requiredDims[j]->value.c_str());
+            if(dataSource->requiredDims[j]->name.equals("time")){
+              timeValue = dataSource->requiredDims[j]->value;
+              netcdfTimeDimName = dataSource->requiredDims[j]->netCDFDimName;
+              break;
+            }
+          }
+          if(timeValue.empty()){
+            //CDBDebug("Time value is not available, getting max reference_time");
+             query.print("select max(%s) from %s",
+                      dataSource->cfgLayer->Dimension[i]->attr.name.c_str(),
+                      tableName.c_str());
+          }else{
+            // TIME is set! Get 
+            
+            
+            CT::string timeTableName;
+            try{
+              timeTableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netcdfTimeDimName.c_str());
+            }catch(int e){
+              CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netcdfTimeDimName.c_str());
+              return 1;
+            }
+            
+            
+            //CDBDebug("Current time value = %s, tablename = %s",timeValue.c_str(),timeTableName.c_str());
+            //CDBDebug("columnname for reference_time is [%s]",ogcDim->netCDFDimName.c_str());
+            //select * from (select forecast_reference_time,(EXTRACT(EPOCH FROM (time-forecast_reference_time))) as age from ( select * from t20140528t083607890_pmyrmlfgcqmpbylb2dgp)a0 ,( select * from t20140528t083607860_uxmpghhqiuf6a2b0mg8y where time = '2014-05-28T03:00:00Z')a1 where a0.path = a1.path order by age asc)a0 where age >= 0 limit 1
+            
+            query.print(
+              "select * from (select %s,(EXTRACT(EPOCH FROM (%s-%s))) as age from ( select * from %s)a0 ,( select * from %s where %s = '%s')a1 where a0.path = a1.path order by age asc)a0 where age >= 0 limit 1",
+                        ogcDim->netCDFDimName.c_str(),
+                        netcdfTimeDimName.c_str(),
+                        ogcDim->netCDFDimName.c_str(),
+                        tableName.c_str(),
+                        timeTableName.c_str(),
+                        netcdfTimeDimName.c_str(),
+                        timeValue.c_str()
+                       );
+          }
+          CDBDebug("Reference time query Query: %s", query.c_str());
+        }
+	#ifdef CREQUEST_DEBUG
+	CDBDebug("Query: %s", query.c_str());
+	#endif
         //Execute the query
         CDB::Store *maxStore = DB->queryToStore(query.c_str());
         if(maxStore == NULL){
@@ -904,9 +970,24 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
           CDBError("query failed");return 1;
         }
         ogcDim->value.copy(maxStore->getRecord(0)->get(0));
+  
         delete maxStore;
       }
     }        
+  
+    //Fix found time values which are retrieved from the database
+    for(size_t i=0;i<dataSource->requiredDims.size();i++){
+      if(dataSource->requiredDims[i]->name.indexOf("time")!=-1){
+        if(dataSource->requiredDims[i]->value.length()>12){
+          dataSource->requiredDims[i]->isATimeDimension = true;
+          if(dataSource->requiredDims[i]->value.charAt(10)==' '){
+            dataSource->requiredDims[i]->value.setChar(10, 'T');
+            dataSource->requiredDims[i]->value.concat("Z");
+          }
+        }
+      }
+    }
+  
   
     CT::string queryOrderedDESC;
     queryOrderedDESC.print("select a0.path");
@@ -1090,11 +1171,19 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
       
       //For each timesteps a new set of dimensions is added with corresponding dim array indices.
       for(size_t i=0;i<dataSource->requiredDims.size();i++){
-        timeStep->dims.addDimension(dataSource->requiredDims[i]->netCDFDimName.c_str(),record->get(1+i*2)->c_str(),atoi(record->get(2+i*2)->c_str()));
+       
         
         //CDBDebug("%s %s",dataSource->requiredDims[i]->netCDFDimName.c_str(),dataSource->requiredDims[i]->value.c_str());
         //CDBDebug("%s = %s",record->get(1+i*2)->c_str(),record->get(2+i*2)->c_str());
-        dataSource->requiredDims[i]->addValue(record->get(1+i*2)->c_str());
+        
+        CT::string value = record->get(1+i*2)->c_str();
+        if(dataSource->requiredDims[i]->isATimeDimension){
+           value.setChar(10, 'T');
+           value.concat("Z");
+        }
+         timeStep->dims.addDimension(dataSource->requiredDims[i]->netCDFDimName.c_str(),value.c_str(),atoi(record->get(2+i*2)->c_str()));
+       // CDBDebug("Pusing %s",value.c_str());
+        dataSource->requiredDims[i]->addValue(value.c_str());
         //dataSource->requiredDims[i]->allValues.push_back(sDims[l].c_str());
       }
     }
