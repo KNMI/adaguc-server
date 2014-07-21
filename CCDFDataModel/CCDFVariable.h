@@ -37,6 +37,15 @@ namespace CDF{
     public:
       CDFType nativeType;
       CDFType currentType;
+      CT::string name;
+      CT::string orgName;
+      std::vector<Attribute *> attributes;
+      std::vector<Dimension *> dimensionlinks;
+      int id;
+      size_t currentSize;
+      void *data;
+      bool isDimension;
+      
     private:
       //Currently, aggregation along just 1 dimension is supported.
       class CDFObjectClass{
@@ -82,6 +91,9 @@ namespace CDF{
           CDBDebug("returning getParentCDFObject");
 #endif          
           return getParentCDFObject();
+        }
+        if(start == NULL || count == NULL){
+           return getParentCDFObject();
         }
         //Return the correct cdfReader According the given dims.
         size_t iterativeDimIndex;
@@ -171,8 +183,7 @@ namespace CDF{
         if(data!=NULL){CDF::freeData(&data);data=NULL;}
         for(size_t j=0;j<cdfObjectList.size();j++){if(cdfObjectList[j]!=NULL){delete cdfObjectList[j];cdfObjectList[j]=NULL;}}
       }
-      std::vector<Attribute *> attributes;
-      std::vector<Dimension *> dimensionlinks;
+    
       CDFType getType(){
         return currentType;
       };
@@ -184,23 +195,20 @@ namespace CDF{
       
       
       
-      CT::string name;
-      CT::string orgName;
+     
       void setName(const char *value){
         name.copy(value);
         //TODO Implement this correctly in readvariabledata....
         if(orgName.length()==0)orgName.copy(value);
       }
-      int id;
-      size_t currentSize;
+
       void setSize(size_t size){
         currentSize = size;
       }
       size_t getSize(){
         return currentSize;
       }
-      void *data;
-      bool isDimension;
+
       
       Attribute * getAttribute(const char *name){
         for(size_t j=0;j<attributes.size();j++){
@@ -323,6 +331,43 @@ namespace CDF{
         if(type==CDF_DOUBLE){memcpy(data,dataToSet,currentSize*sizeof(double));}
         return 0;
       }
+      
+       //Returns a new copy of this variable
+      /*Variable *clone(){
+        Variable *newVar = new Variable ();
+
+        
+        
+        
+        
+        
+        
+        
+      newVar->nativeType = nativeType;
+      newVar->currentType;
+      newVar->name;
+      newVar->orgName;
+      std::vector<Attribute *> attributes;
+      std::vector<Dimension *> dimensionlinks;
+      int id;
+      size_t currentSize;
+      void *data;
+      bool isDimension;
+      
+    private:
+      //Currently, aggregation along just 1 dimension is supported.
+      class CDFObjectClass{
+      public:
+        void *cdfObjectPointer;
+        int dimIndex;
+        double dimValue;
+      };
+    std::vector<CDFObjectClass *> cdfObjectList;
+    void *cdfReaderPointer;
+    void *parentCDFObject;
+    bool hasCustomReader;
+        return newVar;
+      }*/
   };
 }
 #endif

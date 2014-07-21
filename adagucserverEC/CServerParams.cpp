@@ -102,8 +102,8 @@ void CServerParams::getCacheFileName(CT::string *cacheFileName){
 }
 
 
-void CServerParams::getCacheDirectory(CT::string *cacheFileName){
- 
+void CServerParams::_getCacheDirectory(CT::string *_cacheFileName){
+  CT::string cacheFileName;
   //CDBDebug("getCacheDirectory");
   CT::string cacheName("WMSCACHE");
   bool useProvidedCacheFileName=false;
@@ -127,12 +127,21 @@ void CServerParams::getCacheDirectory(CT::string *cacheFileName){
       cacheName.setChar(j,c);
     }
   }
-  //append .dat extension
-  //cacheName.concat(".dat");
   //Insert the tmp dir in the beginning
-  cacheFileName->copy(cfg->TempDir[0]->attr.value.c_str());
-  cacheFileName->concat("/");
-  cacheFileName->concat(&cacheName);
+  cacheFileName.copy(cfg->TempDir[0]->attr.value.c_str());
+  cacheFileName.concat("/");
+  cacheFileName.concat(&cacheName);
+  
+  //Split up
+
+   int maxlength = 200;
+  size_t nrStrings = (cacheFileName.length()/maxlength)+1;
+  CT::string myidinparts = "";
+  for(size_t j=0;j<nrStrings;j++){
+    myidinparts+="/";
+    myidinparts+= cacheFileName.substring(j*maxlength,j*maxlength+maxlength);
+  }
+  _cacheFileName->copy(myidinparts.c_str());
 }
 
 #include <ctime>
@@ -191,7 +200,7 @@ CT::string currentDateTime() {
 //Must become atomic between processes.
 
 CT::string CServerParams::lookupTableName(const char *path,const char *filter, const char * dimension){
-  CT::string identifier = "lookupTableName_";  identifier.concat(path);  identifier.concat("/");  identifier.concat(filter);  
+  CT::string identifier = "lookuptable/";  identifier.concat(path);  identifier.concat("/");  identifier.concat(filter);  
   if(dimension!=NULL){identifier.concat("/");identifier.concat(dimension);}
   CT::string tableName;
   
@@ -203,8 +212,8 @@ CT::string CServerParams::lookupTableName(const char *path,const char *filter, c
   }
   
   CCache::Lock lock;
-  CT::string cacheDirectory = "";
-  getCacheDirectory(&cacheDirectory);
+  CT::string cacheDirectory = cfg->TempDir[0]->attr.value.c_str();
+  //getCacheDirectory(&cacheDirectory);
   if(cacheDirectory.length()>0){
     lock.claim(cacheDirectory.c_str(),identifier.c_str(),isAutoResourceEnabled());
   }
@@ -222,7 +231,10 @@ CT::string CServerParams::lookupTableName(const char *path,const char *filter, c
 // CDBDebug("lookupTableName %s",identifier.c_str());
   
   CT::string lookupTableName = "pathfiltertablelookup";
+  
+  //TODO CRUCIAL setting for fast perfomance on large datasets, add Unique to enable building fast lookup indexes.
   CT::string tableColumns("path varchar (511), filter varchar (511), dimension varchar (511), tablename varchar (63), UNIQUE (path,filter,dimension) ");
+ // CT::string tableColumns("path varchar (511), filter varchar (511), dimension varchar (511), tablename varchar (63)");
   CT::string mvRecordQuery;
   int status;
   CPGSQLDB *DB = getDataBaseConnection();
@@ -394,8 +406,8 @@ bool CServerParams::isAutoResourceCacheEnabled(){
       if(!cfg->AutoResource[0]->attr.enablecache.equals("true"))autoResourceCacheEnabled = 0;
     }
   }
-  if(autoResourceCacheEnabled==0)return false;
-  return true;
+  if(autoResourceCacheEnabled==1)return true;
+  return false;
 }
 
 

@@ -168,44 +168,44 @@ class CImgWarpBilinear:public CImageWarperRenderInterface{
       for(size_t j=0;j<minimaPoints.size();j++)delete minimaPoints[j];
       for(size_t j=0;j<maximaPoints.size();j++)delete maximaPoints[j];
     }
-    void render(CImageWarper *warper,CDataSource *sourceImage,CDrawImage *drawImage);
+    void render(CImageWarper *warper,CDataSource *dataSource,CDrawImage *drawImage);
     int set(const char *pszSettings);
     
-    int getPixelIndexForValue(CDataSource*sourceImage,float val){
+    int getPixelIndexForValue(CDataSource*dataSource,float val){
       bool isNodata=false;
       
-      if(sourceImage->dataObject[0]->hasNodataValue){
-        if(val==float(sourceImage->dataObject[0]->dfNodataValue))isNodata=true;
+      if(dataSource->dataObject[0]->hasNodataValue){
+        if(val==float(dataSource->dataObject[0]->dfNodataValue))isNodata=true;
         if(!(val==val))isNodata=true;
       }
       if(!isNodata)
-        if(sourceImage->legendValueRange==1)
-          if(val<sourceImage->legendLowerRange||val>sourceImage->legendUpperRange)isNodata=true;
+        if(dataSource->styleConfiguration->hasLegendValueRange==1)
+          if(val<dataSource->styleConfiguration->legendLowerRange||val>dataSource->styleConfiguration->legendUpperRange)isNodata=true;
           if(!isNodata){
-            if(sourceImage->legendLog!=0)val=log10(val+.000001)/log10(sourceImage->legendLog);
-            val*=sourceImage->legendScale;
-            val+=sourceImage->legendOffset;
+            if(dataSource->styleConfiguration->legendLog!=0)val=log10(val+.000001)/log10(dataSource->styleConfiguration->legendLog);
+            val*=dataSource->styleConfiguration->legendScale;
+            val+=dataSource->styleConfiguration->legendOffset;
             if(val>=239)val=239;else if(val<0)val=0;
             return int(val);
           }
       return 0;
     }
     
-    void setValuePixel(CDataSource*sourceImage,CDrawImage*drawImage,int destX,int destY,float val){
+    void setValuePixel(CDataSource*dataSource,CDrawImage*drawImage,int destX,int destY,float val){
       bool isNodata=false;
       
-      if(sourceImage->dataObject[0]->hasNodataValue){
-        if(val==float(sourceImage->dataObject[0]->dfNodataValue)){isNodata=true;  return;}
+      if(dataSource->dataObject[0]->hasNodataValue){
+        if(val==float(dataSource->dataObject[0]->dfNodataValue)){isNodata=true;  return;}
         if(!(val==val)){isNodata=true;  return;}
       }
     
       if(!isNodata)
-        if(sourceImage->legendValueRange==1)
-          if(val<sourceImage->legendLowerRange||val>sourceImage->legendUpperRange)isNodata=true;
+        if(dataSource->styleConfiguration->hasLegendValueRange==1)
+          if(val<dataSource->styleConfiguration->legendLowerRange||val>dataSource->styleConfiguration->legendUpperRange)isNodata=true;
       if(!isNodata){
-        if(sourceImage->legendLog!=0)val=log10(val+.000001)/log10(sourceImage->legendLog);
-        val*=sourceImage->legendScale;
-        val+=sourceImage->legendOffset;
+        if(dataSource->styleConfiguration->legendLog!=0)val=log10(val+.000001)/log10(dataSource->styleConfiguration->legendLog);
+        val*=dataSource->styleConfiguration->legendScale;
+        val+=dataSource->styleConfiguration->legendOffset;
         if(val>=239)val=239;else if(val<0)val=0;
         drawImage->setPixelIndexed(destX,destY,(unsigned char)val);
       }

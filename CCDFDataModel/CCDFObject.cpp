@@ -62,7 +62,8 @@ int CDFObject::close(){
   if(reader==NULL){
     CDBError("No reader attached");return 1;
   }
-  CDBDebug("Closing reader");
+  //CDBDebug("Closing reader");
   CDFReader *r=(CDFReader*)reader;
   return r->close();
+  reader = NULL;
 }

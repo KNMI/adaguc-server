@@ -28,18 +28,38 @@ const char *CImgRenderPoints::className="CImgRenderPoints";
 
 void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDrawImage*drawImage){
   bool drawVector = false;
+  bool drawPoints = true;
   bool drawBarb = false;
   bool drawText = true;
+  bool drawVolume = false;
   if(settings.indexOf("vector")!=-1){
     drawVector = true;
   }
   if(settings.indexOf("barb")!=-1){
     drawBarb = true;
   }
+  if(settings.indexOf("volume")!=-1){
+    drawPoints = false;
+    drawVolume = true;
+  }
+  int alphaPoint[15*15];
+  int p = 0;
+  for(int y1=-7;y1<8;y1++){
+    for(int x1=-7;x1<8;x1++){
+      float d= sqrt(x1*x1+y1*y1);
+      if(d<0)d=0;
+      d=10-d;
+      d=d*1.2;
+      alphaPoint[p++] = d;
+    }
+  }
+  
+  
   /*if(settings.indexOf("nearest")!=-1){
     drawText = false;
   }*/
   if(dataSource->dataObject.size()==1){
+    
     std::vector<PointDVWithLatLon> *p1=&dataSource->dataObject[0]->points;
     size_t l=p1->size();
     size_t s=1;
@@ -49,21 +69,37 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
     l=p1->size();
     CT::string t;
     for(size_t j=0;j<l;j=j+s){
-      int x=(*p1)[j].x;
-      int y=dataSource->dHeight-(*p1)[j].y;
       
-      drawImage->circle(x,y, 8, 240,0.65);
-      drawImage->circle(x,y, 1, 240,0.65);
-      if(drawText){
-        //drawImage->setPixelIndexed(x,y, 240);
-        float v=(*p1)[j].v;
-        if(v==v){
-          t.print("%0.1f",v);
-          drawImage->setText(t.c_str(), t.length(),x-t.length()*3,y+8, 240,0);
-        }else{
-          if((*p1)[j].paramList.size()>0){
-            CT::string value = (*p1)[j].paramList[0].value;
-            drawImage->setText(value.c_str(), value.length(),x-value.length()*3,y-20, 240,0);
+      
+
+      if(drawVolume){
+        int x=(*p1)[j].x;
+        int y=dataSource->dHeight-(*p1)[j].y;
+        drawImage->setPixelTrueColor(x,y, 0,0,0,255);
+        int p=0;
+        for(int y1=-7;y1<8;y1++){
+          for(int x1=-7;x1<8;x1++){
+            drawImage->setPixelTrueColor(x+x1,y+y1, 0,0,255,alphaPoint[p++]);
+          }
+        }
+      }
+      
+      if(drawPoints){
+        int x=(*p1)[j].x;
+        int y=dataSource->dHeight-(*p1)[j].y;
+        drawImage->circle(x,y, 8, 240,0.65);
+        drawImage->circle(x,y, 1, 240,0.65);
+        if(drawText){
+          //drawImage->setPixelIndexed(x,y, 240);
+          float v=(*p1)[j].v;
+          if(v==v){
+            t.print("%0.1f",v);
+            drawImage->setText(t.c_str(), t.length(),x-t.length()*3,y+8, 240,0);
+          }else{
+            if((*p1)[j].paramList.size()>0){
+              CT::string value = (*p1)[j].paramList[0].value;
+              drawImage->setText(value.c_str(), value.length(),x-value.length()*3,y-20, 240,0);
+            }
           }
         }
       }

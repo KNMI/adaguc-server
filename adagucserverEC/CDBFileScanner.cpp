@@ -172,7 +172,10 @@ int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,in
       CDBDebug("Checking filetable %s",tableName.c_str());
       
       //if(status == 0){CDBDebug("OK: Table is available");}
-      if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tableName.c_str(),tableColumns.c_str()); return 1;  }
+      if(status == 1){
+        CDBError("\nFAIL: Table %s could not be created: %s",tableName.c_str(),tableColumns.c_str()); 
+        CDBError(DB->getError());
+        return 1;  }
       if(status == 2){
         removeNonExistingFiles=0;
         //removeExisting files can be set back to zero, because there are no files to remove (table is created)
@@ -390,14 +393,14 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
               CDBDebug("Opening file %s",dirReader->fileList[j]->fullName.c_str());
               #endif
               
-              status = cdfObject->open(dirReader->fileList[j]->fullName.c_str());
+              /*status = cdfObject->open(dirReader->fileList[j]->fullName.c_str());
               if(status!=0){
                 CDBError("Unable to open file '%s'",dirReader->fileList[j]->fullName.c_str());
                 throw(__LINE__);
               }
               #ifdef CDBFILESCANNER_DEBUG
               CDBDebug("File opened.");
-              #endif
+              #endif*/
               
               if(status==0){
                 #ifdef CDBFILESCANNER_DEBUG
@@ -596,7 +599,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
               //Close cdfObject. this is only needed if an exception occurs, otherwise it does nothing...
               //delete cdfObject;cdfObject=NULL;
 
-              cdfObject=CDFObjectStore::getCDFObjectStore()->deleteCDFObject(&cdfObject);
+              //TODO CHECK cdfObject=CDFObjectStore::getCDFObjectStore()->deleteCDFObject(&cdfObject);
             }
           }
           //If we are messing in the non-temporary table (e.g.removeNonExistingFiles==0)
@@ -621,7 +624,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
           #endif
           status =  DB->query(queryString.c_str()); 
           if(status!=0){
-            CDBError("Query failed:");
+            CDBError("Query failed [%s]:",DB->getError());
             writeLogFile(queryString.c_str());
             writeLogFile("\n");
             throw(__LINE__);
@@ -678,7 +681,8 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
     DB->query("COMMIT"); 
     #endif    
     CDBError("Exception in DBLoopFiles at line %d",linenr);
-    cdfObject=CDFObjectStore::getCDFObjectStore()->deleteCDFObject(&cdfObject);
+    
+    //TODO CHECK    cdfObject=CDFObjectStore::getCDFObjectStore()->deleteCDFObject(&cdfObject);
     return 1;
   }
   
@@ -696,8 +700,9 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
  
   CCache::Lock lock;
   CT::string identifier = "updatedb";  identifier.concat(dataSource->cfgLayer->FilePath[0]->value.c_str());  identifier.concat("/");  identifier.concat(dataSource->cfgLayer->FilePath[0]->attr.filter.c_str());  
-  CT::string cacheDirectory = "";
-  dataSource->srvParams->getCacheDirectory(&cacheDirectory);
+  //CT::string cacheDirectory = "";
+  CT::string cacheDirectory = dataSource->srvParams->cfg->TempDir[0]->attr.value.c_str();
+  //dataSource->srvParams->getCacheDirectory(&cacheDirectory);
   if(cacheDirectory.length()>0){
     lock.claim(cacheDirectory.c_str(),identifier.c_str(),dataSource->srvParams->isAutoResourceEnabled());
   }
@@ -714,7 +719,7 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
       
       //If this is another directory we will simply ignore it.
       if(layerPath.equals(&layerPathToScan)==false){
-        CDBDebug ("Skipping %s==%s\n",layerPath.c_str(),layerPathToScan.c_str());
+        //CDBDebug ("Skipping %s==%s\n",layerPath.c_str(),layerPathToScan.c_str());
         return 0;
       }
     }
@@ -755,7 +760,7 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
     CDBError("FAILED: Unable to connect to the database with parameters: [%s]",pszDBParams);
     return 1;
   }
-
+    
   try{ 
     
     status = DB->query("SET client_min_messages TO WARNING");
@@ -764,8 +769,10 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
     //First check and create all tables... returns zero on success, positive on error, negative on already done.
     status = createDBUpdateTables(DB,dataSource,removeNonExistingFiles,&dirReader);
     if(status > 0 ){
+
       throw(__LINE__);
     }
+    
     if(status == 0){
             
       //We need to do a transaction if we want to remove files from the existing table
@@ -780,7 +787,7 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
       //Loop Through all files
       status = DBLoopFiles(DB,dataSource,removeNonExistingFiles,&dirReader);
       if(status != 0 )throw(__LINE__);
-            
+              
       //In case of a complete update, the data is written in a temporary table
       //Rename the table to the correct one (remove _temp)
       for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
@@ -823,6 +830,9 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
            #endif    
     return 1;
   }
+  
+  
+ 
   // Close DB
   //CDBDebug("COMMIT");
   #ifdef USEQUERYTRANSACTIONS                  

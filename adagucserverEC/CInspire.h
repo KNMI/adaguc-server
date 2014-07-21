@@ -1,5 +1,11 @@
 #ifndef CINSPIRE_H
 #define CINSPIRE_H
+
+#ifdef ENABLE_CURL
+#define ENABLE_INSPIRE
+#endif
+
+#ifdef ENABLE_INSPIRE
 #include <stdio.h>
 #include "CTypes.h"
 #include "CXMLParser.h"
@@ -55,4 +61,5 @@ public:
    */
   InspireMetadataFromCSW static readInspireMetadataFromCSW(const char * cswService);
 };
+#endif
 #endif

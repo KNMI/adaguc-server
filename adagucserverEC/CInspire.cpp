@@ -1,4 +1,5 @@
 #include "CInspire.h"
+#ifdef ENABLE_INSPIRE
 const char *CInspire::className="CInspire";
 
 CInspire::InspireMetadataFromCSW CInspire::readInspireMetadataFromCSW(const char * cswService){
@@ -74,3 +75,4 @@ CInspire::InspireMetadataFromCSW CInspire::readInspireMetadataFromCSW(const char
   return inspireMetadata;
   
 }
+#endif

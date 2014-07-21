@@ -144,7 +144,7 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
   //Get width and height of the pixel extent
   int dPixelDestW=dPixelExtent[2]-dPixelExtent[0];
   int dPixelDestH=dPixelExtent[3]-dPixelExtent[1];
-  size_t numDestPixels = dPixelDestW*dPixelDestH;
+  size_t numDestPixels = (dPixelDestW+1)*(dPixelDestH+1);
   
   //TODO increase field resolution in order to create better contour plots.
   
@@ -154,6 +154,7 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
   #endif
   int *dpDestX = new int[numDestPixels];//refactor to numGridPoints
   int *dpDestY = new int[numDestPixels];
+  
   class ValueClass{
   public:
     ValueClass(){
@@ -210,9 +211,9 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
   } 
   #endif
   
-  for(int y=dPixelExtent[1];y<dPixelExtent[3];y++){
-    for(int x=dPixelExtent[0];x<dPixelExtent[2];x++){
-      size_t p = size_t((x-(dPixelExtent[0]))+((y-(dPixelExtent[1]))*dPixelDestW));
+  for(int y=dPixelExtent[1];y<dPixelExtent[3]+1;y++){
+    for(int x=dPixelExtent[0];x<dPixelExtent[2]+1;x++){
+      size_t p = size_t((x-(dPixelExtent[0]))+((y-(dPixelExtent[1]))*(dPixelDestW+1)));
       double destX,destY;
       destX=dfSourcedExtW*double(x)+dfSourceOrigX;
       destY=dfSourcedExtH*double(y)+dfSourceOrigY;
@@ -221,7 +222,8 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
       //CDBDebug("%f - %f",destX,destY);
       //TODO:
       //int status = 
-      warper->reprojpoint_inv(destX,destY);
+      int status = warper->reprojpoint_inv(destX,destY);
+
       
       destX-=dfDestOrigX;
       destY-=dfDestOrigY;
@@ -229,46 +231,63 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
       destY/=dfDestExtH;
       destX*=dfDestW;
       destY*=dfDestH;
+      
+      
+      
       dpDestX[p]=(int)destX;//2-200;
       dpDestY[p]=(int)destY;//2+200;
+      
+      
       //CDBDebug("%f - %f s:%d x:%d  y:%d  p:%d",destX,destY,status,x,y,p);
       //  drawImage->setPixelIndexed(dpDestX[p],dpDestY[p],240);
       for(size_t varNr=0;varNr<sourceImage->dataObject.size();varNr++){
         void *data=sourceImage->dataObject[varNr]->cdfVariable->data;
         float *fpValues=valObj[varNr].fpValues;
+        int x1=x;
+        int y1=y;
+        if(x1>=sourceImage->dWidth){
+          x1-=sourceImage->dWidth;
+        }
+        if(y1>=sourceImage->dHeight){
+          y1-=sourceImage->dHeight;
+        }
+        //if(x1>=0&&x1<sourceImage->dWidth&&y>=0&&y<sourceImage->dHeight){
+        size_t sp = x1+y1*sourceImage->dWidth;
         
+
         switch(sourceImage->dataObject[varNr]->cdfVariable->getType()){
           case CDF_CHAR:
-            fpValues[p]= ((signed char*)data)[x+y*sourceImage->dWidth];
+            fpValues[p]= ((signed char*)data)[sp];
             break;
           case CDF_BYTE:
-            fpValues[p]= ((signed char*)data)[x+y*sourceImage->dWidth];
+            fpValues[p]= ((signed char*)data)[sp];
             break;
           case CDF_UBYTE:
-            fpValues[p]= ((unsigned char*)data)[x+y*sourceImage->dWidth];
+            fpValues[p]= ((unsigned char*)data)[sp];
             break;
           case CDF_SHORT:
-            fpValues[p]= ((signed short*)data)[x+y*sourceImage->dWidth];
+            fpValues[p]= ((signed short*)data)[sp];
             break;
           case CDF_USHORT:
-            fpValues[p]= ((unsigned short*)data)[x+y*sourceImage->dWidth];
+            fpValues[p]= ((unsigned short*)data)[sp];
             break;
           case CDF_INT:
-            fpValues[p]= ((signed int*)data)[x+y*sourceImage->dWidth];
+            fpValues[p]= ((signed int*)data)[sp];
             break;
           case CDF_UINT:
-            fpValues[p]= ((unsigned int*)data)[x+y*sourceImage->dWidth];
+            fpValues[p]= ((unsigned int*)data)[sp];
             break;
           case CDF_FLOAT:
-            fpValues[p]= ((float*)data)[x+y*sourceImage->dWidth];
+            fpValues[p]= ((float*)data)[sp];
             break;
           case CDF_DOUBLE:
-            fpValues[p]= ((double*)data)[x+y*sourceImage->dWidth];
+            fpValues[p]= ((double*)data)[sp];
             break;
         }
+        //}
         if(!(fpValues[p]==fpValues[p]))fpValues[p]=fNodataValue;
-        //if(valObj[0].fpValues[p]==fNodataValue)valObj[0].fpValues[p]=0;
-        //valObj[0].fpValues[p]+=10.0f;
+        if(status == 1)fpValues[p]=fNodataValue;
+
       }
     }
   }
@@ -338,7 +357,7 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
       
       for(int y=dPixelExtent[1];y<dPixelExtent[3];y=y+1){
         for(int x=dPixelExtent[0];x<dPixelExtent[2];x=x+1){
-          size_t p = size_t((x-(dPixelExtent[0]))+((y-(dPixelExtent[1]))*dPixelDestW));
+          size_t p = size_t((x-(dPixelExtent[0]))+((y-(dPixelExtent[1]))*(dPixelDestW+1)));
           if ((uValues[p]!=fNodataValue)&&(vValues[p]!=fNodataValue)) {
             double modelX, modelY;
             if (x==dPixelExtent[2]-1) {
@@ -597,7 +616,7 @@ for(size_t varNr=0;varNr<sourceImage->dataObject.size();varNr++){
   #ifdef CImgWarpBilinear_DEBUG
   CDBDebug("start smoothing data with filter %d",smoothingFilter);
   #endif
-  smoothData(fpValues,fNodataValue,smoothingFilter, dPixelDestW,dPixelDestH);
+  smoothData(fpValues,fNodataValue,smoothingFilter, dPixelDestW+1,dPixelDestH+1);
   
   //Draw the obtained raster by using triangle tesselation (eg gouraud shading)
   int xP[4],yP[4];
@@ -626,32 +645,72 @@ for(size_t varNr=0;varNr<sourceImage->dataObject.size();varNr++){
      return cubicInterpolate(arr, x);
    }
    */
-  for(int y=dPixelExtent[1];y<dPixelExtent[3]-1;y=y+1){
-    for(int x=dPixelExtent[0];x<dPixelExtent[2]-1;x=x+1){
-      size_t p = size_t((x-(dPixelExtent[0]))+((y-(dPixelExtent[1]))*dPixelDestW));
+  
+    int avgDX = 0;
+//     int avgDY = 0;
+
+  for(int y=dPixelExtent[1];y<dPixelExtent[3]-1;y++){
+    for(int x=dPixelExtent[0];x<dPixelExtent[2];x++){
+      size_t p = size_t((x-(dPixelExtent[0]))+((y-(dPixelExtent[1]))*(dPixelDestW+1)));
       size_t p00=p;
       size_t p10=p+1;
-      size_t p01=p+dPixelDestW;
-      size_t p11=p+1+dPixelDestW;
-      
-      
-      
+      size_t p01=p+dPixelDestW+1;
+      size_t p11=p+1+dPixelDestW+1;
+     
+
       if(fpValues[p00]!=fNodataValue&&fpValues[p10]!=fNodataValue&&
         fpValues[p01]!=fNodataValue&&fpValues[p11]!=fNodataValue)
       {
+        
         yP[0]=dpDestY[p00]; yP[1]=dpDestY[p01]; yP[2]=dpDestY[p10]; yP[3]=dpDestY[p11];
         xP[0]=dpDestX[p00]; xP[1]=dpDestX[p01]; xP[2]=dpDestX[p10]; xP[3]=dpDestX[p11];
+        
+
         vP[0]=fpValues[p00]; vP[1]=fpValues[p01]; vP[2]=fpValues[p10]; vP[3]=fpValues[p11]; 
         
-        fillQuadGouraud(valueData,vP,  dImageWidth,dImageHeight, xP,yP);
         
-        /*for(int iy=-15;iy<16;iy++){
-          for(int ix=-15;ix<16;ix++){
-            if(iy+dpDestY[p00]>0&&ix+dpDestX[p00]>0&&iy+dpDestY[p00]<dImageHeight&&ix+dpDestX[p00]<dImageWidth){
-              valueData[(iy+dpDestY[p00])*dImageWidth+ix+dpDestX[p00]]=fpValues[p00];
+        
+        bool doDraw = true;
+       
+                  
+        if(x==dPixelExtent[0])avgDX = xP[2];
+//         if(y==dPixelExtent[1])avgDY = yP[3];
+        
+        if(x==dPixelExtent[2]-1){
+          if(abs(avgDX-xP[0])>dImageWidth/4){
+             doDraw= false;
+          }
+          if(abs(avgDX-xP[2])>0){
+            if(abs(avgDX-xP[2])<abs(xP[2]-xP[0])/4){
+              doDraw = false;
+              //CDBDebug("%d %d (%d %d %d %d) ",avgDX-xP[2],xP[2]-xP[0],avgDX,xP[0],xP[1],xP[2]);
             }
           }
-        }*/
+        }
+//         if(y==dPixelExtent[3]-1){
+//           if(abs(avgDY-yP[0])>0){
+//             if(abs(avgDY-yP[0])<abs(yP[3]-yP[0])/2){
+//               doDraw = false;
+//             }
+//           }
+//         }
+        
+        
+        
+
+        
+        if(doDraw){
+        
+          fillQuadGouraud(valueData,vP,  dImageWidth,dImageHeight, xP,yP);
+        
+        }
+//         /*for(int iy=-15;iy<16;iy++){
+//           for(int ix=-15;ix<16;ix++){
+//             if(iy+dpDestY[p00]>0&&ix+dpDestX[p00]>0&&iy+dpDestY[p00]<dImageHeight&&ix+dpDestX[p00]<dImageWidth){
+//               valueData[(iy+dpDestY[p00])*dImageWidth+ix+dpDestX[p00]]=fpValues[p00];
+//             }
+//           }
+//         }*/
       }
     }
   }
@@ -903,6 +962,7 @@ if (enableBarb) {
 //Clean up
 delete[] dpDestX;
 delete[] dpDestY;
+
 delete[] valObj;
  }
  
@@ -1339,13 +1399,11 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
        //Calculate new scale and offset for this:
        float ls=240/((iMax-iMin));
        float lo=-(iMin*ls);
-       dataSource->legendScale=ls;
-       dataSource->legendOffset=lo;
+       dataSource->styleConfiguration->legendScale=ls;
+       dataSource->styleConfiguration->legendOffset=lo;
      }
    }
-   #ifdef CImgWarpBilinear_DEBUG 
-   CDBDebug("scale=%f offset=%f",dataSource->legendScale,dataSource->legendOffset);
-   #endif  
+ 
    
    
   

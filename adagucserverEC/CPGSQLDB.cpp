@@ -26,7 +26,7 @@
 #include "CPGSQLDB.h"
 const char *CPGSQLDB::className="CPGSQLDB";
 void CPGSQLDB::clearResult(){
-  if(result==NULL)PQclear(result);
+  if(result!=NULL)PQclear(result);
   result=NULL;
 }
 
@@ -93,8 +93,13 @@ int CPGSQLDB::checkTable(const char * pszTableName,const char *pszColumns){
 
   for (i = 0; i < PQntuples(result); i++){
     char *pqval=PQgetvalue(result, i, 1);
-    if(strncmp(pszTableName,pqval,strlen(pszTableName))==0&&
-       strlen(pqval)==strlen(pszTableName))break;
+    if(strncmp(pszTableName,pqval,strlen(pszTableName))==0&&strlen(pqval)==strlen(pszTableName)){
+      clearResult();
+      //CDBDebug("Found: %s == %s",pqval,pszTableName);
+      return 0;
+    }else{
+      //CDBDebug("Found: [%s] != [%s]",pqval,pszTableName);
+    }
   }
   // No table exists yet
   if(i == PQntuples(result)){
@@ -140,37 +145,37 @@ int CPGSQLDB::query(const char *pszQuery){
   clearResult();
   return 0;
 }
-CT::string* CPGSQLDB::query_select_deprecated(const char *pszQuery,int dColumn){
-//  CDBDebug("query_select %d %s",dColumn,pszQuery);
-  LastErrorMsg[0]='\0';
-  int i;
-  if(dConnected == 0){
-    CDBError("query_select: Not connected to DB");
-    return NULL;
-  }
-
-  result = PQexec(connection, pszQuery);
-
-  if (PQresultStatus(result) != PGRES_TUPLES_OK) // did the query fail? 
-  {
-    //snprintf(szTemp,CPGSQLDB_MAX_STR_LEN,"query_select: %s failed",pszQuery);
-    //CDBError(szTemp);
-    clearResult();
-    return NULL;
-  }
-  int n=PQntuples(result);
-  CT::string *strings=new CT::string[n+1];
-  for(i=0;i<n;i++){
-    strings[i].copy(PQgetvalue(result, i, dColumn));
-    strings[i].count=n;
-  }
-  CT::CTlink<CT::string>(strings,n);
-  clearResult();
-  return strings;
-}
-CT::string* CPGSQLDB::query_select_deprecated(const char *pszQuery){
-  return query_select_deprecated(pszQuery,0);
-}
+// CT::string* CPGSQLDB::query_select_deprecated(const char *pszQuery,int dColumn){
+// //  CDBDebug("query_select %d %s",dColumn,pszQuery);
+//   LastErrorMsg[0]='\0';
+//   int i;
+//   if(dConnected == 0){
+//     CDBError("query_select: Not connected to DB");
+//     return NULL;
+//   }
+// 
+//   result = PQexec(connection, pszQuery);
+// 
+//   if (PQresultStatus(result) != PGRES_TUPLES_OK) // did the query fail? 
+//   {
+//     //snprintf(szTemp,CPGSQLDB_MAX_STR_LEN,"query_select: %s failed",pszQuery);
+//     //CDBError(szTemp);
+//     clearResult();
+//     return NULL;
+//   }
+//   int n=PQntuples(result);
+//   CT::string *strings=new CT::string[n+1];
+//   for(i=0;i<n;i++){
+//     strings[i].copy(PQgetvalue(result, i, dColumn));
+//     strings[i].count=n;
+//   }
+//   CT::CTlink<CT::string>(strings,n);
+//   clearResult();
+//   return strings;
+// }
+// CT::string* CPGSQLDB::query_select_deprecated(const char *pszQuery){
+//   return query_select_deprecated(pszQuery,0);
+// }
 
 
 CDB::Store* CPGSQLDB::queryToStore(const char *pszQuery,bool throwException){

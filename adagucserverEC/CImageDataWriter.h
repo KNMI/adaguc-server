@@ -35,21 +35,11 @@
 #include "CImgWarpBilinear.h"
 #include "CImgWarpBoolean.h"
 #include "CImgRenderPoints.h"
+#include "CStyleConfiguration.h"
 #include "CMyCURL.h"
 #include "CXMLParser.h"
 #include "CDebugger.h"
 
-//Possible rendermethods
-#define RM_UNDEFINED   0
-#define RM_NEAREST     1
-#define RM_BILINEAR    2
-#define RM_SHADED      4
-#define RM_CONTOUR     8
-#define RM_POINT       16
-#define RM_VECTOR      32
-#define RM_BARB        64
-#define RM_THIN        256
-#define RM_RGBA        512
 
 
 
@@ -76,54 +66,7 @@ class CImageDataWriter: public CBaseDataWriterInterface{
     int nrImagesAdded;
     static void calculateScaleAndOffsetFromMinMax(float &scale, float &offset,float min,float max,float log);
 public:
-  typedef unsigned int RenderMethod;
-  class StyleConfiguration {
-  public:
-    StyleConfiguration(){
-      legendTickInterval = 0;
-      legendTickRound = 0.0;
-      legendIndex = -1;
-      styleIndex = -1;
-    }
-    float shadeInterval,contourIntervalL,contourIntervalH;
-    float legendScale,legendOffset,legendLog;
-    float legendLowerRange,legendUpperRange;//Values in which values are visible (ValueRange)
-    int smoothingFilter;
-    bool hasLegendValueRange;
-    bool hasError;
-    bool legendHasFixedMinMax; //True to fix the classes in the legend, False to determine automatically which values occur.
-    double legendTickInterval;
-    double legendTickRound;
-    
-    RenderMethod renderMethod;
-    std::vector<CServerConfig::XMLE_ContourLine*>*contourLines;
-    std::vector<CServerConfig::XMLE_ShadeInterval*>*shadeIntervals;
-    int legendIndex;
-    int styleIndex;
-    CT::string styleCompositionName;
-    CT::string styleTitle;
-    CT::string styleAbstract;
-    
-    void printStyleConfig(CT::string *data){
-      data->print("shadeInterval = %f\n",shadeInterval);
-      data->printconcat("contourIntervalL = %f\n",contourIntervalL);
-      data->printconcat("contourIntervalH = %f\n",contourIntervalH);
-      data->printconcat("legendScale = %f\n",legendScale);
-      data->printconcat("legendOffset = %f\n",legendOffset);
-      data->printconcat("legendLog = %f\n",legendLog);
-      data->printconcat("hasLegendValueRange = %d\n",hasLegendValueRange);
-      data->printconcat("legendLowerRange = %f\n",legendLowerRange);
-      data->printconcat("legendUpperRange = %f\n",legendUpperRange);
-      data->printconcat("smoothingFilter = %d\n",smoothingFilter);
-      data->printconcat("legendTickRound = %f\n",legendTickRound);
-      data->printconcat("legendTickInterval = %f\n",legendTickInterval);
-      //TODO
-      CT::string rMethodString;
-      getRenderMethodAsString(&rMethodString,renderMethod);
-      data->printconcat("renderMethod = %s",rMethodString.c_str());
-    }
-    
-  };
+  
 public:
     
     class GetFeatureInfoResult{
@@ -160,7 +103,7 @@ public:
 
 
 private:
-    static int getTextForValue(CT::string *tv,float v,StyleConfiguration *currentStyleConfiguration);
+    static int getTextForValue(CT::string *tv,float v,CStyleConfiguration *styleConfiguration);
     std::vector<GetFeatureInfoResult*> getFeatureInfoResultList;
     
     DEF_ERRORFUNCTION();
@@ -175,8 +118,7 @@ private:
 
     //int smoothingFilter;
     //RenderMethodEnum renderMethod;
-    static RenderMethod getRenderMethodFromString(CT::string *renderMethodString);
-    static void getRenderMethodAsString(CT::string *renderMethodString, RenderMethod renderMethod);
+
     double convertValue(CDFType type,void *data,size_t p);
     void setValue(CDFType type,void *data,size_t ptr,double pixel);
     int _setTransparencyAndBGColor(CServerParams *srvParam,CDrawImage* drawImage);
@@ -188,22 +130,22 @@ private:
     static CT::PointerList<CT::string*> *getLegendListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style* style);
     static CT::PointerList<CT::string*> *getLegendNames(std::vector <CServerConfig::XMLE_Legend*> Legend);
     static CT::PointerList<CT::string*> *getStyleNames(std::vector <CServerConfig::XMLE_Styles*> Styles);
-    static CT::PointerList<CT::string*> *getStyleListForDataSource(CDataSource *dataSource,StyleConfiguration *styleConfig);
+    static CT::PointerList<CT::string*> *getStyleListForDataSource(CDataSource *dataSource,CStyleConfiguration *styleConfig);
     
   public:
     CDrawImage drawImage;
-    CImageDataWriter::StyleConfiguration * currentStyleConfiguration;
+    //CStyleConfiguration * currentStyleConfiguration;
     static int  getServerLegendIndexByName(const char * legendName,std::vector <CServerConfig::XMLE_Legend*> serverLegends);
     static int  getServerStyleIndexByName(const char * styleName,std::vector <CServerConfig::XMLE_Style*> serverStyles);
     static CT::PointerList<CT::string*> *getStyleListForDataSource(CDataSource *dataSource);
-    static int makeStyleConfig(StyleConfiguration *styleConfig,CDataSource *dataSource,const char *styleName,const char *legendName,const char *renderMethod);
-    static StyleConfiguration *getStyleConfigurationByName(const char *styleName,CDataSource *dataSource);
+    static int makeStyleConfig(CStyleConfiguration *styleConfig,CDataSource *dataSource,const char *styleName,const char *legendName,const char *renderMethod);
+    static void getStyleConfigurationByName(const char *styleName,CDataSource *dataSource);
 
     static const char *RenderMethodStringList;
     CImageDataWriter();
     ~CImageDataWriter(){
       for(size_t j=0;j<getFeatureInfoResultList.size();j++){delete getFeatureInfoResultList[j];getFeatureInfoResultList[j]=NULL; } getFeatureInfoResultList.clear();
-      delete currentStyleConfiguration;currentStyleConfiguration = NULL;
+      //delete currentStyleConfiguration;currentStyleConfiguration = NULL;
     }
     
     int createLegend(CDataSource *sourceImage,CDrawImage *legendImage);

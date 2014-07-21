@@ -23,29 +23,35 @@
  * 
  ******************************************************************************/
 
-#ifndef CCDFREADER_H
-#define CCDFREADER_H
+#ifndef CCDFSTORE_H
+#define CCDFSTORE_H
 
-#include "CCDFDataModel.h"
-#include "CCDFVariable.h"
+#include "CCache.h"
+
+#include <stdio.h>
+#include <vector>
+#include <iostream>
+#include "CDebugger.h"
+#include "CTypes.h"
+#include <sys/stat.h>
+#include "CDirReader.h"
 #include "CCDFObject.h"
-#include "CCDFCache.h"
+#include "CCDFReader.h"
 
-  class CDFReader{
-    public:
-      CT::string fileName;
-      CDFReader(){cdfObject = NULL;cdfCache = NULL;}
-      virtual ~CDFReader(){}
-      CDFObject *cdfObject;
-      CDFCache * cdfCache;
-      virtual int open(const char *fileName) = 0;
-      virtual int close() = 0;
-      
-      //These two function may only be used by the variable class itself (TODO create friend class, protected?).
-      virtual int _readVariableData(CDF::Variable *var, CDFType type) = 0;
-      //Allocates and reads the variable data
-      virtual int _readVariableData(CDF::Variable *var,CDFType type,size_t *start,size_t *count,ptrdiff_t  *stride) = 0;
-  };
+//#define CCDFSTORE_DEBUG
+typedef std::map <std::string ,CDFReader*> CDFStore_CDFReadersMap;
+typedef std::map<std::string ,CDFReader*>::iterator CDFStore_CDFReadersIterator;
+
+class CDFStore{
+private:
+  static CDFStore_CDFReadersMap cdfReaders;
+public:
+  DEF_ERRORFUNCTION();
+  static  CDFReader* getCDFReader( const char *fileName);
+  static void clear();
+};
 
 
 #endif
+
+
