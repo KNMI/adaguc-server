@@ -31,6 +31,7 @@
 class COGCDims{
   public:
     COGCDims(){
+      isATimeDimension = false;
     }
     /**
      * OGC name
@@ -54,7 +55,10 @@ class COGCDims{
     
     void addValue(const char *value);
     
+    bool isATimeDimension;
+    
 };
+
 class CCDFDims {
   private:
   DEF_ERRORFUNCTION();

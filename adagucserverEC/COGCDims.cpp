@@ -124,7 +124,7 @@ bool CCDFDims::isTimeDimension(int j){
   const char *dimName = getDimensionName(j);
   if(dimName!=NULL){
     CT::string dimTimeName = dimName;
-    if(dimTimeName.indexOf("time")!=-1)return true;
+    if((dimTimeName.indexOf("time")!=-1)&&(dimTimeName.indexOf("reference_time")==-1))return true;
   }
   return false;
 }
