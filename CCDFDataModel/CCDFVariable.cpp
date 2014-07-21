@@ -50,6 +50,7 @@ int CDF::Variable::readData(CDFType readType,bool applyScaleOffset){
  * @param applyScaleOffset Whether or not to apply scale and offset
  */
 int CDF::Variable::readData(CDFType readType,size_t *_start,size_t *_count,ptrdiff_t *_stride,bool applyScaleOffset){
+  
  if(data!=NULL&&currentType!=readType){freeData();}
  if(data!=NULL){
 #ifdef CCDFDATAMODEL_DEBUG            
@@ -112,16 +113,16 @@ int CDF::Variable::readData(CDFType readType,size_t *_start,size_t *_count,ptrdi
 }
 
 int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t *_stride){
-  
+
 #ifdef CCDFDATAMODEL_DEBUG          
   CDBDebug("reading variable %s",name.c_str());
 #endif  
+ 
  if(data!=NULL&&type!=this->currentType){
    #ifdef CCDFDATAMODEL_DEBUG          
   CDBDebug("Freeing orignal variable %s",name.c_str());
 #endif  
    freeData();
-   
   }
   
   
@@ -134,8 +135,7 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
 #endif     
     return 0;
   }
-
-  
+   
   
   //Check for iterative dimension
   bool needsDimIteration=false;
@@ -251,14 +251,16 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
   }
   
   if(needsDimIteration==false){
-    
+   
       //TODO NEEDS BETTER CHECKS
     if(cdfReaderPointer==NULL){
       CDBError("No CDFReader defined for variable %s",name.c_str());
       return 1;
     }
-    
+     
     CDFReader *cdfReader = (CDFReader *)cdfReaderPointer;
+   
+    //CDBDebug("OK");
     int status =0;
     bool useStartCountStride=false;if(_start!=NULL&&_count!=NULL){
       useStartCountStride=true;
@@ -272,11 +274,16 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
       }
       if(dimSizesAreSameAsRequested)useStartCountStride=false;
     }
+     //CDBDebug("OK");
     if(useStartCountStride==true){
+       //CDBDebug("OK");
       status = cdfReader->_readVariableData(this, type,_start,_count,_stride);
+       //CDBDebug("OK");
     }else{
+       //CDBDebug("OK");
       status = cdfReader->_readVariableData(this, type);
     }
+     //CDBDebug("OK");
     if(status!=0){
       CDBError("Unable to read data for variable %s",name.c_str());
       return 1;

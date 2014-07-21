@@ -36,6 +36,7 @@
 #include "CGDALDataWriter.h"
 #endif
 #include "CDFObjectStore.h"
+#include "CCDFStore.h"
 #include "CDebugger.h"
 
 

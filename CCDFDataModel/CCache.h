@@ -28,6 +28,7 @@
 #include "CDirReader.h"
 #ifndef CCACHE_H
 #define CCACHE_H
+#define CCACHE_MAXFILELENGTH 220
 #include <unistd.h>
 /**
  * Helper class for cache files. 
@@ -36,11 +37,11 @@
  * This set of methods take care of both the temporary and the non temporary files, moves files when ready and sets permissions
  * 
  * Methods should be called in the following order:
- * 1) cache.check($cachefile)        : Initialization of cache system.
- * 2) cache.cacheIsAvailable()       :  Returns true if valid cachefile is available
+ * 1) cache.checkCacheSystemReady($cachefile)        : Initialization of cache system.
+ * 2) cache.cacheIsAvailable()       :  Returns true if valid cachefile is available, cached data is available for usage
  * 3) cache.saveCacheFile()          :  Returns true if cachesystem is ready to save a cachefile 
  * 4) cache.getCacheFileNameToWrite(): Filename to write (same as $cachefile, but with _tmp appended)
- * 5) cache.releaseCacheFile()       : Temporary cache file is moved and ready for other processes.
+ * 5) cache.releaseCacheFile()       : Temporary cache file is moved by CCCACHE and is immediately available for waiting other processes.
  */
 
 class CCache{
@@ -48,8 +49,14 @@ class CCache{
   bool saveFieldFile;
   bool cacheAvailable;
   bool cacheFileClaimed;
-   CT::string fileName;
+  bool cacheSystemIsBusy;
+  CT::string fileName;
   CT::string claimedCacheFileName;
+  CT::string claimedCacheProcIDFileName;
+  
+  static int _writePidFile(const char *file);
+  static int _readPidFile(const char *file);
+ 
   DEF_ERRORFUNCTION();
  
    /**
@@ -100,7 +107,7 @@ class CCache{
    * Checks availability of cachefile and determines if cache is busy. Cache methods saveCacheFile() and cacheIsAvailable() are available to query after this has been called.
    * @param fileName;
    */
-  void checkCacheSystemReady(const char *fileName);
+  void checkCacheSystemReady(const char * directory, const char *fileName);
   
   /**
    * Returns true if cachefile can be saved
@@ -117,6 +124,8 @@ class CCache{
    * @return The claimed cache filename
    */
   const char *getCacheFileNameToWrite();
+  
+  const char *getCacheFileNameToRead();
   
   /**
    * Claimes the cachefile, must be released with releaseCacheFile or removeClaimedCachefile.

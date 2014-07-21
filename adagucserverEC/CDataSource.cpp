@@ -95,12 +95,12 @@ CDataSource::CDataSource(){
   stretchMinMax=false;
   stretchMinMaxDone = false;
   isConfigured=false;
-  legendScale=1;
-  legendOffset=0;
-  legendLog=0.0f;
-  legendLowerRange=0;
-  legendUpperRange=0;
-  legendValueRange=0;
+//   legendScale=1;
+//   legendOffset=0;
+//   legendLog=0.0f;
+//   legendLowerRange=0;
+//   legendUpperRange=0;
+//   legendValueRange=0;
   metaData=NULL;
   statistics=NULL;
   currentAnimationStep=0;
@@ -113,6 +113,10 @@ CDataSource::CDataSource(){
   swapXYDimensions = false;
   varX = NULL;
   varY = NULL;
+  
+ // CDBDebug("C");
+  styleConfiguration = new CStyleConfiguration ();
+  
 }
 
 CDataSource::~CDataSource(){
@@ -127,6 +131,12 @@ CDataSource::~CDataSource(){
   }
   for(size_t j=0;j<requiredDims.size();j++)delete requiredDims[j];
   if(statistics!=NULL)delete statistics;statistics=NULL;
+  
+  //CDBDebug("D");
+  if(styleConfiguration!=NULL){
+    delete styleConfiguration;
+    styleConfiguration = NULL;
+  }
 }
 
 int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Configuration *_cfg,CServerConfig::XMLE_Layer * _cfgLayer,const char *_layerName,int layerIndex){
@@ -308,8 +318,8 @@ void CDataSource::getFlagMeaningHumanReadable( CT::string *flagMeaning,std::vect
 int  CDataSource::checkDimTables(CPGSQLDB *dataBaseConnection){
   CCache::Lock lock;
   CT::string identifier = "checkDimTables";  identifier.concat(cfgLayer->FilePath[0]->value.c_str());  identifier.concat("/");  identifier.concat(cfgLayer->FilePath[0]->attr.filter.c_str());  
-  CT::string cacheDirectory = "";
-  srvParams->getCacheDirectory(&cacheDirectory);
+  CT::string cacheDirectory = srvParams->cfg->TempDir[0]->attr.value.c_str();
+  //srvParams->getCacheDirectory(&cacheDirectory);
   if(cacheDirectory.length()>0){
     lock.claim(cacheDirectory.c_str(),identifier.c_str(),srvParams->isAutoResourceEnabled());
   }
@@ -318,6 +328,7 @@ int  CDataSource::checkDimTables(CPGSQLDB *dataBaseConnection){
   CDBDebug("[checkDimTables]");
   #endif
   bool tableNotFound=false;
+  bool fileNeedsUpdate = false;
   CT::string dimName;
   for(size_t i=0;i<cfgLayer->Dimension.size();i++){
     dimName=cfgLayer->Dimension[i]->attr.name.c_str();
@@ -349,12 +360,12 @@ int  CDataSource::checkDimTables(CPGSQLDB *dataBaseConnection){
           
           if(databaseTime.equals(fileDate)==false){
             //CDBDebug("Table was found, %s ~ %s : %d",fileDate.c_str(),databaseTime.c_str(),databaseTime.equals(fileDate));
-            tableNotFound = true;
+            fileNeedsUpdate = true;
           }
           
         }catch(int e){
           CDBDebug("Unable to get filedate from database, error: %s",CDB::getErrorMessage(e));
-          tableNotFound = true;
+          fileNeedsUpdate = true;
         }
         
           
@@ -362,12 +373,12 @@ int  CDataSource::checkDimTables(CPGSQLDB *dataBaseConnection){
     }
     
     delete store;
-    if(tableNotFound)break;
+    if(tableNotFound||fileNeedsUpdate)break;
   }
   
   
   
-  if(tableNotFound){
+  if(fileNeedsUpdate == true){
     if(srvParams->isAutoLocalFileResourceEnabled()==true){
       for(size_t i=0;i<cfgLayer->Dimension.size();i++){
         dimName=cfgLayer->Dimension[i]->attr.name.c_str();
@@ -380,12 +391,22 @@ int  CDataSource::checkDimTables(CPGSQLDB *dataBaseConnection){
           return 1;
         }
        
-        CDBDebug("Dropping old table (if exists)",tableName.c_str());
-        CT::string query = CT::string("drop table ")+tableName;
-        CDBDebug("%s",query.c_str());
+        //CDBDebug("Dropping old table (if exists)",tableName.c_str());
+        CT::string query ;
+        query.print("drop table %s",tableName.c_str());
+        CDBDebug("Try to %s for %s",query.c_str(),dimName.c_str());
         dataBaseConnection->query(query.c_str());
       }
-      
+      tableNotFound = true;
+    }
+  }
+ 
+  
+  
+  
+  if(tableNotFound){
+    if(srvParams->isAutoLocalFileResourceEnabled()==true){
+
       CDBDebug("Updating database");
       int status = CDBFileScanner::updatedb(srvParams->cfg->DataBase[0]->attr.parameters.c_str(),this,NULL,NULL);
       if(status !=0){CDBError("Could not update db for: %s",cfgLayer->Name[0]->value.c_str());return 2;}

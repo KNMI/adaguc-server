@@ -146,6 +146,7 @@
 #define CCONVERTASCAT_DEBUG
 #define MEASURETIME
 #define CIMGWARPNEARESTNEIGHBOUR_DEBUG
+#define CDFOBJECTSTORE_DEBUG
 
 #endif
 //#define MEASURETIME
@@ -162,8 +163,8 @@
 //#define CDATASOURCE_DEBUG
 
 //#define ENABLE_CURL in Makefile
-#define ADAGUC_USE_CAIRO
-#define ADAGUC_USE_GDAL
+//#define ADAGUC_USE_CAIRO
+//#define ADAGUC_USE_GDAL
 #endif
 
 

@@ -73,20 +73,20 @@ public:
     }
     
     dfNodataValue    = dataSource->dataObject[0]->dfNodataValue ;
-    legendValueRange = dataSource->legendValueRange;
-    legendLowerRange = dataSource->legendLowerRange;
-    legendUpperRange = dataSource->legendUpperRange;
+    legendValueRange = dataSource->styleConfiguration->hasLegendValueRange;
+    legendLowerRange = dataSource->styleConfiguration->legendLowerRange;
+    legendUpperRange = dataSource->styleConfiguration->legendUpperRange;
     hasNodataValue   = dataSource->dataObject[0]->hasNodataValue;
     width = dataSource->dWidth;
     height = dataSource->dHeight;
-    legendLog = dataSource->legendLog;
+    legendLog = dataSource->styleConfiguration->legendLog;
     if(legendLog>0){
       legendLogAsLog = log10(legendLog);
     }else{
       legendLogAsLog = 0;
     }
-    legendScale = dataSource->legendScale;
-    legendOffset = dataSource->legendOffset;
+    legendScale = dataSource->styleConfiguration->legendScale;
+    legendOffset = dataSource->styleConfiguration->legendOffset;
   }
   int drawTile(double *x_corners,double *y_corners,int &dDestX,int &dDestY);
   

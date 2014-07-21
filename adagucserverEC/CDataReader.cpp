@@ -385,9 +385,12 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y){
  //Read X and Y dimension data completely.
  dataSource->varX=cdfObject->getVariableNE(dimX->name.c_str());
  dataSource->varY=cdfObject->getVariableNE(dimY->name.c_str());
- if(dataSource->varX==NULL||dataSource->varY==NULL){CDBError("X ('%s') and or Y ('%s') vars not found...",dimX->name.c_str(),dimY->name.c_str());return 1;}
-
-  dataSource->stride2DMap=1;
+  if(dataSource->varX==NULL||dataSource->varY==NULL){CDBError("X ('%s') and or Y ('%s') vars not found...",dimX->name.c_str(),dimY->name.c_str());return 1;}
+  #ifdef CDATAREADER_DEBUG  
+  CDBDebug("Found xy vars for var %s:  %s and %s",dataSourceVar->name.c_str(),dataSource->varX->name.c_str(),dataSource->varY->name.c_str());
+  #endif
+    
+ dataSource->stride2DMap=1;
   
   
   while(dimX->length/dataSource->stride2DMap>5000){
@@ -438,12 +441,17 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y){
     sta[0]=start[dataSource->dimXIndex];str[0]=dataSource->stride2DMap; sto[0]=dataSource->dWidth;
     
     if(singleCellMode){sta[0]=0;str[0]=1;sto[0]=2;}
-    //CDBDebug("[%d %d %d] for %s/%s",sta[0],str[0],sto[0],dataSourceVar->name.c_str(),dataSource->varX->name.c_str());
+    #ifdef CDATAREADER_DEBUG  
+    CDBDebug("[%d %d %d] for %s/%s",sta[0],str[0],sto[0],dataSourceVar->name.c_str(),dataSource->varX->name.c_str());
+    #endif
+
     status = dataSource->varX->readData(CDF_DOUBLE,sta,sto,str);
     if(status!=0){
       CDBError("Unable to read x dimension with name %s for variable %s",dataSource->varX->name.c_str(),dataSourceVar->name.c_str());
       return 1;
     }
+    
+    //CDBDebug("Done");
     
     sta[0]=start[dataSource->dimYIndex];str[0]=dataSource->stride2DMap; sto[0]=dataSource->dHeight;
     if(singleCellMode){
@@ -655,7 +663,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
 
   //Use autoscale of legendcolors when the legendscale factor has been set to zero.
   if(dataSource->stretchMinMaxDone == false){
-    if(dataSource->legendScale==0.0f)dataSource->stretchMinMax=true;else dataSource->stretchMinMax=false;
+    if(dataSource->styleConfiguration->legendScale==0.0f)dataSource->stretchMinMax=true;else dataSource->stretchMinMax=false;
   }
  
   
@@ -1225,28 +1233,28 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
         //Calculate legendOffset legendScale
         float ls=240/(max-min);
         float lo=-(min*ls);
-        dataSource->legendScale=ls;
-        dataSource->legendOffset=lo;
+        dataSource->styleConfiguration->legendScale=ls;
+        dataSource->styleConfiguration->legendOffset=lo;
         dataSource->stretchMinMaxDone = true;
       }
     }
     
     //Check for infinities
-    if(dataSource->legendScale!=dataSource->legendScale||
-      dataSource->legendScale==INFINITY||
-      dataSource->legendScale==NAN||
-      dataSource->legendScale==-INFINITY){
-      dataSource->legendScale=240;
+    if(dataSource->styleConfiguration->legendScale!=dataSource->styleConfiguration->legendScale||
+      dataSource->styleConfiguration->legendScale==INFINITY||
+      dataSource->styleConfiguration->legendScale==NAN||
+      dataSource->styleConfiguration->legendScale==-INFINITY){
+      dataSource->styleConfiguration->legendScale=240;
     }
-    if(dataSource->legendOffset!=dataSource->legendOffset||
-      dataSource->legendOffset==INFINITY||
-      dataSource->legendOffset==NAN||
-      dataSource->legendOffset==-INFINITY){
-      dataSource->legendOffset=0;
+    if(dataSource->styleConfiguration->legendOffset!=dataSource->styleConfiguration->legendOffset||
+      dataSource->styleConfiguration->legendOffset==INFINITY||
+      dataSource->styleConfiguration->legendOffset==NAN||
+      dataSource->styleConfiguration->legendOffset==-INFINITY){
+      dataSource->styleConfiguration->legendOffset=0;
     }
     
     #ifdef CDATAREADER_DEBUG    
-    CDBDebug("dataSource->legendScale = %f, dataSource->legendOffset = %f",dataSource->legendScale,dataSource->legendOffset);
+    CDBDebug("dataSource->styleConfiguration->legendScale = %f, dataSource->styleConfiguration->legendOffset = %f",dataSource->styleConfiguration->legendScale,dataSource->styleConfiguration->legendOffset);
     #endif    
     
   #ifdef MEASURETIME
@@ -1486,9 +1494,9 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
   }
   
   CCache::Lock lock;
-  CT::string identifier = "autoConfigureDimensions";  identifier.concat(dataSource->cfgLayer->FilePath[0]->value.c_str());  identifier.concat("/");  identifier.concat(dataSource->cfgLayer->FilePath[0]->attr.filter.c_str());  
-  CT::string cacheDirectory = "";
-  dataSource->srvParams->getCacheDirectory(&cacheDirectory);
+  CT::string identifier = "autodimension";  identifier.concat(dataSource->cfgLayer->FilePath[0]->value.c_str());  identifier.concat("/");  identifier.concat(dataSource->cfgLayer->FilePath[0]->attr.filter.c_str());  
+  CT::string cacheDirectory = dataSource->srvParams->cfg->TempDir[0]->attr.value.c_str();
+  //dataSource->srvParams->getCacheDirectory(&cacheDirectory);
   if(cacheDirectory.length()>0){
     lock.claim(cacheDirectory.c_str(),identifier.c_str(),dataSource->srvParams->isAutoResourceEnabled());
   }

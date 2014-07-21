@@ -11,7 +11,8 @@ function quit {
 
 cd hclasses
 rm *.o
-make -j3
+rm *.a
+make -j4
 
 if [ -f hclasses.a ]
   then
@@ -23,7 +24,8 @@ if [ -f hclasses.a ]
 
 cd ../CCDFDataModel
 rm *.o
-make -j3
+rm *.a
+make -j4
 
 
 if [ -f CCDFDataModel.a ]
@@ -38,7 +40,7 @@ cd ../adagucserverEC
 rm *.o
 rm adagucserver
 rm h5ncdump
-make -j3
+make -j4
 
 
 if [ -f adagucserver ]
