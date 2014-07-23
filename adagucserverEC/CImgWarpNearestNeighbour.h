@@ -1068,7 +1068,7 @@ private:
     }
     
     if(dataSource->dWidth*dataSource->dHeight<512*512||1==1){
-      CDBDebug("field is small enough for precies renderer: using _render");
+      CDBDebug("field is small enough for precise renderer: using _render");
       CDFType dataType=dataSource->dataObject[0]->cdfVariable->getType();
         switch(dataType){
         case CDF_CHAR  : return _render<char>(warper,dataSource,drawImage);break;

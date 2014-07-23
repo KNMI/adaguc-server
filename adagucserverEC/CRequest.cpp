@@ -61,7 +61,7 @@ void writeLogFile3(const char * msg){
     }//else CDBError("Unable to write logfile %s",logfile);
   }
 }
-void CRequest::addXMLLayerToConfig(CServerParams *srvParam,std::vector<CT::string>*variableNames, const char *group,const char *location){
+void CRequest::addXMLLayerToConfig(CServerParams *srvParam,CDFObject *cdfObject,std::vector<CT::string>*variableNames, const char *group,const char *location){
   CServerConfig::XMLE_Layer *xmleLayer=new CServerConfig::XMLE_Layer();
   CServerConfig::XMLE_FilePath* xmleFilePath = new CServerConfig::XMLE_FilePath();
   
@@ -81,6 +81,21 @@ void CRequest::addXMLLayerToConfig(CServerParams *srvParam,std::vector<CT::strin
     xmleVariable->value.copy((*variableNames)[j].c_str());
     xmleLayer->Variable.push_back(xmleVariable);
   }
+  
+  if(variableNames->size()==1){
+      CDF::Variable *variable = cdfObject->getVariableNE((*variableNames)[0].c_str());
+      if(variable!=NULL){
+        CDF::Attribute *attribute = variable->getAttributeNE("standard_name");
+        if(attribute!=NULL){
+          if(attribute->getDataAsString().equals("rgba")){
+            CServerConfig::XMLE_RenderMethod* xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
+            xmleRenderMethod->value.copy("rgba");
+            xmleLayer->RenderMethod.push_back(xmleRenderMethod);
+          }
+        }
+      }
+  }
+  
   if(variableNames->size()==2){
     CT::string newName;
     newName.print("%s + %s",(*variableNames)[0].c_str(),(*variableNames)[1].c_str());
@@ -2381,7 +2396,8 @@ int CRequest::process_querystring(){
       for(size_t j=0;j<variables.size();j++){
         std::vector<CT::string> variableNames;
         variableNames.push_back(variables[j].c_str());
-        addXMLLayerToConfig(srvParam,&variableNames,NULL,srvParam->internalAutoResourceLocation.c_str());
+        addXMLLayerToConfig(srvParam,cdfObject,&variableNames,NULL,srvParam->internalAutoResourceLocation.c_str());
+        
       }
       
       //Find derived wind parameters
@@ -2405,7 +2421,7 @@ int CRequest::process_querystring(){
           std::vector<CT::string> variableNames;
           variableNames.push_back(varSpeed->name.c_str());
           variableNames.push_back(varDirection->name.c_str());
-          addXMLLayerToConfig(srvParam,&variableNames,"derived",srvParam->internalAutoResourceLocation.c_str());
+          addXMLLayerToConfig(srvParam,cdfObject,&variableNames,"derived",srvParam->internalAutoResourceLocation.c_str());
         }
       }
       
@@ -2417,9 +2433,11 @@ int CRequest::process_querystring(){
           std::vector<CT::string> variableNames;
           variableNames.push_back(varSpeed->name.c_str());
           variableNames.push_back(varDirection->name.c_str());
-          addXMLLayerToConfig(srvParam,&variableNames,"derived",srvParam->internalAutoResourceLocation.c_str());
+          addXMLLayerToConfig(srvParam,cdfObject,&variableNames,"derived",srvParam->internalAutoResourceLocation.c_str());
         }
       }
+      
+      
       
       //Adjust online resource in order to pass on variable and source parameters
       CT::string onlineResource=srvParam->cfg->OnlineResource[0]->attr.value.c_str();

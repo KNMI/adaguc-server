@@ -178,7 +178,7 @@ private:
     int generateGetReferenceTimesDoc(CT::string *result,CDataSource *dataSource);
     int generateOGCDescribeCoverage(CT::string *XMLdocument);
     static int dataRestriction;
-    void addXMLLayerToConfig(CServerParams *srvParam,std::vector<CT::string>*variableNames, const char *group, const char *location);
+    void addXMLLayerToConfig(CServerParams *srvParam,CDFObject *cdfObject,std::vector<CT::string>*variableNames, const char *group, const char *location);
     int getDimValuesForDataSource(CDataSource *dataSource,CServerParams *srvParam);
     
   public:

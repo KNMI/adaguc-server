@@ -831,7 +831,9 @@ int CXMLGen::getWMS_1_0_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
       if(layer->hasError==0){
         XMLDoc->printconcat("<Layer queryable=\"%d\">\n",layer->isQuerable);
         XMLDoc->concat("<Name>"); XMLDoc->concat(&layer->name);XMLDoc->concat("</Name>\n");
-        XMLDoc->concat("<Title>"); XMLDoc->concat(&layer->title);XMLDoc->concat("</Title>\n");
+        CT::string layerTitle = layer->title;
+        layerTitle.encodeXMLSelf();
+        XMLDoc->concat("<Title>"); XMLDoc->concat(&layerTitle);XMLDoc->concat("</Title>\n");
         
         XMLDoc->concat("<SRS>"); 
         for(size_t p=0;p<layer->projectionList.size();p++){
@@ -968,7 +970,9 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
           if(layer->hasError==0){
             XMLDoc->printconcat("<Layer queryable=\"%d\" opaque=\"1\" cascaded=\"%d\">\n",layer->isQuerable,layer->dataSource->dLayerType==CConfigReaderLayerTypeCascaded?1:0);
             XMLDoc->concat("<Name>"); XMLDoc->concat(&layer->name);XMLDoc->concat("</Name>\n");
-            XMLDoc->concat("<Title>"); XMLDoc->concat(&layer->title);XMLDoc->concat("</Title>\n");
+            CT::string layerTitle = layer->title;
+            layerTitle.encodeXMLSelf();
+            XMLDoc->concat("<Title>"); XMLDoc->concat(&layerTitle);XMLDoc->concat("</Title>\n");
             
             
             for(size_t p=0;p<layer->projectionList.size();p++){
@@ -1349,7 +1353,9 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
           if(layer->hasError==0){
             XMLDoc->printconcat("<Layer queryable=\"%d\" opaque=\"1\" cascaded=\"%d\">\n",layer->isQuerable,layer->dataSource->dLayerType==CConfigReaderLayerTypeCascaded?1:0);
             XMLDoc->concat("<Name>"); XMLDoc->concat(&layer->name);XMLDoc->concat("</Name>\n");
-            XMLDoc->concat("<Title>"); XMLDoc->concat(&layer->title);XMLDoc->concat("</Title>\n");
+            CT::string layerTitle = layer->title;
+            layerTitle.encodeXMLSelf();
+            XMLDoc->concat("<Title>"); XMLDoc->concat(&layerTitle);XMLDoc->concat("</Title>\n");
             //TODO
           
             if(layer->abstract.length()>0){
@@ -1514,7 +1520,9 @@ int CXMLGen::getWCS_1_0_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
         XMLDoc->printconcat("<CoverageOfferingBrief>\n");
         XMLDoc->concat("<description>"); XMLDoc->concat(&layer->name);XMLDoc->concat("</description>\n");
         XMLDoc->concat("<name>"); XMLDoc->concat(&layer->name);XMLDoc->concat("</name>\n");
-        XMLDoc->concat("<label>"); XMLDoc->concat(&layer->title);XMLDoc->concat("</label>\n");
+        CT::string layerTitle = layer->title;
+        layerTitle.encodeXMLSelf();
+        XMLDoc->concat("<label>"); XMLDoc->concat(&layerTitle);XMLDoc->concat("</label>\n");
         XMLDoc->printconcat("  <lonLatEnvelope srsName=\"urn:ogc:def:crs:OGC:1.3:CRS84\">\n"
             "    <gml:pos>%f %f</gml:pos>\n"
             "    <gml:pos>%f %f</gml:pos>\n",
@@ -1566,7 +1574,8 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc,std::vector<WMSLay
   
             if(srvParam->requestType==REQUEST_WCS_DESCRIBECOVERAGE){
             //XMLDoc->print("<?xml version='1.0' encoding=\"ISO-8859-1\" ?>\n");
-            
+              CT::string layerTitle = layer->title;
+              layerTitle.encodeXMLSelf();
               XMLDoc->printconcat("  <CoverageOffering>\n"
                   "  <description>%s</description>\n"
                   "  <name>%s</name>\n"
@@ -1574,7 +1583,7 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc,std::vector<WMSLay
                   "  <lonLatEnvelope srsName=\"urn:ogc:def:crs:OGC:1.3:CRS84\">\n"
                   "    <gml:pos>%f %f</gml:pos>\n"
                   "    <gml:pos>%f %f</gml:pos>\n",
-              layer->name.c_str(),layer->name.c_str(),layer->title.c_str(),
+              layer->name.c_str(),layer->name.c_str(),layerTitle.c_str(),
               layer->dfLatLonBBOX[0],layer->dfLatLonBBOX[1],layer->dfLatLonBBOX[2],layer->dfLatLonBBOX[3]
                                 );
   
