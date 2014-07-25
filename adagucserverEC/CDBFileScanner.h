@@ -45,9 +45,11 @@ private:
   static int createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,int &removeNonExistingFiles,CDirReader *dirReader);
   static int DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeNonExistingFiles,CDirReader *dirReader);
   static std::vector <CT::string> tableNamesDone;
-  static bool isTableAlreadyScanned(CT::string *tableName);
+  
   //static int addIndexToTable(CPGSQLDB *DB,const char *tableName, const char * dimName);
 public:
+  static bool isTableAlreadyScanned(CT::string *tableName);
+  static void markTableDirty(CT::string *tableName);
   /**
    * Populates dirReader with files defined by the path, exp and tailPath parameters
    * @param dirReader: An initialised dirReader should be provided, this dirReader will be filled with the found results.

@@ -61,32 +61,7 @@ class CDataReader{
      */
     static int justLoadAFileHeader(CDataSource *dataSource);
     
-    /**
-     * Returns a unique identifier for the current datasource. The identifier is made unique by it dimensions, so storing subsetted cache parts is possible.
-     * @param dataSource
-     * @param cacheName
-     * @return Zero on success.
-     */
-    //static int getCacheFileName(CDataSource *dataSource,CT::string *cacheName);
-    
-    static int getTimeDimIndex( CDFObject *cdfObject, CDF::Variable * var);
-    
-    static CDF::Variable *getTimeVariable( CDFObject *cdfObject, CDF::Variable * var);
-    
-    /**
-     * Get current time string for datasource based on the current timestep
-     * @param dataSource 
-     * @param charachter array where an ISO8601 time string fits in
-     * @return zero on success
-     */
-    int getTimeString(CDataSource *dataSource,char * pszTime);
-    
-    /**
-     * Get time units for this datasource, throws exception of int when failed.
-     * @param dataSource
-     * @return time units for this datasource
-     */
-    CT::string getTimeUnit(CDataSource* dataSource);
+ 
 
     int open(CDataSource *dataSource,int mode,int x,int y);
     int open(CDataSource *dataSource, int x,int y);
@@ -94,6 +69,71 @@ class CDataReader{
     int parseDimensions(CDataSource *dataSource,int mode,int x,int y);
     
     int close(){return 0;};
+
+       
+    /**
+     * Get current time string for datasource based on the current timestep
+     * @param dataSource 
+     * @param charachter array where an ISO8601 time string fits in
+     * @return zero on success
+     */
+    //DEPRECATED
+    int getTimeString(CDataSource *dataSource,char * pszTime);
+    
+    /**
+     * Get time units for this datasource, throws exception of int when failed.
+     * @param dataSource
+     * @return time units for this datasource
+     */
+    //DEPRECATED
+    CT::string getTimeUnit(CDataSource* dataSource);
+   
+    
+    /**
+     * Possible dimension types
+     */
+    enum DimensionType { dtype_none,dtype_normal,dtype_time, dtype_reference_time, dtype_member,dtype_elevation };
+    
+    
+    /** 
+     * Get the dimension type (time, elevation, member) by netcdf dimension name
+     * @param cdfObject, the CDFObject belonging to the dimension
+     * @param ncname the name dimension to check
+     * @return DimensionType
+     */
+    static CDataReader::DimensionType getDimensionType(CDFObject *cdfObject,const char *ncname);
+
+     /** 
+     * Get the dimension type (time, elevation, member) by CDF Variable
+     * @param cdfObject, the CDFObject belonging to the dimension
+     * @param variable the variable to check
+     * @return DimensionType
+     */
+    static DimensionType getDimensionType(CDFObject *cdfObject,CDF::Variable *variable);
+    
+    /** 
+     * Get the dimension type (time, elevation, member of a Dimension object
+     * @param cdfObject, the CDFObject belonging to the dimension
+     * @param dimension the dimension to check
+     * @return DimensionType
+     */
+    static CDataReader::DimensionType getDimensionType(CDFObject *cdfObject,CDF::Dimension *dimension);
+
+    /** 
+     * Return the dimension matching to the requested dimensiontype within a variable
+     * @param var The CDF::Variable containing the dimensions to query
+     * @param dimensionType The dimension type to search for
+     * @return NULL if not found, or the CDF::Dimension matching the query
+     */
+    static CDF::Dimension* searchDimensionByType(CDF::Variable *var,CDataReader::DimensionType dimensionType);
+    
+    /**
+     * Same as searchDimensionByType, but returns the dimension variable instead of the dimension.
+     * @param var The CDF::Variable containing the dimensions to query
+     * @param dimensionType The dimension type to search for
+     * @return NULL if not found, or the CDF::Dimension matching the query
+     */
+    static CDF::Variable* getDimensionVariableByType(CDF::Variable *var,CDataReader::DimensionType dimensionType);
 };
 
 #endif

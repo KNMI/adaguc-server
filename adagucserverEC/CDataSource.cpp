@@ -390,7 +390,7 @@ int  CDataSource::checkDimTables(CPGSQLDB *dataBaseConnection){
           CDBError("Unable to create tableName from '%s' '%s' '%s'",cfgLayer->FilePath[0]->value.c_str(),cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
           return 1;
         }
-       
+        CDBFileScanner::markTableDirty(&tableName);
         //CDBDebug("Dropping old table (if exists)",tableName.c_str());
         CT::string query ;
         query.print("drop table %s",tableName.c_str());
