@@ -69,11 +69,11 @@ bool CDBFileScanner::isTableAlreadyScanned(CT::string *tableName){
   return false;
 }
 void CDBFileScanner::markTableDirty(CT::string *tableName){
-  CDBDebug("Marking table dirty: %s %s",tableNamesDone.size(),tableName->c_str());
+  CDBDebug("Marking table dirty: %d %s",tableNamesDone.size(),tableName->c_str());
   for(size_t t=0;t<tableNamesDone.size();t++){
     if(tableNamesDone[t].equals(tableName->c_str())){
       tableNamesDone.erase (tableNamesDone.begin()+t);
-      CDBDebug("Table marked dirty %s %s",tableNamesDone.size(),tableName->c_str());
+      CDBDebug("Table marked dirty %d %s",tableNamesDone.size(),tableName->c_str());
       return;
     }
   }
@@ -447,17 +447,21 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                 CDF::Variable *  dimVar = cdfObject->getVariableNE(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
                 CDF::Dimension * dimDim = cdfObject->getDimensionNE(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
                 
-                //Check for scalar variable
+                
                 if(dimVar!=NULL&&dimDim==NULL){
+                  //Check for scalar variable
                   if(dimVar->dimensionlinks.size() == 0){
                     CDBDebug("Found scalar variable %s with no dimension. Creating dim",dimVar->name.c_str());
-                    
                     dimDim = new CDF::Dimension();
                     dimDim->name = dimVar->name;
                     dimDim->setSize(1);
                     cdfObject->addDimension(dimDim);
                     dimVar->dimensionlinks.push_back(dimDim);
-                    
+                  }
+                  //Check if this variable has another dim attached
+                  if(dimVar->dimensionlinks.size() == 1){
+                    dimDim = dimVar->dimensionlinks[0];
+                    CDBWarning("Using dimension %s for dimension variable %s",dimVar->dimensionlinks[0]->name.c_str(),dimVar->name.c_str());
                   }
                 }
                 
@@ -466,8 +470,13 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                 
                 if(dimDim==NULL||dimVar==NULL){
                   CDBError("In file %s",dirReader->fileList[j]->fullName.c_str());
-                  CDBError("For variable '%s' dimension '%s' not found",dataSource->cfgLayer->Variable[0]->value.c_str(),
-                    dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+                  if(dimVar == NULL){
+                    CDBError("Variable '%s' for dimension '%s' not found",dataSource->cfgLayer->Variable[0]->value.c_str(),dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+                  }
+                  if(dimDim == NULL){
+                    CDBError("For variable '%s' dimension '%s' not found",dataSource->cfgLayer->Variable[0]->value.c_str(),dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+                  }
+                  
                   throw(__LINE__);
                 }else{
                   CDF::Attribute *dimUnits = dimVar->getAttributeNE("units");

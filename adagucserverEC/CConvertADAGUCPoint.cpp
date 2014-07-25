@@ -26,8 +26,8 @@
 #include "CConvertADAGUCPoint.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
-//#define CCONVERTADAGUCPOINT_DEBUG
-//#define MEASURETIME
+#define CCONVERTADAGUCPOINT_DEBUG
+#define MEASURETIME
 const char *CConvertADAGUCPoint::className="CConvertADAGUCPoint";
 
 
@@ -701,11 +701,12 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
       if(dlon>=0&&dlat>=0&&dlon<dataSource->dWidth&&dlat<dataSource->dHeight){
       for(size_t d=0;d<nrDataObjects;d++){
         float *sdata = ((float*)dataSource->dataObject[d]->cdfVariable->data);
-        
+        PointDVWithLatLon * lastPoint = NULL;
         if(pointVar[d]->currentType==CDF_STRING){
           float v = NAN;
           //CDBDebug("pushing stationNr %d dateDimIndex %d,pPoint DIM %d",stationNr,dateDimIndex,pPoint);
           dataSource->dataObject[d]->points.push_back(PointDVWithLatLon(dlon,dlat,lon,lat,v));//,((const char**)pointVar[d]->data)[pPoint]));
+          lastPoint = &(dataSource->dataObject[d]->points.back());
           const char * key = pointVar[d]->name.c_str();
           const char * description = key;
           try{
@@ -713,20 +714,22 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
             
           }catch(int e){
           }
-          dataSource->dataObject[d]->points.back().paramList.push_back(CKeyValue(key,description ,((const char**)pointVar[d]->data)[pPoint]));
+          lastPoint->paramList.push_back(CKeyValue(key,description ,((const char**)pointVar[d]->data)[pPoint]));
           float a = 0;
           drawCircle(sdata,a,dataSource->dWidth,dataSource->dHeight,dlon-1,dlat,8);
         }
+        
         if(pointVar[d]->currentType==CDF_FLOAT){
           float val  = ((float*)pointVar[d]->data)[pPoint];
         
           
           if(val!=fill){
            
-            
+            CDBDebug("GOING IN %d",d);  
             //CDBDebug("P %d %d %f",dlon,dlat,val);
             
               dataSource->dataObject[d]->points.push_back(PointDVWithLatLon(dlon,dlat,lon,lat,val));//,id));
+              lastPoint = &(dataSource->dataObject[d]->points.back());
               if(pointID!=NULL){
               
                 const char * key = pointID->name.c_str();
@@ -735,14 +738,16 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
                   description = (const char*)pointID->getAttribute("long_name")->data;
                 }catch(int e){
                 }
-                dataSource->dataObject[d]->points.back().paramList.push_back(CKeyValue(key,description ,((const char**)pointID->data)[pGeo]));
+                lastPoint->paramList.push_back(CKeyValue(key,description ,((const char**)pointID->data)[pGeo]));
               }
               drawCircle(sdata,val,dataSource->dWidth,dataSource->dHeight,dlon-1,dlat,8);
             }        
             
             
           }
-          if(hasTimeValuePerObs){
+          
+          if(hasTimeValuePerObs&& lastPoint!=NULL){
+             
             const char * key = timeVarPerObs->name.c_str();
             const char * description = key;
             try{
@@ -750,18 +755,22 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
             }catch(int e){
             }
             //obsTimeData
-            
-            dataSource->dataObject[d]->points.back().paramList.push_back(CKeyValue(key,description ,obsTime.dateToISOString(obsTime.getDate(obsTimeData[pPoint])).c_str()));
+             
+            lastPoint->paramList.push_back(CKeyValue(key,description ,obsTime.dateToISOString(obsTime.getDate(obsTimeData[pPoint])).c_str()));
+             
           }
+          
         }
       }
     }
+    
     #ifdef MEASURETIME
       StopWatch_Stop("Points added");
     #endif
     imageWarper.closereproj();
    
   }
+  
   #ifdef CCONVERTADAGUCPOINT_DEBUG
   CDBDebug("/convertADAGUCPointData");
   #endif
