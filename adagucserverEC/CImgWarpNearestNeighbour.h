@@ -1065,7 +1065,7 @@ private:
       return;
     }
     
-    if(dataSource->dWidth*dataSource->dHeight<512*512||1==1){
+    if(dataSource->dWidth*dataSource->dHeight<512*512||1==2){
       CDBDebug("field is small enough for precise renderer: using _render");
       CDFType dataType=dataSource->dataObject[0]->cdfVariable->getType();
         switch(dataType){

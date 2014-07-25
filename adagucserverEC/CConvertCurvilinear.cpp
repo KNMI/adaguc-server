@@ -98,10 +98,15 @@ int CConvertCurvilinear::convertCurvilinearHeader( CDFObject *cdfObject,CServerP
     //cdfObject->getDimension("row");
     cdfObject->getDimension("time");
     cdfObject->getDimension("bounds");
-    cdfObject->getVariable("lon_bnds");
-    cdfObject->getVariable("lat_bnds");
     cdfObject->getVariable("lon");
     cdfObject->getVariable("lat");
+    
+    CDF::Variable *var=cdfObject->getVariable("lon_bnds");
+    if(var->dimensionlinks.size()<2){
+      return 1;
+    }
+    cdfObject->getVariable("lat_bnds");
+
   }catch(int e){
     return 1;
   }

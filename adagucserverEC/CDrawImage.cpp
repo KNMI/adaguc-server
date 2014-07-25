@@ -112,7 +112,7 @@ int CDrawImage::createImage(int _dW,int _dH){
 
 int CDrawImage::createImage(CGeoParams *_Geo){
 #ifdef MEASURETIME
-  StopWatch_Stop("start createImage");
+  StopWatch_Stop("start createImage of size %d %d",_Geo->dWidth,_Geo->dWidth);
 #endif  
   
   if(dImageCreated==1){CDBError("createImage: image already created");return 1;}

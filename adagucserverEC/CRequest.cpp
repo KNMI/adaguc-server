@@ -2641,16 +2641,27 @@ int CRequest::process_querystring(){
       }
       
       if(dFound_Width==0){
-        float r=fabs(srvParam->Geo->dfBBOX[3]-srvParam->Geo->dfBBOX[1])/fabs(srvParam->Geo->dfBBOX[2]-srvParam->Geo->dfBBOX[0]);
-        srvParam->Geo->dWidth=int(float(srvParam->Geo->dHeight)/r);
+        if(srvParam->Geo->dfBBOX[2] != srvParam->Geo->dfBBOX[0]){
+          float r=fabs(srvParam->Geo->dfBBOX[3]-srvParam->Geo->dfBBOX[1])/fabs(srvParam->Geo->dfBBOX[2]-srvParam->Geo->dfBBOX[0]);
+          srvParam->Geo->dWidth=int(float(srvParam->Geo->dHeight)/r);
+        }else{
+          srvParam->Geo->dWidth = srvParam->Geo->dHeight;
+        }
+        
       }
         
       if(dFound_Height==0){
-        float r=fabs(srvParam->Geo->dfBBOX[3]-srvParam->Geo->dfBBOX[1])/fabs(srvParam->Geo->dfBBOX[2]-srvParam->Geo->dfBBOX[0]);
-        srvParam->Geo->dHeight=int(float(srvParam->Geo->dWidth)*r);
-      }
-        
+        if(srvParam->Geo->dfBBOX[2] != srvParam->Geo->dfBBOX[0]){
+          float r=fabs(srvParam->Geo->dfBBOX[3]-srvParam->Geo->dfBBOX[1])/fabs(srvParam->Geo->dfBBOX[2]-srvParam->Geo->dfBBOX[0]);
+          srvParam->Geo->dHeight=int(float(srvParam->Geo->dWidth)*r);
+        }else{
+          srvParam->Geo->dHeight = srvParam->Geo->dWidth;
+        }
       
+      }
+      
+      if(srvParam->Geo->dWidth<0)srvParam->Geo->dWidth = 1;
+      if(srvParam->Geo->dHeight<0)srvParam->Geo->dHeight = 1;
       // When error is image, utilize full image size
       setErrorImageSize(srvParam->Geo->dWidth,srvParam->Geo->dHeight,srvParam->imageFormat);
       

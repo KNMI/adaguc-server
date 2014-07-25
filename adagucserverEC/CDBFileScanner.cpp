@@ -115,6 +115,10 @@ int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,in
     
     
     CDataReader::DimensionType dtype = CDataReader::getDimensionType(cdfObject,dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+    if(dtype==CDataReader::dtype_none){
+      CDBWarning("dtype_none for %s",dtype,dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+    }
+
     
     bool isTimeDim = false;
     if(dtype == CDataReader::dtype_time || dtype == CDataReader::dtype_reference_time){
@@ -297,16 +301,20 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
       
      
       dimNames[d].copy(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
-      dimNames[d].toLowerCaseSelf();
+     
       isTimeDim[d]=false;
       skipDim[d]=false;
       
       CDataReader::DimensionType dtype = CDataReader::getDimensionType(cdfObjectOfFirstFile,dimNames[d].c_str());
       
+      if(dtype==CDataReader::dtype_none){
+        CDBWarning("dtype_none for %s",dtype,dimNames[d].c_str());
+      }
+      dimNames[d].toLowerCaseSelf();
       if(dtype == CDataReader::dtype_time || dtype == CDataReader::dtype_reference_time){
         isTimeDim[d] = true;
       }
-      CDBDebug("Found dimension %d with name %s",d,dimNames[d].c_str());
+      CDBDebug("Found dimension %d with name %s of type %d, istimedim: [%d]",d,dimNames[d].c_str(),dtype,isTimeDim[d] );
       
       try{
         tableNames[d] = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimNames[d].c_str());
@@ -577,7 +585,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                               uniqueKey = adagucTime.dateToISOString(adagucTime.getDate(dimValues[i]));
                               uniqueKey.setSize(19);
                               uniqueKey.concat("Z");
-                             
+
                               VALUES.print("('%s','%s','%d','%s')",dirReader->fileList[j]->fullName.c_str(),uniqueKey.c_str(),int(i),fileDate.c_str());
                          
                             }catch(int e){
@@ -661,7 +669,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
           status =  DB->query(queryString.c_str()); 
           if(status!=0){
             CDBError("Query failed [%s]:",DB->getError());
-            writeLogFile(queryString.c_str());
+            //writeLogFile(queryString.c_str());
             writeLogFile("\n");
             throw(__LINE__);
           }
