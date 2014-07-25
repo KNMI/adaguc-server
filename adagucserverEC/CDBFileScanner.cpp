@@ -26,6 +26,7 @@
 #include "CDBFileScanner.h"
 #include "CDebugger.h"
 #include "adagucserver.h"
+#include <set>
 const char *CDBFileScanner::className="CDBFileScanner";
 std::vector <CT::string> CDBFileScanner::tableNamesDone;
 //#define CDBFILESCANNER_DEBUG
@@ -67,6 +68,16 @@ bool CDBFileScanner::isTableAlreadyScanned(CT::string *tableName){
   }
   return false;
 }
+void CDBFileScanner::markTableDirty(CT::string *tableName){
+  CDBDebug("Marking table dirty: %s %s",tableNamesDone.size(),tableName->c_str());
+  for(size_t t=0;t<tableNamesDone.size();t++){
+    if(tableNamesDone[t].equals(tableName->c_str())){
+      tableNamesDone.erase (tableNamesDone.begin()+t);
+      CDBDebug("Table marked dirty %s %s",tableNamesDone.size(),tableName->c_str());
+      return;
+    }
+  }
+}
 
 /**
  * 
@@ -89,15 +100,29 @@ int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,in
     }
   }
   
+  CDFObject *cdfObject = NULL;
+  try{
+    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource,dirReader->fileList[0]->fullName.c_str());
+  }catch(int e){
+    CDBError("Unable to get CDFObject for file %s",dirReader->fileList[0]->fullName.c_str());
+    return 1;
+  }
+
+  
   //Check and create all tables...
   for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
   
+    
+    
+    CDataReader::DimensionType dtype = CDataReader::getDimensionType(cdfObject,dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+    
     bool isTimeDim = false;
+    if(dtype == CDataReader::dtype_time || dtype == CDataReader::dtype_reference_time){
+      isTimeDim = true;
+    }
+    
     CT::string dimName(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
-    //dimName.toLowerCaseSelf();
-    if(dimName.toLowerCase().equals("time"))isTimeDim=true;
-    //How do we detect correctly wether this is a time dim?
-    if(dimName.toLowerCase().indexOf("time")!=-1)isTimeDim=true;
+
     
     //Create database tableNames
     CT::string tableName;
@@ -120,10 +145,7 @@ int CDBFileScanner::createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,in
         tableColumns.printconcat(", %s timestamp, dim%s int",dimName.c_str(),dimName.c_str());
       }else{
         try{
-          CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource,dirReader->fileList[0]->fullName.c_str());
-          if(cdfObject == NULL){
-            throw(__LINE__);
-          }
+        
           CDF::Variable *dimVar = cdfObject->getVariableNE(dimName.c_str());
           if(dimVar==NULL){
             CDBError("Dimension '%s' not found.",dimName.c_str());
@@ -259,6 +281,18 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
     CT::string VALUES;
     //CADAGUC_time *ADTime  = NULL;
     CTime adagucTime;
+    
+     
+    CDFObject *cdfObjectOfFirstFile = NULL;
+    try{
+      cdfObjectOfFirstFile = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource,dirReader->fileList[0]->fullName.c_str());
+    }catch(int e){
+      CDBError("Unable to get CDFObject for file %s",dirReader->fileList[0]->fullName.c_str());
+      return 1;
+    }
+
+
+    
     for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
       
      
@@ -266,10 +300,12 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
       dimNames[d].toLowerCaseSelf();
       isTimeDim[d]=false;
       skipDim[d]=false;
-      if(dimNames[d].equals("time"))isTimeDim[d]=true;
-      //TODO: implement use of standardname? How do we detect correctly wether this is a time dim?
-      if(dimNames[d].indexOf("time")!=-1)isTimeDim[d]=true;
-
+      
+      CDataReader::DimensionType dtype = CDataReader::getDimensionType(cdfObjectOfFirstFile,dimNames[d].c_str());
+      
+      if(dtype == CDataReader::dtype_time || dtype == CDataReader::dtype_reference_time){
+        isTimeDim[d] = true;
+      }
       CDBDebug("Found dimension %d with name %s",d,dimNames[d].c_str());
       
       try{
@@ -448,13 +484,12 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                   //Create adaguctime structure, when this is a time dimension.
                   if(isTimeDim[d]){
                     try{
-                      //ADTime = new CADAGUC_time((char*)dimUnits->toString().c_str());
                       adagucTime.reset();
                       adagucTime.init((char*)dimUnits->toString().c_str());
                     }catch(int e){
                       CDBDebug("Exception occurred during time initialization: %d",e);
-                      //delete ADTime;ADTime=NULL;
-                      throw(__LINE__);}
+                      throw(__LINE__);
+                    }
                   }
                   
                   #ifdef CDBFILESCANNER_DEBUG
@@ -495,88 +530,80 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                     
                     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                     //Start looping over every netcdf dimension element
+                    std::set<std::string> uniqueDimensionValueSet;
+                    std::pair<std::set<std::string>::iterator,bool> uniqueDimensionValueRet;
                     
+                    CT::string uniqueKey;
                     for(size_t i=0;i<dimDim->length;i++){
-                     
-                        //Insert individual values of type char, short, int, float, double
-                        if(dimVar->getType()!=CDF_STRING){
-                         if(dimValues[i]!=NC_FILL_DOUBLE){
-                            if(isTimeDim[d]==false){
-                              if(hasStatusFlag==true){
-                                VALUES.print("('%s','%s','%d','%s')",
-                                            dirReader->fileList[j]->fullName.c_str(),
-                                            CDataSource::getFlagMeaning( &statusFlagList,double(dimValues[i])),
-                                            int(i),
-                                            fileDate.c_str());
-                              }
-                              if(hasStatusFlag==false){
-                                switch(dimVar->getType()){
-                                  case CDF_FLOAT:
-                                  case CDF_DOUBLE:
-                                    VALUES.print("('%s',%f,'%d','%s')",dirReader->fileList[j]->fullName.c_str(),double(dimValues[i]),int(i),fileDate.c_str());break;
-                                  default:
-                                    VALUES.print("('%s',%d,'%d','%s')",dirReader->fileList[j]->fullName.c_str(),int(dimValues[i]),int(i),fileDate.c_str());break;
-                                }
-                              }
-                            }else{
-                              VALUES.copy("");
-                              
-                              //ADTime->PrintISOTime(ISOTime,ISO8601TIME_LEN,dimValues[i]);status = 0;//TODO make PrintISOTime return a 0 if succeeded
-                              
-                              try{
-                                isoString = adagucTime.dateToISOString(adagucTime.getDate(dimValues[i]));
-                                
-                                isoString.setSize(19);
-                                isoString.concat("Z");
-                                                                //ISOTime[19]='Z';ISOTime[20]='\0';
-                                VALUES.print("('%s','%s','%d','%s')",dirReader->fileList[j]->fullName.c_str(),isoString.c_str(),int(i),fileDate.c_str());
-                                //CDBDebug("VALUES = [%s]",VALUES.c_str());
-
-                              }catch(int e){
-                                CDBDebug("Exception occurred during time conversion: %d",e);
-                              }
-                              
+                      VALUES = "";
+                      uniqueKey = "";
+                      //Insert individual values of type char, short, int, float, double
+                      if(dimVar->getType()!=CDF_STRING){
+                        if(dimValues[i]!=NC_FILL_DOUBLE){
+                          if(isTimeDim[d]==false){
+                            if(hasStatusFlag==true){
+                              uniqueKey.print("%s",CDataSource::getFlagMeaning( &statusFlagList,double(dimValues[i])));
+                              VALUES.print("('%s','%s','%d','%s')",
+                                          dirReader->fileList[j]->fullName.c_str(),
+                                          uniqueKey.c_str(),
+                                          int(i),
+                                          fileDate.c_str());
                             }
+                            if(hasStatusFlag==false){
+                              switch(dimVar->getType()){
+                                case CDF_FLOAT:
+                                case CDF_DOUBLE:
+                                  uniqueKey.print("%f",double(dimValues[i]));
+                                  VALUES.print("('%s',%f,'%d','%s')",dirReader->fileList[j]->fullName.c_str(),double(dimValues[i]),int(i),fileDate.c_str());break;
+                                default:
+                                  uniqueKey.print("%d",int(dimValues[i]));
+                                  VALUES.print("('%s',%d,'%d','%s')",dirReader->fileList[j]->fullName.c_str(),int(dimValues[i]),int(i),fileDate.c_str());break;
+                              }
+                            }
+                          }else{
+                            
+                            //ADTime->PrintISOTime(ISOTime,ISO8601TIME_LEN,dimValues[i]);status = 0;//TODO make PrintISOTime return a 0 if succeeded
+                            
+                            try{
+                              uniqueKey = adagucTime.dateToISOString(adagucTime.getDate(dimValues[i]));
+                              uniqueKey.setSize(19);
+                              uniqueKey.concat("Z");
+                             
+                              VALUES.print("('%s','%s','%d','%s')",dirReader->fileList[j]->fullName.c_str(),uniqueKey.c_str(),int(i),fileDate.c_str());
+                         
+                            }catch(int e){
+                              CDBDebug("Exception occurred during time conversion: %d",e);
+                            }
+                            
                           }
                         }
-                        
-                        //Insert individual values of type string
-                        if(dimVar->getType()==CDF_STRING){
-                          
-                          const char *str=((char**)dimVar->data)[i];
-                          
-                          VALUES.print("('%s','%s','%d','%s')",dirReader->fileList[j]->fullName.c_str(),str,int(i),fileDate.c_str());
-                        }
-                        
-                        
-                        //Insert record into DB.
-                        if(VALUES.length()>0){
-                          if(multiInsertCache.length()>0){
-                            multiInsertCache.concat(",");
-                          }
-                          multiInsertCache.concat(&VALUES);
-                          /*
-                          
-                          CDBDebug("%s",VALUES.c_str());
-                          //Add the record to the temporary table.
-                          queryString.print("INSERT into %s VALUES %s",tableNames_temp[d].c_str(),VALUES.c_str());
-                          status =  DB->query(queryString.c_str()); 
-                          //CDBDebug("(1) Querying %s",queryString.c_str());
-                          if(status!=0){
-                            CDBError("Query failed: %s",queryString.c_str());
-                            throw(__LINE__);
-                          }
-                          //CDBDebug("queryString= %s",queryString.c_str());
-                          if(removeNonExistingFiles==1){
-                            //We are adding the query above to the temporary table if removeNonExistingFiles==1;
-                            //Lets add it also to the non temporary table for convenience
-                            //Later this table will be dropped, but it will remain more up to date during scanning this way.
-                            queryString.print("INSERT into %s VALUES %s",tableNames[d].c_str(),VALUES.c_str());
-                            DB->query(queryString.c_str()); 
-                           
-                          }*/
-                        }
+                      }
                       
+                      //Insert individual values of type string
+                      if(dimVar->getType()==CDF_STRING){
+                        
+                        const char *str=((char**)dimVar->data)[i];
+                        uniqueKey.print("%s",str);
+                        VALUES.print("('%s','%s','%d','%s')",dirReader->fileList[j]->fullName.c_str(),uniqueKey.c_str(),int(i),fileDate.c_str());
+                      }
+                      
+                      //Check if this insert is unique
+                      if(uniqueKey.length()>0){
+                        uniqueDimensionValueRet = uniqueDimensionValueSet.insert(uniqueKey.c_str());
+                        if(uniqueDimensionValueRet.second == false){
+                          //Already inserted!!!!!! Wrong!!!!
+                          CDBError("Dimension value [%s] not unique in dimension [%s]",VALUES.c_str(),dimVar->name.c_str());
+                          VALUES = "";
+                        }else{
+                          if(VALUES.length()>0){
+                          //Insert record into DB.
+                            if(multiInsertCache.length()>0){
+                              multiInsertCache.concat(",");
+                            }
+                            multiInsertCache.concat(&VALUES);
+                          }
+                        }
+                      }
                     }
                   }catch(int linenr){
                     exceptionAtLineNr=linenr;

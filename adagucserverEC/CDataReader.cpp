@@ -612,7 +612,6 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y){
         
         
         if(j!=dataSource->varX->getSize()){
-          CDBDebug("OK %f",dataSource->dfCellSizeX);
           dataSource->useLonTransformation=j;
           //dataSource->dfBBOX[0]=-180;
           //dataSource->dfBBOX[2]=180;
@@ -1311,95 +1310,6 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
   return 0;
 }
 
-int CDataReader::getTimeDimIndex( CDFObject *cdfObject, CDF::Variable * var){
-  if(var == NULL || cdfObject == NULL)return -1;
-  if(var->dimensionlinks.size()==0){return -1;}
-  CT::string standard_name;
-  //First try to retrieve the time dimension by standard_name
-  for(size_t j=0;j<var->dimensionlinks.size();j++){
-    try{
-      cdfObject->getVariable(var->dimensionlinks[j]->name.c_str())->getAttribute("standard_name")->getDataAsString(&standard_name);
-      if(standard_name.equals("time"))return j;
-    }catch(int e){
-    }
-  }
-  //Second, if failed try to find it based on variable name.
-  for(size_t j=0;j<var->dimensionlinks.size();j++){
-    if(var->dimensionlinks[j]->name.equals("time"))return j;
-  }
-  //Third, try to find it based on indexof method.
-  for(size_t j=0;j<var->dimensionlinks.size();j++){
-    if(var->dimensionlinks[j]->name.indexOf("time")>=0)return j;
-  }
-  return -1;
-}
-CDF::Variable *CDataReader::getTimeVariable( CDFObject *cdfObject, CDF::Variable * var){
-  int timeDimIndex = getTimeDimIndex(cdfObject,var);
-  if(timeDimIndex == -1) return NULL;
-  return cdfObject->getVariableNE(var->dimensionlinks[timeDimIndex]->name.c_str());
-}
-
-
-CT::string CDataReader::getTimeUnit(CDataSource *dataSource){
-  CDF::Variable *time = getTimeVariable(dataSource->dataObject[0]->cdfObject,dataSource->dataObject[0]->cdfVariable);
-  if(time == NULL){CDBDebug("No time variable found");throw(1);}
-  CDF::Attribute *timeUnits = time->getAttributeNE("units");
-  if(timeUnits == NULL){CDBDebug("No time units found");throw(2);}
-  
-  CT::string timeUnitsString=timeUnits->toString().c_str();
-  
-  return timeUnitsString;
-}
-
-int CDataReader::getTimeString(CDataSource *dataSource,char * pszTime){
-  //TODO We assume that the first configured DIM is always time. This might be not the case!
-  pszTime[0]='\0';
-  if(dataSource->isConfigured==false){
-    CDBError("dataSource is not configured");
-    return 1;
-  }
-  if(dataSource->cfgLayer->Dimension.size()==0){
-    snprintf(pszTime,MAX_STR_LEN,"No time dimension available");
-    CDBDebug("%s",pszTime);
-    return 1;
-  }
-  CDF::Variable *time = getTimeVariable(dataSource->dataObject[0]->cdfObject,dataSource->dataObject[0]->cdfVariable);
-  if(time==NULL){CDBDebug("No time variable found");return 1;}
-  CDF::Attribute *timeUnits = time->getAttributeNE("units");
-  if(timeUnits ==NULL){CDBDebug("No time units found");return 1;}
-  time->readData(CDF_DOUBLE);
-  if(dataSource->dNetCDFNumDims>2){
-    size_t currentTimeIndex=dataSource->getDimensionIndex(time->name.c_str());
-    if(currentTimeIndex>=0&&currentTimeIndex<time->getSize()){
-      CTime adagucTime;
-      try{
-        adagucTime.init(timeUnits->toString().c_str());
-        CT::string isoString = "No time dimension available";
-        try{
-          adagucTime.dateToISOString(adagucTime.getDate(((double*)time->data)[currentTimeIndex]));
-        }catch(int e){
-        }
-        snprintf(pszTime,MAX_STR_LEN,"%s",isoString.c_str());
-        
-      }catch(int e){
-        CDBError("Unable to initialize CTime with units %s",timeUnits->toString().c_str());
-        return 1;
-      }
-
-    }else{
-      CDBDebug("time index out of bounds");
-      snprintf(pszTime,MAX_STR_LEN,"No time dimension available");
-      return 1;
-    }
-  }else{
-    snprintf(pszTime,MAX_STR_LEN,"No time dimension available");
-    return 1;
-  }
-  //CDBDebug("[OK] pszTime = %s",pszTime);
-  return 0;
-}
-
-
 
 int CDataReader::justLoadAFileHeader(CDataSource *dataSource){
   
@@ -1599,23 +1509,32 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
               CDF::Variable *dimVar=dataSource->dataObject[0]->cdfObject->getVariable(dim->name.c_str());
               
               CT::string units="";
-              CT::string standard_name=dim->name.c_str();  
+              CT::string netcdfdimname=dim->name.c_str();  
               CT::string OGCDimName;
               try{dimVar->getAttribute("units")->getDataAsString(&units);}catch(int e){}
-              //try{dimVar->getAttribute("standard_name")->getDataAsString(&standard_name);}catch(int e){}
-              OGCDimName.copy(&standard_name);
+              
+              //By default use the netcdf dimname
+              OGCDimName.copy(&netcdfdimname);
+              
+              //Try to specify the OGC name based on dimtype
+              DimensionType dtype = getDimensionType(dataSource->dataObject[0]->cdfObject,dimVar);
+              if(dtype==dtype_time)OGCDimName = "time";
+              if(dtype==dtype_reference_time)OGCDimName = "reference_time";
+              if(dtype==dtype_member)OGCDimName = "member";
+              if(dtype==dtype_elevation)OGCDimName = "elevation";
+
               #ifdef CDATAREADER_DEBUG  
-              CDBDebug("Datasource %s: Dim %s; units %s; standard_name %s",dataSource->layerName.c_str(),dim->name.c_str(),units.c_str(),standard_name.c_str());
+              CDBDebug("Datasource %s: Dim %s; units %s; netcdfdimname %s",dataSource->layerName.c_str(),dim->name.c_str(),units.c_str(),netcdfdimname.c_str());
               #endif
               CServerConfig::XMLE_Dimension *xmleDim=new CServerConfig::XMLE_Dimension();
               dataSource->cfgLayer->Dimension.push_back(xmleDim);
               xmleDim->value.copy(OGCDimName.c_str());
-              xmleDim->attr.name.copy(standard_name.c_str());
+              xmleDim->attr.name.copy(netcdfdimname.c_str());
               xmleDim->attr.units.copy(units.c_str());
               
               
               //Store the data in the db for quick access.
-              query.print("INSERT INTO %s values (E'%s',E'%s',E'%s',E'%s')",tableName.c_str(),layerTableId.c_str(),standard_name.c_str(),OGCDimName.c_str(),units.c_str());
+              query.print("INSERT INTO %s values (E'%s',E'%s',E'%s',E'%s')",tableName.c_str(),layerTableId.c_str(),netcdfdimname.c_str(),OGCDimName.c_str(),units.c_str());
               queriesToDoOnSuccess.push_back(query);
               
               //status = DB->query(query.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",query.c_str());throw(__LINE__); }
@@ -1646,7 +1565,7 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
                 xmleDim->attr.units.copy(units.c_str()); 
                 
                 //Store the data in the db for quick access.
-                query.print("INSERT INTO %s values (E'%s',E'%s',E'%s',E'%s')",tableName.c_str(),layerTableId.c_str(),"forecast_reference_time","reference_time",units.c_str());
+                query.print("INSERT INTO %s values (E'%s',E'%s',E'%s',E'%s')",tableName.c_str(),layerTableId.c_str(),cdfObject->variables[j]->name.c_str(),"reference_time",units.c_str());
                 queriesToDoOnSuccess.push_back(query);
                 //status = DB->query(query.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",query.c_str());throw(__LINE__); }
               }
@@ -1877,4 +1796,161 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
     xmleStyle->value.copy(styles.c_str());
   
   return 0;
+}
+
+
+//DEPRECATED
+CT::string CDataReader::getTimeUnit(CDataSource *dataSource){
+  CDF::Variable *time = getDimensionVariableByType(dataSource->dataObject[0]->cdfVariable,dtype_time);
+  if(time == NULL){CDBDebug("No time variable found");throw(1);}
+  CDF::Attribute *timeUnits = time->getAttributeNE("units");
+  if(timeUnits == NULL){CDBDebug("No time units found");throw(2);}
+  
+  CT::string timeUnitsString=timeUnits->toString().c_str();
+  
+  return timeUnitsString;
+}
+
+//DEPRECATED
+int CDataReader::getTimeString(CDataSource *dataSource,char * pszTime){
+  //TODO We assume that the first configured DIM is always time. This might be not the case!
+  pszTime[0]='\0';
+  if(dataSource->isConfigured==false){
+    CDBError("dataSource is not configured");
+    return 1;
+  }
+  if(dataSource->cfgLayer->Dimension.size()==0){
+    snprintf(pszTime,MAX_STR_LEN,"No time dimension available");
+    CDBDebug("%s",pszTime);
+    return 1;
+  }
+
+  CDF::Variable *time = getDimensionVariableByType(dataSource->dataObject[0]->cdfVariable,dtype_time);
+  if(time==NULL){CDBDebug("No time variable found");return 1;}
+  CDF::Attribute *timeUnits = time->getAttributeNE("units");
+  if(timeUnits ==NULL){CDBDebug("No time units found");return 1;}
+  time->readData(CDF_DOUBLE);
+  if(dataSource->dNetCDFNumDims>2){
+    size_t currentTimeIndex=dataSource->getDimensionIndex(time->name.c_str());
+    if(currentTimeIndex>=0&&currentTimeIndex<time->getSize()){
+      CTime adagucTime;
+      try{
+        adagucTime.init(timeUnits->toString().c_str());
+        CT::string isoString = "No time dimension available";
+        try{
+          adagucTime.dateToISOString(adagucTime.getDate(((double*)time->data)[currentTimeIndex]));
+        }catch(int e){
+        }
+        snprintf(pszTime,MAX_STR_LEN,"%s",isoString.c_str());
+        
+      }catch(int e){
+        CDBError("Unable to initialize CTime with units %s",timeUnits->toString().c_str());
+        return 1;
+      }
+
+    }else{
+      CDBDebug("time index out of bounds");
+      snprintf(pszTime,MAX_STR_LEN,"No time dimension available");
+      return 1;
+    }
+  }else{
+    snprintf(pszTime,MAX_STR_LEN,"No time dimension available");
+    return 1;
+  }
+  //CDBDebug("[OK] pszTime = %s",pszTime);
+  return 0;
+}
+
+ 
+CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *cdfObject,const char *ncname){
+  CDF::Dimension *dimension = cdfObject->getDimensionNE(ncname);
+  if(dimension != NULL){
+    return getDimensionType(cdfObject,dimension);
+  }else{
+    
+    return getDimensionType(cdfObject,cdfObject->getVariableNE(ncname));
+  }
+}
+ 
+CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *cdfObject,CDF::Dimension *dimension){
+  if(dimension == NULL){
+    CDBWarning("Dimension not defined");
+    return dtype_none;
+  }
+  CDF::Variable *variable = cdfObject->getVariableNE(dimension->name.c_str());
+  return getDimensionType(cdfObject,variable);
+}
+
+CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *cdfObject,CDF::Variable *variable){
+  if(variable == NULL){
+    CDBWarning("Warning no dimension variable specified for dimension %s",variable->name.c_str());
+    return dtype_none;
+  }
+
+  CT::string standardName = "";
+
+  try{
+    variable->getAttribute("standard_name")->getDataAsString(&standardName);
+  }catch(int e){
+  }
+
+  if(standardName.length()==0){
+    CDBWarning("Warning no standard name given for dimension %s, using variable name instead.",variable->name.c_str());
+    standardName = variable->name;;
+  }
+
+  //CDBDebug("Standardname of dimension %s is %s",variable->name.c_str(), standardName.c_str());
+  
+  if(standardName.equals("time"))return dtype_time;
+  if(standardName.equals("forecast_reference_time"))return dtype_reference_time;
+  if(standardName.equals("time"))return dtype_time;
+  if(standardName.equals("member"))return dtype_member;
+  if(standardName.equals("elevation"))return dtype_elevation;
+  if(standardName.equals("height"))return dtype_elevation;
+  
+  //If no standard_name matches, try to determine dimension type on _CoordinateAxisType attribute, CDM standard
+  CT::string coordinateAxisType = "";
+  try{
+    variable->getAttribute("_CoordinateAxisType")->getDataAsString(&coordinateAxisType);
+  }catch(int e){
+  }
+  coordinateAxisType.toLowerCaseSelf();
+  if(coordinateAxisType.equals("ensemble"))return dtype_member;
+  if(coordinateAxisType.equals("time"))return dtype_time;
+  if(coordinateAxisType.equals("height"))return dtype_elevation;
+  if(coordinateAxisType.equals("pressure"))return dtype_elevation;
+  if(coordinateAxisType.equals("runtime"))return dtype_reference_time;
+  
+  //Try to find elevation dimension based on positive attribute existence (CF)
+  try{
+    variable->getAttribute("positive");
+    return dtype_elevation;
+  }catch(int e){
+  }
+
+  
+  return dtype_normal;
+}
+
+CDF::Dimension* CDataReader::searchDimensionByType(CDF::Variable *var,CDataReader::DimensionType dimensionType){
+  if(var == NULL)return NULL;
+  if(var->dimensionlinks.size()==0){return NULL;}
+  
+  CDFObject *cdfObject = (CDFObject*)var->getParentCDFObject();
+  
+  for(size_t j=0;j<var->dimensionlinks.size();j++){
+    try{
+      DimensionType type = getDimensionType(cdfObject,var->dimensionlinks[j]);
+      if(type==dimensionType)return var->dimensionlinks[j];
+    }catch(int e){
+    }
+  }
+  return NULL;
+};
+    
+CDF::Variable* CDataReader::getDimensionVariableByType(CDF::Variable *var,CDataReader::DimensionType dimensionType){
+  CDF::Dimension *dim = searchDimensionByType(var,dimensionType);
+  if(dim == NULL) return NULL;
+  CDFObject *cdfObject = (CDFObject*)var->getParentCDFObject();
+  return cdfObject->getVariableNE(dim->name.c_str());
 }

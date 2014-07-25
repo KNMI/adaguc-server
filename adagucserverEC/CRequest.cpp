@@ -23,7 +23,7 @@
  * 
  ******************************************************************************/
 
-#define CREQUEST_DEBUG
+//#define CREQUEST_DEBUG
 //#define MEASURETIME
 
 #include "CRequest.h"
@@ -536,7 +536,7 @@ int CRequest::generateOGCGetCapabilities(CT::string *XMLdocument){
 
 int CRequest::generateGetReferenceTimesDoc(CT::string *result,CDataSource *dataSource){
   bool hasReferenceTimeDimension = false;
-  CT::string dimName = "";//forecast_reference_time";
+  CT::string dimName = "";
   for(size_t l=0;l<dataSource->cfgLayer->Dimension.size();l++){
     if(dataSource->cfgLayer->Dimension[l]->value.equals("reference_time")){
       dimName = dataSource->cfgLayer->Dimension[l]->attr.name.c_str();
@@ -958,9 +958,6 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
             }
             
             
-            //CDBDebug("Current time value = %s, tablename = %s",timeValue.c_str(),timeTableName.c_str());
-            //CDBDebug("columnname for reference_time is [%s]",ogcDim->netCDFDimName.c_str());
-            //select * from (select forecast_reference_time,(EXTRACT(EPOCH FROM (time-forecast_reference_time))) as age from ( select * from t20140528t083607890_pmyrmlfgcqmpbylb2dgp)a0 ,( select * from t20140528t083607860_uxmpghhqiuf6a2b0mg8y where time = '2014-05-28T03:00:00Z')a1 where a0.path = a1.path order by age asc)a0 where age >= 0 limit 1
             
             query.print(
               "select * from (select %s,(EXTRACT(EPOCH FROM (%s-%s))) as age from ( select * from %s)a0 ,( select * from %s where %s = '%s')a1 where a0.path = a1.path order by age asc)a0 where age >= 0 limit 1",

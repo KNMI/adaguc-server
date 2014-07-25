@@ -648,8 +648,8 @@ private:
     //stride=100;
     //stride=32;
  //  stride = 8;
-    int stridei = stride;
-    CDBDebug("STRIDE = %d",stridei);
+    //int stridei = stride;
+//    CDBDebug("STRIDE = %d",stridei);
     int dataWidth = (float(dataSource->dWidth)/stride+0.0);
     int dataHeight = (float(dataSource->dHeight)/stride+0.0);
     int imageWidth = drawImage->Geo->dWidth;
@@ -1063,8 +1063,6 @@ private:
         case CDF_DOUBLE: return _plot<double>(warper,dataSource,drawImage);break;
       }
       return;
-    }else{
-      CDBDebug("fieldsAre NOT Identical");
     }
     
     if(dataSource->dWidth*dataSource->dHeight<512*512||1==1){
