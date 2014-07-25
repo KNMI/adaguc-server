@@ -102,7 +102,12 @@ namespace CDF{
       }
       int getDataAsString(CT::string *out){
         out->copy("");
-        if(type==CDF_CHAR||type==CDF_UBYTE||type==CDF_BYTE){out->copy((const char*)data,length);return 0;}
+        if(type==CDF_CHAR||type==CDF_UBYTE||type==CDF_BYTE){
+          out->copy((const char*)data,length);
+          int a = strlen(out->c_str());
+          out->setSize(a);
+          return 0;
+        }
         if(type==CDF_INT||type==CDF_UINT)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%d",((int*)data)[n]);}
         if(type==CDF_SHORT||type==CDF_USHORT)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%ds",((short*)data)[n]);}
         if(type==CDF_FLOAT)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%ff",((float*)data)[n]);}

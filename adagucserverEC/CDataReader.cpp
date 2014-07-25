@@ -1466,6 +1466,7 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
     return 1;
   }
   
+  
 //  CDBDebug("Dimensions: %d - %d",dataSource->cfgLayer->Dimension.size(),dataSource->dataObject[0]->cdfVariable->dimensionlinks.size());
   
   try{
@@ -1497,22 +1498,33 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
           // Each time to find the non existing dims.
           if(variable->dimensionlinks.size()==2){
             #ifdef CDATAREADER_DEBUG  
-            CDBDebug("Creating an empty table, because variable %s has only x and y dims",variable->name.c_str());
+            CDBDebug("Creating an empty table, because variable [%s] has only x and y dims",variable->name.c_str());
             #endif
             return 0;
           }
           
+  
           for(size_t d=0;d<variable->dimensionlinks.size()-2;d++){
-            
+        
+  
             CDF::Dimension *dim=variable->dimensionlinks[d];
             if(dim!=NULL){
-              CDF::Variable *dimVar=dataSource->dataObject[0]->cdfObject->getVariable(dim->name.c_str());
-              
+              CDF::Variable *dimVar=NULL;
+              try{
+                dimVar = dataSource->dataObject[0]->cdfObject->getVariable(dim->name.c_str());
+              }catch(int e){
+                CDBError("Variable is not defined for dimension [%s]",dim->name.c_str());
+                throw(__LINE__);
+              }
+                 
               CT::string units="";
-              CT::string netcdfdimname=dim->name.c_str();  
-              CT::string OGCDimName;
-              try{dimVar->getAttribute("units")->getDataAsString(&units);}catch(int e){}
               
+              CT::string netcdfdimname=dim->name.c_str();  
+              
+              CT::string OGCDimName;
+              
+              try{dimVar->getAttribute("units")->getDataAsString(&units);}catch(int e){}
+                
               //By default use the netcdf dimname
               OGCDimName.copy(&netcdfdimname);
               
@@ -1531,12 +1543,12 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
               xmleDim->value.copy(OGCDimName.c_str());
               xmleDim->attr.name.copy(netcdfdimname.c_str());
               xmleDim->attr.units.copy(units.c_str());
-              
+                
               
               //Store the data in the db for quick access.
               query.print("INSERT INTO %s values (E'%s',E'%s',E'%s',E'%s')",tableName.c_str(),layerTableId.c_str(),netcdfdimname.c_str(),OGCDimName.c_str(),units.c_str());
               queriesToDoOnSuccess.push_back(query);
-              
+                
               //status = DB->query(query.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",query.c_str());throw(__LINE__); }
                       
             }else{
@@ -1544,12 +1556,13 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
             }
           }
           
+  
           //Check for global variable with standard_name forecast_reference_time 
           CDFObject *cdfObject = dataSource->dataObject[0]->cdfObject;
           for(size_t j=0;j<cdfObject->variables.size();j++){
             try{
               if(cdfObject->variables[j]->getAttribute("standard_name")->toString().equals("forecast_reference_time") == true){
-                CDBDebug("Found forecast_reference_time variable with name %s",cdfObject->variables[j]->name.c_str());
+                CDBDebug("Found forecast_reference_time variable with name [%s]",cdfObject->variables[j]->name.c_str());
                 CT::string units = "";
                 try{
                   cdfObject->variables[j]->getAttribute("units")->toString();
@@ -1573,6 +1586,7 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
             }
           }
           
+  
           //Do all the queries
           for(size_t j=0;j<queriesToDoOnSuccess.size();j++){
             CT::string query = queriesToDoOnSuccess[j];
@@ -1583,6 +1597,7 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
             }
           }
           
+  
         //}catch(int e){
         //  CT::string errorMessage;CDF::getErrorMessage(&errorMessage,e); CDBDebug("Unable to configure dims automatically: %s (%d)",errorMessage.c_str(),e);    
         //  throw(__LINE__);
@@ -1592,7 +1607,7 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
      
     }
   }catch(int linenr){
-    CDBDebug("Exception at line %d",linenr);
+    CDBError("Exception at line %d",linenr);
 
     return 1;
   }
@@ -1883,7 +1898,7 @@ CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *cdfObject,CD
 
 CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *cdfObject,CDF::Variable *variable){
   if(variable == NULL){
-    CDBWarning("Warning no dimension variable specified for dimension %s",variable->name.c_str());
+    CDBWarning("Warning no dimension variable specified for dimension ");
     return dtype_none;
   }
 
@@ -1899,11 +1914,12 @@ CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *cdfObject,CD
     standardName = variable->name;;
   }
 
-  //CDBDebug("Standardname of dimension %s is %s",variable->name.c_str(), standardName.c_str());
+  //CDBDebug("Standardname of dimension [%s] is [%s]",variable->name.c_str(), standardName.c_str());
   
+  
+  //CDBDebug("%d %d",standardName.equals("time"),standardName.length());
   if(standardName.equals("time"))return dtype_time;
   if(standardName.equals("forecast_reference_time"))return dtype_reference_time;
-  if(standardName.equals("time"))return dtype_time;
   if(standardName.equals("member"))return dtype_member;
   if(standardName.equals("elevation"))return dtype_elevation;
   if(standardName.equals("height"))return dtype_elevation;
@@ -1927,7 +1943,7 @@ CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *cdfObject,CD
     return dtype_elevation;
   }catch(int e){
   }
-
+   CDBDebug("Dimension %s with standard_name [%s] is a normal dimension",variable->name.c_str(), standardName.c_str());
   
   return dtype_normal;
 }

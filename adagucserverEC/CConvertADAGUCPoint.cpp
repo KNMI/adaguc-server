@@ -26,8 +26,8 @@
 #include "CConvertADAGUCPoint.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
-#define CCONVERTADAGUCPOINT_DEBUG
-#define MEASURETIME
+//#define CCONVERTADAGUCPOINT_DEBUG
+//#define MEASURETIME
 const char *CConvertADAGUCPoint::className="CConvertADAGUCPoint";
 
 
@@ -725,7 +725,6 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
           
           if(val!=fill){
            
-            CDBDebug("GOING IN %d",d);  
             //CDBDebug("P %d %d %f",dlon,dlat,val);
             
               dataSource->dataObject[d]->points.push_back(PointDVWithLatLon(dlon,dlat,lon,lat,val));//,id));

@@ -34,6 +34,9 @@
 #include <stdlib.h>
 #define CTIME_CONVERSION_ERROR 1
 
+#define CTIME_MODE_UTCALENDAR 0
+#define CTIME_MODE_YYYYMM 1
+
 class CTime{
   private:
   CT::string currentUnit;
@@ -42,6 +45,7 @@ class CTime{
   public:
   static utUnit  dataunits;
   static bool isInitialized;
+  static int mode;
   /**
    * Class which holds date parameters like year, month, day, hour, minute, second and offset
    */
@@ -85,7 +89,7 @@ class CTime{
   
   /**
    * Turns double value into a date object
-   * Throws integer CTIME_CONVERSION_ERROR when failes
+   * Throws integer CTIME_CONVERSION_ERROR when fails
    * @param offset The value to convert to date
    * @return the date object
    */
@@ -94,7 +98,7 @@ class CTime{
   
   /**
    * Turns date object into double value
-   * Throws integer CTIME_CONVERSION_ERROR when failes
+   * Throws integer CTIME_CONVERSION_ERROR when fails
    * @param Date the date object
    * @return The value to convert to date
    */
