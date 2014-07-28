@@ -56,10 +56,10 @@ class CDataSource{
   
   CStyleConfiguration *styleConfiguration;
 
-  class DataClass{
+  class DataObject{
     public:
-      DataClass();
-      ~DataClass();
+      DataObject();
+      ~DataObject();
       bool hasStatusFlag,hasNodataValue,appliedScaleOffset,hasScaleOffset;
       double dfNodataValue,dfscale_factor,dfadd_offset;
       std::vector<StatusFlag*> statusFlagList;
@@ -73,14 +73,14 @@ class CDataSource{
   class Statistics{
     private:
       template <class T>
-      void calcMinMax(size_t size,std::vector <DataClass *> &dataObject){
+      void calcMinMax(size_t size,std::vector <DataObject *> *dataObject){
 #ifdef MEASURETIME
   StopWatch_Stop("Start min/max calculation");
 #endif
-      if(dataObject.size()==1){
-        T* data = (T*)dataObject[0]->cdfVariable->data;
+      if(dataObject->size()==1){
+        T* data = (T*)(*dataObject)[0]->cdfVariable->data;
         
-        CDFType type=dataObject[0]->cdfVariable->getType();
+        CDFType type=(*dataObject)[0]->cdfVariable->getType();
         
         //CDBDebug("nodataval %f",(T)dataObject[0]->dfNodataValue);
         
@@ -99,7 +99,7 @@ class CDataSource{
           T v=data[p];
 
           //CDBDebug("Value %d =  %f",p,(double)v);
-          if((((T)v)!=(T)dataObject[0]->dfNodataValue||(!dataObject[0]->hasNodataValue))&&v==v){
+          if((((T)v)!=(T)(*dataObject)[0]->dfNodataValue||(!(*dataObject)[0]->hasNodataValue))&&v==v){
             if((checkInfinity&&v!=maxInf&&v!=minInf)||(!checkInfinity))
             {
             
@@ -117,9 +117,9 @@ class CDataSource{
         max=(double)_max;
       }
       //Wind vector min max calculation
-      if(dataObject.size()==2){
-         T* dataU = (T*)dataObject[0]->cdfVariable->data;
-         T* dataV = (T*)dataObject[1]->cdfVariable->data;
+      if(dataObject->size()==2){
+         T* dataU = (T*)(*dataObject)[0]->cdfVariable->data;
+         T* dataV = (T*)(*dataObject)[1]->cdfVariable->data;
       //CDBDebug("nodataval %f",(T)dataObject->dfNodataValue);
         T _min=(T)0.0f,_max=(T)0.0f;
         int firstDone=0;
@@ -129,8 +129,8 @@ class CDataSource{
           T u=dataU[p];
           T v=dataV[p];
           
-          if(((((T)v)!=(T)dataObject[0]->dfNodataValue||(!dataObject[0]->hasNodataValue))&&v==v)&&
-            ((((T)u)!=(T)dataObject[0]->dfNodataValue||(!dataObject[0]->hasNodataValue))&&u==u)){
+          if(((((T)v)!=(T)(*dataObject)[0]->dfNodataValue||(!(*dataObject)[0]->hasNodataValue))&&v==v)&&
+            ((((T)u)!=(T)(*dataObject)[0]->dfNodataValue||(!(*dataObject)[0]->hasNodataValue))&&u==u)){
             s=(T)hypot(u,v);
             if(firstDone==0){
               _min=s;_max=s;
@@ -164,9 +164,11 @@ class CDataSource{
   
   class TimeStep{
     public:
+   
       CT::string fileName;   //Filename of the file to load
       //CT::string timeString; //String of the current time
       CCDFDims   dims;//Dimension index in the corresponding name and file
+  
   };
   int datasourceIndex;
   int currentAnimationStep;
@@ -181,6 +183,9 @@ class CDataSource{
    */
   CT::string getDimensionValueForNameAndStep(const char *dimName,int dimStep);
   
+  
+  std::vector <DataObject *> dataObjects;
+  
   bool stretchMinMax,stretchMinMaxDone;
   
   /**
@@ -189,7 +194,7 @@ class CDataSource{
   std::vector <COGCDims*> requiredDims;
   Statistics *statistics; // is NULL when not available
   //The actual dataset data (can have multiple variables)
-  std::vector <DataClass *> dataObject;
+  
   //source image parameters
   double dfBBOX[4],dfCellSizeX,dfCellSizeY;
   int dWidth,dHeight;
@@ -262,6 +267,30 @@ class CDataSource{
   int setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Configuration *_cfg,CServerConfig::XMLE_Layer * _cfgLayer,const char *_layerName, int layerIndex);
   void addStep(const char * fileName, CCDFDims *dims);
   const char *getFileName();
+  
+  DataObject *getDataObject(int j){
+    
+    if(int(dataObjects.size()) <= j){
+      CDBError("No data objects for animation step %d of %d",currentAnimationStep,timeSteps.size());
+      return NULL;
+    }
+
+    DataObject *d = dataObjects[j];
+    //CDBDebug("getDataObject %d %d",currentAnimationStep,j);
+    return d;
+  }
+  
+  std::vector <DataObject *> *getDataObjectsVector(){
+     return &(dataObjects);
+  }
+  
+  size_t getNumDataObjects(){
+    return dataObjects.size();
+  }
+  void eraseDataObject(int j){
+    delete dataObjects[j];
+    dataObjects.erase(dataObjects.begin()+j);
+  }
   void setTimeStep(int timeStep);
   int getCurrentTimeStep();
   size_t getDimensionIndex(const char *name);
@@ -280,25 +309,25 @@ class CDataSource{
       CDBError("Datasource %s is not configured",cfgLayer->Name[0]->value.c_str());
       return 1;
     }
-    if(dataObject.size()<=0){
+    if(getNumDataObjects()<=0){
       CDBError("No variables found for datasource %s",cfgLayer->Name[0]->value.c_str());
       return 1;
     }
   
-    for(size_t varNr=0;varNr<dataObject.size();varNr++){
-      dataObject[varNr]->cdfObject = cdfObject;
-      dataObject[varNr]->cdfVariable = cdfObject->getVariableNE(dataObject[varNr]->variableName.c_str());
-      if(dataObject[varNr]->cdfVariable==NULL){
-        CDBError("attachCDFObject: variable \"%s\" does not exist",dataObject[varNr]->variableName.c_str());
+    for(size_t varNr=0;varNr<getNumDataObjects();varNr++){
+      getDataObject(varNr)->cdfObject = cdfObject;
+      getDataObject(varNr)->cdfVariable = cdfObject->getVariableNE(getDataObject(varNr)->variableName.c_str());
+      if(getDataObject(varNr)->cdfVariable==NULL){
+        CDBError("attachCDFObject: variable \"%s\" does not exist",getDataObject(varNr)->variableName.c_str());
         return 1;
       }
     }
     return 0;
   }
   void detachCDFObject(){
-    for(size_t j=0;j<dataObject.size();j++){
-      dataObject[j]->cdfVariable = NULL;
-      dataObject[j]->cdfObject = NULL;
+    for(size_t j=0;j<getNumDataObjects();j++){
+      getDataObject(j)->cdfVariable = NULL;
+      getDataObject(j)->cdfObject = NULL;
     }
   }
   

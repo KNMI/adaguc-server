@@ -244,7 +244,7 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource,int mo
   #ifdef CCONVERTADAGUCVECTOR_DEBUG
   CDBDebug("convertADAGUCVectorData");
   #endif
-  CDFObject *cdfObject = dataSource->dataObject[0]->cdfObject;
+  CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
   try{
     cdfObject->getDimension("nv");
     cdfObject->getDimension("time");
@@ -253,9 +253,13 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource,int mo
     return 1;
   }
   //CDBDebug("THIS IS ADAGUC VECTOR DATA");
-  
+  size_t nrDataObjects = dataSource->getNumDataObjects();
+  CDataSource::DataObject *dataObjects[nrDataObjects];
+  for(size_t d=0;d<nrDataObjects;d++){
+    dataObjects[d] =  dataSource->getDataObject(d);
+  }
   CDF::Variable *new2DVar;
-  new2DVar = dataSource->dataObject[0]->cdfVariable;
+  new2DVar = dataObjects[0]->cdfVariable;
   
   CDF::Variable *swathVar;
   CT::string origSwathName=new2DVar->name.c_str();
@@ -283,22 +287,22 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource,int mo
  
   CDF::Attribute *fillValue = swathVar->getAttributeNE("_FillValue");
   if(fillValue!=NULL){
-    dataSource->dataObject[0]->hasNodataValue=true;
-    fillValue->getData(&dataSource->dataObject[0]->dfNodataValue,1);
+    dataObjects[0]->hasNodataValue=true;
+    fillValue->getData(&dataObjects[0]->dfNodataValue,1);
     #ifdef CCONVERTADAGUCVECTOR_DEBUG
-    CDBDebug("_FillValue = %f",dataSource->dataObject[0]->dfNodataValue);
+    CDBDebug("_FillValue = %f",dataObjects[0]->dfNodataValue);
     #endif
-    float f=dataSource->dataObject[0]->dfNodataValue;
+    float f=dataObjects[0]->dfNodataValue;
     new2DVar->getAttribute("_FillValue")->setData(CDF_FLOAT,&f,1);
   }else {
-    dataSource->dataObject[0]->hasNodataValue=true;
-    dataSource->dataObject[0]->dfNodataValue=-9999999;
-    float f=dataSource->dataObject[0]->dfNodataValue;
+    dataObjects[0]->hasNodataValue=true;
+    dataObjects[0]->dfNodataValue=-9999999;
+    float f=dataObjects[0]->dfNodataValue;
     new2DVar->setAttribute("_FillValue",CDF_FLOAT,&f,1);
   }
   
   //Detect minimum and maximum values
-  float fill = (float)dataSource->dataObject[0]->dfNodataValue;
+  float fill = (float)dataObjects[0]->dfNodataValue;
   float min = fill;float max=fill;
   for(size_t j=0;j<swathVar->getSize();j++){
     float v=((float*)swathVar->data)[j];
@@ -395,17 +399,17 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource,int mo
     CDF::allocateData(new2DVar->getType(),&(new2DVar->data),fieldSize);
     
     //Draw data!
-    if(dataSource->dataObject[0]->hasNodataValue){
+    if(dataObjects[0]->hasNodataValue){
       for(size_t j=0;j<fieldSize;j++){
-        ((float*)dataSource->dataObject[0]->cdfVariable->data)[j]=(float)dataSource->dataObject[0]->dfNodataValue;
+        ((float*)dataObjects[0]->cdfVariable->data)[j]=(float)dataObjects[0]->dfNodataValue;
       }
     }else{
       for(size_t j=0;j<fieldSize;j++){
-        ((float*)dataSource->dataObject[0]->cdfVariable->data)[j]=NAN;
+        ((float*)dataObjects[0]->cdfVariable->data)[j]=NAN;
       }
     }
     
-    float *sdata = ((float*)dataSource->dataObject[0]->cdfVariable->data);
+    float *sdata = ((float*)dataObjects[0]->cdfVariable->data);
     
     float *lonData=(float*)swathLon->data;
     float *latData=(float*)swathLat->data;

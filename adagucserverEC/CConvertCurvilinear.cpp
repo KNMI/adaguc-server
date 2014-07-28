@@ -375,7 +375,7 @@ int CConvertCurvilinear::convertCurvilinearHeader( CDFObject *cdfObject,CServerP
 int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource,int mode){
 
 
-  CDFObject *cdfObject = dataSource->dataObject[0]->cdfObject;
+  CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
   if(cdfObject->getVariableNE("lat_vertices")!=NULL&&cdfObject->getVariableNE("lon_vertices")!=NULL&&cdfObject->getDimensionNE("vertices")!=NULL){
     try{cdfObject->getDimension("vertices")->name="bounds";}catch(int e){}
     try{cdfObject->getVariable("lat_vertices")->name="lat_bnds";}catch(int e){}
@@ -401,8 +401,13 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource,int mode
   CDBDebug("THIS IS Curvilinear VECTOR DATA");
 #endif
   
+   size_t nrDataObjects = dataSource->getNumDataObjects();
+  CDataSource::DataObject *dataObjects[nrDataObjects];
+  for(size_t d=0;d<nrDataObjects;d++){
+    dataObjects[d] =  dataSource->getDataObject(d);
+  }
   CDF::Variable *new2DVar;
-  new2DVar = dataSource->dataObject[0]->cdfVariable;
+  new2DVar = dataObjects[0]->cdfVariable;
   
   CDF::Variable *swathVar;
   CT::string origSwathName=new2DVar->name.c_str();
@@ -440,22 +445,22 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource,int mode
   CDF::Attribute *fillValue = swathVar->getAttributeNE("_FillValue");
   if(fillValue!=NULL){
    
-    dataSource->dataObject[0]->hasNodataValue=true;
-    fillValue->getData(&dataSource->dataObject[0]->dfNodataValue,1);
+    dataObjects[0]->hasNodataValue=true;
+    fillValue->getData(&dataObjects[0]->dfNodataValue,1);
     #ifdef CCONVERTCURVILINEAR_DEBUG
-    CDBDebug("_FillValue = %f",dataSource->dataObject[0]->dfNodataValue);
+    CDBDebug("_FillValue = %f",dataObjects[0]->dfNodataValue);
     #endif
     CDF::Attribute *fillValue2d = new2DVar->getAttributeNE("_FillValue");
     if(fillValue2d == NULL){
       fillValue2d = new CDF::Attribute();
       fillValue2d->name = "_FillValue";
     }
-    float f=dataSource->dataObject[0]->dfNodataValue;
+    float f=dataObjects[0]->dfNodataValue;
     fillValue2d->setData(CDF_FLOAT,&f,1);
   }else {
-    dataSource->dataObject[0]->hasNodataValue=true;
-    dataSource->dataObject[0]->dfNodataValue=NC_FILL_FLOAT;
-    float f=dataSource->dataObject[0]->dfNodataValue;
+    dataObjects[0]->hasNodataValue=true;
+    dataObjects[0]->dfNodataValue=NC_FILL_FLOAT;
+    float f=dataObjects[0]->dfNodataValue;
     new2DVar->setAttribute("_FillValue",CDF_FLOAT,&f,1);
   }
   
@@ -463,7 +468,7 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource,int mode
   
   
   //Detect minimum and maximum values
-  float fill = (float)dataSource->dataObject[0]->dfNodataValue;
+  float fill = (float)dataObjects[0]->dfNodataValue;
   float min = 0;float max=0;
   bool firstValueDone = false;
   
@@ -572,17 +577,17 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource,int mode
     CDF::allocateData(new2DVar->getType(),&(new2DVar->data),fieldSize);
     
     //Draw data!
-    if(dataSource->dataObject[0]->hasNodataValue){
+    if(dataObjects[0]->hasNodataValue){
       for(size_t j=0;j<fieldSize;j++){
-        ((float*)dataSource->dataObject[0]->cdfVariable->data)[j]=(float)dataSource->dataObject[0]->dfNodataValue;
+        ((float*)dataObjects[0]->cdfVariable->data)[j]=(float)dataObjects[0]->dfNodataValue;
       }
     }else{
       for(size_t j=0;j<fieldSize;j++){
-        ((float*)dataSource->dataObject[0]->cdfVariable->data)[j]=NAN;
+        ((float*)dataObjects[0]->cdfVariable->data)[j]=NAN;
       }
     }
     
-    float *sdata = ((float*)dataSource->dataObject[0]->cdfVariable->data);
+    float *sdata = ((float*)dataObjects[0]->cdfVariable->data);
     
     
    

@@ -110,6 +110,7 @@ const char *CCDFDims::getDimensionName(int j){
 void CCDFDims::copy(CCDFDims * dim){
   if(dim!=NULL){
     for(size_t j=0;j<dim->dimensions.size();j++){
+      CDBDebug("COPY");
       addDimension(dim->dimensions[j]->name.c_str(),dim->dimensions[j]->value.c_str(),dim->dimensions[j]->index);
       
     }

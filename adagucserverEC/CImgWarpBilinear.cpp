@@ -168,8 +168,8 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
     float *fpValues;
     float *valueData;
   };
-  ValueClass *valObj = new ValueClass[sourceImage->dataObject.size()];
-  for(size_t dNr=0;dNr<sourceImage->dataObject.size();dNr++){
+  ValueClass *valObj = new ValueClass[sourceImage->getNumDataObjects()];
+  for(size_t dNr=0;dNr<sourceImage->getNumDataObjects();dNr++){
     #ifdef CImgWarpBilinear_DEBUG
     CDBDebug("Allocating valObj[%d].fpValues: numDestPixels %d x %d",dNr,dPixelDestW,dPixelDestH);
     CDBDebug("Allocating valObj[%d].valueData: imageSize %d x %d",dNr,dImageWidth,dImageHeight);
@@ -178,25 +178,25 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
     valObj[dNr].valueData = new float[dImageWidth*dImageHeight];
   }
   
-  if(!sourceImage->dataObject[0]->hasNodataValue){
+  if(!sourceImage->getDataObject(0)->hasNodataValue){
     /* When the datasource has no nodata value, assign -9999.0f */
     #ifdef CImgWarpBilinear_DEBUG
     CDBDebug("Source image has no NoDataValue, assigning -9999.0f");
     #endif
-    sourceImage->dataObject[0]->dfNodataValue=-9999.0f;
-    sourceImage->dataObject[0]->hasNodataValue=true;
+    sourceImage->getDataObject(0)->dfNodataValue=-9999.0f;
+    sourceImage->getDataObject(0)->hasNodataValue=true;
   }else{
     /* Create a real nodata value instead of a nanf. */
     
-    if(!(sourceImage->dataObject[0]->dfNodataValue==sourceImage->dataObject[0]->dfNodataValue)){
+    if(!(sourceImage->getDataObject(0)->dfNodataValue==sourceImage->getDataObject(0)->dfNodataValue)){
       #ifdef CImgWarpBilinear_DEBUG
       CDBDebug("Source image has no nodata value NaNf, changing this to -9999.0f");
       #endif
-      sourceImage->dataObject[0]->dfNodataValue=-9999.0f;
+      sourceImage->getDataObject(0)->dfNodataValue=-9999.0f;
     }
   }
   //Get the nodatavalue
-  float fNodataValue = sourceImage->dataObject[0]->dfNodataValue ;
+  float fNodataValue = sourceImage->getDataObject(0)->dfNodataValue ;
   
   //Reproject all the points 
   #ifdef CImgWarpBilinear_DEBUG
@@ -204,7 +204,7 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
   
   StopWatch_Stop("Start Reprojecting all the points");
   char temp[32];
-  CDF::getCDFDataTypeName(temp,31,sourceImage->dataObject[0]->cdfVariable->getType());
+  CDF::getCDFDataTypeName(temp,31,sourceImage->getDataObject(0)->cdfVariable->getType());
   CDBDebug("datatype: %s",temp);
   for(int j=0;j<4;j++){
     CDBDebug("dPixelExtent[%d]=%d",j,dPixelExtent[j]);
@@ -240,8 +240,8 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
       
       //CDBDebug("%f - %f s:%d x:%d  y:%d  p:%d",destX,destY,status,x,y,p);
       //  drawImage->setPixelIndexed(dpDestX[p],dpDestY[p],240);
-      for(size_t varNr=0;varNr<sourceImage->dataObject.size();varNr++){
-        void *data=sourceImage->dataObject[varNr]->cdfVariable->data;
+      for(size_t varNr=0;varNr<sourceImage->getNumDataObjects();varNr++){
+        void *data=sourceImage->getDataObject(varNr)->cdfVariable->data;
         float *fpValues=valObj[varNr].fpValues;
         int x1=x;
         int y1=y;
@@ -255,7 +255,7 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
         size_t sp = x1+y1*sourceImage->dWidth;
         
 
-        switch(sourceImage->dataObject[varNr]->cdfVariable->getType()){
+        switch(sourceImage->getDataObject(varNr)->cdfVariable->getType()){
           case CDF_CHAR:
             fpValues[p]= ((signed char*)data)[sp];
             break;
@@ -302,15 +302,15 @@ void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDra
   bool gridRelative=true;
   
   //TODO this should be enabled when U and V components are available. otherwise it should do nothing.
-  if (sourceImage->dataObject.size()>1&&(enableVector||enableBarb)){
+  if (sourceImage->getNumDataObjects()>1&&(enableVector||enableBarb)){
     // Check standard_name/var_name for first vector component
     // if x_wind/grid_east_wind of y_wind/grid_northward_wind then gridRelative=true
     // if eastward_wind/northward_wind then gridRelative=false
     // default is gridRelative=true
     CT::string standard_name;
-    standard_name=sourceImage->dataObject[0]->variableName;
+    standard_name=sourceImage->getDataObject(0)->variableName;
     try {
-      sourceImage->dataObject[0]->cdfVariable->getAttribute("standard_name")->getDataAsString(&standard_name);
+      sourceImage->getDataObject(0)->cdfVariable->getAttribute("standard_name")->getDataAsString(&standard_name);
     } catch (CDFError e) {}
     if (standard_name.equals("x_wind")||standard_name.equals("grid_eastward_wind")||
       standard_name.equals("y_wind")||standard_name.equals("grid_northward_wind")) {
@@ -608,7 +608,7 @@ StopWatch_Stop("u/v rotation finished");
 #endif
 }
 
-for(size_t varNr=0;varNr<sourceImage->dataObject.size();varNr++){
+for(size_t varNr=0;varNr<sourceImage->getNumDataObjects();varNr++){
   float *fpValues=valObj[varNr].fpValues;
   float *valueData=valObj[varNr].valueData;
   
@@ -756,7 +756,7 @@ bool convertToKnots=false; //default is false
 //if((enableVector||enableBarb))
 {
   
-  if(sourceImage->dataObject.size()==2){
+  if(sourceImage->getNumDataObjects()==2){
     int firstXPos=0;
     int firstYPos=0;
     
@@ -767,7 +767,7 @@ bool convertToKnots=false; //default is false
     //Depends on value units
     //Derive convertToKnots from units
     CT::string units="m/s";
-    units=sourceImage->dataObject[0]->units;
+    units=sourceImage->getDataObject(0)->units;
     #ifdef CImgWarpBilinear_DEBUG
     CDBDebug("units = %s", units.c_str());
     #endif
@@ -836,7 +836,7 @@ bool convertToKnots=false; //default is false
                 //                  if (enableBarb) drawImage->drawBarb(x,y,direction,strength,240,convertToKnots,flip);
               }
             }
-          }else valObj[0].valueData[p]=sourceImage->dataObject[0]->dfNodataValue; //Set speeed to nodata if u OR v == no data
+          }else valObj[0].valueData[p]=sourceImage->getDataObject(0)->dfNodataValue; //Set speeed to nodata if u OR v == no data
         }
       }
     }
@@ -855,7 +855,7 @@ if(((enableVector||enableBarb)&&drawGridVectors)){
   int stepy=stepx;
   CDBDebug("Vector thinning: %d %d (%d,%f)", stepx, stepy, wantedSpacing, distPoint);
   CDBDebug("<%d>%f,%f %f,%f",numDestPixels/2 , dpDestX[numDestPixels/2], dpDestX[numDestPixels/2+1], dpDestY[numDestPixels/2], dpDestY[numDestPixels/2+1]);
-  if(sourceImage->dataObject.size()==2){
+  if(sourceImage->getNumDataObjects()==2){
     //bool doprint=true;
     for(int y=dPixelExtent[1];y<dPixelExtent[3];y=y+stepy){ //TODO Refactor to GridExtent
         for(int x=dPixelExtent[0];x<dPixelExtent[2];x=x+stepx){

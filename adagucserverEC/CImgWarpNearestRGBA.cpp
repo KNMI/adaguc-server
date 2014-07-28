@@ -28,7 +28,7 @@
 const char *CImgWarpNearestRGBA::className="CImgWarpNearestRGBA";
 const char *CDrawTileObjBGRA::className="CDrawTileObjBGRA";
 int CDrawTileObjBGRA::drawTile(double *x_corners,double *y_corners,int &dDestX,int &dDestY){
-    uint *data=(uint*)dataSource->dataObject[0]->cdfVariable->data;
+    uint *data=(uint*)dataSource->getDataObject(0)->cdfVariable->data;
     uint *imageData = (uint*)drawImage->getCanvasMemory();
     int imageWidth=drawImage->Geo->dWidth;
     int imageHeight=drawImage->Geo->dHeight;

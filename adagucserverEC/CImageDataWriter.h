@@ -93,7 +93,7 @@ public:
           CT::string feature_name;
           CT::string long_name;
           CT::string var_name;
-          CT::string time;
+          //CT::string time;
           CDF::Variable *variable;
           CDataSource *dataSource;
           CCDFDims cdfDims;

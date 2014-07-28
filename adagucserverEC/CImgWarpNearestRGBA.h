@@ -72,11 +72,11 @@ public:
       dfSourceBBOX[2]=dataSource->dfBBOX[0];
     }
     
-    dfNodataValue    = dataSource->dataObject[0]->dfNodataValue ;
+    dfNodataValue    = dataSource->getDataObject(0)->dfNodataValue ;
     legendValueRange = dataSource->styleConfiguration->hasLegendValueRange;
     legendLowerRange = dataSource->styleConfiguration->legendLowerRange;
     legendUpperRange = dataSource->styleConfiguration->legendUpperRange;
-    hasNodataValue   = dataSource->dataObject[0]->hasNodataValue;
+    hasNodataValue   = dataSource->getDataObject(0)->hasNodataValue;
     width = dataSource->dWidth;
     height = dataSource->dHeight;
     legendLog = dataSource->styleConfiguration->legendLog;
@@ -237,9 +237,9 @@ private:
     
     //Setup the renderer to draw the tiles with.We do not keep the calculated results for CDF_CHAR (faster)
         CDrawTileObjBGRA *drawTileClass= NULL;
-        if(dataSource->dataObject[0]->cdfVariable->getType()==CDF_CHAR||
-          dataSource->dataObject[0]->cdfVariable->getType()==CDF_BYTE||
-          dataSource->dataObject[0]->cdfVariable->getType()==CDF_UBYTE
+        if(dataSource->getDataObject(0)->cdfVariable->getType()==CDF_CHAR||
+          dataSource->getDataObject(0)->cdfVariable->getType()==CDF_BYTE||
+          dataSource->getDataObject(0)->cdfVariable->getType()==CDF_UBYTE
         ){
           drawTileClass = new CDrawTileObjBGRA();           //Do not keep the calculated results for CDF_CHAR
           

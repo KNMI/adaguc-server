@@ -1172,15 +1172,7 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
           
     for(size_t k=0;k<store->getSize();k++){
       CDB::Record *record = store->getRecord(k);
-      CDataSource::TimeStep * timeStep = new CDataSource::TimeStep();
-      dataSource->timeSteps.push_back(timeStep);
-      //timeStep->fileName.copy(values_path[k].c_str());
-      timeStep->fileName.copy(record->get(0)->c_str());
-      //CDBDebug("%s",timeStep->fileName.c_str());
-      //timeStep->timeString.print("%sZ",date_time[k].c_str());
-      //timeStep->timeString.print("%sZ",record->get(1)->c_str());
-      //timeStep->timeString.setChar(10,'T');
-      
+      dataSource->addStep(record->get(0)->c_str(),NULL);
       
       //For each timesteps a new set of dimensions is added with corresponding dim array indices.
       for(size_t i=0;i<dataSource->requiredDims.size();i++){
@@ -1190,15 +1182,16 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
         //CDBDebug("%s = %s",record->get(1+i*2)->c_str(),record->get(2+i*2)->c_str());
         
         CT::string value = record->get(1+i*2)->c_str();
-        if(dataSource->requiredDims[i]->isATimeDimension){
-           value.setChar(10, 'T');
-           value.concat("Z");
-        }
-         timeStep->dims.addDimension(dataSource->requiredDims[i]->netCDFDimName.c_str(),value.c_str(),atoi(record->get(2+i*2)->c_str()));
-       // CDBDebug("Pusing %s",value.c_str());
+//         if(dataSource->requiredDims[i]->isATimeDimension){
+//            value.setChar(10, 'T');
+//            value.concat("Z");
+//         }
+        dataSource->getCDFDims()->addDimension(dataSource->requiredDims[i]->netCDFDimName.c_str(),value.c_str(),atoi(record->get(2+i*2)->c_str()));
+        //CDBDebug("Pusing [%s][%s][%d]",dataSource->requiredDims[i]->netCDFDimName.c_str(),value.c_str(),atoi(record->get(2+i*2)->c_str()));
         dataSource->requiredDims[i]->addValue(value.c_str());
         //dataSource->requiredDims[i]->allValues.push_back(sDims[l].c_str());
       }
+      
     }
     
     
@@ -1347,8 +1340,6 @@ int CRequest::process_all_layers(){
         delete[] date_time;*/
       }else{
         //This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.        
-        CDataSource::TimeStep * timeStep = new CDataSource::TimeStep();
-        dataSources[j]->timeSteps.push_back(timeStep);
         
 
         CDirReader dirReader;
@@ -1361,19 +1352,16 @@ int CRequest::process_all_layers(){
           CDBError("dirReader.fileList.size()==0");return 1;
         }
         
-        timeStep->fileName.copy( dirReader.fileList[0]->fullName.c_str());
-        //timeStep->timeString.copy("0");
-        timeStep->dims.addDimension("time","0",0);
+        
+        dataSources[j]->addStep(dirReader.fileList[0]->fullName.c_str(),NULL);
+        dataSources[j]->getCDFDims()->addDimension("time","0",0);
       }
     }
     
     if(dataSources[j]->dLayerType==CConfigReaderLayerTypeCascaded){
         //This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
-        CDataSource::TimeStep * timeStep = new CDataSource::TimeStep();
-        dataSources[j]->timeSteps.push_back(timeStep);
-        timeStep->fileName.copy("");
-        //timeStep->timeString.copy("0");
-        timeStep->dims.addDimension("time","0",0);
+        dataSources[j]->addStep("",NULL);
+        dataSources[j]->getCDFDims()->addDimension("time","0",0);
     }
   }
   
@@ -1438,7 +1426,7 @@ int CRequest::process_all_layers(){
                   throw(__LINE__);
                 }else{
                   //This is an animation, report an error and continue with adding images.
-                  CDBError("Unable to load datasource %s at line %d",dataSources[dataSourceToUse]->dataObject[0]->variableName.c_str(),__LINE__);
+                  CDBError("Unable to load datasource %s at line %d",dataSources[dataSourceToUse]->getDataObject(0)->variableName.c_str(),__LINE__);
                 }
               }
             }
@@ -1578,7 +1566,7 @@ int CRequest::process_all_layers(){
             throw(__LINE__);
           }
           
-          CT::string dumpString=CDF::dump(dataSources[j]->dataObject[0]->cdfObject);
+          CT::string dumpString=CDF::dump(dataSources[j]->getDataObject(0)->cdfObject);
           
           printf("%s",dumpString.c_str());
           reader.close();

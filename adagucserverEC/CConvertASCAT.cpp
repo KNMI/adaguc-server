@@ -229,7 +229,7 @@ int CConvertASCAT::convertASCATHeader( CDFObject *cdfObject ){
  */
 int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
  
-  CDFObject *cdfObject = dataSource->dataObject[0]->cdfObject;
+  CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
   if(cdfObject->getDimensionNE("nXtrack")!=NULL&&cdfObject->getDimensionNE("nTimes")!=NULL){
     try{cdfObject->getDimension("nXtrack")->name="NUMCELLS";}catch(int e){}
     try{cdfObject->getDimension("nTimes")->name="NUMROWS";}catch(int e){}
@@ -245,18 +245,22 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
  
   
   
-  size_t nrDataObjects = dataSource->dataObject.size();
+  size_t nrDataObjects = dataSource->getNumDataObjects();
   if(nrDataObjects<=0)return 1;
    
+  CDataSource::DataObject *dataObjects[nrDataObjects];
+  for(size_t d=0;d<nrDataObjects;d++){
+    dataObjects[d] = dataSource->getDataObject(d);
+  }
   #ifdef CCONVERTASCAT_DEBUG
   
-  CDBDebug("convertASCATData %s",dataSource->dataObject[0]->cdfVariable->name.c_str());
+  CDBDebug("convertASCATData %s",dataObjects[0]->cdfVariable->name.c_str());
   #endif
   CDF::Variable *new2DVar[nrDataObjects];
   CDF::Variable *swathVar[nrDataObjects];
   
   for(size_t d=0;d<nrDataObjects;d++){
-    new2DVar[d] = dataSource->dataObject[d]->cdfVariable;
+    new2DVar[d] = dataObjects[d]->cdfVariable;
     CT::string origSwathName=new2DVar[d]->name.c_str();
     origSwathName.concat("_backup");
     swathVar[d]=cdfObject->getVariableNE(origSwathName.c_str());
@@ -287,21 +291,21 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
     swathVar[d]->readData(CDF_FLOAT,true);
     CDF::Attribute *fillValue = swathVar[d]->getAttributeNE("_FillValue");
     if(fillValue!=NULL){
-      dataSource->dataObject[d]->hasNodataValue=true;
-      fillValue->getData(&dataSource->dataObject[d]->dfNodataValue,1);
+      dataObjects[d]->hasNodataValue=true;
+      fillValue->getData(&dataObjects[d]->dfNodataValue,1);
       #ifdef CCONVERTASCAT_DEBUG
-      CDBDebug("_FillValue = %f",dataSource->dataObject[d]->dfNodataValue);
+      CDBDebug("_FillValue = %f",dataObjects[d]->dfNodataValue);
       #endif
-      float f=dataSource->dataObject[d]->dfNodataValue;
+      float f=dataObjects[d]->dfNodataValue;
       new2DVar[d]->getAttribute("_FillValue")->setData(CDF_FLOAT,&f,1);
-    }else dataSource->dataObject[d]->hasNodataValue=false;
+    }else dataObjects[d]->hasNodataValue=false;
   }
   
   swathLon->readData(CDF_FLOAT,true);
   swathLat->readData(CDF_FLOAT,true);
   
   
-  float fill = (float)dataSource->dataObject[0]->dfNodataValue;
+  float fill = (float)dataObjects[0]->dfNodataValue;
   float min = fill;float max=fill;
   //Detect minimum and maximum values
   
@@ -403,7 +407,7 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
       new2DVar[d]->setSize(fieldSize);
       CDF::allocateData(new2DVar[d]->getType(),&(new2DVar[d]->data),fieldSize);
       for(size_t j=0;j<fieldSize;j++){
-        ((float*)dataSource->dataObject[d]->cdfVariable->data)[j]=(float)dataSource->dataObject[d]->dfNodataValue;
+        ((float*)dataObjects[d]->cdfVariable->data)[j]=(float)dataObjects[d]->dfNodataValue;
       }
     }
     
@@ -454,6 +458,7 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
     if(dataSource->styleConfiguration->styleCompositionName.indexOf("bilinear")>=0){
       drawBilinear=true;
     }
+
     for(int rowNr=0;rowNr<numRows;rowNr++){ 
       for(int cellNr=0;cellNr<numCells;cellNr++){
         int pSwath = cellNr+rowNr * numCells;
@@ -495,7 +500,7 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
           }
             int dlons[4],dlats[4];double rotation;
             for(size_t d=0;d<nrDataObjects;d++){
-              float *sdata = ((float*)dataSource->dataObject[d]->cdfVariable->data);
+              float *sdata = ((float*)dataObjects[d]->cdfVariable->data);
               float *swathData = (float*)swathVar[d]->data;
               float vals[4];
               vals[0] = swathData[pSwath];
@@ -542,7 +547,7 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
                 
                }
                if(tileHasNoData==false){
-                  if(dataSource->dataObject.size()==2){
+                  if(nrDataObjects==2){
                     if(dlons[0]>=0&&dlons[0]<dataSource->dWidth&&dlats[0]>0&&dlats[0]<dataSource->dHeight){
                       if(tileIsTooLarge==false){
                       //  if(d==1)vals[0]=0;
@@ -552,7 +557,7 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
                         }
                 
                         
-                        dataSource->dataObject[d]->points.push_back(PointDVWithLatLon(dlons[0],dlats[0],origLon,origLat,vals[0],rotation));
+                        dataObjects[d]->points.push_back(PointDVWithLatLon(dlons[0],dlats[0],origLon,origLat,vals[0],rotation));
                       }
                     }
                   }

@@ -28,9 +28,9 @@
 const char *CDataSource::className = "CDataSource";
 
 /************************************/
-/* CDataSource::CDataClass          */
+/* CDataSource::CDataObject          */
 /************************************/
-CDataSource::DataClass::DataClass(){
+CDataSource::DataObject::DataObject(){
   hasStatusFlag=false;
   appliedScaleOffset = false;
   hasScaleOffset = false;
@@ -40,7 +40,7 @@ CDataSource::DataClass::DataClass(){
   dfscale_factor=1;
   std::vector <CPoint> points;
 }
-CDataSource::DataClass::~DataClass(){
+CDataSource::DataObject::~DataObject(){
   for(size_t j=0;j<statusFlagList.size();j++){
     delete statusFlagList[j];
   }
@@ -68,19 +68,20 @@ void CDataSource::Statistics::setMaximum(double max){
 // TODO this currently works only for float data
 int CDataSource::Statistics::calculate(CDataSource *dataSource){
   //Get Min and Max
-  CDataSource::DataClass *dataObject = dataSource->dataObject[0];
+  CDBDebug("calculate stat ");
+  CDataSource::DataObject *dataObject = dataSource->getDataObject(0);
   if(dataObject->cdfVariable->data!=NULL){
     size_t size = dataObject->cdfVariable->getSize();//dataSource->dWidth*dataSource->dHeight;
     
-    if(dataObject->cdfVariable->getType()==CDF_CHAR)calcMinMax<char>(size,dataSource->dataObject);
-    if(dataObject->cdfVariable->getType()==CDF_BYTE)calcMinMax<char>(size,dataSource->dataObject);
-    if(dataObject->cdfVariable->getType()==CDF_UBYTE)calcMinMax<unsigned char>(size,dataSource->dataObject);
-    if(dataObject->cdfVariable->getType()==CDF_SHORT)calcMinMax<short>(size,dataSource->dataObject);
-    if(dataObject->cdfVariable->getType()==CDF_USHORT)calcMinMax<unsigned short>(size,dataSource->dataObject);
-    if(dataObject->cdfVariable->getType()==CDF_INT)calcMinMax<int>(size,dataSource->dataObject);
-    if(dataObject->cdfVariable->getType()==CDF_UINT)calcMinMax<unsigned int>(size,dataSource->dataObject);
-    if(dataObject->cdfVariable->getType()==CDF_FLOAT)calcMinMax<float>(size,dataSource->dataObject);
-    if(dataObject->cdfVariable->getType()==CDF_DOUBLE)calcMinMax<double>(size,dataSource->dataObject); 
+    if(dataObject->cdfVariable->getType()==CDF_CHAR)calcMinMax<char>(size,dataSource->getDataObjectsVector());
+    if(dataObject->cdfVariable->getType()==CDF_BYTE)calcMinMax<char>(size,dataSource->getDataObjectsVector());
+    if(dataObject->cdfVariable->getType()==CDF_UBYTE)calcMinMax<unsigned char>(size,dataSource->getDataObjectsVector());
+    if(dataObject->cdfVariable->getType()==CDF_SHORT)calcMinMax<short>(size,dataSource->getDataObjectsVector());
+    if(dataObject->cdfVariable->getType()==CDF_USHORT)calcMinMax<unsigned short>(size,dataSource->getDataObjectsVector());
+    if(dataObject->cdfVariable->getType()==CDF_INT)calcMinMax<int>(size,dataSource->getDataObjectsVector());
+    if(dataObject->cdfVariable->getType()==CDF_UINT)calcMinMax<unsigned int>(size,dataSource->getDataObjectsVector());
+    if(dataObject->cdfVariable->getType()==CDF_FLOAT)calcMinMax<float>(size,dataSource->getDataObjectsVector());
+    if(dataObject->cdfVariable->getType()==CDF_DOUBLE)calcMinMax<double>(size,dataSource->getDataObjectsVector()); 
     
   }
   return 0;
@@ -121,11 +122,14 @@ CDataSource::CDataSource(){
 
 CDataSource::~CDataSource(){
   if(metaData!=NULL){delete[] metaData;metaData=NULL;}
-  for(size_t j=0;j<dataObject.size();j++){
-    delete dataObject[j];
-    dataObject[j]=NULL;
+    
+  for(size_t d=0;d<dataObjects.size();d++){
+    delete dataObjects[d];
+    dataObjects[d]=NULL;
   }
+
   for(size_t j=0;j<timeSteps.size();j++){
+
     delete timeSteps[j];
     timeSteps[j]=NULL;
   }
@@ -144,13 +148,13 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Confi
   cfg=_cfg;
   cfgLayer=_cfgLayer;
 //    numVariables = cfgLayer->Variable.size();
- 
+// CDBDebug("Configure layer ");
   datasourceIndex=layerIndex;
   for(size_t j=0;j<cfgLayer->Variable.size();j++){
-    DataClass *data = new DataClass();
-    data->variableName.copy(cfgLayer->Variable[j]->value.c_str());
-    dataObject.push_back(data);
-  }
+    DataObject *newDataObject = new DataObject();
+    newDataObject->variableName.copy(cfgLayer->Variable[j]->value.c_str());
+    getDataObjectsVector()->push_back(newDataObject);
+   }
   //Set the layername
   CT::string layerUniqueName;
   if(_layerName==NULL){
@@ -215,15 +219,22 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Confi
 }
 
 void CDataSource::addStep(const char * fileName, CCDFDims *dims){
+  
   TimeStep * timeStep = new TimeStep();
   timeSteps.push_back(timeStep);
+  currentAnimationStep = timeSteps.size()-1;
+//  CDBDebug("Adding dataobject for timestep %d",currentAnimationStep);
   timeStep->fileName.copy(fileName);
   if(dims!=NULL){
     timeStep->dims.copy(dims);
   }
-  //timeStep->timeString.copy(pszTimeString);
-  //timeStep->dims=dims;
-  if(timeSteps.size()==1)setTimeStep(currentAnimationStep);
+//   for(size_t j=0;j<cfgLayer->Variable.size();j++){
+//     DataObject *newDataObject = new DataObject();
+//     newDataObject->variableName.copy(cfgLayer->Variable[j]->value.c_str());
+//    
+//     getDataObjectsVector()->push_back(newDataObject);
+//     
+//   }
 }
 
 const char *CDataSource::getFileName(){
