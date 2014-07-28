@@ -89,11 +89,11 @@ public:
  
     
     
-    dfNodataValue    = dataSource->dataObject[0]->dfNodataValue ;
+    dfNodataValue    = dataSource->getDataObject(0)->dfNodataValue ;
     legendValueRange = dataSource->styleConfiguration->hasLegendValueRange;
     legendLowerRange = dataSource->styleConfiguration->legendLowerRange;
     legendUpperRange = dataSource->styleConfiguration->legendUpperRange;
-    hasNodataValue   = dataSource->dataObject[0]->hasNodataValue;
+    hasNodataValue   = dataSource->getDataObject(0)->hasNodataValue;
     width = dataSource->dWidth;
     height = dataSource->dHeight;
     legendLog = dataSource->styleConfiguration->legendLog;
@@ -106,8 +106,8 @@ public:
     legendOffset = dataSource->styleConfiguration->legendOffset;
   }
   int drawTile(double *x_corners,double *y_corners,int &dDestX,int &dDestY){
-    CDFType dataType=dataSource->dataObject[0]->cdfVariable->getType();
-    void *data=dataSource->dataObject[0]->cdfVariable->data;
+    CDFType dataType=dataSource->getDataObject(0)->cdfVariable->getType();
+    void *data=dataSource->getDataObject(0)->cdfVariable->data;
     switch(dataType){
       case CDF_CHAR  : return myDrawRawTile((char*)data,x_corners,y_corners,dDestX,dDestY);break;
       case CDF_BYTE  : return myDrawRawTile((char*)data,x_corners,y_corners,dDestX,dDestY);break;
@@ -382,11 +382,11 @@ private:
   
   template <class T>
   void _plot(CImageWarper *warper,CDataSource *dataSource,CDrawImage *drawImage){
-    double dfNodataValue    = dataSource->dataObject[0]->dfNodataValue ;
+    double dfNodataValue    = dataSource->getDataObject(0)->dfNodataValue ;
     double legendValueRange = dataSource->styleConfiguration->hasLegendValueRange;
     double legendLowerRange = dataSource->styleConfiguration->legendLowerRange;
     double legendUpperRange = dataSource->styleConfiguration->legendUpperRange;
-    bool hasNodataValue   = dataSource->dataObject[0]->hasNodataValue;
+    bool hasNodataValue   = dataSource->getDataObject(0)->hasNodataValue;
     float nodataValue = (float)dfNodataValue;
     float legendLog = dataSource->styleConfiguration->legendLog;
     float legendLogAsLog;
@@ -398,7 +398,7 @@ private:
     float legendScale = dataSource->styleConfiguration->legendScale;
     float legendOffset = dataSource->styleConfiguration->legendOffset;
         
-    T *data=(T*)dataSource->dataObject[0]->cdfVariable->data;
+    T *data=(T*)dataSource->getDataObject(0)->cdfVariable->data;
     for(int y=0;y<drawImage->Geo->dHeight;y++){
       for(int x=0;x<drawImage->Geo->dWidth;x++){
           T val= data[x+y*drawImage->Geo->dWidth];
@@ -436,7 +436,7 @@ private:
   };
 
   template <class T>
-  void drawTriangle(CDrawImage *drawImage, int *xP,int *yP, CDataSource *dataSource,size_t *indexX,size_t *indexY,Settings *settings){
+  void drawTriangle(CDrawImage *drawImage, int *xP,int *yP, void *sourceData,int sourceWidth,int sourceHeight,size_t *indexX,size_t *indexY,Settings *settings){
     
 
    //Sort the vertices in Y direction
@@ -448,7 +448,7 @@ private:
     if(yP[0]>=H&&yP[1]>=H&&yP[2]>=H)return;  
 
     
-    T *data=(T*)dataSource->dataObject[0]->cdfVariable->data;
+    T *data=(T*)sourceData;
 
     
     unsigned int lower;
@@ -549,8 +549,8 @@ private:
   //           int v = vy;
   //           if(v<0)v=0;if(v>239)v=239;
   //           drawImage->setPixelIndexed(x,y,v);
-            if(vx>=0&&vy>=0&&vx<dataSource->dWidth+1&&vy<dataSource->dHeight){
-              T val= data[vx+vy*dataSource->dWidth];
+            if(vx>=0&&vy>=0&&vx<sourceWidth+1&&vy<sourceHeight){
+              T val= data[vx+vy*sourceWidth];
               bool isNodata=false;
               if(settings->hasNodataValue){if(val==settings->nodataValue)isNodata=true;else if(!(val==val))isNodata=true;}
               if(!isNodata)if(settings->legendValueRange)if(val<settings->legendLowerRange||val>settings->legendUpperRange)isNodata=true;
@@ -603,8 +603,8 @@ private:
   //           int v=vy;
   //           if(v<0)v=0;if(v>239)v=239;
   //           drawImage->setPixelIndexed(x,y,v);
-            if(vx>=0&&vy>=0&&vx<dataSource->dWidth+1&&vy<dataSource->dHeight){
-              T val= data[vx+vy*dataSource->dWidth];
+            if(vx>=0&&vy>=0&&vx<sourceWidth+1&&vy<sourceHeight){
+              T val= data[vx+vy*sourceWidth];
               bool isNodata=false;
               if(settings->hasNodataValue){if(val==settings->nodataValue)isNodata=true;else if(!(val==val))isNodata=true;}
               if(!isNodata)if(settings->legendValueRange)if(val<settings->legendLowerRange||val>settings->legendUpperRange)isNodata=true;
@@ -792,11 +792,11 @@ private:
     
     Settings settings;
     
-    settings.dfNodataValue    = dataSource->dataObject[0]->dfNodataValue ;
+    settings.dfNodataValue    = dataSource->getDataObject(0)->dfNodataValue ;
     settings.legendValueRange = dataSource->styleConfiguration->hasLegendValueRange;
     settings.legendLowerRange = dataSource->styleConfiguration->legendLowerRange;
     settings.legendUpperRange = dataSource->styleConfiguration->legendUpperRange;
-    settings.hasNodataValue   = dataSource->dataObject[0]->hasNodataValue;
+    settings.hasNodataValue   = dataSource->getDataObject(0)->hasNodataValue;
     settings.nodataValue = (float)settings.dfNodataValue;
     settings.legendLog = dataSource->styleConfiguration->legendLog;
     if(settings.legendLog>0){
@@ -810,7 +810,7 @@ private:
     if(drawBil){
 
 //       float *destField = new float[imageWidth*imageHeight];
-//       T *data=(T*)dataSource->dataObject[0]->cdfVariable->data;
+//       T *data=(T*)dataSource->getDataObject(0)->cdfVariable->data;
 //    
 //       for(int y=0;y<dataHeight;y++){
 //         for(int x=0;x<dataWidth;x++){
@@ -925,12 +925,16 @@ private:
             if(y%2==0)ony = true;
             if((x+ony)%2==0)onx = true;
             size_t p=x+y*((dataWidth)*stride);
-            T *data=(T*)dataSource->dataObject[0]->cdfVariable->data;
+            T *data=(T*)dataSource->getDataObject(0)->cdfVariable->data;
             data[p]=0;
             if(onx)data[p]=2550;
             
         }
       }*/
+    
+      void *sourceData = dataSource->getDataObject(0)->cdfVariable->data;
+      int sourceWidth = dataWidth;//dataSource->dWidth;
+      int sourceHeight = dataHeight;//dataSource->dHeight;
       for(int y=0;y<dataHeight;y++){
         for(int x=0;x<dataWidth;x++){
                   
@@ -1004,26 +1008,26 @@ private:
                 ys[0]=y*stride;
                 ys[1]=y*stride;
                 ys[2]=y*stride+stride/2;
-                drawTriangle<T>(drawImage, xP,yP, dataSource,xs,ys,&settings);
+                drawTriangle<T>(drawImage, xP,yP,sourceData,sourceWidth,sourceHeight,xs,ys,&settings);
                 
                 xP[0] = px3;
                 yP[0] = py3;
                 xs[0]=x*stride+stride;
                 ys[0]=y*stride+stride;
-                drawTriangle<T>(drawImage, xP,yP, dataSource,xs,ys,&settings);
+                drawTriangle<T>(drawImage, xP,yP,sourceData,sourceWidth,sourceHeight,xs,ys,&settings);
 
                 xP[1]=px4;
                 yP[1]=py4;
                 xs[1]=x*stride;
                 ys[1]=y*stride+stride;
 
-                drawTriangle<T>(drawImage, xP,yP, dataSource,xs,ys,&settings);
+                drawTriangle<T>(drawImage, xP,yP,sourceData,sourceWidth,sourceHeight,xs,ys,&settings);
 
                 xP[0] = px1;
                 yP[0] = py1;
                 xs[0]=x*stride;
                 ys[0]=y*stride;
-                drawTriangle<T>(drawImage, xP,yP, dataSource,xs,ys,&settings);
+                drawTriangle<T>(drawImage, xP,yP,sourceData,sourceWidth,sourceHeight,xs,ys,&settings);
               }
             }
           }
@@ -1050,7 +1054,7 @@ private:
     
     if(fieldsAreIdentical){
       CDBDebug("fieldsAreIdentical: using _plot");
-      CDFType dataType=dataSource->dataObject[0]->cdfVariable->getType();
+      CDFType dataType=dataSource->getDataObject(0)->cdfVariable->getType();
         switch(dataType){
         case CDF_CHAR  : return _plot<char>(warper,dataSource,drawImage);break;
         case CDF_BYTE  : return _plot<char>(warper,dataSource,drawImage);break;
@@ -1067,7 +1071,7 @@ private:
     
     if(dataSource->dWidth*dataSource->dHeight<512*512||1==2){
       CDBDebug("field is small enough for precise renderer: using _render");
-      CDFType dataType=dataSource->dataObject[0]->cdfVariable->getType();
+      CDFType dataType=dataSource->getDataObject(0)->cdfVariable->getType();
         switch(dataType){
         case CDF_CHAR  : return _render<char>(warper,dataSource,drawImage);break;
         case CDF_BYTE  : return _render<char>(warper,dataSource,drawImage);break;
@@ -1107,9 +1111,9 @@ private:
     
     //Setup the renderer to draw the tiles with.We do not keep the calculated results for CDF_CHAR (faster)
         CDrawTileObjInterface *drawTileClass= NULL;
-        if(dataSource->dataObject[0]->cdfVariable->getType()==CDF_CHAR||
-          dataSource->dataObject[0]->cdfVariable->getType()==CDF_BYTE||
-          dataSource->dataObject[0]->cdfVariable->getType()==CDF_UBYTE
+        if(dataSource->getDataObject(0)->cdfVariable->getType()==CDF_CHAR||
+          dataSource->getDataObject(0)->cdfVariable->getType()==CDF_BYTE||
+          dataSource->getDataObject(0)->cdfVariable->getType()==CDF_UBYTE
         ){
           drawTileClass = new CDrawTileObj();           //Do not keep the calculated results for CDF_CHAR
           

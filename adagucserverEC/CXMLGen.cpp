@@ -53,11 +53,9 @@ CDBDebug("getFileNameForLayer");
   //Create a new datasource and set configuration for it
   if(myWMSLayer->dataSource==NULL){
     myWMSLayer->dataSource = new CDataSource ();
-  
     if(myWMSLayer->dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],myWMSLayer->layer,myWMSLayer->name.c_str(),-1)!=0){
       return 1;
     }
-  
   }
 
   int status;
@@ -66,11 +64,13 @@ CDBDebug("getFileNameForLayer");
   if(myWMSLayer->dataSource->dLayerType==CConfigReaderLayerTypeDataBase||
     myWMSLayer->dataSource->dLayerType==CConfigReaderLayerTypeStyled){
       if(myWMSLayer->dataSource->cfgLayer->Dimension.size()==0){
-       
+        myWMSLayer->dataSource->addStep(myWMSLayer->dataSource->cfgLayer->FilePath[0]->value.c_str(),NULL);
+        
         if(CDataReader::autoConfigureDimensions(myWMSLayer->dataSource)!=0){
           CDBError("Unable to autoconfigure dimensions");
           return 1;
         }
+        
        
       }
      
@@ -202,7 +202,7 @@ CDBDebug("getDataSourceForLayer");
   }
    
 
-  myWMSLayer->dataSource->addStep(myWMSLayer->fileName.c_str(),NULL);
+
   
 
   
@@ -229,9 +229,9 @@ CDBDebug("Database layer");
       
       try{
         CT::string attributeValue;
-        myWMSLayer->dataSource->dataObject[0]->cdfVariable->getAttribute("long_name")->getDataAsString(&attributeValue);
+        myWMSLayer->dataSource->getDataObject(0)->cdfVariable->getAttribute("long_name")->getDataAsString(&attributeValue);
         myWMSLayer->title.copy(attributeValue.c_str());
-        myWMSLayer->title.printconcat(" (%s)",myWMSLayer->dataSource->dataObject[0]->cdfVariable->name.c_str());
+        myWMSLayer->title.printconcat(" (%s)",myWMSLayer->dataSource->getDataObject(0)->cdfVariable->name.c_str());
       }catch(int e){
         CT::string errorMessage;
         CDF::getErrorMessage(&errorMessage,e);
@@ -240,7 +240,7 @@ CDBDebug("Database layer");
         #endif
         try{
           CT::string attributeValue;
-          myWMSLayer->dataSource->dataObject[0]->cdfVariable->getAttribute("standard_name")->getDataAsString(&attributeValue);
+          myWMSLayer->dataSource->getDataObject(0)->cdfVariable->getAttribute("standard_name")->getDataAsString(&attributeValue);
           //CDBDebug("attributeValue %s",attributeValue.c_str());
           myWMSLayer->title.copy(attributeValue.c_str());
         }catch(int e){
@@ -343,8 +343,8 @@ CDBDebug("Check");
 CDBDebug("Check");
 #endif         
       //Check if all dimensions are configured properly by the user (X and Y are never configured by the user, so +2)
-      if(myWMSLayer->dataSource->cfgLayer->Dimension.size()+2!=myWMSLayer->dataSource->dataObject[0]->cdfVariable->dimensionlinks.size()){
-        CDBError("Warning: Dimensions for layer %s are not configured properly! (configured: %d!=variable: %d)",myWMSLayer->dataSource->cfgLayer->Name[0]->value.c_str()+2,myWMSLayer->dataSource->cfgLayer->Dimension.size(),myWMSLayer->dataSource->dataObject[0]->cdfVariable->dimensionlinks.size());
+      if(myWMSLayer->dataSource->cfgLayer->Dimension.size()+2!=myWMSLayer->dataSource->getDataObject(0)->cdfVariable->dimensionlinks.size()){
+        CDBError("Warning: Dimensions for layer %s are not configured properly! (configured: %d!=variable: %d)",myWMSLayer->dataSource->cfgLayer->Name[0]->value.c_str()+2,myWMSLayer->dataSource->cfgLayer->Dimension.size(),myWMSLayer->dataSource->getDataObject(0)->cdfVariable->dimensionlinks.size());
       }
     }*/
 #ifdef CXMLGEN_DEBUG
@@ -387,7 +387,7 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
           CT::string units;
           isTimeDim=true;
           try{
-            myWMSLayer->dataSource->dataObject[0]->cdfObject->getVariable("time")->getAttribute("units")->getDataAsString(&units);
+            myWMSLayer->dataSource->getDataObject(0)->cdfObject->getVariable("time")->getAttribute("units")->getDataAsString(&units);
           }catch(int e){
           }
           if(units.length()>0){
@@ -543,7 +543,7 @@ CDBDebug("Querying %s",query.c_str());
             if(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.units.empty()){
               CT::string units;
               try{
-                myWMSLayer->dataSource->dataObject[0]->cdfObject->getVariable(dim->name.c_str())->getAttribute("units")->getDataAsString(&units);
+                myWMSLayer->dataSource->getDataObject(0)->cdfObject->getVariable(dim->name.c_str())->getAttribute("units")->getDataAsString(&units);
                 dim->units.copy(&units);
               }catch(int e){}
             }else{

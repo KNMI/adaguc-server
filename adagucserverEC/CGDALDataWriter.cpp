@@ -64,10 +64,10 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
   }
   CT::string *metaDataItem = new CT::string();
   metaDataItem->copy("product#[C]variables>");
-  metaDataItem->concat(dataSource->dataObject[0]->variableName.c_str());
+  metaDataItem->concat(dataSource->getDataObject(0)->variableName.c_str());
   metaDataList.push_back(metaDataItem);
 #ifdef CGDALDATAWRITER_DEBUG  
-  CDBDebug("dataSource->dataObject[0]->variableName.c_str() %s",dataSource->dataObject[0]->variableName.c_str());
+  CDBDebug("dataSource->getDataObject(0)->variableName.c_str() %s",dataSource->getDataObject(0)->variableName.c_str());
 #endif
 
   // Get Time unit
@@ -181,24 +181,24 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
 
   // Setup data types
   datatype=GDT_Unknown;
-  if(dataSource->dataObject[0]->cdfVariable->getType()==CDF_CHAR)  datatype = GDT_Byte;
-  if(dataSource->dataObject[0]->cdfVariable->getType()==CDF_UBYTE)  datatype = GDT_Byte;
-  if(dataSource->dataObject[0]->cdfVariable->getType()==CDF_SHORT) datatype = GDT_Int16;
-  if(dataSource->dataObject[0]->cdfVariable->getType()==CDF_USHORT) datatype = GDT_UInt16;
-  if(dataSource->dataObject[0]->cdfVariable->getType()==CDF_INT)   datatype = GDT_Int32;
-  if(dataSource->dataObject[0]->cdfVariable->getType()==CDF_UINT)   datatype = GDT_UInt32;
-  if(dataSource->dataObject[0]->cdfVariable->getType()==CDF_FLOAT) datatype = GDT_Float32;
-  if(dataSource->dataObject[0]->cdfVariable->getType()==CDF_DOUBLE)datatype = GDT_Float64;
+  if(dataSource->getDataObject(0)->cdfVariable->getType()==CDF_CHAR)  datatype = GDT_Byte;
+  if(dataSource->getDataObject(0)->cdfVariable->getType()==CDF_UBYTE)  datatype = GDT_Byte;
+  if(dataSource->getDataObject(0)->cdfVariable->getType()==CDF_SHORT) datatype = GDT_Int16;
+  if(dataSource->getDataObject(0)->cdfVariable->getType()==CDF_USHORT) datatype = GDT_UInt16;
+  if(dataSource->getDataObject(0)->cdfVariable->getType()==CDF_INT)   datatype = GDT_Int32;
+  if(dataSource->getDataObject(0)->cdfVariable->getType()==CDF_UINT)   datatype = GDT_UInt32;
+  if(dataSource->getDataObject(0)->cdfVariable->getType()==CDF_FLOAT) datatype = GDT_Float32;
+  if(dataSource->getDataObject(0)->cdfVariable->getType()==CDF_DOUBLE)datatype = GDT_Float64;
   if(datatype==GDT_Unknown){
     char temp[100];
-    CDF::getCDFDataTypeName(temp,99,dataSource->dataObject[0]->cdfVariable->getType());
-    CDBError("Invalid datatype: dataSource->dataObject[0]->cdfVariable->getType()=%s",temp);
+    CDF::getCDFDataTypeName(temp,99,dataSource->getDataObject(0)->cdfVariable->getType());
+    CDBError("Invalid datatype: dataSource->getDataObject(0)->cdfVariable->getType()=%s",temp);
     return 1;
   }
   
 #ifdef CGDALDATAWRITER_DEBUG  
   char dataTypeName[256];
-  CDF::getCDFDataTypeName(dataTypeName,255,dataSource->dataObject[0]->cdfVariable->getType());
+  CDF::getCDFDataTypeName(dataTypeName,255,dataSource->getDataObject(0)->cdfVariable->getType());
   CDBDebug("Dataset datatype = %s WH = [%d,%d], NrOfBands = [%d]",dataTypeName,dataSource->dWidth,dataSource->dHeight,NrOfBands);
 #endif  
   
@@ -248,19 +248,19 @@ int  CGDALDataWriter::addData(std::vector <CDataSource*>&dataSources){
   CDBDebug("Reading %s for bandnr %d",dataSource->getFileName(),currentBandNr);
 #endif
   GDALRasterBandH hSrcBand = GDALGetRasterBand( hMemDS2, currentBandNr+1 );
-  if(dataSource->dataObject[0]->hasNodataValue==1){
-    dfNoData=dataSource->dataObject[0]->dfNodataValue;
+  if(dataSource->getDataObject(0)->hasNodataValue==1){
+    dfNoData=dataSource->getDataObject(0)->dfNodataValue;
     GDALSetRasterNoDataValue(hSrcBand, dfNoData);
   }
   
 #ifdef CGDALDATAWRITER_DEBUG  
-  CDBDebug("copying data in addData, WH= [%d,%d] type = %s", dataSource->dWidth, dataSource->dHeight, CDF::getCDFDataTypeName(dataSource->dataObject[0]->cdfVariable->getType()).c_str());
+  CDBDebug("copying data in addData, WH= [%d,%d] type = %s", dataSource->dWidth, dataSource->dHeight, CDF::getCDFDataTypeName(dataSource->getDataObject(0)->cdfVariable->getType()).c_str());
 
 #endif
   
   GDALRasterIO( hSrcBand, GF_Write, 0, 0,
                 dataSource->dWidth, dataSource->dHeight,
-                dataSource->dataObject[0]->cdfVariable->data,
+                dataSource->getDataObject(0)->cdfVariable->data,
                 dataSource->dWidth, dataSource->dHeight,
                 datatype, 0, 0 );
 #ifdef CGDALDATAWRITER_DEBUG  
@@ -332,8 +332,8 @@ int  CGDALDataWriter::end(){
   hMemDS1 = GDALCreate( hMemDriver1,"memory_dataset_1",srvParam->Geo->dWidth,srvParam->Geo->dHeight,NrOfBands,eDT,NULL );
   if( hMemDS1 == NULL ){CDBError("Failed to create GDAL MEM dataset.");return 1;}
 
-  if(_dataSource->dataObject[0]->hasNodataValue==1){
-    dfNoData=_dataSource->dataObject[0]->dfNodataValue;
+  if(_dataSource->getDataObject(0)->hasNodataValue==1){
+    dfNoData=_dataSource->getDataObject(0)->dfNodataValue;
     for(int j=0;j<NrOfBands;j++){
       GDALRasterBandH hDstcBand = GDALGetRasterBand( hMemDS1,j+1 );
       GDALSetRasterNoDataValue(hDstcBand, dfNoData);
@@ -459,7 +459,7 @@ int  CGDALDataWriter::end(){
       snprintf(szTemp2,MAX_STR_LEN,"%s",TimeUnit.c_str());
       papszMetadata = CSLSetNameValue(papszMetadata,szTemp,szTemp2);
       snprintf(szTemp,MAX_STR_LEN,"VARNAME");
-      snprintf(szTemp2,MAX_STR_LEN,"%s",_dataSource->dataObject[0]->variableName.c_str());
+      snprintf(szTemp2,MAX_STR_LEN,"%s",_dataSource->getDataObject(0)->variableName.c_str());
       papszMetadata = CSLSetNameValue(papszMetadata,szTemp,szTemp2);
       // Set the metadata
       GDALRasterBandH hSrcBand = GDALGetRasterBand( hMemDS1, b+1 );
@@ -585,7 +585,7 @@ CT::string CGDALDataWriter::generateGetCoverageFileName(){
   CT::string humanReadableString;
   humanReadableString.copy(srvParam->Format.c_str());
   humanReadableString.concat("_");
-  humanReadableString.concat(_dataSource->dataObject[0]->variableName.c_str());
+  humanReadableString.concat(_dataSource->getDataObject(0)->variableName.c_str());
   
   
   
@@ -644,8 +644,8 @@ void CGDALDataWriter::generateUniqueGetCoverageFileName(char *pszTempFileName){
   //CDBDebug("generateUniqueGetCoverageFileName");
   //VariableName
   offset=9;
-  strncpy(pszTempFileName+offset,_dataSource->dataObject[0]->variableName.c_str(),10);
-  size_t varNameLength = strlen(_dataSource->dataObject[0]->variableName.c_str());
+  strncpy(pszTempFileName+offset,_dataSource->getDataObject(0)->variableName.c_str(),10);
+  size_t varNameLength = strlen(_dataSource->getDataObject(0)->variableName.c_str());
   for(int j=varNameLength+offset;j<offset+10;j++)pszTempFileName[j]='_';
   //BBOX
   offset=22;

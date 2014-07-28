@@ -174,8 +174,8 @@ class CImgWarpBilinear:public CImageWarperRenderInterface{
     int getPixelIndexForValue(CDataSource*dataSource,float val){
       bool isNodata=false;
       
-      if(dataSource->dataObject[0]->hasNodataValue){
-        if(val==float(dataSource->dataObject[0]->dfNodataValue))isNodata=true;
+      if(dataSource->getDataObject(0)->hasNodataValue){
+        if(val==float(dataSource->getDataObject(0)->dfNodataValue))isNodata=true;
         if(!(val==val))isNodata=true;
       }
       if(!isNodata)
@@ -194,8 +194,8 @@ class CImgWarpBilinear:public CImageWarperRenderInterface{
     void setValuePixel(CDataSource*dataSource,CDrawImage*drawImage,int destX,int destY,float val){
       bool isNodata=false;
       
-      if(dataSource->dataObject[0]->hasNodataValue){
-        if(val==float(dataSource->dataObject[0]->dfNodataValue)){isNodata=true;  return;}
+      if(dataSource->getDataObject(0)->hasNodataValue){
+        if(val==float(dataSource->getDataObject(0)->dfNodataValue)){isNodata=true;  return;}
         if(!(val==val)){isNodata=true;  return;}
       }
     

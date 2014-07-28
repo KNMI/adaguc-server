@@ -58,9 +58,9 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
   /*if(settings.indexOf("nearest")!=-1){
     drawText = false;
   }*/
-  if(dataSource->dataObject.size()==1){
+  if(dataSource->getNumDataObjects()==1){
     
-    std::vector<PointDVWithLatLon> *p1=&dataSource->dataObject[0]->points;
+    std::vector<PointDVWithLatLon> *p1=&dataSource->getDataObject(0)->points;
     size_t l=p1->size();
     size_t s=1;
     /*while(l/s>(80*32)){
@@ -107,11 +107,11 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
   }
   
   
-  if(dataSource->dataObject.size()==2){
-    CT::string varName1=dataSource->dataObject[0]->cdfVariable->name.c_str();
-    CT::string varName2=dataSource->dataObject[1]->cdfVariable->name.c_str();
-    std::vector<PointDVWithLatLon> *p1=&dataSource->dataObject[0]->points;
-    std::vector<PointDVWithLatLon> *p2=&dataSource->dataObject[1]->points;
+  if(dataSource->getNumDataObjects()==2){
+    CT::string varName1=dataSource->getDataObject(0)->cdfVariable->name.c_str();
+    CT::string varName2=dataSource->getDataObject(1)->cdfVariable->name.c_str();
+    std::vector<PointDVWithLatLon> *p1=&dataSource->getDataObject(0)->points;
+    std::vector<PointDVWithLatLon> *p2=&dataSource->getDataObject(1)->points;
     
     size_t l=p1->size();
     

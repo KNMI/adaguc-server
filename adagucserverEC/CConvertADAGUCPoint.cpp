@@ -351,7 +351,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
   #endif
 
 
-  CDFObject *cdfObject0 = dataSource->dataObject[0]->cdfObject;
+  CDFObject *cdfObject0 = dataSource->getDataObject(0)->cdfObject;
   try{
     if(cdfObject0->getAttribute("featureType")->toString().equals("timeSeries")==false&&cdfObject0->getAttribute("featureType")->toString().equals("point")==false)return 1;
   }catch(int e){
@@ -375,16 +375,20 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
   }
   
 
-  size_t nrDataObjects = dataSource->dataObject.size();
+  size_t nrDataObjects = dataSource->getNumDataObjects();
+  CDataSource::DataObject *dataObjects[nrDataObjects];
+  for(size_t d=0;d<nrDataObjects;d++){
+    dataObjects[d] =  dataSource->getDataObject(d);
+  }
   CDF::Variable *new2DVar[nrDataObjects];
   CDF::Variable *pointVar[nrDataObjects];
   
   
   for(size_t d=0;d<nrDataObjects;d++){
-    new2DVar[d] = dataSource->dataObject[d]->cdfVariable;
+    new2DVar[d] = dataObjects[d]->cdfVariable;
     CT::string origSwathName=new2DVar[d]->name.c_str();
     origSwathName.concat("_backup");
-    pointVar[d]=dataSource->dataObject[d]->cdfObject->getVariableNE(origSwathName.c_str());
+    pointVar[d]=dataObjects[d]->cdfObject->getVariableNE(origSwathName.c_str());
     if(pointVar[d]==NULL){
       CDBError("Unable to find orignal swath variable with name %s",origSwathName.c_str());
       return 1;
@@ -449,10 +453,10 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
   
     CDF::Attribute *fillValue = new2DVar[d]->getAttributeNE("_FillValue");
     if(fillValue!=NULL){
-      dataSource->dataObject[d]->hasNodataValue=true;
-      fillValue->getData(&dataSource->dataObject[d]->dfNodataValue,1);
+      dataObjects[d]->hasNodataValue=true;
+      fillValue->getData(&dataObjects[d]->dfNodataValue,1);
       #ifdef CCONVERTADAGUCPOINT_DEBUG
-      CDBDebug("_FillValue = %f",dataSource->dataObject[d]->dfNodataValue);
+      CDBDebug("_FillValue = %f",dataObjects[d]->dfNodataValue);
       #endif
     }
   }
@@ -462,7 +466,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
   #endif
   
   //Detect minimum and maximum values
-  float fill = (float)dataSource->dataObject[0]->dfNodataValue;
+  float fill = (float)dataObjects[0]->dfNodataValue;
  
   
   //Set statistics
@@ -586,13 +590,13 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
       CDF::allocateData(new2DVar[d]->getType(),&(new2DVar[d]->data),fieldSize);
       
     //Fill in nodata
-      if(dataSource->dataObject[d]->hasNodataValue){
+      if(dataObjects[d]->hasNodataValue){
         for(size_t j=0;j<fieldSize;j++){
-          ((float*)dataSource->dataObject[d]->cdfVariable->data)[j]=(float)dataSource->dataObject[d]->dfNodataValue;
+          ((float*)dataObjects[d]->cdfVariable->data)[j]=(float)dataObjects[d]->dfNodataValue;
         }
       }else{
         for(size_t j=0;j<fieldSize;j++){
-          ((float*)dataSource->dataObject[d]->cdfVariable->data)[j]=NAN;
+          ((float*)dataObjects[d]->cdfVariable->data)[j]=NAN;
         }
       }
     }
@@ -700,13 +704,13 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
       int dlat=int((projectedY-offsetY)/cellSizeY);
       if(dlon>=0&&dlat>=0&&dlon<dataSource->dWidth&&dlat<dataSource->dHeight){
       for(size_t d=0;d<nrDataObjects;d++){
-        float *sdata = ((float*)dataSource->dataObject[d]->cdfVariable->data);
+        float *sdata = ((float*)dataObjects[d]->cdfVariable->data);
         PointDVWithLatLon * lastPoint = NULL;
         if(pointVar[d]->currentType==CDF_STRING){
           float v = NAN;
           //CDBDebug("pushing stationNr %d dateDimIndex %d,pPoint DIM %d",stationNr,dateDimIndex,pPoint);
-          dataSource->dataObject[d]->points.push_back(PointDVWithLatLon(dlon,dlat,lon,lat,v));//,((const char**)pointVar[d]->data)[pPoint]));
-          lastPoint = &(dataSource->dataObject[d]->points.back());
+          dataObjects[d]->points.push_back(PointDVWithLatLon(dlon,dlat,lon,lat,v));//,((const char**)pointVar[d]->data)[pPoint]));
+          lastPoint = &(dataObjects[d]->points.back());
           const char * key = pointVar[d]->name.c_str();
           const char * description = key;
           try{
@@ -727,8 +731,8 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
            
             //CDBDebug("P %d %d %f",dlon,dlat,val);
             
-              dataSource->dataObject[d]->points.push_back(PointDVWithLatLon(dlon,dlat,lon,lat,val));//,id));
-              lastPoint = &(dataSource->dataObject[d]->points.back());
+              dataObjects[d]->points.push_back(PointDVWithLatLon(dlon,dlat,lon,lat,val));//,id));
+              lastPoint = &(dataObjects[d]->points.back());
               if(pointID!=NULL){
               
                 const char * key = pointID->name.c_str();
