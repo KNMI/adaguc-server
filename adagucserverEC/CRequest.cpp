@@ -2662,6 +2662,7 @@ int CRequest::process_querystring(){
       
       if(srvParam->Geo->dWidth<0)srvParam->Geo->dWidth = 1;
       if(srvParam->Geo->dHeight<0)srvParam->Geo->dHeight = 1;
+      
       // When error is image, utilize full image size
       setErrorImageSize(srvParam->Geo->dWidth,srvParam->Geo->dHeight,srvParam->imageFormat);
       

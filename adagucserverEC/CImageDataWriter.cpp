@@ -45,6 +45,7 @@ CT::string months[] = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oc
 
 //#define CIMAGEDATAWRITER_DEBUG
 //#define MEASURETIME
+//#define CIMAGEDATAWRITER_DEBUG
 
 void doJacoIntoLatLon(double &u, double &v, double lo, double la, float deltaX, float deltaY, CImageWarper *warper);
 void rotateUvNorth(double &u, double &v, double rlo, double rla, float deltaX, float deltaY, CImageWarper *warper);
@@ -238,7 +239,7 @@ int CImageDataWriter::drawCascadedWMS(CDataSource * dataSource, const char *serv
 
 int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int NrOfBands){
   int status = 0;
-  #ifdef CIMAGEDATAWRITER_DEBUG    
+  #ifdef CIMAGEDATAWRITER_DEBUG2
   CDBDebug("init");
   #endif
   if(writerStatus!=uninitialized){CDBError("Already initialized");return 1;}
@@ -307,19 +308,19 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
 
   if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded&&1==2){
     //Open the data of this dataSource
-    #ifdef CIMAGEDATAWRITER_DEBUG  
+    #ifdef CIMAGEDATAWRITER_DEBUG2  
     CDBDebug("opening %s",dataSource->getFileName());
     #endif  
     CDataReader reader;
     status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
-    #ifdef CIMAGEDATAWRITER_DEBUG  
+    #ifdef CIMAGEDATAWRITER_DEBUG2  
     CDBDebug("Has opened %s",dataSource->getFileName());
     #endif    
     if(status!=0){
       CDBError("Could not open file: %s",dataSource->getFileName());
       return 1;
     }
-    #ifdef CIMAGEDATAWRITER_DEBUG  
+    #ifdef CIMAGEDATAWRITER_DEBUG2  
     CDBDebug("opened");
     #endif  
     reader.close();
@@ -360,7 +361,7 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   //Create 6-8-5 palette for cascaded layer
   if(dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
   
-    #ifdef CIMAGEDATAWRITER_DEBUG    
+    #ifdef CIMAGEDATAWRITER_DEBUG2    
     CDBDebug("create685Palette");
     #endif
     status = drawImage.create685Palette();
@@ -383,7 +384,7 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
       }
     }
   }
-  #ifdef CIMAGEDATAWRITER_DEBUG    
+  #ifdef CIMAGEDATAWRITER_DEBUG2    
   CDBDebug("/init");
   #endif
   return 0;
@@ -557,7 +558,7 @@ int CImageDataWriter::makeStyleConfig(CStyleConfiguration *styleConfig,CDataSour
   
   //When min and max are given, calculate the scale and offset according to min and max.
   if(minMaxSet){
-    #ifdef CIMAGEDATAWRITER_DEBUG          
+    #ifdef CIMAGEDATAWRITER_DEBUG2          
     CDBDebug("Found min and max in layer configuration");
     #endif      
     calculateScaleAndOffsetFromMinMax(s->legendScale,s->legendOffset,min,max,s->legendLog);
@@ -575,7 +576,7 @@ int CImageDataWriter::makeStyleConfig(CStyleConfiguration *styleConfig,CDataSour
   }*/
   CT::string styleDump;
   styleConfig->printStyleConfig(&styleDump);
-  #ifdef CIMAGEDATAWRITER_DEBUG          
+  #ifdef CIMAGEDATAWRITER_DEBUG2          
   CDBDebug("FOUND legend %s, rendermethod %s, style %s.",legendName,renderMethod,styleName);
   CDBDebug("styleDump:\n%s",styleDump.c_str());
   #endif
@@ -800,7 +801,7 @@ CT::PointerList<CT::string*> *CImageDataWriter::getStyleListForDataSource(CDataS
 
             //CStyleConfiguration mode, try to find which stylename we want our CStyleConfiguration for.
             if(styleConfig!=NULL){
-              #ifdef CIMAGEDATAWRITER_DEBUG    
+              #ifdef CIMAGEDATAWRITER_DEBUG2    
               CDBDebug("Matching '%s' == '%s'",styleName->c_str(),styleToSearchString.c_str());
               #endif
               if(styleToSearchString.equals(styleName)||isDefaultStyle==true){
@@ -957,7 +958,7 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
       return 0;
     }
   }
-  #ifdef CIMAGEDATAWRITER_DEBUG    
+  #ifdef CIMAGEDATAWRITER_DEBUG2    
   CDBDebug("initializeLegend");
   #endif
   if(srvParam==NULL){
@@ -972,7 +973,7 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
   
   CT::string styleName="default";
   CT::string styles(srvParam->Styles.c_str());
-  #ifdef CIMAGEDATAWRITER_DEBUG    
+  #ifdef CIMAGEDATAWRITER_DEBUG2    
   CDBDebug("Server Styles=%s",srvParam->Styles.c_str());
   #endif
   //TODO CHECK CDBDebug("Server Styles=%s",srvParam->Styles.c_str());
@@ -1004,7 +1005,7 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
 //   dataSource->styleConfiguration->legendUpperRange = dataSource->styleConfiguration->legendUpperRange;
 //   dataSource->legendValueRange = dataSource->styleConfiguration->hasLegendValueRange;
   
-  #ifdef CIMAGEDATAWRITER_DEBUG    
+  #ifdef CIMAGEDATAWRITER_DEBUG2    
   CDBDebug("/initializeLegend");
   #endif
   
@@ -1043,7 +1044,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
   StopWatch_Stop("getFeatureInfo");
   #endif
   
-  #ifdef CIMAGEDATAWRITER_DEBUG    
+  #ifdef CIMAGEDATAWRITER_DEBUG2    
   CDBDebug("[getFeatureInfo] %d, %d, [%d,%d]", dataSources.size(), dataSourceIndex, dX, dY);
   #endif
   // Create a new getFeatureInfoResult object and push it into the vector.
@@ -1090,7 +1091,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
 
       getFeatureInfoResult->dataSourceIndex=dataSourceIndex;
       
-      #ifdef CIMAGEDATAWRITER_DEBUG    
+      #ifdef CIMAGEDATAWRITER_DEBUG2    
       CDBDebug("Processing dataSource %d with step %d of %d timesteps (%d) %f",d,step,dataSources[d]->getNumTimeSteps(),dataSources[d]->dataObject[0]->hasNodataValue,dataSources[d]->dataObject[0]->dfNodataValue);
       #endif
 
@@ -1099,13 +1100,13 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       {
         if(openAll){
           //CDBDebug("OPEN ALL");
-          #ifdef CIMAGEDATAWRITER_DEBUG    
+          #ifdef CIMAGEDATAWRITER_DEBUG2    
             CDBDebug("OPEN ALL");
           #endif
           status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_ALL);
         }else{
           //CDBDebug("OPEN HEADER");
-          #ifdef CIMAGEDATAWRITER_DEBUG    
+          #ifdef CIMAGEDATAWRITER_DEBUG2    
             CDBDebug("OPEN Header %d",headerIsAvailable);
           #endif
           if(!headerIsAvailable){
@@ -1151,7 +1152,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         #endif
       }catch(int e){
   
-        #ifdef CIMAGEDATAWRITER_DEBUG  
+        #ifdef CIMAGEDATAWRITER_DEBUG2  
         CDBDebug("initreproj with proj string '%s'",dataSource->nativeProj4.c_str());
         #endif
         status = imageWarper.initreproj(dataSource,drawImage.Geo,&srvParam->cfg->Projection);
@@ -1288,13 +1289,13 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       
       if(projCacheInfo.imx>=0&&projCacheInfo.imy>=0&&projCacheInfo.imx<projCacheInfo.dWidth&&projCacheInfo.imy<projCacheInfo.dHeight&&isOutsideBBOX==false){
         if(!openAll){
-          #ifdef CIMAGEDATAWRITER_DEBUG 
+          #ifdef CIMAGEDATAWRITER_DEBUG2 
           CDBDebug("Reading datasource %d for %d,%d",d,projCacheInfo.imx,projCacheInfo.imy);
           #endif
           
           status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_ALL,projCacheInfo.imx,projCacheInfo.imy);
           
-          #ifdef CIMAGEDATAWRITER_DEBUG 
+          #ifdef CIMAGEDATAWRITER_DEBUG2 
           CDBDebug("Done");
           #endif
           
@@ -1340,7 +1341,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         } else {
           gridRelative=false;
         }
-        #ifdef CIMAGEDATAWRITER_DEBUG 
+        #ifdef CIMAGEDATAWRITER_DEBUG2 
         CDBDebug("Grid propery gridRelative=%d", gridRelative);
         #endif
       }
@@ -1398,11 +1399,11 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         element->cdfDims.addDimension(name.c_str(),value.c_str(),cdfDims->getDimensionIndex(j));
       }
   
-      #ifdef CIMAGEDATAWRITER_DEBUG  
+      #ifdef CIMAGEDATAWRITER_DEBUG2 
       CDBDebug("getFeatureInfoResult->elements has %d elements\n", getFeatureInfoResult->elements.size());
       #endif
       // Retrieve corresponding values.
-      #ifdef CIMAGEDATAWRITER_DEBUG  
+      #ifdef CIMAGEDATAWRITER_DEBUG2  
       CDBDebug("imx:%d imy:%d projCacheInfo.dWidth:%d projCacheInfo.dHeight:%d",projCacheInfo.imx,projCacheInfo.imy,projCacheInfo.dWidth,projCacheInfo.dHeight);
       #endif
       bool hasData = false;
@@ -1416,12 +1417,12 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
           ptr=projCacheInfo.imx+projCacheInfo.imy*projCacheInfo.dWidth;
         }
         
-        #ifdef CIMAGEDATAWRITER_DEBUG 
+        #ifdef CIMAGEDATAWRITER_DEBUG2 
         CDBDebug("ptr = %d",ptr);
         #endif
         double pixel=convertValue(dataSource->dataObject[o]->cdfVariable->getType(),dataSource->dataObject[o]->cdfVariable->data,ptr);
 
-        #ifdef CIMAGEDATAWRITER_DEBUG 
+        #ifdef CIMAGEDATAWRITER_DEBUG2 
         CDBDebug("pixel value = %f",pixel);
         #endif
         //Fill in the actual data value
@@ -1444,7 +1445,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
             
             element->value.print("%f",pixel);//=szTemp;
           }
-          #ifdef CIMAGEDATAWRITER_DEBUG 
+          #ifdef CIMAGEDATAWRITER_DEBUG2 
           CDBDebug("Element value == %s",element->value.c_str());
           #endif
           
@@ -1452,7 +1453,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         }else {
         
           element->value="nodata";
-          #ifdef CIMAGEDATAWRITER_DEBUG 
+          #ifdef CIMAGEDATAWRITER_DEBUG2 
           CDBDebug("Element value == %s",element->value.c_str());
           #endif
           }
@@ -1502,7 +1503,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         }
       }
       //reader.close();
-      #ifdef CIMAGEDATAWRITER_DEBUG 
+      #ifdef CIMAGEDATAWRITER_DEBUG2 
       CDBDebug("dataSource->dataObject.size()==%d",dataSource->dataObject.size());
       #endif
       
@@ -1533,12 +1534,12 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
 
             status = imageWarper.initreproj(dataSource,drawImage.Geo,&srvParam->cfg->Projection);
   #ifdef ORIGINAL_JACOBIAN
-            #ifdef CIMAGEDATAWRITER_DEBUG 
+            #ifdef CIMAGEDATAWRITER_DEBUG2 
             CDBDebug("doJacoIntoLatLon(%f,%f,%f, %f, %f, %f)", pixel1,pixel2, projCacheInfo.lonX,projCacheInfo.lonY,0.01,0.01);
             #endif
             doJacoIntoLatLon(pixel1, pixel2, projCacheInfo.lonX, projCacheInfo.lonY, 0.01, 0.01, &imageWarper);
   #else
-            #ifdef CIMAGEDATAWRITER_DEBUG 
+            #ifdef CIMAGEDATAWRITER_DEBUG2 
             CDBDebug("Rot_UV_North(%f,%f,%f, %f, %f, %f)", pixel1,pixel2, projCacheInfo.lonX,projCacheInfo.lonY,0.01,0.01);
             #endif
             rotateUvNorth(pixel1, pixel2, projCacheInfo.nativeCoordX, projCacheInfo.nativeCoordY, 0.01, 0.01, &imageWarper);
@@ -1580,7 +1581,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
           } else {
             element2->value.print("%s", "nodata");
           }
-          #ifdef CIMAGEDATAWRITER_DEBUG 
+          #ifdef CIMAGEDATAWRITER_DEBUG2 
           CDBDebug("pushed wind dir %s for step %d [%d]", element2->value.c_str(), step, getFeatureInfoResult->elements.size());
           #endif
           element2->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
@@ -1609,7 +1610,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
           } else {
             windspeedOrigElement->value.print("%s","nodata");
           }
-          #ifdef CIMAGEDATAWRITER_DEBUG 
+          #ifdef CIMAGEDATAWRITER_DEBUG2 
           CDBDebug("pushed wind speed %s for step %d [%d]",windspeedOrigElement->value.c_str() , step, getFeatureInfoResult->elements.size());
           #endif
 
@@ -1647,7 +1648,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
             } else {
               element3->value.print("%s", "nodata");
             }
-            #ifdef CIMAGEDATAWRITER_DEBUG 
+            #ifdef CIMAGEDATAWRITER_DEBUG2 
             CDBDebug("pushed wind speed KTS %f for step %d [%d]\n", element3->value.c_str(), step, getFeatureInfoResult->elements.size());
             #endif
           }
@@ -1662,7 +1663,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       getFeatureInfoResultList[j]->layerTitle = getFeatureInfoResultList[j]->elements[0]->long_name;
     }
   }
-  #ifdef CIMAGEDATAWRITER_DEBUG 
+  #ifdef CIMAGEDATAWRITER_DEBUG2 
   CDBDebug("[/getFeatureInfo %d]",getFeatureInfoResultList.size());
   #endif
   return 0;
@@ -1683,23 +1684,23 @@ void CImageDataWriter::setDate(const char *szTemp){
 int CImageDataWriter::warpImage(CDataSource *dataSource,CDrawImage *drawImage){
   //Open the data of this dataSource
   int status = 0;
-  #ifdef CIMAGEDATAWRITER_DEBUG  
+  #ifdef CIMAGEDATAWRITER_DEBUG2  
   CDBDebug("opening %s",dataSource->getFileName());
   #endif  
   CDataReader reader;
   status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
-  #ifdef CIMAGEDATAWRITER_DEBUG  
+  #ifdef CIMAGEDATAWRITER_DEBUG2  
   CDBDebug("Has opened %s",dataSource->getFileName());
   #endif    
   if(status!=0){
     CDBError("Could not open file: %s",dataSource->getFileName());
     return 1;
   }
-  #ifdef CIMAGEDATAWRITER_DEBUG  
+  #ifdef CIMAGEDATAWRITER_DEBUG2  
   CDBDebug("opened");
   #endif  
   //Initialize projection algorithm
-  #ifdef CIMAGEDATAWRITER_DEBUG  
+  #ifdef CIMAGEDATAWRITER_DEBUG2  
   CDBDebug("initreproj %s",dataSource->nativeProj4.c_str());
   #endif
   status = imageWarper.initreproj(dataSource,drawImage->Geo,&srvParam->cfg->Projection);
@@ -1925,7 +1926,7 @@ int CImageDataWriter::calculateData(std::vector <CDataSource*>&dataSources){
     dataSource=dataSources[0];
     
     if(hasFailed==false){
-      #ifdef CIMAGEDATAWRITER_DEBUG  
+      #ifdef CIMAGEDATAWRITER_DEBUG2  
       CDBDebug("initreproj %s",dataSource->nativeProj4.c_str());
       #endif
       status = imageWarper.initreproj(dataSource,drawImage.Geo,&srvParam->cfg->Projection);
@@ -2097,7 +2098,7 @@ int CImageDataWriter::calculateData(std::vector <CDataSource*>&dataSources){
   return 0;
 }
 int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
-#ifdef CIMAGEDATAWRITER_DEBUG  
+#ifdef CIMAGEDATAWRITER_DEBUG2  
   CDBDebug("addData");
 #endif   
   int status = 0;
@@ -2109,7 +2110,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
   nrImagesAdded++;
   // draw the Image
   //drawCascadedWMS("http://geoservices.knmi.nl/cgi-bin/restricted/MODIS_Netherlands.cgi?","modis_250m_netherlands_8bit",true);
-#ifdef CIMAGEDATAWRITER_DEBUG    
+#ifdef CIMAGEDATAWRITER_DEBUG2    
   CDBDebug("Draw data. dataSources.size() =  %d",dataSources.size());
 #endif  
   
@@ -2140,7 +2141,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
   
       
     if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
-      #ifdef CIMAGEDATAWRITER_DEBUG    
+      #ifdef CIMAGEDATAWRITER_DEBUG2    
       CDBDebug("Drawingnormal legend");
       #endif
       if(j!=0){
@@ -2148,7 +2149,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
         * Reinitialize legend for other type of legends, if possible (in true color mode it is always the case
         * For j==0, the legend is already initialized previously
         */
-        #ifdef CIMAGEDATAWRITER_DEBUG
+        #ifdef CIMAGEDATAWRITER_DEBUG2
         CDBDebug("REINITLEGEND");
         #endif
 
@@ -2163,11 +2164,11 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
         
       }
       
-#ifdef CIMAGEDATAWRITER_DEBUG
+#ifdef CIMAGEDATAWRITER_DEBUG2
       CDBDebug("Start warping");
 #endif
       status = warpImage(dataSource,&drawImage);
-#ifdef CIMAGEDATAWRITER_DEBUG
+#ifdef CIMAGEDATAWRITER_DEBUG2
       CDBDebug("Finished warping");
 #endif      
       if(status != 0){
@@ -2235,7 +2236,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
       }
       
       if(useProjection){
-        #ifdef CIMAGEDATAWRITER_DEBUG  
+        #ifdef CIMAGEDATAWRITER_DEBUG2  
         CDBDebug("initreproj latlon");
         #endif
         int status = imageWarper.initreproj(LATLONPROJECTION,drawImage.Geo,&srvParam->cfg->Projection);
@@ -2262,12 +2263,12 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
     
       double numStepsX=(srvParam->Geo->dfBBOX[2]-srvParam->Geo->dfBBOX[0])/numTestSteps;
       double numStepsY=(srvParam->Geo->dfBBOX[3]-srvParam->Geo->dfBBOX[1])/numTestSteps;
-      #ifdef CIMAGEDATAWRITER_DEBUG    
+      #ifdef CIMAGEDATAWRITER_DEBUG2    
       CDBDebug("dfBBOX: %f, %f, %f, %f",srvParam->Geo->dfBBOX[0],srvParam->Geo->dfBBOX[1],srvParam->Geo->dfBBOX[2],srvParam->Geo->dfBBOX[3]);
       #endif
       for(double y=srvParam->Geo->dfBBOX[1];y<srvParam->Geo->dfBBOX[3]+numStepsY;y=y+numStepsY){
         for(double x=srvParam->Geo->dfBBOX[0];x<srvParam->Geo->dfBBOX[2]+numStepsX;x=x+numStepsX){
-          #ifdef CIMAGEDATAWRITER_DEBUG    
+          #ifdef CIMAGEDATAWRITER_DEBUG2    
           CDBDebug("xy: %f, %f",x,y);
           #endif
           topLeft.x=x;
@@ -2282,7 +2283,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
         }
       }
       
-      #ifdef CIMAGEDATAWRITER_DEBUG    
+      #ifdef CIMAGEDATAWRITER_DEBUG2    
       CDBDebug("SIZE: %f, %f, %f, %f",latLonBBOX.left,latLonBBOX.right,latLonBBOX.top,latLonBBOX.bottom);
       #endif
       
@@ -2299,7 +2300,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
       
       size_t numPoints = numPointsX*numPointsY;
       
-      #ifdef CIMAGEDATAWRITER_DEBUG    
+      #ifdef CIMAGEDATAWRITER_DEBUG2    
       CDBDebug("numPointsX = %d, numPointsY = %d",numPointsX,numPointsY);
       #endif
       
@@ -2320,7 +2321,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
         }
       }
       
-      #ifdef CIMAGEDATAWRITER_DEBUG    
+      #ifdef CIMAGEDATAWRITER_DEBUG2    
       CDBDebug("Drawing horizontal lines");
       #endif
 
@@ -2371,7 +2372,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
       }
       
       
-      #ifdef CIMAGEDATAWRITER_DEBUG    
+      #ifdef CIMAGEDATAWRITER_DEBUG2    
       CDBDebug("Drawing vertical lines");
       #endif        
       for(int x=0;x<numPointsX;x=x+s){
@@ -2411,7 +2412,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
         }
       }
 
-      #ifdef CIMAGEDATAWRITER_DEBUG    
+      #ifdef CIMAGEDATAWRITER_DEBUG2    
       CDBDebug("Delete gridp");
       #endif
       
@@ -2474,7 +2475,7 @@ int CImageDataWriter::end(){
   if(writerStatus==finished){CDBError("Already finished");return 1;}
   writerStatus=finished;
   if(srvParam->requestType==REQUEST_WMS_GETFEATUREINFO){
-    #ifdef CIMAGEDATAWRITER_DEBUG    
+    #ifdef CIMAGEDATAWRITER_DEBUG2    
       CDBDebug("end, number of GF results: %d",getFeatureInfoResultList.size());
     #endif
     enum ResultFormats {textplain,texthtml,textxml, applicationvndogcgml,imagepng,imagegif,json};
@@ -2781,13 +2782,13 @@ int CImageDataWriter::end(){
         CDBDebug("CREATING JSONP %s",srvParam->JSONP.c_str() );
         resultJSON.print("%s%c%c\n","Content-Type: application/javascript",13,10);
       }
-      
+       
       CXMLParser::XMLElement rootElement;
  
       rootElement.setName("root");
                 
       for (size_t j=0; j<getFeatureInfoResultList.size(); j++) {
-//        CDBDebug("gfi len: %d of %d (%d el)\n", j, getFeatureInfoResultList.size(), getFeatureInfoResultList[j]->elements.size());
+       //CDBDebug("gfi len: %d of %d (%d el)\n", j, getFeatureInfoResultList.size(), getFeatureInfoResultList[j]->elements.size());
         GetFeatureInfoResult *g=getFeatureInfoResultList[j];
 
         // Find out number of different features in getFeatureInfoResultList[j]
@@ -2813,34 +2814,28 @@ int CImageDataWriter::end(){
 
         int nrDims=e->cdfDims.getNumDimensions();
         int dimLookup[nrDims]; //position of each dimension in cdfDims.dimensions
-        bool timeDimFound=false;
-        for (int d=0; d<nrDims; d++) {
-//           std::string dimName(e->cdfDims.dimensions[d]->name.c_str());
-          std::string dimName(e->dataSource->requiredDims[d]->name.c_str());
-          if (e->cdfDims.isTimeDimension(d)) {
-            timeDimFound=true;
-            dimLookup[nrDims-1]=d;
-          } else if (!timeDimFound) {
-            dimLookup[d]=d;
-          } else {
-            dimLookup[d-1]=d;
+        
+        int timeDimIndex = -1;
+        int endIndex = nrDims-1;
+        for(int j=0;j<nrDims;j++){
+          dimLookup[j]=j;
+          if (e->cdfDims.isTimeDimension(j)) {
+            timeDimIndex = j;
           }
         }
-
-//#ifdef use_LAYER
-//        CXMLParser::XMLElement layerElement("layer");
-//        CT::string layerName=g->layerName.c_str();
-//        layerName.replaceSelf("/", "_");
-//        layerName.replaceSelf(" ", "_");
-//        layerName.replaceSelf(":", "-");
-//        paramElement.add(CXMLParser::XMLElement("name", layerName.c_str()));
-//#endif
+        if(timeDimIndex != -1){
+          if(timeDimIndex != endIndex){
+            int a = dimLookup[timeDimIndex];
+            int b = dimLookup[endIndex];
+            dimLookup[timeDimIndex] = b;
+            dimLookup[endIndex] = a;
+          }
+        }
 
         for (int feat=0; feat<nrFeatures; feat++) {
           GetFeatureInfoResult::Element *e=g->elements[feat];
           CT::string featureName=e->feature_name.c_str();
           featureName.replaceSelf(" ", "_");
-          
           CXMLParser::XMLElement paramElement("param");
           paramElement.add(CXMLParser::XMLElement("name", e->var_name.c_str()));
           paramElement.add(CXMLParser::XMLElement("standard_name", e->standard_name.c_str()));
@@ -2852,29 +2847,29 @@ int CImageDataWriter::end(){
           coord.print("%f,%f", g->lon_coordinate, g->lat_coordinate);
           point.add(CXMLParser::XMLElement("coords", coord.c_str()));
           paramElement.add(point);
+           
           for (size_t d=0; d<e->cdfDims.getNumDimensions();d++) {
 //            paramElement.add(CXMLParser::XMLElement("dims", e->cdfDims.dimensions[dimLookup[d]]->name.c_str()));
               paramElement.add(CXMLParser::XMLElement("dims", e->dataSource->requiredDims[dimLookup[d]]->name.c_str()));
           }                  
-          
+         
           std::map<std::string, std::string>dataMap;
           for (size_t elNR=feat; elNR<g->elements.size(); elNR+=nrFeatures) {
             GetFeatureInfoResult::Element *e=g->elements[elNR];
-
             CT::string dimString="";
             for (size_t d=0; d<e->cdfDims.getNumDimensions(); d++) {
               dimString.printconcat("%s,", e->cdfDims.getDimensionValue(dimLookup[d]).c_str());
             }
             dataMap[dimString.c_str()]=e->value.c_str();
-            
           }
-          
+
           std::map<std::string,std::string>::iterator dkit  ;
           CXMLParser::XMLElement data("data");
 
           CXMLParser::XMLElement *elP = &data;
           
           for (dkit=dataMap.begin(); dkit!=dataMap.end(); ++dkit){
+            
             CT::string key = dkit->first.c_str();
             CT::string value= dkit->second.c_str();
             
@@ -2936,7 +2931,7 @@ int CImageDataWriter::end(){
         return 1;
       }
       
-      #ifdef CIMAGEDATAWRITER_DEBUG        
+      #ifdef CIMAGEDATAWRITER_DEBUG2        
       CDBDebug("GetFeatureInfo Format image/png");
       #endif
       float width=srvParam->Geo->dWidth,height=srvParam->Geo->dHeight;
@@ -3591,7 +3586,7 @@ int CImageDataWriter::getColorIndexForValue(CDataSource *dataSource,float value)
 
 
 int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendImage){
-  #ifdef CIMAGEDATAWRITER_DEBUG        
+  #ifdef CIMAGEDATAWRITER_DEBUG2
     CDBDebug("createLegend");
   #endif
   int status = 0;
@@ -3652,12 +3647,12 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
    
   //if(dataSource->dataObject[0]->cdfVariable->data==NULL){
   if(estimateMinMax){
-    #ifdef CIMAGEDATAWRITER_DEBUG        
+    #ifdef CIMAGEDATAWRITER_DEBUG2
     CDBDebug("Opening CNETCDFREADER_MODE_OPEN_ALL");
     #endif
     status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
   }else{
-    #ifdef CIMAGEDATAWRITER_DEBUG        
+    #ifdef CIMAGEDATAWRITER_DEBUG2
     CDBDebug("Opening CNETCDFREADER_MODE_OPEN_HEADER");
     #endif
     status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
@@ -3910,7 +3905,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
         numClasses=int((maxValue-minValue)/legendInterval);
       }
     }*/
-#ifdef CIMAGEDATAWRITER_DEBUG    
+#ifdef CIMAGEDATAWRITER_DEBUG2
 CDBDebug("LayerName = %s",dataSource->layerName.c_str());
 CDBDebug("minValue=%f maxValue=%f",minValue,maxValue);
 CDBDebug("scale=%f offset=%f",dataSource->styleConfiguration->legendScale,dataSource->styleConfiguration->legendOffset);    
@@ -3920,7 +3915,7 @@ CDBDebug("scale=%f offset=%f",dataSource->styleConfiguration->legendScale,dataSo
     
         
     
-#ifdef CIMAGEDATAWRITER_DEBUG        
+#ifdef CIMAGEDATAWRITER_DEBUG2
 CDBDebug("iMin=%f iMax=%f",iMin,iMax);
 #endif
 
