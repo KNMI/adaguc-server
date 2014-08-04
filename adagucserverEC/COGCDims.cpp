@@ -97,6 +97,13 @@ CT::string CCDFDims::getDimensionValue(int j){
   return dimensions[j]->value;
 }
 
+CT::string *CCDFDims::getDimensionValuePointer(int j){
+  if(j<0)return NULL;
+  if(size_t(j)>dimensions.size())return NULL;
+
+  return &dimensions[j]->value;
+}
+
 CT::string CCDFDims::getDimensionValue(const char *name){
   return getDimensionValue(getArrayIndexForName(name));
 }

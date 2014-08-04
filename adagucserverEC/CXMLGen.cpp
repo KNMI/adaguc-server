@@ -64,8 +64,8 @@ CDBDebug("getFileNameForLayer");
   if(myWMSLayer->dataSource->dLayerType==CConfigReaderLayerTypeDataBase||
     myWMSLayer->dataSource->dLayerType==CConfigReaderLayerTypeStyled){
       if(myWMSLayer->dataSource->cfgLayer->Dimension.size()==0){
-        myWMSLayer->dataSource->addStep(myWMSLayer->dataSource->cfgLayer->FilePath[0]->value.c_str(),NULL);
         
+        myWMSLayer->fileName.copy(myWMSLayer->dataSource->cfgLayer->FilePath[0]->value.c_str());
         if(CDataReader::autoConfigureDimensions(myWMSLayer->dataSource)!=0){
           CDBError("Unable to autoconfigure dimensions");
           return 1;
@@ -1778,7 +1778,7 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
         status = getFileNameForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;
         if(myWMSLayer->hasError == false){
           //Try to open the file, and make a datasource for the layer
-        
+            myWMSLayer->dataSource->addStep(myWMSLayer->fileName.c_str(),NULL);
           
           if(myWMSLayer->hasError==false){status = getDataSourceForLayer(myWMSLayer);if(status != 0)myWMSLayer->hasError=1;}
           

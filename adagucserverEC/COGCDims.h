@@ -77,6 +77,7 @@ class CCDFDims {
     size_t getDimensionIndex(int j);
     size_t getNumDimensions();
     bool isTimeDimension(int j);
+    CT::string *getDimensionValuePointer(int j);
     CT::string getDimensionValue(const char *name);
     CT::string getDimensionValue(int j);
     const char *getDimensionName(int j);

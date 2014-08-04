@@ -30,7 +30,7 @@ const char *CDFNetCDFWriter::className="NetCDFWriter";
 const char *CCDFWarper::className="CCDFWarper";
 
 
-#define CCDFNETCDFIO_DEBUG_OPEN
+//#define CCDFNETCDFIO_DEBUG_OPEN
 
 CDFNetCDFReader::CDFNetCDFReader():CDFReader(){
   #ifdef CCDFNETCDFIO_DEBUG        
