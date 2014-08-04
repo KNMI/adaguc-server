@@ -1101,7 +1101,8 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
         delete[] cDims;
       }
       if(i==0){
-        subQuery.printconcat("ORDER BY %s DESC limit 24*12)a%d ",netCDFDimName.c_str(),i);
+        subQuery.printconcat("ORDER BY %s DESC limit 512)a%d ",netCDFDimName.c_str(),i);
+        //subQuery.printconcat("ORDER BY %s DESC )a%d ",netCDFDimName.c_str(),i);
       }else{
         subQuery.printconcat("ORDER BY %s DESC)a%d ",netCDFDimName.c_str(),i);
       }

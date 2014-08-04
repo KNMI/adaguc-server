@@ -42,6 +42,34 @@
 
 
 
+class UniqueRequests{
+public:
+  CT::string file,dimname,varname;
+  int start,count;
+  std::vector<int> dimensionIndices;
+  UniqueRequests(){
+  }
+  UniqueRequests(CT::string file,CT::string varname,CT::string dimname, int start, int count,std::vector<int> dimensionIndices){
+    this->file = file;
+    this->dimname = dimname;
+    this->start = start;
+    this->count = count;
+    this->varname = varname;
+    this->dimensionIndices = dimensionIndices;
+  }
+};
+class UniqueRequestsList{
+public:
+  std::vector<UniqueRequests> list;
+};
+class RequestsToDo{
+public:
+   std::vector<UniqueRequests> dimlist;
+};
+class RequestsToDoList{
+public:
+  std::vector<RequestsToDo> requestlist;
+};
 
 
 class CImageDataWriter: public CBaseDataWriterInterface{
@@ -55,6 +83,7 @@ class CImageDataWriter: public CBaseDataWriterInterface{
       int imx,imy;
       int dWidth,dHeight;
       double dX,dY;
+      bool isOutsideBBOX;
     };
     static std::map<std::string,CImageDataWriter::ProjCacheInfo> projCacheMap;
     static std::map<std::string,CImageDataWriter::ProjCacheInfo>::iterator projCacheIter;
@@ -65,6 +94,9 @@ class CImageDataWriter: public CBaseDataWriterInterface{
     int animation;
     int nrImagesAdded;
     static void calculateScaleAndOffsetFromMinMax(float &scale, float &offset,float min,float max,float log);
+    static ProjCacheInfo GetProjInfo(CT::string ckey, CDrawImage *drawImage, CDataSource *dataSource,CImageWarper *imageWarper,CServerParams *srvParam,int dX,int dY);
+    
+    static void MakeRequestForAllPossibleDimCombinations( UniqueRequestsList uniqueRequestList[], int numberOfDims,int currentDim,CDataSource *dataSource,CT::string path,UniqueRequests allRequests[],RequestsToDoList &requestsToDo);
 public:
   
 public:
@@ -105,7 +137,7 @@ public:
 private:
     static int getTextForValue(CT::string *tv,float v,CStyleConfiguration *styleConfiguration);
     std::vector<GetFeatureInfoResult*> getFeatureInfoResultList;
-    
+    CXMLParser::XMLElement gfiStructure;
     DEF_ERRORFUNCTION();
 
     int warpImage(CDataSource *sourceImage,CDrawImage *drawImage);
