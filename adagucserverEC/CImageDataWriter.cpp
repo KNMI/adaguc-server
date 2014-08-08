@@ -161,19 +161,21 @@ CImageDataWriter::ProjCacheInfo CImageDataWriter::GetProjInfo(CT::string ckey, C
     y/=(dataSource->dfBBOX[3]-dataSource->dfBBOX[1]);
     x*=double(dataSource->dWidth);
     y*=double(dataSource->dHeight);
-    //CDBDebug("%f %f",x,y);
+    CDBDebug("XY: %f %f and %d %d",x,y,dataSource->dWidth,dataSource->dHeight);
     projCacheInfo.dWidth=dataSource->dWidth;
     projCacheInfo.dHeight=dataSource->dHeight;
     projCacheInfo.dX=(dataSource->dfBBOX[2]-dataSource->dfBBOX[0])/double(dataSource->dWidth);
     projCacheInfo.dY=(dataSource->dfBBOX[3]-dataSource->dfBBOX[1])/double(dataSource->dHeight);
 
-    if(x<0){
+    if(x<0||x>dataSource->dWidth-1){
       projCacheInfo.imx=-1;
+      projCacheInfo.isOutsideBBOX=true;
     }else{
       projCacheInfo.imx=int(x);
     }
-    if(y<0){
+    if(y<0||y>dataSource->dHeight-1){
       projCacheInfo.imy=-1;
+      projCacheInfo.isOutsideBBOX=true;
     }else{
       projCacheInfo.imy=dataSource->dHeight-(int)y-1;
     }
@@ -1195,7 +1197,7 @@ void CImageDataWriter::MakeRequestForAllPossibleDimCombinations( UniqueRequestsL
     for(int dimnr = 0;dimnr<numberOfDims;dimnr++){
       if(result.length()>0)result+="+";
       result.printconcat("%s[%d:%d]",allRequests[dimnr].dimname.c_str(),allRequests[dimnr].start,allRequests[dimnr].count);
-      requestToDo.dimlist.push_back(UniqueRequests(allRequests[dimnr].file.c_str(),allRequests[dimnr].varname.c_str(),allRequests[dimnr].dimname.c_str(),allRequests[dimnr].start,allRequests[dimnr].count,allRequests[dimnr].dimensionIndices));
+      requestToDo.dimlist.push_back(UniqueRequests(allRequests[dimnr].file.c_str(),allRequests[dimnr].varname.c_str(),allRequests[dimnr].dimname.c_str(),allRequests[dimnr].start,allRequests[dimnr].count,allRequests[dimnr].dimensionKeys));
     }
     requestsToDo.requestlist.push_back(requestToDo);
     //CDBDebug("BLA:%s %d %s",path.c_str(),currentDim,result.c_str());
@@ -1264,7 +1266,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
     }
     
     
-      if(openAll == false&&srvParam->InfoFormat.equals("application/json")){
+    if(openAll == false&&srvParam->InfoFormat.equals("application/json")){
       /*Gather dimension information*/
       int numberOfDims = dataSource->requiredDims.size();
       int dimUniqueSize[numberOfDims];
@@ -1302,10 +1304,9 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       
       class CreateGDIDataStructure{
         public:
-        static void createGDIDataStructure(CDataSource *dataSource,int currentDim,int numberOfDims,size_t dimIndex[],size_t dimSize[],int dimLookUp[],double *data,int index, std::vector<int> dimensionIndices[],CXMLParser::XMLElement *dataStructure){
+        static void createGDIDataStructure(int currentDim,int numberOfDims,size_t dimIndex[],size_t dimSize[],int dimLookUp[],double *data,int index, std::vector<CT::string*> dimensionKeys[],CXMLParser::XMLElement *dataStructure){
           if(currentDim<numberOfDims){
             int lookupDim = dimLookUp[currentDim];
-            COGCDims *dims = dataSource->requiredDims[lookupDim];
             int multiplier = 1;
             if(lookupDim==numberOfDims-1){
               multiplier = 1;
@@ -1314,7 +1315,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
             }
             for(size_t i=0;i<dimSize[lookupDim];i++){
               int newindex = index+(i*multiplier);
-              CT::string dimindexvalue = dims->uniqueValues[dimensionIndices[lookupDim][i]];
+              CT::string dimindexvalue = dimensionKeys[lookupDim][i]->c_str();
               if(dimindexvalue.length()==19){
                 if(dimindexvalue.charAt(10)==32){
                 dimindexvalue.setChar(10,'T' );
@@ -1322,7 +1323,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
                 }
               }
               dataStructure->add(CXMLParser::XMLElement(dimindexvalue.c_str()));
-              createGDIDataStructure(dataSource,currentDim+1,numberOfDims,dimIndex,dimSize,dimLookUp,data,newindex,dimensionIndices,dataStructure->getLast());
+              createGDIDataStructure(currentDim+1,numberOfDims,dimIndex,dimSize,dimLookUp,data,newindex,dimensionKeys,dataStructure->getLast());
             }
           }else{
             CT::string value;
@@ -1344,7 +1345,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
           fileSetIterator=fileSet.find(dataSources[d]->getFileName());
           int filenr = std::distance(fileSet.begin(),fileSetIterator);
           #ifdef CIMAGEDATAWRITER_DEBUG
-          CDBDebug("dimnr, filenr %s %d %d [%d][%d] = %d",dims->getDimensionName(dimnr),step,i,dimnr,filenr,dims->getDimensionIndex(dimnr));
+          CDBDebug("dimnr, filenr %s %d [%d][%d] = %d",dims->getDimensionName(dimnr),step,dimnr,filenr,dims->getDimensionIndex(dimnr));
           #endif
           int r = dimSets[dimnr][filenr].insert(dims->getDimensionIndex(dimnr));
           if(r==-1){
@@ -1369,7 +1370,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
           CDBDebug("--Indices for dim %s:", dataSource->requiredDims[dimnr]->name.c_str());
           #endif
           int previousDif = -1 , start = -1,count = -1;
-          std::vector<int> dimensionIndices;
+          std::vector<CT::string*> dimensionKeys;
           for(size_t iter=0;iter<dimSets[dimnr][filenr].size();iter++){
             int index = dimSets[dimnr][filenr].get(iter);
             if(previousDif == -1){
@@ -1380,18 +1381,20 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
               if(index - previousDif != 1){
                 count = (count -start)+1;
                 CDBDebug("%d %d",start,count);
-                uniqueRequestList[dimnr].list.push_back(UniqueRequests(fileSetIterator->c_str(),dataSource->getDataObject(0)->variableName.c_str(),dataSource->requiredDims[dimnr]->name.c_str(),start,count,dimensionIndices));
-                dimensionIndices.clear();
+                uniqueRequestList[dimnr].list.push_back(UniqueRequests(fileSetIterator->c_str(),dataSource->getDataObject(0)->variableName.c_str(),dataSource->requiredDims[dimnr]->name.c_str(),start,count,dimensionKeys));
+                dimensionKeys.clear();
                 previousDif = -2;
                 start = index;
               }
             }
             previousDif = index;
             count = index;
-            dimensionIndices.push_back(iter);
+            
+            //CDBDebug("ITer = %d %d %s",iter,index,uniqueValues[dimnr][filenr][iter]->c_str());
+            dimensionKeys.push_back(uniqueValues[dimnr][filenr][iter]);
           }
           count = (count -start)+1;
-          uniqueRequestList[dimnr].list.push_back(UniqueRequests(fileSetIterator->c_str(),dataSource->getDataObject(0)->variableName.c_str(),dataSource->requiredDims[dimnr]->name.c_str(),start,count,dimensionIndices));
+          uniqueRequestList[dimnr].list.push_back(UniqueRequests(fileSetIterator->c_str(),dataSource->getDataObject(0)->variableName.c_str(),dataSource->requiredDims[dimnr]->name.c_str(),start,count,dimensionKeys));
         }
       }
       
@@ -1445,47 +1448,65 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         layerStructure->add("dims",dataSources[d]->requiredDims[dimLookUp[dimnr]]->name.c_str());
       }
       CXMLParser::XMLElement *dataStructure = layerStructure->add("data");
-    
-      /* Now do all the requests */
-      for(size_t requestNr = 0;requestNr<requestsToDo.requestlist.size();requestNr++){
-        UniqueRequests u = requestsToDo.requestlist[requestNr].dimlist[0];
-        CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource->srvParams,u.file.c_str());
-        CDF::Variable *variable = cdfObject->getVariableNE(u.varname.c_str());
-        if(variable == NULL){
-          CDBError("Variable %s not found",u.varname.c_str());
-          throw (__LINE__);
-        }
-        size_t start[numberOfDims+2],count[numberOfDims+2];
-        ptrdiff_t stride[numberOfDims+2];
-        std::vector<int> dimensionIndices[numberOfDims];  
-        for(int j=0;j<numberOfDims+2;j++){
-          start[j]=0;
-          count[j]=1;
-          stride[j]=1;
-        }
-        for(int dimNr = 0;dimNr<numberOfDims;dimNr++){
-          UniqueRequests u = requestsToDo.requestlist[requestNr].dimlist[dimNr];
-          dimensionIndices[dimNr]=u.dimensionIndices;
-          int netcdfDimIndex = 0;
-          try{
-            netcdfDimIndex = variable->getDimensionIndex(u.dimname.c_str());
-            start[netcdfDimIndex]=u.start;
-            count[netcdfDimIndex]=u.count;
-            stride[netcdfDimIndex]=1;
-          }catch(int e){
-            CDBWarning("Dimension %s not found",u.dimname.c_str());
+      if(projCacheInfo.isOutsideBBOX == false){
+        /* Now do all the requests */
+        for(size_t requestNr = 0;requestNr<requestsToDo.requestlist.size();requestNr++){
+          UniqueRequests u = requestsToDo.requestlist[requestNr].dimlist[0];
+          CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource->srvParams,u.file.c_str());
+          CDF::Variable *variable = cdfObject->getVariableNE(u.varname.c_str());
+          if(variable == NULL){
+            CDBError("Variable %s not found",u.varname.c_str());
+            throw (__LINE__);
           }
-          #ifdef CIMAGEDATAWRITER_DEBUG
-          CDBDebug("R%d/D%d: %s %s|%s=[%d:%d] %d",requestNr,dimNr,u.file.c_str(),u.varname.c_str(),u.dimname.c_str(),u.start,u.count,u.dimensionIndices.size());
-          #endif
+          size_t start[numberOfDims+2],count[numberOfDims+2];
+          ptrdiff_t stride[numberOfDims+2];
+          std::vector<CT::string*> dimensionKeys[numberOfDims];  
+          for(int j=0;j<numberOfDims+2;j++){
+            start[j]=0;
+            count[j]=1;
+            stride[j]=1;
+          }
+          for(int dimNr = 0;dimNr<numberOfDims;dimNr++){
+            UniqueRequests u = requestsToDo.requestlist[requestNr].dimlist[dimNr];
+            dimensionKeys[dimNr]=u.dimensionKeys;
+            int netcdfDimIndex = 0;
+            try{
+              CT::string netCDFDimName = u.dimname;
+              
+              for(size_t i=0;i<dataSource->requiredDims.size();i++){
+                COGCDims *dims = dataSource->requiredDims[i];
+                //CDBDebug("%d: %s == %s",i,dims->name.c_str(),dims->netCDFDimName.c_str());
+                
+                
+                if(dims->name.equals(u.dimname.c_str())){
+                  netCDFDimName = dims->netCDFDimName; 
+                 
+                }
+              }
+              #ifdef CIMAGEDATAWRITER_DEBUG
+              CDBDebug("for ogcname %s: netCDFDimName == %s",u.dimname.c_str(),netCDFDimName.c_str());
+              #endif
+              netcdfDimIndex = variable->getDimensionIndex(netCDFDimName.c_str());
+              start[netcdfDimIndex]=u.start;
+              count[netcdfDimIndex]=u.count;
+              stride[netcdfDimIndex]=1;
+            }catch(int e){
+              CDBWarning("Dimension %s not found",u.dimname.c_str());
+            }
+            #ifdef CIMAGEDATAWRITER_DEBUG
+            CDBDebug("R%d/D%d: %s %s|%s=[%d:%d] %d",requestNr,dimNr,u.file.c_str(),u.varname.c_str(),u.dimname.c_str(),u.start,u.count,u.dimensionKeys.size());
+            #endif
+          }
+          if(projCacheInfo.isOutsideBBOX == false){
+            start[dataSource->dimXIndex] = projCacheInfo.imx;
+            start[dataSource->dimYIndex] = projCacheInfo.imy;
+            variable->freeData();
+            variable->readData(CDF_DOUBLE,start,count,stride);
+            CreateGDIDataStructure::createGDIDataStructure(0,numberOfDims,start,count,dimLookUp,((double*)variable->data),0,dimensionKeys,dataStructure);
+          }
         }
-        if(projCacheInfo.isOutsideBBOX == false){
-          start[dataSource->dimXIndex] = projCacheInfo.imx;
-          start[dataSource->dimYIndex] = projCacheInfo.imy;
-          variable->freeData();
-          variable->readData(CDF_DOUBLE,start,count,stride);
-          CreateGDIDataStructure::createGDIDataStructure(dataSource,0,numberOfDims,start,count,dimLookUp,((double*)variable->data),0,dimensionIndices,dataStructure);
-        }
+      }else{
+        CDBDebug("OUTSIDE BBOX");
       }
      // return 0;
     }else{
@@ -2815,6 +2836,7 @@ int CImageDataWriter::end(){
           if (srvParam->JSONP.length()!=0) {
             printf(");");
           }
+          resetErrors();
           writerStatus=finished;
           return 0;
         }

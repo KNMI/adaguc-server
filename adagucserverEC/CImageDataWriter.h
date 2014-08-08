@@ -46,16 +46,16 @@ class UniqueRequests{
 public:
   CT::string file,dimname,varname;
   int start,count;
-  std::vector<int> dimensionIndices;
+  std::vector<CT::string*> dimensionKeys;
   UniqueRequests(){
   }
-  UniqueRequests(CT::string file,CT::string varname,CT::string dimname, int start, int count,std::vector<int> dimensionIndices){
+  UniqueRequests(CT::string file,CT::string varname,CT::string dimname, int start, int count,std::vector<CT::string*> dimensionKeys){
     this->file = file;
     this->dimname = dimname;
     this->start = start;
     this->count = count;
     this->varname = varname;
-    this->dimensionIndices = dimensionIndices;
+    this->dimensionKeys = dimensionKeys;
   }
 };
 class UniqueRequestsList{
