@@ -397,9 +397,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
   }
   
   //Read original data first 
-  
-  pointLon->readData(CDF_FLOAT,true);
-  pointLat->readData(CDF_FLOAT,true);
+
   
   #ifdef MEASURETIME
     StopWatch_Stop("Lat and lon read");
@@ -411,18 +409,57 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
   CDBDebug("dateDimIndex = %d",dateDimIndex);
   #endif 
   
-  int numStations=pointVar[0]->dimensionlinks[0]->getSize();
-  //int numDates=pointVar[0]->dimensionlinks[1]->getSize();
+  
   int numDims = 2;
+  size_t start[numDims];
+  size_t count[numDims];
+  ptrdiff_t stride[numDims];
+  
+  
+  int stationDimIndexInVar = 0;
+  int timeDimIndexInVar = 1;    
+  
+  if(pointVar[0]->dimensionlinks[0]->name.equals("time")){
+    stationDimIndexInVar = 1;
+    timeDimIndexInVar = 0;
+  }
+  
+  int numStations=pointVar[0]->dimensionlinks[stationDimIndexInVar]->getSize();
+  
+  if(pointLon->dimensionlinks.size()==2){
+    CDBDebug("Time dependant location");
+    start[stationDimIndexInVar]=0;
+    start[timeDimIndexInVar]=dateDimIndex;
+    count[stationDimIndexInVar]=numStations;
+    count[timeDimIndexInVar]=1;
+    stride[0]=1;
+    stride[1]=1;
+    
+    for(int j=0;j<2;j++){
+      CDBDebug("start %d count %d",start[j],count[j]);
+    }
+    pointLon->freeData();
+    pointLat->freeData();
+    pointLon->readData(CDF_FLOAT,start,count,stride,true);
+    pointLat->readData(CDF_FLOAT,start,count,stride,true);
+  }else{
+    #ifdef CCONVERTADAGUCPOINT_DEBUG
+    CDBDebug("NON Time dependant location");
+    #endif
+    pointLon->readData(CDF_FLOAT,true);
+    pointLat->readData(CDF_FLOAT,true);
+  }
+  
+  
+  
+  //int numDates=pointVar[0]->dimensionlinks[1]->getSize();
+  
   #ifdef CCONVERTADAGUCPOINT_DEBUG
     CDBDebug("numStations %d ",numStations);
     CDBDebug("numDims %d ",numDims);
   #endif
 
-   
-  size_t start[numDims];
-  size_t count[numDims];
-  ptrdiff_t stride[numDims];
+
     
   #ifdef MEASURETIME
     StopWatch_Stop("Lat and lon read");
@@ -430,16 +467,41 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
     
   for(int j=0;j<numDims;j++){start[j]=0; count[j]=1;stride[j]=1;}
   for(size_t d=0;d<nrDataObjects;d++){
-    count[0]=pointVar[d]->dimensionlinks[0]->getSize();//Num stations.
-    start[1]=dateDimIndex;
+    count[stationDimIndexInVar]=numStations;
+    start[timeDimIndexInVar]=dateDimIndex;
     #ifdef CCONVERTADAGUCPOINT_DEBUG
     CDBDebug("Reading %s with time index %d ",pointVar[d]->name.c_str(),dateDimIndex);
     #endif
     pointVar[d]->freeData();
-    if(pointVar[d]->nativeType!=CDF_STRING){
+    if(pointVar[d]->nativeType!=CDF_STRING&&pointVar[d]->nativeType!=CDF_CHAR){
       pointVar[d]->readData(CDF_FLOAT,start,count,stride,true);
     }else{
-      pointVar[d]->readData(CDF_STRING,start,count,stride,true);
+      if(pointVar[d]->nativeType==CDF_CHAR){
+        //Compatibilty function for LCW data, reading strings stored as fixed arrays of CDF_CHAR
+        start[1]=0;
+        count[1]=pointVar[d]->dimensionlinks[1]->getSize();
+        CT::string data[count[0]];
+        pointVar[d]->readData(CDF_CHAR,start,count,stride,true);
+        for(int j=0;j<count[0];j++){
+          data[j].copy((char*)(pointVar[d]->data+j*count[1]),count[1]-1);
+        }
+        pointVar[d]->freeData();
+        
+        #ifdef CCONVERTADAGUCPOINT_DEBUG
+        CDBDebug("Reading CDF_CHAR array");
+        for(int j=0;j<numDims;j++){
+          CDBDebug("CDF_CHAR %d: %s %d till %d ",j,pointVar[d]->dimensionlinks[j]->name.c_str(),start[j],count[j]);
+        }
+        #endif
+        pointVar[d]->data = malloc(count[0]*sizeof(size_t));
+        for(int j=0;j<count[0];j++){
+          (((char**)pointVar[d]->data)[j]) = ((char*)malloc((count[1]+1)*sizeof(char)));
+          strncpy((((char**)pointVar[d]->data)[j]),data[j].c_str(),count[1]);
+        }
+      }
+      if(pointVar[d]->nativeType==CDF_STRING){
+        pointVar[d]->readData(CDF_STRING,start,count,stride,true);
+      }
     }
     //pointVar[d]->readData(CDF_FLOAT,true);
   }
@@ -722,6 +784,24 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
           float a = 0;
           drawCircle(sdata,a,dataSource->dWidth,dataSource->dHeight,dlon-1,dlat,8);
         }
+        
+        if(pointVar[d]->currentType==CDF_CHAR){
+          float v = NAN;
+          //CDBDebug("pushing stationNr %d dateDimIndex %d,pPoint DIM %d",stationNr,dateDimIndex,pPoint);
+          dataObjects[d]->points.push_back(PointDVWithLatLon(dlon,dlat,lon,lat,v));//,((const char**)pointVar[d]->data)[pPoint]));
+          lastPoint = &(dataObjects[d]->points.back());
+          const char * key = pointVar[d]->name.c_str();
+          const char * description = key;
+          try{
+            description = (const char*)pointVar[d]->getAttribute("long_name")->data;
+            
+          }catch(int e){
+          }
+          lastPoint->paramList.push_back(CKeyValue(key,description ,((const char**)pointVar[d]->data)[pPoint]));
+          float a = 0;
+          drawCircle(sdata,a,dataSource->dWidth,dataSource->dHeight,dlon-1,dlat,8);
+        }
+        
         
         if(pointVar[d]->currentType==CDF_FLOAT){
           float val  = ((float*)pointVar[d]->data)[pPoint];
