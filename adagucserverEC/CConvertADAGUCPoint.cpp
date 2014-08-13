@@ -427,7 +427,9 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
   int numStations=pointVar[0]->dimensionlinks[stationDimIndexInVar]->getSize();
   
   if(pointLon->dimensionlinks.size()==2){
+    #ifdef CCONVERTADAGUCPOINT_DEBUG
     CDBDebug("Time dependant location");
+    #endif
     start[stationDimIndexInVar]=0;
     start[timeDimIndexInVar]=dateDimIndex;
     count[stationDimIndexInVar]=numStations;
@@ -435,9 +437,9 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
     stride[0]=1;
     stride[1]=1;
     
-    for(int j=0;j<2;j++){
-      CDBDebug("start %d count %d",start[j],count[j]);
-    }
+//     for(int j=0;j<2;j++){
+//       CDBDebug("start %d count %d",start[j],count[j]);
+//     }
     pointLon->freeData();
     pointLat->freeData();
     pointLon->readData(CDF_FLOAT,start,count,stride,true);
@@ -467,23 +469,30 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
     
   for(int j=0;j<numDims;j++){start[j]=0; count[j]=1;stride[j]=1;}
   for(size_t d=0;d<nrDataObjects;d++){
+    
     count[stationDimIndexInVar]=numStations;
     start[timeDimIndexInVar]=dateDimIndex;
     #ifdef CCONVERTADAGUCPOINT_DEBUG
     CDBDebug("Reading %s with time index %d ",pointVar[d]->name.c_str(),dateDimIndex);
     #endif
-    pointVar[d]->freeData();
+    
+    
     if(pointVar[d]->nativeType!=CDF_STRING&&pointVar[d]->nativeType!=CDF_CHAR){
+      #ifdef CCONVERTADAGUCPOINT_DEBUG
+      CDBDebug("Reading FLOAT");
+      #endif
+      pointVar[d]->freeData();
       pointVar[d]->readData(CDF_FLOAT,start,count,stride,true);
     }else{
+
       if(pointVar[d]->nativeType==CDF_CHAR){
         //Compatibilty function for LCW data, reading strings stored as fixed arrays of CDF_CHAR
         start[1]=0;
         count[1]=pointVar[d]->dimensionlinks[1]->getSize();
         CT::string data[count[0]];
         pointVar[d]->readData(CDF_CHAR,start,count,stride,true);
-        for(int j=0;j<count[0];j++){
-          data[j].copy((char*)(pointVar[d]->data+j*count[1]),count[1]-1);
+        for(size_t j=0;j<count[0];j++){
+          data[j].copy(((char*)pointVar[d]->data+j*count[1]),count[1]-1);
         }
         pointVar[d]->freeData();
         
@@ -494,12 +503,19 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
         }
         #endif
         pointVar[d]->data = malloc(count[0]*sizeof(size_t));
-        for(int j=0;j<count[0];j++){
+        for(size_t j=0;j<count[0];j++){
           (((char**)pointVar[d]->data)[j]) = ((char*)malloc((count[1]+1)*sizeof(char)));
           strncpy((((char**)pointVar[d]->data)[j]),data[j].c_str(),count[1]);
         }
       }
       if(pointVar[d]->nativeType==CDF_STRING){
+       #ifdef CCONVERTADAGUCPOINT_DEBUG
+        CDBDebug("Reading CDF_STRING array");
+        for(int j=0;j<numDims;j++){
+          CDBDebug("CDF_STRING %d: %s %d till %d ",j,pointVar[d]->dimensionlinks[j]->name.c_str(),start[j],count[j]);
+        }
+        #endif
+        pointVar[d]->freeData();
         pointVar[d]->readData(CDF_STRING,start,count,stride,true);
       }
     }
@@ -754,7 +770,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
     for(int stationNr=0;stationNr<numStations;stationNr++){ 
       int pPoint = stationNr+0;//dateDimIndex;//*numStations;
       int pGeo = stationNr;
-      //CDBDebug("stationNr %d dateDimIndex %d,pPoint DIM %d",stationNr,dateDimIndex,pPoint);
+//       //CDBDebug("stationNr %d dateDimIndex %d,pPoint DIM %d",stationNr,dateDimIndex,pPoint);
    
       double lon = (double)lonData[pGeo];
       double lat = (double)latData[pGeo];
@@ -780,7 +796,8 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
             
           }catch(int e){
           }
-          lastPoint->paramList.push_back(CKeyValue(key,description ,((const char**)pointVar[d]->data)[pPoint]));
+          const char *b = ((const char**)pointVar[d]->data)[pPoint];
+          lastPoint->paramList.push_back(CKeyValue(key,description ,b));
           float a = 0;
           drawCircle(sdata,a,dataSource->dWidth,dataSource->dHeight,dlon-1,dlat,8);
         }

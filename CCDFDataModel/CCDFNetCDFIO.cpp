@@ -131,7 +131,19 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type,size_t *
   
    
   if(type==CDF_STRING){
-    status = nc_get_var_string(root_id,var->id,(char**)var->data);
+  
+     if(useStartCount == true){
+      if(useStriding){
+        status = nc_get_vars_string(root_id,var->id,start,count,stride,(char**)var->data);
+        if(status!=NC_NOERR){ncError(__LINE__,className,"nc_get_vars (typeconversion): ",status);}
+      }else{
+        status = nc_get_vara_string(root_id,var->id,start,count,(char**)var->data);
+        if(status!=NC_NOERR){ncError(__LINE__,className,"nc_get_vara (typeconversion): ",status);}
+      }
+    }else{
+      status = nc_get_var_string(root_id,var->id,(char**)var->data);
+      if(status!=NC_NOERR){ncError(__LINE__,className,"nc_get_var_string (typeconversion): ",status);}
+    }
     if(status!=NC_NOERR){
       char typeName[254];
       CDF::getCDFDataTypeName(typeName,255,var->currentType);
