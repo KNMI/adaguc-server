@@ -1129,7 +1129,7 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
       return 1;
     }
     
-    query.print("select * from (%s)T order by ",queryOrderedDESC.c_str());
+    query.print("select distinct * from (%s)T order by ",queryOrderedDESC.c_str());
     query.concat(&dataSource->requiredDims[0]->netCDFDimName);
     for(size_t i=1;i<dataSource->requiredDims.size();i++){
       query.printconcat(",%s",dataSource->requiredDims[i]->netCDFDimName.c_str());
