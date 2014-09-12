@@ -2514,14 +2514,18 @@ int CRequest::process_querystring(){
       
       //Detect wind vectors based on standardnames
       if(1==1){
+       
         int varindex_x=-1,varindex_y=-1;
         for(size_t j=0;j<cdfObject->variables.size();j++){
-          CT::string standard_name = cdfObject->variables[j]->getAttribute("standard_name")->getDataAsString();
-          if(standard_name.equals("eastward_wind")){
-            varindex_x=j;
-          }
-          if(standard_name.equals("northward_wind")){
-            varindex_y=j;
+          try{
+            CT::string standard_name = cdfObject->variables[j]->getAttribute("standard_name")->getDataAsString();
+            if(standard_name.equals("eastward_wind")){
+              varindex_x=j;
+            }
+            if(standard_name.equals("northward_wind")){
+              varindex_y=j;
+            }
+          }catch(int e){
           }
         }
         if(varindex_x!=-1&&varindex_y!=-1){
