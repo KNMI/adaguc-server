@@ -253,21 +253,17 @@ class Proc{
    }
     
     
-    //void **a = &dataSource->getDataObject(0)->cdfVariable->data;
-  //  dataSource->dWidth=720;
-   // dataSource->dHeight=360;
-    //((T)dataSource->getDataObject(0)->cdfVariable)
-    void *newData = NULL;
+    
+    
     size_t imageSize = size_t(dataSource->dWidth)*size_t(dataSource->dHeight);
     CDBDebug(" Image size = %d %d %d", imageSize,dataSource->dWidth,dataSource->dHeight);
     if(imageSize==0)imageSize=1;
-    CDF::allocateData(dataSource->getDataObject(0)->cdfVariable->getType(),&newData,imageSize);
+    T *tempData = new T[imageSize];
     for(size_t j=0;j<imageSize;j++){
-      ((T*)newData)[j]=(T)nodataValue;
+      tempData[j]=((T*)data)[j];
     }
     
-    T*oldData = (T*)dataSource->getDataObject(0)->cdfVariable->data;
-    data = (T*)newData;
+
     for(int y=0;y<dataSource->dHeight;y++){
       for(int x=0;x<origWidth;x=x+1){
         double lonX=((double(x)/double(origWidth))*origBBOXWidth)+origBBOXLeft;
@@ -275,16 +271,13 @@ class Proc{
         while(lonX>=180)lonX-=360;
         
         int newXIndex = int(floor((((lonX-dataSource->dfBBOX[0])/360))*double(dataSource->dWidth)+0.5));
-        T value = oldData[x+y*origWidth];
+        T value = tempData[x+y*origWidth];
         if(newXIndex>=0&&newXIndex<dataSource->dWidth){
           data[newXIndex+y*dataSource->dWidth]=value;
         }
       }
     }
-    
-   CDF::freeData(&dataSource->getDataObject(0)->cdfVariable->data);
-   (dataSource->getDataObject(0)->cdfVariable->data)=newData;
-   dataSource->getDataObject(0)->cdfVariable->setSize(imageSize);
+    delete[] tempData;
   }
 };
 

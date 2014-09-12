@@ -2512,6 +2512,27 @@ int CRequest::process_querystring(){
         }
       }
       
+      //Detect wind vectors based on standardnames
+      if(1==1){
+        int varindex_x=-1,varindex_y=-1;
+        for(size_t j=0;j<cdfObject->variables.size();j++){
+          CT::string standard_name = cdfObject->variables[j]->getAttribute("standard_name")->getDataAsString();
+          if(standard_name.equals("eastward_wind")){
+            varindex_x=j;
+          }
+          if(standard_name.equals("northward_wind")){
+            varindex_y=j;
+          }
+        }
+        if(varindex_x!=-1&&varindex_y!=-1){
+          CDBDebug("WindData");
+          std::vector<CT::string> variableNames;
+          variableNames.push_back(cdfObject->variables[varindex_x]->name.c_str());
+          variableNames.push_back(cdfObject->variables[varindex_y]->name.c_str());
+          addXMLLayerToConfig(srvParam,cdfObject,&variableNames,"derived",srvParam->internalAutoResourceLocation.c_str());
+        }
+      }
+      
       
       
       //Adjust online resource in order to pass on variable and source parameters

@@ -401,9 +401,9 @@ int CServerParams::makeLayerGroupName(CT::string *groupName,CServerConfig::XMLE_
 
 bool CServerParams::isAutoResourceCacheEnabled(){
   if(autoResourceCacheEnabled==-1){
-     autoResourceCacheEnabled = 1;
+     autoResourceCacheEnabled = 0;
     if(cfg->AutoResource.size()>0){
-      if(!cfg->AutoResource[0]->attr.enablecache.equals("true"))autoResourceCacheEnabled = 0;
+      if(cfg->AutoResource[0]->attr.enablecache.equals("true"))autoResourceCacheEnabled = 1;
     }
   }
   if(autoResourceCacheEnabled==1)return true;
@@ -418,7 +418,7 @@ bool CServerParams::isAutoOpenDAPResourceEnabled(){
       if(cfg->AutoResource[0]->attr.enableautoopendap.equals("true"))autoOpenDAPEnabled = 1;
     }
   }
-  if(autoOpenDAPEnabled==0)return false;else return true;
+  if(autoOpenDAPEnabled==1)return true;
   return false;
 }
 
@@ -429,7 +429,7 @@ bool CServerParams::isAutoLocalFileResourceEnabled(){
       if(cfg->AutoResource[0]->attr.enablelocalfile.equals("true"))autoLocalFileResourceEnabled = 1;
     }
   }
-  if(autoLocalFileResourceEnabled==0)return false;else return true;
+  if(autoLocalFileResourceEnabled==1)return true;
   return false;
 }
 
