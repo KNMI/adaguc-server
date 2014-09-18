@@ -245,11 +245,11 @@ class Proc{
    
    
    
-   double nodataValue = (T)dataSource->getDataObject(0)->dfNodataValue;
+   //double nodataValue = (T)dataSource->getDataObject(0)->dfNodataValue;
    if(dataSource->getDataObject(0)->hasNodataValue == false){
      dataSource->getDataObject(0)->hasNodataValue = true;
      dataSource->getDataObject(0)->dfNodataValue = INFINITY; 
-     nodataValue=dataSource->getDataObject(0)->dfNodataValue ;
+     //nodataValue=dataSource->getDataObject(0)->dfNodataValue ;
    }
     
     
@@ -996,20 +996,6 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
     return 0;
   }
 
-  #ifdef CDATAREADER_DEBUG
-    
-  #endif
-
-  if(mode==CNETCDFREADER_MODE_OPEN_ALL){
-      #ifdef CDATAREADER_DEBUG
-    CDBDebug("CNETCDFREADER_MODE_OPEN_ALL");
-  #endif
-
-  #ifdef MEASURETIME
-    StopWatch_Stop("start reading image data");
-  #endif
-    //for(size_t varNr=0;varNr<dataSource->getNumDataObjects();varNr++)
-      
   
  
     for(size_t varNr=0;varNr<dataSource->getNumDataObjects();varNr++)    {
@@ -1026,7 +1012,19 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
         dataSource->getDataObject(varNr)->hasNodataValue=false;
       }
       
-      
+    }
+    
+  if(mode==CNETCDFREADER_MODE_OPEN_ALL){
+      #ifdef CDATAREADER_DEBUG
+    CDBDebug("CNETCDFREADER_MODE_OPEN_ALL");
+  #endif
+
+  #ifdef MEASURETIME
+    StopWatch_Stop("start reading image data");
+  #endif
+    //for(size_t varNr=0;varNr<dataSource->getNumDataObjects();varNr++)
+          for(size_t varNr=0;varNr<dataSource->getNumDataObjects();varNr++)    {
+
     
       
       //if( var[varNr]->data==NULL){
