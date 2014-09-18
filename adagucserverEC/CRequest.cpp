@@ -1733,6 +1733,7 @@ int CRequest::process_querystring(){
     if(values->count>=2){
       // BBOX Parameters
       if(value0Cap.equals("BBOX")){
+        values[1].replaceSelf("%2C",",");
         CT::string * bboxvalues=values[1].splitToArray(",");
         if(bboxvalues->count==4){
           for(int j=0;j<4;j++){
@@ -2519,21 +2520,24 @@ int CRequest::process_querystring(){
         for(size_t j=0;j<cdfObject->variables.size();j++){
           try{
             CT::string standard_name = cdfObject->variables[j]->getAttribute("standard_name")->getDataAsString();
-            if(standard_name.equals("eastward_wind")){
+            if(standard_name.equals("eastward_wind")||standard_name.equals("x_wind")){
               varindex_x=j;
             }
-            if(standard_name.equals("northward_wind")){
+            if(standard_name.equals("northward_wind")||standard_name.equals("y_wind")){
               varindex_y=j;
             }
           }catch(int e){
           }
-        }
-        if(varindex_x!=-1&&varindex_y!=-1){
-          CDBDebug("WindData");
-          std::vector<CT::string> variableNames;
-          variableNames.push_back(cdfObject->variables[varindex_x]->name.c_str());
-          variableNames.push_back(cdfObject->variables[varindex_y]->name.c_str());
-          addXMLLayerToConfig(srvParam,cdfObject,&variableNames,"derived",srvParam->internalAutoResourceLocation.c_str());
+        
+          if(varindex_x!=-1&&varindex_y!=-1){
+            CDBDebug("WindData");
+            std::vector<CT::string> variableNames;
+            variableNames.push_back(cdfObject->variables[varindex_x]->name.c_str());
+            variableNames.push_back(cdfObject->variables[varindex_y]->name.c_str());
+            addXMLLayerToConfig(srvParam,cdfObject,&variableNames,"derived",srvParam->internalAutoResourceLocation.c_str());
+            varindex_x = -1;
+            varindex_y = -1;
+          }
         }
       }
       
