@@ -41,45 +41,10 @@
 #include "CDebugger.h"
 
 
-/*
-class UniqueRequests{
-public:
-  
-  CT::string file,varname;
-  class DimInfo{
-    CT::string dimname
-    int start,count;
-  };
-  std::vector<DimInfo> dimInfo 
-  
-  //std::vector<CT::string*> dimensionKeys;
-  UniqueRequests(){
-  }
-//   UniqueRequests(CT::string file,CT::string varname,CT::string dimname, int start, int count,std::vector<CT::string*> dimensionKeys){
-//     this->file = file;
-//     this->dimname = dimname;
-//     this->start = start;
-//     this->count = count;
-//     this->varname = varname;
-//     this->dimensionKeys = dimensionKeys;
-//   }
-};*/
-// class UniqueRequestsList{
-// public:
-//   std::vector<UniqueRequests> list;
-// };
-// class RequestsToDo{
-// public:
-//    std::vector<UniqueRequests> requestlist;
-// };
-// class RequestsToDoList{
-// public:
-//   std::vector<RequestsToDo> requestlist;
-// };
 
 
 class CImageDataWriter: public CBaseDataWriterInterface{
-  private:
+  public:
     
     class ProjCacheInfo{
     public:
@@ -93,6 +58,8 @@ class CImageDataWriter: public CBaseDataWriterInterface{
     };
     static std::map<std::string,CImageDataWriter::ProjCacheInfo> projCacheMap;
     static std::map<std::string,CImageDataWriter::ProjCacheInfo>::iterator projCacheIter;
+    static ProjCacheInfo GetProjInfo(CT::string ckey, CDrawImage *drawImage, CDataSource *dataSource,CImageWarper *imageWarper,CServerParams *srvParam,int dX,int dY);
+private:
     CImageWarper imageWarper;
     CDataSource *currentDataSource;
     //int requestType;
@@ -100,9 +67,9 @@ class CImageDataWriter: public CBaseDataWriterInterface{
     int animation;
     int nrImagesAdded;
     static void calculateScaleAndOffsetFromMinMax(float &scale, float &offset,float min,float max,float log);
-    static ProjCacheInfo GetProjInfo(CT::string ckey, CDrawImage *drawImage, CDataSource *dataSource,CImageWarper *imageWarper,CServerParams *srvParam,int dX,int dY);
     
-    //static void MakeRequestForAllPossibleDimCombinations( UniqueRequestsList uniqueRequestList[], int numberOfDims,int currentDim,CDataSource *dataSource,CT::string path,UniqueRequests allRequests[],RequestsToDo &requestsToDo);
+    
+    
 public:
   
 public:
@@ -156,8 +123,9 @@ private:
 
     //int smoothingFilter;
     //RenderMethodEnum renderMethod;
-
+public:
     static double convertValue(CDFType type,void *data,size_t p);
+private:
     void setValue(CDFType type,void *data,size_t ptr,double pixel);
     int _setTransparencyAndBGColor(CServerParams *srvParam,CDrawImage* drawImage);
     float getValueForColorIndex(CDataSource *dataSource,int index);
