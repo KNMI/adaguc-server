@@ -1205,7 +1205,7 @@ void CImageDataWriter::setValue(CDFType type,void *data,size_t ptr,double pixel)
 // }
 
 
-DEF_ERRORMAIN();
+
 
 template <class T> class MyUnorderedSet{
 public:
@@ -1422,7 +1422,8 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
      bool headerIsAvailable = false;
     bool openAll = false;
     bool everythingIsInBBOX = true;
-     
+    CDataReader reader;
+    reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_HEADER); 
     if(dataSources[d]->getNumDataObjects()>0){ 
       if(dataSources[d]->getDataObject(0)->cdfVariable!=NULL){
         if(dataSources[d]->isConfigured){
@@ -1796,6 +1797,27 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
   //                       CDBDebug("[start][count] for %s: [%d][%d]",variable->dimensionlinks[j]->name.c_str(),start[j],count[j]);
   //                     }
                   CDBDebug("Read");
+                  
+                  //If we have a data postproc, we want to have the data in CDF_DOUBLE format
+                  
+                  bool readDataAsCDFDouble = false;
+                  
+                  /**
+                  * DataPostProc: Here our datapostprocessor comes into action!
+                  */
+                  for(size_t dpi=0;dpi<dataSource->cfgLayer->DataPostProc.size();dpi++){
+                    CServerConfig::XMLE_DataPostProc * proc = dataSource->cfgLayer->DataPostProc[dpi];
+                    //Algorithm ax+b:
+                    if(proc->attr.algorithm.equals("ax+b")){
+                      readDataAsCDFDouble = true;
+                    }
+                  }
+                  
+                  if(readDataAsCDFDouble){
+                    variable->setType(CDF_DOUBLE);
+                  }
+                  
+                  
                   status = variable->readData(variable->currentType,start,count,stride,true);
                   CDBDebug("Done");
                   if(variable->data == NULL){
@@ -1818,6 +1840,37 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
                 }
                 
                   if(status == 0){
+                    /**
+                    * DataPostProc: Here our datapostprocessor comes into action!
+                    */
+                    for(size_t dpi=0;dpi<dataSource->cfgLayer->DataPostProc.size();dpi++){
+                    CServerConfig::XMLE_DataPostProc * proc = dataSource->cfgLayer->DataPostProc[dpi];
+                    //Algorithm ax+b:
+                    if(proc->attr.algorithm.equals("ax+b")){
+                      double dfadd_offset = 0;
+                      double dfscale_factor = 1;
+                      
+                      CT::string offsetStr = proc->attr.b.c_str();
+                      dfadd_offset = offsetStr.toDouble();
+                      CT::string scaleStr = proc->attr.a.c_str();
+                      dfscale_factor = scaleStr.toDouble();
+                      double *_data=(double*)variable->data;
+                      for(size_t j=0;j<variable->getSize();j++){
+                        //if(j%10000==0){CDBError("%d = %f",j,_data[j]);}
+                        _data[j]=_data[j]*dfscale_factor+dfadd_offset;
+                      }
+                      //Convert the nodata type
+                      dataSource->getDataObject(dataObjectNr)->dfNodataValue=dataSource->getDataObject(dataObjectNr)->dfNodataValue*dfscale_factor+dfadd_offset;
+                    }
+                    //Apply units:
+                    if(proc->attr.units.empty()==false){
+                      dataSource->getDataObject(dataObjectNr)->units=proc->attr.units.c_str();
+                    }
+                
+                  }
+                  /* End of data postproc */
+                    
+                    
                     CXMLParser::XMLElement *dataStructure= NULL;
                       try{
                       dataStructure = layerStructure->get("data");
