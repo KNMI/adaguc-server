@@ -179,9 +179,11 @@ private:
     int generateOGCDescribeCoverage(CT::string *XMLdocument);
     static int dataRestriction;
     void addXMLLayerToConfig(CServerParams *srvParam,CDFObject *cdfObject,std::vector<CT::string>*variableNames, const char *group, const char *location);
-    int getDimValuesForDataSource(CDataSource *dataSource,CServerParams *srvParam);
+    
+    
     
   public:
+    static int getDimValuesForDataSource(CDataSource *dataSource,CServerParams *srvParam);
     CRequest(){
       srvParam=new CServerParams();
     }
@@ -212,7 +214,7 @@ private:
     int process_all_layers();
     int process_wms_getreferencetimes_request();
     int updatedb(CT::string *tailPath,CT::string *layerPathToScan);
-    bool checkTimeFormat(CT::string& timeToCheck);
+    static bool checkTimeFormat(CT::string& timeToCheck);
     int runRequest();
 
     static void getCacheFileName(CT::string *cacheFileName,CServerParams *srvParam);

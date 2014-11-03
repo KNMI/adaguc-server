@@ -469,7 +469,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
                   //Check if this variable has another dim attached
                   if(dimVar->dimensionlinks.size() == 1){
                     dimDim = dimVar->dimensionlinks[0];
-                    CDBWarning("Using dimension %s for dimension variable %s",dimVar->dimensionlinks[0]->name.c_str(),dimVar->name.c_str());
+                    CDBDebug("Using dimension %s for dimension variable %s",dimVar->dimensionlinks[0]->name.c_str(),dimVar->name.c_str());
                   }
                 }
                 
