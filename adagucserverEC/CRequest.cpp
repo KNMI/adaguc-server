@@ -27,6 +27,7 @@
 //#define MEASURETIME
 
 #include "CRequest.h"
+#include "COpenDAPHandler.h"
 const char *CRequest::className="CRequest";
 int CRequest::CGI=0;
 
@@ -1066,7 +1067,7 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
               if(l>0)subQuery.concat("and ");
               if(sDims->count==1){
                 
-                if(!checkTimeFormat(sDims[l]))timeValidationError=true;
+                if(!CRequest::checkTimeFormat(sDims[l]))timeValidationError=true;
                 
                 if(isRealType == false){
                   subQuery.printconcat("%s = '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
@@ -1086,11 +1087,11 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
               //TODO Currently only start/stop is supported, start/stop/resolution is not supported yet.
               if(sDims->count>=2){
                 if(l==0){
-                  if(!checkTimeFormat(sDims[l]))timeValidationError=true;
+                  if(!CRequest::checkTimeFormat(sDims[l]))timeValidationError=true;
                   subQuery.printconcat("%s >= '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
                 }
                 if(l==1){
-                  if(!checkTimeFormat(sDims[l]))timeValidationError=true;
+                  if(!CRequest::checkTimeFormat(sDims[l]))timeValidationError=true;
                   subQuery.printconcat("%s <= '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
                 }
               }
@@ -1664,6 +1665,57 @@ int CRequest::process_querystring(){
   //int dFound_OpenDAPVariable=0;
   
   const char * pszQueryString=getenv("QUERY_STRING");
+  
+  /*
+  std::vector<CT::string> keys;
+  keys.push_back("DOCUMENT_ROOT");
+  keys.push_back("HTTP_COOKIE");
+  keys.push_back("HTTP_HOST");
+  keys.push_back("HTTP_REFERER");
+  keys.push_back("HTTP_USER_AGENT");
+  keys.push_back("HTTPS");
+  keys.push_back("PATH");
+  keys.push_back("QUERY_STRING");
+  keys.push_back("REMOTE_ADDR");
+  keys.push_back("REMOTE_HOST");
+  keys.push_back("REMOTE_PORT");
+  keys.push_back("REMOTE_USER");
+  keys.push_back("REQUEST_METHOD");
+  keys.push_back("REQUEST_URI");
+  keys.push_back("SCRIPT_FILENAME");
+  keys.push_back("SCRIPT_NAME");
+  keys.push_back("SERVER_ADMIN");
+  keys.push_back("SERVER_NAME");
+  keys.push_back("SERVER_PORT");
+  keys.push_back("SERVER_SOFTWARE");
+
+  
+  for(size_t j=0;j<keys.size();j++){
+    const char *key=keys[j].c_str();
+    CDBDebug("pszPATH %s = %s",key,getenv(key));
+  }*/
+  
+  
+  /**
+   * Check for OPENDAP
+   */
+  /*const char *SCRIPT_NAME =getenv("SCRIPT_NAME");
+  const char *REQUEST_URI =getenv("REQUEST_URI");
+  if(SCRIPT_NAME!=NULL && REQUEST_URI!=NULL){
+    size_t SCRIPT_NAME_length = strlen(SCRIPT_NAME);
+    size_t REQUEST_URI_length = strlen(REQUEST_URI);
+    if(REQUEST_URI_length>SCRIPT_NAME_length+1){
+      CT::string dapPath = REQUEST_URI + (SCRIPT_NAME_length+1);
+      
+      if(dapPath.indexOf("opendap")==0){
+        //THIS is OPENDAP!
+        CT::string* items = dapPath.splitToArray("?");
+        COpenDAPHandler::HandleOpenDAPRequest(items[0].c_str(),pszQueryString,srvParam);
+        delete[] items;
+        return 0;
+      }
+    }
+  }*/
   
   
   
