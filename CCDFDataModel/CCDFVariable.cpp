@@ -185,9 +185,12 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
     }
 #endif
    
+   
     size_t dataReadOffset=0;
     for(size_t j=iterDimStart;j<iterDimCount+iterDimStart;j++){
+      
       try{
+        
         //Get the right CDF reader for this dimension set
         start[iterativeDimIndex]=j;count[iterativeDimIndex]=1;
         CDFObject *tCDFObject= (CDFObject *)getCDFObjectPointer(start,count);
@@ -195,6 +198,7 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
         //Get the variable from this reader
        
         //
+        
         for(size_t d=0;d<dimensionlinks.size();d++){
           if(useStartCountStride){
             start[d]=0;//TODO in case of multiple readers for the same variable, this offset will change!
@@ -228,6 +232,7 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
           CDBDebug("Free tVar %s",tVar->name.c_str());
   #endif        
           tVar->freeData();
+          tCDFObject->close();
         }
         
         
@@ -235,6 +240,7 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
         if(hasCustomReader){
           status = customReader->readData(this,data,_start,count,stride);
         }
+         
         
 #ifdef CCDFDATAMODEL_DEBUG                
         CDBDebug("Variable->data==NULL: %d",data==NULL);
@@ -247,6 +253,7 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
       }
     }
     delete[] start;delete[] count;delete[] stride;
+    
     if(status!=0)return 1;
   }
   
@@ -295,6 +302,7 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
 }
 
  void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar,const char *dimName){
+   //CDBDebug("[setCDFObjectDim]");
   //if(sourceVar->isDimension)return;
   CDFObject *sourceCDFObject=(CDFObject*)sourceVar->getParentCDFObject();
   std::vector<Dimension *> &srcDims=sourceVar->dimensionlinks;
@@ -339,7 +347,12 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
     CDBError("srcDimVar->getSize()==%d",srcDimVar->getSize());
     throw("__LINE__");
   }
+  
+  
+  
   double srcDimValue=srcDimVar->getDataAt<double>(0);
+  
+  //CDBDebug("Source dim read, TimeValue = %f",srcDimValue);
   
   //Check wether we already have this cdfobject dimension combo in our list
   int foundCDFObject = -1;
@@ -350,7 +363,7 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
   if(foundCDFObject!=-1){
     CDBDebug("Found existing cdfObject %d",foundCDFObject);
   }else{
-//    CDBDebug("cdfObjectList.push_back(new CDFObjectClass()) for variable %s size= %d",name.c_str(),cdfObjectList.size());
+    //CDBDebug("cdfObjectList.push_back(new CDFObjectClass()) for variable %s size= %d",name.c_str(),cdfObjectList.size());
     CDFObjectClass *c=new CDFObjectClass();
     c->dimValue=srcDimValue;
     c->dimIndex=0;
@@ -358,6 +371,7 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
     cdfObjectList.push_back(c);
   }
   int foundDimValue = -1;
+  
   if(iterativeVar->data==NULL){
     //Dit gaat van het verkeerde object!
     if(iterativeVar->readData(currentType)!=0){
@@ -399,9 +413,18 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
   // for(int j=0;j<iterativeDim->getSize();j++){
     //  CDBDebug("1 %d------------------ %f",((double*)iterativeVar->data)[j]);
     //}
+    
+//         for(int j=0;j<currentDimSize;j++){
+//       CDBDebug("A TimeValue %d = %f",j,((double*)iterativeVar->data)[j]);
+//     }
 
     DataCopier::copy(dstData,currentType,iterativeVar->data,currentType,0,0,currentDimSize);
     DataCopier::copy(dstData,currentType,srcData,currentType,currentDimSize,0,1);
+    
+//     for(int j=0;j<
+//       currentDimSize+1;j++){
+//       CDBDebug("B TimeValue %d = %f",j,((double*)dstData)[j]);
+//     }
     
     iterativeVar->freeData();
     iterativeVar->data=dstData;
@@ -473,5 +496,5 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
   //  printf("%s %d - %s %d\n",(*dimensions)[j]->name.c_str(),(*dimensions)[j]->getSize(),dimensionlinks[j]->name.c_str(),dimensionlinks[j]->getSize());
   //}
 
-  
+
 }

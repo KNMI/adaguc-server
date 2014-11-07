@@ -69,6 +69,7 @@ namespace CDF{
         CustomReader * customReader;
   public:
       void setCustomReader(CustomReader *customReader){
+
         hasCustomReader=true;
         this->customReader = customReader;
       };
@@ -152,6 +153,7 @@ namespace CDF{
         for(size_t j=0;j<dimensionlinks.size();j++){if(dimensionlinks[j]->isIterative)return j;}
         return -1;
       }
+      
       Dimension* getIterativeDim(){
         int i=getIterativeDimIndex();
         if(i==-1){
@@ -159,6 +161,7 @@ namespace CDF{
         }
         return dimensionlinks[i];
       }
+      
       DEF_ERRORFUNCTION();
       Variable(){
         isDimension=false;
@@ -168,6 +171,7 @@ namespace CDF{
         nativeType=CDF_NONE;
         cdfReaderPointer=NULL;
         parentCDFObject=NULL;
+        hasCustomReader = false;
       }
       ~Variable(){
         

@@ -122,10 +122,11 @@ CTime::Date CTime::getDate(double offset){
   }
   
   if(mode == CTIME_MODE_UTCALENDAR){
-    float s= date.second;
+    float s;
     if(utCalendar(date.offset,&dataunits,&date.year,&date.month,&date.day,&date.hour,&date.minute,&s)!=0) {
       CDBError("OffsetToAdaguc: Internal error: utCalendar");throw CTIME_CONVERSION_ERROR;
     }
+    date.second = s;
   }
   return date;
 }
@@ -210,12 +211,13 @@ CTime::Date CTime::ISOStringToDate(const char*szTime){
 
 CT::string CTime::dateToString(Date date){
   CT::string s;
-  float second=date.second;
+  int second=date.second;
+
   int minute = date.minute;
-  if(date.second>=60.){
-    second-=60;minute+=1;
-  }
-  s.print("%04d%02d%02dT%02d%02d%02d",date.year,date.month,date.day,date.hour,minute,(int)second);
+//   if(date.second>=60.){
+//     second-=60;minute+=1;
+//   }
+  s.print("%04d%02d%02dT%02d%02d%02d",date.year,date.month,date.day,date.hour,minute,second);
   return s;
 }
 
@@ -224,9 +226,9 @@ CT::string CTime::dateToISOString(Date date){
   CT::string s;
   float second=date.second;
   int minute = date.minute;
-  if(date.second>=60.){
-    second-=60;minute+=1;
-  }
+//   if(date.second>=60.){
+//     second-=60;minute+=1;
+//   }
   //s.print("%04d-%02d-%02dT%02d:%02d:%09f",date.year,date.month,date.day,date.hour,minute,second);
   
   int seconds = int(second);

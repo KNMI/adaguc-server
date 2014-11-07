@@ -35,8 +35,9 @@
 #include "CCDFCache.h"
 #include "CDebugger.h"
 
-//#define CCDFNETCDFIO_DEBUG
-//#define CCDFNETCDFIO_DEBUG_OPEN
+// #define CCDFNETCDFIO_DEBUG
+// #define CCDFNETCDFIO_DEBUG_OPEN
+// #define CCDFNETCDFWRITER_DEBUG
 
 class CDFNetCDFReader :public CDFReader{
   private:
@@ -341,7 +342,6 @@ class CDFNetCDFWriter{
             {
               int dimIDS[numDims+1];
               int NCCommandID[numDims+1];
-              //size_t chunkSizes[numDims+1];
               size_t totalVariableSize = 0;
               //Find dim and chunk info
               CT::string variableInfo(name);
@@ -383,17 +383,39 @@ class CDFNetCDFWriter{
               } 
 
               //Set chunking and deflate options
-              //chunkSizes[0]=1;
-              if(netcdfMode>=4&&numDims>0&&1==1){
-          
-                //status = nc_def_var_chunking(root_id,nc_var_id,0 ,chunkSizes);
-                //if(status!=NC_NOERR){ncError(__LINE__,className,"nc_def_var_chunking: ",status);return 1;}
-                //status = nc_def_var_deflate(root_id,nc_var_id,shuffle ,deflate, deflate_level);
-                //if(status!=NC_NOERR){ncError(__LINE__,className,"nc_def_var_deflate: ",status);return 1;}
-                //if(listNCCommands){
-                  //NCCommands.printconcat("nc_def_var_deflate(root_id,var_id_%d,shuffle ,deflate, deflate_level);\n",j);
-                //} 
+              
                 
+              if(netcdfMode>=4&&numDims>0&&1==1){
+                
+                size_t chunkSizes[variable->dimensionlinks.size()];
+                if(variable->dimensionlinks.size()>2){
+                
+
+                  for(size_t m=0;m<variable->dimensionlinks.size();m++){
+                    chunkSizes[m] = variable->dimensionlinks[m]->getSize();
+                    try{
+                      CT::string standardName = cdfObject->getVariable(variable->dimensionlinks[m]->name.c_str())->getAttribute("standard_name")->getDataAsString();
+                      if(standardName.equals("time")){
+                        chunkSizes[m] = 1;
+                      }
+                    }catch(int e){
+                    }
+                  }
+                  
+                  for(size_t m=0;m<variable->dimensionlinks.size();m++){
+                    CDBDebug("ChunkSizes %s = %d",variable->dimensionlinks[m]->name.c_str(),chunkSizes[m]);
+                  }
+                  
+          
+                  status = nc_def_var_chunking(root_id,nc_var_id,0 ,chunkSizes);
+                  if(status!=NC_NOERR){ncError(__LINE__,className,"nc_def_var_chunking: ",status);return 1;}
+                  status = nc_def_var_deflate(root_id,nc_var_id,shuffle ,deflate, deflate_level);
+                  if(status!=NC_NOERR){ncError(__LINE__,className,"nc_def_var_deflate: ",status);return 1;}
+                  if(listNCCommands){
+                    NCCommands.printconcat("nc_def_var_deflate(root_id,var_id_%d,shuffle ,deflate, deflate_level);\n",j);
+                  } 
+                  
+                }
               }
               
               //copy data
@@ -505,9 +527,9 @@ class CDFNetCDFWriter{
                   if(status!=0)return status;
                 }else{
                   for(size_t id=0;id<variable->dimensionlinks[iterativeDimIndex]->getSize();id++){
-                    #ifdef CCDFNETCDFWRITER_DEBUG    
-                    CDBDebug("  %d/%d Copying Iterative dim '%s' with index %d for variable %s",nrVarsWritten+1,cdfObject->variables.size(),variable->dimensionlinks[iterativeDimIndex]->name.c_str(),id,variable->name.c_str());
-                    #endif                 
+                    //#ifdef CCDFNETCDFWRITER_DEBUG    
+                    CDBDebug("  %d/%d Copying Iterative dim '%s' with index %d/%d for variable %s",nrVarsWritten+1,cdfObject->variables.size(),variable->dimensionlinks[iterativeDimIndex]->name.c_str(),id,variable->dimensionlinks[iterativeDimIndex]->getSize(),variable->name.c_str());
+                    //#endif                 
                     start[iterativeDimIndex]=id;count[iterativeDimIndex]=1;
                     int status = copyVar(variable,nc_var_id,start,count);
                     if(status!=0)return status;
