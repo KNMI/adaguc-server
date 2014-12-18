@@ -3596,7 +3596,10 @@ int CImageDataWriter::end(){
   
   //Output WMS getmap results
   if(errorsOccured()){
+      
+    
     CDBError("Errors occured during image data writing");
+    
     return 1;
   }
   

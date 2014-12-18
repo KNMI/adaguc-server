@@ -135,7 +135,7 @@ void CCache::checkCacheSystemReady(const char *directory, const char *szfileName
   if(szfileName == NULL)return;
   if(directory == NULL)return;
   if(cacheSystemIsBusy == true){
-    CDBError("------------- ERROR cacheSystemIsBusy -------------");
+    CDBDebug("------------- ERROR cacheSystemIsBusy -------------");
     cacheAvailable = false;
     return;
   }
@@ -235,7 +235,7 @@ bool CCache::isCacheFileBusyBlocking(){
           //Check if the process locking this file is still running
           int status = kill(thePIDThatIsLocking,0);
           if(status == -1){
-            CDBError("WARNING: LOCKED by procID %d for key %s which is not running, continuing..." ,thePIDThatIsLocking, claimedCacheFileName.c_str());
+            CDBDebug("WARNING: LOCKED by procID %d for key %s which is not running, continuing..." ,thePIDThatIsLocking, claimedCacheFileName.c_str());
             currentTries = 0;
           }else{
             CDBDebug("CCache::LOCKED by procID %d, waiting %f seconds" ,thePIDThatIsLocking, float(currentTries)/10.0);
@@ -295,7 +295,7 @@ const char *CCache::getCacheFileNameToRead(){
 
 int CCache::claimCacheFile (){
   if(cacheFileClaimed){
-    CDBError("CCache::LOCK Warning: Cache is already claimed by this process");
+    CDBDebug("CCache::LOCK Warning: Cache is already claimed by this process");
     return 0;
   }
   #ifdef CCACHE_DEBUG
@@ -320,12 +320,12 @@ int CCache::claimCacheFile (){
   
    int status = _writePidFile(claimedCacheFileName.c_str());
    if(status != 0){
-     CDBError("Unable to write pid file");
+     CDBDebug("Unable to write pid file");
      return 1;
    }
    status = _writePidFile(claimedCacheProcIDFileName.c_str());
    if(status != 0){
-     CDBError("Unable to write pid file");
+     CDBDebug("Unable to write pid file");
      return 1;
    }
   
@@ -373,7 +373,7 @@ int CCache::Lock::claim(const char *cacheDir, const char *identifier,bool enable
   
 
   if(claimedLockFile.length()>0){
-    CDBError("Already claimed! %s",claimedLockID.c_str());
+    CDBDebug("Already claimed! %s",claimedLockID.c_str());
     
   }else{
     
@@ -423,7 +423,7 @@ int CCache::Lock::claim(const char *cacheDir, const char *identifier,bool enable
       //Check if the process locking this file is still running
       int status = kill(thePIDThatIsLocking,0);
       if(status == -1){
-        CDBError("WARNING: LOCKED by procID %d which is not running, for key [%s] continuing...", thePIDThatIsLocking,claimedLockID.c_str() );
+        CDBDebug("WARNING: LOCKED by procID %d which is not running, for key [%s] continuing...", thePIDThatIsLocking,claimedLockID.c_str() );
         maxTries = 0;
       }else{
         CDBDebug("LOCKED by procID %d, waiting %f seconds",thePIDThatIsLocking,float(maxTries)/10.0);
