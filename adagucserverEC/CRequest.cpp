@@ -373,6 +373,144 @@ int CRequest::process_wms_getmetadata_request(){
     return process_all_layers();
 }
 
+
+int CRequest::process_wms_getstyles_request(){
+    int status;
+    if(srvParam->serviceType==SERVICE_WMS){
+      if(srvParam->Geo->dWidth>MAX_IMAGE_WIDTH){
+        CDBError("Parameter WIDTH must be smaller than %d",MAX_IMAGE_WIDTH);
+        return 1;
+      }
+      if(srvParam->Geo->dHeight>MAX_IMAGE_HEIGHT){
+      CDBError("Parameter HEIGHT must be smaller than %d",MAX_IMAGE_HEIGHT);
+      return 1;
+      }
+    }
+    CDrawImage plotCanvas;
+    plotCanvas.setTrueColor(true);
+    plotCanvas.createImage(int(srvParam->Geo->dWidth),int(srvParam->Geo->dHeight));
+    plotCanvas.create685Palette();
+    
+    CImageDataWriter imageDataWriter;
+  
+    CDataSource * dataSource = new CDataSource();
+    //dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[0],"prediction",0);
+    dataSource->addStep("",NULL);
+    dataSource->getCDFDims()->addDimension("time","0",0);
+    dataSource->setTimeStep(0);
+    dataSource->srvParams=srvParam;
+    dataSource->cfg=srvParam->configObj->Configuration[0];
+    dataSource->cfgLayer=srvParam->cfg->Layer[0];
+    CDataSource::DataObject *newDataObject = new CDataSource::DataObject();
+    newDataObject->variableName.copy("test");
+    dataSource->getDataObjectsVector()->push_back(newDataObject);
+    dataSource->dLayerType=CConfigReaderLayerTypeStyled;
+    
+    
+   
+
+    plotCanvas.rectangle(0,0,plotCanvas.Geo->dWidth,plotCanvas.Geo->dHeight,CColor(255,255,255,255),CColor(255,255,255,255));
+    
+    int legendWidth = 200;
+    int legendHeight = 600;
+
+    
+    
+
+        
+    
+    int posX=0;
+    int posY=0;
+   
+    bool errorOccured = false;
+    
+    bool legendOnlyMode = true;
+    try{
+    
+      for(size_t j=0;j<srvParam->cfg->Style.size();j++){
+        CServerConfig::XMLE_Style* style = srvParam->cfg->Style[j];
+        CDBDebug("style %s",style->attr.name.c_str());
+        
+        CT::PointerList<CT::string*> *legendList = NULL;
+        
+        if(legendOnlyMode == false){
+          legendList = CServerParams::getLegendNames(style->Legend);
+        }else{
+          legendList = new CT::PointerList<CT::string*>();
+          for(size_t j=0;j<srvParam->cfg->Legend.size();j++){
+            
+            legendList->push_back(new CT::string(srvParam->cfg->Legend[j]->attr.name.c_str()));
+            
+          }
+        }
+        
+        CDBDebug("Found %d legends",legendList->size());
+        for(size_t i=0;i<legendList->size();i++){
+          CDBDebug("legend %s",(*legendList)[i]->c_str());
+          
+          int legendIndex = CImageDataWriter::getServerLegendIndexByName((*legendList)[i]->c_str(),srvParam->cfg->Legend);
+          if(legendIndex == -1){
+            CDBError("Legend %s is not configured");
+            delete legendList;
+            throw (__LINE__);
+          }
+          CDBDebug("Found legend index %d",legendIndex);
+          
+          CT::PointerList<CT::string*> *renderMethodList = CImageDataWriter::getRenderMethodListForDataSource(dataSource,style);      
+
+          CDBDebug("Found %d rendermethods",renderMethodList->size());
+          for(size_t r=0;r<renderMethodList->size();r++){
+            CDBDebug("Using %s->%s->%s",style->attr.name.c_str(),(*legendList)[i]->c_str(),(*renderMethodList)[r]->c_str());
+            CT::string styleName;
+            styleName.print("%s/%s",style->attr.name.c_str(),(*renderMethodList)[r]->c_str());
+            if(legendOnlyMode){
+              styleName.print("%s",(*legendList)[i]->c_str());
+            }
+            
+            CImageDataWriter::makeStyleConfig(dataSource->styleConfiguration,dataSource,style->attr.name.c_str(),(*legendList)[i]->c_str(),(*renderMethodList)[r]->c_str());
+            
+            CDrawImage legendImage;
+            legendImage.enableTransparency(true);
+            legendImage.createImage(&plotCanvas,legendWidth,legendHeight);
+            status = legendImage.createGDPalette(srvParam->cfg->Legend[legendIndex]);if(status != 0)throw(__LINE__);
+            
+            
+            legendImage.rectangle(0,0,legendImage.Geo->dWidth-1,legendImage.Geo->dHeight-1,CColor(255,255,255,255),CColor(0,0,255,255));
+            status = imageDataWriter.createLegend(dataSource,&legendImage);if(status != 0)throw(__LINE__);
+            //posX = (legendNr++)*legendWidth;
+          
+            plotCanvas.draw(posX,posY,0,0,&legendImage);
+            plotCanvas.drawText(posX+4,posY+legendHeight-4,srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(),8,0,styleName.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
+            
+            posX+=legendWidth;
+            if(posX>plotCanvas.Geo->dWidth){
+              posX=0;
+              posY+=legendHeight;
+            }
+            if(legendOnlyMode)break;
+          }
+          delete renderMethodList;
+        }
+        delete legendList;
+        if(legendOnlyMode)break;
+      }
+    }catch(int e){
+      errorOccured = true;
+    }
+    
+   
+    
+    
+    delete dataSource;
+  
+    if(errorOccured){
+      return 1;
+    }
+    printf("%s%c%c\n","Content-Type:image/png",13,10);
+    plotCanvas.printImagePng();
+  return 0;
+}
+
 int CRequest::process_wms_getlegendgraphic_request(){
   if(srvParam->WMSLayers!=NULL)
     for(size_t j=0;j<srvParam->WMSLayers->count;j++){
@@ -1264,12 +1402,12 @@ int CRequest::process_all_layers(){
 
   int status;
   if(srvParam->serviceType==SERVICE_WMS){
-    if(srvParam->Geo->dWidth>8192){
-      CDBError("Parameter WIDTH must be smaller than 8192");
+    if(srvParam->Geo->dWidth>MAX_IMAGE_WIDTH){
+      CDBError("Parameter WIDTH must be smaller than %d",MAX_IMAGE_WIDTH);
       return 1;
     }
-    if(srvParam->Geo->dHeight>8192){
-    CDBError("Parameter HEIGHT must be smaller than 8192");
+    if(srvParam->Geo->dHeight>MAX_IMAGE_HEIGHT){
+    CDBError("Parameter HEIGHT must be smaller than %d",MAX_IMAGE_HEIGHT);
     return 1;
     }
   }
@@ -1450,16 +1588,16 @@ int CRequest::process_all_layers(){
             if(srvParam->cfg->WMS[0]->TitleFont.size()==1){
               float fontSize=parseFloat(srvParam->cfg->WMS[0]->TitleFont[0]->attr.size.c_str());
               textY+=int(fontSize);
-              imageDataWriter.drawImage.drawText(5,textY,srvParam->cfg->WMS[0]->TitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapTitle.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
-              textY+=12;
+              textY+=imageDataWriter.drawImage.drawTextArea(5,textY,srvParam->cfg->WMS[0]->TitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapTitle.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
+              //textY+=12;
             }
           }
           if(srvParam->mapSubTitle.length()>0){
             if(srvParam->cfg->WMS[0]->SubTitleFont.size()==1){
               float fontSize=parseFloat(srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.size.c_str());
-              textY+=int(fontSize);
-              imageDataWriter.drawImage.drawText(6,textY,srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapSubTitle.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
-              textY+=8;
+              textY+=int(fontSize)/2;
+              textY+=imageDataWriter.drawImage.drawTextArea(6,textY,srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapSubTitle.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
+              //textY+=8;
             }
           }
 
@@ -1483,35 +1621,55 @@ int CRequest::process_all_layers(){
             bool legendDrawn = false;
             for(size_t d=0;d<dataSources.size()&&legendDrawn==false;d++){
               if(dataSources[d]->dLayerType!=CConfigReaderLayerTypeCascaded){
-                if(1==0){
-                  CDrawImage legendImage;
-                  legendImage.createImage(&imageDataWriter.drawImage,LEGEND_WIDTH,imageDataWriter.drawImage.Geo->dHeight-8);
-                  status = imageDataWriter.createLegend(dataSources[d],&legendImage);if(status != 0)throw(__LINE__);
-//                   int posX=4;
-//                   int posY=imageDataWriter.drawImage.Geo->dHeight-(legendImage.Geo->dHeight+4);
-//                   imageDataWriter.drawImage.rectangle(posX,posY,legendImage.Geo->dWidth+posX+1,legendImage.Geo->dHeight+posY+1,CColor(255,255,255,100),CColor(255,255,255,0));
-//                   imageDataWriter.drawImage.draw(posX,posY,0,0,&legendImage);
-                  legendDrawn=true;
-                }
-                if(1==1){
-                  int padding=1;
-                  int minimumLegendWidth=80;
-                  CDrawImage legendImage;
-                  int legendWidth = imageDataWriter.drawImage.Geo->dWidth/10;
-                  if(legendWidth<minimumLegendWidth)legendWidth=minimumLegendWidth;
-                  legendImage.enableTransparency(true);
-                  legendImage.createImage(&imageDataWriter.drawImage,legendWidth,imageDataWriter.drawImage.Geo->dHeight-padding*2+2);
-                  status = imageDataWriter.createLegend(dataSources[d],&legendImage);if(status != 0)throw(__LINE__);
-                  int posX=imageDataWriter.drawImage.Geo->dWidth-(legendImage.Geo->dWidth+padding);
-                  int posY=imageDataWriter.drawImage.Geo->dHeight-(legendImage.Geo->dHeight+padding);
-                  imageDataWriter.drawImage.rectangle(posX,posY,legendImage.Geo->dWidth+posX+1,legendImage.Geo->dHeight+posY+1,CColor(255,255,255,180),CColor(255,255,255,0));
-                  imageDataWriter.drawImage.draw(posX+1,posY+1,0,0,&legendImage);
-                  legendDrawn=true;
-                  
-                }
+              
+      
+                int padding=4;
+                int minimumLegendWidth=100;
+                CDrawImage legendImage;
+                int legendWidth = LEGEND_WIDTH;//imageDataWriter.drawImage.Geo->dWidth/6;
+                if(legendWidth<minimumLegendWidth)legendWidth=minimumLegendWidth;
+                imageDataWriter.drawImage.enableTransparency(true);
+                //legendImage.setBGColor(255,255,255);
+
+                legendImage.createImage(&imageDataWriter.drawImage,legendWidth,imageDataWriter.drawImage.Geo->dHeight-padding*2+2);
+                
+                //legendImage.rectangle(0,0,legendImage.Geo->dWidth,legendImage.Geo->dHeight,CColor(0,0,0,0),CColor(0,0,0,255));
+                status = imageDataWriter.createLegend(dataSources[d],&legendImage);if(status != 0)throw(__LINE__);
+                int posX=imageDataWriter.drawImage.Geo->dWidth-(legendImage.Geo->dWidth+padding);
+                int posY=imageDataWriter.drawImage.Geo->dHeight-(legendImage.Geo->dHeight+padding);
+                //imageDataWriter.drawImage.rectangle(posX,posY,legendImage.Geo->dWidth+posX+1,legendImage.Geo->dHeight+posY+1,CColor(255,255,255,180),CColor(255,255,255,0));
+                imageDataWriter.drawImage.draw(posX,posY,0,0,&legendImage);
+                legendDrawn=true;
+                
+              
               }
             }
           }
+          
+          if(srvParam->showScaleBarInImage){
+            //Draw legend
+
+            int padding=4;
+            
+            CDrawImage scaleBarImage;
+            
+            
+            imageDataWriter.drawImage.enableTransparency(true);
+            //scaleBarImage.setBGColor(1,0,0);
+
+            scaleBarImage.createImage(&imageDataWriter.drawImage,200,20);
+            
+            //scaleBarImage.rectangle(0,0,scaleBarImage.Geo->dWidth,scaleBarImage.Geo->dHeight,CColor(0,0,0,0),CColor(0,0,0,255));
+            status = imageDataWriter.createScaleBar(dataSources[0],&scaleBarImage);if(status != 0)throw(__LINE__);
+            int posX=padding;//imageDataWriter.drawImage.Geo->dWidth-(scaleBarImage.Geo->dWidth+padding);
+            int posY=imageDataWriter.drawImage.Geo->dHeight-(scaleBarImage.Geo->dHeight+padding);
+            //posY-=50;
+            //imageDataWriter.drawImage.rectangle(posX,posY,scaleBarImage.Geo->dWidth+posX+1,scaleBarImage.Geo->dHeight+posY+1,CColor(255,255,255,180),CColor(255,255,255,0));
+            imageDataWriter.drawImage.draw(posX,posY,0,0,&scaleBarImage);
+            
+
+          }
+          
           if(srvParam->showNorthArrow){
 
           }
@@ -2092,6 +2250,12 @@ int CRequest::process_querystring(){
           srvParam->showLegendInImage = true;
         }
       }
+      if(value0Cap.equals("SHOWSCALEBAR")){
+        values[1].toLowerCaseSelf();
+        if(values[1].equals("true")){
+          srvParam->showScaleBarInImage = true;
+        }
+      }
       if(value0Cap.equals("SHOWNORTHARROW")){
         values[1].toLowerCaseSelf();
         if(values[1].equals("true")){
@@ -2114,7 +2278,8 @@ int CRequest::process_querystring(){
         delete[] valuesC;
       }  
       if(value0Cap.equals("NUMCOLORBANDS")){
-        srvParam->wmsExtensions.numColorBands = values[1].toInt();
+        srvParam->wmsExtensions.numColorBands = values[1].toFloat();
+        srvParam->wmsExtensions.numColorBandsSet = true;
       }  
       if(value0Cap.equals("LOGSCALE")){
         values[1].toLowerCaseSelf();
@@ -2619,13 +2784,18 @@ int CRequest::process_querystring(){
   if(dErrorOccured==0&&srvParam->serviceType==SERVICE_WMS){
     CDBDebug("Entering WMS service");
     
-    
+    if(srvParam->requestType==REQUEST_WMS_GETSTYLES){
+       
+      if(process_wms_getstyles_request()!=0)return 1;
+      return 0;
+       
+    }
 
     if (srvParam->requestType==REQUEST_WMS_GETREFERENCETIMES) {
       int status =  process_wms_getreferencetimes_request();
       if(status != 0) {
-	CDBError("WMS GetReferenceTimes Request failed");
-	return 1;
+        CDBError("WMS GetReferenceTimes Request failed");
+        return 1;
       }
       return 0;
     }
@@ -2937,7 +3107,7 @@ int CRequest::process_querystring(){
   if(srvParam->serviceType==SERVICE_WCS){
     CDBWarning("Invalid value for request. Supported requests are: getcapabilities, describecoverage and getcoverage");
   }else if(srvParam->serviceType==SERVICE_WMS){
-    CDBWarning("Invalid value for request. Supported requests are: getcapabilities, getmap, getfeatureinfo, getpointvalue, getmetadata and getlegendgraphic");
+    CDBWarning("Invalid value for request. Supported requests are: getcapabilities, getmap, getfeatureinfo, getpointvalue, getmetadata, getstyles and getlegendgraphic");
   }else{
     CDBWarning("Unknown service");
   }

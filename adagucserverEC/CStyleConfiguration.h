@@ -73,6 +73,7 @@ public:
   bool legendHasFixedMinMax; //True to fix the classes in the legend, False to determine automatically which values occur.
   double legendTickInterval;
   double legendTickRound;
+  bool minMaxSet;
   int legendIndex;
   int styleIndex;
   RenderMethod renderMethod;

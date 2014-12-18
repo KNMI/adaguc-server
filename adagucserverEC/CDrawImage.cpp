@@ -726,6 +726,62 @@ void CDrawImage::drawText(int x,int y,const char *fontfile, float size, float an
   drawText(x,y,fontfile, size, angle,text,color);
 }
  
+int CDrawImage::drawTextArea(int x,int y,const char *fontfile, float size, float angle,const char *_text,CColor fgcolor,CColor bgcolor){
+    CT::string text;
+      int offset = 0;
+      CT::string title = _text;
+      int length = title.length();
+       CCairoPlotter * ftTitle = new CCairoPlotter (Geo->dWidth,Geo->dHeight,(cairo->getByteBuffer()),size,fontfile);
+     ftTitle->setColor(fgcolor.r,fgcolor.g,fgcolor.b,fgcolor.a);
+     ftTitle->setFillColor(bgcolor.r,bgcolor.g,bgcolor.b,bgcolor.a);
+//      freeType->drawFilledText(x,y,angle,text);
+    float textScale = 1;
+      float textY = 0;
+      int width = Geo->dWidth-x;
+      int w,h;
+      
+      do{
+        
+     
+        do{
+          text.copy((const char*)(title.c_str()+offset),length);
+          ftTitle->getTextSize(w,h,0.0,text.c_str());
+          length--;
+          //if(!needsLineBreak)if(w>width-10)needsLineBreak = true;
+        }while(w>width&&length>=0);
+        length++;
+      
+        if(length+offset<title.length()){
+          int sl = length;
+          while(text.charAt(sl+offset)!=' '&&sl>0){
+            sl--;
+          }
+          if(sl>0)length=(sl+1);
+        }
+
+//         if(length>int(title.length())){
+//           length = title.length();
+//         }
+//         if(offset>int(title.length())){
+//             break;
+//         }
+//         
+        text.copy((const char*)(title.c_str()+offset),length);
+        
+        ftTitle->drawText(x,y+textY,0.0,text.c_str());textY+=size*1.5;  
+        
+        offset+=length;
+        //length+=(length);
+//         if(length>int(title.length())-1){
+//           length = title.length();
+//           break;
+//         }
+      }while(length<int(title.length())-1&&offset<title.length()-1);
+      delete ftTitle;
+      
+      return textY;
+}
+ 
 void CDrawImage::drawText(int x,int y,const char *fontfile, float size, float angle,const char *text,CColor fgcolor,CColor bgcolor){
   if(_bEnableTrueColor==true){
      #ifdef ADAGUC_USE_CAIRO
@@ -1144,7 +1200,14 @@ bool CDrawImage::isPixelTransparent(int &x,int &y){
     #else
     wuLine-> getPixel(x,y,r,g,b,a);
     #endif
-    if(a==0)return true;else return false;
+    
+    if(a==0)return true;else {
+      if(r == BGColorR && g == BGColorG && b== BGColorB && 1==2){
+        return true;
+      }else{
+        return false;
+      }
+    }
   }
   return false;
 }
@@ -1242,8 +1305,11 @@ int CDrawImage::draw(int destx, int desty,int sourcex,int sourcey,CDrawImage *si
         if(_bEnableTrueColor){
         #ifdef ADAGUC_USE_CAIRO
         simage->cairo->getPixel(sx,sy,r,g,b,a);
-        
+       
+      
         cairo-> pixelBlend(dx,dy,r,g,b,a);
+      
+       
         
       //cairo-> pixelBlend(dx,dy,128,128,128,int(dy)%255);
         //cairo-> pixel(dx,dy,r,g,b,a);
@@ -1268,7 +1334,7 @@ int CDrawImage::draw(int destx, int desty,int sourcex,int sourcey,CDrawImage *si
  * @param int paddingH the padding to keep in pixels in height. Set to -1 if no crop in height is desired
  */
 void CDrawImage::crop(int paddingW, int paddingH){
-  
+ // return;
   int x,y,w,h;
   getCanvasSize(x,y,w,h);
   int x1=x-paddingW;
@@ -1283,6 +1349,8 @@ void CDrawImage::crop(int paddingW, int paddingH){
   if(paddingH<0){
     y1=0;h1=Geo->dHeight;
   }
+  if(h1>Geo->dHeight-y1)h1=Geo->dHeight-y1;
+  if(w1>Geo->dWidth-x1)w1=Geo->dWidth-x1;
   setCanvasSize(x1,y1,w1,h1);
 }
 

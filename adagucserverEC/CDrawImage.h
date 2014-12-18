@@ -169,6 +169,9 @@ class CDrawImage{
     void drawText(int x,int y,const char *fontfile, float size, float angle,const char *text,unsigned char colorIndex);
     void drawText(int x,int y,const char *fontfile, float size, float angle,const char *text,CColor fgcolor);
     void drawText(int x,int y,const char *fontfile, float size, float angle,const char *text,CColor fgcolor,CColor bgcolor);
+    
+    int drawTextArea(int x,int y,const char *fontfile, float size, float angle,const char *text,CColor fgcolor,CColor bgcolor);
+    
     //void drawTextAngle(const char * text, size_t length,double angle,int x,int y,int color,int fontSize);
     void drawVector(int x,int y,double direction, double strength,int color);
     void destroyImage();

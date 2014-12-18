@@ -49,13 +49,15 @@ public:
     opacity=100;
     colorScaleRangeSet = false;
     numColorBands=-1;
+    numColorBandsSet=false;
     logScale =false;
   }
   double opacity;//0 = fully transparent, 100 = fully opaque (default). Only applies to image formats that support partial pixel transparency (e.g. PNG). This parameter is redundant if the client application can set image opacity (e.g. Google Earth). 
   double colorScaleRangeMin;
   double colorScaleRangeMax;
   bool colorScaleRangeSet;
-  int numColorBands;
+  float numColorBands;
+  bool numColorBandsSet;
   bool logScale;
 };
 
@@ -112,6 +114,7 @@ class CServerParams{
     CT::string mapSubTitle;
     bool showDimensionsInImage;
     bool showLegendInImage;
+    bool showScaleBarInImage;
     bool showNorthArrow;
     
     CT::string JSONP,queryStrURLParam;
@@ -267,6 +270,14 @@ class CServerParams{
     bool checkBBOXXYOrder(const char *projName);
     
     bool isLonLatProjection(CT::string *projectionName);
+    
+    /**
+      * Returns a stringlist with all possible legends available for this Legend config object.
+      * This is usually a configured legend element in a layer, or a configured legend element in a style.
+      * @param Legend a XMLE_Legend object configured in a style or in a layer
+      * @return Pointer to a new stringlist with all possible legend names, must be deleted with delete. Is NULL on failure.
+      */
+      static CT::PointerList<CT::string*> *getLegendNames(std::vector <CServerConfig::XMLE_Legend*> Legend);
     
 };
 
