@@ -125,20 +125,24 @@ private:
     //RenderMethodEnum renderMethod;
 public:
     static double convertValue(CDFType type,void *data,size_t p);
+    static int getColorIndexForValue(CDataSource *dataSource,float value);
+    static float getValueForColorIndex(CDataSource *dataSource,int index);
 private:
     void setValue(CDFType type,void *data,size_t ptr,double pixel);
     int _setTransparencyAndBGColor(CServerParams *srvParam,CDrawImage* drawImage);
-    float getValueForColorIndex(CDataSource *dataSource,int index);
-    int getColorIndexForValue(CDataSource *dataSource,float value);
+    
+    
     int drawCascadedWMS(CDataSource *dataSource,const char *service,const char *layers,bool transparent);
     
-    static CT::PointerList<CT::string*> *getRenderMethodListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style* style);      
+    
     static CT::PointerList<CT::string*> *getLegendListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style* style);
-    static CT::PointerList<CT::string*> *getLegendNames(std::vector <CServerConfig::XMLE_Legend*> Legend);
+    //static CT::PointerList<CT::string*> *getLegendNames(std::vector <CServerConfig::XMLE_Legend*> Legend);
     static CT::PointerList<CT::string*> *getStyleNames(std::vector <CServerConfig::XMLE_Styles*> Styles);
     static CT::PointerList<CT::string*> *getStyleListForDataSource(CDataSource *dataSource,CStyleConfiguration *styleConfig);
     
   public:
+    static CT::PointerList<CT::string*> *getRenderMethodListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style* style);      
+    
     CDrawImage drawImage;
     //CStyleConfiguration * currentStyleConfiguration;
     static int  getServerLegendIndexByName(const char * legendName,std::vector <CServerConfig::XMLE_Legend*> serverLegends);
@@ -154,7 +158,8 @@ private:
       //delete currentStyleConfiguration;currentStyleConfiguration = NULL;
     }
     
-    int createLegend(CDataSource *sourceImage,CDrawImage *legendImage);
+    static int createLegend(CDataSource *sourceImage,CDrawImage *legendImage);
+    static int createScaleBar(CDataSource *sourceImage,CDrawImage *legendImage);
     int getFeatureInfo(std::vector<CDataSource *>dataSources,int dataSourceIndex,int dX,int dY);
     int createAnimation();
     void setDate(const char *date);

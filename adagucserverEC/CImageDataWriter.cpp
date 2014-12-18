@@ -585,7 +585,7 @@ int CImageDataWriter::makeStyleConfig(CStyleConfiguration *styleConfig,CDataSour
   
   float min =0.0f;
   float max=0.0f;
-  bool minMaxSet = false;
+  s->minMaxSet = false;
   
   if(s->styleIndex!=-1){
     //Get info from style
@@ -607,8 +607,8 @@ int CImageDataWriter::makeStyleConfig(CStyleConfiguration *styleConfig,CDataSour
     }
     
     
-    if(style->Min.size()>0){min=parseFloat(style->Min[0]->value.c_str());minMaxSet=true;}
-    if(style->Max.size()>0){max=parseFloat(style->Max[0]->value.c_str());minMaxSet=true;}
+    if(style->Min.size()>0){min=parseFloat(style->Min[0]->value.c_str());s->minMaxSet=true;}
+    if(style->Max.size()>0){max=parseFloat(style->Max[0]->value.c_str());s->minMaxSet=true;}
     
     s->contourLines=&style->ContourLine;
     s->shadeIntervals=&style->ShadeInterval;
@@ -646,8 +646,8 @@ int CImageDataWriter::makeStyleConfig(CStyleConfiguration *styleConfig,CDataSour
     s->legendUpperRange=parseFloat(layer->ValueRange[0]->attr.max.c_str());
   }
   
-  if(layer->Min.size()>0){min=parseFloat(layer->Min[0]->value.c_str());minMaxSet=true;}
-  if(layer->Max.size()>0){max=parseFloat(layer->Max[0]->value.c_str());minMaxSet=true;}
+  if(layer->Min.size()>0){min=parseFloat(layer->Min[0]->value.c_str());s->minMaxSet=true;}
+  if(layer->Max.size()>0){max=parseFloat(layer->Max[0]->value.c_str());s->minMaxSet=true;}
 
   if(layer->ContourLine.size()>0){
     s->contourLines=&layer->ContourLine;
@@ -670,7 +670,7 @@ int CImageDataWriter::makeStyleConfig(CStyleConfiguration *styleConfig,CDataSour
   
   //Min and max can again be overriden by WMS extension settings
   if( dataSource->srvParams->wmsExtensions.colorScaleRangeSet){
-    minMaxSet=true;
+    s->minMaxSet=true;
     min=dataSource->srvParams->wmsExtensions.colorScaleRangeMin;
     max=dataSource->srvParams->wmsExtensions.colorScaleRangeMax;
   }
@@ -679,9 +679,10 @@ int CImageDataWriter::makeStyleConfig(CStyleConfiguration *styleConfig,CDataSour
     s->legendLog=10;
   }
       
-  if(dataSource->srvParams->wmsExtensions.numColorBands !=-1){
-    s->shadeInterval=dataSource->srvParams->wmsExtensions.numColorBands;
-    s->contourIntervalL=dataSource->srvParams->wmsExtensions.numColorBands;
+  if(dataSource->srvParams->wmsExtensions.numColorBandsSet){
+    float interval = (max-min)/dataSource->srvParams->wmsExtensions.numColorBands;
+    s->shadeInterval=interval;
+    s->contourIntervalL=interval;
     if(dataSource->srvParams->wmsExtensions.numColorBands>0&&dataSource->srvParams->wmsExtensions.numColorBands<300){
       s->legendTickInterval=int((max-min)/double(dataSource->srvParams->wmsExtensions.numColorBands)+0.5);
       //s->legendTickRound = s->legendTickInterval;//pow(10,(log10(s->legendTickInterval)-1));
@@ -693,11 +694,13 @@ int CImageDataWriter::makeStyleConfig(CStyleConfiguration *styleConfig,CDataSour
   
   
   //When min and max are given, calculate the scale and offset according to min and max.
-  if(minMaxSet){
+  if(s->minMaxSet){
     #ifdef CIMAGEDATAWRITER_DEBUG          
     CDBDebug("Found min and max in layer configuration");
     #endif      
     calculateScaleAndOffsetFromMinMax(s->legendScale,s->legendOffset,min,max,s->legendLog);
+    
+    dataSource->stretchMinMax = false;
     //s->legendScale=240/(max-min);
     //s->legendOffset=min*(-s->legendScale);
   }
@@ -731,10 +734,10 @@ int CImageDataWriter::makeStyleConfig(CStyleConfiguration *styleConfig,CDataSour
 CT::PointerList<CT::string*> *CImageDataWriter::getLegendListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style* style){
   
   if(dataSource->cfgLayer->Legend.size()>0){
-    return getLegendNames(dataSource->cfgLayer->Legend);
+    return CServerParams::getLegendNames(dataSource->cfgLayer->Legend);
   }else{
     if(style!=NULL){
-      return getLegendNames(style->Legend);
+      return CServerParams::getLegendNames(style->Legend);
     }
   }
   CDBError("No legendlist for layer %s",dataSource->layerName.c_str());
@@ -845,6 +848,7 @@ CT::PointerList<CT::string*> *CImageDataWriter::getStyleListForDataSource(CDataS
     }
   }
   
+
   CT::PointerList<CT::string*> *renderMethods = NULL;
   CT::PointerList<CT::string*> *legendList = NULL;
   
@@ -890,82 +894,107 @@ CT::PointerList<CT::string*> *CImageDataWriter::getStyleListForDataSource(CDataS
   //Loop over the styles.
   try{
     for(size_t i=start;i<styleNames->size();i++){
+      
       //Lookup the style index in the servers configuration
       int dStyleIndex=getServerStyleIndexByName(styleNames->get(i)->c_str(),serverCFG->Style);
       if(dStyleIndex==-1){
         if(returnStringList){
-          if(!styleNames->get(i)->equals("default")){
+          if(styleNames->get(i)->equals("default")==false){
             CDBError("Style %s not found for layer %s",styleNames->get(i)->c_str(),dataSource->layerName.c_str());
             delete styleNames;styleNames = NULL;
             delete stringList;stringList = NULL;
             return NULL;
           }else{
-            CT::string * styleName = new CT::string();
-            styleName->copy("default");
-            stringList->push_back(styleName);
-            delete styleNames;styleNames = NULL;
-            return stringList;
+            CDBDebug("Warning: Style [%s] not found (%d)",styleNames->get(i)->c_str(),styleNames->get(i)->equals("default"));
+//             CT::string * styleName = new CT::string();
+//             styleName->copy("default");
+//            
+//             stringList->push_back(styleName);
+//             delete styleNames;styleNames = NULL;
+//             return stringList;
+//            continue;
           }
         }
       }
-      CServerConfig::XMLE_Style* style = NULL;
-      if(dStyleIndex!=-1)style=serverCFG->Style[dStyleIndex];
+      if(dStyleIndex!=-1){
+        CServerConfig::XMLE_Style* style = NULL;
+        if(dStyleIndex!=-1)style=serverCFG->Style[dStyleIndex];
+        
       
-    
-      
-      renderMethods = getRenderMethodListForDataSource(dataSource,style);
-      legendList = getLegendListForDataSource(dataSource,style);
-      
-      if(legendList==NULL){
-        CDBError("No legends defined for layer %s",dataSource->layerName.c_str());
-        delete styleNames;styleNames = NULL;
-        delete stringList;stringList = NULL;
-        delete renderMethods;renderMethods= NULL;
-        if(styleConfig!=NULL){styleConfig->hasError=true;}
-        return NULL;
-      }
-      for(size_t l=0;l<legendList->size();l++){
-        for(size_t r=0;r<renderMethods->size();r++){
-          if(renderMethods->get(r)->length()>0){
-            CT::string * styleName = new CT::string();
-            if(legendList->size()>1){
-              styleName->print("%s_%s/%s",styleNames->get(i)->c_str(),legendList->get(l)->c_str(),renderMethods->get(r)->c_str());
-            }else{
-              styleName->print("%s/%s",styleNames->get(i)->c_str(),renderMethods->get(r)->c_str());
-            }
-            
+        
+        renderMethods = getRenderMethodListForDataSource(dataSource,style);
+        legendList = getLegendListForDataSource(dataSource,style);
+        
+        if(legendList==NULL){
+          CDBError("No legends defined for layer %s",dataSource->layerName.c_str());
+          delete styleNames;styleNames = NULL;
+          delete stringList;stringList = NULL;
+          delete renderMethods;renderMethods= NULL;
+          if(styleConfig!=NULL){styleConfig->hasError=true;}
+          return NULL;
+        }
+  //       if(legendList->size()==0){
+  //         CDBError("Zero legends defined for layer %s",dataSource->layerName.c_str());
+  //         delete styleNames;styleNames = NULL;
+  //         delete stringList;stringList = NULL;
+  //         delete renderMethods;renderMethods= NULL;
+  //         if(styleConfig!=NULL){styleConfig->hasError=true;}
+  //         return NULL;
+  //       }if(renderMethods->size()==0){
+  //         CDBError("Zero renderMethods defined for layer %s",dataSource->layerName.c_str());
+  //         delete styleNames;styleNames = NULL;
+  //         delete stringList;stringList = NULL;
+  //         delete renderMethods;renderMethods= NULL;
+  //         if(styleConfig!=NULL){styleConfig->hasError=true;}
+  //         return NULL;
+  //       }
+        
+        for(size_t l=0;l<legendList->size();l++){
+          for(size_t r=0;r<renderMethods->size();r++){
+            if(renderMethods->get(r)->length()>0){
+              CT::string * styleName = new CT::string();
+              if(legendList->size()>1){
+                styleName->print("%s_%s/%s",styleNames->get(i)->c_str(),legendList->get(l)->c_str(),renderMethods->get(r)->c_str());
+              }else{
+                styleName->print("%s/%s",styleNames->get(i)->c_str(),renderMethods->get(r)->c_str());
+              }
+              
 
-            //CStyleConfiguration mode, try to find which stylename we want our CStyleConfiguration for.
-            if(styleConfig!=NULL){
-              #ifdef CIMAGEDATAWRITER_DEBUG    
-              CDBDebug("Matching '%s' == '%s'",styleName->c_str(),styleToSearchString.c_str());
-              #endif
-              if(styleToSearchString.equals(styleName)||isDefaultStyle==true){
-                // We found the correspondign legend/style and rendermethod corresponding with the requested stylename!
-                // Now fill in the CStyleConfiguration Object.
-                
-                
-                if(style!=NULL){
+              //CStyleConfiguration mode, try to find which stylename we want our CStyleConfiguration for.
+              if(styleConfig!=NULL){
+                #ifdef CIMAGEDATAWRITER_DEBUG    
+              //CDBDebug("Matching '%s' == '%s'",styleName->c_str(),styleToSearchString.c_str());
+                #endif
+                if(styleToSearchString.equals(styleName)||isDefaultStyle==true){
+                  // We found the correspondign legend/style and rendermethod corresponding with the requested stylename!
+                  // Now fill in the CStyleConfiguration Object.
                   
-                  for(size_t j=0;j<style->NameMapping.size();j++){
-                    if(renderMethods->get(r)->equals(style->NameMapping[j]->attr.name.c_str())){
-                      styleConfig->styleTitle.copy(style->NameMapping[j]->attr.title.c_str());
-                      styleConfig->styleAbstract.copy(style->NameMapping[j]->attr.abstract.c_str());
-                      break;
+                  
+                  if(style!=NULL){
+                    
+                    for(size_t j=0;j<style->NameMapping.size();j++){
+                      if(renderMethods->get(r)->equals(style->NameMapping[j]->attr.name.c_str())){
+                        styleConfig->styleTitle.copy(style->NameMapping[j]->attr.title.c_str());
+                        styleConfig->styleAbstract.copy(style->NameMapping[j]->attr.abstract.c_str());
+                        break;
+                      }
                     }
                   }
-                }
-                
-                int status = makeStyleConfig(styleConfig,dataSource,styleNames->get(i)->c_str(),legendList->get(l)->c_str(),renderMethods->get(r)->c_str());
-                delete styleName;
-                if(status == -1){
-                  styleConfig->hasError=true;
-                }
-                //Stop with iterating:
+                  
+                  int status = makeStyleConfig(styleConfig,dataSource,styleNames->get(i)->c_str(),legendList->get(l)->c_str(),renderMethods->get(r)->c_str());
+                  delete styleName;
+                  if(status == -1){
+                    styleConfig->hasError=true;
+                  }
+                  //Stop with iterating:
                 throw(__LINE__);
+                }
               }
+              
+              if(returnStringList){
+                stringList->push_back(styleName);
+              }else delete styleName;
             }
-            if(returnStringList)stringList->push_back(styleName);else delete styleName;
           }
         }
       }
@@ -980,6 +1009,7 @@ CT::PointerList<CT::string*> *CImageDataWriter::getStyleListForDataSource(CDataS
       styleConfig->hasError=true;
     }
   }catch(int e){
+
     delete legendList;
     delete renderMethods;
     delete styleNames;
@@ -996,6 +1026,7 @@ CT::PointerList<CT::string*> *CImageDataWriter::getStyleListForDataSource(CDataS
 * @param Legend a XMLE_Legend object configured in a style or in a layer
 * @return Pointer to a new stringlist with all possible legend names, must be deleted with delete. Is NULL on failure.
 */
+/*
 CT::PointerList<CT::string*> *CImageDataWriter::getLegendNames(std::vector <CServerConfig::XMLE_Legend*> Legend){
   if(Legend.size()==0){CDBError("No legends defined");return NULL;}
   CT::PointerList<CT::string*> *stringList = new CT::PointerList<CT::string*>();
@@ -1013,6 +1044,7 @@ CT::PointerList<CT::string*> *CImageDataWriter::getLegendNames(std::vector <CSer
   }
   return stringList;
 }
+*/
 
 /**
 * Returns a stringlist with all possible styles available for this style config object.
@@ -1844,7 +1876,7 @@ if(renderMethod==contour){CDBDebug("contour");}*/
       if(drawContour==true)bilinearSettings.printconcat("drawContour=true;");
       if (drawGridVectors)bilinearSettings.printconcat("drawGridVectors=true;");
       bilinearSettings.printconcat("smoothingFilter=%d;",dataSource->styleConfiguration->smoothingFilter);
-      if(drawShaded==true){
+      if(drawShaded==true||drawContour==true){
         bilinearSettings.printconcat("shadeInterval=%0.12f;contourBigInterval=%0.12f;contourSmallInterval=%0.12f;",
                                     dataSource->styleConfiguration->shadeInterval,dataSource->styleConfiguration->contourIntervalH,dataSource->styleConfiguration->contourIntervalL);
         
@@ -2218,8 +2250,9 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
         CDBError("warpImage for layer %s failed",dataSource->layerName.c_str());
         return status;
       }
-      
-      if(j==dataSources.size()-1){
+        }
+      //if(j==dataSources.size()-1)
+      {
         if(status == 0){
           
           if(dataSource->cfgLayer->ImageText.size()>0){
@@ -2229,18 +2262,20 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
               imageText.copy(dataSource->cfgLayer->ImageText[0]->value.c_str());
             }
           
-            //Determine ImageText based on configured netcdf attribute
-            const char *attrToSearch=dataSource->cfgLayer->ImageText[0]->attr.attribute.c_str();
-            if(attrToSearch!=NULL){
-              //CDBDebug("Determining ImageText based on netcdf attribute %s",attrToSearch);
-              try{
-                CDF::Attribute *attr=dataSource->getDataObject(0)->cdfObject->getAttribute(attrToSearch);
-                if(attr->length>0){
-                  imageText.copy(attrToSearch);
-                  imageText.concat(": ");
-                  imageText.concat(attr->toString().c_str());
+            if(dataSource->getNumDataObjects()>0){
+              //Determine ImageText based on configured netcdf attribute
+              const char *attrToSearch=dataSource->cfgLayer->ImageText[0]->attr.attribute.c_str();
+              if(attrToSearch!=NULL){
+                //CDBDebug("Determining ImageText based on netcdf attribute %s",attrToSearch);
+                try{
+                  CDF::Attribute *attr=dataSource->getDataObject(0)->cdfObject->getAttribute(attrToSearch);
+                  if(attr->length>0){
+                    imageText.copy(attrToSearch);
+                    imageText.concat(": ");
+                    imageText.concat(attr->toString().c_str());
+                  }
+                }catch(int e){
                 }
-              }catch(int e){
               }
             }
             
@@ -2252,7 +2287,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
           }
         }
       }
-    }
+  
     
     //draw a grid in lat/lon coordinates.
     if(dataSource->cfgLayer->Grid.size()==1){
@@ -3216,7 +3251,7 @@ int CImageDataWriter::end(){
             if(plotObject->elements[0]->dataSource->stretchMinMax == false){
               //Determine min max based on given datasource settings (scale/offset/log or min/max/log in config file)
               plotObject->minValue=getValueForColorIndex(plotObject->elements[0]->dataSource,0);
-              plotObject->maxValue=getValueForColorIndex(plotObject->elements[0]->dataSource,240);
+              plotObject->maxValue=getValueForColorIndex(plotObject->elements[0]->dataSource,239);
             }else{
               overallMinMaxValueWasEstimated = true;
             }
@@ -3695,7 +3730,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
   if(renderMethod&RM_RGBA){
       
       legendImage->setText("RGBA",5,0,0,248,-1);  
-      legendImage->crop(2,2);
+      legendImage->crop(4);
       return 0;
   }
   //legendImage->enableTransparency(true);
@@ -3704,7 +3739,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
       //legendImage->crop(40,40);
       //return 0;
   if(legendType == cascaded){
-      legendImage->crop(2,2);
+      legendImage->crop(4);
       return 0;
   }
   
@@ -3724,22 +3759,36 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
       estimateMinMax = false;
     }
   }
-   
-  //if(dataSource->getDataObject(0)->cdfVariable->data==NULL){
-  if(estimateMinMax){
-    #ifdef CIMAGEDATAWRITER_DEBUG
-    CDBDebug("Opening CNETCDFREADER_MODE_OPEN_ALL");
-    #endif
-    status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
-  }else{
-    #ifdef CIMAGEDATAWRITER_DEBUG
-    CDBDebug("Opening CNETCDFREADER_MODE_OPEN_HEADER");
-    #endif
-    status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
+
+  if(dataSource->srvParams->wmsExtensions.colorScaleRangeSet&&dataSource->srvParams->wmsExtensions.numColorBandsSet){
+     estimateMinMax = false;
   }
-  if(status!=0){
-    CDBError("Unable to open file");
-    return 1;
+  
+  
+  //if(dataSource->getDataObject(0)->cdfVariable->data==NULL){
+  if(strlen(dataSource->getFileName())>0){
+    if(estimateMinMax){
+      #ifdef CIMAGEDATAWRITER_DEBUG
+      CDBDebug("Opening CNETCDFREADER_MODE_OPEN_ALL");
+      #endif
+      status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
+    }else{
+      #ifdef CIMAGEDATAWRITER_DEBUG
+      CDBDebug("Opening CNETCDFREADER_MODE_OPEN_HEADER");
+      #endif
+      status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
+    }
+    
+    if(status!=0){
+      CDBError("Unable to open file");
+      return 1;
+    }
+  }else{
+    estimateMinMax = false;
+    #ifdef CIMAGEDATAWRITER_DEBUG
+    CDBDebug("createLegend without any file information");
+  #endif
+    
   }
   //}
   
@@ -3759,10 +3808,10 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
       legendType = discrete;
     }
   }
-  
+  /*
   if(legendType==continous){
     if(legendHeight>280)legendHeight=280;
-  }
+  }*/
 
   
   //Create a legend based on status flags.
@@ -3811,7 +3860,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
       drawLowerTriangle = true;
     
       float minValue = getValueForColorIndex(dataSource,0);
-      float maxValue = getValueForColorIndex(dataSource,240);
+      float maxValue = getValueForColorIndex(dataSource,239);
       if(dataSource->styleConfiguration->legendLowerRange>=minValue){
         drawLowerTriangle = false;
       }
@@ -3900,7 +3949,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
     double classes=6;
     int tickRound=0;
     double min=getValueForColorIndex(dataSource,0);
-    double max=getValueForColorIndex(dataSource,240);
+    double max=getValueForColorIndex(dataSource,239);
    
     if(dataSource->styleConfiguration->legendTickInterval>0){
       //classes=(max-min)/dataSource->styleConfiguration->legendTickInterval;
@@ -3950,6 +3999,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
   //Draw legend with fixed intervals
   if( legendType == discrete ){
     float cbW = 20;//legendWidth/8;
+    
     float cbH = legendHeight-13-13;
     
     //int dH=0;
@@ -3960,7 +4010,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
     
     //Get the min/max values
     float minValue = getValueForColorIndex(dataSource,0);
-    float maxValue = getValueForColorIndex(dataSource,240);
+    float maxValue = getValueForColorIndex(dataSource,239);
 
     if(estimateMinMax){
       if(dataSource->statistics==NULL){
@@ -3976,7 +4026,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
     //Calculate the number of classes
     float legendInterval=dataSource->styleConfiguration->shadeInterval;
     int numClasses=(int((maxValue-minValue)/legendInterval));
-    
+  
     /*
     // and reduce the number of classes when required...
     if(!dataSource->stretchMinMax){
@@ -4081,8 +4131,9 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
       */
       
       numClasses=int((iMax-iMin)/legendInterval);
-      int classSizeY=(180/(numClasses));
-      if(classSizeY>14)classSizeY=14;
+     
+      int classSizeY=((legendHeight-24)/(numClasses));
+      if(classSizeY>12)classSizeY=12;
       
       
       // Rounding of legend text depends on legendInterval
@@ -4112,7 +4163,11 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
         if(j<iMax)
         {
           int y=getColorIndexForValue(dataSource,v);
-          legendImage->rectangle(4+pLeft,cY2+pTop,int(cbW)+7+pLeft,cY+pTop,(y),248);
+          if(classSizeY>4){
+            legendImage->rectangle(4+pLeft,cY2+pTop,int(cbW)+7+pLeft,cY+pTop,(y),248);
+          }else{
+            legendImage->rectangle(4+pLeft,cY2+pTop,int(cbW)+7+pLeft,cY+pTop,(y),(y));
+          }
           if(textRounding<=0)sprintf(szTemp,"%2.0f - %2.0f",v,v+legendInterval);
           if(textRounding==1)sprintf(szTemp,"%2.1f - %2.1f",v,v+legendInterval);
           if(textRounding==2)sprintf(szTemp,"%2.2f - %2.2f",v,v+legendInterval);
@@ -4122,7 +4177,7 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
           if(textRounding==5)sprintf(szTemp,"%2.6f - %2.6f",v,v+legendInterval);
           if(textRounding>6)sprintf(szTemp,"%f - %f",v,v+legendInterval);
           int l=strlen(szTemp);
-          legendImage->setText(szTemp,l,(int)cbW+10+pLeft,((cY+cY2)/2)-7+pTop,248,-1);
+          legendImage->setText(szTemp,l,(int)cbW+10+pLeft,((cY+cY2)/2)-6+pTop,248,-1);
         }
 
       }
@@ -4143,7 +4198,7 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
   
 
 
-  legendImage->crop(4,4);
+  legendImage->crop(4);
   return 0;
 }
 
@@ -4326,3 +4381,131 @@ int CImageDataWriter::drawText(int x,int y,const char * fontlocation, float size
               v = vv*magnitude/newMagnitude;
               
     }
+
+int CImageDataWriter::createScaleBar(CDataSource *dataSource,CDrawImage *scaleBarImage){
+  #ifdef CIMAGEDATAWRITER_DEBUG
+  CDBDebug("createScaleBar");
+  #endif
+  class MakeScaleBar{
+  public:
+    class Props{
+    public:
+      int width;
+      int mapunits;
+    };
+    static Props getScaleBarProperties(CGeoParams *geoParams){
+      float desiredWidth = 25;
+      float realWidth = 0;
+      float numMapUnits=1./10000000.;
+      
+      
+      float boxWidth = geoParams->dfBBOX[2]-geoParams->dfBBOX[0];
+      float pixelsPerUnit = float(geoParams->dWidth)/boxWidth;
+      if(pixelsPerUnit<=0){
+        throw (__LINE__);
+      }
+      
+      float a = desiredWidth/pixelsPerUnit;
+      
+      
+       do{
+        numMapUnits*=10.;
+        float divFactor=a/numMapUnits;
+        if(divFactor==0)throw (__LINE__);
+        realWidth=desiredWidth/divFactor;
+        
+      }while(realWidth<desiredWidth);
+    
+      do{
+        numMapUnits/=2.;
+        float divFactor=a/numMapUnits;
+        realWidth=desiredWidth/divFactor;
+        
+      }while(realWidth>desiredWidth);
+      
+      do{
+        numMapUnits*=1.5;
+        float divFactor=a/numMapUnits;
+        realWidth=desiredWidth/divFactor;
+        
+      }while(realWidth<desiredWidth);
+      
+      
+      float roundedMapUnits = numMapUnits;
+      
+      float d=pow(10,round(log10(numMapUnits)+0.5)-1);
+      
+      roundedMapUnits=int(roundedMapUnits/d);
+      if(roundedMapUnits<2.5)roundedMapUnits=2.5;
+      if(roundedMapUnits>2.5&&roundedMapUnits<7.5)roundedMapUnits=5;
+      if(roundedMapUnits>7.5)roundedMapUnits=10;
+      roundedMapUnits=(roundedMapUnits*d);
+      
+      
+      float divFactor=(desiredWidth/pixelsPerUnit)/roundedMapUnits;
+      realWidth=desiredWidth/divFactor;
+      Props p;
+      
+      p.width = realWidth;
+      
+      p.mapunits = roundedMapUnits;
+      
+      return p;
+    }
+  };
+  
+  MakeScaleBar::Props p=MakeScaleBar::getScaleBarProperties(dataSource->srvParams->Geo);
+  
+  int offsetX=3;
+  int scaleBarHeight = 20;
+  
+  
+  for(int j=0;j<2;j++){
+    scaleBarImage->line(offsetX,scaleBarHeight-2-j,p.width*2+offsetX,scaleBarHeight-2-j,240);
+  }
+  
+  int subDivXW = p.width/5;
+  for(int j=1;j<5;j++){
+    scaleBarImage->line(offsetX+subDivXW*j,scaleBarHeight-2,offsetX+subDivXW*j,scaleBarHeight-2-3,240);
+  }
+  
+  scaleBarImage->line(offsetX,scaleBarHeight-2,offsetX,scaleBarHeight-2-7,240);
+  scaleBarImage->line(offsetX+p.width,scaleBarHeight-2,offsetX+p.width,scaleBarHeight-2-7,240);
+  scaleBarImage->line(offsetX+p.width*2,scaleBarHeight-2,offsetX+p.width*2,scaleBarHeight-2-7,240);
+  
+  
+  CT::string units="";
+  CT::string projection = dataSource->srvParams->Geo->CRS.c_str();
+  if(projection.equals("EPSG:3411"))units="meter";
+  if(projection.equals("EPSG:3412"))units="meter";
+  if(projection.equals("EPSG:3575"))units="meter";
+  if(projection.equals("EPSG:4326"))units="degrees";
+  if(projection.equals("EPSG:28992"))units="meter";
+  if(projection.equals("EPSG:32661"))units="meter";
+  if(projection.equals("EPSG:3857"))units="meter";
+  if(projection.equals("EPSG:900913"))units="meter";
+  if(projection.equals("EPSG:102100"))units="meter";
+  
+  
+  if(units.equals("meter")){
+    if(p.mapunits>1000){
+      p.mapunits/=1000;units="km";
+    }
+  }
+  
+  
+  CT::string valueStr;
+  
+  scaleBarImage->drawText(offsetX-2,8,0,"0",240);
+  
+  valueStr.print("%d",p.mapunits);
+  scaleBarImage->drawText(offsetX+p.width-valueStr.length()*2.5+1,8,0,valueStr.c_str(),240);
+  
+  valueStr.print("%d",p.mapunits*2);
+  scaleBarImage->drawText(offsetX+p.width*2-valueStr.length()*2.5+1,8,0,valueStr.c_str(),240);
+  
+  scaleBarImage->drawText(offsetX+p.width*2+10,18,0,units.c_str(),240);
+  
+  
+  return 0;
+}

@@ -105,6 +105,9 @@
 #define ALLOW_METADATA 8
 #define SHOW_QUERYINFO 16 
 
+#define MAX_IMAGE_WIDTH 8192
+#define MAX_IMAGE_HEIGHT 8192
+
 //#define CImgWarpBilinear_DEBUG
 //#define CImgWarpBilinear_TIME
 //#define MEASURETIME

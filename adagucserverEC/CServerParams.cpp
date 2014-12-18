@@ -46,6 +46,7 @@ CServerParams::CServerParams(){
   autoResourceCacheEnabled = -1;
   showDimensionsInImage = false;
   showLegendInImage = false;
+  showScaleBarInImage = false;
   figWidth=-1;
   figHeight=-1;
   dataBaseConnection = NULL;
@@ -575,4 +576,30 @@ CT::string CServerParams::getFileDate(const char *fileName){
   
    lookupTableFileModificationDateMap.insert(std::pair<std::string,std::string>(fileName,fileDate.c_str()));
   return fileDate;
+}
+
+
+
+/**
+* Returns a stringlist with all possible legends available for this Legend config object.
+* This is usually a configured legend element in a layer, or a configured legend element in a style.
+* @param Legend a XMLE_Legend object configured in a style or in a layer
+* @return Pointer to a new stringlist with all possible legend names, must be deleted with delete. Is NULL on failure.
+*/
+CT::PointerList<CT::string*> *CServerParams::getLegendNames(std::vector <CServerConfig::XMLE_Legend*> Legend){
+  if(Legend.size()==0){CDBError("No legends defined");return NULL;}
+  CT::PointerList<CT::string*> *stringList = new CT::PointerList<CT::string*>();
+  
+  for(size_t j=0;j<Legend.size();j++){
+    CT::string legendValue=Legend[j]->value.c_str();
+    CT::StackList<CT::string> l1=legendValue.splitToStack(",");
+    for(size_t i=0;i<l1.size();i++){
+      if(l1[i].length()>0){
+        CT::string * val = new CT::string();
+        stringList->push_back(val);
+        val->copy(&l1[i]);
+      }
+    }
+  }
+  return stringList;
 }

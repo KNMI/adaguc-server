@@ -458,8 +458,66 @@ class CFreeType{
     return 0;
   }
   
-    int drawFreeTypeText(int x,int y,float angle,const char *text){
+   /* int drawFreeTypeText(int x,int y,float angle,const char *text){
       //Draw text :)
+      if(library==NULL){
+        int status  = initializeFreeType();
+        if(status != 0){
+          return 1;
+        }
+        };
+      int error;
+      
+      //
+        FT_Stroker  stroker = NULL; 
+      error = FT_Stroker_New( library, &stroker ); 
+      
+      //
+      
+      
+      
+      
+      int n;
+      int my_target_height = 8;
+      int num_chars=strlen(text);
+      slot = face->glyph;
+    
+      matrix.xx = (FT_Fixed)( cos( angle ) * 0x10000L );
+      matrix.xy = (FT_Fixed)(-sin( angle ) * 0x10000L );
+      matrix.yx = (FT_Fixed)( sin( angle ) * 0x10000L );
+      matrix.yy = (FT_Fixed)( cos( angle ) * 0x10000L ); 
+      
+      //line_noaa(matrix.xx+x,matrix.xy+y,matrix.yx+x,matrix.yy+y);
+
+      pen.x = x * 64; pen.y = ( my_target_height - y ) * 64;
+
+      for ( n = 0; n < num_chars; n++ ) {
+        
+        
+        FT_Set_Transform( face, &matrix, &pen ); 
+        //error = FT_Load_Char( face, text[n], FT_LOAD_RENDER ); 
+        //error = FT_Load_Glyph(face, text[n]-29, FT_LOAD_RENDER);
+        int glyphIndex = FT_Get_Char_Index(face,(unsigned char)(text[n]));
+        error = FT_Load_Glyph(face,glyphIndex, FT_LOAD_RENDER);
+
+        if ( error ){
+          CDBError("unable toFT_Load_Char");
+          return 1;
+        }
+     
+        renderFont( &slot->bitmap, slot->bitmap_left, my_target_height - slot->bitmap_top ); 
+      
+        //char t[2];t[1]=0;t[0]=text[n];
+        //printf("%s %d\n",t,face->glyph->linearHoriAdvance);
+        //plot(slot->bitmap_left, my_target_height - slot->bitmap_top, 1);
+        
+        pen.x += slot->advance.x; pen.y += slot->advance.y; 
+      }
+      return 0;
+    }*/
+       int _drawFreeTypeText(int x,int y,int &w,int &h,float angle,const char *text,bool render){
+      //Draw text :)
+      w=0;h=0;
       if(library==NULL){
         int status  = initializeFreeType();
         if(status != 0){
@@ -505,16 +563,28 @@ class CFreeType{
           return 1;
         }
         /* now, draw to our target surface (convert position) */ 
-        renderFont( &slot->bitmap, slot->bitmap_left, my_target_height - slot->bitmap_top ); 
+        if(render){
+          renderFont( &slot->bitmap, slot->bitmap_left, my_target_height - slot->bitmap_top ); 
+        }
         /* increment pen position */  
         //char t[2];t[1]=0;t[0]=text[n];
         //printf("%s %d\n",t,face->glyph->linearHoriAdvance);
         //plot(slot->bitmap_left, my_target_height - slot->bitmap_top, 1);
         
         pen.x += slot->advance.x; pen.y += slot->advance.y; 
+        w += slot->advance.x/64;
+        h += slot->advance.y/64;
       }
       return 0;
     }
+    
+  int getTextSize(int &w,int &h,float angle,const char *text){
+    return _drawFreeTypeText(0, 0,w,h,angle,text,false);
+  }
+  int drawFreeTypeText(int x,int y,float angle,const char *text){
+    int w,h;
+    return _drawFreeTypeText( x, y,w,h,angle,text,true);
+  }
 };
 int writeRGBAPng(int width,int height,unsigned char *aggBytebuf,FILE *file,bool trueColor);
 

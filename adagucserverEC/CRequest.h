@@ -207,6 +207,7 @@ private:
     int process_wms_getmap_request();
     int process_wms_getmetadata_request();
     int process_wms_getfeatureinfo_request();
+    int process_wms_getstyles_request();
     int process_wms_getlegendgraphic_request();
     int process_wcs_getcap_request();
     int process_wcs_describecov_request();
