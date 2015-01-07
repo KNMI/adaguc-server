@@ -38,6 +38,102 @@
 #include "CPGSQLDB.h"
 #include "CStyleConfiguration.h"
 
+
+/**
+ * Class which holds min and max values.
+ * isSet indicates whether the values have been set or not.
+ */
+class MinMax{
+public:
+  MinMax(){
+    isSet = false;
+  }
+  bool isSet;
+  double min,max;
+};
+
+
+/**
+ * Returns minmax values for a data array
+ * throws integer if no min max are found
+ * @param data The data array in double format
+ * @param hasFillValue Is there a nodata value
+ * @param fillValue the Nodata value
+ * @param numElements The length of the data array
+ * @return minmax object
+ */
+static MinMax getMinMax(float *data, bool hasFillValue, double fillValue,size_t numElements){
+  MinMax minMax;
+  bool firstSet = false;
+  for(size_t j=0;j<numElements;j++){
+    float v=data[j];
+    if(v==v){
+      if(v!=fillValue||(!hasFillValue)){
+        if(firstSet == false){
+          firstSet = true;
+          minMax.min=v;
+          minMax.max=v;
+          minMax.isSet=true;
+        }
+        if(v<minMax.min)minMax.min=v;
+        if(v>minMax.max)minMax.max=v;
+      }
+    }
+  }
+  if(minMax.isSet==false){
+    throw __LINE__+100;
+  }
+  return minMax;
+}      
+
+
+/**
+ * Returns minmax values for a variable
+ * @param var The variable to retrieve the min max for.
+ * @return minmax object
+ */
+static MinMax getMinMax(CDF::Variable *var){
+  MinMax minMax;
+  if(var!=NULL){
+ 
+      float *data = (float*)var->data;
+      
+      float scaleFactor=1,addOffset=0,fillValue = 0;
+      bool hasFillValue = false;
+      
+      try{
+        var->getAttribute("scale_factor")->getData(&scaleFactor,1);
+      }catch(int e){}
+      try{
+        var->getAttribute("add_offset")->getData(&addOffset,1);
+      }catch(int e){}
+      try{
+        var->getAttribute("_FillValue")->getData(&fillValue,1);
+        hasFillValue = true;
+      }catch(int e){}
+      
+      size_t lsize= var->getSize();
+      
+      //Apply scale and offset
+      if(scaleFactor!=1||addOffset!=0){
+        for(size_t j=0;j<lsize;j++){
+          data[j]=data[j]*scaleFactor+addOffset;
+        }
+        fillValue=fillValue*scaleFactor+addOffset;
+      }
+      
+
+      minMax = getMinMax(data,hasFillValue,fillValue,lsize);
+    
+  }else{
+    //CDBError("getMinMax: Variable has not been set");
+    throw __LINE__+100;
+  }
+  return minMax;
+}
+
+
+
 /**
  * This class represents data to be used further in the server. Specific  metadata and data is filled in by CDataReader
  * This class is used for both image drawing (WMS) and data output (WCS)

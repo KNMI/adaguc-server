@@ -1244,6 +1244,10 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         if(dataSources[d]->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_POINT")!=NULL){
           openAll =true;
         }  
+        
+         if(dataSources[d]->getDataObject(0)->cdfVariable->getAttributeNE("UGRID_MESH")!=NULL){
+          openAll =true;
+        }  
       }
     }
   
