@@ -26,6 +26,7 @@
 #include "CDFObjectStore.h"
 const char *CDFObjectStore::className="CDFObjectStore";
 #include "CConvertASCAT.h"
+#include "CConvertUGRIDMesh.h"
 #include "CConvertADAGUCVector.h"
 #include "CConvertADAGUCPoint.h"
 #include "CConvertCurvilinear.h"
@@ -247,7 +248,9 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *s
   
 
   bool level2CompatMode = false;
-   
+  
+  if(!level2CompatMode)if(CConvertUGRIDMesh::convertUGRIDMeshHeader(cdfObject)==0){level2CompatMode=true;};
+  
   if(!level2CompatMode)if(CConvertASCAT::convertASCATHeader(cdfObject)==0){level2CompatMode=true;};
    
   if(!level2CompatMode)if(CConvertADAGUCVector::convertADAGUCVectorHeader(cdfObject)==0){level2CompatMode=true;};

@@ -401,7 +401,8 @@ private:
     T *data=(T*)dataSource->getDataObject(0)->cdfVariable->data;
     for(int y=0;y<drawImage->Geo->dHeight;y++){
       for(int x=0;x<drawImage->Geo->dWidth;x++){
-          T val= data[x+y*drawImage->Geo->dWidth];
+        T val= data[x+y*drawImage->Geo->dWidth];
+
           bool isNodata=false;
           if(hasNodataValue){if(val==nodataValue)isNodata=true;else if(!(val==val))isNodata=true;}
           if(!isNodata)if(legendValueRange)if(val<legendLowerRange||val>legendUpperRange)isNodata=true;
@@ -416,7 +417,8 @@ private:
             if(pcolorind>=239)pcolorind=239;else if(pcolorind<=0)pcolorind=0;
 
             drawImage->setPixelIndexed(x,drawImage->Geo->dHeight-y,pcolorind);
-        }
+          }
+        
       }
     }
   }
