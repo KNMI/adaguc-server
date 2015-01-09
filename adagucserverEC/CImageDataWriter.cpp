@@ -916,7 +916,11 @@ CT::PointerList<CT::string*> *CImageDataWriter::getStyleListForDataSource(CDataS
           }
         }
       }
-      if(dStyleIndex!=-1){
+      
+      //TODO CHECK, why did we add this line?:
+      //if(dStyleIndex!=-1)
+      {
+        
         CServerConfig::XMLE_Style* style = NULL;
         if(dStyleIndex!=-1)style=serverCFG->Style[dStyleIndex];
         
