@@ -615,7 +615,7 @@ int CDrawImage::drawTextArea(int x,int y,const char *fontfile, float size, float
      ftTitle->setColor(fgcolor.r,fgcolor.g,fgcolor.b,fgcolor.a);
      ftTitle->setFillColor(bgcolor.r,bgcolor.g,bgcolor.b,bgcolor.a);
 //      freeType->drawFilledText(x,y,angle,text);
-    float textScale = 1;
+    //float textScale = 1;
       float textY = 0;
       int width = Geo->dWidth-x;
       int w,h;
@@ -631,7 +631,7 @@ int CDrawImage::drawTextArea(int x,int y,const char *fontfile, float size, float
         }while(w>width&&length>=0);
         length++;
       
-        if(length+offset<title.length()){
+        if(length+offset<(int)title.length()){
           int sl = length;
           while(text.charAt(sl+offset)!=' '&&sl>0){
             sl--;
@@ -656,7 +656,7 @@ int CDrawImage::drawTextArea(int x,int y,const char *fontfile, float size, float
 //           length = title.length();
 //           break;
 //         }
-      }while(length<int(title.length())-1&&offset<title.length()-1);
+      }while(length<(int)(title.length())-1&&(int)offset<(int)title.length()-1);
       delete ftTitle;
       
       return textY;

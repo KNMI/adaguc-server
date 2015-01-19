@@ -178,16 +178,18 @@ class CImgWarpBilinear:public CImageWarperRenderInterface{
         if(val==float(dataSource->getDataObject(0)->dfNodataValue))isNodata=true;
         if(!(val==val))isNodata=true;
       }
-      if(!isNodata)
-        if(dataSource->styleConfiguration->hasLegendValueRange==1)
-          if(val<dataSource->styleConfiguration->legendLowerRange||val>dataSource->styleConfiguration->legendUpperRange)isNodata=true;
+      if(!isNodata){
+        CStyleConfiguration *styleConfiguration = dataSource->getStyle();
+        if(styleConfiguration->hasLegendValueRange==1)
+          if(val<styleConfiguration->legendLowerRange||val>styleConfiguration->legendUpperRange)isNodata=true;
           if(!isNodata){
-            if(dataSource->styleConfiguration->legendLog!=0)val=log10(val+.000001)/log10(dataSource->styleConfiguration->legendLog);
-            val*=dataSource->styleConfiguration->legendScale;
-            val+=dataSource->styleConfiguration->legendOffset;
+            if(styleConfiguration->legendLog!=0)val=log10(val+.000001)/log10(styleConfiguration->legendLog);
+            val*=styleConfiguration->legendScale;
+            val+=styleConfiguration->legendOffset;
             if(val>=239)val=239;else if(val<0)val=0;
             return int(val);
           }
+      }
       return 0;
     }
     
@@ -198,14 +200,15 @@ class CImgWarpBilinear:public CImageWarperRenderInterface{
         if(val==float(dataSource->getDataObject(0)->dfNodataValue)){isNodata=true;  return;}
         if(!(val==val)){isNodata=true;  return;}
       }
-    
-      if(!isNodata)
-        if(dataSource->styleConfiguration->hasLegendValueRange==1)
-          if(val<dataSource->styleConfiguration->legendLowerRange||val>dataSource->styleConfiguration->legendUpperRange)isNodata=true;
+      CStyleConfiguration *styleConfiguration = dataSource->getStyle();
       if(!isNodata){
-        if(dataSource->styleConfiguration->legendLog!=0)val=log10(val+.000001)/log10(dataSource->styleConfiguration->legendLog);
-        val*=dataSource->styleConfiguration->legendScale;
-        val+=dataSource->styleConfiguration->legendOffset;
+        if(styleConfiguration->hasLegendValueRange==1)
+          if(val<styleConfiguration->legendLowerRange||val>styleConfiguration->legendUpperRange)isNodata=true;
+      }
+      if(!isNodata){
+        if(styleConfiguration->legendLog!=0)val=log10(val+.000001)/log10(styleConfiguration->legendLog);
+        val*=styleConfiguration->legendScale;
+        val+=styleConfiguration->legendOffset;
         if(val>=239)val=239;else if(val<0)val=0;
         drawImage->setPixelIndexed(destX,destY,(unsigned char)val);
       }

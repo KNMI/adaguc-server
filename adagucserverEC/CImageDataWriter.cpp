@@ -244,7 +244,7 @@ class PlotObject{
       };
 
 const char * CImageDataWriter::className = "CImageDataWriter";
-const char * CImageDataWriter::RenderMethodStringList="nearest";//, bilinear, contour, vector, barb, barbcontour, shaded,shadedcontour,vectorcontour,vectorcontourshaded,nearestcontour,bilinearcontour";
+
 CImageDataWriter::CImageDataWriter(){
   
   //Mode can be "uninitialized"0 "initialized"(1) and "finished" (2)
@@ -393,10 +393,10 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
       if(initializeLegend(srvParam,dataSource)!=0)return 1;
   }
   
-
-  if(dataSource->styleConfiguration!=NULL){
+  CStyleConfiguration *styleConfiguration = dataSource->getStyle();
+  if(styleConfiguration!=NULL){
   
-    if(dataSource->styleConfiguration->renderMethod&RM_RGBA){
+    if(styleConfiguration->renderMethod&RM_RGBA){
     
       drawImage.setTrueColor(true);
       if(   srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
@@ -507,14 +507,14 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
     }
   }
 
-  if(dataSource->styleConfiguration!=NULL){
-    if(dataSource->styleConfiguration->legendIndex != -1){
+  if(styleConfiguration!=NULL){
+    if(styleConfiguration->legendIndex != -1){
       //Create palette for internal WNS layer
       if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
     //    if(initializeLegend(srvParam,dataSource)!=0)return 1;
-        status = drawImage.createGDPalette(srvParam->cfg->Legend[dataSource->styleConfiguration->legendIndex]);
+        status = drawImage.createGDPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);
         if(status != 0){
-          CDBError("Unknown palette type for %s",srvParam->cfg->Legend[dataSource->styleConfiguration->legendIndex]->attr.name.c_str());
+          CDBError("Unknown palette type for %s",srvParam->cfg->Legend[styleConfiguration->legendIndex]->attr.name.c_str());
           return 1;
         }
       }
@@ -527,603 +527,7 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
 }
 
 
-/**
-* 
-*/
-void CImageDataWriter::calculateScaleAndOffsetFromMinMax(float &scale, float &offset,float min,float max,float log){
-  if(log!=0.0f){
-    //CDBDebug("LOG = %f",log);
-    min=log10(min)/log10(log);
-    max=log10(max)/log10(log);
-  }
-    
-  scale=240/(max-min);
-  offset=min*(-scale);
-}
 
-/**
-* Fills in the styleConfig object based on datasource,stylename, legendname and rendermethod
-* 
-* @param styleConfig
-* 
-* 
-*/
-int CImageDataWriter::makeStyleConfig(CStyleConfiguration *styleConfig,CDataSource *dataSource,const char *styleName,const char *legendName,const char *renderMethod){
-  CT::string errorMessage;
-  CT::string renderMethodString = renderMethod;
-  CT::StackList<CT::string> sl = renderMethodString.splitToStack("/");
-  if(sl.size()==2){
-    renderMethodString.copy(&sl[0]);
-    //if(sl[1].equals("HQ")){CDBDebug("32bitmode");}
-  }
-
-  styleConfig->renderMethod = CStyleConfiguration::getRenderMethodFromString(&renderMethodString);
-  if(styleConfig->renderMethod == RM_UNDEFINED){errorMessage.print("rendermethod %s",renderMethod); }
-  styleConfig->styleIndex   = getServerStyleIndexByName(styleName,dataSource->cfg->Style);
-  //if(styleConfig->styleIndex == -1){errorMessage.print("styleIndex %s",styleName); }
-  styleConfig->legendIndex  = getServerLegendIndexByName(legendName,dataSource->cfg->Legend);
-  if(styleConfig->legendIndex == -1){errorMessage.print("legendIndex %s",legendName); }
-  
-  if(errorMessage.length()>0){
-    CDBError("Unable to configure style: %s is invalid",errorMessage.c_str());
-    return -1;
-  }
-  
-  //Set defaults
-  CStyleConfiguration * s = styleConfig;
-  s->shadeInterval=0.0f;
-  s->contourIntervalL=0.0f;
-  s->contourIntervalH=0.0f;
-  s->legendScale = 0.0f;
-  s->legendOffset = 0.0f;
-  s->legendLog = 0.0f;
-  s->legendLowerRange = 0.0f;
-  s->legendUpperRange = 0.0f;
-  s->smoothingFilter = 0;
-  s->hasLegendValueRange = false;
-  
-  
-  float min =0.0f;
-  float max=0.0f;
-  s->minMaxSet = false;
-  
-  if(s->styleIndex!=-1){
-    //Get info from style
-    CServerConfig::XMLE_Style* style = dataSource->cfg->Style[s->styleIndex];
-    s->styleConfig = style;
-    if(style->Scale.size()>0)s->legendScale=parseFloat(style->Scale[0]->value.c_str());
-    if(style->Offset.size()>0)s->legendOffset=parseFloat(style->Offset[0]->value.c_str());
-    if(style->Log.size()>0)s->legendLog=parseFloat(style->Log[0]->value.c_str());
-    
-    if(style->ContourIntervalL.size()>0)s->contourIntervalL=parseFloat(style->ContourIntervalL[0]->value.c_str());
-    if(style->ContourIntervalH.size()>0)s->contourIntervalH=parseFloat(style->ContourIntervalH[0]->value.c_str());
-    s->shadeInterval=s->contourIntervalL;
-    if(style->ShadeInterval.size()>0)s->shadeInterval=parseFloat(style->ShadeInterval[0]->value.c_str());
-    if(style->SmoothingFilter.size()>0)s->smoothingFilter=parseInt(style->SmoothingFilter[0]->value.c_str());
-    
-    if(style->ValueRange.size()>0){
-      s->hasLegendValueRange=true;
-      s->legendLowerRange=parseFloat(style->ValueRange[0]->attr.min.c_str());
-      s->legendUpperRange=parseFloat(style->ValueRange[0]->attr.max.c_str());
-    }
-    
-    
-    if(style->Min.size()>0){min=parseFloat(style->Min[0]->value.c_str());s->minMaxSet=true;}
-    if(style->Max.size()>0){max=parseFloat(style->Max[0]->value.c_str());s->minMaxSet=true;}
-    
-    s->contourLines=&style->ContourLine;
-    s->shadeIntervals=&style->ShadeInterval;
-    
-    if(style->Legend.size()>0){
-      if(style->Legend[0]->attr.tickinterval.empty()==false){
-        styleConfig->legendTickInterval = parseDouble(style->Legend[0]->attr.tickinterval.c_str());
-      }
-      if(style->Legend[0]->attr.tickround.empty()==false){
-        styleConfig->legendTickRound = parseDouble(style->Legend[0]->attr.tickround.c_str());
-      }
-      if(style->Legend[0]->attr.fixedclasses.equals("true")){
-        styleConfig->legendHasFixedMinMax=true;
-      }
-    }
-    
-    
-  }
-  
-  //Legend settings can always be overriden in the layer itself!
-  CServerConfig::XMLE_Layer* layer = dataSource->cfgLayer;
-  if(layer->Scale.size()>0)s->legendScale=parseFloat(layer->Scale[0]->value.c_str());
-  if(layer->Offset.size()>0)s->legendOffset=parseFloat(layer->Offset[0]->value.c_str());
-  if(layer->Log.size()>0)s->legendLog=parseFloat(layer->Log[0]->value.c_str());
-  
-  if(layer->ContourIntervalL.size()>0)s->contourIntervalL=parseFloat(layer->ContourIntervalL[0]->value.c_str());
-  if(layer->ContourIntervalH.size()>0)s->contourIntervalH=parseFloat(layer->ContourIntervalH[0]->value.c_str());
-  if(s->shadeInterval == 0.0f)s->shadeInterval = s->contourIntervalL;
-  if(layer->ShadeInterval.size()>0)s->shadeInterval=parseFloat(layer->ShadeInterval[0]->value.c_str());
-  if(layer->SmoothingFilter.size()>0)s->smoothingFilter=parseInt(layer->SmoothingFilter[0]->value.c_str());
-  
-  if(layer->ValueRange.size()>0){
-    s->hasLegendValueRange=true;
-    s->legendLowerRange=parseFloat(layer->ValueRange[0]->attr.min.c_str());
-    s->legendUpperRange=parseFloat(layer->ValueRange[0]->attr.max.c_str());
-  }
-  
-  if(layer->Min.size()>0){min=parseFloat(layer->Min[0]->value.c_str());s->minMaxSet=true;}
-  if(layer->Max.size()>0){max=parseFloat(layer->Max[0]->value.c_str());s->minMaxSet=true;}
-
-  if(layer->ContourLine.size()>0){
-    s->contourLines=&layer->ContourLine;
-  }
-  if(layer->ShadeInterval.size()>0){
-    s->shadeIntervals=&layer->ShadeInterval;
-  }
-  
-  if(layer->Legend.size()>0){
-    if(layer->Legend[0]->attr.tickinterval.empty()==false){
-      styleConfig->legendTickInterval = parseDouble(layer->Legend[0]->attr.tickinterval.c_str());
-    }
-    if(layer->Legend[0]->attr.tickround.empty()==false){
-      styleConfig->legendTickRound = parseDouble(layer->Legend[0]->attr.tickround.c_str());
-    }
-    if(layer->Legend[0]->attr.fixedclasses.equals("true")){
-      styleConfig->legendHasFixedMinMax=true;
-    }
-  }
-  
-  //Min and max can again be overriden by WMS extension settings
-  if( dataSource->srvParams->wmsExtensions.colorScaleRangeSet){
-    s->minMaxSet=true;
-    min=dataSource->srvParams->wmsExtensions.colorScaleRangeMin;
-    max=dataSource->srvParams->wmsExtensions.colorScaleRangeMax;
-  }
-  //Log can again be overriden by WMS extension settings
-  if(dataSource->srvParams->wmsExtensions.logScale){
-    s->legendLog=10;
-  }
-      
-  if(dataSource->srvParams->wmsExtensions.numColorBandsSet){
-    float interval = (max-min)/dataSource->srvParams->wmsExtensions.numColorBands;
-    s->shadeInterval=interval;
-    s->contourIntervalL=interval;
-    if(dataSource->srvParams->wmsExtensions.numColorBands>0&&dataSource->srvParams->wmsExtensions.numColorBands<300){
-      s->legendTickInterval=int((max-min)/double(dataSource->srvParams->wmsExtensions.numColorBands)+0.5);
-      //s->legendTickRound = s->legendTickInterval;//pow(10,(log10(s->legendTickInterval)-1));
-      //if(s->legendTickRound > 0.1)s->legendTickRound =0.1;
-      // 
-    }
-  }
-        
-  
-  
-  //When min and max are given, calculate the scale and offset according to min and max.
-  if(s->minMaxSet){
-    #ifdef CIMAGEDATAWRITER_DEBUG          
-    CDBDebug("Found min and max in layer configuration");
-    #endif      
-    calculateScaleAndOffsetFromMinMax(s->legendScale,s->legendOffset,min,max,s->legendLog);
-    
-    dataSource->stretchMinMax = false;
-    //s->legendScale=240/(max-min);
-    //s->legendOffset=min*(-s->legendScale);
-  }
-    
-  //Some safety checks, we cannot create contourlines with negative values.
-  /*if(s->contourIntervalL<=0.0f||s->contourIntervalH<=0.0f){
-    if(s->renderMethod==contour||
-      s->renderMethod==bilinearcontour||
-      s->renderMethod==nearestcontour){
-      s->renderMethod=nearest;
-      }
-  }*/
-  CT::string styleDump;
-  styleConfig->printStyleConfig(&styleDump);
-  #ifdef CIMAGEDATAWRITER_DEBUG          
-  CDBDebug("FOUND legend %s, rendermethod %s, style %s.",legendName,renderMethod,styleName);
-  CDBDebug("styleDump:\n%s",styleDump.c_str());
-  #endif
-  return 0;
-}
-
-
-/**
-* Returns a stringlist with all available legends for this datasource and chosen style.
-* @param dataSource pointer to the datasource 
-* @param style pointer to the style to find the legends for
-* @return stringlist with the list of available legends.
-*/
-
-
-CT::PointerList<CT::string*> *CImageDataWriter::getLegendListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style* style){
-  
-  if(dataSource->cfgLayer->Legend.size()>0){
-    return CServerParams::getLegendNames(dataSource->cfgLayer->Legend);
-  }else{
-    if(style!=NULL){
-      return CServerParams::getLegendNames(style->Legend);
-    }
-  }
-  CDBError("No legendlist for layer %s",dataSource->layerName.c_str());
-  return NULL;
-}
-
-
-/**
-* Returns a stringlist with all available rendermethods for this datasource and chosen style.
-* @param dataSource pointer to the datasource 
-* @param style pointer to the style to find the rendermethods for
-* @return stringlist with the list of available rendermethods.
-*/
-CT::PointerList<CT::string*> *CImageDataWriter::getRenderMethodListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style* style){
-  //List all the desired rendermethods
-  CT::string renderMethodList;
-  
-  if(style!=NULL){
-    if(style->RenderMethod.size()==1){
-      renderMethodList.copy(style->RenderMethod[0]->value.c_str());
-    }
-  }
-  
-  //rendermethods defined in the layers override rendermethods defined in the style
-  if(dataSource->cfgLayer->RenderMethod.size()==1){
-    renderMethodList.copy(dataSource->cfgLayer->RenderMethod[0]->value.c_str());
-  }
-  //If still no list of rendermethods is found, use the default list
-  if(renderMethodList.length()==0){
-    renderMethodList.copy(CImageDataWriter::RenderMethodStringList);
-  }
-  
-  CT::PointerList<CT::string*> * renderMethods = renderMethodList.splitToPointer(",");
-  if(dataSource!=NULL){
-    if(dataSource->getNumDataObjects()>0){
-      if(dataSource->getDataObject(0)->cdfObject!=NULL){
-        
-        try{
-          if(dataSource->getDataObject(0)->cdfObject->getAttribute("featureType")->toString().equals("timeSeries")||dataSource->getDataObject(0)->cdfObject->getAttribute("featureType")->toString().equals("point")){
-            renderMethods->insert(renderMethods->begin(),1,new CT::string("pointnearest"));
-          }
-        }catch(int e){
-        }
-      }
-    }
-  }
-  return  renderMethods;
-}
-
-/**
-* This function calls getStyleListForDataSource in mode (1).
-* 
-* @param dataSource pointer to the datasource to find the stylelist for
-* @return the stringlist with all possible stylenames. Pointer should be deleted with delete!
-*/
-CT::PointerList<CT::string*> *CImageDataWriter::getStyleListForDataSource(CDataSource *dataSource){
-  return getStyleListForDataSource(dataSource,NULL);
-}
-
-/**
-* Sets a new CStyleConfiguration in datasource which contains all settings for the corresponding styles. This function calls getStyleListForDataSource in mode(2).
-* @param styleName
-* @param serverCFG
-*/
-void CImageDataWriter::getStyleConfigurationByName(const char *styleName,CDataSource *dataSource){
-  #ifdef CIMAGEDATAWRITER_DEBUG    
-  CDBDebug("getStyleConfigurationByName for layer %s with name %s",dataSource->layerName.c_str(),styleName);
-  #endif
-  //CServerConfig::XMLE_Configuration *serverCFG = dataSource->cfg;
-  
-  
-  dataSource->styleConfiguration->reset();
-  dataSource->styleConfiguration->styleCompositionName=styleName;
-  getStyleListForDataSource(dataSource,dataSource->styleConfiguration);
-  
-
-}
-
-
-
-/**
-* This function has two modes, return a string list (1) or (2) configure a CStyleConfiguration object.
-*   (1) Returns a stringlist with all possible style names for a datasource, when styleConfig is set to NULL.
-*   (2) When a styleConfig is provided, this function fills in the provided CStyleConfiguration object, 
-*   the styleCompositionName needs to be set in advance (The stylename usually given in the request string)
-* 
-* @param dataSource pointer to the datasource to find the stylelist for
-* @param styleConfig pointer to the CStyleConfiguration object to be filled in. 
-* @return the stringlist with all possible stylenames
-*/
-CT::PointerList<CT::string*> *CImageDataWriter::getStyleListForDataSource(CDataSource *dataSource,CStyleConfiguration *styleConfig){
-//  CDBDebug("getStyleListForDataSource");
-  CT::PointerList<CT::string*> *stringList = new CT::PointerList<CT::string*>();
-  CServerConfig::XMLE_Configuration *serverCFG = dataSource->cfg;
-  CT::string styleToSearchString;
-  bool isDefaultStyle = false;
-  bool returnStringList = true;
-  
-  if(styleConfig!=NULL){
-    styleConfig->hasError=false;
-    returnStringList=false;
-    styleConfig->contourLines = NULL;
-    styleConfig->shadeIntervals=NULL;
-    delete stringList;stringList = NULL;
-    styleToSearchString.copy(&styleConfig->styleCompositionName);
-    if(styleToSearchString.equals("default")||styleToSearchString.equals("default/HQ")){
-      isDefaultStyle = true;
-    }
-  }
-  
-
-  CT::PointerList<CT::string*> *renderMethods = NULL;
-  CT::PointerList<CT::string*> *legendList = NULL;
-  
-  //Auto configure styles, if no legends or styles are defined
-  if(dataSource->cfgLayer->Styles.size()==0&&dataSource->cfgLayer->Legend.size()==0){
-    
-    renderMethods = getRenderMethodListForDataSource(dataSource,NULL);
-    if(renderMethods->size()>0){
-      //For cascaded and rgba layers, no styles need to be defined
-      if((CStyleConfiguration::getRenderMethodFromString(renderMethods->get(0))&RM_RGBA)){
-        CDBDebug("%s",renderMethods->get(0)->c_str());
-        delete renderMethods ; 
-        if(styleConfig!=NULL){
-          CDBDebug("Setting rendermethod RM_RGBA");
-          styleConfig->styleTitle.copy("rgba");
-          styleConfig->styleAbstract.copy("rgba");
-          styleConfig->renderMethod = RM_RGBA;
-        }
-        //CT::string * styleName = new CT::string();
-        //styleName->copy("default");
-        //stringList->push_back(renderMethods->get(0)->c_str());
-        //stringList->push_back(styleName);
-        if(stringList!=NULL){
-          CT::string * styleName = new CT::string();
-          styleName->copy(renderMethods->get(0)->c_str());
-          stringList->push_back(styleName);
-        }
-        return stringList;
-        
-      }
-      CDataReader::autoConfigureStyles(dataSource);
-    }
-  }
-  
-  delete renderMethods ;  renderMethods  = NULL;
-    
-  CT::PointerList<CT::string*> *styleNames = getStyleNames(dataSource->cfgLayer->Styles);
-
-  //We always skip the style "default" if there are more styles.
-  size_t start=0;if(styleNames->size()>1)start=1;
-  
-
-  //Loop over the styles.
-  try{
-    for(size_t i=start;i<styleNames->size();i++){
-      
-      //Lookup the style index in the servers configuration
-      int dStyleIndex=getServerStyleIndexByName(styleNames->get(i)->c_str(),serverCFG->Style);
-      if(dStyleIndex==-1){
-        if(returnStringList){
-          if(styleNames->get(i)->equals("default")==false){
-            CDBError("Style %s not found for layer %s",styleNames->get(i)->c_str(),dataSource->layerName.c_str());
-            delete styleNames;styleNames = NULL;
-            delete stringList;stringList = NULL;
-            return NULL;
-          }else{
-            CDBDebug("Warning: Style [%s] not found (%d)",styleNames->get(i)->c_str(),styleNames->get(i)->equals("default"));
-//             CT::string * styleName = new CT::string();
-//             styleName->copy("default");
-//            
-//             stringList->push_back(styleName);
-//             delete styleNames;styleNames = NULL;
-//             return stringList;
-//            continue;
-          }
-        }
-      }
-      
-      //TODO CHECK, why did we add this line?:
-      //if(dStyleIndex!=-1)
-      {
-        
-        CServerConfig::XMLE_Style* style = NULL;
-        if(dStyleIndex!=-1)style=serverCFG->Style[dStyleIndex];
-        
-      
-        
-        renderMethods = getRenderMethodListForDataSource(dataSource,style);
-        legendList = getLegendListForDataSource(dataSource,style);
-        
-        if(legendList==NULL){
-          CDBError("No legends defined for layer %s",dataSource->layerName.c_str());
-          delete styleNames;styleNames = NULL;
-          delete stringList;stringList = NULL;
-          delete renderMethods;renderMethods= NULL;
-          if(styleConfig!=NULL){styleConfig->hasError=true;}
-          return NULL;
-        }
-  //       if(legendList->size()==0){
-  //         CDBError("Zero legends defined for layer %s",dataSource->layerName.c_str());
-  //         delete styleNames;styleNames = NULL;
-  //         delete stringList;stringList = NULL;
-  //         delete renderMethods;renderMethods= NULL;
-  //         if(styleConfig!=NULL){styleConfig->hasError=true;}
-  //         return NULL;
-  //       }if(renderMethods->size()==0){
-  //         CDBError("Zero renderMethods defined for layer %s",dataSource->layerName.c_str());
-  //         delete styleNames;styleNames = NULL;
-  //         delete stringList;stringList = NULL;
-  //         delete renderMethods;renderMethods= NULL;
-  //         if(styleConfig!=NULL){styleConfig->hasError=true;}
-  //         return NULL;
-  //       }
-        
-        for(size_t l=0;l<legendList->size();l++){
-          for(size_t r=0;r<renderMethods->size();r++){
-            if(renderMethods->get(r)->length()>0){
-              CT::string * styleName = new CT::string();
-              if(legendList->size()>1){
-                styleName->print("%s_%s/%s",styleNames->get(i)->c_str(),legendList->get(l)->c_str(),renderMethods->get(r)->c_str());
-              }else{
-                styleName->print("%s/%s",styleNames->get(i)->c_str(),renderMethods->get(r)->c_str());
-              }
-              
-
-              //CStyleConfiguration mode, try to find which stylename we want our CStyleConfiguration for.
-              if(styleConfig!=NULL){
-                #ifdef CIMAGEDATAWRITER_DEBUG    
-              //CDBDebug("Matching '%s' == '%s'",styleName->c_str(),styleToSearchString.c_str());
-                #endif
-                if(styleToSearchString.equals(styleName)||isDefaultStyle==true){
-                  // We found the correspondign legend/style and rendermethod corresponding with the requested stylename!
-                  // Now fill in the CStyleConfiguration Object.
-                  
-                  
-                  if(style!=NULL){
-                    
-                    for(size_t j=0;j<style->NameMapping.size();j++){
-                      if(renderMethods->get(r)->equals(style->NameMapping[j]->attr.name.c_str())){
-                        styleConfig->styleTitle.copy(style->NameMapping[j]->attr.title.c_str());
-                        styleConfig->styleAbstract.copy(style->NameMapping[j]->attr.abstract.c_str());
-                        break;
-                      }
-                    }
-                  }
-                  
-                  int status = makeStyleConfig(styleConfig,dataSource,styleNames->get(i)->c_str(),legendList->get(l)->c_str(),renderMethods->get(r)->c_str());
-                  delete styleName;
-                  if(status == -1){
-                    styleConfig->hasError=true;
-                  }
-                  //Stop with iterating:
-                throw(__LINE__);
-                }
-              }
-              
-              if(returnStringList){
-                stringList->push_back(styleName);
-              }else delete styleName;
-            }
-          }
-        }
-      }
-      delete legendList;legendList =NULL;
-      delete renderMethods;renderMethods = NULL;
-    }
-    delete styleNames; styleNames = NULL;
-    
-    // We have been through the loop, but the styleConfig has not been created. This is an error.
-    if(styleConfig!=NULL){
-      CDBError("Unable to find style %s",styleToSearchString.c_str());
-      styleConfig->hasError=true;
-    }
-  }catch(int e){
-
-    delete legendList;
-    delete renderMethods;
-    delete styleNames;
-    delete stringList;stringList=NULL;
-  }
-    
-  return stringList;
-}
-
-
-/**
-* Returns a stringlist with all possible legends available for this Legend config object.
-* This is usually a configured legend element in a layer, or a configured legend element in a style.
-* @param Legend a XMLE_Legend object configured in a style or in a layer
-* @return Pointer to a new stringlist with all possible legend names, must be deleted with delete. Is NULL on failure.
-*/
-/*
-CT::PointerList<CT::string*> *CImageDataWriter::getLegendNames(std::vector <CServerConfig::XMLE_Legend*> Legend){
-  if(Legend.size()==0){CDBError("No legends defined");return NULL;}
-  CT::PointerList<CT::string*> *stringList = new CT::PointerList<CT::string*>();
-  
-  for(size_t j=0;j<Legend.size();j++){
-    CT::string legendValue=Legend[j]->value.c_str();
-    CT::StackList<CT::string> l1=legendValue.splitToStack(",");
-    for(size_t i=0;i<l1.size();i++){
-      if(l1[i].length()>0){
-        CT::string * val = new CT::string();
-        stringList->push_back(val);
-        val->copy(&l1[i]);
-      }
-    }
-  }
-  return stringList;
-}
-*/
-
-/**
-* Returns a stringlist with all possible styles available for this style config object.
-* @param Style a pointer to XMLE_Style vector configured in a layer
-* @return Pointer to a new stringlist with all possible style names, must be deleted with delete. Is NULL on failure.
-*/
-CT::PointerList<CT::string*> *CImageDataWriter::getStyleNames(std::vector <CServerConfig::XMLE_Styles*> Styles){
-  CT::PointerList<CT::string*> *stringList = new CT::PointerList<CT::string*>();
-  CT::string * val = new CT::string();
-  stringList->push_back(val);
-  val->copy("default");
-  for(size_t j=0;j<Styles.size();j++){
-    if(Styles[j]->value.empty()==false){
-      CT::string StyleValue=Styles[j]->value.c_str();
-      if(StyleValue.length()>0){
-        CT::StackList<CT::string>  l1=StyleValue.splitToStack(",");
-        for(size_t i=0;i<l1.size();i++){
-          if(l1[i].length()>0){
-            CT::string * val = new CT::string();
-            stringList->push_back(val);
-            val->copy(&l1[i]);
-          }
-        }
-      }
-    }
-  }
-
-  return stringList;
-}
-
-
-
-/**
-* Retrieves the position of for the requested style name in the servers configured style elements.
-* @param styleName The name of the style to locate
-* @param serverStyles Pointer to the servers configured styles.
-* @return The style index as integer, points to the position in the servers configured styles. Is -1 on failure.
-*/
-int  CImageDataWriter::getServerStyleIndexByName(const char * styleName,std::vector <CServerConfig::XMLE_Style*> serverStyles){
-  if(styleName==NULL){
-    CDBError("No style name provided");
-    return -1;
-  }
-  CT::string styleString = styleName;
-  if(styleString.equals("default")||styleString.equals("default/HQ"))return -1;
-  for(size_t j=0;j<serverStyles.size();j++){
-    if(serverStyles[j]->attr.name.empty()==false){
-      if(styleString.equals(serverStyles[j]->attr.name.c_str())){
-        return j;
-      }
-    }
-  }
-  CDBError("No style found with name [%s]",styleName);
-  return -1;
-}
-
-/**
-* Retrieves the position of for the requested legend name in the servers configured legend elements.
-* @param legendName The name of the legend to locate
-* @param serverLegends Pointer to the servers configured legends.
-* @return The legend index as integer, points to the position in the servers configured legends. Is -1 on failure.
-*/
-int  CImageDataWriter::getServerLegendIndexByName(const char * legendName,std::vector <CServerConfig::XMLE_Legend*> serverLegends){
-  int dLegendIndex=-1;
-  CT::string legendString = legendName;
-  if(legendName==NULL)return -1;
-  for(size_t j=0;j<serverLegends.size()&&dLegendIndex==-1;j++){
-    if(legendString.equals(serverLegends[j]->attr.name.c_str())){
-      dLegendIndex=j;
-      break;
-    }
-  }
-  return dLegendIndex;
-}
 
 int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *dataSource){
   if(currentDataSource != NULL){
@@ -1143,40 +547,20 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
     CDBError("Unable to do setTransparencyAndBGColor");
     return -1;
   }
+ 
+  //CStyleConfiguration *styleConfiguration = dataSource->getStyle();
+//   if(styleConfiguration->hasError){
+//     CDBError("Unable to configure style %s for layer %s\n",styleName.c_str(),dataSource->layerName.c_str());
+//   
+//     return -1;
+//   }
   
-  CT::string styleName="default";
-  CT::string styles(srvParam->Styles.c_str());
-  #ifdef CIMAGEDATAWRITER_DEBUG    
-  CDBDebug("Server Styles=%s",srvParam->Styles.c_str());
-  #endif
-  //TODO CHECK CDBDebug("Server Styles=%s",srvParam->Styles.c_str());
-  //CDBDebug("Server Styles=%s",srvParam->Styles.c_str());
-  CT::StackList<CT::string> layerstyles = styles.splitToStack(",");
-  int layerIndex=dataSource->datasourceIndex;
-  if(layerstyles.size()!=0){
-    //Make sure default layer index is within the right bounds.
-    if(layerIndex<0)layerIndex=0;
-    if(layerIndex>((int)layerstyles.size())-1)layerIndex=layerstyles.size()-1;
-    styleName=layerstyles[layerIndex].c_str();
-    if(styleName.length()==0){
-      styleName.copy("default");
-    }
-  }
-
-  CImageDataWriter::getStyleConfigurationByName(styleName.c_str(),dataSource);
-  
-  if(dataSource->styleConfiguration->hasError){
-    CDBError("Unable to configure style %s for layer %s\n",styleName.c_str(),dataSource->layerName.c_str());
-  
-    return -1;
-  }
-  
-//   dataSource->styleConfiguration->legendScale = dataSource->styleConfiguration->legendScale;
-//   dataSource->styleConfiguration->legendOffset = dataSource->styleConfiguration->legendOffset;
-//   dataSource->styleConfiguration->legendLog = dataSource->styleConfiguration->legendLog;
-//   dataSource->styleConfiguration->legendLowerRange = dataSource->styleConfiguration->legendLowerRange;
-//   dataSource->styleConfiguration->legendUpperRange = dataSource->styleConfiguration->legendUpperRange;
-//   dataSource->legendValueRange = dataSource->styleConfiguration->hasLegendValueRange;
+//   styleConfiguration->legendScale = styleConfiguration->legendScale;
+//   styleConfiguration->legendOffset = styleConfiguration->legendOffset;
+//   styleConfiguration->legendLog = styleConfiguration->legendLog;
+//   styleConfiguration->legendLowerRange = styleConfiguration->legendLowerRange;
+//   styleConfiguration->legendUpperRange = styleConfiguration->legendUpperRange;
+//   dataSource->legendValueRange = styleConfiguration->hasLegendValueRange;
   
   #ifdef CIMAGEDATAWRITER_DEBUG    
   CDBDebug("/initializeLegend");
@@ -1805,7 +1189,8 @@ if(renderMethod==nearestcontour){CDBDebug("nearestcontour");}
 if(renderMethod==contour){CDBDebug("contour");}*/
 
   CImageWarperRenderInterface *imageWarperRenderer;
-  CStyleConfiguration::RenderMethod renderMethod = dataSource->styleConfiguration->renderMethod;
+  CStyleConfiguration *styleConfiguration = dataSource->getStyle();
+  CStyleConfiguration::RenderMethod renderMethod = styleConfiguration->renderMethod;
   /**
   * Use fast nearest neighbourrenderer
   */
@@ -1884,14 +1269,14 @@ if(renderMethod==contour){CDBDebug("contour");}*/
       if(drawShaded==true)bilinearSettings.printconcat("drawShaded=true;");
       if(drawContour==true)bilinearSettings.printconcat("drawContour=true;");
       if (drawGridVectors)bilinearSettings.printconcat("drawGridVectors=true;");
-      bilinearSettings.printconcat("smoothingFilter=%d;",dataSource->styleConfiguration->smoothingFilter);
+      bilinearSettings.printconcat("smoothingFilter=%d;",styleConfiguration->smoothingFilter);
       if(drawShaded==true||drawContour==true){
         bilinearSettings.printconcat("shadeInterval=%0.12f;contourBigInterval=%0.12f;contourSmallInterval=%0.12f;",
-                                    dataSource->styleConfiguration->shadeInterval,dataSource->styleConfiguration->contourIntervalH,dataSource->styleConfiguration->contourIntervalL);
+                                    styleConfiguration->shadeInterval,styleConfiguration->contourIntervalH,styleConfiguration->contourIntervalL);
         
-        if(dataSource->styleConfiguration->shadeIntervals!=NULL){
-          for(size_t j=0;j<dataSource->styleConfiguration->shadeIntervals->size();j++){
-            CServerConfig::XMLE_ShadeInterval *shadeInterval=((*dataSource->styleConfiguration->shadeIntervals)[j]);
+        if(styleConfiguration->shadeIntervals!=NULL){
+          for(size_t j=0;j<styleConfiguration->shadeIntervals->size();j++){
+            CServerConfig::XMLE_ShadeInterval *shadeInterval=((*styleConfiguration->shadeIntervals)[j]);
             if(shadeInterval->attr.min.empty()==false&&shadeInterval->attr.max.empty()==false){
               bilinearSettings.printconcat("shading=min(%s)$max(%s)$",shadeInterval->attr.min.c_str(),shadeInterval->attr.max.c_str());
               if(shadeInterval->attr.fillcolor.empty()==false){bilinearSettings.printconcat("$fillcolor(%s)$",shadeInterval->attr.fillcolor.c_str());}
@@ -1902,9 +1287,9 @@ if(renderMethod==contour){CDBDebug("contour");}*/
       }
       if(drawContour==true){
         
-        if(dataSource->styleConfiguration->contourLines!=NULL){
-          for(size_t j=0;j<dataSource->styleConfiguration->contourLines->size();j++){
-            CServerConfig::XMLE_ContourLine * contourLine=((*dataSource->styleConfiguration->contourLines)[j]);
+        if(styleConfiguration->contourLines!=NULL){
+          for(size_t j=0;j<styleConfiguration->contourLines->size();j++){
+            CServerConfig::XMLE_ContourLine * contourLine=((*styleConfiguration->contourLines)[j]);
             //Check if we have a interval contour line or a contourline with separate classes
             if(contourLine->attr.interval.empty()==false){
               //ContourLine interval
@@ -2238,10 +1623,10 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
         #endif
 
         if(initializeLegend(srvParam,dataSource)!=0)return 1;
-        
-        status = drawImage.createGDPalette(srvParam->cfg->Legend[dataSource->styleConfiguration->legendIndex]);
+        CStyleConfiguration *styleConfiguration = dataSource->getStyle();
+        status = drawImage.createGDPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);
         if(status != 0){
-          CDBError("Unknown palette type for %s",srvParam->cfg->Legend[dataSource->styleConfiguration->legendIndex]->attr.name.c_str());
+          CDBError("Unknown palette type for %s",srvParam->cfg->Legend[styleConfiguration->legendIndex]->attr.name.c_str());
           return 1;
         }
         
@@ -3320,19 +2705,20 @@ int CImageDataWriter::end(){
       int tickRound=0;
 
       CDataSource * dataSource=getFeatureInfoResultList[0]->elements[0]->dataSource;
-      //CDBDebug("tickinterval = %f",dataSource->styleConfiguration->legendTickInterval);
-      if(dataSource->styleConfiguration->legendTickInterval>0.0f){
-        classes=(plotObjects[0]->minValue-plotObjects[0]->maxValue)/dataSource->styleConfiguration->legendTickInterval;
+      //CDBDebug("tickinterval = %f",styleConfiguration->legendTickInterval);
+      CStyleConfiguration *styleConfiguration = dataSource->getStyle();
+      if(styleConfiguration->legendTickInterval>0.0f){
+        classes=(plotObjects[0]->minValue-plotObjects[0]->maxValue)/styleConfiguration->legendTickInterval;
       }
       
       
-      if(dataSource->styleConfiguration->legendTickRound>0){
-        tickRound = int(round(log10(dataSource->styleConfiguration->legendTickRound))+3);
+      if(styleConfiguration->legendTickRound>0){
+        tickRound = int(round(log10(styleConfiguration->legendTickRound))+3);
       }
      
       
-      float scale=dataSource->styleConfiguration->legendScale;
-      float offset=dataSource->styleConfiguration->legendOffset;
+      float scale=styleConfiguration->legendScale;
+      float offset=styleConfiguration->legendOffset;
       
  
       scale=240.0f/(overallMaxValue-overallMinValue);
@@ -3421,7 +2807,7 @@ int CImageDataWriter::end(){
         float v=((float(j)/classes))*(240.0f);
         v-=offset;
         v/=scale;
-        if(dataSource->styleConfiguration->legendLog!=0){v=pow(dataSource->styleConfiguration->legendLog,v);}
+        if(styleConfiguration->legendLog!=0){v=pow(styleConfiguration->legendLog,v);}
     
         //if(j!=0)
         lineCanvas.line(0,(int)c,plotWidth,(int)c,0.5,CColor(0,0,128,128));
@@ -3547,10 +2933,10 @@ int CImageDataWriter::end(){
               float v1l=v1;
               float v2l=v2;
               bool noData=false;
-              if(dataSource->styleConfiguration->legendLog!=0){
+              if(styleConfiguration->legendLog!=0){
                 if ((v1>0)&&(v2>0)){
-                  v1l=log10(v1l)/log10(dataSource->styleConfiguration->legendLog);
-                  v2l=log10(v2l)/log10(dataSource->styleConfiguration->legendLog);
+                  v1l=log10(v1l)/log10(styleConfiguration->legendLog);
+                  v2l=log10(v2l)/log10(styleConfiguration->legendLog);
                 } else {
                   noData=true;
                 }
@@ -3672,40 +3058,42 @@ float CImageDataWriter::getValueForColorIndex(CDataSource *dataSource,int index)
 //     //maxValue+=10;
 //     float ls=240/(maxValue-minValue);
 //     float lo=-(minValue*ls);
-//     dataSource->styleConfiguration->legendScale=ls;
-//     dataSource->styleConfiguration->legendOffset=lo;
+//     styleConfiguration->legendScale=ls;
+//     styleConfiguration->legendOffset=lo;
 //     
 //     //Check for infinities
+    CStyleConfiguration *styleConfiguration = dataSource->getStyle();
     if(
-      dataSource->styleConfiguration->legendScale!=dataSource->styleConfiguration->legendScale||
-      dataSource->styleConfiguration->legendScale==INFINITY||
-      dataSource->styleConfiguration->legendScale==NAN||
-      dataSource->styleConfiguration->legendScale==0.0||
-      dataSource->styleConfiguration->legendScale==-INFINITY||
-      dataSource->styleConfiguration->legendOffset!=dataSource->styleConfiguration->legendOffset||
-      dataSource->styleConfiguration->legendOffset==INFINITY||
-      dataSource->styleConfiguration->legendOffset==NAN||
-      dataSource->styleConfiguration->legendOffset==-INFINITY){
-      dataSource->styleConfiguration->legendScale=240.0;
-      dataSource->styleConfiguration->legendOffset=0;
+      styleConfiguration->legendScale!=styleConfiguration->legendScale||
+      styleConfiguration->legendScale==INFINITY||
+      styleConfiguration->legendScale==NAN||
+      styleConfiguration->legendScale==0.0||
+      styleConfiguration->legendScale==-INFINITY||
+      styleConfiguration->legendOffset!=styleConfiguration->legendOffset||
+      styleConfiguration->legendOffset==INFINITY||
+      styleConfiguration->legendOffset==NAN||
+      styleConfiguration->legendOffset==-INFINITY){
+      styleConfiguration->legendScale=240.0;
+      styleConfiguration->legendOffset=0;
     }
 //     //CDBDebug("max=%f; min=%f",maxValue,minValue);
 //     //CDBDebug("scale=%f; offset=%f",ls,lo);
 //     }
 //   }  
   float v=index;
-  v-=dataSource->styleConfiguration->legendOffset;
-  v/=dataSource->styleConfiguration->legendScale;
-  if(dataSource->styleConfiguration->legendLog!=0){
-    v=pow(dataSource->styleConfiguration->legendLog,v);
+  v-=styleConfiguration->legendOffset;
+  v/=styleConfiguration->legendScale;
+  if(styleConfiguration->legendLog!=0){
+    v=pow(styleConfiguration->legendLog,v);
   }
   return v;
 }
 int CImageDataWriter::getColorIndexForValue(CDataSource *dataSource,float value){
+  CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   float val=value;
-  if(dataSource->styleConfiguration->legendLog!=0)val=log10(val+.000001)/log10(dataSource->styleConfiguration->legendLog);
-  val*=dataSource->styleConfiguration->legendScale;
-  val+=dataSource->styleConfiguration->legendOffset;
+  if(styleConfiguration->legendLog!=0)val=log10(val+.000001)/log10(styleConfiguration->legendLog);
+  val*=styleConfiguration->legendScale;
+  val+=styleConfiguration->legendOffset;
   if(val>=239)val=239;else if(val<0)val=0;
   return int(val);
 }
@@ -3737,7 +3125,8 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
   }
  
   CDataReader reader;
-  CStyleConfiguration::RenderMethod renderMethod = dataSource->styleConfiguration->renderMethod;
+  CStyleConfiguration *styleConfiguration = dataSource->getStyle();
+  CStyleConfiguration::RenderMethod renderMethod = styleConfiguration->renderMethod;
 
   if(renderMethod&RM_RGBA){
       
@@ -3759,13 +3148,13 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
   if(renderMethod&RM_SHADED||renderMethod&RM_CONTOUR){
     //We need to open all the data, because we need to estimate min/max for legend drawing
     estimateMinMax = true;
-    if(dataSource->styleConfiguration->legendHasFixedMinMax==true){
+    if(styleConfiguration->legendHasFixedMinMax==true){
       estimateMinMax=false;
     }
   }else {
     //When the scale factor is zero (0.0f) we need to open the data too, because we want to estimate min/max in this case.
     //When the scale factor is given, we only need to open the header, for displaying the units.
-    if(dataSource->styleConfiguration->legendScale==0.0f){
+    if(styleConfiguration->legendScale==0.0f){
       estimateMinMax = true;
     }else{
       estimateMinMax = false;
@@ -3867,16 +3256,16 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
     bool drawUpperTriangle = false;
     bool drawLowerTriangle = false;
     
-    if(dataSource->styleConfiguration->hasLegendValueRange){
+    if(styleConfiguration->hasLegendValueRange){
       drawUpperTriangle = true;
       drawLowerTriangle = true;
     
       float minValue = getValueForColorIndex(dataSource,0);
       float maxValue = getValueForColorIndex(dataSource,239);
-      if(dataSource->styleConfiguration->legendLowerRange>=minValue){
+      if(styleConfiguration->legendLowerRange>=minValue){
         drawLowerTriangle = false;
       }
-      if(dataSource->styleConfiguration->legendUpperRange<=maxValue){
+      if(styleConfiguration->legendUpperRange<=maxValue){
         drawUpperTriangle = false;
       }
     }
@@ -3963,27 +3352,27 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
     double min=getValueForColorIndex(dataSource,0);
     double max=getValueForColorIndex(dataSource,239);
    
-    if(dataSource->styleConfiguration->legendTickInterval>0){
-      //classes=(max-min)/dataSource->styleConfiguration->legendTickInterval;
-      classes=int((max-min)/double(dataSource->styleConfiguration->legendTickInterval)+0.5);
+    if(styleConfiguration->legendTickInterval>0){
+      //classes=(max-min)/styleConfiguration->legendTickInterval;
+      classes=int((max-min)/double(styleConfiguration->legendTickInterval)+0.5);
     }
     
     
     
     
-    if(dataSource->styleConfiguration->legendTickRound>0){
-      tickRound = int(round(log10(dataSource->styleConfiguration->legendTickRound))+3);
+    if(styleConfiguration->legendTickRound>0){
+      tickRound = int(round(log10(styleConfiguration->legendTickRound))+3);
     }
 
      
-    //CDBDebug("LEGEND: scale %f offset %f",dataSource->styleConfiguration->legendScale,dataSource->styleConfiguration->legendOffset);
+    //CDBDebug("LEGEND: scale %f offset %f",styleConfiguration->legendScale,styleConfiguration->legendOffset);
     for(int j=0;j<=classes;j++){
       double c=((double(classes*legendPositiveUp-j)/classes))*(cbH);
       double v=((double(j)/classes))*(240.0f);
-      v-=dataSource->styleConfiguration->legendOffset;
+      v-=styleConfiguration->legendOffset;
       
-      if(dataSource->styleConfiguration->legendScale != 0)v/=dataSource->styleConfiguration->legendScale;
-      if(dataSource->styleConfiguration->legendLog!=0){v=pow(dataSource->styleConfiguration->legendLog,v);}
+      if(styleConfiguration->legendScale != 0)v/=styleConfiguration->legendScale;
+      if(styleConfiguration->legendLog!=0){v=pow(styleConfiguration->legendLog,v);}
       
       //if(v<=max)
       {
@@ -4036,7 +3425,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
     
     
     //Calculate the number of classes
-    float legendInterval=dataSource->styleConfiguration->shadeInterval;
+    float legendInterval=styleConfiguration->shadeInterval;
     int numClasses=(int((maxValue-minValue)/legendInterval));
   
     /*
@@ -4050,7 +3439,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
 #ifdef CIMAGEDATAWRITER_DEBUG
 CDBDebug("LayerName = %s",dataSource->layerName.c_str());
 CDBDebug("minValue=%f maxValue=%f",minValue,maxValue);
-CDBDebug("scale=%f offset=%f",dataSource->styleConfiguration->legendScale,dataSource->styleConfiguration->legendOffset);    
+CDBDebug("scale=%f offset=%f",styleConfiguration->legendScale,styleConfiguration->legendOffset);    
 #endif
     float iMin=convertValueToClass(minValue,legendInterval);
     float iMax=convertValueToClass(maxValue,legendInterval)+legendInterval;
@@ -4073,20 +3462,20 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
         lo=0;
         
       }
-      dataSource->styleConfiguration->legendScale=ls;
-      dataSource->styleConfiguration->legendOffset=lo;
+      styleConfiguration->legendScale=ls;
+      styleConfiguration->legendOffset=lo;
       //Check for infinities
      if(
-      dataSource->styleConfiguration->legendScale!=dataSource->styleConfiguration->legendScale||
-      dataSource->styleConfiguration->legendScale==INFINITY||
-      dataSource->styleConfiguration->legendScale==NAN||
-      dataSource->styleConfiguration->legendScale==-INFINITY||
-      dataSource->styleConfiguration->legendOffset!=dataSource->styleConfiguration->legendOffset||
-      dataSource->styleConfiguration->legendOffset==INFINITY||
-      dataSource->styleConfiguration->legendOffset==NAN||
-      dataSource->styleConfiguration->legendOffset==-INFINITY){
-      dataSource->styleConfiguration->legendScale=240.0;
-      dataSource->styleConfiguration->legendOffset=0;
+      styleConfiguration->legendScale!=styleConfiguration->legendScale||
+      styleConfiguration->legendScale==INFINITY||
+      styleConfiguration->legendScale==NAN||
+      styleConfiguration->legendScale==-INFINITY||
+      styleConfiguration->legendOffset!=styleConfiguration->legendOffset||
+      styleConfiguration->legendOffset==INFINITY||
+      styleConfiguration->legendOffset==NAN||
+      styleConfiguration->legendOffset==-INFINITY){
+      styleConfiguration->legendScale=240.0;
+      styleConfiguration->legendOffset=0;
     }
     }
     
@@ -4094,8 +3483,8 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
     bool discreteLegendOnInterval=false;
     bool definedLegendOnShadeClasses=false;
     
-    if(dataSource->styleConfiguration->shadeIntervals!=NULL){
-      if(dataSource->styleConfiguration->shadeIntervals->size()>0){
+    if(styleConfiguration->shadeIntervals!=NULL){
+      if(styleConfiguration->shadeIntervals->size()>0){
         definedLegendOnShadeClasses=true;
       }
     }
@@ -4110,8 +3499,8 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
     
     if(definedLegendOnShadeClasses){
       char szTemp[1024];
-      for(size_t j=0;j<dataSource->styleConfiguration->shadeIntervals->size();j++){
-        CServerConfig::XMLE_ShadeInterval *s=(*dataSource->styleConfiguration->shadeIntervals)[j];
+      for(size_t j=0;j<styleConfiguration->shadeIntervals->size();j++){
+        CServerConfig::XMLE_ShadeInterval *s=(*styleConfiguration->shadeIntervals)[j];
         if(s->attr.min.empty()==false&&s->attr.max.empty()==false){
           int cY1 = int(cbH-(j*12));
           int cY2 = int(cbH-(((j+1)*12)-2));

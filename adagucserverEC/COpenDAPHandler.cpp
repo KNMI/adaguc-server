@@ -152,8 +152,9 @@ int COpenDAPHandler::HandleOpenDAPRequest(const char *path,const char *query,CSe
     
     static int doDimQuery(){
     //(select distinct(time) from t20141023t161424734_6f2njpjcbnic9ykow48 order by time limit 1 offset 11)a;
-
+      return 0;
     }
+    
   };
 
   
