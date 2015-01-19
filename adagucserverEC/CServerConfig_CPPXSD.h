@@ -74,6 +74,35 @@ class CServerConfig:public CXMLSerializerInterface{
       }
     };
     
+    class XMLE_Thinning: public CXMLObjectInterface{
+    public:
+      class Cattr{
+      public:
+        CXMLString radius;
+      }attr;
+      void addAttribute(const char *attrname,const char *attrvalue){
+        if(equals("radius",6 ,attrname)){attr.radius.copy(attrvalue);return;}
+      }
+    };
+    
+    class XMLE_Disc: public CXMLObjectInterface{
+    public:
+      class Cattr{
+      public:
+        CXMLString fillcolor,linecolor,textcolor,fontfile,fontsize,discradius;
+      }attr;
+      void addAttribute(const char *attrname,const char *attrvalue){
+        if(equals("fillcolor",9,attrname)){attr.fillcolor.copy(attrvalue);return;}
+        else if(equals("linecolor",9,attrname)){attr.linecolor.copy(attrvalue);return;}
+        else if(equals("textcolor",9,attrname)){attr.textcolor.copy(attrvalue);return;}
+        else if(equals("fontfile",8,attrname)){attr.fontfile.copy(attrvalue);return;}
+        else if(equals("fontsize",8,attrname)){attr.fontsize.copy(attrvalue);return;}
+        else if(equals("discradius",10,attrname)){attr.discradius.copy(attrvalue);return;}
+        
+      }
+    };
+    
+    
     class XMLE_Legend: public CXMLObjectInterface{
       public:
         std::vector <XMLE_palette*> palette;
@@ -325,6 +354,8 @@ class CServerConfig:public CXMLSerializerInterface{
     class XMLE_RenderMethod: public CXMLObjectInterface{};
     class XMLE_Style: public CXMLObjectInterface{
       public:
+        std::vector <XMLE_Thinning*> Thinning;
+        std::vector <XMLE_Disc*> Disc;
         std::vector <XMLE_Legend*> Legend;
         std::vector <XMLE_Scale*> Scale;
         std::vector <XMLE_Offset*> Offset;
@@ -343,6 +374,8 @@ class CServerConfig:public CXMLSerializerInterface{
         
         
         ~XMLE_Style(){
+          XMLE_DELOBJ(Thinning);
+          XMLE_DELOBJ(Disc);
           XMLE_DELOBJ(Legend);
           XMLE_DELOBJ(Scale);
           XMLE_DELOBJ(Offset);
@@ -371,7 +404,9 @@ class CServerConfig:public CXMLSerializerInterface{
           if(rc==0)if(value!=NULL)this->value.copy(value);
           if(rc==1){
            
-            if(equals("Legend",6,name)){XMLE_ADDOBJ(Legend);}
+            if(equals("Thinning",8,name)){XMLE_ADDOBJ(Thinning);}
+            else if(equals("Disc",4,name)){XMLE_ADDOBJ(Disc);}
+            else if(equals("Legend",6,name)){XMLE_ADDOBJ(Legend);}
             else if(equals("Scale",5,name)){XMLE_ADDOBJ(Scale);}
             else if(equals("Offset",6,name)){XMLE_ADDOBJ(Offset);}
             else if(equals("Min",3,name)){XMLE_ADDOBJ(Min);}
