@@ -632,7 +632,8 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource,int mode
     float *swathData = (float*)swathVar->data;
     
     bool drawBilinear=false;
-    if(dataSource->styleConfiguration->styleCompositionName.indexOf("bilinear")>=0){
+    CStyleConfiguration *styleConfiguration = dataSource->getStyle();
+    if(styleConfiguration->styleCompositionName.indexOf("bilinear")>=0){
       
       drawBilinear=true;
     }

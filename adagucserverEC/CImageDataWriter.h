@@ -66,7 +66,7 @@ private:
     //int status;
     int animation;
     int nrImagesAdded;
-    static void calculateScaleAndOffsetFromMinMax(float &scale, float &offset,float min,float max,float log);
+    
     
     
     
@@ -135,23 +135,15 @@ private:
     int drawCascadedWMS(CDataSource *dataSource,const char *service,const char *layers,bool transparent);
     
     
-    static CT::PointerList<CT::string*> *getLegendListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style* style);
-    //static CT::PointerList<CT::string*> *getLegendNames(std::vector <CServerConfig::XMLE_Legend*> Legend);
-    static CT::PointerList<CT::string*> *getStyleNames(std::vector <CServerConfig::XMLE_Styles*> Styles);
-    static CT::PointerList<CT::string*> *getStyleListForDataSource(CDataSource *dataSource,CStyleConfiguration *styleConfig);
+    
     
   public:
-    static CT::PointerList<CT::string*> *getRenderMethodListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style* style);      
-    
     CDrawImage drawImage;
-    //CStyleConfiguration * currentStyleConfiguration;
-    static int  getServerLegendIndexByName(const char * legendName,std::vector <CServerConfig::XMLE_Legend*> serverLegends);
-    static int  getServerStyleIndexByName(const char * styleName,std::vector <CServerConfig::XMLE_Style*> serverStyles);
-    static CT::PointerList<CT::string*> *getStyleListForDataSource(CDataSource *dataSource);
-    static int makeStyleConfig(CStyleConfiguration *styleConfig,CDataSource *dataSource,const char *styleName,const char *legendName,const char *renderMethod);
-    static void getStyleConfigurationByName(const char *styleName,CDataSource *dataSource);
+    
+    
 
-    static const char *RenderMethodStringList;
+
+
     CImageDataWriter();
     ~CImageDataWriter(){
       for(size_t j=0;j<getFeatureInfoResultList.size();j++){delete getFeatureInfoResultList[j];getFeatureInfoResultList[j]=NULL; } getFeatureInfoResultList.clear();

@@ -493,8 +493,8 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource,int mo
       }
 
         
-      float lon0 ;
-      float lat0;
+//       float lon0 ;
+//       float lat0;
      
       if(tileIsTooLarge==false){
         for(int j=0;j<4;j++){

@@ -55,9 +55,10 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
   if(settings.indexOf("disc")!=-1){
     drawPoints = false;
     drawDiscs = true;
-    if(dataSource->styleConfiguration!=NULL){
-      if(dataSource->styleConfiguration->styleConfig!=NULL){
-        CServerConfig::XMLE_Style* s = dataSource->styleConfiguration->styleConfig;
+    CStyleConfiguration *styleConfiguration = dataSource->getStyle();
+    if(styleConfiguration!=NULL){
+      if(styleConfiguration->styleConfig!=NULL){
+        CServerConfig::XMLE_Style* s = styleConfiguration->styleConfig;
         if(s -> Disc.size() == 1){
           if(s -> Disc[0]->attr.fillcolor.empty()==false){
             fillColor.parse(s -> Disc[0]->attr.fillcolor.c_str());
@@ -83,11 +84,12 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
       }
     }
   }
+  CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   if(settings.indexOf("thin")!=-1){
     doThinning = true;
-    if(dataSource->styleConfiguration!=NULL){
-      if(dataSource->styleConfiguration->styleConfig!=NULL){
-        CServerConfig::XMLE_Style* s = dataSource->styleConfiguration->styleConfig;
+    if(styleConfiguration!=NULL){
+      if(styleConfiguration->styleConfig!=NULL){
+        CServerConfig::XMLE_Style* s = styleConfiguration->styleConfig;
         if(s -> Thinning.size() == 1){
           if(s -> Thinning[0]->attr.radius.empty()==false){
             thinningRadius = s -> Thinning[0]->attr.radius.toInt();
