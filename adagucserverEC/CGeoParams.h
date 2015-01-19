@@ -146,6 +146,9 @@ public:
   int x,y;
   float v,lon,lat,rotation;
   
+  /** Array containing key description and values
+   * can be used to assign extra attributes to a point
+   */
   std::vector<CKeyValue> paramList;
   
 };    

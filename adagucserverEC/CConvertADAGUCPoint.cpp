@@ -688,6 +688,10 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
       for(size_t d=0;d<nrDataObjects;d++){
         float *sdata = ((float*)dataObjects[d]->cdfVariable->data);
         PointDVWithLatLon * lastPoint = NULL;
+        
+        /**
+         * With string and char (text) data, the float value is set to NAN and character data is put in the paramlist
+         */
         if(pointVar[d]->currentType==CDF_STRING){
           float v = NAN;
           //CDBDebug("pushing stationNr %d dateDimIndex %d,pPoint DIM %d",stationNr,dateDimIndex,pPoint);
@@ -700,6 +704,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
             
           }catch(int e){
           }
+          /* Get the last pushed point from the array and push the character text data in the paramlist */
           const char *b = ((const char**)pointVar[d]->data)[pPoint];
           lastPoint->paramList.push_back(CKeyValue(key,description ,b));
           float a = 0;
@@ -718,6 +723,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
             
           }catch(int e){
           }
+          /* Get the last pushed point from the array and push the character text data in the paramlist */
           lastPoint->paramList.push_back(CKeyValue(key,description ,((const char**)pointVar[d]->data)[pPoint]));
           float a = 0;
           drawCircle(sdata,a,dataSource->dWidth,dataSource->dHeight,dlon-1,dlat,8);
