@@ -35,28 +35,15 @@
 #ifndef CCAIROPLOTTER_H_
 #define CCAIROPLOTTER_H_
 
-#define USE_FREETYPE
-
-//#define USE_PANGOCAIRO
-#ifdef USE_PANGOCAIRO
-  #define PANGO_FONT_OPTIONS
-#endif
-
 #include <cairo.h>
-#ifdef USE_PANGOCAIRO
-#include <pango/pangocairo.h>
-#include <glib-object.h>
-#endif
 #include "CDebugger.h"
 #include "CTypes.h"
-#ifdef USE_FREETYPE
   #include <ft2build.h>
   #include <freetype/freetype.h>
   #include <freetype/ftglyph.h>
   #include <freetype/ftoutln.h>
   #include <freetype/fttrigon.h>
   #include FT_FREETYPE_H
-#endif
 #include <stdio.h>
 #include <math.h>
 
@@ -77,13 +64,8 @@ private:
   float fontSize;
   const char *fontLocation;
   bool initializationFailed;
-#ifdef USE_FREETYPE
   FT_Library library;
   FT_Face face;
-#endif
-#ifdef USE_PANGOCAIRO
-  PangoFontDescription *font_description;
-#endif
 
   unsigned char r,g,b;float a;
   void plot(int x, int y, float alpha){
@@ -151,10 +133,8 @@ private:
     fr=0;fg=0;fb=0;fa=1;
     rfr=rfg=rfb=0;rfa=1;
     
-    #ifdef USE_FREETYPE
     library=NULL;
     initializationFailed=false;
-    #endif
     
     initFont();
     //CDBDebug("constructor");
@@ -195,10 +175,8 @@ public:
     //for(size_t j=0;j<bufferSize;j++)ARGBByteBuffer[j]=0;
     surface=cairo_image_surface_create_for_data(ARGBByteBuffer, CCairoPlotter::FORMAT, width, height, stride);
     cr=cairo_create(this->surface);
-    #ifdef USE_FREETYPE
     library=NULL;
     initializationFailed=false;
-    #endif
     
     initFont();
    
@@ -206,9 +184,6 @@ public:
   
 
   ~CCairoPlotter() {
-#ifdef USE_PANGOCAIRO
-    pango_font_description_free(font_description);
-#endif
     cairo_destroy(cr);
     cairo_surface_destroy(surface);
     if(byteBufferPointerIsOwned){
@@ -217,7 +192,6 @@ public:
     }
   }
 
-#ifdef USE_FREETYPE
   int renderFont(FT_Bitmap *bitmap,int left,int top){
     for(int y=0;y<bitmap->rows;y++){
       for(int x=0;x<bitmap->width;x++){
@@ -271,40 +245,7 @@ public:
     }
     return 0;
   }
-//   int drawText(int x,int y,float angle,const char *text){
-//     if(text==NULL)return 0;
-//     if(strlen(text)==0)return 0;
-//     if(initializationFailed==true)return 1;
-//     if(library==NULL){
-//       int status  = initializeFreeType();
-//       if(status != 0){
-//         initializationFailed=true;
-//         return 1;
-//       }
-//     };
-//     FT_Matrix matrix; /* transformation matrix */
-//     matrix.xx = (FT_Fixed)( cos( angle ) * 0x10000L );
-//     matrix.xy = (FT_Fixed)(-sin( angle ) * 0x10000L );
-//     matrix.yx = (FT_Fixed)( sin( angle ) * 0x10000L );
-//     matrix.yy = (FT_Fixed)( cos( angle ) * 0x10000L ); /* the pen position in 26.6 cartesian space coordinates */
-//     //Draw text :)
-//     int my_target_height = 8,error;
-//     int num_chars=strlen(text);
-//     FT_Vector pen; /* untransformed origin */
-//     pen.x = x * 64; pen.y = ( my_target_height - y ) * 64;
-//     for ( int n = 0; n < num_chars; n++ ) { /* set transformation */
-//       FT_Set_Transform( face, &matrix, &pen ); /* load glyph image into the  face->glyph (erase previous one) */
-//       error = FT_Load_Char( face, text[n], FT_LOAD_RENDER );
-//       if ( error ){CDBError("unable toFT_Load_Char");return 1;
-//       }
-//       /* now, draw to our target surface (convert position) */
-//       renderFont( & face->glyph->bitmap,  face->glyph->bitmap_left, my_target_height -  face->glyph->bitmap_top );
-//       /* increment pen position */
-//       pen.x +=  face->glyph->advance.x; pen.y +=  face->glyph->advance.y;
-//     }
-//     return 0;
-//   }
-         int _drawFreeTypeText(int x,int y,int &w,int &h,float angle,const char *text,bool render){
+      int _drawFreeTypeText(int x,int y,int &w,int &h,float angle,const char *text,bool render){
       //Draw text :)
       w=0;h=0;
       if(library==NULL){
@@ -360,21 +301,27 @@ public:
         //printf("%s %d\n",t,face->glyph->linearHoriAdvance);
         //plot(slot->bitmap_left, my_target_height - slot->bitmap_top, 1);
         
+        if (n==0) h=slot->bitmap.rows; //Hack
+        
         pen.x += slot->advance.x; pen.y += slot->advance.y; 
         w += slot->advance.x/64;
         h += slot->advance.y/64;
       }
+   
       return 0;
     }
     
   int getTextSize(int &w,int &h,float angle,const char *text){
-    return _drawFreeTypeText(0, 0,w,h,angle,text,false);
+    return _drawFreeTypeText(0,0,w,h,angle,text,false);
   }
-  int drawText(int x,int y,float angle,const char *text){
 
+  int drawCenteredText(int x, int y, float angle,const char *text){
     int w,h;
-    return _drawFreeTypeText( x, y,w,h,angle,text,true);
+    getTextSize(w, h, angle, text);
+    //CDBDebug("[w,h]=>[%d,%d] at [%d,%d]\n", w, h, x, y);
+    return _drawFreeTypeText( x-w/2, y+h/2,w,h,angle,text,true);
   }
+
   int drawFilledText(int x,int y,float angle,const char *text){
     if(text==NULL)return 0;
     if(strlen(text)==0)return 0;
@@ -437,34 +384,41 @@ public:
     return 0;
   }
 
-#endif
+#ifdef OLDCODE
+//#ifndef USE_FREETYPE
+  int getTextSize(int &w,int &h,float angle,const char *text){
+    cairo_text_extents_t extents;
+    cairo_text_extents(cr, text, &extents);
+    w=extents.width;
+    h=extents.height;
+    return 0;
+  }
+
+  int drawFilledText(int x,int y,float angle,const char *text){
+    if(text==NULL)return 0;
+    if(strlen(text)==0)return 0;
+    int w=0; int h=0;
+    getTextSize(x, y, angle, text);
+    filledRectangle(x, y, x+w, y+h);
+    return 0;
+  }
+
+  int drawCenteredText(int x, int y, float angle,const char *text){
+    int w,h;
+    getTextSize(w, h, angle, text);
+    CDBDebug("[w,h]=>[%d,%d] at [%d,%d]\n", w, h, x, y);
+    drawText( x-w/2, y+h/2,angle,text);
+    return 0;
+  }
 
   void initFont() {
-#ifdef USE_PANGOCAIRO
-
-    font_description = pango_font_description_new ();
-    pango_font_description_set_family (font_description, fontLocation);
-    pango_font_description_set_weight (font_description, PANGO_WEIGHT_NORMAL);
-    pango_font_description_set_absolute_size (font_description, fontSize * PANGO_SCALE*1.2);
-#else
-#ifdef USE_FREETYPE
-#else
     cairo_select_font_face(cr, fontLocation, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
     cairo_set_font_size(cr, fontSize);
-#ifdef CAIRO_FONT_OPTIONS
-    cairo_font_options_t *font_options;
-    font_options = cairo_font_options_create ();
-    cairo_get_font_options (cr, font_options);
+  }
+ 
+#endif //USE_FREETYPE //OLDCODE
 
-    cairo_font_options_set_hint_metrics (font_options, CAIRO_HINT_METRICS_OFF);
-    cairo_font_options_set_hint_style (font_options, CAIRO_HINT_STYLE_NONE);
-    cairo_font_options_set_antialias(font_options, CAIRO_ANTIALIAS_GRAY);
-
-    cairo_set_font_options (cr, font_options);
-    cairo_font_options_destroy (font_options);
-#endif // CAIRO_FONT_OPTIONS
-#endif // USE_FREETPYE
-#endif //USE_PANGOCAIRO
+  void initFont() {
   }
 
   void setColor(unsigned char r,unsigned char g,unsigned char b,unsigned char a){
@@ -543,8 +497,9 @@ public:
     cairo_set_antialias(cr, CAIRO_ANTIALIAS_DEFAULT);
     cairo_set_line_width(cr, 0.5);
     rectangle(x1,y1,x2,y2);
-      cairo_set_antialias(cr, aa);
+    cairo_set_antialias(cr, aa);
   }
+
   void line_noaa(int x1,int y1,int x2,int y2) {
     cairo_set_source_rgba(cr, rr, rg, rb, ra);
     cairo_antialias_t aa=cairo_get_antialias(cr);
@@ -602,7 +557,19 @@ public:
     cairo_stroke(cr);
   }
 
+  void filledcircle(int x, int y, int r) {
+    cairo_save(cr);
+    cairo_set_line_width(cr, 1);
+    cairo_set_source_rgba(cr, rfr, rfg, rfb, rfa);
+    cairo_arc(cr, x, y, r, 0, 2*M_PI);
+    cairo_stroke_preserve(cr);
+    cairo_set_source_rgba(cr, rfr, rfg, rfb, rfa);
+    cairo_fill(cr);
+    cairo_restore(cr);
+  }
+
   void circle(int x, int y, int r,float lineWidth) {
+    cairo_set_source_rgba(cr, rr, rg, rb, ra);
     cairo_arc(cr, x, y, r, 0, 2*M_PI);
     cairo_set_line_width(cr, lineWidth);
     cairo_stroke(cr);
@@ -622,35 +589,12 @@ public:
       cairo_stroke(cr);
     }
   }
-#ifndef USE_FREETYPE
+
   void drawText(int x, int y,double angle, const char *text) {
-#ifdef USE_PANGOCAIRO
-   PangoLayout *layout=pango_cairo_create_layout (cr);
-   pango_layout_set_font_description (layout, font_description);
-   pango_layout_set_text (layout, text, -1);
-   cairo_set_source_rgba(cr, rr, rg, rb ,ra);
-   cairo_save(cr);
-   cairo_move_to(cr, x, y);
-   if (angle!=0) {
-     cairo_rotate(cr, -angle);
-   }
-   pango_cairo_update_layout(cr, layout);
-   pango_cairo_show_layout_line(cr, pango_layout_get_line (layout,0));
-   cairo_restore(cr);
-   g_object_unref(layout);
-#else
-    cairo_set_source_rgba(cr, rr, rg, rb ,ra);
-    cairo_save(cr);
-    cairo_move_to(cr, x, y);
-    if (angle!=0) {
-      cairo_rotate(cr, -angle);
-    }
-    cairo_show_text(cr, text);
-    cairo_stroke(cr);
-    cairo_restore(cr);
-#endif
+    int w,h;
+    _drawFreeTypeText( x, y,w,h,angle,text,true);
   }
-#endif //USE_FREETYPE
+
   void writeToPngStream(FILE *fp) {
     cairo_surface_flush(surface);
     this->fp=fp;

@@ -590,6 +590,7 @@ int CImageDataWriter::makeStyleConfig(CStyleConfiguration *styleConfig,CDataSour
   if(s->styleIndex!=-1){
     //Get info from style
     CServerConfig::XMLE_Style* style = dataSource->cfg->Style[s->styleIndex];
+    s->styleConfig = style;
     if(style->Scale.size()>0)s->legendScale=parseFloat(style->Scale[0]->value.c_str());
     if(style->Offset.size()>0)s->legendOffset=parseFloat(style->Offset[0]->value.c_str());
     if(style->Log.size()>0)s->legendLog=parseFloat(style->Log[0]->value.c_str());

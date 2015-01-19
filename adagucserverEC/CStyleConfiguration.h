@@ -10,6 +10,7 @@
 #define RM_POINT       16
 #define RM_VECTOR      32
 #define RM_BARB        64
+#define RM_DISC        128
 #define RM_THIN        256
 #define RM_RGBA        512
 #define RM_VOLUME      1024
@@ -58,7 +59,7 @@ public:
     styleCompositionName = "";
     styleTitle = "";
     styleAbstract = "";
-    
+    styleConfig = NULL;
   }
   CStyleConfiguration(){
    reset();
@@ -79,7 +80,7 @@ public:
   RenderMethod renderMethod;
   std::vector<CServerConfig::XMLE_ContourLine*>*contourLines;
   std::vector<CServerConfig::XMLE_ShadeInterval*>*shadeIntervals;
-
+ CServerConfig::XMLE_Style* styleConfig;
   CT::string styleCompositionName;
   CT::string styleTitle;
   CT::string styleAbstract;
