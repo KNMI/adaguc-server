@@ -39,6 +39,7 @@
 #include "CStyleConfiguration.h"
 
 
+
 /**
  * Class which holds min and max values.
  * isSet indicates whether the values have been set or not.
@@ -62,75 +63,14 @@ public:
  * @param numElements The length of the data array
  * @return minmax object
  */
-static MinMax getMinMax(float *data, bool hasFillValue, double fillValue,size_t numElements){
-  MinMax minMax;
-  bool firstSet = false;
-  for(size_t j=0;j<numElements;j++){
-    float v=data[j];
-    if(v==v){
-      if(v!=fillValue||(!hasFillValue)){
-        if(firstSet == false){
-          firstSet = true;
-          minMax.min=v;
-          minMax.max=v;
-          minMax.isSet=true;
-        }
-        if(v<minMax.min)minMax.min=v;
-        if(v>minMax.max)minMax.max=v;
-      }
-    }
-  }
-  if(minMax.isSet==false){
-    throw __LINE__+100;
-  }
-  return minMax;
-}      
-
+MinMax getMinMax(float *data, bool hasFillValue, double fillValue,size_t numElements);
 
 /**
  * Returns minmax values for a variable
  * @param var The variable to retrieve the min max for.
  * @return minmax object
  */
-static MinMax getMinMax(CDF::Variable *var){
-  MinMax minMax;
-  if(var!=NULL){
- 
-      float *data = (float*)var->data;
-      
-      float scaleFactor=1,addOffset=0,fillValue = 0;
-      bool hasFillValue = false;
-      
-      try{
-        var->getAttribute("scale_factor")->getData(&scaleFactor,1);
-      }catch(int e){}
-      try{
-        var->getAttribute("add_offset")->getData(&addOffset,1);
-      }catch(int e){}
-      try{
-        var->getAttribute("_FillValue")->getData(&fillValue,1);
-        hasFillValue = true;
-      }catch(int e){}
-      
-      size_t lsize= var->getSize();
-      
-      //Apply scale and offset
-      if(scaleFactor!=1||addOffset!=0){
-        for(size_t j=0;j<lsize;j++){
-          data[j]=data[j]*scaleFactor+addOffset;
-        }
-        fillValue=fillValue*scaleFactor+addOffset;
-      }
-      
-
-      minMax = getMinMax(data,hasFillValue,fillValue,lsize);
-    
-  }else{
-    //CDBError("getMinMax: Variable has not been set");
-    throw __LINE__+100;
-  }
-  return minMax;
-}
+MinMax getMinMax(CDF::Variable *var);
 
 
 
@@ -150,7 +90,18 @@ class CDataSource{
       double value;
   };
   
-  CStyleConfiguration *styleConfiguration;
+private:
+  CT::PointerList<CStyleConfiguration*> *_styles;
+  CStyleConfiguration *_currentStyle;
+  public:
+    
+  CStyleConfiguration * getStyle();
+  
+  void setStyle(CStyleConfiguration * style){
+    CDBDebug("Setting styleconfiguration");
+    _currentStyle = style;
+  }
+  
 
   class DataObject{
     public:
@@ -193,8 +144,9 @@ class CDataSource{
         for(size_t p=0;p<size;p++){
           
           T v=data[p];
-
-          //CDBDebug("Value %d =  %f",p,(double)v);
+//           if((double)v<10){
+//           CDBDebug("Value %d =  %f",p,(double)v);
+//           }
           if((((T)v)!=(T)(*dataObject)[0]->dfNodataValue||(!(*dataObject)[0]->hasNodataValue))&&v==v){
             if((checkInfinity&&v!=maxInf&&v!=minInf)||(!checkInfinity))
             {
@@ -426,6 +378,21 @@ class CDataSource{
       getDataObject(j)->cdfObject = NULL;
     }
   }
+  
+  /**
+   * IMPORTANT
+   */
+  CT::PointerList<CStyleConfiguration*> *getStyleListForDataSource(CDataSource *dataSource);
+  
+  static void calculateScaleAndOffsetFromMinMax(float &scale, float &offset,float min,float max,float log);
+  static CT::PointerList<CT::string*> *getLegendListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style* style);
+  static CT::PointerList<CT::string*> *getStyleNames(std::vector <CServerConfig::XMLE_Styles*> Styles);
+  
+  static CT::PointerList<CT::string*> *getRenderMethodListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style* style);      
+  static int  getServerLegendIndexByName(const char * legendName,std::vector <CServerConfig::XMLE_Legend*> serverLegends);
+  static int  getServerStyleIndexByName(const char * styleName,std::vector <CServerConfig::XMLE_Style*> serverStyles);
+  static int makeStyleConfig(CStyleConfiguration *styleConfig,CDataSource *dataSource);//,const char *styleName,const char *legendName,const char *renderMethod);
+  //static void getStyleConfigurationByName(const char *styleName,CDataSource *dataSource);
   
 };
 

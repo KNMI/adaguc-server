@@ -86,24 +86,24 @@ public:
       dfSourceBBOX[2]=dataSource->dfBBOX[0];
     }
     
- 
+    CStyleConfiguration *styleConfiguration = dataSource->getStyle();
     
     
     dfNodataValue    = dataSource->getDataObject(0)->dfNodataValue ;
-    legendValueRange = dataSource->styleConfiguration->hasLegendValueRange;
-    legendLowerRange = dataSource->styleConfiguration->legendLowerRange;
-    legendUpperRange = dataSource->styleConfiguration->legendUpperRange;
+    legendValueRange = styleConfiguration->hasLegendValueRange;
+    legendLowerRange = styleConfiguration->legendLowerRange;
+    legendUpperRange = styleConfiguration->legendUpperRange;
     hasNodataValue   = dataSource->getDataObject(0)->hasNodataValue;
     width = dataSource->dWidth;
     height = dataSource->dHeight;
-    legendLog = dataSource->styleConfiguration->legendLog;
+    legendLog = styleConfiguration->legendLog;
     if(legendLog>0){
       legendLogAsLog = log10(legendLog);
     }else{
       legendLogAsLog = 0;
     }
-    legendScale = dataSource->styleConfiguration->legendScale;
-    legendOffset = dataSource->styleConfiguration->legendOffset;
+    legendScale = styleConfiguration->legendScale;
+    legendOffset = styleConfiguration->legendOffset;
   }
   int drawTile(double *x_corners,double *y_corners,int &dDestX,int &dDestY){
     CDFType dataType=dataSource->getDataObject(0)->cdfVariable->getType();
@@ -382,21 +382,22 @@ private:
   
   template <class T>
   void _plot(CImageWarper *warper,CDataSource *dataSource,CDrawImage *drawImage){
+    CStyleConfiguration *styleConfiguration = dataSource->getStyle();
     double dfNodataValue    = dataSource->getDataObject(0)->dfNodataValue ;
-    double legendValueRange = dataSource->styleConfiguration->hasLegendValueRange;
-    double legendLowerRange = dataSource->styleConfiguration->legendLowerRange;
-    double legendUpperRange = dataSource->styleConfiguration->legendUpperRange;
+    double legendValueRange = styleConfiguration->hasLegendValueRange;
+    double legendLowerRange = styleConfiguration->legendLowerRange;
+    double legendUpperRange = styleConfiguration->legendUpperRange;
     bool hasNodataValue   = dataSource->getDataObject(0)->hasNodataValue;
     float nodataValue = (float)dfNodataValue;
-    float legendLog = dataSource->styleConfiguration->legendLog;
+    float legendLog = styleConfiguration->legendLog;
     float legendLogAsLog;
     if(legendLog>0){
     legendLogAsLog = log10(legendLog);
     }else{
     legendLogAsLog = 0;
     }
-    float legendScale = dataSource->styleConfiguration->legendScale;
-    float legendOffset = dataSource->styleConfiguration->legendOffset;
+    float legendScale = styleConfiguration->legendScale;
+    float legendOffset = styleConfiguration->legendOffset;
         
     T *data=(T*)dataSource->getDataObject(0)->cdfVariable->data;
     for(int y=0;y<drawImage->Geo->dHeight;y++){
@@ -793,21 +794,21 @@ private:
     
     
     Settings settings;
-    
+    CStyleConfiguration *styleConfiguration = dataSource->getStyle();    
     settings.dfNodataValue    = dataSource->getDataObject(0)->dfNodataValue ;
-    settings.legendValueRange = dataSource->styleConfiguration->hasLegendValueRange;
-    settings.legendLowerRange = dataSource->styleConfiguration->legendLowerRange;
-    settings.legendUpperRange = dataSource->styleConfiguration->legendUpperRange;
+    settings.legendValueRange = styleConfiguration->hasLegendValueRange;
+    settings.legendLowerRange = styleConfiguration->legendLowerRange;
+    settings.legendUpperRange = styleConfiguration->legendUpperRange;
     settings.hasNodataValue   = dataSource->getDataObject(0)->hasNodataValue;
     settings.nodataValue = (float)settings.dfNodataValue;
-    settings.legendLog = dataSource->styleConfiguration->legendLog;
+    settings.legendLog = styleConfiguration->legendLog;
     if(settings.legendLog>0){
       settings.legendLogAsLog = log10(settings.legendLog);
     }else{
       settings.legendLogAsLog = 0;
     }
-    settings.legendScale = dataSource->styleConfiguration->legendScale;
-    settings.legendOffset = dataSource->styleConfiguration->legendOffset;
+    settings.legendScale = styleConfiguration->legendScale;
+    settings.legendOffset = styleConfiguration->legendOffset;
     
     if(drawBil){
 
