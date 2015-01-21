@@ -856,20 +856,13 @@ CT::PointerList<CStyleConfiguration*> *CDataSource::getStyleListForDataSource(CD
         styleConfig->styleAbstract.copy("rgba");
         styleConfig->renderMethod = RM_RGBA;
         styleConfig->styleCompositionName = "rgba";
-        //CT::string * styleName = new CT::string();
-        //styleName->copy("default");
-        //styleConfigurationList->push_back(renderMethods->get(0)->c_str());
-        //styleConfigurationList->push_back(styleName);
-        //if(styleConfigurationList!=NULL){
-          CT::string * styleName = new CT::string();
-          styleName->copy(renderMethods->get(0)->c_str());
-          styleConfigurationList->push_back(styleConfig);
-        //}
+        styleConfigurationList->push_back(styleConfig);
         return styleConfigurationList;
         
       }
       CDataReader::autoConfigureStyles(dataSource);
     }
+   
   }
   
   delete renderMethods ;  renderMethods  = NULL;
@@ -1042,6 +1035,16 @@ CT::PointerList<CStyleConfiguration*> *CDataSource::getStyleListForDataSource(CD
     delete renderMethods;
     delete styleNames;
     
+  }
+  
+  if(styleConfigurationList->size()==0){
+    CStyleConfiguration * styleConfig = new CStyleConfiguration();
+    CDBDebug("Setting rendermethod RM_NEAREST");
+    styleConfig->styleTitle.copy("default");
+    styleConfig->styleAbstract.copy("default");
+    styleConfig->renderMethod = RM_NEAREST;
+    styleConfig->styleCompositionName = "default";
+    styleConfigurationList->push_back(styleConfig);
   }
     
   return styleConfigurationList;

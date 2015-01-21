@@ -144,8 +144,9 @@ private:
         for(size_t p=0;p<size;p++){
           
           T v=data[p];
-
-          //CDBDebug("Value %d =  %f",p,(double)v);
+//           if((double)v<10){
+//           CDBDebug("Value %d =  %f",p,(double)v);
+//           }
           if((((T)v)!=(T)(*dataObject)[0]->dfNodataValue||(!(*dataObject)[0]->hasNodataValue))&&v==v){
             if((checkInfinity&&v!=maxInf&&v!=minInf)||(!checkInfinity))
             {
