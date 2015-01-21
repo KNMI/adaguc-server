@@ -917,11 +917,7 @@ CT::PointerList<CT::string*> *CImageDataWriter::getStyleListForDataSource(CDataS
           }
         }
       }
-      
-      //TODO CHECK, why did we add this line?:
-      //if(dStyleIndex!=-1)
-      {
-        
+      if(dStyleIndex!=-1){
         CServerConfig::XMLE_Style* style = NULL;
         if(dStyleIndex!=-1)style=serverCFG->Style[dStyleIndex];
         
@@ -1945,7 +1941,7 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   * Use point renderer
   */
   //if(renderMethod==barb||renderMethod==vector||renderMethod==point){
-  if(renderMethod&RM_BARB||renderMethod&RM_VECTOR||renderMethod&RM_POINT||renderMethod&RM_VOLUME){//||renderMethod==RM_NEAREST){
+  if(renderMethod&RM_BARB||renderMethod&RM_VECTOR||renderMethod&RM_POINT||renderMethod&RM_VOLUME||renderMethod&RM_DISC){//||renderMethod==RM_NEAREST){
     if(dataSource->getDataObject(0)->points.size()!=0){
       //CDBDebug("CImgRenderPoints()");
       

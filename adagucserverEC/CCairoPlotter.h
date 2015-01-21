@@ -315,6 +315,27 @@ public:
     return _drawFreeTypeText(0,0,w,h,angle,text,false);
   }
 
+  int drawAnchoredText(int x, int y, float angle,const char *text, int anchor){
+    int w,h;
+    getTextSize(w, h, angle, text);
+ //   CDBDebug("[w,h]=>[%d,%d] %s at [%d,%d] %d,%d\n", w, h, text, x, y, anchor, anchor % 4);
+    switch(anchor%4) {
+      case 0:
+        _drawFreeTypeText( x, y, w, h, angle,text, true);
+        break;
+      case 1:
+        _drawFreeTypeText( x, y+h, w, h,angle,text, true);
+        break;
+      case 2:
+        _drawFreeTypeText( x-w, y+h, w, h,angle,text, true);
+        break;
+      case 3:
+        _drawFreeTypeText( x-w, y, w, h,angle,text, true);
+        break;
+    }        
+    return 0;
+  }
+  
   int drawCenteredText(int x, int y, float angle,const char *text){
     int w,h;
     getTextSize(w, h, angle, text);
@@ -383,40 +404,6 @@ public:
     setColor(orgr,orgg,orgb,orga);
     return 0;
   }
-
-#ifdef OLDCODE
-//#ifndef USE_FREETYPE
-  int getTextSize(int &w,int &h,float angle,const char *text){
-    cairo_text_extents_t extents;
-    cairo_text_extents(cr, text, &extents);
-    w=extents.width;
-    h=extents.height;
-    return 0;
-  }
-
-  int drawFilledText(int x,int y,float angle,const char *text){
-    if(text==NULL)return 0;
-    if(strlen(text)==0)return 0;
-    int w=0; int h=0;
-    getTextSize(x, y, angle, text);
-    filledRectangle(x, y, x+w, y+h);
-    return 0;
-  }
-
-  int drawCenteredText(int x, int y, float angle,const char *text){
-    int w,h;
-    getTextSize(w, h, angle, text);
-    CDBDebug("[w,h]=>[%d,%d] at [%d,%d]\n", w, h, x, y);
-    drawText( x-w/2, y+h/2,angle,text);
-    return 0;
-  }
-
-  void initFont() {
-    cairo_select_font_face(cr, fontLocation, CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
-    cairo_set_font_size(cr, fontSize);
-  }
- 
-#endif //USE_FREETYPE //OLDCODE
 
   void initFont() {
   }

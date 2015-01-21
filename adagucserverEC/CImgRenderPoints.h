@@ -33,6 +33,6 @@ private:
 public:
   void render(CImageWarper*, CDataSource*, CDrawImage*);
   int set(const char*);
-  
+  int getPixelIndexForValue(CDataSource*dataSource,float val);
 };
 #endif
