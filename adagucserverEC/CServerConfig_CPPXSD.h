@@ -102,6 +102,26 @@ class CServerConfig:public CXMLSerializerInterface{
       }
     };
     
+    class XMLE_Point: public CXMLObjectInterface{
+    public:
+      class Cattr{
+      public:
+        CXMLString fillcolor,linecolor,textcolor,fontfile,fontsize,discradius,textradius,dot,anglestart,anglestep,textformat;
+      }attr;
+      void addAttribute(const char *attrname,const char *attrvalue){
+        if(equals("fillcolor",9,attrname)){attr.fillcolor.copy(attrvalue);return;}
+        else if(equals("linecolor",9,attrname)){attr.linecolor.copy(attrvalue);return;}
+        else if(equals("textcolor",9,attrname)){attr.textcolor.copy(attrvalue);return;}
+        else if(equals("fontfile",8,attrname)){attr.fontfile.copy(attrvalue);return;}
+        else if(equals("fontsize",8,attrname)){attr.fontsize.copy(attrvalue);return;}
+        else if(equals("discradius",10,attrname)){attr.discradius.copy(attrvalue);return;}
+        else if(equals("textradius",10,attrname)){attr.textradius.copy(attrvalue);return;}
+        else if(equals("dot",3,attrname)){attr.dot.copy(attrvalue);return;}
+        else if(equals("anglestart",10,attrname)){attr.anglestart.copy(attrvalue);return;}
+        else if(equals("anglestep",9,attrname)){attr.anglestep.copy(attrvalue);return;}
+        else if(equals("textformat",10,attrname)){attr.textformat.copy(attrvalue);return;}
+      }
+    };
     
     class XMLE_Legend: public CXMLObjectInterface{
       public:
@@ -356,6 +376,7 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         std::vector <XMLE_Thinning*> Thinning;
         std::vector <XMLE_Disc*> Disc;
+        std::vector <XMLE_Point*> Point;
         std::vector <XMLE_Legend*> Legend;
         std::vector <XMLE_Scale*> Scale;
         std::vector <XMLE_Offset*> Offset;
@@ -376,6 +397,7 @@ class CServerConfig:public CXMLSerializerInterface{
         ~XMLE_Style(){
           XMLE_DELOBJ(Thinning);
           XMLE_DELOBJ(Disc);
+          XMLE_DELOBJ(Point);
           XMLE_DELOBJ(Legend);
           XMLE_DELOBJ(Scale);
           XMLE_DELOBJ(Offset);
@@ -406,6 +428,7 @@ class CServerConfig:public CXMLSerializerInterface{
            
             if(equals("Thinning",8,name)){XMLE_ADDOBJ(Thinning);}
             else if(equals("Disc",4,name)){XMLE_ADDOBJ(Disc);}
+            else if(equals("Point",5,name)){XMLE_ADDOBJ(Point);}
             else if(equals("Legend",6,name)){XMLE_ADDOBJ(Legend);}
             else if(equals("Scale",5,name)){XMLE_ADDOBJ(Scale);}
             else if(equals("Offset",6,name)){XMLE_ADDOBJ(Offset);}

@@ -678,9 +678,32 @@ void CDrawImage::drawText(int x,int y,const char *fontfile, float size, float an
      delete[] _text;
    }
  }
-//void CDrawImage::setTextDisc(const char *text, size_t length, int x, int y, int r, int color, int fontSize){ 
+void CDrawImage::setDisc(int x,int y,int discRadius, int fillCol, int lineCol){
+  if(_bEnableTrueColor==true){
+    if(currentLegend==NULL)return;
+    cairo->setFillColor(currentLegend->CDIred[fillCol],currentLegend->CDIgreen[fillCol],currentLegend->CDIblue[fillCol],255);
+    cairo->setColor(currentLegend->CDIred[lineCol],currentLegend->CDIgreen[lineCol],currentLegend->CDIblue[lineCol],255);
+    cairo->filledcircle(x, y, discRadius);
+    //cairo->setColor(textcolor.r,textcolor.g,textcolor.b,textcolor.a);
+    cairo->circle(x, y, discRadius, 1);
+//    circle( x,  y,  discRadius,lineCol,1);
+  }else{
+    circle( x,  y,  discRadius,lineCol,1);    
+  }
+}
+
+void CDrawImage::setDisc(int x,int y,int discRadius, CColor fillColor, CColor lineColor){
+  if(_bEnableTrueColor==true){
+    if(currentLegend==NULL)return;
+    cairo->setFillColor(fillColor.r,fillColor.g,fillColor.b,fillColor.a);
+    cairo->setColor(lineColor.r,lineColor.g,lineColor.b,lineColor.a);
+    cairo->filledcircle(x, y, discRadius);
+    circle( x,  y,  discRadius,lineColor,1);
+  }else{
+    circle( x,  y,  discRadius,lineColor,1);    
+  }
+}
 void CDrawImage::setTextDisc(int x,int y,int discRadius, const char *text,const char *fontfile, float fontsize,CColor textcolor,CColor fillcolor, CColor lineColor){
-  
   if(_bEnableTrueColor==true){
     if(currentLegend==NULL)return;
     cairo->setFillColor(fillcolor.r,fillcolor.g,fillcolor.b,fillcolor.a);
@@ -691,15 +714,29 @@ void CDrawImage::setTextDisc(int x,int y,int discRadius, const char *text,const 
     
     circle( x,  y,  discRadius,lineColor,1);
     drawCenteredText( x, y,fontfile, fontsize, 0,text, textcolor);
-    
   }else{
-    
     circle( x,  y,  discRadius,lineColor,1);    
     drawCenteredText( x, y,fontfile, fontsize, 0,text, textcolor);
-
-
   }
 }
+
+void CDrawImage::drawAnchoredText(int x,int y,const char *fontfile, float size, float angle,const char *text,CColor color, int anchor){
+  if(_bEnableTrueColor==true){
+    CCairoPlotter * freeType = new CCairoPlotter (Geo->dWidth,Geo->dHeight,(cairo->getByteBuffer()),size,fontfile);
+    freeType->setColor(color.r,color.g,color.b,color.a);
+    freeType->drawAnchoredText(x,y,angle,text,anchor);
+    delete freeType;
+  }else{
+    //TODO GD renderer does not center text yet
+    char *_text = new char[strlen(text)+1];
+    memcpy(_text,text,strlen(text)+1);
+    int tcolor=getClosestGDColor(color.r,color.g,color.b);
+    if(_bEnableTrueColor)tcolor=-tcolor;
+    gdImageStringFT(image, &brect[0],   tcolor, (char*)fontfile, size, angle,  x,  y, (char*)_text);
+    delete[] _text;
+  }
+}
+  
 
 void CDrawImage::drawCenteredText(int x,int y,const char *fontfile, float size, float angle,const char *text,CColor color){
   

@@ -81,6 +81,7 @@ class CColor{
      * color can have format #RRGGBB or #RRGGBBAA
      */
     void parse(const char * color){
+      fprintf(stderr,"parsing %s", color);
       if(color[0]=='#'){
         if(strlen(color)==7){
           r  =((color[1]>64)?color[1]-55:color[1]-48)*16+((color[2]>64)?color[2]-55:color[2]-48);
@@ -164,6 +165,7 @@ class CDrawImage{
     void drawText(int x,int y,const char *fontfile, float size, float angle,const char *text,unsigned char colorIndex);
     void drawText(int x,int y,const char *fontfile, float size, float angle,const char *text,CColor fgcolor);
     void drawText(int x,int y,const char *fontfile, float size, float angle,const char *text,CColor fgcolor,CColor bgcolor);
+    void drawAnchoredText(int x,int y,const char *fontfile, float size, float angle,const char *text,CColor color, int anchor);
     void drawCenteredText(int x,int y,const char *fontfile, float size, float angle,const char *text,CColor color);
     int drawTextArea(int x,int y,const char *fontfile, float size, float angle,const char *text,CColor fgcolor,CColor bgcolor);
     
@@ -191,6 +193,8 @@ class CDrawImage{
     void getHexColorForColorIndex(CT::string *hexValue,int colorIndex);
     void setText(const char * text, size_t length,int x,int y, int color,int fontSize);
     //void setTextDisc(const char *text, size_t length, int x, int y, int r, CColor color, const char *fontfile,int fontSize);
+    void setDisc(int x,int y,int discRadius, CColor fillColor, CColor lineColor);
+    void setDisc(int x,int y,int discRadius, int fillCol, int lineCol);
     void setTextDisc(int x,int y,int discRadius, const char *text,const char *fontfile, float fontsize,CColor textcolor,CColor fillcolor, CColor lineColor);
     void setTextStroke(const char * text, size_t length,int x,int y, int fgcolor,int bgcolor, int fontSize);
     void rectangle( int x1, int y1, int x2, int y2,int innercolor,int outercolor);
