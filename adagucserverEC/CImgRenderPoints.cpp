@@ -67,9 +67,10 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
   if(settings.indexOf("disc")!=-1){
     drawPoints = false;
     drawDiscs = true;
-    if(dataSource->styleConfiguration!=NULL){
-      if(dataSource->styleConfiguration->styleConfig!=NULL){
-        CServerConfig::XMLE_Style* s = dataSource->styleConfiguration->styleConfig;
+    CStyleConfiguration *styleConfiguration = dataSource->getStyle();
+    if(styleConfiguration!=NULL){
+      if(styleConfiguration->styleConfig!=NULL){
+        CServerConfig::XMLE_Style* s = styleConfiguration->styleConfig;
         if(s -> Disc.size() == 1){
           if(s -> Disc[0]->attr.fillcolor.empty()==false){
             fillColor.parse(s -> Disc[0]->attr.fillcolor.c_str());
@@ -99,15 +100,17 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
       drawPoints=true;
   }
   CDBDebug("drawPoints=%d drawText=%d drawBarb=%d drawVector=%d", drawPoints, drawText, drawBarb, drawVector);
+  CStyleConfiguration *styleConfiguration = dataSource->getStyle();
+
   if (drawPoints) {
     CDBDebug("point style before: %d %d %f %f t:#%02x%02x%02x%02x f:#%02x%02x%02x%02x l:#%02x%02x%02x%02x",drawPointRadius, drawPointDot, drawTextAngleStart, drawTextAngleStep, 
              drawPointTextColor.r,drawPointTextColor.g,drawPointTextColor.b,drawPointTextColor.a,
              drawPointFillColor.r,drawPointFillColor.g,drawPointFillColor.b,drawPointFillColor.a,
              drawPointLineColor.r,drawPointLineColor.g,drawPointLineColor.b,drawPointLineColor.a
             );
-    if(dataSource->styleConfiguration!=NULL){
-      if(dataSource->styleConfiguration->styleConfig!=NULL){
-        CServerConfig::XMLE_Style* s = dataSource->styleConfiguration->styleConfig;
+    if(styleConfiguration!=NULL){
+      if(styleConfiguration->styleConfig!=NULL){
+        CServerConfig::XMLE_Style* s = styleConfiguration->styleConfig;
         if(s -> Point.size() == 1){
           if(s -> Point[0]->attr.fillcolor.empty()==false){
             drawPointFillColor.parse(s -> Point[0]->attr.fillcolor.c_str());
@@ -156,9 +159,9 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
   
   if(settings.indexOf("thin")!=-1){
     doThinning = true;
-    if(dataSource->styleConfiguration!=NULL){
-      if(dataSource->styleConfiguration->styleConfig!=NULL){
-        CServerConfig::XMLE_Style* s = dataSource->styleConfiguration->styleConfig;
+    if(styleConfiguration!=NULL){
+      if(styleConfiguration->styleConfig!=NULL){
+        CServerConfig::XMLE_Style* s = styleConfiguration->styleConfig;
         if(s -> Thinning.size() == 1){
           if(s -> Thinning[0]->attr.radius.empty()==false){
             thinningRadius = s -> Thinning[0]->attr.radius.toInt();
@@ -457,15 +460,17 @@ int CImgRenderPoints::getPixelIndexForValue(CDataSource*dataSource,float val){
         if(val==float(dataSource->getDataObject(0)->dfNodataValue))isNodata=true;
         if(!(val==val))isNodata=true;
       }
-      if(!isNodata)
-        if(dataSource->styleConfiguration->hasLegendValueRange==1)
-          if(val<dataSource->styleConfiguration->legendLowerRange||val>dataSource->styleConfiguration->legendUpperRange)isNodata=true;
+      if(!isNodata) {
+        CStyleConfiguration *styleConfiguration = dataSource->getStyle();
+        if(styleConfiguration->hasLegendValueRange==1)
+          if(val<styleConfiguration->legendLowerRange||val>styleConfiguration->legendUpperRange)isNodata=true;
           if(!isNodata){
-            if(dataSource->styleConfiguration->legendLog!=0)val=log10(val+.000001)/log10(dataSource->styleConfiguration->legendLog);
-            val*=dataSource->styleConfiguration->legendScale;
-            val+=dataSource->styleConfiguration->legendOffset;
+            if(styleConfiguration->legendLog!=0)val=log10(val+.000001)/log10(styleConfiguration->legendLog);
+            val*=styleConfiguration->legendScale;
+            val+=styleConfiguration->legendOffset;
             if(val>=239)val=239;else if(val<0)val=0;
             return int(val);
           }
+      }
       return 0; 
 }

@@ -1276,7 +1276,7 @@ int CImgWarpBilinear::set(const char *pszSettings){
   return 0;
 }
 
-DEF_ERRORMAIN();
+//DEF_ERRORMAIN();
 int xdir[]={-1, 1, 0, 0,-1, 1,-1, 1};
 int ydir[]={ 0, 0, 1,-1,-1,-1, 1, 1};
 void traverseLine(CDrawImage * drawImage,DISTANCEFIELDTYPE *distance,float *valueField,int lineX,int lineY,int dImageWidth,int dImageHeight,float lineWidth,CColor lineColor,CColor textColor,ContourDefinition *contourDefinition,DISTANCEFIELDTYPE lineMask,bool forwardOrBackwards,bool drawText,std::vector<Point> *textLocations){
@@ -1421,7 +1421,7 @@ void traverseLine(CDrawImage * drawImage,DISTANCEFIELDTYPE *distance,float *valu
 
 
 void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float interval,CDataSource *dataSource,CDrawImage *drawImage,bool drawLine, bool drawShade, bool drawText){
-  
+   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
    //When using min/max stretching, the shadeclasses need to be extended according to its shade interval
    if(dataSource->stretchMinMax==true){
      if(dataSource->statistics!=NULL){
@@ -1433,8 +1433,8 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
        //Calculate new scale and offset for this:
        float ls=240/((iMax-iMin));
        float lo=-(iMin*ls);
-       dataSource->styleConfiguration->legendScale=ls;
-       dataSource->styleConfiguration->legendOffset=lo;
+       styleConfiguration->legendScale=ls;
+       styleConfiguration->legendOffset=lo;
      }
    }
  
@@ -1518,8 +1518,8 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
    }
    int lastShadeDef=0;
    
-   float minValue = CImageDataWriter::getValueForColorIndex(dataSource,0);;
-   float maxValue = CImageDataWriter::getValueForColorIndex(dataSource,240);;
+   //float minValue = CImageDataWriter::getValueForColorIndex(dataSource,0);;
+   //float maxValue = CImageDataWriter::getValueForColorIndex(dataSource,240);;
 //     for(int y=0;y<dImageHeight-1;y++){
 //      for(int x=0;x<dImageWidth-1;x++){
 //        

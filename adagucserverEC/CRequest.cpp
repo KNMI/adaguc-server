@@ -94,6 +94,14 @@ void CRequest::addXMLLayerToConfig(CServerParams *srvParam,CDFObject *cdfObject,
             xmleLayer->RenderMethod.push_back(xmleRenderMethod);
           }
         }
+        CDF::Attribute *featureType = variable->getAttributeNE("featureType");
+        if(featureType!=NULL){
+          if(featureType->getDataAsString().equals("timeSeries")){
+            CServerConfig::XMLE_RenderMethod* xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
+            xmleRenderMethod->value.copy("pointnearest");
+            xmleLayer->RenderMethod.push_back(xmleRenderMethod);
+          }
+        }
       }
   }
   
@@ -375,139 +383,140 @@ int CRequest::process_wms_getmetadata_request(){
 
 
 int CRequest::process_wms_getstyles_request(){
-    int status;
-    if(srvParam->serviceType==SERVICE_WMS){
-      if(srvParam->Geo->dWidth>MAX_IMAGE_WIDTH){
-        CDBError("Parameter WIDTH must be smaller than %d",MAX_IMAGE_WIDTH);
-        return 1;
-      }
-      if(srvParam->Geo->dHeight>MAX_IMAGE_HEIGHT){
-      CDBError("Parameter HEIGHT must be smaller than %d",MAX_IMAGE_HEIGHT);
-      return 1;
-      }
-    }
-    CDrawImage plotCanvas;
-    plotCanvas.setTrueColor(true);
-    plotCanvas.createImage(int(srvParam->Geo->dWidth),int(srvParam->Geo->dHeight));
-    plotCanvas.create685Palette();
-    
-    CImageDataWriter imageDataWriter;
-  
-    CDataSource * dataSource = new CDataSource();
-    //dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[0],"prediction",0);
-    dataSource->addStep("",NULL);
-    dataSource->getCDFDims()->addDimension("time","0",0);
-    dataSource->setTimeStep(0);
-    dataSource->srvParams=srvParam;
-    dataSource->cfg=srvParam->configObj->Configuration[0];
-    dataSource->cfgLayer=srvParam->cfg->Layer[0];
-    CDataSource::DataObject *newDataObject = new CDataSource::DataObject();
-    newDataObject->variableName.copy("test");
-    dataSource->getDataObjectsVector()->push_back(newDataObject);
-    dataSource->dLayerType=CConfigReaderLayerTypeStyled;
-    
-    
-   
-
-    plotCanvas.rectangle(0,0,plotCanvas.Geo->dWidth,plotCanvas.Geo->dHeight,CColor(255,255,255,255),CColor(255,255,255,255));
-    
-    int legendWidth = 200;
-    int legendHeight = 600;
-
-    
-    
-
-        
-    
-    int posX=0;
-    int posY=0;
-   
-    bool errorOccured = false;
-    
-    bool legendOnlyMode = true;
-    try{
-    
-      for(size_t j=0;j<srvParam->cfg->Style.size();j++){
-        CServerConfig::XMLE_Style* style = srvParam->cfg->Style[j];
-        CDBDebug("style %s",style->attr.name.c_str());
-        
-        CT::PointerList<CT::string*> *legendList = NULL;
-        
-        if(legendOnlyMode == false){
-          legendList = CServerParams::getLegendNames(style->Legend);
-        }else{
-          legendList = new CT::PointerList<CT::string*>();
-          for(size_t j=0;j<srvParam->cfg->Legend.size();j++){
-            
-            legendList->push_back(new CT::string(srvParam->cfg->Legend[j]->attr.name.c_str()));
-            
-          }
-        }
-        
-        CDBDebug("Found %d legends",legendList->size());
-        for(size_t i=0;i<legendList->size();i++){
-          CDBDebug("legend %s",(*legendList)[i]->c_str());
-          
-          int legendIndex = CImageDataWriter::getServerLegendIndexByName((*legendList)[i]->c_str(),srvParam->cfg->Legend);
-          if(legendIndex == -1){
-            CDBError("Legend %s is not configured");
-            delete legendList;
-            throw (__LINE__);
-          }
-          CDBDebug("Found legend index %d",legendIndex);
-          
-          CT::PointerList<CT::string*> *renderMethodList = CImageDataWriter::getRenderMethodListForDataSource(dataSource,style);      
-
-          CDBDebug("Found %d rendermethods",renderMethodList->size());
-          for(size_t r=0;r<renderMethodList->size();r++){
-            CDBDebug("Using %s->%s->%s",style->attr.name.c_str(),(*legendList)[i]->c_str(),(*renderMethodList)[r]->c_str());
-            CT::string styleName;
-            styleName.print("%s/%s",style->attr.name.c_str(),(*renderMethodList)[r]->c_str());
-            if(legendOnlyMode){
-              styleName.print("%s",(*legendList)[i]->c_str());
-            }
-            
-            CImageDataWriter::makeStyleConfig(dataSource->styleConfiguration,dataSource,style->attr.name.c_str(),(*legendList)[i]->c_str(),(*renderMethodList)[r]->c_str());
-            
-            CDrawImage legendImage;
-            legendImage.enableTransparency(true);
-            legendImage.createImage(&plotCanvas,legendWidth,legendHeight);
-            status = legendImage.createGDPalette(srvParam->cfg->Legend[legendIndex]);if(status != 0)throw(__LINE__);
-            
-            
-            legendImage.rectangle(0,0,legendImage.Geo->dWidth-1,legendImage.Geo->dHeight-1,CColor(255,255,255,255),CColor(0,0,255,255));
-            status = imageDataWriter.createLegend(dataSource,&legendImage);if(status != 0)throw(__LINE__);
-            //posX = (legendNr++)*legendWidth;
-          
-            plotCanvas.draw(posX,posY,0,0,&legendImage);
-            plotCanvas.drawText(posX+4,posY+legendHeight-4,srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(),8,0,styleName.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
-            
-            posX+=legendWidth;
-            if(posX>plotCanvas.Geo->dWidth){
-              posX=0;
-              posY+=legendHeight;
-            }
-            if(legendOnlyMode)break;
-          }
-          delete renderMethodList;
-        }
-        delete legendList;
-        if(legendOnlyMode)break;
-      }
-    }catch(int e){
-      errorOccured = true;
-    }
-    
-   
-    
-    
-    delete dataSource;
-  
-    if(errorOccured){
-      return 1;
-    }
-    printf("%s%c%c\n","Content-Type:image/png",13,10);
-    plotCanvas.printImagePng();
+//     int status;
+//     if(srvParam->serviceType==SERVICE_WMS){
+//       if(srvParam->Geo->dWidth>MAX_IMAGE_WIDTH){
+//         CDBError("Parameter WIDTH must be smaller than %d",MAX_IMAGE_WIDTH);
+//         return 1;
+//       }
+//       if(srvParam->Geo->dHeight>MAX_IMAGE_HEIGHT){
+//       CDBError("Parameter HEIGHT must be smaller than %d",MAX_IMAGE_HEIGHT);
+//       return 1;
+//       }
+//     }
+//     CDrawImage plotCanvas;
+//     plotCanvas.setTrueColor(true);
+//     plotCanvas.createImage(int(srvParam->Geo->dWidth),int(srvParam->Geo->dHeight));
+//     plotCanvas.create685Palette();
+//     
+//     CImageDataWriter imageDataWriter;
+//   
+//     CDataSource * dataSource = new CDataSource();
+//     //dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[0],"prediction",0);
+//     dataSource->addStep("",NULL);
+//     dataSource->getCDFDims()->addDimension("time","0",0);
+//     dataSource->setTimeStep(0);
+//     dataSource->srvParams=srvParam;
+//     dataSource->cfg=srvParam->configObj->Configuration[0];
+//     dataSource->cfgLayer=srvParam->cfg->Layer[0];
+//     CDataSource::DataObject *newDataObject = new CDataSource::DataObject();
+//     newDataObject->variableName.copy("test");
+//     dataSource->getDataObjectsVector()->push_back(newDataObject);
+//     dataSource->dLayerType=CConfigReaderLayerTypeStyled;
+//     
+//     
+//    
+// 
+//     plotCanvas.rectangle(0,0,plotCanvas.Geo->dWidth,plotCanvas.Geo->dHeight,CColor(255,255,255,255),CColor(255,255,255,255));
+//     
+//     int legendWidth = 200;
+//     int legendHeight = 600;
+// 
+//     
+//     
+// 
+//         
+//     
+//     int posX=0;
+//     int posY=0;
+//    
+//     bool errorOccured = false;
+//     
+//     bool legendOnlyMode = true;
+//     try{
+//     
+//       for(size_t j=0;j<srvParam->cfg->Style.size();j++){
+//         CServerConfig::XMLE_Style* style = srvParam->cfg->Style[j];
+//         CDBDebug("style %s",style->attr.name.c_str());
+//         
+//         CT::PointerList<CT::string*> *legendList = NULL;
+//         
+//         if(legendOnlyMode == false){
+//           legendList = CServerParams::getLegendNames(style->Legend);
+//         }else{
+//           legendList = new CT::PointerList<CT::string*>();
+//           for(size_t j=0;j<srvParam->cfg->Legend.size();j++){
+//             
+//             legendList->push_back(new CT::string(srvParam->cfg->Legend[j]->attr.name.c_str()));
+//             
+//           }
+//         }
+//         
+//         CDBDebug("Found %d legends",legendList->size());
+//         for(size_t i=0;i<legendList->size();i++){
+//           CDBDebug("legend %s",(*legendList)[i]->c_str());
+//           
+//           int legendIndex = CImageDataWriter::getServerLegendIndexByName((*legendList)[i]->c_str(),srvParam->cfg->Legend);
+//           if(legendIndex == -1){
+//             CDBError("Legend %s is not configured");
+//             delete legendList;
+//             throw (__LINE__);
+//           }
+//           CDBDebug("Found legend index %d",legendIndex);
+//           
+//           CT::PointerList<CT::string*> *renderMethodList = CImageDataWriter::getRenderMethodListForDataSource(dataSource,style);      
+// 
+//           CDBDebug("Found %d rendermethods",renderMethodList->size());
+// //           for(size_t r=0;r<renderMethodList->size();r++){
+// //             CDBDebug("Using %s->%s->%s",style->attr.name.c_str(),(*legendList)[i]->c_str(),(*renderMethodList)[r]->c_str());
+// //             CT::string styleName;
+// //             styleName.print("%s/%s",style->attr.name.c_str(),(*renderMethodList)[r]->c_str());
+// //             if(legendOnlyMode){
+// //               styleName.print("%s",(*legendList)[i]->c_str());
+// //             }
+// //             
+// //             
+// //             CImageDataWriter::makeStyleConfig(dataSource->styleConfiguration,dataSource);//,style->attr.name.c_str(),(*legendList)[i]->c_str(),(*renderMethodList)[r]->c_str());
+// //             
+// //             CDrawImage legendImage;
+// //             legendImage.enableTransparency(true);
+// //             legendImage.createImage(&plotCanvas,legendWidth,legendHeight);
+// //             status = legendImage.createGDPalette(srvParam->cfg->Legend[legendIndex]);if(status != 0)throw(__LINE__);
+// //             
+// //             
+// //             legendImage.rectangle(0,0,legendImage.Geo->dWidth-1,legendImage.Geo->dHeight-1,CColor(255,255,255,255),CColor(0,0,255,255));
+// //             status = imageDataWriter.createLegend(dataSource,&legendImage);if(status != 0)throw(__LINE__);
+// //             //posX = (legendNr++)*legendWidth;
+// //           
+// //             plotCanvas.draw(posX,posY,0,0,&legendImage);
+// //             plotCanvas.drawText(posX+4,posY+legendHeight-4,srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(),8,0,styleName.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
+// //             
+// //             posX+=legendWidth;
+// //             if(posX>plotCanvas.Geo->dWidth){
+// //               posX=0;
+// //               posY+=legendHeight;
+// //             }
+// //             if(legendOnlyMode)break;
+// //           }
+//           delete renderMethodList;
+//         }
+//         delete legendList;
+//         if(legendOnlyMode)break;
+//       }
+//     }catch(int e){
+//       errorOccured = true;
+//     }
+//     
+//    
+//     
+//     
+//     delete dataSource;
+//   
+//     if(errorOccured){
+//       return 1;
+//     }
+//     printf("%s%c%c\n","Content-Type:image/png",13,10);
+//     plotCanvas.printImagePng();
   return 0;
 }
 
@@ -2534,7 +2543,7 @@ int CRequest::process_querystring(){
         if(srvParam->autoResourceLocation.indexOf("ncdods://")==0)isValidResource=true;
       }
       
-      //Error messages should be the unique for different 'dir' attempts, otherwise someone can find out directory structures
+      //Error messages should be the same for different 'dir' attempts, otherwise someone can find out directory structures
       if(isValidResource==false){
         if(srvParam->isAutoLocalFileResourceEnabled()){
           if(srvParam->checkIfPathHasValidTokens(srvParam->autoResourceLocation.c_str())==false){
