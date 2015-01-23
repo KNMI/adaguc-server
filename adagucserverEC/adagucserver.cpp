@@ -211,6 +211,14 @@ int main(int argc, const char *argv[]){
       readyerror();
       return status;
     }
+    
+    if(strncmp(argv[1],"--test",6)==0){
+      CDBDebug("Test");
+      CProj4ToCF proj4ToCF;
+      proj4ToCF.debug=true;
+      proj4ToCF.unitTest();
+      return 0;
+    }
   }
   //Process the OGC request
   setErrorFunction(serverErrorFunction);
