@@ -74,14 +74,12 @@ class CProj4ToCF{
     
     void initMSGPerspective(CDF::Variable *projectionVariable, std::vector <KVP*> projKVPList);
     void initStereoGraphic(CDF::Variable *projectionVariable, std::vector <KVP*> projKVPList);
-    
     void initLCCPerspective(CDF::Variable *projectionVariable, std::vector <KVP*> projKVPList);
-    
     void initRPPerspective(CDF::Variable *projectionVariable, std::vector <KVP*> projKVPList);
-    
     void initObliqueStereographicPerspective(CDF::Variable *projectionVariable, std::vector <KVP*> projKVPList);
-    
     void initLatitudeLongitude(CDF::Variable *projectionVariable, std::vector <CProj4ToCF::KVP*> projKVPList);
+    void initMercator(CDF::Variable *projectionVariable, std::vector <CProj4ToCF::KVP*> projKVPList);
+    
 
     int convertBackAndFort(const char *projString,CDF::Variable *projectionVariable);
     
