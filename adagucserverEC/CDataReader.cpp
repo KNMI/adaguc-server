@@ -553,6 +553,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y){
             //Projection string was created, set it in the datasource.
             dataSource->nativeProj4.copy(projString.c_str());
             CDBDebug("Autogen proj4 string: %s",projString.c_str());
+            projVar->setAttributeText("autogen_proj",projString.c_str());
           }else{
             CDBWarning("Unnown projection");
           }
