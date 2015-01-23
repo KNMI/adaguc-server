@@ -27,6 +27,7 @@
 #include "CDBFileScanner.h"
 const char *CDataSource::className = "CDataSource";
 
+
 /************************************/
 /* CDataSource::CDataObject          */
 /************************************/
@@ -710,7 +711,7 @@ CT::PointerList<CT::string*> *CDataSource::getLegendListForDataSource(CDataSourc
       return CServerParams::getLegendNames(style->Legend);
     }
   }
-  CDBError("No legendlist for layer %s",dataSource->layerName.c_str());
+//  CDBError("No legendlist for layer %s",dataSource->layerName.c_str());
   return NULL;
 }
 
@@ -1211,7 +1212,14 @@ CStyleConfiguration *CDataSource::getStyle(){
           break;
       }
     }
-    #ifdef CDATASOURCE_DEBUG      
+    if(_currentStyle->legendIndex == -1){
+      CT::PointerList<CT::string*> *legendList = getLegendListForDataSource(this,NULL);
+      if(legendList!=NULL){
+        _currentStyle->legendIndex = getServerLegendIndexByName(legendList->get(0)->c_str(),this->cfg->Legend);
+      }
+      delete legendList;
+    }
+   #ifdef CDATASOURCE_DEBUG      
     CDBDebug("Dumping style:");
     CT::string styleDump;
     _currentStyle->printStyleConfig(&styleDump);
