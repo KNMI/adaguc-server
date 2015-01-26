@@ -8,10 +8,8 @@ CStyleConfiguration::RenderMethod CStyleConfiguration::getRenderMethodFromString
   if(renderMethodString->indexOf("point"   )!=-1)renderMethod|=RM_POINT;
   if(renderMethodString->indexOf("vector"  )!=-1)renderMethod|=RM_VECTOR;
   if(renderMethodString->indexOf("barb"    )!=-1)renderMethod|=RM_BARB;
-  if(renderMethodString->indexOf("disc"    )!=-1)renderMethod|=RM_DISC;
   if(renderMethodString->indexOf("thin")!=-1)renderMethod|=RM_THIN;
   if(renderMethodString->indexOf("rgba")!=-1)renderMethod|=RM_RGBA;
-  if(renderMethodString->indexOf("volume")!=-1)renderMethod|=RM_VOLUME;
 
   return renderMethod;
 }
@@ -27,10 +25,6 @@ void CStyleConfiguration::getRenderMethodAsString(CT::string *renderMethodString
   if(renderMethod & RM_POINT)renderMethodString->concat("point");
   if(renderMethod & RM_VECTOR)renderMethodString->concat("vector");
   if(renderMethod & RM_BARB)renderMethodString->concat("barb");
-  if(renderMethod & RM_DISC)renderMethodString->concat("disc");
   if(renderMethod & RM_THIN)renderMethodString->concat("thin");
   if(renderMethod & RM_RGBA)renderMethodString->concat("rgba");
-  if(renderMethod & RM_VOLUME)renderMethodString->concat("volume");
-  
-
 }
