@@ -424,8 +424,8 @@ int CProj4ToCF::convertCFToProj( CDF::Variable *projectionVariable,CT::string *p
       int projectionUnits = getProjectionUnits(projectionVariable);
       
       if(projectionUnits == CPROJ4TOCF_UNITS_KILOMETER){
-        dfsemi_major_axis = dfsemi_major_axis/1000;
-        dfsemi_minor_axis = dfsemi_minor_axis/1000;
+//         dfsemi_major_axis = dfsemi_major_axis/1000;
+//         dfsemi_minor_axis = dfsemi_minor_axis/1000;
         units="km";
       }
       
@@ -471,8 +471,8 @@ int CProj4ToCF::convertCFToProj( CDF::Variable *projectionVariable,CT::string *p
       int projectionUnits = getProjectionUnits(projectionVariable);
       
       if(projectionUnits == CPROJ4TOCF_UNITS_KILOMETER){
-        dfsemi_major_axis = dfsemi_major_axis/1000;
-        dfsemi_minor_axis = dfsemi_minor_axis/1000;
+//         dfsemi_major_axis = dfsemi_major_axis/1000;
+//         dfsemi_minor_axis = dfsemi_minor_axis/1000;
         units="km";
       }
       
@@ -608,8 +608,8 @@ int CProj4ToCF::convertCFToProj( CDF::Variable *projectionVariable,CT::string *p
       int projectionUnits = getProjectionUnits(projectionVariable);
       
       if(projectionUnits == CPROJ4TOCF_UNITS_KILOMETER){
-        dfsemi_major_axis = dfsemi_major_axis/1000;
-        dfsemi_minor_axis = dfsemi_minor_axis/1000;
+//         dfsemi_major_axis = dfsemi_major_axis/1000;
+//         dfsemi_minor_axis = dfsemi_minor_axis/1000;
         units="km";
       }
       
