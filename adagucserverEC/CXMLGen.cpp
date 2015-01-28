@@ -103,7 +103,7 @@ CDBDebug("getFileNameForLayer");
       CT::string tableName;
       CT::string dimName(myWMSLayer->layer->Dimension[0]->attr.name.c_str());
       try{
-        tableName = srvParam->lookupTableName(myWMSLayer->layer->FilePath[0]->value.c_str(),myWMSLayer->layer->FilePath[0]->attr.filter.c_str(),dimName.c_str());
+        tableName = srvParam->lookupTableName(myWMSLayer->layer->FilePath[0]->value.c_str(),myWMSLayer->layer->FilePath[0]->attr.filter.c_str(),dimName.c_str(),myWMSLayer->layer->DataBaseTable);
       }catch(int e){
         CDBError("Unable to create tableName from '%s' '%s' '%s'",myWMSLayer->layer->FilePath[0]->value.c_str(),myWMSLayer->layer->FilePath[0]->attr.filter.c_str(),dimName.c_str());
         return 1;
@@ -364,7 +364,7 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
       //Get the tablename
       CT::string tableName;
       try{
-        tableName = srvParam->lookupTableName(myWMSLayer->layer->FilePath[0]->value.c_str(),myWMSLayer->layer->FilePath[0]->attr.filter.c_str(),pszDimName);
+        tableName = srvParam->lookupTableName(myWMSLayer->layer->FilePath[0]->value.c_str(),myWMSLayer->layer->FilePath[0]->attr.filter.c_str(),pszDimName,myWMSLayer->layer->DataBaseTable);
       }catch(int e){
         CDBError("Unable to create tableName from '%s' '%s' '%s'",myWMSLayer->layer->FilePath[0]->value.c_str(),myWMSLayer->layer->FilePath[0]->attr.filter.c_str(), pszDimName);
         return 1;

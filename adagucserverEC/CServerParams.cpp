@@ -200,7 +200,21 @@ CT::string currentDateTime() {
 
 //Must become atomic between processes.
 
-CT::string CServerParams::lookupTableName(const char *path,const char *filter, const char * dimension){
+CT::string CServerParams::lookupTableName(const char *path,const char *filter, const char * dimension,std::vector<CServerConfig::XMLE_DataBaseTable*> dataBaseTable){
+  if(dataBaseTable.size() == 1){
+    CT::string tableName = "";
+    
+    tableName.concat(dataBaseTable[0]->value.c_str());
+    CT::string dimName = "";
+    if(dimension!=NULL){
+      dimName = dimension;
+    }
+    
+    makeCorrectTableName(&tableName,&dimName);
+    return tableName;
+    
+  }
+  
   CT::string identifier = "lookuptable/";  identifier.concat(path);  identifier.concat("/");  identifier.concat(filter);  
   if(dimension!=NULL){identifier.concat("/");identifier.concat(dimension);}
   CT::string tableName;
