@@ -868,40 +868,8 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
      * DataPostProc: Here our datapostprocessor comes into action!
      * This is stage1, only AX+B will be applied to scale and offset parameters
      */
-    for(size_t dpi=0;dpi<dataSource->cfgLayer->DataPostProc.size();dpi++){
-      CServerConfig::XMLE_DataPostProc * proc = dataSource->cfgLayer->DataPostProc[dpi];
-      //Algorithm ax+b:
-      if(proc->attr.algorithm.equals("ax+b")){
-        dataSource->getDataObject(varNr)->hasScaleOffset=true;
-        dataSource->getDataObject(varNr)->cdfVariable->setType(CDF_DOUBLE);
-      
-        //Apply offset
-        if(proc->attr.b.empty()==false){
-          CT::string b;
-          b.copy(proc->attr.b.c_str());
-          if(add_offset==NULL){
-            dataSource->getDataObject(varNr)->dfadd_offset=b.toDouble();
-          }else{
-            dataSource->getDataObject(varNr)->dfadd_offset+=b.toDouble();
-          }
-        }
-        //Apply scale
-        if(proc->attr.a.empty()==false){
-          CT::string a;
-          a.copy(proc->attr.a.c_str());
-          if(scale_factor==NULL){
-            dataSource->getDataObject(varNr)->dfscale_factor=a.toDouble();
-          }else{
-            dataSource->getDataObject(varNr)->dfscale_factor*=a.toDouble();
-          }
-        }
-      }
-      //Apply units:
-      if(proc->attr.units.empty()==false){
-        dataSource->getDataObject(varNr)->units=proc->attr.units.c_str();
-      }
-    
-    }
+    CDPPExecutor DPPExecutor;
+    DPPExecutor.executeProcessors(dataSource,CDATAPOSTPROCESSOR_RUNBEFOREREADING);
 
      #ifdef CDATAREADER_DEBUG
     CDBDebug("/Finished Working on variable %s",dataSource->getDataObject(varNr)->cdfVariable->name.c_str());
@@ -1263,37 +1231,13 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
   #ifdef MEASURETIME
     StopWatch_Stop("all read");
   #endif
-
     
-    /**
-     * DataPostProc: Here our datapostprocessor comes into action!
-     * This is stage2, where AX+B already has been applied
-     */
-    for(size_t dpi=0;dpi<dataSource->cfgLayer->DataPostProc.size();dpi++){
-      CServerConfig::XMLE_DataPostProc * proc = dataSource->cfgLayer->DataPostProc[dpi];
-      
-      //Algorithm msgcppmask
-      if(proc->attr.algorithm.equals("msgcppmask")){
-        if(dataSource->getNumDataObjects()!=2){
-          CDBError("3 variables are needed for msgcppmask");
-        }
-        CDBDebug("Applying msgcppmask");
-        float *data1=(float*)dataSource->getDataObject(0)->cdfVariable->data;//sunz
-        float *data2=(float*)dataSource->getDataObject(1)->cdfVariable->data;
-        float fNodata1=(float)dataSource->getDataObject(0)->dfNodataValue;
-        size_t l=(size_t)dataSource->dHeight*(size_t)dataSource->dWidth;
-        float fa=72,fb=75; 
-        if(proc->attr.b.empty()==false){CT::string b;b.copy(proc->attr.b.c_str());fb=b.toDouble();}
-        if(proc->attr.a.empty()==false){CT::string a;a.copy(proc->attr.a.c_str());fa=a.toDouble();}
-        for(size_t j=0;j<l;j++){
-          if((data2[j]<fa&&data1[j]<fa)||(data2[j]>fb))data1[j]=fNodata1; else data1[j]=1;
-        }
-        dataSource->eraseDataObject(1);
-      }
-      #ifdef MEASURETIME
-      StopWatch_Stop("Data postprocessing completed");
-      #endif
-    }
+    /*
+    * DataPostProc: Here our datapostprocessor comes into action!
+    * This is stage2, running on data, not metadata
+    */
+    CDPPExecutor DPPExecutor;
+    DPPExecutor.executeProcessors(dataSource,CDATAPOSTPROCESSOR_RUNAFTERREADING);
 
   }
   #ifdef CDATAREADER_DEBUG
