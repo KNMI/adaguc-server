@@ -85,20 +85,29 @@ class CServerConfig:public CXMLSerializerInterface{
       }
     };
     
-    class XMLE_Disc: public CXMLObjectInterface{
+    class XMLE_FilterPoints: public CXMLObjectInterface{
     public:
       class Cattr{
       public:
-        CXMLString fillcolor,linecolor,textcolor,fontfile,fontsize,discradius;
+        CXMLString skip, use;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
-        if(equals("fillcolor",9,attrname)){attr.fillcolor.copy(attrvalue);return;}
-        else if(equals("linecolor",9,attrname)){attr.linecolor.copy(attrvalue);return;}
-        else if(equals("textcolor",9,attrname)){attr.textcolor.copy(attrvalue);return;}
-        else if(equals("fontfile",8,attrname)){attr.fontfile.copy(attrvalue);return;}
-        else if(equals("fontsize",8,attrname)){attr.fontsize.copy(attrvalue);return;}
-        else if(equals("discradius",10,attrname)){attr.discradius.copy(attrvalue);return;}
-        
+        if(equals("skip",4,attrname)){attr.skip.copy(attrvalue);return;}
+        else if(equals("use",3,attrname)){attr.use.copy(attrvalue);return;}
+      }
+    };
+    
+    class XMLE_Barb: public CXMLObjectInterface{
+    public:
+      class Cattr{
+      public:
+        CXMLString linecolor,linewidth,plotstationid,barbstyle;
+      }attr;
+      void addAttribute(const char *attrname,const char *attrvalue){
+        if(equals("linecolor",9,attrname)){attr.linecolor.copy(attrvalue);return;}
+        else if(equals("linewidth",9,attrname)){attr.linewidth.copy(attrvalue);return;}
+        else if(equals("barbstyle",9,attrname)){attr.barbstyle.copy(attrvalue);return;}
+        else if(equals("plotstationid",13,attrname)){attr.plotstationid.copy(attrvalue);return;}
       }
     };
     
@@ -106,7 +115,7 @@ class CServerConfig:public CXMLSerializerInterface{
     public:
       class Cattr{
       public:
-        CXMLString fillcolor,linecolor,textcolor,fontfile,fontsize,discradius,textradius,dot,anglestart,anglestep,textformat;
+        CXMLString fillcolor,linecolor,textcolor,fontfile,fontsize,discradius,textradius,dot,anglestart,anglestep,textformat,plotstationid,pointstyle;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("fillcolor",9,attrname)){attr.fillcolor.copy(attrvalue);return;}
@@ -120,6 +129,8 @@ class CServerConfig:public CXMLSerializerInterface{
         else if(equals("anglestart",10,attrname)){attr.anglestart.copy(attrvalue);return;}
         else if(equals("anglestep",9,attrname)){attr.anglestep.copy(attrvalue);return;}
         else if(equals("textformat",10,attrname)){attr.textformat.copy(attrvalue);return;}
+        else if(equals("plotstationid",13,attrname)){attr.plotstationid.copy(attrvalue);return;}
+        else if(equals("pointstyle",10,attrname)){attr.pointstyle.copy(attrvalue);return;}
       }
     };
     
@@ -375,8 +386,9 @@ class CServerConfig:public CXMLSerializerInterface{
     class XMLE_Style: public CXMLObjectInterface{
       public:
         std::vector <XMLE_Thinning*> Thinning;
-        std::vector <XMLE_Disc*> Disc;
         std::vector <XMLE_Point*> Point;
+        std::vector <XMLE_Barb*> Barb;
+        std::vector <XMLE_FilterPoints*> FilterPoints;
         std::vector <XMLE_Legend*> Legend;
         std::vector <XMLE_Scale*> Scale;
         std::vector <XMLE_Offset*> Offset;
@@ -396,8 +408,9 @@ class CServerConfig:public CXMLSerializerInterface{
         
         ~XMLE_Style(){
           XMLE_DELOBJ(Thinning);
-          XMLE_DELOBJ(Disc);
           XMLE_DELOBJ(Point);
+          XMLE_DELOBJ(Barb);
+          XMLE_DELOBJ(FilterPoints);
           XMLE_DELOBJ(Legend);
           XMLE_DELOBJ(Scale);
           XMLE_DELOBJ(Offset);
@@ -427,8 +440,9 @@ class CServerConfig:public CXMLSerializerInterface{
           if(rc==1){
            
             if(equals("Thinning",8,name)){XMLE_ADDOBJ(Thinning);}
-            else if(equals("Disc",4,name)){XMLE_ADDOBJ(Disc);}
             else if(equals("Point",5,name)){XMLE_ADDOBJ(Point);}
+            else if(equals("Barb",4,name)){XMLE_ADDOBJ(Barb);}
+            else if(equals("FilterPoints",12,name)){XMLE_ADDOBJ(FilterPoints);}
             else if(equals("Legend",6,name)){XMLE_ADDOBJ(Legend);}
             else if(equals("Scale",5,name)){XMLE_ADDOBJ(Scale);}
             else if(equals("Offset",6,name)){XMLE_ADDOBJ(Offset);}

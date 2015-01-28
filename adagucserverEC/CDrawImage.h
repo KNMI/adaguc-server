@@ -160,6 +160,8 @@ class CDrawImage{
     int clonePalette(CDrawImage *drawImage);
     
     void drawBarb(int x,int y,double direction, double strength,int color,bool toKnots,bool flip);
+    void drawBarb(int x,int y,double direction, double strength,int color,float linewidth, bool toKnots,bool flip);
+    void drawBarb(int x,int y,double direction, double strength,CColor color,float linewidth, bool toKnots,bool flip);
     void drawText(int x,int y,float angle,const char *text,unsigned char colorIndex);
     void drawText(int x,int y,float angle,const char *text,CColor fgcolor);
     void drawText(int x,int y,const char *fontfile, float size, float angle,const char *text,unsigned char colorIndex);
@@ -171,6 +173,8 @@ class CDrawImage{
     
     //void drawTextAngle(const char * text, size_t length,double angle,int x,int y,int color,int fontSize);
     void drawVector(int x,int y,double direction, double strength,int color);
+    void drawVector(int x,int y,double direction, double strength,int color, float linewidth);
+    void drawVector(int x,int y,double direction, double strength,CColor color, float linewidth);
     void destroyImage();
     void line(float x1,float y1,float x2,float y2,int color);
     void line(float x1,float y1,float x2,float y2,CColor color);
@@ -181,7 +185,10 @@ class CDrawImage{
     void endLine();
     
     void poly(float x1, float y1, float x2, float y2, float x3, float y3, int c, bool fill);
+    void poly(float x1, float y1, float x2, float y2, float x3, float y3, CColor color, bool fill);
     void circle(int x, int y, int r, int color);
+    void circle(int x, int y, int r, CColor col);
+
     void circle(int x, int y, int r, int color,float lineWidth);
     void circle(int x, int y, int r, CColor color,float lineWidth);
     void setPixelIndexed(int x,int y,int color);
@@ -192,6 +199,7 @@ class CDrawImage{
     //int getClosestColorIndex(CColor color);
     void getHexColorForColorIndex(CT::string *hexValue,int colorIndex);
     void setText(const char * text, size_t length,int x,int y, int color,int fontSize);
+    void setText(const char * text, size_t length,int x,int y, CColor color,int fontSize);
     //void setTextDisc(const char *text, size_t length, int x, int y, int r, CColor color, const char *fontfile,int fontSize);
     void setDisc(int x,int y,int discRadius, CColor fillColor, CColor lineColor);
     void setDisc(int x,int y,int discRadius, int fillCol, int lineCol);

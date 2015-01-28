@@ -539,9 +539,11 @@ public:
   }*/
 
   void circle(int x, int y, int r) {
-    cairo_arc(cr, x, y, r, 0, 2*M_PI);
+    circle(x, y, r, 1);
+/*    
     cairo_set_line_width(cr, 1);
-    cairo_stroke(cr);
+    cairo_arc(cr, x, y, r, 0, 2*M_PI);
+    cairo_stroke(cr);*/
   }
 
   void filledcircle(int x, int y, int r) {
@@ -556,11 +558,15 @@ public:
   }
 
   void circle(int x, int y, int r,float lineWidth) {
+    double lWx=lineWidth;
+    double lWy=lineWidth;
+    cairo_device_to_user_distance(cr, &lWx, &lWy);
     cairo_set_source_rgba(cr, rr, rg, rb, ra);
+    cairo_set_line_width(cr, lWx);
     cairo_arc(cr, x, y, r, 0, 2*M_PI);
-    cairo_set_line_width(cr, lineWidth);
     cairo_stroke(cr);
   }
+  
   void poly(float x[], float y[], int n, bool closePath, bool fill) {
     cairo_move_to(cr, x[0], y[0]);
     for (int i=1; i<n; i++){

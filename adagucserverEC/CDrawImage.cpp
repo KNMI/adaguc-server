@@ -162,23 +162,37 @@ int CDrawImage::printImageGif(){
   return 0;
 }
 
-
 void CDrawImage::drawVector(int x,int y,double direction, double strength,int color){
+  CColor col=getColorForIndex(color);
+  drawVector(x, y ,direction, strength, col, 1.0);
+}
+  
+void CDrawImage::drawVector(int x,int y,double direction, double strength,int color, float linewidth){
+  CColor col=getColorForIndex(color);
+  drawVector(x, y ,direction, strength, col, linewidth);
+}
+
+void CDrawImage::drawVector(int x,int y,double direction, double strength,CColor color, float linewidth){
   double wx1,wy1,wx2,wy2,dx1,dy1;
   if(fabs(strength)<1){
-    setPixelIndexed(x,y,color);
+    setPixel(x,y,color);
     return;
   }
   
-  float lineWidth=0.50;
+  bool startatxy=true;
   
-  strength=strength/2;
+  //strength=strength/2;
   dx1=cos(direction)*(strength);
   dy1=sin(direction)*(strength); 
   
   // arrow shaft
-  wx1=double(x)+dx1;wy1=double(y)-dy1; // arrow point
-  wx2=double(x)-dx1;wy2=double(y)+dy1;
+  if (startatxy) {
+    wx1=double(x)+dx1;wy1=double(y)-dy1; //
+    wx2=double(x);wy2=double(y);
+  } else {
+    wx1=double(x)+dx1;wy1=double(y)-dy1; // arrow point
+    wx2=double(x)-dx1;wy2=double(y)+dy1;
+  }
 
   strength=(3+strength);
 
@@ -189,9 +203,9 @@ void CDrawImage::drawVector(int x,int y,double direction, double strength,int co
   hx2=wx1+cos(direction+2.5)*(strength/2.8f);
   hy2=wy1-sin(direction+2.5)*(strength/2.8f);
   
-  line(wx1,wy1,wx2,wy2,lineWidth,color);
-  line(wx1,wy1,hx1,hy1,lineWidth,color);
-  line(wx1,wy1,hx2,hy2,lineWidth,color);
+  line(wx1,wy1,wx2,wy2,linewidth,color);
+  line(wx1,wy1,hx1,hy1,linewidth,color);
+  line(wx1,wy1,hx2,hy2,linewidth,color);
   setPixelIndexed(x, y, 252);
   //circle(x+1, y+1, 1, color);
 }
@@ -200,9 +214,18 @@ void CDrawImage::drawVector(int x,int y,double direction, double strength,int co
 
 #define round(x) (int(x+0.5)) // Only for positive values!!!
 
-void CDrawImage::drawBarb(int x,int y,double direction, double strength,int color, bool toKnots, bool flip){
+void CDrawImage::drawBarb(int x,int y,double direction, double strength, int color, bool toKnots, bool flip){
+  CColor col=getColorForIndex(color);
+  drawBarb(x, y, direction, strength, col, 0.5, toKnots, flip);
+}
+
+void CDrawImage::drawBarb(int x,int y,double direction, double strength,int color, float lineWidth, bool toKnots, bool flip){
+  CColor col=getColorForIndex(color);
+  drawBarb(x, y, direction, strength, col, lineWidth, toKnots, flip);
+}
+
+void CDrawImage::drawBarb(int x,int y,double direction, double strength, CColor color, float lineWidth, bool toKnots, bool flip){
   double wx1,wy1,wx2,wy2,dx1,dy1;
-  float lineWidth=0.50;
   int strengthInKnots=round(strength);
   if (toKnots) {
     strengthInKnots = round(strength*3600/1852.);
@@ -283,7 +306,6 @@ void CDrawImage::drawBarb(int x,int y,double direction, double strength,int colo
   line(wx1,wy1,wx2,wy2,lineWidth,color);
 }
 
-
 void CDrawImage::circle(int x, int y, int r, int color,float lineWidth) {
     if(_bEnableTrueColor==true){
     cairo->setColor(currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],255);
@@ -296,7 +318,6 @@ void CDrawImage::circle(int x, int y, int r, int color,float lineWidth) {
 void CDrawImage::circle(int x, int y, int r, CColor color,float lineWidth) {
   if(_bEnableTrueColor==true){
     cairo->setColor(color.r,color.g,color.b,color.a);
-    
     cairo->circle(x, y, r,lineWidth);
   }else {
     int gdcolor=getClosestGDColor(color.r,color.g,color.b);
@@ -308,13 +329,25 @@ void CDrawImage::circle(int x, int y, int r, int color) {
   circle(x,y,r,color,1.0);
 }
 
+void CDrawImage::circle(int x, int y, int r, CColor col) {
+  circle(x,y,r,col,1.0);
+}
+
+
 void CDrawImage::poly(float x1,float y1,float x2,float y2,float x3, float y3, int color, bool fill){
+  CColor col=getColorForIndex(color);
+  poly(x1, y1, x2, y2, x3, y3, col, fill);
+}
+
+void CDrawImage::poly(float x1,float y1,float x2,float y2,float x3, float y3, CColor color, bool fill){
   if(_bEnableTrueColor==true){
     float ptx[3]={x1, x2, x3};
     float pty[3]={y1,y2,y3};
-    cairo->setFillColor(currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],255);
+    cairo->setFillColor(color.r, color.g, color.b, color.a);
+//    currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],255);
     cairo->poly(ptx, pty, 3, true, fill);
   } else {
+    int colorIndex=getClosestGDColor(color.r, color.g, color.b);
     gdPoint pt[4];
     pt[0].x=int(x1);
     pt[1].x=int(x2);
@@ -325,9 +358,9 @@ void CDrawImage::poly(float x1,float y1,float x2,float y2,float x3, float y3, in
     pt[2].y=int(y3);
     pt[3].y=int(y1);
     if (fill) {
-        gdImageFilledPolygon(image, pt, 4, _colors[color]);
+        gdImageFilledPolygon(image, pt, 4, _colors[colorIndex]);
     } else {
-        gdImagePolygon(image, pt, 4, _colors[color]);
+        gdImagePolygon(image, pt, 4, _colors[colorIndex]);
     }
   }
 }
@@ -534,21 +567,23 @@ void CDrawImage::setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,u
   }
 }
 void CDrawImage::setText(const char * text, size_t length,int x,int y,int color,int fontSize){
+  CColor col=getColorForIndex(color);
+  setText(text, length, x, y, color, fontSize);  
+}
+
+void CDrawImage::setText(const char * text, size_t length,int x,int y, CColor color,int fontSize){
   if(_bEnableTrueColor==true){
     if(currentLegend==NULL)return;
-//    agg::rgba8 colStr(currentLegend->CDIred[color], currentLegend->CDIgreen[color], currentLegend->CDIblue[color],255);
-  //  drawFreeTypeText( x, y+11, 0,text,colStr);
-    if(color>=0&&color<256){
-      cairo->setColor(currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],255);
+      cairo->setColor(color.r, color.g, color.b, color.a);
       cairo->drawText(x,y+10,0,text);
-    }
   }else{
+    int colorIndex=getClosestGDColor(color.r, color.g, color.b);
     char *pszText=new char[length+1];
     strncpy(pszText,text,length);
     pszText[length]='\0';
-    if(fontSize==-1)gdImageString (image, gdFontSmall, x,  y, (unsigned char *)pszText,_colors[color]);
-    if(fontSize==0)gdImageString (image, gdFontMediumBold, x,  y, (unsigned char *)pszText, _colors[color]);
-    if(fontSize==1)gdImageString (image, gdFontLarge, x,  y, (unsigned char *)pszText, _colors[color]);
+    if(fontSize==-1)gdImageString (image, gdFontSmall, x,  y, (unsigned char *)pszText,_colors[colorIndex]);
+    if(fontSize==0)gdImageString (image, gdFontMediumBold, x,  y, (unsigned char *)pszText, _colors[colorIndex]);
+    if(fontSize==1)gdImageString (image, gdFontLarge, x,  y, (unsigned char *)pszText, _colors[colorIndex]);
     delete[] pszText;
   }
 }
