@@ -63,16 +63,32 @@ namespace CDF{
       class CustomReader{
         public:
           virtual ~CustomReader(){}
-          virtual int readData(CDF::Variable *thisVar,void *data,size_t *start,size_t *count,ptrdiff_t *stride) = 0;
+          virtual int readData(CDF::Variable *thisVar,size_t *start,size_t *count,ptrdiff_t *stride) = 0;
       };
+    class CustomMemoryReader:public CDF::Variable::CustomReader{
+      public:
+        ~CustomMemoryReader(){
+          
+        }
+        int readData(CDF::Variable *thisVar,size_t *start,size_t *count,ptrdiff_t *stride){
+          int size = 1;
+          for(size_t j=0;j<thisVar->dimensionlinks.size();j++){
+            size*=int((float(count[j])/float(stride[j]))+0.5);
+          }
+          thisVar->setSize(size);
+          CDF::allocateData(thisVar->getType(),&thisVar->data,size);
+          return 0;
+        }
+    };
   private:
         CustomReader * customReader;
   public:
       void setCustomReader(CustomReader *customReader){
-
         hasCustomReader=true;
         this->customReader = customReader;
       };
+
+   
       
       void setCDFReaderPointer(void *cdfReaderPointer){
         this->cdfReaderPointer=cdfReaderPointer;

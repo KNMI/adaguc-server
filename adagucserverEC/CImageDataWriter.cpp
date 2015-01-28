@@ -893,13 +893,14 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
           #endif
           //Fill in the actual data value
           //Check whether this is a NoData value:
-        
+          
           
           if(
             (pixel!=dataSource->getDataObject(o)->dfNodataValue&&dataSource->getDataObject(o)->hasNodataValue==true&&pixel==pixel&&everythingIsInBBOX==true)||
             dataSource->getDataObject(o)->hasNodataValue==false){
             if(dataSource->getDataObject(o)->hasStatusFlag){
               //Add status flag
+              
               CT::string flagMeaning;
               CDataSource::getFlagMeaningHumanReadable(&flagMeaning,&dataSource->getDataObject(o)->statusFlagList,pixel);
               element->value.print("%s (%d)",flagMeaning.c_str(),(int)pixel);

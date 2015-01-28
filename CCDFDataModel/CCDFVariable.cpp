@@ -238,7 +238,7 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
         
         
         if(hasCustomReader){
-          status = customReader->readData(this,data,_start,count,stride);
+          status = customReader->readData(this,_start,count,stride);
         }
          
         
@@ -261,6 +261,13 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
    
       //TODO NEEDS BETTER CHECKS
     if(cdfReaderPointer==NULL){
+      if(hasCustomReader){
+        if(this->customReader!=NULL){
+          this->setType(type);
+          this->customReader->readData(this,_start,_count,_stride);
+          return 0;
+        }
+      }
       CDBError("No CDFReader defined for variable %s",name.c_str());
       return 1;
     }
