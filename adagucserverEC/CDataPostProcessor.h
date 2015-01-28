@@ -52,7 +52,7 @@
     /**
     * Executes the data postprocessor
     */
-    virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource) = 0;
+    virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode) = 0;
   };
 
   /**
@@ -64,19 +64,36 @@
   public:
     virtual const char *getId();
     virtual int isApplicable(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource);
-    virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource);
+    virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode);
   };
 
   /**
-  * MSGCPP mask
+  * MSGCPP VISIBLE-mask, based on sunz and satz. a is sunz+satz threshold and b is satz threshold
   */
-  class CDPPMSGCPPMask : public CDPPInterface{
+  class CDPPMSGCPPVisibleMask : public CDPPInterface{
    private:
     DEF_ERRORFUNCTION();
   public:
     virtual const char *getId();
     virtual int isApplicable(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource);
-    virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource);
+    virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode);
+  };
+  
+  /**
+    * MSGCPP HIWC-mask
+    * thresholds for detection of “High Ice Water Content” according to HAIC case
+    * -          The cloud phase is ice
+    * -          Cloud water path is > 0.1 kg/m2
+    * -          Cloud top temperature < 270 K
+    * -          Cloud optical thickness > 20
+  */
+  class CDPPMSGCPPHIWCMask : public CDPPInterface{
+   private:
+    DEF_ERRORFUNCTION();
+  public:
+    virtual const char *getId();
+    virtual int isApplicable(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource);
+    virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode);
   };
 
   class CDPPExecutor{
