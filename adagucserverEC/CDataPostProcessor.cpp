@@ -238,7 +238,7 @@ int CDPPMSGCPPHIWCMask::execute(CServerConfig::XMLE_DataPostProc* proc, CDataSou
     float *cwp=(float*)dataSource->getDataObject(2)->cdfVariable->data;
     float *ctt=(float*)dataSource->getDataObject(3)->cdfVariable->data;
     float *cot=(float*)dataSource->getDataObject(4)->cdfVariable->data;
-    float fNodata1=(float)dataSource->getDataObject(0)->dfNodataValue;
+    
 
   
     for(size_t j=0;j<l;j++){

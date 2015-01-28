@@ -417,7 +417,7 @@ int  CDataSource::checkDimTables(CPGSQLDB *dataBaseConnection){
     
     CT::string tableName;
     try{
-      tableName = srvParams->lookupTableName(cfgLayer->FilePath[0]->value.c_str(),cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
+      tableName = srvParams->lookupTableName(cfgLayer->FilePath[0]->value.c_str(),cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str(),cfgLayer->DataBaseTable);
     }catch(int e){
       CDBError("Unable to create tableName from '%s' '%s' '%s'",cfgLayer->FilePath[0]->value.c_str(),cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
       return 1;
@@ -467,7 +467,7 @@ int  CDataSource::checkDimTables(CPGSQLDB *dataBaseConnection){
       
         CT::string tableName;
         try{
-          tableName = srvParams->lookupTableName(cfgLayer->FilePath[0]->value.c_str(),cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
+          tableName = srvParams->lookupTableName(cfgLayer->FilePath[0]->value.c_str(),cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str(),cfgLayer->DataBaseTable);
         }catch(int e){
           CDBError("Unable to create tableName from '%s' '%s' '%s'",cfgLayer->FilePath[0]->value.c_str(),cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
           return 1;

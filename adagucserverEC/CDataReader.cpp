@@ -1341,7 +1341,7 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
   
   CT::string layerTableId;
   try{
-    layerTableId = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), NULL);
+    layerTableId = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), NULL,dataSource->cfgLayer->DataBaseTable);
   }catch(int e){
     CDBError("Unable to get layerTableId for autoconfigure_dimensions");
     return 1;
@@ -1598,7 +1598,7 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
   CT::string tableName = "autoconfigure_styles";
   CT::string layerTableId;
   try{
-    layerTableId = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), NULL);
+    layerTableId = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), NULL,dataSource->cfgLayer->DataBaseTable);
   }catch(int e){
     CDBError("Unable to get layerTableId for autoconfigure_styles");
     return 1;

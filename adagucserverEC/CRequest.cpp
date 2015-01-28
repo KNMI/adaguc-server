@@ -706,7 +706,7 @@ int CRequest::generateGetReferenceTimesDoc(CT::string *result,CDataSource *dataS
     CT::string tableName;
    
     try{
-      tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
+      tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str(),dataSource->cfgLayer->DataBaseTable);
     }catch(int e){
       CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
       return 1;
@@ -987,7 +987,7 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
               CT::string tableName;
               
               try{
-                tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), ogcDim->netCDFDimName.c_str());
+                tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), ogcDim->netCDFDimName.c_str(),dataSource->cfgLayer->DataBaseTable);
               }catch(int e){
                 CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), ogcDim->netCDFDimName.c_str());
                 return 1;
@@ -1058,7 +1058,7 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
 
         CT::string tableName;
         try{
-          tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str());
+          tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str(),dataSource->cfgLayer->DataBaseTable);
         }catch(int e){
           CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str());
           return 1;
@@ -1108,7 +1108,7 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
             
             CT::string timeTableName;
             try{
-              timeTableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netcdfTimeDimName.c_str());
+              timeTableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netcdfTimeDimName.c_str(),dataSource->cfgLayer->DataBaseTable);
             }catch(int e){
               CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netcdfTimeDimName.c_str());
               return 1;
@@ -1175,7 +1175,7 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
 
       CT::string tableName;
       try{
-        tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str());
+        tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str(),dataSource->cfgLayer->DataBaseTable);
       }catch(int e){
         CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str());
         return 1;
