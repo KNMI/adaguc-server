@@ -568,14 +568,14 @@ void CDrawImage::setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,u
 }
 void CDrawImage::setText(const char * text, size_t length,int x,int y,int color,int fontSize){
   CColor col=getColorForIndex(color);
-  setText(text, length, x, y, color, fontSize);  
+  setText(text, length, x, y, col, fontSize);  
 }
 
 void CDrawImage::setText(const char * text, size_t length,int x,int y, CColor color,int fontSize){
   if(_bEnableTrueColor==true){
     if(currentLegend==NULL)return;
-      cairo->setColor(color.r, color.g, color.b, color.a);
-      cairo->drawText(x,y+10,0,text);
+    cairo->setColor(color.r, color.g, color.b, color.a);
+    cairo->drawText(x,y+10,0,text);
   }else{
     int colorIndex=getClosestGDColor(color.r, color.g, color.b);
     char *pszText=new char[length+1];
