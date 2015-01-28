@@ -27,7 +27,7 @@
 #include "CDBFileScanner.h"
 const char *CDataSource::className = "CDataSource";
 
-
+//#define CDATASOURCE_DEBUG
 /************************************/
 /* CDataSource::CDataObject          */
 /************************************/
@@ -238,7 +238,7 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Confi
   if(isalpha(_layerName[0])==0)layerName="ID_";else layerName="";
   layerName.concat(_layerName);
   
-#ifdef CDATAREADER_DEBUG  
+#ifdef CDATASOURCE_DEBUG  
   CDBDebug("LayerName=\"%s\"",layerName.c_str());
 #endif  
   //Defaults to database
@@ -876,7 +876,7 @@ CT::PointerList<CStyleConfiguration*> *CDataSource::getStyleListForDataSource(CD
 
   //Loop over the styles.
   try{
-    CDBDebug("There are %d styles to check",styleNames->size());
+    //CDBDebug("There are %d styles to check",styleNames->size());
     for(size_t i=start;i<styleNames->size();i++){
       
       //Lookup the style index in the servers configuration
@@ -981,7 +981,9 @@ CT::PointerList<CStyleConfiguration*> *CDataSource::getStyleListForDataSource(CD
 
                   styleConfig->legendIndex  = dLegendIndex;
                   
-                  
+                  if(dLegendIndex == -1){
+                    CDBError("Legend %s not found",legendList->get(l)->c_str());
+                  }
                   
                   
                   if(style!=NULL){
@@ -1199,10 +1201,10 @@ CStyleConfiguration *CDataSource::getStyle(){
       }
     }
     
-    CDBDebug("Trying to find a style for %s",styleName.c_str());
+    //CDBDebug("Trying to find a style for %s",styleName.c_str());
 
 
-    CDBDebug("There are %d styles combinations",_styles->size());
+    //CDBDebug("There are %d styles combinations",_styles->size());
     _currentStyle = _styles->get(0);
     
     for(size_t j=0;j<_styles->size();j++){
