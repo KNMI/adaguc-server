@@ -296,13 +296,17 @@ int CImageDataWriter::drawCascadedWMS(CDataSource * dataSource, const char *serv
 
 #ifdef ENABLE_CURL
   bool trueColor=drawImage.getTrueColor();
-  transparent=true;
+ // transparent=true;
   CT::string url=service;
   url.concat("SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&STYLES=&");
   if(trueColor==false)url.concat("FORMAT=image/gif");
   else url.concat("FORMAT=image/png");
   //&BBOX=50.943396226415075,-4.545656817372752,118.8679245283019,57.6116945532218
-  if(transparent)url.printconcat("&TRANSPARENT=TRUE");
+  if(transparent){
+    url.printconcat("&TRANSPARENT=TRUE");
+  } else {
+    url.printconcat("&TRANSPARENT=FALSE");
+  }
   url.printconcat("&WIDTH=%d",drawImage.Geo->dWidth);
   url.printconcat("&HEIGHT=%d",drawImage.Geo->dHeight);
   url.printconcat("&BBOX=%0.4f,%0.4f,%0.4f,%0.4f",drawImage.Geo->dfBBOX[0],
@@ -314,7 +318,7 @@ int CImageDataWriter::drawCascadedWMS(CDataSource * dataSource, const char *serv
   for(size_t k=0;k<srvParam->requestDims.size();k++){
     url.printconcat("&%s=%s",srvParam->requestDims[k]->name.c_str(),srvParam->requestDims[k]->value.c_str());
   }
-  //CDBDebug(url.c_str());
+  CDBDebug(url.c_str());
   gdImagePtr gdImage;
   
 
@@ -1592,7 +1596,9 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
     if(dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
       //CDBDebug("Drawing cascaded WMS (grid/logo/external");
       if(dataSource->cfgLayer->WMSLayer.size()==1){
-        status = drawCascadedWMS(dataSource,dataSource->cfgLayer->WMSLayer[0]->attr.service.c_str(),dataSource->cfgLayer->WMSLayer[0]->attr.layer.c_str(),true);
+        status = drawCascadedWMS(dataSource,dataSource->cfgLayer->WMSLayer[0]->attr.service.c_str(),
+                                 dataSource->cfgLayer->WMSLayer[0]->attr.layer.c_str(),
+                                 dataSource->cfgLayer->WMSLayer[0]->attr.transparent);
         if(status!=0){
           CDBError("drawCascadedWMS for layer %s failed",dataSource->layerName.c_str());
         }

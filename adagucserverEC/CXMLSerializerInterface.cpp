@@ -48,3 +48,9 @@ double parseDouble(const char *pszValue){
   double fValue=(double)atof(pszValue);
   return fValue;  
 }
+
+bool parseBool(const char *pszValue){
+  if(pszValue==NULL)return false;
+  return CT::string(pszValue).equalsIgnoreCase("true");
+}
+

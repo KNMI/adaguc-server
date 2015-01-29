@@ -485,7 +485,7 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
           int y=dataSource->dHeight-(*p1)[j].y;
           float dir = (*p2)[j].v;
           if (dir==dir) {
-            drawImage->drawVector(x, y, ((270-direction)/360)*3.141592654*2, drawPointDiscRadius+12, drawPointFillColor, drawBarbLineWidth*4);
+            drawImage->drawVector(x, y, ((270-direction)/360)*3.141592654*2, drawPointDiscRadius+15, drawPointFillColor, drawBarbLineWidth*4);
           }
           float v=(*p1)[j].v;
           if(v==v){

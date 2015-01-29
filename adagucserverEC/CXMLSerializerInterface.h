@@ -203,5 +203,11 @@ float parseFloat(const char *pszValue);
  */
 double parseDouble(const char *pszValue);
 
+/**
+ * parses a character string to bool
+ * @param pszValue The string to parse
+ */
+bool parseBool(const char *pszValue);
+
 #endif
 
