@@ -978,31 +978,38 @@ int CDrawImage::createGDPalette(CServerConfig::XMLE_Legend *legend){
     return _createStandard();
   }
   if(legend->attr.type.equals("colorRange")){
-    int controle=0;
+    
     float cx;
     float rc[4];
-    for(size_t j=0;j<legend->palette.size()-1&&controle<240;j++){
-      if(legend->palette[j]->attr.index>255)legend->palette[j]->attr.index=255;
-      if(legend->palette[j]->attr.index<0)  legend->palette[j]->attr.index=0;
-      if(legend->palette[j+1]->attr.index>255)legend->palette[j+1]->attr.index=255;
-      if(legend->palette[j+1]->attr.index<0)  legend->palette[j+1]->attr.index=0;
-      float dif = legend->palette[j+1]->attr.index-legend->palette[j]->attr.index;
+    for(size_t j=0;j<legend->palette.size();j++){
+      CServerConfig::XMLE_palette *pbegin = legend->palette[j];
+      CServerConfig::XMLE_palette *pnext = legend->palette[j];
+      if(j<legend->palette.size()-1){
+        pnext = legend->palette[j+1];
+      }
+      
+
+      if(pbegin->attr.index>255)pbegin->attr.index=255;
+      if(pbegin->attr.index<0)  pbegin->attr.index=0;
+      if(pnext->attr.index>255)pnext->attr.index=255;
+      if(pnext->attr.index<0)  pnext->attr.index=0;
+      float dif = pnext->attr.index-pbegin->attr.index;
       if(dif<0.5f)dif=1;
-      rc[0]=float(legend->palette[j+1]->attr.red  -legend->palette[j]->attr.red)/dif;
-      rc[1]=float(legend->palette[j+1]->attr.green-legend->palette[j]->attr.green)/dif;
-      rc[2]=float(legend->palette[j+1]->attr.blue -legend->palette[j]->attr.blue)/dif;
-      rc[3]=float(legend->palette[j+1]->attr.alpha -legend->palette[j]->attr.alpha)/dif;
+      rc[0]=float(pnext->attr.red  -pbegin->attr.red)/dif;
+      rc[1]=float(pnext->attr.green-pbegin->attr.green)/dif;
+      rc[2]=float(pnext->attr.blue -pbegin->attr.blue)/dif;
+      rc[3]=float(pnext->attr.alpha -pbegin->attr.alpha)/dif;
 
   
-      for(int i=legend->palette[j]->attr.index;i<legend->palette[j+1]->attr.index&&controle<240;i++){
-        if(i!=controle){CDBError("Invalid color table");return 1;}
-        cx=float(controle-legend->palette[j]->attr.index);
-        currentLegend->CDIred[controle]  =int(rc[0]*cx)+legend->palette[j]->attr.red;
-        currentLegend->CDIgreen[controle]=int(rc[1]*cx)+legend->palette[j]->attr.green;
-        currentLegend->CDIblue[controle] =int(rc[2]*cx)+legend->palette[j]->attr.blue;
-        currentLegend->CDIalpha[controle]=int(rc[3]*cx)+legend->palette[j]->attr.alpha;
-        if(currentLegend->CDIred[i]==0)currentLegend->CDIred[i]=1;//for transparency
-        controle++;
+      for(int i=pbegin->attr.index;i<pnext->attr.index+1;i++){
+        if(i>=0&&i<240){
+          cx=float(i-pbegin->attr.index);
+          currentLegend->CDIred[i]  =int(rc[0]*cx)+pbegin->attr.red;
+          currentLegend->CDIgreen[i]=int(rc[1]*cx)+pbegin->attr.green;
+          currentLegend->CDIblue[i] =int(rc[2]*cx)+pbegin->attr.blue;
+          currentLegend->CDIalpha[i]=int(rc[3]*cx)+pbegin->attr.alpha;
+          if(currentLegend->CDIred[i]==0)currentLegend->CDIred[i]=1;//for transparency
+        }
       }
     }
     
@@ -1047,24 +1054,26 @@ void  CDrawImage::rectangle( int x1, int y1, int x2, int y2,CColor innercolor,CC
 
 void CDrawImage::rectangle( int x1, int y1, int x2, int y2,int innercolor,int outercolor){
   if(currentLegend==NULL)return;
-  if(innercolor>=0&&innercolor<240){
+  if(innercolor>=0&&innercolor<255&&outercolor>=0&&outercolor<255){
     if(_bEnableTrueColor==true){
       cairo->setColor(currentLegend->CDIred[outercolor],currentLegend->CDIgreen[outercolor],currentLegend->CDIblue[outercolor],255);
       cairo->setFillColor(currentLegend->CDIred[innercolor],currentLegend->CDIgreen[innercolor],currentLegend->CDIblue[innercolor],255);
       cairo->filledRectangle(x1,y1,x2,y2);
     }else{
       //Check for transparency
-      if(currentLegend->CDIred[innercolor]==0&&currentLegend->CDIgreen[innercolor]==0&&currentLegend->CDIblue[innercolor]==0){
+      if(isColorTransparent(innercolor)){
         //In case of transparency, draw a checkerboard
-        for(int x=x1;x<x2-3;x=x+6){
+        for(int x=x1;x<x2;x=x+6){
           for(int y=y1;y<y2;y=y+3){
             int tx=x+((y%6)/3)*3;
-            gdImageFilledRectangle (image,tx,y,tx+2,y+2, 240);
+            if(tx+2>x2)tx=x2-2;
+            gdImageFilledRectangle (image,tx,y,tx+2,y+2, getClosestGDColor(64,64,64));
           }
         }
-      }else{
-        gdImageFilledRectangle (image,x1+1,y1+1,x2-1,y2-1, colors[innercolor]);
-      }
+       }else{
+         gdImageFilledRectangle (image,x1+1,y1+1,x2-1,y2-1, colors[innercolor]);
+       }
+        //gdImageFilledRectangle (image,x1+1,y1+1,x2-1,y2-1, _colors[239]);
       gdImageRectangle (image,x1,y1,x2,y2, colors[outercolor]);
     }
   }
@@ -1086,6 +1095,7 @@ int CDrawImage::addColor(int Color,unsigned char R,unsigned char G,unsigned char
   currentLegend->CDIred[Color]=R;
   currentLegend->CDIgreen[Color]=G;
   currentLegend->CDIblue[Color]=B;
+  currentLegend->CDIalpha[Color]=255;
   return 0;
 }
 
@@ -1303,9 +1313,9 @@ int CDrawImage::draw(int destx, int desty,int sourcex,int sourcey,CDrawImage *si
         #endif
         }else{
           int color = gdImageGetPixel(simage->image, x+sourcex, y+sourcey);
-          if(!isColorTransparent(color)){
+          //if(!isColorTransparent(color)){
             gdImageSetPixel(image,x+destx,y+desty,color);
-          }
+          //}
         }
       }
     }
