@@ -3241,7 +3241,9 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
       float y=j*blockDistance+(cbH-numFlags*blockDistance+8);
       double value=dataSource->getDataObject(0)->statusFlagList[j]->value;
       int c=getColorIndexForValue(dataSource,value);
+      
       legendImage->rectangle(1+pLeft,int(2+dH+y)+pTop,(int)cbW+9+pLeft,(int)y+2+dH+blockHeight+pTop,c,248);
+      
       CT::string flagMeaning;
       CDataSource::getFlagMeaningHumanReadable(&flagMeaning,&dataSource->getDataObject(0)->statusFlagList,value);
       CT::string legendMessage;
