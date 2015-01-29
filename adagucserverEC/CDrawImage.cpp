@@ -134,6 +134,49 @@ int CDrawImage::createImage(CGeoParams *_Geo){
 
 }
 
+
+int CDrawImage::getClosestGDColor(unsigned char r,unsigned char g,unsigned char b){
+  int key = r+g*256+b*65536;
+  int color;
+  myColorIter=myColorMap.find(key);
+  if(myColorIter==myColorMap.end()){
+    
+    int transparentColor = gdImageGetTransparent(image);
+    float closestD = -1;
+    int closestI = -1;;
+    //CDBDebug("Transparent color = %d",transparentColor);
+    for(int j=255;j>=0;j--){
+      if(j!=transparentColor){
+        int ri=gdImageRed(image, j);
+        int gi=gdImageGreen(image, j);
+        int bi=gdImageBlue(image, j);
+        
+        
+        float d  = sqrt((ri-r)*(ri-r))+sqrt((gi-g)*(gi-g))+sqrt((bi-b)*(bi-b));
+        //CDBDebug("%d %d %d %d %f",j,ri,gi,bi,d);
+        if(closestI==-1){
+          closestD = d;
+          closestI = j;
+        }else{
+          if(d<closestD){
+            closestD = d;
+            closestI = j;
+          }
+        }
+      }
+      
+    }
+    
+    //CDBDebug("Found %d",closestI);
+    
+    color = closestI;//gdImageColorClosest(image,r,g,b);
+    myColorMap[key]=color;
+  }else{
+    color=(*myColorIter).second;
+  }
+  return color;
+}
+
 int CDrawImage::printImagePng(){
   if(dImageCreated==0){CDBError("print: image not created");return 1;}
   
@@ -569,6 +612,7 @@ void CDrawImage::setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,u
 void CDrawImage::setText(const char * text, size_t length,int x,int y,int color,int fontSize){
   CColor col=getColorForIndex(color);
   setText(text, length, x, y, col, fontSize);  
+    //gdImageString (image, gdFontSmall, x,  y, (unsigned char *)text,_colors[color]);
 }
 
 void CDrawImage::setText(const char * text, size_t length,int x,int y, CColor color,int fontSize){
@@ -577,13 +621,13 @@ void CDrawImage::setText(const char * text, size_t length,int x,int y, CColor co
     cairo->setColor(color.r, color.g, color.b, color.a);
     cairo->drawText(x,y+10,0,text);
   }else{
-    int colorIndex=getClosestGDColor(color.r, color.g, color.b);
+     int colorIndex=getClosestGDColor(color.r, color.g, color.b);
     char *pszText=new char[length+1];
     strncpy(pszText,text,length);
     pszText[length]='\0';
-    if(fontSize==-1)gdImageString (image, gdFontSmall, x,  y, (unsigned char *)pszText,_colors[colorIndex]);
-    if(fontSize==0)gdImageString (image, gdFontMediumBold, x,  y, (unsigned char *)pszText, _colors[colorIndex]);
-    if(fontSize==1)gdImageString (image, gdFontLarge, x,  y, (unsigned char *)pszText, _colors[colorIndex]);
+    if(fontSize==-1)gdImageString (image, gdFontSmall, x,  y, (unsigned char *)pszText,colorIndex);
+    if(fontSize==0)gdImageString (image, gdFontMediumBold, x,  y, (unsigned char *)pszText, colorIndex);
+    if(fontSize==1)gdImageString (image, gdFontLarge, x,  y, (unsigned char *)pszText, colorIndex);
     delete[] pszText;
   }
 }
