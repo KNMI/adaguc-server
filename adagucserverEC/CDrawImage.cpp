@@ -626,8 +626,9 @@ void CDrawImage::drawText(int x,int y,float angle,const char *text,CColor fgcolo
     char *_text = new char[strlen(text)+1];
     memcpy(_text,text,strlen(text)+1);
     int tcolor=getClosestGDColor(fgcolor.r,fgcolor.g,fgcolor.b);
-    if(_bEnableTrueColor)tcolor=-tcolor;
-    if(_bEnableTrueColor)tcolor=-tcolor;
+
+//     if(_bEnableTrueColor)tcolor=-tcolor;
+//     if(_bEnableTrueColor)tcolor=-tcolor;
     gdImageStringFT(image, &brect[0], tcolor, (char*)TTFFontLocation, 8.0f, angle,  x,  y, (char*)_text);
     delete[] _text;
     //drawTextAngle(text, strlen(text),angle, x, y, 240,8);
@@ -723,6 +724,7 @@ void CDrawImage::setDisc(int x,int y,int discRadius, int fillCol, int lineCol){
     cairo->circle(x, y, discRadius, 1);
 //    circle( x,  y,  discRadius,lineCol,1);
   }else{
+    gdImageFilledEllipse(image, x, y, discRadius*2, discRadius*2, fillCol);
     circle( x,  y,  discRadius,lineCol,1);    
   }
 }
@@ -733,9 +735,11 @@ void CDrawImage::setDisc(int x,int y,int discRadius, CColor fillColor, CColor li
     cairo->setFillColor(fillColor.r,fillColor.g,fillColor.b,fillColor.a);
     cairo->setColor(lineColor.r,lineColor.g,lineColor.b,lineColor.a);
     cairo->filledcircle(x, y, discRadius);
-    circle( x,  y,  discRadius,lineColor,1);
+//    circle( x,  y,  discRadius,lineColor,1);
   }else{
-    circle( x,  y,  discRadius,lineColor,1);    
+    int fillCol=getClosestGDColor(fillColor.r,fillColor.g,fillColor.b);
+    gdImageFilledEllipse(image, x, y, discRadius*2, discRadius*2, fillCol);
+    circle( x,  y, discRadius,lineColor,1);    
   }
 }
 void CDrawImage::setTextDisc(int x,int y,int discRadius, const char *text,const char *fontfile, float fontsize,CColor textcolor,CColor fillcolor, CColor lineColor){
@@ -747,9 +751,11 @@ void CDrawImage::setTextDisc(int x,int y,int discRadius, const char *text,const 
     //cairo->setColor(textcolor.r,textcolor.g,textcolor.b,textcolor.a);
     
     
-    circle( x,  y,  discRadius,lineColor,1);
+//    circle( x,  y,  discRadius,lineColor,1);
     drawCenteredText( x, y,fontfile, fontsize, 0,text, textcolor);
   }else{
+    int fillCol=getClosestGDColor(fillcolor.r,fillcolor.g,fillcolor.b);
+    gdImageFilledEllipse(image, x, y, discRadius*2, discRadius*2, fillCol);
     circle( x,  y,  discRadius,lineColor,1);    
     drawCenteredText( x, y,fontfile, fontsize, 0,text, textcolor);
   }
@@ -786,7 +792,11 @@ void CDrawImage::drawCenteredText(int x,int y,const char *fontfile, float size, 
     memcpy(_text,text,strlen(text)+1);
     int tcolor=getClosestGDColor(color.r,color.g,color.b);
     if(_bEnableTrueColor)tcolor=-tcolor;
-    gdImageStringFT(image, &brect[0],   tcolor, (char*)fontfile, size, angle,  x,  y, (char*)_text);
+    gdImageStringFT(NULL, &brect[0], tcolor, (char*)TTFFontLocation, 8.0f, angle,  x,  y, (char*)_text);
+
+    int sw=brect[2]-brect[0];
+    int sh=brect[5]-brect[3];
+    gdImageStringFT(image, &brect[0],   tcolor, (char*)fontfile, size, angle,  x-sw/2,  y-sh/2, (char*)_text);
     delete[] _text;
   }
 }

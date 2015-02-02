@@ -534,25 +534,27 @@ public:
     cairo_set_line_width(cr, width);
     cairo_stroke(cr);
   }
-  /*cairo_status_t writeToPng(const char* fileName) {
-    return cairo_surface_write_to_png(surface, fileName);
-  }*/
+//  /*cairo_status_t writeToPng(const char* fileName) {
+//    return cairo_surface_write_to_png(surface, fileName);
+//  }*/
 
   void circle(int x, int y, int r) {
     circle(x, y, r, 1);
 /*    
     cairo_set_line_width(cr, 1);
     cairo_arc(cr, x, y, r, 0, 2*M_PI);
-    cairo_stroke(cr);*/
+    cairo_stroke(cr);
+*/
   }
 
   void filledcircle(int x, int y, int r) {
     cairo_save(cr);
-    cairo_set_line_width(cr, 1);
+//    cairo_set_line_width(cr, 1);
+//   cairo_set_source_rgba(cr, rfr, rfg, rfb, rfa);
+//    cairo_arc(cr, x, y, r, 0, 2*M_PI);
+//    cairo_stroke_preserve(cr);
     cairo_set_source_rgba(cr, rfr, rfg, rfb, rfa);
     cairo_arc(cr, x, y, r, 0, 2*M_PI);
-    cairo_stroke_preserve(cr);
-    cairo_set_source_rgba(cr, rfr, rfg, rfb, rfa);
     cairo_fill(cr);
     cairo_restore(cr);
   }
