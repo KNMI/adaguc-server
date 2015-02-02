@@ -164,9 +164,10 @@ class CServerParams{
      * @param path The path of the layer
      * @param filter The filter of the layer
      * @param filter The dimension of the layer, can be NULL if not used.
+     * @param filter The databaseTable of the layer
      * @return Tablename on succes, throws integer exception on failure.
      */
-    CT::string lookupTableName(const char *path,const char *filter, const char * dimension);
+    CT::string lookupTableName(const char *path,const char *filter, const char * dimension,std::vector<CServerConfig::XMLE_DataBaseTable*> dataBaseTable);
 
 
     /**

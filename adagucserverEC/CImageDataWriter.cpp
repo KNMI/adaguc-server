@@ -897,13 +897,14 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
           #endif
           //Fill in the actual data value
           //Check whether this is a NoData value:
-        
+          
           
           if(
             (pixel!=dataSource->getDataObject(o)->dfNodataValue&&dataSource->getDataObject(o)->hasNodataValue==true&&pixel==pixel&&everythingIsInBBOX==true)||
             dataSource->getDataObject(o)->hasNodataValue==false){
             if(dataSource->getDataObject(o)->hasStatusFlag){
               //Add status flag
+              
               CT::string flagMeaning;
               CDataSource::getFlagMeaningHumanReadable(&flagMeaning,&dataSource->getDataObject(o)->statusFlagList,pixel);
               element->value.print("%s (%d)",flagMeaning.c_str(),(int)pixel);
@@ -1630,10 +1631,12 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
 
         if(initializeLegend(srvParam,dataSource)!=0)return 1;
         CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-        status = drawImage.createGDPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);
-        if(status != 0){
-          CDBError("Unknown palette type for %s",srvParam->cfg->Legend[styleConfiguration->legendIndex]->attr.name.c_str());
-          return 1;
+        if(styleConfiguration->legendIndex!=-1){
+          status = drawImage.createGDPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);
+          if(status != 0){
+            CDBError("Unknown palette type for %s",srvParam->cfg->Legend[styleConfiguration->legendIndex]->attr.name.c_str());
+            return 1;
+          }
         }
         
         
@@ -3244,7 +3247,9 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
       float y=j*blockDistance+(cbH-numFlags*blockDistance+8);
       double value=dataSource->getDataObject(0)->statusFlagList[j]->value;
       int c=getColorIndexForValue(dataSource,value);
+      
       legendImage->rectangle(1+pLeft,int(2+dH+y)+pTop,(int)cbW+9+pLeft,(int)y+2+dH+blockHeight+pTop,c,248);
+      
       CT::string flagMeaning;
       CDataSource::getFlagMeaningHumanReadable(&flagMeaning,&dataSource->getDataObject(0)->statusFlagList,value);
       CT::string legendMessage;

@@ -39,6 +39,14 @@ namespace CDF{
         length=0;
       }
       
+      Attribute(Attribute*att){
+        data=NULL;
+        length=0;
+
+        name.copy(&att->name);
+        setData(att);
+      }
+      
       
       Attribute(const char *attrName,const char *attrString){
         data=NULL;

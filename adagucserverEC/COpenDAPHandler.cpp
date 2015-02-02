@@ -125,7 +125,7 @@ int COpenDAPHandler::HandleOpenDAPRequest(const char *path,const char *query,CSe
           CT::string dim = dataSource->cfgLayer->Dimension[d]->attr.name.c_str();
                     
           try{
-            tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),dim.c_str());
+            tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),dim.c_str(),dataSource->cfgLayer->DataBaseTable);
           }catch(int e){
             CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dim.c_str());
             return -1;
