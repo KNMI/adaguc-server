@@ -27,6 +27,7 @@
 #include "CDBFileScanner.h"
 const char *CDataSource::className = "CDataSource";
 
+//#define CDATASOURCE_DEBUG
 /************************************/
 /* CDataSource::CDataObject          */
 /************************************/
@@ -237,7 +238,7 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Confi
   if(isalpha(_layerName[0])==0)layerName="ID_";else layerName="";
   layerName.concat(_layerName);
   
-#ifdef CDATAREADER_DEBUG  
+#ifdef CDATASOURCE_DEBUG  
   CDBDebug("LayerName=\"%s\"",layerName.c_str());
 #endif  
   //Defaults to database
@@ -416,7 +417,7 @@ int  CDataSource::checkDimTables(CPGSQLDB *dataBaseConnection){
     
     CT::string tableName;
     try{
-      tableName = srvParams->lookupTableName(cfgLayer->FilePath[0]->value.c_str(),cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
+      tableName = srvParams->lookupTableName(cfgLayer->FilePath[0]->value.c_str(),cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str(),cfgLayer->DataBaseTable);
     }catch(int e){
       CDBError("Unable to create tableName from '%s' '%s' '%s'",cfgLayer->FilePath[0]->value.c_str(),cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
       return 1;
@@ -466,7 +467,7 @@ int  CDataSource::checkDimTables(CPGSQLDB *dataBaseConnection){
       
         CT::string tableName;
         try{
-          tableName = srvParams->lookupTableName(cfgLayer->FilePath[0]->value.c_str(),cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
+          tableName = srvParams->lookupTableName(cfgLayer->FilePath[0]->value.c_str(),cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str(),cfgLayer->DataBaseTable);
         }catch(int e){
           CDBError("Unable to create tableName from '%s' '%s' '%s'",cfgLayer->FilePath[0]->value.c_str(),cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
           return 1;
@@ -710,7 +711,7 @@ CT::PointerList<CT::string*> *CDataSource::getLegendListForDataSource(CDataSourc
       return CServerParams::getLegendNames(style->Legend);
     }
   }
-  CDBError("No legendlist for layer %s",dataSource->layerName.c_str());
+//  CDBError("No legendlist for layer %s",dataSource->layerName.c_str());
   return NULL;
 }
 
@@ -875,7 +876,7 @@ CT::PointerList<CStyleConfiguration*> *CDataSource::getStyleListForDataSource(CD
 
   //Loop over the styles.
   try{
-    CDBDebug("There are %d styles to check",styleNames->size());
+    //CDBDebug("There are %d styles to check",styleNames->size());
     for(size_t i=start;i<styleNames->size();i++){
       
       //Lookup the style index in the servers configuration
@@ -980,7 +981,9 @@ CT::PointerList<CStyleConfiguration*> *CDataSource::getStyleListForDataSource(CD
 
                   styleConfig->legendIndex  = dLegendIndex;
                   
-                  
+                  if(dLegendIndex == -1){
+                    CDBError("Legend %s not found",legendList->get(l)->c_str());
+                  }
                   
                   
                   if(style!=NULL){
@@ -1198,10 +1201,10 @@ CStyleConfiguration *CDataSource::getStyle(){
       }
     }
     
-    CDBDebug("Trying to find a style for %s",styleName.c_str());
+    //CDBDebug("Trying to find a style for %s",styleName.c_str());
 
 
-    CDBDebug("There are %d styles combinations",_styles->size());
+    //CDBDebug("There are %d styles combinations",_styles->size());
     _currentStyle = _styles->get(0);
     
     for(size_t j=0;j<_styles->size();j++){
@@ -1211,7 +1214,14 @@ CStyleConfiguration *CDataSource::getStyle(){
           break;
       }
     }
-    #ifdef CDATASOURCE_DEBUG      
+    if(_currentStyle->legendIndex == -1){
+      CT::PointerList<CT::string*> *legendList = getLegendListForDataSource(this,NULL);
+      if(legendList!=NULL){
+        _currentStyle->legendIndex = getServerLegendIndexByName(legendList->get(0)->c_str(),this->cfg->Legend);
+      }
+      delete legendList;
+    }
+   #ifdef CDATASOURCE_DEBUG      
     CDBDebug("Dumping style:");
     CT::string styleDump;
     _currentStyle->printStyleConfig(&styleDump);

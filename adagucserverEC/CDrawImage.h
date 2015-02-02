@@ -127,18 +127,7 @@ class CDrawImage{
     
     static std::map<int,int> myColorMap;
     static std::map<int,int>::iterator myColorIter;
-    int getClosestGDColor(unsigned char r,unsigned char g,unsigned char b){
-      int key = r+g*256+b*65536;
-      int color;
-      myColorIter=myColorMap.find(key);
-      if(myColorIter==myColorMap.end()){
-        color = gdImageColorClosest(image,r,g,b);
-        myColorMap[key]=color;
-      }else{
-        color=(*myColorIter).second;
-      }
-      return color;
-    }
+    int getClosestGDColor(unsigned char r,unsigned char g,unsigned char b);
     int gdTranspColor;
     float lineMoveToX,lineMoveToY;
   public:

@@ -83,6 +83,21 @@ void CRequest::addXMLLayerToConfig(CServerParams *srvParam,CDFObject *cdfObject,
     xmleLayer->Variable.push_back(xmleVariable);
   }
   
+  if(variableNames->size()>0){
+    CDF::Variable *variable = cdfObject->getVariableNE((*variableNames)[0].c_str());
+    if(variable!=NULL){
+      CDF::Attribute *featureType = cdfObject->getAttributeNE("featureType");
+      if(featureType!=NULL){
+        if(featureType->getDataAsString().equals("timeSeries")||featureType->getDataAsString().equals("point")){
+          CServerConfig::XMLE_RenderMethod* xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
+          xmleRenderMethod->value.copy("point");
+          xmleLayer->RenderMethod.insert(xmleLayer->RenderMethod.begin(),xmleRenderMethod);
+
+        }
+      }
+    }
+  }
+  
   if(variableNames->size()==1){
       CDF::Variable *variable = cdfObject->getVariableNE((*variableNames)[0].c_str());
       if(variable!=NULL){
@@ -91,14 +106,6 @@ void CRequest::addXMLLayerToConfig(CServerParams *srvParam,CDFObject *cdfObject,
           if(attribute->getDataAsString().equals("rgba")){
             CServerConfig::XMLE_RenderMethod* xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
             xmleRenderMethod->value.copy("rgba");
-            xmleLayer->RenderMethod.push_back(xmleRenderMethod);
-          }
-        }
-        CDF::Attribute *featureType = variable->getAttributeNE("featureType");
-        if(featureType!=NULL){
-          if(featureType->getDataAsString().equals("timeSeries")){
-            CServerConfig::XMLE_RenderMethod* xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
-            xmleRenderMethod->value.copy("pointnearest");
             xmleLayer->RenderMethod.push_back(xmleRenderMethod);
           }
         }
@@ -125,6 +132,8 @@ void CRequest::addXMLLayerToConfig(CServerParams *srvParam,CDFObject *cdfObject,
     xmleLayer->RenderMethod.push_back(xmleRenderMethod);
     
   }
+  
+  
   
   xmleLayer->FilePath.push_back(xmleFilePath);
   
@@ -697,7 +706,7 @@ int CRequest::generateGetReferenceTimesDoc(CT::string *result,CDataSource *dataS
     CT::string tableName;
    
     try{
-      tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
+      tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str(),dataSource->cfgLayer->DataBaseTable);
     }catch(int e){
       CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
       return 1;
@@ -978,7 +987,7 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
               CT::string tableName;
               
               try{
-                tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), ogcDim->netCDFDimName.c_str());
+                tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), ogcDim->netCDFDimName.c_str(),dataSource->cfgLayer->DataBaseTable);
               }catch(int e){
                 CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), ogcDim->netCDFDimName.c_str());
                 return 1;
@@ -1049,7 +1058,7 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
 
         CT::string tableName;
         try{
-          tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str());
+          tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str(),dataSource->cfgLayer->DataBaseTable);
         }catch(int e){
           CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str());
           return 1;
@@ -1099,7 +1108,7 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
             
             CT::string timeTableName;
             try{
-              timeTableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netcdfTimeDimName.c_str());
+              timeTableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netcdfTimeDimName.c_str(),dataSource->cfgLayer->DataBaseTable);
             }catch(int e){
               CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netcdfTimeDimName.c_str());
               return 1;
@@ -1166,7 +1175,7 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
 
       CT::string tableName;
       try{
-        tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str());
+        tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str(),dataSource->cfgLayer->DataBaseTable);
       }catch(int e){
         CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str());
         return 1;
@@ -2893,6 +2902,9 @@ int CRequest::process_querystring(){
         if(srvParam->Geo->dfBBOX[2] != srvParam->Geo->dfBBOX[0]){
           float r=fabs(srvParam->Geo->dfBBOX[3]-srvParam->Geo->dfBBOX[1])/fabs(srvParam->Geo->dfBBOX[2]-srvParam->Geo->dfBBOX[0]);
           srvParam->Geo->dWidth=int(float(srvParam->Geo->dHeight)/r);
+          if(srvParam->Geo->dWidth>MAX_IMAGE_WIDTH){
+            srvParam->Geo->dWidth = srvParam->Geo->dHeight ;
+          }
         }else{
           srvParam->Geo->dWidth = srvParam->Geo->dHeight;
         }
@@ -2903,6 +2915,9 @@ int CRequest::process_querystring(){
         if(srvParam->Geo->dfBBOX[2] != srvParam->Geo->dfBBOX[0]){
           float r=fabs(srvParam->Geo->dfBBOX[3]-srvParam->Geo->dfBBOX[1])/fabs(srvParam->Geo->dfBBOX[2]-srvParam->Geo->dfBBOX[0]);
           srvParam->Geo->dHeight=int(float(srvParam->Geo->dWidth)*r);
+          if(srvParam->Geo->dHeight>MAX_IMAGE_HEIGHT){
+            srvParam->Geo->dHeight = srvParam->Geo->dWidth ;
+          }
         }else{
           srvParam->Geo->dHeight = srvParam->Geo->dWidth;
         }
