@@ -45,13 +45,8 @@ CDrawImage::CDrawImage(){
   _bEnableTrueColor=false;
   dNumImages = 0;
   Geo= new CGeoParams(); 
-#ifdef ADAGUC_USE_CAIRO
+
   cairo=NULL;
-#else
-  wuLine=NULL;
-  freeType=NULL;
-  RGBAByteBuffer=NULL;
-#endif
   
   TTFFontLocation = "/usr/X11R6/lib/X11/fonts/truetype/verdana.ttf";
   const char *fontLoc=getenv("ADAGUC_FONT");
@@ -1288,6 +1283,7 @@ int CDrawImage::createImage(CDrawImage *image,int width,int height){
   return 0;
 }
 
+    
 int CDrawImage::setCanvasSize(int x,int y,int width,int height){
   CDrawImage temp;
   temp.createImage(this,width,height);
@@ -1307,20 +1303,8 @@ int CDrawImage::draw(int destx, int desty,int sourcex,int sourcey,CDrawImage *si
       if(sx>=0&&sy>=0&&dx>=0&&dy>=0&&
         sx<simage->Geo->dWidth&&sy<simage->Geo->dHeight&&dx<Geo->dWidth&&dy<Geo->dHeight){
         if(_bEnableTrueColor){
-        #ifdef ADAGUC_USE_CAIRO
-        simage->cairo->getPixel(sx,sy,r,g,b,a);
-       
-      
-        cairo-> pixelBlend(dx,dy,r,g,b,a);
-      
-       
-        
-      //cairo-> pixelBlend(dx,dy,128,128,128,int(dy)%255);
-        //cairo-> pixel(dx,dy,r,g,b,a);
-        #else
-        simage->wuLine->getPixel(sx,sy,r,g,b,a);
-        wuLine-> pixelBlend(dx,dy,r,g,b,a);
-        #endif
+          simage->cairo->getPixel(sx,sy,r,g,b,a);
+          cairo-> pixelBlend(dx,dy,r,g,b,a);
         }else{
           int color = gdImageGetPixel(simage->image, x+sourcex, y+sourcey);
           //if(!isColorTransparent(color)){
