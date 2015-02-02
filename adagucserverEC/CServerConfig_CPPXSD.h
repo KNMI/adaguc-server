@@ -814,10 +814,15 @@ class CServerConfig:public CXMLSerializerInterface{
         class Cattr{
           public:
             CXMLString service,layer;
+            bool transparent;
+            Cattr() {
+              transparent=true;
+            }
         }attr;
         void addAttribute(const char *attrname,const char *attrvalue){
           if(equals("layer",5,attrname)){attr.layer.copy(attrvalue);return;}
           else if(equals("service",7,attrname)){attr.service.copy(attrvalue);return;}
+          else if(equals("transparent",11,attrname)){attr.transparent=parseBool(attrvalue);return;}
         }
     };
     
