@@ -1942,7 +1942,7 @@ int CRequest::process_querystring(){
         }else srvParam->Styles.copy("");
         dFound_Styles=1;
       }else{
-        CDBWarning("Styles already defined");
+        CDBWarning("ADAGUC Server: Styles already defined");
         dErrorOccured=1;
       }
     }
@@ -1954,7 +1954,7 @@ int CRequest::process_querystring(){
         }else srvParam->Style.copy("");
         dFound_Style=1;
       }else{
-        CDBWarning("Style already defined");
+        CDBWarning("ADAGUC Server: Style already defined");
         dErrorOccured=1;
       }
     }
@@ -1968,7 +1968,7 @@ int CRequest::process_querystring(){
             srvParam->Geo->dfBBOX[j]=atof(bboxvalues[j].c_str());
           }
         }else{
-          CDBWarning("Invalid BBOX values");
+          CDBWarning("ADAGUC Server: Invalid BBOX values");
           dErrorOccured=1;
         }
         delete[] bboxvalues;
@@ -1988,7 +1988,7 @@ int CRequest::process_querystring(){
       if(value0Cap.equals("WIDTH")){
         srvParam->Geo->dWidth=atoi(values[1].c_str());
         if(srvParam->Geo->dWidth<1){
-          CDBWarning("Parameter Width should be at least 1");
+          CDBWarning("ADAGUC Server: Parameter Width should be at least 1");
           dErrorOccured=1;
         }
         dFound_Width=1;
@@ -1997,7 +1997,7 @@ int CRequest::process_querystring(){
       if(value0Cap.equals("HEIGHT")){
         srvParam->Geo->dHeight=atoi(values[1].c_str());
         if(srvParam->Geo->dHeight<1){
-          CDBWarning("Parameter Height should be at least 1");
+          CDBWarning("ADAGUC Server: Parameter Height should be at least 1");
           dErrorOccured=1;
         }
 
@@ -2007,7 +2007,7 @@ int CRequest::process_querystring(){
       if(value0Cap.equals("RESX")){
         srvParam->dfResX=atof(values[1].c_str());
         if(srvParam->dfResX==0){
-          CDBWarning("Parameter RESX should not be zero");
+          CDBWarning("ADAGUC Server: Parameter RESX should not be zero");
           dErrorOccured=1;
         }
         dFound_RESX=1;
@@ -2016,7 +2016,7 @@ int CRequest::process_querystring(){
       if(value0Cap.equals("RESY")){
         srvParam->dfResY=atof(values[1].c_str());
         if(srvParam->dfResY==0){
-          CDBWarning("Parameter RESY should not be zero");
+          CDBWarning("ADAGUC Server: Parameter RESY should not be zero");
           dErrorOccured=1;
         }
         dFound_RESY=1;
@@ -2081,7 +2081,7 @@ int CRequest::process_querystring(){
             dFound_Format=1;
           }
         }else{
-          CDBWarning("FORMAT already defined");
+          CDBWarning("ADAGUC Server: FORMAT already defined");
           dErrorOccured=1;
         }
       }
@@ -2094,7 +2094,7 @@ int CRequest::process_querystring(){
             dFound_InfoFormat=1;
           }
         }else{
-          CDBWarning("INFO_FORMAT already defined");
+          CDBWarning("ADAGUC Server: INFO_FORMAT already defined");
           dErrorOccured=1;
         }
       }
@@ -2110,7 +2110,7 @@ int CRequest::process_querystring(){
             dFound_Transparent=1;
           }
         }else{
-          CDBWarning("TRANSPARENT already defined");
+          CDBWarning("ADAGUC Server: TRANSPARENT already defined");
           dErrorOccured=1;
         }
       }
@@ -2122,7 +2122,7 @@ int CRequest::process_querystring(){
             dFound_BGColor=1;
           }
         }else{
-          CDBWarning("FORMAT already defined");
+          CDBWarning("ADAGUC Server: FORMAT already defined");
           dErrorOccured=1;
         }
       }
@@ -2138,7 +2138,7 @@ int CRequest::process_querystring(){
         }
         //ARCGIS user Friendliness, version can be defined multiple times.
         /*else{
-          CDBWarning("Version already defined");
+          CDBWarning("ADAGUC Server: Version already defined");
           dErrorOccured=1;
         }*/
       }
@@ -2151,7 +2151,7 @@ int CRequest::process_querystring(){
             dFound_Exceptions=1;
           }
         }else{
-          CDBWarning("Exceptions already defined");
+          CDBWarning("ADAGUC Server: Exceptions already defined");
           dErrorOccured=1;
         }
       }
@@ -2215,7 +2215,7 @@ int CRequest::process_querystring(){
       //WCS Coverage parameter
     if(value0Cap.equals("COVERAGE")){
         if(srvParam->WMSLayers!=NULL){
-          CDBWarning("COVERAGE already defined");
+          CDBWarning("ADAGUC Server: COVERAGE already defined");
           dErrorOccured=1;
         }else{
           srvParam->WMSLayers = values[1].splitToArray(",");
@@ -2313,7 +2313,7 @@ int CRequest::process_querystring(){
             dFound_JSONP=1;
           }
         }else{
-          CDBWarning("JSONP already defined");
+          CDBWarning("ADAGUC Server: JSONP already defined");
           dErrorOccured=1;
         }
       }
@@ -2342,7 +2342,7 @@ int CRequest::process_querystring(){
   #endif
 
   if(dFound_Service==0){
-    CDBWarning("Parameter SERVICE missing");
+    CDBWarning("ADAGUC Server: Parameter SERVICE missing");
     dErrorOccured=1;
   }
   if(dFound_Styles==0){
@@ -2361,7 +2361,7 @@ int CRequest::process_querystring(){
     srvParam->OGCVersion=WMS_VERSION_1_3_0;
     
     if(dFound_Request==0){
-      CDBWarning("Parameter REQUEST missing");
+      CDBWarning("ADAGUC Server: Parameter REQUEST missing");
       dErrorOccured=1;
     }else{
       if(REQUEST.equals("GETCAPABILITIES"))srvParam->requestType=REQUEST_WMS_GETCAPABILITIES;
@@ -2819,7 +2819,7 @@ int CRequest::process_querystring(){
     }
     if(srvParam->requestType==REQUEST_WMS_GETMAP||srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
         if(dFound_Format==0){
-          CDBWarning("Parameter FORMAT missing");
+          CDBWarning("ADAGUC Server: Parameter FORMAT missing");
           dErrorOccured=1;
         }else{
           
@@ -2855,14 +2855,14 @@ int CRequest::process_querystring(){
       if(srvParam->requestType==REQUEST_WMS_GETFEATUREINFO||srvParam->requestType==REQUEST_WMS_GETPOINTVALUE){
         int status = checkDataRestriction();
         if((status&ALLOW_GFI)==false){
-          CDBWarning("This layer is not queryable.");
+          CDBWarning("ADAGUC Server: This layer is not queryable.");
           return 1;
         }
       }
       // Check if styles is defined for WMS 1.1.1
       if(dFound_Styles==0&&srvParam->requestType==REQUEST_WMS_GETMAP){
         if(srvParam->OGCVersion==WMS_VERSION_1_1_1){
-          //CDBWarning("Parameter STYLES missing");TODO Google Earth does not provide this!
+          //CDBWarning("ADAGUC Server: Parameter STYLES missing");TODO Google Earth does not provide this!
         }
       }
       
@@ -2888,13 +2888,13 @@ int CRequest::process_querystring(){
     
       
       if(dFound_BBOX==0){
-        CDBWarning("Parameter BBOX missing");
+        CDBWarning("ADAGUC Server: Parameter BBOX missing");
         dErrorOccured=1;
       }
       
       
       if(dFound_Width==0&&dFound_Height==0){
-        CDBWarning("Parameter WIDTH or HEIGHT missing");
+        CDBWarning("ADAGUC Server: Parameter WIDTH or HEIGHT missing");
         dErrorOccured=1;
       }
       
@@ -2932,21 +2932,21 @@ int CRequest::process_querystring(){
       
       if(srvParam->OGCVersion==WMS_VERSION_1_0_0 || srvParam->OGCVersion==WMS_VERSION_1_1_1){
         if(dFound_SRS==0){
-          CDBWarning("Parameter SRS missing");
+          CDBWarning("ADAGUC Server: Parameter SRS missing");
           dErrorOccured=1;
         }
       }
       
       if(srvParam->OGCVersion==WMS_VERSION_1_3_0 ){
         if(dFound_CRS==0){
-          CDBWarning("Parameter CRS missing");
+          CDBWarning("ADAGUC Server: Parameter CRS missing");
           dErrorOccured=1;
         }
       }
       
       
       if(dFound_WMSLAYERS==0){
-        CDBWarning("Parameter LAYERS missing");
+        CDBWarning("ADAGUC Server: Parameter LAYERS missing");
         dErrorOccured=1;
       }
       if(dErrorOccured==0){
@@ -2962,22 +2962,22 @@ int CRequest::process_querystring(){
         if(srvParam->requestType==REQUEST_WMS_GETFEATUREINFO){
           if(srvParam->OGCVersion == WMS_VERSION_1_0_0 || srvParam->OGCVersion == WMS_VERSION_1_1_1){
             if(dFound_X==0){
-              CDBWarning("Parameter X missing");
+              CDBWarning("ADAGUC Server: Parameter X missing");
               dErrorOccured=1;
             }
             if(dFound_Y==0){
-              CDBWarning("Parameter Y missing");
+              CDBWarning("ADAGUC Server: Parameter Y missing");
               dErrorOccured=1;
             }
           }
           
           if(srvParam->OGCVersion == WMS_VERSION_1_3_0){
             if(dFound_I==0){
-              CDBWarning("Parameter I missing");
+              CDBWarning("ADAGUC Server: Parameter I missing");
               dErrorOccured=1;
             }
             if(dFound_J==0){
-              CDBWarning("Parameter J missing");
+              CDBWarning("ADAGUC Server: Parameter J missing");
               dErrorOccured=1;
             }
           }
@@ -2995,7 +2995,7 @@ int CRequest::process_querystring(){
     }
     if(dErrorOccured==0&&srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
       if(dFound_WMSLAYER==0){
-        CDBWarning("Parameter LAYER missing");
+        CDBWarning("ADAGUC Server: Parameter LAYER missing");
         dErrorOccured=1;
       }
       if(dErrorOccured==0){
@@ -3018,15 +3018,15 @@ int CRequest::process_querystring(){
     if(dErrorOccured==0&&srvParam->requestType==REQUEST_WMS_GETMETADATA){
       int status = checkDataRestriction();
       if((status&ALLOW_METADATA)==false){
-        CDBWarning("GetMetaData is restricted");
+        CDBWarning("ADAGUC Server: GetMetaData is restricted");
         return 1;
       }
       if(dFound_WMSLAYER==0){
-        CDBWarning("Parameter LAYER missing");
+        CDBWarning("ADAGUC Server: Parameter LAYER missing");
         dErrorOccured=1;
       }
       if(dFound_Format==0){
-        CDBWarning("Parameter FORMAT missing");
+        CDBWarning("ADAGUC Server: Parameter FORMAT missing");
         dErrorOccured=1;
       }
       if(dErrorOccured==0){
@@ -3044,11 +3044,11 @@ int CRequest::process_querystring(){
     srvParam->OGCVersion=WCS_VERSION_1_0;
     int status = checkDataRestriction();
     if((status&ALLOW_WCS)==false){
-      CDBWarning("WCS Service is disabled.");
+      CDBWarning("ADAGUC Server: WCS Service is disabled.");
       return 1;
     }
     if(dFound_Request==0){
-      CDBWarning("Parameter REQUEST missing");
+      CDBWarning("ADAGUC Server: Parameter REQUEST missing");
       dErrorOccured=1;
     }else{
       if(REQUEST.equals("GETCAPABILITIES"))srvParam->requestType=REQUEST_WCS_GETCAPABILITIES;
@@ -3071,41 +3071,41 @@ int CRequest::process_querystring(){
         srvParam->WCS_GoNative = 0;
         if(dFound_RESX==0||dFound_RESY==0){
           if(dFound_Width==0){
-            CDBWarning("Parameter WIDTH/RESX missing");
+            CDBWarning("ADAGUC Server: Parameter WIDTH/RESX missing");
             dErrorOccured=1;
           }
           if(dFound_Height==0){
-            CDBWarning("Parameter HEIGHT/RESY missing");
+            CDBWarning("ADAGUC Server: Parameter HEIGHT/RESY missing");
             dErrorOccured=1;
           }
           srvParam->dWCS_RES_OR_WH = 0;
         }else if(dFound_Width==0||dFound_Height==0){
             CDBDebug("NOWH");
           if(dFound_RESX==0){
-            CDBWarning("Parameter RESX missing");
+            CDBWarning("ADAGUC Server: Parameter RESX missing");
             dErrorOccured=1;
           }
           if(dFound_RESY==0){
-            CDBWarning("Parameter RESY missing");
+            CDBWarning("ADAGUC Server: Parameter RESY missing");
             dErrorOccured=1;
           }
           srvParam->dWCS_RES_OR_WH = 1;
          
         }
         if(dFound_BBOX==0){
-          CDBWarning("Parameter BBOX missing");
+          CDBWarning("ADAGUC Server: Parameter BBOX missing");
           dErrorOccured=1;
         }
         if(dFound_CRS==0){
-          CDBWarning("Parameter CRS missing");
+          CDBWarning("ADAGUC Server: Parameter CRS missing");
           dErrorOccured=1;
         }
         if(dFound_Format==0){
-          CDBWarning("Parameter FORMAT missing");
+          CDBWarning("ADAGUC Server: Parameter FORMAT missing");
           dErrorOccured=1;
         }
         if(dFound_WCSCOVERAGE==0){
-          CDBWarning("Parameter COVERAGE missing");
+          CDBWarning("ADAGUC Server: Parameter COVERAGE missing");
           dErrorOccured=1;
         }
       }
@@ -3129,11 +3129,11 @@ int CRequest::process_querystring(){
     return 0;
   }
   if(srvParam->serviceType==SERVICE_WCS){
-    CDBWarning("Invalid value for request. Supported requests are: getcapabilities, describecoverage and getcoverage");
+    CDBWarning("ADAGUC Server: Invalid value for request. Supported requests are: getcapabilities, describecoverage and getcoverage");
   }else if(srvParam->serviceType==SERVICE_WMS){
-    CDBWarning("Invalid value for request. Supported requests are: getcapabilities, getmap, getfeatureinfo, getpointvalue, getmetadata, getstyles and getlegendgraphic");
+    CDBWarning("ADAGUC Server: Invalid value for request. Supported requests are: getcapabilities, getmap, getfeatureinfo, getpointvalue, getmetadata, getstyles and getlegendgraphic");
   }else{
-    CDBWarning("Unknown service");
+    CDBWarning("ADAGUC Server: Unknown service");
   }
   
 
