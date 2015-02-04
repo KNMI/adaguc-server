@@ -287,7 +287,7 @@ int CImageDataWriter::_setTransparencyAndBGColor(CServerParams *srvParam,CDrawIm
   return 0;
 }
 
-int CImageDataWriter::drawCascadedWMS(CDataSource * dataSource, const char *service,const char *layers,bool transparent){
+int CImageDataWriter::drawCascadedWMS(CDataSource * dataSource, const char *service,const char *layers,bool transparent, const char *bgcolor){
 
 #ifndef ENABLE_CURL
   CDBError("CURL not enabled");
@@ -306,6 +306,10 @@ int CImageDataWriter::drawCascadedWMS(CDataSource * dataSource, const char *serv
     url.printconcat("&TRANSPARENT=TRUE");
   } else {
     url.printconcat("&TRANSPARENT=FALSE");
+  }
+  if (strlen(bgcolor)>0) {
+     url.printconcat("&BGCOLOR=");
+     url.printconcat(bgcolor);
   }
   url.printconcat("&WIDTH=%d",drawImage.Geo->dWidth);
   url.printconcat("&HEIGHT=%d",drawImage.Geo->dHeight);
@@ -1599,7 +1603,9 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
       if(dataSource->cfgLayer->WMSLayer.size()==1){
         status = drawCascadedWMS(dataSource,dataSource->cfgLayer->WMSLayer[0]->attr.service.c_str(),
                                  dataSource->cfgLayer->WMSLayer[0]->attr.layer.c_str(),
-                                 dataSource->cfgLayer->WMSLayer[0]->attr.transparent);
+                                 dataSource->cfgLayer->WMSLayer[0]->attr.transparent,
+                                 dataSource->cfgLayer->WMSLayer[0]->attr.bgcolor.c_str()
+                                );
         if(status!=0){
           CDBError("drawCascadedWMS for layer %s failed",dataSource->layerName.c_str());
         }
