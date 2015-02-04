@@ -516,7 +516,7 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
       if (direction==direction) direction+=rotation; //Nan stays Nan
       
       if ((direction==direction)&&(strength==strength)) { //Check for Nan
-        CDBDebug("Drawing wind %f,%f for [%d,%d]", strength, direction, x, y);
+        //CDBDebug("Drawing wind %f,%f for [%d,%d]", strength, direction, x, y);
         if(drawBarb){
           if(lat>0){
             drawImage->drawBarb(x, y, ((270-direction)/360)*3.141592654*2, strength, drawVectorLineColor ,drawVectorLineWidth, false, false);
