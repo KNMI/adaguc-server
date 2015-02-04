@@ -134,7 +134,7 @@ MinMax getMinMax(CDF::Variable *var){
 // TODO this currently works only for float data
 int CDataSource::Statistics::calculate(CDataSource *dataSource){
   //Get Min and Max
-  CDBDebug("calculate stat ");
+  //CDBDebug("calculate stat ");
   CDataSource::DataObject *dataObject = dataSource->getDataObject(0);
   if(dataObject->cdfVariable->data!=NULL){
     size_t size = dataObject->cdfVariable->getSize();//dataSource->dWidth*dataSource->dHeight;
@@ -403,7 +403,7 @@ int  CDataSource::checkDimTables(CPGSQLDB *dataBaseConnection){
   CT::string cacheDirectory = srvParams->cfg->TempDir[0]->attr.value.c_str();
   //srvParams->getCacheDirectory(&cacheDirectory);
   if(cacheDirectory.length()>0){
-    lock.claim(cacheDirectory.c_str(),identifier.c_str(),srvParams->isAutoResourceEnabled());
+    lock.claim(cacheDirectory.c_str(),identifier.c_str(),"checkDimTables",srvParams->isAutoResourceEnabled());
   }
   
   #ifdef CDATASOURCE_DEBUG
@@ -436,12 +436,12 @@ int  CDataSource::checkDimTables(CPGSQLDB *dataBaseConnection){
         try{
           CT::string databaseTime = store->getRecord(0)->get(1);if(databaseTime.length()<20){databaseTime.concat("Z");}databaseTime.setChar(10,'T');
           
-          CT::string fileDate = srvParams->getFileDate(store->getRecord(0)->get(0)->c_str());
+          CT::string fileDate = CDirReader::getFileDate(store->getRecord(0)->get(0)->c_str());
           
           
           
           if(databaseTime.equals(fileDate)==false){
-            //CDBDebug("Table was found, %s ~ %s : %d",fileDate.c_str(),databaseTime.c_str(),databaseTime.equals(fileDate));
+            CDBDebug("Table was found, %s ~ %s : %d",fileDate.c_str(),databaseTime.c_str(),databaseTime.equals(fileDate));
             fileNeedsUpdate = true;
           }
           
@@ -461,6 +461,7 @@ int  CDataSource::checkDimTables(CPGSQLDB *dataBaseConnection){
   
   
   if(fileNeedsUpdate == true){
+    //Recreate table
     if(srvParams->isAutoLocalFileResourceEnabled()==true){
       for(size_t i=0;i<cfgLayer->Dimension.size();i++){
         dimName=cfgLayer->Dimension[i]->attr.name.c_str();
@@ -481,6 +482,7 @@ int  CDataSource::checkDimTables(CPGSQLDB *dataBaseConnection){
       }
       tableNotFound = true;
     }
+   
   }
  
   
@@ -892,7 +894,7 @@ CT::PointerList<CStyleConfiguration*> *CDataSource::getStyleListForDataSource(CD
 //             
 //             return styleConfigurationList;
 //           }else{
-            CDBDebug("Warning: Style [%s] not found (%d)",styleNames->get(i)->c_str(),styleNames->get(i)->equals("default"));
+//            CDBDebug("Warning: Style [%s] not found (%d)",styleNames->get(i)->c_str(),styleNames->get(i)->equals("default"));
 //             CT::string * styleName = new CT::string();
 //             styleName->copy("default");
 //            
@@ -1042,7 +1044,7 @@ CT::PointerList<CStyleConfiguration*> *CDataSource::getStyleListForDataSource(CD
   
   if(styleConfigurationList->size()==0){
     CStyleConfiguration * styleConfig = new CStyleConfiguration();
-    CDBDebug("Setting rendermethod RM_NEAREST");
+    //CDBDebug("Setting rendermethod RM_NEAREST");
     styleConfig->styleTitle.copy("default");
     styleConfig->styleAbstract.copy("default");
     styleConfig->renderMethod = RM_NEAREST;
@@ -1210,7 +1212,7 @@ CStyleConfiguration *CDataSource::getStyle(){
     for(size_t j=0;j<_styles->size();j++){
       if(_styles->get(j)->styleCompositionName.equals(styleName)){
           _currentStyle=_styles->get(j);
-          CDBDebug("Found style for %s",styleName.c_str());
+          //CDBDebug("Found style for %s",styleName.c_str());
           break;
       }
     }

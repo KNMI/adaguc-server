@@ -44,6 +44,8 @@ class CFileObject{
     int isDir;
 };
 
+static std::map <std::string ,std::string> lookupTableFileModificationDateMap;
+
 class CDirReader{
   private: 
     int _ReadDir(const char* directory,const char *ext_filter,int recursive);
@@ -57,6 +59,8 @@ class CDirReader{
     static void makeCleanPath(CT::string *path);
     static int getFileDate(CT::string *date,const char *file);
     int testRegEx(const char *string,const char *pattern);
+    
+    static CT::string getFileDate(const char *fileName);
 
     /**
      * Create a public directory writable for everybody 

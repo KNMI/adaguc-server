@@ -25,6 +25,7 @@
 
 #include <sys/stat.h>
 #include "CTypes.h"
+#include "CReadFile.h"
 #include "CDirReader.h"
 #ifndef CCACHE_H
 #define CCACHE_H
@@ -51,6 +52,7 @@ class CCache{
   bool cacheFileClaimed;
   bool cacheSystemIsBusy;
   CT::string fileName;
+  CT::string dateFromFile;
   CT::string claimedCacheFileName;
   CT::string claimedCacheProcIDFileName;
   
@@ -71,7 +73,7 @@ class CCache{
   * @param fileName
   * @return true when cache is busy
   */
-  bool isCacheFileBusyBlocking();
+  bool isCacheFileBusyBlocking(const char *reason);
 
   
   /**
@@ -90,7 +92,7 @@ class CCache{
     public:
       Lock();
       ~Lock();
-      int claim(const char *cacheDir, const char *identifier,bool enable);
+      int claim(const char *cacheDir, const char *identifier, const char *reason,bool enable);
       void release();
     };
   /**
@@ -107,7 +109,7 @@ class CCache{
    * Checks availability of cachefile and determines if cache is busy. Cache methods saveCacheFile() and cacheIsAvailable() are available to query after this has been called.
    * @param fileName;
    */
-  void checkCacheSystemReady(const char * directory, const char *fileName);
+  void checkCacheSystemReady(const char * directory, const char *fileName,const char *resource,const char *reason);
   
   /**
    * Returns true if cachefile can be saved

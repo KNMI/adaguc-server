@@ -402,9 +402,9 @@ class CDFNetCDFWriter{
                     }
                   }
                   
-                  for(size_t m=0;m<variable->dimensionlinks.size();m++){
-                    CDBDebug("ChunkSizes %s = %d",variable->dimensionlinks[m]->name.c_str(),chunkSizes[m]);
-                  }
+//                   for(size_t m=0;m<variable->dimensionlinks.size();m++){
+//                     CDBDebug("ChunkSizes %s = %d",variable->dimensionlinks[m]->name.c_str(),chunkSizes[m]);
+//                   }
                   
           
                   status = nc_def_var_chunking(root_id,nc_var_id,0 ,chunkSizes);

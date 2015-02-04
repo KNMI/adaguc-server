@@ -1,7 +1,10 @@
+#ifndef CREADFILE_H
+#define CREADFILE_H
 #include "CTypes.h"
 #define CREADFILE_OK           0
 #define CREADFILE_FILENOTFOUND 1
 #define CREADFILE_FILENOTREAD  2
+#define CREADFILE_FILENOTWRITE 3
 
 class CReadFile{
   private:
@@ -52,5 +55,25 @@ class CReadFile{
       delete[] data;
       return dataString;
     }
+    
+    static void write(const char *fileName,const char *buffer,size_t length){
+      if(buffer==NULL){throw CREADFILE_FILENOTWRITE;}
+      FILE *pFile = fopen ( fileName , "wb" );
+      if(pFile==NULL){
+       throw CREADFILE_FILENOTWRITE;
+      }
+      size_t bytesWritten = fwrite (buffer , sizeof(char),length , pFile );
+      fflush (pFile);   
+      fclose (pFile);
+      
+      if(bytesWritten!=length){
+        throw CREADFILE_FILENOTWRITE;
+      }
+      if(chmod(fileName,0777)<0){
+        throw CREADFILE_FILENOTWRITE;
+      }
+  
+    }
    
 };
+#endif

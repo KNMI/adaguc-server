@@ -342,15 +342,15 @@ int CRequest::setConfigFile(const char *pszConfigFile){
                 CServerConfig::XMLE_Group* xmleGroup = new CServerConfig::XMLE_Group();
                 CServerConfig::XMLE_Variable* xmleVariable = new CServerConfig::XMLE_Variable();
                 CServerConfig::XMLE_FilePath* xmleFilePath = new CServerConfig::XMLE_FilePath();
-                CServerConfig::XMLE_Cache* xmleCache = new CServerConfig::XMLE_Cache();
-                xmleCache->attr.enabled.copy("false");
+                //CServerConfig::XMLE_Cache* xmleCache = new CServerConfig::XMLE_Cache();
+                //xmleCache->attr.enabled.copy("false");
                 xmleLayer->attr.type.copy("database");
                 xmleVariable->value.copy(var->name.c_str());
                 xmleFilePath->value.copy(dirReader.fileList[j]->fullName.c_str());
                 xmleGroup->attr.value.copy(groupName.c_str());
                 xmleLayer->Variable.push_back(xmleVariable);
                 xmleLayer->FilePath.push_back(xmleFilePath);
-                xmleLayer->Cache.push_back(xmleCache);
+                //xmleLayer->Cache.push_back(xmleCache);
                 xmleLayer->Group.push_back(xmleGroup);
                 srvParam->cfg->Layer.push_back(xmleLayer);              
               }

@@ -79,6 +79,26 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type,size_t *
     
     status = nc_open(fileName.c_str(),NC_NOWRITE,&root_id);
     if(status!=NC_NOERR){ncError(__LINE__,className,"nc_open: ",status);return 1;}
+
+    #ifdef CCDFNETCDFIO_DEBUG_OPEN        
+    CDBDebug("root_id %d",root_id);
+    CDBDebug("VARNAME %s id: %d",var->name.c_str(),var->id);
+    #endif
+    
+    /*Check if var id is still OK*/
+    char name[NC_MAX_NAME+1];
+    nc_type type;
+    int ndims;
+    int natt;
+    int dimids[NC_MAX_VAR_DIMS];
+    bool isDimension;
+    for(int j=0;j<nVars;j++){
+      status = nc_inq_var(root_id,j,name,&type,&ndims,dimids,&natt);
+      if(var->name.equals(name)){
+        var->id = j;
+        break;
+      }
+    }
   }
   #ifdef CCDFNETCDFIO_DEBUG        
   CDBDebug("reading %s from file %s",var->name.c_str(),fileName.c_str());
@@ -86,6 +106,7 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type,size_t *
   //CDBDebug("readVariableData");
   //It is essential that the variable nows which reader can be used to read the data
   //var->cdfReaderPointer=(void*)this;
+  //var->setCDFReaderPointer(this);
   var->freeData();
   
  
@@ -218,6 +239,13 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type,size_t *
         if(status!=NC_NOERR){ncError(__LINE__,className,"nc_get_vars (native): ",status);}
       }else{
         status = nc_get_vara(root_id,var->id,start,count,var->data);
+        #ifdef CCDFNETCDFIO_DEBUG_OPEN        
+        CDBDebug("root_id %d var id %d",root_id,var->id);
+        for(size_t j=0;j<var->dimensionlinks.size();j++){
+          CDBDebug("[%s] %d %d",var->dimensionlinks[j]->name.c_str(),start[j],count[j]);
+        }
+        #endif
+        
         if(status!=NC_NOERR){ncError(__LINE__,className,"nc_get_vara (native): ",status);}
       }
     }else{
@@ -402,6 +430,9 @@ int CDFNetCDFReader::open(const char *fileName){
   #endif      
   status = nc_open(fileName,NC_NOWRITE,&root_id);
   if(status!=NC_NOERR){ncError(__LINE__,className,"nc_open: ",status);return 1;}
+  
+  
+  
 /*#ifdef MEASURETIME
       StopWatch_Stop("CDFNetCDFReader open file\n");
 #endif*/

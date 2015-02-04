@@ -237,3 +237,19 @@ void CDirReader::makePublicDirectory(const char *dirname){
     delete[] directorySplitted;
   }
 }
+
+CT::string CDirReader::getFileDate(const char *fileName){
+  
+  std::map<std::string,std::string>::iterator it=lookupTableFileModificationDateMap.find(fileName);
+  if(it!=lookupTableFileModificationDateMap.end()){
+    CT::string filemoddate = (*it).second.c_str();
+    //CDBDebug("Returning filedate %s from map",filemoddate.c_str());
+    return filemoddate;
+  }
+  CT::string fileDate;
+  CDirReader::getFileDate(&fileDate,fileName);
+  if(fileDate.length()<10)fileDate.copy("1970-01-01T00:00:00Z");
+  
+   lookupTableFileModificationDateMap.insert(std::pair<std::string,std::string>(fileName,fileDate.c_str()));
+  return fileDate;
+}
