@@ -603,6 +603,12 @@ public:
     this->fp=fp;
     cairo_surface_write_to_png_stream(surface, writerFunc, (void *)fp);
   }
+  
+  void setToSurface(cairo_surface_t *png) {
+    cairo_set_source_surface (this->cr, png, 0, 0);
+    cairo_paint(this->cr);
+ //   cairo_surface_destroy(surface);
+  }
 };
 
 #endif /* CCAIROPLOTTER_H_ */
