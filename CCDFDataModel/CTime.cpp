@@ -244,6 +244,16 @@ CT::string CTime::dateToISOString(Date date){
 
 CTime::Date CTime::freeDateStringToDate(const char*szTime){
   size_t len = strlen(szTime);
+  //201002010900
+  if(len==12){
+    CT::string date="";
+    date.concat(szTime+0,8);
+    date.concat("T");
+    date.concat(szTime+8,4);
+    date.concat("00Z");
+    return stringToDate(date.c_str());
+  }
+  
   if(len<14){
     CDBError("datestring %s has invalid length %d",szTime,len);
     throw CTIME_CONVERSION_ERROR;

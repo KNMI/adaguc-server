@@ -410,12 +410,19 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
     void enableKNMIHDF5toCFConversion(){
       b_EnableKNMIHDF5toCFConversion=true;
     }
+    
+    int convertNWCSAFtoCF();
+    
     int convertKNMIHDF5toCF(){
+      
+      CDF::Variable *geo = cdfObject->getVariableNE("geographic");
+      if(geo==NULL){return 2;}
+      
       //Fill in dim ranges
       CDF::Variable *var = cdfObject->getVariableNE("image1.image_data");
       //if(var==NULL){CDBError("variable image1.image_data not found");return 1;}
-      CDF::Variable *geo = cdfObject->getVariableNE("geographic");
-      if(geo==NULL){CDBError("variable geographic not found");return 1;}
+      geo = cdfObject->getVariableNE("geographic");
+      if(geo==NULL){CDBError("variable geographic not found");return 0;}
       //if(var->dimensionlinks.size()!=2){CDBError("variable does not have 2 dims");return 1;}
       CDF::Variable *proj = cdfObject->getVariableNE("geographic.map_projection");
       if(proj==NULL){CDBError("variable geographic.map_projection not found");return 1;}
@@ -829,7 +836,10 @@ CDBDebug("list");
 #ifdef CCDFHDF5IO_DEBUG      
 CDBDebug("convertKNMIHDF5toCF()");      
 #endif
-        return convertKNMIHDF5toCF();
+        int status = convertKNMIHDF5toCF();
+        if(status == 1)return 1;
+        status = convertNWCSAFtoCF();
+        if(status == 1)return 1;
       }
       return 0;
     }
