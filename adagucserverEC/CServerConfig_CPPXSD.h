@@ -97,16 +97,21 @@ class CServerConfig:public CXMLSerializerInterface{
       }
     };
     
-    class XMLE_Barb: public CXMLObjectInterface{
+    class XMLE_Vector: public CXMLObjectInterface{
     public:
+      XMLE_Vector() {
+        attr.scale=1.0;
+      }
       class Cattr{
       public:
-        CXMLString linecolor,linewidth,plotstationid,barbstyle;
+        CXMLString linecolor,linewidth,plotstationid,vectorstyle;
+        float scale;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("linecolor",9,attrname)){attr.linecolor.copy(attrvalue);return;}
         else if(equals("linewidth",9,attrname)){attr.linewidth.copy(attrvalue);return;}
-        else if(equals("barbstyle",9,attrname)){attr.barbstyle.copy(attrvalue);return;}
+        else if(equals("scale",5,attrname)){attr.scale=parseFloat(attrvalue);return;}
+        else if(equals("vectorstyle",11,attrname)){attr.vectorstyle.copy(attrvalue);return;}
         else if(equals("plotstationid",13,attrname)){attr.plotstationid.copy(attrvalue);return;}
       }
     };
@@ -206,6 +211,20 @@ class CServerConfig:public CXMLSerializerInterface{
         else if(equals("fillcolor",9,attrname)){attr.fillcolor.copy(attrvalue);return;}
       }
     };
+    
+    class XMLE_SymbolInterval: public CXMLObjectInterface{
+      public:
+      class Cattr{
+      public:
+        float  min,max;
+        CXMLString file;
+      }attr;
+      void addAttribute(const char *attrname,const char *attrvalue){
+        if(equals("min",3,attrname)){attr.min=parseFloat(attrvalue);return;}
+        else if(equals("max",3,attrname)){attr.max=parseFloat(attrvalue);return;}
+        else if(equals("file",4,attrname)){attr.file.copy(attrvalue);return;}
+      }
+     };
     
     class XMLE_SmoothingFilter: public CXMLObjectInterface{};
     class XMLE_StandardNames: public CXMLObjectInterface{
@@ -387,7 +406,7 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         std::vector <XMLE_Thinning*> Thinning;
         std::vector <XMLE_Point*> Point;
-        std::vector <XMLE_Barb*> Barb;
+        std::vector <XMLE_Vector*> Vector;
         std::vector <XMLE_FilterPoints*> FilterPoints;
         std::vector <XMLE_Legend*> Legend;
         std::vector <XMLE_Scale*> Scale;
@@ -400,6 +419,7 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_ValueRange*> ValueRange;
         std::vector <XMLE_RenderMethod*> RenderMethod;
         std::vector <XMLE_ShadeInterval*> ShadeInterval;
+        std::vector <XMLE_SymbolInterval*> SymbolInterval;
         std::vector <XMLE_ContourLine*> ContourLine;
         std::vector <XMLE_NameMapping*> NameMapping;
         std::vector <XMLE_SmoothingFilter*> SmoothingFilter;
@@ -409,7 +429,7 @@ class CServerConfig:public CXMLSerializerInterface{
         ~XMLE_Style(){
           XMLE_DELOBJ(Thinning);
           XMLE_DELOBJ(Point);
-          XMLE_DELOBJ(Barb);
+          XMLE_DELOBJ(Vector);
           XMLE_DELOBJ(FilterPoints);
           XMLE_DELOBJ(Legend);
           XMLE_DELOBJ(Scale);
@@ -422,6 +442,7 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(ContourIntervalH);
           XMLE_DELOBJ(RenderMethod);
           XMLE_DELOBJ(ShadeInterval);
+          XMLE_DELOBJ(SymbolInterval);
           XMLE_DELOBJ(ContourLine);
           XMLE_DELOBJ(NameMapping);
           XMLE_DELOBJ(SmoothingFilter);
@@ -441,7 +462,7 @@ class CServerConfig:public CXMLSerializerInterface{
            
             if(equals("Thinning",8,name)){XMLE_ADDOBJ(Thinning);}
             else if(equals("Point",5,name)){XMLE_ADDOBJ(Point);}
-            else if(equals("Barb",4,name)){XMLE_ADDOBJ(Barb);}
+            else if(equals("Vector",6,name)){XMLE_ADDOBJ(Vector);}
             else if(equals("FilterPoints",12,name)){XMLE_ADDOBJ(FilterPoints);}
             else if(equals("Legend",6,name)){XMLE_ADDOBJ(Legend);}
             else if(equals("Scale",5,name)){XMLE_ADDOBJ(Scale);}
@@ -454,6 +475,7 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("ContourIntervalH",16,name)){XMLE_ADDOBJ(ContourIntervalH);}
             else if(equals("RenderMethod",12,name)){XMLE_ADDOBJ(RenderMethod);}
             else if(equals("ShadeInterval",13,name)){XMLE_ADDOBJ(ShadeInterval);}
+            else if(equals("SymbolInterval",14,name)){XMLE_ADDOBJ(SymbolInterval);}
             else if(equals("ContourLine",11,name)){XMLE_ADDOBJ(ContourLine);}
             else if(equals("NameMapping",11,name)){XMLE_ADDOBJ(NameMapping);}
             else if(equals("SmoothingFilter",15,name)){XMLE_ADDOBJ(SmoothingFilter);}
@@ -813,16 +835,19 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString service,layer;
+            CXMLString service,layer,bgcolor;
             bool transparent;
+
             Cattr() {
               transparent=true;
+              bgcolor.copy("");
             }
         }attr;
         void addAttribute(const char *attrname,const char *attrvalue){
           if(equals("layer",5,attrname)){attr.layer.copy(attrvalue);return;}
           else if(equals("service",7,attrname)){attr.service.copy(attrvalue);return;}
           else if(equals("transparent",11,attrname)){attr.transparent=parseBool(attrvalue);return;}
+          else if(equals("bgcolor",7,attrname)){attr.bgcolor.copy(attrvalue);return;}
         }
     };
     

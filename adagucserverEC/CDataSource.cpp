@@ -585,6 +585,7 @@ int CDataSource::makeStyleConfig(CStyleConfiguration *styleConfig,CDataSource *d
     
     s->contourLines=&style->ContourLine;
     s->shadeIntervals=&style->ShadeInterval;
+    s->symbolIntervals=&style->SymbolInterval;
     
     if(style->Legend.size()>0){
       if(style->Legend[0]->attr.tickinterval.empty()==false){

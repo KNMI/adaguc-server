@@ -56,6 +56,7 @@ public:
     styleIndex = -1;
     contourLines = NULL;
     shadeIntervals = NULL;
+    symbolIntervals = NULL;
     styleCompositionName = "";
     styleTitle = "";
     styleAbstract = "";
@@ -80,6 +81,7 @@ public:
   RenderMethod renderMethod;
   std::vector<CServerConfig::XMLE_ContourLine*>*contourLines;
   std::vector<CServerConfig::XMLE_ShadeInterval*>*shadeIntervals;
+  std::vector<CServerConfig::XMLE_SymbolInterval*>*symbolIntervals;
  CServerConfig::XMLE_Style* styleConfig;
   CT::string styleCompositionName;
   CT::string styleTitle;

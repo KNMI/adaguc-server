@@ -45,13 +45,8 @@ CDrawImage::CDrawImage(){
   _bEnableTrueColor=false;
   dNumImages = 0;
   Geo= new CGeoParams(); 
-#ifdef ADAGUC_USE_CAIRO
+
   cairo=NULL;
-#else
-  wuLine=NULL;
-  freeType=NULL;
-  RGBAByteBuffer=NULL;
-#endif
   
   TTFFontLocation = "/usr/X11R6/lib/X11/fonts/truetype/verdana.ttf";
   const char *fontLoc=getenv("ADAGUC_FONT");
@@ -90,14 +85,24 @@ void CDrawImage::destroyImage(){
 }
 
 CDrawImage::~CDrawImage(){
-  //CDBDebug("[DESC] CDrawImage");
+//   CDBDebug("[DESC] CDrawImage %dx%d", Geo->dWidth, Geo->dHeight);
   destroyImage();
   delete Geo; Geo=NULL;
 }
 
+int CDrawImage::createImage(const char *fn){
+  _bEnableTrueColor=true;
+  _bEnableTransparency=true;
+
+  cairo_surface_t *surface=cairo_image_surface_create_from_png(fn);
+  createImage(cairo_image_surface_get_width(surface), cairo_image_surface_get_height(surface));
+  cairo->setToSurface(surface);
+  cairo_surface_destroy(surface);
+
+  return 0;
+}
 
 int CDrawImage::createImage(int _dW,int _dH){
- 
   Geo->dWidth=_dW;
   Geo->dHeight=_dH;
   return createImage(Geo);
@@ -609,6 +614,7 @@ void CDrawImage::setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,u
       gdImageSetPixel(image, x,y,color);
   }
 }
+
 void CDrawImage::setText(const char * text, size_t length,int x,int y,int color,int fontSize){
   CColor col=getColorForIndex(color);
   setText(text, length, x, y, col, fontSize);  
@@ -1288,6 +1294,7 @@ int CDrawImage::createImage(CDrawImage *image,int width,int height){
   return 0;
 }
 
+    
 int CDrawImage::setCanvasSize(int x,int y,int width,int height){
   CDrawImage temp;
   temp.createImage(this,width,height);
@@ -1301,31 +1308,35 @@ int CDrawImage::setCanvasSize(int x,int y,int width,int height){
 
 int CDrawImage::draw(int destx, int desty,int sourcex,int sourcey,CDrawImage *simage){
   unsigned char r,g,b,a;
+  int dTranspColor;
+  if(simage->_bEnableTrueColor == false){
+    dTranspColor=gdImageGetTransparent(simage->image);
+  }
   for(int y=0;y<simage->Geo->dHeight;y++){
     for(int x=0;x<simage->Geo->dWidth;x++){
       int sx=x+sourcex;int sy=y+sourcey;int dx=x+destx;int dy=y+desty;
       if(sx>=0&&sy>=0&&dx>=0&&dy>=0&&
         sx<simage->Geo->dWidth&&sy<simage->Geo->dHeight&&dx<Geo->dWidth&&dy<Geo->dHeight){
-        if(_bEnableTrueColor){
-        #ifdef ADAGUC_USE_CAIRO
-        simage->cairo->getPixel(sx,sy,r,g,b,a);
-       
-      
-        cairo-> pixelBlend(dx,dy,r,g,b,a);
-      
-       
-        
-      //cairo-> pixelBlend(dx,dy,128,128,128,int(dy)%255);
-        //cairo-> pixel(dx,dy,r,g,b,a);
-        #else
-        simage->wuLine->getPixel(sx,sy,r,g,b,a);
-        wuLine-> pixelBlend(dx,dy,r,g,b,a);
-        #endif
+        //Get source r,g,b,a
+        if(simage->_bEnableTrueColor == true){
+          simage->cairo->getPixel(sx,sy,r,g,b,a);
         }else{
           int color = gdImageGetPixel(simage->image, x+sourcex, y+sourcey);
-          //if(!isColorTransparent(color)){
-            gdImageSetPixel(image,x+destx,y+desty,color);
-          //}
+          r= gdImageRed(simage->image,color);
+          g= gdImageGreen(simage->image,color);
+          b= gdImageBlue(simage->image,color);
+          a= 255-gdImageAlpha(simage->image,color)*2;
+          if(color == dTranspColor){
+            a=0;
+          }
+        }
+        //Set r,g,b,a to dest
+        if(_bEnableTrueColor){
+          cairo-> pixelBlend(dx,dy,r,g,b,a);
+        }else{
+          if(a>128){
+            gdImageSetPixel(image,x+destx,y+desty,getClosestGDColor(r,g,b));
+          }
         }
       }
     }
