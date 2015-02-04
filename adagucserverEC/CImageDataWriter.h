@@ -132,7 +132,7 @@ private:
     int _setTransparencyAndBGColor(CServerParams *srvParam,CDrawImage* drawImage);
     
     
-    int drawCascadedWMS(CDataSource *dataSource,const char *service,const char *layers,bool transparent);
+    int drawCascadedWMS(CDataSource *dataSource,const char *service,const char *layers,bool transparent, const char *bgcolor);
     
     
     

@@ -141,6 +141,7 @@ class CDrawImage{
     ~CDrawImage();
     int createImage(int _dW,int _dH);
     int createImage(CGeoParams *_Geo);
+    int createImage(const char *fn);
     int createImage(CDrawImage *image,int width,int height);
     int printImagePng();
     int printImageGif();

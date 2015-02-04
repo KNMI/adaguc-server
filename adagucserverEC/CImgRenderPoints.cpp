@@ -35,6 +35,7 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
   bool drawDiscs = false;
   bool drawText = true;
   bool drawVolume = false;
+  bool drawSymbol = false;
   
   bool doThinning=false;
   int thinningRadius = 25;
@@ -53,29 +54,19 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
   CColor drawPointFillColor(0,0,0,128);
   CColor drawPointLineColor(0,0,0,255);
   
-  CColor drawBarbLineColor(0,0,128,255);
-  float drawBarbLineWidth=1.0;
-  bool drawBarbPlotStationId=false;
-  CT::string drawBarbBarbStyle("disc");
+  CColor drawVectorLineColor(0,0,128,255);
+  float drawVectorLineWidth=1.0;
+  bool drawVectorPlotStationId=false;
+  float drawVectorVectorScale=1.0;
+  CT::string drawVectorVectorStyle("disc");
   
   std::set<std::string> usePoints;
   std::set<std::string> skipPoints;
   bool useFilter=false;
   
-//   useFilter=true;
-//   usePoints.insert("VKDobs");
-//   usePoints.insert("A310a");
-//   usePoints.insert("A370");
-//   usePoints.insert("A260a");
-//   usePoints.insert("A279a");
-//   usePoints.insert("A277a");
-  
   CDBDebug("style settings: %s", settings.c_str());
-  if(settings.indexOf("vector")!=-1){
-    drawVector = true;
-  }
-//   if(settings.indexOf("barb")!=-1){
-//     drawBarb = true;
+//   if(settings.indexOf("vector")!=-1){
+//     drawVector = true;
 //   }
 
   CDBDebug("point style before: %d %d %f %f t:#%02x%02x%02x%02x f:#%02x%02x%02x%02x l:#%02x%02x%02x%02x",drawPointDiscRadius, drawPointDot, drawPointAngleStart, drawPointAngleStep, 
@@ -146,21 +137,37 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
     drawPoints=false;
     drawVolume=false;
     drawText=true;
+    drawSymbol=false;
   } else if (drawPointPointStyle.equalsIgnoreCase("volume")){
     drawPoints=false;
     drawVolume=true;
     drawDiscs=false;
     drawText=false;
+    drawSymbol=false;
+  } else if (drawPointPointStyle.equalsIgnoreCase("symbol")){
+    drawPoints=false;
+    drawVolume=false;
+    drawDiscs=false;
+    drawText=false;
+    drawSymbol=true;
   } else {
     drawPoints=true;
     drawDiscs=false;
     drawVolume=false;
     drawText=true;
+    drawSymbol=false;
   }
-  CDBDebug("drawPoints=%d drawText=%d drawBarb=%d drawVector=%d drawVolume=%d", drawPoints, drawText, drawBarb, drawVector, drawVolume);
+  CDBDebug("drawPoints=%d drawText=%d drawBarb=%d drawVector=%d drawVolume=%d drawSymbol=%d", drawPoints, drawText, drawBarb, drawVector, drawVolume, drawSymbol);
+  
+  std::vector<CServerConfig::XMLE_SymbolInterval*>* symbolIntervals=NULL;
   
   // CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   if(styleConfiguration!=NULL){
+    if (drawSymbol) {
+      if (styleConfiguration->symbolIntervals!=NULL) {
+        symbolIntervals=styleConfiguration->symbolIntervals;
+      }
+    }
     if(styleConfiguration->styleConfig!=NULL){
       CServerConfig::XMLE_Style* s = styleConfiguration->styleConfig;
       if(s -> FilterPoints.size() == 1){
@@ -183,6 +190,9 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
         }
       }
     }
+    
+  } else {
+    CDBDebug("styleConfiguration==NULL!!!!");
   }
   
   if(settings.indexOf("thin")!=-1){
@@ -209,13 +219,17 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
         d=drawPointDiscRadius-d;
 //        d=10-d;
         if (d<0)d=0;
-        d=d*2.4;
+        d=d*2.4*4;
         alphaPoint[p++] = d;
       }
     }
+    CDBDebug("alphaPoint inited");
   }
-  
+
   if(dataSource->getNumDataObjects()!=2){ // Not for vector (u/v or speed/dir pairs) TODO
+    std::map<std::string,CDrawImage*> symbolCache;
+    CDBDebug("symbolCache created, size=%d", symbolCache.size());
+    std::map<std::string,CDrawImage*>::iterator symbolCacheIter;
     for (size_t dataObject=0; dataObject<dataSource->getNumDataObjects(); dataObject++) {
       std::vector<PointDVWithLatLon> *pts=&dataSource->getDataObject(dataObject)->points;
       float useangle=drawPointAngleStart+drawPointAngleStep*dataObject;
@@ -227,7 +241,7 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
       }
       float usedx=drawPointTextRadius*sin(useangle*M_PI/180);
       float usedy=drawPointTextRadius*cos(useangle*M_PI/180);
-//      CDBDebug("angles[%d] %f %d %f %f", dataObject, useangle, kwadrant, usedx, usedy);
+      CDBDebug("angles[%d] %f %d %f %f", dataObject, useangle, kwadrant, usedx, usedy);
     
       //THINNING
       std::vector<PointDVWithLatLon> *p1=&dataSource->getDataObject(dataObject)->points;
@@ -267,12 +281,43 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
         }
         nrThinnedPoints=thinnedPointsIndex.size(); 
       }
-      
+ 
       CT::string t;
       for(size_t pointNo=0;pointNo<nrThinnedPoints;pointNo++){
         size_t j=pointNo;
         j=thinnedPointsIndex[pointNo];
 
+        if (drawSymbol) {
+          int x=(*pts)[j].x;
+          int y=dataSource->dHeight-(*pts)[j].y;
+          float v=(*pts)[j].v;
+          if (v==v) {
+            if (symbolIntervals!=NULL) {
+              std::string symbolFile("");
+              for (size_t intv=0; intv<symbolIntervals->size(); intv++) {
+                CServerConfig::XMLE_SymbolInterval *symbolInterval=((*symbolIntervals)[intv]);
+                if ((v>=symbolInterval->attr.min)&&(v<symbolInterval->attr.max)) {
+                  symbolFile=symbolInterval->attr.file.c_str();
+                  break;
+                }
+              }
+              if (symbolFile.length()>0) {
+                CDrawImage *symbol=NULL;
+                
+                symbolCacheIter=symbolCache.find(symbolFile);
+                if(symbolCacheIter==symbolCache.end()){
+                  symbol=new CDrawImage();
+                  symbol->createImage(symbolFile.c_str());
+                  symbolCache[symbolFile]=symbol; //Remember in cache
+                } else {
+                  symbol=(*symbolCacheIter).second;
+                }
+                drawImage->draw(x-symbol->Geo->dWidth/2, y-symbol->Geo->dHeight/2, 0, 0, symbol);
+              }
+            }
+            if (drawPointDot) drawImage->circle(x,y, 1, drawPointFillColor,0.65);
+          }
+        }
         if(drawVolume){
           int x=(*pts)[j].x;
           int y=dataSource->dHeight-(*pts)[j].y;
@@ -281,6 +326,7 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
           int bvol=drawPointFillColor.b;
           
           drawImage->setPixelTrueColor(x,y, 0,0,0,255);
+          CDBDebug("drawVolume for [%d,%d]", x, y);
           int *p=alphaPoint;
           for(int y1=-drawPointDiscRadius;y1<=drawPointDiscRadius;y1++){
             for(int x1=-drawPointDiscRadius;x1<=drawPointDiscRadius;x1++){
@@ -288,6 +334,10 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
             }
           }
           if (drawPointPlotStationId) {
+            if((*pts)[j].paramList.size()>0){
+              CT::string value = (*pts)[j].paramList[0].value;
+              drawImage->setText(value.c_str(), value.length(),x-value.length()*3,y-20, drawPointTextColor, 0);
+            }       
           }
         }
         
@@ -318,8 +368,8 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
             }
             if (drawPointPlotStationId) {
               if((*pts)[j].paramList.size()>0){
-                CT::string value =(*pts)[j].paramList[0].value;
-                drawImage->drawCenteredText(x,y-drawPointTextRadius-3, drawPointFontFile, drawPointFontSize, 0, value.c_str(), drawPointTextColor);
+                CT::string stationid =(*pts)[j].paramList[0].value;
+                drawImage->drawCenteredText(x,y-drawPointTextRadius-3, drawPointFontFile, drawPointFontSize, 0, stationid.c_str(), drawPointTextColor);
               }
             }
           }else{
@@ -347,36 +397,37 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
         }
       }
     }
+    for (symbolCacheIter = symbolCache.begin(); symbolCacheIter!=symbolCache.end(); symbolCacheIter++) {
+//      CDBDebug("Deleting entry for %s", symbolCacheIter->first.c_str());
+      delete(symbolCacheIter->second);
+    }
   }
   
   if(dataSource->getNumDataObjects()==2){
     CDBDebug("VECTOR");
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-    CDBDebug("styleConfiguration=%x", styleConfiguration);
     if(styleConfiguration!=NULL){
-      CDBDebug("styleConfiguration->styleConfig=%x", styleConfiguration->styleConfig);
       if(styleConfiguration->styleConfig!=NULL){
         CServerConfig::XMLE_Style* s = styleConfiguration->styleConfig;
-        CDBDebug("XMLE_Style: %x", s);
-        if(s -> Barb.size() == 1){
-          CDBDebug("size=%d", s -> Barb.size());
-          if(s -> Barb[0]->attr.linecolor.empty()==false){
-            drawBarbLineColor.parse(s -> Barb[0]->attr.linecolor.c_str());
+        if (s -> Vector.size() == 1){
+          if(s -> Vector[0]->attr.linecolor.empty()==false){
+            drawVectorLineColor.parse(s -> Vector[0]->attr.linecolor.c_str());
           }
-          if(s -> Barb[0]->attr.barbstyle.empty()==false){
-            drawBarbBarbStyle=s -> Barb[0]->attr.barbstyle.c_str();
-            if (drawBarbBarbStyle.equalsIgnoreCase("barb")) { drawBarb=true; }
-            else if (drawBarbBarbStyle.equalsIgnoreCase("disc")) { drawDiscs=true;}
-            else if (drawBarbBarbStyle.equalsIgnoreCase("vector")) { drawVector=true; }
+          if(s -> Vector[0]->attr.vectorstyle.empty()==false){
+            drawVectorVectorStyle=s -> Vector[0]->attr.vectorstyle.c_str();
+            if (drawVectorVectorStyle.equalsIgnoreCase("barb")) { drawBarb=true; }
+            else if (drawVectorVectorStyle.equalsIgnoreCase("disc")) { drawDiscs=true;}
+            else if (drawVectorVectorStyle.equalsIgnoreCase("vector")) { drawVector=true; }
             else {drawBarb=true;}
           }
 
-          if(s -> Barb[0]->attr.linewidth.empty()==false){
-            drawBarbLineWidth=s -> Barb[0]->attr.linewidth.toFloat();
+          if(s -> Vector[0]->attr.linewidth.empty()==false){
+            drawVectorLineWidth=s -> Vector[0]->attr.linewidth.toFloat();
           }
-          if(s -> Barb[0]->attr.plotstationid.empty()==false){
-            drawBarbPlotStationId=s -> Barb[0]->attr.plotstationid.equalsIgnoreCase("true");
-          }             
+          if(s -> Vector[0]->attr.plotstationid.empty()==false){
+            drawVectorPlotStationId=s -> Vector[0]->attr.plotstationid.equalsIgnoreCase("true");
+          }  
+          drawVectorVectorScale=s -> Vector[0]->attr.scale;
         }
       }
     }
@@ -457,41 +508,47 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
       int y=dataSource->dHeight-(*p1)[j].y;
       
       float strength = (*p1)[j].v;
-      float direction = (*p2)[j].v+rotation;//direction=rotation;
-     // direction=360-45;
-      //drawImage->drawVector(x, y, ((90-direction)/360)*3.141592654*2, strength*2, 240);
-      if (drawBarb || drawVector||drawDiscs) {
-
+      float direction = (*p2)[j].v;
+      if (direction==direction) direction+=rotation; //Nan stays Nan
+      
+      if ((direction==direction)&&(strength==strength)) { //Check for Nan
+        CDBDebug("Drawing wind %f,%f for [%d,%d]", strength, direction, x, y);
         if(drawBarb){
           if(lat>0){
-            drawImage->drawBarb(x, y, ((270-direction)/360)*3.141592654*2, strength, drawBarbLineColor ,drawBarbLineWidth, false, false);
+            drawImage->drawBarb(x, y, ((270-direction)/360)*3.141592654*2, strength, drawVectorLineColor ,drawVectorLineWidth, false, false);
           }else{
-            drawImage->drawBarb(x, y, ((270-direction)/360)*3.141592654*2, strength, drawBarbLineColor, drawBarbLineWidth, true, true);
+            drawImage->drawBarb(x, y, ((270-direction)/360)*3.141592654*2, strength, drawVectorLineColor, drawVectorLineWidth, false, true);
           }
         }
         if(drawVector){
-          drawImage->drawVector(x, y, ((270-direction)/360)*3.141592654*2, strength*2, drawBarbLineColor, drawBarbLineWidth);
+          drawImage->drawVector(x, y, ((270-direction)/360)*3.141592654*2, strength*drawVectorVectorScale, drawVectorLineColor, drawVectorLineWidth);
         }
         //void drawBarb(int x,int y,double direction, double strength,int color,bool toKnots,bool flip);
-        if(drawBarbPlotStationId){
+        if(drawVectorPlotStationId){
           if((*p1)[j].paramList.size()>0){
               CT::string value = (*p1)[j].paramList[0].value;
-              drawImage->setText(value.c_str(), value.length(),x-value.length()*3,y-20, drawPointTextColor, 0);
+              if (drawBarb) {
+                if ((direction>=90)&&(direction<=270)) {
+                  drawImage->setText(value.c_str(), value.length(),x-value.length()*3,y-20, drawPointTextColor, 0);
+                } else {
+                  drawImage->setText(value.c_str(), value.length(),x-value.length()*3,y+6, drawPointTextColor, 0);
+                }
+              } else {
+                if ((direction>=90)&&(direction<=270)) {
+                  drawImage->setText(value.c_str(), value.length(),x-value.length()*3,y+6, drawPointTextColor, 0);
+                } else {
+                  drawImage->setText(value.c_str(), value.length(),x-value.length()*3,y-20, drawPointTextColor, 0);
+                }
+              }
             }
         }
         if (drawDiscs) {
           // Draw a disc with the speed value in text and the dir. value as an arrow
           int x=(*p1)[j].x;
           int y=dataSource->dHeight-(*p1)[j].y;
-          float dir = (*p2)[j].v;
-          if (dir==dir) {
-            drawImage->drawVector(x, y, ((270-direction)/360)*3.141592654*2, drawPointDiscRadius+15, drawPointFillColor, drawBarbLineWidth*4);
-          }
-          float v=(*p1)[j].v;
-          if(v==v){
-            t.print(drawPointTextFormat.c_str(),v);
-            drawImage->setTextDisc( x, y, drawPointDiscRadius, t.c_str(),drawPointFontFile, drawPointFontSize,drawPointTextColor,drawPointFillColor, drawPointLineColor);
-          }
+          drawImage->drawVector(x, y, ((270-direction)/360)*3.141592654*2, drawPointDiscRadius+15, drawPointFillColor, drawVectorLineWidth*4);
+          t.print(drawPointTextFormat.c_str(),strength);
+          drawImage->setTextDisc( x, y, drawPointDiscRadius, t.c_str(),drawPointFontFile, drawPointFontSize,drawPointTextColor,drawPointFillColor, drawPointLineColor);
         }
       }
     }
