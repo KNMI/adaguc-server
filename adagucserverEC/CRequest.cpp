@@ -128,7 +128,7 @@ void CRequest::addXMLLayerToConfig(CServerParams *srvParam,CDFObject *cdfObject,
     xmleName->value.copy(newName.c_str());
     xmleLayer->Name.push_back(xmleName);
     CServerConfig::XMLE_RenderMethod* xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
-    xmleRenderMethod->value.copy("vector_nearest,barb_nearest,vector,barb,nearest");
+    xmleRenderMethod->value.copy("nearestpoint");
     xmleLayer->RenderMethod.push_back(xmleRenderMethod);
     
   }
