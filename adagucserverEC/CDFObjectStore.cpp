@@ -211,6 +211,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *s
 
   if(srvParams!=NULL){
  
+    
     CT::string cacheDir = srvParams->cfg->TempDir[0]->attr.value.c_str();
     //srvParams->getCacheDirectory(&cacheDir);
     if(cacheDir.length()>0){
@@ -219,6 +220,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *s
         cdfReader->cdfCache = cdfCache;
       }
     }
+
   }
   
   

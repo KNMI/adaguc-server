@@ -41,9 +41,9 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
   
   CT::string drawPointPointStyle("point");
   const char *drawPointFontFile = dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.location.c_str();
-  int drawPointFontSize=15;
+  int drawPointFontSize=8;
   int drawPointDiscRadius = 8;
-  int drawPointTextRadius=drawPointDiscRadius+2;
+  int drawPointTextRadius=drawPointDiscRadius+8;
   bool drawPointDot=true;
   float drawPointAngleStart=-90;
   float drawPointAngleStep=180;
@@ -310,6 +310,8 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
               if (dataSource->getNumDataObjects()==1) {
                 int pointColorIndex=getPixelIndexForValue(dataSource, v);
                 drawImage->setDisc(x, y, drawPointDiscRadius, pointColorIndex, pointColorIndex);
+                drawImage->circle(x, y, drawPointDiscRadius+1, drawPointLineColor,0.65);
+                if (drawPointDot) drawImage->circle(x,y, 1, drawPointFillColor,1);
                 drawImage->drawCenteredText(x,y+drawPointTextRadius, drawPointFontFile, drawPointFontSize, 0, t.c_str(), drawPointTextColor);
               } else {
                 drawImage->setDisc(x, y, drawPointDiscRadius, drawPointFillColor, drawPointLineColor);
@@ -323,14 +325,16 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
               }
             }
           }else{
-            CDBDebug("Value not available");
+            //CDBDebug("Value not available");
             if((*pts)[j].paramList.size()>0){
               CT::string value = (*pts)[j].paramList[0].value;
-              CDBDebug("Extra value: %s fixed color with radius %d", value.c_str(), drawPointDiscRadius);
+              //CDBDebug("Extra value: %s fixed color with radius %d", value.c_str(), drawPointDiscRadius);
               if (drawPointDiscRadius==0) {
                 drawImage->drawCenteredText(x,y, drawPointFontFile, drawPointFontSize, 0, value.c_str(), drawPointTextColor);                  
               } else {
-                drawImage->drawAnchoredText(x+usedx,y-usedy, drawPointFontFile, drawPointFontSize, 0, value.c_str(), drawPointTextColor, kwadrant);
+                drawImage->circle(x, y, drawPointDiscRadius+1, drawPointLineColor,0.65);
+                if (drawPointDot) drawImage->circle(x,y, 1, drawPointFillColor,1);
+                drawImage->drawAnchoredText(x-int(float(value.length())*3.0f)-2,y-drawPointTextRadius, drawPointFontFile, drawPointFontSize, 0, value.c_str(), drawPointTextColor, kwadrant);
               }
             }
           }

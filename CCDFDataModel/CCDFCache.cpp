@@ -148,7 +148,7 @@ int CDFCache::open(const char *fileName,CDFObject *cdfObject,bool readOrWrite){
  
   //Try to read from cache
   if(readOrWrite == false){
-    cache->checkCacheSystemReady(cacheDir.c_str(),key.c_str());
+    cache->checkCacheSystemReady(cacheDir.c_str(),key.c_str(),fileName,"CDFCache::open");
     bool cacheIsAvailable = cache->cacheIsAvailable();
     if(cacheIsAvailable){
       CT::string cacheFilename = cache->getCacheFileNameToRead();
@@ -222,6 +222,7 @@ int CDFCache::readVariableData(CDF::Variable *var, CDFType type,size_t *start,si
   CT::string key = "variables/";
   
   bool hasFileName = false;
+  const char *fileName = NULL;
   CDFObject * cdfObject = (CDFObject*)var->getCDFObjectPointer(start,count);
   
   if(cdfObject != NULL){
@@ -233,6 +234,7 @@ int CDFCache::readVariableData(CDF::Variable *var, CDFType type,size_t *start,si
 #ifdef CCDFCACHE_DEBUG
         CDBDebug("readVariableData %s %s",var->name.c_str(),cdfReader->fileName.c_str());
 #endif
+        fileName = cdfReader->fileName.c_str();
         key.concat(cdfReader->fileName.c_str());
         key.concat("_");
         hasFileName = true;
@@ -269,7 +271,7 @@ int CDFCache::readVariableData(CDF::Variable *var, CDFType type,size_t *start,si
   
   if(readOrWrite == false){
     //Read dataobject
-    cache->checkCacheSystemReady(cacheDir.c_str(),key.c_str());
+    cache->checkCacheSystemReady(cacheDir.c_str(),key.c_str(),fileName,"CDFCache::readVariableData");
     bool cacheIsAvailable = cache->cacheIsAvailable();  
     if(cacheIsAvailable){
       CT::string cacheFilename = cache->getCacheFileNameToRead();

@@ -129,7 +129,7 @@ bool CCache::cacheIsAvailable(){
   return cacheAvailable;
 }
 
-void CCache::checkCacheSystemReady(const char *directory, const char *szfileName){
+void CCache::checkCacheSystemReady(const char *directory, const char *szfileName,const char * resource,const char *reason){
   if(cacheFileClaimed)return;
   
   if(szfileName == NULL)return;
@@ -172,21 +172,51 @@ void CCache::checkCacheSystemReady(const char *directory, const char *szfileName
   claimedCacheProcIDFileName = claimedCacheFileName.c_str();
   claimedCacheProcIDFileName.concat("_pid");
   claimedCacheFileName.concat("_tmp");
+
+
+  
     //Check if cache is busy
-  if(isCacheFileBusyBlocking()){
+  if(isCacheFileBusyBlocking(reason)){
     saveFieldFile = false;
     cacheAvailable=false;
   }else{
+    dateFromFile = CDirReader::getFileDate(resource);
     #ifdef CCACHE_DEBUG
     CDBDebug("Cache not busy for %s",this->fileName.c_str());
     #endif
     //Cache is not busy: Check if the cachefile is available
     if(CCache::isCacheFileAvailable(this->fileName.c_str())){
       //Cache is available
-      #ifdef CCACHE_DEBUG
-      CDBDebug("Cache is available");
-      #endif
-      cacheAvailable = true;
+      
+      bool cacheIsOutOfDate = true;
+      
+      
+      CT::string dateFile = this->fileName.c_str();
+      dateFile.concat("date");
+      try{
+        CT::string dateFromCache = CReadFile::open(dateFile.c_str());
+        if(dateFromCache.equals(dateFromFile)){
+           cacheIsOutOfDate = false;
+           cacheAvailable = true;
+           #ifdef CCACHE_DEBUG
+          CDBDebug("Cache is available");
+          #endif
+        }
+      }catch(int e){
+      }
+      //CDBDebug("claimedCacheFileName = [%s] for [%s]",claimedCacheFileName.c_str(),resource);
+      
+      if(cacheIsOutOfDate == true){
+        //CDBDebug("Cache is available but needs to be refreshed");
+        saveFieldFile = true;
+        //TODO MAKE SURE WE DO NOT REMOVE WRONG FILES!
+        CDBDebug("Removing outdated cachefile %s",fileName.c_str());
+        remove(fileName.c_str());
+      }
+  
+      
+      //cacheAvailable = true;
+     
     
     }else{
       //Cache is not available, but can be created
@@ -216,18 +246,20 @@ bool CCache::isCacheFileBusy(){
   return false;
 }
 
-bool CCache::isCacheFileBusyBlocking(){
+bool CCache::isCacheFileBusyBlocking(const char * reason){
  
   if(fileName.length()==0)return false;
   int maxTries = 1200;//Wait 60 seconds.
   int currentTries=maxTries;
   bool cacheWasLocked = false;
+  int logEveryNChecks = 10;
+  int logChecks = logEveryNChecks;
   //Is some kind of process working on any of the cache files?
   do{
     if(isCacheFileBusy()){
       cacheWasLocked = true;
       if(currentTries<=0){
-        CDBDebug("CCache::LOCK !!! A process is working already 60 seconds on %s, skipping wait",fileName.c_str());
+        CDBDebug("CCache::LOCK !!! A process is working already 60 seconds on %s for %s, skipping wait",fileName.c_str(),reason);
         return true;
       }else{
         size_t thePIDThatIsLocking = _readPidFile(claimedCacheProcIDFileName.c_str());
@@ -235,10 +267,15 @@ bool CCache::isCacheFileBusyBlocking(){
           //Check if the process locking this file is still running
           int status = kill(thePIDThatIsLocking,0);
           if(status == -1){
-            CDBDebug("WARNING: LOCKED by procID %d for key %s which is not running, continuing..." ,thePIDThatIsLocking, claimedCacheFileName.c_str());
+            CDBDebug("WARNING: LOCKED by procID %d [%s] for key %s which is not running, continuing..." ,thePIDThatIsLocking, reason,claimedCacheFileName.c_str());
             currentTries = 0;
           }else{
-            CDBDebug("CCache::LOCKED by procID %d, waiting %f seconds" ,thePIDThatIsLocking, float(currentTries)/10.0);
+            if(logChecks <= 0){
+              CDBDebug("CCache::LOCKED by procID %d [%s], waiting %f seconds" ,thePIDThatIsLocking, reason,float(currentTries)/10.0);
+              logChecks = logEveryNChecks;
+            }else{
+              logChecks--;
+            }
           }
         }else{
            currentTries = 0;
@@ -329,6 +366,19 @@ int CCache::claimCacheFile (){
      return 1;
    }
   
+  //Write datefile
+  CT::string dateFile = this->fileName.c_str();
+  dateFile.concat("date");
+  #ifdef CCACHE_DEBUG
+  CDBDebug("WRITE CACHEDATEFILE %s %s" ,dateFile.c_str(),dateFromFile.c_str());
+  #endif
+  try{
+    CReadFile::write(dateFile.c_str(),dateFromFile.c_str(),dateFromFile.length());
+  }catch(int e){
+    CDBDebug("Unable to write date file");
+    return 1;
+  }
+  
   saveFieldFile = true;
   cacheFileClaimed = true;
   #ifdef CCACHE_DEBUG
@@ -364,7 +414,7 @@ CCache::Lock::Lock(){
 CCache::Lock::~Lock(){
   release();
 }
-int CCache::Lock::claim(const char *cacheDir, const char *identifier,bool enable){
+int CCache::Lock::claim(const char *cacheDir, const char *identifier,const char *reason,bool enable){
   isEnabled = enable;
   if(isEnabled == false)return 0;
  
@@ -414,6 +464,8 @@ int CCache::Lock::claim(const char *cacheDir, const char *identifier,bool enable
   //Check if the file exists...
   
   int maxTries = 1200;//Wait 120 seconds.
+  int logEveryNChecks = 10;
+  int logChecks = logEveryNChecks;
   bool wasLocked = false;
   do{
     //Read by which process the file was locked
@@ -423,10 +475,15 @@ int CCache::Lock::claim(const char *cacheDir, const char *identifier,bool enable
       //Check if the process locking this file is still running
       int status = kill(thePIDThatIsLocking,0);
       if(status == -1){
-        CDBDebug("WARNING: LOCKED by procID %d which is not running, for key [%s] continuing...", thePIDThatIsLocking,claimedLockID.c_str() );
+        CDBDebug("WARNING: LOCKED by procID %d for %s which is not running, for key [%s] continuing...", thePIDThatIsLocking,reason,claimedLockID.c_str() );
         maxTries = 0;
       }else{
-        CDBDebug("LOCKED by procID %d, waiting %f seconds",thePIDThatIsLocking,float(maxTries)/10.0);
+        if(logChecks <=0){
+          CDBDebug("LOCKED by procID %d for %s, waiting %f seconds",thePIDThatIsLocking,reason,float(maxTries)/10.0);
+          logChecks = logEveryNChecks;
+        }else{
+          logChecks--;
+        }
       }
       if(maxTries>0){
         usleep(100000);

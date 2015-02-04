@@ -342,7 +342,7 @@ int CDBFileScanner::DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeN
       #endif
       
       
-      CT::string fileDate = dataSource->srvParams->getFileDate(dirReader->fileList[j]->fullName.c_str());
+      CT::string fileDate = CDirReader::getFileDate(dirReader->fileList[j]->fullName.c_str());
 
       
       CT::string dimensionTextList="none";
@@ -748,7 +748,7 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
   CT::string cacheDirectory = dataSource->srvParams->cfg->TempDir[0]->attr.value.c_str();
   //dataSource->srvParams->getCacheDirectory(&cacheDirectory);
   if(cacheDirectory.length()>0){
-    lock.claim(cacheDirectory.c_str(),identifier.c_str(),dataSource->srvParams->isAutoResourceEnabled());
+    lock.claim(cacheDirectory.c_str(),identifier.c_str(),"updatedb",dataSource->srvParams->isAutoResourceEnabled());
   }
 
   //We only need to update the provided path in layerPathToScan. We will simply ignore the other directories

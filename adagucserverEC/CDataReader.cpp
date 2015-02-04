@@ -656,7 +656,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
   dataSourceFilename.copy(dataSource->getFileName());
  
   //CCache cache;
-  CT::string cacheFilename;
+  //CT::string cacheFilename;
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   //Use autoscale of legendcolors when the legendscale factor has been set to zero.
   if(styleConfiguration != NULL){
@@ -1352,7 +1352,7 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
   CT::string cacheDirectory = dataSource->srvParams->cfg->TempDir[0]->attr.value.c_str();
   //dataSource->srvParams->getCacheDirectory(&cacheDirectory);
   if(cacheDirectory.length()>0){
-    lock.claim(cacheDirectory.c_str(),identifier.c_str(),dataSource->srvParams->isAutoResourceEnabled());
+    lock.claim(cacheDirectory.c_str(),identifier.c_str(),"autoconfigure_dimensions",dataSource->srvParams->isAutoResourceEnabled());
   }
 
   
@@ -1856,7 +1856,7 @@ CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *cdfObject,CD
   }
 
   if(standardName.length()==0){
-    CDBWarning("Warning no standard name given for dimension %s, using variable name instead.",variable->name.c_str());
+    CDBDebug("Warning no standard name given for dimension %s, using variable name instead.",variable->name.c_str());
     standardName = variable->name;;
   }
 
