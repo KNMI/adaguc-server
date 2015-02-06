@@ -63,11 +63,20 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
   #endif
   pointLon->readData(CDF_FLOAT,true);
   pointLat->readData(CDF_FLOAT,true);
+  
   #ifdef MEASURETIME
     StopWatch_Stop("DATA READ");
   #endif
-  MinMax lonMinMax = getMinMax(pointLon);
-  MinMax latMinMax = getMinMax(pointLat);
+  MinMax lonMinMax; 
+  MinMax latMinMax;
+  lonMinMax.min = -180; //Initialize to whole world
+  latMinMax.min = -90;
+  lonMinMax.max = 180;
+  latMinMax.max = 90;
+  if(pointLon->getSize() > 0){
+    lonMinMax = getMinMax(pointLon);
+    latMinMax = getMinMax(pointLat);
+  }
   #ifdef MEASURETIME
     StopWatch_Stop("MIN/MAX Calculated");
   #endif
@@ -306,7 +315,12 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
   #ifdef MEASURETIME
     StopWatch_Stop("Lat and lon read");
   #endif
-  
+    
+//   if(pointLon->getSize() == 0){
+//     CDBDebug("Ignoring file because longitude is empty");
+//     return 0;
+//   }
+//   
   int dateDimIndex=dataSource->getDimensionIndex("time");
   
   #ifdef CCONVERTADAGUCPOINT_DEBUG
