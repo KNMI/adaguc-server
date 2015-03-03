@@ -301,11 +301,11 @@ public:
         //printf("%s %d\n",t,face->glyph->linearHoriAdvance);
         //plot(slot->bitmap_left, my_target_height - slot->bitmap_top, 1);
         
-        if (n==0) h=slot->bitmap.rows; //Hack
+        if (slot->bitmap.rows > h) h=slot->bitmap.rows;
         
         pen.x += slot->advance.x; pen.y += slot->advance.y; 
         w += slot->advance.x/64;
-        h += slot->advance.y/64;
+//        h += slot->advance.y/64;
       }
    
       return 0;
