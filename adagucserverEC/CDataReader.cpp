@@ -1799,7 +1799,7 @@ int CDataReader::getTimeString(CDataSource *dataSource,char * pszTime){
         adagucTime.init(timeUnits->toString().c_str());
         CT::string isoString = "No time dimension available";
         try{
-          adagucTime.dateToISOString(adagucTime.getDate(((double*)time->data)[currentTimeIndex]));
+          isoString = adagucTime.dateToISOString(adagucTime.getDate(((double*)time->data)[currentTimeIndex]));
         }catch(int e){
         }
         snprintf(pszTime,MAX_STR_LEN,"%s",isoString.c_str());
