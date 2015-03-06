@@ -245,16 +245,20 @@ void CDrawImage::drawVector(int x,int y,double direction, double strength,CColor
   strength=(3+strength);
 
   // arrow point
-  float hx1,hy1,hx2,hy2;
+  float hx1,hy1,hx2,hy2,hx3,hy3;
   hx1=wx1+cos(direction-2.5)*(strength/2.8f);
   hy1=wy1-sin(direction-2.5)*(strength/2.8f);
   hx2=wx1+cos(direction+2.5)*(strength/2.8f);
   hy2=wy1-sin(direction+2.5)*(strength/2.8f);
+  hx3=wx1+(cos(direction-2.5)+cos(direction+2.5))/2*(strength/2.8f);
+  hy3=wy1-(sin(direction+2.5)+sin(direction-2.5))/2*(strength/2.8f);
   
-  line(wx1,wy1,wx2,wy2,linewidth,color);
-  line(wx1,wy1,hx1,hy1,linewidth,color);
-  line(wx1,wy1,hx2,hy2,linewidth,color);
-  setPixelIndexed(x, y, 252);
+ // line(wx1,wy1,hx1,hy1,linewidth,color);
+ // line(wx1,wy1,hx2,hy2,linewidth,color);
+  poly(hx1, hy1, wx1, wy1, hx2, hy2, linewidth, color, false);
+//  line(wx1,wy1,wx2,wy2,linewidth,color);
+  line(wx2,wy2,hx3,hy3,linewidth,color);
+//  setPixelIndexed(x, y, 252);
   //circle(x+1, y+1, 1, color);
 }
 
@@ -412,6 +416,34 @@ void CDrawImage::poly(float x1,float y1,float x2,float y2,float x3, float y3, CC
     }
   }
 }
+
+
+void CDrawImage::poly(float x1,float y1,float x2,float y2,float x3, float y3, float lineWidth, CColor color, bool fill){
+  if(_bEnableTrueColor==true){
+    float ptx[3]={x1, x2, x3};
+    float pty[3]={y1,y2,y3};
+    cairo->setFillColor(color.r, color.g, color.b, color.a);
+//    currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],255);
+    cairo->poly(ptx, pty, 3, lineWidth, true, fill);
+  } else {
+    int colorIndex=getClosestGDColor(color.r, color.g, color.b);
+    gdPoint pt[4];
+    pt[0].x=int(x1);
+    pt[1].x=int(x2);
+    pt[2].x=int(x3);
+    pt[3].x=int(x1);
+    pt[0].y=int(y1);
+    pt[1].y=int(y2);
+    pt[2].y=int(y3);
+    pt[3].y=int(y1);
+    if (fill) {
+        gdImageFilledPolygon(image, pt, 4, _colors[colorIndex]);
+    } else {
+        gdImagePolygon(image, pt, 4, _colors[colorIndex]);
+    }
+  }
+}
+
 
 void CDrawImage::line(float x1, float y1, float x2, float y2,int color){
   if(_bEnableTrueColor==true){

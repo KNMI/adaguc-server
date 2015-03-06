@@ -106,6 +106,18 @@
     const CT::PointerList<CDPPInterface*> *getPossibleProcessors();
     int executeProcessors( CDataSource *dataSource,int mode);
   };
-
+  
+  /**
+  * Calculate Beaufort algorithm 
+  */
+  class CDPPBeaufort : public CDPPInterface{
+  private:
+    DEF_ERRORFUNCTION();
+    float getBeaufort(float speed);
+  public:
+    virtual const char *getId();
+    virtual int isApplicable(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource);
+    virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode);
+  };
 
 #endif
