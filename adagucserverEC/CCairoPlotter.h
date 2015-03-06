@@ -585,6 +585,27 @@ public:
     }
   }
 
+  void poly(float x[], float y[], int n, float lineWidth, bool closePath, bool fill) {
+    double lWx=lineWidth;
+    double lWy=lineWidth;
+    cairo_device_to_user_distance(cr, &lWx, &lWy);
+    cairo_set_line_width(cr, lWx);
+
+    cairo_move_to(cr, x[0], y[0]);
+    for (int i=1; i<n; i++){
+      cairo_line_to(cr, x[i], y[i]);
+    }
+    if (closePath) {
+      cairo_close_path(cr);
+      if (fill) {
+        cairo_set_source_rgba(cr, rfr, rfg, rfb, rfa);
+        cairo_fill_preserve(cr);
+      }
+      cairo_set_source_rgba(cr, rr, rg, rb ,ra);
+      cairo_stroke(cr);
+    }
+  }
+    
   void drawText(int x, int y,double angle, const char *text) {
     int w,h;
     _drawFreeTypeText( x, y,w,h,angle,text,true);

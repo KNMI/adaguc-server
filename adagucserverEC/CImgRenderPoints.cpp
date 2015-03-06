@@ -550,9 +550,12 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
           // Draw a disc with the speed value in text and the dir. value as an arrow
           int x=(*p1)[j].x;
           int y=dataSource->dHeight-(*p1)[j].y;
-          drawImage->drawVector(x, y, ((270-direction)/360)*3.141592654*2, drawPointDiscRadius+15, drawPointFillColor, drawVectorLineWidth*4);
+          //drawImage->drawVector(x, y, ((270-direction)/360.)*3.141592654*2, drawPointDiscRadius+15, drawPointFillColor, drawVectorLineWidth*1);
           t.print(drawPointTextFormat.c_str(),strength);
           drawImage->setTextDisc( x, y, drawPointDiscRadius, t.c_str(),drawPointFontFile, drawPointFontSize,drawPointTextColor,drawPointFillColor, drawPointLineColor);
+          float dx=cos(((270-direction)/360.)*3.141592654*2);
+          float dy=sin(((270-direction)/360.)*3.141592654*2);
+          drawImage->drawVector(x+dx*drawPointDiscRadius, y-dy*drawPointDiscRadius, ((270-direction)/360.)*3.141592654*2, 12, drawPointFillColor, drawVectorLineWidth*4);
         }
       }
     }
