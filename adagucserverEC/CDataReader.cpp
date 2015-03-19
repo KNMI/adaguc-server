@@ -34,7 +34,7 @@
 
 const char *CDataReader::className="CDataReader";
 
-//#define CDATAREADER_DEBUG
+ #define CDATAREADER_DEBUG
 //#define MEASURETIME
 
 #define uchar unsigned char
@@ -213,72 +213,100 @@ int applyScaleAndOffsetFloat(size_t start,size_t stop,float *data,float scale,fl
 class Proc{
   public:
     DEF_ERRORFUNCTION();
+    static int swapPixelsAtLocation(CDataSource *dataSource,CDF::Variable *variable,int mode){   
+      if(dataSource->useLonTransformation == -1)return 0;
+      switch (variable->getType()){
+      case CDF_CHAR  : _swapPixelsAtLocation<char>        (dataSource,variable,mode);break;
+      case CDF_BYTE  : _swapPixelsAtLocation<char>        (dataSource,variable,mode);break;
+      case CDF_UBYTE : _swapPixelsAtLocation<uchar>       (dataSource,variable,mode);break;
+      case CDF_SHORT : _swapPixelsAtLocation<short>       (dataSource,variable,mode);break;
+      case CDF_USHORT: _swapPixelsAtLocation<ushort>      (dataSource,variable,mode);break;
+      case CDF_INT   : _swapPixelsAtLocation<int>         (dataSource,variable,mode);break;
+      case CDF_UINT  : _swapPixelsAtLocation<unsigned int>(dataSource,variable,mode);break;
+      case CDF_FLOAT : _swapPixelsAtLocation<float>       (dataSource,variable,mode);break;
+      case CDF_DOUBLE: _swapPixelsAtLocation<double>      (dataSource,variable,mode);break;
+      default: {CDBError("Unknown data type"); return 1;}
+    }
+    return 0;
+  }
+  private: 
   template <class T>
-  static void swapPixelsAtLocation(CDataSource *dataSource,T*data){
+  static void _swapPixelsAtLocation(CDataSource *dataSource,CDF::Variable *variable,int mode){
     
-   //T temp1,temp2;
-   CDBDebug("Applying LON warp to -180 till 180 on the original data");
-   
-   int origWidth = dataSource->dWidth;
-   dataSource->dWidth=int(360.0/dataSource->dfCellSizeX);
-   
-   double origBBOXLeft = ((double*)dataSource->varX->data)[0]-dataSource->dfCellSizeX/2;
-   double origBBOXRight = ((double*)dataSource->varX->data)[dataSource->varX->getSize()-1]+dataSource->dfCellSizeX/2;
-   double origBBOXWidth = (origBBOXRight - origBBOXLeft) ;
-   
-   //CDBDebug("BBOXW:(%f %f) origWidth: %d newWidth: %d cellSize: %f",origBBOXLeft,origBBOXLeft,origWidth,dataSource->dWidth,dataSource->dfCellSizeX);
-   
-   dataSource->dfBBOX[0] = origBBOXLeft;
-   dataSource->dfBBOX[2] = origBBOXRight;
-   CDBDebug("Old bbox = %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[2]);
-   while( dataSource->dfBBOX[0]>-180){dataSource->dfBBOX[0]-=dataSource->dfCellSizeX;}
-   while(dataSource->dfBBOX[0]<-180){ dataSource->dfBBOX[0]+=dataSource->dfCellSizeX;}
-   dataSource->dfBBOX[2]=dataSource->dfBBOX[0]+360;
-   
-   
-   /*int discrete = -180/dataSource->dfCellSizeX;
-   discrete*=dataSource->dfCellSizeX;
-   dataSource->dfBBOX[0]=discrete;
-    discrete = 180/dataSource->dfCellSizeX;
-   discrete*=dataSource->dfCellSizeX;
-   dataSource->dfBBOX[2]=discrete;*/
-   
-   
-   
-   
-   //double nodataValue = (T)dataSource->getDataObject(0)->dfNodataValue;
-   if(dataSource->getDataObject(0)->hasNodataValue == false){
-     dataSource->getDataObject(0)->hasNodataValue = true;
-     dataSource->getDataObject(0)->dfNodataValue = INFINITY; 
-     //nodataValue=dataSource->getDataObject(0)->dfNodataValue ;
-   }
+    
+      CDBDebug("Applying LON warp to -180 till 180 on the original data");
+      
+    
+      dataSource->dWidth=int(360.0/dataSource->dfCellSizeX);
+      
+      double left =  ((double*)dataSource->varX->data)[0]-dataSource->dfCellSizeX/2;
+      double right = ((double*)dataSource->varX->data)[dataSource->varX->getSize()-1]+dataSource->dfCellSizeX/2;
+    
+      
+      
+      dataSource->dfBBOX[0] = left;
+      dataSource->dfBBOX[2] = right;
+      CDBDebug("Old bbox = %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[2]);
+      while( dataSource->dfBBOX[0]>-180){dataSource->dfBBOX[0]-=dataSource->dfCellSizeX;}
+      while(dataSource->dfBBOX[0]<-180){ dataSource->dfBBOX[0]+=dataSource->dfCellSizeX;}
+      dataSource->dfBBOX[2]=dataSource->dfBBOX[0]+360;
+      CDBDebug("New bbox = %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[2]);
+
+      
+      
+
+      if(dataSource->getDataObject(0)->hasNodataValue == false){
+        dataSource->getDataObject(0)->hasNodataValue = true;
+        dataSource->getDataObject(0)->dfNodataValue = INFINITY; 
+
+      }
+    
+    if(mode == 0){return;}
     
     
     
-    
+    double origBBOXWidth = (right - left) ;
     size_t imageSize = size_t(dataSource->dWidth)*size_t(dataSource->dHeight);
-    CDBDebug(" Image size = %d %d %d", imageSize,dataSource->dWidth,dataSource->dHeight);
+    CDBDebug(" Image size = %dx%d", dataSource->dWidth,dataSource->dHeight);
     if(imageSize==0)imageSize=1;
+    if(variable->data == NULL)return;
+    
+    
+    T*data = (T*) variable->data;
     T *tempData = new T[imageSize];
-    for(size_t j=0;j<imageSize;j++){
-      tempData[j]=((T*)data)[j];
+    size_t origSize = size_t(dataSource->dOrigWidth)*size_t(dataSource->dHeight);
+    for(size_t j=0;j<origSize;j++){
+      tempData[j]=data[j];
     }
     
-
+    variable->freeData();
+    variable->allocateData(imageSize);
+    
+    data = (T*) variable->data;
+    for(size_t j=0;j<imageSize;j++){
+      data[j]=(T)dataSource->getDataObject(0)->dfNodataValue;
+    }
+    
+    CDBDebug("origWidth = %d",dataSource->dOrigWidth);
+    
+    CDBDebug("Start");
     for(int y=0;y<dataSource->dHeight;y++){
-      for(int x=0;x<origWidth;x=x+1){
-        double lonX=((double(x)/double(origWidth))*origBBOXWidth)+origBBOXLeft;
+      for(int x=0;x<dataSource->dOrigWidth;x=x+1){
+        double lonX=((double(x)/double(dataSource->dOrigWidth))*origBBOXWidth)+left;
         while(lonX<-180)lonX+=360;
         while(lonX>=180)lonX-=360;
         
         int newXIndex = int(floor((((lonX-dataSource->dfBBOX[0])/360))*double(dataSource->dWidth)+0.5));
-        T value = tempData[x+y*origWidth];
+        T value = tempData[x+y*dataSource->dOrigWidth];
         if(newXIndex>=0&&newXIndex<dataSource->dWidth){
           data[newXIndex+y*dataSource->dWidth]=value;
         }
       }
     }
+    CDBDebug("Done");
     delete[] tempData;
+    CDBDebug("Ok");
+    dataSource->lonTransformDone = true;
   }
 };
 
@@ -416,6 +444,8 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y){
     dataSource->dHeight=2;
   }
   
+  dataSource->dOrigWidth = dataSource->dWidth;
+  
   size_t start[dataSource->dNetCDFNumDims+1];
   
   //Everything starts at zero
@@ -499,6 +529,9 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y){
     dataSource->dfBBOX[1]=dfdim_Y[0]-dataSource->dfCellSizeY/2.0f;;
   }
   
+  dataSource->origBBOXLeft = dataSource->dfBBOX[0];
+  dataSource->origBBOXRight = dataSource->dfBBOX[2];
+  
 #ifdef MEASURETIME
   StopWatch_Stop("XY dimensions read");
 #endif
@@ -579,7 +612,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y){
   
   // Lon transformation is used to swap datasets from 0-360 degrees to -180 till 180 degrees
   //Swap data from >180 degrees to domain of -180 till 180 in case of lat lon source data
-   dataSource->useLonTransformation = -1;
+    dataSource->useLonTransformation = -1;
   
   if(singleCellMode == true){
 
@@ -599,30 +632,13 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y){
       //If the lon variable name contains an X, it is probably not longitude.
       if(dataSource->varX->name.indexOf("x")==-1&&dataSource->varX->name.indexOf("X")==-1){
         size_t j=0;
-        
-        
-        
         for(j=0;j<dataSource->varX->getSize();j++){
           //CDBDebug("%d == %f",j,((double*)dataSource->varX->data)[j]);
           if(((double*)dataSource->varX->data)[j]>=180.0)break;
           if(((double*)dataSource->varX->data)[j]<=-180.0)break;
         }
-        
-        
         if(j!=dataSource->varX->getSize()){
           dataSource->useLonTransformation=j;
-          //dataSource->dfBBOX[0]=-180;
-          //dataSource->dfBBOX[2]=180;
-          while( dataSource->dfBBOX[0]>-180){dataSource->dfBBOX[0]-=dataSource->dfCellSizeX;}
-          while(dataSource->dfBBOX[0]<-180){ dataSource->dfBBOX[0]+=dataSource->dfCellSizeX;}
-          dataSource->dfBBOX[2]=dataSource->dfBBOX[0]+360;
-          
-          //When cache is available, the 2D field is already stored as a lontransformed field. We should not do this again.
-          //The lat/lons are always kept original, so they needed to be shifted (done above)
-          
-//           if(cache->cacheIsAvailable()){
-//             dataSource->useLonTransformation = -1;
-//           }
         }
       }
       
@@ -757,7 +773,16 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
 //       }
 //     }
 //   }
+
+  if(dataSource->useLonTransformation!=-1){
+    for(size_t varNr=0;varNr<dataSource->getNumDataObjects();varNr++){
+      Proc::swapPixelsAtLocation(dataSource,dataSource->getDataObject(varNr)->cdfVariable,0);
+    }
+  }
+    
   if(mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS){
+
+
 #ifdef CDATAREADER_DEBUG
     CDBDebug("Dimensions parsed");
 #endif
@@ -774,11 +799,12 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
   
   //Set X and Y dimensions start, count and stride
   for(int j=0;j<dataSource->dNetCDFNumDims;j++){start[j]=0; count[j]=1;stride[j]=1;}
-  count[dataSource->dimXIndex]=dataSource->dWidth;
+  count[dataSource->dimXIndex]=dataSource->dOrigWidth;
   count[dataSource->dimYIndex]=dataSource->dHeight;
   stride[dataSource->dimXIndex]=dataSource->stride2DMap;
   stride[dataSource->dimYIndex]=dataSource->stride2DMap;
   
+
   
   
   //Set other dimensions than X and Y.
@@ -1036,26 +1062,22 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
             CDBDebug("%s %d %d %d",dataSource->getDataObject(varNr)->cdfVariable->dimensionlinks[j]->name.c_str(),start[j],count[j],stride[j]);
           }
           
+          
+          
+          
           return 1;
         }
+        
         
         //Swap data from >180 degrees to domain of -180 till 180 in case of lat lon source data
         if(dataSource->useLonTransformation!=-1){
           //int splitPX=dataSource->useLonTransformation;
-          switch (dataSource->getDataObject(varNr)->cdfVariable->getType()){
-            case CDF_CHAR  : Proc::swapPixelsAtLocation(dataSource,(char*)dataSource->getDataObject(varNr)->cdfVariable->data);break;
-            case CDF_BYTE  : Proc::swapPixelsAtLocation(dataSource,(char*)dataSource->getDataObject(varNr)->cdfVariable->data);break;
-            case CDF_UBYTE : Proc::swapPixelsAtLocation(dataSource,(uchar*)dataSource->getDataObject(varNr)->cdfVariable->data);break;
-            case CDF_SHORT : Proc::swapPixelsAtLocation(dataSource,(short*)dataSource->getDataObject(varNr)->cdfVariable->data);break;
-            case CDF_USHORT: Proc::swapPixelsAtLocation(dataSource,(ushort*)dataSource->getDataObject(varNr)->cdfVariable->data);break;
-            case CDF_INT   : Proc::swapPixelsAtLocation(dataSource,(int*)dataSource->getDataObject(varNr)->cdfVariable->data);break;
-            case CDF_UINT  : Proc::swapPixelsAtLocation(dataSource,(unsigned int*)dataSource->getDataObject(varNr)->cdfVariable->data);break;
-            case CDF_FLOAT : Proc::swapPixelsAtLocation(dataSource,(float*)dataSource->getDataObject(varNr)->cdfVariable->data);break;
-            case CDF_DOUBLE: Proc::swapPixelsAtLocation(dataSource,(double*)dataSource->getDataObject(varNr)->cdfVariable->data);break;
-            default: {CDBError("Unknown data type"); return 1;}
+          if(Proc::swapPixelsAtLocation(dataSource,dataSource->getDataObject(varNr)->cdfVariable,1)!=0){
+            return 1;
           }
+          
         }
-    
+
 
       }
       dataSource->getDataObject(varNr)->appliedScaleOffset = false;

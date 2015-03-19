@@ -177,6 +177,8 @@ CDataSource::CDataSource(){
   datasourceIndex=0;
   level2CompatMode=false;
   useLonTransformation = -1;
+  dOrigWidth = -1;
+  lonTransformDone = false;
   swapXYDimensions = false;
   varX = NULL;
   varY = NULL;

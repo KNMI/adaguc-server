@@ -27,7 +27,7 @@
 
 const char *CDFNetCDFReader::className="NetCDFReader";
 const char *CDFNetCDFWriter::className="NetCDFWriter";
-const char *CCDFWarper::className="CCDFWarper";
+//const char *CCDFWarper::className="CCDFWarper";
 
 
 //#define CCDFNETCDFIO_DEBUG_OPEN
@@ -45,7 +45,7 @@ CDFNetCDFReader::~CDFNetCDFReader(){
 }
 
 void CDFNetCDFReader::enableLonWarp(bool enableLonWarp){
-  warper.enableLonWarp=enableLonWarp;
+  //warper.enableLonWarp=enableLonWarp;
 }
 void CDFNetCDFReader::ncError(int line, const char *className, const char * msg,int e){
   if(e==NC_NOERR)return;
@@ -265,7 +265,7 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type,size_t *
   
   
   
-  warper.warpLonData(var);
+  //warper.warpLonData(var);
 
   if(cdfCache!=NULL){
     #ifdef CCDFNETCDFIO_DEBUG        
