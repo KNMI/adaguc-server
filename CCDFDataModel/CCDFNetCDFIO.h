@@ -43,7 +43,7 @@ class CDFNetCDFReader :public CDFReader{
   private:
   static void ncError(int line, const char *className, const char * msg,int e);  
     
-  CCDFWarper warper;
+  //CCDFWarper warper;
   CDFType typeConversion(nc_type type);
   DEF_ERRORFUNCTION();
   int status,root_id;
@@ -106,7 +106,7 @@ class CDFNetCDFWriter{
     CT::string NCCommands;
     const char *fileName;
  
-    CCDFWarper warper;
+    //CCDFWarper warper;
     
     int shuffle       ;
     int deflate       ;
@@ -582,7 +582,7 @@ class CDFNetCDFWriter{
       
         //Apply longitude warping of the data
         //EG 0-360 to -180 till -180
-        warper.warpLonData(variable);
+        //warper.warpLonData(variable);
       }
       if(status==0){
         if(variable->data==NULL){

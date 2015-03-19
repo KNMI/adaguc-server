@@ -132,6 +132,13 @@ namespace CDF{
       }
 
       void setCDFObjectDim(Variable *sourceVar,const char *dimName);
+      
+      void allocateData(size_t size){
+        if(data!=NULL)CDF::freeData(&data);data=NULL;
+        CDF::allocateData(currentType,&data,size);
+        setSize(size);
+      }
+      
       void freeData(){
         if(data==NULL)return;
 #ifdef CCDFDATAMODEL_DEBUG                
@@ -343,7 +350,7 @@ namespace CDF{
         currentSize=dataLength;
         this->currentType=type;
         this->nativeType=type;
-        allocateData(type,&data,currentSize);
+        CDF::allocateData(type,&data,currentSize);
         if(type==CDF_CHAR||type==CDF_UBYTE||type==CDF_BYTE)memcpy(data,dataToSet,currentSize);
         if(type==CDF_SHORT||type==CDF_USHORT)memcpy(data,dataToSet,currentSize*sizeof(short));
         if(type==CDF_INT||type==CDF_UINT)memcpy(data,dataToSet,currentSize*sizeof(int));

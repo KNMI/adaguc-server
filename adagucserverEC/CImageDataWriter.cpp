@@ -167,13 +167,13 @@ CImageDataWriter::ProjCacheInfo CImageDataWriter::GetProjInfo(CT::string ckey, C
     projCacheInfo.dX=(dataSource->dfBBOX[2]-dataSource->dfBBOX[0])/double(dataSource->dWidth);
     projCacheInfo.dY=(dataSource->dfBBOX[3]-dataSource->dfBBOX[1])/double(dataSource->dHeight);
 
-    if(x<0||x>dataSource->dWidth-1){
+    if(x<0||x>=dataSource->dWidth){
       projCacheInfo.imx=-1;
       projCacheInfo.isOutsideBBOX=true;
     }else{
       projCacheInfo.imx=int(x);
     }
-    if(y<0||y>dataSource->dHeight-1){
+    if(y<0||y>=dataSource->dHeight){
       projCacheInfo.imy=-1;
       projCacheInfo.isOutsideBBOX=true;
     }else{

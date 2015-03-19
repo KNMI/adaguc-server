@@ -139,17 +139,19 @@ private:
         bool checkInfinity = false;
         if(type==CDF_FLOAT||type==CDF_DOUBLE)checkInfinity=true;
         
-        //CDBDebug("MINMAX %f %f %s",(double)maxInf,(double)minInf,CDF::getCDFDataTypeName(type).c_str());
+//         CDBDebug("MINMAX maxinf=%f minInf=%f type=%s size=%d",(double)maxInf,(double)minInf,CDF::getCDFDataTypeName(type).c_str(),size);
         int firstDone=0;
         for(size_t p=0;p<size;p++){
           
           T v=data[p];
-//           if((double)v<10){
-//           CDBDebug("Value %d =  %f",p,(double)v);
-//           }
-          if((((T)v)!=(T)(*dataObject)[0]->dfNodataValue||(!(*dataObject)[0]->hasNodataValue))&&v==v){
+  /*        if((double)v<36){
+            CDBDebug("Value %d =  %f %d",p,(double)v,v!=maxInf);
+          }
+ */         if((((T)v)!=(T)(*dataObject)[0]->dfNodataValue||(!(*dataObject)[0]->hasNodataValue))&&v==v){
             if((checkInfinity&&v!=maxInf&&v!=minInf)||(!checkInfinity))
             {
+              
+              
             
               if(firstDone==0){
                 _min=v;_max=v;
@@ -276,6 +278,9 @@ private:
   // Lon transformation is used to swap datasets from 0-360 degrees to -180 till 180 degrees
   //Swap data from >180 degrees to domain of -180 till 180 in case of lat lon source data
   int useLonTransformation;
+  double origBBOXLeft,origBBOXRight;
+  int dOrigWidth;
+  bool lonTransformDone;
   
   //Sometimes X and Y need to be swapped, this boolean indicates whether it should or not.
   bool swapXYDimensions;

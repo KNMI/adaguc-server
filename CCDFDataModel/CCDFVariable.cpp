@@ -401,12 +401,12 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
     void *dstData = NULL;
     void *srcData = NULL;
     int status = 0;
-    status = allocateData(currentType,&dstData,currentDimSize+1);
+    status = CDF::allocateData(currentType,&dstData,currentDimSize+1);
     if(status!=0){
       CDBError("Unable to allocate data");
       throw("__LINE__");
     }
-    status = allocateData(currentType,&srcData,1);
+    status = CDF::allocateData(currentType,&srcData,1);
     if(status!=0){
       CDBError("Unable to allocate data");  
       throw("__LINE__");
