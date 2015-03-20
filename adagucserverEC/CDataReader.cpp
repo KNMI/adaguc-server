@@ -634,8 +634,10 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y){
         size_t j=0;
         for(j=0;j<dataSource->varX->getSize();j++){
           //CDBDebug("%d == %f",j,((double*)dataSource->varX->data)[j]);
-          if(((double*)dataSource->varX->data)[j]>=180.0)break;
-          if(((double*)dataSource->varX->data)[j]<=-180.0)break;
+          double xvalue = ((double*)dataSource->varX->data)[j];
+          
+          if(xvalue>=180.0&&xvalue<400)break;
+          if(xvalue<=-180.0&&xvalue>-400)break;
         }
         if(j!=dataSource->varX->getSize()){
           dataSource->useLonTransformation=j;

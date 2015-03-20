@@ -58,11 +58,26 @@
 
 class CGDALDataWriter: public CBaseDataWriterInterface{
   private:
+    
+    class Settings{
+    public:
+      size_t width;
+      void *data;
+    };
+
+
+    template <class T>
+    static void drawFunction(int x,int y,T val, void *_settings){
+    Settings*settings = (Settings*)_settings;
+    ((T*)settings->data)[x+y*settings->width]=val;
+    };
+
+    
     CServerParams *srvParam;
     GDALDriverH  hMemDriver1,hMemDriver2,hOutputDriver;
-    GDALDatasetH hMemDS1,hMemDS2,hOutputDS;
+    GDALDatasetH destinationGDALDataSet,hOutputDS;
     double adfDstGeoTransform[6];
-    double adfSrcGeoTransform[6];
+    //double adfSrcGeoTransform[6];
     double dfDstBBOX[4];
     double dfSrcBBOX[4];
     CDataReader reader;
