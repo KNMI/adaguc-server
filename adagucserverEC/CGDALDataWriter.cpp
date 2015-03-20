@@ -257,7 +257,6 @@ int  CGDALDataWriter::addData(std::vector <CDataSource*>&dataSources){
   CDBDebug("copying data in addData, WH= [%d,%d] type = %s", dataSource->dWidth, dataSource->dHeight, CDF::getCDFDataTypeName(dataSource->getDataObject(0)->cdfVariable->getType()).c_str());
 
 #endif
-  CDBDebug("Element 0 = %f",((float*)dataSource->getDataObject(0)->cdfVariable->data)[0]);
   
   GDALRasterIO( hSrcBand, GF_Write, 0, 0,
                 dataSource->dWidth, dataSource->dHeight,

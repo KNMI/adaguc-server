@@ -270,7 +270,7 @@ class CServerParams{
      */
     bool checkBBOXXYOrder(const char *projName);
     
-    bool isLonLatProjection(CT::string *projectionName);
+    
     
     /**
       * Returns a stringlist with all possible legends available for this Legend config object.

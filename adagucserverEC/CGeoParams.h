@@ -52,6 +52,7 @@ class CGeoParams{
   public:
     int dWidth,dHeight;
     double dfBBOX[4];
+    double dfCellSizeX,dfCellSizeY;
     CT::string CRS;
     CGeoParams(){
       dWidth=1;dHeight=1;
@@ -60,9 +61,17 @@ class CGeoParams{
       if(_Geo==NULL)return 1;
       dWidth=_Geo->dWidth;
       dHeight=_Geo->dHeight;
+      dfCellSizeX=_Geo->dfCellSizeX;
+      dfCellSizeY=_Geo->dfCellSizeY;
       CRS.copy(&_Geo->CRS);
       for(int j=0;j<4;j++)dfBBOX[j]=_Geo->dfBBOX[j];
       return 0;
+    }
+    static bool isLonLatProjection(CT::string *projectionName){
+      if(projectionName->indexOf("+proj=longlat")==0){
+        return true;
+      }
+      return false;
     }
 };
 
