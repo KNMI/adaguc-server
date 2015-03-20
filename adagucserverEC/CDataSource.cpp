@@ -1219,6 +1219,13 @@ CStyleConfiguration *CDataSource::getStyle(){
           break;
       }
     }
+    
+    if(_currentStyle->styleIndex == -1){
+      int status = makeStyleConfig(_currentStyle,this);//,styleNames->get(i)->c_str(),legendList->get(l)->c_str(),renderMethods->get(r)->c_str());
+      if(status == -1){
+        _currentStyle->hasError=true;
+      }
+    }
     if(_currentStyle->legendIndex == -1){
       CT::PointerList<CT::string*> *legendList = getLegendListForDataSource(this,NULL);
       if(legendList!=NULL){
@@ -1226,14 +1233,14 @@ CStyleConfiguration *CDataSource::getStyle(){
       }
       delete legendList;
     }
-   #ifdef CDATASOURCE_DEBUG      
+  // #ifdef CDATASOURCE_DEBUG      
     CDBDebug("Dumping style:");
     CT::string styleDump;
     _currentStyle->printStyleConfig(&styleDump);
   
  
     CDBDebug("styleDump:\n%s",styleDump.c_str());
-#endif
+//#endif
   
   }
   
