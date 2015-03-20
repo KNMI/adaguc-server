@@ -1233,14 +1233,14 @@ CStyleConfiguration *CDataSource::getStyle(){
       }
       delete legendList;
     }
-  // #ifdef CDATASOURCE_DEBUG      
+   #ifdef CDATASOURCE_DEBUG      
     CDBDebug("Dumping style:");
     CT::string styleDump;
     _currentStyle->printStyleConfig(&styleDump);
   
  
     CDBDebug("styleDump:\n%s",styleDump.c_str());
-//#endif
+    #endif
   
   }
   

@@ -34,7 +34,7 @@
 
 const char *CDataReader::className="CDataReader";
 
- #define CDATAREADER_DEBUG
+ //#define CDATAREADER_DEBUG
 //#define MEASURETIME
 
 #define uchar unsigned char
