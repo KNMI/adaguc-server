@@ -27,7 +27,7 @@
 #ifdef ADAGUC_USE_GDAL
 #include "CGDALDataWriter.h"
 
-#define CGDALDATAWRITER_DEBUG
+//#define CGDALDATAWRITER_DEBUG
 
 const char * CGDALDataWriter::className = "CGDALDataWriter";
 
@@ -130,12 +130,12 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
   adfDstGeoTransform[5]=(dfDstBBOX[1]-dfDstBBOX[3])/double(srvParam->Geo->dHeight);
 
   //Setup Source geotransform
-  adfSrcGeoTransform[0]=dfSrcBBOX[0];
-  adfSrcGeoTransform[1]=(dfSrcBBOX[2]-dfSrcBBOX[0])/double(dataSource->dWidth);
-  adfSrcGeoTransform[2]=0;
-  adfSrcGeoTransform[3]=dfSrcBBOX[3];
-  adfSrcGeoTransform[4]=0;
-  adfSrcGeoTransform[5]=(dfSrcBBOX[1]-dfSrcBBOX[3])/double(dataSource->dHeight);
+//   adfSrcGeoTransform[0]=dfSrcBBOX[0];
+//   adfSrcGeoTransform[1]=(dfSrcBBOX[2]-dfSrcBBOX[0])/double(dataSource->dWidth);
+//   adfSrcGeoTransform[2]=0;
+//   adfSrcGeoTransform[3]=dfSrcBBOX[3];
+//   adfSrcGeoTransform[4]=0;
+//   adfSrcGeoTransform[5]=(dfSrcBBOX[1]-dfSrcBBOX[3])/double(dataSource->dHeight);
 
   // Retrieve output format
   CT::string driverName;
@@ -203,20 +203,21 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
 #endif  
   
   
-  hMemDS2 = GDALCreate( hMemDriver2, "memory_dataset_2",
-                        dataSource->dWidth, dataSource->dHeight, NrOfBands, datatype, NULL );
-  if( hMemDS2 == NULL ){CDBError("Failed to create GDAL MEM dataset.");reader.close();return 1;}
-  // Set source projection
-  OGRSpatialReference oSRCSRS;
+  destinationGDALDataSet = GDALCreate( hMemDriver2, "memory_dataset_2",
+                        srvParam->Geo->dWidth,srvParam->Geo->dHeight, NrOfBands, datatype, NULL );
+  if( destinationGDALDataSet == NULL ){CDBError("Failed to create GDAL MEM dataset.");reader.close();return 1;}
+  GDALSetGeoTransform(destinationGDALDataSet,adfDstGeoTransform );
+  OGRSpatialReference oDSTSRS;
+
   char *pszSRS_WKT = NULL;
-  GDALSetGeoTransform(hMemDS2,adfSrcGeoTransform );
-  if(oSRCSRS.SetFromUserInput(dataSource->nativeProj4.c_str())!=OGRERR_NONE){
-    CDBError("WCS: Invalid source projection: [%s]",dataSource->nativeProj4.c_str());
+  if(oDSTSRS.SetFromUserInput(srvParam->Geo->CRS.c_str())!=OGRERR_NONE){
+    CDBError("WCS: Invalid source projection: [%s]",srvParam->Geo->CRS.c_str());
     return 1;
   }
-  oSRCSRS.exportToWkt( &pszSRS_WKT );
-  GDALSetProjection( hMemDS2,pszSRS_WKT );
+  oDSTSRS.exportToWkt( &pszSRS_WKT );
+  GDALSetProjection( destinationGDALDataSet,pszSRS_WKT );
   CPLFree( pszSRS_WKT );
+  
   currentBandNr=0;
   if(InputProducts!=NULL)delete[] InputProducts;
   InputProducts=new CT::string[NrOfBands+1];
@@ -230,6 +231,7 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
 
 
 }
+
 
 int  CGDALDataWriter::addData(std::vector <CDataSource*>&dataSources){
 #ifdef CGDALDATAWRITER_DEBUG
@@ -247,22 +249,73 @@ int  CGDALDataWriter::addData(std::vector <CDataSource*>&dataSources){
 #ifdef CGDALDATAWRITER_DEBUG
   CDBDebug("Reading %s for bandnr %d",dataSource->getFileName(),currentBandNr);
 #endif
-  GDALRasterBandH hSrcBand = GDALGetRasterBand( hMemDS2, currentBandNr+1 );
+  GDALRasterBandH hSrcBand = GDALGetRasterBand( destinationGDALDataSet, currentBandNr+1 );
   if(dataSource->getDataObject(0)->hasNodataValue==1){
     dfNoData=dataSource->getDataObject(0)->dfNodataValue;
     GDALSetRasterNoDataValue(hSrcBand, dfNoData);
   }
   
 #ifdef CGDALDATAWRITER_DEBUG  
-  CDBDebug("copying data in addData, WH= [%d,%d] type = %s", dataSource->dWidth, dataSource->dHeight, CDF::getCDFDataTypeName(dataSource->getDataObject(0)->cdfVariable->getType()).c_str());
+  CDBDebug("copying data in addData, WH= [%d,%d] type = %s", srvParam->Geo->dWidth,srvParam->Geo->dHeight, CDF::getCDFDataTypeName(dataSource->getDataObject(0)->cdfVariable->getType()).c_str());
 
 #endif
+  //CDBDebug("Element 0 = %f",((float*)dataSource->getDataObject(0)->cdfVariable->data)[0]);
+  
+  
+  //Warp
+  void *warpedData = NULL;
+//  CDBDebug("DFNODATA = %f",dfNoData);
+  CDF::allocateData(dataSource->getDataObject(0)->cdfVariable->getType(),&warpedData,srvParam->Geo->dWidth*srvParam->Geo->dHeight);
+
+  if(CDF::fill(warpedData,dataSource->getDataObject(0)->cdfVariable->getType(),dfNoData,srvParam->Geo->dWidth*srvParam->Geo->dHeight)!=0){
+    CDBError("Unable to initialize data field to nodata value");
+    return 1;
+  }
+  
+  CImageWarper warper;
+  status = warper.initreproj(dataSource,srvParam->Geo,&srvParam->cfg->Projection);
+  if(status != 0){
+    CDBError("Unable to initialize projection");
+    return 1;
+  }
+  CGeoParams sourceGeo;
+      
+  sourceGeo.dWidth = dataSource->dWidth;
+  sourceGeo.dHeight = dataSource->dHeight;
+  sourceGeo.dfBBOX[0] = dataSource->dfBBOX[0];
+  sourceGeo.dfBBOX[1] = dataSource->dfBBOX[1];
+  sourceGeo.dfBBOX[2] = dataSource->dfBBOX[2];
+  sourceGeo.dfBBOX[3] = dataSource->dfBBOX[3];
+  sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
+  sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
+  sourceGeo.CRS = dataSource->nativeProj4;
+  
+  CDFType dataType=dataSource->getDataObject(0)->cdfVariable->getType();
+  void *sourceData = dataSource->getDataObject(0)->cdfVariable->data;
+  Settings settings;
+  settings.width = srvParam->Geo->dWidth;
+  settings.data=warpedData;
+
+  switch(dataType){
+    case CDF_CHAR  :  GenericDataWarper::render<char>  (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction);break;
+    case CDF_BYTE  :  GenericDataWarper::render<char>  (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction);break;
+    case CDF_UBYTE :  GenericDataWarper::render<unsigned char> (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction);break;
+    case CDF_SHORT :  GenericDataWarper::render<short> (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction);break;
+    case CDF_USHORT:  GenericDataWarper::render<ushort>(&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction);break;
+    case CDF_INT   :  GenericDataWarper::render<int>   (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction);break;
+    case CDF_UINT  :  GenericDataWarper::render<uint>  (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction);break;
+    case CDF_FLOAT :  GenericDataWarper::render<float> (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction);break;
+    case CDF_DOUBLE:  GenericDataWarper::render<double>(&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction);break;
+  }
+ 
+  
   
   GDALRasterIO( hSrcBand, GF_Write, 0, 0,
-                dataSource->dWidth, dataSource->dHeight,
-                dataSource->getDataObject(0)->cdfVariable->data,
-                dataSource->dWidth, dataSource->dHeight,
+                srvParam->Geo->dWidth,srvParam->Geo->dHeight,
+                warpedData,
+                srvParam->Geo->dWidth,srvParam->Geo->dHeight,
                 datatype, 0, 0 );
+  CDF::freeData(&warpedData);
 #ifdef CGDALDATAWRITER_DEBUG  
   CDBDebug("finished copying data in addData");
 #endif
@@ -300,18 +353,18 @@ int  CGDALDataWriter::end(){
   CDBDebug("%s",szTempFileName);
 #endif
   
-  // Warp the image from hMemDS2 to hMemDS1
+  // Warp the image from destinationGDALDataSet to hMemDS1
   GDALDataType eDT;
-  eDT = GDALGetRasterDataType(GDALGetRasterBand(hMemDS2,1));
+  eDT = GDALGetRasterDataType(GDALGetRasterBand(destinationGDALDataSet,1));
   //CDBDebug("Check");
   // Get coordinate systems
   const char *pszSrcWKT;
   char *pszDstWKT = NULL;
-  pszSrcWKT = GDALGetProjectionRef( hMemDS2 );
+  pszSrcWKT = GDALGetProjectionRef( destinationGDALDataSet );
   //CDBDebug("Check");
   //CPLAssert( pszSrcWKT != NULL && strlen(pszSrcWKT) > 0 );
   if(pszSrcWKT == NULL){
-    CDBError("GDALGetProjectionRef( hMemDS2 ) == NULL");return 1;
+    CDBError("GDALGetProjectionRef( destinationGDALDataSet ) == NULL");return 1;
   }
   //CDBDebug("Check");
   OGRSpatialReference oSRS;
@@ -327,79 +380,80 @@ int  CGDALDataWriter::end(){
     return 1;
   }
   oSRS.exportToWkt( &pszDstWKT );
+  //hMemDS1 = destinationGDALDataSet;
   //CDBDebug("Check");
   // Create the output file.
-  hMemDS1 = GDALCreate( hMemDriver1,"memory_dataset_1",srvParam->Geo->dWidth,srvParam->Geo->dHeight,NrOfBands,eDT,NULL );
-  if( hMemDS1 == NULL ){CDBError("Failed to create GDAL MEM dataset.");return 1;}
-
-  if(_dataSource->getDataObject(0)->hasNodataValue==1){
-    dfNoData=_dataSource->getDataObject(0)->dfNodataValue;
-    for(int j=0;j<NrOfBands;j++){
-      GDALRasterBandH hDstcBand = GDALGetRasterBand( hMemDS1,j+1 );
-      GDALSetRasterNoDataValue(hDstcBand, dfNoData);
-    }
-  }
-
-  GDALSetProjection( hMemDS1, pszDstWKT );
-  GDALSetGeoTransform( hMemDS1, adfDstGeoTransform );
-  //CDBDebug("Check");
-  GDALWarpOptions *psWarpOptions = GDALCreateWarpOptions();
-  psWarpOptions->hSrcDS = hMemDS2;
-  psWarpOptions->hDstDS = hMemDS1;
-  psWarpOptions->nBandCount = NrOfBands;
-  psWarpOptions->panSrcBands =
-      (int *) CPLMalloc(sizeof(int) * psWarpOptions->nBandCount );
-  for(int j=0;j<NrOfBands;j++)psWarpOptions->panSrcBands[j] = j+1;
-  psWarpOptions->panDstBands =
-      (int *) CPLMalloc(sizeof(int) * psWarpOptions->nBandCount );
-  for(int j=0;j<NrOfBands;j++)psWarpOptions->panDstBands[j] = j+1;
-  //CDBDebug("Check");
-  //CDBDebug("END");
-  // nodata
-  //printf("<br>Nodata=[%f]<br>\n",dfNoData);
-  psWarpOptions->padfSrcNoDataReal =
-      (double *) CPLMalloc(sizeof(double) * psWarpOptions->nBandCount );
-  for(int j=0;j<NrOfBands;j++)psWarpOptions->padfSrcNoDataReal[j] = dfNoData;
-  psWarpOptions->padfDstNoDataReal =
-      (double *) CPLMalloc(sizeof(double) * psWarpOptions->nBandCount );
-  for(int j=0;j<NrOfBands;j++)psWarpOptions->padfDstNoDataReal[j] = dfNoData;
-  //CDBDebug("Check");
-  psWarpOptions->padfSrcNoDataImag =
-      (double *) CPLMalloc(sizeof(double) * psWarpOptions->nBandCount );
-  for(int j=0;j<NrOfBands;j++)psWarpOptions->padfSrcNoDataImag[j] = 0.0f;
-  psWarpOptions->padfDstNoDataImag =
-      (double *) CPLMalloc(sizeof(double) * psWarpOptions->nBandCount );
-  for(int j=0;j<NrOfBands;j++)psWarpOptions->padfDstNoDataImag[j] = 0.0;
-
-  char **papszWarpOptions = NULL;
-  papszWarpOptions = CSLSetNameValue(papszWarpOptions,"INIT_DEST","NO_DATA");
-  psWarpOptions->papszWarpOptions=papszWarpOptions;
- // Establish reprojection transformer.
-  //CDBDebug("Check");
-  psWarpOptions->pTransformerArg =  GDALCreateGenImgProjTransformer( hMemDS2,
-      GDALGetProjectionRef(hMemDS2),
-      hMemDS1,
-      GDALGetProjectionRef(hMemDS1),
-      FALSE, 0.0, 1 );
-
-  //CDBDebug("Check");
-  psWarpOptions->pfnTransformer = GDALGenImgProjTransform;
-  psWarpOptions->dfWarpMemoryLimit = 1147483647.0f;
-  GDALSetCacheMax(1147483647);
-  // Initialize and execute the warp operation.
-  GDALWarpOperation oOperation;
-
-  oOperation.Initialize( psWarpOptions );
-  CDBDebug("start GDAL ChunkAndWarpImage");
-  /*oOperation.ChunkAndWarpImage( 0, 0,
-                                GDALGetRasterXSize( hMemDS1 ),
-  GDALGetRasterYSize( hMemDS1 ) );*/
-  oOperation.ChunkAndWarpImage( 0, 0,
-                                GDALGetRasterXSize( hMemDS1 ),
-                                GDALGetRasterYSize( hMemDS1 ) );
-  GDALDestroyGenImgProjTransformer( psWarpOptions->pTransformerArg );
-  GDALDestroyWarpOptions( psWarpOptions );
-  CDBDebug("Completed ChunkAndWarpImage");
+//   hMemDS1 = GDALCreate( hMemDriver1,"memory_dataset_1",srvParam->Geo->dWidth,srvParam->Geo->dHeight,NrOfBands,eDT,NULL );
+//   if( hMemDS1 == NULL ){CDBError("Failed to create GDAL MEM dataset.");return 1;}
+// 
+//   if(_dataSource->getDataObject(0)->hasNodataValue==1){
+//     dfNoData=_dataSource->getDataObject(0)->dfNodataValue;
+//     for(int j=0;j<NrOfBands;j++){
+//       GDALRasterBandH hDstcBand = GDALGetRasterBand( hMemDS1,j+1 );
+//       GDALSetRasterNoDataValue(hDstcBand, dfNoData);
+//     }
+//   }
+// 
+//   GDALSetProjection( hMemDS1, pszDstWKT );
+//   GDALSetGeoTransform( hMemDS1, adfDstGeoTransform );
+//   //CDBDebug("Check");
+//   GDALWarpOptions *psWarpOptions = GDALCreateWarpOptions();
+//   psWarpOptions->hSrcDS = destinationGDALDataSet;
+//   psWarpOptions->hDstDS = hMemDS1;
+//   psWarpOptions->nBandCount = NrOfBands;
+//   psWarpOptions->panSrcBands =
+//       (int *) CPLMalloc(sizeof(int) * psWarpOptions->nBandCount );
+//   for(int j=0;j<NrOfBands;j++)psWarpOptions->panSrcBands[j] = j+1;
+//   psWarpOptions->panDstBands =
+//       (int *) CPLMalloc(sizeof(int) * psWarpOptions->nBandCount );
+//   for(int j=0;j<NrOfBands;j++)psWarpOptions->panDstBands[j] = j+1;
+//   //CDBDebug("Check");
+//   //CDBDebug("END");
+//   // nodata
+//   //printf("<br>Nodata=[%f]<br>\n",dfNoData);
+//   psWarpOptions->padfSrcNoDataReal =
+//       (double *) CPLMalloc(sizeof(double) * psWarpOptions->nBandCount );
+//   for(int j=0;j<NrOfBands;j++)psWarpOptions->padfSrcNoDataReal[j] = dfNoData;
+//   psWarpOptions->padfDstNoDataReal =
+//       (double *) CPLMalloc(sizeof(double) * psWarpOptions->nBandCount );
+//   for(int j=0;j<NrOfBands;j++)psWarpOptions->padfDstNoDataReal[j] = dfNoData;
+//   //CDBDebug("Check");
+//   psWarpOptions->padfSrcNoDataImag =
+//       (double *) CPLMalloc(sizeof(double) * psWarpOptions->nBandCount );
+//   for(int j=0;j<NrOfBands;j++)psWarpOptions->padfSrcNoDataImag[j] = 0.0f;
+//   psWarpOptions->padfDstNoDataImag =
+//       (double *) CPLMalloc(sizeof(double) * psWarpOptions->nBandCount );
+//   for(int j=0;j<NrOfBands;j++)psWarpOptions->padfDstNoDataImag[j] = 0.0;
+// 
+//   char **papszWarpOptions = NULL;
+//   papszWarpOptions = CSLSetNameValue(papszWarpOptions,"INIT_DEST","NO_DATA");
+//   psWarpOptions->papszWarpOptions=papszWarpOptions;
+//  // Establish reprojection transformer.
+//   //CDBDebug("Check");
+//   psWarpOptions->pTransformerArg =  GDALCreateGenImgProjTransformer( destinationGDALDataSet,
+//       GDALGetProjectionRef(destinationGDALDataSet),
+//       hMemDS1,
+//       GDALGetProjectionRef(hMemDS1),
+//       FALSE, 0.0, 1 );
+// 
+//   //CDBDebug("Check");
+//   psWarpOptions->pfnTransformer = GDALGenImgProjTransform;
+//   psWarpOptions->dfWarpMemoryLimit = 1147483647.0f;
+//   GDALSetCacheMax(1147483647);
+//   // Initialize and execute the warp operation.
+//   GDALWarpOperation oOperation;
+// 
+//   oOperation.Initialize( psWarpOptions );
+//   CDBDebug("start GDAL ChunkAndWarpImage");
+//   /*oOperation.ChunkAndWarpImage( 0, 0,
+//                                 GDALGetRasterXSize( hMemDS1 ),
+//   GDALGetRasterYSize( hMemDS1 ) );*/
+//   oOperation.ChunkAndWarpImage( 0, 0,
+//                                 GDALGetRasterXSize( hMemDS1 ),
+//                                 GDALGetRasterYSize( hMemDS1 ) );
+//   GDALDestroyGenImgProjTransformer( psWarpOptions->pTransformerArg );
+//   GDALDestroyWarpOptions( psWarpOptions );
+//   CDBDebug("Completed ChunkAndWarpImage");
   // Set metadata for hMemDS1
   char **papszMetadata = NULL;
   for(size_t j=0;j<metaDataList.size();j++){
@@ -420,10 +474,10 @@ int  CGDALDataWriter::end(){
   }
   papszMetadata = CSLSetNameValue(papszMetadata,"product#[C]input_products",GDALinputproducts.c_str());
 
-  GDALSetMetadata( hMemDS1, papszMetadata,"");
+  GDALSetMetadata( destinationGDALDataSet, papszMetadata,"");
   CSLDestroy( papszMetadata);
   papszMetadata = NULL;
-  // Set metadata for each band in hMemDS1
+  // Set metadata for each band in destinationGDALDataSet
   if(TimeUnit.length()>10&&Times[0].length()>10){
     for(int b=0;b<NrOfBands;b++){
 
@@ -462,7 +516,7 @@ int  CGDALDataWriter::end(){
       snprintf(szTemp2,MAX_STR_LEN,"%s",_dataSource->getDataObject(0)->variableName.c_str());
       papszMetadata = CSLSetNameValue(papszMetadata,szTemp,szTemp2);
       // Set the metadata
-      GDALRasterBandH hSrcBand = GDALGetRasterBand( hMemDS1, b+1 );
+      GDALRasterBandH hSrcBand = GDALGetRasterBand( destinationGDALDataSet, b+1 );
       GDALSetRasterNoDataValue(hSrcBand, dfNoData);
       //printf("<br>Setting Nodata2=[%f] for band %d<br>\n",dfNoData,b+1);
       GDALSetMetadata( hSrcBand, papszMetadata,"");
@@ -470,7 +524,7 @@ int  CGDALDataWriter::end(){
       papszMetadata = NULL;
     }
   }
-  // Copy the hMemDS1 dataset to the output driver
+  // Copy the destinationGDALDataSet dataset to the output driver
   char ** papszOptions = NULL;
 
   if(customOptions.length()>2){
@@ -482,20 +536,20 @@ int  CGDALDataWriter::end(){
     }
     delete[] co;
   }
-  CDBDebug("Copying hMemDS1 to hOutputDriver");
-  hOutputDS = GDALCreateCopy( hOutputDriver, tmpFileName.c_str(), hMemDS1, FALSE, papszOptions, NULL, NULL );
+  CDBDebug("Copying destinationGDALDataSet to hOutputDriver");
+  hOutputDS = GDALCreateCopy( hOutputDriver, tmpFileName.c_str(), destinationGDALDataSet, FALSE, papszOptions, NULL, NULL );
   CDBDebug("GDALCreateCopy completed");
   if( hOutputDS == NULL ){
     CDBError("WriteGDALRaster: Failed to create output file:<br>\n\"%s\"",tmpFileName.c_str());
     CDBError("LastErrorMsg: %s",CPLGetLastErrorMsg());
-    GDALClose( hMemDS1 );
+    GDALClose( destinationGDALDataSet );
     return 1;
   }
   CSLDestroy( papszOptions );
 
   GDALClose( hOutputDS );
-  GDALClose( hMemDS1 );
-  GDALClose( hMemDS2 );
+  GDALClose( destinationGDALDataSet );
+//   GDALClose( destinationGDALDataSet );
 
   // Output the file to stdout
   

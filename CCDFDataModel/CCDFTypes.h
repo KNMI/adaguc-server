@@ -87,6 +87,7 @@ namespace CDF{
   //Destdata must be a pointer to an empty array with non-void type
   class DataCopier{
     private:
+      
     template <class T>
     static int copy(T *destdata,void *sourcedata,CDFType sourcetype,size_t destinationOffset,size_t sourceOffset,size_t length){
       size_t dsto=destinationOffset;
@@ -105,11 +106,20 @@ namespace CDF{
       if(sourcetype==CDF_DOUBLE)for(size_t t=0;t<length;t++){destdata[t+dsto]=(T)((double*)sourcedata)[t+srco];}
       return 0;
     }
+   
 public:
     template <class T>          
     static int copy(T *destdata,void *sourcedata,CDFType sourcetype,size_t length){
       return copy(destdata,sourcedata,sourcetype,0,0,length);
     }
+     template <class T>    
+    static void _fill(T *data,double value,size_t size){
+      for(size_t j=0;j<size;j++){
+        data[j]=value;
+      }
+    }
+    
+
 
     //Deprectated?
     //static int copy(void *destdata,void *sourcedata,CDFType sourcetype,size_t destinationOffset,size_t sourceOffset,size_t length);
@@ -117,6 +127,9 @@ public:
     static int copy(void *destdata,CDFType destType,void *sourcedata,CDFType sourcetype,size_t destinationOffset,size_t sourceOffset,size_t length);
     
   };
+  
+  int fill(void *destdata,CDFType destType,double value,size_t size);
+  
   /*dataCopier.copy function should do the job...*/
  // static DataCopier dataCopier;
 

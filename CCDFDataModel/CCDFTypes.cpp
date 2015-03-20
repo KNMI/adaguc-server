@@ -150,7 +150,27 @@ int CDF::DataCopier::copy(void *destdata,CDFType destType,void *sourcedata,CDFTy
   }
   return 0;
 }
-
+  
+  
+int CDF::fill(void *destdata,CDFType destType,double value,size_t size){
+  if(destType==CDF_STRING){
+    return 1;
+  }
+  switch(destType){
+    case CDF_CHAR:DataCopier::_fill((char*)destdata,value,size);break;
+    case CDF_BYTE:DataCopier::_fill((char*)destdata,value,size);break;
+    case CDF_UBYTE:DataCopier::_fill((unsigned char*)destdata,value,size);break;
+    case CDF_SHORT:DataCopier::_fill((short*)destdata,value,size);break;
+    case CDF_USHORT:DataCopier::_fill((unsigned short*)destdata,value,size);break;
+    case CDF_INT:DataCopier::_fill((int*)destdata,value,size);break;
+    case CDF_UINT:DataCopier::_fill((unsigned int*)destdata,value,size);break;
+    case CDF_FLOAT:DataCopier::_fill((float*)destdata,value,size);break;
+    case CDF_DOUBLE:DataCopier::_fill((double*)destdata,value,size);break;
+    default:return 1;
+  }
+  return 0;
+  
+}
 /*
 int CDF::DataCopier::copy(void *destdata,void *sourcedata,CDFType sourcetype,size_t destinationOffset,size_t sourceOffset,size_t length){
   if(sourcetype==CDF_STRING){
