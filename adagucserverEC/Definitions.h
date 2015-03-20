@@ -26,7 +26,7 @@
 #ifndef Definitions_H
 #define Definitions_H
 
-#define ADAGUCSERVER_VERSION             "1.7"
+#define ADAGUCSERVER_VERSION             "1.8"
 
 //CConfigReaderLayerType
 #define CConfigReaderLayerTypeUnknown     0
@@ -55,7 +55,7 @@
 
 //Legend
 #define LEGEND_WIDTH                      300
-#define LEGEND_HEIGHT                     600
+#define LEGEND_HEIGHT                     400
 
 //WMS versions
 #define WMS_VERSION_1_0_0                 1
