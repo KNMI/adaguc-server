@@ -380,81 +380,8 @@ int  CGDALDataWriter::end(){
     return 1;
   }
   oSRS.exportToWkt( &pszDstWKT );
-  //hMemDS1 = destinationGDALDataSet;
-  //CDBDebug("Check");
-  // Create the output file.
-//   hMemDS1 = GDALCreate( hMemDriver1,"memory_dataset_1",srvParam->Geo->dWidth,srvParam->Geo->dHeight,NrOfBands,eDT,NULL );
-//   if( hMemDS1 == NULL ){CDBError("Failed to create GDAL MEM dataset.");return 1;}
-// 
-//   if(_dataSource->getDataObject(0)->hasNodataValue==1){
-//     dfNoData=_dataSource->getDataObject(0)->dfNodataValue;
-//     for(int j=0;j<NrOfBands;j++){
-//       GDALRasterBandH hDstcBand = GDALGetRasterBand( hMemDS1,j+1 );
-//       GDALSetRasterNoDataValue(hDstcBand, dfNoData);
-//     }
-//   }
-// 
-//   GDALSetProjection( hMemDS1, pszDstWKT );
-//   GDALSetGeoTransform( hMemDS1, adfDstGeoTransform );
-//   //CDBDebug("Check");
-//   GDALWarpOptions *psWarpOptions = GDALCreateWarpOptions();
-//   psWarpOptions->hSrcDS = destinationGDALDataSet;
-//   psWarpOptions->hDstDS = hMemDS1;
-//   psWarpOptions->nBandCount = NrOfBands;
-//   psWarpOptions->panSrcBands =
-//       (int *) CPLMalloc(sizeof(int) * psWarpOptions->nBandCount );
-//   for(int j=0;j<NrOfBands;j++)psWarpOptions->panSrcBands[j] = j+1;
-//   psWarpOptions->panDstBands =
-//       (int *) CPLMalloc(sizeof(int) * psWarpOptions->nBandCount );
-//   for(int j=0;j<NrOfBands;j++)psWarpOptions->panDstBands[j] = j+1;
-//   //CDBDebug("Check");
-//   //CDBDebug("END");
-//   // nodata
-//   //printf("<br>Nodata=[%f]<br>\n",dfNoData);
-//   psWarpOptions->padfSrcNoDataReal =
-//       (double *) CPLMalloc(sizeof(double) * psWarpOptions->nBandCount );
-//   for(int j=0;j<NrOfBands;j++)psWarpOptions->padfSrcNoDataReal[j] = dfNoData;
-//   psWarpOptions->padfDstNoDataReal =
-//       (double *) CPLMalloc(sizeof(double) * psWarpOptions->nBandCount );
-//   for(int j=0;j<NrOfBands;j++)psWarpOptions->padfDstNoDataReal[j] = dfNoData;
-//   //CDBDebug("Check");
-//   psWarpOptions->padfSrcNoDataImag =
-//       (double *) CPLMalloc(sizeof(double) * psWarpOptions->nBandCount );
-//   for(int j=0;j<NrOfBands;j++)psWarpOptions->padfSrcNoDataImag[j] = 0.0f;
-//   psWarpOptions->padfDstNoDataImag =
-//       (double *) CPLMalloc(sizeof(double) * psWarpOptions->nBandCount );
-//   for(int j=0;j<NrOfBands;j++)psWarpOptions->padfDstNoDataImag[j] = 0.0;
-// 
-//   char **papszWarpOptions = NULL;
-//   papszWarpOptions = CSLSetNameValue(papszWarpOptions,"INIT_DEST","NO_DATA");
-//   psWarpOptions->papszWarpOptions=papszWarpOptions;
-//  // Establish reprojection transformer.
-//   //CDBDebug("Check");
-//   psWarpOptions->pTransformerArg =  GDALCreateGenImgProjTransformer( destinationGDALDataSet,
-//       GDALGetProjectionRef(destinationGDALDataSet),
-//       hMemDS1,
-//       GDALGetProjectionRef(hMemDS1),
-//       FALSE, 0.0, 1 );
-// 
-//   //CDBDebug("Check");
-//   psWarpOptions->pfnTransformer = GDALGenImgProjTransform;
-//   psWarpOptions->dfWarpMemoryLimit = 1147483647.0f;
-//   GDALSetCacheMax(1147483647);
-//   // Initialize and execute the warp operation.
-//   GDALWarpOperation oOperation;
-// 
-//   oOperation.Initialize( psWarpOptions );
-//   CDBDebug("start GDAL ChunkAndWarpImage");
-//   /*oOperation.ChunkAndWarpImage( 0, 0,
-//                                 GDALGetRasterXSize( hMemDS1 ),
-//   GDALGetRasterYSize( hMemDS1 ) );*/
-//   oOperation.ChunkAndWarpImage( 0, 0,
-//                                 GDALGetRasterXSize( hMemDS1 ),
-//                                 GDALGetRasterYSize( hMemDS1 ) );
-//   GDALDestroyGenImgProjTransformer( psWarpOptions->pTransformerArg );
-//   GDALDestroyWarpOptions( psWarpOptions );
-//   CDBDebug("Completed ChunkAndWarpImage");
-  // Set metadata for hMemDS1
+ 
+  // Set metadata 
   char **papszMetadata = NULL;
   for(size_t j=0;j<metaDataList.size();j++){
     CT::string *attrib = metaDataList[j]->splitToArray(">");
@@ -491,23 +418,12 @@ int  CGDALDataWriter::end(){
         snprintf(szTemp,MAX_STR_LEN,"DIMENSION#time");
         snprintf(szTemp2,MAX_STR_LEN,"%f",offset);
         papszMetadata = CSLSetNameValue(papszMetadata,szTemp,szTemp2);
-
       }catch(int e){
         snprintf(szTemp,MAX_STR_LEN,"DIMENSION#time");
         snprintf(szTemp2,MAX_STR_LEN,"%s",Times[b].c_str());
         papszMetadata = CSLSetNameValue(papszMetadata,szTemp,szTemp2);
       }
-      /*int status=ADTime->ISOTimeToOffset(offset,Times[b].c_str());
-      if(status==0){
-        snprintf(szTemp,MAX_STR_LEN,"DIMENSION#time");
-        snprintf(szTemp2,MAX_STR_LEN,"%f",offset);
-        papszMetadata = CSLSetNameValue(papszMetadata,szTemp,szTemp2);
-      }else{
-        snprintf(szTemp,MAX_STR_LEN,"DIMENSION#time");
-        snprintf(szTemp2,MAX_STR_LEN,"%s",Times[b].c_str());
-        papszMetadata = CSLSetNameValue(papszMetadata,szTemp,szTemp2);
-      }
-      delete ADTime;*/
+
 
       snprintf(szTemp,MAX_STR_LEN,"UNITS#time");
       snprintf(szTemp2,MAX_STR_LEN,"%s",TimeUnit.c_str());
