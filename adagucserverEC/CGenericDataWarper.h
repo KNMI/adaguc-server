@@ -119,13 +119,13 @@ class GenericDataWarper{
     }
 
     double dfSourceExtW=(sourceGeoParams->dfBBOX[2]-sourceGeoParams->dfBBOX[0]);
-    double dfSourceExtH=(sourceGeoParams->dfBBOX[1]-sourceGeoParams->dfBBOX[3]);
+    double dfSourceExtH=(sourceGeoParams->dfBBOX[3]-sourceGeoParams->dfBBOX[1]);
     double dfSourceW = double(sourceGeoParams->dWidth);
     double dfSourceH = double(sourceGeoParams->dHeight);
     double dfSourcedExtW=dfSourceExtW/dfSourceW;
     double dfSourcedExtH=dfSourceExtH/dfSourceH;
     double dfSourceOrigX=sourceGeoParams->dfBBOX[0];
-    double dfSourceOrigY=sourceGeoParams->dfBBOX[3];
+    double dfSourceOrigY=sourceGeoParams->dfBBOX[1];
     
     double dfDestExtW = destGeoParams->dfBBOX[2]-destGeoParams->dfBBOX[0];
     double dfDestExtH = destGeoParams->dfBBOX[1]-destGeoParams->dfBBOX[3];
@@ -229,7 +229,7 @@ class GenericDataWarper{
           }
 
           if(doDraw){
-            T value = ((T*)sourceData)[x+y*dataWidth];
+            T value = ((T*)sourceData)[x+(dataHeight-1-y)*dataWidth];
             double mX = (px1+px2+px3+px4)/4;
             double mY = (py1+py2+py3+py4)/4;
             int xP[3];
