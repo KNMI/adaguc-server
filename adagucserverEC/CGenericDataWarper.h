@@ -101,7 +101,7 @@ class GenericDataWarper{
       int sy = (Y1<0)?0:Y1;
       int ey = (Y2>H)?H:Y2;
       
-      for(int y=sy;y<ey;y++){
+      for(int y=sy;y<=ey;y++){
         int xL = (int)(rcl*float(y-Y1)+X1);
         int xA = (int)(rca*float(y-Y1)+X1);
         float vxL = rcvxl*float(y-Y1)+VX1;
@@ -111,12 +111,13 @@ class GenericDataWarper{
         int x1,x2;
         float vx1,vx2,vy1,vy2;
         if(xL<xA){x1=xL;x2=xA;vx1=vxL;vx2=vxA;vy1=vyL;vy2=vyA;}else{x2=xL;x1=xA;vx1=vxA;vx2=vxL;vy1=vyA;vy2=vyL;}
+       
         if(x1<W&&x2>0){
           int sx = (x1<0)?0:x1;
           int ex = (x2>W)?W:x2;
           float rcxvx = float(vx2-vx1)/float(x2-x1);
           float rcxvy = float(vy2-vy1)/float(x2-x1);
-          for(int x=sx;x<ex;x++){
+          for(int x=sx;x<=ex;x++){
             int vx = int(rcxvx*float(x-x1)+vx1);
             int vy = int(rcxvy*float(x-x1)+vy1);
             if(vx>=0&&vy>=0&&vx<sourceWidth+1&&vy<sourceHeight){
@@ -135,11 +136,11 @@ class GenericDataWarper{
       int sy = (Y2<0)?0:Y2;
       int ey = (Y3>H)?H:Y3;
       
-      for(int y=sy;y<ey;y++){
+      for(int y=sy;y<=ey;y++){
         
      
-        int xL = (int)(rcl*float(y-Y1)+X1);
-        int xB = (int)(rcb*float(y-Y2)+X2);
+        int xL = floor(rcl*float(y-Y1)+X1);
+        int xB = floor(rcb*float(y-Y2)+X2);
         float vxL = rcvxl*float(y-Y1)+VX1;
         float vxB = rcvxb*float(y-Y2)+VX2;
         float vyL = rcvyl*float(y-Y1)+VY1;
@@ -147,17 +148,20 @@ class GenericDataWarper{
         int x1,x2;
         float vx1,vx2,vy1,vy2;
         if(xL<=xB){x1=xL;x2=xB;vx1=vxL;vx2=vxB;vy1=vyL;vy2=vyB;}else{x2=xL;x1=xB;vx1=vxB;vx2=vxL;vy1=vyB;vy2=vyL;}
+
+        //if(xL<=xB)
         if(x1<W&&x2>0){
           int sx = (x1<0)?0:x1;
           int ex = (x2>W)?W:x2;
           float rcxvx = float(vx2-vx1)/float(x2-x1);
           float rcxvy = float(vy2-vy1)/float(x2-x1);
           
-          for(int x=sx;x<ex;x++){
-            int vx = int(rcxvx*float(x-x1)+vx1);
-            int vy = int(rcxvy*float(x-x1)+vy1);
+          for(int x=sx;x<=ex;x++){
+            int vx = floor(rcxvx*float(x-x1)+vx1);
+            int vy = floor(rcxvy*float(x-x1)+vy1);
             if(vx>=0&&vy>=0&&vx<sourceWidth+1&&vy<sourceHeight){
-              drawFunction(x,y,data[vx+vy*sourceWidth],settings);
+             //drawFunction(x,y,data[vx+int((destHeight-1-y)/1.121276975)*sourceWidth],settings);
+             drawFunction(x,y,data[vx+vy*sourceWidth],settings);
             }
           }
         } 
@@ -279,8 +283,8 @@ class GenericDataWarper{
       for(int y=0;y<dataHeight+1;y++){
         for(int x=0;x<dataWidth+1;x++){
           size_t p = x+y*(dataWidth+1);
-          px[p] =dfSourcedExtW*double(x*stride)+dfSourceOrigX;
-          py[p] =dfSourcedExtH*double(y*stride)+dfSourceOrigY;
+          px[p] =dfSourcedExtW*double(x*stride)+dfSourceOrigX+dfCellSizeX/2.0;
+          py[p] =dfSourcedExtH*double(y*stride)+dfSourceOrigY+dfCellSizeY/2.0;
           skip[p] = false;
         }
       }
@@ -514,7 +518,7 @@ class GenericDataWarper{
               yP[0] = py1;
               yP[1] = py2;
               yP[2] = mY;
-              
+              //drawFunction(px1,py1,((T*)sourceData)[x+y*dataWidth],drawFunctionSettings);
 
 
                 size_t xs[3],ys[3];
@@ -524,26 +528,26 @@ class GenericDataWarper{
                 ys[0]=y*stride;
                 ys[1]=y*stride;
                 ys[2]=y*stride+stride/2;
-                drawTriangle<T>( xP,yP,sourceData,sourceWidth,sourceHeight,xs,ys,imageWidth,imageHeight,drawFunctionSettings,drawFunction);
+                 drawTriangle<T>( xP,yP,sourceData,sourceWidth,sourceHeight,xs,ys,imageWidth,imageHeight,drawFunctionSettings,drawFunction);
                 
                 xP[0] = px3;
                 yP[0] = py3;
                 xs[0]=x*stride+stride;
                 ys[0]=y*stride+stride;
-                drawTriangle<T>( xP,yP,sourceData,sourceWidth,sourceHeight,xs,ys,imageWidth,imageHeight,drawFunctionSettings,drawFunction);
+                 drawTriangle<T>( xP,yP,sourceData,sourceWidth,sourceHeight,xs,ys,imageWidth,imageHeight,drawFunctionSettings,drawFunction);
 
                 xP[1]=px4;
                 yP[1]=py4;
                 xs[1]=x*stride;
                 ys[1]=y*stride+stride;
 
-                drawTriangle<T>( xP,yP,sourceData,sourceWidth,sourceHeight,xs,ys,imageWidth,imageHeight,drawFunctionSettings,drawFunction);
+                 drawTriangle<T>( xP,yP,sourceData,sourceWidth,sourceHeight,xs,ys,imageWidth,imageHeight,drawFunctionSettings,drawFunction);
 
                 xP[0] = px1;
                 yP[0] = py1;
                 xs[0]=x*stride;
                 ys[0]=y*stride;
-                drawTriangle<T>( xP,yP,sourceData,sourceWidth,sourceHeight,xs,ys,imageWidth,imageHeight,drawFunctionSettings,drawFunction);
+                 drawTriangle<T>( xP,yP,sourceData,sourceWidth,sourceHeight,xs,ys,imageWidth,imageHeight,drawFunctionSettings,drawFunction);
               }
             }
           }
