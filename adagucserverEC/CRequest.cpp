@@ -33,7 +33,6 @@ int CRequest::CGI=0;
 
 //Entry point for all runs
 int CRequest::runRequest(){
-  
   int status=process_querystring();
   CDFObjectStore::getCDFObjectStore()->clear();
   CDFStore::clear();
@@ -1772,6 +1771,7 @@ return 0;
 }
 
 int CRequest::process_querystring(){
+ 
   #ifdef MEASURETIME
   StopWatch_Stop("Start processing query string");
   #endif
@@ -3080,7 +3080,6 @@ int CRequest::process_querystring(){
           }
           srvParam->dWCS_RES_OR_WH = 0;
         }else if(dFound_Width==0||dFound_Height==0){
-            CDBDebug("NOWH");
           if(dFound_RESX==0){
             CDBWarning("ADAGUC Server: Parameter RESX missing");
             dErrorOccured=1;
@@ -3117,6 +3116,9 @@ int CRequest::process_querystring(){
           CDBError("WCS GetCoverage Request failed");
           return 1;
         }
+      }
+      if(dErrorOccured!=0){
+        return 1;
       }
       return 0;
     }

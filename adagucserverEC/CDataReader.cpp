@@ -233,9 +233,9 @@ class Proc{
   template <class T>
   static void _swapPixelsAtLocation(CDataSource *dataSource,CDF::Variable *variable,int mode){
     
-    
+#ifdef CDATAREADER_DEBUG    
       CDBDebug("Applying LON warp to -180 till 180 on the original data");
-      
+#endif      
     
       dataSource->dWidth=int(360.0/dataSource->dfCellSizeX);
       
@@ -246,12 +246,15 @@ class Proc{
       
       dataSource->dfBBOX[0] = left;
       dataSource->dfBBOX[2] = right;
+      #ifdef CDATAREADER_DEBUG
       CDBDebug("Old bbox = %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[2]);
+#endif
       while( dataSource->dfBBOX[0]>-180){dataSource->dfBBOX[0]-=dataSource->dfCellSizeX;}
       while(dataSource->dfBBOX[0]<-180){ dataSource->dfBBOX[0]+=dataSource->dfCellSizeX;}
       dataSource->dfBBOX[2]=dataSource->dfBBOX[0]+360;
+#ifdef CDATAREADER_DEBUG
       CDBDebug("New bbox = %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[2]);
-
+#endif
       
       
 
@@ -267,7 +270,9 @@ class Proc{
     
     double origBBOXWidth = (right - left) ;
     size_t imageSize = size_t(dataSource->dWidth)*size_t(dataSource->dHeight);
+    #ifdef CDATAREADER_DEBUG
     CDBDebug(" Image size = %dx%d", dataSource->dWidth,dataSource->dHeight);
+#endif
     if(imageSize==0)imageSize=1;
     if(variable->data == NULL)return;
     
@@ -287,9 +292,7 @@ class Proc{
       data[j]=(T)dataSource->getDataObject(0)->dfNodataValue;
     }
     
-    CDBDebug("origWidth = %d",dataSource->dOrigWidth);
     
-    CDBDebug("Start");
     for(int y=0;y<dataSource->dHeight;y++){
       for(int x=0;x<dataSource->dOrigWidth;x=x+1){
         double lonX=((double(x)/double(dataSource->dOrigWidth))*origBBOXWidth)+left;
@@ -303,9 +306,11 @@ class Proc{
         }
       }
     }
+#ifdef CDATAREADER_DEBUG
     CDBDebug("Done");
+#endif
     delete[] tempData;
-    CDBDebug("Ok");
+    
     dataSource->lonTransformDone = true;
   }
 };
@@ -912,91 +917,21 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
     #endif
 
    
-    dataSource->nrMetadataItems=0;
-    char szTemp[MAX_STR_LEN+1];
-    // Find out how many attributes we have
-    dataSource->nrMetadataItems=cdfObject->attributes.size();
-    //CDBDebug("NC_GLOBAL: %d",dataSource->nrMetadataItems);
-    for(size_t i=0;i<cdfObject->variables.size();i++){
-      dataSource->nrMetadataItems+=cdfObject->variables[i]->attributes.size();
-      //CDBDebug("%s: %d",cdfObject->variables[i]->name.c_str(),cdfObject->variables[i]->attributes.size());
-    }
-    //Allocate data for the attributes
-    if(dataSource->metaData != NULL)delete[] dataSource->metaData;
-    dataSource->metaData = new CT::string[dataSource->nrMetadataItems+1];
-    // Loop through each variable
-    int nrAttributes = 0;
     CT::string *variableName;
-    CT::string AttrValue;
-    std::vector<CDF::Attribute *> attributes;
-    char szType[3];
+    std::vector<CDF::Attribute *> *attributes;
+    
     for(size_t i=0;i<cdfObject->variables.size()+1;i++){
       if(i==0){
-        attributes=cdfObject->attributes;
+        attributes=&cdfObject->attributes;
         variableName=&cdfObject->name;
       }else {
-        attributes=cdfObject->variables[i-1]->attributes;
+        attributes=&cdfObject->variables[i-1]->attributes;
         variableName=&cdfObject->variables[i-1]->name;
       }
-
-      // Loop through each attribute
-      szType[1]='\0';
-      for(size_t j=0;j<attributes.size();j++){
+      for(size_t j=0;j<attributes->size();j++){
         CDF::Attribute *attribute;
-        size_t m;
-        attribute=attributes[j];
-        szType[1]='\0';
-        AttrValue.copy("");
-        switch (attribute->getType()){
-          case CDF_CHAR:{
-            szType[0]='C';//char
-            AttrValue.copy((char*)attribute->data);
-          }
-          break;
-          case CDF_SHORT:{
-            szType[0]='S';//short
-            for(m=0; m < attribute->length-1; m++) {
-              snprintf( szTemp, MAX_STR_LEN,"%d, ",((short*)attribute->data)[m] );
-              AttrValue.concat(szTemp);
-            }
-            snprintf( szTemp, MAX_STR_LEN,"%d",((short*)attribute->data)[m]);
-            AttrValue.concat(szTemp);
-          }
-          break;
-          case CDF_INT:{
-            szType[0]='I';//Int
-            for(m=0; m < attribute->length-1; m++) {
-              snprintf( szTemp, MAX_STR_LEN,"%d, ",((int*)attribute->data)[m] );
-              AttrValue.concat(szTemp);
-            }
-            snprintf( szTemp, MAX_STR_LEN,"%d",((int*)attribute->data)[m]);
-            AttrValue.concat(szTemp);
-          }
-          break;
-          case CDF_FLOAT:{
-            szType[0]='F';//Float
-            for(m=0; m < attribute->length-1; m++) {
-              snprintf( szTemp, MAX_STR_LEN,"%f, ",((float*)attribute->data)[m] );
-              AttrValue.concat(szTemp);
-            }
-            snprintf( szTemp, MAX_STR_LEN,"%f",((float*)attribute->data)[m]);
-            AttrValue.concat(szTemp);
-          }
-          break;
-          case CDF_DOUBLE:{
-            szType[0]='D';//Double
-            for(m=0; m < attribute->length-1; m++) {
-              snprintf( szTemp, MAX_STR_LEN,"%f, ",((double*)attribute->data)[m] );
-              AttrValue.concat(szTemp);
-            }
-            snprintf( szTemp, MAX_STR_LEN,"%f",((double*)attribute->data)[m]);
-            AttrValue.concat(szTemp);
-          }
-          break;
-        }
-        snprintf(szTemp,MAX_STR_LEN,"%s#[%s]%s>%s",variableName->c_str(),szType,attribute->name.c_str(),AttrValue.c_str());
-        //CDBDebug("variableName %d==%d %s",nrAttributes,dataSource->nrMetadataItems,szTemp);
-        dataSource->metaData[nrAttributes++].copy(szTemp);
+        attribute=(*attributes)[j];
+        dataSource->metaDataItems.push_back(CDataSource::KVP(variableName->c_str(),attribute->name.c_str(),attribute->toString().c_str()));
       }
     }
     #ifdef CDATAREADER_DEBUG

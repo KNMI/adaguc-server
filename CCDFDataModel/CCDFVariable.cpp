@@ -51,7 +51,10 @@ int CDF::Variable::readData(CDFType readType,bool applyScaleOffset){
  */
 int CDF::Variable::readData(CDFType readType,size_t *_start,size_t *_count,ptrdiff_t *_stride,bool applyScaleOffset){
   
- if(data!=NULL&&currentType!=readType){freeData();}
+ if(data!=NULL&&currentType!=readType){
+   CDBDebug("CDF::Variable::readData freeing data");
+   freeData();
+  }
  if(data!=NULL){
 #ifdef CCDFDATAMODEL_DEBUG            
      CDBDebug("Data is already defined");
@@ -309,7 +312,10 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
 }
 
  void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar,const char *dimName){
-   //CDBDebug("[setCDFObjectDim]");
+  
+    #ifdef CCDFDATAMODEL_DEBUG    
+  CDBDebug("[setCDFObjectDim for %s %s]",sourceVar->name.c_str(),dimName);
+#endif
   //if(sourceVar->isDimension)return;
   CDFObject *sourceCDFObject=(CDFObject*)sourceVar->getParentCDFObject();
   std::vector<Dimension *> &srcDims=sourceVar->dimensionlinks;
@@ -344,164 +350,88 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
     srcDimVar = sourceCDFObject->getVariable(iterativeDim->name.c_str());
   }catch(int e){CDBError("Variable [%s] not found in source CDFObject",iterativeDim->name.c_str());throw(e);}
   
-
-  
-  
   if(srcDimVar->data==NULL){
     srcDimVar->readData(currentType);
   }
-  if(srcDimVar->getSize()!=1){
-    CDBError("srcDimVar->getSize()==%d",srcDimVar->getSize());
-    throw("__LINE__");
-  }
-  
-  
-  
-  double srcDimValue=srcDimVar->getDataAt<double>(0);
-  
-  //CDBDebug("Source dim read, TimeValue = %f",srcDimValue);
-  
-  //Check wether we already have this cdfobject dimension combo in our list
-  int foundCDFObject = -1;
-  for(size_t j=0;j<cdfObjectList.size();j++){
-    //CDBDebug("%f==%f",cdfObjectList[j]->dimValue,srcDimValue);
-    if(cdfObjectList[j]->dimValue==srcDimValue){foundCDFObject=j;break;}
-  }
-  if(foundCDFObject!=-1){
-    CDBDebug("Found existing cdfObject %d",foundCDFObject);
-  }else{
-    //CDBDebug("cdfObjectList.push_back(new CDFObjectClass()) for variable %s size= %d",name.c_str(),cdfObjectList.size());
-    CDFObjectClass *c=new CDFObjectClass();
-    c->dimValue=srcDimValue;
-    c->dimIndex=0;
-    c->cdfObjectPointer=sourceVar->getParentCDFObject();
-    cdfObjectList.push_back(c);
-  }
-  int foundDimValue = -1;
-  
+   #ifdef CCDFDATAMODEL_DEBUG    
+  CDBDebug("=== Found %d steps to add ===",srcDimVar->getSize());
+  #endif
   if(iterativeVar->data==NULL){
-    //Dit gaat van het verkeerde object!
+    #ifdef CCDFDATAMODEL_DEBUG    
+    CDBDebug("READING FIRST ONE ONCE!");
+    #endif
     if(iterativeVar->readData(currentType)!=0){
       throw(0);
     }
   }
 
-  for(size_t j=0;j<iterativeDim->getSize();j++){
-    //CDBDebug("%f==%f",cdfObjectList[j]->dimValue,srcDimValue);
-     //CDBDebug("3 %d ------------------ %f == %f",j,((double*)iterativeVar->data)[j],srcDimValue);
-    if(((double*)iterativeVar->data)[j]==srcDimValue){foundDimValue=j;break;}
-  }
-  
-  if(foundDimValue == -1){
-    //Extend the concerning dimension
-    size_t currentDimSize=iterativeDim->getSize();
-    //if(currentDimSize!=cdfObjectList.size()){
-//      CDBError("currentDimSize!=cdfObjectList.getSize()-1: %d %d",currentDimSize,cdfObjectList.size());throw(__LINE__);
-  //  }
-    void *dstData = NULL;
-    void *srcData = NULL;
-    int status = 0;
-    status = CDF::allocateData(currentType,&dstData,currentDimSize+1);
-    if(status!=0){
-      CDBError("Unable to allocate data");
-      throw("__LINE__");
-    }
-    status = CDF::allocateData(currentType,&srcData,1);
-    if(status!=0){
-      CDBError("Unable to allocate data");  
-      throw("__LINE__");
+  for(size_t indimsize = 0;indimsize<srcDimVar->getSize();indimsize++){
+    double srcDimValue=srcDimVar->getDataAt<double>(indimsize);
+    #ifdef CCDFDATAMODEL_DEBUG    
+    CDBDebug("Itereating %d/%d = %f",indimsize,srcDimVar->getSize(),srcDimValue);  
+    #endif
+    
+    int foundDimValue = -1;
+    size_t dimSize = iterativeDim->getSize();
+    for(size_t _j=0;_j<dimSize;_j++){
+      size_t j=_j;//(dimSize-1)-_j;
+      #ifdef CCDFDATAMODEL_DEBUG    
+      CDBDebug("%d/%d : %f = %f",j,iterativeDim->getSize(),((double*)iterativeVar->data)[j],srcDimValue);
+#endif
+      if(((double*)iterativeVar->data)[j]==srcDimValue){foundDimValue=j;break;}
     }
     
-     DataCopier::copy(srcData,currentType,srcDimVar->data,currentType,0,0,1);
-    //srcDimVar->getData(srcData,1);
-#ifdef CCDFDATAMODEL_DEBUG             
-    CDBDebug("Read data for %s = %f",srcDimVar->name.c_str(),((double*)srcData)[0]);
-#endif    
-  // for(int j=0;j<iterativeDim->getSize();j++){
-    //  CDBDebug("1 %d------------------ %f",((double*)iterativeVar->data)[j]);
-    //}
+    //Check wether we already have this cdfobject dimension combo in our list
+    int foundCDFObject = -1;
+    for(size_t j=0;j<cdfObjectList.size();j++){
+      //CDBDebug("%f==%f",cdfObjectList[j]->dimValue,srcDimValue);
+      if(cdfObjectList[j]->dimValue==srcDimValue){foundCDFObject=j;break;}
+    }
+    if(foundCDFObject!=-1){
+      CDBDebug("Found existing cdfObject %d",foundCDFObject);
+    }else{
+        #ifdef CCDFDATAMODEL_DEBUG    
+      CDBDebug("cdfObjectList.push_back(new CDFObjectClass()) for variable %s size= %d",name.c_str(),cdfObjectList.size());
+#endif
+      CDFObjectClass *c=new CDFObjectClass();
+      c->dimValue=srcDimValue;
+      c->dimIndex=indimsize;
+      c->cdfObjectPointer=sourceVar->getParentCDFObject();
+      cdfObjectList.push_back(c);
+    }
     
-//         for(int j=0;j<currentDimSize;j++){
-//       CDBDebug("A TimeValue %d = %f",j,((double*)iterativeVar->data)[j]);
-//     }
+    if(sourceVar->name.equals(dimName) == true){
+      if(foundDimValue == -1){
+        #ifdef CCDFDATAMODEL_DEBUG    
+        CDBDebug("ADding value %f",srcDimValue);
+  #endif
+        
 
-    DataCopier::copy(dstData,currentType,iterativeVar->data,currentType,0,0,currentDimSize);
-    DataCopier::copy(dstData,currentType,srcData,currentType,currentDimSize,0,1);
-    
-//     for(int j=0;j<
-//       currentDimSize+1;j++){
-//       CDBDebug("B TimeValue %d = %f",j,((double*)dstData)[j]);
-//     }
-    
-    iterativeVar->freeData();
-    iterativeVar->data=dstData;
-    iterativeDim->setSize(currentDimSize+1);
-    iterativeVar->setSize(currentDimSize+1);
-    CDF::freeData(&srcData);
-#ifdef CCDFDATAMODEL_DEBUG            
-    CDBDebug("iterativeDim %d",iterativeDim->getSize());
-#endif    
+        //Extend the concerning dimension
+        size_t currentDimSize=iterativeDim->getSize();
+        //CDBDebug("Currentdimsize = %d",currentDimSize);
+        void *dstData = NULL;
+        int status = 0;
+        status = CDF::allocateData(currentType,&dstData,currentDimSize+1);
+        if(status!=0){
+          CDBError("Unable to allocate data");
+          throw("__LINE__");
+        }
+        DataCopier::copy(dstData,currentType,iterativeVar->data,currentType,0,0,currentDimSize);
+        DataCopier::copy(dstData,currentType,&srcDimValue,currentType,currentDimSize,0,1);
+        iterativeVar->freeData();
+        iterativeVar->data=dstData;
+        iterativeDim->setSize(currentDimSize+1);
+        iterativeVar->setSize(currentDimSize+1);
+    #ifdef CCDFDATAMODEL_DEBUG            
+        CDBDebug("New iterativeDim size %d",iterativeDim->getSize());
+    #endif    
+      }/*else{
+        CDBError("For dimension %s, time value %f is already defined, skipping!",dimName,srcDimValue);
+      }*/
+    }
+  
   }
-  
-  
-  /*for(size_t j=0;j<dimensions->size();j++){
-    if(dimensionlinks[j]->isIterative){
-      Variable *srcVar,*dstVar ;
-      try{srcVar = ((CDFObject *)sourceCDFObject)->getVariable(dimensionlinks[j]->name.c_str());}catch(int e){
-        CDBError("Variable [%s] not found in source CDFObject",dimensionlinks[j]->name.c_str());throw(e);
-      }
-      try{dstVar = ((CDFObject *)getParentCDFObject())->getVariable(dimensionlinks[j]->name.c_str());}catch(int e){
-        CDBError("Variable [%s] not found in destination CDFObject",dimensionlinks[j]->name.c_str());throw(e);
-      }
-      if(srcVar->data==NULL){CDBError("source dimension data not available");throw(CDF_E_ERROR);}
-      if(dstVar->data==NULL){CDBError("destination dimension data not available");throw(CDF_E_ERROR);}
-      size_t srcSize=(*dimensions)[j]->getSize();
-      size_t dstSize=dimensionlinks[j]->getSize();
-      double *srcData = new double[srcSize];
-      double *dstData = new double[dstSize];
-      int *foundSrcData = new int[srcSize];
-      DataCopier::copy(srcData,srcVar->data,srcVar->type,srcSize);
-      DataCopier::copy(dstData,dstVar->data,dstVar->type,dstSize);
-      
-      //Create Lookup 
-      for(size_t h=0;h<srcSize;h++)foundSrcData[h]=0;
-      try{
-        for(size_t i=0;i<dstSize;i++){        
-          for(size_t h=0;h<srcSize;h++){
-            if(dstData[i]==srcData[h]){
-              if(foundSrcData[h]==1){
-                CDBError("CDFReader is already set for this dimension value!");
-                throw(CDF_E_ERROR);
-              }
-              //printf("%f - %f\n",dstData[i],srcData[h]);
-              //TODO Currently is i the correct CDFreader, but this will not be the case when using aggregation along multiple dims.
-              //printf("%d - %d\n",i,h);
-              CDBDebug("FOUND! %d == %d",i,cdfObjectList.size());
-              //cdfObjectList[i].dimIndex=i;
-              //cdfObjectList[i].cdfObjectPointer=sourceCDFObject;
-              foundSrcData[h]=1;
-            }
-          }
-        }
-        //Check if all input dims were found...
-        for(size_t h=0;h<srcSize;h++)if(foundSrcData[h]==0){
-          CDBError("Source Dimension index not found in any of the destination dims");
-          throw(CDF_E_ERROR);
-        }
-        throw(0);
-      }
-      catch(int e){
-        delete[] foundSrcData;
-        delete[] srcData;
-        delete[] dstData;
-        if(e!=0)throw(e);
-      }
-    }*/
-    
-    
-    
-  //  printf("%s %d - %s %d\n",(*dimensions)[j]->name.c_str(),(*dimensions)[j]->getSize(),dimensionlinks[j]->name.c_str(),dimensionlinks[j]->getSize());
-  //}
 
 
 }

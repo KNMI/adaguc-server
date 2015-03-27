@@ -44,7 +44,7 @@ class CDFNetCDFReader :public CDFReader{
   static void ncError(int line, const char *className, const char * msg,int e);  
     
   //CCDFWarper warper;
-  CDFType typeConversion(nc_type type);
+  static CDFType typeConversion(nc_type type);
   DEF_ERRORFUNCTION();
   int status,root_id;
   int nDims,nVars,nRootAttributes,unlimDimIdP;    
@@ -72,7 +72,8 @@ class CDFNetCDFReader :public CDFReader{
 class CDFNetCDFWriter{
   private:
     static void ncError(int line, const char *className, const char * msg,int e);  
-    nc_type NCtypeConversion(CDFType  type){
+public:
+    static nc_type NCtypeConversion(CDFType  type){
       if(type==CDF_BYTE)return NC_BYTE;
       if(type==CDF_UBYTE)return NC_UBYTE;
       if(type==CDF_CHAR)return NC_CHAR;
@@ -85,7 +86,7 @@ class CDFNetCDFWriter{
       if(type==CDF_STRING)return NC_STRING;
       return NC_DOUBLE;
     }
-    CT::string NCtypeConversionToString(CDFType  type){
+    static CT::string NCtypeConversionToString(CDFType  type){
       CT::string r;
       r="NC_DOUBLE";
       if(type==CDF_BYTE)r="NC_BYTE";
@@ -100,6 +101,7 @@ class CDFNetCDFWriter{
       if(type==CDF_STRING)r="NC_STRING";
       return r;
     }
+private:
     bool writeData;
     bool readData;
     bool listNCCommands;
@@ -155,6 +157,9 @@ class CDFNetCDFWriter{
     }
 
     int write(const char *fileName){
+      return write(fileName,NULL);
+    }
+    int write(const char *fileName,void(*progress)(const char*message,float percentage)){
       NCCommands="";
       if(listNCCommands){
         NCCommands.printconcat("int root_id;\n");
@@ -197,7 +202,7 @@ class CDFNetCDFWriter{
         return 1;
         
       }
-      status = _write();
+      status = _write(progress);
       #ifdef CCDFNETCDFWRITER_DEBUG                        
         CDBDebug("Finished writing to file %s",fileName);
       #endif  
@@ -211,7 +216,7 @@ class CDFNetCDFWriter{
       
       return status;
     }
-    int _write(){
+    int _write(void(*progress)(const char*message,float percentage)){
       #ifdef CCDFNETCDFWRITER_DEBUG                        
         CDBDebug("Writing global attributes");
       #endif  
@@ -526,12 +531,24 @@ class CDFNetCDFWriter{
                   int status = copyVar(variable,nc_var_id,start,count);
                   if(status!=0)return status;
                 }else{
+                   
                   for(size_t id=0;id<variable->dimensionlinks[iterativeDimIndex]->getSize();id++){
-                    //#ifdef CCDFNETCDFWRITER_DEBUG    
-                    CDBDebug("  %d/%d Copying Iterative dim '%s' with index %d/%d for variable %s",nrVarsWritten+1,cdfObject->variables.size(),variable->dimensionlinks[iterativeDimIndex]->name.c_str(),id,variable->dimensionlinks[iterativeDimIndex]->getSize(),variable->name.c_str());
-                    //#endif                 
+                    
+                    CT::string progressMessage;
+                    progressMessage.print("\"%d/%d iterating dim %s with index %d/%d for variable %s\"",nrVarsWritten+1,cdfObject->variables.size(),variable->dimensionlinks[iterativeDimIndex]->name.c_str(),id,variable->dimensionlinks[iterativeDimIndex]->getSize(),variable->name.c_str());
+                    
+                    float varPercentage= float(nrVarsWritten)/float(cdfObject->variables.size());
+                    float dimPercentage = (float(id)/float(variable->dimensionlinks[iterativeDimIndex]->getSize()))/float(cdfObject->variables.size());
+                    float percentage = (varPercentage + dimPercentage)*100;
+                    
+                    #ifdef CCDFNETCDFWRITER_DEBUG    
+                    CDBDebug(progressMessage.c_str());
+                    #endif                 
+                    (*progress)(progressMessage.c_str(),percentage);
                     start[iterativeDimIndex]=id;count[iterativeDimIndex]=1;
+                    
                     int status = copyVar(variable,nc_var_id,start,count);
+                    
                     if(status!=0)return status;
                   }
                 }
@@ -541,6 +558,7 @@ class CDFNetCDFWriter{
                 } 
                 //CDBDebug("DONE!");
               }
+
               nrVarsWritten++;
             }
           }
@@ -564,7 +582,9 @@ class CDFNetCDFWriter{
         }*/
         //TODO should read iterative for iterative dims.
 
-        
+//         for(size_t j=0;j<variable->dimensionlinks.size();j++){
+//           CDBDebug("%s %d %d",variable->dimensionlinks[j]->name.c_str(),start[j],count[j]);
+//         }
         status = variable->readData(variable->currentType,start,count,stride);
         if(status!=0){
           CDBError("Reading of variable %s failed",variable->name.c_str());

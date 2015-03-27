@@ -168,15 +168,15 @@ class GenericDataWarper{
   template <class T>
   static int render(CImageWarper *warper,void *sourceData,CGeoParams*sourceGeoParams,CGeoParams*destGeoParams,void *drawFunctionSettings,void (*drawFunction)(int ,int,T,void *drawFunctionSettings)){
     
-    size_t orgDataSize = sourceGeoParams->dWidth*sourceGeoParams->dHeight;
+    //size_t orgDataSize = sourceGeoParams->dWidth*sourceGeoParams->dHeight;
     bool drawBil = false;
     double stride = 1;
     
-    if(!drawBil){  
-      while(orgDataSize/(stride*stride)>512*1024){
-        stride*=2;
-      }
-    }
+//     if(!drawBil){  
+//       while(orgDataSize/(stride*stride)>512*1024){
+//         stride*=2;
+//       }
+//     }
     
     //stride=100;
     //stride=32;
@@ -240,8 +240,8 @@ class GenericDataWarper{
     double dfDestOrigY = destGeoParams->dfBBOX[3];
 
     
-    double multiDestX = double(imageWidth+1)/dfDestExtW;
-    double multiDestY = double(imageHeight+1)/dfDestExtH;
+    double multiDestX = double(imageWidth)/dfDestExtW;
+    double multiDestY = double(imageHeight)/dfDestExtH;
     
     size_t dataSize = (dataWidth+1) * (dataHeight+1);
 
@@ -313,12 +313,11 @@ class GenericDataWarper{
         py[j]-=dfDestOrigY;
         px[j]*=multiDestX;
         py[j]*=multiDestY;
-        py[j]--;
+        //py[j]--;
       }else{
         skip[j]=true;        
       }
     }
-   
     double avgDX = 0;
     double avgDY = 0;
     
@@ -450,8 +449,8 @@ class GenericDataWarper{
       }*/
     
       
-      int sourceWidth = dataWidth;//sourceGeoParams->dWidth;
-      int sourceHeight = dataHeight;//sourceGeoParams->dHeight;
+      int sourceWidth =sourceGeoParams->dWidth;
+      int sourceHeight = sourceGeoParams->dHeight;
       for(int y=0;y<dataHeight;y++){
         for(int x=0;x<dataWidth;x++){
                   

@@ -51,7 +51,6 @@
 
 #include "CPGSQLDB.h"
 #include "CDataReader.h"
-//#include "CADAGUC_time.h"
 
 #include "CIBaseDataWriterInterface.h"
 #define MAX_STR_LEN 8191
@@ -62,22 +61,24 @@ class CGDALDataWriter: public CBaseDataWriterInterface{
     class Settings{
     public:
       size_t width;
+      size_t height;
       void *data;
     };
 
 
     template <class T>
     static void drawFunction(int x,int y,T val, void *_settings){
-    Settings*settings = (Settings*)_settings;
-    ((T*)settings->data)[x+y*settings->width]=val;
+      Settings*settings = (Settings*)_settings;
+      if(x>=0&&y>=0&&x<settings->width&&y<settings->height){
+        ((T*)settings->data)[x+y*settings->width]=val;
+      }
     };
 
     
     CServerParams *srvParam;
-    GDALDriverH  hMemDriver1,hMemDriver2,hOutputDriver;
+    GDALDriverH  hMemDriver2,hOutputDriver;
     GDALDatasetH destinationGDALDataSet,hOutputDS;
     double adfDstGeoTransform[6];
-    //double adfSrcGeoTransform[6];
     double dfDstBBOX[4];
     double dfSrcBBOX[4];
     CDataReader reader;
@@ -88,10 +89,6 @@ class CGDALDataWriter: public CBaseDataWriterInterface{
     int NrOfBands;
     CT::string mimeType;
     CT::string customOptions;
-    //int nrMetadataItems;
-    //CT::string * Metadata;
-    std::vector <CT::string *> metaDataList;
-    CT::string * Times;
     CT::string * InputProducts;
     CT::string TimeUnit;
     char szTemp[MAX_STR_LEN+1];
@@ -102,17 +99,30 @@ class CGDALDataWriter: public CBaseDataWriterInterface{
     void generateUniqueGetCoverageFileName(char *pszTempFileName);
     CT::string generateGetCoverageFileName();
     void generateString(char *s, const int len);
+    
+    CT::string getDimensionValue(int d,CCDFDims *dims){
+      
+      CT::string value;
+      if(dims->isTimeDimension(d)){
+      CTime adagucTime;
+        try{
+          value = "0";
+          adagucTime.init(TimeUnit.c_str());
+          double offset = adagucTime.dateToOffset(adagucTime.ISOStringToDate(dims->getDimensionValue(d).c_str()));
+          value.print("%f",offset);
+        }catch(int e){
+        }
+      }else{
+        value.print("%s",dims->getDimensionValue(d).c_str());
+      }
+      return value;
+    }
+    
   public:
     CGDALDataWriter(){
-      Times=NULL;
       InputProducts=NULL;
     }
     ~CGDALDataWriter(){
-      for(size_t j=0;j<metaDataList.size();j++){
-        delete metaDataList[j];
-      }
-      
-      if(Times!=NULL)delete[] Times;Times=NULL;
       if(InputProducts!=NULL)delete[] InputProducts;InputProducts=NULL;
     }
     // Virtual functions

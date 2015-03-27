@@ -29,16 +29,17 @@ OBJECTS = CDataReader.o COGCDims.o CImageWarper.o CGeoParams.o CCairoPlotter.o C
 EXECUTABLE= adagucserver
 
 default: $(EXECUTABLE)
-$(EXECUTABLE): $(OBJECTS) $(EXECUTABLE).o h5ncdump.o
+$(EXECUTABLE): $(OBJECTS) $(EXECUTABLE).o h5ncdump.o aggregate_time.o
 	g++ $(EXECUTABLE).o $(OBJECTS) $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  $(EXECUTABLE) $(LIBS) 
 	g++ "h5ncdump.o" $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  "h5ncdump" $(LIBS)
+	g++ "aggregate_time.o" $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  "aggregate_time" $(LIBS)
 
 %.o: %.cpp
 	$(CCOMPILER) -c $< -o $@  -DENABLE_CURL -DADAGUC_USE_CAIRO -DADAGUC_USE_GDAL
 	#$(CCOMPILER) -c $< -o $@
 
 clean:
-	rm $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE).o h5ncdump.o h5ncdump
+	rm $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE).o h5ncdump.o h5ncdump aggregate_time.o aggregate_time
 run:
 	make
 	./$(EXECUTABLE)		
