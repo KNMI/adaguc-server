@@ -29,7 +29,7 @@
 #include "CCDFTypes.h"
 #include "CCDFAttribute.h"
 #include "CCDFDimension.h"
-
+// #define CCDFDATAMODEL_DEBUG
 
 namespace CDF{
   class Variable{
@@ -105,7 +105,7 @@ namespace CDF{
       void *getCDFObjectPointer(size_t *start,size_t *count){
         if(cdfObjectList.size()==0){
 #ifdef CCDFDATAMODEL_DEBUG
-          CDBDebug("returning getParentCDFObject");
+          CDBDebug("returning getParentCDFObject because cdfObjectList");
 #endif          
           return getParentCDFObject();
         }

@@ -117,8 +117,7 @@ int runRequest(){
     CDBError("Unable to read configuration file");
     return 1;
   }
-  request.runRequest();
-  return 0;
+  return request.runRequest();
 }
 
 int main(int argc, const char *argv[]){
@@ -229,13 +228,14 @@ int main(int argc, const char *argv[]){
   StopWatch_Start();
 #endif
   
-  runRequest();
+  int status = runRequest();
   //Display errors if any
   readyerror();
 #ifdef MEASURETIME
    StopWatch_Stop("Took");
 #endif
+   
 
-  return 0;
+  return status;
 }
 

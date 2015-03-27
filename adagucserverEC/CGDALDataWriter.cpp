@@ -55,20 +55,20 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
 #ifdef CGDALDATAWRITER_DEBUG  
   CDBDebug("/CNETCDFREADER_MODE_GET_METADATA");
 #endif
-  for(size_t j=0;j<dataSource->nrMetadataItems;j++){
-    CT::string *metaDataItem = new CT::string();
-    metaDataItem->copy(&dataSource->metaData[j]);
-    if(metaDataItem->indexOf("product#[C]variables>")!=0){
-      metaDataList.push_back(metaDataItem);
-    }else delete metaDataItem;
-  }
-  CT::string *metaDataItem = new CT::string();
-  metaDataItem->copy("product#[C]variables>");
-  metaDataItem->concat(dataSource->getDataObject(0)->variableName.c_str());
-  metaDataList.push_back(metaDataItem);
-#ifdef CGDALDATAWRITER_DEBUG  
-  CDBDebug("dataSource->getDataObject(0)->variableName.c_str() %s",dataSource->getDataObject(0)->variableName.c_str());
-#endif
+//   for(size_t j=0;j<dataSource->nrMetadataItems;j++){
+//     CT::string *metaDataItem = new CT::string();
+//     metaDataItem->copy(&dataSource->metaData[j]);
+//     if(metaDataItem->indexOf("product#[C]variables>")!=0){
+//       metaDataList.push_back(metaDataItem);
+//     }else delete metaDataItem;
+//   }
+//   CT::string *metaDataItem = new CT::string();
+//   metaDataItem->copy("product#[C]variables>");
+//   metaDataItem->concat(dataSource->getDataObject(0)->variableName.c_str());
+//   metaDataList.push_back(metaDataItem);
+// #ifdef CGDALDATAWRITER_DEBUG  
+//   CDBDebug("dataSource->getDataObject(0)->variableName.c_str() %s",dataSource->getDataObject(0)->variableName.c_str());
+// #endif
 
   // Get Time unit
 #ifdef CGDALDATAWRITER_DEBUG  
@@ -105,7 +105,7 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
     srvParam->Geo->CRS.copy(&dataSource->nativeProj4);
     if(srvParam->Format.length()==0)srvParam->Format.copy("NetCDF4");
   }else{
-    // Non native projection
+    // Non native projection units
     for(int j=0;j<4;j++)dfSrcBBOX[j]=dataSource->dfBBOX[j];
     for(int j=0;j<4;j++)dfDstBBOX[j]=srvParam->Geo->dfBBOX[j];
     // dfResX and dfResY are in the CRS ore ResponseCRS
@@ -173,9 +173,6 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
     CDBError("Failed to find GDAL driver: \"%s\"",driverName.c_str());return 1;
   }
 
-  // Init memory drivers
-  hMemDriver1 = GDALGetDriverByName( "MEM" );
-  if( hMemDriver1 == NULL ) {CDBError("Failed to find GDAL MEM driver.");return 1;}
   hMemDriver2 = GDALGetDriverByName( "MEM" );
   if( hMemDriver2 == NULL ) {CDBError("Failed to find GDAL MEM driver.");return 1;}
 
@@ -221,8 +218,11 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
   currentBandNr=0;
   if(InputProducts!=NULL)delete[] InputProducts;
   InputProducts=new CT::string[NrOfBands+1];
-  if(Times!=NULL)delete[] Times;
-  Times=new CT::string[NrOfBands+1];
+//   if(Times!=NULL)delete[] Times;
+//   Times=new CT::string[NrOfBands+1];
+  
+    
+
   
 #ifdef CGDALDATAWRITER_DEBUG  
   CDBDebug("/INIT");
@@ -273,6 +273,7 @@ int  CGDALDataWriter::addData(std::vector <CDataSource*>&dataSources){
   }
   
   CImageWarper warper;
+  
   status = warper.initreproj(dataSource,srvParam->Geo,&srvParam->cfg->Projection);
   if(status != 0){
     CDBError("Unable to initialize projection");
@@ -292,8 +293,21 @@ int  CGDALDataWriter::addData(std::vector <CDataSource*>&dataSources){
   
   CDFType dataType=dataSource->getDataObject(0)->cdfVariable->getType();
   void *sourceData = dataSource->getDataObject(0)->cdfVariable->data;
+  
+//   for(int y=0;y< dataSource->dHeight;y++){
+//     for(int x=0;x< dataSource->dWidth;x++){
+//     ((float*)sourceData)[x+y* dataSource->dWidth]=256.;
+//   }
+//   }
+//   
+//    
+//   for(int j=0;j<srvParam->Geo->dWidth/2;j++){
+//     ((float*)warpedData)[j+j*srvParam->Geo->dWidth]=129.0f;
+//   }
+  
   Settings settings;
   settings.width = srvParam->Geo->dWidth;
+  settings.height = srvParam->Geo->dHeight;
   settings.data=warpedData;
 
   switch(dataType){
@@ -307,8 +321,7 @@ int  CGDALDataWriter::addData(std::vector <CDataSource*>&dataSources){
     case CDF_FLOAT :  GenericDataWarper::render<float> (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction);break;
     case CDF_DOUBLE:  GenericDataWarper::render<double>(&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction);break;
   }
- 
-  
+
   
   GDALRasterIO( hSrcBand, GF_Write, 0, 0,
                 srvParam->Geo->dWidth,srvParam->Geo->dHeight,
@@ -319,14 +332,47 @@ int  CGDALDataWriter::addData(std::vector <CDataSource*>&dataSources){
 #ifdef CGDALDATAWRITER_DEBUG  
   CDBDebug("finished copying data in addData");
 #endif
+  
+  
+  {
+    
+    /* Band metadata */
+    char **papszMetadata = NULL;
+    
+   
+   
+    CCDFDims *dims = _dataSource->getCDFDims();
+    CT::string debugInfo;
+    for(size_t d=0;d<dims->getNumDimensions();d++){
+      CT::string dimName = dims->getDimensionName(d);
+      if(dimName.equals("forecast_reference_time")==false){
+        CT::string name = "NETCDF_DIM_";
+        name.concat(dimName.c_str());
+        CT::string value = getDimensionValue(d,dims);
+
+        papszMetadata = CSLSetNameValue(papszMetadata, name.c_str(),value.c_str());
+        
+        debugInfo.printconcat("[%s,%s]",name.c_str(),value.c_str());
+      }
+    }
+    
+    //papszMetadata = CSLSetNameValue(papszMetadata, "NETCDF_DIM_%s", );
+    papszMetadata = CSLSetNameValue(papszMetadata, "NETCDF_VARNAME", _dataSource->getDataObject(0)->cdfVariable->name.c_str());
+    
+//     papszMetadata = CSLSetNameValue(papszMetadata, "standard_name", "bla");
+//     papszMetadata = CSLSetNameValue(papszMetadata, "units", "bla2");
+    GDALSetMetadata( hSrcBand, papszMetadata,"");
+    
+    CSLDestroy( papszMetadata);papszMetadata = NULL;
+  }
   // Get time
-  status = reader.getTimeString(dataSource,szTemp);
-  if(status==0)Times[currentBandNr].copy(szTemp);else Times[currentBandNr].copy("");
-  // Get filename
-  CT::string basename(dataSource->getFileName());
-  int offset = basename.lastIndexOf("/")+1;
-  if(offset<0)offset=0;if(offset>MAX_STR_LEN)offset=0;
-  InputProducts[currentBandNr].copy(basename.c_str()+offset);
+//   status = reader.getTimeString(dataSource,szTemp);
+//   if(status==0)Times[currentBandNr].copy(szTemp);else Times[currentBandNr].copy("");
+//   // Get filename
+//   CT::string basename(dataSource->getFileName());
+//   int offset = basename.lastIndexOf("/")+1;
+//   if(offset<0)offset=0;if(offset>MAX_STR_LEN)offset=0;
+//   InputProducts[currentBandNr].copy(basename.c_str()+offset);
   reader.close();
   currentBandNr++;
 #ifdef CGDALDATAWRITER_DEBUG
@@ -372,7 +418,7 @@ int  CGDALDataWriter::end(){
 //  imageWarper.setSrvParam(srvParam);
   //imageWarper.decodeCRS(&srvParam->Geo->CRS);
   CT::string destinationCRS(&srvParam->Geo->CRS);
-  CDBDebug("Check %s",srvParam->Geo->CRS.c_str());
+  //CDBDebug("Check %s",srvParam->Geo->CRS.c_str());
   //imageWarper.decodeCRS(&destinationCRS,&srvParam->Geo->CRS,&srvParam->cfg->Projection);
   //CDBDebug("Check");
   if(oSRS.SetFromUserInput(destinationCRS.c_str())!=OGRERR_NONE){
@@ -381,65 +427,78 @@ int  CGDALDataWriter::end(){
   }
   oSRS.exportToWkt( &pszDstWKT );
  
-  // Set metadata 
-  char **papszMetadata = NULL;
-  for(size_t j=0;j<metaDataList.size();j++){
-    CT::string *attrib = metaDataList[j]->splitToArray(">");
-    //attrib[1].concat("<end>");
-    //CDBDebug("%s=%s",attrib[0].c_str(),attrib[1].c_str());
-    papszMetadata = CSLSetNameValue(papszMetadata,attrib[0].c_str(),attrib[1].c_str());
-    delete[] attrib;
-  }
-  // Update Input_products
-  //const char *currentInputProduct=CSLFetchNameValue(papszMetadata,"product#[C]input_products");
-  //CDBDebug("END");
-  CT::string GDALinputproducts;
-  GDALinputproducts.concat(&InputProducts[0]);
-  for(int j=1;j<NrOfBands;j++){
-    GDALinputproducts.concat(", ");
-    GDALinputproducts.concat(&InputProducts[j]);
-  }
-  papszMetadata = CSLSetNameValue(papszMetadata,"product#[C]input_products",GDALinputproducts.c_str());
 
-  GDALSetMetadata( destinationGDALDataSet, papszMetadata,"");
-  CSLDestroy( papszMetadata);
-  papszMetadata = NULL;
-  // Set metadata for each band in destinationGDALDataSet
-  if(TimeUnit.length()>10&&Times[0].length()>10){
-    for(int b=0;b<NrOfBands;b++){
 
-      char **papszMetadata = NULL;
-      double offset;
-      //CADAGUC_time *ADTime = new CADAGUC_time(TimeUnit.c_str());
-      CTime adagucTime;
-      try{
-        adagucTime.init(TimeUnit.c_str());
-        offset = adagucTime.dateToOffset(adagucTime.ISOStringToDate(Times[b].c_str()));
-        snprintf(szTemp,MAX_STR_LEN,"DIMENSION#time");
-        snprintf(szTemp2,MAX_STR_LEN,"%f",offset);
-        papszMetadata = CSLSetNameValue(papszMetadata,szTemp,szTemp2);
-      }catch(int e){
-        snprintf(szTemp,MAX_STR_LEN,"DIMENSION#time");
-        snprintf(szTemp2,MAX_STR_LEN,"%s",Times[b].c_str());
-        papszMetadata = CSLSetNameValue(papszMetadata,szTemp,szTemp2);
+  
+  {
+    /* dataset metadata */
+    char **papszMetadata = NULL;
+    
+    CT::string extraDimNames = "{";
+      
+    bool first = true;
+    CCDFDims *dims = _dataSource->getCDFDims();
+    for(size_t d=0;d<dims->getNumDimensions();d++){
+      CT::string dimName = dims->getDimensionName(d);
+      if(dimName.equals("forecast_reference_time")==false){
+        if(first == false){
+          extraDimNames.concat(",");
+        }
+        first = false;
+        
+        extraDimNames.concat(dims->getDimensionName(d));
+        
+        
+        CDFType cdf_type = _dataSource->getDataObject(0)->cdfObject->getVariable(dims->getDimensionName(d))->getType();
+#ifdef CGDALDATAWRITER_DEBUG          
+        CDBDebug("%s = %s",_dataSource->requiredDims[d]->netCDFDimName.c_str(),dims->getDimensionName(d));
+#endif
+        
+        CT::string dimDef;
+        dimDef.print("{%d,%d}",_dataSource->requiredDims[d]->uniqueValues.size(),CDFNetCDFWriter::NCtypeConversion(cdf_type));
+        CT::string key;
+        key.print("NETCDF_DIM_%s_DEF",dims->getDimensionName(d));
+        papszMetadata = CSLSetNameValue(papszMetadata, key.c_str(), dimDef.c_str());
+      
+        
+        CT::string values = "{";
+        std::set<std::string> myset;
+        std::set<std::string>::iterator mysetit;
+        for(size_t t=0;t<_dataSource->timeSteps.size();t++){
+          myset.insert(getDimensionValue(d,&_dataSource->timeSteps[t]->dims).c_str());
+        }
+        bool first = true;
+        for (mysetit=myset.begin(); mysetit!=myset.end(); ++mysetit){
+          if(first == false){
+            values.concat(",");
+          }
+          first = false;
+          values.concat((*mysetit).c_str());
+        }
+        values.concat("}");
+        key.print("NETCDF_DIM_%s_VALUES",dims->getDimensionName(d));
+        papszMetadata = CSLSetNameValue(papszMetadata, key.c_str(), values.c_str() );
       }
-
-
-      snprintf(szTemp,MAX_STR_LEN,"UNITS#time");
-      snprintf(szTemp2,MAX_STR_LEN,"%s",TimeUnit.c_str());
-      papszMetadata = CSLSetNameValue(papszMetadata,szTemp,szTemp2);
-      snprintf(szTemp,MAX_STR_LEN,"VARNAME");
-      snprintf(szTemp2,MAX_STR_LEN,"%s",_dataSource->getDataObject(0)->variableName.c_str());
-      papszMetadata = CSLSetNameValue(papszMetadata,szTemp,szTemp2);
-      // Set the metadata
-      GDALRasterBandH hSrcBand = GDALGetRasterBand( destinationGDALDataSet, b+1 );
-      GDALSetRasterNoDataValue(hSrcBand, dfNoData);
-      //printf("<br>Setting Nodata2=[%f] for band %d<br>\n",dfNoData,b+1);
-      GDALSetMetadata( hSrcBand, papszMetadata,"");
-      CSLDestroy( papszMetadata);
-      papszMetadata = NULL;
     }
+    extraDimNames.concat("}");
+
+    
+    
+    
+    papszMetadata = CSLSetNameValue(papszMetadata, "NETCDF_DIM_EXTRA", extraDimNames.c_str());
+
+    for(size_t j=0;j<_dataSource->metaDataItems.size();j++){
+      CDataSource::KVP * kvp = &_dataSource->metaDataItems[j];
+      CT::string attributekey;
+      attributekey.printconcat("%s#%s",kvp->varname.c_str(),kvp->attrname.c_str());
+      papszMetadata = CSLSetNameValue(papszMetadata,attributekey.c_str(),kvp->value.c_str());
+    }
+    
+    ((GDALDataset*)destinationGDALDataSet)->SetMetadata(papszMetadata);
+    CSLDestroy( papszMetadata);papszMetadata = NULL;
   }
+  
+  
   // Copy the destinationGDALDataSet dataset to the output driver
   char ** papszOptions = NULL;
 
@@ -452,9 +511,17 @@ int  CGDALDataWriter::end(){
     }
     delete[] co;
   }
+  
+
+#ifdef CGDALDATAWRITER_DEBUG  
   CDBDebug("Copying destinationGDALDataSet to hOutputDriver");
+#endif  
   hOutputDS = GDALCreateCopy( hOutputDriver, tmpFileName.c_str(), destinationGDALDataSet, FALSE, papszOptions, NULL, NULL );
+  
+
+#ifdef CGDALDATAWRITER_DEBUG      
   CDBDebug("GDALCreateCopy completed");
+#endif
   if( hOutputDS == NULL ){
     CDBError("WriteGDALRaster: Failed to create output file:<br>\n\"%s\"",tmpFileName.c_str());
     CDBError("LastErrorMsg: %s",CPLGetLastErrorMsg());
@@ -483,11 +550,11 @@ int  CGDALDataWriter::end(){
     fseek( fp, 0L, SEEK_SET );
     //CDBDebug("File opened: size = %d",endPos);
     CDBDebug("Now start streaming %d bytes to the client with mimetype %s",endPos,mimeType.c_str());
-    printf("Content-Disposition: attachment; filename=%s\n",generateGetCoverageFileName().c_str());
-    printf("Content-Description: File Transfer\n");
-    printf("Content-Transfer-Encoding: binary\n");
-    printf("Content-Length: %zu\n",endPos); 
-    printf("%s%c%c\n",mimeType.c_str(),13,10);
+    printf("Content-Disposition: attachment; filename=%s\r\n",generateGetCoverageFileName().c_str());
+    printf("Content-Description: File Transfer\r\n");
+    printf("Content-Transfer-Encoding: binary\r\n");
+    printf("Content-Length: %zu\r\n",endPos); 
+    printf("%s\r\n\r\n",mimeType.c_str());
     for(size_t j=0;j<endPos;j++)putchar(getc(fp));
     fclose(fp);
     fclose(stdout);
@@ -509,7 +576,7 @@ int  CGDALDataWriter::end(){
   remove(tmpFileName.c_str());
 
   if(InputProducts!=NULL)delete[] InputProducts;InputProducts=NULL;
-  if(Times!=NULL)delete[] Times;Times=NULL;
+//   if(Times!=NULL)delete[] Times;Times=NULL;
   return returnCode;
 
   return 0;

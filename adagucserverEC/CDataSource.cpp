@@ -168,7 +168,7 @@ CDataSource::CDataSource(){
 //   legendLowerRange=0;
 //   legendUpperRange=0;
 //   legendValueRange=0;
-  metaData=NULL;
+  //metaData=NULL;
   statistics=NULL;
   currentAnimationStep=0;
   srvParams=NULL;
@@ -189,7 +189,7 @@ CDataSource::CDataSource(){
 }
 
 CDataSource::~CDataSource(){
-  if(metaData!=NULL){delete[] metaData;metaData=NULL;}
+  //if(metaData!=NULL){delete[] metaData;metaData=NULL;}
     
   for(size_t d=0;d<dataObjects.size();d++){
     delete dataObjects[d];

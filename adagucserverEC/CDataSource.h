@@ -256,9 +256,21 @@ private:
   bool legendValueRange;
   CT::string styleName;*/
 
-  //Number of metadata items
-  size_t nrMetadataItems;
-  CT::string *metaData;
+  
+   class KVP{
+      public:
+        KVP(const char *varname,const char *attrname,const char *value){
+          this->varname = varname;
+          this->attrname = attrname;
+          this->value = value;
+        }
+        CT::string varname;
+        CT::string attrname;
+        CT::string value; 
+    };
+  
+  std::vector<KVP> metaDataItems;
+  
 
   //Configured?
   bool isConfigured;
