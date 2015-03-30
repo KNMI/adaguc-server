@@ -400,8 +400,8 @@ int  CGDALDataWriter::end(){
 #endif
   
   // Warp the image from destinationGDALDataSet to hMemDS1
-//   GDALDataType eDT;
-//   eDT = GDALGetRasterDataType(GDALGetRasterBand(destinationGDALDataSet,1));
+  GDALDataType eDT;
+  eDT = GDALGetRasterDataType(GDALGetRasterBand(destinationGDALDataSet,1));
   //CDBDebug("Check");
   // Get coordinate systems
   const char *pszSrcWKT;
