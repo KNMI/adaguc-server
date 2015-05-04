@@ -55,4 +55,5 @@ fi
 test -d ../bin || mkdir ../bin/
 cp adagucserver ../bin/
 cp h5ncdump ../bin/
+cp aggregate_time ../bin/
 echo "[OK] Everything is installed in the ./bin directory"
