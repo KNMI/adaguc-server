@@ -26,8 +26,8 @@
 #include "CConvertADAGUCPoint.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
-//#define CCONVERTADAGUCPOINT_DEBUG
-//#define MEASURETIME
+#define CCONVERTADAGUCPOINT_DEBUG
+#define MEASURETIME
 const char *CConvertADAGUCPoint::className="CConvertADAGUCPoint";
 
 
@@ -96,12 +96,6 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
   //Add geo variables, only if they are not there already
   CDF::Dimension *dimX = cdfObject->getDimensionNE("x");
   CDF::Dimension *dimY = cdfObject->getDimensionNE("y");
-  CDF::Dimension *dimT = cdfObject->getDimensionNE("time");
-  
-//   if(dimT==NULL){
-//     CDBError("No time dimension found");
-//     return 1;
-//   }
   
   CDF::Variable *varX = cdfObject->getVariableNE("x");
   CDF::Variable *varY = cdfObject->getVariableNE("y");
@@ -189,9 +183,17 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
    
     
     //Assign X,Y,T dims 
-    if(dimT!=NULL)new2DVar->dimensionlinks.push_back(dimT);
+    
+    for(size_t d=1;d<pointVar->dimensionlinks.size();d++){
+      if(pointVar->dimensionlinks[d]->name.equals("station")==false){
+        new2DVar->dimensionlinks.push_back( pointVar->dimensionlinks[d]);
+      }
+    }
+    
+    //if(dimT!=NULL)new2DVar->dimensionlinks.push_back(dimT);
     new2DVar->dimensionlinks.push_back(dimY);
     new2DVar->dimensionlinks.push_back(dimX);
+    
     
     //new2DVar->setType(pointVar->getType());
     
@@ -312,94 +314,114 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
   //Read original data first 
 
   
-  #ifdef MEASURETIME
-    StopWatch_Stop("Lat and lon read");
-  #endif
-    
-//   if(pointLon->getSize() == 0){
-//     CDBDebug("Ignoring file because longitude is empty");
-//     return 0;
-//   }
-//   
-  int dateDimIndex=dataSource->getDimensionIndex("time");
-  
-  #ifdef CCONVERTADAGUCPOINT_DEBUG
-  CDBDebug("dateDimIndex = %d",dateDimIndex);
-  #endif 
-  
-  
-  int numDims = 2;
+  size_t numDims = pointVar[0]->dimensionlinks.size();
   size_t start[numDims];
   size_t count[numDims];
   ptrdiff_t stride[numDims];
   
+  /*
+   * There is always a station dimension, we wish to read all stations and for the other dimensions just one: count=1;
+   * 
+   * Therefore we need to know what the station dimension index is
+   */
   
-  int stationDimIndexInVar = 0;
-  int timeDimIndexInVar = 1;    
+  /*First read LAT and LON*/
   
-  if(pointVar[0]->dimensionlinks[0]->name.equals("time")){
-    stationDimIndexInVar = 1;
-    timeDimIndexInVar = 0;
+  /*Find which index is the station dim*/
+  int stationDimIndexInCoord = 0;
+  int numStations = 0;
+  for(size_t j=0;j<pointLon->dimensionlinks.size();j++){
+    if(pointLon->dimensionlinks[0]->name.equals("station")){
+      stationDimIndexInCoord = j;
+      break;
+    }
+  }
+  /*Set dimension indices*/
+  for(size_t j=0;j<pointLon->dimensionlinks.size();j++){
+    if(stationDimIndexInCoord == int(j)){
+      start[j] = 0;
+      numStations=pointLon->dimensionlinks[j]->getSize();
+      count[j] = numStations;
+      stride[j]=1;
+    }else{
+      start[j] = dataSource->getDimensionIndex(pointLon->dimensionlinks[j]->name.c_str());
+      count[j] = 1;
+      stride[j]=1;
+    }
   }
   
-  int numStations=pointVar[0]->dimensionlinks[stationDimIndexInVar]->getSize();
+  #ifdef CCONVERTADAGUCPOINT_DEBUG
+    CDBDebug("numStations %d ",numStations);
+    CDBDebug("numDims %d ",numDims);
+  #endif
   
-  if(pointLon->dimensionlinks.size()==2){
+  
+  
+  if(pointLon->dimensionlinks.size()>=2){
     #ifdef CCONVERTADAGUCPOINT_DEBUG
-    CDBDebug("Time dependant location");
+    CDBDebug("Dimension dependant locations");
     #endif
-    start[stationDimIndexInVar]=0;
-    start[timeDimIndexInVar]=dateDimIndex;
-    count[stationDimIndexInVar]=numStations;
-    count[timeDimIndexInVar]=1;
-    stride[0]=1;
-    stride[1]=1;
-    
-//     for(int j=0;j<2;j++){
-//       CDBDebug("start %d count %d",start[j],count[j]);
-//     }
     pointLon->freeData();
     pointLat->freeData();
     pointLon->readData(CDF_FLOAT,start,count,stride,true);
     pointLat->readData(CDF_FLOAT,start,count,stride,true);
   }else{
     #ifdef CCONVERTADAGUCPOINT_DEBUG
-    CDBDebug("NON Time dependant location");
+    CDBDebug("NON Dimension dependant location");
     #endif
     pointLon->readData(CDF_FLOAT,true);
     pointLat->readData(CDF_FLOAT,true);
   }
-  
-  
-  
-  //int numDates=pointVar[0]->dimensionlinks[1]->getSize();
-  
-  #ifdef CCONVERTADAGUCPOINT_DEBUG
-    CDBDebug("numStations %d ",numStations);
-    CDBDebug("numDims %d ",numDims);
-  #endif
-
 
     
   #ifdef MEASURETIME
     StopWatch_Stop("Lat and lon read");
   #endif
-    
-  for(int j=0;j<numDims;j++){start[j]=0; count[j]=1;stride[j]=1;}
+
+  CT::string data = CDF::dump(cdfObject0);
+  
+  CDBDebug("%s",data.c_str());
+  
+  
   for(size_t d=0;d<nrDataObjects;d++){
+    /*Second read actual variables*/
+    int stationDimIndexInVariable = 0;
     
-    count[stationDimIndexInVar]=numStations;
-    start[timeDimIndexInVar]=dateDimIndex;
-    #ifdef CCONVERTADAGUCPOINT_DEBUG
-    CDBDebug("Reading %s with time index %d ",pointVar[d]->name.c_str(),dateDimIndex);
-    #endif
+    for(size_t j=0;j<pointVar[d]->dimensionlinks.size();j++){
+      if(pointVar[d]->dimensionlinks[0]->name.equals("station")){
+        stationDimIndexInVariable = j;
+        break;
+      }
+    }
+  
+     /*Set dimension indices*/
+    for(size_t j=0;j<pointVar[d]->dimensionlinks.size();j++){
+      if(stationDimIndexInVariable == int(j)){
+        start[j] = 0;
+        count[j] = pointVar[d]->dimensionlinks[j]->getSize();
+        stride[j]=1;
+      }else{
+        start[j] = dataSource->getDimensionIndex(pointVar[d]->dimensionlinks[j]->name.c_str());
+        count[j] = 1;
+        stride[j]=1;
+      }
+    }
     
+  
+      
+
     
     if(pointVar[d]->nativeType!=CDF_STRING&&pointVar[d]->nativeType!=CDF_CHAR){
       #ifdef CCONVERTADAGUCPOINT_DEBUG
-      CDBDebug("Reading FLOAT");
+      CDBDebug("Reading FLOAT %s", pointVar[d]->name.c_str());
       #endif
       pointVar[d]->freeData();
+      
+      for(size_t j=0;j<pointVar[d]->dimensionlinks.size();j++){
+        CDBDebug("%d %s [%d:%d:%d]",j,pointVar[d]->dimensionlinks[j]->name.c_str(),start[j],count[j],stride[j]);
+      }
+      
+      
       pointVar[d]->readData(CDF_FLOAT,start,count,stride,true);
     }else{
 
