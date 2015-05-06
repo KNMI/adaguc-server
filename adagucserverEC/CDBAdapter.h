@@ -16,7 +16,6 @@ public:
   virtual ~CDBAdapter() = 0;
   virtual int setConfig(CServerConfig::XMLE_Configuration *cfg) = 0;
   
-  virtual int              generateGetReferenceTimesDoc(CT::string *result,CDataSource *dataSource) = 0;
   virtual CDBStore::Store *getReferenceTime(const char *netcdfDimName, const char *netcdfTimeDimName, const char *timeValue, const char *timeTableName, const char *tableName) = 0;
   virtual CDBStore::Store *getClosestReferenceTimeToSystemTime(const char *netcdfDimName, const char *tableName) = 0; 
   
@@ -40,9 +39,9 @@ public:
   virtual int              storeDimensionInfoForLayerTableAndLayerName(const char *layertable,const char *layername,const char *netcdfname,const char *ogcname,const char *units) = 0;
   
   
-  virtual CDBStore::Store *getFilesAndIndicesForDimensions(CDataSource *dataSource) = 0;
+  virtual CDBStore::Store *getFilesAndIndicesForDimensions(CDataSource *dataSource,int limit) = 0;
   
-  virtual int              makeDimensionTables(CDataSource *dataSource) = 0;
+  virtual int              autoUpdateAndScanDimensionTables(CDataSource *dataSource) = 0;
   
   
   virtual int              dropTable(const char *tablename) = 0;
@@ -50,7 +49,7 @@ public:
   virtual int              createDimTableReal(const char *dimname,const char *tablename) = 0;
   virtual int              createDimTableString(const char *dimname,const char *tablename) = 0;
   virtual int              createDimTableTimeStamp(const char *dimname,const char *tablename) = 0;
-  virtual int              dropFilesWithDifferentCreationDate(const char *tablename,const char *file,const char *creationDate) = 0;
+  virtual int              removeFilesWithChangedCreationDate(const char *tablename,const char *file,const char *creationDate) = 0;
   virtual int              checkIfFileIsInTable(const char *tablename,const char *filename) = 0;
   
   
@@ -58,6 +57,8 @@ public:
   virtual int              setFileReal(const char *tablename,const char *file,double dimvalue,int dimindex,const char*filedate) = 0;
   virtual int              setFileString(const char *tablename,const char *file,const char * dimvalue,int dimindex,const char*filedate) = 0;
   virtual int              setFileTimeStamp(const char *tablename,const char *file,const char *dimvalue,int dimindex,const char*filedate) = 0;
+  
+  /** First use setFile<type> as many times as you whish, second use addFilesToDataBase to make it final*/
   virtual int              addFilesToDataBase() = 0;
   
   

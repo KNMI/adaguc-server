@@ -1,6 +1,32 @@
+/******************************************************************************
+ * 
+ * Project:  ADAGUC Server
+ * Purpose:  ADAGUC OGC Server
+ * Author:   Maarten Plieger, plieger "at" knmi.nl
+ * Date:     2015-05-06
+ *
+ ******************************************************************************
+ *
+ * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
+ ******************************************************************************/
+
 #include "CDBAdapter.h"
 #include "CDebugger.h"
 #include "CPGSQLDB.h"
+
 class CDBAdapterPostgreSQL:public CDBAdapter{
   private:
     DEF_ERRORFUNCTION();
@@ -21,17 +47,16 @@ class CDBAdapterPostgreSQL:public CDBAdapter{
     ~CDBAdapterPostgreSQL();
     int setConfig(CServerConfig::XMLE_Configuration *cfg);
     
-    int              generateGetReferenceTimesDoc(CT::string *result,CDataSource *dataSource);
     CDBStore::Store *getReferenceTime(const char *netcdfDimName,const char *netcdfTimeDimName,const char *timeValue,const char *timeTableName,const char *tableName);
     CDBStore::Store *getClosestReferenceTimeToSystemTime(const char *netcdfDimName,const char *tableName);
 
     CT::string       getTableNameForPathFilterAndDimension(const char *path,const char *filter, const char * dimension,CDataSource *dataSource);
-    int              makeDimensionTables(CDataSource *dataSource);
+    int              autoUpdateAndScanDimensionTables(CDataSource *dataSource);
     CDBStore::Store *getMin(const char *name,const char *table);
     CDBStore::Store *getMax(const char *name,const char *table);
     CDBStore::Store *getUniqueValuesOrderedByValue(const char *name, int limit, bool orderDescOrAsc,const char *table);
     CDBStore::Store *getUniqueValuesOrderedByIndex(const char *name, int limit, bool orderDescOrAsc,const char *table);
-    CDBStore::Store *getFilesAndIndicesForDimensions(CDataSource *dataSource);
+    CDBStore::Store *getFilesAndIndicesForDimensions(CDataSource *dataSource,int limit);
     
     CDBStore::Store *getDimensionInfoForLayerTableAndLayerName(const char *layertable,const char *layername);
     int              storeDimensionInfoForLayerTableAndLayerName(const char *layertable,const char *layername,const char *netcdfname,const char *ogcname,const char *units);
@@ -44,7 +69,7 @@ class CDBAdapterPostgreSQL:public CDBAdapter{
     int              checkIfFileIsInTable(const char *tablename,const char *filename);
     
     
-    int              dropFilesWithDifferentCreationDate(const char *tablename,const char *file,const char *creationDate);
+    int              removeFilesWithChangedCreationDate(const char *tablename,const char *file,const char *creationDate);
     int              setFileInt(const char *tablename,const char *file,int dimvalue,int dimindex,const char*filedate);
     int              setFileReal(const char *tablename,const char *file,double dimvalue,int dimindex,const char*filedate);
     int              setFileString(const char *tablename,const char *file,const char * dimvalue,int dimindex,const char*filedate);

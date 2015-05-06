@@ -1,3 +1,28 @@
+/******************************************************************************
+ * 
+ * Project:  ADAGUC Server
+ * Purpose:  ADAGUC OGC Server
+ * Author:   Maarten Plieger, plieger "at" knmi.nl
+ * Date:     2015-05-06
+ *
+ ******************************************************************************
+ *
+ * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
+ ******************************************************************************/
+
 #include "CDBAdapterPostgreSQL.h"
 #include <set>
 #include "CDebugger.h"
@@ -113,96 +138,9 @@ CDBStore::Store *CDBAdapterPostgreSQL::getClosestReferenceTimeToSystemTime(const
   return DB->queryToStore(query.c_str());
 };
 
-int CDBAdapterPostgreSQL::generateGetReferenceTimesDoc(CT::string *result,CDataSource *dataSource){
-  bool hasReferenceTimeDimension = false;
-  CT::string dimName = "";
-  for(size_t l=0;l<dataSource->cfgLayer->Dimension.size();l++){
-    if(dataSource->cfgLayer->Dimension[l]->value.equals("reference_time")){
-      dimName = dataSource->cfgLayer->Dimension[l]->attr.name.c_str();
-      hasReferenceTimeDimension=true;
-      break;
-    }
-  }
-  
-  if(hasReferenceTimeDimension){
-    CT::string tableName;
-  
-    try{
-      tableName = getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str(),dataSource);
-    }catch(int e){
-      CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
-      return 1;
-    }
-    CT::string query;
-    query.print("select %s from %s order by %s desc",dimName.c_str(),tableName.c_str(), dimName.c_str());
-    CPGSQLDB * DB = getDataBaseConnection(); if(DB == NULL){return -1;  }
-  
-    // Connect do DB
-    
-  
-    CDBStore::Store *store = DB->queryToStore(query.c_str());
-    if(store == NULL){
-      setExceptionType(InvalidDimensionValue);
-      CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
-      //if((checkDataRestriction()&SHOW_QUERYINFO)==false){
-        CDBError("Query was '%s'",query.c_str());
-      //}
-      return 1;
-    }
-    result->copy("[");
-    bool first=true;
-    for(size_t k=0;k<store->getSize();k++){
-      if (!first) {
-        result->concat(",");
-      }
-      first=false;
-      result->concat("\"");
-      CT::string ymd;
-      ymd=store->getRecord(k)->get(0);
-      ymd.setChar(10, 'T');
-      ymd.concat("Z");
-      result->concat(ymd);
-      result->concat("\"");
-    } 
-    result->concat("]");
-    delete store;
-    return 0;
-  }else{
-    //Set WMSLayers:
-    std::set<std::string>WMSGroups ;
-    for(size_t j=0;j<dataSource->srvParams->cfg->Layer.size();j++){
-      CT::string groupName;
-      dataSource->srvParams->makeLayerGroupName(&groupName,dataSource->srvParams->cfg->Layer[j]);
-      if (groupName.testRegEx("[[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]]_[[:digit:]][[:digit:]]")) {
-        CT::string ymd=groupName.substringr(0,8);
-        CT::string hh=groupName.substringr(9,11);
-        ymd.concat(hh);
-        ymd.concat("00");
-        WMSGroups.insert(ymd.c_str());
-      } else if (groupName.testRegEx("[[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]]")) {
-        groupName.concat("00");
-        WMSGroups.insert(groupName.c_str());
-      } else if (groupName.testRegEx("[[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]]")) {
-        WMSGroups.insert(groupName.c_str());
-      }
-    }
-    result->copy("[");
-    bool first=true;
-    for (std::set<std::string>::reverse_iterator it=WMSGroups.rbegin(); it!=WMSGroups.rend(); ++it) {
-      if (!first) {
-        result->concat(",");
-      }
-      first=false;
-      result->concat("\"");
-      result->concat((*it).c_str());
-      result->concat("\"");
-    }
-    result->concat("]");
-  }
-  return 0;
-}
 
-CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSource *dataSource){
+
+CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSource *dataSource,int limit){
   CPGSQLDB * DB = getDataBaseConnection(); if(DB == NULL){return NULL;  }
 
   
@@ -323,7 +261,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
       delete[] cDims;
     }
     if(i==0){
-      subQuery.printconcat("ORDER BY %s DESC limit 512)a%d ",netCDFDimName.c_str(),i);
+      subQuery.printconcat("ORDER BY %s DESC limit %d)a%d ",netCDFDimName.c_str(),limit,i);
       //subQuery.printconcat("ORDER BY %s DESC )a%d ",netCDFDimName.c_str(),i);
     }else{
       subQuery.printconcat("ORDER BY %s DESC)a%d ",netCDFDimName.c_str(),i);
@@ -384,7 +322,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   return store;
 }
 
-int  CDBAdapterPostgreSQL::makeDimensionTables(CDataSource *dataSource){
+int  CDBAdapterPostgreSQL::autoUpdateAndScanDimensionTables(CDataSource *dataSource){
   CServerParams *srvParams = dataSource->srvParams;;
   CServerConfig::XMLE_Layer * cfgLayer = dataSource->cfgLayer;
   CPGSQLDB * dataBaseConnection = getDataBaseConnection(); if(dataBaseConnection == NULL){return -1;  }
@@ -722,7 +660,7 @@ int CDBAdapterPostgreSQL::checkIfFileIsInTable(const char *tablename,const char 
   return fileIsOK;
 }
 
-int CDBAdapterPostgreSQL::dropFilesWithDifferentCreationDate(const char *tablename,const char *file,const char *creationDate){
+int CDBAdapterPostgreSQL::removeFilesWithChangedCreationDate(const char *tablename,const char *file,const char *creationDate){
   CPGSQLDB * dataBaseConnection = getDataBaseConnection(); if(dataBaseConnection == NULL){return -1;  }
   
   CT::string query;

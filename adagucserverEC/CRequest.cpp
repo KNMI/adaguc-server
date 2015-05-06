@@ -349,6 +349,85 @@ int CRequest::process_wms_getmetadata_request(){
     return process_all_layers();
 }
 
+int CRequest::generateGetReferenceTimesDoc(CT::string *result,CDataSource *dataSource){
+  bool hasReferenceTimeDimension = false;
+  CT::string dimName = "";
+  for(size_t l=0;l<dataSource->cfgLayer->Dimension.size();l++){
+    if(dataSource->cfgLayer->Dimension[l]->value.equals("reference_time")){
+      dimName = dataSource->cfgLayer->Dimension[l]->attr.name.c_str();
+      hasReferenceTimeDimension=true;
+      break;
+    }
+  }
+  
+  if(hasReferenceTimeDimension){
+    CT::string tableName;
+  
+    try{
+      tableName =  CDBFactory::getDBAdapter(srvParam->cfg)->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str(),dataSource);
+    }catch(int e){
+      CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
+      return 1;
+    }
+    
+    CDBStore::Store *store = CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue(dimName.c_str(), -1, false,tableName.c_str());
+    if(store == NULL){
+      setExceptionType(InvalidDimensionValue);
+      CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
+      return 1;
+    }
+    result->copy("[");
+    bool first=true;
+    for(size_t k=0;k<store->getSize();k++){
+      if (!first) {
+        result->concat(",");
+      }
+      first=false;
+      result->concat("\"");
+      CT::string ymd;
+      ymd=store->getRecord(k)->get(0);
+      ymd.setChar(10, 'T');
+      ymd.concat("Z");
+      result->concat(ymd);
+      result->concat("\"");
+    } 
+    result->concat("]");
+    delete store;
+    return 0;
+  }else{
+    //Set WMSLayers:
+    std::set<std::string>WMSGroups ;
+    for(size_t j=0;j<dataSource->srvParams->cfg->Layer.size();j++){
+      CT::string groupName;
+      dataSource->srvParams->makeLayerGroupName(&groupName,dataSource->srvParams->cfg->Layer[j]);
+      if (groupName.testRegEx("[[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]]_[[:digit:]][[:digit:]]")) {
+        CT::string ymd=groupName.substringr(0,8);
+        CT::string hh=groupName.substringr(9,11);
+        ymd.concat(hh);
+        ymd.concat("00");
+        WMSGroups.insert(ymd.c_str());
+      } else if (groupName.testRegEx("[[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]]")) {
+        groupName.concat("00");
+        WMSGroups.insert(groupName.c_str());
+      } else if (groupName.testRegEx("[[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]]")) {
+        WMSGroups.insert(groupName.c_str());
+      }
+    }
+    result->copy("[");
+    bool first=true;
+    for (std::set<std::string>::reverse_iterator it=WMSGroups.rbegin(); it!=WMSGroups.rend(); ++it) {
+      if (!first) {
+        result->concat(",");
+      }
+      first=false;
+      result->concat("\"");
+      result->concat((*it).c_str());
+      result->concat("\"");
+    }
+    result->concat("]");
+  }
+  return 0;
+}
 
 int CRequest::process_wms_getstyles_request(){
 //     int status;
@@ -650,10 +729,6 @@ int CRequest::generateOGCGetCapabilities(CT::string *XMLdocument){
 }
 
 
-int CRequest::generateGetReferenceTimesDoc(CT::string *result,CDataSource *dataSource){
-  return CDBFactory::getDBAdapter(srvParam->cfg)->generateGetReferenceTimesDoc(result,dataSource);
-}
-
 
 int CRequest::generateGetReferenceTimes(CDataSource *dataSource){
   CT::string XMLdocument;
@@ -779,7 +854,7 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
       * Check if all tables are available, if not update the db
       */
     if(srvParam->isAutoResourceEnabled()){
-      status = CDBFactory::getDBAdapter(srvParam->cfg)->makeDimensionTables(dataSource);
+      status = CDBFactory::getDBAdapter(srvParam->cfg)->autoUpdateAndScanDimensionTables(dataSource);
       if(status != 0){
         CDBError("makeDimensionTables checkAndUpdateDimTables failed");
         return status;
@@ -986,7 +1061,7 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
       }
     }
     
-    CDBStore::Store *store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource);
+    CDBStore::Store *store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource,512);
   
    
     if(store == NULL){
