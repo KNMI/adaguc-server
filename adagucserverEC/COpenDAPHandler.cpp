@@ -1,5 +1,6 @@
 #include "COpenDAPHandler.h"
 #include "CRequest.h"
+#include "CDBFactory.h"
 const char * COpenDAPHandler::className = "COpenDAPHandler";
 
 class VarInfo{
@@ -125,7 +126,7 @@ int COpenDAPHandler::HandleOpenDAPRequest(const char *path,const char *query,CSe
           CT::string dim = dataSource->cfgLayer->Dimension[d]->attr.name.c_str();
                     
           try{
-            tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),dim.c_str(),dataSource->cfgLayer->DataBaseTable);
+            tableName =  CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),dim.c_str(),dataSource);
           }catch(int e){
             CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dim.c_str());
             return -1;
@@ -133,16 +134,16 @@ int COpenDAPHandler::HandleOpenDAPRequest(const char *path,const char *query,CSe
           
           CDBDebug("tableName = %s",tableName.c_str());
           size_t dimSize = 0;
-          CT::string query;
-          query.print("select count(%s) from (select distinct %s from %s)temp",dim.c_str(),dim.c_str(),tableName.c_str());
-          CPGSQLDB * DB = dataSource->srvParams->getDataBaseConnection();
-          CDB::Store * dimSizeStore = DB->queryToStore(query.c_str());
-          if(dimSizeStore != NULL){
-            dimSize = dimSizeStore->getRecord(0)->get(0)->toInt();
-          }else{
-            CDBError("Query %s failed",query.c_str());
-          }
-          delete dimSizeStore;
+//           CT::string query;
+//           query.print("select count(%s) from (select distinct %s from %s)temp",dim.c_str(),dim.c_str(),tableName.c_str());
+//           CPGSQLDB * DB = dataSource->srvParams->getDataBaseConnection();
+//           CDBStore::Store * dimSizeStore = DB->queryToStore(query.c_str());
+//           if(dimSizeStore != NULL){
+//             dimSize = dimSizeStore->getRecord(0)->get(0)->toInt();
+//           }else{
+//             CDBError("Query %s failed",query.c_str());
+//           }
+//           delete dimSizeStore;
           CDBDebug("Dimsize= %d",dimSize);
           return dimSize;
         }

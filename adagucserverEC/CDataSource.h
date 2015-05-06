@@ -35,7 +35,7 @@
 #include "CCDFDataModel.h"
 #include "COGCDims.h"
 #include "CStopWatch.h"
-#include "CPGSQLDB.h"
+
 #include "CStyleConfiguration.h"
 
 
@@ -326,7 +326,7 @@ private:
   static const char *getFlagMeaning(std::vector<CDataSource::StatusFlag*> *statusFlagList,double value);
   static void getFlagMeaningHumanReadable(CT::string *flagMeaning ,std::vector<CDataSource::StatusFlag*> *statusFlagList,double value);
   //int autoCompleteDimensions(CPGSQLDB *dataBaseConnection);
-  int checkDimTables(CPGSQLDB *dataBaseConnection);
+  
   
   
   int setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Configuration *_cfg,CServerConfig::XMLE_Layer * _cfgLayer,const char *_layerName, int layerIndex);

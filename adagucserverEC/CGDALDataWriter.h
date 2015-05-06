@@ -49,7 +49,6 @@
 
 #include "CXMLGen.h"
 
-#include "CPGSQLDB.h"
 #include "CDataReader.h"
 
 #include "CIBaseDataWriterInterface.h"

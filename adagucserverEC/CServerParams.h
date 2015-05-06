@@ -34,7 +34,6 @@
 #include "CServerConfig_CPPXSD.h"
 #include "COGCDims.h"
 #include "CGeoParams.h"
-#include "CPGSQLDB.h"
 #include "CCache.h"
 #include <map>
 #include <string>
@@ -68,9 +67,9 @@ class CServerParams{
   DEF_ERRORFUNCTION();
   private:
     int autoOpenDAPEnabled,autoLocalFileResourceEnabled,autoResourceCacheEnabled;
-    std::map <std::string ,std::string> lookupTableNameCacheMap;
-    CPGSQLDB *dataBaseConnection;
-   
+    
+  
+    static int dataRestriction;
   public:
     double dfResX,dfResY;
     int dWCS_RES_OR_WH;
@@ -82,10 +81,7 @@ class CServerParams{
     int imageMode;
     CWMSExtensions wmsExtensions;
     
-    CPGSQLDB *getDataBaseConnection(){
-      if(dataBaseConnection == NULL)dataBaseConnection = new CPGSQLDB();
-      return dataBaseConnection;
-    }
+
     
     
   
@@ -159,16 +155,7 @@ class CServerParams{
      */
     void encodeTableName(CT::string *tableName);
     
-    /**
-     * Makes use of a lookup table to find the tablename belonging to the filter and path combinations.
-     * @param path The path of the layer
-     * @param filter The filter of the layer
-     * @param filter The dimension of the layer, can be NULL if not used.
-     * @param filter The databaseTable of the layer
-     * @return Tablename on succes, throws integer exception on failure.
-     */
-    CT::string lookupTableName(const char *path,const char *filter, const char * dimension,std::vector<CServerConfig::XMLE_DataBaseTable*> dataBaseTable);
-
+  
 
     /**
      * Get the filename of the cachefile used for XML caching. 
@@ -279,7 +266,32 @@ class CServerParams{
       * @return Pointer to a new stringlist with all possible legend names, must be deleted with delete. Is NULL on failure.
       */
       static CT::PointerList<CT::string*> *getLegendNames(std::vector <CServerConfig::XMLE_Legend*> Legend);
+      
+    /**
+      * Checks whether data is restricted or not based on the environment variable ADAGUC_DATARESTRICTION.
+      * If not defined or set to FALSE, there are no dataset restrictions. If set to TRUE, dataaccess is restricted for WCS, GFI, metadata and queryinfo.
+      * Possible values are: ALLOW_GFI, ALLOW_WCS, ALLOW_METADATA and SHOW_QUERYINFO. Values can be combined by using the | sign without any space.
+      * 
+      * ALLOW_GFI: Allows getFeatureInfo request to work.
+      * 
+      * ALLOW_WCS: Allows dataaccess by the Web Coverage Service.
+      * 
+      * ALLOW_METADATA: Allows to display detailed netcdf header information.
+      * 
+      * SHOW_QUERYINFO: Displays failed queries, if not set "hidden" is shown instead.
+      */
+      static int checkDataRestriction();
     
+      
+      /**
+       * Checks if the string contains valid dimension tokens *
+       * returns true if valid, otherwise false
+       */
+      static bool checkTimeFormat(CT::string& timeToCheck);
+      
+      
+      static const CT::string randomString(const int len);
+      static CT::string  currentDateTime();
 };
 
 

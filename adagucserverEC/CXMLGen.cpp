@@ -28,6 +28,7 @@
 #include <vector>
 #include <string>
 #include "CXMLGen.h"
+#include "CDBFactory.h"
 //#define CXMLGEN_DEBUG
 
 const char *CFile::className="CFile";
@@ -89,11 +90,9 @@ CDBDebug("getFileNameForLayer");
         }
         return 0;
       }
-      CPGSQLDB *DB = srvParam->getDataBaseConnection();
-      status = DB->connect(srvParam->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0)return 1;
       
       //if(srvParam->isAutoLocalFileResourceEnabled()==true){
-      status = myWMSLayer->dataSource->checkDimTables(DB);
+      status = CDBFactory::getDBAdapter(srvParam->cfg)->makeDimensionTables(myWMSLayer->dataSource);
       if(status !=0){
         CDBError("Unable to checkDimTables");
         return 1;
@@ -103,7 +102,7 @@ CDBDebug("getFileNameForLayer");
       CT::string tableName;
       CT::string dimName(myWMSLayer->layer->Dimension[0]->attr.name.c_str());
       try{
-        tableName = srvParam->lookupTableName(myWMSLayer->layer->FilePath[0]->value.c_str(),myWMSLayer->layer->FilePath[0]->attr.filter.c_str(),dimName.c_str(),myWMSLayer->layer->DataBaseTable);
+        tableName = CDBFactory::getDBAdapter(srvParam->cfg)->getTableNameForPathFilterAndDimension(myWMSLayer->layer->FilePath[0]->value.c_str(),myWMSLayer->layer->FilePath[0]->attr.filter.c_str(),dimName.c_str(),myWMSLayer->dataSource);
       }catch(int e){
         CDBError("Unable to create tableName from '%s' '%s' '%s'",myWMSLayer->layer->FilePath[0]->value.c_str(),myWMSLayer->layer->FilePath[0]->attr.filter.c_str(),dimName.c_str());
         return 1;
@@ -114,20 +113,15 @@ CDBDebug("getFileNameForLayer");
       
       
       
-      CT::string query;
-      query.print("select path from %s limit 1",tableName.c_str());
-      #ifdef CXMLGEN_DEBUG              
-      CDBDebug("query %s",query.c_str());        
-      #endif      
+     
       
       bool databaseError = false;
       
       
+      CDBStore::Store *values = CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue("path",1,true,tableName.c_str());
       
-      CDB::Store *values = DB->queryToStore(query.c_str());
-     
       if(values==NULL){
-        CDBError("No files found for %s and query %s",myWMSLayer->dataSource->layerName.c_str(),query.c_str());
+        CDBError("No files found for %s ",myWMSLayer->dataSource->layerName.c_str());
         databaseError=true;
       }
       if(databaseError == false){
@@ -139,7 +133,7 @@ CDBDebug("getFileNameForLayer");
         }else{
           //The file is not in the database, probably an error during the database scan has been detected earlier.
           //Ignore the file for now too
-          CDBError("Query '%s' not succeeded",query.c_str(),myWMSLayer->layer->FilePath[0]->value.c_str());
+          CDBError("Query for '%s' not succeeded",myWMSLayer->layer->FilePath[0]->value.c_str());
           databaseError=true;
         }
         delete values;
@@ -330,14 +324,6 @@ CDBDebug("getDimsForLayer");
 // Dimensions
   if(myWMSLayer->dataSource->dLayerType==CConfigReaderLayerTypeDataBase||
     myWMSLayer->dataSource->dLayerType==CConfigReaderLayerTypeStyled){
-#ifdef CXMLGEN_DEBUG
-CDBDebug("DB Connect");
-#endif   
-    CPGSQLDB *DB = srvParam->getDataBaseConnection();
-    int status = DB->connect(srvParam->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0)return 1;
-#ifdef CXMLGEN_DEBUG
-CDBDebug("Check");
-#endif      
   /*  if(myWMSLayer->dataSource->cfgLayer->Dimension.size()!=0){
 #ifdef CXMLGEN_DEBUG
 CDBDebug("Check");
@@ -364,7 +350,7 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
       //Get the tablename
       CT::string tableName;
       try{
-        tableName = srvParam->lookupTableName(myWMSLayer->layer->FilePath[0]->value.c_str(),myWMSLayer->layer->FilePath[0]->attr.filter.c_str(),pszDimName,myWMSLayer->layer->DataBaseTable);
+        tableName = CDBFactory::getDBAdapter(srvParam->cfg)->getTableNameForPathFilterAndDimension(myWMSLayer->layer->FilePath[0]->value.c_str(),myWMSLayer->layer->FilePath[0]->attr.filter.c_str(),pszDimName,myWMSLayer->dataSource);
       }catch(int e){
         CDBError("Unable to create tableName from '%s' '%s' '%s'",myWMSLayer->layer->FilePath[0]->value.c_str(),myWMSLayer->layer->FilePath[0]->attr.filter.c_str(), pszDimName);
         return 1;
@@ -395,11 +381,8 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
             CDBDebug("Time dimension units = %s",units.c_str());
             #endif
             
-            //Get the first 10 values from the database, and determine whether the time resolution is continous or multivalue.
-            CDB::Store *store = NULL;
-            CT::string query;
-            query.print("select %s from %s group by %s order by %s limit 100",pszDimName,tableName.c_str(),pszDimName,pszDimName);
-            store = DB->queryToStore(query.c_str());
+            //Get the first 100 values from the database, and determine whether the time resolution is continous or multivalue.
+            CDBStore::Store *store = CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue(pszDimName,100,true,tableName.c_str());
             bool dataHasBeenFoundInStore = false;
             if(store!=NULL){
               if(store->size()!=0){
@@ -510,28 +493,26 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
               delete store;store=NULL;
             }
             if(dataHasBeenFoundInStore == false){
-              CDBDebug("No data available in database for dimension %s and query %s",pszDimName,query.c_str());
+              CDBDebug("No data available in database for dimension %s",pszDimName);
             }
           }
         }
         
       }
+      CDBStore::Store *values  = NULL;
       //This is a multival dim, defined as val1,val2,val3,val4,val5,etc...
       if(hasMultipleValues==true){
         //Get all dimension values from the db
-        CT::string query;
         if(isTimeDim){
-          query.print("select %s from %s group by %s order by %s",pszDimName,tableName.c_str(),pszDimName,pszDimName);
-          
-         
+          values = CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue(pszDimName,0,true,tableName.c_str());
         }else{
-          query.print("select distinct %s,dim%s from %s order by dim%s,%s",pszDimName,pszDimName,tableName.c_str(),pszDimName,pszDimName);
+          //query.print("select distinct %s,dim%s from %s order by dim%s,%s",pszDimName,pszDimName,tableName.c_str(),pszDimName,pszDimName);
+          values = CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByIndex(pszDimName,0,true,tableName.c_str());
+
         }
-#ifdef CXMLGEN_DEBUG
-CDBDebug("Querying %s",query.c_str());
-#endif               
-        CDB::Store *values = DB->queryToStore(query.c_str());
-        if(values == NULL){CDBError("Query failed \"%s\"",query.c_str());return 1;}
+        
+      
+        if(values == NULL){CDBError("Query failed");return 1;}
         if(values->getSize()>0){
           //if(srvParam->requestType==REQUEST_WMS_GETCAPABILITIES)
           {
@@ -588,15 +569,12 @@ CDBDebug("Querying %s",query.c_str());
       //This is an interval defined as start/stop/resolution
       if(hasMultipleValues==false){
         // Retrieve the max dimension value
-        CT::string query;
-        query.print("select max(%s) from %s",pszDimName,tableName.c_str());
-        CDB::Store *values = DB->queryToStore(query.c_str());
+        CDBStore::Store* values = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(pszDimName,tableName.c_str());
         if(values == NULL){CDBError("Query failed");return 1;}
         if(values->getSize()>0){snprintf(szMaxTime,31,"%s",values->getRecord(0)->get(0)->c_str());szMaxTime[10]='T';}
         delete values;
               // Retrieve the minimum dimension value
-        query.print("select min(%s) from %s",pszDimName,tableName.c_str());
-        values = DB->queryToStore(query.c_str());
+        values = CDBFactory::getDBAdapter(srvParam->cfg)->getMin(pszDimName,tableName.c_str());
         if(values == NULL){CDBError("Query failed");return 1;}
         if(values->getSize()>0){snprintf(szMinTime,31,"%s",values->getRecord(0)->get(0)->c_str());szMinTime[10]='T';}
         delete values;
@@ -1783,7 +1761,7 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
         myWMSLayer->layer=srvParam->cfg->Layer[j];
         
         //Check if this layer is querable
-        int datasetRestriction = CRequest::checkDataRestriction();
+        int datasetRestriction = CServerParams::checkDataRestriction();
         if((datasetRestriction&ALLOW_GFI)){
           myWMSLayer->isQuerable=1;
         }

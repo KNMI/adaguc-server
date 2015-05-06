@@ -37,7 +37,6 @@
 #include "CDataReader.h"
 #include "CImageWarper.h"
 #include "CDrawImage.h"
-#include "CPGSQLDB.h"
 #include "CDataSource.h"
 #include "CRequest.h"
 #include "CDebugger.h"

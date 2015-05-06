@@ -32,9 +32,7 @@
 #include "CDFObjectStore.h"
 #include "CServerError.h"
 #include "CDirReader.h"
-#include "CPGSQLDB.h"
-//#include "CADAGUC_time.h"
-//#include "adagucserver.h"
+
 
 /**
  * Class which scans files and updates the database.
@@ -42,11 +40,11 @@
 class CDBFileScanner{
 private:
   DEF_ERRORFUNCTION();
-  static int createDBUpdateTables(CPGSQLDB *DB,CDataSource *dataSource,int &removeNonExistingFiles,CDirReader *dirReader);
-  static int DBLoopFiles(CPGSQLDB *DB,CDataSource *dataSource,int removeNonExistingFiles,CDirReader *dirReader);
+  static int createDBUpdateTables(CDataSource *dataSource,int &removeNonExistingFiles,CDirReader *dirReader);
+  static int DBLoopFiles(CDataSource *dataSource,int removeNonExistingFiles,CDirReader *dirReader);
   static std::vector <CT::string> tableNamesDone;
   
-  //static int addIndexToTable(CPGSQLDB *DB,const char *tableName, const char * dimName);
+ ;
 public:
   static bool isTableAlreadyScanned(CT::string *tableName);
   static void markTableDirty(CT::string *tableName);
