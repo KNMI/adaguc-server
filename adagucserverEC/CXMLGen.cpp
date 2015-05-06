@@ -127,7 +127,7 @@ CDBDebug("getFileNameForLayer");
       if(databaseError == false){
         if(values->getSize()>0){
           #ifdef CXMLGEN_DEBUG            
-          CDBDebug("Query '%s' succeeded: Filename = %s",query.c_str(),values->getRecord(0)->get(0)->c_str());
+          CDBDebug("Query  succeeded: Filename = %s",values->getRecord(0)->get(0)->c_str());
           #endif        
           myWMSLayer->fileName.copy(values->getRecord(0)->get(0));
         }else{
@@ -540,7 +540,9 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
                 //2011-01-01T22:00:01Z
                 //01234567890123456789
                 values->getRecord(j)->get(0)->setChar(10,'T');
-                values->getRecord(j)->get(0)->concat("Z");
+                if(values->size()==19){
+                  values->getRecord(j)->get(0)->concat("Z");
+                }
               }
               dim->units.copy("ISO8601");
             }

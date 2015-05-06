@@ -28,6 +28,7 @@
 
 #include "CDBAdapter.h"
 #include "CDBAdapterPostgreSQL.h"
+#include "CDBAdapterSQLLite.h"
 
 class CDBFactory{
 private:

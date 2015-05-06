@@ -1300,12 +1300,15 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
   
   CT::string layerTableId;
   try{
-    
+  
     layerTableId = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), NULL,dataSource);
+    
   }catch(int e){
     CDBError("Unable to get layerTableId for autoconfigure_dimensions");
     return 1;
   }
+  
+  
   
   CCache::Lock lock;
   CT::string identifier = "autodimension";  identifier.concat(dataSource->cfgLayer->FilePath[0]->value.c_str());  identifier.concat("/");  identifier.concat(dataSource->cfgLayer->FilePath[0]->attr.filter.c_str());  

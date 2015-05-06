@@ -198,13 +198,13 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource,int &removeNonE
         //The temporary table should always be dropped before filling.  
         //We will do a complete new update, so store everything in an new table
         //Later we will rename this table
-        CT::string tableName_temp(&tableName);
-        if(removeNonExistingFiles==1){
-          tableName_temp.concat("_temp");
-        }
+//         CT::string tableName_temp(&tableName);
+//         if(removeNonExistingFiles==1){
+//           tableName_temp.concat("_temp");
+//         }
         //CDBDebug("Making empty temporary table %s ... ",tableName_temp.c_str());
         //CDBDebug("Check table %s ...\t",tableName.c_str());
-
+/*
         if(status==0){
           //Table already exists....
           CDBError("*** WARNING: Temporary table %s already exists. Is another process updating the database? ***",tableName_temp.c_str());
@@ -235,7 +235,7 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource,int &removeNonE
           //OK, Table did not exist, is created.
           //Create a index on these files:
           //if(addIndexToTable(DB,tableName_temp.c_str(),dimName.c_str()) != 0)return 1;
-        }
+        }*/
       }
     }
       
@@ -494,6 +494,8 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
                     std::set<std::string> uniqueDimensionValueSet;
                     std::pair<std::set<std::string>::iterator,bool> uniqueDimensionValueRet;
                     
+                    bool dimIsUnique = true;
+                    
                     CT::string uniqueKey;
                     for(size_t i=0;i<dimDim->length;i++){
                       
@@ -508,6 +510,8 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
                               uniqueDimensionValueRet = uniqueDimensionValueSet.insert(uniqueKey.c_str());
                               if(uniqueDimensionValueRet.second == true){
                                 dbAdapter->setFileString(tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),uniqueKey.c_str(),int(i),fileDate.c_str()) ;
+                              }else{
+                                dimIsUnique = false;
                               }
                             }
                             if(hasStatusFlag==false){
@@ -518,6 +522,8 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
                                   uniqueDimensionValueRet = uniqueDimensionValueSet.insert(uniqueKey.c_str());
                                   if(uniqueDimensionValueRet.second == true){
                                     dbAdapter->setFileReal(tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),double(dimValues[i]),int(i),fileDate.c_str());
+                                  }else{
+                                    dimIsUnique = false;
                                   }
                                   break;
                                 default:
@@ -525,6 +531,8 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
                                   uniqueDimensionValueRet = uniqueDimensionValueSet.insert(uniqueKey.c_str());
                                   if(uniqueDimensionValueRet.second == true){
                                     dbAdapter->setFileInt(tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),int(dimValues[i]),int(i),fileDate.c_str()) ;
+                                  }else{
+                                    dimIsUnique = false;
                                   }
                                   break;
                               }
@@ -554,17 +562,16 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
                         uniqueDimensionValueRet = uniqueDimensionValueSet.insert(uniqueKey.c_str());
                         if(uniqueDimensionValueRet.second == true){
                           dbAdapter->setFileString(tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),uniqueKey.c_str(),int(i),fileDate.c_str()) ;
+                        }else{
+                          dimIsUnique = false;
                         }
                       }
                       
                       
                       
                       //Check if this insert is unique
-                      if(uniqueKey.length()>0){
-                        uniqueDimensionValueRet = uniqueDimensionValueSet.insert(uniqueKey.c_str());
-                        if(uniqueDimensionValueRet.second == false){
-                          CDBError("Dimension value [%s] not unique in dimension [%s]",dirReader->fileList[j]->fullName.c_str(),dimVar->name.c_str());
-                        }
+                      if(dimIsUnique == false){
+                        CDBError("In file %s dimension value [%s] not unique in dimension [%s]",dirReader->fileList[j]->fullName.c_str(),uniqueKey.c_str(),dimVar->name.c_str());
                       }
                     }
                   }catch(int linenr){

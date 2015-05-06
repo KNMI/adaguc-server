@@ -120,7 +120,41 @@ int runRequest(){
   return request.runRequest();
 }
 
+// #include "CDBAdapterSQLLite.h"
+// #include "CPGSQLDB.h"
 int main(int argc, const char *argv[]){
+//   CDBDebug("Start");
+//   CDBAdapterSQLLite::CSQLLiteDB *db = new CDBAdapterSQLLite::CSQLLiteDB();
+//   db->connect("test.db");
+//   
+// //   CPGSQLDB *db = new CPGSQLDB();
+// //   db->connect("dbname=autoopendap  host=127.0.0.1 user=plieger");
+// 
+//   
+//   CDBStore::Store *s = db->queryToStore("PRAGMA table_info(t20150506t165354054_irajwhnerk3l6twcfta)");
+//   if(s == NULL){
+//     CDBError("error!");
+//     return 0;
+//   }
+//   CT::string col = "";
+//   for(size_t c=0;c<s->getColumnModel()->getSize();c++){
+//     col.printconcat("%s\t\t",s->getColumnModel()->getName(c));
+//   }
+//   CDBDebug("%s",col.c_str());
+//   
+//   
+//   for(size_t j=0;j<s->getSize();j++){
+//      CDBStore::Record* r =s->getRecord(j);
+//      CT::string row = "";
+//      for(size_t c=0;c<s->getColumnModel()->getSize();c++){
+//        row.printconcat("%s\t\t",r->get(c)->c_str());
+//      }
+//      CDBDebug("%s",row.c_str());
+//   }
+//   
+//   delete s;
+//   delete db;
+//   return 0;
 
   // Initialize error functions
   seterrormode(EXCEPTIONS_PLAINTEXT);

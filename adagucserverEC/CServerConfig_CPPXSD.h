@@ -620,10 +620,11 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString parameters;
+            CXMLString parameters,dbtype;
         }attr;
         void addAttribute(const char *attrname,const char *attrvalue){
           if(equals("parameters",10,attrname)){attr.parameters.copy(attrvalue);return;}
+          if(equals("dbtype",6,attrname)){attr.dbtype.copy(attrvalue);return;}
         }
     };
     class XMLE_Projection: public CXMLObjectInterface{
