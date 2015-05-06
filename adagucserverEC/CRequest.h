@@ -177,7 +177,6 @@ private:
     int generateGetReferenceTimes(CDataSource *dataSource);
     int generateGetReferenceTimesDoc(CT::string *result,CDataSource *dataSource);
     int generateOGCDescribeCoverage(CT::string *XMLdocument);
-    
     void addXMLLayerToConfig(CServerParams *srvParam,CDFObject *cdfObject,std::vector<CT::string>*variableNames, const char *group, const char *location);
     
     

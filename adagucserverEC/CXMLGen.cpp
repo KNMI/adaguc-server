@@ -92,7 +92,7 @@ CDBDebug("getFileNameForLayer");
       }
       
       //if(srvParam->isAutoLocalFileResourceEnabled()==true){
-      status = CDBFactory::getDBAdapter(srvParam->cfg)->makeDimensionTables(myWMSLayer->dataSource);
+      status = CDBFactory::getDBAdapter(srvParam->cfg)->autoUpdateAndScanDimensionTables(myWMSLayer->dataSource);
       if(status !=0){
         CDBError("Unable to checkDimTables");
         return 1;

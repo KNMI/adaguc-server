@@ -357,7 +357,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
           }
           
           //Delete files with non-matching creation date 
-          dbAdapter->dropFilesWithDifferentCreationDate(tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),fileDate.c_str());
+          dbAdapter->removeFilesWithChangedCreationDate(tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),fileDate.c_str());
           
           //Check if file is already there
           status = dbAdapter->checkIfFileIsInTable(tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str());
