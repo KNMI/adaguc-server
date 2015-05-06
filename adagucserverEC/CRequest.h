@@ -177,7 +177,7 @@ private:
     int generateGetReferenceTimes(CDataSource *dataSource);
     int generateGetReferenceTimesDoc(CT::string *result,CDataSource *dataSource);
     int generateOGCDescribeCoverage(CT::string *XMLdocument);
-    static int dataRestriction;
+    
     void addXMLLayerToConfig(CServerParams *srvParam,CDFObject *cdfObject,std::vector<CT::string>*variableNames, const char *group, const char *location);
     
     
@@ -215,11 +215,11 @@ private:
     int process_all_layers();
     int process_wms_getreferencetimes_request();
     int updatedb(CT::string *tailPath,CT::string *layerPathToScan);
-    static bool checkTimeFormat(CT::string& timeToCheck);
+    
     int runRequest();
 
     static void getCacheFileName(CT::string *cacheFileName,CServerParams *srvParam);
-    static int checkDataRestriction();
+    
 
 };
 

@@ -30,7 +30,7 @@
 #include "CDataSource.h"
 #include "CServerError.h"
 #include "CDirReader.h"
-#include "CPGSQLDB.h"
+
 //#include "CADAGUC_time.h"
 #include "CCDFDataModel.h"
 #include "CCDFNetCDFIO.h"

@@ -31,7 +31,7 @@
 #include "CConvertADAGUCVector.h"
 #include "CConvertADAGUCPoint.h"
 #include "CConvertCurvilinear.h"
-
+#include "CDBFactory.h"
 const char *CDataReader::className="CDataReader";
 
  //#define CDATAREADER_DEBUG
@@ -1296,11 +1296,12 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
   * Actual dimension values are not storen in this table
   */
   CT::string query;
-  CT::string tableName = "autoconfigure_dimensions";
+  CT::string autoconfigureDimensionsTable = "autoconfigure_dimensions";
   
   CT::string layerTableId;
   try{
-    layerTableId = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), NULL,dataSource->cfgLayer->DataBaseTable);
+    
+    layerTableId = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), NULL,dataSource);
   }catch(int e){
     CDBError("Unable to get layerTableId for autoconfigure_dimensions");
     return 1;
@@ -1314,13 +1315,7 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
     lock.claim(cacheDirectory.c_str(),identifier.c_str(),"autoconfigure_dimensions",dataSource->srvParams->isAutoResourceEnabled());
   }
 
-  
-  layerTableId.concat("_");layerTableId.concat(dataSource->getLayerName());
-  query.print("SELECT * FROM %s where layerid=E'%s'",tableName.c_str(),layerTableId.c_str());
-  CPGSQLDB *db = dataSource->srvParams->getDataBaseConnection();
-
-  if(db->connect(dataSource->cfg->DataBase[0]->attr.parameters.c_str())!=0){CDBError("Error Could not connect to the database");return 1; }
-  CDB::Store *store = db->queryToStore(query.c_str());
+  CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(),dataSource->getLayerName());
 
   if(store!=NULL){
     
@@ -1351,13 +1346,13 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
       }
     }catch(int e){
       delete store;
-      CDBError("DB Exception: %s\n",db->getErrorMessage(e));
+      CDBError("DB Exception: %s\n",CDBStore::getErrorMessage(e));
     }
   }
   
   
 #ifdef CDATAREADER_DEBUG     
-  CDBDebug("autoConfigureDimensions information not in table %s",tableName.c_str());
+  CDBDebug("autoConfigureDimensions information not in table %s",autoconfigureDimensionsTable.c_str());
 #endif  
   
   /* Dimension information is not available in the database. We need to load it from a file.*/
@@ -1386,20 +1381,13 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
        and store them in the table.
        */
       if(dataSource->getDataObject(0)->cdfVariable->dimensionlinks.size()>=2){
-        std::vector<CT::string> queriesToDoOnSuccess;
         //try{
           //Create the database table
-          CT::string tableColumns("layerid varchar (255), ncname varchar (255), ogcname varchar (255), units varchar (255)");
-          int status;
-          CPGSQLDB *DB = dataSource->srvParams->getDataBaseConnection();
-          status = DB->connect(dataSource->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0){CDBError("Error Could not connect to the database");throw(__LINE__);}
-          status = DB->checkTable(tableName.c_str(),tableColumns.c_str());
-          if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tableName.c_str(),tableColumns.c_str()); throw(__LINE__);  }
-          
+                
           CDF::Variable *variable=dataSource->getDataObject(0)->cdfVariable;
           //CDBDebug("OK %d",variable->dimensionlinks.size()-2);
           
-          // When there are no extra dims besides x and y: make a table anyway so autoconfigure_dimensions is not run 
+          // When there are no extra dims besides x and y we can skip
           // Each time to find the non existing dims.
           if(variable->dimensionlinks.size()==2){
             #ifdef CDATAREADER_DEBUG  
@@ -1451,8 +1439,9 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
                 
               
               //Store the data in the db for quick access.
-              query.print("INSERT INTO %s values (E'%s',E'%s',E'%s',E'%s')",tableName.c_str(),layerTableId.c_str(),netcdfdimname.c_str(),OGCDimName.c_str(),units.c_str());
-              queriesToDoOnSuccess.push_back(query);
+              //query.print("INSERT INTO %s values (E'%s',E'%s',E'%s',E'%s')",autoconfigureDimensionsTable.c_str(),layerTableId.c_str(),netcdfdimname.c_str(),OGCDimName.c_str(),units.c_str());
+              CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->storeDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(),dataSource->getLayerName(),netcdfdimname.c_str(),OGCDimName.c_str(),units.c_str());
+          
                 
               //status = DB->query(query.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",query.c_str());throw(__LINE__); }
                       
@@ -1483,24 +1472,14 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
                 xmleDim->attr.units.copy(units.c_str()); 
                 
                 //Store the data in the db for quick access.
-                query.print("INSERT INTO %s values (E'%s',E'%s',E'%s',E'%s')",tableName.c_str(),layerTableId.c_str(),cdfObject->variables[j]->name.c_str(),"reference_time",units.c_str());
-                queriesToDoOnSuccess.push_back(query);
+                CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->storeDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(),dataSource->getLayerName(),cdfObject->variables[j]->name.c_str(),"reference_time",units.c_str());
                 //status = DB->query(query.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",query.c_str());throw(__LINE__); }
               }
             }catch(int e){
             }
           }
           
-  
-          //Do all the queries
-          for(size_t j=0;j<queriesToDoOnSuccess.size();j++){
-            CT::string query = queriesToDoOnSuccess[j];
-            status = DB->query(query.c_str()); 
-            if(status!=0){
-              CDBError("Unable to insert records: \"%s\"",query.c_str());
-              throw(__LINE__); 
-            }
-          }
+
           
   
         //}catch(int e){
@@ -1538,7 +1517,7 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
     return 0;
   }
   
-  bool useDBCache = false;
+//   bool useDBCache = false;
 #ifdef CDATAREADER_DEBUG     
   CDBDebug("autoConfigureStyles");
 #endif  
@@ -1557,40 +1536,13 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
   CT::string tableName = "autoconfigure_styles";
   CT::string layerTableId;
   try{
-    layerTableId = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), NULL,dataSource->cfgLayer->DataBaseTable);
+    layerTableId = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), NULL,dataSource);
   }catch(int e){
     CDBError("Unable to get layerTableId for autoconfigure_styles");
     return 1;
   }
-  CT::string query;
-  
-  if(useDBCache){
-    
-    query.print("SELECT * FROM %s where layerid=E'%s'",tableName.c_str(),layerTableId.c_str());
-    CPGSQLDB * db = dataSource->srvParams->getDataBaseConnection();
-    if(db->connect(dataSource->cfg->DataBase[0]->attr.parameters.c_str())!=0){CDBError("Error Could not connect to the database");return 1; }
-    CDB::Store *store = db->queryToStore(query.c_str());
 
-    if(store!=NULL){
-      if(store->size()!=0){
-        try{
-          xmleStyle->value.copy(store->getRecord(0)->get("styles")->c_str());
-          delete store;store=NULL;
-        }catch(int e){
-          delete store;
-          CDBError("autoConfigureStyles: DB Exception: %s for query %s",db->getErrorMessage(e),query.c_str());
-          return 1;
-        }
-  #ifdef CDATAREADER_DEBUG           
-        CDBDebug("Retrieved auto styles \"%s\" from db",xmleStyle->value.c_str());
-  #endif     
-        //OK!
-        return 0;
-      }
-      delete store;
-    }
-  }
-  
+ 
     
     // Auto style is not available in the database, so look it up in the file.
     
@@ -1695,24 +1647,7 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
     }
     
     if(styles.length()==0) styles="auto";
-    
-    //CDBDebug("Found styles \"%s\"",styles.c_str());
-    if(useDBCache){
-      //Put the result back into the database.
-      try{
-        CT::string tableColumns("layerid varchar (255), styles varchar (255)");
-        int status;
-        CPGSQLDB *DB = dataSource->srvParams->getDataBaseConnection();
-        status = DB->connect(dataSource->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0){CDBError("Error Could not connect to the database");throw(__LINE__);}
-        status = DB->checkTable(tableName.c_str(),tableColumns.c_str());
-        if(status == 1){CDBError("\nFAIL: Table %s could not be created: %s",tableName.c_str(),tableColumns.c_str()); throw(__LINE__);  }
-        query.print("INSERT INTO %s values (E'%s',E'%s')",tableName.c_str(),layerTableId.c_str(),styles.c_str());
-        status = DB->query(query.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",query.c_str());throw(__LINE__); }
-      }catch(int linenr){
-        CDBError("Exception at line %d",linenr);
-        return 1;
-      }
-    }
+   
     xmleStyle->value.copy(styles.c_str());
   
   return 0;

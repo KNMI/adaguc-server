@@ -271,21 +271,7 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Confi
   }
   
   
-  //When a database table is not configured, generate a name automatically
-  /*if( dLayerType!=CConfigReaderLayerTypeCascaded){
-    if(cfgLayer->DataBaseTable.size()==0){
-        CServerConfig::XMLE_DataBaseTable *dbtable=new CServerConfig::XMLE_DataBaseTable();
-        cfgLayer->DataBaseTable.push_back(dbtable);
-        //Create a table name based on the filepath and its filter.
-        CT::string tableName=layerName.c_str();
-        if(cfgLayer->FilePath[0]->attr.filter.empty()){
-          cfgLayer->FilePath[0]->attr.filter.copy("\\.nc");
-        }
-        srvParams->lookupTableName(&tableName,cfgLayer->FilePath[0]->value.c_str(),cfgLayer->FilePath[0]->attr.filter.c_str());
-        srvParams->encodeTableName(&tableName);
-        dbtable->value.copy(tableName.c_str());
-    }
-  }*/
+ 
 
   isConfigured=true;
   return 0;
@@ -399,114 +385,7 @@ void CDataSource::getFlagMeaningHumanReadable( CT::string *flagMeaning,std::vect
 }
 
 
-int  CDataSource::checkDimTables(CPGSQLDB *dataBaseConnection){
-  CCache::Lock lock;
-  CT::string identifier = "checkDimTables";  identifier.concat(cfgLayer->FilePath[0]->value.c_str());  identifier.concat("/");  identifier.concat(cfgLayer->FilePath[0]->attr.filter.c_str());  
-  CT::string cacheDirectory = srvParams->cfg->TempDir[0]->attr.value.c_str();
-  //srvParams->getCacheDirectory(&cacheDirectory);
-  if(cacheDirectory.length()>0){
-    lock.claim(cacheDirectory.c_str(),identifier.c_str(),"checkDimTables",srvParams->isAutoResourceEnabled());
-  }
-  
-  #ifdef CDATASOURCE_DEBUG
-  CDBDebug("[checkDimTables]");
-  #endif
-  bool tableNotFound=false;
-  bool fileNeedsUpdate = false;
-  CT::string dimName;
-  for(size_t i=0;i<cfgLayer->Dimension.size();i++){
-    dimName=cfgLayer->Dimension[i]->attr.name.c_str();
-    
-    CT::string tableName;
-    try{
-      tableName = srvParams->lookupTableName(cfgLayer->FilePath[0]->value.c_str(),cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str(),cfgLayer->DataBaseTable);
-    }catch(int e){
-      CDBError("Unable to create tableName from '%s' '%s' '%s'",cfgLayer->FilePath[0]->value.c_str(),cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
-      return 1;
-    }
-    
-    CT::string query;
-    query.print("select path,filedate,%s from %s limit 1",dimName.c_str(),tableName.c_str());
-    CDB::Store *store = dataBaseConnection->queryToStore(query.c_str());
-    if(store==NULL){
-      tableNotFound=true;
-      CDBDebug("No table found for dimension %s",dimName.c_str());
-    }
-    
-    if(tableNotFound == false){
-      if(srvParams->isAutoLocalFileResourceEnabled()==true){
-        try{
-          CT::string databaseTime = store->getRecord(0)->get(1);if(databaseTime.length()<20){databaseTime.concat("Z");}databaseTime.setChar(10,'T');
-          
-          CT::string fileDate = CDirReader::getFileDate(store->getRecord(0)->get(0)->c_str());
-          
-          
-          
-          if(databaseTime.equals(fileDate)==false){
-            CDBDebug("Table was found, %s ~ %s : %d",fileDate.c_str(),databaseTime.c_str(),databaseTime.equals(fileDate));
-            fileNeedsUpdate = true;
-          }
-          
-        }catch(int e){
-          CDBDebug("Unable to get filedate from database, error: %s",CDB::getErrorMessage(e));
-          fileNeedsUpdate = true;
-        }
-        
-          
-      }
-    }
-    
-    delete store;
-    if(tableNotFound||fileNeedsUpdate)break;
-  }
-  
-  
-  
-  if(fileNeedsUpdate == true){
-    //Recreate table
-    if(srvParams->isAutoLocalFileResourceEnabled()==true){
-      for(size_t i=0;i<cfgLayer->Dimension.size();i++){
-        dimName=cfgLayer->Dimension[i]->attr.name.c_str();
-      
-        CT::string tableName;
-        try{
-          tableName = srvParams->lookupTableName(cfgLayer->FilePath[0]->value.c_str(),cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str(),cfgLayer->DataBaseTable);
-        }catch(int e){
-          CDBError("Unable to create tableName from '%s' '%s' '%s'",cfgLayer->FilePath[0]->value.c_str(),cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
-          return 1;
-        }
-        CDBFileScanner::markTableDirty(&tableName);
-        //CDBDebug("Dropping old table (if exists)",tableName.c_str());
-        CT::string query ;
-        query.print("drop table %s",tableName.c_str());
-        CDBDebug("Try to %s for %s",query.c_str(),dimName.c_str());
-        dataBaseConnection->query(query.c_str());
-      }
-      tableNotFound = true;
-    }
-   
-  }
- 
-  
-  
-  
-  if(tableNotFound){
-    if(srvParams->isAutoLocalFileResourceEnabled()==true){
 
-      CDBDebug("Updating database");
-      int status = CDBFileScanner::updatedb(srvParams->cfg->DataBase[0]->attr.parameters.c_str(),this,NULL,NULL);
-      if(status !=0){CDBError("Could not update db for: %s",cfgLayer->Name[0]->value.c_str());return 2;}
-    }else{
-      CDBDebug("No table found for dimension %s and autoresource is disabled",dimName.c_str());
-      return 1;
-    }
-  }
-  #ifdef CDATASOURCE_DEBUG
-  CDBDebug("[/checkDimTables]");
-  #endif
-  lock.release();
-  return 0;
-}
 
 CT::string CDataSource::getDimensionValueForNameAndStep(const char *dimName,int dimStep){
   return timeSteps[dimStep]->dims.getDimensionValue(dimName);

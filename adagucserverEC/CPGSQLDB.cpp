@@ -178,7 +178,7 @@ int CPGSQLDB::query(const char *pszQuery){
 // }
 
 
-CDB::Store* CPGSQLDB::queryToStore(const char *pszQuery,bool throwException){
+CDBStore::Store* CPGSQLDB::queryToStore(const char *pszQuery,bool throwException){
  // CDBDebug("query_select %s",pszQuery);
   LastErrorMsg[0]='\0';
 
@@ -211,7 +211,7 @@ CDB::Store* CPGSQLDB::queryToStore(const char *pszQuery,bool throwException){
     }
     return NULL;
   }
-  ColumnModel *colModel = new ColumnModel(PQnfields(result));
+  CDBStore::ColumnModel *colModel = new CDBStore::ColumnModel(PQnfields(result));
  // colModel 
   
   
@@ -219,13 +219,13 @@ CDB::Store* CPGSQLDB::queryToStore(const char *pszQuery,bool throwException){
     colModel->setColumn(colNumber,PQfname(result,colNumber));
   }
   
-  Store *store=new Store(colModel);
+  CDBStore::Store *store=new CDBStore::Store(colModel);
   
   
   
   
   for(size_t rowNumber=0;rowNumber<numRows;rowNumber++){
-    Record *record = new Record(colModel);
+    CDBStore::Record *record = new CDBStore::Record(colModel);
     for(size_t colNumber=0;colNumber<numCols;colNumber++)record->push(colNumber,PQgetvalue(result, rowNumber, colNumber));
     store->push(record);
   }

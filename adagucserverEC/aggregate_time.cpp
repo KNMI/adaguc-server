@@ -127,7 +127,7 @@ int main( int argc, const char* argv[]){
 //destCDFObject->aggregateDim(fileObjects[1]->cdfObject,"time");
 //destCDFObject->aggregateDim(fileObjects[2]->cdfObject,"time");
 
-  CDF::Variable * timeVar = destCDFObject->getVariable("time");
+//  CDF::Variable * timeVar = destCDFObject->getVariable("time");
   //CDBDebug("timeVar->getSize() %d",timeVar->getSize());
 
   

@@ -26,8 +26,8 @@
 #include "CConvertADAGUCPoint.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
-#define CCONVERTADAGUCPOINT_DEBUG
-#define MEASURETIME
+// #define CCONVERTADAGUCPOINT_DEBUG
+// #define MEASURETIME
 const char *CConvertADAGUCPoint::className="CConvertADAGUCPoint";
 
 
@@ -153,6 +153,8 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
           !var->name.equals("time")&&
           !var->name.equals("lon")&&
           !var->name.equals("lat")&&
+          !var->name.equals("x")&&
+          !var->name.equals("y")&&
           !var->name.equals("lat_bnds")&&
           !var->name.equals("lon_bnds")&&
           !var->name.equals("custom")&&
@@ -378,10 +380,10 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
     StopWatch_Stop("Lat and lon read");
   #endif
 
-  CT::string data = CDF::dump(cdfObject0);
-  
-  CDBDebug("%s",data.c_str());
-  
+//   CT::string data = CDF::dump(cdfObject0);
+//   
+//   CDBDebug("%s",data.c_str());
+//   
   
   for(size_t d=0;d<nrDataObjects;d++){
     /*Second read actual variables*/
@@ -417,9 +419,9 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
       #endif
       pointVar[d]->freeData();
       
-      for(size_t j=0;j<pointVar[d]->dimensionlinks.size();j++){
-        CDBDebug("%d %s [%d:%d:%d]",j,pointVar[d]->dimensionlinks[j]->name.c_str(),start[j],count[j],stride[j]);
-      }
+//       for(size_t j=0;j<pointVar[d]->dimensionlinks.size();j++){
+//         CDBDebug("%d %s [%d:%d:%d]",j,pointVar[d]->dimensionlinks[j]->name.c_str(),start[j],count[j],stride[j]);
+//       }
       
       
       pointVar[d]->readData(CDF_FLOAT,start,count,stride,true);

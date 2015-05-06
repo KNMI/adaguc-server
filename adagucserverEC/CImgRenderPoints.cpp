@@ -33,7 +33,7 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
   bool drawPoints = true;
   bool drawBarb = false;
   bool drawDiscs = false;
-  bool drawText = true;
+//   bool drawText = true;
   bool drawVolume = false;
   bool drawSymbol = false;
   
@@ -64,16 +64,16 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
   std::set<std::string> skipPoints;
   bool useFilter=false;
   
-  CDBDebug("style settings: %s", settings.c_str());
+//   CDBDebug("style settings: %s", settings.c_str());
 //   if(settings.indexOf("vector")!=-1){
 //     drawVector = true;
 //   }
 
-  CDBDebug("point style before: %d %d %f %f t:#%02x%02x%02x%02x f:#%02x%02x%02x%02x l:#%02x%02x%02x%02x",drawPointDiscRadius, drawPointDot, drawPointAngleStart, drawPointAngleStep, 
-            drawPointTextColor.r,drawPointTextColor.g,drawPointTextColor.b,drawPointTextColor.a,
-            drawPointFillColor.r,drawPointFillColor.g,drawPointFillColor.b,drawPointFillColor.a,
-            drawPointLineColor.r,drawPointLineColor.g,drawPointLineColor.b,drawPointLineColor.a
-          );
+//   CDBDebug("point style before: %d %d %f %f t:#%02x%02x%02x%02x f:#%02x%02x%02x%02x l:#%02x%02x%02x%02x",drawPointDiscRadius, drawPointDot, drawPointAngleStart, drawPointAngleStep, 
+//             drawPointTextColor.r,drawPointTextColor.g,drawPointTextColor.b,drawPointTextColor.a,
+//             drawPointFillColor.r,drawPointFillColor.g,drawPointFillColor.b,drawPointFillColor.a,
+//             drawPointLineColor.r,drawPointLineColor.g,drawPointLineColor.b,drawPointLineColor.a
+//           );
   
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   if(styleConfiguration!=NULL){
@@ -126,38 +126,38 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
       }
     }
   }
-  CDBDebug("point style after: %d %d %f %f t:#%02x%02x%02x%02x f:#%02x%02x%02x%02x l:#%02x%02x%02x%02x",drawPointDiscRadius, drawPointDot, drawPointAngleStart, drawPointAngleStep, 
-            drawPointTextColor.r,drawPointTextColor.g,drawPointTextColor.b,drawPointTextColor.a,
-            drawPointFillColor.r,drawPointFillColor.g,drawPointFillColor.b,drawPointFillColor.a,
-            drawPointLineColor.r,drawPointLineColor.g,drawPointLineColor.b,drawPointLineColor.a
-          );
+//   CDBDebug("point style after: %d %d %f %f t:#%02x%02x%02x%02x f:#%02x%02x%02x%02x l:#%02x%02x%02x%02x",drawPointDiscRadius, drawPointDot, drawPointAngleStart, drawPointAngleStep, 
+//             drawPointTextColor.r,drawPointTextColor.g,drawPointTextColor.b,drawPointTextColor.a,
+//             drawPointFillColor.r,drawPointFillColor.g,drawPointFillColor.b,drawPointFillColor.a,
+//             drawPointLineColor.r,drawPointLineColor.g,drawPointLineColor.b,drawPointLineColor.a
+//           );
   
   if (drawPointPointStyle.equalsIgnoreCase("disc")) {
     drawDiscs=true;
     drawPoints=false;
     drawVolume=false;
-    drawText=true;
+//     drawText=true;
     drawSymbol=false;
   } else if (drawPointPointStyle.equalsIgnoreCase("volume")){
     drawPoints=false;
     drawVolume=true;
     drawDiscs=false;
-    drawText=false;
+//     drawText=false;
     drawSymbol=false;
   } else if (drawPointPointStyle.equalsIgnoreCase("symbol")){
     drawPoints=false;
     drawVolume=false;
     drawDiscs=false;
-    drawText=false;
+//     drawText=false;
     drawSymbol=true;
   } else {
     drawPoints=true;
     drawDiscs=false;
     drawVolume=false;
-    drawText=true;
+//     drawText=true;
     drawSymbol=false;
   }
-  CDBDebug("drawPoints=%d drawText=%d drawBarb=%d drawVector=%d drawVolume=%d drawSymbol=%d", drawPoints, drawText, drawBarb, drawVector, drawVolume, drawSymbol);
+//   CDBDebug("drawPoints=%d drawText=%d drawBarb=%d drawVector=%d drawVolume=%d drawSymbol=%d", drawPoints, drawText, drawBarb, drawVector, drawVolume, drawSymbol);
   
   std::vector<CServerConfig::XMLE_SymbolInterval*>* symbolIntervals=NULL;
   
@@ -228,7 +228,7 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
 
   if(dataSource->getNumDataObjects()!=2){ // Not for vector (u/v or speed/dir pairs) TODO
     std::map<std::string,CDrawImage*> symbolCache;
-    CDBDebug("symbolCache created, size=%d", symbolCache.size());
+//     CDBDebug("symbolCache created, size=%d", symbolCache.size());
     std::map<std::string,CDrawImage*>::iterator symbolCacheIter;
     for (size_t dataObject=0; dataObject<dataSource->getNumDataObjects(); dataObject++) {
       std::vector<PointDVWithLatLon> *pts=&dataSource->getDataObject(dataObject)->points;
@@ -241,7 +241,7 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
       }
       float usedx=drawPointTextRadius*sin(useangle*M_PI/180);
       float usedy=drawPointTextRadius*cos(useangle*M_PI/180);
-      CDBDebug("angles[%d] %f %d %f %f", dataObject, useangle, kwadrant, usedx, usedy);
+//       CDBDebug("angles[%d] %f %d %f %f", dataObject, useangle, kwadrant, usedx, usedy);
     
       //THINNING
       std::vector<PointDVWithLatLon> *p1=&dataSource->getDataObject(dataObject)->points;
@@ -326,7 +326,7 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
           int bvol=drawPointFillColor.b;
           
           drawImage->setPixelTrueColor(x,y, 0,0,0,255);
-          CDBDebug("drawVolume for [%d,%d]", x, y);
+//           CDBDebug("drawVolume for [%d,%d]", x, y);
           int *p=alphaPoint;
           for(int y1=-drawPointDiscRadius;y1<=drawPointDiscRadius;y1++){
             for(int x1=-drawPointDiscRadius;x1<=drawPointDiscRadius;x1++){

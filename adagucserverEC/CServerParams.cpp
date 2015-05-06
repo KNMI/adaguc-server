@@ -26,7 +26,7 @@
 #include "CServerParams.h"
 const char *CServerParams::className="CServerParams";
 
-//std::map<std::string id,std::string table> CServerParams::lookupTableNameCacheMap;
+
 
 CServerParams::CServerParams(){
   
@@ -49,7 +49,7 @@ CServerParams::CServerParams(){
   showScaleBarInImage = false;
   figWidth=-1;
   figHeight=-1;
-  dataBaseConnection = NULL;
+
 }
 
 CServerParams::~CServerParams(){
@@ -61,11 +61,7 @@ CServerParams::~CServerParams(){
     requestDims[j]= NULL;
   }
   requestDims.clear();
-  if(dataBaseConnection != NULL){
-    dataBaseConnection->close2();
-    delete dataBaseConnection;
-    dataBaseConnection = NULL;
-  }
+  
 }
 
 void CServerParams::getCacheFileName(CT::string *cacheFileName){
@@ -145,14 +141,29 @@ void CServerParams::_getCacheDirectory(CT::string *_cacheFileName){
   _cacheFileName->copy(myidinparts.c_str());
 }
 
+
+
 #include <ctime>
 #include <sys/time.h>
 #include <stdio.h>
 #define USE_DEVRANDOM
 
+CT::string  CServerParams::currentDateTime() {
+    timeval curTime;
+    gettimeofday(&curTime, NULL);
+    int milli = curTime.tv_usec / 1000;
 
+    char buffer [80];
+    strftime(buffer, 80, "%Y-%m-%dT%H:%M:%S", localtime(&curTime.tv_sec));
 
-const CT::string randomString(const int len) {
+    char currentTime[84] = "";
+    sprintf(currentTime, "%s:%03dZ", buffer, milli);
+   
+
+    return currentTime;
+}
+
+const CT::string CServerParams::randomString(const int len) {
     char s[len+1];
     
     timeval curTime;
@@ -182,158 +193,10 @@ const CT::string randomString(const int len) {
     return r;
 }
 
-CT::string currentDateTime() {
-    timeval curTime;
-    gettimeofday(&curTime, NULL);
-    int milli = curTime.tv_usec / 1000;
-
-    char buffer [80];
-    strftime(buffer, 80, "%Y-%m-%dT%H:%M:%S", localtime(&curTime.tv_sec));
-
-    char currentTime[84] = "";
-    sprintf(currentTime, "%s:%03dZ", buffer, milli);
-   
-
-    return currentTime;
-}
 
 
-//Must become atomic between processes.
 
-CT::string CServerParams::lookupTableName(const char *path,const char *filter, const char * dimension,std::vector<CServerConfig::XMLE_DataBaseTable*> dataBaseTable){
-  if(dataBaseTable.size() == 1){
-    CT::string tableName = "";
-    
-    tableName.concat(dataBaseTable[0]->value.c_str());
-    CT::string dimName = "";
-    if(dimension!=NULL){
-      dimName = dimension;
-    }
-    
-    makeCorrectTableName(&tableName,&dimName);
-    return tableName;
-    
-  }
-  
-  CT::string identifier = "lookuptable/";  identifier.concat(path);  identifier.concat("/");  identifier.concat(filter);  
-  if(dimension!=NULL){identifier.concat("/");identifier.concat(dimension);}
-  CT::string tableName;
-  
-  std::map<std::string,std::string>::iterator it=lookupTableNameCacheMap.find(identifier.c_str());
-  if(it!=lookupTableNameCacheMap.end()){
-    tableName = (*it).second.c_str();
-    //CDBDebug("Returning tablename %s from map",tableName.c_str());
-    return tableName;
-  }
-  
-  CCache::Lock lock;
-  CT::string cacheDirectory = cfg->TempDir[0]->attr.value.c_str();
-  //getCacheDirectory(&cacheDirectory);
-  if(cacheDirectory.length()>0){
-    lock.claim(cacheDirectory.c_str(),identifier.c_str(),"lookupTableName",isAutoResourceEnabled());
-  }
 
-  
- 
- 
-  // This makes use of a lookup table to find the tablename belonging to the filter and path combinations.
-  // Database collumns: path filter tablename
-  
-  CT::string filterString="F_";filterString.concat(filter);
-  CT::string pathString="P_";pathString.concat(path);
-  CT::string dimString="";if(dimension != NULL){dimString.concat(dimension);dimString.toLowerCaseSelf();}
-  
-// CDBDebug("lookupTableName %s",identifier.c_str());
-  
-  CT::string lookupTableName = "pathfiltertablelookup";
-  
-  //TODO CRUCIAL setting for fast perfomance on large datasets, add Unique to enable building fast lookup indexes.
-  CT::string tableColumns("path varchar (511), filter varchar (511), dimension varchar (511), tablename varchar (63), UNIQUE (path,filter,dimension) ");
- // CT::string tableColumns("path varchar (511), filter varchar (511), dimension varchar (511), tablename varchar (63)");
-  CT::string mvRecordQuery;
-  int status;
-  CPGSQLDB *DB = getDataBaseConnection();
-  const char *pszDBParams = this->cfg->DataBase[0]->attr.parameters.c_str();
-  status = DB->connect(pszDBParams);if(status!=0){
-    CDBError("Error Could not connect to the database with parameters: [%s]",pszDBParams);
-    throw(1);
-  }
-  
-
-  try{
-
-    status = DB->checkTable(lookupTableName.c_str(),tableColumns.c_str());
-    //if(status == 0){CDBDebug("OK: Table %s is available",lookupTableName.c_str());}
-    if(status == 1){
-      CDBError("FAIL: Table %s could not be created: %s",lookupTableName.c_str(),tableColumns.c_str());
-      CDBError("Error: %s",DB->getError());    
-      throw(1);  
-    }
-    //if(status == 2){CDBDebug("OK: Table %s is created",lookupTableName.c_str());  }
-
-    
-    //Check wether a records exists with this path and filter combination.
-    
-    bool lookupTableIsAvailable=false;
-    
-    
-    
-    if(dimString.length()>1){
-      mvRecordQuery.print("SELECT * FROM %s where path=E'%s' and filter=E'%s' and dimension=E'%s'",
-                          lookupTableName.c_str(),pathString.c_str(),filterString.c_str(),dimString.c_str());
-    }else{
-      mvRecordQuery.print("SELECT * FROM %s where path=E'%s' and filter=E'%s'",
-                          lookupTableName.c_str(),pathString.c_str(),filterString.c_str());
-    }
-    CDB::Store *rec = DB->queryToStore(mvRecordQuery.c_str()); 
-    if(rec==NULL){CDBError("Unable to select records: \"%s\"",mvRecordQuery.c_str());throw(1);  }
-    if(rec->getSize()>0){
-      tableName.copy(rec->getRecord(0)->get(3));
-      if(tableName.length()>0){
-        lookupTableIsAvailable = true;
-      }
-      
-    }
-   
-    delete rec;
-    
-    //Add a new lookuptable with an unique id.
-    if(lookupTableIsAvailable==false){
-    
-      CT::string randomTableString = "t";
-      randomTableString.concat(currentDateTime());
-      randomTableString.concat("_");
-      randomTableString.concat(randomString(20));
-      randomTableString.replaceSelf(":","");
-      randomTableString.replaceSelf("-","");
-      randomTableString.replaceSelf("Z",""); 
-      
-      tableName.copy(randomTableString.c_str());
-      tableName.toLowerCaseSelf();
-      mvRecordQuery.print("INSERT INTO %s values (E'%s',E'%s',E'%s',E'%s')",lookupTableName.c_str(),pathString.c_str(),filterString.c_str(),dimString.c_str(),tableName.c_str());
-      //CDBDebug("%s",mvRecordQuery.c_str());
-      status = DB->query(mvRecordQuery.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",mvRecordQuery.c_str());throw(1);  }
-    }
-    //Close the database
-  }catch(int e){
-
-    lock.release();
-    throw(e);
-  }
-  
-  if(tableName.length()>0){
-    //CDBDebug("Pushing %s with id %s",tableName.c_str(),identifier.c_str());
-    lookupTableNameCacheMap.insert(std::pair<std::string,std::string>(identifier.c_str(),tableName.c_str()));
-  }
-  
-  lock.release();
-  if(tableName.length()<=0){
-    CDBError("Unable to generate lookup table name for %s",identifier.c_str());
-    throw(1);
-  }
-  
-  return tableName;
-}
 
 
 //Table names need to be different between dims like time and height.
@@ -597,3 +460,57 @@ CT::PointerList<CT::string*> *CServerParams::getLegendNames(std::vector <CServer
   }
   return stringList;
 }
+
+int CServerParams::dataRestriction = -1;
+int CServerParams::checkDataRestriction(){
+  if(dataRestriction!=-1)return dataRestriction;
+
+  //By default no restrictions
+  int dr = ALLOW_WCS|ALLOW_GFI|ALLOW_METADATA;
+  const char *data=getenv("ADAGUC_DATARESTRICTION");
+  if(data != NULL){
+    dr = ALLOW_NONE;
+    CT::string temp(data);
+    temp.toUpperCaseSelf();
+    if(temp.equals("TRUE")){
+      dr = ALLOW_NONE;
+    }
+    if(temp.equals("FALSE")){
+      dr = ALLOW_WCS|ALLOW_GFI|ALLOW_METADATA;
+    }
+    //Decompose into stringlist and check each item
+    CT::StackList<CT::string> items = temp.splitToStack("|");
+    for(size_t j=0;j<items.size();j++){
+      items[j].replaceSelf("\"","");
+      if(items[j].equals("ALLOW_GFI"))dr|=ALLOW_GFI;
+      if(items[j].equals("ALLOW_WCS"))dr|=ALLOW_WCS;
+      if(items[j].equals("ALLOW_METADATA"))dr|=ALLOW_METADATA;
+      if(items[j].equals("SHOW_QUERYINFO"))dr|=SHOW_QUERYINFO;
+    }
+ 
+  }
+  
+  dataRestriction = dr;
+  return dataRestriction;
+}
+
+const char *timeFormatAllowedChars="0123456789:TZ-/. _ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz()*";
+bool CServerParams::checkTimeFormat(CT::string& timeToCheck){
+  if(timeToCheck.length()<1)return false;
+//  bool isValidTime = false;
+  //First test wether invalid characters are in this string
+  int numValidChars = strlen(timeFormatAllowedChars);
+  const char * timeChars=timeToCheck.c_str();
+  int numTimeChars = strlen(timeChars);
+  for(int j=0;j<numTimeChars;j++){
+    int i=0;
+    for(i=0;i<numValidChars;i++)if(timeChars[j]==timeFormatAllowedChars[i])break;
+    if(i==numValidChars)return false;
+  }
+  return true;
+  /*for(int j=0;j<NUMTIMEFORMATS&&isValidTime==false;j++){
+    isValidTime = timeToCheck.testRegEx(timeFormats[j].pattern);
+  }
+  return isValidTime;*/
+}
+

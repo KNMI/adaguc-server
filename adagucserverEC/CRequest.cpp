@@ -23,11 +23,12 @@
  * 
  ******************************************************************************/
 
-//#define CREQUEST_DEBUG
-//#define MEASURETIME
+// #define CREQUEST_DEBUG
+// #define MEASURETIME
 
 #include "CRequest.h"
 #include "COpenDAPHandler.h"
+#include "CDBFactory.h"
 const char *CRequest::className="CRequest";
 int CRequest::CGI=0;
 
@@ -37,6 +38,7 @@ int CRequest::runRequest(){
   CDFObjectStore::getCDFObjectStore()->clear();
   CDFStore::clear();
   ProjectionStore::getProjectionStore()->clear();
+  CDBFactory::clear();
   return status;
 }
 
@@ -160,52 +162,10 @@ void CRequest::addXMLLayerToConfig(CServerParams *srvParam,CDFObject *cdfObject,
   srvParam->cfg->Layer.push_back(xmleLayer);
 }
 
-int CRequest::dataRestriction = -1;
 
-/**
- * Checks whether data is restricted or not based on the environment variable ADAGUC_DATARESTRICTION.
- * If not defined or set to FALSE, there are no dataset restrictions. If set to TRUE, dataaccess is restricted for WCS, GFI, metadata and queryinfo.
- * Possible values are: ALLOW_GFI, ALLOW_WCS, ALLOW_METADATA and SHOW_QUERYINFO. Values can be combined by using the | sign without any space.
- * 
- * ALLOW_GFI: Allows getFeatureInfo request to work.
- * 
- * ALLOW_WCS: Allows dataaccess by the Web Coverage Service.
- * 
- * ALLOW_METADATA: Allows to display detailed netcdf header information.
- * 
- * SHOW_QUERYINFO: Displays failed queries, if not set "hidden" is shown instead.
- */
-int CRequest::checkDataRestriction(){
-  if(dataRestriction!=-1)return dataRestriction;
 
-  //By default no restrictions
-  int dr = ALLOW_WCS|ALLOW_GFI|ALLOW_METADATA;
-  const char *data=getenv("ADAGUC_DATARESTRICTION");
-  if(data != NULL){
-    dr = ALLOW_NONE;
-    CT::string temp(data);
-    temp.toUpperCaseSelf();
-    if(temp.equals("TRUE")){
-      dr = ALLOW_NONE;
-    }
-    if(temp.equals("FALSE")){
-      dr = ALLOW_WCS|ALLOW_GFI|ALLOW_METADATA;
-    }
-    //Decompose into stringlist and check each item
-    CT::StackList<CT::string> items = temp.splitToStack("|");
-    for(size_t j=0;j<items.size();j++){
-      items[j].replaceSelf("\"","");
-      if(items[j].equals("ALLOW_GFI"))dr|=ALLOW_GFI;
-      if(items[j].equals("ALLOW_WCS"))dr|=ALLOW_WCS;
-      if(items[j].equals("ALLOW_METADATA"))dr|=ALLOW_METADATA;
-      if(items[j].equals("SHOW_QUERYINFO"))dr|=SHOW_QUERYINFO;
-    }
- 
-  }
-  
-  dataRestriction = dr;
-  return dataRestriction;
-}
+
+
 
 
 int CRequest::setConfigFile(const char *pszConfigFile){
@@ -691,92 +651,7 @@ int CRequest::generateOGCGetCapabilities(CT::string *XMLdocument){
 
 
 int CRequest::generateGetReferenceTimesDoc(CT::string *result,CDataSource *dataSource){
-  bool hasReferenceTimeDimension = false;
-  CT::string dimName = "";
-  for(size_t l=0;l<dataSource->cfgLayer->Dimension.size();l++){
-    if(dataSource->cfgLayer->Dimension[l]->value.equals("reference_time")){
-      dimName = dataSource->cfgLayer->Dimension[l]->attr.name.c_str();
-      hasReferenceTimeDimension=true;
-      break;
-    }
-  }
-  
-  if(hasReferenceTimeDimension){
-    CT::string tableName;
-   
-    try{
-      tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str(),dataSource->cfgLayer->DataBaseTable);
-    }catch(int e){
-      CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
-      return 1;
-    }
-    CT::string query;
-    query.print("select %s from %s order by %s desc",dimName.c_str(),tableName.c_str(), dimName.c_str());
-    CPGSQLDB * DB = srvParam->getDataBaseConnection();
-  
-    // Connect do DB
-    int status = DB->connect(srvParam->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0){CDBError("Unable to connect to DB");return 1;}
-  
-    CDB::Store *store = DB->queryToStore(query.c_str());
-    if(store == NULL){
-      setExceptionType(InvalidDimensionValue);
-      CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
-      //if((checkDataRestriction()&SHOW_QUERYINFO)==false){
-        CDBError("Query was '%s'",query.c_str());
-      //}
-      return 1;
-    }
-    result->copy("[");
-    bool first=true;
-    for(size_t k=0;k<store->getSize();k++){
-      if (!first) {
-        result->concat(",");
-      }
-      first=false;
-      result->concat("\"");
-      CT::string ymd;
-      ymd=store->getRecord(k)->get(0);
-      ymd.setChar(10, 'T');
-      ymd.concat("Z");
-      result->concat(ymd);
-      result->concat("\"");
-    } 
-    result->concat("]");
-    delete store;
-    return 0;
-  }else{
-    //Set WMSLayers:
-    std::set<std::string>WMSGroups ;
-    for(size_t j=0;j<srvParam->cfg->Layer.size();j++){
-      CT::string groupName;
-      srvParam->makeLayerGroupName(&groupName,srvParam->cfg->Layer[j]);
-      if (groupName.testRegEx("[[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]]_[[:digit:]][[:digit:]]")) {
-        CT::string ymd=groupName.substringr(0,8);
-        CT::string hh=groupName.substringr(9,11);
-        ymd.concat(hh);
-        ymd.concat("00");
-        WMSGroups.insert(ymd.c_str());
-      } else if (groupName.testRegEx("[[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]]")) {
-        groupName.concat("00");
-        WMSGroups.insert(groupName.c_str());
-      } else if (groupName.testRegEx("[[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]]")) {
-        WMSGroups.insert(groupName.c_str());
-      }
-    }
-    result->copy("[");
-    bool first=true;
-    for (std::set<std::string>::reverse_iterator it=WMSGroups.rbegin(); it!=WMSGroups.rend(); ++it) {
-      if (!first) {
-        result->concat(",");
-      }
-      first=false;
-      result->concat("\"");
-      result->concat((*it).c_str());
-      result->concat("\"");
-    }
-    result->concat("]");
-  }
-  return 0;
+  return CDBFactory::getDBAdapter(srvParam->cfg)->generateGetReferenceTimesDoc(result,dataSource);
 }
 
 
@@ -896,43 +771,17 @@ int CRequest::process_wms_getmap_request(){
 
 
 
-const char *timeFormatAllowedChars="0123456789:TZ-/. _ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz()*";
-bool CRequest::checkTimeFormat(CT::string& timeToCheck){
-  if(timeToCheck.length()<1)return false;
-//  bool isValidTime = false;
-  //First test wether invalid characters are in this string
-  int numValidChars = strlen(timeFormatAllowedChars);
-  const char * timeChars=timeToCheck.c_str();
-  int numTimeChars = strlen(timeChars);
-  for(int j=0;j<numTimeChars;j++){
-    int i=0;
-    for(i=0;i<numValidChars;i++)if(timeChars[j]==timeFormatAllowedChars[i])break;
-    if(i==numValidChars)return false;
-  }
-  return true;
-  /*for(int j=0;j<NUMTIMEFORMATS&&isValidTime==false;j++){
-    isValidTime = timeToCheck.testRegEx(timeFormats[j].pattern);
-  }
-  return isValidTime;*/
-}
-
 
 int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *srvParam){
   int status = 0;
   try{
-    CPGSQLDB * DB = srvParam->getDataBaseConnection();
-    CT::string query;
-  
-    // Connect do DB
-    status = DB->connect(srvParam->cfg->DataBase[0]->attr.parameters.c_str());if(status!=0){CDBError("Unable to connect to DB");return 1;}
-    
     /*
       * Check if all tables are available, if not update the db
       */
     if(srvParam->isAutoResourceEnabled()){
-      status = dataSource->CDataSource::checkDimTables(DB);
+      status = CDBFactory::getDBAdapter(srvParam->cfg)->makeDimensionTables(dataSource);
       if(status != 0){
-        CDBError("checkAndUpdateDimTables failed");
+        CDBError("makeDimensionTables checkAndUpdateDimTables failed");
         return status;
       }
     }
@@ -986,20 +835,19 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
               CT::string tableName;
               
               try{
-                tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), ogcDim->netCDFDimName.c_str(),dataSource->cfgLayer->DataBaseTable);
+                tableName =  CDBFactory::getDBAdapter(srvParam->cfg)->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), ogcDim->netCDFDimName.c_str(),dataSource);
               }catch(int e){
                 CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), ogcDim->netCDFDimName.c_str());
                 return 1;
               }
               
               if(hasReferenceTimeDimension == false){
+                CDBDebug("BLA");
                 //For observations, take the latest:
-                query.print("select max(%s) from %s",ogcDim->netCDFDimName.c_str(),tableName.c_str());
-                CDB::Store *maxStore = DB->queryToStore(query.c_str());
-                if(maxStore == NULL){
-                  setExceptionType(InvalidDimensionValue);
-                  CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
-                  CDBError("query failed"); return 1;
+                CDBStore::Store *maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(ogcDim->netCDFDimName.c_str(),tableName.c_str());
+                if(maxStore==NULL){
+                  CDBError("Unable to get max dimension value");
+                  return 1;
                 }
                 ogcDim->value.copy(maxStore->getRecord(0)->get(0));
                 delete maxStore;
@@ -1008,9 +856,8 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
                 
                 //For time:
                 if(dataSource->cfgLayer->Dimension[i]->value.equals("time")){
-                
-                  query.print("SELECT %s,abs(EXTRACT(EPOCH FROM (%s - now()))) as t from %s order by t asc limit 1",ogcDim->netCDFDimName.c_str(),ogcDim->netCDFDimName.c_str(),tableName.c_str());
-                  CDB::Store *maxStore = DB->queryToStore(query.c_str());
+                  CDBStore::Store *maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getClosestReferenceTimeToSystemTime(ogcDim->netCDFDimName.c_str(),tableName.c_str());
+                  
                   if(maxStore == NULL){
                     setExceptionType(InvalidDimensionValue);
                     CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
@@ -1022,8 +869,7 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
                   CDBDebug("%s %s",ogcDim->netCDFDimName.c_str(),ogcDim->value.c_str());
                 }else{
                   //For other dimensions than time take the latest
-                  query.print("select max(%s) from %s",ogcDim->netCDFDimName.c_str(),tableName.c_str());
-                  CDB::Store *maxStore = DB->queryToStore(query.c_str());
+                  CDBStore::Store *maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(ogcDim->netCDFDimName.c_str(),tableName.c_str());
                   if(maxStore == NULL){
                     setExceptionType(InvalidDimensionValue);
                     CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
@@ -1057,7 +903,7 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
 
         CT::string tableName;
         try{
-          tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str(),dataSource->cfgLayer->DataBaseTable);
+          tableName =  CDBFactory::getDBAdapter(srvParam->cfg)->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str(),dataSource);
         }catch(int e){
           CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str());
           return 1;
@@ -1074,13 +920,11 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
         if(dataSource->cfgLayer->Dimension[i]->value.equals("reference_time")){isReferenceTimeDimension=true;}
         
         
-        CT::string query;
         
+        CDBStore::Store *maxStore = NULL;
         if(!isReferenceTimeDimension){
           //Try to find the max value for this dim name from the database
-          query.print("select max(%s) from %s",
-                      dataSource->cfgLayer->Dimension[i]->attr.name.c_str(),
-                      tableName.c_str());
+          maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(dataSource->cfgLayer->Dimension[i]->attr.name.c_str(),tableName.c_str());
         }else{
           //Try to find a reference time closest to the given time value?
        
@@ -1098,41 +942,26 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
           }
           if(timeValue.empty()){
             //CDBDebug("Time value is not available, getting max reference_time");
-             query.print("select max(%s) from %s",
-                      dataSource->cfgLayer->Dimension[i]->attr.name.c_str(),
-                      tableName.c_str());
+            maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(dataSource->cfgLayer->Dimension[i]->attr.name.c_str(),tableName.c_str());
           }else{
             // TIME is set! Get 
             
             
             CT::string timeTableName;
             try{
-              timeTableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netcdfTimeDimName.c_str(),dataSource->cfgLayer->DataBaseTable);
+              timeTableName =  CDBFactory::getDBAdapter(srvParam->cfg)->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netcdfTimeDimName.c_str(),dataSource);
             }catch(int e){
               CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netcdfTimeDimName.c_str());
               return 1;
             }
             
+            maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getReferenceTime(ogcDim->netCDFDimName.c_str(),netcdfTimeDimName.c_str(),timeValue.c_str(),timeTableName.c_str(),tableName.c_str());
             
-            
-            query.print(
-              "select * from (select %s,(EXTRACT(EPOCH FROM (%s-%s))) as age from ( select * from %s)a0 ,( select * from %s where %s = '%s')a1 where a0.path = a1.path order by age asc)a0 where age >= 0 limit 1",
-                        ogcDim->netCDFDimName.c_str(),
-                        netcdfTimeDimName.c_str(),
-                        ogcDim->netCDFDimName.c_str(),
-                        tableName.c_str(),
-                        timeTableName.c_str(),
-                        netcdfTimeDimName.c_str(),
-                        timeValue.c_str()
-                       );
+//          
           }
-          CDBDebug("Reference time query Query: %s", query.c_str());
+         
         }
-	#ifdef CREQUEST_DEBUG
-	CDBDebug("Query: %s", query.c_str());
-	#endif
-        //Execute the query
-        CDB::Store *maxStore = DB->queryToStore(query.c_str());
+
         if(maxStore == NULL){
           setExceptionType(InvalidDimensionValue);
           CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
@@ -1156,179 +985,25 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
         }
       }
     }
+    
+    CDBStore::Store *store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource);
   
-  
-    CT::string queryOrderedDESC;
-    queryOrderedDESC.print("select a0.path");
-    for(size_t i=0;i<dataSource->requiredDims.size();i++){
-      queryOrderedDESC.printconcat(",%s,dim%s",dataSource->requiredDims[i]->netCDFDimName.c_str(),dataSource->requiredDims[i]->netCDFDimName.c_str());
-      
-    }
-    
-    queryOrderedDESC.concat(" from ");
-    bool timeValidationError = false;
-    
-    //Compose the query
-    for(size_t i=0;i<dataSource->requiredDims.size();i++){
-      CT::string netCDFDimName(&dataSource->requiredDims[i]->netCDFDimName);
-
-      CT::string tableName;
-      try{
-        tableName = dataSource->srvParams->lookupTableName(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str(),dataSource->cfgLayer->DataBaseTable);
-      }catch(int e){
-        CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str());
-        return 1;
-      }
-
-      CT::string subQuery;
-      subQuery.print("(select path,dim%s,%s from %s ",netCDFDimName.c_str(),
-                  netCDFDimName.c_str(),
-                  tableName.c_str());
-      CT::string queryParams(&dataSource->requiredDims[i]->value);
-      if(queryParams.equals("*")==false){
-        CT::string *cDims =queryParams.splitToArray(",");// Split up by commas (and put into cDims)
-        for(size_t k=0;k<cDims->count;k++){
-          CT::string *sDims =cDims[k].splitToArray("/");// Split up by slashes (and put into sDims)
-          
-          if(k==0){
-            subQuery.concat("where ");
-          }
-          if(sDims->count>0&&k>0)subQuery.concat("or ");
-          for(size_t  l=0;l<sDims->count&&l<2;l++){
-            if(sDims[l].length()>0){
-              
-              //Determine column type (timestamp, integer, real)
-              bool isRealType = false;
-              CT::string dataTypeQuery;
-              dataTypeQuery.print("select data_type from information_schema.columns where table_name = '%s' and column_name = '%s'",tableName.c_str(),netCDFDimName.c_str());
-              try{
-                CDB::Store * dataType = DB->queryToStore(dataTypeQuery.c_str(),true);
-                if(dataType!=NULL){
-                  if(dataType->getSize()==1){
-                    if(dataType->getRecord(0)->get(0)->equals("real")){
-                      isRealType = true;
-                    }
-                  }
-                }
-                delete dataType;
-              }catch(int e){
-                if((checkDataRestriction()&SHOW_QUERYINFO)==false)query.copy("hidden");
-                CDBError("Unable to determine column type: '%s'",query.c_str());
-                return 12;
-              }
-            
-              //dataSource->requiredDims[i]->allValues.push_back(sDims[l].c_str());
-              //CDBDebug("requiredDims %d %s",i,sDims[l].c_str());
-              if(l>0)subQuery.concat("and ");
-              if(sDims->count==1){
-                
-                if(!CRequest::checkTimeFormat(sDims[l]))timeValidationError=true;
-                
-                if(isRealType == false){
-                  subQuery.printconcat("%s = '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
-                }
-                
-                //This query gets the closest value from the table.
-                if(isRealType){
-                  subQuery.printconcat("abs(%s - %s) = (select min(abs(%s - %s)) from %s)",
-                                      sDims[l].c_str(),
-                                      netCDFDimName.c_str(),
-                                      sDims[l].c_str(),
-                                      netCDFDimName.c_str(),
-                                      tableName.c_str());
-                }
-              }
-              
-              //TODO Currently only start/stop is supported, start/stop/resolution is not supported yet.
-              if(sDims->count>=2){
-                if(l==0){
-                  if(!CRequest::checkTimeFormat(sDims[l]))timeValidationError=true;
-                  subQuery.printconcat("%s >= '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
-                }
-                if(l==1){
-                  if(!CRequest::checkTimeFormat(sDims[l]))timeValidationError=true;
-                  subQuery.printconcat("%s <= '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
-                }
-              }
-            }
-          }
-          delete[] sDims;
-        }
-        delete[] cDims;
-      }
-      if(i==0){
-        subQuery.printconcat("ORDER BY %s DESC limit 512)a%d ",netCDFDimName.c_str(),i);
-        //subQuery.printconcat("ORDER BY %s DESC )a%d ",netCDFDimName.c_str(),i);
-      }else{
-        subQuery.printconcat("ORDER BY %s DESC)a%d ",netCDFDimName.c_str(),i);
-      }
-      //subQuery.printconcat("ORDER BY %s DESC)a%d ",netCDFDimName.c_str(),i);
-      if(i<dataSource->requiredDims.size()-1)subQuery.concat(",");
-      queryOrderedDESC.concat(&subQuery);
-    }
-    
-    //Join by path
-    if(dataSource->requiredDims.size()>1){
-      queryOrderedDESC.concat(" where a0.path=a1.path");
-      for(size_t i=2;i<dataSource->requiredDims.size();i++){
-        queryOrderedDESC.printconcat(" and a0.path=a%d.path",i);
-      }
-    }
-    
-    //writeLogFile3(queryOrderedDESC.c_str());
-    //writeLogFile3("\n");
-    //queryOrderedDESC.concat(" limit 40");
-  
-    if(timeValidationError==true){
-      if((checkDataRestriction()&SHOW_QUERYINFO)==false)queryOrderedDESC.copy("hidden");
-      CDBError("queryOrderedDESC fails regular expression: '%s'",queryOrderedDESC.c_str());
-      return 1;
-    }
-    
-    query.print("select distinct * from (%s)T order by ",queryOrderedDESC.c_str());
-    query.concat(&dataSource->requiredDims[0]->netCDFDimName);
-    for(size_t i=1;i<dataSource->requiredDims.size();i++){
-      query.printconcat(",%s",dataSource->requiredDims[i]->netCDFDimName.c_str());
-    }
-    
-    //Execute the query
-    
-      //writeLogFile3(query.c_str());
-      //writeLogFile3("\n");
-    //values_path = DB.query_select(query.c_str(),0);
-    #ifdef CREQUEST_DEBUG
-    CDBDebug("%s",query.c_str());
-    #endif
-    CDB::Store *store = NULL;
-    try{
-      store = DB->queryToStore(query.c_str(),true);
-    }catch(int e){
-      if((checkDataRestriction()&SHOW_QUERYINFO)==false)query.copy("hidden");
-      setExceptionType(InvalidDimensionValue);
-      CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
-      CDBDebug("Query failed with code %d (%s)",e,query.c_str());
-      return 1;
-    }
-    
+   
     if(store == NULL){
-      if((checkDataRestriction()&SHOW_QUERYINFO)==false)query.copy("hidden");
       setExceptionType(InvalidDimensionValue);
       CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
-      CDBError("No results for query: '%s'",query.c_str());
       return 2;
     }
     if(store->getSize() == 0){
-      if((checkDataRestriction()&SHOW_QUERYINFO)==false)query.copy("hidden");
       setExceptionType(InvalidDimensionValue);
       CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
-      CDBError("No results for query: '%s'",query.c_str());
       delete store;
 
       return 2;
     }
           
     for(size_t k=0;k<store->getSize();k++){
-      CDB::Record *record = store->getRecord(k);
+      CDBStore::Record *record = store->getRecord(k);
       dataSource->addStep(record->get(0)->c_str(),NULL);
       
       //For each timesteps a new set of dimensions is added with corresponding dim array indices.
@@ -2853,7 +2528,7 @@ int CRequest::process_querystring(){
       )){
       
       if(srvParam->requestType==REQUEST_WMS_GETFEATUREINFO||srvParam->requestType==REQUEST_WMS_GETPOINTVALUE){
-        int status = checkDataRestriction();
+        int status = CServerParams::checkDataRestriction();
         if((status&ALLOW_GFI)==false){
           CDBWarning("ADAGUC Server: This layer is not queryable.");
           return 1;
@@ -3016,7 +2691,7 @@ int CRequest::process_querystring(){
       return status;
     }
     if(dErrorOccured==0&&srvParam->requestType==REQUEST_WMS_GETMETADATA){
-      int status = checkDataRestriction();
+      int status = CServerParams::checkDataRestriction();
       if((status&ALLOW_METADATA)==false){
         CDBWarning("ADAGUC Server: GetMetaData is restricted");
         return 1;
@@ -3042,7 +2717,7 @@ int CRequest::process_querystring(){
 
   if(dErrorOccured==0&&srvParam->serviceType==SERVICE_WCS){
     srvParam->OGCVersion=WCS_VERSION_1_0;
-    int status = checkDataRestriction();
+    int status = CServerParams::checkDataRestriction();
     if((status&ALLOW_WCS)==false){
       CDBWarning("ADAGUC Server: WCS Service is disabled.");
       return 1;
