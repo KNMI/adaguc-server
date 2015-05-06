@@ -237,11 +237,11 @@ int CMakeJSONTimeSeries::MakeJSONTimeSeries(CDrawImage *drawImage,CImageWarper *
 //         }
 //       }
       
-      #ifdef CIMAGEDATAWRITER_DEBUG
-      for(int j=0;j<numberOfDims;j++){
-        CDBDebug("Multiplier %d:%d = %d",j,dimUniqueSize[j],uniqueMultiplier[j]);
-      }
-      #endif
+//       #ifdef CIMAGEDATAWRITER_DEBUG
+// //       for(int j=0;j<numberOfDims;j++){
+// //         CDBDebug("Multiplier %d:%d = %d",j,dimUniqueSize[j],uniqueMultiplier[j]);
+// //       }
+//       #endif
 
       /*Find all individual files*/
       std::set<std::string> fileSet;  

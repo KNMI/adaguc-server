@@ -1068,9 +1068,7 @@ CStyleConfiguration *CDataSource::getStyle(){
         
     CT::string styleName="default";
     CT::string styles(srvParams->Styles.c_str());
-    #ifdef CIMAGEDATAWRITER_DEBUG    
-    CDBDebug("Server Styles=%s",srvParam->Styles.c_str());
-    #endif
+
     //TODO CHECK CDBDebug("Server Styles=%s",srvParam->Styles.c_str());
     //CDBDebug("Server Styles=%s",srvParam->Styles.c_str());
     CT::StackList<CT::string> layerstyles = styles.splitToStack(",");

@@ -35,15 +35,26 @@ CDBAdapter *CDBFactory::staticCDBAdapter = NULL;
 
 CDBAdapter *CDBFactory::getDBAdapter(CServerConfig::XMLE_Configuration *cfg){
   if(staticCDBAdapter == NULL){
-    CDBDebug("CREATE");
-    staticCDBAdapter = new CDBAdapterPostgreSQL();
+    //CDBDebug("CREATE");
+    if(cfg->DataBase.size()!=1){
+      CDBError("DataBase not properly configured");
+      return NULL;
+    }
+    if(cfg->DataBase[0]->attr.dbtype.equals("sqlite")){
+      CDBDebug("Using sqlite");
+      staticCDBAdapter = new CDBAdapterSQLLite();
+    }else{
+      CDBDebug("Using postgresql");
+      staticCDBAdapter = new CDBAdapterPostgreSQL();
+    }
+    
     staticCDBAdapter->setConfig(cfg);
   }
   return staticCDBAdapter;
 }
 
 void CDBFactory::clear(){
-  CDBDebug("CLEAR");
+  //CDBDebug("CLEAR");
   delete staticCDBAdapter;
   staticCDBAdapter = NULL;
 }
