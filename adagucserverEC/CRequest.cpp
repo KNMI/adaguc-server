@@ -2947,6 +2947,7 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan){
   
   CDFObjectStore::getCDFObjectStore()->clear();
   CDFStore::clear();
+  CDBFactory::clear();
   return errorHasOccured;
 }
 
