@@ -89,7 +89,7 @@ private:
     int setConfig(CServerConfig::XMLE_Configuration *cfg);
     
     CDBStore::Store *getReferenceTime(const char *netcdfDimName,const char *netcdfTimeDimName,const char *timeValue,const char *timeTableName,const char *tableName);
-    CDBStore::Store *getClosestReferenceTimeToSystemTime(const char *netcdfDimName,const char *tableName);
+    CDBStore::Store *getClosestDataTimeToSystemTime(const char *netcdfDimName,const char *tableName);
 
     CT::string       getTableNameForPathFilterAndDimension(const char *path,const char *filter, const char * dimension,CDataSource *dataSource);
     int              autoUpdateAndScanDimensionTables(CDataSource *dataSource);

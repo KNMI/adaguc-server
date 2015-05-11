@@ -16,8 +16,29 @@ public:
   virtual ~CDBAdapter() = 0;
   virtual int setConfig(CServerConfig::XMLE_Configuration *cfg) = 0;
   
+  
+  /**
+  * getReferenceTime
+  * This function is used to find the most recent forecast_reference_time for a given time.
+  * returns a forecast_reference_time value where the difference is smallest between time and referencetime and where the difference between time-referencetime is larger than zero
+  * @param netcdfDimName
+  * @param netcdfTimeDimName
+  * @param netcdfDimName
+  * @param tableName
+  * @param timeTableName
+  * @param netcdfTimeDimName
+  * @param timeValue The value to find the most recent reference time for
+  */
   virtual CDBStore::Store *getReferenceTime(const char *netcdfDimName, const char *netcdfTimeDimName, const char *timeValue, const char *timeTableName, const char *tableName) = 0;
-  virtual CDBStore::Store *getClosestReferenceTimeToSystemTime(const char *netcdfDimName, const char *tableName) = 0; 
+  
+  /**
+   * getClosestDataTimeToSystemTime
+   * Returns the closest data time to current system time. Used when time="current" in combination with reference_time.
+   * @param netcdfDimName
+   * @param tableName
+   * @return timeValue;
+   */
+  virtual CDBStore::Store *getClosestDataTimeToSystemTime(const char *netcdfDimName, const char *tableName) = 0; 
   
   /**
     * Makes use of a lookup table to find the tablename belonging to the filter and path combinations.

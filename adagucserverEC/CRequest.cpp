@@ -917,7 +917,7 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
               }
               
               if(hasReferenceTimeDimension == false){
-                CDBDebug("BLA");
+                
                 //For observations, take the latest:
                 CDBStore::Store *maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(ogcDim->netCDFDimName.c_str(),tableName.c_str());
                 if(maxStore==NULL){
@@ -931,7 +931,7 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
                 
                 //For time:
                 if(dataSource->cfgLayer->Dimension[i]->value.equals("time")){
-                  CDBStore::Store *maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getClosestReferenceTimeToSystemTime(ogcDim->netCDFDimName.c_str(),tableName.c_str());
+                  CDBStore::Store *maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getClosestDataTimeToSystemTime(ogcDim->netCDFDimName.c_str(),tableName.c_str());
                   
                   if(maxStore == NULL){
                     setExceptionType(InvalidDimensionValue);

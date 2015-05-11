@@ -129,7 +129,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getReferenceTime(const char *netcdfDimNam
   return DB->queryToStore(query.c_str())  ;
 };
 
-CDBStore::Store *CDBAdapterPostgreSQL::getClosestReferenceTimeToSystemTime(const char *netcdfDimName,const char *tableName){
+CDBStore::Store *CDBAdapterPostgreSQL::getClosestDataTimeToSystemTime(const char *netcdfDimName,const char *tableName){
   CPGSQLDB * DB = getDataBaseConnection(); if(DB == NULL){return NULL;  }
   CT::string query;
   
@@ -535,7 +535,7 @@ CT::string CDBAdapterPostgreSQL::getTableNameForPathFilterAndDimension(const cha
     if(lookupTableIsAvailable==false){
     
       CT::string randomTableString = "t";
-      randomTableString.concat(CServerParams::currentDateTime());
+      randomTableString.concat(CTime::currentDateTime());
       randomTableString.concat("_");
       randomTableString.concat(CServerParams::randomString(20));
       randomTableString.replaceSelf(":","");

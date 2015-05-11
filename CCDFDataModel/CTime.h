@@ -145,6 +145,11 @@ class CTime{
    */
   CT::string dateToISOString(Date date);
   
+  /**
+   * Get current system time as ISO string
+   * @return Current system time as ISO string
+   */
+  static CT::string currentDateTime();
 
 };
 #endif
