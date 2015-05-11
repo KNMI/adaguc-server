@@ -387,7 +387,11 @@ int CRequest::generateGetReferenceTimesDoc(CT::string *result,CDataSource *dataS
       CT::string ymd;
       ymd=store->getRecord(k)->get(0);
       ymd.setChar(10, 'T');
-      ymd.concat("Z");
+      //01234567890123456789
+      //YYYY-MM-DDTHH:MM:SSZ
+      if(ymd.length()==19){
+        ymd.concat("Z");
+      }
       result->concat(ymd);
       result->concat("\"");
     } 

@@ -10,37 +10,39 @@
 #include "CDBStore.h"
 #include "CDebugger.h"
 
+/**
+ * Interface for several database implementations. Currently for CDBAdapterPostgreSQL and CDBAdapterSQLLite
+ */
 class CDBAdapter{
 public:
   CDBAdapter(){}
   virtual ~CDBAdapter() = 0;
   virtual int setConfig(CServerConfig::XMLE_Configuration *cfg) = 0;
   
+  /**
+    * getReferenceTime
+    * This function is used to find the most recent forecast_reference_time for a given time.
+    * returns a forecast_reference_time value where the difference is smallest between time and referencetime and where the difference between time-referencetime is larger than zero
+    * @param netcdfReferenceTimeDimName
+    * @param netcdfTimeDimName
+    * @param timeValue
+    * @param timeTableName
+    * @param referenceTimeTableName
+    * @return timeValue The value to find the most recent reference time for
+    */
+  virtual CDBStore::Store *getReferenceTime(const char *netcdfReferenceTimeDimName, const char *netcdfTimeDimName, const char *timeValue, const char *timeTableName, const char *referenceTimeTableName) = 0;
   
   /**
-  * getReferenceTime
-  * This function is used to find the most recent forecast_reference_time for a given time.
-  * returns a forecast_reference_time value where the difference is smallest between time and referencetime and where the difference between time-referencetime is larger than zero
-  * @param netcdfDimName
-  * @param netcdfTimeDimName
-  * @param netcdfDimName
-  * @param tableName
-  * @param timeTableName
-  * @param netcdfTimeDimName
-  * @param timeValue The value to find the most recent reference time for
-  */
-  virtual CDBStore::Store *getReferenceTime(const char *netcdfDimName, const char *netcdfTimeDimName, const char *timeValue, const char *timeTableName, const char *tableName) = 0;
-  
-  /**
-   * getClosestDataTimeToSystemTime
-   * Returns the closest data time to current system time. Used when time="current" in combination with reference_time.
-   * @param netcdfDimName
-   * @param tableName
-   * @return timeValue;
-   */
+    * getClosestDataTimeToSystemTime
+    * Returns the closest data time to current system time. Used when time="current" in combination with reference_time.
+    * @param netcdfDimName
+    * @param tableName
+    * @return timeValue;
+    */
   virtual CDBStore::Store *getClosestDataTimeToSystemTime(const char *netcdfDimName, const char *tableName) = 0; 
   
   /**
+    * getTableNameForPathFilterAndDimension
     * Makes use of a lookup table to find the tablename belonging to the filter and path combinations.
     * @param path The path of the layer
     * @param filter The filter of the layer
@@ -58,7 +60,6 @@ public:
   /*Dimension Info*/
   virtual CDBStore::Store *getDimensionInfoForLayerTableAndLayerName  (const char *layertable,const char *layername) = 0;
   virtual int              storeDimensionInfoForLayerTableAndLayerName(const char *layertable,const char *layername,const char *netcdfname,const char *ogcname,const char *units) = 0;
-  
   
   virtual CDBStore::Store *getFilesAndIndicesForDimensions(CDataSource *dataSource,int limit) = 0;
   
