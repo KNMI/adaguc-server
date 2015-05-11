@@ -291,7 +291,7 @@ class CServerParams{
       
       
       static const CT::string randomString(const int len);
-      static CT::string  currentDateTime();
+     
 };
 
 

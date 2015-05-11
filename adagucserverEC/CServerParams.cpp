@@ -143,25 +143,14 @@ void CServerParams::_getCacheDirectory(CT::string *_cacheFileName){
 
 
 
-#include <ctime>
-#include <sys/time.h>
+
 #include <stdio.h>
 #define USE_DEVRANDOM
 
-CT::string  CServerParams::currentDateTime() {
-    timeval curTime;
-    gettimeofday(&curTime, NULL);
-    int milli = curTime.tv_usec / 1000;
 
-    char buffer [80];
-    strftime(buffer, 80, "%Y-%m-%dT%H:%M:%S", localtime(&curTime.tv_sec));
+#include <ctime>
+#include <sys/time.h>
 
-    char currentTime[84] = "";
-    sprintf(currentTime, "%s:%03dZ", buffer, milli);
-   
-
-    return currentTime;
-}
 
 const CT::string CServerParams::randomString(const int len) {
     char s[len+1];

@@ -25,6 +25,10 @@
 
 
 #include "CTime.h"
+#include <ctime>
+#include <sys/time.h>
+
+
 const char *CTime::className="CTime";
 utUnit CTime::dataunits;
 bool CTime::isInitialized;
@@ -329,4 +333,19 @@ CTime::Date CTime::freeDateStringToDate(const char*szTime){
   return CTime::Date();
 }
 
+
+CT::string CTime::currentDateTime() {
+    timeval curTime;
+    gettimeofday(&curTime, NULL);
+    int milli = curTime.tv_usec / 1000;
+
+    char buffer [80];
+    strftime(buffer, 80, "%Y-%m-%dT%H:%M:%S", gmtime(&curTime.tv_sec));
+
+    char currentTime[84] = "";
+    sprintf(currentTime, "%s:%03dZ", buffer, milli);
+   
+
+    return currentTime;
+}
 

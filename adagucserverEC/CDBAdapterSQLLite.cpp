@@ -26,6 +26,7 @@
 #include "CDBAdapterSQLLite.h"
 #include <set>
 #include "CDebugger.h"
+#include "CTime.h"
 
 //#define CDBAdapterSQLLite_DEBUG
 
@@ -291,30 +292,161 @@ CDBStore::Store *CDBAdapterSQLLite::getUniqueValuesOrderedByIndex(const char *na
   return DB->queryToStore(query.c_str());
 }
 
-CDBStore::Store *CDBAdapterSQLLite::getReferenceTime(const char *netcdfDimName,const char *netcdfTimeDimName,const char *timeValue,const char *timeTableName,const char *tableName){
+
+
+CDBStore::Store *CDBAdapterSQLLite::getReferenceTime(const char *netcdfReferenceTimeDimName,const char *netcdfTimeDimName,const char *timeValue,const char *timeTableName,const char *referenceTimeTableName){
+  
+  //CDBDebug("SQLITE::getReferenceTime searching for %s",timeValue);
   CSQLLiteDB * DB = getDataBaseConnection(); if(DB == NULL){return NULL;  }
   CT::string query;
-  
-  query.print(
-          "select * from (select %s,(EXTRACT(EPOCH FROM (%s-%s))) as age from ( select * from %s)a0 ,( select * from %s where %s = '%s')a1 where a0.path = a1.path order by age asc)a0 where age >= 0 limit 1",
-                    netcdfDimName,
+  //                                 netcdfReferenceTimeDimName           netcdfTimeDimName-netcdfReferenceTimeDimName      referenceTimeTableName         timeTableName netcdfTimeDimName 'timeValue'
+  query.print("select * from (select %s,%s as age from ( select * from %s)a0 ,( select * from %s where %s = '%s')a1 where a0.path = a1.path )a0",
+                    netcdfReferenceTimeDimName,
                     netcdfTimeDimName,
-                    netcdfDimName,
-                    tableName,
+                    referenceTimeTableName,
                     timeTableName,
                     netcdfTimeDimName,
                     timeValue
                     );
-  return DB->queryToStore(query.c_str())  ;
+  
+  CDBStore::Store*store = DB->queryToStore(query.c_str())  ;
+  if(store == NULL)return NULL;
+
+  CTime ctime;  
+  ctime.init("seconds since 1970");
+  
+  double minDifference = INFINITY;
+  bool differenceWasFound = false;
+  CT::string foundReferenceTime;
+  
+  for(size_t j=0;j<store->getSize();j++){
+    try{
+      CDBStore::Record*record = store->getRecord(j);
+      CT::string forecast_reference_time_value = record->get(0)->c_str();
+      CT::string time_value = record->get(1)->c_str();
+      double refTimeAsEpoch,timeAsEpoch,difference ;
+  
+      //Convert reftime to epoch
+      try{
+        refTimeAsEpoch = ctime.dateToOffset( ctime.ISOStringToDate(forecast_reference_time_value.c_str()));
+      }catch(int e){
+        CDBDebug("Unable to convert %s to epoch",forecast_reference_time_value.c_str());
+        throw(__LINE__);
+      }
+      //Convert time to epoch
+      try{
+        timeAsEpoch = ctime.dateToOffset( ctime.ISOStringToDate(time_value.c_str()));
+      }catch(int e){
+        CDBDebug("Unable to convert %s to epoch",time_value.c_str());
+        throw(__LINE__);
+      }
+      difference = refTimeAsEpoch-timeAsEpoch;
+      
+      if(difference<minDifference){
+        minDifference= difference;
+        foundReferenceTime = forecast_reference_time_value;
+        differenceWasFound = true;
+      }
+    }catch(int e){
+    }
+  }
+  delete store;
+  
+  if(differenceWasFound == false){
+    CDBDebug("No reference times found");
+    return NULL;
+  }
+  
+  CDBDebug("SQLITE::getReferenceTime gives %s for %s",foundReferenceTime.c_str(),timeValue);
+  
+  CDBStore::ColumnModel *columnModel = new CDBStore::ColumnModel(1);
+  columnModel->setColumn(0,netcdfReferenceTimeDimName);
+  CDBStore::Store *result = new CDBStore::Store(columnModel);
+  CDBStore::Record *record = new  CDBStore::Record(columnModel);
+  record->push(0,foundReferenceTime.c_str());
+  result->push(record);
+  return result;
 };
 
-CDBStore::Store *CDBAdapterSQLLite::getClosestReferenceTimeToSystemTime(const char *netcdfDimName,const char *tableName){
+CDBStore::Store *CDBAdapterSQLLite::getClosestDataTimeToSystemTime(const char *netcdfReferenceTimeDimName,const char *referenceTimeTableName){
   CSQLLiteDB * DB = getDataBaseConnection(); if(DB == NULL){return NULL;  }
   CT::string query;
   
 
-  query.print("SELECT %s,abs(EXTRACT(EPOCH FROM (%s - now()))) as t from %s order by t asc limit 1",netcdfDimName,netcdfDimName,tableName);
-  return DB->queryToStore(query.c_str());
+  //query.print("SELECT %s,abs(EXTRACT(EPOCH FROM (%s - now()))) as t from %s order by t asc limit 1",netcdfReferenceTimeDimName,netcdfReferenceTimeDimName,referenceTimeTableName);
+  query.print("SELECT %s from %s",netcdfReferenceTimeDimName,referenceTimeTableName);
+  
+  CDBStore::Store*store = DB->queryToStore(query.c_str())  ;
+  if(store == NULL)return NULL;
+
+  CTime ctime;  
+  ctime.init("seconds since 1970");
+  
+  
+  CT::string currentTimeString = CTime::currentDateTime();
+  
+  double currentTimeAsEpoch ;
+  
+  try{
+    currentTimeAsEpoch = ctime.dateToOffset( ctime.freeDateStringToDate(currentTimeString.c_str()));
+    CT::string currentDateConverted = ctime.dateToISOString(ctime.getDate(currentTimeAsEpoch));
+    CDBDebug("Epoch time = %f = %s",currentTimeAsEpoch,currentDateConverted.c_str());
+  }catch(int e){
+    CDBDebug("Unable to convert %s to epoch",currentTimeString.c_str());
+    delete store;
+    return NULL;
+  }
+  
+  double minDifference = INFINITY;
+  bool differenceWasFound = false;
+  CT::string foundReferenceTime;
+  
+  CDBDebug("found %d times",store->getSize());
+  
+  for(size_t j=0;j<store->getSize();j++){
+    try{
+      CDBStore::Record*record = store->getRecord(j);
+      CT::string forecast_reference_time_value = record->get(0)->c_str();
+
+      double refTimeAsEpoch,difference ;
+  
+      //Convert reftime to epoch
+      try{
+        refTimeAsEpoch = ctime.dateToOffset( ctime.ISOStringToDate(forecast_reference_time_value.c_str()));
+      }catch(int e){
+        CDBDebug("Unable to convert %s to epoch",forecast_reference_time_value.c_str());
+        throw(__LINE__);
+      }
+      
+      difference = fabs(refTimeAsEpoch-currentTimeAsEpoch);
+      
+      if(difference<minDifference){
+        minDifference= difference;
+        foundReferenceTime = forecast_reference_time_value;
+        differenceWasFound = true;
+      }
+      
+      
+    }catch(int e){
+    }
+  }
+  delete store;
+  
+  if(differenceWasFound == false){
+    CDBDebug("No reference times found");
+    return NULL;
+  }
+  
+  CDBDebug("SQLITE::getClosestReferenceTimeToSystemTime gives %s for %s",foundReferenceTime.c_str(),currentTimeString.c_str());
+  
+  CDBStore::ColumnModel *columnModel = new CDBStore::ColumnModel(1);
+  columnModel->setColumn(0,netcdfReferenceTimeDimName);
+  CDBStore::Store *result = new CDBStore::Store(columnModel);
+  CDBStore::Record *record = new  CDBStore::Record(columnModel);
+  record->push(0,foundReferenceTime.c_str());
+  result->push(record);
+  return result;
+  
 };
 
 
@@ -733,7 +865,7 @@ CT::string CDBAdapterSQLLite::getTableNameForPathFilterAndDimension(const char *
     if(lookupTableIsAvailable==false){
     
       CT::string randomTableString = "t";
-      randomTableString.concat(CServerParams::currentDateTime());
+      randomTableString.concat(CTime::currentDateTime());
       randomTableString.concat("_");
       randomTableString.concat(CServerParams::randomString(20));
       randomTableString.replaceSelf(":","");
