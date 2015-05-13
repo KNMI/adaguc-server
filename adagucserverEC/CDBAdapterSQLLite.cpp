@@ -990,6 +990,15 @@ int CDBAdapterSQLLite::checkIfFileIsInTable(const char *tablename,const char *fi
   return fileIsOK;
 }
 
+int CDBAdapterSQLLite::removeFile(const char *tablename,const char *file){
+  CSQLLiteDB * dataBaseConnection = getDataBaseConnection(); if(dataBaseConnection == NULL){return -1;  }
+  
+  CT::string query;
+  query.print("delete from %s where path = '%s'",tablename,file);
+  int status = dataBaseConnection->query(query.c_str()); if(status!=0)throw(__LINE__);
+  return 0;
+}
+
 int CDBAdapterSQLLite::removeFilesWithChangedCreationDate(const char *tablename,const char *file,const char *creationDate){
   CSQLLiteDB * dataBaseConnection = getDataBaseConnection(); if(dataBaseConnection == NULL){return -1;  }
   

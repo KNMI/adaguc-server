@@ -660,6 +660,16 @@ int CDBAdapterPostgreSQL::checkIfFileIsInTable(const char *tablename,const char 
   return fileIsOK;
 }
 
+
+int CDBAdapterPostgreSQL::removeFile(const char *tablename,const char *file){
+  CPGSQLDB * dataBaseConnection = getDataBaseConnection(); if(dataBaseConnection == NULL){return -1;  }
+  
+  CT::string query;
+  query.print("delete from %s where path = '%s'",tablename,file);
+  int status = dataBaseConnection->query(query.c_str()); if(status!=0)throw(__LINE__);
+  return 0;
+}
+
 int CDBAdapterPostgreSQL::removeFilesWithChangedCreationDate(const char *tablename,const char *file,const char *creationDate){
   CPGSQLDB * dataBaseConnection = getDataBaseConnection(); if(dataBaseConnection == NULL){return -1;  }
   

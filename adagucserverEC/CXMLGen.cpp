@@ -118,7 +118,7 @@ CDBDebug("getFileNameForLayer");
       bool databaseError = false;
       
       
-      CDBStore::Store *values = CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue("path",1,true,tableName.c_str());
+      CDBStore::Store *values = CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue("path",1,false,tableName.c_str());
       
       if(values==NULL){
         CDBError("No files found for %s ",myWMSLayer->dataSource->layerName.c_str());
