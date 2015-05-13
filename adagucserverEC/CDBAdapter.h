@@ -71,7 +71,9 @@ public:
   virtual int              createDimTableReal(const char *dimname,const char *tablename) = 0;
   virtual int              createDimTableString(const char *dimname,const char *tablename) = 0;
   virtual int              createDimTableTimeStamp(const char *dimname,const char *tablename) = 0;
+  virtual int              removeFile(const char *tablename,const char *file) = 0;
   virtual int              removeFilesWithChangedCreationDate(const char *tablename,const char *file,const char *creationDate) = 0;
+  
   virtual int              checkIfFileIsInTable(const char *tablename,const char *filename) = 0;
   
   

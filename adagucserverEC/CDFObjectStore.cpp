@@ -268,7 +268,7 @@ CDFObjectStore *CDFObjectStore::getCDFObjectStore(){return &cdfObjectStore;};
 
 
 CDFObject *CDFObjectStore::deleteCDFObject(CDFObject **cdfObject){
-  CDBDebug("Deleting CDFObject");
+  //CDBDebug("Deleting CDFObject");
   for(size_t j=0;j<cdfObjects.size();j++){
     if(cdfObjects[j]==(*cdfObject)){
       //CDBDebug("Closing %s",fileNames[j]->c_str());

@@ -68,7 +68,7 @@ class CDBAdapterPostgreSQL:public CDBAdapter{
     int              createDimTableTimeStamp(const char *dimname,const char *tablename);
     int              checkIfFileIsInTable(const char *tablename,const char *filename);
     
-    
+    int              removeFile(const char *tablename,const char *file);
     int              removeFilesWithChangedCreationDate(const char *tablename,const char *file,const char *creationDate);
     int              setFileInt(const char *tablename,const char *file,int dimvalue,int dimindex,const char*filedate);
     int              setFileReal(const char *tablename,const char *file,double dimvalue,int dimindex,const char*filedate);

@@ -322,6 +322,8 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
       }
     }
     
+    CDBDebug("Found %d files",dirReader->fileList.size());
+    
     for(size_t j=0;j<dirReader->fileList.size();j++){
       //Loop through all configured dimensions.
       #ifdef CDBFILESCANNER_DEBUG
@@ -365,7 +367,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
             fileExistsInDB = 1;
           }
          
-          CDBDebug("fileExistsInDB = %d",fileExistsInDB);
+          //CDBDebug("fileExistsInDB = %d",fileExistsInDB);
           
           //The file metadata does not already reside in the db.
           //Therefore we need to read information from it
@@ -602,14 +604,48 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
         }
         
         
-        //End of dimloop, start inserting our collected records in one statement
-        CDBDebug("Adding files to database");
-        dbAdapter->addFilesToDataBase();
+       
+        
+       
+        
+        
       }
     }
     
+    //End of dimloop, start inserting our collected records in one statement
+    CDBDebug("Adding files to database");
+    dbAdapter->addFilesToDataBase();
     
-    
+    //Now delete files in the database a which are not on file system
+    for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
+      if(skipDim[d] == false){
+        CDBStore::Store *values = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getUniqueValuesOrderedByValue("path",0,false,tableNames[d].c_str());
+        if(values==NULL){
+          CDBError("No files found for %s ",dataSource->layerName.c_str());
+        }else{
+          CDBDebug("Found %d files in DB",values->getSize());
+          for(size_t j=0;j<values->getSize();j++){
+            bool found = false;
+            for(size_t i=0;i<dirReader->fileList.size();i++){
+              if(dirReader->fileList[i]->fullName.equals(values->getRecord(j)->get(0))){
+                found = true;
+                break;
+              }
+
+            }
+            if(found == false){
+              CDBDebug("Deleting file %s from db",values->getRecord(j)->get(0)->c_str());
+              CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->removeFile(tableNames[d].c_str(),values->getRecord(j)->get(0)->c_str());
+            }
+          }
+        }
+        
+        
+        
+        delete values;
+      }
+    }
+  
 
     if(numberOfFilesAddedFromDB!=0){CDBDebug("%d file(s) were already in the database",numberOfFilesAddedFromDB);}
     
@@ -717,38 +753,7 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
       status = DBLoopFiles(dataSource,removeNonExistingFiles,&dirReader);
       if(status != 0 )throw(__LINE__);
               
-//       //In case of a complete update, the data is written in a temporary table
-//       //Rename the table to the correct one (remove _temp)
-//       for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
-//         CT::string dimName(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
-// 
-//         CT::string tableName;
-//         try{
-//           tableName = dbAdapter->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str(),dataSource);
-//         }catch(int e){
-//           CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
-//           return 1;
-//         }
-//           
-//         bool skip = isTableAlreadyScanned(&tableName);
-//         //bool skip = false;
-//         if(skip == false){
-//           //Remember that we have completed this scan
-//           tableNamesDone.push_back(CT::string(tableName.c_str()));
-//           
-//           if(removeNonExistingFiles==1){
-//             CDBDebug("Renaming temporary table '%s_temp' to '%s'",tableName.c_str(),tableName.c_str());
-//             CT::string query;
-//             //Drop old table
-//             query.print("drop table %s",tableName.c_str());
-//             if(DB->query(query.c_str())!=0){CDBError("Query %s failed",query.c_str());throw(__LINE__);}
-//             //Rename new table to old table name
-//             query.print("alter table %s_temp rename to %s",tableName.c_str(),tableName.c_str());
-//             if(DB->query(query.c_str())!=0){CDBError("Query %s failed",query.c_str());throw(__LINE__);}
-//             if(status!=0){throw(__LINE__);}
-//           }
-//         }
-//       }
+
     }
     
   }

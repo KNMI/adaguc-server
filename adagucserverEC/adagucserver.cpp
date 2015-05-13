@@ -164,7 +164,7 @@ int main(int argc, const char *argv[]){
   if(argc>=2){
     
     if(strncmp(argv[1],"--updatedb",10)==0){
-      CDBDebug("***** Starting DB update *****");
+      CDBDebug("***** Starting DB update *****\n");
       CRequest request;
       int configSet = 0;
       CT::string tailPath,layerPathToScan;
