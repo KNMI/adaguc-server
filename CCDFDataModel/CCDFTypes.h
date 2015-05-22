@@ -88,14 +88,21 @@ namespace CDF{
   class DataCopier{
     private:
       
-    template <class T>
-    static int copy(T *destdata,void *sourcedata,CDFType sourcetype,size_t destinationOffset,size_t sourceOffset,size_t length){
+    template <typename T>
+    static int _copy(T *destdata,void *sourcedata,CDFType sourcetype,size_t destinationOffset,size_t sourceOffset,size_t length){
+      
       size_t dsto=destinationOffset;
       size_t srco=sourceOffset;
       if(sourcetype==CDF_STRING){
         //CDBError("Unable to copy CDF_STRING");
         return 1;
       }
+      CT::string t = typeid(T).name();
+      if(t.equals(typeid(void).name())){
+        return 1;
+      }
+      
+      
       if(sourcetype==CDF_CHAR||sourcetype==CDF_BYTE)for(size_t t=0;t<length;t++){destdata[t+dsto]=(T)((char*)sourcedata)[t+srco];}
       if(sourcetype==CDF_CHAR||sourcetype==CDF_UBYTE)for(size_t t=0;t<length;t++){destdata[t+dsto]=(T)((unsigned char*)sourcedata)[t+srco];}
       if(sourcetype==CDF_SHORT)for(size_t t=0;t<length;t++){destdata[t+dsto]=(T)((short*)sourcedata)[t+srco];}
@@ -106,11 +113,12 @@ namespace CDF{
       if(sourcetype==CDF_DOUBLE)for(size_t t=0;t<length;t++){destdata[t+dsto]=(T)((double*)sourcedata)[t+srco];}
       return 0;
     }
+    
    
 public:
     template <class T>          
     static int copy(T *destdata,void *sourcedata,CDFType sourcetype,size_t length){
-      return copy(destdata,sourcedata,sourcetype,0,0,length);
+      return _copy(destdata,sourcedata,sourcetype,0,0,length);
     }
      template <class T>    
     static void _fill(T *data,double value,size_t size){

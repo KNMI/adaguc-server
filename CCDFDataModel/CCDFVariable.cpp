@@ -29,7 +29,7 @@
 const char *CDF::Variable::className="Variable";
 
 
-
+//#define CCDFDATAMODEL_DEBUG
 int CDF::Variable::readData(CDFType type){
   return readData(type,NULL,NULL,NULL);
 }
@@ -346,19 +346,27 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
   
   //Read data from the source dim
   Variable *srcDimVar;
+  int sourceType = currentType;
   try{
     srcDimVar = sourceCDFObject->getVariable(iterativeDim->name.c_str());
   }catch(int e){CDBError("Variable [%s] not found in source CDFObject",iterativeDim->name.c_str());throw(e);}
   
   if(srcDimVar->data==NULL){
     srcDimVar->readData(currentType);
+  }else{
+    sourceType = srcDimVar->getType();
   }
    #ifdef CCDFDATAMODEL_DEBUG    
-  CDBDebug("=== Found %d steps to add ===",srcDimVar->getSize());
+  CDBDebug("=== Found %d steps in source ===",srcDimVar->getSize());
   #endif
+  
+//   if(sourceType != currentType){
+//     CDBError("%s == %s",CDF::getCDFDataTypeName(currentType).c_str(),CDF::getCDFDataTypeName(currentType).c_str());
+//   }
+  
   if(iterativeVar->data==NULL){
     #ifdef CCDFDATAMODEL_DEBUG    
-    CDBDebug("READING FIRST ONE ONCE!");
+    CDBDebug("READING FIRST ONE ONCE! Type = %s",CDF::getCDFDataTypeName(currentType).c_str());
     #endif
     if(iterativeVar->readData(currentType)!=0){
       throw(0);
@@ -376,10 +384,24 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
     for(size_t _j=0;_j<dimSize;_j++){
       size_t j=_j;//(dimSize-1)-_j;
       #ifdef CCDFDATAMODEL_DEBUG    
-      CDBDebug("%d/%d : %f = %f",j,iterativeDim->getSize(),((double*)iterativeVar->data)[j],srcDimValue);
+      CDBDebug("%d/%d : %f = %f",j,iterativeDim->getSize(),iterativeVar->getDataAt<double>(j),srcDimValue);
 #endif
-      if(((double*)iterativeVar->data)[j]==srcDimValue){foundDimValue=j;break;}
+      if(iterativeVar->getDataAt<double>(j)==srcDimValue){
+      #ifdef CCDFDATAMODEL_DEBUG    
+            CDBDebug("Found %f == %f",iterativeVar->getDataAt<double>(j),srcDimValue);
+    #endif
+        foundDimValue=j;break;
+        
+      }
+// #ifdef CCDFDATAMODEL_DEBUG    
+//       else{
+//         CDBDebug("%f != %f",iterativeVar->getDataAt<double>(j),srcDimValue);
+//       }
+// #endif
     }
+//     if(foundDimValue == -1){
+//       CDBDebug("Unable to find srcDimValue %f",srcDimValue);
+//     }
     
     //Check wether we already have this cdfobject dimension combo in our list
     int foundCDFObject = -1;
@@ -417,12 +439,35 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
           CDBError("Unable to allocate data");
           throw("__LINE__");
         }
-        DataCopier::copy(dstData,currentType,iterativeVar->data,currentType,0,0,currentDimSize);
-        DataCopier::copy(dstData,currentType,&srcDimValue,currentType,currentDimSize,0,1);
+        //CDBDebug("try adding %f",srcDimVar->getDataAt<double>(indimsize));
+        status = DataCopier::copy(dstData,currentType,iterativeVar->data,currentType,0,0,currentDimSize);
+        if(status!=0){
+          CDBError("Unable to copy data");
+          throw("__LINE__");
+        }
+        
+        //CDBDebug("indimsize %d %d",indimsize,((int*)srcDimVar->data)[0]);
+        status = DataCopier::copy(dstData,
+                         currentType,
+                         srcDimVar->data,
+                         sourceType,
+                         currentDimSize,
+                         indimsize,
+                         1);
+        if(status!=0){
+          CDBError("Unable to copy timestep ");
+          throw("__LINE__");
+        }
         iterativeVar->freeData();
         iterativeVar->data=dstData;
+        
         iterativeDim->setSize(currentDimSize+1);
         iterativeVar->setSize(currentDimSize+1);
+        
+        size_t dimSize = iterativeDim->getSize();
+//         for(size_t j=0;j<dimSize;j++){
+//           CDBDebug("%d == %f",j,(iterativeVar->getDataAt<double>(j)));
+//         }
     #ifdef CCDFDATAMODEL_DEBUG            
         CDBDebug("New iterativeDim size %d",iterativeDim->getSize());
     #endif    
