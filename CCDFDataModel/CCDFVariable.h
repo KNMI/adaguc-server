@@ -128,6 +128,9 @@ namespace CDF{
 #ifdef CCDFDATAMODEL_DEBUG        
         CDBDebug("Aggregating %d == %d",cdfObjectList[iterativeDimIndex]->dimIndex,iterativeDimIndex);
 #endif
+        if(iterativeDimIndex>=cdfObjectList.size()){
+          CDBError("Wrong index %d, list size is %d",iterativeDimIndex,cdfObjectList.size());
+        }
         return cdfObjectList[iterativeDimIndex]->cdfObjectPointer;
       }
 
@@ -161,7 +164,17 @@ namespace CDF{
         if(data==NULL){
           throw(CDF_E_VARHASNODATA);
         }
-        T dataElement=((T*)data)[index];
+        T dataElement = 0;
+        if(currentType == CDF_CHAR)dataElement=(T)((char*)data)[index];
+        if(currentType == CDF_BYTE)dataElement=(T)((char*)data)[index];
+        if(currentType == CDF_UBYTE)dataElement=(T)((unsigned char*)data)[index];
+        if(currentType == CDF_SHORT)dataElement=(T)((short*)data)[index];
+        if(currentType == CDF_USHORT)dataElement=(T)((ushort*)data)[index];
+        if(currentType == CDF_INT)dataElement=(T)((int*)data)[index];
+        if(currentType == CDF_UINT)dataElement=(T)((unsigned int*)data)[index];
+        if(currentType == CDF_FLOAT)dataElement=(T)((float*)data)[index];
+        if(currentType == CDF_DOUBLE)dataElement=(T)((double*)data)[index];
+        
         return dataElement;
       }
       

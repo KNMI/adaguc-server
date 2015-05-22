@@ -137,15 +137,15 @@ int CDF::DataCopier::copy(void *destdata,CDFType destType,void *sourcedata,CDFTy
     return 1;
   }
   switch(destType){
-    case CDF_CHAR:copy((char*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
-    case CDF_BYTE:copy((char*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
-    case CDF_UBYTE:copy((unsigned char*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
-    case CDF_SHORT:copy((short*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
-    case CDF_USHORT:copy((unsigned short*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
-    case CDF_INT:copy((int*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
-    case CDF_UINT:copy((unsigned int*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
-    case CDF_FLOAT:copy((float*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
-    case CDF_DOUBLE:copy((double*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
+    case CDF_CHAR:_copy((char*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
+    case CDF_BYTE:_copy((char*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
+    case CDF_UBYTE:_copy((unsigned char*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
+    case CDF_SHORT:_copy((short*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
+    case CDF_USHORT:_copy((unsigned short*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
+    case CDF_INT:_copy((int*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
+    case CDF_UINT:_copy((unsigned int*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
+    case CDF_FLOAT:_copy((float*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
+    case CDF_DOUBLE:_copy((double*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
     default:return 1;
   }
   return 0;

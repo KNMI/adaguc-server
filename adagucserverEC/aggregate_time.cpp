@@ -96,7 +96,7 @@ int main( int argc, const char* argv[]){
       fileObject->timeValue=epochCTime.dateToOffset(date);
       CT::string message;
       //message.print("[\"status\":\"Checking files\",\"currentfile\":\"%d\",\"totalfiles\":\"%d\",\"filename\":\"%s\"]",j,dirReader.fileList.size(),fileObject->baseName.c_str());
-      message.print("\"Checking file %s\"",fileObject->baseName.c_str());
+      message.print("\"Checking file (%d/%d) %s, has start date %s\"",j,dirReader.fileList.size(),fileObject->baseName.c_str(),epochCTime.dateToISOString(date).c_str());
       progress(message.c_str(),(float(j)/float(dirReader.fileList.size()))*50);
       
       fileObject->keep=true;
@@ -123,9 +123,9 @@ int main( int argc, const char* argv[]){
    for(size_t j=0;j<fileObjects.size();j++){
      if(destCDFObject->aggregateDim(fileObjects[j]->cdfObject,"time")!=0)throw(__LINE__);
    }
-//destCDFObject->aggregateDim(fileObjects[0]->cdfObject,"time");
-//destCDFObject->aggregateDim(fileObjects[1]->cdfObject,"time");
-//destCDFObject->aggregateDim(fileObjects[2]->cdfObject,"time");
+// destCDFObject->aggregateDim(fileObjects[0]->cdfObject,"time");
+// destCDFObject->aggregateDim(fileObjects[1]->cdfObject,"time");
+// destCDFObject->aggregateDim(fileObjects[2]->cdfObject,"time");
 
 //  CDF::Variable * timeVar = destCDFObject->getVariable("time");
   //CDBDebug("timeVar->getSize() %d",timeVar->getSize());
