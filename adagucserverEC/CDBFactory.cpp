@@ -42,7 +42,11 @@ CDBAdapter *CDBFactory::getDBAdapter(CServerConfig::XMLE_Configuration *cfg){
     }
     if(cfg->DataBase[0]->attr.dbtype.equals("sqlite")){
       CDBDebug("Using sqlite");
+      #ifdef ADAGUC_USE_SQLITE
       staticCDBAdapter = new CDBAdapterSQLLite();
+      #elseif
+      CDBError("SQLITE is not compiled for ADAGUC, not available!");
+      #endif
     }else{
       CDBDebug("Using postgresql");
       staticCDBAdapter = new CDBAdapterPostgreSQL();

@@ -22,7 +22,7 @@
  * limitations under the License.
  * 
  ******************************************************************************/
-
+#ifdef ADAGUC_USE_SQLITE
 #include "CDBAdapterSQLLite.h"
 #include <set>
 #include "CDebugger.h"
@@ -1074,5 +1074,6 @@ int CDBAdapterSQLLite::addFilesToDataBase(){
   return 0;
 }
 
+#endif
 
  

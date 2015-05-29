@@ -22,7 +22,7 @@
  * limitations under the License.
  * 
  ******************************************************************************/
-
+#ifdef ADAGUC_USE_SQLITE
 #include "CDBAdapter.h"
 #include "CDebugger.h"
 #include <set>
@@ -118,3 +118,4 @@ private:
     int              addFilesToDataBase();
       
 };
+#endif
