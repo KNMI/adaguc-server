@@ -44,7 +44,7 @@ CDBAdapter *CDBFactory::getDBAdapter(CServerConfig::XMLE_Configuration *cfg){
       CDBDebug("Using sqlite");
       #ifdef ADAGUC_USE_SQLITE
       staticCDBAdapter = new CDBAdapterSQLLite();
-      #elseif
+      #else
       CDBError("SQLITE is not compiled for ADAGUC, not available!");
       #endif
     }else{
