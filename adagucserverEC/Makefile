@@ -35,7 +35,7 @@ $(EXECUTABLE): $(OBJECTS) $(EXECUTABLE).o h5ncdump.o aggregate_time.o
 	g++ "aggregate_time.o" $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  "aggregate_time" $(LIBS)
 
 %.o: %.cpp
-	$(CCOMPILER) -c $< -o $@  -DENABLE_CURL -DADAGUC_USE_CAIRO -DADAGUC_USE_GDAL
+	$(CCOMPILER) -c $< -o $@  -DENABLE_CURL -DADAGUC_USE_CAIRO -DADAGUC_USE_GDAL -DADAGUC_USE_SQLITE
 	#$(CCOMPILER) -c $< -o $@
 
 clean:
