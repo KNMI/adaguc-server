@@ -225,7 +225,7 @@ public:
                   //imgpointer=srcpixel_x+(dHeight-1-srcpixel_y)*dWidth;
                   val=data[imgpointer];
                   isNodata=false;
-                  if(hasNodataValue){if(val==nodataValue)isNodata=true;else if(!(val==val))isNodata=true;}
+                  if(hasNodataValue){if(val==nodataValue)isNodata=true;}if(!(val==val))isNodata=true;
                   if(!isNodata)if(legendValueRange)if(val<legendLowerRange||val>legendUpperRange)isNodata=true;
                   if(!isNodata){
                     if(legendLog!=0){
@@ -405,7 +405,7 @@ private:
         T val= data[x+y*drawImage->Geo->dWidth];
 
           bool isNodata=false;
-          if(hasNodataValue){if(val==nodataValue)isNodata=true;else if(!(val==val))isNodata=true;}
+          if(hasNodataValue){if(val==nodataValue)isNodata=true;}if(!(val==val))isNodata=true;
           if(!isNodata)if(legendValueRange)if(val<legendLowerRange||val>legendUpperRange)isNodata=true;
           if(!isNodata){
             if(legendLog!=0){
@@ -443,7 +443,7 @@ private:
   static void drawFunction(int x,int y,T val, void *_settings){
     Settings *settings = (Settings*)_settings;
     bool isNodata=false;
-    if(settings->hasNodataValue){if(val==settings->nodataValue)isNodata=true;else if(!(val==val))isNodata=true;}
+    if(settings->hasNodataValue){if(val==settings->nodataValue)isNodata=true;}if(!(val==val))isNodata=true;
     if(!isNodata)if(settings->legendValueRange)if(val<settings->legendLowerRange||val>settings->legendUpperRange)isNodata=true;
     if(!isNodata){
       if(settings->legendLog!=0){
