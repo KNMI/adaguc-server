@@ -495,7 +495,7 @@ int CProj4ToCF::convertCFToProj( CDF::Variable *projectionVariable,CT::string *p
                         false_easting.toDouble(),
                         false_northing.toDouble(),
                         dfsemi_major_axis,
-                        dfsemi_minor_axis
+                        dfsemi_minor_axis,
                         units.c_str()
                               );
       

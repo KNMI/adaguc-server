@@ -249,7 +249,7 @@ bool CCache::isCacheFileBusy(){
 bool CCache::isCacheFileBusyBlocking(const char * reason){
  
   if(fileName.length()==0)return false;
-  int maxTries = 1200;//Wait 60 seconds.
+  int maxTries = 100;
   int currentTries=maxTries;
   bool cacheWasLocked = false;
   int logEveryNChecks = 10;
@@ -463,7 +463,7 @@ int CCache::Lock::claim(const char *cacheDir, const char *identifier,const char 
   
   //Check if the file exists...
   
-  int maxTries = 1200;//Wait 120 seconds.
+  int maxTries = 100;//Wait 120 seconds.
   int logEveryNChecks = 10;
   int logChecks = logEveryNChecks;
   bool wasLocked = false;
