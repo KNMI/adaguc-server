@@ -490,10 +490,12 @@ int CProj4ToCF::convertCFToProj( CDF::Variable *projectionVariable,CT::string *p
       delete[] stpList;
       
       
-      proj4String->printconcat(" +lon_0=%f +k_0=1.0 +x_0=%f +y_0=%f +units=%s",
+      proj4String->printconcat(" +lon_0=%f +k_0=1.0 +x_0=%f +y_0=%f +a=%f +b=%f +units=%s",
                         longitude_of_central_meridian.toDouble(), 
                         false_easting.toDouble(),
                         false_northing.toDouble(),
+                        dfsemi_major_axis,
+                        dfsemi_minor_axis
                         units.c_str()
                               );
       
