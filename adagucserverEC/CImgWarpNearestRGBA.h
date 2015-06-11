@@ -215,7 +215,10 @@ private:
         drawImage->setPixelIndexed(x,y,10);
       }
     }*/
-    
+    uint *imageData = (uint*)drawImage->getCanvasMemory();
+    for(size_t j=0;j<drawImage->Geo->dHeight*drawImage->Geo->dWidth;j++){
+      imageData[j]=0;
+    }
     //CDBDebug("Render");
     //This enables if tiles are divided allong threads.
     int numThreads=4;
