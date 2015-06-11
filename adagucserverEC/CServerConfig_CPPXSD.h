@@ -34,6 +34,7 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         XMLE_palette(){
           attr.alpha=255;
+          attr.index = -1;
         }
         class Cattr{
           public:

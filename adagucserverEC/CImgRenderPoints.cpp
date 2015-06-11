@@ -286,117 +286,136 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
       for(size_t pointNo=0;pointNo<nrThinnedPoints;pointNo++){
         size_t j=pointNo;
         j=thinnedPointsIndex[pointNo];
-
-        if (drawSymbol) {
-          int x=(*pts)[j].x;
-          int y=dataSource->dHeight-(*pts)[j].y;
-          float v=(*pts)[j].v;
-          if (v==v) {
-            if (symbolIntervals!=NULL) {
-              std::string symbolFile("");
-              for (size_t intv=0; intv<symbolIntervals->size(); intv++) {
-                CServerConfig::XMLE_SymbolInterval *symbolInterval=((*symbolIntervals)[intv]);
-                if ((v>=symbolInterval->attr.min)&&(v<symbolInterval->attr.max)) {
-                  symbolFile=symbolInterval->attr.file.c_str();
-                  break;
-                }
-              }
-              if (symbolFile.length()>0) {
-                CDrawImage *symbol=NULL;
-                
-                symbolCacheIter=symbolCache.find(symbolFile);
-                if(symbolCacheIter==symbolCache.end()){
-                  symbol=new CDrawImage();
-                  symbol->createImage(symbolFile.c_str());
-                  symbolCache[symbolFile]=symbol; //Remember in cache
-                } else {
-                  symbol=(*symbolCacheIter).second;
-                }
-                drawImage->draw(x-symbol->Geo->dWidth/2, y-symbol->Geo->dHeight/2, 0, 0, symbol);
-              }
+        float v=(*pts)[j].v;
+        bool skipPoint = false;
+        if(styleConfiguration!=NULL){
+          if(styleConfiguration->hasLegendValueRange){
+            double legendLowerRange = styleConfiguration->legendLowerRange;
+            double legendUpperRange = styleConfiguration->legendUpperRange;
+            skipPoint = true;
+            if(v>=legendLowerRange&&v<legendUpperRange){
+              skipPoint = false;
             }
-            if (drawPointDot) drawImage->circle(x,y, 1, drawPointFillColor,0.65);
           }
         }
-        if(drawVolume){
-          int x=(*pts)[j].x;
-          int y=dataSource->dHeight-(*pts)[j].y;
-          int rvol=drawPointFillColor.r;
-          int gvol=drawPointFillColor.g;
-          int bvol=drawPointFillColor.b;
+        if(!skipPoint){
+          if(drawVolume){
+            int x=(*pts)[j].x;
+            int y=dataSource->dHeight-(*pts)[j].y;
+            int rvol=drawPointFillColor.r;
+            int gvol=drawPointFillColor.g;
+            int bvol=drawPointFillColor.b;
+            
+            drawImage->setPixelTrueColor(x,y, 0,0,0,255);
+            //           CDBDebug("drawVolume for [%d,%d]", x, y);
+            int *p=alphaPoint;
+            for(int y1=-drawPointDiscRadius;y1<=drawPointDiscRadius;y1++){
+              for(int x1=-drawPointDiscRadius;x1<=drawPointDiscRadius;x1++){
+                drawImage->setPixelTrueColor(x+x1,y+y1, rvol, gvol, bvol, *p++);
+              }
+            }
+                      if (drawPointPlotStationId) {
+                        if((*pts)[j].paramList.size()>0){
+                          CT::string value = (*pts)[j].paramList[0].value;
+                          drawImage->setText(value.c_str(), value.length(),x-value.length()*3,y-20, drawPointTextColor, 0);
+                        }       
+                      }
+          }
           
-          drawImage->setPixelTrueColor(x,y, 0,0,0,255);
-//           CDBDebug("drawVolume for [%d,%d]", x, y);
-          int *p=alphaPoint;
-          for(int y1=-drawPointDiscRadius;y1<=drawPointDiscRadius;y1++){
-            for(int x1=-drawPointDiscRadius;x1<=drawPointDiscRadius;x1++){
-              drawImage->setPixelTrueColor(x+x1,y+y1, rvol, gvol, bvol, *p++);
+          if (drawSymbol) {
+            int x=(*pts)[j].x;
+            int y=dataSource->dHeight-(*pts)[j].y;
+            
+            if (v==v) {
+              if (symbolIntervals!=NULL) {
+                std::string symbolFile("");
+                for (size_t intv=0; intv<symbolIntervals->size(); intv++) {
+                  CServerConfig::XMLE_SymbolInterval *symbolInterval=((*symbolIntervals)[intv]);
+                  if ((v>=symbolInterval->attr.min)&&(v<symbolInterval->attr.max)) {
+                    symbolFile=symbolInterval->attr.file.c_str();
+                    break;
+                  }
+                }
+                if (symbolFile.length()>0) {
+                  CDrawImage *symbol=NULL;
+                  
+                  symbolCacheIter=symbolCache.find(symbolFile);
+                  if(symbolCacheIter==symbolCache.end()){
+                    symbol=new CDrawImage();
+                    symbol->createImage(symbolFile.c_str());
+                    symbolCache[symbolFile]=symbol; //Remember in cache
+                  } else {
+                    symbol=(*symbolCacheIter).second;
+                  }
+                  drawImage->draw(x-symbol->Geo->dWidth/2, y-symbol->Geo->dHeight/2, 0, 0, symbol);
+                }
+              }
+              if (drawPointDot) drawImage->circle(x,y, 1, drawPointFillColor,0.65);
             }
           }
-          if (drawPointPlotStationId) {
-            if((*pts)[j].paramList.size()>0){
-              CT::string value = (*pts)[j].paramList[0].value;
-              drawImage->setText(value.c_str(), value.length(),x-value.length()*3,y-20, drawPointTextColor, 0);
-            }       
-          }
-        }
-        
-        if(drawPoints){
-          int x=(*pts)[j].x;
-          int y=dataSource->dHeight-(*pts)[j].y;
-          if (drawPointDot) drawImage->circle(x,y, 1, drawPointFillColor,0.65);
-          float v=(*pts)[j].v;
-          if(v==v){
-            t.print(drawPointTextFormat.c_str(),v);
-//              CDBDebug("[%d] v=%f: drawPointDiscRadius=%d n=%d index=%d", j, v, drawPointDiscRadius, dataSource->getNumDataObjects(), getPixelIndexForValue(dataSource, v));
-            if (drawPointDiscRadius==0) {
-//                CDBDebug("radius==0 => centeredtext only %f", v);
-              if (drawPointPlotStationId) {
-                drawImage->drawCenteredText(x,y+drawPointTextRadius+3, drawPointFontFile, drawPointFontSize, 0, t.c_str(), drawPointTextColor);
-              } else {
-                drawImage->drawCenteredText(x,y, drawPointFontFile, drawPointFontSize, 0, t.c_str(), drawPointTextColor);
-              }
-            } else {
-              if (dataSource->getNumDataObjects()==1) {
-                int pointColorIndex=getPixelIndexForValue(dataSource, v);
-                drawImage->setDisc(x, y, drawPointDiscRadius, pointColorIndex, pointColorIndex);
-                drawImage->circle(x, y, drawPointDiscRadius+1, drawPointLineColor,0.65);
-                if (drawPointDot) drawImage->circle(x,y, 1, drawPointFillColor,1);
-                drawImage->drawCenteredText(x,y+drawPointTextRadius, drawPointFontFile, drawPointFontSize, 0, t.c_str(), drawPointTextColor);
-              } else {
-                drawImage->setDisc(x, y, drawPointDiscRadius, drawPointFillColor, drawPointLineColor);
-                drawImage->drawAnchoredText(x+usedx,y-usedy, drawPointFontFile, drawPointFontSize, 0, t.c_str(), drawPointTextColor, kwadrant);
-              }
-            }
-            if (drawPointPlotStationId) {
-              if((*pts)[j].paramList.size()>0){
-                CT::string stationid =(*pts)[j].paramList[0].value;
-                drawImage->drawCenteredText(x,y-drawPointTextRadius-3, drawPointFontFile, drawPointFontSize, 0, stationid.c_str(), drawPointTextColor);
-              }
-            }
-          }else{
-            //CDBDebug("Value not available");
-            if((*pts)[j].paramList.size()>0){
-              CT::string value = (*pts)[j].paramList[0].value;
-              //CDBDebug("Extra value: %s fixed color with radius %d", value.c_str(), drawPointDiscRadius);
+   
+          
+          if(drawPoints){
+            
+
+            int x=(*pts)[j].x;
+            int y=dataSource->dHeight-(*pts)[j].y;
+            if (drawPointDot) drawImage->circle(x,y, 1, drawPointFillColor,0.65);
+           
+   
+            if(v==v){
+              t.print(drawPointTextFormat.c_str(),v);
+  //              CDBDebug("[%d] v=%f: drawPointDiscRadius=%d n=%d index=%d", j, v, drawPointDiscRadius, dataSource->getNumDataObjects(), getPixelIndexForValue(dataSource, v));
               if (drawPointDiscRadius==0) {
-                drawImage->drawCenteredText(x,y, drawPointFontFile, drawPointFontSize, 0, value.c_str(), drawPointTextColor);                  
+  //                CDBDebug("radius==0 => centeredtext only %f", v);
+                if (drawPointPlotStationId) {
+                  drawImage->drawCenteredText(x,y+drawPointTextRadius+3, drawPointFontFile, drawPointFontSize, 0, t.c_str(), drawPointTextColor);
+                } else {
+                  drawImage->drawCenteredText(x,y, drawPointFontFile, drawPointFontSize, 0, t.c_str(), drawPointTextColor);
+                }
               } else {
-                drawImage->circle(x, y, drawPointDiscRadius+1, drawPointLineColor,0.65);
-                if (drawPointDot) drawImage->circle(x,y, 1, drawPointFillColor,1);
-                drawImage->drawAnchoredText(x-int(float(value.length())*3.0f)-2,y-drawPointTextRadius, drawPointFontFile, drawPointFontSize, 0, value.c_str(), drawPointTextColor, kwadrant);
+                if (dataSource->getNumDataObjects()==1) {
+                  int pointColorIndex=getPixelIndexForValue(dataSource, v);
+                  drawImage->setDisc(x, y, drawPointDiscRadius, pointColorIndex, pointColorIndex);
+                  drawImage->circle(x, y, drawPointDiscRadius+1, drawPointLineColor,0.65);
+                  if (drawPointDot) drawImage->circle(x,y, 1, drawPointFillColor,1);
+                  drawImage->drawCenteredText(x,y+drawPointTextRadius, drawPointFontFile, drawPointFontSize, 0, t.c_str(), drawPointTextColor);
+                } else {
+                  drawImage->setDisc(x, y, drawPointDiscRadius, drawPointFillColor, drawPointLineColor);
+                  drawImage->drawAnchoredText(x+usedx,y-usedy, drawPointFontFile, drawPointFontSize, 0, t.c_str(), drawPointTextColor, kwadrant);
+                }
+              }
+              if (drawPointPlotStationId) {
+                if((*pts)[j].paramList.size()>0){
+                  CT::string stationid =(*pts)[j].paramList[0].value;
+                  drawImage->drawCenteredText(x,y-drawPointTextRadius-3, drawPointFontFile, drawPointFontSize, 0, stationid.c_str(), drawPointTextColor);
+                }
+              }
+            }else{
+              //CDBDebug("Value not available");
+              if((*pts)[j].paramList.size()>0){
+                CT::string value = (*pts)[j].paramList[0].value;
+                //CDBDebug("Extra value: %s fixed color with radius %d", value.c_str(), drawPointDiscRadius);
+                if (drawPointDiscRadius==0) {
+                  drawImage->drawCenteredText(x,y, drawPointFontFile, drawPointFontSize, 0, value.c_str(), drawPointTextColor);                  
+                } else {
+                  drawImage->circle(x, y, drawPointDiscRadius+1, drawPointLineColor,0.65);
+                  if (drawPointDot) drawImage->circle(x,y, 1, drawPointFillColor,1);
+                  drawImage->drawAnchoredText(x-int(float(value.length())*3.0f)-2,y-drawPointTextRadius, drawPointFontFile, drawPointFontSize, 0, value.c_str(), drawPointTextColor, kwadrant);
+                }
               }
             }
+          
           }
-        }
-        if (drawDiscs) { //Filled disc with circle around it and value inside
-          int x=(*pts)[j].x;
-          int y=dataSource->dHeight-(*pts)[j].y;
-          //drawImage->circle(x,y, drawPointDiscRadius, 240,0.65);
-          float v=(*pts)[j].v;
-          if(v==v){
-            t.print(drawPointTextFormat.c_str(),v);
-            drawImage->setTextDisc( x, y,drawPointDiscRadius, t.c_str(),drawPointFontFile, drawPointFontSize,drawPointTextColor,drawPointFillColor, drawPointLineColor);
+          if (drawDiscs) { //Filled disc with circle around it and value inside
+            int x=(*pts)[j].x;
+            int y=dataSource->dHeight-(*pts)[j].y;
+            //drawImage->circle(x,y, drawPointDiscRadius, 240,0.65);
+            
+            if(v==v){
+              t.print(drawPointTextFormat.c_str(),v);
+              drawImage->setTextDisc( x, y,drawPointDiscRadius, t.c_str(),drawPointFontFile, drawPointFontSize,drawPointTextColor,drawPointFillColor, drawPointLineColor);
+            }
           }
         }
       }

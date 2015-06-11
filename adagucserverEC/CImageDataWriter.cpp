@@ -3394,7 +3394,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
       //if(v<=max)
       {
         float lineWidth=0.8;
-        legendImage->line((int)cbW-1+pLeft,(int)c+7+dH+pTop,(int)cbW+6+pLeft,(int)c+7+dH+pTop,lineWidth,248);
+        legendImage->line((int)cbW-1+pLeft,(int)c+6+dH+pTop,(int)cbW+6+pLeft,(int)c+6+dH+pTop,lineWidth,248);
         if(tickRound==0){
           floatToString(szTemp,255,min,max,v);
         }else{
