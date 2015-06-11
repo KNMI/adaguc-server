@@ -799,8 +799,8 @@ void CDrawImage::drawText(int x,int y,const char *fontfile, float size, float an
 void CDrawImage::setDisc(int x,int y,int discRadius, int fillCol, int lineCol){
   if(_bEnableTrueColor==true){
     if(currentLegend==NULL)return;
-    cairo->setFillColor(currentLegend->CDIred[fillCol],currentLegend->CDIgreen[fillCol],currentLegend->CDIblue[fillCol],255);
-    cairo->setColor(currentLegend->CDIred[lineCol],currentLegend->CDIgreen[lineCol],currentLegend->CDIblue[lineCol],255);
+    cairo->setFillColor(currentLegend->CDIred[fillCol],currentLegend->CDIgreen[fillCol],currentLegend->CDIblue[fillCol],currentLegend->CDIalpha[fillCol]);
+    cairo->setColor(currentLegend->CDIred[lineCol],currentLegend->CDIgreen[lineCol],currentLegend->CDIblue[lineCol],currentLegend->CDIalpha[fillCol]);
     cairo->filledcircle(x, y, discRadius);
     //cairo->setColor(textcolor.r,textcolor.g,textcolor.b,textcolor.a);
     cairo->circle(x, y, discRadius, 1);
@@ -1068,14 +1068,33 @@ int CDrawImage::createGDPalette(CServerConfig::XMLE_Legend *legend){
     return _createStandard();
   }
   if(legend->attr.type.equals("interval")){
+  
     for(size_t j=0;j<legend->palette.size();j++){
-      for(int i=legend->palette[j]->attr.min;i<=legend->palette[j]->attr.max;i++){
-        if(i>=0&&i<240){
-          currentLegend->CDIred[i]=legend->palette[j]->attr.red;
-          currentLegend->CDIgreen[i]=legend->palette[j]->attr.green;
-          currentLegend->CDIblue[i]=legend->palette[j]->attr.blue;
-          currentLegend->CDIalpha[i]=legend->palette[j]->attr.alpha;
-          if(currentLegend->CDIred[i]==0)currentLegend->CDIred[i]=1;//for transparency
+    
+      if(legend->palette[j]->attr.index!=-1){
+        
+        int startIndex = legend->palette[j]->attr.index;
+        int stopIndex = 240;
+        if(j<legend->palette.size()-1)stopIndex = legend->palette[j+1]->attr.index;
+        
+        for(int i=startIndex;i<stopIndex;i++){
+          if(i>=0&&i<240){
+            currentLegend->CDIred[i]=legend->palette[j]->attr.red;
+            currentLegend->CDIgreen[i]=legend->palette[j]->attr.green;
+            currentLegend->CDIblue[i]=legend->palette[j]->attr.blue;
+            currentLegend->CDIalpha[i]=legend->palette[j]->attr.alpha;
+            if(currentLegend->CDIred[i]==0)currentLegend->CDIred[i]=1;//for transparency
+          }
+        }
+      }else{
+        for(int i=legend->palette[j]->attr.min;i<=legend->palette[j]->attr.max;i++){
+          if(i>=0&&i<240){
+            currentLegend->CDIred[i]=legend->palette[j]->attr.red;
+            currentLegend->CDIgreen[i]=legend->palette[j]->attr.green;
+            currentLegend->CDIblue[i]=legend->palette[j]->attr.blue;
+            currentLegend->CDIalpha[i]=legend->palette[j]->attr.alpha;
+            if(currentLegend->CDIred[i]==0)currentLegend->CDIred[i]=1;//for transparency
+          }
         }
       }
     }

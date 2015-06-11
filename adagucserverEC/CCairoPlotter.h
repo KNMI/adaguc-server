@@ -193,8 +193,8 @@ public:
   }
 
   int renderFont(FT_Bitmap *bitmap,int left,int top){
-    for(int y=0;y<bitmap->rows;y++){
-      for(int x=0;x<bitmap->width;x++){
+    for(int y=0;y<(int)bitmap->rows;y++){
+      for(int x=0;x<(int)bitmap->width;x++){
         size_t p=(x+y*bitmap->width);
         if(bitmap->buffer[p]!=0){
           float alpha=bitmap->buffer[p];
@@ -301,7 +301,7 @@ public:
         //printf("%s %d\n",t,face->glyph->linearHoriAdvance);
         //plot(slot->bitmap_left, my_target_height - slot->bitmap_top, 1);
         
-        if (slot->bitmap.rows > h) h=slot->bitmap.rows;
+        if (int(slot->bitmap.rows) > h) h=(int)slot->bitmap.rows;
         
         pen.x += slot->advance.x; pen.y += slot->advance.y; 
         w += slot->advance.x/64;
