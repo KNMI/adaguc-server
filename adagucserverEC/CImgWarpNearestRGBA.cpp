@@ -89,12 +89,12 @@ int CDrawTileObjBGRA::drawTile(double *x_corners,double *y_corners,int &dDestX,i
       line_dy2= y_corners[2];
       
       size_t imgpointer;
-      for(x=0;x<=x_div;x++){
+      for(x=0;x<=x_div-1;x++){
         line_dx1+=rcx_1;line_dx2+=rcx_2;line_dy1+=rcy_1;line_dy2+=rcy_2;
         rcx_3= (line_dx2 -line_dx1)/y_div;
         rcy_3= (line_dy2 -line_dy1)/y_div;
         dstpixel_x=int(x)+dDestX;
-        for(y=0;y<=y_div;y=y+1){
+        for(y=0;y<=y_div-1;y=y+1){
           dstpixel_y=y+dDestY-1;
           sample_sx=line_dx1+rcx_3*double(y);
           if(sample_sx>=dfSourceBBOX[0]&&sample_sx<dfSourceBBOX[2])
@@ -111,18 +111,20 @@ int CDrawTileObjBGRA::drawTile(double *x_corners,double *y_corners,int &dDestX,i
                     imgpointer=srcpixel_x+(height-1-srcpixel_y)*width;
                     uint v=data[imgpointer];
                    // if(v!=2147483649){;//uint(-2147483647)){
-                     if(v!=4294967295){
+                    if(v!=4294967295){
                     //v=v*10;
                     unsigned char r=((unsigned char)v);
                     unsigned char g=((unsigned char)(v>>8));
                     unsigned char b=((unsigned char)(v>>16));
                     unsigned char a=((unsigned char)(v>>24));;
-                    //if(r==0&&g==0&&b==0)a=0;
-                   // b=128;r=128;g=128;
-                    //r=0;b=0;
-                    imageData[dstpixel_x+dstpixel_y*imageWidth]=b+g*256+r*256*256+a*256*256*256;
-                    //  v=_rotr32(v);
-                    //imageData[dstpixel_x+dstpixel_y*imageWidth]=v;
+                    if(a!=255){
+                      //For cairo, Alpha is precomputed into components. We need to do this here as well.
+                      unsigned char r1= float(r)*(float(a)/255.);
+                      unsigned char g1 =float(g)*(float(a)/255.);
+                      unsigned char b1=float(b)*(float(a)/255.);
+                      imageData[dstpixel_x+dstpixel_y*imageWidth]=b1+g1*256+r1*256*256+a*256*256*256;
+                    }else{
+                      imageData[dstpixel_x+dstpixel_y*imageWidth]=b+g*256+r*256*256+255*256*256*256;
                     }
                   }
                 }
@@ -131,5 +133,6 @@ int CDrawTileObjBGRA::drawTile(double *x_corners,double *y_corners,int &dDestX,i
           }
         }
       }
-      return 0;
+    }
+    return 0;
   }
