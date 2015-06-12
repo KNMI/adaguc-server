@@ -364,7 +364,11 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
            
    
             if(v==v){
-              t.print(drawPointTextFormat.c_str(),v);
+              bool drawText = true;
+              if(drawPointTextFormat.length() <2)drawText = false;
+              if(drawText){
+                t.print(drawPointTextFormat.c_str(),v);
+              }
   //              CDBDebug("[%d] v=%f: drawPointDiscRadius=%d n=%d index=%d", j, v, drawPointDiscRadius, dataSource->getNumDataObjects(), getPixelIndexForValue(dataSource, v));
               if (drawPointDiscRadius==0) {
   //                CDBDebug("radius==0 => centeredtext only %f", v);
@@ -379,7 +383,9 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
                   drawImage->setDisc(x, y, drawPointDiscRadius, pointColorIndex, pointColorIndex);
                   drawImage->circle(x, y, drawPointDiscRadius+1, drawPointLineColor,0.65);
                   if (drawPointDot) drawImage->circle(x,y, 1, drawPointFillColor,1);
-                  drawImage->drawCenteredText(x,y+drawPointTextRadius, drawPointFontFile, drawPointFontSize, 0, t.c_str(), drawPointTextColor);
+                  if(drawText){
+                    drawImage->drawCenteredText(x,y+drawPointTextRadius, drawPointFontFile, drawPointFontSize, 0, t.c_str(), drawPointTextColor);
+                  }
                 } else {
                   drawImage->setDisc(x, y, drawPointDiscRadius, drawPointFillColor, drawPointLineColor);
                   drawImage->drawAnchoredText(x+usedx,y-usedy, drawPointFontFile, drawPointFontSize, 0, t.c_str(), drawPointTextColor, kwadrant);
