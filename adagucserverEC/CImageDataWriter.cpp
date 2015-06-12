@@ -3367,12 +3367,17 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
     double classes=6;
     int tickRound=0;
     double min=getValueForColorIndex(dataSource,0);
-    double max=getValueForColorIndex(dataSource,239);
-   
+    double max=getValueForColorIndex(dataSource,240);//TODO CHECK 239
+    if(max == INFINITY)max=239;
+    if(min == INFINITY)min=0;
+    if(max == min)max=max+0.000001;
+    double increment = classes/(max-min);
     if(styleConfiguration->legendTickInterval>0){
       //classes=(max-min)/styleConfiguration->legendTickInterval;
-      classes=int((max-min)/double(styleConfiguration->legendTickInterval)+0.5);
+      //classes=int((max-min)/double(styleConfiguration->legendTickInterval)+0.5);
+      increment = double(styleConfiguration->legendTickInterval);
     }
+    if(increment<=0)increment=1;
     
     
     
@@ -3380,27 +3385,34 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
     if(styleConfiguration->legendTickRound>0){
       tickRound = int(round(log10(styleConfiguration->legendTickRound))+3);
     }
+    
+    if(increment>max-min){
+      increment = max-min;
+    }
+    CDBDebug("%f %f %f",min,max,increment);
 
      
     //CDBDebug("LEGEND: scale %f offset %f",styleConfiguration->legendScale,styleConfiguration->legendOffset);
-    for(int j=0;j<=classes;j++){
-      double c=((double(classes*legendPositiveUp-j)/classes))*(cbH);
-      double v=((double(j)/classes))*(240.0f);
-      v-=styleConfiguration->legendOffset;
+    for(double j=min;j<max+increment;j=j+increment){
+      double lineY = cbH-((j-min)/(max-min))*cbH;
+      //CDBDebug("%f %f %f",j,lineY,cbH);
+      //double c=((double(classes*legendPositiveUp-j)/classes))*(cbH);
+      double v=j;
+      //v-=styleConfiguration->legendOffset;
       
-      if(styleConfiguration->legendScale != 0)v/=styleConfiguration->legendScale;
-      if(styleConfiguration->legendLog!=0){v=pow(styleConfiguration->legendLog,v);}
+//       if(styleConfiguration->legendScale != 0)v/=styleConfiguration->legendScale;
+//       if(styleConfiguration->legendLog!=0){v=pow(styleConfiguration->legendLog,v);}
       
-      //if(v<=max)
+      if(lineY>=-2&&lineY<cbH+2)
       {
         float lineWidth=0.8;
-        legendImage->line((int)cbW-1+pLeft,(int)c+6+dH+pTop,(int)cbW+6+pLeft,(int)c+6+dH+pTop,lineWidth,248);
+        legendImage->line((int)cbW-1+pLeft,(int)lineY+6+dH+pTop,(int)cbW+6+pLeft,(int)lineY+6+dH+pTop,lineWidth,248);
         if(tickRound==0){
           floatToString(szTemp,255,min,max,v);
         }else{
           floatToString(szTemp,255,tickRound,v);
         }
-        legendImage->setText(szTemp,strlen(szTemp),(int)cbW+10+pLeft,(int)c+dH+pTop+1,248,-1);
+        legendImage->setText(szTemp,strlen(szTemp),(int)cbW+10+pLeft,(int)lineY+dH+pTop+1,248,-1);
       }
     }
     
