@@ -3371,7 +3371,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
     if(max == INFINITY)max=239;
     if(min == INFINITY)min=0;
     if(max == min)max=max+0.000001;
-    double increment = classes/(max-min);
+    double increment = (max-min)/classes;
     if(styleConfiguration->legendTickInterval>0){
       //classes=(max-min)/styleConfiguration->legendTickInterval;
       //classes=int((max-min)/double(styleConfiguration->legendTickInterval)+0.5);
@@ -3389,11 +3389,13 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
     if(increment>max-min){
       increment = max-min;
     }
-    CDBDebug("%f %f %f",min,max,increment);
+    if((max-min)/increment>250)increment=(max-min)/250;
+    //CDBDebug("%f %f %f",min,max,increment);
 
      
     //CDBDebug("LEGEND: scale %f offset %f",styleConfiguration->legendScale,styleConfiguration->legendOffset);
     for(double j=min;j<max+increment;j=j+increment){
+      //CDBDebug("%f",j);
       double lineY = cbH-((j-min)/(max-min))*cbH;
       //CDBDebug("%f %f %f",j,lineY,cbH);
       //double c=((double(classes*legendPositiveUp-j)/classes))*(cbH);
