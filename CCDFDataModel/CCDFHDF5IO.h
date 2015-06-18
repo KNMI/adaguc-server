@@ -658,9 +658,18 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
         return 1;
       }
     
-      time->setSize(1);
+      
+    
+      //
+      timeDim->setSize(1);
+      
+      
+      time->setSize(timeDim->getSize());
       if(CDF::allocateData(time->currentType,&time->data,time->getSize())){throw(__LINE__);}
-      ((double*)time->data)[0]=offset;
+      for(int j=0;j<timeDim->getSize();j++){
+        ((double*)time->data)[j]=offset+j;
+      }
+      CDBDebug("Time size = %d",time->getSize());
       if(status!=0){
         CDBError("Could not initialize time: %s",szStartTime);
         delete ctime;
@@ -755,35 +764,36 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
                 var->addAttribute(noDataAttr);
               }
             }
-          }
           
-      
-          //Try to detect calibration_formulas and convert them to scale_factor and add_offset attributes
-          CDF::Attribute *calibration_formulas = calibration->getAttributeNE("calibration_formulas"); 
-          if(calibration_formulas != NULL){
-            CT::string formula = calibration_formulas->getDataAsString();
-            //CDBDebug("Formula: %s",formula.c_str());
-            int rightPartFormulaPos = formula.indexOf("=");
-            int multiplicationSignPos = formula.indexOf("*");
-            int additionSignPos = formula.indexOf("+");
-            if(rightPartFormulaPos != -1 && multiplicationSignPos !=-1 && additionSignPos !=-1){
-              
-              float multiplicationFactor = formula.substring(rightPartFormulaPos+1,multiplicationSignPos).trim().toFloat();
-              float additionFactor = formula.substring(additionSignPos+1,formula.length()).trim().toFloat();
-              //CDBDebug("* = '%s' '%f' and + = '%s' '%f'",multiplicationFactorStr.c_str(),additionFactorStr.c_str(),multiplicationFactor,additionFactor);
-              CDBDebug("Formula %s provides y='%f'*x+'%f'",formula.c_str(),multiplicationFactor,additionFactor);
-              CDF::Attribute* add_offset = new CDF::Attribute();
-              add_offset->setName("add_offset");
-              add_offset->setData(CDF_FLOAT,&additionFactor,1);
-              var->addAttribute(add_offset);
-              
-              CDF::Attribute* scale_factor = new CDF::Attribute();
-              scale_factor->setName("scale_factor");
-              scale_factor->setData(CDF_FLOAT,&multiplicationFactor,1);
-              var->addAttribute(scale_factor);
+          
+        
+            //Try to detect calibration_formulas and convert them to scale_factor and add_offset attributes
+            CDF::Attribute *calibration_formulas = calibration->getAttributeNE("calibration_formulas"); 
+            if(calibration_formulas != NULL){
+              CT::string formula = calibration_formulas->getDataAsString();
+              //CDBDebug("Formula: %s",formula.c_str());
+              int rightPartFormulaPos = formula.indexOf("=");
+              int multiplicationSignPos = formula.indexOf("*");
+              int additionSignPos = formula.indexOf("+");
+              if(rightPartFormulaPos != -1 && multiplicationSignPos !=-1 && additionSignPos !=-1){
+                
+                float multiplicationFactor = formula.substring(rightPartFormulaPos+1,multiplicationSignPos).trim().toFloat();
+                float additionFactor = formula.substring(additionSignPos+1,formula.length()).trim().toFloat();
+                //CDBDebug("* = '%s' '%f' and + = '%s' '%f'",multiplicationFactorStr.c_str(),additionFactorStr.c_str(),multiplicationFactor,additionFactor);
+                CDBDebug("Formula %s provides y='%f'*x+'%f'",formula.c_str(),multiplicationFactor,additionFactor);
+                CDF::Attribute* add_offset = new CDF::Attribute();
+                add_offset->setName("add_offset");
+                add_offset->setData(CDF_FLOAT,&additionFactor,1);
+                var->addAttribute(add_offset);
+                
+                CDF::Attribute* scale_factor = new CDF::Attribute();
+                scale_factor->setName("scale_factor");
+                scale_factor->setData(CDF_FLOAT,&multiplicationFactor,1);
+                var->addAttribute(scale_factor);
+              }
             }
           }
-          
+            
       
           
           
