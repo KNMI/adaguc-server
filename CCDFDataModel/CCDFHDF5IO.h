@@ -666,7 +666,7 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
       
       time->setSize(timeDim->getSize());
       if(CDF::allocateData(time->currentType,&time->data,time->getSize())){throw(__LINE__);}
-      for(int j=0;j<timeDim->getSize();j++){
+      for(size_t j=0;j<timeDim->getSize();j++){
         ((double*)time->data)[j]=offset+j;
       }
       CDBDebug("Time size = %d",time->getSize());

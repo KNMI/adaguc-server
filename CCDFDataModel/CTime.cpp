@@ -229,7 +229,7 @@ CT::string CTime::dateToString(Date date){
 CT::string CTime::dateToISOString(Date date){
   CT::string s;
   float second=date.second;
-  int minute = date.minute;
+  //int minute = date.minute;
 //   if(date.second>=60.){
 //     second-=60;minute+=1;
 //   }
