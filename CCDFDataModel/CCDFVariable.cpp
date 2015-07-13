@@ -464,7 +464,7 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
         iterativeDim->setSize(currentDimSize+1);
         iterativeVar->setSize(currentDimSize+1);
         
-        size_t dimSize = iterativeDim->getSize();
+//        size_t dimSize = iterativeDim->getSize();
 //         for(size_t j=0;j<dimSize;j++){
 //           CDBDebug("%d == %f",j,(iterativeVar->getDataAt<double>(j)));
 //         }

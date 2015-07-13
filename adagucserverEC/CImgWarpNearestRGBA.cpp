@@ -124,7 +124,7 @@ int CDrawTileObjBGRA::drawTile(double *x_corners,double *y_corners,int &dDestX,i
                       unsigned char b1=float(b)*(float(a)/255.);
                       imageData[dstpixel_x+dstpixel_y*imageWidth]=b1+g1*256+r1*256*256+a*256*256*256;
                     }else{
-                      imageData[dstpixel_x+dstpixel_y*imageWidth]=b+g*256+r*256*256+255*256*256*256;
+                      imageData[dstpixel_x+dstpixel_y*imageWidth]=b+g*256+r*256*256+4278190080;
                     }
                   }
                 }

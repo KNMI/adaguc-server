@@ -67,7 +67,9 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type,size_t *
   }
   
   if(cdfCache!=NULL){
-    //CDBDebug("Looking into cache %s of type %s",var->name.c_str(),CDF::getCDFDataTypeName(type).c_str());
+    #ifdef CCDFNETCDFIO_DEBUG_OPEN        
+    CDBDebug("Looking into cache %s of type %s",var->name.c_str(),CDF::getCDFDataTypeName(type).c_str());
+    #endif
     int cacheStatus = cdfCache->readVariableData(var, type,start,count,stride,false);
     if(cacheStatus == 0) {return 0;}
   }
@@ -79,9 +81,11 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type,size_t *
     
     status = nc_open(fileName.c_str(),NC_NOWRITE,&root_id);
     if(status!=NC_NOERR){ncError(__LINE__,className,"nc_open: ",status);return 1;}
-
+    status = nc_inq(root_id,&nDims,&nVars,&nRootAttributes,&unlimDimIdP);
+    if(status!=NC_NOERR){ncError(__LINE__,className,"nc_inq: ",status);return 1;}
     #ifdef CCDFNETCDFIO_DEBUG_OPEN        
     CDBDebug("root_id %d",root_id);
+    var->id = -1;
     CDBDebug("VARNAME %s id: %d",var->name.c_str(),var->id);
     #endif
     
@@ -91,18 +95,23 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type,size_t *
     int ndims;
     int natt;
     int dimids[NC_MAX_VAR_DIMS];
-    bool isDimension;
+    //bool isDimension;
     for(int j=0;j<nVars;j++){
       status = nc_inq_var(root_id,j,name,&type,&ndims,dimids,&natt);
+      //CDBDebug("NAME EQUALS %s  = %s %d = %d",var->name.c_str(),name,var->id,j);
       if(var->name.equals(name)){
+        
         var->id = j;
         break;
       }
     }
   }
   #ifdef CCDFNETCDFIO_DEBUG        
-  CDBDebug("reading %s from file %s",var->name.c_str(),fileName.c_str());
+  CDBDebug("reading %s with id %d from file %s",var->name.c_str(), var->id,fileName.c_str());
   #endif
+  
+  
+
   //CDBDebug("readVariableData");
   //It is essential that the variable nows which reader can be used to read the data
   //var->cdfReaderPointer=(void*)this;
@@ -233,23 +242,22 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type,size_t *
   }
   
   if(type == var->nativeType){
-     if(useStartCount){
-       if(useStriding){
+    if(useStartCount){
+      if(useStriding){
         status = nc_get_vars(root_id,var->id,start,count,stride,var->data);
         if(status!=NC_NOERR){ncError(__LINE__,className,"nc_get_vars (native): ",status);}
       }else{
-        status = nc_get_vara(root_id,var->id,start,count,var->data);
         #ifdef CCDFNETCDFIO_DEBUG_OPEN        
-        CDBDebug("root_id %d var id %d",root_id,var->id);
+        CDBDebug("READ: root_id %d var id %d",root_id,var->id);
         for(size_t j=0;j<var->dimensionlinks.size();j++){
-          CDBDebug("[%s] %d %d",var->dimensionlinks[j]->name.c_str(),start[j],count[j]);
+          CDBDebug("READ: [%s] %d %d",var->dimensionlinks[j]->name.c_str(),start[j],count[j]);
         }
         #endif
-        
+        status = nc_get_vara(root_id,var->id,start,count,var->data);
         if(status!=NC_NOERR){ncError(__LINE__,className,"nc_get_vara (native): ",status);}
       }
     }else{
-       status = nc_get_var(root_id,var->id,var->data);
+      status = nc_get_var(root_id,var->id,var->data);
       if(status!=NC_NOERR){ncError(__LINE__,className,"nc_get_var (native): ",status);}
     }
     if(status!=NC_NOERR){
@@ -262,8 +270,20 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type,size_t *
     //End of reading data natively.
   }
   
-  
-  
+//   if(var->currentType == CDF_FLOAT){
+//   
+//     float min=0,max=1;
+//     for(size_t j=0;j<var->getSize();j++){
+//       float v = ((float*)var->data)[j];
+//       if(j==0){
+//         min=v;max=v;
+//       }
+//       if(v>max)max=v;
+//       if(v<min)min=v;
+//     }
+//     CDBDebug("MAX/MIN=%f/%f",min,max);
+//   }
+
   
   //warper.warpLonData(var);
 
