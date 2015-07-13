@@ -101,6 +101,8 @@ class CDFHDF5Reader :public CDFReader{
     void *old_client_data;
     hid_t error_stack;
     bool b_EnableKNMIHDF5toCFConversion;
+    
+   
   public:
     class CustomForecastReader:public CDF::Variable::CustomReader{
     public:
@@ -157,6 +159,7 @@ class CDFHDF5Reader :public CDFReader{
       H5Eset_auto2(error_stack, NULL, NULL);
       H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
       b_EnableKNMIHDF5toCFConversion=false;
+      forecastReader = NULL;
     }
     ~CDFHDF5Reader(){
 #ifdef CCDFHDF5IO_DEBUG            
@@ -685,53 +688,53 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
       CDBDebug("CTime");
       #endif
       //Set adaguc time
-      CTime *ctime = new CTime();
-      if(ctime->init((char*)time_units->data)!=0){
+      CTime ctime;
+      if(ctime.init((char*)time_units->data)!=0){
         CDBError("Could not initialize CTIME: %s",(char*)time_units->data);
         return 1;
       }
       double offset;
       try{
-        offset = ctime->dateToOffset(ctime->stringToDate(szStartTime));
+        offset = ctime.dateToOffset(ctime.stringToDate(szStartTime));
       }catch(int e){
         CT::string message=CTime::getErrorMessage(e);
         CDBError("CTime Exception %s",message.c_str());
-        delete ctime;
+    
         return 1;
       }
     
       bool isForecastData = false;
       
-      int timeLength = 1;
+      //Try to detect if this is forecast data by checking if image1:image_datetime_valid  exists.
+      try{
+        cdfObject->getVariable("image1")->getAttribute("image_datetime_valid");
+        CDBDebug("This is forecast data");
+        isForecastData = true;
+      }catch(int e){
+      }
       
+      
+      int timeLength = 1;
       
       if(isForecastData){
         CDF::Attribute *number_image_groups =overview->getAttributeNE("number_image_groups");
         if(number_image_groups != NULL){
-       
           number_image_groups->getData(&timeLength,1);
-         
         }
       }
     
-      //
       timeDim->setSize(timeLength);
-      
-      
-     
       
       time->setSize(timeDim->getSize());
       if(CDF::allocateData(time->currentType,&time->data,time->getSize())){throw(__LINE__);}
-      for(int j=0;j<timeDim->getSize();j++){
-        ((double*)time->data)[j]=offset+j*5;
+      for(size_t j=0;j<timeDim->getSize();j++){
+        ((double*)time->data)[j]=offset;//This will be filled correctly in at the image looping section
       }
+      
+      #ifdef CCDFHDF5IO_DEBUG
       CDBDebug("Time size = %d",time->getSize());
-      if(status!=0){
-        CDBError("Could not initialize time: %s",szStartTime);
-        delete ctime;
-        return 1;
-      }      
-      delete ctime;
+      #endif
+      
       
       
    
@@ -743,134 +746,153 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
       for(size_t j=0;j<cdfObject->variables.size();j++){
         cdfObject->variables[j]->setAttributeText("ADAGUC_SKIP","true");
       }
-       CDF::Variable *forecast= new CDF::Variable();
-       forecast->setName("forecast");
-       forecast->setType(cdfObject->getVariable("image1.image_data")->getType());
-       forecast->dimensionlinks.push_back(timeDim);
-       forecast->dimensionlinks.push_back(dimY);
-       forecast->dimensionlinks.push_back(dimX);
-       forecast->setAttributeText("grid_mapping","projection");
-       forecast->setCustomReader(new CustomForecastReader());
-       cdfObject->addVariable(forecast);
-       
+      
+      if(isForecastData){
+        CDF::Variable *forecast= new CDF::Variable();
+        forecast->setName("forecast");
+        forecast->setType(cdfObject->getVariable("image1.image_data")->getType());
+        forecast->dimensionlinks.push_back(timeDim);
+        forecast->dimensionlinks.push_back(dimY);
+        forecast->dimensionlinks.push_back(dimX);
+        forecast->setAttributeText("grid_mapping","projection");
+        forecastReader = new CustomForecastReader();
+        forecast->setCustomReader(forecastReader);
+        cdfObject->addVariable(forecast);
+      }
              
+          
       
       //Loop through all images and set grid_mapping name
       CT::string varName;
       int v=1;
 
-      
-      
-      do{
-        varName.print("image%d.image_data",v);
-        var = cdfObject->getVariableNE(varName.c_str());
-        if(var!=NULL){
-          
-          var->removeAttribute("ADAGUC_SKIP");
-          
-          CDF::Attribute* grid_mapping= new CDF::Attribute();
-          grid_mapping->setName("grid_mapping");
-          grid_mapping->setData(CDF_CHAR,(char*)"projection\0",11);
-          var->addAttribute(grid_mapping);
-          var->dimensionlinks.insert(var->dimensionlinks.begin(),1,timeDim);
-          
-          
-          
-          
-          
-          //Set units
-          varName.print("image%d",v);
-          CDF::Variable *imageN = cdfObject->getVariableNE(varName.c_str());
-          if(imageN!=NULL){
-            CDF::Attribute * image_geo_parameter = imageN->getAttributeNE("image_geo_parameter"); 
-            if(image_geo_parameter!=NULL){
-              CDF::Attribute* units= new CDF::Attribute();
-              units->setName("units");
-              CT::string unitString;
-              image_geo_parameter->getDataAsString(&unitString);
-              units->setData(unitString.c_str());
-              var->addAttribute(units);
-            }
-          }
-          
-          //Set no data
-          //Get nodatavalue:
-          varName.print("image%d.calibration",v);
-          CDF::Variable *calibration = cdfObject->getVariableNE(varName.c_str());
-          if(calibration!=NULL){
-//            CDBDebug("Found calibration group");
-            CDF::Attribute *calibration_out_of_image = calibration->getAttributeNE("calibration_out_of_image"); 
-            if(calibration_out_of_image!=NULL){
-  //            CDBDebug("Found calibration_out_of_image attribute");
-              double dfNodata = 0;
-              calibration_out_of_image->getData(&dfNodata,1);
-    //          CDBDebug("Found calibration_out_of_image attribute value=%f, status = %d",dfNodata,status);
-              //if(dfNodata!=0)
-              {
-                CDF::Attribute* noDataAttr = new CDF::Attribute();
-                noDataAttr->setName("_FillValue");
-                char attrType[256];CDF::getCDFDataTypeName(attrType,255,var->currentType);
-#ifdef CCDFHDF5IO_DEBUG                      
-                CDBDebug("%s: Setting type %s",var->name.c_str(),attrType);
-#endif                
-
-                switch(var->currentType){
-                  case CDF_CHAR  : {char   nodata=(char)dfNodata;noDataAttr->setData(var->currentType,&nodata,1);};break;
-                  case CDF_BYTE  : {char   nodata=(char)dfNodata;noDataAttr->setData(var->currentType,&nodata,1);};break;
-                  case CDF_UBYTE : {unsigned char nodata=(unsigned char)dfNodata;noDataAttr->setData(var->currentType,&nodata,1);};break;
-                  case CDF_SHORT : {short  nodata=(short)dfNodata;noDataAttr->setData(var->currentType,&nodata,1);};break;
-                  case CDF_USHORT: {unsigned short nodata=(unsigned short)dfNodata;noDataAttr->setData(var->currentType,&nodata,1);};break;
-                  case CDF_INT   : {int    nodata=(int)dfNodata;noDataAttr->setData(var->currentType,&nodata,1);};break;
-                  case CDF_UINT  : {unsigned int nodata=(unsigned int)dfNodata;noDataAttr->setData(var->currentType,&nodata,1);};break;
-                  case CDF_FLOAT : {float  nodata=(float)dfNodata;noDataAttr->setData(var->currentType,&nodata,1);};break;
-                  case CDF_DOUBLE: {double nodata=(double)dfNodata;noDataAttr->setData(var->currentType,&nodata,1);};break;
-
-                  
-                }
-                var->addAttribute(noDataAttr);
-              }
-            }
-          
-          
-        
-            //Try to detect calibration_formulas and convert them to scale_factor and add_offset attributes
-            CDF::Attribute *calibration_formulas = calibration->getAttributeNE("calibration_formulas"); 
-            if(calibration_formulas != NULL){
-              CT::string formula = calibration_formulas->getDataAsString();
-              //CDBDebug("Formula: %s",formula.c_str());
-              int rightPartFormulaPos = formula.indexOf("=");
-              int multiplicationSignPos = formula.indexOf("*");
-              int additionSignPos = formula.indexOf("+");
-              if(rightPartFormulaPos != -1 && multiplicationSignPos !=-1 && additionSignPos !=-1){
-                
-                float multiplicationFactor = formula.substring(rightPartFormulaPos+1,multiplicationSignPos).trim().toFloat();
-                float additionFactor = formula.substring(additionSignPos+1,formula.length()).trim().toFloat();
-                //CDBDebug("* = '%s' '%f' and + = '%s' '%f'",multiplicationFactorStr.c_str(),additionFactorStr.c_str(),multiplicationFactor,additionFactor);
-                CDBDebug("Formula %s provides y='%f'*x+'%f'",formula.c_str(),multiplicationFactor,additionFactor);
-                CDF::Attribute* add_offset = new CDF::Attribute();
-                add_offset->setName("add_offset");
-                add_offset->setData(CDF_FLOAT,&additionFactor,1);
-                var->addAttribute(add_offset);
-                
-                CDF::Attribute* scale_factor = new CDF::Attribute();
-                scale_factor->setName("scale_factor");
-                scale_factor->setData(CDF_FLOAT,&multiplicationFactor,1);
-                var->addAttribute(scale_factor);
-              }
-            }
-          }
+      //This is the image looping section
+      {
+        do{
+          varName.print("image%d.image_data",v);
+          var = cdfObject->getVariableNE(varName.c_str());
+          if(var!=NULL){
+            if(isForecastData == false)var->removeAttribute("ADAGUC_SKIP");
             
-      
+            CDF::Attribute* grid_mapping= new CDF::Attribute();
+            grid_mapping->setName("grid_mapping");
+            grid_mapping->setData(CDF_CHAR,(char*)"projection\0",11);
+            var->addAttribute(grid_mapping);
+            var->dimensionlinks.insert(var->dimensionlinks.begin(),1,timeDim);
+            
+            
+            
+            
+            
+            //Set units
+            varName.print("image%d",v);
+            CDF::Variable *imageN = cdfObject->getVariableNE(varName.c_str());
+            if(imageN!=NULL){
+              CDF::Attribute * image_geo_parameter = imageN->getAttributeNE("image_geo_parameter"); 
+              if(image_geo_parameter!=NULL){
+                CDF::Attribute* units= new CDF::Attribute();
+                units->setName("units");
+                CT::string unitString;
+                image_geo_parameter->getDataAsString(&unitString);
+                units->setData(unitString.c_str());
+                var->addAttribute(units);
+              }
+            }
+            
+            //Set no data value
+            //Get nodatavalue:
+            varName.print("image%d.calibration",v);
+            CDF::Variable *calibration = cdfObject->getVariableNE(varName.c_str());
+            if(calibration!=NULL){
+              CDF::Attribute *calibration_out_of_image = calibration->getAttributeNE("calibration_out_of_image"); 
+              if(calibration_out_of_image!=NULL){
+                double dfNodata = 0;
+                calibration_out_of_image->getData(&dfNodata,1);
+      //          CDBDebug("Found calibration_out_of_image attribute value=%f, status = %d",dfNodata,status);
+                //if(dfNodata!=0)
+                {
+                  CDF::Attribute* noDataAttr = new CDF::Attribute();
+                  noDataAttr->setName("_FillValue");
+                  char attrType[256];CDF::getCDFDataTypeName(attrType,255,var->currentType);
+  #ifdef CCDFHDF5IO_DEBUG                      
+                  CDBDebug("%s: Setting type %s",var->name.c_str(),attrType);
+  #endif                
+
+                  switch(var->currentType){
+                    case CDF_CHAR  : {char   nodata=(char)dfNodata;noDataAttr->setData(var->currentType,&nodata,1);};break;
+                    case CDF_BYTE  : {char   nodata=(char)dfNodata;noDataAttr->setData(var->currentType,&nodata,1);};break;
+                    case CDF_UBYTE : {unsigned char nodata=(unsigned char)dfNodata;noDataAttr->setData(var->currentType,&nodata,1);};break;
+                    case CDF_SHORT : {short  nodata=(short)dfNodata;noDataAttr->setData(var->currentType,&nodata,1);};break;
+                    case CDF_USHORT: {unsigned short nodata=(unsigned short)dfNodata;noDataAttr->setData(var->currentType,&nodata,1);};break;
+                    case CDF_INT   : {int    nodata=(int)dfNodata;noDataAttr->setData(var->currentType,&nodata,1);};break;
+                    case CDF_UINT  : {unsigned int nodata=(unsigned int)dfNodata;noDataAttr->setData(var->currentType,&nodata,1);};break;
+                    case CDF_FLOAT : {float  nodata=(float)dfNodata;noDataAttr->setData(var->currentType,&nodata,1);};break;
+                    case CDF_DOUBLE: {double nodata=(double)dfNodata;noDataAttr->setData(var->currentType,&nodata,1);};break;
+
+                    
+                  }
+                  var->addAttribute(noDataAttr);
+                }
+              }
+            
+            
           
-          
-          /*CDF::Attribute* nodata = new CDF::Attribute();
-          nodata->setName("_FillValue");
-          nodata->setData(var->currentType,0,1);
-          var->addAttribute(nodata);*/
-        }
-        v++;
-      }while(var!=NULL);
-      
+              //Try to detect calibration_formulas and convert them to scale_factor and add_offset attributes
+              CDF::Attribute *calibration_formulas = calibration->getAttributeNE("calibration_formulas"); 
+              if(calibration_formulas != NULL){
+                CT::string formula = calibration_formulas->getDataAsString();
+                //CDBDebug("Formula: %s",formula.c_str());
+                int rightPartFormulaPos = formula.indexOf("=");
+                int multiplicationSignPos = formula.indexOf("*");
+                int additionSignPos = formula.indexOf("+");
+                if(rightPartFormulaPos != -1 && multiplicationSignPos !=-1 && additionSignPos !=-1){
+                  
+                  float multiplicationFactor = formula.substring(rightPartFormulaPos+1,multiplicationSignPos).trim().toFloat();
+                  float additionFactor = formula.substring(additionSignPos+1,formula.length()).trim().toFloat();
+                  //CDBDebug("* = '%s' '%f' and + = '%s' '%f'",multiplicationFactorStr.c_str(),additionFactorStr.c_str(),multiplicationFactor,additionFactor);
+                  CDBDebug("Formula %s provides y='%f'*x+'%f'",formula.c_str(),multiplicationFactor,additionFactor);
+                  CDF::Attribute* add_offset = new CDF::Attribute();
+                  add_offset->setName("add_offset");
+                  add_offset->setData(CDF_FLOAT,&additionFactor,1);
+                  var->addAttribute(add_offset);
+                  
+                  CDF::Attribute* scale_factor = new CDF::Attribute();
+                  scale_factor->setName("scale_factor");
+                  scale_factor->setData(CDF_FLOAT,&multiplicationFactor,1);
+                  var->addAttribute(scale_factor);
+                }
+              }
+            }
+              
+            //Try to detect image_datetime_valid for forecast data
+            CDF::Attribute *image_datetime_valid = imageN->getAttributeNE("image_datetime_valid"); 
+            if(image_datetime_valid != NULL){
+              CT::string datetime_valid = image_datetime_valid->getDataAsString();
+             
+              char valid_time_iso[100];
+              status = HDF5ToADAGUCTime(valid_time_iso,datetime_valid.c_str());if(status!=0){CDBError("Could not initialize time");return 1;}
+              #ifdef CCDFHDF5IO_DEBUG
+              CDBDebug("image%d:image_datetime_valid = [%s] is [%s]",v,datetime_valid.c_str(),valid_time_iso);
+              #endif
+              
+              double offset;
+              try{
+                offset = ctime.dateToOffset(ctime.stringToDate(valid_time_iso));
+                #ifdef CCDFHDF5IO_DEBUG
+                CDBDebug("Setting time offset %f for image %d",offset,v);
+                #endif
+                ((double*)time->data)[v-1]=offset;
+              }catch(int e){
+                CT::string message=CTime::getErrorMessage(e);
+                CDBError("CTime Exception %s",message.c_str());
+                return 1;
+              }
+            }
+          }
+          v++;
+        }while(var!=NULL);
+      }
+        
  
       #ifdef CCDFHDF5IO_DEBUG
       CDBDebug("convertKNMIHDF5toCF finished");
@@ -921,6 +943,7 @@ CDBDebug("convertKNMIHDF5toCF()");
     }
     int close(){
       if(H5F_file!=-1)H5Fclose(H5F_file);
+      if(forecastReader!=NULL){delete forecastReader;forecastReader=NULL;}
       return 0;
     }
     
@@ -1109,6 +1132,8 @@ CDBDebug("convertKNMIHDF5toCF()");
       closeH5GroupByName(var->name.c_str());
       return status;
     }
+private:
+  CustomForecastReader* forecastReader;
 };
 
 
