@@ -710,6 +710,18 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
         cdfObject->getVariable("image1")->getAttribute("image_datetime_valid");
         CDBDebug("This is forecast data");
         isForecastData = true;
+        
+        //Create forecast_reference_time variable
+        CDF::Variable *forecast_reference_time = new CDF::Variable();
+        forecast_reference_time->setName("forecast_reference_time");
+        forecast_reference_time->setSize(1);
+        forecast_reference_time->setType(CDF_DOUBLE);
+        CDF::allocateData(forecast_reference_time->currentType,&forecast_reference_time->data,forecast_reference_time->getSize());
+        cdfObject->addVariable(forecast_reference_time);
+        forecast_reference_time->setAttributeText("units",(char*)time_units->data);
+        forecast_reference_time->setAttributeText("standard_name","forecast_reference_time");
+        ((double*)forecast_reference_time->data)[0] = offset;
+        
       }catch(int e){
       }
       
