@@ -604,9 +604,9 @@ int CProj4ToCF::convertCFToProj( CDF::Variable *projectionVariable,CT::string *p
       
       
       CT::string units = "m";
-      double  dfsemi_major_axis = semi_major_axis.toDouble();
-      double  dfsemi_minor_axis = semi_minor_axis.toDouble();
-      
+//       double  dfsemi_major_axis = semi_major_axis.toDouble();
+//       double  dfsemi_minor_axis = semi_minor_axis.toDouble();
+//       
       int projectionUnits = getProjectionUnits(projectionVariable);
       
       if(projectionUnits == CPROJ4TOCF_UNITS_KILOMETER){
