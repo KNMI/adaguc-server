@@ -61,7 +61,7 @@ int CDF::Variable::readData(CDFType readType,size_t *_start,size_t *_count,ptrdi
 #endif     
     return 0;
   }
-  
+  CDBDebug("applyScaleOffset = %d",applyScaleOffset);
   if(applyScaleOffset==false){
     return readData(currentType,_start,_count,_stride);
   }
@@ -87,7 +87,7 @@ int CDF::Variable::readData(CDFType readType,size_t *_start,size_t *_count,ptrdi
   if(readType!=-1)scaleType=readType;
   int status = readData(scaleType,_start,_count,_stride);
   if(status != 0)return status;
-  
+  CDBDebug("applyScaleOffset = %f %f",scaleFactor,addOffset);
   //Apply scale and offset
   if(scaleFactor!=1||addOffset!=0){
   size_t lsize= getSize();

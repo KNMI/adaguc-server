@@ -102,6 +102,48 @@ class CDFHDF5Reader :public CDFReader{
     hid_t error_stack;
     bool b_EnableKNMIHDF5toCFConversion;
   public:
+    class CustomForecastReader:public CDF::Variable::CustomReader{
+    public:
+      ~CustomForecastReader(){
+        
+      }
+      int readData(CDF::Variable *thisVar,size_t *start,size_t *count,ptrdiff_t *stride){
+        CDBDebug("READ data for %s called",thisVar->name.c_str());
+        
+        size_t newstart[thisVar->dimensionlinks.size()];
+        for(size_t j=0;j<thisVar->dimensionlinks.size();j++){
+          newstart[j]=start[j];
+          CDBDebug("%s %d %d %d %d",thisVar->dimensionlinks[j]->name.c_str(),j,start[j],count[j],stride[j]);
+        }
+        newstart[0] = 0;
+        CT::string varName ;
+        varName.print("image%d.image_data",(int)start[0]+1);
+        CDF::Variable *var = ((CDFObject*)thisVar->getParentCDFObject())->getVariable(varName.c_str());
+        
+        
+        CDBDebug("Start reading %s",var->name.c_str());
+       
+        int status =  var->readData(var->getType(),newstart,count,stride,false);
+        thisVar->setType(var->getType());
+        if(status != 0)return status;
+        
+        CDF::freeData(&thisVar->data);
+        int size = 1;
+        for(size_t j=0;j<thisVar->dimensionlinks.size();j++){
+          size*=int((float(count[j])/float(stride[j]))+0.5);
+        }
+        thisVar->setSize(size);
+        CDF::allocateData(thisVar->getType(),&thisVar->data,size);
+        status = CDF::DataCopier::copy(thisVar->data,thisVar->getType(),var->data,thisVar->getType(),0,0,size);
+        if(status!=0){
+          CDBError("Unable to copy data");
+          throw("__LINE__");
+        }
+                
+        return 0;
+      }
+    };
+    
     CDFHDF5Reader():CDFReader(){
 #ifdef CCDFHDF5IO_DEBUG            
       CDBDebug("CCDFHDF5IO init");
@@ -658,16 +700,30 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
         return 1;
       }
     
+      bool isForecastData = false;
       
+      int timeLength = 1;
+      
+      
+      if(isForecastData){
+        CDF::Attribute *number_image_groups =overview->getAttributeNE("number_image_groups");
+        if(number_image_groups != NULL){
+       
+          number_image_groups->getData(&timeLength,1);
+         
+        }
+      }
     
       //
-      timeDim->setSize(1);
+      timeDim->setSize(timeLength);
       
+      
+     
       
       time->setSize(timeDim->getSize());
       if(CDF::allocateData(time->currentType,&time->data,time->getSize())){throw(__LINE__);}
       for(int j=0;j<timeDim->getSize();j++){
-        ((double*)time->data)[j]=offset+j;
+        ((double*)time->data)[j]=offset+j*5;
       }
       CDBDebug("Time size = %d",time->getSize());
       if(status!=0){
@@ -687,7 +743,17 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
       for(size_t j=0;j<cdfObject->variables.size();j++){
         cdfObject->variables[j]->setAttributeText("ADAGUC_SKIP","true");
       }
-      
+       CDF::Variable *forecast= new CDF::Variable();
+       forecast->setName("forecast");
+       forecast->setType(cdfObject->getVariable("image1.image_data")->getType());
+       forecast->dimensionlinks.push_back(timeDim);
+       forecast->dimensionlinks.push_back(dimY);
+       forecast->dimensionlinks.push_back(dimX);
+       forecast->setAttributeText("grid_mapping","projection");
+       forecast->setCustomReader(new CustomForecastReader());
+       cdfObject->addVariable(forecast);
+       
+             
       
       //Loop through all images and set grid_mapping name
       CT::string varName;
