@@ -217,13 +217,14 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
       class Cattr{
       public:
-        float  min,max;
+        CXMLString  min,max,binary_and;
         CXMLString file;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
-        if(equals("min",3,attrname)){attr.min=parseFloat(attrvalue);return;}
-        else if(equals("max",3,attrname)){attr.max=parseFloat(attrvalue);return;}
+        if(equals("min",3,attrname)){attr.min.copy(attrvalue);return;}
+        else if(equals("max",3,attrname)){attr.max.copy(attrvalue);return;}
         else if(equals("file",4,attrname)){attr.file.copy(attrvalue);return;}
+        else if(equals("binary_and",10,attrname)){attr.binary_and.copy(attrvalue);return;}
       }
      };
     
@@ -237,6 +238,18 @@ class CServerConfig:public CXMLSerializerInterface{
         void addAttribute(const char *attrname,const char *attrvalue){
           if(equals("units",5,attrname)){attr.units.copy(attrvalue);return;}
           else if(equals("standard_name",13,attrname)){attr.standard_name.copy(attrvalue);return;}
+        }
+    };
+    
+    class XMLE_LegendGraphic: public CXMLObjectInterface{
+      public:
+        class Cattr{
+        public:
+          CXMLString value;
+        }attr;
+        void addAttribute(const char *attrname,const char *attrvalue){
+          if(equals("value",5,attrname)){attr.value.copy(attrvalue);return;}
+          
         }
     };
     
@@ -425,6 +438,8 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_NameMapping*> NameMapping;
         std::vector <XMLE_SmoothingFilter*> SmoothingFilter;
         std::vector <XMLE_StandardNames*> StandardNames;
+        std::vector <XMLE_LegendGraphic*> LegendGraphic;
+        
         
         
         ~XMLE_Style(){
@@ -448,6 +463,8 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(NameMapping);
           XMLE_DELOBJ(SmoothingFilter);
           XMLE_DELOBJ(StandardNames);
+          XMLE_DELOBJ(LegendGraphic);
+          
           
         }
         class Cattr{
@@ -481,6 +498,7 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("NameMapping",11,name)){XMLE_ADDOBJ(NameMapping);}
             else if(equals("SmoothingFilter",15,name)){XMLE_ADDOBJ(SmoothingFilter);}
             else if(equals("StandardNames",13,name)){XMLE_ADDOBJ(StandardNames);}
+            else if(equals("LegendGraphic",13,name)){XMLE_ADDOBJ(LegendGraphic);}
             
            
           }

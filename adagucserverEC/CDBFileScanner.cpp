@@ -348,15 +348,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
           
           numberOfFilesAddedFromDB=0;
           int fileExistsInDB=0;
-          //If we are messing in the non-temporary table (e.g.removeNonExistingFiles==0)
-          //we need to make a transaction to make sure a file is not added twice
-          //If removeNonExistingFiles==1, we are using the temporary table
-          //Which is already locked by a transaction 
-          if(removeNonExistingFiles==0){
-            #ifdef USEQUERYTRANSACTIONS                
-            status = DB->query("BEGIN"); if(status!=0)throw(__LINE__);
-            #endif          
-          }
+
           
           //Delete files with non-matching creation date 
           dbAdapter->removeFilesWithChangedCreationDate(tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),fileDate.c_str());
@@ -366,15 +358,24 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
           if(status == 0){
             fileExistsInDB = 1;
           }
-         
-          //CDBDebug("fileExistsInDB = %d",fileExistsInDB);
+          
+         if(removeNonExistingFiles == 0){
+
+          if(fileExistsInDB == 1){
+              CDBDebug("Done:   %d/%d %s\t %s",
+              (int)j,
+              (int)dirReader->fileList.size(),
+              dimensionTextList.c_str(),
+              dirReader->fileList[j]->baseName.c_str());
+          }
+         }
           
           //The file metadata does not already reside in the db.
           //Therefore we need to read information from it
           if(fileExistsInDB == 0){
             try{
               if(d==0){
-                CDBDebug("Adding fileNo %d/%d %s\t %s",
+                CDBDebug("Adding: %d/%d %s\t %s",
                 (int)j,
                 (int)dirReader->fileList.size(),
                 dimensionTextList.c_str(),
@@ -616,33 +617,35 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
     CDBDebug("Adding files to database");
     dbAdapter->addFilesToDataBase();
     
-    //Now delete files in the database a which are not on file system
-    for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
-      if(skipDim[d] == false){
-        CDBStore::Store *values = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getUniqueValuesOrderedByValue("path",0,false,tableNames[d].c_str());
-        if(values==NULL){
-          CDBError("No files found for %s ",dataSource->layerName.c_str());
-        }else{
-          CDBDebug("Found %d files in DB",values->getSize());
-          for(size_t j=0;j<values->getSize();j++){
-            bool found = false;
-            for(size_t i=0;i<dirReader->fileList.size();i++){
-              if(dirReader->fileList[i]->fullName.equals(values->getRecord(j)->get(0))){
-                found = true;
-                break;
-              }
+    if(removeNonExistingFiles == 1){
+      //Now delete files in the database a which are not on file system
+      for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
+        if(skipDim[d] == false){
+          CDBStore::Store *values = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getUniqueValuesOrderedByValue("path",0,false,tableNames[d].c_str());
+          if(values==NULL){
+            CDBError("No files found for %s ",dataSource->layerName.c_str());
+          }else{
+            CDBDebug("The database contains %d files",values->getSize());
+            for(size_t j=0;j<values->getSize();j++){
+              bool found = false;
+              for(size_t i=0;i<dirReader->fileList.size();i++){
+                if(dirReader->fileList[i]->fullName.equals(values->getRecord(j)->get(0))){
+                  found = true;
+                  break;
+                }
 
-            }
-            if(found == false){
-              CDBDebug("Deleting file %s from db",values->getRecord(j)->get(0)->c_str());
-              CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->removeFile(tableNames[d].c_str(),values->getRecord(j)->get(0)->c_str());
+              }
+              if(found == false){
+                CDBDebug("Deleting file %s from db",values->getRecord(j)->get(0)->c_str());
+                CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->removeFile(tableNames[d].c_str(),values->getRecord(j)->get(0)->c_str());
+              }
             }
           }
+          
+          
+          
+          delete values;
         }
-        
-        
-        
-        delete values;
       }
     }
   

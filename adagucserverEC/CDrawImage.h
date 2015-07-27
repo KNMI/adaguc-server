@@ -54,6 +54,9 @@ float convertValueToClass(float val,float interval);
 #define COLORTYPE_RGBA    2;
 #define COLORTYPE_ARGB    3;
 
+#define CDRAWIMAGERENDERER_GD 1
+#define CDRAWIMAGERENDERER_CAIRO 2
+
 class CLegend{
 public:
   int id;
@@ -129,8 +132,10 @@ class CDrawImage{
     int getClosestGDColor(unsigned char r,unsigned char g,unsigned char b);
     int gdTranspColor;
     float lineMoveToX,lineMoveToY;
+    int numImagesAdded;
+    int currentGraphicsRenderer;
   public:
-    
+    int getRenderer();
     int _colors[256];
     gdImagePtr image;
     

@@ -328,26 +328,48 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
             
             if (v==v) {
               if (symbolIntervals!=NULL) {
-                std::string symbolFile("");
+              
                 for (size_t intv=0; intv<symbolIntervals->size(); intv++) {
                   CServerConfig::XMLE_SymbolInterval *symbolInterval=((*symbolIntervals)[intv]);
-                  if ((v>=symbolInterval->attr.min)&&(v<symbolInterval->attr.max)) {
-                    symbolFile=symbolInterval->attr.file.c_str();
-                    break;
-                  }
-                }
-                if (symbolFile.length()>0) {
-                  CDrawImage *symbol=NULL;
+                  bool drawThisOne = false;
                   
-                  symbolCacheIter=symbolCache.find(symbolFile);
-                  if(symbolCacheIter==symbolCache.end()){
-                    symbol=new CDrawImage();
-                    symbol->createImage(symbolFile.c_str());
-                    symbolCache[symbolFile]=symbol; //Remember in cache
-                  } else {
-                    symbol=(*symbolCacheIter).second;
+                
+                  if(symbolInterval->attr.binary_and.empty() == false ){
+                    int b= parseInt(symbolInterval->attr.binary_and.c_str());
+                    if((b&int(v))==b){
+                      drawThisOne = true;
+                      if(symbolInterval->attr.min.empty() == false && symbolInterval->attr.max.empty()==false){
+                        if ((v>=parseFloat(symbolInterval->attr.min.c_str()))&&(v<parseFloat(symbolInterval->attr.max.c_str())));else drawThisOne = false;
+                      }
+                    }
+                  
+                  }else{
+                    if(symbolInterval->attr.min.empty() == false && symbolInterval->attr.max.empty()==false){
+                      if ((v>=parseFloat(symbolInterval->attr.min.c_str()))&&(v<parseFloat(symbolInterval->attr.max.c_str()))) {
+                        drawThisOne = true;
+                      }
+                    }
+                    
                   }
-                  drawImage->draw(x-symbol->Geo->dWidth/2, y-symbol->Geo->dHeight/2, 0, 0, symbol);
+                  
+                  
+                  if(drawThisOne){
+                    std::string symbolFile=symbolInterval->attr.file.c_str();
+
+                    if (symbolFile.length()>0) {
+                      CDrawImage *symbol=NULL;
+                      
+                      symbolCacheIter=symbolCache.find(symbolFile);
+                      if(symbolCacheIter==symbolCache.end()){
+                        symbol=new CDrawImage();
+                        symbol->createImage(symbolFile.c_str());
+                        symbolCache[symbolFile]=symbol; //Remember in cache
+                      } else {
+                        symbol=(*symbolCacheIter).second;
+                      }
+                      drawImage->draw(x-symbol->Geo->dWidth/2, y-symbol->Geo->dHeight/2, 0, 0, symbol);
+                    }
+                  }
                 }
               }
               if (drawPointDot) drawImage->circle(x,y, 1, drawPointFillColor,0.65);

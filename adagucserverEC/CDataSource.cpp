@@ -570,10 +570,10 @@ int CDataSource::makeStyleConfig(CStyleConfiguration *styleConfig,CDataSource *d
   }*/
   CT::string styleDump;
   styleConfig->printStyleConfig(&styleDump);
-  #ifdef CIMAGEDATAWRITER_DEBUG          
- 
-  CDBDebug("styleDump:\n%s",styleDump.c_str());
-  #endif
+//   #ifdef CIMAGEDATAWRITER_DEBUG          
+//  
+//   CDBDebug("styleDump:\n%s",styleDump.c_str());
+//   #endif
   return 0;
 }
 
@@ -1110,14 +1110,14 @@ CStyleConfiguration *CDataSource::getStyle(){
       }
       delete legendList;
     }
-   #ifdef CDATASOURCE_DEBUG      
-    CDBDebug("Dumping style:");
-    CT::string styleDump;
-    _currentStyle->printStyleConfig(&styleDump);
-  
- 
-    CDBDebug("styleDump:\n%s",styleDump.c_str());
-    #endif
+//    #ifdef CDATASOURCE_DEBUG      
+//     CDBDebug("Dumping style:");
+//     CT::string styleDump;
+//     _currentStyle->printStyleConfig(&styleDump);
+//   
+//  
+//     CDBDebug("styleDump:\n%s",styleDump.c_str());
+//     #endif
   
   }
   

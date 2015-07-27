@@ -43,7 +43,7 @@ void StopWatch_Start(){
   double start,stop;
   start = double(starttime.tv_nsec)/1000000+starttime.tv_sec*1000;
   stop  = double(stoptime.tv_nsec)/1000000+stoptime.tv_sec*1000;
-  CDBDebug("%.3f ms\t%.3f ms\t%s",stop-start,stop-CSTOPWATCH_H_prevTime ,"*** START ***");
+  //CDBDebug("%.3f ms\t%.3f ms\t%s",stop-start,stop-CSTOPWATCH_H_prevTime ,"*** START ***");
   CSTOPWATCH_H_prevTime =stop;
 }
 void __StopWatch_Stop(const char *msg){
@@ -62,7 +62,7 @@ void __StopWatch_Stop(const char *msg){
     CSTOPWATCH_H_prevTime =stop;
     firstTime=1;
   }
-  _printDebugLine("[T] %.1f/%.3f ms: %s",stop-start,stop-CSTOPWATCH_H_prevTime ,msg);
+  _printDebugLine("[T] %.1f ms\t%.3f ms: %s",stop-start,stop-CSTOPWATCH_H_prevTime ,msg);
   CSTOPWATCH_H_prevTime =stop;
   
 }

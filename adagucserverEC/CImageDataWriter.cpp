@@ -450,25 +450,25 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   }
   
 
-  if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded&&1==2){
-    //Open the data of this dataSource
-    #ifdef CIMAGEDATAWRITER_DEBUG  
-    CDBDebug("opening %s",dataSource->getFileName());
-    #endif  
-    CDataReader reader;
-    status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
-    #ifdef CIMAGEDATAWRITER_DEBUG  
-    CDBDebug("Has opened %s",dataSource->getFileName());
-    #endif    
-    if(status!=0){
-      CDBError("Could not open file: %s",dataSource->getFileName());
-      return 1;
-    }
-    #ifdef CIMAGEDATAWRITER_DEBUG  
-    CDBDebug("opened");
-    #endif  
-    reader.close();
-  }
+//   if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded&&1==2){
+//     //Open the data of this dataSource
+//     #ifdef CIMAGEDATAWRITER_DEBUG  
+//     CDBDebug("opening %s",dataSource->getFileName());
+//     #endif  
+//     CDataReader reader;
+//     status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
+//     #ifdef CIMAGEDATAWRITER_DEBUG  
+//     CDBDebug("Has opened %s",dataSource->getFileName());
+//     #endif    
+//     if(status!=0){
+//       CDBError("Could not open file: %s",dataSource->getFileName());
+//       return 1;
+//     }
+//     #ifdef CIMAGEDATAWRITER_DEBUG  
+//     CDBDebug("opened");
+//     #endif  
+//     reader.close();
+//   }
   //drawImage.setTrueColor(true);
   //drawImage.setAntiAliased(true);
   /*drawImage.setTrueColor(true);
@@ -1148,9 +1148,17 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
 
 
 int CImageDataWriter::createAnimation(){
-  printf("%s%c%c\n","Content-Type:image/gif",13,10);
+  #ifdef CIMAGEDATAWRITER_DEBUG 
+  CDBDebug("[createAnimation]");
+  #endif
+  if(drawImage.getRenderer() == CDRAWIMAGERENDERER_GD){
+    printf("%s%c%c\n","Content-Type:image/gif",13,10);
+  }
   drawImage.beginAnimation();
   animation = 1;
+  #ifdef CIMAGEDATAWRITER_DEBUG 
+  CDBDebug("[/createAnimation]");
+  #endif
   return 0;
 }
 
@@ -1579,6 +1587,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
 #ifdef CIMAGEDATAWRITER_DEBUG  
   CDBDebug("addData");
 #endif   
+
   int status = 0;
   
   if(animation==1&&nrImagesAdded>0){
@@ -1596,8 +1605,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
     CDataSource *dataSource=dataSources[j];
 
     
-    
-        
+    /* Cascaded WMS */        
     if(dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
       //CDBDebug("Drawing cascaded WMS (grid/logo/external");
       if(dataSource->cfgLayer->WMSLayer.size()==1){
@@ -1612,16 +1620,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
       }
     }
     
-    
-  
-    /*drawImage.line(0,0,200,200,0.1,248);
-    drawImage.line(200,200,500,201,0.1,248);
-    
-    for(float ty=10;ty<60;ty++){
-      drawImage.line(50+ty*20,20+ty/2,70+ty*20,20+ty/2,0.1,248);
-    }*/
-  
-      
+    /* DataBase layers*/        
     if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
       #ifdef CIMAGEDATAWRITER_DEBUG    
       CDBDebug("Drawingnormal legend");
@@ -1659,7 +1658,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
         CDBError("warpImage for layer %s failed",dataSource->layerName.c_str());
         return status;
       }
-        }
+    }
       //if(j==dataSources.size()-1)
       {
         if(status == 0){
@@ -1959,7 +1958,7 @@ int CImageDataWriter::getTextForValue(CT::string *tv,float v,CStyleConfiguration
 int CImageDataWriter::end(){
      
   
-  int status = 0;
+  
   if(writerStatus==uninitialized){CDBError("Not initialized");return 1;}
   if(writerStatus==finished){CDBError("Already finished");return 1;}
   writerStatus=finished;
@@ -3016,8 +3015,8 @@ int CImageDataWriter::end(){
   //Animation image:
   if(animation==1){
     drawImage.addImage(100);
-    drawImage.endAnimation();
-    return 0;
+    //drawImage.endAnimation();
+    //return 0;
   }
 
 #ifdef MEASURETIME
@@ -3025,7 +3024,7 @@ StopWatch_Stop("Drawing finished");
 #endif
 
   //Static image
-
+  int status = 1;
   if(srvParam->imageFormat==IMAGEFORMAT_IMAGEPNG8||srvParam->imageFormat==IMAGEFORMAT_IMAGEPNG32){
     //CDBDebug("LegendGraphic PNG");
     //printf("%s%c%c","Cache-Control: max-age=3600, must-revalidate",13,10);
@@ -3044,7 +3043,9 @@ StopWatch_Stop("Drawing finished");
     status=drawImage.printImagePng();
   }else if(srvParam->imageFormat==IMAGEFORMAT_IMAGEGIF){
     //CDBDebug("LegendGraphic GIF");
-    printf("%s%c%c\n","Content-Type:image/gif",13,10);
+    if(animation == 0){
+      printf("%s%c%c\n","Content-Type:image/gif",13,10);
+    }
     status=drawImage.printImageGif();
   }else {
     //CDBDebug("LegendGraphic PNG");
@@ -3119,6 +3120,23 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
   #ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("createLegend");
   #endif
+    
+  if(dataSource->cfgLayer != NULL){
+    CStyleConfiguration *styleConfiguration = dataSource->getStyle();
+    if(styleConfiguration!=NULL){
+      if(styleConfiguration->styleConfig!=NULL){
+        if(styleConfiguration->styleConfig->LegendGraphic.size() == 1){
+          if(styleConfiguration->styleConfig->LegendGraphic[0]->attr.value.empty()==false){
+            const char *fileName =styleConfiguration->styleConfig->LegendGraphic[0]->attr.value.c_str();
+            legendImage->destroyImage();
+            legendImage->createImage(fileName);
+            return 0;
+          }
+        }
+      }
+    }
+  }
+    
   int status = 0;
   enum LegendType { undefined,continous,discrete,statusflag,cascaded};
   LegendType legendType=undefined;
@@ -3145,7 +3163,7 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
 
   if(renderMethod&RM_RGBA){
       
-      legendImage->setText("RGBA",5,0,0,248,-1);  
+      //legendImage->setText("",5,0,0,248,-1);  
       legendImage->crop(4);
       return 0;
   }

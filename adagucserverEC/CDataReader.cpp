@@ -717,9 +717,9 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
 //    
   CDFObject *cdfObject = NULL;
   
- #ifdef CDATAREADER_DEBUG
-  CDBDebug("Opening %s",dataSourceFilename.c_str());
-#endif
+ //#ifdef CDATAREADER_DEBUG
+  CDBDebug("Opening [%s]",dataSourceFilename.c_str());
+//#endif
   
   if(mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS  || mode == CNETCDFREADER_MODE_OPEN_HEADER ){
     cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource->srvParams,dataSourceFilename.c_str());

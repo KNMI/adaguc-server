@@ -59,6 +59,9 @@ CDrawImage::CDrawImage(){
   BGColorG=0;
   BGColorB=0;
   backgroundAlpha=255;
+  
+  numImagesAdded = 0;
+  currentGraphicsRenderer = -1;
   //CDBDebug("TTFFontLocation = %s",TTFFontLocation);
 }
 void CDrawImage::destroyImage(){
@@ -98,7 +101,7 @@ int CDrawImage::createImage(const char *fn){
   createImage(cairo_image_surface_get_width(surface), cairo_image_surface_get_height(surface));
   cairo->setToSurface(surface);
   cairo_surface_destroy(surface);
-
+  currentGraphicsRenderer = CDRAWIMAGERENDERER_CAIRO;
   return 0;
 }
 
@@ -110,7 +113,7 @@ int CDrawImage::createImage(int _dW,int _dH){
 
 int CDrawImage::createImage(CGeoParams *_Geo){
 #ifdef MEASURETIME
-  StopWatch_Stop("start createImage of size %d %d",_Geo->dWidth,_Geo->dWidth);
+  StopWatch_Stop("start createImage of size %d %d, truecolor=[%d], transparency = [%d]",_Geo->dWidth,_Geo->dWidth,_bEnableTrueColor,_bEnableTransparency);
 #endif  
   
   if(dImageCreated==1){CDBError("createImage: image already created");return 1;}
@@ -122,17 +125,20 @@ int CDrawImage::createImage(CGeoParams *_Geo){
 
     if(_bEnableTransparency==false){
       cairo = new CCairoPlotter(Geo->dWidth, Geo->dHeight, TTFFontSize, TTFFontLocation ,BGColorR,BGColorG,BGColorB,255);
+      currentGraphicsRenderer = CDRAWIMAGERENDERER_CAIRO;
     }else{
       cairo = new CCairoPlotter(Geo->dWidth, Geo->dHeight, TTFFontSize, TTFFontLocation ,0,0,0,0);
+      currentGraphicsRenderer = CDRAWIMAGERENDERER_CAIRO;
     }
   }
   if(_bEnableTrueColor==false){
     image = gdImageCreate(Geo->dWidth,Geo->dHeight);
     gdFTUseFontConfig(1);
+    currentGraphicsRenderer = CDRAWIMAGERENDERER_GD;
   }
   dImageCreated=1;
 #ifdef MEASURETIME
-  StopWatch_Stop("image created.");
+  StopWatch_Stop("image created with renderer %d.",currentGraphicsRenderer);
 #endif  
 
   return 0;
@@ -199,13 +205,21 @@ int CDrawImage::printImagePng(){
 }
 
 int CDrawImage::printImageGif(){
-  if(dImageCreated==0){CDBError("print: image not created");return 1;}
-  if(_bEnableTrueColor==true){
-    CDBError("TrueColor with gif images is not supported");
-    return 1;
+  if(currentGraphicsRenderer == CDRAWIMAGERENDERER_GD){
+    if(dImageCreated==0){CDBError("print: image not created");return 1;}
+    if(_bEnableTrueColor==true){
+      CDBError("TrueColor with gif images is not supported");
+      return 1;
+    }
+    if(numImagesAdded == 0){
+      gdImageGif(image, stdout);
+    }else{
+      gdImageGifAnimEnd(stdout);
+    }
   }
-  if(_bEnableTrueColor==false){
-    gdImageGif(image, stdout);
+  if(currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO){
+    CDBError("Cairo supports no GIF animations");
+    return 1;
   }
   return 0;
 }
@@ -1204,35 +1218,45 @@ int s=0;
  */
 
 int CDrawImage::addImage(int delay){
-  //Add the current active image:
-  gdImageGifAnimAdd(image, stdout, 0, 0, 0, delay, gdDisposalRestorePrevious, NULL);
-  
-  //This image is added to the GIF container, it should now be destroyed.
-  //Immediately make a new image for next round.
-  destroyImage();
 
-  //Make sure a new image is available for drawing
-  if(_bEnableTrueColor==false){
-    image = gdImageCreate(Geo->dWidth,Geo->dHeight);
-  }else{
-    image = gdImageCreateTrueColor(Geo->dWidth,Geo->dHeight);
-    gdImageSaveAlpha( image, true );
+  //CDBDebug("Render: %d",currentGraphicsRenderer);
+  if(currentGraphicsRenderer == CDRAWIMAGERENDERER_GD){
+    //Add the current active image:
+    gdImageGifAnimAdd(image, stdout, 0, 0, 0, delay, gdDisposalRestorePrevious, NULL);
+    
+    //This image is added to the GIF container, it should now be destroyed.
+    //Immediately make a new image for next round.
+    destroyImage();
+
+    //Make sure a new image is available for drawing
+    if(_bEnableTrueColor==false){
+      image = gdImageCreate(Geo->dWidth,Geo->dHeight);
+    }else{
+      image = gdImageCreateTrueColor(Geo->dWidth,Geo->dHeight);
+      gdImageSaveAlpha( image, true );
+    }
+    dImageCreated=1;
+    currentLegend=legends[0];    
+    copyPalette();
   }
-  dImageCreated=1;
-  currentLegend=legends[0];    
-  copyPalette();
-  
+  numImagesAdded++;
   
   return 0;
 }
 
 int CDrawImage::beginAnimation(){
-  gdImageGifAnimBegin(image, stdout, 1, 0);
+  numImagesAdded = 0;
+  if(_bEnableTrueColor == false){
+    gdImageGifAnimBegin(image, stdout, 1, 0);
+  }
   return 0; 
 }
 
 int CDrawImage::endAnimation(){
-  gdImageGifAnimEnd(stdout);
+//   if(_bEnableTrueColor == false){
+//     gdImageGifAnimEnd(stdout);
+//   }
+//   
   return 0;
 }
 
@@ -1442,4 +1466,8 @@ int CDrawImage::getCanvasColorType(){
     return COLORTYPE_INDEXED;
   }
  return COLORTYPE_ARGB;
+}
+
+int CDrawImage::getRenderer(){
+  return currentGraphicsRenderer;
 }
