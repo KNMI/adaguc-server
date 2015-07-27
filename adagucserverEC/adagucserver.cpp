@@ -176,11 +176,11 @@ int main(int argc, const char *argv[]){
           configSet = 1;
         }
         if(strncmp(argv[j],"--tailpath",10)==0&&argc>j+1){
-          printf("Setting tailpath to \"%s\"\n",argv[j+1]);
+          //printf("Setting tailpath to \"%s\"\n",argv[j+1]);
           tailPath.copy(argv[j+1]);
         }
         if(strncmp(argv[j],"--path",6)==0&&argc>j+1){
-          printf("Setting path to \"%s\"\n",argv[j+1]);
+          //printf("Setting path to \"%s\"\n",argv[j+1]);
           layerPathToScan.copy(argv[j+1]);
         }
       }

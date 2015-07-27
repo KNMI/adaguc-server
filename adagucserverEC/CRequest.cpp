@@ -23,8 +23,8 @@
  * 
  ******************************************************************************/
 
-// #define CREQUEST_DEBUG
-// #define MEASURETIME
+ //#define CREQUEST_DEBUG
+ //#define MEASURETIME
 
 #include "CRequest.h"
 #include "COpenDAPHandler.h"
@@ -852,6 +852,9 @@ int CRequest::process_wms_getmap_request(){
 
 
 int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *srvParam){
+  #ifdef CREQUEST_DEBUG
+    StopWatch_Stop("[getDimValuesForDataSource]");
+  #endif
   int status = 0;
   try{
     /*
@@ -1052,6 +1055,9 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
       }
     }        
   
+    #ifdef CREQUEST_DEBUG
+    CDBDebug("Fix found time values:");
+    #endif
     //Fix found time values which are retrieved from the database
     for(size_t i=0;i<dataSource->requiredDims.size();i++){
       if(dataSource->requiredDims[i]->name.indexOf("time")!=-1){
@@ -1075,7 +1081,7 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
     }
     if(store->getSize() == 0){
       setExceptionType(InvalidDimensionValue);
-      CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
+      CDBError("Dimension value unavailable for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
       delete store;
 
       return 2;
@@ -1084,7 +1090,7 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
     for(size_t k=0;k<store->getSize();k++){
       CDBStore::Record *record = store->getRecord(k);
       dataSource->addStep(record->get(0)->c_str(),NULL);
-      
+      CDBDebug("Step %d: [%s]",k,record->get(0)->c_str());
       //For each timesteps a new set of dimensions is added with corresponding dim array indices.
       for(size_t i=0;i<dataSource->requiredDims.size();i++){
        
@@ -1098,7 +1104,7 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
 //            value.concat("Z");
 //         }
         dataSource->getCDFDims()->addDimension(dataSource->requiredDims[i]->netCDFDimName.c_str(),value.c_str(),atoi(record->get(2+i*2)->c_str()));
-        //CDBDebug("Pusing [%s][%s][%d]",dataSource->requiredDims[i]->netCDFDimName.c_str(),value.c_str(),atoi(record->get(2+i*2)->c_str()));
+        CDBDebug("  [%s][%d] = [%s]",dataSource->requiredDims[i]->netCDFDimName.c_str(),atoi(record->get(2+i*2)->c_str()),value.c_str());
         dataSource->requiredDims[i]->addValue(value.c_str());
         //dataSource->requiredDims[i]->allValues.push_back(sDims[l].c_str());
       }
@@ -1115,6 +1121,9 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
     CDBError("%d",i);
     return 2;
   }
+  #ifdef CREQUEST_DEBUG
+    StopWatch_Stop("[/getDimValuesForDataSource]");
+  #endif
   return 0;
 }
 
@@ -1243,7 +1252,7 @@ int CRequest::process_all_layers(){
       }
       if(dataSources[j]->cfgLayer->Dimension.size()!=0){
         if(getDimValuesForDataSource(dataSources[j],srvParam)!=0){
-          CDBError("Unable to fill in dimensions");
+          CDBError("Unable to find data for given dimensions");
           return 1;
         }
         /*delete[] values_path;
