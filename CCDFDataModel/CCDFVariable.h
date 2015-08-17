@@ -29,7 +29,7 @@
 #include "CCDFTypes.h"
 #include "CCDFAttribute.h"
 #include "CCDFDimension.h"
-// #define CCDFDATAMODEL_DEBUG
+ //#define CCDFDATAMODEL_DEBUG
 
 namespace CDF{
   class Variable{
@@ -52,7 +52,7 @@ namespace CDF{
       public:
         void *cdfObjectPointer;
         int dimIndex;
-        double dimValue;
+        CT::string dimValue;
       };
     std::vector<CDFObjectClass *> cdfObjectList;
     void *cdfReaderPointer;

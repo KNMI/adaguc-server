@@ -26,6 +26,7 @@
 #include "CCDFVariable.h"
 #include "CCDFObject.h"
 #include "CCDFReader.h"
+#include "CTime.h"
 const char *CDF::Variable::className="Variable";
 
 
@@ -373,31 +374,51 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
     }
   }
 
+  
+  CT::string srcDimUnits="";
+  srcDimUnits = srcDimVar->getAttribute("units")->toString();
+   #ifdef CCDFDATAMODEL_DEBUG    
+  CDBDebug("source units are %s",srcDimUnits.c_str());
+#endif
+  CTime ccdftimesrc,ccdftimedst;
+  if(ccdftimesrc.init(srcDimUnits.c_str())!=0){
+    CDBError("Unable to initialize time library with %s",srcDimUnits.c_str());
+    throw(1);
+  }
+
+  
   for(size_t indimsize = 0;indimsize<srcDimVar->getSize();indimsize++){
-    double srcDimValue=srcDimVar->getDataAt<double>(indimsize);
+    CT::string srcDimValue=ccdftimesrc.dateToString(ccdftimesrc.getDate(srcDimVar->getDataAt<double>(indimsize)));
+    
     #ifdef CCDFDATAMODEL_DEBUG    
-    CDBDebug("Itereating %d/%d = %f",indimsize,srcDimVar->getSize(),srcDimValue);  
+    CDBDebug("srcDimValue = %s" ,srcDimValue.c_str());
+    CDBDebug("Itereating %d/%d = %s",indimsize,srcDimVar->getSize(),srcDimValue.c_str());  
     #endif
     
     int foundDimValue = -1;
     size_t dimSize = iterativeDim->getSize();
     for(size_t _j=0;_j<dimSize;_j++){
       size_t j=_j;//(dimSize-1)-_j;
-      #ifdef CCDFDATAMODEL_DEBUG    
-      CDBDebug("%d/%d : %f = %f",j,iterativeDim->getSize(),iterativeVar->getDataAt<double>(j),srcDimValue);
+      
+      CT::string dstDimUnits = iterativeVar->getAttribute("units")->toString();
+        #ifdef CCDFDATAMODEL_DEBUG    
+       CDBDebug("dest units are %d/%s",j,dstDimUnits.c_str());
 #endif
-      if(iterativeVar->getDataAt<double>(j)==srcDimValue){
+      if(ccdftimedst.init(dstDimUnits.c_str())!=0){
+        CDBError("Unable to initialize time library with %s",dstDimUnits.c_str());
+        throw(1);
+      }
+      CT::string dstDimValue = ccdftimedst.dateToString(ccdftimedst.getDate(iterativeVar->getDataAt<double>(j)));
       #ifdef CCDFDATAMODEL_DEBUG    
-            CDBDebug("Found %f == %f",iterativeVar->getDataAt<double>(j),srcDimValue);
+      CDBDebug("dstDimValue = %s" ,dstDimValue.c_str());
+#endif
+      if(dstDimValue.equals(srcDimValue)){
+      #ifdef CCDFDATAMODEL_DEBUG    
+            CDBDebug("Found %s == %s",dstDimValue.c_str(),srcDimValue.c_str());
     #endif
         foundDimValue=j;break;
         
       }
-// #ifdef CCDFDATAMODEL_DEBUG    
-//       else{
-//         CDBDebug("%f != %f",iterativeVar->getDataAt<double>(j),srcDimValue);
-//       }
-// #endif
     }
 //     if(foundDimValue == -1){
 //       CDBDebug("Unable to find srcDimValue %f",srcDimValue);
@@ -406,8 +427,8 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
     //Check wether we already have this cdfobject dimension combo in our list
     int foundCDFObject = -1;
     for(size_t j=0;j<cdfObjectList.size();j++){
-      //CDBDebug("%f==%f",cdfObjectList[j]->dimValue,srcDimValue);
-      if(cdfObjectList[j]->dimValue==srcDimValue){foundCDFObject=j;break;}
+//      CDBDebug("%s==%s",cdfObjectList[j]->dimValue.c_str(),srcDimValue.c_str());
+      if(cdfObjectList[j]->dimValue.equals(srcDimValue)){foundCDFObject=j;break;}
     }
     if(foundCDFObject!=-1){
       CDBDebug("Found existing cdfObject %d",foundCDFObject);
@@ -425,7 +446,7 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
     if(sourceVar->name.equals(dimName) == true){
       if(foundDimValue == -1){
         #ifdef CCDFDATAMODEL_DEBUG    
-        CDBDebug("ADding value %f",srcDimValue);
+        CDBDebug("ADding value %s",srcDimValue.c_str());
   #endif
         
 
@@ -446,18 +467,26 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
           throw("__LINE__");
         }
         
-        //CDBDebug("indimsize %d %d",indimsize,((int*)srcDimVar->data)[0]);
-        status = DataCopier::copy(dstData,
-                         currentType,
-                         srcDimVar->data,
-                         sourceType,
-                         currentDimSize,
-                         indimsize,
-                         1);
-        if(status!=0){
-          CDBError("Unable to copy timestep ");
-          throw("__LINE__");
-        }
+//         CDBDebug("indimsize %d %d",indimsize,((int*)srcDimVar->data)[0]);
+//         CDBDebug("srcDimVar units = %s",srcDimVar->getAttribute("units")->toString().c_str());
+        double destValue = ccdftimedst.dateToOffset(ccdftimedst.stringToDate(srcDimValue.c_str()));
+//         CDBDebug("srcDimVar value = %s == [%d]=%f",srcDimValue.c_str(),currentDimSize,destValue);
+        
+        
+        
+        if(currentType==CDF_DOUBLE)((double*)dstData)[currentDimSize] = destValue;
+        if(currentType==CDF_FLOAT)((float*)dstData)[currentDimSize] = (float)destValue;
+//         status = DataCopier::copy(dstData,//destdata
+//                          currentType,     //thistype
+//                          srcDimVar->data, //sourcedata
+//                          sourceType,      //sourcetype
+//                          currentDimSize,  //destinationOffset
+//                          indimsize,       //sourceOffset
+//                          1);              //Nr. Elements
+//         if(status!=0){
+//           CDBError("Unable to copy timestep ");
+//           throw("__LINE__");
+//         }
         iterativeVar->freeData();
         iterativeVar->data=dstData;
         

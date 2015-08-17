@@ -43,9 +43,9 @@ class CTime{
   void safestrcpy(char *s1,const char*s2,size_t size_s1);
   DEF_ERRORFUNCTION();
   public:
-  static utUnit  dataunits;
-  static bool isInitialized;
-  static int mode;
+  utUnit  dataunits;
+  bool isInitialized;
+  int mode;
   /**
    * Class which holds date parameters like year, month, day, hour, minute, second and offset
    */
