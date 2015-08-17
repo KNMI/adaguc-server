@@ -415,6 +415,9 @@ bool CServerParams::checkBBOXXYOrder(const char *projName){
       projNameString = projName;
     }
     if(projNameString.equals("EPSG:4326"))return true;
+    else if(projNameString.equals("EPSG:4258"))return true;
+    else if(projNameString.equals("CRS:84"))return true;
+    
   }
   return false;
 }

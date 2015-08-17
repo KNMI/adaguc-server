@@ -30,10 +30,10 @@
 
 
 const char *CTime::className="CTime";
-utUnit CTime::dataunits;
-bool CTime::isInitialized;
-
-int CTime::mode = CTIME_MODE_UTCALENDAR;
+// utUnit CTime::dataunits;
+// bool CTime::isInitialized;
+// 
+// int CTime::mode ;
 
 void CTime::safestrcpy(char *s1,const char*s2,size_t size_s1){
   strncpy(s1,s2,size_s1);
@@ -42,6 +42,7 @@ void CTime::safestrcpy(char *s1,const char*s2,size_t size_s1){
 
 CTime::CTime(){
   isInitialized = false;
+  mode = CTIME_MODE_UTCALENDAR;
 }
 CTime::~CTime(){
   reset();
