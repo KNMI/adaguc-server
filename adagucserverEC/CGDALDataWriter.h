@@ -56,7 +56,7 @@
 
 class CGDALDataWriter: public CBaseDataWriterInterface{
   private:
-    
+    CT::string driverName;
     class Settings{
     public:
       size_t width;

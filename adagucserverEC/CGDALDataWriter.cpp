@@ -138,7 +138,7 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
 //   adfSrcGeoTransform[5]=(dfSrcBBOX[1]-dfSrcBBOX[3])/double(dataSource->dHeight);
 
   // Retrieve output format
-  CT::string driverName;
+
   
   for(size_t j=0;j<srvParam->cfg->WCS[0]->WCSFormat.size();j++){
     if(srvParam->Format.equals(srvParam->cfg->WCS[0]->WCSFormat[j]->attr.name.c_str())){
@@ -250,10 +250,12 @@ int  CGDALDataWriter::addData(std::vector <CDataSource*>&dataSources){
   CDBDebug("Reading %s for bandnr %d",dataSource->getFileName(),currentBandNr);
 #endif
   GDALRasterBandH hSrcBand = GDALGetRasterBand( destinationGDALDataSet, currentBandNr+1 );
+  dfNoData = NAN;
   if(dataSource->getDataObject(0)->hasNodataValue==1){
     dfNoData=dataSource->getDataObject(0)->dfNodataValue;
-    GDALSetRasterNoDataValue(hSrcBand, dfNoData);
+   
   }
+  GDALSetRasterNoDataValue(hSrcBand, dfNoData);
   
 #ifdef CGDALDATAWRITER_DEBUG  
   CDBDebug("copying data in addData, WH= [%d,%d] type = %s", srvParam->Geo->dWidth,srvParam->Geo->dHeight, CDF::getCDFDataTypeName(dataSource->getDataObject(0)->cdfVariable->getType()).c_str());
@@ -512,6 +514,15 @@ int  CGDALDataWriter::end(){
     delete[] co;
   }
   
+  CDBDebug("TEST %s?",driverName.c_str());
+  
+  
+  if(driverName.equalsIgnoreCase("AAIGRID")){
+    CDBDebug("Setting FORCE_CELLSIZE to TRUE for AAIGRID");
+    papszOptions = CSLSetNameValue( papszOptions, "FORCE_CELLSIZE", "TRUE" );
+    //papszOptions = CSLSetNameValue( papszOptions, "GDAL_VALIDATE_CREATION_OPTIONS", "FALSE" );
+    
+  };
 
 #ifdef CGDALDATAWRITER_DEBUG  
   CDBDebug("Copying destinationGDALDataSet to hOutputDriver");
