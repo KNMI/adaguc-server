@@ -380,20 +380,20 @@ int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* d
   if(mode==CDATAPOSTPROCESSOR_RUNAFTERREADING){  
     if (dataSource->getNumDataObjects()==1) {
       CDBDebug("Applying beaufort for 1 element");
-      if (dataSource->getDataObject(0)->units.equals("knot")) {
-        factor=1800./3600;
+      if (dataSource->getDataObject(0)->units.equals("knot")||dataSource->getDataObject(0)->units.equals("kt")) {
+        factor=1852./3600;
       }
       CDBDebug("Applying beaufort for 1 element with factor %f", factor);
-      dataSource->getDataObject(0)->cdfVariable->setAttributeText("units","beaufort");
-      dataSource->getDataObject(0)->units="beaufort";
+      dataSource->getDataObject(0)->cdfVariable->setAttributeText("units","bft");
+      dataSource->getDataObject(0)->units="bft";
       size_t l=(size_t)dataSource->dHeight*(size_t)dataSource->dWidth;
       float *src=(float*)dataSource->getDataObject(0)->cdfVariable->data;
       float noDataValue=dataSource->getDataObject(0)->dfNodataValue;
       for (size_t cnt=0; cnt<l; cnt++) {
-        float speed=factor * (*src);
+        float speed = *src;
         if (speed==speed) {
           if (speed!=noDataValue) {
-            *src=getBeaufort(speed);
+            *src=getBeaufort(factor*speed);
           }
         }
         src++;
@@ -403,10 +403,10 @@ int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* d
       CDBDebug("(1): %d points", nrPoints);
 
       for (size_t pointNo=0;pointNo<nrPoints;pointNo++){
-        float speed=factor * (float)dataSource->getDataObject(0)->points[pointNo].v;
+        float speed=(float)dataSource->getDataObject(0)->points[pointNo].v;
         if (speed==speed) {
           if (speed!=noDataValue) {
-            dataSource->getDataObject(0)->points[pointNo].v=getBeaufort(speed);
+            dataSource->getDataObject(0)->points[pointNo].v=getBeaufort(factor*speed);
           }
         }
       }
@@ -415,16 +415,16 @@ int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* d
       CDBDebug("Applying beaufort for 2 elements %s %s",dataSource->getDataObject(0)->units.c_str(),dataSource->getDataObject(1)->units.c_str()  );
       if ((dataSource->getDataObject(0)->units.equals("m/s")||dataSource->getDataObject(0)->units.equals("m s-1"))&&dataSource->getDataObject(1)->units.equals("degree")) {
         //This is a (wind speed,direction) pair
-        dataSource->getDataObject(0)->cdfVariable->setAttributeText("units","beaufort");
-        dataSource->getDataObject(0)->units="beaufort";
+        dataSource->getDataObject(0)->cdfVariable->setAttributeText("units","bft");
+        dataSource->getDataObject(0)->units="bft";
         size_t l=(size_t)dataSource->dHeight*(size_t)dataSource->dWidth;
         float *src=(float*)dataSource->getDataObject(0)->cdfVariable->data;
         float noDataValue=dataSource->getDataObject(0)->dfNodataValue;
         for (size_t cnt=0; cnt<l; cnt++) {
-          float speed=factor * (*src);
+          float speed=*src;
           if (speed==speed) {
             if (speed!=noDataValue) {
-              *src=getBeaufort(speed);
+              *src=getBeaufort(factor * speed);
             }
           }
           src++;
@@ -433,33 +433,33 @@ int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* d
         size_t nrPoints=dataSource->getDataObject(0)->points.size();
         CDBDebug("(2): %d points", nrPoints);
         for (size_t pointNo=0;pointNo<nrPoints;pointNo++){
-          float speed=factor * dataSource->getDataObject(0)->points[pointNo].v;
+          float speed=dataSource->getDataObject(0)->points[pointNo].v;
           if (speed==speed) {
             if (speed!=noDataValue) {
-              dataSource->getDataObject(0)->points[pointNo].v=getBeaufort(speed);
+              dataSource->getDataObject(0)->points[pointNo].v=getBeaufort(factor*speed);
             }
           }
         }
       }
       if ((dataSource->getDataObject(0)->units.equals("m/s")||dataSource->getDataObject(0)->units.equals("m s-1"))&&
-          (dataSource->getDataObject(0)->units.equals("m/s")||dataSource->getDataObject(0)->units.equals("m s-1"))) {
+          (dataSource->getDataObject(1)->units.equals("m/s")||dataSource->getDataObject(1)->units.equals("m s-1"))) {
         //This is a (u,v) pair
-        dataSource->getDataObject(0)->cdfVariable->setAttributeText("units","beaufort");
-        dataSource->getDataObject(0)->units="beaufort";
+        dataSource->getDataObject(0)->cdfVariable->setAttributeText("units","bft");
+        dataSource->getDataObject(0)->units="bft";
         
         size_t l=(size_t)dataSource->dHeight*(size_t)dataSource->dWidth;
         float *srcu=(float*)dataSource->getDataObject(0)->cdfVariable->data;
-        float *srcv=(float*)dataSource->getDataObject(0)->cdfVariable->data;
+        float *srcv=(float*)dataSource->getDataObject(1)->cdfVariable->data;
         float noDataValue=dataSource->getDataObject(0)->dfNodataValue;
         float speed;
         float speedu;
         float speedv;
         for (size_t cnt=0; cnt<l; cnt++) {
-          speedu=factor * (*srcu);
-          speedv=factor * (*srcv);
+          speedu=*srcu;
+          speedv=*srcv;
           if ((speedu==speedu) &&(speedv==speedv)){
             if ((speedu!=noDataValue)&&(speedv!=noDataValue)) {
-              speed=hypot(speedu, speedv);
+              speed=factor * hypot(speedu, speedv);
               *srcu=getBeaufort(speed);
             } else {
               *srcu=noDataValue;
@@ -471,11 +471,11 @@ int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* d
         size_t nrPoints=dataSource->getDataObject(0)->points.size();
         CDBDebug("(2): %d points", nrPoints);
         for (size_t pointNo=0;pointNo<nrPoints;pointNo++){
-          speedu=factor * dataSource->getDataObject(0)->points[pointNo].v;
-          speedv=factor * dataSource->getDataObject(1)->points[pointNo].v;
+          speedu=dataSource->getDataObject(0)->points[pointNo].v;
+          speedv=dataSource->getDataObject(1)->points[pointNo].v;
           if ((speedu==speedu)&&(speedv==speedv)) {
             if ((speedu!=noDataValue) && (speedv!=noDataValue)) {
-              speed=hypot(speedu, speedv);
+              speed=factor * hypot(speedu, speedv);
               dataSource->getDataObject(0)->points[pointNo].v=getBeaufort(speed);
             } else {
               dataSource->getDataObject(0)->points[pointNo].v=noDataValue;
