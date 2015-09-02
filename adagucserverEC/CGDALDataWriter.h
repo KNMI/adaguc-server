@@ -68,7 +68,7 @@ class CGDALDataWriter: public CBaseDataWriterInterface{
     template <class T>
     static void drawFunction(int x,int y,T val, void *_settings){
       Settings*settings = (Settings*)_settings;
-      if(x>=0&&y>=0&&x<settings->width&&y<settings->height){
+      if(x>=0&&y>=0&&x<(int)settings->width&&y<(int)settings->height){
         ((T*)settings->data)[x+y*settings->width]=val;
       }
     };

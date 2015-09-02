@@ -347,16 +347,16 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
   
   //Read data from the source dim
   Variable *srcDimVar;
-  int sourceType = currentType;
+//   int sourceType = currentType;
   try{
     srcDimVar = sourceCDFObject->getVariable(iterativeDim->name.c_str());
   }catch(int e){CDBError("Variable [%s] not found in source CDFObject",iterativeDim->name.c_str());throw(e);}
   
   if(srcDimVar->data==NULL){
     srcDimVar->readData(currentType);
-  }else{
+  }/*else{
     sourceType = srcDimVar->getType();
-  }
+  }*/
    #ifdef CCDFDATAMODEL_DEBUG    
   CDBDebug("=== Found %d steps in source ===",srcDimVar->getSize());
   #endif
