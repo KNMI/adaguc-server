@@ -45,7 +45,7 @@ class GenericDataWarper{
       float rca = float(X2-X1)/float(Y2-Y1);
       int sy = (Y1<0)?0:Y1;
       int ey = (Y2>H)?H:Y2;
-      for(int y=sy;y<=ey;y++){
+      for(int y=sy;y<=ey-1;y++){
         int xL = int(rcl*float(y-Y1)+X1);
         int xA = int(rca*float(y-Y1)+X1);
         int x1,x2;
@@ -53,7 +53,7 @@ class GenericDataWarper{
         if(x1<W&&x2>0){
           int sx = (x1<0)?0:x1;
           int ex = (x2>W)?W:x2;
-          for(int x=sx;x<=ex;x++){
+          for(int x=sx;x<=ex-1;x++){
             drawFunction(x,y,value,settings);
           }
         }
@@ -64,7 +64,7 @@ class GenericDataWarper{
       float rcb = float(X3-X2)/float(Y3-Y2);
       int sy = (Y2<0)?0:Y2;
       int ey = (Y3>H)?H:Y3;
-      for(int y=sy;y<=ey;y++){
+      for(int y=sy;y<=ey-1;y++){
         int xL = floor(rcl*float(y-Y1)+X1);
         int xB = floor(rcb*float(y-Y2)+X2);
         int x1,x2;
@@ -72,7 +72,7 @@ class GenericDataWarper{
         if(x1<W&&x2>0){
           int sx = (x1<0)?0:x1;
           int ex = (x2>W)?W:x2;
-          for(int x=sx;x<=ex;x++){
+          for(int x=sx;x<=ex-1;x++){
             drawFunction(x,y,value,settings);
           }
         } 
@@ -241,19 +241,19 @@ class GenericDataWarper{
             yP[0] = py1;
             yP[1] = py2;
             yP[2] = mY;
-            drawTriangle<T>( xP,yP,value,imageWidth,imageHeight,drawFunctionSettings,drawFunction);
+            drawTriangle<T>( xP,yP,value,imageWidth,imageHeight,drawFunctionSettings,drawFunction); //top
             
             xP[0] = px3;
             yP[0] = py3;
-            drawTriangle<T>( xP,yP,value,imageWidth,imageHeight,drawFunctionSettings,drawFunction);
+            drawTriangle<T>( xP,yP,value,imageWidth,imageHeight,drawFunctionSettings,drawFunction);//right
 
             xP[1]=px4;
             yP[1]=py4;
-            drawTriangle<T>( xP,yP,value,imageWidth,imageHeight,drawFunctionSettings,drawFunction);
+            drawTriangle<T>( xP,yP,value,imageWidth,imageHeight,drawFunctionSettings,drawFunction);//bottom
 
             xP[0] = px1;
             yP[0] = py1;
-            drawTriangle<T>( xP,yP,value,imageWidth,imageHeight,drawFunctionSettings,drawFunction);
+            drawTriangle<T>( xP,yP,value,imageWidth,imageHeight,drawFunctionSettings,drawFunction);//left
           }
         }
       }

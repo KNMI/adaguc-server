@@ -65,13 +65,14 @@ private:
   FT_Library library;
   FT_Face face;
   unsigned char r,g,b;float a;
-  void _plot(int x, int y, float alpha);
+//   void _plot(int x, int y, float alpha);
   void _swap(float &x,float &y);
   void _swap(int &x,int &y);
   static const cairo_format_t FORMAT=CAIRO_FORMAT_ARGB32;
   bool byteBufferPointerIsOwned;
   void _cairoPlotterInit(int width,int height,float fontSize, const char*fontLocation);
   int _drawFreeTypeText(int x,int y,int &w,int &h,float angle,const char *text,bool render);
+    bool isAlphaUsed;
 public:
   
   CCairoPlotter(int width,int height, float fontSize, const char*fontLocation,unsigned char r,unsigned char g,unsigned char b,unsigned char a);
@@ -89,11 +90,15 @@ public:
   void initFont() ;
   void setColor(unsigned char r,unsigned char g,unsigned char b,unsigned char a);
   void setFillColor(unsigned char r,unsigned char g,unsigned char b,unsigned char a);
-  void pixel(int x,int y);
-  void pixelBlend(int x,int y, unsigned char r,unsigned char g,unsigned char b,unsigned char a);
-  void pixel(int x,int y, unsigned char r,unsigned char g,unsigned char b);
-  void pixel(int x,int y, unsigned char r,unsigned char g,unsigned char b,unsigned char a);
+//   void pixel(int x,int y);
+
+//   void pixel(int x,int y, unsigned char r,unsigned char g,unsigned char b);
+//   void pixel(int x,int y, unsigned char r,unsigned char g,unsigned char b,unsigned char a);
   void getPixel(int x,int y, unsigned char &r,unsigned char &g,unsigned char &b,unsigned char &a);
+  
+  void pixel_overwrite(int x,int y, unsigned char r,unsigned char g,unsigned char b,unsigned char a);
+  void pixel_blend(int x,int y, unsigned char r,unsigned char g,unsigned char b,unsigned char a);
+  
   unsigned char *getByteBuffer();
   void rectangle(int x1,int y1,int x2,int y2);
   void filledRectangle(int x1,int y1,int x2,int y2);
