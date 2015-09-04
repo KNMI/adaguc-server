@@ -198,12 +198,12 @@ public:
       T nodataValue=(T)dfNodataValue;
       
       size_t imgpointer;
-      for(x=0;x<=x_div;x++){
+      for(x=0;x<=x_div-2;x++){
         line_dx1+=rcx_1;line_dx2+=rcx_2;line_dy1+=rcy_1;line_dy2+=rcy_2;
         rcx_3= (line_dx2 -line_dx1)/y_div;
         rcy_3= (line_dy2 -line_dy1)/y_div;
         dstpixel_x=int(x)+dDestX;
-        for(y=0;y<=y_div;y=y+1){
+        for(y=0;y<=y_div-2;y=y+1){
           
           dstpixel_y=y+dDestY-1;
           sample_sx=line_dx1+rcx_3*double(y);
@@ -487,7 +487,7 @@ private:
       return;
     }
     
-    if(dataSource->dWidth*dataSource->dHeight<512*512||1==2){
+    if(dataSource->dWidth*dataSource->dHeight<512*512){
       CDBDebug("field is small enough for precise renderer: using _render");
       Settings settings;
       CStyleConfiguration *styleConfiguration = dataSource->getStyle();    
@@ -542,9 +542,9 @@ private:
     bool useThreading=true;
     if(numThreads==1)useThreading=false;
          
-         warper->findExtent(dataSource,dfMaskBBOX);
-    int x_div=drawImage->Geo->dWidth/16;
-    int y_div=drawImage->Geo->dHeight/16;
+      warper->findExtent(dataSource,dfMaskBBOX);
+    int x_div=int((float(drawImage->Geo->dWidth)/16.)+0.5);
+    int y_div=int((float(drawImage->Geo->dHeight)/16.)+0.5);
 //     int x_div=drawImage->Geo->dWidth;
 //     int y_div=drawImage->Geo->dHeight;
      //useThreading=false;
@@ -555,8 +555,8 @@ private:
       //When we are drawing just one tile, threading is not needed
       useThreading=false;
     }
-    double tile_width=(double(drawImage->Geo->dWidth)/double(x_div));
-    double tile_height=(double(drawImage->Geo->dHeight)/double(y_div));
+    int tile_width=int((double(drawImage->Geo->dWidth)/double(x_div))+0.5);
+    int tile_height=int((double(drawImage->Geo->dHeight)/double(y_div))+0.5);
     
     //Setup the renderer to draw the tiles with.We do not keep the calculated results for CDF_CHAR (faster)
         CDrawTileObjInterface *drawTileClass= NULL;
@@ -605,7 +605,7 @@ private:
         
         
      
-        drawTileClass->init(dataSource,drawImage,(int)tile_width,(int)tile_height);
+        drawTileClass->init(dataSource,drawImage,tile_width,tile_height);
         
         #ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
         CDBDebug("x_div, y_div:  %d %d",x_div,y_div);
