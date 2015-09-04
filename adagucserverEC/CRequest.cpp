@@ -1152,7 +1152,7 @@ int CRequest::process_all_layers(){
     //dataSources = new CDataSource[srvParam->WMSLayers->count];
     //Now set the properties of these sourceimages
     CT::string layerName;
-    
+    int additionalLayerCount=0;
     for(size_t j=0;j<srvParam->WMSLayers->count;j++){
       size_t layerNo=0;
       for(layerNo=0;layerNo<srvParam->cfg->Layer.size();layerNo++){
@@ -1164,8 +1164,29 @@ int CRequest::process_all_layers(){
         if(layerName.equals(srvParam->WMSLayers[j].c_str())){
           CDataSource *dataSource = new CDataSource ();
           dataSources.push_back(dataSource);
-          if(dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[layerNo],layerName.c_str(),j)!=0){
+          if(dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[layerNo],layerName.c_str(),j+additionalLayerCount)!=0){
             return 1;
+          }
+          //Check if layer has an additional layer
+          if (srvParam->cfg->Layer[layerNo]->AdditionalLayer.size()>0) {
+            CT::string additionalLayerName; //=srvParam->cfg->Layer[layerNo]->AdditionalLayer[0]->AdditionalLayer;
+            srvParam->makeUniqueAdditionalLayerName(&additionalLayerName,srvParam->cfg->Layer[layerNo]);
+            size_t additionalLayerNo=0;
+            for(additionalLayerNo=0;additionalLayerNo<srvParam->cfg->Layer.size();additionalLayerNo++){
+              CT::string additional;
+              srvParam->makeUniqueLayerName(&additional,srvParam->cfg->Layer[additionalLayerNo]);
+              CDBDebug("comparing for additionallayer %s==%s", additionalLayerName.c_str(), additional.c_str());
+              if (additionalLayerName.equals(additional)) {
+                additionalLayerCount++;
+                CDBDebug("Adding %s", additionalLayerName.c_str());
+                CDataSource *dataSource = new CDataSource ();
+                dataSources.push_back(dataSource);
+                if(dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[additionalLayerNo],additionalLayerName.c_str(),j+additionalLayerCount)!=0){
+                  return 1;
+                }
+                break;
+              }
+            }
           }
           break;
         }

@@ -913,6 +913,18 @@ class CServerConfig:public CXMLSerializerInterface{
         else if(equals("resolution",10,attrname)){attr.resolution.copy(attrvalue);return;}
       }
     };
+    
+    class XMLE_AdditionalLayer: public CXMLObjectInterface{
+    public:
+//       class Cattr{
+//       public:
+//         CXMLString additionallayer;
+//       }attr;
+//       void addAttribute(const char *attrname,const char *attrvalue){
+//         if (equals("layer",5,attrname)){attr.additionallayer.copy(attrvalue);return;}
+//       }
+    };
+    
     class XMLE_Layer: public CXMLObjectInterface{
       public:
         class Cattr{
@@ -955,6 +967,7 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_Position*> Position;
         std::vector <XMLE_WMSFormat*> WMSFormat;
         std::vector <XMLE_Grid*> Grid;
+        std::vector <XMLE_AdditionalLayer*> AdditionalLayer;
         
         
         
@@ -992,6 +1005,7 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(Position);
           XMLE_DELOBJ(WMSFormat);
           XMLE_DELOBJ(Grid);
+          XMLE_DELOBJ(AdditionalLayer);
         }
         void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value){
           CXMLSerializerInterface * base = (CXMLSerializerInterface*)baseClass;
@@ -1033,6 +1047,7 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("Position",8,name)){XMLE_ADDOBJ(Position);}
             else if(equals("WMSFormat",9,name)){XMLE_ADDOBJ(WMSFormat);}
             else if(equals("Grid",4,name)){XMLE_ADDOBJ(Grid);}
+            else if(equals("AdditionalLayer",15,name)){XMLE_ADDOBJ(AdditionalLayer);}
             
             
           }
