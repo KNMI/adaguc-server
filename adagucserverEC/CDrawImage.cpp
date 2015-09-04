@@ -556,13 +556,13 @@ void CDrawImage::setPixelIndexed(int x,int y,int color){
   if(_bEnableTrueColor==true){
     if(currentLegend==NULL)return;
     //if(color>=0&&color<256){
-      if(currentLegend->CDIalpha[color]==255){
-    cairo-> pixel(x,y,currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color]);
-      }else{
-        if(currentLegend->CDIalpha[color]>0){
-              cairo-> pixel(x,y,currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],currentLegend->CDIalpha[color]);
-        }
-      }
+//       if(currentLegend->CDIalpha[color]==255){
+//     cairo-> pixel(x,y,currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color]);
+//       }else{
+//         if(currentLegend->CDIalpha[color]>0){
+              cairo-> pixel_blend(x,y,currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],currentLegend->CDIalpha[color]);
+//         }
+//       }
     //}
   }else{
     gdImageSetPixel(image, x,y,colors[color]);
@@ -574,7 +574,7 @@ void CDrawImage::setPixelIndexed(int x,int y,int color){
 void CDrawImage::setPixelTrueColor(int x,int y,unsigned int color){
   if(_bEnableTrueColor==true){
     //if(_bEnableTrueColor){
-    cairo->pixel(x,y,color,color/256,color/(256*256));
+    cairo->pixel_blend(x,y,color,color/256,color/(256*256),255);
     //}
   }else{
     gdImageSetPixel(image, x,y,color);
@@ -600,8 +600,7 @@ void CDrawImage::getHexColorForColorIndex(CT::string *hexValue,int color){
 
 void CDrawImage::setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,unsigned char b){
   if(_bEnableTrueColor==true){
-    cairo->setColor(r,g,b,255);
-    cairo->pixel(x,y);
+    cairo->pixel_blend(x,y,r,g,b,255);
   }else{
     if(_bEnableTrueColor){
       gdImageSetPixel(image, x,y,r+g*256+b*65536);
@@ -613,8 +612,7 @@ void CDrawImage::setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,u
 
 void CDrawImage::setPixel(int x,int y,CColor &color){
   if(_bEnableTrueColor==true){
-    cairo->setColor(color.r,color.g,color.b,color.a);
-    cairo-> pixel(x,y);
+    cairo->pixel_blend(x,y,color.r,color.g,color.b,color.a);
   }else{
     int key = color.r+color.g*256+color.b*65536;
     int icolor;
@@ -645,8 +643,7 @@ void CDrawImage::setPixel(int x,int y,CColor &color){
 
 void CDrawImage::setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,unsigned char b,unsigned char a){
   if(_bEnableTrueColor==true){
-    cairo->setColor(r,g,b,a);
-    cairo-> pixel(x,y);
+    cairo->pixel_blend(x,y,r,g,b,a);
   }else{
       int key = r+g*256+b*65536;
       int color;
@@ -1407,7 +1404,7 @@ int CDrawImage::draw(int destx, int desty,int sourcex,int sourcey,CDrawImage *si
         }
         //Set r,g,b,a to dest
         if(_bEnableTrueColor){
-          cairo-> pixelBlend(dx,dy,r,g,b,a);
+          cairo-> pixel_blend(dx,dy,r,g,b,a);
         }else{
           if(a>128){
             gdImageSetPixel(image,x+destx,y+desty,getClosestGDColor(r,g,b));

@@ -51,7 +51,7 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
     this->fontSize=fontSize;
     this->fontLocation=fontLocation;
     stride=cairo_format_stride_for_width(FORMAT, width);
-    
+    isAlphaUsed = false;
   
     
     surface=cairo_image_surface_create_for_data(ARGBByteBuffer, CCairoPlotter::FORMAT, width, height, stride);
@@ -69,94 +69,145 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
     //CDBDebug("constructor");
   }
 
-void CCairoPlotter::pixelBlend(int x,int y, unsigned char newR,unsigned char newG,unsigned char newB,unsigned char newA){
-  if(x<0||y<0)return;
-  if(x>=width||y>=height)return;
-  size_t p=x*4+y*stride;
-  if(newA!=255){
-    float oldB = float(ARGBByteBuffer[p]);
-    float oldG = float(ARGBByteBuffer[p+1]);
-    float oldR = float(ARGBByteBuffer[p+2]);
-    float oldA = float(ARGBByteBuffer[p+3]);
-    
-    //float alpha = float(newA)/255.;
-  
-    //float nalpha = 1-alpha;
-    
-    
-    float alphaRatio=(1-oldA/255);
-    float tf=oldA+float(newA)*alphaRatio;if(tf>255)tf=255;  
-    float a1=1-(float(newA)/255);//*alpha;
-    if(oldA==0.0f)a1=0;
-    float a2=1-a1;//1-alphaRatio;
-    
-    ARGBByteBuffer[p]  =(unsigned char)(float(newB)*a2+oldB*a1);
-    ARGBByteBuffer[p+1]=(unsigned char)(float(newG)*a2+oldG*a1);
-    ARGBByteBuffer[p+2]=(unsigned char)(float(newR)*a2+oldR*a1);
-    ARGBByteBuffer[p+3]=(unsigned char)tf;//float(newA)*alpha+oldA*nalpha;
-    //pixel(x,y,ARGBByteBuffer[p+2], ARGBByteBuffer[p+1], ARGBByteBuffer[p], ARGBByteBuffer[p+3]);
-  }else{
-  
-  
-    ARGBByteBuffer[p]=newB;
-    ARGBByteBuffer[p+1]=newG;
-    ARGBByteBuffer[p+2]=newR;
-    ARGBByteBuffer[p+3]=newA;
-  }
-}
-  
-    void CCairoPlotter::pixel(int x,int y, unsigned char r,unsigned char g,unsigned char b,unsigned char a){
-    if(x<0||y<0)return;
-    if(x>=width||y>=height)return;
+ 
+  void CCairoPlotter::pixel_overwrite(int x,int y, unsigned char r,unsigned char g,unsigned char b,unsigned char a){
+
+    if(x<0||y<0||x>=width||y>=height)return;
+    if(a!=0&&a!=255){isAlphaUsed = true;}
     size_t p=x*4+y*stride;
-    if(a!=255){
-    ARGBByteBuffer[p]=(unsigned char)((float(b)/256.0)*float(a));
-    ARGBByteBuffer[p+1]=(unsigned char)((float(g)/256.0)*float(a));
-    ARGBByteBuffer[p+2]=(unsigned char)((float(r)/256.0)*float(a));
-    ARGBByteBuffer[p+3]=a;
-    }else{
+//     if(a!=255){
+//       ARGBByteBuffer[p]=(unsigned char)((float(b)/256.0)*float(a));
+//       ARGBByteBuffer[p+1]=(unsigned char)((float(g)/256.0)*float(a));
+//       ARGBByteBuffer[p+2]=(unsigned char)((float(r)/256.0)*float(a));
+//       ARGBByteBuffer[p+3]=a;
+//     }else{
       ARGBByteBuffer[p]=b;
     ARGBByteBuffer[p+1]=g;
     ARGBByteBuffer[p+2]=r;
     ARGBByteBuffer[p+3]=a;
-    }
+//     }
   }
-  
-  
-  
-  
-  void  CCairoPlotter::_plot(int x, int y, float alpha){
-//    fprintf(stderr, "plot([%d,%d], %d,%d,%d,%f)\n", x, y, r, g, b,a);
-//     
-    cairo_surface_flush(surface);
-    //plot the pixel at (x, y) with brightness c (where 0 ≤ c ≤ 1)
-    if(x<0||y<0)return;
-    if(x>=width||y>=height)return;
+ 
+ void CCairoPlotter::pixel_blend(int x,int y, unsigned char r,unsigned char g,unsigned char b,unsigned char a){
+    if(x<0||y<0||x>=width||y>=height)return;
+ 
     size_t p=x*4+y*stride;
-    float a1=1-(a/255)*alpha;
-    if(a1==0){
+    //Pixel is transparent
+    if(a!=255){
+    
+      float destBlue = b;
+      float destGreen = g;
+      float destRed = r;
+      float destAlpha = a;
+      
+      unsigned char origAlphaC = ARGBByteBuffer[p+3];
+      
+      //Background is transparent, combine Background with pixel
+      if(origAlphaC != 255){
+        float origAlpha = float(origAlphaC);
+        
+        
+        float origBlue = ARGBByteBuffer[p];
+        float origGreen = ARGBByteBuffer[p+1];
+        float origRed = ARGBByteBuffer[p+2];
+        
+        
+        destBlue=destBlue/255;
+        destGreen=destGreen/255;
+        destRed=destRed/255;
+        destAlpha=destAlpha/255;
+        
+        origBlue=origBlue/255;
+        origGreen=origGreen/255;
+        origRed=origRed/255;
+        origAlpha=origAlpha/255;
+        
+        float A1 = origAlpha*(1-destAlpha);
+        float A2 = (destAlpha + A1);
+        
+        float newBlue = (destBlue*destAlpha+origBlue*A1)/A2;
+        float newGreen = (destGreen*destAlpha+origGreen*A1)/A2;
+        float newRed = (destRed*destAlpha+origRed*A1)/A2;
+        float newAlpha = origAlpha+destAlpha*(1-origAlpha);
+        
+        //newAlpha = 1;
+        
+        unsigned char aa= newAlpha*255.;;
+        ARGBByteBuffer[p]=newBlue*255;
+        ARGBByteBuffer[p+1]=newGreen*255;
+        ARGBByteBuffer[p+2]=newRed*255;
+        ARGBByteBuffer[p+3]=aa;
+        if(aa!=255&&aa!=0){isAlphaUsed = true;}
+      }else{
+//         Background is not transparent, but pixel is. Alpha can be left to 255, adjust color values
+        float origBlue = ARGBByteBuffer[p];
+        float origGreen = ARGBByteBuffer[p+1];
+        float origRed = ARGBByteBuffer[p+2];
+        destBlue=destBlue/255;
+        destGreen=destGreen/255;
+        destRed=destRed/255;
+        destAlpha=destAlpha/255;
+        origBlue=origBlue/255;
+        origGreen=origGreen/255;
+        origRed=origRed/255;
+        float A1 = 1-destAlpha;
+        float newBlue = (destBlue*destAlpha+origBlue*A1);
+        float newGreen = (destGreen*destAlpha+origGreen*A1);
+        float newRed = (destRed*destAlpha+origRed*A1);
+        ARGBByteBuffer[p]=newBlue*255;
+        ARGBByteBuffer[p+1]=newGreen*255;
+        ARGBByteBuffer[p+2]=newRed*255;
+        ARGBByteBuffer[p+3]=255;
+      }
+    }else{
       ARGBByteBuffer[p]=b;
       ARGBByteBuffer[p+1]=g;
       ARGBByteBuffer[p+2]=r;
       ARGBByteBuffer[p+3]=255;
-    }else{
-      // ALpha is increased
-      float sf=ARGBByteBuffer[p+3];
-      float alphaRatio=(alpha*(1-sf/255));
-      float tf=sf+a*alphaRatio;if(tf>255)tf=255;
-      float a2=1-a1;//1-alphaRatio;
-      float sr=ARGBByteBuffer[p+2];sr=sr*a1+r*a2;if(sr>255)sr=255;
-      float sg=ARGBByteBuffer[p+1];sg=sg*a1+g*a2;if(sg>255)sg=255;
-      float sb=ARGBByteBuffer[p];sb=sb*a1+b*a2;if(sb>255)sb=255;
-      ARGBByteBuffer[p]=(unsigned char)sb;
-      ARGBByteBuffer[p+1]=(unsigned char)sg;
-      ARGBByteBuffer[p+2]=(unsigned char)sr;
-      ARGBByteBuffer[p+3]=(unsigned char)tf;
     }
-    cairo_surface_mark_dirty(surface);
+
   }
+ 
+//   void CCairoPlotter::pixel(int x,int y, unsigned char r,unsigned char g,unsigned char b,unsigned char a){
+//     pixel_blend(x,y,r,g,b,a);
+//   }
+//   
   
   
+  
+//   void  CCairoPlotter::_plot(int x, int y, float alpha){
+// //    fprintf(stderr, "plot([%d,%d], %d,%d,%d,%f)\n", x, y, r, g, b,a);
+// //     
+//     cairo_surface_flush(surface);
+//     //plot the pixel at (x, y) with brightness c (where 0 ≤ c ≤ 1)
+//     if(x<0||y<0)return;
+//     if(x>=width||y>=height)return;
+//     size_t p=x*4+y*stride;
+//     float a1=1-(a/255)*alpha;
+//     if(a1==0){
+//       ARGBByteBuffer[p]=b;
+//       ARGBByteBuffer[p+1]=g;
+//       ARGBByteBuffer[p+2]=r;
+//       ARGBByteBuffer[p+3]=255;
+//     }else{
+//       pixel_blend(x,y,r,g,b,alpha);
+// //       // ALpha is increased
+// //       float sf=ARGBByteBuffer[p+3];
+// //       float alphaRatio=(alpha*(1-sf/255));
+// //       float tf=sf+a*alphaRatio;if(tf>255)tf=255;
+// //       float a2=1-a1;//1-alphaRatio;
+// //       float sr=ARGBByteBuffer[p+2];sr=sr*a1+r*a2;if(sr>255)sr=255;
+// //       float sg=ARGBByteBuffer[p+1];sg=sg*a1+g*a2;if(sg>255)sg=255;
+// //       float sb=ARGBByteBuffer[p];sb=sb*a1+b*a2;if(sb>255)sb=255;
+// //       ARGBByteBuffer[p]=(unsigned char)sb;
+// //       ARGBByteBuffer[p+1]=(unsigned char)sg;
+// //       ARGBByteBuffer[p+2]=(unsigned char)sr;
+// //       ARGBByteBuffer[p+3]=(unsigned char)tf;
+//     }
+//     cairo_surface_mark_dirty(surface);
+//   }
+//   
+//   
   
   CCairoPlotter::CCairoPlotter(int width,int height, float fontSize, const char*fontLocation,unsigned char r,unsigned char g,unsigned char b,unsigned char a){
     byteBufferPointerIsOwned = true;
@@ -214,12 +265,13 @@ void CCairoPlotter::pixelBlend(int x,int y, unsigned char newR,unsigned char new
         size_t p=(x+y*bitmap->width);
         if(bitmap->buffer[p]!=0){
           float alpha=bitmap->buffer[p];
-          alpha/=256;
+          //alpha/=256;
 
           //r=255;g=255;b=255;
           //plot( x+left,  y+top, alpha);
           //r=0;g=0;b=0;
-          _plot( x+left,  y+top, alpha);
+//           _plot( x+left,  y+top, alpha);
+          pixel_blend( x+left,  y+top, r,g,b,alpha);
         }
       }
     }
@@ -446,22 +498,16 @@ void CCairoPlotter::pixelBlend(int x,int y, unsigned char newR,unsigned char new
     rfa=a/256.;
   }
 
-  void CCairoPlotter::pixel(int x,int y){
-    _plot( x, y, 1);
-  }
-
-  
-  
-  void CCairoPlotter::pixel(int x,int y, unsigned char r,unsigned char g,unsigned char b){
-    if(x<0||y<0)return;
-    if(x>=width||y>=height)return;
-    size_t p=x*4+y*stride;
-    ARGBByteBuffer[p]=b;
-    ARGBByteBuffer[p+1]=g;
-    ARGBByteBuffer[p+2]=r;
-    ARGBByteBuffer[p+3]=255;
-  }
-  
+//   void CCairoPlotter::pixel(int x,int y){
+//      pixel_blend(x,y,r,g,b,255);
+//   }
+// 
+//   
+//   
+//   void CCairoPlotter::pixel(int x,int y, unsigned char r,unsigned char g,unsigned char b){
+//     pixel_blend(x,y,r,g,b,255);
+//   }
+//   
    
   
   void CCairoPlotter::getPixel(int x,int y, unsigned char &r,unsigned char &g,unsigned char &b,unsigned char &a){
@@ -628,12 +674,48 @@ void CCairoPlotter::pixelBlend(int x,int y, unsigned char newR,unsigned char new
   }
 
   void CCairoPlotter::writeToPngStream(FILE *fp) {
+
+  
+    if(isAlphaUsed){
+      CDBDebug("Alpha was used");
+      for(int y=0;y<height;y++){
+        for(int x=0;x<width;x++){
+          size_t p=x*4+y*stride;
+          if(ARGBByteBuffer[p+3]!=255){
+            float a =ARGBByteBuffer[p+3];
+            ARGBByteBuffer[p]=(unsigned char)((float(ARGBByteBuffer[p])/256.0)*float(a));
+            ARGBByteBuffer[p+1]=(unsigned char)((float(ARGBByteBuffer[p+1])/256.0)*float(a));
+            ARGBByteBuffer[p+2]=(unsigned char)((float(ARGBByteBuffer[p+2])/256.0)*float(a));
+
+          }
+        }
+      }
+    }
+    
     cairo_surface_flush(surface);
+    
+    
+    
     this->fp=fp;
     cairo_surface_write_to_png_stream(surface, writerFunc, (void *)fp);
   }
   
   void CCairoPlotter::writeToPngStream(FILE *fp,float alpha) {
+    if(isAlphaUsed){
+      CDBDebug("Alpha was used");
+      for(int y=0;y<height;y++){
+        for(int x=0;x<width;x++){
+          size_t p=x*4+y*stride;
+          if(ARGBByteBuffer[p+3]!=255){
+            float a =ARGBByteBuffer[p+3];
+            ARGBByteBuffer[p]=(unsigned char)((float(ARGBByteBuffer[p])/256.0)*float(a));
+            ARGBByteBuffer[p+1]=(unsigned char)((float(ARGBByteBuffer[p+1])/256.0)*float(a));
+            ARGBByteBuffer[p+2]=(unsigned char)((float(ARGBByteBuffer[p+2])/256.0)*float(a));
+
+          }
+        }
+      }
+    }
     cairo_set_operator (cr,CAIRO_OPERATOR_DEST_IN);
     cairo_paint_with_alpha (cr, alpha);
     cairo_surface_flush(surface);

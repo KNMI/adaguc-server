@@ -36,7 +36,6 @@ $(EXECUTABLE): $(OBJECTS) $(EXECUTABLE).o h5ncdump.o aggregate_time.o
 
 %.o: %.cpp
 	$(CCOMPILER) -c $< -o $@  -DENABLE_CURL -DADAGUC_USE_CAIRO -DADAGUC_USE_GDAL -DADAGUC_USE_SQLITE
-	#$(CCOMPILER) -c $< -o $@
 
 clean:
 	rm $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE).o h5ncdump.o h5ncdump aggregate_time.o aggregate_time
