@@ -1,6 +1,16 @@
 INCLUDEDIR=-I../hclasses  -I/usr/include/libxml2/ -I/usr/include/udunits2/ $(CPPFLAGS) $(LDFLAGS)
 
-CCOMPILER=g++ -Wall $(INCLUDEDIR) 
+#CCOMPILER=g++ -Wall $(INCLUDEDIR) 
+
+ifndef ADAGUCCOMPILERSETTINGS
+  ADAGUCCOMPILERSETTINGS=-Wall
+# ADAGUCCOMPILERSETTINGS=-march=pentium4 -mtune=pentium4 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 
+# ADAGUCCOMPILERSETTINGS=-march=core2 -mtune=core2 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2
+# ADAGUCCOMPILERSETTINGS=-O2
+# ADAGUCCOMPILERSETTINGS=-march=k8-sse3 -mtune=k8-sse3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 
+endif
+
+CCOMPILER=g++ $(ADAGUCCOMPILERSETTINGS) $(INCLUDEDIR)
 
 #optimalization options:
 #CCOMPILER=g++ -march=pentium4 -mtune=pentium4 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 $(INCLUDEDIR) 
