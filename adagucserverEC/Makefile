@@ -6,9 +6,14 @@ CCDFDATAMODELOBJ = $(CCDFDATAMODEL)/CCDFDataModel.a
 
 INCLUDEDIR= $(CPPFLAGS) -I $(HELPERCLASSES) -I $(CCDFDATAMODEL) -I/usr/include/libxml2/  -I/usr/include/udunits2/ -I/usr/include/freetype2/ -I/usr/include/freetype2/freetype/ -I/usr/include/postgresql/ -I/usr/include/cairo/ -I/usr/include/gdal/
 
+ifndef ADAGUCCOMPILERSETTINGS
+  ADAGUCCOMPILERSETTINGS=-Wall
+endif
+
+CCOMPILER=g++ $(ADAGUCCOMPILERSETTINGS) -I $(INCLUDEDIR)
 
 
-CCOMPILER=g++ -Wall $(INCLUDEDIR) 
+#CCOMPILER=g++ -Wall $(INCLUDEDIR) 
 
 #optimalization options:
 #CCOMPILER=g++ -march=pentium4 -mtune=pentium4 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 $(INCLUDEDIR) 
