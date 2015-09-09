@@ -29,7 +29,7 @@
 
 const char *CDBAdapterPostgreSQL::className="CDBAdapterPostgreSQL";
 
-#define CDBAdapterPostgreSQL_DEBUG
+//#define CDBAdapterPostgreSQL_DEBUG
 
 CDBAdapterPostgreSQL::CDBAdapterPostgreSQL(){
 #ifdef CDBAdapterPostgreSQL_DEBUG
