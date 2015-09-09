@@ -1209,12 +1209,17 @@ int CImgWarpBilinear::set(const char *pszSettings){
         CColor fillcolor=CColor(0,0,0,0);
         float max,min;
         bool foundColor=false;
+        CDBDebug("%s",values[1].c_str());
         CT::string *shadeSettings=values[1].splitToArray("$");
         for(size_t l=0;l<shadeSettings->count;l++){
           CT::string *kvp=shadeSettings[l].splitToArray("(");
           if(kvp[0].equals("min"))min=kvp[1].toFloat();
           if(kvp[0].equals("max"))max=kvp[1].toFloat();
-          if(kvp[0].equals("fillcolor")){kvp[1].setSize(7);fillcolor=CColor(kvp[1].c_str());foundColor=true;}
+          //if(kvp[0].equals("fillcolor")){kvp[1].setSize(7);fillcolor=CColor(kvp[1].c_str());foundColor=true;}
+          if(kvp[0].equals("fillcolor")){
+            kvp[1].setSize(kvp[1].length()-1);//Remove trailing bracket (')')
+            fillcolor=CColor(kvp[1].c_str());foundColor=true;
+          }
           delete[] kvp;
         }
 

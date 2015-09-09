@@ -57,6 +57,7 @@ class CDBAdapterPostgreSQL:public CDBAdapter{
     CDBStore::Store *getUniqueValuesOrderedByValue(const char *name, int limit, bool orderDescOrAsc,const char *table);
     CDBStore::Store *getUniqueValuesOrderedByIndex(const char *name, int limit, bool orderDescOrAsc,const char *table);
     CDBStore::Store *getFilesAndIndicesForDimensions(CDataSource *dataSource,int limit);
+    CDBStore::Store *getFilesForIndices(CDataSource *dataSource,size_t *start,size_t *count,ptrdiff_t *stride,int limit);
     
     CDBStore::Store *getDimensionInfoForLayerTableAndLayerName(const char *layertable,const char *layername);
     int              storeDimensionInfoForLayerTableAndLayerName(const char *layertable,const char *layername,const char *netcdfname,const char *ogcname,const char *units);

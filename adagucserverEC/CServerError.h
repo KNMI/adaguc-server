@@ -36,7 +36,7 @@ void readyerror();
 void printerrorImage(void * drawImage);
 void resetErrors();
 bool errorsOccured();
-void setErrorImageSize(int w,int h,int format);
+void setErrorImageSize(int w,int h,int format,bool _enableTransparency);
 void setExceptionType(ServiceExceptionCode code);
 const char * getExceptionCodeText(ServiceExceptionCode code);
 #endif
