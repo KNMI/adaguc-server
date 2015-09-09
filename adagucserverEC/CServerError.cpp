@@ -39,6 +39,7 @@ static int errImageWidth=640;
 static int errImageHeight=480;
 static int errImageFormat=IMAGEFORMAT_IMAGEPNG8;
 static ServiceExceptionCode errExceptionCode=OperationNotSupported;
+static bool enableTransparency;
 void printerror(const char * text){
   error_raised=1;
   CT::string t=text;
@@ -93,7 +94,7 @@ void printerrorImage(void *_drawImage){
     y++;
   }
   y=(y-1)*15+26;
-      //drawImage.rectangle(5,3,errImageWidth-1,(y-1)*15+20,252,0);
+  
   drawImage->line(3,3,errImageWidth-1,3,254);
   drawImage->line(3,3,3,y,254);
   drawImage->line(3,y,errImageWidth-1,y,251);
@@ -106,10 +107,11 @@ void printerrorImage(void *_drawImage){
 bool errorsOccured(){
   if(error_raised==0)return false; else return true;
 }
-void setErrorImageSize(int w,int h,int format){
+void setErrorImageSize(int w,int h,int format,bool _enableTransparency){
   errImageWidth=w;
   errImageHeight=h;
   errImageFormat=format;
+  enableTransparency = _enableTransparency;
 }
 void readyerror(){
 
@@ -164,6 +166,9 @@ void readyerror(){
   if(cerror_mode==WMS_EXCEPTIONS_IMAGE||cerror_mode==WMS_EXCEPTIONS_BLANKIMAGE){//Image
     CDrawImage drawImage;
     drawImage.setBGColor(255,255,255);
+
+    drawImage.enableTransparency(enableTransparency);
+
     drawImage.createImage(errImageWidth,errImageHeight);
     
     drawImage.create685Palette();

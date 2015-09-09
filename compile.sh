@@ -1,12 +1,18 @@
 #!/bin/bash
 
 #export ADAGUCCOMPILERSETTINGS="-Wall"
-# ADAGUCCOMPILERSETTINGS=-march=pentium4 -mtune=pentium4 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 
-# ADAGUCCOMPILERSETTINGS=-march=core2 -mtune=core2 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2
-# ADAGUCCOMPILERSETTINGS=-O2
-# ADAGUCCOMPILERSETTINGS=-march=k8-sse3 -mtune=k8-sse3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 
+#export ADAGUCCOMPILERSETTINGS="-msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2"
 
-export ADAGUCCOMPILERSETTINGS="-msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2"
+DEFAULTCOMPILERSETTINGS="-msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2"
+
+if [ -z ${ADAGUCCOMPILERSETTINGS+x} ]; then 
+  echo "ADAGUCCOMPILERSETTINGS is unset";
+  export ADAGUCCOMPILERSETTINGS=$DEFAULTCOMPILERSETTINGS
+else 
+  echo "ADAGUCCOMPILERSETTINGS is set to '$ADAGUCCOMPILERSETTINGS'"; 
+fi
+  
+
 
 function quit {
   echo "Make sure include directories are indicated with CPPFLAGS and library directories with LDFLAGS"
