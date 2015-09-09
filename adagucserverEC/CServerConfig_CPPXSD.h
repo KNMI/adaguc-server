@@ -930,13 +930,13 @@ class CServerConfig:public CXMLSerializerInterface{
     
     class XMLE_AdditionalLayer: public CXMLObjectInterface{
     public:
-//       class Cattr{
-//       public:
-//         CXMLString additionallayer;
-//       }attr;
-//       void addAttribute(const char *attrname,const char *attrvalue){
-//         if (equals("layer",5,attrname)){attr.additionallayer.copy(attrvalue);return;}
-//       }
+      class Cattr{
+      public:
+        CXMLString replace;
+      }attr;
+      void addAttribute(const char *attrname,const char *attrvalue){
+        if (equals("replace",7,attrname)){attr.replace.copy(attrvalue);return;}
+      }
     };
     
     class XMLE_Layer: public CXMLObjectInterface{

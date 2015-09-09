@@ -941,9 +941,12 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
                   CDBStore::Store *maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getClosestDataTimeToSystemTime(ogcDim->netCDFDimName.c_str(),tableName.c_str());
                   
                   if(maxStore == NULL){
-                    setExceptionType(InvalidDimensionValue);
-                    CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
-                    CDBError("query failed"); return 1;
+                    CDBDebug("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
+                    throw InvalidDimensionValue;
+//                     setExceptionType(InvalidDimensionValue);
+//                     CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
+//                     CDBError("query failed"); 
+//                     return 1;
                   }
                   ogcDim->value.copy(maxStore->getRecord(0)->get(0));
                   
@@ -953,9 +956,12 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
                   //For other dimensions than time take the latest
                   CDBStore::Store *maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(ogcDim->netCDFDimName.c_str(),tableName.c_str());
                   if(maxStore == NULL){
-                    setExceptionType(InvalidDimensionValue);
-                    CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
-                    CDBError("query failed"); return 1;
+                    CDBDebug("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
+                    throw InvalidDimensionValue;
+//                     setExceptionType(InvalidDimensionValue);
+//                     CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
+//                     CDBError("query failed"); 
+//                     return 1;
                   }
                   ogcDim->value.copy(maxStore->getRecord(0)->get(0));
                   delete maxStore;
@@ -1045,9 +1051,12 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
         }
 
         if(maxStore == NULL){
-          setExceptionType(InvalidDimensionValue);
-          CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
-          CDBError("query failed");return 1;
+          CDBDebug("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
+          throw InvalidDimensionValue;
+//           setExceptionType(InvalidDimensionValue);
+//           CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
+//           CDBError("query failed");
+//           return 1;
         }
         ogcDim->value.copy(maxStore->getRecord(0)->get(0));
   
@@ -1075,16 +1084,20 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
   
    
     if(store == NULL){
-      setExceptionType(InvalidDimensionValue);
-      CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
-      return 2;
+      CDBDebug("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
+      throw InvalidDimensionValue;
+//       setExceptionType(InvalidDimensionValue);
+//       CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
+//       return 2;
     }
     if(store->getSize() == 0){
-      setExceptionType(InvalidDimensionValue);
-      CDBError("Dimension value unavailable for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
+      
+//       setExceptionType(InvalidDimensionValue);
+//       CDBError("Dimension value unavailable for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
       delete store;
-
-      return 2;
+      CDBDebug("Dimension value unavailable for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
+      throw InvalidDimensionValue;
+//       return 2;
     }
           
     for(size_t k=0;k<store->getSize();k++){
@@ -1152,7 +1165,7 @@ int CRequest::process_all_layers(){
     //dataSources = new CDataSource[srvParam->WMSLayers->count];
     //Now set the properties of these sourceimages
     CT::string layerName;
-    int additionalLayerCount=0;
+   
     for(size_t j=0;j<srvParam->WMSLayers->count;j++){
       size_t layerNo=0;
       for(layerNo=0;layerNo<srvParam->cfg->Layer.size();layerNo++){
@@ -1162,14 +1175,26 @@ int CRequest::process_all_layers(){
         srvParam->makeUniqueLayerName(&layerName,srvParam->cfg->Layer[layerNo]);
         //CDBError("comparing (%d) %s==%s",j,layerName.c_str(),srvParam->WMSLayers[j].c_str());
         if(layerName.equals(srvParam->WMSLayers[j].c_str())){
+    
+       
           CDataSource *dataSource = new CDataSource ();
           dataSources.push_back(dataSource);
-          if(dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[layerNo],layerName.c_str(),j+additionalLayerCount)!=0){
+          if(dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[layerNo],layerName.c_str(),j)!=0){
             return 1;
           }
+         
           //Check if layer has an additional layer
           for (size_t additionalLayerNr = 0;additionalLayerNr<srvParam->cfg->Layer[layerNo]->AdditionalLayer.size();additionalLayerNr++) {
             CServerConfig::XMLE_AdditionalLayer * additionalLayer = srvParam->cfg->Layer[layerNo]->AdditionalLayer[additionalLayerNr];
+            bool replacePreviousDataSource = false;
+            bool replaceAllDataSource = false;
+            
+            if(additionalLayer->attr.replace.equals("true")||additionalLayer->attr.replace.equals("previous")){
+              replacePreviousDataSource = true;
+            }
+            if(additionalLayer->attr.replace.equals("all")){
+              replaceAllDataSource = true;
+            }
           
             CT::string additionalLayerName; //=srvParam->cfg->Layer[layerNo]->AdditionalLayer[0]->AdditionalLayer;
             srvParam->makeUniqueAdditionalLayerName(&additionalLayerName,srvParam->cfg->Layer[layerNo],additionalLayer);
@@ -1177,15 +1202,41 @@ int CRequest::process_all_layers(){
             for(additionalLayerNo=0;additionalLayerNo<srvParam->cfg->Layer.size();additionalLayerNo++){
               CT::string additional;
               srvParam->makeUniqueLayerName(&additional,srvParam->cfg->Layer[additionalLayerNo]);
-              CDBDebug("comparing for additionallayer %s==%s", additionalLayerName.c_str(), additional.c_str());
+              //CDBDebug("comparing for additionallayer %s==%s", additionalLayerName.c_str(), additional.c_str());
               if (additionalLayerName.equals(additional)) {
-                additionalLayerCount++;
                 CDBDebug("Adding %s", additionalLayerName.c_str());
                 CDataSource *dataSource = new CDataSource ();
-                dataSources.push_back(dataSource);
-                if(dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[additionalLayerNo],additionalLayerName.c_str(),j+additionalLayerCount)!=0){
+                
+                
+                if(dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[additionalLayerNo],additionalLayerName.c_str(),j)!=0){
+                  delete dataSource;
                   return 1;
                 }
+                bool add = true;
+                try{
+                  if(getDimValuesForDataSource(dataSource,srvParam)!=0)add = false;
+                }catch(ServiceExceptionCode e){
+                  add = false;
+                }
+                if(add){
+                  if(replaceAllDataSource){
+                    for(size_t j=0;j<dataSources.size();j++){
+                      delete dataSources[j];
+                    }
+                    dataSources.clear();
+                  }else{
+                    if(replacePreviousDataSource){
+                      if(dataSources.size()>0){
+                        delete dataSources.back();
+                        dataSources.pop_back();
+                      }
+                    }
+                  }
+                  dataSources.push_back(dataSource);
+                }else{
+                  delete dataSource;
+                }
+                
                 break;
               }
             }
@@ -1274,8 +1325,14 @@ int CRequest::process_all_layers(){
         
       }
       if(dataSources[j]->cfgLayer->Dimension.size()!=0){
-        if(getDimValuesForDataSource(dataSources[j],srvParam)!=0){
-          CDBError("Unable to find data for given dimensions");
+        try{
+          if(getDimValuesForDataSource(dataSources[j],srvParam)!=0){
+            CDBError("Error in getDimValuesForDataSource: Unable to find data for layer %s",dataSources[j]->layerName.c_str());
+            return 1;
+          }
+        }catch(ServiceExceptionCode e){
+          CDBError("Invalid dimensions values: No data available for layer %s",dataSources[j]->layerName.c_str());
+          setExceptionType(e);
           return 1;
         }
         /*delete[] values_path;
