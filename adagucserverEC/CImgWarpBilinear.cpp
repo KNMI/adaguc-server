@@ -1209,7 +1209,6 @@ int CImgWarpBilinear::set(const char *pszSettings){
         CColor fillcolor=CColor(0,0,0,0);
         float max,min;
         bool foundColor=false;
-        CDBDebug("%s",values[1].c_str());
         CT::string *shadeSettings=values[1].splitToArray("$");
         for(size_t l=0;l<shadeSettings->count;l++){
           CT::string *kvp=shadeSettings[l].splitToArray("(");
@@ -1250,7 +1249,6 @@ int CImgWarpBilinear::set(const char *pszSettings){
             }
             if(kvp[0].equals("classes")){
               classes.copy(kvp[1].c_str());
-              CDBDebug("kvp[1].toFloat() classes = '%s'",kvp[1].c_str());
             }
             if(kvp[0].equals("linecolor")){kvp[1].setSize(7);linecolor=CColor(kvp[1].c_str());}
             if(kvp[0].equals("textcolor")){kvp[1].setSize(7);textcolor=CColor(kvp[1].c_str());}
