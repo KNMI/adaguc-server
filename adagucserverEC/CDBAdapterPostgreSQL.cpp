@@ -29,7 +29,7 @@
 
 const char *CDBAdapterPostgreSQL::className="CDBAdapterPostgreSQL";
 
-//#define CDBAdapterPostgreSQL_DEBUG
+#define CDBAdapterPostgreSQL_DEBUG
 
 CDBAdapterPostgreSQL::CDBAdapterPostgreSQL(){
 #ifdef CDBAdapterPostgreSQL_DEBUG
@@ -138,7 +138,100 @@ CDBStore::Store *CDBAdapterPostgreSQL::getClosestDataTimeToSystemTime(const char
   return DB->queryToStore(query.c_str());
 };
 
+CDBStore::Store *CDBAdapterPostgreSQL::getFilesForIndices(CDataSource *dataSource,size_t *start,size_t *count,ptrdiff_t *stride,int limit){
+  CDBDebug("getFilesForIndices");
+   CPGSQLDB * DB = getDataBaseConnection(); if(DB == NULL){return NULL;  }
 
+  
+  
+  CT::string queryOrderedDESC;
+  CT::string query;
+  queryOrderedDESC.print("select a0.path");
+  for(size_t i=0;i<dataSource->requiredDims.size();i++){
+    queryOrderedDESC.printconcat(",%s,dim%s",dataSource->requiredDims[i]->netCDFDimName.c_str(),dataSource->requiredDims[i]->netCDFDimName.c_str());
+    
+  }
+  
+  
+  
+  queryOrderedDESC.concat(" from ");
+
+  
+  #ifdef CDBAdapterPostgreSQL_DEBUG
+  CDBDebug("%s",queryOrderedDESC.c_str());
+  #endif
+  
+  //Compose the query
+  for(size_t i=0;i<dataSource->requiredDims.size();i++){
+    CT::string netCDFDimName(&dataSource->requiredDims[i]->netCDFDimName);
+
+    CT::string tableName;
+    try{
+      tableName = getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str(),dataSource);
+    }catch(int e){
+      CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str());
+      return NULL;
+    }
+
+    CT::string subQuery;
+    subQuery.print("(select path,dim%s,%s from %s ",netCDFDimName.c_str(),
+                netCDFDimName.c_str(),
+                tableName.c_str());
+    
+   
+      
+    //subQuery.printconcat("where dim%s = %d ",netCDFDimName.c_str(),start[i]);
+    subQuery.printconcat("ORDER BY %s ASC limit %d offset %d)a%d ",netCDFDimName.c_str(),count[i],start[i],i);
+    if(i<dataSource->requiredDims.size()-1)subQuery.concat(",");
+    queryOrderedDESC.concat(&subQuery);
+  }
+  
+  #ifdef CDBAdapterPostgreSQL_DEBUG
+  CDBDebug("%s",queryOrderedDESC.c_str());
+  #endif
+  //Join by path
+  if(dataSource->requiredDims.size()>1){
+    queryOrderedDESC.concat(" where a0.path=a1.path");
+    for(size_t i=2;i<dataSource->requiredDims.size();i++){
+      queryOrderedDESC.printconcat(" and a0.path=a%d.path",i);
+    }
+  }
+  #ifdef CDBAdapterPostgreSQL_DEBUG
+  CDBDebug("%s",queryOrderedDESC.c_str());
+  #endif
+  //writeLogFile3(queryOrderedDESC.c_str());
+  //writeLogFile3("\n");
+  //queryOrderedDESC.concat(" limit 40");
+
+
+  
+  query.print("select distinct * from (%s)T order by ",queryOrderedDESC.c_str());
+  query.concat(&dataSource->requiredDims[0]->netCDFDimName);
+  for(size_t i=1;i<dataSource->requiredDims.size();i++){
+    query.printconcat(",%s",dataSource->requiredDims[i]->netCDFDimName.c_str());
+  }
+  
+  //Execute the query
+  
+    //writeLogFile3(query.c_str());
+    //writeLogFile3("\n");
+  //values_path = DB.query_select(query.c_str(),0);
+  #ifdef CDBAdapterPostgreSQL_DEBUG
+  CDBDebug("%s",query.c_str());
+  #endif
+  
+  CDBStore::Store *store = NULL;
+  try{
+    store = DB->queryToStore(query.c_str(),true);
+  }catch(int e){
+    if((CServerParams::checkDataRestriction()&SHOW_QUERYINFO)==false)query.copy("hidden");
+    setExceptionType(InvalidDimensionValue);
+    CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
+    CDBDebug("Query failed with code %d (%s)",e,query.c_str());
+    return NULL;
+  }
+  return store;
+}
 
 CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSource *dataSource,int limit){
   CPGSQLDB * DB = getDataBaseConnection(); if(DB == NULL){return NULL;  }
