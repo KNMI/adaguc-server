@@ -228,7 +228,7 @@ int CServerParams::makeUniqueLayerName(CT::string *layerName,CServerConfig::XMLE
   
   if(!cfgLayer->Name[0]->attr.force.equals("true")){
     layerName->concat(cfgLayer->Name[0]->value.c_str());
-    layerName->replaceSelf(".","_");
+    //layerName->replaceSelf(".","_");//TODO CHECK WHY?
   }else{
     layerName->copy(cfgLayer->Name[0]->value.c_str());
   }
