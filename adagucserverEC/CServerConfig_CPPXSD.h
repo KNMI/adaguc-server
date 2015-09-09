@@ -75,6 +75,18 @@ class CServerConfig:public CXMLSerializerInterface{
       }
     };
     
+    class XMLE_WMSExceptions: public CXMLObjectInterface{
+    public:
+      class Cattr{
+      public:
+        CXMLString defaultValue, force;
+      }attr;
+      void addAttribute(const char *attrname,const char *attrvalue){
+        if(equals("defaultvalue",12,attrname)){attr.defaultValue.copy(attrvalue);return;}
+        else if(equals("force",5,attrname)){attr.force.copy(attrvalue);return;}
+      }
+    };
+    
     class XMLE_Thinning: public CXMLObjectInterface{
     public:
       class Cattr{
@@ -764,7 +776,7 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_DimensionFont*> DimensionFont;
         std::vector <XMLE_GridFont*> GridFont;
         std::vector <XMLE_WMSFormat*> WMSFormat;
-        
+        std::vector <XMLE_WMSExceptions*> WMSExceptions;
         std::vector <XMLE_Inspire*> Inspire;
 
          
@@ -781,6 +793,7 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(DimensionFont);
           XMLE_DELOBJ(GridFont);
           XMLE_DELOBJ(WMSFormat);
+          XMLE_DELOBJ(WMSExceptions);
           //XMLE_DELOBJ(Keywords);
 
           XMLE_DELOBJ(Inspire);
@@ -798,6 +811,7 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("Abstract",8,name)){XMLE_ADDOBJ(Abstract);}
             else if(equals("RootLayer",9,name)){XMLE_ADDOBJ(RootLayer);}
             else if(equals("WMSFormat",9,name)){XMLE_ADDOBJ(WMSFormat);}
+            else if(equals("WMSExceptions",13,name)){XMLE_ADDOBJ(WMSExceptions);}
             else if(equals("TitleFont",9,name)){XMLE_ADDOBJ(TitleFont);}
             else if(equals("ContourFont",11,name)){XMLE_ADDOBJ(ContourFont);}
             else if(equals("SubTitleFont",12,name)){XMLE_ADDOBJ(SubTitleFont);}

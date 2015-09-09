@@ -45,9 +45,11 @@ void printerror(const char * text){
   CT::string t=text;
   
   //Remove "[E: file,line] spaces"
-  t.substringSelf(t.indexOf("]")+1,-1);
-  t.trimSelf();
-  t.replaceSelf("\n","");
+  if (t.indexOf("[E:")==0) {
+    t.substringSelf(t.indexOf("]")+1,-1);
+  }
+   t.trimSelf();
+   t.replaceSelf("\n","");
   if(t.length()>0){
     errormsgs.push_back(t);
   }
@@ -137,7 +139,7 @@ void readyerror(){
     for(size_t j=0;j<errormsgs.size();j++){
       CT::string msg=errormsgs[j].c_str();
       msg.replaceSelf("<","&lt;");
-      msg.replaceSelf("<","&gt;");
+      msg.replaceSelf(">","&gt;");
       fprintf(stdout,"    %s;\n",msg.c_str());
       //if(j+1<errormsgs.size())fprintf(stdout,";\n");
     }
@@ -155,7 +157,7 @@ void readyerror(){
     for(size_t j=0;j<errormsgs.size();j++){
       CT::string msg=errormsgs[j].c_str();
       msg.replaceSelf("<","&lt;");
-      msg.replaceSelf("<","&gt;");
+      msg.replaceSelf(">","&gt;");
       fprintf(stdout,"    %s;\n",msg.c_str());
       //if(j+1<errormsgs.size())fprintf(stdout,";\n");
     }

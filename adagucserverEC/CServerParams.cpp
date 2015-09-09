@@ -246,7 +246,7 @@ int CServerParams::makeUniqueLayerName(CT::string *layerName,CServerConfig::XMLE
   return 0;
 }
 
-int CServerParams::makeUniqueAdditionalLayerName(CT::string *layerName,CServerConfig::XMLE_Layer *cfgLayer){
+int CServerParams::makeUniqueAdditionalLayerName(CT::string *layerName,CServerConfig::XMLE_Layer *cfgLayer,CServerConfig::XMLE_AdditionalLayer * additionalLayer){
   /*
   if(cfgLayer->Variable.size()!=0){
   _layerName=cfgLayer->Variable[0]->value.c_str();
@@ -260,7 +260,7 @@ int CServerParams::makeUniqueAdditionalLayerName(CT::string *layerName,CServerCo
     }
   }
   
-  layerName->concat(cfgLayer->AdditionalLayer[0]->value.c_str());
+  layerName->concat(additionalLayer->value.c_str());
   layerName->replaceSelf(".","_");
   
   /*if(cfgLayer->Title.size()==0){

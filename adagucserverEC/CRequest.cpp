@@ -1168,9 +1168,11 @@ int CRequest::process_all_layers(){
             return 1;
           }
           //Check if layer has an additional layer
-          if (srvParam->cfg->Layer[layerNo]->AdditionalLayer.size()>0) {
+          for (size_t additionalLayerNr = 0;additionalLayerNr<srvParam->cfg->Layer[layerNo]->AdditionalLayer.size();additionalLayerNr++) {
+            CServerConfig::XMLE_AdditionalLayer * additionalLayer = srvParam->cfg->Layer[layerNo]->AdditionalLayer[additionalLayerNr];
+          
             CT::string additionalLayerName; //=srvParam->cfg->Layer[layerNo]->AdditionalLayer[0]->AdditionalLayer;
-            srvParam->makeUniqueAdditionalLayerName(&additionalLayerName,srvParam->cfg->Layer[layerNo]);
+            srvParam->makeUniqueAdditionalLayerName(&additionalLayerName,srvParam->cfg->Layer[layerNo],additionalLayer);
             size_t additionalLayerNo=0;
             for(additionalLayerNo=0;additionalLayerNo<srvParam->cfg->Layer.size();additionalLayerNo++){
               CT::string additional;
@@ -2168,7 +2170,7 @@ int CRequest::process_querystring(){
       }
     }
     
-    seterrormode(WMS_EXCEPTIONS_XML_1_1_1);
+    seterrormode(WMS_EXCEPTIONS_XML_1_3_0);
     // Check the version
     if(dFound_Version!=0){
       srvParam->OGCVersion=-1;//WMS_VERSION_1_1_1;
@@ -2186,13 +2188,29 @@ int CRequest::process_querystring(){
       if(srvParam->requestType==REQUEST_WMS_GETMAP)seterrormode(WMS_EXCEPTIONS_IMAGE);
       if(srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC)seterrormode(WMS_EXCEPTIONS_IMAGE);
     }
-    
+
+   
     if(srvParam->OGCVersion==WMS_VERSION_1_1_1){
       seterrormode(WMS_EXCEPTIONS_XML_1_1_1);
+      //Check if default has been set for EXCEPTIONS
+      if ((dFound_Exceptions==0)&&(srvParam->cfg->WMS[0]->WMSExceptions.size()>0)) {
+        if (srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.defaultValue.empty()==false){
+          Exceptions=srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.defaultValue;
+          dFound_Exceptions=1;
+        }
+      }
     }
     
     if(srvParam->OGCVersion==WMS_VERSION_1_3_0){
       seterrormode(WMS_EXCEPTIONS_XML_1_3_0);
+      //Check if default has been set for EXCEPTIONS
+      if ((dFound_Exceptions==0)&&(srvParam->cfg->WMS[0]->WMSExceptions.size()>0)) {
+        if (srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.defaultValue.empty()==false){
+          Exceptions=srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.defaultValue; 
+          dFound_Exceptions=1;
+          CDBDebug("Changing default to `%s' ", Exceptions.c_str());
+        }
+      }
       
       if(srvParam->checkBBOXXYOrder(NULL)==true){
         //BBOX swap
@@ -2209,6 +2227,17 @@ int CRequest::process_querystring(){
     }
     
     if(dFound_Exceptions!=0){
+      //Overrule found EXCEPTIONS with value of WMSExceptions.default if force is set and default is defined
+      if (srvParam->cfg->WMS[0]->WMSExceptions.size()>0) {
+        if ((srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.defaultValue.empty()==false)&&
+            (srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.force.empty()==false)) {
+          if (srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.force.equals("true")) {
+            Exceptions=srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.defaultValue;
+            CDBDebug("Overruling default Exceptions %s", Exceptions.c_str());
+          }
+        }
+      }
+        
       if(Exceptions.equals("application/vnd.ogc.se_xml")){
         if(srvParam->OGCVersion==WMS_VERSION_1_1_1)seterrormode(WMS_EXCEPTIONS_XML_1_1_1);
       }
@@ -2224,7 +2253,13 @@ int CRequest::process_querystring(){
       if(Exceptions.equals("BLANK")){
         seterrormode(WMS_EXCEPTIONS_BLANKIMAGE);
       }
-    }
+      if(Exceptions.equals("XML")){
+        if(srvParam->OGCVersion==WMS_VERSION_1_1_1) seterrormode(WMS_EXCEPTIONS_XML_1_1_1);
+        if(srvParam->OGCVersion==WMS_VERSION_1_3_0) seterrormode(WMS_EXCEPTIONS_XML_1_3_0);
+      }  
+    } else {
+      //EXCEPTIONS not set in request
+    }  
   }
   
   
