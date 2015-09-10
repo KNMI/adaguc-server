@@ -12,6 +12,7 @@
 #include "CStyleConfiguration.h"
 #include "CMyCURL.h"
 #include "CXMLParser.h"
+#include "CTime.h"
 #include "CDebugger.h"
 
 class COpenDAPHandler{
