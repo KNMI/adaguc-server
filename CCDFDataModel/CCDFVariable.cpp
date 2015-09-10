@@ -62,7 +62,9 @@ int CDF::Variable::readData(CDFType readType,size_t *_start,size_t *_count,ptrdi
 #endif     
     return 0;
   }
-  //CDBDebug("applyScaleOffset = %d",applyScaleOffset);
+  #ifdef CCDFDATAMODEL_DEBUG  
+  CDBDebug("applyScaleOffset = %d",applyScaleOffset);
+#endif
   if(applyScaleOffset==false){
     return readData(currentType,_start,_count,_stride);
   }
