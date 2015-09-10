@@ -133,9 +133,17 @@ CDFObject *CDFObjectStore::getCDFObjectHeader(CServerParams *srvParams,const cha
       return NULL;
     }
 
-    return getCDFObject(NULL,srvParams,fileName);
+    return getCDFObject(NULL,srvParams,fileName,false);
 }
 
+CDFObject *CDFObjectStore::getCDFObjectHeaderPlain(CServerParams *srvParams,const char *fileName){
+  if(srvParams == NULL){
+    CDBError("srvParams == NULL");
+    return NULL;
+  }
+  
+  return getCDFObject(NULL,srvParams,fileName,true);
+}
 
 /**
 * Get a CDFObject based with opened and configured CDF reader for a filename/OPeNDAP url and a dataSource.
@@ -143,11 +151,11 @@ CDFObject *CDFObjectStore::getCDFObjectHeader(CServerParams *srvParams,const cha
 * @param fileName The filename to read.
 */
 CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,const char *fileName){
-  return getCDFObject(dataSource,NULL,fileName);
+  return getCDFObject(dataSource,NULL,fileName,false);
 }
   
 
-CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *srvParams,const char *fileName){
+CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *srvParams,const char *fileName,bool plain){
   CT::string uniqueIDForFile = fileName;
   
 
@@ -248,19 +256,19 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *s
   cdfReaders.push_back(cdfReader);
   
   
-
-  bool level2CompatMode = false;
-  
-  if(!level2CompatMode)if(CConvertUGRIDMesh::convertUGRIDMeshHeader(cdfObject)==0){level2CompatMode=true;};
-  
-  if(!level2CompatMode)if(CConvertASCAT::convertASCATHeader(cdfObject)==0){level2CompatMode=true;};
-   
-  if(!level2CompatMode)if(CConvertADAGUCVector::convertADAGUCVectorHeader(cdfObject)==0){level2CompatMode=true;};
-   
-  if(!level2CompatMode)if(CConvertADAGUCPoint::convertADAGUCPointHeader(cdfObject)==0){level2CompatMode=true;};
-   
-  if(!level2CompatMode)if(CConvertCurvilinear::convertCurvilinearHeader(cdfObject,srvParams)==0){level2CompatMode=true;};
+  if(plain == false){
+    bool level2CompatMode = false;
     
+    if(!level2CompatMode)if(CConvertUGRIDMesh::convertUGRIDMeshHeader(cdfObject)==0){level2CompatMode=true;};
+    
+    if(!level2CompatMode)if(CConvertASCAT::convertASCATHeader(cdfObject)==0){level2CompatMode=true;};
+    
+    if(!level2CompatMode)if(CConvertADAGUCVector::convertADAGUCVectorHeader(cdfObject)==0){level2CompatMode=true;};
+    
+    if(!level2CompatMode)if(CConvertADAGUCPoint::convertADAGUCPointHeader(cdfObject)==0){level2CompatMode=true;};
+    
+    if(!level2CompatMode)if(CConvertCurvilinear::convertCurvilinearHeader(cdfObject,srvParams)==0){level2CompatMode=true;};
+  }
   
   return cdfObject;
 }

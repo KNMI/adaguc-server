@@ -57,7 +57,7 @@ private:
   static CDFReader *getCDFReader(const char *fileName);
   
   
-  CDFObject* getCDFObject(CDataSource *dataSource,CServerParams *srvParams,const char *fileName);
+  CDFObject* getCDFObject(CDataSource *dataSource,CServerParams *srvParams,const char *fileName,bool plain);
   CDFObject *deleteCDFObject(CDFObject **cdfObject);
   DEF_ERRORFUNCTION();
 public:
@@ -78,7 +78,7 @@ public:
   CDFObject *getCDFObject(CDataSource *dataSource,const char *fileName);
   
   CDFObject *getCDFObjectHeader(CServerParams *srvParams,const char *fileName);
-  
+  CDFObject *getCDFObjectHeaderPlain(CServerParams *srvParams,const char *fileName);
   static CT::StackList<CT::string> getListOfVisualizableVariables(CDFObject *cdfObject);
   
   

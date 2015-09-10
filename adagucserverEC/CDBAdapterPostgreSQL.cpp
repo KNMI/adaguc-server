@@ -139,7 +139,9 @@ CDBStore::Store *CDBAdapterPostgreSQL::getClosestDataTimeToSystemTime(const char
 };
 
 CDBStore::Store *CDBAdapterPostgreSQL::getFilesForIndices(CDataSource *dataSource,size_t *start,size_t *count,ptrdiff_t *stride,int limit){
+  #ifdef CDBAdapterPostgreSQL_DEBUG
   CDBDebug("getFilesForIndices");
+#endif
    CPGSQLDB * DB = getDataBaseConnection(); if(DB == NULL){return NULL;  }
 
   

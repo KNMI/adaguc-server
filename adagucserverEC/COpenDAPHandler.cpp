@@ -46,6 +46,20 @@ void writeInt(int v){
   bytesWritten+=4;
 }
 
+void writeDouble(double &v){
+  unsigned char const * p = reinterpret_cast<unsigned char const *>(&v);
+  fwrite(&p[7],1,1,stdout);
+  fwrite(&p[6],1,1,stdout);
+  fwrite(&p[5],1,1,stdout);
+  fwrite(&p[4],1,1,stdout);
+  fwrite(&p[3],1,1,stdout);
+  fwrite(&p[2],1,1,stdout);
+  fwrite(&p[1],1,1,stdout);
+  fwrite(&p[0],1,1,stdout);
+
+  bytesWritten+=8;
+}
+
 int putVariableDataSize(CDF::Variable *v){
  
   int a = v->getSize();
@@ -100,16 +114,17 @@ int COpenDAPHandler::HandleOpenDAPRequest(const char *path,const char *query,CSe
  
   #ifdef COPENDAPHANDLER_DEBUG
   CDBDebug("\n*****************************************************************************************");
-  CDBDebug("OpenDAP Received [%s] [%s]",path,query);
+ 
   #endif
-  
+  CDBDebug("OpenDAP Received [%s] [%s]",path,query);
   CT::string dapName = path+8;
   CT::string layerName  = dapName;
   CT::string pathQuery = "";
   bool isDDSRequest = false;
   bool isDASRequest = false;
   bool isDODRequest = false;
-  
+  dapName.decodeURLSelf();
+  //dapName.replaceSelf("%20"," ");
   int i = dapName.lastIndexOf(".dds");
   if(i != -1){
     layerName = dapName.substring(0,i);
@@ -137,11 +152,8 @@ int COpenDAPHandler::HandleOpenDAPRequest(const char *path,const char *query,CSe
       }
     }
   }
-  if(isDODRequest){
-    printf("%s%c%c\n","Content-Type: application/octet-stream",13,10);
-  }else{
-    printf("%s%c%c\n","Content-Type: text/plain",13,10);
-  }
+  
+
   #ifdef COPENDAPHANDLER_DEBUG
   CDBDebug("Layername = %s",layerName.c_str());
   CDBDebug("pathQuery = %s",pathQuery.c_str());
@@ -168,8 +180,13 @@ int COpenDAPHandler::HandleOpenDAPRequest(const char *path,const char *query,CSe
     return 1;
   }
       
+      if(isDODRequest){
+        printf("%s%c%c\n","Content-Type: application/octet-stream",13,10);
+      }else{
+        printf("%s%c%c\n","Content-Type: text/plain",13,10);
+      }
 #ifdef COPENDAPHANDLER_DEBUG      
-  CDBDebug("Found layer");
+CDBDebug("Found layer %s",layerName.c_str());
   #endif
   if(dataSource->dLayerType==CConfigReaderLayerTypeDataBase||
       dataSource->dLayerType==CConfigReaderLayerTypeStyled)
@@ -190,6 +207,9 @@ int COpenDAPHandler::HandleOpenDAPRequest(const char *path,const char *query,CSe
       }
     }else{
       //This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.        
+      #ifdef COPENDAPHANDLER_DEBUG      
+      CDBDebug("This layer has no dims, adding one virtual time step.");
+      #endif
       CDirReader dirReader;
       if(CDBFileScanner::searchFileNames(&dirReader,dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter,NULL)!=0){
         CDBError("Could not find any filename");
@@ -254,7 +274,7 @@ int COpenDAPHandler::HandleOpenDAPRequest(const char *path,const char *query,CSe
         #ifdef COPENDAPHANDLER_DEBUG
         CDBDebug("getDimSize Trying to lookup in cdfObject");
         #endif
-        CDF::Dimension *v=dataSource->getDataObject(0)->cdfObject->getDimension(name);
+        CDF::Dimension *v= CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(dataSource->srvParams,dataSource->getFileName())->getDimension(name);
         #ifdef COPENDAPHANDLER_DEBUG
         CDBDebug("Length = %d",v->length);
         #endif
@@ -274,12 +294,13 @@ int COpenDAPHandler::HandleOpenDAPRequest(const char *path,const char *query,CSe
   
   try{
   
-   CDataReader reader;
-    int status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
-    if(status!=0){
-      CDBError("Could not open file: %s",dataSource->getFileName());
-      throw(__LINE__);
-    }
+//    CDataReader reader;
+//     int status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
+//     if(status!=0){
+//       CDBError("Could not open file: %s",dataSource->getFileName());
+//       throw(__LINE__);
+//     }
+    
     
     class CDFTypeToOpenDAPType{
     public:
@@ -315,7 +336,7 @@ int COpenDAPHandler::HandleOpenDAPRequest(const char *path,const char *query,CSe
       }
     };
     
-    CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
+    CDFObject *cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(dataSource->srvParams,dataSource->getFileName());;// dataSource->getDataObject(0)->cdfObject;
       
     for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
       //Check for the configured dimensions or scalar variables
@@ -466,31 +487,31 @@ int COpenDAPHandler::HandleOpenDAPRequest(const char *path,const char *query,CSe
             output.printconcat("    %s ",CDFTypeToOpenDAPType::getvar(v->getType()).c_str());
             output.concat(v->name.c_str());
             
-            //This is the variable it is all about:            
-            if(v == dataSource->getDataObject(0)->cdfVariable){
-              //Add the dimensions which are not in the cdfVariable, but ara externally configured.
-              for(size_t j=0;j<dataSource->cfgLayer->Dimension.size();j++){
-                CT::string dimname = dataSource->cfgLayer->Dimension[j]->attr.name;
-                try{
-                  //Just throw an exception when not found.
-                  v->getDimension(dimname.c_str())->getSize();
-                }catch(int e){
-                  
-                  int dimSize = DimQuery::getDimSize(dataSource,dimname.c_str());
-                  #ifdef COPENDAPHANDLER_DEBUG
-                  CDBDebug("Getting DimSize %d",dimSize);
-                  #endif
-                  if(selectedVariables[i].dimInfo.size() == dataSource->cfgLayer->Dimension.size()+2){
-                    dimSize = selectedVariables[i].dimInfo[j].count;
-                  }
-                  if(isDDSRequest){
-                    output.printconcat("[%s = %d]",dimname.c_str(),dimSize);
-                  }else{
-                    output.printconcat("[%d]",dimSize);
-                  }
-                }
-              }
-            }
+//             //This is the variable it is all about:            
+//             if(v == dataSource->getDataObject(0)->cdfVariable){
+//               //Add the dimensions which are not in the cdfVariable, but ara externally configured.
+//               for(size_t j=0;j<dataSource->cfgLayer->Dimension.size();j++){
+//                 CT::string dimname = dataSource->cfgLayer->Dimension[j]->attr.name;
+//                 try{
+//                   //Just throw an exception when not found.
+//                   v->getDimension(dimname.c_str())->getSize();
+//                 }catch(int e){
+//                   
+//                   int dimSize = DimQuery::getDimSize(dataSource,dimname.c_str());
+//                   #ifdef COPENDAPHANDLER_DEBUG
+//                   CDBDebug("Getting DimSize %d",dimSize);
+//                   #endif
+//                   if(selectedVariables[i].dimInfo.size() == dataSource->cfgLayer->Dimension.size()+2){
+//                     dimSize = selectedVariables[i].dimInfo[j].count;
+//                   }
+//                   if(isDDSRequest){
+//                     output.printconcat("[%s = %d]",dimname.c_str(),dimSize);
+//                   }else{
+//                     output.printconcat("[%d]",dimSize);
+//                   }
+//                 }
+//               }
+//             }
               
             
             for(size_t j=0;j<v->dimensionlinks.size();j++){
@@ -509,8 +530,8 @@ int COpenDAPHandler::HandleOpenDAPRequest(const char *path,const char *query,CSe
           }
         }
       }
-      //output.printconcat("} 0000000000%s;\n",layerName.c_str());
-      output.printconcat("} C/testsets/opendaptests/x4.nc;",layerName.c_str());
+      output.printconcat("} %s;\n",layerName.c_str());
+      //output.printconcat("} C/testsets/opendaptests/x4.nc;",layerName.c_str());
       
       printf("%s\r\n",output.c_str());
       fflush(stdout);
@@ -572,17 +593,51 @@ int COpenDAPHandler::HandleOpenDAPRequest(const char *path,const char *query,CSe
                     CDBDebug("STORE SIZE %d varSize = %d",store->size(),varSize);
                     #endif
                     if(store->size()!=0){
-                        writeInt(varSize);
-                        writeInt(varSize);
-                       
-                        foundData = true;
-                        for(size_t storeIndex=0;storeIndex<store->size();storeIndex++){
+                      writeInt(varSize);
+                      writeInt(varSize);
+                      
+                      foundData = true;
+                      
+                      CT::string dimStandardName = "";
+                      try{
+                        dimStandardName = v->getAttribute("standard_name")->getDataAsString();;
+                      }catch(int e){
+                      }
+                      CT::string dimUnits = "";
+                      try{
+                        dimUnits = v->getAttribute("units")->getDataAsString();;
+                      }catch(int e){
+                      }
+                      bool readFromDB=false;
+                      //If variable name equals dimension name, values are stored in the database.
+                      CTime time;
+                      if(v->isDimension&&v->getType()==CDF_DOUBLE){
+                        if(v->dimensionlinks.size()==1){
+                          if(v->name.equals(v->dimensionlinks[0]->name)){
+                            
+                            
+                            
+                            
+                           
+                            if(dimStandardName.equals("time")&&dimUnits.length()>2){
+                              readFromDB=true;
+                              
+                              time.init(dimUnits.c_str());
+                         
+                            }
+                            //                               CDBDebug("%s",store->getRecord(storeIndex)->get(0)->c_str());
+                            //                               CDBDebug("%s",store->getRecord(storeIndex)->get(1)->c_str());//value
+                            //                               CDBDebug("%s",store->getRecord(storeIndex)->get(2)->c_str());
+                          }
+                        }
+                      }
+                      for(size_t storeIndex=0;storeIndex<store->size();storeIndex++){
                         CT::string fileName = store->getRecord(storeIndex)->get(0)->c_str();
                         #ifdef COPENDAPHANDLER_DEBUG
                         CDBDebug("Found file %s",fileName.c_str());
                         #endif
-                        cdfObjectToRead = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource,fileName.c_str());
-                        start[0]=0;
+                        cdfObjectToRead = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(dataSource->srvParams,fileName.c_str());
+                        start[0]=store->getRecord(storeIndex)->get(2)->toInt();
                         count[0]=1;
                         #ifdef COPENDAPHANDLER_DEBUG
                         CDBDebug("Start reading data for variable %s",v->name.c_str());
@@ -590,13 +645,28 @@ int COpenDAPHandler::HandleOpenDAPRequest(const char *path,const char *query,CSe
                           CDBDebug("  start[%d] = %d %d %d",j,start[j],count[j],stride[j]);
                         }
                         #endif
-                        CDF::Variable *variableToRead = cdfObjectToRead->getVariable(v->name.c_str());
-                        variableToRead->readData((CDFType)v->getType(),start,count,stride);
-                        #ifdef COPENDAPHANDLER_DEBUG
-                        CDBDebug("Read %d elements with type %s with element size %d",variableToRead->getSize(),CDF::getCDFDataTypeName(variableToRead->getType()).c_str(), CDF::getTypeSize(variableToRead->getType()));
-                        #endif
-                     
-                        putVariableData(variableToRead);
+                        if(readFromDB){
+                          CT::string dimValue = store->getRecord(storeIndex)->get(1);
+                       
+                          
+                          double value = time.dateToOffset(time.freeDateStringToDate(dimValue.c_str()));
+                          #ifdef COPENDAPHANDLER_DEBUG
+                          CDBDebug("Dimension value  = [%s] units = [%s] standard_name = [%s]",dimValue.c_str(),dimUnits.c_str(),dimStandardName.c_str());
+                          CDBDebug("Convert value %f",value);
+                          #endif
+                          writeDouble(value);
+                        }
+
+                        if(readFromDB == false){
+                          CDF::Variable *variableToRead = cdfObjectToRead->getVariable(v->name.c_str());
+                          variableToRead->readData((CDFType)v->getType(),start,count,stride);
+                          #ifdef COPENDAPHANDLER_DEBUG
+                          CDBDebug("Read %d elements with type %s with element size %d",variableToRead->getSize(),CDF::getCDFDataTypeName(variableToRead->getType()).c_str(), CDF::getTypeSize(variableToRead->getType()));
+                          #endif
+
+                      
+                          putVariableData(variableToRead);
+                        }
                       }
                     }
                   }
@@ -671,7 +741,7 @@ int COpenDAPHandler::HandleOpenDAPRequest(const char *path,const char *query,CSe
     }
     
     if(isDASRequest){
-      CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
+      CDFObject *cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(dataSource->srvParams,dataSource->getFileName());
       CT::string output = "";
       output.concat("Attributes {\n");
       for(size_t j=0;j<cdfObject->variables.size();j++){
@@ -699,7 +769,7 @@ int COpenDAPHandler::HandleOpenDAPRequest(const char *path,const char *query,CSe
     }
 
     
-    reader.close();
+//    reader.close();
   }catch(int e){
   }
   
