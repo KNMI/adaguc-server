@@ -59,14 +59,14 @@ void writeErrorFile(const char * msg){
     if(pFile != NULL){
 //      setvbuf(pFile, NULL, _IONBF, 0);
       fputs  (msg, pFile );
-      if(strlen(msg)>1){
+      if(strncmp(msg,"[D:",3)==0||strncmp(msg,"[W:",3)==0||strncmp(msg,"[E:",3)==0){
         time_t myTime = time(NULL);
         tm *myUsableTime = localtime(&myTime);
         char szTemp[128];
-        snprintf(szTemp,127," at %.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ ",
-                myUsableTime->tm_year+1900,myUsableTime->tm_mon+1,myUsableTime->tm_mday,
-                myUsableTime->tm_hour,myUsableTime->tm_min,myUsableTime->tm_sec
-                );
+        snprintf(szTemp,127,"%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ ",
+                 myUsableTime->tm_year+1900,myUsableTime->tm_mon+1,myUsableTime->tm_mday,
+                 myUsableTime->tm_hour,myUsableTime->tm_min,myUsableTime->tm_sec
+        );
         fputs  (szTemp, pFile );
       }
       fclose (pFile);

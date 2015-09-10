@@ -823,6 +823,18 @@ class CServerConfig:public CXMLSerializerInterface{
           if(pt2Class!=NULL)pt2Class->addElement(baseClass,rc-pt2Class->level,name,value);
         }
     };
+    
+    class XMLE_OpenDAP: public CXMLObjectInterface{
+    public:
+      class Cattr{
+      public:
+        CXMLString enabled,path;
+      }attr;
+      void addAttribute(const char *attrname,const char *attrvalue){
+        if(equals("enabled",7,attrname)){attr.enabled.copy(attrvalue);return;}
+        else if(equals("path",4,attrname)){attr.path.copy(attrvalue);return;}
+      }
+    };
   
     class XMLE_WCS: public CXMLObjectInterface{
       public:
@@ -1078,6 +1090,7 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_Legend*> Legend;
         std::vector <XMLE_WMS*> WMS;
         std::vector <XMLE_WCS*> WCS;
+        std::vector <XMLE_OpenDAP*> OpenDAP;
         std::vector <XMLE_Path*> Path;
         std::vector <XMLE_TempDir*> TempDir;
         std::vector <XMLE_OnlineResource*> OnlineResource;
@@ -1094,6 +1107,7 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(Legend);
           XMLE_DELOBJ(WMS);
           XMLE_DELOBJ(WCS);
+          XMLE_DELOBJ(OpenDAP);
           XMLE_DELOBJ(Path);
           XMLE_DELOBJ(TempDir);
           XMLE_DELOBJ(OnlineResource);
@@ -1116,6 +1130,7 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("WMS",3,name)){XMLE_SETOBJ(WMS);}
             else if(equals("WCS",3,name)){XMLE_SETOBJ(WCS);}
             else if(equals("Path",4,name)){XMLE_ADDOBJ(Path);}
+            else if(equals("OpenDAP",7,name)){XMLE_ADDOBJ(OpenDAP);}
             else if(equals("TempDir",7,name)){XMLE_ADDOBJ(TempDir);}
             else if(equals("OnlineResource",14,name)){XMLE_ADDOBJ(OnlineResource);}
             else if(equals("DataBase",8,name)){XMLE_ADDOBJ(DataBase);}

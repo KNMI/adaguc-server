@@ -1715,27 +1715,35 @@ int CRequest::process_querystring(){
   }*/
   
   
-//   /**
-//    * Check for OPENDAP
-//    */
-//   const char *SCRIPT_NAME =getenv("SCRIPT_NAME");
-//   const char *REQUEST_URI =getenv("REQUEST_URI");
-//   if(SCRIPT_NAME!=NULL && REQUEST_URI!=NULL){
-//     size_t SCRIPT_NAME_length = strlen(SCRIPT_NAME);
-//     size_t REQUEST_URI_length = strlen(REQUEST_URI);
-//     if(REQUEST_URI_length>SCRIPT_NAME_length+1){
-//       CT::string dapPath = REQUEST_URI + (SCRIPT_NAME_length+1);
-//       
-//       if(dapPath.indexOf("opendap")==0){
-//         //THIS is OPENDAP!
-//         CT::string* items = dapPath.splitToArray("?");
-//         COpenDAPHandler::HandleOpenDAPRequest(items[0].c_str(),pszQueryString,srvParam);
-//         delete[] items;
-//         return 0;
-//       }
-//     }
-//   }
-//   
+  /**
+   * Check for OPENDAP
+   */
+  if (srvParam->cfg->OpenDAP.size()==1){
+    if(srvParam->cfg->OpenDAP[0]->attr.enabled.equals("true")){
+      CT::string defaultPath = "opendap";
+      if(srvParam->cfg->OpenDAP[0]->attr.path.empty()==false){
+        defaultPath = srvParam->cfg->OpenDAP[0]->attr.path.c_str();
+      }
+      const char *SCRIPT_NAME =getenv("SCRIPT_NAME");
+      const char *REQUEST_URI =getenv("REQUEST_URI");
+      if(SCRIPT_NAME!=NULL && REQUEST_URI!=NULL){
+        size_t SCRIPT_NAME_length = strlen(SCRIPT_NAME);
+        size_t REQUEST_URI_length = strlen(REQUEST_URI);
+        if(REQUEST_URI_length>SCRIPT_NAME_length+1){
+          CT::string dapPath = REQUEST_URI + (SCRIPT_NAME_length+1);
+          
+          if(dapPath.indexOf(defaultPath.c_str())==0){
+            //THIS is OPENDAP!
+            CT::string* items = dapPath.splitToArray("?");
+            COpenDAPHandler::HandleOpenDAPRequest(items[0].c_str(),pszQueryString,srvParam);
+            delete[] items;
+            return 0;
+          }
+        }
+      }
+    }
+  }
+  
   
   
   if(pszQueryString==NULL){

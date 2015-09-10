@@ -61,10 +61,10 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type){
 
 int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type,size_t *start,size_t *count,ptrdiff_t *stride){
 
-  if(var->dimensionlinks.size()==0){
-    CDBError("No dimensions specified for variable %s",var->name.c_str());
-    return 1;
-  }
+//   if(var->dimensionlinks.size()==0){
+//     CDBError("No dimensions specified for variable %s",var->name.c_str());
+//     return 1;
+//   }
   
   if(cdfCache!=NULL){
     #ifdef CCDFNETCDFIO_DEBUG_OPEN        
