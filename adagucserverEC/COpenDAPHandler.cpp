@@ -1,6 +1,7 @@
 #include "COpenDAPHandler.h"
 #include "CRequest.h"
 #include "CDBFactory.h"
+#include "CAutoResource.h"
 const char * COpenDAPHandler::className = "COpenDAPHandler";
 
 //References: http://opendap.org/pdf/ESE-RFC-004v1.2.pdf
@@ -101,11 +102,11 @@ int putVariableData(CDF::Variable *v){
     written+=typeSize;
   }
   //Padding bytes to sequences of four.
-  while(int(written/4)*4 !=written){
-    putc(0,stdout);
-    written++;
-    bytesWritten++;
-  }
+//   while(int(written/4)*4 !=written){
+//     putc(0,stdout);
+//     written++;
+//     bytesWritten++;
+//   }
   fflush(stdout);
   return 0;
 }
@@ -118,12 +119,15 @@ int COpenDAPHandler::HandleOpenDAPRequest(const char *path,const char *query,CSe
   #endif
   CDBDebug("OpenDAP Received [%s] [%s]",path,query);
   CT::string dapName = path+8;
-  CT::string layerName  = dapName;
+  CT::string layerName  = "";
   CT::string pathQuery = "";
   bool isDDSRequest = false;
   bool isDASRequest = false;
   bool isDODRequest = false;
   dapName.decodeURLSelf();
+  
+  //CDBDebug("dapName: %s",dapName.c_str());
+
   //dapName.replaceSelf("%20"," ");
   int i = dapName.lastIndexOf(".dds");
   if(i != -1){
@@ -153,7 +157,33 @@ int COpenDAPHandler::HandleOpenDAPRequest(const char *path,const char *query,CSe
     }
   }
   
-
+  if(isDDSRequest == false && isDASRequest == false && isDODRequest == false){
+    CDBError("Not a valid OpenDAP request received, e.g. use .dds, .das");
+    return 1;
+  }
+  
+  //Check if a dataset/dataURL was given
+  CT::string dataURL = "";
+  int lastSlash = layerName.lastIndexOf("/");
+  if(lastSlash !=-1){
+    dataURL = layerName.substring(0,lastSlash);
+    layerName = layerName.substring(lastSlash+1,-1);
+    
+    
+  }
+  
+/*  
+  CDBDebug("dataURL: %s",dataURL.c_str());
+  CDBDebug("layerName: %s",layerName.c_str());*/
+  
+  if(dataURL.length()>0){
+    srvParam->autoResourceLocation = dataURL;
+    if(CAutoResource::configure(srvParam)!=0){
+      CDBError("AutoResource failed");
+      return 1;
+    }
+  }
+  
   #ifdef COPENDAPHANDLER_DEBUG
   CDBDebug("Layername = %s",layerName.c_str());
   CDBDebug("pathQuery = %s",pathQuery.c_str());
@@ -746,23 +776,39 @@ CDBDebug("Found layer %s",layerName.c_str());
       output.concat("Attributes {\n");
       for(size_t j=0;j<cdfObject->variables.size();j++){
         CDF::Variable *v = cdfObject->variables[j];
+        //if(v->name.equals("custom")==false)
+        {
         output.printconcat("    %s {\n",v->name.c_str());
         for(size_t j=0;j<v->attributes.size();j++){
-          output.printconcat("        %s %s ",CDFTypeToOpenDAPType::getatt(v->attributes[j]->type).c_str(),v->attributes[j]->name.c_str());
-          if(v->attributes[j]->type == CDF_CHAR){
-            output.concat("\"");
-            CT::string s = v->attributes[j]->getDataAsString().c_str();
-            //s.encodeURLSelf();
-            //s.replaceSelf(":","");
-            //s.replaceSelf("[","");
-            output.concat(s.c_str());
-            if(v->attributes[j]->type == CDF_CHAR)output.concat("\"");
-          }else{
-            output.concat(v->attributes[j]->getDataAsString().c_str());
+          //if(v->attributes[j]->name.charAt(0)!='_'&&v->attributes[j]->type!=CDF_DOUBLE)
+          {
+            CT::string attrName = v->attributes[j]->name;
+            attrName.replaceSelf(" ","_");
+            attrName.replaceSelf("\"","_");
+            attrName.replaceSelf("[","_");
+            attrName.replaceSelf("]","_");
+            output.printconcat("        %s %s ",CDFTypeToOpenDAPType::getatt(v->attributes[j]->type).c_str(),attrName.c_str());
+            if(v->attributes[j]->type == CDF_CHAR){
+              output.concat("\"");
+              CT::string s = v->attributes[j]->getDataAsString().c_str();
+            
+              //s.encodeURLSelf();
+//               s.replaceSelf(":","");
+//               s.replaceSelf("[","");
+              s.replaceSelf("\"","\\\"");
+              
+              output.concat(s.c_str());
+              if(v->attributes[j]->type == CDF_CHAR)output.concat("\"");
+            }else{
+              CT::string s= v->attributes[j]->getDataAsString();
+              s.replaceSelf(" ",",");
+              output.concat(s.c_str());
+            }
+            output.printconcat(";\n",v->attributes[j]->name.c_str());
           }
-          output.printconcat(";\n",v->attributes[j]->name.c_str());
         }
         output.concat("    }\n");
+      }
       }
       output.printconcat("}");
       printf("%s\n",output.c_str());
