@@ -57,6 +57,7 @@ int CDF::Variable::readData(CDFType readType,size_t *_start,size_t *_count,ptrdi
    freeData();
   }
  if(data!=NULL){
+   //TODO Check start,stop, stride settings first!!!
 #ifdef CCDFDATAMODEL_DEBUG            
      CDBDebug("Data is already defined");
 #endif     
@@ -87,13 +88,21 @@ int CDF::Variable::readData(CDFType readType,size_t *_start,size_t *_count,ptrdi
     hasFillValue = true;
   }catch(int e){}
   
-  if(readType!=-1)scaleType=readType;
+  if(readType!=-1){
+    if(readType!=CDF_FLOAT&&readType!=CDF_DOUBLE){
+      CDBError("Unable to apply scale offset for readtype %s",CDF::getCDFDataTypeName(readType).c_str());
+      return 1;
+    }else{
+      scaleType=readType;
+    }
+  }
   int status = readData(scaleType,_start,_count,_stride);
   if(status != 0)return status;
   //CDBDebug("applyScaleOffset = %f %f",scaleFactor,addOffset);
   //Apply scale and offset
   if(scaleFactor!=1||addOffset!=0){
   size_t lsize= getSize();
+  //CDBDebug("ScaleType = %s",CDF::getCDFDataTypeName(scaleType).c_str());
     if(scaleType == CDF_FLOAT){
       float *scaleData = (float*)data;
       float fscale = float(scaleFactor);
