@@ -120,4 +120,16 @@
     virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode);
   };
 
+  /**
+  * Radar dbZ to Rain intensity algorithm 
+  */
+  class CDPDBZtoRR : public CDPPInterface{
+  private:
+    DEF_ERRORFUNCTION();
+    float getRR(float dbZ);
+  public:
+    virtual const char *getId();
+    virtual int isApplicable(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource);
+    virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode);
+  };
 #endif
