@@ -50,7 +50,7 @@ private:
     * @param srvParam The serverparams
     * returns 0 on success.
     */
-  static int configureAutoResource(CServerParams *srvParam);
+  static int configureAutoResource(CServerParams *srvParam,bool plain);
   
   /**
     * configures Dataset, based on  srvParam->datasetLocation parameter. Used for KDC inspire
@@ -58,7 +58,7 @@ private:
     * @param srvParam The serverparams
     * returns 0 on success.
     */
-  static int configureDataset(CServerParams *srvParam);
+  static int configureDataset(CServerParams *srvParam,bool plain);
   
 public:
   /**
@@ -66,8 +66,9 @@ public:
    * Usually based on &SOURCE= and &DATASET= key value pairs in WMS urls.
    * Modifies the configuration object in serverparams.
    * @param srvParam The serverparams
+   * @param plain Serve data as plain as possible, when set to true. no point/swath/curvilinear transformation is applied
    * returns 0 on success.
    */
-  static int configure(CServerParams *srvParam);
+  static int configure(CServerParams *srvParam,bool plain);
 };
 #endif

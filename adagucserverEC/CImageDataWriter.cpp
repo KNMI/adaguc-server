@@ -620,6 +620,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
   int status = 0;
   
   for(size_t d=0;d<dataSources.size();d++){
+    
     GetFeatureInfoResult  *getFeatureInfoResult = new GetFeatureInfoResult();
     getFeatureInfoResultList.push_back(getFeatureInfoResult);
      bool headerIsAvailable = false;

@@ -944,10 +944,11 @@ class CServerConfig:public CXMLSerializerInterface{
     public:
       class Cattr{
       public:
-        CXMLString replace;
+        CXMLString replace,style;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if (equals("replace",7,attrname)){attr.replace.copy(attrvalue);return;}
+        else if (equals("style",5,attrname)){attr.style.copy(attrvalue);return;}
       }
     };
     

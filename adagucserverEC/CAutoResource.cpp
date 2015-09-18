@@ -5,14 +5,14 @@
 
 const char *CAutoResource::className = "CAutoResource";
 
-int CAutoResource::configure(CServerParams *srvParam){
+int CAutoResource::configure(CServerParams *srvParam,bool plain){
   int status;
-  status = configureDataset(srvParam);if(status!=0)return status;
-  status = configureAutoResource(srvParam);if(status!=0)return status;
+  status = configureDataset(srvParam,plain);if(status!=0)return status;
+  status = configureAutoResource(srvParam,plain);if(status!=0)return status;
   return 0;
 };
   
-int CAutoResource::configureDataset(CServerParams *srvParam){
+int CAutoResource::configureDataset(CServerParams *srvParam,bool plain){
   //Configure the server based an an available dataset
   if(srvParam->datasetLocation.empty()==false){
     //datasetLocation is usually an inspire dataset unique identifier
@@ -94,7 +94,7 @@ int CAutoResource::configureDataset(CServerParams *srvParam){
   return 0;
 };
 
-int CAutoResource::configureAutoResource(CServerParams *srvParam){
+int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
   // Configure the server automically based on an OpenDAP resource
   if(srvParam->autoResourceLocation.empty()==false){
     srvParam->internalAutoResourceLocation=srvParam->autoResourceLocation.c_str();
@@ -150,12 +150,18 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam){
       srvParam->autoResourceVariable.copy("");
       //Open the opendap resource
       CDBDebug("OGC REQUEST Remote resource %s",srvParam->internalAutoResourceLocation.c_str());
-      CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(srvParam,srvParam->internalAutoResourceLocation.c_str());
+      CDFObject * cdfObject =  NULL;
+      if(plain == false){
+        cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(srvParam,srvParam->internalAutoResourceLocation.c_str());
+      }else{
+        cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(srvParam,srvParam->internalAutoResourceLocation.c_str());
+       
+      }
       //int status=cdfObject->open(srvParam->internalAutoResourceLocation.c_str());
       if(cdfObject!=NULL){
         for(size_t j=0;j<cdfObject->variables.size();j++){
-          if(cdfObject->variables[j]->dimensionlinks.size()>=2){
-            if(cdfObject->variables[j]->getAttributeNE("ADAGUC_SKIP")==NULL){
+          if(cdfObject->variables[j]->dimensionlinks.size()>=2||plain==true){
+            if(cdfObject->variables[j]->getAttributeNE("ADAGUC_SKIP")==NULL||plain==true){
               if(!cdfObject->variables[j]->name.equals("lon")&&
                 !cdfObject->variables[j]->name.equals("lat")&&
                 !cdfObject->variables[j]->name.equals("lon_bounds")&&
@@ -190,7 +196,13 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam){
     StopWatch_Stop("Opening file");
     #endif
     //CDBDebug("Opening %s",srvParam->internalAutoResourceLocation.c_str());
-    CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(srvParam,srvParam->internalAutoResourceLocation.c_str());
+    CDFObject * cdfObject =  NULL;
+    if(plain == false){
+      cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(srvParam,srvParam->internalAutoResourceLocation.c_str());
+    }else{
+      cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(srvParam,srvParam->internalAutoResourceLocation.c_str());
+     
+    }
     //int status=cdfObject->open(srvParam->internalAutoResourceLocation.c_str());
     if(cdfObject==NULL){
       CDBError("Unable to open resource %s",srvParam->autoResourceLocation.c_str());

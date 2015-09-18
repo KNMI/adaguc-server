@@ -754,9 +754,9 @@ int CRequest::process_wms_getmap_request(){
 
 
 
-int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *srvParam){
+int CRequest::setDimValuesForDataSource(CDataSource *dataSource,CServerParams *srvParam){
   #ifdef CREQUEST_DEBUG
-    StopWatch_Stop("[getDimValuesForDataSource]");
+    StopWatch_Stop("[setDimValuesForDataSource]");
   #endif
   int status = 0;
   try{
@@ -1038,7 +1038,7 @@ int CRequest::getDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
     return 2;
   }
   #ifdef CREQUEST_DEBUG
-    StopWatch_Stop("[/getDimValuesForDataSource]");
+    StopWatch_Stop("[/setDimValuesForDataSource]");
   #endif
   return 0;
 }
@@ -1072,14 +1072,12 @@ int CRequest::process_all_layers(){
     for(size_t j=0;j<srvParam->WMSLayers->count;j++){
       size_t layerNo=0;
       for(layerNo=0;layerNo<srvParam->cfg->Layer.size();layerNo++){
-         
+   
 
               
         srvParam->makeUniqueLayerName(&layerName,srvParam->cfg->Layer[layerNo]);
         //CDBError("comparing (%d) %s==%s",j,layerName.c_str(),srvParam->WMSLayers[j].c_str());
         if(layerName.equals(srvParam->WMSLayers[j].c_str())){
-    
-       
           CDataSource *dataSource = new CDataSource ();
           dataSources.push_back(dataSource);
           if(dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[layerNo],layerName.c_str(),j)!=0){
@@ -1107,20 +1105,24 @@ int CRequest::process_all_layers(){
               srvParam->makeUniqueLayerName(&additional,srvParam->cfg->Layer[additionalLayerNo]);
               //CDBDebug("comparing for additionallayer %s==%s", additionalLayerName.c_str(), additional.c_str());
               if (additionalLayerName.equals(additional)) {
-                CDBDebug("Adding %s", additionalLayerName.c_str());
-                CDataSource *dataSource = new CDataSource ();
+                CDataSource *additionalDataSource = new CDataSource ();
                 
                 
-                if(dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[additionalLayerNo],additionalLayerName.c_str(),j)!=0){
-                  delete dataSource;
+                if(additionalDataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[additionalLayerNo],additionalLayerName.c_str(),j)!=0){
+                  delete additionalDataSource;
                   return 1;
                 }
                 bool add = true;
+               
+                CDataSource *checkForData = new CDataSource ();
+                checkForData->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[additionalLayerNo],additionalLayerName.c_str(),j);
                 try{
-                  if(getDimValuesForDataSource(dataSource,srvParam)!=0)add = false;
+                if(setDimValuesForDataSource(checkForData,srvParam)!=0)add = false;
                 }catch(ServiceExceptionCode e){
                   add = false;
                 }
+                delete checkForData;
+            
                 if(add){
                   if(replaceAllDataSource){
                     for(size_t j=0;j<dataSources.size();j++){
@@ -1135,9 +1137,14 @@ int CRequest::process_all_layers(){
                       }
                     }
                   }
-                  dataSources.push_back(dataSource);
+                  if(additionalLayer->attr.style.empty()==false){
+                    additionalDataSource->setStyle(additionalLayer->attr.style.c_str());
+                  }else{
+                    additionalDataSource->setStyle("default");
+                  }
+                  dataSources.push_back(additionalDataSource);
                 }else{
-                  delete dataSource;
+                  delete additionalDataSource;
                 }
                 
                 break;
@@ -1153,7 +1160,6 @@ int CRequest::process_all_layers(){
       }
     }
   }
-
 
 
 
@@ -1229,8 +1235,8 @@ int CRequest::process_all_layers(){
       }
       if(dataSources[j]->cfgLayer->Dimension.size()!=0){
         try{
-          if(getDimValuesForDataSource(dataSources[j],srvParam)!=0){
-            CDBError("Error in getDimValuesForDataSource: Unable to find data for layer %s",dataSources[j]->layerName.c_str());
+          if(setDimValuesForDataSource(dataSources[j],srvParam)!=0){
+            CDBError("Error in setDimValuesForDataSource: Unable to find data for layer %s",dataSources[j]->layerName.c_str());
             return 1;
           }
         }catch(ServiceExceptionCode e){
@@ -1267,6 +1273,8 @@ int CRequest::process_all_layers(){
         dataSources[j]->getCDFDims()->addDimension("time","0",0);
     }
   }
+  
+  
   
   int j=0;
   
@@ -2233,7 +2241,7 @@ int CRequest::process_querystring(){
   
   
   if(dErrorOccured == 0){
-    if(CAutoResource::configure(srvParam)!=0){
+    if(CAutoResource::configure(srvParam,false)!=0){
       CDBError("AutoResource failed");
       return 1;
     }

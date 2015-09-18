@@ -1110,16 +1110,53 @@ CStyleConfiguration *CDataSource::getStyle(){
       }
       delete legendList;
     }
-//    #ifdef CDATASOURCE_DEBUG      
-//     CDBDebug("Dumping style:");
-//     CT::string styleDump;
-//     _currentStyle->printStyleConfig(&styleDump);
-//   
-//  
-//     CDBDebug("styleDump:\n%s",styleDump.c_str());
-//     #endif
-  
   }
   
   return _currentStyle;
 }
+
+
+
+int CDataSource::setStyle(const char *styleName){
+  if(_styles == NULL){
+    _styles = getStyleListForDataSource(this);
+  }
+  if(_styles->size() == 0){
+    CDBError("There are no styles available");
+    return 1;
+  }
+  
+  _currentStyle = _styles->get(0);
+  bool foundStyle = false;
+  for(size_t j=0;j<_styles->size();j++){
+    if(_styles->get(j)->styleCompositionName.equals(styleName)){
+      
+        _currentStyle=_styles->get(j);
+        foundStyle = true;
+        break;
+    }
+  }
+  
+  if(foundStyle == false){
+    CDBWarning("Unable to find style %s. Available styles:",styleName);
+    for(size_t j=0;j<_styles->size();j++){
+        CDBWarning("  -%s",_styles->get(j)->styleCompositionName.c_str());
+    }
+  }
+  
+  if(_currentStyle->styleIndex == -1){
+    int status = makeStyleConfig(_currentStyle,this);//,styleNames->get(i)->c_str(),legendList->get(l)->c_str(),renderMethods->get(r)->c_str());
+    if(status == -1){
+      _currentStyle->hasError=true;
+    }
+  }
+  if(_currentStyle->legendIndex == -1){
+    CT::PointerList<CT::string*> *legendList = getLegendListForDataSource(this,NULL);
+    if(legendList!=NULL){
+      _currentStyle->legendIndex = getServerLegendIndexByName(legendList->get(0)->c_str(),this->cfg->Legend);
+    }
+    delete legendList;
+  }
+  if(_currentStyle->hasError)return 1;
+  return 0;
+};
