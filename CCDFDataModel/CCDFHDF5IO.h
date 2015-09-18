@@ -125,9 +125,13 @@ class CDFHDF5Reader :public CDFReader{
         
         CDBDebug("Start reading %s",var->name.c_str());
        
-        int status =  var->readData(var->getType(),newstart,count,stride,false);
-        thisVar->setType(var->getType());
-        if(status != 0)return status;
+        CDFType readType = thisVar->getType();
+        int status =  var->readData(readType,newstart,count,stride,true);
+        
+        if(status != 0){
+          CDBError("CustomForecastReader: Unable to read variable %s",thisVar->name.c_str());
+          return 1;
+        }
         
         CDF::freeData(&thisVar->data);
         int size = 1;
@@ -141,6 +145,8 @@ class CDFHDF5Reader :public CDFReader{
           CDBError("Unable to copy data");
           throw("__LINE__");
         }
+        
+        
                 
         return 0;
       }
@@ -762,7 +768,7 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
       if(isForecastData){
         CDF::Variable *forecast= new CDF::Variable();
         forecast->setName("forecast");
-        forecast->setType(cdfObject->getVariable("image1.image_data")->getType());
+        forecast->setType(CDF_FLOAT); //Forces new type to float
         forecast->dimensionlinks.push_back(timeDim);
         forecast->dimensionlinks.push_back(dimY);
         forecast->dimensionlinks.push_back(dimX);
@@ -770,9 +776,9 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
         forecastReader = new CustomForecastReader();
         forecast->setCustomReader(forecastReader);
         cdfObject->addVariable(forecast);
-      }
-             
-          
+      }  
+      
+      
       
       //Loop through all images and set grid_mapping name
       CT::string varName;
@@ -813,8 +819,15 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
             
             //Set no data value
             //Get nodatavalue:
+            // Get calibration group: First check if one is defined for specified image number, if not, use from image 1.
+            
             varName.print("image%d.calibration",v);
             CDF::Variable *calibration = cdfObject->getVariableNE(varName.c_str());
+            if(calibration==NULL){
+              varName.print("image%d.calibration",1);
+              calibration = cdfObject->getVariableNE(varName.c_str());
+            }
+            
             if(calibration!=NULL){
               CDF::Attribute *calibration_out_of_image = calibration->getAttributeNE("calibration_out_of_image"); 
               if(calibration_out_of_image!=NULL){
