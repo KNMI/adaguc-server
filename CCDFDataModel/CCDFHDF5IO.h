@@ -509,6 +509,9 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
       if(product==NULL){
         product = new CDF::Variable();
         product->name = "product";
+        product->setType(CDF_BYTE);
+        product->setSize(1);
+        if(CDF::allocateData(product->currentType,&product->data,1)){throw(__LINE__);}
         cdfObject->addVariable(product);
       }
       product->addAttribute(new CDF::Attribute("validity_start",szStartTime));
@@ -546,6 +549,8 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
       if(iso_dataset==NULL){
         iso_dataset = new CDF::Variable();
         iso_dataset->name = "iso_dataset";
+        iso_dataset->setType(CDF_BYTE);
+        if(CDF::allocateData(iso_dataset->currentType,&iso_dataset->data,1)){throw(__LINE__);}
         cdfObject->addVariable(iso_dataset);
       }
  
@@ -631,6 +636,7 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
         projection->setName("projection");
         projection->currentType=CDF_CHAR;
         projection->nativeType=CDF_CHAR;
+        if(CDF::allocateData(projection->currentType,&projection->data,1)){throw(__LINE__);}
         projection->isDimension=false;
       }
       
