@@ -272,6 +272,7 @@ CDPPExecutor::CDPPExecutor(){
   dataPostProcessorList->push_back(new CDPPMSGCPPVisibleMask());
   dataPostProcessorList->push_back(new CDPPMSGCPPHIWCMask());
   dataPostProcessorList->push_back(new CDPPBeaufort());
+  dataPostProcessorList->push_back(new CDPDBZtoRR());
   
 }
 
@@ -491,3 +492,48 @@ int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* d
   }
   return 0;
 }
+/************************/
+/*      CDPDBZtoRR     */
+/************************/
+const char *CDPDBZtoRR::className="CDPDBZtoRR";
+
+const char *CDPDBZtoRR::getId(){
+  return "dbztorr";
+}
+int CDPDBZtoRR::isApplicable(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource){
+  CDBDebug("isApplicable called for dbztorr");
+  if(proc->attr.algorithm.equals("dbztorr")){
+    return CDATAPOSTPROCESSOR_RUNAFTERREADING;
+  }
+  return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
+}
+
+float CDPDBZtoRR::getRR(float dbZ) {
+  return pow((pow(10,dbZ/10.)/200),1/1.6);
+}
+
+int CDPDBZtoRR::execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode){
+  CDBDebug("CDPDBZtoRR::execute mode %d", mode);
+  if(isApplicable(proc,dataSource)!=CDATAPOSTPROCESSOR_RUNAFTERREADING){
+    return -1;
+  }
+  CDBDebug("Applying dbztorr %d", mode==CDATAPOSTPROCESSOR_RUNAFTERREADING);
+  if(mode==CDATAPOSTPROCESSOR_RUNAFTERREADING){  
+    dataSource->getDataObject(0)->cdfVariable->setAttributeText("units","mm/hr");
+    dataSource->getDataObject(0)->units="mm/hr";
+    size_t l=(size_t)dataSource->dHeight*(size_t)dataSource->dWidth;
+    float *src=(float*)dataSource->getDataObject(0)->cdfVariable->data;
+    float noDataValue=dataSource->getDataObject(0)->dfNodataValue;
+    for (size_t cnt=0; cnt<l; cnt++) {
+      float dbZ = *src;
+      if (dbZ==dbZ) {
+        if (dbZ!=noDataValue) {
+          *src=getRR(dbZ);
+        }
+      }
+      src++;
+    }
+  }
+  return 0;    
+}
+
