@@ -411,6 +411,13 @@ private:
   static int makeStyleConfig(CStyleConfiguration *styleConfig,CDataSource *dataSource);//,const char *styleName,const char *legendName,const char *renderMethod);
   //static void getStyleConfigurationByName(const char *styleName,CDataSource *dataSource);
   
+  /**
+   * Sets the style by name, can be a character string.
+   * @param styleName The name of the style
+   * returns zero on success.
+   */
+  int setStyle(const char *styleName);
+  
 };
 
 #endif

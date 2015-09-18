@@ -141,7 +141,7 @@ CDFObject *CDFObjectStore::getCDFObjectHeaderPlain(CServerParams *srvParams,cons
     CDBError("srvParams == NULL");
     return NULL;
   }
-  
+
   return getCDFObject(NULL,srvParams,fileName,true);
 }
 
@@ -255,6 +255,8 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *s
   cdfObjects.push_back(cdfObject);
   cdfReaders.push_back(cdfReader);
   
+  
+
   
   if(plain == false){
     bool level2CompatMode = false;

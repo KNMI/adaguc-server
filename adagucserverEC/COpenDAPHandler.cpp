@@ -5,6 +5,7 @@
 const char * COpenDAPHandler::className = "COpenDAPHandler";
 
 //References: http://opendap.org/pdf/ESE-RFC-004v1.2.pdf
+//https://earthdata.nasa.gov/files/ESE-RFC-004v1.1.pdf
 
 //http://opendap.knmi.nl/knmi/thredds/dodsC/ADAGUC/testsets/opendaptests/x4.nc
 // wget "http://bhw485.knmi.nl:8080/cgi-bin/list.cgi/opendap/test2.nc.dods" -O /tmp/dat.txt && hexdump -C /tmp/dat.txt
@@ -17,6 +18,100 @@ const char * COpenDAPHandler::className = "COpenDAPHandler";
 //wget --certificate /usr/people/plieger/impactspace/esg-dn1.nsc.liu.se.esgf-idp.openid.maartenplieger/certs/creds.pem --no-check-certificate https://bhw485.knmi.nl:8281/impactportal/DAP/esg-dn1.nsc.liu.se.esgf-idp.openid.maartenplieger/x4.nc.dods?x -O /tmp/dat.txt && hexdump -C /tmp/dat.txt
 
 //#define COPENDAPHANDLER_DEBUG
+class CDFTypeToOpenDAPType{
+public:
+  static CT::string getvar(const int type){
+    CT::string rtype="unknown";
+    if(type==CDF_NONE  )rtype=("CDF_NONE");
+    if(type==CDF_BYTE  )rtype=("Byte");
+    if(type==CDF_UBYTE )rtype=("Byte");
+    if(type==CDF_CHAR  )rtype=("String");
+    if(type==CDF_SHORT )rtype=("Int16");
+    if(type==CDF_USHORT)rtype=("UInt16");
+    if(type==CDF_INT   )rtype=("Int32");
+    if(type==CDF_UINT  )rtype=("Uint32");
+    if(type==CDF_FLOAT )rtype=("Float32");
+    if(type==CDF_DOUBLE)rtype=("Float64");
+    if(type==CDF_STRING)rtype=("String");
+    return rtype;
+  }
+    static CT::string getatt(const int type){
+    CT::string rtype="unknown";
+    if(type==CDF_NONE  )rtype=("CDF_NONE");
+    if(type==CDF_BYTE  )rtype=("Byte");
+    if(type==CDF_UBYTE )rtype=("Byte");
+    if(type==CDF_CHAR  )rtype=("String");
+    if(type==CDF_SHORT )rtype=("Int16");
+    if(type==CDF_USHORT)rtype=("UInt16");
+    if(type==CDF_INT   )rtype=("Int32");
+    if(type==CDF_UINT  )rtype=("Uint32");
+    if(type==CDF_FLOAT )rtype=("Float32");
+    if(type==CDF_DOUBLE)rtype=("Float64");
+    if(type==CDF_STRING)rtype=("String");
+    return rtype;
+  }
+};
+
+    
+int COpenDAPHandler::getDimSize(CDataSource *dataSource, const char *name){
+  #ifdef COPENDAPHANDLER_DEBUG
+  CDBDebug("getDimSize There are %d dims for %s",dataSource->cfgLayer->Dimension.size(),name);
+  #endif
+  //First check wether dims are configured in the DataBase
+  for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
+    #ifdef COPENDAPHANDLER_DEBUG
+    CDBDebug("getDimSize Checking : %s",dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+    #endif
+    if(dataSource->cfgLayer->Dimension[d]->attr.name.equals(name)){
+      #ifdef COPENDAPHANDLER_DEBUG
+      CDBDebug("getDimSize found : %s",dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+      #endif
+      CT::string tableName;
+      CT::string dim = dataSource->cfgLayer->Dimension[d]->attr.name.c_str();
+                
+      try{
+        tableName =  CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),dim.c_str(),dataSource);
+      }catch(int e){
+        CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dim.c_str());
+        return -1;
+      }
+      #ifdef COPENDAPHANDLER_DEBUG
+      CDBDebug("getDimSize tableName = %s",tableName.c_str());
+      #endif
+      size_t dimSize = 0;
+      CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getUniqueValuesOrderedByValue(dim.c_str(),0,true,tableName.c_str());
+      if(store!=NULL){
+        if(store->size()!=0){
+          #ifdef COPENDAPHANDLER_DEBUG
+          CDBDebug("getDimSize %d",store->size());
+          #endif
+          dimSize = store->size();
+        }
+      }
+      delete store;
+      #ifdef COPENDAPHANDLER_DEBUG
+      CDBDebug("getDimSize DimSize from DB for dim %s = %d",dim.c_str(),dimSize);
+      #endif
+      return dimSize;
+    }
+  }
+  
+  //Check wether we can find the dim in the netcdf file
+  try{
+    #ifdef COPENDAPHANDLER_DEBUG
+    CDBDebug("getDimSize Trying to lookup in cdfObject");
+    #endif
+    CDF::Dimension *v= CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(dataSource->srvParams,dataSource->getFileName())->getDimension(name);
+    #ifdef COPENDAPHANDLER_DEBUG
+    CDBDebug("Length = %d",v->length);
+    #endif
+    return v->length;
+  }catch(int e){
+  }
+  CDBError("getDimSize failed");
+  return -1;
+}
+
 
 CT::string COpenDAPHandler::VarInfoToString(std::vector <VarInfo> selectedVariables){
   CT::string r;
@@ -28,6 +123,37 @@ CT::string COpenDAPHandler::VarInfoToString(std::vector <VarInfo> selectedVariab
   }
   return r;
 }
+
+CT::string COpenDAPHandler::createDDSHeader(CT::string layerName, CDFObject *cdfObject ,std::vector <VarInfo> selectedVariables){
+  /* Print DODS and DDS header */
+  CT::string output = "";
+  output.concat("Dataset {\n");
+  for(size_t i=0;i<selectedVariables.size();i++){
+    for(size_t j=0;j<cdfObject->variables.size();j++){
+      CDF::Variable *v = cdfObject->variables[j];
+      CDFType type = (CDFType)v->getType();
+
+      if( selectedVariables[i].name.equals(&v->name)){
+        output.printconcat("    %s ",CDFTypeToOpenDAPType::getvar(type).c_str());
+        output.concat(v->name.c_str());
+        for(size_t j=0;j<v->dimensionlinks.size();j++){
+          int size  = -1;
+          if(selectedVariables[i].dimInfo.size() == v->dimensionlinks.size()){
+            size = selectedVariables[i].dimInfo[j].count;
+          }
+          output.printconcat("[%s = %d]",v->dimensionlinks[j]->name.c_str(),size);
+        }
+        if(v->dimensionlinks.size() == 0 &&v->getType()!=CDF_CHAR){
+          output.printconcat("[%d]",1);
+        }
+        output.concat(";\n");
+      }
+    }
+  }
+  output.printconcat("} %s;\n",layerName.c_str());
+  return output;
+}
+
 
 
 int bytesWritten = 0;
@@ -64,50 +190,53 @@ void writeDouble(double &v){
 int putVariableDataSize(CDF::Variable *v){
  
   int a = v->getSize();
-  writeInt(a);
+  if(v->getType()!=CDF_CHAR)writeInt(a);
   writeInt(a);
   
   
   return 0;
 }
 
-int putVariableData(CDF::Variable *v){
+// int tdata = 48;
+int COpenDAPHandler::putVariableData(CDF::Variable *v,CDFType type){
   int written = 0;
-  size_t typeSize = CDF::getTypeSize(v->getType());
+  size_t typeSize = CDF::getTypeSize(type);
   
-//   if(v->getType()==CDF_FLOAT){
-//     for(size_t d=0;d<v->getSize();d++){
-//       //float b = 123.5*d;
-//      // unsigned char *data = ((float*)v->data);
-//       unsigned char const * p = reinterpret_cast<unsigned char const *>(&((float*)v->data)[d]);
-//     //   unsigned char a = 0;
-//       fwrite(&p[3],1,1,stdout);
-//       fwrite(&p[2],1,1,stdout);
-//       fwrite(&p[1],1,1,stdout);
-//       fwrite(&p[0],1,1,stdout);
-//       fflush(stdout);
-//       bytesWritten+=4;
-//     }
-//     return 0;
-//   }
+
+  
+  size_t varSize = v->getSize();
+  //CDBDebug("%s %d %d",v->name.c_str(),typeSize,varSize);
   unsigned char *data = (unsigned char*)v->data;
-  for(size_t d=0;d<v->getSize();d++){
+  for(size_t d=0;d<varSize;d++){
     for(size_t e=0;e<typeSize;e++){
-      //putc(48+d,stdout);
       putc(data[d*typeSize+(typeSize-1)-e],stdout);
+      //putc(tdata,stdout);
       
-      //putc(data[d*typeSize+e],stdout);
     }
     bytesWritten+=typeSize;
     written+=typeSize;
   }
-  //Padding bytes to sequences of four.
-//   while(int(written/4)*4 !=written){
-//     putc(0,stdout);
-//     written++;
-//     bytesWritten++;
-//   }
-  fflush(stdout);
+  
+  //Strings need to be '0' terminated.
+  if(type==CDF_CHAR){
+    varSize++;
+    putc(0,stdout);
+    written++;
+    bytesWritten++;
+  }
+  
+  //Bytes need to be padded to words of four bytes
+  if((typeSize==1&&varSize>1))
+  {
+    //Padding bytes to sequences of four.
+    while(int(written/4)*4 !=written){
+      CDBDebug("Padding");
+      putc(0,stdout);
+      written++;
+      bytesWritten++;
+    }
+  }
+  //fflush(stdout);
   return 0;
 }
 
@@ -178,7 +307,7 @@ int COpenDAPHandler::HandleOpenDAPRequest(const char *path,const char *query,CSe
   
   if(dataURL.length()>0){
     srvParam->autoResourceLocation = dataURL;
-    if(CAutoResource::configure(srvParam)!=0){
+    if(CAutoResource::configure(srvParam,true)!=0){
       CDBError("AutoResource failed");
       return 1;
     }
@@ -208,6 +337,19 @@ int COpenDAPHandler::HandleOpenDAPRequest(const char *path,const char *query,CSe
     CDBError("Unable to find layer %s",layerName.c_str());
     delete dataSource;
     return 1;
+//     CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(srvParam,srvParam->internalAutoResourceLocation.c_str());
+//     CDF::Variable *v = cdfObject->getVariableNE(layerName.c_str());
+//     if(v== NULL){
+//       CDBError("Unable to find layer %s",layerName.c_str());
+//       delete dataSource;
+//       return 1;
+//     }else{
+// //       if(dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[layerNo],intLayerName.c_str(),0)!=0){
+// //         CDBError("Error setCFGLayer");
+// //         return 1;
+// //       }
+// //       foundLayer = true;
+//     }
   }
       
       if(isDODRequest){
@@ -230,12 +372,12 @@ CDBDebug("Found layer %s",layerName.c_str());
         return 1;
       }
     }
-    if(dataSource->cfgLayer->Dimension.size()!=0){
-      if(CRequest::getDimValuesForDataSource(dataSource,srvParam)!=0){
-        CDBError("Unable to fill in dimensions");
-        return 1;
-      }
-    }else{
+//     if(dataSource->cfgLayer->Dimension.size()!=0){
+//       if(CRequest::getDimValuesForDataSource(dataSource,srvParam)!=0){
+//         CDBError("Unable to fill in dimensions");
+//         return 1;
+//       }
+//     }else{
       //This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.        
       #ifdef COPENDAPHANDLER_DEBUG      
       CDBDebug("This layer has no dims, adding one virtual time step.");
@@ -250,73 +392,10 @@ CDBDebug("Found layer %s",layerName.c_str());
       }
       dataSource->addStep(dirReader.fileList[0]->fullName.c_str(),NULL);
       dataSource->getCDFDims()->addDimension("time","0",0);
-    }
+//     }
   }
   
-  class DimQuery{
-  public:
-    
-    static int getDimSize(CDataSource *dataSource, const char *name){
-      #ifdef COPENDAPHANDLER_DEBUG
-      CDBDebug("getDimSize There are %d dims for %s",dataSource->cfgLayer->Dimension.size(),name);
-      #endif
-      //First check wether dims are configured in the DataBase
-      for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
-        #ifdef COPENDAPHANDLER_DEBUG
-        CDBDebug("getDimSize Checking : %s",dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
-        #endif
-        if(dataSource->cfgLayer->Dimension[d]->attr.name.equals(name)){
-          #ifdef COPENDAPHANDLER_DEBUG
-          CDBDebug("getDimSize found : %s",dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
-          #endif
-          CT::string tableName;
-          CT::string dim = dataSource->cfgLayer->Dimension[d]->attr.name.c_str();
-                    
-          try{
-            tableName =  CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),dim.c_str(),dataSource);
-          }catch(int e){
-            CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dim.c_str());
-            return -1;
-          }
-          #ifdef COPENDAPHANDLER_DEBUG
-          CDBDebug("getDimSize tableName = %s",tableName.c_str());
-          #endif
-          size_t dimSize = 0;
-          CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getUniqueValuesOrderedByValue(dim.c_str(),0,true,tableName.c_str());
-          if(store!=NULL){
-            if(store->size()!=0){
-              #ifdef COPENDAPHANDLER_DEBUG
-              CDBDebug("getDimSize %d",store->size());
-              #endif
-              dimSize = store->size();
-            }
-          }
-          delete store;
-          #ifdef COPENDAPHANDLER_DEBUG
-          CDBDebug("getDimSize DimSize from DB for dim %s = %d",dim.c_str(),dimSize);
-          #endif
-          return dimSize;
-        }
-      }
-      
-      //Check wether we can find the dim in the netcdf file
-      try{
-        #ifdef COPENDAPHANDLER_DEBUG
-        CDBDebug("getDimSize Trying to lookup in cdfObject");
-        #endif
-        CDF::Dimension *v= CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(dataSource->srvParams,dataSource->getFileName())->getDimension(name);
-        #ifdef COPENDAPHANDLER_DEBUG
-        CDBDebug("Length = %d",v->length);
-        #endif
-        return v->length;
-      }catch(int e){
-      }
-      CDBError("getDimSize failed");
-      return -1;
-    }
-
-  };
-
+  
   
   
   //Read the NetCDF header!
@@ -332,39 +411,7 @@ CDBDebug("Found layer %s",layerName.c_str());
 //     }
     
     
-    class CDFTypeToOpenDAPType{
-    public:
-      static CT::string getvar(const int type){
-        CT::string rtype="unknown";
-        if(type==CDF_NONE  )rtype=("CDF_NONE");
-        if(type==CDF_BYTE  )rtype=("Byte");
-        if(type==CDF_UBYTE )rtype=("Byte");
-        if(type==CDF_CHAR  )rtype=("Byte");
-        if(type==CDF_SHORT )rtype=("Int16");
-        if(type==CDF_USHORT)rtype=("UInt16");
-        if(type==CDF_INT   )rtype=("Int32");
-        if(type==CDF_UINT  )rtype=("Uint32");
-        if(type==CDF_FLOAT )rtype=("Float32");
-        if(type==CDF_DOUBLE)rtype=("Float64");
-        if(type==CDF_STRING)rtype=("String");
-        return rtype;
-      }
-       static CT::string getatt(const int type){
-        CT::string rtype="unknown";
-        if(type==CDF_NONE  )rtype=("CDF_NONE");
-        if(type==CDF_BYTE  )rtype=("Byte");
-        if(type==CDF_UBYTE )rtype=("Byte");
-        if(type==CDF_CHAR  )rtype=("String");
-        if(type==CDF_SHORT )rtype=("Int16");
-        if(type==CDF_USHORT)rtype=("UInt16");
-        if(type==CDF_INT   )rtype=("Int32");
-        if(type==CDF_UINT  )rtype=("Uint32");
-        if(type==CDF_FLOAT )rtype=("Float32");
-        if(type==CDF_DOUBLE)rtype=("Float64");
-        if(type==CDF_STRING)rtype=("String");
-        return rtype;
-      }
-    };
+
     
     CDFObject *cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(dataSource->srvParams,dataSource->getFileName());;// dataSource->getDataObject(0)->cdfObject;
       
@@ -413,6 +460,7 @@ CDBDebug("Found layer %s",layerName.c_str());
           #ifdef COPENDAPHANDLER_DEBUG
           CDBDebug("Push varinfo %s",varsettings[0].c_str());
           #endif
+          
           selectedVariables.push_back(VarInfo(varsettings[0].c_str()));
           //Retrieve other settings, like start,count,stride
           if(varsettings.size() > 1){
@@ -477,9 +525,10 @@ CDBDebug("Found layer %s",layerName.c_str());
           
           try{
             CDF::Variable *v = cdfObject->getVariable(varname.c_str());
+
             for(size_t j=0;j<v->dimensionlinks.size();j++){
               int size = v->dimensionlinks[j]->getSize();
-              int dimSize = DimQuery::getDimSize(dataSource,v->dimensionlinks[j]->name.c_str());
+              int dimSize = getDimSize(dataSource,v->dimensionlinks[j]->name.c_str());
               #ifdef COPENDAPHANDLER_DEBUG
               CDBDebug("Getting DimSize %d",dimSize);
               #endif
@@ -500,6 +549,15 @@ CDBDebug("Found layer %s",layerName.c_str());
         }
       }
       
+//       for (std::vector<VarInfo>::iterator it = selectedVariables.begin() ; it != selectedVariables.end(); ++it){
+//         if(it->name.equals("polar_stereographic")){
+//           selectedVariables.erase(it);
+//         }
+//       }
+
+      
+      
+      
       #ifdef COPENDAPHANDLER_DEBUG
       CT::string r = VarInfoToString(selectedVariables);
       
@@ -507,73 +565,21 @@ CDBDebug("Found layer %s",layerName.c_str());
       CDBDebug("]");
       #endif
       
-      
-      CT::string output = "";
-      output.concat("Dataset {\n");
-      for(size_t i=0;i<selectedVariables.size();i++){
-        for(size_t j=0;j<cdfObject->variables.size();j++){
-          CDF::Variable *v = cdfObject->variables[j];
-          if( selectedVariables[i].name.equals(&v->name)){
-            output.printconcat("    %s ",CDFTypeToOpenDAPType::getvar(v->getType()).c_str());
-            output.concat(v->name.c_str());
-            
-//             //This is the variable it is all about:            
-//             if(v == dataSource->getDataObject(0)->cdfVariable){
-//               //Add the dimensions which are not in the cdfVariable, but ara externally configured.
-//               for(size_t j=0;j<dataSource->cfgLayer->Dimension.size();j++){
-//                 CT::string dimname = dataSource->cfgLayer->Dimension[j]->attr.name;
-//                 try{
-//                   //Just throw an exception when not found.
-//                   v->getDimension(dimname.c_str())->getSize();
-//                 }catch(int e){
-//                   
-//                   int dimSize = DimQuery::getDimSize(dataSource,dimname.c_str());
-//                   #ifdef COPENDAPHANDLER_DEBUG
-//                   CDBDebug("Getting DimSize %d",dimSize);
-//                   #endif
-//                   if(selectedVariables[i].dimInfo.size() == dataSource->cfgLayer->Dimension.size()+2){
-//                     dimSize = selectedVariables[i].dimInfo[j].count;
-//                   }
-//                   if(isDDSRequest){
-//                     output.printconcat("[%s = %d]",dimname.c_str(),dimSize);
-//                   }else{
-//                     output.printconcat("[%d]",dimSize);
-//                   }
-//                 }
-//               }
-//             }
-              
-            
-            for(size_t j=0;j<v->dimensionlinks.size();j++){
-              int size  = -1;
-              if(selectedVariables[i].dimInfo.size() == v->dimensionlinks.size()){
-                size = selectedVariables[i].dimInfo[j].count;
-              }
-              if(isDDSRequest){
-                output.printconcat("[%s = %d]",v->dimensionlinks[j]->name.c_str(),size);
-              }else{
-                output.printconcat("[%d]",size);
-              }
-            }
-            
-            output.concat(";\n");
-          }
-        }
-      }
-      output.printconcat("} %s;\n",layerName.c_str());
-      //output.printconcat("} C/testsets/opendaptests/x4.nc;",layerName.c_str());
-      
+      CT::string output = createDDSHeader(layerName,cdfObject,selectedVariables);
       printf("%s\r\n",output.c_str());
-      fflush(stdout);
+      //fflush(stdout);
+      
       CDFObject* cdfObjectToRead = NULL;
       //Data request
       if(isDODRequest){
         //printf("0000000000"); 
         printf("Data:\r\n"); 
-        fflush(stdout);
+        //fflush(stdout);
         for(size_t i=0;i<selectedVariables.size();i++){
           for(size_t j=0;j<cdfObject->variables.size();j++){
             CDF::Variable *v = cdfObject->variables[j];
+            CDFType type = (CDFType)v->getType();
+
             if( selectedVariables[i].name.equals(&v->name)){
               #ifdef COPENDAPHANDLER_DEBUG
               CDBDebug("selectedVariables[i].dimInfo.size() = %d",selectedVariables[i].dimInfo.size());
@@ -641,7 +647,7 @@ CDBDebug("Found layer %s",layerName.c_str());
                       bool readFromDB=false;
                       //If variable name equals dimension name, values are stored in the database.
                       CTime time;
-                      if(v->isDimension&&v->getType()==CDF_DOUBLE){
+                      if(v->isDimension&&type==CDF_DOUBLE){
                         if(v->dimensionlinks.size()==1){
                           if(v->name.equals(v->dimensionlinks[0]->name)){
                             
@@ -674,6 +680,7 @@ CDBDebug("Found layer %s",layerName.c_str());
                         for(size_t j=0;j< v->dimensionlinks.size();j++){
                           CDBDebug("  start[%d] = %d %d %d",j,start[j],count[j],stride[j]);
                         }
+                        
                         #endif
                         if(readFromDB){
                           CT::string dimValue = store->getRecord(storeIndex)->get(1);
@@ -681,21 +688,21 @@ CDBDebug("Found layer %s",layerName.c_str());
                           
                           double value = time.dateToOffset(time.freeDateStringToDate(dimValue.c_str()));
                           #ifdef COPENDAPHANDLER_DEBUG
-                          CDBDebug("Dimension value  = [%s] units = [%s] standard_name = [%s]",dimValue.c_str(),dimUnits.c_str(),dimStandardName.c_str());
-                          CDBDebug("Convert value %f",value);
+                          CDBDebug("Dimension value from DB = [%s] units = [%s] standard_name = [%s]",dimValue.c_str(),dimUnits.c_str(),dimStandardName.c_str());
+                          //CDBDebug("Convert value %f",value);
                           #endif
                           writeDouble(value);
                         }
 
                         if(readFromDB == false){
                           CDF::Variable *variableToRead = cdfObjectToRead->getVariable(v->name.c_str());
-                          variableToRead->readData((CDFType)v->getType(),start,count,stride);
+                          variableToRead->readData(type,start,count,stride);
                           #ifdef COPENDAPHANDLER_DEBUG
-                          CDBDebug("Read %d elements with type %s with element size %d",variableToRead->getSize(),CDF::getCDFDataTypeName(variableToRead->getType()).c_str(), CDF::getTypeSize(variableToRead->getType()));
+                          CDBDebug("Read %d elements with type %s with element size %d",variableToRead->getSize(),CDF::getCDFDataTypeName(type).c_str(), CDF::getTypeSize(type));
                           #endif
 
                       
-                          putVariableData(variableToRead);
+                          putVariableData(variableToRead,type);
                         }
                       }
                     }
@@ -711,19 +718,19 @@ CDBDebug("Found layer %s",layerName.c_str());
                   #ifdef COPENDAPHANDLER_DEBUG
                   CDBDebug("Read all data for %s",v->name.c_str());
                   #endif
-                  int status = v->readData((CDFType)v->getType());
+                  int status = v->readData(type);
                   if(status!=0){
                     CDBError("Unable to read data for %s",v->name.c_str());
                     return -1;
                   }else{
                     putVariableDataSize(v);
-                    putVariableData(v);
+                    putVariableData(v,type);
                   }
                 }
                 
                 
-                //v->readData((CDFType)v->getType(),start,count,stride);
               }else{
+                // No aggregate dimension
                 #ifdef COPENDAPHANDLER_DEBUG
                 CDBDebug("Read data for %s",v->name.c_str());
                 #endif
@@ -741,31 +748,48 @@ CDBDebug("Found layer %s",layerName.c_str());
                     stride[k] = selectedVariables[i].dimInfo[k].stride;
                   }
                   #ifdef COPENDAPHANDLER_DEBUG
+                  CDBDebug("Variable %s",v->name.c_str());
                   for(size_t j=0;j< v->dimensionlinks.size();j++){
                             CDBDebug(" start[%d] = %d %d %d",j,start[j],count[j],stride[j]);
                           }
                   #endif
-                    status = v->readData((CDFType)v->getType(),start,count,stride);
+                    //v->freeData();
+                    status = v->readData(type,start,count,stride);
+//                     if(v->getType()==CDF_DOUBLE){
+//                       for(size_t j=0;j<v->getSize();j++){
+//                         CDBDebug("%f",((double*)v->data)[j]);
+//                       }
+//                     }
                 }else{
                   #ifdef COPENDAPHANDLER_DEBUG
                   CDBDebug("READ ALL");
                   #endif
-                  v->readData((CDFType)v->getType());
+               
+                  v->readData(type);
                 }
                 if(status!=0){
                   CDBError("Unable to read data for %s",v->name.c_str());
                   return -1;
                 }else{
                   putVariableDataSize(v);
-                  putVariableData(v);
+                  putVariableData(v,type);
                 }
               }
               
               
+              
+//               //Strings need to be null terminated
+//               if(type == CDF_CHAR){
+//                 CDBDebug("ADDING CHAR for %s",v->name.c_str());
+//                 putc(0,stdout);
+//                 putc(0,stdout);
+//                 putc(0,stdout);
+//                 
+//               }
             }
           }
         }
-        fflush(stdout);
+        //fflush(stdout);
       }
      
     }

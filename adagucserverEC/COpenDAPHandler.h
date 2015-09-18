@@ -43,6 +43,9 @@ private:
       
     };
   static CT::string VarInfoToString(std::vector <VarInfo> selectedVariables);
+  static int putVariableData(CDF::Variable *v,CDFType type);
+  static CT::string createDDSHeader(CT::string layerName, CDFObject *cdfObject ,std::vector <VarInfo> selectedVariables);
+  static int getDimSize(CDataSource *dataSource, const char *name);
 public:
   DEF_ERRORFUNCTION();
   static int HandleOpenDAPRequest(const char *path,const char *query,CServerParams *srvParams);

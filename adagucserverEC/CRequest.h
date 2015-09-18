@@ -177,12 +177,12 @@ private:
     int generateGetReferenceTimes(CDataSource *dataSource);
     int generateGetReferenceTimesDoc(CT::string *result,CDataSource *dataSource);
     int generateOGCDescribeCoverage(CT::string *XMLdocument);
-    
+    static int setDimValuesForDataSource(CDataSource *dataSource,CServerParams *srvParam);
     
     
     
   public:
-    static int getDimValuesForDataSource(CDataSource *dataSource,CServerParams *srvParam);
+    
     CRequest(){
       srvParam=new CServerParams();
     }
