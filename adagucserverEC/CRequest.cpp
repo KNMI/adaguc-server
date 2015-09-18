@@ -2258,10 +2258,12 @@ int CRequest::process_querystring(){
     if(srvParam->OGCVersion==WMS_VERSION_1_1_1){
       seterrormode(WMS_EXCEPTIONS_XML_1_1_1);
       //Check if default has been set for EXCEPTIONS
-      if ((dFound_Exceptions==0)&&(srvParam->cfg->WMS[0]->WMSExceptions.size()>0)) {
-        if (srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.defaultValue.empty()==false){
-          Exceptions=srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.defaultValue;
-          dFound_Exceptions=1;
+      if ((srvParam->requestType==REQUEST_WMS_GETMAP)||(srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC)){
+        if ((dFound_Exceptions==0)&&(srvParam->cfg->WMS[0]->WMSExceptions.size()>0)) {
+          if (srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.defaultValue.empty()==false){
+            Exceptions=srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.defaultValue;
+            dFound_Exceptions=1;
+          }
         }
       }
     }
@@ -2269,11 +2271,13 @@ int CRequest::process_querystring(){
     if(srvParam->OGCVersion==WMS_VERSION_1_3_0){
       seterrormode(WMS_EXCEPTIONS_XML_1_3_0);
       //Check if default has been set for EXCEPTIONS
-      if ((dFound_Exceptions==0)&&(srvParam->cfg->WMS[0]->WMSExceptions.size()>0)) {
-        if (srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.defaultValue.empty()==false){
-          Exceptions=srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.defaultValue; 
-          dFound_Exceptions=1;
-          CDBDebug("Changing default to `%s' ", Exceptions.c_str());
+      if ((srvParam->requestType==REQUEST_WMS_GETMAP)||(srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC)){
+        if ((dFound_Exceptions==0)&&(srvParam->cfg->WMS[0]->WMSExceptions.size()>0)) {
+          if (srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.defaultValue.empty()==false){
+            Exceptions=srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.defaultValue; 
+            dFound_Exceptions=1;
+            CDBDebug("Changing default to `%s' ", Exceptions.c_str());
+          }
         }
       }
       
@@ -2292,13 +2296,15 @@ int CRequest::process_querystring(){
     }
     
     if(dFound_Exceptions!=0){
-      //Overrule found EXCEPTIONS with value of WMSExceptions.default if force is set and default is defined
-      if (srvParam->cfg->WMS[0]->WMSExceptions.size()>0) {
-        if ((srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.defaultValue.empty()==false)&&
-            (srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.force.empty()==false)) {
-          if (srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.force.equals("true")) {
-            Exceptions=srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.defaultValue;
-            CDBDebug("Overruling default Exceptions %s", Exceptions.c_str());
+      if ((srvParam->requestType==REQUEST_WMS_GETMAP)||(srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC)){
+        //Overrule found EXCEPTIONS with value of WMSExceptions.default if force is set and default is defined
+        if (srvParam->cfg->WMS[0]->WMSExceptions.size()>0) {
+          if ((srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.defaultValue.empty()==false)&&
+              (srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.force.empty()==false)) {
+            if (srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.force.equals("true")) {
+              Exceptions=srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.defaultValue;
+              CDBDebug("Overruling default Exceptions %s", Exceptions.c_str());
+            }
           }
         }
       }
