@@ -25,7 +25,7 @@ public:
     if(type==CDF_NONE  )rtype=("CDF_NONE");
     if(type==CDF_BYTE  )rtype=("Byte");
     if(type==CDF_UBYTE )rtype=("Byte");
-    if(type==CDF_CHAR  )rtype=("String");
+    if(type==CDF_CHAR  )rtype=("Byte");
     if(type==CDF_SHORT )rtype=("Int16");
     if(type==CDF_USHORT)rtype=("UInt16");
     if(type==CDF_INT   )rtype=("Int32");
@@ -143,7 +143,7 @@ CT::string COpenDAPHandler::createDDSHeader(CT::string layerName, CDFObject *cdf
           }
           output.printconcat("[%s = %d]",v->dimensionlinks[j]->name.c_str(),size);
         }
-        if(v->dimensionlinks.size() == 0 &&v->getType()!=CDF_CHAR){
+        if(v->dimensionlinks.size() == 0 ){
           output.printconcat("[%d]",1);
         }
         output.concat(";\n");
@@ -187,11 +187,18 @@ void writeDouble(double &v){
   bytesWritten+=8;
 }
 
-int putVariableDataSize(CDF::Variable *v){
+int COpenDAPHandler::putVariableDataSize(CDF::Variable *v){
  
-  int a = v->getSize();
-  if(v->getType()!=CDF_CHAR)writeInt(a);
-  writeInt(a);
+  if(v->getType() != CDF_STRING){
+    int a = v->getSize();
+    writeInt(a);
+    writeInt(a);
+  }else{
+
+     int a = v->getSize();
+    
+    writeInt(a);
+  }
   
   
   return 0;
@@ -205,33 +212,80 @@ int COpenDAPHandler::putVariableData(CDF::Variable *v,CDFType type){
 
   
   size_t varSize = v->getSize();
-  //CDBDebug("%s %d %d",v->name.c_str(),typeSize,varSize);
-  unsigned char *data = (unsigned char*)v->data;
-  for(size_t d=0;d<varSize;d++){
-    for(size_t e=0;e<typeSize;e++){
-      putc(data[d*typeSize+(typeSize-1)-e],stdout);
-      //putc(tdata,stdout);
-      
+  //CDBDebug("name:%s typeSize:%d varSize:%d",v->name.c_str(),typeSize,varSize);
+  if(type==CDF_BYTE||
+    type==CDF_UBYTE||
+    type==CDF_CHAR||
+    type==CDF_INT||
+    type==CDF_UINT||
+    type==CDF_FLOAT||
+    type==CDF_DOUBLE){
+    unsigned char *data = (unsigned char*)v->data;
+    for(size_t d=0;d<varSize;d++){
+      for(size_t e=0;e<typeSize;e++){
+        putc(data[d*typeSize+(typeSize-1)-e],stdout);
+        //putc(tdata,stdout);
+        
+      }
+      bytesWritten+=typeSize;
+      written+=typeSize;
     }
-    bytesWritten+=typeSize;
-    written+=typeSize;
+  }
+  
+  if(type==CDF_SHORT||
+    type==CDF_USHORT){
+    unsigned char *data = (unsigned char*)v->data;
+
+    for(size_t d=0;d<varSize;d++){
+      putc(0,stdout);
+      putc(0,stdout);
+      bytesWritten+=2;
+      written+=2;
+      for(size_t e=0;e<typeSize;e++){
+        
+    
+        putc(data[d*typeSize+(typeSize-1)-e],stdout);
+
+        //putc(tdata,stdout);
+        
+      }
+      bytesWritten+=typeSize;
+      written+=typeSize;
+    }
   }
   
   //Strings need to be '0' terminated.
-  if(type==CDF_CHAR){
-    varSize++;
-    putc(0,stdout);
-    written++;
-    bytesWritten++;
+  if(type==CDF_STRING){
+    const char **data = (const char**)v->data;
+    for(size_t d=0;d<varSize;d++){
+      size_t l = strlen(data[d]);
+      writeInt(l);
+      for(size_t e=0;e<l;e++){
+        //CDBDebug("%s",data[d][e]);
+        
+        putc(data[d][e],stdout);
+        written++;
+        bytesWritten++;
+        
+      }
+      
+      //Padding bytes to sequences of four.
+      while(int(written/4)*4 !=written){
+        putc(0,stdout);
+        written++;
+        bytesWritten++;
+      }
+    }
   }
-  
+
+
   //Bytes need to be padded to words of four bytes
-  if((typeSize==1&&varSize>1))
+  if((type==CDF_BYTE||type==CDF_CHAR||type==CDF_UBYTE))
   {
     //Padding bytes to sequences of four.
     while(int(written/4)*4 !=written){
       CDBDebug("Padding");
-      putc(0,stdout);
+      putc(48,stdout);
       written++;
       bytesWritten++;
     }
@@ -512,7 +566,9 @@ CDBDebug("Found layer %s",layerName.c_str());
           #ifdef COPENDAPHANDLER_DEBUG
           CDBDebug("Push varinfo %s",cdfObject->variables[j]->name.c_str());
           #endif
-          selectedVariables.push_back(VarInfo(cdfObject->variables[j]->name.c_str()));
+          //if(cdfObject->variables[j]->name.equals(layerName)){
+            selectedVariables.push_back(VarInfo(cdfObject->variables[j]->name.c_str()));
+          //}
         }
       }
       
@@ -549,9 +605,14 @@ CDBDebug("Found layer %s",layerName.c_str());
         }
       }
       
+      
+      
 //       for (std::vector<VarInfo>::iterator it = selectedVariables.begin() ; it != selectedVariables.end(); ++it){
-//         if(it->name.equals("polar_stereographic")){
+//         if(it->name.equals("crs")==true
+// 
+//         ){
 //           selectedVariables.erase(it);
+//           it--;
 //         }
 //       }
 
@@ -755,9 +816,9 @@ CDBDebug("Found layer %s",layerName.c_str());
                   #endif
                     //v->freeData();
                     status = v->readData(type,start,count,stride);
-//                     if(v->getType()==CDF_DOUBLE){
+//                     if(v->getType()==CDF_STRING){
 //                       for(size_t j=0;j<v->getSize();j++){
-//                         CDBDebug("%f",((double*)v->data)[j]);
+//                         CDBDebug("%s",((char**)v->data)[j]);
 //                       }
 //                     }
                 }else{

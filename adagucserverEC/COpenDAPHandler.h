@@ -43,6 +43,7 @@ private:
       
     };
   static CT::string VarInfoToString(std::vector <VarInfo> selectedVariables);
+  static int putVariableDataSize(CDF::Variable *v);
   static int putVariableData(CDF::Variable *v,CDFType type);
   static CT::string createDDSHeader(CT::string layerName, CDFObject *cdfObject ,std::vector <VarInfo> selectedVariables);
   static int getDimSize(CDataSource *dataSource, const char *name);
