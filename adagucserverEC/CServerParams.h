@@ -68,10 +68,11 @@ class CServerParams{
   private:
     int autoOpenDAPEnabled,autoLocalFileResourceEnabled,autoResourceCacheEnabled;
     
-  
+    
     static int dataRestriction;
   public:
     double dfResX,dfResY;
+    int dFound_BBOX;
     int dWCS_RES_OR_WH;
     double dX,dY;
     CT::string *WMSLayers;
