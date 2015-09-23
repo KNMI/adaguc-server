@@ -1207,6 +1207,7 @@ int CRequest::process_all_layers(){
       return 0;
     }
   }
+  
 
   for(size_t j=0;j<dataSources.size();j++){
     
@@ -1273,8 +1274,34 @@ int CRequest::process_all_layers(){
         dataSources[j]->getCDFDims()->addDimension("time","0",0);
     }
   }
-  
-  
+   
+   
+  //Try to find BBOX automatically, when not provided.
+  if(srvParam->dFound_BBOX == 0){
+    for(size_t d=0;d<dataSources.size();d++){
+      if(dataSources[d]->dLayerType!=CConfigReaderLayerTypeCascaded){
+        CImageWarper warper;
+        CDataReader reader;
+        status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_HEADER);
+        reader.close();
+        status =  warper.initreproj(dataSources[d],srvParam->Geo,&srvParam->cfg->Projection);
+        if(status!=0){
+          warper.closereproj();
+          CDBDebug("Unable to initialize projection ");
+        }
+        srvParam->Geo->dfBBOX[0]=-180;
+        srvParam->Geo->dfBBOX[1]=-90;
+        srvParam->Geo->dfBBOX[2]=180;
+        srvParam->Geo->dfBBOX[3]=90;
+        warper.findExtent(dataSources[d],srvParam->Geo->dfBBOX);
+        warper.closereproj();
+        CDBDebug("Found bbox %s %f %f %f %f",srvParam->Geo->CRS.c_str(),srvParam->Geo->dfBBOX[0],srvParam->Geo->dfBBOX[1],srvParam->Geo->dfBBOX[2],srvParam->Geo->dfBBOX[3]);
+        srvParam->dFound_BBOX = 1;
+        break;
+      }
+    }
+  }
+    
   
   int j=0;
   
@@ -1290,6 +1317,8 @@ int CRequest::process_all_layers(){
           dataSources[d]->setTimeStep(0);
         }
         if(srvParam->requestType==REQUEST_WMS_GETMAP){
+          
+
           CImageDataWriter imageDataWriter;
 
           /**
@@ -1305,6 +1334,7 @@ int CRequest::process_all_layers(){
               status = imageDataWriter.init(srvParam,dataSources[d],dataSources[d]->getNumTimeSteps());if(status != 0)throw(__LINE__);
               imageDataWriterIsInitialized=true;
               dataSourceToUse=d;
+
             }
           }
           
@@ -1568,7 +1598,7 @@ int CRequest::process_querystring(){
   int dFound_J=0;
   int dFound_RESX=0;
   int dFound_RESY=0;
-  int dFound_BBOX=0;
+
   int dFound_SRS=0;
   int dFound_CRS=0;
   //int dFound_Debug=0;
@@ -1735,7 +1765,7 @@ int CRequest::process_querystring(){
           dErrorOccured=1;
         }
         delete[] bboxvalues;
-        dFound_BBOX=1;
+        srvParam->dFound_BBOX=1;
       }
       
       if(value0Cap.equals("FIGWIDTH")){
@@ -2088,7 +2118,7 @@ int CRequest::process_querystring(){
   delete[] parameters;
 
   if(dFound_Width == 0 && dFound_Height == 0){
-    if(dFound_BBOX && dFound_RESX && dFound_RESY){
+    if(srvParam->dFound_BBOX && dFound_RESX && dFound_RESY){
       srvParam->Geo->dWidth=int(((srvParam->Geo->dfBBOX[2]-srvParam->Geo->dfBBOX[0])/srvParam->dfResX));
       srvParam->Geo->dHeight=int(((srvParam->Geo->dfBBOX[1]-srvParam->Geo->dfBBOX[3])/srvParam->dfResY));
       srvParam->Geo->dHeight=abs(srvParam->Geo->dHeight);
@@ -2326,7 +2356,7 @@ int CRequest::process_querystring(){
       if(srvParam->requestType==REQUEST_WMS_GETPOINTVALUE){
         //Maps REQUEST_WMS_GETPOINTVALUE to REQUEST_WMS_GETFEATUREINFO
         //http://bhw222.knmi.nl:8080/cgi-bin/model.cgi?&SERVICE=WMS&REQUEST=GetPointValue&VERSION=1.1.1&SRS=EPSG%3A4326&QUERY_LAYERS=PMSL_sfc_0&X=3.74&Y=52.34&INFO_FORMAT=text/html&time=2011-08-18T09:00:00Z/2011-08-18T18:00:00Z&DIM_sfc_snow=0
-        dFound_BBOX=1;
+        srvParam->dFound_BBOX=1;
         dFound_WMSLAYERS=1;
         dFound_Width=1;
         dFound_Height=1;
@@ -2344,9 +2374,12 @@ int CRequest::process_querystring(){
       
     
       
-      if(dFound_BBOX==0){
-        CDBWarning("ADAGUC Server: Parameter BBOX missing");
-        dErrorOccured=1;
+      if(srvParam->dFound_BBOX==0){
+//        TODO enable strict WMS
+//        CDBWarning("ADAGUC Server: Parameter BBOX missing");
+//        dErrorOccured=1;
+
+        
       }
       
       
@@ -2524,7 +2557,7 @@ int CRequest::process_querystring(){
     }
     if(dErrorOccured==0&&srvParam->requestType==REQUEST_WCS_GETCOVERAGE){
       CDBDebug("WCS");
-      if(dFound_Width==0&&dFound_Height==0&&dFound_RESX==0&&dFound_RESY==0&&dFound_BBOX==0&&dFound_CRS==0)srvParam->WCS_GoNative=1;else{
+      if(dFound_Width==0&&dFound_Height==0&&dFound_RESX==0&&dFound_RESY==0&&srvParam->dFound_BBOX==0&&dFound_CRS==0)srvParam->WCS_GoNative=1;else{
         srvParam->WCS_GoNative = 0;
         if(dFound_RESX==0||dFound_RESY==0){
           if(dFound_Width==0){
@@ -2548,7 +2581,7 @@ int CRequest::process_querystring(){
           srvParam->dWCS_RES_OR_WH = 1;
          
         }
-        if(dFound_BBOX==0){
+        if(srvParam->dFound_BBOX==0){
           CDBWarning("ADAGUC Server: Parameter BBOX missing");
           dErrorOccured=1;
         }
