@@ -1277,27 +1277,29 @@ int CRequest::process_all_layers(){
    
    
   //Try to find BBOX automatically, when not provided.
-  if(srvParam->dFound_BBOX == 0){
-    for(size_t d=0;d<dataSources.size();d++){
-      if(dataSources[d]->dLayerType!=CConfigReaderLayerTypeCascaded){
-        CImageWarper warper;
-        CDataReader reader;
-        status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_HEADER);
-        reader.close();
-        status =  warper.initreproj(dataSources[d],srvParam->Geo,&srvParam->cfg->Projection);
-        if(status!=0){
+  if(srvParam->requestType==REQUEST_WMS_GETMAP){
+    if(srvParam->dFound_BBOX == 0){
+      for(size_t d=0;d<dataSources.size();d++){
+        if(dataSources[d]->dLayerType!=CConfigReaderLayerTypeCascaded){
+          CImageWarper warper;
+          CDataReader reader;
+          status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_HEADER);
+          reader.close();
+          status =  warper.initreproj(dataSources[d],srvParam->Geo,&srvParam->cfg->Projection);
+          if(status!=0){
+            warper.closereproj();
+            CDBDebug("Unable to initialize projection ");
+          }
+          srvParam->Geo->dfBBOX[0]=-180;
+          srvParam->Geo->dfBBOX[1]=-90;
+          srvParam->Geo->dfBBOX[2]=180;
+          srvParam->Geo->dfBBOX[3]=90;
+          warper.findExtent(dataSources[d],srvParam->Geo->dfBBOX);
           warper.closereproj();
-          CDBDebug("Unable to initialize projection ");
+          CDBDebug("Found bbox %s %f %f %f %f",srvParam->Geo->CRS.c_str(),srvParam->Geo->dfBBOX[0],srvParam->Geo->dfBBOX[1],srvParam->Geo->dfBBOX[2],srvParam->Geo->dfBBOX[3]);
+          srvParam->dFound_BBOX = 1;
+          break;
         }
-        srvParam->Geo->dfBBOX[0]=-180;
-        srvParam->Geo->dfBBOX[1]=-90;
-        srvParam->Geo->dfBBOX[2]=180;
-        srvParam->Geo->dfBBOX[3]=90;
-        warper.findExtent(dataSources[d],srvParam->Geo->dfBBOX);
-        warper.closereproj();
-        CDBDebug("Found bbox %s %f %f %f %f",srvParam->Geo->CRS.c_str(),srvParam->Geo->dfBBOX[0],srvParam->Geo->dfBBOX[1],srvParam->Geo->dfBBOX[2],srvParam->Geo->dfBBOX[3]);
-        srvParam->dFound_BBOX = 1;
-        break;
       }
     }
   }
