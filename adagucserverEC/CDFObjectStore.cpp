@@ -30,6 +30,7 @@ const char *CDFObjectStore::className="CDFObjectStore";
 #include "CConvertADAGUCVector.h"
 #include "CConvertADAGUCPoint.h"
 #include "CConvertCurvilinear.h"
+#include "CConvertHexagon.h"
 #include "CDataReader.h"
 //#define CDFOBJECTSTORE_DEBUG
 #define MAX_OPEN_FILES 200
@@ -270,6 +271,8 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *s
     if(!level2CompatMode)if(CConvertADAGUCPoint::convertADAGUCPointHeader(cdfObject)==0){level2CompatMode=true;};
     
     if(!level2CompatMode)if(CConvertCurvilinear::convertCurvilinearHeader(cdfObject,srvParams)==0){level2CompatMode=true;};
+    
+    if(!level2CompatMode)if(CConvertHexagon::convertHexagonHeader(cdfObject,srvParams)==0){level2CompatMode=true;};
   }
   
   return cdfObject;

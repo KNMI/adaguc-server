@@ -51,4 +51,15 @@ void fillQuadGouraud(float  *data, float  *values, int W,int H, int *xP,int *yP)
 
 void drawCircle(float *data,float value,int W,int H,int orgx,int orgy,int radius);
 
+/**
+ * Fills a triangle flat
+ * @param data the data field to fill
+ * @param value value for the triangle
+ * @param W width of the field
+ * @param W height of the field
+ * @param xP 3 X corners
+ * @param xP 3 Y corners
+ */
+void fillTriangleFlat(float  *data, float  value, int W,int H, int *xP,int *yP);
+
 #endif

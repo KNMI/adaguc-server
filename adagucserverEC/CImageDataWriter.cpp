@@ -3021,7 +3021,7 @@ int CImageDataWriter::end(){
   }
 
 #ifdef MEASURETIME
-StopWatch_Stop("Drawing finished");
+StopWatch_Stop("Drawing finished, start printing image");
 #endif
 
   //Static image
