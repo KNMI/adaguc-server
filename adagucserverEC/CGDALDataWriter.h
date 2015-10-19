@@ -110,10 +110,13 @@ class CGDALDataWriter: public CBaseDataWriterInterface{
           double offset = adagucTime.dateToOffset(adagucTime.ISOStringToDate(dims->getDimensionValue(d).c_str()));
           value.print("%f",offset);
         }catch(int e){
+          CDBDebug("Warning in getDimensionValue: Unable to get string value from time dimension");
         }
+       
       }else{
         value.print("%s",dims->getDimensionValue(d).c_str());
       }
+       CDBDebug("Continuing %s",value.c_str());
       return value;
     }
     
