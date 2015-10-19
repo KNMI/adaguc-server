@@ -27,7 +27,7 @@
 #ifdef ADAGUC_USE_GDAL
 #include "CGDALDataWriter.h"
 
-//#define CGDALDATAWRITER_DEBUG
+#define CGDALDATAWRITER_DEBUG
 
 const char * CGDALDataWriter::className = "CGDALDataWriter";
 
@@ -439,64 +439,108 @@ int  CGDALDataWriter::end(){
     CT::string extraDimNames = "{";
       
     bool first = true;
+    
     CCDFDims *dims = _dataSource->getCDFDims();
     for(size_t d=0;d<dims->getNumDimensions();d++){
-      CT::string dimName = dims->getDimensionName(d);
+      CT::string dimName = "null";
+      try{
+        dimName = dims->getDimensionName(d);
+      }catch(int e){
+        CDBError("Exception code %d",e);throw e;
+      }
       if(dimName.equals("forecast_reference_time")==false){
         if(first == false){
           extraDimNames.concat(",");
         }
         first = false;
+  
         
-        extraDimNames.concat(dims->getDimensionName(d));
-        
-        
-        CDFType cdf_type = _dataSource->getDataObject(0)->cdfObject->getVariable(dims->getDimensionName(d))->getType();
-#ifdef CGDALDATAWRITER_DEBUG          
-        CDBDebug("%s = %s",_dataSource->requiredDims[d]->netCDFDimName.c_str(),dims->getDimensionName(d));
-#endif
-        
-        CT::string dimDef;
-        dimDef.print("{%d,%d}",_dataSource->requiredDims[d]->uniqueValues.size(),CDFNetCDFWriter::NCtypeConversion(cdf_type));
-        CT::string key;
-        key.print("NETCDF_DIM_%s_DEF",dims->getDimensionName(d));
-        papszMetadata = CSLSetNameValue(papszMetadata, key.c_str(), dimDef.c_str());
-      
-        
-        CT::string values = "{";
-        std::set<std::string> myset;
-        std::set<std::string>::iterator mysetit;
-        for(size_t t=0;t<_dataSource->timeSteps.size();t++){
-          myset.insert(getDimensionValue(d,&_dataSource->timeSteps[t]->dims).c_str());
+        CDFType cdf_type = -1;
+        try{
+          cdf_type=_dataSource->getDataObject(0)->cdfObject->getVariable(dimName.c_str())->getType();
+        }catch(int e){
+          CDBDebug("Exception code %d for dimension name %s",e,dimName.c_str());
         }
-        bool first = true;
-        for (mysetit=myset.begin(); mysetit!=myset.end(); ++mysetit){
-          if(first == false){
-            values.concat(",");
+        if(cdf_type!=-1){
+  #ifdef CGDALDATAWRITER_DEBUG          
+          CDBDebug("%s = %s",_dataSource->requiredDims[d]->netCDFDimName.c_str(),dimName.c_str());
+  #endif
+          try{
+            extraDimNames.concat(dimName.c_str());
+          }catch(int e){
+            CDBError("Exception code %d",e);throw e;
           }
-          first = false;
-          values.concat((*mysetit).c_str());
+          CT::string dimDef;
+          dimDef.print("{%d,%d}",_dataSource->requiredDims[d]->uniqueValues.size(),CDFNetCDFWriter::NCtypeConversion(cdf_type));
+          CT::string key;
+          try{
+            key.print("NETCDF_DIM_%s_DEF",dimName.c_str());
+          }catch(int e){
+            CDBError("Exception code %d",e);throw e;
+          }
+          #ifdef CGDALDATAWRITER_DEBUG  
+            CDBDebug("%s:%s",key.c_str(), dimDef.c_str());
+          #endif    
+          papszMetadata = CSLSetNameValue(papszMetadata, key.c_str(), dimDef.c_str());
+        
+          
+          CT::string values = "{";
+          std::set<std::string> myset;
+          std::set<std::string>::iterator mysetit;
+          for(size_t t=0;t<_dataSource->timeSteps.size();t++){
+            try{
+              myset.insert(getDimensionValue(d,&_dataSource->timeSteps[t]->dims).c_str());
+            }catch(int e){
+              CDBError("Exception code %d",e);throw e;
+            }
+          }
+          bool first = true;
+          for (mysetit=myset.begin(); mysetit!=myset.end(); ++mysetit){
+            if(first == false){
+              values.concat(",");
+            }
+            first = false;
+            values.concat((*mysetit).c_str());
+          }
+          values.concat("}");
+          try{
+            key.print("NETCDF_DIM_%s_VALUES",dimName.c_str());
+          }catch(int e){
+            CDBError("Exception code %d",e);throw e;
+          }
+          #ifdef CGDALDATAWRITER_DEBUG  
+            CDBDebug("%s:%s",key.c_str(), values.c_str() );
+          #endif    
+          papszMetadata = CSLSetNameValue(papszMetadata, key.c_str(), values.c_str() );
         }
-        values.concat("}");
-        key.print("NETCDF_DIM_%s_VALUES",dims->getDimensionName(d));
-        papszMetadata = CSLSetNameValue(papszMetadata, key.c_str(), values.c_str() );
       }
     }
     extraDimNames.concat("}");
 
-    
-    
-    
-    papszMetadata = CSLSetNameValue(papszMetadata, "NETCDF_DIM_EXTRA", extraDimNames.c_str());
+   
+    if(extraDimNames.length()>2){
+      #ifdef CGDALDATAWRITER_DEBUG  
+        CDBDebug("%s:%s","NETCDF_DIM_EXTRA", extraDimNames.c_str() );
+      #endif  
+      papszMetadata = CSLSetNameValue(papszMetadata, "NETCDF_DIM_EXTRA", extraDimNames.c_str());
+    }
 
     for(size_t j=0;j<_dataSource->metaDataItems.size();j++){
       CDataSource::KVP * kvp = &_dataSource->metaDataItems[j];
       CT::string attributekey;
       attributekey.printconcat("%s#%s",kvp->varname.c_str(),kvp->attrname.c_str());
+      #ifdef CGDALDATAWRITER_DEBUG  
+      CDBDebug("%s:%s",attributekey.c_str(),kvp->value.c_str());
+      #endif
       papszMetadata = CSLSetNameValue(papszMetadata,attributekey.c_str(),kvp->value.c_str());
     }
-    
+    #ifdef CGDALDATAWRITER_DEBUG  
+    CDBDebug("Setting metadata");
+    #endif
     ((GDALDataset*)destinationGDALDataSet)->SetMetadata(papszMetadata);
+    #ifdef CGDALDATAWRITER_DEBUG  
+    CDBDebug("Destroying metadata");
+    #endif
     CSLDestroy( papszMetadata);papszMetadata = NULL;
   }
   
@@ -514,7 +558,7 @@ int  CGDALDataWriter::end(){
     delete[] co;
   }
   
-  CDBDebug("TEST %s?",driverName.c_str());
+  //CDBDebug("TEST %s?",driverName.c_str());
   
   
   if(driverName.equalsIgnoreCase("AAIGRID")){

@@ -30,7 +30,7 @@
 const char *CDF::Variable::className="Variable";
 
 
-//#define CCDFDATAMODEL_DEBUG
+#define CCDFDATAMODEL_DEBUG
 int CDF::Variable::readData(CDFType type){
   return readData(type,NULL,NULL,NULL);
 }
@@ -480,7 +480,13 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
         
 //         CDBDebug("indimsize %d %d",indimsize,((int*)srcDimVar->data)[0]);
 //         CDBDebug("srcDimVar units = %s",srcDimVar->getAttribute("units")->toString().c_str());
-        double destValue = ccdftimedst.dateToOffset(ccdftimedst.stringToDate(srcDimValue.c_str()));
+        double destValue = 0;
+        try{
+          destValue = ccdftimedst.dateToOffset(ccdftimedst.stringToDate(srcDimValue.c_str()));
+        }catch(int e){
+          CDBError("Error converting %s date",srcDimValue.c_str());
+          throw e;
+        }
 //         CDBDebug("srcDimVar value = %s == [%d]=%f",srcDimValue.c_str(),currentDimSize,destValue);
         
         

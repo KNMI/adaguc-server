@@ -146,7 +146,7 @@ double CTime::dateToOffset( Date date){
   
   if(mode == CTIME_MODE_UTCALENDAR){
     if(utInvCalendar(date.year,date.month,date.day,date.hour,date.minute,(int)date.second,&dataunits,&offset) != 0){
-      CDBError("DateToOffset: Internal error: utInvCalendar");throw CTIME_CONVERSION_ERROR;
+      CDBError("DateToOffset: Internal error: utInvCalendar with args %s",dateToString(date).c_str());throw CTIME_CONVERSION_ERROR;
     }
   }
   return offset;
@@ -171,7 +171,12 @@ CTime::Date CTime::stringToDate(const char*szTime){
     safestrcpy(szTemp,szTime+16,3);date.second+=((float)atoi(szTemp))/1000;
   }
 //  CDBDebug("szTime %s %s %f",szTime,szTemp,date.second);
-  date.offset=dateToOffset(date);
+  try{
+    date.offset=dateToOffset(date);
+  }catch(int e){
+    CDBError("Exception in stringToDate with input %s",szTime);
+    throw e;
+  }
   Date checkDate=getDate(date.offset);
   CT::string checkStr = dateToString(checkDate);
   if(!checkStr.equals(szTime,15)){
@@ -195,8 +200,12 @@ CTime::Date CTime::ISOStringToDate(const char*szTime){
   safestrcpy(szTemp,szTime+11,2);date.hour=atoi(szTemp);
   safestrcpy(szTemp,szTime+14,2);date.minute=atoi(szTemp);
   safestrcpy(szTemp,szTime+17,2);date.second=(float)atoi(szTemp);
-  
-  date.offset=dateToOffset(date);
+  try{
+    date.offset=dateToOffset(date);
+  }catch(int e){
+    CDBError("Exception in ISOStringToDate with input %s",szTime);
+    throw e;
+  }
   Date checkDate=getDate(date.offset);
   CT::string checkStr = dateToISOString(checkDate);
   checkStr.setChar(19,'Z');
@@ -280,7 +289,12 @@ CTime::Date CTime::freeDateStringToDate(const char*szTime){
     date.concat(":");
     date.concat(szTime+17,2);
     date.concat("Z");
-    return ISOStringToDate(date.c_str());
+    try{
+      return ISOStringToDate(date.c_str());
+    }catch(int e){
+      CDBError("freeDateStringToDate exception");
+      throw e;
+    }
   }
   
   //20041201T00:00:00.000000
@@ -325,7 +339,12 @@ CTime::Date CTime::freeDateStringToDate(const char*szTime){
     date.concat(":");
     date.concat("00",2);
     date.concat("Z");
-    return ISOStringToDate(date.c_str());
+    try{
+      return ISOStringToDate(date.c_str());
+    }catch(int e){
+      CDBError("freeDateStringToDate exception");
+      throw e;
+    }
   }
   
   //CDBError("Format for date string \"%s\" not recognised",szTime);

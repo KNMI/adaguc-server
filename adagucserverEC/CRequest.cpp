@@ -1483,12 +1483,28 @@ int CRequest::process_all_layers(){
         if(srvParam->requestType==REQUEST_WCS_GETCOVERAGE){
     #ifdef ADAGUC_USE_GDAL
           CGDALDataWriter GDALDataWriter;
-          status = GDALDataWriter.init(srvParam,dataSources[j],dataSources[j]->getNumTimeSteps());if(status != 0)throw(__LINE__);
+          try{
+            status = GDALDataWriter.init(srvParam,dataSources[j],dataSources[j]->getNumTimeSteps());if(status != 0)throw(__LINE__);
+          }catch(int e){
+            CDBError("Exception code %d",e);
+             throw(__LINE__);
+          }
           for(int k=0;k<dataSources[j]->getNumTimeSteps();k++){
             dataSources[j]->setTimeStep(k);
-            status = GDALDataWriter.addData(dataSources);if(status != 0)throw(__LINE__);
+            try{
+              status = GDALDataWriter.addData(dataSources);
+            }catch(int e){
+              CDBError("Exception code %d",e);
+              throw(__LINE__);
+            }
+            if(status != 0)throw(__LINE__);
           }
-          status = GDALDataWriter.end();if(status != 0)throw(__LINE__);
+          try{
+            status = GDALDataWriter.end();if(status != 0)throw(__LINE__);
+          }catch(int e){
+            CDBError("Exception code %d",e);
+            throw(__LINE__);
+          }
     #endif
         }
     

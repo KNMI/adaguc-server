@@ -678,7 +678,7 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource,int mode){
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
     if(styleConfiguration->styleCompositionName.indexOf("bilinear")>=0){
       
-      drawBilinear=true;
+      //drawBilinear=true;
     }
     /*
      * Bilinear rendering is based on gouraud shading using the center of each quads by using lat and lon variables, while nearest neighbour rendering is based on lat_bnds and lat_bnds variables, drawing the corners of the quads..
