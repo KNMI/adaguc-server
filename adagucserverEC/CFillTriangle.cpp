@@ -379,3 +379,74 @@ void drawCircle(float *data,float value,int W,int H,int orgx,int orgy,int radius
     }
   }
 }
+
+
+
+void fillTriangleFlat(float * data, float value, int destWidth,int destHeight, int *xP,int *yP){
+  
+  int W = destWidth;
+  int H = destHeight;
+  if(xP[0]<0&&xP[1]<0&&xP[2]<0)return;
+  if(xP[0]>=W&&xP[1]>=W&&xP[2]>=W)return;
+  if(yP[0]<0&&yP[1]<0&&yP[2]<0)return;
+  if(yP[0]>=H&&yP[1]>=H&&yP[2]>=H)return;  
+  
+  unsigned int lower;
+  unsigned int middle;
+  unsigned int upper;
+  
+  /*Sort the vertices in Y direction*/
+  if(yP[0]<yP[1]){
+    if(yP[0]<yP[2]){lower=0;if(yP[1]<yP[2]){middle=1;upper=2;}else{middle=2;upper=1;}}else{middle=0;lower=2;upper=1;}
+  }else{
+    if(yP[1]<yP[2]){lower=1;if(yP[0]<yP[2]){middle=0;upper=2;}else{middle=2;upper=0;}}else{middle=1;lower=2;upper=0;}
+  }
+  
+  int X1 = xP[lower];
+  int X2 = xP[middle];
+  int X3 = xP[upper];
+  int Y1 = yP[lower];
+  int Y2 = yP[middle];
+  int Y3 = yP[upper];
+  
+  if((Y1 == Y3)||(Y2==Y1&&Y3==Y2))return;
+  
+  float rcl = float(X3-X1)/float(Y3-Y1);
+  if(Y2!=Y1&&Y1<H&&Y2>0){
+    float rca = float(X2-X1)/float(Y2-Y1);
+    int sy = (Y1<0)?0:Y1;
+    int ey = (Y2>H)?H:Y2;
+    for(int y=sy;y<=ey-1;y++){
+      int xL = int(rcl*float(y-Y1)+X1);
+      int xA = int(rca*float(y-Y1)+X1);
+      int x1,x2;
+      if(xL<xA){x1=xL;x2=xA;}else{x2=xL;x1=xA;}
+      if(x1<W&&x2>0){
+        int sx = (x1<0)?0:x1;
+        int ex = (x2>W)?W:x2;
+        for(int x=sx;x<=ex-1;x++){
+          data[x+y*W]=value;
+        }
+      }
+    }
+  }
+  
+  if(Y3 != Y2&&Y2<H&&Y3>0){
+    float rcb = float(X3-X2)/float(Y3-Y2);
+    int sy = (Y2<0)?0:Y2;
+    int ey = (Y3>H)?H:Y3;
+    for(int y=sy;y<=ey-1;y++){
+      int xL = floor(rcl*float(y-Y1)+X1);
+      int xB = floor(rcb*float(y-Y2)+X2);
+      int x1,x2;
+      if(xL<=xB){x1=xL;x2=xB;}else{x2=xL;x1=xB;}
+      if(x1<W&&x2>0){
+        int sx = (x1<0)?0:x1;
+        int ex = (x2>W)?W:x2;
+        for(int x=sx;x<=ex-1;x++){
+          data[x+y*W]=value;
+        }
+      } 
+    }
+  }
+}

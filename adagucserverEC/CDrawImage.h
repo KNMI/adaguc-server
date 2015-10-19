@@ -41,7 +41,7 @@
 #include "CServerError.h"
 #include "CServerConfig_CPPXSD.h"
 #include <math.h>
-#include <png.h>
+//#include <png.h>
 #include <gd.h>
 #include "gdfontl.h"
 #include "gdfonts.h"

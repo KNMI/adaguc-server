@@ -153,6 +153,7 @@ void CServerParams::_getCacheDirectory(CT::string *_cacheFileName){
 
 
 const CT::string CServerParams::randomString(const int len) {
+  CDBDebug("generating random string");
     char s[len+1];
     
     timeval curTime;

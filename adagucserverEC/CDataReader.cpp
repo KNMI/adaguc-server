@@ -31,6 +31,7 @@
 #include "CConvertADAGUCVector.h"
 #include "CConvertADAGUCPoint.h"
 #include "CConvertCurvilinear.h"
+#include "CConvertHexagon.h"
 #include "CDBFactory.h"
 const char *CDataReader::className="CDataReader";
 
@@ -338,7 +339,8 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y){
   if(!dataSource->level2CompatMode)if(CConvertUGRIDMesh::convertUGRIDMeshData(dataSource,mode)==0)dataSource->level2CompatMode=true;
   if(!dataSource->level2CompatMode)if(CConvertADAGUCVector::convertADAGUCVectorData(dataSource,mode)==0)dataSource->level2CompatMode=true;
   if(!dataSource->level2CompatMode)if(CConvertADAGUCPoint::convertADAGUCPointData(dataSource,mode)==0)dataSource->level2CompatMode=true;
-  if(!dataSource->level2CompatMode)if(CConvertCurvilinear::convertCurvilinearData(dataSource,mode)==0)dataSource->level2CompatMode=true;     
+  if(!dataSource->level2CompatMode)if(CConvertCurvilinear::convertCurvilinearData(dataSource,mode)==0)dataSource->level2CompatMode=true;
+  if(!dataSource->level2CompatMode)if(CConvertHexagon::convertHexagonData(dataSource,mode)==0)dataSource->level2CompatMode=true;     
 //   if(dataSource->level2CompatMode){
 //    cache->removeClaimedCachefile();
 //   }
@@ -413,7 +415,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y){
  //Read X and Y dimension data completely.
  dataSource->varX=cdfObject->getVariableNE(dimX->name.c_str());
  dataSource->varY=cdfObject->getVariableNE(dimY->name.c_str());
-  if(dataSource->varX==NULL||dataSource->varY==NULL){CDBError("X ('%s') and or Y ('%s') vars not found...",dimX->name.c_str(),dimY->name.c_str());return 1;}
+ if(dataSource->varX==NULL||dataSource->varY==NULL){CDBError("X ('%s') and or Y ('%s') vars not found for variable %s...",dimX->name.c_str(),dimY->name.c_str(),dataSourceVar->name.c_str());return 1;}
   #ifdef CDATAREADER_DEBUG  
   CDBDebug("Found xy vars for var %s:  %s and %s",dataSourceVar->name.c_str(),dataSource->varX->name.c_str(),dataSource->varY->name.c_str());
   #endif

@@ -196,6 +196,7 @@ int CDrawImage::printImagePng(){
       cairo->writeToPngStream(stdout,float(backgroundAlpha)/255);
     }else{
       cairo->writeToPngStream(stdout);
+      
     }
   }
   if(_bEnableTrueColor==false){

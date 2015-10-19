@@ -26,6 +26,7 @@
 #include "CCairoPlotter.h"
 #ifdef ADAGUC_USE_CAIRO
 
+#include "CStopWatch.h"
 const char *CCairoPlotter::className="CCairoPlotter";
 
 cairo_status_t writerFunc(void *closure, const unsigned char *data, unsigned int length) {
@@ -674,30 +675,34 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
   }
 
   void CCairoPlotter::writeToPngStream(FILE *fp) {
+    bool useCairo = false;
+    if(useCairo){
 
-  
-    if(isAlphaUsed){
-      CDBDebug("Alpha was used");
-      for(int y=0;y<height;y++){
-        for(int x=0;x<width;x++){
-          size_t p=x*4+y*stride;
-          if(ARGBByteBuffer[p+3]!=255){
-            float a =ARGBByteBuffer[p+3];
-            ARGBByteBuffer[p]=(unsigned char)((float(ARGBByteBuffer[p])/256.0)*float(a));
-            ARGBByteBuffer[p+1]=(unsigned char)((float(ARGBByteBuffer[p+1])/256.0)*float(a));
-            ARGBByteBuffer[p+2]=(unsigned char)((float(ARGBByteBuffer[p+2])/256.0)*float(a));
+      writeARGBPng(width,height,ARGBByteBuffer,fp,true);
+    }else{
+      if(isAlphaUsed){
+        CDBDebug("Alpha was used");
+        for(int y=0;y<height;y++){
+          for(int x=0;x<width;x++){
+            size_t p=x*4+y*stride;
+            if(ARGBByteBuffer[p+3]!=255){
+              float a =ARGBByteBuffer[p+3];
+              ARGBByteBuffer[p]=(unsigned char)((float(ARGBByteBuffer[p])/256.0)*float(a));
+              ARGBByteBuffer[p+1]=(unsigned char)((float(ARGBByteBuffer[p+1])/256.0)*float(a));
+              ARGBByteBuffer[p+2]=(unsigned char)((float(ARGBByteBuffer[p+2])/256.0)*float(a));
 
+            }
           }
         }
       }
+      
+      cairo_surface_flush(surface);
+      
+      
+      
+      this->fp=fp;
+      cairo_surface_write_to_png_stream(surface, writerFunc, (void *)fp);
     }
-    
-    cairo_surface_flush(surface);
-    
-    
-    
-    this->fp=fp;
-    cairo_surface_write_to_png_stream(surface, writerFunc, (void *)fp);
   }
   
   void CCairoPlotter::writeToPngStream(FILE *fp,float alpha) {
@@ -728,4 +733,125 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
     cairo_paint(this->cr);
  //   cairo_surface_destroy(surface);
   }
+  
+
+  int CCairoPlotter::writeARGBPng(int width,int height,unsigned char *ARGBByteBuffer,FILE *file,bool trueColor){
+    
+    
+    #ifdef MEASURETIME
+    StopWatch_Stop("start writeRGBAPng.");
+    #endif
+    
+    png_structp png_ptr;
+    png_infop info_ptr;
+    png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    
+    #ifdef MEASURETIME
+    StopWatch_Stop("LINE %d",__LINE__);
+    #endif
+    if (!png_ptr){CDBError("png_create_write_struct failed");return 1;}
+    
+    info_ptr = png_create_info_struct(png_ptr);
+    if (!info_ptr){
+      png_destroy_write_struct(&png_ptr, NULL);
+      CDBError("png_create_info_struct failed");
+      return 1;
+    }
+    
+    if (setjmp(png_jmpbuf(png_ptr))){
+      CDBError("Error during init_io");
+      return 1;
+    }
+    
+    png_init_io(png_ptr, file);
+    
+    /* write header */
+    if (setjmp(png_jmpbuf(png_ptr))){
+      CDBError("Error during writing header");
+      return 1;
+    }
+    /*png_set_IHDR(png_ptr, info_ptr, width, height, 8,
+     *          PNG_COLOR_TYPE_RGB_ALPHA,
+     *          PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,
+     P NG*_FILTER_TYPE_DEFAULT);*/
+    if(trueColor){
+      /*png_set_IHDR(png_ptr, info_ptr, width, height, 8,
+       *          PNG_COLOR_TYPE_RGB_ALPHA,
+       *          PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE,
+       P *NG_FILTER_TYPE_BASE);*/
+      png_set_IHDR(png_ptr, info_ptr, width, height, 8,
+                   PNG_COLOR_TYPE_RGB_ALPHA,
+                   PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE,
+                   PNG_FILTER_TYPE_BASE);
+      
+    }else{
+      png_set_IHDR(png_ptr, info_ptr, width, height,
+                   8, PNG_COLOR_TYPE_GRAY, PNG_INTERLACE_NONE,
+                   PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_NONE);
+    }
+    
+    
+    png_set_filter (png_ptr, 0, PNG_FILTER_NONE);
+    png_set_compression_level (png_ptr, -1);
+    
+    //png_set_invert_alpha(png_ptr);
+    png_write_info(png_ptr, info_ptr);
+    
+    /* write bytes */
+    if (setjmp(png_jmpbuf(png_ptr))){
+      CDBError("Error during writing bytes");
+      return 1;
+    }
+    png_set_packing(png_ptr);
+    #ifdef MEASURETIME
+    StopWatch_Stop("LINE %d",__LINE__);
+    #endif
+    
+    int i;
+    png_bytep row_ptr = 0;
+    
+    if(trueColor){
+      
+      int s=width*4;
+      for (i = 0; i < height; i=i+1){
+        
+        unsigned char RGBARow[s];
+        int p=0;
+        int start=i*s;
+        int stop=start+s;
+        for(int x=start;x<stop;x+=4){
+          RGBARow[p++]=ARGBByteBuffer[2+x];
+          RGBARow[p++]=ARGBByteBuffer[1+x];
+          RGBARow[p++]=ARGBByteBuffer[0+x];
+          RGBARow[p++]=ARGBByteBuffer[3+x];
+        }
+        
+        row_ptr = RGBARow;
+        png_write_rows(png_ptr, &row_ptr, 1);
+      }
+    }else{
+      for (i = 0; i < height; i++){
+        row_ptr = ARGBByteBuffer + 1 * i * width;
+        png_write_rows(png_ptr, &row_ptr, 1);
+      }
+    }
+    
+    #ifdef MEASURETIME
+    StopWatch_Stop("LINE %d",__LINE__);
+    #endif
+    
+    /* end write */
+    if (setjmp(png_jmpbuf(png_ptr))){
+      CDBError("Error during end of write");
+      return 1;
+    }
+    
+    png_write_end(png_ptr, NULL);
+    
+    #ifdef MEASURETIME
+    StopWatch_Stop("end writeRGBAPng.");
+    #endif
+    return 0;
+  }
+ 
 #endif

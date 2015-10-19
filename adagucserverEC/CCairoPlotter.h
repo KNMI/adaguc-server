@@ -34,7 +34,7 @@
 
 #ifndef CCAIROPLOTTER_H_
 #define CCAIROPLOTTER_H_
-
+#include <png.h>
 #include <cairo.h>
 #include "CDebugger.h"
 #include "CTypes.h"
@@ -46,6 +46,7 @@
 #include FT_FREETYPE_H
 #include <stdio.h>
 #include <math.h>
+
 
 cairo_status_t writerFunc(void *closure, const unsigned char *data, unsigned int length);
 class CCairoPlotter {
@@ -79,7 +80,7 @@ public:
   CCairoPlotter(int width,int height, unsigned char * _ARGBByteBuffer, float fontSize, const char*fontLocation);
 
   ~CCairoPlotter() ;
-
+  int writeARGBPng(int width,int height,unsigned char *ARGBByteBuffer,FILE *file,bool trueColor);
   int renderFont(FT_Bitmap *bitmap,int left,int top);
   int initializeFreeType();
   
