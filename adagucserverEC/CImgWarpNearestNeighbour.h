@@ -467,6 +467,7 @@ private:
     if((float)dataSource->dfBBOX[2] != (float)drawImage->Geo->dfBBOX[2]){fieldsAreIdentical = false;}
     if((float)dataSource->dfBBOX[3] != (float)drawImage->Geo->dfBBOX[1]){fieldsAreIdentical = false;}
     if((int)dataSource->dWidth != (int)drawImage->Geo->dWidth){fieldsAreIdentical = false;}
+    if((int)dataSource->dHeight != (int)drawImage->Geo->dHeight){fieldsAreIdentical = false;}
     
     if(fieldsAreIdentical){
       CDBDebug("fieldsAreIdentical: using _plot");

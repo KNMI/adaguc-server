@@ -153,6 +153,8 @@ void CProj4ToCF::initStereoGraphic(CDF::Variable *projectionVariable, std::vecto
   v=getProj4ValueF("a"      ,projKVPList,dfsemi_major_axis);     projectionVariable->addAttribute(new CDF::Attribute("semi_major_axis"                       ,CDF_FLOAT,&v,1));
   v=getProj4ValueF("b"      ,projKVPList,dfsemi_minor_axis);     projectionVariable->addAttribute(new CDF::Attribute("semi_minor_axis"                        ,CDF_FLOAT,&v,1));
   
+  
+
   /*add("proj","grid_mapping_name",CDF_CHAR,"polar_stereographic");
   add("lat_0","latitude_of_projection_origin",CDF_FLOAT,"90");
   add("lon_0","straight_vertical_longitude_from_pole",CDF_FLOAT,"0");
@@ -429,7 +431,7 @@ int CProj4ToCF::convertCFToProj( CDF::Variable *projectionVariable,CT::string *p
         units="km";
       }
       
-      proj4String->print("+proj=stere +lat_0=%f +lon_0=%f +lat_ts=%f +a=%f +b=%f +x_0=%f +y_0=%f +units=%s",
+      proj4String->print("+proj=stere +lat_0=%f +lon_0=%f +lat_ts=%f +a=%f +b=%f +x_0=%f +y_0=%f +units=%s +ellps=WGS84 +datum=WGS84",
                         latitude_of_projection_origin.toDouble(),
                         straight_vertical_longitude_from_pole.toDouble(),
                         standard_parallel.toDouble(),
