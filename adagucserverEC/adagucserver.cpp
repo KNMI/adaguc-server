@@ -233,10 +233,11 @@ int main(int argc, const char *argv[]){
           inspireDatasetCSWXML.print("<!--header-->\n\n  <WMS>\n    <Inspire>\n      <DatasetCSW>%s</DatasetCSW>\n    </Inspire>\n  </WMS>",inspireDatasetCSW.c_str());
           fileInfo.replaceSelf("<!--header-->",inspireDatasetCSWXML.c_str());
           
-          if(datasetPath.empty() == false){
-            fileInfo.replaceSelf("[DATASETPATH]",datasetPath.c_str());
-          }
+        
           
+        }
+        if(datasetPath.empty() == false){
+          fileInfo.replaceSelf("[DATASETPATH]",datasetPath.c_str());
         }
         printf("%s\n",fileInfo.c_str());
         status = 0;

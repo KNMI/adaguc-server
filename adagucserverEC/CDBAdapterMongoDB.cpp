@@ -31,6 +31,16 @@
 /*
  * What to do next?
  * - Memory leak in getDatabaseConnection. Line 50.
+ * 
+ * 
+ * Make MongoDriver work with DATASET key value pair.
+ * 
+ * Create config via:
+ * 
+ * ./adagucserver --getlayers --file /nobackup/users/plieger/projects/data/sdpkdc/RADNL_DATA/RADNL_OPER_R___25PCPRR_L3__20110617T152000_20110617T152500_0001.nc --datasetpath /nobackup/users/plieger/projects/data/sdpkdc/RADNL_DATA/ > /nobackup/users/plieger/datasetconfigs/urn_xkdc_dg_nl.knmi__default_testset_ADAGUC_NONE_1_.xml
+ * 
+ * Reference via URL with 
+ * server.cgi?dataset=urn:xkdc:dg:nl.knmi::default_testset_ADAGUC_NONE/1/&&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=dnb&QUERY_LAYERS=dnb&CRS=EPSG%3A3857&BBOX=-4017299.426632504,429296.1946664017,5144326.288111853,6643017.105297432&WIDTH=1585&HEIGHT=1075&I=500&J=706&FORMAT=image/gif&INFO_FORMAT=text/html&STYLES=&&time=2015-10-21T02%3A57%3A45Z
  */
 
 const char *CDBAdapterMongoDB::className="CDBAdapterMongoDB";
@@ -48,20 +58,26 @@ CServerConfig::XMLE_Configuration *configurationObject;
  *         If no connection can be established, return NULL.
  */
 mongo::DBClientConnection *dataBaseConnection;
+
+DEF_ERRORMAIN();
+
+
 mongo::DBClientConnection *getDataBaseConnection(){
   //if(dataBaseConnection->isFailed()){
     std::string errorMessage;
     /* Connecting to the database. Only needed is host + port. */
+    CDBDebug("Using MongoDB settings: %s",configurationObject->DataBase[0]->attr.parameters.c_str());
     dataBaseConnection = new mongo::DBClientConnection();
-    dataBaseConnection->connect("bhw494.knmi.nl:27017");
+    dataBaseConnection->connect(configurationObject->DataBase[0]->attr.parameters.c_str(),errorMessage);
+    
     /* Authenticating with dbname, username and password. */
     /*
     dataBaseConnection->auth(configurationObject->DataBase[0]->attr.parameters.c_str(),
       configurationObject->DataBase[1]->attr.parameters.c_str(),
       configurationObject->DataBase[2]->attr.parameters.c_str(),errorMessage); */
-    if(errorMessage.empty()){
+    if(!errorMessage.empty()){
       /* Something with className error. Commented for now. TODO */
-      //CDBError("Unable to connect to the MongoDB database");
+      CDBError("Unable to connect to the MongoDB database: %s",errorMessage.c_str());
       return NULL;
     }
   //}
@@ -234,7 +250,7 @@ CT::string CDBAdapterMongoDB::getTableNameForPathFilterAndDimension(const char *
   CT::string tableColumns("path varchar (511), filter varchar (511), dimension varchar (511), tablename varchar (63), UNIQUE (path,filter,dimension) ");
  // CT::string tableColumns("path varchar (511), filter varchar (511), dimension varchar (511), tablename varchar (63)");
   mongo::BSONObjBuilder mvRecordQuery;
-  int status;
+  int status = 0;
   mongo::DBClientConnection * DB = getDataBaseConnection();
   if(DB == NULL) {
     throw(1);
