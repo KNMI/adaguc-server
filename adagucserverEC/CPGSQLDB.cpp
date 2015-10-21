@@ -22,7 +22,6 @@
  * limitations under the License.
  * 
  ******************************************************************************/
-
 #include "CPGSQLDB.h"
 const char *CPGSQLDB::className="CPGSQLDB";
 void CPGSQLDB::clearResult(){
