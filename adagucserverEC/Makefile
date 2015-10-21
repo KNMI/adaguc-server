@@ -23,19 +23,19 @@ CCOMPILER=g++ $(ADAGUCCOMPILERSETTINGS) $(INCLUDEDIR)
 
 # USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lxml2 -lgd -lproj -lpq -ludunits2 -lfreetype -lgd -lpng -lpthread  -lrt
 
-USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lxml2 -lgd -lproj -lpq -ludunits2 -lfreetype -lgd -lpng -lpthread  -lrt -lcurl -lgdal -lcairo -lsqlite3
+USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lxml2 -lgd -lproj -lpq -ludunits2 -lfreetype -lgd -lpng -lpthread -lrt -lcurl -lgdal -lcairo -lsqlite3 -l:libboost_system.so.1.55.0 -l:libboost_thread.so.1.55.0 -l:libboost_filesystem.so.1.55.0 -l:libboost_program_options.so.1.55.0 -lmongoclient
 
 # all libs together
-LIBS = $(USERLIBS) $(LDFLAGS) -L$(INSTALLDIR2)/lib  
+LIBS = $(USERLIBS) $(LDFLAGS) -L$(INSTALLDIR2)/lib
 #-L/usr/lib64
 
-OBJECTS = CDataReader.o COGCDims.o CImageWarper.o CGeoParams.o CCairoPlotter.o CDrawImage.o CServerError.o CRequest.o  CXMLGen.o CServerParams.o CGDALDataWriter.o CImageDataWriter.o CXMLSerializerInterface.o CDataSource.o CStopWatch.o CImgWarpBilinear.o CImgWarpBoolean.o CImgWarpNearestNeighbour.o CGenericDataWarper.o CImgWarpNearestRGBA.o CPGSQLDB.o CDBFileScanner.o CDFObjectStore.o CFillTriangle.o CConvertASCAT.o CConvertUGRIDMesh.o CConvertADAGUCVector.o CConvertADAGUCPoint.o CImgRenderPoints.o CConvertCurvilinear.o CConvertHexagon.o CInspire.o CGetFileInfo.o CStyleConfiguration.o CMakeJSONTimeSeries.o COpenDAPHandler.o CDataPostProcessor.o CDBFactory.o CDBAdapterPostgreSQL.o CAutoResource.o CDBAdapterSQLLite.o
+OBJECTS = CDataReader.o COGCDims.o CImageWarper.o CGeoParams.o CCairoPlotter.o CDrawImage.o CServerError.o CRequest.o  CXMLGen.o CServerParams.o CGDALDataWriter.o CImageDataWriter.o CXMLSerializerInterface.o CDataSource.o CStopWatch.o CImgWarpBilinear.o CImgWarpBoolean.o CImgWarpNearestNeighbour.o CGenericDataWarper.o CImgWarpNearestRGBA.o CPGSQLDB.o CDBFileScanner.o CDFObjectStore.o CFillTriangle.o CConvertASCAT.o CConvertUGRIDMesh.o CConvertADAGUCVector.o CConvertADAGUCPoint.o CImgRenderPoints.o CConvertCurvilinear.o CConvertHexagon.o CInspire.o CGetFileInfo.o CStyleConfiguration.o CMakeJSONTimeSeries.o COpenDAPHandler.o CDataPostProcessor.o CDBFactory.o CDBAdapterPostgreSQL.o CAutoResource.o CDBAdapterSQLLite.o CDBAdapterMongoDB.o
 
 EXECUTABLE= adagucserver
 
 default: $(EXECUTABLE)
 $(EXECUTABLE): $(OBJECTS) $(EXECUTABLE).o h5ncdump.o aggregate_time.o
-	g++ $(EXECUTABLE).o $(OBJECTS) $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  $(EXECUTABLE) $(LIBS) 
+	g++ $(EXECUTABLE).o $(OBJECTS) $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  $(EXECUTABLE) $(LIBS)
 	g++ "h5ncdump.o" $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  "h5ncdump" $(LIBS)
 	g++ "aggregate_time.o" $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  "aggregate_time" $(LIBS)
 

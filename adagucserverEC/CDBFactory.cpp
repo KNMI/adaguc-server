@@ -35,7 +35,6 @@ CDBAdapter *CDBFactory::staticCDBAdapter = NULL;
 
 CDBAdapter *CDBFactory::getDBAdapter(CServerConfig::XMLE_Configuration *cfg){
   if(staticCDBAdapter == NULL){
-    //CDBDebug("CREATE");
     if(cfg->DataBase.size()!=1){
       CDBError("DataBase not properly configured");
       return NULL;
@@ -47,9 +46,13 @@ CDBAdapter *CDBFactory::getDBAdapter(CServerConfig::XMLE_Configuration *cfg){
       #else
       CDBError("SQLITE is not compiled for ADAGUC, not available!");
       #endif
+    }else if(cfg->DataBase[0]->attr.dbtype.equals("mongo")) {
+      /* If the dbtype of the first parameter is mongo, we use MongoDB. */
+      CDBDebug("Using mongodb");
+      staticCDBAdapter = new CDBAdapterMongoDB();
     }else{
-      CDBDebug("Using postgresql");
-      staticCDBAdapter = new CDBAdapterPostgreSQL();
+      CDBDebug("Using mongodb");
+      staticCDBAdapter = new CDBAdapterMongoDB();
     }
     
     staticCDBAdapter->setConfig(cfg);
