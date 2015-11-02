@@ -29,7 +29,7 @@
 
 const char *CDBAdapterPostgreSQL::className="CDBAdapterPostgreSQL";
 
-//#define CDBAdapterPostgreSQL_DEBUG
+#define CDBAdapterPostgreSQL_DEBUG
 
 CDBAdapterPostgreSQL::CDBAdapterPostgreSQL(){
 #ifdef CDBAdapterPostgreSQL_DEBUG
@@ -95,6 +95,9 @@ CDBStore::Store *CDBAdapterPostgreSQL::getUniqueValuesOrderedByValue(const char 
     query.printconcat(" limit %d",limit);
   }
   CDBStore::Store* store = DB->queryToStore(query.c_str());
+  
+  CT::string *r1 = store->getRecord(0)->get(0);
+  CDBDebug("%s", r1->c_str());
   if(store == NULL){
     CDBDebug("Query %s failed",query.c_str());
   }
@@ -414,6 +417,14 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     CDBDebug("Query failed with code %d (%s)",e,query.c_str());
     return NULL;
   }
+					
+  for(size_t i = 0; i < store->size(); i++) {
+    CDBStore::Record *rec = store->getRecord(i);
+    for(size_t f = 0; f < rec->getColumnModel()->getSize(); f++) {
+		CDBDebug("Record has the following values: %s", rec->get(f)->c_str());
+	}
+  }
+  
   return store;
 }
 
@@ -565,9 +576,6 @@ CT::string CDBAdapterPostgreSQL::getTableNameForPathFilterAndDimension(const cha
   if(cacheDirectory.length()>0){
     lock.claim(cacheDirectory.c_str(),identifier.c_str(),"lookupTableName",dataSource->srvParams->isAutoResourceEnabled());
   }
-
-  
- 
  
   // This makes use of a lookup table to find the tablename belonging to the filter and path combinations.
   // Database collumns: path filter tablename

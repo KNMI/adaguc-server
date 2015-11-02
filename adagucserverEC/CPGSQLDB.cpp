@@ -185,7 +185,6 @@ CDBStore::Store* CPGSQLDB::queryToStore(const char *pszQuery,bool throwException
     if(throwException){
       throw CDB_CONNECTION_ERROR;
     }
-    CDBError("queryToStore: Not connected to DB");
     return NULL;
   }
 

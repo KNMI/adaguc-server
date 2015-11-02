@@ -1321,7 +1321,6 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
   }
 
   CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(),dataSource->getLayerName());
-
   if(store!=NULL){
     
     try{
