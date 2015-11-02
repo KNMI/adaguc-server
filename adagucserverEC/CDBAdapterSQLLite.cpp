@@ -901,7 +901,6 @@ CT::string CDBAdapterSQLLite::getTableNameForPathFilterAndDimension(const char *
 
 CDBStore::Store *CDBAdapterSQLLite::getDimensionInfoForLayerTableAndLayerName(const char *layertable,const char *layername){
   CSQLLiteDB * dataBaseConnection = getDataBaseConnection(); if(dataBaseConnection == NULL){return NULL;  }
-
   CT::string query;
   query.print("SELECT * FROM autoconfigure_dimensions where layerid='%s_%s'",layertable,layername);
   CDBStore::Store *store = dataBaseConnection->queryToStore(query.c_str());
