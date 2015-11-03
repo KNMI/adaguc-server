@@ -29,26 +29,9 @@
 #include <set>
 #include "CDebugger.h"
 
-/*
- * What to do next?
- * - Memory leak in getDatabaseConnection. Line 50.
- * 
- * 
- * Make MongoDriver work with DATASET key value pair.
- * 
- * Create config via:
- * 
- * ./adagucserver --getlayers --file /nobackup/users/plieger/projects/data/sdpkdc/RADNL_DATA/RADNL_OPER_R___25PCPRR_L3__20110617T152000_20110617T152500_0001.nc --datasetpath /nobackup/users/plieger/projects/data/sdpkdc/RADNL_DATA/ > /nobackup/users/plieger/datasetconfigs/urn_xkdc_dg_nl.knmi__default_testset_ADAGUC_NONE_1_.xml
- * 
- * Reference via URL with 
- * server.cgi?dataset=urn:xkdc:dg:nl.knmi::default_testset_ADAGUC_NONE/1/&&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=dnb&QUERY_LAYERS=dnb&CRS=EPSG%3A3857&BBOX=-4017299.426632504,429296.1946664017,5144326.288111853,6643017.105297432&WIDTH=1585&HEIGHT=1075&I=500&J=706&FORMAT=image/gif&INFO_FORMAT=text/html&STYLES=&&time=2015-10-21T02%3A57%3A45Z
- */
-
-/* Exception used for cracky functions. */
-
 const char *CDBAdapterMongoDB::className="CDBAdapterMongoDB";
 
-//#define CDBAdapterMongoDB_DEBUG
+#define CDBAdapterMongoDB_DEBUG
 
 CServerConfig::XMLE_Configuration *configurationObject;
 
@@ -108,7 +91,7 @@ int checkTableMongo(const char * pszTableName,const char *pszColumns){
   
   /* Getting the record of the given granule. */
   mongo::BSONObjBuilder selecting_query;
-  selecting_query << "fileName" << "TEST_TEST_TEST_TEST_TEST_T_19660101T030000_19660101T030500_0001.nc";
+  selecting_query << "fileName" << pszTableName;
   mongo::BSONObj the_query = selecting_query.obj();
   
   mongo::BSONObjBuilder specific_fields;
@@ -641,30 +624,42 @@ CDBStore::Store *CDBAdapterMongoDB::getUniqueValuesOrderedByIndex(const char *na
   if(DB == NULL) {
     return NULL;
   }
-  /* Also need the dim<name> column. */
-  std::string dimBuff = "dim";
-  dimBuff.append(name);
+
+  /* The corrected name. Because of MongoDB, it can be that  */
+  const char* corrected_name = getCorrectedPath(name);
   
-  /* Selecting the needed data. */
+  std::string dimension_name = "dim";
+  dimension_name.append(name);
+  const char * corrected_dim_name = getCorrectedPath(dimension_name.c_str());
+  
+  /* What do we want to select? Only the name variable. */
   mongo::BSONObjBuilder queryBSON;
-  /* Selecting the name, then group by name. */
-  queryBSON << name << 1 << dimBuff << 1;
+  queryBSON << corrected_name << 1 << corrected_dim_name << 1 << "_id" << 0;
   mongo::BSONObj queryObj = queryBSON.obj();
   
-  mongo::Query query = mongo::Query().sort(name, orderDescOrAsc ? 1 : -1);
+  /* The query itself. */
+  mongo::BSONObjBuilder query_itself;
+  query_itself << "fileName" << table;
+  mongo::BSONObj the_query = query_itself.obj();
+  
+  /* Sorting on multiple fields. So creating a BSON */
+  mongo::BSONObjBuilder sorting_fields_builder;
+  sorting_fields_builder << corrected_name << 1 << corrected_dim_name << 1;
+  mongo::BSONObj sorting_fields = sorting_fields_builder.obj();
+  
+  mongo::Query query = mongo::Query(the_query).sort(sorting_fields);
 
   auto_ptr<mongo::DBClientCursor> cursorFromMongoDB;
   
-  std::string buff = "database.";
-  buff.append(table);
+  cursorFromMongoDB = DB->query("database.datagranules", query, limit, 0, &queryObj);
   
-  if(limit>0) {
-    cursorFromMongoDB = DB->query(buff, query, limit, 0, &queryObj);
-  } else {
-    cursorFromMongoDB = DB->query(buff, query, 0, 0, &queryObj);
-  }
+  std::string columns = name;
+  columns.append(",");
   
-  CDBStore::Store *store = ptrToStore(cursorFromMongoDB, table);
+  CDBStore::Store *store = ptrToStore(cursorFromMongoDB, columns.c_str());
+  
+  CT::string *r1 = store->getRecord(0)->get(0);
+  CDBDebug("%s", r1->c_str());
   
   if(store == NULL){
     CDBDebug("Query %s failed",query.toString().c_str());
@@ -1006,6 +1001,8 @@ int CDBAdapterMongoDB::setFileTimeStamp(const char *tablename,const char *file,c
   return 0;
 }
 
+
+/* For next story! */
 int CDBAdapterMongoDB::addFilesToDataBase() {
   #ifdef CDBAdapterMongoDB_DEBUG
     CDBDebug("[Function: addFilesToDateBase]");
