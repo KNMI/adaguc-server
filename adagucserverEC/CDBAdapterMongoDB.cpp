@@ -31,12 +31,14 @@
 
 const char *CDBAdapterMongoDB::className="CDBAdapterMongoDB";
 
-#define CDBAdapterMongoDB_DEBUG
+//#define CDBAdapterMongoDB_DEBUG
 
 CServerConfig::XMLE_Configuration *configurationObject;
 
-// Used to discover the sorting of the MongoDB queries.
+/* Used to discover the sorting of the MongoDB queries. */
 std::map<std::string,std::string> table_combi;
+
+DEF_ERRORMAIN();
 
 /*
  * Getting the database connection. 
@@ -47,8 +49,6 @@ std::map<std::string,std::string> table_combi;
  *         If no connection can be established, return NULL.
  */
 mongo::DBClientConnection *dataBaseConnection;
-
-DEF_ERRORMAIN();
 
 mongo::DBClientConnection *getDataBaseConnection(){
   if(dataBaseConnection == NULL) {
@@ -153,30 +153,26 @@ CDBAdapterMongoDB::~CDBAdapterMongoDB() {
   delete dataBaseConnection;
 }
 
-/*
- * Because mongoDB is completely different then RDBMS, we need to
- * correct the layername.
- * 
- */
-const char* getCorrectedPath(const char* layer_name) {
+const char* CDBAdapterMongoDB::getCorrectedColumnName(const char* column_name) {
 	std::string prefix;
-	if(strcmp(layer_name,"time") == 0) {
+	if(strcmp(column_name,"time") == 0) {
       prefix = "adaguc.dimension.time.";
-	} else if(strcmp(layer_name,"dimtime") == 0) {
+	} else if(strcmp(column_name,"dimtime") == 0) {
       prefix = "adaguc.dimension.time.";
 	}else {
 	  prefix = "adaguc.";
     }
     
-	prefix.append(layer_name);
+	prefix.append(column_name);
 	return prefix.c_str();
 }
 
 /*
  *  Converting the query to a CDBStore, compatible with ADAGUC.
  * 
- *  @param DBClientCursor the cursor with a pointer to the query result.
- *  @param const char* used for having the field names in the correct order.
+ *  @param 		DBClientCursor 		the cursor with a pointer to the query result.
+ *  @param 		const char* 		Used for having the field names in the correct order.
+ * 	@return		CDBStore::Store		The store containing the results.
  */
 CDBStore::Store *ptrToStore(auto_ptr<mongo::DBClientCursor> cursor, const char* table) {
   #ifdef CDBAdapterMongoDB_DEBUG
@@ -354,12 +350,6 @@ CDBStore::Store *CDBAdapterMongoDB::getClosestDataTimeToSystemTime(const char *n
   return NULL;
 }
 
-/*
- *  Getting the granule name so ADAGUC knows where the information is stored. 
- *  In Postgres it was a tablename like t201509...., in MongoDB the filename is fine!
- * 
- *  @return CT::string The filename of the granule.
- */
 CT::string CDBAdapterMongoDB::getTableNameForPathFilterAndDimension(const char *path,const char *filter, const char * dimension,CDataSource *dataSource) {
   #ifdef CDBAdapterMongoDB_DEBUG
     CDBDebug("[Function: getTableNameForPathFilterAndDimension]");
@@ -503,7 +493,7 @@ CDBStore::Store *CDBAdapterMongoDB::getMin(const char *name,const char *table) {
   }
   
   /* Get the correct MongoDB path. */
-  std::string used_name = getCorrectedPath(name);
+  std::string used_name = getCorrectedColumnName(name);
   
   mongo::BSONObjBuilder query_builder;
   query_builder << "fileName" << table;
@@ -543,7 +533,7 @@ CDBStore::Store *CDBAdapterMongoDB::getMax(const char *name,const char *table) {
     return NULL;
   }
   /* Get the correct MongoDB path. */
-  std::string used_name = getCorrectedPath(name);
+  std::string used_name = getCorrectedColumnName(name);
   
   mongo::BSONObjBuilder query_builder;
   query_builder << "fileName" << table;
@@ -573,7 +563,6 @@ CDBStore::Store *CDBAdapterMongoDB::getMax(const char *name,const char *table) {
   return maxStore; 
 }
 
-/* DO THIS! */
 CDBStore::Store *CDBAdapterMongoDB::getUniqueValuesOrderedByValue(const char *name, int limit, bool orderDescOrAsc,const char *table) {
   #ifdef CDBAdapterMongoDB_DEBUG
     CDBDebug("[Function: getUniqueValuesOrderedByValue]");
@@ -584,7 +573,7 @@ CDBStore::Store *CDBAdapterMongoDB::getUniqueValuesOrderedByValue(const char *na
   }
 
   /* The corrected name. Because of MongoDB, it can be that  */
-  const char* corrected_name = getCorrectedPath(name);
+  const char* corrected_name = getCorrectedColumnName(name);
   
   /* What do we want to select? Only the name variable. */
   mongo::BSONObjBuilder queryBSON;
@@ -626,11 +615,11 @@ CDBStore::Store *CDBAdapterMongoDB::getUniqueValuesOrderedByIndex(const char *na
   }
 
   /* The corrected name. Because of MongoDB, it can be that  */
-  const char* corrected_name = getCorrectedPath(name);
+  const char* corrected_name = getCorrectedColumnName(name);
   
   std::string dimension_name = "dim";
   dimension_name.append(name);
-  const char * corrected_dim_name = getCorrectedPath(dimension_name.c_str());
+  const char * corrected_dim_name = getCorrectedColumnName(dimension_name.c_str());
   
   /* What do we want to select? Only the name variable. */
   mongo::BSONObjBuilder queryBSON;
@@ -667,7 +656,6 @@ CDBStore::Store *CDBAdapterMongoDB::getUniqueValuesOrderedByIndex(const char *na
   return store;
 }
 
-/* Query needs to be defined. */
 CDBStore::Store *CDBAdapterMongoDB::getFilesAndIndicesForDimensions(CDataSource *dataSource,int limit) {
   #ifdef CDBAdapterMongoDB_DEBUG
     CDBDebug("[Function: getFilesAndIndicesForDimensions]");
@@ -686,23 +674,20 @@ CDBStore::Store *CDBAdapterMongoDB::getFilesAndIndicesForDimensions(CDataSource 
   query_builder << "fileName" << tableName.c_str();
   mongo::BSONObj the_query = query_builder.obj();
   
+  mongo::BSONObjBuilder selecting_builder;
+  selecting_builder << "adaguc.path" << 1 << getCorrectedColumnName(dataSource->requiredDims[0]->netCDFDimName.c_str()) << 1 << "_id" << 0;
+  
   std::string buff = "dim";
   buff.append(dataSource->requiredDims[0]->netCDFDimName.c_str());
+  const char* buff_corrected = getCorrectedColumnName(buff.c_str());
   
-  mongo::BSONObjBuilder selecting_builder;
-  selecting_builder << "adaguc.path" << 1 << getCorrectedPath(dataSource->requiredDims[0]->netCDFDimName.c_str()) << 1 << "adaguc.dimension.time.dimtime" << 1 << "_id" << 0;
+  selecting_builder << buff_corrected << 1;
+  
   mongo::BSONObj selecting_query = selecting_builder.obj();
   
   auto_ptr<mongo::DBClientCursor> ptrToMongo = DB->query("database.datagranules", mongo::Query(the_query), limit, 0, &selecting_query);
   
   CDBStore::Store *store = ptrToStore(ptrToMongo, "path,time,dimtime");
-  
-  for(size_t i = 0; i < store->size(); i++) {
-    CDBStore::Record *rec = store->getRecord(i);
-    for(size_t f = 0; f < rec->getColumnModel()->getSize(); f++) {
-		CDBDebug("Record has the following values: %s", rec->get(f)->c_str());
-	}
-  }
   
   if(store != NULL) {
     return store;
@@ -722,14 +707,6 @@ CDBStore::Store *CDBAdapterMongoDB::getFilesForIndices(CDataSource *dataSource,s
   return NULL; 
 }
 
-/*
- *  Getting the dimension info about the selected file. 
- * 
- *  @param layertable Misleading param, but it is the fileName of the granule.
- *  @param layername The layer name used in ADAGUC.
- * 
- *  @return CDBStore::Store All records specific for some dimension.
- */
 CDBStore::Store *CDBAdapterMongoDB::getDimensionInfoForLayerTableAndLayerName(const char *layertable,const char *layername) {
   #ifdef CDBAdapterMongoDB_DEBUG
     CDBDebug("[Function: getDimensionInfoForLayerTableAndLayerName]");
@@ -768,15 +745,6 @@ CDBStore::Store *CDBAdapterMongoDB::getDimensionInfoForLayerTableAndLayerName(co
   return store;
 }
 
-/*
- *  Setting the dimension info about the selected file. 
- * 
- *  @param layertable Misleading param, but it is the fileName of the granule.
- *  @param layername The layer name used in ADAGUC.
- *  @param others, the values that must be set.
- * 
- *  @return int Status for succeeded or not.
- */
 int CDBAdapterMongoDB::storeDimensionInfoForLayerTableAndLayerName(const char *layertable,const char *layername,const char *netcdfname,const char *ogcname,const char *units) {
   #ifdef CDBAdapterMongoDB_DEBUG
     CDBDebug("[Function: storeDImensionInfoForLayerTableAndLayerName]");
@@ -820,6 +788,7 @@ int CDBAdapterMongoDB::storeDimensionInfoForLayerTableAndLayerName(const char *l
   return 0;
 }
     
+/* Not used anymore? */
 int CDBAdapterMongoDB::dropTable(const char *tablename) {
   #ifdef CDBAdapterMongoDB_DEBUG
     CDBDebug("[Function: dropTable]");
@@ -840,6 +809,7 @@ int CDBAdapterMongoDB::dropTable(const char *tablename) {
 int CDBAdapterMongoDB::createDimTableOfType(const char *dimname,const char *tablename,int type) {
   #ifdef CDBAdapterMongoDB_DEBUG
     CDBDebug("[Function: createDimTableOfType]");
+    CDBDebug("Dimtype is: %zu", type);
   #endif
   mongo::DBClientConnection * DB = getDataBaseConnection();
   if(DB == NULL) {
@@ -881,6 +851,7 @@ int CDBAdapterMongoDB::createDimTableTimeStamp(const char *dimname,const char *t
 int CDBAdapterMongoDB::checkIfFileIsInTable(const char *tablename,const char *filename) {
   #ifdef CDBAdapterMongoDB_DEBUG
     CDBDebug("[Function: checkIfFileIsInTable]");
+    CDBDebug("The fileName is %s, and the path is %s",tablename, filename);
   #endif
   int fileIsOK = 1;
   mongo::DBClientConnection * DB = getDataBaseConnection();
@@ -889,6 +860,7 @@ int CDBAdapterMongoDB::checkIfFileIsInTable(const char *tablename,const char *fi
   }
   auto_ptr<mongo::DBClientCursor> cursorFromMongoDB;
   
+  /* Granule needs to have the correct fileName and the correct path. */
   mongo::BSONObjBuilder query;
   query << "fileName" << tablename << "adaguc.path" << filename;
   mongo::BSONObj objBSON = query.obj();
@@ -898,6 +870,7 @@ int CDBAdapterMongoDB::checkIfFileIsInTable(const char *tablename,const char *fi
   /* Third parameter is number of results. */
   cursorFromMongoDB = DB->query(table_name, mongo::Query(objBSON));
   
+  /* If there is result, and the next one is valid ( so no $err.. ) */
   if(cursorFromMongoDB->more()) {
     if(cursorFromMongoDB->next().isValid()) {
       fileIsOK=0;
@@ -911,6 +884,7 @@ int CDBAdapterMongoDB::checkIfFileIsInTable(const char *tablename,const char *fi
   return fileIsOK; 
 }
     
+/* Not used anymore? */
 int CDBAdapterMongoDB::removeFile(const char *tablename,const char *file) {
   #ifdef CDBAdapterMongoDB_DEBUG
     CDBDebug("[Function: removeFile]");
@@ -920,6 +894,7 @@ int CDBAdapterMongoDB::removeFile(const char *tablename,const char *file) {
   if(DB == NULL) {
     return -1;
   }
+  
   /* Status will never change. Remove function is a void. 
    * Also, no param pointers are being used, so no feedback. */
   int status = 0;
@@ -935,6 +910,7 @@ int CDBAdapterMongoDB::removeFile(const char *tablename,const char *file) {
   return status;
 }
 
+/* Not used anymore? */
 int CDBAdapterMongoDB::removeFilesWithChangedCreationDate(const char *tablename,const char *file,const char *creationDate) {
   #ifdef CDBAdapterMongoDB_DEBUG
     CDBDebug("[Function: removeFilesWithChangedCreationDate]");
@@ -1000,7 +976,6 @@ int CDBAdapterMongoDB::setFileTimeStamp(const char *tablename,const char *file,c
   fileListPerTable[tablename].push_back(values.c_str());
   return 0;
 }
-
 
 /* For next story! */
 int CDBAdapterMongoDB::addFilesToDataBase() {
