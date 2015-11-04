@@ -45,7 +45,7 @@ adagucenv['ADAGUC_ONLINERESOURCE']=""
 
 """ Run the ADAGUC executable and capture the output """
 filetogenerate =  StringIO()
-status = CGIRunner().run(["../../bin/adagucserver"],url,output = filetogenerate,extraenv=adagucenv)
+status = CGIRunner().run([ADAGUC_PATH+"/bin/adagucserver"],url,output = filetogenerate,extraenv=adagucenv)
 
 try:
   """ Try to show the image """
