@@ -22,7 +22,7 @@
  * limitations under the License.
  * 
  ******************************************************************************/
-
+#ifdef ADAGUC_USE_POSTGRESQL
 #include "CDBAdapterPostgreSQL.h"
 #include <set>
 #include "CDebugger.h"
@@ -841,5 +841,4 @@ int CDBAdapterPostgreSQL::addFilesToDataBase(){
   return 0;
 }
 
-
- 
+#endif

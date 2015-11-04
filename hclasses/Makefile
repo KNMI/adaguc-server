@@ -11,12 +11,21 @@ OBJECTS =  CTypes.o CXMLParser.o CDebugger.o CDirReader.o
 
 EXECUTABLE= hclasses
 
+ifndef ADAGUCCOMPONENTS
+  ADAGUCCOMPONENTS=-DENABLE_CURL
+endif
+
+
+ifneq (,$(findstring DENABLE_CURL,$(ADAGUCCOMPONENTS)))
+ENABLE_CURL=-DENABLE_CURL
+endif
+
 default: $(EXECUTABLE) 
 $(EXECUTABLE): $(OBJECTS) 
 	ar rcs $(EXECUTABLE).a $(OBJECTS)  
 
 %.o: %.cpp
-	$(CCOMPILER) -c $< -o $@  -DENABLE_CURL
+	$(CCOMPILER) -c $< -o $@  $(ENABLE_CURL)
 
 clean:
 	rm $(OBJECTS) $(EXECUTABLE).a

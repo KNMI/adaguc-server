@@ -10,6 +10,28 @@ ifndef ADAGUCCOMPILERSETTINGS
   ADAGUCCOMPILERSETTINGS=-Wall
 endif
 
+ifndef ADAGUCCOMPONENTS
+  ADAGUCCOMPONENTS=-DENABLE_CURL -DADAGUC_USE_GDAL -DADAGUC_USE_SQLITE -DADAGUC_USE_POSTGRESQL
+endif
+
+
+ifneq (,$(findstring DENABLE_CURL,$(ADAGUCCOMPONENTS)))
+LIB_CURL=-lcurl
+endif
+ifneq (,$(findstring DADAGUC_USE_GDAL,$(ADAGUCCOMPONENTS)))
+LIB_GDAL=-lgdal
+endif
+ifneq (,$(findstring DADAGUC_USE_SQLITE,$(ADAGUCCOMPONENTS)))
+LIB_SQLITE=-lsqlite3
+endif
+ifneq (,$(findstring DADAGUC_USE_POSTGRESQL,$(ADAGUCCOMPONENTS)))
+LIB_PQ=-lpq
+endif
+
+
+LIB_CAIRO=-lcairo
+
+
 CCOMPILER=g++ $(ADAGUCCOMPILERSETTINGS) $(INCLUDEDIR)
 
 
@@ -21,9 +43,13 @@ CCOMPILER=g++ $(ADAGUCCOMPILERSETTINGS) $(INCLUDEDIR)
 #CCOMPILER=g++ -O2 $(INCLUDEDIR)
 #CCOMPILER=g++ -march=k8-sse3 -mtune=k8-sse3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 $(INCLUDEDIR)  
 
-# USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lxml2 -lgd -lproj -lpq -ludunits2 -lfreetype -lgd -lpng -lpthread  -lrt
 
-USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lxml2 -lgd -lproj -lpq -ludunits2 -lfreetype -lgd -lpng -lpthread  -lrt -lcurl -lgdal -lcairo -lsqlite3
+
+
+USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lxml2 -lgd -lproj  -ludunits2 -lfreetype -lgd -lpng -lpthread -lrt $(LIB_CAIRO) $(LIB_CURL) $(LIB_GDAL) $(LIB_PQ) $(LIB_SQLITE)
+
+
+
 
 # all libs together
 LIBS = $(USERLIBS) $(LDFLAGS) -L$(INSTALLDIR2)/lib  
@@ -40,7 +66,7 @@ $(EXECUTABLE): $(OBJECTS) $(EXECUTABLE).o h5ncdump.o aggregate_time.o
 	g++ "aggregate_time.o" $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  "aggregate_time" $(LIBS)
 
 %.o: %.cpp
-	$(CCOMPILER) -c $< -o $@  -DENABLE_CURL -DADAGUC_USE_CAIRO -DADAGUC_USE_GDAL -DADAGUC_USE_SQLITE
+	$(CCOMPILER) -c $< -o $@ $(ADAGUCCOMPONENTS)
 
 clean:
 	rm $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE).o h5ncdump.o h5ncdump aggregate_time.o aggregate_time

@@ -22,7 +22,7 @@
  * limitations under the License.
  * 
  ******************************************************************************/
-
+#ifdef ADAGUC_USE_POSTGRESQL
 #ifndef CPGSQLDB_H
 #define CPGSQLDB_H
 #include <stdio.h>
@@ -77,3 +77,4 @@ class CPGSQLDB{
 };
 #endif
 
+#endif
