@@ -305,8 +305,18 @@ class CServerParams{
        */
       static bool checkTimeFormat(CT::string& timeToCheck);
       
-      
+      /** 
+       * Creates a random string of specified length
+       * @param len The length of the string
+       */
       static const CT::string randomString(const int len);
+      
+      /**
+       * Parses the provided configuration file. Can be called consecutively to extend the internal configuration object.
+       * @param pszConfigFile The config file to parse
+       * returns zero on success       * 
+       */
+      int parseConfigFile(CT::string &pszConfigFile);
      
 };
 

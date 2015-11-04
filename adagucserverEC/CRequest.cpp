@@ -84,19 +84,7 @@ int CRequest::setConfigFile(const char *pszConfigFile){
   CT::StackList<CT::string> configFileList=configFile.splitToStack(",");
   
   //Parse the main configuration file
-  CT::string configFileData;
-  
-  configFileData = "";
-  try{
-    configFileData = CReadFile::open(configFileList[0].c_str());
-    const char *pszADAGUC_PATH=getenv("ADAGUC_PATH");
-    if(pszADAGUC_PATH!=NULL)configFileData.replaceSelf("{ADAGUC_PATH}",pszADAGUC_PATH);
-    const char *pszADAGUC_TMP=getenv("ADAGUC_TMP");
-    if(pszADAGUC_TMP!=NULL)configFileData.replaceSelf("{ADAGUC_TMP}",pszADAGUC_TMP);
-  }catch(int e){
-  }
-  
-  int status = srvParam->configObj->parse(configFileData.c_str(),configFileData.length());
+  int status = srvParam->parseConfigFile(configFileList[0]);
   
   if(status == 0 && srvParam->configObj->Configuration.size()==1){
  
@@ -106,19 +94,7 @@ int CRequest::setConfigFile(const char *pszConfigFile){
     if(configFileList.size()>1){
       for(size_t j=1;j<configFileList.size();j++){
           CDBDebug("Include '%s'",configFileList[j].c_str());
-          
-          configFileData = "";
-          try{
-            configFileData = CReadFile::open(configFileList[j].c_str());
-            const char *pszADAGUC_PATH=getenv("ADAGUC_PATH");
-            if(pszADAGUC_PATH!=NULL)configFileData.replaceSelf("{ADAGUC_PATH}",pszADAGUC_PATH);
-            const char *pszADAGUC_TMP=getenv("ADAGUC_TMP");
-            if(pszADAGUC_TMP!=NULL)configFileData.replaceSelf("{ADAGUC_TMP}",pszADAGUC_TMP);
-            
-          }catch(int e){
-          }
-  
-          status = srvParam->configObj->parse(configFileData.c_str(),configFileData.length());
+          status = srvParam->parseConfigFile(configFileList[j]);
           if(status != 0){
             CDBError("There is an error with include '%s'",configFileList[j].c_str());
             return 1;
@@ -134,7 +110,7 @@ int CRequest::setConfigFile(const char *pszConfigFile){
     for(size_t j=0;j<srvParam->cfg->Include.size();j++){
       if(srvParam->cfg->Include[j]->attr.location.empty()==false){
         CDBDebug("Include '%s'",srvParam->cfg->Include[j]->attr.location.c_str());
-        status = srvParam->configObj->parseFile(srvParam->cfg->Include[j]->attr.location.c_str());
+        status = srvParam->parseConfigFile(srvParam->cfg->Include[j]->attr.location);
         if(status != 0){
           CDBError("There is an error with include '%s'",srvParam->cfg->Include[j]->attr.location.c_str());
           return 1;
