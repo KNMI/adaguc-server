@@ -69,6 +69,7 @@
     <Max>3500</Max>
     <NameMapping name="nearest"   title="Rainbow colors" abstract="Drawing  images with rainbow colors"/>
   </Style>
+  
    <Style name="no2">
     <Legend fixedclasses="true" tickinterval="500" tickround="1">no2</Legend>
     <Min>0.0</Min>
@@ -77,4 +78,6 @@
     <NameMapping name="nearest"   title="NO2 colors" abstract="Drawing  images with NO2 colors"/>
     <NameMapping name="bilinear"   title="NO2 colors smooth" abstract="Drawing  images with NO2 colors and bilinear interpolation"/>
   </Style>
+  
+
 </Configuration>
