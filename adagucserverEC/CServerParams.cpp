@@ -560,3 +560,27 @@ bool CServerParams::checkTimeFormat(CT::string& timeToCheck){
   return isValidTime;*/
 }
 
+int CServerParams::parseConfigFile(CT::string &pszConfigFile){
+  CT::string configFileData;
+  
+  configFileData = "";
+  try{
+    configFileData = CReadFile::open(pszConfigFile.c_str());
+    const char *pszADAGUC_PATH=getenv("ADAGUC_PATH");
+    if(pszADAGUC_PATH!=NULL)configFileData.replaceSelf("{ADAGUC_PATH}",pszADAGUC_PATH);
+    const char *pszADAGUC_TMP=getenv("ADAGUC_TMP");
+    if(pszADAGUC_TMP!=NULL)configFileData.replaceSelf("{ADAGUC_TMP}",pszADAGUC_TMP);
+  }catch(int e){
+  }
+  
+  int status = configObj->parse(configFileData.c_str(),configFileData.length());
+  
+  if(status == 0 && configObj->Configuration.size()==1){
+    return 0;
+  }else{
+    cfg=NULL;
+    CDBError("Invalid XML file %s",pszConfigFile.c_str());
+    return 1;
+  } 
+}
+

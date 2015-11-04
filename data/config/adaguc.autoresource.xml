@@ -14,7 +14,7 @@
       <Abstract>Root Layer Abstract</Abstract>
     </RootLayer>
     <!-- PNG 8 bit requests are forced to 32 bit: better for antialiasing and combining layers with many colors -->
-    <WMSFormat name="image/png32" format="image/png"/> 
+    <WMSFormat name="image/png" format="image/png32"/> 
   </WMS>
   
   

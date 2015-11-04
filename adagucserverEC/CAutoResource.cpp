@@ -59,7 +59,7 @@ int CAutoResource::configureDataset(CServerParams *srvParam,bool plain){
     }
 
     //Add the dataset file to the current configuration      
-    int status = srvParam->configObj->parseFile(datasetConfigFile.c_str());
+    int status = srvParam->parseConfigFile(datasetConfigFile);
     if(status!=0){
       CDBError("Invalid dataset configuration file. ");
       return 1;
