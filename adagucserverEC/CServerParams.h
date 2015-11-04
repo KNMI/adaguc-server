@@ -68,7 +68,7 @@ class CServerParams{
   private:
     int autoOpenDAPEnabled,autoLocalFileResourceEnabled,autoResourceCacheEnabled;
     
-    
+    CT::string _onlineResource;
     static int dataRestriction;
   public:
     double dfResX,dfResY;
@@ -254,10 +254,17 @@ class CServerParams{
      */    
     static void showWCSNotEnabledErrorMessage();
     
+    
+    
     /**
      * Get configured online resource
      */
     CT::string getOnlineResource();
+    
+    /**
+     * Set online resource
+     */
+    void setOnlineResource(CT::string onlineResource);
     
     /**
      * Determine whether boundingbox y and x are swapped, for example the case with WMS 1.3.0 and EPSG:4326

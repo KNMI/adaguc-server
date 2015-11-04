@@ -230,7 +230,7 @@ int CConvertHexagon::convertHexagonHeader( CDFObject *cdfObject,CServerParams *s
     
 
   }catch(int e){
-    CDBDebug("NOT HEXAGON DATA");
+    //CDBDebug("NOT HEXAGON DATA");
     return 1;
   }
   
