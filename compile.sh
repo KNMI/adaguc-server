@@ -1,9 +1,14 @@
 #!/bin/bash
 
+#For developing, use:
 #export ADAGUCCOMPILERSETTINGS="-Wall"
+#For operational, use:
 #export ADAGUCCOMPILERSETTINGS="-msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2"
 
 DEFAULTCOMPILERSETTINGS="-msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2"
+DEFAULTADAGUCCOMPONENTS="-DENABLE_CURL -DADAGUC_USE_GDAL -DADAGUC_USE_SQLITE -DADAGUC_USE_POSTGRESQL"
+
+
 
 if [ -z ${ADAGUCCOMPILERSETTINGS+x} ]; then 
   echo "ADAGUCCOMPILERSETTINGS is unset";
@@ -11,7 +16,18 @@ if [ -z ${ADAGUCCOMPILERSETTINGS+x} ]; then
 else 
   echo "ADAGUCCOMPILERSETTINGS is set to '$ADAGUCCOMPILERSETTINGS'"; 
 fi
-  
+
+#Minimal instalation can be compiled by settign:
+#export ADAGUCCOMPONENTS="-DADAGUC_USE_SQLITE"
+
+if [ -z ${ADAGUCCOMPONENTS}+x} ]; then 
+  echo "ADAGUCCOMPONENTS is unset";
+  export ADAGUCCOMPONENTS=$DEFAULTADAGUCCOMPONENTS
+else 
+  echo "ADAGUCCOMPONENTS is set to '$ADAGUCCOMPONENTS'"; 
+fi  
+
+
 
 
 function quit {
