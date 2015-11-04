@@ -27,7 +27,7 @@
 #ifdef ADAGUC_USE_GDAL
 #include "CGDALDataWriter.h"
 
-#define CGDALDATAWRITER_DEBUG
+//#define CGDALDATAWRITER_DEBUG
 
 const char * CGDALDataWriter::className = "CGDALDataWriter";
 
@@ -441,7 +441,7 @@ int  CGDALDataWriter::end(){
     bool first = true;
     
     CCDFDims *dims = _dataSource->getCDFDims();
-    for(size_t d=0;d<dims->getNumDimensions();d++){
+    for(size_t d=0;d<_dataSource->requiredDims.size();d++){
       CT::string dimName = "null";
       try{
         dimName = dims->getDimensionName(d);
