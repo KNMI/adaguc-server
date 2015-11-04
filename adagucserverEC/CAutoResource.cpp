@@ -66,12 +66,13 @@ int CAutoResource::configureDataset(CServerParams *srvParam,bool plain){
     }
     
     //Adjust online resource in order to pass on dataset parameters
-    CT::string onlineResource=srvParam->cfg->OnlineResource[0]->attr.value.c_str();
+    CT::string onlineResource=srvParam->getOnlineResource();
     CT::string stringToAdd;
     stringToAdd.concat("DATASET=");stringToAdd.concat(srvParam->datasetLocation.c_str());
     stringToAdd.concat("&amp;");
     onlineResource.concat(stringToAdd.c_str());
-    srvParam->cfg->OnlineResource[0]->attr.value.copy(onlineResource.c_str());
+    srvParam->setOnlineResource(onlineResource.c_str());
+    
     
     //Adjust unique cache file identifier for each dataset.
     if(srvParam->cfg->CacheDocs.size()==0){srvParam->cfg->CacheDocs.push_back(new CServerConfig::XMLE_CacheDocs());}
@@ -240,7 +241,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
         }
       }
     }
-    
+    CDBDebug("A");
     CT::string serverSummary="";
     CT::string serverDescription="";
     CT::string serverSource="";
@@ -260,7 +261,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
     try{cdfObject->getAttribute("history")->getDataAsString(&serverHistory);}catch(int e){}
     try{cdfObject->getAttribute("comments")->getDataAsString(&serverComments);}catch(int e){}
     try{cdfObject->getAttribute("disclaimer")->getDataAsString(&serverDisclaimer);}catch(int e){}
-    
+    CDBDebug("A");
     CT::string serverAbstract="";
     if(serverInstitution.length()>0){serverAbstract.printconcat("Institution: %s.\n",serverInstitution.c_str());}
     if(serverSummary.length()>0){serverAbstract.printconcat("Summary: %s.\n",serverSummary.c_str());}
@@ -270,7 +271,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
     if(serverHistory.length()>0){serverAbstract.printconcat("History: %s.\n",serverHistory.c_str());}
     if(serverComments.length()>0){serverAbstract.printconcat("Comments: %s.\n",serverComments.c_str());}
     if(serverDisclaimer.length()>0){serverAbstract.printconcat("Disclaimer: %s.\n",serverDisclaimer.c_str());}
-
+CDBDebug("A");
     //Replace invalid XML tokens with valid ones
     serverAbstract.replaceSelf("@" ," at ");
     serverAbstract.replaceSelf("<" ,"[");
@@ -284,7 +285,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
         }
       }
     }
-    
+    CDBDebug("A");
   
     //Generate layers based on the OpenDAP variables
     CT::StackList<CT::string> variables=srvParam->autoResourceVariable.splitToStack(",");
@@ -318,7 +319,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
         variableNames.push_back(varDirection->name.c_str());
         addXMLLayerToConfig(srvParam,cdfObject,&variableNames,"derived",srvParam->internalAutoResourceLocation.c_str());
       }
-    }
+    }CDBDebug("A");
     
     //Detect dd and ff for wind direction and wind speed
     if(1==1){
@@ -331,7 +332,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
         addXMLLayerToConfig(srvParam,cdfObject,&variableNames,"derived",srvParam->internalAutoResourceLocation.c_str());
       }
     }
-    
+    CDBDebug("A");
     //Detect wind vectors based on standardnames
     if(1==1){
       
@@ -360,10 +361,10 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
       }
     }
     
-    
+    CDBDebug("A");
     
     //Adjust online resource in order to pass on variable and source parameters
-    CT::string onlineResource=srvParam->cfg->OnlineResource[0]->attr.value.c_str();
+    CT::string onlineResource=srvParam->getOnlineResource();
     CT::string stringToAdd;
     stringToAdd.concat("&source=");stringToAdd.concat(srvParam->autoResourceLocation.c_str());
     //stringToAdd.concat("&variable=");stringToAdd.concat(srvParam->autoResourceVariable.c_str());
@@ -371,11 +372,11 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
     stringToAdd.encodeURLSelf();
     stringToAdd.concat("&amp;");
     onlineResource.concat(stringToAdd.c_str());
-    srvParam->cfg->OnlineResource[0]->attr.value.copy(onlineResource.c_str());
+    srvParam->setOnlineResource(onlineResource.c_str());
     //CDBDebug("OGC REQUEST RESOURCE %s",srvParam->internalAutoResourceLocation.c_str());//,srvParam->autoResourceLocation.c_str(),);
     
     
-    
+    CDBDebug("A");
   
     #ifdef MEASURETIME
     StopWatch_Stop("Auto opendap configured");

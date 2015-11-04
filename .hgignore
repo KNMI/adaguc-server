@@ -7,3 +7,10 @@ syntax: glob
 *.a
 .project
 .cproject
+./adagucserverEC/adagucserver
+./adagucserverEC/aggregate_time
+./adagucserverEC/h5ncdump
+./bin/adagucserver
+./bin/aggregate_time
+./bin/h5ncdump
+

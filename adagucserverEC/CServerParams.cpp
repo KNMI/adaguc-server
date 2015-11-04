@@ -415,23 +415,47 @@ void CServerParams::encodeTableName(CT::string *tableName){
   tableName->toLowerCaseSelf();
 }
 
-
+void CServerParams::setOnlineResource(CT::string r){
+  _onlineResource = r;
+};
 
 CT::string CServerParams::getOnlineResource(){
-  CT::string onlineResource=cfg->OnlineResource[0]->attr.value.c_str();
-  //A full path is given
-  if(onlineResource.indexOf("http",4)==0){
+  if(_onlineResource.length()>0){
+    return _onlineResource;
+  }
+  if(cfg->OnlineResource.size() == 0){
+    //No Online resource is given.
+     const char *pszADAGUCOnlineResource=getenv("ADAGUC_ONLINERESOURCE");
+    if(pszADAGUCOnlineResource==NULL){
+      CDBError("No OnlineResources configured. Unable to get from config OnlineResource or from environment ADAGUC_ONLINERESOURCE");
+      _onlineResource = "";
+      return "";
+    }
+    CT::string onlineResource=pszADAGUCOnlineResource;
+    _onlineResource = onlineResource;
     return onlineResource;
   }
+  
+  CT::string onlineResource=cfg->OnlineResource[0]->attr.value.c_str();
+  
+  
+  //A full path is given in the configuration
+  if(onlineResource.indexOf("http",4)==0){
+    _onlineResource = onlineResource;
+    return onlineResource;
+  }
+  
   //Only the last part is given, we need to prepend the HTTP_HOST environment variable.
   const char *pszHTTPHost=getenv("HTTP_HOST");
   if(pszHTTPHost==NULL){
     CDBError("Unable to determine HTTP_HOST");
+    _onlineResource = "";
     return "";
   }
   CT::string httpHost="http://";
   httpHost.concat(pszHTTPHost);
   httpHost.concat(&onlineResource);
+  _onlineResource = httpHost;
   return httpHost;
 }
 
