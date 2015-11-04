@@ -5,6 +5,7 @@ syntax: glob
 .ccache/*
 *~
 *.a
+*.pyc
 .project
 .cproject
 ./adagucserverEC/adagucserver
