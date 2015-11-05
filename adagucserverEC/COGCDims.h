@@ -27,7 +27,7 @@
 #define COGCDIMS_H
 #include <stdio.h>
 #include "CTypes.h"
-
+#include "CDebugger.h"
 class COGCDims{
   public:
     COGCDims(){
