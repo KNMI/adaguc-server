@@ -22,15 +22,13 @@
  * limitations under the License.
  * 
  ******************************************************************************/
-
 #include "CCDFCache.h"
+const char *CDFCache::className="CDFCache";
+
 #include "CCDFObject.h"
 #include "CCDFDataModel.h"
 #include "CCDFNetCDFIO.h"
 #include "CCDFStore.h"
-const char *CDFCache::className="CDFCache";
-
-
 //#define CCDFCACHE_DEBUG
 //#define CCDFCACHE_DEBUG_LOW
 
