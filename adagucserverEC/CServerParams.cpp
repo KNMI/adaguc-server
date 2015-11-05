@@ -578,7 +578,7 @@ int CServerParams::parseConfigFile(CT::string &pszConfigFile){
   if(status == 0 && configObj->Configuration.size()==1){
     return 0;
   }else{
-    cfg=NULL;
+    //cfg=NULL;
     CDBError("Invalid XML file %s",pszConfigFile.c_str());
     return 1;
   } 
