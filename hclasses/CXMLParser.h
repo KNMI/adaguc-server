@@ -29,8 +29,7 @@
 #include <iostream>
 #include <vector>
 #include <stdio.h>
-#include <libxml/parser.h>
-#include <libxml/tree.h>
+
 #include "CTypes.h"
 
 #define CXMLPARSER_ATTR_NOT_FOUND 1
