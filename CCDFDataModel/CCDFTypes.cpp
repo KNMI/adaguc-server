@@ -25,11 +25,12 @@
 
 #include "CCDFTypes.h"
 
-#ifdef MEMLEAKCHECK
-extern Tracer NewTrace;
-#endif
+//#include "CDebugger.h"
+//#ifdef MEMLEAKCHECK
+//extern Tracer NewTrace;
+//#endif
 
-DEF_ERRORMAIN()
+//DEF_ERRORMAIN()
 
 int CDF::getTypeSize(CDFType type){
   if(type == CDF_CHAR || type == CDF_UBYTE || type == CDF_BYTE)return 1;
@@ -59,7 +60,7 @@ int CDF::allocateData(CDFType type,void **p,size_t length){
 
   size_t typeSize= getTypeSize(type);
   if(typeSize==0){
-    CDBError("In CDF::allocateData: Unknown type");
+//    CDBError("In CDF::allocateData: Unknown type");
     return 1;
   }
   *p = malloc(length*typeSize);

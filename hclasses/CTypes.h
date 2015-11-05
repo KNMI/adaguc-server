@@ -36,8 +36,7 @@
 #include <exception>
 #include <stdlib.h>
 #include <regex.h>
-#include "CDebugger.h"
-
+#include <vector>
 #define END NULL
 
 #ifndef CTYPESCOMPATON

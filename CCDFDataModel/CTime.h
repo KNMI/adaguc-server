@@ -36,7 +36,7 @@
 
 #define CTIME_MODE_UTCALENDAR 0
 #define CTIME_MODE_YYYYMM 1
-
+#include "CDebugger.h"
 class CTime{
   private:
   CT::string currentUnit;
