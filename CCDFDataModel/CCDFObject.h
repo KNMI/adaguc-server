@@ -23,11 +23,13 @@
  * 
  ******************************************************************************/
 
-#include "CCDFVariable.h"
-
 #ifndef CCDFOBJECT_H
 #define CCDFOBJECT_H
 
+#include <libxml/parser.h>
+#include <libxml/tree.h>
+#include "CCDFVariable.h"
+#include "CDebugger_H2.h"
 
 
 class CDFObject:public CDF::Variable{
