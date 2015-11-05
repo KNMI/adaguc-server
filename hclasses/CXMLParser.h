@@ -169,13 +169,13 @@ class CXMLParser{
     CT::string value;
     CT::string name;
     
-    public:
+    private:
     /**
      * Constructor which parses libXmlNode
      * @param xmlNode The libXML node to parse
      * @param depth Current recursive depth of the node
      */
-    XMLElement(xmlNode * a_node,int depth);
+    XMLElement(void * _a_node,int depth);
  
   
     private:
@@ -183,14 +183,14 @@ class CXMLParser{
      * Parses the attributes of the libXML attribute and adds them to the XMLelement
      * @param xmlAttr the libXML attribute to parse
      */
-    void parse_element_attributes(xmlAttr * a_node);
+    void parse_element_attributes(void * a_node);
      
     /**
      * Parses the lib xmlElements to XMLElement recursively
      * @param xmlNode the libXML node to parse
      * @param depth the current recursive depth of the node
      */
-    void parse_element_names(xmlNode * a_node,int depth);
+    void parse_element_names(void * _a_node,int depth);
       
     private: 
     /**
