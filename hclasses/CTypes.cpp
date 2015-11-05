@@ -26,7 +26,7 @@
 #include "CTypes.h"
 #include "CTString.h"
 #include "CTStringRef.h"
-const char *CT::string::className = "CT::string";
+//const char *CT::string::className = "CT::string";
 
 namespace CT{
   
