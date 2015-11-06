@@ -64,16 +64,16 @@ class CDBAdapterMongoDB:public CDBAdapter{
      */
     CDBStore::Store *getClosestDataTimeToSystemTime(const char *netcdfDimName,const char *tableName);
 
-	/*
-	 *  Getting the granule name so ADAGUC knows where the information is stored. 
-	 *  In Postgres it was a tablename like t201509...., in MongoDB the filename is fine!
-	 *  @param		const char*		The full path of the dataset.
-	 *  @param		const char*		Not used parameter ( only applicable for SQL databases.
-	 *  @param 		const char* 	Not used parameter ( only applicable for SQL databases.
-	 *  @param		CDataSource		Not used parameter ( only applicable for SQL databases.
-	 * 
-	 *  @return 	CT::string 		The filename of the granule.
-	 */
+    /*
+     *  Getting the granule name so ADAGUC knows where the information is stored. 
+     *  In Postgres it was a tablename like t201509...., in MongoDB the filename is fine!
+     *  @param		const char*		The full path of the dataset.
+     *  @param		const char*		Not used parameter ( only applicable for SQL databases.
+     *  @param 		const char* 	Not used parameter ( only applicable for SQL databases.
+     *  @param		CDataSource		Not used parameter ( only applicable for SQL databases.
+     * 
+     *  @return 	CT::string 		The filename of the granule.
+     */
     CT::string       getTableNameForPathFilterAndDimension(const char *path,const char *filter, const char * dimension,CDataSource *dataSource);
     
     /*
@@ -82,21 +82,21 @@ class CDBAdapterMongoDB:public CDBAdapter{
     int              autoUpdateAndScanDimensionTables(CDataSource *dataSource);
     
     /*
-	 *  Getting the minimum value of the selected name.
-	 *  @param		const char*		The full path of the dataset.
-	 *  @param		const char*		The filename of the granule.
-	 * 
-	 *  @return 	CDBStore::Store A store containing the minimum value.
-	 */
+     *  Getting the minimum value of the selected name.
+     *  @param		const char*		The full path of the dataset.
+     *  @param		const char*		The filename of the granule.
+     * 
+     *  @return 	CDBStore::Store A store containing the minimum value.
+     */
     CDBStore::Store *getMin(const char *name,const char *table);
     
     /*
-	 *  Getting the maximum value of the selected name.
-	 *  @param		const char*		The full path of the dataset.
-	 *  @param		const char*		The filename of the granule.
-	 * 
-	 *  @return 	CDBStore::Store A store containing the maximum value.
-	 */
+     *  Getting the maximum value of the selected name.
+     *  @param		const char*		The full path of the dataset.
+     *  @param		const char*		The filename of the granule.
+     * 
+     *  @return 	CDBStore::Store A store containing the maximum value.
+     */
     CDBStore::Store *getMax(const char *name,const char *table);
     
     /*  
