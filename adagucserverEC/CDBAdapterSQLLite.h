@@ -101,7 +101,7 @@ private:
     CDBStore::Store *getFilesAndIndicesForDimensions(CDataSource *dataSource,int limit);
     
     //TODO implement this method!!!
-    CDBStore::Store *getFilesForIndices(CDataSource *dataSource,size_t *start,size_t *count,ptrdiff_t *stride,int limit){return NULL;}
+    CDBStore::Store *getFilesForIndices(CDataSource *dataSource,size_t *start,size_t *count,ptrdiff_t *stride,int limit);
     
     CDBStore::Store *getDimensionInfoForLayerTableAndLayerName(const char *layertable,const char *layername);
     int              storeDimensionInfoForLayerTableAndLayerName(const char *layertable,const char *layername,const char *netcdfname,const char *ogcname,const char *units);
