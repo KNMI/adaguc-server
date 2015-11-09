@@ -30,7 +30,7 @@
 const char *CDF::Variable::className="Variable";
 
 
-#define CCDFDATAMODEL_DEBUG
+//#define CCDFDATAMODEL_DEBUG
 int CDF::Variable::readData(CDFType type){
   return readData(type,NULL,NULL,NULL);
 }
