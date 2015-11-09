@@ -93,7 +93,7 @@ int CRequest::setConfigFile(const char *pszConfigFile){
      //Include additional config files given as argument
     if(configFileList.size()>1){
       for(size_t j=1;j<configFileList.size();j++){
-          CDBDebug("Include '%s'",configFileList[j].c_str());
+          //CDBDebug("Include '%s'",configFileList[j].c_str());
           status = srvParam->parseConfigFile(configFileList[j]);
           if(status != 0){
             CDBError("There is an error with include '%s'",configFileList[j].c_str());
@@ -109,7 +109,7 @@ int CRequest::setConfigFile(const char *pszConfigFile){
     //Include additional config files given in the include statement of the config file
     for(size_t j=0;j<srvParam->cfg->Include.size();j++){
       if(srvParam->cfg->Include[j]->attr.location.empty()==false){
-        CDBDebug("Include '%s'",srvParam->cfg->Include[j]->attr.location.c_str());
+        //CDBDebug("Include '%s'",srvParam->cfg->Include[j]->attr.location.c_str());
         status = srvParam->parseConfigFile(srvParam->cfg->Include[j]->attr.location);
         if(status != 0){
           CDBError("There is an error with include '%s'",srvParam->cfg->Include[j]->attr.location.c_str());

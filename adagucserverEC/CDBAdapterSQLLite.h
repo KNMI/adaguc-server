@@ -80,7 +80,8 @@ private:
       return dataBaseConnection;
     }
     CServerConfig::XMLE_Configuration *configurationObject;
-    std::map <std::string ,std::string> lookupTableNameCacheMap;
+    std::map <std::string ,std::string> lookupTableNameCacheMap; //PathFilter gives tablename
+
     std::map <std::string ,std::vector<std::string> > fileListPerTable;
     int createDimTableOfType(const char *dimname,const char *tablename,int type);
   public:
