@@ -31,7 +31,7 @@
 
 const char *CDBAdapterMongoDB::className="CDBAdapterMongoDB";
 
-#define CDBAdapterMongoDB_DEBUG
+//#define CDBAdapterMongoDB_DEBUG
 
 CServerConfig::XMLE_Configuration *configurationObject;
 
@@ -83,7 +83,6 @@ int checkTableMongo(const char * pszTableName,const char *pszColumns){
   // 1 = error
   // 2 = table created
   
-  int i;
   mongo::DBClientConnection * DB = getDataBaseConnection();
   if(DB == NULL) {
     CDBError("checkTable: Not connected to DB");
@@ -234,7 +233,7 @@ CDBStore::Store *ptrToStore(auto_ptr<mongo::DBClientCursor> cursor, const char* 
     }
   
   /* Number of columns. */
-  int numCols = 0;
+  size_t numCols = 0;
   if(strcmp(object_field_return.c_str(),"dimension.time") == 0) {
     numCols = firstValue.nFields();
   } else if(strcmp(table, "path,time,dimtime") == 0) {
