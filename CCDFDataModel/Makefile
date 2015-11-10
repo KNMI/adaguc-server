@@ -1,4 +1,4 @@
-INCLUDEDIR=-I../hclasses  -I/usr/include/libxml2/ -I/usr/include/udunits2/ $(CPPFLAGS) $(LDFLAGS)
+INCLUDEDIR=-I../hclasses  -I/usr/include/libxml2/ -I/usr/include/hdf5/serial/ -I/usr/include/udunits2/ $(CPPFLAGS) $(LDFLAGS)
 
 #CCOMPILER=g++ -Wall $(INCLUDEDIR) 
 

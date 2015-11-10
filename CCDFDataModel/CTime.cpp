@@ -146,7 +146,7 @@ double CTime::dateToOffset( Date date){
   
   if(mode == CTIME_MODE_UTCALENDAR){
     if(utInvCalendar(date.year,date.month,date.day,date.hour,date.minute,(int)date.second,&dataunits,&offset) != 0){
-      CDBError("DateToOffset: Internal error: utInvCalendar with args %s",dateToString(date).c_str());throw CTIME_CONVERSION_ERROR;
+      CDBError("dateToOffset: Internal error: utInvCalendar with args %s",dateToString(date).c_str());throw CTIME_CONVERSION_ERROR;
     }
   }
   return offset;
@@ -203,7 +203,7 @@ CTime::Date CTime::ISOStringToDate(const char*szTime){
   try{
     date.offset=dateToOffset(date);
   }catch(int e){
-    CDBError("Exception in ISOStringToDate with input %s",szTime);
+    CDBError("ISOStringToDate: input %s",szTime);
     throw e;
   }
   Date checkDate=getDate(date.offset);

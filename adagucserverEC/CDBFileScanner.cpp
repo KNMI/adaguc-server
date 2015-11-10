@@ -472,8 +472,9 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
                     //Read the dimension data
                     status = dimVar->readData(CDF_STRING);
                   }
-                  CDBDebug("/Reading dimension %s of length %d",dimVar->name.c_str(),dimDim->getSize());
-                  
+                  //#ifdef CDBFILESCANNER_DEBUG
+                  CDBDebug("Reading dimension %s of length %d",dimVar->name.c_str(),dimDim->getSize());
+                  //#endif
                   if(status!=0){
                     CDBError("Unable to read variable data for %s",dimVar->name.c_str());
                     throw(__LINE__);

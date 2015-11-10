@@ -52,7 +52,11 @@ CDBAdapter *CDBFactory::getDBAdapter(CServerConfig::XMLE_Configuration *cfg){
       staticCDBAdapter = new CDBAdapterMongoDB();
     }else{
       CDBDebug("Using postgresql");
+      #ifdef ADAGUC_USE_POSTGRESQL
       staticCDBAdapter = new CDBAdapterPostgreSQL();
+      #else
+      CDBError("POSTGRESQL is not compiled for ADAGUC, not available!");
+      #endif
     }
     
     staticCDBAdapter->setConfig(cfg);

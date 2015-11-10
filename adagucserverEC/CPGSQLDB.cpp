@@ -22,6 +22,7 @@
  * limitations under the License.
  * 
  ******************************************************************************/
+#ifdef ADAGUC_USE_POSTGRESQL
 #include "CPGSQLDB.h"
 const char *CPGSQLDB::className="CPGSQLDB";
 void CPGSQLDB::clearResult(){
@@ -185,6 +186,7 @@ CDBStore::Store* CPGSQLDB::queryToStore(const char *pszQuery,bool throwException
     if(throwException){
       throw CDB_CONNECTION_ERROR;
     }
+    CDBError("queryToStore: Not connected to DB");
     return NULL;
   }
 

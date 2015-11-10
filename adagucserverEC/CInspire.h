@@ -10,7 +10,7 @@
 #include "CTypes.h"
 #include "CXMLParser.h"
 #include "CHTTPTools.h"
-
+#include "CDebugger.h"
 #define CINSPIRE_HTTPGETERROR 1
 #define CINSPIRE_XMLPARSEERROR 2
 #define CINSPIRE_XMLELEMENTNOTFOUND 3

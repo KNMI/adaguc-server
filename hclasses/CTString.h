@@ -58,7 +58,7 @@ namespace CT{
         strncpy (heapValue,stackValue, privatelength);
       }
     }
-    DEF_ERRORFUNCTION();
+    //DEF_ERRORFUNCTION();
   public:
     /**
     * Default constructor

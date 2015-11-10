@@ -27,6 +27,7 @@
 #define CDirReader_H
 #include <iostream>
 #include <vector>
+#include <map>
 #include <stdio.h>
 #include <string.h>
 #include <regex.h>
