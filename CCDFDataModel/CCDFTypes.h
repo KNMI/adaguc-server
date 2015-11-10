@@ -30,11 +30,9 @@
 #include <stddef.h>
 #include <vector>
 #include <iostream>
-#include "CDebugger.h"
-#include "CTypes.h"
 #include <stdlib.h>
-#include <libxml/parser.h>
-#include <libxml/tree.h>
+
+#include "CTypes.h"
 
 
 

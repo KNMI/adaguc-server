@@ -26,7 +26,7 @@
 #ifndef Definitions_H
 #define Definitions_H
 
-#define ADAGUCSERVER_VERSION             "1.9.3"
+#define ADAGUCSERVER_VERSION             "1.9.5"
 
 //CConfigReaderLayerType
 #define CConfigReaderLayerTypeUnknown     0
@@ -108,6 +108,8 @@
 #define MAX_IMAGE_WIDTH 8192
 #define MAX_IMAGE_HEIGHT 8192
 
+#define ADAGUC_USE_CAIRO
+
 //#define CImgWarpBilinear_DEBUG
 //#define CImgWarpBilinear_TIME
 //#define MEASURETIME
@@ -166,7 +168,7 @@
 //#define CDATASOURCE_DEBUG
 
 //#define ENABLE_CURL in Makefile
-//#define ADAGUC_USE_CAIRO
+
 //#define ADAGUC_USE_GDAL
 #endif
 

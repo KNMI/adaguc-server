@@ -1049,30 +1049,171 @@ int CDBAdapterSQLLite::addFilesToDataBase(){
   #endif
   CSQLLiteDB * dataBaseConnection = getDataBaseConnection(); if(dataBaseConnection == NULL){return -1;  }
   
-  CT::string multiInsert = "";
+  
   for (std::map<std::string,std::vector<std::string> >::iterator it=fileListPerTable.begin(); it!=fileListPerTable.end(); ++it){
       #ifdef CDBAdapterSQLLite_DEBUG
     CDBDebug("Updating table %s with %d records",it->first.c_str(),(it->second.size()));
 #endif
+    
+    
+    std::vector<CT::string> columnNames;
+    CT::string query;
+    query.print("PRAGMA table_info(%s)",it->first.c_str());
+    CDBStore::Store *columnNamesStore = dataBaseConnection->queryToStore(query.c_str());
+    if(columnNamesStore == NULL){
+      CDBError("Unable to get columnnames for table %s",it->first.c_str());
+      return 1;
+    }
+    for(size_t j=0;j<columnNamesStore->size();j++){
+      columnNames.push_back(columnNamesStore->getRecord(j)->get(1)->c_str());
+    }
+    delete columnNamesStore;
+    
+    size_t maxIters = 50;
     if(it->second.size()>0){
+      size_t rowNumber = 0;
+      do{
+        CT::string multiInsert = "";    
+        multiInsert.print("INSERT into %s (",it->first.c_str());
+        for(size_t j=0;j<columnNames.size();j++){
+          if(j>0)multiInsert.printconcat(", ");
+          multiInsert.printconcat("%s",columnNames[j].c_str());
+        }
+        multiInsert.concat(") select ");
+        //for(size_t j=0;j<columnNames.size();j++){
+          //if(j>0)multiInsert.printconcat(", ");
+          CT::string values = it->second[rowNumber].c_str();
+          values.replaceSelf("(","");
+          values.replaceSelf(")","");
+          multiInsert.printconcat("%s",values.c_str());
+          rowNumber++;
+          //multiInsert.printconcat("'val%d' as '%s'",j,columnNames[j].c_str());
+        //}
+        if(rowNumber<it->second.size()){
+          for(size_t j=0;j<maxIters-1;j++){
+            CT::string values = it->second[rowNumber].c_str();
+            values.replaceSelf("(","");
+            values.replaceSelf(")","");
+            multiInsert.printconcat(" union all select %s",values.c_str());
+            rowNumber++;
+            if(rowNumber>=it->second.size())break;
+          }
+        }
+        //CDBDebug("%s ",multiInsert.c_str());
+        CDBDebug("Inserting %d bytes ",multiInsert.length());
+        int status =  dataBaseConnection->query(multiInsert.c_str()); 
+        if(status!=0){
+          CDBError("Query failed [%s]:",dataBaseConnection->getError());
+          throw(__LINE__);
+        }
+      }while(rowNumber<it->second.size());
+        
       
-      multiInsert.print("INSERT into %s VALUES ",it->first.c_str());
-      for(size_t j=0;j<it->second.size();j++){
-        if(j>0)multiInsert.concat(",");
-        multiInsert.concat(it->second[j].c_str());
-      }
-      int status =  dataBaseConnection->query(multiInsert.c_str()); 
-      if(status!=0){
-        CDBError("Query failed [%s]:",dataBaseConnection->getError());
-        throw(__LINE__);
-      }
-      CDBDebug("/Inserting %d bytes",multiInsert.length());
+      //CDBDebug("/Inserting %d bytes",multiInsert.length());
     }
     it->second.clear();
   }
   CDBDebug("clearing arrays");
   fileListPerTable.clear();
   return 0;
+}
+
+
+CDBStore::Store *CDBAdapterSQLLite::getFilesForIndices(CDataSource *dataSource,size_t *start,size_t *count,ptrdiff_t *stride,int limit){
+  #ifdef CDBAdapterSQLLite_DEBUG
+  CDBDebug("getFilesForIndices");
+#endif
+   CSQLLiteDB * DB = getDataBaseConnection(); if(DB == NULL){return NULL;  }
+
+  
+  
+  CT::string queryOrderedDESC;
+  CT::string query;
+  queryOrderedDESC.print("select a0.path");
+  for(size_t i=0;i<dataSource->requiredDims.size();i++){
+    queryOrderedDESC.printconcat(",%s,dim%s",dataSource->requiredDims[i]->netCDFDimName.c_str(),dataSource->requiredDims[i]->netCDFDimName.c_str());
+    
+  }
+  
+  
+  
+  queryOrderedDESC.concat(" from ");
+
+  
+  #ifdef CDBAdapterSQLLite_DEBUG
+  CDBDebug("%s",queryOrderedDESC.c_str());
+  #endif
+  
+  //Compose the query
+  for(size_t i=0;i<dataSource->requiredDims.size();i++){
+    CT::string netCDFDimName(&dataSource->requiredDims[i]->netCDFDimName);
+
+    CT::string tableName;
+    try{
+      tableName = getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str(),dataSource);
+    }catch(int e){
+      CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str());
+      return NULL;
+    }
+
+    CT::string subQuery;
+    subQuery.print("(select path,dim%s,%s from %s ",netCDFDimName.c_str(),
+                netCDFDimName.c_str(),
+                tableName.c_str());
+    
+   
+      
+    //subQuery.printconcat("where dim%s = %d ",netCDFDimName.c_str(),start[i]);
+    subQuery.printconcat("ORDER BY %s ASC limit %d offset %d)a%d ",netCDFDimName.c_str(),count[i],start[i],i);
+    if(i<dataSource->requiredDims.size()-1)subQuery.concat(",");
+    queryOrderedDESC.concat(&subQuery);
+  }
+  
+  #ifdef CDBAdapterSQLLite_DEBUG
+  CDBDebug("%s",queryOrderedDESC.c_str());
+  #endif
+  //Join by path
+  if(dataSource->requiredDims.size()>1){
+    queryOrderedDESC.concat(" where a0.path=a1.path");
+    for(size_t i=2;i<dataSource->requiredDims.size();i++){
+      queryOrderedDESC.printconcat(" and a0.path=a%d.path",i);
+    }
+  }
+  #ifdef CDBAdapterSQLLite_DEBUG
+  CDBDebug("%s",queryOrderedDESC.c_str());
+  #endif
+  //writeLogFile3(queryOrderedDESC.c_str());
+  //writeLogFile3("\n");
+  //queryOrderedDESC.concat(" limit 40");
+
+
+  
+  query.print("select distinct * from (%s)T order by ",queryOrderedDESC.c_str());
+  query.concat(&dataSource->requiredDims[0]->netCDFDimName);
+  for(size_t i=1;i<dataSource->requiredDims.size();i++){
+    query.printconcat(",%s",dataSource->requiredDims[i]->netCDFDimName.c_str());
+  }
+  
+  //Execute the query
+  
+    //writeLogFile3(query.c_str());
+    //writeLogFile3("\n");
+  //values_path = DB.query_select(query.c_str(),0);
+  #ifdef CDBAdapterSQLLite_DEBUG
+  CDBDebug("%s",query.c_str());
+  #endif
+  
+  CDBStore::Store *store = NULL;
+  try{
+    store = DB->queryToStore(query.c_str(),true);
+  }catch(int e){
+    if((CServerParams::checkDataRestriction()&SHOW_QUERYINFO)==false)query.copy("hidden");
+    setExceptionType(InvalidDimensionValue);
+    CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
+    CDBDebug("Query failed with code %d (%s)",e,query.c_str());
+    return NULL;
+  }
+  return store;
 }
 
 #endif

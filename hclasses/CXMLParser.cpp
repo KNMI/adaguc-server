@@ -22,6 +22,8 @@
  * limitations under the License.
  * 
  ******************************************************************************/
+#include <libxml/parser.h>
+#include <libxml/tree.h>
 
 #include "CXMLParser.h"
 /**
@@ -108,7 +110,8 @@ void CXMLParser::XMLElement::XMLElementPointerList::add(XMLElement *element){
  * @param xmlNode The libXML node to parse
  * @param depth Current recursive depth of the node
  */
-CXMLParser::XMLElement::XMLElement(xmlNode * a_node,int depth){
+CXMLParser::XMLElement::XMLElement(void* _a_node,int depth){
+  xmlNode * a_node = (xmlNode*)_a_node;
   parse_element_names( a_node, depth);
 }
 
@@ -116,7 +119,8 @@ CXMLParser::XMLElement::XMLElement(xmlNode * a_node,int depth){
  * Parses the attributes of the libXML attribute and adds them to the XMLelement
  * @param xmlAttr the libXML attribute to parse
  */
-void CXMLParser::XMLElement::parse_element_attributes(xmlAttr * a_node){
+void CXMLParser::XMLElement::parse_element_attributes(void *_a_node){
+  xmlAttr *a_node=(xmlAttr*)_a_node;
   char *content=NULL;
   char *name = NULL;
   name=(char*)a_node->name;
@@ -133,7 +137,8 @@ void CXMLParser::XMLElement::parse_element_attributes(xmlAttr * a_node){
  * @param xmlNode the libXML node to parse
  * @param depth the current recursive depth of the node
  */
-void CXMLParser::XMLElement::parse_element_names(xmlNode * a_node,int depth){
+void CXMLParser::XMLElement::parse_element_names(void *_a_node,int depth){
+  xmlNode * a_node=(xmlNode*)_a_node;
   xmlNode *cur_node = NULL;
   for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
     if (cur_node->type == XML_ELEMENT_NODE) {

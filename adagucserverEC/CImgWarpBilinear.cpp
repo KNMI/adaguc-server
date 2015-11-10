@@ -1424,7 +1424,7 @@ void traverseLine(CDrawImage * drawImage,DISTANCEFIELDTYPE *distance,float *valu
 
 
 void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float interval,CDataSource *dataSource,CDrawImage *drawImage,bool drawLine, bool drawShade, bool drawText){
-   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
+   CStyleConfiguration *styleConfiguration = dataSource->getStyle();// TODO SLOW
    //When using min/max stretching, the shadeclasses need to be extended according to its shade interval
    if(dataSource->stretchMinMax==true){
      if(dataSource->statistics!=NULL){

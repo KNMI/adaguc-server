@@ -22,14 +22,14 @@
  * limitations under the License.
  * 
  ******************************************************************************/
-
+#ifdef ADAGUC_USE_POSTGRESQL
 #include "CDBAdapterPostgreSQL.h"
 #include <set>
 #include "CDebugger.h"
 
 const char *CDBAdapterPostgreSQL::className="CDBAdapterPostgreSQL";
 
-#define CDBAdapterPostgreSQL_DEBUG
+//#define CDBAdapterPostgreSQL_DEBUG
 
 CDBAdapterPostgreSQL::CDBAdapterPostgreSQL(){
 #ifdef CDBAdapterPostgreSQL_DEBUG
@@ -95,9 +95,6 @@ CDBStore::Store *CDBAdapterPostgreSQL::getUniqueValuesOrderedByValue(const char 
     query.printconcat(" limit %d",limit);
   }
   CDBStore::Store* store = DB->queryToStore(query.c_str());
-  
-  CT::string *r1 = store->getRecord(0)->get(0);
-  CDBDebug("%s", r1->c_str());
   if(store == NULL){
     CDBDebug("Query %s failed",query.c_str());
   }
@@ -417,14 +414,6 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     CDBDebug("Query failed with code %d (%s)",e,query.c_str());
     return NULL;
   }
-					
-  for(size_t i = 0; i < store->size(); i++) {
-    CDBStore::Record *rec = store->getRecord(i);
-    for(size_t f = 0; f < rec->getColumnModel()->getSize(); f++) {
-		CDBDebug("Record has the following values: %s", rec->get(f)->c_str());
-	}
-  }
-  
   return store;
 }
 
@@ -849,5 +838,4 @@ int CDBAdapterPostgreSQL::addFilesToDataBase(){
   return 0;
 }
 
-
- 
+#endif

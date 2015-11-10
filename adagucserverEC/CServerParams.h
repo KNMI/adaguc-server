@@ -68,7 +68,7 @@ class CServerParams{
   private:
     int autoOpenDAPEnabled,autoLocalFileResourceEnabled,autoResourceCacheEnabled;
     
-    
+    CT::string _onlineResource;
     static int dataRestriction;
   public:
     double dfResX,dfResY;
@@ -254,10 +254,17 @@ class CServerParams{
      */    
     static void showWCSNotEnabledErrorMessage();
     
+    
+    
     /**
      * Get configured online resource
      */
     CT::string getOnlineResource();
+    
+    /**
+     * Set online resource
+     */
+    void setOnlineResource(CT::string onlineResource);
     
     /**
      * Determine whether boundingbox y and x are swapped, for example the case with WMS 1.3.0 and EPSG:4326
@@ -298,8 +305,18 @@ class CServerParams{
        */
       static bool checkTimeFormat(CT::string& timeToCheck);
       
-      
+      /** 
+       * Creates a random string of specified length
+       * @param len The length of the string
+       */
       static const CT::string randomString(const int len);
+      
+      /**
+       * Parses the provided configuration file. Can be called consecutively to extend the internal configuration object.
+       * @param pszConfigFile The config file to parse
+       * returns zero on success       * 
+       */
+      int parseConfigFile(CT::string &pszConfigFile);
      
 };
 

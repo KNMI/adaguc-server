@@ -415,23 +415,47 @@ void CServerParams::encodeTableName(CT::string *tableName){
   tableName->toLowerCaseSelf();
 }
 
-
+void CServerParams::setOnlineResource(CT::string r){
+  _onlineResource = r;
+};
 
 CT::string CServerParams::getOnlineResource(){
-  CT::string onlineResource=cfg->OnlineResource[0]->attr.value.c_str();
-  //A full path is given
-  if(onlineResource.indexOf("http",4)==0){
+  if(_onlineResource.length()>0){
+    return _onlineResource;
+  }
+  if(cfg->OnlineResource.size() == 0){
+    //No Online resource is given.
+     const char *pszADAGUCOnlineResource=getenv("ADAGUC_ONLINERESOURCE");
+    if(pszADAGUCOnlineResource==NULL){
+      CDBError("No OnlineResources configured. Unable to get from config OnlineResource or from environment ADAGUC_ONLINERESOURCE");
+      _onlineResource = "";
+      return "";
+    }
+    CT::string onlineResource=pszADAGUCOnlineResource;
+    _onlineResource = onlineResource;
     return onlineResource;
   }
+  
+  CT::string onlineResource=cfg->OnlineResource[0]->attr.value.c_str();
+  
+  
+  //A full path is given in the configuration
+  if(onlineResource.indexOf("http",4)==0){
+    _onlineResource = onlineResource;
+    return onlineResource;
+  }
+  
   //Only the last part is given, we need to prepend the HTTP_HOST environment variable.
   const char *pszHTTPHost=getenv("HTTP_HOST");
   if(pszHTTPHost==NULL){
     CDBError("Unable to determine HTTP_HOST");
+    _onlineResource = "";
     return "";
   }
   CT::string httpHost="http://";
   httpHost.concat(pszHTTPHost);
   httpHost.concat(&onlineResource);
+  _onlineResource = httpHost;
   return httpHost;
 }
 
@@ -534,5 +558,29 @@ bool CServerParams::checkTimeFormat(CT::string& timeToCheck){
     isValidTime = timeToCheck.testRegEx(timeFormats[j].pattern);
   }
   return isValidTime;*/
+}
+
+int CServerParams::parseConfigFile(CT::string &pszConfigFile){
+  CT::string configFileData;
+  
+  configFileData = "";
+  try{
+    configFileData = CReadFile::open(pszConfigFile.c_str());
+    const char *pszADAGUC_PATH=getenv("ADAGUC_PATH");
+    if(pszADAGUC_PATH!=NULL)configFileData.replaceSelf("{ADAGUC_PATH}",pszADAGUC_PATH);
+    const char *pszADAGUC_TMP=getenv("ADAGUC_TMP");
+    if(pszADAGUC_TMP!=NULL)configFileData.replaceSelf("{ADAGUC_TMP}",pszADAGUC_TMP);
+  }catch(int e){
+  }
+  
+  int status = configObj->parse(configFileData.c_str(),configFileData.length());
+  
+  if(status == 0 && configObj->Configuration.size()==1){
+    return 0;
+  }else{
+    //cfg=NULL;
+    CDBError("Invalid XML file %s",pszConfigFile.c_str());
+    return 1;
+  } 
 }
 
