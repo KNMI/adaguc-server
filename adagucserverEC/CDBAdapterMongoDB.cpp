@@ -31,7 +31,7 @@
 
 const char *CDBAdapterMongoDB::className="CDBAdapterMongoDB";
 
-#define CDBAdapterMongoDB_DEBUG
+//#define CDBAdapterMongoDB_DEBUG
 
 CServerConfig::XMLE_Configuration *configurationObject;
 
@@ -164,17 +164,14 @@ CDBAdapterMongoDB::~CDBAdapterMongoDB() {
 }
 
 const char* CDBAdapterMongoDB::getCorrectedColumnName(const char* column_name) {
-	std::string prefix;
-	if(strcmp(column_name,"time") == 0) {
-	  prefix = "adaguc.";
-	} else if(strcmp(column_name,"dimtime") == 0) {
-	  prefix = "adaguc.dimension.time.";
-	}else {
-	  prefix = "adaguc.";
-    }
-    
-	prefix.append(column_name);
-	return prefix.c_str();
+  std::string prefix;
+  if(strcmp(column_name,"dimtime") == 0) {
+    prefix = "adaguc.dimension.time.";
+  }else {
+    prefix = "adaguc.";
+  }
+  prefix.append(column_name);
+  return prefix.c_str();
 }
 
 
@@ -197,7 +194,7 @@ CDBStore::Store *ptrToStore(auto_ptr<mongo::DBClientCursor> cursor, const char* 
   #ifdef CDBAdapterMongoDB_DEBUG
     CDBDebug("[Function: ptrToStore]");
   #endif
-  
+    
   /* Prework. */
   std::string delimiter = ",";
   /* Fieldsnames cannot be collected from the query unfortunately. So we use 
@@ -299,17 +296,22 @@ CDBStore::Store *ptrToStore(auto_ptr<mongo::DBClientCursor> cursor, const char* 
       } else if(strcmp(cName.c_str(), "ncname") == 0) {
 	fieldValue = current_used_dimension;
       } else if(strcmp(cName.c_str(), "ogcname") == 0) {
-	fieldValue = firstValue.getObjectField("adaguc").getObjectField("layer").getObjectField(configurationObject->Layer[0]->Variable[0]->value.c_str()).getObjectField("dimension").getObjectField(current_used_dimension).getStringField("ogcname");
+	size_t index = 0;
+	while(fieldValue.empty()) {
+	  fieldValue = firstValue.getObjectField("adaguc").getObjectField("layer").getObjectField(configurationObject->Layer[index++]->Variable[0]->value.c_str()).getObjectField("dimension").getObjectField(current_used_dimension).getStringField("ogcname");
+	}
       } else if(strcmp(cName.c_str(), "layer") == 0) {
-	fieldValue = configurationObject->Layer[0]->Variable[0]->value.c_str();
+	size_t index = 0;
+	while(fieldValue.empty()) {
+	  fieldValue = configurationObject->Layer[index++]->Variable[0]->value.c_str();
+	}
       }else {
 	fieldValue = firstValue.getObjectField("adaguc").getStringField(cName.c_str());
       }
-
+    
       if(j == 0 && true == using_extended_layerid) {
 	fieldValue = the_file_name_of_the_granule.append(fieldValue); 
       }
-      CDBDebug("What goes in: %s", fieldValue.c_str());
       record->push(colNumber,fieldValue.c_str());
       colNumber++;
     } 
@@ -338,9 +340,15 @@ CDBStore::Store *ptrToStore(auto_ptr<mongo::DBClientCursor> cursor, const char* 
       } else if(strcmp(cName.c_str(), "ncname") == 0) {
 	fieldValue = current_used_dimension;
       } else if(strcmp(cName.c_str(), "ogcname") == 0) {
-	fieldValue = nextValue.getObjectField("adaguc").getObjectField("layer").getObjectField(configurationObject->Layer[0]->Variable[0]->value.c_str()).getObjectField("dimension").getObjectField(current_used_dimension).getStringField("ogcname");
+	size_t index = 0;
+	while(fieldValue.empty()) {
+	  fieldValue = firstValue.getObjectField("adaguc").getObjectField("layer").getObjectField(configurationObject->Layer[index++]->Variable[0]->value.c_str()).getObjectField("dimension").getObjectField(current_used_dimension).getStringField("ogcname");
+	}
       } else if(strcmp(cName.c_str(), "layer") == 0) {
-	fieldValue = configurationObject->Layer[0]->Variable[0]->value.c_str();
+	size_t index = 0;
+	while(fieldValue.empty()) {
+	  fieldValue = configurationObject->Layer[index++]->Variable[0]->value.c_str();
+	}
       }else {
 	fieldValue = nextValue.getObjectField("adaguc").getStringField(cName.c_str());
       }
@@ -348,7 +356,6 @@ CDBStore::Store *ptrToStore(auto_ptr<mongo::DBClientCursor> cursor, const char* 
       if(j == 0 && true == using_extended_layerid) {
 	fieldValue = the_file_name_of_the_granule.append(fieldValue); 
       }
-      CDBDebug("What goes in: %s", fieldValue.c_str());
       record->push(colNumber,fieldValue.c_str());
       colNumber++;
     }
@@ -642,6 +649,7 @@ CDBStore::Store *CDBAdapterMongoDB::getUniqueValuesOrderedByValue(const char *na
 
   /* The corrected name. Because of MongoDB, it can be that  */
   const char* corrected_name = getCorrectedColumnName(name);
+  std::string tmp_string_corrected_name(corrected_name);
   
   /* What do we want to select? Only the name variable. */
   mongo::BSONObjBuilder queryBSON;
@@ -658,7 +666,7 @@ CDBStore::Store *CDBAdapterMongoDB::getUniqueValuesOrderedByValue(const char *na
   }
   mongo::BSONObj the_query = query_itself.obj();
   
-  mongo::Query query = mongo::Query(the_query).sort(corrected_name, orderDescOrAsc ? 1 : -1);
+  mongo::Query query = mongo::Query(the_query).sort(tmp_string_corrected_name.c_str(), orderDescOrAsc ? 1 : -1);
 
   auto_ptr<mongo::DBClientCursor> cursorFromMongoDB;
   
@@ -737,6 +745,8 @@ CDBStore::Store *CDBAdapterMongoDB::getFilesAndIndicesForDimensions(CDataSource 
   #endif
   mongo::DBClientConnection * DB = getDataBaseConnection();
   
+  CT::string queryParams(&dataSource->requiredDims[0]->value);
+  
   CT::string tableName;
     try{
       tableName = getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), "",dataSource);
@@ -751,6 +761,15 @@ CDBStore::Store *CDBAdapterMongoDB::getFilesAndIndicesForDimensions(CDataSource 
   } else { 
     query_builder << "adaguc.dataSetPath" << tableName.c_str();
   }
+  
+  const char* queryParams_char = queryParams.c_str();
+  std::string queryParams_std(queryParams_char);
+  
+  boost::replace_all(queryParams_std, "T", " ");
+  boost::erase_all(queryParams_std, "Z");
+  
+  query_builder << getCorrectedColumnName(dataSource->requiredDims[0]->netCDFDimName.c_str()) << queryParams_std.c_str();
+  
   mongo::BSONObj the_query = query_builder.obj();
   
   mongo::BSONObjBuilder selecting_builder;
@@ -758,7 +777,7 @@ CDBStore::Store *CDBAdapterMongoDB::getFilesAndIndicesForDimensions(CDataSource 
   
   mongo::BSONObj selecting_query = selecting_builder.obj();
   
-  auto_ptr<mongo::DBClientCursor> ptrToMongo = DB->query("database.datagranules", mongo::Query(the_query).sort(getCorrectedColumnName(dataSource->requiredDims[0]->netCDFDimName.c_str()),1), limit, 0, &selecting_query);
+  auto_ptr<mongo::DBClientCursor> ptrToMongo = DB->query("database.datagranules", mongo::Query(the_query).sort(getCorrectedColumnName(dataSource->requiredDims[0]->netCDFDimName.c_str()),-1), 1, 0, &selecting_query);
   
   CDBStore::Store *store = ptrToStore(ptrToMongo, "path,time,dimtime");
   
@@ -898,12 +917,12 @@ CDBStore::Store *CDBAdapterMongoDB::getDimensionInfoForLayerTableAndLayerName(co
   current_used_dimension = ncname_name;
   
   mongo::BSONObjBuilder selectingColumns;
-  selectingColumns << filename_name << 1 << layer_name << 1 << ncname_name << 1 << ogcname_name << 1 << units_name << 1 << "_id" << 0;
+  selectingColumns << filename_name << 1 << layer_name << 1 << ogcname_name << 1 << units_name << 1 << "_id" << 0;
   mongo::BSONObj selectedColumns = selectingColumns.obj();
   
   /* Collecting the results. */
   auto_ptr<mongo::DBClientCursor> cursorFromMongoDB;
-  cursorFromMongoDB = DB->query("database.datagranules",mongo::Query(objBSON), 0, 0, &selectedColumns);
+  cursorFromMongoDB = DB->query("database.datagranules",mongo::Query(objBSON), 1, 0, &selectedColumns);
 
   /* Making a store of it. */
   CDBStore::Store *store = ptrToStore(cursorFromMongoDB, table_combi.find("autoconfigure_dimensions")->second.c_str());
