@@ -233,3 +233,4 @@ CDBStore::Store* CPGSQLDB::queryToStore(const char *pszQuery,bool throwException
   clearResult();
   return store;;
 }
+#endif
