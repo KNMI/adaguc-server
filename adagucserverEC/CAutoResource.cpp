@@ -241,7 +241,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
         }
       }
     }
-    CDBDebug("A");
+    
     CT::string serverSummary="";
     CT::string serverDescription="";
     CT::string serverSource="";
@@ -261,7 +261,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
     try{cdfObject->getAttribute("history")->getDataAsString(&serverHistory);}catch(int e){}
     try{cdfObject->getAttribute("comments")->getDataAsString(&serverComments);}catch(int e){}
     try{cdfObject->getAttribute("disclaimer")->getDataAsString(&serverDisclaimer);}catch(int e){}
-    CDBDebug("A");
+    
     CT::string serverAbstract="";
     if(serverInstitution.length()>0){serverAbstract.printconcat("Institution: %s.\n",serverInstitution.c_str());}
     if(serverSummary.length()>0){serverAbstract.printconcat("Summary: %s.\n",serverSummary.c_str());}
@@ -271,7 +271,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
     if(serverHistory.length()>0){serverAbstract.printconcat("History: %s.\n",serverHistory.c_str());}
     if(serverComments.length()>0){serverAbstract.printconcat("Comments: %s.\n",serverComments.c_str());}
     if(serverDisclaimer.length()>0){serverAbstract.printconcat("Disclaimer: %s.\n",serverDisclaimer.c_str());}
-CDBDebug("A");
+
     //Replace invalid XML tokens with valid ones
     serverAbstract.replaceSelf("@" ," at ");
     serverAbstract.replaceSelf("<" ,"[");
@@ -285,7 +285,7 @@ CDBDebug("A");
         }
       }
     }
-    CDBDebug("A");
+    
   
     //Generate layers based on the OpenDAP variables
     CT::StackList<CT::string> variables=srvParam->autoResourceVariable.splitToStack(",");
@@ -319,7 +319,7 @@ CDBDebug("A");
         variableNames.push_back(varDirection->name.c_str());
         addXMLLayerToConfig(srvParam,cdfObject,&variableNames,"derived",srvParam->internalAutoResourceLocation.c_str());
       }
-    }CDBDebug("A");
+    }
     
     //Detect dd and ff for wind direction and wind speed
     if(1==1){
@@ -332,7 +332,7 @@ CDBDebug("A");
         addXMLLayerToConfig(srvParam,cdfObject,&variableNames,"derived",srvParam->internalAutoResourceLocation.c_str());
       }
     }
-    CDBDebug("A");
+    
     //Detect wind vectors based on standardnames
     if(1==1){
       
@@ -361,7 +361,7 @@ CDBDebug("A");
       }
     }
     
-    CDBDebug("A");
+    
     
     //Adjust online resource in order to pass on variable and source parameters
     CT::string onlineResource=srvParam->getOnlineResource();
@@ -376,7 +376,7 @@ CDBDebug("A");
     //CDBDebug("OGC REQUEST RESOURCE %s",srvParam->internalAutoResourceLocation.c_str());//,srvParam->autoResourceLocation.c_str(),);
     
     
-    CDBDebug("A");
+    
   
     #ifdef MEASURETIME
     StopWatch_Stop("Auto opendap configured");
