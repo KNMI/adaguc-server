@@ -22,6 +22,7 @@
  * limitations under the License.
  * 
  ******************************************************************************/
+#ifdef ADAGUC_USE_KDCMONGODB
 #include "mongo/client/dbclient.h"
 #include "mongo/bson/bson.h"
 #include <boost/algorithm/string.hpp>
@@ -1236,3 +1237,4 @@ int CDBAdapterMongoDB::addFilesToDataBase() {
   fileListPerTable.clear();
   return 0;
 }
+#endif

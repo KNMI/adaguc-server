@@ -27,6 +27,10 @@ endif
 ifneq (,$(findstring DADAGUC_USE_POSTGRESQL,$(ADAGUCCOMPONENTS)))
 LIB_PQ=-lpq
 endif
+ifneq (,$(findstring DADAGUC_USE_KDCMONGODB,$(ADAGUCCOMPONENTS)))
+LIB_MONGODB=-l:libboost_system.so.1.55.0 -l:libboost_thread.so.1.55.0 -l:libboost_filesystem.so.1.55.0 -l:libboost_program_options.so.1.55.0 -lmongoclient
+endif
+
 
 
 LIB_CAIRO=-lcairo
@@ -43,7 +47,7 @@ CCOMPILER=g++ $(ADAGUCCOMPILERSETTINGS) $(INCLUDEDIR)
 #CCOMPILER=g++ -O2 $(INCLUDEDIR)
 #CCOMPILER=g++ -march=k8-sse3 -mtune=k8-sse3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 $(INCLUDEDIR)  
 
-USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lxml2 -lgd -lproj  -ludunits2 -lfreetype -lgd -lpng -lpthread -lrt $(LIB_CAIRO) $(LIB_CURL) $(LIB_GDAL) $(LIB_PQ) $(LIB_SQLITE) -l:libboost_system.so.1.55.0 -l:libboost_thread.so.1.55.0 -l:libboost_filesystem.so.1.55.0 -l:libboost_program_options.so.1.55.0 -lmongoclient
+USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lxml2 -lgd -lproj  -ludunits2 -lfreetype -lgd -lpng -lpthread -lrt $(LIB_CAIRO) $(LIB_CURL) $(LIB_GDAL) $(LIB_PQ) $(LIB_SQLITE) $(LIB_MONGODB)
 
 
 

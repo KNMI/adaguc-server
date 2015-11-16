@@ -22,6 +22,7 @@
  * limitations under the License.
  * 
  ******************************************************************************/
+#ifdef ADAGUC_USE_KDCMONGODB
 #include "CDBAdapter.h"
 #include "CDebugger.h"
 #include "CPGSQLDB.h"
@@ -183,3 +184,4 @@ class CDBAdapterMongoDB:public CDBAdapter{
     int              setFileTimeStamp(const char *tablename,const char *file,const char *dimvalue,int dimindex,const char*filedate);
     int              addFilesToDataBase();
 };
+#endif

@@ -49,7 +49,11 @@ CDBAdapter *CDBFactory::getDBAdapter(CServerConfig::XMLE_Configuration *cfg){
     }else if(cfg->DataBase[0]->attr.dbtype.equals("mongodb")) {
       /* If the dbtype of the first parameter is mongo, we use MongoDB. */
       CDBDebug("Using mongodb");
+      #ifdef ADAGUC_USE_KDCMONGODB
       staticCDBAdapter = new CDBAdapterMongoDB();
+      #else
+       CDBError("ADAGUC_USE_KDCMONGODB is not compiled for ADAGUC, not available!");
+      #endif
     }else{
       CDBDebug("Using postgresql");
       #ifdef ADAGUC_USE_POSTGRESQL
