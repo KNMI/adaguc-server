@@ -1,44 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Configuration>
-
-  <TempDir value="{ADAGUC_TMP}"/>
-  <Path value="{ADAGUC_PATH}/data"/>
-  <DataBase dbtype="sqlite" parameters="{ADAGUC_TMP}/adaguc.testdata.db"/>
-  
-  <!-- WMS settings -->
-  <WMS>
-    <Title>ADAGUC WMS Service</Title>
-    <Abstract>This service demonstrates how the ADAGUC server can be used to create OGC services.</Abstract>
-    <RootLayer>
-      <Title>Root Layer Title</Title>
-      <Abstract>Root Layer Abstract</Abstract>
-    </RootLayer>
-    <!-- PNG 8 bit requests are forced to 32 bit: better for antialiasing and combining layers with many colors -->
-    <WMSFormat name="image/png" format="image/png32"/> 
-  </WMS>
-  
-  
-  <!-- WMS -->
-  <Include location="{ADAGUC_PATH}/data/config/includes/WMS.include.xml"/>
-
-  <!-- WCS settings -->
-  <WCS>
-    <Title>ADAGUC WCS Service</Title>
-    <Label>wcsLabel</Label>
-  </WCS>
-
-  <!-- WCSFormat -->
-  <Include location="{ADAGUC_PATH}/data/config/includes/WCSFormat.include.xml"/>
-
-  <!-- Projections -->
-  <Include location="{ADAGUC_PATH}/data/config/includes/Projection.include.xml"/>
-           
-  <!--Legends -->
-  <Include location="{ADAGUC_PATH}/data/config/includes/DefaultStyles.include.xml"/>
-
-  <Include location="{ADAGUC_PATH}/data/config/includes/DefaultLayers.include.xml"/>
-  
-  <!-- Custom styles -->
+  <!-- 
+  See https://dev.knmi.nl/projects/adagucserver/wiki/Dataset, for details
+  This file can be included by using the adaguc.dataset.cgi?service=wms&DATASET=testdata& key value pair in the URL 
+  -->
   <Style name="testdata">
     <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
     <Min>0.0</Min>
@@ -60,15 +25,12 @@
     
   </Style>
   
-
-  
-  <!-- Layers -->
   <Layer type="database">
-    
     <FilePath filter="">{ADAGUC_PATH}data/datasets/testdata.nc</FilePath>
+    
     <Variable>testdata</Variable>
     <Styles>testdata</Styles>
   </Layer>
   
-  <!-- End of configuration /-->
 </Configuration>
+
