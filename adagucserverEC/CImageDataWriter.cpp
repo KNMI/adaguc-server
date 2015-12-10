@@ -390,9 +390,17 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   this->srvParam=srvParam;
   
   if(_setTransparencyAndBGColor(this->srvParam,&drawImage)!=0)return 1;
+  if(srvParam->imageFormat ==  IMAGEFORMAT_IMAGEPNG8 || srvParam->imageFormat ==  IMAGEFORMAT_IMAGEPNG32){
+    drawImage.setRenderer(CDRAWIMAGERENDERER_CAIRO);
+  }else{
+    drawImage.setRenderer(CDRAWIMAGERENDERER_GD);
+  }
+   
+  
   if(srvParam->imageMode==SERVERIMAGEMODE_RGBA||srvParam->Styles.indexOf("HQ")>0){
-    drawImage.setTrueColor(true);
-    //drawImage.setAntiAliased(true);
+    drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
+    drawImage.setRenderer(CDRAWIMAGERENDERER_CAIRO);
+    
   }
   
   
@@ -406,7 +414,7 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   
     if(styleConfiguration->renderMethod&RM_RGBA){
     
-      drawImage.setTrueColor(true);
+      drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
       if(   srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
       
         writerStatus=initialized;
@@ -420,10 +428,10 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   // WMS Format in layer always overrides all
   if(dataSource->cfgLayer->WMSFormat.size()>0){
     if(dataSource->cfgLayer->WMSFormat[0]->attr.name.equals("image/png32")){
-      drawImage.setTrueColor(true);
+      drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
     }
     if(dataSource->cfgLayer->WMSFormat[0]->attr.format.equals("image/png32")){
-      drawImage.setTrueColor(true);
+      drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
     }
   }
   //Set font location
@@ -2781,16 +2789,7 @@ int CImageDataWriter::end(){
       plotCanvas.create685Palette();
       lineCanvas.createImage(int(plotWidth),int(plotHeight));
       lineCanvas.create685Palette();
-      //plotCanvas.rectangle(-1,-1,int(width+1),int(height+1),CColor(0,0,255,1),CColor(0,0,0,255));        
-      //plotCanvas.line(0,0,200,100,CColor(0,0,255,255));
-      
-        //      printf("%s%c%c\n","Content-Type:image/png",13,10);
-        //plotCanvas.printImagePng();
-        //return 0;
-      //lineCanvas.rectangle(0,0,int(plotWidth/2),int(plotHeight),CColor(255,255,255,255),CColor(255,255,255,255));
-      //lineCanvas.rectangle(-1,-1,int(plotWidth+1),int(plotHeight+1),CColor(255,255,255,255),CColor(255,255,255,255));
-      
-      
+        
          
       //TODO
       //plotCanvas.line(int(plotOffsetX-1),int(plotOffsetY-1),int(plotWidth+plotOffsetX),int(plotHeight+plotOffsetY),0);
@@ -2983,7 +2982,7 @@ int CImageDataWriter::end(){
         plotCanvas.draw(int(plotOffsetX), int(plotOffsetY),0,0,&lineCanvas);
       if(resultFormat==imagepng){
         printf("%s%c%c\n","Content-Type:image/png",13,10);
-        plotCanvas.printImagePng();
+        plotCanvas.printImagePng8();
       }
       if(resultFormat==imagegif){
         printf("%s%c%c\n","Content-Type:image/gif",13,10);
@@ -3025,23 +3024,15 @@ StopWatch_Stop("Drawing finished, start printing image");
 #endif
 
   //Static image
+CDBDebug("srvParam->imageFormat = %d",srvParam->imageFormat);
   int status = 1;
-  if(srvParam->imageFormat==IMAGEFORMAT_IMAGEPNG8||srvParam->imageFormat==IMAGEFORMAT_IMAGEPNG32){
-    //CDBDebug("LegendGraphic PNG");
-    //printf("%s%c%c","Cache-Control: max-age=3600, must-revalidate",13,10);
-    //printf("%s%c%c","Pragma: no-cache",13,10);
-    //printf("%s%c%c","Cache-Control:no-store,no-cache,must-revalidate,post-check=0,pre-check=0",13,10);
-    //printf("%s%c%c","Expires: Fri, 17 Aug 2012:19:41 GMT");
-    //printf("%s%c%c","Last-Modified: Thu, 01 Jan 1970 00:00:00 GMT",13,10);
-    //printf("%s\n","ETag: \"3e86-410-3596fbbc\"");
+  if(srvParam->imageFormat==IMAGEFORMAT_IMAGEPNG8){
+    CDBDebug("Creating 8 bit png");
     printf("%s%c%c\n","Content-Type:image/png",13,10);
-    
-    
-    
-
-    
-    
-    status=drawImage.printImagePng();
+    status=drawImage.printImagePng8();
+  }else if(srvParam->imageFormat==IMAGEFORMAT_IMAGEPNG32){
+    printf("%s%c%c\n","Content-Type:image/png",13,10);
+    status=drawImage.printImagePng32();
   }else if(srvParam->imageFormat==IMAGEFORMAT_IMAGEGIF){
     //CDBDebug("LegendGraphic GIF");
     if(animation == 0){
@@ -3051,7 +3042,7 @@ StopWatch_Stop("Drawing finished, start printing image");
   }else {
     //CDBDebug("LegendGraphic PNG");
     printf("%s%c%c\n","Content-Type:image/png",13,10);
-    status=drawImage.printImagePng();
+    status=drawImage.printImagePng8();
   }
   
   #ifdef MEASURETIME

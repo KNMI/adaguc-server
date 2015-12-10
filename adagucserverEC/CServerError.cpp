@@ -180,15 +180,18 @@ void readyerror(){
       printerrorImage(&drawImage);
     }
     
-    if(errImageFormat==IMAGEFORMAT_IMAGEPNG8||errImageFormat==IMAGEFORMAT_IMAGEPNG32){
+    if(errImageFormat==IMAGEFORMAT_IMAGEPNG8){
       printf("%s%c%c\n","Content-Type:image/png",13,10);
-      drawImage.printImagePng();
+      drawImage.printImagePng8();
+    }else if(errImageFormat==IMAGEFORMAT_IMAGEPNG32){
+      printf("%s%c%c\n","Content-Type:image/png",13,10);
+      drawImage.printImagePng32();
     }else if(errImageFormat==IMAGEFORMAT_IMAGEGIF){
       printf("%s%c%c\n","Content-Type:image/gif",13,10);
       drawImage.printImageGif();
     }else {
       printf("%s%c%c\n","Content-Type:image/png",13,10);
-      drawImage.printImagePng();
+      drawImage.printImagePng8();
     }
      resetErrors();return;
   }

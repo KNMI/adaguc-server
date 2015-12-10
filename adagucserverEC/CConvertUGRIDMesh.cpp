@@ -26,9 +26,10 @@
 #include "CConvertUGRIDMesh.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
-#define CCONVERTUGRIDMESH_DEBUG
+//#define CCONVERTUGRIDMESH_DEBUG
 const char *CConvertUGRIDMesh::className="CConvertUGRIDMesh";
 
+#define CCONVERTUGRIDMESH_NODATA -32000
 
 void line(float *imagedata,int w,int h,float x1,float y1,float x2, float y2,float value){
    int xyIsSwapped=0;
@@ -66,7 +67,13 @@ void line(float *imagedata,int w,int h,float x1,float y1,float x2, float y2,floa
 
 void drawlines(float *imagedata,int w,int h,int polyCorners,float *polyX,float *polyY,float value){
   for(int j=0;j<polyCorners-1;j++){
-    line(imagedata, w, h,polyX[j],polyY[j],polyX[j+1],polyY[j+1],value);
+    if((polyX[j]>=0 && polyY[j]>=0 && polyX[j] < w && polyY[j] < h)||
+      (polyX[j+1]>=0 && polyY[j+1]>=0 && polyX[j+1] < w && polyY[j+1] < h)
+    ){
+      if(polyX[j] !=CCONVERTUGRIDMESH_NODATA && polyX[j+1] != CCONVERTUGRIDMESH_NODATA){
+        line(imagedata, w, h,polyX[j],polyY[j],polyX[j+1],polyY[j+1],value);
+      }
+    }
   }
 }
 
@@ -125,7 +132,7 @@ for (pixelY=IMAGE_TOP; pixelY<IMAGE_BOT; pixelY++) {
 int CConvertUGRIDMesh::convertUGRIDMeshHeader( CDFObject *cdfObject ){
   //Check whether this is really an ugrid file
   try{
-    cdfObject->getVariable("Mesh2");
+    cdfObject->getVariable("mesh");
   }catch(int e){
     return 1;
   }
@@ -140,8 +147,8 @@ int CConvertUGRIDMesh::convertUGRIDMeshHeader( CDFObject *cdfObject ){
   CDF::Variable *pointLat;
   
   try{
-    pointLon = cdfObject->getVariable("Mesh2_node_x");
-    pointLat = cdfObject->getVariable("Mesh2_node_y");
+    pointLon = cdfObject->getVariable("mesh_node_lon");
+    pointLat = cdfObject->getVariable("mesh_node_lat");
   }catch(int e){
     CDBError("Mesh2_node_x or Mesh2_node_y variables not found");
     return 1;
@@ -223,7 +230,7 @@ int CConvertUGRIDMesh::convertUGRIDMeshHeader( CDFObject *cdfObject ){
   for(size_t v=0;v<cdfObject->variables.size();v++){
     CDF::Variable *var = cdfObject->variables[v];
     if(var->isDimension==false){
-      if(var->name.equals("Mesh2")){
+      if(var->name.equals("mesh")){
         varsToConvert.add(CT::string(var->name.c_str()));
       }
       //CDBDebug("%s",var->name.c_str());
@@ -286,7 +293,7 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource,int mode){
   CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
    //Check whether this is really an ugrid file
   try{
-    cdfObject->getVariable("Mesh2");
+    cdfObject->getVariable("mesh");
   }catch(int e){
     return 1;
   }
@@ -311,8 +318,8 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource,int mode){
   CDF::Variable *meshLat;
  
   try{
-    meshLon = cdfObject->getVariable("Mesh2_node_x");
-    meshLat = cdfObject->getVariable("Mesh2_node_y");
+    meshLon = cdfObject->getVariable("mesh_node_lon");
+    meshLat = cdfObject->getVariable("mesh_node_lat");
   }catch(int e){
     CDBError("lat or lon variables not found");
     return 1;
@@ -420,25 +427,25 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource,int mode){
 
   
     CImageWarper imageWarper;
-    bool projectionRequired=false;
-    if(dataSource->srvParams->Geo->CRS.length()>0){
-      projectionRequired=true;
-      new2DVar->setAttributeText("grid_mapping","customgridprojection");
-      if(cdfObject->getVariableNE("customgridprojection")==NULL){
-        CDF::Variable *projectionVar = new CDF::Variable();
-        projectionVar->name.copy("customgridprojection");
-        cdfObject->addVariable(projectionVar);
-        dataSource->nativeEPSG = dataSource->srvParams->Geo->CRS.c_str();
-        imageWarper.decodeCRS(&dataSource->nativeProj4,&dataSource->nativeEPSG,&dataSource->srvParams->cfg->Projection);
-        if(dataSource->nativeProj4.length()==0){
-          dataSource->nativeProj4=LATLONPROJECTION;
-          dataSource->nativeEPSG="EPSG:4326";
-          projectionRequired=false;
-        }
-        projectionVar->setAttributeText("proj4_params",dataSource->nativeProj4.c_str());
-      }
-    }
-   
+//     bool projectionRequired=false;
+//     if(dataSource->srvParams->Geo->CRS.length()>0){
+//       projectionRequired=true;
+//       new2DVar->setAttributeText("grid_mapping","customgridprojection");
+//       if(cdfObject->getVariableNE("customgridprojection")==NULL){
+//         CDF::Variable *projectionVar = new CDF::Variable();
+//         projectionVar->name.copy("customgridprojection");
+//         cdfObject->addVariable(projectionVar);
+//         dataSource->nativeEPSG = dataSource->srvParams->Geo->CRS.c_str();
+//         imageWarper.decodeCRS(&dataSource->nativeProj4,&dataSource->nativeEPSG,&dataSource->srvParams->cfg->Projection);
+//         if(dataSource->nativeProj4.length()==0){
+//           dataSource->nativeProj4=LATLONPROJECTION;
+//           dataSource->nativeEPSG="EPSG:4326";
+//           projectionRequired=false;
+//         }
+//         projectionVar->setAttributeText("proj4_params",dataSource->nativeProj4.c_str());
+//       }
+//     }
+//    
     
     #ifdef CCONVERTUGRIDMESH_DEBUG
     CDBDebug("Datasource CRS = %s nativeproj4 = %s",dataSource->nativeEPSG.c_str(),dataSource->nativeProj4.c_str());
@@ -447,39 +454,54 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource,int mode){
     #endif
     
     
-    if(projectionRequired){
+    //if(projectionRequired){
       int status = imageWarper.initreproj(dataSource,dataSource->srvParams->Geo,&dataSource->srvParams->cfg->Projection);
       if(status !=0 ){
         CDBError("Unable to init projection");
         return 1;
       }
-    }
-    
+   // }
+   bool projectionRequired = imageWarper.isProjectionRequired();
 //     int polyCorners = 5;
     float projectedX[numMeshPoints];//={10,100,40,110,20,10};
     float projectedY[numMeshPoints];//={10,20,40,100,110,10};
     
-    
+    #ifdef MEASURETIME
+    StopWatch_Stop("Iterating lat/lon data");
+    #endif
     
     
     for(size_t j=0;j<numMeshPoints;j++){
  
-      double lon =j,lat = j;
-      double tprojectedX = float(lonData[j]);
-      double tprojectedY = float(latData[j]);
+      double lon =double(lonData[j]),lat = double(latData[j]);
+      double tprojectedX = lon;
+      double tprojectedY = lat;
       float v =j ;
-      if(projectionRequired)imageWarper.reprojfromLatLon(tprojectedX,tprojectedY);
-      int dlon=int((tprojectedX-offsetX)/cellSizeX);
-      int dlat=int((tprojectedY-offsetY)/cellSizeY);
+      int status = 0;
+      if(projectionRequired)status = imageWarper.reprojfromLatLon(tprojectedX,tprojectedY);
+      int dlon,dlat;
+      if(!status){
+        dlon=int((tprojectedX-offsetX)/cellSizeX);
+        dlat=int((tprojectedY-offsetY)/cellSizeY);
+      }else{
+        dlat=CCONVERTUGRIDMESH_NODATA;
+        dlon=CCONVERTUGRIDMESH_NODATA;
+      }
       dataObjects[0]->points.push_back(PointDVWithLatLon(dlon,dlat,lon,lat,v));
       projectedX[j]=dlon;
       projectedY[j]=dlat;
     }
     
-    CDF::Variable * Mesh2_face_nodes = cdfObject->getVariable("Mesh2_face_nodes");
-    Mesh2_face_nodes->readData(CDF_INT,true);
+    #ifdef MEASURETIME
+    StopWatch_Stop("Start reading face nodes");
+    #endif
+    
+    
+    CDF::Variable * Mesh2_face_nodes = cdfObject->getVariable("mesh_face_nodes");
+    Mesh2_face_nodes->readData(CDF_INT,false);
     int* Mesh2_face_nodesData = (int*)Mesh2_face_nodes->data;
     int Mesh2_face_nodesData_Fill = -1;
+    
     try{
       Mesh2_face_nodes->getAttribute("_FillValue")->getData(&Mesh2_face_nodesData_Fill,1);;
       
@@ -500,28 +522,36 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource,int mode){
     float polyY[MaxNumNodesPerFace+1];
 
     int numPoints = 0;
+//     CDBDebug("drawpolys");
+//     for(size_t f=0;f<nFaces;f++){
+//       for(size_t j=0;j<MaxNumNodesPerFace;j++){
+//         int p1 = Mesh2_face_nodesData[j+f*MaxNumNodesPerFace];
+//         if(p1!=Mesh2_face_nodesData_Fill){
+//           polyX[numPoints] = projectedX[p1];
+//           polyY[numPoints++] = projectedY[p1];
+//         }
+//       }
+//       polyX[numPoints] = polyX[0];
+//       polyY[numPoints++] = polyY[0];
+//       drawpoly(sdata,dataSource->dWidth,dataSource->dHeight,numPoints,polyX,polyY,f);
+//       //drawlines(sdata,dataSource->dWidth,dataSource->dHeight,numPoints,polyX,polyY);
+//       numPoints = 0;
+//     }
+   
+    #ifdef MEASURETIME
+    StopWatch_Stop("drawlines");
+    #endif
+    for(size_t f=0;f<nFaces;f++){
+      for(size_t j=0;j<MaxNumNodesPerFace;j++){
+        int p1 = Mesh2_face_nodesData[j+f*MaxNumNodesPerFace];
+        
 
-    for(size_t f=0;f<nFaces;f++){
-      for(size_t j=0;j<MaxNumNodesPerFace;j++){
-        int p1 = Mesh2_face_nodesData[j+f*MaxNumNodesPerFace];
+        
         if(p1!=Mesh2_face_nodesData_Fill){
-          polyX[numPoints] = projectedX[p1];
-          polyY[numPoints++] = projectedY[p1];
-        }
-      }
-      polyX[numPoints] = polyX[0];
-      polyY[numPoints++] = polyY[0];
-      drawpoly(sdata,dataSource->dWidth,dataSource->dHeight,numPoints,polyX,polyY,f);
-      //drawlines(sdata,dataSource->dWidth,dataSource->dHeight,numPoints,polyX,polyY);
-      numPoints = 0;
-    }
-    
-    for(size_t f=0;f<nFaces;f++){
-      for(size_t j=0;j<MaxNumNodesPerFace;j++){
-        int p1 = Mesh2_face_nodesData[j+f*MaxNumNodesPerFace];
-        if(p1!=Mesh2_face_nodesData_Fill){
-          polyX[numPoints] = projectedX[p1];
-          polyY[numPoints++] = projectedY[p1];
+          
+            polyX[numPoints] = projectedX[p1];
+            polyY[numPoints++] = projectedY[p1];
+          
         }
       }
       polyX[numPoints] = polyX[0];
@@ -530,7 +560,9 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource,int mode){
       drawlines(sdata,dataSource->dWidth,dataSource->dHeight,numPoints,polyX,polyY,0);
       numPoints = 0;
     }
-    
+    #ifdef MEASURETIME
+    StopWatch_Stop("drawlines done");
+    #endif
     imageWarper.closereproj();
    
   }

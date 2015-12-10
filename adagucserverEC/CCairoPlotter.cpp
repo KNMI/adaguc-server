@@ -674,11 +674,11 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
     _drawFreeTypeText( x, y,w,h,angle,text,true);
   }
 
-  void CCairoPlotter::writeToPngStream(FILE *fp) {
+  void CCairoPlotter::writeToPng8Stream(FILE *fp,unsigned char alpha) {
     bool useCairo = false;
-    if(useCairo){
+    if(!useCairo){
 
-      writeARGBPng(width,height,ARGBByteBuffer,fp,true);
+      writeARGBPng(width,height,ARGBByteBuffer,fp,false);
     }else{
       if(isAlphaUsed){
         CDBDebug("Alpha was used");
@@ -705,7 +705,7 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
     }
   }
   
-  void CCairoPlotter::writeToPngStream(FILE *fp,float alpha) {
+  void CCairoPlotter::writeToPng32Stream(FILE *fp,unsigned char alpha) {
     if(isAlphaUsed){
       CDBDebug("Alpha was used");
       for(int y=0;y<height;y++){
@@ -722,7 +722,9 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
       }
     }
     cairo_set_operator (cr,CAIRO_OPERATOR_DEST_IN);
-    cairo_paint_with_alpha (cr, alpha);
+    if(alpha!=255){
+      cairo_paint_with_alpha (cr, float(alpha)/255.);
+    }
     cairo_surface_flush(surface);
     this->fp=fp;
     cairo_surface_write_to_png_stream(surface, writerFunc, (void *)fp);
@@ -736,7 +738,9 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
   
 
   int CCairoPlotter::writeARGBPng(int width,int height,unsigned char *ARGBByteBuffer,FILE *file,bool trueColor){
-    
+    trueColor=false;
+    CDBDebug("Using png library directly to write PNG");
+    OctreeType * tree = NULL;
     
     #ifdef MEASURETIME
     StopWatch_Stop("start writeRGBAPng.");
@@ -747,7 +751,7 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
     png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     
     #ifdef MEASURETIME
-    StopWatch_Stop("LINE %d",__LINE__);
+    StopWatch_Stop("png_create_write_struct written");
     #endif
     if (!png_ptr){CDBError("png_create_write_struct failed");return 1;}
     
@@ -785,9 +789,76 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
                    PNG_FILTER_TYPE_BASE);
       
     }else{
-      png_set_IHDR(png_ptr, info_ptr, width, height,
-                   8, PNG_COLOR_TYPE_GRAY, PNG_INTERLACE_NONE,
-                   PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_NONE);
+      CDBDebug("Starting header");
+//       png_set_IHDR(png_ptr, info_ptr, width, height, 8, 
+//                    PNG_COLOR_TYPE_GRAY, PNG_INTERLACE_NONE,
+//                    PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_NONE);
+      png_set_IHDR(png_ptr, info_ptr, width, height, 8, 
+                   PNG_COLOR_TYPE_PALETTE, 
+                   PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, 
+                   PNG_FILTER_TYPE_BASE);
+      CDBDebug("Finished header");
+      
+      png_color palette[256];
+      png_byte a[256];
+      png_color_16 trans_values[256];
+      #ifdef MEASURETIME
+      StopWatch_Stop("Creating octtree for color quantization");
+      #endif
+     
+      for(int j=0;j<width*height;j=j+1){
+        RGBType color;
+        color.r=ARGBByteBuffer[2+j*4];
+        color.g=ARGBByteBuffer[1+j*4];
+        color.b=ARGBByteBuffer[0+j*4]/4+int(ARGBByteBuffer[3+j*4]/64)*64;
+        color.realblue=ARGBByteBuffer[0+j*4];
+        color.realalpha=ARGBByteBuffer[3+j*4];
+        InsertTree(&tree, &color, -1);
+      }
+      
+      #ifdef MEASURETIME
+      StopWatch_Stop("Tree filled, starting reduction");
+      #endif
+      while(TotalLeafNodes()>255){
+        ReduceTree();
+      }
+      #ifdef MEASURETIME
+      StopWatch_Stop("Tree reduction completed");
+      #endif
+    
+      int numColors=0;
+      RGBType table[256];
+      
+      MakePaletteTable(tree, table, &numColors);
+      if(numColors>255)numColors=255;
+      CDBDebug("Number of quantized colors: %d",numColors);
+      
+      int numAlphaColors = 0;
+      
+      for(int j=0;j<256&&j<numColors;j++){
+        palette[j].red=table[j].r;
+        palette[j].green=table[j].g;
+        palette[j].blue=table[j].realblue;
+        //palette[j+1].alpha=table[j].a;
+        unsigned char alpha = table[j].realalpha;
+        //if(alpha!=255)
+        {
+        
+          a[numAlphaColors]=alpha;
+//           trans_values[numAlphaColors].index=alpha;
+//           trans_values[numAlphaColors].red=table[j].r;
+//           trans_values[numAlphaColors].green=table[j].g;
+//           trans_values[numAlphaColors].blue=table[j].realblue;
+          
+          numAlphaColors++;
+        }
+    
+      }
+      png_set_PLTE( png_ptr,  info_ptr,  palette, 255);
+     
+      CDBDebug("Num alpha colors: %d",numAlphaColors);
+    
+      png_set_tRNS(png_ptr, info_ptr, a, numAlphaColors, trans_values);
     }
     
     
@@ -804,7 +875,7 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
     }
     png_set_packing(png_ptr);
     #ifdef MEASURETIME
-    StopWatch_Stop("LINE %d",__LINE__);
+    StopWatch_Stop("Headers written");
     #endif
     
     int i;
@@ -830,14 +901,42 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
         png_write_rows(png_ptr, &row_ptr, 1);
       }
     }else{
+      int s=width*4;
+      
+        
+      #ifdef MEASURETIME
+      StopWatch_Stop("Starting color quantization");
+      #endif
       for (i = 0; i < height; i++){
-        row_ptr = ARGBByteBuffer + 1 * i * width;
+        unsigned char RGBARow[s];
+        int p=0;
+        int start=i*s;
+        int stop=start+s;
+        for(int x=start;x<stop;x+=4){
+         // if(ARGBByteBuffer[3+x]>128){
+          
+          RGBType color;
+          color.r= ARGBByteBuffer[2+x];
+          color.g= ARGBByteBuffer[1+x];
+          color.b= ARGBByteBuffer[0+x]/4+int(ARGBByteBuffer[3+x]/64)*64;
+          //color.a= ARGBByteBuffer[3+x];
+          
+          int index=QuantizeColorMapped(tree, &color);
+        
+          RGBARow[p++]= index;
+//           }else{
+//             RGBARow[p++]=0;
+//           }
+
+        }
+        
+        row_ptr = RGBARow;
         png_write_rows(png_ptr, &row_ptr, 1);
       }
     }
     
     #ifdef MEASURETIME
-    StopWatch_Stop("LINE %d",__LINE__);
+    StopWatch_Stop("PNG data written");
     #endif
     
     /* end write */
@@ -853,5 +952,201 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
     #endif
     return 0;
   }
+ 
+ 
+ 
+ // oct1.c -- Color octree routines.
+ // Dean Clark
+ //
+ #include    <stdio.h>
+ #include    <stdlib.h>
+
+ #define     COLORBITS   8
+ #define     TREEDEPTH   6
+ byte MASK[COLORBITS] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
+ #define BIT(b,n)   (((b)&MASK[n])>>n)
+ #define LEVEL(c,d)((BIT((c)->r,(d)))<<2 | BIT((c)->g,(d))<<1 | BIT((c)->b,(d)))
+ OctreeType  *reducelist[TREEDEPTH];             // List of reducible nodes
+ static byte glbLeafLevel = TREEDEPTH;
+ static uint glbTotalLeaves = 0;
+ static void *getMem(size_t size);
+ static void MakeReducible(int level, OctreeType *node);
+ static OctreeType *GetReducible(void);
+ // InsertTree -- Insert a color into the octree
+ //
+ void InsertTree(OctreeType **tree, RGBType *color, uint depth)
+ {
+//   int level;
+   if (*tree == (OctreeType *)NULL) {
+     *tree = CreateOctNode(depth);
+   }
+   if ((*tree)->isleaf) {
+     (*tree)->npixels++;
+     (*tree)->redsum += color->r;
+     (*tree)->greensum += color->g;
+     (*tree)->bluesum += color->b;
+     (*tree)->realbluesum += color->realblue;
+     (*tree)->realalphasum += color->realalpha;
+   }
+   else {
+     InsertTree(&((*tree)->child[LEVEL(color, TREEDEPTH-depth)]),
+                color,
+                depth+1);
+   }
+ }
+ // ReduceTree -- Combines all the children of a node into the parent, 
+ // makes the parent into a leaf
+ //
+ void ReduceTree()
+ {
+   OctreeType  *node;
+   ulong   sumred=0, sumgreen=0, sumblue=0,sumrealalpha=0,sumrealblue=0;
+   byte    i, nchild=0;
+   node = GetReducible();
+   for (i = 0; i < COLORBITS; i++) {
+     if (node->child[i]) {
+       nchild++;
+       sumred += node->child[i]->redsum;
+       sumgreen += node->child[i]->greensum;
+       sumblue += node->child[i]->bluesum;
+       sumrealalpha += node->child[i]->realalphasum;
+       sumrealblue += node->child[i]->realbluesum;
+       
+       node->npixels += node->child[i]->npixels;
+       free(node->child[i]);
+     }
+   }
+   node->isleaf = True;
+   node->redsum = sumred;
+   node->greensum = sumgreen;
+   node->bluesum = sumblue;
+   node->realalphasum = sumrealalpha;
+   node->realbluesum = sumrealblue;
+   glbTotalLeaves -= (nchild - 1);
+ }
+ // CreateOctNode -- Allocates and initializes a new octree node.  The level 
+ // of the node is determined by the caller.
+ // Arguments:  level   int     Tree level where the node will be inserted.
+ // Returns:    Pointer to newly allocated node.  Does not return on failure.
+ //
+ OctreeType *CreateOctNode(int level)
+ {
+   static OctreeType  *newnode;
+   int                 i;
+   newnode = (OctreeType *)getMem(sizeof(OctreeType));
+   newnode->level = level;
+   newnode->isleaf = level == glbLeafLevel;
+   if (newnode->isleaf) { 
+     glbTotalLeaves++;
+   }
+   else {
+     MakeReducible(level, newnode);
+   }
+   newnode->npixels = 0;
+   newnode->index = 0;
+   newnode->npixels = 0;
+   newnode->redsum = newnode->greensum = newnode->bluesum = newnode->realbluesum = newnode->realalphasum =0L;
+   for (i = 0; i < COLORBITS; i++) {
+     newnode->child[i] = NULL;
+   }
+   return newnode;
+ }
+ // MakeReducible -- Adds a node to the reducible list for the specified level
+ //
+ static void MakeReducible(int level, OctreeType *node)
+ {
+   node->nextnode = reducelist[level];
+   reducelist[level] = node;
+ }
+ // GetReducible -- Returns next available reducible node at tree's leaf level
+ //
+ static OctreeType *GetReducible(void)
+ {
+   OctreeType *node;
+   
+   while (reducelist[glbLeafLevel-1] == NULL) {
+     glbLeafLevel--;
+   }
+   node = reducelist[glbLeafLevel-1];
+   reducelist[glbLeafLevel-1] = reducelist[glbLeafLevel-1]->nextnode;
+   return node;
+ }
+ // MakePaletteTable -- Given a color octree, traverse tree and: 
+ //  - Add the averaged RGB leaf color to the color palette table;
+ //  - Store the palette table index in the tree;
+ // When this recursive function finally returns, 'index' will contain
+ // the total number of colors in the palette table.
+ //
+ void MakePaletteTable(OctreeType *tree, RGBType table[], int *index)
+ {
+   int i;
+   if (tree->isleaf) {
+     table[*index].r = (byte)(tree->redsum / tree->npixels);
+     table[*index].g = (byte)(tree->greensum / tree->npixels);
+     table[*index].b = (byte)(tree->bluesum / tree->npixels);
+     table[*index].realblue = (byte)(tree->realbluesum / tree->npixels);
+     table[*index].realalpha = (byte)(tree->realalphasum / tree->npixels);
+    
+     tree->index = *index;
+   //  if(*index>100)return;
+     (*index)++;
+   }
+   else {
+     for (i = 0; i < COLORBITS; i++) {
+       if (tree->child[i]) {
+         MakePaletteTable(tree->child[i], table, index);
+       }
+     }
+   }
+ }
+ // QuantizeColor -- Returns palette table index of an RGB color by traversing 
+ // the octree to the leaf level
+ //
+ 
+int lastColor=-1;
+int lastIndex=0;
+ 
+ int QuantizeColorMapped(OctreeType *tree, RGBType *color){
+   //return QuantizeColor(tree,color);;;
+   int key = color->r+color->g*256+color->b*65536;
+   if(lastColor == key){
+     return lastIndex;
+   }
+   lastColor=key;
+   lastIndex=  QuantizeColor(tree,color);;
+   return lastIndex;
+  
+}
+
+ int QuantizeColor(OctreeType *tree, RGBType *color) {  
+  
+  
+    if (tree->isleaf) {
+      return tree->index;
+    }
+    else {
+      QuantizeColor(tree->child[LEVEL(color,6-tree->level)],color);
+    }
+   
+  
+ }
+ // TotalLeafNodes -- Returns the total leaves in the tree (glbTotalLeaves)
+ //
+ ulong TotalLeafNodes()
+ {
+   return glbTotalLeaves;
+ }
+ // getMem -- Memory allocation routine
+ //
+ static void *getMem(size_t size)
+ {
+   void *  mem;
+   mem = (void *)malloc(size);
+   if (mem == NULL) {
+     printf("Error allocating %ld bytes in getMem\n",(ulong)size);
+     exit(-1);
+   }
+   return mem;
+ }
  
 #endif
