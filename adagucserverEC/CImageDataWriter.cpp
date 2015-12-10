@@ -3217,7 +3217,9 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
     
   }
   //}
-  
+  #ifdef CIMAGEDATAWRITER_DEBUG
+  CDBDebug("Determine legendtype");
+  #endif
   //Determine legendtype.
   if(dataSource->getDataObject(0)->hasStatusFlag){
     legendType = statusflag;
@@ -3242,6 +3244,9 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
   
   //Create a legend based on status flags.
   if( legendType == statusflag ){
+    #ifdef CIMAGEDATAWRITER_DEBUG
+    CDBDebug("legendtype statusflag");
+    #endif
     int dH=30;
     //cbW=LEGEND_WIDTH/3;cbW/=3;cbW*=3;cbW+=3;
     float cbW = 20;//legendWidth/8;
@@ -3279,7 +3284,9 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
   
   //Draw a continous legend
   if( legendType == continous ){
-    
+    #ifdef CIMAGEDATAWRITER_DEBUG
+    CDBDebug("legendtype continous");
+    #endif
     bool drawUpperTriangle = false;
     bool drawLowerTriangle = false;
     
@@ -3440,6 +3447,9 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
   
   //Draw legend with fixed intervals
   if( legendType == discrete ){
+    #ifdef CIMAGEDATAWRITER_DEBUG
+    CDBDebug("legendtype discrete");
+    #endif
     float cbW = 20;//legendWidth/8;
     
     float cbH = legendHeight-13-13;
@@ -3533,7 +3543,9 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
       discreteLegendOnInterval=true;
     }
     
-    
+    #ifdef CIMAGEDATAWRITER_DEBUG
+    CDBDebug("legendtype settext");
+    #endif
     /**
     * Defined blocks based on defined interval
     */
@@ -3624,7 +3636,9 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
 
       }
     }
-  
+    #ifdef CIMAGEDATAWRITER_DEBUG
+    CDBDebug("set units");
+    #endif
     //Get units
     CT::string units;
     if(dataSource->getDataObject(0)->units.length()>0){
@@ -3638,7 +3652,9 @@ CDBDebug("iMin=%f iMax=%f",iMin,iMax);
   reader.close();
 
   
-
+  #ifdef CIMAGEDATAWRITER_DEBUG
+  CDBDebug("cropping");
+  #endif
 
   legendImage->crop(4);
   return 0;

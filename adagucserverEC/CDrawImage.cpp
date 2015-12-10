@@ -1264,7 +1264,7 @@ void CDrawImage::setTrueColor(bool enable){
 
 
 bool CDrawImage::isPixelTransparent(int &x,int &y){
-  if(!_bEnableTrueColor){
+  if(currentGraphicsRenderer==CDRAWIMAGERENDERER_GD){
     int color = gdImageGetPixel(image, x, y);
     if(color!=gdTranspColor||127!=gdImageAlpha(image,color)){
       return false;
@@ -1347,14 +1347,19 @@ int CDrawImage::clonePalette(CDrawImage *drawImage){
  * Creates a new image with the same settings but with different size as the source image
  */
 int CDrawImage::createImage(CDrawImage *image,int width,int height){
-  setTrueColor(image->getTrueColor());
+  //setTrueColor(image->getTrueColor());
+//  CDBDebug("Creating image");
   enableTransparency(image->_bEnableTransparency);
+  currentGraphicsRenderer = image->currentGraphicsRenderer;
+  //colorType = image->colorType;
   setTTFFontLocation(image->TTFFontLocation);
   
   setTTFFontSize(image->TTFFontSize);
-    
+//  CDBDebug("Creating image 2");
   createImage(width,height);
+//  CDBDebug("Creating image palette");
   clonePalette(image);
+//  CDBDebug("New image created");
   return 0;
 }
 
@@ -1362,8 +1367,11 @@ int CDrawImage::createImage(CDrawImage *image,int width,int height){
 int CDrawImage::setCanvasSize(int x,int y,int width,int height){
   CDrawImage temp;
   temp.createImage(this,width,height);
+ 
   temp.draw(0,0,x,y,this);
+ 
   destroyImage();
+
   createImage(&temp,width,height);
   draw(0,0,0,0,&temp);
   temp.destroyImage();
@@ -1373,7 +1381,7 @@ int CDrawImage::setCanvasSize(int x,int y,int width,int height){
 int CDrawImage::draw(int destx, int desty,int sourcex,int sourcey,CDrawImage *simage){
   unsigned char r,g,b,a;
   int dTranspColor;
-  if(simage->_bEnableTrueColor == false){
+  if(currentGraphicsRenderer==CDRAWIMAGERENDERER_GD){
     dTranspColor=gdImageGetTransparent(simage->image);
   }
   for(int y=0;y<simage->Geo->dHeight;y++){
@@ -1382,7 +1390,7 @@ int CDrawImage::draw(int destx, int desty,int sourcex,int sourcey,CDrawImage *si
       if(sx>=0&&sy>=0&&dx>=0&&dy>=0&&
         sx<simage->Geo->dWidth&&sy<simage->Geo->dHeight&&dx<Geo->dWidth&&dy<Geo->dHeight){
         //Get source r,g,b,a
-        if(simage->_bEnableTrueColor == true){
+        if(currentGraphicsRenderer==CDRAWIMAGERENDERER_CAIRO){
           simage->cairo->getPixel(sx,sy,r,g,b,a);
         }else{
           int color = gdImageGetPixel(simage->image, x+sourcex, y+sourcey);
@@ -1395,7 +1403,7 @@ int CDrawImage::draw(int destx, int desty,int sourcex,int sourcey,CDrawImage *si
           }
         }
         //Set r,g,b,a to dest
-        if(_bEnableTrueColor){
+        if(currentGraphicsRenderer==CDRAWIMAGERENDERER_CAIRO){
           cairo-> pixel_blend(dx,dy,r,g,b,a);
         }else{
           if(a>128){
@@ -1416,6 +1424,7 @@ void CDrawImage::crop(int paddingW, int paddingH){
  // return;
   int x,y,w,h;
   getCanvasSize(x,y,w,h);
+  
   int x1=x-paddingW;
   int y1=y-paddingH;
   int w1=w+paddingW*2;
@@ -1430,6 +1439,7 @@ void CDrawImage::crop(int paddingW, int paddingH){
   }
   if(h1>Geo->dHeight-y1)h1=Geo->dHeight-y1;
   if(w1>Geo->dWidth-x1)w1=Geo->dWidth-x1;
+  
   setCanvasSize(x1,y1,w1,h1);
 }
 
