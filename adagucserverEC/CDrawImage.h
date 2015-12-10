@@ -50,9 +50,8 @@
 
 float convertValueToClass(float val,float interval);
 
-#define COLORTYPE_INDEXED 1;
-#define COLORTYPE_RGBA    2;
-#define COLORTYPE_ARGB    3;
+#define CDRAWIMAGE_COLORTYPE_INDEXED 1
+#define CDRAWIMAGE_COLORTYPE_ARGB    2
 
 #define CDRAWIMAGERENDERER_GD 1
 #define CDRAWIMAGERENDERER_CAIRO 2
@@ -103,6 +102,30 @@ class CColor{
 
 
 class CDrawImage{
+public:
+  /*
+  #define CGRAPHICSIMAGE_IMAGETYPEINDEXED
+  #define CGRAPHICSIMAGE_IMAGETYPEARGB
+ 
+  class CGraphicsImage{
+  public:
+    CGraphicsImage();
+    ~CGraphicsImage();
+    int imageType;
+    int width,height,stride;
+    unsigned char* byteBuffer;
+    int byteBufferPointerIsOwned;
+  };
+  
+  class CPNGWriter{
+  public:
+    class {
+      unsigned char    r,g,b,a;
+    } RGBAType;
+    int writeToPng8Stream(FILE *fp, CGraphicsImage* image);
+    int writeToPng32Stream(FILE *fp, CGraphicsImage* image);
+  };
+  */
   private:
     std::vector<CLegend *>legends;
     CLegend * currentLegend;
@@ -147,7 +170,8 @@ class CDrawImage{
     int createImage(CGeoParams *_Geo);
     int createImage(const char *fn);
     int createImage(CDrawImage *image,int width,int height);
-    int printImagePng();
+    int printImagePng8();
+    int printImagePng32();
     int printImageGif();
     int createGDPalette(CServerConfig::XMLE_Legend *palette);
     int create685Palette();
@@ -240,11 +264,21 @@ class CDrawImage{
     unsigned char* const getCanvasMemory();
     
     /**
-     * Returns canvas colortype
+     * Returns canvas colortype, either COLORTYPE_INDEXED or COLORTYPE_ARGB
      */
     int getCanvasColorType();
     
+    /**
+     * Sets canvas colortype, either COLORTYPE_INDEXED or COLORTYPE_ARGB
+     */
+    void setCanvasColorType(int colorType);
     
+    /**
+     * Set renderer type, CDRAWIMAGERENDERER_CAIRO or CDRAWIMAGERENDERER_GD
+     */
+    void setRenderer(int renderer);
+    
+
 };
 
 #endif

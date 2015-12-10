@@ -131,7 +131,7 @@ MinMax getMinMax(CDF::Variable *var){
   return minMax;
 }
 
-// TODO this currently works only for float data
+
 int CDataSource::Statistics::calculate(CDataSource *dataSource){
   //Get Min and Max
   //CDBDebug("calculate stat ");
@@ -1055,7 +1055,7 @@ void CDataSource::calculateScaleAndOffsetFromMinMax(float &scale, float &offset,
 
 CStyleConfiguration *CDataSource::getStyle(){
   #ifdef CDATASOURCE_DEBUG      
-  CDBDebug("Returning styleconfiguration");
+//  CDBDebug("Returning styleconfiguration");
 #endif
   if(_styles == NULL){
     _styles = getStyleListForDataSource(this);
