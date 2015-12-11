@@ -295,7 +295,8 @@ int CImageDataWriter::drawCascadedWMS(CDataSource * dataSource, const char *serv
 #endif
 
 #ifdef ENABLE_CURL
-  bool trueColor=drawImage.getTrueColor();
+  bool trueColor=false;
+  if(drawImage.getRenderer() == CDRAWIMAGERENDERER_CAIRO)trueColor=true;
  // transparent=true;
   CT::string url=service;
   url.concat("SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&STYLES=&");

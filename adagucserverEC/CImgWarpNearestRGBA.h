@@ -54,7 +54,7 @@ public:
   //size_t prev_imgpointer;
   void init(CDataSource *dataSource,CDrawImage *drawImage,int tileWidth,int tileHeight);
   int drawTile(double *x_corners,double *y_corners,int &dDestX,int &dDestY);
-  
+  void pixel_blend(int x,int y, unsigned char r,unsigned char g,unsigned char b,unsigned char a);
 };
 
 /**
