@@ -6,6 +6,13 @@ imgproj = "+proj=stere +lat_0=90 +lon_0=0 +lat_ts=60 +a=6378.14 +b=6356.75 +x_0=
 product = "mask"
 outputname = '../datasets/radarmask.nc'
 
+
+inputname = '../datasets/alpha-test.png'
+imgextent = [-90,-90,90,90]
+imgproj = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+product = "alpha-test"
+outputname = '../datasets/alpha-test.nc'
+
 import Image
 import numpy as np
 import netCDF4

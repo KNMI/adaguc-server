@@ -27,7 +27,7 @@
 #include "CImgWarpNearestRGBA.h"
 const char *CImgWarpNearestRGBA::className="CImgWarpNearestRGBA";
 const char *CDrawTileObjBGRA::className="CDrawTileObjBGRA";
-
+#define CIMGWARPNEARESTRGBA_USEDRAWIMAGE
 
 void CDrawTileObjBGRA::init(CDataSource *dataSource,CDrawImage *drawImage,int tileWidth,int tileHeight){
   this->dataSource = dataSource;
@@ -69,7 +69,9 @@ void CDrawTileObjBGRA::init(CDataSource *dataSource,CDrawImage *drawImage,int ti
 
 int CDrawTileObjBGRA::drawTile(double *x_corners,double *y_corners,int &dDestX,int &dDestY){
   uint *data=(uint*)dataSource->getDataObject(0)->cdfVariable->data;
+  #ifndef CIMGWARPNEARESTRGBA_USEDRAWIMAGE  
   uint *imageData = (uint*)drawImage->getCanvasMemory();
+#endif
   int imageWidth=drawImage->Geo->dWidth;
   int imageHeight=drawImage->Geo->dHeight;
   #ifdef CIMGWARPNEARESTRGBA_DEBUG
@@ -151,21 +153,26 @@ int CDrawTileObjBGRA::drawTile(double *x_corners,double *y_corners,int &dDestX,i
                   imgpointer=srcpixel_x+(height-1-srcpixel_y)*width;
                   uint v=data[imgpointer];
                   // if(v!=2147483649){;//uint(-2147483647)){
-                  if(v!=4294967295){
+//                   if(v!=4294967295)
+                  {
                   //v=v*10;
                   unsigned char r=((unsigned char)v);
                   unsigned char g=((unsigned char)(v>>8));
                   unsigned char b=((unsigned char)(v>>16));
                   unsigned char a=((unsigned char)(v>>24));;
+#ifdef CIMGWARPNEARESTRGBA_USEDRAWIMAGE                  
+                  drawImage->setPixelTrueColor(dstpixel_x,dstpixel_y,r,g,b,a);
+#else
                   if(a!=255){
                     //For cairo, Alpha is precomputed into components. We need to do this here as well.
-                    unsigned char r1= float(r)*(float(a)/255.);
-                    unsigned char g1 =float(g)*(float(a)/255.);
-                    unsigned char b1=float(b)*(float(a)/255.);
+                    unsigned char r1= float(r)*(float(a)/256.);
+                    unsigned char g1 =float(g)*(float(a)/256.);
+                    unsigned char b1=float(b)*(float(a)/256.);
                     imageData[dstpixel_x+dstpixel_y*imageWidth]=b1+g1*256+r1*256*256+a*256*256*256;
                   }else{
                     imageData[dstpixel_x+dstpixel_y*imageWidth]=b+g*256+r*256*256+4278190080;
                   }
+#endif
                 }
               }
             }

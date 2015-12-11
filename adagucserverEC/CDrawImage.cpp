@@ -1466,6 +1466,7 @@ unsigned char* const CDrawImage::getCanvasMemory(){
 void CDrawImage::setCanvasColorType(int colorType){
   if(colorType == CDRAWIMAGE_COLORTYPE_ARGB){
     setRenderer(CDRAWIMAGERENDERER_CAIRO);
+    _bEnableTrueColor = true;
   }  
 }
 
