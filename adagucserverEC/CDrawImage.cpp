@@ -1236,8 +1236,10 @@ int CDrawImage::addImage(int delay){
 
 int CDrawImage::beginAnimation(){
   numImagesAdded = 0;
-  if(_bEnableTrueColor == false){
-    gdImageGifAnimBegin(image, stdout, 1, 0);
+  if(currentGraphicsRenderer==CDRAWIMAGERENDERER_GD){
+    if(_bEnableTrueColor == false){
+      gdImageGifAnimBegin(image, stdout, 1, 0);
+    }
   }
   return 0; 
 }
