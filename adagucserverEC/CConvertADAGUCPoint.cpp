@@ -432,7 +432,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
         start[1]=0;
         count[1]=pointVar[d]->dimensionlinks[1]->getSize();
         CT::string data[count[0]];
-        pointVar[d]->readData(CDF_CHAR,start,count,stride,true);
+        pointVar[d]->readData(CDF_CHAR,start,count,stride,false);
         for(size_t j=0;j<count[0];j++){
           data[j].copy(((char*)pointVar[d]->data+j*count[1]),count[1]-1);
         }
@@ -458,7 +458,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
         }
         #endif
         pointVar[d]->freeData();
-        pointVar[d]->readData(CDF_STRING,start,count,stride,true);
+        pointVar[d]->readData(CDF_STRING,start,count,stride,false);
       }
     }
     //pointVar[d]->readData(CDF_FLOAT,true);
@@ -656,14 +656,14 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
         projectionVar->setAttributeText("proj4_params",dataSource->nativeProj4.c_str());
       }
     }
-   /* 
+   
     
     #ifdef CCONVERTADAGUCPOINT_DEBUG
     CDBDebug("Datasource CRS = %s nativeproj4 = %s",dataSource->nativeEPSG.c_str(),dataSource->nativeProj4.c_str());
     CDBDebug("Datasource bbox:%f %f %f %f",dataSource->srvParams->Geo->dfBBOX[0],dataSource->srvParams->Geo->dfBBOX[1],dataSource->srvParams->Geo->dfBBOX[2],dataSource->srvParams->Geo->dfBBOX[3]);
     CDBDebug("Datasource width height %d %d",dataSource->dWidth,dataSource->dHeight);
     #endif
-    */
+    
     
     if(projectionRequired){
       int status = imageWarper.initreproj(dataSource,dataSource->srvParams->Geo,&dataSource->srvParams->cfg->Projection);
@@ -705,9 +705,11 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
       }
     }
     
+    #ifdef MEASURETIME
+    CDBDebug("Date numStations = %d",numStations);
+    #endif
     
-    
-    //CDBDebug("Date DIM %d numStations = %d",dateDimIndex,numStations);
+
    
     for(int stationNr=0;stationNr<numStations;stationNr++){ 
       int pPoint = stationNr+0;//dateDimIndex;//*numStations;
