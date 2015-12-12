@@ -38,6 +38,9 @@
 void ncError(int line, const char *className, const char * msg,int e);
 class CDFHDF5Reader :public CDFReader{
   private:
+    
+    CT::string fileName;
+    bool fileIsOpen ;
     CDFType typeConversion(hid_t type){
       if(H5Tequal(type,H5T_NATIVE_SCHAR)>0)return CDF_BYTE;
       if(H5Tequal(type,H5T_NATIVE_UCHAR)>0)return CDF_UBYTE;
@@ -166,6 +169,7 @@ class CDFHDF5Reader :public CDFReader{
       H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
       b_EnableKNMIHDF5toCFConversion=false;
       forecastReader = NULL;
+      fileIsOpen = false;
     }
     ~CDFHDF5Reader(){
 #ifdef CCDFHDF5IO_DEBUG            
@@ -933,11 +937,14 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
       return 0;
     }
     int open(const char *fileName){
+      CT::string cpy=(fileName);
+      this->fileName = cpy.c_str();
 #ifdef CCDFHDF5IO_DEBUG      
-CDBDebug("Opening HDF5 file %s",fileName);      
+      CDBDebug("Opening HDF5 file %s",this->fileName.c_str());      
 #endif
-      H5F_file = H5Fopen(fileName,H5F_ACC_RDONLY, H5P_DEFAULT );
-      if(H5F_file <0){CDBError("could not open HDF5 file %s",fileName);return 1;}
+      H5F_file = H5Fopen(this->fileName.c_str(),H5F_ACC_RDONLY, H5P_DEFAULT );
+      
+      if(H5F_file <0){CDBError("could not open HDF5 file [%s]",this->fileName.c_str());return 1;}
       
       //Read global attributes
 #ifdef CCDFHDF5IO_DEBUG      
@@ -970,16 +977,22 @@ CDBDebug("convertKNMIHDF5toCF()");
         status = convertNWCSAFtoCF();
         if(status == 1)return 1;
       }
+      fileIsOpen=true;
       return 0;
     }
     int close(){
       if(H5F_file!=-1)H5Fclose(H5F_file);
       if(forecastReader!=NULL){delete forecastReader;forecastReader=NULL;}
+      fileIsOpen = false;
       return 0;
     }
     
     hid_t openH5GroupByName(char * varNameOut,size_t maxVarNameLen,const char * variableGroupName){
-//      CDBError("openH5GroupByName");
+      if(fileIsOpen == false){
+//        CDBError("openH5GroupByName: File is not open");
+  //      CDBDebug("Trying to open [%s]",fileName.c_str());
+        if(open(fileName.c_str())!=0)return -1;
+      }  
       hid_t HDF5_group=H5F_file;hid_t newGroupID;
       CT::string varName(variableGroupName);
       CT::string * paths=varName.splitToArray(".");
@@ -988,7 +1001,7 @@ CDBDebug("convertKNMIHDF5toCF()");
         newGroupID= H5Gopen2(HDF5_group ,paths[j].c_str(),H5P_DEFAULT);
         //CDBDebug("Opened group %s with id %d from %d",paths[j].c_str(),newGroupID,HDF5_group);
         if(newGroupID<0){
-          CDBError("group %s not found",paths[j].c_str());delete[] paths;paths=NULL;
+          CDBError("group %s for variable %s not found",paths[j].c_str(),varName.c_str());delete[] paths;paths=NULL;
           return -1;
         }
         
@@ -1018,6 +1031,12 @@ CDBDebug("convertKNMIHDF5toCF()");
         CDBWarning("Not reading any data because it is already in memory");
         return 0;
       }
+      if(fileIsOpen == false){
+        CDBError("openH5GroupByName: File is not open");
+        CDBDebug("Trying to open [%s]",fileName.c_str());
+        if(open(fileName.c_str())!=0)return -1;
+      }
+      
       char typeName[32];
       CDF::getCDFDataTypeName(typeName,31,type);
       CDBDebug("Reading %s --> %s with type %s",var->name.c_str(),var->orgName.c_str(),typeName);

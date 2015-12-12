@@ -51,6 +51,7 @@
 #define REQUEST_WMS_GETSTYLES             9
 #define REQUEST_WMS_GETPOINTVALUE         10
 #define REQUEST_WMS_GETREFERENCETIMES     11
+#define REQUEST_WMS_GETHISTOGRAM          12
 #define REQUEST_UPDATEDB                  100
 
 //Legend
@@ -140,7 +141,7 @@
 #define MEASURETIME
 */
 
-//#define DEBUGON
+#define DEBUGON
 #ifdef DEBUGON
 #define CDATASOURCE_DEBUG
 #define CREQUEST_DEBUG

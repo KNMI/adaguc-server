@@ -178,7 +178,8 @@ class CDFObject:public CDF::Variable{
       for(size_t v=0;v<sourceCDFObject->variables.size();v++){
           //try{srcVar=sourceCDFObject->getVariable("ctt");}catch(int e){CDBError("Variable not found.");throw(__LINE__);}
         srcVar=sourceCDFObject->variables[v];
-        
+        //if(getVariableNE(srcVar->name.c_str())!=NULL)
+        {
         try{
           try{destVar=getVariable(srcVar->name.c_str());}catch(int e){CDBError("Variable %s not found.",srcVar->name.c_str());throw(__LINE__);}
           
@@ -189,7 +190,7 @@ class CDFObject:public CDF::Variable{
           CDBError("Unable to setCDFObjectDim for variable %s",srcVar->name.c_str());
           return 1;
         }
-        
+    }
       }
       
       return 0;
