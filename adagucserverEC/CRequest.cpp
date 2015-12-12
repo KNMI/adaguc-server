@@ -752,6 +752,20 @@ int CRequest::process_wms_getmap_request(){
 }
 
 
+int CRequest::process_wms_gethistogram_request(){
+  if(srvParam->WMSLayers!=NULL){
+    CT::string message = "WMS GETHISTOGRAM ";
+    for(size_t j=0;j<srvParam->WMSLayers->count;j++){
+      if(j>0)message.concat(",");
+      message.printconcat("(%d) %s",j,srvParam->WMSLayers[j].c_str());
+    }
+    CDBDebug(message.c_str());
+  }else{
+    CDBDebug("WMS GETMAP no layers");
+  }
+  return process_all_layers();
+}
+
 
 
 int CRequest::setDimValuesForDataSource(CDataSource *dataSource,CServerParams *srvParam){
@@ -1510,46 +1524,39 @@ int CRequest::process_all_layers(){
     
         if(srvParam->requestType==REQUEST_WMS_GETFEATUREINFO){
           CImageDataWriter imageDataWriter;
-          
           status = imageDataWriter.init(srvParam,dataSources[j],dataSources[j]->getNumTimeSteps());if(status != 0)throw(__LINE__);
-         
-//             for(int k=0;k<dataSources[j]->getNumTimeSteps();k++){
-//               for(size_t d=0;d<dataSources.size();d++){
-//                 dataSources[d]->setTimeStep(k);
-//               }
-              status = imageDataWriter.getFeatureInfo(dataSources,0,int(srvParam->dX),int(srvParam->dY));if(status != 0)throw(__LINE__);
-//             }
-          
-          
+          status = imageDataWriter.getFeatureInfo(dataSources,0,int(srvParam->dX),int(srvParam->dY));if(status != 0)throw(__LINE__);
           status = imageDataWriter.end();if(status != 0)throw(__LINE__);
         }
         
         // WMS Getlegendgraphic
         if(srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
           CImageDataWriter imageDataWriter;
-          
-          
           status = imageDataWriter.init(srvParam,dataSources[j],1);if(status != 0)throw(__LINE__);
-         //imageDataWriter.drawImage.crop(10,10);
           status = imageDataWriter.createLegend(dataSources[j],&imageDataWriter.drawImage);if(status != 0)throw(__LINE__);
           status = imageDataWriter.end();if(status != 0)throw(__LINE__);
         }
+        
+        // WMS GETHISTOGRAM
+        if(srvParam->requestType==REQUEST_WMS_GETHISTOGRAM){
+          CImageDataWriter imageDataWriter;
+          status = imageDataWriter.init(srvParam,dataSources[j],1);if(status != 0)throw(__LINE__);
+          status = imageDataWriter.createHistogram(dataSources[j],&imageDataWriter.drawImage);if(status != 0)throw(__LINE__);
+          status = imageDataWriter.end();if(status != 0)throw(__LINE__);
+        }
+        
         // WMS GetMetaData
         if(srvParam->requestType==REQUEST_WMS_GETMETADATA){
           printf("%s%c%c\n","Content-Type:text/plain",13,10);
-          //printf("%s",dataSources[j]->getFileName());
           CDataReader reader;
           status = reader.open(dataSources[j],CNETCDFREADER_MODE_OPEN_HEADER);
           if(status!=0){
             CDBError("Could not open file: %s",dataSources[j]->getFileName());
             throw(__LINE__);
           }
-          
           CT::string dumpString=CDF::dump(dataSources[j]->getDataObject(0)->cdfObject);
-          
           printf("%s",dumpString.c_str());
           reader.close();
-
         }
         
         if(srvParam->requestType==REQUEST_WMS_GETREFERENCETIMES){
@@ -2177,6 +2184,7 @@ int CRequest::process_querystring(){
     }else{
       if(REQUEST.equals("GETCAPABILITIES"))srvParam->requestType=REQUEST_WMS_GETCAPABILITIES;
       if(REQUEST.equals("GETMAP"))srvParam->requestType=REQUEST_WMS_GETMAP;
+      if(REQUEST.equals("GETHISTOGRAM"))srvParam->requestType=REQUEST_WMS_GETHISTOGRAM;
       if(REQUEST.equals("GETFEATUREINFO"))srvParam->requestType=REQUEST_WMS_GETFEATUREINFO;
       if(REQUEST.equals("GETPOINTVALUE"))srvParam->requestType=REQUEST_WMS_GETPOINTVALUE;
       if(REQUEST.equals("GETLEGENDGRAPHIC"))srvParam->requestType=REQUEST_WMS_GETLEGENDGRAPHIC;
@@ -2354,10 +2362,12 @@ int CRequest::process_querystring(){
       (
         srvParam->requestType==REQUEST_WMS_GETMAP||
         srvParam->requestType==REQUEST_WMS_GETFEATUREINFO||
-        srvParam->requestType==REQUEST_WMS_GETPOINTVALUE
+        srvParam->requestType==REQUEST_WMS_GETPOINTVALUE||
+        srvParam->requestType==REQUEST_WMS_GETHISTOGRAM
+        
       )){
       
-      if(srvParam->requestType==REQUEST_WMS_GETFEATUREINFO||srvParam->requestType==REQUEST_WMS_GETPOINTVALUE){
+      if(srvParam->requestType==REQUEST_WMS_GETFEATUREINFO||srvParam->requestType==REQUEST_WMS_GETPOINTVALUE||srvParam->requestType==REQUEST_WMS_GETHISTOGRAM){
         int status = CServerParams::checkDataRestriction();
         if((status&ALLOW_GFI)==false){
           CDBWarning("ADAGUC Server: This layer is not queryable.");
@@ -2367,13 +2377,17 @@ int CRequest::process_querystring(){
       // Check if styles is defined for WMS 1.1.1
       if(dFound_Styles==0&&srvParam->requestType==REQUEST_WMS_GETMAP){
         if(srvParam->OGCVersion==WMS_VERSION_1_1_1){
-          //CDBWarning("ADAGUC Server: Parameter STYLES missing");TODO Google Earth does not provide this!
+          //CDBWarning("ADAGUC Server: Parameter STYLES missing");TODO Google Earth does not provide this! Disabled this check for the moment.
         }
       }
       
       if(srvParam->requestType==REQUEST_WMS_GETPOINTVALUE){
-        //Maps REQUEST_WMS_GETPOINTVALUE to REQUEST_WMS_GETFEATUREINFO
-        //http://bhw222.knmi.nl:8080/cgi-bin/model.cgi?&SERVICE=WMS&REQUEST=GetPointValue&VERSION=1.1.1&SRS=EPSG%3A4326&QUERY_LAYERS=PMSL_sfc_0&X=3.74&Y=52.34&INFO_FORMAT=text/html&time=2011-08-18T09:00:00Z/2011-08-18T18:00:00Z&DIM_sfc_snow=0
+        /*
+         * Maps REQUEST_WMS_GETPOINTVALUE to REQUEST_WMS_GETFEATUREINFO
+         * SERVICE=WMS&REQUEST=GetPointValue&VERSION=1.1.1&SRS=EPSG%3A4326&QUERY_LAYERS=PMSL_sfc_0&X=3.74&Y=52.34&INFO_FORMAT=text/html&time=2011-08-18T09:00:00Z/2011-08-18T18:00:00Z&DIM_sfc_snow=0 
+         * 
+         */
+        
         srvParam->dFound_BBOX=1;
         dFound_WMSLAYERS=1;
         dFound_Width=1;
@@ -2393,11 +2407,11 @@ int CRequest::process_querystring(){
     
       
       if(srvParam->dFound_BBOX==0){
-//        TODO enable strict WMS
+          /*
+           * TODO enable strict WMS. If bbox is not given, ADAGUC calculates the best fit bbox itself, handy for preview images!!!
+           */
 //        CDBWarning("ADAGUC Server: Parameter BBOX missing");
 //        dErrorOccured=1;
-
-        
       }
       
       
@@ -2460,6 +2474,15 @@ int CRequest::process_querystring(){
       if(dErrorOccured==0){
         if(srvParam->requestType==REQUEST_WMS_GETMAP){
           int status =  process_wms_getmap_request();
+          if(status != 0) {
+            CDBError("WMS GetMap Request failed");
+            return 1;
+          }
+          return 0;
+        }
+        
+        if(srvParam->requestType==REQUEST_WMS_GETHISTOGRAM){
+          int status =  process_wms_gethistogram_request();
           if(status != 0) {
             CDBError("WMS GetMap Request failed");
             return 1;
@@ -2641,7 +2664,7 @@ int CRequest::process_querystring(){
   if(srvParam->serviceType==SERVICE_WCS){
     CDBWarning("ADAGUC Server: Invalid value for request. Supported requests are: getcapabilities, describecoverage and getcoverage");
   }else if(srvParam->serviceType==SERVICE_WMS){
-    CDBWarning("ADAGUC Server: Invalid value for request. Supported requests are: getcapabilities, getmap, getfeatureinfo, getpointvalue, getmetadata, getstyles and getlegendgraphic");
+    CDBWarning("ADAGUC Server: Invalid value for request. Supported requests are: getcapabilities, getmap, gethistogram, getfeatureinfo, getpointvalue, getmetadata, getReferencetimes, getstyles and getlegendgraphic");
   }else{
     CDBWarning("ADAGUC Server: Unknown service");
   }

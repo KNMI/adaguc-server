@@ -293,6 +293,11 @@ namespace CT{
     int lastIndexOf(const char* search){return lastIndexOf(search,strlen(search));};
     
     /**
+     * The endsWith() method determines whether a string ends with the characters of another string, returning true or false as appropriate.
+     * 
+     */
+    int endsWith(const char* search){return (lastIndexOf(search)==int(privatelength-strlen(search)));};
+    /**
     * String to unicode
     */
     void toUnicodeSelf();

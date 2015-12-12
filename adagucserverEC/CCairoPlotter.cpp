@@ -673,36 +673,36 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
     int w,h;
     _drawFreeTypeText( x, y,w,h,angle,text,true);
   }
-
+//TODO alpha is not yet working!
   void CCairoPlotter::writeToPng8Stream(FILE *fp,unsigned char alpha) {
-    bool useCairo = false;
-    if(!useCairo){
+//     bool useCairo = false;
+//     if(!useCairo){
 
       writeARGBPng(width,height,ARGBByteBuffer,fp,false);
-    }else{
-      if(isAlphaUsed){
-        CDBDebug("Alpha was used");
-        for(int y=0;y<height;y++){
-          for(int x=0;x<width;x++){
-            size_t p=x*4+y*stride;
-            if(ARGBByteBuffer[p+3]!=255){
-              float a =ARGBByteBuffer[p+3];
-              ARGBByteBuffer[p]=(unsigned char)((float(ARGBByteBuffer[p])/256.0)*float(a));
-              ARGBByteBuffer[p+1]=(unsigned char)((float(ARGBByteBuffer[p+1])/256.0)*float(a));
-              ARGBByteBuffer[p+2]=(unsigned char)((float(ARGBByteBuffer[p+2])/256.0)*float(a));
-
-            }
-          }
-        }
-      }
-      
-      cairo_surface_flush(surface);
-      
-      
-      
-      this->fp=fp;
-      cairo_surface_write_to_png_stream(surface, writerFunc, (void *)fp);
-    }
+//     }else{
+//       if(isAlphaUsed){
+//         CDBDebug("Alpha was used");
+//         for(int y=0;y<height;y++){
+//           for(int x=0;x<width;x++){
+//             size_t p=x*4+y*stride;
+//             if(ARGBByteBuffer[p+3]!=255){
+//               float a =ARGBByteBuffer[p+3];
+//               ARGBByteBuffer[p]=(unsigned char)((float(ARGBByteBuffer[p])/256.0)*float(a));
+//               ARGBByteBuffer[p+1]=(unsigned char)((float(ARGBByteBuffer[p+1])/256.0)*float(a));
+//               ARGBByteBuffer[p+2]=(unsigned char)((float(ARGBByteBuffer[p+2])/256.0)*float(a));
+// 
+//             }
+//           }
+//         }
+//       }
+//       
+//       cairo_surface_flush(surface);
+//       
+//       
+//       
+//       this->fp=fp;
+//       cairo_surface_write_to_png_stream(surface, writerFunc, (void *)fp);
+//     }
   }
   
   void CCairoPlotter::writeToPng32Stream(FILE *fp,unsigned char alpha) {

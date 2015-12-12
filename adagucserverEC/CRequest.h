@@ -213,6 +213,7 @@ private:
     int process_wcs_getcoverage_request();
     int process_all_layers();
     int process_wms_getreferencetimes_request();
+    int process_wms_gethistogram_request();
     int updatedb(CT::string *tailPath,CT::string *layerPathToScan);
     
     int runRequest();

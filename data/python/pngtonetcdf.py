@@ -13,6 +13,12 @@ imgproj = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
 product = "alpha-test"
 outputname = '../datasets/alpha-test.nc'
 
+inputname = '/home/adaguc/data/test.png'
+imgextent = [-180,-90,180,90]
+imgproj = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+product = "color_etopo1_ice_low"
+outputname = '/data/services/data/testsets/rgba_truecolor_images/test.nc'
+
 import Image
 import numpy as np
 import netCDF4
