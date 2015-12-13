@@ -1539,10 +1539,31 @@ int CRequest::process_all_layers(){
         
         // WMS GETHISTOGRAM
         if(srvParam->requestType==REQUEST_WMS_GETHISTOGRAM){
-          CImageDataWriter imageDataWriter;
-          status = imageDataWriter.init(srvParam,dataSources[j],1);if(status != 0)throw(__LINE__);
-          status = imageDataWriter.createHistogram(dataSources[j],&imageDataWriter.drawImage);if(status != 0)throw(__LINE__);
-          status = imageDataWriter.end();if(status != 0)throw(__LINE__);
+          CCreateHistogram histogramCreator;
+          CDBDebug("REQUEST_WMS_GETHISTOGRAM");
+          
+          try{
+            status = histogramCreator.init(srvParam,dataSources[j],dataSources[j]->getNumTimeSteps());if(status != 0)throw(__LINE__);
+          }catch(int e){
+            CDBError("Exception code %d",e);
+            throw(__LINE__);
+          }
+          for(int k=0;k<dataSources[j]->getNumTimeSteps();k++){
+            dataSources[j]->setTimeStep(k);
+            try{
+              status = histogramCreator.addData(dataSources);
+            }catch(int e){
+              CDBError("Exception code %d",e);
+              throw(__LINE__);
+            }
+            if(status != 0)throw(__LINE__);
+          }
+          try{
+            status = histogramCreator.end();if(status != 0)throw(__LINE__);
+          }catch(int e){
+            CDBError("Exception code %d",e);
+            throw(__LINE__);
+          }
         }
         
         // WMS GetMetaData

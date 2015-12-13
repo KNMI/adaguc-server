@@ -35,6 +35,7 @@
 #ifdef ADAGUC_USE_GDAL
 #include "CGDALDataWriter.h"
 #endif
+#include "CCreateHistogram.h"
 #include "CDFObjectStore.h"
 #include "CCDFStore.h"
 #include "CDebugger.h"
