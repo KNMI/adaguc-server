@@ -152,7 +152,7 @@ private:
     
     static int createLegend(CDataSource *sourceImage,CDrawImage *legendImage);
     static int createScaleBar(CDataSource *sourceImage,CDrawImage *scaleBarImage);
-    static int createHistogram(CDataSource *sourceImage,CDrawImage *histogramImage);
+   
     int getFeatureInfo(std::vector<CDataSource *>dataSources,int dataSourceIndex,int dX,int dY);
     int createAnimation();
     void setDate(const char *date);

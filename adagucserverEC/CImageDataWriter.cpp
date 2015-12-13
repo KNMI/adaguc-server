@@ -30,7 +30,7 @@
 #include <algorithm>
 #include "CCreateScaleBar.h"
 #include "CCreateLegend.h"
-#include "CCreateHistogram.h"
+
 #include "CImageDataWriter.h"
 #include "CMakeJSONTimeSeries.h"
 #ifndef M_PI
@@ -507,7 +507,7 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
     
     if(status != 0) return 1;
   }
-  if(srvParam->requestType==REQUEST_WMS_GETFEATUREINFO){
+  if(srvParam->requestType==REQUEST_WMS_GETFEATUREINFO||srvParam->requestType==REQUEST_WMS_GETHISTOGRAM){
     //status = drawImage.createImage(2,2);
     drawImage.Geo->copy(srvParam->Geo);
     return 0;
@@ -3113,10 +3113,6 @@ int CImageDataWriter::getColorIndexForValue(CDataSource *dataSource,float value)
 
 int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendImage){
   return CCreateLegend::createLegend(dataSource,legendImage);
-}
-
-int CImageDataWriter::createHistogram(CDataSource *dataSource,CDrawImage *histogramImage){
-  return CCreateHistogram::createHistogram(dataSource,histogramImage);
 }
 
 
