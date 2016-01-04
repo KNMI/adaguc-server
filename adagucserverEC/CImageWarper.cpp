@@ -482,7 +482,7 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
     
     pKey.setFoundExtent(dfBBOX);
     projectionStore.keys.push_back(pKey);
-    CDBDebug("out: %f %f %f %f",dfBBOX[0],dfBBOX[1],dfBBOX[2],dfBBOX[3]);
+    //CDBDebug("out: %f %f %f %f",dfBBOX[0],dfBBOX[1],dfBBOX[2],dfBBOX[3]);
     return 0;
   }
   void CImageWarper::reprojBBOX(double *df4PixelExtent){

@@ -789,7 +789,7 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
                    PNG_FILTER_TYPE_BASE);
       
     }else{
-      CDBDebug("Starting header");
+      //CDBDebug("Starting header");
 //       png_set_IHDR(png_ptr, info_ptr, width, height, 8, 
 //                    PNG_COLOR_TYPE_GRAY, PNG_INTERLACE_NONE,
 //                    PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_NONE);
@@ -797,7 +797,7 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
                    PNG_COLOR_TYPE_PALETTE, 
                    PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, 
                    PNG_FILTER_TYPE_BASE);
-      CDBDebug("Finished header");
+      //CDBDebug("Finished header");
       
       png_color palette[256];
       png_byte a[256];
@@ -856,7 +856,7 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
       }
       png_set_PLTE( png_ptr,  info_ptr,  palette, 255);
      
-      CDBDebug("Num alpha colors: %d",numAlphaColors);
+      //CDBDebug("Num alpha colors: %d",numAlphaColors);
     
       png_set_tRNS(png_ptr, info_ptr, a, numAlphaColors, trans_values);
     }
