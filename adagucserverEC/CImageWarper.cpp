@@ -86,7 +86,7 @@ int CImageWarper::reprojpoint(double &dfx,double &dfy){
   if(pj_transform(destpj,sourcepj, 1,0,&dfx,&dfy,NULL)!=0){
     //throw("reprojpoint error");
     return 1;
-    CDBError("ReprojException");
+   // CDBError("ReprojException");
   }
   if(convertRadiansDegreesSrc){
     dfx/=DEG_TO_RAD;
@@ -150,7 +150,8 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
       dfy*=DEG_TO_RAD;
     }
     if(pj_transform(sourcepj,latlonpj,1,0,&dfx,&dfy,NULL)!=0){
-     CDBError("ReprojException");
+     
+     return 1;
     }
     dfx/=DEG_TO_RAD;
     dfy/=DEG_TO_RAD;    
@@ -162,7 +163,7 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
     dfy*=DEG_TO_RAD;
     
     if(pj_transform(latlonpj,sourcepj,1,0,&dfx,&dfy,NULL)!=0){
-     CDBError("ReprojException");
+     return 1;
     }
     //if(status!=0)CDBDebug("DestPJ: %s",GeoDest->CRS.c_str());
     if(convertRadiansDegreesSrc){
@@ -312,7 +313,7 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
     requireReprojection=false;
     double y=52; double x=5;
     x *= DEG_TO_RAD;y *= DEG_TO_RAD;
-    pj_transform(destpj,sourcepj, 1,0,&x,&y,NULL);
+    if(pj_transform(destpj,sourcepj, 1,0,&x,&y,NULL)!=0)requireReprojection=true;
     x /= DEG_TO_RAD;y /= DEG_TO_RAD;
     if(y+0.001<52||y-0.001>52||
        x+0.001<5||x-0.001>5)requireReprojection=true;
@@ -481,7 +482,7 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
     
     pKey.setFoundExtent(dfBBOX);
     projectionStore.keys.push_back(pKey);
-    //CDBDebug("out: %f %f %f %f",dfBBOX[0],dfBBOX[1],dfBBOX[2],dfBBOX[3]);
+    CDBDebug("out: %f %f %f %f",dfBBOX[0],dfBBOX[1],dfBBOX[2],dfBBOX[3]);
     return 0;
   }
   void CImageWarper::reprojBBOX(double *df4PixelExtent){
