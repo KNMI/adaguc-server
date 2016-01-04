@@ -26,7 +26,7 @@
 #ifndef Definitions_H
 #define Definitions_H
 
-#define ADAGUCSERVER_VERSION             "1.9.7"
+#define ADAGUCSERVER_VERSION             "1.9.8"
 
 //CConfigReaderLayerType
 #define CConfigReaderLayerTypeUnknown     0
@@ -141,7 +141,7 @@
 #define MEASURETIME
 */
 
-#define DEBUGON
+//#define DEBUGON
 #ifdef DEBUGON
 #define CDATASOURCE_DEBUG
 #define CREQUEST_DEBUG
