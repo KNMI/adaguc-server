@@ -503,7 +503,7 @@ const char *CDPDBZtoRR::getId(){
 int CDPDBZtoRR::isApplicable(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource){
   CDBDebug("isApplicable called for dbztorr");
   if(proc->attr.algorithm.equals("dbztorr")){
-    return CDATAPOSTPROCESSOR_RUNAFTERREADING;
+    return CDATAPOSTPROCESSOR_RUNAFTERREADING|CDATAPOSTPROCESSOR_RUNBEFOREREADING;
   }
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
 }
@@ -514,8 +514,13 @@ float CDPDBZtoRR::getRR(float dbZ) {
 
 int CDPDBZtoRR::execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode){
   CDBDebug("CDPDBZtoRR::execute mode %d", mode);
-  if(isApplicable(proc,dataSource)!=CDATAPOSTPROCESSOR_RUNAFTERREADING){
+  if((isApplicable(proc,dataSource)&mode)==false){
     return -1;
+  }
+  CDBDebug("Applying dbztorr %d", mode==CDATAPOSTPROCESSOR_RUNBEFOREREADING);
+  if(mode==CDATAPOSTPROCESSOR_RUNBEFOREREADING){  
+    dataSource->getDataObject(0)->cdfVariable->setAttributeText("units","mm/hr");
+    dataSource->getDataObject(0)->units="mm/hr";
   }
   CDBDebug("Applying dbztorr %d", mode==CDATAPOSTPROCESSOR_RUNAFTERREADING);
   if(mode==CDATAPOSTPROCESSOR_RUNAFTERREADING){  
