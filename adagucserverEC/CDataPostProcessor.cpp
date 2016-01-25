@@ -50,7 +50,7 @@ int CDPPAXplusB::execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* da
       }
     }
     if(proc->attr.units.empty()==false){
-      dataSource->getDataObject(varNr)->units=proc->attr.units.c_str();
+      dataSource->getDataObject(varNr)->setUnits(proc->attr.units.c_str());
     }
   }
   return 0;
@@ -381,12 +381,11 @@ int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* d
   if(mode==CDATAPOSTPROCESSOR_RUNAFTERREADING){  
     if (dataSource->getNumDataObjects()==1) {
       CDBDebug("Applying beaufort for 1 element");
-      if (dataSource->getDataObject(0)->units.equals("knot")||dataSource->getDataObject(0)->units.equals("kt")) {
+      if (dataSource->getDataObject(0)->getUnits().equals("knot")||dataSource->getDataObject(0)->getUnits().equals("kt")) {
         factor=1852./3600;
       }
       CDBDebug("Applying beaufort for 1 element with factor %f", factor);
-      dataSource->getDataObject(0)->cdfVariable->setAttributeText("units","bft");
-      dataSource->getDataObject(0)->units="bft";
+      dataSource->getDataObject(0)->setUnits("bft");
       size_t l=(size_t)dataSource->dHeight*(size_t)dataSource->dWidth;
       float *src=(float*)dataSource->getDataObject(0)->cdfVariable->data;
       float noDataValue=dataSource->getDataObject(0)->dfNodataValue;
@@ -413,11 +412,10 @@ int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* d
       }
     }
     if (dataSource->getNumDataObjects()==2) {
-      CDBDebug("Applying beaufort for 2 elements %s %s",dataSource->getDataObject(0)->units.c_str(),dataSource->getDataObject(1)->units.c_str()  );
-      if ((dataSource->getDataObject(0)->units.equals("m/s")||dataSource->getDataObject(0)->units.equals("m s-1"))&&dataSource->getDataObject(1)->units.equals("degree")) {
+      CDBDebug("Applying beaufort for 2 elements %s %s",dataSource->getDataObject(0)->getUnits().c_str(),dataSource->getDataObject(1)->getUnits().c_str()  );
+      if ((dataSource->getDataObject(0)->getUnits().equals("m/s")||dataSource->getDataObject(0)->getUnits().equals("m s-1"))&&dataSource->getDataObject(1)->getUnits().equals("degree")) {
         //This is a (wind speed,direction) pair
-        dataSource->getDataObject(0)->cdfVariable->setAttributeText("units","bft");
-        dataSource->getDataObject(0)->units="bft";
+        dataSource->getDataObject(0)->setUnits("bft");
         size_t l=(size_t)dataSource->dHeight*(size_t)dataSource->dWidth;
         float *src=(float*)dataSource->getDataObject(0)->cdfVariable->data;
         float noDataValue=dataSource->getDataObject(0)->dfNodataValue;
@@ -442,11 +440,10 @@ int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* d
           }
         }
       }
-      if ((dataSource->getDataObject(0)->units.equals("m/s")||dataSource->getDataObject(0)->units.equals("m s-1"))&&
-          (dataSource->getDataObject(1)->units.equals("m/s")||dataSource->getDataObject(1)->units.equals("m s-1"))) {
+      if ((dataSource->getDataObject(0)->getUnits().equals("m/s")||dataSource->getDataObject(0)->getUnits().equals("m s-1"))&&
+          (dataSource->getDataObject(1)->getUnits().equals("m/s")||dataSource->getDataObject(1)->getUnits().equals("m s-1"))) {
         //This is a (u,v) pair
-        dataSource->getDataObject(0)->cdfVariable->setAttributeText("units","bft");
-        dataSource->getDataObject(0)->units="bft";
+        dataSource->getDataObject(0)->setUnits("bft");
         
         size_t l=(size_t)dataSource->dHeight*(size_t)dataSource->dWidth;
         float *srcu=(float*)dataSource->getDataObject(0)->cdfVariable->data;
@@ -501,7 +498,6 @@ const char *CDPDBZtoRR::getId(){
   return "dbztorr";
 }
 int CDPDBZtoRR::isApplicable(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource){
-  CDBDebug("isApplicable called for dbztorr");
   if(proc->attr.algorithm.equals("dbztorr")){
     return CDATAPOSTPROCESSOR_RUNAFTERREADING|CDATAPOSTPROCESSOR_RUNBEFOREREADING;
   }
@@ -513,19 +509,14 @@ float CDPDBZtoRR::getRR(float dbZ) {
 }
 
 int CDPDBZtoRR::execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode){
-  CDBDebug("CDPDBZtoRR::execute mode %d", mode);
   if((isApplicable(proc,dataSource)&mode)==false){
     return -1;
   }
-  CDBDebug("Applying dbztorr %d", mode==CDATAPOSTPROCESSOR_RUNBEFOREREADING);
   if(mode==CDATAPOSTPROCESSOR_RUNBEFOREREADING){  
-    dataSource->getDataObject(0)->cdfVariable->setAttributeText("units","mm/hr");
-    dataSource->getDataObject(0)->units="mm/hr";
+//    dataSource->getDataObject(0)->cdfVariable->setAttributeText("units","mm/hr");
+    dataSource->getDataObject(0)->setUnits("mm/hr");
   }
-  CDBDebug("Applying dbztorr %d", mode==CDATAPOSTPROCESSOR_RUNAFTERREADING);
   if(mode==CDATAPOSTPROCESSOR_RUNAFTERREADING){  
-    dataSource->getDataObject(0)->cdfVariable->setAttributeText("units","mm/hr");
-    dataSource->getDataObject(0)->units="mm/hr";
     size_t l=(size_t)dataSource->dHeight*(size_t)dataSource->dWidth;
     float *src=(float*)dataSource->getDataObject(0)->cdfVariable->data;
     float noDataValue=dataSource->getDataObject(0)->dfNodataValue;
