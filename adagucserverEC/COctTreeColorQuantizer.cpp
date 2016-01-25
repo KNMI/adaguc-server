@@ -168,9 +168,7 @@
    if (tree->isleaf) {
      return tree->index;
    }
-   else {
-     QuantizeColor(tree->child[LEVEL(color,6-tree->level)],color);
-   }
+   return QuantizeColor(tree->child[LEVEL(color,6-tree->level)],color);
    
    
  }
