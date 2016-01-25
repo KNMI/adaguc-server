@@ -466,7 +466,7 @@ int CMakeJSONTimeSeries::MakeJSONTimeSeries(CDrawImage *drawImage,CImageWarper *
         }
     
         layerStructure->add(CXMLParser::XMLElement("standard_name",standardName.c_str()));
-        layerStructure->add(CXMLParser::XMLElement("units",dataObject->units.c_str()));
+        layerStructure->add(CXMLParser::XMLElement("units",dataObject->getUnits().c_str()));
 
         CT::string ckey;
         ckey.print("%d%d%s",dX,dY,dataSource->nativeProj4.c_str());
@@ -625,7 +625,7 @@ int CMakeJSONTimeSeries::MakeJSONTimeSeries(CDrawImage *drawImage,CImageWarper *
                     }
                     //Apply units:
                     if(proc->attr.units.empty()==false){
-                      dataSource->getDataObject(dataObjectNr)->units=proc->attr.units.c_str();
+                      dataSource->getDataObject(dataObjectNr)->setUnits(proc->attr.units.c_str());
                     }
                 
                   }

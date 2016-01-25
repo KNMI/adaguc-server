@@ -607,13 +607,15 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString name,interval,defaultV,units;
+            CXMLString name,interval,defaultV,units,quantizeperiod,quantizemethod;
         }attr;
         void addAttribute(const char *attrname,const char *attrvalue){
           if(equals("name",4,attrname)){attr.name.copy(attrvalue);return;}
           if(equals("units",5,attrname)){attr.units.copy(attrvalue);return;}
           if(equals("default",7,attrname)){attr.defaultV.copy(attrvalue);return;}
           if(equals("interval",8,attrname)){attr.interval.copy(attrvalue);return;}
+          if(equals("quantizeperiod",14,attrname)){attr.quantizeperiod.copy(attrvalue);return;}
+          if(equals("quantizemethod",14,attrname)){attr.quantizemethod.copy(attrvalue);return;}
         }
     };
     

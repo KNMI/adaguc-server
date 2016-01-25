@@ -788,7 +788,8 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
           //Get variable name
           element->var_name.copy(&dataSources[d]->getDataObject(d)->variableName);
           //Get variable units
-          element->units.copy(&dataSources[d]->getDataObject(d)->units);
+          CT::string units=dataSources[d]->getDataObject(d)->getUnits();
+          element->units.copy(&units);
           element->value="nodata";
           getFeatureInfoResult->elements.push_back(element);
           //isOutsideBBOX = true;
@@ -843,7 +844,8 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         //Get variable name
         element->var_name.copy(&dataSources[d]->getDataObject(o)->variableName);
         //Get variable units
-        element->units.copy(&dataSources[d]->getDataObject(o)->units);
+        CT::string units=dataSources[d]->getDataObject(o)->getUnits();
+        element->units.copy(&units);
 
         //Get variable standard name
         CDF::Attribute * attr_standard_name=dataSources[d]->getDataObject(o)->cdfVariable->getAttributeNE("standard_name");
@@ -1089,7 +1091,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
             windspeedOrigElement->var_name="wind speed";
             windspeedOrigElement->standard_name="speed1";
             windspeedOrigElement->feature_name="wind speed";
-            windspeedOrigElement->units=dataSource->getDataObject(0)->units;
+            windspeedOrigElement->units=dataSource->getDataObject(0)->getUnits();
   //           windspeedOrigElement->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
             if (windDataValid) {
               double windspeed=hypot(pixel1, pixel2);
@@ -1104,7 +1106,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
             //Skip KTS calculation if input data is not u and v vectors in m/s.
             bool skipKTSCalc = true;
             try{
-              if(dataSource->getDataObject(0)->units.indexOf("m/s")>=0){
+              if(dataSource->getDataObject(0)->getUnits().indexOf("m/s")>=0){
                 skipKTSCalc =false;
               }
             }catch(int e){}

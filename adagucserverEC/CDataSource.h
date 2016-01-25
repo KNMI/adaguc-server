@@ -112,8 +112,11 @@ private:
       std::vector<StatusFlag*> statusFlagList;
       CDF::Variable *cdfVariable;
       CDFObject *cdfObject;
+      CT::string overruledUnits;
       
-      CT::string variableName,units;
+      CT::string variableName;
+      CT::string getUnits();
+      void setUnits(CT::string units);
       std::vector<PointDVWithLatLon> points;
   };
   

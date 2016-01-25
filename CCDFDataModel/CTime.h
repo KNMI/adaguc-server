@@ -150,6 +150,22 @@ class CTime{
    * @return Current system time as ISO string
    */
   static CT::string currentDateTime();
+  
+  /**
+   * Time values received in the URL as input can be rounded to more discrete time periods. 
+   * For example when noon, 12:03:53, is received as input, it is possible to round this to 12:00:00. 
+   * This enables the service to respond to fuzzy time intervals.
+   * 
+   * PT15M/low: 2016-01-13T08:35:00Z --> 2016-01-13T08:30:00Z
+   * PT15M/high: 2016-01-13T08:36:00Z --> 2016-01-13T08:45:00Z
+   * PT15M/round: 2016-01-13T08:38:00Z --> 2016-01-13T08:45:00Z
+   * 
+   * @param value The input value to quantize, as date string
+   * @param period The time resolution to round to
+   * @param method  Can be either low, high and round, defaults to round.
+   * @return The quantized date as ISO8601 String
+   */
+  static CT::string quantizeTimeToISO8601(CT::string value, CT::string period, CT::string method);
 
 };
 #endif

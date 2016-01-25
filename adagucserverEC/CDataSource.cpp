@@ -37,6 +37,7 @@ CDataSource::DataObject::DataObject(){
   hasScaleOffset = false;
   cdfVariable = NULL;
   cdfObject=NULL;
+  overruledUnits=NULL;
   dfadd_offset=0;
   dfscale_factor=1;
   std::vector <CPoint> points;
@@ -47,8 +48,16 @@ CDataSource::DataObject::~DataObject(){
   }
 
 }
+CT::string CDataSource::DataObject::getUnits() {
+  if (overruledUnits.empty()) {
+    return cdfVariable->getAttributeNE("units")->getDataAsString();
+  } 
+  return overruledUnits;
+}
 
-
+void CDataSource::DataObject::setUnits(CT::string units) {
+  overruledUnits=units;
+}
 
 /************************************/
 /* CDataSource::Statistics          */

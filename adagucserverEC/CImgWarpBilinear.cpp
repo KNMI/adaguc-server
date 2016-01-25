@@ -788,7 +788,7 @@ bool convertToKnots=false; //default is false
     //Depends on value units
     //Derive convertToKnots from units
     CT::string units="m/s";
-    units=sourceImage->getDataObject(0)->units;
+    units=sourceImage->getDataObject(0)->getUnits();
     #ifdef CImgWarpBilinear_DEBUG
     CDBDebug("units = %s", units.c_str());
     #endif

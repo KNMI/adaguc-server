@@ -334,8 +334,8 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage)
     
     //Get units
     CT::string units;
-    if(dataSource->getDataObject(0)->units.length()>0){
-      units.concat(&dataSource->getDataObject(0)->units);
+    if(dataSource->getDataObject(0)->getUnits().length()>0){
+      units.concat(dataSource->getDataObject(0)->getUnits().c_str());
     }
     if(units.length()>0)legendImage->setText(units.c_str(),units.length(),2+pLeft,int(legendHeight)-14+pTop,248,-1);
     //legendImage->crop(2,2);    
@@ -538,8 +538,8 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage)
     #endif
     //Get units
     CT::string units;
-    if(dataSource->getDataObject(0)->units.length()>0){
-      units.concat(&dataSource->getDataObject(0)->units);
+    if(dataSource->getDataObject(0)->getUnits().length()>0){
+      units.concat(units.c_str());
     }
     if(units.length()>0)legendImage->setText(units.c_str(),units.length(),2+pLeft,int(legendHeight)-14+pTop,248,-1);
     //legendImage->crop(4,4);
