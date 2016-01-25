@@ -27,7 +27,7 @@
 #include "CTime.h"
 #include <ctime>
 #include <sys/time.h>
-
+#include <math.h>
 
 const char *CTime::className="CTime";
 // utUnit CTime::dataunits;
@@ -368,4 +368,96 @@ CT::string CTime::currentDateTime() {
 
     return currentTime;
 }
+
+
+CT::string CTime::quantizeTimeToISO8601(CT::string value, CT::string period, CT::string method) {
+  CT::string newDateString = value;
+  CDBDebug("quantizetime with for value %s with period %s and method %s",value.c_str(),period.c_str(),method.c_str());
+  try{
+    CTime time;
+    time.init("seconds since 0000-01-01T00:00:00Z");
+    CTime::Date date=time.freeDateStringToDate(value.c_str());
+    double offsetOrig = time.dateToOffset(  date);
+    double offsetLow ;
+    double offsetHigh ;
+    //P1Y
+    //P1D
+    //PT1M
+    if(period.indexOf("T")!=-1){ //Contains HMS
+      
+      CT::string* items = period.splitToArray("T");
+      if(items->count!=2){
+        delete[] items;
+        throw(-1);
+      }
+      CT::string hmsPart = items[1];
+      delete[] items;
+      
+      //hmsPart contains 15M, 1M, 12S, 6H, etc...
+      if(hmsPart.indexOf("H")!=-1){//6H
+        hmsPart.replaceSelf("H","");int H = hmsPart.toInt();int origH=date.hour;
+        date.minute=0; date.second=0;
+        date.hour=origH-origH%H;offsetLow = time.dateToOffset(date);
+        date.hour=date.hour+H;offsetHigh = time.dateToOffset(date);
+      }else if(hmsPart.indexOf("M")!=-1){//5M
+        hmsPart.replaceSelf("M","");int M = hmsPart.toInt();int origM=date.minute;
+        date.second=0;
+        date.minute=origM-origM%M;offsetLow = time.dateToOffset(date);
+        date.minute=date.minute+M;offsetHigh = time.dateToOffset(date);
+      }else if(hmsPart.indexOf("S")!=-1){//30S
+        hmsPart.replaceSelf("S","");int S = hmsPart.toInt();int origS=date.second;
+        date.second=origS-origS%S;offsetLow = time.dateToOffset(date);
+        date.second=date.second+S;offsetHigh = time.dateToOffset(date);
+      }
+
+      
+    }else{ // Contains YMD
+      
+      CT::string hmsPart = period;
+      hmsPart.replaceSelf("P", "");
+      
+      //hmsPart contains 15M, 1M, 12S, 6H, etc...
+      if(hmsPart.indexOf("Y")!=-1){//6H
+        hmsPart.replaceSelf("Y","");int Y = hmsPart.toInt();int origY=date.year;
+        date.month=1;date.day=1;date.hour=0;date.minute=0;date.second=0;
+        date.year=origY-origY%Y;offsetLow = time.dateToOffset(date);
+        date.year=date.year+Y;offsetHigh = time.dateToOffset(date);
+      }else if(hmsPart.indexOf("M")!=-1){//5M
+        date.day=1;date.hour=0;date.minute=0;date.second=0;
+        hmsPart.replaceSelf("M","");int M = hmsPart.toInt();int origM=date.month;
+        date.month=origM-origM%M;offsetLow = time.dateToOffset(date);
+        date.month=date.month+M;offsetHigh = time.dateToOffset(date);
+      }else if(hmsPart.indexOf("D")!=-1){//30S
+        date.hour=0;date.minute=0;date.second=0;
+        hmsPart.replaceSelf("D","");int D = hmsPart.toInt();int origD=date.day;
+        date.day=origD-origD%D;offsetLow = time.dateToOffset(date);
+        date.day=date.day+D;offsetHigh = time.dateToOffset(date);
+      }
+    }
+    
+    if(method.equals("low")){
+      offsetOrig= offsetLow;
+    }else if(method.equals("high")){
+      offsetOrig= offsetHigh;
+    }else if(method.equals("round")){
+      double diffL =  fabs(offsetOrig-offsetLow);
+      double diffH =  fabs(offsetOrig-offsetHigh);
+      if(diffL<diffH){
+        offsetOrig= offsetLow;
+      }else{
+        offsetOrig= offsetHigh;
+      }
+    }
+    
+   
+    CTime::Date newDate=time.getDate( offsetOrig);
+    newDateString=time.dateToISOString(newDate);
+  }catch(int e){
+    CDBError("Exception in quantizetime with message %s",CTime::getErrorMessage(e).c_str());
+  }
+  CDBDebug("New date is %s",newDateString.c_str());
+  return newDateString;
+  //return "2016-01-13T09:50:00Z";
+}
+
 

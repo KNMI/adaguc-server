@@ -828,7 +828,22 @@ int CRequest::setDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
             ogcDim->name.copy(&dimName);
             ogcDim->value.copy(&srvParam->requestDims[k]->value);
             ogcDim->netCDFDimName.copy(dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
-
+            
+           
+            //If we have a dimension value quantizer adjust the value accordingly
+            if(ogcDim->name.equals("time")||ogcDim->name.equals("reference_time")){
+              if(!dataSource->cfgLayer->Dimension[i]->attr.quantizeperiod.empty()){
+                CDBDebug("For dataSource %s found quantizeperiod %s",dataSource->layerName.c_str(),dataSource->cfgLayer->Dimension[i]->attr.quantizeperiod.c_str());
+                CT::string quantizemethod="round";
+                CT::string quantizeperiod=dataSource->cfgLayer->Dimension[i]->attr.quantizeperiod;
+                if(!dataSource->cfgLayer->Dimension[i]->attr.quantizemethod.empty()){
+                  quantizemethod=dataSource->cfgLayer->Dimension[i]->attr.quantizemethod;
+                }
+                //Start time quantization with quantizeperiod and quantizemethod
+                ogcDim->value=CTime::quantizeTimeToISO8601(ogcDim->value, quantizeperiod, quantizemethod) ;
+              }
+            }
+            
             // If we have value 'current', give the dim a special status
             if(ogcDim->value.equals("current")){
               CT::string tableName;

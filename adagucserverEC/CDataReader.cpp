@@ -863,8 +863,8 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
     //Get Unit
     CDF::Attribute *varUnits=dataSource->getDataObject(varNr)->cdfVariable->getAttributeNE("units");
     if(varUnits!=NULL){
-      dataSource->getDataObject(varNr)->units.copy((char*)varUnits->data,varUnits->length);
-    }else dataSource->getDataObject(varNr)->units.copy("");
+      dataSource->getDataObject(varNr)->setUnits((char*)varUnits->data); //units.copy((char*)varUnits->data,varUnits->length);
+    }else dataSource->getDataObject(varNr)->setUnits("");
   
     // Check for packed data / hasScaleOffset
   
@@ -1568,8 +1568,8 @@ int CDataReader::autoConfigureStyles(CDataSource *dataSource){
     
     //Get the units
     CT::string dataSourceUnits;
-    if(dataSource->getDataObject(0)->units.length()>0){
-      dataSourceUnits = dataSource->getDataObject(0)->units.c_str();
+    if(dataSource->getDataObject(0)->getUnits().length()>0){
+      dataSourceUnits = dataSource->getDataObject(0)->getUnits().c_str();
     }
     dataSourceUnits.toLowerCaseSelf();
     
