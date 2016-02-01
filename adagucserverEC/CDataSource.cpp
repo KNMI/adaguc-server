@@ -49,8 +49,10 @@ CDataSource::DataObject::~DataObject(){
 
 }
 CT::string CDataSource::DataObject::getUnits() {
-  if (overruledUnits.empty()) {
-    return cdfVariable->getAttributeNE("units")->getDataAsString();
+  if (overruledUnits.empty() && cdfVariable !=NULL ) {
+    try{
+      return cdfVariable->getAttribute("units")->getDataAsString();
+    }catch(int e){}    
   } 
   return overruledUnits;
 }
