@@ -66,6 +66,7 @@ CDrawImage::CDrawImage(){
 }
 void CDrawImage::destroyImage(){
   //CDBDebug("[destroy] CDrawImage");
+
   if(currentGraphicsRenderer==CDRAWIMAGERENDERER_GD){
     if(dPaletteCreated==1){
       for(int j=0;j<256;j++)if(_colors[j]!=-1)gdImageColorDeallocate(image,_colors[j]);
@@ -113,7 +114,7 @@ int CDrawImage::createImage(int _dW,int _dH){
 
 int CDrawImage::createImage(CGeoParams *_Geo){
 #ifdef MEASURETIME
-  StopWatch_Stop("start createImage of size %d %d, truecolor=[%d], transparency = [%d]",_Geo->dWidth,_Geo->dWidth,_bEnableTrueColor,_bEnableTransparency);
+  StopWatch_Stop("start createImage of size %d %d, truecolor=[%d], transparency = [%d], currentGraphicsRenderer [%d]",_Geo->dWidth,_Geo->dHeight,_bEnableTrueColor,_bEnableTransparency,currentGraphicsRenderer);
 #endif  
   
   if(dImageCreated==1){CDBError("createImage: image already created");return 1;}
@@ -1328,6 +1329,10 @@ void CDrawImage:: getCanvasSize(int &x1,int &y1,int &w,int &h){
 }
 
 int CDrawImage::clonePalette(CDrawImage *drawImage){
+  if(drawImage->currentLegend == NULL){
+    currentLegend  = NULL;
+    return 0;
+  }
   currentLegend = new CLegend();
   currentLegend->id = legends.size();
   currentLegend->legendName=drawImage->currentLegend->legendName.c_str();
@@ -1349,6 +1354,10 @@ int CDrawImage::clonePalette(CDrawImage *drawImage){
  * Creates a new image with the same settings but with different size as the source image
  */
 int CDrawImage::createImage(CDrawImage *image,int width,int height){
+  
+  #ifdef MEASURETIME
+  CDBDebug("createImage(CDrawImage *image,int width,int height)");
+#endif
   //setTrueColor(image->getTrueColor());
 //  CDBDebug("Creating image");
   enableTransparency(image->_bEnableTransparency);
