@@ -90,7 +90,7 @@ int CAutoResource::configureDataset(CServerParams *srvParam,bool plain){
     //DONE Adjust unique cache file identifier for each dataset. [OK]
     //DONE Disable autoResourceLocation [OK]
     //Done Escape identifier, : and / tokens to _
-    //TODO check if WMS INSPIRE global metadata URL can be the same for all services      
+    //DONE check if WMS INSPIRE global metadata URL can be the same for all services (NO) [OK]
   }
   return 0;
 };
