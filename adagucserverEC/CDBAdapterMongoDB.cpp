@@ -102,7 +102,7 @@ int checkTableMongo(const char * pszTableName,const char *pszColumns){
   mongo::BSONObj fields_specifically = specific_fields.obj();
   
   /* Getting the result. */
-  auto_ptr<mongo::DBClientCursor> ptr_to_mongodb = DB->query(collection_in_mongo, mongo::Query(the_query), 0, 0, &fields_specifically);
+  std::auto_ptr<mongo::DBClientCursor> ptr_to_mongodb = DB->query(collection_in_mongo, mongo::Query(the_query), 0, 0, &fields_specifically);
   
   /* Getting the BSON object of the record. */
   mongo::BSONObj record = ptr_to_mongodb->next().getObjectField("adaguc");
@@ -126,7 +126,7 @@ int checkTableMongo(const char * pszTableName,const char *pszColumns){
     //DB->update("database.datagranules", mongo::Query(the_query), update_query_bson);
   
 
-    //auto_ptr<mongo::DBClientCursor> ptr_for_check = DB->query(collection_in_mongo, mongo::Query(the_query), 0, 0, &fields_specifically);
+    //std::auto_ptr<mongo::DBClientCursor> ptr_for_check = DB->query(collection_in_mongo, mongo::Query(the_query), 0, 0, &fields_specifically);
     //if(ptr_for_check->more()){
       //if(ptr_for_check->next().getObjectField("adaguc").nFields() !=2) {
         /* If query not succeeded. */
@@ -191,7 +191,7 @@ bool hasEnding (std::string const &fullString, std::string const &ending) {
  *  @param 		const char* 		Used for having the field names in the correct order.
  * 	@return		CDBStore::Store		The store containing the results.
  */
-CDBStore::Store *ptrToStore(auto_ptr<mongo::DBClientCursor> cursor, const char* table) {
+CDBStore::Store *ptrToStore(std::auto_ptr<mongo::DBClientCursor> cursor, const char* table) {
   #ifdef CDBAdapterMongoDB_DEBUG
     CDBDebug("[Function: ptrToStore]");
   #endif
@@ -398,7 +398,7 @@ CDBStore::Store *CDBAdapterMongoDB::getClosestDataTimeToSystemTime(const char *n
   querySelect << netcdfDimName << 1;
   mongo::BSONObj objBSON = querySelect.obj();
   
-  auto_ptr<mongo::DBClientCursor> cursorFromMongoDB;
+  std::auto_ptr<mongo::DBClientCursor> cursorFromMongoDB;
   cursorFromMongoDB = DB->query(tableName,mongo::Query(objBSON).sort("",1), 1, 0);
   
   DATENOW
@@ -475,7 +475,7 @@ int CDBAdapterMongoDB::autoUpdateAndScanDimensionTables(CDataSource *dataSource)
     }
     mongo::BSONObj the_query = query_builder.obj();
     
-    auto_ptr<mongo::DBClientCursor> cursorFromMongoDB;
+    std::auto_ptr<mongo::DBClientCursor> cursorFromMongoDB;
     
     cursorFromMongoDB = DB->query("database.datagranules",mongo::Query(the_query),1, 0, &objBSON);
     CDBStore::Store *store = ptrToStore(cursorFromMongoDB, table_combi.find("pathfiltertablelookup")->second.c_str());
@@ -577,8 +577,8 @@ CDBStore::Store *CDBAdapterMongoDB::getMin(const char *name,const char *table) {
   selecting_builder << used_name.c_str() << 1 << "_id" << 0;
   mongo::BSONObj selecting_query = selecting_builder.obj();
   
-  /* MongoDB uses auto_ptr for getting all records. */
-  auto_ptr<mongo::DBClientCursor> cursorFromMongoDB;
+  /* MongoDB uses std::auto_ptr for getting all records. */
+  std::auto_ptr<mongo::DBClientCursor> cursorFromMongoDB;
   cursorFromMongoDB = DB->query("database.datagranules",query, 1, 0, &selecting_query);
   
   std::string buff = name;
@@ -621,8 +621,8 @@ CDBStore::Store *CDBAdapterMongoDB::getMax(const char *name,const char *table) {
   selecting_builder << used_name.c_str() << 1 << "_id" << 0;
   mongo::BSONObj selecting_query = selecting_builder.obj();
   
-  /* MongoDB uses auto_ptr for getting all records. */
-  auto_ptr<mongo::DBClientCursor> cursorFromMongoDB;
+  /* MongoDB uses std::auto_ptr for getting all records. */
+  std::auto_ptr<mongo::DBClientCursor> cursorFromMongoDB;
   cursorFromMongoDB = DB->query("database.datagranules",query, 1, 0, &selecting_query);
   
   std::string buff = name;
@@ -669,7 +669,7 @@ CDBStore::Store *CDBAdapterMongoDB::getUniqueValuesOrderedByValue(const char *na
   
   mongo::Query query = mongo::Query(the_query).sort(tmp_string_corrected_name.c_str(), orderDescOrAsc ? 1 : -1);
 
-  auto_ptr<mongo::DBClientCursor> cursorFromMongoDB;
+  std::auto_ptr<mongo::DBClientCursor> cursorFromMongoDB;
   
   cursorFromMongoDB = DB->query("database.datagranules", query, limit, 0, &queryObj);
   
@@ -721,7 +721,7 @@ CDBStore::Store *CDBAdapterMongoDB::getUniqueValuesOrderedByIndex(const char *na
   
   mongo::Query query = mongo::Query(the_query).sort(sorting_fields);
 
-  auto_ptr<mongo::DBClientCursor> cursorFromMongoDB;
+  std::auto_ptr<mongo::DBClientCursor> cursorFromMongoDB;
   
   cursorFromMongoDB = DB->query("database.datagranules", query, limit, 0, &queryObj);
   
@@ -778,7 +778,7 @@ CDBStore::Store *CDBAdapterMongoDB::getFilesAndIndicesForDimensions(CDataSource 
   
   mongo::BSONObj selecting_query = selecting_builder.obj();
   
-  auto_ptr<mongo::DBClientCursor> ptrToMongo = DB->query("database.datagranules", mongo::Query(the_query).sort(getCorrectedColumnName(dataSource->requiredDims[0]->netCDFDimName.c_str()),-1), 1, 0, &selecting_query);
+  std::auto_ptr<mongo::DBClientCursor> ptrToMongo = DB->query("database.datagranules", mongo::Query(the_query).sort(getCorrectedColumnName(dataSource->requiredDims[0]->netCDFDimName.c_str()),-1), 1, 0, &selecting_query);
   
   CDBStore::Store *store = ptrToStore(ptrToMongo, "path,time,dimtime");
   
@@ -828,7 +828,7 @@ CDBStore::Store *CDBAdapterMongoDB::getFilesForIndices(CDataSource *dataSource,s
     nToSkip = count[4];
   }
   
-  auto_ptr<mongo::DBClientCursor> ptrToMongo = DB->query("database.datagranules", mongo::Query(objBSON).sort(time_field,1) , limit_in_documents, nToSkip, &data_set_name_obj); 
+  std::auto_ptr<mongo::DBClientCursor> ptrToMongo = DB->query("database.datagranules", mongo::Query(objBSON).sort(time_field,1) , limit_in_documents, nToSkip, &data_set_name_obj); 
   
   CDBStore::Store *store = ptrToStore(ptrToMongo, "path,time,dimtime");
   
@@ -866,7 +866,7 @@ CDBStore::Store *CDBAdapterMongoDB::getDimensionInfoForLayerTableAndLayerName(co
   data_set_name_builder << "dataSetName" << 1 << "_id" << 0;
   mongo::BSONObj data_set_name_obj = data_set_name_builder.obj();
   
-  auto_ptr<mongo::DBClientCursor> ptrForName = DB->query("database.datagranules", mongo::Query(objBSON), 1, 0, &data_set_name_obj);
+  std::auto_ptr<mongo::DBClientCursor> ptrForName = DB->query("database.datagranules", mongo::Query(objBSON), 1, 0, &data_set_name_obj);
   const char* data_set_name;
   if(ptrForName->more()) {
     data_set_name = ptrForName->next().getStringField("dataSetName"); 
@@ -886,7 +886,7 @@ CDBStore::Store *CDBAdapterMongoDB::getDimensionInfoForLayerTableAndLayerName(co
   data_set_selecting << "dimension" << 1 << "_id" << 0;
   mongo::BSONObj data_set_selecting_obj = data_set_selecting.obj();
   
-  auto_ptr<mongo::DBClientCursor> ptrForDimension = DB->query("database.dataSets", mongo::Query(data_set_query), 1, 0, &data_set_selecting_obj);
+  std::auto_ptr<mongo::DBClientCursor> ptrForDimension = DB->query("database.dataSets", mongo::Query(data_set_query), 1, 0, &data_set_selecting_obj);
   const char* dimension_name;
   if(ptrForDimension->more()) {
     dimension_name = ptrForDimension->next().getStringField("dimension"); 
@@ -922,7 +922,7 @@ CDBStore::Store *CDBAdapterMongoDB::getDimensionInfoForLayerTableAndLayerName(co
   mongo::BSONObj selectedColumns = selectingColumns.obj();
   
   /* Collecting the results. */
-  auto_ptr<mongo::DBClientCursor> cursorFromMongoDB;
+  std::auto_ptr<mongo::DBClientCursor> cursorFromMongoDB;
   cursorFromMongoDB = DB->query("database.datagranules",mongo::Query(objBSON), 1, 0, &selectedColumns);
 
   /* Making a store of it. */
@@ -960,7 +960,7 @@ int CDBAdapterMongoDB::storeDimensionInfoForLayerTableAndLayerName(const char *l
   DB->update("database.datagranules", mongo::Query(selectedGranule), objBSON);
   
   /* Query to see if record was succesfuly added. */
-  auto_ptr<mongo::DBClientCursor> cursorFromMongoDB;
+  std::auto_ptr<mongo::DBClientCursor> cursorFromMongoDB;
   
   mongo::BSONObjBuilder queryCheck;
   queryCheck << "fileName" << layertable << "adaguc.layer" << layername;
@@ -1052,7 +1052,7 @@ int CDBAdapterMongoDB::checkIfFileIsInTable(const char *tablename,const char *fi
   if(DB == NULL) {
     return -1;
   }
-  auto_ptr<mongo::DBClientCursor> cursorFromMongoDB;
+  std::auto_ptr<mongo::DBClientCursor> cursorFromMongoDB;
   
   /* Granule needs to have the correct fileName and the correct path. */
   mongo::BSONObjBuilder query;
