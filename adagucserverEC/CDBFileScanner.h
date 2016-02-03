@@ -33,6 +33,8 @@
 #include "CServerError.h"
 #include "CDirReader.h"
 
+#define CDBFILESCANNER_RESCAN 1
+
 
 /**
  * Class which scans files and updates the database.
@@ -41,7 +43,7 @@ class CDBFileScanner{
 private:
   DEF_ERRORFUNCTION();
   static int createDBUpdateTables(CDataSource *dataSource,int &removeNonExistingFiles,CDirReader *dirReader);
-  static int DBLoopFiles(CDataSource *dataSource,int removeNonExistingFiles,CDirReader *dirReader);
+  static int DBLoopFiles(CDataSource *dataSource,int removeNonExistingFiles,CDirReader *dirReader ,int scanFlags);
   static std::vector <CT::string> tableNamesDone;
   
  ;
@@ -65,8 +67,9 @@ public:
    * @param _layerPathToScan: When matched with the datasources configured FilePath, the datasource is updated, otherwise it is ignored. 
    * This can be used to update a specific layer by defining its corresponding path. When all datasources are looped, only the datasource with matching paths are updated
    * When set to NULL, the datasource is updated always.
+   * @param scanFlags Scan flags parameters, e.g. CDBFILESCANNER_RESCAN can be set as flag.
    */
-  static int updatedb(const char *pszDBParams, CDataSource *dataSource,CT::string *tailPath,CT::string *_layerPathToScan);
+  static int updatedb(const char *pszDBParams, CDataSource *dataSource,CT::string *tailPath,CT::string *_layerPathToScan,int scanFlags);
   
 };
 

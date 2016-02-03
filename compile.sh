@@ -1,7 +1,11 @@
 #!/bin/bash
 
 #For developing, use:
-#export ADAGUCCOMPILERSETTINGS="-Wall"
+#export ADAGUCCOMPILERSETTINGS="-Wall -DMEMLEAKCHECK"
+
+#For time measurement of components use
+#export ADAGUCCOMPILERSETTINGS="-Wall -DMEMLEAKCHECK -DMEASURETIME"
+
 #For operational, use:
 #export ADAGUCCOMPILERSETTINGS="-msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2"
 

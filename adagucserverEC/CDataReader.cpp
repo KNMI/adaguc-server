@@ -1320,7 +1320,8 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
     lock.claim(cacheDirectory.c_str(),identifier.c_str(),"autoconfigure_dimensions",dataSource->srvParams->isAutoResourceEnabled());
   }
 
-  CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(),dataSource->getLayerName());
+  CT::string layerIdentifier = dataSource->getLayerName();
+  CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(),layerIdentifier.c_str());
   if(store!=NULL){
     
     try{
@@ -1476,7 +1477,7 @@ int CDataReader::autoConfigureDimensions(CDataSource *dataSource){
                 xmleDim->attr.units.copy(units.c_str()); 
                 
                 //Store the data in the db for quick access.
-                CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->storeDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(),dataSource->getLayerName(),cdfObject->variables[j]->name.c_str(),"reference_time",units.c_str());
+                CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->storeDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(),layerIdentifier.c_str(),cdfObject->variables[j]->name.c_str(),"reference_time",units.c_str());
                 //status = DB->query(query.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",query.c_str());throw(__LINE__); }
               }
             }catch(int e){

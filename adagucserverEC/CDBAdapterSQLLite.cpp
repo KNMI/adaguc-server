@@ -742,7 +742,7 @@ int  CDBAdapterSQLLite::autoUpdateAndScanDimensionTables(CDataSource *dataSource
     if(srvParams->isAutoLocalFileResourceEnabled()==true){
 
       CDBDebug("Updating database");
-      int status = CDBFileScanner::updatedb(srvParams->cfg->DataBase[0]->attr.parameters.c_str(),dataSource,NULL,NULL);
+      int status = CDBFileScanner::updatedb(srvParams->cfg->DataBase[0]->attr.parameters.c_str(),dataSource,NULL,NULL,0);
       if(status !=0){CDBError("Could not update db for: %s",cfgLayer->Name[0]->value.c_str());return 2;}
     }else{
       CDBDebug("No table found for dimension %s and autoresource is disabled",dimName.c_str());
@@ -927,6 +927,14 @@ int CDBAdapterSQLLite::storeDimensionInfoForLayerTableAndLayerName(const char *l
     throw(__LINE__); 
   }
   return 0;
+}
+
+int CDBAdapterSQLLite::removeDimensionInfoForLayerTableAndLayerName(const char *layertable,const char *layername){
+  CSQLLiteDB * dataBaseConnection = getDataBaseConnection(); if(dataBaseConnection == NULL){return -1;  }
+  CT::string query;
+  query.print("delete FROM autoconfigure_dimensions where layerid like '%s%'",layertable);
+  int status = dataBaseConnection->query(query.c_str()); 
+  return status;
 }
 
 int CDBAdapterSQLLite::dropTable(const char *tablename){

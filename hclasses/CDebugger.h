@@ -27,7 +27,7 @@
 #include <new>
 #include "CDebugger_H2.h"
 
-#define MEMLEAKCHECK
+
 
 #ifndef MEMLEAKCHECK_ASSIGNED
 #define MEMLEAKCHECK_ASSIGNED

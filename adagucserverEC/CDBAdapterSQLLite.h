@@ -105,6 +105,7 @@ private:
     
     CDBStore::Store *getDimensionInfoForLayerTableAndLayerName(const char *layertable,const char *layername);
     int              storeDimensionInfoForLayerTableAndLayerName(const char *layertable,const char *layername,const char *netcdfname,const char *ogcname,const char *units);
+    int              removeDimensionInfoForLayerTableAndLayerName(const char *layertable,const char *layername);
     
     int              dropTable(const char *tablename);
     int              createDimTableInt(const char *dimname,const char *tablename);

@@ -536,7 +536,7 @@ int CDBAdapterMongoDB::autoUpdateAndScanDimensionTables(CDataSource *dataSource)
     if(srvParams->isAutoLocalFileResourceEnabled()==true){
 
       CDBDebug("Updating database");
-      int status = CDBFileScanner::updatedb(srvParams->cfg->DataBase[0]->attr.parameters.c_str(),dataSource,NULL,NULL);
+      int status = CDBFileScanner::updatedb(srvParams->cfg->DataBase[0]->attr.parameters.c_str(),dataSource,NULL,NULL,0);
       if(status !=0){CDBError("Could not update db for: %s",cfgLayer->Name[0]->value.c_str());return 2;}
     }else{
       CDBDebug("No table found for dimension %s and autoresource is disabled",dimName.c_str());
@@ -974,6 +974,12 @@ int CDBAdapterMongoDB::storeDimensionInfoForLayerTableAndLayerName(const char *l
     throw(__LINE__); 
   }
   return 0;
+}
+
+//TODO IMPLEMENT THIS METHOD!!!
+int CDBAdapterMongoDB::removeDimensionInfoForLayerTableAndLayerName(const char *layertable,const char *layername) {
+  CDBError("CDBAdapterMongoDB::removeDimensionInfoForLayerTableAndLayerName is not YET implemented !!!!");
+  throw(-1);
 }
     
 /* Not used anymore? */

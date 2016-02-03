@@ -24,6 +24,7 @@
  ******************************************************************************/
 
 #include "CServerParams.h"
+#include "CStopWatch.h"
 const char *CServerParams::className="CServerParams";
 
 
@@ -153,7 +154,10 @@ void CServerParams::_getCacheDirectory(CT::string *_cacheFileName){
 
 
 const CT::string CServerParams::randomString(const int len) {
-  CDBDebug("generating random string");
+  #ifdef MEASURETIME
+  StopWatch_Stop(">CServerParams::randomString");
+  #endif
+
     char s[len+1];
     
     timeval curTime;
@@ -180,6 +184,10 @@ const CT::string CServerParams::randomString(const int len) {
 
     s[len] = 0;
     CT::string r=s;
+    
+    #ifdef MEASURETIME
+    StopWatch_Stop("<CServerParams::randomString");
+    #endif
     return r;
 }
 

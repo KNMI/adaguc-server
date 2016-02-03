@@ -159,6 +159,9 @@ class CDBAdapterMongoDB:public CDBAdapter{
      *  @return 	int 			Status for succeeded or not.
      */
     int              storeDimensionInfoForLayerTableAndLayerName(const char *layertable,const char *layername,const char *netcdfname,const char *ogcname,const char *units);
+   
+    //TODO IMPLEMENT THIS METHOD!!!
+    int              removeDimensionInfoForLayerTableAndLayerName(const char *layertable,const char *layername);
     
     int              dropTable(const char *tablename);
     int              createDimTableInt(const char *dimname,const char *tablename);
