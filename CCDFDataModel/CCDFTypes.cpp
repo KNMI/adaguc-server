@@ -28,6 +28,7 @@
 //#include "CDebugger.h"
 //#ifdef MEMLEAKCHECK
 //extern Tracer NewTrace;
+//#define MEMLEAKCHECK
 //#endif
 
 //DEF_ERRORMAIN()
@@ -43,7 +44,7 @@ int CDF::getTypeSize(CDFType type){
 }
 
 int CDF::freeData(void **p){
-  #ifdef MEMLEAKCHECK
+  #ifdef CCDFTYPES_MEMLEAKCHECK
   if (Tracer::Ready)
     NewTrace.Remove (*p);
   #endif
@@ -64,7 +65,7 @@ int CDF::allocateData(CDFType type,void **p,size_t length){
     return 1;
   }
   *p = malloc(length*typeSize);
-  #ifdef MEMLEAKCHECK
+  #ifdef CCDFTYPES_MEMLEAKCHECK
   if (Tracer::Ready)NewTrace.Add (*p, __FILE__, __LINE__);
   #endif
 

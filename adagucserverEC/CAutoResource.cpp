@@ -194,7 +194,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
     //Open the opendap resource
     //CDBDebug("Opening opendap %s",srvParam->internalAutoResourceLocation.c_str());
     #ifdef MEASURETIME
-    StopWatch_Stop("Opening file");
+    StopWatch_Stop("Opening data file [%s]",srvParam->internalAutoResourceLocation.c_str());
     #endif
     //CDBDebug("Opening %s",srvParam->internalAutoResourceLocation.c_str());
     CDFObject * cdfObject =  NULL;
