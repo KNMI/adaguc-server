@@ -385,21 +385,30 @@ int COpenDAPHandler::HandleOpenDAPRequest(const char *path,const char *query,CSe
   #ifdef COPENDAPHANDLER_DEBUG
   CDBDebug("Layername = %s",layerName.c_str());
   CDBDebug("pathQuery = %s",pathQuery.c_str());
+  CDBDebug("autoResourceVariable = %s",srvParam->autoResourceVariable.c_str());
+  
   #endif
   CDataSource *dataSource = new CDataSource ();
   bool foundLayer = false;
   
   for(size_t layerNo=0;layerNo<srvParam->cfg->Layer.size();layerNo++){
-    CT::string intLayerName;
-    srvParam->makeUniqueLayerName(&intLayerName,srvParam->cfg->Layer[layerNo]);
-    if(intLayerName.equals(layerName.c_str())){
-      if(dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[layerNo],intLayerName.c_str(),0)!=0){
-        CDBError("Error setCFGLayer");
-        delete dataSource;
-        return 1;
+    if(srvParam->cfg->Layer[layerNo]->attr.type.equals("database")){
+      CT::string intLayerName;
+      
+      srvParam->makeUniqueLayerName(&intLayerName,srvParam->cfg->Layer[layerNo]);
+      if(layerName.length()==0){
+        layerName=intLayerName;
       }
-      foundLayer = true;
-      break;
+      CDBDebug("%s",intLayerName.c_str());
+      if(intLayerName.equals(layerName.c_str())){
+        if(dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[layerNo],intLayerName.c_str(),0)!=0){
+          CDBError("Error setCFGLayer");
+          delete dataSource;
+          return 1;
+        }
+        foundLayer = true;
+        break;
+      }
     }
   }
   
