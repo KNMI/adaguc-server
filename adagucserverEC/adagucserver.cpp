@@ -167,6 +167,7 @@ int main(int argc, const char *argv[]){
       CDBDebug("***** Starting DB update *****\n");
       CRequest request;
       int configSet = 0;
+      int scanFlags = 0;
       CT::string tailPath,layerPathToScan;
       for(int j=0;j<argc;j++){
         if(strncmp(argv[j],"--config",8)==0&&argc>j+1){
@@ -183,6 +184,10 @@ int main(int argc, const char *argv[]){
           //printf("Setting path to \"%s\"\n",argv[j+1]);
           layerPathToScan.copy(argv[j+1]);
         }
+        if(strncmp(argv[j],"--rescan",8)==0){
+          CDBDebug("RESCAN: Forcing rescan of dataset");
+          scanFlags|=CDBFILESCANNER_RESCAN;
+        }
       }
       if(configSet == 0){
         CDBError("Error: Configuration file is not set: use '--updatedb --config configfile.xml'" );
@@ -196,7 +201,7 @@ int main(int argc, const char *argv[]){
         return 1;
       }
       //printf("\n");
-      status = request.updatedb(&tailPath,&layerPathToScan);
+      status = request.updatedb(&tailPath,&layerPathToScan,scanFlags);
       if(status != 0){
         CDBError("Error occured in updating the database");
       }
@@ -267,7 +272,7 @@ int main(int argc, const char *argv[]){
   //Display errors if any
   readyerror();
 #ifdef MEASURETIME
-   StopWatch_Stop("Took");
+   StopWatch_Stop("Ready!!!");
 #endif
    
 

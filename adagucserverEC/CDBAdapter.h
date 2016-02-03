@@ -60,6 +60,7 @@ public:
   /*Dimension Info*/
   virtual CDBStore::Store *getDimensionInfoForLayerTableAndLayerName  (const char *layertable,const char *layername) = 0;
   virtual int              storeDimensionInfoForLayerTableAndLayerName(const char *layertable,const char *layername,const char *netcdfname,const char *ogcname,const char *units) = 0;
+  virtual int              removeDimensionInfoForLayerTableAndLayerName(const char *layertable,const char *layername) = 0;
   
   virtual CDBStore::Store *getFilesAndIndicesForDimensions(CDataSource *dataSource,int limit) = 0;
   virtual CDBStore::Store *getFilesForIndices(CDataSource *dataSource,size_t *start,size_t *count,ptrdiff_t *stride,int limit) = 0;

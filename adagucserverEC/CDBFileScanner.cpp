@@ -123,7 +123,7 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource,int &removeNonE
     //Check whether we already did this table in this scan
     bool skip = isTableAlreadyScanned(&tableName);
     if(skip==false){
-      CDBDebug("Updating dimension '%s' with table '%s'",dimName.c_str(),tableName.c_str());
+      CDBDebug("CreateDBUpdateTables: Updating dimension '%s' with table '%s'",dimName.c_str(),tableName.c_str());
       
       //Create column names
       
@@ -244,7 +244,7 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource,int &removeNonE
   return 0;
 }
 
-int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFiles,CDirReader *dirReader){
+int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFiles,CDirReader *dirReader,int scanFlags){
 //  CDBDebug("DBLoopFiles");
   CT::string query;
   CDFObject *cdfObject = NULL;
@@ -332,7 +332,12 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
       
       
       CT::string fileDate = CDirReader::getFileDate(dirReader->fileList[j]->fullName.c_str());
+      CT::string fileDateToCompareWith = fileDate;
 
+      if(scanFlags&CDBFILESCANNER_RESCAN){
+        fileDateToCompareWith = "";
+        CDBDebug("FileDate is ignored");
+      }
       
       CT::string dimensionTextList="none";
       if(dataSource->cfgLayer->Dimension.size()>0){
@@ -351,17 +356,33 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
 
           
           //Delete files with non-matching creation date 
-          dbAdapter->removeFilesWithChangedCreationDate(tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),fileDate.c_str());
+          dbAdapter->removeFilesWithChangedCreationDate(tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),fileDateToCompareWith.c_str());
           
           //Check if file is already there
           status = dbAdapter->checkIfFileIsInTable(tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str());
           if(status == 0){
+            //The file is there!
             fileExistsInDB = 1;
+          }else{
+            //The file is not there. If isAutoResourceEnabled and there is no file, force cleaning of autoConfigureDimensions table.
+            
+            if(dirReader->fileList.size() == 1){
+              CDBDebug("Removing autoConfigureDimensions [%s_%s]",tableNames[d].c_str(),dataSource->getLayerName());
+              CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->removeDimensionInfoForLayerTableAndLayerName(tableNames[d].c_str(),dataSource->getLayerName());
+              
+              CDBDebug("Creating autoConfigureDimensions");
+              status = createDBUpdateTables(dataSource,removeNonExistingFiles,dirReader);
+              if(status > 0 ){
+                throw(__LINE__);
+              }
+            }
+              
           }
           
          if(removeNonExistingFiles == 0){
 
           if(fileExistsInDB == 1){
+            //We dont remove non existing files and this files seems to be OK.
               CDBDebug("Done:   %d/%d %s\t %s",
               (int)j,
               (int)dirReader->fileList.size(),
@@ -603,6 +624,8 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
               //TODO CHECK cdfObject=CDFObjectStore::getCDFObjectStore()->deleteCDFObject(&cdfObject);
             }
           }
+        }else{
+          CDBDebug("Assuming [%s] done",dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
         }
         
         
@@ -675,7 +698,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
 
 
 
-int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT::string *_tailPath,CT::string *_layerPathToScan){
+int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT::string *_tailPath,CT::string *_layerPathToScan,int scanFlags){
  
   if(dataSource->dLayerType!=CConfigReaderLayerTypeDataBase)return 0;
  
@@ -737,10 +760,6 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
   
 
   try{ 
-    
-//     status = DB->query("SET client_min_messages TO WARNING");
-//     if(status != 0 )throw(__LINE__);
-    
     //First check and create all tables... returns zero on success, positive on error, negative on already done.
     status = createDBUpdateTables(dataSource,removeNonExistingFiles,&dirReader);
     if(status > 0 ){
@@ -749,17 +768,11 @@ int CDBFileScanner::updatedb(const char *pszDBParams, CDataSource *dataSource,CT
     }
     
     if(status == 0){
-            
-  
-      
       
       //Loop Through all files
-      status = DBLoopFiles(dataSource,removeNonExistingFiles,&dirReader);
+      status = DBLoopFiles(dataSource,removeNonExistingFiles,&dirReader,scanFlags);
       if(status != 0 )throw(__LINE__);
-              
-
     }
-    
   }
   catch(int linenr){
     CDBError("Exception in updatedb at line %d",linenr);

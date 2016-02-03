@@ -37,14 +37,14 @@ void line2(float *imagedata,int w,int h,float x1,float y1,float x2, float y2,flo
   float dx = x2 - x1;
   float dy = y2 - y1;
   if(fabs(dx) < fabs(dy)){
-    swap(x1, y1);
-    swap(x2, y2);
-    swap(dx, dy);
+    std::swap(x1, y1);
+    std::swap(x2, y2);
+    std::swap(dx, dy);
     xyIsSwapped=1;
   }
   if(x2 < x1){
-    swap(x1, x2);
-    swap(y1, y2);
+    std::swap(x1, x2);
+    std::swap(y1, y2);
   }
   float gradient = dy / dx;
   float y=y1;

@@ -3,7 +3,7 @@ INCLUDEDIR=-I../hclasses  -I/usr/include/libxml2/ -I/usr/include/hdf5/serial/ -I
 #CCOMPILER=g++ -Wall $(INCLUDEDIR) 
 
 ifndef ADAGUCCOMPILERSETTINGS
-  ADAGUCCOMPILERSETTINGS=-Wall
+  ADAGUCCOMPILERSETTINGS=-Wall -DMEMLEAKCHECK
 # ADAGUCCOMPILERSETTINGS=-march=pentium4 -mtune=pentium4 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 
 # ADAGUCCOMPILERSETTINGS=-march=core2 -mtune=core2 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2
 # ADAGUCCOMPILERSETTINGS=-O2

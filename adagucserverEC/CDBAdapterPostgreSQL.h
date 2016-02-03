@@ -30,14 +30,8 @@
 class CDBAdapterPostgreSQL:public CDBAdapter{
   private:
     DEF_ERRORFUNCTION();
-     CPGSQLDB *dataBaseConnection;
-     CPGSQLDB *getDataBaseConnection(){
-      if(dataBaseConnection == NULL){
-        dataBaseConnection = new CPGSQLDB();
-        int status = dataBaseConnection->connect(configurationObject->DataBase[0]->attr.parameters.c_str());if(status!=0){CDBError("Unable to connect to DB");return NULL;}
-      }
-      return dataBaseConnection;
-    }
+    CPGSQLDB *dataBaseConnection;
+    CPGSQLDB *getDataBaseConnection();
     CServerConfig::XMLE_Configuration *configurationObject;
     std::map <std::string ,std::string> lookupTableNameCacheMap;
     std::map <std::string ,std::vector<std::string> > fileListPerTable;
@@ -61,7 +55,8 @@ class CDBAdapterPostgreSQL:public CDBAdapter{
     
     CDBStore::Store *getDimensionInfoForLayerTableAndLayerName(const char *layertable,const char *layername);
     int              storeDimensionInfoForLayerTableAndLayerName(const char *layertable,const char *layername,const char *netcdfname,const char *ogcname,const char *units);
-    
+    int              removeDimensionInfoForLayerTableAndLayerName(const char *layertable,const char *layername);
+     
     int              dropTable(const char *tablename);
     int              createDimTableInt(const char *dimname,const char *tablename);
     int              createDimTableReal(const char *dimname,const char *tablename);

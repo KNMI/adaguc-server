@@ -2711,7 +2711,7 @@ int CRequest::process_querystring(){
 }
 
 
-int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan){
+int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan, int scanFlags){
   int errorHasOccured = 0;
   int status;
   //Fill in all data sources from the configuration object
@@ -2729,7 +2729,7 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan){
 
   for(size_t j=0;j<numberOfLayers;j++){
     if(dataSources[j]->dLayerType==CConfigReaderLayerTypeDataBase){
-        status = CDBFileScanner::updatedb(srvParam->cfg->DataBase[0]->attr.parameters.c_str(),dataSources[j],tailPath,layerPathToScan);
+        status = CDBFileScanner::updatedb(srvParam->cfg->DataBase[0]->attr.parameters.c_str(),dataSources[j],tailPath,layerPathToScan,scanFlags);
         if(status !=0){CDBError("Could not update db for: %s",dataSources[j]->cfgLayer->Name[0]->value.c_str());errorHasOccured++;}
     }
   }

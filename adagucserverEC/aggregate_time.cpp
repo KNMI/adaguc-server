@@ -1,3 +1,5 @@
+#include <vector>
+#include <iterator>
 #include <algorithm>
 #include <stdio.h>
 #include <netcdf.h>
@@ -85,7 +87,7 @@ int main( int argc, const char* argv[]){
 
   // Create a vector which holds information for all the inputfiles.
   std::vector<NCFileObject *> fileObjects;
-  vector<NCFileObject *>::iterator fileObjectsIt;
+  std::vector<NCFileObject *>::iterator fileObjectsIt;
   
   /* Loop through all files and gather information */
   try{
