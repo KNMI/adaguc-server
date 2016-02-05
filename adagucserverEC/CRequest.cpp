@@ -1035,7 +1035,9 @@ int CRequest::setDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
     for(size_t k=0;k<store->getSize();k++){
       CDBStore::Record *record = store->getRecord(k);
       dataSource->addStep(record->get(0)->c_str(),NULL);
+                #ifdef CREQUEST_DEBUG
       CDBDebug("Step %d: [%s]",k,record->get(0)->c_str());
+#endif
       //For each timesteps a new set of dimensions is added with corresponding dim array indices.
       for(size_t i=0;i<dataSource->requiredDims.size();i++){
        
@@ -1049,7 +1051,9 @@ int CRequest::setDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
 //            value.concat("Z");
 //         }
         dataSource->getCDFDims()->addDimension(dataSource->requiredDims[i]->netCDFDimName.c_str(),value.c_str(),atoi(record->get(2+i*2)->c_str()));
+          #ifdef CREQUEST_DEBUG
         CDBDebug("  [%s][%d] = [%s]",dataSource->requiredDims[i]->netCDFDimName.c_str(),atoi(record->get(2+i*2)->c_str()),value.c_str());
+#endif
         dataSource->requiredDims[i]->addValue(value.c_str());
         //dataSource->requiredDims[i]->allValues.push_back(sDims[l].c_str());
       }
