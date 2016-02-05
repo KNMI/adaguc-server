@@ -9,26 +9,6 @@ const char * CMakeJSONTimeSeries::className = "CMakeJSONTimeSeries";
 
 #define CMakeJSONTimeSeries_MAX_DIMS 255
 
-template <class T> class MyUnorderedSet{
-public:
-  std::vector<T> array;
-  T insert(T i){
-    for(size_t j=0;j<array.size();j++){
-      if(array[j] == i){
-        return j;
-      }
-    }
-    array.push_back(i);
-    return -1;
-  }
-  size_t size(){
-    return array.size();
-  }
-  T get(size_t i){
-    return array[i];
-  }
-};
-
 class UniqueRequests{
 private:
      DEF_ERRORFUNCTION();
@@ -183,7 +163,7 @@ public:
 
   AggregatedDimension *dimensions[CMakeJSONTimeSeries_MAX_DIMS];
 
-  void nestRequest(it_type_diminfo diminfomapiterator,FileInfo*fileInfo,CT::string p,int depth){
+  void nestRequest(it_type_diminfo diminfomapiterator,FileInfo*fileInfo,int depth){
     if(diminfomapiterator != fileInfo->dimInfoMap .end()){
       it_type_diminfo currentIt =  diminfomapiterator;
       int currentDepth = depth;
@@ -193,8 +173,7 @@ public:
         AggregatedDimension * aggregatedValue = (currentIt->second)->aggregatedValues[j];
         aggregatedValue->name=(currentIt->first).c_str();
         dimensions[currentDepth]=aggregatedValue;
-        CT::string newp;newp.print("%s-->%s[%d:%d]",p.c_str(),(currentIt->first).c_str(),aggregatedValue->start,aggregatedValue->values.size());
-        nestRequest(diminfomapiterator,fileInfo,newp,depth);
+        nestRequest(diminfomapiterator,fileInfo,depth);
       }
       return;
     }else{
@@ -278,16 +257,16 @@ public:
     
     //Generate UniqueRequests
     for(it_type_file filemapiterator = fileInfoMap.begin(); filemapiterator != fileInfoMap.end(); filemapiterator++) {
-      nestRequest((filemapiterator->second)->dimInfoMap .begin(),filemapiterator->second,"",0);
+      nestRequest((filemapiterator->second)->dimInfoMap .begin(),filemapiterator->second,0);
     }
     
     
   }
 
   
-  void doIt(CDataSource::DataObject *dataObject,CDF::Variable *variable,size_t *start,size_t *count,int d,Request *request,CT::string p,int index){
+  void expandData(CDataSource::DataObject *dataObject,CDF::Variable *variable,size_t *start,size_t *count,int d,Request *request,int index){
     
-    if(d<variable->dimensionlinks.size()-2){
+    if(d<int(variable->dimensionlinks.size())-2){
       CDF::Dimension *dim = variable->dimensionlinks[d];
       
       int requestDimIndex=-1;
@@ -299,16 +278,10 @@ public:
       for(size_t j=d+1;j<variable->dimensionlinks.size()-2;j++){
         multiplier*=count[j];
       }
-      //CDBDebug("MULTI = %d",multiplier);
       for(size_t j=0;j<request->dimensions[requestDimIndex]->values.size();j++){
-        //CDBDebug("%s",request->dimensions[requestDimIndex]->values[j].c_str());
-        CT::string newp=p;
         dimensionKeys[d] = &request->dimensions[requestDimIndex]->values[j];
-        newp.print("%s{%s}",p.c_str(),request->dimensions[requestDimIndex]->values[j].c_str());
-        doIt(dataObject,variable,start,count,d+1,request,newp,j*multiplier+index);
+        expandData(dataObject,variable,start,count,d+1,request,j*multiplier+index);
       }
-      
-      
     }else{
       double pixel=CImageDataWriter::convertValue(variable->getType(),variable->data,index);
       CT::string dataAsString="nodata";
@@ -332,18 +305,6 @@ public:
       result->numDims= variable->dimensionlinks.size()-2;
       results.push_back(result);
     }
-  }
-  
-  void expandData(CDataSource::DataObject *dataObject,CDF::Variable *variable,size_t *start,size_t *count,Request *request){
-    size_t size = variable->getSize();
-  
-    doIt(dataObject,variable,start,count,0,request,"",0);
-//     for(int i=0;i<request->numDims;i++){
-//         int netcdfDimIndex = variable->getDimensionIndex(request->dimensions[i]->name.c_str());
-//         start[netcdfDimIndex]=request->dimensions[i]->start;
-//         count[netcdfDimIndex]=request->dimensions[i]->values.size();
-//         CDBDebug("  %d %s %d %d",i,request->dimensions[i]->name.c_str(),request->dimensions[i]->start,request->dimensions[i]->values.size());
-//       }
   }
   
   void recurDataStructure(CXMLParser::XMLElement *dataStructure,Result *result,int depth,int *dimOrdering){
@@ -434,13 +395,9 @@ public:
     point.add(CXMLParser::XMLElement("coords", coord.c_str()));
     layerStructure->add(point);
   
-    for(int i=0;i<dataSource->requiredDims.size();i++){
-      CCDFDims *dims = dataSource->getCDFDims();
-      //layerStructure->add(CXMLParser::XMLElement("dims2",dims->getDimensionName(dimOrdering[i])));
+    for(size_t i=0;i<dataSource->requiredDims.size();i++){
       COGCDims *ogcDim=dataSource->requiredDims[dimOrdering[i]];
       layerStructure->add(CXMLParser::XMLElement("dims",ogcDim->name.c_str()));
-   
-      //layerStructure->add(CXMLParser::XMLElement("ncdims",ogcDim->netCDFDimName.c_str()));
     }
   
     CXMLParser::XMLElement *dataStructure= NULL;
@@ -454,24 +411,14 @@ public:
     std::sort(results.begin(), results.end(), less_than_key());
     CDBDebug("Found %d elements",results.size());
     for(size_t j=0;j<results.size();j++){
-      CT::string key="";
-      
       recurDataStructure(dataStructure,results[j],0,dimOrdering);
-      
-      for(size_t d=0;d<results[j]->numDims;d++){
-        key.printconcat("{%s}",results[j]->dimensionKeys[d]->c_str());
-        
-        
-        
-      }
-      //CDBDebug("Found %s=%s",key.c_str(),results[j]->value.c_str());
     }
   }
   
   void makeRequests(CDrawImage *drawImage,CImageWarper *imageWarper,CDataSource *dataSource,int dX,int dY,CXMLParser::XMLElement *gfiStructure){
     CDataReader reader;
     int numberOfDims = dataSource->requiredDims.size();
-    size_t start[numberOfDims+2],count[numberOfDims+2];ptrdiff_t stride[numberOfDims+2];int rank[numberOfDims+2];
+    size_t start[numberOfDims+2],count[numberOfDims+2];ptrdiff_t stride[numberOfDims+2];
     
     reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
     
@@ -572,7 +519,7 @@ public:
               CDBDebug("Read %d elements",variable->getSize());
               
               try{
-                expandData(dataObject,variable,start,count,request);
+                expandData(dataObject,variable,start,count,0,request,0);
               }catch(int e){
                 CDBError("Error in expandData at line %d",e);
                 throw(__LINE__);

@@ -131,6 +131,11 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
 
 #ifdef CCDFDATAMODEL_DEBUG          
   CDBDebug("reading variable %s",name.c_str());
+  if(_start == NULL){
+    CDBDebug("_start not defined for reading variable %s",name.c_str());
+  }else{
+    CDBDebug("_start = %d",_start[0]);
+  }
 #endif  
  
  if(data!=NULL&&type!=this->currentType){
@@ -193,7 +198,7 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
     }
     //Now make the iterative dim of length zero
     size_t iterDimStart=start[iterativeDimIndex];
-    size_t iterDimCount=count[iterativeDimIndex];
+    //size_t iterDimCount=count[iterativeDimIndex];
 #ifdef CCDFDATAMODEL_DEBUG        
     for(size_t i=0;i<dimensionlinks.size();i++){
       CDBDebug("%d\t%d",start[i],count[i]);
@@ -202,16 +207,19 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
    
    
     size_t dataReadOffset=0;
-    for(size_t j=iterDimStart;j<iterDimCount+iterDimStart;j++){
+    //for(size_t j=iterDimStart;j<iterDimCount+iterDimStart;j++)
+      int j=iterDimStart;
+    {
       
       try{
         
         //Get the right CDF reader for this dimension set
         start[iterativeDimIndex]=j;count[iterativeDimIndex]=1;
-        CDFObject *tCDFObject= (CDFObject *)getCDFObjectPointer(start,count);
+        CDFObjectClass *tCDFObjectClass= (CDFObjectClass *)getCDFObjectClassPointer(start,count);
+        CDFObject *tCDFObject=(CDFObject*)tCDFObjectClass->cdfObjectPointer;
         if(tCDFObject==NULL){CDBError("Unable to read variable %s because tCDFObject==NULL",name.c_str());throw(CDF_E_ERROR);}
         //Get the variable from this reader
-       
+        //CDBDebug("cdfObject->dimIndex %d",tCDFObject->dimIndex);
         //
         
         for(size_t d=0;d<dimensionlinks.size();d++){
@@ -225,6 +233,7 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
             stride[d]=1;
           }      
         }
+        start[iterativeDimIndex]=tCDFObjectClass->dimIndex;
         count[iterativeDimIndex]=1;
         //Read the data!
         
@@ -408,12 +417,14 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
     
     int foundDimValue = -1;
     size_t dimSize = iterativeDim->getSize();
+    
+    //CDBDebug("dimSize = %d",dimSize);
     for(size_t _j=0;_j<dimSize;_j++){
       size_t j=_j;//(dimSize-1)-_j;
       
       CT::string dstDimUnits = iterativeVar->getAttribute("units")->toString();
         #ifdef CCDFDATAMODEL_DEBUG    
-       CDBDebug("dest units are %d/%s",j,dstDimUnits.c_str());
+     //  CDBDebug("dest units are %d/%s",j,dstDimUnits.c_str());
 #endif
       if(ccdftimedst.init(dstDimUnits.c_str())!=0){
         CDBError("Unable to initialize time library with %s",dstDimUnits.c_str());
@@ -421,7 +432,7 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
       }
       CT::string dstDimValue = ccdftimedst.dateToString(ccdftimedst.getDate(iterativeVar->getDataAt<double>(j)));
       #ifdef CCDFDATAMODEL_DEBUG    
-      CDBDebug("dstDimValue = %s" ,dstDimValue.c_str());
+     // CDBDebug("dstDimValue = %s" ,dstDimValue.c_str());
 #endif
       if(dstDimValue.equals(srcDimValue)){
       #ifdef CCDFDATAMODEL_DEBUG    
@@ -442,7 +453,9 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
       if(cdfObjectList[j]->dimValue.equals(srcDimValue)){foundCDFObject=j;break;}
     }
     if(foundCDFObject!=-1){
+      #ifdef CCDFDATAMODEL_DEBUG    
       CDBDebug("Found existing cdfObject %d",foundCDFObject);
+#endif
     }else{
         #ifdef CCDFDATAMODEL_DEBUG    
       CDBDebug("cdfObjectList.push_back(new CDFObjectClass()) for variable %s size= %d",name.c_str(),cdfObjectList.size());
