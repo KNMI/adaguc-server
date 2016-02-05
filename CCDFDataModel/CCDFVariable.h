@@ -46,14 +46,14 @@ namespace CDF{
       void *data;
       bool isDimension;
       
-    private:
+  
       //Currently, aggregation along just 1 dimension is supported.
       class CDFObjectClass{
       public:
         void *cdfObjectPointer;
         int dimIndex;
         CT::string dimValue;
-      };
+      };  private:
     std::vector<CDFObjectClass *> cdfObjectList;
     void *cdfReaderPointer;
     void *parentCDFObject;
@@ -102,7 +102,7 @@ namespace CDF{
         }
         return parentCDFObject;
       }
-      void *getCDFObjectPointer(size_t *start,size_t *count){
+      void *getCDFObjectClassPointer(size_t *start,size_t *count){
         if(cdfObjectList.size()==0){
 #ifdef CCDFDATAMODEL_DEBUG
           CDBDebug("returning getParentCDFObject because cdfObjectList");
@@ -131,7 +131,7 @@ namespace CDF{
         if(iterativeDimIndex>=cdfObjectList.size()){
           CDBError("Wrong index %d, list size is %d",iterativeDimIndex,cdfObjectList.size());
         }
-        return cdfObjectList[iterativeDimIndex]->cdfObjectPointer;
+        return cdfObjectList[iterativeDimIndex];//->cdfObjectPointer;
       }
 
       void setCDFObjectDim(Variable *sourceVar,const char *dimName);

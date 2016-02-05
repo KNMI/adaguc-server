@@ -221,7 +221,7 @@ int CDFCache::readVariableData(CDF::Variable *var, CDFType type,size_t *start,si
   
   bool hasFileName = false;
   const char *fileName = NULL;
-  CDFObject * cdfObject = (CDFObject*)var->getCDFObjectPointer(start,count);
+  CDFObject * cdfObject = (CDFObject*)(((CDF::Variable::CDFObjectClass *)var-> getCDFObjectClassPointer(start,count))->cdfObjectPointer);
   
   if(cdfObject != NULL){
     CDFReader * cdfReader = (CDFReader*)cdfObject->getCDFReader();
