@@ -332,6 +332,10 @@ size_t CDataSource::getDimensionIndex(int i){
   return timeSteps[currentAnimationStep]->dims.getDimensionIndex(i);
 }
 
+CT::string CDataSource::getDimensionValue(int i){
+  return timeSteps[currentAnimationStep]->dims.getDimensionValue(i);
+}
+
 int CDataSource::getNumTimeSteps(){
   return (int)timeSteps.size();
 }

@@ -1767,6 +1767,7 @@ CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *cdfObject,CD
   if(standardName.equals("forecast_reference_time"))return dtype_reference_time;
   if(standardName.equals("member"))return dtype_member;
   if(standardName.equals("elevation"))return dtype_elevation;
+  if(standardName.equals("pressurelevel_0"))return dtype_elevation;
   if(standardName.equals("height"))return dtype_elevation;
   
   //If no standard_name matches, try to determine dimension type on _CoordinateAxisType attribute, CDM standard

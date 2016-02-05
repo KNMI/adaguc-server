@@ -435,6 +435,9 @@ private:
               for(size_t i=0;i<variable->attributes.size();i++){
                 if(!variable->attributes[i]->name.equals("CLASS")&&!variable->attributes[i]->name.equals("_Netcdf4Dimid")){
                   nc_type type=NCtypeConversion(variable->attributes[i]->getType());
+                  if(variable->attributes[i]->name.equals("_FillValue")){
+                    type=variable->getType();
+                  }
                   status = nc_put_att(root_id, nc_var_id, variable->attributes[i]->name.c_str(),
                                       type,variable->attributes[i]->length,
                                       variable->attributes[i]->data);
