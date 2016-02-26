@@ -218,6 +218,7 @@ namespace CDF{
           for(size_t j=0;j<getSize();j++){
             //CDBDebug("%s\n",((const char**)data)[j]);
             free(((char**)data)[j]);
+            ((char**)data)[j]=NULL;
           }
         }
         if(data!=NULL){CDF::freeData(&data);data=NULL;}

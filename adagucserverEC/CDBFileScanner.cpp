@@ -972,7 +972,8 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
       double nrTilesX = tilesetWidth/tileBBOXWidth, nrTilesY = tilesetHeight/tileBBOXHeight;
       CDBDebug("nrTilesX,nrTilesY: [%f,%f]",nrTilesX,nrTilesY);
       int isClosed = true;
-      for(int level = 2;level<9;level++){
+      int maxlevel            = dataSource->cfgLayer->TileSettings[0]->attr.maxlevel.toInt();
+      for(int level = 2;level<maxlevel+1;level++){
         int numFound = 0;
         int numCreated=0;
         CDBDebug("Tiling level %d",level);

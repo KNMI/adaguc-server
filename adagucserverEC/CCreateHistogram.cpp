@@ -141,10 +141,9 @@ int CCreateHistogram::addData(std::vector <CDataSource*> &dataSources){
       reader.close();
       CDBDebug("Addata finished, data warped");
       
-      if(dataSource->statistics==NULL){
-        dataSource->statistics = new CDataSource::Statistics();
-        dataSource->statistics->calculate(dataSource);
-      }
+
+      CDataSource::Statistics statistics;
+      statistics.calculate(dataSource->srvParams->Geo->dWidth*dataSource->srvParams->Geo->dHeight,(float*)warpedData,CDF_FLOAT,dataSource->getDataObject(0)->dfNodataValue,dataSource->getDataObject(0)->hasNodataValue);
       
       int maxNumBins = 20;
       
@@ -154,8 +153,8 @@ int CCreateHistogram::addData(std::vector <CDataSource*> &dataSources){
       
 
       
-      float min=(float)dataSource->statistics->getMinimum();
-      float max=(float)dataSource->statistics->getMaximum();
+      float min=(float)statistics.getMinimum();
+      float max=(float)statistics.getMaximum();
       
       //Round min and max
       
@@ -204,8 +203,8 @@ int CCreateHistogram::addData(std::vector <CDataSource*> &dataSources){
       JSONdata.printconcat("\"layername\":\"%s\",",dataSource->layerName.c_str());
       
       //Min/Max
-      JSONdata.printconcat("\"min\":%f,",dataSource->statistics->getMinimum());
-      JSONdata.printconcat("\"max\":%f,",dataSource->statistics->getMaximum());
+      JSONdata.printconcat("\"min\":%f,",statistics.getMinimum());
+      JSONdata.printconcat("\"max\":%f,",statistics.getMaximum());
       
       
       

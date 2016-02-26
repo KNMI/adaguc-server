@@ -839,7 +839,7 @@ int CDBAdapterPostgreSQL::createDimTableOfType(const char *dimname,const char *t
   
   // New since 2016-02-15 projection information and level
    tableColumns.printconcat(", level int");
-   tableColumns.printconcat(", crs varchar (128)");
+   //tableColumns.printconcat(", crs varchar (511)");
    tableColumns.printconcat(", minx real, miny real, maxx real, maxy real");
    tableColumns.printconcat(", startx int, starty int, countx int, county int");
    
@@ -924,8 +924,8 @@ int CDBAdapterPostgreSQL::removeFilesWithChangedCreationDate(const char *tablena
 
 int CDBAdapterPostgreSQL::setFileInt(const char *tablename,const char *file,int dimvalue,int dimindex,const char*filedate, GeoOptions *geoOptions){
   CT::string values;
-  values.print("('%s',%d,'%d','%s','%d','%s','%f','%f','%f','%f','%d','%d','%d','%d')",file,dimvalue,dimindex,filedate,
-               geoOptions->level,geoOptions->crs.c_str(),geoOptions->bbox[0],geoOptions->bbox[1],geoOptions->bbox[2],geoOptions->bbox[3],
+  values.print("('%s',%d,'%d','%s','%d','%f','%f','%f','%f','%d','%d','%d','%d')",file,dimvalue,dimindex,filedate,
+               geoOptions->level,geoOptions->bbox[0],geoOptions->bbox[1],geoOptions->bbox[2],geoOptions->bbox[3],
                geoOptions->indices[0],geoOptions->indices[1],geoOptions->indices[2],geoOptions->indices[3]);
   #ifdef CDBAdapterPostgreSQL_DEBUG
   CDBDebug("Adding INT %s",values.c_str());
@@ -935,8 +935,8 @@ int CDBAdapterPostgreSQL::setFileInt(const char *tablename,const char *file,int 
 }
 int CDBAdapterPostgreSQL::setFileReal(const char *tablename,const char *file,double dimvalue,int dimindex,const char*filedate, GeoOptions *geoOptions){
   CT::string values;
-  values.print("('%s',%f,'%d','%s','%d','%s','%f','%f','%f','%f','%d','%d','%d','%d')",file,dimvalue,dimindex,filedate,
-               geoOptions->level,geoOptions->crs.c_str(),geoOptions->bbox[0],geoOptions->bbox[1],geoOptions->bbox[2],geoOptions->bbox[3],
+  values.print("('%s',%f,'%d','%s','%d','%f','%f','%f','%f','%d','%d','%d','%d')",file,dimvalue,dimindex,filedate,
+               geoOptions->level,geoOptions->bbox[0],geoOptions->bbox[1],geoOptions->bbox[2],geoOptions->bbox[3],
                geoOptions->indices[0],geoOptions->indices[1],geoOptions->indices[2],geoOptions->indices[3]);
   #ifdef CDBAdapterPostgreSQL_DEBUG
   CDBDebug("Adding REAL %s",values.c_str());
@@ -946,8 +946,8 @@ int CDBAdapterPostgreSQL::setFileReal(const char *tablename,const char *file,dou
 }
 int CDBAdapterPostgreSQL::setFileString(const char *tablename,const char *file,const char * dimvalue,int dimindex,const char*filedate, GeoOptions *geoOptions){
   CT::string values;
-  values.print("('%s','%s','%d','%s','%d','%s','%f','%f','%f','%f','%d','%d','%d','%d')",file,dimvalue,dimindex,filedate,
-               geoOptions->level,geoOptions->crs.c_str(),geoOptions->bbox[0],geoOptions->bbox[1],geoOptions->bbox[2],geoOptions->bbox[3],
+  values.print("('%s','%s','%d','%s','%d','%f','%f','%f','%f','%d','%d','%d','%d')",file,dimvalue,dimindex,filedate,
+               geoOptions->level,geoOptions->bbox[0],geoOptions->bbox[1],geoOptions->bbox[2],geoOptions->bbox[3],
                geoOptions->indices[0],geoOptions->indices[1],geoOptions->indices[2],geoOptions->indices[3]);
   #ifdef CDBAdapterPostgreSQL_DEBUG
   CDBDebug("Adding STRING %s",values.c_str());
@@ -957,8 +957,8 @@ int CDBAdapterPostgreSQL::setFileString(const char *tablename,const char *file,c
 }
 int CDBAdapterPostgreSQL::setFileTimeStamp(const char *tablename,const char *file,const char *dimvalue,int dimindex,const char*filedate, GeoOptions *geoOptions){
   CT::string values;
-  values.print("('%s','%s','%d','%s','%d','%s','%f','%f','%f','%f','%d','%d','%d','%d')",file,dimvalue,dimindex,filedate,
-               geoOptions->level,geoOptions->crs.c_str(),geoOptions->bbox[0],geoOptions->bbox[1],geoOptions->bbox[2],geoOptions->bbox[3],
+  values.print("('%s','%s','%d','%s','%d','%f','%f','%f','%f','%d','%d','%d','%d')",file,dimvalue,dimindex,filedate,
+               geoOptions->level,geoOptions->bbox[0],geoOptions->bbox[1],geoOptions->bbox[2],geoOptions->bbox[3],
                geoOptions->indices[0],geoOptions->indices[1],geoOptions->indices[2],geoOptions->indices[3]);
   #ifdef CDBAdapterPostgreSQL_DEBUG
   CDBDebug("Adding TIMESTAMP %s",values.c_str());

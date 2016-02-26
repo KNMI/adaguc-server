@@ -69,7 +69,7 @@ class CCDFDims {
       size_t index;
     };
     std::vector <NetCDFDim*> dimensions;  
-    int getArrayIndexForName(const char *name);
+  
   public:
     ~CCDFDims ();
     void addDimension(const char *name,const char *value,size_t index);
@@ -82,5 +82,6 @@ class CCDFDims {
     CT::string getDimensionValue(int j);
     const char *getDimensionName(int j);
     void copy(CCDFDims * dim);
+    int getArrayIndexForName(const char *name);
 };
 #endif

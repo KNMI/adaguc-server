@@ -1068,6 +1068,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
       double level1BBOXWidth  = dataSource->cfgLayer->TileSettings[0]->attr.tilebboxwidth.toDouble();
       double level1BBOXHeight = dataSource->cfgLayer->TileSettings[0]->attr.tilebboxheight.toDouble();
       CT::string nativeProj4  = dataSource->cfgLayer->TileSettings[0]->attr.tileprojection.c_str();
+      int maxlevel            = dataSource->cfgLayer->TileSettings[0]->attr.maxlevel.toInt();
       
       if(!nativeProj4.equals(srvParam->Geo->CRS)){
         CImageWarper warper;
@@ -1119,18 +1120,18 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
       store=NULL;
       dataSource->queryLevel=0;
       
-      while((numResults*tileWidth*tileHeight)/4>srvParam->Geo->dWidth*srvParam->Geo->dHeight||numResults==0){
-        if(dataSource->queryLevel>7){dataSource->queryLevel--;break;}
+      while((numResults*tileWidth*tileHeight)/4>srvParam->Geo->dWidth*srvParam->Geo->dHeight||numResults==0||numResults>60){
+        if(dataSource->queryLevel>(maxlevel-1)){dataSource->queryLevel--;break;}
         delete store;store=NULL;
         dataSource->queryLevel++;
         double levelXBBOXWidth = level1BBOXWidth*pow(2,dataSource->queryLevel-1)*1;
         double levelXBBOXHeight =level1BBOXHeight*pow(2,dataSource->queryLevel-1)*1;
-        CDBDebug("levelXBBOXWidth = %f, levelXBBOXHeight = %f queryLevel=%d",levelXBBOXWidth,levelXBBOXHeight,dataSource->queryLevel);
+        //CDBDebug("levelXBBOXWidth = %f, levelXBBOXHeight = %f queryLevel=%d",levelXBBOXWidth,levelXBBOXHeight,dataSource->queryLevel);
         dataSource->nativeViewPortBBOX[0]=nativeViewPortBBOX[0]-levelXBBOXWidth;
         dataSource->nativeViewPortBBOX[1]=nativeViewPortBBOX[1]-levelXBBOXHeight;
         dataSource->nativeViewPortBBOX[2]=nativeViewPortBBOX[2]+levelXBBOXWidth;
         dataSource->nativeViewPortBBOX[3]=nativeViewPortBBOX[3]+levelXBBOXHeight;
-        store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource,30);
+        store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource,300);
         if(store!=NULL){
           numResults=store->getSize();
           CDBDebug("Found %d tiles",store->getSize());
@@ -1649,6 +1650,7 @@ int CRequest::process_all_layers(){
             }
           }
           if(driverName.equals("ADAGUCNetCDF")){
+            CDBDebug("Creating CNetCDFDataWriter");
             wcsWriter = new CNetCDFDataWriter();
           }
           
@@ -1661,31 +1663,40 @@ int CRequest::process_all_layers(){
             CDBError("No WCS Writer found");
             return 1;
           }
-          
           try{
-            status = wcsWriter->init(srvParam,dataSources[j],dataSources[j]->getNumTimeSteps());if(status != 0)throw(__LINE__);
-          }catch(int e){
-            CDBError("Exception code %d",e);
-             throw(__LINE__);
-          }
-          for(int k=0;k<dataSources[j]->getNumTimeSteps();k++){
-            dataSources[j]->setTimeStep(k);
             try{
-              status = wcsWriter->addData(dataSources);
+              status = wcsWriter->init(srvParam,dataSources[j],dataSources[j]->getNumTimeSteps());if(status != 0)throw(__LINE__);
+            }catch(int e){
+              CDBError("Exception code %d",e);
+              
+              throw(__LINE__);
+            }
+            for(int k=0;k<dataSources[j]->getNumTimeSteps();k++){
+              dataSources[j]->setTimeStep(k);
+              try{
+                status = wcsWriter->addData(dataSources);
+              }catch(int e){
+                CDBError("Exception code %d",e);
+                throw(__LINE__);
+              }
+              if(status != 0)throw(__LINE__);
+            }
+            try{
+              status = wcsWriter->end();if(status != 0)throw(__LINE__);
             }catch(int e){
               CDBError("Exception code %d",e);
               throw(__LINE__);
             }
-            if(status != 0)throw(__LINE__);
-          }
-          try{
-            status = wcsWriter->end();if(status != 0)throw(__LINE__);
-          }catch(int e){
-            CDBError("Exception code %d",e);
+          }catch(int line){
+            CDBDebug("%d",line);
+            delete wcsWriter;
+            wcsWriter = NULL;
             throw(__LINE__);
           }
-    
+
+        
           delete wcsWriter;
+          wcsWriter = NULL;
         }
     
         if(srvParam->requestType==REQUEST_WMS_GETFEATUREINFO){

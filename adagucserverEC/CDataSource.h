@@ -121,41 +121,22 @@ private:
   };
   
   class Statistics{
-    private:
+    public:
       template <class T>
-      void calcMinMax(size_t size,std::vector <DataObject *> *dataObject){
-#ifdef MEASURETIME
-  StopWatch_Stop("Start min/max calculation");
-#endif
-      if(dataObject->size()==1){
-        T* data = (T*)(*dataObject)[0]->cdfVariable->data;
-        
-        CDFType type=(*dataObject)[0]->cdfVariable->getType();
-        
-        //CDBDebug("nodataval %f",(T)dataObject[0]->dfNodataValue);
-        
-        T _min=(T)0.0f,_max=(T)1.0f;
+      void calculate(size_t size,T*data,CDFType type,double dfNodataValue, bool hasNodataValue){
+         T _min=(T)0.0f,_max=(T)1.0f;
         
         T maxInf=(T)INFINITY;
         T minInf=(T)-INFINITY;
         
         bool checkInfinity = false;
         if(type==CDF_FLOAT||type==CDF_DOUBLE)checkInfinity=true;
-        
-//         CDBDebug("MINMAX maxinf=%f minInf=%f type=%s size=%d",(double)maxInf,(double)minInf,CDF::getCDFDataTypeName(type).c_str(),size);
         int firstDone=0;
         for(size_t p=0;p<size;p++){
-          
           T v=data[p];
-  /*        if((double)v<36){
-            CDBDebug("Value %d =  %f %d",p,(double)v,v!=maxInf);
-          }
- */         if((((T)v)!=(T)(*dataObject)[0]->dfNodataValue||(!(*dataObject)[0]->hasNodataValue))&&v==v){
+          if((((T)v)!=(T)dfNodataValue||(!hasNodataValue))&&v==v){
             if((checkInfinity&&v!=maxInf&&v!=minInf)||(!checkInfinity))
             {
-              
-              
-            
               if(firstDone==0){
                 _min=v;_max=v;
                 firstDone=1;
@@ -169,6 +150,21 @@ private:
         min=(double)_min;
         max=(double)_max;
       }
+  private:
+     template <class T>
+      void calcMinMax(size_t size,std::vector <DataObject *> *dataObject){
+#ifdef MEASURETIME
+  StopWatch_Stop("Start min/max calculation");
+#endif
+      if(dataObject->size()==1){
+        T* data              = (T*)(*dataObject)[0]->cdfVariable->data;
+        CDFType type         =(*dataObject)[0]->cdfVariable->getType();
+        double dfNodataValue = (*dataObject)[0]->dfNodataValue;
+        bool hasNodataValue  = (*dataObject)[0]->hasNodataValue;
+        calculate(size,data,type,dfNodataValue,hasNodataValue);
+      }
+      
+      
       //Wind vector min max calculation
       if(dataObject->size()==2){
          T* dataU = (T*)(*dataObject)[0]->cdfVariable->data;
@@ -212,16 +208,13 @@ private:
       double getMaximum();
       void setMinimum(double min);
       void setMaximum(double max);
-      int calculate(CDataSource *dataSource);      // TODO this currently works only for float data
+      int calculate(CDataSource *dataSource);
   };
   
   class TimeStep{
     public:
-   
       CT::string fileName;   //Filename of the file to load
-      //CT::string timeString; //String of the current time
       CCDFDims   dims;//Dimension index in the corresponding name and file
-  
   };
   int datasourceIndex;
   int currentAnimationStep;
