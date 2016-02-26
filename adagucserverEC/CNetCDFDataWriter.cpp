@@ -4,38 +4,46 @@ const char * CNetCDFDataWriter::className = "CNetCDFDataWriter";
 
 //#define CNetCDFDataWriter_DEBUG
 
-void createProjectionVariables(CDFObject *cdfObject,int width,int height,double *bbox){
+void CNetCDFDataWriter::createProjectionVariables(CDFObject *cdfObject,int width,int height,double *bbox){
   bool isProjected=true;
-  CDF::Dimension *projectionDimX = new CDF::Dimension();
+  if(projectionDimX!=NULL){
+    CDBWarning("createProjectionVariables already done");
+    return;
+  }
+  projectionDimX = new CDF::Dimension();
+  cdfObject->addDimension(projectionDimX);
   if(isProjected){
     projectionDimX->name="x";
   }else{
     projectionDimX->name="lon";
   }
   projectionDimX->setSize(width);
-  cdfObject->addDimension(projectionDimX);
-  CDF::Variable *projectionVarX = new CDF::Variable();
+  
+  projectionVarX = new CDF::Variable();
+  cdfObject->addVariable(projectionVarX);
   projectionVarX->setType(CDF_DOUBLE);
   projectionVarX->name.copy(projectionDimX->name.c_str());
   projectionVarX->isDimension=true;
   projectionVarX->dimensionlinks.push_back(projectionDimX);
-  cdfObject->addVariable(projectionVarX);
+  
   CDF::allocateData(CDF_DOUBLE,&projectionVarX->data,width);
   
-  CDF::Dimension *projectionDimY = new CDF::Dimension();
+  projectionDimY = new CDF::Dimension();
+  cdfObject->addDimension(projectionDimY);
   if(isProjected){
     projectionDimY->name="y";
   }else{
     projectionDimY->name="lat";
   }
   projectionDimY->setSize(height);
-  cdfObject->addDimension(projectionDimY);
-  CDF::Variable *projectionVarY = new CDF::Variable();
+
+  projectionVarY = new CDF::Variable();
+  cdfObject->addVariable(projectionVarY);
   projectionVarY->setType(CDF_DOUBLE);
   projectionVarY->name.copy(projectionDimY->name.c_str());
   projectionVarY->isDimension=true;
   projectionVarY->dimensionlinks.push_back(projectionDimY);
-  cdfObject->addVariable(projectionVarY);
+  
   CDF::allocateData(CDF_DOUBLE,&projectionVarY->data,height);
   
   if(isProjected){
@@ -62,11 +70,29 @@ void createProjectionVariables(CDFObject *cdfObject,int width,int height,double 
 
 
 int CNetCDFDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int nrOfBands){
+  
+#ifdef CNetCDFDataWriter_DEBUG
+  CDBDebug(">CNetCDFDataWriter::init");
+#endif
   baseDataSource = dataSource;
   this->srvParam = srvParam;
   destCDFObject = new CDFObject();
   CT::string randomString = CServerParams::randomString(32);
   tempFileName.print("%s/%s.nc",srvParam->cfg->TempDir[0]->attr.value.c_str(),randomString.c_str());
+  CDataReader reader;
+  int status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
+  if(status!=0){
+    CDBError("Could not open file: %s",dataSource->getFileName());
+    return 1;
+  }
+  
+  CT::string timeUnits;
+  try{
+    timeUnits = reader.getTimeUnit(dataSource);
+  }catch(int e){
+    timeUnits = "";
+  }
+
   // Copy global attributes
   CDFObject * srcObj=dataSource->getDataObject(0)->cdfObject;
   for(size_t j=0;j<srcObj->attributes.size();j++){
@@ -105,7 +131,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int
   }
   //Create projection variables
   createProjectionVariables(destCDFObject,srvParam->Geo->dWidth,srvParam->Geo->dHeight,dfDstBBOX);
-  
+ 
   
   
   //Create other NonGeo dimensions
@@ -114,50 +140,130 @@ int CNetCDFDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int
   CDBDebug("Number of requireddims=%d",baseDataSource->requiredDims.size());
 #endif
   for(size_t d=0;d<baseDataSource->requiredDims.size();d++){
+    
     CT::string dimName = "null";
 
     dimName = baseDataSource->requiredDims[d]->netCDFDimName;
-#ifdef CNetCDFDataWriter_DEBUG        
-    CDBDebug("Adding dimension [%s]",dimName.c_str());
-#endif    
+
+    CCDFDims *cdfDims = baseDataSource->getCDFDims();
+    
+    int dimIndex=cdfDims->getArrayIndexForName(dimName.c_str());
+    if(dimIndex == -1){
+      CDBError("Unable to find dimension %s",dimName.c_str());
+      return 1;
+    }
+    bool isTimeDim=cdfDims->isTimeDimension(dimIndex);
+    
+    CDF::Variable *sourceVar = srcObj->getVariable(dimName.c_str());
+    
     CDF::Dimension *dim = new CDF::Dimension();
-    dim->name = dimName;
-    dim->setSize(1);//TODO
     destCDFObject->addDimension(dim);
+    dim->name = dimName;
+   
     CDF::Variable *var = new CDF::Variable();
-    var->setType(CDF_DOUBLE);
+    destCDFObject->addVariable(var);
+    if(isTimeDim){
+      var->setType(CDF_DOUBLE);
+    }else{
+      var->setType(sourceVar->getType());
+    }
     var->name.copy(dim->name.c_str());
     var->isDimension=true;
     var->dimensionlinks.push_back(dim);
-    destCDFObject->addVariable(var);
-    CDF::allocateData(CDF_DOUBLE,&var->data,dim->length);
+
+    dim->setSize(baseDataSource->requiredDims[d]->uniqueValues.size());
+#ifdef CNetCDFDataWriter_DEBUG        
+    CDBDebug("Adding dimension [%s] with type [%d] and length [%d]",dimName.c_str(),var->getType(),dim->length);
+#endif    
+    
     var->setSize(dim->length);
+    CDF::allocateData(var->getType(),&var->data,dim->length);
+    
     if(CDF::fill(var->data,var->getType(),0,var->getSize())!=0){
       CDBError("Unable to initialize data field to nodata value");
       return 1;
     }
-    CDF::Variable *sourceVar = srcObj->getVariable(dimName.c_str());
+    
+   
+    //Fill dimension with correct data
+    for(size_t j=0;j<baseDataSource->requiredDims[d]->uniqueValues.size();j++){
+      CT::string dimValue=baseDataSource->requiredDims[d]->uniqueValues[j].c_str();
+#ifdef CNetCDFDataWriter_DEBUG
+      CDBDebug("Setting dimension %s value = %s",dimName.c_str(),dimValue.c_str());
+#endif        
+      if(var->getType()==CDF_STRING){
+#ifdef CNetCDFDataWriter_DEBUG            
+          CDBDebug("Dimension [%s]: writing string value %s to index %d",dimName.c_str(),dimValue.c_str(),j);
+#endif 
+        ((char**)var->data)[j]=strdup(dimValue.c_str());
+      }
+      
+      if(var->getType()!=CDF_STRING){
+        if(isTimeDim){
+          CTime ctime;
+          ctime.init(timeUnits.c_str());
+          double offset = ctime.dateToOffset(ctime.freeDateStringToDate(dimValue.c_str()));
+#ifdef CNetCDFDataWriter_DEBUG            
+          CDBDebug("Dimension [%s]: writing string value %s with units %s, offset %f to index %d",dimName.c_str(),dimValue.c_str(),timeUnits.c_str(),offset,j);
+#endif       
+          double *dimData = ((double*)var->data);
+          dimData[j]=offset;
+        } else{
+    #ifdef CNetCDFDataWriter_DEBUG            
+          CDBDebug("Dimension [%s]: writing scalar value %s to index %d",dimName.c_str(),dimValue.c_str(),j);
+#endif 
+          switch(var->getType()){
+            case CDF_CHAR  : ((char*)          var->data)[j]=dimValue.toInt();break;
+            case CDF_BYTE  : ((char*)          var->data)[j]=dimValue.toInt();break;
+            case CDF_UBYTE : ((unsigned char*) var->data)[j]=dimValue.toInt();break;
+            case CDF_SHORT : ((short*)         var->data)[j]=dimValue.toInt();break;
+            case CDF_USHORT: ((unsigned short*)var->data)[j]=dimValue.toInt();break;
+            case CDF_INT   : ((int*)           var->data)[j]=dimValue.toInt();break;
+            case CDF_UINT  : ((unsigned int*)  var->data)[j]=dimValue.toInt();break;
+            case CDF_FLOAT : ((float*)         var->data)[j]=dimValue.toFloat();break;
+            case CDF_DOUBLE: ((double*)        var->data)[j]=dimValue.toDouble();break;
+            default:return 1;
+          }
+        }
+      }
+    }
+  
+    
+    //Copy dim attributes
     for(size_t i=0;i<sourceVar->attributes.size();i++){
       var->setAttribute(sourceVar->attributes[i]->name.c_str(),sourceVar->attributes[i]->getType(),sourceVar->attributes[i]->data,sourceVar->attributes[i]->length);
     } 
+  
   }
   
   //Create variables
   size_t varSize = 1;
   for(size_t j=0;j<baseDataSource->getNumDataObjects();j++){
     CDF::Variable *destVar = new CDF::Variable();
+    destCDFObject->addVariable(destVar);
     CDF::Variable *sourceVar = baseDataSource->getDataObject(j)->cdfVariable;
     destVar->name.copy(sourceVar->name.c_str());
+    CDBDebug("Name = %s, type = %d",sourceVar->name.c_str(),sourceVar->getType());
     destVar->setType(sourceVar->getType());
     for(size_t i=0;i<sourceVar->dimensionlinks.size();i++){
       CDF::Dimension *d = destCDFObject->getDimensionNE(sourceVar->dimensionlinks[i]->name.c_str());
       if(d==NULL){
-        CDBError("Unable to add dimension %s",sourceVar->dimensionlinks[i]->name.c_str());
+        if(i==(sourceVar->dimensionlinks.size()-1)-0){
+          d=projectionDimX;
+        }
+        if(i==(sourceVar->dimensionlinks.size()-1)-1){
+          d=projectionDimY;
+        }
+      }
+      if(d==NULL){
+        CDBError("Unable to add dimension nr %d, name[%s]",i,sourceVar->dimensionlinks[i]->name.c_str());
         throw(__LINE__);
       }
       destVar->dimensionlinks.push_back(d);
       varSize*=d->getSize();
+      
     }
+    CDBDebug("Allocating %d elements for variable %s",varSize/(projectionDimX->getSize()*projectionDimY->getSize()),destVar->name.c_str());
     CDF::allocateData(destVar->getType(),&destVar->data,varSize);
     double dfNoData = NAN;
     if(dataSource->getDataObject(0)->hasNodataValue==1){
@@ -177,7 +283,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int
     
     //destCDFObject->removeAttribute("grid_mapping");
     destVar->setAttributeText("grid_mapping","crs");
-    destCDFObject->addVariable(destVar);
+   
   }
   
   CDF::Variable *crs = new CDF::Variable();
@@ -187,23 +293,14 @@ int CNetCDFDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int
   
   
   destCDFObject->addVariable(crs);
-  
+  #ifdef CNetCDFDataWriter_DEBUG
+  CDBDebug("<CNetCDFDataWriter::init");
+  #endif
+ 
   return 0;
 }
 
-// CDF::Variable *createOrGetVariable(CDFObject *cdfObject,CT::string name){
-//   CDF::Variable *variable = cdfObject->getVariableNE(name.c_str());
-//   if(variable == NULL){
-//     variable = new CDF::Variable();
-//     if(name.equals("x")){
-//       
-//     }
-//   }
-// }
-
-
 int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
-//  CDBDebug("addData");
 
   int status;
   
@@ -215,15 +312,14 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
       CDBError("Could not open file: %s",dataSource->getFileName());
       return 1;
     }
-    
+      
     CT::string timeUnits;
     try{
       timeUnits = reader.getTimeUnit(dataSource);
     }catch(int e){
       timeUnits = "";
     }
-    
-    //
+
     CDF::Variable *variable = destCDFObject->getVariable(dataSource->getDataObject(0)->cdfVariable->name.c_str());;
     
     //Set dimension
@@ -231,36 +327,101 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
     #ifdef CNetCDFDataWriter_DEBUG    
     CDBDebug("Setting dimension,nr %d",dims->getNumDimensions());
 #endif
+    /*
+     * This step figures out the required dimindex for each dimension based on timestep.
+     */
+    int dimIndices[dims->getNumDimensions()+1];
     
-    for(size_t d=0;d<dims->getNumDimensions();d++){
-      CT::string dimName = dims->getDimensionName(d);
-      if(dimName.equals("forecast_reference_time")==false){
-#ifdef CNetCDFDataWriter_DEBUG
-        CDBDebug("Setting dimension %s for timestep %d",dimName.c_str(),dataSource->getCurrentTimeStep());
-#endif        
-        //int destIndex = -1;
-        CDF::Variable *dim=destCDFObject->getVariable(dimName.c_str());
-        double *dimData = ((double*)dim->data);
-        CT::string dimValue = dataSource->getDimensionValue(d);
-#ifdef CNetCDFDataWriter_DEBUG
-        CDBDebug("Setting dimension %s value = %s",dimName.c_str(),dataSource->getDimensionValue(dataSource->getDimensionIndex(dimName.c_str())).c_str());
-#endif        
-        if(dims->isTimeDimension(d)){
+
+    
+    for(size_t d=0;d<baseDataSource->requiredDims.size();d++){
+      CT::string dimName = baseDataSource->requiredDims[d]->netCDFDimName;
+      CCDFDims *cdfDims = baseDataSource->getCDFDims();
+      int dimIndex=cdfDims->getArrayIndexForName(dimName.c_str());
+      if(dimIndex == -1){
+        CDBError("Unable to find dimension %s",dimName.c_str());
+        return 1;
+      }
+      bool isTimeDim=cdfDims->isTimeDimension(dimIndex);
+      CT::string dimValue = baseDataSource->getDimensionValueForNameAndStep(dimName.c_str(),dataSource->getCurrentTimeStep());
+      int indexTofind = -1;
+      CDF::Variable *var=destCDFObject->getVariable(dimName.c_str());
+      if(var->getType()==CDF_STRING){
+        for(size_t j=0;j<var->getSize();j++){
+          if(dimValue.equals(((char**)var->data)[j])){
+            indexTofind = j;
+            break;
+          }
+        }
+      }
+      
+      if(var->getType()!=CDF_STRING){
+        if(isTimeDim){
           CTime ctime;
           ctime.init(timeUnits.c_str());
-          double offset = ctime.dateToOffset(ctime.ISOStringToDate(dims->getDimensionValue(d).c_str()));
-          dimData[0]=offset;
-        } 
-        
-        
+          double offset = ctime.dateToOffset(ctime.freeDateStringToDate(dimValue.c_str()));
+          for(size_t j=0;j<var->getSize();j++){
+            if(((double*)var->data)[j]==offset){
+              indexTofind = j;
+              break;
+            }
+          }
+        } else{
+          double valueToFind=dimValue.toDouble();
+          for(size_t j=0;j<var->getSize();j++){
+            double value;
+            switch(var->getType()){
+              case CDF_CHAR  : value = ((char*)          var->data)[j];break;
+              case CDF_BYTE  : value = ((char*)          var->data)[j];break;
+              case CDF_UBYTE : value = ((unsigned char*) var->data)[j];break;
+              case CDF_SHORT : value = ((short*)         var->data)[j];break;
+              case CDF_USHORT: value = ((unsigned short*)var->data)[j];break;
+              case CDF_INT   : value = ((int*)           var->data)[j];break;
+              case CDF_UINT  : value = ((unsigned int*)  var->data)[j];break;
+              case CDF_FLOAT : value = ((float*)         var->data)[j];break;
+              case CDF_DOUBLE: value = ((double*)        var->data)[j];break;
+              default:return 1;
+            }
+            if(value == valueToFind){
+              indexTofind = j;
+              break;
+            }
+          }
+        }
       }
+      if(indexTofind == -1){
+        CDBError("Unable to find dim value %s in destination object",dimValue.c_str());
+        return 1;
+      }
+#ifdef CNetCDFDataWriter_DEBUG      
+      CDBDebug("Found dimindex %d for dimvalue %s",indexTofind,dimValue.c_str());
+#endif      
+      dimIndices[d]=indexTofind;
+    }
+
+    int _dimMultiplier=1;
+    int dimMultipliers[dims->getNumDimensions()+1];
+    for(size_t d=0;d<baseDataSource->requiredDims.size();d++){
+      dimMultipliers[(baseDataSource->requiredDims.size()-1)-d]=_dimMultiplier;
+      _dimMultiplier*=baseDataSource->requiredDims[(baseDataSource->requiredDims.size()-1)-d]->uniqueValues.size();
     }
     
     
+    #ifdef CNetCDFDataWriter_DEBUG
+    for(size_t d=0;d<baseDataSource->requiredDims.size();d++){
+     CDBDebug("For [%s]: index = %d, multiplier = %d",baseDataSource->requiredDims[d]->name.c_str(),dimIndices[d],dimMultipliers[d]);
+    }
+    #endif
+    
+    int dataStepIndex = 0;
+    for(size_t d=0;d<baseDataSource->requiredDims.size();d++){
+      dataStepIndex+=dimMultipliers[d]*dimIndices[d];
+    }
+    
+    #ifdef CNetCDFDataWriter_DEBUG
+      CDBDebug("DataStep index = %d, timestep = %d",dataStepIndex,dataSource->getCurrentTimeStep());
+    #endif
     //Warp
-    void *warpedData = variable->data;
-    
-    
     CImageWarper warper;
     
     status = warper.initreproj(dataSource,srvParam->Geo,&srvParam->cfg->Projection);
@@ -287,22 +448,27 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
     Settings settings;
     settings.width = srvParam->Geo->dWidth;
     settings.height = srvParam->Geo->dHeight;
-    settings.data=warpedData;
-
     
+    size_t elementOffset = dataStepIndex*settings.width*settings.height;
+    void *warpedData = NULL;
+
+    switch(variable->getType()){
+      case CDF_CHAR  : warpedData = ((char*)variable->data)+elementOffset;break;
+      case CDF_BYTE  : warpedData = ((char*)variable->data)+elementOffset;break;
+      case CDF_UBYTE : warpedData = ((unsigned char*)variable->data)+elementOffset;break;
+      case CDF_SHORT : warpedData = ((short*)variable->data)+elementOffset;break;
+      case CDF_USHORT: warpedData = ((unsigned short*)variable->data)+elementOffset;break;
+      case CDF_INT   : warpedData = ((int*)variable->data)+elementOffset;break;
+      case CDF_UINT  : warpedData = ((unsigned int*)variable->data)+elementOffset;break;
+      case CDF_FLOAT : warpedData = ((float*)variable->data)+elementOffset;break;
+      case CDF_DOUBLE: warpedData = ((double*)variable->data)+elementOffset;break;
+      default:return 1;
+    }
+    settings.data=warpedData;
     GenericDataWarper::render<float> (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction);/*break;*/
     reader.close();
-    
-    
-    
-//    CDBDebug("Addata finished, data warped");
-    
-//     if(dataSource->statistics==NULL){
-//       dataSource->statistics = new CDataSource::Statistics();
-//       dataSource->statistics->calculate(dataSource);
-//     }
-    
   }
+  
   return 0;
   
 }
@@ -325,12 +491,12 @@ int CNetCDFDataWriter::writeFile(const char *fileName,int level){
 }
 
 int CNetCDFDataWriter::end(){
-  
-  
   CDFNetCDFWriter *netCDFWriter = new CDFNetCDFWriter(destCDFObject);
   netCDFWriter->setNetCDFMode(4);
   int  status = netCDFWriter->write(tempFileName.c_str());
+  
   delete netCDFWriter;
+  
   
   if(status!=0){
     CDBError("Unable to write file to temporary directory");
@@ -378,9 +544,20 @@ int CNetCDFDataWriter::end(){
 }
 
 CNetCDFDataWriter::CNetCDFDataWriter(){
+  #ifdef CNetCDFDataWriter_DEBUG
+        CDBDebug("CNetCDFDataWriter::CNetCDFDataWriter()");
+#endif   
+
   destCDFObject = NULL;
   baseDataSource = NULL;
+  projectionDimX=NULL;
+  projectionDimY=NULL;
+  projectionVarX=NULL;
+  projectionVarY=NULL;
 }
 CNetCDFDataWriter::~CNetCDFDataWriter(){
+#ifdef CNetCDFDataWriter_DEBUG
+        CDBDebug("CNetCDFDataWriter::~CNetCDFDataWriter()");
+#endif   
   delete destCDFObject;destCDFObject = NULL;
 }

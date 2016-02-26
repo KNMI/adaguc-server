@@ -38,6 +38,9 @@ private:
   CDFObject *destCDFObject;
   CT::string tempFileName;
   CServerParams *srvParam;
+  CDF::Dimension *projectionDimX,*projectionDimY;//Shorthand pointers to cdfdatamodel (do never delete!)
+  CDF::Variable *projectionVarX,*projectionVarY;//Shorthand pointers to cdfdatamodel (do never delete!)
+  void createProjectionVariables(CDFObject *cdfObject,int width,int height,double *bbox);
 public:
   CNetCDFDataWriter();
   ~CNetCDFDataWriter();

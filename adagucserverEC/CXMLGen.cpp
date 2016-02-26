@@ -390,6 +390,7 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
                 tm tms[store->size()];
                 
                 try{
+                
                   for(size_t j=0;j<store->size();j++){
                     store->getRecord(j)->get("time")->setChar(10,'T');
                     const char *isotime = store->getRecord(j)->get("time")->c_str();
@@ -406,7 +407,9 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
                   }
                   size_t nrTimes=store->size()-1;
                   bool isConst = true;
-                  
+                  if(store->size()<4){
+                    isConst=false;
+                  }
                  
                   CT::string iso8601timeRes="P";
                   CT::string yearPart="";

@@ -28,6 +28,7 @@ private:
   };
   CDataSource * baseDataSource;
 public:
+  virtual ~CCreateHistogram(){};
   static int createHistogram(CDataSource *dataSource,CDrawImage *legendImage);
   // Virtual functions
   int init(CServerParams *srvParam,CDataSource *dataSource, int nrOfBands);

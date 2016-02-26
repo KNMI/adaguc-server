@@ -69,6 +69,11 @@ int CDF::allocateData(CDFType type,void **p,size_t length){
   if (Tracer::Ready)NewTrace.Add (*p, __FILE__, __LINE__);
   #endif
 
+  if(type == CDF_STRING){
+    for(size_t j=0;j<length;j++){
+      ((char**)*p)[j]=NULL;
+    }
+  }
   return 0;
 }
 
@@ -156,7 +161,11 @@ int CDF::DataCopier::copy(void *destdata,CDFType destType,void *sourcedata,CDFTy
   
 int CDF::fill(void *destdata,CDFType destType,double value,size_t size){
   if(destType==CDF_STRING){
-    return 1;
+    for(size_t j=0;j<size;j++){
+      free(((char**)destdata)[j]);
+      ((char**)destdata)[j]=NULL;
+    }
+    return 0;
   }
   switch(destType){
     case CDF_CHAR:DataCopier::_fill((char*)destdata,value,size);break;
