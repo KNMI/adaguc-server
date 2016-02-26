@@ -1435,7 +1435,8 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
                 }
               }
               XMLDoc->printconcat(" <AuthorityURL name=\"%s\"><OnlineResource xlink:href=\"%s\" /></AuthorityURL>\n",authorityName.c_str(),authorityOnlineResource.c_str());
-              XMLDoc->printconcat(" <Identifier authority=\"%s\">%s</Identifier>\n",identifierAuthority.c_str(),identifierId.c_str());
+              //XMLDoc->printconcat(" <Identifier authority=\"%s\">%s</Identifier>\n",identifierAuthority.c_str(),identifierId.c_str());
+              XMLDoc->printconcat(" <Identifier authority=\"%s\">%s</Identifier>\n",identifierAuthority.c_str(),layer->name.c_str());
             }
             
             //Styles

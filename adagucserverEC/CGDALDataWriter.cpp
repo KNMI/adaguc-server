@@ -27,7 +27,7 @@
 #ifdef ADAGUC_USE_GDAL
 #include "CGDALDataWriter.h"
 
-//#define CGDALDATAWRITER_DEBUG
+#define CGDALDATAWRITER_DEBUG
 
 const char * CGDALDataWriter::className = "CGDALDataWriter";
 
@@ -487,9 +487,14 @@ int  CGDALDataWriter::end(){
           CT::string values = "{";
           std::set<std::string> myset;
           std::set<std::string>::iterator mysetit;
+          CDBDebug("Nr Of timesteps : %d",_dataSource->timeSteps.size());
           for(size_t t=0;t<_dataSource->timeSteps.size();t++){
             try{
+              CDBDebug("getDimensionValue %d %s",
+                       d,
+                       _dataSource->timeSteps[t]->dims.getDimensionName(0));
               myset.insert(getDimensionValue(d,&_dataSource->timeSteps[t]->dims).c_str());
+              CDBDebug("getDimensionValue");
             }catch(int e){
               CDBError("Exception code %d",e);throw e;
             }
@@ -821,5 +826,27 @@ void CGDALDataWriter::generateUniqueGetCoverageFileName(char *pszTempFileName){
   }
   pszTempFileName[128]='\0';
   //CDBDebug("generateUniqueGetCoverageFileName");
+}
+
+  
+CT::string CGDALDataWriter::getDimensionValue(int d,CCDFDims *dims){
+  
+  CT::string value;
+  if(dims->isTimeDimension(d)){
+    CTime adagucTime;
+    try{
+      value = "0";
+      adagucTime.init(TimeUnit.c_str());
+      double offset = adagucTime.dateToOffset(adagucTime.ISOStringToDate(dims->getDimensionValue(d).c_str()));
+      value.print("%f",offset);
+    }catch(int e){
+      CDBDebug("Warning in getDimensionValue: Unable to get string value from time dimension");
+    }
+           
+  }else{
+    value.print("%s",dims->getDimensionValue(d).c_str());
+  }
+         CDBDebug("Continuing %s",value.c_str());
+         return value;
 }
 #endif

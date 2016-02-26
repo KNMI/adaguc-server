@@ -162,12 +162,19 @@ int main(int argc, const char *argv[]){
 
   //Check if a database update was requested
   if(argc>=2){
-    
-    if(strncmp(argv[1],"--updatedb",10)==0){
+  
+    if(strncmp(argv[1],"--updatedb",10)==0||strncmp(argv[1],"--createtiles",13)==0){
+      int scanFlags = 0;
+      if(strncmp(argv[1],"--updatedb",10)==0){
+        scanFlags+=CDBFILESCANNER_UPDATEDB;
+      }
+      if(strncmp(argv[1],"--createtiles",13)==0){
+        scanFlags+=CDBFILESCANNER_CREATETILES;
+      }
       CDBDebug("***** Starting DB update *****\n");
       CRequest request;
       int configSet = 0;
-      int scanFlags = 0;
+     
       CT::string tailPath,layerPathToScan;
       for(int j=0;j<argc;j++){
         if(strncmp(argv[j],"--config",8)==0&&argc>j+1){
@@ -188,6 +195,11 @@ int main(int argc, const char *argv[]){
           CDBDebug("RESCAN: Forcing rescan of dataset");
           scanFlags|=CDBFILESCANNER_RESCAN;
         }
+        if(strncmp(argv[j],"--nocleanup",11)==0){
+          CDBDebug("NOCLEANUP: Leave all records in DB, don't check if files have disappeared");
+          scanFlags|=CDBFILESCANNER_DONTREMOVEDATAFROMDB;
+        }
+        
       }
       if(configSet == 0){
         CDBError("Error: Configuration file is not set: use '--updatedb --config configfile.xml'" );
@@ -200,11 +212,14 @@ int main(int argc, const char *argv[]){
         CDBError("Unable to read configuration file");
         return 1;
       }
-      //printf("\n");
+
       status = request.updatedb(&tailPath,&layerPathToScan,scanFlags);
       if(status != 0){
         CDBError("Error occured in updating the database");
       }
+    
+
+                
       readyerror();
       return status;
     }

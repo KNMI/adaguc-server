@@ -23,13 +23,14 @@
  * 
  ******************************************************************************/
 
- //#define CREQUEST_DEBUG
- //#define MEASURETIME
+// #define CREQUEST_DEBUG
+// #define MEASURETIME
 
 #include "CRequest.h"
 #include "COpenDAPHandler.h"
 #include "CDBFactory.h"
 #include "CAutoResource.h"
+#include "CNetCDFDataWriter.h"
 const char *CRequest::className="CRequest";
 int CRequest::CGI=0;
 
@@ -769,6 +770,13 @@ int CRequest::process_wms_gethistogram_request(){
 
 
 int CRequest::setDimValuesForDataSource(CDataSource *dataSource,CServerParams *srvParam){
+  int status = fillDimValuesForDataSource(dataSource,srvParam);if(status != 0)return status;
+  status = queryDimValuesForDataSource(dataSource,srvParam);if(status != 0)return status;
+  return 0;
+};
+
+
+int CRequest::fillDimValuesForDataSource(CDataSource *dataSource,CServerParams *srvParam){
   #ifdef CREQUEST_DEBUG
     StopWatch_Stop("[setDimValuesForDataSource]");
   #endif
@@ -830,8 +838,15 @@ int CRequest::setDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
             ogcDim->netCDFDimName.copy(dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
             
            
-            //If we have a dimension value quantizer adjust the value accordingly
+            
             if(ogcDim->name.equals("time")||ogcDim->name.equals("reference_time")){
+              //Make nice time value 1970-01-01T00:33:26 --> 1970-01-01T00:33:26Z
+              if(dataSource->requiredDims[i]->value.charAt(10)=='T'){
+                if(ogcDim->value.length()==19){
+                  dataSource->requiredDims[i]->value.concat("Z");
+                }
+              }
+              //If we have a dimension value quantizer adjust the value accordingly  
               if(!dataSource->cfgLayer->Dimension[i]->attr.quantizeperiod.empty()){
                 CDBDebug("For dataSource %s found quantizeperiod %s",dataSource->layerName.c_str(),dataSource->cfgLayer->Dimension[i]->attr.quantizeperiod.c_str());
                 CT::string quantizemethod="round";
@@ -1006,30 +1021,140 @@ int CRequest::setDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
           dataSource->requiredDims[i]->isATimeDimension = true;
           if(dataSource->requiredDims[i]->value.charAt(10)==' '){
             dataSource->requiredDims[i]->value.setChar(10, 'T');
-            dataSource->requiredDims[i]->value.concat("Z");
+          }
+          if(dataSource->requiredDims[i]->value.charAt(10)=='T'){
+            if(dataSource->requiredDims[i]->value.length()==19){
+              dataSource->requiredDims[i]->value.concat("Z");
+            }
           }
         }
       }
     }
     
-    CDBStore::Store *store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource,512);
+    //STOP NOW
+  }catch(int i){
+    CDBError("%d",i);
+    return 2;
+  }
+  return 0;
+}
+
+
+int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams *srvParam){
+    
+  try{
+    CDBStore::Store *store = NULL;
+    
+    //If query on bbox = enabled, set the current viewport bbox
+    dataSource->queryBBOX = false;
+    if(dataSource->cfgLayer->TileSettings.size()==1){
+      dataSource->queryBBOX = true;
+    }
+    
+    if(srvParam->Geo->CRS.empty() == true){
+      dataSource->queryBBOX = false;
+    }
+    
+    if(dataSource->queryBBOX){
+     
+      double nativeViewPortBBOX[4];
+      nativeViewPortBBOX[0]=srvParam->Geo->dfBBOX[0];
+      nativeViewPortBBOX[1]=srvParam->Geo->dfBBOX[1];
+      nativeViewPortBBOX[2]=srvParam->Geo->dfBBOX[2];
+      nativeViewPortBBOX[3]=srvParam->Geo->dfBBOX[3];
+      
+      int tileWidth           = dataSource->cfgLayer->TileSettings[0]->attr.tilewidth.toInt();
+      int tileHeight          = dataSource->cfgLayer->TileSettings[0]->attr.tileheight.toInt();
+      double level1BBOXWidth  = dataSource->cfgLayer->TileSettings[0]->attr.tilebboxwidth.toDouble();
+      double level1BBOXHeight = dataSource->cfgLayer->TileSettings[0]->attr.tilebboxheight.toDouble();
+      CT::string nativeProj4  = dataSource->cfgLayer->TileSettings[0]->attr.tileprojection.c_str();
+      
+      if(!nativeProj4.equals(srvParam->Geo->CRS)){
+        CImageWarper warper;
+        int status =  warper.initreproj(nativeProj4.c_str(),srvParam->Geo,&srvParam->cfg->Projection);
+        if(status!=0){
+          warper.closereproj();
+          CDBDebug("Unable to initialize projection ");
+        }
+        double bbStepX = (nativeViewPortBBOX[2]-nativeViewPortBBOX[0])/100.;
+        double bbStepY = (nativeViewPortBBOX[3]-nativeViewPortBBOX[1])/100.;
+        
+        double xLow,yLow;
+        double xHigh,yHigh;
+        xLow=nativeViewPortBBOX[0];
+        yLow=nativeViewPortBBOX[1];
+        xHigh=nativeViewPortBBOX[2];
+        yHigh=nativeViewPortBBOX[3];
+        
+  
+        bool first = false;
+        for(double y=yLow;y<yHigh;y+=bbStepY){
+          for(double x=xLow;x<xHigh;x+=bbStepX){
+            
+            double x1=x,y1=y;
+            status=warper.reprojpoint(x1,y1);
+            if(status == 0){
+              //CDBDebug("Testing %f %f" ,x,y);
+              if(first  == false){
+                nativeViewPortBBOX[0]=x1;
+                nativeViewPortBBOX[1]=y1;
+                nativeViewPortBBOX[2]=x1;
+                nativeViewPortBBOX[3]=y1;
+              }else{
+                if(nativeViewPortBBOX[0]>x1)nativeViewPortBBOX[0]=x1;
+                if(nativeViewPortBBOX[1]>y1)nativeViewPortBBOX[1]=y1;
+                if(nativeViewPortBBOX[2]<x1)nativeViewPortBBOX[2]=x1;
+                if(nativeViewPortBBOX[3]<y1)nativeViewPortBBOX[3]=y1;
+              }
+              first=true;
+            }
+          }
+        }
+        warper.closereproj();
+      }
+
+      
+      dataSource->queryLevel = 1;
+     int numResults = 0;
+      store=NULL;
+      dataSource->queryLevel=0;
+      
+      while((numResults*tileWidth*tileHeight)/4>srvParam->Geo->dWidth*srvParam->Geo->dHeight||numResults==0){
+        if(dataSource->queryLevel>7){dataSource->queryLevel--;break;}
+        delete store;store=NULL;
+        dataSource->queryLevel++;
+        double levelXBBOXWidth = level1BBOXWidth*pow(2,dataSource->queryLevel-1)*1;
+        double levelXBBOXHeight =level1BBOXHeight*pow(2,dataSource->queryLevel-1)*1;
+        CDBDebug("levelXBBOXWidth = %f, levelXBBOXHeight = %f queryLevel=%d",levelXBBOXWidth,levelXBBOXHeight,dataSource->queryLevel);
+        dataSource->nativeViewPortBBOX[0]=nativeViewPortBBOX[0]-levelXBBOXWidth;
+        dataSource->nativeViewPortBBOX[1]=nativeViewPortBBOX[1]-levelXBBOXHeight;
+        dataSource->nativeViewPortBBOX[2]=nativeViewPortBBOX[2]+levelXBBOXWidth;
+        dataSource->nativeViewPortBBOX[3]=nativeViewPortBBOX[3]+levelXBBOXHeight;
+        store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource,30);
+        if(store!=NULL){
+          numResults=store->getSize();
+          CDBDebug("Found %d tiles",store->getSize());
+        }else {
+          numResults = 0;
+        }
+      }
+      
+      CDBDebug("level %d, tiles %d",dataSource->queryLevel,store->getSize());
+      srvParam->mapTitle.print("level %d, tiles %d",dataSource->queryLevel,store->getSize());
+      
+    }else{
+      dataSource->queryBBOX = false;
+      store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource,512);
+    }
   
    
     if(store == NULL){
       CDBDebug("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
       throw InvalidDimensionValue;
-//       setExceptionType(InvalidDimensionValue);
-//       CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
-//       return 2;
     }
     if(store->getSize() == 0){
-      
-//       setExceptionType(InvalidDimensionValue);
-//       CDBError("Dimension value unavailable for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
       delete store;
-      CDBDebug("Dimension value unavailable for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
       throw InvalidDimensionValue;
-//       return 2;
     }
           
     for(size_t k=0;k<store->getSize();k++){
@@ -1071,6 +1196,7 @@ int CRequest::setDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
     return 2;
   }
   #ifdef CREQUEST_DEBUG
+  CDBDebug("Datasource has %d steps",dataSource->getNumTimeSteps());
     StopWatch_Stop("[/setDimValuesForDataSource]");
   #endif
   return 0;
@@ -1514,10 +1640,30 @@ int CRequest::process_all_layers(){
         }
     
         if(srvParam->requestType==REQUEST_WCS_GETCOVERAGE){
+          CBaseDataWriterInterface* wcsWriter = NULL;
+          CT::string driverName = "ADAGUCNetCDF";
+          for(size_t i=0;i<srvParam->cfg->WCS[0]->WCSFormat.size();i++){
+            if(srvParam->Format.equals(srvParam->cfg->WCS[0]->WCSFormat[i]->attr.name.c_str())){
+              driverName.copy(srvParam->cfg->WCS[0]->WCSFormat[i]->attr.driver.c_str());
+              break;
+            }
+          }
+          if(driverName.equals("ADAGUCNetCDF")){
+            wcsWriter = new CNetCDFDataWriter();
+          }
+          
     #ifdef ADAGUC_USE_GDAL
-          CGDALDataWriter GDALDataWriter;
+        if(wcsWriter==NULL){
+          wcsWriter = new CGDALDataWriter();
+        }
+    #endif
+          if(wcsWriter == NULL){
+            CDBError("No WCS Writer found");
+            return 1;
+          }
+          
           try{
-            status = GDALDataWriter.init(srvParam,dataSources[j],dataSources[j]->getNumTimeSteps());if(status != 0)throw(__LINE__);
+            status = wcsWriter->init(srvParam,dataSources[j],dataSources[j]->getNumTimeSteps());if(status != 0)throw(__LINE__);
           }catch(int e){
             CDBError("Exception code %d",e);
              throw(__LINE__);
@@ -1525,7 +1671,7 @@ int CRequest::process_all_layers(){
           for(int k=0;k<dataSources[j]->getNumTimeSteps();k++){
             dataSources[j]->setTimeStep(k);
             try{
-              status = GDALDataWriter.addData(dataSources);
+              status = wcsWriter->addData(dataSources);
             }catch(int e){
               CDBError("Exception code %d",e);
               throw(__LINE__);
@@ -1533,12 +1679,13 @@ int CRequest::process_all_layers(){
             if(status != 0)throw(__LINE__);
           }
           try{
-            status = GDALDataWriter.end();if(status != 0)throw(__LINE__);
+            status = wcsWriter->end();if(status != 0)throw(__LINE__);
           }catch(int e){
             CDBError("Exception code %d",e);
             throw(__LINE__);
           }
-    #endif
+    
+          delete wcsWriter;
         }
     
         if(srvParam->requestType==REQUEST_WMS_GETFEATUREINFO){
@@ -1567,8 +1714,7 @@ int CRequest::process_all_layers(){
             CDBError("Exception code %d",e);
             throw(__LINE__);
           }
-          for(int k=0;k<dataSources[j]->getNumTimeSteps();k++){
-            dataSources[j]->setTimeStep(k);
+         
             try{
               status = histogramCreator.addData(dataSources);
             }catch(int e){
@@ -1576,7 +1722,7 @@ int CRequest::process_all_layers(){
               throw(__LINE__);
             }
             if(status != 0)throw(__LINE__);
-          }
+          
           try{
             status = histogramCreator.end();if(status != 0)throw(__LINE__);
           }catch(int e){
@@ -2733,8 +2879,13 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan, int sca
 
   for(size_t j=0;j<numberOfLayers;j++){
     if(dataSources[j]->dLayerType==CConfigReaderLayerTypeDataBase){
-        status = CDBFileScanner::updatedb(srvParam->cfg->DataBase[0]->attr.parameters.c_str(),dataSources[j],tailPath,layerPathToScan,scanFlags);
-        if(status !=0){CDBError("Could not update db for: %s",dataSources[j]->cfgLayer->Name[0]->value.c_str());errorHasOccured++;}
+      if(scanFlags&CDBFILESCANNER_UPDATEDB){
+        status = CDBFileScanner::updatedb(dataSources[j],tailPath,layerPathToScan,scanFlags);
+      }
+      if(scanFlags&CDBFILESCANNER_CREATETILES){
+        status = CDBFileScanner::createTiles(dataSources[j],scanFlags);
+      }
+      if(status !=0){CDBError("Could not update db for: %s",dataSources[j]->cfgLayer->Name[0]->value.c_str());errorHasOccured++;}
     }
   }
 

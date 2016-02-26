@@ -33,7 +33,7 @@ const char *CDFObjectStore::className="CDFObjectStore";
 #include "CConvertHexagon.h"
 #include "CDataReader.h"
 //#define CDFOBJECTSTORE_DEBUG
-#define MAX_OPEN_FILES 200
+#define MAX_OPEN_FILES 20
 extern CDFObjectStore cdfObjectStore;
 CDFObjectStore cdfObjectStore;
 bool EXTRACT_HDF_NC_VERBOSE = false;
@@ -280,7 +280,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *s
 CDFObjectStore *CDFObjectStore::getCDFObjectStore(){return &cdfObjectStore;};
 
 
-CDFObject *CDFObjectStore::deleteCDFObject(CDFObject **cdfObject){
+void CDFObjectStore::deleteCDFObject(CDFObject **cdfObject){
   //CDBDebug("Deleting CDFObject");
   for(size_t j=0;j<cdfObjects.size();j++){
     if(cdfObjects[j]==(*cdfObject)){
@@ -292,11 +292,10 @@ CDFObject *CDFObjectStore::deleteCDFObject(CDFObject **cdfObject){
       cdfReaders.erase(cdfReaders.begin()+j);
       cdfObjects.erase(cdfObjects.begin()+j);
       fileNames.erase(fileNames.begin()+j);
-      return NULL;
     }
   }
   
-  return NULL;
+
 }
 
 /**

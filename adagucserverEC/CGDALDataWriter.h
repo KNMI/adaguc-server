@@ -98,27 +98,7 @@ class CGDALDataWriter: public CBaseDataWriterInterface{
     void generateUniqueGetCoverageFileName(char *pszTempFileName);
     CT::string generateGetCoverageFileName();
     void generateString(char *s, const int len);
-    
-    CT::string getDimensionValue(int d,CCDFDims *dims){
-      
-      CT::string value;
-      if(dims->isTimeDimension(d)){
-      CTime adagucTime;
-        try{
-          value = "0";
-          adagucTime.init(TimeUnit.c_str());
-          double offset = adagucTime.dateToOffset(adagucTime.ISOStringToDate(dims->getDimensionValue(d).c_str()));
-          value.print("%f",offset);
-        }catch(int e){
-          CDBDebug("Warning in getDimensionValue: Unable to get string value from time dimension");
-        }
-       
-      }else{
-        value.print("%s",dims->getDimensionValue(d).c_str());
-      }
-       CDBDebug("Continuing %s",value.c_str());
-      return value;
-    }
+    CT::string getDimensionValue(int d,CCDFDims *dims);
     
   public:
     CGDALDataWriter(){

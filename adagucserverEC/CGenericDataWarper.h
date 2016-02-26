@@ -258,7 +258,13 @@ class GenericDataWarper{
         }
       }
     }
-
+//     for(int y=0;y<dataHeight;y=y+1){
+//       for(int x=0;x<dataWidth;x=x+1){
+//         size_t p=x+y*(dataWidth+1);
+//         drawFunction(px[p],py[p],12,drawFunctionSettings);
+//       }
+//     }
+//  
     delete[] px;
     delete[] py;
     delete[] skip;

@@ -17,6 +17,16 @@
     <LatLonBox minx="-180"  miny="-90" maxx="180" maxy="90"/>
   </Layer>
   
+  
+  <Layer type="cascaded" hidden="true">
+    <Group value="baselayers"/>
+    <Name force="true">streetmap</Name>
+    <Title>baselayer</Title>
+    <WMSLayer service="http://geoservices.knmi.nl/cgi-bin/bgmaps.cgi?" layer="streetmap"/>
+    <LatLonBox minx="-180"  miny="-90" maxx="180" maxy="90"/>
+  </Layer>
+  
+  
   <Layer type="grid" hidden="true">
     <Group value="baselayers"/>
     <Name force="true">grid1</Name>

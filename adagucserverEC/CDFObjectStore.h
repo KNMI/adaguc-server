@@ -57,14 +57,15 @@ private:
   static CDFReader *getCDFReader(const char *fileName);
   
   
+  
   CDFObject* getCDFObject(CDataSource *dataSource,CServerParams *srvParams,const char *fileName,bool plain);
-  CDFObject *deleteCDFObject(CDFObject **cdfObject);
+  
   DEF_ERRORFUNCTION();
 public:
   ~CDFObjectStore(){
     clear();
   }
-  
+  void deleteCDFObject(CDFObject **cdfObject);
   /**
    * Gets the current allocated object store
    */
