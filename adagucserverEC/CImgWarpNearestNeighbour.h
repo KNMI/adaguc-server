@@ -219,6 +219,8 @@ public:
                   imgpointer=srcpixel_x+(height-1-srcpixel_y)*width;
                   //imgpointer=srcpixel_x+(dHeight-1-srcpixel_y)*dWidth;
                   val=data[imgpointer];
+//                   if(srcpixel_x ==0||srcpixel_x==width-1||srcpixel_y ==0||srcpixel_y==height-1)val=12;
+                  
                   isNodata=false;
                   if(hasNodataValue){if(val==nodataValue)isNodata=true;}if(!(val==val))isNodata=true;
                   if(!isNodata)if(legendValueRange)if(val<legendLowerRange||val>legendUpperRange)isNodata=true;
@@ -528,7 +530,7 @@ private:
         case CDF_USHORT:  GenericDataWarper::render<ushort>(warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
         case CDF_INT   :  GenericDataWarper::render<int>   (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
         case CDF_UINT  :  GenericDataWarper::render<uint>  (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
-       case CDF_FLOAT :  GenericDataWarper::render<float> (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
+        case CDF_FLOAT :  GenericDataWarper::render<float> (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
         case CDF_DOUBLE:  GenericDataWarper::render<double>(warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
       }
       return;

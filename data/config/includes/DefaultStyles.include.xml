@@ -61,13 +61,46 @@
     <palette index="190" red="255" green="0" blue="160"/> 
     <palette index="240" red="255" green="0" blue="160"/> 
   </Legend>
+  
+  <Legend name="isoluminant" type="colorRange">
+    <palette index="0"   red="216"  green="15" blue="15"/>
+    <palette index="48"  red="134"  green="134"   blue="0"/>
+    <palette index="96"  red="0"    green="151"   blue="0"/>
+    <palette index="144"  red="0"    green="143"   blue="143"/>
+    <palette index="192" red="81"   green="253" blue="247"/>
+    <palette index="240" red="183"   green="0" blue="183"/>
+  </Legend>
+  
+  <Legend name="elevation" type="colorRange">
+    <palette index="0"   red="0"   green="191" blue="191"/>
+    <palette index="48"  red="0"   green="255" blue="0"/>
+    <palette index="96"  red="255" green="255" blue="0"/>
+    <palette index="144" red="255" green="127" blue="0"/>
+    <palette index="192" red="191" green="127" blue="63"/>
+    <palette index="240" red="20"  green="20"  blue="20"/>
+  </Legend>
 
   <!-- Style configuration -->
   <Style name="rainbow">
     <Legend fixedclasses="true" tickinterval="500" tickround="1">rainbow</Legend>
     <Min>0.0</Min>
     <Max>3500</Max>
-    <NameMapping name="nearest"   title="Rainbow colors" abstract="Drawing  images with rainbow colors"/>
+    <NameMapping name="nearest"   title="Rainbow colors" abstract="Drawing images with rainbow colors"/>
+  </Style>
+  
+    
+  <Style name="elevation">
+    <Legend fixedclasses="true" tickinterval="1" tickround="1">elevation</Legend>
+    <Min>0.0</Min>
+    <Max>10</Max>
+    <NameMapping name="nearest"   title="Elevation colors" abstract="Drawing images with elevation colors"/>
+  </Style>
+  
+  <Style name="isoluminant">
+    <Legend fixedclasses="true" tickinterval="1" tickround="1">isoluminant</Legend>
+    <Min>0.0</Min>
+    <Max>10</Max>
+    <NameMapping name="nearest"   title="Isoluminant colors" abstract="Drawing images with isoluminant colors"/>
   </Style>
   
    <Style name="no2">
@@ -76,8 +109,9 @@
     <Max>3500</Max>
     <RenderMethod>nearest,bilinear</RenderMethod>
     <NameMapping name="nearest"   title="NO2 colors" abstract="Drawing  images with NO2 colors"/>
-    <NameMapping name="bilinear"   title="NO2 colors smooth" abstract="Drawing  images with NO2 colors and bilinear interpolation"/>
+    <NameMapping name="bilinear"   title="NO2 colors smooth" abstract="Drawing images with NO2 colors and bilinear interpolation"/>
   </Style>
+
   
 
 </Configuration>

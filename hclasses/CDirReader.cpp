@@ -35,6 +35,7 @@ CDirReader::~CDirReader(){
   for(size_t j=0;j<fileList.size();j++){
     delete fileList[j];
   }
+  fileList.clear();
 }
 
 int CDirReader::listDirRecursive(const char* directory,const char *ext_filter){

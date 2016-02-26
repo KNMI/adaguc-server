@@ -109,6 +109,9 @@ class CImageWarper{
       initialized =false;
     }
     projPJ sourcepj,destpj,latlonpj;
+    CT::string getDestProjString(){
+      return destinationCRS;
+    }
     int initreproj(CDataSource *dataSource,CGeoParams *GeoDest,std::vector <CServerConfig::XMLE_Projection*> *prj);
     int initreproj(const char * projString,CGeoParams *GeoDest,std::vector <CServerConfig::XMLE_Projection*> *_prj);
     int closereproj();

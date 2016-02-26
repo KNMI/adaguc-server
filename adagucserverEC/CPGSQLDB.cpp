@@ -81,8 +81,8 @@ int CPGSQLDB::checkTable(const char * pszTableName,const char *pszColumns){
     CDBError("checkTable: Not connected to DB");
     return 1;
   }
-  char query_string[256];
-  snprintf(query_string,255,"select * from pg_tables where schemaname='public';");
+  char query_string[1024];
+  snprintf(query_string,1023,"select * from pg_tables where schemaname='public';");
   result = PQexec(connection, query_string);                   /* send the query */
   if (PQresultStatus(result) != PGRES_TUPLES_OK)         /* did the query fail? */
   {
@@ -105,7 +105,7 @@ int CPGSQLDB::checkTable(const char * pszTableName,const char *pszColumns){
   if(i == PQntuples(result)){
     clearResult();
   
-    snprintf(query_string,255,"CREATE TABLE %s (%s)",pszTableName,pszColumns);
+    snprintf(query_string,1023,"CREATE TABLE %s (%s)",pszTableName,pszColumns);
     
     result = PQexec(connection, query_string);                   /* send the query */
     if (PQresultStatus(result) != PGRES_COMMAND_OK)         /* did the query fail? */

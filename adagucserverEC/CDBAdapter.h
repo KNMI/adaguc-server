@@ -10,6 +10,7 @@
 #include "CDBStore.h"
 #include "CDebugger.h"
 
+
 /**
  * Interface for several database implementations. Currently for CDBAdapterPostgreSQL and CDBAdapterSQLLite
  */
@@ -17,6 +18,15 @@ class CDBAdapter{
 public:
   CDBAdapter(){}
   virtual ~CDBAdapter() = 0;
+  
+  class GeoOptions{
+  public:
+    double bbox[4];
+    int indices[4];
+    CT::string crs;
+    int level;
+  };
+  
   virtual int setConfig(CServerConfig::XMLE_Configuration *cfg) = 0;
   
   /**
@@ -79,10 +89,10 @@ public:
   virtual int              checkIfFileIsInTable(const char *tablename,const char *filename) = 0;
   
   
-  virtual int              setFileInt(const char *tablename,const char *file,int dimvalue,int dimindex,const char*filedate) = 0;
-  virtual int              setFileReal(const char *tablename,const char *file,double dimvalue,int dimindex,const char*filedate) = 0;
-  virtual int              setFileString(const char *tablename,const char *file,const char * dimvalue,int dimindex,const char*filedate) = 0;
-  virtual int              setFileTimeStamp(const char *tablename,const char *file,const char *dimvalue,int dimindex,const char*filedate) = 0;
+  virtual int              setFileInt(const char *tablename,const char *file,int dimvalue,int dimindex,const char*filedate, GeoOptions *geoOptions) = 0;
+  virtual int              setFileReal(const char *tablename,const char *file,double dimvalue,int dimindex,const char*filedate, GeoOptions *geoOptions) = 0;
+  virtual int              setFileString(const char *tablename,const char *file,const char * dimvalue,int dimindex,const char*filedate, GeoOptions *geoOptions) = 0;
+  virtual int              setFileTimeStamp(const char *tablename,const char *file,const char *dimvalue,int dimindex,const char*filedate, GeoOptions *geoOptions) = 0;
   
   /** First use setFile<type> as many times as you whish, second use addFilesToDataBase to make it final*/
   virtual int              addFilesToDataBase() = 0;

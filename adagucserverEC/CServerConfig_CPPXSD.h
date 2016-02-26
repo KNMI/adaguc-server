@@ -578,6 +578,32 @@ class CServerConfig:public CXMLSerializerInterface{
         }
     };
     
+    class XMLE_TileSettings: public CXMLObjectInterface{
+      public:
+        class Cattr{
+          public:
+            CXMLString tilewidth,tileheight,tilebboxwidth,tilebboxheight,tileprojection,maxlevel,tilepath;
+        }attr;
+//           <TileSettings  tilewidth="600" 
+//                    tileheight="600" 
+//                    tilebboxwidth="15000" 
+//                    tilebboxheight="15000" 
+//                    tileprojection="+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +units=m +no_defs"
+//                    maxlevel="7"
+//                    tilepath="/nobackup/users/plieger/data/clipc/tiles/"/>
+//     
+    
+        void addAttribute(const char *name,const char *value){
+               if(equals("tilewidth",9,name)){attr.tilewidth.copy(value);return;}
+          else if(equals("tileheight",10,name)){attr.tileheight.copy(value);return;}
+          else if(equals("tilebboxwidth",13,name)){attr.tilebboxwidth.copy(value);return;}
+          else if(equals("tilebboxheight",14,name)){attr.tilebboxheight.copy(value);return;}
+          else if(equals("tileprojection",14,name)){attr.tileprojection.copy(value);return;}
+          else if(equals("maxlevel",8,name)){attr.maxlevel.copy(value);return;}
+          else if(equals("tilepath",8,name)){attr.tilepath.copy(value);return;}
+        }
+    };
+    
     class XMLE_Group: public CXMLObjectInterface{
       public:
       class Cattr{
@@ -970,6 +996,7 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_DataBaseTable*> DataBaseTable;
         std::vector <XMLE_Variable*> Variable;
         std::vector <XMLE_FilePath*> FilePath;
+        std::vector <XMLE_TileSettings*> TileSettings;
         std::vector <XMLE_DataReader*> DataReader;
         std::vector <XMLE_Dimension*> Dimension;
         std::vector <XMLE_Legend*> Legend;
@@ -1008,6 +1035,7 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(DataBaseTable);
           XMLE_DELOBJ(Variable);
           XMLE_DELOBJ(FilePath);
+          XMLE_DELOBJ(TileSettings)
           XMLE_DELOBJ(DataReader);
           XMLE_DELOBJ(Dimension);
           XMLE_DELOBJ(Legend);
@@ -1050,6 +1078,7 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("DataBaseTable",13,name)){XMLE_ADDOBJ(DataBaseTable);}
             else if(equals("Variable",8,name)){XMLE_ADDOBJ(Variable);}
             else if(equals("FilePath",8,name)){XMLE_ADDOBJ(FilePath);}
+            else if(equals("TileSettings",12,name)){XMLE_ADDOBJ(TileSettings);}
             else if(equals("DataReader",10,name)){XMLE_ADDOBJ(DataReader);}
             else if(equals("Dimension",9,name)){XMLE_ADDOBJ(Dimension);}
             else if(equals("Legend",6,name)){XMLE_ADDOBJ(Legend);}

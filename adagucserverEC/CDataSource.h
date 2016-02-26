@@ -310,6 +310,11 @@ private:
   int dNetCDFNumDims;
   int dLayerType;
   CT::string layerName;
+  
+  //
+  bool queryBBOX; //True: query on viewport
+  double nativeViewPortBBOX[4];
+  int queryLevel;
 
   //Current value index of the dim
   //int dOGCDimValues[MAX_DIMS];

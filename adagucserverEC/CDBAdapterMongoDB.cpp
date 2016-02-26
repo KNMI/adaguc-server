@@ -536,7 +536,7 @@ int CDBAdapterMongoDB::autoUpdateAndScanDimensionTables(CDataSource *dataSource)
     if(srvParams->isAutoLocalFileResourceEnabled()==true){
 
       CDBDebug("Updating database");
-      int status = CDBFileScanner::updatedb(srvParams->cfg->DataBase[0]->attr.parameters.c_str(),dataSource,NULL,NULL,0);
+      int status = CDBFileScanner::updatedb(dataSource,NULL,NULL,0);
       if(status !=0){CDBError("Could not update db for: %s",cfgLayer->Name[0]->value.c_str());return 2;}
     }else{
       CDBDebug("No table found for dimension %s and autoresource is disabled",dimName.c_str());
@@ -1128,7 +1128,7 @@ int CDBAdapterMongoDB::removeFilesWithChangedCreationDate(const char *tablename,
   return 0; 
 }
 
-int CDBAdapterMongoDB::setFileInt(const char *tablename,const char *file,int dimvalue,int dimindex,const char*filedate) {
+int CDBAdapterMongoDB::setFileInt(const char *tablename,const char *file,int dimvalue,int dimindex,const char*filedate,GeoOptions *geoOptions) {
   CT::string values;
   values.print("('%s',%d,'%d','%s')",file,dimvalue,dimindex,filedate);
   #ifdef CDBAdapterMongoDB_DEBUG
@@ -1141,7 +1141,7 @@ int CDBAdapterMongoDB::setFileInt(const char *tablename,const char *file,int dim
   return 0;
 }
 
-int CDBAdapterMongoDB::setFileReal(const char *tablename,const char *file,double dimvalue,int dimindex,const char*filedate) {
+int CDBAdapterMongoDB::setFileReal(const char *tablename,const char *file,double dimvalue,int dimindex,const char*filedate,GeoOptions *geoOptions) {
   CT::string values;
   values.print("('%s',%f,'%d','%s')",file,dimvalue,dimindex,filedate);
   #ifdef CDBAdapterMongoDB_DEBUG
@@ -1151,7 +1151,7 @@ int CDBAdapterMongoDB::setFileReal(const char *tablename,const char *file,double
   return 0;
 }
 
-int CDBAdapterMongoDB::setFileString(const char *tablename,const char *file,const char * dimvalue,int dimindex,const char*filedate) {
+int CDBAdapterMongoDB::setFileString(const char *tablename,const char *file,const char * dimvalue,int dimindex,const char*filedate,GeoOptions *geoOptions) {
   CT::string values;
   values.print("('%s','%s','%d','%s')",file,dimvalue,dimindex,filedate);
   #ifdef CDBAdapterMongoDB_DEBUG
@@ -1161,7 +1161,7 @@ int CDBAdapterMongoDB::setFileString(const char *tablename,const char *file,cons
   return 0;
 }
 
-int CDBAdapterMongoDB::setFileTimeStamp(const char *tablename,const char *file,const char *dimvalue,int dimindex,const char*filedate) {
+int CDBAdapterMongoDB::setFileTimeStamp(const char *tablename,const char *file,const char *dimvalue,int dimindex,const char*filedate,GeoOptions *geoOptions) {
   CT::string values;
   values.print("('%s','%s','%d','%s')",file,dimvalue,dimindex,filedate);
   #ifdef CDBAdapterMongoDB_DEBUG

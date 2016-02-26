@@ -197,6 +197,9 @@ CDataSource::CDataSource(){
   _styles = NULL;
   _currentStyle = NULL;
   
+  queryBBOX = false;
+  queryLevel = 1;
+  
 }
 
 CDataSource::~CDataSource(){

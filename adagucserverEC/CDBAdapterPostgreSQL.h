@@ -66,10 +66,10 @@ class CDBAdapterPostgreSQL:public CDBAdapter{
     
     int              removeFile(const char *tablename,const char *file);
     int              removeFilesWithChangedCreationDate(const char *tablename,const char *file,const char *creationDate);
-    int              setFileInt(const char *tablename,const char *file,int dimvalue,int dimindex,const char*filedate);
-    int              setFileReal(const char *tablename,const char *file,double dimvalue,int dimindex,const char*filedate);
-    int              setFileString(const char *tablename,const char *file,const char * dimvalue,int dimindex,const char*filedate);
-    int              setFileTimeStamp(const char *tablename,const char *file,const char *dimvalue,int dimindex,const char*filedate);
+    int              setFileInt(const char *tablename,const char *file,int dimvalue,int dimindex,const char*filedate, GeoOptions *geoOptions);
+    int              setFileReal(const char *tablename,const char *file,double dimvalue,int dimindex,const char*filedate, GeoOptions *geoOptions);
+    int              setFileString(const char *tablename,const char *file,const char * dimvalue,int dimindex,const char*filedate, GeoOptions *geoOptions);
+    int              setFileTimeStamp(const char *tablename,const char *file,const char *dimvalue,int dimindex,const char*filedate, GeoOptions *geoOptions);
     int              addFilesToDataBase();
       
 };

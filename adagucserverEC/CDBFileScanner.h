@@ -34,7 +34,9 @@
 #include "CDirReader.h"
 
 #define CDBFILESCANNER_RESCAN 1
-
+#define CDBFILESCANNER_UPDATEDB 2
+#define CDBFILESCANNER_CREATETILES 4
+#define CDBFILESCANNER_DONTREMOVEDATAFROMDB 8
 
 /**
  * Class which scans files and updates the database.
@@ -61,7 +63,6 @@ public:
   
   /**
    * Updates the database for a specified dataSource
-   * @param pszDBParams: The database connection parameters
    * @param dataSource: The datasource to update
    * @param tailPath: The path under the root path to be scanned.
    * @param _layerPathToScan: When matched with the datasources configured FilePath, the datasource is updated, otherwise it is ignored. 
@@ -69,7 +70,9 @@ public:
    * When set to NULL, the datasource is updated always.
    * @param scanFlags Scan flags parameters, e.g. CDBFILESCANNER_RESCAN can be set as flag.
    */
-  static int updatedb(const char *pszDBParams, CDataSource *dataSource,CT::string *tailPath,CT::string *_layerPathToScan,int scanFlags);
+  static int updatedb(CDataSource *dataSource,CT::string *tailPath,CT::string *_layerPathToScan,int scanFlags);
+  
+  static int createTiles(CDataSource *dataSource,int scanFlags);
   
 };
 

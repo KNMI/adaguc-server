@@ -579,6 +579,10 @@ CDBStore::Store *CDBAdapterSQLLite::getFilesAndIndicesForDimensions(CDataSource 
       delete[] cDims;
     }
     if(i==0){
+      if(dataSource->queryBBOX){
+        subQuery.printconcat("and level = %d and minx >= %f and maxx <= %f and miny >= %f and maxy <= %f ",dataSource->queryLevel,dataSource->nativeViewPortBBOX[0],dataSource->nativeViewPortBBOX[2],dataSource->nativeViewPortBBOX[1],dataSource->nativeViewPortBBOX[3]);
+       // CDBDebug("Print query %s",subQuery.c_str());
+      }
       subQuery.printconcat("ORDER BY %s DESC limit %d)a%d ",netCDFDimName.c_str(),limit,i);
       //subQuery.printconcat("ORDER BY %s DESC )a%d ",netCDFDimName.c_str(),i);
     }else{
@@ -742,7 +746,7 @@ int  CDBAdapterSQLLite::autoUpdateAndScanDimensionTables(CDataSource *dataSource
     if(srvParams->isAutoLocalFileResourceEnabled()==true){
 
       CDBDebug("Updating database");
-      int status = CDBFileScanner::updatedb(srvParams->cfg->DataBase[0]->attr.parameters.c_str(),dataSource,NULL,NULL,0);
+      int status = CDBFileScanner::updatedb(dataSource,NULL,NULL,0);
       if(status !=0){CDBError("Could not update db for: %s",cfgLayer->Name[0]->value.c_str());return 2;}
     }else{
       CDBDebug("No table found for dimension %s and autoresource is disabled",dimName.c_str());
@@ -960,6 +964,13 @@ int CDBAdapterSQLLite::createDimTableOfType(const char *dimname,const char *tabl
   if(type == 0)tableColumns.printconcat(", %s int, dim%s int",dimname,dimname);
   
   tableColumns.printconcat(", filedate varchar (64)");
+  
+  // New since 2016-02-15 projection information and level
+  tableColumns.printconcat(", level int");
+  tableColumns.printconcat(", crs varchar (128");
+  tableColumns.printconcat(", minx real, miny real, maxx real, maxy real");
+  tableColumns.printconcat(", startx int, starty int, countx int, county int");
+  
   tableColumns.printconcat(", PRIMARY KEY (path, %s)",dimname);
   
   int status = dataBaseConnection->checkTable(tablename,tableColumns.c_str());
@@ -1015,36 +1026,44 @@ int CDBAdapterSQLLite::removeFilesWithChangedCreationDate(const char *tablename,
   return 0;
 }
 
-int CDBAdapterSQLLite::setFileInt(const char *tablename,const char *file,int dimvalue,int dimindex,const char*filedate){
+int CDBAdapterSQLLite::setFileInt(const char *tablename,const char *file,int dimvalue,int dimindex,const char*filedate, GeoOptions *geoOptions){
   CT::string values;
-  values.print("('%s',%d,'%d','%s')",file,dimvalue,dimindex,filedate);
+  values.print("('%s',%d,'%d','%s','%d','%s','%f','%f','%f','%f','%d','%d','%d','%d')",file,dimvalue,dimindex,filedate,
+               geoOptions->level,geoOptions->crs.c_str(),geoOptions->bbox[0],geoOptions->bbox[1],geoOptions->bbox[2],geoOptions->bbox[3],
+               geoOptions->indices[0],geoOptions->indices[1],geoOptions->indices[2],geoOptions->indices[3]);
   #ifdef CDBAdapterSQLLite_DEBUG
   CDBDebug("Adding INT %s",values.c_str());
   #endif
   fileListPerTable[tablename].push_back(values.c_str());
   return 0;
 }
-int CDBAdapterSQLLite::setFileReal(const char *tablename,const char *file,double dimvalue,int dimindex,const char*filedate){
+int CDBAdapterSQLLite::setFileReal(const char *tablename,const char *file,double dimvalue,int dimindex,const char*filedate, GeoOptions *geoOptions){
   CT::string values;
-  values.print("('%s',%f,'%d','%s')",file,dimvalue,dimindex,filedate);
+  values.print("('%s',%f,'%d','%s','%d','%s','%f','%f','%f','%f','%d','%d','%d','%d')",file,dimvalue,dimindex,filedate,
+               geoOptions->level,geoOptions->crs.c_str(),geoOptions->bbox[0],geoOptions->bbox[1],geoOptions->bbox[2],geoOptions->bbox[3],
+               geoOptions->indices[0],geoOptions->indices[1],geoOptions->indices[2],geoOptions->indices[3]);
   #ifdef CDBAdapterSQLLite_DEBUG
   CDBDebug("Adding REAL %s",values.c_str());
   #endif
   fileListPerTable[tablename].push_back(values.c_str());
   return 0;
 }
-int CDBAdapterSQLLite::setFileString(const char *tablename,const char *file,const char * dimvalue,int dimindex,const char*filedate){
+int CDBAdapterSQLLite::setFileString(const char *tablename,const char *file,const char * dimvalue,int dimindex,const char*filedate, GeoOptions *geoOptions){
   CT::string values;
-  values.print("('%s','%s','%d','%s')",file,dimvalue,dimindex,filedate);
+  values.print("('%s','%s','%d','%s','%d','%s','%f','%f','%f','%f','%d','%d','%d','%d')",file,dimvalue,dimindex,filedate,
+               geoOptions->level,geoOptions->crs.c_str(),geoOptions->bbox[0],geoOptions->bbox[1],geoOptions->bbox[2],geoOptions->bbox[3],
+               geoOptions->indices[0],geoOptions->indices[1],geoOptions->indices[2],geoOptions->indices[3]);
   #ifdef CDBAdapterSQLLite_DEBUG
   CDBDebug("Adding STRING %s",values.c_str());
   #endif
   fileListPerTable[tablename].push_back(values.c_str());
   return 0;
 }
-int CDBAdapterSQLLite::setFileTimeStamp(const char *tablename,const char *file,const char *dimvalue,int dimindex,const char*filedate){
+int CDBAdapterSQLLite::setFileTimeStamp(const char *tablename,const char *file,const char *dimvalue,int dimindex,const char*filedate, GeoOptions *geoOptions){
   CT::string values;
-  values.print("('%s','%s','%d','%s')",file,dimvalue,dimindex,filedate);
+  values.print("('%s','%s','%d','%s','%d','%s','%f','%f','%f','%f','%d','%d','%d','%d')",file,dimvalue,dimindex,filedate,
+               geoOptions->level,geoOptions->crs.c_str(),geoOptions->bbox[0],geoOptions->bbox[1],geoOptions->bbox[2],geoOptions->bbox[3],
+               geoOptions->indices[0],geoOptions->indices[1],geoOptions->indices[2],geoOptions->indices[3]);
   #ifdef CDBAdapterSQLLite_DEBUG
   CDBDebug("Adding TIMESTAMP %s",values.c_str());
   #endif
