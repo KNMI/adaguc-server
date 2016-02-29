@@ -102,7 +102,7 @@ int setCRequestConfigFromEnvironment(CRequest *request){
     int status = request->setConfigFile(configfile);
     return status;
   }else{
-    CDBError("No configuration file is set!");
+    CDBError("No configuration file is set. Please set ADAGUC_CONFIG environment variable accordingly.");
     //request->setConfigFile("/nobackup/users/plieger/cpp/oper/config/DWD.xml");
     return 1;
   }
@@ -114,7 +114,7 @@ int runRequest(){
   CRequest request;
   int status = setCRequestConfigFromEnvironment(&request);
   if(status!=0){
-    CDBError("Unable to read configuration file");
+    CDBError("Unable to read configuration file.");
     return 1;
   }
   return request.runRequest();

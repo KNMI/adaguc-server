@@ -277,6 +277,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int
       return 1;
     }
     for(size_t i=0;i<sourceVar->attributes.size();i++){
+      CDBDebug("For %s: Copying attribute %s with length %d",destVar->name.c_str(),sourceVar->attributes[i]->name.c_str(),sourceVar->attributes[i]->length);
       destVar->setAttribute(sourceVar->attributes[i]->name.c_str(),sourceVar->attributes[i]->getType(),sourceVar->attributes[i]->data,sourceVar->attributes[i]->length);
     }
     //destCDFObject->setAttribute("_FillValue",destVar->getType(),&dfNoData,1);

@@ -2176,7 +2176,9 @@ int CRequest::process_querystring(){
       if(dFound_autoResourceLocation==0){
         if(value0Cap.equals("SOURCE")){
           if(srvParam->autoResourceLocation.empty()){
-            srvParam->autoResourceLocation.copy(values[1].c_str());
+            CT::string *hashList=values[1].splitToArray("#");
+            srvParam->autoResourceLocation.copy(hashList[0].c_str());
+            delete[] hashList;
           }
           dFound_autoResourceLocation=1;
         }
