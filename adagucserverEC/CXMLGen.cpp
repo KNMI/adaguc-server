@@ -543,8 +543,8 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
                 //2011-01-01T22:00:01Z
                 //01234567890123456789
                 values->getRecord(j)->get(0)->setChar(10,'T');
-                if(values->size()==19){
-                  values->getRecord(j)->get(0)->concat("Z");
+                if(values->getRecord(j)->get(0)->length()==19){
+                  values->getRecord(j)->get(0)->printconcat("Z");
                 }
               }
               dim->units.copy("ISO8601");
@@ -1563,13 +1563,13 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc,std::vector<WMSLay
             int timeDimIndex=-1;
             for(size_t d=0;d<layer->dimList.size();d++){
               WMSLayer::Dim * dim = layer->dimList[d];
-              if(dim->hasMultipleValues==0){
+              //if(dim->hasMultipleValues==0){
                 if(dim->units.equals("ISO8601")){
                   timeDimIndex=d;
                 }
-              }
+              //}
             }
-  
+
             if(srvParam->requestType==REQUEST_WCS_DESCRIBECOVERAGE){
             //XMLDoc->print("<?xml version='1.0' encoding=\"ISO-8859-1\" ?>\n");
               CT::string layerTitle = layer->title;
@@ -1637,8 +1637,7 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc,std::vector<WMSLay
           
               if(timeDimIndex>=0){
                 XMLDoc->concat("      <temporalDomain>\n");
-                {
-              //For information about this, visit http://www.galdosinc.com/archives/151
+                if(layer->dimList[timeDimIndex]->hasMultipleValues==0){
                   CT::string * timeDimSplit = layer->dimList[timeDimIndex]->values.splitToArray("/");
                   if(timeDimSplit->count==3){
                     XMLDoc->concat("        <gml:TimePeriod>\n");
@@ -1648,6 +1647,15 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc,std::vector<WMSLay
                     XMLDoc->concat("        </gml:TimePeriod>\n");
                   }
                   delete[] timeDimSplit;
+                }else{
+                  
+                    
+                    CT::string * positions = layer->dimList[timeDimIndex]->values.splitToArray(",");
+                    for(size_t p=0;p<positions->count;p++){
+                      XMLDoc->printconcat("        <gml:timePosition>%s</gml:timePosition>\n",(positions[p]).c_str());
+                    }
+                    delete[] positions;
+                    
                 }
                 XMLDoc->concat("      </temporalDomain>\n");
               }
