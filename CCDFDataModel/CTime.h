@@ -36,6 +36,8 @@
 
 #define CTIME_MODE_UTCALENDAR 0
 #define CTIME_MODE_YYYYMM 1
+#define CTIME_MODE_YYYYMMDD_NUMBER 2
+
 #include "CDebugger.h"
 class CTime{
   private:

@@ -71,6 +71,9 @@ int CTime::init(const char *units){
       if(mode == CTIME_MODE_YYYYMM){
         CDBError("CTIME_MODE_YYYYMM: Already initialized with %s",currentUnit.c_str());
       }
+      if(mode == CTIME_MODE_YYYYMMDD_NUMBER){
+        CDBError("CTIME_MODE_YYYYMMDD_NUMBER: Already initialized with %s",currentUnit.c_str());
+      }
       return 1;
     }
     return 0;
@@ -80,6 +83,13 @@ int CTime::init(const char *units){
   //Mode is in YYYYMM format
   if(currentUnit.indexOf("YYYYMM")>=0){
     mode = CTIME_MODE_YYYYMM;
+    isInitialized=true;
+    return 0;
+  }
+  
+  //Mode is in YYYYMMDD format as nunmber
+  if(currentUnit.equals("day as %Y%m%d.%f")){
+    mode = CTIME_MODE_YYYYMMDD_NUMBER;
     isInitialized=true;
     return 0;
   }
@@ -126,6 +136,18 @@ CTime::Date CTime::getDate(double offset){
     date.second = 0;
   }
   
+   if(mode == CTIME_MODE_YYYYMMDD_NUMBER){
+    int yyyymm = int(offset);
+    date.year = int(yyyymm/10000);
+    date.month = int((yyyymm-(date.year*10000))/100);
+    date.day = yyyymm-(date.month*100+date.year*10000);
+    date.month++;
+    date.day++;
+    date.hour = 0;
+    date.minute = 0;
+    date.second = 0;
+  }
+  
   if(mode == CTIME_MODE_UTCALENDAR){
     float s;
     if(utCalendar(date.offset,&dataunits,&date.year,&date.month,&date.day,&date.hour,&date.minute,&s)!=0) {
@@ -142,6 +164,10 @@ double CTime::dateToOffset( Date date){
   
   if(mode == CTIME_MODE_YYYYMM){
     return int(date.year)*100+int(date.month);
+  }
+  
+  if(mode == CTIME_MODE_YYYYMMDD_NUMBER){
+    return int(date.year)*10000+int(date.month-1)*100+int(date.day-1);
   }
   
   if(mode == CTIME_MODE_UTCALENDAR){

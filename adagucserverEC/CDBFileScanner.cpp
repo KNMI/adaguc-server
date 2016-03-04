@@ -69,7 +69,7 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource,int &removeNonE
   
   
   if(dataSource->cfgLayer->Dimension.size()==0){
-    if(CDataReader::autoConfigureDimensions(dataSource)!=0){
+    if(CAutoConfigure::autoConfigureDimensions(dataSource)!=0){
       CDBError("Unable to configure dimensions automatically");
       return 1;
     }
@@ -915,7 +915,7 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
   }
   CDBAdapter * dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
   if(dataSource->cfgLayer->Dimension.size()==0){
-    if(CDataReader::autoConfigureDimensions(dataSource)!=0){
+    if(CAutoConfigure::autoConfigureDimensions(dataSource)!=0){
       CDBError("Unable to configure dimensions automatically");
       return 1;
     }
