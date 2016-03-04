@@ -763,7 +763,7 @@ CT::PointerList<CStyleConfiguration*> *CDataSource::getStyleListForDataSource(CD
         return styleConfigurationList;
         
       }
-      CDataReader::autoConfigureStyles(dataSource);
+      CAutoConfigure::autoConfigureStyles(dataSource);
     }
    
   }

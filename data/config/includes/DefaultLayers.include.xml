@@ -53,12 +53,5 @@
     <palette index="210" red="165"  green="0" blue="0"/>
     <palette index="240" red="90"   green="0" blue="0"/>
   </Legend>
-  <!--Styles -->
-  <Style name="auto">
-    <Legend>temperature</Legend>
-    <Scale>0</Scale>
-    <Offset>0</Offset>
-    <RenderMethod>nearest,bilinear,point</RenderMethod>
-      <StandardNames standard_name="*"/>
-  </Style>
+
 </Configuration>

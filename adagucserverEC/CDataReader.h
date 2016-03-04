@@ -42,25 +42,18 @@
 #include "CDFObjectStore.h"
 #include "CCache.h"
 #include "CDataPostProcessor.h"
-
+#include "CAutoConfigure.h"
 class CDataReader{
   private:
     DEF_ERRORFUNCTION();
-    
+
   public:
     CDataReader(){}
     ~CDataReader(){}
   
+
     
-    static int autoConfigureDimensions(CDataSource *dataSource);
-    static int autoConfigureStyles(CDataSource *dataSource);
-    
-    /** 
-     * Load a generic file header into the datasource. Usually the most recent file from a series is taken. The file header can for example be used to determine automatically the available dimensions.
-     * @param dataSource
-     * @return Zero on success.
-     */
-    static int justLoadAFileHeader(CDataSource *dataSource);
+
     
  
 

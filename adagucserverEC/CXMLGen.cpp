@@ -67,7 +67,7 @@ CDBDebug("getFileNameForLayer");
       if(myWMSLayer->dataSource->cfgLayer->Dimension.size()==0){
         
         myWMSLayer->fileName.copy(myWMSLayer->dataSource->cfgLayer->FilePath[0]->value.c_str());
-        if(CDataReader::autoConfigureDimensions(myWMSLayer->dataSource)!=0){
+        if(CAutoConfigure::autoConfigureDimensions(myWMSLayer->dataSource)!=0){
           CDBError("Unable to autoconfigure dimensions");
           return 1;
         }
@@ -208,9 +208,7 @@ CDBDebug("Database layer");
      CDataReader reader;
      //CNETCDFREADER_MODE_OPEN_DIMENSIONS
     int status = reader.open(myWMSLayer->dataSource,CNETCDFREADER_MODE_OPEN_DIMENSIONS);
-    //int status = CDataReader::justLoadAFileHeader(myWMSLayer->dataSource);
     if(status!=0){
-    
       CDBError("Could not open file: %s",myWMSLayer->dataSource->getFileName());
       return 1;
     }
@@ -1808,7 +1806,7 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam,CT::string *XMLDocument
                 #ifdef CXMLGEN_DEBUG    
                 CDBDebug("cfgLayer->attr.type  %d",myWMSLayer->dataSource->dLayerType);
                 #endif
-                status=CDataReader::autoConfigureStyles(myWMSLayer->dataSource);
+                status=CAutoConfigure::autoConfigureStyles(myWMSLayer->dataSource);
                 if(status != 0){myWMSLayer->hasError=1;CDBError("Unable to autoconfigure styles for layer %s",layerUniqueName.c_str());}
                 //Get the defined styles for this layer
                 
