@@ -113,12 +113,16 @@ class CDFHDF5Reader :public CDFReader{
         
       }
       int readData(CDF::Variable *thisVar,size_t *start,size_t *count,ptrdiff_t *stride){
+#ifdef CCDFHDF5IO_DEBUG        
         CDBDebug("READ data for %s called",thisVar->name.c_str());
+#endif        
         
         size_t newstart[thisVar->dimensionlinks.size()];
         for(size_t j=0;j<thisVar->dimensionlinks.size();j++){
           newstart[j]=start[j];
+          #ifdef CCDFHDF5IO_DEBUG
           CDBDebug("%s %d %d %d %d",thisVar->dimensionlinks[j]->name.c_str(),j,start[j],count[j],stride[j]);
+          #endif
         }
         newstart[0] = 0;
         CT::string varName ;
@@ -885,7 +889,7 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
                   float multiplicationFactor = formula.substring(rightPartFormulaPos+1,multiplicationSignPos).trim().toFloat();
                   float additionFactor = formula.substring(additionSignPos+1,formula.length()).trim().toFloat();
                   //CDBDebug("* = '%s' '%f' and + = '%s' '%f'",multiplicationFactorStr.c_str(),additionFactorStr.c_str(),multiplicationFactor,additionFactor);
-                  CDBDebug("Formula %s provides y='%f'*x+'%f'",formula.c_str(),multiplicationFactor,additionFactor);
+//                  CDBDebug("Formula %s provides y='%f'*x+'%f'",formula.c_str(),multiplicationFactor,additionFactor);
                   CDF::Attribute* add_offset = new CDF::Attribute();
                   add_offset->setName("add_offset");
                   add_offset->setData(CDF_FLOAT,&additionFactor,1);
@@ -1039,14 +1043,20 @@ CDBDebug("convertKNMIHDF5toCF()");
       
       char typeName[32];
       CDF::getCDFDataTypeName(typeName,31,type);
+      #ifdef CCDFHDF5IO_DEBUG
       CDBDebug("Reading %s --> %s with type %s",var->name.c_str(),var->orgName.c_str(),typeName);
+      #endif
       char varName[1024];
       hid_t HDF5_group=openH5GroupByName(varName,1023,var->orgName.c_str());
       if(HDF5_group>0){
+#ifdef CCDFHDF5IO_DEBUG        
         CDBDebug("Group  %s Openend, got variable %s",var->orgName.c_str(),varName);
+#endif        
         hid_t datasetID = H5Dopen2(HDF5_group,varName,H5P_DEFAULT);
         if(datasetID>0){
+#ifdef CCDFHDF5IO_DEBUG          
           CDBDebug("Dataset Openend");
+#endif          
           hid_t   HDF5_dataspace = H5Dget_space(datasetID); 
           int     ndims          = H5Sget_simple_extent_ndims(HDF5_dataspace);
           hsize_t dims_out[ndims];
@@ -1061,11 +1071,16 @@ CDBDebug("convertKNMIHDF5toCF()");
             mem_count[d]=count[d+dimDiff];
             data_start[d]=start[d+dimDiff];//mem_start[d];
             data_count[d]=mem_count[d];
+            #ifdef CCDFHDF5IO_DEBUG
             CDBDebug("%d %d, %d",d,data_start[d],data_count[d]);
+#endif
             totalVariableSize*=mem_count[d];;
         
           }
+          
+#ifdef CCDFHDF5IO_DEBUG          
           CDBDebug("totalVariableSize= %d",totalVariableSize);
+#endif          
           var->setSize(totalVariableSize);
           if(CDF::allocateData(type,&var->data,var->getSize())){throw(__LINE__);}
           hid_t HDF5_memspace = H5Screate_simple(2,mem_count,NULL);

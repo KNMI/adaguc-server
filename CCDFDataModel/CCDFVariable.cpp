@@ -282,7 +282,9 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
   }
   
   if(needsDimIteration==false){
-   
+#ifdef CCDFDATAMODEL_DEBUG          
+  CDBDebug("needsDimIteration=false");
+#endif
       //TODO NEEDS BETTER CHECKS
     if(cdfReaderPointer==NULL){
       if(hasCustomReader){
@@ -315,10 +317,16 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
      //CDBDebug("OK");
     if(useStartCountStride==true){
        //CDBDebug("OK");
+#ifdef CCDFDATAMODEL_DEBUG          
+  CDBDebug("_readVariableData start count stride");
+#endif
       status = cdfReader->_readVariableData(this, type,_start,_count,_stride);
        //CDBDebug("OK");
     }else{
        //CDBDebug("OK");
+#ifdef CCDFDATAMODEL_DEBUG          
+  CDBDebug("_readVariableDat");
+#endif
       status = cdfReader->_readVariableData(this, type);
     }
      //CDBDebug("OK");
@@ -327,7 +335,11 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
       return 1;
     }
   }
-//  CDBDebug("Data for %s read %d",name.c_str(),data!=NULL);
+#ifdef CCDFDATAMODEL_DEBUG          
+  CDBDebug("Data for %s read %d",name.c_str(),data!=NULL);
+#endif
+
+
   
   return 0;
 }

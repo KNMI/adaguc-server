@@ -32,11 +32,12 @@
 #include "CConvertADAGUCPoint.h"
 #include "CConvertCurvilinear.h"
 #include "CConvertHexagon.h"
+#include "CConvertEProfile.h"
 #include "CDBFactory.h"
 const char *CDataReader::className="CDataReader";
 
-//#define CDATAREADER_DEBUG
-//#define MEASURETIME
+// #define CDATAREADER_DEBUG
+// #define MEASURETIME
 
 #define uchar unsigned char
 #define MAX_STR_LEN 8191
@@ -340,7 +341,8 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y){
   if(!dataSource->level2CompatMode)if(CConvertADAGUCVector::convertADAGUCVectorData(dataSource,mode)==0)dataSource->level2CompatMode=true;
   if(!dataSource->level2CompatMode)if(CConvertADAGUCPoint::convertADAGUCPointData(dataSource,mode)==0)dataSource->level2CompatMode=true;
   if(!dataSource->level2CompatMode)if(CConvertCurvilinear::convertCurvilinearData(dataSource,mode)==0)dataSource->level2CompatMode=true;
-  if(!dataSource->level2CompatMode)if(CConvertHexagon::convertHexagonData(dataSource,mode)==0)dataSource->level2CompatMode=true;     
+  if(!dataSource->level2CompatMode)if(CConvertHexagon::convertHexagonData(dataSource,mode)==0)dataSource->level2CompatMode=true;
+  if(!dataSource->level2CompatMode)if(CConvertEProfile::convertEProfileData(dataSource,mode)==0)dataSource->level2CompatMode=true;     
 //   if(dataSource->level2CompatMode){
 //    cache->removeClaimedCachefile();
 //   }
@@ -677,9 +679,11 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
     singleCellMode = true;
   }
   
+  
   CT::string dataSourceFilename;
   dataSourceFilename.copy(dataSource->getFileName());
  
+  
   //CCache cache;
   //CT::string cacheFilename;
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
@@ -689,40 +693,13 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
       if(styleConfiguration->legendScale==0.0f && !(styleConfiguration->renderMethod&RM_RGBA))dataSource->stretchMinMax=true;else dataSource->stretchMinMax=false;
     }
   }
-    
- 
-  
-  
-//   bool enableDataCache=false;
-//   if(dataSource->cfgLayer->Cache.size()>0){
-//     if(dataSource->cfgLayer->Cache[0]->attr.enabled.equals("true")){
-//       
-//       enableDataCache=true;
-//        //Get cachefilename
-//       if(getCacheFileName(dataSource,&cacheFilename)!=0){
-//         enableDataCache=false;
-//       }
-//     }
-//   }
-  
-  //Check wether we should use cache or not (in case of OpenDAP, this speeds up things a lot)
-//   if(enableDataCache){
-//     cache.checkCacheSystemReady(cacheFilename.c_str());
-//   }
-//   
-//   if(mode!=CNETCDFREADER_MODE_OPEN_ALL){
-//     enableDataCache=false;
-//   }
-//   if(singleCellMode){
-//     enableDataCache=false;
-//   }
-//    
+      
   CDFObject *cdfObject = NULL;
-  
+    
  //#ifdef CDATAREADER_DEBUG
-  CDBDebug("Opening [%s]",dataSourceFilename.c_str());
+  CDBDebug("Opening [%s] with mode %d",dataSourceFilename.c_str(),mode);
 //#endif
-  
+    
   if(mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS  || mode == CNETCDFREADER_MODE_OPEN_HEADER ){
     cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource->srvParams,dataSourceFilename.c_str());
    
@@ -863,7 +840,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
     //Get Unit
     CDF::Attribute *varUnits=dataSource->getDataObject(varNr)->cdfVariable->getAttributeNE("units");
     if(varUnits!=NULL){
-      dataSource->getDataObject(varNr)->setUnits((char*)varUnits->data); //units.copy((char*)varUnits->data,varUnits->length);
+      dataSource->getDataObject(varNr)->setUnits(varUnits->toString()); //units.copy((char*)varUnits->data,varUnits->length);
     }else dataSource->getDataObject(varNr)->setUnits("");
   
     // Check for packed data / hasScaleOffset
@@ -988,7 +965,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
         #endif
         
         #ifdef CDATAREADER_DEBUG   
-        CDBDebug("--- varNR [%d], name=\"%s\"",varNr,dataSource->getDataObject(varNr)->cdfVariable->name.c_str());
+        CDBDebug("READING DATA FOR varNR [%d], name=\"%s\"",varNr,dataSource->getDataObject(varNr)->cdfVariable->name.c_str());
         for(size_t d=0;d<dataSource->getDataObject(varNr)->cdfVariable->dimensionlinks.size();d++){
           CDBDebug("%s  \tstart: %d\tcount %d\tstride %d",dataSource->getDataObject(varNr)->cdfVariable->dimensionlinks[d]->name.c_str(),start[d],count[d],stride[d]);
         }
@@ -1006,7 +983,11 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
           
           return 1;
         }
-        
+         
+        #ifdef CDATAREADER_DEBUG   
+        CDBDebug("DATA IS READ FOR varNR [%d], name=\"%s\": DATA IS READ",varNr,dataSource->getDataObject(varNr)->cdfVariable->name.c_str());
+       
+        #endif 
         
         //Swap data from >180 degrees to domain of -180 till 180 in case of lat lon source data
         if(dataSource->useLonTransformation!=-1){

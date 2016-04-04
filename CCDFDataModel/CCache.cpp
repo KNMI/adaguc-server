@@ -463,7 +463,7 @@ int CCache::Lock::claim(const char *cacheDir, const char *identifier,const char 
   
   //Check if the file exists...
   
-  int maxTries = 100;//Wait 120 seconds.
+  int maxTries = 100;
   int logEveryNChecks = 10;
   int logChecks = 0;
   bool wasLocked = false;
@@ -481,14 +481,14 @@ int CCache::Lock::claim(const char *cacheDir, const char *identifier,const char 
         maxTries = 0;
       }else{
         if(logChecks <=0){
-          CDBDebug("[LOCK Locked by pid %d] waiting %f seconds. I need it for [%s]",thePIDThatIsLocking,float(maxTries)/10.0,reason);
+          CDBDebug("[LOCK Locked by pid %d] polling every 100ms, waiting %f seconds. I need it for [%s]",thePIDThatIsLocking,float(maxTries)/10.0,reason);
           logChecks = logEveryNChecks;
         }else{
           logChecks--;
         }
       }
       if(maxTries>0){
-        usleep(100000);
+        usleep(100*1000);//Sleep 100ms
       }
     
     }else{

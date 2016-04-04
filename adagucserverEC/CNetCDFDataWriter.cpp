@@ -77,9 +77,11 @@ int CNetCDFDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int
   baseDataSource = dataSource;
   this->srvParam = srvParam;
   destCDFObject = new CDFObject();
+    
   CT::string randomString = CServerParams::randomString(32);
   tempFileName.print("%s/%s.nc",srvParam->cfg->TempDir[0]->attr.value.c_str(),randomString.c_str());
   CDataReader reader;
+  
   int status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
   if(status!=0){
     CDBError("Could not open file: %s",dataSource->getFileName());
@@ -145,14 +147,17 @@ int CNetCDFDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int
 
     dimName = baseDataSource->requiredDims[d]->netCDFDimName;
 
-    CCDFDims *cdfDims = baseDataSource->getCDFDims();
-    
-    int dimIndex=cdfDims->getArrayIndexForName(dimName.c_str());
-    if(dimIndex == -1){
-      CDBError("Unable to find dimension %s",dimName.c_str());
-      return 1;
+    CDataReader::DimensionType dtype = CDataReader::getDimensionType(srcObj,dimName.c_str());
+    if(dtype==CDataReader::dtype_none){
+      CDBWarning("dtype_none for %s",dtype,dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
     }
-    bool isTimeDim=cdfDims->isTimeDimension(dimIndex);
+
+    
+    bool isTimeDim = false;
+    if(dtype == CDataReader::dtype_time || dtype == CDataReader::dtype_reference_time){
+      isTimeDim = true;
+    }
+    
     
     CDF::Variable *sourceVar = srcObj->getVariable(dimName.c_str());
     
@@ -175,6 +180,10 @@ int CNetCDFDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int
 #ifdef CNetCDFDataWriter_DEBUG        
     CDBDebug("Adding dimension [%s] with type [%d] and length [%d]",dimName.c_str(),var->getType(),dim->length);
 #endif    
+    if(dim->length == 0){
+      CDBError("Cannot create dimension [%s] with length zero",dimName.c_str());
+      return 1;
+    }
     
     var->setSize(dim->length);
     CDF::allocateData(var->getType(),&var->data,dim->length);
@@ -243,7 +252,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int
     destCDFObject->addVariable(destVar);
     CDF::Variable *sourceVar = baseDataSource->getDataObject(j)->cdfVariable;
     destVar->name.copy(sourceVar->name.c_str());
-    CDBDebug("Name = %s, type = %d",sourceVar->name.c_str(),sourceVar->getType());
+    //CDBDebug("Name = %s, type = %d",sourceVar->name.c_str(),sourceVar->getType());
     destVar->setType(sourceVar->getType());
     for(size_t i=0;i<sourceVar->dimensionlinks.size();i++){
       CDF::Dimension *d = destCDFObject->getDimensionNE(sourceVar->dimensionlinks[i]->name.c_str());
@@ -263,7 +272,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int
       varSize*=d->getSize();
       
     }
-    CDBDebug("Allocating %d elements for variable %s",varSize/(projectionDimX->getSize()*projectionDimY->getSize()),destVar->name.c_str());
+    //CDBDebug("Allocating %d elements for variable %s",varSize/(projectionDimX->getSize()*projectionDimY->getSize()),destVar->name.c_str());
     CDF::allocateData(destVar->getType(),&destVar->data,varSize);
     double dfNoData = NAN;
     if(dataSource->getDataObject(0)->hasNodataValue==1){
@@ -277,9 +286,11 @@ int CNetCDFDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int
       return 1;
     }
     for(size_t i=0;i<sourceVar->attributes.size();i++){
-      CDBDebug("For %s: Copying attribute %s with length %d",destVar->name.c_str(),sourceVar->attributes[i]->name.c_str(),sourceVar->attributes[i]->length);
+      //CDBDebug("For %s: Copying attribute %s with length %d",destVar->name.c_str(),sourceVar->attributes[i]->name.c_str(),sourceVar->attributes[i]->length);
       destVar->setAttribute(sourceVar->attributes[i]->name.c_str(),sourceVar->attributes[i]->getType(),sourceVar->attributes[i]->data,sourceVar->attributes[i]->length);
     }
+    
+    //destVar->removeAttribute("calendar");
     //destCDFObject->setAttribute("_FillValue",destVar->getType(),&dfNoData,1);
     
     //destCDFObject->removeAttribute("grid_mapping");
@@ -337,16 +348,25 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
     
     for(size_t d=0;d<baseDataSource->requiredDims.size();d++){
       CT::string dimName = baseDataSource->requiredDims[d]->netCDFDimName;
-      CCDFDims *cdfDims = baseDataSource->getCDFDims();
-      int dimIndex=cdfDims->getArrayIndexForName(dimName.c_str());
-      if(dimIndex == -1){
-        CDBError("Unable to find dimension %s",dimName.c_str());
-        return 1;
+      
+      CDataReader::DimensionType dtype = CDataReader::getDimensionType(dataSource->getDataObject(0)->cdfObject,dimName.c_str());
+      if(dtype==CDataReader::dtype_none){
+        CDBWarning("dtype_none for %s",dtype,dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
       }
-      bool isTimeDim=cdfDims->isTimeDimension(dimIndex);
-      CT::string dimValue = baseDataSource->getDimensionValueForNameAndStep(dimName.c_str(),dataSource->getCurrentTimeStep());
+
+      
+      bool isTimeDim = false;
+      if(dtype == CDataReader::dtype_time || dtype == CDataReader::dtype_reference_time){
+        isTimeDim = true;
+      }
+      CT::string dimValue = dataSource->getDimensionValueForNameAndStep(dimName.c_str(),dataSource->getCurrentTimeStep());
       int indexTofind = -1;
+      
+      
+      
+      
       CDF::Variable *var=destCDFObject->getVariable(dimName.c_str());
+      //CDBDebug("trying to search in var with size %d",var->getSize());
       if(var->getType()==CDF_STRING){
         for(size_t j=0;j<var->getSize();j++){
           if(dimValue.equals(((char**)var->data)[j])){
@@ -361,6 +381,7 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
           CTime ctime;
           ctime.init(timeUnits.c_str());
           double offset = ctime.dateToOffset(ctime.freeDateStringToDate(dimValue.c_str()));
+          
           for(size_t j=0;j<var->getSize();j++){
             if(((double*)var->data)[j]==offset){
               indexTofind = j;

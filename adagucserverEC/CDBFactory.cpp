@@ -26,8 +26,6 @@
 #include "CDBFactory.h"
 #include "CDBAdapter.h"
 
-CDBAdapter::~CDBAdapter(){
-}
 
 const char *CDBFactory::className="CDBFactory";
 

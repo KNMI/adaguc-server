@@ -34,6 +34,8 @@ std::vector <CT::string> CDBFileScanner::tableNamesDone;
 //#define CDBFILESCANNER_DEBUG
 #define ISO8601TIME_LEN 32
 
+#define CDBFILESCANNER_TILECREATIONFAILED -100
+
 
 bool CDBFileScanner::isTableAlreadyScanned(CT::string *tableName){
   for(size_t t=0;t<tableNamesDone.size();t++){
@@ -683,7 +685,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
     }
     
     //End of dimloop, start inserting our collected records in one statement
-    CDBDebug("Adding files to database");
+    //CDBDebug("Adding files to database");
     dbAdapter->addFilesToDataBase();
     
     if(removeNonExistingFiles == 1){
@@ -797,13 +799,16 @@ int CDBFileScanner::updatedb( CDataSource *dataSource,CT::string *_tailPath,CT::
   
   CDBDebug("*** Starting update layer '%s' ***",dataSource->cfgLayer->Name[0]->value.c_str());
   
+  CDBDebug("Using path [%s] and filter [%s]",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str());
+  
   if(searchFileNames(&dirReader,dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),tailPath.c_str())!=0)return 0;
   
   //Include tiles
-  
-  if(dataSource->cfgLayer->TileSettings.size() == 1){
-    CDBDebug("Start including TileSettings path [%s]. (Already found %d non tiled files)",dataSource->cfgLayer->TileSettings[0]->attr.tilepath.c_str(),dirReader.fileList.size());
-    if(searchFileNames(&dirReader,dataSource->cfgLayer->TileSettings[0]->attr.tilepath.c_str(),"^.*\\.nc$",tailPath.c_str())!=0)return 0;
+  if(tailPath.length()==0){
+    if(dataSource->cfgLayer->TileSettings.size() == 1){
+      CDBDebug("Start including TileSettings path [%s]. (Already found %d non tiled files)",dataSource->cfgLayer->TileSettings[0]->attr.tilepath.c_str(),dirReader.fileList.size());
+      if(searchFileNames(&dirReader,dataSource->cfgLayer->TileSettings[0]->attr.tilepath.c_str(),"^.*\\.nc$",tailPath.c_str())!=0)return 0;
+    }
   }
   
 
@@ -862,6 +867,12 @@ int CDBFileScanner::searchFileNames(CDirReader *dirReader,const char * path,CT::
   if(tailPath!=NULL){
     if(tailPath[0]=='/'){
       filePath.copy(tailPath);
+      
+      CT::string baseName = filePath.substring(filePath.lastIndexOf("/")+1,-1);
+      if(dirReader->testRegEx(baseName.c_str(),expr.c_str())!=1){
+        CDBWarning("Filter [%s] does not match path [%s].",expr.c_str(),baseName.c_str());
+        return 1;
+      }
     }else{
       filePath.concat(tailPath);
     }
@@ -971,7 +982,6 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
       CDBDebug("tilesetWidth,tilesetHeight: [%f,%f]",tilesetWidth,tilesetHeight);
       double nrTilesX = tilesetWidth/tileBBOXWidth, nrTilesY = tilesetHeight/tileBBOXHeight;
       CDBDebug("nrTilesX,nrTilesY: [%f,%f]",nrTilesX,nrTilesY);
-      int isClosed = true;
       int maxlevel            = dataSource->cfgLayer->TileSettings[0]->attr.maxlevel.toInt();
       for(int level = 2;level<maxlevel+1;level++){
         int numFound = 0;
@@ -980,76 +990,62 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
         int levelInc = pow(2,level-1);
         //CDBDebug("Tiling levelInc %d",levelInc);
         for(int y=0;y<nrTilesY;y=y+levelInc){
-          CDBDebug("**** Scanning tile: Level %d, Percentage done for this level: %.2f ***",level,(float(y)/float(nrTilesY))*100);
+          
           for(int x=0;x<nrTilesX;x=x+levelInc){
-            if(isClosed){
-              CDataReader *reader = new CDataReader();;
-              dataSource->addStep(dirReader.fileList[0]->fullName.c_str(),NULL);
-              reader->open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
-              isClosed = false;
-              delete reader;
-            }
+            CDBDebug("**** Scanning tile: Level %d, Percentage done for this level: %.2f ***",level,(float(y)/float(nrTilesY))*100);          
+            CDataSource ds;
+            CServerParams newSrvParams;
+            newSrvParams.cfg=dataSource->srvParams->cfg;
+            ds.srvParams=&newSrvParams;
+            ds.cfgLayer=dataSource->cfgLayer;
+            ds.cfg=dataSource->srvParams->cfg;
             double dfMinX = globalBBOX[0]+tileBBOXWidth*x;
             double dfMinY = globalBBOX[1]+tileBBOXHeight*y;
             double dfMaxX = globalBBOX[0]+tileBBOXWidth*(x+levelInc);
             double dfMaxY = globalBBOX[1]+tileBBOXHeight*(y+levelInc);
-
             CT::string fileNameToWrite = dataSource->cfgLayer->TileSettings[0]->attr.tilepath.c_str(); 
             fileNameToWrite.printconcat("/l%dleft%ftop%f.nc",level,dfMinX,dfMinY);
             CDirReader::makeCleanPath(&fileNameToWrite);
-            //CDBDebug("Checking [%s][%s]" ,tableName.c_str(),fileNameToWrite.c_str());
             int status = dbAdapter->checkIfFileIsInTable(tableName.c_str(),fileNameToWrite.c_str());
-            if(status == 0){
-              //CDBDebug("Tile %s already done.",fileNameToWrite.c_str());
-            }else{
-              dataSource->srvParams->Geo->CRS=dataSource->nativeProj4;
-              dataSource->srvParams->Geo->dfBBOX[0]=dfMinX;
-              dataSource->srvParams->Geo->dfBBOX[1]=dfMinY;
-              dataSource->srvParams->Geo->dfBBOX[2]=dfMaxX;
-              dataSource->srvParams->Geo->dfBBOX[3]=dfMaxY;
+            if(status != 0){
+              ds.srvParams->Geo->CRS=dataSource->nativeProj4;
+              ds.srvParams->Geo->dfBBOX[0]=dfMinX;
+              ds.srvParams->Geo->dfBBOX[1]=dfMinY;
+              ds.srvParams->Geo->dfBBOX[2]=dfMaxX;
+              ds.srvParams->Geo->dfBBOX[3]=dfMaxY;
               
-              dataSource->nativeViewPortBBOX[0]=dfMinX;
-              dataSource->nativeViewPortBBOX[1]=dfMinY;
-              dataSource->nativeViewPortBBOX[2]=dfMaxX;
-              dataSource->nativeViewPortBBOX[3]=dfMaxY;
+              ds.nativeViewPortBBOX[0]=dfMinX;
+              ds.nativeViewPortBBOX[1]=dfMinY;
+              ds.nativeViewPortBBOX[2]=dfMaxX;
+              ds.nativeViewPortBBOX[3]=dfMaxY;
               
              
-              //CDBDebug("New globalBBOX: [%f,%f,%f,%f]",dataSource->srvParams->Geo->dfBBOX[0],dataSource->srvParams->Geo->dfBBOX[1],dataSource->srvParams->Geo->dfBBOX[2],dataSource->srvParams->Geo->dfBBOX[3]);
               try{
                 try{
-                  CRequest::fillDimValuesForDataSource(dataSource,dataSource->srvParams);
+                  CRequest::fillDimValuesForDataSource(&ds,dataSource->srvParams);
                 }catch(ServiceExceptionCode e){
                   CDBError("Exception in setDimValuesForDataSource");
                 }
-
-                
-              // CDBDebug("setDimValuesForDataSource done");
-                //CDBDebug("START");
-                dataSource->queryLevel=level-1;
-                dataSource->queryBBOX=1;
-                store = dbAdapter->getFilesAndIndicesForDimensions(dataSource,3000);
-                //CDBDebug("OK");
+                ds.queryLevel=level-1;
+                ds.queryBBOX=1;
+                store = dbAdapter->getFilesAndIndicesForDimensions(&ds,3000);
                 if(store!=NULL){
                   //CDBDebug("*** Found %d %d:%d = %f %f",store->getSize(),x,y,dfMinX,dfMinY);
-                  CDataSource ds;
-                  for(size_t d=0;d<dataSource->requiredDims.size();d++){
-                    COGCDims *ogcDim = new COGCDims();
-                    ds.requiredDims.push_back(ogcDim);
-                    ogcDim->name.copy(dataSource->requiredDims[d]->name.c_str());
-                    ogcDim->value.copy(dataSource->requiredDims[d]->value.c_str());
-                    ogcDim->netCDFDimName.copy(dataSource->requiredDims[d]->netCDFDimName.c_str());
-                  }
-                  
                   if(store->getSize()>0&&1==1){
+                    for(size_t k=0;k<store->getSize();k++){
+                      CDBStore::Record *record = store->getRecord(k);
+                      CDBDebug("Adding %s",record->get(0)->c_str());
+                      ds.addStep(record->get(0)->c_str(),NULL);
+                      for(size_t i=0;i<ds.requiredDims.size();i++){
+                        CT::string value = record->get(1+i*2)->c_str();
+                        ds.getCDFDims()->addDimension(ds.requiredDims[i]->netCDFDimName.c_str(),value.c_str(),atoi(record->get(2+i*2)->c_str()));
+                        ds.requiredDims[i]->addValue(value.c_str());
+                      }
+                    }
                     int status =0;
                     
                     CNetCDFDataWriter *wcsWriter = new CNetCDFDataWriter();
                     try{
-                      
-                      CServerParams newSrvParams;
-                      
-                      
-                      newSrvParams.cfg=dataSource->srvParams->cfg;
                       newSrvParams.Geo->dWidth=dataSource->dWidth;
                       newSrvParams.Geo->dHeight=dataSource->dHeight;
                       newSrvParams.Geo->dfBBOX[0]=dfMinX;
@@ -1061,67 +1057,42 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
                       newSrvParams.Geo->CRS.copy(&dataSource->nativeProj4);
                       int ErrorAtLine =0;
                       try{
-                        CDBDebug("wcswriter init");
-                        status = wcsWriter->init(&newSrvParams,dataSource,dataSource->getNumTimeSteps());if(status!=0){throw(__LINE__);};
-                        
-                        std::vector <CDataSource*> dataSources;
-                        dataSources.push_back(&ds);
                         int layerNo = dataSource->datasourceIndex;
                         if(ds.setCFGLayer(dataSource->srvParams,dataSource->srvParams->configObj->Configuration[0],dataSource->srvParams->cfg->Layer[layerNo],NULL,layerNo)!=0){
                           return 1;
                         }
-  //                       try{
-  //                       CRequest::setDimValuesForDataSource(&ds,&newSrvParams);
-  //                       }catch(int e){
-  //                         CDBError("CRequest::setDimValuesForDataSource");
-  //                       }
-                        
-  
-                        
-                        {//Check if really necessary.
-//                           CDBDebug("ds.requiredDims.size() = %d",ds.requiredDims.size());
-                          for(size_t k=0;k<store->getSize();k++){
-                            CDBStore::Record *record = store->getRecord(k);
-                            ds.addStep(record->get(0)->c_str(),NULL);
-                            for(size_t i=0;i<ds.requiredDims.size();i++){
-                              CT::string value = record->get(1+i*2)->c_str();
-                              ds.getCDFDims()->addDimension(ds.requiredDims[i]->netCDFDimName.c_str(),value.c_str(),atoi(record->get(2+i*2)->c_str()));
-                              ds.requiredDims[i]->addValue(value.c_str());
-                            }
-                            
-                          }
-                        }
-                        
+                        //CDBDebug("wcswriter init");
+
+                        status = wcsWriter->init(&newSrvParams,&ds,ds.getNumTimeSteps());if(status!=0){throw(__LINE__);};
+                        //CDBDebug("wcswriter init done");
+                        std::vector <CDataSource*> dataSources;
+                        dataSources.push_back(&ds);
                         for(size_t k=0;k<(size_t)dataSources[0]->getNumTimeSteps();k++){
                           for(size_t d=0;d<dataSources.size();d++){
                             dataSources[d]->setTimeStep(k);
                           }
-
                           status = wcsWriter->addData(dataSources);if(status!=0){throw(__LINE__);};
-                          //Clean up.
-                          for(size_t d=0;d<dataSources.size();d++){
-                            CDFObjectStore::getCDFObjectStore()->deleteCDFObject(&dataSources[d]->getDataObject(0)->cdfObject);
-                          }
-                          isClosed = true;
-                        }
-                        
-                        //TODO get cache location
-                        //TODO add files to db.
-                        CDBDebug("wcswriter writefile");
-                        
-                        status = wcsWriter->writeFile(fileNameToWrite.c_str(),level);if(status!=0){throw(__LINE__);};
 
-  //                       CDataReader *reader = new CDataReader();;
-  //                       reader->open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
-  //                       delete reader;
-                        
-                        //CDBDebug("Starting Updating DB");
+                        }
+                        status = wcsWriter->writeFile(fileNameToWrite.c_str(),level);if(status!=0){throw(__LINE__);};
                         updatedb(dataSources[0],&fileNameToWrite,NULL,CDBFILESCANNER_DONTREMOVEDATAFROMDB|CDBFILESCANNER_UPDATEDB);
-                        //CDBDebug("Done Updating DB");
+                 
+                        
+                        for(size_t d=0;d<dataSources.size();d++){
+                          for(size_t k=0;k<(size_t)dataSources[d]->getNumTimeSteps();k++){
+                            dataSources[d]->setTimeStep(k);
+                            CDFObjectStore::getCDFObjectStore()->deleteCDFObject(dataSources[d]->getFileName());
+                          }
+                        }
+                        CDFObjectStore::getCDFObjectStore()->deleteCDFObject(fileNameToWrite.c_str());
+                        
+                        CDBDebug("DONE: Open CDFObjects: [%d]",CDFObjectStore::getCDFObjectStore()->getNumberOfOpenObjects());
                       }catch(int e){
                         ErrorAtLine=e;
                       }
                       newSrvParams.cfg = NULL;
+            
+                      
                       if(ErrorAtLine!=0)throw(ErrorAtLine);
                     }catch(int e){
                       CDBError("Exception at line %d",e);
@@ -1129,7 +1100,10 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
                     }  
                     delete wcsWriter;
                     
-                    if(status!=0)return 1;
+                    if(status!=0){
+                      delete store;store=NULL;
+                      return 1;
+                    }
                   }
                   numFound+=store->getSize();
                   if(store->getSize()>0){

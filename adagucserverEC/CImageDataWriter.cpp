@@ -33,6 +33,7 @@
 
 #include "CImageDataWriter.h"
 #include "CMakeJSONTimeSeries.h"
+#include "CMakeEProfile.h"
 #ifndef M_PI
 #define M_PI            3.14159265358979323846  // pi 
 #endif
@@ -637,6 +638,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
     getFeatureInfoResultList.push_back(getFeatureInfoResult);
      bool headerIsAvailable = false;
     bool openAll = false;
+    bool isProfileData = false;
     bool everythingIsInBBOX = true;
     CDataReader reader;
     reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_HEADER); 
@@ -655,8 +657,11 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
           openAll =true;
         }  
         
-         if(dataSources[d]->getDataObject(0)->cdfVariable->getAttributeNE("UGRID_MESH")!=NULL){
+        if(dataSources[d]->getDataObject(0)->cdfVariable->getAttributeNE("UGRID_MESH")!=NULL){
           openAll =true;
+        }  
+        if(dataSources[d]->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_PROFILE")!=NULL){
+          isProfileData =true;
         }  
       }
     }
@@ -672,8 +677,15 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       return 1;
     }
     
+    CDBDebug("isProfileData:[%d] openAll:[%d] infoFormat:[%s]",isProfileData,openAll,srvParam->InfoFormat.c_str());
     
-    if(openAll == false&&srvParam->InfoFormat.equals("application/json")){
+    if(isProfileData){
+      int status = CMakeEProfile::MakeEProfile(&drawImage,&imageWarper,dataSources, d,dX,dY,&gfiStructure);
+      if(status != 0){
+        CDBError("CMakeEProfile::MakeEProfile failed");
+        return status;
+      }      
+    }else if(openAll == false&&srvParam->InfoFormat.equals("application/json")){
       int status = CMakeJSONTimeSeries::MakeJSONTimeSeries(&drawImage,&imageWarper,dataSources, d,dX,dY,&gfiStructure);
       if(status != 0){
         CDBError("CMakeJSONTimeSeries::MakeJSONTimeSeries failed");
