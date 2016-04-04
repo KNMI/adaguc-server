@@ -215,8 +215,14 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
     
     CT::string serverTitle="";
     try{cdfObject->getAttribute("title")->getDataAsString(&serverTitle);}catch(int e){}
+
       
     if(serverTitle.length()>0){
+      //Replace invalid XML tokens with valid ones
+      serverTitle.replaceSelf("@" ," at ");
+      serverTitle.replaceSelf("<" ,"[");
+      serverTitle.replaceSelf(">" ,"]");
+      serverTitle.replaceSelf("&" ,"&amp;");
       if(srvParam->cfg->WMS.size()>0){
         if(srvParam->cfg->WMS[0]->Title.size()>0){
           //CT::string title="ADAGUC AUTO WMS ";

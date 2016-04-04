@@ -25,14 +25,6 @@ private:
     if(x>=0&&y>=0&&x<(int)settings->width&&y<(int)settings->height){
       ((T*)settings->data)[x+y*settings->width]=val;
     }
-//     for(int x=0;x<settings->width;x++){
-//       ((T*)settings->data)[x+0*settings->width]=10;
-//       ((T*)settings->data)[x+(settings->height-1)*settings->width]=10;
-//     }
-//     for(int y=0;y<settings->height;y++){
-//       ((T*)settings->data)[0+y*settings->width]=10;
-//       ((T*)settings->data)[(settings->width-1)+y*settings->width]=10;
-//     }
   };
   CDataSource * baseDataSource;
   CDFObject *destCDFObject;

@@ -66,6 +66,7 @@ public:
     clear();
   }
   void deleteCDFObject(CDFObject **cdfObject);
+  void deleteCDFObject(const char *fileName);
   /**
    * Gets the current allocated object store
    */
@@ -82,7 +83,14 @@ public:
   CDFObject *getCDFObjectHeaderPlain(CServerParams *srvParams,const char *fileName);
   static CT::StackList<CT::string> getListOfVisualizableVariables(CDFObject *cdfObject);
   
-  
+  /**
+   * Returns how many objects are openend in this store
+   */
+  int getNumberOfOpenObjects();
+  /**
+   * Returns how many objects can be openend in this store
+   */
+  int getMaxNumberOfOpenObjects();
   
   /**
    * Clean the CDFObject store and throw away all readers and objects

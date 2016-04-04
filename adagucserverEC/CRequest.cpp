@@ -778,7 +778,7 @@ int CRequest::setDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
 
 int CRequest::fillDimValuesForDataSource(CDataSource *dataSource,CServerParams *srvParam){
   #ifdef CREQUEST_DEBUG
-    StopWatch_Stop("[setDimValuesForDataSource]");
+    StopWatch_Stop("[fillDimValuesForDataSource]");
   #endif
   int status = 0;
   try{
@@ -1120,7 +1120,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
       store=NULL;
       dataSource->queryLevel=0;
       
-      while((numResults*tileWidth*tileHeight)/4>srvParam->Geo->dWidth*srvParam->Geo->dHeight||numResults==0||numResults>60){
+      while(((numResults*tileWidth*tileHeight)/4>srvParam->Geo->dWidth*srvParam->Geo->dHeight&&numResults>2)||numResults==0||numResults>60){
         if(dataSource->queryLevel>(maxlevel-1)){dataSource->queryLevel--;break;}
         delete store;store=NULL;
         dataSource->queryLevel++;
@@ -1141,7 +1141,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
       }
       
       CDBDebug("level %d, tiles %d",dataSource->queryLevel,store->getSize());
-      srvParam->mapTitle.print("level %d, tiles %d",dataSource->queryLevel,store->getSize());
+      //srvParam->mapTitle.print("level %d, tiles %d",dataSource->queryLevel,store->getSize());
       
     }else{
       dataSource->queryBBOX = false;
@@ -1152,9 +1152,14 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
     if(store == NULL){
       CDBDebug("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
       throw InvalidDimensionValue;
+      
     }
     if(store->getSize() == 0){
       delete store;
+      if(dataSource->queryBBOX){
+        //No tiles found can mean that we are outside an area. TODO check whether this has to to with wrong dims or with missing area.
+        return 0;
+      }
       throw InvalidDimensionValue;
     }
           
@@ -1166,16 +1171,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
 #endif
       //For each timesteps a new set of dimensions is added with corresponding dim array indices.
       for(size_t i=0;i<dataSource->requiredDims.size();i++){
-       
-        
-        //CDBDebug("%s %s",dataSource->requiredDims[i]->netCDFDimName.c_str(),dataSource->requiredDims[i]->value.c_str());
-        //CDBDebug("%s = %s",record->get(1+i*2)->c_str(),record->get(2+i*2)->c_str());
-        
         CT::string value = record->get(1+i*2)->c_str();
-//         if(dataSource->requiredDims[i]->isATimeDimension){
-//            value.setChar(10, 'T');
-//            value.concat("Z");
-//         }
         dataSource->getCDFDims()->addDimension(dataSource->requiredDims[i]->netCDFDimName.c_str(),value.c_str(),atoi(record->get(2+i*2)->c_str()));
           #ifdef CREQUEST_DEBUG
         CDBDebug("  [%s][%d] = [%s]",dataSource->requiredDims[i]->netCDFDimName.c_str(),atoi(record->get(2+i*2)->c_str()),value.c_str());
@@ -1277,12 +1273,15 @@ int CRequest::process_all_layers(){
                 CDataSource *checkForData = new CDataSource ();
                 checkForData->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[additionalLayerNo],additionalLayerName.c_str(),j);
                 try{
-                if(setDimValuesForDataSource(checkForData,srvParam)!=0)add = false;
+                  if(setDimValuesForDataSource(checkForData,srvParam)!=0){
+                    add = false;
+                  }
                 }catch(ServiceExceptionCode e){
                   add = false;
                 }
                 delete checkForData;
-            
+                
+                CDBDebug("add = %d replaceAllDataSource = %d replacePreviousDataSource = %d",add,replaceAllDataSource,replacePreviousDataSource);
                 if(add){
                   if(replaceAllDataSource){
                     for(size_t j=0;j<dataSources.size();j++){
@@ -1537,7 +1536,7 @@ int CRequest::process_all_layers(){
               //Special styled layer for GEOMON project
               status = imageDataWriter.calculateData(dataSources);if(status != 0)throw(__LINE__);
             }
-            if(dataSources[dataSourceToUse]->getNumTimeSteps()>1){
+            if(dataSources[dataSourceToUse]->getNumTimeSteps()>1&& dataSources[dataSourceToUse]->queryBBOX==false){
               //Print the animation data into the image
               char szTemp[1024];
               snprintf(szTemp,1023,"%s UTC",dataSources[dataSourceToUse]->getDimensionValueForNameAndStep("time",k).c_str());

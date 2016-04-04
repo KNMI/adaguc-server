@@ -23,25 +23,33 @@
  * 
  ******************************************************************************/
 
-#include "CConvertADAGUCPoint.h"
+#include "CConvertEProfile.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
-// #define CCONVERTADAGUCPOINT_DEBUG
-// #define MEASURETIME
-const char *CConvertADAGUCPoint::className="CConvertADAGUCPoint";
+//#define CCONVERTEPROFILE_DEBUG
+// #define CCONVERTEPROFILE_DEBUG
+const char *CConvertEProfile::className="CConvertEProfile";
 
 
 /**
  * This function adjusts the cdfObject by creating virtual 2D variables
  */
-int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
+int CConvertEProfile::convertEProfileHeader( CDFObject *cdfObject,CServerParams *srvParams){
   //Check whether this is really an adaguc file
+  
+  /*TODO TODO TODO TODO TODO */
+  return 1;  
+
+
+
+
   try{
-    if(cdfObject->getAttribute("featureType")->toString().equals("timeSeries")==false&&cdfObject->getAttribute("featureType")->toString().equals("point")==false)return 1;
+    cdfObject->getVariable("range");
+    cdfObject->getDimension("range");
   }catch(int e){
     return 1;
   }
-  CDBDebug("Using CConvertADAGUCPoint.h");
+  CDBDebug("Using CConvertEProfile.h");
 
   
  
@@ -50,21 +58,21 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
   CDF::Variable *pointLat;
   
   try{
-    pointLon = cdfObject->getVariable("lon");
-    pointLat = cdfObject->getVariable("lat");
+    pointLon = cdfObject->getVariable("longitude");
+    pointLat = cdfObject->getVariable("latitude");
   }catch(int e){
     CDBError("lat or lon variables not found");
     return 1;
   }
   
   
-  #ifdef MEASURETIME
-    StopWatch_Stop("ADAGUC POINT DATA");
+  #ifdef CCONVERTEPROFILE_DEBUG
+    StopWatch_Stop("EPROFILE LIDAR DATA");
   #endif
   pointLon->readData(CDF_FLOAT,true);
   pointLat->readData(CDF_FLOAT,true);
   
-  #ifdef MEASURETIME
+  #ifdef CCONVERTEPROFILE_DEBUG
     StopWatch_Stop("DATA READ");
   #endif
   MinMax lonMinMax; 
@@ -77,7 +85,7 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
     lonMinMax = getMinMax(pointLon);
     latMinMax = getMinMax(pointLat);
   }
-  #ifdef MEASURETIME
+  #ifdef CCONVERTEPROFILE_DEBUG
     StopWatch_Stop("MIN/MAX Calculated");
   #endif
   double dfBBOX[]={lonMinMax.min,latMinMax.min,lonMinMax.max,latMinMax.max};
@@ -138,7 +146,7 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
     }
   }
   
-  #ifdef MEASURETIME
+  #ifdef CCONVERTEPROFILE_DEBUG
     StopWatch_Stop("2D Coordinate dimensions created");
   #endif
   
@@ -153,6 +161,9 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
           !var->name.equals("time")&&
           !var->name.equals("lon")&&
           !var->name.equals("lat")&&
+          !var->name.equals("altitude")&&
+          !var->name.equals("longitude")&&
+          !var->name.equals("latitude")&&
           !var->name.equals("x")&&
           !var->name.equals("y")&&
           !var->name.equals("lat_bnds")&&
@@ -176,7 +187,7 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
   for(size_t v=0;v<varsToConvert.size();v++){
     CDF::Variable *pointVar=cdfObject->getVariable(varsToConvert[v].c_str());
     
-    #ifdef CCONVERTADAGUCPOINT_DEBUG
+    #ifdef CCONVERTEPROFILE_DEBUG
     CDBDebug("Converting %s",pointVar->name.c_str());
     #endif
     
@@ -185,13 +196,12 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
    
     
     //Assign X,Y,T dims 
-    
-    for(size_t d=1;d<pointVar->dimensionlinks.size();d++){
-      if(pointVar->dimensionlinks[d]->name.equals("station")==false){
-        new2DVar->dimensionlinks.push_back( pointVar->dimensionlinks[d]);
-      }
+    if(pointVar->dimensionlinks.size() >=2){
+         new2DVar->dimensionlinks.push_back( pointVar->dimensionlinks[0]);//time
+         //new2DVar->dimensionlinks.push_back( pointVar->dimensionlinks[1]);//range
     }
     
+    //new2DVar->dimensionlinks.push_back( pointVar->dimensionlinks[0]);
     //if(dimT!=NULL)new2DVar->dimensionlinks.push_back(dimT);
     new2DVar->dimensionlinks.push_back(dimY);
     new2DVar->dimensionlinks.push_back(dimX);
@@ -227,7 +237,7 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
       }
       
     }
-    new2DVar->setAttributeText("ADAGUC_POINT","true");
+    new2DVar->setAttributeText("ADAGUC_PROFILE","true");
     
     //if(new2DVar->getType()!=CDF_STRING){
       if(new2DVar->getAttributeNE("_FillValue")==NULL){
@@ -248,7 +258,7 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
    
   }
   
-  #ifdef MEASURETIME
+  #ifdef CCONVERTEPROFILE_DEBUG
     StopWatch_Stop("Header done");
   #endif
 
@@ -262,21 +272,24 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
 /**
  * This function draws the virtual 2D variable into a new 2D field
  */
-int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode){
-  #ifdef CCONVERTADAGUCPOINT_DEBUG
-  CDBDebug("convertADAGUCPointData");
+int CConvertEProfile::convertEProfileData(CDataSource *dataSource,int mode){
+  #ifdef CCONVERTEPROFILE_DEBUG
+  CDBDebug("convertEProfileData");
   #endif
-
-
+  /*TODO TODO TODO TODO TODO */
+  return 1;
+  
+  
   CDFObject *cdfObject0 = dataSource->getDataObject(0)->cdfObject;
   try{
-    if(cdfObject0->getAttribute("featureType")->toString().equals("timeSeries")==false&&cdfObject0->getAttribute("featureType")->toString().equals("point")==false)return 1;
+    cdfObject0->getVariable("range");
+    cdfObject0->getDimension("range");
   }catch(int e){
     return 1;
   }
-  //CDBDebug("THIS IS ADAGUC POINT DATA");
+  //CDBDebug("THIS IS EPROFILE LIDAR DATA");
   
-  #ifdef MEASURETIME
+  #ifdef CCONVERTEPROFILE_DEBUG
     StopWatch_Stop("Reading data");
   #endif
     
@@ -284,8 +297,8 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
   CDF::Variable *pointLat;
   
   try{
-    pointLon = cdfObject0->getVariable("lon");
-    pointLat = cdfObject0->getVariable("lat");
+    pointLon = cdfObject0->getVariable("longitude");
+    pointLat = cdfObject0->getVariable("latitude");
   }catch(int e){
     CDBError("lat or lon variables not found");
     return 1;
@@ -331,36 +344,18 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
   
   /*Find which index is the station dim*/
   int stationDimIndexInCoord = 0;
-  int numStations = 0;
-  for(size_t j=0;j<pointLon->dimensionlinks.size();j++){
-    if(pointLon->dimensionlinks[0]->name.equals("station")){
-      stationDimIndexInCoord = j;
-      break;
-    }
-  }
-  /*Set dimension indices*/
-  for(size_t j=0;j<pointLon->dimensionlinks.size();j++){
-    if(stationDimIndexInCoord == int(j)){
-      start[j] = 0;
-      numStations=pointLon->dimensionlinks[j]->getSize();
-      count[j] = numStations;
-      stride[j]=1;
-    }else{
-      start[j] = dataSource->getDimensionIndex(pointLon->dimensionlinks[j]->name.c_str());
-      count[j] = 1;
-      stride[j]=1;
-    }
-  }
+  int numStations = 1;
+
   
-  #ifdef CCONVERTADAGUCPOINT_DEBUG
+  #ifdef CCONVERTEPROFILE_DEBUG
     CDBDebug("numStations %d ",numStations);
     CDBDebug("numDims %d ",numDims);
   #endif
   
   
-  
+/*  
   if(pointLon->dimensionlinks.size()>=2){
-    #ifdef CCONVERTADAGUCPOINT_DEBUG
+    #ifdef CCONVERTEPROFILE_DEBUG
     CDBDebug("Dimension dependant locations");
     #endif
     pointLon->freeData();
@@ -368,15 +363,15 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
     pointLon->readData(CDF_FLOAT,start,count,stride,true);
     pointLat->readData(CDF_FLOAT,start,count,stride,true);
   }else{
-    #ifdef CCONVERTADAGUCPOINT_DEBUG
+    #ifdef CCONVERTEPROFILE_DEBUG
     CDBDebug("NON Dimension dependant location");
-    #endif
+    #endif*/
     pointLon->readData(CDF_FLOAT,true);
     pointLat->readData(CDF_FLOAT,true);
-  }
+//   }
 
     
-  #ifdef MEASURETIME
+  #ifdef CCONVERTEPROFILE_DEBUG
     StopWatch_Stop("Lat and lon read");
   #endif
 
@@ -386,19 +381,19 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
 //   
   
   for(size_t d=0;d<nrDataObjects;d++){
-    /*Second read actual variables*/
-    int stationDimIndexInVariable = 0;
+     /*Second read actual variables*/
+    int rangeDimIndexInVariable = -1;
     
     for(size_t j=0;j<pointVar[d]->dimensionlinks.size();j++){
-      if(pointVar[d]->dimensionlinks[j]->name.equals("station")){
-        stationDimIndexInVariable = j;
+      if(pointVar[d]->dimensionlinks[j]->name.equals("range")){
+        rangeDimIndexInVariable = j;
         break;
       }
     }
   
      /*Set dimension indices*/
     for(size_t j=0;j<pointVar[d]->dimensionlinks.size();j++){
-      if(stationDimIndexInVariable == int(j)){
+      if(rangeDimIndexInVariable == int(j)){
         start[j] = 0;
         count[j] = pointVar[d]->dimensionlinks[j]->getSize();
         stride[j]=1;
@@ -408,13 +403,11 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
         stride[j]=1;
       }
     }
-    
-  
       
 
     
     if(pointVar[d]->nativeType!=CDF_STRING&&pointVar[d]->nativeType!=CDF_CHAR){
-      #ifdef CCONVERTADAGUCPOINT_DEBUG
+      #ifdef CCONVERTEPROFILE_DEBUG
       CDBDebug("Reading FLOAT %s", pointVar[d]->name.c_str());
       #endif
       pointVar[d]->freeData();
@@ -425,6 +418,10 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
       
       
       pointVar[d]->readData(CDF_FLOAT,start,count,stride,true);
+      
+      //TODO Use altitude to correct range height
+      
+      
     }else{
 
       if(pointVar[d]->nativeType==CDF_CHAR){
@@ -438,7 +435,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
         }
         pointVar[d]->freeData();
         
-        #ifdef CCONVERTADAGUCPOINT_DEBUG
+        #ifdef CCONVERTEPROFILE_DEBUG
         CDBDebug("Reading CDF_CHAR array");
         for(int j=0;j<numDims;j++){
           CDBDebug("CDF_CHAR %d: %s %d till %d ",j,pointVar[d]->dimensionlinks[j]->name.c_str(),start[j],count[j]);
@@ -451,7 +448,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
         }
       }
       if(pointVar[d]->nativeType==CDF_STRING){
-       #ifdef CCONVERTADAGUCPOINT_DEBUG
+       #ifdef CCONVERTEPROFILE_DEBUG
         CDBDebug("Reading CDF_STRING array");
         for(int j=0;j<numDims;j++){
           CDBDebug("CDF_STRING %d: %s %d till %d ",j,pointVar[d]->dimensionlinks[j]->name.c_str(),start[j],count[j]);
@@ -464,7 +461,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
     //pointVar[d]->readData(CDF_FLOAT,true);
   }
   
-  #ifdef MEASURETIME
+  #ifdef CCONVERTEPROFILE_DEBUG
     StopWatch_Stop("Variables read");
   #endif
 
@@ -475,13 +472,13 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
     if(fillValue!=NULL){
       dataObjects[d]->hasNodataValue=true;
       fillValue->getData(&dataObjects[d]->dfNodataValue,1);
-      #ifdef CCONVERTADAGUCPOINT_DEBUG
+      #ifdef CCONVERTEPROFILE_DEBUG
       CDBDebug("_FillValue = %f",dataObjects[d]->dfNodataValue);
       #endif
     }
   }
   
-  #ifdef MEASURETIME
+  #ifdef CCONVERTEPROFILE_DEBUG
     StopWatch_Stop("FillValues set");
   #endif
   
@@ -493,7 +490,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
   if(dataSource->stretchMinMax) 
   {
     if(dataSource->stretchMinMaxDone == false){
-    #ifdef CCONVERTADAGUCPOINT_DEBUG
+    #ifdef CCONVERTEPROFILE_DEBUG
     CDBDebug("dataSource->stretchMinMax");
     #endif
     if(dataSource->statistics==NULL){
@@ -509,14 +506,14 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
       }
 
       
-      #ifdef MEASURETIME
+      #ifdef CCONVERTEPROFILE_DEBUG
         StopWatch_Stop("Min max calculated");
       #endif
 
-      #ifdef CCONVERTADAGUCPOINT_DEBUG
+      #ifdef CCONVERTEPROFILE_DEBUG
       CDBDebug("Calculated min/max : %f %f",min,max);
       #endif
-      #ifdef CCONVERTADAGUCPOINT_DEBUG
+      #ifdef CCONVERTEPROFILE_DEBUG
       CDBDebug("Setting statistics: min/max : %f %f",min,max);
       #endif
       dataSource->statistics = new CDataSource::Statistics();
@@ -530,7 +527,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
   
   
   
-  #ifdef MEASURETIME
+  #ifdef CCONVERTEPROFILE_DEBUG
     StopWatch_Stop("Statistics set");
   #endif
 
@@ -564,7 +561,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
   if(mode==CNETCDFREADER_MODE_OPEN_ALL){
    
     
-    #ifdef CCONVERTADAGUCPOINT_DEBUG
+    #ifdef CCONVERTEPROFILE_DEBUG
     for(size_t d=0;d<nrDataObjects;d++){
       CDBDebug("Drawing %s",new2DVar[d]->name.c_str());
     }
@@ -598,7 +595,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
       ((double*)varY->data)[j]=y;
     }
     
-    #ifdef MEASURETIME
+    #ifdef CCONVERTEPROFILE_DEBUG
       StopWatch_Stop("Dimensions set");
     #endif
 
@@ -622,7 +619,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
     }
     
     
-    #ifdef MEASURETIME
+    #ifdef CCONVERTEPROFILE_DEBUG
       StopWatch_Stop("2D Field allocated");
     #endif
       
@@ -658,7 +655,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
     }
    
     
-    #ifdef CCONVERTADAGUCPOINT_DEBUG
+    #ifdef CCONVERTEPROFILE_DEBUG
     CDBDebug("Datasource CRS = %s nativeproj4 = %s",dataSource->nativeEPSG.c_str(),dataSource->nativeProj4.c_str());
     CDBDebug("Datasource bbox:%f %f %f %f",dataSource->srvParams->Geo->dfBBOX[0],dataSource->srvParams->Geo->dfBBOX[1],dataSource->srvParams->Geo->dfBBOX[2],dataSource->srvParams->Geo->dfBBOX[3]);
     CDBDebug("Datasource width height %d %d",dataSource->dWidth,dataSource->dHeight);
@@ -688,12 +685,12 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
     CTime obsTime;
     double *obsTimeData = NULL;
     CDF::Variable * timeVarPerObs =  cdfObject0->getVariableNE("time");
-    if(timeVarPerObs!= NULL){
-      if(timeVarPerObs->isDimension == false){
+      if(timeVarPerObs!= NULL){
+      //if(timeVarPerObs->isDimension == true){
         if(timeVarPerObs->dimensionlinks[0]->getSize(),pointVar[0]->dimensionlinks[0]->getSize()){
           CDF::Attribute* timeStringAttr = timeVarPerObs->getAttributeNE("units");
           if(timeStringAttr !=NULL){
-            if(timeStringAttr -> data != NULL){
+              if(timeStringAttr -> data != NULL){
               if(obsTime.init((const char*)timeStringAttr ->data)==0){
                 hasTimeValuePerObs = true;
                 timeVarPerObs->readData(CDF_DOUBLE,start,count,stride,true);
@@ -702,10 +699,10 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
             }
           }
         }
-      }
+      //}
     }
     
-    #ifdef MEASURETIME
+    #ifdef CCONVERTEPROFILE_DEBUG
     CDBDebug("Date numStations = %d",numStations);
     #endif
     
@@ -796,33 +793,33 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
             
           }
           
-          if(hasTimeValuePerObs&& lastPoint!=NULL){
-             
-            const char * key = timeVarPerObs->name.c_str();
-            const char * description = key;
-            try{
-              description = (const char*)timeVarPerObs->getAttribute("long_name")->data;
-            }catch(int e){
-            }
-            //obsTimeData
-             
-            lastPoint->paramList.push_back(CKeyValue(key,description ,obsTime.dateToISOString(obsTime.getDate(obsTimeData[pPoint])).c_str()));
-             
-          }
+//           if(hasTimeValuePerObs&& lastPoint!=NULL){
+//              
+//             const char * key = timeVarPerObs->name.c_str();
+//             const char * description = key;
+//             try{
+//               description = (const char*)timeVarPerObs->getAttribute("long_name")->data;
+//             }catch(int e){
+//             }
+//             //obsTimeData
+//              
+//             lastPoint->paramList.push_back(CKeyValue(key,description ,obsTime.dateToISOString(obsTime.getDate(obsTimeData[pPoint])).c_str()));
+//              
+//           }
           
         }
       }
     }
     
-    #ifdef MEASURETIME
+    #ifdef CCONVERTEPROFILE_DEBUG
       StopWatch_Stop("Points added");
     #endif
     imageWarper.closereproj();
    
   }
   
-  #ifdef CCONVERTADAGUCPOINT_DEBUG
-  CDBDebug("/convertADAGUCPointData");
+  #ifdef CCONVERTEPROFILE_DEBUG
+  CDBDebug("/convertEProfileData");
   #endif
   return 0;
 }
