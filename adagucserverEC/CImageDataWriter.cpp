@@ -260,6 +260,7 @@ CImageDataWriter::CImageDataWriter(){
 
 
 int CImageDataWriter::_setTransparencyAndBGColor(CServerParams *srvParam,CDrawImage* drawImage){
+//  CDBDebug("_setTransparencyAndBGColor");
   //drawImage->setTrueColor(true);
   //Set transparency
   if(srvParam->Transparent==true){
@@ -420,8 +421,8 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
     if(styleConfiguration->renderMethod&RM_RGBA){
     
       drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-      if(   srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
-      
+      if(srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
+        //CDBDebug("drawImage.create685Palette();");
         writerStatus=initialized;
         drawImage.createImage(40,20);
         drawImage.create685Palette();
@@ -459,6 +460,7 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   
   //Set background opacity, if applicable
   if(srvParam->wmsExtensions.opacity<100){
+    //CDBDebug("srvParam->wmsExtensions.opacity %d",srvParam->wmsExtensions.opacity);
     drawImage.setBackGroundAlpha((unsigned char )(float(srvParam->wmsExtensions.opacity)*2.55));
   }
   
@@ -564,11 +566,11 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
     return -1;
   }
   
-  if(_setTransparencyAndBGColor(srvParam,&drawImage)!=0){
-    CDBError("Unable to do setTransparencyAndBGColor");
-    return -1;
-  }
- 
+//   if(_setTransparencyAndBGColor(srvParam,&drawImage)!=0){
+//     CDBError("Unable to do setTransparencyAndBGColor");
+//     return -1;
+//   }
+//  
   //CStyleConfiguration *styleConfiguration = dataSource->getStyle();
 //   if(styleConfiguration->hasError){
 //     CDBError("Unable to configure style %s for layer %s\n",styleName.c_str(),dataSource->layerName.c_str());

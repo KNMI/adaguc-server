@@ -209,7 +209,7 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage)
     
     
     
-    float cbW = 12;//legendWidth/8;
+    float cbW = 16;//legendWidth/8;
     float triangleHeight = int(cbW/triangleShape);
     float cbH = legendHeight-13-13;
     int dH=0;
@@ -229,16 +229,19 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage)
     for(int j=0;j<cbH;j++){
       //for(int i=0;i<cbW+3;i++){
       float c=(float(cbH*legendPositiveUp-(j+1))/cbH)*240.0f;
+      for(int x=pLeft;x<pLeft+(int)cbW+1;x++){
+        legendImage->setPixelIndexed(x,j+7+dH+pTop,int(c));
+      }
       //legendImage->setPixelIndexed(i+pLeft,j+7+dH+pTop,int(c));
-      legendImage->line(pLeft,j+7+dH+pTop,pLeft+(int)cbW+1,j+7+dH+pTop,int(c));
+      //legendImage->line_noaa(pLeft,j+7+dH+pTop,pLeft+(int)cbW+1,j+7+dH+pTop,int(c));
       if(j==0)minColor = int(c);
       maxColor = int(c);
       // }
     }
     //legendImage->rectangle(pLeft,7+dH+pTop,(int)cbW+3+pLeft,(int)cbH+7+dH+pTop,248);
     
-    legendImage->line(pLeft,7+dH+pTop,pLeft,(int)cbH+7+dH+pTop,0.5,248);
-    legendImage->line((int)cbW+1+pLeft,7+dH+pTop,(int)cbW+1+pLeft,(int)cbH+7+dH+pTop,0.5,248);
+    legendImage->line(pLeft,6+dH+pTop,pLeft,(int)cbH+7+dH+pTop,0.8,248);
+    legendImage->line((int)cbW+1+pLeft,6+dH+pTop,(int)cbW+1+pLeft,(int)cbH+7+dH+pTop,0.8,248);
     
     
     
@@ -257,21 +260,27 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage)
       for(int j=0;j<(triangle1BY-triangle1TY)+1;j++){
         int dx=int((float(j)/float(triangle1BY-triangle1TY))*cbW/2.0);
         //int dx=int((float(j)/float((triangle2BY-triangle2TY)))*cbW/2.0);
-        legendImage->line(triangleLX+dx,triangle1BY-j,triangleRX-dx-0.5,triangle1BY-j,minColor);
+//         legendImage->line(triangleLX+dx,triangle1BY-j,triangleRX-dx-0.5,triangle1BY-j,minColor);
+        for(int x=triangleLX+dx;x<triangleRX-dx-0.5;x++){
+          legendImage->setPixelIndexed(x,triangle1BY-j,int(minColor));
+        }
       }
-      legendImage->line(triangleLX,triangle1BY,triangleMX,triangle1TY-1,0.6,248);
-      legendImage->line(triangleRX,triangle1BY,triangleMX,triangle1TY-1,0.6,248);
+      legendImage->line(triangleLX,triangle1BY,triangleMX,triangle1TY-1,0.8,248);
+      legendImage->line(triangleRX,triangle1BY,triangleMX,triangle1TY-1,0.8,248);
     }else{
-      legendImage->line(triangleLX,triangle1BY+1,triangleRX,triangle1BY+1,0.6,248);
+      legendImage->line(triangleLX,triangle1BY+1,triangleRX,triangle1BY+1,0.8,248);
     }
     
     if(drawLowerTriangle){
       //Draw lower triangle
       for(int j=0;j<(triangle2BY-triangle2TY)+1;j++){
         int dx=int((float(j)/float((triangle2BY-triangle2TY)))*cbW/2.0);
-        legendImage->line(triangleLX+dx+0.5,triangle2TY+j,triangleRX-dx-0.5,triangle2TY+j,maxColor);
+        //legendImage->line(triangleLX+dx+0.5,triangle2TY+j,triangleRX-dx-0.5,triangle2TY+j,maxColor);
+        for(int x=triangleLX+dx+0.5;x<triangleRX-dx-0.5;x++){
+          legendImage->setPixelIndexed(x,triangle2TY+j,int(maxColor));
+        }
       }
-      
+
       legendImage->line(triangleLX,triangle2TY,triangleMX,triangle2BY+1,0.6,248);
       legendImage->line(triangleRX,triangle2TY,triangleMX,triangle2BY+1,0.6,248);
     }else{
@@ -362,7 +371,11 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage)
     if(dataSource->getDataObject(0)->getUnits().length()>0){
       units.concat(dataSource->getDataObject(0)->getUnits().c_str());
     }
-    if(units.length()>0)legendImage->setText(units.c_str(),units.length(),2+pLeft,int(legendHeight)-14+pTop,248,-1);
+    if(units.length()==0){
+      units="-";
+    }
+      
+    legendImage->setText(units.c_str(),units.length(),2+pLeft,int(legendHeight)-14+pTop,248,-1);
     //legendImage->crop(2,2);    
     //return 0;
   }
@@ -578,6 +591,6 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage)
   CDBDebug("cropping");
   #endif
   
-  legendImage->crop(4);
+  legendImage->crop(5);
   return 0;
 } 

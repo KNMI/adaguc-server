@@ -95,6 +95,7 @@ CDrawImage::~CDrawImage(){
 }
 
 int CDrawImage::createImage(const char *fn){
+  //CDBDebug("CreateImage from file");
   _bEnableTrueColor=true;
   _bEnableTransparency=true;
 
@@ -107,12 +108,14 @@ int CDrawImage::createImage(const char *fn){
 }
 
 int CDrawImage::createImage(int _dW,int _dH){
+  //CDBDebug("CreateImage from WH");
   Geo->dWidth=_dW;
   Geo->dHeight=_dH;
   return createImage(Geo);
 }
 
 int CDrawImage::createImage(CGeoParams *_Geo){
+  //CDBDebug("CreateImage from GeoParams");
 #ifdef MEASURETIME
   StopWatch_Stop("start createImage of size %d %d, truecolor=[%d], transparency = [%d], currentGraphicsRenderer [%d]",_Geo->dWidth,_Geo->dHeight,_bEnableTrueColor,_bEnableTransparency,currentGraphicsRenderer);
 #endif  
@@ -1354,7 +1357,7 @@ int CDrawImage::clonePalette(CDrawImage *drawImage){
  * Creates a new image with the same settings but with different size as the source image
  */
 int CDrawImage::createImage(CDrawImage *image,int width,int height){
-  
+  //CDBDebug("CreateImage from image");
   #ifdef MEASURETIME
   CDBDebug("createImage(CDrawImage *image,int width,int height)");
 #endif
