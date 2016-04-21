@@ -566,7 +566,7 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
      
         CT::string productCornerString =(char *)geo->getAttribute("geo_product_corners")->toString().c_str();
     
-        CT::StackList<CT::string> coords=productCornerString.trimr().splitToStack(" ");
+        CT::StackList<CT::string> coords=productCornerString.trim().splitToStack(" ");
        
         if(coords.size()>6){
           iso_dataset->addAttribute(new CDF::Attribute("min-x",coords[0].c_str()));

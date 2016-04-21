@@ -135,7 +135,7 @@ private:
     int drawCascadedWMS(CDataSource *dataSource,const char *service,const char *layers,bool transparent, const char *bgcolor);
     
     
-    
+    bool isProfileData;
     
   public:
     CDrawImage drawImage;
