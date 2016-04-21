@@ -1,3 +1,5 @@
+#ifndef GenericDataWarper_H
+#define GenericDataWarper_H
 #include <math.h>
 #include <stdlib.h>
 #include <proj_api.h>
@@ -271,3 +273,4 @@ class GenericDataWarper{
     return 0;
   }
 };
+#endif
