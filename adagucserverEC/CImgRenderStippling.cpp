@@ -88,10 +88,10 @@ void CImgRenderStippling::render(CImageWarper *warper,CDataSource *dataSource,CD
   
   int oddeven=0;
   
-  for(size_t y=0;y<settings.height;y=y+24){
+  for(size_t y=0;y<settings.height;y=y+22){
     oddeven=1-oddeven;
-    for(size_t x1=0;x1<settings.width;x1=x1+24){
-      int x=(x1)+((oddeven)*12);
+    for(size_t x1=0;x1<settings.width;x1=x1+22){
+      int x=(x1)+((oddeven)*11);
       if(x>=0&&y>=0&&x<settings.width&&y<settings.height){
         float val = settings.dataField[x+y*settings.width];
         if(val != (float)settings.dfNodataValue && (val==val)){
@@ -105,7 +105,7 @@ void CImgRenderStippling::render(CImageWarper *warper,CDataSource *dataSource,CD
           int pcolorind=(int)(val*styleConfiguration->legendScale+styleConfiguration->legendOffset);
           if(pcolorind>=239)pcolorind=239;else if(pcolorind<=0)pcolorind=0;
           CColor c =drawImage->getColorForIndex(pcolorind);
-          drawImage->setDisc(x,y,10,c,c);
+          drawImage->setDisc(x,y,8,c,c);
         }
     }
     }
