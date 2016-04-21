@@ -35,6 +35,7 @@
 #include "CImgWarpBilinear.h"
 #include "CImgWarpBoolean.h"
 #include "CImgRenderPoints.h"
+#include "CImgRenderStippling.h"
 #include "CStyleConfiguration.h"
 #include "CMyCURL.h"
 #include "CXMLParser.h"

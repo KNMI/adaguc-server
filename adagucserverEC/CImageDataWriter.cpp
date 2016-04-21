@@ -1292,17 +1292,6 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   /**
   * Use bilinear renderer
   */
-  /*if(renderMethod==nearestcontour||
-    renderMethod==bilinear||
-    renderMethod==bilinearcontour||
-    renderMethod==contour||
-    renderMethod==shaded||
-    renderMethod==shadedcontour||
-    renderMethod==vector||renderMethod==vectorshaded||renderMethod==vectorcontour||renderMethod==vectorcontourshaded||
-    renderMethod==barb||renderMethod==barbshaded||renderMethod==barbcontour||renderMethod==barbcontourshaded||
-    renderMethod==thinvector||renderMethod==thinvectorshaded||renderMethod==thinvectorcontour||renderMethod==thinvectorcontourshaded||
-    renderMethod==thinbarb||renderMethod==thinbarbshaded||renderMethod==thinbarbcontour||renderMethod==thinbarbcontourshaded
-    )*/
   if(renderMethod&RM_CONTOUR||renderMethod&RM_BILINEAR||renderMethod&RM_SHADED||renderMethod&RM_VECTOR||renderMethod&RM_BARB||renderMethod&RM_THIN)  {
     if(dataSource->getDataObject(0)->points.size()==0){
       imageWarperRenderer = new CImgWarpBilinear();
@@ -1322,25 +1311,6 @@ if(renderMethod==contour){CDBDebug("contour");}*/
       if(renderMethod&RM_THIN)drawGridVectors=true;
       
       
-      
-      
-      /*if(renderMethod==bilinear||renderMethod==bilinearcontour)drawMap=true;
-      if(renderMethod==bilinearcontour)drawContour=true;
-      if(renderMethod==nearestcontour)drawContour=true;
-      if(renderMethod==contour||renderMethod==shadedcontour||renderMethod==vectorcontour||renderMethod==vectorcontourshaded)drawContour=true;
-      if(renderMethod==vector||renderMethod==vectorcontour||renderMethod==vectorshaded||renderMethod==vectorcontourshaded)drawVector=true;
-      if(renderMethod==thinvector||renderMethod==thinvectorcontour||renderMethod==thinvectorshaded||renderMethod==thinvectorcontourshaded){ drawVector=true;drawGridVectors=true;}
-      if(renderMethod==thinbarb||renderMethod==thinbarbcontour||renderMethod==thinbarbshaded||renderMethod==thinbarbcontourshaded) {drawBarb=true; drawGridVectors=true;}
-      if(renderMethod==thinbarbcontour||renderMethod==thinbarbcontourshaded) {drawContour=true;}
-      if(renderMethod==shaded||renderMethod==shadedcontour||renderMethod==vectorcontourshaded||renderMethod==barbcontourshaded)drawShaded=true;
-      if(renderMethod==vectorshaded||renderMethod==thinvectorshaded||renderMethod==thinvectorcontourshaded)drawShaded=true;
-      if(renderMethod==barbshaded||renderMethod==thinbarbshaded||renderMethod==thinbarbcontourshaded)drawShaded=true;
-      if(renderMethod==barbcontour) { drawContour=true; drawBarb=true; }
-      if(renderMethod==vectorcontour) { drawContour=true; drawVector=true; }
-      if(renderMethod==vectorcontourshaded||renderMethod==thinvectorcontourshaded) { drawShaded=true; drawContour=true; drawVector=true; }
-      if(renderMethod==vectorcontour||renderMethod==thinvectorcontour) { drawVector=true; drawContour=true;}
-      if(renderMethod==barbcontourshaded||renderMethod==thinbarbcontourshaded) { drawShaded=true; drawContour=true; drawBarb=true; }
-      if((renderMethod==barb)||(renderMethod==barbshaded)) drawBarb=true;*/
       
       
       if(drawMap==true)bilinearSettings.printconcat("drawMap=true;");
@@ -1407,12 +1377,19 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   }
   
   /**
+   * Use stippling renderer
+   */
+  if(renderMethod&RM_STIPPLING){
+    imageWarperRenderer = new CImgRenderStippling();
+    imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
+    delete imageWarperRenderer;
+  }
+  
+  /**
   * Use point renderer
   */
-  //if(renderMethod==barb||renderMethod==vector||renderMethod==point){
-  if(renderMethod&RM_BARB||renderMethod&RM_VECTOR||renderMethod&RM_POINT||renderMethod&RM_VOLUME||renderMethod&RM_DISC){//||renderMethod==RM_NEAREST){
+  if(renderMethod&RM_BARB||renderMethod&RM_VECTOR||renderMethod&RM_POINT){
     if(dataSource->getDataObject(0)->points.size()!=0){
-      //CDBDebug("CImgRenderPoints()");
       
       imageWarperRenderer = new CImgRenderPoints();
       CT::string renderMethodAsString;
