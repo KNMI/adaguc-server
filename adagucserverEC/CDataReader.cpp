@@ -336,13 +336,14 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y){
   /*  LEVEL 2 ASCAT COMPAT MODE!*/
   /**************************************************************************************************/
   dataSource->level2CompatMode = false;
+  if(!dataSource->level2CompatMode)if(CConvertEProfile::convertEProfileData(dataSource,mode)==0)dataSource->level2CompatMode=true;     
   if(!dataSource->level2CompatMode)if(CConvertASCAT::convertASCATData(dataSource,mode)==0)dataSource->level2CompatMode=true;
   if(!dataSource->level2CompatMode)if(CConvertUGRIDMesh::convertUGRIDMeshData(dataSource,mode)==0)dataSource->level2CompatMode=true;
   if(!dataSource->level2CompatMode)if(CConvertADAGUCVector::convertADAGUCVectorData(dataSource,mode)==0)dataSource->level2CompatMode=true;
   if(!dataSource->level2CompatMode)if(CConvertADAGUCPoint::convertADAGUCPointData(dataSource,mode)==0)dataSource->level2CompatMode=true;
   if(!dataSource->level2CompatMode)if(CConvertCurvilinear::convertCurvilinearData(dataSource,mode)==0)dataSource->level2CompatMode=true;
   if(!dataSource->level2CompatMode)if(CConvertHexagon::convertHexagonData(dataSource,mode)==0)dataSource->level2CompatMode=true;
-  if(!dataSource->level2CompatMode)if(CConvertEProfile::convertEProfileData(dataSource,mode)==0)dataSource->level2CompatMode=true;     
+  
 //   if(dataSource->level2CompatMode){
 //    cache->removeClaimedCachefile();
 //   }
