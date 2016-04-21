@@ -26,7 +26,7 @@
 #include "CConvertEProfile.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
-//#define CCONVERTEPROFILE_DEBUG
+#define CCONVERTEPROFILE_DEBUG
 // #define CCONVERTEPROFILE_DEBUG
 const char *CConvertEProfile::className="CConvertEProfile";
 
@@ -90,7 +90,7 @@ int CConvertEProfile::convertEProfileHeader( CDFObject *cdfObject,CServerParams 
   #ifdef CCONVERTEPROFILE_DEBUG
     StopWatch_Stop("MIN/MAX Calculated");
   #endif
-  double dfBBOX[]={lonMinMax.min,latMinMax.min,lonMinMax.max,latMinMax.max};
+  double dfBBOX[]={lonMinMax.min-0.5,latMinMax.min-0.5,lonMinMax.max+0.5,latMinMax.max+0.5};
   //double dfBBOX[]={-180,-90,180,90};
   //CDBDebug("Datasource dfBBOX:%f %f %f %f",dfBBOX[0],dfBBOX[1],dfBBOX[2],dfBBOX[3]);
   
@@ -200,7 +200,7 @@ int CConvertEProfile::convertEProfileHeader( CDFObject *cdfObject,CServerParams 
   for(size_t v=0;v<cdfObject->variables.size();v++){
     CDF::Variable *var = cdfObject->variables[v];
     if(var->isDimension==false){
-      //if(var->getType()!=CDF_STRING)
+      if(var->getType()!=CDF_STRING)
       {
         if(!var->name.equals("time2D")&&
           !var->name.equals("time")&&
@@ -219,7 +219,19 @@ int CConvertEProfile::convertEProfileHeader( CDFObject *cdfObject,CServerParams 
           !var->name.equals("iso_dataset")&&
           !var->name.equals("tile_properties")
         ){
-          varsToConvert.add(CT::string(var->name.c_str()));
+          bool added = false;
+          if(var->dimensionlinks.size()==2){
+            if(var->dimensionlinks[0]->getSize()>100){
+            if(var->dimensionlinks[1]->getSize()>100){
+              varsToConvert.add(CT::string(var->name.c_str()));
+              added=true;
+            }
+            }
+            
+          }
+          if(added == false){
+            var->setAttributeText("ADAGUC_SKIP","true");
+          }
         }
         if(var->name.equals("projection")){
           var->setAttributeText("ADAGUC_SKIP","true");
