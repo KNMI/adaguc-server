@@ -17,8 +17,16 @@
 class CMakeEProfile{
 public:
    DEF_ERRORFUNCTION();
-   
-  static int MakeEProfile(CDrawImage *drawImage,CImageWarper *imageWarper,std::vector<CDataSource *>dataSources,int dataSourceIndex,int dX,int dY,CXMLParser::XMLElement *gfiStructure);
+  class DayPass{
+  public:
+    DayPass(int x,double offset){
+      this->x = x;
+      this->offset=offset;
+    };
+    double offset;
+    int x;
+  };
+  static int MakeEProfile(CDrawImage *drawImage,CImageWarper *imageWarper,std::vector<CDataSource *>dataSources,int dataSourceIndex,int dX,int dY);
 };
 
 

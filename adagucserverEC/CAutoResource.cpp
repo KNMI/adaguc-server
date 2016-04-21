@@ -307,7 +307,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
     for(size_t v=0;v<variables.size();v++){
       int dirLoc=variables[v].indexOf("_dir");
       if(dirLoc>0){
-        detectStrings.push_back(variables[v].substringr(0,dirLoc));
+        detectStrings.push_back(variables[v].substring(0,dirLoc));
       }
     }
     

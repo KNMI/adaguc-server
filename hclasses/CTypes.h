@@ -23,7 +23,7 @@
  * 
  ******************************************************************************/
 #define CTYPES_USESTACK true
-#define CTSTRINGSTACKLENGTH 62
+#define CTSTRINGSTACKLENGTH 126
 //#define CTSTRINGSTACKLENGTH 0
 
 #ifndef CTypes_H
@@ -40,10 +40,10 @@
 #define END NULL
 
 #ifndef CTYPESCOMPATON
-#define toLowerCaser toLowerCase
-#define replacer replace
-#define trimr trim
-#define substringr substring
+
+
+
+
 #endif 
 
 #include "CTBaseType.h"

@@ -633,14 +633,14 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
   #endif
   // Create a new getFeatureInfoResult object and push it into the vector.
   int status = 0;
-  
+  isProfileData=false;
   for(size_t d=0;d<dataSources.size();d++){
     
     GetFeatureInfoResult  *getFeatureInfoResult = new GetFeatureInfoResult();
     getFeatureInfoResultList.push_back(getFeatureInfoResult);
      bool headerIsAvailable = false;
     bool openAll = false;
-    bool isProfileData = false;
+
     bool everythingIsInBBOX = true;
     CDataReader reader;
     reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_HEADER); 
@@ -663,7 +663,9 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
           openAll =true;
         }  
         if(dataSources[d]->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_PROFILE")!=NULL){
-          isProfileData =true;
+          if(!srvParam->InfoFormat.equals("application/json")){
+            isProfileData =true;
+          }
         }  
       }
     }
@@ -682,11 +684,18 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
     CDBDebug("isProfileData:[%d] openAll:[%d] infoFormat:[%s]",isProfileData,openAll,srvParam->InfoFormat.c_str());
     
     if(isProfileData){
-      int status = CMakeEProfile::MakeEProfile(&drawImage,&imageWarper,dataSources, d,dX,dY,&gfiStructure);
-      if(status != 0){
-        CDBError("CMakeEProfile::MakeEProfile failed");
-        return status;
-      }      
+      if(srvParam->InfoFormat.equals("image/png")){
+        int status = CMakeEProfile::MakeEProfile(&drawImage,&imageWarper,dataSources, d,dX,dY);
+        if(status != 0){
+          CDBError("CMakeEProfile::MakeEProfile failed");
+          return status;
+        }      
+        CDBDebug("CMakeEProfile::MakeEProfile done");
+      }else{
+        printf("%s%c%c\n","Content-Type:text/plain",13,10);
+        printf("Not supported yet");
+        return 0;
+      }
     }else if(openAll == false&&srvParam->InfoFormat.equals("application/json")){
       int status = CMakeJSONTimeSeries::MakeJSONTimeSeries(&drawImage,&imageWarper,dataSources, d,dX,dY,&gfiStructure);
       if(status != 0){
@@ -2020,7 +2029,7 @@ int CImageDataWriter::end(){
     #ifdef CIMAGEDATAWRITER_DEBUG    
       CDBDebug("end, number of GF results: %d",getFeatureInfoResultList.size());
     #endif
-    enum ResultFormats {textplain,texthtml,textxml, applicationvndogcgml,imagepng,imagegif,json};
+    enum ResultFormats {textplain,texthtml,textxml, applicationvndogcgml,imagepng,imagegif,json,imagepng_eprofile};
     ResultFormats resultFormat=texthtml;
     
     if(srvParam->InfoFormat.equals("text/plain"))resultFormat=textplain;
@@ -2029,6 +2038,17 @@ int CImageDataWriter::end(){
     if(srvParam->InfoFormat.equals("image/gif"))resultFormat=imagegif;
     
     if(srvParam->InfoFormat.equals("application/vnd.ogc.gml"))resultFormat=applicationvndogcgml;
+    
+    if(isProfileData){
+      resultFormat=imagepng_eprofile;
+
+    
+      printf("%s%c%c\n","Content-Type:image/png",13,10);
+      drawImage.printImagePng8();
+    
+      return 0;
+    }
+    
     
     if(srvParam->InfoFormat.indexOf("application/json")!=-1){
       
@@ -2183,7 +2203,7 @@ int CImageDataWriter::end(){
       
       
       printf("%s",resultHTML.c_str());
-    }
+    }/*End of text html */
  
     /* Text XML */
     if(resultFormat==applicationvndogcgml){
@@ -2269,7 +2289,7 @@ int CImageDataWriter::end(){
       resultXML.printconcat(" </FeatureCollection>\n");
       resetErrors();
       printf("%s",resultXML.c_str());
-    }
+    }/* End of applicationvndogcgml */
     
    if(resultFormat==textxml){
       CDBDebug("CREATING XML");
@@ -2345,7 +2365,7 @@ int CImageDataWriter::end(){
       resetErrors();
       printf("%s",resultXML.c_str());
       
-    }
+    }/* End of text/xml */
 
     if (resultFormat==json) {
       CT::string resultJSON;
@@ -2496,7 +2516,7 @@ int CImageDataWriter::end(){
         printf("%s", resultJSON.c_str());
       }
 
-    }
+    } /* End of json */
     
     /*************************************************************************************************************************************/
     /* image/png image/png image/png image/png image/png image/png image/png image/png image/png image/png image/png image/png image/png */
@@ -3031,6 +3051,7 @@ int CImageDataWriter::end(){
       title.print("%s till %s",startDateString.c_str(),stopDateString.c_str());
       plotCanvas.drawText(int(plotWidth/2-float(title.length())*2.5),int(height-5),fontLocation,8,0,title.c_str(),CColor(0,0,0,255),CColor(255,255,255,0));
         plotCanvas.draw(int(plotOffsetX), int(plotOffsetY),0,0,&lineCanvas);
+
       if(resultFormat==imagepng){
         printf("%s%c%c\n","Content-Type:image/png",13,10);
         plotCanvas.printImagePng8();
@@ -3045,12 +3066,12 @@ int CImageDataWriter::end(){
     
       for(size_t j=0;j<plotObjects.size();j++)delete plotObjects[j];plotObjects.clear();
       //CDBDebug("Done!");
-    }
+    }/* End of imagepng */
     
     
     
     for(size_t j=0;j<getFeatureInfoResultList.size();j++){delete getFeatureInfoResultList[j];getFeatureInfoResultList[j]=NULL; } getFeatureInfoResultList.clear();
-  }
+  }/* End of getfeatureInfo */
   if(srvParam->requestType!=REQUEST_WMS_GETMAP&&srvParam->requestType!=REQUEST_WMS_GETLEGENDGRAPHIC)return 0;
   
   

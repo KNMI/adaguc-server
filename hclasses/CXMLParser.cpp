@@ -169,7 +169,7 @@ void CXMLParser::XMLElement::parse_element_names(void *_a_node,int depth){
 CT::string CXMLParser::XMLElement::toXML(XMLElement el,int depth){
   CT::string data = "";
   bool hasValue=false;
-  if(el.getValue().replacer("\n","").trimr().length()>0){
+  if(el.getValue().replace("\n","").trim().length()>0){
     hasValue=true;
   }
 
@@ -236,7 +236,7 @@ CT::string CXMLParser::XMLElement::toJSON(XMLElement el,int depth,int mode){
         data+= "\"";data+=el.xmlElements[j].name.c_str();data+= "\"";
         data+=":[";
         for(size_t i=0;i<els.size();i++){
-          CT::string value = els[i]->getValue().replacer("\n","").trimr();
+          CT::string value = els[i]->getValue().replace("\n","").trim();
           CT::string subdata = toJSON(*(els[i]),depth++,mode);;
           if(subdata.length()>0){
             if(i>0)data+=",";
@@ -260,7 +260,7 @@ CT::string CXMLParser::XMLElement::toJSON(XMLElement el,int depth,int mode){
         bool hasValues = false;
         CT::string value = el.xmlElements[j].value;
         if(value.length()>0){
-          value=value.replacer("\n","").trimr();
+          value=value.replace("\n","").trim();
           if(value.length()>0){
             hasValues = true;
           }

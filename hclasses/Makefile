@@ -7,7 +7,7 @@ endif
 
 CCOMPILER=g++ $(ADAGUCCOMPILERSETTINGS) -I $(INCLUDEDIR)
 
-OBJECTS =  CTypes.o CXMLParser.o CDebugger.o CDirReader.o
+OBJECTS =  CTypes.o CTString.o CXMLParser.o CDebugger.o CDirReader.o
 
 EXECUTABLE= hclasses
 

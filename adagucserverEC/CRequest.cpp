@@ -309,8 +309,8 @@ int CRequest::generateGetReferenceTimesDoc(CT::string *result,CDataSource *dataS
       CT::string groupName;
       dataSource->srvParams->makeLayerGroupName(&groupName,dataSource->srvParams->cfg->Layer[j]);
       if (groupName.testRegEx("[[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]][[:digit:]]_[[:digit:]][[:digit:]]")) {
-        CT::string ymd=groupName.substringr(0,8);
-        CT::string hh=groupName.substringr(9,11);
+        CT::string ymd=groupName.substring(0,8);
+        CT::string hh=groupName.substring(9,11);
         ymd.concat(hh);
         ymd.concat("00");
         WMSGroups.insert(ymd.c_str());
@@ -1930,7 +1930,7 @@ int CRequest::process_querystring(){
 
     if(equalPos!=-1){
       
-      values[0] = parameters[j].substringr(0,equalPos);
+      values[0] = parameters[j].substring(0,equalPos);
       values[1] = parameters[j].c_str()+equalPos+1;
       values[0].count = 2;
     }else{

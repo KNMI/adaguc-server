@@ -35,22 +35,24 @@ const char *CConvertEProfile::className="CConvertEProfile";
  * This function adjusts the cdfObject by creating virtual 2D variables
  */
 int CConvertEProfile::convertEProfileHeader( CDFObject *cdfObject,CServerParams *srvParams){
-  //Check whether this is really an adaguc file
-  
-  /*TODO TODO TODO TODO TODO */
-  return 1;  
-
-
-
-
+  //Check whether this is really a profile file
   try{
     cdfObject->getVariable("range");
     cdfObject->getDimension("range");
+
+    if( cdfObject->getAttribute("source")->toString().startsWith("CHM")==false){
+      return 1;
+    }
+    if( cdfObject->getAttribute("serlom")->toString().startsWith("TUB")==false){
+      return 1;
+    }
+    
   }catch(int e){
     return 1;
   }
   CDBDebug("Using CConvertEProfile.h");
-
+  
+  cdfObject->setAttributeText("ADAGUC_PROFILE","true");
   
  
   //Standard bounding box of adaguc data is worldwide
@@ -146,6 +148,49 @@ int CConvertEProfile::convertEProfileHeader( CDFObject *cdfObject,CServerParams 
     }
   }
   
+  CDF::Variable *timev = cdfObject->getVariable("time");
+  CDF::Dimension *timed = cdfObject->getDimension("time");
+  
+  timev->name="time_obs";
+  timed->name="time_obs";
+  
+   
+  timev->readData(CDF_DOUBLE);
+  double*timeData=((double*)timev->data);
+  
+  
+  CDF::Dimension *dimT=new CDF::Dimension();
+  dimT->name="time";
+  dimT->setSize(timev->getSize()/25);
+  cdfObject->addDimension(dimT);
+  CDF::Variable * varT = new CDF::Variable();
+  varT->setType(CDF_DOUBLE);
+  varT->name.copy("time");
+  varT->setAttributeText("standard_name","time");
+  varT->setAttributeText("units",timev->getAttribute("units")->toString().c_str());
+  varT->isDimension=true;
+  varT->dimensionlinks.push_back(dimT);
+  cdfObject->addVariable(varT);
+  CDF::allocateData(CDF_DOUBLE,&varT->data,dimT->length);
+  
+  //The startdate of the file will be used in time_file
+  CTime obsTime;
+/*
+  CDF::Attribute* timeStringAttr = timeData->getAttributeNE("units");
+  if(timeStringAttr ==NULL){
+    CDBError("No time units provided");
+    return 1;
+  }
+  */
+//       if(obsTime.init((const char*)timeStringAttr ->data)==0){
+// 
+//   CT::string CTime::quantizeTimeToISO8601(CT::string value, CT::string period, CT::string method) {
+ 
+  for(size_t j=0;j<timev->getSize()/25;j++){
+    ((double*)varT->data)[j]=timeData[j*25];
+  }
+  
+  
   #ifdef CCONVERTEPROFILE_DEBUG
     StopWatch_Stop("2D Coordinate dimensions created");
   #endif
@@ -194,10 +239,12 @@ int CConvertEProfile::convertEProfileHeader( CDFObject *cdfObject,CServerParams 
     CDF::Variable *new2DVar = new CDF::Variable();
     cdfObject->addVariable(new2DVar);
    
+
+   
     
     //Assign X,Y,T dims 
     if(pointVar->dimensionlinks.size() >=2){
-         new2DVar->dimensionlinks.push_back( pointVar->dimensionlinks[0]);//time
+         new2DVar->dimensionlinks.push_back( dimT);//pointVar->dimensionlinks[0]);//time
          //new2DVar->dimensionlinks.push_back( pointVar->dimensionlinks[1]);//range
     }
     
@@ -276,14 +323,21 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource,int mode){
   #ifdef CCONVERTEPROFILE_DEBUG
   CDBDebug("convertEProfileData");
   #endif
-  /*TODO TODO TODO TODO TODO */
-  return 1;
-  
+
+ 
   
   CDFObject *cdfObject0 = dataSource->getDataObject(0)->cdfObject;
   try{
     cdfObject0->getVariable("range");
     cdfObject0->getDimension("range");
+    
+    if( cdfObject0->getAttribute("source")->toString().startsWith("CHM")==false){
+      return 1;
+    }
+    if( cdfObject0->getAttribute("serlom")->toString().startsWith("TUB")==false){
+      return 1;
+    }
+
   }catch(int e){
     return 1;
   }
