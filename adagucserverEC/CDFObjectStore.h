@@ -32,6 +32,7 @@
 #include "CCDFDataModel.h"
 #include "CCDFNetCDFIO.h"
 #include "CCDFHDF5IO.h"
+#include "CCDFGeoJSONIO.h"
 #include "CCache.h"
 
 //Datasource can share multiple cdfObjects

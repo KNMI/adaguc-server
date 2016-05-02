@@ -7,7 +7,7 @@ CCDFDATAMODELOBJ = $(CCDFDATAMODEL)/CCDFDataModel.a
 INCLUDEDIR= $(CPPFLAGS) -I $(HELPERCLASSES) -I $(CCDFDATAMODEL) -I/usr/include/libxml2/  -I/usr/include/udunits2/ -I/usr/include/freetype2/ -I/usr/include/freetype2/freetype/ -I/usr/include/postgresql/ -I/usr/include/cairo/ -I/usr/include/gdal/
 
 ifndef ADAGUCCOMPILERSETTINGS
-  ADAGUCCOMPILERSETTINGS=-Wall -DMEMLEAKCHECK
+  ADAGUCCOMPILERSETTINGS=-Wall -DMEMLEAKCHECK -g
 endif
 
 ifndef ADAGUCCOMPONENTS
@@ -56,21 +56,27 @@ USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lxml2 -lgd -lproj  -ludunits2 -lfreetype -l
 LIBS = $(USERLIBS) $(LDFLAGS) -L$(INSTALLDIR2)/lib -L/usr/lib/x86_64-linux-gnu/hdf5/serial/
 #-L/usr/lib64
 
-OBJECTS = CDataReader.o COGCDims.o CImageWarper.o CGeoParams.o CCairoPlotter.o CDrawImage.o CServerError.o CRequest.o  CXMLGen.o CServerParams.o CGDALDataWriter.o CImageDataWriter.o CXMLSerializerInterface.o CDataSource.o CStopWatch.o CImgWarpBilinear.o CImgWarpBoolean.o CImgWarpNearestNeighbour.o CGenericDataWarper.o CImgWarpNearestRGBA.o CPGSQLDB.o CDBFileScanner.o CDFObjectStore.o CFillTriangle.o CConvertASCAT.o CConvertUGRIDMesh.o CConvertADAGUCVector.o CConvertADAGUCPoint.o CImgRenderPoints.o CConvertCurvilinear.o CConvertHexagon.o CInspire.o CGetFileInfo.o CStyleConfiguration.o CMakeJSONTimeSeries.o COpenDAPHandler.o CDataPostProcessor.o CDBFactory.o CDBAdapterPostgreSQL.o CAutoResource.o CDBAdapterSQLLite.o CDBAdapterMongoDB.o COctTreeColorQuantizer.o CCreateLegend.o CCreateHistogram.o CNetCDFDataWriter.o 
+OBJECTS = CDataReader.o COGCDims.o CImageWarper.o CGeoParams.o CCairoPlotter.o CDrawImage.o CServerError.o CRequest.o  CXMLGen.o CServerParams.o CGDALDataWriter.o CImageDataWriter.o CXMLSerializerInterface.o CDataSource.o CStopWatch.o CImgWarpBilinear.o CImgWarpBoolean.o CImgWarpNearestNeighbour.o CGenericDataWarper.o CImgWarpNearestRGBA.o CPGSQLDB.o CDBFileScanner.o CDFObjectStore.o CFillTriangle.o CConvertASCAT.o CConvertUGRIDMesh.o CConvertADAGUCVector.o CConvertADAGUCPoint.o CImgRenderPoints.o CConvertCurvilinear.o CConvertHexagon.o CInspire.o CGetFileInfo.o CStyleConfiguration.o CMakeJSONTimeSeries.o COpenDAPHandler.o CDataPostProcessor.o CDBFactory.o CDBAdapterPostgreSQL.o CAutoResource.o CDBAdapterSQLLite.o CDBAdapterMongoDB.o COctTreeColorQuantizer.o CCreateLegend.o CCreateHistogram.o CNetCDFDataWriter.o CConvertGeoJSON.o json.o
 
 EXECUTABLE= adagucserver
 
 default: $(EXECUTABLE)
-$(EXECUTABLE): $(OBJECTS) $(EXECUTABLE).o h5ncdump.o aggregate_time.o
+$(EXECUTABLE): $(OBJECTS) $(EXECUTABLE).o h5ncdump.o aggregate_time.o geojsondump.o 
 	g++ $(EXECUTABLE).o $(OBJECTS) $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  $(EXECUTABLE) $(LIBS)
 	g++ "h5ncdump.o" $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  "h5ncdump" $(LIBS)
 	g++ "aggregate_time.o" $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  "aggregate_time" $(LIBS)
-
+	g++ "geojsondump.o"  $(OBJECTS) $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  "geojsondump" $(LIBS)
+	
+	
+geojsondump: geojsondump.o 
+	g++ "geojsondump.o" $(CCDFDATAMODELOBJ) $(HELPOBJECTS) -o  "geojsondump" $(LIBS)
+	
+	
 %.o: %.cpp
 	$(CCOMPILER) -c $< -o $@ $(ADAGUCCOMPONENTS)
 
 clean:
-	rm $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE).o h5ncdump.o h5ncdump aggregate_time.o aggregate_time
+	rm $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE).o h5ncdump.o h5ncdump aggregate_time.o aggregate_time geojsondump.o  geojsondump
 run:
 	make
 	./$(EXECUTABLE)		

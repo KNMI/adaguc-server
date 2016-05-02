@@ -31,8 +31,9 @@ const char *CDFObjectStore::className="CDFObjectStore";
 #include "CConvertADAGUCPoint.h"
 #include "CConvertCurvilinear.h"
 #include "CConvertHexagon.h"
+#include "CConvertGeoJSON.h"
 #include "CDataReader.h"
-//#define CDFOBJECTSTORE_DEBUG
+#define CDFOBJECTSTORE_DEBUG
 #define MAX_OPEN_FILES 20
 extern CDFObjectStore cdfObjectStore;
 CDFObjectStore cdfObjectStore;
@@ -56,6 +57,12 @@ CDFReader *CDFObjectStore::getCDFReader(CDataSource *dataSource,const char *file
         cdfReader = new CDFHDF5Reader();
         CDFHDF5Reader * hdf5Reader = (CDFHDF5Reader*)cdfReader;
         hdf5Reader->enableKNMIHDF5toCFConversion();
+      } else if(dataSource->cfgLayer->DataReader[0]->value.equals("GEOJSON")){
+        #ifdef CDFOBJECTSTORE_DEBUG
+        CDBDebug("Creating GEOJSON reader");
+        #endif
+        cdfReader = new CDFGeoJSONReader();
+ //       CDFGeoJSONReader * geoJSONReader = (CDFGeoJSONReader*)cdfReader;
       }
     }else{
       cdfReader=getCDFReader(fileName);
@@ -112,6 +119,28 @@ CDFReader *CDFObjectStore::getCDFReader(const char *fileName){
             CDBDebug("Creating HDF reader");
           }
           cdfReader = new CDFHDF5Reader();
+        }
+      }
+    }
+    if(cdfReader==NULL){
+      a=name.indexOf(".json");
+      if(a!=-1){
+        if(a==int(name.length())-5){
+          if(EXTRACT_HDF_NC_VERBOSE){
+            CDBDebug("Creating GeoJSON reader");
+          }
+          cdfReader = new CDFGeoJSONReader();
+        }
+      }
+    }
+    if(cdfReader==NULL){
+      a=name.indexOf(".geojson");
+      if(a!=-1){
+        if(a==int(name.length())-8){
+          if(EXTRACT_HDF_NC_VERBOSE){
+            CDBDebug("Creating GeoJSON reader");
+          }
+          cdfReader = new CDFGeoJSONReader();
         }
       }
     }
@@ -273,6 +302,8 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *s
     if(!level2CompatMode)if(CConvertCurvilinear::convertCurvilinearHeader(cdfObject,srvParams)==0){level2CompatMode=true;};
     
     if(!level2CompatMode)if(CConvertHexagon::convertHexagonHeader(cdfObject,srvParams)==0){level2CompatMode=true;};
+    
+    if(!level2CompatMode)if(CConvertGeoJSON::convertGeoJSONHeader(cdfObject)==0){level2CompatMode=true;};
   }
   
   return cdfObject;

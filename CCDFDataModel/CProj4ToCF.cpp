@@ -205,6 +205,27 @@ void CProj4ToCF::initLCCPerspective(CDF::Variable *projectionVariable, std::vect
   }
 }
 
+void CProj4ToCF::initLAEAPerspective(CDF::Variable *projectionVariable, std::vector <CProj4ToCF::KVP*> projKVPList){
+  //+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0");
+  /*add("proj","grid_mapping_name",CDF_CHAR,"lambert_azimuthal_equal_area");
+  add("lat_0","latitude_of_projection_origin",CDF_FLOAT,"90.0");
+  add("lon_0","longitude_of_central_meridian",CDF_FLOAT,"0.0");
+  add("x","false_easting",CDF_FLOAT,"0");
+  add("y","false_northing",CDF_FLOAT,"0");
+  add("a","semi_minor_axis",CDF_FLOAT,"6378.1370",CProj4ToCF::convertToM);
+  add("b","semi_major_axis",CDF_FLOAT,"6356.7523",CProj4ToCF::convertToM);*/
+  projectionVariable->removeAttributes();
+  float v = 0;
+  projectionVariable->addAttribute(new CDF::Attribute("grid_mapping_name","lambert_azimuthal_equal_area"));
+  v=getProj4ValueF("lat_0"  ,projKVPList,46.8);            projectionVariable->addAttribute(new CDF::Attribute("latitude_of_projection_origin"         ,CDF_FLOAT,&v,1));
+  v=getProj4ValueF("lon_0"  ,projKVPList,2.337229);        projectionVariable->addAttribute(new CDF::Attribute("longitude_of_central_meridian" ,CDF_FLOAT,&v,1));
+  v=getProj4ValueF("x_0"      ,projKVPList,0);                        projectionVariable->addAttribute(new CDF::Attribute("false_easting"                         ,CDF_FLOAT,&v,1));
+  v=getProj4ValueF("y_0"      ,projKVPList,0);                        projectionVariable->addAttribute(new CDF::Attribute("false_northing"                        ,CDF_FLOAT,&v,1));
+  v=getProj4ValueF("a"      ,projKVPList,6378140.0,CProj4ToCF::convertToM);     projectionVariable->addAttribute(new CDF::Attribute("semi_major_axis"                       ,CDF_FLOAT,&v,1));
+  v=getProj4ValueF("b"      ,projKVPList,6356755.5,CProj4ToCF::convertToM);     projectionVariable->addAttribute(new CDF::Attribute("semi_minor_axis"                        ,CDF_FLOAT,&v,1));
+  v=getProj4ValueF("pm"     ,projKVPList,0);               projectionVariable->addAttribute(new CDF::Attribute("longitude_of_prime_meridian", CDF_FLOAT, &v, 1));
+}
+
 void CProj4ToCF::initRPPerspective(CDF::Variable *projectionVariable, std::vector <CProj4ToCF::KVP*> projKVPList){
   //+proj=ob_tran +o_proj=longlat +lon_0=15 +o_lat_p=47 +o_lon_p=0 +a=6378.140 +b=6356.750 +x_0=0 +y_0=0 +no_defs
   //try{projectionVariable->getAttribute("grid_north_pole_latitude")->getDataAsString(&grid_north_pole_latitude);}catch(int e){};
@@ -341,6 +362,7 @@ int CProj4ToCF::convertProjToCF( CDF::Variable *projectionVariable, const char *
         if(projKVPList[j]->value.equals("sterea")){  initObliqueStereographicPerspective(projectionVariable,projKVPList);foundProj=1;}
         if(projKVPList[j]->value.equals("latitude_longitude")){  initLatitudeLongitude(projectionVariable,projKVPList);foundProj=1;}
         if(projKVPList[j]->value.equals("tmerc")){  initMercator(projectionVariable,projKVPList);foundProj=1;}
+        if(projKVPList[j]->value.equals("laea")){  initLAEAPerspective(projectionVariable,projKVPList);foundProj=1;}
       }
     }
     if(projectionVariable->name.empty())projectionVariable->name="projection";
@@ -498,6 +520,65 @@ int CProj4ToCF::convertCFToProj( CDF::Variable *projectionVariable,CT::string *p
                         false_northing.toDouble(),
                         dfsemi_major_axis,
                         dfsemi_minor_axis,
+                        units.c_str()
+                              );
+      
+    }else if(grid_mapping_name.equals("lambert_azimuthal_equal_area")){
+      // Lambert conformal conic projection
+      //+proj=lcc +lat_0=0 +lon_0=0 +x_0=0 +y_0=0
+      CT::string longitude_of_projection_origin = "0" ;
+      CT::string latitude_of_projection_origin = "90" ;
+      CT::string semi_major_axis = "6378140.000000f" ;
+      CT::string semi_minor_axis = "-9999" ;
+      CT::string inverse_flattening = "-9999" ;
+      CT::string longitude_of_prime_meridian = "0";
+      CT::string false_easting = "0" ;
+      CT::string false_northing = "0";
+      
+      try{projectionVariable->getAttribute("longitude_of_projection_origin")->getDataAsString(&longitude_of_projection_origin);}catch(int e){};
+      try{projectionVariable->getAttribute("latitude_of_projection_origin")->getDataAsString(&latitude_of_projection_origin);}catch(int e){};
+      try{projectionVariable->getAttribute("longitude_of_prime_meridian")->getDataAsString(&longitude_of_prime_meridian);}catch(int e){};      
+      try{projectionVariable->getAttribute("semi_major_axis")->getDataAsString(&semi_major_axis);}catch(int e){};
+      try{
+        projectionVariable->getAttribute("semi_minor_axis")->getDataAsString(&semi_minor_axis);
+      }catch(int e){
+         try{
+           projectionVariable->getAttribute("inverse_flattening")->getDataAsString(&inverse_flattening);
+         } catch (int e) {}
+      };
+      try{projectionVariable->getAttribute("false_easting")->getDataAsString(&false_easting);}catch(int e){};
+      try{projectionVariable->getAttribute("false_northing")->getDataAsString(&false_northing);}catch(int e){};
+      
+      
+      CT::string units = "m";
+      double  dfsemi_major_axis = semi_major_axis.toDouble();
+      double inv_flat = inverse_flattening.toDouble();
+      double  dfsemi_minor_axis;
+      if (inv_flat>0) {
+        dfsemi_minor_axis=dfsemi_major_axis*(1-1/inv_flat);
+      } else {
+        dfsemi_minor_axis = semi_minor_axis.toDouble();
+        if (dfsemi_minor_axis<=0) {
+          dfsemi_minor_axis=dfsemi_major_axis;
+        }
+      }
+      int projectionUnits = getProjectionUnits(projectionVariable);
+      
+      if(projectionUnits == CPROJ4TOCF_UNITS_KILOMETER){
+//         dfsemi_major_axis = dfsemi_major_axis/1000;
+//         dfsemi_minor_axis = dfsemi_minor_axis/1000;
+        units="km";
+      }
+      
+      proj4String->print("+proj=laea +lat_0=%f +lon_0=%f",
+                        latitude_of_projection_origin.toDouble(), longitude_of_projection_origin.toDouble());
+      
+      proj4String->printconcat(" +k_0=1.0 +x_0=%f +y_0=%f +a=%f +b=%f +pm=%f +units=%s",
+                        false_easting.toDouble(),
+                        false_northing.toDouble(),
+                        dfsemi_major_axis,
+                        dfsemi_minor_axis,
+                        longitude_of_prime_meridian.toDouble(),
                         units.c_str()
                               );
       
