@@ -63,6 +63,7 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
   std::set<std::string> usePoints;
   std::set<std::string> skipPoints;
   bool useFilter=false;
+  bool useDrawPointFillColor=false;
   
 //   CDBDebug("style settings: %s", settings.c_str());
 //   if(settings.indexOf("vector")!=-1){
@@ -82,6 +83,7 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
       if(s -> Point.size() == 1){
         if(s -> Point[0]->attr.fillcolor.empty()==false){
           drawPointFillColor.parse(s -> Point[0]->attr.fillcolor.c_str());
+          useDrawPointFillColor=true;
         }
         if(s -> Point[0]->attr.linecolor.empty()==false){
           drawPointLineColor.parse(s -> Point[0]->attr.linecolor.c_str());
@@ -402,8 +404,8 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
                   drawImage->drawCenteredText(x,y, drawPointFontFile, drawPointFontSize, 0, t.c_str(), drawPointTextColor);
                 }
               } else {
-                if (dataSource->getNumDataObjects()==1) {
-                  int pointColorIndex=getPixelIndexForValue(dataSource, v);
+                if (!useDrawPointFillColor) { //(dataSource->getNumDataObjects()==1) {
+                  int pointColorIndex=getPixelIndexForValue(dataSource, v); //Use value of dataObject[0] for colour
                   drawImage->setDisc(x, y, drawPointDiscRadius, pointColorIndex, pointColorIndex);
                   drawImage->circle(x, y, drawPointDiscRadius+1, drawPointLineColor,0.65);
                   if (drawPointDot) drawImage->circle(x,y, 1, drawPointFillColor,1);
