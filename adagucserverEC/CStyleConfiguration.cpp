@@ -10,6 +10,7 @@ CStyleConfiguration::RenderMethod CStyleConfiguration::getRenderMethodFromString
   if(renderMethodString->indexOf("barb"    )!=-1)renderMethod|=RM_BARB;
   if(renderMethodString->indexOf("thin")!=-1)renderMethod|=RM_THIN;
   if(renderMethodString->indexOf("rgba")!=-1)renderMethod|=RM_RGBA;
+  if(renderMethodString->indexOf("stippling")!=-1)renderMethod|=RM_STIPPLING;
 
   return renderMethod;
 }
@@ -27,4 +28,5 @@ void CStyleConfiguration::getRenderMethodAsString(CT::string *renderMethodString
   if(renderMethod & RM_BARB)renderMethodString->concat("barb");
   if(renderMethod & RM_THIN)renderMethodString->concat("thin");
   if(renderMethod & RM_RGBA)renderMethodString->concat("rgba");
+  if(renderMethod & RM_STIPPLING)renderMethodString->concat("stippling");
 }

@@ -33,6 +33,7 @@
 
 #include "CImageDataWriter.h"
 #include "CMakeJSONTimeSeries.h"
+#include "CMakeEProfile.h"
 #ifndef M_PI
 #define M_PI            3.14159265358979323846  // pi 
 #endif
@@ -259,6 +260,7 @@ CImageDataWriter::CImageDataWriter(){
 
 
 int CImageDataWriter::_setTransparencyAndBGColor(CServerParams *srvParam,CDrawImage* drawImage){
+//  CDBDebug("_setTransparencyAndBGColor");
   //drawImage->setTrueColor(true);
   //Set transparency
   if(srvParam->Transparent==true){
@@ -419,8 +421,8 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
     if(styleConfiguration->renderMethod&RM_RGBA){
     
       drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-      if(   srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
-      
+      if(srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
+        //CDBDebug("drawImage.create685Palette();");
         writerStatus=initialized;
         drawImage.createImage(40,20);
         drawImage.create685Palette();
@@ -458,6 +460,7 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   
   //Set background opacity, if applicable
   if(srvParam->wmsExtensions.opacity<100){
+    //CDBDebug("srvParam->wmsExtensions.opacity %d",srvParam->wmsExtensions.opacity);
     drawImage.setBackGroundAlpha((unsigned char )(float(srvParam->wmsExtensions.opacity)*2.55));
   }
   
@@ -567,11 +570,11 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
     return -1;
   }
   
-  if(_setTransparencyAndBGColor(srvParam,&drawImage)!=0){
-    CDBError("Unable to do setTransparencyAndBGColor");
-    return -1;
-  }
- 
+//   if(_setTransparencyAndBGColor(srvParam,&drawImage)!=0){
+//     CDBError("Unable to do setTransparencyAndBGColor");
+//     return -1;
+//   }
+//  
   //CStyleConfiguration *styleConfiguration = dataSource->getStyle();
 //   if(styleConfiguration->hasError){
 //     CDBError("Unable to configure style %s for layer %s\n",styleName.c_str(),dataSource->layerName.c_str());
@@ -634,13 +637,14 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
   #endif
   // Create a new getFeatureInfoResult object and push it into the vector.
   int status = 0;
-  
+  isProfileData=false;
   for(size_t d=0;d<dataSources.size();d++){
     
     GetFeatureInfoResult  *getFeatureInfoResult = new GetFeatureInfoResult();
     getFeatureInfoResultList.push_back(getFeatureInfoResult);
      bool headerIsAvailable = false;
     bool openAll = false;
+
     bool everythingIsInBBOX = true;
     CDataReader reader;
     reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_HEADER); 
@@ -659,10 +663,14 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
           openAll =true;
         }  
         
-         if(dataSources[d]->getDataObject(0)->cdfVariable->getAttributeNE("UGRID_MESH")!=NULL){
+        if(dataSources[d]->getDataObject(0)->cdfVariable->getAttributeNE("UGRID_MESH")!=NULL){
           openAll =true;
         }  
-        
+        if(dataSources[d]->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_PROFILE")!=NULL){
+          if(!srvParam->InfoFormat.equals("application/json")){
+            isProfileData =true;
+          }
+        }
         if(dataSources[d]->getDataObject(0)->cdfObject->getAttributeNE("ADAGUC_GEOJSON")!=NULL){
           openAll =true;
         }  
@@ -682,8 +690,22 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       return 1;
     }
     
+    CDBDebug("isProfileData:[%d] openAll:[%d] infoFormat:[%s]",isProfileData,openAll,srvParam->InfoFormat.c_str());
     
-    if(openAll == false&&srvParam->InfoFormat.equals("application/json")){
+    if(isProfileData){
+      if(srvParam->InfoFormat.equals("image/png")){
+        int status = CMakeEProfile::MakeEProfile(&drawImage,&imageWarper,dataSources, d,dX,dY);
+        if(status != 0){
+          CDBError("CMakeEProfile::MakeEProfile failed");
+          return status;
+        }      
+        CDBDebug("CMakeEProfile::MakeEProfile done");
+      }else{
+        printf("%s%c%c\n","Content-Type:text/plain",13,10);
+        printf("Not supported yet");
+        return 0;
+      }
+    }else if(openAll == false&&srvParam->InfoFormat.equals("application/json")){
       int status = CMakeJSONTimeSeries::MakeJSONTimeSeries(&drawImage,&imageWarper,dataSources, d,dX,dY,&gfiStructure);
       if(status != 0){
         CDBError("CMakeJSONTimeSeries::MakeJSONTimeSeries failed");
@@ -1284,17 +1306,6 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   /**
   * Use bilinear renderer
   */
-  /*if(renderMethod==nearestcontour||
-    renderMethod==bilinear||
-    renderMethod==bilinearcontour||
-    renderMethod==contour||
-    renderMethod==shaded||
-    renderMethod==shadedcontour||
-    renderMethod==vector||renderMethod==vectorshaded||renderMethod==vectorcontour||renderMethod==vectorcontourshaded||
-    renderMethod==barb||renderMethod==barbshaded||renderMethod==barbcontour||renderMethod==barbcontourshaded||
-    renderMethod==thinvector||renderMethod==thinvectorshaded||renderMethod==thinvectorcontour||renderMethod==thinvectorcontourshaded||
-    renderMethod==thinbarb||renderMethod==thinbarbshaded||renderMethod==thinbarbcontour||renderMethod==thinbarbcontourshaded
-    )*/
   if(renderMethod&RM_CONTOUR||renderMethod&RM_BILINEAR||renderMethod&RM_SHADED||renderMethod&RM_VECTOR||renderMethod&RM_BARB||renderMethod&RM_THIN)  {
     if(dataSource->getDataObject(0)->points.size()==0){
       imageWarperRenderer = new CImgWarpBilinear();
@@ -1314,25 +1325,6 @@ if(renderMethod==contour){CDBDebug("contour");}*/
       if(renderMethod&RM_THIN)drawGridVectors=true;
       
       
-      
-      
-      /*if(renderMethod==bilinear||renderMethod==bilinearcontour)drawMap=true;
-      if(renderMethod==bilinearcontour)drawContour=true;
-      if(renderMethod==nearestcontour)drawContour=true;
-      if(renderMethod==contour||renderMethod==shadedcontour||renderMethod==vectorcontour||renderMethod==vectorcontourshaded)drawContour=true;
-      if(renderMethod==vector||renderMethod==vectorcontour||renderMethod==vectorshaded||renderMethod==vectorcontourshaded)drawVector=true;
-      if(renderMethod==thinvector||renderMethod==thinvectorcontour||renderMethod==thinvectorshaded||renderMethod==thinvectorcontourshaded){ drawVector=true;drawGridVectors=true;}
-      if(renderMethod==thinbarb||renderMethod==thinbarbcontour||renderMethod==thinbarbshaded||renderMethod==thinbarbcontourshaded) {drawBarb=true; drawGridVectors=true;}
-      if(renderMethod==thinbarbcontour||renderMethod==thinbarbcontourshaded) {drawContour=true;}
-      if(renderMethod==shaded||renderMethod==shadedcontour||renderMethod==vectorcontourshaded||renderMethod==barbcontourshaded)drawShaded=true;
-      if(renderMethod==vectorshaded||renderMethod==thinvectorshaded||renderMethod==thinvectorcontourshaded)drawShaded=true;
-      if(renderMethod==barbshaded||renderMethod==thinbarbshaded||renderMethod==thinbarbcontourshaded)drawShaded=true;
-      if(renderMethod==barbcontour) { drawContour=true; drawBarb=true; }
-      if(renderMethod==vectorcontour) { drawContour=true; drawVector=true; }
-      if(renderMethod==vectorcontourshaded||renderMethod==thinvectorcontourshaded) { drawShaded=true; drawContour=true; drawVector=true; }
-      if(renderMethod==vectorcontour||renderMethod==thinvectorcontour) { drawVector=true; drawContour=true;}
-      if(renderMethod==barbcontourshaded||renderMethod==thinbarbcontourshaded) { drawShaded=true; drawContour=true; drawBarb=true; }
-      if((renderMethod==barb)||(renderMethod==barbshaded)) drawBarb=true;*/
       
       
       if(drawMap==true)bilinearSettings.printconcat("drawMap=true;");
@@ -1399,12 +1391,19 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   }
   
   /**
+   * Use stippling renderer
+   */
+  if(renderMethod&RM_STIPPLING){
+    imageWarperRenderer = new CImgRenderStippling();
+    imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
+    delete imageWarperRenderer;
+  }
+  
+  /**
   * Use point renderer
   */
-  //if(renderMethod==barb||renderMethod==vector||renderMethod==point){
-  if(renderMethod&RM_BARB||renderMethod&RM_VECTOR||renderMethod&RM_POINT||renderMethod&RM_VOLUME||renderMethod&RM_DISC){//||renderMethod==RM_NEAREST){
+  if(renderMethod&RM_BARB||renderMethod&RM_VECTOR||renderMethod&RM_POINT){
     if(dataSource->getDataObject(0)->points.size()!=0){
-      CDBDebug("<OOOOOOOO>CImgRenderPoints()");
       
       imageWarperRenderer = new CImgRenderPoints();
       CT::string renderMethodAsString;
@@ -2021,7 +2020,7 @@ int CImageDataWriter::end(){
     #ifdef CIMAGEDATAWRITER_DEBUG    
       CDBDebug("end, number of GF results: %d",getFeatureInfoResultList.size());
     #endif
-    enum ResultFormats {textplain,texthtml,textxml, applicationvndogcgml,imagepng,imagegif,json};
+    enum ResultFormats {textplain,texthtml,textxml, applicationvndogcgml,imagepng,imagegif,json,imagepng_eprofile};
     ResultFormats resultFormat=texthtml;
     
     if(srvParam->InfoFormat.equals("text/plain"))resultFormat=textplain;
@@ -2030,6 +2029,17 @@ int CImageDataWriter::end(){
     if(srvParam->InfoFormat.equals("image/gif"))resultFormat=imagegif;
     
     if(srvParam->InfoFormat.equals("application/vnd.ogc.gml"))resultFormat=applicationvndogcgml;
+    
+    if(isProfileData){
+      resultFormat=imagepng_eprofile;
+
+    
+      printf("%s%c%c\n","Content-Type:image/png",13,10);
+      drawImage.printImagePng8();
+    
+      return 0;
+    }
+    
     
     if(srvParam->InfoFormat.indexOf("application/json")!=-1){
       
@@ -2184,7 +2194,7 @@ int CImageDataWriter::end(){
       
       
       printf("%s",resultHTML.c_str());
-    }
+    }/*End of text html */
  
     /* Text XML */
     if(resultFormat==applicationvndogcgml){
@@ -2270,7 +2280,7 @@ int CImageDataWriter::end(){
       resultXML.printconcat(" </FeatureCollection>\n");
       resetErrors();
       printf("%s",resultXML.c_str());
-    }
+    }/* End of applicationvndogcgml */
     
    if(resultFormat==textxml){
       CDBDebug("CREATING XML");
@@ -2346,7 +2356,7 @@ int CImageDataWriter::end(){
       resetErrors();
       printf("%s",resultXML.c_str());
       
-    }
+    }/* End of text/xml */
 
     if (resultFormat==json) {
       CT::string resultJSON;
@@ -2497,7 +2507,7 @@ int CImageDataWriter::end(){
         printf("%s", resultJSON.c_str());
       }
 
-    }
+    } /* End of json */
     
     /*************************************************************************************************************************************/
     /* image/png image/png image/png image/png image/png image/png image/png image/png image/png image/png image/png image/png image/png */
@@ -3032,6 +3042,7 @@ int CImageDataWriter::end(){
       title.print("%s till %s",startDateString.c_str(),stopDateString.c_str());
       plotCanvas.drawText(int(plotWidth/2-float(title.length())*2.5),int(height-5),fontLocation,8,0,title.c_str(),CColor(0,0,0,255),CColor(255,255,255,0));
         plotCanvas.draw(int(plotOffsetX), int(plotOffsetY),0,0,&lineCanvas);
+
       if(resultFormat==imagepng){
         printf("%s%c%c\n","Content-Type:image/png",13,10);
         plotCanvas.printImagePng8();
@@ -3046,12 +3057,12 @@ int CImageDataWriter::end(){
     
       for(size_t j=0;j<plotObjects.size();j++)delete plotObjects[j];plotObjects.clear();
       //CDBDebug("Done!");
-    }
+    }/* End of imagepng */
     
     
     
     for(size_t j=0;j<getFeatureInfoResultList.size();j++){delete getFeatureInfoResultList[j];getFeatureInfoResultList[j]=NULL; } getFeatureInfoResultList.clear();
-  }
+  }/* End of getfeatureInfo */
   if(srvParam->requestType!=REQUEST_WMS_GETMAP&&srvParam->requestType!=REQUEST_WMS_GETLEGENDGRAPHIC)return 0;
   
   

@@ -463,30 +463,32 @@ int CCache::Lock::claim(const char *cacheDir, const char *identifier,const char 
   
   //Check if the file exists...
   
-  int maxTries = 100;//Wait 120 seconds.
+  int maxTries = 100;
   int logEveryNChecks = 10;
-  int logChecks = logEveryNChecks;
+  int logChecks = 0;
   bool wasLocked = false;
+  int wasLockedBy = -1;
   do{
     //Read by which process the file was locked
     int thePIDThatIsLocking = CCache::_readPidFile(claimedLockFile.c_str());
     if(thePIDThatIsLocking>0){ 
       wasLocked = true;
+      wasLockedBy = thePIDThatIsLocking;
       //Check if the process locking this file is still running
       int status = kill(thePIDThatIsLocking,0);
       if(status == -1){
-        CDBDebug("WARNING: LOCKED by procID %d for %s which is not running, for key [%s] continuing...", thePIDThatIsLocking,reason,claimedLockID.c_str() );
+        CDBDebug("[LOCK] WARNING: LOCKED by procID %d which is not running, needed for [%s] with key [%s] continuing...", thePIDThatIsLocking,reason,claimedLockID.c_str() );
         maxTries = 0;
       }else{
         if(logChecks <=0){
-          CDBDebug("LOCKED by procID %d for %s, waiting %f seconds",thePIDThatIsLocking,reason,float(maxTries)/10.0);
+          CDBDebug("[LOCK Locked by pid %d] polling every 100ms, waiting %f seconds. I need it for [%s]",thePIDThatIsLocking,float(maxTries)/10.0,reason);
           logChecks = logEveryNChecks;
         }else{
           logChecks--;
         }
       }
       if(maxTries>0){
-        usleep(100000);
+        usleep(100*1000);//Sleep 100ms
       }
     
     }else{
@@ -496,6 +498,8 @@ int CCache::Lock::claim(const char *cacheDir, const char *identifier,const char 
     maxTries--;
   }while(maxTries>0);
   if(wasLocked){
+    CDBDebug("[LOCK: Released by %d] Continuing operation [%s]",wasLockedBy,reason);
+
     #ifdef CCACHE_DEBUG
     CDBDebug("LOCK FREED %s,", claimedLockFile.c_str() );
     #endif
@@ -503,7 +507,10 @@ int CCache::Lock::claim(const char *cacheDir, const char *identifier,const char 
   }
 
  // const char buffer[] = { "temp_data\n" };
-  CCache::_writePidFile(claimedLockFile.c_str());
+  int status = CCache::_writePidFile(claimedLockFile.c_str());
+  if(status != 0){
+    CDBError("Unable to write PID file (status %s). Continuing with operation [%s]",status,reason);
+  }
     
     
   

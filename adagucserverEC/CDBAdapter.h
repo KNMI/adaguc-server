@@ -17,7 +17,7 @@
 class CDBAdapter{
 public:
   CDBAdapter(){}
-  virtual ~CDBAdapter() = 0;
+  virtual ~CDBAdapter() {};
   
   class GeoOptions{
   public:

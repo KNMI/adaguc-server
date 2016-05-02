@@ -35,6 +35,7 @@
 #include "CImgWarpBilinear.h"
 #include "CImgWarpBoolean.h"
 #include "CImgRenderPoints.h"
+#include "CImgRenderStippling.h"
 #include "CStyleConfiguration.h"
 #include "CMyCURL.h"
 #include "CXMLParser.h"
@@ -135,7 +136,7 @@ private:
     int drawCascadedWMS(CDataSource *dataSource,const char *service,const char *layers,bool transparent, const char *bgcolor);
     
     
-    
+    bool isProfileData;
     
   public:
     CDrawImage drawImage;

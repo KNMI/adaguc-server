@@ -10,24 +10,10 @@
 #define RM_POINT       16
 #define RM_VECTOR      32
 #define RM_BARB        64
-#define RM_DISC        128
-#define RM_THIN        256
-#define RM_RGBA        512
-#define RM_VOLUME      1024
+#define RM_THIN        128
+#define RM_RGBA        256
+#define RM_STIPPLING   512
 
-
-// #include <string>
-// #include <map>
-// #include "Definitions.h"
-// #include "CStopWatch.h"
-// #include "CIBaseDataWriterInterface.h"
-// #include "CImgWarpNearestNeighbour.h"
-// #include "CImgWarpNearestRGBA.h"
-// #include "CImgWarpBilinear.h"
-// #include "CImgWarpBoolean.h"
-// #include "CImgRenderPoints.h"
-// #include "CStyleConfiguration.h"
-// #include "CMyCURL.h"
 #include "CServerConfig_CPPXSD.h"
 #include "CXMLParser.h"
 #include "CDebugger.h"

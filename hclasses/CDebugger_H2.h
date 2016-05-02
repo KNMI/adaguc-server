@@ -51,6 +51,8 @@ void _printDebug(const char *pszMessage,...);
 void _printWarning(const char *pszMessage,...);
 void _printError(const char *pszMessage,...);
 
+
+
 #define CDBWarning             _printWarning("[W: %s, %d in %s] ",__FILE__,__LINE__,className);_printWarningLine
 #define CDBError               _printError("[E: %s, %d in %s] ",__FILE__,__LINE__,className);_printErrorLine
 #define CDBErrormessage        _printErrorLine

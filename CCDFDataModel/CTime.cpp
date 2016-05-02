@@ -71,6 +71,9 @@ int CTime::init(const char *units){
       if(mode == CTIME_MODE_YYYYMM){
         CDBError("CTIME_MODE_YYYYMM: Already initialized with %s",currentUnit.c_str());
       }
+      if(mode == CTIME_MODE_YYYYMMDD_NUMBER){
+        CDBError("CTIME_MODE_YYYYMMDD_NUMBER: Already initialized with %s",currentUnit.c_str());
+      }
       return 1;
     }
     return 0;
@@ -80,6 +83,13 @@ int CTime::init(const char *units){
   //Mode is in YYYYMM format
   if(currentUnit.indexOf("YYYYMM")>=0){
     mode = CTIME_MODE_YYYYMM;
+    isInitialized=true;
+    return 0;
+  }
+  
+  //Mode is in YYYYMMDD format as nunmber
+  if(currentUnit.equals("day as %Y%m%d.%f")){
+    mode = CTIME_MODE_YYYYMMDD_NUMBER;
     isInitialized=true;
     return 0;
   }
@@ -126,6 +136,18 @@ CTime::Date CTime::getDate(double offset){
     date.second = 0;
   }
   
+   if(mode == CTIME_MODE_YYYYMMDD_NUMBER){
+    int yyyymm = int(offset);
+    date.year = int(yyyymm/10000);
+    date.month = int((yyyymm-(date.year*10000))/100);
+    date.day = yyyymm-(date.month*100+date.year*10000);
+    date.month++;
+    date.day++;
+    date.hour = 0;
+    date.minute = 0;
+    date.second = 0;
+  }
+  
   if(mode == CTIME_MODE_UTCALENDAR){
     float s;
     if(utCalendar(date.offset,&dataunits,&date.year,&date.month,&date.day,&date.hour,&date.minute,&s)!=0) {
@@ -142,6 +164,10 @@ double CTime::dateToOffset( Date date){
   
   if(mode == CTIME_MODE_YYYYMM){
     return int(date.year)*100+int(date.month);
+  }
+  
+  if(mode == CTIME_MODE_YYYYMMDD_NUMBER){
+    return int(date.year)*10000+int(date.month-1)*100+int(date.day-1);
   }
   
   if(mode == CTIME_MODE_UTCALENDAR){
@@ -269,7 +295,7 @@ CTime::Date CTime::freeDateStringToDate(const char*szTime){
   }
   
   if(len<14){
-    CDBError("datestring %s has invalid length %d",szTime,len);
+    CDBError("freeDateStringToDate: datestring %s has invalid length %d",szTime,len);
     throw CTIME_CONVERSION_ERROR;
   }
   //2010-01-01T00:00:00.000000
@@ -370,19 +396,15 @@ CT::string CTime::currentDateTime() {
 }
 
 
-CT::string CTime::quantizeTimeToISO8601(CT::string value, CT::string period, CT::string method) {
-  CT::string newDateString = value;
-  CDBDebug("quantizetime with for value %s with period %s and method %s",value.c_str(),period.c_str(),method.c_str());
-  try{
-    CTime time;
-    time.init("seconds since 0000-01-01T00:00:00Z");
-    CTime::Date date=time.freeDateStringToDate(value.c_str());
-    double offsetOrig = time.dateToOffset(  date);
+double  CTime::quantizeTimeToISO8601(CTime * thisTime, double offsetOrig, CT::string period, CT::string method) {
     double offsetLow ;
     double offsetHigh ;
     //P1Y
     //P1D
     //PT1M
+    
+    Date date = thisTime->getDate(offsetOrig);
+    
     if(period.indexOf("T")!=-1){ //Contains HMS
       
       CT::string* items = period.splitToArray("T");
@@ -397,17 +419,17 @@ CT::string CTime::quantizeTimeToISO8601(CT::string value, CT::string period, CT:
       if(hmsPart.indexOf("H")!=-1){//6H
         hmsPart.replaceSelf("H","");int H = hmsPart.toInt();int origH=date.hour;
         date.minute=0; date.second=0;
-        date.hour=origH-origH%H;offsetLow = time.dateToOffset(date);
-        date.hour=date.hour+H;offsetHigh = time.dateToOffset(date);
+        date.hour=origH-origH%H;offsetLow = thisTime->dateToOffset(date);
+        date.hour=date.hour+H;offsetHigh = thisTime->dateToOffset(date);
       }else if(hmsPart.indexOf("M")!=-1){//5M
         hmsPart.replaceSelf("M","");int M = hmsPart.toInt();int origM=date.minute;
         date.second=0;
-        date.minute=origM-origM%M;offsetLow = time.dateToOffset(date);
-        date.minute=date.minute+M;offsetHigh = time.dateToOffset(date);
+        date.minute=origM-origM%M;offsetLow = thisTime->dateToOffset(date);
+        date.minute=date.minute+M;offsetHigh = thisTime->dateToOffset(date);
       }else if(hmsPart.indexOf("S")!=-1){//30S
         hmsPart.replaceSelf("S","");int S = hmsPart.toInt();int origS=date.second;
-        date.second=origS-origS%S;offsetLow = time.dateToOffset(date);
-        date.second=date.second+S;offsetHigh = time.dateToOffset(date);
+        date.second=origS-origS%S;offsetLow = thisTime->dateToOffset(date);
+        date.second=date.second+S;offsetHigh = thisTime->dateToOffset(date);
       }
 
       
@@ -420,18 +442,18 @@ CT::string CTime::quantizeTimeToISO8601(CT::string value, CT::string period, CT:
       if(hmsPart.indexOf("Y")!=-1){//6H
         hmsPart.replaceSelf("Y","");int Y = hmsPart.toInt();int origY=date.year;
         date.month=1;date.day=1;date.hour=0;date.minute=0;date.second=0;
-        date.year=origY-origY%Y;offsetLow = time.dateToOffset(date);
-        date.year=date.year+Y;offsetHigh = time.dateToOffset(date);
+        date.year=origY-origY%Y;offsetLow = thisTime->dateToOffset(date);
+        date.year=date.year+Y;offsetHigh = thisTime->dateToOffset(date);
       }else if(hmsPart.indexOf("M")!=-1){//5M
         date.day=1;date.hour=0;date.minute=0;date.second=0;
         hmsPart.replaceSelf("M","");int M = hmsPart.toInt();int origM=date.month;
-        date.month=origM-origM%M;offsetLow = time.dateToOffset(date);
-        date.month=date.month+M;offsetHigh = time.dateToOffset(date);
+        date.month=origM-origM%M;offsetLow = thisTime->dateToOffset(date);
+        date.month=date.month+M;offsetHigh = thisTime->dateToOffset(date);
       }else if(hmsPart.indexOf("D")!=-1){//30S
         date.hour=0;date.minute=0;date.second=0;
         hmsPart.replaceSelf("D","");int D = hmsPart.toInt();int origD=date.day;
-        date.day=origD-origD%D;offsetLow = time.dateToOffset(date);
-        date.day=date.day+D;offsetHigh = time.dateToOffset(date);
+        date.day=origD-origD%D;offsetLow = thisTime->dateToOffset(date);
+        date.day=date.day+D;offsetHigh = thisTime->dateToOffset(date);
       }
     }
     
@@ -448,10 +470,18 @@ CT::string CTime::quantizeTimeToISO8601(CT::string value, CT::string period, CT:
         offsetOrig= offsetHigh;
       }
     }
-    
-   
-    CTime::Date newDate=time.getDate( offsetOrig);
-    newDateString=time.dateToISOString(newDate);
+    return offsetOrig;  
+}
+
+CT::string CTime::quantizeTimeToISO8601(CT::string value, CT::string period, CT::string method) {
+  CT::string newDateString = value;
+  CDBDebug("quantizetime with for value %s with period %s and method %s",value.c_str(),period.c_str(),method.c_str());
+  try{
+    CTime time;
+    time.init("seconds since 0000-01-01T00:00:00Z");
+    double offsetOrig = time.dateToOffset(  time.freeDateStringToDate(value.c_str()));
+    double quantizedOffset = time.quantizeTimeToISO8601(&time,offsetOrig,&period,&method);
+    newDateString=time.dateToISOString(time.getDate( quantizedOffset));
   }catch(int e){
     CDBError("Exception in quantizetime with message %s",CTime::getErrorMessage(e).c_str());
   }

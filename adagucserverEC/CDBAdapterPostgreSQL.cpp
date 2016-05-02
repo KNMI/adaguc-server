@@ -977,7 +977,9 @@ int CDBAdapterPostgreSQL::addFilesToDataBase(){
   
   CT::string multiInsert = "";
   for (std::map<std::string,std::vector<std::string> >::iterator it=fileListPerTable.begin(); it!=fileListPerTable.end(); ++it){
+      #ifdef CDBAdapterPostgreSQL_DEBUG
     CDBDebug("Updating table %s with %d records",it->first.c_str(),(it->second.size()));
+#endif
     if(it->second.size()>0){
       
       multiInsert.print("INSERT into %s VALUES ",it->first.c_str());
@@ -990,12 +992,15 @@ int CDBAdapterPostgreSQL::addFilesToDataBase(){
         CDBError("Query failed [%s]:",dataBaseConnection->getError());
         throw(__LINE__);
       }
+  #ifdef CDBAdapterPostgreSQL_DEBUG      
       CDBDebug("/Inserting %d bytes",multiInsert.length());
+#endif
     }
     it->second.clear();
   }
-  
+  #ifdef CDBAdapterPostgreSQL_DEBUG  
   CDBDebug("clearing arrays");
+#endif
   fileListPerTable.clear();
   #ifdef MEASURETIME
   StopWatch_Stop("<CDBAdapterPostgreSQL::addFilesToDataBase");

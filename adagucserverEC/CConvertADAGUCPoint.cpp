@@ -393,7 +393,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
         int stationDimIndexInVariable = 0;
         
         for(size_t j=0;j<pointVar[d]->dimensionlinks.size();j++){
-        if(pointVar[d]->dimensionlinks[0]->name.equals("station")){
+      if(pointVar[d]->dimensionlinks[j]->name.equals("station")){
             stationDimIndexInVariable = j;
             break;
         }
@@ -700,12 +700,12 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
     CTime obsTime;
     double *obsTimeData = NULL;
     CDF::Variable * timeVarPerObs =  cdfObject0->getVariableNE("time");
-      if(timeVarPerObs!= NULL){
+    if(timeVarPerObs!= NULL){
       if(timeVarPerObs->isDimension == false){
         if(timeVarPerObs->dimensionlinks[0]->getSize(),pointVar[0]->dimensionlinks[0]->getSize()){
           CDF::Attribute* timeStringAttr = timeVarPerObs->getAttributeNE("units");
           if(timeStringAttr !=NULL){
-              if(timeStringAttr -> data != NULL){
+            if(timeStringAttr -> data != NULL){
               if(obsTime.init((const char*)timeStringAttr ->data)==0){
                 hasTimeValuePerObs = true;
                 timeVarPerObs->readData(CDF_DOUBLE,start,count,stride,true);
