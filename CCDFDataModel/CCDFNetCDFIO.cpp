@@ -29,8 +29,8 @@ const char *CDFNetCDFReader::className="NetCDFReader";
 const char *CDFNetCDFWriter::className="NetCDFWriter";
 //const char *CCDFWarper::className="CCDFWarper";
 
-
-//#define CCDFNETCDFIO_DEBUG_OPEN
+// #define CCDFNETCDFIO_DEBUG
+// #define CCDFNETCDFIO_DEBUG_OPEN
 
 CDFNetCDFReader::CDFNetCDFReader():CDFReader(){
   #ifdef CCDFNETCDFIO_DEBUG        
@@ -164,13 +164,23 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type,size_t *
   
      if(useStartCount == true){
       if(useStriding){
+      #ifdef CCDFNETCDFIO_DEBUG_OPEN        
+        CDBDebug("READ NSCS: [%s]",var->name.c_str());
+      #endif
+
         status = nc_get_vars_string(root_id,var->id,start,count,stride,(char**)var->data);
         if(status!=NC_NOERR){ncError(__LINE__,className,"nc_get_vars (typeconversion): ",status);}
       }else{
+      #ifdef CCDFNETCDFIO_DEBUG_OPEN        
+        CDBDebug("READ NSC: [%s]",var->name.c_str());
+      #endif
         status = nc_get_vara_string(root_id,var->id,start,count,(char**)var->data);
         if(status!=NC_NOERR){ncError(__LINE__,className,"nc_get_vara (typeconversion): ",status);}
       }
     }else{
+      #ifdef CCDFNETCDFIO_DEBUG_OPEN        
+        CDBDebug("READ N: [%s]",var->name.c_str());
+      #endif
       status = nc_get_var_string(root_id,var->id,(char**)var->data);
       if(status!=NC_NOERR){ncError(__LINE__,className,"nc_get_var_string (typeconversion): ",status);}
     }
@@ -207,13 +217,23 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type,size_t *
     
     if(useStartCount == true){
       if(useStriding){
+      #ifdef CCDFNETCDFIO_DEBUG_OPEN        
+        CDBDebug("READ SCS: [%s]",var->name.c_str());
+      #endif
         status = nc_get_vars(root_id,var->id,start,count,stride,voidData);
         if(status!=NC_NOERR){ncError(__LINE__,className,"nc_get_vars (typeconversion): ",status);}
       }else{
+        #ifdef CCDFNETCDFIO_DEBUG_OPEN        
+        CDBDebug("READ SC: [%s]",var->name.c_str());
+      #endif
         status = nc_get_vara(root_id,var->id,start,count,voidData);
         if(status!=NC_NOERR){ncError(__LINE__,className,"nc_get_vara (typeconversion): ",status);}
       }
     }else{
+      #ifdef CCDFNETCDFIO_DEBUG_OPEN        
+        CDBDebug("READ: [%s]",var->name.c_str());
+      #endif
+
       status = nc_get_var(root_id,var->id,voidData);
       if(status!=NC_NOERR){ncError(__LINE__,className,"nc_get_var (typeconversion): ",status);}
     }
@@ -244,19 +264,32 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type,size_t *
   if(type == var->nativeType){
     if(useStartCount){
       if(useStriding){
+        #ifdef CCDFNETCDFIO_DEBUG_OPEN                
+        CT::string dims="";
+        for(size_t j=0;j<var->dimensionlinks.size();j++){
+        if(j>0)dims.concat(",");
+          dims.printconcat("%s[%d:%d:%d]",var->dimensionlinks[j]->name.c_str(),start[j],count[j],start[j]);
+        }
+        CDBDebug("READ NSCS: [%s](%s)",var->name.c_str(),dims.c_str());
+        #endif
         status = nc_get_vars(root_id,var->id,start,count,stride,var->data);
         if(status!=NC_NOERR){ncError(__LINE__,className,"nc_get_vars (native): ",status);}
       }else{
         #ifdef CCDFNETCDFIO_DEBUG_OPEN        
-        CDBDebug("READ: root_id %d var id %d",root_id,var->id);
+        CT::string dims="";
         for(size_t j=0;j<var->dimensionlinks.size();j++){
-          CDBDebug("READ: [%s] %d %d",var->dimensionlinks[j]->name.c_str(),start[j],count[j]);
+          if(j>0)dims.concat(",");
+          dims.printconcat("%s[%d:%d]",var->dimensionlinks[j]->name.c_str(),start[j],count[j]);
         }
+        CDBDebug("READ NSC: [%s](%s)",var->name.c_str(),dims.c_str());
         #endif
         status = nc_get_vara(root_id,var->id,start,count,var->data);
         if(status!=NC_NOERR){ncError(__LINE__,className,"nc_get_vara (native): ",status);}
       }
     }else{
+      #ifdef CCDFNETCDFIO_DEBUG_OPEN        
+        CDBDebug("READ N: [%s]",var->name.c_str());
+      #endif
       status = nc_get_var(root_id,var->id,var->data);
       if(status!=NC_NOERR){ncError(__LINE__,className,"nc_get_var (native): ",status);}
     }

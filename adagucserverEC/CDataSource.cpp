@@ -568,7 +568,7 @@ int CDataSource::makeStyleConfig(CStyleConfiguration *styleConfig,CDataSource *d
   
   //When min and max are given, calculate the scale and offset according to min and max.
   if(s->minMaxSet){
-    #ifdef CIMAGEDATAWRITER_DEBUG          
+    #ifdef CDATASOURCE_DEBUG          
     CDBDebug("Found min and max in layer configuration");
     #endif      
     calculateScaleAndOffsetFromMinMax(s->legendScale,s->legendOffset,min,max,s->legendLog);
@@ -588,7 +588,7 @@ int CDataSource::makeStyleConfig(CStyleConfiguration *styleConfig,CDataSource *d
   }*/
   CT::string styleDump;
   styleConfig->printStyleConfig(&styleDump);
-//   #ifdef CIMAGEDATAWRITER_DEBUG          
+//   #ifdef CDATASOURCE_DEBUG          
 //  
 //   CDBDebug("styleDump:\n%s",styleDump.c_str());
 //   #endif
@@ -605,7 +605,9 @@ int CDataSource::makeStyleConfig(CStyleConfiguration *styleConfig,CDataSource *d
 
 
 CT::PointerList<CT::string*> *CDataSource::getLegendListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style* style){
-  
+  #ifdef CDATASOURCE_DEBUG          
+  CDBDebug("getLegendListForDataSource");
+  #endif
   if(dataSource->cfgLayer->Legend.size()>0){
     return CServerParams::getLegendNames(dataSource->cfgLayer->Legend);
   }else{
@@ -676,7 +678,7 @@ CT::PointerList<CT::string*> *CDataSource::getRenderMethodListForDataSource(CDat
 * @param serverCFG
 */
 // void CDataSource::getStyleConfigurationByName(const char *styleName,CDataSource *dataSource){
-//   //#ifdef CIMAGEDATAWRITER_DEBUG    
+//   //#ifdef CDATASOURCE_DEBUG    
 //   CDBDebug("getStyleConfigurationByName for layer %s with name %s",dataSource->layerName.c_str(),styleName);
 //   //#endif
 //   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
@@ -723,22 +725,6 @@ CT::PointerList<CStyleConfiguration*> *CDataSource::getStyleListForDataSource(CD
   CT::PointerList<CStyleConfiguration*> *styleConfigurationList = new CT::PointerList<CStyleConfiguration*>();
   
   CServerConfig::XMLE_Configuration *serverCFG = dataSource->cfg;
-  //CT::string styleToSearchString;
-  //bool isDefaultStyle = false;
-  //bool returnStringList = true;
-  
-//   if(styleConfig!=NULL){
-//     styleConfig->hasError=false;
-//     returnStringList=false;
-//     styleConfig->contourLines = NULL;
-//     styleConfig->shadeIntervals=NULL;
-//     delete styleConfigurationList;styleConfigurationList = NULL;
-//     styleToSearchString.copy(&styleConfig->styleCompositionName);
-//     if(styleToSearchString.equals("default")||styleToSearchString.equals("default/HQ")){
-//       isDefaultStyle = true;
-//     }
-//   }
-  
 
   CT::PointerList<CT::string*> *renderMethods = NULL;
   CT::PointerList<CT::string*> *legendList = NULL;
@@ -763,7 +749,7 @@ CT::PointerList<CStyleConfiguration*> *CDataSource::getStyleListForDataSource(CD
         return styleConfigurationList;
         
       }
-      CDataReader::autoConfigureStyles(dataSource);
+      CAutoConfigure::autoConfigureStyles(dataSource);
     }
    
   }
@@ -863,7 +849,7 @@ CT::PointerList<CStyleConfiguration*> *CDataSource::getStyleListForDataSource(CD
 
               //CStyleConfiguration mode, try to find which stylename we want our CStyleConfiguration for.
             
-                #ifdef CIMAGEDATAWRITER_DEBUG    
+                #ifdef CDATASOURCE_DEBUG    
               //CDBDebug("Matching '%s' == '%s'",styleName->c_str(),styleToSearchString.c_str());
                 #endif
                 
@@ -951,7 +937,10 @@ CT::PointerList<CStyleConfiguration*> *CDataSource::getStyleListForDataSource(CD
     styleConfig->styleCompositionName = "default";
     styleConfigurationList->push_back(styleConfig);
   }
-    
+        #ifdef CDATASOURCE_DEBUG      
+  CDBDebug("/getStyleListForDataSource");
+#endif
+
   return styleConfigurationList;
 }
 
@@ -988,6 +977,9 @@ CT::PointerList<CT::string*> *CDataSource::getLegendNames(std::vector <CServerCo
 * @return Pointer to a new stringlist with all possible style names, must be deleted with delete. Is NULL on failure.
 */
 CT::PointerList<CT::string*> *CDataSource::getStyleNames(std::vector <CServerConfig::XMLE_Styles*> Styles){
+  #ifdef CDATASOURCE_DEBUG          
+  CDBDebug("getStyleNames");
+  #endif
   CT::PointerList<CT::string*> *stringList = new CT::PointerList<CT::string*>();
   CT::string * val = new CT::string();
   stringList->push_back(val);
@@ -1007,7 +999,9 @@ CT::PointerList<CT::string*> *CDataSource::getStyleNames(std::vector <CServerCon
       }
     }
   }
-
+  #ifdef CDATASOURCE_DEBUG          
+  CDBDebug("/getStyleNames");
+  #endif
   return stringList;
 }
 
@@ -1020,6 +1014,9 @@ CT::PointerList<CT::string*> *CDataSource::getStyleNames(std::vector <CServerCon
 * @return The style index as integer, points to the position in the servers configured styles. Is -1 on failure.
 */
 int  CDataSource::getServerStyleIndexByName(const char * styleName,std::vector <CServerConfig::XMLE_Style*> serverStyles){
+  #ifdef CDATASOURCE_DEBUG          
+  CDBDebug("getServerStyleIndexByName");
+  #endif
   if(styleName==NULL){
     CDBError("No style name provided");
     return -1;
@@ -1029,6 +1026,10 @@ int  CDataSource::getServerStyleIndexByName(const char * styleName,std::vector <
   for(size_t j=0;j<serverStyles.size();j++){
     if(serverStyles[j]->attr.name.empty()==false){
       if(styleString.equals(serverStyles[j]->attr.name.c_str())){
+  #ifdef CDATASOURCE_DEBUG          
+  CDBDebug("/getServerStyleIndexByName");
+  #endif
+
         return j;
       }
     }
@@ -1073,7 +1074,7 @@ void CDataSource::calculateScaleAndOffsetFromMinMax(float &scale, float &offset,
 
 CStyleConfiguration *CDataSource::getStyle(){
   #ifdef CDATASOURCE_DEBUG      
-//  CDBDebug("Returning styleconfiguration");
+  CDBDebug("getStyle");
 #endif
   if(_styles == NULL){
     _styles = getStyleListForDataSource(this);
@@ -1130,6 +1131,9 @@ CStyleConfiguration *CDataSource::getStyle(){
     }
   }
   
+    #ifdef CDATASOURCE_DEBUG      
+  CDBDebug("/getStyle");
+#endif
   return _currentStyle;
 }
 

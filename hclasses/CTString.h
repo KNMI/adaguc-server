@@ -46,18 +46,11 @@ namespace CT{
     char stackValue[CTSTRINGSTACKLENGTH+1];
     bool useStack;
     char *heapValue;
-    void init(){useStack=CTYPES_USESTACK;heapValue=NULL;stackValue[0]=0;count=0;allocated=0;privatelength=0;bufferlength=CTSTRINGSTACKLENGTH;}
-    char *getValuePointer(){
+    inline void init(){useStack=CTYPES_USESTACK;heapValue=NULL;stackValue[0]=0;count=0;allocated=0;privatelength=0;bufferlength=CTSTRINGSTACKLENGTH;}
+    inline char *getValuePointer(){
       return useStack?stackValue:heapValue;
     }
-    void moveStackToHeap(){
-      if(useStack){
-        useStack = false;
-        heapValue=new char[privatelength+1];
-        allocated=1;
-        strncpy (heapValue,stackValue, privatelength);
-      }
-    }
+
     //DEF_ERRORFUNCTION();
   public:
     /**
@@ -124,24 +117,19 @@ namespace CT{
     * @param _value The character array to copy
     * @param _length the length of the character array
     */
-    string(const char * _value,size_t _length){init();copy(_value,_length);}
+    string(const char * _value,size_t _length);
 
     /**
     * Copy constructor which initialize the string with a character array
     * @param _value The character array to copy
     */
-    string(const char * _value){
-      #ifdef CTYPES_DEBUG
-      printf("string(const char * _value == %s)\n",_value);
-      #endif      
-      init();copy(_value,strlen(_value));
-    }
+    string(const char * _value);
 
     /**
     * Copy constructor which initialize the string with the contents of a string pointer
     * @param _string Pointer to the string to copy
     */
-    string(CT::string*_string){init();copy(_string);}
+    string(CT::string*_string);
     
     /**
     * Destructor
@@ -152,13 +140,13 @@ namespace CT{
     * returns length of the string
     * @return length
     */
-    size_t length(){return privatelength;}
+    inline size_t length(){return privatelength;}
     
     /**
     * returns the internal bufferlength of the string
     * @return internal bufferlength
     */
-    size_t getbufferlength(){return bufferlength;}
+    inline size_t getbufferlength(){return bufferlength;}
     
     /**
     * Copy a character array into the string
@@ -171,28 +159,25 @@ namespace CT{
     * Copy a string pointer into the array
     * @param _string Pointer to the string to copy
     */
-    void copy(const CT::string*_string){
-      if(_string==NULL){_Free();return;}
-      copy(_string->useStack?_string->stackValue:_string->heapValue,_string->privatelength);      
-    };
+    void copy(const CT::string*_string);
 
     /**
     * Copy a character array into the string
     * @param _value The character array to copy
     */
-    void copy(const char * _value){ if(_value==NULL){_Free();return;}copy(_value,strlen(_value));};
+    void copy(const char * _value);
     
     /**
     * Appends a pointer to a string object to this string object
     * @param string* The string pointer to append
     */
-    void concat(const CT::string*_string){concat(_string->useStack?_string->stackValue:_string->heapValue,_string->privatelength);}
+    void concat(const CT::string*_string);
     
     /**
     * Appends a string object to this string object
     * @param string The string to append
     */
-    void concat(const CT::string _string){concat(_string.useStack?_string.stackValue:_string.heapValue,_string.privatelength);}
+    void concat(const CT::string _string);
     
     /**
     * Appends an array of characters with specified length to this string object
@@ -205,7 +190,7 @@ namespace CT{
     * Appends an array of characters terminated with a '\0' character.
     * @param value The 0-terminated character array to append
     */
-    void concat(const char*_value){if(_value==NULL)return;concat(_value,strlen(_value));};
+    void concat(const char*_value);
     
     /**
     * Returns the char value at the specified index.
@@ -274,7 +259,7 @@ namespace CT{
     * @param search The 0-terminated character array to look for
     * @return -1 if not found, otherwise the index of the character sequence in this string object
     */
-    int indexOf(const char* search){return indexOf(search,strlen(search));};
+    int indexOf(const char* search);
     
     /**
     * Returns the index within this string of the last occurrence of the specified character
@@ -290,13 +275,18 @@ namespace CT{
     * @param search The 0-terminated character array to look for
     * @return -1 if not found, otherwise the last index of the character sequence in this string object
     */
-    int lastIndexOf(const char* search){return lastIndexOf(search,strlen(search));};
+    int lastIndexOf(const char* search);
     
     /**
      * The endsWith() method determines whether a string ends with the characters of another string, returning true or false as appropriate.
-     * 
      */
-    int endsWith(const char* search){return (lastIndexOf(search)==int(privatelength-strlen(search)));};
+    int endsWith(const char* search);
+
+    /**
+     * The startsWith() method determines whether a string begins with the characters of another string, returning true or false as appropriate.
+     */
+    int startsWith(const char* search);
+    
     /**
     * String to unicode
     */
@@ -315,12 +305,7 @@ namespace CT{
     /**
     * Return lowercase string
     */
-    CT::string toLowerCaser(){
-      CT::string t;
-      t.copy(c_str(),privatelength);
-      t.toLowerCaseSelf();
-      return t;
-    }
+    CT::string toLowerCase();
     
     /**
     * Decodes URL to string
@@ -347,7 +332,7 @@ namespace CT{
     /**
     * Returns a new string with removed spaces
     */
-    string trimr(){CT::string r;r.copy(c_str(),privatelength);r.trimSelf();return r;}
+    string trim();
     
     /**
     * Function which returns an array of strings
@@ -410,7 +395,7 @@ namespace CT{
     * @param newString the new stringto replace with
     * @return Zero on success
     */
-    int replaceSelf(CT::string *substr,CT::string *newString){return replaceSelf(substr->c_str(),substr->privatelength,newString->c_str(),newString->privatelength);}
+    int replaceSelf(CT::string *substr,CT::string *newString);
     
     
     /** Replace all strings with another string
@@ -418,7 +403,7 @@ namespace CT{
     * @param newString the new string to replace with
     * @return Zero on success
     */
-    int replaceSelf(const char *substr,CT::string *newString){return replaceSelf(substr,strlen(substr),newString->c_str(),newString->privatelength);}
+    int replaceSelf(const char *substr,CT::string *newString);
     
     
     /** Replace all strings with another string
@@ -426,21 +411,21 @@ namespace CT{
     * @param newString the new character array to replace with
     * @return Zero on success
     */
-    int replaceSelf(CT::string *substr,const char *newString){return replaceSelf(substr->c_str(),substr->privatelength,newString,strlen(newString));}
+    int replaceSelf(CT::string *substr,const char *newString);
     
     /** Replace all strings with another string
     * @param substr the character array to replace
     * @param newString the new character array to replace with
     * @return Zero on success
     */
-    int replaceSelf(const char *substr,const char *newString){return replaceSelf(substr,strlen(substr),newString,strlen(newString));}
+    int replaceSelf(const char *substr,const char *newString);
     
     /** Replace all strings with another string and returns the new string
     * @param substr the character array to replace
     * @param newString the new character array to replace with
     * @return the subsetted string
     */
-    CT::string replacer(const char * old,const char *newstr){string r;r.copy(c_str(),privatelength);r.replaceSelf(old,newstr);return r;}
+    CT::string replace(const char * old,const char *newstr);
 
     /**
       * Subset the string from start till end
@@ -457,7 +442,7 @@ namespace CT{
     * @param end Where to subset to (-1 means till the end of the string)
     * @return Zero on success
     */
-    int substringSelf(size_t start,size_t end){substringSelf(this, start, end);return 0;}
+    int substringSelf(size_t start,size_t end);
     
     /**
     * Returns a subsetted string from start till end
@@ -465,49 +450,32 @@ namespace CT{
     * @param end Where to subset to (-1 means till the end of the string)
     * @return string with the subsetted string
     */
-    CT::string substringr(size_t start,size_t end){CT::string r;r.substringSelf(this,start,end);return r;}
+    CT::string substring(size_t start,size_t end);
     
     /**
     * Adjusts the size of the string
     */
-    void setSize(int size){
-      if(size<0){
-        copy("",0);
-        return;
-      }
-      if(size<int(privatelength)){
-        getValuePointer()[size]='\0';
-        privatelength=size;
-      }
-    }
+    void setSize(int size);
     
     /**
     * Converts the string to a float number
     */
-    float toFloat(){float fValue=(float)atof(c_str());return fValue;}
+    float toFloat();
     
     /**
     * Converts the string to a double number
     */
-    double toDouble(){double fValue=(double)atof(c_str());return fValue;}
+    double toDouble();
 
     /**
     * Converts the string to an integer number
     */
-    int toInt(){int dValue=(int)atoi(c_str());return dValue;}
+    int toInt();
     
     /** 
     * Test whether string is empty or not
     */
-    bool empty(){
-      if(privatelength == 0){
-        return true;
-      }
-      if(useStack == false){
-        if(heapValue == NULL)return true;
-      }
-      return false;
-    }
+    bool empty();
   };
 };
 

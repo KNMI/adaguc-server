@@ -556,7 +556,7 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
     cairo_set_antialias(cr, CAIRO_ANTIALIAS_DEFAULT);
     cairo_move_to(cr, x1, y1);
     cairo_line_to(cr, x2, y2);
-    cairo_set_line_width(cr, 0.9);
+    cairo_set_line_width(cr, 1);
     cairo_stroke(cr);
     cairo_set_antialias(cr, aa);
   }

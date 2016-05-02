@@ -36,6 +36,8 @@
 
 #define CTIME_MODE_UTCALENDAR 0
 #define CTIME_MODE_YYYYMM 1
+#define CTIME_MODE_YYYYMMDD_NUMBER 2
+
 #include "CDebugger.h"
 class CTime{
   private:
@@ -94,6 +96,7 @@ class CTime{
    * @return the date object
    */
   Date getDate(double offset);
+  Date offsetToDate(double offset){return getDate(offset);};
   
   
   /**
@@ -166,6 +169,8 @@ class CTime{
    * @return The quantized date as ISO8601 String
    */
   static CT::string quantizeTimeToISO8601(CT::string value, CT::string period, CT::string method);
+  
+  double quantizeTimeToISO8601(CTime * thisTime, double offsetOrig, CT::string period, CT::string method);
 
 };
 #endif

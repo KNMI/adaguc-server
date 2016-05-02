@@ -24,10 +24,10 @@
  ******************************************************************************/
 
 #include "adagucserver.h"
-#define MEASURETIME
+
 DEF_ERRORMAIN();
 
-
+int myPID = int(getpid());
 void writeLogFile(const char * msg){
   char * logfile=getenv("ADAGUC_LOGFILE");
   if(logfile!=NULL){
@@ -40,9 +40,10 @@ void writeLogFile(const char * msg){
         time_t myTime = time(NULL);
         tm *myUsableTime = localtime(&myTime);
         char szTemp[128];
-        snprintf(szTemp,127,"%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ ",
+        snprintf(szTemp,127,"%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ/%d ",
                 myUsableTime->tm_year+1900,myUsableTime->tm_mon+1,myUsableTime->tm_mday,
-                myUsableTime->tm_hour,myUsableTime->tm_min,myUsableTime->tm_sec
+                myUsableTime->tm_hour,myUsableTime->tm_min,myUsableTime->tm_sec,
+                myPID
                 );
         fputs  (szTemp, pFile );
       }
@@ -66,9 +67,10 @@ void writeErrorFile(const char * msg){
         time_t myTime = time(NULL);
         tm *myUsableTime = localtime(&myTime);
         char szTemp[128];
-        snprintf(szTemp,127,"%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ ",
+        snprintf(szTemp,127,"%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ/%d ",
                  myUsableTime->tm_year+1900,myUsableTime->tm_mon+1,myUsableTime->tm_mday,
-                 myUsableTime->tm_hour,myUsableTime->tm_min,myUsableTime->tm_sec
+                 myUsableTime->tm_hour,myUsableTime->tm_min,myUsableTime->tm_sec,
+                 myPID
         );
         fputs  (szTemp, pFile );
       }

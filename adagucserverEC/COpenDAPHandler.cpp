@@ -446,7 +446,7 @@ CDBDebug("Found layer %s",layerName.c_str());
     // When there are no dims, we can get the filename from the config
     if(dataSource->cfgLayer->Dimension.size()==0){
       
-      if(CDataReader::autoConfigureDimensions(dataSource)!=0){
+      if(CAutoConfigure::autoConfigureDimensions(dataSource)!=0){
         CDBError("Unable to configure dimensions automatically");
         delete dataSource;
         return 1;

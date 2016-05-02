@@ -32,8 +32,9 @@ const char *CDFObjectStore::className="CDFObjectStore";
 #include "CConvertCurvilinear.h"
 #include "CConvertHexagon.h"
 #include "CConvertGeoJSON.h"
+#include "CConvertEProfile.h"
 #include "CDataReader.h"
-#define CDFOBJECTSTORE_DEBUG
+//#define CDFOBJECTSTORE_DEBUG
 #define MAX_OPEN_FILES 20
 extern CDFObjectStore cdfObjectStore;
 CDFObjectStore cdfObjectStore;
@@ -304,6 +305,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *s
     if(!level2CompatMode)if(CConvertHexagon::convertHexagonHeader(cdfObject,srvParams)==0){level2CompatMode=true;};
     
     if(!level2CompatMode)if(CConvertGeoJSON::convertGeoJSONHeader(cdfObject)==0){level2CompatMode=true;};
+    if(!level2CompatMode)if(CConvertEProfile::convertEProfileHeader(cdfObject,srvParams)==0){level2CompatMode=true;};
   }
   
   return cdfObject;
@@ -312,20 +314,51 @@ CDFObjectStore *CDFObjectStore::getCDFObjectStore(){return &cdfObjectStore;};
 
 
 void CDFObjectStore::deleteCDFObject(CDFObject **cdfObject){
-  //CDBDebug("Deleting CDFObject");
+  //CDBDebug("Deleting CDFObject  %d", (*cdfObject));
+  int numDeleted = 0;
   for(size_t j=0;j<cdfObjects.size();j++){
     if(cdfObjects[j]==(*cdfObject)){
       //CDBDebug("Closing %s",fileNames[j]->c_str());
-      delete cdfObjects[j];cdfObjects[j]=NULL;(*cdfObject)=NULL;
+      delete cdfObjects[j];cdfObjects[j]=NULL;
+      delete fileNames[j]; fileNames[j] = NULL;
+      delete cdfReaders[j]->cdfCache;cdfReaders[j]->cdfCache = NULL;delete cdfReaders[j];cdfReaders[j] = NULL;
+      
+      cdfObjects.erase(cdfObjects.begin()+j);
+      fileNames.erase(fileNames.begin()+j);
+      cdfReaders.erase(cdfReaders.begin()+j);
+      
+      numDeleted++;
+    }
+  }
+  //CDBDebug("Deleted [%d] CDFObjects",numDeleted);
+  if(numDeleted != 0){
+    deleteCDFObject(cdfObject);
+  }else{
+    (*cdfObject)=NULL;
+  }
+
+}
+
+void CDFObjectStore::deleteCDFObject(const char *fileName){
+ // CDBDebug("Deleting CDFObject");
+  int numDeleted = 0;
+  for(size_t j=0;j<cdfObjects.size();j++){
+    if(fileNames[j]->equals(fileName)){
+      CDBDebug("Closing %s",fileNames[j]->c_str());
+      delete cdfObjects[j];cdfObjects[j]=NULL;
       delete fileNames[j]; fileNames[j] = NULL;
       delete cdfReaders[j]->cdfCache;cdfReaders[j]->cdfCache = NULL;
       delete cdfReaders[j];cdfReaders[j] = NULL;
       cdfReaders.erase(cdfReaders.begin()+j);
-      cdfObjects.erase(cdfObjects.begin()+j);
       fileNames.erase(fileNames.begin()+j);
+      cdfObjects.erase(cdfObjects.begin()+j);
+       numDeleted++;
     }
   }
-  
+  //CDBDebug("Deleted [%d] CDFObjects",numDeleted);
+  if(numDeleted != 0){
+    deleteCDFObject(fileName);
+  }
 
 }
 
@@ -370,3 +403,11 @@ CT::StackList<CT::string> CDFObjectStore::getListOfVisualizableVariables(CDFObje
   return variableList;
 }
 
+
+int CDFObjectStore::getNumberOfOpenObjects(){
+  return cdfObjects.size();
+}
+
+int CDFObjectStore::getMaxNumberOfOpenObjects(){
+  return MAX_OPEN_FILES;
+}
