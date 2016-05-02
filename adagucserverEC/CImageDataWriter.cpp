@@ -47,8 +47,8 @@
 
 CT::string months[] = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
 
-// #define CIMAGEDATAWRITER_DEBUG
-// #define MEASURETIME
+#define CIMAGEDATAWRITER_DEBUG
+ #define MEASURETIME
 
 
 void doJacoIntoLatLon(double &u, double &v, double lo, double la, float deltaX, float deltaY, CImageWarper *warper);
@@ -137,13 +137,13 @@ CImageDataWriter::ProjCacheInfo CImageDataWriter::GetProjInfo(CT::string ckey, C
     projCacheInfo.CoordX=x;
     projCacheInfo.CoordY=y;
 
-
+    CDBDebug("X is : %f Y is: %f",x,y);
     
     imageWarper->reprojpoint(x,y);
     if(  CGeoParams::isLonLatProjection(&dataSource->nativeProj4)){     
       CDBDebug("Is latlon %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[2]);
       //if(dataSource->dfBBOX[2]>180||dataSource->dfBBOX[0]<-180){
-        CDBDebug("X is : %f %d %d",x,x>=-180,x<180);
+        CDBDebug("X is : %f %d %d Y is: %f",x,x>=-180,x<180,y);
         if(x>=-180&&x<180){
           
         //  while(x>=dataSource->dfBBOX[2])x-=360;
@@ -511,6 +511,10 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   if(srvParam->requestType==REQUEST_WMS_GETFEATUREINFO||srvParam->requestType==REQUEST_WMS_GETHISTOGRAM){
     //status = drawImage.createImage(2,2);
     drawImage.Geo->copy(srvParam->Geo);
+    
+        #ifdef CIMAGEDATAWRITER_DEBUG    
+    CDBDebug("/init");
+        #endif
     return 0;
   }
   
@@ -658,8 +662,14 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
          if(dataSources[d]->getDataObject(0)->cdfVariable->getAttributeNE("UGRID_MESH")!=NULL){
           openAll =true;
         }  
+        
+        if(dataSources[d]->getDataObject(0)->cdfObject->getAttributeNE("ADAGUC_GEOJSON")!=NULL){
+          openAll =true;
+        }  
       }
     }
+    
+    openAll = true;
   
       
     if(dataSources[d]->cfgLayer->TileSettings.size()==1){
@@ -857,8 +867,8 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       //Retrieve variable names
       for(size_t o=0;o<dataSource->getNumDataObjects();o++){
        
-        //size_t j=d+o*dataSources.size();
-  //      CDBDebug("j = %d",j);
+        size_t j=d+o*dataSources.size();
+        CDBDebug("j = %d",j);
         //Create a new element and at it to the elements list.
         
         GetFeatureInfoResult::Element * element = new GetFeatureInfoResult::Element();
@@ -974,6 +984,9 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
             }
           }
         
+          if (dataSource->getDataObject(o)->points.size()>0&&hasData==true){
+            CDBDebug("GFI value = %s", element->value.c_str());
+          }
           if(dataSource->getDataObject(o)->points.size()>0&&hasData==true){
             float closestDistance =0;
             int closestIndex =0;
@@ -1023,7 +1036,8 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         #endif
         
         //For vectors, we will calculate angle and strength
-        if(dataSource->getNumDataObjects()==2){
+        if((dataSource->getNumDataObjects()==2)&&(dataSource->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_GEOJSONPOINT")==NULL)){
+          CDBDebug("VECTOR GFI!@!!!!!!!!");
           size_t ptr=0;
           if(openAll){
             ptr=projCacheInfo.imx+projCacheInfo.imy*projCacheInfo.dWidth;
@@ -1252,6 +1266,7 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   * Use fast nearest neighbourrenderer
   */
   if(renderMethod&RM_NEAREST){
+    CDBDebug("<OOOOOO>Nearest");
     imageWarperRenderer = new CImgWarpNearestNeighbour();
     imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
     delete imageWarperRenderer;
@@ -1389,7 +1404,7 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   //if(renderMethod==barb||renderMethod==vector||renderMethod==point){
   if(renderMethod&RM_BARB||renderMethod&RM_VECTOR||renderMethod&RM_POINT||renderMethod&RM_VOLUME||renderMethod&RM_DISC){//||renderMethod==RM_NEAREST){
     if(dataSource->getDataObject(0)->points.size()!=0){
-      //CDBDebug("CImgRenderPoints()");
+      CDBDebug("<OOOOOOOO>CImgRenderPoints()");
       
       imageWarperRenderer = new CImgRenderPoints();
       CT::string renderMethodAsString;

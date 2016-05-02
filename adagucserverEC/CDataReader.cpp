@@ -32,10 +32,11 @@
 #include "CConvertADAGUCPoint.h"
 #include "CConvertCurvilinear.h"
 #include "CConvertHexagon.h"
+#include "CConvertGeoJSON.h"
 #include "CDBFactory.h"
 const char *CDataReader::className="CDataReader";
 
- //#define CDATAREADER_DEBUG
+//#define CDATAREADER_DEBUG
 //#define MEASURETIME
 
 #define uchar unsigned char
@@ -341,6 +342,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y){
   if(!dataSource->level2CompatMode)if(CConvertADAGUCPoint::convertADAGUCPointData(dataSource,mode)==0)dataSource->level2CompatMode=true;
   if(!dataSource->level2CompatMode)if(CConvertCurvilinear::convertCurvilinearData(dataSource,mode)==0)dataSource->level2CompatMode=true;
   if(!dataSource->level2CompatMode)if(CConvertHexagon::convertHexagonData(dataSource,mode)==0)dataSource->level2CompatMode=true;     
+  if(!dataSource->level2CompatMode)if(CConvertGeoJSON::convertGeoJSONData(dataSource,mode)==0)dataSource->level2CompatMode=true;     
 //   if(dataSource->level2CompatMode){
 //    cache->removeClaimedCachefile();
 //   }

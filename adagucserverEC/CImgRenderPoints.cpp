@@ -210,6 +210,7 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
     }
   }
   
+  CDBDebug("drawPointFillcolor: %x%x%x%x", drawPointFillColor.r,drawPointFillColor.g,drawPointFillColor.b,drawPointFillColor.a);
   int alphaPoint[(2*drawPointDiscRadius+1)*(2*drawPointDiscRadius+1)];
   if (drawVolume) {
     int p = 0;
@@ -226,7 +227,8 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
     CDBDebug("alphaPoint inited");
   }
 
-  if(dataSource->getNumDataObjects()!=2){ // Not for vector (u/v or speed/dir pairs) TODO
+      CDBDebug("dataObjects: %d", dataSource->getNumDataObjects());
+  if((dataSource->getNumDataObjects()!=2)||(dataSource->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_GEOJSONPOINT")!=NULL)){ // Not for vector (u/v or speed/dir pairs) TODO
     std::map<std::string,CDrawImage*> symbolCache;
 //     CDBDebug("symbolCache created, size=%d", symbolCache.size());
     std::map<std::string,CDrawImage*>::iterator symbolCacheIter;
@@ -454,7 +456,7 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
     }
   }
   
-  if(dataSource->getNumDataObjects()==2){
+  if ((dataSource->getNumDataObjects()==2)&&(dataSource->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_GEOJSONPOINT")==NULL)){
     CDBDebug("VECTOR");
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
     if(styleConfiguration!=NULL){

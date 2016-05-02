@@ -24,6 +24,7 @@
  ******************************************************************************/
 
 #include "adagucserver.h"
+#define MEASURETIME
 DEF_ERRORMAIN();
 
 
@@ -45,7 +46,9 @@ void writeLogFile(const char * msg){
                 );
         fputs  (szTemp, pFile );
       }
+
       fclose (pFile);
+      
     }else fprintf(stderr,"Unable to write logfile %s\n",logfile);
   }
 }
