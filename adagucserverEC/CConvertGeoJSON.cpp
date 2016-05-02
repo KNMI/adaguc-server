@@ -23,7 +23,6 @@
       * 
       ******************************************************************************/
 
-#include "psimpl.h"
       #include "CConvertGeoJSON.h"
       #include "CConvertUGRIDMesh.h"
 //      #include "CFillTriangle.h"
