@@ -23,7 +23,7 @@
       * 
       ******************************************************************************/
 
-      #include "psimpl.h"
+#include "psimpl.h"
       #include "CConvertGeoJSON.h"
       #include "CConvertUGRIDMesh.h"
 //      #include "CFillTriangle.h"
@@ -32,6 +32,7 @@
       #include <string>
       #include <map>
       #include <cstdlib>
+      #include <queue>
       #define CCONVERTGEOJSON_DEBUG
       const char *CConvertGeoJSON::className="CConvertGeoJSON";
 
