@@ -293,7 +293,7 @@ int CImageDataWriter::_setTransparencyAndBGColor(CServerParams *srvParam,CDrawIm
   return 0;
 }
 
-int CImageDataWriter::drawCascadedWMS(CDataSource * dataSource, const char *service,const char *layers,bool transparent, const char *bgcolor){
+int CImageDataWriter::drawCascadedWMS(CDataSource * dataSource, const char *service,const char *layers, const char *styles,bool transparent, const char *bgcolor){
 
 #ifndef ENABLE_CURL
   CDBError("CURL not enabled");
@@ -304,7 +304,7 @@ int CImageDataWriter::drawCascadedWMS(CDataSource * dataSource, const char *serv
   bool trueColor=drawImage.getTrueColor();
  // transparent=true;
   CT::string url=service;
-  url.concat("SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&STYLES=&");
+  url.concat("SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&");
   if(trueColor==false)url.concat("FORMAT=image/gif");
   else url.concat("FORMAT=image/png");
   //&BBOX=50.943396226415075,-4.545656817372752,118.8679245283019,57.6116945532218
@@ -325,6 +325,11 @@ int CImageDataWriter::drawCascadedWMS(CDataSource * dataSource, const char *serv
                   drawImage.Geo->dfBBOX[3]);
   url.printconcat("&SRS=%s",drawImage.Geo->CRS.c_str());
   url.printconcat("&LAYERS=%s",layers);
+  if ((styles!=NULL)&&(strlen(styles)>0)){
+    url.printconcat("&STYLES=%s", styles);
+  } else {
+    url.printconcat("&STYLES=");
+  }
   for(size_t k=0;k<srvParam->requestDims.size();k++){
     url.printconcat("&%s=%s",srvParam->requestDims[k]->name.c_str(),srvParam->requestDims[k]->value.c_str());
   }
@@ -1665,6 +1670,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
       if(dataSource->cfgLayer->WMSLayer.size()==1){
         status = drawCascadedWMS(dataSource,dataSource->cfgLayer->WMSLayer[0]->attr.service.c_str(),
                                  dataSource->cfgLayer->WMSLayer[0]->attr.layer.c_str(),
+                                 dataSource->cfgLayer->WMSLayer[0]->attr.style.c_str(),
                                  dataSource->cfgLayer->WMSLayer[0]->attr.transparent,
                                  dataSource->cfgLayer->WMSLayer[0]->attr.bgcolor.c_str()
                                 );
