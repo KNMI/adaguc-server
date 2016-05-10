@@ -76,6 +76,7 @@ private:
   int _drawFreeTypeText(int x,int y,int &w,int &h,float angle,const char *text,bool render);
     bool isAlphaUsed;
 public:
+  bool isAlphaUsed;
   
   CCairoPlotter(int width,int height, float fontSize, const char*fontLocation,unsigned char r,unsigned char g,unsigned char b,unsigned char a);
   CCairoPlotter(int width,int height, unsigned char * _ARGBByteBuffer, float fontSize, const char*fontLocation);
