@@ -51,8 +51,8 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
     this->height=height;
     this->fontSize=fontSize;
     this->fontLocation=fontLocation;
-    stride=cairo_format_stride_for_width(FORMAT, width);
-    isAlphaUsed = false;
+    this->stride=cairo_format_stride_for_width(FORMAT, width);
+    this->isAlphaUsed = false;
   
     
     surface=cairo_image_surface_create_for_data(ARGBByteBuffer, CCairoPlotter::FORMAT, width, height, stride);
@@ -107,11 +107,9 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
       if(origAlphaC != 255){
         float origAlpha = float(origAlphaC);
         
-        
         float origBlue = ARGBByteBuffer[p];
         float origGreen = ARGBByteBuffer[p+1];
         float origRed = ARGBByteBuffer[p+2];
-        
         
         destBlue=destBlue/255;
         destGreen=destGreen/255;
@@ -130,10 +128,9 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
         float newGreen = (destGreen*destAlpha+origGreen*A1)/A2;
         float newRed = (destRed*destAlpha+origRed*A1)/A2;
         float newAlpha = origAlpha+destAlpha*(1-origAlpha);
-        
         //newAlpha = 1;
         
-        unsigned char aa= newAlpha*255.;;
+        unsigned char aa= newAlpha*255.;
         ARGBByteBuffer[p]=newBlue*255;
         ARGBByteBuffer[p+1]=newGreen*255;
         ARGBByteBuffer[p+2]=newRed*255;
@@ -376,7 +373,6 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
         w += slot->advance.x/64;
 //        h += slot->advance.y/64;
       }
-   
       return 0;
     }
     
@@ -385,9 +381,9 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
   }
 
   int CCairoPlotter::drawAnchoredText(int x, int y, float angle,const char *text, int anchor){
-    int w,h;
+    int w=0, h=0;
     getTextSize(w, h, angle, text);
- //   CDBDebug("[w,h]=>[%d,%d] %s at [%d,%d] %d,%d\n", w, h, text, x, y, anchor, anchor % 4);
+//    CDBDebug("[w,h]=>[%d,%d] %s at [%d,%d] %d,%d\n", w, h, text, x, y, anchor, anchor % 4);
     switch(anchor%4) {
       case 0:
         _drawFreeTypeText( x, y, w, h, angle,text, true);
@@ -406,9 +402,9 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
   }
   
   int CCairoPlotter::drawCenteredText(int x, int y, float angle,const char *text){
-    int w,h;
+    int w=0, h=0;
     getTextSize(w, h, angle, text);
-    //CDBDebug("[w,h]=>[%d,%d] at [%d,%d]\n", w, h, x, y);
+//    CDBDebug("[w,h]=>[%d,%d] at [%d,%d] (%d)\n", w, h, x, y, isAlphaUsed);
     return _drawFreeTypeText( x-w/2, y+h/2,w,h,angle,text,true);
   }
 
