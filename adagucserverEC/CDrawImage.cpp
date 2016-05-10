@@ -100,10 +100,10 @@ int CDrawImage::createImage(const char *fn){
   _bEnableTransparency=true;
 
   cairo_surface_t *surface=cairo_image_surface_create_from_png(fn);
+  currentGraphicsRenderer = CDRAWIMAGERENDERER_CAIRO;
   createImage(cairo_image_surface_get_width(surface), cairo_image_surface_get_height(surface));
   cairo->setToSurface(surface);
   cairo_surface_destroy(surface);
-  currentGraphicsRenderer = CDRAWIMAGERENDERER_CAIRO;
   return 0;
 }
 
@@ -251,7 +251,7 @@ void CDrawImage::drawVector(int x,int y,double direction, double strength,int co
   drawVector(x, y ,direction, strength, col, linewidth);
 }
 
-void CDrawImage::drawVector(int x,int y,double direction, double strength,CColor color, float linewidth){
+void CDrawImage::drawVector(int x,int y,double direction, double strength, CColor color, float linewidth){
   double wx1,wy1,wx2,wy2,dx1,dy1;
   if(fabs(strength)<1){
     setPixel(x,y,color);
@@ -291,6 +291,32 @@ void CDrawImage::drawVector(int x,int y,double direction, double strength,CColor
   line(wx2,wy2,hx3,hy3,linewidth,color);
 //  setPixelIndexed(x, y, 252);
   //circle(x+1, y+1, 1, color);
+}
+
+#define xCor(l,d) ((int)(l*cos(d)+0.5))
+#define yCor(l,d) ((int)(l*sin(d)+0.5))
+
+void CDrawImage::drawVector2(int x,int y,double direction, double strength, int radius, CColor color, float linewidth){
+  if(fabs(strength)<1){
+    setPixel(x,y,color);
+    return;
+  }
+  
+  int ARROW_LENGTH=radius + 16;
+  float tipX = x+(int)(ARROW_LENGTH*cos(direction));
+  float tipY = y+(int)(ARROW_LENGTH*sin(direction));
+
+  int i2=8+(int)linewidth;
+  int i1=2*i2;
+  
+  float hx1=tipX-xCor(i1, direction+0.5);
+  float hy1=tipY-yCor(i1,direction+0.5);
+  float hx2=tipX-xCor(i2,direction);
+  float hy2=tipY-yCor(i2,direction);
+  float hx3=tipX-xCor(i1, direction-0.5);
+  float hy3=tipY-yCor(i1,direction-0.5);
+  
+  poly(tipX, tipY, hx1, hy1, hx2, hy2, hx3, hy3, linewidth, color, true);
 }
 
 #define MSTOKNOTS (3600./1852.)
@@ -475,6 +501,33 @@ void CDrawImage::poly(float x1,float y1,float x2,float y2,float x3, float y3, fl
   }
 }
 
+void CDrawImage::poly(float x1,float y1,float x2,float y2,float x3, float y3, float x4, float y4, float lineWidth, CColor color, bool fill){
+  if(currentGraphicsRenderer==CDRAWIMAGERENDERER_CAIRO){
+    float ptx[4]={x1, x2, x3, x4};
+    float pty[4]={y1, y2, y3, y4};
+    cairo->setFillColor(color.r, color.g, color.b, color.a);
+//    currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],255);
+    cairo->poly(ptx, pty, 4, lineWidth, true, fill);
+  } else {
+    int colorIndex=getClosestGDColor(color.r, color.g, color.b);
+    gdPoint pt[5];
+    pt[0].x=int(x1);
+    pt[1].x=int(x2);
+    pt[2].x=int(x3);
+    pt[3].x=int(x4);
+    pt[4].x=int(x1);
+    pt[0].y=int(y1);
+    pt[1].y=int(y2);
+    pt[2].y=int(y3);
+    pt[3].y=int(y4);
+    pt[4].y=int(y1);
+    if (fill) {
+        gdImageFilledPolygon(image, pt, 5, _colors[colorIndex]);
+    } else {
+        gdImagePolygon(image, pt, 5, _colors[colorIndex]);
+    }
+  }
+}
 
 void CDrawImage::line(float x1, float y1, float x2, float y2,int color){
   if(currentGraphicsRenderer==CDRAWIMAGERENDERER_CAIRO){
@@ -799,6 +852,7 @@ int CDrawImage::drawTextArea(int x,int y,const char *fontfile, float size, float
 //           break;
 //         }
       }while(length<(int)(title.length())-1&&(int)offset<(int)title.length()-1);
+      cairo->isAlphaUsed|=ftTitle->isAlphaUsed; //remember ftTile's isAlphaUsed flag
       delete ftTitle;
       
       return textY;
@@ -810,6 +864,7 @@ void CDrawImage::drawText(int x,int y,const char *fontfile, float size, float an
      freeType->setColor(fgcolor.r,fgcolor.g,fgcolor.b,fgcolor.a);
      freeType->setFillColor(bgcolor.r,bgcolor.g,bgcolor.b,bgcolor.a);
      freeType->drawFilledText(x,y,angle,text);
+     cairo->isAlphaUsed|=freeType->isAlphaUsed; //remember freetype's isAlphaUsed flag
      delete freeType;
    }else{
      char *_text = new char[strlen(text)+1];
@@ -872,6 +927,7 @@ void CDrawImage::drawAnchoredText(int x,int y,const char *fontfile, float size, 
     CCairoPlotter * freeType = new CCairoPlotter (Geo->dWidth,Geo->dHeight,(cairo->getByteBuffer()),size,fontfile);
     freeType->setColor(color.r,color.g,color.b,color.a);
     freeType->drawAnchoredText(x,y,angle,text,anchor);
+    cairo->isAlphaUsed|=freeType->isAlphaUsed; //remember freetype's isAlphaUsed flag
     delete freeType;
   }else{
     //TODO GD renderer does not center text yet
@@ -891,6 +947,7 @@ void CDrawImage::drawCenteredText(int x,int y,const char *fontfile, float size, 
     CCairoPlotter * freeType = new CCairoPlotter (Geo->dWidth,Geo->dHeight,(cairo->getByteBuffer()),size,fontfile);
     freeType->setColor(color.r,color.g,color.b,color.a);
     freeType->drawCenteredText(x,y,angle,text);
+    cairo->isAlphaUsed|=freeType->isAlphaUsed; //remember freetype's isAlphaUsed flag
     delete freeType;
   }else{
     //TODO GD renderer does not center text yet
@@ -913,6 +970,7 @@ void CDrawImage::drawText(int x,int y,const char *fontfile, float size, float an
     CCairoPlotter * freeType = new CCairoPlotter (Geo->dWidth,Geo->dHeight,(cairo->getByteBuffer()),size,fontfile);
     freeType->setColor(color.r,color.g,color.b,color.a);
     freeType->drawText(x,y,angle,text);
+    cairo->isAlphaUsed|=freeType->isAlphaUsed; //remember freetype's isAlphaUsed flag
     delete freeType;
   }else{
     char *_text = new char[strlen(text)+1];
