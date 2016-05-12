@@ -26,7 +26,7 @@
 #include "CConvertEProfile.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
-#define CCONVERTEPROFILE_DEBUG
+//#define CCONVERTEPROFILE_DEBUG
 // #define CCONVERTEPROFILE_DEBUG
 const char *CConvertEProfile::className="CConvertEProfile";
 
@@ -353,7 +353,7 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource,int mode){
   }catch(int e){
     return 1;
   }
-  //CDBDebug("THIS IS EPROFILE LIDAR DATA");
+  CDBDebug("THIS IS EPROFILE LIDAR DATA");
   
   #ifdef CCONVERTEPROFILE_DEBUG
     StopWatch_Stop("Reading data");
@@ -409,7 +409,7 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource,int mode){
   /*First read LAT and LON*/
   
   /*Find which index is the station dim*/
-  int stationDimIndexInCoord = 0;
+//   int stationDimIndexInCoord = 0;
   int numStations = 1;
 
   
@@ -503,7 +503,7 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource,int mode){
         
         #ifdef CCONVERTEPROFILE_DEBUG
         CDBDebug("Reading CDF_CHAR array");
-        for(int j=0;j<numDims;j++){
+        for(size_t j=0;j<numDims;j++){
           CDBDebug("CDF_CHAR %d: %s %d till %d ",j,pointVar[d]->dimensionlinks[j]->name.c_str(),start[j],count[j]);
         }
         #endif
@@ -516,7 +516,7 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource,int mode){
       if(pointVar[d]->nativeType==CDF_STRING){
        #ifdef CCONVERTEPROFILE_DEBUG
         CDBDebug("Reading CDF_STRING array");
-        for(int j=0;j<numDims;j++){
+        for(size_t j=0;j<numDims;j++){
           CDBDebug("CDF_STRING %d: %s %d till %d ",j,pointVar[d]->dimensionlinks[j]->name.c_str(),start[j],count[j]);
         }
         #endif
@@ -747,9 +747,9 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource,int mode){
     }
     
     //Read dates for obs
-    bool hasTimeValuePerObs = false;
+//     bool hasTimeValuePerObs = false;
     CTime obsTime;
-    double *obsTimeData = NULL;
+//     double *obsTimeData = NULL;
     CDF::Variable * timeVarPerObs =  cdfObject0->getVariableNE("time");
       if(timeVarPerObs!= NULL){
       //if(timeVarPerObs->isDimension == true){
@@ -757,10 +757,10 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource,int mode){
           CDF::Attribute* timeStringAttr = timeVarPerObs->getAttributeNE("units");
           if(timeStringAttr !=NULL){
               if(timeStringAttr -> data != NULL){
-              if(obsTime.init((const char*)timeStringAttr ->data)==0){
-                hasTimeValuePerObs = true;
+              if(obsTime.init(timeVarPerObs)==0){
+//                 hasTimeValuePerObs = true;
                 timeVarPerObs->readData(CDF_DOUBLE,start,count,stride,true);
-                obsTimeData = (double*)timeVarPerObs->data;
+//                 obsTimeData = (double*)timeVarPerObs->data;
               }
             }
           }

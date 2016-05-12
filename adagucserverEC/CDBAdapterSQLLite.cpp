@@ -313,7 +313,7 @@ CDBStore::Store *CDBAdapterSQLLite::getReferenceTime(const char *netcdfReference
   if(store == NULL)return NULL;
 
   CTime ctime;  
-  ctime.init("seconds since 1970");
+  ctime.init("seconds since 1970",NULL);
   
   double minDifference = INFINITY;
   bool differenceWasFound = false;
@@ -380,7 +380,7 @@ CDBStore::Store *CDBAdapterSQLLite::getClosestDataTimeToSystemTime(const char *n
   if(store == NULL)return NULL;
 
   CTime ctime;  
-  ctime.init("seconds since 1970");
+  ctime.init("seconds since 1970",NULL);
   
   
   CT::string currentTimeString = CTime::currentDateTime();

@@ -88,7 +88,13 @@ int CDF::Variable::readData(CDFType readType,size_t *_start,size_t *_count,ptrdi
     hasFillValue = true;
   }catch(int e){}
   
-  if(readType!=-1){
+  bool reallyApplyScaleOffset = false;
+  
+  if(scaleFactor!=1||addOffset!=0){
+    reallyApplyScaleOffset = true;
+  }
+  
+  if(readType!=-1 && reallyApplyScaleOffset){
     if(readType!=CDF_FLOAT&&readType!=CDF_DOUBLE){
       CDBError("Unable to apply scale offset for readtype %s",CDF::getCDFDataTypeName(readType).c_str());
       return 1;
@@ -100,19 +106,17 @@ int CDF::Variable::readData(CDFType readType,size_t *_start,size_t *_count,ptrdi
   if(status != 0)return status;
   //CDBDebug("applyScaleOffset = %f %f",scaleFactor,addOffset);
   //Apply scale and offset
-  if(scaleFactor!=1||addOffset!=0){
-  size_t lsize= getSize();
+  if(reallyApplyScaleOffset){
+    size_t lsize= getSize();
   //CDBDebug("ScaleType = %s",CDF::getCDFDataTypeName(scaleType).c_str());
     if(scaleType == CDF_FLOAT){
       float *scaleData = (float*)data;
       float fscale = float(scaleFactor);
       float foffset = float(addOffset);
-      if(scaleFactor!=1||addOffset!=0){
-        for(size_t j=0;j<lsize;j++)scaleData[j]=scaleData[j]*fscale+foffset;
-        fillValue=fillValue*fscale+foffset;
-        float f=(float)fillValue;
-        if( hasFillValue)getAttribute("_FillValue")->setData(CDF_FLOAT,&f,1);
-      }
+      for(size_t j=0;j<lsize;j++)scaleData[j]=scaleData[j]*fscale+foffset;
+      fillValue=fillValue*fscale+foffset;
+      float f=(float)fillValue;
+      if( hasFillValue)getAttribute("_FillValue")->setData(CDF_FLOAT,&f,1);
     }
     
     if(scaleType == CDF_DOUBLE){
@@ -407,14 +411,9 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
   }
 
   
-  CT::string srcDimUnits="";
-  srcDimUnits = srcDimVar->getAttribute("units")->toString();
-   #ifdef CCDFDATAMODEL_DEBUG    
-  CDBDebug("source units are %s",srcDimUnits.c_str());
-#endif
   CTime ccdftimesrc,ccdftimedst;
-  if(ccdftimesrc.init(srcDimUnits.c_str())!=0){
-    CDBError("Unable to initialize time library with %s",srcDimUnits.c_str());
+  if(ccdftimesrc.init(srcDimVar)!=0){
+    CDBError("Unable to initialize time library");
     throw(1);
   }
 
@@ -434,12 +433,8 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
     for(size_t _j=0;_j<dimSize;_j++){
       size_t j=_j;//(dimSize-1)-_j;
       
-      CT::string dstDimUnits = iterativeVar->getAttribute("units")->toString();
-        #ifdef CCDFDATAMODEL_DEBUG    
-     //  CDBDebug("dest units are %d/%s",j,dstDimUnits.c_str());
-#endif
-      if(ccdftimedst.init(dstDimUnits.c_str())!=0){
-        CDBError("Unable to initialize time library with %s",dstDimUnits.c_str());
+      if(ccdftimedst.init(iterativeVar)!=0){
+        CDBError("Unable to initialize time library");
         throw(1);
       }
       CT::string dstDimValue = ccdftimedst.dateToString(ccdftimedst.getDate(iterativeVar->getDataAt<double>(j)));

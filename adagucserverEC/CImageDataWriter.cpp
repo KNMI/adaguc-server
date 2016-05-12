@@ -2637,7 +2637,7 @@ int CImageDataWriter::end(){
       
       
       CTime *ctime = new CTime();
-      ctime->init("seconds since 1950");
+      ctime->init("seconds since 1950",NULL);
       
       double startTimeValue=0;
       double stopTimeValue=0;

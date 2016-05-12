@@ -474,7 +474,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
                   if(isTimeDim[d]){
                     try{
                       adagucTime.reset();
-                      adagucTime.init((char*)dimUnits->toString().c_str());
+                      adagucTime.init(dimVar);
                     }catch(int e){
                       CDBDebug("Exception occurred during time initialization: %d",e);
                       throw(__LINE__);

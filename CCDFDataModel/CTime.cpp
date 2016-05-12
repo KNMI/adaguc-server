@@ -30,6 +30,11 @@
 #include <math.h>
 
 const char *CTime::className="CTime";
+//                                                    1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12
+int CTime::CTIME_CALENDARTYPE_365day_Months[]=     { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+int CTime::CTIME_CALENDARTYPE_365day_MonthsCumul[]={ 0, 31, 59, 90,120,151,181,212,243,273,304,334,365};
+
+
 // utUnit CTime::dataunits;
 // bool CTime::isInitialized;
 // 
@@ -59,12 +64,54 @@ void CTime::reset(){
     utTerm();
   }
   currentUnit="";
+  currentCalendar="";
   isInitialized=false;
 }
 
-int CTime::init(const char *units){
+int CTime::init(CDF::Variable *timeVariable){
+  if(timeVariable == NULL){
+    CDBError("CTime::init: Given timeVariable == NULL");
+    return 1;
+  }
+  CT::string units,calendar;
+  
+  CDF::Attribute *unitsAttr = timeVariable->getAttributeNE("units");
+  CDF::Attribute *calendarAttr = timeVariable->getAttributeNE("calendar");
+  
+  if(unitsAttr == NULL){
+    CDBError("No time units available for dimension %s",timeVariable->name.c_str());
+    return 1;
+  }
+  
+  if(unitsAttr->data == NULL){
+    CDBError("No units data available for dimension %s",timeVariable->name.c_str());
+    return 1;
+  }
+  
+  units=unitsAttr->getDataAsString();
+  
+  if(units.length() == 0){
+    CDBError("No units data available for dimension %s",timeVariable->name.c_str());
+    return 1;
+  }
+  
+  if(calendarAttr!=NULL){
+    if(calendarAttr->data!=NULL){
+      calendar = calendarAttr->getDataAsString();
+      //CDBDebug("Found calendar %s",calendar.c_str());
+    }
+  }
+  
+  return init(units.c_str(),calendar.c_str());
+  
+}
+
+int CTime::init(const char *units, const char *calendar){
   if(isInitialized){
     if(!currentUnit.equals(units)){
+      if(mode == CTIME_MODE_365day){
+        CDBError("UDUNITS library already initialized with %s",currentUnit.c_str());
+      }
       if(mode == CTIME_MODE_UTCALENDAR){
         CDBError("UDUNITS library already initialized with %s",currentUnit.c_str());
       }
@@ -79,6 +126,157 @@ int CTime::init(const char *units){
     return 0;
   }
   currentUnit=units;
+  
+  currentCalendar="";
+  if(calendar!=NULL){
+    if(strlen(calendar)>0){
+      currentCalendar= calendar;
+    }
+  }
+  
+  //Mode is 365day  || noleap
+  if(currentCalendar.length()>0){
+    if(currentCalendar.equals("365days")||
+      currentCalendar.equals("365_day")||
+      currentCalendar.equals("noleap")||
+      currentCalendar.equals("no_leap")){
+      mode = CTIME_MODE_365day;
+      timeUnits.calendarType = CTIME_CALENDARTYPE_365day;
+      
+      //CT::string "days since 1949-12-01 00:00:00"
+    
+      CT::string YYYYMMDDPart;
+      CT::string HHMMSSPart;
+    
+      CDBDebug("365day calendar with units %s",currentUnit.c_str());
+      CT::string* timeItems = currentUnit.splitToArray(" ");
+    
+      bool hasError = false;
+      try{
+        if(timeItems->count<3){
+          CDBError("timeItems length <3 for %s",currentUnit.c_str());
+          throw(__LINE__);
+        }
+        if(timeItems[1].equals("since")==false){
+          CDBError("timeItems is missing since for %s",currentUnit.c_str());
+          throw(__LINE__);
+        }
+      
+        int unitType = -1;
+        //Determine unit type (days since, hours since)
+        if(timeItems[0].equals("seconds")){unitType = CTIME_UNITTYPE_SECONDS;}
+        if(timeItems[0].equals("minutes")){unitType = CTIME_UNITTYPE_MINUTES;}
+        if(timeItems[0].equals("hours")){unitType = CTIME_UNITTYPE_HOURS;}
+        if(timeItems[0].equals("days")){unitType = CTIME_UNITTYPE_DAYS;}
+        if(timeItems[0].equals("months")){unitType = CTIME_UNITTYPE_MONTHS;}
+        if(timeItems[0].equals("years")){unitType = CTIME_UNITTYPE_YEARS;}
+        
+        if(unitType == -1){
+          CDBError("Unable to detect type of units for %s",timeItems[0].c_str());
+         throw(__LINE__);
+        }
+        timeUnits.unitType = unitType;
+      
+        timeUnits.date.year = 0;
+        timeUnits.date.month = 0;
+        timeUnits.date.day = 0;
+        timeUnits.date.hour = 0;
+        timeUnits.date.minute = 0;
+        timeUnits.date.second = 0;
+        
+        //Determince the since part, e.g. 1949-12-01 00:00:00
+        YYYYMMDDPart = timeItems[2].c_str();
+        
+        CT::string * YYYYMMDDPartSplitted = YYYYMMDDPart.splitToArray("-");
+        
+        if(YYYYMMDDPartSplitted->count != 3){
+          CDBError("YYYYMMDD part is incorrect [%s]",YYYYMMDDPart.c_str());
+          hasError = true;
+        }else{
+          timeUnits.date.year = YYYYMMDDPartSplitted[0].toInt();
+          timeUnits.date.month = YYYYMMDDPartSplitted[1].toInt();
+          timeUnits.date.day = YYYYMMDDPartSplitted[2].toInt();
+        }
+        
+        delete [] YYYYMMDDPartSplitted;
+        
+        if(timeItems->count>3){
+          HHMMSSPart=timeItems[3].c_str();
+          
+          CT::string *HHMMSSPartSplited = HHMMSSPart.splitToArray(":");
+          if(HHMMSSPartSplited->count!=3){
+            CDBError("HHMMSS part is incorrect [%s]",HHMMSSPart.c_str());
+            hasError = true;
+          }else{
+            timeUnits.date.hour = HHMMSSPartSplited[0].toInt();
+            timeUnits.date.minute = HHMMSSPartSplited[1].toInt();
+            timeUnits.date.second = (double)HHMMSSPartSplited[2].toInt();
+          }
+          delete [] HHMMSSPartSplited;
+        }
+      }catch(int e){
+        hasError = true;
+      }
+      delete[] timeItems;
+      
+      //Check limits
+      if(!(timeUnits.date.year>=0   && timeUnits.date.year<10000))  {CDBError("Year out of range");return 1;}
+      if(!(timeUnits.date.month>=1  && timeUnits.date.month<13)) {CDBError("Month out of range");return 1;}
+      if(!(timeUnits.date.day>=1    && timeUnits.date.day<32))   {CDBError("Day out of range");return 1;}
+      if(!(timeUnits.date.hour>=0   && timeUnits.date.hour<24))  {CDBError("Hour out of range");return 1;}
+      if(!(timeUnits.date.minute>=0 && timeUnits.date.minute<60)){CDBError("Minute out of range");return 1;}
+      if(!(timeUnits.date.second>=0 && timeUnits.date.second<60)){CDBError("Second out of range");return 1;}
+      
+      //Calculate date since offset for units
+      timeUnits.dateSinceOffset = 0;
+      
+      
+//       timeUnits.dateSinceOffset = dateToOffset(
+      if(timeUnits.unitType == CTIME_UNITTYPE_DAYS){
+        timeUnits.dateSinceOffset +=timeUnits.date.year*365;   
+         timeUnits.dateSinceOffset +=CTIME_CALENDARTYPE_365day_MonthsCumul[(timeUnits.date.month-1)];
+         timeUnits.dateSinceOffset +=timeUnits.date.day;        
+//         timeUnits.dateSinceOffset +=(((double)timeUnits.date.hour)/24.); 
+//         timeUnits.dateSinceOffset +=(((double)timeUnits.date.minute)/(24*60.));
+//         timeUnits.dateSinceOffset +=(((double)timeUnits.date.second)/(24*60*60.));       
+
+      }     
+      
+//       CDBDebug("timeUnits.date.year   = %d",timeUnits.date.year);
+//       CDBDebug("timeUnits.date.month  = %d",timeUnits.date.month);
+//       CDBDebug("timeUnits.date.day    = %d",timeUnits.date.day);
+//       CDBDebug("timeUnits.date.hour   = %d",timeUnits.date.hour);
+//       CDBDebug("timeUnits.date.minute = %d",timeUnits.date.minute);
+//       CDBDebug("timeUnits.date.second = %f",timeUnits.date.second);
+      /*
+      for(int d=1;d<366;d++){
+        CDBDebug("day %d = %d",d,getMonthByDayInYear(d,CTIME_CALENDARTYPE_365day_MonthsCumul));
+      }
+      
+      CDBDebug("dateSinceOffset = %f",timeUnits.dateSinceOffset);
+
+      double d = 20652;
+      
+      Date date =getDate(d);
+      double o = dateToOffset(date);
+      
+      CDBDebug("2006-07-01: In = %f, out = %s and %f",d,dateToISOString(date).c_str(),o);
+      
+      for(double d=20652;d<20652+366;d++){
+        Date date =getDate(d);
+        double o = dateToOffset(date);
+        
+        CDBDebug("In = %f, out = %s and %f",d,dateToISOString(date).c_str(),o);
+      }*/
+
+      if(hasError){
+        return 1;
+      }
+      
+      isInitialized=true;
+      return 0;
+    }
+  }
   
   //Mode is in YYYYMM format
   if(currentUnit.indexOf("YYYYMM")>=0){
@@ -122,9 +320,48 @@ int CTime::init(const char *units){
 
 
 
+int CTime::getMonthByDayInYear(int day,int *monthsCumul){
+   for(int j=1;j<13;j++){
+     if(monthsCumul[j]>=day){
+       return j;
+     }
+   }
+   CDBError("Month not found for day %d",day);
+   return -1;
+}
+
 CTime::Date CTime::getDate(double offset){
   Date date;
   date.offset=offset;
+  
+  
+  if(mode == CTIME_MODE_365day){
+    if(timeUnits.unitType == CTIME_UNITTYPE_DAYS){
+      double newOffset = timeUnits.dateSinceOffset+offset;
+      date.year = int(newOffset/365);
+      newOffset-=(date.year*365);
+
+      date.month = getMonthByDayInYear(newOffset,CTIME_CALENDARTYPE_365day_MonthsCumul);
+      if(date.month <= 0){CDBError("date.month <= 0");throw CTIME_CONVERSION_ERROR;}
+      newOffset-=(CTIME_CALENDARTYPE_365day_MonthsCumul[date.month-1]);
+
+      date.day = newOffset;
+      
+      newOffset -=date.day;;
+      if(newOffset>0){
+        //TODO support sub daily data?
+        CDBError("Sub daily data not supported by calendar CTIME_MODE_365day and unit CTIME_UNITTYPE_DAYS !");
+        throw CTIME_CONVERSION_ERROR;
+        date.hour = int(newOffset*24);
+        date.minute = 0;
+        date.second = 0;
+      }else{
+        date.hour = 0;
+        date.minute = 0;
+        date.second = 0;
+      }
+    }
+  }
 
   if(mode == CTIME_MODE_YYYYMM){
     int yyyymm = int(offset);
@@ -161,6 +398,20 @@ CTime::Date CTime::getDate(double offset){
 
 double CTime::dateToOffset( Date date){
   double offset;
+  
+  if(mode == CTIME_MODE_365day){
+    if(timeUnits.unitType == CTIME_UNITTYPE_DAYS){
+      offset = date.year*365;
+      offset +=CTIME_CALENDARTYPE_365day_MonthsCumul[(date.month-1)];
+      offset +=date.day;        
+      offset +=(((float)date.hour)/24.); 
+      offset +=(((float)date.minute)/(24*60.));
+      offset +=(((float)date.second)/(24*60*60.));       
+      offset-=timeUnits.dateSinceOffset;
+    }     
+    return offset;
+    
+  }
   
   if(mode == CTIME_MODE_YYYYMM){
     return int(date.year)*100+int(date.month);
@@ -478,7 +729,7 @@ CT::string CTime::quantizeTimeToISO8601(CT::string value, CT::string period, CT:
   CDBDebug("quantizetime with for value %s with period %s and method %s",value.c_str(),period.c_str(),method.c_str());
   try{
     CTime time;
-    time.init("seconds since 0000-01-01T00:00:00Z");
+    time.init("seconds since 0000-01-01T00:00:00Z",NULL);
     double offsetOrig = time.dateToOffset(  time.freeDateStringToDate(value.c_str()));
     double quantizedOffset = time.quantizeTimeToISO8601(&time,offsetOrig,&period,&method);
     newDateString=time.dateToISOString(time.getDate( quantizedOffset));

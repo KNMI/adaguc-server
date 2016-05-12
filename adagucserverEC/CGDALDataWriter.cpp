@@ -836,7 +836,7 @@ CT::string CGDALDataWriter::getDimensionValue(int d,CCDFDims *dims){
     CTime adagucTime;
     try{
       value = "0";
-      adagucTime.init(TimeUnit.c_str());
+      adagucTime.init(TimeUnit.c_str(),NULL);//TODO replace with var
       double offset = adagucTime.dateToOffset(adagucTime.ISOStringToDate(dims->getDimensionValue(d).c_str()));
       value.print("%f",offset);
     }catch(int e){

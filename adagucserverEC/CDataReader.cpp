@@ -587,7 +587,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y){
         if(proj4Attr!=NULL)dataSource->nativeProj4.copy(proj4Attr->toString().c_str());
         
         //if still not found, try to compose a proj4 string based on Climate and Forecast Conventions
-        if (proj4Attr==NULL){
+        if (proj4Attr==NULL||dataSource->nativeProj4.length()==0){
           CProj4ToCF proj4ToCF;
           proj4ToCF.debug=true;
           CT::string projString;
@@ -1199,7 +1199,9 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
 
 
 
-
+CDF::Variable *CDataReader::getTimeDimension(CDataSource *dataSource){
+  return getDimensionVariableByType(dataSource->getDataObject(0)->cdfVariable,dtype_time);
+}
 
 //DEPRECATED
 CT::string CDataReader::getTimeUnit(CDataSource *dataSource){
@@ -1237,7 +1239,7 @@ int CDataReader::getTimeString(CDataSource *dataSource,char * pszTime){
     if(currentTimeIndex>=0&&currentTimeIndex<time->getSize()){
       CTime adagucTime;
       try{
-        adagucTime.init(timeUnits->toString().c_str());
+        adagucTime.init(time);
         CT::string isoString = "No time dimension available";
         try{
           isoString = adagucTime.dateToISOString(adagucTime.getDate(((double*)time->data)[currentTimeIndex]));

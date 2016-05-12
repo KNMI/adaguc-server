@@ -210,7 +210,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int
       if(var->getType()!=CDF_STRING){
         if(isTimeDim){
           CTime ctime;
-          ctime.init(timeUnits.c_str());
+          ctime.init(CDataReader::getTimeDimension(dataSource));
           double offset = ctime.dateToOffset(ctime.freeDateStringToDate(dimValue.c_str()));
 #ifdef CNetCDFDataWriter_DEBUG            
           CDBDebug("Dimension [%s]: writing string value %s with units %s, offset %f to index %d",dimName.c_str(),dimValue.c_str(),timeUnits.c_str(),offset,j);
@@ -287,8 +287,13 @@ int CNetCDFDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int
     }
     for(size_t i=0;i<sourceVar->attributes.size();i++){
       //CDBDebug("For %s: Copying attribute %s with length %d",destVar->name.c_str(),sourceVar->attributes[i]->name.c_str(),sourceVar->attributes[i]->length);
-      destVar->setAttribute(sourceVar->attributes[i]->name.c_str(),sourceVar->attributes[i]->getType(),sourceVar->attributes[i]->data,sourceVar->attributes[i]->length);
+      if(!sourceVar->attributes[i]->name.equals("scale_factor")&&
+        !sourceVar->attributes[i]->name.equals("add_offset")&&
+        !sourceVar->attributes[i]->name.equals("_FillValue")){
+        destVar->setAttribute(sourceVar->attributes[i]->name.c_str(),sourceVar->attributes[i]->getType(),sourceVar->attributes[i]->data,sourceVar->attributes[i]->length);
+      }
     }
+  
     
     //destVar->removeAttribute("calendar");
     //destCDFObject->setAttribute("_FillValue",destVar->getType(),&dfNoData,1);
@@ -379,7 +384,7 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
       if(var->getType()!=CDF_STRING){
         if(isTimeDim){
           CTime ctime;
-          ctime.init(timeUnits.c_str());
+          ctime.init(CDataReader::getTimeDimension(dataSource));
           double offset = ctime.dateToOffset(ctime.freeDateStringToDate(dimValue.c_str()));
           
           for(size_t j=0;j<var->getSize();j++){
@@ -473,7 +478,6 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
     
     size_t elementOffset = dataStepIndex*settings.width*settings.height;
     void *warpedData = NULL;
-
     switch(variable->getType()){
       case CDF_CHAR  : warpedData = ((char*)variable->data)+elementOffset;break;
       case CDF_BYTE  : warpedData = ((char*)variable->data)+elementOffset;break;
@@ -486,10 +490,34 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
       case CDF_DOUBLE: warpedData = ((double*)variable->data)+elementOffset;break;
       default:return 1;
     }
+      
     settings.data=warpedData;
-    GenericDataWarper::render<float> (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction);/*break;*/
-    reader.close();
+    
+      switch(variable->getType()){
+    case CDF_CHAR  :  GenericDataWarper::render<char>  (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction);break;
+    case CDF_BYTE  :  GenericDataWarper::render<char>  (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction);break;
+    case CDF_UBYTE :  GenericDataWarper::render<unsigned char> (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction);break;
+    case CDF_SHORT :  GenericDataWarper::render<short> (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction);break;
+    case CDF_USHORT:  GenericDataWarper::render<ushort>(&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction);break;
+    case CDF_INT   :  GenericDataWarper::render<int>   (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction);break;
+    case CDF_UINT  :  GenericDataWarper::render<uint>  (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction);break;
+    case CDF_FLOAT :  GenericDataWarper::render<float> (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction);break;
+    case CDF_DOUBLE:  GenericDataWarper::render<double>(&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction);break;
   }
+    
+    
+    reader.close();
+    
+    //Set _FillValue
+    if(dataSource->getDataObject(0)->hasNodataValue){
+      if(variable->getAttributeNE("_FillValue")==NULL){
+        variable->setAttribute("_FillValue",variable->getType(),dataSource->getDataObject(0)->dfNodataValue);
+      }
+    }
+    
+  }
+  
+  
   
   return 0;
   
@@ -513,12 +541,18 @@ int CNetCDFDataWriter::writeFile(const char *fileName,int level){
 }
 
 int CNetCDFDataWriter::end(){
+  
+    #ifdef CNetCDFDataWriter_DEBUG
+      CDBDebug("END");
+    #endif
   CDFNetCDFWriter *netCDFWriter = new CDFNetCDFWriter(destCDFObject);
+ 
   netCDFWriter->setNetCDFMode(4);
+ 
   int  status = netCDFWriter->write(tempFileName.c_str());
-  
+ 
   delete netCDFWriter;
-  
+ 
   
   if(status!=0){
     CDBError("Unable to write file to temporary directory");
