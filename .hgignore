@@ -11,7 +11,9 @@ syntax: glob
 ./adagucserverEC/adagucserver
 ./adagucserverEC/aggregate_time
 ./adagucserverEC/h5ncdump
+./adagucserverEC/geojsondump
 ./bin/adagucserver
 ./bin/aggregate_time
 ./bin/h5ncdump
+./bin/geojsondump
 
