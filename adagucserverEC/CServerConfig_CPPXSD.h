@@ -909,12 +909,13 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString service,layer,bgcolor;
+            CXMLString service,layer,bgcolor,style;
             bool transparent;
 
             Cattr() {
               transparent=true;
               bgcolor.copy("");
+              style.copy("");
             }
         }attr;
         void addAttribute(const char *attrname,const char *attrvalue){
@@ -922,6 +923,7 @@ class CServerConfig:public CXMLSerializerInterface{
           else if(equals("service",7,attrname)){attr.service.copy(attrvalue);return;}
           else if(equals("transparent",11,attrname)){attr.transparent=parseBool(attrvalue);return;}
           else if(equals("bgcolor",7,attrname)){attr.bgcolor.copy(attrvalue);return;}
+          else if(equals("style",5,attrname)){attr.style.copy(attrvalue);return;}
         }
     };
     

@@ -24,7 +24,7 @@
  ******************************************************************************/
 
 // #define CREQUEST_DEBUG
-// #define MEASURETIME
+ #define MEASURETIME
 
 #include "CRequest.h"
 #include "COpenDAPHandler.h"
@@ -2867,7 +2867,9 @@ int CRequest::process_querystring(){
   }else{
     CDBWarning("ADAGUC Server: Unknown service");
   }
-  
+  #ifdef MEASURETIME
+  StopWatch_Stop("End of query string");
+  #endif
 
   return 0;
 }

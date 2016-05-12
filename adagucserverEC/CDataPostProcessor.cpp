@@ -1,9 +1,28 @@
 #include "CDataPostProcessor.h"
 
 
-
-
-
+void writeLogFileLocal(const char * msg){
+  char * logfile=getenv("ADAGUC_LOGFILE");
+  if(logfile!=NULL){
+    FILE * pFile = NULL;
+    pFile = fopen (logfile , "a" );
+    if(pFile != NULL){
+ //     setvbuf(pFile, NULL, _IONBF, 0);
+      fputs  (msg, pFile );
+      if(strncmp(msg,"[D:",3)==0||strncmp(msg,"[W:",3)==0||strncmp(msg,"[E:",3)==0){
+        time_t myTime = time(NULL);
+        tm *myUsableTime = localtime(&myTime);
+        char szTemp[128];
+        snprintf(szTemp,127,"%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ ",
+                myUsableTime->tm_year+1900,myUsableTime->tm_mon+1,myUsableTime->tm_mday,
+                myUsableTime->tm_hour,myUsableTime->tm_min,myUsableTime->tm_sec
+                );
+        fputs  (szTemp, pFile );
+      }
+      fclose (pFile);
+    }else fprintf(stderr,"Unable to write logfile %s\n",logfile);
+  }
+}
 
 /************************/
 /*      CDPPAXplusB     */
@@ -238,8 +257,6 @@ int CDPPMSGCPPHIWCMask::execute(CServerConfig::XMLE_DataPostProc* proc, CDataSou
     float *cwp=(float*)dataSource->getDataObject(2)->cdfVariable->data;
     float *ctt=(float*)dataSource->getDataObject(3)->cdfVariable->data;
     float *cot=(float*)dataSource->getDataObject(4)->cdfVariable->data;
-    
-
   
     for(size_t j=0;j<l;j++){
       hiwc[j]=0;
@@ -273,7 +290,7 @@ CDPPExecutor::CDPPExecutor(){
   dataPostProcessorList->push_back(new CDPPMSGCPPHIWCMask());
   dataPostProcessorList->push_back(new CDPPBeaufort());
   dataPostProcessorList->push_back(new CDPDBZtoRR());
-  
+  dataPostProcessorList->push_back(new CDPPAddFeatures());
 }
 
 CDPPExecutor::~CDPPExecutor(){
@@ -533,3 +550,111 @@ int CDPDBZtoRR::execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dat
   return 0;    
 }
 
+/************************/
+/*      CDPPAddFeatures     */
+/************************/
+const char *CDPPAddFeatures::className="CDPPAddFeatures";
+
+const char *CDPPAddFeatures::getId(){
+  return "addfeatures";
+}
+int CDPPAddFeatures::isApplicable(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource){
+  if(proc->attr.algorithm.equals("addfeatures")){
+    return CDATAPOSTPROCESSOR_RUNAFTERREADING|CDATAPOSTPROCESSOR_RUNBEFOREREADING;
+  }
+  return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
+}
+
+int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode){
+  if((isApplicable(proc,dataSource)&mode)==false){
+    return -1;
+  }
+  if(mode==CDATAPOSTPROCESSOR_RUNBEFOREREADING){  
+//    dataSource->getDataObject(0)->cdfVariable->setAttributeText("units","mm/hr");
+//    dataSource->getDataObject(0)->setUnits("mm/hr");
+    try {
+      if(dataSource->getDataObject(0)->cdfVariable->getAttribute("ADAGUC_GEOJSONPOINT"))return 0;
+    } catch(int a){}
+    CDBDebug("CDATAPOSTPROCESSOR_RUNBEFOREREADING::Adding features from GEOJson");
+    CDF::Variable *varToClone=dataSource->getDataObject(0)->cdfVariable;
+
+    CDataSource::DataObject *newDataObject = new CDataSource::DataObject();
+
+    newDataObject->variableName.copy("indexes");
+    dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin()+1,newDataObject);
+
+    newDataObject->cdfVariable = new CDF::Variable();
+    newDataObject->cdfObject = (CDFObject*)varToClone->getParentCDFObject();
+    newDataObject->cdfObject->addVariable(newDataObject->cdfVariable);
+    newDataObject->cdfVariable->setName("indexes");
+    newDataObject->cdfVariable->setType(CDF_USHORT);
+    newDataObject->cdfVariable->setSize(dataSource->dWidth*dataSource->dHeight);
+
+    for(size_t j=0;j<varToClone->dimensionlinks.size();j++){
+      newDataObject->cdfVariable->dimensionlinks.push_back(varToClone->dimensionlinks[j]);
+    }
+    newDataObject->cdfVariable->removeAttribute("standard_name");
+    newDataObject->cdfVariable->removeAttribute("_FillValue");
+    
+    newDataObject->cdfVariable->setAttributeText("standard_name","indexes");
+    newDataObject->cdfVariable->setAttributeText("long_name","indexes");
+    newDataObject->cdfVariable->setAttributeText("units","1");
+    newDataObject->cdfVariable->setAttributeText("ADAGUC_GEOJSONPOINT","1");
+    dataSource->getDataObject(0)->cdfVariable->setAttributeText("ADAGUC_GEOJSONPOINT","1");
+    
+    unsigned short sf=65535u;
+    newDataObject->cdfVariable->setAttribute("_FillValue", newDataObject->cdfVariable->getType(),&sf,1);
+
+  }
+  if(mode==CDATAPOSTPROCESSOR_RUNAFTERREADING){  
+    CDataSource featureDataSource;
+    if(featureDataSource.setCFGLayer(dataSource->srvParams,dataSource->srvParams->configObj->Configuration[0],dataSource->srvParams->cfg->Layer[0],NULL,0)!=0){
+      return 1;
+    }    
+    featureDataSource.addStep(proc->attr.a.c_str(), NULL);
+    CDataReader reader;
+    CDBDebug("Opening %s",featureDataSource.getFileName());
+    int status  = reader.open(&featureDataSource,CNETCDFREADER_MODE_OPEN_ALL);
+    if(status!=0){
+      CDBDebug("Can't open file %s", proc->attr.a.c_str());
+      return 1;
+    }else {
+      std::map<std::string, float>valueMap;
+      float values[dataSource->getDataObject(0)->points.size()];
+      for(size_t j=0;j<dataSource->getDataObject(0)->points.size();j++){
+        for (size_t c=0; c<dataSource->getDataObject(0)->points[j].paramList.size(); c++) {
+          CKeyValue ckv=dataSource->getDataObject(0)->points[j].paramList[c];
+//        CDBDebug("ckv: %s %s", ckv.key.c_str(), ckv.value.c_str());
+          if (ckv.key.equals("station")) {
+            valueMap[ckv.value.c_str()]=dataSource->getDataObject(0)->points[j].v;
+//            CDBDebug("ckv: %s %s %f", ckv.key.c_str(), ckv.value.c_str(),dataSource->getDataObject(0)->points[j].v);
+          }
+        }
+        values[j]=dataSource->getDataObject(0)->points[j].v;
+      }
+
+      CDF::allocateData(dataSource->getDataObject(1)->cdfVariable->getType(),&dataSource->getDataObject(1)->cdfVariable->data,dataSource->dWidth*dataSource->dHeight);
+      //Copy the gridded values from the geojson grid to the point data's grid
+      size_t l=(size_t)dataSource->dHeight*(size_t)dataSource->dWidth;
+      unsigned short *src=(unsigned short*)featureDataSource.getDataObject(0)->cdfVariable->data;
+      float *dest=(float*)dataSource->getDataObject(0)->cdfVariable->data;
+      unsigned short noDataValue=featureDataSource.getDataObject(0)->dfNodataValue;
+      float destNoDataValue=dataSource->getDataObject(0)->dfNodataValue;
+      unsigned short *indexDest=(unsigned short*)dataSource->getDataObject(1)->cdfVariable->data;
+      for (size_t cnt=0; cnt<l; cnt++) {
+        unsigned short val = *src;
+        if (val!=noDataValue) {
+          *dest=values[val];
+          *indexDest=val;
+        }else {
+          *dest=destNoDataValue;
+          *indexDest=destNoDataValue;
+        }
+        src++;
+        dest++;
+        indexDest++;
+      }
+    }
+  }
+  return 0;    
+}

@@ -193,6 +193,7 @@ public:
     void drawVector(int x,int y,double direction, double strength,int color);
     void drawVector(int x,int y,double direction, double strength,int color, float linewidth);
     void drawVector(int x,int y,double direction, double strength,CColor color, float linewidth);
+    void drawVector2(int x,int y,double direction, double strength, int radius, CColor color, float linewidth);
     void destroyImage();
     void line(float x1,float y1,float x2,float y2,int color);
     void line(float x1,float y1,float x2,float y2,CColor color);
@@ -205,6 +206,7 @@ public:
     void poly(float x1, float y1, float x2, float y2, float x3, float y3, int c, bool fill);
     void poly(float x1, float y1, float x2, float y2, float x3, float y3, CColor color, bool fill);
     void poly(float x1, float y1, float x2, float y2, float x3, float y3, float lineWidth, CColor color, bool fill);
+    void poly(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, float lineWidth, CColor color, bool fill);
     void circle(int x, int y, int r, int color);
     void circle(int x, int y, int r, CColor col);
 
