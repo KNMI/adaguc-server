@@ -341,6 +341,24 @@ namespace CDF{
         attr->setData(attrType,attrData,attrLen);
         return 0;
       }
+      
+      template <class T>
+      int setAttribute(const char *attrName,CDFType attrType,T data){ 
+        Attribute *attr;
+        try{
+          attr=getAttribute(attrName);
+        }catch(...){
+          attr = new Attribute();
+          attr->name.copy(attrName);
+          addAttribute(attr);
+        }
+        attr->type=attrType;
+        attr->setData(attrType,data);
+        return 0;
+      }
+      
+      
+      
       int setAttributeText(const char *attrName,const char *attrString,size_t strLen){
         size_t attrLen=strLen+1;
         char *attrData=new char[attrLen];

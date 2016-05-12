@@ -160,7 +160,7 @@ int CDFHDF5Reader::convertNWCSAFtoCF(){
      
           //Set adaguc time
           CTime *ctime = new CTime();
-          if(ctime->init((char*)time_units->data)!=0){
+          if(ctime->init((char*)time_units->data,NULL)!=0){
             CDBError("Could not initialize CTIME: %s",(char*)time_units->data);
             return 1;
           }

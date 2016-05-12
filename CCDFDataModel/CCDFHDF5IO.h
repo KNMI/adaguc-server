@@ -709,7 +709,7 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
       #endif
       //Set adaguc time
       CTime ctime;
-      if(ctime.init((char*)time_units->data)!=0){
+      if(ctime.init((char*)time_units->data,NULL)!=0){
         CDBError("Could not initialize CTIME: %s",(char*)time_units->data);
         return 1;
       }

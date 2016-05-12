@@ -28,21 +28,50 @@
 #include <udunits.h>
 
 #include "CTypes.h"
-
+#include "CCDFVariable.h"
 #include <time.h>
 #include <sys/types.h>
 #include <stdlib.h>
 #define CTIME_CONVERSION_ERROR 1
 
-#define CTIME_MODE_UTCALENDAR 0
-#define CTIME_MODE_YYYYMM 1
+#define CTIME_MODE_UTCALENDAR      0
+#define CTIME_MODE_YYYYMM          1
 #define CTIME_MODE_YYYYMMDD_NUMBER 2
+#define CTIME_MODE_365day          3
+
+#define CTIME_UNITTYPE_SECONDS     1
+#define CTIME_UNITTYPE_MINUTES     2
+#define CTIME_UNITTYPE_HOURS       3
+#define CTIME_UNITTYPE_DAYS        4
+#define CTIME_UNITTYPE_MONTHS      5
+#define CTIME_UNITTYPE_YEARS       6
+
+#define CTIME_CALENDARTYPE_365day  1
+
+
+
 
 #include "CDebugger.h"
 class CTime{
   private:
   CT::string currentUnit;
+  CT::string currentCalendar;
   void safestrcpy(char *s1,const char*s2,size_t size_s1);
+  static int CTIME_CALENDARTYPE_365day_Months[];
+  static int CTIME_CALENDARTYPE_365day_MonthsCumul[]; 
+  
+  /**
+   * @param day between 1-365
+   * @param monthsCumul Array of 12 with months in cumultive order
+   * return Month number as 1-12
+   */
+  int getMonthByDayInYear(int day,int *monthsCumul);
+  
+  
+  
+  
+  
+  
   DEF_ERRORFUNCTION();
   public:
   utUnit  dataunits;
@@ -57,6 +86,17 @@ class CTime{
     double   second;
     double  offset;
   };
+  
+private:
+  class TimeUnit{
+  public:
+    int calendarType;
+    int unitType;
+    Date date;
+    double dateSinceOffset;
+  }timeUnits;
+public:
+  
   
   /**
    * Constructor
@@ -85,9 +125,17 @@ class CTime{
   /**
    * Initializes CTime
    * @param units CF time units
+   * @param calendar CF time calendar
    * @return 0 on success 1 on failure.
    */
-  int init(const char *units);
+  int init(const char *units,const char *calendar);
+  
+  /**
+   * Initializes CTime
+   * @param CDF::Variable time variable
+   * @return 0 on success 1 on failure.
+   */
+  int init(CDF::Variable *timeVariable);
   
   /**
    * Turns double value into a date object

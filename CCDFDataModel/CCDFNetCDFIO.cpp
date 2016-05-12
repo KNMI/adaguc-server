@@ -374,7 +374,7 @@ int CDFNetCDFReader::readAttributes(std::vector<CDF::Attribute *> &attributes,in
       if(status!=NC_NOERR){ncError(__LINE__,className,"nc_inq_att: ",status);return 1;}
       CDF::Attribute *attr = new CDF::Attribute();
       attr->setName(name);
-      attr->type=typeConversion(type);
+      attr->type=_typeConversionAtt(type);
       attr->length=length;
       CDF::allocateData(attr->getType(),&attr->data,attr->length+1);
       status = nc_get_att(root_id,varID,name,attr->data);
@@ -416,14 +416,43 @@ int CDFNetCDFReader::readVariables(){
           }
         }
       }
-      var->setType(typeConversion(type));
-      var->nativeType=typeConversion(type);
+      
+      //Attributes:
+      status = readAttributes(var->attributes,j,natt);if(status!=0)return 1;
+      
+      
+      //Check for signed/unsigned status via opendap 
+      bool varIsUnsigned = false;
+      CDF::Attribute *_Unsigned = var->getAttributeNE("_Unsigned");
+      if(_Unsigned != NULL){
+        if(_Unsigned->toString().equals("true")){
+          varIsUnsigned = true;
+        }
+      }
+      
+      //Variable type
+      nc_type thisType = _typeConversionVar(type,varIsUnsigned);
+      
+      if(varIsUnsigned){
+         CDF::Attribute *FillValue = var->getAttributeNE("_FillValue");
+        if(FillValue != NULL){
+          FillValue->type=thisType;
+        }
+      }
+     
+      
+      var->setType(thisType);
+      var->nativeType=thisType;
       var->setName(name);
       var->id=j;
       var->setParentCDFObject(cdfObject);
       var->isDimension=isDimension;
-        //Attributes:
-      status = readAttributes(var->attributes,j,natt);if(status!=0)return 1;
+      
+      
+      
+      
+      
+      
       cdfObject->variables.push_back(var);
         //printf("%d: %s %d\n",j,var->name.c_str(),isDimension);
       //It is essential that the variable nows which reader can be used to read the data
@@ -433,7 +462,7 @@ int CDFNetCDFReader::readVariables(){
   return 0;
 }
 
-CDFType CDFNetCDFReader::typeConversion(nc_type type){
+CDFType CDFNetCDFReader::_typeConversionAtt(nc_type type){
   if(type==NC_BYTE)return CDF_BYTE;
   if(type==NC_UBYTE)return CDF_UBYTE;
   if(type==NC_CHAR)return CDF_CHAR;
@@ -444,6 +473,32 @@ CDFType CDFNetCDFReader::typeConversion(nc_type type){
   if(type==NC_FLOAT)return CDF_FLOAT;
   if(type==NC_DOUBLE)return CDF_DOUBLE;
   if(type==NC_STRING)return CDF_STRING;
+  return CDF_DOUBLE;
+}
+
+
+CDFType CDFNetCDFReader::_typeConversionVar(nc_type type, bool isUnsigned){
+  if(isUnsigned){
+    if(type==NC_BYTE)  return CDF_UBYTE;
+    if(type==NC_UBYTE) return CDF_UBYTE;
+    if(type==NC_CHAR)  return CDF_UBYTE;
+    if(type==NC_SHORT) return CDF_USHORT;
+    if(type==NC_USHORT)return CDF_USHORT;
+    if(type==NC_INT)   return CDF_UINT;
+    if(type==NC_UINT)  return CDF_UINT;
+  }else{
+    if(type==NC_BYTE)  return CDF_BYTE;
+    if(type==NC_UBYTE) return CDF_UBYTE;
+    if(type==NC_CHAR)  return CDF_CHAR;
+    if(type==NC_SHORT) return CDF_SHORT;
+    if(type==NC_USHORT)return CDF_USHORT;
+    if(type==NC_INT)   return CDF_INT;
+    if(type==NC_UINT)  return CDF_UINT;
+  }
+  if(type==NC_FLOAT)return CDF_FLOAT;
+  if(type==NC_DOUBLE)return CDF_DOUBLE;
+  if(type==NC_STRING)return CDF_STRING;
+
   return CDF_DOUBLE;
 }
 

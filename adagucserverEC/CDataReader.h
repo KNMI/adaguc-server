@@ -64,6 +64,12 @@ class CDataReader{
     
     int close(){return 0;};
 
+    /**
+     * Returns the time dim for given datasource
+     * @param dataSource the datasource
+     * @return NULL if not available, otherwise a CDF::Variable.
+     */
+    static CDF::Variable *getTimeDimension(CDataSource *dataSource);
        
     /**
      * Get current time string for datasource based on the current timestep

@@ -118,10 +118,10 @@ int main( int argc, const char* argv[]){
       }
       
       CTime time;
-      time.init(units.c_str());
+      time.init(timeVar);
       CTime::Date date = time.getDate(value);
       CTime epochCTime;
-      epochCTime.init("seconds since 1970-01-01 0:0:0");
+      epochCTime.init("seconds since 1970-01-01 0:0:0",NULL);
       
       fileObject->timeValue=epochCTime.dateToOffset(date);
       

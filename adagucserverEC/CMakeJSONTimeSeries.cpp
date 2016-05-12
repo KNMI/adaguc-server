@@ -474,7 +474,13 @@ public:
             for(int i=0;i<numberOfDims+2;i++){
               CDBDebug("  %d [%d:%d]",i,start[i],count[i]);
             }
-#endif            
+#endif       
+  
+  /*
+            if(variable->getAttributeNE("scale_factor")!=NULL){
+              readDataAsCDFDouble = true;
+            }*/
+
             if(readDataAsCDFDouble){
               variable->setType(CDF_DOUBLE);
             }

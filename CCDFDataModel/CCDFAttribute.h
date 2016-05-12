@@ -90,6 +90,24 @@ namespace CDF{
         if(type==CDF_DOUBLE){memcpy(data,dataToSet,length*sizeof(double));}
         return 0;
       }
+      
+      /**
+       * Sets one element of data
+       */
+      template <class T>
+      int setData(CDFType type,T data){
+        if(type==CDF_CHAR||type==CDF_BYTE){char d=data; setData(type,&d,1);}
+        if(type==CDF_UBYTE){unsigned char d=data; setData(type,&d,1);}
+        if(type==CDF_SHORT){short d=data; setData(type,&d,1);}
+        if(type==CDF_USHORT){unsigned short d=data; setData(type,&d,1);}
+        if(type==CDF_INT){int d=data; setData(type,&d,1);}
+        if(type==CDF_UINT){unsigned int d=data; setData(type,&d,1);}
+        if(type==CDF_FLOAT){float d=data; setData(type,&d,1);}
+        if(type==CDF_DOUBLE){double d=data; setData(type,&d,1);}
+        return 0;
+      }
+      
+      
       int setData(const char*dataToSet){
         if(data!=NULL)freeData(&data);data=NULL;
         length=strlen(dataToSet);
@@ -116,11 +134,17 @@ namespace CDF{
           out->setSize(a);
           return 0;
         }
-        if(type==CDF_BYTE||type==CDF_UBYTE)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%d",((char*)data)[n]);}
-        if(type==CDF_INT||type==CDF_UINT)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%d",((int*)data)[n]);}
-        if(type==CDF_SHORT||type==CDF_USHORT)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%ds",((short*)data)[n]);}
-        if(type==CDF_FLOAT)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%ff",((float*)data)[n]);}
-        if(type==CDF_DOUBLE)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%fdf",((double*)data)[n]);}
+        if(type==CDF_BYTE)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%d",((char*)data)[n]);}
+        if(type==CDF_UBYTE)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%d",((unsigned char*)data)[n]);}
+        
+        if(type==CDF_INT)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%d",((int*)data)[n]);}
+        if(type==CDF_UINT)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%d",((unsigned int*)data)[n]);}
+        
+        if(type==CDF_SHORT)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%d",((short*)data)[n]);}
+        if(type==CDF_USHORT)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%d",((unsigned short*)data)[n]);}
+        
+        if(type==CDF_FLOAT)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%f",((float*)data)[n]);}
+        if(type==CDF_DOUBLE)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%f",((double*)data)[n]);}
         return 0;
       }
       

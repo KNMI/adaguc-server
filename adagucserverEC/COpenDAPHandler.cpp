@@ -765,7 +765,7 @@ CDBDebug("Found layer %s",layerName.c_str());
                               if(dimStandardName.equals("time")){
                                 if(dimUnits.length()>2){
                                   readFromDB=true;
-                                  time.init(dimUnits.c_str());
+                                  time.init(v);
                                 }else{
                                   CDBDebug("%s name units are [%s]",v->name.c_str(),dimUnits.c_str());
                                 }

@@ -694,7 +694,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
           CDF::Attribute* timeStringAttr = timeVarPerObs->getAttributeNE("units");
           if(timeStringAttr !=NULL){
             if(timeStringAttr -> data != NULL){
-              if(obsTime.init((const char*)timeStringAttr ->data)==0){
+              if(obsTime.init(timeVarPerObs)==0){
                 hasTimeValuePerObs = true;
                 timeVarPerObs->readData(CDF_DOUBLE,start,count,stride,true);
                 obsTimeData = (double*)timeVarPerObs->data;

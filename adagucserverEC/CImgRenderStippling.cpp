@@ -92,7 +92,7 @@ void CImgRenderStippling::render(CImageWarper *warper,CDataSource *dataSource,CD
     oddeven=1-oddeven;
     for(size_t x1=0;x1<settings.width;x1=x1+22){
       int x=(x1)+((oddeven)*11);
-      if(x>=0&&y>=0&&x<settings.width&&y<settings.height){
+      if(x>=0&&y>=0&&x<((int)settings.width)&&y<((size_t)settings.height)){
         float val = settings.dataField[x+y*settings.width];
         if(val != (float)settings.dfNodataValue && (val==val)){
           if(styleConfiguration->legendLog!=0){

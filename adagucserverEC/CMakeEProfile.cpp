@@ -702,7 +702,7 @@ int EProfileUniqueRequests::plotHeightRetrieval(CDrawImage *drawImage, CDFObject
 int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage,CDF::Variable *variable,size_t *start,size_t *count,EProfileUniqueRequests::Request*request,CDataSource *dataSource){
 
   CTime adagucTime;
-  adagucTime.init(((CDFObject*)variable->getParentCDFObject())->getVariableNE("time_obs")->getAttributeNE("units")->toString().c_str());
+  adagucTime.init(((CDFObject*)variable->getParentCDFObject())->getVariableNE("time_obs"));
   
   COGCDims *ogcDim=dataSource->requiredDims[0];
 
