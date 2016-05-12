@@ -48,8 +48,8 @@
 
 CT::string months[] = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
 
-#define CIMAGEDATAWRITER_DEBUG
- #define MEASURETIME
+// #define CIMAGEDATAWRITER_DEBUG
+//  #define MEASURETIME
 
 
 void doJacoIntoLatLon(double &u, double &v, double lo, double la, float deltaX, float deltaY, CImageWarper *warper);
@@ -1293,7 +1293,6 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   * Use fast nearest neighbourrenderer
   */
   if(renderMethod&RM_NEAREST){
-    CDBDebug("<OOOOOO>Nearest");
     imageWarperRenderer = new CImgWarpNearestNeighbour();
     imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
     delete imageWarperRenderer;

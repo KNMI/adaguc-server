@@ -349,12 +349,9 @@ CTime::Date CTime::getDate(double offset){
       
       newOffset -=date.day;;
       if(newOffset>0){
-        //TODO support sub daily data?
-        CDBError("Sub daily data not supported by calendar CTIME_MODE_365day and unit CTIME_UNITTYPE_DAYS !");
-        throw CTIME_CONVERSION_ERROR;
-        date.hour = int(newOffset*24);
-        date.minute = 0;
-        date.second = 0;
+        date.hour   = int(newOffset*24)%24;      newOffset-=float(date.hour  )/24;
+        date.minute = int(newOffset*24*60)%60;   newOffset-=float(date.minute)/(60*24);
+        date.second = int(newOffset*24*60*60)%60;newOffset-=float(date.second)/(60*60*24);
       }else{
         date.hour = 0;
         date.minute = 0;
