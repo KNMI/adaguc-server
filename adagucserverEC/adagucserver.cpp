@@ -24,6 +24,7 @@
  ******************************************************************************/
 
 #include "adagucserver.h"
+
 DEF_ERRORMAIN();
 
 int myPID = int(getpid());
@@ -46,7 +47,9 @@ void writeLogFile(const char * msg){
                 );
         fputs  (szTemp, pFile );
       }
+
       fclose (pFile);
+      
     }else fprintf(stderr,"Unable to write logfile %s\n",logfile);
   }
 }

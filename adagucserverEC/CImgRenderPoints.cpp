@@ -63,6 +63,7 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
   std::set<std::string> usePoints;
   std::set<std::string> skipPoints;
   bool useFilter=false;
+  bool useDrawPointFillColor=false;
   
 //   CDBDebug("style settings: %s", settings.c_str());
 //   if(settings.indexOf("vector")!=-1){
@@ -82,6 +83,7 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
       if(s -> Point.size() == 1){
         if(s -> Point[0]->attr.fillcolor.empty()==false){
           drawPointFillColor.parse(s -> Point[0]->attr.fillcolor.c_str());
+          useDrawPointFillColor=true;
         }
         if(s -> Point[0]->attr.linecolor.empty()==false){
           drawPointLineColor.parse(s -> Point[0]->attr.linecolor.c_str());
@@ -210,6 +212,7 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
     }
   }
   
+  CDBDebug("drawPointFillcolor: %x%x%x%x", drawPointFillColor.r,drawPointFillColor.g,drawPointFillColor.b,drawPointFillColor.a);
   int alphaPoint[(2*drawPointDiscRadius+1)*(2*drawPointDiscRadius+1)];
   if (drawVolume) {
     int p = 0;
@@ -226,7 +229,8 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
     CDBDebug("alphaPoint inited");
   }
 
-  if(dataSource->getNumDataObjects()!=2){ // Not for vector (u/v or speed/dir pairs) TODO
+      CDBDebug("dataObjects: %d", dataSource->getNumDataObjects());
+  if((dataSource->getNumDataObjects()!=2)||(dataSource->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_GEOJSONPOINT")!=NULL)){ // Not for vector (u/v or speed/dir pairs) TODO
     std::map<std::string,CDrawImage*> symbolCache;
 //     CDBDebug("symbolCache created, size=%d", symbolCache.size());
     std::map<std::string,CDrawImage*>::iterator symbolCacheIter;
@@ -400,8 +404,8 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
                   drawImage->drawCenteredText(x,y, drawPointFontFile, drawPointFontSize, 0, t.c_str(), drawPointTextColor);
                 }
               } else {
-                if (dataSource->getNumDataObjects()==1) {
-                  int pointColorIndex=getPixelIndexForValue(dataSource, v);
+                if (!useDrawPointFillColor) { //(dataSource->getNumDataObjects()==1) {
+                  int pointColorIndex=getPixelIndexForValue(dataSource, v); //Use value of dataObject[0] for colour
                   drawImage->setDisc(x, y, drawPointDiscRadius, pointColorIndex, pointColorIndex);
                   drawImage->circle(x, y, drawPointDiscRadius+1, drawPointLineColor,0.65);
                   if (drawPointDot) drawImage->circle(x,y, 1, drawPointFillColor,1);
@@ -454,7 +458,7 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
     }
   }
   
-  if(dataSource->getNumDataObjects()==2){
+  if ((dataSource->getNumDataObjects()==2)&&(dataSource->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_GEOJSONPOINT")==NULL)){
     CDBDebug("VECTOR");
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
     if(styleConfiguration!=NULL){
@@ -597,12 +601,9 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
           // Draw a disc with the speed value in text and the dir. value as an arrow
           int x=(*p1)[j].x;
           int y=dataSource->dHeight-(*p1)[j].y;
-          //drawImage->drawVector(x, y, ((270-direction)/360.)*3.141592654*2, drawPointDiscRadius+15, drawPointFillColor, drawVectorLineWidth*1);
           t.print(drawPointTextFormat.c_str(),strength);
           drawImage->setTextDisc( x, y, drawPointDiscRadius, t.c_str(),drawPointFontFile, drawPointFontSize,drawPointTextColor,drawPointFillColor, drawPointLineColor);
-          float dx=cos(((270-direction)/360.)*3.141592654*2);
-          float dy=sin(((270-direction)/360.)*3.141592654*2);
-          drawImage->drawVector(x+dx*drawPointDiscRadius, y-dy*drawPointDiscRadius, ((270-direction)/360.)*3.141592654*2, 12, drawPointFillColor, drawVectorLineWidth*4);
+          drawImage->drawVector2(x, y, ((90+direction)/360.)*3.141592654*2, 10, drawPointDiscRadius, drawPointFillColor, drawVectorLineWidth);
         }
       }
     }
