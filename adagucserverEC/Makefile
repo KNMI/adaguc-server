@@ -6,28 +6,28 @@ CCDFDATAMODELOBJ = $(CCDFDATAMODEL)/CCDFDataModel.a
 
 INCLUDEDIR= $(CPPFLAGS) -I $(HELPERCLASSES) -I $(CCDFDATAMODEL) -I/usr/include/libxml2/  -I/usr/include/udunits2/ -I/usr/include/freetype2/ -I/usr/include/freetype2/freetype/ -I/usr/include/postgresql/ -I/usr/include/cairo/ -I/usr/include/gdal/
 
-ifndef ADAGUCCOMPILERSETTINGS
-  ADAGUCCOMPILERSETTINGS=-Wall -DMEMLEAKCHECK -g
+ifndef BUILDER_ADAGUCCOMPILERSETTINGS
+  BUILDER_ADAGUCCOMPILERSETTINGS=-Wall -DMEMLEAKCHECK -g
 endif
 
-ifndef ADAGUCCOMPONENTS
-  ADAGUCCOMPONENTS=-DENABLE_CURL -DADAGUC_USE_GDAL -DADAGUC_USE_SQLITE -DADAGUC_USE_POSTGRESQL
+ifndef BUILDER_ADAGUCCOMPONENTS
+  BUILDER_ADAGUCCOMPONENTS=-DENABLE_CURL -DADAGUC_USE_GDAL -DADAGUC_USE_SQLITE -DADAGUC_USE_POSTGRESQL
 endif
 
 
-ifneq (,$(findstring DENABLE_CURL,$(ADAGUCCOMPONENTS)))
+ifneq (,$(findstring DENABLE_CURL,$(BUILDER_ADAGUCCOMPONENTS)))
 LIB_CURL=-lcurl
 endif
-ifneq (,$(findstring DADAGUC_USE_GDAL,$(ADAGUCCOMPONENTS)))
+ifneq (,$(findstring DADAGUC_USE_GDAL,$(BUILDER_ADAGUCCOMPONENTS)))
 LIB_GDAL=-lgdal
 endif
-ifneq (,$(findstring DADAGUC_USE_SQLITE,$(ADAGUCCOMPONENTS)))
+ifneq (,$(findstring DADAGUC_USE_SQLITE,$(BUILDER_ADAGUCCOMPONENTS)))
 LIB_SQLITE=-lsqlite3
 endif
-ifneq (,$(findstring DADAGUC_USE_POSTGRESQL,$(ADAGUCCOMPONENTS)))
+ifneq (,$(findstring DADAGUC_USE_POSTGRESQL,$(BUILDER_ADAGUCCOMPONENTS)))
 LIB_PQ=-lpq
 endif
-ifneq (,$(findstring DADAGUC_USE_KDCMONGODB,$(ADAGUCCOMPONENTS)))
+ifneq (,$(findstring DADAGUC_USE_KDCMONGODB,$(BUILDER_ADAGUCCOMPONENTS)))
 LIB_MONGODB=-l:libboost_system.so.1.55.0 -l:libboost_thread.so.1.55.0 -l:libboost_filesystem.so.1.55.0 -l:libboost_program_options.so.1.55.0 -lmongoclient
 endif
 
@@ -36,7 +36,7 @@ endif
 LIB_CAIRO=-lcairo
 
 
-CCOMPILER=g++ $(ADAGUCCOMPILERSETTINGS) $(INCLUDEDIR)
+CCOMPILER=g++ $(BUILDER_ADAGUCCOMPILERSETTINGS) $(INCLUDEDIR)
 
 
 #CCOMPILER=g++ -Wall $(INCLUDEDIR) 
@@ -73,7 +73,7 @@ geojsondump: geojsondump.o
 	
 	
 %.o: %.cpp
-	$(CCOMPILER) -c $< -o $@ $(ADAGUCCOMPONENTS)
+	$(CCOMPILER) -c $< -o $@ $(BUILDER_ADAGUCCOMPONENTS)
 
 clean:
 	rm $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE).o h5ncdump.o h5ncdump aggregate_time.o aggregate_time geojsondump.o  geojsondump

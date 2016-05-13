@@ -218,7 +218,7 @@ public:
    */
   static CT::string quantizeTimeToISO8601(CT::string value, CT::string period, CT::string method);
   
-  double quantizeTimeToISO8601(CTime * thisTime, double offsetOrig, CT::string period, CT::string method);
+  double quantizeTimeToISO8601( double offsetOrig, CT::string period, CT::string method);
 
 };
 #endif

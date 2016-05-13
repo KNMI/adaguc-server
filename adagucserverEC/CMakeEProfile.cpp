@@ -657,8 +657,11 @@ int CMakeEProfile::MakeEProfile(CDrawImage *drawImage,CImageWarper *imageWarper,
 
 
 int EProfileUniqueRequests::plotHeightRetrieval(CDrawImage *drawImage, CDFObject *cdfObject,const char *varName,CColor c,size_t NrOfDates ,double startGraphTime,double startGraphRange,double graphWidth,double graphHeight,int timeWidth){
+  
+    
+      
   CT::string newVarName;
-  newVarName.print("%s_backup",varName);
+  newVarName.print("%s",varName);
   CDF::Variable *plotHeightRetrievalVariable =cdfObject->getVariableNE(newVarName.c_str());
   if(plotHeightRetrievalVariable!=NULL){
     int status = plotHeightRetrievalVariable->readData(CDF_SHORT);
@@ -681,19 +684,24 @@ int EProfileUniqueRequests::plotHeightRetrieval(CDrawImage *drawImage, CDFObject
       size_t numLoaded = plotHeightRetrievalVariable->dimensionlinks[0]->getSize();
       if(NrOfDates>numLoaded-1)NrOfDates=numLoaded-1;
       
+
       for(size_t time=0;time<NrOfDates;time++){
         for(size_t layer = 0;layer<numLayers;layer++){
           int x = int(((((double*)varTime->data)[time]  -startGraphTime)/graphWidth)*imageWidth);
           float h = ((short*)plotHeightRetrievalVariable->data)[time*numLayers+layer];
           if(h>0){
             int y =imageHeight-int(((h-startGraphRange)/graphHeight)*imageHeight);
-            drawImage->line(x-2+timeWidth/2,y-2,x+2+timeWidth/2,y+2,c);
-            drawImage->line(x-2+timeWidth/2,y+2,x+2+timeWidth/2,y-2,c);
+            drawImage->line(x-1+timeWidth/2,y-1,x+1+timeWidth/2,y+1,c);
+            drawImage->line(x-1+timeWidth/2,y+1,x+1+timeWidth/2,y-1,c);
+            
+        
           }
         }
         
       }
     }
+  }else{
+    CDBError("plotHeightRetrievalVariable == NULL");
   }
   return 0;
 }
@@ -885,10 +893,10 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage,CDF::Variable *va
   CT::string dateStr  =adagucTime.dateToISOString(adagucTime.offsetToDate(((double*)varTime->data)[time]));
       drawImage->setText(dateStr.c_str(),dateStr.length(),x1,1,CColor(0,0,0,0),12);*/
   
-  plotHeightRetrieval(drawImage,((CDFObject*)variable->getParentCDFObject()),"cbh",CColor(255,0,0,255),count[0],startGraphTime,startGraphRange,graphWidth,graphHeight,minWidth);
-  plotHeightRetrieval(drawImage,((CDFObject*)variable->getParentCDFObject()),"pbl",CColor(0,0,255,255),count[0],startGraphTime,startGraphRange,graphWidth,graphHeight,minWidth);
+  plotHeightRetrieval(drawImage,((CDFObject*)variable->getParentCDFObject()),"cbh",CColor(0,0,255,255),count[0],startGraphTime,startGraphRange,graphWidth,graphHeight,minWidth);
+/*  plotHeightRetrieval(drawImage,((CDFObject*)variable->getParentCDFObject()),"pbl",CColor(0,0,255,255),count[0],startGraphTime,startGraphRange,graphWidth,graphHeight,minWidth);
    plotHeightRetrieval(drawImage,((CDFObject*)variable->getParentCDFObject()),"vor",CColor(255,255,255,255),count[0],startGraphTime,startGraphRange,graphWidth,graphHeight,minWidth);
-   //plotHeightRetrieval(drawImage,((CDFObject*)variable->getParentCDFObject()),"cdp",CColor(0,0,0,255),count[0],startGraphTime,startGraphRange,graphWidth,graphHeight);
+ */  //plotHeightRetrieval(drawImage,((CDFObject*)variable->getParentCDFObject()),"cdp",CColor(0,0,0,255),count[0],startGraphTime,startGraphRange,graphWidth,graphHeight);
 //   
    
   for(size_t j=0;j<dayPasses.size();j++){

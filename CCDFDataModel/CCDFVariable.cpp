@@ -53,7 +53,7 @@ int CDF::Variable::readData(CDFType readType,bool applyScaleOffset){
 int CDF::Variable::readData(CDFType readType,size_t *_start,size_t *_count,ptrdiff_t *_stride,bool applyScaleOffset){
   
  if(data!=NULL&&currentType!=readType){
-   CDBDebug("CDF::Variable::readData freeing data");
+   //CDBDebug("CDF::Variable::readData freeing data");
    freeData();
   }
  if(data!=NULL){
@@ -94,15 +94,25 @@ int CDF::Variable::readData(CDFType readType,size_t *_start,size_t *_count,ptrdi
     reallyApplyScaleOffset = true;
   }
   
+  if(readType!=-1){
+    scaleType=readType;
+  }
+  
   if(readType!=-1 && reallyApplyScaleOffset){
     if(readType!=CDF_FLOAT&&readType!=CDF_DOUBLE){
       CDBError("Unable to apply scale offset for readtype %s",CDF::getCDFDataTypeName(readType).c_str());
       return 1;
-    }else{
-      scaleType=readType;
     }
   }
+  
+  CDBDebug("Start reading data of type %d with reallyApplyScaleOffset = %d",scaleType,reallyApplyScaleOffset);
+  
   int status = readData(scaleType,_start,_count,_stride);
+  
+  if(scaleType == CDF_FLOAT){
+    CDBDebug("%s has %f",name.c_str(),((float*)data)[0]);
+  }
+  
   if(status != 0)return status;
   //CDBDebug("applyScaleOffset = %f %f",scaleFactor,addOffset);
   //Apply scale and offset

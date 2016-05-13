@@ -26,6 +26,7 @@
 #include "CConvertEProfile.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
+#include <set>
 //#define CCONVERTEPROFILE_DEBUG
 // #define CCONVERTEPROFILE_DEBUG
 const char *CConvertEProfile::className="CConvertEProfile";
@@ -158,10 +159,30 @@ int CConvertEProfile::convertEProfileHeader( CDFObject *cdfObject,CServerParams 
   timev->readData(CDF_DOUBLE);
   double*timeData=((double*)timev->data);
   
+     
+  double currentTime = -1;
+  std::set<double> datesToAdd;
   
+  //The startdate of the file will be used in time_file
+  CTime obsTime;
+
+  if(obsTime.init(timev)!=0){
+    return 1;
+  }
+    
+  for(size_t j=0;j<timev->getSize();j++){
+    double inTime = timeData[j];
+    double outTime = obsTime.quantizeTimeToISO8601(inTime, "PT5M", "low");
+    if(outTime > currentTime){
+      datesToAdd.insert(outTime);
+      currentTime = outTime;
+    }
+  }
+  CDBDebug("Set time Size = %d",datesToAdd.size());
+ 
   CDF::Dimension *dimT=new CDF::Dimension();
   dimT->name="time";
-  dimT->setSize(timev->getSize()/25);
+  dimT->setSize(datesToAdd.size());
   cdfObject->addDimension(dimT);
   CDF::Variable * varT = new CDF::Variable();
   varT->setType(CDF_DOUBLE);
@@ -173,23 +194,16 @@ int CConvertEProfile::convertEProfileHeader( CDFObject *cdfObject,CServerParams 
   cdfObject->addVariable(varT);
   CDF::allocateData(CDF_DOUBLE,&varT->data,dimT->length);
   
-  //The startdate of the file will be used in time_file
-  CTime obsTime;
-/*
-  CDF::Attribute* timeStringAttr = timeData->getAttributeNE("units");
-  if(timeStringAttr ==NULL){
-    CDBError("No time units provided");
-    return 1;
-  }
-  */
-//       if(obsTime.init((const char*)timeStringAttr ->data)==0){
-// 
-//   CT::string CTime::quantizeTimeToISO8601(CT::string value, CT::string period, CT::string method) {
- 
-  for(size_t j=0;j<timev->getSize()/25;j++){
-    ((double*)varT->data)[j]=timeData[j*25];
+  std::set<double>::iterator it;
+  size_t counter = 0;
+  for (it=datesToAdd.begin(); it!=datesToAdd.end(); ++it){
+    ((double*)varT->data)[counter]=*it;
+    counter++;
   }
   
+  
+  
+
   
   #ifdef CCONVERTEPROFILE_DEBUG
     StopWatch_Stop("2D Coordinate dimensions created");
