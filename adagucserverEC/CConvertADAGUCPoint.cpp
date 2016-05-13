@@ -26,8 +26,8 @@
 #include "CConvertADAGUCPoint.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
-// #define CCONVERTADAGUCPOINT_DEBUG
-// #define MEASURETIME
+ #define CCONVERTADAGUCPOINT_DEBUG
+ #define MEASURETIME
 const char *CConvertADAGUCPoint::className="CConvertADAGUCPoint";
 
 
@@ -382,6 +382,8 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
     StopWatch_Stop("Lat and lon read");
   #endif
 
+    
+    CDBDebug("pointLon = %f",((float*)pointLon->data)[0]);
 //   CT::string data = CDF::dump(cdfObject0);
 //   
 //   CDBDebug("%s",data.c_str());
@@ -730,6 +732,9 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
    
       double lon = (double)lonData[pGeo];
       double lat = (double)latData[pGeo];
+      
+      CDBDebug("Found coordinate %f %f",lon,lat);
+      
       double projectedX = lon;
       double projectedY = lat;
       

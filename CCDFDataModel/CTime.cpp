@@ -644,13 +644,13 @@ CT::string CTime::currentDateTime() {
 }
 
 
-double  CTime::quantizeTimeToISO8601(CTime * thisTime, double offsetOrig, CT::string period, CT::string method) {
+double  CTime::quantizeTimeToISO8601( double offsetOrig, CT::string period, CT::string method) {
     double offsetLow ;
     double offsetHigh ;
     //P1Y
     //P1D
     //PT1M
-    
+    CTime * thisTime = this;
     Date date = thisTime->getDate(offsetOrig);
     
     if(period.indexOf("T")!=-1){ //Contains HMS
@@ -728,7 +728,7 @@ CT::string CTime::quantizeTimeToISO8601(CT::string value, CT::string period, CT:
     CTime time;
     time.init("seconds since 0000-01-01T00:00:00Z",NULL);
     double offsetOrig = time.dateToOffset(  time.freeDateStringToDate(value.c_str()));
-    double quantizedOffset = time.quantizeTimeToISO8601(&time,offsetOrig,&period,&method);
+    double quantizedOffset = time.quantizeTimeToISO8601(offsetOrig,&period,&method);
     newDateString=time.dateToISOString(time.getDate( quantizedOffset));
   }catch(int e){
     CDBError("Exception in quantizetime with message %s",CTime::getErrorMessage(e).c_str());

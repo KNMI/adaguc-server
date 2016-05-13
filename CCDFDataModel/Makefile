@@ -2,15 +2,15 @@ INCLUDEDIR=-I../hclasses  -I/usr/include/libxml2/ -I/usr/include/hdf5/serial/ -I
 
 #CCOMPILER=g++ -Wall $(INCLUDEDIR) 
 
-ifndef ADAGUCCOMPILERSETTINGS
-  ADAGUCCOMPILERSETTINGS=-Wall -DMEMLEAKCHECK
-# ADAGUCCOMPILERSETTINGS=-march=pentium4 -mtune=pentium4 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 
-# ADAGUCCOMPILERSETTINGS=-march=core2 -mtune=core2 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2
-# ADAGUCCOMPILERSETTINGS=-O2
-# ADAGUCCOMPILERSETTINGS=-march=k8-sse3 -mtune=k8-sse3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 
+ifndef BUILDER_ADAGUCCOMPILERSETTINGS
+  BUILDER_ADAGUCCOMPILERSETTINGS=-Wall -DMEMLEAKCHECK
+# BUILDER_ADAGUCCOMPILERSETTINGS=-march=pentium4 -mtune=pentium4 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 
+# BUILDER_ADAGUCCOMPILERSETTINGS=-march=core2 -mtune=core2 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2
+# BUILDER_ADAGUCCOMPILERSETTINGS=-O2
+# BUILDER_ADAGUCCOMPILERSETTINGS=-march=k8-sse3 -mtune=k8-sse3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 
 endif
 
-CCOMPILER=g++ $(ADAGUCCOMPILERSETTINGS) $(INCLUDEDIR)
+CCOMPILER=g++ $(BUILDER_ADAGUCCOMPILERSETTINGS) $(INCLUDEDIR)
 
 #optimalization options:
 #CCOMPILER=g++ -march=pentium4 -mtune=pentium4 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 $(INCLUDEDIR) 

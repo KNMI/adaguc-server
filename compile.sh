@@ -12,23 +12,25 @@
 DEFAULTCOMPILERSETTINGS="-msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2"
 DEFAULTADAGUCCOMPONENTS="-DENABLE_CURL -DADAGUC_USE_GDAL -DADAGUC_USE_SQLITE -DADAGUC_USE_POSTGRESQL"
 
+CURRENTDIR=`pwd`
 
-
-if [ -z ${ADAGUCCOMPILERSETTINGS+x} ]; then 
-  echo "ADAGUCCOMPILERSETTINGS is unset";
-  export ADAGUCCOMPILERSETTINGS=$DEFAULTCOMPILERSETTINGS
+if [ -z "${ADAGUCCOMPILERSETTINGS}" ]; then 
+  export BUILDER_ADAGUCCOMPILERSETTINGS=$DEFAULTCOMPILERSETTINGS
+   echo "BUILDER_ADAGUCCOMPILERSETTINGS is set to default 'BUILDER_ADAGUCCOMPILERSETTINGS'";
 else 
-  echo "ADAGUCCOMPILERSETTINGS is set to '$ADAGUCCOMPILERSETTINGS'"; 
+  echo "Note: ADAGUCCOMPILERSETTINGS is set to '$ADAGUCCOMPILERSETTINGS'"; 
+  export BUILDER_ADAGUCCOMPILERSETTINGS=$ADAGUCCOMPILERSETTINGS
 fi
 
 #Minimal instalation can be compiled by settign:
 #export ADAGUCCOMPONENTS="-DADAGUC_USE_SQLITE"
 
-if [ -z ${ADAGUCCOMPONENTS}+x} ]; then 
-  echo "ADAGUCCOMPONENTS is unset";
-  export ADAGUCCOMPONENTS=$DEFAULTADAGUCCOMPONENTS
+if [ -z "${ADAGUCCOMPONENTS}" ]; then 
+  export BUILDER_ADAGUCCOMPONENTS=$DEFAULTADAGUCCOMPONENTS
+  echo "BUILDER_ADAGUCCOMPONENTS is set to default '$BUILDER_ADAGUCCOMPONENTS'";
 else 
-  echo "ADAGUCCOMPONENTS is set to '$ADAGUCCOMPONENTS'"; 
+  echo "ADAGUCCOMPONENTS is set to '$ADAGUCCOMPONENTS'";
+  export BUILDER_ADAGUCCOMPONENTS=$ADAGUCCOMPONENTS
 fi  
 
 
@@ -43,52 +45,77 @@ function quit {
   exit ;
 }
 
-cd hclasses
-rm *.o
-rm *.a
-make -j4
+function clean {
+  cd $CURRENTDIR/hclasses
+  rm *.o
+  rm *.a
 
-if [ -f hclasses.a ]
-  then
-  echo "[OK] hclasses have succesfully been compiled."
-  else
-    echo "[FAILED] hclasses compilation failed"
-    quit;
+  cd $CURRENTDIR/CCDFDataModel
+  rm *.o
+  rm *.a
+
+  cd $CURRENTDIR/adagucserverEC
+  rm *.o
+  rm adagucserver
+  rm h5ncdump
+  rm aggregate_time
+  rm geojsondump
+
+  test -d $CURRENTDIR/bin || mkdir $CURRENTDIR/bin/
+  rm $CURRENTDIR/bin/adagucserver
+  rm $CURRENTDIR/bin/h5ncdump
+  rm $CURRENTDIR/bin/aggregate_time
+  rm $CURRENTDIR/bin/geojsondump
+}
+
+function build {
+  clean
+  cd $CURRENTDIR/hclasses
+  make -j4
+
+  if [ -f hclasses.a ]
+    then
+    echo "[OK] hclasses have succesfully been compiled."
+    else
+      echo "[FAILED] hclasses compilation failed"
+      quit;
+    fi
+
+  cd $CURRENTDIR/CCDFDataModel
+  make -j4
+
+
+  if [ -f CCDFDataModel.a ]
+    then
+    echo "[OK] CCDFDataModel has been succesfully compiled."
+    else
+      echo "[FAILED] CCDFDataModel compilation failed"
+      quit;
+    fi
+    
+  cd $CURRENTDIR/adagucserverEC
+  make -j4
+
+
+  if [ -f adagucserver ]
+    then
+    echo "[OK] ADAGUC has been succesfully compiled."
+    else
+      echo "[FAILED] ADAGUC compilation failed"
+      quit;
   fi
 
-cd ../CCDFDataModel
-rm *.o
-rm *.a
-make -j4
 
+  test -d $CURRENTDIR/bin || mkdir $CURRENTDIR/bin/
+  cp adagucserver $CURRENTDIR/bin/
+  cp h5ncdump $CURRENTDIR/bin/
+  cp aggregate_time $CURRENTDIR/bin/
+  cp geojsondump $CURRENTDIR/bin/
+  echo "[OK] Everything is installed in the ./bin directory"
+}
 
-if [ -f CCDFDataModel.a ]
-  then
-  echo "[OK] CCDFDataModel has been succesfully compiled."
+if [ "$@" == "--clean" ]; then
+  clean
   else
-    echo "[FAILED] CCDFDataModel compilation failed"
-    quit;
-  fi
-  
-cd ../adagucserverEC
-rm *.o
-rm adagucserver
-rm h5ncdump
-make -j4
-
-
-if [ -f adagucserver ]
-  then
-  echo "[OK] ADAGUC has been succesfully compiled."
-   else
-     echo "[FAILED] ADAGUC compilation failed"
-     quit;
+  build
 fi
-
-
-test -d ../bin || mkdir ../bin/
-cp adagucserver ../bin/
-cp h5ncdump ../bin/
-cp aggregate_time ../bin/
-cp geojsondump ../bin/
-echo "[OK] Everything is installed in the ./bin directory"
