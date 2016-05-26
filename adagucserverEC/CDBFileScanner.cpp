@@ -877,7 +877,9 @@ int CDBFileScanner::searchFileNames(CDirReader *dirReader,const char * path,CT::
       filePath.concat(tailPath);
     }
   }
-  if(filePath.lastIndexOf(".nc")==int(filePath.length()-3)||filePath.lastIndexOf(".h5")==int(filePath.length()-3)||filePath.indexOf("http://")==0||filePath.indexOf("https://")==0||filePath.indexOf("dodsc://")==0){
+  if(filePath.lastIndexOf(".nc")==int(filePath.length()-3)||filePath.lastIndexOf(".h5")==int(filePath.length()-3)||
+     filePath.lastIndexOf(".json")==int(filePath.length()-5)||
+     filePath.lastIndexOf(".geojson")==int(filePath.length()-8)||filePath.indexOf("http://")==0||filePath.indexOf("https://")==0||filePath.indexOf("dodsc://")==0){
     //Add single file or opendap URL.
     CFileObject * fileObject = new CFileObject();
     fileObject->fullName.copy(&filePath);

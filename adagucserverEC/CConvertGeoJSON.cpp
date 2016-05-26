@@ -36,7 +36,7 @@
       const char *CConvertGeoJSON::className="CConvertGeoJSON";
 
       #define CCONVERTUGRIDMESH_NODATA -32000
-      #define MEASURETIME 1
+//      #define MEASURETIME 1
 
       void CConvertGeoJSON::drawpoly2(float *imagedata,int w,int h,int polyCorners,float *polyXY,float value){
         //  public-domain code by Darel Rex Finley, 2007
@@ -169,7 +169,7 @@
       }  
     }
 
-    void CConvertGeoJSON::drawpolyWithHoles_index(unsigned short int *imagedata,int w,int h,int polyCorners,float *polyXY,unsigned short int value,int holes,int *holeCorners, float*holeXY[]){
+    void CConvertGeoJSON::drawpolyWithHoles_indexORG(unsigned short int *imagedata,int w,int h,int polyCorners,float *polyXY,unsigned short int value,int holes,int *holeCorners, float*holeXY[]){
         //  public-domain code by Darel Rex Finley, 2007
 
       int  nodes, nodeX[polyCorners*2+1],  pixelY, i, j, swap ;
@@ -254,8 +254,132 @@
         }
       }  
     }
+    int cntCnt=0;
+    void buildNodeList(int pixelY, int &nodes, int nodeX[], int polyCorners, float *polyXY) {
+        int i,j;
+        int i2,j2;
+        cntCnt++;
+        //  Build a list of nodes.
+        nodes=0; j=polyCorners-1;
+        for (i=0; i<polyCorners; i++) {
+          i2=i*2;
+          j2=j*2;
+          if ((polyXY[i2+1]<(double) pixelY && polyXY[j2+1]>=(double) pixelY)
+          || ( polyXY[j2+1]<(double) pixelY && polyXY[i2+1]>=(double) pixelY)) {
+            nodeX[nodes++]=(int) (polyXY[i2]+(pixelY-polyXY[i2+1])/(polyXY[j2+1]-polyXY[i2+1])
+            *(polyXY[j2]-polyXY[i2])); }
+          j=i; 
+        }
+      
+    }
+    
+    void bubbleSort(int nodes, int nodeX[]){
+        //  Sort the nodes, via a simple “Bubble” sort.
+        int i,swap;
+        i=0;
+        while (i<nodes-1) {
+          if (nodeX[i]>nodeX[i+1]) {
+            swap=nodeX[i]; nodeX[i]=nodeX[i+1]; nodeX[i+1]=swap; if (i) i--; 
+        } else {
+            i++;
+          }
+        }
+    }      
+    
+    void fillLine(int nodes, int *nodeX, int IMAGE_LEFT, int IMAGE_RIGHT, unsigned short int* scanline, unsigned short value){
+        //  Fill the pixels between node pairs.
+        for (int i=0; i<nodes; i+=2) {
+          if   (nodeX[i  ]>=IMAGE_RIGHT) break;
+          if   (nodeX[i+1]> IMAGE_LEFT ) {
+            if (nodeX[i  ]< IMAGE_LEFT ) nodeX[i  ]=IMAGE_LEFT ;
+            if (nodeX[i+1]> IMAGE_RIGHT) nodeX[i+1]=IMAGE_RIGHT;
+            for (int j=nodeX[i]; j<nodeX[i+1]; j++){
+//                imagedata[int(j)+int(pixelY)*w] = value;
+                scanline[j] = value;
+            }
+          }
+        }      
+    }
+ 
+    void CConvertGeoJSON::drawpolyWithHoles_index(unsigned short int *imagedata,int w,int h,int polyCorners,float *polyXY,unsigned short int value,int holes,int *holeCorners, float*holeXY[]){
+        //  public-domain code by Darel Rex Finley, 2007
 
-      void CConvertGeoJSON::drawpoly2_index(unsigned short *imagedata,int w,int h,int polyCorners,float *polyXY,unsigned short value){
+      int  nodes, nodeX[polyCorners*2+1],  pixelY, i, j ;
+      int IMAGE_TOP = 0;
+      int IMAGE_BOT = h;
+      int IMAGE_LEFT = 0;
+      int IMAGE_RIGHT = w;
+
+      int cntLines=0;
+      int cntNodes=0;
+      int cntHoles=0;
+      int cntHoleLists=0;
+      //Allocate  scanline
+      unsigned short scanline[w];
+      //  Loop through the rows of the image.
+      for (pixelY=IMAGE_TOP; pixelY<IMAGE_BOT; pixelY++) {
+        cntLines++;
+        for (i=0; i<w;i++) scanline[i]=65535u;
+
+        buildNodeList(pixelY, nodes, nodeX, polyCorners, polyXY);         
+        cntNodes+=nodes;
+
+        bubbleSort(nodes, nodeX);
+
+//         //  Fill the pixels between node pairs.
+//         for (i=0; i<nodes; i+=2) {
+//           if   (nodeX[i  ]>=IMAGE_RIGHT) break;
+//           if   (nodeX[i+1]> IMAGE_LEFT ) {
+//             if (nodeX[i  ]< IMAGE_LEFT ) nodeX[i  ]=IMAGE_LEFT ;
+//             if (nodeX[i+1]> IMAGE_RIGHT) nodeX[i+1]=IMAGE_RIGHT;
+//             for (j=nodeX[i]; j<nodeX[i+1]; j++){
+// //                imagedata[int(j)+int(pixelY)*w] = value;
+//                 scanline[j] = value;
+//             }
+//           }
+//         }
+        fillLine(nodes, nodeX, IMAGE_LEFT, IMAGE_RIGHT, scanline, value);
+        
+        for (int h=0; h<holes; h++) {
+          
+//           //  Build a list of hole nodes.
+//           nodes=0; j=holeCorners[h]-1;
+//           for (i=0; i<holeCorners[h]; i++) {
+//             if ((holeXY[h][i*2+1]<(double) pixelY && holeXY[h][j*2+1]>=(double) pixelY)
+//             || ( holeXY[h][j*2+1]<(double) pixelY && holeXY[h][i*2+1]>=(double) pixelY)) {
+//               nodeX[nodes++]=(int) (holeXY[h][i*2]+(pixelY-holeXY[h][i*2+1])/(holeXY[h][j*2+1]-holeXY[h][i*2+1])
+//               *(holeXY[h][j*2]-holeXY[h][i*2])); }
+//             j=i; }
+          buildNodeList(pixelY, nodes, nodeX, holeCorners[h], holeXY[h]);    
+          cntHoleLists++;
+          cntHoles+=holes;
+          bubbleSort(nodes, nodeX);
+
+//           //  Fill the pixels between node pairs.
+//           for (i=0; i<nodes; i+=2) {
+//             if   (nodeX[i  ]>=IMAGE_RIGHT) break;
+//             if   (nodeX[i+1]> IMAGE_LEFT ) {
+//               if (nodeX[i  ]< IMAGE_LEFT ) nodeX[i  ]=IMAGE_LEFT ;
+//               if (nodeX[i+1]> IMAGE_RIGHT) nodeX[i+1]=IMAGE_RIGHT;
+//               for (j=nodeX[i]; j<nodeX[i+1]; j++){
+//   //                imagedata[int(j)+int(pixelY)*w] = value;
+//                   scanline[j] = 65535u;
+//               }
+//             }
+//           }
+          fillLine(nodes, nodeX, IMAGE_LEFT, IMAGE_RIGHT, scanline, value);
+        }
+        unsigned int startScanLineY=pixelY*w;
+        for (i=0; i<w; i++) {
+          if (scanline[i]!=65535u) {
+            imagedata[i+startScanLineY]=scanline[i];
+          }
+        }
+      }  
+//      CDBDebug("drawPoly %d %d %d %d %d", cntLines, cntNodes, cntHoles, cntHoleLists, cntCnt);
+    }
+ 
+     void CConvertGeoJSON::drawpoly2_index(unsigned short *imagedata,int w,int h,int polyCorners,float *polyXY,unsigned short value){
         //  public-domain code by Darel Rex Finley, 2007
 
       int  nodes, nodeX[polyCorners*2+1],  pixelY, i, j, swap ;
@@ -298,7 +422,7 @@
           }
         }
       }
-      
+            
       void CConvertGeoJSON::drawpoly(float *imagedata,int w,int h,int polyCorners,float *polyX,float *polyY,float value){
         //  public-domain code by Darel Rex Finley, 2007
 
@@ -344,9 +468,20 @@
         }
       }
       
-      std::map<std::string, BBOX> CConvertGeoJSON::BBOXStore;
       std::map<std::string, std::vector<Feature*> > CConvertGeoJSON::featureStore;
 
+      void CConvertGeoJSON::clearFeatureStore() {
+        for (std::map<std::string, std::vector<Feature*> >::iterator itf=featureStore.begin();itf!=featureStore.end();++itf){
+          std::string fileName= itf->first.c_str();
+//          CDBDebug("Deleting %d features for %s", featureStore[fileName].size(), fileName.c_str());
+          for (std::vector<Feature*>::iterator it=featureStore[ fileName].begin();it!=featureStore[fileName].end(); ++it) {
+//            CDBDebug("deleting %s", (*it)->getId().c_str());
+            delete *it;
+          }
+        }
+        featureStore.clear(); 
+      }
+      
       /**
       * This function adjusts the cdfObject by creating virtual 2D variables
       */
@@ -358,6 +493,7 @@
         }catch(int e){
           return 1;
         }
+        CDBDebug("convertGeoJSONHeader");
 #ifdef CCONVERTGEOJSON_DEBUG
         CDBDebug("Using CConvertGeoJSON.cpp");
 #endif
@@ -384,8 +520,10 @@
 
         std::vector<Feature*> features;
         BBOX dfBBOX;
-        getBBOX(dfBBOX, *json, features);  
+        getBBOX(cdfObject, dfBBOX, *json, features);  
 
+        addCDFInfo(cdfObject, NULL, dfBBOX, features);
+        
         std::string geojsonkey=jsonVar->getAttributeNE("ADAGUC_BASENAME")->toString().c_str();
         featureStore[geojsonkey]=features;
          
@@ -397,10 +535,17 @@
         #ifdef MEASURETIME
           StopWatch_Stop("BBOX Calculated");
         #endif
-        CDF::Dimension *dimFeatures=new CDF::Dimension();
-        dimFeatures->name="features";
-        dimFeatures->setSize(features.size());
-        cdfObject->addDimension(dimFeatures);         
+          
+
+#ifdef CCONVERTGEOJSON_DEBUG
+        CDBDebug("CConvertGeoJSON::convertGeoJSONHeader() done");
+#endif
+        return 0;
+      }
+
+      
+      void CConvertGeoJSON::addCDFInfo(CDFObject *cdfObject, CServerParams *srvParams, BBOX &dfBBOX, std::vector<Feature*>& featureMap) {
+        //Create variables for all properties fields
         
         //Default size of adaguc 2dField is 2x2
         int width=2;
@@ -416,6 +561,7 @@
         CDF::Dimension *dimY = cdfObject->getDimensionNE("y");
         CDF::Variable *varX = cdfObject->getVariableNE("x");
         CDF::Variable *varY = cdfObject->getVariableNE("y");
+        
         if(dimX==NULL||dimY==NULL||varX==NULL||varY==NULL) {
           //If not available, create new dimensions and variables (X,Y,T)
 #ifdef CCONVERTGEOJSON_DEBUG
@@ -457,6 +603,7 @@
             ((double*)varY->data)[j]=y;
           }
         }
+        
         CDF::Variable *new2DVar = new CDF::Variable();
         cdfObject->addVariable(new2DVar);
 
@@ -468,19 +615,68 @@
         unsigned short f=65535u;
         new2DVar->setAttribute("_FillValue",CDF_USHORT,&f,1);
 
-#ifdef CCONVERTGEOJSON_DEBUG
-        CDBDebug("CConvertGeoJSON::convertGeoJSONHeader() done");
-#endif
-        return 0;
+
+        CDBDebug("<><><><><><><>Creating variables for all properties fields<><><><><><>");
+//        std::vector<Feature*>::iterator sample=featureMap.begin();
+        Feature *sample=featureMap[0];
+        CDBDebug("sz: %d", featureMap.size());
+        CDF::Dimension *dimFeatures;
+        bool found=false;
+        try {
+          dimFeatures=cdfObject->getDimension("features");
+          found=true;
+        } catch (int e) {}
+        if (!found) {
+          CDBDebug("Creating dim %s %d", "features", featureMap.size());
+          dimFeatures=new CDF::Dimension();
+          dimFeatures->name="features";
+          dimFeatures->setSize(featureMap.size());
+          cdfObject->addDimension(dimFeatures);            
+        } 
+
+        for (std::map<std::string, FeatureProperty*>::iterator ftit=(sample)->getFp().begin(); ftit!=(sample)->getFp().end(); ++ftit) {
+          CDBDebug("Create var %s %s", ftit->first.c_str(), ftit->second->toString().c_str());
+          bool found=false;
+          try {
+            cdfObject->getVariable(ftit->first.c_str());
+            found=true;
+          } catch(int e){}
+          if (!found) {
+            CDF::Variable *newVar = new CDF::Variable();
+            cdfObject->addVariable(newVar);
+            newVar->dimensionlinks.push_back(dimFeatures);
+            CDF::Variable *new2DVar = new CDF::Variable();
+            cdfObject->addVariable(new2DVar);
+            new2DVar->dimensionlinks.push_back(dimY);
+            new2DVar->dimensionlinks.push_back(dimX);
+            FeaturePropertyType tp=ftit->second->getType();
+            if (tp==typeStr) {
+              newVar->setType(CDF_STRING);
+              new2DVar->setType(CDF_STRING);
+            } else if (tp==typeInt) { 
+              newVar->setType(CDF_USHORT);
+              new2DVar->setType(CDF_USHORT);
+              unsigned short f=65535u;
+              newVar->setAttribute("_FillValue",CDF_USHORT,&f,1);
+              new2DVar->setAttribute("_FillValue",CDF_USHORT,&f,1);
+            } else if (tp==typeDouble) {
+              newVar->setType(CDF_FLOAT);
+              float f=-99999;
+              newVar->setAttribute("_FillValue",CDF_FLOAT,&f,1);
+              new2DVar->setAttribute("_FillValue",CDF_FLOAT,&f,1);
+            }
+            newVar->name=(ftit->first+"_backup").c_str();
+            new2DVar->name=ftit->first.c_str();
+            new2DVar->setAttributeText("grid_mapping","customgridprojection");
+
+          }
+        } 
       }
-
-      // void CConvertGeoJSON::getPolygons(json_value features) {
-      // }
-
+      
 #define MAX(a,b) (((a)>(b))?(a):(b))
 #define MIN(a,b) (((a)<(b))?(a):(b))
 
-      void CConvertGeoJSON::getBBOX(BBOX &bbox, json_value &json, std::vector<Feature*>& featureMap) {
+      void CConvertGeoJSON::getBBOX(CDFObject *cdfObject, BBOX &bbox, json_value &json, std::vector<Feature*>& featureMap) {
         double minLat=90.,maxLat=-90.,minLon=180,maxLon=-180;
         bool BBOXFound=false;
         if (json.type==json_object){
@@ -508,48 +704,72 @@
 #ifdef CCONVERTGEOJSON_DEBUG
               CDBDebug("features found");
 #endif
-              for (unsigned int cnt = 0; cnt < features.u.array.length; ++cnt){
+              for (unsigned int cnt = 0; cnt < features.u.array.length; cnt++){
                 json_value feature = *features.u.array.values[cnt];
                 CT::string featureId;
                 json_value id = feature["id"];
                 if (id.type==json_string) {
-//                CDBDebug("id=%s", id.u.string.ptr);
+//                  CDBDebug("Id=%s", id.u.string.ptr);
                   featureId=id.u.string.ptr;
+                } else if (id.type==json_integer) {
+                  featureId.print("%1d", id.u.integer);
                 }
                 Feature *feat=new Feature();
                 
                 json_value props = feature["properties"];
-//               CDBDebug("props.type=%d", props.type);
+//                CDBDebug("props.type=%d", props.type);
                 if (props.type==json_object){
-                  for (unsigned int propCnt = 0; propCnt < props.u.object.length; ++propCnt){
+                  for (unsigned int propCnt = 0; propCnt < props.u.object.length; propCnt++){
                     json_object_entry propObject = props.u.object.values[propCnt];
                     CT::string propName(propObject.name);
                     json_value prop = *propObject.value;
                     if (prop.type==json_string) {
 //                      CDBDebug("[%d] prop[%s]=%s", cnt, propName.c_str(), prop.u.string.ptr);
-//                      CDBDebug("[%d] prop[%s]S ", cnt, propName.c_str());
+//                      CDBDebug("[%d] prop[%s]S =%s", cnt, propName.c_str(),prop.u.string.ptr);
                       feat->addProp(propName, prop.u.string.ptr);
                     } else if (prop.type==json_integer) {
-//                      CDBDebug("[%d] prop[%s]I =%d", cnt, propName.c_str(), prop.u.integer);
-                      feat->addProp(propName, prop.u.integer);
-                    } 
+//                      CDBDebug("[%d] prop[%s]I =%d", cnt, propName.c_str(), (int)prop.u.integer);
+                      feat->addProp(propName, (int)prop.u.integer);
+                    } else if (prop.type==json_double) {
+//                      CDBDebug("[%d] prop[%s]D =%f", cnt, propName.c_str(), prop.u.dbl);
+                      feat->addProp(propName, prop.u.dbl);
+                    }
                   }
                 }
                 if (featureId.length()==0) {
-                  CT::string id_s=feat->getFp()["id"].toString().c_str();
-                  if (!id_s.equals("NONE")) {
-                    featureId=id;
-                  } else {
-                    id_s=feat->getFp()["NUTS_ID"].toString().c_str();
-                    if (!id_s.equals("NONE")){
+                  std::map<std::string, FeatureProperty*>::iterator it;
+                  CT::string id_s;
+                  it=feat->getFp().find("id");
+                  if (it!=feat->getFp().end()) {
+                    id_s=it->second->toString().c_str();
+//                     CDBDebug("Found %s %s", it->first.c_str(), id_s.c_str());
+                    if (!id_s.equals("NONE")) {
                       featureId=id_s;
+                    }
+                  } else {
+                    it=feat->getFp().find("NUTS_ID");
+                    if (it!=feat->getFp().end()) {
+                      id_s=it->second->toString().c_str();
+//                       CDBDebug("Found %s %s", it->first.c_str(), id_s.c_str());
+                      if (!id_s.equals("NONE")){
+                        featureId=id_s;
+                      }
                     } else {
-                      featureId.print("%04d", cnt);
+                      it=feat->getFp().find("name");  
+                      if (it!=feat->getFp().end()) {
+                        id_s=it->second->toString().c_str();
+//                         CDBDebug("Found %s %s", it->first.c_str(), id_s.c_str());
+                        if (!id_s.equals("NONE")){
+                          featureId=id_s;
+                        } 
+                      } else {           
+//                        CDBDebug("Fallback to id %d", cnt);
+                        featureId.print("%04d", cnt);
+                      }
                     }
                   }
                 }
                 feat->setId(featureId);
-//                CDBDebug("featureId: %s", featureId.c_str());
 
                 json_value geom=feature["geometry"];
                 if (geom.type==json_object){
@@ -637,6 +857,21 @@
             }
           }
         }
+
+//         CDBDebug("<><><><><><><>Cleaning up for all properties fields<><><><><><>");
+//         int itctr=0;
+//         for (std::vector<Feature*>::iterator it = featureMap.begin(); it != featureMap.end(); ++it) {
+// //          CDBDebug("FT[%d] has %d items", itctr, (*it)->getFp().size());
+//           for (std::map<std::string, FeatureProperty*>::iterator ftit=(*it)->getFp().begin(); ftit!=(*it)->getFp().end(); ++ftit) {
+// //            CDBDebug("FT: %d %s %s", itctr, ftit->first.c_str(), ftit->second->toString().c_str());
+//             delete ftit->second;
+//           }
+//           (*it)->getFp().clear();
+//           delete *it;
+//           itctr++;
+//         }
+//         featureMap.clear();
+        //If no BBOX was found in file, generate it from found geo coordinates
         if (!BBOXFound) {
           bbox.llX=minLon;
           bbox.llY=minLat;
@@ -660,7 +895,7 @@
           return 1;
         }       
 
-        CDBDebug("convertGEOJSONData");
+        CDBDebug("convertGEOJSONData %s", (mode==CNETCDFREADER_MODE_OPEN_ALL)?"ALL":"NOT ALL");
         int result=0;
         
         //Check whether this is really an geojson file
@@ -682,15 +917,10 @@
 #endif          
 
           BBOX dfBBOX;
-          getBBOX(dfBBOX, *json, features);  
+          getBBOX(cdfObject, dfBBOX, *json, features);  
+          addCDFInfo(cdfObject, dataSource->srvParams, dfBBOX, features);
         }
-        size_t nrDataObjects = dataSource->getNumDataObjects();
-        CDataSource::DataObject *dataObjects[nrDataObjects];
-        for(size_t d=0;d<nrDataObjects;d++){
-          dataObjects[d] =  dataSource->getDataObject(d);
-        }
-        CDF::Variable *new2DVar;
-        new2DVar = dataObjects[0]->cdfVariable;
+
 
         //Make the width and height of the new 2D adaguc field the same as the viewing window
         dataSource->dWidth=dataSource->srvParams->Geo->dWidth;
@@ -708,7 +938,14 @@
           #ifdef CCONVERTGEOJSON_DEBUG
           CDBDebug("convertGeoJSONData OPEN ALL");
           #endif
-                      
+          
+          size_t nrDataObjects = dataSource->getNumDataObjects();
+          CDataSource::DataObject *dataObjects[nrDataObjects];
+          for(size_t d=0;d<nrDataObjects;d++){
+            dataObjects[d] =  dataSource->getDataObject(d);
+          }
+          CDF::Variable *new2DVar;
+          new2DVar = dataObjects[0]->cdfVariable;                      
           //Width needs to be at least 2 in this case.
           if(dataSource->dWidth == 1)dataSource->dWidth=2;
           if(dataSource->dHeight == 1)dataSource->dHeight=2;
@@ -744,11 +981,32 @@
             double y=offsetY+double(j)*cellSizeY+cellSizeY/2;
             ((double*)varY->data)[j]=y;
           }
-          
+          bool projectionRequired=false;
+          CImageWarper imageWarper;
+          if(dataSource->srvParams->Geo->CRS.length()>0){
+            projectionRequired=true;
+//            for(size_t d=0;d<nrDataObjects;d++){
+              new2DVar->setAttributeText("grid_mapping","customgridprojection");
+//            }
+            if(cdfObject->getVariableNE("customgridprojection")==NULL){
+              CDF::Variable *projectionVar = new CDF::Variable();
+              projectionVar->name.copy("customgridprojection");
+              cdfObject->addVariable(projectionVar);
+              dataSource->nativeEPSG = dataSource->srvParams->Geo->CRS.c_str();
+              imageWarper.decodeCRS(&dataSource->nativeProj4,&dataSource->nativeEPSG,&dataSource->srvParams->cfg->Projection);
+              if(dataSource->nativeProj4.length()==0){
+                dataSource->nativeProj4=LATLONPROJECTION;
+                dataSource->nativeEPSG="EPSG:4326";
+                projectionRequired=false;
+              }
+              projectionVar->setAttributeText("proj4_params",dataSource->nativeProj4.c_str());
+            }
+          }          
           #ifdef CCONVERTGEOJSON_DEBUG
           CDBDebug("Drawing %s",new2DVar->name.c_str());
           #endif
           
+//TODO Only draw if datatype is int (or float)        
           size_t fieldSize = dataSource->dWidth*dataSource->dHeight;
           new2DVar->setSize(fieldSize);
           CDF::allocateData(new2DVar->getType(),&(new2DVar->data),fieldSize);
@@ -768,9 +1026,8 @@
 #ifdef MEASURETIME
             StopWatch_Stop("GeoJSON DATA");
           #endif
-        
-          CImageWarper imageWarper;
-          
+          CDBDebug("dump: %s", CDF::dump(cdfObject).c_str());
+       
           #ifdef CCONVERTGEOJSON_DEBUG
           CDBDebug("Datasource CRS = %s nativeproj4 = %s",dataSource->nativeEPSG.c_str(),dataSource->nativeProj4.c_str());
           CDBDebug("Datasource bbox:%f %f %f %f",dataSource->srvParams->Geo->dfBBOX[0],dataSource->srvParams->Geo->dfBBOX[1],dataSource->srvParams->Geo->dfBBOX[2],dataSource->srvParams->Geo->dfBBOX[3]);
@@ -782,14 +1039,13 @@
             CDBError("Unable to init projection");
             return 1;
           }
-          bool projectionRequired = imageWarper.isProjectionRequired();
+//          bool projectionRequired = imageWarper.isProjectionRequired();
           
           #ifdef MEASURETIME
           StopWatch_Stop("Iterating lat/lon data");
           #endif
           CDBDebug("DrawPoly");
           
-          int skipped=0;
           double llX=dataSource->srvParams->Geo->dfBBOX[0];
           double llY=dataSource->srvParams->Geo->dfBBOX[1];
           double urX=dataSource->srvParams->Geo->dfBBOX[2];
@@ -801,12 +1057,12 @@
 #ifdef MEASURETIME
           StopWatch_Stop("Feature drawing starts");
 #endif
-          int nrFeatures=features.size();
+          CDBDebug("nrFeatures: %d", features.size());
           
           int featureIndex=0;
           typedef std::vector<Feature*>::iterator it_type;
           for(it_type it = features.begin(); it != features.end(); ++it) { //Loop over all features
-            CT::string id=(*it)->getId();
+//            CT::string id=(*it)->getId();
 //            CDBDebug("feature[%s] of %d", id.c_str(), nrFeatures);
             std::vector<Polygon>polygons=(*it)->getPolygons();
             for(std::vector<Polygon>::iterator itpoly = polygons.begin(); itpoly != polygons.end(); ++itpoly) {
@@ -816,7 +1072,7 @@
               float projectedXY[numPoints*2];
               float minX=FLT_MAX,minY=FLT_MAX;
               float maxX=-FLT_MAX,maxY=-FLT_MAX;
-//              CDBDebug("Plotting a polygon of %d points", numPoints);
+//              CDBDebug("Plotting a polygon of %d points with %d holes [%d of %d]", numPoints, itpoly->getHoles().size(), cnt++, featureIndex);
               for (int j=0; j<numPoints;j++) {
                 double tprojectedX=polyX[j];
                 double tprojectedY=polyY[j];
@@ -840,7 +1096,7 @@
               if ((minX>urX)||(maxX<llX)||(maxY<llY)||(minY>urY)){
 //                CDBDebug("skip %f,%f,%f,%f for %f,%f,%f,%f", minX,maxX, minY, maxY, llX, urX, urY, llY);
               } else {
-                float tolerance=0.001;
+//                float tolerance=0.001;
                 std::deque <float> polyline(projectedXY,projectedXY+numPoints*2);
 //                  float *result=new float[polyline.size()];
                 
@@ -899,20 +1155,12 @@
       #endif
             featureIndex++;
           }        
+
         
 #ifdef CCONVERTGEOJSON_DEBUG
           CDBDebug("/convertGEOJSONData");
 #endif
         }
-        for (std::map<std::string, std::vector<Feature*> >::iterator itf=featureStore.begin();itf!=featureStore.end();++itf){
-          std::string fileName= itf->first.c_str();
-          CDBDebug("Deleting features for %s", fileName.c_str());
-          for (std::vector<Feature*>::iterator it=featureStore[ fileName].begin();it!=featureStore[fileName].end(); ++it) {
-            delete *it;
-          }
-          
-        }
-        featureStore.clear();
         return result;
       }
  

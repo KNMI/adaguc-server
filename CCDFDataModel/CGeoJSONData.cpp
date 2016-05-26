@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 
+const char *Feature::className="Feature";
+
 void PointArray::addPoint(float lon, float lat) {
   lons.push_back(lon);
   lats.push_back(lat);
@@ -104,16 +106,21 @@ Feature::Feature(const char *_id) {
 }
 
 void Feature::addProp(CT::string name, int v){
-  FeatureProperty f(v);
+  FeatureProperty* f=new FeatureProperty(v);
   fp[name.c_str()]=f;
 }
 
-void Feature::addProp(CT::string name, std::string v){
-  FeatureProperty f(v.c_str());
+void Feature::addProp(CT::string name, char *v){
+  FeatureProperty* f=new FeatureProperty(v);
   fp[name.c_str()]=f;
 } 
 
-std::map<std::string, FeatureProperty> Feature::getFp(){
+void Feature::addProp(CT::string name, double v){
+  FeatureProperty* f=new FeatureProperty(v);
+  fp[name.c_str()]=f;
+}
+
+std::map<std::string, FeatureProperty*>& Feature::getFp(){
   return fp;
 }
 
