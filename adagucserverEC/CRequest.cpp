@@ -31,6 +31,7 @@
 #include "CDBFactory.h"
 #include "CAutoResource.h"
 #include "CNetCDFDataWriter.h"
+#include "CConvertGeoJSON.h"
 const char *CRequest::className="CRequest";
 int CRequest::CGI=0;
 
@@ -38,6 +39,7 @@ int CRequest::CGI=0;
 int CRequest::runRequest(){
   int status=process_querystring();
   CDFObjectStore::getCDFObjectStore()->clear();
+  CConvertGeoJSON::clearFeatureStore();
   CDFStore::clear();
   ProjectionStore::getProjectionStore()->clear();
   CDBFactory::clear();
@@ -2933,6 +2935,7 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan, int sca
   }
   
   CDFObjectStore::getCDFObjectStore()->clear();
+  CConvertGeoJSON::clearFeatureStore();
   CDFStore::clear();
   CDBFactory::clear();
   return errorHasOccured;

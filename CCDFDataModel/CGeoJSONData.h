@@ -3,6 +3,7 @@
 #include <vector>
 #include <map>
 #include "CTypes.h"
+#include "CDebugger.h"
 
 class PointArray {
   std::vector<float> lons;
@@ -33,6 +34,7 @@ public:
 typedef enum {
   typeNone,
   typeInt,
+  typeDouble,
   typeStr
 } FeaturePropertyType;
 
@@ -41,19 +43,35 @@ private:
   FeaturePropertyType type;
   CT::string pstr;
   int intVal;
-
+  double dblVal;
+  DEF_ERRORFUNCTION();
 public:
   FeatureProperty(int i) {
     type=typeInt;
     intVal=i;
+    dblVal=-12;
+    pstr="EMPTY i";
   }
   FeatureProperty(CT::string s) {
     type=typeStr;
-    pstr=s;
+    pstr=CT::string(s);
+    intVal=-1;
+    dblVal=-2;
+  }
+  
+  FeatureProperty(double d) {
+    type=typeDouble;
+    dblVal=d;
+    intVal=-21;
+    pstr="EMPTY d";
   }
   
   FeatureProperty() {
     type=typeNone;
+  }
+  
+  FeaturePropertyType getType() {
+    return type;
   }
   
   CT::string toString() {
@@ -61,7 +79,9 @@ public:
     if (type==typeInt) {
       s.print("%d", intVal);
     } else if (type==typeStr) {
-      s.print("%s", pstr.c_str());
+      s.print("`%s'", pstr.c_str());
+    } else if (type==typeDouble) {
+      s.print("%f", dblVal);
     } else {
       s.print("NONE");
     }
@@ -76,7 +96,8 @@ public:
 class Feature {
   CT::string id;
   std::vector<Polygon> polygons;
-  std::map<std::string, FeatureProperty> fp;
+  std::map<std::string, FeatureProperty*> fp;
+  DEF_ERRORFUNCTION();
 public:
   Feature();
   Feature(CT::string _id);
@@ -94,8 +115,9 @@ public:
     id=s;
   }
   void addProp(CT::string name, int v);
-  void addProp(CT::string name, std::string v);
-  std::map<std::string, FeatureProperty> getFp();
+  void addProp(CT::string name, char *v);
+  void addProp(CT::string name, double v);
+  std::map<std::string, FeatureProperty*>& getFp();
   bool hasHoles();
 };
 
