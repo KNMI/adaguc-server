@@ -26,8 +26,8 @@
 #include "CConvertADAGUCPoint.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
- #define CCONVERTADAGUCPOINT_DEBUG
- #define MEASURETIME
+// #define CCONVERTADAGUCPOINT_DEBUG
+//pwd #define MEASURETIME
 const char *CConvertADAGUCPoint::className="CConvertADAGUCPoint";
 
 
