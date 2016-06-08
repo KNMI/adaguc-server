@@ -32,7 +32,7 @@
       #include <map>
       #include <cstdlib>
       #include <queue>
-      #define CCONVERTGEOJSON_DEBUG
+//      #define CCONVERTGEOJSON_DEBUG
       const char *CConvertGeoJSON::className="CConvertGeoJSON";
 
       #define CCONVERTUGRIDMESH_NODATA -32000
@@ -304,7 +304,7 @@
     void CConvertGeoJSON::drawpolyWithHoles_index(unsigned short int *imagedata,int w,int h,int polyCorners,float *polyXY,unsigned short int value,int holes,int *holeCorners, float*holeXY[]){
         //  public-domain code by Darel Rex Finley, 2007
 
-      int  nodes, nodeX[polyCorners*2+1],  pixelY, i, j ;
+      int  nodes, nodeX[polyCorners*2+1],  pixelY, i ;
       int IMAGE_TOP = 0;
       int IMAGE_BOT = h;
       int IMAGE_LEFT = 0;
@@ -367,7 +367,7 @@
 //               }
 //             }
 //           }
-          fillLine(nodes, nodeX, IMAGE_LEFT, IMAGE_RIGHT, scanline, value);
+          fillLine(nodes, nodeX, IMAGE_LEFT, IMAGE_RIGHT, scanline, 65535u);
         }
         unsigned int startScanLineY=pixelY*w;
         for (i=0; i<w; i++) {
@@ -522,7 +522,7 @@
         BBOX dfBBOX;
         getBBOX(cdfObject, dfBBOX, *json, features);  
 
-        addCDFInfo(cdfObject, NULL, dfBBOX, features);
+        addCDFInfo(cdfObject, NULL, dfBBOX, features, false);
         
         std::string geojsonkey=jsonVar->getAttributeNE("ADAGUC_BASENAME")->toString().c_str();
         featureStore[geojsonkey]=features;
@@ -544,7 +544,7 @@
       }
 
       
-      void CConvertGeoJSON::addCDFInfo(CDFObject *cdfObject, CServerParams *srvParams, BBOX &dfBBOX, std::vector<Feature*>& featureMap) {
+      void CConvertGeoJSON::addCDFInfo(CDFObject *cdfObject, CServerParams *srvParams, BBOX &dfBBOX, std::vector<Feature*>& featureMap, bool openAll) {
         //Create variables for all properties fields
         
         //Default size of adaguc 2dField is 2x2
@@ -618,8 +618,9 @@
 
         CDBDebug("<><><><><><><>Creating variables for all properties fields<><><><><><>");
 //        std::vector<Feature*>::iterator sample=featureMap.begin();
-        Feature *sample=featureMap[0];
-        CDBDebug("sz: %d", featureMap.size());
+//        Feature *sample=featureMap[0];
+        int nrFeatures=featureMap.size();
+        CDBDebug("sz: %d", nrFeatures);
         CDF::Dimension *dimFeatures;
         bool found=false;
         try {
@@ -627,50 +628,71 @@
           found=true;
         } catch (int e) {}
         if (!found) {
-          CDBDebug("Creating dim %s %d", "features", featureMap.size());
+          CDBDebug("Creating dim %s %d", "features", nrFeatures);
           dimFeatures=new CDF::Dimension();
           dimFeatures->name="features";
-          dimFeatures->setSize(featureMap.size());
+          dimFeatures->setSize(nrFeatures);
           cdfObject->addDimension(dimFeatures);            
         } 
+        CDF::Variable *featureIdVar = new CDF::Variable();
+        
+        try {
+          cdfObject->getVariable("featureids");
+          found=true;
+        } catch(int e){}
+        if (!found) {
+          cdfObject->addVariable(featureIdVar);
+          featureIdVar->dimensionlinks.push_back(dimFeatures);
+          featureIdVar->setType(CDF_STRING);
+          featureIdVar->name="featureids";
+          CDF::allocateData(CDF_STRING, &featureIdVar->data, nrFeatures);
+        }
 
-        for (std::map<std::string, FeatureProperty*>::iterator ftit=(sample)->getFp().begin(); ftit!=(sample)->getFp().end(); ++ftit) {
-          CDBDebug("Create var %s %s", ftit->first.c_str(), ftit->second->toString().c_str());
-          bool found=false;
-          try {
-            cdfObject->getVariable(ftit->first.c_str());
-            found=true;
-          } catch(int e){}
-          if (!found) {
-            CDF::Variable *newVar = new CDF::Variable();
-            cdfObject->addVariable(newVar);
-            newVar->dimensionlinks.push_back(dimFeatures);
-            CDF::Variable *new2DVar = new CDF::Variable();
-            cdfObject->addVariable(new2DVar);
-            new2DVar->dimensionlinks.push_back(dimY);
-            new2DVar->dimensionlinks.push_back(dimX);
-            FeaturePropertyType tp=ftit->second->getType();
-            if (tp==typeStr) {
-              newVar->setType(CDF_STRING);
-              new2DVar->setType(CDF_STRING);
-            } else if (tp==typeInt) { 
-              newVar->setType(CDF_USHORT);
-              new2DVar->setType(CDF_USHORT);
-              unsigned short f=65535u;
-              newVar->setAttribute("_FillValue",CDF_USHORT,&f,1);
-              new2DVar->setAttribute("_FillValue",CDF_USHORT,&f,1);
-            } else if (tp==typeDouble) {
-              newVar->setType(CDF_FLOAT);
-              float f=-99999;
-              newVar->setAttribute("_FillValue",CDF_FLOAT,&f,1);
-              new2DVar->setAttribute("_FillValue",CDF_FLOAT,&f,1);
+        
+        int featureCnt=0;
+        for (std::vector<Feature*>::iterator sample=featureMap.begin(); sample!=featureMap.end(); ++sample) {
+//          CDBDebug("Feature id %s", (*sample)->getId().c_str());
+          ((const char**)featureIdVar->data)[featureCnt++]=strdup((*sample)->getId().c_str());
+          for (std::map<std::string, FeatureProperty*>::iterator ftit=(*sample)->getFp().begin(); ftit!=(*sample)->getFp().end(); ++ftit) {
+ //           CDBDebug("Create var %s %s %d", ftit->first.c_str(), ftit->second->toString().c_str(),ftit->second->getType() );
+            if (ftit->second->getType()!=typeStr) {
+              bool found=false;
+              try {
+                cdfObject->getVariable(ftit->first.c_str());
+                found=true;
+              } catch(int e){}
+              if (!found) {
+                CDF::Variable *newVar = new CDF::Variable();
+                cdfObject->addVariable(newVar);
+                newVar->dimensionlinks.push_back(dimFeatures);
+                CDF::Variable *new2DVar = new CDF::Variable();
+                cdfObject->addVariable(new2DVar);
+                new2DVar->dimensionlinks.push_back(dimY);
+                new2DVar->dimensionlinks.push_back(dimX);
+                FeaturePropertyType tp=ftit->second->getType();
+                if (tp==typeStr) {
+                  newVar->setType(CDF_STRING);
+                  new2DVar->setType(CDF_STRING);
+                } else if (tp==typeInt) { 
+                  newVar->setType(CDF_USHORT);
+                  new2DVar->setType(CDF_USHORT);
+                  unsigned short f=65535u;
+                  newVar->setAttribute("_FillValue",CDF_USHORT,&f,1);
+                  new2DVar->setAttribute("_FillValue",CDF_USHORT,&f,1);
+                } else if (tp==typeDouble) {
+                  newVar->setType(CDF_FLOAT);
+                  float f=-99999;
+                  newVar->setAttribute("_FillValue",CDF_FLOAT,&f,1);
+                  new2DVar->setAttribute("_FillValue",CDF_FLOAT,&f,1);
+                }
+                newVar->name=(ftit->first+"_backup").c_str();
+                new2DVar->name=ftit->first.c_str();
+                new2DVar->setAttributeText("grid_mapping","customgridprojection");
+                
+              }
             }
-            newVar->name=(ftit->first+"_backup").c_str();
-            new2DVar->name=ftit->first.c_str();
-            new2DVar->setAttributeText("grid_mapping","customgridprojection");
-
           }
-        } 
+        }
       }
       
 #define MAX(a,b) (((a)>(b))?(a):(b))
@@ -714,6 +736,7 @@
                 } else if (id.type==json_integer) {
                   featureId.print("%1d", id.u.integer);
                 }
+//                CDBDebug("found featureId as attribute %s", featureId.c_str());
                 Feature *feat=new Feature();
                 
                 json_value props = feature["properties"];
@@ -767,6 +790,7 @@
                         featureId.print("%04d", cnt);
                       }
                     }
+//                    CDBDebug("found featureId in properties %s", featureId.c_str());                    
                   }
                 }
                 feat->setId(featureId);
@@ -918,7 +942,7 @@
 
           BBOX dfBBOX;
           getBBOX(cdfObject, dfBBOX, *json, features);  
-          addCDFInfo(cdfObject, dataSource->srvParams, dfBBOX, features);
+          addCDFInfo(cdfObject, dataSource->srvParams, dfBBOX, features, true);
         }
 
 
@@ -1026,7 +1050,6 @@
 #ifdef MEASURETIME
             StopWatch_Stop("GeoJSON DATA");
           #endif
-          CDBDebug("dump: %s", CDF::dump(cdfObject).c_str());
        
           #ifdef CCONVERTGEOJSON_DEBUG
           CDBDebug("Datasource CRS = %s nativeproj4 = %s",dataSource->nativeEPSG.c_str(),dataSource->nativeProj4.c_str());
@@ -1062,9 +1085,9 @@
           int featureIndex=0;
           typedef std::vector<Feature*>::iterator it_type;
           for(it_type it = features.begin(); it != features.end(); ++it) { //Loop over all features
-//            CT::string id=(*it)->getId();
-//            CDBDebug("feature[%s] of %d", id.c_str(), nrFeatures);
             std::vector<Polygon>polygons=(*it)->getPolygons();
+//            CT::string id=(*it)->getId();
+//            CDBDebug("feature[%s] %d of %d with %d polygons", id.c_str(), featureIndex, features.size(), polygons.size());
             for(std::vector<Polygon>::iterator itpoly = polygons.begin(); itpoly != polygons.end(); ++itpoly) {
               float *polyX=itpoly->getLons();
               float *polyY=itpoly->getLats();
@@ -1072,7 +1095,7 @@
               float projectedXY[numPoints*2];
               float minX=FLT_MAX,minY=FLT_MAX;
               float maxX=-FLT_MAX,maxY=-FLT_MAX;
-//              CDBDebug("Plotting a polygon of %d points with %d holes [%d of %d]", numPoints, itpoly->getHoles().size(), cnt++, featureIndex);
+//              CDBDebug("Plotting a polygon of %d points with %d holes [? of %d]", numPoints, itpoly->getHoles().size(), featureIndex);
               for (int j=0; j<numPoints;j++) {
                 double tprojectedX=polyX[j];
                 double tprojectedY=polyY[j];
@@ -1111,7 +1134,7 @@
                 float *projectedHoleXY[nrHoles];
                 int h=0;
                 for(std::vector<PointArray>::iterator itholes = holes.begin(); itholes != holes.end(); ++itholes) {
-//                   CDBDebug("holes[%d]: %d found in %d", itholes->getSize(), featureIndex);
+//                   CDBDebug("holes[%d]: %d found in %d", 0, itholes->getSize(), featureIndex);
                   holeX[h]=itholes->getLons();
                   holeY[h]=itholes->getLats();
                   holeSize[h]=itholes->getSize();

@@ -1011,24 +1011,33 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
             }
           }
         
-          if (dataSource->getDataObject(o)->points.size()>0&&hasData==true){
-            CDBDebug("GFI value = %s", element->value.c_str());
+          if (dataSource->getDataObject(o)->points.size()>0/*&&hasData==true*/){
+            CDBDebug("GFI value = %s, %d", element->value.c_str(),dataSource->getDataObject(o)->cdfVariable->getAttributeNE("ADAGUC_SKIP_POINTS")==NULL);
           }
-          if(dataSource->getDataObject(o)->points.size()>0&&hasData==true){
+          if(dataSource->getDataObject(o)->points.size()>0/*&&hasData==true*/){
+            if (dataSource->getDataObject(o)->cdfVariable->getAttributeNE("ADAGUC_SKIP_POINTS")==NULL) {
             float closestDistance =0;
             int closestIndex =0;
             
             for(size_t j=0;j<dataSource->getDataObject(o)->points.size();j++){
               PointDVWithLatLon point = dataSource->getDataObject(o)->points[j];
               float distance = hypot(point.lon-getFeatureInfoResult->lon_coordinate,point.lat-getFeatureInfoResult->lat_coordinate);
+              CDBDebug("[%d] dist=%f", o, distance);
               if(distance<closestDistance||j==0){
                 closestIndex=j;
                 closestDistance = distance;
               }
             }
             
+            CDBDebug("closestIndex: %d", closestIndex);
             
             PointDVWithLatLon point = dataSource->getDataObject(o)->points[closestIndex];
+            
+            if (!hasData) {
+              double val=dataSource->getDataObject(o)->points[closestIndex].v; 
+              
+              element->value.print("%f",val);
+            }
             for(size_t p=0;p<point.paramList.size();p++){
               GetFeatureInfoResult::Element *pointID=new GetFeatureInfoResult::Element();
               pointID->dataSource= dataSource;
@@ -1053,7 +1062,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
               floatToString(szTemp,1023,point.v);
               element->value=szTemp;*/
             }
-            
+            }
               
           }
         }

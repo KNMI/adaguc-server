@@ -79,7 +79,7 @@ public:
     if (type==typeInt) {
       s.print("%d", intVal);
     } else if (type==typeStr) {
-      s.print("`%s'", pstr.c_str());
+      s.print("%s", pstr.c_str());
     } else if (type==typeDouble) {
       s.print("%f", dblVal);
     } else {
