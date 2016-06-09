@@ -427,6 +427,20 @@ class CServerConfig:public CXMLSerializerInterface{
       }
     };
     
+    class XMLE_FeatureInterval: public CXMLObjectInterface{
+    public:
+      class Cattr{
+      public:
+        CXMLString match,matchid,bgcolor,fillcolor;
+      }attr;
+      void addAttribute(const char *attrname,const char *attrvalue){
+        if(equals("match",5,attrname)){attr.match.copy(attrvalue); return;}
+        if(equals("matchid", 7,attrname)){attr.matchid.copy(attrvalue); return;}
+        if(equals("fillcolor",9,attrname)){attr.fillcolor.copy(attrvalue); return;}
+        if(equals("bgcolor",7,attrname)){attr.bgcolor.copy(attrvalue); return;}
+      }
+    };
+    
     class XMLE_RenderMethod: public CXMLObjectInterface{};
     class XMLE_Style: public CXMLObjectInterface{
       public:
@@ -451,7 +465,7 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_SmoothingFilter*> SmoothingFilter;
         std::vector <XMLE_StandardNames*> StandardNames;
         std::vector <XMLE_LegendGraphic*> LegendGraphic;
-        
+        std::vector <XMLE_FeatureInterval*> FeatureInterval;
         
         
         ~XMLE_Style(){
@@ -476,7 +490,7 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(SmoothingFilter);
           XMLE_DELOBJ(StandardNames);
           XMLE_DELOBJ(LegendGraphic);
-          
+          XMLE_DELOBJ(FeatureInterval);
           
         }
         class Cattr{
@@ -511,7 +525,7 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("SmoothingFilter",15,name)){XMLE_ADDOBJ(SmoothingFilter);}
             else if(equals("StandardNames",13,name)){XMLE_ADDOBJ(StandardNames);}
             else if(equals("LegendGraphic",13,name)){XMLE_ADDOBJ(LegendGraphic);}
-            
+            else if(equals("FeatureInterval",15,name)){XMLE_ADDOBJ(FeatureInterval);}           
            
           }
           if(pt2Class!=NULL){pt2Class->addElement(baseClass,rc-pt2Class->level,name,value);pt2Class=NULL;}
@@ -1026,7 +1040,7 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_WMSFormat*> WMSFormat;
         std::vector <XMLE_Grid*> Grid;
         std::vector <XMLE_AdditionalLayer*> AdditionalLayer;
-        
+        std::vector <XMLE_FeatureInterval*> FeatureInterval;
         
         
         ~XMLE_Layer(){
@@ -1065,6 +1079,7 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(WMSFormat);
           XMLE_DELOBJ(Grid);
           XMLE_DELOBJ(AdditionalLayer);
+          XMLE_DELOBJ(FeatureInterval);
         }
         void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value){
           CXMLSerializerInterface * base = (CXMLSerializerInterface*)baseClass;
@@ -1108,6 +1123,7 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("WMSFormat",9,name)){XMLE_ADDOBJ(WMSFormat);}
             else if(equals("Grid",4,name)){XMLE_ADDOBJ(Grid);}
             else if(equals("AdditionalLayer",15,name)){XMLE_ADDOBJ(AdditionalLayer);}
+            else if(equals("FeatureInterval",15,name)){XMLE_ADDOBJ(FeatureInterval);}
             
             
           }
