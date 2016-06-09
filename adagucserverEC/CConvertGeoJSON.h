@@ -29,6 +29,7 @@
 #include "CGeoJSONData.h"
 #include <map>
 #include "json.h"
+#include "CDebugger.h"
 
 typedef struct {
   double llX;
@@ -40,16 +41,18 @@ typedef struct {
 class CConvertGeoJSON{
   private:
   DEF_ERRORFUNCTION();
-  static void getBBOX(BBOX &bbox, json_value& json, std::vector<Feature*>& features);
+  static void getBBOX(CDFObject *cdfObject, BBOX &bbox, json_value& json, std::vector<Feature*>& features);
   static void getPolygons(json_value &j);
+  static void addCDFInfo(CDFObject *cdfObject, CServerParams *srvParams, BBOX &dfBBOX, std::vector<Feature*>& featureMap, bool openAll);
   static void drawpoly(float *imagedata,int w,int h,int polyCorners,float *polyX,float *polyY,float value);
   static void drawpoly2(float *imagedata,int w,int h,int polyCorners,float *polyXY,float value);
   static void drawpoly2_index(unsigned short  *imagedata,int w,int h,int polyCorners,float *polyXY,unsigned short value);
   static void drawpolyWithHoles(float *imagedata,int w,int h,int polyCorners,float *polyXY,float value,int holes,int *holeCorners,float*holeXY[]);
   static void drawpolyWithHoles_index(unsigned short *imagedata,int w,int h,int polyCorners,float *polyXY,unsigned short int value,int holes,int *holeCorners,float *holeXY[]);
+  static void drawpolyWithHoles_indexORG(unsigned short *imagedata,int w,int h,int polyCorners,float *polyXY,unsigned short int value,int holes,int *holeCorners,float *holeXY[]);
 public: 
-  static std::map<std::string, BBOX> BBOXStore;
   static std::map<std::string, std::vector<Feature *> >  featureStore;
+  static void clearFeatureStore();
 
   static int convertGeoJSONHeader(CDFObject *cdfObject);
   static int convertGeoJSONData(CDataSource *dataSource,int mode);
