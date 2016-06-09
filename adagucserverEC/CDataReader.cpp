@@ -599,7 +599,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y){
             CDBDebug("Autogen proj4 string: %s",projString.c_str());
             projVar->setAttributeText("autogen_proj",projString.c_str());
           }else{
-            CDBWarning("Unnown projection");
+            CDBWarning("Unknown projection");
           }
         }
         
