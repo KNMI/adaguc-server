@@ -1256,6 +1256,41 @@ void CImageDataWriter::setDate(const char *szTemp){
   drawImage.setTextStroke(szTemp, strlen(szTemp),drawImage.Geo->dWidth-170,5,240,254,0);
 }
 
+std::vector<CImageDataWriter::IndexRange*> CImageDataWriter::getIndexRangesForRegex(CT::string match, char*ids[], int n) {
+  std::vector<CImageDataWriter::IndexRange*> ranges;
+  int ret;
+  regex_t regex;
+  ret=regcomp(&regex, match.c_str(), 0);
+
+  if (!ret) {
+    int first=-1;
+    int last=-1;
+    for (int i=0; i<n; i++) {
+      int matched=regexec(&regex, ids[i], 0, NULL, 0);
+      if (matched==0) {
+        CDBDebug("match of %s [%d] with %s", ids[i], i, match.c_str());
+        if (first==-1) {
+          first=i;
+          last=i+1;
+        } else {
+          if ((i-last)>0) {
+            //new range
+            CImageDataWriter::IndexRange *rng=new CImageDataWriter::IndexRange(first, last);
+            ranges.push_back(rng);
+            first=i;
+            last=i+1;
+          } else {
+            last=i+1;
+          }
+        }
+      }
+    }
+    ranges.push_back(new CImageDataWriter::IndexRange(first,last));
+  }
+  regfree(&regex);
+  return ranges;
+}
+
 int CImageDataWriter::warpImage(CDataSource *dataSource,CDrawImage *drawImage){
   //Open the data of this dataSource
   int status = 0;
@@ -1361,6 +1396,30 @@ if(renderMethod==contour){CDBDebug("contour");}*/
             }
           }
         }
+        if (styleConfiguration->featureIntervals!=NULL) {
+          CDF::Variable *v=dataSource->getDataObject(0)->cdfObject->getVariableNE("featureids");
+          v->readData(CDF_STRING);
+          CDBDebug("featureid[2]=%s",((char **)v->data)[2]);
+          int sz=v->getDimension("features")->getSize();
+          char *colorForIndex[sz];
+          for(size_t j=0;j<styleConfiguration->featureIntervals->size();j++){
+            CServerConfig::XMLE_FeatureInterval *featureInterval=((*styleConfiguration->featureIntervals)[j]);
+            if(featureInterval->attr.match.empty()==false&&featureInterval->attr.matchid.empty()==false){
+              CDBDebug("matching %d ids with %s", sz, featureInterval->attr.match.c_str());
+              if(featureInterval->attr.fillcolor.empty()==false){
+                
+                std::vector<CImageDataWriter::IndexRange*> ranges=getIndexRangesForRegex(featureInterval->attr.match, ((char **)v->data), sz);
+//              getColorForIndex(featureInterval->attr.match, ((char **)v->data), sz, featureInterval->attr.fillcolor.c_str(), colorForIndex);
+                for (size_t i=0; i<ranges.size(); i++) {
+                  bilinearSettings.printconcat("shading=min(%1d)$max(%1d)$", ranges[i]->min, ranges[i]->max); 
+                  bilinearSettings.printconcat("$fillcolor(%s)$;",featureInterval->attr.fillcolor.c_str());
+                  delete ranges[i];
+                }
+              }
+            }
+          }
+        }         
+          
       }
       if(drawContour==true){
         

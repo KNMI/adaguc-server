@@ -27,6 +27,7 @@
 #define CImageDataWriter_H
 #include <string>
 #include <map>
+#include <vector>
 #include "Definitions.h"
 #include "CStopWatch.h"
 #include "CIBaseDataWriterInterface.h"
@@ -57,6 +58,18 @@ class CImageDataWriter: public CBaseDataWriterInterface{
       double dX,dY;
       bool isOutsideBBOX;
     };
+ 
+    class IndexRange{
+    public:
+      int min;
+      int max;
+      IndexRange(int min, int max) {
+        this->min=min;
+        this->max=max;
+      }
+      IndexRange();
+    };
+    std::vector<CImageDataWriter::IndexRange*> getIndexRangesForRegex(CT::string match, char*ids[], int n);
     static std::map<std::string,CImageDataWriter::ProjCacheInfo> projCacheMap;
     static std::map<std::string,CImageDataWriter::ProjCacheInfo>::iterator projCacheIter;
     static ProjCacheInfo GetProjInfo(CT::string ckey, CDrawImage *drawImage, CDataSource *dataSource,CImageWarper *imageWarper,CServerParams *srvParam,int dX,int dY);

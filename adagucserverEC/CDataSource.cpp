@@ -485,6 +485,7 @@ int CDataSource::makeStyleConfig(CStyleConfiguration *styleConfig,CDataSource *d
     s->contourLines=&style->ContourLine;
     s->shadeIntervals=&style->ShadeInterval;
     s->symbolIntervals=&style->SymbolInterval;
+    s->featureIntervals=&style->FeatureInterval;
     
     if(style->Legend.size()>0){
       if(style->Legend[0]->attr.tickinterval.empty()==false){
@@ -527,6 +528,9 @@ int CDataSource::makeStyleConfig(CStyleConfiguration *styleConfig,CDataSource *d
   }
   if(layer->ShadeInterval.size()>0){
     s->shadeIntervals=&layer->ShadeInterval;
+  }
+  if (layer->FeatureInterval.size()>0){
+    s->featureIntervals=&layer->FeatureInterval;
   }
   
   if(layer->Legend.size()>0){

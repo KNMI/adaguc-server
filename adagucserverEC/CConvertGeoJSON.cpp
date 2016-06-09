@@ -32,7 +32,7 @@
       #include <map>
       #include <cstdlib>
       #include <queue>
-//      #define CCONVERTGEOJSON_DEBUG
+      #define CCONVERTGEOJSON_DEBUG
       const char *CConvertGeoJSON::className="CConvertGeoJSON";
 
       #define CCONVERTUGRIDMESH_NODATA -32000
@@ -955,6 +955,7 @@
           dataSource->dfBBOX[1]=dataSource->srvParams->Geo->dfBBOX[1];
           dataSource->dfBBOX[2]=dataSource->srvParams->Geo->dfBBOX[2];
           dataSource->dfBBOX[3]=dataSource->srvParams->Geo->dfBBOX[3];
+          return result;//TODO
         }
         
         if(mode==CNETCDFREADER_MODE_OPEN_ALL)
