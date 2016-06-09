@@ -26,7 +26,7 @@
 #include "CImgWarpBilinear.h"
 #include "CImageDataWriter.h"
 #include <gd.h>
-
+#include <set>
 #ifndef M_PI
 #define M_PI            3.14159265358979323846  // pi 
 #endif
@@ -1494,8 +1494,39 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
   
    float val[4];
    
+   
+   //Expand the ShadeDefinitions
+   std::vector<ShadeDefinition> shadeDefinitionsExpanded;
+   std::set<double>intervals;
+   std::set<double>::iterator intervalsit;
+   for(size_t j=0;j<shadeDefinitions.size();j++){
+     intervals.insert(shadeDefinitions[j].min);
+     intervals.insert(shadeDefinitions[j].max);
+   }
+   double previ;
+   int nr = 0;
+   for (intervalsit=intervals.begin(); intervalsit!=intervals.end(); ++intervalsit){
+     double i = *intervalsit;
+     if(nr>0){
+      int foundOne = -1;
+      for(int j=int (shadeDefinitions.size())-1;j>=0;j--){
+        if(shadeDefinitions[j].min<=previ&&shadeDefinitions[j].max>=i){
+          foundOne = j;
+          break;
+        }
+      }
+      if(foundOne!=-1){
+        CDBDebug("SHADEDEF %d uses def %d\t(%f\t%f)",shadeDefinitionsExpanded.size(),foundOne,previ,i);
+        shadeDefinitionsExpanded.push_back(ShadeDefinition(previ,i,shadeDefinitions[foundOne].fillColor,shadeDefinitions[foundOne].foundColor));
+      }
+     }
+     previ=i;
+     nr++;
+   }
+
+   
    int snr=0;
-   int numShadeDefs=(int)shadeDefinitions.size();
+   int numShadeDefs=(int)shadeDefinitionsExpanded.size();
    float shadeDefMin[numShadeDefs];
    float shadeDefMax[numShadeDefs];
    unsigned char shadeColorR[numShadeDefs];
@@ -1503,14 +1534,14 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
    unsigned char shadeColorB[numShadeDefs];
    unsigned char shadeColorA[numShadeDefs];
    for(snr=0;snr<numShadeDefs;snr++){
-     shadeDefMin[snr]=shadeDefinitions[snr].min;
-     shadeDefMax[snr]=shadeDefinitions[snr].max;
+     shadeDefMin[snr]=shadeDefinitionsExpanded[snr].min;
+     shadeDefMax[snr]=shadeDefinitionsExpanded[snr].max;
      
-     if(shadeDefinitions[snr].foundColor){
-      shadeColorR[snr]=shadeDefinitions[snr].fillColor.r;
-      shadeColorG[snr]=shadeDefinitions[snr].fillColor.g;
-      shadeColorB[snr]=shadeDefinitions[snr].fillColor.b;
-      shadeColorA[snr]=shadeDefinitions[snr].fillColor.a;
+     if(shadeDefinitionsExpanded[snr].foundColor){
+      shadeColorR[snr]=shadeDefinitionsExpanded[snr].fillColor.r;
+      shadeColorG[snr]=shadeDefinitionsExpanded[snr].fillColor.g;
+      shadeColorB[snr]=shadeDefinitionsExpanded[snr].fillColor.b;
+      shadeColorA[snr]=shadeDefinitionsExpanded[snr].fillColor.a;
      }else{
        CColor color=drawImage->getColorForIndex(getPixelIndexForValue(dataSource,shadeDefMin[snr]));
        shadeColorR[snr]=color.r;
