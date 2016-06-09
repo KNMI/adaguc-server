@@ -114,7 +114,7 @@ function build {
   echo "[OK] Everything is installed in the ./bin directory"
 }
 
-if [ "$@" == "--clean" ]; then
+if [ "$@" = "--clean" ]; then
   clean
   else
   build
