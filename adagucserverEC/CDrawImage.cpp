@@ -61,7 +61,7 @@ CDrawImage::CDrawImage(){
   backgroundAlpha=255;
   
   numImagesAdded = 0;
-  currentGraphicsRenderer = -1;
+  currentGraphicsRenderer = CDRAWIMAGERENDERER_GD;
   //CDBDebug("TTFFontLocation = %s",TTFFontLocation);
 }
 void CDrawImage::destroyImage(){
@@ -119,7 +119,10 @@ int CDrawImage::createImage(CGeoParams *_Geo){
 #ifdef MEASURETIME
   StopWatch_Stop("start createImage of size %d %d, truecolor=[%d], transparency = [%d], currentGraphicsRenderer [%d]",_Geo->dWidth,_Geo->dHeight,_bEnableTrueColor,_bEnableTransparency,currentGraphicsRenderer);
 #endif  
-  
+  if(currentGraphicsRenderer == -1){
+    CDBError("currentGraphicsRenderer not set.");
+    return 1;
+  }
   if(dImageCreated==1){CDBError("createImage: image already created");return 1;}
   
   Geo->copy(_Geo);
@@ -129,16 +132,13 @@ int CDrawImage::createImage(CGeoParams *_Geo){
 
     if(_bEnableTransparency==false){
       cairo = new CCairoPlotter(Geo->dWidth, Geo->dHeight, TTFFontSize, TTFFontLocation ,BGColorR,BGColorG,BGColorB,255);
-      currentGraphicsRenderer = CDRAWIMAGERENDERER_CAIRO;
     }else{
       cairo = new CCairoPlotter(Geo->dWidth, Geo->dHeight, TTFFontSize, TTFFontLocation ,0,0,0,0);
-      currentGraphicsRenderer = CDRAWIMAGERENDERER_CAIRO;
     }
   }
   if(currentGraphicsRenderer==CDRAWIMAGERENDERER_GD){
     image = gdImageCreate(Geo->dWidth,Geo->dHeight);
     gdFTUseFontConfig(1);
-    currentGraphicsRenderer = CDRAWIMAGERENDERER_GD;
   }
   dImageCreated=1;
 #ifdef MEASURETIME
@@ -1323,6 +1323,8 @@ void CDrawImage::setTrueColor(bool enable){
   _bEnableTrueColor=enable;
   if(enable){
     setRenderer(CDRAWIMAGERENDERER_CAIRO);
+  }else{
+    setRenderer(CDRAWIMAGERENDERER_GD);
   }
 }
 
@@ -1537,7 +1539,9 @@ void CDrawImage::setCanvasColorType(int colorType){
   if(colorType == CDRAWIMAGE_COLORTYPE_ARGB){
     setRenderer(CDRAWIMAGERENDERER_CAIRO);
     _bEnableTrueColor = true;
-  }  
+  }  else{
+    setRenderer(CDRAWIMAGERENDERER_GD);
+  }
 }
 
 int CDrawImage::getCanvasColorType(){
