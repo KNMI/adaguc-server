@@ -47,9 +47,9 @@
 #endif
 
 CT::string months[] = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
-
-// #define CIMAGEDATAWRITER_DEBUG
-//  #define MEASURETIME
+/*
+#define CIMAGEDATAWRITER_DEBUG
+ #define MEASURETIME*/
 
 
 void doJacoIntoLatLon(double &u, double &v, double lo, double la, float deltaX, float deltaY, CImageWarper *warper);
@@ -498,7 +498,7 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   nrImagesAdded = 0;
 
   if(srvParam->requestType==REQUEST_WMS_GETMAP){
-  
+//  CDBDebug("CREATING IMAGE FOR WMS GETMAP ---------------------------------------");
     status = drawImage.createImage(srvParam->Geo);
   
     if(status != 0) return 1;
@@ -1268,7 +1268,7 @@ std::vector<CImageDataWriter::IndexRange*> CImageDataWriter::getIndexRangesForRe
     for (int i=0; i<n; i++) {
       int matched=regexec(&regex, ids[i], 0, NULL, 0);
       if (matched==0) {
-        CDBDebug("match of %s [%d] with %s", ids[i], i, match.c_str());
+        //CDBDebug("match of %s [%d] with %s", ids[i], i, match.c_str());
         if (first==-1) {
           first=i;
           last=i+1;
@@ -1397,23 +1397,33 @@ if(renderMethod==contour){CDBDebug("contour");}*/
           }
         }
         if (styleConfiguration->featureIntervals!=NULL) {
+          if(styleConfiguration->featureIntervals->size()>0){
           CDF::Variable *v=dataSource->getDataObject(0)->cdfObject->getVariableNE("featureids");
-          v->readData(CDF_STRING);
-          CDBDebug("featureid[2]=%s",((char **)v->data)[2]);
-          int sz=v->getDimension("features")->getSize();
-          char *colorForIndex[sz];
-          for(size_t j=0;j<styleConfiguration->featureIntervals->size();j++){
-            CServerConfig::XMLE_FeatureInterval *featureInterval=((*styleConfiguration->featureIntervals)[j]);
-            if(featureInterval->attr.match.empty()==false&&featureInterval->attr.matchid.empty()==false){
-              CDBDebug("matching %d ids with %s", sz, featureInterval->attr.match.c_str());
-              if(featureInterval->attr.fillcolor.empty()==false){
-                
-                std::vector<CImageDataWriter::IndexRange*> ranges=getIndexRangesForRegex(featureInterval->attr.match, ((char **)v->data), sz);
-//              getColorForIndex(featureInterval->attr.match, ((char **)v->data), sz, featureInterval->attr.fillcolor.c_str(), colorForIndex);
-                for (size_t i=0; i<ranges.size(); i++) {
-                  bilinearSettings.printconcat("shading=min(%1d)$max(%1d)$", ranges[i]->min, ranges[i]->max); 
-                  bilinearSettings.printconcat("$fillcolor(%s)$;",featureInterval->attr.fillcolor.c_str());
-                  delete ranges[i];
+            if(v == NULL){
+              CDBError("featureids variable not founrd");
+              return 1;
+            }
+            v->readData(CDF_STRING);
+  //          CDBDebug("featureid[2]=%s",((char **)v->data)[2]);
+            int sz=v->getDimension("features")->getSize();
+            char *colorForIndex[sz];
+            for(size_t j=0;j<styleConfiguration->featureIntervals->size();j++){
+              CServerConfig::XMLE_FeatureInterval *featureInterval=((*styleConfiguration->featureIntervals)[j]);
+              if(featureInterval->attr.match.empty()==false&&featureInterval->attr.matchid.empty()==false){
+                CDBDebug("matching %d ids with %s", sz, featureInterval->attr.match.c_str());
+                if(featureInterval->attr.fillcolor.empty()==false){
+                  
+                  std::vector<CImageDataWriter::IndexRange*> ranges=getIndexRangesForRegex(featureInterval->attr.match, ((char **)v->data), sz);
+  //              getColorForIndex(featureInterval->attr.match, ((char **)v->data), sz, featureInterval->attr.fillcolor.c_str(), colorForIndex);
+                  for (size_t i=0; i<ranges.size(); i++) {
+                    bilinearSettings.printconcat("shading=min(%1d)$max(%1d)$", ranges[i]->min, ranges[i]->max); 
+                    bilinearSettings.printconcat("$fillcolor(%s)$",featureInterval->attr.fillcolor.c_str());
+                    if(!featureInterval->attr.bgcolor.empty()){
+                      bilinearSettings.printconcat("$bgcolor(%s)$",featureInterval->attr.bgcolor.c_str());
+                    }
+                    bilinearSettings.concat(";");
+                    delete ranges[i];
+                  }
                 }
               }
             }
@@ -1455,7 +1465,7 @@ if(renderMethod==contour){CDBDebug("contour");}*/
         
         //bilinearSettings.printconcat("textScaleFactor=%f;textOffsetFactor=%f;",textScaleFactor,textOffsetFactor);
       }
-      //CDBDebug("bilinearSettings.c_str() %s",bilinearSettings.c_str());
+      CDBDebug("bilinearSettings.c_str() %s",bilinearSettings.c_str());
       imageWarperRenderer->set(bilinearSettings.c_str());
       imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
       delete imageWarperRenderer;

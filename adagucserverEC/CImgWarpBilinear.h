@@ -50,12 +50,16 @@ class ShadeDefinition{
 public:
   float min,max;
   bool foundColor;
+  bool hasBGColor;
   CColor fillColor;
-  ShadeDefinition(float min,float max,CColor fillColor,bool foundColor){
+  CColor bgColor;
+  ShadeDefinition(float min,float max,CColor fillColor,bool foundColor,CColor bgColor,bool hasBGColor){
     this->min=min;
     this->max=max;
     this->fillColor=fillColor;
     this->foundColor=foundColor;
+    this->bgColor=bgColor;
+    this->hasBGColor=hasBGColor;
   }
 };
 

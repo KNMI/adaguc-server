@@ -205,8 +205,8 @@ int CConvertCurvilinear::convertCurvilinearHeader( CDFObject *cdfObject,CServerP
     
 
   //Default size of adaguc 2dField is 2x2
-  int width=2;
-  int height=2;
+  int width=swathMiddleLon->dimensionlinks[1]->getSize();
+  int height=swathMiddleLon->dimensionlinks[0]->getSize();
   
   
   if(srvParams->Geo->dWidth>1&&srvParams->Geo->dHeight>1){
@@ -700,15 +700,25 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource,int mode
 
           bool tileHasNoData = false;
           bool tileIsOverDateBorder = false;
+          float minLon,maxLon;
           for(int j=0;j<4;j++){
+            lons[j]-=180;
             float lon = lons[j];
             float lat = lats[j];
             float val = vals[j];
             if(val==fill||val==INFINITY||val==NAN||val==-INFINITY||!(val==val)){tileHasNoData=true;break;}
             if(lat==fillValueLat||lat==INFINITY||lat==-INFINITY||!(lat==lat)){tileHasNoData=true;break;}
             if(lon==fillValueLon||lon==INFINITY||lon==-INFINITY||!(lon==lon)){tileHasNoData=true;break;}
-            if(lon>180)tileIsOverDateBorder=true;
+            if(j==0){
+              minLon=lon;
+              maxLon=lon;
+            }else{
+              if(lon<minLon)minLon=lon;
+              if(lon>maxLon)maxLon=lon;
+            }
           }
+          //if(maxLon>180)tileIsOverDateBorder=true;
+          
           if(tileHasNoData==false){
             int dlons[4],dlats[4];
             bool projectionIsOk = true;

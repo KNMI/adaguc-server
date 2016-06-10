@@ -1517,6 +1517,7 @@ int CRequest::process_all_layers(){
             }
             if(dataSources[j]->dLayerType==CConfigReaderLayerTypeDataBase||
               dataSources[j]->dLayerType==CConfigReaderLayerTypeCascaded){
+       
               status = imageDataWriter.addData(dataSources);
               if(status != 0){
                 /**
