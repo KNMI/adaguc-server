@@ -1207,8 +1207,11 @@ int CImgWarpBilinear::set(const char *pszSettings){
       
       if(values[0].equals("shading")){
         CColor fillcolor=CColor(0,0,0,0);
+        CColor bgColor=CColor(0,0,0,0);
         float max,min;
         bool foundColor=false;
+        bool hasBGColor = false;
+        
         CT::string *shadeSettings=values[1].splitToArray("$");
         for(size_t l=0;l<shadeSettings->count;l++){
           CT::string *kvp=shadeSettings[l].splitToArray("(");
@@ -1219,10 +1222,15 @@ int CImgWarpBilinear::set(const char *pszSettings){
             kvp[1].setSize(kvp[1].length()-1);//Remove trailing bracket (')')
             fillcolor=CColor(kvp[1].c_str());foundColor=true;
           }
+          if(kvp[0].equals("bgcolor")){
+            kvp[1].setSize(kvp[1].length()-1);//Remove trailing bracket (')')
+            CDBDebug("Found bgcolor");
+            bgColor=CColor(kvp[1].c_str());hasBGColor=true;
+          }
           delete[] kvp;
         }
 
-        shadeDefinitions.push_back(ShadeDefinition(min,max,fillcolor,foundColor));
+        shadeDefinitions.push_back(ShadeDefinition(min,max,fillcolor,foundColor,bgColor,hasBGColor));
         delete[] shadeSettings;
       }
       
@@ -1517,41 +1525,55 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
       }
       if(foundOne!=-1){
         CDBDebug("SHADEDEF %d uses def %d\t(%f\t%f)",shadeDefinitionsExpanded.size(),foundOne,previ,i);
-        shadeDefinitionsExpanded.push_back(ShadeDefinition(previ,i,shadeDefinitions[foundOne].fillColor,shadeDefinitions[foundOne].foundColor));
+        shadeDefinitionsExpanded.push_back(ShadeDefinition(previ,i,shadeDefinitions[foundOne].fillColor,shadeDefinitions[foundOne].foundColor,shadeDefinitions[foundOne].bgColor,shadeDefinitions[foundOne].hasBGColor));
       }
      }
      previ=i;
      nr++;
    }
-
    
-   int snr=0;
-   int numShadeDefs=(int)shadeDefinitionsExpanded.size();
-   float shadeDefMin[numShadeDefs];
-   float shadeDefMax[numShadeDefs];
-   unsigned char shadeColorR[numShadeDefs];
-   unsigned char shadeColorG[numShadeDefs];
-   unsigned char shadeColorB[numShadeDefs];
-   unsigned char shadeColorA[numShadeDefs];
-   for(snr=0;snr<numShadeDefs;snr++){
-     shadeDefMin[snr]=shadeDefinitionsExpanded[snr].min;
-     shadeDefMax[snr]=shadeDefinitionsExpanded[snr].max;
-     
-     if(shadeDefinitionsExpanded[snr].foundColor){
+   //Fill out the bgcolor
+    
+    if(shadeDefinitionsExpanded.size()>0){
+      if(shadeDefinitionsExpanded[0].hasBGColor){
+        for(int y=0;y<dImageHeight;y++){
+          for(int x=0;x<dImageWidth;x++){
+            drawImage->setPixelTrueColor(x,y,shadeDefinitionsExpanded[0].bgColor.r,
+                                         shadeDefinitionsExpanded[0].bgColor.g,
+                                         shadeDefinitionsExpanded[0].bgColor.b,
+                                         shadeDefinitionsExpanded[0].bgColor.a);
+          }
+        }
+      }
+    }
+    
+    int snr=0;
+    int numShadeDefs=(int)shadeDefinitionsExpanded.size();
+    float shadeDefMin[numShadeDefs];
+    float shadeDefMax[numShadeDefs];
+    unsigned char shadeColorR[numShadeDefs];
+    unsigned char shadeColorG[numShadeDefs];
+    unsigned char shadeColorB[numShadeDefs];
+    unsigned char shadeColorA[numShadeDefs];
+    for(snr=0;snr<numShadeDefs;snr++){
+      shadeDefMin[snr]=shadeDefinitionsExpanded[snr].min;
+      shadeDefMax[snr]=shadeDefinitionsExpanded[snr].max;
+      
+      if(shadeDefinitionsExpanded[snr].foundColor){
       shadeColorR[snr]=shadeDefinitionsExpanded[snr].fillColor.r;
       shadeColorG[snr]=shadeDefinitionsExpanded[snr].fillColor.g;
       shadeColorB[snr]=shadeDefinitionsExpanded[snr].fillColor.b;
       shadeColorA[snr]=shadeDefinitionsExpanded[snr].fillColor.a;
-     }else{
-       CColor color=drawImage->getColorForIndex(getPixelIndexForValue(dataSource,shadeDefMin[snr]));
-       shadeColorR[snr]=color.r;
-       shadeColorG[snr]=color.g;
-       shadeColorB[snr]=color.b;
-       shadeColorA[snr]=color.a;
-     }
-   }
-   int lastShadeDef=0;
-   
+      }else{
+        CColor color=drawImage->getColorForIndex(getPixelIndexForValue(dataSource,shadeDefMin[snr]));
+        shadeColorR[snr]=color.r;
+        shadeColorG[snr]=color.g;
+        shadeColorB[snr]=color.b;
+        shadeColorA[snr]=color.a;
+      }
+    }
+    int lastShadeDef=0;
+    
    //float minValue = CImageDataWriter::getValueForColorIndex(dataSource,0);;
    //float maxValue = CImageDataWriter::getValueForColorIndex(dataSource,240);;
 //     for(int y=0;y<dImageHeight-1;y++){
@@ -1601,7 +1623,11 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
               }while(done>0);
              }
              if(done==-1){
-               drawImage->setPixelTrueColor(x,y,shadeColorR[lastShadeDef],shadeColorG[lastShadeDef],shadeColorB[lastShadeDef],shadeColorA[lastShadeDef]);
+               if(shadeColorA[lastShadeDef] == 0){ //When a fully transparent color is deliberately set, force this color in the image
+                 drawImage->setPixelTrueColorOverWrite(x,y,shadeColorR[lastShadeDef],shadeColorG[lastShadeDef],shadeColorB[lastShadeDef],shadeColorA[lastShadeDef]);
+               }else{
+                drawImage->setPixelTrueColor(x,y,shadeColorR[lastShadeDef],shadeColorG[lastShadeDef],shadeColorB[lastShadeDef],shadeColorA[lastShadeDef]);
+               }
              }
            }
          }

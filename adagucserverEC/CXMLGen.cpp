@@ -1608,6 +1608,14 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc,std::vector<WMSLay
                 proj->dfBBOX[0],proj->dfBBOX[1],proj->dfBBOX[2],proj->dfBBOX[3]
                                   );
               }
+              int width = layer->dataSource->dWidth-1;
+              int height = layer->dataSource->dHeight-1;
+              if(width<=1){
+                width=999;
+              }
+              if(height<=1){
+                height=999;
+              }
               XMLDoc->printconcat(
                   "        <gml:RectifiedGrid dimension=\"2\">\n"
                   "          <gml:limits>\n"
@@ -1625,8 +1633,8 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc,std::vector<WMSLay
                   "          <gml:offsetVector>0 %f</gml:offsetVector>\n"
                   "        </gml:RectifiedGrid>\n"
                   "      </spatialDomain>\n",
-              layer->dataSource->dWidth-1,
-              layer->dataSource->dHeight-1,
+              width,
+              height,
               layer->dataSource->dfBBOX[0]+layer->dataSource->dfCellSizeX/2,
               layer->dataSource->dfBBOX[3]+layer->dataSource->dfCellSizeY/2,
               layer->dataSource->dfCellSizeX,

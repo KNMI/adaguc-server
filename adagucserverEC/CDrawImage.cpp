@@ -709,6 +709,23 @@ void CDrawImage::setPixel(int x,int y,CColor &color){
   return icolor;
 }*/
 
+void CDrawImage::setPixelTrueColorOverWrite(int x,int y,unsigned char r,unsigned char g,unsigned char b,unsigned char a){
+  if(currentGraphicsRenderer==CDRAWIMAGERENDERER_CAIRO){
+    cairo->pixel_overwrite(x,y,r,g,b,a);
+  }else{
+      int key = r+g*256+b*65536;
+      int color;
+      myColorIter=myColorMap.find(key);
+      if(myColorIter==myColorMap.end()){
+        color = gdImageColorClosest(image,r,g,b);
+        myColorMap[key]=color;
+      }else{
+        color=(*myColorIter).second;
+      }
+      gdImageSetPixel(image, x,y,color);
+  }
+}
+
 void CDrawImage::setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,unsigned char b,unsigned char a){
   if(currentGraphicsRenderer==CDRAWIMAGERENDERER_CAIRO){
     cairo->pixel_blend(x,y,r,g,b,a);
