@@ -163,6 +163,11 @@ class GenericDataWarper{
       }
     }
 
+   
+//     for(size_t j=0;j<dataSize;j++){
+//       if(px[j]>0&&px[j]<1)skip[j]=true;        
+//     }
+    
     if(warper->isProjectionRequired()){
       if(sourceNeedsDegreeRadianConversion){
         for(size_t j=0;j<dataSize;j++){
@@ -180,18 +185,12 @@ class GenericDataWarper{
         }
       }
     }
+    
+
 
     for(size_t j=0;j<dataSize;j++){
-      if(px[j]>-DBL_MAX&&px[j]<DBL_MAX){
-        px[j]-=dfDestOrigX;
-        py[j]-=dfDestOrigY;
-        px[j]*=multiDestX;
-        py[j]*=multiDestY;
-        px[j]+=0.5;
-        py[j]+=0.5;
-      }else{
-        skip[j]=true;        
-      }
+      if(!(px[j]>-DBL_MAX&&px[j]<DBL_MAX))skip[j]=true;        
+      
     }
     
     double avgDX = 0;
@@ -202,16 +201,68 @@ class GenericDataWarper{
         size_t p=x+y*(dataWidth+1);
         if(skip[p]==false&&skip[p+1]==false&&skip[p+dataWidth+1]==false&&skip[p+dataWidth+2]==false)
         {
+          bool doDraw = true;
           double px1 = px[p];
           double px2 = px[p+1];
           double px3 = px[p+dataWidth+2];
           double px4 = px[p+dataWidth+1];
+            
+          //CDBDebug("destGeoParams = %s",destGeoParams->CRS.c_str());
+          if( CGeoParams::isLonLatProjection(&destGeoParams->CRS)==true||CGeoParams::isMercatorProjection(&destGeoParams->CRS)==true)
+          {
+            double lons[4];
+            lons[0] = px1;
+            lons[1] = px2;
+            lons[2] = px3;
+            lons[3] = px4;
+            
+            float lonMin,lonMax,lonMiddle=0;
+            for(int j=0;j<4;j++){
+              float lon = lons[j];
+              if(j==0){lonMin=lon;lonMax=lon;}else{
+                if(lon<lonMin)lonMin=lon;
+                if(lon>lonMax)lonMax=lon;
+              }
+              lonMiddle+=lon;
+              if(lon==INFINITY||lon==-INFINITY||!(lon==lon)){doDraw=false;break;}
+            }
+            lonMiddle/=4;
+            double sphereWidth=360;
+            if(CGeoParams::isMercatorProjection(&destGeoParams->CRS)){
+              sphereWidth=40000000;
+            }
+            
+            if(lonMax-lonMin>=sphereWidth*0.9)
+            {
+              if(lonMiddle>0){
+                  for(int j=0;j<4;j++)if(lons[j]<lonMiddle)lons[j]+=sphereWidth;
+              }else{
+                for(int j=0;j<4;j++)if(lons[j]>lonMiddle)lons[j]-=sphereWidth;
+              }
+            }
+            px1=lons[0];
+            px2=lons[1]; 
+            px3=lons[2]; 
+            px4=lons[3]; 
+          }
+          
+          px1-=dfDestOrigX;px1*=multiDestX;px1+=0.5;
+          px2-=dfDestOrigX;px2*=multiDestX;px2+=0.5;
+          px3-=dfDestOrigX;px3*=multiDestX;px3+=0.5;
+          px4-=dfDestOrigX;px4*=multiDestX;px4+=0.5;
+ 
 
           double py1 = py[p];
           double py2 = py[p+1];
           double py3 = py[p+dataWidth+2];
           double py4 = py[p+dataWidth+1];
-          bool doDraw = true;
+          
+          py1-=dfDestOrigY;py1*=multiDestY;py1+=0.5;
+          py2-=dfDestOrigY;py2*=multiDestY;py2+=0.5;
+          py3-=dfDestOrigY;py3*=multiDestY;py3+=0.5;
+          py4-=dfDestOrigY;py4*=multiDestY;py4+=0.5;
+ 
+        
           
           if(x==0)avgDX = px2;
           if(y==0)avgDY = py4;

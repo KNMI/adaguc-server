@@ -1406,7 +1406,7 @@ if(renderMethod==contour){CDBDebug("contour");}*/
             v->readData(CDF_STRING);
   //          CDBDebug("featureid[2]=%s",((char **)v->data)[2]);
             int sz=v->getDimension("features")->getSize();
-            char *colorForIndex[sz];
+            //char *colorForIndex[sz];
             for(size_t j=0;j<styleConfiguration->featureIntervals->size();j++){
               CServerConfig::XMLE_FeatureInterval *featureInterval=((*styleConfiguration->featureIntervals)[j]);
               if(featureInterval->attr.match.empty()==false&&featureInterval->attr.matchid.empty()==false){

@@ -71,6 +71,18 @@ class CGeoParams{
       if(projectionName->indexOf("+proj=longlat")==0){
         return true;
       }
+      if(projectionName->equals("EPSG:4326")){
+        return true;
+      }
+      return false;
+    }
+    static bool isMercatorProjection(CT::string *projectionName){
+      if(projectionName->indexOf("+proj=merc")==0){
+        return true;
+      }
+      if(projectionName->equals("EPSG:3857")||projectionName->equals("EPSG:900913")){
+        return true;
+      }
       return false;
     }
 };
