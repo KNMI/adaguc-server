@@ -575,45 +575,47 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y){
     //Read projection attributes from the file
     CDF::Attribute *projvarnameAttr = dataSourceVar->getAttributeNE("grid_mapping");
     if(projvarnameAttr!=NULL){
-      CDF::Variable * projVar = cdfObject->getVariableNE(projvarnameAttr->toString().c_str());
-      if(projVar==NULL){CDBWarning("projection variable '%s' not found",(char*)projvarnameAttr->data);}
-      else {
-        //Get proj4_params according to ADAGUC metadata
-        CDF::Attribute *proj4Attr = projVar->getAttributeNE("proj4_params");
-        
-        //If not found try alternative one
-        if (proj4Attr==NULL) proj4Attr = projVar->getAttributeNE("proj4");
-        
-        //If a proj4 string was found set it in the datasource.
-        if(proj4Attr!=NULL)dataSource->nativeProj4.copy(proj4Attr->toString().c_str());
-        
-        //if still not found, try to compose a proj4 string based on Climate and Forecast Conventions
-        if (proj4Attr==NULL||dataSource->nativeProj4.length()==0){
-          CProj4ToCF proj4ToCF;
-          proj4ToCF.debug=true;
-          CT::string projString;
-          status = proj4ToCF.convertCFToProj(projVar,&projString);
-          if(status==0){
-            //Projection string was created, set it in the datasource.
-            dataSource->nativeProj4.copy(projString.c_str());
-            CDBDebug("Autogen proj4 string: %s",projString.c_str());
-            projVar->setAttributeText("autogen_proj",projString.c_str());
-          }else{
-            CDBWarning("Unknown projection");
+      if(projvarnameAttr->toString().equals("latitude_longitude")==false){
+        CDF::Variable * projVar = cdfObject->getVariableNE(projvarnameAttr->toString().c_str());
+        if(projVar==NULL){CDBWarning("projection variable '%s' not found",(char*)projvarnameAttr->data);}
+        else {
+          //Get proj4_params according to ADAGUC metadata
+          CDF::Attribute *proj4Attr = projVar->getAttributeNE("proj4_params");
+          
+          //If not found try alternative one
+          if (proj4Attr==NULL) proj4Attr = projVar->getAttributeNE("proj4");
+          
+          //If a proj4 string was found set it in the datasource.
+          if(proj4Attr!=NULL)dataSource->nativeProj4.copy(proj4Attr->toString().c_str());
+          
+          //if still not found, try to compose a proj4 string based on Climate and Forecast Conventions
+          if (proj4Attr==NULL||dataSource->nativeProj4.length()==0){
+            CProj4ToCF proj4ToCF;
+            proj4ToCF.debug=true;
+            CT::string projString;
+            status = proj4ToCF.convertCFToProj(projVar,&projString);
+            if(status==0){
+              //Projection string was created, set it in the datasource.
+              dataSource->nativeProj4.copy(projString.c_str());
+              CDBDebug("Autogen proj4 string: %s",projString.c_str());
+              projVar->setAttributeText("autogen_proj",projString.c_str());
+            }else{
+              CDBWarning("Unknown projection");
+            }
           }
-        }
-        
-        
+          
+          
 
-        //Get EPSG_code
-        CDF::Attribute *epsgAttr = projVar->getAttributeNE("EPSG_code");
-        if(epsgAttr!=NULL){dataSource->nativeEPSG.copy((char*)epsgAttr->data);}else
-        {
-          //Make a projection code based on PROJ4: namespace
-          dataSource->nativeEPSG.print("PROJ4:%s",dataSource->nativeProj4.c_str());
-          dataSource->nativeEPSG.encodeURLSelf();
+          //Get EPSG_code
+          CDF::Attribute *epsgAttr = projVar->getAttributeNE("EPSG_code");
+          if(epsgAttr!=NULL){dataSource->nativeEPSG.copy((char*)epsgAttr->data);}else
+          {
+            //Make a projection code based on PROJ4: namespace
+            dataSource->nativeEPSG.print("PROJ4:%s",dataSource->nativeProj4.c_str());
+            dataSource->nativeEPSG.encodeURLSelf();
+          }
+          //else {CDBWarning("EPSG_code not found in variable %s",(char*)projvarnameAttr->data);}
         }
-        //else {CDBWarning("EPSG_code not found in variable %s",(char*)projvarnameAttr->data);}
       }
     }
   }

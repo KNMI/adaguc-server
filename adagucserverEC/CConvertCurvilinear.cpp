@@ -699,35 +699,38 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource,int mode
           vals[3] = swathData[pSwath+numCols+1];
 
           bool tileHasNoData = false;
-          bool tileIsOverDateBorder = false;
-          float minLon,maxLon;
+          float lonMin,lonMax,lonMiddle=0;
           for(int j=0;j<4;j++){
-            lons[j]-=180;
             float lon = lons[j];
+            if(j==0){lonMin=lon;lonMax=lon;}else{
+              if(lon<lonMin)lonMin=lon;
+              if(lon>lonMax)lonMax=lon;
+            }
+            lonMiddle+=lon;
             float lat = lats[j];
             float val = vals[j];
             if(val==fill||val==INFINITY||val==NAN||val==-INFINITY||!(val==val)){tileHasNoData=true;break;}
             if(lat==fillValueLat||lat==INFINITY||lat==-INFINITY||!(lat==lat)){tileHasNoData=true;break;}
             if(lon==fillValueLon||lon==INFINITY||lon==-INFINITY||!(lon==lon)){tileHasNoData=true;break;}
-            if(j==0){
-              minLon=lon;
-              maxLon=lon;
+          
+          }
+          lonMiddle/=4;
+          if(lonMax-lonMin>=350){
+            if(lonMiddle>0){
+              for(int j=0;j<4;j++)if(lons[j]<lonMiddle)lons[j]+=360;
             }else{
-              if(lon<minLon)minLon=lon;
-              if(lon>maxLon)maxLon=lon;
+              for(int j=0;j<4;j++)if(lons[j]>lonMiddle)lons[j]-=360;
             }
           }
-          //if(maxLon>180)tileIsOverDateBorder=true;
-          
           if(tileHasNoData==false){
             int dlons[4],dlats[4];
             bool projectionIsOk = true;
             for(int j=0;j<4;j++){
-              if(tileIsOverDateBorder){
-                lons[j]-=360;
-                if(lons[j]<-280)lons[j]+=360;
-              }
-              
+//               if(tileIsOverDateBorder){
+//                 lons[j]-=360;
+//                 if(lons[j]<-280)lons[j]+=360;
+//               }
+//               
               if(projectionRequired){
                 if(imageWarper.reprojfromLatLon(lons[j],lats[j])!=0)projectionIsOk = false;
               }
@@ -803,36 +806,38 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource,int mode
 
         bool tileHasNoData = false;
         
-        bool tileIsOverDateBorder = false;
-        
+      
+        float lonMin,lonMax,lonMiddle=0;
         for(int j=0;j<4;j++){
           float lon = lons[j];
+          if(j==0){lonMin=lon;lonMax=lon;}else{
+            if(lon<lonMin)lonMin=lon;
+            if(lon>lonMax)lonMax=lon;
+          }
+          lonMiddle+=lon;
           float lat = lats[j];
           float val = vals[j];
           if(val==fill||val==INFINITY||val==NAN||val==-INFINITY||!(val==val)){tileHasNoData=true;break;}
           if(lat==fillValueLat||lat==INFINITY||lat==-INFINITY||!(lat==lat)){tileHasNoData=true;break;}
           if(lon==fillValueLon||lon==INFINITY||lon==-INFINITY||!(lon==lon)){tileHasNoData=true;break;}
-          if(lon>180)tileIsOverDateBorder=true;
+        
+        }
+        lonMiddle/=4;
+        if(lonMax-lonMin>=350){
+          if(lonMiddle>0){
+             for(int j=0;j<4;j++)if(lons[j]<lonMiddle)lons[j]+=360;
+          }else{
+            for(int j=0;j<4;j++)if(lons[j]>lonMiddle)lons[j]-=360;
+          }
         }
         if(tileHasNoData==false){
-          //CDBDebug(" (%f,%f) (%f,%f) (%f,%f) (%f,%f)",lons[0],lats[0],lons[1],lats[1],lons[2],lats[2],lons[3],lats[3]);
-          
-          
           int dlons[4],dlats[4];
           for(int j=0;j<4;j++){
-            if(tileIsOverDateBorder){
-              lons[j]-=360;
-              if(lons[j]<-280)lons[j]+=360;
-            }
             if(projectionRequired)if(imageWarper.reprojfromLatLon(lons[j],lats[j])!=0){tileHasNoData=true;break;}
             dlons[j]=int((lons[j]-offsetX)/cellSizeX);
             dlats[j]=int((lats[j]-offsetY)/cellSizeY);
           }
           if(tileHasNoData==false){
-            
-            
-            //CDBDebug(" (%d,%d) (%d,%d) (%d,%d) (%d,%d)",dlons[0],dlats[0],dlons[1],dlats[1],dlons[2],dlats[2],dlons[3],dlats[3]);
-            
             fillQuadGouraud(sdata, vals, dataSource->dWidth,dataSource->dHeight, dlons,dlats);
           }
         }
