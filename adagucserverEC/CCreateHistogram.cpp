@@ -103,8 +103,7 @@ int CCreateHistogram::addData(std::vector <CDataSource*> &dataSources){
         }
     
         void *sourceData = dataSource->getDataObject(0)->cdfVariable->data;
-      //  CDFType dataType=dataSource->getDataObject(0)->cdfVariable->getType();
-        
+        CDFType dataType=dataSource->getDataObject(0)->cdfVariable->getType();
         
         Settings settings;
         settings.width = dataSource->srvParams->Geo->dWidth;
@@ -122,7 +121,8 @@ int CCreateHistogram::addData(std::vector <CDataSource*> &dataSources){
         sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
         sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
         sourceGeo.CRS = dataSource->nativeProj4;
-      /*  
+        
+        CDBDebug("Rendering %f,%f",sourceGeo.dfBBOX[0],sourceGeo.dfBBOX[1]);
         switch(dataType){
           case CDF_CHAR  :  GenericDataWarper::render<char>  (&warper,sourceData,&sourceGeo,dataSource->srvParams->Geo,&settings,&drawFunction);break;
           case CDF_BYTE  :  GenericDataWarper::render<char>  (&warper,sourceData,&sourceGeo,dataSource->srvParams->Geo,&settings,&drawFunction);break;
@@ -133,15 +133,12 @@ int CCreateHistogram::addData(std::vector <CDataSource*> &dataSources){
           case CDF_UINT  :  GenericDataWarper::render<uint>  (&warper,sourceData,&sourceGeo,dataSource->srvParams->Geo,&settings,&drawFunction);break;
           case CDF_FLOAT :  GenericDataWarper::render<float> (&warper,sourceData,&sourceGeo,dataSource->srvParams->Geo,&settings,&drawFunction);break;
           case CDF_DOUBLE:  GenericDataWarper::render<double>(&warper,sourceData,&sourceGeo,dataSource->srvParams->Geo,&settings,&drawFunction);break;
-        }*/
+        }
 
-        CDBDebug("Rendering %f,%f",sourceGeo.dfBBOX[0],sourceGeo.dfBBOX[1]);
-        GenericDataWarper::render<float> (&warper,sourceData,&sourceGeo,dataSource->srvParams->Geo,&settings,&drawFunction);/*break;*/
       }
       reader.close();
       CDBDebug("Addata finished, data warped");
       
-
       CDataSource::Statistics statistics;
       statistics.calculate(dataSource->srvParams->Geo->dWidth*dataSource->srvParams->Geo->dHeight,(float*)warpedData,CDF_FLOAT,dataSource->getDataObject(0)->dfNodataValue,dataSource->getDataObject(0)->hasNodataValue);
       
