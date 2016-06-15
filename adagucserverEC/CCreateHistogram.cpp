@@ -139,6 +139,13 @@ int CCreateHistogram::addData(std::vector <CDataSource*> &dataSources){
       reader.close();
       CDBDebug("Addata finished, data warped");
       
+      if(dataSource->statistics==NULL){
+        dataSource->statistics = new CDataSource::Statistics();
+        dataSource->statistics->calculate(dataSource);
+      }
+      float fieldMin=(float)dataSource->statistics->getMinimum();
+      float fieldMax=(float)dataSource->statistics->getMaximum();
+      
       CDataSource::Statistics statistics;
       statistics.calculate(dataSource->srvParams->Geo->dWidth*dataSource->srvParams->Geo->dHeight,(float*)warpedData,CDF_FLOAT,dataSource->getDataObject(0)->dfNodataValue,dataSource->getDataObject(0)->hasNodataValue);
       
@@ -203,7 +210,9 @@ int CCreateHistogram::addData(std::vector <CDataSource*> &dataSources){
       JSONdata.printconcat("\"min\":%f,",statistics.getMinimum());
       JSONdata.printconcat("\"max\":%f,",statistics.getMaximum());
       
-      
+      //FieldMin/Fieldmax
+      JSONdata.printconcat("\"fieldmin\":%f,", fieldMin);
+      JSONdata.printconcat("\"fieldmax\":%f,", fieldMax);
       
       //Print interval
       JSONdata.printconcat("\"interval\":[");
