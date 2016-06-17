@@ -1506,6 +1506,43 @@ int CDrawImage::draw(int destx, int desty,int sourcex,int sourcey,CDrawImage *si
   }
   return 0;
 }
+int CDrawImage::drawrotated(int destx, int desty,int sourcex,int sourcey,CDrawImage *simage){
+  unsigned char r,g,b,a;
+  int dTranspColor;
+  if(currentGraphicsRenderer==CDRAWIMAGERENDERER_GD){
+    dTranspColor=gdImageGetTransparent(simage->image);
+  }
+  for(int y=0;y<simage->Geo->dHeight;y++){
+    for(int x=0;x<simage->Geo->dWidth;x++){
+      int sx=x+sourcex;int sy=y+sourcey;int dx=simage->Geo->dHeight-y-desty;int dy=x+destx;
+      if(sx>=0&&sy>=0&&dx>=0&&dy>=0&&
+        sx<simage->Geo->dWidth&&sy<simage->Geo->dHeight&&dx<Geo->dWidth&&dy<Geo->dHeight){
+        //Get source r,g,b,a
+        if(currentGraphicsRenderer==CDRAWIMAGERENDERER_CAIRO){
+          simage->cairo->getPixel(sx,sy,r,g,b,a);
+        }else{
+          int color = gdImageGetPixel(simage->image, x+sourcex, y+sourcey);
+          r= gdImageRed(simage->image,color);
+          g= gdImageGreen(simage->image,color);
+          b= gdImageBlue(simage->image,color);
+          a= 255-gdImageAlpha(simage->image,color)*2;
+          if(color == dTranspColor){
+            a=0;
+          }
+        }
+        //Set r,g,b,a to dest
+        if(currentGraphicsRenderer==CDRAWIMAGERENDERER_CAIRO){
+          cairo-> pixel_blend(dx,dy,r,g,b,a);
+        }else{
+          if(a>128){
+            gdImageSetPixel(image,dx,dy,getClosestGDColor(r,g,b));
+          }
+        }
+        }
+    }
+  }
+  return 0;
+}
 /**
  * Crops image 
  * @param int paddingW the padding to keep in pixels in width. Set to -1 if no crop in width is desired
@@ -1540,6 +1577,30 @@ void CDrawImage::crop(int paddingW, int paddingH){
  */
 void CDrawImage::crop(int padding){
   crop(padding,padding);
+}
+
+void CDrawImage::rotate() {
+  int w = Geo->dWidth;
+  int h = Geo->dHeight;
+//   if(this->Geo->dWidth!=1)w=srvParam->Geo->dWidth;
+//   if(srvParam->Geo->dHeight!=1)h=srvParam->Geo->dHeight;
+//   if (requestedWidth>requestedHeight) {
+//     int x,y,w,h;
+//     getCanvasSize(x,y,w,h);
+//     // rotate image 90 degrees counter clockwise
+//         
+//   }    
+  CDrawImage temp;
+  temp.createImage(this,w,h);
+  
+  temp.draw(0,0,0,0,this);
+  
+  destroyImage();
+  CDBDebug("Creating rotated legend %d,%d", h, w);
+  createImage(&temp,h,w);
+  drawrotated(0,0,0,0,&temp);
+  temp.destroyImage();
+//  return 0;
 }
 
 unsigned char* const CDrawImage::getCanvasMemory(){

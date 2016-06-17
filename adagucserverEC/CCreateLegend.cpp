@@ -5,7 +5,11 @@
 
 const char * CCreateLegend::className = "CCreateLegend";
 
-int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage){
+int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage) {
+  createLegend(dataSource, legendImage, false);
+}
+
+int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage, bool rotate){
   #ifdef CIMAGEDATAWRITER_DEBUG
   CDBDebug("createLegend");
   #endif
@@ -32,7 +36,7 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage)
   bool estimateMinMax=false;
   
   int legendPositiveUp = 1;
-  //float legendWidth = legendImage->Geo->dWidth;
+  float legendWidth = legendImage->Geo->dWidth;
   float legendHeight = legendImage->Geo->dHeight;
   
   int pLeft=4;
@@ -592,5 +596,9 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage)
   #endif
   
   legendImage->crop(5);
+  if (rotate) {
+    CDBDebug("rotate");
+    legendImage->rotate();
+  }
   return 0;
 } 
