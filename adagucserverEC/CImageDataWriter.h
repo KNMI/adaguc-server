@@ -165,6 +165,8 @@ private:
     }
     
     static int createLegend(CDataSource *sourceImage,CDrawImage *legendImage);
+    static int createLegend(CDataSource *sourceImage,CDrawImage *legendImage, bool rotate);
+    
     static int createScaleBar(CDataSource *sourceImage,CDrawImage *scaleBarImage);
    
     int getFeatureInfo(std::vector<CDataSource *>dataSources,int dataSourceIndex,int dX,int dY);

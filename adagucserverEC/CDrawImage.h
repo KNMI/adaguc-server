@@ -259,8 +259,11 @@ public:
     
     int setCanvasSize(int x,int y,int width,int height);
     int draw(int destx, int desty,int sourcex,int sourcey,CDrawImage *simage);
+    int drawrotated(int destx, int desty,int sourcex,int sourcey,CDrawImage *simage);    
     void crop(int paddingW,int paddingH);
     void crop(int padding);
+    
+    void rotate();
     /**
      * Returns canvas memory in case of true color images
      */

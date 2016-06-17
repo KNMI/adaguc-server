@@ -512,7 +512,13 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
     if(srvParam->Geo->dWidth!=1)w=srvParam->Geo->dWidth;
     if(srvParam->Geo->dHeight!=1)h=srvParam->Geo->dHeight;
     
-    status = drawImage.createImage(w,h);
+    if (w>h) {
+      status = drawImage.createImage(h,w);
+      CDBDebug("Init legend %dx%d", h,w);
+    } else {
+      status = drawImage.createImage(w,h);
+      CDBDebug("Init legend %dx%d", h,w);
+    }
     
     if(status != 0) return 1;
   }
@@ -3258,6 +3264,9 @@ int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendIma
   return CCreateLegend::createLegend(dataSource,legendImage);
 }
 
+int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendImage, bool rotate){
+  return CCreateLegend::createLegend(dataSource,legendImage, rotate);
+}
 
 
 int CImageDataWriter::drawText(int x,int y,const char * fontlocation, float size,float angle,const char *text,unsigned char colorIndex){

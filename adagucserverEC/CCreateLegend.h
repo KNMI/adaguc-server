@@ -12,6 +12,7 @@ private:
   DEF_ERRORFUNCTION();
 public:
   static int createLegend(CDataSource *dataSource,CDrawImage *legendImage);
+  static int createLegend(CDataSource *dataSource,CDrawImage *legendImage, bool rotate);
 };
 
 #endif

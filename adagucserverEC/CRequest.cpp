@@ -1712,7 +1712,9 @@ int CRequest::process_all_layers(){
         if(srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
           CImageDataWriter imageDataWriter;
           status = imageDataWriter.init(srvParam,dataSources[j],1);if(status != 0)throw(__LINE__);
-          status = imageDataWriter.createLegend(dataSources[j],&imageDataWriter.drawImage);if(status != 0)throw(__LINE__);
+          bool rotate=srvParam->Geo->dWidth>srvParam->Geo->dHeight;
+          CDBDebug("creatinglegend %dx%d %d", srvParam->Geo->dWidth,srvParam->Geo->dHeight, rotate);
+          status = imageDataWriter.createLegend(dataSources[j],&imageDataWriter.drawImage, rotate);if(status != 0)throw(__LINE__);
           status = imageDataWriter.end();if(status != 0)throw(__LINE__);
         }
         

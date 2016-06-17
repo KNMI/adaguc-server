@@ -950,6 +950,25 @@
         dataSource->dWidth=dataSource->srvParams->Geo->dWidth;
         dataSource->dHeight=dataSource->srvParams->Geo->dHeight;      
 
+        //Set statistics
+        if(dataSource->stretchMinMax){
+          #ifdef CCONVERTGEOJSON_DEBUG
+          CDBDebug("dataSource->stretchMinMax");
+          #endif
+          if(dataSource->statistics==NULL){
+            #ifdef CCONVERTGEOJSON_DEBUG
+            CDBDebug("Setting statistics: min/max : %f %f",0,features.size()-1);
+            #endif
+            dataSource->statistics = new CDataSource::Statistics();
+            dataSource->statistics->setMaximum(features.size()-1);
+            dataSource->statistics->setMinimum(0);
+          }
+        }
+        
+        if (dataSource->srvParams->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
+          return 0;
+        }
+        
         if(dataSource->dWidth == 1 && dataSource->dHeight == 1){
           dataSource->dfBBOX[0]=dataSource->srvParams->Geo->dfBBOX[0];
           dataSource->dfBBOX[1]=dataSource->srvParams->Geo->dfBBOX[1];
