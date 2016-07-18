@@ -284,6 +284,13 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
     serverAbstract.replaceSelf(">" ,"]");
     serverAbstract.replaceSelf("&" ,"&amp;");
     
+    size_t l= serverAbstract.length();
+    for(size_t j=0;j<l;j++){
+        unsigned char c = (unsigned char)serverAbstract.charAt(j);
+        if(c<32 || c>126)c='!';
+        serverAbstract.setChar(j,c);
+    }
+    
     if(serverAbstract.length()>0){
       if(srvParam->cfg->WMS.size()>0){
         if(srvParam->cfg->WMS[0]->Abstract.size()>0){
