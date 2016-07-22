@@ -255,34 +255,7 @@ int CServerParams::makeUniqueLayerName(CT::string *layerName,CServerConfig::XMLE
   return 0;
 }
 
-int CServerParams::makeUniqueAdditionalLayerName(CT::string *layerName,CServerConfig::XMLE_Layer *cfgLayer,CServerConfig::XMLE_AdditionalLayer * additionalLayer){
-  /*
-  if(cfgLayer->Variable.size()!=0){
-  _layerName=cfgLayer->Variable[0]->value.c_str();
-}*/
-  
-  layerName->copy("");
-  if(cfgLayer->Group.size()==1){
-    if(cfgLayer->Group[0]->attr.value.empty()==false){
-      layerName->copy(cfgLayer->Group[0]->attr.value.c_str());
-      layerName->concat("/");
-    }
-  }
-  
-  layerName->concat(additionalLayer->value.c_str());
-  layerName->replaceSelf(".","_");
-  
-  /*if(cfgLayer->Title.size()==0){
-    CServerConfig::XMLE_Title *title=new CServerConfig::XMLE_Title();
-    cfgLayer->Title.push_back(title);
-    title->value.copy(cfgLayer->Name[0]->value.c_str());
-  } */ 
-  
-  
-  
 
-  return 0;
-}
 
 int CServerParams::makeLayerGroupName(CT::string *groupName,CServerConfig::XMLE_Layer *cfgLayer){
   /*

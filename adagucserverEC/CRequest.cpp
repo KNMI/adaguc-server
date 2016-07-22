@@ -772,6 +772,20 @@ int CRequest::process_wms_gethistogram_request(){
 
 
 int CRequest::setDimValuesForDataSource(CDataSource *dataSource,CServerParams *srvParam){
+ if(dataSource->cfgLayer->Dimension.size()==0){
+    //This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.        
+    CDirReader dirReader;
+    if(CDBFileScanner::searchFileNames(&dirReader,dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter,NULL)!=0){
+        CDBError("Could not find any filename");
+        return 1; 
+    }
+    if(dirReader.fileList.size()==0){
+        CDBError("dirReader.fileList.size()==0");return 1;
+    }
+    dataSource->addStep(dirReader.fileList[0]->fullName.c_str(),NULL);
+    dataSource->getCDFDims()->addDimension("time","0",0);
+    return 0;
+  }    
   int status = fillDimValuesForDataSource(dataSource,srvParam);if(status != 0)return status;
   status = queryDimValuesForDataSource(dataSource,srvParam);if(status != 0)return status;
   return 0;
@@ -1255,13 +1269,12 @@ int CRequest::process_all_layers(){
               replaceAllDataSource = true;
             }
           
-            CT::string additionalLayerName; //=srvParam->cfg->Layer[layerNo]->AdditionalLayer[0]->AdditionalLayer;
-            srvParam->makeUniqueAdditionalLayerName(&additionalLayerName,srvParam->cfg->Layer[layerNo],additionalLayer);
+            CT::string additionalLayerName=additionalLayer->value.c_str();
             size_t additionalLayerNo=0;
             for(additionalLayerNo=0;additionalLayerNo<srvParam->cfg->Layer.size();additionalLayerNo++){
               CT::string additional;
               srvParam->makeUniqueLayerName(&additional,srvParam->cfg->Layer[additionalLayerNo]);
-              //CDBDebug("comparing for additionallayer %s==%s", additionalLayerName.c_str(), additional.c_str());
+              CDBDebug("comparing for additionallayer %s==%s", additionalLayerName.c_str(), additional.c_str());
               if (additionalLayerName.equals(additional)) {
                 CDataSource *additionalDataSource = new CDataSource ();
                 

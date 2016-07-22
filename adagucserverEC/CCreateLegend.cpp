@@ -7,6 +7,7 @@ const char * CCreateLegend::className = "CCreateLegend";
 
 int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage) {
   createLegend(dataSource, legendImage, false);
+  return 0;
 }
 
 int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage, bool rotate){
@@ -36,7 +37,7 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage,
   bool estimateMinMax=false;
   
   int legendPositiveUp = 1;
-  float legendWidth = legendImage->Geo->dWidth;
+//   float legendWidth = legendImage->Geo->dWidth;
   float legendHeight = legendImage->Geo->dHeight;
   
   int pLeft=4;

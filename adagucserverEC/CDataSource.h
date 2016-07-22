@@ -334,11 +334,22 @@ private:
   void addStep(const char * fileName, CCDFDims *dims);
   const char *getFileName();
   
+  DataObject *getDataObject(const char *name){
+   //Find out to which dataobject we need to write to
+    for(size_t dataObjectNr = 0; dataObjectNr<dataObjects.size();dataObjectNr++){
+      if(dataObjects[dataObjectNr]->cdfVariable->name.equals(name)){
+        return dataObjects[dataObjectNr];
+      }
+    }
+    CDBError("Unable to find dataobject: variable %s not found",name);
+    throw (CEXCEPTION_NULLPOINTER);
+  };
+  
   DataObject *getDataObject(int j){
     
     if(int(dataObjects.size()) <= j){
-      CDBError("No data objects for animation step %d of %d",currentAnimationStep,timeSteps.size());
-      return NULL;
+      CDBError("No Data object witn nr %d (total %d) for animation step %d (total steps %d)",j,currentAnimationStep,dataObjects.size(),timeSteps.size());
+      throw (CEXCEPTION_NULLPOINTER);
     }
 
     DataObject *d = dataObjects[j];

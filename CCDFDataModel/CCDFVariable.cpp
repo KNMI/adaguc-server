@@ -29,6 +29,9 @@
 #include "CTime.h"
 const char *CDF::Variable::className="Variable";
 
+extern CDF::Variable::CustomMemoryReader customMemoryReaderInstance;
+CDF::Variable::CustomMemoryReader customMemoryReaderInstance;
+CDF::Variable::CustomMemoryReader*CDF::Variable::CustomMemoryReaderInstance = &customMemoryReaderInstance;
 
 //#define CCDFDATAMODEL_DEBUG
 int CDF::Variable::readData(CDFType type){

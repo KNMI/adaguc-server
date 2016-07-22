@@ -945,11 +945,14 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString a,b,units,algorithm;
+            CXMLString a,b,c,units,algorithm,mode,name;
         }attr;
         void addAttribute(const char *attrname,const char *attrvalue){
           if(equals("a",1,attrname)){attr.a.copy(attrvalue);return;}
           else if(equals("b",1,attrname)){attr.b.copy(attrvalue);return;}
+          else if(equals("c",1,attrname)){attr.c.copy(attrvalue);return;}
+          else if(equals("mode",4,attrname)){attr.mode.copy(attrvalue);return;}
+          else if(equals("name",4,attrname)){attr.name.copy(attrvalue);return;}
           else if(equals("units",5,attrname)){attr.units.copy(attrvalue);return;}
           else if(equals("algorithm",9,attrname)){attr.algorithm.copy(attrvalue);return;}
         }

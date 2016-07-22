@@ -144,13 +144,7 @@ class CServerParams{
      */
     int makeUniqueLayerName(CT::string *layerName,CServerConfig::XMLE_Layer *cfgLayer);
  
-    /** 
-     * Function which generates a unique aditionallayername from the Layer's configuration
-     * @param layerName the returned name
-     * @param cfgLayer the configuration object of the corresponding layer
-     * @param additionalLayer The configuration of the additional layer
-     */
-    int makeUniqueAdditionalLayerName(CT::string *layerName,CServerConfig::XMLE_Layer *cfgLayer,CServerConfig::XMLE_AdditionalLayer * additionalLayer);
+  
     
     /** 
      * Function which generates a group name from the Layer's configuration

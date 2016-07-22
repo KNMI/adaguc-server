@@ -1,4 +1,5 @@
 #include "CDataPostProcessor.h"
+#include "CRequest.h"
 
 
 void writeLogFileLocal(const char * msg){
@@ -77,6 +78,437 @@ int CDPPAXplusB::execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* da
 
 
 /************************/
+/*CDPPIncludeLayer */
+/************************/
+const char *CDPPIncludeLayer::className="CDPPIncludeLayer";
+
+const char *CDPPIncludeLayer::getId(){
+  return "include_layer";
+}
+int CDPPIncludeLayer::isApplicable(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource){
+  if(proc->attr.algorithm.equals("include_layer")){
+    return CDATAPOSTPROCESSOR_RUNAFTERREADING|CDATAPOSTPROCESSOR_RUNBEFOREREADING;
+  }
+  return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
+}
+
+CDataSource *CDPPIncludeLayer::getDataSource(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource){
+    CDataSource *dataSourceToInclude=new CDataSource ();
+    CT::string additionalLayerName = proc->attr.name.c_str();
+    size_t additionalLayerNo=0;
+    for(size_t j=0;j<dataSource->srvParams->cfg->Layer.size();j++){
+      CT::string layerName;dataSource->srvParams->makeUniqueLayerName(&layerName,dataSource->srvParams->cfg->Layer[j]);
+      //CDBDebug("comparing for additionallayer %s==%s", additionalLayerName.c_str(), layerName.c_str());
+      if (additionalLayerName.equals(layerName)) {
+        additionalLayerNo=j;
+        break;
+      }
+    }
+    dataSourceToInclude->setCFGLayer(dataSource->srvParams,dataSource->srvParams->configObj->Configuration[0],dataSource->srvParams->cfg->Layer[additionalLayerNo],additionalLayerName.c_str(),0);
+    return dataSourceToInclude;
+}
+
+int CDPPIncludeLayer::setDimsForNewDataSource(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,CDataSource*dataSourceToInclude){
+    CT::string additionalLayerName = proc->attr.name.c_str();
+    bool dataIsFound = false;
+    try{
+      if(CRequest::setDimValuesForDataSource(dataSourceToInclude,dataSource->srvParams)==0){
+        dataIsFound = true;
+      }
+    }catch(ServiceExceptionCode e){
+    }
+    if(dataIsFound == false){
+      CDBDebug("No data available for layer %s",additionalLayerName.c_str());
+      return 1;
+    }
+    return 0;
+}
+
+int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode){
+  if((isApplicable(proc,dataSource)&mode)==false){
+    return -1;
+  }
+  if(mode==CDATAPOSTPROCESSOR_RUNBEFOREREADING){
+
+    CDBDebug("CDATAPOSTPROCESSOR_RUNBEFOREREADING::Applying include_layer");
+    
+    //Load the other datasource.
+    CDataSource *dataSourceToInclude = getDataSource(proc,dataSource);
+    if(dataSourceToInclude == NULL){
+      CDBDebug("dataSourceToInclude has no data");
+      return 0;
+    }
+  /*  
+    CDirReader dirReader;
+    if(CDBFileScanner::searchFileNames(&dirReader,dataSourceToInclude->cfgLayer->FilePath[0]->value.c_str(),dataSourceToInclude->cfgLayer->FilePath[0]->attr.filter,NULL)!=0){
+      CDBError("Could not find any filename");
+      return 1; 
+    }
+    
+    if(dirReader.fileList.size()==0){
+      CDBError("dirReader.fileList.size()==0");return 1;
+    }
+    
+    
+    dataSourceToInclude->addStep(dirReader.fileList[0]->fullName.c_str(),NULL);
+  */
+    int status = setDimsForNewDataSource(proc,dataSource,dataSourceToInclude);
+    if(status!=0){
+      CDBError("Trying to include datasource, but it has no values for given dimensions");
+      delete dataSourceToInclude;;
+      return 1;
+    }
+    
+    CDataReader reader;
+    status  = reader.open(dataSourceToInclude,CNETCDFREADER_MODE_OPEN_HEADER);//Only read metadata
+    if(status!=0){
+      CDBDebug("Can't open file %s for layer %s", dataSourceToInclude->getFileName(),proc->attr.name.c_str());
+      return 1;
+    }
+    
+    
+    for(size_t dataObjectNr = 0; dataObjectNr<dataSource->getNumDataObjects();dataObjectNr++){
+      if(dataSource->getDataObject(dataObjectNr)->cdfVariable->name.equals(dataSourceToInclude->getDataObject(0)->cdfVariable->name)){
+//        CDBDebug("Probably already done");
+        delete dataSourceToInclude;
+        return 0;
+      }
+    }
+    for(size_t dataObjectNr = 0; dataObjectNr<dataSourceToInclude->getNumDataObjects();dataObjectNr++){
+      CDataSource::DataObject *currentDataObject =  dataSource->getDataObject(0);
+      CDF::Variable *varToClone=NULL;
+      try{
+        varToClone = dataSourceToInclude->getDataObject(dataObjectNr)->cdfVariable;
+      }catch(int e){
+      }
+      if(varToClone == NULL){
+        CDBError("Variable not found");
+        return 1;
+      }
+
+      int mode = 0;//0:append, 1:prepend
+      if(proc->attr.mode.empty()==false){
+        if(proc->attr.mode.equals("append"))mode=0;
+        if(proc->attr.mode.equals("prepend"))mode=1;
+      }
+      
+      CDataSource::DataObject *newDataObject = new CDataSource::DataObject();
+      if(mode==0)dataSource->getDataObjectsVector()->push_back(newDataObject);
+      
+      if(mode==1)dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(),newDataObject);
+         
+      CDBDebug("--------> newDataObject %d ",dataSource->getDataObjectsVector()->size());
+      
+      newDataObject->variableName.copy(varToClone->name.c_str());
+      
+      newDataObject->cdfVariable = new CDF::Variable();
+      CT::string text;text.print("{\"variable\":\"%s\",\"datapostproc\":\"%s\"}",varToClone->name.c_str(),this->getId());
+      newDataObject->cdfObject = currentDataObject->cdfObject;//(CDFObject*)varToClone->getParentCDFObject();
+      CDBDebug("--------> Adding variable %s ",varToClone->name.c_str());
+      newDataObject->cdfObject->addVariable(newDataObject->cdfVariable);
+      newDataObject->cdfVariable->setName(varToClone->name.c_str());
+      newDataObject->cdfVariable->setType(varToClone->getType());
+      newDataObject->cdfVariable->setSize(dataSource->dWidth*dataSource->dHeight);
+      
+      for(size_t j=0;j<currentDataObject->cdfVariable->dimensionlinks.size();j++){
+        newDataObject->cdfVariable->dimensionlinks.push_back(currentDataObject->cdfVariable->dimensionlinks[j]);
+      }
+
+      for(size_t j=0;j<varToClone->attributes.size();j++){
+        newDataObject->cdfVariable->attributes.push_back(new CDF::Attribute(varToClone->attributes[j]));
+      }
+      newDataObject->cdfVariable->removeAttribute("ADAGUC_DATAOBJECTID");
+      newDataObject->cdfVariable->setAttributeText("ADAGUC_DATAOBJECTID",text.c_str());
+
+      newDataObject->cdfVariable->removeAttribute("scale_factor");
+      newDataObject->cdfVariable->removeAttribute("add_offset");
+
+      newDataObject->cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
+    }
+    reader.close();
+    delete dataSourceToInclude;
+    return 0;
+  }
+  
+  if(mode==CDATAPOSTPROCESSOR_RUNAFTERREADING){
+    CDBDebug("CDATAPOSTPROCESSOR_RUNAFTERREADING::Applying include_layer");
+    
+    //Load the other datasource.
+    CDataSource *dataSourceToInclude = getDataSource(proc,dataSource);
+    if(dataSourceToInclude == NULL){
+      CDBDebug("dataSourceToInclude has no data");
+      return 0;
+    }
+    int status = setDimsForNewDataSource(proc,dataSource,dataSourceToInclude);
+    if(status!=0){
+      CDBError("Trying to include datasource, but it has no values for given dimensions");
+      delete dataSourceToInclude;;
+      return 1;
+    }
+    
+    dataSourceToInclude->setTimeStep(dataSource->getCurrentTimeStep());
+
+    //dataSourceToInclude->getDataObject(0)->cdfVariable->data=NULL;
+    CDataReader reader;
+//    CDBDebug("Opening %s",dataSourceToInclude->getFileName());
+    status  = reader.open(dataSourceToInclude,CNETCDFREADER_MODE_OPEN_ALL); //Now open the data as well.
+    if(status!=0){
+      CDBDebug("Can't open file %s for layer %s", dataSourceToInclude->getFileName(),proc->attr.name.c_str());
+      return 1;
+    }
+    
+    
+
+  /*  size_t l=(size_t)dataSource->dHeight*(size_t)dataSource->dWidth;
+    CDF::allocateData( dataSourceToInclude->getDataObject(0)->cdfVariable->getType(),&dataSourceToInclude->getDataObject(0)->cdfVariable->data,l);
+    CDF::fill(dataSourceToInclude->getDataObject(0)->cdfVariable->data, dataSourceToInclude->getDataObject(0)->cdfVariable->getType(),100,(size_t)dataSource->dHeight*(size_t)dataSource->dWidth);
+   */ 
+    for(size_t dataObjectNr = 0; dataObjectNr<dataSourceToInclude->getNumDataObjects();dataObjectNr++){
+      //This is the variable to read from
+      CDF::Variable *varToClone=dataSourceToInclude->getDataObject(dataObjectNr)->cdfVariable;
+      
+      //This is the variable to write To
+//      CDBDebug("Filling %s",varToClone->name.c_str());
+      CDF::Variable *varToWriteTo = dataSource->getDataObject(varToClone->name.c_str())->cdfVariable;
+      CDF::fill(varToWriteTo->data, varToWriteTo->getType(),0,(size_t)dataSource->dHeight*(size_t)dataSource->dWidth);
+      
+      Settings settings;
+      settings.width   = dataSource->dWidth;
+      settings.height  = dataSource->dHeight;
+      settings.data    = (void*)varToWriteTo->data;//To write TO
+      void *sourceData = (void*)varToClone->data;//To read FROM
+      
+      CGeoParams sourceGeo;
+      sourceGeo.dWidth = dataSourceToInclude->dWidth;
+      sourceGeo.dHeight = dataSourceToInclude->dHeight;
+      sourceGeo.dfBBOX[0] = dataSourceToInclude->dfBBOX[0];
+      sourceGeo.dfBBOX[1] = dataSourceToInclude->dfBBOX[1];
+      sourceGeo.dfBBOX[2] = dataSourceToInclude->dfBBOX[2];
+      sourceGeo.dfBBOX[3] = dataSourceToInclude->dfBBOX[3];
+      sourceGeo.dfCellSizeX = dataSourceToInclude->dfCellSizeX;
+      sourceGeo.dfCellSizeY = dataSourceToInclude->dfCellSizeY;
+      sourceGeo.CRS = dataSourceToInclude->nativeProj4;
+      
+      
+      CGeoParams destGeo;
+      destGeo.dWidth = dataSource->dWidth;
+      destGeo.dHeight = dataSource->dHeight;
+      destGeo.dfBBOX[0] = dataSource->dfBBOX[0];
+      destGeo.dfBBOX[1] = dataSource->dfBBOX[1];
+      destGeo.dfBBOX[2] = dataSource->dfBBOX[2];
+      destGeo.dfBBOX[3] = dataSource->dfBBOX[3];
+      destGeo.dfCellSizeX = dataSource->dfCellSizeX;
+      destGeo.dfCellSizeY = dataSource->dfCellSizeY;
+      destGeo.CRS = dataSource->nativeProj4;
+      
+      CImageWarper warper;
+      
+      status = warper.initreproj(dataSourceToInclude,&destGeo,&dataSource->srvParams->cfg->Projection);
+      if(status != 0){
+        CDBError("Unable to initialize projection");
+        return 1;
+      }
+      
+      switch(varToWriteTo->getType()){
+        case CDF_CHAR  :  GenericDataWarper::render<char>  (&warper,sourceData,&sourceGeo,&destGeo,&settings,&drawFunction);break;
+        case CDF_BYTE  :  GenericDataWarper::render<char>  (&warper,sourceData,&sourceGeo,&destGeo,&settings,&drawFunction);break;
+        case CDF_UBYTE :  GenericDataWarper::render<unsigned char> (&warper,sourceData,&sourceGeo,&destGeo,&settings,&drawFunction);break;
+        case CDF_SHORT :  GenericDataWarper::render<short> (&warper,sourceData,&sourceGeo,&destGeo,&settings,&drawFunction);break;
+        case CDF_USHORT:  GenericDataWarper::render<ushort>(&warper,sourceData,&sourceGeo,&destGeo,&settings,&drawFunction);break;
+        case CDF_INT   :  GenericDataWarper::render<int>   (&warper,sourceData,&sourceGeo,&destGeo,&settings,&drawFunction);break;
+        case CDF_UINT  :  GenericDataWarper::render<uint>  (&warper,sourceData,&sourceGeo,&destGeo,&settings,&drawFunction);break;
+        case CDF_FLOAT :  GenericDataWarper::render<float> (&warper,sourceData,&sourceGeo,&destGeo,&settings,&drawFunction);break;
+        case CDF_DOUBLE:  GenericDataWarper::render<double>(&warper,sourceData,&sourceGeo,&destGeo,&settings,&drawFunction);break;
+      }
+      
+    }
+    reader.close();
+    delete dataSourceToInclude;
+  }
+  return 0;
+}
+
+
+/************************/
+/*CDPPDATAMASK */
+/************************/
+const char *CDPPDATAMASK::className="CDPPDATAMASK";
+
+const char *CDPPDATAMASK::getId(){
+  return "datamask";
+}
+int CDPPDATAMASK::isApplicable(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource){
+  if(proc->attr.algorithm.equals("datamask")){
+    if(dataSource->getNumDataObjects()!=2&&dataSource->getNumDataObjects()!=3){
+      CDBError("2 variables are needed for datamask, found %d",dataSource->getNumDataObjects());
+      return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
+    }
+    return CDATAPOSTPROCESSOR_RUNAFTERREADING|CDATAPOSTPROCESSOR_RUNBEFOREREADING;
+  }
+  return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
+}
+
+template <typename TT,typename SS>
+void CDPPDATAMASK::DOIT<TT,SS>::doIt(void *newData,void* orginalData,void* maskData,double newDataNoDataValue,CDFType maskType,double a,double b,double c,int mode,size_t l){
+switch(maskType){
+    case CDF_CHAR  :  DOIT<TT,char>         ::reallyDoIt(newData,orginalData,maskData,newDataNoDataValue,maskType,a,b,c,mode,l);break;
+    case CDF_BYTE  :  DOIT<TT,char>         ::reallyDoIt(newData,orginalData,maskData,newDataNoDataValue,maskType,a,b,c,mode,l);break;
+    case CDF_UBYTE :  DOIT<TT,unsigned char>::reallyDoIt(newData,orginalData,maskData,newDataNoDataValue,maskType,a,b,c,mode,l);break;
+    case CDF_SHORT :  DOIT<TT,short>        ::reallyDoIt(newData,orginalData,maskData,newDataNoDataValue,maskType,a,b,c,mode,l);break;
+    case CDF_USHORT:  DOIT<TT,ushort>       ::reallyDoIt(newData,orginalData,maskData,newDataNoDataValue,maskType,a,b,c,mode,l);break;
+    case CDF_INT   :  DOIT<TT,int>          ::reallyDoIt(newData,orginalData,maskData,newDataNoDataValue,maskType,a,b,c,mode,l);break;
+    case CDF_UINT  :  DOIT<TT,uint>         ::reallyDoIt(newData,orginalData,maskData,newDataNoDataValue,maskType,a,b,c,mode,l);break;
+    case CDF_FLOAT :  DOIT<TT,float>        ::reallyDoIt(newData,orginalData,maskData,newDataNoDataValue,maskType,a,b,c,mode,l);break;
+    case CDF_DOUBLE:  DOIT<TT,double>       ::reallyDoIt(newData,orginalData,maskData,newDataNoDataValue,maskType,a,b,c,mode,l);break;
+  }
+}
+
+template <typename TT,typename SS>
+void CDPPDATAMASK::DOIT<TT,SS>::reallyDoIt(void *newData,void* orginalData,void* maskData,double newDataNoDataValue,CDFType maskType,double a,double b,double c,int mode,size_t l){
+  //if_mask_includes_then_nodata_else_data
+  if(mode == 0){
+    for(size_t j=0;j<l;j++){
+      if(((SS*)maskData)[j]>=a&&((SS*)maskData)[j]<=b)((TT*)newData)[j]=newDataNoDataValue; else ((TT*)newData)[j]=((TT*)orginalData)[j];
+    }
+  }
+
+  //if_mask_excludes_then_nodata_else_data
+  if(mode == 1){
+    for(size_t j=0;j<l;j++){
+      if(((SS*)maskData)[j]>=a&&((SS*)maskData)[j]<=b)((TT*)newData)[j]=((TT*)orginalData)[j]; else ((TT*)newData)[j]=newDataNoDataValue;
+    }
+  }
+  
+  //if_mask_includes_then_valuec_else_data
+  if(mode == 2){
+    for(size_t j=0;j<l;j++){
+      if(((SS*)maskData)[j]>=a&&((SS*)maskData)[j]<=b)((TT*)newData)[j]=c; else ((TT*)newData)[j]=((TT*)orginalData)[j];
+    }
+  }
+  
+  //if_mask_excludes_then_valuec_else_data
+  if(mode == 3){
+    for(size_t j=0;j<l;j++){
+      if(((SS*)maskData)[j]>=a&&((SS*)maskData)[j]<=b)((TT*)newData)[j]=((TT*)orginalData)[j]; else ((TT*)newData)[j]=c;
+    }
+  }
+  
+  //if_mask_includes_then_mask_else_data
+  if(mode == 4){
+    for(size_t j=0;j<l;j++){
+      if(((SS*)maskData)[j]>=a&&((SS*)maskData)[j]<=b)((TT*)newData)[j]=((SS*)maskData)[j]; else ((TT*)newData)[j]=((TT*)orginalData)[j];
+    }
+  }
+  
+  //if_mask_excludes_then_mask_else_data
+  if(mode == 5){
+    for(size_t j=0;j<l;j++){
+      if(((SS*)maskData)[j]>=a&&((SS*)maskData)[j]<=b)((TT*)newData)[j]=((TT*)orginalData)[j]; else ((TT*)newData)[j]=((SS*)maskData)[j];
+    }
+  }
+}
+
+
+int CDPPDATAMASK::execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode){
+  if((isApplicable(proc,dataSource)&mode)==false){
+    return -1;
+  }
+  if(mode==CDATAPOSTPROCESSOR_RUNBEFOREREADING){
+
+    if(dataSource->getDataObject(0)->cdfVariable->name.equals("masked"))return 0;
+    CDBDebug("CDATAPOSTPROCESSOR_RUNBEFOREREADING::Applying datamask");
+    CDF::Variable *varToClone=dataSource->getDataObject(0)->cdfVariable;
+
+    CDataSource::DataObject *newDataObject = new CDataSource::DataObject();
+
+    newDataObject->variableName.copy("masked");
+
+    
+    dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(),newDataObject);
+
+    
+    newDataObject->cdfVariable = new CDF::Variable();
+    newDataObject->cdfObject = (CDFObject*)varToClone->getParentCDFObject();
+    newDataObject->cdfObject->addVariable(newDataObject->cdfVariable);
+    newDataObject->cdfVariable->setName("masked");
+    CT::string text;text.print("{\"variable\":\"%s\",\"datapostproc\":\"%s\"}","masked",this->getId());
+    newDataObject->cdfVariable->removeAttribute("ADAGUC_DATAOBJECTID");
+    newDataObject->cdfVariable->setAttributeText("ADAGUC_DATAOBJECTID",text.c_str());
+    newDataObject->cdfVariable->setType(dataSource->getDataObject(1)->cdfVariable->getType());
+    newDataObject->cdfVariable->setSize(dataSource->dWidth*dataSource->dHeight);
+
+    for(size_t j=0;j<varToClone->dimensionlinks.size();j++){
+      newDataObject->cdfVariable->dimensionlinks.push_back(varToClone->dimensionlinks[j]);
+    }
+
+    for(size_t j=0;j<varToClone->attributes.size();j++){
+      newDataObject->cdfVariable->attributes.push_back(new CDF::Attribute(varToClone->attributes[j]));
+    }
+
+    newDataObject->cdfVariable->removeAttribute("scale_factor");
+    newDataObject->cdfVariable->removeAttribute("add_offset");
+
+    if(proc->attr.units.empty()==false){
+      newDataObject->cdfVariable->removeAttribute("units");
+      newDataObject->setUnits(proc->attr.units.c_str());
+      newDataObject->cdfVariable->setAttributeText("units",proc->attr.units.c_str());
+    }
+    if(proc->attr.name.empty()==false){
+      newDataObject->cdfVariable->removeAttribute("long_name");
+      newDataObject->cdfVariable->setAttributeText("long_name",proc->attr.name.c_str());
+    }
+    newDataObject->cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
+    
+    
+    //return 0;
+  }
+  if(mode==CDATAPOSTPROCESSOR_RUNAFTERREADING){
+    CDBDebug("Applying datamask");
+    
+
+
+    double fa=0,fb=1; //More or equal to a and less than b
+    double fc=0;
+    if(proc->attr.a.empty()==false){CT::string a;a.copy(proc->attr.a.c_str());fa=a.toDouble();}
+    if(proc->attr.b.empty()==false){CT::string b;b.copy(proc->attr.b.c_str());fb=b.toDouble();}
+    if(proc->attr.c.empty()==false){CT::string c;c.copy(proc->attr.c.c_str());fc=c.toDouble();}
+    size_t l=(size_t)dataSource->dHeight*(size_t)dataSource->dWidth;
+    
+    int mode = 0;//replace with noDataValue
+    
+    if(proc->attr.mode.empty()==false){
+      if(proc->attr.mode.equals("if_mask_includes_then_nodata_else_data"))mode = 0;
+      if(proc->attr.mode.equals("if_mask_excludes_then_nodata_else_data"))mode = 1;
+      if(proc->attr.mode.equals("if_mask_includes_then_valuec_else_data"))mode = 2;
+      if(proc->attr.mode.equals("if_mask_excludes_then_valuec_else_data"))mode = 3;
+      if(proc->attr.mode.equals("if_mask_includes_then_mask_else_data"))mode = 4;
+      if(proc->attr.mode.equals("if_mask_excludes_then_mask_else_data"))mode = 5;
+    }
+    
+    void *newData     = dataSource->getDataObject(0)->cdfVariable->data;
+    void *orginalData = dataSource->getDataObject(1)->cdfVariable->data;//sunz
+    void *maskData    = dataSource->getDataObject(2)->cdfVariable->data;
+    double newDataNoDataValue=(double)dataSource->getDataObject(1)->dfNodataValue;
+    
+    CDFType maskType = dataSource->getDataObject(2)->cdfVariable->getType();
+    switch(dataSource->getDataObject(0)->cdfVariable->getType()){
+      case CDF_CHAR  :  DOIT<char,void>         ::doIt(newData,orginalData,maskData,newDataNoDataValue,maskType,fa,fb,fc,mode,l);break;
+      case CDF_BYTE  :  DOIT<char,void>         ::doIt(newData,orginalData,maskData,newDataNoDataValue,maskType,fa,fb,fc,mode,l);break;
+      case CDF_UBYTE :  DOIT<unsigned char,void>::doIt(newData,orginalData,maskData,newDataNoDataValue,maskType,fa,fb,fc,mode,l);break;
+      case CDF_SHORT :  DOIT<short,void>        ::doIt(newData,orginalData,maskData,newDataNoDataValue,maskType,fa,fb,fc,mode,l);break;
+      case CDF_USHORT:  DOIT<ushort,void>       ::doIt(newData,orginalData,maskData,newDataNoDataValue,maskType,fa,fb,fc,mode,l);break;
+      case CDF_INT   :  DOIT<int,void>          ::doIt(newData,orginalData,maskData,newDataNoDataValue,maskType,fa,fb,fc,mode,l);break;
+      case CDF_UINT  :  DOIT<uint,void>         ::doIt(newData,orginalData,maskData,newDataNoDataValue,maskType,fa,fb,fc,mode,l);break;
+      case CDF_FLOAT :  DOIT<float,void>        ::doIt(newData,orginalData,maskData,newDataNoDataValue,maskType,fa,fb,fc,mode,l);break;
+      case CDF_DOUBLE:  DOIT<double,void>       ::doIt(newData,orginalData,maskData,newDataNoDataValue,maskType,fa,fb,fc,mode,l);break;
+    }
+ 
+  }
+  return 0;
+}
+
+
+/************************/
 /*CDPPMSGCPPVisibleMask */
 /************************/
 const char *CDPPMSGCPPVisibleMask::className="CDPPMSGCPPVisibleMask";
@@ -146,8 +578,8 @@ int CDPPMSGCPPVisibleMask::execute(CServerConfig::XMLE_DataPostProc* proc, CData
     newDataObject->cdfVariable->setAttribute("flag_values",newDataObject->cdfVariable->getType(),attrData,2);
     newDataObject->cdfVariable->setAttributeText("flag_meanings","no yes");
     
-    CDF::Variable::CustomMemoryReader*reader = new CDF::Variable::CustomMemoryReader();
-    newDataObject->cdfVariable->setCustomReader(reader);
+
+    newDataObject->cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
     
     
     //return 0;
@@ -241,8 +673,7 @@ int CDPPMSGCPPHIWCMask::execute(CServerConfig::XMLE_DataPostProc* proc, CDataSou
     newDataObject->cdfVariable->setAttribute("flag_values",newDataObject->cdfVariable->getType(),attrData,2);
     newDataObject->cdfVariable->setAttributeText("flag_meanings","no yes");
     
-    CDF::Variable::CustomMemoryReader*reader = new CDF::Variable::CustomMemoryReader();
-    newDataObject->cdfVariable->setCustomReader(reader);
+    newDataObject->cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
     
     
     //return 0;
@@ -285,7 +716,10 @@ const char *CDPPExecutor::className="CDPPExecutor";
 CDPPExecutor::CDPPExecutor(){
   //CDBDebug("CDPPExecutor");
   dataPostProcessorList = new  CT::PointerList<CDPPInterface*>();
+  dataPostProcessorList->push_back(new CDPPIncludeLayer());
   dataPostProcessorList->push_back(new CDPPAXplusB());
+  
+  dataPostProcessorList->push_back(new CDPPDATAMASK);
   dataPostProcessorList->push_back(new CDPPMSGCPPVisibleMask());
   dataPostProcessorList->push_back(new CDPPMSGCPPHIWCMask());
   dataPostProcessorList->push_back(new CDPPBeaufort());
@@ -317,18 +751,26 @@ int CDPPExecutor::executeProcessors( CDataSource *dataSource,int mode){
       /*Will be runned when datasource metadata been loaded */
       if(mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING){
         if(code&CDATAPOSTPROCESSOR_RUNBEFOREREADING){
-          int status = dataPostProcessorList->get(procId)->execute(proc,dataSource,CDATAPOSTPROCESSOR_RUNBEFOREREADING);
-          if(status != 0){
-            CDBError("Processor %s failed execution, statuscode %d",dataPostProcessorList->get(procId)->getId(),status);
+          try{
+            int status = dataPostProcessorList->get(procId)->execute(proc,dataSource,CDATAPOSTPROCESSOR_RUNBEFOREREADING);
+            if(status != 0){
+              CDBError("Processor %s failed RUNBEFOREREADING, statuscode %d",dataPostProcessorList->get(procId)->getId(),status);
+            }
+          }catch(int e){
+            CDBError("Exception in Processor %s failed RUNBEFOREREADING, exceptioncode %d",dataPostProcessorList->get(procId)->getId(),e);
           }
         }
       }
       /*Will be runned when datasource data been loaded */
       if(mode == CDATAPOSTPROCESSOR_RUNAFTERREADING){
         if(code&CDATAPOSTPROCESSOR_RUNAFTERREADING){
-          int status = dataPostProcessorList->get(procId)->execute(proc,dataSource,CDATAPOSTPROCESSOR_RUNAFTERREADING);
-          if(status != 0){
-            CDBError("Processor %s failed execution, statuscode %d",dataPostProcessorList->get(procId)->getId(),status);
+          try{
+            int status = dataPostProcessorList->get(procId)->execute(proc,dataSource,CDATAPOSTPROCESSOR_RUNAFTERREADING);
+            if(status != 0){
+              CDBError("Processor %s failed RUNAFTERREADING, statuscode %d",dataPostProcessorList->get(procId)->getId(),status);
+            }
+          }catch(int e){
+            CDBError("Exception in Processor %s failed RUNAFTERREADING, exceptioncode %d",dataPostProcessorList->get(procId)->getId(),e);
           }
         }
       }

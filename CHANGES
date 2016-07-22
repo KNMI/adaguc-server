@@ -1,0 +1,6 @@
+Version 2.0.9, 2016-07-22:
+    - AdditionalLayer functionality now works with NetCDF files with two dimensions per variable (only y,x data).
+    - Added datamask datapostprocessor
+    - Added include_layer datapostprocessor
+    - WCS NetCDFDataWriter now supports multiple dataobjects as output.
+    - WMS GetFeatureInfo can now output multiple data objects when they have the same standard name
