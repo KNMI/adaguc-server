@@ -900,8 +900,8 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       //Retrieve variable names
       for(size_t o=0;o<dataSource->getNumDataObjects();o++){
        
-        size_t j=d+o*dataSources.size();
-        CDBDebug("j = %d",j);
+//        size_t j=d+o*dataSources.size();
+        //CDBDebug("j = %d",j);
         //Create a new element and at it to the elements list.
         
         GetFeatureInfoResult::Element * element = new GetFeatureInfoResult::Element();
@@ -919,13 +919,16 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
           CT::string standardName;attr_standard_name->getDataAsString(&standardName);
           element->standard_name.copy(&standardName);
           // Make a more clean standard name.
-          standardName.replaceSelf("_"," ");standardName.replaceSelf(" status flag","");
-          element->feature_name.copy(&standardName);
+          //standardName.replaceSelf("_"," ");standardName.replaceSelf(" status flag","");
+          element->feature_name.print("%s_%d",standardName.c_str(),o);
         }
         if(element->standard_name.empty()){
           element->standard_name.copy(&element->var_name);
           element->feature_name.copy(&element->var_name);
+          element->feature_name.print("%s_%d",element->var_name.c_str(),o);
         }
+
+        
  
         // Get variable long name
         CDF::Attribute * attr_long_name=dataSources[d]->getDataObject(o)->cdfVariable->getAttributeNE("long_name");
@@ -950,7 +953,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
   //         if(name.indexOf("time")==0){
   //           value=element->cdfDims.getDimensionValue("time").c_str();
   //         }
-           CDBDebug("%d) %s == %s == %d",j,name.c_str(),value.c_str(),cdfDims->getDimensionIndex(j));
+//           CDBDebug("%d) %s == %s == %d",j,name.c_str(),value.c_str(),cdfDims->getDimensionIndex(j));
           element->cdfDims.addDimension(name.c_str(),value.c_str(),cdfDims->getDimensionIndex(j));
         }
   
@@ -1079,7 +1082,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         
         //For vectors, we will calculate angle and strength
         if((dataSource->getNumDataObjects()==2)&&(dataSource->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_GEOJSONPOINT")==NULL)){
-          CDBDebug("VECTOR GFI!@!!!!!!!!");
+//          CDBDebug("VECTOR GFI!@!!!!!!!!");
           size_t ptr=0;
           if(openAll){
             ptr=projCacheInfo.imx+projCacheInfo.imy*projCacheInfo.dWidth;
@@ -2517,6 +2520,7 @@ int CImageDataWriter::end(){
           CXMLParser::XMLElement paramElement("param");
           paramElement.add(CXMLParser::XMLElement("name", e->var_name.c_str()));
           paramElement.add(CXMLParser::XMLElement("standard_name", e->standard_name.c_str()));
+          paramElement.add(CXMLParser::XMLElement("feature_name", e->feature_name.c_str()));
           paramElement.add(CXMLParser::XMLElement("units", e->units.c_str()));
            
           CXMLParser::XMLElement point("point");

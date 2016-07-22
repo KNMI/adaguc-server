@@ -452,28 +452,21 @@ CDBDebug("Found layer %s",layerName.c_str());
         return 1;
       }
     }
-//     if(dataSource->cfgLayer->Dimension.size()!=0){
-//       if(CRequest::getDimValuesForDataSource(dataSource,srvParam)!=0){
-//         CDBError("Unable to fill in dimensions");
-//         return 1;
-//       }
-//     }else{
-      //This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.        
-      #ifdef COPENDAPHANDLER_DEBUG      
-      CDBDebug("This layer has no dims, adding one virtual time step.");
-      #endif
-      CDirReader dirReader;
-      if(CDBFileScanner::searchFileNames(&dirReader,dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter,NULL)!=0){
-        CDBError("Could not find any filename");
-        delete dataSource;
-        return 1; 
-      }
-      if(dirReader.fileList.size()==0){
-        CDBError("dirReader.fileList.size()==0");delete dataSource;return 1;
-      }
-      dataSource->addStep(dirReader.fileList[0]->fullName.c_str(),NULL);
-      dataSource->getCDFDims()->addDimension("time","0",0);
-//     }
+    //This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.        
+    #ifdef COPENDAPHANDLER_DEBUG      
+    CDBDebug("This layer has no dims, adding one virtual time step.");
+    #endif
+    CDirReader dirReader;
+    if(CDBFileScanner::searchFileNames(&dirReader,dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter,NULL)!=0){
+    CDBError("Could not find any filename");
+    delete dataSource;
+    return 1; 
+    }
+    if(dirReader.fileList.size()==0){
+    CDBError("dirReader.fileList.size()==0");delete dataSource;return 1;
+    }
+    dataSource->addStep(dirReader.fileList[0]->fullName.c_str(),NULL);
+    dataSource->getCDFDims()->addDimension("time","0",0);
   }
   
   

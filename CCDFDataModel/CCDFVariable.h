@@ -77,9 +77,11 @@ namespace CDF{
           }
           thisVar->setSize(size);
           CDF::allocateData(thisVar->getType(),&thisVar->data,size);
+          //CDF::fill(thisVar->data, thisVar->getType(),12345,size);//Should be done by followup code.
           return 0;
         }
     };
+    static CustomMemoryReader*CustomMemoryReaderInstance;
   private:
         CustomReader * customReader;
   public:
