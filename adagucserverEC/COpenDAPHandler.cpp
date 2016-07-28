@@ -399,7 +399,9 @@ int COpenDAPHandler::HandleOpenDAPRequest(const char *path,const char *query,CSe
       if(layerName.length()==0){
         layerName=intLayerName;
       }
+      intLayerName.replaceSelf("/","_");
       CDBDebug("%s",intLayerName.c_str());
+      
       if(intLayerName.equals(layerName.c_str())){
         if(dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[layerNo],intLayerName.c_str(),0)!=0){
           CDBError("Error setCFGLayer");
