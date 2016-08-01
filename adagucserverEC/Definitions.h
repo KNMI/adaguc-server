@@ -26,7 +26,7 @@
 #ifndef Definitions_H
 #define Definitions_H
 
-#define ADAGUCSERVER_VERSION             "2.0.9"
+#define ADAGUCSERVER_VERSION             "2.0.10"
 
 //CConfigReaderLayerType
 #define CConfigReaderLayerTypeUnknown     0
@@ -52,6 +52,7 @@
 #define REQUEST_WMS_GETPOINTVALUE         10
 #define REQUEST_WMS_GETREFERENCETIMES     11
 #define REQUEST_WMS_GETHISTOGRAM          12
+#define REQUEST_WMS_GETSCALEBAR           13
 #define REQUEST_UPDATEDB                  100
 
 //Legend

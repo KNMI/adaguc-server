@@ -612,6 +612,9 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y){
           {
             //Make a projection code based on PROJ4: namespace
             dataSource->nativeEPSG.print("PROJ4:%s",dataSource->nativeProj4.c_str());
+            dataSource->nativeEPSG.replaceSelf("\"","");
+            dataSource->nativeEPSG.replaceSelf("\n","");
+            dataSource->nativeEPSG.trimSelf();
             dataSource->nativeEPSG.encodeURLSelf();
           }
           //else {CDBWarning("EPSG_code not found in variable %s",(char*)projvarnameAttr->data);}

@@ -307,6 +307,17 @@ int CXMLGen::getProjectionInformationForLayer(WMSLayer * myWMSLayer){
     
     warper.closereproj();
   }
+  //Add the layers native projection as well
+  WMSLayer::Projection * myProjection = new WMSLayer::Projection();
+  myWMSLayer->projectionList.push_back(myProjection);
+  myProjection->name.copy(myWMSLayer->dataSource->nativeEPSG.c_str());
+  myProjection->dfBBOX[0]=myWMSLayer->dataSource->dfBBOX[0];
+  myProjection->dfBBOX[3]=myWMSLayer->dataSource->dfBBOX[1];
+  myProjection->dfBBOX[2]=myWMSLayer->dataSource->dfBBOX[2];
+  myProjection->dfBBOX[1]=myWMSLayer->dataSource->dfBBOX[3];
+  
+
+  
   return 0;
 }
 
@@ -1227,16 +1238,20 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc,std::vector<WMSLayer*>
 
     for(size_t p=0;p<(*myWMSLayerList)[0]->projectionList.size();p++){
       WMSLayer::Projection *proj = (*myWMSLayerList)[0]->projectionList[p];
-      XMLDoc->concat("<CRS>"); 
-      XMLDoc->concat(&proj->name);
-      XMLDoc->concat("</CRS>\n");
+      if(!proj->name.empty()){
+        XMLDoc->concat("<CRS>"); 
+        XMLDoc->concat(&proj->name);
+        XMLDoc->concat("</CRS>\n");
+      }
     }
     for(size_t p=0;p<(*myWMSLayerList)[0]->projectionList.size();p++){
       WMSLayer::Projection *proj = (*myWMSLayerList)[0]->projectionList[p];
-      if(srvParam->checkBBOXXYOrder(proj->name.c_str())==true){
-        XMLDoc->printconcat("<BoundingBox CRS=\"%s\" minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\" />\n",proj->name.c_str(),proj->dfBBOX[1],proj->dfBBOX[0],proj->dfBBOX[3],proj->dfBBOX[2]);
-      }else{
-        XMLDoc->printconcat("<BoundingBox CRS=\"%s\" minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\" />\n",proj->name.c_str(),proj->dfBBOX[0],proj->dfBBOX[1],proj->dfBBOX[2],proj->dfBBOX[3]);
+      if(!proj->name.empty()){
+        if(srvParam->checkBBOXXYOrder(proj->name.c_str())==true){
+            XMLDoc->printconcat("<BoundingBox CRS=\"%s\" minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\" />\n",proj->name.c_str(),proj->dfBBOX[1],proj->dfBBOX[0],proj->dfBBOX[3],proj->dfBBOX[2]);
+        }else{
+            XMLDoc->printconcat("<BoundingBox CRS=\"%s\" minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\" />\n",proj->name.c_str(),proj->dfBBOX[0],proj->dfBBOX[1],proj->dfBBOX[2],proj->dfBBOX[3]);
+        }
       }
     }
    
@@ -1600,11 +1615,14 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc,std::vector<WMSLay
                   "    <spatialDomain>\n");
               for(size_t p=0;p< layer->projectionList.size();p++){
                 WMSLayer::Projection *proj = layer->projectionList[p];
+                CT::string encodedProjString(proj->name.c_str());
+                //encodedProjString.encodeURLSelf();
+                
                 XMLDoc->printconcat("        <gml:Envelope srsName=\"%s\">\n"
                     "          <gml:pos>%f %f</gml:pos>\n"
                     "          <gml:pos>%f %f</gml:pos>\n"
                     "        </gml:Envelope>\n",
-                proj->name.c_str(),
+                encodedProjString.c_str(),
                 proj->dfBBOX[0],proj->dfBBOX[1],proj->dfBBOX[2],proj->dfBBOX[3]
                                   );
               }
@@ -1635,8 +1653,8 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc,std::vector<WMSLay
                   "      </spatialDomain>\n",
               width,
               height,
-              layer->dataSource->dfBBOX[0]+layer->dataSource->dfCellSizeX/2,
-              layer->dataSource->dfBBOX[3]+layer->dataSource->dfCellSizeY/2,
+              layer->dataSource->dfBBOX[0],//+layer->dataSource->dfCellSizeX/2,
+              layer->dataSource->dfBBOX[3],//+layer->dataSource->dfCellSizeY/2,
               layer->dataSource->dfCellSizeX,
               layer->dataSource->dfCellSizeY
                                 );
@@ -1688,14 +1706,14 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc,std::vector<WMSLay
               for(size_t p=0;p< layer->projectionList.size();p++){
                 WMSLayer::Projection *proj = (*myWMSLayerList)[0]->projectionList[p];
                 CT::string encodedProjString(proj->name.c_str());
-                encodedProjString.encodeURLSelf();
+
                 XMLDoc->printconcat("      <requestResponseCRSs>%s</requestResponseCRSs>\n",
                                     encodedProjString.c_str());
               }
           
-          
+              CT::string prettyCRS = layer->dataSource->nativeEPSG.c_str();
               XMLDoc->printconcat("      <nativeCRSs>%s</nativeCRSs>\n    </supportedCRSs>\n",
-                                  layer->dataSource->nativeEPSG.c_str());
+                                  prettyCRS.c_str());
   
               XMLDoc->concat(
                   "    <supportedFormats nativeFormat=\"NetCDF4\">\n"

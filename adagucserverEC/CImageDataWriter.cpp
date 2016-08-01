@@ -414,13 +414,19 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
     
   }
   
-  
-  if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
-    
-      if(initializeLegend(srvParam,dataSource)!=0)return 1;
+  if(dataSource!=NULL){
+    if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
+        
+        if(initializeLegend(srvParam,dataSource)!=0)return 1;
+    }
   }
   
-  CStyleConfiguration *styleConfiguration = dataSource->getStyle();
+  CStyleConfiguration *styleConfiguration = NULL;
+  
+  if(dataSource!=NULL){
+    styleConfiguration = dataSource->getStyle();
+  }
+  
   if(styleConfiguration!=NULL){
   
     if(styleConfiguration->renderMethod&RM_RGBA){
@@ -437,12 +443,14 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   }
   
   // WMS Format in layer always overrides all
-  if(dataSource->cfgLayer->WMSFormat.size()>0){
-    if(dataSource->cfgLayer->WMSFormat[0]->attr.name.equals("image/png32")){
-      drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-    }
-    if(dataSource->cfgLayer->WMSFormat[0]->attr.format.equals("image/png32")){
-      drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
+  if(dataSource!=NULL){
+    if(dataSource->cfgLayer->WMSFormat.size()>0){
+        if(dataSource->cfgLayer->WMSFormat[0]->attr.name.equals("image/png32")){
+        drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
+        }
+        if(dataSource->cfgLayer->WMSFormat[0]->attr.format.equals("image/png32")){
+        drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
+        }
     }
   }
   //Set font location
@@ -470,29 +478,7 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   }
   
 
-//   if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded&&1==2){
-//     //Open the data of this dataSource
-//     #ifdef CIMAGEDATAWRITER_DEBUG  
-//     CDBDebug("opening %s",dataSource->getFileName());
-//     #endif  
-//     CDataReader reader;
-//     status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
-//     #ifdef CIMAGEDATAWRITER_DEBUG  
-//     CDBDebug("Has opened %s",dataSource->getFileName());
-//     #endif    
-//     if(status!=0){
-//       CDBError("Could not open file: %s",dataSource->getFileName());
-//       return 1;
-//     }
-//     #ifdef CIMAGEDATAWRITER_DEBUG  
-//     CDBDebug("opened");
-//     #endif  
-//     reader.close();
-//   }
-  //drawImage.setTrueColor(true);
-  //drawImage.setAntiAliased(true);
-  /*drawImage.setTrueColor(true);
-  drawImage.setAntiAliased(true);*/
+
   writerStatus=initialized;
   animation = 0;
   nrImagesAdded = 0;
@@ -532,30 +518,32 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
     return 0;
   }
   
-  //Create 6-8-5 palette for cascaded layer
-  if(dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
-  
-    #ifdef CIMAGEDATAWRITER_DEBUG    
-    CDBDebug("create685Palette");
-    #endif
-    status = drawImage.create685Palette();
-    if(status != 0){
-      CDBError("Unable to create standard 6-8-5 palette");
-      return 1;
-    }
-  }
-
-  if(styleConfiguration!=NULL){
-    if(styleConfiguration->legendIndex != -1){
-      //Create palette for internal WNS layer
-      if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
-    //    if(initializeLegend(srvParam,dataSource)!=0)return 1;
-        status = drawImage.createGDPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);
+  if(dataSource!=NULL){
+    //Create 6-8-5 palette for cascaded layer
+    if(dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
+    
+        #ifdef CIMAGEDATAWRITER_DEBUG    
+        CDBDebug("create685Palette");
+        #endif
+        status = drawImage.create685Palette();
         if(status != 0){
-          CDBError("Unknown palette type for %s",srvParam->cfg->Legend[styleConfiguration->legendIndex]->attr.name.c_str());
-          return 1;
+        CDBError("Unable to create standard 6-8-5 palette");
+        return 1;
         }
-      }
+    }
+
+    if(styleConfiguration!=NULL){
+        if(styleConfiguration->legendIndex != -1){
+        //Create palette for internal WNS layer
+        if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
+        //    if(initializeLegend(srvParam,dataSource)!=0)return 1;
+            status = drawImage.createGDPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);
+            if(status != 0){
+            CDBError("Unknown palette type for %s",srvParam->cfg->Legend[styleConfiguration->legendIndex]->attr.name.c_str());
+            return 1;
+            }
+        }
+        }
     }
   }
   #ifdef CIMAGEDATAWRITER_DEBUG    
@@ -3452,6 +3440,6 @@ int CImageDataWriter::drawText(int x,int y,const char * fontlocation, float size
               
     }
     
-int CImageDataWriter::createScaleBar(CDataSource *dataSource,CDrawImage *scaleBarImage){
-  return CCreateScaleBar::createScaleBar(scaleBarImage,dataSource->srvParams->Geo);
+int CImageDataWriter::createScaleBar(CGeoParams *geoParams,CDrawImage *scaleBarImage){
+  return CCreateScaleBar::createScaleBar(scaleBarImage,geoParams);
 }
