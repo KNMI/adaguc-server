@@ -32,6 +32,7 @@
 #include "CAutoResource.h"
 #include "CNetCDFDataWriter.h"
 #include "CConvertGeoJSON.h"
+#include "CCreateScaleBar.h"
 const char *CRequest::className="CRequest";
 int CRequest::CGI=0;
 
@@ -1638,7 +1639,7 @@ int CRequest::process_all_layers(){
             scaleBarImage.createImage(&imageDataWriter.drawImage,200,20);
             
             //scaleBarImage.rectangle(0,0,scaleBarImage.Geo->dWidth,scaleBarImage.Geo->dHeight,CColor(0,0,0,0),CColor(0,0,0,255));
-            status = imageDataWriter.createScaleBar(dataSources[0],&scaleBarImage);if(status != 0)throw(__LINE__);
+            status = imageDataWriter.createScaleBar(dataSources[0]->srvParams->Geo,&scaleBarImage);if(status != 0)throw(__LINE__);
             int posX=padding;//imageDataWriter.drawImage.Geo->dWidth-(scaleBarImage.Geo->dWidth+padding);
             int posY=imageDataWriter.drawImage.Geo->dHeight-(scaleBarImage.Geo->dHeight+padding);
             //posY-=50;
@@ -1730,6 +1731,7 @@ int CRequest::process_all_layers(){
           status = imageDataWriter.createLegend(dataSources[j],&imageDataWriter.drawImage, rotate);if(status != 0)throw(__LINE__);
           status = imageDataWriter.end();if(status != 0)throw(__LINE__);
         }
+        
         
         // WMS GETHISTOGRAM
         if(srvParam->requestType==REQUEST_WMS_GETHISTOGRAM){
@@ -2006,6 +2008,17 @@ int CRequest::process_querystring(){
         delete[] bboxvalues;
         srvParam->dFound_BBOX=1;
       }
+      if(value0Cap.equals("BBOXWIDTH")){
+       
+        srvParam->Geo->dfBBOX[0]=0;
+        srvParam->Geo->dfBBOX[1]=0;
+        srvParam->Geo->dfBBOX[2]=values[1].toDouble();
+        srvParam->Geo->dfBBOX[3]=values[1].toDouble();
+       
+       
+        srvParam->dFound_BBOX=1;
+      }
+      
       
       if(value0Cap.equals("FIGWIDTH")){
         srvParam->figWidth=atoi(values[1].c_str());
@@ -2401,6 +2414,7 @@ int CRequest::process_querystring(){
       if(REQUEST.equals("GETCAPABILITIES"))srvParam->requestType=REQUEST_WMS_GETCAPABILITIES;
       if(REQUEST.equals("GETMAP"))srvParam->requestType=REQUEST_WMS_GETMAP;
       if(REQUEST.equals("GETHISTOGRAM"))srvParam->requestType=REQUEST_WMS_GETHISTOGRAM;
+      if(REQUEST.equals("GETSCALEBAR"))srvParam->requestType=REQUEST_WMS_GETSCALEBAR;
       if(REQUEST.equals("GETFEATUREINFO"))srvParam->requestType=REQUEST_WMS_GETFEATUREINFO;
       if(REQUEST.equals("GETPOINTVALUE"))srvParam->requestType=REQUEST_WMS_GETPOINTVALUE;
       if(REQUEST.equals("GETLEGENDGRAPHIC"))srvParam->requestType=REQUEST_WMS_GETLEGENDGRAPHIC;
@@ -2582,6 +2596,7 @@ int CRequest::process_querystring(){
         srvParam->requestType==REQUEST_WMS_GETPOINTVALUE||
         srvParam->requestType==REQUEST_WMS_GETHISTOGRAM
         
+        
       )){
       
       if(srvParam->requestType==REQUEST_WMS_GETFEATUREINFO||srvParam->requestType==REQUEST_WMS_GETPOINTVALUE||srvParam->requestType==REQUEST_WMS_GETHISTOGRAM){
@@ -2741,6 +2756,45 @@ int CRequest::process_querystring(){
         }
       }
     }
+    
+    //WMS GETSCALEBAR
+    if(dErrorOccured==0&&srvParam->requestType==REQUEST_WMS_GETSCALEBAR){
+
+        CDrawImage drawImage;
+        
+        drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
+        drawImage.setRenderer(CDRAWIMAGERENDERER_CAIRO);
+        drawImage.enableTransparency(true);
+        
+        
+         //Set font location
+        if(srvParam->cfg->WMS[0]->ContourFont.size()!=0){
+          if(srvParam->cfg->WMS[0]->ContourFont[0]->attr.location.empty()==false){
+            drawImage.setTTFFontLocation(srvParam->cfg->WMS[0]->ContourFont[0]->attr.location.c_str());
+            if(srvParam->cfg->WMS[0]->ContourFont[0]->attr.size.empty()==false){
+              CT::string fontSize="7";//srvParam->cfg->WMS[0]->ContourFont[0]->attr.size.c_str();
+              drawImage.setTTFFontSize(fontSize.toFloat());
+            }
+          }else {
+            CDBError("In <Font>, attribute \"location\" missing");
+            return 1;
+          }
+        }
+        drawImage.createImage(300,30);
+        drawImage.create685Palette();
+        try{
+            CCreateScaleBar::createScaleBar(&drawImage,srvParam->Geo);
+        }catch(int e){
+            CDBError("Exception %d",e);
+            return 1;
+        }
+        drawImage.crop(1);
+        printf("%s%c%c\n","Content-Type:image/png",13,10);
+        drawImage.printImagePng8();
+        return 0;
+    }
+        
+    
     if(dErrorOccured==0&&srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
       if(dFound_WMSLAYER==0){
         CDBWarning("ADAGUC Server: Parameter LAYER missing");
