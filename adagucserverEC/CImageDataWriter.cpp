@@ -598,19 +598,24 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
 
 
 double CImageDataWriter::convertValue(CDFType type,void *data,size_t ptr){
-  double pixel = 0.0f;
-  if(type==CDF_CHAR)pixel=((char*)data)[ptr];
-  if(type==CDF_UBYTE)pixel=((unsigned char*)data)[ptr];
-  if(type==CDF_SHORT)pixel=((short*)data)[ptr];
-  if(type==CDF_USHORT)pixel=((unsigned short*)data)[ptr];
-  if(type==CDF_INT)pixel=((int*)data)[ptr];
-  if(type==CDF_UINT)pixel=((unsigned int*)data)[ptr];
-  if(type==CDF_FLOAT)pixel=((float*)data)[ptr];
-  if(type==CDF_DOUBLE)pixel=((double*)data)[ptr];
-  return pixel;
+  switch(type){
+      case CDF_CHAR:  return ((char*)data)[ptr];
+      case CDF_BYTE:  return ((char*)data)[ptr];
+      case CDF_UBYTE: return ((unsigned char*)data)[ptr];
+      case CDF_SHORT: return ((short*)data)[ptr];
+      case CDF_USHORT:return ((ushort*)data)[ptr];
+      case CDF_INT:   return ((int*)data)[ptr];
+      case CDF_UINT:  return ((uint*)data)[ptr];
+      case CDF_FLOAT: return ((float*)data)[ptr];
+      case CDF_DOUBLE:return ((double*)data)[ptr];
+      default:
+          CDBError("Unknown type detected in convertValue, type = %d",type);
+          break;
+  }
+  return 0;
 }
 void CImageDataWriter::setValue(CDFType type,void *data,size_t ptr,double pixel){
-  if(type==CDF_CHAR)((char*)data)[ptr]=(char)pixel;
+  if(type==CDF_CHAR||type==CDF_BYTE)((char*)data)[ptr]=(char)pixel;
   if(type==CDF_UBYTE)((unsigned char*)data)[ptr]=(unsigned char)pixel;
   if(type==CDF_SHORT)((short*)data)[ptr]=(short)pixel;
   if(type==CDF_USHORT)((unsigned short*)data)[ptr]=(unsigned short)pixel;
@@ -676,7 +681,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       }
     }
     
-    openAll = true;
+//    openAll = true;
   
       
     if(dataSources[d]->cfgLayer->TileSettings.size()==1){
