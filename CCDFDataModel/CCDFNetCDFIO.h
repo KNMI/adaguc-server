@@ -55,6 +55,8 @@ class CDFNetCDFReader :public CDFReader{
   int readVariables(int groupId, CT::string* groupName);
   int _readVariableData(CDF::Variable *var, CDFType type);
   int _readVariableData(CDF::Variable *var, CDFType type,size_t *start,size_t *count,ptrdiff_t *stride);
+  
+  int _findNCGroupIdForCDFVariable(CT::string *varName);
 
   public:
     CDFNetCDFReader();
