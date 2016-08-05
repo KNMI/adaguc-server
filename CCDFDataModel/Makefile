@@ -1,35 +1,28 @@
 INCLUDEDIR=-I../hclasses  -I/usr/include/libxml2/ -I/usr/include/hdf5/serial/ -I/usr/include/udunits2/ $(CPPFLAGS) $(LDFLAGS)
 
-#CCOMPILER=g++ -Wall $(INCLUDEDIR) 
-
 ifndef BUILDER_ADAGUCCOMPILERSETTINGS
   BUILDER_ADAGUCCOMPILERSETTINGS=-Wall -DMEMLEAKCHECK
-# BUILDER_ADAGUCCOMPILERSETTINGS=-march=pentium4 -mtune=pentium4 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 
-# BUILDER_ADAGUCCOMPILERSETTINGS=-march=core2 -mtune=core2 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2
-# BUILDER_ADAGUCCOMPILERSETTINGS=-O2
-# BUILDER_ADAGUCCOMPILERSETTINGS=-march=k8-sse3 -mtune=k8-sse3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 
 endif
 
 CCOMPILER=g++ $(BUILDER_ADAGUCCOMPILERSETTINGS) $(INCLUDEDIR)
 
-#optimalization options:
-#CCOMPILER=g++ -march=pentium4 -mtune=pentium4 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 $(INCLUDEDIR) 
-#CCOMPILER=g++ -march=core2 -mtune=core2 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 $(INCLUDEDIR) 
-#CCOMPILER=g++ -O2 $(INCLUDEDIR)
-#CCOMPILER=g++ -march=k8-sse3 -mtune=k8-sse3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 $(INCLUDEDIR)  
-
 OBJECTS = CCDFDataModel.o  CCDFNetCDFIO.o CTime.o CCDFHDF5IO.o CProj4ToCF.o CCDFVariable.o CCDFObject.o CCDFTypes.o CCDFCache.o CCache.o CCDFStore.o CCDFGeoJSONIO.o CGeoJSONData.o
 
-EXECUTABLE= CCDFDataModel
+default: CCDFDataModel
+CCDFDataModel: $(OBJECTS)
+	ar rcs  CCDFDataModel.a $(OBJECTS) 
 
-default: $(EXECUTABLE)
-$(EXECUTABLE): $(OBJECTS)
-	ar rcs  $(EXECUTABLE).a $(OBJECTS) 
-
+anydump:
+	make default
+	rm -f anydump.o
+	rm -f anydump
+	$(CCOMPILER) -c anydump.cpp -o anydump.o
+	g++ "anydump.o" $(OBJECTS)  -o  "anydump"  $(LDFLAGS) -lhdf5 -lhdf5_hl -lnetcdf -lxml2 -ludunits2 ../hclasses/hclasses.a
+	
 %.o: %.cpp
 	$(CCOMPILER) -c $< -o $@
 
 clean:
-	rm $(OBJECTS)  $(EXECUTABLE).a
+	rm -f $(OBJECTS)  CCDFDataModel.a
 
 
