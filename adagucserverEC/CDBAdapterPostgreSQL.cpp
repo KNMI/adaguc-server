@@ -830,8 +830,9 @@ int CDBAdapterPostgreSQL::createDimTableOfType(const char *dimname,const char *t
   CPGSQLDB * dataBaseConnection = getDataBaseConnection(); if(dataBaseConnection == NULL){return -1;  }
   
   CT::string tableColumns("path varchar (511)");
-   
-  if(type == 3)tableColumns.printconcat(", %s timestamp, dim%s int",dimname,dimname);
+  //12345678901234567890
+  //0000-00-00T00:00:00Z
+  if(type == 3)tableColumns.printconcat(", %s varchar (20), dim%s int",dimname,dimname);
   if(type == 2)tableColumns.printconcat(", %s varchar (64), dim%s int",dimname,dimname);
   if(type == 1)tableColumns.printconcat(", %s real, dim%s int",dimname,dimname);
   if(type == 0)tableColumns.printconcat(", %s int, dim%s int",dimname,dimname);
