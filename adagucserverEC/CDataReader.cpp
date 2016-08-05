@@ -34,6 +34,7 @@
 #include "CConvertHexagon.h"
 #include "CConvertGeoJSON.h"
 #include "CConvertEProfile.h"
+#include "CConvertTROPOMI.h"
 #include "CDBFactory.h"
 const char *CDataReader::className="CDataReader";
 
@@ -344,7 +345,8 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y){
   if(!dataSource->level2CompatMode)if(CConvertADAGUCPoint::convertADAGUCPointData(dataSource,mode)==0)dataSource->level2CompatMode=true;
   if(!dataSource->level2CompatMode)if(CConvertCurvilinear::convertCurvilinearData(dataSource,mode)==0)dataSource->level2CompatMode=true;
   if(!dataSource->level2CompatMode)if(CConvertHexagon::convertHexagonData(dataSource,mode)==0)dataSource->level2CompatMode=true;
-  if(!dataSource->level2CompatMode)if(CConvertGeoJSON::convertGeoJSONData(dataSource,mode)==0)dataSource->level2CompatMode=true;     
+  if(!dataSource->level2CompatMode)if(CConvertGeoJSON::convertGeoJSONData(dataSource,mode)==0)dataSource->level2CompatMode=true;
+  if(!dataSource->level2CompatMode)if(CConvertTROPOMI::convertTROPOMIData(dataSource,mode)==0)dataSource->level2CompatMode=true;     
 //   if(dataSource->level2CompatMode){
 //    cache->removeClaimedCachefile();
 //   }

@@ -108,13 +108,13 @@ int CDF::Variable::readData(CDFType readType,size_t *_start,size_t *_count,ptrdi
     }
   }
   
-  CDBDebug("Start reading data of type %d with reallyApplyScaleOffset = %d",scaleType,reallyApplyScaleOffset);
+  //CDBDebug("Start reading data of type %d with reallyApplyScaleOffset = %d",scaleType,reallyApplyScaleOffset);
   
   int status = readData(scaleType,_start,_count,_stride);
   
-  if(scaleType == CDF_FLOAT){
-    CDBDebug("%s has %f",name.c_str(),((float*)data)[0]);
-  }
+//   if(scaleType == CDF_FLOAT){
+//     CDBDebug("%s has %f",name.c_str(),((float*)data)[0]);
+//   }
   
   if(status != 0)return status;
   //CDBDebug("applyScaleOffset = %f %f",scaleFactor,addOffset);
