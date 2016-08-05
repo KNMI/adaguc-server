@@ -37,8 +37,8 @@
 #include "CDebugger.h"
 
 //  #define CCDFNETCDFIO_DEBUG
-#define CCDFNETCDFIO_DEBUG_OPEN
-#define CCDFNETCDFWRITER_DEBUG
+// #define CCDFNETCDFIO_DEBUG_OPEN
+// #define CCDFNETCDFWRITER_DEBUG
 
 class CDFNetCDFReader :public CDFReader{
   private:
@@ -49,11 +49,10 @@ class CDFNetCDFReader :public CDFReader{
   static CDFType _typeConversionAtt(nc_type type);
   DEF_ERRORFUNCTION();
   int status,root_id;
-  int nDims,nVars,nRootAttributes,unlimDimIdP;    
   bool keepFileOpen;
-  int readDimensions();
-  int readAttributes(std::vector<CDF::Attribute *> &attributes,int varID,int natt);
-  int readVariables();
+  int readDimensions(int groupId,CT::string *groupName);
+  int readAttributes(int root_id,std::vector<CDF::Attribute *> &attributes,int varID,int natt);
+  int readVariables(int groupId, CT::string* groupName);
   int _readVariableData(CDF::Variable *var, CDFType type);
   int _readVariableData(CDF::Variable *var, CDFType type,size_t *start,size_t *count,ptrdiff_t *stride);
 

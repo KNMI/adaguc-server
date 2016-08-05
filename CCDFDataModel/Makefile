@@ -12,10 +12,7 @@ default: CCDFDataModel
 CCDFDataModel: $(OBJECTS)
 	ar rcs  CCDFDataModel.a $(OBJECTS) 
 
-anydump:
-	make default
-	rm -f anydump.o
-	rm -f anydump
+anydump: CCDFDataModel
 	$(CCOMPILER) -c anydump.cpp -o anydump.o
 	g++ "anydump.o" $(OBJECTS)  -o  "anydump"  $(LDFLAGS) -lhdf5 -lhdf5_hl -lnetcdf -lxml2 -ludunits2 ../hclasses/hclasses.a
 	
