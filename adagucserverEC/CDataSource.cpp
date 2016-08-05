@@ -740,7 +740,7 @@ CT::PointerList<CStyleConfiguration*> *CDataSource::getStyleListForDataSource(CD
     if(renderMethods->size()>0){
       //For cascaded and rgba layers, no styles need to be defined
       if((CStyleConfiguration::getRenderMethodFromString(renderMethods->get(0))&RM_RGBA)){
-        CDBDebug("%s",renderMethods->get(0)->c_str());
+        CDBDebug("Using rendermethod %s",renderMethods->get(0)->c_str());
         delete renderMethods ; 
         
         CStyleConfiguration * styleConfig = new CStyleConfiguration();

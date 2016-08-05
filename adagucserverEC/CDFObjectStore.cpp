@@ -33,6 +33,7 @@ const char *CDFObjectStore::className="CDFObjectStore";
 #include "CConvertHexagon.h"
 #include "CConvertGeoJSON.h"
 #include "CConvertEProfile.h"
+#include "CConvertTROPOMI.h"
 #include "CDataReader.h"
 //#define CDFOBJECTSTORE_DEBUG
 #define MAX_OPEN_FILES 20
@@ -305,7 +306,11 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *s
     if(!level2CompatMode)if(CConvertHexagon::convertHexagonHeader(cdfObject,srvParams)==0){level2CompatMode=true;};
     
     if(!level2CompatMode)if(CConvertGeoJSON::convertGeoJSONHeader(cdfObject)==0){level2CompatMode=true;};
+    
     if(!level2CompatMode)if(CConvertEProfile::convertEProfileHeader(cdfObject,srvParams)==0){level2CompatMode=true;};
+    
+    if(!level2CompatMode)if(CConvertTROPOMI::convertTROPOMIHeader(cdfObject,srvParams)==0){level2CompatMode=true;};
+    
   }
   
   return cdfObject;
