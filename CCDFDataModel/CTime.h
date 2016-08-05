@@ -38,6 +38,7 @@
 #define CTIME_MODE_YYYYMM          1
 #define CTIME_MODE_YYYYMMDD_NUMBER 2
 #define CTIME_MODE_365day          3
+#define CTIME_MODE_360day          4
 
 #define CTIME_UNITTYPE_SECONDS     1
 #define CTIME_UNITTYPE_MINUTES     2
@@ -46,7 +47,7 @@
 #define CTIME_UNITTYPE_MONTHS      5
 #define CTIME_UNITTYPE_YEARS       6
 
-#define CTIME_CALENDARTYPE_365day  1
+//#define CTIME_CALENDARTYPE_365day  1
 
 
 
@@ -57,6 +58,8 @@ class CTime{
   CT::string currentUnit;
   CT::string currentCalendar;
   void safestrcpy(char *s1,const char*s2,size_t size_s1);
+  static int CTIME_CALENDARTYPE_360day_Months[];
+  static int CTIME_CALENDARTYPE_360day_MonthsCumul[]; 
   static int CTIME_CALENDARTYPE_365day_Months[];
   static int CTIME_CALENDARTYPE_365day_MonthsCumul[]; 
   
@@ -90,7 +93,7 @@ class CTime{
 private:
   class TimeUnit{
   public:
-    int calendarType;
+    //int calendarType;
     int unitType;
     Date date;
     double dateSinceOffset;

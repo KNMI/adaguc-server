@@ -639,18 +639,21 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
           const char *pszDefaultV=myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.defaultV.c_str();
           CT::string defaultV;if(pszDefaultV!=NULL)defaultV=pszDefaultV;
           if(defaultV.length()==0||defaultV.equals("max",3)){
-            dim->defaultValue.copy(szMaxTime);dim->defaultValue.concat("Z");
+            dim->defaultValue.copy(szMaxTime);
           }else if(defaultV.equals("min",3)){
-            dim->defaultValue.copy(szMinTime);dim->defaultValue.concat("Z");
+            dim->defaultValue.copy(szMinTime);
           }else {
             dim->defaultValue.copy(&defaultV);
           }
-          //dim->defaultValue.copy(szMinTime);dim->defaultValue.concat("Z");
+          if(dim->defaultValue.length()==19){
+            dim->defaultValue.concat("Z");
+          }
+
           CT::string minTime=szMinTime;
           if(minTime.equals(szMaxTime)){
-            dim->values.print("%sZ",szMinTime);
+            dim->values.print("%s",szMinTime);
           }else{
-            dim->values.print("%sZ/%sZ/%s",szMinTime,szMaxTime,pszInterval);
+            dim->values.print("%s/%s/%s",szMinTime,szMaxTime,pszInterval);
           }
         }
       }
