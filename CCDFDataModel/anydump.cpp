@@ -34,29 +34,34 @@
 DEF_ERRORMAIN();
 
 int main(int argCount,char **argVars){
-    CDFHDF5Reader *hdf5Reader = NULL;
+    CDFReader*cdfReader = NULL;
     CDFObject *cdfObject = NULL;
     if(argCount<=2){
-      printf("h5ncdump [-h] file\n");
+      printf("anydump [-h] file\n");
       printf("  [-h]             Header information only, no data\n");
       return 0;
     }
-    const char *inputfile=argVars[argCount-1];//"/nobackup/users/plieger/projects/msgcpp/oud/meteosat9.fl.geo.h5";
+    CT::string inputFile=argVars[argCount-1];//"/nobackup/users/plieger/projects/msgcpp/oud/meteosat9.fl.geo.h5";
     int status = 0;
     try{
       cdfObject=new CDFObject();
-      hdf5Reader = new CDFHDF5Reader();
-      cdfObject->attachCDFReader(hdf5Reader);
-      status = hdf5Reader->open(inputfile);
-      if(status != 0){CDBError("Unable to read file %s",inputfile);throw(__LINE__);}
+      if(inputFile.endsWith(".nc")){
+        cdfReader = new CDFNetCDFReader() ;
+      }
+      if(inputFile.endsWith(".h5")){
+        cdfReader = new CDFHDF5Reader();
+      }
+      cdfObject->attachCDFReader(cdfReader);
+      status = cdfReader->open(inputFile.c_str());
+      if(status != 0){CDBError("Unable to read file %s",inputFile.c_str());throw(__LINE__);}
       CT::string dumpString;
       CDF::dump(cdfObject,&dumpString);
       printf("%s\n",dumpString.c_str());
-      delete hdf5Reader;hdf5Reader=NULL;
+      delete cdfReader;cdfReader=NULL;
       delete cdfObject;cdfObject=NULL;
     }
     catch(int e){
-      delete hdf5Reader;hdf5Reader=NULL;
+      delete cdfReader;cdfReader=NULL;
       delete cdfObject;cdfObject=NULL;
     }
       
