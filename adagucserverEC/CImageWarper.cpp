@@ -367,7 +367,7 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
       if(projectionStore.keys[j].isSet == true){
         bool match = true;
         if(!projectionStore.keys[j].destinationCRS.equals(pKey.destinationCRS.c_str()))match=false;
-        //if(!match){CDBDebug("DESTCRS DO NOT MATCH");}
+        //if(!match){CDBDebug("DESTCRS DO NOT MATCH %s",pKey.destinationCRS.c_str());}
         if(match){
           for(int i=0;i<4;i++){
             if(projectionStore.keys[j].bbox[i] != pKey.bbox[i]){
@@ -390,11 +390,10 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
         }
       }
     }
-    //CDBDebug("PROJECTION NOT FOUND, START CALCULATION");
    
     
     
-    
+   
     
     //double tempy;
     double miny1=dfBBOX[1];
@@ -409,22 +408,33 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
       double nrTestY=45;
       bool foundFirst = false;
       for(int y=0;y<int(nrTestY)+1;y++){
+          
         for(int x=0;x<int(nrTestX)+1;x++){
           double stepX = double(x)/nrTestX;
           double stepY = double(y)/nrTestY;
-          
+         
           
           double testPosX = dfBBOX[0]*(1-stepX)+dfBBOX[2]*stepX;
           double testPosY = dfBBOX[1]*(1-stepY)+dfBBOX[3]*stepY;
           double inY = testPosY;
           double inX = testPosX;
           bool projError=false;
-          if(useLatLonSourceProj){
-            //Boundingbox is given in the projection definition, it is always given in latlon so we need to project it to the current projection
-            if(reprojfromLatLon(inX,inY)!=0)projError=true;
-          }else {
-            if(reprojpoint_inv(inX,inY)!=0)projError=true;
+          
+          if(testPosX==testPosX && testPosY == testPosY){
+            try{
+              if(useLatLonSourceProj){
+                //Boundingbox is given in the projection definition, it is always given in latlon so we need to project it to the current projection
+                if(reprojfromLatLon(inX,inY)!=0)projError=true;
+              }else {
+                if(reprojpoint_inv(inX,inY)!=0)projError=true;
+              }
+            }catch(int e){
+              projError=true;
+            }
+          }else{
+              projError=true;
           }
+          
           if(projError==false){
             double latX=inX,lonY=inY;
             if(reprojToLatLon(latX,lonY)!=0)projError=true;;
@@ -447,12 +457,13 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
             }
           }
         }
+          
       }
     }catch(...){
       CDBError("Unable to reproject");
       return 1;
     }
-
+   
     dfBBOX[1]=miny1;
     dfBBOX[3]=maxy1;
     dfBBOX[0]=minx1;
@@ -470,7 +481,7 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
         dMaxExtentDefined=1;
       }
     }
-    
+   
     //Check if values are within allowable extent:
     if(dMaxExtentDefined==1){
       for(int j=0;j<2;j++)if(dfBBOX[j]<dfMaxExtent[j])dfBBOX[j]=dfMaxExtent[j];
@@ -479,12 +490,17 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
         for(int j=0;j<4;j++)dfBBOX[j]=dfMaxExtent[j];
 
     }
-    
+   
     pKey.setFoundExtent(dfBBOX);
     projectionStore.keys.push_back(pKey);
+   
     //CDBDebug("out: %f %f %f %f",dfBBOX[0],dfBBOX[1],dfBBOX[2],dfBBOX[3]);
     return 0;
-  }
+  };
+  
+  
+  
+  
   void CImageWarper::reprojBBOX(double *df4PixelExtent){
     double b[4],X,Y,xmin,xmax,ymin,ymax;
     for(int j=0;j<4;j++)b[j]=df4PixelExtent[j];

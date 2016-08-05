@@ -41,7 +41,23 @@ int main(int argCount,char **argVars){
       printf("  [-h]             Header information only, no data\n");
       return 0;
     }
+    
+    CT::string cmdType = argVars[1];
+    CT::string variableName;
+    if(cmdType.equals("-v")) {
+      if(argCount!=4){
+        CDBError("Not enough arguments");
+        return 1;
+      }
+      variableName = argVars[2];
+      CDBDebug("Dumpvar %s",variableName.c_str());
+      
+    }
+    
     CT::string inputFile=argVars[argCount-1];//"/nobackup/users/plieger/projects/msgcpp/oud/meteosat9.fl.geo.h5";
+    
+    
+    
     int status = 0;
     try{
       cdfObject=new CDFObject();
@@ -54,9 +70,40 @@ int main(int argCount,char **argVars){
       cdfObject->attachCDFReader(cdfReader);
       status = cdfReader->open(inputFile.c_str());
       if(status != 0){CDBError("Unable to read file %s",inputFile.c_str());throw(__LINE__);}
-      CT::string dumpString;
-      CDF::dump(cdfObject,&dumpString);
-      printf("%s\n",dumpString.c_str());
+      
+      if(cmdType.equals("-v")) {
+        CDF::Variable *var = cdfObject->getVariableNE(variableName.c_str());
+        if(var == NULL){
+          CDBError("Variable not found");
+          throw(__LINE__);
+        }
+        var->readData(CDF_FLOAT);
+        CT::string dumpString;
+        CDF::dump(var,&dumpString);
+        printf("%s\n",dumpString.c_str());
+        printf("[");
+        for(size_t j=0;j<var->getSize();j++){
+          if(var->dimensionlinks.size()>0){
+            size_t firstDimSize = var->dimensionlinks[var->dimensionlinks.size()-1]->getSize();
+            if(j%firstDimSize==0&&j!=0){
+              printf("]\n[");
+            }
+          }
+          printf("%f, ",((float*)var->data)[j]);
+        }
+        printf("]\n");
+        
+        
+        
+      }
+      
+      
+      
+      if(cmdType.equals("-h")) {
+        CT::string dumpString;
+        CDF::dump(cdfObject,&dumpString);
+        printf("%s\n",dumpString.c_str());
+      }
       delete cdfReader;cdfReader=NULL;
       delete cdfObject;cdfObject=NULL;
     }
