@@ -1,4 +1,19 @@
-ADAGUC NEWS
+Version 2.0.12, 2016-08-10:
+    - Added support for NetCDF4 groups
+    - Added anydump tool in CCDFDataModel, make with "make anydump"
+    - Added initial support for TROPOMI
+    - Added 360_day calendar support for CLIPC
+    - Bugfix: GetFeatureInfo now works on Byte data
+    - Bugfix: Layers with groups can now be served over ADAGUC OpenDAP, group separator is replaced by "_"
+    
+Version 2.0.9, 2016-07-22:
+    - AdditionalLayer functionality now works with NetCDF files with two dimensions per variable (only y,x data).
+    - Added datamask datapostprocessor
+    - Added include_layer datapostprocessor
+    - WCS NetCDFDataWriter now supports multiple dataobjects as output.
+    - WMS GetFeatureInfo can now output multiple data objects when they have the same standard name
+
+
 --------
 
 - Added Dataset configuration option to load additional datasets through the URL
