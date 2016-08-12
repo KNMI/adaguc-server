@@ -51,7 +51,16 @@ void progresswrite(const char*message,float percentage){
   progress(message,percentage/2.+50);
 }
 
-
+void applyChangesToCDFObject(CDFObject *cdfObject,CT::StackList<CT::string> variablesToDo){
+  for(size_t j=0;j<variablesToDo.size();j++){
+    CDF::Variable *varWithoutTime = cdfObject->getVariableNE(variablesToDo[j].c_str());
+    if(varWithoutTime!=NULL){
+      varWithoutTime->dimensionlinks.insert(varWithoutTime->dimensionlinks.begin(),cdfObject->getDimension("time"));
+    }else{
+      CDBWarning("Variable %s not found");
+    }
+  }
+}
 
   
 int main( int argc, const char* argv[]){
@@ -63,8 +72,8 @@ int main( int argc, const char* argv[]){
     return 1;
   }
   
-  if(argc!=3){
-    CDBDebug("Argument count is wrong, please specifiy an input dir and output file");
+  if(argc!=3&&argc!=4){
+    CDBDebug("Argument count is wrong, please specifiy an input dir and output file, plus optionally a comma separated list of variable names to add the time variable to.");
     return 1;
   }
   
@@ -82,6 +91,13 @@ int main( int argc, const char* argv[]){
       CDBError("No netcdf (*.nc) or hdf5 (*.h5) files files in input directory %s",inputDir.c_str());
       return 1;
     }
+  }
+  
+  
+  CT::StackList<CT::string> variablesToAddTimeTo;
+  if(argc == 4){
+    CT::string variableList = argv[3];
+    variablesToAddTimeTo=variableList.splitToStack(",");    
   }
   
 
@@ -130,6 +146,8 @@ int main( int argc, const char* argv[]){
       message.print("\"Checking file (%d/%d) %s, has start date %s\"",j,dirReader.fileList.size(),fileObject->baseName.c_str(),epochCTime.dateToISOString(date).c_str());
       progress(message.c_str(),(float(j)/float(dirReader.fileList.size()))*50);
       
+
+         
       fileObject->keep=true;
       fileObject->cdfObject->close();
     }
@@ -160,13 +178,16 @@ int main( int argc, const char* argv[]){
   }
   destCDFObject->attachCDFReader(cdfReader);
   status = destCDFObject->open(netcdfFile.c_str());
+  applyChangesToCDFObject(destCDFObject,variablesToAddTimeTo);
   if(status != 0){CDBError("Unable to read file %s",netcdfFile.c_str());throw(__LINE__);}
+  
   
   try{
    for(size_t j=0;j<fileObjects.size();j++){
      try{
-       CT::string data = dump(fileObjects[j]->cdfObject); 
+       //CT::string data = dump(fileObjects[j]->cdfObject); 
 //       // printf("%s",data.c_str());
+     applyChangesToCDFObject(fileObjects[j]->cdfObject,variablesToAddTimeTo);
      if(destCDFObject->aggregateDim(fileObjects[j]->cdfObject,"time")!=0)throw(__LINE__);
      }catch(int e){
        CDBError("Unable to aggregate dimension for %s",fileObjects[j]->baseName.c_str());

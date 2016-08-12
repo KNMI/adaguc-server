@@ -383,6 +383,7 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
           isTimeDim=true;
           try{
             myWMSLayer->dataSource->getDataObject(0)->cdfObject->getVariable("time")->getAttribute("units")->getDataAsString(&units);
+ 
           }catch(int e){
           }
           if(units.length()>0){
@@ -419,6 +420,16 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
                   if(store->size()<4){
                     isConst=false;
                   }
+                  try{
+                    CTime time;
+                    time.init(myWMSLayer->dataSource->getDataObject(0)->cdfObject->getVariable("time"));
+                    if(time.getMode()!=0){
+                       isConst = false;
+                    }
+                  }catch(int e){
+                  }
+                 
+                 
                  
                   CT::string iso8601timeRes="P";
                   CT::string yearPart="";
@@ -430,7 +441,7 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
                       isConst=false;
                       #ifdef CXMLGEN_DEBUG    
                       CDBDebug("year is irregular");
-                      #endif  
+                      #endif
                     }
                   }
                   if(tms[1].tm_mon-tms[0].tm_mon!=0){if(tms[1].tm_mon-tms[0].tm_mon == (tms[nrTimes<10?nrTimes:10].tm_mon-tms[0].tm_mon)/double(nrTimes<10?nrTimes:10))

@@ -27,6 +27,8 @@
 
 const char *CDFNetCDFReader::className="NetCDFReader";
 const char *CDFNetCDFWriter::className="NetCDFWriter";
+
+#define CDFNetCDFGroupSeparator "/"
 //const char *CCDFWarper::className="CCDFWarper";
 
 // #define CCDFNETCDFIO_DEBUG
@@ -406,7 +408,7 @@ int CDFNetCDFReader::readAttributes(int root_id,std::vector<CDF::Attribute *> &a
 
 
 int CDFNetCDFReader::_findNCGroupIdForCDFVariable(CT::string *varName){
-  CT::string * paths=varName->splitToArray(".");
+  CT::string * paths=varName->splitToArray(CDFNetCDFGroupSeparator);
   if(paths->count <= 1){
     delete[] paths;
     return root_id;
@@ -440,9 +442,9 @@ int CDFNetCDFReader::readVariables(int groupId,CT::string *groupName){
       if(status!=NC_NOERR){ncError(__LINE__,className,"nc_inq_grpname: ",status);delete[] groupIds;return 1;}
       CT::string newGroupName;
       if(groupName->length()>0){
-        newGroupName.print("%s%s.",groupName->c_str(),foundGroupName);
+        newGroupName.print("%s%s%s",groupName->c_str(),foundGroupName,CDFNetCDFGroupSeparator);
       }else{
-        newGroupName.print("%s.",foundGroupName);
+        newGroupName.print("%s%s",foundGroupName,CDFNetCDFGroupSeparator);
       }
       status = readVariables(groupIds[g],&newGroupName);
       if(status!=0){CDBError("readVariables failed for group [%s]",newGroupName.c_str());delete[] groupIds;return 1;}
