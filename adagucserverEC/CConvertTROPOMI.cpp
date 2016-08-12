@@ -76,8 +76,8 @@ int CConvertTROPOMI::convertTROPOMIHeader( CDFObject *cdfObject,CServerParams *s
   CDF::Variable *pointLat;
   
   try{
-    pointLon = cdfObject->getVariable("PRODUCT.longitude");
-    pointLat = cdfObject->getVariable("PRODUCT.latitude");
+    pointLon = cdfObject->getVariable("PRODUCT/longitude");
+    pointLat = cdfObject->getVariable("PRODUCT/latitude");
   }catch(int e){
     CDBError("lat or lon variables not found");
     return 1;
@@ -183,11 +183,11 @@ int CConvertTROPOMI::convertTROPOMIHeader( CDFObject *cdfObject,CServerParams *s
     CDF::Variable *var = cdfObject->variables[v];
     if(var->isDimension==false){
       
-      if(var->name.startsWith("PRODUCT.")&&var->dimensionlinks.size()>2){
+      if(var->name.startsWith("PRODUCT/")&&var->dimensionlinks.size()>2){
         if(
-          !var->name.equals("PRODUCT.longitude")&&
-          !var->name.equals("PRODUCT.latitude")&&
-          !var->name.equals("PRODUCT.time")
+          !var->name.equals("PRODUCT/longitude")&&
+          !var->name.equals("PRODUCT/latitude")&&
+          !var->name.equals("PRODUCT/time")
           
         ){
           varsToConvert.add(CT::string(var->name.c_str()));
@@ -272,8 +272,8 @@ int CConvertTROPOMI::convertTROPOMIData(CDataSource *dataSource,int mode){
   CDF::Variable *pointLon;
   CDF::Variable *pointLat;
   try{
-    pointLon = cdfObject->getVariable("PRODUCT.longitude");
-    pointLat = cdfObject->getVariable("PRODUCT.latitude");
+    pointLon = cdfObject->getVariable("PRODUCT/longitude");
+    pointLat = cdfObject->getVariable("PRODUCT/latitude");
   }catch(int e){
     CDBError("lat or lon variables not found");
     return 1;

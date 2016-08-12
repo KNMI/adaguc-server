@@ -80,6 +80,10 @@ class CTime{
   utUnit  dataunits;
   bool isInitialized;
   int mode;
+  
+  int getMode(){
+      return mode;
+  }
   /**
    * Class which holds date parameters like year, month, day, hour, minute, second and offset
    */
