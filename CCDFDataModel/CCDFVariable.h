@@ -84,6 +84,7 @@ namespace CDF{
     static CustomMemoryReader*CustomMemoryReaderInstance;
   private:
         CustomReader * customReader;
+        bool _isString;
   public:
       void setCustomReader(CustomReader *customReader){
         hasCustomReader=true;
@@ -210,6 +211,7 @@ namespace CDF{
         cdfReaderPointer=NULL;
         parentCDFObject=NULL;
         hasCustomReader = false;
+        _isString = false;
       }
       ~Variable(){
         
@@ -230,13 +232,21 @@ namespace CDF{
       CDFType getType(){
         return currentType;
       };
+      CDFType getNativeType(){
+        return nativeType;
+      };
       void setType(CDFType type){
         currentType = type;
       };
       
       
-      
-      
+      bool isString(){
+        return _isString;
+      }
+      bool isString(bool isString){
+        _isString=isString;
+        return _isString;
+      }
       
      
       void setName(const char *value){

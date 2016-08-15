@@ -77,22 +77,41 @@ int main(int argCount,char **argVars){
           CDBError("Variable not found");
           throw(__LINE__);
         }
-        var->readData(CDF_FLOAT);
+        
+        
         CT::string dumpString;
         CDF::dump(var,&dumpString);
         printf("%s\n",dumpString.c_str());
-        printf("[");
-        for(size_t j=0;j<var->getSize();j++){
-          if(var->dimensionlinks.size()>0){
-            size_t firstDimSize = var->dimensionlinks[var->dimensionlinks.size()-1]->getSize();
-            if(j%firstDimSize==0&&j!=0){
-              printf("]\n[");
-            }
-          }
-          printf("%f, ",((float*)var->data)[j]);
-        }
-        printf("]\n");
         
+        bool isString = var->getNativeType()==CDF_STRING;
+        isString = true;
+        if(!isString){
+          var->readData(CDF_FLOAT);
+          printf("[");
+          for(size_t j=0;j<var->getSize();j++){
+            if(var->dimensionlinks.size()>0){
+              size_t firstDimSize = var->dimensionlinks[var->dimensionlinks.size()-1]->getSize();
+              if(j%firstDimSize==0&&j!=0){
+                printf("]\n[");
+              }
+            }
+            printf("%g, ",((float*)var->data)[j]);
+          }
+          printf("]\n");
+        }else{
+          var->readData(CDF_STRING);
+          printf("[");
+          for(size_t j=0;j<var->getSize();j++){
+            if(var->dimensionlinks.size()>0){
+              size_t firstDimSize = var->dimensionlinks[var->dimensionlinks.size()-1]->getSize();
+              if(j%firstDimSize==0&&j!=0){
+                printf("]\n[");
+              }
+            }
+            printf("\"%s\",\n ",((char**)var->data)[j]);
+          }
+          printf("]\n");
+        }
         
         
       }

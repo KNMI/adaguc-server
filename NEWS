@@ -1,3 +1,8 @@
+Version 2.0.13, 2016-08-15:
+    - OpenDAP strings are encoded with two dimensions data(numstrings,maxStrlen64) by the NetCDF library. Internally this is now translated to CDF_STRING
+    - Anydump is able to list strings
+    - Timeseries/points are now plotted correctly over opendap
+
 Version 2.0.12, 2016-08-10:
     - Added support for NetCDF4 groups
     - Added anydump tool in CCDFDataModel, make with "make anydump"
