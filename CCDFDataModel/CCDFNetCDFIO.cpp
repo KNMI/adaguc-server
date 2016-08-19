@@ -1154,7 +1154,13 @@ int CDFNetCDFWriter::_write(void(*progress)(const char*message,float percentage)
               for(size_t id=0;id<variable->dimensionlinks[iterativeDimIndex]->getSize();id++){
                 
                 CT::string progressMessage;
-                progressMessage.print("\"%d/%d iterating dim %s with index %d/%d for variable %s\"",nrVarsWritten+1,cdfObject->variables.size(),variable->dimensionlinks[iterativeDimIndex]->name.c_str(),id,variable->dimensionlinks[iterativeDimIndex]->getSize(),variable->name.c_str());
+                progressMessage.print("\"%d/%d iterating dim %s with index %d/%d for variable %s\"",
+                                      nrVarsWritten+1,
+                                      cdfObject->variables.size(),
+                                      variable->dimensionlinks[iterativeDimIndex]->name.c_str(),
+                                      id,
+                                      variable->dimensionlinks[iterativeDimIndex]->getSize(),
+                                      variable->name.c_str());
                 
                 float varPercentage= float(nrVarsWritten)/float(cdfObject->variables.size());
                 float dimPercentage = (float(id)/float(variable->dimensionlinks[iterativeDimIndex]->getSize()))/float(cdfObject->variables.size());
