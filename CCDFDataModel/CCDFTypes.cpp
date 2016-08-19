@@ -145,11 +145,23 @@ CT::string CDF::getErrorMessage(int errorCode){
 }
 
 int CDF::DataCopier::copy(void *destdata,CDFType destType,void *sourcedata,CDFType sourcetype,size_t destinationOffset,size_t sourceOffset,size_t length){
-   if(sourcetype==CDF_STRING||destType==CDF_STRING){
-    //CDBError("Unable to copy CDF_STRING");
+  if(sourcetype==CDF_STRING||destType==CDF_STRING){
+    if(sourcetype==CDF_STRING&&destType==CDF_STRING){
+      for(size_t t=0;t<length;t++){
+        const char*sourceValue = ((char**)sourcedata)[t+sourceOffset];
+        if(sourceValue!=NULL){
+          size_t strlength =strlen(sourceValue);
+          ((char**)destdata)[t+destinationOffset]=(char*)malloc(strlength+1);
+          strncpy(((char**)destdata)[t+destinationOffset],sourceValue,strlength);
+          ((char**)destdata)[t+destinationOffset][strlength]=0;
+        }
+      }
+      return 0;
+    }
     return 1;
   }
   switch(destType){
+    
     case CDF_CHAR:_copy((char*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
     case CDF_BYTE:_copy((char*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
     case CDF_UBYTE:_copy((unsigned char*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;

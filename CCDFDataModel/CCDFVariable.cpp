@@ -425,14 +425,35 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
 
   
   CTime ccdftimesrc,ccdftimedst;
-  if(ccdftimesrc.init(srcDimVar)!=0){
-    CDBError("Unable to initialize time library");
-    throw(1);
+  
+  bool isTimeDim = false;
+  
+  try{
+    if(srcDimVar->getAttribute("standard_name")->toString().equals("time")){
+      isTimeDim = true;
+    }
+  }catch(int e){
   }
-
+  
+  if(isTimeDim){
+    if(ccdftimesrc.init(srcDimVar)!=0){
+      CDBError("Unable to initialize time library");
+      throw(1);
+    }
+  }
   
   for(size_t indimsize = 0;indimsize<srcDimVar->getSize();indimsize++){
-    CT::string srcDimValue=ccdftimesrc.dateToString(ccdftimesrc.getDate(srcDimVar->getDataAt<double>(indimsize)));
+    CT::string srcDimValue;
+    
+    if(isTimeDim){
+      srcDimValue=ccdftimesrc.dateToString(ccdftimesrc.getDate(srcDimVar->getDataAt<double>(indimsize)));
+    }else{
+      if(srcDimVar->getType()==CDF_STRING){
+        srcDimValue.print("%s",((const char**)srcDimVar->data)[indimsize]);
+      }else{
+        srcDimValue.print("%f",srcDimVar->getDataAt<double>(indimsize));
+      }
+    }
     
     #ifdef CCDFDATAMODEL_DEBUG    
     CDBDebug("srcDimValue = %s" ,srcDimValue.c_str());
@@ -446,11 +467,22 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
     for(size_t _j=0;_j<dimSize;_j++){
       size_t j=_j;//(dimSize-1)-_j;
       
-      if(ccdftimedst.init(iterativeVar)!=0){
-        CDBError("Unable to initialize time library");
-        throw(1);
+      if(isTimeDim){
+        if(ccdftimedst.init(iterativeVar)!=0){
+          CDBError("Unable to initialize time library");
+          throw(1);
+        }
       }
-      CT::string dstDimValue = ccdftimedst.dateToString(ccdftimedst.getDate(iterativeVar->getDataAt<double>(j)));
+      CT::string dstDimValue;
+      if(isTimeDim){
+        dstDimValue = ccdftimedst.dateToString(ccdftimedst.getDate(iterativeVar->getDataAt<double>(j)));
+      }else{
+        if(iterativeVar->getType()==CDF_STRING){
+          dstDimValue.print("%s",((const char**)iterativeVar->data)[j]);
+        }else{
+          dstDimValue.print("%f",iterativeVar->getDataAt<double>(j));
+        }
+      }
       #ifdef CCDFDATAMODEL_DEBUG    
      // CDBDebug("dstDimValue = %s" ,dstDimValue.c_str());
 #endif
@@ -515,7 +547,11 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
 //         CDBDebug("srcDimVar units = %s",srcDimVar->getAttribute("units")->toString().c_str());
         double destValue = 0;
         try{
-          destValue = ccdftimedst.dateToOffset(ccdftimedst.stringToDate(srcDimValue.c_str()));
+          if(isTimeDim){
+            destValue = ccdftimedst.dateToOffset(ccdftimedst.stringToDate(srcDimValue.c_str()));
+          }else{
+            destValue = srcDimValue.toDouble();
+          }
         }catch(int e){
           CDBError("Error converting %s date",srcDimValue.c_str());
           throw e;
@@ -526,17 +562,24 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
         
         if(currentType==CDF_DOUBLE)((double*)dstData)[currentDimSize] = destValue;
         if(currentType==CDF_FLOAT)((float*)dstData)[currentDimSize] = (float)destValue;
-//         status = DataCopier::copy(dstData,//destdata
-//                          currentType,     //thistype
-//                          srcDimVar->data, //sourcedata
-//                          sourceType,      //sourcetype
-//                          currentDimSize,  //destinationOffset
-//                          indimsize,       //sourceOffset
-//                          1);              //Nr. Elements
-//         if(status!=0){
-//           CDBError("Unable to copy timestep ");
-//           throw("__LINE__");
-//         }
+        if(currentType==CDF_STRING){
+          //CDBDebug("Appending %s",srcDimValue.c_str());
+          ((char**)dstData)[currentDimSize]=(char*)malloc(srcDimValue.length()+1);
+          strncpy(((char**)dstData)[currentDimSize],srcDimValue.c_str(),srcDimValue.length());
+          ((char**)dstData)[currentDimSize][srcDimValue.length()]=0;
+        }
+        
+// //         status = DataCopier::copy(dstData,//destdata
+// //                          currentType,     //thistype
+// //                          srcDimVar->data, //sourcedata
+// //                          sourceType,      //sourcetype
+// //                          currentDimSize,  //destinationOffset
+// //                          indimsize,       //sourceOffset
+// //                          1);              //Nr. Elements
+// //         if(status!=0){
+// //           CDBError("Unable to copy timestep ");
+// //           throw("__LINE__");
+// //         }
         iterativeVar->freeData();
         iterativeVar->data=dstData;
         

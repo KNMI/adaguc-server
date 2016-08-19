@@ -1,3 +1,4 @@
+
 HELPERCLASSES= ../hclasses
 HELPOBJECTS = $(HELPERCLASSES)/hclasses.a
 
@@ -61,10 +62,11 @@ OBJECTS = CDataReader.o COGCDims.o CImageWarper.o CGeoParams.o CCairoPlotter.o C
 EXECUTABLE= adagucserver
 
 default: $(EXECUTABLE)
-$(EXECUTABLE): $(OBJECTS) $(EXECUTABLE).o h5ncdump.o aggregate_time.o geojsondump.o 
+$(EXECUTABLE): $(OBJECTS) $(EXECUTABLE).o h5ncdump.o aggregate_time.o aggregate_dim.o geojsondump.o 
 	g++ $(EXECUTABLE).o $(OBJECTS) $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  $(EXECUTABLE) $(LIBS)
 	g++ "h5ncdump.o" $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  "h5ncdump" $(LIBS)
 	g++ "aggregate_time.o" $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  "aggregate_time" $(LIBS)
+	g++ "aggregate_dim.o" $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  "aggregate_dim" $(LIBS)
 	g++ "geojsondump.o"  $(OBJECTS) $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  "geojsondump" $(LIBS)
 	
 	
@@ -76,7 +78,7 @@ geojsondump: geojsondump.o
 	$(CCOMPILER) -c $< -o $@ $(BUILDER_ADAGUCCOMPONENTS)
 
 clean:
-	rm $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE).o h5ncdump.o h5ncdump aggregate_time.o aggregate_time geojsondump.o  geojsondump
+	rm $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE).o h5ncdump.o h5ncdump aggregate_time.o aggregate_time aggregate_dim.o aggregate_dim geojsondump.o  geojsondump
 run:
 	make
 	./$(EXECUTABLE)		
