@@ -96,6 +96,14 @@ CT::string Feature::toString() {
   return s;
 }
 
+
+Feature::~Feature(){
+  for (std::map<std::string, FeatureProperty*>::iterator it=fp.begin(); it!=fp.end(); ++it){
+    delete it->second;
+  }
+  fp.clear();
+}
+
 Feature::Feature(){
 }
 Feature::Feature(CT::string _id){

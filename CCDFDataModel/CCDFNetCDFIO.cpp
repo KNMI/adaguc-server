@@ -24,7 +24,7 @@
  ******************************************************************************/
 
 #include "CCDFNetCDFIO.h"
-
+#include "CStopWatch.h"
 const char *CDFNetCDFReader::className="NetCDFReader";
 const char *CDFNetCDFWriter::className="NetCDFWriter";
 
