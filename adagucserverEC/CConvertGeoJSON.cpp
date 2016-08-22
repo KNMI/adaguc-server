@@ -286,7 +286,8 @@
         }
     }      
     
-    void fillLine(int nodes, int *nodeX, int IMAGE_LEFT, int IMAGE_RIGHT, unsigned short int* scanline, unsigned short value){
+  
+    static inline void fillLine(int &nodes, int *nodeX, int &IMAGE_LEFT, int &IMAGE_RIGHT, unsigned short int* scanline, unsigned short value){
         //  Fill the pixels between node pairs.
         for (int i=0; i<nodes; i+=2) {
           if   (nodeX[i  ]>=IMAGE_RIGHT) break;
@@ -294,91 +295,92 @@
             if (nodeX[i  ]< IMAGE_LEFT ) nodeX[i  ]=IMAGE_LEFT ;
             if (nodeX[i+1]> IMAGE_RIGHT) nodeX[i+1]=IMAGE_RIGHT;
             for (int j=nodeX[i]; j<nodeX[i+1]; j++){
-//                imagedata[int(j)+int(pixelY)*w] = value;
                 scanline[j] = value;
             }
           }
         }      
     }
- 
-    void CConvertGeoJSON::drawpolyWithHoles_index(unsigned short int *imagedata,int w,int h,int polyCorners,float *polyXY,unsigned short int value,int holes,int *holeCorners, float*holeXY[]){
+    
+    
+     
+    
+    void CConvertGeoJSON::drawpolyWithHoles_index(int xMin,int yMin, int xMax, int yMax, unsigned short int *imagedata,int w,int h,int polyCorners,float *polyXY,unsigned short int value,int holes,int *holeCorners, float*holeXY[]){
+      if(xMax<0||yMax<0||xMin>=w||yMin>=h)return;
+      
         //  public-domain code by Darel Rex Finley, 2007
 
       int  nodes, nodeX[polyCorners*2+1],  pixelY, i ;
-      int IMAGE_TOP = 0;
-      int IMAGE_BOT = h;
-      int IMAGE_LEFT = 0;
-      int IMAGE_RIGHT = w;
+      
+      
+      if(xMin<0)xMin=0;
+      if(yMin<5)yMin=0;
+      if(xMax>=w)xMax=w;
+      if(yMax>=h)yMax=h;
+      
+      int IMAGE_TOP = yMin;
+      int IMAGE_BOT = yMax+1;if(IMAGE_BOT>h)IMAGE_BOT=h;
+      int IMAGE_LEFT = xMin;
+      int IMAGE_RIGHT = xMax;
+      int scanLineWidth = IMAGE_RIGHT-IMAGE_LEFT;
 
+      
       int cntLines=0;
       int cntNodes=0;
       int cntHoles=0;
       int cntHoleLists=0;
       //Allocate  scanline
-      unsigned short scanline[w];
+      unsigned short scanline[scanLineWidth];
       //  Loop through the rows of the image.
       for (pixelY=IMAGE_TOP; pixelY<IMAGE_BOT; pixelY++) {
+        
         cntLines++;
-        for (i=0; i<w;i++) scanline[i]=65535u;
-
+        for (i=0; i<scanLineWidth;i++) scanline[i]=65535u;
         buildNodeList(pixelY, nodes, nodeX, polyCorners, polyXY);         
         cntNodes+=nodes;
-
         bubbleSort(nodes, nodeX);
-
-//         //  Fill the pixels between node pairs.
-//         for (i=0; i<nodes; i+=2) {
-//           if   (nodeX[i  ]>=IMAGE_RIGHT) break;
-//           if   (nodeX[i+1]> IMAGE_LEFT ) {
-//             if (nodeX[i  ]< IMAGE_LEFT ) nodeX[i  ]=IMAGE_LEFT ;
-//             if (nodeX[i+1]> IMAGE_RIGHT) nodeX[i+1]=IMAGE_RIGHT;
-//             for (j=nodeX[i]; j<nodeX[i+1]; j++){
-// //                imagedata[int(j)+int(pixelY)*w] = value;
-//                 scanline[j] = value;
-//             }
-//           }
-//         }
-        fillLine(nodes, nodeX, IMAGE_LEFT, IMAGE_RIGHT, scanline, value);
+        //fillLine2(nodes, nodeX, IMAGE_LEFT,IMAGE_RIGHT, scanline, value);
+        for (i=0;i<nodes;i+=2){
+          int x1=nodeX[i]-IMAGE_LEFT;
+          int x2=nodeX[i+1]-IMAGE_LEFT;
+          if(x1<0)x1=0;
+          if (x2>scanLineWidth)x2=scanLineWidth;
+          for(int j=x1;j<x2;j++){
+            scanline[j]=value;
+          }
+        }     
         
         for (int h=0; h<holes; h++) {
-          
-//           //  Build a list of hole nodes.
-//           nodes=0; j=holeCorners[h]-1;
-//           for (i=0; i<holeCorners[h]; i++) {
-//             if ((holeXY[h][i*2+1]<(double) pixelY && holeXY[h][j*2+1]>=(double) pixelY)
-//             || ( holeXY[h][j*2+1]<(double) pixelY && holeXY[h][i*2+1]>=(double) pixelY)) {
-//               nodeX[nodes++]=(int) (holeXY[h][i*2]+(pixelY-holeXY[h][i*2+1])/(holeXY[h][j*2+1]-holeXY[h][i*2+1])
-//               *(holeXY[h][j*2]-holeXY[h][i*2])); }
-//             j=i; }
           buildNodeList(pixelY, nodes, nodeX, holeCorners[h], holeXY[h]);    
           cntHoleLists++;
           cntHoles+=holes;
           bubbleSort(nodes, nodeX);
-
-//           //  Fill the pixels between node pairs.
-//           for (i=0; i<nodes; i+=2) {
-//             if   (nodeX[i  ]>=IMAGE_RIGHT) break;
-//             if   (nodeX[i+1]> IMAGE_LEFT ) {
-//               if (nodeX[i  ]< IMAGE_LEFT ) nodeX[i  ]=IMAGE_LEFT ;
-//               if (nodeX[i+1]> IMAGE_RIGHT) nodeX[i+1]=IMAGE_RIGHT;
-//               for (j=nodeX[i]; j<nodeX[i+1]; j++){
-//   //                imagedata[int(j)+int(pixelY)*w] = value;
-//                   scanline[j] = 65535u;
-//               }
-//             }
-//           }
-          fillLine(nodes, nodeX, IMAGE_LEFT, IMAGE_RIGHT, scanline, 65535u);
+          for (i=0;i<nodes;i+=2){
+            int x1=nodeX[i]-IMAGE_LEFT;
+            int x2=nodeX[i+1]-IMAGE_LEFT;
+            if(x1<0)x1=0;
+            if (x2>scanLineWidth)x2=scanLineWidth;
+            for(int j=x1;j<x2;j++){
+              scanline[j]=65535u;
+            }
+          }     
         }
         unsigned int startScanLineY=pixelY*w;
-        for (i=0; i<w; i++) {
-          if (scanline[i]!=65535u) {
-            imagedata[i+startScanLineY]=scanline[i];
+        for (i=IMAGE_LEFT; i<IMAGE_RIGHT; i++) {
+          if (scanline[i-IMAGE_LEFT]!=65535u) {
+            imagedata[i+startScanLineY]=scanline[i-IMAGE_LEFT];
           }
         }
       }  
 //      CDBDebug("drawPoly %d %d %d %d %d", cntLines, cntNodes, cntHoles, cntHoleLists, cntCnt);
-    }
+    };
  
+    
+    
+    
+    
+    
+    
+    
      void CConvertGeoJSON::drawpoly2_index(unsigned short *imagedata,int w,int h,int polyCorners,float *polyXY,unsigned short value){
         //  public-domain code by Darel Rex Finley, 2007
 
@@ -1105,6 +1107,7 @@
           int featureIndex=0;
           typedef std::vector<Feature*>::iterator it_type;
           for(it_type it = features.begin(); it != features.end(); ++it) { //Loop over all features
+            
             std::vector<Polygon>polygons=(*it)->getPolygons();
 //            CT::string id=(*it)->getId();
 //            CDBDebug("feature[%s] %d of %d with %d polygons", id.c_str(), featureIndex, features.size(), polygons.size());
@@ -1115,6 +1118,9 @@
               float projectedXY[numPoints*2];
               float minX=FLT_MAX,minY=FLT_MAX;
               float maxX=-FLT_MAX,maxY=-FLT_MAX;
+              
+              int pxMin,pxMax,pyMin,pyMax,first=0;
+              
 //              CDBDebug("Plotting a polygon of %d points with %d holes [? of %d]", numPoints, itpoly->getHoles().size(), featureIndex);
               for (int j=0; j<numPoints;j++) {
                 double tprojectedX=polyX[j];
@@ -1125,6 +1131,18 @@
                 if(!status){
                   dlon=int((tprojectedX-offsetX)/cellSizeX);
                   dlat=int((tprojectedY-offsetY)/cellSizeY);
+                  
+                  if(first == 0){
+                    first=1;
+                    pxMin=dlon;pxMax=dlon;
+                    pyMin=dlat;pyMax=dlat;
+                  }else{
+                    if(dlon<pxMin)pxMin=dlon;
+                    if(dlon>pxMax)pxMax=dlon;
+                    if(dlat<pyMin)pyMin=dlat;
+                    if(dlat>pyMax)pyMax=dlat;
+                  }
+                  
                   minX=MIN(minX, tprojectedX);
                   minY=MIN(minY, tprojectedY);
                   maxX=MAX(maxX, tprojectedX);
@@ -1136,11 +1154,18 @@
                 projectedXY[j*2]=dlon;
                 projectedXY[j*2+1]=dlat;
               }
-              if ((minX>urX)||(maxX<llX)||(maxY<llY)||(minY>urY)){
+              
+              
+              
+              if ((minX>urX)||(maxX<llX)||(maxY<llY)||(minY>urY))
+              {
 //                CDBDebug("skip %f,%f,%f,%f for %f,%f,%f,%f", minX,maxX, minY, maxY, llX, urX, urY, llY);
               } else {
+             {
+
+     
 //                float tolerance=0.001;
-                std::deque <float> polyline(projectedXY,projectedXY+numPoints*2);
+//                std::deque <float> polyline(projectedXY,projectedXY+numPoints*2);
 //                  float *result=new float[polyline.size()];
                 
 //                  float *last = psimpl::simplify_douglas_peucker<2>(
@@ -1179,19 +1204,22 @@
                   } 
                   h++;
                 }
+                
+                
+                {
 
 //                  CDBDebug("passed %d, %d", featureIndex, nrHoles);
 //                  int dpCount=(last-result)/sizeof(float)*2;
                 int dpCount=numPoints;
-                drawpolyWithHoles_index(sdata,dataSource->dWidth,dataSource->dHeight,dpCount,projectedXY,featureIndex,
-                                        nrHoles,holeSize,projectedHoleXY);
+                drawpolyWithHoles_index(pxMin,pyMin,pxMax,pyMax,sdata,dataSource->dWidth,dataSource->dHeight,dpCount,projectedXY,featureIndex,nrHoles,holeSize,projectedHoleXY);
 //                  delete[]result;
 
                 for (int h=0; h<nrHoles;h++) {
                   delete[]projectedHoleXY[h];
                 }
-                  
+                }
               }
+            }
             }
       #ifdef MEASURETIME
         StopWatch_Stop("Feature drawn %d", featureIndex);

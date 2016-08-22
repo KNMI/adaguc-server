@@ -100,6 +100,7 @@ class Feature {
   DEF_ERRORFUNCTION();
 public:
   Feature();
+  ~Feature();
   Feature(CT::string _id);
   Feature(const char *_id);
   void newPolygon();

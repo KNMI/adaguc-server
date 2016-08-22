@@ -48,7 +48,7 @@ class CConvertGeoJSON{
   static void drawpoly2(float *imagedata,int w,int h,int polyCorners,float *polyXY,float value);
   static void drawpoly2_index(unsigned short  *imagedata,int w,int h,int polyCorners,float *polyXY,unsigned short value);
   static void drawpolyWithHoles(float *imagedata,int w,int h,int polyCorners,float *polyXY,float value,int holes,int *holeCorners,float*holeXY[]);
-  static void drawpolyWithHoles_index(unsigned short *imagedata,int w,int h,int polyCorners,float *polyXY,unsigned short int value,int holes,int *holeCorners,float *holeXY[]);
+  static void drawpolyWithHoles_index(int xMin,int yMin, int xMax, int yMax,unsigned short *imagedata,int w,int h,int polyCorners,float *polyXY,unsigned short int value,int holes,int *holeCorners,float *holeXY[]);
   static void drawpolyWithHoles_indexORG(unsigned short *imagedata,int w,int h,int polyCorners,float *polyXY,unsigned short int value,int holes,int *holeCorners,float *holeXY[]);
 public: 
   static std::map<std::string, std::vector<Feature *> >  featureStore;
