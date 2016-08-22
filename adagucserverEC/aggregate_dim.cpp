@@ -53,7 +53,7 @@ void progresswrite(const char*message,float percentage){
 int memberNo = 1;
 void applyChangesToCDFObject(const char* _fileName,CDFObject *cdfObject,CT::StackList<CT::string> variablesToDo,const char *dimNameToAggregate){
   CT::string fileName = _fileName;
-  CT::string memberValue = fileName.substring(23,-1);
+  CT::string memberValue = fileName.substring(fileName.indexOf("KNMI")+5,-1);
   int end = memberValue.indexOf("_");
   memberValue.substringSelf(0,end);
   for(size_t j=0;j<variablesToDo.size();j++){
