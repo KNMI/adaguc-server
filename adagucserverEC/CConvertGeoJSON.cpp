@@ -310,7 +310,7 @@
         //  public-domain code by Darel Rex Finley, 2007
 
       int  nodes, nodeX[polyCorners*2+1],  pixelY, i ;
-      
+    
       
       if(xMin<0)xMin=0;
       if(yMin<5)yMin=0;
@@ -371,6 +371,7 @@
           }
         }
       }  
+   
 //      CDBDebug("drawPoly %d %d %d %d %d", cntLines, cntNodes, cntHoles, cntHoleLists, cntCnt);
     };
  
