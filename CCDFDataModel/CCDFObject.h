@@ -26,7 +26,7 @@
 #ifndef CCDFOBJECT_H
 #define CCDFOBJECT_H
 
-#include "CGeoJSONData.h"
+
 #include "CCDFVariable.h"
 #include "CDebugger_H2.h"
 

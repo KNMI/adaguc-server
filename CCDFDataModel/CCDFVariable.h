@@ -237,6 +237,7 @@ namespace CDF{
       };
       void setType(CDFType type){
         currentType = type;
+        if(nativeType == CDF_NONE)nativeType =type;
       };
       
       

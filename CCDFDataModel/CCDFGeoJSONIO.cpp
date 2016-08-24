@@ -75,6 +75,7 @@ int CDFGeoJSONReader::open(const char *fileName){
   jsonVar->setName("jsoncontent");
   jsonVar->currentType=CDF_CHAR;
   jsonVar->nativeType=CDF_CHAR;
+  jsonVar->setType(CDF_CHAR);
   jsonVar->isDimension=false;
   jsonVar->allocateData(jsonData.length()+1);
   strncpy((char *)jsonVar->data,jsonData.c_str(),jsonData.length()+1);

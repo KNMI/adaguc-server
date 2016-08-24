@@ -27,6 +27,7 @@
 #define CGeoParams_H
 #include "CTypes.h"
 #include <math.h>
+#include <map>
 //static float  NegativeNaN = log(-1) ;
 
 class CKeyValue{
@@ -35,7 +36,7 @@ class CKeyValue{
     CT::string description;
     CT::string value;
     
-    CKeyValue(const CT::string &key,const CT::string &desrciption,const CT::string &value){
+    CKeyValue(const CT::string &key,const CT::string &description,const CT::string &value){
       this->key=key;
       this->description=description;
       this->value=value;
@@ -173,6 +174,20 @@ public:
   std::vector<CKeyValue> paramList;
   
 };    
+
+class CFeature{
+public:
+  CFeature(){
+  }
+  CFeature(int _id){
+    this->id = _id;
+  }
+  void addProperty(const char*propertyName, const char *propertyValue){
+    paramMap[propertyName] = propertyValue;
+  }
+  int id;
+  std::map<std::string,std::string> paramMap;
+};
 
 void CoordinatesXYtoScreenXY(double &x,double &y,CGeoParams *geoParam);
 void CoordinatesXYtoScreenXY(CPoint &p,CGeoParams *geoParam);

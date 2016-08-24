@@ -525,6 +525,7 @@
         BBOX dfBBOX;
         getBBOX(cdfObject, dfBBOX, *json, features);  
 
+        CDBDebug("addCDFInfo");
         addCDFInfo(cdfObject, NULL, dfBBOX, features, false);
         
         std::string geojsonkey=jsonVar->getAttributeNE("ADAGUC_BASENAME")->toString().c_str();
@@ -565,7 +566,10 @@
         CDF::Variable *varX = cdfObject->getVariableNE("x");
         CDF::Variable *varY = cdfObject->getVariableNE("y");
         
-        if(dimX==NULL||dimY==NULL||varX==NULL||varY==NULL) {
+        
+        if(dimX==NULL||dimY==NULL||varX==NULL||varY==NULL) 
+        {
+          
           //If not available, create new dimensions and variables (X,Y,T)
 #ifdef CCONVERTGEOJSON_DEBUG
           CDBDebug("CellsizeX: %f", cellSizeX);
@@ -582,7 +586,7 @@
           varX->dimensionlinks.push_back(dimX);
           cdfObject->addVariable(varX);
           CDF::allocateData(CDF_DOUBLE,&varX->data,dimX->length);
-
+varX->setType(CDF_DOUBLE);
           //For y 
           dimY=new CDF::Dimension();
           dimY->name="y";
@@ -606,17 +610,17 @@
             ((double*)varY->data)[j]=y;
           }
         }
+     
         
-        CDF::Variable *new2DVar = new CDF::Variable();
-        cdfObject->addVariable(new2DVar);
-
-        new2DVar->dimensionlinks.push_back(dimY);
-        new2DVar->dimensionlinks.push_back(dimX);
+        CDF::Variable *polygonIndexVar = new CDF::Variable();
+        cdfObject->addVariable(polygonIndexVar);
+        polygonIndexVar->dimensionlinks.push_back(dimY);
+        polygonIndexVar->dimensionlinks.push_back(dimX);
+        polygonIndexVar->setType(CDF_USHORT);
+        polygonIndexVar->name="polygons";
         
-        new2DVar->setType(CDF_USHORT);
-        new2DVar->name="polygons";
         unsigned short f=65535u;
-        new2DVar->setAttribute("_FillValue",CDF_USHORT,&f,1);
+        polygonIndexVar->setAttribute("_FillValue",CDF_USHORT,&f,1);
 
 
         CDBDebug("<><><><><><><>Creating variables for all properties fields<><><><><><>");
@@ -668,29 +672,29 @@
                 CDF::Variable *newVar = new CDF::Variable();
                 cdfObject->addVariable(newVar);
                 newVar->dimensionlinks.push_back(dimFeatures);
-                CDF::Variable *new2DVar = new CDF::Variable();
-                cdfObject->addVariable(new2DVar);
-                new2DVar->dimensionlinks.push_back(dimY);
-                new2DVar->dimensionlinks.push_back(dimX);
+                CDF::Variable *polygonIndexVar = new CDF::Variable();
+                cdfObject->addVariable(polygonIndexVar);
+                polygonIndexVar->dimensionlinks.push_back(dimY);
+                polygonIndexVar->dimensionlinks.push_back(dimX);
                 FeaturePropertyType tp=ftit->second->getType();
                 if (tp==typeStr) {
                   newVar->setType(CDF_STRING);
-                  new2DVar->setType(CDF_STRING);
+                  polygonIndexVar->setType(CDF_STRING);
                 } else if (tp==typeInt) { 
                   newVar->setType(CDF_USHORT);
-                  new2DVar->setType(CDF_USHORT);
+                  polygonIndexVar->setType(CDF_USHORT);
                   unsigned short f=65535u;
                   newVar->setAttribute("_FillValue",CDF_USHORT,&f,1);
-                  new2DVar->setAttribute("_FillValue",CDF_USHORT,&f,1);
+                  polygonIndexVar->setAttribute("_FillValue",CDF_USHORT,&f,1);
                 } else if (tp==typeDouble) {
                   newVar->setType(CDF_FLOAT);
                   float f=-99999;
                   newVar->setAttribute("_FillValue",CDF_FLOAT,&f,1);
-                  new2DVar->setAttribute("_FillValue",CDF_FLOAT,&f,1);
+                  polygonIndexVar->setAttribute("_FillValue",CDF_FLOAT,&f,1);
                 }
                 newVar->name=(ftit->first+"_backup").c_str();
-                new2DVar->name=ftit->first.c_str();
-                new2DVar->setAttributeText("grid_mapping","customgridprojection");
+                polygonIndexVar->name=ftit->first.c_str();
+                polygonIndexVar->setAttributeText("grid_mapping","customgridprojection");
                 
               }
             }
@@ -945,6 +949,7 @@
 
           BBOX dfBBOX;
           getBBOX(cdfObject, dfBBOX, *json, features);  
+          CDBDebug("addCDFInfo again");
           addCDFInfo(cdfObject, dataSource->srvParams, dfBBOX, features, true);
         }
 
@@ -991,8 +996,8 @@
           for(size_t d=0;d<nrDataObjects;d++){
             dataObjects[d] =  dataSource->getDataObject(d);
           }
-          CDF::Variable *new2DVar;
-          new2DVar = dataObjects[0]->cdfVariable;                      
+          CDF::Variable *polygonIndexVar;
+          polygonIndexVar = dataObjects[0]->cdfVariable;                      
           //Width needs to be at least 2 in this case.
           if(dataSource->dWidth == 1)dataSource->dWidth=2;
           if(dataSource->dHeight == 1)dataSource->dHeight=2;
@@ -1033,7 +1038,7 @@
           if(dataSource->srvParams->Geo->CRS.length()>0){
             projectionRequired=true;
 //            for(size_t d=0;d<nrDataObjects;d++){
-              new2DVar->setAttributeText("grid_mapping","customgridprojection");
+              polygonIndexVar->setAttributeText("grid_mapping","customgridprojection");
 //            }
             if(cdfObject->getVariableNE("customgridprojection")==NULL){
               CDF::Variable *projectionVar = new CDF::Variable();
@@ -1050,25 +1055,25 @@
             }
           }          
           #ifdef CCONVERTGEOJSON_DEBUG
-          CDBDebug("Drawing %s",new2DVar->name.c_str());
+          CDBDebug("Drawing %s",polygonIndexVar->name.c_str());
           #endif
           
 //TODO Only draw if datatype is int (or float)        
           size_t fieldSize = dataSource->dWidth*dataSource->dHeight;
-          new2DVar->setSize(fieldSize);
-          CDF::allocateData(new2DVar->getType(),&(new2DVar->data),fieldSize);
+          polygonIndexVar->setSize(fieldSize);
+          CDF::allocateData(polygonIndexVar->getType(),&(polygonIndexVar->data),fieldSize);
           
           //Draw data!
-          CDF::Attribute *fillValue = new2DVar->getAttributeNE("_FillValue");
+          CDF::Attribute *fillValue = polygonIndexVar->getAttributeNE("_FillValue");
           if(fillValue!=NULL){
             dataObjects[0]->hasNodataValue=true;
             fillValue->getData(&dataObjects[0]->dfNodataValue,1);
           }
         
           for(size_t j=0;j<fieldSize;j++){
-            ((short int*)new2DVar->data)[j]=dataObjects[0]->dfNodataValue;
+            ((short int*)polygonIndexVar->data)[j]=dataObjects[0]->dfNodataValue;
           }
-          unsigned short *sdata = ((unsigned short*)new2DVar->data);
+          unsigned short *sdata = ((unsigned short*)polygonIndexVar->data);
 
 #ifdef MEASURETIME
             StopWatch_Stop("GeoJSON DATA");
@@ -1107,10 +1112,10 @@
           
           int featureIndex=0;
           typedef std::vector<Feature*>::iterator it_type;
-          for(it_type it = features.begin(); it != features.end(); ++it) { //Loop over all features
+          for(it_type feature = features.begin(); feature != features.end(); ++feature) { //Loop over all features
             
-            std::vector<Polygon>polygons=(*it)->getPolygons();
-//            CT::string id=(*it)->getId();
+            std::vector<Polygon>polygons=(*feature)->getPolygons();
+//            CT::string id=(*feature)->getId();
 //            CDBDebug("feature[%s] %d of %d with %d polygons", id.c_str(), featureIndex, features.size(), polygons.size());
             for(std::vector<Polygon>::iterator itpoly = polygons.begin(); itpoly != polygons.end(); ++itpoly) {
               float *polyX=itpoly->getLons();
@@ -1225,6 +1230,13 @@
       #ifdef MEASURETIME
         StopWatch_Stop("Feature drawn %d", featureIndex);
       #endif
+            for (std::map<std::string, FeatureProperty*>::iterator ftit=(*feature)->getFp().begin(); ftit!=(*feature)->getFp().end(); ++ftit) {
+              if(dataSource->getDataObject(0)->features.count(featureIndex) == 0){
+                dataSource->getDataObject(0)->features[featureIndex]=CFeature(featureIndex);
+              }
+              dataSource->getDataObject(0)->features[featureIndex].addProperty(ftit->first.c_str(), ftit->second->toString().c_str());
+              
+            }
             featureIndex++;
           }        
 
