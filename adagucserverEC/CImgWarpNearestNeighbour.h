@@ -417,7 +417,7 @@ private:
             //val+=legendOffset;
             if(pcolorind>=239)pcolorind=239;else if(pcolorind<=0)pcolorind=0;
 
-            drawImage->setPixelIndexed(x,drawImage->Geo->dHeight-y,pcolorind);
+            drawImage->setPixelIndexed(x,(drawImage->Geo->dHeight-1)-y,pcolorind);
           }
         
       }
