@@ -617,7 +617,8 @@ varX->setType(CDF_DOUBLE);
         polygonIndexVar->dimensionlinks.push_back(dimY);
         polygonIndexVar->dimensionlinks.push_back(dimX);
         polygonIndexVar->setType(CDF_USHORT);
-        polygonIndexVar->name="polygons";
+        polygonIndexVar->name="features";
+        polygonIndexVar->setAttributeText("long_name","Feature index");
         
         unsigned short f=65535u;
         polygonIndexVar->setAttribute("_FillValue",CDF_USHORT,&f,1);
@@ -931,7 +932,7 @@ varX->setType(CDF_DOUBLE);
         
         //Check whether this is really an geojson file
         try{
-          cdfObject->getVariable("polygons");//TODO generate these again
+          cdfObject->getVariable("features");//TODO generate these again
         }catch(int e){
           return 1;
         }

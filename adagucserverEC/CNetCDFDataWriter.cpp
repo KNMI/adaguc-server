@@ -657,8 +657,8 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
             featureIndexVar = new CDF::Variable();
             featureIndexVar->name = featureDimIndexName.c_str();
             featureIndexVar->setType(CDF_UINT);
-            featureIndexVar->setAttributeText("long_name","polygon index number");
-            featureIndexVar->setAttributeText("auxiliary","polygons");
+            featureIndexVar->setAttributeText("long_name","feature index number");
+            featureIndexVar->setAttributeText("auxiliary",variable->name.c_str());
             featureIndexVar->dimensionlinks.push_back(featureIndexDim);
             CDF::allocateData(CDF_DOUBLE,&featureIndexVar->data,featureIndexDim->getSize());
 
@@ -691,7 +691,7 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
                   CDF::allocateData(CDF_STRING,&featureVar->data,featureIndexDim->getSize());
                   destCDFObject->addVariable(featureVar);
                   featureVar->setAttributeText("long_name",paramItemIt->first.c_str());
-                  featureVar->setAttributeText("auxiliary","polygons");
+                  featureVar->setAttributeText("auxiliary",variable->name.c_str());
                 }
                 char *str = strdup(paramItemIt->second.c_str());
                 ((char**)featureVar->data)[featureIndex]=str;
