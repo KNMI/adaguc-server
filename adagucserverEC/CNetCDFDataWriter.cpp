@@ -640,6 +640,70 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
           variable->setAttribute("_FillValue",variable->getType(),dataSource->getDataObject(j)->dfNodataValue);
         }
       }
+      
+      //Copy feature paramlist
+      if (dataSource->getDataObject(j)->features.empty() == false){
+        CT::string paramListAttr = "";
+        CT::string featureVarName = variable->name.c_str();
+        CT::string featureDimIndexName = featureVarName+"_index";
+        CDBDebug("featureDimIndexName = %s",featureDimIndexName.c_str());
+         CDF::Dimension *featureIndexDim = destCDFObject->getDimensionNE(featureDimIndexName.c_str());
+         CDF::Variable *featureIndexVar = NULL;
+          if(featureIndexDim == NULL){
+            featureIndexDim = new CDF::Dimension();
+            featureIndexDim->setSize(dataSource->getDataObject(j)->features.size());
+            featureIndexDim->name = featureDimIndexName.c_str();;
+            destCDFObject->addDimension(featureIndexDim);
+            featureIndexVar = new CDF::Variable();
+            featureIndexVar->name = featureDimIndexName.c_str();
+            featureIndexVar->setType(CDF_UINT);
+            featureIndexVar->setAttributeText("long_name","polygon index number");
+            featureIndexVar->setAttributeText("auxiliary","polygons");
+            featureIndexVar->dimensionlinks.push_back(featureIndexDim);
+            CDF::allocateData(CDF_DOUBLE,&featureIndexVar->data,featureIndexDim->getSize());
+
+            destCDFObject->addVariable(featureIndexVar);
+          }
+          featureIndexVar = destCDFObject->getVariable(featureDimIndexName.c_str());
+          int featureIndex=0;
+          std::map<int,CFeature>::iterator featureIt;
+          for (featureIt=dataSource->getDataObject(j)->features.begin(); featureIt!=dataSource->getDataObject(j)->features.end(); ++featureIt){
+            CFeature *feature = &featureIt->second;
+            if(featureIndex!=featureIt->first){
+              CDBError("featureIndex!=featureIt->first: [%d,%d]",featureIndex,featureIt->first);
+              return 1;
+            }
+            if(feature->paramMap.empty() == false){
+              std::map<std::string,std::string>::iterator paramItemIt  ;
+              for (paramItemIt=feature->paramMap.begin(); paramItemIt!=feature->paramMap.end(); ++paramItemIt){
+                CT::string newfeatureVarName= variable->name.c_str();
+                newfeatureVarName.printconcat("_%s",paramItemIt->first.c_str());
+                CDF::Variable *featureVar = destCDFObject->getVariableNE(newfeatureVarName.c_str());
+                if(featureVar == NULL){
+                  if(paramListAttr.length()>0){
+                    paramListAttr.concat(",");
+                  }
+                  paramListAttr.concat(newfeatureVarName);
+                  featureVar = new CDF::Variable();
+                  featureVar->name = newfeatureVarName.c_str();
+                  featureVar->setType(CDF_STRING);
+                  featureVar->dimensionlinks.push_back(featureIndexDim);
+                  CDF::allocateData(CDF_STRING,&featureVar->data,featureIndexDim->getSize());
+                  destCDFObject->addVariable(featureVar);
+                  featureVar->setAttributeText("long_name",paramItemIt->first.c_str());
+                  featureVar->setAttributeText("auxiliary","polygons");
+                }
+                char *str = strdup(paramItemIt->second.c_str());
+                ((char**)featureVar->data)[featureIndex]=str;
+              // CDBDebug("Clicked %s %s",paramItemIt->first.c_str(),paramItemIt->second.c_str());
+              }
+            }
+            ((int*)featureIndexVar->data)[featureIndex]=featureIndex;
+            featureIndex++;
+          }
+          variable->setAttributeText("paramlist",paramListAttr.c_str());
+      }
+      
     }
   }
   
