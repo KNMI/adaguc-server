@@ -1004,6 +1004,34 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
             #endif
             
             hasData = true;
+            
+            if (dataSource->getDataObject(o)->features.empty() == false &&hasData==true){
+              std::map<int,CFeature>::iterator featureIt = dataSource->getDataObject(o)->features.find(pixel);
+              if(featureIt!=dataSource->getDataObject(o)->features.end()){
+                CFeature *feature = &featureIt->second;
+                if(feature->paramMap.empty() == false){
+                  std::map<std::string,std::string>::iterator paramItemIt  ;
+                  for (paramItemIt=feature->paramMap.begin(); paramItemIt!=feature->paramMap.end(); ++paramItemIt){
+                    CDBDebug("Clicked %s %s",paramItemIt->first.c_str(),paramItemIt->second.c_str());
+                    GetFeatureInfoResult::Element *featureParam=new GetFeatureInfoResult::Element();
+                    featureParam->dataSource= dataSource;
+                    for(size_t j=0;j<dataSources[d]->requiredDims.size();j++){
+                      value=cdfDims->getDimensionValue(j);
+                      name=cdfDims->getDimensionName(j);
+                      featureParam->cdfDims.addDimension(name.c_str(),value.c_str(),cdfDims->getDimensionIndex(j));
+                    }
+                    getFeatureInfoResult->elements.push_back(featureParam);
+                    featureParam->long_name=paramItemIt->first.c_str();
+                    featureParam->var_name=paramItemIt->first.c_str();
+                    featureParam->standard_name=paramItemIt->first.c_str();
+                    featureParam->feature_name=paramItemIt->first.c_str();
+                    featureParam->value=paramItemIt->second.c_str();
+                    featureParam->units="";
+                  }
+                }
+              }
+            }
+          
           }else {
           
             element->value="nodata";
@@ -1013,6 +1041,10 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
             }
           }
         
+        
+   
+        
+          // Add info about point data
           if (dataSource->getDataObject(o)->points.size()>0/*&&hasData==true*/){
             CDBDebug("GFI value = %s, %d", element->value.c_str(),dataSource->getDataObject(o)->cdfVariable->getAttributeNE("ADAGUC_SKIP_POINTS")==NULL);
           }
@@ -1040,6 +1072,8 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
               
               element->value.print("%f",val);
             }
+            
+            //Loop over point paramlist
             for(size_t p=0;p<point.paramList.size();p++){
               GetFeatureInfoResult::Element *pointID=new GetFeatureInfoResult::Element();
               pointID->dataSource= dataSource;

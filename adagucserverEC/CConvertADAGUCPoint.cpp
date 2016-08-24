@@ -161,7 +161,8 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
           !var->name.equals("projection")&&
           !var->name.equals("product")&&
           !var->name.equals("iso_dataset")&&
-          !var->name.equals("tile_properties")
+          !var->name.equals("tile_properties")&&
+          !var->name.equals("forecast_reference_time")
         ){
           varsToConvert.add(CT::string(var->name.c_str()));
         }

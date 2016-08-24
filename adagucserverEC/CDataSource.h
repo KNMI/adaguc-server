@@ -118,6 +118,7 @@ private:
       CT::string getUnits();
       void setUnits(CT::string units);
       std::vector<PointDVWithLatLon> points;
+      std::map<int,CFeature> features;
   };
   
   class Statistics{
