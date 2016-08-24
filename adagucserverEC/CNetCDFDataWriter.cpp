@@ -101,6 +101,22 @@ int CNetCDFDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int
     destCDFObject->setAttribute(srcObj->attributes[j]->name.c_str(),srcObj->attributes[j]->type,srcObj->attributes[j]->data,srcObj->attributes[j]->length);
   }
   
+
+  
+  //Copy provenance, if available
+  CDF::Variable *KNMIProv = srcObj->getVariableNE("knmi_provenance");
+  if(KNMIProv!=NULL){
+    CDF::Variable *newProv = new CDF::Variable();
+    newProv->name="knmi_provenance";
+    newProv->setType(CDF_CHAR);
+    newProv->setSize(0);
+    destCDFObject->addVariable(newProv);
+    for(size_t j=0;j<KNMIProv->attributes.size();j++){
+      newProv->setAttribute(KNMIProv->attributes[j]->name.c_str(),KNMIProv->attributes[j]->type,KNMIProv->attributes[j]->data,KNMIProv->attributes[j]->length);
+    }
+  }
+  
+  
   double dfDstBBOX[4];
   double dfSrcBBOX[4];
   //Setup projection
@@ -131,9 +147,69 @@ int CNetCDFDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int
       return 1;
     }
   }
+  
+   //Adjust history
+  CT::string historyText = "";
+  CDF::Attribute *historyAttr = destCDFObject->getAttributeNE("history");
+  if(historyAttr!=NULL){
+    historyText = historyAttr->toString();
+  }
+  
+  CT::string adagucwcsdestgrid;
+  adagucwcsdestgrid.print("width=%d&height=%d&bbox=%f,%f,%f,%f&crs=%s", 
+                       srvParam->Geo->dWidth,
+                       srvParam->Geo->dHeight,
+                       dfDstBBOX[0],
+                       dfDstBBOX[1],
+                       dfDstBBOX[2],
+                       dfDstBBOX[3],
+                       srvParam->Geo->CRS.c_str());
+  
+  CT::string newHistoryText;
+  newHistoryText.print("Created by ADAGUC WCS Server version %s, destination grid settings: %s. %s",
+                       ADAGUCSERVER_VERSION,
+                       adagucwcsdestgrid.c_str(),
+                       historyText.c_str());
+  destCDFObject->setAttributeText("history",newHistoryText.c_str());
+  
+  //Write dest grid attribute
+  destCDFObject->setAttributeText("adaguc_wcs_destgridspec",adagucwcsdestgrid.c_str());
+
+  //Write CF Convertion variable
+  destCDFObject->setAttributeText("Conventions","CF-1.6");
+  
   //Create projection variables
   createProjectionVariables(destCDFObject,srvParam->Geo->dWidth,srvParam->Geo->dHeight,dfDstBBOX);
- 
+  
+  //Move uuid
+  CDF::Attribute *uuid = destCDFObject->getAttributeNE("uuid");
+  if(uuid != NULL){
+    uuid->name = "input_uuid";
+  }
+  
+  CDF::Attribute *tracking_id = destCDFObject->getAttributeNE("tracking_id");
+  if(tracking_id != NULL){
+    tracking_id->name = "invar_tracking_id";
+  }
+  
+  // Now it will work also on gridded polygondata
+  destCDFObject->removeAttribute("featureType");
+  
+  // Remove attributes which have no meaning anymore
+  destCDFObject->removeAttribute("geospatial_increment");
+  destCDFObject->removeAttribute("geospatial_lat_max");
+  destCDFObject->removeAttribute("geospatial_lat_min");
+  destCDFObject->removeAttribute("geospatial_lon_max ");
+  
+  destCDFObject->removeAttribute("geospatial_lon_min");
+  destCDFObject->removeAttribute("domain");
+  CT::string software;software.print("ADAGUC WCS Server version %s",ADAGUCSERVER_VERSION);
+  destCDFObject->setAttributeText("software",software.c_str());
+  destCDFObject->removeAttribute("software_platform");
+  destCDFObject->removeAttribute("time_coverage_end");
+  destCDFObject->removeAttribute("time_coverage_start");
+  destCDFObject->removeAttribute("time_number_gaps");
+  destCDFObject->removeAttribute("time_number_steps");
   
   
   //Create other NonGeo dimensions
