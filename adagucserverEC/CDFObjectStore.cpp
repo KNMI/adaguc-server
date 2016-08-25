@@ -35,7 +35,7 @@ const char *CDFObjectStore::className="CDFObjectStore";
 #include "CConvertEProfile.h"
 #include "CConvertTROPOMI.h"
 #include "CDataReader.h"
-//#define CDFOBJECTSTORE_DEBUG
+#define CDFOBJECTSTORE_DEBUG
 #define MAX_OPEN_FILES 20
 extern CDFObjectStore cdfObjectStore;
 CDFObjectStore cdfObjectStore;
@@ -91,58 +91,60 @@ CDFReader *CDFObjectStore::getCDFReader(const char *fileName){
   CDFReader *cdfReader = NULL;
   if(fileName!=NULL){
     CT::string name=fileName;
-    int a=name.indexOf(".h5");
-    if(a!=-1){
-      if(a==int(name.length())-3){
-        if(EXTRACT_HDF_NC_VERBOSE){
-          CDBDebug("Creating HDF5 reader");
-        }
-        cdfReader = new CDFHDF5Reader();
-        CDFHDF5Reader * hdf5Reader = (CDFHDF5Reader*)cdfReader;
-        hdf5Reader->enableKNMIHDF5toCFConversion();
-      }
-    }
-    if(cdfReader==NULL){
-      a=name.indexOf(".he5");
+    if(name.indexOf("http")!=0){
+      int a=name.indexOf(".h5");
       if(a!=-1){
-        if(a==int(name.length())-4){
+        if(a==int(name.length())-3){
           if(EXTRACT_HDF_NC_VERBOSE){
-            CDBDebug("Creating HDF EOS 5 reader");
+            CDBDebug("Creating HDF5 reader");
           }
           cdfReader = new CDFHDF5Reader();
+          CDFHDF5Reader * hdf5Reader = (CDFHDF5Reader*)cdfReader;
+          hdf5Reader->enableKNMIHDF5toCFConversion();
         }
       }
-    }
-    if(cdfReader==NULL){
-      a=name.indexOf(".hdf");
-      if(a!=-1){
-        if(a==int(name.length())-4){
-          if(EXTRACT_HDF_NC_VERBOSE){
-            CDBDebug("Creating HDF reader");
+      if(cdfReader==NULL){
+        a=name.indexOf(".he5");
+        if(a!=-1){
+          if(a==int(name.length())-4){
+            if(EXTRACT_HDF_NC_VERBOSE){
+              CDBDebug("Creating HDF EOS 5 reader");
+            }
+            cdfReader = new CDFHDF5Reader();
           }
-          cdfReader = new CDFHDF5Reader();
         }
       }
-    }
-    if(cdfReader==NULL){
-      a=name.indexOf(".json");
-      if(a!=-1){
-        if(a==int(name.length())-5){
-          if(EXTRACT_HDF_NC_VERBOSE){
-            CDBDebug("Creating GeoJSON reader");
+      if(cdfReader==NULL){
+        a=name.indexOf(".hdf");
+        if(a!=-1){
+          if(a==int(name.length())-4){
+            if(EXTRACT_HDF_NC_VERBOSE){
+              CDBDebug("Creating HDF reader");
+            }
+            cdfReader = new CDFHDF5Reader();
           }
-          cdfReader = new CDFGeoJSONReader();
         }
       }
-    }
-    if(cdfReader==NULL){
-      a=name.indexOf(".geojson");
-      if(a!=-1){
-        if(a==int(name.length())-8){
-          if(EXTRACT_HDF_NC_VERBOSE){
-            CDBDebug("Creating GeoJSON reader");
+      if(cdfReader==NULL){
+        a=name.indexOf(".json");
+        if(a!=-1){
+          if(a==int(name.length())-5){
+            if(EXTRACT_HDF_NC_VERBOSE){
+              CDBDebug("Creating GeoJSON reader");
+            }
+            cdfReader = new CDFGeoJSONReader();
           }
-          cdfReader = new CDFGeoJSONReader();
+        }
+      }
+      if(cdfReader==NULL){
+        a=name.indexOf(".geojson");
+        if(a!=-1){
+          if(a==int(name.length())-8){
+            if(EXTRACT_HDF_NC_VERBOSE){
+              CDBDebug("Creating GeoJSON reader");
+            }
+            cdfReader = new CDFGeoJSONReader();
+          }
         }
       }
     }
