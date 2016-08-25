@@ -1,31 +1,36 @@
-      /******************************************************************************
-      * 
-      * Project:  ADAGUC Server
-      * Purpose:  ADAGUC OGC Server
-      * Author:   Maarten Plieger, plieger "at" knmi.nl
-      * Date:     2013-06-01
-      *
-      ******************************************************************************
-      *
-      * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
-      *
-      * Licensed under the Apache License, Version 2.0 (the "License");
-      * you may not use this file except in compliance with the License.
-      * You may obtain a copy of the License at
-//       * 
-      *      http://www.apache.org/licenses/LICENSE-2.0
-      * 
-      * Unless required by applicable law or agreed to in writing, software
-      * distributed under the License is distributed on an "AS IS" BASIS,
-      * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-      * See the License for the specific language governing permissions and
-      * limitations under the License.
-      * 
-      ******************************************************************************/
+/******************************************************************************
+ * 
+ * Project:  ADAGUC Server
+ * Purpose:  Transforms GeoJSON into a Grid.
+ * Author:   Ernst de Vreede (KNMI)
+ * Date:     2016-08
+ *
+ ******************************************************************************
+ *
+ * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
+ ******************************************************************************/
+
+      
+//GeoJSON in non standard geographical projection:
+//http://cariska.mona.uwi.edu/geoserver/wfs?typename=geonode%3ACatchment&outputFormat=json&version=1.0.0&request=GetFeature&service=WFS
+//GeoJSON in latlon geographical projection:
+//http://cariska.mona.uwi.edu/geoserver/wfs?typename=geonode%3ACatchment&outputFormat=json&version=1.0.0&request=GetFeature&service=WFS&srsName=EPSG:4326
 
       #include "CConvertGeoJSON.h"
       #include "CConvertUGRIDMesh.h"
-//      #include "CFillTriangle.h"
       #include "CImageWarper.h"
       #include <values.h>
       #include <string>
@@ -850,15 +855,15 @@ varX->setType(CDF_DOUBLE);
                           if (coords.type==json_array) {
 //                            CDBDebug("  array of %d coords",coords.u.array.length);
                             for (unsigned int j=0; j<coords.u.array.length; j++) {
-                              if (j==0) {
+                               if (j==0) {
                                 feat->newPolygon();
                               } else {
                                 feat->newHole();
                               }
                               json_value polygon=*coords.u.array.values[j];
 //                              CDBDebug("polygon: %d", polygon.u.array.length);
-                              for (unsigned int i=0; i<polygon.u.array.length;i++) {
-                                json_value pt=*polygon.u.array.values[i];
+                              for (unsigned int k=0; k<polygon.u.array.length;k++) {
+                                json_value pt=*polygon.u.array.values[k];
                                 json_value lo=*pt.u.array.values[0];
                                 json_value la=*pt.u.array.values[1];
                                 double lon=(double)lo;
@@ -1055,6 +1060,8 @@ varX->setType(CDF_DOUBLE);
               projectionVar->setAttributeText("proj4_params",dataSource->nativeProj4.c_str());
             }
           }          
+          
+          
           #ifdef CCONVERTGEOJSON_DEBUG
           CDBDebug("Drawing %s",polygonIndexVar->name.c_str());
           #endif
@@ -1065,15 +1072,20 @@ varX->setType(CDF_DOUBLE);
           CDF::allocateData(polygonIndexVar->getType(),&(polygonIndexVar->data),fieldSize);
           
           //Draw data!
+          dataObjects[0]->dfNodataValue = -1;
           CDF::Attribute *fillValue = polygonIndexVar->getAttributeNE("_FillValue");
           if(fillValue!=NULL){
             dataObjects[0]->hasNodataValue=true;
             fillValue->getData(&dataObjects[0]->dfNodataValue,1);
+          }else{
+            unsigned short f = dataObjects[0]->dfNodataValue;
+            polygonIndexVar->setAttribute("_FillValue",CDF_USHORT,&f,1);
           }
-        
+          unsigned short sNodataValue = (unsigned short)dataObjects[0]->dfNodataValue;
           for(size_t j=0;j<fieldSize;j++){
-            ((short int*)polygonIndexVar->data)[j]=dataObjects[0]->dfNodataValue;
+            ((unsigned short*)polygonIndexVar->data)[j]=sNodataValue;
           }
+          
           unsigned short *sdata = ((unsigned short*)polygonIndexVar->data);
 
 #ifdef MEASURETIME
@@ -1114,7 +1126,7 @@ varX->setType(CDF_DOUBLE);
           int featureIndex=0;
           typedef std::vector<Feature*>::iterator it_type;
           for(it_type feature = features.begin(); feature != features.end(); ++feature) { //Loop over all features
-            
+            //if(featureIndex!=0)break;
             std::vector<Polygon>polygons=(*feature)->getPolygons();
 //            CT::string id=(*feature)->getId();
 //            CDBDebug("feature[%s] %d of %d with %d polygons", id.c_str(), featureIndex, features.size(), polygons.size());
@@ -1128,7 +1140,7 @@ varX->setType(CDF_DOUBLE);
               
               int pxMin,pxMax,pyMin,pyMax,first=0;
               
-//              CDBDebug("Plotting a polygon of %d points with %d holes [? of %d]", numPoints, itpoly->getHoles().size(), featureIndex);
+              //CDBDebug("Plotting a polygon of %d points with %d holes [? of %d]", numPoints, itpoly->getHoles().size(), featureIndex);
               for (int j=0; j<numPoints;j++) {
                 double tprojectedX=polyX[j];
                 double tprojectedY=polyY[j];
