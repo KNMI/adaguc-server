@@ -1,8 +1,8 @@
 /******************************************************************************
  * 
  * Project:  Generic common data format
- * Purpose:  Generic Data model to read netcdf and hdf5
- * Author:   Maarten Plieger, plieger "at" knmi.nl
+ * Purpose:  Packages GeoJSON into a NetCDF file
+ * Author:   Ernst de Vreede (KNMI)
  * Date:     2013-06-01
  *
  ******************************************************************************
@@ -25,6 +25,8 @@
 
 #include "CCDFGeoJSONIO.h"
 #define CCDFGEOJSONIO_DEBUG
+
+
 
 const char *CDFGeoJSONReader::className="GeoJSONReader";
 

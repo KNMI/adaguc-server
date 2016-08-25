@@ -2,7 +2,7 @@
 #include "CGenericDataWarper.h"
 const char * CNetCDFDataWriter::className = "CNetCDFDataWriter";
 
-// #define CNetCDFDataWriter_DEBUG
+#define CNetCDFDataWriter_DEBUG
 
 void CNetCDFDataWriter::createProjectionVariables(CDFObject *cdfObject,int width,int height,double *bbox){
   bool isProjected=true;
@@ -103,19 +103,19 @@ int CNetCDFDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int
   
 
   
-  //Copy provenance, if available
-  CDF::Variable *KNMIProv = srcObj->getVariableNE("knmi_provenance");
-  if(KNMIProv!=NULL){
-    CDF::Variable *newProv = new CDF::Variable();
-    newProv->name="knmi_provenance";
-    newProv->setType(CDF_CHAR);
-    newProv->setSize(0);
-    destCDFObject->addVariable(newProv);
-    for(size_t j=0;j<KNMIProv->attributes.size();j++){
-      newProv->setAttribute(KNMIProv->attributes[j]->name.c_str(),KNMIProv->attributes[j]->type,KNMIProv->attributes[j]->data,KNMIProv->attributes[j]->length);
-    }
-  }
-  
+//   //Copy provenance, if available
+//   CDF::Variable *KNMIProv = srcObj->getVariableNE("knmi_provenance");
+//   if(KNMIProv!=NULL){
+//     CDF::Variable *newProv = new CDF::Variable();
+//     newProv->name="knmi_provenance";
+//     newProv->setType(CDF_CHAR);
+//     newProv->setSize(0);
+//     destCDFObject->addVariable(newProv);
+//     for(size_t j=0;j<KNMIProv->attributes.size();j++){
+//       newProv->setAttribute(KNMIProv->attributes[j]->name.c_str(),KNMIProv->attributes[j]->type,KNMIProv->attributes[j]->data,KNMIProv->attributes[j]->length);
+//     }
+//   }
+//   
   
   double dfDstBBOX[4];
   double dfSrcBBOX[4];
