@@ -173,8 +173,20 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
                 !cdfObject->variables[j]->name.equals("time_bnds")&&
                 !cdfObject->variables[j]->name.equals("time")&&
                 (cdfObject->variables[j]->name.indexOf("_bnds")==-1)){
-                  if(srvParam->autoResourceVariable.length()>0)srvParam->autoResourceVariable.concat(",");
-                  srvParam->autoResourceVariable.concat(cdfObject->variables[j]->name.c_str());
+                  bool skip = false;
+                  CDF::Attribute* standard_name = cdfObject->variables[j]->getAttributeNE("standard_name");
+                  if(standard_name!=NULL){
+                    CT::string standard_name_value = standard_name->toString();
+                    if(standard_name_value.equals("longitude")||
+                      standard_name_value.equals("latitude")||
+                      standard_name_value.equals("time")){
+                      skip = true;
+                    }
+                  }
+                  if(skip == false){
+                    if(srvParam->autoResourceVariable.length()>0)srvParam->autoResourceVariable.concat(",");
+                    srvParam->autoResourceVariable.concat(cdfObject->variables[j]->name.c_str());
+                  }
                   //CDBDebug("%s",cdfObject->variables[j]->name.c_str());
               }
             }
