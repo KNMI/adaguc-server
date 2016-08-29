@@ -1009,8 +1009,8 @@ varX->setType(CDF_DOUBLE);
           if(dataSource->dHeight == 1)dataSource->dHeight=2;
           double cellSizeX=(dataSource->srvParams->Geo->dfBBOX[2]-dataSource->srvParams->Geo->dfBBOX[0])/double(dataSource->dWidth);
           double cellSizeY=(dataSource->srvParams->Geo->dfBBOX[3]-dataSource->srvParams->Geo->dfBBOX[1])/double(dataSource->dHeight);
-          double offsetX=dataSource->srvParams->Geo->dfBBOX[0];
-          double offsetY=dataSource->srvParams->Geo->dfBBOX[1];
+          double offsetX=dataSource->srvParams->Geo->dfBBOX[0]+cellSizeX/2;
+          double offsetY=dataSource->srvParams->Geo->dfBBOX[1]+cellSizeY/2;
             
           CDF::Dimension *dimX;
           CDF::Dimension *dimY;
@@ -1032,11 +1032,11 @@ varX->setType(CDF_DOUBLE);
           
           //Fill in the X and Y dimensions with the array of coordinates
           for(size_t j=0;j<dimX->length;j++){
-            double x=offsetX+double(j)*cellSizeX+cellSizeX/2;
+            double x=offsetX+double(j)*cellSizeX;
             ((double*)varX->data)[j]=x;
           }
           for(size_t j=0;j<dimY->length;j++){
-            double y=offsetY+double(j)*cellSizeY+cellSizeY/2;
+            double y=offsetY+double(j)*cellSizeY;
             ((double*)varY->data)[j]=y;
           }
           bool projectionRequired=false;
@@ -1110,13 +1110,13 @@ varX->setType(CDF_DOUBLE);
           #endif
           CDBDebug("DrawPoly");
           
-          double llX=dataSource->srvParams->Geo->dfBBOX[0];
-          double llY=dataSource->srvParams->Geo->dfBBOX[1];
-          double urX=dataSource->srvParams->Geo->dfBBOX[2];
-          double urY=dataSource->srvParams->Geo->dfBBOX[3];
-#ifdef CCONVERTGEOJSON_DEBUG
-          CDBDebug("BBOX:%f,%f,%f,%f", llX, llY, urX, urY);
- #endif
+//           double llX=dataSource->srvParams->Geo->dfBBOX[0];
+//           double llY=dataSource->srvParams->Geo->dfBBOX[1];
+//           double urX=dataSource->srvParams->Geo->dfBBOX[2];
+//           double urY=dataSource->srvParams->Geo->dfBBOX[3];
+// #ifdef CCONVERTGEOJSON_DEBUG
+//           CDBDebug("BBOX:%f,%f,%f,%f", llX, llY, urX, urY);
+//  #endif
           
 #ifdef MEASURETIME
           StopWatch_Stop("Feature drawing starts");
@@ -1148,7 +1148,7 @@ varX->setType(CDF_DOUBLE);
                 if(projectionRequired)status = imageWarper.reprojfromLatLon(tprojectedX,tprojectedY);
                 int dlon,dlat;
                 if(!status){
-                  dlon=int((tprojectedX-offsetX)/cellSizeX);
+                  dlon=int((tprojectedX-offsetX)/cellSizeX)+1;
                   dlat=int((tprojectedY-offsetY)/cellSizeY);
                   
                   if(first == 0){
@@ -1176,10 +1176,11 @@ varX->setType(CDF_DOUBLE);
               
               
               
-              if ((minX>urX)||(maxX<llX)||(maxY<llY)||(minY>urY))
+/*              if ((minX>urX)||(maxX<llX)||(maxY<llY)||(minY>urY))
               {
 //                CDBDebug("skip %f,%f,%f,%f for %f,%f,%f,%f", minX,maxX, minY, maxY, llX, urX, urY, llY);
-              } else {
+              } else 
+              */{
              {
 
      
@@ -1211,7 +1212,7 @@ varX->setType(CDF_DOUBLE);
                     if(projectionRequired)holeStatus = imageWarper.reprojfromLatLon(tprojectedX,tprojectedY);
                     int dlon,dlat;
                     if(!holeStatus){
-                      dlon=int((tprojectedX-offsetX)/cellSizeX);
+                      dlon=int((tprojectedX-offsetX)/cellSizeX)+1;
                       dlat=int((tprojectedY-offsetY)/cellSizeY);
                     }else{
                       dlat=CCONVERTUGRIDMESH_NODATA;
