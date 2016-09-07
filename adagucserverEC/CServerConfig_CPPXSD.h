@@ -229,14 +229,17 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
       class Cattr{
       public:
-        CXMLString  min,max,binary_and;
+        CXMLString min,max,binary_and;
         CXMLString file;
+        CXMLString offsetX, offsetY;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("min",3,attrname)){attr.min.copy(attrvalue);return;}
         else if(equals("max",3,attrname)){attr.max.copy(attrvalue);return;}
         else if(equals("file",4,attrname)){attr.file.copy(attrvalue);return;}
         else if(equals("binary_and",10,attrname)){attr.binary_and.copy(attrvalue);return;}
+        else if(equals("offset_x",8,attrname)){attr.offsetX.copy(attrvalue);return;}
+        else if(equals("offset_y",8,attrname)){attr.offsetY.copy(attrvalue);return;}
       }
      };
     

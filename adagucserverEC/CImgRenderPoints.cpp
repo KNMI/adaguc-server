@@ -229,7 +229,7 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
     CDBDebug("alphaPoint inited");
   }
 
-      CDBDebug("dataObjects: %d", dataSource->getNumDataObjects());
+      CDBDebug("dataObjects: %d %d", dataSource->getNumDataObjects(), drawSymbol);
   if((dataSource->getNumDataObjects()!=2)||(dataSource->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_GEOJSONPOINT")!=NULL)){ // Not for vector (u/v or speed/dir pairs) TODO
     std::map<std::string,CDrawImage*> symbolCache;
 //     CDBDebug("symbolCache created, size=%d", symbolCache.size());
@@ -318,19 +318,26 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
                 drawImage->setPixelTrueColor(x+x1,y+y1, rvol, gvol, bvol, *p++);
               }
             }
-                      if (drawPointPlotStationId) {
-                        if((*pts)[j].paramList.size()>0){
-                          CT::string value = (*pts)[j].paramList[0].value;
-                          drawImage->setText(value.c_str(), value.length(),x-value.length()*3,y-20, drawPointTextColor, 0);
-                        }       
-                      }
+            if (drawPointPlotStationId) {
+              if((*pts)[j].paramList.size()>0){
+                CT::string value = (*pts)[j].paramList[0].value;
+                drawImage->setText(value.c_str(), value.length(),x-value.length()*3,y-20, drawPointTextColor, 0);
+              }       
+            }
           }
           
           if (drawSymbol) {
             int x=(*pts)[j].x;
             int y=dataSource->dHeight-(*pts)[j].y;
             
-            if (v==v) {
+            bool minMaxSet=(symbolIntervals!=NULL && (symbolIntervals->size()==1) &&
+                            !(*symbolIntervals)[0]->attr.min.empty() && !(*symbolIntervals)[0]->attr.max.empty());
+            //Plot symbol if either valid v or Symbolinterval.min and max not set (to plot symbol for string data type)
+            if ((v==v)||(((*pts)[j].paramList.size()>0)&&!minMaxSet)) { //
+              float symbol_v=v; //Local copy of value
+              if (!(v==v)) {
+                if ((*pts)[j].paramList.size()>0) symbol_v=0;
+              }
               if (symbolIntervals!=NULL) {
               
                 for (size_t intv=0; intv<symbolIntervals->size(); intv++) {
@@ -340,20 +347,21 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
                 
                   if(symbolInterval->attr.binary_and.empty() == false ){
                     int b= parseInt(symbolInterval->attr.binary_and.c_str());
-                    if((b&int(v))==b){
+                    if((b&int(symbol_v))==b){
                       drawThisOne = true;
                       if(symbolInterval->attr.min.empty() == false && symbolInterval->attr.max.empty()==false){
-                        if ((v>=parseFloat(symbolInterval->attr.min.c_str()))&&(v<parseFloat(symbolInterval->attr.max.c_str())));else drawThisOne = false;
+                        if ((symbol_v>=parseFloat(symbolInterval->attr.min.c_str()))&&(symbol_v<parseFloat(symbolInterval->attr.max.c_str())));else drawThisOne = false;
                       }
                     }
                   
                   }else{
                     if(symbolInterval->attr.min.empty() == false && symbolInterval->attr.max.empty()==false){
-                      if ((v>=parseFloat(symbolInterval->attr.min.c_str()))&&(v<parseFloat(symbolInterval->attr.max.c_str()))) {
+                      if ((symbol_v>=parseFloat(symbolInterval->attr.min.c_str()))&&(symbol_v<parseFloat(symbolInterval->attr.max.c_str()))) {
                         drawThisOne = true;
                       }
+                    } else if (symbolInterval->attr.min.empty() && symbolInterval->attr.max.empty()) {
+                      drawThisOne=true;
                     }
-                    
                   }
                   
                   
@@ -371,13 +379,24 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
                       } else {
                         symbol=(*symbolCacheIter).second;
                       }
-                      drawImage->draw(x-symbol->Geo->dWidth/2, y-symbol->Geo->dHeight/2, 0, 0, symbol);
+                      int offsetX=0;
+                      int offsetY=0;
+                      if (!symbolInterval->attr.offsetX.empty()) offsetX=parseInt(symbolInterval->attr.offsetX.c_str());
+                      if (!symbolInterval->attr.offsetY.empty()) offsetY=parseInt(symbolInterval->attr.offsetY.c_str());
+                      drawImage->draw(x-symbol->Geo->dWidth/2+offsetX, y-symbol->Geo->dHeight/2+offsetY, 0, 0, symbol);
+                    }
+                    if(drawPointPlotStationId) {
+                      if ((*pts)[j].paramList.size()>0) {
+                        CT::string stationid =(*pts)[j].paramList[0].value;
+                        drawImage->drawCenteredText(x,y-drawPointTextRadius-3, drawPointFontFile, drawPointFontSize, 0,   stationid.c_str(), drawPointTextColor);
+                      }
                     }
                   }
                 }
               }
               if (drawPointDot) drawImage->circle(x,y, 1, drawPointFillColor,0.65);
             }
+            
           }
    
           
