@@ -53,9 +53,22 @@ void progresswrite(const char*message,float percentage){
 int memberNo = 1;
 void applyChangesToCDFObject(const char* _fileName,CDFObject *cdfObject,CT::StackList<CT::string> variablesToDo,const char *dimNameToAggregate){
   CT::string fileName = _fileName;
-  CT::string memberValue = fileName.substring(fileName.indexOf("KNMI")+5,-1);
+  int KNMIINDEX = fileName.indexOf("ens-multiModel-");
+  CT::string memberValue;
+  if(KNMIINDEX==-1){
+    KNMIINDEX = fileName.indexOf("KNMI");
+    memberValue= fileName.substring(KNMIINDEX+5,-1);
+  }else{
+    memberValue= fileName.substring(KNMIINDEX+10,-1);
+    KNMIINDEX = memberValue.indexOf("-");
+    memberValue= memberValue.substring(KNMIINDEX+1,-1);
+    KNMIINDEX = memberValue.indexOf("-");
+    memberValue= memberValue.substring(0,KNMIINDEX);
+  }
+  
   int end = memberValue.indexOf("_");
   memberValue.substringSelf(0,end);
+
   for(size_t j=0;j<variablesToDo.size();j++){
     
     CDF::Dimension *dim = cdfObject->getDimensionNE(dimNameToAggregate);
@@ -223,7 +236,7 @@ int main( int argc, const char* argv[]){
 
   CT::string netcdfFile=fileObjects[0]->fullName.c_str();
   CT::string netcdfFileBase=fileObjects[0]->baseName.c_str();
-  //CDBDebug("Reading %s",netcdfFile.c_str());
+  CDBDebug("Reading %s",netcdfFile.c_str());
   //CDFObject *destCDFObject=fileObjects[0]->cdfObject;
   CDFObject *destCDFObject=new CDFObject();
   CDFReader *cdfReader;
@@ -238,7 +251,7 @@ int main( int argc, const char* argv[]){
   applyChangesToCDFObject(netcdfFileBase.c_str(),destCDFObject,variablesToAddDimTo,dimNameToAggregate);
   if(status != 0){CDBError("Unable to read file %s",netcdfFile.c_str());throw(__LINE__);}
   
-  
+  CT::string usedInputFiles = "";
   try{
    for(size_t j=0;j<fileObjects.size();j++){
      try{
@@ -250,6 +263,10 @@ int main( int argc, const char* argv[]){
        CDBError("Unable to aggregate dimension for %s",fileObjects[j]->baseName.c_str());
        throw(__LINE__);
      }
+     if(usedInputFiles.length()>0){
+       usedInputFiles.concat(",");
+     }
+     usedInputFiles.printconcat("%s",fileObjects[j]->baseName.c_str());
    }
   }catch(int e){
     for(size_t j=0;j<fileObjects.size();j++)delete fileObjects[j];
@@ -257,6 +274,16 @@ int main( int argc, const char* argv[]){
     delete destCDFObject;
     return 1;
   }
+  
+  destCDFObject->attributes.clear();
+  std::vector<CDF::Attribute*> attributes = fileObjects[4]->cdfObject->attributes;
+  for(size_t j=0;j<attributes.size();j++){
+    destCDFObject->attributes.push_back(new CDF::Attribute(attributes[j]));
+  }
+  CT::string history;
+  history.print("Aggregated members into a single file with ADAGUC. Used input files: %s",usedInputFiles.c_str());
+  destCDFObject->setAttributeText("history",history.c_str());
+  
 // destCDFObject->aggregateDim(fileObjects[0]->cdfObject,dimNameToAggregate);
 // destCDFObject->aggregateDim(fileObjects[1]->cdfObject,dimNameToAggregate);
 // destCDFObject->aggregateDim(fileObjects[2]->cdfObject,dimNameToAggregate);
