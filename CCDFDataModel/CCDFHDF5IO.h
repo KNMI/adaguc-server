@@ -35,6 +35,8 @@
 #include "CTime.h"
 #include "CProj4ToCF.h"
 //#define CCDFHDF5IO_DEBUG
+
+#define CCDFHDF5IO_GROUPSEPARATOR "."
 void ncError(int line, const char *className, const char * msg,int e);
 class CDFHDF5Reader :public CDFReader{
   private:
@@ -126,7 +128,7 @@ class CDFHDF5Reader :public CDFReader{
         }
         newstart[0] = 0;
         CT::string varName ;
-        varName.print("image%d.image_data",(int)start[0]+1);
+        varName.print("image%d%simage_data",(int)start[0]+1,CCDFHDF5IO_GROUPSEPARATOR);
         CDF::Variable *var = ((CDFObject*)thisVar->getParentCDFObject())->getVariable(varName.c_str());
         
         
@@ -315,7 +317,7 @@ CDBDebug("Getting group '%s'",name);
           if(newGroupID>0){
             char temp[1024];
             if(strlen(groupName)!=0){
-              snprintf(temp,1023,"%s.%s",groupName,name);
+              snprintf(temp,1023,"%s%s%s",groupName,CCDFHDF5IO_GROUPSEPARATOR,name);
             }else snprintf(temp,1023,"%s",name);
 
           
@@ -351,9 +353,8 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
               hid_t datasetNativeType =  H5Tget_native_type(datasetType,H5T_DIR_ASCEND );
               if(datasetNativeType>0){
                 char varName[1024];
-                //snprintf(varName,1023,"%s.%s",groupName,name);
                 if(strlen(groupName)!=0){
-                  snprintf(varName,1023,"%s.%s",groupName,name);
+                  snprintf(varName,1023,"%s%s%s",groupName,CCDFHDF5IO_GROUPSEPARATOR,name);
                 }else snprintf(varName,1023,"%s",name);
 
                 int cdfType = typeConversion(datasetNativeType);
@@ -393,7 +394,7 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
                   var->setParentCDFObject(cdfObject);
                   readAttributes(var->attributes,datasetID);
   #ifdef CCDFHDF5IO_DEBUG      
-  CDBDebug("%s.%s",groupName,name);
+  CDBDebug("%s%s%s",groupName,CCDFHDF5IO_GROUPSEPARATOR,name);
   #endif
                   CDF::Dimension *dim ;
     
@@ -478,12 +479,15 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
       if(geo==NULL){return 2;}
       
       //Fill in dim ranges
-      CDF::Variable *var = cdfObject->getVariableNE("image1.image_data");
-      //if(var==NULL){CDBError("variable image1.image_data not found");return 1;}
+      CT::string variableName;
+      variableName.print("image1%simage_data",CCDFHDF5IO_GROUPSEPARATOR);
+      CDF::Variable *var = cdfObject->getVariableNE(variableName.c_str());
+      //if(var==NULL){CDBError("variable %s not found",variableName.c_str());return 1;}
       geo = cdfObject->getVariableNE("geographic");
       if(geo==NULL){CDBError("variable geographic not found");return 0;}
       //if(var->dimensionlinks.size()!=2){CDBError("variable does not have 2 dims");return 1;}
-      CDF::Variable *proj = cdfObject->getVariableNE("geographic.map_projection");
+      variableName.print("geographic%smap_projection",CCDFHDF5IO_GROUPSEPARATOR);
+      CDF::Variable *proj = cdfObject->getVariableNE(variableName.c_str());
       if(proj==NULL){CDBError("variable geographic.map_projection not found");return 1;}
       CDF::Attribute *cellsizeXattr =geo->getAttributeNE("geo_pixel_size_x");
       CDF::Attribute *cellsizeYattr =geo->getAttributeNE("geo_pixel_size_y");
@@ -526,7 +530,8 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
       product->addAttribute(new CDF::Attribute("validity_stop",szEndTime));
 
       /* Try to get additional values*/
-      CDF::Variable *image1_satellite = cdfObject->getVariableNE("image1.satellite");
+      variableName.print("image1%ssatellite",CCDFHDF5IO_GROUPSEPARATOR);
+      CDF::Variable *image1_satellite = cdfObject->getVariableNE(variableName.c_str());
       if(image1_satellite!=NULL){
         CDF::Attribute *image_acquisition_time =image1_satellite->getAttributeNE("image_acquisition_time");
         CDF::Attribute *image_generation_time =image1_satellite->getAttributeNE("image_generation_time");
@@ -801,7 +806,7 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
       //This is the image looping section
       {
         do{
-          varName.print("image%d.image_data",v);
+          varName.print("image%d%simage_data",v,CCDFHDF5IO_GROUPSEPARATOR);
           var = cdfObject->getVariableNE(varName.c_str());
           if(var!=NULL){
             if(isForecastData == false)var->removeAttribute("ADAGUC_SKIP");
@@ -835,10 +840,10 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
             //Get nodatavalue:
             // Get calibration group: First check if one is defined for specified image number, if not, use from image 1.
             
-            varName.print("image%d.calibration",v);
+            varName.print("image%d%scalibration",v,CCDFHDF5IO_GROUPSEPARATOR);
             CDF::Variable *calibration = cdfObject->getVariableNE(varName.c_str());
             if(calibration==NULL){
-              varName.print("image%d.calibration",1);
+              varName.print("image%d%scalibration",1,CCDFHDF5IO_GROUPSEPARATOR);
               calibration = cdfObject->getVariableNE(varName.c_str());
             }
             
@@ -952,7 +957,7 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
       
       //Read global attributes
 #ifdef CCDFHDF5IO_DEBUG      
-CDBDebug("Opening group \".\"");      
+CDBDebug("Opening group \"%s\"",CCDFHDF5IO_GROUPSEPARATOR);      
 #endif
       //hid_t HDF5_group = H5Gopen(H5F_file,"."); API V1.6
       hid_t HDF5_group = H5Gopen2(H5F_file,".",H5P_DEFAULT);
@@ -999,7 +1004,7 @@ CDBDebug("convertKNMIHDF5toCF()");
       }  
       hid_t HDF5_group=H5F_file;hid_t newGroupID;
       CT::string varName(variableGroupName);
-      CT::string * paths=varName.splitToArray(".");
+      CT::string * paths=varName.splitToArray(CCDFHDF5IO_GROUPSEPARATOR);
       for(size_t j=0;j<paths->count-1;j++){
         
         newGroupID= H5Gopen2(HDF5_group ,paths[j].c_str(),H5P_DEFAULT);
