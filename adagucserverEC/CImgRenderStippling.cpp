@@ -86,13 +86,53 @@ void CImgRenderStippling::render(CImageWarper *warper,CDataSource *dataSource,CD
     case CDF_DOUBLE:  GenericDataWarper::render<double>(warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
   }
   
-  int oddeven=0;
+ 
   
-  for(size_t y=0;y<settings.height;y=y+22){
-    oddeven=1-oddeven;
-    for(size_t x1=0;x1<settings.width;x1=x1+22){
-      int x=(x1)+((oddeven)*11);
-      if(x>=0&&y>=0&&x<((int)settings.width)&&y<((size_t)settings.height)){
+  int xDistance = 22;
+  int yDistance = 22;
+  int discSize = 6;
+  
+  
+  if(styleConfiguration!=NULL&&styleConfiguration->styleConfig!=NULL){
+    if(styleConfiguration->styleConfig->Stippling.size()==1){\
+      if(!styleConfiguration->styleConfig->Stippling[0]->attr.distancex.empty()){
+        xDistance = styleConfiguration->styleConfig->Stippling[0]->attr.distancex.toInt();
+      }
+      if(!styleConfiguration->styleConfig->Stippling[0]->attr.distancey.empty()){
+        yDistance = styleConfiguration->styleConfig->Stippling[0]->attr.distancey.toInt();
+      }
+      if(!styleConfiguration->styleConfig->Stippling[0]->attr.discradius.empty()){
+        discSize = styleConfiguration->styleConfig->Stippling[0]->attr.discradius.toInt();
+      }
+    }
+  }
+  
+  
+  double bboxWidth = (dataSource->srvParams->Geo->dfBBOX[2]-dataSource->srvParams->Geo->dfBBOX[0]);
+  double bboxHeight = (dataSource->srvParams->Geo->dfBBOX[3]-dataSource->srvParams->Geo->dfBBOX[1]);
+
+  
+  int startX=int(((-dataSource->srvParams->Geo->dfBBOX[0])/bboxWidth)*dataSource->srvParams->Geo->dWidth);
+  startX = (startX%(xDistance*2))-(xDistance*2);
+  int startY=int(((dataSource->srvParams->Geo->dfBBOX[1])/bboxHeight)*dataSource->srvParams->Geo->dHeight);
+  startY = (startY%(yDistance*2))-(yDistance*2);
+/*  
+  
+  
+  CT::string text;
+  text.print("%d   %d  %d",startX,startY,fstartX);
+  drawImage->setText(text.c_str(),text.length(),8,8,CColor(0,0,0,0),10);*/
+
+
+  
+  for(int y=startY;y<(int)settings.height;y=y+yDistance){
+    int oddeven=0;
+    if((y-startY)%(yDistance*2)==0){
+      oddeven = 1;
+    }
+    for(int x1=startX;x1<(int)settings.width;x1=x1+xDistance){
+      int x=(x1)+((oddeven)*(xDistance/2));
+      if(x>=0&&y>=0&&x<((int)settings.width)&&y<((int)settings.height)){
         float val = settings.dataField[x+y*settings.width];
         if(val != (float)settings.dfNodataValue && (val==val)){
           if(styleConfiguration->legendLog!=0){
@@ -105,7 +145,7 @@ void CImgRenderStippling::render(CImageWarper *warper,CDataSource *dataSource,CD
           int pcolorind=(int)(val*styleConfiguration->legendScale+styleConfiguration->legendOffset);
           if(pcolorind>=239)pcolorind=239;else if(pcolorind<=0)pcolorind=0;
           CColor c =drawImage->getColorForIndex(pcolorind);
-          drawImage->setDisc(x,y,8,c,c);
+          drawImage->setDisc(x,y,discSize,c,c);
         }
     }
     }
