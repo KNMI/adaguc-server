@@ -24,7 +24,7 @@
  ******************************************************************************/
 
 #include "CDrawImage.h"
-
+#include "CXMLParser.h"
 const char *CDrawImage::className="CDrawImage";
 std::map<int,int> CDrawImage::myColorMap;
 std::map<int,int>::iterator CDrawImage::myColorIter;
@@ -1180,6 +1180,84 @@ int CDrawImage::createGDPalette(CServerConfig::XMLE_Legend *legend){
           }
         }
       }
+    }
+    return _createStandard();
+  }
+  if(legend->attr.type.equals("svg")){
+    if(legend->attr.file.empty()){
+      CDBError("Legend type file has no file attribute specified");
+      return 1;
+    }
+    CDBDebug("Reading file %s",legend->attr.file.c_str());
+    
+    CXMLParserElement element;
+    
+    try{
+      element.parse(legend->attr.file.c_str());
+      CXMLParser::XMLElement::XMLElementPointerList stops = element.get("svg")->get("g")->get("defs")->get("linearGradient")->getList("stop");
+      float cx;
+      float rc[4];
+      unsigned char prev_red, prev_green, prev_blue, prev_alpha;
+      int prev_offset;
+      for(size_t j=0;j<stops.size();j++){
+        //CDBDebug("%s",stops.get(j)->toString().c_str());
+        int offset = (int)(stops.get(j)->getAttrValue("offset").toFloat()*2.4);
+        CT::string color = stops.get(j)->getAttrValue("stop-color").c_str()+4;
+        color.setSize(color.length()-1);
+        CT::string *colors = color.splitToArray(",");
+        if(colors->count!=3){
+          delete[] colors;
+          CDBError("Number of specified colors is unequal to three");
+          return 1;
+        }
+        unsigned char red = colors[0].toInt();
+        unsigned char green = colors[1].toInt();
+        unsigned char blue = colors[2].toInt();
+        delete[] colors;
+        unsigned char alpha = (char)(stops.get(j)->getAttrValue("stop-opacity").toFloat()*255);
+        //CDBDebug("I%d R%d G%d B%d A%d",offset,red,green,blue,alpha);
+        if(offset>255)offset=255;else if(offset<0)  offset=0;
+        /*---------------*/
+       
+        if(j==0){
+          prev_red = red;
+          prev_green = green;
+          prev_blue = blue;
+          prev_alpha = alpha;
+          prev_offset = offset;
+        }else{
+          float dif = offset-prev_offset;
+          //CDBDebug("dif %f",dif);
+          if(dif<0.5f)dif=1;
+          rc[0]=float(prev_red  -red)/dif;
+          rc[1]=float(prev_green-green)/dif;
+          rc[2]=float(prev_blue -blue)/dif;
+          rc[3]=float(prev_alpha -alpha)/dif;
+
+      
+          for(int i=prev_offset;i<offset+1;i++){
+            if(i>=0&&i<240){
+              cx=float(i-prev_offset);
+              currentLegend->CDIred[i]  =int(rc[0]*cx)+red;
+              currentLegend->CDIgreen[i]=int(rc[1]*cx)+green;
+              currentLegend->CDIblue[i] =int(rc[2]*cx)+blue;
+              currentLegend->CDIalpha[i]=int(rc[3]*cx)+alpha;
+              if(currentLegend->CDIred[i]==0)currentLegend->CDIred[i]=1;//for transparency
+            }
+          }
+        }
+        prev_red = red;
+        prev_green = green;
+        prev_blue = blue;
+        prev_alpha = alpha;
+        prev_offset = offset;
+          /*---------------*/
+      }
+      
+    }catch(int e){
+      CT::string message=CXMLParser::getErrorMessage(e);
+      CDBError("%s\n",message.c_str());
+      return 1;
     }
     return _createStandard();
   }
