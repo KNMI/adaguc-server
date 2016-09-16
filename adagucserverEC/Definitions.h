@@ -1,3 +1,4 @@
+
 /******************************************************************************
  * 
  * Project:  ADAGUC Server
@@ -26,7 +27,7 @@
 #ifndef Definitions_H
 #define Definitions_H
 
-#define ADAGUCSERVER_VERSION             "2.0.14"
+#define ADAGUCSERVER_VERSION             "2.0.15"
 
 //CConfigReaderLayerType
 #define CConfigReaderLayerTypeUnknown     0
