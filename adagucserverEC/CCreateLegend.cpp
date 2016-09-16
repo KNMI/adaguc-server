@@ -176,11 +176,11 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage,
       CT::string flagMeaning;
       CDataSource::getFlagMeaningHumanReadable(&flagMeaning,&dataSource->getDataObject(0)->statusFlagList,value);
       CT::string legendMessage;
-      legendMessage.print("%d %s",(int)value,flagMeaning.c_str());
+      legendMessage.print("%d) %s",(int)value,flagMeaning.c_str());
       legendImage->setText(legendMessage.c_str(),legendMessage.length(),(int)cbW+15+pLeft,(int)y+dH+2+pTop,248,-1);  
     }
-    CT::string units="status flag";
-    legendImage->setText(units.c_str(),units.length(),2+pLeft,int(legendHeight)-14+pTop,248,-1);
+//     CT::string units="status flag";
+//     legendImage->setText(units.c_str(),units.length(),2+pLeft,int(legendHeight)-14+pTop,248,-1);
     //legendImage->crop(4,4);
   }
   

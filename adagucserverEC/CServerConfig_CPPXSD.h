@@ -444,6 +444,20 @@ class CServerConfig:public CXMLSerializerInterface{
       }
     };
     
+    
+    class XMLE_Stippling: public CXMLObjectInterface{
+    public:
+      class Cattr{
+      public:
+        CXMLString distancex,distancey,discradius;
+      }attr;
+      void addAttribute(const char *attrname,const char *attrvalue){
+        if(equals("distancex",9,attrname)){attr.distancex.copy(attrvalue); return;}
+        if(equals("distancey", 9,attrname)){attr.distancey.copy(attrvalue); return;}
+        if(equals("discradius",10,attrname)){attr.discradius.copy(attrvalue); return;}
+      }
+    };
+    
     class XMLE_RenderMethod: public CXMLObjectInterface{};
     class XMLE_Style: public CXMLObjectInterface{
       public:
@@ -469,6 +483,7 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_StandardNames*> StandardNames;
         std::vector <XMLE_LegendGraphic*> LegendGraphic;
         std::vector <XMLE_FeatureInterval*> FeatureInterval;
+        std::vector <XMLE_Stippling*> Stippling;
         
         
         ~XMLE_Style(){
@@ -494,6 +509,7 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(StandardNames);
           XMLE_DELOBJ(LegendGraphic);
           XMLE_DELOBJ(FeatureInterval);
+          XMLE_DELOBJ(Stippling);
           
         }
         class Cattr{
@@ -528,7 +544,8 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("SmoothingFilter",15,name)){XMLE_ADDOBJ(SmoothingFilter);}
             else if(equals("StandardNames",13,name)){XMLE_ADDOBJ(StandardNames);}
             else if(equals("LegendGraphic",13,name)){XMLE_ADDOBJ(LegendGraphic);}
-            else if(equals("FeatureInterval",15,name)){XMLE_ADDOBJ(FeatureInterval);}           
+            else if(equals("FeatureInterval",15,name)){XMLE_ADDOBJ(FeatureInterval);}
+            else if(equals("Stippling",9,name)){XMLE_ADDOBJ(Stippling);}           
            
           }
           if(pt2Class!=NULL){pt2Class->addElement(baseClass,rc-pt2Class->level,name,value);pt2Class=NULL;}
