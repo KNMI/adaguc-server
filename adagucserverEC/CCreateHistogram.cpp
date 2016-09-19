@@ -210,6 +210,9 @@ int CCreateHistogram::addData(std::vector <CDataSource*> &dataSources){
       JSONdata.printconcat("\"min\":%f,",statistics.getMinimum());
       JSONdata.printconcat("\"max\":%f,",statistics.getMaximum());
       
+      JSONdata.printconcat("\"average\":%f,",statistics.getAverage());
+      JSONdata.printconcat("\"stddev\":%f,",statistics.getStdDev());
+      
       //FieldMin/Fieldmax
       JSONdata.printconcat("\"fieldmin\":%f,", fieldMin);
       JSONdata.printconcat("\"fieldmax\":%f,", fieldMax);

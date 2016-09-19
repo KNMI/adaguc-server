@@ -71,6 +71,16 @@ double CDataSource::Statistics::getMaximum(){
   return max;
 }
 
+
+double CDataSource::Statistics::getStdDev(){
+  return stddev;
+}
+
+double CDataSource::Statistics::getAverage(){
+  return avg;
+}
+
+
 void CDataSource::Statistics::setMinimum(double min){
   this->min=min;
 }
@@ -164,7 +174,90 @@ int CDataSource::Statistics::calculate(CDataSource *dataSource){
   return 0;
 }
 
+template <class T>
+void CDataSource::Statistics::calculate(size_t size,T*data,CDFType type,double dfNodataValue, bool hasNodataValue){
+  T _min=(T)0.0f,_max=(T)1.0f;
+  double _sum=0,_stddev=0,_sumsquared=0;
+  size_t numSamples=0;
+  T maxInf=(T)INFINITY;
+  T minInf=(T)-INFINITY;
+  
+  bool checkInfinity = false;
+  if(type==CDF_FLOAT||type==CDF_DOUBLE)checkInfinity=true;
+  int firstDone=0;
 
+  for(size_t p=0;p<size;p++){
+    T v=data[p];
+    if((((T)v)!=(T)dfNodataValue||(!hasNodataValue))&&v==v){
+      if((checkInfinity&&v!=maxInf&&v!=minInf)||(!checkInfinity))
+      {
+        if(firstDone==0){
+          _min=v;_max=v;
+          firstDone=1;
+        }else{
+          if(v<_min)_min=v;
+          if(v>_max)_max=v;
+        }
+        _sum+=v;
+        _sumsquared+=(v*v);
+        numSamples++;
+      }
+    }
+  }
+  avg=_sum/double(numSamples);
+  stddev=sqrt((numSamples*_sumsquared-_sum*_sum)/(numSamples*(numSamples-1)));
+  min=(double)_min;
+  max=(double)_max;
+}
+
+      
+template <class T>
+void CDataSource::Statistics::calcMinMax(size_t size,std::vector <DataObject *> *dataObject){
+#ifdef MEASURETIME
+StopWatch_Stop("Start min/max calculation");
+#endif
+  if(dataObject->size()==1){
+    T* data              = (T*)(*dataObject)[0]->cdfVariable->data;
+    CDFType type         =(*dataObject)[0]->cdfVariable->getType();
+    double dfNodataValue = (*dataObject)[0]->dfNodataValue;
+    bool hasNodataValue  = (*dataObject)[0]->hasNodataValue;
+    calculate(size,data,type,dfNodataValue,hasNodataValue);
+  }
+  
+  
+  //Wind vector min max calculation
+  if(dataObject->size()==2){
+      T* dataU = (T*)(*dataObject)[0]->cdfVariable->data;
+      T* dataV = (T*)(*dataObject)[1]->cdfVariable->data;
+  //CDBDebug("nodataval %f",(T)dataObject->dfNodataValue);
+    T _min=(T)0.0f,_max=(T)0.0f;
+    int firstDone=0;
+    T s =0;
+    for(size_t p=0;p<size;p++){
+      
+      T u=dataU[p];
+      T v=dataV[p];
+      
+      if(((((T)v)!=(T)(*dataObject)[0]->dfNodataValue||(!(*dataObject)[0]->hasNodataValue))&&v==v)&&
+        ((((T)u)!=(T)(*dataObject)[0]->dfNodataValue||(!(*dataObject)[0]->hasNodataValue))&&u==u)){
+        s=(T)hypot(u,v);
+        if(firstDone==0){
+          _min=s;_max=s;
+          firstDone=1;
+        }else{
+          
+          if(s<_min)_min=s;
+          if(s>_max)_max=s;
+        }
+      }
+    }
+    min=(double)_min;
+    max=(double)_max;
+  }
+#ifdef MEASURETIME
+  StopWatch_Stop("Finished min/max calculation");
+#endif
+}
 /************************************/
 /* CDataSource                      */
 /************************************/
