@@ -123,8 +123,41 @@ private:
   
   class Statistics{
     public:
-      template <class T>
-      void calculate(size_t size,T*data,CDFType type,double dfNodataValue, bool hasNodataValue);
+    template <class T>
+    void calculate(size_t size,T*data,CDFType type,double dfNodataValue, bool hasNodataValue){
+    T _min=(T)0.0f,_max=(T)1.0f;
+    double _sum=0,_sumsquared=0;
+    size_t numSamples=0;
+    T maxInf=(T)INFINITY;
+    T minInf=(T)-INFINITY;
+    
+    bool checkInfinity = false;
+    if(type==CDF_FLOAT||type==CDF_DOUBLE)checkInfinity=true;
+    int firstDone=0;
+
+    for(size_t p=0;p<size;p++){
+      T v=data[p];
+      if((((T)v)!=(T)dfNodataValue||(!hasNodataValue))&&v==v){
+        if((checkInfinity&&v!=maxInf&&v!=minInf)||(!checkInfinity))
+        {
+          if(firstDone==0){
+            _min=v;_max=v;
+            firstDone=1;
+          }else{
+            if(v<_min)_min=v;
+            if(v>_max)_max=v;
+          }
+          _sum+=v;
+          _sumsquared+=(v*v);
+          numSamples++;
+        }
+      }
+    }
+  avg=_sum/double(numSamples);
+  stddev=sqrt((numSamples*_sumsquared-_sum*_sum)/(numSamples*(numSamples-1)));
+  min=(double)_min;
+  max=(double)_max;
+}
   private:
      template <class T>
       void calcMinMax(size_t size,std::vector <DataObject *> *dataObject);

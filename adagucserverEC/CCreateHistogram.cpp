@@ -142,12 +142,13 @@ int CCreateHistogram::addData(std::vector <CDataSource*> &dataSources){
       if(dataSource->statistics==NULL){
         dataSource->statistics = new CDataSource::Statistics();
         dataSource->statistics->calculate(dataSource);
+        dataSource->statistics->calculate(dataSource->srvParams->Geo->dWidth*dataSource->srvParams->Geo->dHeight,(float*)warpedData,CDF_FLOAT,dataSource->getDataObject(0)->dfNodataValue,dataSource->getDataObject(0)->hasNodataValue);
       }
       float fieldMin=(float)dataSource->statistics->getMinimum();
       float fieldMax=(float)dataSource->statistics->getMaximum();
       
-      CDataSource::Statistics statistics;
-      statistics.calculate(dataSource->srvParams->Geo->dWidth*dataSource->srvParams->Geo->dHeight,(float*)warpedData,CDF_FLOAT,dataSource->getDataObject(0)->dfNodataValue,dataSource->getDataObject(0)->hasNodataValue);
+      
+      
       
       int maxNumBins = 20;
       
@@ -157,8 +158,8 @@ int CCreateHistogram::addData(std::vector <CDataSource*> &dataSources){
       
 
       
-      float min=(float)statistics.getMinimum();
-      float max=(float)statistics.getMaximum();
+      float min=(float)dataSource->statistics->getMinimum();
+      float max=(float)dataSource->statistics->getMaximum();
       
       //Round min and max
       
@@ -207,11 +208,11 @@ int CCreateHistogram::addData(std::vector <CDataSource*> &dataSources){
       JSONdata.printconcat("\"layername\":\"%s\",",dataSource->layerName.c_str());
       
       //Min/Max
-      JSONdata.printconcat("\"min\":%f,",statistics.getMinimum());
-      JSONdata.printconcat("\"max\":%f,",statistics.getMaximum());
+      JSONdata.printconcat("\"min\":%f,",dataSource->statistics->getMinimum());
+      JSONdata.printconcat("\"max\":%f,",dataSource->statistics->getMaximum());
       
-      JSONdata.printconcat("\"average\":%f,",statistics.getAverage());
-      JSONdata.printconcat("\"stddev\":%f,",statistics.getStdDev());
+      JSONdata.printconcat("\"average\":%f,",dataSource->statistics->getAverage());
+      JSONdata.printconcat("\"stddev\":%f,",dataSource->statistics->getStdDev());
       
       //FieldMin/Fieldmax
       JSONdata.printconcat("\"fieldmin\":%f,", fieldMin);
