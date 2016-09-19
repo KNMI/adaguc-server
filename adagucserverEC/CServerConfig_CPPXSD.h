@@ -249,11 +249,12 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
         public:
-          CXMLString units,standard_name;
+          CXMLString units,standard_name,variable_name;
         }attr;
         void addAttribute(const char *attrname,const char *attrvalue){
           if(equals("units",5,attrname)){attr.units.copy(attrvalue);return;}
           else if(equals("standard_name",13,attrname)){attr.standard_name.copy(attrvalue);return;}
+          else if(equals("variable_name",13,attrname)){attr.variable_name.copy(attrvalue);return;}
         }
     };
     
