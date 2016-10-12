@@ -253,7 +253,7 @@ int CTime::init(const char *units, const char *calendar){
       if(mode == CTIME_MODE_360day){
         timeUnits.dateSinceOffset +=timeUnits.date.year*360;   
         timeUnits.dateSinceOffset +=CTIME_CALENDARTYPE_360day_MonthsCumul[(timeUnits.date.month-1)];
-        timeUnits.dateSinceOffset +=timeUnits.date.day;        
+        timeUnits.dateSinceOffset +=(timeUnits.date.day-1);        
   //         timeUnits.dateSinceOffset +=(((double)timeUnits.date.hour)/24.);  TODO
   //         timeUnits.dateSinceOffset +=(((double)timeUnits.date.minute)/(24*60.)); TODO
   //         timeUnits.dateSinceOffset +=(((double)timeUnits.date.second)/(24*60*60.));   TODO     
@@ -261,10 +261,24 @@ int CTime::init(const char *units, const char *calendar){
       if(mode == CTIME_MODE_365day){
         timeUnits.dateSinceOffset +=timeUnits.date.year*365;   
         timeUnits.dateSinceOffset +=CTIME_CALENDARTYPE_365day_MonthsCumul[(timeUnits.date.month-1)];
-        timeUnits.dateSinceOffset +=timeUnits.date.day;        
-  //         timeUnits.dateSinceOffset +=(((double)timeUnits.date.hour)/24.);  TODO
-  //         timeUnits.dateSinceOffset +=(((double)timeUnits.date.minute)/(24*60.)); TODO
-  //         timeUnits.dateSinceOffset +=(((double)timeUnits.date.second)/(24*60*60.));   TODO     
+        timeUnits.dateSinceOffset +=(timeUnits.date.day-1);        
+        timeUnits.dateSinceOffset +=(((double)timeUnits.date.hour)/24.); 
+        timeUnits.dateSinceOffset +=(((double)timeUnits.date.minute)/(24*60.));
+        timeUnits.dateSinceOffset +=(((double)timeUnits.date.second)/(24*60*60.));  
+        
+//         CDBDebug("timeUnits.date.month = %f",float(timeUnits.date.month));
+//         
+//         
+//         
+//         CDBDebug("Y = %f",float(timeUnits.date.year*365));
+//         CDBDebug("m = %f",float(CTIME_CALENDARTYPE_365day_MonthsCumul[(timeUnits.date.month-1)]));
+//         CDBDebug("D = %f",float(timeUnits.date.day));
+//         CDBDebug("H = %f",(((double)timeUnits.date.hour)/24.));
+//         CDBDebug("M = %f",(((double)timeUnits.date.minute)/(24*60.)));
+//         CDBDebug("S = %f",(((double)timeUnits.date.second)/(24*60*60.)));
+//         
+//         
+//         CDBDebug("dateSinceOffset = %f",timeUnits.dateSinceOffset);
       }
 
     }else{
@@ -390,12 +404,16 @@ CTime::Date CTime::getDate(double offset){
         date.minute = 0;
         date.second = 0;
       }
+      date.day++;
     }
   }
   
   if(mode == CTIME_MODE_365day){
     if(timeUnits.unitType == CTIME_UNITTYPE_DAYS){
       double newOffset = timeUnits.dateSinceOffset+offset;
+//       CDBDebug("timeUnits.dateSinceOffset = %f",timeUnits.dateSinceOffset);
+//       CDBDebug("newOffset = %f",newOffset);
+//       CDBDebug("offset = %f",offset);
       date.year = int(newOffset/365);
       newOffset-=(date.year*365);
 
@@ -405,16 +423,26 @@ CTime::Date CTime::getDate(double offset){
 
       date.day = newOffset;
       
+//       CDBDebug("YMD: %f %f %f",float(date.year),float(date.month),float(date.day));
+      
       newOffset -=date.day;;
       if(newOffset>0){
+        CDBDebug("newOffset>0");
         date.hour   = int(newOffset*24)%24;      newOffset-=float(date.hour  )/24;
         date.minute = int(newOffset*24*60)%60;   newOffset-=float(date.minute)/(60*24);
         date.second = int(newOffset*24*60*60)%60;newOffset-=float(date.second)/(60*60*24);
+//         CDBDebug("newOffset>0: %f %f %f",float(date.hour),float(date.minute),float(date.second));
+//         
+//         CDBDebug("Remaining offset: %f (should be zero)",newOffset);
       }else{
         date.hour = 0;
         date.minute = 0;
         date.second = 0;
       }
+      date.day++;
+    }else{
+      CDBError("Other unittype than CTIME_UNITTYPE_DAYS not supported");
+      throw CTIME_CONVERSION_ERROR;
     }
   }
 
