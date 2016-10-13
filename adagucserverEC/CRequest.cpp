@@ -23,7 +23,7 @@
  * 
  ******************************************************************************/
 
-// #define CREQUEST_DEBUG
+//#define CREQUEST_DEBUG
 //#define MEASURETIME
 
 #include "CRequest.h"
@@ -809,7 +809,10 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource,CServerParams *
         return status;
       }
     }
-    
+    for(size_t j=0;j<dataSource->timeSteps.size();j++){
+      delete dataSource->timeSteps[j];
+    }
+    dataSource->timeSteps.clear();
     /*
       * Get the number of required dims from the given dims
       * Check if all dimensions are given
@@ -1659,6 +1662,8 @@ int CRequest::process_all_layers(){
         if(srvParam->requestType==REQUEST_WCS_GETCOVERAGE){
           CBaseDataWriterInterface* wcsWriter = NULL;
           CT::string driverName = "ADAGUCNetCDF";
+          setDimValuesForDataSource(dataSources[j],srvParam);
+          
           for(size_t i=0;i<srvParam->cfg->WCS[0]->WCSFormat.size();i++){
             if(srvParam->Format.equals(srvParam->cfg->WCS[0]->WCSFormat[i]->attr.name.c_str())){
               driverName.copy(srvParam->cfg->WCS[0]->WCSFormat[i]->attr.driver.c_str());
@@ -1689,6 +1694,7 @@ int CRequest::process_all_layers(){
             }
             for(int k=0;k<dataSources[j]->getNumTimeSteps();k++){
               dataSources[j]->setTimeStep(k);
+
               try{
                 status = wcsWriter->addData(dataSources);
               }catch(int e){
