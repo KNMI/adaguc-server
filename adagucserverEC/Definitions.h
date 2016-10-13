@@ -1,4 +1,5 @@
 
+
 /******************************************************************************
  * 
  * Project:  ADAGUC Server
@@ -147,7 +148,7 @@
 */
 
 //#define MEASURETIME
-
+//#define ADAGUC_TILESTITCHER_DEBUG
 //#define DEBUGON
 #ifdef DEBUGON
 #define CDATASOURCE_DEBUG
@@ -160,7 +161,7 @@
 #define MEASURETIME
 #define CIMGWARPNEARESTNEIGHBOUR_DEBUG
 #define CDFOBJECTSTORE_DEBUG
-
+#define ADAGUC_TILESTITCHER_DEBUG
 #endif
 //#define MEASURETIME
 //#define CCDFNETCDFIO_DEBUG
