@@ -528,8 +528,8 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
                     CDataReader reader;
                     dataSource->addStep(dirReader->fileList[j]->fullName.c_str(),NULL);
                     reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
-//                     CDBDebug("CRS:  [%s]",dataSource->nativeProj4.c_str());
-//                     CDBDebug("BBOX: [%f %f %f %f]",dataSource->dfBBOX[0],dataSource->dfBBOX[1],dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
+//                      CDBDebug("---> CRS:  [%s]",dataSource->nativeProj4.c_str());
+//                      CDBDebug("---> BBOX: [%f %f %f %f]",dataSource->dfBBOX[0],dataSource->dfBBOX[1],dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
                    /* crs = dataSource->nativeProj4.c_str();
                     minx = dataSource->dfBBOX[0];
                     miny = dataSource->dfBBOX[1];
@@ -990,7 +990,7 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
         int numCreated=0;
         CDBDebug("Tiling level %d",level);
         int levelInc = pow(2,level-1);
-        //CDBDebug("Tiling levelInc %d",levelInc);
+        CDBDebug("Tiling levelInc %d",levelInc);
         for(int y=0;y<nrTilesY;y=y+levelInc){
           
           for(int x=0;x<nrTilesX;x=x+levelInc){
@@ -1001,21 +1001,28 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
             ds.srvParams=&newSrvParams;
             ds.cfgLayer=dataSource->cfgLayer;
             ds.cfg=dataSource->srvParams->cfg;
-            double dfMinX = globalBBOX[0]+tileBBOXWidth*x;
-            double dfMinY = globalBBOX[1]+tileBBOXHeight*y;
-            double dfMaxX = globalBBOX[0]+tileBBOXWidth*(x+levelInc);
-            double dfMaxY = globalBBOX[1]+tileBBOXHeight*(y+levelInc);
+            double dfMinX = globalBBOX[0]+tileBBOXWidth*x-tileBBOXWidth/2;
+            double dfMinY = globalBBOX[1]+tileBBOXHeight*y-tileBBOXHeight/2;
+            double dfMaxX = globalBBOX[0]+tileBBOXWidth*(x+levelInc)+tileBBOXWidth/2;
+            double dfMaxY = globalBBOX[1]+tileBBOXHeight*(y+levelInc)+tileBBOXHeight/2;
             CT::string fileNameToWrite = dataSource->cfgLayer->TileSettings[0]->attr.tilepath.c_str(); 
             fileNameToWrite.printconcat("/l%dleft%ftop%f.nc",level,dfMinX,dfMinY);
             CDirReader::makeCleanPath(&fileNameToWrite);
             int status = dbAdapter->checkIfFileIsInTable(tableName.c_str(),fileNameToWrite.c_str());
+            if(status == 0){
+              CDBDebug("File %s already in table %s",fileNameToWrite.c_str(),tableName.c_str());
+            }
             if(status != 0){
+              CDBDebug("File %s not in table %s",fileNameToWrite.c_str(),tableName.c_str());
               ds.srvParams->Geo->CRS=dataSource->nativeProj4;
+   
               ds.srvParams->Geo->dfBBOX[0]=dfMinX;
               ds.srvParams->Geo->dfBBOX[1]=dfMinY;
               ds.srvParams->Geo->dfBBOX[2]=dfMaxX;
               ds.srvParams->Geo->dfBBOX[3]=dfMaxY;
               
+                         
+
               ds.nativeViewPortBBOX[0]=dfMinX;
               ds.nativeViewPortBBOX[1]=dfMinY;
               ds.nativeViewPortBBOX[2]=dfMaxX;
@@ -1032,7 +1039,7 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
                 ds.queryBBOX=1;
                 store = dbAdapter->getFilesAndIndicesForDimensions(&ds,3000);
                 if(store!=NULL){
-                  //CDBDebug("*** Found %d %d:%d = %f %f",store->getSize(),x,y,dfMinX,dfMinY);
+                  CDBDebug("*** Found %d %d:%d = (%f %f %f %f) - (%f,%f)",store->getSize(),x,y,dfMinX,dfMinY,dfMaxX,dfMaxY,dfMaxX-dfMinX,dfMaxY-dfMinY);
                   if(store->getSize()>0&&1==1){
                     for(size_t k=0;k<store->getSize();k++){
                       CDBStore::Record *record = store->getRecord(k);
@@ -1050,6 +1057,11 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
                     try{
                       newSrvParams.Geo->dWidth=dataSource->dWidth;
                       newSrvParams.Geo->dHeight=dataSource->dHeight;
+                      dfMinX = globalBBOX[0]+tileBBOXWidth*x;
+                      dfMinY = globalBBOX[1]+tileBBOXHeight*y;
+                      dfMaxX = globalBBOX[0]+tileBBOXWidth*(x+levelInc);
+                      dfMaxY = globalBBOX[1]+tileBBOXHeight*(y+levelInc);
+                      
                       newSrvParams.Geo->dfBBOX[0]=dfMinX;
                       newSrvParams.Geo->dfBBOX[1]=dfMinY;
                       newSrvParams.Geo->dfBBOX[2]=dfMaxX;
