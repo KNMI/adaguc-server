@@ -405,6 +405,15 @@ CTime::Date CTime::getDate(double offset){
         date.second = 0;
       }
       date.day++;
+      int numDaysInMonth = CTIME_CALENDARTYPE_360day_Months[date.month-1];
+      if(date.day>numDaysInMonth){
+        date.month++;
+        date.day=1;
+        if(date.month>12){
+          date.month=1;
+          date.year++;
+        }
+      }
     }
   }
   
@@ -427,7 +436,7 @@ CTime::Date CTime::getDate(double offset){
       
       newOffset -=date.day;;
       if(newOffset>0){
-        CDBDebug("newOffset>0");
+        //CDBDebug("newOffset>0");
         date.hour   = int(newOffset*24)%24;      newOffset-=float(date.hour  )/24;
         date.minute = int(newOffset*24*60)%60;   newOffset-=float(date.minute)/(60*24);
         date.second = int(newOffset*24*60*60)%60;newOffset-=float(date.second)/(60*60*24);
@@ -440,6 +449,15 @@ CTime::Date CTime::getDate(double offset){
         date.second = 0;
       }
       date.day++;
+      int numDaysInMonth = CTIME_CALENDARTYPE_365day_Months[date.month-1];
+      if(date.day>numDaysInMonth){
+        date.month++;
+        date.day=1;
+        if(date.month>12){
+          date.month=1;
+          date.year++;
+        }
+      }
     }else{
       CDBError("Other unittype than CTIME_UNITTYPE_DAYS not supported");
       throw CTIME_CONVERSION_ERROR;
@@ -487,7 +505,7 @@ double CTime::dateToOffset( Date date){
     if(timeUnits.unitType == CTIME_UNITTYPE_DAYS){
       offset = date.year*360;
       offset +=CTIME_CALENDARTYPE_360day_MonthsCumul[(date.month-1)];
-      offset +=date.day;        
+      offset +=(date.day-1);        
       offset +=(((float)date.hour)/24.); 
       offset +=(((float)date.minute)/(24*60.));
       offset +=(((float)date.second)/(24*60*60.));       
@@ -500,7 +518,7 @@ double CTime::dateToOffset( Date date){
     if(timeUnits.unitType == CTIME_UNITTYPE_DAYS){
       offset = date.year*365;
       offset +=CTIME_CALENDARTYPE_365day_MonthsCumul[(date.month-1)];
-      offset +=date.day;        
+      offset +=(date.day-1);        
       offset +=(((float)date.hour)/24.); 
       offset +=(((float)date.minute)/(24*60.));
       offset +=(((float)date.second)/(24*60*60.));       
@@ -579,8 +597,10 @@ CTime::Date CTime::ISOStringToDate(const char*szTime){
     CDBError("ISOStringToDate: input %s",szTime);
     throw e;
   }
+  //CDBDebug("date.offset %f",date.offset);
   Date checkDate=getDate(date.offset);
   CT::string checkStr = dateToISOString(checkDate);
+  //CDBDebug("checkStr %s",checkStr.c_str());
   checkStr.setChar(19,'Z');
   checkStr.setSize(20);
   if(!checkStr.equals(szTime)){
