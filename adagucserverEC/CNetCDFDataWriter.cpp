@@ -2,7 +2,7 @@
 #include "CGenericDataWarper.h"
 const char * CNetCDFDataWriter::className = "CNetCDFDataWriter";
 
-#define CNetCDFDataWriter_DEBUG
+//#define CNetCDFDataWriter_DEBUG
 
 void CNetCDFDataWriter::createProjectionVariables(CDFObject *cdfObject,int width,int height,double *bbox){
   bool isProjected=true;

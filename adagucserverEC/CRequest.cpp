@@ -1,3 +1,4 @@
+
 /******************************************************************************
  * 
  * Project:  ADAGUC Server
@@ -1137,13 +1138,13 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
       store=NULL;
       dataSource->queryLevel=0;
       
-      while(((numResults*tileWidth*tileHeight)/4>srvParam->Geo->dWidth*srvParam->Geo->dHeight&&numResults>2)||numResults==0||numResults>60){
+      while(((numResults*tileWidth*tileHeight)/3>srvParam->Geo->dWidth*srvParam->Geo->dHeight&&numResults>3)||numResults==0||numResults>60){
         if(dataSource->queryLevel>(maxlevel-1)){dataSource->queryLevel--;break;}
         delete store;store=NULL;
         dataSource->queryLevel++;
         double levelXBBOXWidth = level1BBOXWidth*pow(2,dataSource->queryLevel-1)*1;
         double levelXBBOXHeight =level1BBOXHeight*pow(2,dataSource->queryLevel-1)*1;
-        //CDBDebug("levelXBBOXWidth = %f, levelXBBOXHeight = %f queryLevel=%d",levelXBBOXWidth,levelXBBOXHeight,dataSource->queryLevel);
+        CDBDebug("levelXBBOXWidth = %f, levelXBBOXHeight = %f queryLevel=%d",levelXBBOXWidth,levelXBBOXHeight,dataSource->queryLevel);
         dataSource->nativeViewPortBBOX[0]=nativeViewPortBBOX[0]-levelXBBOXWidth;
         dataSource->nativeViewPortBBOX[1]=nativeViewPortBBOX[1]-levelXBBOXHeight;
         dataSource->nativeViewPortBBOX[2]=nativeViewPortBBOX[2]+levelXBBOXWidth;
@@ -1158,7 +1159,9 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
       }
       
       CDBDebug("level %d, tiles %d",dataSource->queryLevel,store->getSize());
-      //srvParam->mapTitle.print("level %d, tiles %d",dataSource->queryLevel,store->getSize());
+      #ifdef ADAGUC_TILESTITCHER_DEBUG
+      srvParam->mapTitle.print("level %d, tiles %d",dataSource->queryLevel,store->getSize());
+      #endif
       
     }else{
       dataSource->queryBBOX = false;
