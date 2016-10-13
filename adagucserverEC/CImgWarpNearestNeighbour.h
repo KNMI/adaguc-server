@@ -219,7 +219,20 @@ public:
                   imgpointer=srcpixel_x+(height-1-srcpixel_y)*width;
                   //imgpointer=srcpixel_x+(dHeight-1-srcpixel_y)*dWidth;
                   val=data[imgpointer];
-//                   if(srcpixel_x ==0||srcpixel_x==width-1||srcpixel_y ==0||srcpixel_y==height-1)val=12;
+
+#ifdef ADAGUC_TILESTITCHER_DEBUG
+                  
+                      if(srcpixel_x ==0||srcpixel_x==width-1||srcpixel_y ==0||srcpixel_y==height-1)val=12;
+                      
+                      
+                      if((srcpixel_x ==10||srcpixel_x==width-10)&& srcpixel_y >10 &&srcpixel_y<height-10){
+                        val = 5;
+                      }
+                      if((srcpixel_y ==10||srcpixel_y==width-10)&& srcpixel_x >10 &&srcpixel_x<width-10){
+                        val = 5;
+                      }
+#endif                    
+                                    
                   
                   isNodata=false;
                   if(hasNodataValue){if(val==nodataValue)isNodata=true;}if(!(val==val))isNodata=true;
