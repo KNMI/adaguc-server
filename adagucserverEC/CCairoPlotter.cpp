@@ -290,7 +290,7 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
     }
     error = FT_New_Face( library,fontLocation , 0, &face );
     if ( error == FT_Err_Unknown_File_Format ) {
-      CDBError("the font file could be opened and read, but it appears that its font format is unsupported");
+      CDBError("the font file could be opened and read, but it appears that its font format is unsupported %s",fontLocation );
       if(library!=NULL){FT_Done_FreeType(library);library=NULL;face=NULL; }
       return 1;
     } else if ( error ) {
