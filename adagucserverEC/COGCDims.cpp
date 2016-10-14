@@ -44,7 +44,7 @@ CCDFDims::~CCDFDims (){
 }
 
 void CCDFDims::addDimension(const char *name,const char *value,size_t index){
-  //CDBDebug("Adddimension %s %s %d",name,value,index);
+  //CDBDebug("Adddimension %s %s %d, numdims = %d",name,value,index,dimensions.size());
   for(size_t j=0;j<dimensions.size();j++){
     if(dimensions[j]->name.equals(name)){
       dimensions[j]->index=index;
@@ -115,9 +115,10 @@ const char *CCDFDims::getDimensionName(int j){
 }
 
 void CCDFDims::copy(CCDFDims * dim){
+  CDBDebug("CCDFDims::copy numdims %d",dim->dimensions.size());
   if(dim!=NULL){
     for(size_t j=0;j<dim->dimensions.size();j++){
-      CDBDebug("COPY");
+      CDBDebug("COPY %s",j);
       addDimension(dim->dimensions[j]->name.c_str(),dim->dimensions[j]->value.c_str(),dim->dimensions[j]->index);
       
     }

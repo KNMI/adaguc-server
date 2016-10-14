@@ -1,3 +1,4 @@
+
 /******************************************************************************
  * 
  * Project:  ADAGUC Server
@@ -23,7 +24,7 @@
  * 
  ******************************************************************************/
 
-// #define CREQUEST_DEBUG
+//#define CREQUEST_DEBUG
 //#define MEASURETIME
 
 #include "CRequest.h"
@@ -809,7 +810,10 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource,CServerParams *
         return status;
       }
     }
-    
+    for(size_t j=0;j<dataSource->timeSteps.size();j++){
+      delete dataSource->timeSteps[j];
+    }
+    dataSource->timeSteps.clear();
     /*
       * Get the number of required dims from the given dims
       * Check if all dimensions are given
@@ -1137,13 +1141,13 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
       store=NULL;
       dataSource->queryLevel=0;
       
-      while(((numResults*tileWidth*tileHeight)/4>srvParam->Geo->dWidth*srvParam->Geo->dHeight&&numResults>2)||numResults==0||numResults>60){
+      while(((numResults*tileWidth*tileHeight)/3>srvParam->Geo->dWidth*srvParam->Geo->dHeight&&numResults>3)||numResults==0||numResults>60){
         if(dataSource->queryLevel>(maxlevel-1)){dataSource->queryLevel--;break;}
         delete store;store=NULL;
         dataSource->queryLevel++;
         double levelXBBOXWidth = level1BBOXWidth*pow(2,dataSource->queryLevel-1)*1;
         double levelXBBOXHeight =level1BBOXHeight*pow(2,dataSource->queryLevel-1)*1;
-        //CDBDebug("levelXBBOXWidth = %f, levelXBBOXHeight = %f queryLevel=%d",levelXBBOXWidth,levelXBBOXHeight,dataSource->queryLevel);
+        CDBDebug("levelXBBOXWidth = %f, levelXBBOXHeight = %f queryLevel=%d",levelXBBOXWidth,levelXBBOXHeight,dataSource->queryLevel);
         dataSource->nativeViewPortBBOX[0]=nativeViewPortBBOX[0]-levelXBBOXWidth;
         dataSource->nativeViewPortBBOX[1]=nativeViewPortBBOX[1]-levelXBBOXHeight;
         dataSource->nativeViewPortBBOX[2]=nativeViewPortBBOX[2]+levelXBBOXWidth;
@@ -1158,7 +1162,9 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
       }
       
       CDBDebug("level %d, tiles %d",dataSource->queryLevel,store->getSize());
-      //srvParam->mapTitle.print("level %d, tiles %d",dataSource->queryLevel,store->getSize());
+      #ifdef ADAGUC_TILESTITCHER_DEBUG
+      srvParam->mapTitle.print("level %d, tiles %d",dataSource->queryLevel,store->getSize());
+      #endif
       
     }else{
       dataSource->queryBBOX = false;
@@ -1659,6 +1665,8 @@ int CRequest::process_all_layers(){
         if(srvParam->requestType==REQUEST_WCS_GETCOVERAGE){
           CBaseDataWriterInterface* wcsWriter = NULL;
           CT::string driverName = "ADAGUCNetCDF";
+          setDimValuesForDataSource(dataSources[j],srvParam);
+          
           for(size_t i=0;i<srvParam->cfg->WCS[0]->WCSFormat.size();i++){
             if(srvParam->Format.equals(srvParam->cfg->WCS[0]->WCSFormat[i]->attr.name.c_str())){
               driverName.copy(srvParam->cfg->WCS[0]->WCSFormat[i]->attr.driver.c_str());
@@ -1689,6 +1697,7 @@ int CRequest::process_all_layers(){
             }
             for(int k=0;k<dataSources[j]->getNumTimeSteps();k++){
               dataSources[j]->setTimeStep(k);
+
               try{
                 status = wcsWriter->addData(dataSources);
               }catch(int e){

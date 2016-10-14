@@ -351,7 +351,7 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Confi
 }
 
 void CDataSource::addStep(const char * fileName, CCDFDims *dims){
-  
+  //CDBDebug("addStep for %s",fileName);
   TimeStep * timeStep = new TimeStep();
   timeSteps.push_back(timeStep);
   currentAnimationStep = timeSteps.size()-1;
