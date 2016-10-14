@@ -122,9 +122,16 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage,
   #ifdef CIMAGEDATAWRITER_DEBUG
   CDBDebug("Determine legendtype");
   #endif
+  
   //Determine legendtype.
   if(dataSource->getDataObject(0)->hasStatusFlag){
     legendType = statusflag;
+  }else if (renderMethod&RM_POINT) {
+    if ((styleConfiguration!=NULL)&&(styleConfiguration->shadeIntervals!=NULL)&&(styleConfiguration->shadeIntervals->size()>0)) {
+        legendType=discrete;
+      } else {
+        legendType=continous;
+      }
   }else if(!(renderMethod&RM_SHADED||renderMethod&RM_CONTOUR)){
     legendType = continous;
   }else{
@@ -154,6 +161,11 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage,
     float cbW = 20;//legendWidth/8;
     float cbH = legendHeight-13-13-30;
     
+    bool useShadeIntervals=false;
+    if ((styleConfiguration!=NULL)&&(styleConfiguration->shadeIntervals!=NULL)&&(styleConfiguration->shadeIntervals->size()>0)) {
+      useShadeIntervals=true;
+    }
+    
     int blockHeight = 12;
     int blockDistance=18;
     
@@ -165,13 +177,18 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage,
       }
     }
     
+    CColor black(0,0,0,255);
     
     for(size_t j=0;j<numFlags;j++){
       float y=j*blockDistance+(cbH-numFlags*blockDistance+8);
       double value=dataSource->getDataObject(0)->statusFlagList[j]->value;
-      int c=CImageDataWriter::getColorIndexForValue(dataSource,value);
-      
-      legendImage->rectangle(1+pLeft,int(2+dH+y)+pTop,(int)cbW+9+pLeft,(int)y+2+dH+blockHeight+pTop,c,248);
+      if (useShadeIntervals) {
+        CColor col=CImageDataWriter::getPixelColorForValue(dataSource, value);
+        legendImage->rectangle(1+pLeft,int(2+dH+y)+pTop,(int)cbW+9+pLeft,(int)y+2+dH+blockHeight+pTop, col, black);
+      } else {
+        int c=CImageDataWriter::getColorIndexForValue(dataSource,value);
+        legendImage->rectangle(1+pLeft,int(2+dH+y)+pTop,(int)cbW+9+pLeft,(int)y+2+dH+blockHeight+pTop,c,248);
+      }
       
       CT::string flagMeaning;
       CDataSource::getFlagMeaningHumanReadable(&flagMeaning,&dataSource->getDataObject(0)->statusFlagList,value);
@@ -247,8 +264,6 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage,
     
     legendImage->line(pLeft,6+dH+pTop,pLeft,(int)cbH+7+dH+pTop,0.8,248);
     legendImage->line((int)cbW+1+pLeft,6+dH+pTop,(int)cbW+1+pLeft,(int)cbH+7+dH+pTop,0.8,248);
-    
-    
     
     int triangleLX= pLeft;
     int triangleRX= (int)cbW+1+pLeft;
@@ -384,7 +399,7 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage,
     //legendImage->crop(2,2);    
     //return 0;
   }
-  
+
   //Draw legend with fixed intervals
   if( legendType == discrete ){
     #ifdef CIMAGEDATAWRITER_DEBUG
@@ -417,7 +432,10 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage,
     
     //Calculate the number of classes
     float legendInterval=styleConfiguration->shadeInterval;
-    int numClasses=(int((maxValue-minValue)/legendInterval));
+    int numClasses=8; //Default number of classes, if legendInterval not specified
+    if (legendInterval!=0){
+      numClasses=int((maxValue-minValue)/legendInterval);
+    }
     
     /*
      *   // and reduce the number of classes when required...
@@ -430,7 +448,7 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage,
     #ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("LayerName = %s",dataSource->layerName.c_str());
     CDBDebug("minValue=%f maxValue=%f",minValue,maxValue);
-    CDBDebug("scale=%f offset=%f",styleConfiguration->legendScale,styleConfiguration->legendOffset);    
+    CDBDebug("scale=%f offset=%f",styleConfiguration->legendScale,styleConfiguration->legendOffset);  
     #endif
     float iMin=convertValueToClass(minValue,legendInterval);
     float iMax=convertValueToClass(maxValue,legendInterval)+legendInterval;
@@ -466,7 +484,7 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage,
         styleConfiguration->legendOffset==NAN||
         styleConfiguration->legendOffset==-INFINITY){
         styleConfiguration->legendScale=240.0;
-      styleConfiguration->legendOffset=0;
+        styleConfiguration->legendOffset=0;
         }
     }
     
@@ -503,7 +521,6 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage,
           }else{
             color=legendImage->getColorForIndex(CImageDataWriter::getColorIndexForValue(dataSource,parseFloat(s->attr.min.c_str())));
           }
-          
           legendImage->rectangle(4+pLeft,cY2+pTop,int(cbW)+7+pLeft,cY1+pTop,color,CColor(0,0,0,255));
           
           if(s->attr.label.empty()){
@@ -577,12 +594,13 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage,
       }
     }
     #ifdef CIMAGEDATAWRITER_DEBUG
+    
     CDBDebug("set units");
     #endif
     //Get units
     CT::string units;
     if(dataSource->getDataObject(0)->getUnits().length()>0){
-      units.concat(units.c_str());
+      units.concat(dataSource->getDataObject(0)->getUnits().c_str());
     }
     if(units.length()>0)legendImage->setText(units.c_str(),units.length(),2+pLeft,int(legendHeight)-14+pTop,248,-1);
     //legendImage->crop(4,4);
