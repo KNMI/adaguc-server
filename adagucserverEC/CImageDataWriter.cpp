@@ -415,7 +415,8 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   }
   
   if(dataSource!=NULL){
-    if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
+    if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded
+    ){
         
         if(initializeLegend(srvParam,dataSource)!=0)return 1;
     }
@@ -535,7 +536,8 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
     if(styleConfiguration!=NULL){
         if(styleConfiguration->legendIndex != -1){
         //Create palette for internal WNS layer
-        if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
+        if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded
+        ){
         //    if(initializeLegend(srvParam,dataSource)!=0)return 1;
             status = drawImage.createGDPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);
             if(status != 0){

@@ -35,6 +35,7 @@
 #define CConfigReaderLayerTypeDataBase    1
 #define CConfigReaderLayerTypeStyled      2
 #define CConfigReaderLayerTypeCascaded    3
+#define CConfigReaderLayerTypeBaseLayer   4
 
 //CRequest
 //Service options

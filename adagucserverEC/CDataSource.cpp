@@ -330,6 +330,8 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Confi
     dLayerType=CConfigReaderLayerTypeCascaded;
   }else if(cfgLayer->attr.type.equals("autoscan")){
     dLayerType=CConfigReaderLayerTypeUnknown;
+  }else if(cfgLayer->attr.type.equals("baselayer")){
+    dLayerType=CConfigReaderLayerTypeBaseLayer;
   }else if(cfgLayer->attr.type.empty()==false){
     if(strlen(cfgLayer->attr.type.c_str())>0){
       dLayerType=CConfigReaderLayerTypeUnknown;
