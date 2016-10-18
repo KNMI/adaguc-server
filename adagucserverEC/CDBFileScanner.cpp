@@ -746,7 +746,9 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
 
 int CDBFileScanner::updatedb( CDataSource *dataSource,CT::string *_tailPath,CT::string *_layerPathToScan,int scanFlags){
  
-  if(dataSource->dLayerType!=CConfigReaderLayerTypeDataBase)return 0;
+  if(dataSource->dLayerType!=CConfigReaderLayerTypeDataBase&&
+    dataSource->dLayerType!=CConfigReaderLayerTypeBaseLayer
+  )return 0;
  
   CCache::Lock lock;
   CT::string identifier = "updatedb";  identifier.concat(dataSource->cfgLayer->FilePath[0]->value.c_str());  identifier.concat("/");  identifier.concat(dataSource->cfgLayer->FilePath[0]->attr.filter.c_str());  

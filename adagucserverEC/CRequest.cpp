@@ -1402,7 +1402,8 @@ int CRequest::process_all_layers(){
     /* Type = Database layer   */
     /***************************/
     if(dataSources[j]->dLayerType==CConfigReaderLayerTypeDataBase||
-      dataSources[j]->dLayerType==CConfigReaderLayerTypeStyled)
+      dataSources[j]->dLayerType==CConfigReaderLayerTypeStyled||
+      dataSources[j]->dLayerType==CConfigReaderLayerTypeBaseLayer)
     {
 
       //When this layer has no dimensions, we do not need to query 
@@ -1461,7 +1462,8 @@ int CRequest::process_all_layers(){
   if(srvParam->requestType==REQUEST_WMS_GETMAP){
     if(srvParam->dFound_BBOX == 0){
       for(size_t d=0;d<dataSources.size();d++){
-        if(dataSources[d]->dLayerType!=CConfigReaderLayerTypeCascaded){
+        if(dataSources[d]->dLayerType!=CConfigReaderLayerTypeCascaded&&
+           dataSources[d]->dLayerType!=CConfigReaderLayerTypeBaseLayer){
           CImageWarper warper;
           CDataReader reader;
           status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_HEADER);
@@ -1493,7 +1495,8 @@ int CRequest::process_all_layers(){
     /**************************************/
     if(dataSources[j]->dLayerType==CConfigReaderLayerTypeDataBase||
       dataSources[j]->dLayerType==CConfigReaderLayerTypeStyled||
-      dataSources[j]->dLayerType==CConfigReaderLayerTypeCascaded)
+      dataSources[j]->dLayerType==CConfigReaderLayerTypeCascaded||
+      dataSources[j]->dLayerType==CConfigReaderLayerTypeBaseLayer)
     {
       try{
         for(size_t d=0;d<dataSources.size();d++){
@@ -1536,7 +1539,8 @@ int CRequest::process_all_layers(){
               dataSources[d]->setTimeStep(k);
             }
             if(dataSources[j]->dLayerType==CConfigReaderLayerTypeDataBase||
-              dataSources[j]->dLayerType==CConfigReaderLayerTypeCascaded){
+              dataSources[j]->dLayerType==CConfigReaderLayerTypeCascaded||
+              dataSources[j]->dLayerType==CConfigReaderLayerTypeBaseLayer){
        
               status = imageDataWriter.addData(dataSources);
               if(status != 0){
@@ -2973,7 +2977,8 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan, int sca
   srvParam->requestType=REQUEST_UPDATEDB;
 
   for(size_t j=0;j<numberOfLayers;j++){
-    if(dataSources[j]->dLayerType==CConfigReaderLayerTypeDataBase){
+    if(dataSources[j]->dLayerType==CConfigReaderLayerTypeDataBase||
+       dataSources[j]->dLayerType==CConfigReaderLayerTypeBaseLayer){
       if(scanFlags&CDBFILESCANNER_UPDATEDB){
         status = CDBFileScanner::updatedb(dataSources[j],tailPath,layerPathToScan,scanFlags);
       }
