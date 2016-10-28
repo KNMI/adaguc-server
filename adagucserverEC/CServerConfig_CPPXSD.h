@@ -160,7 +160,7 @@ class CServerConfig:public CXMLSerializerInterface{
         }
         class Cattr{
           public:
-            CXMLString name,type,tickround,tickinterval,fixedclasses;
+            CXMLString name,type,tickround,tickinterval,fixedclasses,file;
         }attr;
         void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value){
           CXMLSerializerInterface * base = (CXMLSerializerInterface*)baseClass;
@@ -176,6 +176,7 @@ class CServerConfig:public CXMLSerializerInterface{
         void addAttribute(const char *name,const char *value){
           if(equals("name",4,name)){attr.name.copy(value);return;}
           else if(equals("type",4,name)){attr.type.copy(value);return;}
+          else if(equals("file",4,name)){attr.file.copy(value);return;}
           else if(equals("tickround",9,name)){attr.tickround.copy(value);return;}
           else if(equals("tickinterval",12,name)){attr.tickinterval.copy(value);return;}
           else if(equals("fixedclasses",12,name)){attr.fixedclasses.copy(value);return;}
@@ -248,11 +249,12 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
         public:
-          CXMLString units,standard_name;
+          CXMLString units,standard_name,variable_name;
         }attr;
         void addAttribute(const char *attrname,const char *attrvalue){
           if(equals("units",5,attrname)){attr.units.copy(attrvalue);return;}
           else if(equals("standard_name",13,attrname)){attr.standard_name.copy(attrvalue);return;}
+          else if(equals("variable_name",13,attrname)){attr.variable_name.copy(attrvalue);return;}
         }
     };
     

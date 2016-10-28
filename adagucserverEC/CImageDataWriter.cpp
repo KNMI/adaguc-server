@@ -415,7 +415,8 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   }
   
   if(dataSource!=NULL){
-    if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
+    if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded
+    ){
         
         if(initializeLegend(srvParam,dataSource)!=0)return 1;
     }
@@ -535,7 +536,8 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
     if(styleConfiguration!=NULL){
         if(styleConfiguration->legendIndex != -1){
         //Create palette for internal WNS layer
-        if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded){
+        if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded
+        ){
         //    if(initializeLegend(srvParam,dataSource)!=0)return 1;
             status = drawImage.createGDPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);
             if(status != 0){
@@ -1056,7 +1058,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
             for(size_t j=0;j<dataSource->getDataObject(o)->points.size();j++){
               PointDVWithLatLon point = dataSource->getDataObject(o)->points[j];
               float distance = hypot(point.lon-getFeatureInfoResult->lon_coordinate,point.lat-getFeatureInfoResult->lat_coordinate);
-              CDBDebug("[%d] dist=%f", o, distance);
+    //          CDBDebug("[%d] dist=%f", o, distance);
               if(distance<closestDistance||j==0){
                 closestIndex=j;
                 closestDistance = distance;
@@ -1069,8 +1071,15 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
             
             if (!hasData) {
               double val=dataSource->getDataObject(o)->points[closestIndex].v; 
-              
-              element->value.print("%f",val);
+              if(dataSource->getDataObject(o)->hasStatusFlag){
+                //Add status flag
+                CT::string flagMeaning;
+                CDataSource::getFlagMeaningHumanReadable(&flagMeaning,&dataSource->getDataObject(o)->statusFlagList,(int)val);
+                element->value.print("%s (%d)",flagMeaning.c_str(),(int)val);
+                element->units="";
+              }else{             
+                element->value.print("%f",val);
+              }
             }
             
             //Loop over point paramlist
@@ -3289,7 +3298,36 @@ int CImageDataWriter::getColorIndexForValue(CDataSource *dataSource,float value)
   return int(val);
 }
 
-
+CColor CImageDataWriter::getPixelColorForValue(CDataSource*dataSource,float val){
+  bool isNodata=false;
+  
+  CColor color;
+  if(dataSource->getDataObject(0)->hasNodataValue){
+    if(val==float(dataSource->getDataObject(0)->dfNodataValue))isNodata=true;
+    if(!(val==val))isNodata=true;
+  }
+  if(!isNodata) {
+    CStyleConfiguration *styleConfiguration = dataSource->getStyle();
+    for(size_t j=0;j<styleConfiguration->shadeIntervals->size();j++){
+      CServerConfig::XMLE_ShadeInterval *shadeInterval=((*styleConfiguration->shadeIntervals)[j]);
+      if(shadeInterval->attr.min.empty()==false&&shadeInterval->attr.max.empty()==false){
+        if ((val>=atof(shadeInterval->attr.min.c_str()))&&(val<atof(shadeInterval->attr.max.c_str()))){
+          return CColor(shadeInterval->attr.fillcolor.c_str());
+        }
+      }
+    }
+    //     if(styleConfiguration->hasLegendValueRange==1)
+    //       if(val<styleConfiguration->legendLowerRange||val>styleConfiguration->legendUpperRange)isNodata=true;
+    //       if(!isNodata){
+    //         if(styleConfiguration->legendLog!=0)val=log10(val+.000001)/log10(styleConfiguration->legendLog);
+    //         val*=styleConfiguration->legendScale;
+    //         val+=styleConfiguration->legendOffset;
+    //         if(val>=239)val=239;else if(val<0)val=0;
+    //         return int(val);
+    //       }
+  }
+  return color; 
+}
 
 int CImageDataWriter::createLegend(CDataSource *dataSource,CDrawImage *legendImage){
   return CCreateLegend::createLegend(dataSource,legendImage);
