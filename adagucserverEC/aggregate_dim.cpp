@@ -52,9 +52,13 @@ void progresswrite(const char*message,float percentage){
 }
 int memberNo = 1;
 void applyChangesToCDFObject(const char* _fileName,CDFObject *cdfObject,CT::StackList<CT::string> variablesToDo,const char *dimNameToAggregate){
+  
+  CT::string memberValue;
+#define CLIPC_ENSEMBLES_GERICS
+#ifdef CLIPC_ENSEMBLES_KNMI  
   CT::string fileName = _fileName;
   int KNMIINDEX = fileName.indexOf("ens-multiModel-");
-  CT::string memberValue;
+  
   if(KNMIINDEX==-1){
     KNMIINDEX = fileName.indexOf("KNMI");
     memberValue= fileName.substring(KNMIINDEX+5,-1);
@@ -68,7 +72,19 @@ void applyChangesToCDFObject(const char* _fileName,CDFObject *cdfObject,CT::Stac
   
   int end = memberValue.indexOf("_");
   memberValue.substringSelf(0,end);
-
+#endif
+  
+#ifdef CLIPC_ENSEMBLES_GERICS
+   CT::string fileName = _fileName;
+  CT::StackList<CT::string> parts =fileName.splitToStack("_");
+  memberValue = parts[3];
+  memberValue.concat("_with_");
+  memberValue += parts[6];
+  if(memberValue.indexOf("median")!=-1)memberValue="median";
+  if(memberValue.indexOf("20p")!=-1)memberValue="20p";
+  if(memberValue.indexOf("80p")!=-1)memberValue="80p";
+#endif  
+  
   for(size_t j=0;j<variablesToDo.size();j++){
     
     CDF::Dimension *dim = cdfObject->getDimensionNE(dimNameToAggregate);
