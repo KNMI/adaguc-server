@@ -118,9 +118,11 @@
     <!--Styles -->
   <Style name="auto">
     <Legend fixedclasses="true" tickround="1">elevation</Legend>
+    <Point pointstyle="point" textcolor="#111111"/>
+    <Vector vectorstyle="barb" linecolor="#0000FF" />
     <Scale>0</Scale>
     <Offset>0</Offset>
-    <RenderMethod>nearest,bilinear,point</RenderMethod>
+    <RenderMethod>nearest,bilinear,point,barb</RenderMethod>
       <StandardNames standard_name="*"/>
   </Style>
 

@@ -141,6 +141,7 @@ public:
     static double convertValue(CDFType type,void *data,size_t p);
     static int getColorIndexForValue(CDataSource *dataSource,float value);
     static float getValueForColorIndex(CDataSource *dataSource,int index);
+    static CColor getPixelColorForValue(CDataSource*dataSource,float val);
 private:
     void setValue(CDFType type,void *data,size_t ptr,double pixel);
     int _setTransparencyAndBGColor(CServerParams *srvParam,CDrawImage* drawImage);

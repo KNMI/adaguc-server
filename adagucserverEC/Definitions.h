@@ -1,3 +1,5 @@
+
+
 /******************************************************************************
  * 
  * Project:  ADAGUC Server
@@ -26,13 +28,14 @@
 #ifndef Definitions_H
 #define Definitions_H
 
-#define ADAGUCSERVER_VERSION             "2.0.14"
+#define ADAGUCSERVER_VERSION             "2.0.17"
 
 //CConfigReaderLayerType
 #define CConfigReaderLayerTypeUnknown     0
 #define CConfigReaderLayerTypeDataBase    1
 #define CConfigReaderLayerTypeStyled      2
 #define CConfigReaderLayerTypeCascaded    3
+#define CConfigReaderLayerTypeBaseLayer   4
 
 //CRequest
 //Service options
@@ -146,7 +149,7 @@
 */
 
 //#define MEASURETIME
-
+//#define ADAGUC_TILESTITCHER_DEBUG
 //#define DEBUGON
 #ifdef DEBUGON
 #define CDATASOURCE_DEBUG
@@ -159,7 +162,7 @@
 #define MEASURETIME
 #define CIMGWARPNEARESTNEIGHBOUR_DEBUG
 #define CDFOBJECTSTORE_DEBUG
-
+#define ADAGUC_TILESTITCHER_DEBUG
 #endif
 //#define MEASURETIME
 //#define CCDFNETCDFIO_DEBUG

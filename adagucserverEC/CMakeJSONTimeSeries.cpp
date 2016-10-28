@@ -469,8 +469,10 @@ public:
             if(dataObject->cdfVariable->dimensionlinks[j]->name.equals("forecast_reference_time")){foundReferenceTime=true;break;}
           }
           if(foundReferenceTime==false){
-            CDF::Dimension *forecastRefDim = cdfObject->getDimension("forecast_reference_time");
-            dataObject->cdfVariable->dimensionlinks.insert(dataObject->cdfVariable->dimensionlinks.begin()+dataObject->cdfVariable->dimensionlinks.size()-2,forecastRefDim);
+            CDF::Dimension *forecastRefDim = cdfObject->getDimensionNE("forecast_reference_time");
+            if(forecastRefDim!=NULL){
+              dataObject->cdfVariable->dimensionlinks.insert(dataObject->cdfVariable->dimensionlinks.begin()+dataObject->cdfVariable->dimensionlinks.size()-2,forecastRefDim);
+            }
           }
 
          
