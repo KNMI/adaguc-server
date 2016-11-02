@@ -149,23 +149,23 @@ CDBStore::Store *CDBAdapterPostgreSQL::getUniqueValuesOrderedByIndex(const char 
   return DB->queryToStore(query.c_str());
 }
 
-CDBStore::Store *CDBAdapterPostgreSQL::getReferenceTime(const char *netcdfDimName,const char *netcdfTimeDimName,const char *timeValue,const char *timeTableName,const char *tableName){
+CDBStore::Store *CDBAdapterPostgreSQL::getReferenceTime(const char *netcdfReferenceTimeDimName,const char *netcdfTimeDimName,const char *timeValue,const char *timeTableName,const char *referenceTimeTableName){
   #ifdef MEASURETIME
   StopWatch_Stop(">CDBAdapterPostgreSQL::getReferenceTime");
   #endif
   CPGSQLDB * DB = getDataBaseConnection(); if(DB == NULL){return NULL;  }
   CT::string query;
-  
+ 
   query.print(
-          "select * from (select %s,(EXTRACT(EPOCH FROM (%s-%s))) as age from ( select * from %s)a0 ,( select * from %s where %s = '%s')a1 where a0.path = a1.path order by age asc)a0 where age >= 0 limit 1",
-                    netcdfDimName,
+         "select max(forecast_reference_time) from (select %s,%s as age from ( select * from %s)a0 ,( select * from %s where %s = '%s')a1 where a0.path = a1.path )a0",
+                    netcdfReferenceTimeDimName,
                     netcdfTimeDimName,
-                    netcdfDimName,
-                    tableName,
+                    referenceTimeTableName,
                     timeTableName,
                     netcdfTimeDimName,
                     timeValue
                     );
+
   #ifdef MEASURETIME
   StopWatch_Stop("<CDBAdapterPostgreSQL::getReferenceTime");
   #endif
@@ -180,7 +180,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getClosestDataTimeToSystemTime(const char
   CT::string query;
   
 
-  query.print("SELECT %s,abs(EXTRACT(EPOCH FROM (%s - now()))) as t from %s order by t asc limit 1",netcdfDimName,netcdfDimName,tableName);
+  query.print("SELECT %s,abs(EXTRACT(EPOCH FROM (to_timestamp(%s) - now()))) as t from %s order by t asc limit 1",netcdfDimName,netcdfDimName,tableName);
   
   #ifdef MEASURETIME
   StopWatch_Stop("<CDBAdapterPostgreSQL::getClosestDataTimeToSystemTime");
