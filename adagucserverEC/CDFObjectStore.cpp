@@ -59,6 +59,11 @@ CDFReader *CDFObjectStore::getCDFReader(CDataSource *dataSource,const char *file
         cdfReader = new CDFHDF5Reader();
         CDFHDF5Reader * hdf5Reader = (CDFHDF5Reader*)cdfReader;
         hdf5Reader->enableKNMIHDF5toCFConversion();
+        if (!dataSource->cfgLayer->DataReader[0]->attr.useendtime.empty()){
+          if (dataSource->cfgLayer->DataReader[0]->attr.useendtime.equalsIgnoreCase("true")) {
+            hdf5Reader->enableKNMIHDF5UseEndTime();
+          }
+        }
       } else if(dataSource->cfgLayer->DataReader[0]->value.equals("GEOJSON")){
         #ifdef CDFOBJECTSTORE_DEBUG
         CDBDebug("Creating GEOJSON reader");
