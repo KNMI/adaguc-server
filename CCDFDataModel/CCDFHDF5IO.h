@@ -106,7 +106,7 @@ class CDFHDF5Reader :public CDFReader{
     void *old_client_data;
     hid_t error_stack;
     bool b_EnableKNMIHDF5toCFConversion;
-    
+    bool b_KNMIHDF5UseEndTime;
    
   public:
     class CustomForecastReader:public CDF::Variable::CustomReader{
@@ -174,6 +174,7 @@ class CDFHDF5Reader :public CDFReader{
       H5Eset_auto2(error_stack, NULL, NULL);
       H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
       b_EnableKNMIHDF5toCFConversion=false;
+      b_KNMIHDF5UseEndTime=false;
       forecastReader = NULL;
       fileIsOpen = false;
     }
@@ -471,6 +472,10 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
       b_EnableKNMIHDF5toCFConversion=true;
     }
     
+    void enableKNMIHDF5UseEndTime() {
+      b_KNMIHDF5UseEndTime=true;
+    }
+    
     int convertNWCSAFtoCF();
     
     int convertKNMIHDF5toCF(){
@@ -719,13 +724,25 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
         return 1;
       }
       double offset;
-      try{
-        offset = ctime.dateToOffset(ctime.stringToDate(szStartTime));
-      }catch(int e){
-        CT::string message=CTime::getErrorMessage(e);
-        CDBError("CTime Exception %s",message.c_str());
-    
-        return 1;
+      if (b_KNMIHDF5UseEndTime) {
+        //Use product_datetime_end if explicitly configured
+        try{
+          offset = ctime.dateToOffset(ctime.stringToDate(szEndTime));
+        }catch(int e){
+          CT::string message=CTime::getErrorMessage(e);
+          CDBError("CTime Exception %s",message.c_str());
+          
+          return 1;
+        }
+      } else {
+        try{
+          offset = ctime.dateToOffset(ctime.stringToDate(szStartTime));
+        }catch(int e){
+          CT::string message=CTime::getErrorMessage(e);
+          CDBError("CTime Exception %s",message.c_str());
+      
+          return 1;
+        }
       }
     
       bool isForecastData = false;
