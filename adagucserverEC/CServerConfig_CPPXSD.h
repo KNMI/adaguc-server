@@ -604,7 +604,16 @@ class CServerConfig:public CXMLSerializerInterface{
     class XMLE_Abstract: public CXMLObjectInterface{};
     class XMLE_DataBaseTable: public CXMLObjectInterface{};
     class XMLE_Variable: public CXMLObjectInterface{};
-    class XMLE_DataReader: public CXMLObjectInterface{};
+    class XMLE_DataReader: public CXMLObjectInterface{
+      public:
+        class Cattr{
+        public:
+          CXMLString useendtime;
+        }attr;
+        void addAttribute(const char *name,const char *value){
+          if(equals("useendtime", 10,name)){attr.useendtime.copy(value);return;}
+        }
+    };
     class XMLE_FilePath: public CXMLObjectInterface{
       public:
         class Cattr{
