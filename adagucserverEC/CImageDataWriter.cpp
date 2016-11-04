@@ -1301,7 +1301,7 @@ void CImageDataWriter::setDate(const char *szTemp){
   drawImage.setTextStroke(szTemp, strlen(szTemp),drawImage.Geo->dWidth-170,5,240,254,0);
 }
 
-std::vector<CImageDataWriter::IndexRange*> CImageDataWriter::getIndexRangesForRegex(CT::string match, char*ids[], int n) {
+std::vector<CImageDataWriter::IndexRange*> CImageDataWriter::getIndexRangesForRegex(CT::string match, CT::string *attributeValues, int n) {
   std::vector<CImageDataWriter::IndexRange*> ranges;
   int ret;
   regex_t regex;
@@ -1311,9 +1311,14 @@ std::vector<CImageDataWriter::IndexRange*> CImageDataWriter::getIndexRangesForRe
     int first=-1;
     int last=-1;
     for (int i=0; i<n; i++) {
-      int matched=regexec(&regex, ids[i], 0, NULL, 0);
+      int matched=1;
+      if(attributeValues[i].length()>0){
+        matched=regexec(&regex, attributeValues[i].c_str(), 0, NULL, 0);
+      }
+      //CDBDebug("Checking %s for %s",ids[i],match.c_str());
+      
       if (matched==0) {
-        //CDBDebug("match of %s [%d] with %s", ids[i], i, match.c_str());
+        //CDBDebug("match of %s [%d] with %s", attributeValues[i].c_str(), i, match.c_str());
         if (first==-1) {
           first=i;
           last=i+1;
@@ -1378,6 +1383,57 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   CImageWarperRenderInterface *imageWarperRenderer;
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   CStyleConfiguration::RenderMethod renderMethod = styleConfiguration->renderMethod;
+  
+  
+  /** Apply FeatureInterval config */
+  if (styleConfiguration->featureIntervals!=NULL&&styleConfiguration->shadeIntervals!=NULL) {
+    if(styleConfiguration->featureIntervals->size()>0&&styleConfiguration->shadeIntervals->size()==0){
+
+      int numFeatures=0;
+      try{
+        numFeatures = dataSource->getDataObject(0)->cdfObject->getDimension("features")->getSize();
+      }catch(int e){
+        CDBError("Unable to find dimension features");
+        return 1;
+      }
+      
+      CT::string attributeValues[numFeatures];
+      /* Loop through all configured FeatureInterval elements */
+      for(size_t j=0;j<styleConfiguration->featureIntervals->size();j++){
+        CServerConfig::XMLE_FeatureInterval *featureInterval=((*styleConfiguration->featureIntervals)[j]);
+        if(featureInterval->attr.match.empty()==false&&featureInterval->attr.matchid.empty()==false){
+          /* Get the matchid attribute for the feature */
+          CT::string attributeName = featureInterval->attr.matchid;
+          for(int featureNr = 0;featureNr<numFeatures;featureNr++){
+            attributeValues[featureNr] =  "";
+            std::map<int,CFeature>::iterator feature = dataSource->getDataObject(0)->features.find(featureNr);
+            if(feature!=dataSource->getDataObject(0)->features.end()){
+              std::map<std::string,std::string>::iterator attributeValueItr =  feature->second.paramMap.find(attributeName.c_str());
+              if(attributeValueItr!=feature->second.paramMap.end()){
+                attributeValues[featureNr] = attributeValueItr->second.c_str();
+              }
+            }
+          }
+          if(featureInterval->attr.fillcolor.empty()==false){
+            std::vector<CImageDataWriter::IndexRange*> ranges=getIndexRangesForRegex(featureInterval->attr.match, attributeValues, numFeatures);
+            for (size_t i=0; i<ranges.size(); i++) {
+              CServerConfig::XMLE_ShadeInterval *shadeInterval = new CServerConfig::XMLE_ShadeInterval ();
+              styleConfiguration->shadeIntervals->push_back(shadeInterval);
+              shadeInterval->attr.min.print("%d",ranges[i]->min);
+              shadeInterval->attr.max.print("%d",ranges[i]->max);
+              shadeInterval->attr.fillcolor=featureInterval->attr.fillcolor;
+              shadeInterval->attr.bgcolor=featureInterval->attr.bgcolor;
+              shadeInterval->attr.label=featureInterval->attr.label;
+              delete ranges[i];
+            }
+          }
+        }
+      }
+    }
+  }         
+  
+  
+  
   /**
   * Use fast nearest neighbourrenderer
   */
@@ -1437,43 +1493,14 @@ if(renderMethod==contour){CDBDebug("contour");}*/
             if(shadeInterval->attr.min.empty()==false&&shadeInterval->attr.max.empty()==false){
               bilinearSettings.printconcat("shading=min(%s)$max(%s)$",shadeInterval->attr.min.c_str(),shadeInterval->attr.max.c_str());
               if(shadeInterval->attr.fillcolor.empty()==false){bilinearSettings.printconcat("$fillcolor(%s)$",shadeInterval->attr.fillcolor.c_str());}
+               if(!shadeInterval->attr.bgcolor.empty()){
+                bilinearSettings.printconcat("$bgcolor(%s)$",shadeInterval->attr.bgcolor.c_str());
+              }
               bilinearSettings.printconcat(";");
             }
           }
         }
-        if (styleConfiguration->featureIntervals!=NULL) {
-          if(styleConfiguration->featureIntervals->size()>0){
-          CDF::Variable *v=dataSource->getDataObject(0)->cdfObject->getVariableNE("featureids");
-            if(v == NULL){
-              CDBError("featureids variable not founrd");
-              return 1;
-            }
-            v->readData(CDF_STRING);
-  //          CDBDebug("featureid[2]=%s",((char **)v->data)[2]);
-            int sz=v->getDimension("features")->getSize();
-            //char *colorForIndex[sz];
-            for(size_t j=0;j<styleConfiguration->featureIntervals->size();j++){
-              CServerConfig::XMLE_FeatureInterval *featureInterval=((*styleConfiguration->featureIntervals)[j]);
-              if(featureInterval->attr.match.empty()==false&&featureInterval->attr.matchid.empty()==false){
-                CDBDebug("matching %d ids with %s", sz, featureInterval->attr.match.c_str());
-                if(featureInterval->attr.fillcolor.empty()==false){
-                  
-                  std::vector<CImageDataWriter::IndexRange*> ranges=getIndexRangesForRegex(featureInterval->attr.match, ((char **)v->data), sz);
-  //              getColorForIndex(featureInterval->attr.match, ((char **)v->data), sz, featureInterval->attr.fillcolor.c_str(), colorForIndex);
-                  for (size_t i=0; i<ranges.size(); i++) {
-                    bilinearSettings.printconcat("shading=min(%1d)$max(%1d)$", ranges[i]->min, ranges[i]->max); 
-                    bilinearSettings.printconcat("$fillcolor(%s)$",featureInterval->attr.fillcolor.c_str());
-                    if(!featureInterval->attr.bgcolor.empty()){
-                      bilinearSettings.printconcat("$bgcolor(%s)$",featureInterval->attr.bgcolor.c_str());
-                    }
-                    bilinearSettings.concat(";");
-                    delete ranges[i];
-                  }
-                }
-              }
-            }
-          }
-        }         
+
           
       }
       if(drawContour==true){

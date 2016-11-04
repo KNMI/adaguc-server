@@ -216,13 +216,14 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
       class Cattr{
       public:
-        CXMLString min,max,label,fillcolor;
+        CXMLString min,max,label,fillcolor,bgcolor;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("min",3,attrname)){attr.min.copy(attrvalue);return;}
         else if(equals("max",3,attrname)){attr.max.copy(attrvalue);return;}
         else if(equals("label",5,attrname)){attr.label.copy(attrvalue);return;}
         else if(equals("fillcolor",9,attrname)){attr.fillcolor.copy(attrvalue);return;}
+        else if(equals("bgcolor",7,attrname)){attr.bgcolor.copy(attrvalue); return;}
       }
     };
     
@@ -436,13 +437,14 @@ class CServerConfig:public CXMLSerializerInterface{
     public:
       class Cattr{
       public:
-        CXMLString match,matchid,bgcolor,fillcolor;
+        CXMLString match,matchid,bgcolor,label,fillcolor;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("match",5,attrname)){attr.match.copy(attrvalue); return;}
-        if(equals("matchid", 7,attrname)){attr.matchid.copy(attrvalue); return;}
-        if(equals("fillcolor",9,attrname)){attr.fillcolor.copy(attrvalue); return;}
-        if(equals("bgcolor",7,attrname)){attr.bgcolor.copy(attrvalue); return;}
+        else if(equals("label",5,attrname)){attr.label.copy(attrvalue); return;}
+        else if(equals("matchid", 7,attrname)){attr.matchid.copy(attrvalue); return;}
+        else if(equals("fillcolor",9,attrname)){attr.fillcolor.copy(attrvalue); return;}
+        else if(equals("bgcolor",7,attrname)){attr.bgcolor.copy(attrvalue); return;}
       }
     };
     

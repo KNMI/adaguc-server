@@ -413,26 +413,85 @@ private:
     float legendOffset = styleConfiguration->legendOffset;
         
     T *data=(T*)dataSource->getDataObject(0)->cdfVariable->data;
-    for(int y=0;y<drawImage->Geo->dHeight;y++){
-      for(int x=0;x<drawImage->Geo->dWidth;x++){
-        T val= data[x+y*drawImage->Geo->dWidth];
-
+    
+    bool shade = false;
+    if(styleConfiguration!=NULL){
+      if(styleConfiguration->shadeIntervals!=NULL){
+        if(styleConfiguration->shadeIntervals->size()>0){
+          shade = true;
+        }
+      }
+    }
+    
+    if(shade){
+      int numShadeDefs=(int)styleConfiguration->shadeIntervals->size();
+      T shadeDefMin[numShadeDefs];
+      T shadeDefMax[numShadeDefs];
+      CColor fillColors[numShadeDefs];
+      CColor bgColor;
+      bool hasBgColor = false;
+      for(int j=0;j<numShadeDefs;j++){
+        CServerConfig::XMLE_ShadeInterval *featureInterval=((*styleConfiguration->shadeIntervals)[j]);
+        shadeDefMin[j] = (T)featureInterval->attr.min.toDouble();
+        shadeDefMax[j] = (T)featureInterval->attr.max.toDouble();
+        fillColors[j]=CColor(featureInterval->attr.fillcolor.c_str());
+        if(j==0){
+          if(featureInterval->attr.bgcolor.empty()==false){
+            hasBgColor = true;
+            bgColor = CColor(featureInterval->attr.bgcolor.c_str());
+          }
+        }
+      }
+              
+      for(int y=0;y<drawImage->Geo->dHeight;y++){
+        for(int x=0;x<drawImage->Geo->dWidth;x++){
+          T val= data[x+y*drawImage->Geo->dWidth];
+          bool drawnPixel = false;
           bool isNodata=false;
           if(hasNodataValue){if(val==nodataValue)isNodata=true;}if(!(val==val))isNodata=true;
           if(!isNodata)if(legendValueRange)if(val<legendLowerRange||val>legendUpperRange)isNodata=true;
           if(!isNodata){
-            if(legendLog!=0){
-              if(val>0){
-                val=(T)(log10(val)/legendLogAsLog);
-              }else val=(T)(-legendOffset);
+            for(int snr=numShadeDefs;snr>=0;snr--){
+              if(val>=shadeDefMin[snr]&&val<shadeDefMax[snr]){
+                if(fillColors[snr].a == 0){ //When a fully transparent color is deliberately set, force this color in the image
+                  drawImage->setPixelTrueColorOverWrite(x,(drawImage->Geo->dHeight-1)-y,fillColors[snr].r,fillColors[snr].g,fillColors[snr].b,fillColors[snr].a);  
+                }else{
+                  drawImage->setPixelTrueColor(x,(drawImage->Geo->dHeight-1)-y,fillColors[snr].r,fillColors[snr].g,fillColors[snr].b,fillColors[snr].a);  
+                }
+                drawnPixel = true;
+                break;
+              }
             }
-            int pcolorind=(int)(val*legendScale+legendOffset);
-            //val+=legendOffset;
-            if(pcolorind>=239)pcolorind=239;else if(pcolorind<=0)pcolorind=0;
-
-            drawImage->setPixelIndexed(x,(drawImage->Geo->dHeight-1)-y,pcolorind);
           }
-        
+          if(hasBgColor&&!drawnPixel){
+            drawImage->setPixelTrueColor(x,(drawImage->Geo->dHeight-1)-y,bgColor.r,bgColor.g,bgColor.b,bgColor.a);  
+          }
+        }
+      }
+    }
+    
+    if(shade == false){
+      for(int y=0;y<drawImage->Geo->dHeight;y++){
+        for(int x=0;x<drawImage->Geo->dWidth;x++){
+          T val= data[x+y*drawImage->Geo->dWidth];
+
+            bool isNodata=false;
+            if(hasNodataValue){if(val==nodataValue)isNodata=true;}if(!(val==val))isNodata=true;
+            if(!isNodata)if(legendValueRange)if(val<legendLowerRange||val>legendUpperRange)isNodata=true;
+            if(!isNodata){
+              if(legendLog!=0){
+                if(val>0){
+                  val=(T)(log10(val)/legendLogAsLog);
+                }else val=(T)(-legendOffset);
+              }
+              int pcolorind=(int)(val*legendScale+legendOffset);
+              //val+=legendOffset;
+              if(pcolorind>=239)pcolorind=239;else if(pcolorind<=0)pcolorind=0;
+
+              drawImage->setPixelIndexed(x,(drawImage->Geo->dHeight-1)-y,pcolorind);
+            }
+          
+        }
       }
     }
   }
@@ -450,24 +509,72 @@ private:
     float legendScale;
     float legendOffset;
     CDrawImage *drawImage;
+    float *rField = NULL, *gField=NULL, *bField = NULL;
+    int *numField = NULL;
+    bool trueColorRGBA;
   };
 
+  
   template <class T>
   static void drawFunction(int x,int y,T val, void *_settings){
     Settings *settings = (Settings*)_settings;
-    bool isNodata=false;
-    if(settings->hasNodataValue){if(val==settings->nodataValue)isNodata=true;}if(!(val==val))isNodata=true;
-    if(!isNodata)if(settings->legendValueRange)if(val<settings->legendLowerRange||val>settings->legendUpperRange)isNodata=true;
-    if(!isNodata){
-      if(settings->legendLog!=0){
-        if(val>0){
-          val=(T)(log10(val)/settings->legendLogAsLog);
-        }else val=(T)(-settings->legendOffset);
+    if(settings->trueColorRGBA == false){
+
+      bool isNodata=false;
+      if(settings->hasNodataValue){if(val==settings->nodataValue)isNodata=true;}if(!(val==val))isNodata=true;
+      if(!isNodata)if(settings->legendValueRange)if(val<settings->legendLowerRange||val>settings->legendUpperRange)isNodata=true;
+      if(!isNodata){
+        if(settings->legendLog!=0){
+          if(val>0){
+            val=(T)(log10(val)/settings->legendLogAsLog);
+          }else val=(T)(-settings->legendOffset);
+        }
+        int pcolorind=(int)(val*settings->legendScale+settings->legendOffset);
+        //val+=legendOffset;
+        if(pcolorind>=239)pcolorind=239;else if(pcolorind<=0)pcolorind=0;
+      
+        settings->drawImage->setPixelIndexed(x,y,pcolorind);
       }
-      int pcolorind=(int)(val*settings->legendScale+settings->legendOffset);
-      //val+=legendOffset;
-      if(pcolorind>=239)pcolorind=239;else if(pcolorind<=0)pcolorind=0;
-      settings->drawImage->setPixelIndexed(x,y,pcolorind);
+    }else{
+    
+
+      size_t size=settings->drawImage->Geo->dWidth*settings->drawImage->Geo->dHeight;
+      if(settings->rField == NULL){
+        
+        settings->rField = new float[size];
+        settings->gField = new float[size];
+        settings->bField = new float[size];
+        settings->numField = new int[size];
+        for(size_t j=0;j<size;j++){
+          settings->rField[j] = 0;
+          settings->gField[j] = 0;
+          settings->bField[j] = 0;
+          settings->numField[j] = 0;
+        }
+      }
+      
+      size_t p = x+y*settings->drawImage->Geo->dWidth;
+      if(p<size){
+            
+        uint v = val;
+        unsigned char r=((unsigned char)v);
+        unsigned char g=((unsigned char)(v>>8));
+        unsigned char b=((unsigned char)(v>>16));
+        unsigned char a=((unsigned char)(v>>24));
+        
+          
+        settings->numField[p]++;
+        settings->rField[p]+=r;
+        settings->gField[p]+=g;
+        settings->bField[p]+=b;
+        
+        r= (unsigned char)(settings->rField[p]/settings->numField[p]);
+        g= (unsigned char)(settings->gField[p]/settings->numField[p]);
+        b= (unsigned char)(settings->bField[p]/settings->numField[p]);
+      
+        settings->drawImage->setPixelTrueColorOverWrite(x,y,r,g,b,a);  
+      
+      }
     }
   };
   
@@ -501,7 +608,7 @@ private:
       return;
     }
     
-    if(dataSource->dWidth*dataSource->dHeight<512*512||1==2){
+    if(dataSource->dWidth*dataSource->dHeight<720*720||1==2){
       CDBDebug("field is small enough for precise renderer: using _render");
       Settings settings;
       CStyleConfiguration *styleConfiguration = dataSource->getStyle();    
@@ -511,6 +618,11 @@ private:
       settings.legendUpperRange = styleConfiguration->legendUpperRange;
       settings.hasNodataValue   = dataSource->getDataObject(0)->hasNodataValue;
       settings.nodataValue = (float)settings.dfNodataValue;
+      settings.trueColorRGBA = false;
+      settings.rField = NULL;
+      settings.gField=NULL;
+      settings.bField = NULL;
+      settings.numField = NULL;
       settings.legendLog = styleConfiguration->legendLog;
       if(settings.legendLog>0){
         settings.legendLogAsLog = log10(settings.legendLog);
@@ -549,7 +661,7 @@ private:
       return;
     }
     
-    //CDBDebug("Render");
+    CDBDebug("Render");
     //This enables if tiles are divided allong threads.
     int numThreads=4;
     //Threading is not needed when only one thread is specified.

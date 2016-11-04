@@ -625,21 +625,38 @@ void CDrawImage::setPixelIndexed(int x,int y,int color){
   
   if(currentGraphicsRenderer==CDRAWIMAGERENDERER_CAIRO){
     if(currentLegend==NULL)return;
-    //if(color>=0&&color<256){
+    if(color>=0&&color<256){
 //       if(currentLegend->CDIalpha[color]==255){
 //     cairo-> pixel(x,y,currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color]);
 //       }else{
-//         if(currentLegend->CDIalpha[color]>0){
+        if(currentLegend->CDIalpha[color]>0){
               cairo-> pixel_blend(x,y,currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],currentLegend->CDIalpha[color]);
-//         }
+        }
 //       }
-    //}
+    }
   }else{
     gdImageSetPixel(image, x,y,colors[color]);
   }
 }
 
-
+void CDrawImage::getPixelTrueColor(int x,int y,unsigned char &r,unsigned char &g,unsigned char &b,unsigned char &a){
+  if(currentGraphicsRenderer==CDRAWIMAGERENDERER_CAIRO){
+    cairo->getPixel(x,y,r,g,b,a);
+  }else{
+    int dTranspColor;
+    if(currentGraphicsRenderer==CDRAWIMAGERENDERER_GD){
+      dTranspColor=gdImageGetTransparent(image);
+    }
+    int color = gdImageGetPixel(image, x, y);
+    r= gdImageRed(image,color);
+    g= gdImageGreen(image,color);
+    b= gdImageBlue(image,color);
+    a= 255-gdImageAlpha(image,color)*2;
+    if(color == dTranspColor){
+      a=0;
+    }
+  }
+}
 
 void CDrawImage::setPixelTrueColor(int x,int y,unsigned int color){
   if(currentGraphicsRenderer==CDRAWIMAGERENDERER_CAIRO){
