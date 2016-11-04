@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+
+  <TempDir value="{ADAGUC_TMP}"/>
+  <Path value="{ADAGUC_PATH}/data"/>
+  <DataBase dbtype="sqlite" parameters="{ADAGUC_TMP}/adaguc.geojson.db"/>
+  
+  <!-- WMS settings -->
+  <WMS>
+    <Title>ADAGUC WMS Service</Title>
+    <Abstract>eoJSON Service demonstrating the possibility to use GeoJSON in ADAGUC.</Abstract>
+    <RootLayer>
+      <Title>GeoJSON Service</Title>
+      <Abstract>GeoJSON Service demonstrating the possibility to use GeoJSON in ADAGUC</Abstract>
+    </RootLayer>
+  </WMS>
+  
+  
+  <!-- WMS -->
+  <Include location="{ADAGUC_PATH}/data/config/includes/WMS.include.xml"/>
+
+  <!-- WCS settings -->
+  <WCS>
+    <Title>ADAGUC WCS Service</Title>
+    <Label>wcsLabel</Label>
+  </WCS>
+
+  <!-- WCSFormat -->
+  <Include location="{ADAGUC_PATH}/data/config/includes/WCSFormat.include.xml"/>
+
+  <!-- Projections -->
+  <Include location="{ADAGUC_PATH}/data/config/includes/Projection.include.xml"/>
+           
+  <!--Legends -->
+  <Include location="{ADAGUC_PATH}/data/config/includes/DefaultStyles.include.xml"/>
+
+  <Include location="{ADAGUC_PATH}/data/config/includes/DefaultLayers.include.xml"/>
+  
+  <!-- Custom styles -->
+  <Style name="countries_coloured">
+    <Legend fixedclasses="true" tickinterval="10" tickround=".01">multicolor</Legend>
+    <Min>0</Min>
+    <Max>170</Max>
+    <NameMapping name="nearest"   title="All countries" abstract="All countries"/>
+    <RenderMethod>nearest</RenderMethod>
+  </Style>
+  
+  <Style name="countries_nlmask">
+    <Legend fixed="true">bluewhitered</Legend>
+    <FeatureInterval match=".*" matchid="abbrev" bgcolor="#CCCCFF" fillcolor="#CCFFCCFF" label="Other"/>
+    <FeatureInterval match="NLD.*" matchid="adm0_a3" fillcolor="#DFFFDF00" label="The Netherlands"/>
+    <FeatureInterval match="^Luxembourg$" matchid="brk_name" fillcolor="#0000FF"  label="Luxembourg"/>
+    <FeatureInterval match="^Asia$" matchid="continent" fillcolor="#808080"  label="Asia"/>
+    <FeatureInterval match="^India$" matchid="abbrev" fillcolor="#80FF80"  label="India"/>
+    <NameMapping name="nearest"   title="Mask NL"/>
+    <RenderMethod>nearest</RenderMethod>
+  </Style>
+  
+    
+  <Style name="landseamask">
+    <Legend fixed="true">bluewhitered</Legend>
+    <FeatureInterval match=".*" matchid="abbrev" bgcolor="#CCCCFF" fillcolor="#CCFFCCFF"/>
+    <NameMapping name="nearest"   title="Land sea mask"/>
+    <RenderMethod>nearest</RenderMethod>
+  </Style>
+  
+  <!-- Layers -->
+  <Layer type="database">
+    <Title>Countries</Title>
+    <Name>countries</Name>
+    <!-- Data obtained from https://geojson-maps.kyd.com.au/ -->
+    <FilePath filter="">{ADAGUC_PATH}data/datasets/countries.geojson</FilePath>
+    <Variable>features</Variable>
+    <Styles>countries_coloured,countries_nlmask,landseamask</Styles>
+  </Layer>
+  <!-- End of configuration /-->
+</Configuration>

@@ -866,6 +866,18 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource,CServerParams *
                 if(ogcDim->value.length()==19){
                   dataSource->requiredDims[i]->value.concat("Z");
                 }
+                CTime ctime;  
+                ctime.init("seconds since 1970",NULL);
+                double currentTimeAsEpoch ;
+                
+                try{
+                  currentTimeAsEpoch = ctime.dateToOffset( ctime.freeDateStringToDate(dataSource->requiredDims[i]->value.c_str()));
+                  CT::string currentDateConverted = ctime.dateToISOString(ctime.getDate(currentTimeAsEpoch));
+                  dataSource->requiredDims[i]->value=currentDateConverted;
+                }catch(int e){
+                  CDBDebug("Unable to convert %s to epoch",dataSource->requiredDims[i]->value.c_str());
+                }                
+                
               }
               //If we have a dimension value quantizer adjust the value accordingly  
               if(!dataSource->cfgLayer->Dimension[i]->attr.quantizeperiod.empty()){
