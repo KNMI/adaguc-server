@@ -13,14 +13,14 @@ class GenericDataWarper{
  private:
   DEF_ERRORFUNCTION();
   template <class T>
-  static void drawTriangle(int *xP,int *yP, T value,int destWidth,int destHeight,void *settings, void (*drawFunction)(int ,int,T,void *settings)){
+  static int drawTriangle(int *xP,int *yP, T value,int destWidth,int destHeight,void *settings, void (*drawFunction)(int ,int,T,void *settings)){
     
     int W = destWidth;
     int H = destHeight;
-    if(xP[0]<0&&xP[1]<0&&xP[2]<0)return;
-    if(xP[0]>=W&&xP[1]>=W&&xP[2]>=W)return;
-    if(yP[0]<0&&yP[1]<0&&yP[2]<0)return;
-    if(yP[0]>=H&&yP[1]>=H&&yP[2]>=H)return;  
+    if(xP[0]<0&&xP[1]<0&&xP[2]<0)return 0;
+    if(xP[0]>=W&&xP[1]>=W&&xP[2]>=W)return 0;
+    if(yP[0]<0&&yP[1]<0&&yP[2]<0)return 0;
+    if(yP[0]>=H&&yP[1]>=H&&yP[2]>=H)return 0;  
     
     unsigned int lower;
     unsigned int middle;
@@ -40,7 +40,25 @@ class GenericDataWarper{
     int Y2 = yP[middle];
     int Y3 = yP[upper];
     
-    if((Y1 == Y3)||(Y2==Y1&&Y3==Y2))return;
+    /*
+    //  1
+    //   \
+    //    2
+    //   /
+    //  3
+    */
+    //If top point is equal to bottom point of triangle, skip
+    //If middle is equal to top and middle is equal to bottom, skip
+    if((Y1 == Y3)||(Y2==Y1&&Y3==Y2)){
+      int minx=X1;if(minx>X2)minx=X2;if(minx>X3)minx=X3;
+      int maxx=X1;if(maxx<X2)maxx=X2;if(maxx<X3)maxx=X3;
+      for(int x=minx;x<maxx+1;x++){
+        drawFunction(x,yP[2],value,settings);
+      }
+      return 1;
+    }
+ 
+    
 
     float rcl = float(X3-X1)/float(Y3-Y1);
     if(Y2!=Y1&&Y1<H&&Y2>0){
@@ -48,8 +66,8 @@ class GenericDataWarper{
       int sy = (Y1<0)?0:Y1;
       int ey = (Y2>H)?H:Y2;
       for(int y=sy;y<=ey-1;y++){
-        int xL = int(rcl*float(y-Y1)+X1);
-        int xA = int(rca*float(y-Y1)+X1);
+        int xL = floor(rcl*float(y-Y1)+X1);
+        int xA = floor(rca*float(y-Y1)+X1);
         int x1,x2;
         if(xL<xA){x1=xL;x2=xA;}else{x2=xL;x1=xA;}
         if(x1<W&&x2>0){
@@ -80,6 +98,7 @@ class GenericDataWarper{
         } 
       }
     }
+    return 0;
   }
    
   public:
@@ -246,24 +265,23 @@ class GenericDataWarper{
             px4=lons[3]; 
           }
           
-          px1-=dfDestOrigX;px1*=multiDestX;px1+=0.5;
-          px2-=dfDestOrigX;px2*=multiDestX;px2+=0.5;
-          px3-=dfDestOrigX;px3*=multiDestX;px3+=0.5;
-          px4-=dfDestOrigX;px4*=multiDestX;px4+=0.5;
+          px1-=dfDestOrigX;px1*=multiDestX;//px1+=0.5;
+          px2-=dfDestOrigX;px2*=multiDestX;//px2+=0.5;
+          px3-=dfDestOrigX;px3*=multiDestX;//px3+=0.5;
+          px4-=dfDestOrigX;px4*=multiDestX;//px4+=0.5;
  
+          
 
           double py1 = py[p];
           double py2 = py[p+1];
           double py3 = py[p+dataWidth+2];
           double py4 = py[p+dataWidth+1];
           
-          py1-=dfDestOrigY;py1*=multiDestY;py1+=0.5;
-          py2-=dfDestOrigY;py2*=multiDestY;py2+=0.5;
-          py3-=dfDestOrigY;py3*=multiDestY;py3+=0.5;
-          py4-=dfDestOrigY;py4*=multiDestY;py4+=0.5;
- 
-        
-          
+          py1-=dfDestOrigY;py1*=multiDestY;//py1+=0.5;
+          py2-=dfDestOrigY;py2*=multiDestY;//py2+=0.5;
+          py3-=dfDestOrigY;py3*=multiDestY;//py3+=0.5;
+          py4-=dfDestOrigY;py4*=multiDestY;//py4+=0.5;
+
           if(x==0)avgDX = px2;
           if(y==0)avgDY = py4;
           
@@ -280,33 +298,73 @@ class GenericDataWarper{
               doDraw = false;
             }
           }
+        
 
+          
           if(doDraw){
             T value = ((T*)sourceData)[x+(dataHeight-1-y)*dataWidth];
             double mX = (px1+px2+px3+px4)/4;
             double mY = (py1+py2+py3+py4)/4;
+/*            
+            if(px2>px1)px2--;else if (px2<px1)px2++;
+            if(px3>px1)px3--;else if (px3<px1)px3++;
+            if(py3>py1)py3--;else if (py3<py1)py3++;
+            if(py4>py1)py4--;else if (py4<py1)py4++;*/
+            int dmX=int(mX);
+            int dmY=int(mY);
+            int dpx1=int(px1);
+            int dpy1=int(py1);
+            int dpx2=int(px2);
+            int dpy2=int(py2);
+            int dpx3=int(px3);
+            int dpy3=int(py3);
+            int dpx4=int(px4);
+            int dpy4=int(py4);
+
+           
             int xP[3];
             int yP[3];
-            xP[0] = px1;
-            xP[1] = px2;
-            xP[2] = mX;
-
-            yP[0] = py1;
-            yP[1] = py2;
-            yP[2] = mY;
-            drawTriangle<T>( xP,yP,value,imageWidth,imageHeight,drawFunctionSettings,drawFunction); //top
+            xP[0] = dpx1;
+            yP[0] = dpy1;
             
-            xP[0] = px3;
-            yP[0] = py3;
+            xP[1] = dpx2;
+            yP[1] = dpy2;
+
+            xP[2] = dmX;
+            yP[2] = dmY;
+            drawTriangle<T>( xP,yP,value,imageWidth,imageHeight,drawFunctionSettings,drawFunction); //bottom
+
+            xP[0] = dpx3;
+            yP[0] = dpy3;
+            
+            xP[1] = dpx2;
+            yP[1] = dpy2;
+
+            xP[2] = dmX;
+            yP[2] = dmY;
             drawTriangle<T>( xP,yP,value,imageWidth,imageHeight,drawFunctionSettings,drawFunction);//right
 
-            xP[1]=px4;
-            yP[1]=py4;
-            drawTriangle<T>( xP,yP,value,imageWidth,imageHeight,drawFunctionSettings,drawFunction);//bottom
+            xP[0] = dpx3;
+            yP[0] = dpy3;
+            
+            xP[1] = dpx4;
+            yP[1] = dpy4;
 
-            xP[0] = px1;
-            yP[0] = py1;
+            xP[2] = dmX;
+            yP[2] = dmY;
+            drawTriangle<T>( xP,yP,value,imageWidth,imageHeight,drawFunctionSettings,drawFunction);//top
+
+            xP[0] = dpx1;
+            yP[0] = dpy1;
+            
+            xP[1] = dpx4;
+            yP[1] = dpy4;
+
+            xP[2] = dmX;
+            yP[2] = dmY;
             drawTriangle<T>( xP,yP,value,imageWidth,imageHeight,drawFunctionSettings,drawFunction);//left
+            
+
           }
         }
       }

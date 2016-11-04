@@ -216,8 +216,10 @@ public:
     void setPixelTrueColor(int x,int y,unsigned int color);
     void setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,unsigned char b);
     void setPixelTrueColor(int x,int y,unsigned char r,unsigned char g,unsigned char b,unsigned char a);
+    void getPixelTrueColor(int x,int y,unsigned char &r,unsigned char &g,unsigned char &b,unsigned char &a);
     void setPixelTrueColorOverWrite(int x,int y,unsigned char r,unsigned char g,unsigned char b,unsigned char a);
     void setPixel(int x,int y,CColor &color);
+    
     //int getClosestColorIndex(CColor color);
     void getHexColorForColorIndex(CT::string *hexValue,int colorIndex);
     void setText(const char * text, size_t length,int x,int y, int color,int fontSize);

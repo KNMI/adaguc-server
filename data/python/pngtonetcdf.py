@@ -13,13 +13,15 @@ imgproj = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
 product = "alpha-test"
 outputname = '../datasets/alpha-test.nc'
 
-inputname = '/home/adaguc/data/test.png'
-imgextent = [-180,-90,180,90]
-imgproj = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
-product = "color_etopo1_ice_low"
-outputname = '/data/services/data/testsets/rgba_truecolor_images/test.nc'
+#inputname = '/nobackup/users/plieger/data/himawari/HIMAWARI_8_AHI_GLOBERGBDUST_201610270700.png'
+inputname = '/nobackup/users/plieger/data/himawari/grid.png'
+imgextent = [-5567.2481376,-5567.2481376,5567.2481376,5567.2481376]
+#imgproj = "+proj=geos +lon_0=145.000000 +lat_0=0 +h=35807.414063 +a=6378.169 +b=6356.5838"
+imgproj = "+proj=geos +lon_0=145.000000 +lat_0=0 +h=35807.414063 +a=6378.169 +b=6356.5838"
+product = "test"
+outputname = '/nobackup/users/plieger/data/himawari/test4.nc'
 
-import Image
+from PIL import Image
 import numpy as np
 import netCDF4
 import dateutil.parser
