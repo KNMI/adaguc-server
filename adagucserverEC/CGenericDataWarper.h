@@ -143,6 +143,8 @@ class GenericDataWarper{
     double dfSourceExtH=(sourceGeoParams->dfBBOX[3]-sourceGeoParams->dfBBOX[1]);
     double dfSourceW = double(sourceGeoParams->dWidth);
     double dfSourceH = double(sourceGeoParams->dHeight);
+    double dfDestW = double(destGeoParams->dWidth);
+    double dfDestH = double(destGeoParams->dHeight);
     double dfSourcedExtW=dfSourceExtW/dfSourceW;
     double dfSourcedExtH=dfSourceExtH/dfSourceH;
     double dfSourceOrigX=sourceGeoParams->dfBBOX[0];
@@ -167,6 +169,33 @@ class GenericDataWarper{
     }
     if(sourceGeoParams->CRS.indexOf("longlat")>=0){
       sourceNeedsDegreeRadianConversion = true;
+    }
+    
+    
+    /* When geographical map projections are equal, just do a simple linear transformation */
+    if(warper->isProjectionRequired()==false){
+      CDBDebug("warper->isProjectionRequired() = %d: Applying simple linear transformation",warper->isProjectionRequired());
+      for(int y=0;y<sourceGeoParams->dHeight;y++){
+        for(int x=0;x<sourceGeoParams->dWidth;x++){
+          int sx1=((((double(x)/double(sourceGeoParams->dWidth))*dfSourceExtW+dfSourceOrigX)-dfDestOrigX)/dfDestExtW)*dfDestW;
+          int sy1=((((double(y)/double(sourceGeoParams->dHeight))*dfSourceExtH+dfSourceOrigY)-dfDestOrigY)/dfDestExtH)*dfDestH;
+          int sx2=((((double(x+1)/double(sourceGeoParams->dWidth))*dfSourceExtW+dfSourceOrigX)-dfDestOrigX)/dfDestExtW)*dfDestW;
+          int sy2=((((double(y+1)/double(sourceGeoParams->dHeight))*dfSourceExtH+dfSourceOrigY)-dfDestOrigY)/dfDestExtH)*dfDestH;
+          int sxw=abs(sx2-sx1);
+          int syh=abs(sy2-sy1);
+          for(int sjy=0;sjy<syh;sjy++){
+            for(int sjx=0;sjx<sxw;sjx++){
+              int sx = sjx+sx1;
+              int sy = sjy+sy1;
+              if(sx>=0&&sy>=0&&sx<destGeoParams->dWidth&&sy<destGeoParams->dHeight){
+                T value = ((T*)sourceData)[x+(sourceGeoParams->dHeight-1-y)*sourceGeoParams->dWidth];
+                drawFunction(sx,sy,value,drawFunctionSettings);
+              }
+            }
+          }
+        }
+      }
+      return 0;
     }
     
     double *px = new double[dataSize];
