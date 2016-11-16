@@ -11,7 +11,8 @@ CStyleConfiguration::RenderMethod CStyleConfiguration::getRenderMethodFromString
   if(renderMethodString->indexOf("thin")!=-1)renderMethod|=RM_THIN;
   if(renderMethodString->indexOf("rgba")!=-1)renderMethod|=RM_RGBA;
   if(renderMethodString->indexOf("stippling")!=-1)renderMethod|=RM_STIPPLING;
-
+  if(renderMethodString->indexOf("polyline")!=-1)renderMethod|=RM_POLYLINE;
+  
   return renderMethod;
 }
 
@@ -29,4 +30,5 @@ void CStyleConfiguration::getRenderMethodAsString(CT::string *renderMethodString
   if(renderMethod & RM_THIN)renderMethodString->concat("thin");
   if(renderMethod & RM_RGBA)renderMethodString->concat("rgba");
   if(renderMethod & RM_STIPPLING)renderMethodString->concat("stippling");
+  if(renderMethod & RM_POLYLINE)renderMethodString->concat("polyline");
 }
