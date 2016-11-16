@@ -97,6 +97,19 @@
                   tilepath="/nobackup/users/plieger/data/tiles/himtest/"/>
     <Dimension name="time" interval="PT10M" default="max">time</Dimension>
   </Layer>
+  
+<!--  <Layer type="database">
+    <Group value="Optical"/>
+    <Name>G4INDO LAI tiles layer</Name>
+    <Title>lai_tiles</Title>
+    <FilePath filter="[.]nc$">/data/thredds/LAI_tiles/</FilePath>
+    <Variable>lai</Variable>
+    <Projection id="EPSG:32749" proj4="+proj=utm +zone=49 +south +datum=WGS84 +units=m +no_defs"/>
+    <Styles>rainbow</Styles>
+    <Cache enabled="true"/>
+   <AdditionalLayer replace="false" >Desa and Mask/bigmask</AdditionalLayer>
+    <Dimension name="time">time</Dimension>
+  </Layer>-->
 
   <!-- End of configuration /-->
 </Configuration>
