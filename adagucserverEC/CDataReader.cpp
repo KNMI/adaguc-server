@@ -699,15 +699,15 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
   //Use autoscale of legendcolors when the legendscale factor has been set to zero.
   if(styleConfiguration != NULL){
     if(dataSource->stretchMinMaxDone == false){
-      if(styleConfiguration->legendScale==0.0f && !(styleConfiguration->renderMethod&RM_RGBA))dataSource->stretchMinMax=true;else dataSource->stretchMinMax=false;
+      if(styleConfiguration->legendScale==0.0f && !(styleConfiguration->renderMethod&RM_RGBA)&& !(styleConfiguration->renderMethod&RM_AVG_RGBA))dataSource->stretchMinMax=true;else dataSource->stretchMinMax=false;
     }
   }
       
   CDFObject *cdfObject = NULL;
     
- //#ifdef CDATAREADER_DEBUG
-  CDBDebug("Opening [%s] with mode %d",dataSourceFilename.c_str(),mode);
-//#endif
+#ifdef CDATAREADER_DEBUG
+  CDBDebug("Working on [%s] with mode %d",dataSourceFilename.c_str(),mode);
+#endif
     
   if(mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS  || mode == CNETCDFREADER_MODE_OPEN_HEADER ){
     cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource->srvParams,dataSourceFilename.c_str());
@@ -1279,7 +1279,10 @@ CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *cdfObject,co
   if(dimension != NULL){
     return getDimensionType(cdfObject,dimension);
   }else{
-    
+    CT::string none="none";
+    if(none.equals(ncname)){
+      return dtype_normal;
+    }
     return getDimensionType(cdfObject,cdfObject->getVariableNE(ncname));
   }
 }

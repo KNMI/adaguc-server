@@ -9,6 +9,8 @@
 #include "CImageWarper.h"
 #include "CDebugger.h"
 
+//#define GenericDataWarper_DEBUG
+
 class GenericDataWarper{
  private:
   DEF_ERRORFUNCTION();
@@ -101,14 +103,20 @@ class GenericDataWarper{
     return 0;
   }
    
+   
+  static int findPixelExtent(int *PXExtentBasedOnSource,CGeoParams*sourceGeoParams,CGeoParams*destGeoParams,CImageWarper*warper);
+   
   public:
   template <class T>
   static int render(CImageWarper *warper,void *sourceData,CGeoParams*sourceGeoParams,CGeoParams*destGeoParams,void *drawFunctionSettings,void (*drawFunction)(int ,int,T,void *drawFunctionSettings)){
+        
+#ifdef GenericDataWarper_DEBUG
+    CDBDebug("render");
+#endif
     
-    int dataWidth = sourceGeoParams->dWidth;
-    int dataHeight = sourceGeoParams->dHeight;
-    int imageWidth = destGeoParams->dWidth;
+
     int imageHeight = destGeoParams->dHeight;
+    int imageWidth = destGeoParams->dWidth;
     bool destNeedsDegreeRadianConversion = false;
     bool sourceNeedsDegreeRadianConversion = false;
     
@@ -143,10 +151,12 @@ class GenericDataWarper{
     double dfSourceExtH=(sourceGeoParams->dfBBOX[3]-sourceGeoParams->dfBBOX[1]);
     double dfSourceW = double(sourceGeoParams->dWidth);
     double dfSourceH = double(sourceGeoParams->dHeight);
+    
     double dfDestW = double(destGeoParams->dWidth);
     double dfDestH = double(destGeoParams->dHeight);
-    double dfSourcedExtW=dfSourceExtW/dfSourceW;
-    double dfSourcedExtH=dfSourceExtH/dfSourceH;
+
+    double dfSourcedExtW=dfSourceExtW/(dfSourceW);
+    double dfSourcedExtH=dfSourceExtH/(dfSourceH);
     double dfSourceOrigX=sourceGeoParams->dfBBOX[0];
     double dfSourceOrigY=sourceGeoParams->dfBBOX[1];
     
@@ -157,11 +167,10 @@ class GenericDataWarper{
 
     
     double multiDestX = double(imageWidth)/dfDestExtW;
-    double multiDestY = double(imageHeight)/dfDestExtH;
-
-    size_t dataSize = (dataWidth+1) * (dataHeight+1);
-
     
+    double multiDestY = double(imageHeight)/dfDestExtH;
+    
+        
     CT::string destinationCRS;
     warper->decodeCRS(&destinationCRS,&destGeoParams->CRS);
     if(destinationCRS.indexOf("longlat")>=0){
@@ -172,44 +181,112 @@ class GenericDataWarper{
     }
     
     
-    /* When geographical map projections are equal, just do a simple linear transformation */
-    if(warper->isProjectionRequired()==false){
+    //Determine source BBOX of based on destination grid
+#ifdef GenericDataWarper_DEBUG    
+    CDBDebug("Creating px extent");
+#endif    
+    
+    int sourceDataWidth = sourceGeoParams->dWidth;
+    int sourceDataHeight = sourceGeoParams->dHeight;
+    
+    int PXExtentBasedOnSource[4];
+    
+    PXExtentBasedOnSource[0]=0;
+    PXExtentBasedOnSource[1]=1;
+    PXExtentBasedOnSource[2]=sourceDataWidth;
+    PXExtentBasedOnSource[3]=sourceDataHeight;
+    
+    bool tryToFindExtend = true;
+    
+    
+    if(tryToFindExtend){
+      findPixelExtent(PXExtentBasedOnSource,sourceGeoParams,destGeoParams,warper);
+
+    }
+     
+
+    
+
+    
+    
+//     dfDestOrigX-=fabs(0.5/multiDestX);
+//     dfDestOrigY-=fabs(0.5/multiDestY);
+//     
+//     double dfCellSizeX = dataSource->dfCellSizeX;
+//     double dfCellSizeY = dataSource->dfCellSizeY;
+    
+    int dataWidth = PXExtentBasedOnSource[2]-PXExtentBasedOnSource[0];
+    int dataHeight = PXExtentBasedOnSource[3]-PXExtentBasedOnSource[1];
+    
+
+        /* When geographical map projections are equal, just do a simple linear transformation */
+    if(warper->isProjectionRequired()==false)
+    {
+#ifdef GenericDataWarper_DEBUG
       CDBDebug("warper->isProjectionRequired() = %d: Applying simple linear transformation",warper->isProjectionRequired());
-      for(int y=0;y<sourceGeoParams->dHeight;y++){
-        for(int x=0;x<sourceGeoParams->dWidth;x++){
-          int sx1=((((double(x)/double(sourceGeoParams->dWidth))*dfSourceExtW+dfSourceOrigX)-dfDestOrigX)/dfDestExtW)*dfDestW;
-          int sy1=((((double(y)/double(sourceGeoParams->dHeight))*dfSourceExtH+dfSourceOrigY)-dfDestOrigY)/dfDestExtH)*dfDestH;
-          int sx2=((((double(x+1)/double(sourceGeoParams->dWidth))*dfSourceExtW+dfSourceOrigX)-dfDestOrigX)/dfDestExtW)*dfDestW;
-          int sy2=((((double(y+1)/double(sourceGeoParams->dHeight))*dfSourceExtH+dfSourceOrigY)-dfDestOrigY)/dfDestExtH)*dfDestH;
-          int sxw=abs(sx2-sx1);
-          int syh=abs(sy2-sy1);
-          for(int sjy=0;sjy<syh;sjy++){
-            for(int sjx=0;sjx<sxw;sjx++){
-              int sx = sjx+sx1;
-              int sy = sjy+sy1;
-              if(sx>=0&&sy>=0&&sx<destGeoParams->dWidth&&sy<destGeoParams->dHeight){
-                T value = ((T*)sourceData)[x+(sourceGeoParams->dHeight-1-y)*sourceGeoParams->dWidth];
-                drawFunction(sx,sy,value,drawFunctionSettings);
+#endif
+      for(int y=PXExtentBasedOnSource[1];y<PXExtentBasedOnSource[3];y++){
+        for(int x=PXExtentBasedOnSource[0];x<PXExtentBasedOnSource[2];x++){
+          
+          double dfx=x;
+          double dfy=y;
+          int sx1=floor((((((dfx)/(dfSourceW))*dfSourceExtW+dfSourceOrigX)-dfDestOrigX)/dfDestExtW)*dfDestW+0.5);
+          int sy1=floor((((((dfy)/(dfSourceH))*dfSourceExtH+dfSourceOrigY)-dfDestOrigY)/dfDestExtH)*dfDestH+0.5);
+          int sx2=floor((((((dfx+1)/(dfSourceW))*dfSourceExtW+dfSourceOrigX)-dfDestOrigX)/dfDestExtW)*dfDestW+0.5);
+          int sy2=floor((((((dfy+1)/(dfSourceH))*dfSourceExtH+dfSourceOrigY)-dfDestOrigY)/dfDestExtH)*dfDestH+0.5);
+          bool skip = false;
+          int sxw=floor(fabs(sx2-sx1))+1;
+          int syh=floor(fabs(sy2-sy1))+1;
+          if(sx1<-sxw&&sx2<-sxw)skip=true;
+          if(sy1<-syh&&sy2<-syh)skip=true;
+          if(sx1>=destGeoParams->dWidth+sxw&&sx2>=destGeoParams->dWidth+sxw)skip=true;
+          if(sy1>=destGeoParams->dHeight+syh&&sy2>=destGeoParams->dHeight+syh)skip=true;
+//           
+          
+          
+          if(!skip){
+            T value = ((T*)sourceData)[x+(sourceGeoParams->dHeight-1-y)*sourceGeoParams->dWidth];
+            int lx1,lx2,ly1,ly2;
+            if(sx1>sx2){lx2=sx1;lx1=sx2;}else{lx2=sx2;lx1=sx1;}
+            if(sy1>sy2){ly2=sy1;ly1=sy2;}else{ly2=sy2;ly1=sy1;}
+            if(ly2==ly1)ly2++;
+            if(lx2==lx1)lx2++;
+            for(int sjy=ly1;sjy<ly2;sjy++){
+              for(int sjx=lx1;sjx<lx2;sjx++){
+                drawFunction(sjx,sjy,value,drawFunctionSettings);
               }
             }
           }
         }
       }
+     // CDBDebug("warper->isProjectionRequired() = %d: Finished simple linear transformation",warper->isProjectionRequired());
       return 0;
     }
+#ifdef GenericDataWarper_DEBUG
+    CDBDebug("warp is required");
+#endif
+
     
+   
+
+    size_t dataSize = (dataWidth+1) * (dataHeight+1);
+
+    
+
     double *px = new double[dataSize];
     double *py = new double[dataSize];
     char *skip = new char[dataSize];
+    
       
     for(int y=0;y<dataHeight+1;y++){
       for(int x=0;x<dataWidth+1;x++){
         size_t p = x+y*(dataWidth+1);
-        px[p] =dfSourcedExtW*double(x)+dfSourceOrigX;//+dfCellSizeX/2.0;
-        py[p] =dfSourcedExtH*double(y)+dfSourceOrigY;//+dfCellSizeY/2.0;
+        px[p] =dfSourcedExtW*double(x+PXExtentBasedOnSource[0])+dfSourceOrigX;//+dfSourcedExtW/2.0;
+        py[p] =dfSourcedExtH*double(y+PXExtentBasedOnSource[1])+dfSourceOrigY;//+dfSourcedExtH/2.0;
         skip[p] = false;
       }
     }
+    
 
    
 //     for(size_t j=0;j<dataSize;j++){
@@ -223,6 +300,7 @@ class GenericDataWarper{
           py[j]*=DEG_TO_RAD;
         }
       }
+      
       if(pj_transform(warper->sourcepj,warper->destpj, dataSize,0,px,py,NULL)){
         CDBDebug("Unable to do pj_transform");
       }
@@ -234,16 +312,22 @@ class GenericDataWarper{
       }
     }
     
-
+#ifdef GenericDataWarper_DEBUG
+    CDBDebug("Reprojection done");
+#endif
 
     for(size_t j=0;j<dataSize;j++){
       if(!(px[j]>-DBL_MAX&&px[j]<DBL_MAX))skip[j]=true;        
       
     }
     
+    
     double avgDX = 0;
     double avgDY = 0;
-
+    
+    
+    
+    
     for(int y=0;y<dataHeight;y=y+1){
       for(int x=0;x<dataWidth;x=x+1){
         size_t p=x+y*(dataWidth+1);
@@ -331,7 +415,9 @@ class GenericDataWarper{
 
           
           if(doDraw){
-            T value = ((T*)sourceData)[x+(dataHeight-1-y)*dataWidth];
+            int sourceGridX = x+PXExtentBasedOnSource[0];
+            int sourceGridY = y+PXExtentBasedOnSource[1];
+            T value = ((T*)sourceData)[sourceGridX+(sourceDataHeight-1-sourceGridY)*sourceDataWidth];
             double mX = (px1+px2+px3+px4)/4;
             double mY = (py1+py2+py3+py4)/4;
 /*            
@@ -339,16 +425,16 @@ class GenericDataWarper{
             if(px3>px1)px3--;else if (px3<px1)px3++;
             if(py3>py1)py3--;else if (py3<py1)py3++;
             if(py4>py1)py4--;else if (py4<py1)py4++;*/
-            int dmX=int(mX);
-            int dmY=int(mY);
-            int dpx1=int(px1);
-            int dpy1=int(py1);
-            int dpx2=int(px2);
-            int dpy2=int(py2);
-            int dpx3=int(px3);
-            int dpy3=int(py3);
-            int dpx4=int(px4);
-            int dpy4=int(py4);
+            int dmX=floor(mX);
+            int dmY=floor(mY);
+            int dpx1=floor(px1);
+            int dpy1=floor(py1);
+            int dpx2=floor(px2);
+            int dpy2=floor(py2);
+            int dpx3=floor(px3);
+            int dpy3=floor(py3);
+            int dpx4=floor(px4);
+            int dpy4=floor(py4);
 
            
             int xP[3];
@@ -408,6 +494,9 @@ class GenericDataWarper{
     delete[] px;
     delete[] py;
     delete[] skip;
+#ifdef GenericDataWarper_DEBUG
+    CDBDebug("render done");
+#endif
     return 0;
   }
 };

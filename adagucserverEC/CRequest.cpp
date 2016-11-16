@@ -24,7 +24,7 @@
  * 
  ******************************************************************************/
 
-//#define CREQUEST_DEBUG
+// #define CREQUEST_DEBUG
 //#define MEASURETIME
 
 #include "CRequest.h"
@@ -774,8 +774,12 @@ int CRequest::process_wms_gethistogram_request(){
 
 
 int CRequest::setDimValuesForDataSource(CDataSource *dataSource,CServerParams *srvParam){
- if(dataSource->cfgLayer->Dimension.size()==0){
+#ifdef CREQUEST_DEBUG  
+  CDBDebug("setDimValuesForDataSource");
+#endif  
+  if(dataSource->cfgLayer->Dimension.size()==0){
     //This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.        
+    CDBDebug("setDimValuesForDataSource dataSource->cfgLayer->Dimension.size()==0");
     CDirReader dirReader;
     if(CDBFileScanner::searchFileNames(&dirReader,dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter,NULL)!=0){
         CDBError("Could not find any filename");
@@ -784,8 +788,11 @@ int CRequest::setDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
     if(dirReader.fileList.size()==0){
         CDBError("dirReader.fileList.size()==0");return 1;
     }
+#ifdef CREQUEST_DEBUG
+    CDBDebug("Addstep");
+#endif
     dataSource->addStep(dirReader.fileList[0]->fullName.c_str(),NULL);
-    dataSource->getCDFDims()->addDimension("time","0",0);
+//     dataSource->getCDFDims()->addDimension("none","0",0);
     return 0;
   }    
   int status = fillDimValuesForDataSource(dataSource,srvParam);if(status != 0)return status;
@@ -866,17 +873,24 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource,CServerParams *
                 if(ogcDim->value.length()==19){
                   dataSource->requiredDims[i]->value.concat("Z");
                 }
-                CTime ctime;  
-                ctime.init("seconds since 1970",NULL);
-                double currentTimeAsEpoch ;
                 
-                try{
-                  currentTimeAsEpoch = ctime.dateToOffset( ctime.freeDateStringToDate(dataSource->requiredDims[i]->value.c_str()));
-                  CT::string currentDateConverted = ctime.dateToISOString(ctime.getDate(currentTimeAsEpoch));
-                  dataSource->requiredDims[i]->value=currentDateConverted;
-                }catch(int e){
-                  CDBDebug("Unable to convert %s to epoch",dataSource->requiredDims[i]->value.c_str());
-                }                
+                /* Try to make sense of other timestrings as well */
+                if(dataSource->requiredDims[i]->value.indexOf("/")==-1&&dataSource->requiredDims[i]->value.indexOf(",")==-1)
+                {
+                  CDBDebug("Got Time value [%s]",dataSource->requiredDims[i]->value.c_str());
+                  CTime ctime;  
+                  ctime.init("seconds since 1970",NULL);
+                  double currentTimeAsEpoch ;
+                  
+                  try{
+                    currentTimeAsEpoch = ctime.dateToOffset( ctime.freeDateStringToDate(dataSource->requiredDims[i]->value.c_str()));
+                    CT::string currentDateConverted = ctime.dateToISOString(ctime.getDate(currentTimeAsEpoch));
+                    dataSource->requiredDims[i]->value=currentDateConverted;
+                  }catch(int e){
+                    CDBDebug("Unable to convert %s to epoch",dataSource->requiredDims[i]->value.c_str());
+                  }                
+                  CDBDebug("Converted to Time value [%s]",dataSource->requiredDims[i]->value.c_str());
+                }
                 
               }
               //If we have a dimension value quantizer adjust the value accordingly  
@@ -1069,12 +1083,23 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource,CServerParams *
     CDBError("%d",i);
     return 2;
   }
+  
+    if(dataSource->requiredDims.size()==0){
+      CDBDebug("Required dims is still zero, add none now");
+      COGCDims *ogcDim = new COGCDims();
+      dataSource->requiredDims.push_back(ogcDim);
+      ogcDim->name.copy("none");
+      ogcDim->value.copy("0");
+      ogcDim->netCDFDimName.copy("none");
+    }
   return 0;
 }
 
 
 int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams *srvParam){
-    
+#ifdef CREQUEST_DEBUG
+    CDBDebug("queryDimValuesForDataSource");
+#endif    
   try{
     CDBStore::Store *store = NULL;
     
@@ -1084,26 +1109,47 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
       dataSource->queryBBOX = true;
     }
     
+//     CDBDebug("queryDimValuesForDataSource dataSource->queryBBOX=%d %s for step %d/%d",(int)dataSource->queryBBOX,dataSource->layerName.c_str(),dataSource->getCurrentTimeStep(),dataSource->getNumTimeSteps());
+//     CDBDebug("queryDimValuesForDataSource cfgLayer->Name = %s",dataSource->cfgLayer->Name[0]->value.c_str());
+//     CDBDebug("queryDimValuesForDataSource cfgLayer->Title = %s",dataSource->cfgLayer->Title[0]->value.c_str());
+//     CDBDebug("queryDimValuesForDataSource cfgLayer->FilePath = %s",dataSource->cfgLayer->FilePath[0]->value.c_str());
+//     CDBDebug("queryDimValuesForDataSource dataSource->cfgLayer->TileSettings.size()= %d",dataSource->cfgLayer->TileSettings.size());
+//     
     if(srvParam->Geo->CRS.empty() == true){
       dataSource->queryBBOX = false;
     }
     
     if(dataSource->queryBBOX){
-     
+      
+       CDBDebug("queryDimValuesForDataSource dataSource->queryBBOX %s for step %d/%d",dataSource->layerName.c_str(),dataSource->getCurrentTimeStep(),dataSource->getNumTimeSteps());
       double nativeViewPortBBOX[4];
+
       nativeViewPortBBOX[0]=srvParam->Geo->dfBBOX[0];
       nativeViewPortBBOX[1]=srvParam->Geo->dfBBOX[1];
       nativeViewPortBBOX[2]=srvParam->Geo->dfBBOX[2];
       nativeViewPortBBOX[3]=srvParam->Geo->dfBBOX[3];
       
-      int tileWidth           = dataSource->cfgLayer->TileSettings[0]->attr.tilewidth.toInt();
-      int tileHeight          = dataSource->cfgLayer->TileSettings[0]->attr.tileheight.toInt();
-      double level1BBOXWidth  = dataSource->cfgLayer->TileSettings[0]->attr.tilebboxwidth.toDouble();
-      double level1BBOXHeight = dataSource->cfgLayer->TileSettings[0]->attr.tilebboxheight.toDouble();
+      int tilewidth           = dataSource->cfgLayer->TileSettings[0]->attr.tilewidthpx.toInt();
+      int tileheight          = dataSource->cfgLayer->TileSettings[0]->attr.tileheightpx.toInt();
+      double tilecellsizex  = dataSource->cfgLayer->TileSettings[0]->attr.tilecellsizex.toDouble();
+      double tilecellsizey = dataSource->cfgLayer->TileSettings[0]->attr.tilecellsizey.toDouble();
+      double level1BBOXWidth = fabs(tilecellsizex*double(tilewidth));
+      double level1BBOXHeight =  fabs(tilecellsizey*double(tileheight));
+//       if(dataSource->cfgLayer->TileSettings[0]->attr.tilebboxwidth.empty()==false){
+//         level1BBOXWidth = dataSource->cfgLayer->TileSettings[0]->attr.tilebboxwidth.toDouble();
+//       }
+//       if(dataSource->cfgLayer->TileSettings[0]->attr.tilebboxwidth.empty()==false){
+//         level1BBOXHeight = dataSource->cfgLayer->TileSettings[0]->attr.tilebboxheight.toDouble();
+//       }
+      
+      CDBDebug("level1BBOXHeight,level1BBOXHeight %f,%f",level1BBOXHeight,level1BBOXHeight);
+      
       CT::string nativeProj4  = dataSource->cfgLayer->TileSettings[0]->attr.tileprojection.c_str();
       int maxlevel            = dataSource->cfgLayer->TileSettings[0]->attr.maxlevel.toInt();
       
-      if(!nativeProj4.equals(srvParam->Geo->CRS)){
+      double screenCellSize = -1;
+      //if(!nativeProj4.equals(srvParam->Geo->CRS))
+      {
         CImageWarper warper;
         int status =  warper.initreproj(nativeProj4.c_str(),srvParam->Geo,&srvParam->cfg->Projection);
         if(status!=0){
@@ -1144,18 +1190,70 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
             }
           }
         }
+        
+        //Find cellsize at parts of window
+        
+        double viewportCellsizeX=(srvParam->Geo->dfBBOX[2]-srvParam->Geo->dfBBOX[0])/double(srvParam->Geo->dWidth);
+        double viewportCellsizeY=(srvParam->Geo->dfBBOX[3]-srvParam->Geo->dfBBOX[1])/double(srvParam->Geo->dHeight);
+        
+        for(double wy=0;wy<1;wy+=0.1){
+          for(double wx=0;wx<1;wx+=0.1){
+            double viewPortMX = srvParam->Geo->dfBBOX[2]*(1-wx)+srvParam->Geo->dfBBOX[0]*wx;
+            double viewPortMY = srvParam->Geo->dfBBOX[3]*(1-wy)+srvParam->Geo->dfBBOX[1]*wy;
+            //CDBDebug("viewPortMX, viewPortMY = (%f,%f)",viewPortMX,viewPortMY);
+            double x1 = viewPortMX;
+            double y1 = viewPortMY;
+            double x2 = viewPortMX+viewportCellsizeX;
+            double y2 = viewPortMY+viewportCellsizeY;;
+            status = 0;
+            status +=warper.reprojpoint(x1,y1);
+            status +=warper.reprojpoint(x2,y2);
+            
+//             CDBDebug("%f %f",x1,y1);
+//             CDBDebug("%f %f",x2,y2);
+            if(status==0){
+              double calcCellsize = sqrt(((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1))/2);
+              if(screenCellSize<0){
+                screenCellSize = calcCellsize;
+              }else{
+                if(calcCellsize<screenCellSize)screenCellSize = calcCellsize;
+              }
+              //CDBDebug("screenCellSize (%f,%f)= %f",viewPortMX,viewPortMY,screenCellSize);
+            }
+          }
+        }
+        CDBDebug("Cellsize screen %f",screenCellSize);
+        
+        CDBDebug("Cellsize basetile %f",level1BBOXWidth/double(tilewidth));
+        
         warper.closereproj();
       }
 
       
-      dataSource->queryLevel = 1;
-     int numResults = 0;
+      dataSource->queryLevel = 0;
+//       int numResults = 0;
       store=NULL;
-      dataSource->queryLevel=0;
       
-      while(((numResults*tileWidth*tileHeight)/3>srvParam->Geo->dWidth*srvParam->Geo->dHeight&&numResults>3)||numResults==0||numResults>60){
+      
+      for(int queryLevel=1;queryLevel<maxlevel;queryLevel++){
+        double levelXBBOXWidth = level1BBOXWidth*pow(2,queryLevel)*1;
+        double tileCellSize = levelXBBOXWidth/double(tilewidth);
+        if(tileCellSize<screenCellSize){
+          dataSource->queryLevel=queryLevel;
+          //break;
+        }
+      }
+      //if(dataSource->queryLevel>0)dataSource->queryLevel--;
+      
+
+      
+      
+      
+    /*  while(((numResults*tilewidth*tileheight)/2>srvParam->Geo->dWidth*srvParam->Geo->dHeight&&numResults>3)||numResults==0||numResults>60)
+      {
+        
         if(dataSource->queryLevel>(maxlevel-1)){dataSource->queryLevel--;break;}
-        delete store;store=NULL;
+     */   delete store;store=NULL;
         dataSource->queryLevel++;
         double levelXBBOXWidth = level1BBOXWidth*pow(2,dataSource->queryLevel-1)*1;
         double levelXBBOXHeight =level1BBOXHeight*pow(2,dataSource->queryLevel-1)*1;
@@ -1164,16 +1262,41 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
         dataSource->nativeViewPortBBOX[1]=nativeViewPortBBOX[1]-levelXBBOXHeight;
         dataSource->nativeViewPortBBOX[2]=nativeViewPortBBOX[2]+levelXBBOXWidth;
         dataSource->nativeViewPortBBOX[3]=nativeViewPortBBOX[3]+levelXBBOXHeight;
+        
+        CDBDebug(" dataSource->nativeViewPortBBOX: [%f,%f,%f,%f]", dataSource->nativeViewPortBBOX[0], dataSource->nativeViewPortBBOX[1], dataSource->nativeViewPortBBOX[2], dataSource->nativeViewPortBBOX[3]);
         store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource,300);
-        if(store!=NULL){
-          numResults=store->getSize();
-          CDBDebug("Found %d tiles",store->getSize());
-        }else {
-          numResults = 0;
+        if(store == NULL){
+          CDBError("Unable to query bbox for tiles");
+          return 1;
         }
-      }
+        
+        if(store->getSize() == 0){
+          delete store;
+          dataSource->queryLevel=0;
+          dataSource->queryBBOX=false;
+          store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource,300);
+          if(store == NULL){
+            CDBError("Unable to query bbox for tiles");
+            return 1;
+          }
+        }
       
-      CDBDebug("level %d, tiles %d",dataSource->queryLevel,store->getSize());
+        
+//         if(store!=NULL){
+//           numResults=store->getSize();
+//           CDBDebug("Found %d tiles",store->getSize());
+//         }else {
+//           numResults = 0;
+//         }
+//         double tileCellSize = levelXBBOXWidth/tilewidth;
+
+        
+        
+//       }
+      
+      
+      double tileCellSize = levelXBBOXWidth/double(tilewidth);
+      CDBDebug("level %d, tiles %0d cellsize %f",dataSource->queryLevel,store->getSize(),tileCellSize);
       #ifdef ADAGUC_TILESTITCHER_DEBUG
       srvParam->mapTitle.print("level %d, tiles %d",dataSource->queryLevel,store->getSize());
       #endif
@@ -1200,6 +1323,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
           
     for(size_t k=0;k<store->getSize();k++){
       CDBStore::Record *record = store->getRecord(k);
+      //CDBDebug("Addstep");
       dataSource->addStep(record->get(0)->c_str(),NULL);
                 #ifdef CREQUEST_DEBUG
       CDBDebug("Step %d: [%s]",k,record->get(0)->c_str());
@@ -1209,6 +1333,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
         CT::string value = record->get(1+i*2)->c_str();
         dataSource->getCDFDims()->addDimension(dataSource->requiredDims[i]->netCDFDimName.c_str(),value.c_str(),atoi(record->get(2+i*2)->c_str()));
           #ifdef CREQUEST_DEBUG
+        CDBDebug("queryDimValuesForDataSource dataSource->queryBBOX %s for step %d/%d",dataSource->layerName.c_str(),dataSource->getCurrentTimeStep(),dataSource->getNumTimeSteps());
         CDBDebug("  [%s][%d] = [%s]",dataSource->requiredDims[i]->netCDFDimName.c_str(),atoi(record->get(2+i*2)->c_str()),value.c_str());
 #endif
         dataSource->requiredDims[i]->addValue(value.c_str());
@@ -1270,7 +1395,9 @@ int CRequest::process_all_layers(){
         //CDBError("comparing (%d) %s==%s",j,layerName.c_str(),srvParam->WMSLayers[j].c_str());
         if(layerName.equals(srvParam->WMSLayers[j].c_str())){
           CDataSource *dataSource = new CDataSource ();
+          
           dataSources.push_back(dataSource);
+          
           if(dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[layerNo],layerName.c_str(),j)!=0){
             return 1;
           }
@@ -1352,6 +1479,7 @@ int CRequest::process_all_layers(){
         return 1;
       }
     }
+    
   }
 
 
@@ -1418,8 +1546,6 @@ int CRequest::process_all_layers(){
       dataSources[j]->dLayerType==CConfigReaderLayerTypeBaseLayer)
     {
 
-      //When this layer has no dimensions, we do not need to query 
-      // When there are no dims, we can get the filename from the config
       if(dataSources[j]->cfgLayer->Dimension.size()==0){
        
         if(CAutoConfigure::autoConfigureDimensions(dataSources[j])!=0){
@@ -1443,6 +1569,7 @@ int CRequest::process_all_layers(){
         delete[] values_dim;
         delete[] date_time;*/
       }else{
+        CDBDebug("Layer has no dims");
         //This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.        
         
 
@@ -1456,16 +1583,17 @@ int CRequest::process_all_layers(){
           CDBError("dirReader.fileList.size()==0");return 1;
         }
         
-        
+        CDBDebug("Addstep");
         dataSources[j]->addStep(dirReader.fileList[0]->fullName.c_str(),NULL);
-        dataSources[j]->getCDFDims()->addDimension("time","0",0);
+        //dataSources[j]->getCDFDims()->addDimension("none","0",0);
       }
     }
     
     if(dataSources[j]->dLayerType==CConfigReaderLayerTypeCascaded){
         //This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
+      CDBDebug("Addstep");
         dataSources[j]->addStep("",NULL);
-        dataSources[j]->getCDFDims()->addDimension("time","0",0);
+        //dataSources[j]->getCDFDims()->addDimension("none","0",0);
     }
   }
    
@@ -1547,13 +1675,11 @@ int CRequest::process_all_layers(){
           if(dataSources[dataSourceToUse]->getNumTimeSteps()>1)imageDataWriter.createAnimation();
     
           for(size_t k=0;k<(size_t)dataSources[dataSourceToUse]->getNumTimeSteps();k++){
-            for(size_t d=0;d<dataSources.size();d++){
-              dataSources[d]->setTimeStep(k);
-            }
+            
             if(dataSources[j]->dLayerType==CConfigReaderLayerTypeDataBase||
               dataSources[j]->dLayerType==CConfigReaderLayerTypeCascaded||
               dataSources[j]->dLayerType==CConfigReaderLayerTypeBaseLayer){
-       
+              dataSources[dataSourceToUse]->setTimeStep(k);
               status = imageDataWriter.addData(dataSources);
               if(status != 0){
                 /**
@@ -1711,8 +1837,10 @@ int CRequest::process_all_layers(){
               
               throw(__LINE__);
             }
+            
             for(int k=0;k<dataSources[j]->getNumTimeSteps();k++){
               dataSources[j]->setTimeStep(k);
+              CDBDebug("WCS dataset %d/ timestep %d",j,k);
 
               try{
                 status = wcsWriter->addData(dataSources);
@@ -2604,7 +2732,7 @@ int CRequest::process_querystring(){
           // Set format
           //CDBDebug("FORMAT: %s",srvParam->Format.c_str());
           //srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8;
-          if(srvParam->Format.indexOf("24")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG32;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
+          if(srvParam->Format.indexOf("24")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG24;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
           else if(srvParam->Format.indexOf("32")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG32;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
           else if(srvParam->Format.indexOf("8")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8;srvParam->imageMode=SERVERIMAGEMODE_8BIT;}
           else if(srvParam->Format.indexOf("gif")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEGIF;srvParam->imageMode=SERVERIMAGEMODE_8BIT;}

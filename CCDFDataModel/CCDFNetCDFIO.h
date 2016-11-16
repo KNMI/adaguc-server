@@ -95,6 +95,7 @@ class CDFNetCDFWriter{
     void setNetCDFMode(int mode);
     void disableVariableWrite();
     void disableReadData();
+    void setDeflateShuffle(int deflate, int deflate_level,int shuffle);
     void recordNCCommands(bool enable);
     int write(const char *fileName);
     int write(const char *fileName,void(*progress)(const char*message,float percentage));

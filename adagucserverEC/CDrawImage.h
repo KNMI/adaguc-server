@@ -158,6 +158,9 @@ public:
     int numImagesAdded;
     int currentGraphicsRenderer;
   public:
+    float *rField , *gField, *bField ;
+    int *numField ;
+    bool trueColorAVG_RGBA;
     int getRenderer();
     int _colors[256];
     gdImagePtr image;
@@ -171,6 +174,7 @@ public:
     int createImage(const char *fn);
     int createImage(CDrawImage *image,int width,int height);
     int printImagePng8();
+    int printImagePng24();
     int printImagePng32();
     int printImageGif();
     int createGDPalette(CServerConfig::XMLE_Legend *palette);

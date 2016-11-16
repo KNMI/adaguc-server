@@ -55,7 +55,7 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage,
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   CStyleConfiguration::RenderMethod renderMethod = styleConfiguration->renderMethod;
   
-  if(renderMethod&RM_RGBA){
+  if(renderMethod&RM_RGBA||renderMethod&RM_AVG_RGBA){
     
     //legendImage->setText("",5,0,0,248,-1);  
     legendImage->crop(4);

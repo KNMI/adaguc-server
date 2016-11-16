@@ -81,7 +81,7 @@ public:
   CCairoPlotter(int width,int height, unsigned char * _ARGBByteBuffer, float fontSize, const char*fontLocation);
 
   ~CCairoPlotter() ;
-  int writeARGBPng(int width,int height,unsigned char *ARGBByteBuffer,FILE *file,bool trueColor);
+  int writeARGBPng(int width,int height,unsigned char *ARGBByteBuffer,FILE *file,int bitDepth);
   int renderFont(FT_Bitmap *bitmap,int left,int top);
   int initializeFreeType();
   
@@ -119,6 +119,7 @@ public:
   void drawText(int x, int y,double angle, const char *text);
 
   void writeToPng8Stream(FILE *fp,unsigned char alpha);
+  void writeToPng24Stream(FILE *fp,unsigned char alpha);
   void writeToPng32Stream(FILE *fp,unsigned char alpha);
   void setToSurface(cairo_surface_t *png) ;
 };

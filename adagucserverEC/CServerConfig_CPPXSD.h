@@ -631,7 +631,12 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString tilewidth,tileheight,tilebboxwidth,tilebboxheight,tileprojection,maxlevel,tilepath;
+            CXMLString tilewidthpx,tileheightpx,
+            tilecellsizex,tilecellsizey,
+            left,right,bottom,top,
+            numtilesx,numtilesy,
+            tileprojection,maxlevel,tilepath,
+            tilemode;
         }attr;
 //           <TileSettings  tilewidth="600" 
 //                    tileheight="600" 
@@ -643,10 +648,17 @@ class CServerConfig:public CXMLSerializerInterface{
 //     
     
         void addAttribute(const char *name,const char *value){
-               if(equals("tilewidth",9,name)){attr.tilewidth.copy(value);return;}
-          else if(equals("tileheight",10,name)){attr.tileheight.copy(value);return;}
-          else if(equals("tilebboxwidth",13,name)){attr.tilebboxwidth.copy(value);return;}
-          else if(equals("tilebboxheight",14,name)){attr.tilebboxheight.copy(value);return;}
+          if(equals("tilemode",8,name)){attr.tilemode.copy(value);return;}
+          else if(equals("tilewidthpx",11,name)){attr.tilewidthpx.copy(value);return;}
+          else if(equals("tileheightpx",12,name)){attr.tileheightpx.copy(value);return;}
+          else if(equals("tilecellsizex",13,name)){attr.tilecellsizex.copy(value);return;}
+          else if(equals("tilecellsizey",13,name)){attr.tilecellsizey.copy(value);return;}
+          else if(equals("left",4,name)){attr.left.copy(value);return;}
+          else if(equals("bottom",6,name)){attr.bottom.copy(value);return;}
+          else if(equals("right",5,name)){attr.right.copy(value);return;}
+          else if(equals("top",3,name)){attr.top.copy(value);return;}
+          else if(equals("numtilesx",9,name)){attr.numtilesx.copy(value);return;}
+          else if(equals("numtilesy",9,name)){attr.numtilesy.copy(value);return;}
           else if(equals("tileprojection",14,name)){attr.tileprojection.copy(value);return;}
           else if(equals("maxlevel",8,name)){attr.maxlevel.copy(value);return;}
           else if(equals("tilepath",8,name)){attr.tilepath.copy(value);return;}

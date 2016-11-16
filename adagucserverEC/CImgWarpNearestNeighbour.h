@@ -220,7 +220,7 @@ public:
                   //imgpointer=srcpixel_x+(dHeight-1-srcpixel_y)*dWidth;
                   val=data[imgpointer];
 
-#ifdef ADAGUC_TILESTITCHER_DEBUG
+/*#ifdef ADAGUC_TILESTITCHER_DEBUG
                   
                       if(srcpixel_x ==0||srcpixel_x==width-1||srcpixel_y ==0||srcpixel_y==height-1)val=12;
                       
@@ -231,7 +231,7 @@ public:
                       if((srcpixel_y ==10||srcpixel_y==width-10)&& srcpixel_x >10 &&srcpixel_x<width-10){
                         val = 5;
                       }
-#endif                    
+#endif             */       
                                     
                   
                   isNodata=false;
@@ -509,16 +509,14 @@ private:
     float legendScale;
     float legendOffset;
     CDrawImage *drawImage;
-    float *rField = NULL, *gField=NULL, *bField = NULL;
-    int *numField = NULL;
-    bool trueColorRGBA;
+
   };
 
   
   template <class T>
   static void drawFunction(int x,int y,T val, void *_settings){
     Settings *settings = (Settings*)_settings;
-    if(settings->trueColorRGBA == false){
+    if(settings->drawImage->trueColorAVG_RGBA == false){
 
       bool isNodata=false;
       if(settings->hasNodataValue){if(val==settings->nodataValue)isNodata=true;}if(!(val==val))isNodata=true;
@@ -536,44 +534,20 @@ private:
         settings->drawImage->setPixelIndexed(x,y,pcolorind);
       }
     }else{
-    
-
-      size_t size=settings->drawImage->Geo->dWidth*settings->drawImage->Geo->dHeight;
-      if(settings->rField == NULL){
-        
-        settings->rField = new float[size];
-        settings->gField = new float[size];
-        settings->bField = new float[size];
-        settings->numField = new int[size];
-        for(size_t j=0;j<size;j++){
-          settings->rField[j] = 0;
-          settings->gField[j] = 0;
-          settings->bField[j] = 0;
-          settings->numField[j] = 0;
-        }
-      }
-      
-      size_t p = x+y*settings->drawImage->Geo->dWidth;
-      if(p<size){
-            
+      if(x>=0&&y>=0&&x<settings->drawImage->Geo->dWidth&&y<settings->drawImage->Geo->dHeight){
+        size_t p = x+y*settings->drawImage->Geo->dWidth;      
         uint v = val;
-        unsigned char r=((unsigned char)v);
-        unsigned char g=((unsigned char)(v>>8));
-        unsigned char b=((unsigned char)(v>>16));
-        unsigned char a=((unsigned char)(v>>24));
-        
+        unsigned char a = ((unsigned char)(v>>24));
+        if(a==255){
+          settings->drawImage->numField[p]++;
+          unsigned char r = ((unsigned char)v);
+          unsigned char g = ((unsigned char)(v>>8));
+          unsigned char b = ((unsigned char)(v>>16));
           
-        settings->numField[p]++;
-        settings->rField[p]+=r;
-        settings->gField[p]+=g;
-        settings->bField[p]+=b;
-        
-        r= (unsigned char)(settings->rField[p]/settings->numField[p]);
-        g= (unsigned char)(settings->gField[p]/settings->numField[p]);
-        b= (unsigned char)(settings->bField[p]/settings->numField[p]);
-      
-        settings->drawImage->setPixelTrueColorOverWrite(x,y,r,g,b,a);  
-      
+          settings->drawImage->rField[p]+=r;
+          settings->drawImage->gField[p]+=g;
+          settings->drawImage->bField[p]+=b;
+        }
       }
     }
   };
@@ -608,21 +582,18 @@ private:
       return;
     }
     
-    if(dataSource->dWidth*dataSource->dHeight<720*720||1==2){
+    CStyleConfiguration *styleConfiguration = dataSource->getStyle();  
+    if(dataSource->dWidth*dataSource->dHeight<720*720||1==2||styleConfiguration->renderMethod&RM_AVG_RGBA){
       CDBDebug("field is small enough for precise renderer: using _render");
       Settings settings;
-      CStyleConfiguration *styleConfiguration = dataSource->getStyle();    
+        
       settings.dfNodataValue    = dataSource->getDataObject(0)->dfNodataValue ;
       settings.legendValueRange = styleConfiguration->hasLegendValueRange;
       settings.legendLowerRange = styleConfiguration->legendLowerRange;
       settings.legendUpperRange = styleConfiguration->legendUpperRange;
       settings.hasNodataValue   = dataSource->getDataObject(0)->hasNodataValue;
       settings.nodataValue = (float)settings.dfNodataValue;
-      settings.trueColorRGBA = false;
-      settings.rField = NULL;
-      settings.gField=NULL;
-      settings.bField = NULL;
-      settings.numField = NULL;
+      
       settings.legendLog = styleConfiguration->legendLog;
       if(settings.legendLog>0){
         settings.legendLogAsLog = log10(settings.legendLog);
@@ -632,6 +603,24 @@ private:
       settings.legendScale = styleConfiguration->legendScale;
       settings.legendOffset = styleConfiguration->legendOffset;
       settings.drawImage = drawImage;
+      
+      if(styleConfiguration->renderMethod&RM_AVG_RGBA){
+        settings.drawImage->trueColorAVG_RGBA = true;
+        size_t size=settings.drawImage->Geo->dWidth*settings.drawImage->Geo->dHeight;
+        if(settings.drawImage->rField == NULL){
+          CDBDebug("Allocating fields");
+          settings.drawImage->rField = new float[size];
+          settings.drawImage->gField = new float[size];
+          settings.drawImage->bField = new float[size];
+          settings.drawImage->numField = new int[size];
+          for(size_t j=0;j<size;j++){
+            settings.drawImage->rField[j] = 0;
+            settings.drawImage->gField[j] = 0;
+            settings.drawImage->bField[j] = 0;
+            settings.drawImage->numField[j] = 0;
+          }
+        }
+      }
       
       CDFType dataType=dataSource->getDataObject(0)->cdfVariable->getType();
       void *sourceData = dataSource->getDataObject(0)->cdfVariable->data;
@@ -658,6 +647,26 @@ private:
         case CDF_FLOAT :  GenericDataWarper::render<float> (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
         case CDF_DOUBLE:  GenericDataWarper::render<double>(warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
       }
+      
+      
+      if(styleConfiguration->renderMethod&RM_AVG_RGBA&&settings.drawImage->rField!=NULL){
+        for(int y=0;y<settings.drawImage->Geo->dHeight;y++){
+          for(int x=0;x<settings.drawImage->Geo->dWidth;x++){
+            size_t p = x+y*settings.drawImage->Geo->dWidth;
+            if(settings.drawImage->numField[p]!=0){
+              
+              unsigned char r= (settings.drawImage->rField[p]/settings.drawImage->numField[p]);
+              unsigned char g= (settings.drawImage->gField[p]/settings.drawImage->numField[p]);
+              unsigned char b= (settings.drawImage->bField[p]/settings.drawImage->numField[p]);
+              unsigned char a=255;
+              settings.drawImage->setPixelTrueColorOverWrite(x,y,r,g,b,a);  
+            }
+          }
+        }
+
+      }
+      
+      
       return;
     }
     

@@ -127,6 +127,11 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource){
           // When there are no extra dims besides x and y we can skip
           // Each time to find the non existing dims.
           if(variable->dimensionlinks.size()==2){
+            CServerConfig::XMLE_Dimension *xmleDim=new CServerConfig::XMLE_Dimension();
+            xmleDim->value.copy("0");
+            xmleDim->attr.name.copy("none");
+            xmleDim->attr.units.copy("none");
+            dataSource->cfgLayer->Dimension.push_back(xmleDim);
             #ifdef CAUTOCONFIGURE_DEBUG  
             CDBDebug("Creating an empty table, because variable [%s] has only x and y dims",variable->name.c_str());
             #endif

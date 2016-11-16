@@ -28,7 +28,7 @@
 #ifndef Definitions_H
 #define Definitions_H
 
-#define ADAGUCSERVER_VERSION             "2.0.17"
+#define ADAGUCSERVER_VERSION             "2.0.18"
 
 //CConfigReaderLayerType
 #define CConfigReaderLayerTypeUnknown     0
@@ -81,7 +81,8 @@
 //Image formats
 #define IMAGEFORMAT_IMAGEPNG8             0
 #define IMAGEFORMAT_IMAGEGIF              1
-#define IMAGEFORMAT_IMAGEPNG32            2
+#define IMAGEFORMAT_IMAGEPNG24            2
+#define IMAGEFORMAT_IMAGEPNG32            3
 
 #define SERVERIMAGEMODE_8BIT              0
 #define SERVERIMAGEMODE_RGBA              1
