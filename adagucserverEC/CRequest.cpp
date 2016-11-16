@@ -1212,7 +1212,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
 //             CDBDebug("%f %f",x1,y1);
 //             CDBDebug("%f %f",x2,y2);
             if(status==0){
-              double calcCellsize = sqrt(((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1))/2);
+              double calcCellsize = sqrt(((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1)));
               if(screenCellSize<0){
                 screenCellSize = calcCellsize;
               }else{

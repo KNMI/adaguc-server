@@ -192,7 +192,7 @@ class GenericDataWarper{
     int PXExtentBasedOnSource[4];
     
     PXExtentBasedOnSource[0]=0;
-    PXExtentBasedOnSource[1]=1;
+    PXExtentBasedOnSource[1]=0;
     PXExtentBasedOnSource[2]=sourceDataWidth;
     PXExtentBasedOnSource[3]=sourceDataHeight;
     
@@ -204,6 +204,8 @@ class GenericDataWarper{
 
     }
      
+    if(PXExtentBasedOnSource[2]-PXExtentBasedOnSource[0]<=0)return 0;
+    if(PXExtentBasedOnSource[3]-PXExtentBasedOnSource[1]<=0)return 0;
 
     
 
