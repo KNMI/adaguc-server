@@ -27,6 +27,7 @@
 const char *GenericDataWarper::className="GenericDataWarper";
 
 int GenericDataWarper::findPixelExtent(int *PXExtentBasedOnSource,CGeoParams*sourceGeoParams,CGeoParams*destGeoParams,CImageWarper*warper){
+//  CDBDebug("start findPixelExtent");
     bool destNeedsDegreeRadianConversion = false;
     bool sourceNeedsDegreeRadianConversion = false;
         CT::string destinationCRS;
@@ -69,7 +70,9 @@ int GenericDataWarper::findPixelExtent(int *PXExtentBasedOnSource,CGeoParams*sou
       int startX=0;
       int startY=0;
       bool firstExtent = true;
+      
       bool OK = false;
+      bool transFormationRequired=false;
       while(OK==false){
       
         OK=true;
@@ -90,6 +93,9 @@ int GenericDataWarper::findPixelExtent(int *PXExtentBasedOnSource,CGeoParams*sou
                 //CDBDebug("pxpy: %f,%f",px,py);
                 if(pj_transform(warper->destpj,warper->sourcepj, 1,0,&px,&py,NULL)){
                   skip = true;
+//                   px/=DEG_TO_RAD;
+//                   py/=DEG_TO_RAD;
+//                   CDBDebug("skip %f %f",px,py);
                 }
                 if(sourceNeedsDegreeRadianConversion){
                   px/=DEG_TO_RAD;
@@ -98,7 +104,7 @@ int GenericDataWarper::findPixelExtent(int *PXExtentBasedOnSource,CGeoParams*sou
               }
                 //CDBDebug("pxpy: %f,%f",px,py);
               if(!skip){
-                
+                transFormationRequired=true;
                 //CDBDebug("pxpy: %f,%f",px,py);
                 px=((px-dfSourceOrigX)/dfSourceExtW)*dfSourceW;
                 py=((py-dfSourceOrigY)/dfSourceExtH)*dfSourceH;
@@ -117,10 +123,11 @@ int GenericDataWarper::findPixelExtent(int *PXExtentBasedOnSource,CGeoParams*sou
                 }
               
               }else{
+             
                 if(OK==true){
                   OK=false;
-                  startX++;
-                  startY++;
+                   startX+=((double(imageWidth)/10.)+1);
+                   startY+=((double(imageHeight)/10.)+1);
                 //CDBDebug("PXEXTent error increasing to %d/%d",startX,startY);
                 }
               }
@@ -128,10 +135,14 @@ int GenericDataWarper::findPixelExtent(int *PXExtentBasedOnSource,CGeoParams*sou
           }
         }
       }
-      PXExtentBasedOnSource[0]--;
-      PXExtentBasedOnSource[1]--;
-      PXExtentBasedOnSource[2]++;
-      PXExtentBasedOnSource[3]++;
+      PXExtentBasedOnSource[0]-=2;
+      PXExtentBasedOnSource[1]-=2;
+      PXExtentBasedOnSource[2]+=2;
+      PXExtentBasedOnSource[3]+=2;
+      
+      
+      
+      
        #ifdef GenericDataWarper_DEBUG
     CDBDebug("PXExtentBasedOnSource = [%d,%d,%d,%d]",PXExtentBasedOnSource[0],PXExtentBasedOnSource[1],PXExtentBasedOnSource[2],PXExtentBasedOnSource[3]);
 #endif
@@ -145,7 +156,12 @@ int GenericDataWarper::findPixelExtent(int *PXExtentBasedOnSource,CGeoParams*sou
     if(PXExtentBasedOnSource[0]>PXExtentBasedOnSource[2]){
       std::swap(PXExtentBasedOnSource[0],PXExtentBasedOnSource[2]);
     }
-    
+    if(transFormationRequired==false){
+      PXExtentBasedOnSource[0]=-1;
+      PXExtentBasedOnSource[1]=-1;
+      PXExtentBasedOnSource[2]=-1;
+      PXExtentBasedOnSource[3]=-1;
+    }
     
  #ifdef GenericDataWarper_DEBUG   
     CDBDebug("PXExtentBasedOnSource = [%d,%d,%d,%d]",PXExtentBasedOnSource[0],PXExtentBasedOnSource[1],PXExtentBasedOnSource[2],PXExtentBasedOnSource[3]);
