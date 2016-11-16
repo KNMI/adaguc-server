@@ -88,6 +88,14 @@ int CImageWarper::reprojpoint(double &dfx,double &dfy){
     return 1;
    // CDBError("ReprojException");
   }
+  if(dfx!=dfx||dfy!=dfy){
+       dfx=0;dfy=0;
+      return 1;
+    }
+    if(dfx== HUGE_VAL||dfy== HUGE_VAL){
+       dfx=0;dfy=0;
+      return 1;
+    }
   if(convertRadiansDegreesSrc){
     dfx/=DEG_TO_RAD;
     dfy/=DEG_TO_RAD;

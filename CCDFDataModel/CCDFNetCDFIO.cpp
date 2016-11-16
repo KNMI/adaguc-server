@@ -746,6 +746,12 @@ CDFNetCDFWriter::~CDFNetCDFWriter(){
   for(size_t j=0;j<dimensions.size();j++){delete dimensions[j];}
 };
 
+void CDFNetCDFWriter::setDeflateShuffle(int deflate, int deflate_level,int shuffle){
+  this->deflate = deflate;
+  this->shuffle = shuffle;
+  this->deflate_level = deflate_level;
+}
+
 void CDFNetCDFWriter::setNetCDFMode(int mode){
   if(mode!=3&&mode!=4){
     CDBError("Illegal netcdf mode %d: keeping mode ",mode,netcdfMode);
@@ -1030,14 +1036,17 @@ int CDFNetCDFWriter::_write(void(*progress)(const char*message,float percentage)
               
               status = nc_def_var_chunking(root_id,nc_var_id,0 ,chunkSizes);
               if(status!=NC_NOERR){ncError(__LINE__,className,"nc_def_var_chunking: ",status);return 1;}
-              status = nc_def_var_deflate(root_id,nc_var_id,shuffle ,deflate, deflate_level);
-              if(status!=NC_NOERR){ncError(__LINE__,className,"nc_def_var_deflate: ",status);return 1;}
-              if(listNCCommands){
-                NCCommands.printconcat("nc_def_var_deflate(root_id,var_id_%d,shuffle ,deflate, deflate_level);\n",j);
-              } 
+              
               
             }
           }
+          
+          //CDBDebug("shuffle ,deflate, deflate_level %d,%d,%d",shuffle ,deflate, deflate_level);
+          status = nc_def_var_deflate(root_id,nc_var_id,shuffle ,deflate, deflate_level);
+          if(status!=NC_NOERR){ncError(__LINE__,className,"nc_def_var_deflate: ",status);return 1;}
+          if(listNCCommands){
+            NCCommands.printconcat("nc_def_var_deflate(root_id,var_id_%d,shuffle ,deflate, deflate_level);\n",j);
+          } 
           
           //copy data
           #ifdef CCDFNETCDFWRITER_DEBUG     

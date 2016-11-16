@@ -29,7 +29,9 @@
 
 const char *CDBAdapterPostgreSQL::className="CDBAdapterPostgreSQL";
 
-//#define CDBAdapterPostgreSQL_DEBUG
+// #define CDBAdapterPostgreSQL_DEBUG
+// 
+// #define MEASURETIME
 
 CDBAdapterPostgreSQL::CDBAdapterPostgreSQL(){
 #ifdef CDBAdapterPostgreSQL_DEBUG
@@ -297,7 +299,12 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   #endif
   CPGSQLDB * DB = getDataBaseConnection(); if(DB == NULL){return NULL;  }
 
+  if(dataSource->requiredDims.size()==0){
+    CDBError("Unable to do getFilesAndIndicesForDimensions, this datasource has no dimensions: dataSource->requiredDims.size()==0");
+    return NULL;
+  }
   
+//   CDBDebug("dataSource->requiredDims.size() = %d",dataSource->requiredDims.size());
   
   CT::string queryOrderedDESC;
   CT::string query;
@@ -333,6 +340,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
                 netCDFDimName.c_str(),
                 tableName.c_str());
     CT::string queryParams(&dataSource->requiredDims[i]->value);
+    int numQueriesAdded = 0;
     if(queryParams.equals("*")==false){
       CT::string *cDims =queryParams.splitToArray(",");// Split up by commas (and put into cDims)
       for(size_t k=0;k<cDims->count;k++){
@@ -344,7 +352,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
         if(sDims->count>0&&k>0)subQuery.concat("or ");
         for(size_t  l=0;l<sDims->count&&l<2;l++){
           if(sDims[l].length()>0){
-            
+            numQueriesAdded++;
             //Determine column type (timestamp, integer, real)
             bool isRealType = false;
             CT::string dataTypeQuery;
@@ -416,7 +424,12 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     }
     if(i==0){
       if(dataSource->queryBBOX){
-        subQuery.printconcat("and level = %d and minx >= %f and maxx <= %f and miny >= %f and maxy <= %f ",dataSource->queryLevel,dataSource->nativeViewPortBBOX[0],dataSource->nativeViewPortBBOX[2],dataSource->nativeViewPortBBOX[1],dataSource->nativeViewPortBBOX[3]);
+        if(numQueriesAdded==0){
+          subQuery.printconcat("where ");
+        }else{
+          subQuery.printconcat("and ");
+        }
+        subQuery.printconcat("level = %d and minx >= %f and maxx <= %f and miny >= %f and maxy <= %f ",dataSource->queryLevel,dataSource->nativeViewPortBBOX[0],dataSource->nativeViewPortBBOX[2],dataSource->nativeViewPortBBOX[1],dataSource->nativeViewPortBBOX[3]);
        // CDBDebug("Print query %s",subQuery.c_str());
       }
       subQuery.printconcat("ORDER BY %s DESC limit %d)a%d ",netCDFDimName.c_str(),limit,i);
@@ -916,7 +929,10 @@ int CDBAdapterPostgreSQL::removeFilesWithChangedCreationDate(const char *tablena
   
   CT::string query;
   query.print("delete from %s where path = '%s' and (filedate != '%s' or filedate is NULL)",tablename,file,creationDate);
-  int status = dataBaseConnection->query(query.c_str()); if(status!=0)throw(__LINE__);
+  int status = dataBaseConnection->query(query.c_str()); if(status!=0){
+    //CDBError("removeFilesWithChangedCreationDate exception");
+    throw(__LINE__);
+  }
   #ifdef MEASURETIME
   StopWatch_Stop("<CDBAdapterPostgreSQL::removeFilesWithChangedCreationDate");
   #endif

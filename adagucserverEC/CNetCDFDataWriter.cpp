@@ -3,7 +3,7 @@
 const char * CNetCDFDataWriter::className = "CNetCDFDataWriter";
 #include "CRequest.h"
 
-//#define CNetCDFDataWriter_DEBUG
+// #define CNetCDFDataWriter_DEBUG
 
 void CNetCDFDataWriter::createProjectionVariables(CDFObject *cdfObject,int width,int height,double *bbox){
   bool isProjected=true;
@@ -217,7 +217,9 @@ int CNetCDFDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int
     CT::string dimName = "null";
 
     dimName = baseDataSource->requiredDims[d]->netCDFDimName;
-
+    if(dimName.equals("none")==true){
+      break;
+    }
     CDataReader::DimensionType dtype = CDataReader::getDimensionType(srcObj,dimName.c_str());
     if(dtype==CDataReader::dtype_none){
       CDBWarning("dtype_none for %s",dtype,dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
@@ -230,7 +232,12 @@ int CNetCDFDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int
     }
     
     
-    CDF::Variable *sourceVar = srcObj->getVariable(dimName.c_str());
+    CDF::Variable *sourceVar = srcObj->getVariableNE(dimName.c_str());
+    if(sourceVar == NULL){
+      CDBError("Unable to find dimension [%s]",dimName.c_str());
+      throw(__LINE__);
+    }
+    
     
     CDF::Dimension *dim = new CDF::Dimension();
     destCDFObject->addDimension(dim);
@@ -439,7 +446,9 @@ int CNetCDFDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int
 }
 
 int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
-
+  #ifdef CNetCDFDataWriter_DEBUG     
+  CDBDebug("Add data");
+  #endif  
   int status;
   
   for(size_t i=0;i<dataSources.size();i++){
@@ -483,8 +492,11 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
 
       
       for(size_t d=0;d<baseDataSource->requiredDims.size();d++){
+        dimIndices[d]=0;
         CT::string dimName = baseDataSource->requiredDims[d]->netCDFDimName;
-        
+        if(dimName.equals("none")==true){
+          break;
+        }
         CDataReader::DimensionType dtype = CDataReader::getDimensionType(dataSource->getDataObject(j)->cdfObject,dimName.c_str());
         if(dtype==CDataReader::dtype_none){
           CDBWarning("dtype_none for %s",dtype,dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
@@ -609,6 +621,27 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
       settings.width = srvParam->Geo->dWidth;
       settings.height = srvParam->Geo->dHeight;
       
+      settings.rField = NULL;
+      settings.gField=NULL;
+      settings.bField = NULL;
+      settings.numField = NULL;
+      settings.trueColorRGBA=true;
+      
+      if(settings.trueColorRGBA){
+        size_t size = settings.width*settings.height;
+        
+        settings.rField = new float[size];
+        settings.gField = new float[size];
+        settings.bField = new float[size];
+        settings.numField = new int[size];
+        for(size_t j=0;j<size;j++){
+          settings.rField[j] = 0;
+          settings.gField[j] = 0;
+          settings.bField[j] = 0;
+          settings.numField[j] = 0;
+        }
+      }
+      
       size_t elementOffset = dataStepIndex*settings.width*settings.height;
       void *warpedData = NULL;
       switch(variable->getType()){
@@ -626,21 +659,52 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
         
       settings.data=warpedData;
       
-    switch(variable->getType()){
-      case CDF_CHAR  :  GenericDataWarper::render<char>  (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction);break;
-      case CDF_BYTE  :  GenericDataWarper::render<char>  (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction);break;
-      case CDF_UBYTE :  GenericDataWarper::render<unsigned char> (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction);break;
-      case CDF_SHORT :  GenericDataWarper::render<short> (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction);break;
-      case CDF_USHORT:  GenericDataWarper::render<ushort>(&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction);break;
-      case CDF_INT   :  GenericDataWarper::render<int>   (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction);break;
-      case CDF_UINT  :  GenericDataWarper::render<uint>  (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction);break;
-      case CDF_FLOAT :  GenericDataWarper::render<float> (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction);break;
-      case CDF_DOUBLE:  GenericDataWarper::render<double>(&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction);break;
-    }
       
+      
+      
+      if(drawFunctionMode == CNetCDFDataWriter_NEAREST){
+        switch(variable->getType()){
+          case CDF_CHAR  :  GenericDataWarper::render<char>  (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_nearest);break;
+          case CDF_BYTE  :  GenericDataWarper::render<char>  (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_nearest);break;
+          case CDF_UBYTE :  GenericDataWarper::render<unsigned char> (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_nearest);break;
+          case CDF_SHORT :  GenericDataWarper::render<short> (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_nearest);break;
+          case CDF_USHORT:  GenericDataWarper::render<ushort>(&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_nearest);break;
+          case CDF_INT   :  GenericDataWarper::render<int>   (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_nearest);break;
+          case CDF_UINT  :  GenericDataWarper::render<uint>  (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_nearest);break;
+          case CDF_FLOAT :  GenericDataWarper::render<float> (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_nearest);break;
+          case CDF_DOUBLE:  GenericDataWarper::render<double>(&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_nearest);break;
+        }
+      }
+      
+      if(drawFunctionMode == CNetCDFDataWriter_AVG_RGB){
+        switch(variable->getType()){
+          case CDF_CHAR  :  GenericDataWarper::render<char>  (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_avg_rbg);break;
+          case CDF_BYTE  :  GenericDataWarper::render<char>  (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_avg_rbg);break;
+          case CDF_UBYTE :  GenericDataWarper::render<unsigned char> (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_avg_rbg);break;
+          case CDF_SHORT :  GenericDataWarper::render<short> (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_avg_rbg);break;
+          case CDF_USHORT:  GenericDataWarper::render<ushort>(&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_avg_rbg);break;
+          case CDF_INT   :  GenericDataWarper::render<int>   (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_avg_rbg);break;
+          case CDF_UINT  :  GenericDataWarper::render<uint>  (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_avg_rbg);break;
+          case CDF_FLOAT :  GenericDataWarper::render<float> (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_avg_rbg);break;
+          case CDF_DOUBLE:  GenericDataWarper::render<double>(&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_avg_rbg);break;
+        }
+      }
+        
       
       reader.close();
       
+            
+      
+      if(settings.trueColorRGBA){
+        delete[] settings.rField;
+        delete[] settings.gField;
+        delete[] settings.bField;
+        delete[] settings.numField;
+        settings.rField = NULL;
+        settings.gField=NULL;
+        settings.bField = NULL;
+        settings.numField = NULL;
+      }
       //Set _FillValue
       if(dataSource->getDataObject(j)->hasNodataValue){
         if(variable->getAttributeNE("_FillValue")==NULL){
@@ -714,7 +778,9 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
     }
   }
   
-  
+  #ifdef CNetCDFDataWriter_DEBUG     
+  CDBDebug("Add data done");
+  #endif  
   
   return 0;
   
@@ -727,6 +793,7 @@ int CNetCDFDataWriter::writeFile(const char *fileName,int level){
   }
   CDFNetCDFWriter *netCDFWriter = new CDFNetCDFWriter(destCDFObject);
   netCDFWriter->setNetCDFMode(4);
+  netCDFWriter->setDeflateShuffle(1,2, 0);
   int  status = netCDFWriter->write(fileName);
   delete netCDFWriter;
   
@@ -740,12 +807,12 @@ int CNetCDFDataWriter::writeFile(const char *fileName,int level){
 int CNetCDFDataWriter::end(){
   
     #ifdef CNetCDFDataWriter_DEBUG
-      CDBDebug("END");
+      CDBDebug("CNetCDFDataWriter::end()");
     #endif
   CDFNetCDFWriter *netCDFWriter = new CDFNetCDFWriter(destCDFObject);
  
   netCDFWriter->setNetCDFMode(4);
- 
+  netCDFWriter->setDeflateShuffle(1,2,0);
   int  status = netCDFWriter->write(tempFileName.c_str());
  
   delete netCDFWriter;
@@ -808,10 +875,15 @@ CNetCDFDataWriter::CNetCDFDataWriter(){
   projectionDimY=NULL;
   projectionVarX=NULL;
   projectionVarY=NULL;
+  drawFunctionMode = CNetCDFDataWriter_NEAREST;
 }
 CNetCDFDataWriter::~CNetCDFDataWriter(){
 #ifdef CNetCDFDataWriter_DEBUG
         CDBDebug("CNetCDFDataWriter::~CNetCDFDataWriter()");
 #endif   
   delete destCDFObject;destCDFObject = NULL;
+}
+
+void CNetCDFDataWriter::setInterpolationMode(int mode){
+  drawFunctionMode = mode;
 }

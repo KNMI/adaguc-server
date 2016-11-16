@@ -669,12 +669,16 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
     int w,h;
     _drawFreeTypeText( x, y,w,h,angle,text,true);
   }
-//TODO alpha is not yet working!
+
+  void CCairoPlotter::writeToPng24Stream(FILE *fp,unsigned char alpha) {
+    writeARGBPng(width,height,ARGBByteBuffer,fp,24);
+  }
+  
   void CCairoPlotter::writeToPng8Stream(FILE *fp,unsigned char alpha) {
 //     bool useCairo = false;
 //     if(!useCairo){
 
-      writeARGBPng(width,height,ARGBByteBuffer,fp,false);
+      writeARGBPng(width,height,ARGBByteBuffer,fp,8);
 //     }else{
 //       if(isAlphaUsed){
 //         CDBDebug("Alpha was used");
@@ -726,15 +730,11 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
     cairo_surface_write_to_png_stream(surface, writerFunc, (void *)fp);
   }
   
-  void CCairoPlotter::setToSurface(cairo_surface_t *png) {
-    cairo_set_source_surface (this->cr, png, 0, 0);
-    cairo_paint(this->cr);
- //   cairo_surface_destroy(surface);
-  }
   
 
-  int CCairoPlotter::writeARGBPng(int width,int height,unsigned char *ARGBByteBuffer,FILE *file,bool trueColor){
-    trueColor=false;
+
+  int CCairoPlotter::writeARGBPng(int width,int height,unsigned char *ARGBByteBuffer,FILE *file,int bitDepth){
+    
     CDBDebug("Using png library directly to write PNG");
     OctreeType * tree = NULL;
     
@@ -774,7 +774,7 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
      *          PNG_COLOR_TYPE_RGB_ALPHA,
      *          PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,
      P NG*_FILTER_TYPE_DEFAULT);*/
-    if(trueColor){
+    if(bitDepth==32){
       /*png_set_IHDR(png_ptr, info_ptr, width, height, 8,
        *          PNG_COLOR_TYPE_RGB_ALPHA,
        *          PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE,
@@ -784,7 +784,25 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
                    PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE,
                    PNG_FILTER_TYPE_BASE);
       
-    }else{
+    }else if(bitDepth==24){
+      /*png_set_IHDR(png_ptr, info_ptr, width, height, 8,
+       *          PNG_COLOR_TYPE_RGB_ALPHA,
+       *          PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE,
+       P *NG_FILTER_TYPE_BASE);*/
+      png_set_IHDR(png_ptr, info_ptr, width, height, 8,
+                   PNG_COLOR_TYPE_RGB,
+                   PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE,
+                   PNG_FILTER_TYPE_BASE);
+      png_byte a[1];
+      png_color_16 trans_values[1];
+      a[0]=0;
+      trans_values[0].index=0;
+      trans_values[0].red=0;
+      trans_values[0].green=0;
+      trans_values[0].blue=0;
+      png_set_tRNS(png_ptr, info_ptr, a, 1, trans_values);
+      
+    }else if(bitDepth==8){
       //CDBDebug("Starting header");
 //       png_set_IHDR(png_ptr, info_ptr, width, height, 8, 
 //                    PNG_COLOR_TYPE_GRAY, PNG_INTERLACE_NONE,
@@ -877,7 +895,7 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
     int i;
     png_bytep row_ptr = 0;
     
-    if(trueColor){
+    if(bitDepth==32){
       
       int s=width*4;
       for (i = 0; i < height; i=i+1){
@@ -896,7 +914,36 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
         row_ptr = RGBARow;
         png_write_rows(png_ptr, &row_ptr, 1);
       }
-    }else{
+    }else if(bitDepth==24){
+      int s=width*4;
+      for (i = 0; i < height; i=i+1){
+        
+        unsigned char RGBRow[s];
+        int p=0;
+        int start=i*s;
+        int stop=start+s;
+        for(int x=start;x<stop;x+=4){
+          if(ARGBByteBuffer[3+x]>127){
+            if(ARGBByteBuffer[2+x]==0&&ARGBByteBuffer[1+x]==0&&ARGBByteBuffer[0+x]==0){
+              RGBRow[p++] = 1;
+              RGBRow[p++] = 0;
+              RGBRow[p++] = 0;
+            }else{
+              RGBRow[p++]=ARGBByteBuffer[2+x];
+              RGBRow[p++]=ARGBByteBuffer[1+x];
+              RGBRow[p++]=ARGBByteBuffer[0+x];
+            }
+          }else{
+            RGBRow[p++] = 0;
+            RGBRow[p++] = 0;
+            RGBRow[p++] = 0;
+          }
+        }
+        
+        row_ptr = RGBRow;
+        png_write_rows(png_ptr, &row_ptr, 1);
+      }
+    }else if(bitDepth==8){
       int s=width*4;
       
         
@@ -949,7 +996,11 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
     return 0;
   }
  
- 
+  void CCairoPlotter::setToSurface(cairo_surface_t *png) {
+    cairo_set_source_surface (this->cr, png, 0, 0);
+    cairo_paint(this->cr);
+ //   cairo_surface_destroy(surface);
+  }
  
  
 #endif

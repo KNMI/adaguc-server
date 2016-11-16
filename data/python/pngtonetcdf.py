@@ -14,12 +14,18 @@ product = "alpha-test"
 outputname = '../datasets/alpha-test.nc'
 
 #inputname = '/nobackup/users/plieger/data/himawari/HIMAWARI_8_AHI_GLOBERGBDUST_201610270700.png'
-inputname = '/nobackup/users/plieger/data/himawari/grid.png'
+inputname = '/data/data/himawaripng/full_disk_ahi_true_color_20161115190000.jpg'
 imgextent = [-5567.2481376,-5567.2481376,5567.2481376,5567.2481376]
+
+isodate="20161115190000"
 #imgproj = "+proj=geos +lon_0=145.000000 +lat_0=0 +h=35807.414063 +a=6378.169 +b=6356.5838"
-imgproj = "+proj=geos +lon_0=145.000000 +lat_0=0 +h=35807.414063 +a=6378.169 +b=6356.5838"
+
+# Himawari 8
+imgextent = [-5500000,-5500000,5500000,5500000]
+imgproj = "+proj=geos +h=35785863 +a=6378137.0 +b=6356752.3 +lon_0=140.7 +no_defs"
+
 product = "test"
-outputname = '/nobackup/users/plieger/data/himawari/test4.nc'
+outputname = '/data/data/himawaripng/full_disk_ahi_true_color_20161115190000.nc'
 
 from PIL import Image
 import numpy as np
@@ -55,7 +61,7 @@ ncfile.Conventions = "CF-1.4";
 
 lat_dim = ncfile.createDimension('y', imgheight)     # latitude axis
 lon_dim = ncfile.createDimension('x', imgwidth)     # longitude axis
-#time_dim=ncfile.createDimension('time', 1)
+
 
 lat = ncfile.createVariable('y', 'd', ('y'))
 lat.units = 'degrees_north'
@@ -65,9 +71,7 @@ lon = ncfile.createVariable('x', 'd', ('x'))
 lon.units = 'degrees_east'
 lon.standard_name = 'longitude'
 
-#timevar =  ncfile.createVariable('time', 'd', ('time'))
-#timevar.units="seconds since 1970-01-01 00:00:00"
-#timevar.standard_name='time'
+
 
 projection = ncfile.createVariable('projection','byte')
 projection.proj4 = imgproj
@@ -78,9 +82,16 @@ print len(list(drange(imgextent[0]+cellsizex/2,imgextent[2],cellsizex)))
 print len(list(drange(imgextent[3]+cellsizey/2,imgextent[1],cellsizey)))
 lon[:] = list(drange(imgextent[0]+cellsizex/2,imgextent[2],cellsizex))
 lat[:] = list(drange(imgextent[3]+cellsizey/2,imgextent[1],cellsizey))
-#timevar[:] = epochtime = int(dateutil.parser.parse("2015-05-10T092812").strftime("%s")) ;
-#rgbdata = ncfile.createVariable(product,'u4',('time','y','x'))
-rgbdata = ncfile.createVariable(product,'u4',('y','x'))
+
+if len(isodate)>0:
+  time_dim=ncfile.createDimension('time', 1)
+  timevar =  ncfile.createVariable('time', 'd', ('time'))
+  timevar.units="seconds since 1970-01-01 00:00:00"
+  timevar.standard_name='time'
+  timevar[:] = epochtime = int(dateutil.parser.parse(isodate).strftime("%s")) ;
+  rgbdata = ncfile.createVariable(product,'u4',('time','y','x'))
+else:
+  rgbdata = ncfile.createVariable(product,'u4',('y','x'))
 rgbdata.units = 'rgba'
 rgbdata.standard_name = 'rgba'
 rgbdata.long_name = product
