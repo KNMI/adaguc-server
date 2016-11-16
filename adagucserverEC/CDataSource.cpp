@@ -258,7 +258,7 @@ CDataSource::CDataSource(){
   
   queryBBOX = false;
   queryLevel = 1;
-  
+  featureSet=NULL;
 }
 
 CDataSource::~CDataSource(){
@@ -280,6 +280,11 @@ CDataSource::~CDataSource(){
   if(_styles != NULL){
     delete _styles;
     _styles = NULL;
+  }
+  
+  if (featureSet.length()!=0) {
+    CConvertGeoJSON::clearFeatureStore(featureSet);
+    featureSet=NULL;
   }
   
   //CDBDebug("D");

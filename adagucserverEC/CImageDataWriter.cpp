@@ -1465,16 +1465,13 @@ if(renderMethod==contour){CDBDebug("contour");}*/
       bool drawBarb=false;
       bool drawShaded=false;
       bool drawGridVectors=false;
-      
+       
       if(renderMethod&RM_BILINEAR)drawMap=true;
       if(renderMethod&RM_CONTOUR)drawContour=true;
       if(renderMethod&RM_VECTOR)drawVector=true;
       if(renderMethod&RM_SHADED)drawShaded=true;
       if(renderMethod&RM_BARB)drawBarb=true;
       if(renderMethod&RM_THIN)drawGridVectors=true;
-      
-      
-      
       
       if(drawMap==true)bilinearSettings.printconcat("drawMap=true;");
       if(drawVector==true)bilinearSettings.printconcat("drawVector=true;");
@@ -1568,6 +1565,20 @@ if(renderMethod==contour){CDBDebug("contour");}*/
     }
   }
   
+  /**
+   * Use polyline renderer
+   */
+  if (renderMethod&RM_POLYLINE) {
+    if (dataSource->featureSet.length()!=0) {
+      imageWarperRenderer = new CImgRenderPolylines();
+      CT::string renderMethodAsString;
+      CStyleConfiguration::getRenderMethodAsString(&renderMethodAsString,renderMethod);
+      imageWarperRenderer->set(renderMethodAsString.c_str());
+      imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
+      delete imageWarperRenderer;
+      
+    }
+  }
 #ifdef MEASURETIME
   StopWatch_Stop("warp finished");
 #endif

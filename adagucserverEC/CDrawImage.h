@@ -207,6 +207,7 @@ public:
     void poly(float x1, float y1, float x2, float y2, float x3, float y3, CColor color, bool fill);
     void poly(float x1, float y1, float x2, float y2, float x3, float y3, float lineWidth, CColor color, bool fill);
     void poly(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, float lineWidth, CColor color, bool fill);
+    void poly(float *x, float*y, int n, float lineWidth, CColor color, bool fill);
     void circle(int x, int y, int r, int color);
     void circle(int x, int y, int r, CColor col);
 
@@ -219,6 +220,9 @@ public:
     void getPixelTrueColor(int x,int y,unsigned char &r,unsigned char &g,unsigned char &b,unsigned char &a);
     void setPixelTrueColorOverWrite(int x,int y,unsigned char r,unsigned char g,unsigned char b,unsigned char a);
     void setPixel(int x,int y,CColor &color);
+    
+    int getWidth();
+    int getHeight();
     
     //int getClosestColorIndex(CColor color);
     void getHexColorForColorIndex(CT::string *hexValue,int colorIndex);
