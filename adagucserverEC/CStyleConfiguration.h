@@ -13,7 +13,8 @@
 #define RM_THIN        128
 #define RM_RGBA        256
 #define RM_STIPPLING   512
-#define RM_POLYLINE   1024
+#define RM_AVG_RGBA    1024
+#define RM_POLYLINE    2048
 
 #include "CServerConfig_CPPXSD.h"
 #include "CXMLParser.h"

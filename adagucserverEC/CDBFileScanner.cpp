@@ -31,7 +31,7 @@
 #include <set>
 const char *CDBFileScanner::className="CDBFileScanner";
 std::vector <CT::string> CDBFileScanner::tableNamesDone;
-//#define CDBFILESCANNER_DEBUG
+// #define CDBFILESCANNER_DEBUG
 #define ISO8601TIME_LEN 32
 
 #define CDBFILESCANNER_TILECREATIONFAILED -100
@@ -61,21 +61,15 @@ void CDBFileScanner::markTableDirty(CT::string *tableName){
  * @return Positive on error, zero on succes, negative on skip.
  */
 int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource,int &removeNonExistingFiles,CDirReader *dirReader){
- ;
+  #ifdef CDBFILESCANNER_DEBUG
+  CDBDebug("createDBUpdateTables");
+  #endif
   int status = 0;
   CT::string query;
   
   
   CDBAdapter * dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
   
-  
-  
-  if(dataSource->cfgLayer->Dimension.size()==0){
-    if(CAutoConfigure::autoConfigureDimensions(dataSource)!=0){
-      CDBError("Unable to configure dimensions automatically");
-      return 1;
-    }
-  }
   
   CDFObject *cdfObject = NULL;
   try{
@@ -84,16 +78,42 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource,int &removeNonE
     CDBError("Unable to get CDFObject for file %s",dirReader->fileList[0]->fullName.c_str());
     return 1;
   }
+  
 
   
+  if(dataSource->cfgLayer->Dimension.size()==0){
+    if(CAutoConfigure::autoConfigureDimensions(dataSource)!=0){
+      CDBError("Unable to configure dimensions automatically");
+      return 1;
+    }
+  }
+#ifdef CDBFILESCANNER_DEBUG  
+  CDBDebug("dirReader->fileList.size() = %d",dirReader->fileList.size());
+#endif
+  
+
+    
+  if(dataSource->cfgLayer->Dimension.size()==0){
+    CDBError("Still No dims");
+    return 1;
+  }
+
+    #ifdef CDBFILESCANNER_DEBUG
+  CDBDebug("dataSource->cfgLayer->Dimension.size() %d",dataSource->cfgLayer->Dimension.size());
+  #endif
   //Check and create all tables...
   for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
   
+    CT::string dimName = "";
+    if(dataSource->cfgLayer->Dimension[d]->attr.name.empty()==false){
+      dimName=dataSource->cfgLayer->Dimension[d]->attr.name.c_str();
+    }
     
+    CDBDebug("Checking dim [%s]",dimName.c_str());
     
-    CDataReader::DimensionType dtype = CDataReader::getDimensionType(cdfObject,dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+    CDataReader::DimensionType dtype = CDataReader::getDimensionType(cdfObject,dimName.c_str());
     if(dtype==CDataReader::dtype_none){
-      CDBWarning("dtype_none for %s",dtype,dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+      CDBWarning("dtype_none %d for  %s",dtype,dimName.c_str());
     }
 
     
@@ -102,7 +122,7 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource,int &removeNonE
       isTimeDim = true;
     }
     
-    CT::string dimName(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+    
 
     
     //Create database tableNames
@@ -114,8 +134,10 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource,int &removeNonE
       return 1;
 
     }
+#ifdef CDBFILESCANNER_DEBUG    
+    CDBDebug("Tablename = %s",tableName.c_str());
+#endif
 
-    
     int TABLETYPE_TIMESTAMP = 1;
     int TABLETYPE_INT       = 2;
     int TABLETYPE_REAL      = 3;
@@ -126,7 +148,9 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource,int &removeNonE
     //Check whether we already did this table in this scan
     bool skip = isTableAlreadyScanned(&tableName);
     if(skip==false){
-      CDBDebug("CreateDBUpdateTables: Updating dimension '%s' with table '%s'",dimName.c_str(),tableName.c_str());
+      #ifdef CDBFILESCANNER_DEBUG
+      CDBDebug("CreateDBUpdateTables: Updating dimension '%s' with table '%s' %d",dimName.c_str(),tableName.c_str(),isTimeDim);
+      #endif
       
       //Create column names
       
@@ -136,33 +160,49 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource,int &removeNonE
         tableType = TABLETYPE_TIMESTAMP;
       }else{
         try{
-        
-          CDF::Variable *dimVar = cdfObject->getVariableNE(dimName.c_str());
-          if(dimVar==NULL){
-            CDBError("Dimension '%s' not found.",dimName.c_str());
-            throw(__LINE__);
+          bool dimensionlessmode = false;
+          
+          if(dimName.equals("none")){
+            #ifdef CDBFILESCANNER_DEBUG
+            CDBDebug("dimensionlessmode");
+            #endif
+            dimensionlessmode=true;
+            status = dbAdapter->createDimTableInt      (dimName.c_str(),tableName.c_str());
+            tableType = TABLETYPE_INT;
+          }
+          
+          
+          CDF::Variable *dimVar = NULL;
+          if(dimensionlessmode == false){
+            dimVar = cdfObject->getVariableNE(dimName.c_str());
+            if(dimVar==NULL){
+              CDBError("Dimension '%s' not found.",dimName.c_str());
+              throw(__LINE__);
+            }
           }
           
           bool hasStatusFlag=false;
-          std::vector<CDataSource::StatusFlag*> statusFlagList;
-          CDataSource::readStatusFlags(dimVar,&statusFlagList);
-          if(statusFlagList.size()>0)hasStatusFlag=true;
-          for(size_t i=0;i<statusFlagList.size();i++)delete statusFlagList[i];
-          statusFlagList.clear();
-          if(hasStatusFlag){
-            tableType = TABLETYPE_STRING;
-            status = dbAdapter->createDimTableString(dimName.c_str(),tableName.c_str());
-          }else{
-            switch(dimVar->getType()){
-              case CDF_FLOAT:
-              case CDF_DOUBLE:
-                tableType = TABLETYPE_REAL;break;
-              case CDF_STRING:
-                tableType = TABLETYPE_STRING;break;
-              default:
-                tableType = TABLETYPE_INT;break;
-              
-            }          
+          if(dimensionlessmode == false){
+            std::vector<CDataSource::StatusFlag*> statusFlagList;
+            CDataSource::readStatusFlags(dimVar,&statusFlagList);
+            if(statusFlagList.size()>0)hasStatusFlag=true;
+            for(size_t i=0;i<statusFlagList.size();i++)delete statusFlagList[i];
+            statusFlagList.clear();
+            if(hasStatusFlag){
+              tableType = TABLETYPE_STRING;
+              status = dbAdapter->createDimTableString(dimName.c_str(),tableName.c_str());
+            }else{
+              switch(dimVar->getType()){
+                case CDF_FLOAT:
+                case CDF_DOUBLE:
+                  tableType = TABLETYPE_REAL;break;
+                case CDF_STRING:
+                  tableType = TABLETYPE_STRING;break;
+                default:
+                  tableType = TABLETYPE_INT;break;
+                
+              }          
+            }
           }
         }catch(int e){
           CDBError("Exception defining table structure at line %d",e);
@@ -174,17 +214,17 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource,int &removeNonE
         CDBError("Unknown tabletype");
         return 1;
       }
-    
+      
+      status = 1;
       if(tableType == TABLETYPE_TIMESTAMP)status = dbAdapter->createDimTableTimeStamp(dimName.c_str(),tableName.c_str());
       if(tableType == TABLETYPE_INT      )status = dbAdapter->createDimTableInt      (dimName.c_str(),tableName.c_str());
       if(tableType == TABLETYPE_REAL     )status = dbAdapter->createDimTableReal     (dimName.c_str(),tableName.c_str());
       if(tableType == TABLETYPE_STRING   )status = dbAdapter->createDimTableString   (dimName.c_str(),tableName.c_str());
       
-      CDBDebug("Checking filetable %s",tableName.c_str());
       
       //if(status == 0){CDBDebug("OK: Table is available");}
       if(status == 1){
-        CDBError("\nFAIL: Table %s could not be created",tableName.c_str()); 
+        CDBError("FAIL: Table %s could not be created",tableName.c_str()); 
         return 1;  }
       if(status == 2){
         removeNonExistingFiles=0;
@@ -312,7 +352,9 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
         CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dimNames[d].c_str());
         return 1;
       }
-      
+      #ifdef CDBFILESCANNER_DEBUG
+      CDBDebug("Found table name %s",tableNames[d].c_str());
+      #endif
 //       //Create temporary tableName
 //       tableNames_temp[d].copy(&(tableNames[d]));
 //       if(removeNonExistingFiles==1){
@@ -324,9 +366,10 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
         CDBDebug("Skipping dimension '%s' with table '%s': already scanned.",dimNames[d].c_str(),tableNames[d].c_str());
       }
     }
-    
+
+
     CDBDebug("Found %d files",dirReader->fileList.size());
-    
+
     for(size_t j=0;j<dirReader->fileList.size();j++){
       //Loop through all configured dimensions.
       #ifdef CDBFILESCANNER_DEBUG
@@ -350,6 +393,62 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
         }
         dimensionTextList.concat(")");
       }
+      
+//       CDBDebug("dataSource->cfgLayer->Dimension = %d",dataSource->cfgLayer->Dimension.size());
+//       if(dataSource->cfgLayer->Dimension.size() == 0){
+//                   CDBAdapter::GeoOptions geoOptions;
+//                   geoOptions.level=-1;
+//                   geoOptions.crs="EPSG:4236";
+//                   geoOptions.bbox[0]=-1000;
+//                   geoOptions.bbox[1]=-1000;
+//                   geoOptions.bbox[2]=1000;
+//                   geoOptions.bbox[3]=1000;
+//                   
+//                   
+//                   
+//                     CDataReader reader;
+//                     dataSource->addStep(dirReader->fileList[j]->fullName.c_str(),NULL);
+//                     reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
+// //                      CDBDebug("---> CRS:  [%s]",dataSource->nativeProj4.c_str());
+// //                      CDBDebug("---> BBOX: [%f %f %f %f]",dataSource->dfBBOX[0],dataSource->dfBBOX[1],dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
+//                    /* crs = dataSource->nativeProj4.c_str();
+//                     minx = dataSource->dfBBOX[0];
+//                     miny = dataSource->dfBBOX[1];
+//                     maxx = dataSource->dfBBOX[2];
+//                     maxy = dataSource->dfBBOX[3];
+//                     level = 1 ; //Highest detail, highest resolution, most files.
+//                    */ 
+//                     geoOptions.level=1;
+//                     geoOptions.crs=dataSource->nativeProj4.c_str();
+//                     geoOptions.bbox[0]=dataSource->dfBBOX[0];
+//                     geoOptions.bbox[1]=dataSource->dfBBOX[1];
+//                     geoOptions.bbox[2]=dataSource->dfBBOX[2];
+//                     geoOptions.bbox[3]=dataSource->dfBBOX[3];
+//                     geoOptions.indices[0]=0;
+//                     geoOptions.indices[1]=1;
+//                     geoOptions.indices[2]=2;
+//                     geoOptions.indices[3]=3;
+//                     
+//                     
+//                     CDF::Attribute *adagucTileLevelAttr=dataSource->getDataObject(0)->cdfObject->getAttributeNE("adaguctilelevel");
+//                     
+//                     if(adagucTileLevelAttr != NULL){
+//                       geoOptions.level = adagucTileLevelAttr->toString().toInt();
+//                       //CDBDebug( "Found adaguctilelevel %d in NetCDF header",geoOptions.level);
+//                     }
+//                     
+//                    CT::string tableName = dbAdapter->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),"",dataSource);
+//                    CDBDebug("Updating table %s",tableName.c_str());
+//                     status = dbAdapter->createDimTableInt      ("time",tableName.c_str());
+//                     status = dbAdapter->checkIfFileIsInTable(tableName.c_str(),dirReader->fileList[j]->fullName.c_str());
+//                     if(status!=0){
+//                       dbAdapter->setFileInt(tableName.c_str(),dirReader->fileList[j]->fullName.c_str(),int(0),int(0),fileDate.c_str(),&geoOptions) ;
+//                     }
+//              
+//       }
+        
+        
+        
       for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
         multiInsertCache = "";
         if(skipDim[d] == false){
@@ -359,9 +458,19 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
 
           
           //Delete files with non-matching creation date 
-          dbAdapter->removeFilesWithChangedCreationDate(tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),fileDateToCompareWith.c_str());
+          #ifdef CDBFILESCANNER_DEBUG
+          CDBDebug("removeFilesWithChangedCreationDate [%s] [%s] [%s]",tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),fileDateToCompareWith.c_str());
+          #endif
+          try{
+            dbAdapter->removeFilesWithChangedCreationDate(tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),fileDateToCompareWith.c_str());
+          }catch(int e){
+            CDBWarning("Unable to removeFilesWithChangedCreationDate");
+          }
           
           //Check if file is already there
+          #ifdef CDBFILESCANNER_DEBUG
+          CDBDebug("checkIfFileIsInTable");
+          #endif
           status = dbAdapter->checkIfFileIsInTable(tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str());
           if(status == 0){
             //The file is there!
@@ -376,6 +485,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
                 CDBDebug("Creating autoConfigureDimensions");
                 status = createDBUpdateTables(dataSource,removeNonExistingFiles,dirReader);
                 if(status > 0 ){
+                  CDBError("Exception at createDBUpdateTables");
                   throw(__LINE__);
                 }
               }
@@ -398,7 +508,12 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
           //The file metadata does not already reside in the db.
           //Therefore we need to read information from it
           if(fileExistsInDB == 0){
+          #ifdef CDBFILESCANNER_DEBUG
+          CDBDebug("fileExistsInDB == 0");
+          #endif
             try{
+              
+        
               if(d==0){
                 CDBDebug("Adding: %d/%d %s\t %s",
                 (int)j,
@@ -410,7 +525,10 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
               CDBDebug("Creating new CDFObject");
               #endif
               cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource,dirReader->fileList[j]->fullName.c_str());
-              if(cdfObject == NULL)throw(__LINE__);
+              if(cdfObject == NULL){
+                CDBError("cdfObject == NULL");
+                throw(__LINE__);
+              }
               
               //Open the file
               #ifdef CDBFILESCANNER_DEBUG
@@ -427,7 +545,20 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
                 CDF::Variable *  dimVar = cdfObject->getVariableNE(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
                 CDF::Dimension * dimDim = cdfObject->getDimensionNE(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
                 
-                
+                if(dataSource->cfgLayer->Dimension[d]->attr.name.equals("none")){
+                  #ifdef CDBFILESCANNER_DEBUG
+                  CDBDebug("Creating dummy dim none");
+                  #endif
+                  dimVar = new CDF::Variable();
+                  dimVar->name="none";
+                  cdfObject->addVariable(dimVar);
+                  dimDim = new CDF::Dimension();
+                  dimDim->name = dimVar->name;
+                  dimDim->setSize(1);
+                  cdfObject->addDimension(dimDim);
+                  dimVar->dimensionlinks.push_back(dimDim);
+                }
+              
                 if(dimVar!=NULL&&dimDim==NULL){
                   //Check for scalar variable
                   if(dimVar->dimensionlinks.size() == 0){
@@ -448,7 +579,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
                 
                 
                 
-                if(dimDim==NULL||dimVar==NULL){
+                if((dimDim==NULL||dimVar==NULL)){
                   CDBError("In file %s",dirReader->fileList[j]->fullName.c_str());
                   if(dimVar == NULL){
                     CDBError("Variable '%s' for dimension '%s' not found",dataSource->cfgLayer->Variable[0]->value.c_str(),dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
@@ -459,57 +590,63 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
                   
                   throw(__LINE__);
                 }else{
-                  CDF::Attribute *dimUnits = dimVar->getAttributeNE("units");
-                  if(dimUnits==NULL){
-                    if(isTimeDim[d]){
-                      CDBError("No time units found for variable %s",dimVar->name.c_str());
-                      throw(__LINE__);
-                    }
-                    dimVar->setAttributeText("units","1");
-                    dimUnits = dimVar->getAttributeNE("units");
-                  }
-                  
-                
-                  //Create adaguctime structure, when this is a time dimension.
-                  if(isTimeDim[d]){
-                    try{
-                      adagucTime.reset();
-                      adagucTime.init(dimVar);
-                    }catch(int e){
-                      CDBDebug("Exception occurred during time initialization: %d",e);
-                      throw(__LINE__);
-                    }
-                  }
-                  
-                  #ifdef CDBFILESCANNER_DEBUG
-                  CDBDebug("Dimension type = %s",CDF::getCDFDataTypeName(dimVar->getType()).c_str());
-                  #endif
-                  
-                  #ifdef CDBFILESCANNER_DEBUG
-                  CDBDebug("Reading dimension %s of length %d",dimVar->name.c_str(),dimDim->getSize());
-                  #endif
-                  
-                  //Strings do never fit in a double.
-                  if(dimVar->getType()!=CDF_STRING){
-                    //Read the dimension data
-                    status = dimVar->readData(CDF_DOUBLE);
-                  }else{
-                    //Read the dimension data
-                    status = dimVar->readData(CDF_STRING);
-                  }
-                  //#ifdef CDBFILESCANNER_DEBUG
-//                   CDBDebug("Reading dimension %s of length %d",dimVar->name.c_str(),dimDim->getSize());
-                  //#endif
-                  if(status!=0){
-                    CDBError("Unable to read variable data for %s",dimVar->name.c_str());
-                    throw(__LINE__);
-                  }
-                  
-                  //Check for status flag dimensions
                   bool hasStatusFlag = false;
                   std::vector<CDataSource::StatusFlag*> statusFlagList;
-                  CDataSource::readStatusFlags(dimVar,&statusFlagList);
-                  if(statusFlagList.size()>0)hasStatusFlag=true;
+                  if(dimVar!=NULL){
+                    CDF::Attribute *dimUnits = dimVar->getAttributeNE("units");
+                    if(dimUnits==NULL){
+                      if(isTimeDim[d]){
+                        CDBError("No time units found for variable %s",dimVar->name.c_str());
+                        throw(__LINE__);
+                      }
+                      dimVar->setAttributeText("units","1");
+                      dimUnits = dimVar->getAttributeNE("units");
+                    }
+                    
+                  
+                    //Create adaguctime structure, when this is a time dimension.
+                    if(isTimeDim[d]){
+                      try{
+                        adagucTime.reset();
+                        adagucTime.init(dimVar);
+                      }catch(int e){
+                        CDBDebug("Exception occurred during time initialization: %d",e);
+                        throw(__LINE__);
+                      }
+                    }
+                    
+                    #ifdef CDBFILESCANNER_DEBUG
+                    CDBDebug("Dimension type = %s",CDF::getCDFDataTypeName(dimVar->getType()).c_str());
+                    #endif
+                    
+                    #ifdef CDBFILESCANNER_DEBUG
+                    CDBDebug("Reading dimension %s of length %d",dimVar->name.c_str(),dimDim->getSize());
+                    #endif
+                    status = 0;
+                    if(dimVar->name.equals("none")==false){
+                      //Strings do never fit in a double.
+                      if(dimVar->getType()!=CDF_STRING){
+                        //Read the dimension data
+                        status = dimVar->readData(CDF_DOUBLE);
+                      }else{
+                        //Read the dimension data
+                        status = dimVar->readData(CDF_STRING);
+                      }
+                    }
+                    //#ifdef CDBFILESCANNER_DEBUG
+  //                   CDBDebug("Reading dimension %s of length %d",dimVar->name.c_str(),dimDim->getSize());
+                    //#endif
+                    if(status!=0){
+                      CDBError("Unable to read variable data for %s",dimVar->name.c_str());
+                      throw(__LINE__);
+                    }
+                    
+                    //Check for status flag dimensions
+                    
+        
+                    CDataSource::readStatusFlags(dimVar,&statusFlagList);
+                    if(statusFlagList.size()>0)hasStatusFlag=true;
+                  }
                   
                   int exceptionAtLineNr=0;
                   
@@ -537,7 +674,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
                     maxy = dataSource->dfBBOX[3];
                     level = 1 ; //Highest detail, highest resolution, most files.
                    */ 
-                    geoOptions.level=1;
+                    geoOptions.level=0;
                     geoOptions.crs=dataSource->nativeProj4.c_str();
                     geoOptions.bbox[0]=dataSource->dfBBOX[0];
                     geoOptions.bbox[1]=dataSource->dfBBOX[1];
@@ -556,99 +693,102 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
                       //CDBDebug( "Found adaguctilelevel %d in NetCDF header",geoOptions.level);
                     }
                   }
-                  
-                  
-                  try{
-                    const double *dimValues=(double*)dimVar->data;
-                    
-                    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                    //Start looping over every netcdf dimension element
-                    std::set<std::string> uniqueDimensionValueSet;
-                    std::pair<std::set<std::string>::iterator,bool> uniqueDimensionValueRet;
-                    
-                    bool dimIsUnique = true;
-                    
-                    CT::string uniqueKey;
-                    for(size_t i=0;i<dimDim->length;i++){
+                  if(dimVar->name.equals("none")){
+                    dbAdapter->setFileInt(tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),int(0),int(0),fileDate.c_str(),&geoOptions) ;
+                  }
+                  if(dimVar->name.equals("none")==false){
+                    try{
+                      const double *dimValues=(double*)dimVar->data;
                       
+                      //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                      //Start looping over every netcdf dimension element
+                      std::set<std::string> uniqueDimensionValueSet;
+                      std::pair<std::set<std::string>::iterator,bool> uniqueDimensionValueRet;
                       
-                      CT::string uniqueKey = "";
-                      //Insert individual values of type char, short, int, float, double
-                      if(dimVar->getType()!=CDF_STRING){
-                        if(dimValues[i]!=NC_FILL_DOUBLE){
-                          if(isTimeDim[d]==false){
-                            if(hasStatusFlag==true){
-                              uniqueKey.print("%s",CDataSource::getFlagMeaning( &statusFlagList,double(dimValues[i])));
-                              uniqueDimensionValueRet = uniqueDimensionValueSet.insert(uniqueKey.c_str());
-                              if(uniqueDimensionValueRet.second == true){
-                                dbAdapter->setFileString(tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),uniqueKey.c_str(),int(i),fileDate.c_str(),&geoOptions) ;
-                              }else{
-                                dimIsUnique = false;
+                      bool dimIsUnique = true;
+                      
+                      CT::string uniqueKey;
+                      for(size_t i=0;i<dimDim->length;i++){
+                        
+                        
+                        CT::string uniqueKey = "";
+                        //Insert individual values of type char, short, int, float, double
+                        if(dimVar->getType()!=CDF_STRING){
+                          if(dimValues[i]!=NC_FILL_DOUBLE){
+                            if(isTimeDim[d]==false){
+                              if(hasStatusFlag==true){
+                                uniqueKey.print("%s",CDataSource::getFlagMeaning( &statusFlagList,double(dimValues[i])));
+                                uniqueDimensionValueRet = uniqueDimensionValueSet.insert(uniqueKey.c_str());
+                                if(uniqueDimensionValueRet.second == true){
+                                  dbAdapter->setFileString(tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),uniqueKey.c_str(),int(i),fileDate.c_str(),&geoOptions) ;
+                                }else{
+                                  dimIsUnique = false;
+                                }
                               }
-                            }
-                            if(hasStatusFlag==false){
-                              switch(dimVar->getType()){
-                                case CDF_FLOAT:
-                                case CDF_DOUBLE:
-                                  uniqueKey.print("%f",double(dimValues[i]));
-                                  uniqueDimensionValueRet = uniqueDimensionValueSet.insert(uniqueKey.c_str());
-                                  if(uniqueDimensionValueRet.second == true){
-                                    dbAdapter->setFileReal(tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),double(dimValues[i]),int(i),fileDate.c_str(),&geoOptions);
-                                  }else{
-                                    dimIsUnique = false;
-                                  }
-                                  break;
-                                default:
-                                  uniqueKey.print("%d",int(dimValues[i]));
-                                  uniqueDimensionValueRet = uniqueDimensionValueSet.insert(uniqueKey.c_str());
-                                  if(uniqueDimensionValueRet.second == true){
-                                    dbAdapter->setFileInt(tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),int(dimValues[i]),int(i),fileDate.c_str(),&geoOptions) ;
-                                  }else{
-                                    dimIsUnique = false;
-                                  }
-                                  break;
+                              if(hasStatusFlag==false){
+                                switch(dimVar->getType()){
+                                  case CDF_FLOAT:
+                                  case CDF_DOUBLE:
+                                    uniqueKey.print("%f",double(dimValues[i]));
+                                    uniqueDimensionValueRet = uniqueDimensionValueSet.insert(uniqueKey.c_str());
+                                    if(uniqueDimensionValueRet.second == true){
+                                      dbAdapter->setFileReal(tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),double(dimValues[i]),int(i),fileDate.c_str(),&geoOptions);
+                                    }else{
+                                      dimIsUnique = false;
+                                    }
+                                    break;
+                                  default:
+                                    uniqueKey.print("%d",int(dimValues[i]));
+                                    uniqueDimensionValueRet = uniqueDimensionValueSet.insert(uniqueKey.c_str());
+                                    if(uniqueDimensionValueRet.second == true){
+                                      dbAdapter->setFileInt(tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),int(dimValues[i]),int(i),fileDate.c_str(),&geoOptions) ;
+                                    }else{
+                                      dimIsUnique = false;
+                                    }
+                                    break;
+                                }
                               }
-                            }
-                          }else{
-                            
-                            //ADTime->PrintISOTime(ISOTime,ISO8601TIME_LEN,dimValues[i]);status = 0;//TODO make PrintISOTime return a 0 if succeeded
-                            
-                            try{
-                              uniqueKey = adagucTime.dateToISOString(adagucTime.getDate(dimValues[i]));
-                              uniqueKey.setSize(19);
-                              uniqueKey.concat("Z");
-                              dbAdapter->setFileTimeStamp(tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),uniqueKey.c_str(),int(i),fileDate.c_str(),&geoOptions) ;
+                            }else{
                               
-                         
-                            }catch(int e){
-                              CDBDebug("Exception occurred during time conversion: %d",e);
+                              //ADTime->PrintISOTime(ISOTime,ISO8601TIME_LEN,dimValues[i]);status = 0;//TODO make PrintISOTime return a 0 if succeeded
+                              
+                              try{
+                                uniqueKey = adagucTime.dateToISOString(adagucTime.getDate(dimValues[i]));
+                                uniqueKey.setSize(19);
+                                uniqueKey.concat("Z");
+                                dbAdapter->setFileTimeStamp(tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),uniqueKey.c_str(),int(i),fileDate.c_str(),&geoOptions) ;
+                                
+                          
+                              }catch(int e){
+                                CDBDebug("Exception occurred during time conversion: %d",e);
+                              }
+                              
                             }
-                            
                           }
                         }
-                      }
-                      
-                      if(dimVar->getType()==CDF_STRING){
-                        const char *str=((char**)dimVar->data)[i];
-                        uniqueKey.print("%s",str);
-                        uniqueDimensionValueRet = uniqueDimensionValueSet.insert(uniqueKey.c_str());
-                        if(uniqueDimensionValueRet.second == true){
-                          dbAdapter->setFileString(tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),uniqueKey.c_str(),int(i),fileDate.c_str(),&geoOptions) ;
-                        }else{
-                          dimIsUnique = false;
+                        
+                        if(dimVar->getType()==CDF_STRING){
+                          const char *str=((char**)dimVar->data)[i];
+                          uniqueKey.print("%s",str);
+                          uniqueDimensionValueRet = uniqueDimensionValueSet.insert(uniqueKey.c_str());
+                          if(uniqueDimensionValueRet.second == true){
+                            dbAdapter->setFileString(tableNames[d].c_str(),dirReader->fileList[j]->fullName.c_str(),uniqueKey.c_str(),int(i),fileDate.c_str(),&geoOptions) ;
+                          }else{
+                            dimIsUnique = false;
+                          }
+                        }
+                        
+                        
+                        
+                        //Check if this insert is unique
+                        if(dimIsUnique == false){
+                          CDBError("In file %s dimension value [%s] not unique in dimension [%s]",dirReader->fileList[j]->fullName.c_str(),uniqueKey.c_str(),dimVar->name.c_str());
                         }
                       }
-                      
-                      
-                      
-                      //Check if this insert is unique
-                      if(dimIsUnique == false){
-                        CDBError("In file %s dimension value [%s] not unique in dimension [%s]",dirReader->fileList[j]->fullName.c_str(),uniqueKey.c_str(),dimVar->name.c_str());
-                      }
+                    }catch(int linenr){
+                      CDBError("Exception at linenr %d",linenr);
+                      exceptionAtLineNr=linenr;
                     }
-                  }catch(int linenr){
-                    CDBError("Exception at linenr %d",linenr);
-                    exceptionAtLineNr=linenr;
                   }
                   //Cleanup statusflags
                   for(size_t i=0;i<statusFlagList.size();i++)delete statusFlagList[i];
@@ -657,7 +797,10 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
                   //Cleanup adaguctime structure
                   
                   
-                  if(exceptionAtLineNr!=0)throw(exceptionAtLineNr);
+                  if(exceptionAtLineNr!=0){
+                    CDBError("Exception occured at line %d",exceptionAtLineNr);
+                    throw(exceptionAtLineNr);
+                  }
                 }
               
               //delete cdfObject;cdfObject=NULL;
@@ -685,7 +828,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
     }
     
     //End of dimloop, start inserting our collected records in one statement
-    //CDBDebug("Adding files to database");
+    CDBDebug("Adding files to database");
     dbAdapter->addFilesToDataBase();
     
     if(removeNonExistingFiles == 1){
@@ -812,7 +955,7 @@ int CDBFileScanner::updatedb( CDataSource *dataSource,CT::string *_tailPath,CT::
       if(searchFileNames(&dirReader,dataSource->cfgLayer->TileSettings[0]->attr.tilepath.c_str(),"^.*\\.nc$",tailPath.c_str())!=0)return 0;
     }
   }
-  
+
 
   
   if(dirReader.fileList.size()==0){
@@ -860,6 +1003,9 @@ int CDBFileScanner::updatedb( CDataSource *dataSource,CT::string *_tailPath,CT::
 
 //TODO READ FILE FROM DB!
 int CDBFileScanner::searchFileNames(CDirReader *dirReader,const char * path,CT::string expr,const char *tailPath){
+  #ifdef CDBFILESCANNER_DEBUG
+  CDBDebug("searchFileNames");
+#endif
   if(path==NULL){
     CDBError("No path defined");
     return 1;
@@ -897,6 +1043,7 @@ int CDBFileScanner::searchFileNames(CDirReader *dirReader,const char * path,CT::
         fileFilterExpr.copy(&expr);
       }
       //CDBDebug("Reading directory %s with filter %s",filePath.c_str(),fileFilterExpr.c_str()); 
+      
       dirReader->listDirRecursive(filePath.c_str(),fileFilterExpr.c_str());
       
       //Delete all files that start with a "." from the filelist.
@@ -924,9 +1071,9 @@ int CDBFileScanner::searchFileNames(CDirReader *dirReader,const char * path,CT::
 int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
   CDBDebug("createTiles");
               
-  if(dataSource->cfgLayer->TileSettings.size() == 0){
-    CDBError("TileSettings is not set");
-    return 1;
+  if(dataSource->cfgLayer->TileSettings.size() != 1){
+    CDBDebug("TileSettings is not set for this layer");
+    return 0;
   }
   CDBAdapter * dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
   if(dataSource->cfgLayer->Dimension.size()==0){
@@ -953,199 +1100,411 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
   CDBDebug("CRS:  [%s]",dataSource->nativeProj4.c_str());
   CDBDebug("BBOX: [%f %f %f %f]",dataSource->dfBBOX[0],dataSource->dfBBOX[1],dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
   //const char *crs = dataSource->nativeProj4.c_str();
-  double minx = dataSource->dfBBOX[0];
-  double miny = dataSource->dfBBOX[1];
-  double maxx = dataSource->dfBBOX[2];
-  double maxy = dataSource->dfBBOX[3];    
+//   double minx = dataSource->dfBBOX[0];
+//   double miny = dataSource->dfBBOX[1];
+//   double maxx = dataSource->dfBBOX[2];
+//   double maxy = dataSource->dfBBOX[3];    
+//   
   
-  double tileBBOXWidth = fabs(maxx-minx);
-  double tileBBOXHeight = fabs(maxy-miny);
+  CServerConfig::XMLE_TileSettings *ts=dataSource->cfgLayer->TileSettings[0];
+  int configErrors = 0;
+  if(ts->attr.tilewidthpx.empty()){CDBError("tilewidthpx not defined");configErrors++;}
+  if(ts->attr.tileheightpx.empty()){CDBError("tileheightpx not defined");configErrors++;}
+  if(ts->attr.tilecellsizex.empty()){CDBError("tilecellsizex not defined");configErrors++;}
+  if(ts->attr.tilecellsizey.empty()){CDBError("tilecellsizey not defined");configErrors++;}
+  if(ts->attr.left.empty()){CDBError("left not defined");configErrors++;}
+  if(ts->attr.bottom.empty()){CDBError("bottom not defined");configErrors++;}
+  if(ts->attr.right.empty()){CDBError("right not defined");configErrors++;}
+  if(ts->attr.top.empty()){CDBError("top not defined");configErrors++;}
+  
+  if(configErrors!=0){return 1;}
+  
+  CT::string tilemode      = ts->attr.tilemode;
+  
+  int tilewidthpx         = ts->attr.tilewidthpx.toInt();
+  int tileheightpx        = ts->attr.tileheightpx.toInt();
+  
+  double tilecellsizex  = ts->attr.tilecellsizex.toDouble();
+  double tilecellsizey  = ts->attr.tilecellsizey.toDouble();
+  
+  double tilesetstartx  = ts->attr.left.toDouble();
+  double tilesetstarty  = ts->attr.bottom.toDouble();
+  double tilesetstopx   = ts->attr.right.toDouble();
+  double tilesetstopy   = ts->attr.top.toDouble();
+  
+  double tileBBOXWidth  = fabs(tilecellsizex*double(tilewidthpx));
+  double tileBBOXHeight = fabs(tilecellsizey*double(tileheightpx));
+
+
+  CDBDebug("tilecellsizexy     : [%f,%f]",tilecellsizex,tilecellsizey);
+  CDBDebug("tileBBOXWH         : [%f,%f]",tileBBOXWidth,tileBBOXHeight);
+  CDBDebug("tileWH             : [%d,%d]",tilewidthpx,tileheightpx);
+  
+  
+  CT::string tileprojection = dataSource->nativeProj4;
+  
+   if(ts->attr.tileprojection.empty()==false){
+     tileprojection = ts->attr.tileprojection;
+   }
+  
+//   double tileBBOXWidth = fabs(dataSource->dfCellSizeX*double(tilewidth));
+//   double tileBBOXHeight =  fabs(dataSource->dfCellSizeY*double(tileheight));
+//   if(ts->attr.tilebboxwidth.empty()==false){
+//     tileBBOXWidth = ts->attr.tilebboxwidth.toDouble();
+//   }
+//   if(ts->attr.tilebboxwidth.empty()==false){
+//     tileBBOXHeight = ts->attr.tilebboxheight.toDouble();
+//   }
+//   
+
+  
       
   CT::string tableName ;
-  for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
-    try{
-
-      
-      tableName = dbAdapter->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),dataSource->cfgLayer->Dimension[d]->attr.name.c_str(),dataSource);
-      CDBDebug("Create tiles  [%s]",tableName.c_str());
-      
-      double globalBBOX[4];
-      
-      CDBStore::Store *store;
-      store = dbAdapter->getMin("minx",tableName.c_str());globalBBOX[0] = store->getRecord(0)->get(0)->toDouble();delete store;
-      store = dbAdapter->getMin("miny",tableName.c_str());globalBBOX[1] = store->getRecord(0)->get(0)->toDouble();delete store;
-      store = dbAdapter->getMax("maxx",tableName.c_str());globalBBOX[2] = store->getRecord(0)->get(0)->toDouble();delete store;
-      store = dbAdapter->getMax("maxy",tableName.c_str());globalBBOX[3] = store->getRecord(0)->get(0)->toDouble();delete store;
-      
-      CDBDebug("globalBBOX: [%f,%f,%f,%f]",globalBBOX[0],globalBBOX[1],globalBBOX[2],globalBBOX[3]);
-      CDBDebug("cellSizeX,cellSizeY: [%f,%f]",dataSource->dfCellSizeX,dataSource->dfCellSizeY);
-      
-      double tilesetWidth = globalBBOX[2] - globalBBOX[0];
-      double tilesetHeight = globalBBOX[3] - globalBBOX[1];
-      
-      CDBDebug("tilesetWidth,tilesetHeight: [%f,%f]",tilesetWidth,tilesetHeight);
-      double nrTilesX = tilesetWidth/tileBBOXWidth, nrTilesY = tilesetHeight/tileBBOXHeight;
-      CDBDebug("nrTilesX,nrTilesY: [%f,%f]",nrTilesX,nrTilesY);
-      int maxlevel            = dataSource->cfgLayer->TileSettings[0]->attr.maxlevel.toInt();
-      for(int level = 2;level<maxlevel+1;level++){
-        int numFound = 0;
-        int numCreated=0;
-        CDBDebug("Tiling level %d",level);
-        int levelInc = pow(2,level-1);
-        CDBDebug("Tiling levelInc %d",levelInc);
-        for(int y=0;y<nrTilesY;y=y+levelInc){
-          
-          for(int x=0;x<nrTilesX;x=x+levelInc){
-            CDBDebug("**** Scanning tile: Level %d, Percentage done for this level: %.2f ***",level,(float(y)/float(nrTilesY))*100);          
-            CDataSource ds;
-            CServerParams newSrvParams;
-            newSrvParams.cfg=dataSource->srvParams->cfg;
-            ds.srvParams=&newSrvParams;
-            ds.cfgLayer=dataSource->cfgLayer;
-            ds.cfg=dataSource->srvParams->cfg;
-            double dfMinX = globalBBOX[0]+tileBBOXWidth*x-tileBBOXWidth/2;
-            double dfMinY = globalBBOX[1]+tileBBOXHeight*y-tileBBOXHeight/2;
-            double dfMaxX = globalBBOX[0]+tileBBOXWidth*(x+levelInc)+tileBBOXWidth/2;
-            double dfMaxY = globalBBOX[1]+tileBBOXHeight*(y+levelInc)+tileBBOXHeight/2;
-            CT::string fileNameToWrite = dataSource->cfgLayer->TileSettings[0]->attr.tilepath.c_str(); 
-            fileNameToWrite.printconcat("/l%dleft%ftop%f.nc",level,dfMinX,dfMinY);
-            CDirReader::makeCleanPath(&fileNameToWrite);
-            int status = dbAdapter->checkIfFileIsInTable(tableName.c_str(),fileNameToWrite.c_str());
-            if(status == 0){
-              CDBDebug("File %s already in table %s",fileNameToWrite.c_str(),tableName.c_str());
-            }
-            if(status != 0){
-              CDBDebug("File %s not in table %s",fileNameToWrite.c_str(),tableName.c_str());
-              ds.srvParams->Geo->CRS=dataSource->nativeProj4;
-   
-              ds.srvParams->Geo->dfBBOX[0]=dfMinX;
-              ds.srvParams->Geo->dfBBOX[1]=dfMinY;
-              ds.srvParams->Geo->dfBBOX[2]=dfMaxX;
-              ds.srvParams->Geo->dfBBOX[3]=dfMaxY;
-              
-                         
-
-              ds.nativeViewPortBBOX[0]=dfMinX;
-              ds.nativeViewPortBBOX[1]=dfMinY;
-              ds.nativeViewPortBBOX[2]=dfMaxX;
-              ds.nativeViewPortBBOX[3]=dfMaxY;
-              
-             
-              try{
-                try{
-                  CRequest::fillDimValuesForDataSource(&ds,dataSource->srvParams);
-                }catch(ServiceExceptionCode e){
-                  CDBError("Exception in setDimValuesForDataSource");
-                }
-                ds.queryLevel=level-1;
-                ds.queryBBOX=1;
-                store = dbAdapter->getFilesAndIndicesForDimensions(&ds,3000);
-                if(store!=NULL){
-                  CDBDebug("*** Found %d %d:%d = (%f %f %f %f) - (%f,%f)",store->getSize(),x,y,dfMinX,dfMinY,dfMaxX,dfMaxY,dfMaxX-dfMinX,dfMaxY-dfMinY);
-                  if(store->getSize()>0&&1==1){
-                    for(size_t k=0;k<store->getSize();k++){
-                      CDBStore::Record *record = store->getRecord(k);
-                      CDBDebug("Adding %s",record->get(0)->c_str());
-                      ds.addStep(record->get(0)->c_str(),NULL);
-                      for(size_t i=0;i<ds.requiredDims.size();i++){
-                        CT::string value = record->get(1+i*2)->c_str();
-                        ds.getCDFDims()->addDimension(ds.requiredDims[i]->netCDFDimName.c_str(),value.c_str(),atoi(record->get(2+i*2)->c_str()));
-                        ds.requiredDims[i]->addValue(value.c_str());
-                      }
-                    }
-                    int status =0;
-                    
-                    CNetCDFDataWriter *wcsWriter = new CNetCDFDataWriter();
-                    try{
-                      newSrvParams.Geo->dWidth=dataSource->dWidth;
-                      newSrvParams.Geo->dHeight=dataSource->dHeight;
-                      dfMinX = globalBBOX[0]+tileBBOXWidth*x;
-                      dfMinY = globalBBOX[1]+tileBBOXHeight*y;
-                      dfMaxX = globalBBOX[0]+tileBBOXWidth*(x+levelInc);
-                      dfMaxY = globalBBOX[1]+tileBBOXHeight*(y+levelInc);
+    
+  if(CAutoConfigure::autoConfigureDimensions(dataSource)!=0){
+    CDBError("Unable to configure dimensions automatically");
+    return 1;
+  }
+  
+  
                       
-                      newSrvParams.Geo->dfBBOX[0]=dfMinX;
-                      newSrvParams.Geo->dfBBOX[1]=dfMinY;
-                      newSrvParams.Geo->dfBBOX[2]=dfMaxX;
-                      newSrvParams.Geo->dfBBOX[3]=dfMaxY;
-                      newSrvParams.Format="adagucnetcdf";
-                      newSrvParams.WCS_GoNative=0;
-                      newSrvParams.Geo->CRS.copy(&dataSource->nativeProj4);
-                      int ErrorAtLine =0;
-                      try{
-                        int layerNo = dataSource->datasourceIndex;
-                        if(ds.setCFGLayer(dataSource->srvParams,dataSource->srvParams->configObj->Configuration[0],dataSource->srvParams->cfg->Layer[layerNo],NULL,layerNo)!=0){
-                          return 1;
-                        }
-                        //CDBDebug("wcswriter init");
+  try{
+    CRequest::fillDimValuesForDataSource(dataSource,dataSource->srvParams);
+  }catch(ServiceExceptionCode e){
+    CDBError("Exception in setDimValuesForDataSource");
+  }
+  
+  dataSource->queryLevel=0;
+  dataSource->queryBBOX=1;
 
-                        status = wcsWriter->init(&newSrvParams,&ds,ds.getNumTimeSteps());if(status!=0){throw(__LINE__);};
-                        //CDBDebug("wcswriter init done");
-                        std::vector <CDataSource*> dataSources;
-                        dataSources.push_back(&ds);
-                        for(size_t k=0;k<(size_t)dataSources[0]->getNumTimeSteps();k++){
-                          for(size_t d=0;d<dataSources.size();d++){
-                            dataSources[d]->setTimeStep(k);
-                          }
-                          status = wcsWriter->addData(dataSources);if(status!=0){throw(__LINE__);};
 
-                        }
-                        status = wcsWriter->writeFile(fileNameToWrite.c_str(),level);if(status!=0){throw(__LINE__);};
-                        updatedb(dataSources[0],&fileNameToWrite,NULL,CDBFILESCANNER_DONTREMOVEDATAFROMDB|CDBFILESCANNER_UPDATEDB);
-                 
-                        
-                        for(size_t d=0;d<dataSources.size();d++){
-                          for(size_t k=0;k<(size_t)dataSources[d]->getNumTimeSteps();k++){
-                            dataSources[d]->setTimeStep(k);
-                            CDFObjectStore::getCDFObjectStore()->deleteCDFObject(dataSources[d]->getFileName());
-                          }
-                        }
-                        CDFObjectStore::getCDFObjectStore()->deleteCDFObject(fileNameToWrite.c_str());
-                        
-                        CDBDebug("DONE: Open CDFObjects: [%d]",CDFObjectStore::getCDFObjectStore()->getNumberOfOpenObjects());
-                      }catch(int e){
-                        ErrorAtLine=e;
-                      }
-                      newSrvParams.cfg = NULL;
+  dataSource->nativeViewPortBBOX[0]=-1000000000;
+  dataSource->nativeViewPortBBOX[1]=-1000000000;
+  dataSource->nativeViewPortBBOX[2]=1000000000;;
+  dataSource->nativeViewPortBBOX[3]=1000000000;;
+
+  if(dataSource->requiredDims[0]->name.equals("time")){
+    dataSource->requiredDims[0]->value="*";
+    CDBStore::Store *store = dbAdapter->getFilesAndIndicesForDimensions(dataSource,3000);
+    if(store == NULL){
+      CDBError("Unable to get results");
+      return 1;
+    }
+    for(size_t k=0;k<store->getSize();k++){
+      CDBStore::Record *record = store->getRecord(k);
+      dataSource->addStep(record->get(0)->c_str(),NULL);
+      for(size_t i=0;i<dataSource->requiredDims.size();i++){
+          CT::string value = record->get(1+i*2)->c_str();
+          dataSource->getCDFDims()->addDimension(dataSource->requiredDims[i]->netCDFDimName.c_str(),value.c_str(),atoi(record->get(2+i*2)->c_str()));
+          dataSource->requiredDims[i]->addValue(value.c_str());//,atoi(record->get(2+i*2)->c_str()));
+      }
+    }
+    delete store;store=NULL;
+  }else{
+    int status = CRequest::queryDimValuesForDataSource(dataSource,dataSource->srvParams);if(status != 0)return status;
+  }
+
+  
+
+  
+  CDBDebug("dataSource->getNumTimeSteps %d",dataSource->getNumTimeSteps());
+  CDBDebug(" dataSource->requiredDims %d",dataSource->requiredDims.size());
+  
+  CDBDebug(" ddataSource->requiredDims[0]->uniqueValues.size()= %d",dataSource->requiredDims[0]->uniqueValues.size());
+  
+  for(size_t j=0;j<dataSource->requiredDims[0]->uniqueValues.size();j++){
+    CDBDebug("Found %s",dataSource->requiredDims[0]->uniqueValues[j].c_str());
+  }
+
+  
+  
+  for(size_t dd=0;dd<dataSource->requiredDims.size();dd++){
+    for(size_t ddd=0;ddd<dataSource->requiredDims[dd]->uniqueValues.size();ddd++){
+      //dataSource->requiredDims[dd]->currentValue = dataSource->requiredDims[dd]->uniqueValues[ddd].c_str();
+      dataSource->requiredDims[dd]->value = dataSource->requiredDims[dd]->uniqueValues[ddd].c_str();
+      //dataSource->requiredDims[dd]->currentIndex = dataSource->requiredDims[dd]->uniqueIndexes[ddd];
+      try{
+
+        CT::string dimName = dataSource->cfgLayer->Dimension[dd]->attr.name.c_str();
+        tableName = dbAdapter->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),dimName.c_str(),dataSource);
+        CDBDebug("Create tiles  [%s]",tableName.c_str());
+        
+        double globalBBOX[4];
+        
+        CDBStore::Store *store = NULL;
+  //       store = dbAdapter->getMin("minx",tableName.c_str());globalBBOX[0] = store->getRecord(0)->get(0)->toDouble();delete store;
+  //       store = dbAdapter->getMin("miny",tableName.c_str());globalBBOX[1] = store->getRecord(0)->get(0)->toDouble();delete store;
+  //       store = dbAdapter->getMax("maxx",tableName.c_str());globalBBOX[2] = store->getRecord(0)->get(0)->toDouble();delete store;
+  //       store = dbAdapter->getMax("maxy",tableName.c_str());globalBBOX[3] = store->getRecord(0)->get(0)->toDouble();delete store;
+    /*    
+        globalBBOX[0]=-2099.359;
+        globalBBOX[2]=91.10042;
+        globalBBOX[1]=-2000.16;
+        globalBBOX[3]=2002.185;*/
+        
+        globalBBOX[0]=tilesetstartx;
+        globalBBOX[2]=tilesetstopx;
+        globalBBOX[1]=tilesetstarty;
+        globalBBOX[3]=tilesetstopy;
+    
+        double tilesetWidth = globalBBOX[2] - globalBBOX[0];
+        double tilesetHeight = globalBBOX[3] - globalBBOX[1];
+        int nrTilesX = floor(tilesetWidth/tileBBOXWidth+0.5);
+        int nrTilesY = floor(tilesetHeight/tileBBOXHeight+0.5);
+        
+        //´CDBDebug("globalBBOX         : [%f,%f,%f,%f]",globalBBOX[0],globalBBOX[1],globalBBOX[2],globalBBOX[3]);
+        //CDBDebug("nrTilesX,nrTilesY  : [%d,%d]",nrTilesX,nrTilesY);
+        
+        int maxlevel            = ts->attr.maxlevel.toInt();
+        for(int level = 1;level<maxlevel+1;level++){
+          int numFound = 0;
+          int numCreated=0;
+          //CDBDebug("Tiling level %d",level);
+          int levelInc = pow(2,level-1);
+          //CDBDebug("Tiling levelInc %d",levelInc);
+          for(int y=0;y<nrTilesY;y=y+levelInc){
             
+            for(int x=0;x<nrTilesX;x=x+levelInc){
+              
+              CDataSource ds;
+              CServerParams newSrvParams;
+              newSrvParams.cfg=dataSource->srvParams->cfg;
+              ds.srvParams=&newSrvParams;
+              ds.cfgLayer=dataSource->cfgLayer;
+              ds.cfg=dataSource->srvParams->cfg;
+              
+              
+              
+              double dfMinX = globalBBOX[0]+tileBBOXWidth*x-tileBBOXWidth/2;
+              double dfMinY = globalBBOX[1]+tileBBOXHeight*y-tileBBOXHeight/2;
+              double dfMaxX = globalBBOX[0]+tileBBOXWidth*(x+levelInc)+tileBBOXWidth/2;
+              double dfMaxY = globalBBOX[1]+tileBBOXHeight*(y+levelInc)+tileBBOXHeight/2;
+              try{
+                CRequest::fillDimValuesForDataSource(&ds,dataSource->srvParams);
+              }catch(ServiceExceptionCode e){
+                CDBError("Exception in setDimValuesForDataSource");
+                return 1;
+              }
+              ds.requiredDims[dd]->value = dataSource->requiredDims[dd]->value;
+                
+//               for(size_t j=0;j<dataSource->requiredDims.size();j++){
+//                 //for(size_t ddd=0;ddd<dataSource->requiredDims[dd]->uniqueValues.size();ddd++){
+//                   dataSource->requiredDims[j]->currentValue = dataSource->requiredDims[j]->uniqueValues[ddd].c_str();
+// //                   ds.addStep("",NULL);
+// //                   ds.getCDFDims()->addDimension(dataSource->requiredDims[j]->netCDFDimName.c_str(), dataSource->requiredDims[j]->currentValue.c_str() , dataSource->requiredDims[j]->currentIndex);
+//                 //}
+//               }
+              
+              CT::string fileNameToWrite = ts->attr.tilepath.c_str(); 
+              fileNameToWrite.printconcat("/l%dleft%ftop%f",level,dfMinX,dfMinY);
+              for(size_t i=0;i<ds.requiredDims.size();i++){
+                fileNameToWrite.printconcat("_%s",ds.requiredDims[i]->value.c_str());
+              }
+              fileNameToWrite.concat(".nc");
+              CDirReader::makeCleanPath(&fileNameToWrite);
+              #ifdef CDBFILESCANNER_DEBUG
+              CDBDebug("Checking file %s in DB table %s",fileNameToWrite.c_str(),tableName.c_str());
+            #endif
+              int status = dbAdapter->checkIfFileIsInTable(tableName.c_str(),fileNameToWrite.c_str());
+              #ifdef CDBFILESCANNER_DEBUG
+              if(status == 0){
+                CDBDebug("File %s already in table %s",fileNameToWrite.c_str(),tableName.c_str());
+              }
+              #endif
+              if(status != 0){
+                #ifdef CDBFILESCANNER_DEBUG
+                CDBDebug("File %s not in table %s",fileNameToWrite.c_str(),tableName.c_str());
+                #endif
+                ds.srvParams->Geo->CRS=tileprojection;
+    
+                ds.srvParams->Geo->dfBBOX[0]=dfMinX;
+                ds.srvParams->Geo->dfBBOX[1]=dfMinY;
+                ds.srvParams->Geo->dfBBOX[2]=dfMaxX;
+                ds.srvParams->Geo->dfBBOX[3]=dfMaxY;
+
+                ds.nativeViewPortBBOX[0]=dfMinX;
+                ds.nativeViewPortBBOX[1]=dfMinY;
+                ds.nativeViewPortBBOX[2]=dfMaxX;
+                ds.nativeViewPortBBOX[3]=dfMaxY;
+                
+              
+                try{
+                
+            
+                
+                  ds.queryLevel=level-1;
+                  ds.queryBBOX=1;
+                  
+                  //bool dimensionLess= false;
+                
+                  store = dbAdapter->getFilesAndIndicesForDimensions(&ds,3000);
+                  
+                  
+                  if(store!=NULL){
+                    #ifdef CDBFILESCANNER_DEBUG
+                    CDBDebug("Store size = %d for level %d",store->getSize(),level);
+                    #endif
+                    if(level == 1 && store->getSize()==0){
+                      delete store;
                       
-                      if(ErrorAtLine!=0)throw(ErrorAtLine);
-                    }catch(int e){
-                      CDBError("Exception at line %d",e);
-                      status  =1;
-                    }  
-                    delete wcsWriter;
-                    
-                    if(status!=0){
-                      delete store;store=NULL;
+                      #ifdef CDBFILESCANNER_DEBUG
+                      CDBDebug("Finding root, dataSource->requiredDims.size() = %d",dataSource->requiredDims.size());
+                      #endif
+
+                      store = dbAdapter->getFilesAndIndicesForDimensions(dataSource,1);
+                    }
+                    if(store==NULL){
+                      CDBError("Found no data!");
                       return 1;
                     }
-                  }
-                  numFound+=store->getSize();
-                  if(store->getSize()>0){
-                    numCreated++;
-                  }
-                }
-                delete store;store=NULL;
-                
-              }catch(ServiceExceptionCode e){
-                CDBError("Catched ServiceExceptionCode %d at line %d",e,__LINE__);
-              }catch(int e){
-                CDBError("Catched integerException %d at line %d",e,__LINE__);
-              }
+                      #ifdef CDBFILESCANNER_DEBUG
+                    CDBDebug("*** Found %d %d:%d / %d:%d= (%f %f %f %f) - (%f,%f)",store->getSize(),x,y,int(nrTilesX),int(nrTilesY),dfMinX,dfMinY,dfMaxX,dfMaxY,dfMaxX-dfMinX,dfMaxY-dfMinY);
+  #endif
+                    if(store->getSize()>0){
+                      for(size_t k=0;k<store->getSize();k++){
+                        CDBStore::Record *record = store->getRecord(k);
+                        #ifdef CDBFILESCANNER_DEBUG
+                        CDBDebug("Adding %s",record->get(0)->c_str());
+  #endif
+                        ds.addStep(record->get(0)->c_str(),NULL);
+  //                       if(dimensionLess){
+  //                         for(size_t i=0;i<ds.requiredDims.size();i++){
+  //                           delete ds.requiredDims[i];
+  //                         }
+  //                         ds.requiredDims.clear();
+  //                       }
+                        for(size_t i=0;i<ds.requiredDims.size();i++){
+                          #ifdef CDBFILESCANNER_DEBUG
+                          CDBDebug("%s",ds.requiredDims[i]->netCDFDimName.c_str());
+                          #endif
+  //                         if(ds.requiredDims[i]->netCDFDimName.equals("_")==false){
+                            CT::string value = record->get(1+i*2)->c_str();
+                            
+                            ds.getCDFDims()->addDimension(ds.requiredDims[i]->netCDFDimName.c_str(),value.c_str(),atoi(record->get(2+i*2)->c_str()));
+                            ds.requiredDims[i]->addValue(value.c_str());
+  //                         }else{
+  //                           CDBDebug("Skipping dim [%s]",ds.requiredDims[i]->netCDFDimName.c_str());
+  //                         }
+                        }
+                      }
+                      int status =0;
+                      
+                      CNetCDFDataWriter *wcsWriter = new CNetCDFDataWriter();
+                      if(tilemode.equals("avg_rgba")){
+                        wcsWriter->setInterpolationMode(CNetCDFDataWriter_AVG_RGB);
+                      }
+                      try{
+                        newSrvParams.Geo->dWidth=(tilewidthpx);
+                        newSrvParams.Geo->dHeight=(tileheightpx);
+                        dfMinX = globalBBOX[0]+tileBBOXWidth*x;//+(tilecellsizex*double(levelInc))/2;;
+                        dfMinY = globalBBOX[1]+tileBBOXHeight*y;//+(tilecellsizey*double(levelInc))/2;;
+                        dfMaxX = globalBBOX[0]+tileBBOXWidth*(x+levelInc);//+(tilecellsizex*double(levelInc))/2;
+                        dfMaxY = globalBBOX[1]+tileBBOXHeight*(y+levelInc);//+(tilecellsizey*double(levelInc))/2;
+                        
+                        newSrvParams.Geo->dfBBOX[0]=dfMinX;
+                        newSrvParams.Geo->dfBBOX[1]=dfMinY;
+                        newSrvParams.Geo->dfBBOX[2]=dfMaxX;
+                        newSrvParams.Geo->dfBBOX[3]=dfMaxY;
+                        newSrvParams.Format="adagucnetcdf";
+                        newSrvParams.WCS_GoNative=0;
+                        newSrvParams.Geo->CRS.copy(&tileprojection);
+                        int ErrorAtLine =0;
+                        try{
+                          int layerNo = dataSource->datasourceIndex;
+                          if(ds.setCFGLayer(dataSource->srvParams,dataSource->srvParams->configObj->Configuration[0],dataSource->srvParams->cfg->Layer[layerNo],NULL,layerNo)!=0){
+                            return 1;
+                          }
+                          
+
+                          CDBDebug("Making tile for [%f,%f,%f,%f] with WH [%d,%d]",dfMinX,dfMinY,dfMaxX,dfMaxY,newSrvParams.Geo->dWidth,newSrvParams.Geo->dHeight);
+                          #ifdef CDBFILESCANNER_DEBUG
+                          CDBDebug("wcswriter init");
+                          #endif
+                          status = wcsWriter->init(&newSrvParams,&ds,ds.getNumTimeSteps());if(status!=0){throw(__LINE__);};
+                          std::vector <CDataSource*> dataSources;
+                          dataSources.push_back(&ds);
+                          int wcsstatus = 0;
+                          for(size_t k=0;k<(size_t)dataSources[0]->getNumTimeSteps();k++){
+                            for(size_t d=0;d<dataSources.size();d++){
+                              dataSources[d]->setTimeStep(k);
+                            }
+                            #ifdef CDBFILESCANNER_DEBUG
+                            CDBDebug("wcswriter adddata");
+                            #endif
+                            status = wcsWriter->addData(dataSources);if(status!=0){wcsstatus++;};
+                            #ifdef CDBFILESCANNER_DEBUG
+                            CDBDebug("wcswriter adddata done");
+                            #endif
+                          }
+                          
+                          status = wcsWriter->writeFile(fileNameToWrite.c_str(),level);if(status!=0){throw(__LINE__);};
+                          updatedb(dataSources[0],&fileNameToWrite,NULL,CDBFILESCANNER_DONTREMOVEDATAFROMDB|CDBFILESCANNER_UPDATEDB);
+                  
+                          
+                          for(size_t d=0;d<dataSources.size();d++){
+                            for(size_t k=0;k<(size_t)dataSources[d]->getNumTimeSteps();k++){
+                              dataSources[d]->setTimeStep(k);
+                              if(dataSources[d]->queryLevel!=0){
+                                CDFObjectStore::getCDFObjectStore()->deleteCDFObject(dataSources[d]->getFileName());
+                              }
+                            }
+                          }
+                          CDFObjectStore::getCDFObjectStore()->deleteCDFObject(fileNameToWrite.c_str());
+                          
+                          #ifdef CDBFILESCANNER_DEBUG
+                          CDBDebug("DONE: Open CDFObjects: [%d]",CDFObjectStore::getCDFObjectStore()->getNumberOfOpenObjects());
+                          #endif
+                        }catch(int e){
+                          CDBError("Error at line %d",e);
+                          ErrorAtLine=e;
+                        }
+                        newSrvParams.cfg = NULL;
               
-              delete store;store=NULL;
+                        
+                        if(ErrorAtLine!=0)throw(ErrorAtLine);
+                      }catch(int e){
+                        CDBError("Exception at line %d",e);
+                        status  =1;
+                      }  
+                      delete wcsWriter;
+                      
+                      if(status!=0){
+                        delete store;store=NULL;
+                        return 1;
+                      }
+                    }
+                    numFound+=store->getSize();
+                    if(store->getSize()>0){
+                      numCreated++;
+                    }
+                  }
+                  delete store;store=NULL;
+                  
+                }catch(ServiceExceptionCode e){
+                  CDBError("Catched ServiceExceptionCode %d at line %d",e,__LINE__);
+                }catch(int e){
+                  CDBError("Catched integerException %d at line %d",e,__LINE__);
+                }
+                
+                delete store;store=NULL;
+              }
+              if(numCreated !=0){
+                  
+                CDBDebug("**** Scanning tile dimnr %d/%d dimval %d/%d: Level %d/%d, Percentage done for this level: %.1f ***",dd,dataSource->requiredDims.size(),ddd,dataSource->requiredDims[dd]->uniqueValues.size(),level,maxlevel,(float(x+y*nrTilesX)/float(nrTilesY*nrTilesX))*100);          
+              }
             }
           }
+          if(numCreated!=0){
+            CDBDebug( "Level %d Found %d file, created %d tiles",level,numFound,numCreated);
+          }
         }
-        CDBDebug( "Found %d file, created %d tiles",numFound,numCreated);
+      
+        
+      }catch(int e){
+        
+        CDBError("Unable to create tableName from '%s' '%s' ",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str());
+        return 1;
       }
-     
-      
-    }catch(int e){
-      
-      CDBError("Unable to create tableName from '%s' '%s' '%s'",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
-      return 1;
     }
   }         
   return 0;

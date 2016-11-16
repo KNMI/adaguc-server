@@ -415,6 +415,10 @@ const char *CDataSource::getLayerName(){
 
 
 CCDFDims *CDataSource::getCDFDims(){
+  if(currentAnimationStep>=timeSteps.size()){
+    CDBError("Invalid step asked");
+    return NULL;
+  }
   return &timeSteps[currentAnimationStep]->dims;
 }
 
@@ -805,20 +809,20 @@ CT::PointerList<CStyleConfiguration*> *CDataSource::getStyleListForDataSource(CD
     renderMethods = getRenderMethodListForDataSource(dataSource,NULL);
     if(renderMethods->size()>0){
       //For cascaded and rgba layers, no styles need to be defined
-      if((CStyleConfiguration::getRenderMethodFromString(renderMethods->get(0))&RM_RGBA)){
-        CDBDebug("Using rendermethod %s",renderMethods->get(0)->c_str());
-        delete renderMethods ; 
-        
-        CStyleConfiguration * styleConfig = new CStyleConfiguration();
-        CDBDebug("Setting rendermethod RM_RGBA");
-        styleConfig->styleTitle.copy("rgba");
-        styleConfig->styleAbstract.copy("rgba");
-        styleConfig->renderMethod = RM_RGBA;
-        styleConfig->styleCompositionName = "rgba";
-        styleConfigurationList->push_back(styleConfig);
-        return styleConfigurationList;
-        
-      }
+//       if((CStyleConfiguration::getRenderMethodFromString(renderMethods->get(0))&(RM_RGBA)){
+//         CDBDebug("Using rendermethod %s",renderMethods->get(0)->c_str());
+//         delete renderMethods ; 
+//         
+//         CStyleConfiguration * styleConfig = new CStyleConfiguration();
+//         //CDBDebug("Setting rendermethod RM_RGBA");
+//         styleConfig->styleTitle.copy("rgba");
+//         styleConfig->styleAbstract.copy("rgba");
+//         styleConfig->renderMethod = RM_RGBA;
+//         styleConfig->styleCompositionName = "rgba";
+//         styleConfigurationList->push_back(styleConfig);
+//         return styleConfigurationList;
+//         
+//       }
       CAutoConfigure::autoConfigureStyles(dataSource);
     }
    

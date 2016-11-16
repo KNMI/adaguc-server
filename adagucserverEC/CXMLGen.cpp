@@ -348,6 +348,7 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
 #endif         
     /* Auto configure dimensions */
     for(size_t i=0;i<myWMSLayer->dataSource->cfgLayer->Dimension.size();i++){
+      if(i==0&&myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.equals("none"))break;
       #ifdef CXMLGEN_DEBUG
       CDBDebug("%d = %s",i,myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
       #endif    
