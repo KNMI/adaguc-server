@@ -81,21 +81,21 @@
 <Layer type="database">
     <Name>tiled</Name>
     <Title>tiled</Title>
-    <FilePath>/nobackup/users/plieger/data/himawari/test.nc</FilePath>
-    <Variable>test</Variable>
+    <FilePath>/nobackup/users/plieger/data/himawari/loop/</FilePath>
+    <Variable>himawari</Variable>
     <RenderMethod>rgba,avg_rgba</RenderMethod>
     <Min>0</Min>
     <Max>10</Max>
-    <TileSettings tilewidthpx="720" 
-                  tileheightpx="720" 
-                  tilecellsizex="0.025"
-                  tilecellsizey="0.025"
-                  left="-60" right="180"  bottom="-80" top="80"
+    <TileSettings tilewidthpx="1000" 
+                  tileheightpx="1000" 
+                  tilecellsizex="0.01"
+                  tilecellsizey="0.01"
+                  left="-60" right="190"  bottom="-86" top="86"
                   tileprojection="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
                   maxlevel="6"
                   tilemode="avg_rgba"
                   tilepath="/nobackup/users/plieger/data/tiles/himtest/"/>
-
+    <Dimension name="time" interval="PT10M" default="max">time</Dimension>
   </Layer>
 
   <!-- End of configuration /-->
