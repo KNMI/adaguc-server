@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+
+  <TempDir value="{ADAGUC_TMP}"/>
+  <Path value="{ADAGUC_PATH}/data"/>
+  <DataBase dbtype="postgresql" parameters="host=localhost dbname=tiles"/>
+  
+  <!-- WMS settings -->
+  <WMS>
+    <Title>ADAGUC WMS Service</Title>
+    <Abstract>eoJSON Service demonstrating the possibility to use GeoJSON in ADAGUC.</Abstract>
+    <RootLayer>
+      <Title>GeoJSON Service</Title>
+      <Abstract>GeoJSON Service demonstrating the possibility to use GeoJSON in ADAGUC</Abstract>
+    </RootLayer>
+      <WMSFormat name="image/png" format="image/png24"/> 
+  </WMS>
+  
+  
+  <!-- WMS -->
+  <Include location="{ADAGUC_PATH}/data/config/includes/WMS.include.xml"/>
+
+  <!-- WCS settings -->
+  <WCS>
+    <Title>ADAGUC WCS Service</Title>
+    <Label>wcsLabel</Label>
+  </WCS>
+
+  <!-- WCSFormat -->
+  <Include location="{ADAGUC_PATH}/data/config/includes/WCSFormat.include.xml"/>
+
+  <!-- Projections -->
+  <Include location="{ADAGUC_PATH}/data/config/includes/Projection.include.xml"/>
+           
+  <!--Legends -->
+  <Include location="{ADAGUC_PATH}/data/config/includes/DefaultStyles.include.xml"/>
+
+  <Include location="{ADAGUC_PATH}/data/config/includes/DefaultLayers.include.xml"/>
+  
+  <!-- Custom styles -->
+  <Style name="countries_coloured">
+    <Legend fixedclasses="true" tickinterval="10" tickround=".01">multicolor</Legend>
+    <Min>0</Min>
+    <Max>170</Max>
+    <NameMapping name="nearest"   title="All countries" abstract="All countries"/>
+    <RenderMethod>nearest</RenderMethod>
+  </Style>
+  
+  <Style name="countries_nlmask">
+    <Legend fixed="true">bluewhitered</Legend>
+    <FeatureInterval match=".*" matchid="abbrev" bgcolor="#CCCCFF" fillcolor="#CCFFCCFF" label="Other"/>
+    <FeatureInterval match="NLD.*" matchid="adm0_a3" fillcolor="#DFFFDF00" label="The Netherlands"/>
+    <FeatureInterval match="^Luxembourg$" matchid="brk_name" fillcolor="#0000FF"  label="Luxembourg"/>
+    <FeatureInterval match="^Asia$" matchid="continent" fillcolor="#808080"  label="Asia"/>
+    <FeatureInterval match="^India$" matchid="abbrev" fillcolor="#80FF80"  label="India"/>
+    <NameMapping name="nearest"   title="Mask NL"/>
+    <RenderMethod>nearest</RenderMethod>
+  </Style>
+  
+    
+  <Style name="landseamask">
+    <Legend fixed="true">bluewhitered</Legend>
+    <FeatureInterval match=".*" matchid="abbrev" bgcolor="#CCCCFF" fillcolor="#CCFFCCFF"/>
+    <NameMapping name="nearest"   title="Land sea mask"/>
+    <RenderMethod>nearest</RenderMethod>
+  </Style>
+  
+  <!-- Layers -->
+  
+  <Layer type="database">
+    <Name>notiles</Name>
+    <Title>notiles</Title>
+    <FilePath>/nobackup/users/plieger/data/himawari/test.nc</FilePath>
+    <Variable>test</Variable>
+    <RenderMethod>rgba</RenderMethod>
+    <Min>0</Min>
+    <Max>10</Max>
+    <DataBaseTable>notiles</DataBaseTable>
+  </Layer>
+  
+<Layer type="database">
+    <Name>tiled</Name>
+    <Title>tiled</Title>
+    <FilePath>/nobackup/users/plieger/data/himawari/test.nc</FilePath>
+    <Variable>test</Variable>
+    <RenderMethod>rgba,avg_rgba</RenderMethod>
+    <Min>0</Min>
+    <Max>10</Max>
+    <TileSettings tilewidthpx="720" 
+                  tileheightpx="720" 
+                  tilecellsizex="0.025"
+                  tilecellsizey="0.025"
+                  left="-60" right="180"  bottom="-80" top="80"
+                  tileprojection="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+                  maxlevel="6"
+                  tilemode="avg_rgba"
+                  tilepath="/nobackup/users/plieger/data/tiles/himtest/"/>
+
+  </Layer>
+
+  <!-- End of configuration /-->
+</Configuration>

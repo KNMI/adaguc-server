@@ -158,8 +158,8 @@ public:
     int numImagesAdded;
     int currentGraphicsRenderer;
   public:
-    float *rField = NULL, *gField=NULL, *bField = NULL;
-    int *numField = NULL;
+    float *rField , *gField, *bField ;
+    int *numField ;
     bool trueColorAVG_RGBA;
     int getRenderer();
     int _colors[256];
