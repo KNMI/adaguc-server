@@ -13,7 +13,8 @@ CStyleConfiguration::RenderMethod CStyleConfiguration::getRenderMethodFromString
   if(renderMethodString->indexOf("rgba")!=-1)renderMethod|=RM_RGBA;
   
   if(renderMethodString->indexOf("stippling")!=-1)renderMethod|=RM_STIPPLING;
-
+  if(renderMethodString->indexOf("polyline")!=-1)renderMethod|=RM_POLYLINE;
+  
   /* When RM_AVG_RGBA is requested, disable RM_RGBA, otherwise two RGBA rendereres come into action */
   if(renderMethod&RM_AVG_RGBA){
     renderMethod&=~RM_RGBA;
@@ -37,4 +38,5 @@ void CStyleConfiguration::getRenderMethodAsString(CT::string *renderMethodString
   if(renderMethod & RM_RGBA)renderMethodString->concat("rgba");
   if(renderMethod & RM_AVG_RGBA)renderMethodString->concat("avg_rgba");
   if(renderMethod & RM_STIPPLING)renderMethodString->concat("stippling");
+  if(renderMethod & RM_POLYLINE)renderMethodString->concat("polyline");
 }

@@ -38,7 +38,7 @@
 
 #include "CStyleConfiguration.h"
 
-
+#include "CGeoJSONData.h"
 
 /**
  * Class which holds min and max values.
@@ -285,8 +285,9 @@ private:
   CServerConfig::XMLE_Layer * cfgLayer;
   CServerConfig::XMLE_Configuration *cfg;
   
-  //Link to the root CDFObject, is owned by the datareader.
+  CT::string featureSet;
   
+  //Link to the root CDFObject, is owned by the datareader.
   
   CDataSource();
   ~CDataSource();
@@ -294,8 +295,6 @@ private:
   static const char *getFlagMeaning(std::vector<CDataSource::StatusFlag*> *statusFlagList,double value);
   static void getFlagMeaningHumanReadable(CT::string *flagMeaning ,std::vector<CDataSource::StatusFlag*> *statusFlagList,double value);
   //int autoCompleteDimensions(CPGSQLDB *dataBaseConnection);
-  
-  
   
   int setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Configuration *_cfg,CServerConfig::XMLE_Layer * _cfgLayer,const char *_layerName, int layerIndex);
   void addStep(const char * fileName, CCDFDims *dims);

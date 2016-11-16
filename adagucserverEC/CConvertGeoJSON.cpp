@@ -485,11 +485,27 @@
           for (std::vector<Feature*>::iterator it=featureStore[ fileName].begin();it!=featureStore[fileName].end(); ++it) {
 //            CDBDebug("deleting %s", (*it)->getId().c_str());
             delete *it;
+            *it=NULL;
           }
+          CDBDebug("Deleted %d features for %s", featureStore[fileName].size(), fileName.c_str());
         }
         featureStore.clear(); 
       }
-      
+
+      //Delete one set of features from the featureStore
+      void CConvertGeoJSON::clearFeatureStore(CT::string name) {
+        for (std::map<std::string, std::vector<Feature*> >::iterator itf=featureStore.begin();itf!=featureStore.end();++itf){
+          std::string fileName= itf->first.c_str();
+          if (fileName==name.c_str()) {
+                    CDBDebug("Deleting %d features ONLY for %s", featureStore[fileName].size(), fileName.c_str());
+            for (std::vector<Feature*>::iterator it=featureStore[ fileName].begin();it!=featureStore[fileName].end(); ++it) {
+//                          CDBDebug("deleting %s", (*it)->getId().c_str());
+              delete *it;
+              *it=NULL;
+            }
+          }
+        }
+      }
       /**
       * This function adjusts the cdfObject by creating virtual 2D variables
       */
@@ -958,7 +974,8 @@ varX->setType(CDF_DOUBLE);
           CDBDebug("addCDFInfo again");
           addCDFInfo(cdfObject, dataSource->srvParams, dfBBOX, features, true);
         }
-
+        //Store featureSet name (geojsonkey) in datasource
+        dataSource->featureSet=geojsonkey.c_str();
 
         //Make the width and height of the new 2D adaguc field the same as the viewing window
         dataSource->dWidth=dataSource->srvParams->Geo->dWidth;

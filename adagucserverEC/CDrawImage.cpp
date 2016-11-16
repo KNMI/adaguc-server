@@ -554,6 +554,27 @@ void CDrawImage::poly(float x1,float y1,float x2,float y2,float x3, float y3, fl
   }
 }
 
+void CDrawImage::poly(float *x, float*y, int n, float lineWidth, CColor color, bool fill){
+  if(currentGraphicsRenderer==CDRAWIMAGERENDERER_CAIRO){
+    cairo->setFillColor(color.r, color.g, color.b, color.a);
+    //    currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],255);
+    cairo->poly(x, y, n, lineWidth, true, fill);
+  } else {
+    int colorIndex=getClosestGDColor(color.r, color.g, color.b);
+    gdPoint pt[n];  
+    for (int i=0; i<n;i++) {
+      pt[i].x=int(x[i]);
+      pt[i].y=int(y[i]);
+    }
+    if (fill) {
+      gdImageFilledPolygon(image, pt, 5, _colors[colorIndex]);
+    } else {
+      gdImagePolygon(image, pt, 5, _colors[colorIndex]);
+    }
+  }
+}
+
+
 void CDrawImage::line(float x1, float y1, float x2, float y2,int color){
   if(currentGraphicsRenderer==CDRAWIMAGERENDERER_CAIRO){
     if(currentLegend==NULL)return;
@@ -1756,4 +1777,12 @@ int CDrawImage::getRenderer(){
 
 void CDrawImage::setRenderer(int type){
   currentGraphicsRenderer=type;
+}
+
+int CDrawImage::getHeight() {
+  return Geo->dHeight;
+}
+
+int CDrawImage::getWidth() {
+  return Geo->dWidth;
 }
