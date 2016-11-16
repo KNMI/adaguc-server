@@ -20,8 +20,8 @@ private:
     size_t width;
     size_t height;
     void *data;
-    float *rField = NULL, *gField=NULL, *bField = NULL;
-    int *numField = NULL;
+    float *rField , *gField, *bField ;
+    int *numField ;
     bool trueColorRGBA;
   };
   
