@@ -126,8 +126,8 @@ int GenericDataWarper::findPixelExtent(int *PXExtentBasedOnSource,CGeoParams*sou
              
                 if(OK==true){
                   OK=false;
-                   startX+=((double(imageWidth)/10.)+1);
-                   startY+=((double(imageHeight)/10.)+1);
+                   startX+=1;//((double(imageWidth)/10.)+1);
+                   startY+=1;//((double(imageHeight)/10.)+1);
                 //CDBDebug("PXEXTent error increasing to %d/%d",startX,startY);
                 }
               }
