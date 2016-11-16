@@ -35,7 +35,7 @@ const char *CDFObjectStore::className="CDFObjectStore";
 #include "CConvertEProfile.h"
 #include "CConvertTROPOMI.h"
 #include "CDataReader.h"
-#define CDFOBJECTSTORE_DEBUG
+//#define CDFOBJECTSTORE_DEBUG
 #define MAX_OPEN_FILES 20
 extern CDFObjectStore cdfObjectStore;
 CDFObjectStore cdfObjectStore;
@@ -356,7 +356,7 @@ void CDFObjectStore::deleteCDFObject(const char *fileName){
   int numDeleted = 0;
   for(size_t j=0;j<cdfObjects.size();j++){
     if(fileNames[j]->equals(fileName)){
-      CDBDebug("Closing %s",fileNames[j]->c_str());
+      //CDBDebug("Closing %s",fileNames[j]->c_str());
       delete cdfObjects[j];cdfObjects[j]=NULL;
       delete fileNames[j]; fileNames[j] = NULL;
       delete cdfReaders[j]->cdfCache;cdfReaders[j]->cdfCache = NULL;

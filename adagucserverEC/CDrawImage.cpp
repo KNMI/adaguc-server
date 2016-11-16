@@ -47,6 +47,11 @@ CDrawImage::CDrawImage(){
   Geo= new CGeoParams(); 
 
   cairo=NULL;
+  rField = NULL;
+  gField=NULL;
+  bField = NULL;
+  numField = NULL;
+  trueColorAVG_RGBA=false;
   
   TTFFontLocation = "/usr/X11R6/lib/X11/fonts/truetype/verdana.ttf";
   const char *fontLoc=getenv("ADAGUC_FONT");
@@ -86,6 +91,12 @@ void CDrawImage::destroyImage(){
   legends.clear();
  
   delete cairo; cairo=NULL;
+  if(rField!=NULL){
+    delete[] rField; rField = NULL;
+    delete[] gField;gField=NULL;
+    delete[] bField;bField = NULL;
+    delete[] numField;numField = NULL;
+  }
 }
 
 CDrawImage::~CDrawImage(){
@@ -208,6 +219,19 @@ int CDrawImage::printImagePng8(){
   return 0;
 }
 
+int CDrawImage::printImagePng24(){
+  if(dImageCreated==0){CDBError("print: image not created");return 1;}
+  
+  if(currentGraphicsRenderer==CDRAWIMAGERENDERER_CAIRO){
+    cairo->writeToPng24Stream(stdout,backgroundAlpha);
+  }
+  
+  if(currentGraphicsRenderer==CDRAWIMAGERENDERER_GD){
+    CDBError("gdImagePNG does not support 24 bit");
+    return 1;
+  }
+  return 0;
+}
 int CDrawImage::printImagePng32(){
   if(dImageCreated==0){CDBError("print: image not created");return 1;}
   
@@ -221,6 +245,7 @@ int CDrawImage::printImagePng32(){
   }
   return 0;
 }
+
 int CDrawImage::printImageGif(){
   if(currentGraphicsRenderer == CDRAWIMAGERENDERER_GD){
     if(dImageCreated==0){CDBError("print: image not created");return 1;}

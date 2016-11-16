@@ -137,7 +137,7 @@ int CDrawTileObjBGRA::drawTile(double *x_corners,double *y_corners,int &dDestX,i
       rcy_3= (line_dy2 -line_dy1)/dfTileHeight;
       dstpixel_x=int(x)+dDestX;
       for(y=0;y<=dfTileHeight-1;y=y+1){
-        dstpixel_y=y+dDestY-1;
+        dstpixel_y=y+dDestY;
         sample_sx=line_dx1+rcx_3*double(y);
         if(sample_sx>=dfSourceBBOX[0]&&sample_sx<dfSourceBBOX[2])
         {

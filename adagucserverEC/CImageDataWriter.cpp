@@ -401,7 +401,7 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   this->srvParam=srvParam;
   
   if(_setTransparencyAndBGColor(this->srvParam,&drawImage)!=0)return 1;
-  if(srvParam->imageFormat ==  IMAGEFORMAT_IMAGEPNG8 || srvParam->imageFormat ==  IMAGEFORMAT_IMAGEPNG32){
+  if(srvParam->imageFormat ==  IMAGEFORMAT_IMAGEPNG8 || srvParam->imageFormat ==  IMAGEFORMAT_IMAGEPNG24 || srvParam->imageFormat ==  IMAGEFORMAT_IMAGEPNG32){
     drawImage.setRenderer(CDRAWIMAGERENDERER_CAIRO);
   }else{
     drawImage.setRenderer(CDRAWIMAGERENDERER_GD);
@@ -444,16 +444,20 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   }
   
   // WMS Format in layer always overrides all
-  if(dataSource!=NULL){
-    if(dataSource->cfgLayer->WMSFormat.size()>0){
-        if(dataSource->cfgLayer->WMSFormat[0]->attr.name.equals("image/png32")){
-        drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-        }
-        if(dataSource->cfgLayer->WMSFormat[0]->attr.format.equals("image/png32")){
-        drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-        }
-    }
-  }
+//   if(dataSource!=NULL){
+//     if(dataSource->cfgLayer->WMSFormat.size()>0){
+//         if(dataSource->cfgLayer->WMSFormat[0]->attr.name.equals("image/png32")){
+//         drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
+//         }
+//         if(dataSource->cfgLayer->WMSFormat[0]->attr.format.equals("image/png32")){
+//         drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
+//         }
+//         if(dataSource->cfgLayer->WMSFormat[0]->attr.format.equals("image/png24")){
+//           drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
+//         }
+//         
+//     }
+//   }
   //Set font location
   if(srvParam->cfg->WMS[0]->ContourFont.size()!=0){
     if(srvParam->cfg->WMS[0]->ContourFont[0]->attr.location.empty()==false){
@@ -1437,7 +1441,7 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   /**
   * Use fast nearest neighbourrenderer
   */
-  if(renderMethod&RM_NEAREST){
+  if(renderMethod&RM_NEAREST||renderMethod&RM_AVG_RGBA){
     imageWarperRenderer = new CImgWarpNearestNeighbour();
     imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
     delete imageWarperRenderer;
@@ -1795,7 +1799,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
 #ifdef CIMAGEDATAWRITER_DEBUG  
   CDBDebug("addData");
 #endif   
-
+  //if(dataSource->getCurrentTimeStep()>dataSource->getCurrentTimeStep()
   int status = 0;
   
   if(animation==1&&nrImagesAdded>0){
@@ -1861,7 +1865,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
 #endif
       status = warpImage(dataSource,&drawImage);
 #ifdef CIMAGEDATAWRITER_DEBUG
-      CDBDebug("Finished warping");
+      CDBDebug("Finished warping %s for step %d/%d",dataSource->layerName.c_str(),dataSource->getCurrentTimeStep(),dataSource->getNumTimeSteps());
 #endif      
       if(status != 0){
         CDBError("warpImage for layer %s failed",dataSource->layerName.c_str());
@@ -3249,7 +3253,12 @@ CDBDebug("srvParam->imageFormat = %d",srvParam->imageFormat);
     CDBDebug("Creating 8 bit png");
     printf("%s%c%c\n","Content-Type:image/png",13,10);
     status=drawImage.printImagePng8();
+  }else if(srvParam->imageFormat==IMAGEFORMAT_IMAGEPNG24){
+    CDBDebug("Creating 24 bit png");
+    printf("%s%c%c\n","Content-Type:image/png",13,10);
+    status=drawImage.printImagePng24();
   }else if(srvParam->imageFormat==IMAGEFORMAT_IMAGEPNG32){
+    CDBDebug("Creating 32 bit png");
     printf("%s%c%c\n","Content-Type:image/png",13,10);
     status=drawImage.printImagePng32();
   }else if(srvParam->imageFormat==IMAGEFORMAT_IMAGEGIF){
