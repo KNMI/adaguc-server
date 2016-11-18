@@ -37,6 +37,7 @@
 #include "CCache.h"
 #include <map>
 #include <string>
+
 //#define MAX_DIMS 10
 
 /**
@@ -136,6 +137,8 @@ class CServerParams{
      * Destructor
      */
     ~CServerParams();
+    
+    
     
     /** 
      * Function which generates a unique layername from the Layer's configuration

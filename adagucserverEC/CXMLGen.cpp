@@ -304,9 +304,11 @@ int CXMLGen::getProjectionInformationForLayer(WMSLayer * myWMSLayer){
     if(srvParam->cfg->Projection[p]->attr.id.equals("EPSG:4326")){
       for(int k=0;k<4;k++)myWMSLayer->dfLatLonBBOX[k]=myProjection->dfBBOX[k];
     }
-    
+    CDBDebug("OK");
     warper.closereproj();
+    CDBDebug("OK");
   }
+  CDBDebug("OK");
   //Add the layers native projection as well
   WMSLayer::Projection * myProjection = new WMSLayer::Projection();
   myWMSLayer->projectionList.push_back(myProjection);

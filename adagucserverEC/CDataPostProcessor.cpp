@@ -1,7 +1,6 @@
 #include "CDataPostProcessor.h"
 #include "CRequest.h"
 
-
 void writeLogFileLocal(const char * msg){
   char * logfile=getenv("ADAGUC_LOGFILE");
   if(logfile!=NULL){
@@ -23,6 +22,12 @@ void writeLogFileLocal(const char * msg){
       fclose (pFile);
     }else fprintf(stderr,"Unable to write logfile %s\n",logfile);
   }
+}
+
+extern CDPPExecutor cdppExecutorInstance;
+CDPPExecutor cdppExecutorInstance;
+CDPPExecutor *CDataPostProcessor::getCDPPExecutor(){
+  return &cdppExecutorInstance;
 }
 
 /************************/
@@ -714,7 +719,7 @@ int CDPPMSGCPPHIWCMask::execute(CServerConfig::XMLE_DataPostProc* proc, CDataSou
 const char *CDPPExecutor::className="CDPPExecutor";
 
 CDPPExecutor::CDPPExecutor(){
-  //CDBDebug("CDPPExecutor");
+//  CDBDebug("CDPPExecutor");
   dataPostProcessorList = new  CT::PointerList<CDPPInterface*>();
   dataPostProcessorList->push_back(new CDPPIncludeLayer());
   dataPostProcessorList->push_back(new CDPPAXplusB());

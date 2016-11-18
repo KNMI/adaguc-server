@@ -67,7 +67,7 @@ void CDrawTileObjBGRA::init(CDataSource *dataSource,CDrawImage *drawImage,int ti
   legendOffset = styleConfiguration->legendOffset;
 }
 
-int CDrawTileObjBGRA::drawTile(double *x_corners,double *y_corners,int &dDestX,int &dDestY){
+int CDrawTileObjBGRA::drawTile(double *x_corners,double *y_corners,int &dDestX,int &dDestY, bool debug){
   uint *data=(uint*)dataSource->getDataObject(0)->cdfVariable->data;
   #ifndef CIMGWARPNEARESTRGBA_USEDRAWIMAGE  
   uint *imageData = (uint*)drawImage->getCanvasMemory();
@@ -160,6 +160,13 @@ int CDrawTileObjBGRA::drawTile(double *x_corners,double *y_corners,int &dDestX,i
                   unsigned char g=((unsigned char)(v>>8));
                   unsigned char b=((unsigned char)(v>>16));
                   unsigned char a=((unsigned char)(v>>24));;
+
+                  if(debug){
+                    if(srcpixel_x ==0||srcpixel_x==width-1||srcpixel_y ==0||srcpixel_y==height-1){r=0;g=0;b=255;a=255;}
+                    if((srcpixel_x ==10||srcpixel_x==width-10)&& srcpixel_y >10 &&srcpixel_y<height-10){r=255;g=255;b=0;a=255;}
+                    if((srcpixel_y ==10||srcpixel_y==width-10)&& srcpixel_x >10 &&srcpixel_x<width-10){r=255;g=255;b=0;a=255;}
+                  }
+                  
 #ifdef CIMGWARPNEARESTRGBA_USEDRAWIMAGE                  
                   drawImage->setPixelTrueColor(dstpixel_x,dstpixel_y,r,g,b,a);
 #else
@@ -168,6 +175,8 @@ int CDrawTileObjBGRA::drawTile(double *x_corners,double *y_corners,int &dDestX,i
                     unsigned char r1= float(r)*(float(a)/256.);
                     unsigned char g1 =float(g)*(float(a)/256.);
                     unsigned char b1=float(b)*(float(a)/256.);
+                    
+
                     imageData[dstpixel_x+dstpixel_y*imageWidth]=b1+g1*256+r1*256*256+a*256*256*256;
                   }else{
                     imageData[dstpixel_x+dstpixel_y*imageWidth]=b+g*256+r*256*256+4278190080;
@@ -197,7 +206,7 @@ void *CImgWarpNearestRGBA::drawTiles(void *arg){
       CDBDebug("Drawing tile id %d",ct->id);
       #endif 
       //int status = 
-      ct->drawTile->drawTile(ct->x_corners,ct->y_corners,ct->tile_offset_x,ct->tile_offset_y);
+      ct->drawTile->drawTile(ct->x_corners,ct->y_corners,ct->tile_offset_x,ct->tile_offset_y,ct->debug);
       /*if(status!=0){
         CDBError("Unable to draw tile at line %d",status);
       }*/
@@ -239,16 +248,16 @@ int CImgWarpNearestRGBA::reproj(CImageWarper *warper,CDataSource *dataSource,CGe
   psy[2]=dfTiledBBOX[3];
   psy[3]=dfTiledBBOX[1];
   if(warper->isProjectionRequired()){
-    CT::string destinationCRS;
-    warper->decodeCRS(&destinationCRS,&GeoDest->CRS);
-    if(destinationCRS.indexOf("longlat")>=0){
+//     CT::string destinationCRS;
+//     warper->decodeCRS(&destinationCRS,&GeoDest->CRS);
+    if(warper->destNeedsDegreeRadianConversion){
       for(int j=0;j<4;j++){
         psx[j]*=DEG_TO_RAD;
         psy[j]*=DEG_TO_RAD;
       }
     }
     pj_transform(warper->destpj,warper->sourcepj, 4,0,psx,psy,NULL);
-    if(dataSource->nativeProj4.indexOf("longlat")>=0){
+     if(warper->sourceNeedsDegreeRadianConversion){
       for(int j=0;j<4;j++){
         psx[j]/=DEG_TO_RAD;
         psy[j]/=DEG_TO_RAD;
@@ -335,12 +344,20 @@ void CImgWarpNearestRGBA::render(CImageWarper *warper,CDataSource *dataSource,CD
       #endif 
       int numberOfTiles=x_div*y_div;
       DrawTileSettings *drawTileSettings = new DrawTileSettings[numberOfTiles];
+      bool debug = false;
+      
+      if(dataSource->cfgLayer->TileSettings.size()==1){
+        if(dataSource->cfgLayer->TileSettings[0]->attr.debug.equals("true")){
+          debug = true;
+        }
+      }
       DrawTileSettings *curTileSettings;
       for(int x=0;x<x_div;x++){
         for(int y=0;y<y_div;y++){
           status = reproj(warper,dataSource,&internalGeo,x,(y_div-1)-y,x_div,y_div);
           int tileId=x+y*x_div;
           curTileSettings=&drawTileSettings[tileId];
+          curTileSettings->debug=debug;
           curTileSettings->id=tileId;
           if(status != 0)curTileSettings->id=(-tileId)-1;//This one does not need to be done.
           for(int j=0;j<4;j++){

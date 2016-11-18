@@ -1255,8 +1255,13 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
         //´CDBDebug("globalBBOX         : [%f,%f,%f,%f]",globalBBOX[0],globalBBOX[1],globalBBOX[2],globalBBOX[3]);
         //CDBDebug("nrTilesX,nrTilesY  : [%d,%d]",nrTilesX,nrTilesY);
         
+        int minlevel = 1;
+        if(ts->attr.minlevel.empty()==false){
+          minlevel = ts->attr.minlevel.toInt();
+          if(minlevel<=1)minlevel=1;
+        }
         int maxlevel            = ts->attr.maxlevel.toInt();
-        for(int level = 1;level<maxlevel+1;level++){
+        for(int level = minlevel;level<maxlevel+1;level++){
           int numFound = 0;
           int numCreated=0;
           //CDBDebug("Tiling level %d",level);
@@ -1344,7 +1349,7 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
                     #ifdef CDBFILESCANNER_DEBUG
                     CDBDebug("Store size = %d for level %d",store->getSize(),level);
                     #endif
-                    if(level == 1 && store->getSize()==0){
+                    if(level == minlevel && store->getSize()==0){
                       delete store;
                       
                       #ifdef CDBFILESCANNER_DEBUG

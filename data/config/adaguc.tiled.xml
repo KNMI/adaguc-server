@@ -86,17 +86,54 @@
     <RenderMethod>rgba,avg_rgba</RenderMethod>
     <Min>0</Min>
     <Max>10</Max>
-    <TileSettings tilewidthpx="1000" 
-                  tileheightpx="1000" 
+   <TileSettings tilewidthpx="600" 
+                  tileheightpx="600" 
                   tilecellsizex="0.01"
                   tilecellsizey="0.01"
-                  left="-60" right="190"  bottom="-86" top="86"
+                  left="60" right="180"  bottom="-86" top="86"
                   tileprojection="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+                  minlevel="3"
                   maxlevel="6"
                   tilemode="avg_rgba"
+                  debug="false"
+                  threads="2" 
                   tilepath="/nobackup/users/plieger/data/tiles/himtest/"/>
+<!--    
+     <TileSettings tilewidthpx="512" 
+                  tileheightpx="512" 
+                  tilecellsizex="2000"
+                  tilecellsizey="2000"
+                  left="-5500000" right="5500000"  bottom="-5500000" top="5500000"
+                  tileprojection="+proj=geos +h=35785863 +a=6378137.0 +b=6356752.3 +lon_0=140.7 +no_defs"
+                  maxlevel="6"
+                  tilemode="avg_rgba"
+                  debug="true"
+                  threads="4" 
+                  tilepath="/nobackup/users/plieger/data/tiles/himtest/"/>-->
     <Dimension name="time" interval="PT10M" default="max">time</Dimension>
   </Layer>
+  
+  <Layer type="database">
+    <Name>S1A</Name>
+    <Title>S1A</Title>
+    <FilePath>/nobackup/users/plieger/data/g4indo/S1A_20160527220855_IW_VVVV_VH_VV-VH.nc</FilePath>
+    <Variable>rgba</Variable>
+    <RenderMethod>rgba</RenderMethod>
+   
+   <TileSettings tilewidthpx="600" 
+                  tileheightpx="600" 
+                  tilecellsizex="0.000224982"
+                  tilecellsizey="0.000224982"
+                  left="111.4" right="113.1"  bottom="-8.4" top="-7.1"
+                  tileprojection="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+                  minlevel="1"
+                  maxlevel="6"
+                  tilemode="avg_rgba"
+                  debug="false"
+                  threads="2" 
+                  tilepath="/nobackup/users/plieger/data/tiles/g4indo/"/>
+   <DataBaseTable>g4indo</DataBaseTable>
+   </Layer>
   
 <!--  <Layer type="database">
     <Group value="Optical"/>

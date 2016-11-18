@@ -25,6 +25,7 @@
 
 #include "CCairoPlotter.h"
 #ifdef ADAGUC_USE_CAIRO
+//#define MEASURETIME
 
 #include "CStopWatch.h"
 const char *CCairoPlotter::className="CCairoPlotter";
@@ -60,8 +61,8 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
 //    fprintf(stderr, "cairo status: %s\n", cairo_status_to_string(cairo_status(cr)));
     r=0;g=0;b=0;a=255;
     rr=r/256.l; rg=g/256.;rb=b/256.;ra=1;
-    fr=0;fg=0;fb=0;fa=1;
-    rfr=rfg=rfb=0;rfa=1;
+    fr=0;fg=0;fb=0;fa=0;
+    rfr=rfg=rfb=0;rfa=0;
     
     library=NULL;
     initializationFailed=false;
@@ -261,6 +262,7 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
     for(int y=0;y<(int)bitmap->rows;y++){
       for(int x=0;x<(int)bitmap->width;x++){
         size_t p=(x+y*bitmap->width);
+ 
         if(bitmap->buffer[p]!=0){
           float alpha=bitmap->buffer[p];
           //alpha/=256;
@@ -735,7 +737,7 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
 
   int CCairoPlotter::writeARGBPng(int width,int height,unsigned char *ARGBByteBuffer,FILE *file,int bitDepth){
     
-    CDBDebug("Using png library directly to write PNG");
+    //CDBDebug("Using png library directly to write PNG");
     OctreeType * tree = NULL;
     
     #ifdef MEASURETIME
@@ -877,8 +879,8 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
     
     
     png_set_filter (png_ptr, 0, PNG_FILTER_NONE);
-    png_set_compression_level (png_ptr, -1);
-    
+    png_set_compression_level (png_ptr, 0);
+    png_set_filter_heuristics(png_ptr, PNG_FILTER_HEURISTIC_DEFAULT,1, NULL, NULL);
     //png_set_invert_alpha(png_ptr);
     png_write_info(png_ptr, info_ptr);
     
@@ -915,6 +917,9 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
         png_write_rows(png_ptr, &row_ptr, 1);
       }
     }else if(bitDepth==24){
+      #ifdef MEASURETIME
+      StopWatch_Stop("Start 24BIT FILL");
+      #endif
       int s=width*4;
       for (i = 0; i < height; i=i+1){
         
@@ -943,6 +948,9 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
         row_ptr = RGBRow;
         png_write_rows(png_ptr, &row_ptr, 1);
       }
+      #ifdef MEASURETIME
+      StopWatch_Stop("Finished 24BIT FILL");
+      #endif
     }else if(bitDepth==8){
       int s=width*4;
       

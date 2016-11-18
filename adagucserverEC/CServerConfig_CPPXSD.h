@@ -635,8 +635,10 @@ class CServerConfig:public CXMLSerializerInterface{
             tilecellsizex,tilecellsizey,
             left,right,bottom,top,
             numtilesx,numtilesy,
-            tileprojection,maxlevel,tilepath,
-            tilemode;
+            tileprojection,minlevel,maxlevel,tilepath,
+            tilemode,
+            threads,
+            debug;
         }attr;
 //           <TileSettings  tilewidth="600" 
 //                    tileheight="600" 
@@ -649,6 +651,8 @@ class CServerConfig:public CXMLSerializerInterface{
     
         void addAttribute(const char *name,const char *value){
           if(equals("tilemode",8,name)){attr.tilemode.copy(value);return;}
+          else if(equals("debug",5,name)){attr.debug.copy(value);return;}
+          else if(equals("threads",7,name)){attr.threads.copy(value);return;}
           else if(equals("tilewidthpx",11,name)){attr.tilewidthpx.copy(value);return;}
           else if(equals("tileheightpx",12,name)){attr.tileheightpx.copy(value);return;}
           else if(equals("tilecellsizex",13,name)){attr.tilecellsizex.copy(value);return;}
@@ -660,6 +664,7 @@ class CServerConfig:public CXMLSerializerInterface{
           else if(equals("numtilesx",9,name)){attr.numtilesx.copy(value);return;}
           else if(equals("numtilesy",9,name)){attr.numtilesy.copy(value);return;}
           else if(equals("tileprojection",14,name)){attr.tileprojection.copy(value);return;}
+          else if(equals("minlevel",8,name)){attr.minlevel.copy(value);return;}
           else if(equals("maxlevel",8,name)){attr.maxlevel.copy(value);return;}
           else if(equals("tilepath",8,name)){attr.tilepath.copy(value);return;}
         }
