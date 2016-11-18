@@ -354,27 +354,20 @@ private:
     psy[2]=dfTiledBBOX[3];
     psy[3]=dfTiledBBOX[1];
     if(warper->isProjectionRequired()){
-    //return 0;
-    
-    CT::string destinationCRS;
-    warper->decodeCRS(&destinationCRS,&GeoDest->CRS);
-    if(destinationCRS.indexOf("longlat")>=0){
-      for(int j=0;j<4;j++){
-        psx[j]*=DEG_TO_RAD;
-        psy[j]*=DEG_TO_RAD;
+      if(warper->destNeedsDegreeRadianConversion){
+        for(int j=0;j<4;j++){
+          psx[j]*=DEG_TO_RAD;
+          psy[j]*=DEG_TO_RAD;
+        }
       }
-    }
-
-    
-    if(pj_transform(warper->destpj,warper->sourcepj, 4,0,psx,psy,NULL)){
-      CDBDebug("Unable to do pj_transform");
-    }
-
-    
-    if(dataSource->nativeProj4.indexOf("longlat")>=0)
-      for(int j=0;j<4;j++){
-        psx[j]/=DEG_TO_RAD;
-        psy[j]/=DEG_TO_RAD;
+      if(pj_transform(warper->destpj,warper->sourcepj, 4,0,psx,psy,NULL)){
+        CDBDebug("Unable to do pj_transform");
+      }
+      if(warper->sourceNeedsDegreeRadianConversion){
+        for(int j=0;j<4;j++){
+          psx[j]/=DEG_TO_RAD;
+          psy[j]/=DEG_TO_RAD;
+        }
       }
     }
     x_corners[0]=psx[1];
@@ -543,15 +536,16 @@ private:
           unsigned char r = ((unsigned char)v);
           unsigned char g = ((unsigned char)(v>>8));
           unsigned char b = ((unsigned char)(v>>16));
-          
           settings->drawImage->rField[p]+=r;
           settings->drawImage->gField[p]+=g;
           settings->drawImage->bField[p]+=b;
+          settings->drawImage->setPixelTrueColorOverWrite(x,y,r,g,b,255);  
         }
       }
     }
   };
   
+  pthread_mutex_t CImgWarpNearestNeighbour_render_lock;
   
   //Setup projection and all other settings for the tiles to draw
   void render(CImageWarper *warper,CDataSource *dataSource,CDrawImage *drawImage){
@@ -605,6 +599,8 @@ private:
       settings.drawImage = drawImage;
       
       if(styleConfiguration->renderMethod&RM_AVG_RGBA){
+        
+        pthread_mutex_lock(&CImgWarpNearestNeighbour_render_lock);
         settings.drawImage->trueColorAVG_RGBA = true;
         size_t size=settings.drawImage->Geo->dWidth*settings.drawImage->Geo->dHeight;
         if(settings.drawImage->rField == NULL){
@@ -620,6 +616,7 @@ private:
             settings.drawImage->numField[j] = 0;
           }
         }
+        pthread_mutex_unlock(&CImgWarpNearestNeighbour_render_lock);
       }
       
       CDFType dataType=dataSource->getDataObject(0)->cdfVariable->getType();
@@ -649,23 +646,24 @@ private:
       }
       
       
-      if(styleConfiguration->renderMethod&RM_AVG_RGBA&&settings.drawImage->rField!=NULL){
-        for(int y=0;y<settings.drawImage->Geo->dHeight;y++){
-          for(int x=0;x<settings.drawImage->Geo->dWidth;x++){
-            size_t p = x+y*settings.drawImage->Geo->dWidth;
-            if(settings.drawImage->numField[p]!=0){
-              
-              unsigned char r= (settings.drawImage->rField[p]/settings.drawImage->numField[p]);
-              unsigned char g= (settings.drawImage->gField[p]/settings.drawImage->numField[p]);
-              unsigned char b= (settings.drawImage->bField[p]/settings.drawImage->numField[p]);
-              unsigned char a=255;
-              settings.drawImage->setPixelTrueColorOverWrite(x,y,r,g,b,a);  
-            }
-          }
-        }
-
-      }
-      
+//       if(styleConfiguration->renderMethod&RM_AVG_RGBA&&settings.drawImage->rField!=NULL){
+//         pthread_mutex_lock(&CImgWarpNearestNeighbour_render_lock);
+//         for(int y=0;y<settings.drawImage->Geo->dHeight;y++){
+//           for(int x=0;x<settings.drawImage->Geo->dWidth;x++){
+//             size_t p = x+y*settings.drawImage->Geo->dWidth;
+//             if(settings.drawImage->numField[p]!=0){
+//               
+//               unsigned char r= (settings.drawImage->rField[p]/settings.drawImage->numField[p]);
+//               unsigned char g= (settings.drawImage->gField[p]/settings.drawImage->numField[p]);
+//               unsigned char b= (settings.drawImage->bField[p]/settings.drawImage->numField[p]);
+//               unsigned char a=255;
+//               settings.drawImage->setPixelTrueColorOverWrite(x,y,r,g,b,a);  
+//             }
+//           }
+//         }
+//         pthread_mutex_unlock(&CImgWarpNearestNeighbour_render_lock);
+//       }
+//       
       
       return;
     }

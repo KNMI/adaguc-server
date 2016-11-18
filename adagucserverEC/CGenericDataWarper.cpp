@@ -40,16 +40,16 @@ int GenericDataWarper::findPixelExtent(int *PXExtentBasedOnSource,CGeoParams*sou
 //     PXExtentBasedOnSource[3]=sourceDataHeight;
 //     return 0;
 //  CDBDebug("start findPixelExtent");
-    bool destNeedsDegreeRadianConversion = false;
-    bool sourceNeedsDegreeRadianConversion = false;
-        CT::string destinationCRS;
-    warper->decodeCRS(&destinationCRS,&destGeoParams->CRS);
-      if(destinationCRS.indexOf("longlat")>=0){
-      destNeedsDegreeRadianConversion = true;
-    }
-    if(sourceGeoParams->CRS.indexOf("longlat")>=0){
-      sourceNeedsDegreeRadianConversion = true;
-    }
+//     bool destNeedsDegreeRadianConversion = false;
+//     bool sourceNeedsDegreeRadianConversion = false;
+//         CT::string destinationCRS;
+//     warper->decodeCRS(&destinationCRS,&destGeoParams->CRS);
+//       if(destinationCRS.indexOf("longlat")>=0){
+//       destNeedsDegreeRadianConversion = true;
+//     }
+//     if(sourceGeoParams->CRS.indexOf("longlat")>=0){
+//       sourceNeedsDegreeRadianConversion = true;
+//     }
     
     double dfSourceExtW=(sourceGeoParams->dfBBOX[2]-sourceGeoParams->dfBBOX[0]);
     double dfSourceExtH=(sourceGeoParams->dfBBOX[3]-sourceGeoParams->dfBBOX[1]);
@@ -123,7 +123,7 @@ int GenericDataWarper::findPixelExtent(int *PXExtentBasedOnSource,CGeoParams*sou
                 px=(double(x)/dfDestW)*dfDestExtW+dfDestOrigX;
                 py=(double(y)/dfDestH)*dfDestExtH+dfDestOrigY;
                 if(warper->isProjectionRequired()){
-                  if(destNeedsDegreeRadianConversion){
+                  if(warper->destNeedsDegreeRadianConversion){
                     px*=DEG_TO_RAD;
                     py*=DEG_TO_RAD;
                   }
@@ -153,7 +153,7 @@ int GenericDataWarper::findPixelExtent(int *PXExtentBasedOnSource,CGeoParams*sou
                   if(needsProjection)
                   {
                     if(warper->isProjectionRequired()){
-                      if(destNeedsDegreeRadianConversion){
+                      if(warper->destNeedsDegreeRadianConversion){
                         px*=DEG_TO_RAD;
                         py*=DEG_TO_RAD;
                       }
@@ -164,7 +164,7 @@ int GenericDataWarper::findPixelExtent(int *PXExtentBasedOnSource,CGeoParams*sou
       //                   py/=DEG_TO_RAD;
       //                   CDBDebug("skip %f %f",px,py);
                       }
-                      if(sourceNeedsDegreeRadianConversion){
+                      if(warper->sourceNeedsDegreeRadianConversion){
                         px/=DEG_TO_RAD;
                         py/=DEG_TO_RAD;
                       }

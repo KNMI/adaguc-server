@@ -53,7 +53,7 @@ public:
   CDrawImage *drawImage;
   //size_t prev_imgpointer;
   void init(CDataSource *dataSource,CDrawImage *drawImage,int tileWidth,int tileHeight);
-  int drawTile(double *x_corners,double *y_corners,int &dDestX,int &dDestY);
+  int drawTile(double *x_corners,double *y_corners,int &dDestX,int &dDestY, bool debug);
   void pixel_blend(int x,int y, unsigned char r,unsigned char g,unsigned char b,unsigned char a);
 };
 
@@ -77,6 +77,7 @@ private:
     double y_corners[4],x_corners[4];
     int tile_offset_x,tile_offset_y;
     CDrawTileObjBGRA *drawTile;
+    bool debug;
   };
   //This class represents which bunch of tiles needs to be drawn by which thread.
   class DrawMultipleTileSettings{

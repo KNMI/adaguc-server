@@ -115,15 +115,17 @@ const char *CCDFDims::getDimensionName(int j){
 }
 
 void CCDFDims::copy(CCDFDims * dim){
-  CDBDebug("CCDFDims::copy numdims %d",dim->dimensions.size());
+  //CDBDebug("CCDFDims::copy numdims %d",dim->dimensions.size());
   if(dim!=NULL){
     for(size_t j=0;j<dim->dimensions.size();j++){
-      CDBDebug("COPY %s",j);
+      //CDBDebug("COPY %s, %s, %d",dim->dimensions[j]->name.c_str(),dim->dimensions[j]->value.c_str(),dim->dimensions[j]->index);
       addDimension(dim->dimensions[j]->name.c_str(),dim->dimensions[j]->value.c_str(),dim->dimensions[j]->index);
       
     }
   }
+  //CDBDebug("/CCDFDims::copy numdims %d",dim->dimensions.size());
 }
+
 
 size_t CCDFDims::getNumDimensions(){
   return dimensions.size();

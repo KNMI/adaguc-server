@@ -117,8 +117,7 @@ class GenericDataWarper{
 
     int imageHeight = destGeoParams->dHeight;
     int imageWidth = destGeoParams->dWidth;
-    bool destNeedsDegreeRadianConversion = false;
-    bool sourceNeedsDegreeRadianConversion = false;
+  
     
     //Reproj back and forth sourceGeoParams boundingbox
     double y1=sourceGeoParams->dfBBOX[1];
@@ -170,7 +169,7 @@ class GenericDataWarper{
     
     double multiDestY = double(imageHeight)/dfDestExtH;
     
-        
+  /*      
     CT::string destinationCRS;
     warper->decodeCRS(&destinationCRS,&destGeoParams->CRS);
     if(destinationCRS.indexOf("longlat")>=0){
@@ -178,7 +177,7 @@ class GenericDataWarper{
     }
     if(sourceGeoParams->CRS.indexOf("longlat")>=0){
       sourceNeedsDegreeRadianConversion = true;
-    }
+    }*/
     
     
     //Determine source BBOX of based on destination grid
@@ -296,7 +295,7 @@ class GenericDataWarper{
 //     }
     
     if(warper->isProjectionRequired()){
-      if(sourceNeedsDegreeRadianConversion){
+      if(warper->sourceNeedsDegreeRadianConversion){
         for(size_t j=0;j<dataSize;j++){
           px[j]*=DEG_TO_RAD;
           py[j]*=DEG_TO_RAD;
@@ -306,7 +305,7 @@ class GenericDataWarper{
       if(pj_transform(warper->sourcepj,warper->destpj, dataSize,0,px,py,NULL)){
         CDBDebug("Unable to do pj_transform");
       }
-      if(destNeedsDegreeRadianConversion){
+      if(warper->destNeedsDegreeRadianConversion){
         for(size_t j=0;j<dataSize;j++){
           px[j]/=DEG_TO_RAD;
           py[j]/=DEG_TO_RAD;
@@ -326,9 +325,10 @@ class GenericDataWarper{
     
     double avgDX = 0;
     double avgDY = 0;
-    
-    
-    
+/*    
+    T blue = T(double(255.+0*256.+0*256.*256.+255.*256.*256.*256.));
+    T yellow  = T(double(0.+255.*256.+255.*256.*256.+255.*256.*256.*256.));
+    */
     
     for(int y=0;y<dataHeight;y=y+1){
       for(int x=0;x<dataWidth;x=x+1){
@@ -414,12 +414,21 @@ class GenericDataWarper{
             }
           }
         
+          
 
           
           if(doDraw){
             int sourceGridX = x+PXExtentBasedOnSource[0];
             int sourceGridY = y+PXExtentBasedOnSource[1];
             T value = ((T*)sourceData)[sourceGridX+(sourceDataHeight-1-sourceGridY)*sourceDataWidth];
+
+            
+//             if(sourceGridX ==0||sourceGridX==sourceDataWidth-1||sourceGridY ==0||sourceGridY==sourceDataHeight-1){value=blue;}
+//             if((sourceGridX ==10||sourceGridX==sourceDataWidth-10)&& sourceGridY >10 &&sourceGridY<sourceDataHeight-10){value=yellow;}
+//             if((sourceGridY ==10||sourceGridY==sourceDataHeight-10)&& sourceGridX >10 &&sourceGridX<sourceDataWidth-10){value=yellow;}
+//                      
+
+            
             double mX = (px1+px2+px3+px4)/4;
             double mY = (py1+py2+py3+py4)/4;
 /*            

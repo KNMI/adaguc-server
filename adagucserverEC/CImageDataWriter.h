@@ -75,8 +75,8 @@ class CImageDataWriter: public CBaseDataWriterInterface{
     static std::map<std::string,CImageDataWriter::ProjCacheInfo>::iterator projCacheIter;
     static ProjCacheInfo GetProjInfo(CT::string ckey, CDrawImage *drawImage, CDataSource *dataSource,CImageWarper *imageWarper,CServerParams *srvParam,int dX,int dY);
 private:
-    CImageWarper imageWarper;
-    CDataSource *currentDataSource;
+    //CImageWarper imageWarper;
+   //CDataSource *currentDataSource;
     //int requestType;
     //int status;
     int animation;
@@ -183,5 +183,7 @@ private:
     int initializeLegend(CServerParams *srvParam,CDataSource *dataSource);
     int drawText(int x,int y,const char *fontfile,float size, float angle,const char *text,unsigned char colorIndex);
 };
+
+
 
 #endif

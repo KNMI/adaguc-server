@@ -423,14 +423,17 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
       delete[] cDims;
     }
     if(i==0){
+      if(numQueriesAdded==0){
+        subQuery.printconcat("where ");
+      }else{
+        subQuery.printconcat("and ");
+      }
       if(dataSource->queryBBOX){
-        if(numQueriesAdded==0){
-          subQuery.printconcat("where ");
-        }else{
-          subQuery.printconcat("and ");
-        }
+        
         subQuery.printconcat("level = %d and minx >= %f and maxx <= %f and miny >= %f and maxy <= %f ",dataSource->queryLevel,dataSource->nativeViewPortBBOX[0],dataSource->nativeViewPortBBOX[2],dataSource->nativeViewPortBBOX[1],dataSource->nativeViewPortBBOX[3]);
-       // CDBDebug("Print query %s",subQuery.c_str());
+       
+      }else{
+         subQuery.printconcat("level = %d ",dataSource->queryLevel);
       }
       subQuery.printconcat("ORDER BY %s DESC limit %d)a%d ",netCDFDimName.c_str(),limit,i);
       //subQuery.printconcat("ORDER BY %s DESC )a%d ",netCDFDimName.c_str(),i);
