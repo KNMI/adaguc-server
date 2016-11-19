@@ -260,6 +260,7 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
       return 1;
     }
     outputCRS->copy(inputCRS);
+    if(inputCRS->indexOf("proj")!=-1)return 0;
     dMaxExtentDefined=0;
     //CDBDebug("Check");
     outputCRS->decodeURLSelf();
@@ -290,32 +291,32 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
     return 0;
   }
 
-  int CImageWarper::_decodeCRS(CT::string *CRS){
-    destinationCRS.copy(CRS);
-    dMaxExtentDefined=0;
-    //destinationCRS.decodeURL();
-    for(size_t j=0;j<(*prj).size();j++){
-      if(destinationCRS.equals((*prj)[j]->attr.id.c_str())){
-        destinationCRS.copy((*prj)[j]->attr.proj4.c_str());
-        if((*prj)[j]->LatLonBox.size()==1){
-          //if(getMaxExtentBBOX!=NULL)
-          {
-            dMaxExtentDefined=1;
-            dfMaxExtent[0]=(*prj)[j]->LatLonBox[0]->attr.minx;
-            dfMaxExtent[1]=(*prj)[j]->LatLonBox[0]->attr.miny;
-            dfMaxExtent[2]=(*prj)[j]->LatLonBox[0]->attr.maxx;
-            dfMaxExtent[3]=(*prj)[j]->LatLonBox[0]->attr.maxy;
-          }
-        }
-        break;
-      }
-    }
-    if(destinationCRS.indexOf("PROJ4:")==0){
-      CT::string temp(destinationCRS.c_str()+6);
-      destinationCRS.copy(&temp);
-    }
-    return 0;
-  }
+//   int CImageWarper::_decodeCRS(CT::string *CRS){
+//     destinationCRS.copy(CRS);
+//     dMaxExtentDefined=0;
+//     //destinationCRS.decodeURL();
+//     for(size_t j=0;j<(*prj).size();j++){
+//       if(destinationCRS.equals((*prj)[j]->attr.id.c_str())){
+//         destinationCRS.copy((*prj)[j]->attr.proj4.c_str());
+//         if((*prj)[j]->LatLonBox.size()==1){
+//           //if(getMaxExtentBBOX!=NULL)
+//           {
+//             dMaxExtentDefined=1;
+//             dfMaxExtent[0]=(*prj)[j]->LatLonBox[0]->attr.minx;
+//             dfMaxExtent[1]=(*prj)[j]->LatLonBox[0]->attr.miny;
+//             dfMaxExtent[2]=(*prj)[j]->LatLonBox[0]->attr.maxx;
+//             dfMaxExtent[3]=(*prj)[j]->LatLonBox[0]->attr.maxy;
+//           }
+//         }
+//         break;
+//       }
+//     }
+//     if(destinationCRS.indexOf("PROJ4:")==0){
+//       CT::string temp(destinationCRS.c_str()+6);
+//       destinationCRS.copy(&temp);
+//     }
+//     return 0;
+//   }
 
   int CImageWarper::initreproj(CDataSource *dataSource,CGeoParams *GeoDest,std::vector <CServerConfig::XMLE_Projection*> *_prj){
     if(dataSource==NULL||GeoDest==NULL){
@@ -351,13 +352,22 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
       pj_ctx_free(proj4Context);
     }
     proj4Context = pj_ctx_alloc();
+    
+    CT::string sourceProjectionUndec = projString;
+    CT::string sourceProjection = projString;
+    if(decodeCRS(&sourceProjection,&sourceProjectionUndec,_prj)!=0){
+      CDBError("decodeCRS failed");
+      return 1;
+    }
+    
+    CDBDebug("sourceProjectionUndec %s, sourceProjection %s",sourceProjection.c_str(),sourceProjectionUndec.c_str());
    
-    if (!(sourcepj = pj_init_plus_ctx(proj4Context,projString))){
-      CDBError("SetSourceProjection: Invalid projection: %s",projString);
+    if (!(sourcepj = pj_init_plus_ctx(proj4Context,sourceProjection.c_str()))){
+      CDBError("SetSourceProjection: Invalid projection: %s",sourceProjection.c_str());
       return 1;
     }
     if(sourcepj==NULL){
-      CDBError("SetSourceProjection: Invalid projection: %s",projString);
+      CDBError("SetSourceProjection: Invalid projection: %s",sourceProjection.c_str());
       return 1;
     }
     if (!(latlonpj = pj_init_plus_ctx(proj4Context,LATLONPROJECTION))){
@@ -365,10 +375,11 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
       return 1;
     }
     dMaxExtentDefined=0;
-    if(_decodeCRS(&GeoDest->CRS)!=0){
+    if(decodeCRS(&destinationCRS,&GeoDest->CRS,_prj)!=0){
       CDBError("decodeCRS failed");
       return 1;
     }
+    
     if (!(destpj = pj_init_plus_ctx(proj4Context,destinationCRS.c_str()))){
       CDBError("SetDestProjection: Invalid projection: %s",destinationCRS.c_str());
       return 1;
@@ -391,7 +402,7 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
       destNeedsDegreeRadianConversion = true;
     }else destNeedsDegreeRadianConversion =false;
     
-    sourceCRSString = projString;
+    sourceCRSString = sourceProjection.c_str();
     if(sourceCRSString.indexOf("longlat")>=0){
       sourceNeedsDegreeRadianConversion = true;
     }else sourceNeedsDegreeRadianConversion=false;
