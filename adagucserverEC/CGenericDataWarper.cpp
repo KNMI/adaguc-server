@@ -27,6 +27,7 @@
 const char *GenericDataWarper::className="GenericDataWarper";
 
 int GenericDataWarper::findPixelExtent(int *PXExtentBasedOnSource,CGeoParams*sourceGeoParams,CGeoParams*destGeoParams,CImageWarper*warper){
+  return 0;
     int sourceDataWidth = sourceGeoParams->dWidth;
     int sourceDataHeight = sourceGeoParams->dHeight;
       PXExtentBasedOnSource[0]=-1;
