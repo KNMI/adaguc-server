@@ -75,7 +75,7 @@ class CImageWarper{
     //CGeoParams * _geoDest;
     CT::string sourceCRSString;
     CT::string destinationCRS;
-    int _decodeCRS(CT::string *CRS);
+//     int _decodeCRS(CT::string *CRS);
     std::vector <CServerConfig::XMLE_Projection*> *prj;
     bool initialized;
     int _findExtentSynchronized(CDataSource *dataSource,double * dfBBOX);
