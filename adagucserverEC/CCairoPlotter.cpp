@@ -736,7 +736,8 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
 
 
   int CCairoPlotter::writeARGBPng(int width,int height,unsigned char *ARGBByteBuffer,FILE *file,int bitDepth){
-    
+         bool use8bitpalAlpha = false;
+     
     //CDBDebug("Using png library directly to write PNG");
     OctreeType * tree = NULL;
     
@@ -821,60 +822,112 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
       #ifdef MEASURETIME
       StopWatch_Stop("Creating octtree for color quantization");
       #endif
-     
-      for(int j=0;j<width*height;j=j+1){
-        RGBType color;
-        color.b=ARGBByteBuffer[0+j*4]/8+int(ARGBByteBuffer[3+j*4]/32)*32;
-        color.g=ARGBByteBuffer[1+j*4];
-        color.r=ARGBByteBuffer[2+j*4];
-        color.realblue=ARGBByteBuffer[0+j*4];
-        color.realalpha=ARGBByteBuffer[3+j*4];
-        InsertTree(&tree, &color, -1);
+ 
+      if(use8bitpalAlpha){
+        for(int j=0;j<width*height;j=j+1){
+          RGBType color;
+          color.b=ARGBByteBuffer[0+j*4]/8+int(ARGBByteBuffer[3+j*4]/32)*32;
+          color.g=ARGBByteBuffer[1+j*4];
+          color.r=ARGBByteBuffer[2+j*4];
+          color.realblue=ARGBByteBuffer[0+j*4];
+          color.realalpha=ARGBByteBuffer[3+j*4];
+          InsertTree(&tree, &color, -1);
+        }
+      }else{
+        for(int j=0;j<width*height;j=j+1){
+          RGBType color;
+          if((ARGBByteBuffer[3+j*4]==255)){
+            color.b=ARGBByteBuffer[0+j*4];
+            color.g=ARGBByteBuffer[1+j*4];
+            color.r=ARGBByteBuffer[2+j*4];
+            color.realblue=ARGBByteBuffer[0+j*4];
+            color.realalpha=ARGBByteBuffer[3+j*4];
+            InsertTree(&tree, &color, -1);
+          }
+        }
       }
       
       #ifdef MEASURETIME
       StopWatch_Stop("Tree filled, starting reduction");
       #endif
-      while(TotalLeafNodes()>255){
-        ReduceTree();
+      if(use8bitpalAlpha){
+        while(TotalLeafNodes()>255){
+          ReduceTree();
+        }
+      }else{
+        while(TotalLeafNodes()>254){
+          ReduceTree();
+        }
       }
       #ifdef MEASURETIME
       StopWatch_Stop("Tree reduction completed");
       #endif
     
-      int numColors=0;
-      RGBType table[256];
-      
-      MakePaletteTable(tree, table, &numColors);
-      if(numColors>255)numColors=255;
-      CDBDebug("Number of quantized colors: %d",numColors);
-      
-      int numAlphaColors = 0;
-      
-      for(int j=0;j<256&&j<numColors;j++){
-        palette[j].red=table[j].r;
-        palette[j].green=table[j].g;
-        palette[j].blue=table[j].realblue;
-        //palette[j+1].alpha=table[j].a;
-        unsigned char alpha = table[j].realalpha;
-        //if(alpha!=255)
-        {
-        
-          a[numAlphaColors]=alpha;
-//           trans_values[numAlphaColors].index=alpha;
-//           trans_values[numAlphaColors].red=table[j].r;
-//           trans_values[numAlphaColors].green=table[j].g;
-//           trans_values[numAlphaColors].blue=table[j].realblue;
-          
-          numAlphaColors++;
+      if(use8bitpalAlpha){
+        int numColors=0;
+        RGBType table[256];
+        MakePaletteTable(tree, table, &numColors);
+        if(numColors>255)numColors=255;
+        CDBDebug("Number of quantized colors: %d",numColors);
+        int numAlphaColors = 0;
+        palette[0].red=0;
+        palette[0].green=0;
+        palette[0].blue=0;
+        for(int j=0;j<256&&j<numColors;j++){
+          palette[j].red=table[j].r;
+          palette[j].green=table[j].g;
+          palette[j].blue=table[j].realblue;
+          unsigned char alpha = table[j].realalpha;
+          //if(alpha!=255)
+          {
+            a[numAlphaColors]=alpha;
+//             trans_values[numAlphaColors].index=alpha;
+//             trans_values[numAlphaColors].red=table[j].r;
+//             trans_values[numAlphaColors].green=table[j].g;
+//             trans_values[numAlphaColors].blue=table[j].realblue;
+            numAlphaColors++;
+          }
         }
-    
+        png_set_PLTE( png_ptr,  info_ptr,  palette, 255);
+        CDBDebug("Num alpha colors: %d",numAlphaColors);
+        png_set_tRNS(png_ptr, info_ptr, a, numAlphaColors, trans_values);
+      }else{        
+        int numColors=0;
+        RGBType table[256];
+        MakePaletteTable(tree, table, &numColors);
+        if(numColors>254)numColors=254;
+        CDBDebug("Number of quantized colors: %d",numColors);
+                palette[0].red=0;
+        palette[0].green=0;
+        palette[0].blue=0;
+        for(int j=1;j<256&&j<numColors+1;j++){
+          palette[j].red=table[j-1].r;
+          palette[j].green=table[j-1].g;
+          palette[j].blue=table[j-1].realblue;
+        }
+        png_set_PLTE( png_ptr,  info_ptr,  palette, 255);
+        
+        a[0]=0;
+        trans_values[0].index=0;
+        trans_values[0].red=0;
+        trans_values[0].green=0;
+        trans_values[0].blue=0;
+        png_set_tRNS(png_ptr, info_ptr, a, 1, trans_values);
       }
-      png_set_PLTE( png_ptr,  info_ptr,  palette, 255);
      
-      //CDBDebug("Num alpha colors: %d",numAlphaColors);
-    
-      png_set_tRNS(png_ptr, info_ptr, a, numAlphaColors, trans_values);
+     
+//       if(use8bitpalAlpha){
+
+//       }else{
+//         png_byte a[1];
+//         png_color_16 trans_values[1];
+//         a[0]=0;
+//         trans_values[0].index=0;
+//         trans_values[0].red=0;
+//         trans_values[0].green=0;
+//         trans_values[0].blue=0;
+//         png_set_tRNS(png_ptr, info_ptr, a, 1, trans_values);
+//       }
     }
     
     
@@ -967,17 +1020,23 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
          // if(ARGBByteBuffer[3+x]>128){
           
           RGBType color;
-          color.b= ARGBByteBuffer[0+x]/8+int(ARGBByteBuffer[3+x]/32)*32;
           color.g= ARGBByteBuffer[1+x];
           color.r= ARGBByteBuffer[2+x];
-          //color.a= ARGBByteBuffer[3+x];
-          
-          int index=QuantizeColorMapped(tree, &color);
-        
-          RGBARow[p++]= index;
-//           }else{
-//             RGBARow[p++]=0;
-//           }
+          if(use8bitpalAlpha){
+            color.b= ARGBByteBuffer[0+x]/8+int(ARGBByteBuffer[3+x]/32)*32;
+            RGBARow[p++]= QuantizeColorMapped(tree, &color);
+
+          }else{
+            color.b= ARGBByteBuffer[0+x];
+            if(ARGBByteBuffer[3+x]==255){
+              RGBARow[p++]= QuantizeColorMapped(tree, &color)+1;
+            }else{
+              RGBARow[p++]= 0;
+            }
+
+          }
+      
+
 
         }
         
