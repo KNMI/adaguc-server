@@ -690,8 +690,11 @@ void CDrawImage::setPixelIndexed(int x,int y,int color){
 //       if(currentLegend->CDIalpha[color]==255){
 //     cairo-> pixel(x,y,currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color]);
 //       }else{
+      
         if(currentLegend->CDIalpha[color]>0){
               cairo-> pixel_blend(x,y,currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],currentLegend->CDIalpha[color]);
+        }else if(currentLegend->CDIalpha[color]<0){
+              cairo-> pixel_overwrite(x,y,currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],-(currentLegend->CDIalpha[color]+1));
         }
 //       }
     }
