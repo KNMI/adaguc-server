@@ -837,7 +837,7 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
         bool something = false;
         for(int j=0;j<width*height;j=j+1){
           RGBType color;
-          if((ARGBByteBuffer[3+j*4]==255)){
+          if((ARGBByteBuffer[3+j*4]>64)){
             something=true;
             color.b=ARGBByteBuffer[0+j*4];
             color.g=ARGBByteBuffer[1+j*4];
@@ -1039,7 +1039,7 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
 
           }else{
             color.b= ARGBByteBuffer[0+x];
-            if(ARGBByteBuffer[3+x]==255){
+            if(ARGBByteBuffer[3+x]>64){
               RGBARow[p++]= QuantizeColorMapped(tree, &color)+1;
             }else{
               RGBARow[p++]= 0;

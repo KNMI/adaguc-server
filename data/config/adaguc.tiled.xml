@@ -13,7 +13,7 @@
       <Title>GeoJSON Service</Title>
       <Abstract>GeoJSON Service demonstrating the possibility to use GeoJSON in ADAGUC</Abstract>
     </RootLayer>
-      <WMSFormat name="image/png" format="image/png24"/> 
+      <WMSFormat name="image/png" format="image/png;mode=8bit_noalpha"/> 
   </WMS>
   
   
@@ -88,15 +88,15 @@
     <Max>10</Max>
    <TileSettings tilewidthpx="600" 
                   tileheightpx="600" 
-                  tilecellsizex="0.01"
-                  tilecellsizey="0.01"
+                  tilecellsizex="0.02"
+                  tilecellsizey="0.02"
                   left="60" right="180"  bottom="-86" top="86"
                   tileprojection="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
-                  minlevel="3"
+                  minlevel="2"
                   maxlevel="6"
                   tilemode="avg_rgba"
                   debug="false"
-                  threads="2" 
+                  threads="1" 
                   tilepath="/nobackup/users/plieger/data/tiles/himtest/"/>
 <!--    
      <TileSettings tilewidthpx="512" 
@@ -114,11 +114,12 @@
   </Layer>
   
   <Layer type="database">
-    <Name>S1A</Name>
-    <Title>S1A</Title>
-    <FilePath>/nobackup/users/plieger/data/g4indo/S1A_20160527220855_IW_VVVV_VH_VV-VH.nc</FilePath>
-    <Variable>rgba</Variable>
-    <RenderMethod>rgba</RenderMethod>
+    <Name>mask</Name>
+    <Title>mask</Title>
+    <FilePath>/nobackup/users/plieger/data/g4indo/result_clip_ones.nc</FilePath>
+    <Variable>Band1</Variable>
+    <RenderMethod>nearest</RenderMethod>
+    <ValueRange min="-0.5" max="0.5"/>
    
    <TileSettings tilewidthpx="600" 
                   tileheightpx="600" 
@@ -128,13 +129,39 @@
                   tileprojection="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
                   minlevel="1"
                   maxlevel="6"
+                  debug="false"
+                  threads="1" 
+                  tilepath="/nobackup/users/plieger/data/tiles/g4indo-mask/"/>
+   </Layer>
+   
+  <Layer type="database">
+    <Name>S1A</Name>
+    <Title>S1A</Title>
+    <FilePath>/nobackup/users/plieger/data/g4indo/S1A_20160527220855_IW_VVVV_VH_VV-VH.nc</FilePath>
+    <Variable>rgba</Variable>
+    <RenderMethod>rgba</RenderMethod>
+    <TileSettings tilewidthpx="600" 
+                  tileheightpx="600" 
+                  tilecellsizex="0.000224982"
+                  tilecellsizey="0.000224982"
+                  left="111.4" right="113.1"  bottom="-8.4" top="-7.1"
+                  tileprojection="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+                  minlevel="1"
+                  maxlevel="6"
                   tilemode="avg_rgba"
                   debug="false"
-                  threads="2" 
+                  threads="1" 
                   tilepath="/nobackup/users/plieger/data/tiles/g4indo/"/>
-   <DataBaseTable>g4indo</DataBaseTable>
    </Layer>
   
+<Layer type="cascaded" hidden="false">
+  <Name>S1A_MASKED</Name>
+  <Title>S1A Masked</Title>
+  <WMSLayer service="http://bhw485.knmi.nl:8080/cgi-bin/adaguc.tiled.cgi?" layer="S1A,mask"/>
+  <LatLonBox minx="111.4"  miny="-8.4" maxx="113.1" maxy="-7.1"/>
+</Layer>
+
+
 <!--  <Layer type="database">
     <Group value="Optical"/>
     <Name>G4INDO LAI tiles layer</Name>

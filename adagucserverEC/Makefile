@@ -12,9 +12,14 @@ ifndef BUILDER_ADAGUCCOMPILERSETTINGS
   BUILDER_ADAGUCCOMPILERSETTINGS=-Wall -DMEMLEAKCHECK -g
 endif
 
+ifdef ADAGUCCOMPONENTS
+BUILDER_ADAGUCCOMPONENTS=$(ADAGUCCOMPONENTS)
+endif
+
 ifndef BUILDER_ADAGUCCOMPONENTS
   BUILDER_ADAGUCCOMPONENTS=-DENABLE_CURL -DADAGUC_USE_GDAL -DADAGUC_USE_SQLITE -DADAGUC_USE_POSTGRESQL
 endif
+
 
 
 ifneq (,$(findstring DENABLE_CURL,$(BUILDER_ADAGUCCOMPONENTS)))
@@ -51,7 +56,7 @@ CCOMPILER=g++ $(BUILDER_ADAGUCCOMPILERSETTINGS) $(INCLUDEDIR)
 #CCOMPILER=g++ -O2 $(INCLUDEDIR)
 #CCOMPILER=g++ -march=k8-sse3 -mtune=k8-sse3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 $(INCLUDEDIR)  
 
-USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lxml2 -lgd -lproj  -ludunits2 -lfreetype -lgd -lpng -lpthread -lrt $(LIB_CAIRO) $(LIB_CURL) $(LIB_GDAL) $(LIB_PQ) $(LIB_SQLITE) $(LIB_MONGODB) $(LIB_WEBP)
+USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lxml2 -lgd -lproj  -ludunits2 -lfreetype -lgd -lpng -lpthread -lrt $(LIB_CAIRO) $(LIB_CURL) $(LIB_GDAL) $(LIB_PQ) $(LIB_SQLITE) $(LIB_MONGODB) $(LIB_WEBP) 
 
 
 
