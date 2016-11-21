@@ -2848,9 +2848,13 @@ int CRequest::process_querystring(){
           // Set format
           //CDBDebug("FORMAT: %s",srvParam->Format.c_str());
           //srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8;
-          if(srvParam->Format.indexOf("24")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG24;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
-          else if(srvParam->Format.indexOf("32")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG32;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
-          else if(srvParam->Format.indexOf("8")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8;srvParam->imageMode=SERVERIMAGEMODE_8BIT;}
+
+          if(srvParam->Format.indexOf("32")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG32;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
+          else if(srvParam->Format.indexOf("24")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG24;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
+          else if(srvParam->Format.indexOf("8bit_noalpha")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8_NOALPHA;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
+          else if(srvParam->Format.indexOf("png8_noalpha")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8_NOALPHA;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
+          else if(srvParam->Format.indexOf("8")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
+          else if(srvParam->Format.indexOf("webp")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEWEBP;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
           else if(srvParam->Format.indexOf("gif")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEGIF;srvParam->imageMode=SERVERIMAGEMODE_8BIT;}
           else if(srvParam->Format.indexOf("GIF")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEGIF;srvParam->imageMode=SERVERIMAGEMODE_8BIT;}
        
@@ -3059,7 +3063,7 @@ int CRequest::process_querystring(){
         }
         drawImage.crop(1);
         printf("%s%c%c\n","Content-Type:image/png",13,10);
-        drawImage.printImagePng8();
+        drawImage.printImagePng8(true);
         return 0;
     }
         

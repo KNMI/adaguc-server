@@ -673,14 +673,14 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
   }
 
   void CCairoPlotter::writeToPng24Stream(FILE *fp,unsigned char alpha) {
-    writeARGBPng(width,height,ARGBByteBuffer,fp,24);
+    writeARGBPng(width,height,ARGBByteBuffer,fp,24,false);
   }
   
-  void CCairoPlotter::writeToPng8Stream(FILE *fp,unsigned char alpha) {
+  void CCairoPlotter::writeToPng8Stream(FILE *fp,unsigned char alpha,bool use8bitpalAlpha) {
 //     bool useCairo = false;
 //     if(!useCairo){
 
-      writeARGBPng(width,height,ARGBByteBuffer,fp,8);
+      writeARGBPng(width,height,ARGBByteBuffer,fp,8,use8bitpalAlpha);
 //     }else{
 //       if(isAlphaUsed){
 //         CDBDebug("Alpha was used");
@@ -735,8 +735,8 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
   
 
 
-  int CCairoPlotter::writeARGBPng(int width,int height,unsigned char *ARGBByteBuffer,FILE *file,int bitDepth){
-         bool use8bitpalAlpha = false;
+  int CCairoPlotter::writeARGBPng(int width,int height,unsigned char *ARGBByteBuffer,FILE *file,int bitDepth,bool use8bitpalAlpha){
+        // bool use8bitpalAlpha = true;
      
     //CDBDebug("Using png library directly to write PNG");
     OctreeType * tree = NULL;
@@ -834,9 +834,11 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
           InsertTree(&tree, &color, -1);
         }
       }else{
+        bool something = false;
         for(int j=0;j<width*height;j=j+1){
           RGBType color;
           if((ARGBByteBuffer[3+j*4]==255)){
+            something=true;
             color.b=ARGBByteBuffer[0+j*4];
             color.g=ARGBByteBuffer[1+j*4];
             color.r=ARGBByteBuffer[2+j*4];
@@ -844,6 +846,15 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
             color.realalpha=ARGBByteBuffer[3+j*4];
             InsertTree(&tree, &color, -1);
           }
+        }
+        if(!something){
+          RGBType color;
+          color.r=0;
+          color.g=0;
+          color.b=0;
+          color.realblue=0;
+          color.realalpha=0;
+          InsertTree(&tree, &color, -1);
         }
       }
       
@@ -932,8 +943,8 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
     
     
     png_set_filter (png_ptr, 0, PNG_FILTER_NONE);
-    png_set_compression_level (png_ptr, 0);
-    png_set_filter_heuristics(png_ptr, PNG_FILTER_HEURISTIC_DEFAULT,1, NULL, NULL);
+    //png_set_compression_level (png_ptr, 2);
+    //png_set_filter_heuristics(png_ptr, PNG_FILTER_HEURISTIC_DEFAULT,1, NULL, NULL);
     //png_set_invert_alpha(png_ptr);
     png_write_info(png_ptr, info_ptr);
     
@@ -1069,5 +1080,26 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
  //   cairo_surface_destroy(surface);
   }
  
+#ifdef ADAGUC_USE_WEBP 
+#include "webp/encode.h"
+#include "webp/decode.h"
+#include "webp/types.h"
+#endif
+ void CCairoPlotter::writeToWebP32Stream(FILE *fp,unsigned char alpha){
+#ifdef ADAGUC_USE_WEBP
+   /* sudo apt-get install libwebp-dev */
+  uint8_t* output = NULL;
+  size_t numBytes = WebPEncodeBGRA(ARGBByteBuffer,  width,  height,  stride,80,&output);
+  if(numBytes == 0){
+    CDBError("Unable to encode WebPEncodeBGRA");
+  }else{
+    fwrite(output,1,numBytes, fp);
+    free(output);
+  }
+#else
+CDBError("-DADAGUC_USE_WEBP not enabled");
+#endif
+   
+ }
  
 #endif
