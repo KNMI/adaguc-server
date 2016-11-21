@@ -2228,7 +2228,7 @@ int CImageDataWriter::end(){
 
     
       printf("%s%c%c\n","Content-Type:image/png",13,10);
-      drawImage.printImagePng8();
+      drawImage.printImagePng8(true);
     
       return 0;
     }
@@ -3239,7 +3239,7 @@ int CImageDataWriter::end(){
 
       if(resultFormat==imagepng){
         printf("%s%c%c\n","Content-Type:image/png",13,10);
-        plotCanvas.printImagePng8();
+        plotCanvas.printImagePng8(true);
       }
       if(resultFormat==imagegif){
         printf("%s%c%c\n","Content-Type:image/gif",13,10);
@@ -3284,9 +3284,13 @@ StopWatch_Stop("Drawing finished, start printing image");
 //CDBDebug("srvParam->imageFormat = %d",srvParam->imageFormat);
   int status = 1;
   if(srvParam->imageFormat==IMAGEFORMAT_IMAGEPNG8){
-    CDBDebug("Creating 8 bit png");
+    CDBDebug("Creating 8 bit png with alpha");
     printf("%s%c%c\n","Content-Type:image/png",13,10);
-    status=drawImage.printImagePng8();
+    status=drawImage.printImagePng8(true);
+  }else if(srvParam->imageFormat==IMAGEFORMAT_IMAGEPNG8_NOALPHA){
+    CDBDebug("Creating 8 bit png without alpha");
+    printf("%s%c%c\n","Content-Type:image/png",13,10);
+    status=drawImage.printImagePng8(false);
   }else if(srvParam->imageFormat==IMAGEFORMAT_IMAGEPNG24){
     CDBDebug("Creating 24 bit png");
     printf("%s%c%c\n","Content-Type:image/png",13,10);
@@ -3295,6 +3299,10 @@ StopWatch_Stop("Drawing finished, start printing image");
     CDBDebug("Creating 32 bit png");
     printf("%s%c%c\n","Content-Type:image/png",13,10);
     status=drawImage.printImagePng32();
+  }else if(srvParam->imageFormat==IMAGEFORMAT_IMAGEWEBP){
+    CDBDebug("Creating 32 bit webp");
+    printf("%s%c%c\n","Content-Type:image/webp",13,10);
+    status=drawImage.printImageWebP32();
   }else if(srvParam->imageFormat==IMAGEFORMAT_IMAGEGIF){
     //CDBDebug("LegendGraphic GIF");
     if(animation == 0){
@@ -3304,7 +3312,7 @@ StopWatch_Stop("Drawing finished, start printing image");
   }else {
     //CDBDebug("LegendGraphic PNG");
     printf("%s%c%c\n","Content-Type:image/png",13,10);
-    status=drawImage.printImagePng8();
+    status=drawImage.printImagePng8(true);
   }
   
   #ifdef MEASURETIME

@@ -203,12 +203,12 @@ int CDrawImage::getClosestGDColor(unsigned char r,unsigned char g,unsigned char 
   return color;
 }
 
-int CDrawImage::printImagePng8(){
+int CDrawImage::printImagePng8(bool useBitAlpha){
   if(dImageCreated==0){CDBError("print: image not created");return 1;}
 
   if(currentGraphicsRenderer==CDRAWIMAGERENDERER_CAIRO){
     CDBDebug("printImagePng8 CAIRO");
-    cairo->writeToPng8Stream(stdout,backgroundAlpha);
+    cairo->writeToPng8Stream(stdout,backgroundAlpha,useBitAlpha);
   }else if(currentGraphicsRenderer==CDRAWIMAGERENDERER_GD){
     CDBDebug("printImagePng8 GF");
     gdImagePng(image, stdout);
@@ -232,6 +232,8 @@ int CDrawImage::printImagePng24(){
   }
   return 0;
 }
+
+
 int CDrawImage::printImagePng32(){
   if(dImageCreated==0){CDBError("print: image not created");return 1;}
   
@@ -241,6 +243,19 @@ int CDrawImage::printImagePng32(){
   
   if(currentGraphicsRenderer==CDRAWIMAGERENDERER_GD){
     CDBError("gdImagePNG does not support 32 bit");
+    return 1;
+  }
+  return 0;
+}
+int CDrawImage::printImageWebP32(){
+  if(dImageCreated==0){CDBError("print: image not created");return 1;}
+  
+  if(currentGraphicsRenderer==CDRAWIMAGERENDERER_CAIRO){
+    cairo->writeToWebP32Stream(stdout,backgroundAlpha);
+  }
+  
+  if(currentGraphicsRenderer==CDRAWIMAGERENDERER_GD){
+    CDBError("gdImagePNG does not support webp");
     return 1;
   }
   return 0;
