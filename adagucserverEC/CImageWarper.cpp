@@ -360,7 +360,7 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
       return 1;
     }
     
-    CDBDebug("sourceProjectionUndec %s, sourceProjection %s",sourceProjection.c_str(),sourceProjectionUndec.c_str());
+//    CDBDebug("sourceProjectionUndec %s, sourceProjection %s",sourceProjection.c_str(),sourceProjectionUndec.c_str());
    
     if (!(sourcepj = pj_init_plus_ctx(proj4Context,sourceProjection.c_str()))){
       CDBError("SetSourceProjection: Invalid projection: %s",sourceProjection.c_str());
