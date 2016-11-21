@@ -525,6 +525,8 @@ private:
         if(pcolorind>=239)pcolorind=239;else if(pcolorind<=0)pcolorind=0;
       
         settings->drawImage->setPixelIndexed(x,y,pcolorind);
+        
+        //settings->drawImage->setPixelTrueColorOverWrite(x,y,0,0,0,0);
       }
     }else{
       if(x>=0&&y>=0&&x<settings->drawImage->Geo->dWidth&&y<settings->drawImage->Geo->dHeight){
@@ -560,7 +562,7 @@ private:
     if((int)dataSource->dHeight != (int)drawImage->Geo->dHeight){fieldsAreIdentical = false;}
     
     if(fieldsAreIdentical){
-      CDBDebug("fieldsAreIdentical: using _plot");
+      //CDBDebug("fieldsAreIdentical: using _plot");
       CDFType dataType=dataSource->getDataObject(0)->cdfVariable->getType();
         switch(dataType){
         case CDF_CHAR  : return _plot<char>(warper,dataSource,drawImage);break;
@@ -578,7 +580,7 @@ private:
     
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();  
     if(dataSource->dWidth*dataSource->dHeight<720*720||1==2||styleConfiguration->renderMethod&RM_AVG_RGBA){
-      CDBDebug("field is small enough for precise renderer: using _render");
+      //CDBDebug("field is small enough for precise renderer: using _render");
       Settings settings;
         
       settings.dfNodataValue    = dataSource->getDataObject(0)->dfNodataValue ;

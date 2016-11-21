@@ -708,9 +708,9 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
  
   CDFObject *cdfObject = NULL;
     
-#ifdef CDATAREADER_DEBUG
+//#ifdef CDATAREADER_DEBUG
   CDBDebug("Working on [%s] with mode %d",dataSourceFilename.c_str(),mode);
-#endif
+//#endif
     
   if(mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS  || mode == CNETCDFREADER_MODE_OPEN_HEADER ){
       //pthread_mutex_lock(&CDataReader_open_lock);

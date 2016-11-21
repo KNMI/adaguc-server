@@ -113,12 +113,25 @@
     <Dimension name="time" interval="PT10M" default="max">time</Dimension>
   </Layer>
   
+  <Legend name="black" type="colorRange">
+    <palette index="0"   red="0"  green="0" blue="0" alpha="-1"/>
+    <palette index="240" red="0"  green="0"  blue="0" alpha="-1"/>
+  </Legend>
+  
+  <Style name="black">
+    <Legend fixedclasses="true" tickinterval="1">black</Legend>
+    <Min>0</Min>
+    <Max>1</Max>
+    <NameMapping name="nearest"   title="Masked" abstract="Masked"/>
+    <RenderMethod>nearest</RenderMethod>
+  </Style>
+  
   <Layer type="database">
     <Name>mask</Name>
     <Title>mask</Title>
     <FilePath>/nobackup/users/plieger/data/g4indo/result_clip_ones.nc</FilePath>
     <Variable>Band1</Variable>
-    <RenderMethod>nearest</RenderMethod>
+    <Styles>black</Styles>
     <ValueRange min="-0.5" max="0.5"/>
    
    <TileSettings tilewidthpx="600" 
@@ -130,7 +143,7 @@
                   minlevel="1"
                   maxlevel="6"
                   debug="false"
-                  threads="1" 
+                  threads="1"  
                   tilepath="/nobackup/users/plieger/data/tiles/g4indo-mask/"/>
    </Layer>
    
@@ -152,28 +165,10 @@
                   debug="false"
                   threads="1" 
                   tilepath="/nobackup/users/plieger/data/tiles/g4indo/"/>
+       <AdditionalLayer style="black/nearest"  replace="false">mask</AdditionalLayer>
    </Layer>
-  
-<Layer type="cascaded" hidden="false">
-  <Name>S1A_MASKED</Name>
-  <Title>S1A Masked</Title>
-  <WMSLayer service="http://bhw485.knmi.nl:8080/cgi-bin/adaguc.tiled.cgi?" layer="S1A,mask"/>
-  <LatLonBox minx="111.4"  miny="-8.4" maxx="113.1" maxy="-7.1"/>
-</Layer>
 
-
-<!--  <Layer type="database">
-    <Group value="Optical"/>
-    <Name>G4INDO LAI tiles layer</Name>
-    <Title>lai_tiles</Title>
-    <FilePath filter="[.]nc$">/data/thredds/LAI_tiles/</FilePath>
-    <Variable>lai</Variable>
-    <Projection id="EPSG:32749" proj4="+proj=utm +zone=49 +south +datum=WGS84 +units=m +no_defs"/>
-    <Styles>rainbow</Styles>
-    <Cache enabled="true"/>
-   <AdditionalLayer replace="false" >Desa and Mask/bigmask</AdditionalLayer>
-    <Dimension name="time">time</Dimension>
-  </Layer>-->
+   
 
   <!-- End of configuration /-->
 </Configuration>
