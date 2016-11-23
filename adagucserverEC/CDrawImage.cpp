@@ -554,11 +554,12 @@ void CDrawImage::poly(float x1,float y1,float x2,float y2,float x3, float y3, fl
   }
 }
 
-void CDrawImage::poly(float *x, float*y, int n, float lineWidth, CColor color, bool fill){
+void CDrawImage::poly(float *x, float*y, int n, float lineWidth, CColor color, bool close, bool fill){
   if(currentGraphicsRenderer==CDRAWIMAGERENDERER_CAIRO){
+    cairo->setColor(color.r, color.g, color.b, color.a);
     cairo->setFillColor(color.r, color.g, color.b, color.a);
     //    currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],255);
-    cairo->poly(x, y, n, lineWidth, true, fill);
+    cairo->poly(x, y, n, lineWidth, close, fill);
   } else {
     int colorIndex=getClosestGDColor(color.r, color.g, color.b);
     gdPoint pt[n];  

@@ -630,6 +630,8 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
   
   void CCairoPlotter::poly(float x[], float y[], int n, bool closePath, bool fill) {
     cairo_move_to(cr, x[0], y[0]);
+    cairo_antialias_t aa=cairo_get_antialias(cr);
+    cairo_set_antialias(cr, CAIRO_ANTIALIAS_DEFAULT);
     for (int i=1; i<n; i++){
       cairo_line_to(cr, x[i], y[i]);
     }
@@ -639,14 +641,19 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
         cairo_set_source_rgba(cr, rfr, rfg, rfb, rfa);
         cairo_fill_preserve(cr);
       }
-      cairo_set_source_rgba(cr, rr, rg, rb ,ra);
-      cairo_stroke(cr);
     }
+    cairo_set_source_rgba(cr, rr, rg, rb ,ra);
+    cairo_stroke(cr);
+    cairo_set_antialias(cr, aa);
   }
 
   void CCairoPlotter::poly(float x[], float y[], int n, float lineWidth, bool closePath, bool fill) {
     double lWx=lineWidth;
     double lWy=lineWidth;
+    
+    cairo_antialias_t aa=cairo_get_antialias(cr);
+    cairo_set_antialias(cr, CAIRO_ANTIALIAS_DEFAULT);
+    
     cairo_device_to_user_distance(cr, &lWx, &lWy);
     cairo_set_line_width(cr, lWx);
 
@@ -660,9 +667,10 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
         cairo_set_source_rgba(cr, rfr, rfg, rfb, rfa);
         cairo_fill_preserve(cr);
       }
-      cairo_set_source_rgba(cr, rr, rg, rb ,ra);
-      cairo_stroke(cr);
     }
+    cairo_set_source_rgba(cr, rr, rg, rb ,ra);
+    cairo_stroke(cr);
+    cairo_set_antialias(cr, aa);
   }
     
   void CCairoPlotter::drawText(int x, int y,double angle, const char *text) {

@@ -5,6 +5,16 @@
 #include "CTypes.h"
 #include "CDebugger.h"
 
+class GeoPoint {
+  float lon;
+  float lat;
+public:
+  GeoPoint(float lon, float lat);
+  float getLon();
+  float getLat();
+  CT::string toString();
+};
+
 class PointArray {
   std::vector<float> lons;
   std::vector<float> lats;
@@ -29,6 +39,16 @@ public:
   float *getLats();
   float *getLons();
   std::vector<PointArray>getHoles();
+};
+
+class Polyline {
+  PointArray points;
+public:
+  void addPoint(float lon, float lat);
+  CT::string toString();
+  int getSize();
+  float *getLats();
+  float *getLons();
 };
 
 typedef enum {
@@ -97,6 +117,8 @@ class Feature {
   CT::string id;
   std::vector<Polygon> polygons;
   std::map<std::string, FeatureProperty*> fp;
+  std::vector<Polyline> polylines;
+  std::vector<GeoPoint>points;
   DEF_ERRORFUNCTION();
 public:
   Feature();
@@ -104,17 +126,21 @@ public:
   Feature(CT::string _id);
   Feature(const char *_id);
   void newPolygon();
-  void addPoint(float lon, float lat);
+  void newPolyline();
+  void addPolygonPoint(float lon, float lat);
+  void addPolylinePoint(float lon, float lat);
   void newHole();
   void addHolePoint(float lon, float lat);
   CT::string toString();
   std::vector<Polygon>getPolygons();
+  std::vector<Polyline>getPolylines();
   CT::string getId() {
     return id;
   }
   void setId(CT::string s) {
     id=s;
   }
+  void addPoint(float lon, float lat);
   void addProp(CT::string name, int v);
   void addProp(CT::string name, char *v);
   void addProp(CT::string name, double v);
