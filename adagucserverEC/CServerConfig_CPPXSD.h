@@ -437,7 +437,7 @@ class CServerConfig:public CXMLSerializerInterface{
     public:
       class Cattr{
       public:
-        CXMLString match,matchid,bgcolor,label,fillcolor,linecolor, linewidth;
+        CXMLString match,matchid,bgcolor,label,fillcolor,linecolor, linewidth, bordercolor, borderwidth;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("match",5,attrname)){attr.match.copy(attrvalue); return;}
@@ -447,6 +447,8 @@ class CServerConfig:public CXMLSerializerInterface{
         else if(equals("bgcolor",7,attrname)){attr.bgcolor.copy(attrvalue); return;}
         else if(equals("linecolor",9,attrname)){attr.linecolor.copy(attrvalue); return;}
         else if(equals("linewidth",9,attrname)){attr.linewidth.copy(attrvalue); return;}
+        else if(equals("borderwidth",11,attrname)){attr.borderwidth.copy(attrvalue); return;}
+        else if(equals("bordercolor",11,attrname)){attr.bordercolor.copy(attrvalue); return;}
       }
     };
     
