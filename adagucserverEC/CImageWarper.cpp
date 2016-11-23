@@ -33,7 +33,53 @@ ProjectionStore projectionStore;
 ProjectionStore *ProjectionStore::getProjectionStore(){
   return &projectionStore;
 }
-  
+
+// extern CImageWarper imageWarper;
+// CImageWarper imageWarper;
+// CImageWarper *CImageWarper::getCImageWarper(){
+//   return &imageWarper;
+// }
+
+
+
+ProjectionKey::ProjectionKey(){
+}
+pthread_mutex_t ProjectionKey_ProjectionKey;
+ProjectionKey::ProjectionKey(double *_box,double *_dfMaxExtent,CT::string source,CT::string dest){
+  pthread_mutex_lock(&ProjectionKey_ProjectionKey);
+  for(int j=0;j<4;j++){
+    bbox[j]=_box[j];
+    dfMaxExtent[j]=_dfMaxExtent[j];
+  }
+  sourceCRS = source;
+  destinationCRS = dest;
+  isSet = false;
+  pthread_mutex_unlock(&ProjectionKey_ProjectionKey);
+}
+
+pthread_mutex_t ProjectionKey_setFoundExtent;
+void ProjectionKey::setFoundExtent(double *_foundExtent){
+  pthread_mutex_lock(&ProjectionKey_setFoundExtent);
+  for(int j=0;j<4;j++){
+    foundExtent[j]=_foundExtent[j];
+  }
+  isSet = true;
+  pthread_mutex_unlock(&ProjectionKey_setFoundExtent);
+}
+
+ProjectionStore::ProjectionStore(){}
+ProjectionStore::~ProjectionStore(){clear();}
+
+
+
+pthread_mutex_t ProjectionKey_clear;
+void ProjectionStore::clear(){
+  pthread_mutex_lock(&ProjectionKey_clear);
+  keys.clear();
+  pthread_mutex_unlock(&ProjectionKey_clear);
+}
+
+
 void floatToString(char * string,size_t maxlen,int numdigits,float number){
   //snprintf(string,maxlen,"%0.2f",number);
   //return;
@@ -70,16 +116,17 @@ void floatToString(char * string,size_t maxlen,float min, float max,float number
 
 int CImageWarper::closereproj(){
   if(initialized){
-    pj_free(sourcepj);
-    pj_free(destpj);
-    pj_free(latlonpj);
+    if(sourcepj!=NULL){pj_free(sourcepj);sourcepj=NULL;}
+    if(destpj!=NULL){pj_free(destpj);destpj=NULL;}
+    if(latlonpj!=NULL){pj_free(latlonpj);latlonpj=NULL;}
+    if(proj4Context!=NULL){pj_ctx_free(proj4Context);proj4Context=NULL;}
   }
   initialized=false;
   return 0;
 }
 
 int CImageWarper::reprojpoint(double &dfx,double &dfy){
-  if(convertRadiansDegreesDst){
+  if(destNeedsDegreeRadianConversion){
     dfx*=DEG_TO_RAD;
     dfy*=DEG_TO_RAD;
   }
@@ -96,7 +143,7 @@ int CImageWarper::reprojpoint(double &dfx,double &dfy){
        dfx=0;dfy=0;
       return 1;
     }
-  if(convertRadiansDegreesSrc){
+  if(sourceNeedsDegreeRadianConversion){
     dfx/=DEG_TO_RAD;
     dfy/=DEG_TO_RAD;
   }
@@ -111,7 +158,7 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
 
 
   int CImageWarper::reprojToLatLon(double &dfx,double &dfy){
-    if(convertRadiansDegreesDst){
+    if(destNeedsDegreeRadianConversion){
       dfx*=DEG_TO_RAD;
       dfy*=DEG_TO_RAD;
     }
@@ -144,7 +191,7 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
       return 1;
     }
     //if(status!=0)CDBDebug("DestPJ: %s",GeoDest->CRS.c_str());
-    if(convertRadiansDegreesDst){
+    if(destNeedsDegreeRadianConversion){
       dfx/=DEG_TO_RAD;
       dfy/=DEG_TO_RAD;
     }
@@ -153,7 +200,7 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
 
  
   int CImageWarper::reprojModelToLatLon(double &dfx,double &dfy){
-    if(convertRadiansDegreesSrc){
+    if(sourceNeedsDegreeRadianConversion){
       dfx*=DEG_TO_RAD;
       dfy*=DEG_TO_RAD;
     }
@@ -174,7 +221,7 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
      return 1;
     }
     //if(status!=0)CDBDebug("DestPJ: %s",GeoDest->CRS.c_str());
-    if(convertRadiansDegreesSrc){
+    if(sourceNeedsDegreeRadianConversion){
       dfx/=DEG_TO_RAD;
       dfy/=DEG_TO_RAD;
     }
@@ -184,7 +231,7 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
   
   int CImageWarper::reprojpoint_inv(double &dfx,double &dfy){
     
-    if(convertRadiansDegreesSrc){
+    if(sourceNeedsDegreeRadianConversion){
       dfx*=DEG_TO_RAD;
       dfy*=DEG_TO_RAD;
     }
@@ -194,15 +241,15 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
      dfy=0;
      return 1;
     }
-    if(convertRadiansDegreesDst){
+    if(destNeedsDegreeRadianConversion){
       dfx/=DEG_TO_RAD;
       dfy/=DEG_TO_RAD;
     }
     return 0;
   }
-  int CImageWarper::decodeCRS(CT::string *outputCRS, CT::string *inputCRS){
-    return decodeCRS(outputCRS,inputCRS,prj);
-  }
+//   int CImageWarper::decodeCRS(CT::string *outputCRS, CT::string *inputCRS){
+//     return decodeCRS(outputCRS,inputCRS,prj);
+//   }
   int CImageWarper::decodeCRS(CT::string *outputCRS, CT::string *inputCRS,std::vector <CServerConfig::XMLE_Projection*> *prj){
     if(prj==NULL){
       CDBError("decodeCRS: prj==NULL");
@@ -213,6 +260,7 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
       return 1;
     }
     outputCRS->copy(inputCRS);
+    if(inputCRS->indexOf("proj")!=-1)return 0;
     dMaxExtentDefined=0;
     //CDBDebug("Check");
     outputCRS->decodeURLSelf();
@@ -243,32 +291,32 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
     return 0;
   }
 
-  int CImageWarper::_decodeCRS(CT::string *CRS){
-    destinationCRS.copy(CRS);
-    dMaxExtentDefined=0;
-    //destinationCRS.decodeURL();
-    for(size_t j=0;j<(*prj).size();j++){
-      if(destinationCRS.equals((*prj)[j]->attr.id.c_str())){
-        destinationCRS.copy((*prj)[j]->attr.proj4.c_str());
-        if((*prj)[j]->LatLonBox.size()==1){
-          //if(getMaxExtentBBOX!=NULL)
-          {
-            dMaxExtentDefined=1;
-            dfMaxExtent[0]=(*prj)[j]->LatLonBox[0]->attr.minx;
-            dfMaxExtent[1]=(*prj)[j]->LatLonBox[0]->attr.miny;
-            dfMaxExtent[2]=(*prj)[j]->LatLonBox[0]->attr.maxx;
-            dfMaxExtent[3]=(*prj)[j]->LatLonBox[0]->attr.maxy;
-          }
-        }
-        break;
-      }
-    }
-    if(destinationCRS.indexOf("PROJ4:")==0){
-      CT::string temp(destinationCRS.c_str()+6);
-      destinationCRS.copy(&temp);
-    }
-    return 0;
-  }
+//   int CImageWarper::_decodeCRS(CT::string *CRS){
+//     destinationCRS.copy(CRS);
+//     dMaxExtentDefined=0;
+//     //destinationCRS.decodeURL();
+//     for(size_t j=0;j<(*prj).size();j++){
+//       if(destinationCRS.equals((*prj)[j]->attr.id.c_str())){
+//         destinationCRS.copy((*prj)[j]->attr.proj4.c_str());
+//         if((*prj)[j]->LatLonBox.size()==1){
+//           //if(getMaxExtentBBOX!=NULL)
+//           {
+//             dMaxExtentDefined=1;
+//             dfMaxExtent[0]=(*prj)[j]->LatLonBox[0]->attr.minx;
+//             dfMaxExtent[1]=(*prj)[j]->LatLonBox[0]->attr.miny;
+//             dfMaxExtent[2]=(*prj)[j]->LatLonBox[0]->attr.maxx;
+//             dfMaxExtent[3]=(*prj)[j]->LatLonBox[0]->attr.maxy;
+//           }
+//         }
+//         break;
+//       }
+//     }
+//     if(destinationCRS.indexOf("PROJ4:")==0){
+//       CT::string temp(destinationCRS.c_str()+6);
+//       destinationCRS.copy(&temp);
+//     }
+//     return 0;
+//   }
 
   int CImageWarper::initreproj(CDataSource *dataSource,CGeoParams *GeoDest,std::vector <CServerConfig::XMLE_Projection*> *_prj){
     if(dataSource==NULL||GeoDest==NULL){
@@ -282,7 +330,15 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
     return initreproj(dataSource->nativeProj4.c_str(),GeoDest,_prj);
   }
   
+  pthread_mutex_t CImageWarper_initreproj;
   int CImageWarper::initreproj(const char * projString,CGeoParams *GeoDest,std::vector <CServerConfig::XMLE_Projection*> *_prj){
+    pthread_mutex_lock(&CImageWarper_initreproj);
+    int status = _initreprojSynchronized(projString,GeoDest, _prj);
+    pthread_mutex_unlock(&CImageWarper_initreproj);
+    return status;
+  }
+  int CImageWarper::_initreprojSynchronized(const char * projString,CGeoParams *GeoDest,std::vector <CServerConfig::XMLE_Projection*> *_prj){
+    
     if(projString==NULL){
       projString = LATLONPROJECTION;
     }
@@ -291,25 +347,40 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
       CDBError("prj==NULL");
       return 1;
     }
-
-    if (!(sourcepj = pj_init_plus(projString))){
-      CDBError("SetSourceProjection: Invalid projection: %s",projString);
+   
+    if(proj4Context!=NULL){
+      pj_ctx_free(proj4Context);
+    }
+    proj4Context = pj_ctx_alloc();
+    
+    CT::string sourceProjectionUndec = projString;
+    CT::string sourceProjection = projString;
+    if(decodeCRS(&sourceProjection,&sourceProjectionUndec,_prj)!=0){
+      CDBError("decodeCRS failed");
+      return 1;
+    }
+    
+//    CDBDebug("sourceProjectionUndec %s, sourceProjection %s",sourceProjection.c_str(),sourceProjectionUndec.c_str());
+   
+    if (!(sourcepj = pj_init_plus_ctx(proj4Context,sourceProjection.c_str()))){
+      CDBError("SetSourceProjection: Invalid projection: %s",sourceProjection.c_str());
       return 1;
     }
     if(sourcepj==NULL){
-      CDBError("SetSourceProjection: Invalid projection: %s",projString);
+      CDBError("SetSourceProjection: Invalid projection: %s",sourceProjection.c_str());
       return 1;
     }
-    if (!(latlonpj = pj_init_plus(LATLONPROJECTION))){
+    if (!(latlonpj = pj_init_plus_ctx(proj4Context,LATLONPROJECTION))){
       CDBError("SetLatLonProjection: Invalid projection: %s",LATLONPROJECTION);
       return 1;
     }
     dMaxExtentDefined=0;
-    if(_decodeCRS(&GeoDest->CRS)!=0){
+    if(decodeCRS(&destinationCRS,&GeoDest->CRS,_prj)!=0){
       CDBError("decodeCRS failed");
       return 1;
     }
-    if (!(destpj = pj_init_plus(destinationCRS.c_str()))){
+    
+    if (!(destpj = pj_init_plus_ctx(proj4Context,destinationCRS.c_str()))){
       CDBError("SetDestProjection: Invalid projection: %s",destinationCRS.c_str());
       return 1;
     }
@@ -328,19 +399,29 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
     //Check wether we should convert between radians and degrees for the dest and source projections
     
     if(destinationCRS.indexOf("longlat")>=0){
-      convertRadiansDegreesDst = true;
-    }else convertRadiansDegreesDst =false;
+      destNeedsDegreeRadianConversion = true;
+    }else destNeedsDegreeRadianConversion =false;
     
-    sourceCRSString = projString;
+    sourceCRSString = sourceProjection.c_str();
     if(sourceCRSString.indexOf("longlat")>=0){
-      convertRadiansDegreesSrc = true;
-    }else convertRadiansDegreesSrc=false;
+      sourceNeedsDegreeRadianConversion = true;
+    }else sourceNeedsDegreeRadianConversion=false;
     
     return 0;
 
   }
   
+    
+  
+  pthread_mutex_t CImageWarper_findExtent;
   int CImageWarper::findExtent(CDataSource *dataSource,double * dfBBOX){
+    pthread_mutex_lock(&CImageWarper_findExtent);
+    int status = _findExtentSynchronized(dataSource,dfBBOX);
+    pthread_mutex_unlock(&CImageWarper_findExtent);
+    return status;
+  }
+    
+  int CImageWarper::_findExtentSynchronized(CDataSource *dataSource,double * dfBBOX){
   // Find the outermost corners of the image
   
   

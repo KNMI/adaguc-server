@@ -203,12 +203,12 @@ int CDrawImage::getClosestGDColor(unsigned char r,unsigned char g,unsigned char 
   return color;
 }
 
-int CDrawImage::printImagePng8(){
+int CDrawImage::printImagePng8(bool useBitAlpha){
   if(dImageCreated==0){CDBError("print: image not created");return 1;}
 
   if(currentGraphicsRenderer==CDRAWIMAGERENDERER_CAIRO){
     CDBDebug("printImagePng8 CAIRO");
-    cairo->writeToPng8Stream(stdout,backgroundAlpha);
+    cairo->writeToPng8Stream(stdout,backgroundAlpha,useBitAlpha);
   }else if(currentGraphicsRenderer==CDRAWIMAGERENDERER_GD){
     CDBDebug("printImagePng8 GF");
     gdImagePng(image, stdout);
@@ -232,6 +232,8 @@ int CDrawImage::printImagePng24(){
   }
   return 0;
 }
+
+
 int CDrawImage::printImagePng32(){
   if(dImageCreated==0){CDBError("print: image not created");return 1;}
   
@@ -241,6 +243,19 @@ int CDrawImage::printImagePng32(){
   
   if(currentGraphicsRenderer==CDRAWIMAGERENDERER_GD){
     CDBError("gdImagePNG does not support 32 bit");
+    return 1;
+  }
+  return 0;
+}
+int CDrawImage::printImageWebP32(){
+  if(dImageCreated==0){CDBError("print: image not created");return 1;}
+  
+  if(currentGraphicsRenderer==CDRAWIMAGERENDERER_CAIRO){
+    cairo->writeToWebP32Stream(stdout,backgroundAlpha);
+  }
+  
+  if(currentGraphicsRenderer==CDRAWIMAGERENDERER_GD){
+    CDBError("gdImagePNG does not support webp");
     return 1;
   }
   return 0;
@@ -676,8 +691,11 @@ void CDrawImage::setPixelIndexed(int x,int y,int color){
 //       if(currentLegend->CDIalpha[color]==255){
 //     cairo-> pixel(x,y,currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color]);
 //       }else{
+      
         if(currentLegend->CDIalpha[color]>0){
               cairo-> pixel_blend(x,y,currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],currentLegend->CDIalpha[color]);
+        }else if(currentLegend->CDIalpha[color]<0){
+              cairo-> pixel_overwrite(x,y,currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],-(currentLegend->CDIalpha[color]+1));
         }
 //       }
     }
@@ -888,8 +906,8 @@ int CDrawImage::drawTextArea(int x,int y,const char *fontfile, float size, float
       CT::string title = _text;
       int length = title.length();
        CCairoPlotter * ftTitle = new CCairoPlotter (Geo->dWidth,Geo->dHeight,(cairo->getByteBuffer()),size,fontfile);
-     ftTitle->setColor(fgcolor.r,fgcolor.g,fgcolor.b,fgcolor.a);
-     ftTitle->setFillColor(bgcolor.r,bgcolor.g,bgcolor.b,bgcolor.a);
+    // ftTitle->setColor(fgcolor.r,fgcolor.g,fgcolor.b,fgcolor.a);
+     
 //      freeType->drawFilledText(x,y,angle,text);
     //float textScale = 1;
       float textY = 0;
@@ -923,7 +941,12 @@ int CDrawImage::drawTextArea(int x,int y,const char *fontfile, float size, float
 //         }
 //         
         text.copy((const char*)(title.c_str()+offset),length);
-        
+        if(bgcolor.a!=0){
+          ftTitle->setColor(bgcolor.r,bgcolor.g,bgcolor.b,0);
+          ftTitle->setFillColor(bgcolor.r,bgcolor.g,bgcolor.b,bgcolor.a);
+          ftTitle->filledRectangle(x-3,y+textY+3,x+w+3,y-h-3);
+        }
+        ftTitle->setColor(fgcolor.r,fgcolor.g,fgcolor.b,fgcolor.a);
         ftTitle->drawText(x,y+textY,0.0,text.c_str());textY+=size*1.5;  
         
         offset+=length;

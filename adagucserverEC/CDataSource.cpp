@@ -25,6 +25,7 @@
 
 #include "CDataSource.h"
 #include "CDBFileScanner.h"
+#include "CConvertGeoJSON.h"
 const char *CDataSource::className = "CDataSource";
 
 //#define CDATASOURCE_DEBUG
@@ -48,6 +49,28 @@ CDataSource::DataObject::~DataObject(){
   }
 
 }
+
+CDataSource::DataObject* CDataSource::DataObject::clone(){
+  CDataSource::DataObject *nd = new CDataSource::DataObject();
+  nd->hasStatusFlag=hasStatusFlag;
+  nd->hasNodataValue=hasNodataValue;
+  nd->appliedScaleOffset=appliedScaleOffset;
+  nd->hasScaleOffset=hasScaleOffset;
+  nd->dfNodataValue=dfNodataValue;
+  nd->dfscale_factor=dfscale_factor;
+  nd->dfadd_offset=dfadd_offset;
+  nd->cdfVariable=cdfVariable;
+  nd->cdfObject=cdfObject;
+  nd->overruledUnits=overruledUnits;
+  nd->variableName=variableName;
+  
+  
+//   std::vector<StatusFlag*> statusFlagList;
+//   std::vector<PointDVWithLatLon> points;
+//   std::map<int,CFeature> features;
+  return nd;
+}
+
 CT::string CDataSource::DataObject::getUnits() {
   if (overruledUnits.empty() && cdfVariable !=NULL ) {
     try{
@@ -232,6 +255,7 @@ CDataSource::CDataSource(){
   stretchMinMax=false;
   stretchMinMaxDone = false;
   isConfigured=false;
+  threadNr=-1;
 //   legendScale=1;
 //   legendOffset=0;
 //   legendLog=0.0f;
@@ -257,7 +281,7 @@ CDataSource::CDataSource(){
   _currentStyle = NULL;
   
   queryBBOX = false;
-  queryLevel = 1;
+  queryLevel = 0;
   featureSet=NULL;
 }
 
@@ -287,11 +311,6 @@ CDataSource::~CDataSource(){
     featureSet=NULL;
   }
   
-  //CDBDebug("D");
-//   if(styleConfiguration!=NULL){
-//     delete styleConfiguration;
-//     styleConfiguration = NULL;
-//   }
 }
 
 int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Configuration *_cfg,CServerConfig::XMLE_Layer * _cfgLayer,const char *_layerName,int layerIndex){
@@ -415,7 +434,7 @@ const char *CDataSource::getLayerName(){
 
 
 CCDFDims *CDataSource::getCDFDims(){
-  if(currentAnimationStep>=timeSteps.size()){
+  if(currentAnimationStep>=int(timeSteps.size())){
     CDBError("Invalid step asked");
     return NULL;
   }
@@ -1256,3 +1275,107 @@ int CDataSource::setStyle(const char *styleName){
   if(_currentStyle->hasError)return 1;
   return 0;
 };
+
+
+   /*
+  for(size_t d=0;d<dataObjects.size();d++){
+    delete dataObjects[d];
+    dataObjects[d]=NULL;
+  }
+
+  for(size_t j=0;j<timeSteps.size();j++){
+
+    delete timeSteps[j];
+    timeSteps[j]=NULL;
+  }
+  for(size_t j=0;j<requiredDims.size();j++)delete requiredDims[j];
+  if(statistics!=NULL)delete statistics;statistics=NULL;
+  
+  if(_styles != NULL){
+    delete _styles;
+    _styles = NULL;
+  }
+  
+  if (featureSet.length()!=0) {
+    CConvertGeoJSON::clearFeatureStore(featureSet);
+    featureSet=NULL;
+  }*/
+
+CDataSource *CDataSource::clone(){
+ 
+  CDataSource *d = new CDataSource();
+  d->_currentStyle = _currentStyle;
+  d->datasourceIndex=datasourceIndex;
+  d->currentAnimationStep = currentAnimationStep;
+  
+  
+  /* Copy timesteps */
+  for(size_t j=0;j<timeSteps.size();j++){
+     //CDBDebug("addStep for %s",fileName);
+    TimeStep * timeStep = new TimeStep();
+    d->timeSteps.push_back(timeStep);
+    timeStep->fileName.copy(timeSteps[j]->fileName.c_str());
+    timeStep->dims.copy(&timeSteps[j]->dims);
+  }
+
+  
+  /* Copy dataObjects */
+  for(size_t j=0;j<dataObjects.size();j++){
+    d->dataObjects.push_back(dataObjects[j]->clone());
+  }
+    
+  d->stretchMinMax=stretchMinMax;
+  d->stretchMinMaxDone=stretchMinMaxDone;
+  
+  /* Copy requireddims */
+  for(size_t j=0;j<requiredDims.size();j++){
+    COGCDims *ogcDim = new COGCDims();
+    d->requiredDims.push_back(ogcDim);
+    ogcDim->name = requiredDims[j]->name;
+    ogcDim->value = requiredDims[j]->value;
+    ogcDim->netCDFDimName = requiredDims[j]->netCDFDimName;
+    for(size_t i=0;i<requiredDims[j]->uniqueValues.size();i++){
+      ogcDim->uniqueValues.push_back(requiredDims[j]->uniqueValues[i].c_str());
+    }
+    ogcDim->isATimeDimension = requiredDims[j]->isATimeDimension;
+  }
+
+  for(size_t j=0;j<4;j++){
+    d->dfBBOX[j]=dfBBOX[j];
+    d->nativeViewPortBBOX[j]=nativeViewPortBBOX[j];
+  }
+  
+  d->dfCellSizeX = dfCellSizeX;
+  d->dfCellSizeY = dfCellSizeY;
+  d->dWidth = dWidth;
+  d->dHeight = dHeight;
+  d->nativeEPSG=nativeEPSG;
+  d->nativeProj4=nativeProj4;
+  d->isConfigured=isConfigured;
+  d->level2CompatMode=level2CompatMode;
+  d->dimXIndex = dimXIndex;
+  d->dimYIndex = dimYIndex;
+  d->stride2DMap = stride2DMap;
+  d->useLonTransformation = useLonTransformation;
+  d->origBBOXLeft = origBBOXLeft;
+  d->origBBOXRight = origBBOXRight;
+  d->dOrigWidth = dOrigWidth;
+  d->lonTransformDone = lonTransformDone;
+  d->swapXYDimensions = swapXYDimensions;
+  d->varX = varX;
+  d->varY = varY;
+  d->dNetCDFNumDims = dNetCDFNumDims;
+  d->dLayerType = dLayerType;
+  d->layerName = layerName;
+  d->queryBBOX = queryBBOX;
+  d->queryLevel = queryLevel;
+  d->srvParams = srvParams;
+  d->cfgLayer = cfgLayer;
+  d->cfg = cfg;
+  d->featureSet = featureSet;
+  
+  
+  
+
+  return d;
+}

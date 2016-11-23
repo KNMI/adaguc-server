@@ -53,7 +53,7 @@ CDBAdapter *CDBFactory::getDBAdapter(CServerConfig::XMLE_Configuration *cfg){
        CDBError("ADAGUC_USE_KDCMONGODB is not compiled for ADAGUC, not available!");
       #endif
     }else{
-      CDBDebug("Using postgresql");
+      //CDBDebug("Using postgresql");
       #ifdef ADAGUC_USE_POSTGRESQL
       staticCDBAdapter = new CDBAdapterPostgreSQL();
       #else

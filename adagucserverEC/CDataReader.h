@@ -41,19 +41,20 @@
 #include "CDBFileScanner.h"
 #include "CDFObjectStore.h"
 #include "CCache.h"
-#include "CDataPostProcessor.h"
+
 #include "CAutoConfigure.h"
 class CDataReader{
   private:
     DEF_ERRORFUNCTION();
 
+    
   public:
     CDataReader(){}
     ~CDataReader(){}
   
 
     
-
+    
     
  
 

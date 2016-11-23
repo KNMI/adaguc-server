@@ -119,6 +119,7 @@ private:
       void setUnits(CT::string units);
       std::vector<PointDVWithLatLon> points;
       std::map<int,CFeature> features;
+      DataObject *clone();
   };
   
   class Statistics{
@@ -185,7 +186,7 @@ private:
   };
   int datasourceIndex;
   int currentAnimationStep;
-  
+  int threadNr;
   /**
    * The amount of steps in this datasource
    */
@@ -219,7 +220,7 @@ private:
   bool legendValueRange;
   CT::string styleName;*/
 
-  
+//TODO KVP and metaDataItems can be moved out to GDAL datawriter  
    class KVP{
       public:
         KVP(const char *varname,const char *attrname,const char *value){
@@ -374,6 +375,8 @@ private:
       getDataObject(j)->cdfObject = NULL;
     }
   }
+  
+  CDataSource * clone();
   
   /**
    * IMPORTANT

@@ -185,7 +185,7 @@ void readyerror(){
     
     if(errImageFormat==IMAGEFORMAT_IMAGEPNG8){
       printf("%s%c%c\n","Content-Type:image/png",13,10);
-      drawImage.printImagePng8();
+      drawImage.printImagePng8(true);
     }else if(errImageFormat==IMAGEFORMAT_IMAGEPNG24){
       drawImage.setRenderer(CDRAWIMAGERENDERER_CAIRO);
       printf("%s%c%c\n","Content-Type:image/png",13,10);
@@ -199,7 +199,7 @@ void readyerror(){
       drawImage.printImageGif();
     }else {
       printf("%s%c%c\n","Content-Type:image/png",13,10);
-      drawImage.printImagePng8();
+      drawImage.printImagePng8(true);
     }
      resetErrors();return;
   }

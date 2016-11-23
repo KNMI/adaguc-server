@@ -59,7 +59,8 @@ float convertValueToClass(float val,float interval);
 class CLegend{
 public:
   int id;
-  unsigned char CDIred[256],CDIgreen[256],CDIblue[256],CDIalpha[256];//Currently alpha of 0 and 255 is supported, but nothin in between.
+  unsigned char CDIred[256],CDIgreen[256],CDIblue[256];
+  short CDIalpha[256];//Currently alpha of 0 and 255 is supported, but nothin in between.
   CT::string legendName;
 };
 
@@ -173,9 +174,10 @@ public:
     int createImage(CGeoParams *_Geo);
     int createImage(const char *fn);
     int createImage(CDrawImage *image,int width,int height);
-    int printImagePng8();
+    int printImagePng8(bool useBitAlpha);
     int printImagePng24();
     int printImagePng32();
+    int printImageWebP32();
     int printImageGif();
     int createGDPalette(CServerConfig::XMLE_Legend *palette);
     int create685Palette();

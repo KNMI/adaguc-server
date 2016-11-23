@@ -24,7 +24,7 @@
  * 
  ******************************************************************************/
 
-// #define CREQUEST_DEBUG
+ //#define CREQUEST_DEBUG
 //#define MEASURETIME
 
 #include "CRequest.h"
@@ -839,7 +839,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource,CServerParams *
       CT::string dimName(dataSource->cfgLayer->Dimension[i]->value.c_str());
       dimName.toLowerCaseSelf();
       #ifdef CREQUEST_DEBUG
-      CDBDebug("dimName %s",dimName.c_str());
+      CDBDebug("dimName \"%s\"",dimName.c_str());
       #endif
       //Check if this dim is not already added
       bool alreadyAdded=false;
@@ -877,7 +877,9 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource,CServerParams *
                 /* Try to make sense of other timestrings as well */
                 if(dataSource->requiredDims[i]->value.indexOf("/")==-1&&dataSource->requiredDims[i]->value.indexOf(",")==-1)
                 {
+                  #ifdef CREQUEST_DEBUG
                   CDBDebug("Got Time value [%s]",dataSource->requiredDims[i]->value.c_str());
+                  #endif
                   CTime ctime;  
                   ctime.init("seconds since 1970",NULL);
                   double currentTimeAsEpoch ;
@@ -889,7 +891,9 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource,CServerParams *
                   }catch(int e){
                     CDBDebug("Unable to convert %s to epoch",dataSource->requiredDims[i]->value.c_str());
                   }                
+                  #ifdef CREQUEST_DEBUG
                   CDBDebug("Converted to Time value [%s]",dataSource->requiredDims[i]->value.c_str());
+                  #endif
                 }
                 
               }
@@ -1120,8 +1124,8 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
     }
     
     if(dataSource->queryBBOX){
-      
-       CDBDebug("queryDimValuesForDataSource dataSource->queryBBOX %s for step %d/%d",dataSource->layerName.c_str(),dataSource->getCurrentTimeStep(),dataSource->getNumTimeSteps());
+      bool tileSettingsDebug = false;
+       //CDBDebug("queryDimValuesForDataSource dataSource->queryBBOX %s for step %d/%d",dataSource->layerName.c_str(),dataSource->getCurrentTimeStep(),dataSource->getNumTimeSteps());
       double nativeViewPortBBOX[4];
 
       nativeViewPortBBOX[0]=srvParam->Geo->dfBBOX[0];
@@ -1135,6 +1139,9 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
       double tilecellsizey = dataSource->cfgLayer->TileSettings[0]->attr.tilecellsizey.toDouble();
       double level1BBOXWidth = fabs(tilecellsizex*double(tilewidth));
       double level1BBOXHeight =  fabs(tilecellsizey*double(tileheight));
+      if(dataSource->cfgLayer->TileSettings[0]->attr.debug.equals("true")){
+        tileSettingsDebug = true;
+      }
 //       if(dataSource->cfgLayer->TileSettings[0]->attr.tilebboxwidth.empty()==false){
 //         level1BBOXWidth = dataSource->cfgLayer->TileSettings[0]->attr.tilebboxwidth.toDouble();
 //       }
@@ -1142,11 +1149,18 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
 //         level1BBOXHeight = dataSource->cfgLayer->TileSettings[0]->attr.tilebboxheight.toDouble();
 //       }
       
+       #ifdef CREQUEST_DEBUG
       CDBDebug("level1BBOXHeight,level1BBOXHeight %f,%f",level1BBOXHeight,level1BBOXHeight);
+      #endif
       
       CT::string nativeProj4  = dataSource->cfgLayer->TileSettings[0]->attr.tileprojection.c_str();
       int maxlevel            = dataSource->cfgLayer->TileSettings[0]->attr.maxlevel.toInt();
-      
+      int minlevel = 1;
+      if(dataSource->cfgLayer->TileSettings[0]->attr.minlevel.empty()==false){
+        minlevel=dataSource->cfgLayer->TileSettings[0]->attr.minlevel.toInt()-1;
+        if(minlevel<=1)minlevel=1;
+      }
+   
       double screenCellSize = -1;
       //if(!nativeProj4.equals(srvParam->Geo->CRS))
       {
@@ -1218,13 +1232,15 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
               }else{
                 if(calcCellsize<screenCellSize)screenCellSize = calcCellsize;
               }
-              //CDBDebug("screenCellSize (%f,%f)= %f",viewPortMX,viewPortMY,screenCellSize);
+              //CDBDebug("screenCellSize (%f,%f)= %f",viewPortMX,viewPortMY,calcCellsize);
             }
           }
         }
-        CDBDebug("Cellsize screen %f",screenCellSize);
         
+        #ifdef CREQUEST_DEBUG
+        CDBDebug("Cellsize screen %f",screenCellSize);
         CDBDebug("Cellsize basetile %f",level1BBOXWidth/double(tilewidth));
+        #endif
         
         warper.closereproj();
       }
@@ -1235,7 +1251,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
       store=NULL;
       
       
-      for(int queryLevel=1;queryLevel<maxlevel;queryLevel++){
+      for(int queryLevel=minlevel;queryLevel<maxlevel;queryLevel++){
         double levelXBBOXWidth = level1BBOXWidth*pow(2,queryLevel)*1;
         double tileCellSize = levelXBBOXWidth/double(tilewidth);
         if(tileCellSize<screenCellSize){
@@ -1253,17 +1269,23 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
       {
         
         if(dataSource->queryLevel>(maxlevel-1)){dataSource->queryLevel--;break;}
-     */   delete store;store=NULL;
+     *///   delete store;store=NULL;
         dataSource->queryLevel++;
+        
+        if(maxlevel == 0){
+          dataSource->queryLevel=0;
+          dataSource->queryBBOX=false;
+        }
+        
         double levelXBBOXWidth = level1BBOXWidth*pow(2,dataSource->queryLevel-1)*1;
         double levelXBBOXHeight =level1BBOXHeight*pow(2,dataSource->queryLevel-1)*1;
-        CDBDebug("levelXBBOXWidth = %f, levelXBBOXHeight = %f queryLevel=%d",levelXBBOXWidth,levelXBBOXHeight,dataSource->queryLevel);
+        //CDBDebug("levelXBBOXWidth = %f, levelXBBOXHeight = %f queryLevel=%d",levelXBBOXWidth,levelXBBOXHeight,dataSource->queryLevel);
         dataSource->nativeViewPortBBOX[0]=nativeViewPortBBOX[0]-levelXBBOXWidth;
         dataSource->nativeViewPortBBOX[1]=nativeViewPortBBOX[1]-levelXBBOXHeight;
         dataSource->nativeViewPortBBOX[2]=nativeViewPortBBOX[2]+levelXBBOXWidth;
         dataSource->nativeViewPortBBOX[3]=nativeViewPortBBOX[3]+levelXBBOXHeight;
         
-        CDBDebug(" dataSource->nativeViewPortBBOX: [%f,%f,%f,%f]", dataSource->nativeViewPortBBOX[0], dataSource->nativeViewPortBBOX[1], dataSource->nativeViewPortBBOX[2], dataSource->nativeViewPortBBOX[3]);
+        //CDBDebug(" dataSource->nativeViewPortBBOX: [%f,%f,%f,%f]", dataSource->nativeViewPortBBOX[0], dataSource->nativeViewPortBBOX[1], dataSource->nativeViewPortBBOX[2], dataSource->nativeViewPortBBOX[3]);
         store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource,300);
         if(store == NULL){
           CDBError("Unable to query bbox for tiles");
@@ -1296,10 +1318,12 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
       
       
       double tileCellSize = levelXBBOXWidth/double(tilewidth);
-      CDBDebug("level %d, tiles %0d cellsize %f",dataSource->queryLevel,store->getSize(),tileCellSize);
-      #ifdef ADAGUC_TILESTITCHER_DEBUG
-      srvParam->mapTitle.print("level %d, tiles %d",dataSource->queryLevel,store->getSize());
-      #endif
+      //CDBDebug("level %d, tiles %0d cellsize %f",dataSource->queryLevel,store->getSize(),tileCellSize);
+      if(tileSettingsDebug){
+        srvParam->mapTitle.print("level %d, tiles %d",dataSource->queryLevel,store->getSize());
+        srvParam->mapSubTitle.print("level %d, tiles %0d cellsize %f",dataSource->queryLevel,store->getSize(),tileCellSize);
+      }
+      
       
     }else{
       dataSource->queryBBOX = false;
@@ -1670,44 +1694,136 @@ int CRequest::process_all_layers(){
             dataSourceToUse=0;
             imageDataWriterIsInitialized=true;
           }
+          bool measurePerformance = false;
           
-          //When we have multiple timesteps, we will create an animation.
-          if(dataSources[dataSourceToUse]->getNumTimeSteps()>1)imageDataWriter.createAnimation();
-    
-          for(size_t k=0;k<(size_t)dataSources[dataSourceToUse]->getNumTimeSteps();k++){
-            
-            if(dataSources[j]->dLayerType==CConfigReaderLayerTypeDataBase||
-              dataSources[j]->dLayerType==CConfigReaderLayerTypeCascaded||
-              dataSources[j]->dLayerType==CConfigReaderLayerTypeBaseLayer){
-              dataSources[dataSourceToUse]->setTimeStep(k);
-              status = imageDataWriter.addData(dataSources);
-              if(status != 0){
-                /**
-                 * Adding data failed:
-                 * Do not ruin an animation if one timestep fails to load.
-                 * If there is a single time step then throw an exception otherwise continue.
-                 */
-                if(dataSources[dataSourceToUse]->getNumTimeSteps()==1){
-                  //Not an animation, so throw an exception
-                  CDBError("Unable to convert datasource %s to image",dataSources[j]->layerName.c_str());
-                  throw(__LINE__);
-                }else{
-                  //This is an animation, report an error and continue with adding images.
-                  CDBError("Unable to load datasource %s at line %d",dataSources[dataSourceToUse]->getDataObject(0)->variableName.c_str(),__LINE__);
-                }
+          
+          
+          bool useThreading = false;
+          int numThreads=4;
+          if(dataSources[dataSourceToUse]->cfgLayer->TileSettings.size()==1){
+            if(dataSources[dataSourceToUse]->cfgLayer->TileSettings[0]->attr.threads.empty()==false){
+              numThreads =  dataSources[dataSourceToUse]->cfgLayer->TileSettings[0]->attr.threads.toInt();
+              if(numThreads<=1){
+                useThreading = false;
+              }else{
+                useThreading = true;
               }
-            }
-            if(dataSources[j]->dLayerType==CConfigReaderLayerTypeStyled){
-              //Special styled layer for GEOMON project
-              status = imageDataWriter.calculateData(dataSources);if(status != 0)throw(__LINE__);
-            }
-            if(dataSources[dataSourceToUse]->getNumTimeSteps()>1&& dataSources[dataSourceToUse]->queryBBOX==false){
-              //Print the animation data into the image
-              char szTemp[1024];
-              snprintf(szTemp,1023,"%s UTC",dataSources[dataSourceToUse]->getDimensionValueForNameAndStep("time",k).c_str());
-              imageDataWriter.setDate(szTemp);
+              //measurePerformance = true;
             }
           }
+          if(measurePerformance){StopWatch_Stop("Start imagewarper");}
+          if(useThreading){
+            
+            //When we have multiple timesteps, we will create an animation.
+            if(dataSources[dataSourceToUse]->getNumTimeSteps()>1)imageDataWriter.createAnimation();
+            size_t numTimeSteps = (size_t)dataSources[dataSourceToUse]->getNumTimeSteps();
+            
+            int errcode;
+            pthread_t threads[numThreads];  
+           
+            CImageDataWriter_addData_args args[numThreads];
+            for (int worker=0; worker<numThreads; worker++) {
+             
+              for(size_t d=0;d<dataSources.size();d++){
+                args[worker].dataSources.push_back(dataSources[d]->clone());;
+              }
+              args[worker].imageDataWriter = &imageDataWriter;
+              args[worker].finished = false;
+              args[worker].running = false;
+              args[worker].used = false;
+            }
+          
+            for(size_t k=0;k<numTimeSteps;k=k+1){
+              
+              if(dataSources[j]->dLayerType==CConfigReaderLayerTypeDataBase||
+                dataSources[j]->dLayerType==CConfigReaderLayerTypeCascaded||
+                dataSources[j]->dLayerType==CConfigReaderLayerTypeBaseLayer){
+                bool OK = false;
+                while(OK==false){
+                  for (int worker=0; worker<numThreads&&OK==false; worker++) {
+                    if(args[worker].running==false){
+                      args[worker].running =true;
+                      args[worker].used =true;
+                      
+                      args[worker].dataSources[dataSourceToUse]->setTimeStep(k);
+                      for(size_t d=0;d<args[worker].dataSources.size();d++){
+                        args[worker].dataSources[d]->threadNr=worker;
+                      }
+                    
+                      errcode=pthread_create(&threads[worker],NULL,CImageDataWriter_addData,&args[worker]);
+                      if(errcode){CDBError("pthread_create");return 1;}
+                      
+                      if(measurePerformance){StopWatch_Stop("Started thread %d for timestep %d",worker,k);}
+                      OK=true;
+                      break;
+                    }
+                  }
+                  if(OK==false){
+                    usleep(1000);
+                  }
+                }
+
+                
+              }
+            }
+            if(measurePerformance){StopWatch_Stop("All submitted");}
+            for (int worker=0; worker<numThreads; worker++) {
+              if(args[worker].used){
+                args[worker].used=false;
+                errcode=pthread_join(threads[worker],(void **) &status);
+                if(errcode) { CDBError("pthread_join");return 1;}
+              }
+            }
+            if(measurePerformance){StopWatch_Stop("All done");}
+            for (int worker=0; worker<numThreads; worker++) {
+              for(size_t j=0;j<args[worker].dataSources.size();j++){
+                delete args[worker].dataSources[j];
+              }
+              args[worker].dataSources.clear();
+            }
+            if(measurePerformance){StopWatch_Stop("All deleted");}
+          }else{
+            /*Standard non threading functionality */
+            for(size_t k=0;k<(size_t)dataSources[dataSourceToUse]->getNumTimeSteps();k++){
+              for(size_t d=0;d<dataSources.size();d++){
+                dataSources[d]->setTimeStep(k);
+              }
+              if(dataSources[j]->dLayerType==CConfigReaderLayerTypeDataBase||
+                dataSources[j]->dLayerType==CConfigReaderLayerTypeCascaded||
+                dataSources[j]->dLayerType==CConfigReaderLayerTypeBaseLayer){
+        
+                status = imageDataWriter.addData(dataSources);
+                if(status != 0){
+                  /**
+                  * Adding data failed:
+                  * Do not ruin an animation if one timestep fails to load.
+                  * If there is a single time step then throw an exception otherwise continue.
+                  */
+                  if(dataSources[dataSourceToUse]->getNumTimeSteps()==1){
+                    //Not an animation, so throw an exception
+                    CDBError("Unable to convert datasource %s to image",dataSources[j]->layerName.c_str());
+                    throw(__LINE__);
+                  }else{
+                    //This is an animation, report an error and continue with adding images.
+                    CDBError("Unable to load datasource %s at line %d",dataSources[dataSourceToUse]->getDataObject(0)->variableName.c_str(),__LINE__);
+                  }
+                }
+              }
+              if(dataSources[j]->dLayerType==CConfigReaderLayerTypeStyled){
+                //Special styled layer for GEOMON project
+                status = imageDataWriter.calculateData(dataSources);if(status != 0)throw(__LINE__);
+              }
+              if(dataSources[dataSourceToUse]->getNumTimeSteps()>1&& dataSources[dataSourceToUse]->queryBBOX==false){
+                //Print the animation data into the image
+                char szTemp[1024];
+                snprintf(szTemp,1023,"%s UTC",dataSources[dataSourceToUse]->getDimensionValueForNameAndStep("time",k).c_str());
+                imageDataWriter.setDate(szTemp);
+              }
+            }
+          }
+          if(measurePerformance){StopWatch_Stop("Finished imagewarper");}
+          
+ 
           
           int textY=5;
           //int prevTextY=0;
@@ -2696,7 +2812,7 @@ int CRequest::process_querystring(){
   
   // WMS Service
   if(dErrorOccured==0&&srvParam->serviceType==SERVICE_WMS){
-    CDBDebug("Entering WMS service");
+    //CDBDebug("Entering WMS service");
     
     if(srvParam->requestType==REQUEST_WMS_GETSTYLES){
        
@@ -2732,9 +2848,13 @@ int CRequest::process_querystring(){
           // Set format
           //CDBDebug("FORMAT: %s",srvParam->Format.c_str());
           //srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8;
-          if(srvParam->Format.indexOf("24")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG24;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
-          else if(srvParam->Format.indexOf("32")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG32;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
-          else if(srvParam->Format.indexOf("8")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8;srvParam->imageMode=SERVERIMAGEMODE_8BIT;}
+
+          if(srvParam->Format.indexOf("32")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG32;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
+          else if(srvParam->Format.indexOf("24")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG24;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
+          else if(srvParam->Format.indexOf("8bit_noalpha")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8_NOALPHA;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
+          else if(srvParam->Format.indexOf("png8_noalpha")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8_NOALPHA;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
+          else if(srvParam->Format.indexOf("8")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
+          else if(srvParam->Format.indexOf("webp")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEWEBP;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
           else if(srvParam->Format.indexOf("gif")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEGIF;srvParam->imageMode=SERVERIMAGEMODE_8BIT;}
           else if(srvParam->Format.indexOf("GIF")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEGIF;srvParam->imageMode=SERVERIMAGEMODE_8BIT;}
        
@@ -2943,7 +3063,7 @@ int CRequest::process_querystring(){
         }
         drawImage.crop(1);
         printf("%s%c%c\n","Content-Type:image/png",13,10);
-        drawImage.printImagePng8();
+        drawImage.printImagePng8(true);
         return 0;
     }
         
@@ -3198,5 +3318,18 @@ int CRequest::getDocumentCacheName(CT::string *documentName,CServerParams *srvPa
     return 1;
   }
   return 0;
+}
+
+//pthread_mutex_t CImageDataWriter_addData_lock;
+void *CImageDataWriter_addData(void *arg){
+   
+//   pthread_mutex_lock(&CImageDataWriter_addData_lock);
+  CImageDataWriter_addData_args *imgdwArg = (CImageDataWriter_addData_args*)arg;
+  imgdwArg->status = imgdwArg->imageDataWriter->addData(imgdwArg->dataSources);
+  
+  imgdwArg->finished = true;
+//   pthread_mutex_unlock(&CImageDataWriter_addData_lock);
+  imgdwArg->running = false;
+  return NULL;
 }
 

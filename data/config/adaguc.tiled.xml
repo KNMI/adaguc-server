@@ -13,7 +13,7 @@
       <Title>GeoJSON Service</Title>
       <Abstract>GeoJSON Service demonstrating the possibility to use GeoJSON in ADAGUC</Abstract>
     </RootLayer>
-      <WMSFormat name="image/png" format="image/png24"/> 
+      <WMSFormat name="image/png" format="image/png;mode=8bit_noalpha"/> 
   </WMS>
   
   
@@ -81,22 +81,94 @@
 <Layer type="database">
     <Name>tiled</Name>
     <Title>tiled</Title>
-    <FilePath>/nobackup/users/plieger/data/himawari/test.nc</FilePath>
-    <Variable>test</Variable>
+    <FilePath>/nobackup/users/plieger/data/himawari/loop/</FilePath>
+    <Variable>himawari</Variable>
     <RenderMethod>rgba,avg_rgba</RenderMethod>
     <Min>0</Min>
     <Max>10</Max>
-    <TileSettings tilewidthpx="720" 
-                  tileheightpx="720" 
-                  tilecellsizex="0.025"
-                  tilecellsizey="0.025"
-                  left="-60" right="180"  bottom="-80" top="80"
+   <TileSettings tilewidthpx="600" 
+                  tileheightpx="600" 
+                  tilecellsizex="0.02"
+                  tilecellsizey="0.02"
+                  left="60" right="180"  bottom="-86" top="86"
                   tileprojection="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+                  minlevel="2"
                   maxlevel="6"
                   tilemode="avg_rgba"
+                  debug="false"
+                  threads="1" 
                   tilepath="/nobackup/users/plieger/data/tiles/himtest/"/>
-
+<!--    
+     <TileSettings tilewidthpx="512" 
+                  tileheightpx="512" 
+                  tilecellsizex="2000"
+                  tilecellsizey="2000"
+                  left="-5500000" right="5500000"  bottom="-5500000" top="5500000"
+                  tileprojection="+proj=geos +h=35785863 +a=6378137.0 +b=6356752.3 +lon_0=140.7 +no_defs"
+                  maxlevel="6"
+                  tilemode="avg_rgba"
+                  debug="true"
+                  threads="4" 
+                  tilepath="/nobackup/users/plieger/data/tiles/himtest/"/>-->
+    <Dimension name="time" interval="PT10M" default="max">time</Dimension>
   </Layer>
+  
+  <Legend name="black" type="colorRange">
+    <palette index="0"   red="0"  green="0" blue="0" alpha="-1"/>
+    <palette index="240" red="0"  green="0"  blue="0" alpha="-1"/>
+  </Legend>
+  
+  <Style name="black">
+    <Legend fixedclasses="true" tickinterval="1">black</Legend>
+    <Min>0</Min>
+    <Max>1</Max>
+    <NameMapping name="nearest"   title="Masked" abstract="Masked"/>
+    <RenderMethod>nearest</RenderMethod>
+  </Style>
+  
+  <Layer type="database">
+    <Name>mask</Name>
+    <Title>mask</Title>
+    <FilePath>/nobackup/users/plieger/data/g4indo/result_clip_ones.nc</FilePath>
+    <Variable>Band1</Variable>
+    <Styles>black</Styles>
+    <ValueRange min="-0.5" max="0.5"/>
+   
+   <TileSettings tilewidthpx="600" 
+                  tileheightpx="600" 
+                  tilecellsizex="0.000224982"
+                  tilecellsizey="0.000224982"
+                  left="111.4" right="113.1"  bottom="-8.4" top="-7.1"
+                  tileprojection="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+                  minlevel="1"
+                  maxlevel="6"
+                  debug="false"
+                  threads="1"  
+                  tilepath="/nobackup/users/plieger/data/tiles/g4indo-mask/"/>
+   </Layer>
+   
+  <Layer type="database">
+    <Name>S1A</Name>
+    <Title>S1A</Title>
+    <FilePath>/nobackup/users/plieger/data/g4indo/S1A_20160527220855_IW_VVVV_VH_VV-VH.nc</FilePath>
+    <Variable>rgba</Variable>
+    <RenderMethod>rgba</RenderMethod>
+    <TileSettings tilewidthpx="600" 
+                  tileheightpx="600" 
+                  tilecellsizex="0.000224982"
+                  tilecellsizey="0.000224982"
+                  left="111.4" right="113.1"  bottom="-8.4" top="-7.1"
+                  tileprojection="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+                  minlevel="1"
+                  maxlevel="6"
+                  tilemode="avg_rgba"
+                  debug="false"
+                  threads="1" 
+                  tilepath="/nobackup/users/plieger/data/tiles/g4indo/"/>
+       <AdditionalLayer style="black/nearest"  replace="false">mask</AdditionalLayer>
+   </Layer>
+
+   
 
   <!-- End of configuration /-->
 </Configuration>

@@ -227,5 +227,18 @@ private:
 
 };
 
+class CImageDataWriter_addData_args{
+public:
+  CImageDataWriter *imageDataWriter;
+  std::vector <CDataSource*>dataSources;
+  int status;
+  bool running;
+  bool finished;
+  bool used;
+};
+
+void *CImageDataWriter_addData(void *arg);
+
+
 #endif
 

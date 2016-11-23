@@ -669,13 +669,14 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y){
 }
 
 
-
+pthread_mutex_t CDataReader_open_lock;
 
 int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
+
   //Perform some checks on pointers
   if(dataSource==NULL){CDBError("Invalid dataSource");return 1;}
   if(dataSource->getFileName()==NULL){CDBError("Invalid NetCDF filename (NULL)");return 1;}
-  
+ 
   #ifdef CDATAREADER_DEBUG
     CDBDebug("Open mode:%d x:%d y:%d",mode,x,y);
 #endif
@@ -695,31 +696,40 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
   
   //CCache cache;
   //CT::string cacheFilename;
+  //pthread_mutex_lock(&CDataReader_open_lock);
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
+  //pthread_mutex_unlock(&CDataReader_open_lock);
   //Use autoscale of legendcolors when the legendscale factor has been set to zero.
   if(styleConfiguration != NULL){
     if(dataSource->stretchMinMaxDone == false){
       if(styleConfiguration->legendScale==0.0f && !(styleConfiguration->renderMethod&RM_RGBA)&& !(styleConfiguration->renderMethod&RM_AVG_RGBA))dataSource->stretchMinMax=true;else dataSource->stretchMinMax=false;
     }
   }
-      
+ 
   CDFObject *cdfObject = NULL;
     
-#ifdef CDATAREADER_DEBUG
+//#ifdef CDATAREADER_DEBUG
   CDBDebug("Working on [%s] with mode %d",dataSourceFilename.c_str(),mode);
-#endif
+//#endif
     
   if(mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS  || mode == CNETCDFREADER_MODE_OPEN_HEADER ){
+      //pthread_mutex_lock(&CDataReader_open_lock);
     cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource->srvParams,dataSourceFilename.c_str());
+     //pthread_mutex_unlock(&CDataReader_open_lock);
    
 //     enableDataCache = false;
   }
-  
-  if(mode == CNETCDFREADER_MODE_OPEN_ALL|| mode == CNETCDFREADER_MODE_GET_METADATA){
     
+  if(mode == CNETCDFREADER_MODE_OPEN_ALL|| mode == CNETCDFREADER_MODE_GET_METADATA){
+   // CDBDebug("Working on [%s] with mode %d",dataSourceFilename.c_str(),mode);
+    //CDBDebug("Getting datasource %s",dataSourceFilename.c_str());
+    //pthread_mutex_lock(&CDataReader_open_lock);
     cdfObject=CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource,dataSourceFilename.c_str());
+    //pthread_mutex_unlock(&CDataReader_open_lock);
   }
-
+  //pthread_mutex_lock(&CDataReader_open_lock);
+   // //pthread_mutex_lock(&CDataReader_open_lock);
+//return 0;//CHECK
   //Check whether we really have a cdfObject
   if(cdfObject==NULL){CDBError("Unable to get CDFObject from store");return 1;}
   
@@ -894,8 +904,8 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
   * DataPostProc: Here our datapostprocessor comes into action!
   * This is stage1, only AX+B will be applied to scale and offset parameters
   */
-  CDPPExecutor DPPExecutor;
-  DPPExecutor.executeProcessors(dataSource,CDATAPOSTPROCESSOR_RUNBEFOREREADING);
+  
+  CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource,CDATAPOSTPROCESSOR_RUNBEFOREREADING);
   
 
 
@@ -944,7 +954,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
         dataSource->getDataObject(varNr)->hasNodataValue=false;
       }
       
-    }
+    } 
 
         
   if(mode==CNETCDFREADER_MODE_OPEN_ALL){
@@ -1190,15 +1200,14 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
     * This is stage2, running on data, not metadata
     */
     
-    CDPPExecutor DPPExecutor;
-    DPPExecutor.executeProcessors(dataSource,CDATAPOSTPROCESSOR_RUNAFTERREADING);
+   CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource,CDATAPOSTPROCESSOR_RUNAFTERREADING);
 //    CT::string dumpString;
 //    CDF::dump(cdfObject,&dumpString);
 //   CDBDebug("\nSTART\n%s\nEND\n",dumpString.c_str());
 //   writeLogFile2(dumpString.c_str());
   
   }
-
+ //pthread_mutex_unlock(&CDataReader_open_lock);
   #ifdef CDATAREADER_DEBUG
     CDBDebug("/Finished datareader");
   #endif
