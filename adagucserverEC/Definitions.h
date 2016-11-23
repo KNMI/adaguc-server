@@ -28,7 +28,7 @@
 #ifndef Definitions_H
 #define Definitions_H
 
-#define ADAGUCSERVER_VERSION             "2.0.18"
+#define ADAGUCSERVER_VERSION             "2.0.19"
 
 //CConfigReaderLayerType
 #define CConfigReaderLayerTypeUnknown     0
@@ -83,6 +83,8 @@
 #define IMAGEFORMAT_IMAGEGIF              1
 #define IMAGEFORMAT_IMAGEPNG24            2
 #define IMAGEFORMAT_IMAGEPNG32            3
+#define IMAGEFORMAT_IMAGEWEBP             4
+#define IMAGEFORMAT_IMAGEPNG8_NOALPHA     5
 
 #define SERVERIMAGEMODE_8BIT              0
 #define SERVERIMAGEMODE_RGBA              1
@@ -119,9 +121,10 @@
 
 #define ADAGUC_USE_CAIRO
 
+
 //#define CImgWarpBilinear_DEBUG
 //#define CImgWarpBilinear_TIME
-//#define MEASURETIME
+// #define MEASURETIME
 
 //#define CDATAREADER_DEBUG
 //#define CCDFNETCDFIO_DEBUG

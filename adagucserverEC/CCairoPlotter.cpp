@@ -25,6 +25,7 @@
 
 #include "CCairoPlotter.h"
 #ifdef ADAGUC_USE_CAIRO
+//#define MEASURETIME
 
 #include "CStopWatch.h"
 const char *CCairoPlotter::className="CCairoPlotter";
@@ -60,8 +61,8 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
 //    fprintf(stderr, "cairo status: %s\n", cairo_status_to_string(cairo_status(cr)));
     r=0;g=0;b=0;a=255;
     rr=r/256.l; rg=g/256.;rb=b/256.;ra=1;
-    fr=0;fg=0;fb=0;fa=1;
-    rfr=rfg=rfb=0;rfa=1;
+    fr=0;fg=0;fb=0;fa=0;
+    rfr=rfg=rfb=0;rfa=0;
     
     library=NULL;
     initializationFailed=false;
@@ -261,6 +262,7 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
     for(int y=0;y<(int)bitmap->rows;y++){
       for(int x=0;x<(int)bitmap->width;x++){
         size_t p=(x+y*bitmap->width);
+ 
         if(bitmap->buffer[p]!=0){
           float alpha=bitmap->buffer[p];
           //alpha/=256;
@@ -679,14 +681,14 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
   }
 
   void CCairoPlotter::writeToPng24Stream(FILE *fp,unsigned char alpha) {
-    writeARGBPng(width,height,ARGBByteBuffer,fp,24);
+    writeARGBPng(width,height,ARGBByteBuffer,fp,24,false);
   }
   
-  void CCairoPlotter::writeToPng8Stream(FILE *fp,unsigned char alpha) {
+  void CCairoPlotter::writeToPng8Stream(FILE *fp,unsigned char alpha,bool use8bitpalAlpha) {
 //     bool useCairo = false;
 //     if(!useCairo){
 
-      writeARGBPng(width,height,ARGBByteBuffer,fp,8);
+      writeARGBPng(width,height,ARGBByteBuffer,fp,8,use8bitpalAlpha);
 //     }else{
 //       if(isAlphaUsed){
 //         CDBDebug("Alpha was used");
@@ -741,9 +743,10 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
   
 
 
-  int CCairoPlotter::writeARGBPng(int width,int height,unsigned char *ARGBByteBuffer,FILE *file,int bitDepth){
-    
-    CDBDebug("Using png library directly to write PNG");
+  int CCairoPlotter::writeARGBPng(int width,int height,unsigned char *ARGBByteBuffer,FILE *file,int bitDepth,bool use8bitpalAlpha){
+        // bool use8bitpalAlpha = true;
+     
+    //CDBDebug("Using png library directly to write PNG");
     OctreeType * tree = NULL;
     
     #ifdef MEASURETIME
@@ -827,66 +830,129 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
       #ifdef MEASURETIME
       StopWatch_Stop("Creating octtree for color quantization");
       #endif
-     
-      for(int j=0;j<width*height;j=j+1){
-        RGBType color;
-        color.b=ARGBByteBuffer[0+j*4]/8+int(ARGBByteBuffer[3+j*4]/32)*32;
-        color.g=ARGBByteBuffer[1+j*4];
-        color.r=ARGBByteBuffer[2+j*4];
-        color.realblue=ARGBByteBuffer[0+j*4];
-        color.realalpha=ARGBByteBuffer[3+j*4];
-        InsertTree(&tree, &color, -1);
+ 
+      if(use8bitpalAlpha){
+        for(int j=0;j<width*height;j=j+1){
+          RGBType color;
+          color.b=ARGBByteBuffer[0+j*4]/8+int(ARGBByteBuffer[3+j*4]/32)*32;
+          color.g=ARGBByteBuffer[1+j*4];
+          color.r=ARGBByteBuffer[2+j*4];
+          color.realblue=ARGBByteBuffer[0+j*4];
+          color.realalpha=ARGBByteBuffer[3+j*4];
+          InsertTree(&tree, &color, -1);
+        }
+      }else{
+        bool something = false;
+        for(int j=0;j<width*height;j=j+1){
+          RGBType color;
+          if((ARGBByteBuffer[3+j*4]>64)){
+            something=true;
+            color.b=ARGBByteBuffer[0+j*4];
+            color.g=ARGBByteBuffer[1+j*4];
+            color.r=ARGBByteBuffer[2+j*4];
+            color.realblue=ARGBByteBuffer[0+j*4];
+            color.realalpha=ARGBByteBuffer[3+j*4];
+            InsertTree(&tree, &color, -1);
+          }
+        }
+        if(!something){
+          RGBType color;
+          color.r=0;
+          color.g=0;
+          color.b=0;
+          color.realblue=0;
+          color.realalpha=0;
+          InsertTree(&tree, &color, -1);
+        }
       }
       
       #ifdef MEASURETIME
       StopWatch_Stop("Tree filled, starting reduction");
       #endif
-      while(TotalLeafNodes()>255){
-        ReduceTree();
+      if(use8bitpalAlpha){
+        while(TotalLeafNodes()>255){
+          ReduceTree();
+        }
+      }else{
+        while(TotalLeafNodes()>254){
+          ReduceTree();
+        }
       }
       #ifdef MEASURETIME
       StopWatch_Stop("Tree reduction completed");
       #endif
     
-      int numColors=0;
-      RGBType table[256];
-      
-      MakePaletteTable(tree, table, &numColors);
-      if(numColors>255)numColors=255;
-      CDBDebug("Number of quantized colors: %d",numColors);
-      
-      int numAlphaColors = 0;
-      
-      for(int j=0;j<256&&j<numColors;j++){
-        palette[j].red=table[j].r;
-        palette[j].green=table[j].g;
-        palette[j].blue=table[j].realblue;
-        //palette[j+1].alpha=table[j].a;
-        unsigned char alpha = table[j].realalpha;
-        //if(alpha!=255)
-        {
-        
-          a[numAlphaColors]=alpha;
-//           trans_values[numAlphaColors].index=alpha;
-//           trans_values[numAlphaColors].red=table[j].r;
-//           trans_values[numAlphaColors].green=table[j].g;
-//           trans_values[numAlphaColors].blue=table[j].realblue;
-          
-          numAlphaColors++;
+      if(use8bitpalAlpha){
+        int numColors=0;
+        RGBType table[256];
+        MakePaletteTable(tree, table, &numColors);
+        if(numColors>255)numColors=255;
+        CDBDebug("Number of quantized colors: %d",numColors);
+        int numAlphaColors = 0;
+        palette[0].red=0;
+        palette[0].green=0;
+        palette[0].blue=0;
+        for(int j=0;j<256&&j<numColors;j++){
+          palette[j].red=table[j].r;
+          palette[j].green=table[j].g;
+          palette[j].blue=table[j].realblue;
+          unsigned char alpha = table[j].realalpha;
+          //if(alpha!=255)
+          {
+            a[numAlphaColors]=alpha;
+//             trans_values[numAlphaColors].index=alpha;
+//             trans_values[numAlphaColors].red=table[j].r;
+//             trans_values[numAlphaColors].green=table[j].g;
+//             trans_values[numAlphaColors].blue=table[j].realblue;
+            numAlphaColors++;
+          }
         }
-    
+        png_set_PLTE( png_ptr,  info_ptr,  palette, 255);
+        CDBDebug("Num alpha colors: %d",numAlphaColors);
+        png_set_tRNS(png_ptr, info_ptr, a, numAlphaColors, trans_values);
+      }else{        
+        int numColors=0;
+        RGBType table[256];
+        MakePaletteTable(tree, table, &numColors);
+        if(numColors>254)numColors=254;
+        CDBDebug("Number of quantized colors: %d",numColors);
+                palette[0].red=0;
+        palette[0].green=0;
+        palette[0].blue=0;
+        for(int j=1;j<256&&j<numColors+1;j++){
+          palette[j].red=table[j-1].r;
+          palette[j].green=table[j-1].g;
+          palette[j].blue=table[j-1].realblue;
+        }
+        png_set_PLTE( png_ptr,  info_ptr,  palette, 255);
+        
+        a[0]=0;
+        trans_values[0].index=0;
+        trans_values[0].red=0;
+        trans_values[0].green=0;
+        trans_values[0].blue=0;
+        png_set_tRNS(png_ptr, info_ptr, a, 1, trans_values);
       }
-      png_set_PLTE( png_ptr,  info_ptr,  palette, 255);
      
-      //CDBDebug("Num alpha colors: %d",numAlphaColors);
-    
-      png_set_tRNS(png_ptr, info_ptr, a, numAlphaColors, trans_values);
+     
+//       if(use8bitpalAlpha){
+
+//       }else{
+//         png_byte a[1];
+//         png_color_16 trans_values[1];
+//         a[0]=0;
+//         trans_values[0].index=0;
+//         trans_values[0].red=0;
+//         trans_values[0].green=0;
+//         trans_values[0].blue=0;
+//         png_set_tRNS(png_ptr, info_ptr, a, 1, trans_values);
+//       }
     }
     
     
     png_set_filter (png_ptr, 0, PNG_FILTER_NONE);
-    png_set_compression_level (png_ptr, -1);
-    
+    //png_set_compression_level (png_ptr, 2);
+    //png_set_filter_heuristics(png_ptr, PNG_FILTER_HEURISTIC_DEFAULT,1, NULL, NULL);
     //png_set_invert_alpha(png_ptr);
     png_write_info(png_ptr, info_ptr);
     
@@ -923,6 +989,9 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
         png_write_rows(png_ptr, &row_ptr, 1);
       }
     }else if(bitDepth==24){
+      #ifdef MEASURETIME
+      StopWatch_Stop("Start 24BIT FILL");
+      #endif
       int s=width*4;
       for (i = 0; i < height; i=i+1){
         
@@ -951,6 +1020,9 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
         row_ptr = RGBRow;
         png_write_rows(png_ptr, &row_ptr, 1);
       }
+      #ifdef MEASURETIME
+      StopWatch_Stop("Finished 24BIT FILL");
+      #endif
     }else if(bitDepth==8){
       int s=width*4;
       
@@ -967,17 +1039,23 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
          // if(ARGBByteBuffer[3+x]>128){
           
           RGBType color;
-          color.b= ARGBByteBuffer[0+x]/8+int(ARGBByteBuffer[3+x]/32)*32;
           color.g= ARGBByteBuffer[1+x];
           color.r= ARGBByteBuffer[2+x];
-          //color.a= ARGBByteBuffer[3+x];
-          
-          int index=QuantizeColorMapped(tree, &color);
-        
-          RGBARow[p++]= index;
-//           }else{
-//             RGBARow[p++]=0;
-//           }
+          if(use8bitpalAlpha){
+            color.b= ARGBByteBuffer[0+x]/8+int(ARGBByteBuffer[3+x]/32)*32;
+            RGBARow[p++]= QuantizeColorMapped(tree, &color);
+
+          }else{
+            color.b= ARGBByteBuffer[0+x];
+            if(ARGBByteBuffer[3+x]>64){
+              RGBARow[p++]= QuantizeColorMapped(tree, &color)+1;
+            }else{
+              RGBARow[p++]= 0;
+            }
+
+          }
+      
+
 
         }
         
@@ -1010,5 +1088,26 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
  //   cairo_surface_destroy(surface);
   }
  
+#ifdef ADAGUC_USE_WEBP 
+#include "webp/encode.h"
+#include "webp/decode.h"
+#include "webp/types.h"
+#endif
+ void CCairoPlotter::writeToWebP32Stream(FILE *fp,unsigned char alpha){
+#ifdef ADAGUC_USE_WEBP
+   /* sudo apt-get install libwebp-dev */
+  uint8_t* output = NULL;
+  size_t numBytes = WebPEncodeBGRA(ARGBByteBuffer,  width,  height,  stride,80,&output);
+  if(numBytes == 0){
+    CDBError("Unable to encode WebPEncodeBGRA");
+  }else{
+    fwrite(output,1,numBytes, fp);
+    free(output);
+  }
+#else
+CDBError("-DADAGUC_USE_WEBP not enabled");
+#endif
+   
+ }
  
 #endif

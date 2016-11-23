@@ -47,9 +47,10 @@
 #endif
 
 CT::string months[] = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
-/*
-#define CIMAGEDATAWRITER_DEBUG
- #define MEASURETIME*/
+
+// #define CIMAGEDATAWRITER_DEBUG
+//  #define MEASURETIME
+
 
 
 void doJacoIntoLatLon(double &u, double &v, double lo, double la, float deltaX, float deltaY, CImageWarper *warper);
@@ -254,7 +255,7 @@ CImageDataWriter::CImageDataWriter(){
   
   //Mode can be "uninitialized"0 "initialized"(1) and "finished" (2)
   writerStatus = uninitialized;
-  currentDataSource = NULL;
+
 }
 
 
@@ -562,11 +563,7 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
 
 
 int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *dataSource){
-  if(currentDataSource != NULL){
-    if(dataSource==currentDataSource){
-      return 0;
-    }
-  }
+ 
   #ifdef CIMAGEDATAWRITER_DEBUG    
   CDBDebug("initializeLegend");
   #endif
@@ -598,7 +595,7 @@ int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *data
   CDBDebug("/initializeLegend");
   #endif
   
-  currentDataSource = dataSource;
+  
   return 0;
 }
 
@@ -637,7 +634,7 @@ void CImageDataWriter::setValue(CDFType type,void *data,size_t ptr,double pixel)
 
 
 int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int dataSourceIndex,int dX,int dY){
-  
+  CImageWarper imageWarper;
   #ifdef MEASURETIME
   StopWatch_Stop("getFeatureInfo");
   #endif
@@ -1345,37 +1342,43 @@ std::vector<CImageDataWriter::IndexRange*> CImageDataWriter::getIndexRangesForRe
   return ranges;
 }
 
+pthread_mutex_t CImageDataWriter_addData_lock;
 int CImageDataWriter::warpImage(CDataSource *dataSource,CDrawImage *drawImage){
+
   //Open the data of this dataSource
   int status = 0;
   #ifdef CIMAGEDATAWRITER_DEBUG  
-  CDBDebug("opening %s",dataSource->getFileName());
+  CDBDebug("Thread[%d]: Opening %s",dataSource->threadNr,dataSource->getFileName());
   #endif  
+  
+
   CDataReader reader;
+  pthread_mutex_lock(&CImageDataWriter_addData_lock);
+  #ifdef MEASURETIME
+  StopWatch_Stop("Thread[%d]: start Opening grid",dataSource->threadNr);
+#endif
+
   status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
+  #ifdef MEASURETIME
+  StopWatch_Stop("Thread[%d]: Opened grid",dataSource->threadNr);
+#endif
+
+  pthread_mutex_unlock(&CImageDataWriter_addData_lock);
+ //return 0;
   #ifdef CIMAGEDATAWRITER_DEBUG  
-  CDBDebug("Has opened %s",dataSource->getFileName());
+  CDBDebug("Thread[%d]: Has opened %s",dataSource->threadNr,dataSource->getFileName());
   #endif    
   if(status!=0){
     CDBError("Could not open file: %s",dataSource->getFileName());
     return 1;
   }
   #ifdef CIMAGEDATAWRITER_DEBUG  
-  CDBDebug("opened");
+  CDBDebug("Thread[%d]: opened",dataSource->threadNr);
   #endif  
-  //Initialize projection algorithm
-  #ifdef CIMAGEDATAWRITER_DEBUG  
-  CDBDebug("initreproj %s",dataSource->nativeProj4.c_str());
-  #endif
-  status = imageWarper.initreproj(dataSource,drawImage->Geo,&srvParam->cfg->Projection);
-  if(status!=0){
-    CDBError("initreproj failed");
-    reader.close();
-    return 1;
-  }
-  
+ 
+
 #ifdef MEASURETIME
-  StopWatch_Stop("warp start");
+  StopWatch_Stop("Thread[%d]: warp start",dataSource->threadNr);
 #endif
 
 /*if(renderMethod==nearest){CDBDebug("nearest");}
@@ -1387,7 +1390,7 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   CImageWarperRenderInterface *imageWarperRenderer;
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   CStyleConfiguration::RenderMethod renderMethod = styleConfiguration->renderMethod;
-  
+
   
   /** Apply FeatureInterval config */
   if (styleConfiguration->featureIntervals!=NULL&&styleConfiguration->shadeIntervals!=NULL) {
@@ -1435,6 +1438,17 @@ if(renderMethod==contour){CDBDebug("contour");}*/
       }
     }
   }         
+    //Initialize projection algorithm
+  #ifdef CIMAGEDATAWRITER_DEBUG  
+  CDBDebug("Thread[%d]: initreproj %s",dataSource->threadNr,dataSource->nativeProj4.c_str());
+  #endif
+    CImageWarper imageWarper;
+  status = imageWarper.initreproj(dataSource,drawImage->Geo,&srvParam->cfg->Projection);
+  if(status!=0){
+    CDBError("initreproj failed");
+    reader.close();
+    return 1;
+  }
   
   
   
@@ -1442,20 +1456,21 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   * Use fast nearest neighbourrenderer
   */
   if(renderMethod&RM_NEAREST||renderMethod&RM_AVG_RGBA){
+    
     imageWarperRenderer = new CImgWarpNearestNeighbour();
     imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
     delete imageWarperRenderer;
   }
-  
+ 
   /**
   * Use RGBA renderer
   */
-    if(renderMethod&RM_RGBA){
-    imageWarperRenderer = new CImgWarpNearestRGBA();
-    imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
-    delete imageWarperRenderer;
+  if(renderMethod&RM_RGBA){
+     imageWarperRenderer = new CImgWarpNearestRGBA();
+     imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
+     delete imageWarperRenderer;
   }
-  
+    
   /**
   * Use bilinear renderer
   */
@@ -1584,15 +1599,17 @@ if(renderMethod==contour){CDBDebug("contour");}*/
     }
   }
 #ifdef MEASURETIME
-  StopWatch_Stop("warp finished");
+  StopWatch_Stop("Thread[%d]: warp finished",dataSource->threadNr);
 #endif
-  imageWarper.closereproj();
+  //imageWarper.closereproj();
   reader.close();
+  
   return 0;
 }
 
 // Virtual functions
 int CImageDataWriter::calculateData(std::vector <CDataSource*>&dataSources){
+  
   /**
   This style has a special *custom* non WMS syntax:
   First style: represents how the boolean results must be combined
@@ -1605,7 +1622,7 @@ int CImageDataWriter::calculateData(std::vector <CDataSource*>&dataSources){
   */
 
 //  int status;
-
+  CImageWarper imageWarper;
   CDBDebug("calculateData");
 
   if(animation==1&&nrImagesAdded>1){
@@ -1806,7 +1823,11 @@ int CImageDataWriter::calculateData(std::vector <CDataSource*>&dataSources){
   }
   return 0;
 }
+
+
+
 int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
+  
 #ifdef CIMAGEDATAWRITER_DEBUG  
   CDBDebug("addData");
 #endif   
@@ -1874,7 +1895,9 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
 #ifdef CIMAGEDATAWRITER_DEBUG
       CDBDebug("Start warping");
 #endif
+      
       status = warpImage(dataSource,&drawImage);
+      
 #ifdef CIMAGEDATAWRITER_DEBUG
       CDBDebug("Finished warping %s for step %d/%d",dataSource->layerName.c_str(),dataSource->getCurrentTimeStep(),dataSource->getNumTimeSteps());
 #endif      
@@ -1944,7 +1967,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
         //CDBDebug("Not using projection");
         useProjection = false;
       }
-      
+      CImageWarper imageWarper;
       if(useProjection){
         #ifdef CIMAGEDATAWRITER_DEBUG  
         CDBDebug("initreproj latlon");
@@ -2205,7 +2228,7 @@ int CImageDataWriter::end(){
 
     
       printf("%s%c%c\n","Content-Type:image/png",13,10);
-      drawImage.printImagePng8();
+      drawImage.printImagePng8(true);
     
       return 0;
     }
@@ -3216,7 +3239,7 @@ int CImageDataWriter::end(){
 
       if(resultFormat==imagepng){
         printf("%s%c%c\n","Content-Type:image/png",13,10);
-        plotCanvas.printImagePng8();
+        plotCanvas.printImagePng8(true);
       }
       if(resultFormat==imagegif){
         printf("%s%c%c\n","Content-Type:image/gif",13,10);
@@ -3258,12 +3281,16 @@ StopWatch_Stop("Drawing finished, start printing image");
 #endif
 
   //Static image
-CDBDebug("srvParam->imageFormat = %d",srvParam->imageFormat);
+//CDBDebug("srvParam->imageFormat = %d",srvParam->imageFormat);
   int status = 1;
   if(srvParam->imageFormat==IMAGEFORMAT_IMAGEPNG8){
-    CDBDebug("Creating 8 bit png");
+    CDBDebug("Creating 8 bit png with alpha");
     printf("%s%c%c\n","Content-Type:image/png",13,10);
-    status=drawImage.printImagePng8();
+    status=drawImage.printImagePng8(true);
+  }else if(srvParam->imageFormat==IMAGEFORMAT_IMAGEPNG8_NOALPHA){
+    CDBDebug("Creating 8 bit png without alpha");
+    printf("%s%c%c\n","Content-Type:image/png",13,10);
+    status=drawImage.printImagePng8(false);
   }else if(srvParam->imageFormat==IMAGEFORMAT_IMAGEPNG24){
     CDBDebug("Creating 24 bit png");
     printf("%s%c%c\n","Content-Type:image/png",13,10);
@@ -3272,6 +3299,10 @@ CDBDebug("srvParam->imageFormat = %d",srvParam->imageFormat);
     CDBDebug("Creating 32 bit png");
     printf("%s%c%c\n","Content-Type:image/png",13,10);
     status=drawImage.printImagePng32();
+  }else if(srvParam->imageFormat==IMAGEFORMAT_IMAGEWEBP){
+    CDBDebug("Creating 32 bit webp");
+    printf("%s%c%c\n","Content-Type:image/webp",13,10);
+    status=drawImage.printImageWebP32();
   }else if(srvParam->imageFormat==IMAGEFORMAT_IMAGEGIF){
     //CDBDebug("LegendGraphic GIF");
     if(animation == 0){
@@ -3281,7 +3312,7 @@ CDBDebug("srvParam->imageFormat = %d",srvParam->imageFormat);
   }else {
     //CDBDebug("LegendGraphic PNG");
     printf("%s%c%c\n","Content-Type:image/png",13,10);
-    status=drawImage.printImagePng8();
+    status=drawImage.printImagePng8(true);
   }
   
   #ifdef MEASURETIME
@@ -3567,3 +3598,6 @@ int CImageDataWriter::drawText(int x,int y,const char * fontlocation, float size
 int CImageDataWriter::createScaleBar(CGeoParams *geoParams,CDrawImage *scaleBarImage){
   return CCreateScaleBar::createScaleBar(scaleBarImage,geoParams);
 }
+
+
+

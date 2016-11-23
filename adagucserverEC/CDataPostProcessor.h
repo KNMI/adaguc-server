@@ -26,8 +26,7 @@
 #ifndef CDATAPOSTPROCESSOR_H
 #define CDATAPOSTPROCESSOR_H
 #include "CDataSource.h"
-#include "CDataReader.h"
-#include "CConvertGeoJSON.h"
+
 
 #define CDATAPOSTPROCESSOR_NOTAPPLICABLE 1
 #define CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET 2
@@ -232,6 +231,12 @@
     virtual const char *getId();
     virtual int isApplicable(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource);
     virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode);
+  };
+  
+  
+  class CDataPostProcessor{
+  public:
+    static CDPPExecutor *getCDPPExecutor();
   };
 
  
