@@ -213,7 +213,7 @@ public:
     void poly(float x1, float y1, float x2, float y2, float x3, float y3, CColor color, bool fill);
     void poly(float x1, float y1, float x2, float y2, float x3, float y3, float lineWidth, CColor color, bool fill);
     void poly(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, float lineWidth, CColor color, bool fill);
-    void poly(float *x, float*y, int n, float lineWidth, CColor color, bool fill);
+    void poly(float *x, float*y, int n, float lineWidth, CColor color, bool close, bool fill);
     void circle(int x, int y, int r, int color);
     void circle(int x, int y, int r, CColor col);
 
