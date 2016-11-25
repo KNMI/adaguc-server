@@ -92,7 +92,7 @@
                   tilecellsizey="0.02"
                   left="60" right="180"  bottom="-86" top="86"
                   tileprojection="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
-                  minlevel="2"
+                  minlevel="1"
                   maxlevel="6"
                   tilemode="avg_rgba"
                   debug="false"
