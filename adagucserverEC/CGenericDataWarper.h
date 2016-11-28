@@ -161,14 +161,15 @@ class GenericDataWarper{
     
     double dfDestExtW = destGeoParams->dfBBOX[2]-destGeoParams->dfBBOX[0];
     double dfDestExtH = destGeoParams->dfBBOX[1]-destGeoParams->dfBBOX[3];
-    double dfDestOrigX = destGeoParams->dfBBOX[0];
-    double dfDestOrigY = destGeoParams->dfBBOX[3];
-
-    
-    double multiDestX = double(imageWidth)/dfDestExtW;
+        double multiDestX = double(imageWidth)/dfDestExtW;
     
     double multiDestY = double(imageHeight)/dfDestExtH;
     
+    double dfDestOrigX = destGeoParams->dfBBOX[0];//-0.5/multiDestX;;
+    double dfDestOrigY = destGeoParams->dfBBOX[3];//+0.5/multiDestY;;;
+
+    
+
   /*      
     CT::string destinationCRS;
     warper->decodeCRS(&destinationCRS,&destGeoParams->CRS);
@@ -282,8 +283,8 @@ class GenericDataWarper{
     for(int y=0;y<dataHeight+1;y++){
       for(int x=0;x<dataWidth+1;x++){
         size_t p = x+y*(dataWidth+1);
-        px[p] =dfSourcedExtW*double(x+PXExtentBasedOnSource[0])+dfSourceOrigX;//+dfSourcedExtW/2.0;
-        py[p] =dfSourcedExtH*double(y+PXExtentBasedOnSource[1])+dfSourceOrigY;//+dfSourcedExtH/2.0;
+        px[p] =dfSourcedExtW*double(double(x)+PXExtentBasedOnSource[0])+dfSourceOrigX;//+dfSourcedExtW/2.0;
+        py[p] =dfSourcedExtH*double(double(y)+PXExtentBasedOnSource[1])+dfSourceOrigY;//+dfSourcedExtH/2.0;
         skip[p] = false;
       }
     }
@@ -436,16 +437,16 @@ class GenericDataWarper{
             if(px3>px1)px3--;else if (px3<px1)px3++;
             if(py3>py1)py3--;else if (py3<py1)py3++;
             if(py4>py1)py4--;else if (py4<py1)py4++;*/
-            int dmX=floor(mX);
-            int dmY=floor(mY);
-            int dpx1=floor(px1);
-            int dpy1=floor(py1);
-            int dpx2=floor(px2);
-            int dpy2=floor(py2);
-            int dpx3=floor(px3);
-            int dpy3=floor(py3);
-            int dpx4=floor(px4);
-            int dpy4=floor(py4);
+            int dmX=floor(mX+0.5);
+            int dmY=floor(mY+0.5);
+            int dpx1=floor(px1+0.5);
+            int dpy1=floor(py1+0.5);
+            int dpx2=floor(px2+0.5);
+            int dpy2=floor(py2+0.5);
+            int dpx3=floor(px3+0.5);
+            int dpy3=floor(py3+0.5);
+            int dpx4=floor(px4+0.5);
+            int dpy4=floor(py4+0.5);
 
            
             int xP[3];
@@ -489,7 +490,8 @@ class GenericDataWarper{
             xP[2] = dmX;
             yP[2] = dmY;
             drawTriangle<T>( xP,yP,value,imageWidth,imageHeight,drawFunctionSettings,drawFunction);//left
-            
+//             for(int vy=-1;vy<2;vy++)for(int vx=-1;vx<2;vx++)
+//             drawFunction(dmX+vx,dmY+vy,1,drawFunctionSettings);
 
           }
         }
