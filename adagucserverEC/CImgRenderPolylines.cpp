@@ -27,6 +27,7 @@
         #include <set>
         #include "CConvertGeoJSON.h"
         #include <values.h>
+        #include <string>
 
  //   #define MEASURETIME
 
@@ -40,12 +41,51 @@
           CColor drawPointTextColor(0,0,0,255);
           CColor drawPointFillColor(0,0,0,128);
           CColor drawPointLineColor(0,0,0,255);
+          
           CColor defaultColor(0,0,0,255);
           
           CStyleConfiguration *styleConfiguration = dataSource->getStyle();
           if(styleConfiguration!=NULL){
             if(styleConfiguration->styleConfig!=NULL){
               CServerConfig::XMLE_Style* s = styleConfiguration->styleConfig;
+              CDBDebug("style: %d %d", s->FeatureInterval.size(), styleConfiguration->shadeIntervals->size());
+              int numFeatures=s->FeatureInterval.size();
+              CT::string attributeValues[numFeatures];
+              /* Loop through all configured FeatureInterval elements */
+              for(size_t j=0;j<styleConfiguration->featureIntervals->size();j++){
+                CServerConfig::XMLE_FeatureInterval *featureInterval=((*styleConfiguration->featureIntervals)[j]);
+                if(featureInterval->attr.match.empty()==false&&featureInterval->attr.matchid.empty()==false){
+                  /* Get the matchid attribute for the feature */
+                  CT::string attributeName = featureInterval->attr.matchid;
+                  for(int featureNr = 0;featureNr<numFeatures;featureNr++){
+                    attributeValues[featureNr] =  "";
+                    std::map<int,CFeature>::iterator feature = dataSource->getDataObject(0)->features.find(featureNr);
+                    if(feature!=dataSource->getDataObject(0)->features.end()){
+                      std::map<std::string,std::string>::iterator attributeValueItr =  feature->second.paramMap.find(attributeName.c_str());
+                      if(attributeValueItr!=feature->second.paramMap.end()){
+                        attributeValues[featureNr] = attributeValueItr->second.c_str();
+                        CDBDebug("attributeValues[%d]=%s", featureNr, attributeValues[featureNr].c_str());
+                      }
+                    }
+                  }
+                  if(featureInterval->attr.fillcolor.empty()==false){
+                    CDBDebug("feature[%d] %s %s %s", j, featureInterval->attr.fillcolor.c_str(), 
+                             featureInterval->attr.bgcolor.c_str(), featureInterval->attr.label.c_str());;
+//                     std::vector<CImageDataWriter::IndexRange*> ranges=getIndexRangesForRegex(featureInterval->attr.match, attributeValues, numFeatures);
+//                     for (size_t i=0; i<ranges.size(); i++) {
+//                       CDBDebug("feature[%d] %d-%d %s %s %s",ranges[i]->min,ranges[i]->max, featureInterval->attr.fillcolor, featureInterval->attr.bgcolor?featureInterval->attr.bgcolor:"null", featureInterval->attr.label?featureInterval->attr.label:"null");
+//                       CServerConfig::XMLE_ShadeInterval *shadeInterval = new CServerConfig::XMLE_ShadeInterval ();
+//                       styleConfiguration->shadeIntervals->push_back(shadeInterval);
+//                       shadeInterval->attr.min.print("%d",ranges[i]->min);
+//                       shadeInterval->attr.max.print("%d",ranges[i]->max);
+//                       shadeInterval->attr.fillcolor=featureInterval->attr.fillcolor;
+//                       shadeInterval->attr.bgcolor=featureInterval->attr.bgcolor;
+//                       shadeInterval->attr.label=featureInterval->attr.label;
+//                       delete ranges[i];
+//                     }
+                  }
+                }
+              }
             }
           }
           
@@ -56,7 +96,6 @@
             projectionRequired=true;
           }
           
-          int width=drawImage->getWidth();
           int height=drawImage->getHeight();
           
           double cellSizeX=(dataSource->srvParams->Geo->dfBBOX[2]-dataSource->srvParams->Geo->dfBBOX[0])/double(dataSource->dWidth);
@@ -72,10 +111,15 @@
             if (fileName==name.c_str()) {
               CDBDebug("Plotting %d features ONLY for %s", featureStore[fileName].size(), fileName.c_str());
               for (std::vector<Feature*>::iterator feature=featureStore[ fileName].begin();feature!=featureStore[fileName].end(); ++feature) {
+                  //FindAttributes for this feature
+                  BorderStyle borderStyle = getAttributesForFeature(&(dataSource->getDataObject(0)->features[featureIndex]) ,(*feature)->getId(), styleConfiguration);
+//                  CDBDebug("bs: %s %s", borderStyle.width.c_str(), borderStyle.color.c_str());
+                  CColor drawPointLineColor2(borderStyle.color.c_str());
+                  float drawPointLineWidth=atoi(borderStyle.width.c_str());
                   //if(featureIndex!=0)break;
                   std::vector<Polygon>polygons=(*feature)->getPolygons();
-                  //            CT::string id=(*feature)->getId();
-                  //            CDBDebug("feature[%s] %d of %d with %d polygons", id.c_str(), featureIndex, features.size(), polygons.size());
+                  CT::string id=(*feature)->getId();
+//                  CDBDebug("feature[%s] %d of %d with %d polygons", id.c_str(), featureIndex,           featureStore[fileName].size(), polygons.size());
                   for(std::vector<Polygon>::iterator itpoly = polygons.begin(); itpoly != polygons.end(); ++itpoly) {
                     float *polyX=itpoly->getLons();
                     float *polyY=itpoly->getLats();
@@ -107,16 +151,10 @@
                     }
                     
 //                    CDBDebug("Draw polygon: %d points (%d)", cnt, numPoints);
-                    drawImage->poly(projectedX, projectedY, cnt, 2, drawPointLineColor, false);
+                    drawImage->poly(projectedX, projectedY, cnt, drawPointLineWidth, drawPointLineColor2, true, false);
 //                    break;
                     if (true) {
                         std::vector<PointArray>holes = itpoly->getHoles();
-                        int nrHoles=holes.size();
-                        int holeSize[nrHoles];
-                        float *holeX[nrHoles];
-                        float *holeY[nrHoles];
-                        float *projectedHoleX[nrHoles];
-                        float *projectedHoleY[nrHoles];
                         int h=0;
                         for(std::vector<PointArray>::iterator itholes = holes.begin(); itholes != holes.end(); ++itholes) {
                           //                   CDBDebug("holes[%d]: %d found in %d", 0, itholes->getSize(), featureIndex);
@@ -145,32 +183,111 @@
                             //                      CDBDebug("J: %d", j);
                           } 
  //                         CDBDebug("Draw hole[%d]: %d points", h, holeSize);
-                          drawImage->poly(projectedHoleX, projectedHoleY, holeSize, 2, drawPointLineColor, false);
+                          drawImage->poly(projectedHoleX, projectedHoleY, holeSize, drawPointLineWidth, drawPointLineColor2, true, false);
                           h++;
                         }
                       }
                   }
+                  
+                  std::vector<Polyline>polylines=(*feature)->getPolylines();
+                              CT::string idl=(*feature)->getId();
+//                              CDBDebug("feature[%s] %d of %d with %d polylines", idl.c_str(), featureIndex, featureStore[fileName].size(), polylines.size());
+                  for(std::vector<Polyline>::iterator itpoly = polylines.begin(); itpoly != polylines.end(); ++itpoly) {
+                    float *polyX=itpoly->getLons();
+                    float *polyY=itpoly->getLats();
+                    int numPoints=itpoly->getSize();
+                    float projectedX[numPoints];
+                    float projectedY[numPoints];
+                    
+                    //CDBDebug("Plotting a polyline of %d points [? of %d] %f", numPoints, featureIndex);
+                    int cnt=0;
+                    for (int j=0; j<numPoints;j++) {
+                      double tprojectedX=polyX[j];
+                      double tprojectedY=polyY[j];
+                      int status=0;
+                      if(projectionRequired)status = imageWarper->reprojfromLatLon(tprojectedX,tprojectedY);
+                      int dlon,dlat;
+                      if(!status){
+                        dlon=int((tprojectedX-offsetX)/cellSizeX)+1;
+                        dlat=int((tprojectedY-offsetY)/cellSizeY);
+                        projectedX[cnt]=dlon;
+                        projectedY[cnt]=height-dlat;
+                        cnt++;
+                      }else{
+                        CDBDebug("status: %d %d [%f,%f]", status, j, tprojectedX, tprojectedY);
+                        //                         dlat=CCONVERTUGRIDMESH_NODATA;
+                        //                         dlon=CCONVERTUGRIDMESH_NODATA;
+                      }
+                      //                       projectedX[j]=dlon;
+                      //                       projectedY[j]=height-dlat;
+                    }
+                    
+//                                        CDBDebug("Draw polygon: %d points (%d)", cnt, numPoints);
+                    drawImage->poly(projectedX, projectedY, cnt, drawPointLineWidth, drawPointLineColor2, false, false);
+                    //                    break;
+ 
+                  }  
                   #ifdef MEASURETIME
                   StopWatch_Stop("Feature drawn %d", featureIndex);
                   #endif
-                  for (std::map<std::string, FeatureProperty*>::iterator ftit=(*feature)->getFp().begin(); ftit!=(*feature)->getFp().end(); ++ftit) {
-                    if(dataSource->getDataObject(0)->features.count(featureIndex) == 0){
-                      dataSource->getDataObject(0)->features[featureIndex]=CFeature(featureIndex);
-                    }
-                    dataSource->getDataObject(0)->features[featureIndex].addProperty(ftit->first.c_str(), ftit->second->toString().c_str());
-                    
-                  }
                   featureIndex++;
                 }        
-                
             }
           }
         }
 
-        int CImgRenderPolylines::set(const char*values){
+      int CImgRenderPolylines::set(const char*values){
 
           settings.copy(values);
           return 0;
         }
 
-
+        BorderStyle CImgRenderPolylines::getAttributesForFeature(CFeature *feature, CT::string id, CStyleConfiguration *styleConfig){
+          CT::string borderWidth="3";
+          CT::string borderColor="#008000FF";
+          for(size_t j=0;j<styleConfig->featureIntervals->size();j++){
+            // Draw border if borderWidth>0
+            if ((*styleConfig->featureIntervals)[j]->attr.match.empty()==false){
+              CT::string match=(*styleConfig->featureIntervals)[j]->attr.match;
+              CT::string matchString=id;  
+              if ((*styleConfig->featureIntervals)[j]->attr.matchid.empty()==false) {
+                //match on matchid
+                CT::string matchId;
+                matchId = ((*styleConfig->featureIntervals)[j]->attr.matchid);
+                std::map<std::string,std::string>::iterator attributeValueItr =  feature->paramMap.find(matchId.c_str());
+                if(attributeValueItr!=feature->paramMap.end()){
+//                  attributeValues[featureNr] = attributeValueItr->c_str();
+//                  CDBDebug("Match on %s", attributeValueItr->second.c_str());
+                  matchString=attributeValueItr->second.c_str();
+                }
+              
+              } else {
+                // match on id
+                matchString=id;
+              }
+              //CDBDebug("matchString: %s", matchString.c_str());
+              regex_t regex;
+              int ret=regcomp(&regex, match.c_str(), 0);
+              if (!ret){
+                if (regexec(&regex, matchString.c_str(), 0, NULL, 0)==0) {
+                  //Matched
+                  //CDBDebug("Matched %s on %s!!", matchString.c_str(), match.c_str());
+                  if(((*styleConfig->featureIntervals)[j]->attr.borderwidth.empty()==false)&&(atoi((*styleConfig->featureIntervals)[j]->attr.borderwidth.c_str())>0)){
+                    borderWidth=(*styleConfig->featureIntervals)[j]->attr.borderwidth;
+                    //A border should be drawn
+                    if ((*styleConfig->featureIntervals)[j]->attr.bordercolor.empty()==false){
+                      borderColor=(*styleConfig->featureIntervals)[j]->attr.bordercolor;
+                    } else {
+                      //Use default color
+                    }
+                  } else {
+                    //Draw no border
+                  }
+                }
+              }
+            }
+          }
+          //CDBDebug("found: %s %s", borderWidth.c_str(), borderColor.c_str());
+          BorderStyle bs={borderWidth, borderColor}; 
+          return bs;
+        }
