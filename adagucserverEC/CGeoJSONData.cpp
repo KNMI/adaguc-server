@@ -30,6 +30,25 @@
 
 const char *Feature::className="Feature";
 
+GeoPoint::GeoPoint(float lon, float lat) {
+  this->lat=lat;
+  this->lon=lon;
+}
+
+float GeoPoint::getLon() {
+  return this->lon;
+}
+
+float GeoPoint::getLat() {
+  return this->lat;
+}
+
+CT::string GeoPoint::toString() {
+  CT::string s;
+  s.print("point(%f, %f)", lon, lat);
+  return s;
+}
+
 void PointArray::addPoint(float lon, float lat) {
   lons.push_back(lon);
   lats.push_back(lat);
@@ -70,7 +89,7 @@ void Polygon::addHolePoint(float lon, float lat) {
 
 CT::string Polygon::toString() {
   CT::string s;
-  s.print("poly(%d) holes[%d]\n", points.getSize(), holes.size());
+  s.print("polygon(%d) holes[%d]\n", points.getSize(), holes.size());
   return s;
 }
 
@@ -87,12 +106,43 @@ void Feature::newPolygon() {
   polygons.push_back(poly);
 }
 
-void Feature::addPoint(float lon, float lat) {
+CT::string Polyline::toString() {
+  CT::string s;
+  s.print("polyline(%d)\n", points.getSize());
+  return s;
+}
+
+void Polyline::addPoint(float lon, float lat) {
+  points.addPoint(lon, lat);
+}
+
+float *Polyline::getLats(){
+  return points.getLats();
+}
+
+float *Polyline::getLons(){
+  return points.getLons();
+}
+
+int Polyline::getSize(){
+    return points.getSize();
+}
+
+void Feature::newPolyline() {
+  Polyline line;
+  polylines.push_back(line);
+}
+
+void Feature::addPolygonPoint(float lon, float lat) {
   polygons[polygons.size()-1].addPoint(lon, lat);
 }
 
 void Feature::addHolePoint(float lon, float lat){
   polygons[polygons.size()-1].addHolePoint(lon, lat);
+}
+
+void Feature::addPolylinePoint(float lon, float lat) {
+  polylines[polylines.size()-1].addPoint(lon, lat);
 }
 
 void Feature::newHole(){
@@ -112,11 +162,23 @@ std::vector<Polygon>Feature::getPolygons(){
   return polygons;
 }
 
+std::vector<Polyline>Feature::getPolylines(){
+  return polylines;
+}
+
 CT::string Feature::toString() {
   CT::string s;
   s.print("polygons: %d\n", polygons.size());
   for (unsigned int i=0; i<polygons.size(); i++) {
     s+=polygons[i].toString();
+  }
+  s.printconcat("polylines: %d\n", polylines.size());
+  for (unsigned int i=0; i<polylines.size(); i++) {
+    s+=polylines[i].toString();
+  }
+  s.printconcat("points: %d\n", points.size());
+  for (unsigned int i=0; i<points.size(); i++) {
+    s+=points[i].toString();
   }
   return s;
 }
@@ -131,9 +193,11 @@ Feature::~Feature(){
 
 Feature::Feature(){
 }
+
 Feature::Feature(CT::string _id){
     id=_id;
 }
+
 Feature::Feature(const char *_id) {
     id=_id;
 }
@@ -163,11 +227,11 @@ std::map<std::string, FeatureProperty*>& Feature::getFp(){
 int main(int argc, char *argv[]) {
   Feature poly("0001");
   poly.newPolygon();
-  poly.addPoint(2,40);
-  poly.addPoint(2,20);
-  poly.addPoint(40,20);
-  poly.addPoint(40,40);
-  poly.addPoint(2,40);
+  poly.addPolygonPoint(2,40);
+  poly.addPolygonPoint(2,20);
+  poly.addPolygonPoint(40,20);
+  poly.addPolygonPoint(40,40);
+  poly.addPolygonPoint(2,40);
   poly.newHole();
   poly.addHolePoint(10,10);
   poly.addHolePoint(12,10);
