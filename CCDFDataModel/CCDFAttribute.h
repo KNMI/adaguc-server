@@ -145,6 +145,7 @@ namespace CDF{
         
         if(type==CDF_FLOAT)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%f",((float*)data)[n]);}
         if(type==CDF_DOUBLE)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%f",((double*)data)[n]);}
+        if(type==CDF_STRING)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%s",((char**)data)[n]);}
         return 0;
       }
       

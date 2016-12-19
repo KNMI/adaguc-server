@@ -31,8 +31,8 @@ const char *CDFNetCDFWriter::className="NetCDFWriter";
 #define CDFNetCDFGroupSeparator "/"
 //const char *CCDFWarper::className="CCDFWarper";
 
-// #define CCDFNETCDFIO_DEBUG
-// #define CCDFNETCDFIO_DEBUG_OPEN
+ #define CCDFNETCDFIO_DEBUG
+ #define CCDFNETCDFIO_DEBUG_OPEN
 
 CDFNetCDFReader::CDFNetCDFReader():CDFReader(){
   #ifdef CCDFNETCDFIO_DEBUG        
@@ -403,6 +403,7 @@ int CDFNetCDFReader::readAttributes(int root_id,std::vector<CDF::Attribute *> &a
     if(status!=NC_NOERR){ncError(__LINE__,className,"nc_inq_attname: ",status);return 1;}
     //Only add non existing attributes;
     int attributeExists=false;
+    
     for(size_t k=0;k<attributes.size();k++){if(attributes[k]->name.equals(name)){attributeExists=true;break;}}
     if(attributeExists==false){
       status = nc_inq_att(root_id,varID,name,&type,&length);
@@ -410,11 +411,19 @@ int CDFNetCDFReader::readAttributes(int root_id,std::vector<CDF::Attribute *> &a
       CDF::Attribute *attr = new CDF::Attribute();
       attr->setName(name);
       attr->type=_typeConversionAtt(type);
+      CDBDebug("%s %d %d %d",name,type,attr->type,attr->length);
       attr->length=length;
       CDF::allocateData(attr->getType(),&attr->data,attr->length+1);
-      status = nc_get_att(root_id,varID,name,attr->data);
-      if(type==NC_CHAR)((char*)attr->data)[attr->length]='\0';
-      if(status!=NC_NOERR){ncError(__LINE__,className,"nc_get_att: ",status);return 1;}
+      if(type!=NC_STRING){
+        status = nc_get_att(root_id,varID,name,attr->data);
+        if(type==NC_CHAR)((char*)attr->data)[attr->length]='\0';
+        if(status!=NC_NOERR){ncError(__LINE__,className,"nc_get_att: ",status);return 1;}
+      }else{
+        status = nc_get_att_string(root_id,varID,name,(char**)attr->data);
+        if(type==NC_CHAR)((char*)attr->data)[attr->length]='\0';
+        if(status!=NC_NOERR){ncError(__LINE__,className,"nc_get_att: ",status);return 1;}
+        CDBDebug("units %s",((char**)attr->data)[0]);
+      }
       attributes.push_back(attr);
     }
   }
@@ -574,6 +583,7 @@ CDFType CDFNetCDFReader::_typeConversionAtt(nc_type type){
   if(type==NC_FLOAT)return CDF_FLOAT;
   if(type==NC_DOUBLE)return CDF_DOUBLE;
   if(type==NC_STRING)return CDF_STRING;
+  CDBWarning("Warning unknown attribute type %d",type);
   return CDF_DOUBLE;
 }
 
