@@ -104,7 +104,7 @@ int GenericDataWarper::findPixelExtent(int *PXExtentBasedOnSource,CGeoParams*sou
 //         transFormationRequired=true;
 //       }else
       {
-        while(OK==false){
+        while(OK==true){
           OK=true;
           
           bool attemptToContintue = true;

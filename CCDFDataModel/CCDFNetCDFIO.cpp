@@ -31,8 +31,8 @@ const char *CDFNetCDFWriter::className="NetCDFWriter";
 #define CDFNetCDFGroupSeparator "/"
 //const char *CCDFWarper::className="CCDFWarper";
 
- #define CCDFNETCDFIO_DEBUG
- #define CCDFNETCDFIO_DEBUG_OPEN
+//  #define CCDFNETCDFIO_DEBUG
+//  #define CCDFNETCDFIO_DEBUG_OPEN
 
 CDFNetCDFReader::CDFNetCDFReader():CDFReader(){
   #ifdef CCDFNETCDFIO_DEBUG        
@@ -411,7 +411,7 @@ int CDFNetCDFReader::readAttributes(int root_id,std::vector<CDF::Attribute *> &a
       CDF::Attribute *attr = new CDF::Attribute();
       attr->setName(name);
       attr->type=_typeConversionAtt(type);
-      CDBDebug("%s %d %d %d",name,type,attr->type,attr->length);
+      //CDBDebug("%s %d %d %d",name,type,attr->type,attr->length);
       attr->length=length;
       CDF::allocateData(attr->getType(),&attr->data,attr->length+1);
       if(type!=NC_STRING){
