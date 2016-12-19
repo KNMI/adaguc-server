@@ -67,7 +67,7 @@
   
   <!-- Layers -->
   
-  <Layer type="database">
+<!--  <Layer type="database">
     <Name>notiles</Name>
     <Title>notiles</Title>
     <FilePath>/nobackup/users/plieger/data/himawari/test.nc</FilePath>
@@ -76,9 +76,9 @@
     <Min>0</Min>
     <Max>10</Max>
     <DataBaseTable>notiles</DataBaseTable>
-  </Layer>
+  </Layer>-->
   
-<Layer type="database">
+<!--<Layer type="database">
     <Name>tiled</Name>
     <Title>tiled</Title>
     <FilePath>/nobackup/users/plieger/data/himawari/loop/</FilePath>
@@ -95,23 +95,12 @@
                   minlevel="1"
                   maxlevel="6"
                   tilemode="avg_rgba"
-                  debug="false"
+                  debug="true"
                   threads="1" 
                   tilepath="/nobackup/users/plieger/data/tiles/himtest/"/>
-<!--    
-     <TileSettings tilewidthpx="512" 
-                  tileheightpx="512" 
-                  tilecellsizex="2000"
-                  tilecellsizey="2000"
-                  left="-5500000" right="5500000"  bottom="-5500000" top="5500000"
-                  tileprojection="+proj=geos +h=35785863 +a=6378137.0 +b=6356752.3 +lon_0=140.7 +no_defs"
-                  maxlevel="6"
-                  tilemode="avg_rgba"
-                  debug="true"
-                  threads="4" 
-                  tilepath="/nobackup/users/plieger/data/tiles/himtest/"/>-->
+
     <Dimension name="time" interval="PT10M" default="max">time</Dimension>
-  </Layer>
+  </Layer>-->
   
   <Legend name="black" type="colorRange">
     <palette index="0"   red="0"  green="0" blue="0" alpha="-1"/>
@@ -162,10 +151,10 @@
                   minlevel="1"
                   maxlevel="6"
                   tilemode="avg_rgba"
-                  debug="false"
+                  debug="true"
                   threads="1" 
                   tilepath="/nobackup/users/plieger/data/tiles/g4indo/"/>
-       <AdditionalLayer style="black/nearest"  replace="false">mask</AdditionalLayer>
+   <!--    <AdditionalLayer style="black/nearest"  replace="false">mask</AdditionalLayer>-->
    </Layer>
 
    
