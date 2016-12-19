@@ -1,3 +1,16 @@
+Version 2.0.20 2016-11-28
+    - CCDFDataModel supports NC_STRING types for attributes
+
+Version 2.0.19 2016-11-20
+    - Tiles can now be generated from very big grids in any cartographic projection
+    - GeoJSON supports line rendering
+    
+Version 2.0.17 2016-10-13
+    - Support for POI markers
+    
+Version 2.0.18 2016-10-12
+    - Support for 365_day calendars    
+    
 Version 2.0.13, 2016-08-15:
     - OpenDAP strings are encoded with two dimensions data(numstrings,maxStrlen64) by the NetCDF library. Internally this is now translated to CDF_STRING
     - Anydump is able to list strings
