@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<Configuration>
-  <WCS>
-    <WCSFormat name="netcdf" driver="ADAGUCNetCDF" mimetype="Content-Type:application/netcdf" options=""/>
-    <!--<WCSFormat name="netcdf" driver="NetCDF" mimetype="Content-Type:application/netcdf" options="WRITE_GDAL_TAGS=FALSE,WRITE_LONLAT=FALSE,WRITE_BOTTOMUP=FALSE,ZLEVEL=2,FORMAT=NC4C"/>-->
-    <WCSFormat name="aaigrid" driver="AAIGrid" mimetype="Content-Type:text/plain" />
-    <WCSFormat name="geotiff" driver="GTiff" mimetype="Content-Type:text/plain" />
-  </WCS>
-</Configuration>
