@@ -77,6 +77,7 @@ class CProj4ToCF{
     void initObliqueStereographicPerspective(CDF::Variable *projectionVariable, std::vector <KVP*> projKVPList);
     void initLatitudeLongitude(CDF::Variable *projectionVariable, std::vector <CProj4ToCF::KVP*> projKVPList);
     void initMercator(CDF::Variable *projectionVariable, std::vector <CProj4ToCF::KVP*> projKVPList);
+    void initTransverseMercator(CDF::Variable *projectionVariable, std::vector <CProj4ToCF::KVP*> projKVPList);
     void initLAEAPerspective(CDF::Variable *projectionVariable, std::vector <KVP*> projKVPList);
     
 

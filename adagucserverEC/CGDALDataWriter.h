@@ -82,7 +82,7 @@ class CGDALDataWriter: public CBaseDataWriterInterface{
     double dfSrcBBOX[4];
     CDataReader reader;
     GDALDataType datatype;
-    CT::string tmpFileName;
+   
     GDALWarpOptions *psWarpOptions;
     int currentBandNr;
     int NrOfBands;

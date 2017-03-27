@@ -28,6 +28,8 @@
 #ifndef CHTTPTOOLS_H
 #define CHTTPTOOLS_H
 
+#include "CDebugger.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,7 +39,7 @@
 class CHTTPTools{
   
   private:
-    
+  DEF_ERRORFUNCTION();  
   struct MemoryStruct {
     char *memory;
     size_t size;
@@ -75,7 +77,11 @@ class CHTTPTools{
    * @return Zero on succes
    */
   int static getBuffer(const char * url,char * &buffer, size_t &length){
-    if(buffer!=NULL)return 1;
+    CDBDebug("Getting [%s]",url);
+    if(buffer!=NULL){
+      CDBError("curl buffer is not empty");
+      return 1;
+    }
     CURL *curl_handle;
   
     struct MemoryStruct chunk;
@@ -83,26 +89,43 @@ class CHTTPTools{
     chunk.memory=NULL; /* we expect realloc(NULL, size) to work */ 
     chunk.size = 0;    /* no data at this point */ 
   
-    curl_global_init(CURL_GLOBAL_ALL);
+    if(curl_global_init(CURL_GLOBAL_ALL)!=0){
+      CDBError("curl_global_init failed");
+    }
   
     /* init the curl session */ 
     curl_handle = curl_easy_init();
+    
+    if(curl_handle == NULL){
+      CDBError("curl_easy_init failed");
+    }
   
     /* specify URL to get */ 
-    curl_easy_setopt(curl_handle, CURLOPT_URL, url);
+    if(curl_easy_setopt(curl_handle, CURLOPT_URL, url)!=0){
+      CDBError("curl_easy_setopt failed CURLOPT_URL");
+    }
   
     /* send all data to this function  */ 
-    curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
+    if( curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback)!=0){
+      CDBError("curl_easy_setopt failed CURLOPT_WRITEFUNCTION");
+    }
   
     /* we pass our 'chunk' struct to the callback function */ 
-    curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&chunk);
+    if(curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&chunk)!=0){
+      CDBError("curl_easy_setopt failed CURLOPT_WRITEDATA");
+    }
   
     /* some servers don't like requests that are made without a user-agent
     field, so we provide one */ 
-    curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, "libcurl-agent/1.0");
+    //if(curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, "libcurl-agent/1.0")!=0){
+    if(curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, "Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:51.0) Gecko/20100101 Firefox/51.0")!=0){
+      CDBError("curl_easy_setopt failed CURLOPT_USERAGENT");
+    }
   
     /* get it! */ 
-    curl_easy_perform(curl_handle);
+    if(curl_easy_perform(curl_handle)!=0){
+      CDBError("curl_easy_perform failed");
+    }
   
     /* cleanup curl stuff */ 
     curl_easy_cleanup(curl_handle);
@@ -110,6 +133,7 @@ class CHTTPTools{
     length = chunk.size;
     
     if(length==0){
+      CDBError("CURL chunk.size == 0");
       return 2;
     }
     
@@ -117,7 +141,7 @@ class CHTTPTools{
   
     /* we're done with libcurl, so clean it up */ 
     curl_global_cleanup();
-  
+    
     return 0;
   }
   
@@ -135,3 +159,4 @@ class CHTTPTools{
 };
 #endif
 #endif
+

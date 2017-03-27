@@ -622,10 +622,11 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString filter;
+            CXMLString filter,gfi_openall;
         }attr;
         void addAttribute(const char *name,const char *value){
           if(equals("filter",6,name)){attr.filter.copy(value);return;}
+          else if(equals("gfi_openall",11,name)){attr.gfi_openall.copy(value);return;}
         }
     };
     
@@ -640,7 +641,9 @@ class CServerConfig:public CXMLSerializerInterface{
             tileprojection,minlevel,maxlevel,tilepath,
             tilemode,
             threads,
-            debug;
+            debug,
+            prefix,
+            readonly;
         }attr;
 //           <TileSettings  tilewidth="600" 
 //                    tileheight="600" 
@@ -654,6 +657,8 @@ class CServerConfig:public CXMLSerializerInterface{
         void addAttribute(const char *name,const char *value){
           if(equals("tilemode",8,name)){attr.tilemode.copy(value);return;}
           else if(equals("debug",5,name)){attr.debug.copy(value);return;}
+          else if(equals("prefix",6,name)){attr.prefix.copy(value);return;}
+          else if(equals("readonly",8,name)){attr.readonly.copy(value);return;}
           else if(equals("threads",7,name)){attr.threads.copy(value);return;}
           else if(equals("tilewidthpx",11,name)){attr.tilewidthpx.copy(value);return;}
           else if(equals("tileheightpx",12,name)){attr.tileheightpx.copy(value);return;}

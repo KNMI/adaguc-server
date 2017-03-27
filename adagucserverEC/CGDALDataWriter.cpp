@@ -388,18 +388,31 @@ int  CGDALDataWriter::end(){
 #ifdef CGDALDATAWRITER_DEBUG  
   CDBDebug("END");
 #endif
+  CT::string tmpFileName;
+  bool writeToStdout = true;
   
-  // Generate a temporary filename for storage
-  char szTempFileName[MAX_STR_LEN+1];
-  generateUniqueGetCoverageFileName(szTempFileName);
+  const char * pszADAGUCWriteToFile=getenv("ADAGUC_WRITETOFILE");      
+  if(pszADAGUCWriteToFile != NULL){
+    tmpFileName = pszADAGUCWriteToFile;
+    writeToStdout = false;
+    CDBDebug("Write to ADAGUC_WRITETOFILE %s",pszADAGUCWriteToFile);
+  }else{
+    // Generate a temporary filename for storage
+    char szTempFileName[MAX_STR_LEN+1];
+    generateUniqueGetCoverageFileName(szTempFileName);
+    
+    tmpFileName.copy(srvParam->cfg->TempDir[0]->attr.value.c_str());
+    tmpFileName.concat("/");
+    tmpFileName.concat(szTempFileName);
+    #ifdef CGDALDATAWRITER_DEBUG    
+      CDBDebug("Generating a tmp file with name");
+      CDBDebug("%s",szTempFileName);
+    #endif
+  }
   
-  tmpFileName.copy(srvParam->cfg->TempDir[0]->attr.value.c_str());
-  tmpFileName.concat("/");
-  tmpFileName.concat(szTempFileName);
-#ifdef CGDALDATAWRITER_DEBUG    
-  CDBDebug("Generating a tmp file with name");
-  CDBDebug("%s",szTempFileName);
-#endif
+  
+  
+
   
   // Warp the image from destinationGDALDataSet to hMemDS1
   //GDALDataType eDT;
@@ -593,8 +606,14 @@ int  CGDALDataWriter::end(){
   GDALClose( hOutputDS );
   GDALClose( destinationGDALDataSet );
 //   GDALClose( destinationGDALDataSet );
+  
+  
+  
+  if(writeToStdout == false){
+    return 0;
+  }
 
-  // Output the file to stdout
+  /* Output the file to stdout */
   
   if(mimeType.length()<2)mimeType.copy("Content-Type:text/plain");
 //  printf("%s\n",tmpFileName.c_str());
@@ -638,8 +657,6 @@ int  CGDALDataWriter::end(){
   if(InputProducts!=NULL)delete[] InputProducts;InputProducts=NULL;
 //   if(Times!=NULL)delete[] Times;Times=NULL;
   return returnCode;
-
-  return 0;
 }
 
 

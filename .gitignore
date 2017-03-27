@@ -27,3 +27,13 @@
 *.exe
 *.out
 *.app
+
+#Other binaries
+CCDFDataModel/anydump
+adagucserverEC/adagucserver
+adagucserverEC/aggregate_dim
+adagucserverEC/aggregate_time
+adagucserverEC/geojsondump
+adagucserverEC/h5ncdump
+bin/*
+
