@@ -33,6 +33,7 @@ const char *CDFNetCDFWriter::className="NetCDFWriter";
 
 //  #define CCDFNETCDFIO_DEBUG
 //  #define CCDFNETCDFIO_DEBUG_OPEN
+// #define CCDFNETCDFWRITER_DEBUG
 
 CDFNetCDFReader::CDFNetCDFReader():CDFReader(){
   #ifdef CCDFNETCDFIO_DEBUG        
@@ -182,7 +183,7 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type,size_t *
         char*stringToAdd = tempData+(j+beginAt)*stringSize;
         size_t length = strlen(stringToAdd);
         ((char**)var->data)[j]=(char*)malloc(length+1);
-        snprintf(((char**)var->data)[j],length+1,stringToAdd);
+        snprintf(((char**)var->data)[j],length+1,"%s",stringToAdd);
       }
       delete[] tempData;
     }else{
@@ -363,8 +364,13 @@ int CDFNetCDFReader::readDimensions(int groupId,CT::string *groupName){
   char flatname[NC_MAX_NAME+1];
   size_t length;
   int nDims;
-  //status = nc_inq_ndims (groupId,&nDims);
+  status = nc_inq_ndims (groupId,&nDims);
+//   CDBDebug("Found %d dims",nDims);
+  
   status = nc_inq_dimids(groupId , &nDims, NULL, 0 );
+  
+//   CDBDebug("Found %d dims",nDims);
+  
   if(status!=NC_NOERR){CDBError("For groupName %s: ",groupName->c_str());ncError(__LINE__,className,"nc_inq_dimids: ",status);return 1;}
   int dimIds[nDims];
   status = nc_inq_dimids(groupId , &nDims, dimIds, 0 );
@@ -373,21 +379,25 @@ int CDFNetCDFReader::readDimensions(int groupId,CT::string *groupName){
   if(status!=NC_NOERR){ncError(__LINE__,className,"nc_inq_ndims: ",status);return 1;}
   for(int j=0;j<nDims;j++){
     status = nc_inq_dim(groupId,dimIds[j],flatname,&length);
+
     if(status!=NC_NOERR){CDBError("For groupName %s: ",groupName->c_str());ncError(__LINE__,className,"nc_inq_dim: ",status);return 1;}
     CT::string name=groupName->c_str();
     name.concat(flatname);
     try{
       CDF::Dimension * existingDim = cdfObject->getDimension(name.c_str());
       //Only add non existing variables;
+      CDBWarning("Reassigning dim %s",name.c_str());
       if(existingDim->length!=length){
         CDBError("Previously dimensions size for dim %s is not the same as new definition",name.c_str());
         return 1;
       }
     }catch(...){
+      
       CDF::Dimension * dim = new CDF::Dimension();
-      dim->id=j;
+      dim->id=dimIds[j];
       dim->setName(name.c_str());
       dim->length=length;
+      
       cdfObject->dimensions.push_back(dim);
     }
   }
@@ -411,6 +421,9 @@ int CDFNetCDFReader::readAttributes(int root_id,std::vector<CDF::Attribute *> &a
       CDF::Attribute *attr = new CDF::Attribute();
       attr->setName(name);
       attr->type=_typeConversionAtt(type);
+      if(attr->type == CDF_UNKNOWN){
+        CDBWarning("Unknown attribute type for attribute %s %d %d %d",name,type,attr->type,attr->length);
+      }
       //CDBDebug("%s %d %d %d",name,type,attr->type,attr->length);
       attr->length=length;
       CDF::allocateData(attr->getType(),&attr->data,attr->length+1);
@@ -422,7 +435,7 @@ int CDFNetCDFReader::readAttributes(int root_id,std::vector<CDF::Attribute *> &a
         status = nc_get_att_string(root_id,varID,name,(char**)attr->data);
         if(type==NC_CHAR)((char*)attr->data)[attr->length]='\0';
         if(status!=NC_NOERR){ncError(__LINE__,className,"nc_get_att: ",status);return 1;}
-        CDBDebug("units %s",((char**)attr->data)[0]);
+        //CDBDebug("units %s",((char**)attr->data)[0]);
       }
       attributes.push_back(attr);
     }
@@ -449,7 +462,7 @@ int CDFNetCDFReader::_findNCGroupIdForCDFVariable(CT::string *varName){
 };
 
 
-int CDFNetCDFReader::readVariables(int groupId,CT::string *groupName){
+int CDFNetCDFReader::readVariables(int groupId,CT::string *groupName,int mode){
   int nGroups;
   status = nc_inq_grps(groupId,&nGroups,NULL);
   if(status!=NC_NOERR){ncError(__LINE__,className,"nc_inq_grpname_full: ",status);return 1;}
@@ -470,7 +483,7 @@ int CDFNetCDFReader::readVariables(int groupId,CT::string *groupName){
       }else{
         newGroupName.print("%s%s",foundGroupName,CDFNetCDFGroupSeparator);
       }
-      status = readVariables(groupIds[g],&newGroupName);
+      status = readVariables(groupIds[g],&newGroupName,mode);
       if(status!=0){CDBError("readVariables failed for group [%s]",newGroupName.c_str());delete[] groupIds;return 1;}
     }
     
@@ -480,11 +493,14 @@ int CDFNetCDFReader::readVariables(int groupId,CT::string *groupName){
   CDBDebug("Start reading group [%s] with id [%d]",groupName->c_str(),groupId);
   #endif  
   
-  status = readDimensions(groupId,groupName);if(status!=0)return 1;
-  if(status!=0){CDBError("readDimensions failed for group [%s]",groupName);return 1;}
-  #ifdef MEASURETIME
-  StopWatch_Stop("readDim");
-  #endif
+  if(mode == 0){
+    status = readDimensions(groupId,groupName);if(status!=0)return 1;
+    if(status!=0){CDBError("readDimensions failed for group [%s]",groupName);return 1;}
+    #ifdef MEASURETIME
+    StopWatch_Stop("readDim");
+    #endif
+    return 0;
+  }
   
   //  status = nc_inq_grpname_full (int groupId, size_t *lenp, char *full_name);
   //  if(status!=NC_NOERR){ncError(__LINE__,className,"nc_inq_grpname_full: ",status);return 1;}
@@ -505,24 +521,42 @@ int CDFNetCDFReader::readVariables(int groupId,CT::string *groupName){
     CT::string name=groupName->c_str();
     name.concat(flatname);
     
+//     CDBDebug("%s Numdims NC : %d",name.c_str(),ndims);
+    
     //Only add non existing variables...
     try{
       cdfObject->getVariable(name.c_str());
     }catch(...){
       CDF::Variable * var = new CDF::Variable();
+      cdfObject->variables.push_back(var);
       isDimension = false;
       //Is this a dimension:
       for(size_t i=0;i<cdfObject->dimensions.size();i++){if(cdfObject->dimensions[i]->name.equals(name.c_str())){isDimension=true;break;}}
       //Dimension links:
+      
+//       CDBDebug("%s Numdims: %d",name.c_str(),var->dimensionlinks.size());
+      
       for(int k=0;k<ndims;k++){
+        bool foundDim = false;
         for(size_t i=0;i<cdfObject->dimensions.size();i++){
           if(cdfObject->dimensions[i]->id==dimids[k]){
+//             CDBDebug("%s %d %d",name.c_str(),cdfObject->dimensions[i]->id,dimids[k]);
             var->dimensionlinks.push_back(cdfObject->dimensions[i]);
+            foundDim = true;
             break;
           }
         }
+        if(foundDim == false){
+          CDBError("For variable [%s] unable to find dimensionwith id %d: Nr of needed dims: %d, numdims found in cdfobject: %d",name.c_str(),dimids[k],ndims,cdfObject->dimensions.size());
+          for(size_t j=0;j<cdfObject->dimensions.size();j++){
+            CDBDebug("%d: %s with id %d",j,cdfObject->dimensions[j]->name.c_str(),cdfObject->dimensions[j]->id);
+          }
+          return 1;
+        }
       }
       
+      
+//       CDBDebug("%s Numdims: %d",name.c_str(),var->dimensionlinks.size());
       
       
       
@@ -563,7 +597,7 @@ int CDFNetCDFReader::readVariables(int groupId,CT::string *groupName){
       var->setParentCDFObject(cdfObject);
       var->isDimension=isDimension;
       
-      cdfObject->variables.push_back(var);
+      
       
       //It is essential that the variable nows which reader can be used to read the data
       var->setCDFReaderPointer((void*)this);
@@ -584,7 +618,7 @@ CDFType CDFNetCDFReader::_typeConversionAtt(nc_type type){
   if(type==NC_DOUBLE)return CDF_DOUBLE;
   if(type==NC_STRING)return CDF_STRING;
   CDBWarning("Warning unknown attribute type %d",type);
-  return CDF_DOUBLE;
+  return CDF_UNKNOWN;
 }
 
 
@@ -610,7 +644,7 @@ CDFType CDFNetCDFReader::_typeConversionVar(nc_type type, bool isUnsigned){
   if(type==NC_DOUBLE)return CDF_DOUBLE;
   if(type==NC_STRING)return CDF_STRING;
   
-  return CDF_DOUBLE;
+  return CDF_UNKNOWN;
 }
 
 int CDFNetCDFReader::open(const char *fileName){
@@ -658,9 +692,15 @@ int CDFNetCDFReader::open(const char *fileName){
   StopWatch_Stop("NC_INQ");
   #endif
   
-  
+  //First readdims
   CT::string groupName="";
-  status = readVariables(root_id,&groupName);if(status!=0)return 1;
+  status = readVariables(root_id,&groupName,0);if(status!=0)return 1;
+  
+  //Second read vars
+  groupName="";
+  status = readVariables(root_id,&groupName,1);if(status!=0)return 1;
+  
+  
   #ifdef MEASURETIME
   StopWatch_Stop("readVar");
   #endif
@@ -738,6 +778,7 @@ CT::string CDFNetCDFWriter::NCtypeConversionToString(CDFType  type){
   if(type==CDF_FLOAT)r="NC_FLOAT";
   if(type==CDF_DOUBLE)r="NC_DOUBLE";
   if(type==CDF_STRING)r="NC_STRING";
+  if(type==CDF_UNKNOWN)r="NC_DOUBLE";
   return r;
 }
 

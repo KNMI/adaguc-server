@@ -23,7 +23,7 @@ public:
   public:
     double bbox[4];
     int indices[4];
-    CT::string crs;
+    CT::string proj4;
     int level;
   };
   

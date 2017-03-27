@@ -492,18 +492,6 @@ int CRequest::process_wms_getfeatureinfo_request(){
       CDBDebug("WMS GETFEATUREINFO %s",srvParam->WMSLayers[j].c_str());
     }
   return process_all_layers();
-//   CFile header;
-//   int status=header.     open("/nobackup/users/plieger/cpp/adagucserver/adagucserver/data/","./XMLTemplates/WMS_1.3.0_GetFeatureInfo_GML_WFS.dat");
-//   
-//   if(status!=0){
-//     CDBError("Not fouind");
-//     return 1;
-//   }
-//   CT::string XMLDoc;
-//   XMLDoc.copy(header.data);
-//   printf("%s%c%c\n","Content-Type:text/xml",13,10);
-//   printf("%s",XMLDoc.c_str());
-//   return 0;
 }
 
 int CRequest::process_wcs_getcoverage_request(){
@@ -719,8 +707,13 @@ int CRequest::process_wms_getcap_request(){
     //Do not use cache
     int status = generateOGCGetCapabilities(&XMLdocument);;if(status==CXMLGEN_FATAL_ERROR_OCCURED)return 1;
   }
-  printf("%s%c%c\n","Content-Type:text/xml",13,10);
-  printf("%s",XMLdocument.c_str());
+  const char * pszADAGUCWriteToFile=getenv("ADAGUC_WRITETOFILE");      
+  if(pszADAGUCWriteToFile != NULL){
+    CReadFile::write(pszADAGUCWriteToFile, XMLdocument.c_str(), XMLdocument.length());
+  }else{
+    printf("%s%c%c\n","Content-Type:text/xml",13,10);
+    printf("%s",XMLdocument.c_str());
+  }
   
 
   
@@ -1099,6 +1092,54 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource,CServerParams *
   return 0;
 }
 
+int findExtent(const char *srcProj4Str,CServerParams *srvParam,double nativeViewPortBBOX[4]){
+  CImageWarper warper;
+  int status =  warper.initreproj(srcProj4Str,srvParam->Geo,&srvParam->cfg->Projection);
+  if(status!=0){
+    warper.closereproj();
+    if(status!=0){
+      warper.closereproj();
+      return 1;
+    }
+  }
+  
+  double bbStepX = (nativeViewPortBBOX[2]-nativeViewPortBBOX[0])/100.;
+  double bbStepY = (nativeViewPortBBOX[3]-nativeViewPortBBOX[1])/100.;
+  
+  double xLow,yLow;
+  double xHigh,yHigh;
+  xLow=nativeViewPortBBOX[0];
+  yLow=nativeViewPortBBOX[1];
+  xHigh=nativeViewPortBBOX[2];
+  yHigh=nativeViewPortBBOX[3];
+  
+
+  bool first = false;
+  for(double y=yLow;y<yHigh;y+=bbStepY){
+    for(double x=xLow;x<xHigh;x+=bbStepX){
+      
+      double x1=x,y1=y;
+      status=warper.reprojpoint(x1,y1);
+      if(status == 0){
+        //CDBDebug("Testing %f %f" ,x,y);
+        if(first  == false){
+          nativeViewPortBBOX[0]=x1;
+          nativeViewPortBBOX[1]=y1;
+          nativeViewPortBBOX[2]=x1;
+          nativeViewPortBBOX[3]=y1;
+        }else{
+          if(nativeViewPortBBOX[0]>x1)nativeViewPortBBOX[0]=x1;
+          if(nativeViewPortBBOX[1]>y1)nativeViewPortBBOX[1]=y1;
+          if(nativeViewPortBBOX[2]<x1)nativeViewPortBBOX[2]=x1;
+          if(nativeViewPortBBOX[3]<y1)nativeViewPortBBOX[3]=y1;
+        }
+        first=true;
+      }
+    }
+  }
+  warper.closereproj();
+  return 0;
+}
 
 int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams *srvParam){
 #ifdef CREQUEST_DEBUG
@@ -1112,6 +1153,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
     if(dataSource->cfgLayer->TileSettings.size()==1){
       dataSource->queryBBOX = true;
     }
+   
     
 //     CDBDebug("queryDimValuesForDataSource dataSource->queryBBOX=%d %s for step %d/%d",(int)dataSource->queryBBOX,dataSource->layerName.c_str(),dataSource->getCurrentTimeStep(),dataSource->getNumTimeSteps());
 //     CDBDebug("queryDimValuesForDataSource cfgLayer->Name = %s",dataSource->cfgLayer->Name[0]->value.c_str());
@@ -1123,15 +1165,21 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
       dataSource->queryBBOX = false;
     }
     
-    if(dataSource->queryBBOX){
+    if(dataSource->queryBBOX&&dataSource->cfgLayer->TileSettings.size()==1){
       bool tileSettingsDebug = false;
        //CDBDebug("queryDimValuesForDataSource dataSource->queryBBOX %s for step %d/%d",dataSource->layerName.c_str(),dataSource->getCurrentTimeStep(),dataSource->getNumTimeSteps());
+      CT::string nativeProj4  = dataSource->cfgLayer->TileSettings[0]->attr.tileprojection.c_str();
+      
+      nativeProj4  = dataSource->cfgLayer->TileSettings[0]->attr.tileprojection.c_str();
+      
       double nativeViewPortBBOX[4];
-
       nativeViewPortBBOX[0]=srvParam->Geo->dfBBOX[0];
       nativeViewPortBBOX[1]=srvParam->Geo->dfBBOX[1];
       nativeViewPortBBOX[2]=srvParam->Geo->dfBBOX[2];
       nativeViewPortBBOX[3]=srvParam->Geo->dfBBOX[3];
+      findExtent(nativeProj4.c_str(),srvParam,nativeViewPortBBOX);
+      
+
       
       int tilewidth           = dataSource->cfgLayer->TileSettings[0]->attr.tilewidthpx.toInt();
       int tileheight          = dataSource->cfgLayer->TileSettings[0]->attr.tileheightpx.toInt();
@@ -1153,7 +1201,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
       CDBDebug("level1BBOXHeight,level1BBOXHeight %f,%f",level1BBOXHeight,level1BBOXHeight);
       #endif
       
-      CT::string nativeProj4  = dataSource->cfgLayer->TileSettings[0]->attr.tileprojection.c_str();
+      
       int maxlevel            = dataSource->cfgLayer->TileSettings[0]->attr.maxlevel.toInt();
       int minlevel = 1;
       if(dataSource->cfgLayer->TileSettings[0]->attr.minlevel.empty()==false){
@@ -1163,87 +1211,56 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
    
       double screenCellSize = -1;
       //if(!nativeProj4.equals(srvParam->Geo->CRS))
-      {
-        CImageWarper warper;
-        int status =  warper.initreproj(nativeProj4.c_str(),srvParam->Geo,&srvParam->cfg->Projection);
-        if(status!=0){
-          warper.closereproj();
-          CDBDebug("Unable to initialize projection ");
-        }
-        double bbStepX = (nativeViewPortBBOX[2]-nativeViewPortBBOX[0])/100.;
-        double bbStepY = (nativeViewPortBBOX[3]-nativeViewPortBBOX[1])/100.;
-        
-        double xLow,yLow;
-        double xHigh,yHigh;
-        xLow=nativeViewPortBBOX[0];
-        yLow=nativeViewPortBBOX[1];
-        xHigh=nativeViewPortBBOX[2];
-        yHigh=nativeViewPortBBOX[3];
-        
-  
-        bool first = false;
-        for(double y=yLow;y<yHigh;y+=bbStepY){
-          for(double x=xLow;x<xHigh;x+=bbStepX){
-            
-            double x1=x,y1=y;
-            status=warper.reprojpoint(x1,y1);
-            if(status == 0){
-              //CDBDebug("Testing %f %f" ,x,y);
-              if(first  == false){
-                nativeViewPortBBOX[0]=x1;
-                nativeViewPortBBOX[1]=y1;
-                nativeViewPortBBOX[2]=x1;
-                nativeViewPortBBOX[3]=y1;
-              }else{
-                if(nativeViewPortBBOX[0]>x1)nativeViewPortBBOX[0]=x1;
-                if(nativeViewPortBBOX[1]>y1)nativeViewPortBBOX[1]=y1;
-                if(nativeViewPortBBOX[2]<x1)nativeViewPortBBOX[2]=x1;
-                if(nativeViewPortBBOX[3]<y1)nativeViewPortBBOX[3]=y1;
-              }
-              first=true;
-            }
-          }
-        }
-        
-        //Find cellsize at parts of window
-        
-        double viewportCellsizeX=(srvParam->Geo->dfBBOX[2]-srvParam->Geo->dfBBOX[0])/double(srvParam->Geo->dWidth);
-        double viewportCellsizeY=(srvParam->Geo->dfBBOX[3]-srvParam->Geo->dfBBOX[1])/double(srvParam->Geo->dHeight);
-        
-        for(double wy=0;wy<1;wy+=0.1){
-          for(double wx=0;wx<1;wx+=0.1){
-            double viewPortMX = srvParam->Geo->dfBBOX[2]*(1-wx)+srvParam->Geo->dfBBOX[0]*wx;
-            double viewPortMY = srvParam->Geo->dfBBOX[3]*(1-wy)+srvParam->Geo->dfBBOX[1]*wy;
-            //CDBDebug("viewPortMX, viewPortMY = (%f,%f)",viewPortMX,viewPortMY);
-            double x1 = viewPortMX;
-            double y1 = viewPortMY;
-            double x2 = viewPortMX+viewportCellsizeX;
-            double y2 = viewPortMY+viewportCellsizeY;;
-            status = 0;
-            status +=warper.reprojpoint(x1,y1);
-            status +=warper.reprojpoint(x2,y2);
-            
+      
+     
+      
+      //Find cellsize at parts of window
+      
+      double viewportCellsizeX=(srvParam->Geo->dfBBOX[2]-srvParam->Geo->dfBBOX[0])/double(srvParam->Geo->dWidth);
+      double viewportCellsizeY=(srvParam->Geo->dfBBOX[3]-srvParam->Geo->dfBBOX[1])/double(srvParam->Geo->dHeight);
+      
+      CImageWarper warper;
+      int status =  warper.initreproj(nativeProj4.c_str(),srvParam->Geo,&srvParam->cfg->Projection);
+      if(status!=0){
+        warper.closereproj();
+        CDBError("Unable to initialize projection ");
+        return 1;
+      }
+      
+      for(double wy=0;wy<1;wy+=0.1){
+        for(double wx=0;wx<1;wx+=0.1){
+          double viewPortMX = srvParam->Geo->dfBBOX[2]*(1-wx)+srvParam->Geo->dfBBOX[0]*wx;
+          double viewPortMY = srvParam->Geo->dfBBOX[3]*(1-wy)+srvParam->Geo->dfBBOX[1]*wy;
+          //CDBDebug("viewPortMX, viewPortMY = (%f,%f)",viewPortMX,viewPortMY);
+          double x1 = viewPortMX;
+          double y1 = viewPortMY;
+          double x2 = viewPortMX+viewportCellsizeX;
+          double y2 = viewPortMY+viewportCellsizeY;;
+          status = 0;
+          status +=warper.reprojpoint(x1,y1);
+          status +=warper.reprojpoint(x2,y2);
+          
 //             CDBDebug("%f %f",x1,y1);
 //             CDBDebug("%f %f",x2,y2);
-            if(status==0){
-              double calcCellsize = sqrt(((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1))/2);
-              if(screenCellSize<0){
-                screenCellSize = calcCellsize;
-              }else{
-                if(calcCellsize<screenCellSize)screenCellSize = calcCellsize;
-              }
-              //CDBDebug("screenCellSize (%f,%f)= %f",viewPortMX,viewPortMY,calcCellsize);
+          if(status==0){
+            double calcCellsize = sqrt(((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1))/2);
+            if(screenCellSize<0){
+              screenCellSize = calcCellsize;
+            }else{
+              if(calcCellsize<screenCellSize)screenCellSize = calcCellsize;
             }
+            //CDBDebug("screenCellSize (%f,%f)= %f",viewPortMX,viewPortMY,calcCellsize);
           }
         }
-        
-        #ifdef CREQUEST_DEBUG
-        CDBDebug("Cellsize screen %f",screenCellSize);
-        CDBDebug("Cellsize basetile %f",level1BBOXWidth/double(tilewidth));
-        #endif
-        
-        warper.closereproj();
       }
+      
+      #ifdef CREQUEST_DEBUG
+      CDBDebug("Cellsize screen %f",screenCellSize);
+      CDBDebug("Cellsize basetile %f",level1BBOXWidth/double(tilewidth));
+      #endif
+      
+      warper.closereproj();
+    
 
       
       dataSource->queryLevel = 0;
@@ -1326,7 +1343,15 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
       
       
     }else{
-      dataSource->queryBBOX = false;
+         dataSource->queryBBOX = false;
+         
+/*
+      dataSource->queryBBOX = true;
+      dataSource->nativeViewPortBBOX[0] =111615;
+      dataSource->nativeViewPortBBOX[1] = 9.19318e+06;
+      dataSource->nativeViewPortBBOX[2] = 666176;
+      dataSource->nativeViewPortBBOX[3] =  9.24119e+06;
+      dataSource->queryLevel = 0;*/
       store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource,512);
     }
   
@@ -1524,31 +1549,14 @@ int CRequest::process_all_layers(){
   if(srvParam->serviceType==SERVICE_WCS){
     if(srvParam->requestType==REQUEST_WCS_DESCRIBECOVERAGE){
       CT::string XMLDocument;
-      /*if(srvParam->enableDocumentCache==true){
-        CSimpleStore simpleStore;
-        CT::string documentName;
-        bool storeNeedsUpdate=false;
-        int status = getDocumentCacheName(&documentName,srvParam);if(status!=0)return 1;
-        //Try to get the getcapabilities document from the store:
-        status = getDocFromDocCache(&simpleStore,&documentName,&XMLDocument);if(status==1)return 1;
-        //if(status==2, the store is ok, but not up to date
-        if(status==2)storeNeedsUpdate=true;
-        if(storeNeedsUpdate){
-          CDBDebug("Generating a new document with name %s",documentName.c_str());
-          status = generateOGCDescribeCoverage(&XMLDocument);if(status!=0)return 1;
-          //Store this document  
-          simpleStore.setStringAttribute(documentName.c_str(),XMLDocument.c_str());
-          if(storeDocumentCache(&simpleStore)!=0)return 1;
-        }else{
-          CDBDebug("Providing document from store with name %s",documentName.c_str());
-        }
-      }else{
-        //Do not use cache
-        status = generateOGCDescribeCoverage(&XMLDocument);if(status!=0)return 1;
-    }*/
       status = generateOGCDescribeCoverage(&XMLDocument);if(status==CXMLGEN_FATAL_ERROR_OCCURED)return 1;
-      printf("%s%c%c\n","Content-Type:text/xml",13,10);
-      printf("%s",XMLDocument.c_str());
+      const char * pszADAGUCWriteToFile=getenv("ADAGUC_WRITETOFILE");      
+      if(pszADAGUCWriteToFile != NULL){
+        CReadFile::write(pszADAGUCWriteToFile, XMLDocument.c_str(), XMLDocument.length());
+      }else{
+        printf("%s%c%c\n","Content-Type:text/xml",13,10);
+        printf("%s",XMLDocument.c_str());
+      }
       return 0;
     }
   }
@@ -2129,6 +2137,7 @@ int CRequest::process_querystring(){
   int dFound_JSONP=0;
   int dFound_Dataset=0;
   
+  
 
   
   int dFound_autoResourceLocation=0;
@@ -2245,7 +2254,7 @@ int CRequest::process_querystring(){
         }else srvParam->Styles.copy("");
         dFound_Styles=1;
       }else{
-        CDBWarning("ADAGUC Server: Styles already defined");
+        CDBError("ADAGUC Server: Styles already defined");
         dErrorOccured=1;
       }
     }
@@ -2257,7 +2266,7 @@ int CRequest::process_querystring(){
         }else srvParam->Style.copy("");
         dFound_Style=1;
       }else{
-        CDBWarning("ADAGUC Server: Style already defined");
+        CDBError("ADAGUC Server: Style already defined");
         dErrorOccured=1;
       }
     }
@@ -2271,7 +2280,7 @@ int CRequest::process_querystring(){
             srvParam->Geo->dfBBOX[j]=atof(bboxvalues[j].c_str());
           }
         }else{
-          CDBWarning("ADAGUC Server: Invalid BBOX values");
+          CDBError("ADAGUC Server: Invalid BBOX values");
           dErrorOccured=1;
         }
         delete[] bboxvalues;
@@ -2302,7 +2311,7 @@ int CRequest::process_querystring(){
       if(value0Cap.equals("WIDTH")){
         srvParam->Geo->dWidth=atoi(values[1].c_str());
         if(srvParam->Geo->dWidth<1){
-          CDBWarning("ADAGUC Server: Parameter Width should be at least 1");
+          CDBError("ADAGUC Server: Parameter Width should be at least 1");
           dErrorOccured=1;
         }
         dFound_Width=1;
@@ -2311,7 +2320,7 @@ int CRequest::process_querystring(){
       if(value0Cap.equals("HEIGHT")){
         srvParam->Geo->dHeight=atoi(values[1].c_str());
         if(srvParam->Geo->dHeight<1){
-          CDBWarning("ADAGUC Server: Parameter Height should be at least 1");
+          CDBError("ADAGUC Server: Parameter Height should be at least 1");
           dErrorOccured=1;
         }
 
@@ -2321,7 +2330,7 @@ int CRequest::process_querystring(){
       if(value0Cap.equals("RESX")){
         srvParam->dfResX=atof(values[1].c_str());
         if(srvParam->dfResX==0){
-          CDBWarning("ADAGUC Server: Parameter RESX should not be zero");
+          CDBError("ADAGUC Server: Parameter RESX should not be zero");
           dErrorOccured=1;
         }
         dFound_RESX=1;
@@ -2330,7 +2339,7 @@ int CRequest::process_querystring(){
       if(value0Cap.equals("RESY")){
         srvParam->dfResY=atof(values[1].c_str());
         if(srvParam->dfResY==0){
-          CDBWarning("ADAGUC Server: Parameter RESY should not be zero");
+          CDBError("ADAGUC Server: Parameter RESY should not be zero");
           dErrorOccured=1;
         }
         dFound_RESY=1;
@@ -2395,7 +2404,7 @@ int CRequest::process_querystring(){
             dFound_Format=1;
           }
         }else{
-          CDBWarning("ADAGUC Server: FORMAT already defined");
+          CDBError("ADAGUC Server: FORMAT already defined");
           dErrorOccured=1;
         }
       }
@@ -2408,7 +2417,7 @@ int CRequest::process_querystring(){
             dFound_InfoFormat=1;
           }
         }else{
-          CDBWarning("ADAGUC Server: INFO_FORMAT already defined");
+          CDBError("ADAGUC Server: INFO_FORMAT already defined");
           dErrorOccured=1;
         }
       }
@@ -2424,7 +2433,7 @@ int CRequest::process_querystring(){
             dFound_Transparent=1;
           }
         }else{
-          CDBWarning("ADAGUC Server: TRANSPARENT already defined");
+          CDBError("ADAGUC Server: TRANSPARENT already defined");
           dErrorOccured=1;
         }
       }
@@ -2436,7 +2445,7 @@ int CRequest::process_querystring(){
             dFound_BGColor=1;
           }
         }else{
-          CDBWarning("ADAGUC Server: FORMAT already defined");
+          CDBError("ADAGUC Server: FORMAT already defined");
           dErrorOccured=1;
         }
       }
@@ -2452,7 +2461,7 @@ int CRequest::process_querystring(){
         }
         //ARCGIS user Friendliness, version can be defined multiple times.
         /*else{
-          CDBWarning("ADAGUC Server: Version already defined");
+          CDBError("ADAGUC Server: Version already defined");
           dErrorOccured=1;
         }*/
       }
@@ -2465,7 +2474,7 @@ int CRequest::process_querystring(){
             dFound_Exceptions=1;
           }
         }else{
-          CDBWarning("ADAGUC Server: Exceptions already defined");
+          CDBError("ADAGUC Server: Exceptions already defined");
           dErrorOccured=1;
         }
       }
@@ -2531,7 +2540,7 @@ int CRequest::process_querystring(){
       //WCS Coverage parameter
     if(value0Cap.equals("COVERAGE")){
         if(srvParam->WMSLayers!=NULL){
-          CDBWarning("ADAGUC Server: COVERAGE already defined");
+          CDBError("ADAGUC Server: COVERAGE already defined");
           dErrorOccured=1;
         }else{
           srvParam->WMSLayers = values[1].splitToArray(",");
@@ -2629,7 +2638,7 @@ int CRequest::process_querystring(){
             dFound_JSONP=1;
           }
         }else{
-          CDBWarning("ADAGUC Server: JSONP already defined");
+          CDBError("ADAGUC Server: JSONP already defined");
           dErrorOccured=1;
         }
       }
@@ -2658,7 +2667,7 @@ int CRequest::process_querystring(){
   #endif
 
   if(dFound_Service==0){
-    CDBWarning("ADAGUC Server: Parameter SERVICE missing");
+    CDBError("ADAGUC Server: Parameter SERVICE missing");
     dErrorOccured=1;
   }
   if(dFound_Styles==0){
@@ -2677,7 +2686,7 @@ int CRequest::process_querystring(){
     srvParam->OGCVersion=WMS_VERSION_1_3_0;
     
     if(dFound_Request==0){
-      CDBWarning("ADAGUC Server: Parameter REQUEST missing");
+      CDBError("ADAGUC Server: Parameter REQUEST missing");
       dErrorOccured=1;
     }else{
       if(REQUEST.equals("GETCAPABILITIES"))srvParam->requestType=REQUEST_WMS_GETCAPABILITIES;
@@ -2831,7 +2840,7 @@ int CRequest::process_querystring(){
     }
     if(srvParam->requestType==REQUEST_WMS_GETMAP||srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
         if(dFound_Format==0){
-          CDBWarning("ADAGUC Server: Parameter FORMAT missing");
+          CDBError("ADAGUC Server: Parameter FORMAT missing");
           dErrorOccured=1;
         }else{
           
@@ -2875,14 +2884,14 @@ int CRequest::process_querystring(){
       if(srvParam->requestType==REQUEST_WMS_GETFEATUREINFO||srvParam->requestType==REQUEST_WMS_GETPOINTVALUE||srvParam->requestType==REQUEST_WMS_GETHISTOGRAM){
         int status = CServerParams::checkDataRestriction();
         if((status&ALLOW_GFI)==false){
-          CDBWarning("ADAGUC Server: This layer is not queryable.");
+          CDBError("ADAGUC Server: This layer is not queryable.");
           return 1;
         }
       }
       // Check if styles is defined for WMS 1.1.1
       if(dFound_Styles==0&&srvParam->requestType==REQUEST_WMS_GETMAP){
         if(srvParam->OGCVersion==WMS_VERSION_1_1_1){
-          //CDBWarning("ADAGUC Server: Parameter STYLES missing");TODO Google Earth does not provide this! Disabled this check for the moment.
+          //CDBError("ADAGUC Server: Parameter STYLES missing");TODO Google Earth does not provide this! Disabled this check for the moment.
         }
       }
       
@@ -2915,13 +2924,13 @@ int CRequest::process_querystring(){
           /*
            * TODO enable strict WMS. If bbox is not given, ADAGUC calculates the best fit bbox itself, handy for preview images!!!
            */
-//        CDBWarning("ADAGUC Server: Parameter BBOX missing");
+//        CDBError("ADAGUC Server: Parameter BBOX missing");
 //        dErrorOccured=1;
       }
       
       
       if(dFound_Width==0&&dFound_Height==0){
-        CDBWarning("ADAGUC Server: Parameter WIDTH or HEIGHT missing");
+        CDBError("ADAGUC Server: Parameter WIDTH or HEIGHT missing");
         dErrorOccured=1;
       }
       
@@ -2959,21 +2968,21 @@ int CRequest::process_querystring(){
       
       if(srvParam->OGCVersion==WMS_VERSION_1_0_0 || srvParam->OGCVersion==WMS_VERSION_1_1_1){
         if(dFound_SRS==0){
-          CDBWarning("ADAGUC Server: Parameter SRS missing");
+          CDBError("ADAGUC Server: Parameter SRS missing");
           dErrorOccured=1;
         }
       }
       
       if(srvParam->OGCVersion==WMS_VERSION_1_3_0 ){
         if(dFound_CRS==0){
-          CDBWarning("ADAGUC Server: Parameter CRS missing");
+          CDBError("ADAGUC Server: Parameter CRS missing");
           dErrorOccured=1;
         }
       }
       
       
       if(dFound_WMSLAYERS==0){
-        CDBWarning("ADAGUC Server: Parameter LAYERS missing");
+        CDBError("ADAGUC Server: Parameter LAYERS missing");
         dErrorOccured=1;
       }
       if(dErrorOccured==0){
@@ -2998,22 +3007,22 @@ int CRequest::process_querystring(){
         if(srvParam->requestType==REQUEST_WMS_GETFEATUREINFO){
           if(srvParam->OGCVersion == WMS_VERSION_1_0_0 || srvParam->OGCVersion == WMS_VERSION_1_1_1){
             if(dFound_X==0){
-              CDBWarning("ADAGUC Server: Parameter X missing");
+              CDBError("ADAGUC Server: Parameter X missing");
               dErrorOccured=1;
             }
             if(dFound_Y==0){
-              CDBWarning("ADAGUC Server: Parameter Y missing");
+              CDBError("ADAGUC Server: Parameter Y missing");
               dErrorOccured=1;
             }
           }
           
           if(srvParam->OGCVersion == WMS_VERSION_1_3_0){
             if(dFound_I==0){
-              CDBWarning("ADAGUC Server: Parameter I missing");
+              CDBError("ADAGUC Server: Parameter I missing");
               dErrorOccured=1;
             }
             if(dFound_J==0){
-              CDBWarning("ADAGUC Server: Parameter J missing");
+              CDBError("ADAGUC Server: Parameter J missing");
               dErrorOccured=1;
             }
           }
@@ -3070,7 +3079,7 @@ int CRequest::process_querystring(){
     
     if(dErrorOccured==0&&srvParam->requestType==REQUEST_WMS_GETLEGENDGRAPHIC){
       if(dFound_WMSLAYER==0){
-        CDBWarning("ADAGUC Server: Parameter LAYER missing");
+        CDBError("ADAGUC Server: Parameter LAYER missing");
         dErrorOccured=1;
       }
       if(dErrorOccured==0){
@@ -3093,15 +3102,15 @@ int CRequest::process_querystring(){
     if(dErrorOccured==0&&srvParam->requestType==REQUEST_WMS_GETMETADATA){
       int status = CServerParams::checkDataRestriction();
       if((status&ALLOW_METADATA)==false){
-        CDBWarning("ADAGUC Server: GetMetaData is restricted");
+        CDBError("ADAGUC Server: GetMetaData is restricted");
         return 1;
       }
       if(dFound_WMSLAYER==0){
-        CDBWarning("ADAGUC Server: Parameter LAYER missing");
+        CDBError("ADAGUC Server: Parameter LAYER missing");
         dErrorOccured=1;
       }
       if(dFound_Format==0){
-        CDBWarning("ADAGUC Server: Parameter FORMAT missing");
+        CDBError("ADAGUC Server: Parameter FORMAT missing");
         dErrorOccured=1;
       }
       if(dErrorOccured==0){
@@ -3119,11 +3128,11 @@ int CRequest::process_querystring(){
     srvParam->OGCVersion=WCS_VERSION_1_0;
     int status = CServerParams::checkDataRestriction();
     if((status&ALLOW_WCS)==false){
-      CDBWarning("ADAGUC Server: WCS Service is disabled.");
+      CDBError("ADAGUC Server: WCS Service is disabled.");
       return 1;
     }
     if(dFound_Request==0){
-      CDBWarning("ADAGUC Server: Parameter REQUEST missing");
+      CDBError("ADAGUC Server: Parameter REQUEST missing");
       dErrorOccured=1;
     }else{
       if(REQUEST.equals("GETCAPABILITIES"))srvParam->requestType=REQUEST_WCS_GETCAPABILITIES;
@@ -3146,40 +3155,40 @@ int CRequest::process_querystring(){
         srvParam->WCS_GoNative = 0;
         if(dFound_RESX==0||dFound_RESY==0){
           if(dFound_Width==0){
-            CDBWarning("ADAGUC Server: Parameter WIDTH/RESX missing");
+            CDBError("ADAGUC Server: Parameter WIDTH/RESX missing");
             dErrorOccured=1;
           }
           if(dFound_Height==0){
-            CDBWarning("ADAGUC Server: Parameter HEIGHT/RESY missing");
+            CDBError("ADAGUC Server: Parameter HEIGHT/RESY missing");
             dErrorOccured=1;
           }
           srvParam->dWCS_RES_OR_WH = 0;
         }else if(dFound_Width==0||dFound_Height==0){
           if(dFound_RESX==0){
-            CDBWarning("ADAGUC Server: Parameter RESX missing");
+            CDBError("ADAGUC Server: Parameter RESX missing");
             dErrorOccured=1;
           }
           if(dFound_RESY==0){
-            CDBWarning("ADAGUC Server: Parameter RESY missing");
+            CDBError("ADAGUC Server: Parameter RESY missing");
             dErrorOccured=1;
           }
           srvParam->dWCS_RES_OR_WH = 1;
          
         }
         if(srvParam->dFound_BBOX==0){
-          CDBWarning("ADAGUC Server: Parameter BBOX missing");
+          CDBError("ADAGUC Server: Parameter BBOX missing");
           dErrorOccured=1;
         }
         if(dFound_CRS==0){
-          CDBWarning("ADAGUC Server: Parameter CRS missing");
+          CDBError("ADAGUC Server: Parameter CRS missing");
           dErrorOccured=1;
         }
         if(dFound_Format==0){
-          CDBWarning("ADAGUC Server: Parameter FORMAT missing");
+          CDBError("ADAGUC Server: Parameter FORMAT missing");
           dErrorOccured=1;
         }
         if(dFound_WCSCOVERAGE==0){
-          CDBWarning("ADAGUC Server: Parameter COVERAGE missing");
+          CDBError("ADAGUC Server: Parameter COVERAGE missing");
           dErrorOccured=1;
         }
       }
@@ -3206,11 +3215,11 @@ int CRequest::process_querystring(){
     return 0;
   }
   if(srvParam->serviceType==SERVICE_WCS){
-    CDBWarning("ADAGUC Server: Invalid value for request. Supported requests are: getcapabilities, describecoverage and getcoverage");
+    CDBError("ADAGUC Server: Invalid value for request. Supported requests are: getcapabilities, describecoverage and getcoverage");
   }else if(srvParam->serviceType==SERVICE_WMS){
-    CDBWarning("ADAGUC Server: Invalid value for request. Supported requests are: getcapabilities, getmap, gethistogram, getfeatureinfo, getpointvalue, getmetadata, getReferencetimes, getstyles and getlegendgraphic");
+    CDBError("ADAGUC Server: Invalid value for request. Supported requests are: getcapabilities, getmap, gethistogram, getfeatureinfo, getpointvalue, getmetadata, getReferencetimes, getstyles and getlegendgraphic");
   }else{
-    CDBWarning("ADAGUC Server: Unknown service");
+    CDBError("ADAGUC Server: Unknown service");
   }
   #ifdef MEASURETIME
   StopWatch_Stop("End of query string");

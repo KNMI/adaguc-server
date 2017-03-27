@@ -293,6 +293,7 @@ void CProj4ToCF::initLatitudeLongitude(CDF::Variable *projectionVariable, std::v
 }
 
 void CProj4ToCF::initMercator(CDF::Variable *projectionVariable, std::vector <CProj4ToCF::KVP*> projKVPList){
+  CDBDebug("initMercator ");
   projectionVariable->removeAttributes();
   float v = 0;
   projectionVariable->addAttribute(new CDF::Attribute("grid_mapping_name","mercator"));
@@ -302,6 +303,26 @@ void CProj4ToCF::initMercator(CDF::Variable *projectionVariable, std::vector <CP
   v=getProj4ValueF("b"      ,projKVPList,6356079,CProj4ToCF::convertToM);    projectionVariable->addAttribute(new CDF::Attribute("semi_minor_axis"     ,CDF_FLOAT,&v,1));
 }
 
+void CProj4ToCF::initTransverseMercator(CDF::Variable *projectionVariable, std::vector <CProj4ToCF::KVP*> projKVPList){
+  CDBDebug("initTransverseMercator()");
+  projectionVariable->removeAttributes();
+  float v = 0;
+  projectionVariable->addAttribute(new CDF::Attribute("grid_mapping_name","transverse_mercator"));
+  v=getProj4ValueF("lat_0"  ,projKVPList,0);
+  projectionVariable->addAttribute(new CDF::Attribute("latitude_of_projection_origin" ,CDF_FLOAT,&v,1));
+  v=getProj4ValueF("lon_0"  ,projKVPList,0);
+  projectionVariable->addAttribute(new CDF::Attribute("longitude_of_central_meridian" ,CDF_FLOAT,&v,1));
+  v=getProj4ValueF("a"      ,projKVPList,6377397.155,CProj4ToCF::convertToM);
+  projectionVariable->addAttribute(new CDF::Attribute("semi_major_axis" ,CDF_FLOAT,&v,1));
+  v=getProj4ValueF("b"      ,projKVPList,6356079,CProj4ToCF::convertToM);
+  projectionVariable->addAttribute(new CDF::Attribute("semi_minor_axis"     ,CDF_FLOAT,&v,1));
+  v=getProj4ValueF("x_0"      ,projKVPList,0,CProj4ToCF::convertToM);
+  projectionVariable->addAttribute(new CDF::Attribute("false_easting"     ,CDF_FLOAT,&v,1));
+  v=getProj4ValueF("y_0"      ,projKVPList,0,CProj4ToCF::convertToM);
+  projectionVariable->addAttribute(new CDF::Attribute("false_northing"     ,CDF_FLOAT,&v,1));
+  v=getProj4ValueF("k_0"      ,projKVPList,1.0,CProj4ToCF::convertToM);
+  projectionVariable->addAttribute(new CDF::Attribute("scale_factor_at_projection_origin"     ,CDF_FLOAT,&v,1));
+}
 
 int CProj4ToCF::convertBackAndFort(const char *projString,CDF::Variable *projectionVariable){
   CProj4ToCF proj4ToCF;
@@ -361,7 +382,8 @@ int CProj4ToCF::convertProjToCF( CDF::Variable *projectionVariable, const char *
         if(projKVPList[j]->value.equals("ob_tran")){  initRPPerspective(projectionVariable,projKVPList);foundProj=1;}
         if(projKVPList[j]->value.equals("sterea")){  initObliqueStereographicPerspective(projectionVariable,projKVPList);foundProj=1;}
         if(projKVPList[j]->value.equals("latitude_longitude")){  initLatitudeLongitude(projectionVariable,projKVPList);foundProj=1;}
-        if(projKVPList[j]->value.equals("tmerc")){  initMercator(projectionVariable,projKVPList);foundProj=1;}
+        if(projKVPList[j]->value.equals("merc")){  initMercator(projectionVariable,projKVPList);foundProj=1;}
+        if(projKVPList[j]->value.equals("tmerc")){  initTransverseMercator(projectionVariable,projKVPList);foundProj=1;}
         if(projKVPList[j]->value.equals("laea")){  initLAEAPerspective(projectionVariable,projKVPList);foundProj=1;}
       }
     }
@@ -698,7 +720,7 @@ int CProj4ToCF::convertCFToProj( CDF::Variable *projectionVariable,CT::string *p
         units="km";
       }
       
-      proj4String->print("+proj=tmerc +lat_0=%f",
+      proj4String->print("+proj=merc +lat_0=%f",
                         latitude_of_projection_origin.toDouble());
     
       
@@ -712,14 +734,89 @@ int CProj4ToCF::convertCFToProj( CDF::Variable *projectionVariable,CT::string *p
       delete[] stpList;
       
       
-      proj4String->printconcat(" +lon_0=%f +k_0=1.0 +x_0=%f +y_0=%f +units=%s",
+      proj4String->printconcat(" +lon_0=%f +k_0=1.0 +x_0=%f +y_0=%f +a=%f +units=%s",
                         longitude_of_central_meridian.toDouble(), 
                         false_easting.toDouble(),
                         false_northing.toDouble(),
+                        semi_major_axis.toDouble(),
                         units.c_str()
                               );
       
-    }else{
+    }else if(grid_mapping_name.equals("transverse_mercator")){
+      // Transverse mercator projection
+      //+proj=tmerc +lat_0=46.8 +lon_0=2.337229 +k_0=1.00 +x_0=600000 +y_0=2200000
+      CT::string longitude_of_central_meridian = "0" ;
+      CT::string latitude_of_projection_origin = "90" ;
+      CT::string standard_parallel = "" ;
+      CT::string semi_major_axis = "6378140.000000f" ;
+      CT::string semi_minor_axis = "6356750.000000f" ;
+      CT::string inverse_flattening = "297.183263207";
+      CT::string false_easting = "0" ;
+      CT::string false_northing = "0";
+      CT::string scale_factor_at_projection_origin = "1.0";
+      
+      bool found;
+      
+      found=false;
+      try{projectionVariable->getAttribute("longitude_of_central_meridian")->getDataAsString(&longitude_of_central_meridian);found=true;}catch(int e){};
+      if (!found) {
+        try{projectionVariable->getAttribute("longitude_of_projection_origin")->getDataAsString(&longitude_of_central_meridian);found=true;}catch(int e){};
+      }
+      try{projectionVariable->getAttribute("latitude_of_projection_origin")->getDataAsString(&latitude_of_projection_origin);}catch(int e){};
+      
+      found=false;
+      try{projectionVariable->getAttribute("scale_factor_at_projection_origin")->getDataAsString(&scale_factor_at_projection_origin);found=true;}catch(int e){};
+      if (!found) {
+        try{projectionVariable->getAttribute("scale_factor_at_central_meridian")->getDataAsString(&scale_factor_at_projection_origin);found=true;}catch(int e){};
+        if (!found) {
+          CDBError("Projection '%s' needs scale_factor_at_projection_origin or scale_factor_at_central_meridian");
+          return CPROJ4TOCF_UNSUPPORTED_PROJECTION;
+        }
+      }
+      
+      try{projectionVariable->getAttribute("semi_major_axis")->getDataAsString(&semi_major_axis);}catch(int e){};
+      
+      found=false;
+      try{projectionVariable->getAttribute("semi_minor_axis")->getDataAsString(&semi_minor_axis);found=true;}catch(int e){};
+      if (!found) {
+        try{projectionVariable->getAttribute("inverse_flattening")->getDataAsString(&inverse_flattening);found=true;}catch(int e){};
+        if (found) {
+          float semi_minor_axis_value=semi_major_axis.toDouble()*(1-1/inverse_flattening.toDouble());
+          semi_minor_axis.print("%f", semi_minor_axis_value);
+        } else {
+          CDBError("Projection '%s' needs semi_minor_axis or inverse_flattening");
+          return CPROJ4TOCF_UNSUPPORTED_PROJECTION;
+        }  
+      }
+      try{projectionVariable->getAttribute("false_easting")->getDataAsString(&false_easting);}catch(int e){};
+      try{projectionVariable->getAttribute("false_northing")->getDataAsString(&false_northing);}catch(int e){};
+      
+      
+      CT::string units = "m";
+      //       double  dfsemi_major_axis = semi_major_axis.toDouble();
+      //       double  dfsemi_minor_axis = semi_minor_axis.toDouble();
+      //       
+      int projectionUnits = getProjectionUnits(projectionVariable);
+      
+      if(projectionUnits == CPROJ4TOCF_UNITS_KILOMETER){
+        //         dfsemi_major_axis = dfsemi_major_axis/1000;
+        //         dfsemi_minor_axis = dfsemi_minor_axis/1000;
+        units="km";
+      }
+      
+      proj4String->print("+proj=tmerc +lat_0=%f",
+                         latitude_of_projection_origin.toDouble());
+      
+      proj4String->printconcat(" +lon_0=%f +k_0=%f +x_0=%f +y_0=%f +a=%f +b=%f +units=%s",
+                               longitude_of_central_meridian.toDouble(), 
+                               scale_factor_at_projection_origin.toDouble(),
+                               false_easting.toDouble(),
+                               false_northing.toDouble(),
+                               semi_major_axis.toDouble(),
+                               semi_minor_axis.toDouble(),
+                               units.c_str()
+                              );
+     }else{
       CDBError("Projection '%s' not supported",grid_mapping_name.c_str());
       return CPROJ4TOCF_UNSUPPORTED_PROJECTION;
     }
