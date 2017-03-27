@@ -53,6 +53,7 @@ typedef int CDFType;
 #define CDF_USHORT  8  /* unsigned 2-byte int */
 #define CDF_UINT    9  /* unsigned 4-byte int */
 #define CDF_STRING  10 /* variable string */
+#define CDF_UNKNOWN 11 /* Unknown type, using CDF_DOUBLE */
 
 /* Possible error codes, thrown by CDF */
 typedef int CDFError;

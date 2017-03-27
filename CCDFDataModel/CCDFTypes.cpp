@@ -39,6 +39,7 @@ int CDF::getTypeSize(CDFType type){
   if(type == CDF_INT || type == CDF_UINT)return 4;
   if(type == CDF_FLOAT)return 4;
   if(type == CDF_DOUBLE)return 8;
+  if(type == CDF_UNKNOWN)return 8;
   if(type == CDF_STRING)return sizeof(char*);
   return 0;
 }
@@ -92,6 +93,7 @@ void CDF::getCDFDataTypeName(char *name,const size_t maxlen,const int type){
   if(type==CDF_INT   )snprintf(name,maxlen,"CDF_INT");
   if(type==CDF_FLOAT )snprintf(name,maxlen,"CDF_FLOAT");
   if(type==CDF_DOUBLE)snprintf(name,maxlen,"CDF_DOUBLE");
+  if(type==CDF_UNKNOWN)snprintf(name,maxlen,"CDF_UNKNOWN");
   if(type==CDF_UBYTE )snprintf(name,maxlen,"CDF_UBYTE");
   if(type==CDF_USHORT)snprintf(name,maxlen,"CDF_USHORT");
   if(type==CDF_UINT  )snprintf(name,maxlen,"CDF_UINT");

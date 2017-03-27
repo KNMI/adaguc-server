@@ -487,7 +487,7 @@
               delete *it;
               *it=NULL;
             }
-            CDBDebug("Deleted %d features for %s", featureStore[fileName].size(), fileName.c_str());
+//            CDBDebug("Deleted %d features for %s", featureStore[fileName].size(), fileName.c_str());
           }
           featureStore.clear(); 
         }
@@ -644,12 +644,9 @@
           unsigned short f=65535u;
           polygonIndexVar->setAttribute("_FillValue",CDF_USHORT,&f,1);
 
-
-          CDBDebug("<><><><><><><>Creating variables for all properties fields<><><><><><>");
   //        std::vector<Feature*>::iterator sample=featureMap.begin();
   //        Feature *sample=featureMap[0];
           int nrFeatures=featureMap.size();
-          CDBDebug("sz: %d", nrFeatures);
           CDF::Dimension *dimFeatures;
           bool found=false;
           try {
@@ -724,7 +721,6 @@
 //               }
 //             }
           }
-          CDBDebug("Dump: %s\n", CDF::dump(cdfObject).c_str());
         }
         
   #define MAX(a,b) (((a)>(b))?(a):(b))
@@ -866,10 +862,8 @@
   //                        CDBDebug("  coords type of %d", coords.type);
                         }
                       } else if (strcmp(geomType.u.string.ptr, "LineString")==0) {
-                        CDBDebug("LineString found");
                         json_value coords=geom["coordinates"];
                         if (coords.type==json_array) {
-                          CDBDebug("  array of %d coords",coords.u.array.length);
                           feat->newPolyline(); 
                           for (unsigned int i=0; i<coords.u.array.length;i++) {
                             json_value pt=*coords.u.array.values[i];
@@ -889,10 +883,8 @@
                           CDBDebug("  coords type of %d", coords.type);
                         }
                       } else if (strcmp(geomType.u.string.ptr, "MultiLineString")==0) {
-                        CDBDebug("MultiLineString found");
                         json_value multicoords=geom["coordinates"];
                         if (multicoords.type==json_array) {
-                          CDBDebug("  array of %d coords",multicoords.u.array.length);
                           //                            CDBDebug("  array of %d coords",coords.u.array.length);
                           for (unsigned int j=0; j<multicoords.u.array.length; j++) {
                             json_value coords=*multicoords.u.array.values[j];

@@ -48,7 +48,7 @@
 
 CT::string months[] = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
 
-// #define CIMAGEDATAWRITER_DEBUG
+//  #define CIMAGEDATAWRITER_DEBUG
 //  #define MEASURETIME
 
 
@@ -69,6 +69,7 @@ CImageDataWriter::ProjCacheInfo CImageDataWriter::GetProjInfo(CT::string ckey, C
   
   //bool projInvertedFirst = true;
   try{
+    
     
     projCacheIter=projCacheMap.find(key);
     if(projCacheIter==projCacheMap.end()){
@@ -139,13 +140,13 @@ CImageDataWriter::ProjCacheInfo CImageDataWriter::GetProjInfo(CT::string ckey, C
     projCacheInfo.CoordX=x;
     projCacheInfo.CoordY=y;
 
-    CDBDebug("X is : %f Y is: %f",x,y);
+//     CDBDebug("X is : %f Y is: %f",x,y);
     
     imageWarper->reprojpoint(x,y);
     if(  CGeoParams::isLonLatProjection(&dataSource->nativeProj4)){     
-      CDBDebug("Is latlon %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[2]);
+//       CDBDebug("Is latlon %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[2]);
       //if(dataSource->dfBBOX[2]>180||dataSource->dfBBOX[0]<-180){
-        CDBDebug("X is : %f %d %d Y is: %f",x,x>=-180,x<180,y);
+//         CDBDebug("X is : %f %d %d Y is: %f",x,x>=-180,x<180,y);
         if(x>=-180&&x<180){
           
         //  while(x>=dataSource->dfBBOX[2])x-=360;
@@ -167,7 +168,9 @@ CImageDataWriter::ProjCacheInfo CImageDataWriter::GetProjInfo(CT::string ckey, C
     y/=(dataSource->dfBBOX[3]-dataSource->dfBBOX[1]);
     x*=double(dataSource->dWidth);
     y*=double(dataSource->dHeight);
-    CDBDebug("XY: %f %f and %d %d",x,y,dataSource->dWidth,dataSource->dHeight);
+#ifdef CIMAGEDATAWRITER_DEBUG
+     CDBDebug("XY: %f %f and %d %d",x,y,dataSource->dWidth,dataSource->dHeight);
+#endif
     projCacheInfo.dWidth=dataSource->dWidth;
     projCacheInfo.dHeight=dataSource->dHeight;
     projCacheInfo.dX=(dataSource->dfBBOX[2]-dataSource->dfBBOX[0])/double(dataSource->dWidth);
@@ -185,13 +188,14 @@ CImageDataWriter::ProjCacheInfo CImageDataWriter::GetProjInfo(CT::string ckey, C
     }else{
       projCacheInfo.imy=dataSource->dHeight-(int)y-1;
     }
-
+//     CDBDebug("projCacheInfo %d,%d",int(projCacheInfo.imx),int(projCacheInfo.imy));
     projCacheInfo.lonX=projCacheInfo.CoordX;
     projCacheInfo.lonY=projCacheInfo.CoordY;
     //Get lat/lon
     imageWarper->reprojToLatLon(projCacheInfo.lonX,projCacheInfo.lonY);
     imageWarper->closereproj();
     projCacheMap[key]=projCacheInfo;
+    
   }
   return projCacheInfo;
 }
@@ -649,9 +653,10 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
     
     GetFeatureInfoResult  *getFeatureInfoResult = new GetFeatureInfoResult();
     getFeatureInfoResultList.push_back(getFeatureInfoResult);
-     bool headerIsAvailable = false;
+    bool headerIsAvailable = false;
+    bool sameHeaderForAll = false;
     bool openAll = false;
-
+    
     bool everythingIsInBBOX = true;
     CDataReader reader;
     reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_HEADER); 
@@ -681,15 +686,25 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         if(dataSources[d]->getDataObject(0)->cdfObject->getAttributeNE("ADAGUC_GEOJSON")!=NULL){
           openAll =true;
         }  
+        if(dataSources[d]->cfgLayer->FilePath.size()==1 && dataSources[d]->cfgLayer->FilePath[0]->attr.gfi_openall.equals("true")){
+          openAll =true;
+        }
+        if(dataSources[d]->cfgLayer->FilePath.size()==1 && dataSources[d]->cfgLayer->FilePath[0]->attr.gfi_openall.equals("headers")){
+          sameHeaderForAll = true;
+        }
+        
+        
       }
     }
     
-//    openAll = true;
+    //CDBDebug("gfi_openall: %d %d",dataSources[d]->cfgLayer->FilePath.size(),openAll);
+    
   
       
     if(dataSources[d]->cfgLayer->TileSettings.size()==1){
       openAll=true;
     }
+    
     
     CDataSource *dataSource=dataSources[d];
     if(dataSource==NULL){
@@ -697,7 +712,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
       return 1;
     }
     
-    CDBDebug("isProfileData:[%d] openAll:[%d] infoFormat:[%s]",isProfileData,openAll,srvParam->InfoFormat.c_str());
+    CDBDebug("isProfileData:[%d] openAll:[%d] sameHeaderForAll:[%d] infoFormat:[%s]",isProfileData,openAll,sameHeaderForAll,srvParam->InfoFormat.c_str());
     
     if(isProfileData){
       if(srvParam->InfoFormat.equals("image/png")){
@@ -712,7 +727,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         printf("Not supported yet");
         return 0;
       }
-    }else if(openAll == false&&srvParam->InfoFormat.equals("application/json")){
+    }else if(sameHeaderForAll==false && openAll == false && srvParam->InfoFormat.equals("application/json")){
       int status = CMakeJSONTimeSeries::MakeJSONTimeSeries(&drawImage,&imageWarper,dataSources, d,dX,dY,&gfiStructure);
       if(status != 0){
         CDBError("CMakeJSONTimeSeries::MakeJSONTimeSeries failed");
@@ -721,10 +736,18 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
     }else{
     //return 1;
       CDBDebug("Num time steps for datasource %d",dataSources[d]->getNumTimeSteps());
+      
+      std::map<std::string, bool>dimensionKeyValueMap;//A map for every dimensionvalue linked to a value
+      
+      
+      
       for(int step=0;step<dataSources[d]->getNumTimeSteps();step++){
         dataSources[d]->setTimeStep(step);
+        
+        CCDFDims * cdfDims = dataSources[d]->getCDFDims();
+        
       
-     
+        
     
         
 
@@ -736,8 +759,9 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         getFeatureInfoResult->dataSourceIndex=dataSourceIndex;
         
         #ifdef CIMAGEDATAWRITER_DEBUG    
-        CDBDebug("Processing dataSource %d with step %d of %d timesteps (%d) %f",d,step,dataSources[d]->getNumTimeSteps(),dataSources[d]->getDataObject(0)->hasNodataValue,dataSources[d]->getDataObject(0)->dfNodataValue);
+        CDBDebug("Processing dataSource %d with result %d of %d results (%d) %f",d,step,dataSources[d]->getNumTimeSteps(),dataSources[d]->getDataObject(0)->hasNodataValue,dataSources[d]->getDataObject(0)->dfNodataValue);
         #endif
+        
 
         CDataReader reader;
         //if(!headerIsAvailable)
@@ -753,7 +777,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
             #ifdef CIMAGEDATAWRITER_DEBUG    
               CDBDebug("OPEN Header %d",headerIsAvailable);
             #endif
-            if(!headerIsAvailable){
+            if(!headerIsAvailable||sameHeaderForAll==true){
               headerIsAvailable = true;
               status = reader.open(dataSources[d],CNETCDFREADER_MODE_OPEN_HEADER);
             }
@@ -775,9 +799,9 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         //int imx=89,imy=26;
         
         CT::string ckey;
-        ckey.print("%d%d%s%f%f%f%f",dX,dY,dataSource->nativeProj4.c_str(),dataSource->dfBBOX[0],dataSource->dfBBOX[1],dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
+        ckey.print("%d:%d:%d:%d:%s:%f:%f:%f:%f",dX,dY,dataSource->dWidth,dataSource->dHeight,dataSource->nativeProj4.c_str(),dataSource->dfBBOX[0],dataSource->dfBBOX[1],dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
         CImageDataWriter::ProjCacheInfo projCacheInfo = GetProjInfo(ckey,&drawImage,dataSource,&imageWarper,srvParam,dX,dY);
-        
+        //CDBDebug("key = %s",ckey.c_str());
         #ifdef MEASURETIME
         StopWatch_Stop("/projCacheInfo");
         #endif
@@ -838,7 +862,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
             CDBError("Could not open file: %s",dataSource->getFileName());
             return 1;
           }
-        }else{
+        }/*else{
          
           GetFeatureInfoResult::Element * element = new GetFeatureInfoResult::Element();
           element->dataSource=dataSource;
@@ -852,7 +876,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
          
           //isOutsideBBOX = true;
           //everythingIsInBBOX = false;
-        }
+        }*/
   //     }
   //     
   //     
@@ -900,8 +924,36 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         //CDBDebug("j = %d",j);
         //Create a new element and at it to the elements list.
         
+        
+        CT::string dimkey = "";
+        for(size_t j=0;j<dataSources[d]->requiredDims.size();j++){
+          dimkey.printconcat("[%s=%s]",cdfDims->getDimensionValue(j).c_str(),cdfDims->getDimensionName(j));
+        }
+        dimkey.printconcat("[dataobject=%d]",o);
+         
+
+        std::map<std::string,bool>::iterator dimensionKeyValueMapIterator = dimensionKeyValueMap.find(dimkey.c_str());
+        if(dimensionKeyValueMapIterator!=dimensionKeyValueMap.end()){
+          if(dimensionKeyValueMapIterator->second==false){
+            if(getFeatureInfoResult->elements.size()>0){
+              delete getFeatureInfoResult->elements[getFeatureInfoResult->elements.size()-1];
+              getFeatureInfoResult->elements.pop_back();
+            }
+          }
+        }else{
+          dimensionKeyValueMap[dimkey.c_str()]=false;
+        }
+
         GetFeatureInfoResult::Element * element = new GetFeatureInfoResult::Element();
         getFeatureInfoResult->elements.push_back(element);
+        
+        
+        
+          
+          
+        
+        
+           
         element->dataSource=dataSource;
         //Get variable name
         element->var_name.copy(&dataSources[d]->getDataObject(o)->variableName);
@@ -1005,7 +1057,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
             #ifdef CIMAGEDATAWRITER_DEBUG 
             CDBDebug("Element value == %s",element->value.c_str());
             #endif
-            
+            dimensionKeyValueMap[dimkey.c_str()]=true;
             hasData = true;
             
             if (dataSource->getDataObject(o)->features.empty() == false &&hasData==true){
@@ -1042,6 +1094,17 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
             CDBDebug("Element value == %s",element->value.c_str());
             #endif
             }
+          }else{
+            #ifdef CIMAGEDATAWRITER_DEBUG 
+            CDBDebug("isOutsideBBOX");
+            #endif
+
+            if(hasData==false && dimensionKeyValueMap.find(dimkey.c_str())->second==true){
+              getFeatureInfoResult->elements.pop_back();
+              delete element;element=NULL;
+            }
+          
+          
           }
         
         
@@ -2592,7 +2655,7 @@ int CImageDataWriter::end(){
 
         int nrDims=e->cdfDims.getNumDimensions();
         int dimLookup[nrDims]; //position of each dimension in cdfDims.dimensions
-        CDBDebug("nrDims = %d",nrDims);
+        //CDBDebug("nrDims = %d",nrDims);
         int timeDimIndex = -1;
         int endIndex = nrDims-1;
         for(int j=0;j<nrDims;j++){
@@ -2614,7 +2677,7 @@ int CImageDataWriter::end(){
      
 
         for (int feat=0; feat<nrFeatures; feat++) {
-             CDBDebug("A %d/%d",feat,nrFeatures);
+             //CDBDebug("A %d/%d",feat,nrFeatures);
           GetFeatureInfoResult::Element *e=g->elements[feat];
           CT::string featureName=e->feature_name.c_str();
           featureName.replaceSelf(" ", "_");
@@ -2630,7 +2693,7 @@ int CImageDataWriter::end(){
           coord.print("%f,%f", g->lon_coordinate, g->lat_coordinate);
           point.add(CXMLParser::XMLElement("coords", coord.c_str()));
           paramElement.add(point);
-           CDBDebug("e->cdfDims.getNumDimensions() = %d",e->cdfDims.getNumDimensions());
+           //CDBDebug("e->cdfDims.getNumDimensions() = %d",e->cdfDims.getNumDimensions());
           for (size_t d=0; d<e->cdfDims.getNumDimensions()&&int(d)<nrDims;d++) {
 //            paramElement.add(CXMLParser::XMLElement("dims", e->cdfDims.dimensions[dimLookup[d]]->name.c_str()));
            // CDBDebug("d= %d, dimLookup[d] = %d, e->dataSource->requiredDims.size() = %d",d,dimLookup[d],e->dataSource->requiredDims.size());

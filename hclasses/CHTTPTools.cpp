@@ -24,3 +24,5 @@
  ******************************************************************************/
 
 #include "CHTTPTools.h"
+
+const char *CHTTPTools::className="CHTTPTools";

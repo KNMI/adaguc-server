@@ -131,7 +131,7 @@
                   tileprojection="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
                   minlevel="1"
                   maxlevel="6"
-                  debug="false"
+                  debug="true"
                   threads="1"  
                   tilepath="/nobackup/users/plieger/data/tiles/g4indo-mask/"/>
    </Layer>
@@ -154,10 +154,26 @@
                   debug="true"
                   threads="1" 
                   tilepath="/nobackup/users/plieger/data/tiles/g4indo/"/>
-   <!--    <AdditionalLayer style="black/nearest"  replace="false">mask</AdditionalLayer>-->
+      <AdditionalLayer style="black/nearest"  replace="false">mask</AdditionalLayer>
+   </Layer>
+   
+   <Layer type="database">
+    <Name>orbits</Name>
+    <Title>orbits</Title>
+    <FilePath>/nobackup/users/plieger/data/g4indo/orbits/</FilePath>
+    <Variable>rgba</Variable>
+    <RenderMethod>rgba</RenderMethod>
+
    </Layer>
 
-   
+<!--
+   <Layer type="database">
+    <Name>ash</Name>
+    <Title>ash</Title>
+    <FilePath>/nobackup/users/plieger/data/g4indo/viirs/</FilePath>
+    <Variable>ash</Variable>
+    <RenderMethod>rgba</RenderMethod>
 
+   </Layer>-->
   <!-- End of configuration /-->
 </Configuration>

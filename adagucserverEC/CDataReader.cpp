@@ -599,7 +599,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y){
             if(status==0){
               //Projection string was created, set it in the datasource.
               dataSource->nativeProj4.copy(projString.c_str());
-              CDBDebug("Autogen proj4 string: %s",projString.c_str());
+              //CDBDebug("Autogen proj4 string: %s",projString.c_str());
               projVar->setAttributeText("autogen_proj",projString.c_str());
             }else{
               CDBWarning("Unknown projection");
@@ -709,7 +709,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
   CDFObject *cdfObject = NULL;
     
 //#ifdef CDATAREADER_DEBUG
-  CDBDebug("Working on [%s] with mode %d",dataSourceFilename.c_str(),mode);
+  CDBDebug("Working on [%s] with mode %d and (%d,%d)",dataSourceFilename.c_str(),mode,x,y);
 //#endif
     
   if(mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS  || mode == CNETCDFREADER_MODE_OPEN_HEADER ){

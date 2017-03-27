@@ -27,7 +27,7 @@
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
 // #define CCONVERTADAGUCPOINT_DEBUG
-//pwd #define MEASURETIME
+// #define MEASURETIME
 const char *CConvertADAGUCPoint::className="CConvertADAGUCPoint";
 
 
@@ -187,8 +187,15 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
     
     //Assign X,Y,T dims 
     
-    for(size_t d=1;d<pointVar->dimensionlinks.size();d++){
-      if(pointVar->dimensionlinks[d]->name.equals("station")==false){
+    for(size_t d=0;d<pointVar->dimensionlinks.size();d++){
+      bool skip = false;
+      if(pointVar->dimensionlinks[d]->name.equals("station")==true){
+        skip = true;
+      }
+      if(d == 0 && pointVar->dimensionlinks[d]->name.equals("time") == false){
+        skip = true;
+      }
+      if(!skip){
         new2DVar->dimensionlinks.push_back( pointVar->dimensionlinks[d]);
       }
     }
@@ -333,10 +340,12 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
   /*First read LAT and LON*/
   
   /*Find which index is the station dim*/
-  int stationDimIndexInCoord = 0;
-  int numStations = 0;
+  int stationDimIndexInCoord = -1;
+  int numStations = 1;
   for(size_t j=0;j<pointLon->dimensionlinks.size();j++){
-    if(pointLon->dimensionlinks[0]->name.equals("station")){
+    if(
+      pointLon->dimensionlinks[j]->name.equals("station")||
+      cdfObject0->getVariableNE(pointLon->dimensionlinks[j]->name.c_str()) == NULL){
       stationDimIndexInCoord = j;
       break;
     }
@@ -353,6 +362,9 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
       count[j] = 1;
       stride[j]=1;
     }
+    #ifdef CCONVERTADAGUCPOINT_DEBUG
+    CDBDebug("%s %d %d",pointLon->dimensionlinks[j]->name.c_str(),start[j],count[j]);
+    #endif
   }
   
   #ifdef CCONVERTADAGUCPOINT_DEBUG
@@ -362,21 +374,21 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
   
   
   
-  if(pointLon->dimensionlinks.size()>=2){
-    #ifdef CCONVERTADAGUCPOINT_DEBUG
-    CDBDebug("Dimension dependant locations");
-    #endif
+//   if(pointLon->dimensionlinks.size()>=2 ){
+//     #ifdef CCONVERTADAGUCPOINT_DEBUG
+//     CDBDebug("Dimension dependant locations");
+//     #endif
     pointLon->freeData();
     pointLat->freeData();
     pointLon->readData(CDF_FLOAT,start,count,stride,true);
     pointLat->readData(CDF_FLOAT,start,count,stride,true);
-  }else{
-    #ifdef CCONVERTADAGUCPOINT_DEBUG
-    CDBDebug("NON Dimension dependant location");
-    #endif
-    pointLon->readData(CDF_FLOAT,true);
-    pointLat->readData(CDF_FLOAT,true);
-  }
+//   }else{
+//     #ifdef CCONVERTADAGUCPOINT_DEBUG
+//     CDBDebug("NON Dimension dependant location");
+//     #endif
+//     pointLon->readData(CDF_FLOAT,true);
+//     pointLat->readData(CDF_FLOAT,true);
+//   }
 
     
   #ifdef MEASURETIME
@@ -384,19 +396,21 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
   #endif
 
     
-    CDBDebug("pointLon = %f",((float*)pointLon->data)[0]);
+    //CDBDebug("pointLon = %f",((float*)pointLon->data)[0]);
 //   CT::string data = CDF::dump(cdfObject0);
 //   
 //   CDBDebug("%s",data.c_str());
 //   
+    
   
     for(size_t d=0;d<nrDataObjects;d++){
       if(pointVar[d]!=NULL){
         /*Second read actual variables*/
-        int stationDimIndexInVariable = 0;
+        int stationDimIndexInVariable = -1;
         
         for(size_t j=0;j<pointVar[d]->dimensionlinks.size();j++){
-      if(pointVar[d]->dimensionlinks[j]->name.equals("station")){
+          if(pointVar[d]->dimensionlinks[j]->name.equals("station")||
+            dataObjects[d]->cdfObject->getVariableNE(pointVar[d]->dimensionlinks[j]->name.c_str()) == NULL){
             stationDimIndexInVariable = j;
             break;
         }
@@ -413,6 +427,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
             count[j] = 1;
             stride[j]=1;
         }
+        //CDBDebug("%s %d %d",pointVar[d]->dimensionlinks[j]->name.c_str(),start[j],count[j]);
         }
         
     
@@ -425,10 +440,10 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
         #endif
         pointVar[d]->freeData();
         
-    //       for(size_t j=0;j<pointVar[d]->dimensionlinks.size();j++){
-    //         CDBDebug("%d %s [%d:%d:%d]",j,pointVar[d]->dimensionlinks[j]->name.c_str(),start[j],count[j],stride[j]);
-    //       }
-        
+//           for(size_t j=0;j<pointVar[d]->dimensionlinks.size();j++){
+//             CDBDebug("%d %s [%d:%d:%d]",j,pointVar[d]->dimensionlinks[j]->name.c_str(),start[j],count[j],stride[j]);
+//           }
+//         
         
         pointVar[d]->readData(CDF_FLOAT,start,count,stride,true);
         }else{
