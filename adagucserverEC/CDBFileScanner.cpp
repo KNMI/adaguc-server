@@ -654,7 +654,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
 
                   CDBAdapter::GeoOptions geoOptions;
                   geoOptions.level=-1;
-                  geoOptions.crs="EPSG:4236";
+                  geoOptions.proj4="EPSG:4236";
                   geoOptions.bbox[0]=-1000;
                   geoOptions.bbox[1]=-1000;
                   geoOptions.bbox[2]=1000;
@@ -675,7 +675,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
                     level = 1 ; //Highest detail, highest resolution, most files.
                    */ 
                     geoOptions.level=0;
-                    geoOptions.crs=dataSource->nativeProj4.c_str();
+                    geoOptions.proj4=dataSource->nativeProj4.c_str();
                     geoOptions.bbox[0]=dataSource->dfBBOX[0];
                     geoOptions.bbox[1]=dataSource->dfBBOX[1];
                     geoOptions.bbox[2]=dataSource->dfBBOX[2];
@@ -944,9 +944,17 @@ int CDBFileScanner::updatedb( CDataSource *dataSource,CT::string *_tailPath,CT::
   
   CDBDebug("*** Starting update layer '%s' ***",dataSource->cfgLayer->Name[0]->value.c_str());
   
-  CDBDebug("Using path [%s] and filter [%s]",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str());
+  CDBDebug("Using path [%s], filter [%s] and tailpath [%s]",dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),tailPath.c_str());
   
-  if(searchFileNames(&dirReader,dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),tailPath.c_str())!=0)return 0;
+  CT::string filter=dataSource->cfgLayer->FilePath[0]->attr.filter.c_str();
+  
+  if(scanFlags&CDBFILESCANNER_IGNOREFILTER){
+    filter="^.*$";
+  }
+  
+  
+  
+  if(searchFileNames(&dirReader,dataSource->cfgLayer->FilePath[0]->value.c_str(),filter.c_str(),tailPath.c_str())!=0)return 0;
   
   //Include tiles
   if(tailPath.length()==0){
@@ -1018,7 +1026,7 @@ int CDBFileScanner::searchFileNames(CDirReader *dirReader,const char * path,CT::
       
       CT::string baseName = filePath.substring(filePath.lastIndexOf("/")+1,-1);
       if(dirReader->testRegEx(baseName.c_str(),expr.c_str())!=1){
-        CDBWarning("Filter [%s] does not match path [%s].",expr.c_str(),baseName.c_str());
+        CDBWarning("Filter [%s] does not match path [%s]. Tailpath = [%s]",expr.c_str(),baseName.c_str(),tailPath);
         return 1;
       }
     }else{
@@ -1106,7 +1114,14 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
 //   double maxy = dataSource->dfBBOX[3];    
 //   
   
+  
   CServerConfig::XMLE_TileSettings *ts=dataSource->cfgLayer->TileSettings[0];
+  
+  
+  if(ts->attr.readonly.equals("true")){
+    CDBDebug("Skipping create tiles for layer %s, because readonly in TileSettings is set to true",dataSource->getLayerName());
+    return 0;
+  };
   int configErrors = 0;
   if(ts->attr.tilewidthpx.empty()){CDBError("tilewidthpx not defined");configErrors++;}
   if(ts->attr.tileheightpx.empty()){CDBError("tileheightpx not defined");configErrors++;}
@@ -1301,7 +1316,13 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
 //               }
               
               CT::string fileNameToWrite = ts->attr.tilepath.c_str(); 
-              fileNameToWrite.printconcat("/l%dleft%ftop%f",level,dfMinX,dfMinY);
+              CT::string prefix = "";
+              if(ts->attr.prefix.empty()==false){
+                prefix = ts->attr.prefix+"/";
+              }
+              fileNameToWrite.printconcat("/%slevel%0.2d/left%f/",prefix.c_str(),level,dfMinY);
+              CDirReader::makePublicDirectory(fileNameToWrite.c_str());
+              fileNameToWrite.printconcat("left[%f]_bottom[%f]_right[%f]_top[%f]",dfMinX,dfMinY,dfMaxX,dfMaxY);
               for(size_t i=0;i<ds.requiredDims.size();i++){
                 fileNameToWrite.printconcat("_%s",ds.requiredDims[i]->value.c_str());
               }
@@ -1443,7 +1464,7 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
                           }
                           
                           status = wcsWriter->writeFile(fileNameToWrite.c_str(),level);if(status!=0){throw(__LINE__);};
-                          updatedb(dataSources[0],&fileNameToWrite,NULL,CDBFILESCANNER_DONTREMOVEDATAFROMDB|CDBFILESCANNER_UPDATEDB);
+                          updatedb(dataSources[0],&fileNameToWrite,NULL,CDBFILESCANNER_DONTREMOVEDATAFROMDB|CDBFILESCANNER_UPDATEDB|CDBFILESCANNER_IGNOREFILTER);
                   
                           
                           for(size_t d=0;d<dataSources.size();d++){

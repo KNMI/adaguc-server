@@ -37,6 +37,7 @@
 #define CDBFILESCANNER_UPDATEDB 2
 #define CDBFILESCANNER_CREATETILES 4
 #define CDBFILESCANNER_DONTREMOVEDATAFROMDB 8
+#define CDBFILESCANNER_IGNOREFILTER 16
 
 /**
  * Class which scans files and updates the database.

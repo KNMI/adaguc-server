@@ -94,9 +94,9 @@ void serverErrorFunction(const char *msg){
 void serverWarningFunction(const char *msg){
   writeLogFile(msg);
   printdebug(msg,1);
-  if(strncmp(msg,"[W: ",4)!=0){ //<-- do not enable: when something printed with printerror causes getmap to fail!!!
-    printerror(msg);
-  }
+//   if(strncmp(msg,"[W: ",4)!=0){ //<-- do not enable: when something printed with printerror causes getmap to fail!!!
+//     printerror(msg);
+//   }
 }
 
 

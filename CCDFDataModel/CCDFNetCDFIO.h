@@ -52,7 +52,10 @@ class CDFNetCDFReader :public CDFReader{
   bool keepFileOpen;
   int readDimensions(int groupId,CT::string *groupName);
   int readAttributes(int root_id,std::vector<CDF::Attribute *> &attributes,int varID,int natt);
-  int readVariables(int groupId, CT::string* groupName);
+  /**
+   * @param mode, mode = 0: read dims, 1: read variables
+   */
+  int readVariables(int groupId, CT::string* groupName,int mode);
   int _readVariableData(CDF::Variable *var, CDFType type);
   int _readVariableData(CDF::Variable *var, CDFType type,size_t *start,size_t *count,ptrdiff_t *stride);
   

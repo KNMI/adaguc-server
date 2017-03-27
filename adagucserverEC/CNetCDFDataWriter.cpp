@@ -809,6 +809,21 @@ int CNetCDFDataWriter::end(){
     #ifdef CNetCDFDataWriter_DEBUG
       CDBDebug("CNetCDFDataWriter::end()");
     #endif
+      
+  const char * pszADAGUCWriteToFile=getenv("ADAGUC_WRITETOFILE");      
+  if(pszADAGUCWriteToFile != NULL){
+    CDFNetCDFWriter *netCDFWriter = new CDFNetCDFWriter(destCDFObject);
+    netCDFWriter->setNetCDFMode(4);
+    // netCDFWriter->setDeflateShuffle(1,2,0);
+    CDBDebug("Write to ADAGUC_WRITETOFILE %s",pszADAGUCWriteToFile);
+    int  status = netCDFWriter->write(pszADAGUCWriteToFile);
+    if(status!=0){
+    CDBError("Unable to write file to file specified in ADAGUC_WRITETOFILE");
+      return 1;
+    }
+    delete netCDFWriter;
+    return 0;
+  }
   CDFNetCDFWriter *netCDFWriter = new CDFNetCDFWriter(destCDFObject);
  
   netCDFWriter->setNetCDFMode(4);
@@ -856,7 +871,7 @@ int CNetCDFDataWriter::end(){
     fclose(fp);
     fclose(stdout);
   }
-  //Remove temporary files
+  //Remove temporary file
   remove(tempFileName.c_str());
   CDBDebug("Done");
   if(returnCode!=0)return 1;
