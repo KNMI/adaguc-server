@@ -5,6 +5,7 @@ CStyleConfiguration::RenderMethod CStyleConfiguration::getRenderMethodFromString
   if(renderMethodString->indexOf("bilinear")!=-1)renderMethod|=RM_BILINEAR;
   if(renderMethodString->indexOf("shaded"  )!=-1)renderMethod|=RM_SHADED;
   if(renderMethodString->indexOf("contour" )!=-1)renderMethod|=RM_CONTOUR;
+  if(renderMethodString->indexOf("linearinterpolation")!=-1)renderMethod|=RM_POINT_LINEARINTERPOLATION;
   if(renderMethodString->indexOf("point"   )!=-1)renderMethod|=RM_POINT;
   if(renderMethodString->indexOf("vector"  )!=-1)renderMethod|=RM_VECTOR;
   if(renderMethodString->indexOf("barb"    )!=-1)renderMethod|=RM_BARB;
@@ -14,6 +15,10 @@ CStyleConfiguration::RenderMethod CStyleConfiguration::getRenderMethodFromString
   
   if(renderMethodString->indexOf("stippling")!=-1)renderMethod|=RM_STIPPLING;
   if(renderMethodString->indexOf("polyline")!=-1)renderMethod|=RM_POLYLINE;
+  
+  
+  
+  
   
   /* When RM_AVG_RGBA is requested, disable RM_RGBA, otherwise two RGBA rendereres come into action */
   if(renderMethod&RM_AVG_RGBA){
@@ -39,4 +44,5 @@ void CStyleConfiguration::getRenderMethodAsString(CT::string *renderMethodString
   if(renderMethod & RM_AVG_RGBA)renderMethodString->concat("avg_rgba");
   if(renderMethod & RM_STIPPLING)renderMethodString->concat("stippling");
   if(renderMethod & RM_POLYLINE)renderMethodString->concat("polyline");
+  if(renderMethod & RM_POINT_LINEARINTERPOLATION)renderMethodString->concat("linearinterpolation");
 }
