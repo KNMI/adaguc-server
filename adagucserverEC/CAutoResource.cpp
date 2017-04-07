@@ -438,11 +438,11 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *srvParam,CDFObject *cdfOb
     if(variable!=NULL){
       CDF::Attribute *featureType = cdfObject->getAttributeNE("featureType");
       if(featureType!=NULL){
+        // TODO This must be accomplished with standard name / global attribute mappings
         if(featureType->getDataAsString().equals("timeSeries")||featureType->getDataAsString().equals("point")){
           CServerConfig::XMLE_RenderMethod* xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
           xmleRenderMethod->value.copy("point");
           xmleLayer->RenderMethod.insert(xmleLayer->RenderMethod.begin(),xmleRenderMethod);
-
         }
       }
     }
