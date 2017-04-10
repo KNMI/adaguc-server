@@ -329,7 +329,7 @@ int CDataReader::open(CDataSource *dataSource, int x,int y){
 }
 
 
-int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y){
+int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, int *gridExtent){
   
   
 
@@ -452,6 +452,12 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y){
   dataSource->dWidth=dimX->length/dataSource->stride2DMap;
   dataSource->dHeight=dimY->length/dataSource->stride2DMap;
   
+  
+  if( mode == CNETCDFREADER_MODE_OPEN_EXTENT && gridExtent != NULL ){
+    dataSource->dWidth = (gridExtent[2]-gridExtent[0])/dataSource->stride2DMap;
+    dataSource->dHeight = (gridExtent[3]-gridExtent[1])/dataSource->stride2DMap;
+  }
+  
   if(singleCellMode){
     dataSource->dWidth=2;
     dataSource->dHeight=2;
@@ -474,6 +480,16 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y){
   }
 
   if(dataSource->level2CompatMode == false){
+    
+     
+    if( mode == CNETCDFREADER_MODE_OPEN_EXTENT && gridExtent != NULL ){
+      start[dataSource->dimXIndex] = gridExtent[0];
+      start[dataSource->dimYIndex] = gridExtent[1];
+      CDBDebug("START X, %d",start[dataSource->dimXIndex]);
+      CDBDebug("START Y, %d",start[dataSource->dimYIndex]);
+      CDBDebug("WIDTH, %d",dataSource->dWidth);
+      CDBDebug("HEIGHT, %d",dataSource->dHeight);
+    }
       
     size_t sta[1],sto[1];ptrdiff_t str[1];
     sta[0]=start[dataSource->dimXIndex];str[0]=dataSource->stride2DMap; sto[0]=dataSource->dWidth;
@@ -672,6 +688,12 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y){
 pthread_mutex_t CDataReader_open_lock;
 
 int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
+  return open(dataSource, mode, x, y, NULL);
+}
+int CDataReader::openExtent(CDataSource *dataSource,int mode,int *gridExtent){
+  return open(dataSource, mode, -1, -1, gridExtent);
+}
+int CDataReader::open(CDataSource *dataSource,int mode,int x,int y, int *gridExtent){
 
   //Perform some checks on pointers
   if(dataSource==NULL){CDBError("Invalid dataSource");return 1;}
@@ -720,7 +742,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
 //     enableDataCache = false;
   }
     
-  if(mode == CNETCDFREADER_MODE_OPEN_ALL|| mode == CNETCDFREADER_MODE_GET_METADATA){
+  if(mode == CNETCDFREADER_MODE_OPEN_ALL|| mode == CNETCDFREADER_MODE_GET_METADATA || mode == CNETCDFREADER_MODE_OPEN_EXTENT){
    // CDBDebug("Working on [%s] with mode %d",dataSourceFilename.c_str(),mode);
     //CDBDebug("Getting datasource %s",dataSourceFilename.c_str());
     //pthread_mutex_lock(&CDataReader_open_lock);
@@ -760,7 +782,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
   }
 
   
-  if(parseDimensions(dataSource,mode,x,y)!=0){
+  if(parseDimensions(dataSource,mode,x,y, gridExtent)!=0){
     CDBError("Unable to parseDimensions");
     return 1;
   }
@@ -957,9 +979,9 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
     } 
 
         
-  if(mode==CNETCDFREADER_MODE_OPEN_ALL){
+  if(mode==CNETCDFREADER_MODE_OPEN_ALL || CNETCDFREADER_MODE_OPEN_EXTENT){
       #ifdef CDATAREADER_DEBUG
-    CDBDebug("CNETCDFREADER_MODE_OPEN_ALL");
+    CDBDebug("CNETCDFREADER_MODE_OPEN_ALL || CNETCDFREADER_MODE_OPEN_EXTENT");
   #endif
 
   #ifdef MEASURETIME
@@ -989,6 +1011,8 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y){
           CDBDebug("%s  \tstart: %d\tcount %d\tstride %d",dataSource->getDataObject(varNr)->cdfVariable->dimensionlinks[d]->name.c_str(),start[d],count[d],stride[d]);
         }
         #endif 
+        
+        
          
         if(dataSource->getDataObject(varNr)->cdfVariable->readData(dataSource->getDataObject(varNr)->cdfVariable->getType(),start,count,stride)!=0){
           CDBError("Unable to read data for variable %s in file %s",dataSource->getDataObject(varNr)->cdfVariable->name.c_str(),dataSource->getFileName());

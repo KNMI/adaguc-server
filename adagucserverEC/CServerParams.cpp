@@ -318,7 +318,7 @@ bool CServerParams::isAutoResourceEnabled(){
 
 
 bool CServerParams::checkIfPathHasValidTokens(const char *path){
-  return checkForValidTokens(path,"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/_-+:. ,");
+  return checkForValidTokens(path,"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/_-+:. ,[]");
 }
 
 bool CServerParams::checkForValidTokens(const char *path,const char *validPATHTokens){
