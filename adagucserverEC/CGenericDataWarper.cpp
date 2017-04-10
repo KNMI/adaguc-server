@@ -27,9 +27,18 @@
 const char *GenericDataWarper::className="GenericDataWarper";
 #define GenericDataWarper_DEBUG
 int GenericDataWarper::findPixelExtent(int *PXExtentBasedOnSource,CGeoParams*sourceGeoParams,CGeoParams*destGeoParams,CImageWarper*warper){
-  return 0;
     int sourceDataWidth = sourceGeoParams->dWidth;
     int sourceDataHeight = sourceGeoParams->dHeight;
+    
+    
+    PXExtentBasedOnSource[0]=0;
+    PXExtentBasedOnSource[1]=0;
+    PXExtentBasedOnSource[2]=sourceDataWidth;
+    PXExtentBasedOnSource[3]=sourceDataHeight;
+    
+  //return 0;
+    CDBDebug("Starting findPixelExtent");
+
       PXExtentBasedOnSource[0]=-1;
       PXExtentBasedOnSource[1]=-1;
       PXExtentBasedOnSource[2]=-1;
@@ -248,6 +257,6 @@ int GenericDataWarper::findPixelExtent(int *PXExtentBasedOnSource,CGeoParams*sou
  #ifdef GenericDataWarper_DEBUG   
     CDBDebug("PXExtentBasedOnSource = [%d,%d,%d,%d]",PXExtentBasedOnSource[0],PXExtentBasedOnSource[1],PXExtentBasedOnSource[2],PXExtentBasedOnSource[3]);
 #endif
-    //CDBDebug("PXExtentBasedOnSource = [%d,%d,%d,%d]",PXExtentBasedOnSource[0],PXExtentBasedOnSource[1],PXExtentBasedOnSource[2],PXExtentBasedOnSource[3]);
+    CDBDebug("PXExtentBasedOnSource = [%d,%d,%d,%d]",PXExtentBasedOnSource[0],PXExtentBasedOnSource[1],PXExtentBasedOnSource[2],PXExtentBasedOnSource[3]);
     return 0;
 }

@@ -454,8 +454,37 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
   for(size_t i=0;i<dataSources.size();i++){
     CDataSource *dataSource = dataSources[i];
     CDataReader reader;
-   
-    status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
+    
+//     render
+    
+       
+    CImageWarper warper;
+    
+    status = warper.initreproj(dataSource,srvParam->Geo,&srvParam->cfg->Projection);
+    if(status != 0){
+      CDBError("Unable to initialize projection");
+      return 1;
+    }
+            CGeoParams sourceGeo;
+      
+      sourceGeo.dWidth = dataSource->dWidth;
+      sourceGeo.dHeight = dataSource->dHeight;
+      sourceGeo.dfBBOX[0] = dataSource->dfBBOX[0];
+      sourceGeo.dfBBOX[1] = dataSource->dfBBOX[1];
+      sourceGeo.dfBBOX[2] = dataSource->dfBBOX[2];
+      sourceGeo.dfBBOX[3] = dataSource->dfBBOX[3];
+      sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
+      sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
+      sourceGeo.CRS = dataSource->nativeProj4;
+      
+      bool usePixelExtent = false;
+      if(usePixelExtent ){
+        int PXExtentBasedOnSource[4];
+        GenericDataWarper::findPixelExtent(PXExtentBasedOnSource,&sourceGeo,srvParam->Geo,&warper);
+        status = reader.openExtent(dataSource,CNETCDFREADER_MODE_OPEN_EXTENT,PXExtentBasedOnSource);
+      }else{
+        status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
+      }
     if(status!=0){
       CDBError("Could not open file: %s",dataSource->getFileName());
       return 1;
@@ -593,27 +622,10 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
       #ifdef CNetCDFDataWriter_DEBUG
         CDBDebug("DataStep index = %d, timestep = %d",dataStepIndex,dataSource->getCurrentTimeStep());
       #endif
-      //Warp
-      CImageWarper warper;
-      
-      status = warper.initreproj(dataSource,srvParam->Geo,&srvParam->cfg->Projection);
-      if(status != 0){
-        CDBError("Unable to initialize projection");
-        return 1;
-      }
+  
       
       destCDFObject->getVariable("crs")->setAttributeText("proj4_params",warper.getDestProjString().c_str());
-      CGeoParams sourceGeo;
-      
-      sourceGeo.dWidth = dataSource->dWidth;
-      sourceGeo.dHeight = dataSource->dHeight;
-      sourceGeo.dfBBOX[0] = dataSource->dfBBOX[0];
-      sourceGeo.dfBBOX[1] = dataSource->dfBBOX[1];
-      sourceGeo.dfBBOX[2] = dataSource->dfBBOX[2];
-      sourceGeo.dfBBOX[3] = dataSource->dfBBOX[3];
-      sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
-      sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
-      sourceGeo.CRS = dataSource->nativeProj4;
+
       
       void *sourceData = dataSource->getDataObject(j)->cdfVariable->data;
       

@@ -742,7 +742,7 @@ CT::PointerList<CT::string*> *CDataSource::getRenderMethodListForDataSource(CDat
       }
     }
   }
-  CDBDebug("RendermethodListString = %s",renderMethodList.c_str());
+//   CDBDebug("RendermethodListString = %s",renderMethodList.c_str());
   //If still no list of rendermethods is found, use the default list
   if(renderMethodList.length()==0){
     renderMethodList.copy("nearest");
