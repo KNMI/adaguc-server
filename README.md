@@ -13,3 +13,7 @@ docker run -i -t --net adagucnet --ip 172.18.0.2 -v $HOME/data:/data openearth/a
 Visit URL http://172.18.0.2:8080/adaguc-viewer/?service=http%3A%2F%2F172.18.0.2%3A8080%2Fadaguc-services%2Fadagucserver%3Fservice%3Dwms%26request%3Dgetcapabilities%26source%3Dtestdata.nc
 
 You can copy NetCDF's / GeoJSONS to your hosts ~/data directory. This will be served through adaguc-server, via the source=<filename> key value pair. testdata.nc is copied there by default. See example URL above.
+
+It is also possible to explore remote OpenDAP URL's, for example:
+
+http://172.18.0.2:8080/adaguc-viewer/?service=http%3A%2F%2F172.18.0.2%3A8080%2Fadaguc-services%2Fadagucserver%3Fservice%3Dwms%26request%3Dgetcapabilities%26source%3Dhttp://opendap.knmi.nl/knmi/thredds/dodsC/ADAGUC/testsets/rgba_truecolor_images/butterfly_fromjpg_truecolor.nc
