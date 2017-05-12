@@ -893,28 +893,28 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
         //bool windVectorProduct=false;
         bool gridRelative=false;
        
-        if (dataSource->getNumDataObjects()>1){
-         
-          //windVectorProduct=true;
-          // Check standard_name/var_name for first vector component
-          // if x_wind/grid_east_wind of y_wind/grid_northward_wind then gridRelative=true
-          // if eastward_wind/northward_wind then gridRelative=false
-          // default is gridRelative=true
-          CT::string standard_name;
-          standard_name=dataSource->getDataObject(0)->variableName;
-          try {
-            dataSource->getDataObject(0)->cdfVariable->getAttribute("standard_name")->getDataAsString(&standard_name);
-          } catch (CDFError e) {}
-          if (standard_name.equals("x_wind")||standard_name.equals("grid_eastward_wind")||
-            standard_name.equals("y_wind")||standard_name.equals("grid_northward_wind")) {
-            gridRelative=true;
-          } else {
-            gridRelative=false;
-          }
-          #ifdef CIMAGEDATAWRITER_DEBUG 
-          CDBDebug("Grid propery gridRelative=%d", gridRelative);
-          #endif
-        }
+//         if (dataSource->getNumDataObjects()>1){
+//          
+//           //windVectorProduct=true;
+//           // Check standard_name/var_name for first vector component
+//           // if x_wind/grid_east_wind of y_wind/grid_northward_wind then gridRelative=true
+//           // if eastward_wind/northward_wind then gridRelative=false
+//           // default is gridRelative=true
+//           CT::string standard_name;
+//           standard_name=dataSource->getDataObject(0)->variableName;
+//           try {
+//             dataSource->getDataObject(0)->cdfVariable->getAttribute("standard_name")->getDataAsString(&standard_name);
+//           } catch (CDFError e) {}
+//           if (standard_name.equals("x_wind")||standard_name.equals("grid_eastward_wind")||
+//             standard_name.equals("y_wind")||standard_name.equals("grid_northward_wind")) {
+//             gridRelative=true;
+//           } else {
+//             gridRelative=false;
+//           }
+//           #ifdef CIMAGEDATAWRITER_DEBUG 
+//           CDBDebug("Grid propery gridRelative=%d", gridRelative);
+//           #endif
+//         }
             
 
       //Retrieve variable names
@@ -1518,7 +1518,7 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   /**
   * Use fast nearest neighbourrenderer
   */
-  if(renderMethod&RM_NEAREST||renderMethod&RM_AVG_RGBA){
+  if(renderMethod&RM_NEAREST||renderMethod&RM_AVG_RGBA||renderMethod&RM_POINT_LINEARINTERPOLATION){
     
     imageWarperRenderer = new CImgWarpNearestNeighbour();
     imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
