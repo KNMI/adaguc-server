@@ -723,16 +723,26 @@ CT::PointerList<CT::string*> *CDataSource::getRenderMethodListForDataSource(CDat
   //List all the desired rendermethods
   CT::string renderMethodList;
   
-  if(style!=NULL){
-    if(style->RenderMethod.size()==1){
-      renderMethodList.copy(style->RenderMethod[0]->value.c_str());
+
+  
+  //rendermethods defined in the layers must prepend rendermethods defined in the style
+  if(dataSource->cfgLayer->RenderMethod.size()>0){
+   
+    for(size_t j=0;j<dataSource->cfgLayer->RenderMethod.size();j++){
+      if(renderMethodList.length()>0)renderMethodList.concat(",");
+      renderMethodList.concat(dataSource->cfgLayer->RenderMethod[j]->value.c_str());
     }
   }
   
-  //rendermethods defined in the layers override rendermethods defined in the style
-  if(dataSource->cfgLayer->RenderMethod.size()==1){
-    renderMethodList.copy(dataSource->cfgLayer->RenderMethod[0]->value.c_str());
+  if(style!=NULL){
+    if(style->RenderMethod.size()>0){
+      for(size_t j=0;j<style->RenderMethod.size();j++){
+        if(renderMethodList.length()>0)renderMethodList.concat(",");
+        renderMethodList.concat(style->RenderMethod[j]->value.c_str());
+      }
+    }
   }
+  CDBDebug("RendermethodListString = %s",renderMethodList.c_str());
   //If still no list of rendermethods is found, use the default list
   if(renderMethodList.length()==0){
     renderMethodList.copy("nearest");
