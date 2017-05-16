@@ -586,9 +586,10 @@ CDBStore::Store *CDBAdapterSQLLite::getFilesAndIndicesForDimensions(CDataSource 
         subQuery.printconcat("and ");
       }
       if(dataSource->queryBBOX){
-        subQuery.printconcat("level = %d and minx >= %f and maxx <= %f and miny >= %f and maxy <= %f ",dataSource->queryLevel,dataSource->nativeViewPortBBOX[0],dataSource->nativeViewPortBBOX[2],dataSource->nativeViewPortBBOX[1],dataSource->nativeViewPortBBOX[3]);
+        subQuery.printconcat("adaguctilinglevel = %d and minx >= %f and maxx <= %f and miny >= %f and maxy <= %f ",dataSource->queryLevel,dataSource->nativeViewPortBBOX[0],dataSource->nativeViewPortBBOX[2],dataSource->nativeViewPortBBOX[1],dataSource->nativeViewPortBBOX[3]);
       }else{
-         subQuery.printconcat("level = %d ",dataSource->queryLevel);
+         //subQuery.printconcat("adaguctilinglevel = %d ",dataSource->queryLevel);
+        subQuery.printconcat("adaguctilinglevel != %d ",-1);
       }
       subQuery.printconcat("ORDER BY %s DESC limit %d)a%d ",netCDFDimName.c_str(),limit,i);
       //subQuery.printconcat("ORDER BY %s DESC )a%d ",netCDFDimName.c_str(),i);
@@ -973,7 +974,7 @@ int CDBAdapterSQLLite::createDimTableOfType(const char *dimname,const char *tabl
   tableColumns.printconcat(", filedate varchar (64)");
   
   // New since 2016-02-15 projection information and level
-  tableColumns.printconcat(", level int");
+  tableColumns.printconcat(", adaguctilinglevel int");
  // tableColumns.printconcat(", crs varchar (511");
   tableColumns.printconcat(", minx real, miny real, maxx real, maxy real");
   tableColumns.printconcat(", startx int, starty int, countx int, county int");

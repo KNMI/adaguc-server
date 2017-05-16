@@ -31,7 +31,7 @@
 #include <set>
 const char *CDBFileScanner::className="CDBFileScanner";
 std::vector <CT::string> CDBFileScanner::tableNamesDone;
-#define CDBFILESCANNER_DEBUG
+//#define CDBFILESCANNER_DEBUG
 #define ISO8601TIME_LEN 32
 
 #define CDBFILESCANNER_TILECREATIONFAILED -100
@@ -1463,7 +1463,7 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
                             #endif
                           }
                           
-                          status = wcsWriter->writeFile(fileNameToWrite.c_str(),level);if(status!=0){throw(__LINE__);};
+                          status = wcsWriter->writeFile(fileNameToWrite.c_str(),level,false);if(status!=0){throw(__LINE__);};
                           updatedb(dataSources[0],&fileNameToWrite,NULL,CDBFILESCANNER_DONTREMOVEDATAFROMDB|CDBFILESCANNER_UPDATEDB|CDBFILESCANNER_IGNOREFILTER);
                   
                           
