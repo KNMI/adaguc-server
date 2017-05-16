@@ -198,7 +198,7 @@ class GenericDataWarper{
     PXExtentBasedOnSource[2]=sourceDataWidth;
     PXExtentBasedOnSource[3]=sourceDataHeight;
     
-    bool tryToFindExtend = true;
+    bool tryToFindExtend = false;
     
     
     if(tryToFindExtend){

@@ -643,7 +643,8 @@ class CServerConfig:public CXMLSerializerInterface{
             threads,
             debug,
             prefix,
-            readonly;
+            readonly,
+            optimizeextent;
         }attr;
 //           <TileSettings  tilewidth="600" 
 //                    tileheight="600" 
@@ -674,6 +675,7 @@ class CServerConfig:public CXMLSerializerInterface{
           else if(equals("minlevel",8,name)){attr.minlevel.copy(value);return;}
           else if(equals("maxlevel",8,name)){attr.maxlevel.copy(value);return;}
           else if(equals("tilepath",8,name)){attr.tilepath.copy(value);return;}
+          else if(equals("optimizeextent",14,name)){attr.optimizeextent.copy(value);return;}
         }
     };
     
@@ -788,10 +790,11 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString enabled;
+            CXMLString enabled,optimizeextent;
         }attr;
         void addAttribute(const char *attrname,const char *attrvalue){
           if(equals("enabled",7,attrname)){attr.enabled.copy(attrvalue);return;}
+          else if(equals("optimizeextent",14,attrname)){attr.optimizeextent.copy(attrvalue);return;}
         }
     };
     class XMLE_WCSFormat: public CXMLObjectInterface{

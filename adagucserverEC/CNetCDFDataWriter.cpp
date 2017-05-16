@@ -2,7 +2,6 @@
 #include "CGenericDataWarper.h"
 const char * CNetCDFDataWriter::className = "CNetCDFDataWriter";
 #include "CRequest.h"
-
 // #define CNetCDFDataWriter_DEBUG
 
 void CNetCDFDataWriter::createProjectionVariables(CDFObject *cdfObject,int width,int height,double *bbox){
@@ -456,17 +455,51 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
     CDataReader reader;
     
 //     render
-    
+  
+     CDBDebug("Reading file %s",dataSource->getFileName());
+     status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
+   
        
     CImageWarper warper;
-    
-    status = warper.initreproj(dataSource,srvParam->Geo,&srvParam->cfg->Projection);
+    dataSource->srvParams=this->srvParam;
+    status = warper.initreproj(dataSource,this->srvParam->Geo,&srvParam->cfg->Projection);
     if(status != 0){
       CDBError("Unable to initialize projection");
       return 1;
     }
             CGeoParams sourceGeo;
       
+      
+      bool usePixelExtent = false;
+      if(dataSource->cfgLayer->TileSettings.size() == 1 && !dataSource->cfgLayer->TileSettings[0]->attr.optimizeextent.empty()){
+        if(dataSource->cfgLayer->TileSettings[0]->attr.optimizeextent.equals("true")){
+          usePixelExtent=true;
+        }
+      }
+      if(usePixelExtent ){
+        sourceGeo.dWidth = dataSource->dWidth;
+        sourceGeo.dHeight = dataSource->dHeight;
+        sourceGeo.dfBBOX[0] = dataSource->dfBBOX[0];
+        sourceGeo.dfBBOX[1] = dataSource->dfBBOX[1];
+        sourceGeo.dfBBOX[2] = dataSource->dfBBOX[2];
+        sourceGeo.dfBBOX[3] = dataSource->dfBBOX[3];
+        sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
+        sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
+        sourceGeo.CRS = dataSource->nativeProj4;
+      
+        int PXExtentBasedOnSource[4];
+        PXExtentBasedOnSource[0]=0;
+        PXExtentBasedOnSource[1]=0;
+        PXExtentBasedOnSource[2]=dataSource->dWidth;;
+        PXExtentBasedOnSource[3]=dataSource->dHeight;;
+        GenericDataWarper::findPixelExtent(PXExtentBasedOnSource,&sourceGeo,this->srvParam->Geo,&warper);
+        status = reader.openExtent(dataSource,CNETCDFREADER_MODE_OPEN_EXTENT,PXExtentBasedOnSource);
+        
+
+      
+      }else{
+        status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
+      }
       sourceGeo.dWidth = dataSource->dWidth;
       sourceGeo.dHeight = dataSource->dHeight;
       sourceGeo.dfBBOX[0] = dataSource->dfBBOX[0];
@@ -476,15 +509,6 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
       sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
       sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
       sourceGeo.CRS = dataSource->nativeProj4;
-      
-      bool usePixelExtent = false;
-      if(usePixelExtent ){
-        int PXExtentBasedOnSource[4];
-        GenericDataWarper::findPixelExtent(PXExtentBasedOnSource,&sourceGeo,srvParam->Geo,&warper);
-        status = reader.openExtent(dataSource,CNETCDFREADER_MODE_OPEN_EXTENT,PXExtentBasedOnSource);
-      }else{
-        status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
-      }
     if(status!=0){
       CDBError("Could not open file: %s",dataSource->getFileName());
       return 1;
@@ -654,6 +678,7 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
         }
       }
       
+//      CDBDebug("Setting pointers");
       size_t elementOffset = dataStepIndex*settings.width*settings.height;
       void *warpedData = NULL;
       switch(variable->getType()){
@@ -673,7 +698,8 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
       
       
       
-      
+      CDBDebug("Warping from %dx%d to %dx%d", sourceGeo.dWidth, sourceGeo.dHeight, settings.width, settings.height);
+
       if(drawFunctionMode == CNetCDFDataWriter_NEAREST){
         switch(variable->getType()){
           case CDF_CHAR  :  GenericDataWarper::render<char>  (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_nearest);break;
@@ -799,13 +825,15 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
 }
 
 
-int CNetCDFDataWriter::writeFile(const char *fileName,int level){
-  if(level!=-1){
-    destCDFObject->setAttribute("adaguctilelevel",CDF_INT,&level,1);
+int CNetCDFDataWriter::writeFile(const char *fileName,int adaguctilelevel, bool enableCompression){
+  if(adaguctilelevel!=-1){
+    destCDFObject->setAttribute("adaguctilelevel",CDF_INT,&adaguctilelevel,1);
   }
   CDFNetCDFWriter *netCDFWriter = new CDFNetCDFWriter(destCDFObject);
   netCDFWriter->setNetCDFMode(4);
-  netCDFWriter->setDeflateShuffle(1,2, 0);
+  if(enableCompression){
+    netCDFWriter->setDeflateShuffle(1,2, 0);
+  }
   int  status = netCDFWriter->write(fileName);
   delete netCDFWriter;
   

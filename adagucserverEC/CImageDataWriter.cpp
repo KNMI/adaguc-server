@@ -48,7 +48,8 @@
 
 CT::string months[] = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
 
-//  #define CIMAGEDATAWRITER_DEBUG
+
+// #define CIMAGEDATAWRITER_DEBUG
 //  #define MEASURETIME
 
 
@@ -1420,8 +1421,39 @@ int CImageDataWriter::warpImage(CDataSource *dataSource,CDrawImage *drawImage){
   #ifdef MEASURETIME
   StopWatch_Stop("Thread[%d]: start Opening grid",dataSource->threadNr);
 #endif
+  
+  bool usePixelExtent = false;
+  if(usePixelExtent){
 
-  status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
+    status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
+    CImageWarper warper;
+
+      status = warper.initreproj(dataSource,srvParam->Geo,&srvParam->cfg->Projection);
+      if(status != 0){
+        CDBError("Unable to initialize projection");
+        return 1;
+      }
+    
+    
+    
+    CGeoParams sourceGeo;
+        
+    sourceGeo.dWidth = dataSource->dWidth;
+    sourceGeo.dHeight = dataSource->dHeight;
+    sourceGeo.dfBBOX[0] = dataSource->dfBBOX[0];
+    sourceGeo.dfBBOX[1] = dataSource->dfBBOX[1];
+    sourceGeo.dfBBOX[2] = dataSource->dfBBOX[2];
+    sourceGeo.dfBBOX[3] = dataSource->dfBBOX[3];
+    sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
+    sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
+    sourceGeo.CRS = dataSource->nativeProj4;
+    int PXExtentBasedOnSource[4];
+    GenericDataWarper::findPixelExtent(PXExtentBasedOnSource,&sourceGeo,srvParam->Geo,&warper);
+    
+    status = reader.openExtent(dataSource,CNETCDFREADER_MODE_OPEN_EXTENT,PXExtentBasedOnSource);
+  }else{
+   status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
+  }
   #ifdef MEASURETIME
   StopWatch_Stop("Thread[%d]: Opened grid",dataSource->threadNr);
 #endif
