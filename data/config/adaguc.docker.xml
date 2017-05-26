@@ -14,7 +14,7 @@
       <Abstract>Root Layer Abstract</Abstract>
     </RootLayer>
     <!-- PNG 8 bit requests are forced to 32 bit: better for antialiasing and combining layers with many colors -->
-    <WMSFormat name="image/png" format="image/png32"/> 
+    <!--<WMSFormat name="image/png" format="image/png32"/> -->
   </WMS>
   
   
@@ -37,10 +37,11 @@
   <Include location="{ADAGUC_PATH}/data/config/includes/DefaultStyles.include.xml"/>
 
   <AutoResource enableautoopendap="true" enablelocalfile="true" enablecache="false">
-    <Dir basedir="/data" prefix="/data/"/>
+    <Dir basedir="/data/adaguc-autowms" prefix="/data/adaguc-autowms/"/>
     <ImageText attribute="source"></ImageText>
   </AutoResource>
 
+  <Dataset enabled="true" location="/data/adaguc-datasets/"/>
   
  <Legend name="baselayer" type="interval">
     <palette min="0" max="240" red="0"  green="0" blue="0"/>

@@ -3,7 +3,8 @@
 
   <TempDir value="{ADAGUC_TMP}"/>
   <Path value="{ADAGUC_PATH}/data"/>
-  <DataBase dbtype="postgresql" parameters="host=localhost dbname=tiles"/>
+  <!--<DataBase dbtype="postgresql" parameters="host=localhost dbname=tiles"/>-->
+  <DataBase dbtype="sqlite" parameters="/tmp/tiles.db"/>
   
   <!-- WMS settings -->
   <WMS>
@@ -113,7 +114,7 @@
     <Max>1</Max>
     <NameMapping name="nearest"   title="Masked" abstract="Masked"/>
     <RenderMethod>nearest</RenderMethod>
-  </Style>
+  </Style><!--
   
   <Layer type="database">
     <Name>mask</Name>
@@ -134,9 +135,9 @@
                   debug="true"
                   threads="1"  
                   tilepath="/nobackup/users/plieger/data/tiles/g4indo-mask/"/>
-   </Layer>
+   </Layer>-->
    
-  <Layer type="database">
+<!--  <Layer type="database">
     <Name>S1A</Name>
     <Title>S1A</Title>
     <FilePath>/nobackup/users/plieger/data/g4indo/S1A_20160527220855_IW_VVVV_VH_VV-VH.nc</FilePath>
@@ -156,15 +157,36 @@
                   tilepath="/nobackup/users/plieger/data/tiles/g4indo/"/>
       <AdditionalLayer style="black/nearest"  replace="false">mask</AdditionalLayer>
    </Layer>
-   
-   <Layer type="database">
+   -->
+  
+  <Layer type="database">
+    <Name>him</Name>
+    <Title>him</Title>
+    <FilePath>/data/adaguc-autowms/full_disk_ahi_rgb_airmass_20170516105000.nc</FilePath>
+    <Variable>rgba</Variable>
+    <RenderMethod>rgba</RenderMethod>
+    <TileSettings tilewidthpx="512" 
+                  tileheightpx="512" 
+                  tilecellsizex="0.001"
+                  tilecellsizey="0.001"
+                  left="50" right="180"  bottom="-80==90" top="90"
+                  tileprojection="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+                  minlevel="1"
+                  maxlevel="6"
+                  tilemode="rgba"
+                  debug="true"
+                  threads="1" 
+                  tilepath="/data/adaguc-autowms/tiles"/>
+      <AdditionalLayer style="black/nearest"  replace="false">mask</AdditionalLayer>
+   </Layer>
+<!--   <Layer type="database">
     <Name>orbits</Name>
     <Title>orbits</Title>
     <FilePath>/nobackup/users/plieger/data/g4indo/orbits/</FilePath>
     <Variable>rgba</Variable>
     <RenderMethod>rgba</RenderMethod>
 
-   </Layer>
+   </Layer>-->
 
 <!--
    <Layer type="database">
