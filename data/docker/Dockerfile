@@ -75,7 +75,7 @@ RUN printf "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\
   <basedir>/root/adaguc-services-base</basedir>\n\
   <userworkspace>/root/adaguc-services-space</userworkspace>\n\
   <server>\n\
-    <port>9000</port>\n\
+    <port>8080</port>\n\
   </server>\n\
   <security>\n\
     <keystore>/root/keystore.jks</keystore>\n\
@@ -112,6 +112,8 @@ EXPOSE 8080
 CMD echo "Starting POSTGRESQL DB" && \
     runuser -l postgres -c "pg_ctl -D /postgresql -l /var/log/postgresql.log start" && \
     sleep 1 && \ 
+    mkdir -p /data/adaguc-autowms/ && \ 
+    mkdir -p /data/adaguc-datasets/ && \ 
     cp /src/adaguc-server-master/data/datasets/testdata.nc /data/adaguc-autowms/ && \
     cp /src/adaguc-server-master/data/config/datasets/dataset_a.xml /data/adaguc-datasets/ && \
     echo "Configuring POSTGRESQL DB" && \
