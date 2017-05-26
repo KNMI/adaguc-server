@@ -66,10 +66,23 @@ WORKDIR /src/adaguc-services-master
 RUN mvn package
 RUN cp ./target/adaguc-services-1.0.0-SNAPSHOT.war /usr/share/tomcat/webapps/adaguc-services.war
 
+RUN keytool -genkey -noprompt -keypass password -alias tomcat -keyalg RSA -storepass password -keystore /tmp/c4i_keystore.jks  -dname CN=compute-test.c3s-magic.eu/C=NL/O=C3SMAGIC/OU=KNMI 
+
 # Configure adaguc-services
 RUN printf "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\
 <adaguc-services>\n\
   <external-home-url>http://172.18.0.2:8080</external-home-url>\n\
+  <basedir>/root/adaguc-services-base</basedir>\n\
+  <userworkspace>/root/adaguc-services-space</userworkspace>\n\
+  <server>\n\
+    <port>9000</port>\n\
+  </server>\n\
+  <security>\n\
+    <keystore>/root/keystore.jks</keystore>\n\
+    <keystorepassword>password</keystorepassword>\n\
+    <keystoretype>JKS</keystoretype>\n\
+    <keyalias>tomcat</keyalias>\n\
+  </security>\n\
   <adaguc-server>\n\
     <adagucexecutable>/src/adaguc-server-master/bin/adagucserver</adagucexecutable>\n\
     <export>ADAGUC_PATH=/src/adaguc-server-master/</export>\n\
@@ -88,12 +101,19 @@ ENV ADAGUC_SERVICES_CONFIG=/root/adaguc-services-config.xml
 # Set up data dir, this is also configured in adaguc.docker.xml
 RUN mkdir /data/
 
+#Setup directory for automatic visualization of NetCDF's
+RUN mkdir /data/adaguc-autowms
+
+#Setup directory for visualization of ADAGUC datasets
+RUN mkdir /data/adaguc-datasets
+
 EXPOSE 8080
 
 CMD echo "Starting POSTGRESQL DB" && \
     runuser -l postgres -c "pg_ctl -D /postgresql -l /var/log/postgresql.log start" && \
     sleep 1 && \ 
-    cp /src/adaguc-server-master/data/datasets/testdata.nc /data/ && \
+    cp /src/adaguc-server-master/data/datasets/testdata.nc /data/adaguc-autowms/ && \
+    cp /src/adaguc-server-master/data/config/datasets/dataset_a.xml /data/adaguc-datasets/ && \
     echo "Configuring POSTGRESQL DB" && \
     runuser -l postgres -c "createuser --superuser adaguc" && \
     runuser -l postgres -c "psql postgres -c \"ALTER USER adaguc PASSWORD 'adaguc';\"" && \
