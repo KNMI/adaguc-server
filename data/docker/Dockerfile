@@ -66,6 +66,8 @@ WORKDIR /src/adaguc-services-master
 RUN mvn package
 RUN cp ./target/adaguc-services-1.0.0-SNAPSHOT.war /usr/share/tomcat/webapps/adaguc-services.war
 
+RUN keytool -genkey -noprompt -keypass password -alias tomcat -keyalg RSA -storepass password -keystore /tmp/c4i_keystore.jks  -dname CN=compute-test.c3s-magic.eu/C=NL/O=C3SMAGIC/OU=KNMI 
+
 # Configure adaguc-services
 RUN printf "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\
 <adaguc-services>\n\
