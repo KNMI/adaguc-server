@@ -86,13 +86,10 @@ RUN printf "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\
   <adaguc-server>\n\
     <adagucexecutable>/src/adaguc-server-master/bin/adagucserver</adagucexecutable>\n\
     <export>ADAGUC_PATH=/src/adaguc-server-master/</export>\n\
-    <export>ADAGUC_TMP=/tmp</export>\n\
     <export>ADAGUC_CONFIG=/src/adaguc-server-master/data/config/adaguc.docker.xml</export>\n\
     <export>ADAGUC_DATARESTRICTION=FALSE</export>\n\
     <export>ADAGUC_LOGFILE=/tmp/adaguc.docker.log</export>\n\
-    <export>ADAGUC_ERRORFILE=/tmp/adaguc.docker.errlog</export>\n\
     <export>ADAGUC_FONT=/src/adaguc-server-master/data/fonts/FreeSans.ttf</export>\n\
-    <export>ADAGUC_ONLINERESOURCE=http://172.18.0.2:8080/adaguc-services/adagucserver?</export>\n\
   </adaguc-server>\n\
 </adaguc-services>" > /root/adaguc-services-config.xml
 
