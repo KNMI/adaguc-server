@@ -51,7 +51,7 @@ RUN mv adaguc-viewer-master adaguc-viewer
 
 # Configure adaguc-viewer
 RUN printf "\n\
-xml2jsonrequestURL = '/adaguc-services/XML2JSON?'\n\
+xml2jsonrequestURL = '/adaguc-services/xml2json?'\n\
 baseLayerConfiguration = [\n\
   {service:'http://172.18.0.2:8080/adaguc-services/adagucserver?',name:'baselayer',title:'Baselayer',enabled: true,format:'image/png'},\n\
   {service:'http://172.18.0.2:8080/adaguc-services/adagucserver?',name:'overlay',title:'Overlay',enabled: true,keepontop:true,format:'image/png'}\n\
