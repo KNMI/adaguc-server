@@ -60,7 +60,7 @@ baseLayerConfiguration = [\n\
 
 # Install adaguc-services
 WORKDIR /src
-RUN curl -L https://github.com/maartenplieger/adaguc-services/archive/master.tar.gz > adaguc-services.tar.gz
+RUN curl -L https://github.com/KNMI/adaguc-services/archive/master.tar.gz > adaguc-services.tar.gz
 RUN tar xvf adaguc-services.tar.gz
 WORKDIR /src/adaguc-services-master
 RUN mvn package
