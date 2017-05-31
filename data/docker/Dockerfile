@@ -73,7 +73,7 @@ RUN keytool -genkey -noprompt -keypass password -alias tomcat -keyalg RSA -store
 # Configure adaguc-services
 RUN printf "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\
 <adaguc-services>\n\
-  <external-home-url>http://172.18.0.2:8080</external-home-url>\n\
+  <external-home-url>http://172.18.0.2:8080/adaguc-services/</external-home-url>\n\
   <basedir>/root/adaguc-services-base</basedir>\n\
   <userworkspace>/root/adaguc-services-space</userworkspace>\n\
   <server>\n\
