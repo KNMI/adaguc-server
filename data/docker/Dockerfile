@@ -93,6 +93,11 @@ RUN printf "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\
     <export>ADAGUC_LOGFILE=/tmp/adaguc.docker.log</export>\n\
     <export>ADAGUC_FONT=/src/adaguc-server-master/data/fonts/FreeSans.ttf</export>\n\
   </adaguc-server>\n\
+  <autowms>\n\
+    <enabled>true</enabled>\n\
+    <autowmspath>/data/adaguc-autowms/</autowmspath>\n\
+    <datasetpath>/data/adaguc-datasets/</datasetpath>\n\
+  </autowms>\n\
 </adaguc-services>" > /root/adaguc-services-config.xml
 
 ENV ADAGUC_SERVICES_CONFIG=/root/adaguc-services-config.xml 
