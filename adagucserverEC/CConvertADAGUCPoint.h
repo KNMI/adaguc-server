@@ -29,6 +29,7 @@
 class CConvertADAGUCPoint{
   private:
   DEF_ERRORFUNCTION();
+  static void lineInterpolated(float *grid , int W,int H, int startX,int startY, int stopX, int stopY, float startVal, float stopVal);
   public:
   static int convertADAGUCPointHeader(CDFObject *cdfObject);
   static int convertADAGUCPointData(CDataSource *dataSource,int mode);

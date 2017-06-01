@@ -3,7 +3,7 @@
 
   <TempDir value="{ADAGUC_TMP}"/>
   <Path value="{ADAGUC_PATH}/data"/>
-  <DataBase dbtype="sqlite" parameters="{ADAGUC_TMP}/adaguc.autoresource.db"/>
+  <DataBase dbtype="postgres" parameters="user=adaguc password=adaguc host=localhost dbname=adaguc"/>
   
   <!-- WMS settings -->
   <WMS>
@@ -84,3 +84,4 @@
 
   <!-- End of configuration /-->
 </Configuration>
+
