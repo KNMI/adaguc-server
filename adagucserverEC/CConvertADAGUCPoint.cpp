@@ -31,6 +31,56 @@
 const char *CConvertADAGUCPoint::className="CConvertADAGUCPoint";
 
 
+void CConvertADAGUCPoint::lineInterpolated(float *grid , int W,int H, int startX,int startY, int stopX, int stopY, float startVal, float stopVal){
+  // drawImage->setPixelTrueColor(startX,startY, 0,0,0,255);
+  int dX = stopX - startX;
+  int dY = stopY - startY;
+  if(abs(dX)>5000)return;
+  if(abs(dY)>5000)return;
+  float rc = 0;
+  int numPoints = 0;
+  
+  float valD = stopVal - startVal;
+  
+  if(abs(dX) < abs(dY)){
+    rc = float(dX)/float(dY);
+    int sx = startX;
+    int sy = startY;
+    float myVal = startVal;
+    if(dY > 0)numPoints = dY;else {numPoints = -dY;sx=stopX,sy=stopY;myVal = stopVal;valD = -valD;}
+    float valRc = valD / numPoints;
+    for(int p = 0; p< numPoints;p++){
+      float v = valRc*float(p)+myVal;
+      for(int x = -4;x<6;x++){
+        for(int y = -4;y<6;y++){
+          int pointX = float(p) * rc+sx+x;
+          int pointY = p+sy+y;
+          if(pointX >= 0 && pointY >=0 && pointX < W && pointY< H)grid[pointX+pointY*W]=v;
+        }
+      }
+    }
+  }else{
+    int sx = startX;
+    int sy = startY;
+    float myVal = startVal;
+    rc = float(dY)/float(dX);
+    if(dX > 0)numPoints = dX;else {numPoints = -dX;sx=stopX,sy=stopY;myVal = stopVal;valD = -valD;}
+    float valRc = valD / numPoints;
+    for(int p = 0; p< numPoints;p++){
+      float v = valRc*float(p)+myVal;
+      for(int x = -4;x<6;x++){
+        for(int y = -4;y<6;y++){
+          int pointX = p + sx+x;
+          int pointY = float(p) * rc +sy+y;
+          if(pointX >= 0 && pointY >=0 && pointX < W && pointY< H)grid[pointX+pointY*W]=v;
+        }
+      }
+    }
+  }
+  
+  
+  
+}
 /**
  * This function adjusts the cdfObject by creating virtual 2D variables
  */
@@ -710,8 +760,27 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
        pointID = cdfObject0->getVariableNE("location_backup");
     }
     if(pointID!=NULL){
-      pointID->readData(CDF_STRING);
+      if(pointID->getType() == CDF_STRING){
+          pointID->readData(CDF_STRING);
+      }else{
+        pointID = NULL;
+      }
     }
+    
+    CDF::Variable *roadIdVar = cdfObject0->getVariableNE("roadId_backup");
+    float *roadIdData = NULL;
+    float prevRoadId = -1;
+    if(roadIdVar != NULL){
+      //if(roadIdVar->getType() == CDF_SHORT)
+      {
+          CDBDebug("Start reading data");
+        roadIdVar->readData(CDF_FLOAT);
+        CDBDebug("Done reading data");
+         roadIdData = (float*)roadIdVar->data;
+         prevRoadId=roadIdData[0];
+      }
+    }
+    
     
     //Read dates for obs
     bool hasTimeValuePerObs = false;
@@ -738,6 +807,12 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
     #ifdef MEASURETIME
     CDBDebug("Date numStations = %d",numStations);
     #endif
+    int prevLon,prevLat;
+    float prevVal;
+    bool hasPrevLatLon = false;
+    
+    bool doDrawLinearInterpolated = dataSource->getStyle()->renderMethod&RM_POINT_LINEARINTERPOLATION;
+    bool doDrawCircle = dataSource->getStyle()->renderMethod&RM_NEAREST;
     
 
    
@@ -753,99 +828,130 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
       
       double projectedX = lon;
       double projectedY = lat;
-      
-      if(projectionRequired)imageWarper.reprojfromLatLon(projectedX,projectedY);
-      int dlon=int((projectedX-offsetX)/cellSizeX);
-      int dlat=int((projectedY-offsetY)/cellSizeY);
-//      if(dlon>=0&&dlat>=0&&dlon<dataSource->dWidth&&dlat<dataSource->dHeight){ remove
-      for(size_t d=0;d<nrDataObjects;d++){
-        if(pointVar[d]!=NULL){
-        float *sdata = ((float*)dataObjects[d]->cdfVariable->data);
-        PointDVWithLatLon * lastPoint = NULL;
-        
-        /**
-         * With string and char (text) data, the float value is set to NAN and character data is put in the paramlist
-         */
-        if(pointVar[d]->currentType==CDF_STRING){
-          float v = NAN;
-          //CDBDebug("pushing stationNr %d dateDimIndex %d,pPoint DIM %d",stationNr,dateDimIndex,pPoint);
-          dataObjects[d]->points.push_back(PointDVWithLatLon(dlon,dlat,lon,lat,v));//,((const char**)pointVar[d]->data)[pPoint]));
-          lastPoint = &(dataObjects[d]->points.back());
-          const char * key = pointVar[d]->name.c_str();
-          const char * description = key;
-          try{
-            description = (const char*)pointVar[d]->getAttribute("long_name")->data;
-            
-          }catch(int e){
-          }
-          /* Get the last pushed point from the array and push the character text data in the paramlist */
-          const char *b = ((const char**)pointVar[d]->data)[pPoint];
-          lastPoint->paramList.push_back(CKeyValue(key,description ,b));
-          float a = 0;
-          drawCircle(sdata,a,dataSource->dWidth,dataSource->dHeight,dlon-1,dlat,8);
-        }
-        
-        if(pointVar[d]->currentType==CDF_CHAR){
-          float v = NAN;
-          //CDBDebug("pushing stationNr %d dateDimIndex %d,pPoint DIM %d",stationNr,dateDimIndex,pPoint);
-          dataObjects[d]->points.push_back(PointDVWithLatLon(dlon,dlat,lon,lat,v));//,((const char**)pointVar[d]->data)[pPoint]));
-          lastPoint = &(dataObjects[d]->points.back());
-          const char * key = pointVar[d]->name.c_str();
-          const char * description = key;
-          try{
-            description = (const char*)pointVar[d]->getAttribute("long_name")->data;
-            
-          }catch(int e){
-          }
-          /* Get the last pushed point from the array and push the character text data in the paramlist */
-          lastPoint->paramList.push_back(CKeyValue(key,description ,((const char**)pointVar[d]->data)[pPoint]));
-          float a = 0;
-          drawCircle(sdata,a,dataSource->dWidth,dataSource->dHeight,dlon-1,dlat,8);
-        }
-        
-        
-        if(pointVar[d]->currentType==CDF_FLOAT){
-          float val  = ((float*)pointVar[d]->data)[pPoint];
-        
-          
-          if(val!=fill){
-           
-            //CDBDebug("P %d %d %f",dlon,dlat,val);
-            
-              dataObjects[d]->points.push_back(PointDVWithLatLon(dlon,dlat,lon,lat,val));//,id));
-              lastPoint = &(dataObjects[d]->points.back());
-              if(pointID!=NULL){
-              
-                const char * key = pointID->name.c_str();
-                const char * description = key;
-                try{
-                  description = (const char*)pointID->getAttribute("long_name")->data;
-                }catch(int e){
-                }
-                lastPoint->paramList.push_back(CKeyValue(key,description ,((const char**)pointID->data)[pGeo]));
-              }
-              drawCircle(sdata,val,dataSource->dWidth,dataSource->dHeight,dlon-1,dlat,8);
-            }        
-            
-            
-          }
-          
-          if(hasTimeValuePerObs&& lastPoint!=NULL){
-             
-            const char * key = timeVarPerObs->name.c_str();
-            const char * description = key;
-            try{
-              description = (const char*)timeVarPerObs->getAttribute("long_name")->data;
-            }catch(int e){
-            }
-            //obsTimeData
-             
-            lastPoint->paramList.push_back(CKeyValue(key,description ,obsTime.dateToISOString(obsTime.getDate(obsTimeData[pPoint])).c_str()));
-             
-          }
+      bool projectionError = false;
+      if(projectionRequired){
+        if(imageWarper.reprojfromLatLon(projectedX,projectedY)!=0){
+          projectionError = true;
+          hasPrevLatLon = false;
         }
       }
+//      CDBDebug("proj OK : %f %f",projectedX, projectedY);
+      if(projectionError == false){
+        int dlon=int((projectedX-offsetX)/cellSizeX);
+        int dlat=int((projectedY-offsetY)/cellSizeY);
+  //      if(dlon>=0&&dlat>=0&&dlon<dataSource->dWidth&&dlat<dataSource->dHeight){ remove
+        for(size_t d=0;d<nrDataObjects;d++){
+          if(pointVar[d]!=NULL){
+          float *sdata = ((float*)dataObjects[d]->cdfVariable->data);
+          PointDVWithLatLon * lastPoint = NULL;
+          
+          /**
+          * With string and char (text) data, the float value is set to NAN and character data is put in the paramlist
+          */
+          if(pointVar[d]->currentType==CDF_STRING){
+            float v = NAN;
+            //CDBDebug("pushing stationNr %d dateDimIndex %d,pPoint DIM %d",stationNr,dateDimIndex,pPoint);
+            dataObjects[d]->points.push_back(PointDVWithLatLon(dlon,dlat,lon,lat,v));//,((const char**)pointVar[d]->data)[pPoint]));
+            lastPoint = &(dataObjects[d]->points.back());
+            const char * key = pointVar[d]->name.c_str();
+            const char * description = key;
+            try{
+              description = (const char*)pointVar[d]->getAttribute("long_name")->data;
+              
+            }catch(int e){
+            }
+            /* Get the last pushed point from the array and push the character text data in the paramlist */
+            const char *b = ((const char**)pointVar[d]->data)[pPoint];
+            lastPoint->paramList.push_back(CKeyValue(key,description ,b));
+            float a = 0;
+            drawCircle(sdata,a,dataSource->dWidth,dataSource->dHeight,dlon-1,dlat,8);
+          }
+          
+          
+          
+          
+          
+          if(pointVar[d]->currentType==CDF_CHAR){
+            float v = NAN;
+            //CDBDebug("pushing stationNr %d dateDimIndex %d,pPoint DIM %d",stationNr,dateDimIndex,pPoint);
+            dataObjects[d]->points.push_back(PointDVWithLatLon(dlon,dlat,lon,lat,v));//,((const char**)pointVar[d]->data)[pPoint]));
+            lastPoint = &(dataObjects[d]->points.back());
+            const char * key = pointVar[d]->name.c_str();
+            const char * description = key;
+            try{
+              description = (const char*)pointVar[d]->getAttribute("long_name")->data;
+              
+            }catch(int e){
+            }
+            /* Get the last pushed point from the array and push the character text data in the paramlist */
+            lastPoint->paramList.push_back(CKeyValue(key,description ,((const char**)pointVar[d]->data)[pPoint]));
+            float a = 0;
+            drawCircle(sdata,a,dataSource->dWidth,dataSource->dHeight,dlon-1,dlat,8);
+          }
+          
+          
+          if(pointVar[d]->currentType==CDF_FLOAT){
+            float val  = ((float*)pointVar[d]->data)[pPoint];
+            
+          
+            if(val!=fill){
+            
+              //CDBDebug("P %d %d %f",dlon,dlat,val);
+              
+                dataObjects[d]->points.push_back(PointDVWithLatLon(dlon,dlat,lon,lat,val));//,id));
+                lastPoint = &(dataObjects[d]->points.back());
+                if(pointID!=NULL){
+                
+                  const char * key = pointID->name.c_str();
+                  const char * description = key;
+                  try{
+                    description = (const char*)pointID->getAttribute("long_name")->data;
+                  }catch(int e){
+                  }
+                  lastPoint->paramList.push_back(CKeyValue(key,description ,((const char**)pointID->data)[pGeo]));
+                }
+                if(doDrawCircle){
+                  drawCircle(sdata,val,dataSource->dWidth,dataSource->dHeight,dlon-1,dlat,8);
+                }
+                if(doDrawLinearInterpolated && roadIdData != NULL){
+                  if(hasPrevLatLon){
+                    float roadId = roadIdData[pPoint];
+                    if(roadId == prevRoadId && val == val && prevVal == prevVal){
+                        lineInterpolated(sdata,dataSource->dWidth,dataSource->dHeight,prevLon,prevLat,dlon,dlat,prevVal,val);
+                    }
+                    prevRoadId = roadId;
+                  }
+                }
+                prevLon = dlon;
+                prevLat = dlat;;
+                prevVal=val;
+                
+                hasPrevLatLon = true;
+              }else{
+                hasPrevLatLon = false;
+              }
+              
+              
+            }
+            
+            if(hasTimeValuePerObs&& lastPoint!=NULL){
+              
+              const char * key = timeVarPerObs->name.c_str();
+              const char * description = key;
+              try{
+                description = (const char*)timeVarPerObs->getAttribute("long_name")->data;
+              }catch(int e){
+              }
+              //obsTimeData
+              
+              lastPoint->paramList.push_back(CKeyValue(key,description ,obsTime.dateToISOString(obsTime.getDate(obsTimeData[pPoint])).c_str()));
+              
+            }
+          }
+        }
+        
 //      } TODO remove if test for "clipping"
+      }
     }
     
     #ifdef MEASURETIME

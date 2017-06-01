@@ -31,13 +31,13 @@ imgextent = [-5567.2481376,-5567.2481376,5567.2481376,5567.2481376]
 
 
 # Himawari 8
-inputname="/nobackup/users/plieger/data/himawari/rammdb/full_disk_ahi_true_color_20161114062000.jpg" 
+inputname="/home/c3smagic/data/full_disk_ahi_rgb_airmass_20170516105000.jpg" 
 imgextent = [-5500000,-5500000,5500000,5500000]
 imgproj = "+proj=geos +h=35785863 +a=6378137.0 +b=6356752.3 +lon_0=140.7 +no_defs"
 isodate="20161114062000"
 #directorytoscan = "/nobackup/users/plieger/data/himawari/rammdb/"
 product = "himawari"
-outputname = '/nobackup/users/plieger/data/himawari/loop/full_disk_ahi_true_color_20161114062000.nc'
+outputname = '/home/c3smagic/data/full_disk_ahi_rgb_airmass_20170516105000.nc'
 
 
 def drange(start, stop, step):
@@ -112,26 +112,26 @@ def convertonc(inputname,imgextent,imgproj,product,outputname):
   print "Ok!"
   
 
+convertonc(inputname,imgextent,imgproj,product,outputname)  
 
-
-directorytoscan = "/nobackup/users/plieger/data/himawari/rammdb/"
-onlyfiles = [f for f in listdir(directorytoscan) if isfile(join(directorytoscan, f))]
-filenr=0
+#directorytoscan = "/nobackup/users/plieger/data/himawari/rammdb/"
+#onlyfiles = [f for f in listdir(directorytoscan) if isfile(join(directorytoscan, f))]
+#filenr=0
    
-filteredlist = [mfile for mfile in onlyfiles if "jpg" in mfile]    
+#filteredlist = [mfile for mfile in onlyfiles if "jpg" in mfile]    
 
-for mfile in filteredlist:
+#for mfile in filteredlist:
   
-  filenr+=1
-  print("File %d/%d"%(filenr,len(filteredlist)))
+  #filenr+=1
+  #print("File %d/%d"%(filenr,len(filteredlist)))
     
-  inputname="/nobackup/users/plieger/data/himawari/rammdb/"+mfile
-  imgextent = [-5500000,-5500000,5500000,5500000]
-  imgproj = "+proj=geos +h=35785863 +a=6378137.0 +b=6356752.3 +lon_0=140.7 +no_defs"
-  isodate=mfile[25:-4]
-  product = "himawari"
-  outputname = "/nobackup/users/plieger/data/himawari/loop/"+mfile+".nc"
-  if os.path.isfile(outputname) == False:
-    convertonc(inputname,imgextent,imgproj,product,outputname)  
+  #inputname="/nobackup/users/plieger/data/himawari/rammdb/"+mfile
+  #imgextent = [-5500000,-5500000,5500000,5500000]
+  #imgproj = "+proj=geos +h=35785863 +a=6378137.0 +b=6356752.3 +lon_0=140.7 +no_defs"
+  #isodate=mfile[25:-4]
+  #product = "himawari"
+  #outputname = "/nobackup/users/plieger/data/himawari/loop/"+mfile+".nc"
+  #if os.path.isfile(outputname) == False:
+    #convertonc(inputname,imgextent,imgproj,product,outputname)  
 
 

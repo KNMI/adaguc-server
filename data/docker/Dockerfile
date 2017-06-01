@@ -51,7 +51,9 @@ RUN mv adaguc-viewer-master adaguc-viewer
 
 # Configure adaguc-viewer
 RUN printf "\n\
-xml2jsonrequestURL = '/adaguc-services/XML2JSON?'\n\
+xml2jsonrequestURL = '/adaguc-services/xml2json?';\n\
+autowmsURL = '/adaguc-services/autowms?';\n\
+getFeatureInfoApplications.push({name:'AutoWMS',iconCls:'button_getfeatureinfo'});\n\
 baseLayerConfiguration = [\n\
   {service:'http://172.18.0.2:8080/adaguc-services/adagucserver?',name:'baselayer',title:'Baselayer',enabled: true,format:'image/png'},\n\
   {service:'http://172.18.0.2:8080/adaguc-services/adagucserver?',name:'overlay',title:'Overlay',enabled: true,keepontop:true,format:'image/png'}\n\
@@ -60,27 +62,42 @@ baseLayerConfiguration = [\n\
 
 # Install adaguc-services
 WORKDIR /src
-RUN curl -L https://github.com/maartenplieger/adaguc-services/archive/master.tar.gz > adaguc-services.tar.gz
+RUN curl -L https://github.com/KNMI/adaguc-services/archive/master.tar.gz > adaguc-services.tar.gz
 RUN tar xvf adaguc-services.tar.gz
 WORKDIR /src/adaguc-services-master
 RUN mvn package
 RUN cp ./target/adaguc-services-1.0.0-SNAPSHOT.war /usr/share/tomcat/webapps/adaguc-services.war
 
+RUN keytool -genkey -noprompt -keypass password -alias tomcat -keyalg RSA -storepass password -keystore /tmp/c4i_keystore.jks  -dname CN=compute-test.c3s-magic.eu/C=NL/O=C3SMAGIC/OU=KNMI 
+
 # Configure adaguc-services
 RUN printf "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\
 <adaguc-services>\n\
-  <external-home-url>http://172.18.0.2:8080</external-home-url>\n\
+  <external-home-url>http://172.18.0.2:8080/adaguc-services/</external-home-url>\n\
+  <basedir>/root/adaguc-services-base</basedir>\n\
+  <userworkspace>/root/adaguc-services-space</userworkspace>\n\
+  <server>\n\
+    <port>8080</port>\n\
+  </server>\n\
+  <security>\n\
+    <keystore>/root/keystore.jks</keystore>\n\
+    <keystorepassword>password</keystorepassword>\n\
+    <keystoretype>JKS</keystoretype>\n\
+    <keyalias>tomcat</keyalias>\n\
+  </security>\n\
   <adaguc-server>\n\
     <adagucexecutable>/src/adaguc-server-master/bin/adagucserver</adagucexecutable>\n\
     <export>ADAGUC_PATH=/src/adaguc-server-master/</export>\n\
-    <export>ADAGUC_TMP=/tmp</export>\n\
     <export>ADAGUC_CONFIG=/src/adaguc-server-master/data/config/adaguc.docker.xml</export>\n\
     <export>ADAGUC_DATARESTRICTION=FALSE</export>\n\
     <export>ADAGUC_LOGFILE=/tmp/adaguc.docker.log</export>\n\
-    <export>ADAGUC_ERRORFILE=/tmp/adaguc.docker.errlog</export>\n\
     <export>ADAGUC_FONT=/src/adaguc-server-master/data/fonts/FreeSans.ttf</export>\n\
-    <export>ADAGUC_ONLINERESOURCE=http://172.18.0.2:8080/adaguc-services/adagucserver?</export>\n\
   </adaguc-server>\n\
+  <autowms>\n\
+    <enabled>true</enabled>\n\
+    <autowmspath>/data/adaguc-autowms/</autowmspath>\n\
+    <datasetpath>/data/adaguc-datasets/</datasetpath>\n\
+  </autowms>\n\
 </adaguc-services>" > /root/adaguc-services-config.xml
 
 ENV ADAGUC_SERVICES_CONFIG=/root/adaguc-services-config.xml 
@@ -88,12 +105,21 @@ ENV ADAGUC_SERVICES_CONFIG=/root/adaguc-services-config.xml
 # Set up data dir, this is also configured in adaguc.docker.xml
 RUN mkdir /data/
 
+#Setup directory for automatic visualization of NetCDF's
+RUN mkdir /data/adaguc-autowms
+
+#Setup directory for visualization of ADAGUC datasets
+RUN mkdir /data/adaguc-datasets
+
 EXPOSE 8080
 
 CMD echo "Starting POSTGRESQL DB" && \
     runuser -l postgres -c "pg_ctl -D /postgresql -l /var/log/postgresql.log start" && \
     sleep 1 && \ 
-    cp /src/adaguc-server-master/data/datasets/testdata.nc /data/ && \
+    mkdir -p /data/adaguc-autowms/ && \ 
+    mkdir -p /data/adaguc-datasets/ && \ 
+    cp /src/adaguc-server-master/data/datasets/testdata.nc /data/adaguc-autowms/ && \
+    cp /src/adaguc-server-master/data/config/datasets/dataset_a.xml /data/adaguc-datasets/ && \
     echo "Configuring POSTGRESQL DB" && \
     runuser -l postgres -c "createuser --superuser adaguc" && \
     runuser -l postgres -c "psql postgres -c \"ALTER USER adaguc PASSWORD 'adaguc';\"" && \
