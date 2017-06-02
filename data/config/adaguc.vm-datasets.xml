@@ -36,10 +36,6 @@
   <!--Legends -->
   <Include location="{ADAGUC_PATH}/data/config/includes/DefaultStyles.include.xml"/>
 
-  <AutoResource enableautoopendap="true" enablelocalfile="true" enablecache="false">
-    <Dir basedir="/data/adaguc-autowms" prefix="/data/adaguc-autowms/"/>
-    <ImageText attribute="source"></ImageText>
-  </AutoResource>
 
   <Dataset enabled="true" location="/data/adaguc-datasets/"/>
   
