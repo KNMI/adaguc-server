@@ -73,7 +73,7 @@ RUN keytool -genkey -noprompt -keypass password -alias tomcat -keyalg RSA -store
 # Configure adaguc-services
 RUN printf "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\
 <adaguc-services>\n\
-  <external-home-url>http://172.18.0.2:8080</external-home-url>\n\
+  <external-home-url>http://172.18.0.2:8080/adaguc-services/</external-home-url>\n\
   <basedir>/root/adaguc-services-base</basedir>\n\
   <userworkspace>/root/adaguc-services-space</userworkspace>\n\
   <server>\n\
@@ -93,6 +93,11 @@ RUN printf "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\
     <export>ADAGUC_LOGFILE=/tmp/adaguc.docker.log</export>\n\
     <export>ADAGUC_FONT=/src/adaguc-server-master/data/fonts/FreeSans.ttf</export>\n\
   </adaguc-server>\n\
+  <autowms>\n\
+    <enabled>true</enabled>\n\
+    <autowmspath>/data/adaguc-autowms/</autowmspath>\n\
+    <datasetpath>/data/adaguc-datasets/</datasetpath>\n\
+  </autowms>\n\
 </adaguc-services>" > /root/adaguc-services-config.xml
 
 ENV ADAGUC_SERVICES_CONFIG=/root/adaguc-services-config.xml 
@@ -126,6 +131,6 @@ CMD echo "Starting POSTGRESQL DB" && \
 # Build with docker build  -t adaguc-server ./data/docker/
 # This docker container needs to be runned with custom configuration settings:  
 # docker network create --subnet=172.18.0.0/16 adagucnet
-# docker run -i -t --net adagucnet --ip 172.18.0.2 -v $HOME/data:/data adaguc-server
+# docker run -i -t --net adagucnet --ip 172.18.0.2 -v $HOME/data:/data openearth/adaguc-server
 # Then visit http://172.18.0.2:8080/adaguc-viewer/?service=http%3A%2F%2F172.18.0.2%3A8080%2Fadaguc-services%2Fadagucserver%3Fservice%3Dwms%26request%3Dgetcapabilities%26source%3Dtestdata.nc
 # You can copy NetCDF's / GeoJSONS to your hosts ~/data directory. This will be served through adaguc-server, via the source=<filename> key value pair. testdata.nc is copied there by default. See example URL above.
