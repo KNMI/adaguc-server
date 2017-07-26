@@ -551,7 +551,9 @@ private:
   
   //Setup projection and all other settings for the tiles to draw
   void render(CImageWarper *warper,CDataSource *dataSource,CDrawImage *drawImage){
-    
+    #ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
+    CDBDebug("Render");
+    #endif
     
     bool fieldsAreIdentical = true;
     if((float)dataSource->dfBBOX[0] != (float)drawImage->Geo->dfBBOX[0]){fieldsAreIdentical = false;}
@@ -562,7 +564,9 @@ private:
     if((int)dataSource->dHeight != (int)drawImage->Geo->dHeight){fieldsAreIdentical = false;}
     
     if(fieldsAreIdentical){
-      //CDBDebug("fieldsAreIdentical: using _plot");
+      #ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
+      CDBDebug("fieldsAreIdentical: using _plot");
+      #endif
       CDFType dataType=dataSource->getDataObject(0)->cdfVariable->getType();
         switch(dataType){
         case CDF_CHAR  : return _plot<char>(warper,dataSource,drawImage);break;
@@ -579,8 +583,13 @@ private:
     }
     
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();  
-    if(dataSource->dWidth*dataSource->dHeight<720*720||1==2||styleConfiguration->renderMethod&RM_AVG_RGBA){
-      //CDBDebug("field is small enough for precise renderer: using _render");
+    if((dataSource->dWidth*dataSource->dHeight < 700*700 ||
+        1==2 ||
+        styleConfiguration->renderMethod&RM_AVG_RGBA) &&
+        dataSource->cfgLayer->TileSettings.size() != 1){
+      #ifdef  CIMGWARPNEARESTNEIGHBOUR_DEBUG
+      CDBDebug("field is small enough for precise renderer: using _render");
+      #endif
       Settings settings;
         
       settings.dfNodataValue    = dataSource->getDataObject(0)->dfNodataValue ;
@@ -670,7 +679,7 @@ private:
       return;
     }
     
-    CDBDebug("Render");
+
     //This enables if tiles are divided allong threads.
     int numThreads=4;
     //Threading is not needed when only one thread is specified.

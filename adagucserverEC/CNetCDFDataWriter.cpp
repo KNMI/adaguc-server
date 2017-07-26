@@ -459,6 +459,7 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
      CDBDebug("Reading file %s",dataSource->getFileName());
      status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
    
+     //CDBDebug("Initializing warper for file %s",dataSource->getFileName());
        
     CImageWarper warper;
     dataSource->srvParams=this->srvParam;

@@ -49,7 +49,7 @@
 CT::string months[] = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
 
 
-// #define CIMAGEDATAWRITER_DEBUG
+//#define CIMAGEDATAWRITER_DEBUG
 //  #define MEASURETIME
 
 
@@ -1551,7 +1551,9 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   * Use fast nearest neighbourrenderer
   */
   if(renderMethod&RM_NEAREST||renderMethod&RM_AVG_RGBA||renderMethod&RM_POINT_LINEARINTERPOLATION){
-    
+    #ifdef CIMAGEDATAWRITER_DEBUG  
+      CDBDebug("Using CImgWarpNearestNeighbour");
+    #endif
     imageWarperRenderer = new CImgWarpNearestNeighbour();
     imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
     delete imageWarperRenderer;
@@ -1561,6 +1563,9 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   * Use RGBA renderer
   */
   if(renderMethod&RM_RGBA){
+     #ifdef CIMAGEDATAWRITER_DEBUG  
+       CDBDebug("Using CImgWarpNearestRGBA");
+     #endif
      imageWarperRenderer = new CImgWarpNearestRGBA();
      imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
      delete imageWarperRenderer;
@@ -1570,6 +1575,9 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   * Use bilinear renderer
   */
   if(renderMethod&RM_CONTOUR||renderMethod&RM_BILINEAR||renderMethod&RM_SHADED||renderMethod&RM_VECTOR||renderMethod&RM_BARB||renderMethod&RM_THIN)  {
+    #ifdef CIMAGEDATAWRITER_DEBUG  
+        CDBDebug("Using CImgWarpBilinear");
+    #endif
     if(dataSource->getDataObject(0)->points.size()==0){
       imageWarperRenderer = new CImgWarpBilinear();
       CT::string bilinearSettings;
@@ -1648,7 +1656,9 @@ if(renderMethod==contour){CDBDebug("contour");}*/
         
         //bilinearSettings.printconcat("textScaleFactor=%f;textOffsetFactor=%f;",textScaleFactor,textOffsetFactor);
       }
+      #ifdef CIMAGEDATAWRITER_DEBUG  
       CDBDebug("bilinearSettings.c_str() %s",bilinearSettings.c_str());
+      #endif
       imageWarperRenderer->set(bilinearSettings.c_str());
       imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
       delete imageWarperRenderer;
@@ -1659,6 +1669,9 @@ if(renderMethod==contour){CDBDebug("contour");}*/
    * Use stippling renderer
    */
   if(renderMethod&RM_STIPPLING){
+    #ifdef CIMAGEDATAWRITER_DEBUG  
+        CDBDebug("Using CImgRenderStippling");
+    #endif
     imageWarperRenderer = new CImgRenderStippling();
     imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
     delete imageWarperRenderer;
@@ -1669,7 +1682,9 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   */
   if(renderMethod&RM_BARB||renderMethod&RM_VECTOR||renderMethod&RM_POINT){
     if(dataSource->getDataObject(0)->points.size()!=0){
-      
+      #ifdef CIMAGEDATAWRITER_DEBUG  
+        CDBDebug("Using CImgRenderPoints");
+      #endif
       imageWarperRenderer = new CImgRenderPoints();
       CT::string renderMethodAsString;
       CStyleConfiguration::getRenderMethodAsString(&renderMethodAsString,renderMethod);
@@ -1684,6 +1699,9 @@ if(renderMethod==contour){CDBDebug("contour");}*/
    */
   if (renderMethod&RM_POLYLINE) {
     if (dataSource->featureSet.length()!=0) {
+      #ifdef CIMAGEDATAWRITER_DEBUG  
+        CDBDebug("Using CImgRenderPolylines");
+      #endif
       imageWarperRenderer = new CImgRenderPolylines();
       CT::string renderMethodAsString;
       CStyleConfiguration::getRenderMethodAsString(&renderMethodAsString,renderMethod);
