@@ -445,7 +445,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     if(i<dataSource->requiredDims.size()-1)subQuery.concat(",");
     queryOrderedDESC.concat(&subQuery);
   }
-  CDBDebug("%s",queryOrderedDESC.c_str());
+//  CDBDebug("%s",queryOrderedDESC.c_str());
   #ifdef CDBAdapterPostgreSQL_DEBUG
   CDBDebug("%s",queryOrderedDESC.c_str());
   #endif

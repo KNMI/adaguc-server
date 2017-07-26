@@ -39,8 +39,8 @@
 const char *CDataReader::className="CDataReader";
 
 
-//#define CDATAREADER_DEBUG
-// #define MEASURETIME
+// #define CDATAREADER_DEBUG
+//  #define MEASURETIME
 
 #define uchar unsigned char
 #define MAX_STR_LEN 8191
@@ -1018,7 +1018,7 @@ if( mode == CNETCDFREADER_MODE_OPEN_EXTENT && gridExtent != NULL ){
     } 
 
         
-  if(mode==CNETCDFREADER_MODE_OPEN_ALL || CNETCDFREADER_MODE_OPEN_EXTENT){
+  if(mode==CNETCDFREADER_MODE_OPEN_ALL || mode==CNETCDFREADER_MODE_OPEN_EXTENT){
       #ifdef CDATAREADER_DEBUG
     CDBDebug("CNETCDFREADER_MODE_OPEN_ALL || CNETCDFREADER_MODE_OPEN_EXTENT");
   #endif
