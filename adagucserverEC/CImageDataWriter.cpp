@@ -3362,7 +3362,7 @@ int CImageDataWriter::end(){
       StopWatch_Stop("/Start creating image");
       #endif
     
-      for(size_t j=0;j<plotObjects.size();j++)delete plotObjects[j];plotObjects.clear();
+      for(size_t j=0;j<plotObjects.size();j++){delete plotObjects[j];};plotObjects.clear();
       //CDBDebug("Done!");
     }/* End of imagepng */
     

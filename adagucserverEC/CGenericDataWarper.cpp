@@ -281,10 +281,14 @@ CDBDebug("PXExtentBasedOnSource = [%d,%d,%d,%d]",PXExtentBasedOnSource[0],PXExte
     CDBDebug("PXExtentBasedOnSource = [%d,%d,%d,%d]",PXExtentBasedOnSource[0],PXExtentBasedOnSource[1],PXExtentBasedOnSource[2],PXExtentBasedOnSource[3]);
 #endif   
     
-    if(PXExtentBasedOnSource[0]<0)PXExtentBasedOnSource[0]=0;if(PXExtentBasedOnSource[0]>=sourceDataWidth)PXExtentBasedOnSource[0]=sourceDataWidth;
-    if(PXExtentBasedOnSource[2]<0)PXExtentBasedOnSource[2]=0;if(PXExtentBasedOnSource[2]>=sourceDataWidth)PXExtentBasedOnSource[2]=sourceDataWidth;
-    if(PXExtentBasedOnSource[1]<0)PXExtentBasedOnSource[1]=0;if(PXExtentBasedOnSource[1]>=sourceDataHeight)PXExtentBasedOnSource[1]=sourceDataHeight;
-    if(PXExtentBasedOnSource[3]<0)PXExtentBasedOnSource[3]=0;if(PXExtentBasedOnSource[3]>=sourceDataHeight)PXExtentBasedOnSource[3]=sourceDataHeight;
+    if(PXExtentBasedOnSource[0]<0){PXExtentBasedOnSource[0]=0;}
+    if(PXExtentBasedOnSource[0]>=sourceDataWidth){PXExtentBasedOnSource[0]=sourceDataWidth;}
+    if(PXExtentBasedOnSource[2]<0){PXExtentBasedOnSource[2]=0;}
+    if(PXExtentBasedOnSource[2]>=sourceDataWidth){PXExtentBasedOnSource[2]=sourceDataWidth;}
+    if(PXExtentBasedOnSource[1]<0){PXExtentBasedOnSource[1]=0;}
+    if(PXExtentBasedOnSource[1]>=sourceDataHeight){PXExtentBasedOnSource[1]=sourceDataHeight;}
+    if(PXExtentBasedOnSource[3]<0){PXExtentBasedOnSource[3]=0;}
+    if(PXExtentBasedOnSource[3]>=sourceDataHeight){PXExtentBasedOnSource[3]=sourceDataHeight;}
     if(transFormationRequired==false){
       PXExtentBasedOnSource[0]=-1;
       PXExtentBasedOnSource[1]=-1;

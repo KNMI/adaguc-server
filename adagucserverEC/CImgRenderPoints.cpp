@@ -700,15 +700,18 @@ int CImgRenderPoints::getPixelIndexForValue(CDataSource*dataSource,float val){
       }
       if(!isNodata) {
         CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-        if(styleConfiguration->hasLegendValueRange==1)
-          if(val<styleConfiguration->legendLowerRange||val>styleConfiguration->legendUpperRange)isNodata=true;
-          if(!isNodata){
-            if(styleConfiguration->legendLog!=0)val=log10(val+.000001)/log10(styleConfiguration->legendLog);
-            val*=styleConfiguration->legendScale;
-            val+=styleConfiguration->legendOffset;
-            if(val>=239)val=239;else if(val<0)val=0;
-            return int(val);
+        if(styleConfiguration->hasLegendValueRange==1){
+          if(val<styleConfiguration->legendLowerRange||val>styleConfiguration->legendUpperRange){
+            isNodata=true;
           }
+        }
+        if(!isNodata){
+          if(styleConfiguration->legendLog!=0)val=log10(val+.000001)/log10(styleConfiguration->legendLog);
+          val*=styleConfiguration->legendScale;
+          val+=styleConfiguration->legendOffset;
+          if(val>=239)val=239;else if(val<0)val=0;
+          return int(val);
+        }
       }
       return 0; 
 }

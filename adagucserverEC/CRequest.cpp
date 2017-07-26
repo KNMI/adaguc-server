@@ -250,11 +250,12 @@ int CRequest::setConfigFile(const char *pszConfigFile){
 
 
 int CRequest::process_wms_getmetadata_request(){
-  if(srvParam->WMSLayers!=NULL)
+  if(srvParam->WMSLayers!=NULL) {
     for(size_t j=0;j<srvParam->WMSLayers->count;j++){
       CDBDebug("WMS GETMETADATA %s",srvParam->WMSLayers[j].c_str());
     }
-    return process_all_layers();
+  }
+  return process_all_layers();
 }
 
 int CRequest::generateGetReferenceTimesDoc(CT::string *result,CDataSource *dataSource){
@@ -2513,28 +2514,27 @@ int CRequest::process_querystring(){
       
       //WMS Layers parameter
       if(value0Cap.equals("LAYERS")){
-        if(srvParam->WMSLayers!=NULL)
+        if(srvParam->WMSLayers!=NULL){
           delete[] srvParam->WMSLayers;
-          srvParam->WMSLayers = values[1].splitToArray(",");
+        }
+        srvParam->WMSLayers = values[1].splitToArray(",");
         dFound_WMSLAYERS=1;
       }
       //WMS Layer parameter
       if(value0Cap.equals("LAYER")){
-        if(srvParam->WMSLayers!=NULL)
+        if(srvParam->WMSLayers!=NULL){
           delete[] srvParam->WMSLayers;
-          srvParam->WMSLayers = values[1].splitToArray(",");
+        }
+        srvParam->WMSLayers = values[1].splitToArray(",");
         dFound_WMSLAYER=1;
       }
 
     //WMS Layer parameter
       if(value0Cap.equals("QUERY_LAYERS")){
-        if(srvParam->WMSLayers!=NULL)
+        if(srvParam->WMSLayers!=NULL){
           delete[] srvParam->WMSLayers;
-          srvParam->WMSLayers = values[1].splitToArray(",");
-          /*if(srvParam->WMSLayers->count>1){
-            CDBError("Too many layers in request");
-            dErrorOccured=1;
-          }*/
+        }
+        srvParam->WMSLayers = values[1].splitToArray(",");
         dFound_WMSLAYER=1;
     }
       //WCS Coverage parameter
