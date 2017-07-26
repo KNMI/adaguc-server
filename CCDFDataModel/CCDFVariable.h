@@ -140,7 +140,7 @@ namespace CDF{
       void setCDFObjectDim(Variable *sourceVar,const char *dimName);
       
       void allocateData(size_t size){
-        if(data!=NULL)CDF::freeData(&data);data=NULL;
+        if(data!=NULL){CDF::freeData(&data);};data=NULL;
         CDF::allocateData(currentType,&data,size);
         setSize(size);
       }
@@ -391,7 +391,7 @@ namespace CDF{
 
       
       int setData(CDFType type,const void *dataToSet,size_t dataLength){
-        if(data!=NULL)CDF::freeData(&data);data=NULL;
+        if(data!=NULL){CDF::freeData(&data);};data=NULL;
         currentSize=dataLength;
         this->currentType=type;
         this->nativeType=type;

@@ -136,27 +136,23 @@ public:
       if(fabs(x_corners[k]-x_corners[0])>=fabs(dfSourceBBOX[2]-dfSourceBBOX[0]))break;
     }
     if(k==4){
-      for(k=0;k<4;k++)
+      for(k=0;k<4;k++){
         if(x_corners[k]>dfSourceBBOX[0]&&x_corners[k]<dfSourceBBOX[2])break;
-        if(k==4){
-//            #ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
-//           CDBDebug("Return @ %d because %f<%f && %f>%f",__LINE__,x_corners[0],dfSourceBBOX[0],x_corners[0],dfSourceBBOX[2]);
-//           #endif
-          return __LINE__;
-        }
+      }
+      if(k==4){
+        return __LINE__;
+      }
     }
     for(k=0;k<4;k++){
       if(fabs(y_corners[k]-y_corners[0])>=fabs(dfSourceBBOX[3]-dfSourceBBOX[1]))break;
     }
     if(k==4){
-      for(k=0;k<4;k++)
+      for(k=0;k<4;k++){
         if(y_corners[k]>dfSourceBBOX[1]&&y_corners[k]<dfSourceBBOX[3])break;
-        if(k==4){
-//           #ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
-//           //CDBDebug("Return @ %d",__LINE__);
-//           #endif
-          return __LINE__;
-        }
+      }
+      if(k==4){
+        return __LINE__;
+      }
     }
     
   

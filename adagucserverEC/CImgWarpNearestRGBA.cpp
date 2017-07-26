@@ -92,17 +92,19 @@ int CDrawTileObjBGRA::drawTile(double *x_corners,double *y_corners,int &dDestX,i
     if(fabs(x_corners[k]-x_corners[0])>=fabs(dfSourceBBOX[2]-dfSourceBBOX[0]))break;
   }
   if(k==4){
-    for(k=0;k<4;k++)
+    for(k=0;k<4;k++){
       if(x_corners[k]>dfSourceBBOX[0]&&x_corners[k]<dfSourceBBOX[2])break;
-      if(k==4)return __LINE__;
+    }
+    if(k==4)return __LINE__;
   }
   for(k=0;k<4;k++){
     if(fabs(y_corners[k]-y_corners[0])>=fabs(dfSourceBBOX[3]-dfSourceBBOX[1]))break;
   }
   if(k==4){
-    for(k=0;k<4;k++)
+    for(k=0;k<4;k++){
       if(y_corners[k]>dfSourceBBOX[1]&&y_corners[k]<dfSourceBBOX[3])break;
-      if(k==4)return __LINE__;
+    }
+    if(k==4)return __LINE__;
   }
 
       /*
