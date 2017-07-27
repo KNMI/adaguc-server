@@ -325,12 +325,17 @@ int  CGDALDataWriter::addData(std::vector <CDataSource*>&dataSources){
   }
 
   
-  GDALRasterIO( hSrcBand, GF_Write, 0, 0,
+  CPLErr gdalStatus = GDALRasterIO( hSrcBand, GF_Write, 0, 0,
                 srvParam->Geo->dWidth,srvParam->Geo->dHeight,
                 warpedData,
                 srvParam->Geo->dWidth,srvParam->Geo->dHeight,
                 datatype, 0, 0 );
   CDF::freeData(&warpedData);
+  
+  if( gdalStatus != CE_None ) {
+    CDBError("GDALRasterIO failed");return 1;
+  }
+  
 #ifdef CGDALDATAWRITER_DEBUG  
   CDBDebug("finished copying data in addData");
 #endif
