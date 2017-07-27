@@ -58,7 +58,7 @@ int CDF::freeData(void **p){
 //Data must be freed with freeData()
 int CDF::allocateData(CDFType type,void **p,size_t length){
 
-  if((*p)!=NULL)freeData(p);(*p)=NULL;
+  if((*p)!=NULL){freeData(p);};(*p)=NULL;
 
   size_t typeSize= getTypeSize(type);
   if(typeSize==0){
