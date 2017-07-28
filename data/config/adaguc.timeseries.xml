@@ -70,6 +70,16 @@
     <FilePath filter="">/nobackup/users/plieger/data/RADNL_25PCPRR-201602/01</FilePath>
     <Variable>precipitation</Variable>
     <Styles>testdata</Styles>
+    <DataBaseTable>test3</DataBaseTable>
+  </Layer>
+  
+  <Layer type="database">
+    <Name>Andere</Name>
+    <Title>Andere</Title>
+    <FilePath filter="">/nobackup/users/plieger/data/RADNL_25PCPRR-201602/01</FilePath>
+    <Variable>precipitation</Variable>
+    <Styles>testdata</Styles>
+    <DataBaseTable>test4</DataBaseTable>
   </Layer>
   
   <!-- End of configuration /-->

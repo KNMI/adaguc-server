@@ -148,6 +148,7 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource,int &removeNonE
     //Check whether we already did this table in this scan
     bool skip = isTableAlreadyScanned(&tableName);
     if(skip==false){
+    
       #ifdef CDBFILESCANNER_DEBUG
       CDBDebug("CreateDBUpdateTables: Updating dimension '%s' with table '%s' %d",dimName.c_str(),tableName.c_str(),isTimeDim);
       #endif
@@ -294,6 +295,7 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource,int &removeNonE
 
 int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFiles,CDirReader *dirReader,int scanFlags){
 //  CDBDebug("DBLoopFiles");
+  bool verbose = false;
   CT::string query;
   CDFObject *cdfObject = NULL;
   int status = 0;
@@ -369,6 +371,9 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
       skipDim[d] = isTableAlreadyScanned(&tableNames[d]);
       if(skipDim[d]){
         CDBDebug("Skipping dimension '%s' with table '%s': already scanned.",dimNames[d].c_str(),tableNames[d].c_str());
+      }else{
+        CDBDebug("Marking table done for dim '%s' with table '%s'.",dimNames[d].c_str(),tableNames[d].c_str());
+        tableNamesDone.push_back(tableNames[d]);
       }
     }
 
@@ -454,7 +459,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
         
         
         
-      for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
+      for(size_t d=0;d<dataSource->cfgLayer->Dimension.size() && skipDim[d] == false;d++){
         multiInsertCache = "";
         if(skipDim[d] == false){
           
@@ -520,7 +525,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
               
         
               if(d==0){
-                CDBDebug("Adding: %d/%d %s\t %s",
+                if(verbose)CDBDebug("Adding: %d/%d %s\t %s",
                 (int)j,
                 (int)dirReader->fileList.size(),
                 dimensionTextList.c_str(),
@@ -833,7 +838,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
        //End of dimloop, start inserting our collected records in one statement
       if(j%50==0)dbAdapter->addFilesToDataBase();
     }
-    
+      
        //End of dimloop, start inserting our collected records in one statement
     dbAdapter->addFilesToDataBase();
    
