@@ -1012,7 +1012,7 @@ int CDBAdapterPostgreSQL::addFilesToDataBase(){
           rowNumber++;
           if(rowNumber>=it->second.size())break;
         }
-        CDBDebug("Inserting %d bytes ",multiInsert.length());
+        // CDBDebug("Inserting %d bytes ",multiInsert.length());
         int status =  dataBaseConnection->query(multiInsert.c_str()); 
         if(status!=0){
           CDBError("Query failed [%s]:",dataBaseConnection->getError());

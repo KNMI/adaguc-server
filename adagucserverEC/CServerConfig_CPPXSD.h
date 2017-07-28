@@ -663,7 +663,8 @@ class CServerConfig:public CXMLSerializerInterface{
             debug,
             prefix,
             readonly,
-            optimizeextent;
+            optimizeextent,
+            maxtilesinimage;
         }attr;
 //           <TileSettings  tilewidth="600" 
 //                    tileheight="600" 
@@ -695,6 +696,8 @@ class CServerConfig:public CXMLSerializerInterface{
           else if(equals("maxlevel",8,name)){attr.maxlevel.copy(value);return;}
           else if(equals("tilepath",8,name)){attr.tilepath.copy(value);return;}
           else if(equals("optimizeextent",14,name)){attr.optimizeextent.copy(value);return;}
+          else if(equals("maxtilesinimage",15,name)){attr.maxtilesinimage.copy(value);return;}
+          
         }
     };
     
