@@ -830,11 +830,13 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
         
         
       }
+       //End of dimloop, start inserting our collected records in one statement
+      if(j%50==0)dbAdapter->addFilesToDataBase();
     }
     
-    //End of dimloop, start inserting our collected records in one statement
-    CDBDebug("Adding files to database");
+       //End of dimloop, start inserting our collected records in one statement
     dbAdapter->addFilesToDataBase();
+   
     
     if(removeNonExistingFiles == 1){
       //Now delete files in the database a which are not on file system

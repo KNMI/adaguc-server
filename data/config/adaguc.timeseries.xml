@@ -3,7 +3,8 @@
 
   <TempDir value="{ADAGUC_TMP}"/>
   <Path value="{ADAGUC_PATH}/data"/>
-  <DataBase dbtype="sqlite" parameters="{ADAGUC_TMP}/adaguc.timeseries.db"/>
+  <!--<DataBase dbtype="sqlite" parameters="{ADAGUC_TMP}/adaguc.timeseries.db"/>-->
+  <DataBase parameters="dbname=timeseries host=localhost"/>
   
   <!-- WMS settings -->
   <WMS>
