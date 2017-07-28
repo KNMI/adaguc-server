@@ -601,13 +601,26 @@ private:
     }
     
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();  
-    if((dataSource->dWidth*dataSource->dHeight < 700*700 ||
-        1==2 ||
-        styleConfiguration->renderMethod&RM_AVG_RGBA) &&
-        dataSource->cfgLayer->TileSettings.size() != 1){
-      #ifdef  CIMGWARPNEARESTNEIGHBOUR_DEBUG
-      CDBDebug("field is small enough for precise renderer: using _render");
-      #endif
+    int renderSettings = 0;//auto
+    if(styleConfiguration->styleConfig!=NULL && styleConfiguration->styleConfig->RenderSettings.size() == 1) {
+      if(!styleConfiguration->styleConfig->RenderSettings[0]->attr.settings.empty()){
+        CT::string renderSettingsAttr = styleConfiguration->styleConfig->RenderSettings[0]->attr.settings;
+        if(renderSettingsAttr.equals("fast")){
+          renderSettings = 1;//fast
+        }
+        if(renderSettingsAttr.equals("precise")){
+          renderSettings = 2;//precise
+        }
+      }
+    }
+    
+    bool usePrecise = false;
+    if (renderSettings == 0 && dataSource->dWidth*dataSource->dHeight < 700*700) { usePrecise = true; }
+    if (styleConfiguration->renderMethod&RM_AVG_RGBA) { usePrecise = true; }
+    if (dataSource->cfgLayer->TileSettings.size() == 1) { usePrecise = false; }
+    if (renderSettings == 1) { usePrecise = false; }
+    if (renderSettings == 2) { usePrecise = true; }
+    if( usePrecise ){
       Settings settings;
         
       settings.dfNodataValue    = dataSource->getDataObject(0)->dfNodataValue ;

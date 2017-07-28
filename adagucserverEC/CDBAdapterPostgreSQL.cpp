@@ -28,7 +28,7 @@
 #include "CDebugger.h"
 
 const char *CDBAdapterPostgreSQL::className="CDBAdapterPostgreSQL";
-
+#define CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP "pathfiltertablelookup_v2_0_23"
 // #define CDBAdapterPostgreSQL_DEBUG
 // 
 // #define MEASURETIME
@@ -430,11 +430,11 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
       }
       if(dataSource->queryBBOX){
         
-        subQuery.printconcat("level = %d and minx >= %f and maxx <= %f and miny >= %f and maxy <= %f ",dataSource->queryLevel,dataSource->nativeViewPortBBOX[0],dataSource->nativeViewPortBBOX[2],dataSource->nativeViewPortBBOX[1],dataSource->nativeViewPortBBOX[3]);
+        subQuery.printconcat("adaguctilinglevel = %d and minx >= %f and maxx <= %f and miny >= %f and maxy <= %f ",dataSource->queryLevel,dataSource->nativeViewPortBBOX[0],dataSource->nativeViewPortBBOX[2],dataSource->nativeViewPortBBOX[1],dataSource->nativeViewPortBBOX[3]);
        
       }
       else{
-         subQuery.printconcat("level != %d ",-1);
+         subQuery.printconcat("adaguctilinglevel != %d ",-1);
       }
       subQuery.printconcat("ORDER BY %s DESC limit %d)a%d ",netCDFDimName.c_str(),limit,i);
       //subQuery.printconcat("ORDER BY %s DESC )a%d ",netCDFDimName.c_str(),i);
@@ -673,7 +673,7 @@ CT::string CDBAdapterPostgreSQL::getTableNameForPathFilterAndDimension(const cha
   
 // CDBDebug("lookupTableName %s",identifier.c_str());
   
-  CT::string lookupTableName = "pathfiltertablelookup";
+  CT::string lookupTableName = CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP;
   
   //TODO CRUCIAL setting for fast perfomance on large datasets, add Unique to enable building fast lookup indexes.
   CT::string tableColumns("path varchar (511), filter varchar (511), dimension varchar (511), tablename varchar (63), UNIQUE (path,filter,dimension) ");
@@ -856,7 +856,7 @@ int CDBAdapterPostgreSQL::createDimTableOfType(const char *dimname,const char *t
   tableColumns.printconcat(", filedate timestamp");
   
   // New since 2016-02-15 projection information and level
-   tableColumns.printconcat(", level int");
+   tableColumns.printconcat(", adaguctilinglevel int");
    //tableColumns.printconcat(", crs varchar (511)");
    tableColumns.printconcat(", minx real, miny real, maxx real, maxy real");
    tableColumns.printconcat(", startx int, starty int, countx int, county int");

@@ -511,7 +511,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
     CDBDebug("[%d %d %d] for %s/%s",sta[0],str[0],sto[0],dataSourceVar->name.c_str(),dataSource->varX->name.c_str());
     #endif
 
-    if(gridExtent != NULL || true){
+    if(gridExtent != NULL){
       //TODO We are using a different start/count, but the data is not re-read until it is freed first.
       dataSource->varX->freeData();
       dataSource->varY->freeData();
