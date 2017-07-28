@@ -1,3 +1,8 @@
+Version 2.0.25 2017-07-28
+    - Tilecreation speed is optimized. When optimizeextent is set to true in TileSettings, only the partial area from the big netcdf file is read into memory and used for warping and tilecreation
+    - The bottom, left, right and top parameters in TileSettings are now optional, when left out they will be automatically detected based on the input file. This simplifies TileSettings if only one input file is needed as input.
+    
+
 Version 2.0.24 2017-07-28
     - Updatedb has a new flag called --recreate. This drops the filetables and will recreate the them
     - Updatedb now synchronizes scanned files with the database per 50 scanned files.
