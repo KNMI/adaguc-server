@@ -1001,21 +1001,24 @@ int CDBAdapterPostgreSQL::addFilesToDataBase(){
       #ifdef CDBAdapterPostgreSQL_DEBUG
     CDBDebug("Updating table %s with %d records",it->first.c_str(),(it->second.size()));
 #endif
+    size_t maxIters = 50;
     if(it->second.size()>0){
-      
-      multiInsert.print("INSERT into %s VALUES ",it->first.c_str());
-      for(size_t j=0;j<it->second.size();j++){
-        if(j>0)multiInsert.concat(",");
-        multiInsert.concat(it->second[j].c_str());
-      }
-      int status =  dataBaseConnection->query(multiInsert.c_str()); 
-      if(status!=0){
-        CDBError("Query failed [%s]:",dataBaseConnection->getError());
-        throw(__LINE__);
-      }
-  #ifdef CDBAdapterPostgreSQL_DEBUG      
-      CDBDebug("/Inserting %d bytes",multiInsert.length());
-#endif
+      size_t rowNumber = 0;
+      do{
+        multiInsert.print("INSERT into %s VALUES ",it->first.c_str());
+        for(size_t j=0;j<maxIters;j++){
+          if(j>0)multiInsert.concat(",");
+          multiInsert.concat(it->second[rowNumber].c_str());
+          rowNumber++;
+          if(rowNumber>=it->second.size())break;
+        }
+        CDBDebug("Inserting %d bytes ",multiInsert.length());
+        int status =  dataBaseConnection->query(multiInsert.c_str()); 
+        if(status!=0){
+          CDBError("Query failed [%s]:",dataBaseConnection->getError());
+          throw(__LINE__);
+        }
+      }while(rowNumber<it->second.size());
     }
     it->second.clear();
   }

@@ -1125,7 +1125,7 @@ int CDBAdapterSQLLite::addFilesToDataBase(){
           //multiInsert.printconcat("'val%d' as '%s'",j,columnNames[j].c_str());
         //}
         if(rowNumber<it->second.size()){
-          for(size_t j=0;j<maxIters-1;j++){
+          for(size_t j=0;j<maxIters;j++){
             CT::string values = it->second[rowNumber].c_str();
             values.replaceSelf("(","");
             values.replaceSelf(")","");
