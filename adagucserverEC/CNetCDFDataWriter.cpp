@@ -449,14 +449,16 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
   CDBDebug("Add data");
   #endif  
   int status;
-  
+  bool verbose = false;
   for(size_t i=0;i<dataSources.size();i++){
     CDataSource *dataSource = dataSources[i];
     CDataReader reader;
     
 //     render
   
-     CDBDebug("Reading file %s",dataSource->getFileName());
+     if(verbose){
+       CDBDebug("Reading file %s",dataSource->getFileName());
+     }
      status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
    
      //CDBDebug("Initializing warper for file %s",dataSource->getFileName());
@@ -472,11 +474,17 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
       
       
       bool usePixelExtent = false;
+      bool optimizeExtentForTiles = false;
       if(dataSource->cfgLayer->TileSettings.size() == 1 && !dataSource->cfgLayer->TileSettings[0]->attr.optimizeextent.empty()){
         if(dataSource->cfgLayer->TileSettings[0]->attr.optimizeextent.equals("true")){
-          usePixelExtent=true;
+          optimizeExtentForTiles=true;
         }
       }
+      
+      if(optimizeExtentForTiles){
+        usePixelExtent = true;
+      }
+      
       if(usePixelExtent ){
         sourceGeo.dWidth = dataSource->dWidth;
         sourceGeo.dHeight = dataSource->dHeight;
@@ -494,10 +502,27 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
         PXExtentBasedOnSource[2]=dataSource->dWidth;;
         PXExtentBasedOnSource[3]=dataSource->dHeight;;
         GenericDataWarper::findPixelExtent(PXExtentBasedOnSource,&sourceGeo,this->srvParam->Geo,&warper);
+        
+        
+        
+        if(PXExtentBasedOnSource[0] == PXExtentBasedOnSource[2] || PXExtentBasedOnSource[1] == PXExtentBasedOnSource[3])   {
+          //CDBDebug("PXExtentBasedOnSource = [%d,%d,%d,%d]",PXExtentBasedOnSource[0],PXExtentBasedOnSource[1],PXExtentBasedOnSource[2],PXExtentBasedOnSource[3]);  
+          return 1;
+        }
+        
         status = reader.openExtent(dataSource,CNETCDFREADER_MODE_OPEN_EXTENT,PXExtentBasedOnSource);
         
-
-      
+        /* Check if there is any data in the found grid */
+        if(dataSource->statistics == NULL){
+          dataSource->statistics = new CDataSource::Statistics();
+          dataSource->statistics->calculate(dataSource);
+        }
+        if(dataSource->statistics!=NULL){
+          if(verbose){
+            CDBDebug("min %f, max %f samples %d",dataSource->statistics->getMinimum(),dataSource->statistics->getMaximum(), dataSource->statistics->getNumSamples());
+          }
+          if(dataSource->statistics->getNumSamples() ==0)return 1;
+        }
       }else{
         status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
       }
@@ -662,7 +687,7 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
       settings.gField=NULL;
       settings.bField = NULL;
       settings.numField = NULL;
-      settings.trueColorRGBA=true;
+      settings.trueColorRGBA=(drawFunctionMode == CNetCDFDataWriter_AVG_RGB); 
       
       if(settings.trueColorRGBA){
         size_t size = settings.width*settings.height;
@@ -697,9 +722,12 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
         
       settings.data=warpedData;
       
+  
+     
       
-      
-      CDBDebug("Warping from %dx%d to %dx%d", sourceGeo.dWidth, sourceGeo.dHeight, settings.width, settings.height);
+      if(verbose){
+        CDBDebug("Warping from %dx%d to %dx%d", sourceGeo.dWidth, sourceGeo.dHeight, settings.width, settings.height);
+      }
 
       if(drawFunctionMode == CNetCDFDataWriter_NEAREST){
         switch(variable->getType()){
