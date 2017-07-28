@@ -60,7 +60,7 @@ void CDBFileScanner::markTableDirty(CT::string *tableName){
  * 
  * @return Positive on error, zero on succes, negative on skip.
  */
-int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource,int &removeNonExistingFiles,CDirReader *dirReader){
+int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource,int &removeNonExistingFiles,CDirReader *dirReader, bool recreateTables){
   #ifdef CDBFILESCANNER_DEBUG
   CDBDebug("createDBUpdateTables");
   #endif
@@ -152,9 +152,14 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource,int &removeNonE
       CDBDebug("CreateDBUpdateTables: Updating dimension '%s' with table '%s' %d",dimName.c_str(),tableName.c_str(),isTimeDim);
       #endif
       
-      //Create column names
       
-
+      //Drop table if set 
+      if (recreateTables) {
+        CDBDebug("Recreating table: Now dropping table %s", tableName.c_str());
+        status = dbAdapter->dropTable(tableName.c_str());
+      }
+      
+      //Create column names
           
       if(isTimeDim==true){
         tableType = TABLETYPE_TIMESTAMP;
@@ -483,7 +488,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
                 CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->removeDimensionInfoForLayerTableAndLayerName(tableNames[d].c_str(),dataSource->getLayerName());
                 
                 CDBDebug("Creating autoConfigureDimensions");
-                status = createDBUpdateTables(dataSource,removeNonExistingFiles,dirReader);
+                status = createDBUpdateTables(dataSource,removeNonExistingFiles,dirReader, false);
                 if(status > 0 ){
                   CDBError("Exception at createDBUpdateTables");
                   throw(__LINE__);
@@ -974,7 +979,7 @@ int CDBFileScanner::updatedb( CDataSource *dataSource,CT::string *_tailPath,CT::
 
   try{ 
     //First check and create all tables... returns zero on success, positive on error, negative on already done.
-    status = createDBUpdateTables(dataSource,removeNonExistingFiles,&dirReader);
+    status = createDBUpdateTables(dataSource,removeNonExistingFiles,&dirReader,scanFlags&CDBFILESCANNER_RECREATETABLES);
     if(status > 0 ){
 
       throw(__LINE__);
