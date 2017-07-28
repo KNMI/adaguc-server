@@ -467,6 +467,21 @@ class CServerConfig:public CXMLSerializerInterface{
     };
     
     class XMLE_RenderMethod: public CXMLObjectInterface{};
+    
+        
+    class XMLE_RenderSettings: public CXMLObjectInterface{
+      public:
+        class Cattr{
+          public:
+            CXMLString settings,width,height;
+        }attr;
+        void addAttribute(const char *name,const char *value){
+          if(equals("settings",8,name)){attr.settings.copy(value);return;}
+          else if(equals("width",5,name)){attr.width.copy(value);return;}
+          else if(equals("height",6,name)){attr.height.copy(value);return;}
+        }
+    };
+    
     class XMLE_Style: public CXMLObjectInterface{
       public:
         std::vector <XMLE_Thinning*> Thinning;
@@ -492,6 +507,9 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_LegendGraphic*> LegendGraphic;
         std::vector <XMLE_FeatureInterval*> FeatureInterval;
         std::vector <XMLE_Stippling*> Stippling;
+        std::vector <XMLE_RenderSettings*> RenderSettings;
+        
+        
         
         
         ~XMLE_Style(){
@@ -518,6 +536,7 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(LegendGraphic);
           XMLE_DELOBJ(FeatureInterval);
           XMLE_DELOBJ(Stippling);
+          XMLE_DELOBJ(RenderSettings);
           
         }
         class Cattr{
@@ -554,7 +573,7 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("LegendGraphic",13,name)){XMLE_ADDOBJ(LegendGraphic);}
             else if(equals("FeatureInterval",15,name)){XMLE_ADDOBJ(FeatureInterval);}
             else if(equals("Stippling",9,name)){XMLE_ADDOBJ(Stippling);}           
-           
+            else if(equals("RenderSettings",14,name)){XMLE_ADDOBJ(RenderSettings);}
           }
           if(pt2Class!=NULL){pt2Class->addElement(baseClass,rc-pt2Class->level,name,value);pt2Class=NULL;}
         }
@@ -629,7 +648,7 @@ class CServerConfig:public CXMLSerializerInterface{
           else if(equals("gfi_openall",11,name)){attr.gfi_openall.copy(value);return;}
         }
     };
-    
+
     class XMLE_TileSettings: public CXMLObjectInterface{
       public:
         class Cattr{
