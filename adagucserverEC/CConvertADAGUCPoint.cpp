@@ -767,6 +767,21 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
       }
     }
     
+    CDF::Variable *roadIdVar = cdfObject0->getVariableNE("roadId_backup");
+    float *roadIdData = NULL;
+    float prevRoadId = -1;
+    if(roadIdVar != NULL){
+      //if(roadIdVar->getType() == CDF_SHORT)
+      {
+          CDBDebug("Start reading data");
+        roadIdVar->readData(CDF_FLOAT);
+        CDBDebug("Done reading data");
+         roadIdData = (float*)roadIdVar->data;
+         prevRoadId=roadIdData[0];
+      }
+    }
+    
+    
     //Read dates for obs
     bool hasTimeValuePerObs = false;
     CTime obsTime;
@@ -852,6 +867,10 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
             drawCircle(sdata,a,dataSource->dWidth,dataSource->dHeight,dlon-1,dlat,8);
           }
           
+          
+          
+          
+          
           if(pointVar[d]->currentType==CDF_CHAR){
             float v = NAN;
             //CDBDebug("pushing stationNr %d dateDimIndex %d,pPoint DIM %d",stationNr,dateDimIndex,pPoint);
@@ -873,7 +892,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
           
           if(pointVar[d]->currentType==CDF_FLOAT){
             float val  = ((float*)pointVar[d]->data)[pPoint];
-          
+            
           
             if(val!=fill){
             
@@ -894,14 +913,19 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
                 if(doDrawCircle){
                   drawCircle(sdata,val,dataSource->dWidth,dataSource->dHeight,dlon-1,dlat,8);
                 }
-                if(doDrawLinearInterpolated){
+                if(doDrawLinearInterpolated && roadIdData != NULL){
                   if(hasPrevLatLon){
-                    lineInterpolated(sdata,dataSource->dWidth,dataSource->dHeight,prevLon,prevLat,dlon,dlat,prevVal,val);
+                    float roadId = roadIdData[pPoint];
+                    if(roadId == prevRoadId && val == val && prevVal == prevVal){
+                        lineInterpolated(sdata,dataSource->dWidth,dataSource->dHeight,prevLon,prevLat,dlon,dlat,prevVal,val);
+                    }
+                    prevRoadId = roadId;
                   }
                 }
                 prevLon = dlon;
                 prevLat = dlat;;
                 prevVal=val;
+                
                 hasPrevLatLon = true;
               }else{
                 hasPrevLatLon = false;
