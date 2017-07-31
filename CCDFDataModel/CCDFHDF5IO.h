@@ -478,6 +478,8 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
     
     int convertNWCSAFtoCF();
     
+    int convertLSASAFtoCF();
+    
     int convertKNMIHDF5toCF(){
       
       CDF::Variable *geo = cdfObject->getVariableNE("geographic");
@@ -1001,6 +1003,8 @@ CDBDebug("convertKNMIHDF5toCF()");
         int status = convertKNMIHDF5toCF();
         if(status == 1)return 1;
         status = convertNWCSAFtoCF();
+        if(status == 1)return 1;
+        status = convertLSASAFtoCF();
         if(status == 1)return 1;
       }
       fileIsOpen=true;
