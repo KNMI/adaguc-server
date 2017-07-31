@@ -38,6 +38,7 @@
 #define CDBFILESCANNER_CREATETILES 4
 #define CDBFILESCANNER_DONTREMOVEDATAFROMDB 8
 #define CDBFILESCANNER_IGNOREFILTER 16
+#define CDBFILESCANNER_RECREATETABLES 32
 
 /**
  * Class which scans files and updates the database.
@@ -45,7 +46,7 @@
 class CDBFileScanner{
 private:
   DEF_ERRORFUNCTION();
-  static int createDBUpdateTables(CDataSource *dataSource,int &removeNonExistingFiles,CDirReader *dirReader);
+  static int createDBUpdateTables(CDataSource *dataSource,int &removeNonExistingFiles,CDirReader *dirReader, bool recreateTable);
   static int DBLoopFiles(CDataSource *dataSource,int removeNonExistingFiles,CDirReader *dirReader ,int scanFlags);
   static std::vector <CT::string> tableNamesDone;
   

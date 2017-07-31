@@ -1,9 +1,33 @@
+Version 2.0.26 2017-07-31
+    - Added support for LSA SAF hdf5 files for MeteoRomania
+
+Version 2.0.25 2017-07-28
+    - Tilecreation speed is optimized. When optimizeextent is set to true in TileSettings, only the partial area from the big netcdf file is read into memory and used for warping and tilecreation
+    - The bottom, left, right and top parameters in TileSettings are now optional, when left out they will be automatically detected based on the input file. This simplifies TileSettings if only one input file is needed as input.
+    
+
+Version 2.0.24 2017-07-28
+    - Updatedb has a new flag called --recreate. This drops the filetables and will recreate the them
+    - Updatedb now synchronizes scanned files with the database per 50 scanned files.
+
+Version 2.0.23 2017-08-01
+    - TileSettings has an extra configuration attribute called "optimizeextent" for optimizing reading small chunks from big grids
+    - TileSettings debug mode now draw the border of the tiles on the GetMap with lines
+    - Nearest neighbour renderer mode can be set to precise or fast with RenderSettings element in Styles
+
+Version 2.0.22 2017-03-27
+    - Worked on dockerizing and modularizing 
+    - Added extra configuration examples for adaguc workshop 2017
+    
 Version 2.0.20 2016-11-28
     - CCDFDataModel supports NC_STRING types for attributes
 
 Version 2.0.19 2016-11-20
     - Tiles can now be generated from very big grids in any cartographic projection
     - GeoJSON supports line rendering
+
+Version 2.0.18 2016-11-06
+    - Added linear transformation in Nearest neighbour renderer when geographic mappings are equal.
     
 Version 2.0.17 2016-10-13
     - Support for POI markers

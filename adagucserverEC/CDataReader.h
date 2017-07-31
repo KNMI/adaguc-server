@@ -59,9 +59,12 @@ class CDataReader{
  
 
     int open(CDataSource *dataSource,int mode,int x,int y);
+    int openExtent(CDataSource *dataSource,int mode,int *gridExtent);
+    int open(CDataSource *dataSource,int mode,int x,int y, int *gridExtent);
     int open(CDataSource *dataSource, int x,int y);
     int open(CDataSource *dataSource, int mode);
-    int parseDimensions(CDataSource *dataSource,int mode,int x,int y);
+    int open(CDataSource *dataSource, int mode, int *gridExtent);
+    int parseDimensions(CDataSource *dataSource,int mode,int x,int y, int *gridExtent);
     
     int close(){return 0;};
 

@@ -325,12 +325,17 @@ int  CGDALDataWriter::addData(std::vector <CDataSource*>&dataSources){
   }
 
   
-  GDALRasterIO( hSrcBand, GF_Write, 0, 0,
+  CPLErr gdalStatus = GDALRasterIO( hSrcBand, GF_Write, 0, 0,
                 srvParam->Geo->dWidth,srvParam->Geo->dHeight,
                 warpedData,
                 srvParam->Geo->dWidth,srvParam->Geo->dHeight,
                 datatype, 0, 0 );
   CDF::freeData(&warpedData);
+  
+  if( gdalStatus != CE_None ) {
+    CDBError("GDALRasterIO failed");return 1;
+  }
+  
 #ifdef CGDALDATAWRITER_DEBUG  
   CDBDebug("finished copying data in addData");
 #endif
@@ -654,7 +659,7 @@ int  CGDALDataWriter::end(){
   tmpFileName.concat(".aux.xml");
   remove(tmpFileName.c_str());
 
-  if(InputProducts!=NULL)delete[] InputProducts;InputProducts=NULL;
+  if(InputProducts!=NULL){delete[] InputProducts;}InputProducts=NULL;
 //   if(Times!=NULL)delete[] Times;Times=NULL;
   return returnCode;
 }
@@ -750,7 +755,7 @@ void CGDALDataWriter::generateUniqueGetCoverageFileName(char *pszTempFileName){
   snprintf(pszTempFileName,MAX_STR_LEN,
            "FORMAT--_VARIABLENAME_BBOX0_BBOX2_BBOX3_BBOX4_WIDTH_HEIGH_RESX-_RESY-_CONFIG--_DIM_DIM_DIM_PROJECTION_RAND------------______.tmp");
   //CDBDebug("generateUniqueGetCoverageFileName");
-  for(int j=0;j<118;j++)pszTempFileName[j]='_';pszTempFileName[MAX_STR_LEN]='\0';
+  for(int j=0;j<118;j++){pszTempFileName[j]='_';};pszTempFileName[MAX_STR_LEN]='\0';
   //CDBDebug("generateUniqueGetCoverageFileName");
   //Format
   strncpy(pszTempFileName+0,srvParam->Format.c_str(),8);

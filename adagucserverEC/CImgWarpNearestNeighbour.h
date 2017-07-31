@@ -57,6 +57,7 @@ public:
   float legendLogAsLog;
   CDataSource * dataSource;
   CDrawImage *drawImage;
+  bool debug;
   //size_t prev_imgpointer;
   void init(CDataSource *dataSource,CDrawImage *drawImage,int tileWidth,int tileHeight){
     this->dataSource = dataSource;
@@ -76,6 +77,14 @@ public:
     if(dataSource->dfBBOX[2]<dataSource->dfBBOX[0]){
       dfSourceBBOX[0]=dataSource->dfBBOX[2];
       dfSourceBBOX[2]=dataSource->dfBBOX[0];
+    }
+    
+    debug = false;
+    
+    if(dataSource->cfgLayer->TileSettings.size()==1){
+      if(dataSource->cfgLayer->TileSettings[0]->attr.debug.equals("true")){
+        debug = true;
+      }
     }
     
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
@@ -136,27 +145,23 @@ public:
       if(fabs(x_corners[k]-x_corners[0])>=fabs(dfSourceBBOX[2]-dfSourceBBOX[0]))break;
     }
     if(k==4){
-      for(k=0;k<4;k++)
+      for(k=0;k<4;k++){
         if(x_corners[k]>dfSourceBBOX[0]&&x_corners[k]<dfSourceBBOX[2])break;
-        if(k==4){
-//            #ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
-//           CDBDebug("Return @ %d because %f<%f && %f>%f",__LINE__,x_corners[0],dfSourceBBOX[0],x_corners[0],dfSourceBBOX[2]);
-//           #endif
-          return __LINE__;
-        }
+      }
+      if(k==4){
+        return __LINE__;
+      }
     }
     for(k=0;k<4;k++){
       if(fabs(y_corners[k]-y_corners[0])>=fabs(dfSourceBBOX[3]-dfSourceBBOX[1]))break;
     }
     if(k==4){
-      for(k=0;k<4;k++)
+      for(k=0;k<4;k++){
         if(y_corners[k]>dfSourceBBOX[1]&&y_corners[k]<dfSourceBBOX[3])break;
-        if(k==4){
-//           #ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
-//           //CDBDebug("Return @ %d",__LINE__);
-//           #endif
-          return __LINE__;
-        }
+      }
+      if(k==4){
+        return __LINE__;
+      }
     }
     
   
@@ -232,7 +237,7 @@ public:
                         val = 5;
                       }
 #endif             */       
-                                    
+                 
                   
                   isNodata=false;
                   if(hasNodataValue){if(val==nodataValue)isNodata=true;}if(!(val==val))isNodata=true;
@@ -249,6 +254,19 @@ public:
                     
                     //drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,drawImage->colors[(unsigned char)val]);
                     drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,pcolorind);
+                  }
+                  if(debug){
+                    bool draw = false;
+                    bool draw2 = false;
+                    if(srcpixel_x ==0||srcpixel_x==width-1||srcpixel_y ==0||srcpixel_y==height-1){draw=true;}
+                    if((srcpixel_x ==10||srcpixel_x==width-10)&& srcpixel_y >10 &&srcpixel_y<height-10){draw2=true;}
+                    if((srcpixel_y ==10||srcpixel_y==width-10)&& srcpixel_x >10 &&srcpixel_x<width-10){draw2=true;}
+                    if(draw){
+                      drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,249);
+                    }
+                    if(draw2){
+                      drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,244);
+                    }
                   }
                 }
               }
@@ -551,7 +569,9 @@ private:
   
   //Setup projection and all other settings for the tiles to draw
   void render(CImageWarper *warper,CDataSource *dataSource,CDrawImage *drawImage){
-    
+    #ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
+    CDBDebug("Render");
+    #endif
     
     bool fieldsAreIdentical = true;
     if((float)dataSource->dfBBOX[0] != (float)drawImage->Geo->dfBBOX[0]){fieldsAreIdentical = false;}
@@ -562,7 +582,9 @@ private:
     if((int)dataSource->dHeight != (int)drawImage->Geo->dHeight){fieldsAreIdentical = false;}
     
     if(fieldsAreIdentical){
-      //CDBDebug("fieldsAreIdentical: using _plot");
+      #ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
+      CDBDebug("fieldsAreIdentical: using _plot");
+      #endif
       CDFType dataType=dataSource->getDataObject(0)->cdfVariable->getType();
         switch(dataType){
         case CDF_CHAR  : return _plot<char>(warper,dataSource,drawImage);break;
@@ -579,8 +601,26 @@ private:
     }
     
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();  
-    if(dataSource->dWidth*dataSource->dHeight<720*720||1==2||styleConfiguration->renderMethod&RM_AVG_RGBA){
-      //CDBDebug("field is small enough for precise renderer: using _render");
+    int renderSettings = 0;//auto
+    if(styleConfiguration->styleConfig!=NULL && styleConfiguration->styleConfig->RenderSettings.size() == 1) {
+      if(!styleConfiguration->styleConfig->RenderSettings[0]->attr.settings.empty()){
+        CT::string renderSettingsAttr = styleConfiguration->styleConfig->RenderSettings[0]->attr.settings;
+        if(renderSettingsAttr.equals("fast")){
+          renderSettings = 1;//fast
+        }
+        if(renderSettingsAttr.equals("precise")){
+          renderSettings = 2;//precise
+        }
+      }
+    }
+    
+    bool usePrecise = false;
+    if (renderSettings == 0 && dataSource->dWidth*dataSource->dHeight < 700*700) { usePrecise = true; }
+    if (styleConfiguration->renderMethod&RM_AVG_RGBA) { usePrecise = true; }
+    if (dataSource->cfgLayer->TileSettings.size() == 1) { usePrecise = false; }
+    if (renderSettings == 1) { usePrecise = false; }
+    if (renderSettings == 2) { usePrecise = true; }
+    if( usePrecise ){
       Settings settings;
         
       settings.dfNodataValue    = dataSource->getDataObject(0)->dfNodataValue ;
@@ -670,7 +710,7 @@ private:
       return;
     }
     
-    CDBDebug("Render");
+
     //This enables if tiles are divided allong threads.
     int numThreads=4;
     //Threading is not needed when only one thread is specified.

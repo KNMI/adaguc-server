@@ -204,6 +204,10 @@ int main(int argc, const char *argv[]){
           CDBDebug("NOCLEANUP: Leave all records in DB, don't check if files have disappeared");
           scanFlags|=CDBFILESCANNER_DONTREMOVEDATAFROMDB;
         }
+        if(strncmp(argv[j],"--recreate",10)==0){
+          CDBDebug("RECREATE: Drop tables and recreate them");
+          scanFlags|=CDBFILESCANNER_RECREATETABLES;
+        }
         
       }
       if(configSet == 0){
