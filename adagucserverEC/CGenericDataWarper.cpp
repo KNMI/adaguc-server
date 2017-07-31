@@ -25,11 +25,24 @@
 
 #include "CGenericDataWarper.h"
 const char *GenericDataWarper::className="GenericDataWarper";
-#define GenericDataWarper_DEBUG
+//#define GenericDataWarper_DEBUG
 int GenericDataWarper::findPixelExtent(int *PXExtentBasedOnSource,CGeoParams*sourceGeoParams,CGeoParams*destGeoParams,CImageWarper*warper){
-  return 0;
     int sourceDataWidth = sourceGeoParams->dWidth;
     int sourceDataHeight = sourceGeoParams->dHeight;
+    
+    
+    PXExtentBasedOnSource[0]=0;
+    PXExtentBasedOnSource[1]=0;
+    PXExtentBasedOnSource[2]=sourceDataWidth;
+    PXExtentBasedOnSource[3]=sourceDataHeight;
+    
+  
+
+//     CDBDebug("Starting findPixelExtent for WH [%d, %d] and area %f %f %f %f", PXExtentBasedOnSource[2],PXExtentBasedOnSource[3], destGeoParams->dfBBOX[0],destGeoParams->dfBBOX[1],destGeoParams->dfBBOX[2],destGeoParams->dfBBOX[3]);
+//     
+//     CDBDebug("sourcegeo %d %d", sourceGeoParams->dWidth, sourceGeoParams->dHeight);
+//     CDBDebug("dfbbox %f %f %f %f", sourceGeoParams->dfBBOX[0], sourceGeoParams->dfBBOX[1],sourceGeoParams->dfBBOX[2],sourceGeoParams->dfBBOX[3]);
+
       PXExtentBasedOnSource[0]=-1;
       PXExtentBasedOnSource[1]=-1;
       PXExtentBasedOnSource[2]=-1;
@@ -52,8 +65,6 @@ int GenericDataWarper::findPixelExtent(int *PXExtentBasedOnSource,CGeoParams*sou
 //       sourceNeedsDegreeRadianConversion = true;
 //     }
     
-    double dfSourceExtW=(sourceGeoParams->dfBBOX[2]-sourceGeoParams->dfBBOX[0]);
-    double dfSourceExtH=(sourceGeoParams->dfBBOX[3]-sourceGeoParams->dfBBOX[1]);
     double dfSourceW = double(sourceGeoParams->dWidth);
     double dfSourceH = double(sourceGeoParams->dHeight);
     
@@ -64,8 +75,18 @@ int GenericDataWarper::findPixelExtent(int *PXExtentBasedOnSource,CGeoParams*sou
 
 //     double dfSourcedExtW=dfSourceExtW/(dfSourceW);
 //     double dfSourcedExtH=dfSourceExtH/(dfSourceH);
+
+
+    int lowerIndex = 1, higherIndex = 3;
+//     if((sourceGeoParams->dfBBOX[lowerIndex]-sourceGeoParams->dfBBOX[higherIndex])>0){
+//       higherIndex = 3;
+//       lowerIndex = 1;
+//     }
+    
+    double dfSourceExtW=(sourceGeoParams->dfBBOX[2]-sourceGeoParams->dfBBOX[0]);
     double dfSourceOrigX=sourceGeoParams->dfBBOX[0];
-    double dfSourceOrigY=sourceGeoParams->dfBBOX[1];
+    double dfSourceExtH=(sourceGeoParams->dfBBOX[lowerIndex]-sourceGeoParams->dfBBOX[higherIndex]);
+    double dfSourceOrigY=sourceGeoParams->dfBBOX[higherIndex];
     
     double dfDestExtW = destGeoParams->dfBBOX[2]-destGeoParams->dfBBOX[0];
     double dfDestExtH = destGeoParams->dfBBOX[1]-destGeoParams->dfBBOX[3];
@@ -109,48 +130,57 @@ int GenericDataWarper::findPixelExtent(int *PXExtentBasedOnSource,CGeoParams*sou
           
           bool attemptToContintue = true;
           
-          if(warper->isProjectionRequired()){
-            attemptToContintue = false;
-            int incY = double(imageHeight)/4+0.5;
-            int incX = double(imageWidth)/4+0.5;
-  //           CDBDebug("%d %d",incX,incY);
+//           if(warper->isProjectionRequired()){
+//             attemptToContintue = false;
+//             int incY = double(imageHeight)/4+0.5;
+//             int incX = double(imageWidth)/4+0.5;
+//   //           CDBDebug("%d %d",incX,incY);
+//             if(incY<1)incY=1;
+//             if(incX<1)incX=1;
+//             
+//             for(int y=startY;y<imageHeight+incY&&attemptToContintue==false;y=y+incY){
+//               for(int x=startX;x<imageWidth+incX&&attemptToContintue==false;x=x+incX){
+//   //               CDBDebug("Checking xy %d,%d",x,y);
+//                 double px,py;
+//                 px=(double(x)/dfDestW)*dfDestExtW+dfDestOrigX;
+//                 py=(double(y)/dfDestH)*dfDestExtH+dfDestOrigY;
+//                 if(warper->isProjectionRequired()){
+//                   if(warper->destNeedsDegreeRadianConversion){
+//                     px*=DEG_TO_RAD;
+//                     py*=DEG_TO_RAD;
+//                   }
+//                   if(!pj_transform(warper->destpj,warper->sourcepj, 1,0,&px,&py,NULL)){
+//                     attemptToContintue = true;
+//   //                   CDBDebug("OK!");
+//                   }
+//                 }
+//               }
+//             }
+//           }
+          
+          
+            int incY = double(imageHeight)/16+0.5;
+            int incX = double(imageWidth)/16+0.5;
+//            CDBDebug("%d %d",incX,incY);
             if(incY<1)incY=1;
             if(incX<1)incX=1;
-            
-            for(int y=startY;y<imageHeight+incY&&attemptToContintue==false;y=y+incY){
-              for(int x=startX;x<imageWidth+incX&&attemptToContintue==false;x=x+incX){
-  //               CDBDebug("Checking xy %d,%d",x,y);
-                double px,py;
-                px=(double(x)/dfDestW)*dfDestExtW+dfDestOrigX;
-                py=(double(y)/dfDestH)*dfDestExtH+dfDestOrigY;
-                if(warper->isProjectionRequired()){
-                  if(warper->destNeedsDegreeRadianConversion){
-                    px*=DEG_TO_RAD;
-                    py*=DEG_TO_RAD;
-                  }
-                  if(!pj_transform(warper->destpj,warper->sourcepj, 1,0,&px,&py,NULL)){
-                    attemptToContintue = true;
-  //                   CDBDebug("OK!");
-                  }
-                }
-              }
-            }
-          }
-          
-          
          
 
           if(attemptToContintue){
-          
-            for(int y=startY;y<stopY+1&&OK;y=y+1){
-              for(int x=startX;x<stopX+1&&OK;x=x+1){
-                if(x==startX||y==startY||x==stopX||y==stopY||x%10==0||fullScan==true){
-                  double px,py;
-                  px=(double(x)/dfDestW)*dfDestExtW+dfDestOrigX;
-                  py=(double(y)/dfDestH)*dfDestExtH+dfDestOrigY;
-                  //CDBDebug("pxpy: %f,%f",px,py);
-                  
+            //CDBDebug("ImageHeight = %d", stopY);
+            for(int y=startY;y<stopY+incY&&OK;y=y+incY){
+              for(int x=startX;x<stopX+incX&&OK;x=x+incX){
+                if(x==startX||y==startY||x==stopX||y==stopY||fullScan==true||true)
+                {
+                  double destCoordX,destCoordY;
+                  destCoordX=(double(x)/dfDestW)*dfDestExtW+dfDestOrigX;
+                  destCoordY=(double(y)/dfDestH)*dfDestExtH+dfDestOrigY;
+               
+//                   if(x==0){
+//                         CDBDebug("pxpy: %f,%f",px,py);
+//                       }
                   bool skip = false;
+                  double px=destCoordX,py=destCoordY;
                   if(needsProjection)
                   {
                     if(warper->isProjectionRequired()){
@@ -158,7 +188,7 @@ int GenericDataWarper::findPixelExtent(int *PXExtentBasedOnSource,CGeoParams*sou
                         px*=DEG_TO_RAD;
                         py*=DEG_TO_RAD;
                       }
-                      //CDBDebug("pxpy: %f,%f",px,py);
+                      
                       if(pj_transform(warper->destpj,warper->sourcepj, 1,0,&px,&py,NULL)){
                         skip = true;
       //                   px/=DEG_TO_RAD;
@@ -171,24 +201,37 @@ int GenericDataWarper::findPixelExtent(int *PXExtentBasedOnSource,CGeoParams*sou
                       }
                     }
                   }
-                    //CDBDebug("pxpy: %f,%f",px,py);
-                  if(!skip){
+                  /*f(x==0){
+                    CDBDebug("pxpy: %f,%f",px,py);
+                  }*/
+                  double sourcePixelX=((px-dfSourceOrigX)/dfSourceExtW)*dfSourceW;
+                    double sourcePixelY=((py-dfSourceOrigY)/dfSourceExtH)*dfSourceH;
+//                      CDBDebug("destCoord: %f,%f",destCoordX,destCoordY);
+//                       CDBDebug("soorceCrd: %f,%f",px,py);
+//                       CDBDebug("sourcePX : %d,%d",(int)sourcePixelX,(int)sourcePixelY);
+                     
+                  if(!skip&&px==px&&py==py&&px!=-INFINITY&&px!=INFINITY&&py!=-INFINITY&&py!=INFINITY){
                     transFormationRequired=true;
-                    //CDBDebug("pxpy: %f,%f",px,py);
-                    px=((px-dfSourceOrigX)/dfSourceExtW)*dfSourceW;
-                    py=((py-dfSourceOrigY)/dfSourceExtH)*dfSourceH;
-                    //CDBDebug("pxpy: %f,%f",px,py);
-                    if(firstExtent){
-                      PXExtentBasedOnSource[0]=int(px);
-                      PXExtentBasedOnSource[1]=int(py);
-                      PXExtentBasedOnSource[2]=int(px);
-                      PXExtentBasedOnSource[3]=int(py);
-                      firstExtent=false;
-                    }else{
-                      if(px<PXExtentBasedOnSource[0])PXExtentBasedOnSource[0]=px;
-                      if(px>PXExtentBasedOnSource[2])PXExtentBasedOnSource[2]=px;
-                      if(py<PXExtentBasedOnSource[1])PXExtentBasedOnSource[1]=py;
-                      if(py>PXExtentBasedOnSource[3])PXExtentBasedOnSource[3]=py;
+                    
+                    
+//                     if(x==0&&y%10==0){
+//                       CDBDebug("pxpy: %f,%f",px,py);
+//                     }
+                    if(sourcePixelX==sourcePixelX&&sourcePixelY==sourcePixelY&&sourcePixelX!=-INFINITY&&sourcePixelX!=INFINITY&&sourcePixelY!=-INFINITY&&sourcePixelY!=INFINITY){
+                      
+                      if(firstExtent){
+                        PXExtentBasedOnSource[0]=int(sourcePixelX);
+                        PXExtentBasedOnSource[1]=int(sourcePixelY);
+                        PXExtentBasedOnSource[2]=int(sourcePixelX);
+                        PXExtentBasedOnSource[3]=int(sourcePixelY);
+                        firstExtent=false;
+                      }else{
+                        if(sourcePixelX<PXExtentBasedOnSource[0])PXExtentBasedOnSource[0]=sourcePixelX;
+                        if(sourcePixelX>PXExtentBasedOnSource[2])PXExtentBasedOnSource[2]=sourcePixelX;
+                        if(sourcePixelY<PXExtentBasedOnSource[1]){PXExtentBasedOnSource[1]=sourcePixelY;}
+                        if(sourcePixelY>PXExtentBasedOnSource[3]){PXExtentBasedOnSource[3]=sourcePixelY;}
+                      }
+                        
                     }
                   
                   }else{
@@ -220,9 +263,9 @@ int GenericDataWarper::findPixelExtent(int *PXExtentBasedOnSource,CGeoParams*sou
       
       
        #ifdef GenericDataWarper_DEBUG
+CDBDebug("PXExtentBasedOnSource = [%d,%d,%d,%d]",PXExtentBasedOnSource[0],PXExtentBasedOnSource[1],PXExtentBasedOnSource[2],PXExtentBasedOnSource[3]);
     
 #endif
-//CDBDebug("PXExtentBasedOnSource = [%d,%d,%d,%d]",PXExtentBasedOnSource[0],PXExtentBasedOnSource[1],PXExtentBasedOnSource[2],PXExtentBasedOnSource[3]);
     if(PXExtentBasedOnSource[1]>PXExtentBasedOnSource[3]){
       std::swap(PXExtentBasedOnSource[1],PXExtentBasedOnSource[3]);
     }
@@ -231,10 +274,21 @@ int GenericDataWarper::findPixelExtent(int *PXExtentBasedOnSource,CGeoParams*sou
     }
     PXExtentBasedOnSource[2]+=1;
     PXExtentBasedOnSource[3]+=1;
-    if(PXExtentBasedOnSource[0]<0)PXExtentBasedOnSource[0]=0;if(PXExtentBasedOnSource[0]>=sourceDataWidth)PXExtentBasedOnSource[0]=sourceDataWidth;
-    if(PXExtentBasedOnSource[2]<0)PXExtentBasedOnSource[2]=0;if(PXExtentBasedOnSource[2]>=sourceDataWidth)PXExtentBasedOnSource[2]=sourceDataWidth;
-    if(PXExtentBasedOnSource[1]<0)PXExtentBasedOnSource[1]=0;if(PXExtentBasedOnSource[1]>=sourceDataHeight)PXExtentBasedOnSource[1]=sourceDataHeight;
-    if(PXExtentBasedOnSource[3]<0)PXExtentBasedOnSource[3]=0;if(PXExtentBasedOnSource[3]>=sourceDataHeight)PXExtentBasedOnSource[3]=sourceDataHeight;
+    /*
+    PXExtentBasedOnSource[1]=4;;
+    PXExtentBasedOnSource[3]=10;*/
+ #ifdef    GenericDataWarper_DEBUG
+    CDBDebug("PXExtentBasedOnSource = [%d,%d,%d,%d]",PXExtentBasedOnSource[0],PXExtentBasedOnSource[1],PXExtentBasedOnSource[2],PXExtentBasedOnSource[3]);
+#endif   
+    
+    if(PXExtentBasedOnSource[0]<0){PXExtentBasedOnSource[0]=0;}
+    if(PXExtentBasedOnSource[0]>=sourceDataWidth){PXExtentBasedOnSource[0]=sourceDataWidth;}
+    if(PXExtentBasedOnSource[2]<0){PXExtentBasedOnSource[2]=0;}
+    if(PXExtentBasedOnSource[2]>=sourceDataWidth){PXExtentBasedOnSource[2]=sourceDataWidth;}
+    if(PXExtentBasedOnSource[1]<0){PXExtentBasedOnSource[1]=0;}
+    if(PXExtentBasedOnSource[1]>=sourceDataHeight){PXExtentBasedOnSource[1]=sourceDataHeight;}
+    if(PXExtentBasedOnSource[3]<0){PXExtentBasedOnSource[3]=0;}
+    if(PXExtentBasedOnSource[3]>=sourceDataHeight){PXExtentBasedOnSource[3]=sourceDataHeight;}
     if(transFormationRequired==false){
       PXExtentBasedOnSource[0]=-1;
       PXExtentBasedOnSource[1]=-1;
@@ -245,9 +299,7 @@ int GenericDataWarper::findPixelExtent(int *PXExtentBasedOnSource,CGeoParams*sou
 //             PXExtentBasedOnSource[1]-=2;
     
     
- #ifdef GenericDataWarper_DEBUG   
-    CDBDebug("PXExtentBasedOnSource = [%d,%d,%d,%d]",PXExtentBasedOnSource[0],PXExtentBasedOnSource[1],PXExtentBasedOnSource[2],PXExtentBasedOnSource[3]);
-#endif
+ 
     //CDBDebug("PXExtentBasedOnSource = [%d,%d,%d,%d]",PXExtentBasedOnSource[0],PXExtentBasedOnSource[1],PXExtentBasedOnSource[2],PXExtentBasedOnSource[3]);
     return 0;
 }

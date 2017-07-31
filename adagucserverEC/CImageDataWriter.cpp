@@ -48,7 +48,8 @@
 
 CT::string months[] = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
 
-//  #define CIMAGEDATAWRITER_DEBUG
+
+//#define CIMAGEDATAWRITER_DEBUG
 //  #define MEASURETIME
 
 
@@ -1420,8 +1421,39 @@ int CImageDataWriter::warpImage(CDataSource *dataSource,CDrawImage *drawImage){
   #ifdef MEASURETIME
   StopWatch_Stop("Thread[%d]: start Opening grid",dataSource->threadNr);
 #endif
+  
+  bool usePixelExtent = false;
+  if(usePixelExtent){
 
-  status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
+    status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
+    CImageWarper warper;
+
+      status = warper.initreproj(dataSource,srvParam->Geo,&srvParam->cfg->Projection);
+      if(status != 0){
+        CDBError("Unable to initialize projection");
+        return 1;
+      }
+    
+    
+    
+    CGeoParams sourceGeo;
+        
+    sourceGeo.dWidth = dataSource->dWidth;
+    sourceGeo.dHeight = dataSource->dHeight;
+    sourceGeo.dfBBOX[0] = dataSource->dfBBOX[0];
+    sourceGeo.dfBBOX[1] = dataSource->dfBBOX[1];
+    sourceGeo.dfBBOX[2] = dataSource->dfBBOX[2];
+    sourceGeo.dfBBOX[3] = dataSource->dfBBOX[3];
+    sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
+    sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
+    sourceGeo.CRS = dataSource->nativeProj4;
+    int PXExtentBasedOnSource[4];
+    GenericDataWarper::findPixelExtent(PXExtentBasedOnSource,&sourceGeo,srvParam->Geo,&warper);
+    
+    status = reader.openExtent(dataSource,CNETCDFREADER_MODE_OPEN_EXTENT,PXExtentBasedOnSource);
+  }else{
+   status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
+  }
   #ifdef MEASURETIME
   StopWatch_Stop("Thread[%d]: Opened grid",dataSource->threadNr);
 #endif
@@ -1519,7 +1551,9 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   * Use fast nearest neighbourrenderer
   */
   if(renderMethod&RM_NEAREST||renderMethod&RM_AVG_RGBA||renderMethod&RM_POINT_LINEARINTERPOLATION){
-    
+    #ifdef CIMAGEDATAWRITER_DEBUG  
+      CDBDebug("Using CImgWarpNearestNeighbour");
+    #endif
     imageWarperRenderer = new CImgWarpNearestNeighbour();
     imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
     delete imageWarperRenderer;
@@ -1529,6 +1563,9 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   * Use RGBA renderer
   */
   if(renderMethod&RM_RGBA){
+     #ifdef CIMAGEDATAWRITER_DEBUG  
+       CDBDebug("Using CImgWarpNearestRGBA");
+     #endif
      imageWarperRenderer = new CImgWarpNearestRGBA();
      imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
      delete imageWarperRenderer;
@@ -1538,6 +1575,9 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   * Use bilinear renderer
   */
   if(renderMethod&RM_CONTOUR||renderMethod&RM_BILINEAR||renderMethod&RM_SHADED||renderMethod&RM_VECTOR||renderMethod&RM_BARB||renderMethod&RM_THIN)  {
+    #ifdef CIMAGEDATAWRITER_DEBUG  
+        CDBDebug("Using CImgWarpBilinear");
+    #endif
     if(dataSource->getDataObject(0)->points.size()==0){
       imageWarperRenderer = new CImgWarpBilinear();
       CT::string bilinearSettings;
@@ -1616,7 +1656,9 @@ if(renderMethod==contour){CDBDebug("contour");}*/
         
         //bilinearSettings.printconcat("textScaleFactor=%f;textOffsetFactor=%f;",textScaleFactor,textOffsetFactor);
       }
+      #ifdef CIMAGEDATAWRITER_DEBUG  
       CDBDebug("bilinearSettings.c_str() %s",bilinearSettings.c_str());
+      #endif
       imageWarperRenderer->set(bilinearSettings.c_str());
       imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
       delete imageWarperRenderer;
@@ -1627,6 +1669,9 @@ if(renderMethod==contour){CDBDebug("contour");}*/
    * Use stippling renderer
    */
   if(renderMethod&RM_STIPPLING){
+    #ifdef CIMAGEDATAWRITER_DEBUG  
+        CDBDebug("Using CImgRenderStippling");
+    #endif
     imageWarperRenderer = new CImgRenderStippling();
     imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
     delete imageWarperRenderer;
@@ -1637,7 +1682,9 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   */
   if(renderMethod&RM_BARB||renderMethod&RM_VECTOR||renderMethod&RM_POINT){
     if(dataSource->getDataObject(0)->points.size()!=0){
-      
+      #ifdef CIMAGEDATAWRITER_DEBUG  
+        CDBDebug("Using CImgRenderPoints");
+      #endif
       imageWarperRenderer = new CImgRenderPoints();
       CT::string renderMethodAsString;
       CStyleConfiguration::getRenderMethodAsString(&renderMethodAsString,renderMethod);
@@ -1652,6 +1699,9 @@ if(renderMethod==contour){CDBDebug("contour");}*/
    */
   if (renderMethod&RM_POLYLINE) {
     if (dataSource->featureSet.length()!=0) {
+      #ifdef CIMAGEDATAWRITER_DEBUG  
+        CDBDebug("Using CImgRenderPolylines");
+      #endif
       imageWarperRenderer = new CImgRenderPolylines();
       CT::string renderMethodAsString;
       CStyleConfiguration::getRenderMethodAsString(&renderMethodAsString,renderMethod);
@@ -3312,7 +3362,7 @@ int CImageDataWriter::end(){
       StopWatch_Stop("/Start creating image");
       #endif
     
-      for(size_t j=0;j<plotObjects.size();j++)delete plotObjects[j];plotObjects.clear();
+      for(size_t j=0;j<plotObjects.size();j++){delete plotObjects[j];};plotObjects.clear();
       //CDBDebug("Done!");
     }/* End of imagepng */
     

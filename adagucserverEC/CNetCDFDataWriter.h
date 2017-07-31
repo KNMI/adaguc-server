@@ -85,7 +85,7 @@ public:
   // Virtual functions
   int init(CServerParams *srvParam,CDataSource *dataSource, int nrOfBands);
   int addData(std::vector <CDataSource*> &dataSources);
-  int writeFile(const char *fileName, int level);
+  int writeFile(const char *fileName, int adagucTileLevel, bool enableCompression);
   int end();
   
   void setInterpolationMode(int mode);
