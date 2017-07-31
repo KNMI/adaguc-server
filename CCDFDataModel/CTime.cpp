@@ -547,7 +547,7 @@ double CTime::dateToOffset( Date date){
 CTime::Date CTime::stringToDate(const char*szTime){
   size_t timeLength = strlen(szTime);
   if(timeLength<15){
-     CDBError("stringToDate internal error: invalid time format:",szTime);
+     CDBError("stringToDate internal error: invalid time format: [%s]",szTime);
      throw CTIME_CONVERSION_ERROR;
   }
   Date date;
@@ -651,6 +651,21 @@ CT::string CTime::dateToISOString(Date date){
 
 CTime::Date CTime::freeDateStringToDate(const char*szTime){
   size_t len = strlen(szTime);
+  
+  //01234567890123 
+  //20100201090000
+  if(len==14){
+    if(szTime[8]!='T'){
+      CT::string date="";
+      date.concat(szTime+0,8);
+      date.concat("T");
+      date.concat(szTime+8,6);
+      date.concat("Z");
+      CDBDebug("Fixing time to [%s]",date.c_str());
+      return stringToDate(date.c_str());
+    }
+  }
+  
   //201002010900
   if(len==12){
     CT::string date="";
