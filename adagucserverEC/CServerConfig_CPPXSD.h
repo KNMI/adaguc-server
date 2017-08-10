@@ -27,6 +27,10 @@
 #define CServerConfig_H
 #include "CXMLSerializerInterface.h"
 
+// f 102 >15
+// F 70 > 15
+// 0 48 > 0
+#define CSERVER_HEXDIGIT_TO_DEC(DIGIT) (DIGIT>96?DIGIT-87:DIGIT>64?DIGIT-55:DIGIT-48) //Converts "9" to 9, "A" to 10 and "a" to 10
 
 class CServerConfig:public CXMLSerializerInterface{
   public:
@@ -51,11 +55,11 @@ class CServerConfig:public CXMLSerializerInterface{
           else if(equals("color",5,name)){//Hex color like: #A41D23
             if(value[0]=='#')if(strlen(value)==7||strlen(value)==9){
               
-              attr.red  =((value[1]>64)?value[1]-55:value[1]-48)*16+((value[2]>64)?value[2]-55:value[2]-48);
-              attr.green=((value[3]>64)?value[3]-55:value[3]-48)*16+((value[4]>64)?value[4]-55:value[4]-48);
-              attr.blue =((value[5]>64)?value[5]-55:value[5]-48)*16+((value[6]>64)?value[6]-55:value[6]-48);
+              attr.red  = CSERVER_HEXDIGIT_TO_DEC(value[1])*16+CSERVER_HEXDIGIT_TO_DEC(value[2]);
+              attr.green= CSERVER_HEXDIGIT_TO_DEC(value[3])*16+CSERVER_HEXDIGIT_TO_DEC(value[4]);
+              attr.blue = CSERVER_HEXDIGIT_TO_DEC(value[5])*16+CSERVER_HEXDIGIT_TO_DEC(value[6]);
               if(strlen(value)==9){
-                attr.alpha =((value[7]>64)?value[7]-55:value[7]-48)*16+((value[8]>64)?value[8]-55:value[8]-48);
+                attr.alpha = CSERVER_HEXDIGIT_TO_DEC(value[7])*16+CSERVER_HEXDIGIT_TO_DEC(value[8]);
               }
             }
             return;
@@ -641,11 +645,12 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString filter,gfi_openall;
+            CXMLString filter,gfi_openall,ncml;
         }attr;
         void addAttribute(const char *name,const char *value){
           if(equals("filter",6,name)){attr.filter.copy(value);return;}
           else if(equals("gfi_openall",11,name)){attr.gfi_openall.copy(value);return;}
+          else if(equals("ncml",4,name)){attr.ncml.copy(value);return;}
         }
     };
 
