@@ -245,7 +245,7 @@ int CDFHDF5Reader::convertLSASAFtoCF(){
     try{
       if(cdfObject->variables[j]->getAttribute("CLASS")->toString().toLowerCase().equals("data")){
         cdfObject->variables[j]->removeAttribute("ADAGUC_SKIP");
-        CDBDebug("Variable %s is an IMAGE",cdfObject->variables[j]->name.c_str());
+        // CDBDebug("Variable %s is an IMAGE",cdfObject->variables[j]->name.c_str());
         if(dimsDone == false){
           
            
@@ -265,13 +265,13 @@ int CDFHDF5Reader::convertLSASAFtoCF(){
           float fYGEO_LOW_RIGHT;
           fYGEO_LOW_RIGHT=3469500;
           
-          CDBDebug("SENSING_START_TIME = %s",timeString.c_str());
-          CDBDebug("PROJECTION = %s",projectionString.c_str());
-          CDBDebug("XGEO_UP_LEFT = %f",fXGEO_UP_LEFT);
-          CDBDebug("YGEO_UP_LEFT = %f",fYGEO_UP_LEFT);
-          CDBDebug("XGEO_LOW_RIGHT = %f",fXGEO_LOW_RIGHT);
-          CDBDebug("YGEO_LOW_RIGHT = %f",fYGEO_LOW_RIGHT);
-          
+//           CDBDebug("SENSING_START_TIME = %s",timeString.c_str());
+//           CDBDebug("PROJECTION = %s",projectionString.c_str());
+//           CDBDebug("XGEO_UP_LEFT = %f",fXGEO_UP_LEFT);
+//           CDBDebug("YGEO_UP_LEFT = %f",fYGEO_UP_LEFT);
+//           CDBDebug("XGEO_LOW_RIGHT = %f",fXGEO_LOW_RIGHT);
+//           CDBDebug("YGEO_LOW_RIGHT = %f",fYGEO_LOW_RIGHT);
+//           
           CDF::Dimension *dimX=cdfObject->variables[j]->dimensionlinks[1];
           CDF::Dimension *dimY=cdfObject->variables[j]->dimensionlinks[0];
           CDF::Variable *varX=cdfObject->getVariableNE(dimX->name.c_str());
@@ -408,22 +408,49 @@ int CDFHDF5Reader::convertLSASAFtoCF(){
           float additionFactor[1];
           float multiplicationFactor[1];
           
-          SCALING_FACTOR->getData(multiplicationFactor,1);
-          OFFSET->getData(additionFactor,1);
+          if(SCALING_FACTOR->size()==1){
+            SCALING_FACTOR->getData(multiplicationFactor,1);
+            CDBDebug("Setting offset to %f and %f", multiplicationFactor[0]);
+            CDF::Attribute* scale_factor = new CDF::Attribute();
+            scale_factor->setName("scale_factor");
+            scale_factor->setData(CDF_FLOAT,multiplicationFactor,1);
+            cdfObject->variables[j]->addAttribute(scale_factor);
+          }
           
-          CDF::Attribute* add_offset = new CDF::Attribute();
-          add_offset->setName("add_offset");
-          add_offset->setData(CDF_FLOAT,additionFactor,1);
-          cdfObject->variables[j]->addAttribute(add_offset);
+          //FOR LSA, scaling factor should be inversed. This is probably an error in the LSA files!
+          if(SCALING_FACTOR->size()==2){
+            SCALING_FACTOR->getData(multiplicationFactor,1);
+            if(multiplicationFactor[0]!=0){
+              multiplicationFactor[0]=1/multiplicationFactor[0];
+              CDBDebug("Setting offset to %f and %f", multiplicationFactor[0]);
+              CDF::Attribute* scale_factor = new CDF::Attribute();
+              scale_factor->setName("scale_factor");
+              scale_factor->setData(CDF_FLOAT,multiplicationFactor,1);
+              cdfObject->variables[j]->addAttribute(scale_factor);
+            }
+          }
           
-          CDF::Attribute* scale_factor = new CDF::Attribute();
-          scale_factor->setName("scale_factor");
-          scale_factor->setData(CDF_FLOAT,multiplicationFactor,1);
-          cdfObject->variables[j]->addAttribute(scale_factor);
+          if(OFFSET->size()==1){
+            OFFSET->getData(additionFactor,1);
+            CDBDebug("Setting offset to %f and %f", additionFactor[0]);
+            CDF::Attribute* add_offset = new CDF::Attribute();
+            add_offset->setName("add_offset");
+            add_offset->setData(CDF_FLOAT,additionFactor,1);
+            cdfObject->variables[j]->addAttribute(add_offset);
+          }
+          
           
         }
         
-        if(cdfObject->variables[j]->getType() == CDF_UBYTE){
+        CDF::Attribute * UNITS = cdfObject->variables[j]->getAttributeNE("UNITS");
+        if(UNITS!=NULL){
+          cdfObject->variables[j]->setAttributeText("units",UNITS->toString().c_str());
+        }
+        
+        CDF::Attribute * MISSING_VALUE = cdfObject->variables[j]->getAttributeNE("MISSING_VALUE");
+        if(MISSING_VALUE!=NULL){
+          MISSING_VALUE->setName("_FillValue");
+        }else if(cdfObject->variables[j]->getType() == CDF_UBYTE){
           unsigned char FfillValue = 0;
           CDF::Attribute* fillValue = new CDF::Attribute();
           fillValue->setName("_FillValue");
