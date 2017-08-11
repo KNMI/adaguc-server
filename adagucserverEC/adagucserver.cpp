@@ -104,6 +104,7 @@ void serverWarningFunction(const char *msg){
 int setCRequestConfigFromEnvironment(CRequest *request){
   char * configfile=getenv("ADAGUC_CONFIG");
   if(configfile!=NULL){
+    // CDBDebug( "Setting to [%s]",configfile);
     int status = request->setConfigFile(configfile);
     return status;
   }else{
@@ -185,7 +186,7 @@ int main(int argc, const char *argv[]){
         if(strncmp(argv[j],"--config",8)==0&&argc>j+1){
           
           //CDBDebug("Setting environment variable ADAGUC_CONFIG to \"%s\"\n",argv[j+1]);
-          setenv("ADAGUC_CONFIG",argv[j+1],0);
+          setenv("ADAGUC_CONFIG",argv[j+1],1);
           configSet = 1;
         }
         if(strncmp(argv[j],"--tailpath",10)==0&&argc>j+1){
