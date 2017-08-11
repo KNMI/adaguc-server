@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+
+  <TempDir value="{ADAGUC_TMP}"/>
+  <Path value="{ADAGUC_PATH}/data"/>
+  <DataBase dbtype="postgresql" parameters="host=localhost user=adaguc dbname=adaguc password=adaguc"/>
+  <!--<DataBase dbtype="sqlite" parameters="/tmp/tile2s.db"/>-->
+  
+  <!-- WMS settings -->
+  <WMS>
+    <Title>ADAGUC WMS Service</Title>
+    <Abstract>eoJSON Service demonstrating the possibility to use GeoJSON in ADAGUC.</Abstract>
+    <RootLayer>
+      <Title>GeoJSON Service</Title>
+      <Abstract>GeoJSON Service demonstrating the possibility to use GeoJSON in ADAGUC</Abstract>
+    </RootLayer>
+      <WMSFormat name="image/png" format="image/png;mode=8bit_noalpha"/> 
+  </WMS>
+  
+  
+  <!-- WMS -->
+  <Include location="{ADAGUC_PATH}/data/config/includes/WMS.include.xml"/>
+
+  <!-- WCS settings -->
+  <WCS>
+    <Title>ADAGUC WCS Service</Title>
+    <Label>wcsLabel</Label>
+  </WCS>
+
+  <!-- WCSFormat -->
+  <Include location="{ADAGUC_PATH}/data/config/includes/WCSFormat.include.xml"/>
+
+  <!-- Projections -->
+  <Include location="{ADAGUC_PATH}/data/config/includes/Projection.include.xml"/>
+           
+  <!--Legends -->
+  <Include location="{ADAGUC_PATH}/data/config/includes/DefaultStyles.include.xml"/>
+
+  <Include location="{ADAGUC_PATH}/data/config/includes/DefaultLayers.include.xml"/>
+  
+  <!--<Layer type="database">
+    <Name>world</Name>
+    <Title>world</Title>
+    <FilePath2>/data/services/data/HYP_50M_SR_W.png</FilePath>
+    <FilePath>/home/adaguc/Downloads/netcdf_pngdata_0.nc</FilePath>
+    
+    <Variable>pngdata</Variable>
+   
+    <RenderMethod >rgba</RenderMethod>
+    <TileSettings tilewidthpx="512" 
+                  tileheightpx="512" 
+                  tilecellsizex="0.0333333333"
+                  tilecellsizey="0.0333333333"
+                  left="-180" right="180"  bottom="-90" top="90"
+                  tileprojection="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+                  minlevel="1"
+                  maxlevel="6"
+                  tilemode="rgba"
+                  debug="false"
+                  threads="1" 
+                  tilepath="/data/services/data/HYP_50M_SR_Wtiles"
+                  optimizeextent="true"/>
+   </Layer>-->
+   
+   
+   <Layer type="database">
+     <Name>osm</Name>
+     <Title>osm</Title>
+     <!--<FilePath>/data/services/data/HYP_50M_SR_W.png</FilePath>-->
+     <FilePath filter="^.*\.png$">/data/services/data/osmtiles/</FilePath>
+     
+     <Variable>pngdata</Variable>
+     <Dimension name="none"/>
+     <RenderMethod >rgba</RenderMethod>
+     <TileSettings tilewidthpx="256" 
+                   tileheightpx="256" 
+                   tilecellsizex="152.746"
+                   tilecellsizey="152.746"
+                   left="-20037508.342789244" right="20037508.342789244"
+                   bottom="-20037508.342789244" top="20037508.342789244"
+                  
+                   tileprojection="+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs"
+                   minlevel="1"
+                   maxlevel="10" tilemode="rgba"
+                   debug="false"
+                   threads="1" 
+                   tsdilepath="/data/services/data/HYP_50M_SR_Wtiles"
+                   optimizeextent="false"/>
+     </Layer>
+
+  <!-- End of configuration /-->
+</Configuration>
