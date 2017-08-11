@@ -173,8 +173,8 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage,
       useShadeIntervals=true;
     }
     
-    int blockHeight = 12;
-    int blockDistance=18;
+    int blockHeight = 18;
+    int blockDistance=20;
     
     size_t numFlags=dataSource->getDataObject(0)->statusFlagList.size();
     while(numFlags*blockDistance>legendHeight-14&&blockDistance>5){
