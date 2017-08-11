@@ -24,7 +24,7 @@
  ******************************************************************************/
 
 #include "CCDFGeoJSONIO.h"
-#define CCDFGEOJSONIO_DEBUG
+//#define CCDFGEOJSONIO_DEBUG
 
 
 

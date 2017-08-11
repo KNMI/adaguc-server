@@ -33,6 +33,8 @@
 #include "CCDFNetCDFIO.h"
 #include "CCDFHDF5IO.h"
 #include "CCDFGeoJSONIO.h"
+#include "CCDFPngIO.h"
+
 #include "CCache.h"
 
 //Datasource can share multiple cdfObjects

@@ -39,7 +39,7 @@ const char *CDFObjectStore::className="CDFObjectStore";
 #define MAX_OPEN_FILES 50
 extern CDFObjectStore cdfObjectStore;
 CDFObjectStore cdfObjectStore;
-bool EXTRACT_HDF_NC_VERBOSE = false;
+bool EXTRACT_HDF_NC_VERBOSE = true;
 /**
  * Get a CDFReader based on information in the datasource. In the Layer element this can be configured with <DataReader>HDF5</DataReader>
  * @param dataSource The configured datasource or NULL pointer. NULL pointer defaults to a NetCDF/OPeNDAP reader
@@ -70,6 +70,12 @@ CDFReader *CDFObjectStore::getCDFReader(CDataSource *dataSource,const char *file
         #endif
         cdfReader = new CDFGeoJSONReader();
  //       CDFGeoJSONReader * geoJSONReader = (CDFGeoJSONReader*)cdfReader;
+      }
+      else if(dataSource->cfgLayer->DataReader[0]->value.equals("PNG")){
+        #ifdef CDFOBJECTSTORE_DEBUG
+        CDBDebug("Creating PNG reader");
+        #endif
+        cdfReader = new CDFPngReader();
       }
     }else{
       cdfReader=getCDFReader(fileName);
@@ -149,6 +155,17 @@ CDFReader *CDFObjectStore::getCDFReader(const char *fileName){
               CDBDebug("Creating GeoJSON reader");
             }
             cdfReader = new CDFGeoJSONReader();
+          }
+        }
+      }
+      if(cdfReader==NULL){
+        a=name.indexOf(".png");
+        if(a!=-1){
+          if(a==int(name.length())-4){
+            if(EXTRACT_HDF_NC_VERBOSE){
+              CDBDebug("Creating PNG reader");
+            }
+            cdfReader = new CDFPngReader();
           }
         }
       }
