@@ -75,7 +75,7 @@ CDFReader *CDFObjectStore::getCDFReader(CDataSource *dataSource,const char *file
         #ifdef CDFOBJECTSTORE_DEBUG
         CDBDebug("Creating PNG reader");
         #endif
-        cdfReader = new CDFPngReader();
+        cdfReader = new CDFPNGReader();
       }
     }else{
       cdfReader=getCDFReader(fileName);
@@ -165,7 +165,7 @@ CDFReader *CDFObjectStore::getCDFReader(const char *fileName){
             if(EXTRACT_HDF_NC_VERBOSE){
               CDBDebug("Creating PNG reader");
             }
-            cdfReader = new CDFPngReader();
+            cdfReader = new CDFPNGReader();
           }
         }
       }

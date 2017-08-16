@@ -148,8 +148,12 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource){
               try{
                 dimVar = dataSource->getDataObject(0)->cdfObject->getVariable(dim->name.c_str());
               }catch(int e){
-                CDBError("Variable is not defined for dimension [%s]",dim->name.c_str());
-                throw(__LINE__);
+                CDBDebug("Warning: Variable is not defined for dimension [%s], creating array",dim->name.c_str());
+                dimVar = CDataReader::addBlankDimVariable(dataSource->getDataObject(0)->cdfObject, dim->name.c_str());
+                if(dimVar == NULL){
+                  CDBError("Unable to add dimension variable for dimension %s",dim->name.c_str());
+                  return 1;
+                }
               }
                  
               CT::string units="";

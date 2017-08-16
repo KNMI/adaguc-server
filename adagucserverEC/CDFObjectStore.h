@@ -33,7 +33,7 @@
 #include "CCDFNetCDFIO.h"
 #include "CCDFHDF5IO.h"
 #include "CCDFGeoJSONIO.h"
-#include "CCDFPngIO.h"
+#include "CCDFPNGIO.h"
 
 #include "CCache.h"
 
