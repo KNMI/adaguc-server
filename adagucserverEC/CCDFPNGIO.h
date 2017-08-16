@@ -34,45 +34,37 @@
 #include "CDebugger.h"
 #include "CTime.h"
 #include "CProj4ToCF.h"
+#include "CReadPNG.h"
 //#define CCDFPNGIO_DEBUG
 
 
-class CDFPngReader :public CDFReader{
+class CDFPNGReader :public CDFReader{
   private:
     DEF_ERRORFUNCTION();
-    class CPngRaster {
-    public:
-      CPngRaster(){
-        data = NULL;
-      }
-      ~CPngRaster() {
-        if(data!=NULL){
-          delete[] data;
-          data = NULL;
-        }
-      }
-      unsigned char * data;
-      size_t width, height;
-    };
-    CPngRaster* read_png_file(const char* file_name, bool readHeaderOnly);
-   // CDFPngReader::CPngRaster*pngRaster;
+    bool isSlippyMapFormat;
+    size_t rasterWidth;
+    size_t rasterHeight;
+    CReadPNG::CPNGRaster*pngRaster;
   public:
     
-    CDFPngReader():CDFReader(){
+    CDFPNGReader():CDFReader(){
 #ifdef CCDFPNGIO_DEBUG            
       CDBDebug("CCDFPNGIO init");
 #endif      
-//       pngRaster = NULL;
+      pngRaster = NULL;
+      isSlippyMapFormat = false;
+      rasterWidth=0;
+      rasterHeight=0;
     }
-    ~CDFPngReader(){
+    ~CDFPNGReader(){
 #ifdef CCDFPNGIO_DEBUG            
       CDBDebug("CCDFPNGIO close");
 #endif     
       close();
-    /*  if(pngRaster!=NULL){
+      if(pngRaster!=NULL){
         delete pngRaster;pngRaster=NULL;
       }
-    */}
+    }
     
     int open(const char *fileName);
     

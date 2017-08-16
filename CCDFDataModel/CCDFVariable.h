@@ -212,16 +212,16 @@ namespace CDF{
         parentCDFObject=NULL;
         hasCustomReader = false;
         _isString = false;
-        CDBDebug("Variable");
+        //CDBDebug("Variable");
         setName(name);
         setType(type);
-        CDBDebug("Iterating dims[%d]",numdims);
+        //CDBDebug("Iterating dims[%d]",numdims);
         for(int j=0;j<numdims;j++){
-          CDBDebug("Iterating dims %s",dims[j]->getName().c_str());
+          //CDBDebug("Iterating dims %s",dims[j]->getName().c_str());
           dimensionlinks.push_back(dims[j]);
         }
         isDimension = isCoordinateVariable;
-        CDBDebug("done");
+        //CDBDebug("done");
       }
       Variable(){
         isDimension=false;

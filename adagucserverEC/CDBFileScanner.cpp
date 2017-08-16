@@ -114,7 +114,12 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource,int &removeNonE
     CDataReader::DimensionType dtype = CDataReader::getDimensionType(cdfObject,dimName.c_str());
     if(dtype==CDataReader::dtype_none){
       CDBWarning("dtype_none %d for  %s",dtype,dimName.c_str());
+      if ( CDataReader::addBlankDimVariable(cdfObject, dimName.c_str()) != NULL){
+        dtype=CDataReader::dtype_normal;
+      }
+
     }
+
 
     
     bool isTimeDim = false;

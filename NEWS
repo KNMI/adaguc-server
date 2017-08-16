@@ -1,3 +1,7 @@
+Version 2.0.27 2017-08-16
+    - Dimensions without a dimension variable now get an automatically assigned dimension variable, values start with 1 and are increased onwards.
+    - Initial PNG support with initial slippy map support added
+
 Version 2.0.26 2017-07-31
     - Added support for LSA SAF hdf5 files for MeteoRomania
 

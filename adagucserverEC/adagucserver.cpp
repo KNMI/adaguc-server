@@ -27,57 +27,52 @@
 
 DEF_ERRORMAIN();
 
-int myPID = int(getpid());
-void writeLogFile(const char * msg){
-  char * logfile=getenv("ADAGUC_LOGFILE");
-  if(logfile!=NULL){
-    FILE * pFile = NULL;
-    pFile = fopen (logfile , "a" );
-    if(pFile != NULL){
- //     setvbuf(pFile, NULL, _IONBF, 0);
-      fputs  (msg, pFile );
-      if(strncmp(msg,"[D:",3)==0||strncmp(msg,"[W:",3)==0||strncmp(msg,"[E:",3)==0){
-        time_t myTime = time(NULL);
-        tm *myUsableTime = localtime(&myTime);
-        char szTemp[128];
-        snprintf(szTemp,127,"%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ/%d ",
-                myUsableTime->tm_year+1900,myUsableTime->tm_mon+1,myUsableTime->tm_mday,
-                myUsableTime->tm_hour,myUsableTime->tm_min,myUsableTime->tm_sec,
-                myPID
-                );
-        fputs  (szTemp, pFile );
-      }
+FILE * pLogDebugFile = NULL;
 
-      fclose (pFile);
-      
-    }else fprintf(stderr,"Unable to write logfile %s\n",logfile);
+int myPID = int(getpid());
+
+void writeLogFile(const char * msg){
+  if(pLogDebugFile != NULL){
+//     setvbuf(pLogDebugFile, NULL, _IONBF, 0);
+    fputs  (msg, pLogDebugFile );
+    if(strncmp(msg,"[D:",3)==0||strncmp(msg,"[W:",3)==0||strncmp(msg,"[E:",3)==0){
+      time_t myTime = time(NULL);
+      tm *myUsableTime = localtime(&myTime);
+      char szTemp[128];
+      snprintf(szTemp,127,"%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ/%d ",
+              myUsableTime->tm_year+1900,myUsableTime->tm_mon+1,myUsableTime->tm_mday,
+              myUsableTime->tm_hour,myUsableTime->tm_min,myUsableTime->tm_sec,
+              myPID
+              );
+      fputs  (szTemp, pLogDebugFile );
+    }
   }
 }
 
 void writeErrorFile(const char * msg){
-  //fprintf(stderr,"%s",msg);
-  char * logfile=getenv("ADAGUC_ERRORFILE");
-  if(logfile!=NULL){
-    FILE * pFile;
-    pFile = fopen (logfile , "a" );
-    if(pFile != NULL){
-//      setvbuf(pFile, NULL, _IONBF, 0);
-      fputs  (msg, pFile );
-      if(strncmp(msg,"[D:",3)==0||strncmp(msg,"[W:",3)==0||strncmp(msg,"[E:",3)==0){
-        time_t myTime = time(NULL);
-        tm *myUsableTime = localtime(&myTime);
-        char szTemp[128];
-        snprintf(szTemp,127,"%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ/%d ",
-                 myUsableTime->tm_year+1900,myUsableTime->tm_mon+1,myUsableTime->tm_mday,
-                 myUsableTime->tm_hour,myUsableTime->tm_min,myUsableTime->tm_sec,
-                 myPID
-        );
-        fputs  (szTemp, pFile );
-      }
-      fclose (pFile);
-    }else fprintf(stderr,"Unable to write error logfile %s\n",logfile);
-  };
-  writeLogFile(msg);
+//   //fprintf(stderr,"%s",msg);
+//   char * logfile=getenv("ADAGUC_ERRORFILE");
+//   if(logfile!=NULL){
+//     FILE * pFile;
+//     pFile = fopen (logfile , "a" );
+//     if(pFile != NULL){
+// //      setvbuf(pFile, NULL, _IONBF, 0);
+//       fputs  (msg, pFile );
+//       if(strncmp(msg,"[D:",3)==0||strncmp(msg,"[W:",3)==0||strncmp(msg,"[E:",3)==0){
+//         time_t myTime = time(NULL);
+//         tm *myUsableTime = localtime(&myTime);
+//         char szTemp[128];
+//         snprintf(szTemp,127,"%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ/%d ",
+//                  myUsableTime->tm_year+1900,myUsableTime->tm_mon+1,myUsableTime->tm_mday,
+//                  myUsableTime->tm_hour,myUsableTime->tm_min,myUsableTime->tm_sec,
+//                  myPID
+//         );
+//         fputs  (szTemp, pFile );
+//       }
+//       fclose (pFile);
+//     }else fprintf(stderr,"Unable to write error logfile %s\n",logfile);
+//   };
+   writeLogFile(msg);
 }
 
 // Called by CDebugger
@@ -128,7 +123,10 @@ int runRequest(){
 
 // #include "CDBAdapterSQLLite.h"
 // #include "CPGSQLDB.h"
-int main(int argc, const char *argv[]){
+
+      
+      
+int _main(int argc, const char *argv[]){
 //   CDBDebug("Start");
 //   CDBAdapterSQLLite::CSQLLiteDB *db = new CDBAdapterSQLLite::CSQLLiteDB();
 //   db->connect("test.db");
@@ -304,3 +302,18 @@ int main(int argc, const char *argv[]){
   return status;
 }
 
+
+int main(int argc, const char *argv[]){
+  const char * ADAGUC_LOGFILE=getenv("ADAGUC_LOGFILE");
+  if(ADAGUC_LOGFILE!=NULL){
+    pLogDebugFile = fopen (ADAGUC_LOGFILE , "a" );
+    if(pLogDebugFile ==NULL){
+      fprintf(stderr,"Unable to write ADAGUC_LOGFILE %s\n",ADAGUC_LOGFILE);
+    }
+  }
+  int status = _main(argc,argv);  
+  if(pLogDebugFile!= NULL){
+    fclose (pLogDebugFile);
+  }
+  return status;
+}      
