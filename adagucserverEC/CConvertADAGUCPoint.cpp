@@ -29,19 +29,32 @@
 // #define CCONVERTADAGUCPOINT_DEBUG
 // #define MEASURETIME
 const char *CConvertADAGUCPoint::className="CConvertADAGUCPoint";
-
+void drawDot(int px, int py, int v, int W, int H, float * grid){
+  for(int x = -4;x<6;x++){
+    for(int y = -4;y<6;y++){
+      int pointX = px+x;
+      int pointY = py+y;
+      if(pointX >= 0 && pointY >=0 && pointX < W && pointY< H)grid[pointX+pointY*W]=v;
+    }
+  }
+}
 
 void CConvertADAGUCPoint::lineInterpolated(float *grid , int W,int H, int startX,int startY, int stopX, int stopY, float startVal, float stopVal){
   // drawImage->setPixelTrueColor(startX,startY, 0,0,0,255);
+
   int dX = stopX - startX;
   int dY = stopY - startY;
   if(abs(dX)>5000)return;
   if(abs(dY)>5000)return;
   float rc = 0;
   int numPoints = 0;
-  
+  if((!startVal == startVal) || !(stopVal==stopVal)){
+    startVal = 100;
+    stopVal =100;
+  }
   float valD = stopVal - startVal;
-  
+  float angle = atan2(dY,dX) + (3.141592654/2);
+  float dist = 10;
   if(abs(dX) < abs(dY)){
     rc = float(dX)/float(dY);
     int sx = startX;
@@ -51,13 +64,10 @@ void CConvertADAGUCPoint::lineInterpolated(float *grid , int W,int H, int startX
     float valRc = valD / numPoints;
     for(int p = 0; p< numPoints;p++){
       float v = valRc*float(p)+myVal;
-      for(int x = -4;x<6;x++){
-        for(int y = -4;y<6;y++){
-          int pointX = float(p) * rc+sx+x;
-          int pointY = p+sy+y;
-          if(pointX >= 0 && pointY >=0 && pointX < W && pointY< H)grid[pointX+pointY*W]=v;
-        }
-      }
+      
+      float px = float(p) * rc + sx +cos(angle)*dist;
+      float py = p + sy+sin(angle)*dist;
+      drawDot(px,py,v,W,H, grid);
     }
   }else{
     int sx = startX;
@@ -68,13 +78,11 @@ void CConvertADAGUCPoint::lineInterpolated(float *grid , int W,int H, int startX
     float valRc = valD / numPoints;
     for(int p = 0; p< numPoints;p++){
       float v = valRc*float(p)+myVal;
-      for(int x = -4;x<6;x++){
-        for(int y = -4;y<6;y++){
-          int pointX = p + sx+x;
-          int pointY = float(p) * rc +sy+y;
-          if(pointX >= 0 && pointY >=0 && pointX < W && pointY< H)grid[pointX+pointY*W]=v;
-        }
-      }
+      
+      float px = p + sx + cos(angle)*dist;
+      float py = float(p) * rc +sy + sin(angle)*dist;
+      drawDot(px,py,v,W,H, grid);
+      
     }
   }
   
