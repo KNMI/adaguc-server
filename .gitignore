@@ -39,3 +39,7 @@ bin/*
 
 #Python pyc files
 *.pyc
+
+#Test results
+tests/log
+tests/tmp
