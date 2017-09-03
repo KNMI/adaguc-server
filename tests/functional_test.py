@@ -2,7 +2,7 @@ import os
 from StringIO import StringIO
 from adaguc.CGIRunner import CGIRunner
 import unittest
-
+import shutil
 
 
 def runADAGUCServer(url):
@@ -26,7 +26,7 @@ def runADAGUCServer(url):
  
   adagucexecutable = ADAGUC_PATH+"/bin/adagucserver";
 
-  print ("Starting %s" % adagucexecutable)
+ 
 
   filetogenerate =  StringIO()
   status, headers = CGIRunner().run([adagucexecutable],url,output = filetogenerate,extraenv=adagucenv)
@@ -53,13 +53,20 @@ def writetofile(filename, data):
     f.write(data)
 
 def readfromfile(filename):
-  with open(filename, 'r') as f:
+  ADAGUC_PATH = os.environ['ADAGUC_PATH']
+  with open(ADAGUC_PATH + "/tests/" + filename, 'r') as f:
     return f.read()
+  
+def cleanTempDir():
+  ADAGUC_TMP = os.environ['ADAGUC_TMP']
+  shutil.rmtree(ADAGUC_TMP)
+  return
 
 class TestStringMethods(unittest.TestCase):
     overWriteExpectedData = False
     
     def test_WMSGetCapabilities_testdatanc(self):
+        cleanTempDir()
         filename="expectedoutputs/test_WMSGetCapabilities_testdatanc"
         status,data = runADAGUCServer("source=testdata.nc&SERVICE=WMS&request=getcapabilities")
         if self.overWriteExpectedData: writetofile(filename,data.getvalue())
@@ -67,9 +74,34 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(data.getvalue(), readfromfile(filename))
 
     def test_WMSGetMap_testdatanc(self):
+        cleanTempDir()
         filename="expectedoutputs/test_WMSGetMap_testdatanc"
         status,data = runADAGUCServer("source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&")
         if self.overWriteExpectedData: writetofile(filename,data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), readfromfile(filename))
+        
+    def test_WMSGetCapabilitiesGetMap_testdatanc(self):
+        cleanTempDir()
+        filename="expectedoutputs/test_WMSGetCapabilities_testdatanc"
+        status,data = runADAGUCServer("source=testdata.nc&SERVICE=WMS&request=getcapabilities")
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), readfromfile(filename))
+        filename="expectedoutputs/test_WMSGetMap_testdatanc"
+        status,data = runADAGUCServer("source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&")
+        if self.overWriteExpectedData: writetofile(filename,data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), readfromfile(filename))
+        
+    def test_WMSGetMapGetCapabilities_testdatanc(self):
+        cleanTempDir()
+        filename="expectedoutputs/test_WMSGetMap_testdatanc"
+        status,data = runADAGUCServer("source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&")
+        if self.overWriteExpectedData: writetofile(filename,data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), readfromfile(filename))
+        filename="expectedoutputs/test_WMSGetCapabilities_testdatanc"
+        status,data = runADAGUCServer("source=testdata.nc&SERVICE=WMS&request=getcapabilities")
         self.assertEqual(status, 0)
         self.assertEqual(data.getvalue(), readfromfile(filename))
 
