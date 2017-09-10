@@ -213,7 +213,7 @@ int _main(int argc, const char *argv[]){
         CDBError("Error: Configuration file is not set: use '--updatedb --config configfile.xml'" );
         CDBError("And --tailpath for scanning specific sub directory, specify --path for a absolute path to update" );
 
-        return 0;
+        return 1;
       }
       int status = setCRequestConfigFromEnvironment(&request);
       if(status!=0){
