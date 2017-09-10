@@ -10,7 +10,7 @@ font = ImageFont.truetype("../fonts/FreeSans.ttf", 12)
 
 fileOutDir="../datasets"
 dimsset = {
-  'netcdf_5dims_seq1.nc':{
+  'netcdf_5dims/netcdf_5dims_seq1/nc_5D_20170101000000-20170101001000.nc':{
     'time':{
       'vartype':'d',
       'units':"seconds since 1970-01-01 00:00:00",
@@ -32,7 +32,7 @@ dimsset = {
       'values':['member6','member5','member4','member3','member2','member1']
       }
     },
-'netcdf_5dims_seq2.nc':{
+    'netcdf_5dims/netcdf_5dims_seq2/nc_5D_20170101001500-20170101002500.nc':{
     'time':{
       'vartype':'d',
       'units':"seconds since 1970-01-01 00:00:00",
