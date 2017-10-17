@@ -39,7 +39,7 @@ const char *CDFObjectStore::className="CDFObjectStore";
 #define MAX_OPEN_FILES 50
 extern CDFObjectStore cdfObjectStore;
 CDFObjectStore cdfObjectStore;
-bool EXTRACT_HDF_NC_VERBOSE = true;
+bool EXTRACT_HDF_NC_VERBOSE = false;
 /**
  * Get a CDFReader based on information in the datasource. In the Layer element this can be configured with <DataReader>HDF5</DataReader>
  * @param dataSource The configured datasource or NULL pointer. NULL pointer defaults to a NetCDF/OPeNDAP reader

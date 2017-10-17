@@ -129,10 +129,11 @@ int CDFPNGReader::open(const char *fileName){
       cdfObject->setAttribute("adaguctilelevel",CDF_INT,&level,1);
     }
     delete[] parts;
+    CDF::Variable * CRS = cdfObject->addVariable(new CDF::Variable("crs",CDF_UINT,NULL,0, false));
+    CRS->setAttributeText("proj4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs");
   }
   
-  CDF::Variable * CRS = cdfObject->addVariable(new CDF::Variable("crs",CDF_UINT,NULL,0, false));
-  CRS->setAttributeText("proj4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs");
+  
 #ifdef CCDFPNGIO_DEBUG                   
   CDBDebug("Done");
 #endif  
@@ -244,7 +245,7 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType type){
   }
   if(var->name.equals("pngdata")){
     if(pngRaster !=NULL){
-      CDBError("Warning: rereading pngdata");
+      CDBDebug("Warning: rereading pngdata");
       delete pngRaster;
     }
     pngRaster= CReadPNG::read_png_file(this->fileName.c_str(),false);  

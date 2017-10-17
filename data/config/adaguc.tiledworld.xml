@@ -3,7 +3,7 @@
 
   <TempDir value="{ADAGUC_TMP}"/>
   <Path value="{ADAGUC_PATH}/data"/>
-  <DataBase dbtype="postgresql" parameters="host=localhost dbname=adaguc"/>
+  <DataBase maxquerylimit="1" dbtype="postgresql" parameters="host=localhost dbname=adaguc password=adaguc user=adaguc"/>
   <!--<DataBase dbtype="sqlite" parameters="/tmp/tile2s.db"/>-->
   
   <!-- WMS settings -->
@@ -66,26 +66,27 @@
    <Layer type="database">
      <Name>osm</Name>
      <Title>osm</Title>
-     <!--<FilePath>/data/services/data/HYP_50M_SR_W.png</FilePath>-->
-     <FilePath filter="^.*\.png$">/nobackup/users/plieger/data/osm/tiles/</FilePath>
+     <FilePath>/home/adaguc/Downloads/HYP_50M_SR_W.nc</FilePath>
+     <!--<FilePath filter="^.*\.png$">/nobackup/users/plieger/data/osm/tiles/</FilePath>-->
      
      <Variable>pngdata</Variable>
-     <Dimension name="none"/>
+     <!--<Dimension name="none"/>-->
+     
      <RenderMethod >rgba</RenderMethod>
-     <TileSettings tilewidthpx="256" 
-                   tileheightpx="256" 
-                   tilecellsizex="1.193"
-                   tilecellsizey="1.193"
-                   left="-20037508.342789244" right="20037508.342789244"
-                   bottom="-20037508.342789244" top="20037508.342789244"
-                  
-                   tileprojection="+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs"
+     <TileSettings tilewidthpx="128" 
+                   tileheightpx="128" 
+                   tilecellsizex="0.0333333333"
+                   tilecellsizey="0.0333333333"
+                   left="-180" right="180"  bottom="-90" top="90"
+                   tileprojection="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
                    minlevel="1"
-                   maxlevel="17" tilemode="rgba"
-                   debug="true"
+                   maxlevel="6"
+                   tilemode="avg_rgba"
+                   maxtilesinimage="10"
+                   debug="false"
                    threads="1" 
-                   tsdilepath="/data/services/data/HYP_50M_SR_Wtiles"
-                   optimizeextent="false"/>
+                   tilepath="/data/services/data/HYP_50M_SR_Wtiles"
+                   optimizeextent="true"/>
      </Layer>
 
   <!-- End of configuration /-->
