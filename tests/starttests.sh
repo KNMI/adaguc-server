@@ -2,8 +2,8 @@
 pushd `dirname $0` > /dev/null
 SCRIPTPATH=`pwd`
 popd > /dev/null
-ADAGUC_PATH=${SCRIPTPATH}/../
-export ADAGUC_PATH=`realpath ${ADAGUC_PATH}`/
+export ADAGUC_PATH=${SCRIPTPATH}/../
+export ADAGUC_PATH=`readlink -f ${ADAGUC_PATH}`/
 export PYTHONPATH=${ADAGUC_PATH}/data/python/
 echo $ADAGUC_PATH
 export ADAGUC_TMP=${ADAGUC_PATH}/tests/tmp/

@@ -77,8 +77,9 @@ CDBStore::Store *CDBAdapterPostgreSQL::getMax(const char *name,const char *table
   CPGSQLDB * DB = getDataBaseConnection(); if(DB == NULL){return NULL;  }
   
   CT::string query;
-  
+  // CREATE INDEX MAXINDEX ON t20171017t085357097_iwna17kzcgyvrvr183as (none)
   query.print("select max(%s) from %s",name,table);
+  // query.print("SELECT %s FROM %s ORDER BY %s DESC LIMIT 1",name, table,name);
   CDBStore::Store *maxStore = DB->queryToStore(query.c_str());
   if(maxStore == NULL){
     setExceptionType(InvalidDimensionValue);
@@ -256,12 +257,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesForIndices(CDataSource *dataSourc
   #ifdef CDBAdapterPostgreSQL_DEBUG
   CDBDebug("%s",queryOrderedDESC.c_str());
   #endif
-  //writeLogFile3(queryOrderedDESC.c_str());
-  //writeLogFile3("\n");
-  //queryOrderedDESC.concat(" limit 40");
-
-
-  
+    
   query.print("select distinct * from (%s)T order by ",queryOrderedDESC.c_str());
   query.concat(&dataSource->requiredDims[0]->netCDFDimName);
   for(size_t i=1;i<dataSource->requiredDims.size();i++){
@@ -459,9 +455,6 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   #ifdef CDBAdapterPostgreSQL_DEBUG
   CDBDebug("%s",queryOrderedDESC.c_str());
   #endif
-  //writeLogFile3(queryOrderedDESC.c_str());
-  //writeLogFile3("\n");
-  //queryOrderedDESC.concat(" limit 40");
 
   if(timeValidationError==true){
     if((CServerParams::checkDataRestriction()&SHOW_QUERYINFO)==false)queryOrderedDESC.copy("hidden");
@@ -869,6 +862,24 @@ int CDBAdapterPostgreSQL::createDimTableOfType(const char *dimname,const char *t
   #ifdef MEASURETIME
   StopWatch_Stop("<CDBAdapterPostgreSQL::createDimTableOfType");
   #endif
+  if (status == 2) {
+    CDBDebug("New table created: Set indexes");
+    CT::string query;
+    int status = 0;
+    /* Create index on dimension */
+    query.print("CREATE INDEX INDEXFOR%s on %s (%s)", dimname, tablename, dimname); status = dataBaseConnection->query(query.c_str()); if(status!=0) { CDBError("Unable to create index [%s]", query.c_str());throw(__LINE__); }
+    
+//     /* Create index on filepath */
+//     query.print("CREATE INDEX INDEXFOR%s on %s (%s)", "path", tablename, "path"); status = dataBaseConnection->query(query.c_str()); if(status!=0) { CDBError("Unable to create index [%s]", query.c_str());throw(__LINE__); }
+//     
+//     /* Create index on minx etc */
+//     query.print("CREATE INDEX INDEXFOR%s on %s (%s)", "minx", tablename, "minx"); status = dataBaseConnection->query(query.c_str()); if(status!=0) { CDBError("Unable to create index [%s]", query.c_str());throw(__LINE__); }
+//     query.print("CREATE INDEX INDEXFOR%s on %s (%s)", "miny", tablename, "miny"); status = dataBaseConnection->query(query.c_str()); if(status!=0) { CDBError("Unable to create index [%s]", query.c_str());throw(__LINE__); }
+//     query.print("CREATE INDEX INDEXFOR%s on %s (%s)", "maxx", tablename, "maxx"); status = dataBaseConnection->query(query.c_str()); if(status!=0) { CDBError("Unable to create index [%s]", query.c_str());throw(__LINE__); }
+//     query.print("CREATE INDEX INDEXFOR%s on %s (%s)", "maxy", tablename, "maxy"); status = dataBaseConnection->query(query.c_str()); if(status!=0) { CDBError("Unable to create index [%s]", query.c_str());throw(__LINE__); }
+//     query.print("CREATE INDEX INDEXFOR%s on %s (%s)", "adaguctilinglevel", tablename, "adaguctilinglevel"); status = dataBaseConnection->query(query.c_str()); if(status!=0) { CDBError("Unable to create index [%s]", query.c_str());throw(__LINE__); }
+    
+  }
   return status;
   
 }
