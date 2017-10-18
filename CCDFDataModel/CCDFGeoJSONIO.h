@@ -58,7 +58,7 @@ class CDFGeoJSONReader :public CDFReader{
     CDFGeoJSONReader();
     ~CDFGeoJSONReader();
     
-    void enableLonWarp(bool enableLonWarp);
+    //void enableLonWarp(bool enableLonWarp);
     
     int open(const char *fileName);
     

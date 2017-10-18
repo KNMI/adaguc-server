@@ -781,11 +781,12 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString parameters,dbtype;
+            CXMLString parameters,dbtype,maxquerylimit;
         }attr;
         void addAttribute(const char *attrname,const char *attrvalue){
           if(equals("parameters",10,attrname)){attr.parameters.copy(attrvalue);return;}
-          if(equals("dbtype",6,attrname)){attr.dbtype.copy(attrvalue);return;}
+          else if(equals("dbtype",6,attrname)){attr.dbtype.copy(attrvalue);return;}
+          else if(equals("maxquerylimit",13,attrname)){attr.maxquerylimit.copy(attrvalue);return;}
         }
     };
     class XMLE_Projection: public CXMLObjectInterface{

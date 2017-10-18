@@ -71,6 +71,12 @@ CDFReader *CDFObjectStore::getCDFReader(CDataSource *dataSource,const char *file
         cdfReader = new CDFGeoJSONReader();
  //       CDFGeoJSONReader * geoJSONReader = (CDFGeoJSONReader*)cdfReader;
       }
+      else if(dataSource->cfgLayer->DataReader[0]->value.equals("PNG")){
+        #ifdef CDFOBJECTSTORE_DEBUG
+        CDBDebug("Creating PNG reader");
+        #endif
+        cdfReader = new CDFPNGReader();
+      }
     }else{
       cdfReader=getCDFReader(fileName);
     }
@@ -149,6 +155,17 @@ CDFReader *CDFObjectStore::getCDFReader(const char *fileName){
               CDBDebug("Creating GeoJSON reader");
             }
             cdfReader = new CDFGeoJSONReader();
+          }
+        }
+      }
+      if(cdfReader==NULL){
+        a=name.indexOf(".png");
+        if(a!=-1){
+          if(a==int(name.length())-4){
+            if(EXTRACT_HDF_NC_VERBOSE){
+              CDBDebug("Creating PNG reader");
+            }
+            cdfReader = new CDFPNGReader();
           }
         }
       }

@@ -138,6 +138,8 @@ class CDataReader{
      * @return NULL if not found, or the CDF::Dimension matching the query
      */
     static CDF::Variable* getDimensionVariableByType(CDF::Variable *var,CDataReader::DimensionType dimensionType);
+    
+    static CDF::Variable *addBlankDimVariable(CDFObject* cdfObject, const char *dimName);
 };
 
 #endif
