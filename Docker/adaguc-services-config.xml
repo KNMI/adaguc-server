@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<adaguc-services>
+  <external-home-url>${ENV.EXTERNALADDRESS}</external-home-url>
+  <userworkspace>/adaguc/userworkspace</userworkspace>
+  <basedir>/adaguc/basedir</basedir>
+  <server>
+    <port>8080</port>
+  </server>
+  <adaguc-server>
+    <adagucexecutable>/adaguc/adaguc-server-master/bin/adagucserver</adagucexecutable>
+    <export>ADAGUC_PATH=/adaguc/adaguc-server-master/</export>
+    <export>ADAGUC_TMP=/tmp</export>
+    <export>ADAGUC_CONFIG=/adaguc/adaguc-server-config.xml</export>
+    <export>ADAGUC_DATARESTRICTION=FALSE</export>
+    <export>ADAGUC_LOGFILE=/tmp/adaguc.docker.log</export>
+    <export>ADAGUC_ERRORFILE=/tmp/adaguc.docker.errlog</export>
+    <export>ADAGUC_FONT=/adaguc/adaguc-server-master/data/fonts/FreeSans.ttf</export>
+    <export>ADAGUC_ONLINERESOURCE={ENV.EXTERNALADDRESS}/adaguc-services/adagucserver?</export>
+  </adaguc-server>
+</adaguc-services>

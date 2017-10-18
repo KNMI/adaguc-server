@@ -148,8 +148,12 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource){
               try{
                 dimVar = dataSource->getDataObject(0)->cdfObject->getVariable(dim->name.c_str());
               }catch(int e){
-                CDBError("Variable is not defined for dimension [%s]",dim->name.c_str());
-                throw(__LINE__);
+                CDBDebug("Warning: Variable is not defined for dimension [%s], creating array",dim->name.c_str());
+                dimVar = CDataReader::addBlankDimVariable(dataSource->getDataObject(0)->cdfObject, dim->name.c_str());
+                if(dimVar == NULL){
+                  CDBError("Unable to add dimension variable for dimension %s",dim->name.c_str());
+                  return 1;
+                }
               }
                  
               CT::string units="";
@@ -451,7 +455,15 @@ int CAutoConfigure::justLoadAFileHeader(CDataSource *dataSource){
   
   fileName = dataSource->getFileName();
   //CDBDebug("Loading header [%s]",fileName);
-  
+ /* 
+  //TODO TRY to get first one from DB
+  CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getFilesAndIndicesForDimensions(dataSource,1);
+  if(store!=NULL && store->getSize() == 1){
+    CT::string fileNamestr = store->getRecord(0)->get(0)->c_str();
+    CDBDebug("fileName %s",fileNamestr.c_str());
+  }
+  delete store;
+  */
   CDirReader dirReader; // Must stay outside the next statement in order to keep the pointer to fileName sane.
   if(fileName == NULL){
     

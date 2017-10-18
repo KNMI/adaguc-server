@@ -202,6 +202,27 @@ namespace CDF{
       }
       
       DEF_ERRORFUNCTION();
+      Variable(const char *name, CDFType type, CDF::Dimension *dims[], int numdims, bool isCoordinateVariable){
+        isDimension=false;
+        data = NULL;
+        currentSize=0;
+        currentType=CDF_NONE;
+        nativeType=CDF_NONE;
+        cdfReaderPointer=NULL;
+        parentCDFObject=NULL;
+        hasCustomReader = false;
+        _isString = false;
+        //CDBDebug("Variable");
+        setName(name);
+        setType(type);
+        //CDBDebug("Iterating dims[%d]",numdims);
+        for(int j=0;j<numdims;j++){
+          //CDBDebug("Iterating dims %s",dims[j]->getName().c_str());
+          dimensionlinks.push_back(dims[j]);
+        }
+        isDimension = isCoordinateVariable;
+        //CDBDebug("done");
+      }
       Variable(){
         isDimension=false;
         data = NULL;

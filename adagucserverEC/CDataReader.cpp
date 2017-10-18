@@ -1345,7 +1345,22 @@ int CDataReader::getTimeString(CDataSource *dataSource,char * pszTime){
   return 0;
 }
 
- 
+CDF::Variable *CDataReader::addBlankDimVariable(CDFObject* cdfObject, const char *dimName) {
+  CDF::Dimension *dim = cdfObject->getDimensionNE(dimName);
+  if( dim == NULL ){
+    CDBError("Unable to find dimension %s", dimName);
+    return NULL;
+  }
+  CDF::Variable *dimVar = cdfObject->addVariable(new CDF::Variable(dim->getName().c_str(),CDF_DOUBLE,&dim,1, true));
+  
+  dimVar->setCDFReaderPointer(NULL);
+  dimVar->setParentCDFObject(cdfObject);
+  dimVar->allocateData(dim->getSize());
+  for(size_t j=0;j<dim->getSize();j++){
+    ((double*)dimVar->data)[j]=j+1;
+  }
+  return dimVar;
+}
 CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *cdfObject,const char *ncname){
   CDF::Dimension *dimension = cdfObject->getDimensionNE(ncname);
   if(dimension != NULL){
