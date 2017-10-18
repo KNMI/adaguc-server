@@ -1,5 +1,6 @@
 
 
+
 /******************************************************************************
  * 
  * Project:  ADAGUC Server
@@ -28,7 +29,7 @@
 #ifndef Definitions_H
 #define Definitions_H
 
-#define ADAGUCSERVER_VERSION             "2.0.22"
+#define ADAGUCSERVER_VERSION             "2.0.28"
 
 //CConfigReaderLayerType
 #define CConfigReaderLayerTypeUnknown     0
@@ -107,6 +108,7 @@
 #define CNETCDFREADER_MODE_OPEN_ALL        2
 #define CNETCDFREADER_MODE_GET_METADATA    3
 #define CNETCDFREADER_MODE_OPEN_DIMENSIONS 4
+#define CNETCDFREADER_MODE_OPEN_EXTENT     5
 
 
 //Web Coverage restriction and Get Feature Info restriction

@@ -119,11 +119,11 @@ class CDFObject:public CDF::Variable{
     CDF::Variable * getVariableNE(const char *name){
       try{return getVariable(name);}catch(int e){return NULL;}
     }
-    int addVariable(CDF::Variable *var){
+    CDF::Variable* addVariable(CDF::Variable *var){
       var->id = variables.size();
       var->setParentCDFObject(this);
       variables.push_back(var);
-      return 0;
+      return var;
     }
     int removeVariable(const char *name){
       for(size_t j=0;j<variables.size();j++){
@@ -143,10 +143,10 @@ class CDFObject:public CDF::Variable{
       }
       return 0;
     }
-    int addDimension(CDF::Dimension *dim){
+    CDF::Dimension* addDimension(CDF::Dimension *dim){
       dim->id = dimensions.size();
       dimensions.push_back(dim);
-      return 0;
+      return dim;
     }
     CDF::Dimension * getDimension(const char *name){
       for(size_t j=0;j<dimensions.size();j++){

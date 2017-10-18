@@ -126,9 +126,9 @@ private:
     public:
     template <class T>
     void calculate(size_t size,T*data,CDFType type,double dfNodataValue, bool hasNodataValue){
-    T _min=(T)0.0f,_max=(T)1.0f;
+    T _min=(T)NAN,_max=(T)NAN;
     double _sum=0,_sumsquared=0;
-    size_t numSamples=0;
+    numSamples=0;
     T maxInf=(T)INFINITY;
     T minInf=(T)-INFINITY;
     
@@ -163,12 +163,14 @@ private:
      template <class T>
       void calcMinMax(size_t size,std::vector <DataObject *> *dataObject);
       double min,max,avg,stddev;
+      size_t numSamples;
     public:
       Statistics(){
         min=0;
         max=0;
         avg=0;
         stddev=0;
+        numSamples=0;
       }
       double getMinimum();
       double getMaximum();
@@ -176,6 +178,7 @@ private:
       double getAverage();
       void setMinimum(double min);
       void setMaximum(double max);
+      size_t getNumSamples(){return numSamples;};
       int calculate(CDataSource *dataSource);
   };
   

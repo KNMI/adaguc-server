@@ -105,7 +105,7 @@ class CGDALDataWriter: public CBaseDataWriterInterface{
       InputProducts=NULL;
     }
     ~CGDALDataWriter(){
-      if(InputProducts!=NULL)delete[] InputProducts;InputProducts=NULL;
+      if(InputProducts!=NULL){delete[] InputProducts;};InputProducts=NULL;
     }
     // Virtual functions
     int init(CServerParams *srvParam,CDataSource *dataSource, int nrOfBands);

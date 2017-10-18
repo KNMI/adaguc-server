@@ -55,7 +55,7 @@ namespace CT{
     printf("string(string const &f);\n");
     #endif
 
-    if(&f==NULL){init();return;}
+    // if((&f)==NULL){init();return;}
     init();copy(f.useStack?f.stackValue:f.heapValue,f.privatelength);
   }
  
@@ -67,7 +67,7 @@ namespace CT{
     #ifdef CTYPES_DEBUG
     printf("string::operator= (string const& f);\n");
     #endif
-    if(&f==NULL){init();return *this;}
+    // if((&f)==NULL){init();return *this;}
     if (this == &f) return *this;  
     _Free();init();copy(f.useStack?f.stackValue:f.heapValue,f.privatelength);
     return *this;
@@ -77,7 +77,7 @@ namespace CT{
     #ifdef CTYPES_DEBUG
     printf("string::operator= (const char*const &f)\n");
     #endif
-    if(&f==NULL){init();return *this;}
+    // if((&f)==NULL){init();return *this;}
     _Free();init();this->copy(f);
     return *this;
   }      

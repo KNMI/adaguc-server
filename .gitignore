@@ -37,3 +37,9 @@ adagucserverEC/geojsondump
 adagucserverEC/h5ncdump
 bin/*
 
+#Python pyc files
+*.pyc
+
+#Test results
+tests/log
+tests/tmp
