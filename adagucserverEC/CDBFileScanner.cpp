@@ -31,7 +31,7 @@
 #include <set>
 const char *CDBFileScanner::className="CDBFileScanner";
 std::vector <CT::string> CDBFileScanner::tableNamesDone;
-// #define CDBFILESCANNER_DEBUG
+//#define CDBFILESCANNER_DEBUG
 #define ISO8601TIME_LEN 32
 
 #define CDBFILESCANNER_TILECREATIONFAILED -100
@@ -60,7 +60,7 @@ void CDBFileScanner::markTableDirty(CT::string *tableName){
  * 
  * @return Positive on error, zero on succes, negative on skip.
  */
-int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource,int &removeNonExistingFiles,CDirReader *dirReader){
+int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource,int &removeNonExistingFiles,CDirReader *dirReader, bool recreateTables){
   #ifdef CDBFILESCANNER_DEBUG
   CDBDebug("createDBUpdateTables");
   #endif
@@ -114,7 +114,12 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource,int &removeNonE
     CDataReader::DimensionType dtype = CDataReader::getDimensionType(cdfObject,dimName.c_str());
     if(dtype==CDataReader::dtype_none){
       CDBWarning("dtype_none %d for  %s",dtype,dimName.c_str());
+      if ( CDataReader::addBlankDimVariable(cdfObject, dimName.c_str()) != NULL){
+        dtype=CDataReader::dtype_normal;
+      }
+
     }
+
 
     
     bool isTimeDim = false;
@@ -148,13 +153,19 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource,int &removeNonE
     //Check whether we already did this table in this scan
     bool skip = isTableAlreadyScanned(&tableName);
     if(skip==false){
+    
       #ifdef CDBFILESCANNER_DEBUG
       CDBDebug("CreateDBUpdateTables: Updating dimension '%s' with table '%s' %d",dimName.c_str(),tableName.c_str(),isTimeDim);
       #endif
       
-      //Create column names
       
-
+      //Drop table if set 
+      if (recreateTables) {
+        CDBDebug("Recreating table: Now dropping table %s", tableName.c_str());
+        status = dbAdapter->dropTable(tableName.c_str());
+      }
+      
+      //Create column names
           
       if(isTimeDim==true){
         tableType = TABLETYPE_TIMESTAMP;
@@ -289,6 +300,7 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource,int &removeNonE
 
 int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFiles,CDirReader *dirReader,int scanFlags){
 //  CDBDebug("DBLoopFiles");
+  bool verbose = false;
   CT::string query;
   CDFObject *cdfObject = NULL;
   int status = 0;
@@ -364,6 +376,11 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
       skipDim[d] = isTableAlreadyScanned(&tableNames[d]);
       if(skipDim[d]){
         CDBDebug("Skipping dimension '%s' with table '%s': already scanned.",dimNames[d].c_str(),tableNames[d].c_str());
+      }else{
+        if(dataSource->cfgLayer->TileSettings.size() == 0){
+          CDBDebug("Marking table done for dim '%s' with table '%s'.",dimNames[d].c_str(),tableNames[d].c_str());
+          tableNamesDone.push_back(tableNames[d]);
+        }
       }
     }
 
@@ -449,7 +466,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
         
         
         
-      for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
+      for(size_t d=0;d<dataSource->cfgLayer->Dimension.size() && skipDim[d] == false;d++){
         multiInsertCache = "";
         if(skipDim[d] == false){
           
@@ -483,7 +500,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
                 CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->removeDimensionInfoForLayerTableAndLayerName(tableNames[d].c_str(),dataSource->getLayerName());
                 
                 CDBDebug("Creating autoConfigureDimensions");
-                status = createDBUpdateTables(dataSource,removeNonExistingFiles,dirReader);
+                status = createDBUpdateTables(dataSource,removeNonExistingFiles,dirReader, false);
                 if(status > 0 ){
                   CDBError("Exception at createDBUpdateTables");
                   throw(__LINE__);
@@ -515,7 +532,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
               
         
               if(d==0){
-                CDBDebug("Adding: %d/%d %s\t %s",
+                if(verbose)CDBDebug("Adding: %d/%d %s\t %s",
                 (int)j,
                 (int)dirReader->fileList.size(),
                 dimensionTextList.c_str(),
@@ -825,11 +842,13 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
         
         
       }
+       //End of dimloop, start inserting our collected records in one statement
+      if(j%50==0)dbAdapter->addFilesToDataBase();
     }
-    
-    //End of dimloop, start inserting our collected records in one statement
-    CDBDebug("Adding files to database");
+      
+       //End of dimloop, start inserting our collected records in one statement
     dbAdapter->addFilesToDataBase();
+   
     
     if(removeNonExistingFiles == 1){
       //Now delete files in the database a which are not on file system
@@ -974,7 +993,7 @@ int CDBFileScanner::updatedb( CDataSource *dataSource,CT::string *_tailPath,CT::
 
   try{ 
     //First check and create all tables... returns zero on success, positive on error, negative on already done.
-    status = createDBUpdateTables(dataSource,removeNonExistingFiles,&dirReader);
+    status = createDBUpdateTables(dataSource,removeNonExistingFiles,&dirReader,scanFlags&CDBFILESCANNER_RECREATETABLES);
     if(status > 0 ){
 
       throw(__LINE__);
@@ -1035,6 +1054,7 @@ int CDBFileScanner::searchFileNames(CDirReader *dirReader,const char * path,CT::
   }
   if(filePath.lastIndexOf(".nc")==int(filePath.length()-3)||filePath.lastIndexOf(".h5")==int(filePath.length()-3)||
      filePath.lastIndexOf(".json")==int(filePath.length()-5)||
+     filePath.lastIndexOf(".png")==int(filePath.length()-4)||
      filePath.lastIndexOf(".geojson")==int(filePath.length()-8)||filePath.indexOf("http://")==0||filePath.indexOf("https://")==0||filePath.indexOf("dodsc://")==0){
     //Add single file or opendap URL.
     CFileObject * fileObject = new CFileObject();
@@ -1078,6 +1098,7 @@ int CDBFileScanner::searchFileNames(CDirReader *dirReader,const char * path,CT::
 
 int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
   CDBDebug("createTiles");
+  //bool verbose=false;
               
   if(dataSource->cfgLayer->TileSettings.size() != 1){
     CDBDebug("TileSettings is not set for this layer");
@@ -1127,11 +1148,17 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
   if(ts->attr.tileheightpx.empty()){CDBError("tileheightpx not defined");configErrors++;}
   if(ts->attr.tilecellsizex.empty()){CDBError("tilecellsizex not defined");configErrors++;}
   if(ts->attr.tilecellsizey.empty()){CDBError("tilecellsizey not defined");configErrors++;}
-  if(ts->attr.left.empty()){CDBError("left not defined");configErrors++;}
-  if(ts->attr.bottom.empty()){CDBError("bottom not defined");configErrors++;}
-  if(ts->attr.right.empty()){CDBError("right not defined");configErrors++;}
-  if(ts->attr.top.empty()){CDBError("top not defined");configErrors++;}
   
+  bool autoTileExtent = false;
+  if(ts->attr.left.empty() && ts->attr.bottom.empty() && ts->attr.right.empty() && ts->attr.top.empty()){
+    autoTileExtent = true;
+  }else{
+    if(ts->attr.left.empty()){CDBError("left not defined");configErrors++;}
+    if(ts->attr.bottom.empty()){CDBError("bottom not defined");configErrors++;}
+    if(ts->attr.right.empty()){CDBError("right not defined");configErrors++;}
+    if(ts->attr.top.empty()){CDBError("top not defined");configErrors++;}
+  }
+
   if(configErrors!=0){return 1;}
   
   CT::string tilemode      = ts->attr.tilemode;
@@ -1141,11 +1168,47 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
   
   double tilecellsizex  = ts->attr.tilecellsizex.toDouble();
   double tilecellsizey  = ts->attr.tilecellsizey.toDouble();
+   
+  CT::string tileprojection = dataSource->nativeProj4;
+  
+  if(ts->attr.tileprojection.empty()==false){
+    tileprojection = ts->attr.tileprojection;
+  }
   
   double tilesetstartx  = ts->attr.left.toDouble();
   double tilesetstarty  = ts->attr.bottom.toDouble();
   double tilesetstopx   = ts->attr.right.toDouble();
   double tilesetstopy   = ts->attr.top.toDouble();
+  
+  if(autoTileExtent == true){
+    CImageWarper warper;
+    CDBDebug("Start determinining tileextent");
+    CGeoParams sourceGeo;
+//     sourceGeo.dWidth = dataSource->dWidth;
+//     sourceGeo.dHeight = dataSource->dHeight;
+//     sourceGeo.dfBBOX[0] = dataSource->dfBBOX[0];
+//     sourceGeo.dfBBOX[1] = dataSource->dfBBOX[1];
+//     sourceGeo.dfBBOX[2] = dataSource->dfBBOX[2];
+//     sourceGeo.dfBBOX[3] = dataSource->dfBBOX[3];
+//     sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
+//     sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
+    sourceGeo.CRS = tileprojection;
+      
+    int status = warper.initreproj(dataSource,&sourceGeo,&dataSource->srvParams->cfg->Projection);
+    if(status != 0){
+      CDBError("Unable to initialize projection");
+      return 1;
+    }
+    double dfBBOX[4];
+    warper.findExtent(dataSource,dfBBOX);
+    
+    CDBDebug("Found TILEEXTENT BBOX [%f, %f, %f, %f]", dfBBOX[0],dfBBOX[1],dfBBOX[2],dfBBOX[3]);
+    tilesetstartx  = dfBBOX[0];
+    tilesetstarty  = dfBBOX[1];
+    tilesetstopx   = dfBBOX[2];
+    tilesetstopy   = dfBBOX[3];
+ 
+  }
   
   double tileBBOXWidth  = fabs(tilecellsizex*double(tilewidthpx));
   double tileBBOXHeight = fabs(tilecellsizey*double(tileheightpx));
@@ -1155,12 +1218,7 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
   CDBDebug("tileBBOXWH         : [%f,%f]",tileBBOXWidth,tileBBOXHeight);
   CDBDebug("tileWH             : [%d,%d]",tilewidthpx,tileheightpx);
   
-  
-  CT::string tileprojection = dataSource->nativeProj4;
-  
-   if(ts->attr.tileprojection.empty()==false){
-     tileprojection = ts->attr.tileprojection;
-   }
+ 
   
 //   double tileBBOXWidth = fabs(dataSource->dfCellSizeX*double(tilewidth));
 //   double tileBBOXHeight =  fabs(dataSource->dfCellSizeY*double(tileheight));
@@ -1278,14 +1336,15 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
         int maxlevel            = ts->attr.maxlevel.toInt();
         for(int level = minlevel;level<maxlevel+1;level++){
           int numFound = 0;
-          int numCreated=0;
+          int numCreated = 0;
+        
           //CDBDebug("Tiling level %d",level);
           int levelInc = pow(2,level-1);
           //CDBDebug("Tiling levelInc %d",levelInc);
           for(int y=0;y<nrTilesY;y=y+levelInc){
             
             for(int x=0;x<nrTilesX;x=x+levelInc){
-              
+              int tilesCreated = 0;
               CDataSource ds;
               CServerParams newSrvParams;
               newSrvParams.cfg=dataSource->srvParams->cfg;
@@ -1442,14 +1501,22 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
                           }
                           
 
-                          CDBDebug("Making tile for [%f,%f,%f,%f] with WH [%d,%d]",dfMinX,dfMinY,dfMaxX,dfMaxY,newSrvParams.Geo->dWidth,newSrvParams.Geo->dHeight);
+                          //if(verbose)
+                          {
+                            CDBDebug("Checking tile for [%f,%f,%f,%f] with WH [%d,%d]",dfMinX,dfMinY,dfMaxX,dfMaxY,newSrvParams.Geo->dWidth,newSrvParams.Geo->dHeight);
+                          }
                           #ifdef CDBFILESCANNER_DEBUG
                           CDBDebug("wcswriter init");
                           #endif
                           status = wcsWriter->init(&newSrvParams,&ds,ds.getNumTimeSteps());if(status!=0){throw(__LINE__);};
                           std::vector <CDataSource*> dataSources;
+                          ds.varX->freeData();
+                          ds.varY->freeData();
+    
                           dataSources.push_back(&ds);
-                          int wcsstatus = 0;
+                          int numFailedWarps = 0;
+                          int numDoneWarps = 0;
+                          
                           for(size_t k=0;k<(size_t)dataSources[0]->getNumTimeSteps();k++){
                             for(size_t d=0;d<dataSources.size();d++){
                               dataSources[d]->setTimeStep(k);
@@ -1457,14 +1524,20 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
                             #ifdef CDBFILESCANNER_DEBUG
                             CDBDebug("wcswriter adddata");
                             #endif
-                            status = wcsWriter->addData(dataSources);if(status!=0){wcsstatus++;};
+                            numDoneWarps++;
+                            status = wcsWriter->addData(dataSources);if(status!=0){numFailedWarps++;};
                             #ifdef CDBFILESCANNER_DEBUG
                             CDBDebug("wcswriter adddata done");
                             #endif
                           }
                           
-                          status = wcsWriter->writeFile(fileNameToWrite.c_str(),level);if(status!=0){throw(__LINE__);};
-                          updatedb(dataSources[0],&fileNameToWrite,NULL,CDBFILESCANNER_DONTREMOVEDATAFROMDB|CDBFILESCANNER_UPDATEDB|CDBFILESCANNER_IGNOREFILTER);
+                          if(numDoneWarps != numFailedWarps){
+                            status = wcsWriter->writeFile(fileNameToWrite.c_str(),level,false);if(status!=0){throw(__LINE__);};
+                            updatedb(dataSources[0],&fileNameToWrite,NULL,CDBFILESCANNER_DONTREMOVEDATAFROMDB|CDBFILESCANNER_UPDATEDB|CDBFILESCANNER_IGNOREFILTER);
+                            tilesCreated++;
+                          }else{
+                            status = 0;
+                          }
                   
                           
                           for(size_t d=0;d<dataSources.size();d++){
@@ -1495,6 +1568,7 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
                       delete wcsWriter;
                       
                       if(status!=0){
+                        CDBError("Status is nonzero");
                         delete store;store=NULL;
                         return 1;
                       }
@@ -1514,9 +1588,11 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
                 
                 delete store;store=NULL;
               }
-              if(numCreated !=0){
+              if(tilesCreated > 0){
                   
-                CDBDebug("**** Scanning tile dimnr %d/%d dimval %d/%d: Level %d/%d, Percentage done for this level: %.1f ***",dd,dataSource->requiredDims.size(),ddd,dataSource->requiredDims[dd]->uniqueValues.size(),level,maxlevel,(float(x+y*nrTilesX)/float(nrTilesY*nrTilesX))*100);          
+                CDBDebug("**** Percentage done for level: %.1f. Scanning tile dimnr %d/%d dimval %d/%d: Level %d/%d,  ***",
+                         (float(x+y*nrTilesX)/float(nrTilesY*nrTilesX))*100,
+                         dd,dataSource->requiredDims.size(),ddd,dataSource->requiredDims[dd]->uniqueValues.size(),level,maxlevel);          
               }
             }
           }

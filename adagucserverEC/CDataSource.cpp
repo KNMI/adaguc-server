@@ -299,7 +299,7 @@ CDataSource::~CDataSource(){
     timeSteps[j]=NULL;
   }
   for(size_t j=0;j<requiredDims.size();j++)delete requiredDims[j];
-  if(statistics!=NULL)delete statistics;statistics=NULL;
+  if(statistics!=NULL){delete statistics;};statistics=NULL;
   
   if(_styles != NULL){
     delete _styles;
@@ -742,7 +742,7 @@ CT::PointerList<CT::string*> *CDataSource::getRenderMethodListForDataSource(CDat
       }
     }
   }
-  CDBDebug("RendermethodListString = %s",renderMethodList.c_str());
+//   CDBDebug("RendermethodListString = %s",renderMethodList.c_str());
   //If still no list of rendermethods is found, use the default list
   if(renderMethodList.length()==0){
     renderMethodList.copy("nearest");

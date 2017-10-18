@@ -250,11 +250,12 @@ int CRequest::setConfigFile(const char *pszConfigFile){
 
 
 int CRequest::process_wms_getmetadata_request(){
-  if(srvParam->WMSLayers!=NULL)
+  if(srvParam->WMSLayers!=NULL) {
     for(size_t j=0;j<srvParam->WMSLayers->count;j++){
       CDBDebug("WMS GETMETADATA %s",srvParam->WMSLayers[j].c_str());
     }
-    return process_all_layers();
+  }
+  return process_all_layers();
 }
 
 int CRequest::generateGetReferenceTimesDoc(CT::string *result,CDataSource *dataSource){
@@ -1303,7 +1304,11 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
         dataSource->nativeViewPortBBOX[3]=nativeViewPortBBOX[3]+levelXBBOXHeight;
         
         //CDBDebug(" dataSource->nativeViewPortBBOX: [%f,%f,%f,%f]", dataSource->nativeViewPortBBOX[0], dataSource->nativeViewPortBBOX[1], dataSource->nativeViewPortBBOX[2], dataSource->nativeViewPortBBOX[3]);
-        store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource,300);
+        int maxTilesInImage = 300;
+        if( !dataSource->cfgLayer->TileSettings[0]->attr.maxtilesinimage.empty() ){
+          maxTilesInImage = dataSource->cfgLayer->TileSettings[0]->attr.maxtilesinimage.toInt();
+        }
+        store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource,maxTilesInImage);
         if(store == NULL){
           CDBError("Unable to query bbox for tiles");
           return 1;
@@ -1311,9 +1316,9 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
         
         if(store->getSize() == 0){
           delete store;
-          dataSource->queryLevel=0;
-          dataSource->queryBBOX=false;
-          store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource,300);
+          dataSource->queryLevel=1;
+          dataSource->queryBBOX=true;
+          store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource,maxTilesInImage);
           if(store == NULL){
             CDBError("Unable to query bbox for tiles");
             return 1;
@@ -1352,7 +1357,14 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
       dataSource->nativeViewPortBBOX[2] = 666176;
       dataSource->nativeViewPortBBOX[3] =  9.24119e+06;
       dataSource->queryLevel = 0;*/
-      store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource,512);
+      int maxQueryResultLimit = 512;
+      if (srvParam->cfg->DataBase.size() == 1 && srvParam->cfg->DataBase[0]->attr.maxquerylimit.empty() == false) {
+        maxQueryResultLimit = srvParam->cfg->DataBase[0]->attr.maxquerylimit.toInt();
+        CDBDebug("Using maxquerylimit %d", maxQueryResultLimit);
+      } else {
+        CDBDebug("Using default maxquerylimit %d", maxQueryResultLimit);
+      }
+      store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource,maxQueryResultLimit);
     }
   
    
@@ -2513,28 +2525,27 @@ int CRequest::process_querystring(){
       
       //WMS Layers parameter
       if(value0Cap.equals("LAYERS")){
-        if(srvParam->WMSLayers!=NULL)
+        if(srvParam->WMSLayers!=NULL){
           delete[] srvParam->WMSLayers;
-          srvParam->WMSLayers = values[1].splitToArray(",");
+        }
+        srvParam->WMSLayers = values[1].splitToArray(",");
         dFound_WMSLAYERS=1;
       }
       //WMS Layer parameter
       if(value0Cap.equals("LAYER")){
-        if(srvParam->WMSLayers!=NULL)
+        if(srvParam->WMSLayers!=NULL){
           delete[] srvParam->WMSLayers;
-          srvParam->WMSLayers = values[1].splitToArray(",");
+        }
+        srvParam->WMSLayers = values[1].splitToArray(",");
         dFound_WMSLAYER=1;
       }
 
     //WMS Layer parameter
       if(value0Cap.equals("QUERY_LAYERS")){
-        if(srvParam->WMSLayers!=NULL)
+        if(srvParam->WMSLayers!=NULL){
           delete[] srvParam->WMSLayers;
-          srvParam->WMSLayers = values[1].splitToArray(",");
-          /*if(srvParam->WMSLayers->count>1){
-            CDBError("Too many layers in request");
-            dErrorOccured=1;
-          }*/
+        }
+        srvParam->WMSLayers = values[1].splitToArray(",");
         dFound_WMSLAYER=1;
     }
       //WCS Coverage parameter

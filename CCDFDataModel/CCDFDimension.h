@@ -33,6 +33,13 @@ namespace CDF{
       Dimension(){
         isIterative=false;
         length=0;
+        id=-1;
+      }
+      Dimension(const char *_name, size_t _length){
+        isIterative=false;
+        length=_length;
+        name.copy(_name);
+        id =-1;
       }
       CT::string name;
       size_t length;
@@ -46,6 +53,9 @@ namespace CDF{
       }
       void setName(const char *value){
         name.copy(value);
+      }
+      CT::string getName(){
+        return name;
       }
       //Returns a new copy of this dimension
       Dimension *clone(){

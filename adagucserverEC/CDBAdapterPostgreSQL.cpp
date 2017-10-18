@@ -28,7 +28,7 @@
 #include "CDebugger.h"
 
 const char *CDBAdapterPostgreSQL::className="CDBAdapterPostgreSQL";
-
+#define CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP "pathfiltertablelookup_v2_0_23"
 // #define CDBAdapterPostgreSQL_DEBUG
 // 
 // #define MEASURETIME
@@ -77,8 +77,9 @@ CDBStore::Store *CDBAdapterPostgreSQL::getMax(const char *name,const char *table
   CPGSQLDB * DB = getDataBaseConnection(); if(DB == NULL){return NULL;  }
   
   CT::string query;
-  
+  // CREATE INDEX MAXINDEX ON t20171017t085357097_iwna17kzcgyvrvr183as (none)
   query.print("select max(%s) from %s",name,table);
+  // query.print("SELECT %s FROM %s ORDER BY %s DESC LIMIT 1",name, table,name);
   CDBStore::Store *maxStore = DB->queryToStore(query.c_str());
   if(maxStore == NULL){
     setExceptionType(InvalidDimensionValue);
@@ -256,12 +257,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesForIndices(CDataSource *dataSourc
   #ifdef CDBAdapterPostgreSQL_DEBUG
   CDBDebug("%s",queryOrderedDESC.c_str());
   #endif
-  //writeLogFile3(queryOrderedDESC.c_str());
-  //writeLogFile3("\n");
-  //queryOrderedDESC.concat(" limit 40");
-
-
-  
+    
   query.print("select distinct * from (%s)T order by ",queryOrderedDESC.c_str());
   query.concat(&dataSource->requiredDims[0]->netCDFDimName);
   for(size_t i=1;i<dataSource->requiredDims.size();i++){
@@ -430,10 +426,11 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
       }
       if(dataSource->queryBBOX){
         
-        subQuery.printconcat("level = %d and minx >= %f and maxx <= %f and miny >= %f and maxy <= %f ",dataSource->queryLevel,dataSource->nativeViewPortBBOX[0],dataSource->nativeViewPortBBOX[2],dataSource->nativeViewPortBBOX[1],dataSource->nativeViewPortBBOX[3]);
+        subQuery.printconcat("adaguctilinglevel = %d and minx >= %f and maxx <= %f and miny >= %f and maxy <= %f ",dataSource->queryLevel,dataSource->nativeViewPortBBOX[0],dataSource->nativeViewPortBBOX[2],dataSource->nativeViewPortBBOX[1],dataSource->nativeViewPortBBOX[3]);
        
-      }else{
-         subQuery.printconcat("level = %d ",dataSource->queryLevel);
+      }
+      else{
+         subQuery.printconcat("adaguctilinglevel != %d ",-1);
       }
       subQuery.printconcat("ORDER BY %s DESC limit %d)a%d ",netCDFDimName.c_str(),limit,i);
       //subQuery.printconcat("ORDER BY %s DESC )a%d ",netCDFDimName.c_str(),i);
@@ -444,7 +441,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     if(i<dataSource->requiredDims.size()-1)subQuery.concat(",");
     queryOrderedDESC.concat(&subQuery);
   }
-  
+//  CDBDebug("%s",queryOrderedDESC.c_str());
   #ifdef CDBAdapterPostgreSQL_DEBUG
   CDBDebug("%s",queryOrderedDESC.c_str());
   #endif
@@ -458,9 +455,6 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   #ifdef CDBAdapterPostgreSQL_DEBUG
   CDBDebug("%s",queryOrderedDESC.c_str());
   #endif
-  //writeLogFile3(queryOrderedDESC.c_str());
-  //writeLogFile3("\n");
-  //queryOrderedDESC.concat(" limit 40");
 
   if(timeValidationError==true){
     if((CServerParams::checkDataRestriction()&SHOW_QUERYINFO)==false)queryOrderedDESC.copy("hidden");
@@ -672,7 +666,7 @@ CT::string CDBAdapterPostgreSQL::getTableNameForPathFilterAndDimension(const cha
   
 // CDBDebug("lookupTableName %s",identifier.c_str());
   
-  CT::string lookupTableName = "pathfiltertablelookup";
+  CT::string lookupTableName = CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP;
   
   //TODO CRUCIAL setting for fast perfomance on large datasets, add Unique to enable building fast lookup indexes.
   CT::string tableColumns("path varchar (511), filter varchar (511), dimension varchar (511), tablename varchar (63), UNIQUE (path,filter,dimension) ");
@@ -855,7 +849,7 @@ int CDBAdapterPostgreSQL::createDimTableOfType(const char *dimname,const char *t
   tableColumns.printconcat(", filedate timestamp");
   
   // New since 2016-02-15 projection information and level
-   tableColumns.printconcat(", level int");
+   tableColumns.printconcat(", adaguctilinglevel int");
    //tableColumns.printconcat(", crs varchar (511)");
    tableColumns.printconcat(", minx real, miny real, maxx real, maxy real");
    tableColumns.printconcat(", startx int, starty int, countx int, county int");
@@ -868,6 +862,24 @@ int CDBAdapterPostgreSQL::createDimTableOfType(const char *dimname,const char *t
   #ifdef MEASURETIME
   StopWatch_Stop("<CDBAdapterPostgreSQL::createDimTableOfType");
   #endif
+  if (status == 2) {
+    CDBDebug("New table created: Set indexes");
+    CT::string query;
+    int status = 0;
+    /* Create index on dimension */
+    query.print("CREATE INDEX INDEXFOR%s on %s (%s)", dimname, tablename, dimname); status = dataBaseConnection->query(query.c_str()); if(status!=0) { CDBError("Unable to create index [%s]", query.c_str());throw(__LINE__); }
+    
+//     /* Create index on filepath */
+//     query.print("CREATE INDEX INDEXFOR%s on %s (%s)", "path", tablename, "path"); status = dataBaseConnection->query(query.c_str()); if(status!=0) { CDBError("Unable to create index [%s]", query.c_str());throw(__LINE__); }
+//     
+//     /* Create index on minx etc */
+//     query.print("CREATE INDEX INDEXFOR%s on %s (%s)", "minx", tablename, "minx"); status = dataBaseConnection->query(query.c_str()); if(status!=0) { CDBError("Unable to create index [%s]", query.c_str());throw(__LINE__); }
+//     query.print("CREATE INDEX INDEXFOR%s on %s (%s)", "miny", tablename, "miny"); status = dataBaseConnection->query(query.c_str()); if(status!=0) { CDBError("Unable to create index [%s]", query.c_str());throw(__LINE__); }
+//     query.print("CREATE INDEX INDEXFOR%s on %s (%s)", "maxx", tablename, "maxx"); status = dataBaseConnection->query(query.c_str()); if(status!=0) { CDBError("Unable to create index [%s]", query.c_str());throw(__LINE__); }
+//     query.print("CREATE INDEX INDEXFOR%s on %s (%s)", "maxy", tablename, "maxy"); status = dataBaseConnection->query(query.c_str()); if(status!=0) { CDBError("Unable to create index [%s]", query.c_str());throw(__LINE__); }
+//     query.print("CREATE INDEX INDEXFOR%s on %s (%s)", "adaguctilinglevel", tablename, "adaguctilinglevel"); status = dataBaseConnection->query(query.c_str()); if(status!=0) { CDBError("Unable to create index [%s]", query.c_str());throw(__LINE__); }
+    
+  }
   return status;
   
 }
@@ -1000,21 +1012,24 @@ int CDBAdapterPostgreSQL::addFilesToDataBase(){
       #ifdef CDBAdapterPostgreSQL_DEBUG
     CDBDebug("Updating table %s with %d records",it->first.c_str(),(it->second.size()));
 #endif
+    size_t maxIters = 50;
     if(it->second.size()>0){
-      
-      multiInsert.print("INSERT into %s VALUES ",it->first.c_str());
-      for(size_t j=0;j<it->second.size();j++){
-        if(j>0)multiInsert.concat(",");
-        multiInsert.concat(it->second[j].c_str());
-      }
-      int status =  dataBaseConnection->query(multiInsert.c_str()); 
-      if(status!=0){
-        CDBError("Query failed [%s]:",dataBaseConnection->getError());
-        throw(__LINE__);
-      }
-  #ifdef CDBAdapterPostgreSQL_DEBUG      
-      CDBDebug("/Inserting %d bytes",multiInsert.length());
-#endif
+      size_t rowNumber = 0;
+      do{
+        multiInsert.print("INSERT into %s VALUES ",it->first.c_str());
+        for(size_t j=0;j<maxIters;j++){
+          if(j>0)multiInsert.concat(",");
+          multiInsert.concat(it->second[rowNumber].c_str());
+          rowNumber++;
+          if(rowNumber>=it->second.size())break;
+        }
+        // CDBDebug("Inserting %d bytes ",multiInsert.length());
+        int status =  dataBaseConnection->query(multiInsert.c_str()); 
+        if(status!=0){
+          CDBError("Query failed [%s]:",dataBaseConnection->getError());
+          throw(__LINE__);
+        }
+      }while(rowNumber<it->second.size());
     }
     it->second.clear();
   }

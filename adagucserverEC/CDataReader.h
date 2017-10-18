@@ -59,9 +59,12 @@ class CDataReader{
  
 
     int open(CDataSource *dataSource,int mode,int x,int y);
+    int openExtent(CDataSource *dataSource,int mode,int *gridExtent);
+    int open(CDataSource *dataSource,int mode,int x,int y, int *gridExtent);
     int open(CDataSource *dataSource, int x,int y);
     int open(CDataSource *dataSource, int mode);
-    int parseDimensions(CDataSource *dataSource,int mode,int x,int y);
+    int open(CDataSource *dataSource, int mode, int *gridExtent);
+    int parseDimensions(CDataSource *dataSource,int mode,int x,int y, int *gridExtent);
     
     int close(){return 0;};
 
@@ -135,6 +138,8 @@ class CDataReader{
      * @return NULL if not found, or the CDF::Dimension matching the query
      */
     static CDF::Variable* getDimensionVariableByType(CDF::Variable *var,CDataReader::DimensionType dimensionType);
+    
+    static CDF::Variable *addBlankDimVariable(CDFObject* cdfObject, const char *dimName);
 };
 
 #endif

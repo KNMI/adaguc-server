@@ -455,14 +455,19 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
         CDBError("Invalid month: %s",szMonth);
         return 1; 
       }
+                            //012345678901234
+      strncpy(pszADAGUCTime, "20000101T000000", 15);
+        
       snprintf(szMonth,3,"%02d\n",M);
       strncpy(pszADAGUCTime,pszRadarTime+7,4);
       strncpy(pszADAGUCTime+4,szMonth,2);
       strncpy(pszADAGUCTime+6,pszRadarTime,2);
       strncpy(pszADAGUCTime+8,"T",1);
-      strncpy(pszADAGUCTime+9,pszRadarTime+12,2);
-      strncpy(pszADAGUCTime+11,pszRadarTime+15,2);
-      strncpy(pszADAGUCTime+13,pszRadarTime+18,2);
+      strncpy(pszADAGUCTime+9,pszRadarTime+12,2);//Hours
+      strncpy(pszADAGUCTime+11,pszRadarTime+15,2);//Minutes
+//       if(strlen(pszRadarTime) > 15 ) {
+//         strncpy(pszADAGUCTime+13,pszRadarTime+18,2);
+//       }
       pszADAGUCTime[15]='\0';
       //CDBDebug("%s --> %s",pszRadarTime,pszADAGUCTime);
       return 0;
@@ -477,6 +482,8 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
     }
     
     int convertNWCSAFtoCF();
+    
+    int convertLSASAFtoCF();
     
     int convertKNMIHDF5toCF(){
       
@@ -1001,6 +1008,8 @@ CDBDebug("convertKNMIHDF5toCF()");
         int status = convertKNMIHDF5toCF();
         if(status == 1)return 1;
         status = convertNWCSAFtoCF();
+        if(status == 1)return 1;
+        status = convertLSASAFtoCF();
         if(status == 1)return 1;
       }
       fileIsOpen=true;

@@ -104,9 +104,11 @@ class GenericDataWarper{
   }
    
    
-  static int findPixelExtent(int *PXExtentBasedOnSource,CGeoParams*sourceGeoParams,CGeoParams*destGeoParams,CImageWarper*warper);
+  
    
   public:
+    static int findPixelExtent(int *PXExtentBasedOnSource,CGeoParams*sourceGeoParams,CGeoParams*destGeoParams,CImageWarper*warper);
+    
   template <class T>
   static int render(CImageWarper *warper,void *sourceData,CGeoParams*sourceGeoParams,CGeoParams*destGeoParams,void *drawFunctionSettings,void (*drawFunction)(int ,int,T,void *drawFunctionSettings)){
         
@@ -196,7 +198,7 @@ class GenericDataWarper{
     PXExtentBasedOnSource[2]=sourceDataWidth;
     PXExtentBasedOnSource[3]=sourceDataHeight;
     
-    bool tryToFindExtend = true;
+    bool tryToFindExtend = false;
     
     
     if(tryToFindExtend){

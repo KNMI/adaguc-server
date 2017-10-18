@@ -1,3 +1,4 @@
+
 /******************************************************************************
  * 
  * Project:  Helper classes
@@ -143,20 +144,18 @@ void CXMLParser::XMLElement::parse_element_names(void *_a_node,int depth){
   for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
     if (cur_node->type == XML_ELEMENT_NODE) {
       char *content=NULL;
-      if(cur_node->children!=NULL)
-        if(cur_node->children->content!=NULL)
-          if(cur_node->children->type==XML_TEXT_NODE)
-            content=(char*)cur_node->children->content;
-          {
-            XMLElement child;
-            child.name=(char*)cur_node->name;
-            child.value=(char*)content;
-            child.parse_element_names(cur_node->children,depth+1);
-            if(cur_node->properties!=NULL){
-              child.parse_element_attributes(cur_node->properties);
-            }
-            xmlElements.push_back(child);
-          }
+      if(cur_node->children!=NULL && cur_node->children->content!=NULL && cur_node->children->type==XML_TEXT_NODE){
+        content=(char*)cur_node->children->content;
+      }
+          
+      XMLElement child;
+      child.name=(char*)cur_node->name;
+      child.value=(char*)content;
+      child.parse_element_names(cur_node->children,depth+1);
+      if(cur_node->properties!=NULL){
+        child.parse_element_attributes(cur_node->properties);
+      }
+      xmlElements.push_back(child);
     }
   }
 }
@@ -192,7 +191,7 @@ CT::string CXMLParser::XMLElement::toXML(XMLElement el,int depth){
     data+=el.getValue();
     data+= CT::string("</")+el.name+">\n";
   }else{
-    for(int i=0;i<depth;i++)data+="  ";data+= CT::string("</")+el.name+">\n";
+    for(int i=0;i<depth;i++){data+="  ";};data+= CT::string("</")+el.name+">\n";
   }
   return data;
 }

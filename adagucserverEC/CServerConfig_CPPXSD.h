@@ -27,6 +27,10 @@
 #define CServerConfig_H
 #include "CXMLSerializerInterface.h"
 
+// f 102 >15
+// F 70 > 15
+// 0 48 > 0
+#define CSERVER_HEXDIGIT_TO_DEC(DIGIT) (DIGIT>96?DIGIT-87:DIGIT>64?DIGIT-55:DIGIT-48) //Converts "9" to 9, "A" to 10 and "a" to 10
 
 class CServerConfig:public CXMLSerializerInterface{
   public:
@@ -51,11 +55,11 @@ class CServerConfig:public CXMLSerializerInterface{
           else if(equals("color",5,name)){//Hex color like: #A41D23
             if(value[0]=='#')if(strlen(value)==7||strlen(value)==9){
               
-              attr.red  =((value[1]>64)?value[1]-55:value[1]-48)*16+((value[2]>64)?value[2]-55:value[2]-48);
-              attr.green=((value[3]>64)?value[3]-55:value[3]-48)*16+((value[4]>64)?value[4]-55:value[4]-48);
-              attr.blue =((value[5]>64)?value[5]-55:value[5]-48)*16+((value[6]>64)?value[6]-55:value[6]-48);
+              attr.red  = CSERVER_HEXDIGIT_TO_DEC(value[1])*16+CSERVER_HEXDIGIT_TO_DEC(value[2]);
+              attr.green= CSERVER_HEXDIGIT_TO_DEC(value[3])*16+CSERVER_HEXDIGIT_TO_DEC(value[4]);
+              attr.blue = CSERVER_HEXDIGIT_TO_DEC(value[5])*16+CSERVER_HEXDIGIT_TO_DEC(value[6]);
               if(strlen(value)==9){
-                attr.alpha =((value[7]>64)?value[7]-55:value[7]-48)*16+((value[8]>64)?value[8]-55:value[8]-48);
+                attr.alpha = CSERVER_HEXDIGIT_TO_DEC(value[7])*16+CSERVER_HEXDIGIT_TO_DEC(value[8]);
               }
             }
             return;
@@ -467,6 +471,21 @@ class CServerConfig:public CXMLSerializerInterface{
     };
     
     class XMLE_RenderMethod: public CXMLObjectInterface{};
+    
+        
+    class XMLE_RenderSettings: public CXMLObjectInterface{
+      public:
+        class Cattr{
+          public:
+            CXMLString settings,width,height;
+        }attr;
+        void addAttribute(const char *name,const char *value){
+          if(equals("settings",8,name)){attr.settings.copy(value);return;}
+          else if(equals("width",5,name)){attr.width.copy(value);return;}
+          else if(equals("height",6,name)){attr.height.copy(value);return;}
+        }
+    };
+    
     class XMLE_Style: public CXMLObjectInterface{
       public:
         std::vector <XMLE_Thinning*> Thinning;
@@ -492,6 +511,9 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_LegendGraphic*> LegendGraphic;
         std::vector <XMLE_FeatureInterval*> FeatureInterval;
         std::vector <XMLE_Stippling*> Stippling;
+        std::vector <XMLE_RenderSettings*> RenderSettings;
+        
+        
         
         
         ~XMLE_Style(){
@@ -518,6 +540,7 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(LegendGraphic);
           XMLE_DELOBJ(FeatureInterval);
           XMLE_DELOBJ(Stippling);
+          XMLE_DELOBJ(RenderSettings);
           
         }
         class Cattr{
@@ -554,7 +577,7 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("LegendGraphic",13,name)){XMLE_ADDOBJ(LegendGraphic);}
             else if(equals("FeatureInterval",15,name)){XMLE_ADDOBJ(FeatureInterval);}
             else if(equals("Stippling",9,name)){XMLE_ADDOBJ(Stippling);}           
-           
+            else if(equals("RenderSettings",14,name)){XMLE_ADDOBJ(RenderSettings);}
           }
           if(pt2Class!=NULL){pt2Class->addElement(baseClass,rc-pt2Class->level,name,value);pt2Class=NULL;}
         }
@@ -622,14 +645,15 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString filter,gfi_openall;
+            CXMLString filter,gfi_openall,ncml;
         }attr;
         void addAttribute(const char *name,const char *value){
           if(equals("filter",6,name)){attr.filter.copy(value);return;}
           else if(equals("gfi_openall",11,name)){attr.gfi_openall.copy(value);return;}
+          else if(equals("ncml",4,name)){attr.ncml.copy(value);return;}
         }
     };
-    
+
     class XMLE_TileSettings: public CXMLObjectInterface{
       public:
         class Cattr{
@@ -643,7 +667,9 @@ class CServerConfig:public CXMLSerializerInterface{
             threads,
             debug,
             prefix,
-            readonly;
+            readonly,
+            optimizeextent,
+            maxtilesinimage;
         }attr;
 //           <TileSettings  tilewidth="600" 
 //                    tileheight="600" 
@@ -674,6 +700,9 @@ class CServerConfig:public CXMLSerializerInterface{
           else if(equals("minlevel",8,name)){attr.minlevel.copy(value);return;}
           else if(equals("maxlevel",8,name)){attr.maxlevel.copy(value);return;}
           else if(equals("tilepath",8,name)){attr.tilepath.copy(value);return;}
+          else if(equals("optimizeextent",14,name)){attr.optimizeextent.copy(value);return;}
+          else if(equals("maxtilesinimage",15,name)){attr.maxtilesinimage.copy(value);return;}
+          
         }
     };
     
@@ -752,11 +781,12 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString parameters,dbtype;
+            CXMLString parameters,dbtype,maxquerylimit;
         }attr;
         void addAttribute(const char *attrname,const char *attrvalue){
           if(equals("parameters",10,attrname)){attr.parameters.copy(attrvalue);return;}
-          if(equals("dbtype",6,attrname)){attr.dbtype.copy(attrvalue);return;}
+          else if(equals("dbtype",6,attrname)){attr.dbtype.copy(attrvalue);return;}
+          else if(equals("maxquerylimit",13,attrname)){attr.maxquerylimit.copy(attrvalue);return;}
         }
     };
     class XMLE_Projection: public CXMLObjectInterface{
@@ -788,10 +818,11 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString enabled;
+            CXMLString enabled,optimizeextent;
         }attr;
         void addAttribute(const char *attrname,const char *attrvalue){
           if(equals("enabled",7,attrname)){attr.enabled.copy(attrvalue);return;}
+          else if(equals("optimizeextent",14,attrname)){attr.optimizeextent.copy(attrvalue);return;}
         }
     };
     class XMLE_WCSFormat: public CXMLObjectInterface{

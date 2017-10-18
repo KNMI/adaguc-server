@@ -63,7 +63,7 @@ namespace CDF{
       }
       
       ~Attribute(){
-        if(data!=NULL)freeData(&data);data=NULL;
+        if(data!=NULL){freeData(&data);};data=NULL;
       }
       CDFType type;
       CT::string name;
@@ -79,7 +79,7 @@ namespace CDF{
         return 0;
       }
       int setData(CDFType type,const void *dataToSet,size_t dataLength){
-        if(data!=NULL)freeData(&data);data=NULL;
+        if(data!=NULL){freeData(&data);};data=NULL;
         length=dataLength;
         this->type=type;
         allocateData(type,&data,length);
@@ -109,7 +109,7 @@ namespace CDF{
       
       
       int setData(const char*dataToSet){
-        if(data!=NULL)freeData(&data);data=NULL;
+        if(data!=NULL){freeData(&data);};data=NULL;
         length=strlen(dataToSet);
         this->type=CDF_CHAR;
         allocateData(type,&data,length+1);

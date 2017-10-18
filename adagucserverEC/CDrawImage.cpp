@@ -1722,8 +1722,8 @@ void CDrawImage::crop(int paddingW, int paddingH){
   int y1=y-paddingH;
   int w1=w+paddingW*2;
   int h1=h+paddingH*2;
-  if(x1<0)x1=0;if(y1<0)y1=0;
-  if(x1>Geo->dWidth)x1=Geo->dWidth;if(y1>Geo->dHeight)y1=Geo->dHeight;
+  if(x1<0){x1=0;};if(y1<0){y1=0;}
+  if(x1>Geo->dWidth){x1=Geo->dWidth;};if(y1>Geo->dHeight){y1=Geo->dHeight;}
   if(paddingW<0){
     x1=0;w1=Geo->dWidth;
   }
