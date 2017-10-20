@@ -49,7 +49,7 @@ RUN curl -L https://github.com/maartenplieger/adaguc-services/archive/master.tar
 RUN tar xvf adaguc-services.tar.gz
 WORKDIR /adaguc/adaguc-services-master
 RUN mvn package
-RUN cp ./target/adaguc-services-1.0.0-SNAPSHOT.war /usr/share/tomcat/webapps/adaguc-services.war
+RUN cp ./target/adaguc-services-*.war /usr/share/tomcat/webapps/adaguc-services.war
 
 COPY adaguc-server-config.xml /adaguc/adaguc-server-config.xml
 
