@@ -477,12 +477,11 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString settings,width,height;
+            CXMLString settings,striding;
         }attr;
         void addAttribute(const char *name,const char *value){
           if(equals("settings",8,name)){attr.settings.copy(value);return;}
-          else if(equals("width",5,name)){attr.width.copy(value);return;}
-          else if(equals("height",6,name)){attr.height.copy(value);return;}
+          else if(equals("striding",8,name)){attr.striding.copy(value);return;}
         }
     };
     
