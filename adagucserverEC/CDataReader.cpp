@@ -438,16 +438,14 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
   
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   if(styleConfiguration != NULL && styleConfiguration->styleConfig != NULL){
-
     if( styleConfiguration->styleConfig->RenderSettings.size() ==1 ){
       if(( styleConfiguration->styleConfig->RenderSettings[0])->attr.striding.empty() == false){
         dataSource->stride2DMap =  styleConfiguration->styleConfig->RenderSettings[0]->attr.striding.toInt();
       }
     }
-    
   }
   
-  dataSource->stride2DMap=1;
+  
   
   
   if(dataSource->stride2DMap != 1){
