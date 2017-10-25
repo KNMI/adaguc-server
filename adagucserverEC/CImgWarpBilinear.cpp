@@ -68,7 +68,7 @@ bool IsTextTooClose(std::vector<Point> *textLocations,int x,int y){
   #define CONTOURDEFINITIONLOOKUPLENGTH 256
 */
 
-#define CImgWarpBilinear_DEBUG
+//#define CImgWarpBilinear_DEBUG
 
 //DEF_ERRORMAIN();
 const char *CImgWarpBilinear::className="CImgWarpBilinear";
@@ -464,7 +464,7 @@ if(drawMap==true&&enableShade==false&&enableVector==false&&enableBarb==false){
 
 float *uValueData=valObj[0].valueData;
 float *vValueData=valObj[1].valueData;
-renderBarbsAndVectors(warper, sourceImage, drawImage, enableShade, enableContour, enableBarb, drawMap, enableVector, drawGridVectors, dPixelExtent, uValueData, vValueData, dpDestX, dpDestY);
+std::vector<CalculatedWindVector> windVectors = renderBarbsAndVectors(warper, sourceImage, drawImage, enableShade, enableContour, enableBarb, drawMap, enableVector, drawGridVectors, dPixelExtent, uValueData, vValueData, dpDestX, dpDestY);
 
 
 
@@ -516,7 +516,22 @@ if(enableContour||enableShade){
 //     wv=windVectors[sz];
 //     drawImage->drawBarb(wv.x, wv.y, wv.dir, wv.strength, 240,wv.convertToKnots,wv.flip);
 //   }
-// }                 
+// }    
+
+if (enableVector) {
+    CalculatedWindVector wv;
+    for (size_t sz=0; sz<windVectors.size();sz++) {
+      wv=windVectors[sz];
+      drawImage->drawVector(wv.x, wv.y, wv.dir, wv.strength, 240);
+    }
+  }                 
+  if (enableBarb) {
+    CalculatedWindVector wv;
+    for (size_t sz=0; sz<windVectors.size();sz++) {
+      wv=windVectors[sz];
+      drawImage->drawBarb(wv.x, wv.y, wv.dir, wv.strength, 240,wv.convertToKnots,wv.flip);
+    }
+  }                 
 
 //Clean up
 delete[] dpDestX;
