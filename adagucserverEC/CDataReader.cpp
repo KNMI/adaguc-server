@@ -427,15 +427,26 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
   CDBDebug("Found xy vars for var %s:  %s and %s",dataSourceVar->name.c_str(),dataSource->varX->name.c_str(),dataSource->varY->name.c_str());
   #endif
     
- dataSource->stride2DMap=1;
-  
-  
-  while(dimX->length/dataSource->stride2DMap>5000){
-    dataSource->stride2DMap++;
-  }
+/* Experimental feature to reduce the amount of time to load quicklooks of opendap URL's */
+//   dataSource->stride2DMap=1;
+//   while(dimX->length/dataSource->stride2DMap>5000){
+//     dataSource->stride2DMap++;
+//   }
   
   
   dataSource->stride2DMap=1;
+  
+  CStyleConfiguration *styleConfiguration = dataSource->getStyle();
+  if(styleConfiguration != NULL && styleConfiguration->styleConfig != NULL){
+    if( styleConfiguration->styleConfig->RenderSettings.size() ==1 ){
+      if(( styleConfiguration->styleConfig->RenderSettings[0])->attr.striding.empty() == false){
+        dataSource->stride2DMap =  styleConfiguration->styleConfig->RenderSettings[0]->attr.striding.toInt();
+      }
+    }
+  }
+  
+  
+  
   
   if(dataSource->stride2DMap != 1){
     CDBDebug("dataSource->stride2DMap == %d",dataSource->stride2DMap);
