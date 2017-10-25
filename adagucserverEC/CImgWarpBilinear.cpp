@@ -1077,7 +1077,7 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
         }
       }
       if(foundOne!=-1){
-        CDBDebug("SHADEDEF %d uses def %d\t(%f\t%f)",shadeDefinitionsExpanded.size(),foundOne,previ,i);
+        // CDBDebug("SHADEDEF %d uses def %d\t(%f\t%f)",shadeDefinitionsExpanded.size(),foundOne,previ,i);
         shadeDefinitionsExpanded.push_back(ShadeDefinition(previ,i,shadeDefinitions[foundOne].fillColor,shadeDefinitions[foundOne].foundColor,shadeDefinitions[foundOne].bgColor,shadeDefinitions[foundOne].hasBGColor));
       }
      }
