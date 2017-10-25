@@ -111,6 +111,12 @@ int CRequest::setConfigFile(const char *pszConfigFile){
     srvParam->configFileName.copy(pszConfigFile);
     srvParam->cfg=srvParam->configObj->Configuration[0];
     
+    //TODO INCLUDE DATASET = here
+    status = CAutoResource::configureDataset(srvParam,false);
+    if(status!=0){
+      CDBError("CAutoResource::configureDataset failed");
+      return status;
+    }
     //Include additional config files given in the include statement of the config file
     for(size_t j=0;j<srvParam->cfg->Include.size();j++){
       if(srvParam->cfg->Include[j]->attr.location.empty()==false){
