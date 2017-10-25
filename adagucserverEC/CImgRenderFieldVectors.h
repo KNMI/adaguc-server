@@ -333,7 +333,7 @@ int applyUVConversion(CImageWarper *warper, CDataSource *sourceImage, bool enabl
   return 0;
 };
 
-int renderBarbsAndVectors(CImageWarper * warper, 
+std::vector<CalculatedWindVector> renderBarbsAndVectors(CImageWarper * warper, 
                           CDataSource *sourceImage, 
                           CDrawImage *drawImage, 
                           bool enableShade, 
@@ -520,19 +520,6 @@ int renderBarbsAndVectors(CImageWarper * warper,
       }
     }
   }
-  if (enableVector) {
-    CalculatedWindVector wv;
-    for (size_t sz=0; sz<windVectors.size();sz++) {
-      wv=windVectors[sz];
-      drawImage->drawVector(wv.x, wv.y, wv.dir, wv.strength, 240);
-    }
-  }                 
-  if (enableBarb) {
-    CalculatedWindVector wv;
-    for (size_t sz=0; sz<windVectors.size();sz++) {
-      wv=windVectors[sz];
-      drawImage->drawBarb(wv.x, wv.y, wv.dir, wv.strength, 240,wv.convertToKnots,wv.flip);
-    }
-  }                 
-  return 0;
+  
+  return windVectors;
 }
