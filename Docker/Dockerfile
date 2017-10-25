@@ -60,6 +60,7 @@ ENV ADAGUC_SERVICES_CONFIG=/adaguc/adaguc-services-config.xml
 # Set up data dir, this is also configured in adaguc-server-config.xml
 RUN mkdir -p /data/adaguc-autowms
 RUN mkdir -p /data/adaguc-datasets
+RUN mkdir -p /data/adaguc-data
 
 EXPOSE 8080
 
@@ -68,7 +69,7 @@ COPY start.sh /adaguc/
 RUN chmod +x /adaguc/start.sh
 
 RUN mkdir -p /adaguc/userworkspace/
-RUN mkdir -p /adaguc/basedir/-
+RUN mkdir -p /adaguc/basedir/
 
 ENTRYPOINT /adaguc/start.sh
  
