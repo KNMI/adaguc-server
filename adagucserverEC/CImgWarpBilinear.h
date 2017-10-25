@@ -200,7 +200,7 @@ class CImgWarpBilinear:public CImageWarperRenderInterface{
       return 0;
     }
     
-    void setValuePixel(CDataSource*dataSource,CDrawImage*drawImage,int destX,int destY,float val){
+    static void setValuePixel(CDataSource*dataSource,CDrawImage*drawImage,int destX,int destY,float val){
       bool isNodata=false;
       
       if(dataSource->getDataObject(0)->hasNodataValue){

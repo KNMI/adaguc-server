@@ -33,7 +33,7 @@ int myPID = int(getpid());
 
 void writeLogFile(const char * msg){
   if(pLogDebugFile != NULL){
-//     setvbuf(pLogDebugFile, NULL, _IONBF, 0);
+    setvbuf(pLogDebugFile, NULL, _IONBF, 0);
     fputs  (msg, pLogDebugFile );
     if(strncmp(msg,"[D:",3)==0||strncmp(msg,"[W:",3)==0||strncmp(msg,"[E:",3)==0){
       time_t myTime = time(NULL);
