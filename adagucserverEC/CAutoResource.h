@@ -51,7 +51,7 @@ private:
     * returns 0 on success.
     */
   static int configureAutoResource(CServerParams *srvParam,bool plain);
-  
+public:  
   /**
     * configures Dataset, based on  srvParam->datasetLocation parameter. Used for KDC inspire
     * Adds new layers to the configuration object in serverparams.
@@ -60,7 +60,7 @@ private:
     */
   static int configureDataset(CServerParams *srvParam,bool plain);
   
-public:
+
   /**
    * Configures new layers in the configuration automatically based on srvParam->autoResourceLocation and srvParam->datasetLocation.
    * Usually based on &SOURCE= and &DATASET= key value pairs in WMS urls.

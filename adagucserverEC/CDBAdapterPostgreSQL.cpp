@@ -867,7 +867,7 @@ int CDBAdapterPostgreSQL::createDimTableOfType(const char *dimname,const char *t
     CT::string query;
     int status = 0;
     /* Create index on dimension */
-    query.print("CREATE INDEX INDEXFOR%s%s on %s (%s)", dimname, tablename, tablename, dimname); 
+    query.print("CREATE INDEX idxdim%s on %s (%s)", tablename, tablename, dimname); 
     status = dataBaseConnection->query(query.c_str()); if(status!=0) { 
       CDBDebug("Warning: Unable to create index [%s]", query.c_str());
     }
