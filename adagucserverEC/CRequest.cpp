@@ -113,34 +113,36 @@ int CRequest::setConfigFile(const char *pszConfigFile){
     
     //TODO INCLUDE DATASET = here
     const char * pszQueryString=getenv("QUERY_STRING");
-    CT::string queryString(pszQueryString);
-    queryString.decodeURLSelf();
-    CT::string * parameters=queryString.splitToArray("&");
-    for(size_t j=0;j<parameters->count;j++){
-      CT::string value0Cap;
-      CT::string values[2];
-      int equalPos = parameters[j].indexOf("=");//splitToArray("=");
-      if(equalPos!=-1){
-        values[0] = parameters[j].substring(0,equalPos);
-        values[1] = parameters[j].c_str()+equalPos+1;
-        values[0].count = 2;
-      }else{
-        values[0] = parameters[j].c_str();
-        values[1] = "";
-        values[0].count = 1;
-      }
-      value0Cap.copy(&values[0]);
-      value0Cap.toUpperCaseSelf();
-      if(value0Cap.equals("DATASET")){
-        if(srvParam->datasetLocation.empty()){
-          srvParam->datasetLocation.copy(values[1].c_str());
+    if(pszQueryString!=NULL){
+      CT::string queryString(pszQueryString);
+      queryString.decodeURLSelf();
+      CT::string * parameters=queryString.splitToArray("&");
+      for(size_t j=0;j<parameters->count;j++){
+        CT::string value0Cap;
+        CT::string values[2];
+        int equalPos = parameters[j].indexOf("=");//splitToArray("=");
+        if(equalPos!=-1){
+          values[0] = parameters[j].substring(0,equalPos);
+          values[1] = parameters[j].c_str()+equalPos+1;
+          values[0].count = 2;
+        }else{
+          values[0] = parameters[j].c_str();
+          values[1] = "";
+          values[0].count = 1;
         }
+        value0Cap.copy(&values[0]);
+        value0Cap.toUpperCaseSelf();
+        if(value0Cap.equals("DATASET")){
+          if(srvParam->datasetLocation.empty()){
+            srvParam->datasetLocation.copy(values[1].c_str());
+          }
+        }
+      }      
+      status = CAutoResource::configureDataset(srvParam,false);
+      if(status!=0){
+        CDBError("CAutoResource::configureDataset failed");
+        return status;
       }
-    }      
-    status = CAutoResource::configureDataset(srvParam,false);
-    if(status!=0){
-      CDBError("CAutoResource::configureDataset failed");
-      return status;
     }
     
     // Include additional config files given in the include statement of the config file
