@@ -143,13 +143,15 @@ int CRequest::setConfigFile(const char *pszConfigFile){
       return status;
     }
     
-    //Include additional config files given in the include statement of the config file
+    // Include additional config files given in the include statement of the config file
+    // Last config file is included first
     for(size_t j=0;j<srvParam->cfg->Include.size();j++){
       if(srvParam->cfg->Include[j]->attr.location.empty()==false){
-        //CDBDebug("Include '%s'",srvParam->cfg->Include[j]->attr.location.c_str());
-        status = srvParam->parseConfigFile(srvParam->cfg->Include[j]->attr.location);
+        int index = (srvParam->cfg->Include.size()-1)-j;
+        CDBDebug("Include '%s'",srvParam->cfg->Include[index]->attr.location.c_str());
+        status = srvParam->parseConfigFile(srvParam->cfg->Include[index]->attr.location);
         if(status != 0){
-          CDBError("There is an error with include '%s'",srvParam->cfg->Include[j]->attr.location.c_str());
+          CDBError("There is an error with include '%s'",srvParam->cfg->Include[index]->attr.location.c_str());
           return 1;
         }
       }
