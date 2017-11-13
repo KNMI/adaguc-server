@@ -1,9 +1,9 @@
-# adaguc-server
+# ADAGUC / adaguc-server
 ADAGUC is a geographical information system to visualize netCDF files via the web. The software consists of a server side C++ application and a client side JavaScript application. The software provides several features to access and visualize data over the web, it uses OGC standards for data dissemination.
 
 See http://dev.knmi.nl/projects/adagucserver/wiki for details
 
-# Docker:
+# Docker for server:
 ```
 docker pull openearth/adaguc-server
 mkdir -p $HOME/data/adaguc-autowms
@@ -13,7 +13,10 @@ docker run -e EXTERNALADDRESS="http://127.0.0.1:8080/" -p 8080:8080 -v $HOME/dat
 ```
 
 # Docker compose with server and viewer:
-To get a instance online with docker compose::
+
+The compose file is located here: https://github.com/KNMI/adaguc-server/blob/master/Docker/docker-compose.yml
+
+To get a instance online with docker compose: [./blob/master/Docker/docker-compose.yml](docker-compose.yml)
 ```
 cd ./adaguc-server/Docker
 docker pull openearth/adaguc-viewer
@@ -47,7 +50,7 @@ Testdata can be found here: http://opendap.knmi.nl/knmi/thredds/catalog/ADAGUC/c
 # Custom datasets
 It is also possible to configure new datasets with custom styling and create aggregations over many files. Check https://dev.knmi.nl/projects/adagucserver/wiki/ for more information
 
-# Opendap services can be visualized without downloading
+# Opendap services can be visualized
 
 The following OpenDAP URL can be visualized:
 ```
@@ -59,6 +62,8 @@ http%3A%2F%2Fopendap.knmi.nl%2Fknmi%2Fthredds%2FdodsC%2Fomi%2FOMI___OPER_R___TYT
 ```
 
 The ADAGUC WMS URL becomes: 
+```
 http://localhost:8090/adaguc-services/wms.cgi?source=http%3A%2F%2Fopendap.knmi.nl%2Fknmi%2Fthredds%2FdodsC%2Fomi%2FOMI___OPER_R___TYTRCNO_L3%2FTYTRCNO%2FOMI___OPER_R___TYTRCNO_3.nc&service=wms&request=getcapabilities
+```
 
 This WMS URL can be visualized in the viewer by using "Add data". (http://localhost:8091/adaguc-viewer/)
