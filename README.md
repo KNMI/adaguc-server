@@ -67,3 +67,9 @@ http://localhost:8090/adaguc-services/wms.cgi?source=http%3A%2F%2Fopendap.knmi.n
 ```
 
 This WMS URL can be visualized in the viewer by using "Add data". (http://localhost:8091/adaguc-viewer/)
+
+# Allowing other hosts in the viewer
+
+In the docker container for adaguc-viewer, at location /var/www/html/adaguc-viewer/config.php there is a list with all allowed hostnames. Add your own hostname if you want to allow data visualization from your own host. See https://dev.knmi.nl/projects/adagucviewer/wiki/Configuration for details.
+
+The default file is located here: https://github.com/KNMI/adaguc-viewer/blob/master/Docker/config.php
