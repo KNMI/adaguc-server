@@ -6,6 +6,9 @@ services:
         container_name: adaguc-viewer
         ports:
             - "8091:80"
+        environment:
+            - "LOCAL_ADAGUCSERVER_ADDR=http://localhost:8090/" # Should be same as adaguc-server's EXTERNALADDRESS
+            - "REMOTE_ADAGUCSERVER_ADDR=http://adaguc-server:8080/"
     adaguc-server:
         image: openearth/adaguc-server
         container_name: adaguc-server
@@ -15,7 +18,7 @@ services:
             - $HOME/data/adaguc-datasets:/data/adaguc-datasets
             - $HOME/data/adaguc-autowms:/data/adaguc-autowms
         environment:
-            - "EXTERNALADDRESS=http://127.0.0.1:8090/"
+            - "EXTERNALADDRESS=http://localhost:8090/"
 # cd ./adaguc-server/Docker
 # To get a instance online:
 #
