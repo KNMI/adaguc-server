@@ -14,9 +14,9 @@ docker run -e EXTERNALADDRESS="http://127.0.0.1:8080/" -p 8080:8080 -v $HOME/dat
 
 # Docker compose with server and viewer:
 
-The compose file is located here: https://github.com/KNMI/adaguc-server/blob/master/Docker/docker-compose.yml
-
-To get a instance online with docker compose: [./blob/master/Docker/docker-compose.yml](docker-compose.yml)
+The compose file is located here: [.blob/master/Docker/docker-compose.yml](docker-compose.yml)
+                     
+To get a instance online with docker compose: 
 ```
 cd ./adaguc-server/Docker
 docker pull openearth/adaguc-viewer
