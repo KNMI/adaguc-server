@@ -47,16 +47,18 @@ Testdata can be found here: http://opendap.knmi.nl/knmi/thredds/catalog/ADAGUC/c
 # Custom datasets
 It is also possible to configure new datasets with custom styling and create aggregations over many files. Check https://dev.knmi.nl/projects/adagucserver/wiki/ for more information
 
-# Opendap services can be visualized withoud downloading
+# Opendap services can be visualized without downloading
 
-The following URL can be visualized:
+The following OpenDAP URL can be visualized:
 ```
 http://opendap.knmi.nl/knmi/thredds/dodsC/omi/OMI___OPER_R___TYTRCNO_L3/TYTRCNO/OMI___OPER_R___TYTRCNO_3.nc
 ```
-Note that the value of source=<value> should be URL encoded:
+To provide it to the source=<file location> parameter it must be be URL encoded:
 ```
 http%3A%2F%2Fopendap.knmi.nl%2Fknmi%2Fthredds%2FdodsC%2Fomi%2FOMI___OPER_R___TYTRCNO_L3%2FTYTRCNO%2FOMI___OPER_R___TYTRCNO_3.nc
 ```
 
-The ADAGUC WMS URL becomes: http://localhost:8090/adaguc-services/wms.cgi?source=http%3A%2F%2Fopendap.knmi.nl%2Fknmi%2Fthredds%2FdodsC%2Fomi%2FOMI___OPER_R___TYTRCNO_L3%2FTYTRCNO%2FOMI___OPER_R___TYTRCNO_3.nc&service=wms&request=getcapabilities
+The ADAGUC WMS URL becomes: 
+http://localhost:8090/adaguc-services/wms.cgi?source=http%3A%2F%2Fopendap.knmi.nl%2Fknmi%2Fthredds%2FdodsC%2Fomi%2FOMI___OPER_R___TYTRCNO_L3%2FTYTRCNO%2FOMI___OPER_R___TYTRCNO_3.nc&service=wms&request=getcapabilities
+
 This WMS URL can be visualized in the viewer by using "Add data". (http://localhost:8091/adaguc-viewer/)
