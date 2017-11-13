@@ -7,7 +7,7 @@ const char *CAutoResource::className = "CAutoResource";
 
 int CAutoResource::configure(CServerParams *srvParam,bool plain){
   int status;
-  status = configureDataset(srvParam,plain);if(status!=0)return status;
+  //status = configureDataset(srvParam,plain);if(status!=0)return status; //<-- Done in CREQUEST BEFORE INCLUDES are parsed
   status = configureAutoResource(srvParam,plain);if(status!=0)return status;
   return 0;
 };

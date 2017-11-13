@@ -111,13 +111,49 @@ int CRequest::setConfigFile(const char *pszConfigFile){
     srvParam->configFileName.copy(pszConfigFile);
     srvParam->cfg=srvParam->configObj->Configuration[0];
     
-    //Include additional config files given in the include statement of the config file
+    //TODO INCLUDE DATASET = here
+    const char * pszQueryString=getenv("QUERY_STRING");
+    if(pszQueryString!=NULL){
+      CT::string queryString(pszQueryString);
+      queryString.decodeURLSelf();
+      CT::string * parameters=queryString.splitToArray("&");
+      for(size_t j=0;j<parameters->count;j++){
+        CT::string value0Cap;
+        CT::string values[2];
+        int equalPos = parameters[j].indexOf("=");//splitToArray("=");
+        if(equalPos!=-1){
+          values[0] = parameters[j].substring(0,equalPos);
+          values[1] = parameters[j].c_str()+equalPos+1;
+          values[0].count = 2;
+        }else{
+          values[0] = parameters[j].c_str();
+          values[1] = "";
+          values[0].count = 1;
+        }
+        value0Cap.copy(&values[0]);
+        value0Cap.toUpperCaseSelf();
+        if(value0Cap.equals("DATASET")){
+          if(srvParam->datasetLocation.empty()){
+            srvParam->datasetLocation.copy(values[1].c_str());
+          }
+        }
+      }      
+      status = CAutoResource::configureDataset(srvParam,false);
+      if(status!=0){
+        CDBError("CAutoResource::configureDataset failed");
+        return status;
+      }
+    }
+    
+    // Include additional config files given in the include statement of the config file
+    // Last config file is included first
     for(size_t j=0;j<srvParam->cfg->Include.size();j++){
       if(srvParam->cfg->Include[j]->attr.location.empty()==false){
-        //CDBDebug("Include '%s'",srvParam->cfg->Include[j]->attr.location.c_str());
-        status = srvParam->parseConfigFile(srvParam->cfg->Include[j]->attr.location);
+        int index = (srvParam->cfg->Include.size()-1)-j;
+        CDBDebug("Include '%s'",srvParam->cfg->Include[index]->attr.location.c_str());
+        status = srvParam->parseConfigFile(srvParam->cfg->Include[index]->attr.location);
         if(status != 0){
-          CDBError("There is an error with include '%s'",srvParam->cfg->Include[j]->attr.location.c_str());
+          CDBError("There is an error with include '%s'",srvParam->cfg->Include[index]->attr.location.c_str());
           return 1;
         }
       }
@@ -2147,7 +2183,7 @@ int CRequest::process_querystring(){
   int dFound_Styles=0;
   int dFound_Style=0;
   int dFound_JSONP=0;
-  int dFound_Dataset=0;
+  
   
   
 
@@ -2504,14 +2540,7 @@ int CRequest::process_querystring(){
         }
       }
       
-      if(dFound_Dataset==0){
-        if(value0Cap.equals("DATASET")){
-          if(srvParam->datasetLocation.empty()){
-            srvParam->datasetLocation.copy(values[1].c_str());
-          }
-          dFound_Dataset=1;
-        }
-      }
+      
      /* //Opendap variable parameter
        if(dFound_OpenDAPVariable==0){
         if(value0Cap.equals("VARIABLE")){

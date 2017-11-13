@@ -1,3 +1,11 @@
+Version 2.0.29 2017-10-23
+    - Striding of gridfields can now be controlled with attribute striding in RenderSettings (e.g. <Style><RenderSettings striding="4"/></Style>)
+
+Version 2.0.28 2017-09-10
+    - Added 8 functional tests
+    - Added postgres index on dimension column
+    - Query limit can now be configured: <DataBase maxquerylimit="1000"/>
+    
 Version 2.0.27 2017-08-16
     - Dimensions without a dimension variable now get an automatically assigned dimension variable, values start with 1 and are increased onwards.
     - Initial PNG support with initial slippy map support added
