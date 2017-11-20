@@ -82,7 +82,7 @@ ENTRYPOINT /adaguc/start.sh
 # touch $HOME/adagucdockerlog.log && chmod 777 $HOME/adagucdockerlog.log
 # mkdir -p ~/data/adaguc-autowms && mkdir -p ~/data/adaguc-datasets && chmod 777 ~/data/ * -R 
 # mkdir -p $HOME/adaguclogs && chmod 777 $HOME/adaguclogs
-# docker run -e EXTERNALADDRESS="http://127.0.0.1:18080/" -p 18080:8080 -v $HOME/data:/data -v $HOME/adaguclogs:/var/log/adaguc -it adaguc-server 
+# docker run -e EXTERNALADDRESS="http://127.0.0.1:8080/" -p 8080:8080 -v $HOME/data:/data -v $HOME/adaguclogs:/var/log/adaguc -it adaguc-server 
 # Check http://localhost:8080/adaguc-services/adagucserver?service=wms&request=getcapabilities
 # You can copy NetCDF's / GeoJSONS to your hosts ~/data/adaguc-autowms directory. This will be served through adaguc-server, via the source=<filename> key value pair. testdata.nc is copied there by default. 
 # Directories $HOME/data/adaguc-datasets and $HOME/data/adaguc-autowms will be created if they do not exist.
