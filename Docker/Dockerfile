@@ -23,7 +23,8 @@ RUN yum update -y && yum install -y \
     postgresql-server \
     gdal-devel \
     tomcat \ 
-    maven
+    maven \
+    logrotate
          
 RUN mkdir /adaguc
 
@@ -71,13 +72,17 @@ RUN chmod +x /adaguc/start.sh
 
 RUN mkdir -p /adaguc/userworkspace/
 RUN mkdir -p /adaguc/basedir/
+RUN mkdir -p /var/log/adaguc/ 
+COPY adaguc-server-logrotate /etc/logrotate.d/adaguc
+
 
 ENTRYPOINT /adaguc/start.sh
  
 # docker build -t adaguc-server . 
 # touch $HOME/adagucdockerlog.log && chmod 777 $HOME/adagucdockerlog.log
-# mkdir -p ~/data/adaguc-autowms && mkdir -p ~/data/adaguc-datasets && chmod 777 ~/data/ * -R
-# docker run -e EXTERNALADDRESS="http://127.0.0.1:8080/" -p 8080:8080 -v $HOME/data:/data -v $HOME/adagucdockerlog.log:/tmp/adaguc.docker.log -it adaguc-server 
+# mkdir -p ~/data/adaguc-autowms && mkdir -p ~/data/adaguc-datasets && chmod 777 ~/data/ * -R 
+# mkdir $HOME/adaguclogs && chmod 777 $HOME/adaguclogs
+# docker run -e EXTERNALADDRESS="http://127.0.0.1:18080/" -p 18080:8080 -v $HOME/data:/data -v $HOME/adaguclogs:/var/log/adaguc -it adaguc-server 
 # Check http://localhost:8080/adaguc-services/adagucserver?service=wms&request=getcapabilities
 # You can copy NetCDF's / GeoJSONS to your hosts ~/data/adaguc-autowms directory. This will be served through adaguc-server, via the source=<filename> key value pair. testdata.nc is copied there by default. 
 # Directories $HOME/data/adaguc-datasets and $HOME/data/adaguc-autowms will be created if they do not exist.

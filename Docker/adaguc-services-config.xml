@@ -12,7 +12,7 @@
     <export>ADAGUC_TMP=/tmp</export>
     <export>ADAGUC_CONFIG=/adaguc/adaguc-server-config.xml</export>
     <export>ADAGUC_DATARESTRICTION=FALSE</export>
-    <export>ADAGUC_LOGFILE=/tmp/adaguc.docker.log</export>
+    <export>ADAGUC_LOGFILE=/var/log/adaguc/adaguc-server.log</export>
     <export>ADAGUC_FONT=/adaguc/adaguc-server-master/data/fonts/FreeSans.ttf</export>
     <export>ADAGUC_ONLINERESOURCE={ENV.EXTERNALADDRESS}/adaguc-services/adagucserver?</export>
   </adaguc-server>
