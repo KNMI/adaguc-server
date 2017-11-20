@@ -5,6 +5,7 @@ echo "Starting POSTGRESQL DB" && \
     sleep 1 && \
     cp /adaguc/adaguc-server-master/data/datasets/testdata.nc /data/adaguc-autowms && \
     cp /adaguc/adaguc-server-master/data/config/datasets/baselayers.xml /data/adaguc-datasets && \
+    cp /adaguc/adaguc-server-master/data/config/datasets/dataset_a.xml /data/adaguc-datasets && \
     echo "Configuring POSTGRESQL DB" && \
     runuser -l postgres -c "createuser --superuser adaguc" && \
     runuser -l postgres -c "psql postgres -c \"ALTER USER adaguc PASSWORD 'adaguc';\"" && \

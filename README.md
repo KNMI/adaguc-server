@@ -30,7 +30,7 @@ docker-compose up
 ```
 In working directory go to:
 * viewer at http://localhost:8091/adaguc-viewer/ 
-* server http://localhost:8090/adaguc-services/wms.cgi? 
+* server http://localhost:8090/adaguc-services/adagucserver? 
 
 To stop:
 ```
@@ -43,17 +43,20 @@ The following directories will be created if they do not exist:
 
 # Use your own data
 Copy your data files to $HOME/data/adaguc-autowms. Files are are accessible by linking them via the source= key value pair. Filenames must be URLEncoded. Supported files are NetCDF, HDF5 and GeoJSON.
-The example file 'testdata.nc' is accessible via http://localhost:8090/adaguc-services/wms.cgi?source=testdata.nc&service=WMS&request=GetCapabilities
+The example file 'testdata.nc' is accessible via http://localhost:8090/adaguc-services/adagucserver?source=testdata.nc&service=WMS&request=GetCapabilities
 
 Files can be visualized in the adaguc-viewer via:
 * Go to http://localhost:8091/adaguc-viewer/
-* Add service http://localhost:8090/adaguc-services/wms.cgi?source=testdata.nc via "Add data"
-* A direct link is: http://localhost:8091/adaguc-viewer/?service=http%3A%2F%2Flocalhost%3A8090%2Fadaguc-services%2Fwms.cgi%3Fsource%3Dtestdata.nc
+* Add service http://localhost:8090/adaguc-services/adagucserver?source=testdata.nc via "Add data"
+* A direct link is: http://localhost:8091/adaguc-viewer/?service=http%3A%2F%2Flocalhost%3A8090%2Fadaguc-services%2Fadagucserver%3Fsource%3Dtestdata.nc
 
 Testdata can be found here: http://opendap.knmi.nl/knmi/thredds/catalog/ADAGUC/catalog.html. 
 
 # Custom datasets
 It is also possible to configure new datasets with custom styling and create aggregations over many files. Check https://dev.knmi.nl/projects/adagucserver/wiki/ for more information
+
+* Copy your XML configurations to $HOME/data/adaguc-datasets
+* Datasets are accessible via http://localhost:8080/adaguc-services/wms?service=wms&request=getcapabilities&dataset=dataset_a
 
 # Opendap services can be visualized
 
@@ -68,10 +71,10 @@ http%3A%2F%2Fopendap.knmi.nl%2Fknmi%2Fthredds%2FdodsC%2Fomi%2FOMI___OPER_R___TYT
 
 The ADAGUC WMS URL becomes: 
 ```
-http://localhost:8090/adaguc-services/wms.cgi?source=http%3A%2F%2Fopendap.knmi.nl%2Fknmi%2Fthredds%2FdodsC%2Fomi%2FOMI___OPER_R___TYTRCNO_L3%2FTYTRCNO%2FOMI___OPER_R___TYTRCNO_3.nc&service=wms&request=getcapabilities
+http://localhost:8090/adaguc-services/adagucserver?source=http%3A%2F%2Fopendap.knmi.nl%2Fknmi%2Fthredds%2FdodsC%2Fomi%2FOMI___OPER_R___TYTRCNO_L3%2FTYTRCNO%2FOMI___OPER_R___TYTRCNO_3.nc&service=wms&request=getcapabilities
 ```
 
-This WMS URL can be visualized in the viewer by using "Add data". (http://localhost:8091/adaguc-viewer/)
+This WMS URL can be visualized in the viewer by using "Add data". (http://localhost:8091/adaguc-viewer/ if you use the compose)
 
 # Allowing other hosts in the viewer
 

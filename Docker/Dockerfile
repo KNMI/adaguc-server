@@ -58,9 +58,10 @@ COPY adaguc-services-config.xml /adaguc/adaguc-services-config.xml
 ENV ADAGUC_SERVICES_CONFIG=/adaguc/adaguc-services-config.xml 
 
 # Set up data dir, this is also configured in adaguc-server-config.xml
-RUN mkdir -p /data/adaguc-autowms
-RUN mkdir -p /data/adaguc-datasets
-RUN mkdir -p /data/adaguc-data
+# /data/adaguc-autowms : Place your netcdfs/HDF5's/GeoJSONS here, they will be visualized with the source=<file> KVP via the URI
+# /data/adaguc-datasets : Place your dataset XML configuration here, they will be accessible with the dataset=<dataset basename> KVP via the URI
+# /data/adaguc-data : Place your netcdfs/HDF5's/GeoJSONS here you don't want to have accessible via dataset configurations.
+RUN mkdir -p /data/adaguc-autowms && mkdir -p /data/adaguc-datasets && mkdir -p /data/adaguc-data
 
 EXPOSE 8080
 
@@ -74,10 +75,16 @@ RUN mkdir -p /adaguc/basedir/
 ENTRYPOINT /adaguc/start.sh
  
 # docker build -t adaguc-server . 
-# docker run -e EXTERNALADDRESS="http://127.0.0.1:8080/" -p 8080:8080 -v $HOME/data:/data -it adaguc-server 
-# Check http://localhost:8080/adaguc-services/wms.cgi?service=wms&request=getcapabilities
+# touch $HOME/adagucdockerlog.log && chmod 777 $HOME/adagucdockerlog.log
+# mkdir -p ~/data/adaguc-autowms && mkdir -p ~/data/adaguc-datasets && chmod 777 ~/data/ * -R
+# docker run -e EXTERNALADDRESS="http://127.0.0.1:8080/" -p 8080:8080 -v $HOME/data:/data -v $HOME/adagucdockerlog.log:/tmp/adaguc.docker.log -it adaguc-server 
+# Check http://localhost:8080/adaguc-services/adagucserver?service=wms&request=getcapabilities
 # You can copy NetCDF's / GeoJSONS to your hosts ~/data/adaguc-autowms directory. This will be served through adaguc-server, via the source=<filename> key value pair. testdata.nc is copied there by default. 
 # Directories $HOME/data/adaguc-datasets and $HOME/data/adaguc-autowms will be created if they do not exist.
 # Copy your NetCDF/GeoJSON/HDF5 to $HOME/data/adaguc-autowms
-# Files are are accessible via http://localhost:8080/adaguc-services/wms.cgi?source=testdata.nc&&service=WMS&request=GetCapabilities
+# Files are are accessible via http://localhost:8080/adaguc-services/adagucserver?source=testdata.nc&&service=WMS&request=GetCapabilities
 # Testdata can be found here: http://opendap.knmi.nl/knmi/thredds/catalog/ADAGUC/catalog.html
+# Copy your XML configurations to $HOME/data/adaguc-datasets
+# Datasets are accessible via http://localhost:8080/adaguc-services/wms?service=wms&request=getcapabilities&dataset=dataset_a
+# You can also look inside the container with docker exec -i -t  `docker ps -f ancestor=adaguc-server -q` bash
+
