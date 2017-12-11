@@ -133,7 +133,7 @@ int CDF::Variable::readData(CDFType readType,size_t *_start,size_t *_count,ptrdi
     }
     
     if(scaleType == CDF_DOUBLE){
-      float *scaleData = (float*)data;
+      double *scaleData = (double*)data;
       for(size_t j=0;j<lsize;j++)scaleData[j]=scaleData[j]*scaleFactor+addOffset;
       fillValue=fillValue*scaleFactor+addOffset;
       if( hasFillValue)getAttribute("_FillValue")->setData(CDF_DOUBLE,&fillValue,1);
@@ -156,7 +156,7 @@ int CDF::Variable::readData(CDFType type,size_t *_start,size_t *_count,ptrdiff_t
 #endif  
  
  if(data!=NULL&&type!=this->currentType){
-   #ifdef CCDFDATAMODEL_DEBUG          
+#ifdef CCDFDATAMODEL_DEBUG          
   CDBDebug("Freeing orignal variable %s",name.c_str());
 #endif  
    freeData();
