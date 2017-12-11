@@ -302,7 +302,7 @@ bool CServerParams::isAutoOpenDAPResourceEnabled(){
 
 bool CServerParams::isAutoLocalFileResourceEnabled(){
   /* When a dataset is configured, autoscan should be disabled */
-  if (srvParam->datasetLocation.empty() == false){
+  if (this->datasetLocation.empty() == false){
     return false;
   }
   if(autoLocalFileResourceEnabled==-1){
