@@ -47,6 +47,8 @@ int CProj4ToCF::getProjectionUnits(CDF::Variable *projectionVariable){
                   return CPROJ4TOCF_UNITS_KILOMETER;
                 }else if(units.equals("m")){
                   return CPROJ4TOCF_UNITS_METER;
+                }else if(units.equals("rad")){
+                  return CPROJ4TOCF_UNITS_RADIANS;
                 }
               }
             }catch(int e){
@@ -324,6 +326,23 @@ void CProj4ToCF::initTransverseMercator(CDF::Variable *projectionVariable, std::
   projectionVariable->addAttribute(new CDF::Attribute("scale_factor_at_projection_origin"     ,CDF_FLOAT,&v,1));
 }
 
+
+void CProj4ToCF::initGeosPerspective(CDF::Variable *projectionVariable, std::vector <CProj4ToCF::KVP*> projKVPList){
+  //+proj=geos +lon_0=0.000000 +lat_0=0 +h=35807.414063 +a=6378.169 +b=6356.5838
+  projectionVariable->removeAttributes();
+  float v = 0;
+  CT::string s;
+  projectionVariable->addAttribute(new CDF::Attribute("grid_mapping_name","geostationary"));
+  v=getProj4ValueF("h"     ,projKVPList,4.2163970098E7,CProj4ToCF::convertToM);projectionVariable->addAttribute(new CDF::Attribute("perspective_point_height"      ,CDF_FLOAT,&v,1));
+  v=getProj4ValueF("a"      ,projKVPList,6378137.0,CProj4ToCF::convertToM);     projectionVariable->addAttribute(new CDF::Attribute("semi_major_axis"               ,CDF_FLOAT,&v,1));
+  v=getProj4ValueF("b"      ,projKVPList,6356752.31414,CProj4ToCF::convertToM);     projectionVariable->addAttribute(new CDF::Attribute("semi_minor_axis"               ,CDF_FLOAT,&v,1));
+  v=getProj4ValueF("lat_0"  ,projKVPList,0);                        projectionVariable->addAttribute(new CDF::Attribute("latitude_of_projection_origin" ,CDF_FLOAT,&v,1));
+  v=getProj4ValueF("lon_0"  ,projKVPList,0);                        projectionVariable->addAttribute(new CDF::Attribute("longitude_of_projection_origin",CDF_FLOAT,&v,1));
+  s=getProj4Value("sweep",projKVPList);             projectionVariable->addAttribute(new CDF::Attribute("sweep_angle_axis", s.c_str()));
+}
+  
+  
+  
 int CProj4ToCF::convertBackAndFort(const char *projString,CDF::Variable *projectionVariable){
   CProj4ToCF proj4ToCF;
   proj4ToCF.debug=true;
@@ -377,7 +396,18 @@ int CProj4ToCF::convertProjToCF( CDF::Variable *projectionVariable, const char *
     for(size_t j=0;j<projKVPList.size();j++){
       if(projKVPList[j]->name.equals("proj")){
         if(projKVPList[j]->value.equals("stere")){initStereoGraphic(projectionVariable,projKVPList); foundProj=1;}
-        if(projKVPList[j]->value.equals("geos")){ initMSGPerspective(projectionVariable,projKVPList);foundProj=1;}
+        if(projKVPList[j]->value.equals("geos")){ 
+           for (size_t j2=0; j2<projKVPList.size();j2++){
+             if(projKVPList[j2]->name.equals("height_from_earth_center")){
+               initMSGPerspective(projectionVariable,projKVPList);
+               foundProj=1;
+             }
+           }
+           if (foundProj==0) {
+               initGeosPerspective(projectionVariable,projKVPList);
+               foundProj=1;
+           }
+        }
         if(projKVPList[j]->value.equals("lcc")){  initLCCPerspective(projectionVariable,projKVPList);foundProj=1;}
         if(projKVPList[j]->value.equals("ob_tran")){  initRPPerspective(projectionVariable,projKVPList);foundProj=1;}
         if(projKVPList[j]->value.equals("sterea")){  initObliqueStereographicPerspective(projectionVariable,projKVPList);foundProj=1;}
@@ -445,6 +475,30 @@ int CProj4ToCF::convertCFToProj( CDF::Variable *projectionVariable,CT::string *p
                         35807.414063,
                         semi_major_axis.toDouble()/1000,
                         semi_minor_axis.toDouble()/1000
+                        );
+    }else if(grid_mapping_name.equals("geostationary")){
+      // Meteosat Second Generation projection
+      CT::string longitude_of_projection_origin = "0.000000f" ;
+      CT::string latitude_of_projection_origin = "0.000000f" ;
+      CT::string perspective_point_height = "35807414.063f" ; //"35807.414063f" ;
+      CT::string semi_major_axis = "6378140.000000f" ;
+      CT::string semi_minor_axis = "6356750.000000f" ;
+      CT::string sweep_angle_axis = "x";
+
+      try{projectionVariable->getAttribute("longitude_of_projection_origin")->getDataAsString(&longitude_of_projection_origin);}catch(int e){};
+      try{projectionVariable->getAttribute("latitude_of_projection_origin")->getDataAsString(&latitude_of_projection_origin);}catch(int e){};
+      try{projectionVariable->getAttribute("perspective_point_height")->getDataAsString(&perspective_point_height);}catch(int e){};
+      try{projectionVariable->getAttribute("semi_major_axis")->getDataAsString(&semi_major_axis);}catch(int e){};
+      try{projectionVariable->getAttribute("semi_minor_axis")->getDataAsString(&semi_minor_axis);}catch(int e){};
+      try{projectionVariable->getAttribute("sweep_angle_axis")->getDataAsString(&sweep_angle_axis);}catch(int e){};
+      
+      proj4String->print("+proj=geos +lon_0=%f +lat_0=%f +h=%f +a=%f +b=%f +sweep=%s",
+                        longitude_of_projection_origin.toDouble(),
+                        latitude_of_projection_origin.toDouble(),
+                        perspective_point_height.toDouble(),
+                        semi_major_axis.toDouble(),
+                        semi_minor_axis.toDouble(),
+                        sweep_angle_axis.c_str()
                         );
     }else if(grid_mapping_name.equals("polar_stereographic")){
       // Polar stereographic projection

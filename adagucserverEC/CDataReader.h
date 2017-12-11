@@ -65,6 +65,7 @@ class CDataReader{
     int open(CDataSource *dataSource, int mode);
     int open(CDataSource *dataSource, int mode, int *gridExtent);
     int parseDimensions(CDataSource *dataSource,int mode,int x,int y, int *gridExtent);
+    int getCRS(CDataSource *dataSource);
     
     int close(){return 0;};
 
