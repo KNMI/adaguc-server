@@ -643,8 +643,9 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
     //coordinates can be converted to (k)m
     //
     CDF::Attribute* units=dataSource->varX->getAttributeNE("units");
-    CDBDebug("units: %s", units->toString().c_str());
+
     if ((units!=NULL) && units->toString().equals("rad")){
+      CDBDebug("units: %s", units->toString().c_str());
       CDBDebug("Correct varX and varY");
       double *xdata=(double*)dataSource->varX->data;
       double *ydata=(double*)dataSource->varY->data;
