@@ -111,7 +111,6 @@ int CRequest::setConfigFile(const char *pszConfigFile){
     srvParam->configFileName.copy(pszConfigFile);
     srvParam->cfg=srvParam->configObj->Configuration[0];
     
-    //TODO INCLUDE DATASET = here
     const char * pszQueryString=getenv("QUERY_STRING");
     if(pszQueryString!=NULL){
       CT::string queryString(pszQueryString);
