@@ -28,7 +28,7 @@
 #include "CConvertGeoJSON.h"
 const char *CDataSource::className = "CDataSource";
 
-//#define CDATASOURCE_DEBUG
+#define CDATASOURCE_DEBUG
 /************************************/
 /* CDataSource::CDataObject          */
 /************************************/
@@ -111,13 +111,37 @@ void CDataSource::Statistics::setMaximum(double max){
   this->max=max;
 }
 
+MinMax getMinMax(double *data, bool hasFillValue, double fillValue,size_t numElements){
+  MinMax minMax;
+  bool firstSet = false;
+  for(size_t j=0;j<numElements;j++){
+    double v=data[j];
+    if(v==v){
+      if((v!=fillValue)||(!hasFillValue)){
+        if(firstSet == false){
+          firstSet = true;
+          minMax.min=v;
+          minMax.max=v;
+          minMax.isSet=true;
+        }
+        if(v<minMax.min)minMax.min=v;
+        if(v>minMax.max)minMax.max=v;
+      }
+    }
+  }
+  if(minMax.isSet==false){
+    throw __LINE__+100;
+  }
+  return minMax;
+}      
+
 MinMax getMinMax(float *data, bool hasFillValue, double fillValue,size_t numElements){
   MinMax minMax;
   bool firstSet = false;
   for(size_t j=0;j<numElements;j++){
     float v=data[j];
     if(v==v){
-      if(v!=fillValue||(!hasFillValue)){
+      if((v!=fillValue)||(!hasFillValue)){
         if(firstSet == false){
           firstSet = true;
           minMax.min=v;
@@ -136,37 +160,69 @@ MinMax getMinMax(float *data, bool hasFillValue, double fillValue,size_t numElem
 }      
 
 MinMax getMinMax(CDF::Variable *var){
+  const char* className="getMinMax";
+  CDBDebug("getMinMax %s: %d", var->name.c_str(), var->getType());
   MinMax minMax;
   if(var!=NULL){
- 
-      float *data = (float*)var->data;
-      
-      float scaleFactor=1,addOffset=0,fillValue = 0;
-      bool hasFillValue = false;
-      
-      try{
-        var->getAttribute("scale_factor")->getData(&scaleFactor,1);
-      }catch(int e){}
-      try{
-        var->getAttribute("add_offset")->getData(&addOffset,1);
-      }catch(int e){}
-      try{
-        var->getAttribute("_FillValue")->getData(&fillValue,1);
-        hasFillValue = true;
-      }catch(int e){}
-      
-      size_t lsize= var->getSize();
-      
-      //Apply scale and offset
-      if(scaleFactor!=1||addOffset!=0){
-        for(size_t j=0;j<lsize;j++){
-          data[j]=data[j]*scaleFactor+addOffset;
-        }
-        fillValue=fillValue*scaleFactor+addOffset;
-      }
-      
+      if (var->getType()==CDF_FLOAT) {
+   
+	float *data = (float*)var->data;
+	
+	float scaleFactor=1,addOffset=0,fillValue = 0;
+	bool hasFillValue = false;
+	
+	try{
+	  var->getAttribute("scale_factor")->getData(&scaleFactor,1);
+	}catch(int e){}
+	try{
+	  var->getAttribute("add_offset")->getData(&addOffset,1);
+	}catch(int e){}
+	try{
+	  var->getAttribute("_FillValue")->getData(&fillValue,1);
+	  hasFillValue = true;
+	}catch(int e){}
+	
+	size_t lsize= var->getSize();
+	
+	//Apply scale and offset
+	if(scaleFactor!=1||addOffset!=0){
+	  for(size_t j=0;j<lsize;j++){
+	    data[j]=data[j]*scaleFactor+addOffset;
+	  }
+	  fillValue=fillValue*scaleFactor+addOffset;
+	}
+	
+	minMax = getMinMax(data,hasFillValue,fillValue,lsize);
+      } else if (var->getType()==CDF_DOUBLE) {
+   
+	double *data = (double*)var->data;
+	
+	double scaleFactor=1,addOffset=0,fillValue = 0;
+	bool hasFillValue = false;
+	
+	try{
+	  var->getAttribute("scale_factor")->getData(&scaleFactor,1);
+	}catch(int e){}
+	try{
+	  var->getAttribute("add_offset")->getData(&addOffset,1);
+	}catch(int e){}
+	try{
+	  var->getAttribute("_FillValue")->getData(&fillValue,1);
+	  hasFillValue = true;
+	}catch(int e){}
+	
+	size_t lsize= var->getSize();
+	
+	//Apply scale and offset
+	if(scaleFactor!=1||addOffset!=0){
+	  for(size_t j=0;j<lsize;j++){
+	    data[j]=data[j]*scaleFactor+addOffset;
+	  }
+	  fillValue=fillValue*scaleFactor+addOffset;
+	}
 
-      minMax = getMinMax(data,hasFillValue,fillValue,lsize);
+	minMax = getMinMax(data,hasFillValue,fillValue,lsize);
+      }
     
   }else{
     //CDBError("getMinMax: Variable has not been set");
