@@ -43,3 +43,4 @@ bin/*
 #Test results
 tests/log
 tests/tmp
+tests/testresults/*
