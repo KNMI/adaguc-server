@@ -75,8 +75,6 @@ def cleanTempDir():
   return
 
 class TestStringMethods(unittest.TestCase):
-    overWriteExpectedData = False
-    
     def compareXML(self,xml,expectedxml):
         obj1 = objectify.fromstring(re.sub(' xmlns="[^"]+"', '', expectedxml, count=1))
         obj2 = objectify.fromstring(re.sub(' xmlns="[^"]+"', '', xml, count=1))
@@ -88,45 +86,45 @@ class TestStringMethods(unittest.TestCase):
     
     def test_WMSGetCapabilities_testdatanc(self):
         cleanTempDir()
-        filename="expectedoutputs/test_WMSGetCapabilities_testdatanc"
+        filename="test_WMSGetCapabilities_testdatanc"
         status,data = runADAGUCServer("source=testdata.nc&SERVICE=WMS&request=getcapabilities")
-        if self.overWriteExpectedData: writetofile(filename,data.getvalue())
+        writetofile("testresults/" + filename,data.getvalue())
         self.assertEqual(status, 0)
-        self.compareXML(data.getvalue(), readfromfile(filename))
+        self.compareXML(data.getvalue(), readfromfile("expectedoutputs/" + filename))
 
     def test_WMSGetMap_testdatanc(self):
         cleanTempDir()
-        filename="expectedoutputs/test_WMSGetMap_testdatanc"
+        filename="test_WMSGetMap_testdatanc"
         status,data = runADAGUCServer("source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&")
-        if self.overWriteExpectedData: writetofile(filename,data.getvalue())
+        writetofile("testresults/" + filename,data.getvalue())
         self.assertEqual(status, 0)
-        self.assertEqual(data.getvalue(), readfromfile(filename))
+        self.assertEqual(data.getvalue(), readfromfile("expectedoutputs/" + filename))
         
     def test_WMSGetCapabilitiesGetMap_testdatanc(self):
         cleanTempDir()
-        filename="expectedoutputs/test_WMSGetCapabilities_testdatanc"
+        filename="test_WMSGetCapabilities_testdatanc"
         status,data = runADAGUCServer("source=testdata.nc&SERVICE=WMS&request=getcapabilities")
-        if self.overWriteExpectedData: writetofile(filename,data.getvalue())
+        writetofile("testresults/" + filename,data.getvalue())
         self.assertEqual(status, 0)
-        self.compareXML(data.getvalue(), readfromfile(filename))
-        filename="expectedoutputs/test_WMSGetMap_testdatanc"
+        self.compareXML(data.getvalue(), readfromfile("expectedoutputs/" + filename))
+        filename="test_WMSGetMap_testdatanc"
         status,data = runADAGUCServer("source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&")
-        if self.overWriteExpectedData: writetofile(filename,data.getvalue())
+        writetofile("testresults/" + filename,data.getvalue())
         self.assertEqual(status, 0)
-        self.assertEqual(data.getvalue(), readfromfile(filename))
+        self.assertEqual(data.getvalue(), readfromfile("expectedoutputs/" + filename))
         
     def test_WMSGetMapGetCapabilities_testdatanc(self):
         cleanTempDir()
-        filename="expectedoutputs/test_WMSGetMap_testdatanc"
+        filename="test_WMSGetMap_testdatanc"
         status,data = runADAGUCServer("source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&")
-        if self.overWriteExpectedData: writetofile(filename,data.getvalue())
+        writetofile("testresults/" + filename,data.getvalue())
         self.assertEqual(status, 0)
-        self.assertEqual(data.getvalue(), readfromfile(filename))
-        filename="expectedoutputs/test_WMSGetCapabilities_testdatanc"
+        self.assertEqual(data.getvalue(), readfromfile("expectedoutputs/" + filename))
+        filename="test_WMSGetCapabilities_testdatanc"
         status,data = runADAGUCServer("source=testdata.nc&SERVICE=WMS&request=getcapabilities")
-        if self.overWriteExpectedData: writetofile(filename,data.getvalue())
+        writetofile("testresults/" + filename,data.getvalue())
         self.assertEqual(status, 0)
-        self.compareXML(data.getvalue(), readfromfile(filename))
+        self.compareXML(data.getvalue(), readfromfile("expectedoutputs/" + filename))
         
     def test_WMSGetMap_getmap_3dims_singlefile(self):
         dims = {
@@ -167,16 +165,15 @@ class TestStringMethods(unittest.TestCase):
                   value = (dims[dims.keys()[i]]['values'])[l[i]]
                   kvps += "&" + key +'=' + str(value)
                 #print "Checking dims" + kvps
-                filename="expectedoutputs/test_WMSGetMap_getmap_3dims_"+kvps+".png"
+                filename="test_WMSGetMap_getmap_3dims_"+kvps+".png"
                 filename = filename.replace("&","_").replace(":","_").replace("=","_");
                 #print filename
                 url="source=netcdf_5dims%2Fnetcdf_5dims_seq1%2Fnc_5D_20170101000000-20170101001000.nc&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=data&WIDTH=360&HEIGHT=180&CRS=EPSG%3A4326&BBOX=-90,-180,90,180&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&COLORSCALERANGE=0,1&"
                 url+=kvps
                 status,data = runADAGUCServer(url)
-                if self.overWriteExpectedData: 
-                  writetofile(filename,data.getvalue())
+                writetofile("testresults/" + filename,data.getvalue())
                 self.assertEqual(status, 0)
-                self.assertEqual(data.getvalue(), readfromfile(filename))
+                self.assertEqual(data.getvalue(), readfromfile("expectedoutputs/" + filename))
         l = []
 
         for i in range(len(dims)):
@@ -196,11 +193,11 @@ class TestStringMethods(unittest.TestCase):
         returnCode = subprocess.call(args, stdout=FNULL, stderr=subprocess.STDOUT) 
         self.assertEqual(returnCode, 0)
         
-        filename="expectedoutputs/test_WMSGetCapabilities_timeseries_twofiles"
+        filename="test_WMSGetCapabilities_timeseries_twofiles"
         status,data = runADAGUCServer("SERVICE=WMS&request=getcapabilities", {'ADAGUC_CONFIG': ADAGUC_PATH + '/data/config/adaguc.timeseries.xml'})
-        if self.overWriteExpectedData: writetofile(filename,data.getvalue())
+        writetofile("testresults/" + filename,data.getvalue())
         self.assertEqual(status, 0)
-        self.compareXML(data.getvalue(), readfromfile(filename))
+        self.compareXML(data.getvalue(), readfromfile("expectedoutputs/" + filename))
     
     def test_WMSCMDUpdateDBTailPath(self):
         cleanTempDir()
@@ -209,21 +206,21 @@ class TestStringMethods(unittest.TestCase):
         returnCode = subprocess.call(args, stdout=FNULL, stderr=subprocess.STDOUT) 
         self.assertEqual(returnCode, 0)
         
-        filename="expectedoutputs/test_WMSGetCapabilities_timeseries_tailpath_netcdf_5dims_seq1"
+        filename="test_WMSGetCapabilities_timeseries_tailpath_netcdf_5dims_seq1"
         status,data = runADAGUCServer("SERVICE=WMS&request=getcapabilities", {'ADAGUC_CONFIG': ADAGUC_PATH + '/data/config/adaguc.timeseries.xml'})
-        if self.overWriteExpectedData: writetofile(filename,data.getvalue())
+        writetofile("testresults/" + filename,data.getvalue())
         self.assertEqual(status, 0)
-        self.compareXML(data.getvalue(), readfromfile(filename))
+        self.compareXML(data.getvalue(), readfromfile("expectedoutputs/" + filename))
         
         args = [ADAGUC_PATH+'/bin/adagucserver', '--updatedb', '--config', ADAGUC_PATH + '/data/config/adaguc.timeseries.xml', '--tailpath','netcdf_5dims_seq2']
         returnCode = subprocess.call(args, stdout=FNULL, stderr=subprocess.STDOUT) 
         self.assertEqual(returnCode, 0)
 
-        filename="expectedoutputs/test_WMSGetCapabilities_timeseries_tailpath_netcdf_5dims_seq1_and_seq2"
+        filename="test_WMSGetCapabilities_timeseries_tailpath_netcdf_5dims_seq1_and_seq2"
         status,data = runADAGUCServer("SERVICE=WMS&request=getcapabilities", {'ADAGUC_CONFIG': ADAGUC_PATH + '/data/config/adaguc.timeseries.xml'})
-        if self.overWriteExpectedData: writetofile(filename,data.getvalue())
+        writetofile("testresults/" + filename,data.getvalue())
         self.assertEqual(status, 0)
-        self.compareXML(data.getvalue(), readfromfile(filename))
+        self.compareXML(data.getvalue(), readfromfile("expectedoutputs/" + filename))
       
 
 if __name__ == '__main__':
