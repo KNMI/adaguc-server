@@ -149,7 +149,9 @@ int CRequest::setConfigFile(const char *pszConfigFile){
     for(size_t j=0;j<srvParam->cfg->Include.size();j++){
       if(srvParam->cfg->Include[j]->attr.location.empty()==false){
         int index = (srvParam->cfg->Include.size()-1)-j;
+#ifdef CREQUEST_DEBUG
         CDBDebug("Include '%s'",srvParam->cfg->Include[index]->attr.location.c_str());
+#endif        
         status = srvParam->parseConfigFile(srvParam->cfg->Include[index]->attr.location);
         if(status != 0){
           CDBError("There is an error with include '%s'",srvParam->cfg->Include[index]->attr.location.c_str());
