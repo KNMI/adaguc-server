@@ -384,8 +384,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
           varindex_y = -1;
         }
       }
-    }
-    
+    }    
     
     
     //Adjust online resource in order to pass on variable and source parameters
