@@ -28,7 +28,7 @@
 #include "CConvertGeoJSON.h"
 const char *CDataSource::className = "CDataSource";
 
-#define CDATASOURCE_DEBUG
+// #define CDATASOURCE_DEBUG
 /************************************/
 /* CDataSource::CDataObject          */
 /************************************/
