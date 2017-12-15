@@ -24,8 +24,9 @@ RUN yum update -y && yum install -y \
     gdal-devel \
     tomcat \ 
     maven \
-    logrotate
-         
+    logrotate \
+    cronie
+
 RUN mkdir /adaguc
 
 WORKDIR /adaguc
@@ -37,13 +38,6 @@ RUN chown postgres: /postgresql/
 RUN chown postgres: /var/log/postgresql.log
 RUN runuser -l postgres -c "initdb -D /postgresql"
 
-# Install adaguc-server
-WORKDIR /adaguc
-RUN curl -L  https://github.com/KNMI/adaguc-server/archive/master.tar.gz > adaguc-server.tar.gz
-RUN tar xvf adaguc-server.tar.gz
-WORKDIR /adaguc/adaguc-server-master
-RUN bash compile.sh
-
 # Install adaguc-services
 WORKDIR /adaguc
 RUN curl -L https://github.com/maartenplieger/adaguc-services/archive/master.tar.gz > adaguc-services.tar.gz
@@ -51,6 +45,15 @@ RUN tar xvf adaguc-services.tar.gz
 WORKDIR /adaguc/adaguc-services-master
 RUN mvn package
 RUN cp ./target/adaguc-services-*.war /usr/share/tomcat/webapps/adaguc-services.war
+
+# Install adaguc-server
+WORKDIR /adaguc
+#RUN curl -L  https://github.com/KNMI/adaguc-server/archive/master.tar.gz > adaguc-server.tar.gz
+ADD  https://github.com/KNMI/adaguc-server/archive/master.tar.gz /adaguc/adaguc-server.tar.gz
+RUN tar xvf adaguc-server.tar.gz
+WORKDIR /adaguc/adaguc-server-master
+RUN bash compile.sh
+
 
 COPY adaguc-server-config.xml /adaguc/adaguc-server-config.xml
 

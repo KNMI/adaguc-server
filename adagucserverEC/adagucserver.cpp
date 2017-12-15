@@ -28,12 +28,15 @@
 DEF_ERRORMAIN();
 
 FILE * pLogDebugFile = NULL;
+bool useLogBuffer = false;
 
 int myPID = int(getpid());
 
 void writeLogFile(const char * msg){
   if(pLogDebugFile != NULL){
-    setvbuf(pLogDebugFile, NULL, _IONBF, 0);
+    if (useLogBuffer == false) {
+      setvbuf(pLogDebugFile, NULL, _IONBF, 0);
+    }
     fputs  (msg, pLogDebugFile );
     if(strncmp(msg,"[D:",3)==0||strncmp(msg,"[W:",3)==0||strncmp(msg,"[E:",3)==0){
       time_t myTime = time(NULL);
@@ -310,6 +313,13 @@ int main(int argc, const char *argv[]){
     if(pLogDebugFile ==NULL){
       fprintf(stderr,"Unable to write ADAGUC_LOGFILE %s\n",ADAGUC_LOGFILE);
     }
+  }
+  const char * ADAGUC_ENABLELOGBUFFER=getenv("ADAGUC_ENABLELOGBUFFER");
+  if(ADAGUC_ENABLELOGBUFFER!=NULL){
+    CT::string check = ADAGUC_ENABLELOGBUFFER;
+    if(check.equalsIgnoreCase("true")){
+      useLogBuffer = true;
+    } 
   }
   int status = _main(argc,argv);  
   if(pLogDebugFile!= NULL){
