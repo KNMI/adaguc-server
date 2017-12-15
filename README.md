@@ -8,7 +8,7 @@ See http://dev.knmi.nl/projects/adagucserver/wiki for details
 docker pull openearth/adaguc-server
 mkdir -p $HOME/data/adaguc-autowms
 mkdir -p $HOME/data/adaguc-datasets
-docker run -e EXTERNALADDRESS="http://127.0.0.1:8080/" -p 8080:8080 -v $HOME/data:/data -it adaguc-server 
+docker run -e EXTERNALADDRESS="http://127.0.0.1:8080/" -p 8080:8080 -v $HOME/data:/data/adaguc-data -v $HOME/adagucserverconfig:/data/adaguc-datasets  -v /tmp/adagucdb:/adaguc/adagucdb -it adaguc-server 
 
 ```
 
