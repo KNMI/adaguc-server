@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ADAGUCDB=/adaguc/adagucdb
-
+chmod 777 /var/log/adaguc/
 files=$(shopt -s nullglob dotglob; echo ${ADAGUCDB}/*)
 if (( ${#files} ))
 then

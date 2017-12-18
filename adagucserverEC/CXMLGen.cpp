@@ -352,13 +352,15 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
     for(size_t i=0;i<myWMSLayer->dataSource->cfgLayer->Dimension.size();i++){
       if(i==0&&myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.equals("none"))break;
       #ifdef CXMLGEN_DEBUG
-      CDBDebug("%d = %s",i,myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
+      CDBDebug("%d = %s / %s",i,myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str(),myWMSLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
       #endif    
       //Shorthand dimName
       const char *pszDimName = myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str();
       
       //Create a new dim to store in the layer
-      WMSLayer::Dim *dim=new WMSLayer::Dim();myWMSLayer->dimList.push_back(dim);
+      WMSLayer::Dim *dim=new WMSLayer::Dim();
+      myWMSLayer->dimList.push_back(dim);
+      dim->name.copy( myWMSLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
       //Get the tablename
       CT::string tableName;
       try{
@@ -539,6 +541,7 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
         
       
         if(values == NULL){CDBError("Query failed");return 1;}
+        
         if(values->getSize()>0){
           //if(srvParam->requestType==REQUEST_WMS_GETCAPABILITIES)
           {
@@ -596,6 +599,7 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
 
       //This is an interval defined as start/stop/resolution
       if(hasMultipleValues==false){
+        CDBDebug("!hasMultipleValues");
         // Retrieve the max dimension value
         CDBStore::Store* values = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(pszDimName,tableName.c_str());
         if(values == NULL){CDBError("Query failed");return 1;}
@@ -671,9 +675,13 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
           }
         }
       }
+   
+     
+ }
     }
-
-    }
+        
+    
+    
     return 0;
 }
 

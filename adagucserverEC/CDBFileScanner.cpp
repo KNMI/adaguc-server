@@ -304,7 +304,6 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
   CT::string query;
   CDFObject *cdfObject = NULL;
   int status = 0;
-  CT::string multiInsertCache;
 
   CDBAdapter * dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
   try{
@@ -466,9 +465,12 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
         
         
         
-      for(size_t d=0;d<dataSource->cfgLayer->Dimension.size() && skipDim[d] == false;d++){
-        multiInsertCache = "";
-        if(skipDim[d] == false){
+      for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
+        if(skipDim[d] == true) {
+          CDBDebug("Assuming [%s] done",dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+          continue;
+        }
+        {
           
           numberOfFilesAddedFromDB=0;
           int fileExistsInDB=0;
@@ -831,8 +833,6 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
               //TODO CHECK cdfObject=CDFObjectStore::getCDFObjectStore()->deleteCDFObject(&cdfObject);
             }
           }
-        }else{
-          CDBDebug("Assuming [%s] done",dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
         }
         
         
