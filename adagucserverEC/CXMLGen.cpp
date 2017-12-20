@@ -599,7 +599,6 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
 
       //This is an interval defined as start/stop/resolution
       if(hasMultipleValues==false){
-        CDBDebug("!hasMultipleValues");
         // Retrieve the max dimension value
         CDBStore::Store* values = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(pszDimName,tableName.c_str());
         if(values == NULL){CDBError("Query failed");return 1;}
