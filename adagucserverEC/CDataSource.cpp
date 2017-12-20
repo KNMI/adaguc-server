@@ -160,8 +160,6 @@ MinMax getMinMax(float *data, bool hasFillValue, double fillValue,size_t numElem
 }      
 
 MinMax getMinMax(CDF::Variable *var){
-  const char* className="getMinMax";
-  CDBDebug("getMinMax %s: %d", var->name.c_str(), var->getType());
   MinMax minMax;
   if(var!=NULL){
       if (var->getType()==CDF_FLOAT) {
