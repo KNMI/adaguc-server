@@ -59,7 +59,9 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
   CColor drawVectorLineColor(0,0,128,255);
   float drawVectorLineWidth=1.0;
   bool drawVectorPlotStationId=false;
+  bool drawVectorPlotValue=false;
   float drawVectorVectorScale=1.0;
+  CT::string drawVectorTextFormat("%0.1f");
   CT::string drawVectorVectorStyle("disc");
   
   std::set<std::string> usePoints;
@@ -557,6 +559,12 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
           if(s -> Vector[0]->attr.plotstationid.empty()==false){
             drawVectorPlotStationId=s -> Vector[0]->attr.plotstationid.equalsIgnoreCase("true");
           }  
+          if(s -> Vector[0]->attr.plotvalue.empty()==false){
+            drawVectorPlotValue=s -> Vector[0]->attr.plotvalue.equalsIgnoreCase("true");
+          }  
+          if(s -> Vector[0]->attr.textformat.empty()==false){
+            drawVectorTextFormat=s -> Vector[0]->attr.textformat;
+          }  
           drawVectorVectorScale=s -> Vector[0]->attr.scale;
         }
       }
@@ -644,10 +652,15 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
       if ((direction==direction)&&(strength==strength)) { //Check for Nan
 //        CDBDebug("Drawing wind %f,%f for [%d,%d]", strength, direction, x, y);
         if(drawBarb){
+          CT::string units=dataSource->getDataObject(0)->getUnits();
+          bool toKnots=false;
+          if (!(units.equalsIgnoreCase("kt")||units.equalsIgnoreCase("kts")||units.equalsIgnoreCase("knot"))) {
+            toKnots=true;
+          }
           if(lat>0){
-            drawImage->drawBarb(x, y, ((270-direction)/360)*3.141592654*2, strength, drawVectorLineColor ,drawVectorLineWidth, false, false);
+            drawImage->drawBarb(x, y, ((270-direction)/360)*3.141592654*2, strength, drawVectorLineColor ,drawVectorLineWidth, toKnots, false);
           }else{
-            drawImage->drawBarb(x, y, ((270-direction)/360)*3.141592654*2, strength, drawVectorLineColor, drawVectorLineWidth, false, true);
+            drawImage->drawBarb(x, y, ((270-direction)/360)*3.141592654*2, strength, drawVectorLineColor, drawVectorLineWidth, toKnots, true);
           }
         }
         if(drawVector){
@@ -672,6 +685,17 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
               }
             }
         }
+        if(drawVectorPlotValue){
+          if(!drawDiscs){
+            t.print(drawVectorTextFormat.c_str(),strength);
+            if ((direction>=90)&&(direction<=270)) {
+               drawImage->setText(t.c_str(), t.length(),x-t.length()*3,y-20, drawPointTextColor, 0);
+            } else {
+              drawImage->setText(t.c_str(), t.length(),x-t.length()*3,y+6, drawPointTextColor, 0);
+            }
+          }
+        }
+
         if (drawDiscs) {
           // Draw a disc with the speed value in text and the dir. value as an arrow
           int x=(*p1)[j].x;
