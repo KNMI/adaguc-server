@@ -879,20 +879,6 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y, int *gridExt
     return 1;
   }
   
-  
-  
-//   if(dataSource->level2CompatMode){
-//    
-//     enableDataCache=false;
-//   }
-//   if(enableDataCache){
-//     if(cache.saveCacheFile()){
-//       if(cache.claimCacheFile()!=0){
-//         enableDataCache = false;
-//       }
-//     }
-//   }
-
   if(dataSource->useLonTransformation!=-1 && gridExtent == NULL){
     for(size_t varNr=0;varNr<dataSource->getNumDataObjects();varNr++){
       Proc::swapPixelsAtLocation(dataSource,dataSource->getDataObject(varNr)->cdfVariable,0);
@@ -931,11 +917,6 @@ if( mode == CNETCDFREADER_MODE_OPEN_EXTENT && gridExtent != NULL ){
       
       count[dataSource->dimXIndex] = dataSource->dWidth;
       count[dataSource->dimYIndex]=dataSource->dHeight;
-//       CDBDebug("START X, %d",start[dataSource->dimXIndex]);
-//       CDBDebug("START Y, %d",start[dataSource->dimYIndex]);
-//       CDBDebug("WIDTH, %d",dataSource->dWidth);
-//       CDBDebug("HEIGHT, %d",dataSource->dHeight);
-
     }
   
   
@@ -965,24 +946,16 @@ if( mode == CNETCDFREADER_MODE_OPEN_EXTENT && gridExtent != NULL ){
 
   
   
-  //Determine dataSource->getDataObject(0)->dataType of the variable we are going to read
+  /*
+   * Determine dataSource->getDataObject(0)->dataType of the variable we are going to read
+   * 
+   * Important: ax+b DatapostProc needs this information, so it needs to be called after these statements
+   */
   for(size_t varNr=0;varNr<dataSource->getNumDataObjects();varNr++){
     
     #ifdef CDATAREADER_DEBUG
     CDBDebug("Working on variable %s, %d/%d",dataSource->getDataObject(varNr)->cdfVariable->name.c_str(),varNr,dataSource->getNumDataObjects());
     #endif
-    //dataSource->getDataObject(varNr)->dataType=dataSource->getDataObject(varNr)->cdfVariable->getType();
-    /*if(dataSource->getDataObject(varNr)->cdfVariable->getType()==CDF_CHAR||dataSource->getDataObject(varNr)->cdfVariable->getType()==CDF_BYTE)dataSource->getDataObject(varNr)->dataType=CDF_CHAR;
-    if(dataSource->getDataObject(varNr)->cdfVariable->getType()==CDF_UBYTE)dataSource->getDataObject(varNr)->dataType=CDF_UBYTE;
-    
-    if(dataSource->getDataObject(varNr)->cdfVariable->getType()==CDF_SHORT||dataSource->getDataObject(varNr)->cdfVariable->getType()==CDF_USHORT)dataSource->getDataObject(varNr)->dataType=CDF_SHORT;
-    if(dataSource->getDataObject(varNr)->cdfVariable->getType()==CDF_INT||dataSource->getDataObject(varNr)->cdfVariable->getType()==CDF_UINT)dataSource->getDataObject(varNr)->dataType=CDF_INT;
-    if(dataSource->getDataObject(varNr)->cdfVariable->getType()==CDF_FLOAT)dataSource->getDataObject(varNr)->dataType=CDF_FLOAT;
-    if(dataSource->getDataObject(varNr)->cdfVariable->getType()==CDF_DOUBLE)dataSource->getDataObject(varNr)->dataType=CDF_DOUBLE;
-    if(dataSource->getDataObject(varNr)->dataType==CDF_NONE){
-      CDBError("Invalid dataSource->getDataObject(varNr)->dataType");
-      return 1;
-    }*/
     //Get Unit
     CDF::Attribute *varUnits=dataSource->getDataObject(varNr)->cdfVariable->getAttributeNE("units");
     if(varUnits!=NULL){
@@ -1008,10 +981,6 @@ if( mode == CNETCDFREADER_MODE_OPEN_EXTENT && gridExtent != NULL ){
         dataSource->getDataObject(varNr)->cdfVariable->setType(CDF_DOUBLE);
       }
     
-      //char dataTypeName[256];
-      //CDF::getCDFDataTypeName(dataTypeName,255, dataSource->getDataObject(varNr)->dataType);
-      //CDBDebug("Dataset datatype for reading = %s sizeof(short)=%d",dataTypeName,sizeof(short));
-    
       //Internally we use always double for scale and offset parameters:
       scale_factor->getData(&dataSource->getDataObject(varNr)->dfscale_factor,1);
       
@@ -1028,10 +997,9 @@ if( mode == CNETCDFREADER_MODE_OPEN_EXTENT && gridExtent != NULL ){
   }
     
   /*
-  * DataPostProc: Here our datapostprocessor comes into action!
+  * DataPostProc: Here our datapostprocessor comes into action! It needs scale and offset from datasource.
   * This is stage1, only AX+B will be applied to scale and offset parameters
   */
-  
   CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource,CDATAPOSTPROCESSOR_RUNBEFOREREADING);
   
 
