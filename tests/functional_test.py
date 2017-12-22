@@ -34,6 +34,8 @@ def runADAGUCServer(url, extraenv = []):
   ADAGUC_PATH = os.environ['ADAGUC_PATH']
  
   adagucexecutable = ADAGUC_PATH+"/bin/adagucserver";
+  
+  os.chdir(ADAGUC_PATH+"/tests");
 
  
 
