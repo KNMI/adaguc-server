@@ -42,7 +42,7 @@ function quit {
   echo "  export CPPFLAGS=-I/home/user/software/install/include -I/home/user/othersoftware/install/include"
   echo "  export LDFLAGS=-L/home/user/software/install/lib/ -L/home/user/othersoftware/install/lib/" 
   echo ""
-  exit ;
+  exit 1;
 }
 
 function clean {

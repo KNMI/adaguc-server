@@ -3,14 +3,43 @@ ADAGUC is a geographical information system to visualize netCDF files via the we
 
 See http://dev.knmi.nl/projects/adagucserver/wiki for details
 
-# Docker for server:
+# Docker for adaguc-server:
 ```
 docker pull openearth/adaguc-server
-mkdir -p $HOME/data/adaguc-autowms
-mkdir -p $HOME/data/adaguc-datasets
-docker run -e EXTERNALADDRESS="http://127.0.0.1:8080/" -p 8080:8080 -v $HOME/data:/data/adaguc-data -v $HOME/adagucserverconfig:/data/adaguc-datasets  -v /tmp/adagucdb:/adaguc/adagucdb -it adaguc-server 
+
+rm -rf /tmp/adaguc-database
+rm -rf /tmp/adaguc-logs
+
+
+mkdir -p $HOME/adaguc-server-docker/adaguc-data
+mkdir -p $HOME/adaguc-server-docker/adaguc-datasets
+mkdir -p $HOME/adaguc-server-docker/adaguc-autowms
+mkdir -p /tmp/adaguc-database && chmod 760 /tmp/adaguc-database
+mkdir -p /tmp/adaguc-logs && chmod 760 /tmp/adaguc-logs
+
+docker run \
+  -e EXTERNALADDRESS="http://127.0.0.1:8090/" \
+  -p 8090:8080 \
+  -v $HOME/adaguc-server-docker/adaguc-data:/data/adaguc-data \
+  -v $HOME/adaguc-server-docker/adaguc-datasets:/data/adaguc-datasets \
+  -v $HOME/adaguc-server-docker/adaguc-autowms:/data/adaguc-autowms \
+  -v /tmp/adaguc-database:/adaguc/adagucdb \
+  -v /tmp/adaguc-logs:/var/log/adaguc \
+  -it adaguc-server 
 
 ```
+# Test a NetCDF file
+```
+Put a NetCDF testfile into your autowms folder
+curl -kL https://github.com/KNMI/adaguc-server/raw/master/data/datasets/testdata.nc > $HOME/adaguc-server-docker/adaguc-autowms/testdata.nc
+```
+This file is now accessible via http://localhost:8090/adaguc-services/adagucserver?source=testdata.nc
+You can visualize this link in the adaguc-viewer via "Add data"
+
+# Test your own configuration for styling, aggregations, etc ...
+
+curl -kL https://raw.githubusercontent.com/KNMI/adaguc-server/master/data/config/datasets/dataset_a.xml > $HOME/adaguc-server-docker/adaguc-datasets/dataset_a.xml
+This dataset is now accessible via http://localhost:8090/adaguc-services/adagucserver?service=wms&request=getcapabilities&dataset=dataset_a
 
 # Docker compose with server and viewer:
 
@@ -56,7 +85,7 @@ Testdata can be found here: http://opendap.knmi.nl/knmi/thredds/catalog/ADAGUC/c
 It is also possible to configure new datasets with custom styling and create aggregations over many files. Check https://dev.knmi.nl/projects/adagucserver/wiki/ for more information
 
 * Copy your XML configurations to $HOME/data/adaguc-datasets
-* Datasets are accessible via http://localhost:8080/adaguc-services/wms?service=wms&request=getcapabilities&dataset=dataset_a
+* Datasets are accessible via http://localhost:8090/adaguc-services/adagucserver?service=wms&request=getcapabilities&dataset=dataset_a
 
 # Opendap services can be visualized
 
