@@ -121,7 +121,7 @@ class CServerConfig:public CXMLSerializerInterface{
       }
       class Cattr{
       public:
-        CXMLString linecolor,linewidth,plotstationid,vectorstyle;
+        CXMLString linecolor,linewidth,plotstationid,vectorstyle,textformat,plotvalue;
         float scale;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
@@ -130,6 +130,8 @@ class CServerConfig:public CXMLSerializerInterface{
         else if(equals("scale",5,attrname)){attr.scale=parseFloat(attrvalue);return;}
         else if(equals("vectorstyle",11,attrname)){attr.vectorstyle.copy(attrvalue);return;}
         else if(equals("plotstationid",13,attrname)){attr.plotstationid.copy(attrvalue);return;}
+        else if(equals("textformat",10,attrname)){attr.textformat.copy(attrvalue);return;}
+        else if(equals("plotvalue",9,attrname)){attr.plotvalue.copy(attrvalue);return;}
       }
     };
     
