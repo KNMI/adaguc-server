@@ -15,8 +15,9 @@ services:
         ports:
             - "8090:8080"
         volumes:
-            - $HOME/data/adaguc-datasets:/data/adaguc-datasets
-            - $HOME/data/adaguc-autowms:/data/adaguc-autowms
+            - $HOME/adaguc-server-docker/adaguc-datasetss:/data/adaguc-datasets
+            - $HOME/adaguc-server-docker/adaguc-autowms:/data/adaguc-autowms
+            - $HOME/adaguc-server-docker/adaguc-data:/data/adaguc-data
         environment:
             - "EXTERNALADDRESS=http://localhost:8090/"
 # cd ./adaguc-server/Docker
@@ -25,10 +26,12 @@ services:
 # docker pull openearth/adaguc-viewer
 # docker pull openearth/adaguc-server
 # docker-compose up # In working directory and go to http://localhost:8091/adaguc-viewer/ or http://localhost:8090/adaguc-services/wms.cgi? 
+# mkdir -p $HOME/adaguc-server-docker/adaguc-data
+# mkdir -p $HOME/adaguc-server-docker/adaguc-datasets
+# mkdir -p $HOME/adaguc-server-docker/adaguc-autowms
 # docker-compose down # To stop 
 #
-# Directories $HOME/data/adaguc-datasets and $HOME/data/adaguc-autowms will be created if they do not exist.
-# Copy your NetCDF/GeoJSON/HDF5 to $HOME/data/adaguc-autowms
+# Copy your NetCDF/GeoJSON/HDF5 to $HOME/adaguc-server-docker/adaguc-autowms
 # Files are are accessible by linking them via the source= key. Filenames must be URLEncoded.
 #   http://localhost:8090/adaguc-services/wms.cgi?source=testdata.nc&&service=WMS&request=GetCapabilities
 #
