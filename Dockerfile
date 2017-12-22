@@ -80,4 +80,9 @@ VOLUME /adaguc/adagucdb       # You can make the postgresql database persistent 
 
 EXPOSE 8080
 
+# This needs to be moved out of the way in the future
+#RUN systemctl enable crond 
+#COPY ./Docker/CRONTAB /adaguc/CRONTAB
+#RUN crontab CRONTAB
+
 ENTRYPOINT /adaguc/start.sh
