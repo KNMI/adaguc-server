@@ -208,6 +208,18 @@
   };
 
   /**
+  * Calculate speed in knots algorithm 
+  */
+  class CDPPToKnots : public CDPPInterface{
+  private:
+    DEF_ERRORFUNCTION();
+  public:
+    virtual const char *getId();
+    virtual int isApplicable(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource);
+    virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode);
+  };
+
+  /**
   * Radar dbZ to Rain intensity algorithm 
   */
   class CDPDBZtoRR : public CDPPInterface{
