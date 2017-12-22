@@ -34,6 +34,8 @@ def runADAGUCServer(url, extraenv = []):
   ADAGUC_PATH = os.environ['ADAGUC_PATH']
  
   adagucexecutable = ADAGUC_PATH+"/bin/adagucserver";
+  
+  os.chdir(ADAGUC_PATH+"/tests");
 
  
 
@@ -221,7 +223,33 @@ class TestStringMethods(unittest.TestCase):
         writetofile("testresults/" + filename,data.getvalue())
         self.assertEqual(status, 0)
         self.compareXML(data.getvalue(), readfromfile("expectedoutputs/" + filename))
-      
+
+    def test_WMSGetFeatureInfo_forecastreferencetime_texthtml(self):
+        cleanTempDir()
+        filename="test_WMSGetFeatureInfo_forecastreferencetime.html"
+        status,data = runADAGUCServer("source=forecast_reference_time%2FHARM_N25_20171215090000_dimx16_dimy16_dimtime49_dimforecastreferencetime1_varairtemperatureat2m.nc&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=air_temperature__at_2m&QUERY_LAYERS=air_temperature__at_2m&CRS=EPSG%3A4326&BBOX=49.55171074378079,1.4162628389784275,54.80328142582087,9.526486675156528&WIDTH=1515&HEIGHT=981&I=832&J=484&FORMAT=image/gif&INFO_FORMAT=text/html&STYLES=&&time=2017-12-17T09%3A00%3A00Z&DIM_reference_time=2017-12-15T09%3A00%3A00Z")
+        writetofile("testresults/" + filename,data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), readfromfile("expectedoutputs/" + filename))
+        filename="test_WMSGetCapabilities_testdatanc"
+        status,data = runADAGUCServer("source=testdata.nc&SERVICE=WMS&request=getcapabilities")
+        writetofile("testresults/" + filename,data.getvalue())
+        self.assertEqual(status, 0)
+        self.compareXML(data.getvalue(), readfromfile("expectedoutputs/" + filename))      
+
+    
+    def test_WMSGetFeatureInfo_timeseries_forecastreferencetime_json(self):
+        cleanTempDir()
+        filename="test_WMSGetFeatureInfo_timeseries_forecastreferencetime.json"
+        status,data = runADAGUCServer("source=forecast_reference_time%2FHARM_N25_20171215090000_dimx16_dimy16_dimtime49_dimforecastreferencetime1_varairtemperatureat2m.nc&service=WMS&request=GetFeatureInfo&version=1.3.0&layers=air_temperature__at_2m&query_layers=air_temperature__at_2m&crs=EPSG%3A4326&bbox=47.80599631376197%2C1.4162628389784275%2C56.548995855839685%2C9.526486675156528&width=910&height=981&i=502&j=481&format=image%2Fgif&info_format=application%2Fjson&time=1000-01-01T00%3A00%3A00Z%2F3000-01-01T00%3A00%3A00Z&dim_reference_time=2017-12-15T09%3A00%3A00Z")
+        writetofile("testresults/" + filename,data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), readfromfile("expectedoutputs/" + filename))
+        filename="test_WMSGetCapabilities_testdatanc"
+        status,data = runADAGUCServer("source=testdata.nc&SERVICE=WMS&request=getcapabilities")
+        writetofile("testresults/" + filename,data.getvalue())
+        self.assertEqual(status, 0)
+        self.compareXML(data.getvalue(), readfromfile("expectedoutputs/" + filename))      
 
 if __name__ == '__main__':
     unittest.main()
