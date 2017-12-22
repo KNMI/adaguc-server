@@ -1,18 +1,17 @@
 #!/bin/bash
-
-ADAGUCDB=/adaguc/adagucdb
 chmod 777 /var/log/adaguc/
+
 files=$(shopt -s nullglob dotglob; echo ${ADAGUCDB}/*)
 if (( ${#files} ))
 then
-  echo "Re-using database files from ${ADAGUCDB}" && \
+  echo "Re-using persistent postgresql database from ${ADAGUCDB}" && \
   runuser -l postgres -c "pg_ctl -w -D ${ADAGUCDB} -l /var/log/adaguc/postgresql.log start"
 else 
-  echo "Initializing postgresdb"
+  echo "Initializing new postgresql database"
   mkdir -p ${ADAGUCDB} && chmod 777 ${ADAGUCDB} && chown postgres: ${ADAGUCDB} && \
   runuser -l postgres -c "pg_ctl initdb -w -D ${ADAGUCDB}" && \
   runuser -l postgres -c "pg_ctl -w -D ${ADAGUCDB} -l /var/log/adaguc/postgresql.log start" && \
-  echo "Configuring POSTGRESQL DB" && \
+  echo "Configuring new postgresql database" && \
   runuser -l postgres -c "createuser --superuser adaguc" && \
   runuser -l postgres -c "psql postgres -c \"ALTER USER adaguc PASSWORD 'adaguc';\"" && \
   runuser -l postgres -c "psql postgres -c \"CREATE DATABASE adaguc;\""
@@ -20,10 +19,7 @@ fi
 
 echo "Checking POSTGRESQL DB" && \
     runuser -l postgres -c "psql postgres -c \"show data_directory;\"" && \
-    echo "Creating directories" && \
-    cp /adaguc/adaguc-server-master/data/datasets/testdata.nc /data/adaguc-autowms && \
-    cp /adaguc/adaguc-server-master/data/config/datasets/baselayers.xml /data/adaguc-datasets && \
-    cp /adaguc/adaguc-server-master/data/config/datasets/dataset_a.xml /data/adaguc-datasets && \
-    echo "Starting TOMCAT Server" && \
+    echo "Starting adaguc-services Server" && \
+    echo "Starting tomcat server with adaguc-services application" && \
     /usr/libexec/tomcat/server start 
     

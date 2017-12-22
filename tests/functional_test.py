@@ -80,10 +80,30 @@ class TestStringMethods(unittest.TestCase):
     def compareXML(self,xml,expectedxml):
         obj1 = objectify.fromstring(re.sub(' xmlns="[^"]+"', '', expectedxml, count=1))
         obj2 = objectify.fromstring(re.sub(' xmlns="[^"]+"', '', xml, count=1))
+
+        # Remove ADAGUC build date and version from keywordlists
         for child in obj1.findall("Service/KeywordList")[0]:child.getparent().remove(child)
         for child in obj2.findall("Service/KeywordList")[0]:child.getparent().remove(child)
+        
+        # Boundingbox extent values are too varying by different Proj libraries
+        def removeBBOX(root):
+          if (root.tag.title() == "Boundingbox"):
+            #root.getparent().remove(root)
+            try: 
+              del root.attrib["minx"]
+              del root.attrib["miny"] 
+              del root.attrib["maxx"] 
+              del root.attrib["maxy"] 
+            except: pass
+          for elem in root.getchildren():
+              removeBBOX(elem)
+        
+        removeBBOX(obj1);
+        removeBBOX(obj2);  
+        
         result = etree.tostring(obj1)     
         expect = etree.tostring(obj2)     
+
         self.assertEquals(expect, result)
     
     def test_WMSGetCapabilities_testdatanc(self):

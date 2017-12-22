@@ -5,7 +5,7 @@ popd > /dev/null
 export ADAGUC_PATH=${SCRIPTPATH}/../
 export ADAGUC_PATH=`readlink -f ${ADAGUC_PATH}`/
 export PYTHONPATH=${ADAGUC_PATH}/data/python/
-echo $ADAGUC_PATH
+echo "ADAGUC-Server path is [$ADAGUC_PATH]"
 export ADAGUC_TMP=${ADAGUC_PATH}/tests/tmp/
 export ADAGUC_LOGFILE=${ADAGUC_PATH}/tests/log/
 rm -rf $ADAGUC_LOGFILE && mkdir -p $ADAGUC_LOGFILE
