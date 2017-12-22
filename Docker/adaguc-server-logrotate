@@ -5,5 +5,4 @@
     size 100k
     missingok
     notifempty
-    endscript
 }
