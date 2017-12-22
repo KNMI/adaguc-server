@@ -1,4 +1,5 @@
 #!/bin/bash 
+echo "Starting adaguc-server functional tests"
 pushd `dirname $0` > /dev/null
 SCRIPTPATH=`pwd`
 popd > /dev/null
