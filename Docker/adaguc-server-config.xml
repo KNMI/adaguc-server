@@ -42,6 +42,7 @@
   </AutoResource>
 
   <Dataset enabled="true" location="/data/adaguc-datasets/"/>
+  <Dataset enabled="true" location="/data/adaguc-datasets-internal/"/>
 
   <!-- End of configuration /-->
 </Configuration>
