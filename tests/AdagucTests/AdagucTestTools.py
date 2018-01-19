@@ -77,3 +77,7 @@ class AdagucTestTools:
     except:
       pass
     return
+  
+  def mkdir_p(self, directory):
+    if not os.path.exists(directory):
+      os.makedirs(directory)
