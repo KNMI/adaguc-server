@@ -360,6 +360,7 @@ int COpenDAPHandler::HandleOpenDAPRequest(const char *path,const char *query,CSe
 //   CDBDebug("layerName: %s",layerName.c_str());
   
   if(dataURL.length()>0){
+    bool hasFoundDataSetOrAutoResource = false;
     
     //Check if AUTORESOURCE is enabled
     if(srvParam->isAutoResourceEnabled()){
@@ -367,15 +368,19 @@ int COpenDAPHandler::HandleOpenDAPRequest(const char *path,const char *query,CSe
       if(CAutoResource::configure(srvParam,true)!=0){
         CDBError("AutoResource failed, file provided with SOURCE identifier not found");
         return 1;
+      } else {
+        hasFoundDataSetOrAutoResource = true;
       }
     }
     //Check if DATASET is enabled
-    if(srvParam->cfg->Dataset.size()==1){
-      if(srvParam->cfg->Dataset[0]->attr.enabled.equals("true")&&srvParam->cfg->Dataset[0]->attr.location.empty()==false){
-        srvParam->datasetLocation = dataURL;
-        if(CAutoResource::configure(srvParam,true)!=0){
-          CDBError("File associated with provided DATASET identifier not found");
-          return 1;
+    if(hasFoundDataSetOrAutoResource == false){
+      for(size_t j=0;j<srvParam->cfg->Dataset.size();j++){
+        if(srvParam->cfg->Dataset[j]->attr.enabled.equals("true")&&srvParam->cfg->Dataset[j]->attr.location.empty()==false){
+          srvParam->datasetLocation = dataURL;
+          if(CAutoResource::configure(srvParam,true)!=0 && j == srvParam->cfg->Dataset.size() -1){
+            CDBError("File associated with provided DATASET identifier not found");
+            return 1;
+          }
         }
       }
     }
