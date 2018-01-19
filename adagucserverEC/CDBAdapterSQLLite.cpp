@@ -200,7 +200,7 @@ int CDBAdapterSQLLite::CSQLLiteDB::query(const char *pszQuery){
   
   int rc = sqlite3_exec(db, pszQuery, CDBAdapterSQLLite::CSQLLiteDB::callbacknoresults, 0, &zErrMsg);
   if( rc!=SQLITE_OK ){
-    fprintf(stderr, "SQL error: %s\n", zErrMsg);
+    // fprintf(stderr, "SQL error: %s\n", zErrMsg);
     errorMessage = zErrMsg;
     sqlite3_free(zErrMsg);
     return 1;

@@ -13,24 +13,27 @@ FNULL = open(os.devnull, 'w')
 ADAGUC_PATH = os.environ['ADAGUC_PATH']
 
 class AdagucTestTools:
-
-  def runADAGUCServer(self, url, extraenv = []):
-    def getLogFile():
+  def getLogFile(self):
       ADAGUC_LOGFILE = os.environ['ADAGUC_LOGFILE']
       f=open(ADAGUC_LOGFILE)
       data=f.read()
       f.close()
       return data
-
-    def printLogFile(self):
+    
+  def printLogFile(self):
       ADAGUC_LOGFILE = os.environ['ADAGUC_LOGFILE']
-      print "--------- START ADAGUC LOGS ---------"
-      print getLogFile()
-      print "--------- END ADAGUC LOGS ---------"
+      print "\n=== START ADAGUC LOGS ==="
+      print self.getLogFile()
+      print "=== END ADAGUC LOGS ==="
+      
+  def runADAGUCServer(self, url = None, env = [], path = None):
+    
+
+
 
     adagucenv=os.environ.copy()
     
-    adagucenv.update(extraenv)
+    adagucenv.update(env)
 
     ADAGUC_TMP = os.environ['ADAGUC_TMP']
     ADAGUC_PATH = os.environ['ADAGUC_PATH']
@@ -42,24 +45,29 @@ class AdagucTestTools:
   
 
     filetogenerate =  StringIO()
-    status, headers = CGIRunner().run([adagucexecutable],url,output = filetogenerate,extraenv=adagucenv)
+    status, headers = CGIRunner().run([adagucexecutable],url=url,output = filetogenerate, env=adagucenv, path=path)
 
 
     if status != 0:
-      printLogFile()
-      
-      print ("Adaguc-server has non zero exit status %d ", status)
+      print("\n\n--- START ADAGUC DEBUG INFO ---")
+      print("Adaguc-server has non zero exit status %d " % status)
+      self.printLogFile();
       if status == -9: print("Process: Killed")
       if status == -11: print("Process: Segmentation Fault ")
       
       if len(headers)!=0: 
-        print("Process: No HTTP Headers written")
+        print "=== START ADAGUC HTTP HEADER ==="
         print headers
-      return [status]
+        print "=== END ADAGUC HTTP HEADER ==="
+      else: 
+        print("Process: No HTTP Headers written")
+
+      print("--- END ADAGUC DEBUG INFO ---\n")        
+      return [status, filetogenerate, headers]
 
       
     else:  
-      return [0,filetogenerate]
+      return [0,filetogenerate, headers]
       
   def writetofile(self, filename, data):
     with open(filename, 'w') as f:

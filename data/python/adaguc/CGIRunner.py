@@ -95,7 +95,7 @@ class CGIRunner:
   """
     Run the CGI script with specified URL and environment. Stdout is captured and put in a StringIO object provided in output
   """
-  def run(self,cmds,url,output,extraenv = []):
+  def run(self,cmds,url,output,env = [], path = None):
     #output = subprocess.Popen(["../../bin/adagucserver", "myarg"], stdout=subprocess.PIPE, env=adagucenv).communicate()[0]
     self.headersSent = False
     self.foundLF = False
@@ -107,11 +107,20 @@ class CGIRunner:
     def monitor1(_message):
       self._filterHeader(_message,writefunction)
     
-    env = os.environ.copy()
-    env['QUERY_STRING']=url
+    localenv = os.environ.copy()
+    if url != None:
+      localenv['QUERY_STRING']=url
+    else :
+       localenv['QUERY_STRING']=""
+      
     
-    env.update(extraenv)  
-    status = self._startProcess(cmds,monitor1,env,bufsize=8192)
+    if path!=None:
+      localenv['SCRIPT_NAME']="/myscriptname";
+      #SCRIPT_NAME [/cgi-bin/autoresource.cgi], REQUEST_URI [/cgi-bin/autoresource.cgi/opendap/clipc/combinetest/wcs_nc2.nc.das]
+      localenv['REQUEST_URI']="/myscriptname/" + path
+      
+    localenv.update(env)  
+    status = self._startProcess(cmds,monitor1,localenv,bufsize=8192)
     
     output.flush()
     
