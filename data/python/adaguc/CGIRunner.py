@@ -18,7 +18,7 @@ class CGIRunner:
     self.headersSent = False
     self.foundLF = False
     
-  def _startProcess(self,cmds,callback=None,env = None,bufsize=0):
+  def startProcess(self,cmds,callback=None,env = None,bufsize=0):
     try:
         from Queue import Queue, Empty
     except ImportError:
@@ -120,7 +120,7 @@ class CGIRunner:
       localenv['REQUEST_URI']="/myscriptname/" + path
       
     localenv.update(env)  
-    status = self._startProcess(cmds,monitor1,localenv,bufsize=8192)
+    status = self.startProcess(cmds,monitor1,localenv,bufsize=8192)
     
     output.flush()
     
