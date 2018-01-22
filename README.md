@@ -10,12 +10,11 @@ docker pull openearth/adaguc-server
 rm -rf /tmp/adaguc-database
 rm -rf /tmp/adaguc-logs
 
-
 mkdir -p $HOME/adaguc-server-docker/adaguc-data
 mkdir -p $HOME/adaguc-server-docker/adaguc-datasets
 mkdir -p $HOME/adaguc-server-docker/adaguc-autowms
-mkdir -p /tmp/adaguc-database && chmod 760 /tmp/adaguc-database
-mkdir -p /tmp/adaguc-logs && chmod 760 /tmp/adaguc-logs
+mkdir -p /tmp/adaguc-database && chmod 777 /tmp/adaguc-database
+mkdir -p /tmp/adaguc-logs && chmod 777 /tmp/adaguc-logs
 
 docker run \
   -e EXTERNALADDRESS="http://127.0.0.1:8090/" \
@@ -28,18 +27,31 @@ docker run \
   -it adaguc-server 
 
 ```
-# Test a NetCDF file
+
+# Visualize a NetCDF file via autowms
+
 ```
 Put a NetCDF testfile into your autowms folder
 curl -kL https://github.com/KNMI/adaguc-server/raw/master/data/datasets/testdata.nc > $HOME/adaguc-server-docker/adaguc-autowms/testdata.nc
 ```
+AutoWMS files are referenced via the source= key value pair in the URL.
 This file is now accessible via http://localhost:8090/adaguc-services/adagucserver?source=testdata.nc
 You can visualize this link in the adaguc-viewer via "Add data"
 
-# Test your own configuration for styling, aggregations, etc ...
+# Test your own dataset configuration for styling, aggregations, etc ...
 
+Get a dataset configurationfile:
+```
 curl -kL https://raw.githubusercontent.com/KNMI/adaguc-server/master/data/config/datasets/dataset_a.xml > $HOME/adaguc-server-docker/adaguc-datasets/dataset_a.xml
-This dataset is now accessible via http://localhost:8090/adaguc-services/adagucserver?service=wms&request=getcapabilities&dataset=dataset_a
+```
+Now update the db:
+```
+dockercontainerid=`docker ps -f ancestor=adaguc-server -q`
+docker exec -i -t ${dockercontainerid} /adaguc/adaguc-server-updatedatasets.sh
+```
+Dataset configurations are referenced via the dataset= key value pair in the URL.
+This dataset is now accessible via 
+http://localhost:8090/adaguc-services/adagucserver?service=wms&request=getcapabilities&dataset=dataset_a&
 
 # Docker compose with server and viewer:
 

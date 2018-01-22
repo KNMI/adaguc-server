@@ -1,5 +1,5 @@
 #!/bin/bash
-chmod 777 /var/log/adaguc/
+chmod 777 /var/log/adaguc
 
 files=$(shopt -s nullglob dotglob; echo ${ADAGUCDB}/*)
 if (( ${#files} ))
@@ -17,9 +17,13 @@ else
   runuser -l postgres -c "psql postgres -c \"CREATE DATABASE adaguc;\""
 fi
 
+export ADAGUC_PATH=/adaguc/adaguc-server-master/ && \
+export ADAGUC_TMP=/tmp && \
+/adaguc/adaguc-server-master/bin/adagucserver --updatedb \
+  --config /adaguc/adaguc-server-config.xml,/data/adaguc-datasets-internal/baselayers.xml
+
 echo "Checking POSTGRESQL DB" && \
     runuser -l postgres -c "psql postgres -c \"show data_directory;\"" && \
     echo "Starting adaguc-services Server" && \
-    echo "Starting tomcat server with adaguc-services application" && \
     /usr/libexec/tomcat/server start 
     

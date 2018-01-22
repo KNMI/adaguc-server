@@ -1,3 +1,8 @@
+Version 2.0.32 2018-01-22
+    - Polylines smaller then 1 px can now be rendered.
+    - OpenDAPServer is now compatible with Java NetCDF library
+    - OpenDAPServer tests and polyline tests added
+
 Version 2.0.31 2017-10-23
     - When using ?DATASET=<yourdateset> configurations the autoscan is now not started, this should be done by you.
     - Support for NOAA GOES NetCDF files
