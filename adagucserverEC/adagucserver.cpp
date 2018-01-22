@@ -97,6 +97,10 @@ void serverWarningFunction(const char *msg){
 //   }
 }
 
+void serverLogFunctionCMDLine(const char *msg){
+  printf("%s", msg);
+}
+
 
 //Set config file from environment variable ADAGUC_CONFIG
 int setCRequestConfigFromEnvironment(CRequest *request){
@@ -165,7 +169,9 @@ int _main(int argc, const char *argv[]){
 
   // Initialize error functions
   seterrormode(EXCEPTIONS_PLAINTEXT);
-
+  setErrorFunction(serverLogFunctionCMDLine);
+  setWarningFunction(serverLogFunctionCMDLine);
+  setDebugFunction(serverLogFunctionCMDLine);
 
   //Check if a database update was requested
   if(argc>=2){

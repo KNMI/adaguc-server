@@ -15,10 +15,14 @@ ADAGUC_PATH = os.environ['ADAGUC_PATH']
 class AdagucTestTools:
   def getLogFile(self):
       ADAGUC_LOGFILE = os.environ['ADAGUC_LOGFILE']
-      f=open(ADAGUC_LOGFILE)
-      data=f.read()
-      f.close()
-      return data
+      try:
+        f=open(ADAGUC_LOGFILE)
+        data=f.read()
+        f.close()
+        return data
+      except:
+        pass
+      return ""
     
   def printLogFile(self):
       ADAGUC_LOGFILE = os.environ['ADAGUC_LOGFILE']
@@ -26,26 +30,27 @@ class AdagucTestTools:
       print self.getLogFile()
       print "=== END ADAGUC LOGS ==="
       
-  def runADAGUCServer(self, url = None, env = [], path = None):
+  def runADAGUCServer(self, url = None, env = [], path = None, args = None, isCGI = True):
     
-
-
 
     adagucenv=os.environ.copy()
-    
     adagucenv.update(env)
+    
 
-    ADAGUC_TMP = os.environ['ADAGUC_TMP']
-    ADAGUC_PATH = os.environ['ADAGUC_PATH']
-  
+
+    ADAGUC_PATH = adagucenv['ADAGUC_PATH']
+    
     adagucexecutable = ADAGUC_PATH+"/bin/adagucserver";
+    
+    adagucargs = [adagucexecutable]
+    
+    if args is not None:
+      adagucargs  = adagucargs + args
     
     os.chdir(ADAGUC_PATH+"/tests");
 
-  
-
     filetogenerate =  StringIO()
-    status, headers = CGIRunner().run([adagucexecutable],url=url,output = filetogenerate, env=adagucenv, path=path)
+    status, headers = CGIRunner().run(adagucargs,url=url,output = filetogenerate, env=adagucenv, path=path, isCGI= isCGI)
 
 
     if status != 0:
@@ -84,6 +89,7 @@ class AdagucTestTools:
       shutil.rmtree(ADAGUC_TMP)
     except:
       pass
+    self.mkdir_p(os.environ['ADAGUC_TMP']);
     return
   
   def mkdir_p(self, directory):

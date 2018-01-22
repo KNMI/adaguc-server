@@ -31,7 +31,9 @@ class CGIRunner:
             queue.put(line)
         out.close()
 
-
+    #print cmds
+    #print env
+    
     p = Popen(cmds, stdout=PIPE, stderr=STDOUT,bufsize=bufsize, close_fds=ON_POSIX,env=env)
     q = Queue()
     t = Thread(target=enqueue_output, args=(p.stdout, q))
@@ -95,11 +97,14 @@ class CGIRunner:
   """
     Run the CGI script with specified URL and environment. Stdout is captured and put in a StringIO object provided in output
   """
-  def run(self,cmds,url,output,env = [], path = None):
+  def run(self,cmds,url,output,env = [], path = None, isCGI = True):
     #output = subprocess.Popen(["../../bin/adagucserver", "myarg"], stdout=subprocess.PIPE, env=adagucenv).communicate()[0]
     self.headersSent = False
     self.foundLF = False
     self.headers = ""
+    
+    if isCGI is False:
+      self.headersSent = True
     
     def writefunction(data):
       output.write(data)
@@ -107,7 +112,7 @@ class CGIRunner:
     def monitor1(_message):
       self._filterHeader(_message,writefunction)
     
-    localenv = os.environ.copy()
+    localenv = {}#os.environ.copy()
     if url != None:
       localenv['QUERY_STRING']=url
     else :

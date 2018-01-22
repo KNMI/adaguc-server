@@ -86,10 +86,14 @@ int CDBAdapterSQLLite::CSQLLiteDB::close(){
 };
 
 int CDBAdapterSQLLite::CSQLLiteDB::connect(const char * pszOptions){
-
+  if (db != NULL){
+    CDBError("Database is already connected");
+    return 1;
+  }
   int rc = sqlite3_open(pszOptions, &db);
   if( rc ){
-    CDBError( "Can't open database: %s\n", sqlite3_errmsg(db));
+    CDBDebug( "Can't open database: [%s] with file [%s]\n", sqlite3_errmsg(db), pszOptions);
+    CDBError( "Can't open database: [%s]\n", sqlite3_errmsg(db));
     sqlite3_close(db);
     db = NULL;
     return 1 ;
@@ -769,7 +773,16 @@ int  CDBAdapterSQLLite::autoUpdateAndScanDimensionTables(CDataSource *dataSource
 }
 
 
-
+CDBAdapterSQLLite::CSQLLiteDB *CDBAdapterSQLLite::getDataBaseConnection(){
+  if(dataBaseConnection == NULL){
+    dataBaseConnection = new CSQLLiteDB();
+    int status = dataBaseConnection->connect(configurationObject->DataBase[0]->attr.parameters.c_str());
+    if(status!=0){
+      CDBError("Unable to connect to DB");return NULL;
+    }
+  }
+  return dataBaseConnection;
+}
 
 CT::string CDBAdapterSQLLite::getTableNameForPathFilterAndDimension(const char *path,const char *filter, const char * dimension,CDataSource *dataSource){
   if(dataSource->cfgLayer->DataBaseTable.size() == 1){
