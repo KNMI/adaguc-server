@@ -19,9 +19,9 @@ int CAutoResource::configureDataset(CServerParams *srvParam,bool plain){
 
     //Check if dataset extension is enabled           
     bool datasetEnabled = false;
-    if(srvParam->cfg->Dataset.size()==1){
-      if(srvParam->cfg->Dataset[0]->attr.enabled.equals("true")&&srvParam->cfg->Dataset[0]->attr.location.empty()==false){
-        datasetEnabled = true;
+    for(size_t j=0;j<srvParam->cfg->Dataset.size();j++){
+      if(srvParam->cfg->Dataset[j]->attr.enabled.equals("true")&&srvParam->cfg->Dataset[j]->attr.location.empty()==false){
+        datasetEnabled = true;break;
       }
     }
     
@@ -40,28 +40,37 @@ int CAutoResource::configureDataset(CServerParams *srvParam,bool plain){
     internalDatasetLocation.replaceSelf(":","_");
     internalDatasetLocation.replaceSelf("/","_");
     
-    CT::string datasetConfigFile = srvParam->cfg->Dataset[0]->attr.location.c_str();
-    
-    datasetConfigFile.printconcat("/%s.xml",internalDatasetLocation.c_str());
-    
-    CDBDebug("Found dataset %s",datasetConfigFile.c_str());
-    
-    //Check whether this config file exists.
-    struct stat stFileInfo;
-    int intStat;
-    intStat = stat(datasetConfigFile.c_str(),&stFileInfo);
-    CT::string cacheBuffer;
-    //The file exists, so remove it.
-    if(intStat != 0) {
-      CDBDebug("Dataset config file does not exist: %s ",datasetConfigFile.c_str());
+    CT::string datasetConfigFile = "";
+    for(size_t j=0;j<srvParam->cfg->Dataset.size();j++){
+      CT::string testDataSet= srvParam->cfg->Dataset[j]->attr.location.c_str();
+      
+      testDataSet.printconcat("/%s.xml",internalDatasetLocation.c_str());
+      
+      //Check whether this config file exists.
+      struct stat stFileInfo;
+      int intStat;
+      intStat = stat(testDataSet.c_str(),&stFileInfo);
+      CT::string cacheBuffer;
+      //The file exists, so remove it.
+      if(intStat != 0) {
+        CDBDebug("Dataset not found in [%s]",testDataSet.c_str());
+        continue;
+      } else {
+        datasetConfigFile = testDataSet;
+        break;
+      }
+    }
+    if(datasetConfigFile.length() == 0) {
       CDBError("No such dataset");
       return 1;
     }
 
+    CDBDebug("Found dataset %s",datasetConfigFile.c_str());
+    
     //Add the dataset file to the current configuration      
     int status = srvParam->parseConfigFile(datasetConfigFile);
     if(status!=0){
-      CDBError("Invalid dataset configuration file. ");
+      CDBError("Invalid dataset configuration file.");
       return 1;
     }
     
@@ -444,6 +453,15 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *srvParam,CDFObject *cdfOb
           xmleLayer->RenderMethod.insert(xmleLayer->RenderMethod.begin(),xmleRenderMethod);
         }
       }
+      CDF::Attribute *adaguc_data_type = variable->getAttributeNE("adaguc_data_type");
+      if (adaguc_data_type != NULL){
+        if (adaguc_data_type->toString().equals("CConvertGeoJSON")){
+          CServerConfig::XMLE_RenderMethod* xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
+          xmleRenderMethod->value.copy("polyline");
+          xmleLayer->RenderMethod.insert(xmleLayer->RenderMethod.begin(),xmleRenderMethod);
+        }
+      }
+      
     }
   }
   

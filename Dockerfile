@@ -64,7 +64,7 @@ COPY ./Docker/adaguc-services-config.xml /adaguc/adaguc-services-config.xml
 COPY ./Docker/start.sh /adaguc/
 COPY ./Docker/adaguc-server-logrotate /etc/logrotate.d/adaguc
 COPY ./Docker/adaguc-server-updatedatasets.sh /adaguc/
-COPY ./data/config/datasets/baselayers.xml /data/adaguc-datasets-internal/baselayers.xml
+COPY ./Docker/baselayers.xml /data/adaguc-datasets-internal/baselayers.xml
 RUN  chmod +x /adaguc/adaguc-server-updatedatasets.sh && chmod +x /adaguc/start.sh
 
 # Set adaguc-services configuration file
@@ -79,5 +79,10 @@ VOLUME /var/log/adaguc/       # Loggings are save here, including logrotate
 VOLUME /adaguc/adagucdb       # You can make the postgresql database persistent by externally mounting it
 
 EXPOSE 8080
+
+# This needs to be moved out of the way in the future
+#RUN systemctl enable crond 
+#COPY ./Docker/CRONTAB /adaguc/CRONTAB
+#RUN crontab CRONTAB
 
 ENTRYPOINT /adaguc/start.sh

@@ -42,14 +42,19 @@ private:
       std::vector<Dim> dimInfo;
       
     };
-  static CT::string VarInfoToString(std::vector <VarInfo> selectedVariables);
-  static int putVariableDataSize(CDF::Variable *v);
-  static int putVariableData(CDF::Variable *v,CDFType type);
-  static CT::string createDDSHeader(CT::string layerName, CDFObject *cdfObject ,std::vector <VarInfo> selectedVariables);
-  static int getDimSize(CDataSource *dataSource, const char *name);
+  CT::string VarInfoToString(std::vector <VarInfo> selectedVariables);
+  int putVariableDataSize(CDF::Variable *v);
+  int putVariableData(CDF::Variable *v,CDFType type);
+  CT::string createDDSHeader(CT::string layerName, CDFObject *cdfObject ,std::vector <VarInfo> selectedVariables);
+  int getDimSize(CDataSource *dataSource, const char *name);
+  FILE *opendapoutstream;
+  void writeInt(int &v);
+  void writeDouble(double &v);
 public:
   DEF_ERRORFUNCTION();
-  static int HandleOpenDAPRequest(const char *path,const char *query,CServerParams *srvParams);
+//   COpenDAPHandler();
+//   ~COpenDAPHandler();
+  int handleOpenDAPRequest(const char *path,const char *query,CServerParams *srvParams);
 };
 
 #endif
