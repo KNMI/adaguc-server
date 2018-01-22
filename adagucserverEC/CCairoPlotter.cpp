@@ -907,7 +907,7 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
             numAlphaColors++;
           }
         }
-        png_set_PLTE( png_ptr,  info_ptr,  palette, 255);
+        png_set_PLTE( png_ptr,  info_ptr,  palette, numColors);
         CDBDebug("Num alpha colors: %d",numAlphaColors);
         png_set_tRNS(png_ptr, info_ptr, a, numAlphaColors, trans_values);
       }else{        

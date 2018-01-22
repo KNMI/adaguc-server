@@ -2235,7 +2235,7 @@ int CRequest::process_querystring(){
       }
       const char *SCRIPT_NAME =getenv("SCRIPT_NAME");
       const char *REQUEST_URI =getenv("REQUEST_URI");
-      CDBDebug("SCRIPT_NAME [%s], REQUEST_URI [%s]",SCRIPT_NAME,REQUEST_URI);
+      // CDBDebug("SCRIPT_NAME [%s], REQUEST_URI [%s]",SCRIPT_NAME,REQUEST_URI);
       if(SCRIPT_NAME!=NULL && REQUEST_URI!=NULL){
         size_t SCRIPT_NAME_length = strlen(SCRIPT_NAME);
         size_t REQUEST_URI_length = strlen(REQUEST_URI);

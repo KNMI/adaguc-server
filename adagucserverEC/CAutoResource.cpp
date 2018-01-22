@@ -453,6 +453,15 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *srvParam,CDFObject *cdfOb
           xmleLayer->RenderMethod.insert(xmleLayer->RenderMethod.begin(),xmleRenderMethod);
         }
       }
+      CDF::Attribute *adaguc_data_type = variable->getAttributeNE("adaguc_data_type");
+      if (adaguc_data_type != NULL){
+        if (adaguc_data_type->toString().equals("CConvertGeoJSON")){
+          CServerConfig::XMLE_RenderMethod* xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
+          xmleRenderMethod->value.copy("polyline");
+          xmleLayer->RenderMethod.insert(xmleLayer->RenderMethod.begin(),xmleRenderMethod);
+        }
+      }
+      
     }
   }
   
