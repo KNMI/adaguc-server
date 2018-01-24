@@ -9,7 +9,6 @@ from lxml import objectify
 import re
 from AdagucTestTools import AdagucTestTools
 
-FNULL = open(os.devnull, 'w')
 ADAGUC_PATH = os.environ['ADAGUC_PATH']
 
 class TestOpenDAPServer(unittest.TestCase):
