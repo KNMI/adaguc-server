@@ -9,7 +9,7 @@ from lxml import objectify
 import re
 from AdagucTestTools import AdagucTestTools
 
-FNULL = open(os.devnull, 'w')
+
 ADAGUC_PATH = os.environ['ADAGUC_PATH']
 
 class TestWMSTiling(unittest.TestCase):
@@ -21,11 +21,11 @@ class TestWMSTiling(unittest.TestCase):
     def test_WMSGetMap_testdatanc(self):
       AdagucTestTools().cleanTempDir()
       args = [ADAGUC_PATH+'/bin/adagucserver', '--updatedb', '--config', ADAGUC_PATH + '/data/config/adaguc.tiling.xml']
-      returnCode = subprocess.call(args, stdout=FNULL, stderr=subprocess.STDOUT) 
+      returnCode = subprocess.call(args) 
       self.assertEqual(returnCode, 0)
 
       args = [ADAGUC_PATH+'/bin/adagucserver', '--createtiles', '--config', ADAGUC_PATH + '/data/config/adaguc.tiling.xml']
-      returnCode = subprocess.call(args)#, stdout=FNULL, stderr=subprocess.STDOUT) 
+      returnCode = subprocess.call(args)
       self.assertEqual(returnCode, 0)
       
       

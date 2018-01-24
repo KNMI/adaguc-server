@@ -604,4 +604,15 @@ namespace CT{
   double string::toDouble(){double fValue=(double)atof(c_str());return fValue;}
   
   int string::toInt(){int dValue=(int)atoi(c_str());return dValue;}
+  
+  CT::string string::basename() {
+    const char *last=rindex(this->c_str(), '/');
+    CT::string fileBaseName;
+    if ((last!=NULL)&&(*last)) {
+      fileBaseName.copy(last+1);
+    } else {
+      fileBaseName.copy(this);
+    }
+    return fileBaseName;
+  }
 }

@@ -97,6 +97,15 @@ int CDBAdapterSQLLite::CSQLLiteDB::connect(const char * pszOptions){
     sqlite3_close(db);
     db = NULL;
     return 1 ;
+  } else {
+    if (query("pragma journal_mode = OFF") != 0){
+      CDBError("Unable to set journal_mode");
+      return 1;
+    }
+    if (query("pragma TEMP_STORE = MEMORY") != 0){
+      CDBError("Unable to set TEMP_STORE");
+      return 1;
+    }
   }
 
   return 0;

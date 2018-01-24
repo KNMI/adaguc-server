@@ -476,6 +476,12 @@ namespace CT{
     * Test whether string is empty or not
     */
     bool empty();
+    
+    /**
+     * Returns posix basename of path
+     */
+    CT::string basename();
+    
   };
 };
 

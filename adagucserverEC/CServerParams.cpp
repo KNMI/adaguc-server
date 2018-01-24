@@ -65,6 +65,7 @@ CServerParams::~CServerParams(){
   
 }
 
+
 void CServerParams::getCacheFileName(CT::string *cacheFileName){
   CT::string cacheName("WMSCACHE");
   bool useProvidedCacheFileName=false;
@@ -78,8 +79,14 @@ void CServerParams::getCacheFileName(CT::string *cacheFileName){
   }
   if(useProvidedCacheFileName==false){
     //If no cache filename is provided, we will create a standard one
-    //Based on the name of the configuration file
-    cacheName.concat(&configFileName);
+    
+    if(autoResourceLocation.empty()==false){
+       cacheName.concat(&configFileName);
+       cacheName.concat(&autoResourceLocation);
+    } else {
+      //Based on the name of the configuration file
+      cacheName.concat(&configFileName);
+    }
     for(size_t j=0;j<cacheName.length();j++){
       char c=cacheName.charAt(j);
       if(c=='/')c='_';
