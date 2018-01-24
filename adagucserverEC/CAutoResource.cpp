@@ -7,20 +7,30 @@ const char *CAutoResource::className = "CAutoResource";
 
 int CAutoResource::configure(CServerParams *srvParam,bool plain){
   int status;
-  //status = configureDataset(srvParam,plain);if(status!=0)return status; //<-- Done in CREQUEST BEFORE INCLUDES are parsed
+  //Dataset configuration is done in CREQUEST BEFORE INCLUDES are parsed
   status = configureAutoResource(srvParam,plain);if(status!=0)return status;
   return 0;
 };
   
 int CAutoResource::configureDataset(CServerParams *srvParam,bool plain){
+  
+  
+  if(srvParam == NULL || srvParam->cfg==NULL){
+    CDBDebug("configureDataset: srvParam->cfg == NULL");
+    return 1;
+  }
+  
   //Configure the server based an an available dataset
   if(srvParam->datasetLocation.empty()==false){
     //datasetLocation is usually an inspire dataset unique identifier
-
+    
     //Check if dataset extension is enabled           
     bool datasetEnabled = false;
+    
     for(size_t j=0;j<srvParam->cfg->Dataset.size();j++){
+      
       if(srvParam->cfg->Dataset[j]->attr.enabled.equals("true")&&srvParam->cfg->Dataset[j]->attr.location.empty()==false){
+        
         datasetEnabled = true;break;
       }
     }
@@ -42,6 +52,7 @@ int CAutoResource::configureDataset(CServerParams *srvParam,bool plain){
     
     CT::string datasetConfigFile = "";
     for(size_t j=0;j<srvParam->cfg->Dataset.size();j++){
+      
       CT::string testDataSet= srvParam->cfg->Dataset[j]->attr.location.c_str();
       
       testDataSet.printconcat("/%s.xml",internalDatasetLocation.c_str());
@@ -60,6 +71,7 @@ int CAutoResource::configureDataset(CServerParams *srvParam,bool plain){
         break;
       }
     }
+    
     if(datasetConfigFile.length() == 0) {
       CDBError("No such dataset");
       return 1;

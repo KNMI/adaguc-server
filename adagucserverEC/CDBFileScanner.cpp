@@ -913,6 +913,8 @@ int CDBFileScanner::updatedb( CDataSource *dataSource,CT::string *_tailPath,CT::
   )return 0;
  
   CCache::Lock lock;
+  
+
   CT::string identifier = "updatedb";  identifier.concat(dataSource->cfgLayer->FilePath[0]->value.c_str());  identifier.concat("/");  identifier.concat(dataSource->cfgLayer->FilePath[0]->attr.filter.c_str());  
   //CT::string cacheDirectory = "";
   CT::string cacheDirectory = dataSource->srvParams->cfg->TempDir[0]->attr.value.c_str();
