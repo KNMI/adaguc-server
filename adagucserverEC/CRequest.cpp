@@ -93,11 +93,12 @@ int CRequest::setConfigFile(const char *pszConfigFile){
   
   if(status == 0 && srvParam->configObj->Configuration.size()==1){
  
-    
+    srvParam->configFileName.copy(pszConfigFile);
+    srvParam->cfg=srvParam->configObj->Configuration[0];
     
      //Include additional config files given as argument
     if(configFileList.size()>1){
-      for(size_t j=1;j<configFileList.size();j++){
+      for(size_t j=1;j<configFileList.size() - 1;j++){
           //CDBDebug("Include '%s'",configFileList[j].c_str());
           status = srvParam->parseConfigFile(configFileList[j]);
           if(status != 0){
@@ -106,10 +107,21 @@ int CRequest::setConfigFile(const char *pszConfigFile){
           }
         
       }
+      
+      //The last configration file is considered the dataset one, strip path and extension and give it to configurer
+      if(configFileList.size() > 1){
+        srvParam->datasetLocation.copy(configFileList[configFileList.size()  -1].basename().c_str());
+        srvParam->datasetLocation.substringSelf(0,srvParam->datasetLocation.lastIndexOf("."));
+        CDBDebug("Dataset name based on passed configfile is [%s]", srvParam->datasetLocation.c_str());
+        status = CAutoResource::configureDataset(srvParam,false);
+        if(status!=0){
+          CDBError("ConfigureDataset failed for %s", configFileList[1].c_str());
+          return status;
+        }
+      }
     }
     
-    srvParam->configFileName.copy(pszConfigFile);
-    srvParam->cfg=srvParam->configObj->Configuration[0];
+
     
     const char * pszQueryString=getenv("QUERY_STRING");
     if(pszQueryString!=NULL){
@@ -134,15 +146,16 @@ int CRequest::setConfigFile(const char *pszConfigFile){
         if(value0Cap.equals("DATASET")){
           if(srvParam->datasetLocation.empty()){
             srvParam->datasetLocation.copy(values[1].c_str());
+            status = CAutoResource::configureDataset(srvParam,false);
+            if(status!=0){
+              CDBError("CAutoResource::configureDataset failed");
+              return status;
+            }
           }
         }
       }      
-      status = CAutoResource::configureDataset(srvParam,false);
-      if(status!=0){
-        CDBError("CAutoResource::configureDataset failed");
-        return status;
-      }
     }
+
     
     // Include additional config files given in the include statement of the config file
     // Last config file is included first
@@ -3300,22 +3313,29 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan, int sca
     }
   }
 
-  //invalidate cache
-  CT::string cacheFileName;
-  srvParam->getCacheFileName(&cacheFileName);
-  
-  //Remove the cache file, but check first wether it exists or not.
-  struct stat stFileInfo;
-  int intStat;
-  intStat = stat(cacheFileName.c_str(),&stFileInfo);
-  CT::string cacheBuffer;
-  //The file exists, so remove it.
-  if(intStat == 0) {
-    CDBDebug("Removing cachefile %s ",cacheFileName.c_str());
-    if(cacheFileName.length()>0){
-      if(remove(cacheFileName.c_str())!=0){
-        CDBError("Unable to remove cachefile %s, please do it manually.",cacheFileName.c_str());
+  if(srvParam->enableDocumentCache) {
+    //invalidate cache
+    CT::string cacheFileName;
+    srvParam->getCacheFileName(&cacheFileName);
+    
+    CDBDebug("Invalidating cache file [%s]", cacheFileName.c_str());
+    //Remove the cache file, but check first wether it exists or not.
+    struct stat stFileInfo;
+    int intStat;
+    intStat = stat(cacheFileName.c_str(),&stFileInfo);
+    CT::string cacheBuffer;
+    
+    //The file exists, so remove it.
+    if(intStat == 0) {
+      CDBDebug("Removing cachefile %s ",cacheFileName.c_str());
+      if(cacheFileName.length()>0){
+        if(remove(cacheFileName.c_str())!=0){
+          CDBError("Unable to remove cachefile %s, please do it manually.",cacheFileName.c_str());
+          return 1;
+        }
       }
+    } else {
+      CDBDebug("There is no cachefile");
     }
   }
   /*
