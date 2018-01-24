@@ -133,10 +133,11 @@
     <Legend fixedclasses="true" tickround="1">elevation</Legend>
     <Point pointstyle="point" textcolor="#111111"/>
     <Vector vectorstyle="barb" linecolor="#0000FF" />
+    <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#000000" borderwidth="2"/> <!-- Used in CImgRenderPolylines -->
     <Scale>0</Scale>
     <Offset>0</Offset>
     <RenderMethod>nearest,bilinear,point,barb</RenderMethod>
-      <StandardNames standard_name="*"/>
+    <StandardNames standard_name="*"/>
   </Style>
 
 </Configuration>

@@ -10,12 +10,12 @@
      >
     <Service>
         <Name>WMS</Name>
-        <Title>ADAGUC WMS Service</Title>
+        <Title>adaguc.testtimeseriescached</Title>
         <Abstract>This service demonstrates how the ADAGUC server can be used to create OGC services.</Abstract>
         <KeywordList>
             <Keyword>view</Keyword>
             <Keyword>infoMapAccessService</Keyword>
-            <Keyword>ADAGUCServer version 2.0.31, of Jan 22 2018 13:18:18 </Keyword>
+            <Keyword>ADAGUCServer version 2.0.32, of Jan 24 2018 09:35:22 </Keyword>
         </KeywordList>
         <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testtimeseriescached&amp;SERVICE=WMS&amp;"/>
         <ContactInformation>
@@ -59,7 +59,7 @@
         </Exception>
             
 <Layer>
-<Title>Root Layer Title</Title>
+<Title>WMS of  adaguc.testtimeseriescached</Title>
 <CRS>EPSG:3411</CRS>
 <CRS>EPSG:3412</CRS>
 <CRS>EPSG:3575</CRS>
