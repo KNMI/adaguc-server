@@ -1495,38 +1495,40 @@ if(renderMethod==contour){CDBDebug("contour");}*/
       try{
         numFeatures = dataSource->getDataObject(0)->cdfObject->getDimension("features")->getSize();
       }catch(int e){
-        CDBError("Unable to find dimension features");
-        return 1;
+        #ifdef CIMAGEDATAWRITER_DEBUG  
+        CDBDebug("Note: While configuring featureInterval: Unable to find features variable");
+        #endif
       }
-      
-      CT::string attributeValues[numFeatures];
-      /* Loop through all configured FeatureInterval elements */
-      for(size_t j=0;j<styleConfiguration->featureIntervals->size();j++){
-        CServerConfig::XMLE_FeatureInterval *featureInterval=((*styleConfiguration->featureIntervals)[j]);
-        if(featureInterval->attr.match.empty()==false&&featureInterval->attr.matchid.empty()==false){
-          /* Get the matchid attribute for the feature */
-          CT::string attributeName = featureInterval->attr.matchid;
-          for(int featureNr = 0;featureNr<numFeatures;featureNr++){
-            attributeValues[featureNr] =  "";
-            std::map<int,CFeature>::iterator feature = dataSource->getDataObject(0)->features.find(featureNr);
-            if(feature!=dataSource->getDataObject(0)->features.end()){
-              std::map<std::string,std::string>::iterator attributeValueItr =  feature->second.paramMap.find(attributeName.c_str());
-              if(attributeValueItr!=feature->second.paramMap.end()){
-                attributeValues[featureNr] = attributeValueItr->second.c_str();
+      if (numFeatures > 0){
+        CT::string attributeValues[numFeatures];
+        /* Loop through all configured FeatureInterval elements */
+        for(size_t j=0;j<styleConfiguration->featureIntervals->size();j++){
+          CServerConfig::XMLE_FeatureInterval *featureInterval=((*styleConfiguration->featureIntervals)[j]);
+          if(featureInterval->attr.match.empty()==false&&featureInterval->attr.matchid.empty()==false){
+            /* Get the matchid attribute for the feature */
+            CT::string attributeName = featureInterval->attr.matchid;
+            for(int featureNr = 0;featureNr<numFeatures;featureNr++){
+              attributeValues[featureNr] =  "";
+              std::map<int,CFeature>::iterator feature = dataSource->getDataObject(0)->features.find(featureNr);
+              if(feature!=dataSource->getDataObject(0)->features.end()){
+                std::map<std::string,std::string>::iterator attributeValueItr =  feature->second.paramMap.find(attributeName.c_str());
+                if(attributeValueItr!=feature->second.paramMap.end()){
+                  attributeValues[featureNr] = attributeValueItr->second.c_str();
+                }
               }
             }
-          }
-          if(featureInterval->attr.fillcolor.empty()==false){
-            std::vector<CImageDataWriter::IndexRange*> ranges=getIndexRangesForRegex(featureInterval->attr.match, attributeValues, numFeatures);
-            for (size_t i=0; i<ranges.size(); i++) {
-              CServerConfig::XMLE_ShadeInterval *shadeInterval = new CServerConfig::XMLE_ShadeInterval ();
-              styleConfiguration->shadeIntervals->push_back(shadeInterval);
-              shadeInterval->attr.min.print("%d",ranges[i]->min);
-              shadeInterval->attr.max.print("%d",ranges[i]->max);
-              shadeInterval->attr.fillcolor=featureInterval->attr.fillcolor;
-              shadeInterval->attr.bgcolor=featureInterval->attr.bgcolor;
-              shadeInterval->attr.label=featureInterval->attr.label;
-              delete ranges[i];
+            if(featureInterval->attr.fillcolor.empty()==false){
+              std::vector<CImageDataWriter::IndexRange*> ranges=getIndexRangesForRegex(featureInterval->attr.match, attributeValues, numFeatures);
+              for (size_t i=0; i<ranges.size(); i++) {
+                CServerConfig::XMLE_ShadeInterval *shadeInterval = new CServerConfig::XMLE_ShadeInterval ();
+                styleConfiguration->shadeIntervals->push_back(shadeInterval);
+                shadeInterval->attr.min.print("%d",ranges[i]->min);
+                shadeInterval->attr.max.print("%d",ranges[i]->max);
+                shadeInterval->attr.fillcolor=featureInterval->attr.fillcolor;
+                shadeInterval->attr.bgcolor=featureInterval->attr.bgcolor;
+                shadeInterval->attr.label=featureInterval->attr.label;
+                delete ranges[i];
+              }
             }
           }
         }
