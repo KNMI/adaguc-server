@@ -1294,7 +1294,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
 //             CDBDebug("%f %f",x1,y1);
 //             CDBDebug("%f %f",x2,y2);
           if(status==0){
-            double calcCellsize = sqrt(((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1))/2);
+            double calcCellsize = sqrt(((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1)));
             if(screenCellSize<0){
               screenCellSize = calcCellsize;
             }else{
@@ -1393,7 +1393,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
       //CDBDebug("level %d, tiles %0d cellsize %f",dataSource->queryLevel,store->getSize(),tileCellSize);
       if(tileSettingsDebug){
         srvParam->mapTitle.print("level %d, tiles %d",dataSource->queryLevel,store->getSize());
-        srvParam->mapSubTitle.print("level %d, tiles %0d cellsize %f",dataSource->queryLevel,store->getSize(),tileCellSize);
+        srvParam->mapSubTitle.print("level %d, tiles %0d, tileCellSize %f, screenCellSize %f",dataSource->queryLevel,store->getSize(),tileCellSize,screenCellSize);
       }
       
       

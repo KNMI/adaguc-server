@@ -20,13 +20,15 @@ class TestWMSTiling(unittest.TestCase):
     
     def test_WMSGetMap_testdatanc(self):
       AdagucTestTools().cleanTempDir()
-      args = [ADAGUC_PATH+'/bin/adagucserver', '--updatedb', '--config', ADAGUC_PATH + '/data/config/adaguc.tiling.xml']
-      returnCode = subprocess.call(args) 
-      self.assertEqual(returnCode, 0)
-
-      args = [ADAGUC_PATH+'/bin/adagucserver', '--createtiles', '--config', ADAGUC_PATH + '/data/config/adaguc.tiling.xml']
-      returnCode = subprocess.call(args)
-      self.assertEqual(returnCode, 0)
+      
+      
+      config =  ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml,' + ADAGUC_PATH + '/data/config/datasets/adaguc.testtiling.xml'
+      status,data,headers = AdagucTestTools().runADAGUCServer(args = ['--updatedb', '--config', config], env = self.env, isCGI = False)
+      self.assertEqual(status, 0)
+        
+      config =  ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml,' + ADAGUC_PATH + '/data/config/datasets/adaguc.testtiling.xml'
+      status,data,headers = AdagucTestTools().runADAGUCServer(args = ['--createtiles', '--config', config], env = self.env, isCGI = False)
+      self.assertEqual(status, 0)
       
       
       #AdagucTestTools().cleanTempDir()
