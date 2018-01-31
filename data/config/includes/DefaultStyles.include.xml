@@ -135,7 +135,7 @@
 
     <!--Styles -->
   <Style name="auto">
-    <Legend fixedclasses="true" tickround="1">elevation</Legend>
+    <Legend fixedclasses="true" tickround="1">bluewhitered</Legend>
     <Point pointstyle="point" textcolor="#111111"/>
     <Vector vectorstyle="barb" linecolor="#0000FF" />
     <Scale>0</Scale>
