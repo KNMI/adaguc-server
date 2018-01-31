@@ -1,8 +1,0 @@
-Dataset {
-    Float32 testdata[x = 29][y = 31];
-    Float32 y[y = 31];
-    Float32 x[x = 29];
-    Float32 time[time = 1];
-    Int16 projection[1];
-} testdata;
-
