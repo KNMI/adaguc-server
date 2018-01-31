@@ -85,6 +85,14 @@ int CAutoResource::configureDataset(CServerParams *srvParam,bool plain){
       CDBError("Invalid dataset configuration file.");
       return 1;
     }
+
+    // Set server title based on dataset
+    CT::string serverTitle = "";
+    if(serverTitle.empty() && srvParam->datasetLocation.empty() == false){
+      serverTitle = srvParam->datasetLocation.basename();
+    }
+    setServerTitle(srvParam, serverTitle);
+    
     
     //Adjust online resource in order to pass on dataset parameters
     CT::string onlineResource=srvParam->getOnlineResource();
@@ -115,6 +123,40 @@ int CAutoResource::configureDataset(CServerParams *srvParam,bool plain){
   }
   return 0;
 };
+
+int CAutoResource::setServerTitle(CServerParams* srvParam, CT::string serverTitle){
+  if(serverTitle.length()>0){
+    //Replace invalid XML tokens with valid ones
+    serverTitle.replaceSelf("@" ," at ");
+    serverTitle.replaceSelf("<" ,"[");
+    serverTitle.replaceSelf(">" ,"]");
+    serverTitle.replaceSelf("&" ,"&amp;");
+    if(srvParam->cfg->WMS.size()>0){
+      if(srvParam->cfg->WMS[0]->Title.size()>0){
+        //CT::string title="ADAGUC AUTO WMS ";
+        CT::string title="";
+        title.concat(serverTitle.c_str());
+        //title.replaceSelf(" ","_");
+        srvParam->cfg->WMS[0]->Title[0]->value.copy(title.c_str());
+      }
+      if(srvParam->cfg->WMS[0]->RootLayer.size()>0){
+        if(srvParam->cfg->WMS[0]->RootLayer[0]->Title.size()>0){
+          CT::string title="WMS of  ";
+          title.concat(serverTitle.c_str());
+          srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->value.copy(title.c_str());
+        }
+      }          
+    }
+    if(srvParam->cfg->WCS.size()>0){
+      if(srvParam->cfg->WCS[0]->Title.size()>0){
+        CT::string title="ADAGUC_AUTO_WCS_";
+        title.concat(serverTitle.c_str());
+        srvParam->cfg->WCS[0]->Title[0]->value.copy(title.c_str());
+      }
+    }
+  }
+  return 0;
+}
 
 int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
   // Configure the server automically based on an OpenDAP resource
@@ -245,41 +287,15 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
     #ifdef MEASURETIME
     StopWatch_Stop("File opened");
     #endif
-    
     CT::string serverTitle="";
     try{cdfObject->getAttribute("title")->getDataAsString(&serverTitle);}catch(int e){}
 
-      
-    if(serverTitle.length()>0){
-      //Replace invalid XML tokens with valid ones
-      serverTitle.replaceSelf("@" ," at ");
-      serverTitle.replaceSelf("<" ,"[");
-      serverTitle.replaceSelf(">" ,"]");
-      serverTitle.replaceSelf("&" ,"&amp;");
-      if(srvParam->cfg->WMS.size()>0){
-        if(srvParam->cfg->WMS[0]->Title.size()>0){
-          //CT::string title="ADAGUC AUTO WMS ";
-          CT::string title="";
-          title.concat(serverTitle.c_str());
-          //title.replaceSelf(" ","_");
-          srvParam->cfg->WMS[0]->Title[0]->value.copy(title.c_str());
-        }
-        if(srvParam->cfg->WMS[0]->RootLayer.size()>0){
-          if(srvParam->cfg->WMS[0]->RootLayer[0]->Title.size()>0){
-            CT::string title="WMS of  ";
-            title.concat(serverTitle.c_str());
-            srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->value.copy(title.c_str());
-          }
-        }          
-      }
-      if(srvParam->cfg->WCS.size()>0){
-        if(srvParam->cfg->WCS[0]->Title.size()>0){
-          CT::string title="ADAGUC_AUTO_WCS_";
-          title.concat(serverTitle.c_str());
-          srvParam->cfg->WCS[0]->Title[0]->value.copy(title.c_str());
-        }
-      }
+    // If no title is set in the global NetCDF attributes, use the source= value
+    if(serverTitle.empty() && srvParam->autoResourceLocation.empty() == false){
+      serverTitle = CT::string("AutoResource ") + srvParam->autoResourceLocation.basename();
     }
+  
+    setServerTitle(srvParam, serverTitle);
     
     CT::string serverSummary="";
     CT::string serverDescription="";

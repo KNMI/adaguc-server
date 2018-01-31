@@ -51,6 +51,13 @@ private:
     * returns 0 on success.
     */
   static int configureAutoResource(CServerParams *srvParam,bool plain);
+  
+  /**
+   * Sets the server title, will be advertised in de WMS getcapabilities
+   * @param srvParam
+   * @param setServerTitle
+   */
+  static int setServerTitle(CServerParams* srvParams, CT::string serverTitle);
 public:  
   /**
     * configures Dataset, based on  srvParam->datasetLocation parameter. Used for KDC inspire
