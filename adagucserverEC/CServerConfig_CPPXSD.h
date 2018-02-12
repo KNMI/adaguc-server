@@ -463,12 +463,14 @@ class CServerConfig:public CXMLSerializerInterface{
     public:
       class Cattr{
       public:
-        CXMLString distancex,distancey,discradius;
+        CXMLString distancex,distancey,discradius,mode,color;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("distancex",9,attrname)){attr.distancex.copy(attrvalue); return;}
-        if(equals("distancey", 9,attrname)){attr.distancey.copy(attrvalue); return;}
-        if(equals("discradius",10,attrname)){attr.discradius.copy(attrvalue); return;}
+        else if(equals("distancey", 9,attrname)){attr.distancey.copy(attrvalue); return;}
+        else if(equals("discradius",10,attrname)){attr.discradius.copy(attrvalue); return;}
+        else if(equals("mode",4,attrname)){attr.mode.copy(attrvalue); return;}
+        else if(equals("color",5,attrname)){attr.color.copy(attrvalue); return;}        
       }
     };
     
