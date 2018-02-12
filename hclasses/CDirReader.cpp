@@ -52,6 +52,22 @@ CDirReader::~CDirReader(){
 }
 
 int CDirReader::listDirRecursive(const char* directory,const char *ext_filter){
+  if (fileList.size() != 0){
+    if(!currentDir.equals(directory)) {
+      CDBError("Trying to do listDirRecursive twice with different paths");
+      return 1;
+    } else {
+      // Already done
+      CDBDebug("Using cached results for [%s]", directory);
+      return 0;
+    }
+  }
+  currentDir = directory;
+  return _listDirRecursive(directory, ext_filter);
+} 
+
+int CDirReader::_listDirRecursive(const char* directory,const char *ext_filter){
+  CDBDebug("Doing recursive diretory scan for [%s]", directory);
   try{
     return _ReadDir(directory,ext_filter,1);
   }catch(int a){
@@ -135,7 +151,7 @@ int CDirReader::_ReadDir(const char* directory,const char *ext_filter,int recurs
   }
   return 0;
 }
-int CDirReader::listDir (const char* directory,const char *ext_filter){
+int CDirReader::_listDir (const char* directory,const char *ext_filter){
   DIR *dp;
   DIR *cdp;
   struct dirent *ep;
@@ -314,3 +330,36 @@ void CDirReader::test_compareLists() {
   
   CDirReader::compareLists(oldList, newList, &A::_handleMissing, &A::_handleNew);
 }
+
+
+
+// CCachedDirReader *CCachedDirReader::getCachedDirReader(){return &cachedDirReader;};
+std::map<std::string,CDirReader*> CCachedDirReader::dirReaderMap;
+
+CDirReader *CCachedDirReader::getDirReader(const char* directory,const char *ext_filter) {
+  std::string key = directory;
+  if (ext_filter != NULL){
+    key = key + ext_filter;
+  }
+  std::map<std::string,CDirReader*>::iterator it;
+
+  it = dirReaderMap.find(key);
+  if (it == dirReaderMap.end()){
+    CDirReader *dirReader = new CDirReader();
+    dirReaderMap[key] = dirReader;
+    return dirReader;
+  }else{
+    return it->second;
+  }
+  return 0;
+}
+
+void CCachedDirReader::free(){
+  CDBDebug("Cleaningup dirReaders");
+  for (std::map<std::string,CDirReader*>::iterator it=dirReaderMap.begin(); it!=dirReaderMap.end(); ++it) {
+    delete it->second;
+  }
+  dirReaderMap.clear();
+}
+  
+const char *CCachedDirReader::className="CCachedDirReader";

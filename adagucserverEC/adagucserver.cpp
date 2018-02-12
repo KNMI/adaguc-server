@@ -313,6 +313,7 @@ int _main(int argc, const char *argv[]){
 
 
 int main(int argc, const char *argv[]){
+  
   const char * ADAGUC_LOGFILE=getenv("ADAGUC_LOGFILE");
   if(ADAGUC_LOGFILE!=NULL){
     pLogDebugFile = fopen (ADAGUC_LOGFILE , "a" );
@@ -331,5 +332,6 @@ int main(int argc, const char *argv[]){
   if(pLogDebugFile!= NULL){
     fclose (pLogDebugFile);
   }
+  CCachedDirReader::free();
   return status;
 }      

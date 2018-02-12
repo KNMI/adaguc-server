@@ -43,16 +43,18 @@ static std::map <std::string ,std::string> lookupTableFileModificationDateMap;
 class CDirReader{
   private: 
     int _ReadDir(const char* directory,const char *ext_filter,int recursive);
+    int _listDir (const char* directory,const char *ext_filter);
+    int _listDirRecursive (const char* directory,const char *ext_filter);
+    CT::string currentDir;
     DEF_ERRORFUNCTION();
   public:
     std::vector <CFileObject*> fileList;
     CDirReader();
     ~CDirReader();
-    int listDir (const char* directory,const char *ext_filter);
     int listDirRecursive (const char* directory,const char *ext_filter);
     static void makeCleanPath(CT::string *path);
     static int getFileDate(CT::string *date,const char *file);
-    int testRegEx(const char *string,const char *pattern);
+    static int testRegEx(const char *string,const char *pattern);
     
     static CT::string getFileDate(const char *fileName);
 
@@ -67,6 +69,20 @@ class CDirReader{
     
     static void test_compareLists();
 };
+
+class CCachedDirReader{
+private:
+  DEF_ERRORFUNCTION();
+  static std::map<std::string,CDirReader*> dirReaderMap;
+public:
+  static void free();
+  static CDirReader * getDirReader(const char* directory,const char *ext_filter);
+  
+};
+
+
+
+
 #endif
 
 
