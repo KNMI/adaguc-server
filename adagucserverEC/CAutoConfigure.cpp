@@ -451,9 +451,9 @@ int CAutoConfigure::justLoadAFileHeader(CDataSource *dataSource){
     return 0;
   }
   
-  const char *fileName = NULL;
+  CT::string foundFileName;
   
-  fileName = dataSource->getFileName();
+  foundFileName = dataSource->getFileName();
   //CDBDebug("Loading header [%s]",fileName);
  /* 
   //TODO TRY to get first one from DB
@@ -464,21 +464,22 @@ int CAutoConfigure::justLoadAFileHeader(CDataSource *dataSource){
   }
   delete store;
   */
-  if(fileName == NULL){
+  if(foundFileName.empty()){
     //TODO VERY INNEFICIENT
-    CDirReader *dirReader = CDBFileScanner::searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter,NULL);
-    if(dirReader == NULL){CDBError("Could not find any filename");return 1; }
-    if(dirReader->fileList.size()==0){CDBError("dirReader.fileList.size()==0");return 1; }
+    std::vector<std::string> fileList;
+    try {
+      fileList = CDBFileScanner::searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter,NULL);
+    }catch(int e){CDBError("Could not find any filename");return 1; }
+    if(fileList.size()==0){CDBError("fileList.size()==0");return 1; }
     
-    fileName = dirReader->fileList[0]->fullName.c_str();
-    //CDBDebug("Loading header [%s]",fileName);
+    foundFileName = fileList[0].c_str();
   }
   
   
   //Open a file
   try{
-    //CDBDebug("Loading header [%s]",fileName);
-    CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource->srvParams,fileName);
+    CDBDebug("Loading header [%s]",foundFileName.c_str());
+    CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource->srvParams,foundFileName.c_str());
     if(cdfObject == NULL)throw(__LINE__);
 
 

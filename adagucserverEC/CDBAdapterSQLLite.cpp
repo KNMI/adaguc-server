@@ -1170,7 +1170,7 @@ int CDBAdapterSQLLite::addFilesToDataBase(){
     }
     it->second.clear();
   }
-  CDBDebug("clearing arrays");
+//   CDBDebug("clearing arrays");
   fileListPerTable.clear();
   return 0;
 }

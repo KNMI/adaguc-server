@@ -329,9 +329,12 @@ int main(int argc, const char *argv[]){
     } 
   }
   int status = _main(argc,argv);  
+  
+  CCachedDirReader::free();
+  
   if(pLogDebugFile!= NULL){
     fclose (pLogDebugFile);
   }
-  CCachedDirReader::free();
+  
   return status;
 }      
