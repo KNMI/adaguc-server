@@ -50,8 +50,15 @@ private:
   static int DBLoopFiles(CDataSource *dataSource,int removeNonExistingFiles,CDirReader *dirReader ,int scanFlags);
   static std::vector <CT::string> tableNamesDone;
   
- ;
-public:
+  static void handleDirHasNewFile(std::string a){
+  }
+  
+  static std::vector <std::string> filesToDeleteFromDB;
+  static void handleFileFromDBIsMissing(std::string a){
+    CDBDebug("DirReader is missing %s", a.c_str());
+    filesToDeleteFromDB.push_back(a);
+  }
+ public:
   static bool isTableAlreadyScanned(CT::string *tableName);
   static void markTableDirty(CT::string *tableName);
   /**

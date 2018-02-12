@@ -25,18 +25,9 @@
 
 #ifndef CDirReader_H
 #define CDirReader_H
-#include <iostream>
-#include <vector>
-#include <map>
-#include <stdio.h>
-#include <string.h>
-#include <regex.h>
-#include <stddef.h>
-#include <sys/types.h>
-#include <dirent.h>
+
 #include "CTypes.h"
 #include "CDebugger.h"
-#include <sys/stat.h>
 
 class CFileObject{
   public:
@@ -45,6 +36,8 @@ class CFileObject{
     int isDir;
 };
 
+#include <string>
+#include <map>
 static std::map <std::string ,std::string> lookupTableFileModificationDateMap;
 
 class CDirReader{
@@ -69,6 +62,10 @@ class CDirReader{
      * @param dirname 
      */
     static void makePublicDirectory(const char *dirname);
+    
+    static void compareLists(std::vector <std::string> a, std::vector <std::string> b, void (*handleMissing)(std::string), void (*handleNew)(std::string));
+    
+    static void test_compareLists();
 };
 #endif
 

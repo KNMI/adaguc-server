@@ -2026,7 +2026,7 @@ int CRequest::process_all_layers(){
             
             for(int k=0;k<dataSources[j]->getNumTimeSteps();k++){
               dataSources[j]->setTimeStep(k);
-              CDBDebug("WCS dataset %d/ timestep %d",j,k);
+              CDBDebug("WCS dataset %d/ timestep %d of %d",j,k,dataSources[j]->getNumTimeSteps());
 
               try{
                 status = wcsWriter->addData(dataSources);
