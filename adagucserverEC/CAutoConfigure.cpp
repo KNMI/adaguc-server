@@ -464,13 +464,13 @@ int CAutoConfigure::justLoadAFileHeader(CDataSource *dataSource){
   }
   delete store;
   */
-  CDirReader dirReader; // Must stay outside the next statement in order to keep the pointer to fileName sane.
   if(fileName == NULL){
+    //TODO VERY INNEFICIENT
+    CDirReader *dirReader = CDBFileScanner::searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter,NULL);
+    if(dirReader == NULL){CDBError("Could not find any filename");return 1; }
+    if(dirReader->fileList.size()==0){CDBError("dirReader.fileList.size()==0");return 1; }
     
-    if(CDBFileScanner::searchFileNames(&dirReader,dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter,NULL)!=0){CDBError("Could not find any filename");return 1; }
-    if(dirReader.fileList.size()==0){CDBError("dirReader.fileList.size()==0");return 1; }
-    
-    fileName = dirReader.fileList[0]->fullName.c_str();
+    fileName = dirReader->fileList[0]->fullName.c_str();
     //CDBDebug("Loading header [%s]",fileName);
   }
   

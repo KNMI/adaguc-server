@@ -218,23 +218,24 @@ int CRequest::setConfigFile(const char *pszConfigFile){
         /* Create the list of layers from a directory list */
         const char * baseDir=srvParam->cfg->Layer[j]->FilePath[0]->value.c_str();
         
-        CDirReader dirReader;
+        
         CDBDebug("autoscan");
-        CDBFileScanner::searchFileNames(&dirReader,baseDir,srvParam->cfg->Layer[j]->FilePath[0]->attr.filter.c_str(),NULL);
-        /*if(dirReader.listDirRecursive(baseDir,"^.*nc$")!=0){
-          CDBError("Unable to list directory '%s'",baseDir);
+        CDirReader * dirReader = CDBFileScanner::searchFileNames(baseDir,srvParam->cfg->Layer[j]->FilePath[0]->attr.filter.c_str(),NULL);
+
+        if (dirReader == NULL){
+          CDBError("Could not find any file in directory '%s'",baseDir);
           throw(__LINE__);
-        }*/
-        if(dirReader.fileList.size()==0){
+        }
+        if(dirReader->fileList.size()==0){
           CDBError("Could not find any file in directory '%s'",baseDir);
           throw(__LINE__);
         }
         size_t nrOfFileErrors=0;
-        for(size_t j=0;j<dirReader.fileList.size();j++){
+        for(size_t j=0;j<dirReader->fileList.size();j++){
           try{
           CT::string baseDirStr = baseDir;
-          CT::string groupName = dirReader.fileList[j]->fullName.c_str();
-          CT::string baseName = dirReader.fileList[j]->fullName.c_str();
+          CT::string groupName = dirReader->fileList[j]->fullName.c_str();
+          CT::string baseName = dirReader->fileList[j]->fullName.c_str();
           groupName.substringSelf(baseDirStr.length(),-1);
           //int lastSlash = baseName.lastIndexOf("/")+1;
           //baseName.substringSelf(lastSlash,-1);
@@ -244,9 +245,9 @@ int CRequest::setConfigFile(const char *pszConfigFile){
        
       
           //Open file
-          //CDBDebug("Opening file %s",dirReader.fileList[j]->fullName.c_str());
-          CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(srvParam,dirReader.fileList[j]->fullName.c_str());
-          if(cdfObject == NULL){CDBError("Unable to read file %s",dirReader.fileList[j]->fullName.c_str());throw(__LINE__);}
+          //CDBDebug("Opening file %s",dirReader->fileList[j]->fullName.c_str());
+          CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(srvParam,dirReader->fileList[j]->fullName.c_str());
+          if(cdfObject == NULL){CDBError("Unable to read file %s",dirReader->fileList[j]->fullName.c_str());throw(__LINE__);}
           
           //std::vector<CT::string> variables;
           //List variables
@@ -263,7 +264,7 @@ int CRequest::setConfigFile(const char *pszConfigFile){
                 //xmleCache->attr.enabled.copy("false");
                 xmleLayer->attr.type.copy("database");
                 xmleVariable->value.copy(var->name.c_str());
-                xmleFilePath->value.copy(dirReader.fileList[j]->fullName.c_str());
+                xmleFilePath->value.copy(dirReader->fileList[j]->fullName.c_str());
                 xmleGroup->attr.value.copy(groupName.c_str());
                 xmleLayer->Variable.push_back(xmleVariable);
                 xmleLayer->FilePath.push_back(xmleFilePath);
@@ -821,21 +822,22 @@ int CRequest::setDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
 #ifdef CREQUEST_DEBUG  
   CDBDebug("setDimValuesForDataSource");
 #endif  
+  //TODO inneficient
   if(dataSource->cfgLayer->Dimension.size()==0){
     //This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.        
     CDBDebug("setDimValuesForDataSource dataSource->cfgLayer->Dimension.size()==0");
-    CDirReader dirReader;
-    if(CDBFileScanner::searchFileNames(&dirReader,dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter,NULL)!=0){
+    CDirReader *dirReader = CDBFileScanner::searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter,NULL);
+    if (dirReader == NULL){
         CDBError("Could not find any filename");
         return 1; 
     }
-    if(dirReader.fileList.size()==0){
-        CDBError("dirReader.fileList.size()==0");return 1;
+    if(dirReader->fileList.size()==0){
+        CDBError("dirReader->fileList.size()==0");return 1;
     }
 #ifdef CREQUEST_DEBUG
     CDBDebug("Addstep");
 #endif
-    dataSource->addStep(dirReader.fileList[0]->fullName.c_str(),NULL);
+    dataSource->addStep(dirReader->fileList[0]->fullName.c_str(),NULL);
 //     dataSource->getCDFDims()->addDimension("none","0",0);
     return 0;
   }    
@@ -1666,19 +1668,18 @@ int CRequest::process_all_layers(){
         CDBDebug("Layer has no dims");
         //This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.        
         
-
-        CDirReader dirReader;
-        if(CDBFileScanner::searchFileNames(&dirReader,dataSources[j]->cfgLayer->FilePath[0]->value.c_str(),dataSources[j]->cfgLayer->FilePath[0]->attr.filter,NULL)!=0){
-          CDBError("Could not find any filename");
-          return 1; 
+        CDirReader *dirReader = CDBFileScanner::searchFileNames(dataSources[j]->cfgLayer->FilePath[0]->value.c_str(),dataSources[j]->cfgLayer->FilePath[0]->attr.filter,NULL);
+        if (dirReader == NULL){
+            CDBError("Could not find any filename");
+            return 1; 
         }
         
-        if(dirReader.fileList.size()==0){
-          CDBError("dirReader.fileList.size()==0");return 1;
+        if(dirReader->fileList.size()==0){
+          CDBError("dirReader->fileList.size()==0");return 1;
         }
         
         CDBDebug("Addstep");
-        dataSources[j]->addStep(dirReader.fileList[0]->fullName.c_str(),NULL);
+        dataSources[j]->addStep(dirReader->fileList[0]->fullName.c_str(),NULL);
         //dataSources[j]->getCDFDims()->addDimension("none","0",0);
       }
     }
