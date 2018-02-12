@@ -47,3 +47,5 @@ tests/testresults/*
 tests/test.db
 
 Docker/adaguc-server.dockerimage
+
+hclasses/test

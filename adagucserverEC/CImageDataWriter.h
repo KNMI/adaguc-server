@@ -180,7 +180,6 @@ private:
     int init(CServerParams *srvParam, CDataSource *dataSource,int nrOfBands);
     int addData(std::vector <CDataSource*> &dataSources);
     int end();
-    int initializeLegend(CServerParams *srvParam,CDataSource *dataSource);
     int drawText(int x,int y,const char *fontfile,float size, float angle,const char *text,unsigned char colorIndex);
 };
 

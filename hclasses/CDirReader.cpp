@@ -22,8 +22,21 @@
  * limitations under the License.
  * 
  ******************************************************************************/
+#include <iostream>
+#include <vector>
+#include <map>
+#include <stdio.h>
+#include <string.h>
+#include <regex.h>
+#include <stddef.h>
+#include <sys/types.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include <algorithm>    // std::sort
 
 #include "CDirReader.h"
+
+
 
 
 
@@ -253,4 +266,51 @@ CT::string CDirReader::getFileDate(const char *fileName){
   
    lookupTableFileModificationDateMap.insert(std::pair<std::string,std::string>(fileName,fileDate.c_str()));
   return fileDate;
+}
+
+
+void CDirReader::compareLists(std::vector <std::string> L1, std::vector <std::string> L2, void (*handleMissing)(std::string), void (*handleNew)(std::string)) {
+  
+  std::vector<std::string>::iterator it1 = L1.begin();
+  std::vector<std::string>::iterator it2 = L2.begin();
+
+  std::sort(L1.begin(), L1.end());
+  std::sort(L2.begin(), L2.end());
+  
+  while( it1 != L1.end() && it2 != L2.end() )
+  {
+      if( *it1 < *it2 ) {
+          handleMissing( *it1++ );
+      } else if( *it2 < *it1 ) {
+          handleNew( *it2++ );
+      } else {
+          it1++;
+          it2++;
+      }
+  }
+
+  while( it1 != L1.end() ) handleMissing( *it1++ );
+  while( it2 != L2.end() ) handleNew( *it2++ );
+}
+
+
+void CDirReader::test_compareLists() {
+  std::vector <std::string> oldList;
+  oldList.push_back("ABC");oldList.push_back("OK");oldList.push_back("OK");oldList.push_back("DEF");oldList.push_back("GHI");oldList.push_back("JKL");
+  std::vector <std::string> newList;
+  newList.push_back("PQR");newList.push_back("ABC");newList.push_back("DEF");newList.push_back("PQR");newList.push_back("GHI");newList.push_back("JKL");
+
+  
+  class A{
+  public:
+      static void _handleMissing(std::string a){
+        CDBDebug("Newlist is missing %s", a.c_str());
+      }
+
+      static void _handleNew(std::string a){
+        CDBDebug("Newlist has new %s", a.c_str());
+      }
+  };
+  
+  CDirReader::compareLists(oldList, newList, &A::_handleMissing, &A::_handleNew);
 }

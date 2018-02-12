@@ -36,7 +36,7 @@ std::vector <CT::string> CDBFileScanner::tableNamesDone;
 
 #define CDBFILESCANNER_TILECREATIONFAILED -100
 
-
+std::vector <std::string> CDBFileScanner::filesToDeleteFromDB;
 bool CDBFileScanner::isTableAlreadyScanned(CT::string *tableName){
   for(size_t t=0;t<tableNamesDone.size();t++){
     if(tableNamesDone[t].equals(tableName->c_str())){
@@ -298,6 +298,8 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource,int &removeNonE
   return 0;
 }
 
+
+
 int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFiles,CDirReader *dirReader,int scanFlags){
 //  CDBDebug("DBLoopFiles");
   bool verbose = false;
@@ -463,8 +465,13 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
 //              
 //       }
         
-        
-        
+      /* If there is only one dimension for the list of files, and if this dimension is done, skip */
+      if (dataSource->cfgLayer->Dimension.size() == 1){
+        if(skipDim[0] == true) {
+          CDBDebug("Assuming [%s] done",dataSource->cfgLayer->Dimension[0]->attr.name.c_str());
+          break;
+        }
+      }
       for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
         if(skipDim[d] == true) {
           CDBDebug("Assuming [%s] done",dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
@@ -498,6 +505,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
             //The file is not there. If isAutoResourceEnabled and there is no file, force cleaning of autoConfigureDimensions table.
             if(removeNonExistingFiles == 1){   
               if(dirReader->fileList.size() == 1){
+                
                 CDBDebug("Removing autoConfigureDimensions [%s_%s]",tableNames[d].c_str(),dataSource->getLayerName());
                 CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->removeDimensionInfoForLayerTableAndLayerName(tableNames[d].c_str(),dataSource->getLayerName());
                 
@@ -534,9 +542,9 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
               
         
               if(d==0){
-                if(verbose)CDBDebug("Adding: %d/%d %s\t %s",
-                (int)j,
-                (int)dirReader->fileList.size(),
+                if(verbose)CDBDebug("Adding: %zu/%zu %s\t %s",
+                j,
+                dirReader->fileList.size(),
                 dimensionTextList.c_str(),
                 dirReader->fileList[j]->baseName.c_str());
               };
@@ -859,20 +867,45 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
             CDBError("No files found for %s ",dataSource->layerName.c_str());
           }else{
             CDBDebug("The database contains %d files",values->getSize());
-            for(size_t j=0;j<values->getSize();j++){
-              bool found = false;
-              for(size_t i=0;i<dirReader->fileList.size();i++){
-                if(dirReader->fileList[i]->fullName.equals(values->getRecord(j)->get(0))){
-                  found = true;
-                  break;
-                }
+            
+          std::vector <std::string> oldList;
+          std::vector <std::string> newList;   
+          for(size_t j=0;j<values->getSize();j++) {
+            oldList.push_back(values->getRecord(j)->get(0)->c_str());
+          }
+          for(size_t i=0;i<dirReader->fileList.size();i++){
+            newList.push_back(dirReader->fileList[i]->fullName.c_str());
+          }
+          CDBDebug("Comparing lists");
+          filesToDeleteFromDB.clear();
+          CDirReader::compareLists(oldList, newList, &handleFileFromDBIsMissing, &handleDirHasNewFile);
+          CDBDebug("Found %d files in DB which are missing", filesToDeleteFromDB.size());
+          for(size_t j=0;j<filesToDeleteFromDB.size();j++){
+            CDBDebug("Deleting file %s from db",filesToDeleteFromDB[j].c_str());
+            CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->removeFile(tableNames[d].c_str(),filesToDeleteFromDB[j].c_str());
+          }
 
-              }
-              if(found == false){
-                CDBDebug("Deleting file %s from db",values->getRecord(j)->get(0)->c_str());
-                CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->removeFile(tableNames[d].c_str(),values->getRecord(j)->get(0)->c_str());
-              }
-            }
+          
+/*              
+  
+  
+  
+  CDirReader::compareLists(oldList, newList, &A::_handleMissing, &A::_handleNew);*/
+            
+//             for(size_t j=0;j<values->getSize();j++){
+//               bool found = false;
+//               for(size_t i=0;i<dirReader->fileList.size();i++){
+//                 if(dirReader->fileList[i]->fullName.equals(values->getRecord(j)->get(0))){
+//                   found = true;
+//                   break;
+//                 }
+// 
+//               }
+//               if(found == false){
+//                 CDBDebug("Deleting file %s from db",values->getRecord(j)->get(0)->c_str());
+//                 CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->removeFile(tableNames[d].c_str(),values->getRecord(j)->get(0)->c_str());
+//               }
+//             }
           }
           
           
