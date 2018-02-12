@@ -81,9 +81,13 @@ CDBDebug("getFileNameForLayer");
         CDBDebug("Layer %s has no dimensions",myWMSLayer->dataSource->layerName.c_str());
         #endif   
         //If not, just return the filename
-        CDirReader *dirReader = CDBFileScanner::searchFileNames(myWMSLayer->dataSource->cfgLayer->FilePath[0]->value.c_str(),myWMSLayer->dataSource->cfgLayer->FilePath[0]->attr.filter,NULL);
-        if(dirReader !=NULL && dirReader->fileList.size()==1){
-          myWMSLayer->fileName.copy(dirReader->fileList[0]->fullName.c_str());
+        std::vector<std::string> fileList;
+        try {
+          fileList = CDBFileScanner::searchFileNames(myWMSLayer->dataSource->cfgLayer->FilePath[0]->value.c_str(),myWMSLayer->dataSource->cfgLayer->FilePath[0]->attr.filter,NULL);
+        }catch(int linenr){
+        };
+        if(fileList.size()==1){
+          myWMSLayer->fileName.copy(fileList[0].c_str());
         }else{
           myWMSLayer->fileName.copy(myWMSLayer->layer->FilePath[0]->value.c_str());
         }

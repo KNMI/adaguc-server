@@ -67,7 +67,7 @@ int CDirReader::listDirRecursive(const char* directory,const char *ext_filter){
 } 
 
 int CDirReader::_listDirRecursive(const char* directory,const char *ext_filter){
-  CDBDebug("Doing recursive diretory scan for [%s]", directory);
+  CDBDebug("Doing recursive directory scan for [%s]", directory);
   try{
     return _ReadDir(directory,ext_filter,1);
   }catch(int a){

@@ -68,7 +68,7 @@ private:
    * @param tailPath: The path under the root path to be scanned.
    * @returns dirReader: An initialised dirReader or NULL on error
    */
-  static CDirReader *searchFileNames(const char * path,CT::string expr,const char *tailPath);
+  static std::vector<std::string> searchFileNames(const char * path,CT::string expr,const char *tailPath);
   
   /**
    * Updates the database for a specified dataSource

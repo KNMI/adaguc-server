@@ -31,7 +31,7 @@
 #include <set>
 const char *CDBFileScanner::className="CDBFileScanner";
 std::vector <CT::string> CDBFileScanner::tableNamesDone;
-#define CDBFILESCANNER_DEBUG
+// #define CDBFILESCANNER_DEBUG
 #define ISO8601TIME_LEN 32
 
 #define CDBFILESCANNER_TILECREATIONFAILED -100
@@ -933,28 +933,27 @@ int CDBFileScanner::updatedb( CDataSource *dataSource,CT::string *_tailPath,CT::
   }
   
   
-  
-  CDirReader *dirReader = searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(),filter.c_str(),tailPath.c_str());
-  if(dirReader == NULL){
+  std::vector<std::string> fileList;
+  try{
+    fileList = searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(),filter.c_str(),tailPath.c_str());
+  }catch(int linenr){
+    CDBDebug("Exception in searchFileNames [%s] [%s]", dataSource->cfgLayer->FilePath[0]->value.c_str(),filter.c_str(),tailPath.c_str());
     return 0;
   }
-  CDBDebug("Found DIRREADER");
-  std::vector<std::string> fileList;
-  for(size_t j=0;j<dirReader->fileList.size();j++){
-    fileList.push_back(dirReader->fileList[j]->fullName.c_str());
-  }
-  
-  CDBDebug("Found DIRREADER %d", fileList.size());
   
   //Include tiles
   if(tailPath.length()==0){
     if(dataSource->cfgLayer->TileSettings.size() == 1){
-      CDBDebug("Start including TileSettings path [%s]. (Already found %d non tiled files)",dataSource->cfgLayer->TileSettings[0]->attr.tilepath.c_str(),dirReader->fileList.size());
-      CDirReader *dirReader = searchFileNames(dataSource->cfgLayer->TileSettings[0]->attr.tilepath.c_str(),"^.*\\.nc$",tailPath.c_str());
-      if (dirReader != NULL){
-        for(size_t j=0;j<dirReader->fileList.size();j++){
-          fileList.push_back(dirReader->fileList[j]->fullName.c_str());
+      CDBDebug("Start including TileSettings path [%s]. (Already found %d non tiled files)",dataSource->cfgLayer->TileSettings[0]->attr.tilepath.c_str(),fileList.size());
+      try{
+        std::vector<std::string> fileListForTiles = searchFileNames(dataSource->cfgLayer->TileSettings[0]->attr.tilepath.c_str(),"^.*\\.nc$",tailPath.c_str());
+        if (fileListForTiles.size() == 0)throw(__LINE__);
+        CDBDebug("Found %d tiles",fileListForTiles.size());
+        for(size_t j=0;j<fileListForTiles.size();j++){
+          fileList.push_back(fileListForTiles[j].c_str());
         }
+      } catch(int linenr){
+         CDBDebug("No tiles found");
       }
     }
   }
@@ -1005,13 +1004,13 @@ int CDBFileScanner::updatedb( CDataSource *dataSource,CT::string *_tailPath,CT::
 }
 
 //TODO READ FILE FROM DB!
-CDirReader *CDBFileScanner::searchFileNames(const char * path,CT::string expr,const char *tailPath){
+std::vector<std::string> CDBFileScanner::searchFileNames(const char * path,CT::string expr,const char *tailPath){
   #ifdef CDBFILESCANNER_DEBUG
   CDBDebug("searchFileNames");
 #endif
   if(path==NULL){
     CDBError("No path defined");
-    return NULL;
+    throw (__LINE__);
   }
   CT::string filePath=path;//dataSource->cfgLayer->FilePath[0]->value.c_str();
   
@@ -1022,7 +1021,7 @@ CDirReader *CDBFileScanner::searchFileNames(const char * path,CT::string expr,co
       CT::string baseName = filePath.substring(filePath.lastIndexOf("/")+1,-1);
       if(CDirReader::testRegEx(baseName.c_str(),expr.c_str())!=1){
         CDBWarning("Filter [%s] does not match path [%s]. Tailpath = [%s]",expr.c_str(),baseName.c_str(),tailPath);
-        return NULL;
+        throw (__LINE__);
       }
     }else{
       filePath.concat(tailPath);
@@ -1033,16 +1032,12 @@ CDirReader *CDBFileScanner::searchFileNames(const char * path,CT::string expr,co
      filePath.lastIndexOf(".png")==int(filePath.length()-4)||
      filePath.lastIndexOf(".geojson")==int(filePath.length()-8)||filePath.indexOf("http://")==0||filePath.indexOf("https://")==0||filePath.indexOf("dodsc://")==0){
     //Add single file or opendap URL.
-    CFileObject * fileObject = new CFileObject();
-    fileObject->fullName.copy(&filePath);
-    fileObject->baseName.copy(&filePath);
-    fileObject->isDir=false;
-    CDirReader *dirReader = new CDirReader();//TODO LEAKS
-    dirReader->fileList.push_back(fileObject);
-    return dirReader;
+    std::vector<std::string> fileList;
+    fileList.push_back(filePath.c_str());
+    return fileList;
   }else{
     //Read directory
-    CDirReader * dirReader = NULL;
+    
     CDirReader::makeCleanPath(&filePath);
     try{
       CT::string fileFilterExpr(".*\\.nc$");
@@ -1051,30 +1046,30 @@ CDirReader *CDBFileScanner::searchFileNames(const char * path,CT::string expr,co
       }
       CDBDebug("Reading directory %s with filter %s",filePath.c_str(),fileFilterExpr.c_str()); 
       
-      dirReader = CCachedDirReader::getDirReader(filePath.c_str(),fileFilterExpr.c_str());
+      CDirReader * dirReader = CCachedDirReader::getDirReader(filePath.c_str(),fileFilterExpr.c_str());
       CDBDebug("OK, %d",dirReader);
       dirReader->listDirRecursive(filePath.c_str(),fileFilterExpr.c_str());
+      std::vector<std::string> fileList;
       
       //Delete all files that start with a "." from the filelist.
       for(size_t j=0;j<dirReader->fileList.size();j++){
-        if(dirReader->fileList[j]->baseName.c_str()[0]=='.'){
-          delete dirReader->fileList[j];
-          dirReader->fileList.erase(dirReader->fileList.begin()+j);
-          j--;
+        if(dirReader->fileList[j]->baseName.c_str()[0]!='.'){
+          fileList.push_back(dirReader->fileList[j]->fullName.c_str());
         }
       }
-      
+      #ifdef CDBFILESCANNER_DEBUG
+        CDBDebug("Found %d file(s)",int(dirReader->fileList.size()));
+      #endif
+      return fileList;
     }catch(const char *msg){
       CDBDebug("Directory %s does not exist, silently skipping...",filePath.c_str());
-      return NULL;
+      throw (__LINE__);
     }
-    #ifdef CDBFILESCANNER_DEBUG
-    CDBDebug("Found %d file(s)",int(dirReader->fileList.size()));
-    #endif
-    return dirReader;
+    
+    throw (__LINE__);
   }
   
-  return NULL;
+  throw (__LINE__);
 }
 
 
@@ -1096,18 +1091,21 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
   
   CDBDebug("*** Starting update layer '%s' ***",dataSource->cfgLayer->Name[0]->value.c_str());
   
-  CDirReader *dirReader = searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),NULL);
-  if(dirReader == NULL){
-    return 0; 
+  std::vector<std::string> fileList;
+  try{
+    fileList = searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),NULL);
+  }catch(int linenr){
+    CDBDebug("Exception in searchFileNames [%s] [%s]", dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str());
+    return 0;
   }
   
-  if(dirReader->fileList.size()==0){
+  if(fileList.size()==0){
     CDBWarning("No files found for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
     return 1;
   }
 
   CDataReader *reader = new CDataReader();;
-  dataSource->addStep(dirReader->fileList[0]->fullName.c_str(),NULL);
+  dataSource->addStep(fileList[0].c_str(),NULL);
   reader->open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
   delete reader;
   CDBDebug("CRS:  [%s]",dataSource->nativeProj4.c_str());
