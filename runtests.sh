@@ -1,3 +1,3 @@
 #!/bin/bash
-
-bash ./tests/starttests.sh
+cd tests
+bash starttests.sh
