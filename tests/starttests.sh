@@ -3,6 +3,8 @@ echo "Starting adaguc-server functional tests"
 pushd `dirname $0` > /dev/null
 SCRIPTPATH=`pwd`
 popd > /dev/null
+unset ADAGUC_CONFIG
+unset QUERY_STRING
 export ADAGUC_PATH=${SCRIPTPATH}/../
 export ADAGUC_PATH=`readlink -f ${ADAGUC_PATH}`/
 export PYTHONPATH=${ADAGUC_PATH}/data/python/
