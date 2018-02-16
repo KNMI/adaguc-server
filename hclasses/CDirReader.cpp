@@ -172,17 +172,38 @@ CT::string CDirReader::makeCleanPath(const char *_path){
   path = _path;
   if(path.length()==0)return path;
   CT::StackList<CT::string>parts =path.splitToStack("/");
+  
+  /* Check if this should end with a slash or not */
+  bool appendSlash = false;
+  if(path.endsWith("/") == true) {
+    appendSlash = true;
+  }
+
+  /* Check if this should start with a slash or not */
   if(path.c_str()[0]=='/'){
     path.copy("/");
   }else path.copy("");
+  
+  
+  std::vector<CT::string> parts2;
   for(size_t j=0;j<parts.size();j++){
     if(parts[j].length()>0){
-      path.concat(&(parts[j]));
-      if(j+1<parts.size()){
+      parts2.push_back(parts[j]);
+    }
+  }
+  
+  for(size_t j=0;j<parts2.size();j++){
+    if(parts2[j].length()>0){
+      path.concat(&(parts2[j]));
+      if(j+1<parts2.size()){
         path.concat("/");
       }
     }
   }
+  if(appendSlash){
+    path.concat("/");
+  }
+//  CDBDebug("path = %s", path.c_str());
   return path;
 }
 
@@ -295,6 +316,7 @@ void CDirReader::compareLists(std::vector <std::string> L1, std::vector <std::st
 
 
 void CDirReader::test_compareLists() {
+  
   std::vector <std::string> oldList;
   oldList.push_back("ABC");oldList.push_back("OK");oldList.push_back("OK");oldList.push_back("DEF");oldList.push_back("GHI");oldList.push_back("JKL");
   std::vector <std::string> newList;
@@ -316,6 +338,31 @@ void CDirReader::test_compareLists() {
 }
 
 
+int CDirReader::test_makeCleanPath(){
+//   CDBDebug("%s",makeCleanPath("bla").c_str());
+//   CDBDebug("%s",makeCleanPath("/data/bla").c_str());
+//   CDBDebug("%s",makeCleanPath("//data/bla").c_str());
+//   CDBDebug("%s",makeCleanPath("/data//bla").c_str());
+//   CDBDebug("%s",makeCleanPath("/data/bla/").c_str());
+//   CDBDebug("%s",makeCleanPath("/data/bla//").c_str());
+  //CT::string t;
+  
+  
+  CT::string t;
+   t = makeCleanPath("data");CDBDebug("[%s]",t.c_str());;
+  t = makeCleanPath("data/");CDBDebug("[%s]",t.c_str());;
+  t = makeCleanPath("/data/");CDBDebug("[%s]",t.c_str());;
+  t = makeCleanPath("/data");CDBDebug("[%s]",t.c_str());;
+  t = makeCleanPath("/data//");CDBDebug("[%s]",t.c_str());;
+  t = makeCleanPath("data/bla");CDBDebug("[%s]",t.c_str());;
+  t = makeCleanPath("/data/bla");CDBDebug("[%s]",t.c_str());;
+  t = makeCleanPath("data/bla/");CDBDebug("[%s]",t.c_str());;
+  t = makeCleanPath("//data//bla////");CDBDebug("[%s]",t.c_str());;
+  t = makeCleanPath("/data//bla////");CDBDebug("[%s]",t.c_str());;
+  t = makeCleanPath("/data/bla////");CDBDebug("[%s]",t.c_str());;
+  
+  return 0;
+}
 
 // CCachedDirReader *CCachedDirReader::getCachedDirReader(){return &cachedDirReader;};
 std::map<std::string,CDirReader*> CCachedDirReader::dirReaderMap;

@@ -28,12 +28,15 @@ docker run \
 # Visualize a NetCDF file via autowms
 
 ```
-Put a NetCDF testfile into your autowms folder
+# Put a NetCDF testfile into your autowms folder
 curl -kL https://github.com/KNMI/adaguc-server/raw/master/data/datasets/testdata.nc > $HOME/adaguc-server-docker/adaguc-autowms/testdata.nc
 ```
-AutoWMS files are referenced via the source= key value pair in the URL.
+AutoWMS files are referenced via the source= key value pair in the URL. Filenames must be URLEncoded. Supported files are NetCDF, HDF5 and GeoJSON.
 This file is now accessible via http://localhost:8090/adaguc-services/adagucserver?source=testdata.nc
+
 You can visualize this link in the adaguc-viewer via "Add data", for example in http://geoservices.knmi.nl/viewer2.0/
+
+Other testdata can be found here: http://opendap.knmi.nl/knmi/thredds/catalog/ADAGUC/catalog.html. 
 
 # Test your own dataset configuration for styling, aggregations, etc ...
 
@@ -106,7 +109,23 @@ http://localhost:8090/adaguc-services/adagucserver?service=wms&request=getcapabi
 
 You can use this URL for example in http://geoservices.knmi.nl/viewer2.0/
 
+# Opendap services can be visualized
 
+The following OpenDAP URL can be visualized:
+```
+http://opendap.knmi.nl/knmi/thredds/dodsC/omi/OMI___OPER_R___TYTRCNO_L3/TYTRCNO/OMI___OPER_R___TYTRCNO_3.nc
+```
+To provide it to the source=<file location> parameter it must be be URL encoded:
+```
+http%3A%2F%2Fopendap.knmi.nl%2Fknmi%2Fthredds%2FdodsC%2Fomi%2FOMI___OPER_R___TYTRCNO_L3%2FTYTRCNO%2FOMI___OPER_R___TYTRCNO_3.nc
+```
+
+The ADAGUC WMS URL becomes: 
+```
+http://localhost:8090/adaguc-services/adagucserver?source=http%3A%2F%2Fopendap.knmi.nl%2Fknmi%2Fthredds%2FdodsC%2Fomi%2FOMI___OPER_R___TYTRCNO_L3%2FTYTRCNO%2FOMI___OPER_R___TYTRCNO_3.nc&service=wms&request=getcapabilities
+```
+
+This WMS URL can be visualized in the viewer by using "Add data". (http://localhost:8091/adaguc-viewer/ if you use the compose)
 
 # Docker compose with server and viewer:
 
@@ -117,7 +136,7 @@ Prebuilt images are available at https://hub.docker.com/ through openearth:
 * https://hub.docker.com/r/openearth/adaguc-server/
 
                      
-To get a instance online with docker compose: 
+To get an instance online with docker compose: 
 ```
 cd ./adaguc-server/Docker
 docker pull openearth/adaguc-viewer
@@ -141,43 +160,8 @@ To stop:
 docker-compose down
 ```
 
-# Use your own data
-Copy your data files to $HOME/data/adaguc-autowms. Files are are accessible by linking them via the source= key value pair. Filenames must be URLEncoded. Supported files are NetCDF, HDF5 and GeoJSON.
-The example file 'testdata.nc' is accessible via http://localhost:8090/adaguc-services/adagucserver?source=testdata.nc&service=WMS&request=GetCapabilities
-
-Files can be visualized in the adaguc-viewer via:
-* Go to http://localhost:8091/adaguc-viewer/
-* Add service http://localhost:8090/adaguc-services/adagucserver?source=testdata.nc via "Add data"
-* A direct link is: http://localhost:8091/adaguc-viewer/?service=http%3A%2F%2Flocalhost%3A8090%2Fadaguc-services%2Fadagucserver%3Fsource%3Dtestdata.nc
-
-Testdata can be found here: http://opendap.knmi.nl/knmi/thredds/catalog/ADAGUC/catalog.html. 
-
-# Custom datasets
-It is also possible to configure new datasets with custom styling and create aggregations over many files. Check https://dev.knmi.nl/projects/adagucserver/wiki/ for more information
-
-* Copy your XML configurations to $HOME/data/adaguc-datasets
-* Datasets are accessible via http://localhost:8090/adaguc-services/adagucserver?service=wms&request=getcapabilities&dataset=dataset_a
-
-# Opendap services can be visualized
-
-The following OpenDAP URL can be visualized:
+Use the following command to scan datasets:
 ```
-http://opendap.knmi.nl/knmi/thredds/dodsC/omi/OMI___OPER_R___TYTRCNO_L3/TYTRCNO/OMI___OPER_R___TYTRCNO_3.nc
-```
-To provide it to the source=<file location> parameter it must be be URL encoded:
-```
-http%3A%2F%2Fopendap.knmi.nl%2Fknmi%2Fthredds%2FdodsC%2Fomi%2FOMI___OPER_R___TYTRCNO_L3%2FTYTRCNO%2FOMI___OPER_R___TYTRCNO_3.nc
+ docker exec -i -t adaguc-server /adaguc/adaguc-server-updatedatasets.sh <your dataset name>
 ```
 
-The ADAGUC WMS URL becomes: 
-```
-http://localhost:8090/adaguc-services/adagucserver?source=http%3A%2F%2Fopendap.knmi.nl%2Fknmi%2Fthredds%2FdodsC%2Fomi%2FOMI___OPER_R___TYTRCNO_L3%2FTYTRCNO%2FOMI___OPER_R___TYTRCNO_3.nc&service=wms&request=getcapabilities
-```
-
-This WMS URL can be visualized in the viewer by using "Add data". (http://localhost:8091/adaguc-viewer/ if you use the compose)
-
-# Allowing other hosts in the viewer
-
-In the docker container for adaguc-viewer, at location /var/www/html/adaguc-viewer/config.php there is a list with all allowed hostnames. Add your own hostname if you want to allow data visualization from your own host. See https://dev.knmi.nl/projects/adagucviewer/wiki/Configuration for details.
-
-The default file is located here: https://github.com/KNMI/adaguc-viewer/blob/master/Docker/config.php

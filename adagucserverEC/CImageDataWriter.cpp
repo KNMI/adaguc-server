@@ -1340,8 +1340,14 @@ void CImageDataWriter::setDate(const char *szTemp){
   drawImage.setTextStroke(szTemp, strlen(szTemp),drawImage.Geo->dWidth-170,5,240,254,0);
 }
 
-std::vector<CImageDataWriter::IndexRange*> CImageDataWriter::getIndexRangesForRegex(CT::string match, CT::string *attributeValues, int n) {
-  std::vector<CImageDataWriter::IndexRange*> ranges;
+
+CImageDataWriter::IndexRange::IndexRange() {
+  min = 0;
+  max = 0;
+}
+
+std::vector<CImageDataWriter::IndexRange> CImageDataWriter::getIndexRangesForRegex(CT::string match, CT::string *attributeValues, int n) {
+  std::vector<CImageDataWriter::IndexRange> ranges;
   int ret;
   regex_t regex;
   ret=regcomp(&regex, match.c_str(), 0);
@@ -1364,8 +1370,8 @@ std::vector<CImageDataWriter::IndexRange*> CImageDataWriter::getIndexRangesForRe
         } else {
           if ((i-last)>0) {
             //new range
-            CImageDataWriter::IndexRange *rng=new CImageDataWriter::IndexRange(first, last);
-            ranges.push_back(rng);
+            ;
+            ranges.push_back(CImageDataWriter::IndexRange(first, last));
             first=i;
             last=i+1;
           } else {
@@ -1374,7 +1380,7 @@ std::vector<CImageDataWriter::IndexRange*> CImageDataWriter::getIndexRangesForRe
         }
       }
     }
-    ranges.push_back(new CImageDataWriter::IndexRange(first,last));
+    ranges.push_back(CImageDataWriter::IndexRange(first,last));
   }
   regfree(&regex);
   return ranges;
@@ -1463,7 +1469,7 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   
   /** Apply FeatureInterval config */
   if (styleConfiguration->featureIntervals!=NULL&&styleConfiguration->shadeIntervals!=NULL) {
-    if(styleConfiguration->featureIntervals->size()>0&&styleConfiguration->shadeIntervals->size()==0){
+    if(styleConfiguration->featureIntervals->size()>0){//&&styleConfiguration->shadeIntervals->size()==0){
 
       int numFeatures=0;
       try{
@@ -1492,16 +1498,15 @@ if(renderMethod==contour){CDBDebug("contour");}*/
               }
             }
             if(featureInterval->attr.fillcolor.empty()==false){
-              std::vector<CImageDataWriter::IndexRange*> ranges=getIndexRangesForRegex(featureInterval->attr.match, attributeValues, numFeatures);
+              std::vector<CImageDataWriter::IndexRange> ranges=getIndexRangesForRegex(featureInterval->attr.match, attributeValues, numFeatures);
               for (size_t i=0; i<ranges.size(); i++) {
                 CServerConfig::XMLE_ShadeInterval *shadeInterval = new CServerConfig::XMLE_ShadeInterval ();
                 styleConfiguration->shadeIntervals->push_back(shadeInterval);
-                shadeInterval->attr.min.print("%d",ranges[i]->min);
-                shadeInterval->attr.max.print("%d",ranges[i]->max);
+                shadeInterval->attr.min.print("%d",ranges[i].min);
+                shadeInterval->attr.max.print("%d",ranges[i].max);
                 shadeInterval->attr.fillcolor=featureInterval->attr.fillcolor;
                 shadeInterval->attr.bgcolor=featureInterval->attr.bgcolor;
                 shadeInterval->attr.label=featureInterval->attr.label;
-                delete ranges[i];
               }
             }
           }

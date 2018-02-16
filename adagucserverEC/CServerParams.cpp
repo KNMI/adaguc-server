@@ -422,7 +422,7 @@ CT::string CServerParams::getOnlineResource(){
     //No Online resource is given.
      const char *pszADAGUCOnlineResource=getenv("ADAGUC_ONLINERESOURCE");
     if(pszADAGUCOnlineResource==NULL){
-      CDBError("No OnlineResources configured. Unable to get from config OnlineResource or from environment ADAGUC_ONLINERESOURCE");
+      CDBDebug("Warning: No OnlineResources configured. Unable to get from config OnlineResource or from environment ADAGUC_ONLINERESOURCE");
       _onlineResource = "";
       return "";
     }
