@@ -5,7 +5,7 @@
 
 const char * CMakeJSONTimeSeries::className = "CMakeJSONTimeSeries";
 
-//#define CMakeJSONTimeSeries_DEBUG
+// #define CMakeJSONTimeSeries_DEBUG
 
 #define CMakeJSONTimeSeries_MAX_DIMS 255
 
@@ -303,7 +303,7 @@ public:
           dataAsString.print("%f",pixel);//=szTemp;
         }
       }
-      //CDBDebug("VAL [%s][%d][%f]",p.c_str(),index,data[index]);
+      // CDBDebug("VAL [%s][%d][%f]",p.c_str(),index,data[index]);
       Result *result = new Result(this);
 
       for(size_t j=0;j<variable->dimensionlinks.size()-2;j++){
@@ -355,7 +355,7 @@ public:
   };
 
   void createStructure(CDataSource::DataObject *dataObject,CDrawImage *drawImage,CImageWarper *imageWarper,CDataSource *dataSource,int dX,int dY,CXMLParser::XMLElement *gfiStructure){
-    
+
     /* Determine ordering of dimensions */
     int numberOfDims = dataSource->requiredDims.size();
     int timeDimIndex = -1;
@@ -440,10 +440,16 @@ public:
     reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
     
 
-    
 
-    
+    #ifdef CMakeJSONTimeSeries_DEBUG
+    CDBDebug("===================== iterating data objects ==================");
+    #endif
     for(size_t dataObjectNr=0;dataObjectNr<dataSource->dataObjects.size();dataObjectNr++){
+    //CDBDebug("Found %d elements",results.size());
+      for(size_t j=0;j<results.size();j++){
+        delete results[j];
+      }
+      results.clear();
       CDataSource::DataObject *dataObject = dataSource->getDataObject(dataObjectNr);
       CT::string variableName = dataObject->cdfVariable->name;
       //Show all requests
@@ -496,7 +502,7 @@ public:
               
             Request *request=(filemapiterator->second)->requests[j];
 #ifdef CMakeJSONTimeSeries_DEBUG                          
-            CDBDebug("%s",(filemapiterator->first).c_str());
+            CDBDebug("Reading file %s  for variable %s",(filemapiterator->first).c_str(), variable->name.c_str());
 #endif            
             
 
@@ -507,38 +513,43 @@ public:
               count[j]=1;
               stride[j]=1;
             }
+#ifdef CMakeJSONTimeSeries_DEBUG              
+            CDBDebug("Querying raster location %d %d",projCacheInfo.imx,projCacheInfo.imy);
+            CDBDebug("Querying raster dimIndex %d %d",dataSource->dimXIndex,dataSource->dimYIndex);
+#endif
             start[dataSource->dimXIndex] = projCacheInfo.imx;
             start[dataSource->dimYIndex] = projCacheInfo.imy;
-              
+
             for(int i=0;i<request->numDims;i++){
+              
               int netcdfDimIndex = -1;
               CDataReader::DimensionType dtype = CDataReader::getDimensionType(cdfObject,request->dimensions[i]->name.c_str());
-              if(dtype==CDataReader::dtype_none){
-                CDBWarning("dtype_none for %s",dtype,request->dimensions[i]->name.c_str());
-              }
-              try{
-                netcdfDimIndex = variable->getDimensionIndex(request->dimensions[i]->name.c_str());
-              }catch(int e){
-                //CDBError("Unable to find dimension [%s]",request->dimensions[i]->name.c_str());
-                if(dtype == CDataReader::dtype_reference_time){
-                  CDBDebug("IS REFERENCE TIME %s",request->dimensions[i]->name.c_str());
-      
-                }else{
-                  throw(__LINE__);
+              if(dtype != CDataReader::dtype_reference_time){
+                if(dtype==CDataReader::dtype_none){
+                  CDBWarning("dtype_none for %s",dtype,request->dimensions[i]->name.c_str());
                 }
-              }
-              
-              
-
-              start[netcdfDimIndex]=request->dimensions[i]->start;
-              count[netcdfDimIndex]=request->dimensions[i]->values.size();
-#ifdef CMakeJSONTimeSeries_DEBUG                
-              CDBDebug("  %d %s %d %d",i,request->dimensions[i]->name.c_str(),request->dimensions[i]->start,request->dimensions[i]->values.size());
-#endif              
+                try{
+                  netcdfDimIndex = variable->getDimensionIndex(request->dimensions[i]->name.c_str());
+                }catch(int e){
+                  //CDBError("Unable to find dimension [%s]",request->dimensions[i]->name.c_str());
+                  if(dtype == CDataReader::dtype_reference_time){
+                    CDBDebug("IS REFERENCE TIME %s",request->dimensions[i]->name.c_str());
+        
+                  }else{
+                    CDBError("IS NOT REFERENCE TIME %s",request->dimensions[i]->name.c_str());
+                    throw(__LINE__);
+                  }
+                }
+                start[netcdfDimIndex]=request->dimensions[i]->start;
+                count[netcdfDimIndex]=request->dimensions[i]->values.size();
+  #ifdef CMakeJSONTimeSeries_DEBUG                
+                CDBDebug("  request index: %d  netcdfdimindex %d  %s %d %d",i,netcdfDimIndex, request->dimensions[i]->name.c_str(),request->dimensions[i]->start,request->dimensions[i]->values.size());
+  #endif              
+               }
             }
 #ifdef CMakeJSONTimeSeries_DEBUG              
             for(int i=0;i<numberOfDims+2;i++){
-              CDBDebug("  %d [%d:%d]",i,start[i],count[i]);
+              CDBDebug("  %d %s [%d:%d]",i,"",start[i],count[i]);
             }
 #endif       
   
@@ -550,6 +561,7 @@ public:
             if(readDataAsCDFDouble){
               variable->setType(CDF_DOUBLE);
             }
+            CDBDebug("Reading data");
             int status = variable->readData(variable->currentType,start,count,stride,true);
             
             if(status != 0){
@@ -561,6 +573,7 @@ public:
               /**
               * DataPostProc: Here our datapostprocessor comes into action!
               */
+              CDBDebug("Applying postprocs");
               for(size_t dpi=0;dpi<dataSource->cfgLayer->DataPostProc.size();dpi++){
                 CServerConfig::XMLE_DataPostProc * proc = dataSource->cfgLayer->DataPostProc[dpi];
                 //Algorithm ax+b:
@@ -587,9 +600,13 @@ public:
             
               }
               /* End of data postproc */
-        
+#ifdef CMakeJSONTimeSeries_DEBUG          
               CDBDebug("Read %d elements",variable->getSize());
               
+              for(size_t j=0;j<variable->getSize();j++){
+                CDBDebug("Data value %d is \t %f",j,((float*)variable->data)[j]);
+              }
+#endif              
               try{
                 expandData(dataObject,variable,start,count,0,request,0);
               }catch(int e){
@@ -604,6 +621,7 @@ public:
       
   
       try{
+        CDBDebug("dataObjectNr: %d", dataObjectNr);
         createStructure(dataObject ,drawImage,imageWarper,dataSource,dX,dY,gfiStructure);
       }catch(int e){
         CDBError("Error in createStructure at line %d",e);

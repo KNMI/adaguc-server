@@ -329,6 +329,87 @@ int CDataReader::open(CDataSource *dataSource, int x,int y){
   return open(dataSource,CNETCDFREADER_MODE_OPEN_ALL,x,y);
 }
 
+int CDataReader::getCRS(CDataSource *dataSource) {
+  // Retrieve CRS
+  
+  CDF::Variable * dataSourceVar=dataSource->getDataObject(0)->cdfVariable;
+  CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
+
+  //Check if projection is overidden in the config file
+  if(dataSource->cfgLayer->Projection.size()==1){
+    //Read projection information from configuration
+    if(dataSource->cfgLayer->Projection[0]->attr.id.empty()==false){
+      dataSource->nativeEPSG.copy(dataSource->cfgLayer->Projection[0]->attr.id.c_str());
+    }else{
+      dataSource->nativeEPSG.copy("EPSG:4326");
+      //dataSource->nativeEPSG.copy("unknown");
+    }
+    //Read proj4 string
+    if(dataSource->cfgLayer->Projection[0]->attr.proj4.empty()==false){
+      dataSource->nativeProj4.copy(dataSource->cfgLayer->Projection[0]->attr.proj4.c_str());
+    }
+    else {
+      dataSource->nativeProj4.copy("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
+      //dataSource->nativeProj4.copy("unknown");
+    }
+  }else{
+    // If undefined, set standard lat lon projection
+    dataSource->nativeProj4.copy("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
+    //dataSource->nativeEPSG.copy("EPSG:4326");
+    //dataSource->nativeProj4.copy("unknown");
+    dataSource->nativeEPSG.copy("EPSG:4326");
+    //Read projection attributes from the file
+    CDF::Attribute *projvarnameAttr = dataSourceVar->getAttributeNE("grid_mapping");
+    if(projvarnameAttr!=NULL){
+      if(projvarnameAttr->toString().equals("latitude_longitude")==false){
+        CDF::Variable * projVar = cdfObject->getVariableNE(projvarnameAttr->toString().c_str());
+        if(projVar==NULL){CDBWarning("projection variable '%s' not found",(char*)projvarnameAttr->data);}
+        else {
+          //Get proj4_params according to ADAGUC metadata
+          CDF::Attribute *proj4Attr = projVar->getAttributeNE("proj4_params");
+          
+          //If not found try alternative one
+          if (proj4Attr==NULL) proj4Attr = projVar->getAttributeNE("proj4");
+          
+          //If a proj4 string was found set it in the datasource.
+          if(proj4Attr!=NULL)dataSource->nativeProj4.copy(proj4Attr->toString().c_str());
+          
+          //if still not found, try to compose a proj4 string based on Climate and Forecast Conventions
+          if (proj4Attr==NULL||dataSource->nativeProj4.length()==0){
+            CProj4ToCF proj4ToCF;
+            proj4ToCF.debug=true;
+            CT::string projString;
+            int status = proj4ToCF.convertCFToProj(projVar,&projString);
+            if(status==0){
+              //Projection string was created, set it in the datasource.
+              dataSource->nativeProj4.copy(projString.c_str());
+              CDBDebug("Autogen proj4 string: %s",projString.c_str());
+              projVar->setAttributeText("autogen_proj",projString.c_str());
+            }else{
+              CDBWarning("Unknown projection");
+            }
+          }
+          
+          
+
+          //Get EPSG_code
+          CDF::Attribute *epsgAttr = projVar->getAttributeNE("EPSG_code");
+          if(epsgAttr!=NULL){dataSource->nativeEPSG.copy((char*)epsgAttr->data);}else
+          {
+            //Make a projection code based on PROJ4: namespace
+            dataSource->nativeEPSG.print("PROJ4:%s",dataSource->nativeProj4.c_str());
+            dataSource->nativeEPSG.replaceSelf("\"","");
+            dataSource->nativeEPSG.replaceSelf("\n","");
+            dataSource->nativeEPSG.trimSelf();
+            dataSource->nativeEPSG.encodeURLSelf();
+          }
+          //else {CDBWarning("EPSG_code not found in variable %s",(char*)projvarnameAttr->data);}
+        }
+      }
+    }
+  }
+  return 0;
+}
 
 int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, int *gridExtent){
   
@@ -530,32 +611,80 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
       
     }
     
-    status = dataSource->varX->readData(CDF_DOUBLE,sta,sto,str);
+    status = dataSource->varX->readData(CDF_DOUBLE,sta,sto,str,true);
     if(status!=0){
       CDBError("Unable to read x dimension with name %s for variable %s",dataSource->varX->name.c_str(),dataSourceVar->name.c_str());
       return 1;
     }
-    
+
 //     CDBDebug("Read data X %f",((double*)dataSource->varX->data)[0]);
-    
+
+
     //CDBDebug("Done");
     
     sta[0]=start[dataSource->dimYIndex];str[0]=dataSource->stride2DMap; sto[0]=dataSource->dHeight;
     if(singleCellMode){
       sta[0]=0;str[0]=1;sto[0]=2;
-      
     }
     
-    status = dataSource->varY->readData(CDF_DOUBLE,sta,sto,str);if(status!=0){
+    status = dataSource->varY->readData(CDF_DOUBLE,sta,sto,str,true);
+    if(status!=0){
       CDBError("Unable to read y dimension for variable %s",dataSourceVar->name.c_str());
       for(size_t j=0;j<dataSource->varY->dimensionlinks.size();j++){
             CDBDebug("For var %s, reading dim %s of size %d (%d %d %d)", dataSource->varY->name.c_str(),dataSource->varY->dimensionlinks[j]->name.c_str(),dataSource->varY->dimensionlinks[j]->getSize(),sta[j],sto[j],str[j]);
           }
       return 1;
     }
+
+    // Get CRS info DataObject
+    getCRS(dataSource);
+
+    //if units="rad" and grid_mapping variable contains perspective_point_height attribute
+    //coordinates can be converted to (k)m
+    //
+    CDF::Attribute* units=dataSource->varX->getAttributeNE("units");
+
+    if ((units!=NULL) && units->toString().equals("rad")){
+      CDBDebug("units: %s", units->toString().c_str());
+      CDBDebug("Correct varX and varY");
+      double *xdata=(double*)dataSource->varX->data;
+      double *ydata=(double*)dataSource->varY->data;
+      CDF::Attribute *projvarnameAttr = dataSourceVar->getAttributeNE("grid_mapping");
+      if(projvarnameAttr!=NULL){
+	CDF::Variable * projVar = cdfObject->getVariableNE(projvarnameAttr->toString().c_str());
+	if(projVar==NULL){
+          CDBWarning("projection variable '%s' not found",(char*)projvarnameAttr->data);
+        } else {
+	  CDF::Attribute *grid_mapping_name = projVar->getAttributeNE("grid_mapping_name");
+          if ((grid_mapping_name!=NULL) && grid_mapping_name->toString().equals("geostationary")) {
+	    //Get perspective_height
+	    CDF::Attribute *perspectiveHeightAttr = projVar->getAttributeNE("perspective_point_height");
+	    double perspectiveHeight=35786000.;
+	    if (perspectiveHeightAttr!=NULL) {
+	      try{
+		perspectiveHeight = perspectiveHeightAttr->toString().toDouble();
+	      }catch(int e){
+		CDBDebug("Falling back to default perspective_point_height: 35786000");
+              }
+	    }
+
+	    sta[0]=start[dataSource->dimXIndex];str[0]=dataSource->stride2DMap; sto[0]=dataSource->dWidth;
+	    if(singleCellMode){sta[0]=0;str[0]=1;sto[0]=2;}
+	    for (size_t j=sta[0];j<sto[0];j+=str[0]) {
+	      xdata[j]=xdata[j]*perspectiveHeight;
+	    }
+
+	    sta[0]=start[dataSource->dimYIndex];str[0]=dataSource->stride2DMap; sto[0]=dataSource->dHeight;
+	    if(singleCellMode){sta[0]=0;str[0]=1;sto[0]=2;}
+	    for (size_t j=sta[0];j<sto[0];j+=str[0]) {
+	      ydata[j]=ydata[j]*perspectiveHeight;
+	    }
+          }
+	}
+      }
+    }
   }
 
-  
   
   // Calculate cellsize based on read X,Y dims
   double *dfdim_X=(double*)dataSource->varX->data;
@@ -602,81 +731,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
   StopWatch_Stop("XY dimensions read");
 #endif
 
-  // Retrieve CRS
-  
-  //Check if projection is overidden in the config file
-  if(dataSource->cfgLayer->Projection.size()==1){
-    //Read projection information from configuration
-    if(dataSource->cfgLayer->Projection[0]->attr.id.empty()==false){
-      dataSource->nativeEPSG.copy(dataSource->cfgLayer->Projection[0]->attr.id.c_str());
-    }else{
-      dataSource->nativeEPSG.copy("EPSG:4326");
-      //dataSource->nativeEPSG.copy("unknown");
-    }
-    //Read proj4 string
-    if(dataSource->cfgLayer->Projection[0]->attr.proj4.empty()==false){
-      dataSource->nativeProj4.copy(dataSource->cfgLayer->Projection[0]->attr.proj4.c_str());
-    }
-    else {
-      dataSource->nativeProj4.copy("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
-      //dataSource->nativeProj4.copy("unknown");
-    }
-  }else{
-    // If undefined, set standard lat lon projection
-    dataSource->nativeProj4.copy("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
-    //dataSource->nativeEPSG.copy("EPSG:4326");
-    //dataSource->nativeProj4.copy("unknown");
-    dataSource->nativeEPSG.copy("EPSG:4326");
-    //Read projection attributes from the file
-    CDF::Attribute *projvarnameAttr = dataSourceVar->getAttributeNE("grid_mapping");
-    if(projvarnameAttr!=NULL){
-      if(projvarnameAttr->toString().equals("latitude_longitude")==false){
-        CDF::Variable * projVar = cdfObject->getVariableNE(projvarnameAttr->toString().c_str());
-        if(projVar==NULL){CDBWarning("projection variable '%s' not found",(char*)projvarnameAttr->data);}
-        else {
-          //Get proj4_params according to ADAGUC metadata
-          CDF::Attribute *proj4Attr = projVar->getAttributeNE("proj4_params");
-          
-          //If not found try alternative one
-          if (proj4Attr==NULL) proj4Attr = projVar->getAttributeNE("proj4");
-          
-          //If a proj4 string was found set it in the datasource.
-          if(proj4Attr!=NULL)dataSource->nativeProj4.copy(proj4Attr->toString().c_str());
-          
-          //if still not found, try to compose a proj4 string based on Climate and Forecast Conventions
-          if (proj4Attr==NULL||dataSource->nativeProj4.length()==0){
-            CProj4ToCF proj4ToCF;
-            proj4ToCF.debug=true;
-            CT::string projString;
-            status = proj4ToCF.convertCFToProj(projVar,&projString);
-            if(status==0){
-              //Projection string was created, set it in the datasource.
-              dataSource->nativeProj4.copy(projString.c_str());
-              //CDBDebug("Autogen proj4 string: %s",projString.c_str());
-              projVar->setAttributeText("autogen_proj",projString.c_str());
-            }else{
-              CDBWarning("Unknown projection");
-            }
-          }
-          
-          
-
-          //Get EPSG_code
-          CDF::Attribute *epsgAttr = projVar->getAttributeNE("EPSG_code");
-          if(epsgAttr!=NULL){dataSource->nativeEPSG.copy((char*)epsgAttr->data);}else
-          {
-            //Make a projection code based on PROJ4: namespace
-            dataSource->nativeEPSG.print("PROJ4:%s",dataSource->nativeProj4.c_str());
-            dataSource->nativeEPSG.replaceSelf("\"","");
-            dataSource->nativeEPSG.replaceSelf("\n","");
-            dataSource->nativeEPSG.trimSelf();
-            dataSource->nativeEPSG.encodeURLSelf();
-          }
-          //else {CDBWarning("EPSG_code not found in variable %s",(char*)projvarnameAttr->data);}
-        }
-      }
-    }
-  }
+  //getCRS(dataSource);
   #ifdef CDATAREADER_DEBUG
   CDBDebug("PROJ4 = [%s]",dataSource->nativeProj4.c_str());
   #endif
@@ -770,7 +825,10 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y, int *gridExt
 #ifdef CDATAREADER_DEBUG
   CDBDebug("Working on [%s] with mode %d and (%d,%d)",dataSourceFilename.c_str(),mode,x,y);
 #endif
-    
+  
+  if (mode == CNETCDFREADER_MODE_OPEN_ALL){
+    CDBDebug("Working on [%s]", dataSourceFilename.c_str());
+  }
   if(mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS  || mode == CNETCDFREADER_MODE_OPEN_HEADER ){
       //pthread_mutex_lock(&CDataReader_open_lock);
     cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource->srvParams,dataSourceFilename.c_str());
@@ -824,20 +882,6 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y, int *gridExt
     return 1;
   }
   
-  
-  
-//   if(dataSource->level2CompatMode){
-//    
-//     enableDataCache=false;
-//   }
-//   if(enableDataCache){
-//     if(cache.saveCacheFile()){
-//       if(cache.claimCacheFile()!=0){
-//         enableDataCache = false;
-//       }
-//     }
-//   }
-
   if(dataSource->useLonTransformation!=-1 && gridExtent == NULL){
     for(size_t varNr=0;varNr<dataSource->getNumDataObjects();varNr++){
       Proc::swapPixelsAtLocation(dataSource,dataSource->getDataObject(varNr)->cdfVariable,0);
@@ -876,11 +920,6 @@ if( mode == CNETCDFREADER_MODE_OPEN_EXTENT && gridExtent != NULL ){
       
       count[dataSource->dimXIndex] = dataSource->dWidth;
       count[dataSource->dimYIndex]=dataSource->dHeight;
-//       CDBDebug("START X, %d",start[dataSource->dimXIndex]);
-//       CDBDebug("START Y, %d",start[dataSource->dimYIndex]);
-//       CDBDebug("WIDTH, %d",dataSource->dWidth);
-//       CDBDebug("HEIGHT, %d",dataSource->dHeight);
-
     }
   
   
@@ -910,24 +949,16 @@ if( mode == CNETCDFREADER_MODE_OPEN_EXTENT && gridExtent != NULL ){
 
   
   
-  //Determine dataSource->getDataObject(0)->dataType of the variable we are going to read
+  /*
+   * Determine dataSource->getDataObject(0)->dataType of the variable we are going to read
+   * 
+   * Important: ax+b DatapostProc needs this information, so it needs to be called after these statements
+   */
   for(size_t varNr=0;varNr<dataSource->getNumDataObjects();varNr++){
     
     #ifdef CDATAREADER_DEBUG
     CDBDebug("Working on variable %s, %d/%d",dataSource->getDataObject(varNr)->cdfVariable->name.c_str(),varNr,dataSource->getNumDataObjects());
     #endif
-    //dataSource->getDataObject(varNr)->dataType=dataSource->getDataObject(varNr)->cdfVariable->getType();
-    /*if(dataSource->getDataObject(varNr)->cdfVariable->getType()==CDF_CHAR||dataSource->getDataObject(varNr)->cdfVariable->getType()==CDF_BYTE)dataSource->getDataObject(varNr)->dataType=CDF_CHAR;
-    if(dataSource->getDataObject(varNr)->cdfVariable->getType()==CDF_UBYTE)dataSource->getDataObject(varNr)->dataType=CDF_UBYTE;
-    
-    if(dataSource->getDataObject(varNr)->cdfVariable->getType()==CDF_SHORT||dataSource->getDataObject(varNr)->cdfVariable->getType()==CDF_USHORT)dataSource->getDataObject(varNr)->dataType=CDF_SHORT;
-    if(dataSource->getDataObject(varNr)->cdfVariable->getType()==CDF_INT||dataSource->getDataObject(varNr)->cdfVariable->getType()==CDF_UINT)dataSource->getDataObject(varNr)->dataType=CDF_INT;
-    if(dataSource->getDataObject(varNr)->cdfVariable->getType()==CDF_FLOAT)dataSource->getDataObject(varNr)->dataType=CDF_FLOAT;
-    if(dataSource->getDataObject(varNr)->cdfVariable->getType()==CDF_DOUBLE)dataSource->getDataObject(varNr)->dataType=CDF_DOUBLE;
-    if(dataSource->getDataObject(varNr)->dataType==CDF_NONE){
-      CDBError("Invalid dataSource->getDataObject(varNr)->dataType");
-      return 1;
-    }*/
     //Get Unit
     CDF::Attribute *varUnits=dataSource->getDataObject(varNr)->cdfVariable->getAttributeNE("units");
     if(varUnits!=NULL){
@@ -953,10 +984,6 @@ if( mode == CNETCDFREADER_MODE_OPEN_EXTENT && gridExtent != NULL ){
         dataSource->getDataObject(varNr)->cdfVariable->setType(CDF_DOUBLE);
       }
     
-      //char dataTypeName[256];
-      //CDF::getCDFDataTypeName(dataTypeName,255, dataSource->getDataObject(varNr)->dataType);
-      //CDBDebug("Dataset datatype for reading = %s sizeof(short)=%d",dataTypeName,sizeof(short));
-    
       //Internally we use always double for scale and offset parameters:
       scale_factor->getData(&dataSource->getDataObject(varNr)->dfscale_factor,1);
       
@@ -973,10 +1000,9 @@ if( mode == CNETCDFREADER_MODE_OPEN_EXTENT && gridExtent != NULL ){
   }
     
   /*
-  * DataPostProc: Here our datapostprocessor comes into action!
+  * DataPostProc: Here our datapostprocessor comes into action! It needs scale and offset from datasource.
   * This is stage1, only AX+B will be applied to scale and offset parameters
   */
-  
   CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource,CDATAPOSTPROCESSOR_RUNBEFOREREADING);
   
 

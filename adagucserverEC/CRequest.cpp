@@ -93,11 +93,12 @@ int CRequest::setConfigFile(const char *pszConfigFile){
   
   if(status == 0 && srvParam->configObj->Configuration.size()==1){
  
-    
+    srvParam->configFileName.copy(pszConfigFile);
+    srvParam->cfg=srvParam->configObj->Configuration[0];
     
      //Include additional config files given as argument
     if(configFileList.size()>1){
-      for(size_t j=1;j<configFileList.size();j++){
+      for(size_t j=1;j<configFileList.size() - 1;j++){
           //CDBDebug("Include '%s'",configFileList[j].c_str());
           status = srvParam->parseConfigFile(configFileList[j]);
           if(status != 0){
@@ -106,12 +107,22 @@ int CRequest::setConfigFile(const char *pszConfigFile){
           }
         
       }
+      
+      //The last configration file is considered the dataset one, strip path and extension and give it to configurer
+      if(configFileList.size() > 1){
+        srvParam->datasetLocation.copy(configFileList[configFileList.size()  -1].basename().c_str());
+        srvParam->datasetLocation.substringSelf(0,srvParam->datasetLocation.lastIndexOf("."));
+        CDBDebug("Dataset name based on passed configfile is [%s]", srvParam->datasetLocation.c_str());
+        status = CAutoResource::configureDataset(srvParam,false);
+        if(status!=0){
+          CDBError("ConfigureDataset failed for %s", configFileList[1].c_str());
+          return status;
+        }
+      }
     }
     
-    srvParam->configFileName.copy(pszConfigFile);
-    srvParam->cfg=srvParam->configObj->Configuration[0];
+
     
-    //TODO INCLUDE DATASET = here
     const char * pszQueryString=getenv("QUERY_STRING");
     if(pszQueryString!=NULL){
       CT::string queryString(pszQueryString);
@@ -135,22 +146,25 @@ int CRequest::setConfigFile(const char *pszConfigFile){
         if(value0Cap.equals("DATASET")){
           if(srvParam->datasetLocation.empty()){
             srvParam->datasetLocation.copy(values[1].c_str());
+            status = CAutoResource::configureDataset(srvParam,false);
+            if(status!=0){
+              CDBError("CAutoResource::configureDataset failed");
+              return status;
+            }
           }
         }
       }      
-      status = CAutoResource::configureDataset(srvParam,false);
-      if(status!=0){
-        CDBError("CAutoResource::configureDataset failed");
-        return status;
-      }
     }
+
     
     // Include additional config files given in the include statement of the config file
     // Last config file is included first
     for(size_t j=0;j<srvParam->cfg->Include.size();j++){
       if(srvParam->cfg->Include[j]->attr.location.empty()==false){
         int index = (srvParam->cfg->Include.size()-1)-j;
+#ifdef CREQUEST_DEBUG
         CDBDebug("Include '%s'",srvParam->cfg->Include[index]->attr.location.c_str());
+#endif        
         status = srvParam->parseConfigFile(srvParam->cfg->Include[index]->attr.location);
         if(status != 0){
           CDBError("There is an error with include '%s'",srvParam->cfg->Include[index]->attr.location.c_str());
@@ -204,35 +218,36 @@ int CRequest::setConfigFile(const char *pszConfigFile){
         /* Create the list of layers from a directory list */
         const char * baseDir=srvParam->cfg->Layer[j]->FilePath[0]->value.c_str();
         
-        CDirReader dirReader;
+        
         CDBDebug("autoscan");
-        CDBFileScanner::searchFileNames(&dirReader,baseDir,srvParam->cfg->Layer[j]->FilePath[0]->attr.filter.c_str(),NULL);
-        /*if(dirReader.listDirRecursive(baseDir,"^.*nc$")!=0){
-          CDBError("Unable to list directory '%s'",baseDir);
+        std::vector<std::string> fileList;
+        try{
+          fileList= CDBFileScanner::searchFileNames(baseDir,srvParam->cfg->Layer[j]->FilePath[0]->attr.filter.c_str(),NULL);
+        }catch(int linenr){
+          CDBError("Could not find any file in directory '%s'",baseDir);
           throw(__LINE__);
-        }*/
-        if(dirReader.fileList.size()==0){
+        }
+
+
+        if(fileList.size()==0){
           CDBError("Could not find any file in directory '%s'",baseDir);
           throw(__LINE__);
         }
         size_t nrOfFileErrors=0;
-        for(size_t j=0;j<dirReader.fileList.size();j++){
+        for(size_t j=0;j<fileList.size();j++){
           try{
           CT::string baseDirStr = baseDir;
-          CT::string groupName = dirReader.fileList[j]->fullName.c_str();
-          CT::string baseName = dirReader.fileList[j]->fullName.c_str();
+          CT::string groupName = fileList[j].c_str();
           groupName.substringSelf(baseDirStr.length(),-1);
-          //int lastSlash = baseName.lastIndexOf("/")+1;
-          //baseName.substringSelf(lastSlash,-1);
           
         
         
        
       
           //Open file
-          //CDBDebug("Opening file %s",dirReader.fileList[j]->fullName.c_str());
-          CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(srvParam,dirReader.fileList[j]->fullName.c_str());
-          if(cdfObject == NULL){CDBError("Unable to read file %s",dirReader.fileList[j]->fullName.c_str());throw(__LINE__);}
+          //CDBDebug("Opening file %s",fileList[j].c_str());
+          CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(srvParam,fileList[j].c_str());
+          if(cdfObject == NULL){CDBError("Unable to read file %s",fileList[j].c_str());throw(__LINE__);}
           
           //std::vector<CT::string> variables;
           //List variables
@@ -249,7 +264,7 @@ int CRequest::setConfigFile(const char *pszConfigFile){
                 //xmleCache->attr.enabled.copy("false");
                 xmleLayer->attr.type.copy("database");
                 xmleVariable->value.copy(var->name.c_str());
-                xmleFilePath->value.copy(dirReader.fileList[j]->fullName.c_str());
+                xmleFilePath->value.copy(fileList[j].c_str());
                 xmleGroup->attr.value.copy(groupName.c_str());
                 xmleLayer->Variable.push_back(xmleVariable);
                 xmleLayer->FilePath.push_back(xmleFilePath);
@@ -807,21 +822,24 @@ int CRequest::setDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
 #ifdef CREQUEST_DEBUG  
   CDBDebug("setDimValuesForDataSource");
 #endif  
+  //TODO inneficient
   if(dataSource->cfgLayer->Dimension.size()==0){
     //This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.        
     CDBDebug("setDimValuesForDataSource dataSource->cfgLayer->Dimension.size()==0");
-    CDirReader dirReader;
-    if(CDBFileScanner::searchFileNames(&dirReader,dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter,NULL)!=0){
-        CDBError("Could not find any filename");
-        return 1; 
+    std::vector<std::string> fileList;
+    try {
+      fileList= CDBFileScanner::searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter,NULL);
+    }catch(int linenr){
+      CDBError("Could not find any filename");
+      return 1; 
     }
-    if(dirReader.fileList.size()==0){
-        CDBError("dirReader.fileList.size()==0");return 1;
+    if(fileList.size()==0){
+        CDBError("fileList.size()==0");return 1;
     }
 #ifdef CREQUEST_DEBUG
     CDBDebug("Addstep");
 #endif
-    dataSource->addStep(dirReader.fileList[0]->fullName.c_str(),NULL);
+    dataSource->addStep(fileList[0].c_str(),NULL);
 //     dataSource->getCDFDims()->addDimension("none","0",0);
     return 0;
   }    
@@ -1280,7 +1298,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
 //             CDBDebug("%f %f",x1,y1);
 //             CDBDebug("%f %f",x2,y2);
           if(status==0){
-            double calcCellsize = sqrt(((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1))/2);
+            double calcCellsize = sqrt(((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1)));
             if(screenCellSize<0){
               screenCellSize = calcCellsize;
             }else{
@@ -1379,7 +1397,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
       //CDBDebug("level %d, tiles %0d cellsize %f",dataSource->queryLevel,store->getSize(),tileCellSize);
       if(tileSettingsDebug){
         srvParam->mapTitle.print("level %d, tiles %d",dataSource->queryLevel,store->getSize());
-        srvParam->mapSubTitle.print("level %d, tiles %0d cellsize %f",dataSource->queryLevel,store->getSize(),tileCellSize);
+        srvParam->mapSubTitle.print("level %d, tiles %0d, tileCellSize %f, screenCellSize %f",dataSource->queryLevel,store->getSize(),tileCellSize,screenCellSize);
       }
       
       
@@ -1652,19 +1670,20 @@ int CRequest::process_all_layers(){
         CDBDebug("Layer has no dims");
         //This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.        
         
-
-        CDirReader dirReader;
-        if(CDBFileScanner::searchFileNames(&dirReader,dataSources[j]->cfgLayer->FilePath[0]->value.c_str(),dataSources[j]->cfgLayer->FilePath[0]->attr.filter,NULL)!=0){
+        std::vector<std::string> fileList;
+        try {
+          fileList = CDBFileScanner::searchFileNames(dataSources[j]->cfgLayer->FilePath[0]->value.c_str(),dataSources[j]->cfgLayer->FilePath[0]->attr.filter,NULL);
+        } catch(int linenr){
           CDBError("Could not find any filename");
           return 1; 
         }
         
-        if(dirReader.fileList.size()==0){
-          CDBError("dirReader.fileList.size()==0");return 1;
+        if(fileList.size()==0){
+          CDBError("fileList.size()==0");return 1;
         }
         
         CDBDebug("Addstep");
-        dataSources[j]->addStep(dirReader.fileList[0]->fullName.c_str(),NULL);
+        dataSources[j]->addStep(fileList[0].c_str(),NULL);
         //dataSources[j]->getCDFDims()->addDimension("none","0",0);
       }
     }
@@ -2012,7 +2031,7 @@ int CRequest::process_all_layers(){
             
             for(int k=0;k<dataSources[j]->getNumTimeSteps();k++){
               dataSources[j]->setTimeStep(k);
-              CDBDebug("WCS dataset %d/ timestep %d",j,k);
+              CDBDebug("WCS dataset %d/ timestep %d of %d",j,k,dataSources[j]->getNumTimeSteps());
 
               try{
                 status = wcsWriter->addData(dataSources);
@@ -2234,7 +2253,7 @@ int CRequest::process_querystring(){
       }
       const char *SCRIPT_NAME =getenv("SCRIPT_NAME");
       const char *REQUEST_URI =getenv("REQUEST_URI");
-      //CDBDebug("SCRIPT_NAME [%s], REQUEST_URI [%s]",SCRIPT_NAME,REQUEST_URI);
+      // CDBDebug("SCRIPT_NAME [%s], REQUEST_URI [%s]",SCRIPT_NAME,REQUEST_URI);
       if(SCRIPT_NAME!=NULL && REQUEST_URI!=NULL){
         size_t SCRIPT_NAME_length = strlen(SCRIPT_NAME);
         size_t REQUEST_URI_length = strlen(REQUEST_URI);
@@ -2244,7 +2263,8 @@ int CRequest::process_querystring(){
           if(dapPath.indexOf(defaultPath.c_str())==0){
             //THIS is OPENDAP!
             CT::string* items = dapPath.splitToArray("?");
-            COpenDAPHandler::HandleOpenDAPRequest(items[0].c_str(),pszQueryString,srvParam);
+            COpenDAPHandler opendapHandler;
+            opendapHandler.handleOpenDAPRequest(items[0].c_str(),pszQueryString,srvParam);
             delete[] items;
             return 0;
           }
@@ -3298,22 +3318,29 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan, int sca
     }
   }
 
-  //invalidate cache
-  CT::string cacheFileName;
-  srvParam->getCacheFileName(&cacheFileName);
-  
-  //Remove the cache file, but check first wether it exists or not.
-  struct stat stFileInfo;
-  int intStat;
-  intStat = stat(cacheFileName.c_str(),&stFileInfo);
-  CT::string cacheBuffer;
-  //The file exists, so remove it.
-  if(intStat == 0) {
-    CDBDebug("Removing cachefile %s ",cacheFileName.c_str());
-    if(cacheFileName.length()>0){
-      if(remove(cacheFileName.c_str())!=0){
-        CDBError("Unable to remove cachefile %s, please do it manually.",cacheFileName.c_str());
+  if(srvParam->enableDocumentCache) {
+    //invalidate cache
+    CT::string cacheFileName;
+    srvParam->getCacheFileName(&cacheFileName);
+    
+    CDBDebug("Invalidating cache file [%s]", cacheFileName.c_str());
+    //Remove the cache file, but check first wether it exists or not.
+    struct stat stFileInfo;
+    int intStat;
+    intStat = stat(cacheFileName.c_str(),&stFileInfo);
+    CT::string cacheBuffer;
+    
+    //The file exists, so remove it.
+    if(intStat == 0) {
+      CDBDebug("Removing cachefile %s ",cacheFileName.c_str());
+      if(cacheFileName.length()>0){
+        if(remove(cacheFileName.c_str())!=0){
+          CDBError("Unable to remove cachefile %s, please do it manually.",cacheFileName.c_str());
+          return 1;
+        }
       }
+    } else {
+      CDBDebug("There is no cachefile");
     }
   }
   /*

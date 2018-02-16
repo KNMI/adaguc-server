@@ -81,10 +81,13 @@ CDBDebug("getFileNameForLayer");
         CDBDebug("Layer %s has no dimensions",myWMSLayer->dataSource->layerName.c_str());
         #endif   
         //If not, just return the filename
-        CDirReader dirReader;
-        CDBFileScanner::searchFileNames(&dirReader,myWMSLayer->dataSource->cfgLayer->FilePath[0]->value.c_str(),myWMSLayer->dataSource->cfgLayer->FilePath[0]->attr.filter,NULL);
-        if(dirReader.fileList.size()==1){
-          myWMSLayer->fileName.copy(dirReader.fileList[0]->fullName.c_str());
+        std::vector<std::string> fileList;
+        try {
+          fileList = CDBFileScanner::searchFileNames(myWMSLayer->dataSource->cfgLayer->FilePath[0]->value.c_str(),myWMSLayer->dataSource->cfgLayer->FilePath[0]->attr.filter,NULL);
+        }catch(int linenr){
+        };
+        if(fileList.size()==1){
+          myWMSLayer->fileName.copy(fileList[0].c_str());
         }else{
           myWMSLayer->fileName.copy(myWMSLayer->layer->FilePath[0]->value.c_str());
         }
@@ -352,13 +355,15 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
     for(size_t i=0;i<myWMSLayer->dataSource->cfgLayer->Dimension.size();i++){
       if(i==0&&myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.equals("none"))break;
       #ifdef CXMLGEN_DEBUG
-      CDBDebug("%d = %s",i,myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
+      CDBDebug("%d = %s / %s",i,myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str(),myWMSLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
       #endif    
       //Shorthand dimName
       const char *pszDimName = myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str();
       
       //Create a new dim to store in the layer
-      WMSLayer::Dim *dim=new WMSLayer::Dim();myWMSLayer->dimList.push_back(dim);
+      WMSLayer::Dim *dim=new WMSLayer::Dim();
+      myWMSLayer->dimList.push_back(dim);
+      dim->name.copy( myWMSLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
       //Get the tablename
       CT::string tableName;
       try{
@@ -539,6 +544,7 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
         
       
         if(values == NULL){CDBError("Query failed");return 1;}
+        
         if(values->getSize()>0){
           //if(srvParam->requestType==REQUEST_WMS_GETCAPABILITIES)
           {
@@ -671,9 +677,13 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
           }
         }
       }
+   
+     
+ }
     }
-
-    }
+        
+    
+    
     return 0;
 }
 

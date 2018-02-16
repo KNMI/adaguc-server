@@ -39,11 +39,7 @@
 #define XMLE_SETOBJ(variableName){ if(variableName.size()==0){pt2Class=new XMLE_##variableName();pt2Class->level=rc;variableName.push_back(((XMLE_##variableName*)pt2Class));}else{pt2Class=variableName[0];}}
 #define XMLE_DELOBJ(variableName){ {for(size_t j=0;j<variableName.size();j++){delete variableName[j];}}}
 
-/**
- * Simple string element with limited functionality. All string values in CXMLObjectInterface will have this type.
- */
-class CXMLString :public CT::string{
-};
+
 /**
  * Base objects
  */
@@ -52,7 +48,7 @@ class CXMLObjectInterface{
     CXMLObjectInterface();
     virtual ~CXMLObjectInterface(){}
     int level;
-    CXMLString value;
+    CT::string value;
     CXMLObjectInterface* pt2Class;
     virtual void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value);
     virtual void addAttribute(const char *name,const char *value){}

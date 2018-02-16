@@ -28,12 +28,15 @@
 DEF_ERRORMAIN();
 
 FILE * pLogDebugFile = NULL;
+bool useLogBuffer = false;
 
 int myPID = int(getpid());
 
 void writeLogFile(const char * msg){
   if(pLogDebugFile != NULL){
-    setvbuf(pLogDebugFile, NULL, _IONBF, 0);
+    if (useLogBuffer == false) {
+      setvbuf(pLogDebugFile, NULL, _IONBF, 0);
+    }
     fputs  (msg, pLogDebugFile );
     if(strncmp(msg,"[D:",3)==0||strncmp(msg,"[W:",3)==0||strncmp(msg,"[E:",3)==0){
       time_t myTime = time(NULL);
@@ -92,6 +95,10 @@ void serverWarningFunction(const char *msg){
 //   if(strncmp(msg,"[W: ",4)!=0){ //<-- do not enable: when something printed with printerror causes getmap to fail!!!
 //     printerror(msg);
 //   }
+}
+
+void serverLogFunctionCMDLine(const char *msg){
+  printf("%s", msg);
 }
 
 
@@ -162,7 +169,9 @@ int _main(int argc, const char *argv[]){
 
   // Initialize error functions
   seterrormode(EXCEPTIONS_PLAINTEXT);
-
+  setErrorFunction(serverLogFunctionCMDLine);
+  setWarningFunction(serverLogFunctionCMDLine);
+  setDebugFunction(serverLogFunctionCMDLine);
 
   //Check if a database update was requested
   if(argc>=2){
@@ -304,6 +313,7 @@ int _main(int argc, const char *argv[]){
 
 
 int main(int argc, const char *argv[]){
+  
   const char * ADAGUC_LOGFILE=getenv("ADAGUC_LOGFILE");
   if(ADAGUC_LOGFILE!=NULL){
     pLogDebugFile = fopen (ADAGUC_LOGFILE , "a" );
@@ -311,9 +321,20 @@ int main(int argc, const char *argv[]){
       fprintf(stderr,"Unable to write ADAGUC_LOGFILE %s\n",ADAGUC_LOGFILE);
     }
   }
+  const char * ADAGUC_ENABLELOGBUFFER=getenv("ADAGUC_ENABLELOGBUFFER");
+  if(ADAGUC_ENABLELOGBUFFER!=NULL){
+    CT::string check = ADAGUC_ENABLELOGBUFFER;
+    if(check.equalsIgnoreCase("true")){
+      useLogBuffer = true;
+    } 
+  }
   int status = _main(argc,argv);  
+  
+  CCachedDirReader::free();
+  
   if(pLogDebugFile!= NULL){
     fclose (pLogDebugFile);
   }
+  
   return status;
 }      

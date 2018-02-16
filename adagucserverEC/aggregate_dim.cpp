@@ -166,16 +166,16 @@ int main( int argc, const char* argv[]){
   /* Loop through all files and gather information */
   try{
     for(size_t j=0;j<dirReader.fileList.size();j++){
-      NCFileObject *fileObject=new NCFileObject(dirReader.fileList[j]->baseName.c_str());
+      NCFileObject *fileObject=new NCFileObject(CT::string(dirReader.fileList[j].c_str()).basename().c_str());
       fileObjects.push_back(fileObject);
-      fileObject->fullName = dirReader.fileList[j]->fullName.c_str();
-      fileObject->baseName = dirReader.fileList[j]->baseName.c_str();
+      fileObject->fullName = dirReader.fileList[j].c_str();
+      fileObject->baseName = CT::string(dirReader.fileList[j].c_str()).basename().c_str();
 
       status = fileObject->cdfObject->open(fileObject->fullName.c_str());
       
       if(status != 0){CDBError("Unable to read file %s",fileObject->fullName.c_str());throw(__LINE__);}
       
-      applyChangesToCDFObject(dirReader.fileList[j]->baseName.c_str(),fileObject->cdfObject,variablesToAddDimTo,dimNameToAggregate);
+      applyChangesToCDFObject(CT::string(dirReader.fileList[j].c_str()).basename().c_str(),fileObject->cdfObject,variablesToAddDimTo,dimNameToAggregate);
       
       CDF::Variable* aggregationDim = fileObject->cdfObject->getVariableNE(dimNameToAggregate);
       if(aggregationDim == NULL){

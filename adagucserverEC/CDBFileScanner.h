@@ -46,22 +46,29 @@
 class CDBFileScanner{
 private:
   DEF_ERRORFUNCTION();
-  static int createDBUpdateTables(CDataSource *dataSource,int &removeNonExistingFiles,CDirReader *dirReader, bool recreateTable);
-  static int DBLoopFiles(CDataSource *dataSource,int removeNonExistingFiles,CDirReader *dirReader ,int scanFlags);
+  static int createDBUpdateTables(CDataSource *dataSource,int &removeNonExistingFiles,std::vector <std::string> *fileList, bool recreateTable);
+  static int DBLoopFiles(CDataSource *dataSource,int removeNonExistingFiles,std::vector <std::string> *fileList ,int scanFlags);
   static std::vector <CT::string> tableNamesDone;
   
- ;
-public:
+  static void handleDirHasNewFile(std::string a){
+  }
+  
+  static std::vector <std::string> filesToDeleteFromDB;
+  static void handleFileFromDBIsMissing(std::string a){
+    CDBDebug("DirReader is missing %s", a.c_str());
+    filesToDeleteFromDB.push_back(a);
+  }
+ public:
   static bool isTableAlreadyScanned(CT::string *tableName);
   static void markTableDirty(CT::string *tableName);
   /**
    * Populates dirReader with files defined by the path, exp and tailPath parameters
-   * @param dirReader: An initialised dirReader should be provided, this dirReader will be filled with the found results.
    * @param path: This is usually the configured FilePath in the Layers configuration, can also be an OpenDAP URL
    * @param expr: The regular expression to reject/accept each individual file on. When NULL is provided, *.nc is used as default.
    * @param tailPath: The path under the root path to be scanned.
+   * @returns dirReader: An initialised dirReader or NULL on error
    */
-  static int searchFileNames(CDirReader *dirReader,const char * path,CT::string expr,const char *tailPath);
+  static std::vector<std::string> searchFileNames(const char * path,CT::string expr,const char *tailPath);
   
   /**
    * Updates the database for a specified dataSource

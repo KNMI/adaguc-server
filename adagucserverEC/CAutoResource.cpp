@@ -7,21 +7,31 @@ const char *CAutoResource::className = "CAutoResource";
 
 int CAutoResource::configure(CServerParams *srvParam,bool plain){
   int status;
-  //status = configureDataset(srvParam,plain);if(status!=0)return status; //<-- Done in CREQUEST BEFORE INCLUDES are parsed
+  //Dataset configuration is done in CREQUEST BEFORE INCLUDES are parsed
   status = configureAutoResource(srvParam,plain);if(status!=0)return status;
   return 0;
 };
   
 int CAutoResource::configureDataset(CServerParams *srvParam,bool plain){
+  
+  
+  if(srvParam == NULL || srvParam->cfg==NULL){
+    CDBDebug("configureDataset: srvParam->cfg == NULL");
+    return 1;
+  }
+  
   //Configure the server based an an available dataset
   if(srvParam->datasetLocation.empty()==false){
     //datasetLocation is usually an inspire dataset unique identifier
-
+    
     //Check if dataset extension is enabled           
     bool datasetEnabled = false;
-    if(srvParam->cfg->Dataset.size()==1){
-      if(srvParam->cfg->Dataset[0]->attr.enabled.equals("true")&&srvParam->cfg->Dataset[0]->attr.location.empty()==false){
-        datasetEnabled = true;
+    
+    for(size_t j=0;j<srvParam->cfg->Dataset.size();j++){
+      
+      if(srvParam->cfg->Dataset[j]->attr.enabled.equals("true")&&srvParam->cfg->Dataset[j]->attr.location.empty()==false){
+        
+        datasetEnabled = true;break;
       }
     }
     
@@ -40,30 +50,49 @@ int CAutoResource::configureDataset(CServerParams *srvParam,bool plain){
     internalDatasetLocation.replaceSelf(":","_");
     internalDatasetLocation.replaceSelf("/","_");
     
-    CT::string datasetConfigFile = srvParam->cfg->Dataset[0]->attr.location.c_str();
+    CT::string datasetConfigFile = "";
+    for(size_t j=0;j<srvParam->cfg->Dataset.size();j++){
+      
+      CT::string testDataSet= srvParam->cfg->Dataset[j]->attr.location.c_str();
+      
+      testDataSet.printconcat("/%s.xml",internalDatasetLocation.c_str());
+      
+      //Check whether this config file exists.
+      struct stat stFileInfo;
+      int intStat;
+      intStat = stat(testDataSet.c_str(),&stFileInfo);
+      CT::string cacheBuffer;
+      //The file exists, so remove it.
+      if(intStat != 0) {
+        CDBDebug("Dataset not found in [%s]",testDataSet.c_str());
+        continue;
+      } else {
+        datasetConfigFile = testDataSet;
+        break;
+      }
+    }
     
-    datasetConfigFile.printconcat("/%s.xml",internalDatasetLocation.c_str());
-    
-    CDBDebug("Found dataset %s",datasetConfigFile.c_str());
-    
-    //Check whether this config file exists.
-    struct stat stFileInfo;
-    int intStat;
-    intStat = stat(datasetConfigFile.c_str(),&stFileInfo);
-    CT::string cacheBuffer;
-    //The file exists, so remove it.
-    if(intStat != 0) {
-      CDBDebug("Dataset config file does not exist: %s ",datasetConfigFile.c_str());
+    if(datasetConfigFile.length() == 0) {
       CDBError("No such dataset");
       return 1;
     }
 
+    CDBDebug("Found dataset %s",datasetConfigFile.c_str());
+    
     //Add the dataset file to the current configuration      
     int status = srvParam->parseConfigFile(datasetConfigFile);
     if(status!=0){
-      CDBError("Invalid dataset configuration file. ");
+      CDBError("Invalid dataset configuration file.");
       return 1;
     }
+
+    // Set server title based on dataset
+    CT::string serverTitle = "";
+    if(serverTitle.empty() && srvParam->datasetLocation.empty() == false){
+      serverTitle = srvParam->datasetLocation.basename();
+    }
+    setServerTitle(srvParam, serverTitle);
+    
     
     //Adjust online resource in order to pass on dataset parameters
     CT::string onlineResource=srvParam->getOnlineResource();
@@ -94,6 +123,40 @@ int CAutoResource::configureDataset(CServerParams *srvParam,bool plain){
   }
   return 0;
 };
+
+int CAutoResource::setServerTitle(CServerParams* srvParam, CT::string serverTitle){
+  if(serverTitle.length()>0){
+    //Replace invalid XML tokens with valid ones
+    serverTitle.replaceSelf("@" ," at ");
+    serverTitle.replaceSelf("<" ,"[");
+    serverTitle.replaceSelf(">" ,"]");
+    serverTitle.replaceSelf("&" ,"&amp;");
+    if(srvParam->cfg->WMS.size()>0){
+      if(srvParam->cfg->WMS[0]->Title.size()>0){
+        //CT::string title="ADAGUC AUTO WMS ";
+        CT::string title="";
+        title.concat(serverTitle.c_str());
+        //title.replaceSelf(" ","_");
+        srvParam->cfg->WMS[0]->Title[0]->value.copy(title.c_str());
+      }
+      if(srvParam->cfg->WMS[0]->RootLayer.size()>0){
+        if(srvParam->cfg->WMS[0]->RootLayer[0]->Title.size()>0){
+          CT::string title="WMS of  ";
+          title.concat(serverTitle.c_str());
+          srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->value.copy(title.c_str());
+        }
+      }          
+    }
+    if(srvParam->cfg->WCS.size()>0){
+      if(srvParam->cfg->WCS[0]->Title.size()>0){
+        CT::string title="ADAGUC_AUTO_WCS_";
+        title.concat(serverTitle.c_str());
+        srvParam->cfg->WCS[0]->Title[0]->value.copy(title.c_str());
+      }
+    }
+  }
+  return 0;
+}
 
 int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
   // Configure the server automically based on an OpenDAP resource
@@ -224,41 +287,15 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
     #ifdef MEASURETIME
     StopWatch_Stop("File opened");
     #endif
-    
     CT::string serverTitle="";
     try{cdfObject->getAttribute("title")->getDataAsString(&serverTitle);}catch(int e){}
 
-      
-    if(serverTitle.length()>0){
-      //Replace invalid XML tokens with valid ones
-      serverTitle.replaceSelf("@" ," at ");
-      serverTitle.replaceSelf("<" ,"[");
-      serverTitle.replaceSelf(">" ,"]");
-      serverTitle.replaceSelf("&" ,"&amp;");
-      if(srvParam->cfg->WMS.size()>0){
-        if(srvParam->cfg->WMS[0]->Title.size()>0){
-          //CT::string title="ADAGUC AUTO WMS ";
-          CT::string title="";
-          title.concat(serverTitle.c_str());
-          //title.replaceSelf(" ","_");
-          srvParam->cfg->WMS[0]->Title[0]->value.copy(title.c_str());
-        }
-        if(srvParam->cfg->WMS[0]->RootLayer.size()>0){
-          if(srvParam->cfg->WMS[0]->RootLayer[0]->Title.size()>0){
-            CT::string title="WMS of  ";
-            title.concat(serverTitle.c_str());
-            srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->value.copy(title.c_str());
-          }
-        }          
-      }
-      if(srvParam->cfg->WCS.size()>0){
-        if(srvParam->cfg->WCS[0]->Title.size()>0){
-          CT::string title="ADAGUC_AUTO_WCS_";
-          title.concat(serverTitle.c_str());
-          srvParam->cfg->WCS[0]->Title[0]->value.copy(title.c_str());
-        }
-      }
+    // If no title is set in the global NetCDF attributes, use the source= value
+    if(serverTitle.empty() && srvParam->autoResourceLocation.empty() == false){
+      serverTitle = CT::string("AutoResource ") + srvParam->autoResourceLocation.basename();
     }
+  
+    setServerTitle(srvParam, serverTitle);
     
     CT::string serverSummary="";
     CT::string serverDescription="";
@@ -384,8 +421,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
           varindex_y = -1;
         }
       }
-    }
-    
+    }    
     
     
     //Adjust online resource in order to pass on variable and source parameters
@@ -445,6 +481,15 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *srvParam,CDFObject *cdfOb
           xmleLayer->RenderMethod.insert(xmleLayer->RenderMethod.begin(),xmleRenderMethod);
         }
       }
+      CDF::Attribute *adaguc_data_type = variable->getAttributeNE("adaguc_data_type");
+      if (adaguc_data_type != NULL){
+        if (adaguc_data_type->toString().equals("CConvertGeoJSON")){
+          CServerConfig::XMLE_RenderMethod* xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
+          xmleRenderMethod->value.copy("polyline");
+          xmleLayer->RenderMethod.insert(xmleLayer->RenderMethod.begin(),xmleRenderMethod);
+        }
+      }
+      
     }
   }
   

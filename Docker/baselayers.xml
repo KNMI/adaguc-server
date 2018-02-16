@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <Legend name="baselayer" type="interval">
+    <palette min="0" max="240" red="0"  green="0" blue="0"/>
+  </Legend>
+
+  <Style name="baselayer">
+    <Legend fixedclasses="true" tickinterval="1000" tickround="1">baselayer</Legend>
+    <Min>0.0</Min>
+    <Max>1000</Max>
+    <RenderMethod>nearest</RenderMethod>
+    <NameMapping name="nearest"   title="Land sea mask" abstract="Land sea mask"/>
+    <FeatureInterval match=".*" matchid="abbrev" bgcolor="#CCCCFF" fillcolor="#CCFFCC"/>
+  </Style>
+
+  <Style name="overlay">
+    <Legend fixedclasses="true" tickinterval="1000" tickround="1">baselayer</Legend>
+    <Min>0.0</Min>
+    <Max>1000</Max>
+    <RenderMethod>polyline</RenderMethod>
+    <NameMapping name="polyline"   title="Overlay countries" abstract="Overlay countries"/>
+    <FeatureInterval match=".*" matchid="abbrev" bordercolor="#000000" borderwidth="1" linecolor="#000000" linewidth="1"/>
+  </Style>
+
+  <Layer>
+      <Name>baselayer</Name>
+      <Title>baselayer</Title>
+      <FilePath>{ADAGUC_PATH}/data/datasets/countries.geojson</FilePath>
+      <Variable>features</Variable>
+      <Styles>baselayer</Styles>
+  </Layer>
+
+  <Layer>
+      <Name>overlay</Name>
+      <Title>overlay</Title>
+      <FilePath>{ADAGUC_PATH}/data/datasets/countries.geojson</FilePath>
+      <Variable>features</Variable>
+      <Styles>overlay</Styles>
+  </Layer>
+</Configuration>  

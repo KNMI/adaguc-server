@@ -140,7 +140,8 @@ void _printWarningStream(const char *pszMessage){
   fprintf(stderr,"%s",pszMessage);
 }
 void _printDebugStream(const char *pszMessage){
-  fprintf(stdout,"%s",pszMessage);
+  //fprintf(stdout,"%s",pszMessage);
+  printf("%s", pszMessage);
 }
 
 void _printDebugLine(const char *pszMessage,...){

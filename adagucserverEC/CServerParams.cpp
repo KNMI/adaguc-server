@@ -65,6 +65,7 @@ CServerParams::~CServerParams(){
   
 }
 
+
 void CServerParams::getCacheFileName(CT::string *cacheFileName){
   CT::string cacheName("WMSCACHE");
   bool useProvidedCacheFileName=false;
@@ -78,8 +79,14 @@ void CServerParams::getCacheFileName(CT::string *cacheFileName){
   }
   if(useProvidedCacheFileName==false){
     //If no cache filename is provided, we will create a standard one
-    //Based on the name of the configuration file
-    cacheName.concat(&configFileName);
+    
+    if(autoResourceLocation.empty()==false){
+       cacheName.concat(&configFileName);
+       cacheName.concat(&autoResourceLocation);
+    } else {
+      //Based on the name of the configuration file
+      cacheName.concat(&configFileName);
+    }
     for(size_t j=0;j<cacheName.length();j++){
       char c=cacheName.charAt(j);
       if(c=='/')c='_';
@@ -290,6 +297,9 @@ bool CServerParams::isAutoResourceCacheEnabled(){
 
 
 bool CServerParams::isAutoOpenDAPResourceEnabled(){
+  if (this->datasetLocation.empty() == false){
+    return false;
+  }
   if(autoOpenDAPEnabled==-1){
     autoOpenDAPEnabled = 0;
     if(cfg->AutoResource.size()>0){
@@ -301,6 +311,10 @@ bool CServerParams::isAutoOpenDAPResourceEnabled(){
 }
 
 bool CServerParams::isAutoLocalFileResourceEnabled(){
+  /* When a dataset is configured, autoscan should be disabled */
+  if (this->datasetLocation.empty() == false){
+    return false;
+  }
   if(autoLocalFileResourceEnabled==-1){
     autoLocalFileResourceEnabled = 0;
     if(cfg->AutoResource.size()>0){
@@ -408,7 +422,7 @@ CT::string CServerParams::getOnlineResource(){
     //No Online resource is given.
      const char *pszADAGUCOnlineResource=getenv("ADAGUC_ONLINERESOURCE");
     if(pszADAGUCOnlineResource==NULL){
-      CDBError("No OnlineResources configured. Unable to get from config OnlineResource or from environment ADAGUC_ONLINERESOURCE");
+      CDBDebug("Warning: No OnlineResources configured. Unable to get from config OnlineResource or from environment ADAGUC_ONLINERESOURCE");
       _onlineResource = "";
       return "";
     }

@@ -640,6 +640,7 @@
           polygonIndexVar->setType(CDF_USHORT);
           polygonIndexVar->name="features";
           polygonIndexVar->setAttributeText("long_name","Feature index");
+          polygonIndexVar->setAttributeText("adaguc_data_type","CConvertGeoJSON");
           
           unsigned short f=65535u;
           polygonIndexVar->setAttribute("_FillValue",CDF_USHORT,&f,1);
