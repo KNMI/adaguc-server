@@ -892,8 +892,8 @@ int CDBFileScanner::updatedb( CDataSource *dataSource,CT::string *_tailPath,CT::
       layerPath.copy(dataSource->cfgLayer->FilePath[0]->value.c_str());
       layerPathToScan.copy(_layerPathToScan);
       
-      CDirReader::makeCleanPath(&layerPath);
-      CDirReader::makeCleanPath(&layerPathToScan);
+      layerPath = CDirReader::makeCleanPath(layerPath.c_str());
+      layerPathToScan = CDirReader::makeCleanPath(layerPathToScan.c_str());
       
       //If this is another directory we will simply ignore it.
       if(layerPath.equals(&layerPathToScan)==false){
@@ -911,7 +911,7 @@ int CDBFileScanner::updatedb( CDataSource *dataSource,CT::string *_tailPath,CT::
   //Copy tailpath (can be provided to scan only certain subdirs)
   CT::string tailPath(_tailPath);
   
-  CDirReader::makeCleanPath(&tailPath);
+  tailPath = CDirReader::makeCleanPath(tailPath.c_str());
   
   //if tailpath is defined than removeNonExistingFiles must be zero
   if(tailPath.length()>0)removeNonExistingFiles=0;
@@ -1038,7 +1038,7 @@ std::vector<std::string> CDBFileScanner::searchFileNames(const char * path,CT::s
   }else{
     //Read directory
     
-    CDirReader::makeCleanPath(&filePath);
+    filePath = CDirReader::makeCleanPath(filePath.c_str());
     try{
       CT::string fileFilterExpr(".*\\.nc$");
       if(expr.empty()==false){//dataSource->cfgLayer->FilePath[0]->attr.filter.c_str()
@@ -1053,8 +1053,8 @@ std::vector<std::string> CDBFileScanner::searchFileNames(const char * path,CT::s
       
       //Delete all files that start with a "." from the filelist.
       for(size_t j=0;j<dirReader->fileList.size();j++){
-        if(dirReader->fileList[j]->baseName.c_str()[0]!='.'){
-          fileList.push_back(dirReader->fileList[j]->fullName.c_str());
+        if(CT::string(dirReader->fileList[j].c_str()).basename().c_str()[0]!='.'){
+          fileList.push_back(dirReader->fileList[j].c_str());
         }
       }
       #ifdef CDBFILESCANNER_DEBUG
@@ -1368,7 +1368,7 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
                 fileNameToWrite.printconcat("_%s",ds.requiredDims[i]->value.c_str());
               }
               fileNameToWrite.concat(".nc");
-              CDirReader::makeCleanPath(&fileNameToWrite);
+              fileNameToWrite = CDirReader::makeCleanPath(fileNameToWrite.c_str());
               #ifdef CDBFILESCANNER_DEBUG
               CDBDebug("Checking file %s in DB table %s",fileNameToWrite.c_str(),tableName.c_str());
             #endif

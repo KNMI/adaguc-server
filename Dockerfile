@@ -7,7 +7,6 @@ RUN yum update -y && yum clean all && yum groupinstall -y "Development tools"
 
 RUN yum update -y && yum install -y \
     cairo-devel \
-    cronie \
     curl-devel \
     gd-devel \
     gdal-devel \
@@ -30,20 +29,12 @@ RUN yum update -y && yum install -y \
 RUN mkdir /adaguc
 
 # Install adaguc-services (spring boot application for running adaguc-server)
-RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.0.1/adaguc-services-1.0.1.war > /usr/share/tomcat/webapps/adaguc-services.war
+RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.0.2/adaguc-services-1.0.2.war > /usr/share/tomcat/webapps/adaguc-services.war
 
 # Install adaguc-server from context
 COPY . /adaguc/adaguc-server-master
 WORKDIR /adaguc/adaguc-server-master
 RUN bash compile.sh
-
-# Install adaguc-server from github master
-# WORKDIR /adaguc
-# #RUN curl -L  https://github.com/KNMI/adaguc-server/archive/master.tar.gz > adaguc-server.tar.gz
-# ADD  https://github.com/KNMI/adaguc-server/archive/master.tar.gz /adaguc/adaguc-server.tar.gz
-# RUN tar xvf adaguc-server.tar.gz
-# WORKDIR /adaguc/adaguc-server-master
-# RUN bash compile.sh
 
 # Run adaguc-server functional tests
 RUN bash runtests.sh
@@ -84,10 +75,5 @@ VOLUME /var/log/adaguc/
 VOLUME /adaguc/adagucdb       
 
 EXPOSE 8080
-
-# This needs to be moved out of the way in the future
-#RUN systemctl enable crond 
-#COPY ./Docker/CRONTAB /adaguc/CRONTAB
-#RUN crontab CRONTAB
 
 ENTRYPOINT /adaguc/start.sh
