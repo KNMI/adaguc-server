@@ -48,7 +48,7 @@ void CConvertADAGUCPoint::lineInterpolated(float *grid , int W,int H, int startX
   if(abs(dY)>5000)return;
   float rc = 0;
   int numPoints = 0;
-  if((!startVal == startVal) || !(stopVal==stopVal)){
+  if(!(startVal == startVal) || !(stopVal==stopVal)){
     startVal = 100;
     stopVal =100;
   }

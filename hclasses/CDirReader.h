@@ -28,14 +28,6 @@
 
 #include "CTypes.h"
 #include "CDebugger.h"
-
-class CFileObject{
-  public:
-    CT::string fullName;
-    CT::string baseName;
-    int isDir;
-};
-
 #include <string>
 #include <map>
 static std::map <std::string ,std::string> lookupTableFileModificationDateMap;
@@ -43,20 +35,23 @@ static std::map <std::string ,std::string> lookupTableFileModificationDateMap;
 class CDirReader{
   private: 
     int _ReadDir(const char* directory,const char *ext_filter,int recursive);
-    int _listDir (const char* directory,const char *ext_filter);
+    //int _listDir (const char* directory,const char *ext_filter);
     int _listDirRecursive (const char* directory,const char *ext_filter);
     CT::string currentDir;
     DEF_ERRORFUNCTION();
   public:
-    std::vector <CFileObject*> fileList;
+    std::vector <std::string> fileList;
     CDirReader();
     ~CDirReader();
     int listDirRecursive (const char* directory,const char *ext_filter);
-    static void makeCleanPath(CT::string *path);
+    static CT::string makeCleanPath(const char *_path);
     static int getFileDate(CT::string *date,const char *file);
     static int testRegEx(const char *string,const char *pattern);
     
     static CT::string getFileDate(const char *fileName);
+    
+    static bool isDir(const char *fileName);
+    
 
     /**
      * Create a public directory writable for everybody 

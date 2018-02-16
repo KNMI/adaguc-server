@@ -45,9 +45,6 @@ CDirReader::CDirReader(){
 }
 
 CDirReader::~CDirReader(){
-  for(size_t j=0;j<fileList.size();j++){
-    delete fileList[j];
-  }
   fileList.clear();
 }
 
@@ -84,11 +81,7 @@ int CDirReader::_listDirRecursive(const char* directory,const char *ext_filter){
     }
     //Check filter
     if(testRegEx(directory,ext_filter)==1){
-      CFileObject * fileObject = new CFileObject();
-      fileList.push_back(fileObject);
-      fileObject->fullName.copy(directory);
-      makeCleanPath(&fileObject->fullName);
-      fileObject->baseName.copy(&fileObject->fullName);
+      fileList.push_back(makeCleanPath(directory).c_str());
     }else{
       //CDBError("Regexp failed.");
       return 3;
@@ -99,7 +92,6 @@ int CDirReader::_listDirRecursive(const char* directory,const char *ext_filter){
 int CDirReader::_ReadDir(const char* directory,const char *ext_filter,int recursive){ 
   //printf("Entering %s\n",directory);
   DIR *dp;
-  DIR *cdp;
   struct dirent *ep;
   //int ext_len=strlen(ext_filter);
   int filename_len;
@@ -112,31 +104,27 @@ int CDirReader::_ReadDir(const char* directory,const char *ext_filter,int recurs
     ep = readdir (dp);
     while (ep){
         filename_len=strlen(ep->d_name);
-        //int name_offset=filename_len-ext_len;
-        //if(name_offset<0)name_offset=0;
-        //ext_cmp=&ep->d_name[name_offset];
-        if(testRegEx(ep->d_name,ext_filter)==1){
-          CFileObject * fileObject = new CFileObject();
-          fileList.push_back(fileObject);
-          fileObject->fullName.copy(directory,dir_len);
-          fileObject->fullName.concat("/",1);
-          fileObject->fullName.concat(ep->d_name,filename_len);
-          makeCleanPath(&fileObject->fullName);
-          fileObject->baseName.copy(ep->d_name,filename_len);
-          cdp=opendir(fileObject->fullName.c_str());
-          if(cdp)fileObject->isDir=1;else fileObject->isDir=0;
-          (void) closedir (cdp);
-        }
-        if(recursive==1){
-          if(ep->d_name[0]!='.')
-          {
-            CT::string dirpath;
-            dirpath.copy(directory,dir_len);
-            dirpath.concat("/",1);
-            dirpath.concat(ep->d_name,filename_len);
-            cdp=opendir(dirpath.c_str());
-            if(cdp)_ReadDir(dirpath.c_str(),ext_filter,recursive);
-            (void) closedir (cdp);
+        CT::string dirpath;
+        dirpath.copy(directory,dir_len);
+        dirpath.concat("/",1);
+        dirpath.concat(ep->d_name,filename_len);
+        bool isdir = isDir(dirpath.c_str());
+        // CDBDebug("%s %d", dirpath.c_str(), isdir);
+        if(isdir == false) {
+          if(testRegEx(ep->d_name,ext_filter)==1){
+          
+            /* This is a file */
+            CT::string fullName;
+            filename_len=strlen(ep->d_name);
+            fullName.copy(directory,dir_len);
+            fullName.concat("/",1);
+            fullName.concat(ep->d_name,filename_len);
+            fullName = makeCleanPath(fullName.c_str());
+            fileList.push_back(fullName.c_str());
+          }
+        } else if(recursive==1){
+          if(ep->d_name[0]!='.') {
+            _ReadDir(dirpath.c_str(),ext_filter,recursive);
           }
         }
       ep = readdir (dp);
@@ -144,72 +132,68 @@ int CDirReader::_ReadDir(const char* directory,const char *ext_filter,int recurs
     (void) closedir (dp);
   }
   else {
-    //char szTemp[MAX_STR_LEN+1];
-    //snprintf(szTemp,MAX_STR_LEN,"Could not open the directory %s",directory);
+    /* Could not open the directory */
     throw 1;
-    return 1;
   }
   return 0;
 }
-int CDirReader::_listDir (const char* directory,const char *ext_filter){
-  DIR *dp;
-  DIR *cdp;
-  struct dirent *ep;
-  //int ext_len=strlen(ext_filter);
-  int filename_len;
-  int dir_len=strlen(directory);
-  
-  //char * ext_cmp;
-  dp = opendir (directory);
-  if (dp != NULL)
-  {
-    ep = readdir (dp);
-    while (ep){
-        filename_len=strlen(ep->d_name);
-        //int name_offset=filename_len-ext_len;
-        //if(name_offset<0)name_offset=0;
-        //ext_cmp=&ep->d_name[name_offset];
-        if(testRegEx(ep->d_name,ext_filter)==1){
-          CFileObject * fileObject = new CFileObject();
-          fileList.push_back(fileObject);
-          filename_len=strlen(ep->d_name);
-          fileObject->fullName.copy(directory,dir_len);
-          fileObject->fullName.concat("/",1);
-          fileObject->fullName.concat(ep->d_name,filename_len);
-          makeCleanPath(&fileObject->fullName);
-          fileObject->baseName.copy(ep->d_name,filename_len);
-          cdp=opendir(fileObject->fullName.c_str());
-          if(cdp)fileObject->isDir=1;else fileObject->isDir=0;
-          (void) closedir (cdp);
-        }
-      ep = readdir (dp);
-    }
-    (void) closedir (dp);
-  }
-  else {CDBError ("Could not open the directory %s",directory);return 1;}
-  return 0;
-}
+// int CDirReader::_listDir (const char* directory,const char *ext_filter){
+//   DIR *dp;
+//   struct dirent *ep;
+//   int filename_len;
+//   int dir_len=strlen(directory);
+//   dp = opendir (directory);
+//   if (dp != NULL)
+//   {
+//     ep = readdir (dp);
+//     while (ep){
+//         filename_len=strlen(ep->d_name);
+//         if(testRegEx(ep->d_name,ext_filter)==1){
+//           CT::string fullName;
+//           filename_len=strlen(ep->d_name);
+//           fullName.copy(directory,dir_len);
+//           fullName.concat("/",1);
+//           fullName.concat(ep->d_name,filename_len);
+//           fullName = makeCleanPath(fullName.c_str());
+//           fileList.push_back(fullName.c_str());
+//         }
+//       ep = readdir (dp);
+//     }
+//     (void) closedir (dp);
+//   }
+//   else {CDBError ("Could not open the directory %s",directory);return 1;}
+//   return 0;
+// }
 
 //Removes the double //'s from the string and makes sure that the string does not end with a /
-void CDirReader::makeCleanPath(CT::string *path){
-  if(path==NULL)return;
-  if(path->length()==0)return;
-  CT::StackList<CT::string>parts =path->splitToStack("/");
-  if(path->c_str()[0]=='/'){
-    path->copy("/");
-  }else path->copy("");
+CT::string CDirReader::makeCleanPath(const char *_path){
+  CT::string path;
+  if(_path==NULL)return path;
+  path = _path;
+  if(path.length()==0)return path;
+  CT::StackList<CT::string>parts =path.splitToStack("/");
+  if(path.c_str()[0]=='/'){
+    path.copy("/");
+  }else path.copy("");
   for(size_t j=0;j<parts.size();j++){
     if(parts[j].length()>0){
-      path->concat(&(parts[j]));
+      path.concat(&(parts[j]));
       if(j+1<parts.size()){
-        path->concat("/");
+        path.concat("/");
       }
     }
   }
-
+  return path;
 }
 
-
+bool CDirReader::isDir(const char * directory){
+  struct stat64 fileattr;
+  if(stat64(directory,&fileattr)==-1){
+    //CDBError("Unable to stat %s",directory);
+    return false;
+  }
+  return S_ISDIR(fileattr.st_mode);
+}
 int CDirReader::testRegEx(const char *string,const char *pattern){
   //printf("Testing '%s' == '%s': ",string,pattern);
   int    status; 
@@ -363,3 +347,5 @@ void CCachedDirReader::free(){
 }
   
 const char *CCachedDirReader::className="CCachedDirReader";
+
+

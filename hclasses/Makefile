@@ -7,7 +7,7 @@ endif
 
 CCOMPILER=g++ $(BUILDER_ADAGUCCOMPILERSETTINGS) -I $(INCLUDEDIR)
 
-OBJECTS =  CTypes.o CTString.o CXMLParser.o CDebugger.o CDirReader.o CStopWatch.o CHTTPTools.o test.o
+OBJECTS =  CTypes.o CTString.o CXMLParser.o CDebugger.o CDirReader.o CStopWatch.o CHTTPTools.o CReadFile.o test.o
 
 EXECUTABLE= hclasses
 
@@ -31,7 +31,7 @@ clean:
 	rm -f $(OBJECTS) $(EXECUTABLE).a test
 
 	
-test: $(OBJECTS) 
+test: $(OBJECTS) $(EXECUTABLE)
 	g++ $(OBJECTS) -o  test  $(LDFLAGS)  -lxml2 
 	./test
 

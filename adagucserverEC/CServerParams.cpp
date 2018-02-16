@@ -297,6 +297,9 @@ bool CServerParams::isAutoResourceCacheEnabled(){
 
 
 bool CServerParams::isAutoOpenDAPResourceEnabled(){
+  if (this->datasetLocation.empty() == false){
+    return false;
+  }
   if(autoOpenDAPEnabled==-1){
     autoOpenDAPEnabled = 0;
     if(cfg->AutoResource.size()>0){
