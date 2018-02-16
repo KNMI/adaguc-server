@@ -138,7 +138,7 @@ Prebuilt images are available at https://hub.docker.com/ through openearth:
                      
 To get an instance online with docker compose: 
 ```
-cd ./adaguc-server/Docker
+cd ./adaguc-server
 docker pull openearth/adaguc-viewer
 docker pull openearth/adaguc-server
 
@@ -148,7 +148,7 @@ mkdir -p $HOME/adaguc-server-docker/adaguc-autowms
 mkdir -p $HOME/adaguc-server-docker/adagucdb && chmod 777 $HOME/adaguc-server-docker/adagucdb
 mkdir -p $HOME/adaguc-server-docker/adaguc-logs && chmod 777 $HOME/adaguc-server-docker/adaguc-logs
 
-docker-compose up 
+docker-compose -f ./Docker/docker-compose.yml up 
 ```
 The following services are now available:
 * viewer at http://localhost:8091/adaguc-viewer/ 
