@@ -1012,7 +1012,7 @@ std::vector<std::string> CDBFileScanner::searchFileNames(const char * path,CT::s
     CDBError("No path defined");
     throw (__LINE__);
   }
-  CT::string filePath=path;//dataSource->cfgLayer->FilePath[0]->value.c_str();
+  CT::string filePath=path;
   
   if(tailPath!=NULL){
     if(tailPath[0]=='/'){

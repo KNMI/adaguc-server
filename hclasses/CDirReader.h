@@ -63,6 +63,7 @@ class CDirReader{
     static void compareLists(std::vector <std::string> a, std::vector <std::string> b, void (*handleMissing)(std::string), void (*handleNew)(std::string));
     
     static void test_compareLists();
+    static int test_makeCleanPath();
 };
 
 class CCachedDirReader{
