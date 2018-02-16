@@ -35,6 +35,7 @@ namespace CT{
     
   class string:public basetype{
   private:
+    char stackValue[CTSTRINGSTACKLENGTH+1];
     int allocated;
     size_t privatelength; // Length of string
     size_t bufferlength;  // Length of buffer
@@ -43,7 +44,7 @@ namespace CT{
     const char* strrstr(const char *x, const char *y);
     char _tohex(char in);
     char _fromhex(char in);
-    char stackValue[CTSTRINGSTACKLENGTH+1];
+    
     bool useStack;
     char *heapValue;
     inline void init(){useStack=CTYPES_USESTACK;heapValue=NULL;stackValue[0]=0;count=0;allocated=0;privatelength=0;bufferlength=CTSTRINGSTACKLENGTH;}
@@ -113,6 +114,23 @@ namespace CT{
     string& operator+ (const char*const &f);
     
     /**
+     * Compare operator
+     * @param f The input string
+     */
+     bool operator < (const string& str) const {
+       return strcmp(this->c_str(),str.c_str()) < 0;
+     }
+     bool operator > (const string& str) const {
+       return strcmp(this->c_str(),str.c_str()) > 0;
+     }
+     bool operator == (const string& str) const {
+       return this->equals(str);
+     }
+     bool operator != (const string& str) const {
+       return !this->equals(str);
+     }
+    
+    /**
     * Copy constructor which initialize the string with a character array
     * @param _value The character array to copy
     * @param _length the length of the character array
@@ -160,6 +178,12 @@ namespace CT{
     * @param _string Pointer to the string to copy
     */
     void copy(const CT::string*_string);
+    
+    /**
+    * Copy a string pointer into the array
+    * @param _string Pointer to the string to copy
+    */
+    void copy(const CT::string _string);
 
     /**
     * Copy a character array into the string
@@ -210,25 +234,25 @@ namespace CT{
     * @param value The character array to compare
     * @param length The length of the character array to compare
     */
-    bool equals(const char *value,size_t length);
+    bool equals(const char *value,size_t length) const;
     
     /**
     * Compares this string to the specified object. The result is true if the given argument is not null and representing the same sequence of characters as this object.
     * @param value  The 0-terminated character array to compare
     */
-    bool equals(const char *value);
+    bool equals(const char *value) const;
     
     /**
     * Compares this string to the specified object. The result is true if the given argument is not null and representing the same sequence of characters as this object.
     * @param string*  Pointer to the string object to compare
     */
-    bool equals(CT::string* string);
+    bool equals(CT::string* string) const;
 
     /**
     * Compares this string to the specified object. The result is true if the given argument is not null and representing the same sequence of characters as this object.
     * @param string Copy of the string object to compare
     */
-    bool equals(CT::string string);
+    bool equals(CT::string string) const;
 
     bool equalsIgnoreCase(const char *_value,size_t _length);
     
@@ -379,7 +403,7 @@ namespace CT{
     * Get a character array with the string data
     * @return the character array
     */
-    const char * c_str();
+    const char * c_str() const;
     
     /** Replace all strings with another string
     * @param substr the character array to replace
@@ -476,6 +500,12 @@ namespace CT{
     * Test whether string is empty or not
     */
     bool empty();
+    
+    /**
+     * Returns posix basename of path
+     */
+    CT::string basename();
+    
   };
 };
 

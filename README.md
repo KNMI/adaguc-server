@@ -1,62 +1,113 @@
 # ADAGUC / adaguc-server
 ADAGUC is a geographical information system to visualize netCDF files via the web. The software consists of a server side C++ application and a client side JavaScript application. The software provides several features to access and visualize data over the web, it uses OGC standards for data dissemination.
 
-See http://dev.knmi.nl/projects/adagucserver/wiki for details
+See https://dev.knmi.nl/projects/adagucserver/wiki for details
 
-# Docker for server:
+# Docker for adaguc-server:
 ```
-docker pull openearth/adaguc-server
-mkdir -p $HOME/data/adaguc-autowms
-mkdir -p $HOME/data/adaguc-datasets
-docker run -e EXTERNALADDRESS="http://127.0.0.1:8080/" -p 8080:8080 -v $HOME/data:/data -it adaguc-server 
+docker pull openearth/adaguc-server # Or build latest docker from this repo yourself with "docker build -t adaguc-server ."
 
-```
+mkdir -p $HOME/adaguc-server-docker/adaguc-data
+mkdir -p $HOME/adaguc-server-docker/adaguc-datasets
+mkdir -p $HOME/adaguc-server-docker/adaguc-autowms
+mkdir -p $HOME/adaguc-server-docker/adagucdb && chmod 777 $HOME/adaguc-server-docker/adagucdb
+mkdir -p $HOME/adaguc-server-docker/adaguc-logs && chmod 777 $HOME/adaguc-server-docker/adaguc-logs
 
-# Docker compose with server and viewer:
+docker run \
+  -e EXTERNALADDRESS="http://127.0.0.1:8090/" \
+  -p 8090:8080 \
+  -v $HOME/adaguc-server-docker/adaguc-data:/data/adaguc-data \
+  -v $HOME/adaguc-server-docker/adaguc-datasets:/data/adaguc-datasets \
+  -v $HOME/adaguc-server-docker/adaguc-autowms:/data/adaguc-autowms \
+  -v $HOME/adaguc-server-docker/adagucdb:/adaguc/adagucdb \
+  -v $HOME/adaguc-server-docker/adaguc-logs:/var/log/adaguc \
+  -it adaguc-server 
 
-The compose file is located here: [Docker/docker-compose.yml](Docker/docker-compose.yml)
-
-Prebuilt images are available at https://hub.docker.com/ through openearth:
-* https://hub.docker.com/r/openearth/adaguc-viewer/
-* https://hub.docker.com/r/openearth/adaguc-server/
-
-                     
-To get a instance online with docker compose: 
-```
-cd ./adaguc-server/Docker
-docker pull openearth/adaguc-viewer
-docker pull openearth/adaguc-server
-docker-compose up 
-```
-In working directory go to:
-* viewer at http://localhost:8091/adaguc-viewer/ 
-* server http://localhost:8090/adaguc-services/adagucserver? 
-
-To stop:
-```
-docker-compose down
 ```
 
-The following directories will be created if they do not exist:
-* $HOME/data/adaguc-datasets 
-* $HOME/data/adaguc-autowms 
+# Visualize a NetCDF file via autowms
 
-# Use your own data
-Copy your data files to $HOME/data/adaguc-autowms. Files are are accessible by linking them via the source= key value pair. Filenames must be URLEncoded. Supported files are NetCDF, HDF5 and GeoJSON.
-The example file 'testdata.nc' is accessible via http://localhost:8090/adaguc-services/adagucserver?source=testdata.nc&service=WMS&request=GetCapabilities
+```
+# Put a NetCDF testfile into your autowms folder
+curl -kL https://github.com/KNMI/adaguc-server/raw/master/data/datasets/testdata.nc > $HOME/adaguc-server-docker/adaguc-autowms/testdata.nc
+```
+AutoWMS files are referenced via the source= key value pair in the URL. Filenames must be URLEncoded. Supported files are NetCDF, HDF5 and GeoJSON.
+This file is now accessible via http://localhost:8090/adaguc-services/adagucserver?source=testdata.nc
 
-Files can be visualized in the adaguc-viewer via:
-* Go to http://localhost:8091/adaguc-viewer/
-* Add service http://localhost:8090/adaguc-services/adagucserver?source=testdata.nc via "Add data"
-* A direct link is: http://localhost:8091/adaguc-viewer/?service=http%3A%2F%2Flocalhost%3A8090%2Fadaguc-services%2Fadagucserver%3Fsource%3Dtestdata.nc
+You can visualize this link in the adaguc-viewer via "Add data", for example in http://geoservices.knmi.nl/viewer2.0/
 
-Testdata can be found here: http://opendap.knmi.nl/knmi/thredds/catalog/ADAGUC/catalog.html. 
+Other testdata can be found here: http://opendap.knmi.nl/knmi/thredds/catalog/ADAGUC/catalog.html. 
 
-# Custom datasets
-It is also possible to configure new datasets with custom styling and create aggregations over many files. Check https://dev.knmi.nl/projects/adagucserver/wiki/ for more information
+# Test your own dataset configuration for styling, aggregations, etc ...
 
-* Copy your XML configurations to $HOME/data/adaguc-datasets
-* Datasets are accessible via http://localhost:8080/adaguc-services/wms?service=wms&request=getcapabilities&dataset=dataset_a
+Get a dataset configurationfile:
+```
+curl -kL https://raw.githubusercontent.com/KNMI/adaguc-server/master/data/config/datasets/dataset_a.xml > $HOME/adaguc-server-docker/adaguc-datasets/dataset_a.xml
+```
+Now update the db:
+```
+dockercontainerid=`docker ps -f ancestor=adaguc-server -q` && docker exec -i -t ${dockercontainerid} /adaguc/adaguc-server-updatedatasets.sh dataset_a
+```
+Dataset configurations are referenced via the dataset= key value pair in the URL.
+This dataset is now accessible via 
+http://localhost:8090/adaguc-services/adagucserver?service=wms&request=getcapabilities&dataset=dataset_a&
+
+# Aggregation of hi-res satellite imagery
+
+Download a sequence of satellite data:
+```
+cd $HOME/adaguc-server-docker/adaguc-data/
+wget -nc -r -l2 -A.h5   -I /knmi/thredds/fileServer/,/knmi/thredds/catalog/ 'http://opendap.knmi.nl/knmi/thredds/catalog/ADAGUC/testsets/projectedgrids/meteosat/catalog.html'
+ls opendap.knmi.nl/knmi/thredds/fileServer/ADAGUC/testsets/projectedgrids/meteosat/
+```
+
+Put a dataset configuration file named sat.xml inside $HOME/adaguc-server-docker/adaguc-datasets/ :
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <!-- Custom styles -->
+  <Legend name="gray" type="colorRange">
+    <palette index="0"   red="0"   green="0"   blue="0" alpha="0"/>
+    <palette index="240" red="255" green="255"   blue="255"/>
+  </Legend>
+  <Style name="hrvis_0till30000">
+    <Legend fixed="true">gray</Legend>
+    <Min>0</Min>
+    <Max>30000</Max>
+    <RenderMethod>nearest</RenderMethod>
+    <RenderSettings renderer="gd"/>
+    <NameMapping name="nearest"        title="Albedo 0-30000" abstract="Albedo values from satellite imagery"/>
+  </Style>
+  <Style name="hrvis_0till30000_transparent">
+    <Legend fixed="true">gray</Legend>
+    <Min>0</Min>
+    <Max>30000</Max>
+    <RenderMethod>nearest</RenderMethod>
+    <RenderSettings renderer="cairo"/>
+    <NameMapping name="nearest"        title="Albedo 0-30000 transparent" abstract="Albedo values from satellite imagery with the lower values made transparent"/>
+  </Style>
+  <!-- Layers -->
+  <Layer type="database">
+    <Projection proj4="+proj=geos +lon_0=0.000000 +lat_0=0 +h=35807.414063 +a=6378.169000 +b=6356.583984"/>
+    <Name>HRVIS</Name>
+    <Title>HRVIS</Title>
+    <Variable>image1.image_data</Variable>
+    <FilePath
+      filter="^METEOSAT_(8|9|10|11).*EUROPEHVIS.*\.h5">/data/adaguc-data/opendap.knmi.nl/knmi/thredds/fileServer/ADAGUC/testsets/projectedgrids/meteosat/</FilePath>
+    <DataReader>HDF5</DataReader>
+    <Dimension name="time" interval="PT15M">time</Dimension>
+    <Styles>hrvis_0till30000,hrvis_0till30000_transparent</Styles>
+  </Layer>
+</Configuration>
+```
+Now update the db wit the sat dataset:
+```
+dockercontainerid=`docker ps -f ancestor=adaguc-server -q` && docker exec -i -t ${dockercontainerid} /adaguc/adaguc-server-updatedatasets.sh sat
+```
+The following URL can be used in the viewer:
+http://localhost:8090/adaguc-services/adagucserver?service=wms&request=getcapabilities&dataset=sat&
+
+You can use this URL for example in http://geoservices.knmi.nl/viewer2.0/
 
 # Opendap services can be visualized
 
@@ -76,8 +127,41 @@ http://localhost:8090/adaguc-services/adagucserver?source=http%3A%2F%2Fopendap.k
 
 This WMS URL can be visualized in the viewer by using "Add data". (http://localhost:8091/adaguc-viewer/ if you use the compose)
 
-# Allowing other hosts in the viewer
+# Docker compose with server and viewer:
 
-In the docker container for adaguc-viewer, at location /var/www/html/adaguc-viewer/config.php there is a list with all allowed hostnames. Add your own hostname if you want to allow data visualization from your own host. See https://dev.knmi.nl/projects/adagucviewer/wiki/Configuration for details.
+The compose file is located here: [Docker/docker-compose.yml](Docker/docker-compose.yml)
 
-The default file is located here: https://github.com/KNMI/adaguc-viewer/blob/master/Docker/config.php
+Prebuilt images are available at https://hub.docker.com/ through openearth:
+* https://hub.docker.com/r/openearth/adaguc-viewer/
+* https://hub.docker.com/r/openearth/adaguc-server/
+
+                     
+To get an instance online with docker compose: 
+```
+cd ./adaguc-server
+docker pull openearth/adaguc-viewer
+docker pull openearth/adaguc-server
+
+mkdir -p $HOME/adaguc-server-docker/adaguc-data
+mkdir -p $HOME/adaguc-server-docker/adaguc-datasets
+mkdir -p $HOME/adaguc-server-docker/adaguc-autowms
+mkdir -p $HOME/adaguc-server-docker/adagucdb && chmod 777 $HOME/adaguc-server-docker/adagucdb
+mkdir -p $HOME/adaguc-server-docker/adaguc-logs && chmod 777 $HOME/adaguc-server-docker/adaguc-logs
+
+docker-compose -f ./Docker/docker-compose.yml up 
+```
+The following services are now available:
+* viewer at http://localhost:8091/adaguc-viewer/ 
+* server http://localhost:8090/adaguc-services/adagucserver? 
+
+To stop:
+```
+# Press CTRL+C
+docker-compose down
+```
+
+Use the following command to scan datasets:
+```
+ docker exec -i -t adaguc-server /adaguc/adaguc-server-updatedatasets.sh <your dataset name>
+```
+

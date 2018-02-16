@@ -65,7 +65,7 @@ USERLIBS= -lhdf5 -lhdf5_hl -lnetcdf -lxml2 -lgd -lproj  -ludunits2 -lfreetype -l
 LIBS = $(USERLIBS) $(LDFLAGS) -L$(INSTALLDIR2)/lib -L/usr/lib/x86_64-linux-gnu/hdf5/serial/
 #-L/usr/lib64
 
-OBJECTS = CReadPNG.o CCDFPNGIO.o CDataReader.o COGCDims.o CImageWarper.o CGeoParams.o CCairoPlotter.o CDrawImage.o CServerError.o CRequest.o  CXMLGen.o CServerParams.o CGDALDataWriter.o CImageDataWriter.o CXMLSerializerInterface.o CDataSource.o CImgWarpBilinear.o CImgWarpBoolean.o CImgWarpNearestNeighbour.o CGenericDataWarper.o CImgWarpNearestRGBA.o CPGSQLDB.o CDBFileScanner.o CDFObjectStore.o CFillTriangle.o CConvertASCAT.o CConvertUGRIDMesh.o CConvertADAGUCVector.o CConvertEProfile.o CConvertADAGUCPoint.o CImgRenderPoints.o CConvertCurvilinear.o CConvertHexagon.o CInspire.o CGetFileInfo.o CStyleConfiguration.o CMakeJSONTimeSeries.o COpenDAPHandler.o CDataPostProcessor.o CDBFactory.o CDBAdapterPostgreSQL.o CAutoResource.o CDBAdapterSQLLite.o CDBAdapterMongoDB.o COctTreeColorQuantizer.o CCreateLegend.o CCreateHistogram.o CNetCDFDataWriter.o CAutoConfigure.o CMakeEProfile.o CImgRenderStippling.o CConvertGeoJSON.o  CGeoJSONData.o json.o CCreateScaleBar.o CConvertTROPOMI.o CImgRenderPolylines.o 
+OBJECTS = CReadPNG.o CCDFPNGIO.o CDataReader.o COGCDims.o CImageWarper.o CGeoParams.o CCairoPlotter.o CDrawImage.o CServerError.o CRequest.o  CXMLGen.o CServerParams.o CGDALDataWriter.o CImageDataWriter.o CXMLSerializerInterface.o CDataSource.o CImgWarpBilinear.o CImgWarpBoolean.o CImgWarpNearestNeighbour.o CGenericDataWarper.o CImgWarpNearestRGBA.o CPGSQLDB.o CDBFileScanner.o CDFObjectStore.o CFillTriangle.o CConvertASCAT.o CConvertUGRIDMesh.o CConvertADAGUCVector.o CConvertEProfile.o CConvertADAGUCPoint.o CImgRenderPoints.o CConvertCurvilinear.o CConvertHexagon.o CInspire.o CGetFileInfo.o CStyleConfiguration.o CMakeJSONTimeSeries.o COpenDAPHandler.o CDataPostProcessor.o CDBFactory.o CDBAdapterPostgreSQL.o CAutoResource.o CDBAdapterSQLLite.o CDBAdapterMongoDB.o COctTreeColorQuantizer.o CCreateLegend.o CCreateHistogram.o CNetCDFDataWriter.o CAutoConfigure.o CMakeEProfile.o CImgRenderStippling.o CConvertGeoJSON.o  CGeoJSONData.o json.o CCreateScaleBar.o CConvertTROPOMI.o CImgRenderPolylines.o CAreaMapper.o
 
 EXECUTABLE= adagucserver
 
@@ -73,9 +73,9 @@ default: $(EXECUTABLE)
 $(EXECUTABLE): $(OBJECTS) $(EXECUTABLE).o h5ncdump.o aggregate_time.o aggregate_dim.o geojsondump.o 
 	g++ $(EXECUTABLE).o $(OBJECTS) $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  $(EXECUTABLE) $(LIBS)
 	g++ "h5ncdump.o" $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  "h5ncdump" $(LIBS)
-	g++ "aggregate_time.o" $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  "aggregate_time" $(LIBS)
-	g++ "aggregate_dim.o" $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  "aggregate_dim" $(LIBS)
-	g++ "geojsondump.o"  $(OBJECTS) $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  "geojsondump" $(LIBS)
+	g++ "aggregate_time.o" $(CCDFDATAMODELOBJ)  $(HELPOBJECTS) -o  "aggregate_time" $(LIBS)
+	g++ "aggregate_dim.o"  $(CCDFDATAMODELOBJ) $(HELPOBJECTS) -o  "aggregate_dim" $(LIBS)
+	g++ "geojsondump.o"  $(OBJECTS) $(CCDFDATAMODELOBJ) $(HELPOBJECTS)  -o  "geojsondump" $(LIBS)
 	
 	
 geojsondump: geojsondump.o 

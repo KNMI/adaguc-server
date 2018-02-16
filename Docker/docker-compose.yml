@@ -15,27 +15,27 @@ services:
         ports:
             - "8090:8080"
         volumes:
-            - $HOME/data/adaguc-datasets:/data/adaguc-datasets
-            - $HOME/data/adaguc-autowms:/data/adaguc-autowms
+            - $HOME/adaguc-server-docker/adaguc-datasets:/data/adaguc-datasets
+            - $HOME/adaguc-server-docker/adaguc-autowms:/data/adaguc-autowms
+            - $HOME/adaguc-server-docker/adaguc-data:/data/adaguc-data
+            - $HOME/adaguc-server-docker/adagucdb:/adaguc/adagucdb
+            - $HOME/adaguc-server-docker/adaguc-logs:/var/log/adaguc
         environment:
             - "EXTERNALADDRESS=http://localhost:8090/"
-# cd ./adaguc-server/Docker
-# To get a instance online:
-#
-# docker pull openearth/adaguc-viewer
-# docker pull openearth/adaguc-server
-# docker-compose up # In working directory and go to http://localhost:8091/adaguc-viewer/ or http://localhost:8090/adaguc-services/wms.cgi? 
-# docker-compose down # To stop 
-#
-# Directories $HOME/data/adaguc-datasets and $HOME/data/adaguc-autowms will be created if they do not exist.
-# Copy your NetCDF/GeoJSON/HDF5 to $HOME/data/adaguc-autowms
-# Files are are accessible by linking them via the source= key. Filenames must be URLEncoded.
-#   http://localhost:8090/adaguc-services/wms.cgi?source=testdata.nc&&service=WMS&request=GetCapabilities
-#
-# New files can be visualized in the adaguc-viewer via:
-#   http://localhost:8091/adaguc-viewer/ by adding service http://localhost:8090/adaguc-services/wms.cgi?source=testdata.nc via "Add data"
-# A direct link is:
-#   http://localhost:8091/adaguc-viewer/?service=http%3A%2F%2Flocalhost%3A8090%2Fadaguc-services%2Fwms.cgi%3Fsource%3Dtestdata.nc
-# Testdata can be found here:
-#   http://opendap.knmi.nl/knmi/thredds/catalog/ADAGUC/catalog.html
-# It is also possible to configure new datasets with custom styling and create aggregations over many files.
+
+#cd ./adaguc-server/
+#docker pull openearth/adaguc-viewer
+#Either do:
+#docker pull openearth/adaguc-server #<-- Pull docker image from dockerhub, or do docker build -t openearth/adaguc-server . 
+
+#mkdir -p $HOME/adaguc-server-docker/adaguc-data
+#mkdir -p $HOME/adaguc-server-docker/adaguc-datasets
+#mkdir -p $HOME/adaguc-server-docker/adaguc-autowms
+#mkdir -p $HOME/adaguc-server-docker/adagucdb && chmod 777 $HOME/adaguc-server-docker/adagucdb
+#mkdir -p $HOME/adaguc-server-docker/adaguc-logs && chmod 777 $HOME/adaguc-server-docker/adaguc-logs
+
+# docker-compose -f ./Docker/docker-compose.yml up 
+# Go to http://localhost:8091/adaguc-viewer/ or http://localhost:8090/adaguc-services/wms.cgi? 
+
+# CTRL+C and docker-compose down # To stop 
+

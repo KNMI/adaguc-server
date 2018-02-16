@@ -1,10 +1,14 @@
 #!/bin/bash
 
+if [[ $1 == dev ]]; then
+  export ADAGUCCOMPILERSETTINGS="-Wall -DMEMLEAKCHECK -g"
+  ulimit -c unlimited
+fi
 #For developing, use:
-#export ADAGUCCOMPILERSETTINGS="-Wall -DMEMLEAKCHECK"
+#export ADAGUCCOMPILERSETTINGS="-Wall -DMEMLEAKCHECK -g"
 
 #For time measurement of components use
-#export ADAGUCCOMPILERSETTINGS="-Wall -DMEMLEAKCHECK -DMEASURETIME"
+#export ADAGUCCOMPILERSETTINGS="-Wall -DMEMLEAKCHECK -DMEASURETIME -g"
 
 #For operational, use:
 #export ADAGUCCOMPILERSETTINGS="-msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2"
@@ -42,30 +46,30 @@ function quit {
   echo "  export CPPFLAGS=-I/home/user/software/install/include -I/home/user/othersoftware/install/include"
   echo "  export LDFLAGS=-L/home/user/software/install/lib/ -L/home/user/othersoftware/install/lib/" 
   echo ""
-  exit ;
+  exit 1;
 }
 
 function clean {
   cd $CURRENTDIR/hclasses
-  rm *.o
-  rm *.a
+  rm -f *.o
+  rm -f *.a
 
   cd $CURRENTDIR/CCDFDataModel
-  rm *.o
-  rm *.a
+  rm -f *.o
+  rm -f *.a
 
   cd $CURRENTDIR/adagucserverEC
-  rm *.o
-  rm adagucserver
-  rm h5ncdump
-  rm aggregate_time
-  rm geojsondump
+  rm -f *.o
+  rm -f adagucserver
+  rm -f h5ncdump
+  rm -f aggregate_time
+  rm -f geojsondump
 
   test -d $CURRENTDIR/bin || mkdir $CURRENTDIR/bin/
-  rm $CURRENTDIR/bin/adagucserver
-  rm $CURRENTDIR/bin/h5ncdump
-  rm $CURRENTDIR/bin/aggregate_time
-  rm $CURRENTDIR/bin/geojsondump
+  rm -f $CURRENTDIR/bin/adagucserver
+  rm -f $CURRENTDIR/bin/h5ncdump
+  rm -f $CURRENTDIR/bin/aggregate_time
+  rm -f $CURRENTDIR/bin/geojsondump
 }
 
 function build {

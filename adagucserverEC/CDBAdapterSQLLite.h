@@ -71,14 +71,9 @@ class CDBAdapterSQLLite:public CDBAdapter{
     };
 private:
     DEF_ERRORFUNCTION();
-     CSQLLiteDB *dataBaseConnection;
-     CSQLLiteDB *getDataBaseConnection(){
-      if(dataBaseConnection == NULL){
-        dataBaseConnection = new CSQLLiteDB();
-        int status = dataBaseConnection->connect(configurationObject->DataBase[0]->attr.parameters.c_str());if(status!=0){CDBError("Unable to connect to DB");return NULL;}
-      }
-      return dataBaseConnection;
-    }
+    CSQLLiteDB *dataBaseConnection;
+    CSQLLiteDB *getDataBaseConnection();
+     
     CServerConfig::XMLE_Configuration *configurationObject;
     std::map <std::string ,std::string> lookupTableNameCacheMap; //PathFilter gives tablename
 

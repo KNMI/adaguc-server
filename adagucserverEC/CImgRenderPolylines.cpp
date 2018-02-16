@@ -113,9 +113,9 @@
               for (std::vector<Feature*>::iterator feature=featureStore[ fileName].begin();feature!=featureStore[fileName].end(); ++feature) {
                   //FindAttributes for this feature
                   BorderStyle borderStyle = getAttributesForFeature(&(dataSource->getDataObject(0)->features[featureIndex]) ,(*feature)->getId(), styleConfiguration);
-//                  CDBDebug("bs: %s %s", borderStyle.width.c_str(), borderStyle.color.c_str());
+                  //CDBDebug("bs: %s %s", borderStyle.width.c_str(), borderStyle.color.c_str());
                   CColor drawPointLineColor2(borderStyle.color.c_str());
-                  float drawPointLineWidth=atoi(borderStyle.width.c_str());
+                  float drawPointLineWidth=borderStyle.width.toFloat();
                   //if(featureIndex!=0)break;
                   std::vector<Polygon>polygons=(*feature)->getPolygons();
                   CT::string id=(*feature)->getId();
@@ -272,7 +272,7 @@
                 if (regexec(&regex, matchString.c_str(), 0, NULL, 0)==0) {
                   //Matched
                   //CDBDebug("Matched %s on %s!!", matchString.c_str(), match.c_str());
-                  if(((*styleConfig->featureIntervals)[j]->attr.borderwidth.empty()==false)&&(atoi((*styleConfig->featureIntervals)[j]->attr.borderwidth.c_str())>0)){
+                  if(((*styleConfig->featureIntervals)[j]->attr.borderwidth.empty()==false)&&(((*styleConfig->featureIntervals)[j]->attr.borderwidth.toFloat())>0)){
                     borderWidth=(*styleConfig->featureIntervals)[j]->attr.borderwidth;
                     //A border should be drawn
                     if ((*styleConfig->featureIntervals)[j]->attr.bordercolor.empty()==false){

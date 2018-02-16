@@ -54,6 +54,11 @@
     <palette index="240" red="255"   green="0" blue="0"/> 
   </Legend>
 
+  <Legend name="gray" type="colorRange">
+    <palette index="0"   red="0"   green="0"   blue="0"/> 
+    <palette index="240" red="255"   green="255" blue="255"/> 
+  </Legend>
+  
   <Legend name="no2" type="colorRange">
     <palette index="0"   red="0"  green="0"    blue="190"/> 
     <palette index="5"   red="0"  green="0"    blue="255"/> 
@@ -130,13 +135,24 @@
 
     <!--Styles -->
   <Style name="auto">
-    <Legend fixedclasses="true" tickround="1">elevation</Legend>
+    <Legend fixedclasses="true" tickround="1">bluewhitered</Legend>
     <Point pointstyle="point" textcolor="#111111"/>
     <Vector vectorstyle="barb" linecolor="#0000FF" />
     <Scale>0</Scale>
     <Offset>0</Offset>
     <RenderMethod>nearest,bilinear,point,barb</RenderMethod>
-      <StandardNames standard_name="*"/>
+    <StandardNames standard_name="*"/>
+  </Style>
+  
+  <Style name="autofeatures">
+    <Legend fixedclasses="true" tickround="1">elevation</Legend>
+    <Point pointstyle="point" textcolor="#111111"/>
+    <Vector vectorstyle="barb" linecolor="#0000FF" />
+    <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#000000" borderwidth="2"/> <!-- Used in CImgRenderPolylines -->
+    <Scale>0</Scale>
+    <Offset>0</Offset>
+    <RenderMethod>nearest,bilinear,point,barb</RenderMethod>
+    <StandardNames standard_name="features"/>
   </Style>
 
 </Configuration>

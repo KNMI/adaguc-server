@@ -42,6 +42,7 @@
 
 #define CPROJ4TOCF_UNITS_METER 0
 #define CPROJ4TOCF_UNITS_KILOMETER 1
+#define CPROJ4TOCF_UNITS_RADIANS 2
 
 class CProj4ToCF{
   private:
@@ -79,6 +80,7 @@ class CProj4ToCF{
     void initMercator(CDF::Variable *projectionVariable, std::vector <CProj4ToCF::KVP*> projKVPList);
     void initTransverseMercator(CDF::Variable *projectionVariable, std::vector <CProj4ToCF::KVP*> projKVPList);
     void initLAEAPerspective(CDF::Variable *projectionVariable, std::vector <KVP*> projKVPList);
+    void initGeosPerspective(CDF::Variable *projectionVariable, std::vector <KVP*> projKVPList);
     
 
     int convertBackAndFort(const char *projString,CDF::Variable *projectionVariable);

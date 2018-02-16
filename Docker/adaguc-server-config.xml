@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Configuration>
-
+  <CacheDocs enabled="false"/>
   <TempDir value="{ADAGUC_TMP}"/>
   <Path value="{ADAGUC_PATH}/data"/>
   <DataBase parameters="host=localhost port=5432 user=adaguc password=adaguc dbname=adaguc"/>
@@ -42,6 +42,7 @@
   </AutoResource>
 
   <Dataset enabled="true" location="/data/adaguc-datasets/"/>
+  <Dataset enabled="true" location="/data/adaguc-datasets-internal/"/>
 
   <!-- End of configuration /-->
 </Configuration>

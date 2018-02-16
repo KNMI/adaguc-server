@@ -1,0 +1,50 @@
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+#Other binaries
+CCDFDataModel/anydump
+adagucserverEC/adagucserver
+adagucserverEC/aggregate_dim
+adagucserverEC/aggregate_time
+adagucserverEC/geojsondump
+adagucserverEC/h5ncdump
+bin/*
+
+#Python pyc files
+*.pyc
+
+#Test results
+tests/log
+tests/tmp
+tests/testresults/*
+
+
+Docker/adaguc-server.dockerimage
+Dockerfile

@@ -86,13 +86,26 @@ int CDBAdapterSQLLite::CSQLLiteDB::close(){
 };
 
 int CDBAdapterSQLLite::CSQLLiteDB::connect(const char * pszOptions){
-
+  if (db != NULL){
+    CDBError("Database is already connected");
+    return 1;
+  }
   int rc = sqlite3_open(pszOptions, &db);
   if( rc ){
-    CDBError( "Can't open database: %s\n", sqlite3_errmsg(db));
+    CDBDebug( "Can't open database: [%s] with file [%s]\n", sqlite3_errmsg(db), pszOptions);
+    CDBError( "Can't open database: [%s]\n", sqlite3_errmsg(db));
     sqlite3_close(db);
     db = NULL;
     return 1 ;
+  } else {
+    if (query("pragma journal_mode = OFF") != 0){
+      CDBError("Unable to set journal_mode");
+      return 1;
+    }
+    if (query("pragma TEMP_STORE = MEMORY") != 0){
+      CDBError("Unable to set TEMP_STORE");
+      return 1;
+    }
   }
 
   return 0;
@@ -200,7 +213,7 @@ int CDBAdapterSQLLite::CSQLLiteDB::query(const char *pszQuery){
   
   int rc = sqlite3_exec(db, pszQuery, CDBAdapterSQLLite::CSQLLiteDB::callbacknoresults, 0, &zErrMsg);
   if( rc!=SQLITE_OK ){
-    fprintf(stderr, "SQL error: %s\n", zErrMsg);
+    // fprintf(stderr, "SQL error: %s\n", zErrMsg);
     errorMessage = zErrMsg;
     sqlite3_free(zErrMsg);
     return 1;
@@ -654,6 +667,10 @@ CDBStore::Store *CDBAdapterSQLLite::getFilesAndIndicesForDimensions(CDataSource 
 
 int  CDBAdapterSQLLite::autoUpdateAndScanDimensionTables(CDataSource *dataSource){
   CServerParams *srvParams = dataSource->srvParams;;
+//   if(srvParams->isAutoLocalFileResourceEnabled()==false){
+//     CDBDebug("Auto update is not available");
+//     return 0;
+//   }
   CServerConfig::XMLE_Layer * cfgLayer = dataSource->cfgLayer;
   CSQLLiteDB * dataBaseConnection = getDataBaseConnection(); if(dataBaseConnection == NULL){return -1;  }
   
@@ -769,7 +786,16 @@ int  CDBAdapterSQLLite::autoUpdateAndScanDimensionTables(CDataSource *dataSource
 }
 
 
-
+CDBAdapterSQLLite::CSQLLiteDB *CDBAdapterSQLLite::getDataBaseConnection(){
+  if(dataBaseConnection == NULL){
+    dataBaseConnection = new CSQLLiteDB();
+    int status = dataBaseConnection->connect(configurationObject->DataBase[0]->attr.parameters.c_str());
+    if(status!=0){
+      CDBError("Unable to connect to DB");return NULL;
+    }
+  }
+  return dataBaseConnection;
+}
 
 CT::string CDBAdapterSQLLite::getTableNameForPathFilterAndDimension(const char *path,const char *filter, const char * dimension,CDataSource *dataSource){
   if(dataSource->cfgLayer->DataBaseTable.size() == 1){
@@ -1148,7 +1174,7 @@ int CDBAdapterSQLLite::addFilesToDataBase(){
     }
     it->second.clear();
   }
-  CDBDebug("clearing arrays");
+//   CDBDebug("clearing arrays");
   fileListPerTable.clear();
   return 0;
 }
