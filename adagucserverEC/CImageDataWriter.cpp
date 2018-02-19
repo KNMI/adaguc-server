@@ -407,9 +407,32 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   this->srvParam=srvParam;
   
   if(_setTransparencyAndBGColor(this->srvParam,&drawImage)!=0)return 1;
-  if(srvParam->imageFormat ==  IMAGEFORMAT_IMAGEPNG8 || srvParam->imageFormat ==  IMAGEFORMAT_IMAGEPNG24 || srvParam->imageFormat ==  IMAGEFORMAT_IMAGEPNG32){
-    drawImage.setRenderer(CDRAWIMAGERENDERER_CAIRO);
+  
+  CStyleConfiguration *styleConfiguration = NULL;
+  
+  if(dataSource!=NULL){
+    styleConfiguration = dataSource->getStyle();
+  }
+  
+  bool forceGDRenderer = false;
+
+  if(styleConfiguration!=NULL && styleConfiguration->styleConfig!=NULL && styleConfiguration->styleConfig->RenderSettings.size() == 1) {
+    // XMLE_RenderSettings
+    if(styleConfiguration->styleConfig->RenderSettings[0]->attr.renderer.equals("gd")){
+      forceGDRenderer = true;
+    }
+  }
+  
+  if(!forceGDRenderer){
+    if(srvParam->imageFormat ==  IMAGEFORMAT_IMAGEPNG8 || 
+      srvParam->imageFormat ==  IMAGEFORMAT_IMAGEPNG24 || 
+      srvParam->imageFormat ==  IMAGEFORMAT_IMAGEPNG32) {
+      drawImage.setRenderer(CDRAWIMAGERENDERER_CAIRO);
+    }else{
+      drawImage.setRenderer(CDRAWIMAGERENDERER_GD);
+    }
   }else{
+    CDBDebug("Forcing renderer to GD");
     drawImage.setRenderer(CDRAWIMAGERENDERER_GD);
   }
    
@@ -419,20 +442,8 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
     drawImage.setRenderer(CDRAWIMAGERENDERER_CAIRO);
     
   }
-  
-  if(dataSource!=NULL){
-    if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded
-    ){
-        
-        if(initializeLegend(srvParam,dataSource)!=0)return 1;
-    }
-  }
-  
-  CStyleConfiguration *styleConfiguration = NULL;
-  
-  if(dataSource!=NULL){
-    styleConfiguration = dataSource->getStyle();
-  }
+
+
   
   if(styleConfiguration!=NULL){
   
@@ -548,7 +559,6 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
         //Create palette for internal WNS layer
         if(dataSource->dLayerType!=CConfigReaderLayerTypeCascaded
         ){
-        //    if(initializeLegend(srvParam,dataSource)!=0)return 1;
             status = drawImage.createGDPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);
             if(status != 0){
             CDBError("Unknown palette type for %s",srvParam->cfg->Legend[styleConfiguration->legendIndex]->attr.name.c_str());
@@ -567,42 +577,6 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
 
 
 
-int CImageDataWriter::initializeLegend(CServerParams *srvParam,CDataSource *dataSource){
- 
-  #ifdef CIMAGEDATAWRITER_DEBUG    
-  CDBDebug("initializeLegend");
-  #endif
-  if(srvParam==NULL){
-    CDBError("srvParam==NULL");
-    return -1;
-  }
-  
-//   if(_setTransparencyAndBGColor(srvParam,&drawImage)!=0){
-//     CDBError("Unable to do setTransparencyAndBGColor");
-//     return -1;
-//   }
-//  
-  //CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-//   if(styleConfiguration->hasError){
-//     CDBError("Unable to configure style %s for layer %s\n",styleName.c_str(),dataSource->layerName.c_str());
-//   
-//     return -1;
-//   }
-  
-//   styleConfiguration->legendScale = styleConfiguration->legendScale;
-//   styleConfiguration->legendOffset = styleConfiguration->legendOffset;
-//   styleConfiguration->legendLog = styleConfiguration->legendLog;
-//   styleConfiguration->legendLowerRange = styleConfiguration->legendLowerRange;
-//   styleConfiguration->legendUpperRange = styleConfiguration->legendUpperRange;
-//   dataSource->legendValueRange = styleConfiguration->hasLegendValueRange;
-  
-  #ifdef CIMAGEDATAWRITER_DEBUG    
-  CDBDebug("/initializeLegend");
-  #endif
-  
-  
-  return 0;
-}
 
 
 double CImageDataWriter::convertValue(CDFType type,void *data,size_t ptr){
@@ -1366,8 +1340,14 @@ void CImageDataWriter::setDate(const char *szTemp){
   drawImage.setTextStroke(szTemp, strlen(szTemp),drawImage.Geo->dWidth-170,5,240,254,0);
 }
 
-std::vector<CImageDataWriter::IndexRange*> CImageDataWriter::getIndexRangesForRegex(CT::string match, CT::string *attributeValues, int n) {
-  std::vector<CImageDataWriter::IndexRange*> ranges;
+
+CImageDataWriter::IndexRange::IndexRange() {
+  min = 0;
+  max = 0;
+}
+
+std::vector<CImageDataWriter::IndexRange> CImageDataWriter::getIndexRangesForRegex(CT::string match, CT::string *attributeValues, int n) {
+  std::vector<CImageDataWriter::IndexRange> ranges;
   int ret;
   regex_t regex;
   ret=regcomp(&regex, match.c_str(), 0);
@@ -1390,8 +1370,8 @@ std::vector<CImageDataWriter::IndexRange*> CImageDataWriter::getIndexRangesForRe
         } else {
           if ((i-last)>0) {
             //new range
-            CImageDataWriter::IndexRange *rng=new CImageDataWriter::IndexRange(first, last);
-            ranges.push_back(rng);
+            ;
+            ranges.push_back(CImageDataWriter::IndexRange(first, last));
             first=i;
             last=i+1;
           } else {
@@ -1400,7 +1380,7 @@ std::vector<CImageDataWriter::IndexRange*> CImageDataWriter::getIndexRangesForRe
         }
       }
     }
-    ranges.push_back(new CImageDataWriter::IndexRange(first,last));
+    ranges.push_back(CImageDataWriter::IndexRange(first,last));
   }
   regfree(&regex);
   return ranges;
@@ -1489,7 +1469,7 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   
   /** Apply FeatureInterval config */
   if (styleConfiguration->featureIntervals!=NULL&&styleConfiguration->shadeIntervals!=NULL) {
-    if(styleConfiguration->featureIntervals->size()>0&&styleConfiguration->shadeIntervals->size()==0){
+    if(styleConfiguration->featureIntervals->size()>0){//&&styleConfiguration->shadeIntervals->size()==0){
 
       int numFeatures=0;
       try{
@@ -1518,16 +1498,15 @@ if(renderMethod==contour){CDBDebug("contour");}*/
               }
             }
             if(featureInterval->attr.fillcolor.empty()==false){
-              std::vector<CImageDataWriter::IndexRange*> ranges=getIndexRangesForRegex(featureInterval->attr.match, attributeValues, numFeatures);
+              std::vector<CImageDataWriter::IndexRange> ranges=getIndexRangesForRegex(featureInterval->attr.match, attributeValues, numFeatures);
               for (size_t i=0; i<ranges.size(); i++) {
                 CServerConfig::XMLE_ShadeInterval *shadeInterval = new CServerConfig::XMLE_ShadeInterval ();
                 styleConfiguration->shadeIntervals->push_back(shadeInterval);
-                shadeInterval->attr.min.print("%d",ranges[i]->min);
-                shadeInterval->attr.max.print("%d",ranges[i]->max);
+                shadeInterval->attr.min.print("%d",ranges[i].min);
+                shadeInterval->attr.max.print("%d",ranges[i].max);
                 shadeInterval->attr.fillcolor=featureInterval->attr.fillcolor;
                 shadeInterval->attr.bgcolor=featureInterval->attr.bgcolor;
                 shadeInterval->attr.label=featureInterval->attr.label;
-                delete ranges[i];
               }
             }
           }
@@ -1994,7 +1973,7 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
         CDBDebug("REINITLEGEND");
         #endif
 
-        if(initializeLegend(srvParam,dataSource)!=0)return 1;
+
         CStyleConfiguration *styleConfiguration = dataSource->getStyle();
         if(styleConfiguration->legendIndex!=-1){
           status = drawImage.createGDPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);

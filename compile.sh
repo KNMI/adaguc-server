@@ -1,5 +1,9 @@
 #!/bin/bash
 
+if [[ $1 == dev ]]; then
+  export ADAGUCCOMPILERSETTINGS="-Wall -DMEMLEAKCHECK -g"
+  ulimit -c unlimited
+fi
 #For developing, use:
 #export ADAGUCCOMPILERSETTINGS="-Wall -DMEMLEAKCHECK -g"
 
