@@ -892,6 +892,8 @@ int CDBFileScanner::updatedb( CDataSource *dataSource,CT::string *_tailPath,CT::
       layerPath.copy(dataSource->cfgLayer->FilePath[0]->value.c_str());
       layerPathToScan.copy(_layerPathToScan);
       
+      
+      
       layerPath = CDirReader::makeCleanPath(layerPath.c_str());
       layerPathToScan = CDirReader::makeCleanPath(layerPathToScan.c_str());
       
@@ -1013,6 +1015,7 @@ std::vector<std::string> CDBFileScanner::searchFileNames(const char * path,CT::s
     throw (__LINE__);
   }
   CT::string filePath=path;
+//  CDBDebug("filePath = %s",filePath.c_str());
   
   if(tailPath!=NULL){
     if(tailPath[0]=='/'){
@@ -1024,16 +1027,25 @@ std::vector<std::string> CDBFileScanner::searchFileNames(const char * path,CT::s
         throw (__LINE__);
       }
     }else{
-      filePath.concat(tailPath);
+      if(strlen(tailPath)>0){
+        filePath += "/" ;
+        filePath.concat(tailPath);
+      }
     }
   }
-  if(filePath.lastIndexOf(".nc")==int(filePath.length()-3)||filePath.lastIndexOf(".h5")==int(filePath.length()-3)||
-     filePath.lastIndexOf(".json")==int(filePath.length()-5)||
-     filePath.lastIndexOf(".png")==int(filePath.length()-4)||
-     filePath.lastIndexOf(".geojson")==int(filePath.length()-8)||filePath.indexOf("http://")==0||filePath.indexOf("https://")==0||filePath.indexOf("dodsc://")==0){
+  // CDBDebug("Checking if this is a file: [%s]", filePath.c_str());
+  if(filePath.endsWith(".nc")||
+     filePath.endsWith(".h5")||
+     filePath.endsWith(".png")||
+     filePath.endsWith(".geojson")||
+     filePath.endsWith(".json")||
+     filePath.startsWith("http://")||
+     filePath.startsWith("https://")||
+     filePath.startsWith("dodsc://")){
     //Add single file or opendap URL.
     std::vector<std::string> fileList;
     fileList.push_back(filePath.c_str());
+//    CDBDebug("%s is a file",filePath.c_str());
     return fileList;
   }else{
     //Read directory
