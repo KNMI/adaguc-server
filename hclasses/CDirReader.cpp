@@ -71,19 +71,19 @@ int CDirReader::_listDirRecursive(const char* directory,const char *ext_filter){
     //Maybe the user provided a file instead of a directory?
     struct stat64 fileattr;
     if(stat64(directory,&fileattr)==-1){
-      //CDBError("Unable to stat %s",directory);
+      CDBWarning("Unable to stat %s",directory);
       return 1;
     }
     //Is this a regular file?
     if(S_ISREG(fileattr.st_mode)==0){
-      //CDBError("Not a regular file");
+      CDBWarning("Not a regular file");
       return 2;
     }
     //Check filter
     if(testRegEx(directory,ext_filter)==1){
       fileList.push_back(makeCleanPath(directory).c_str());
     }else{
-      //CDBError("Regexp failed.");
+      CDBWarning("Regexp failed.");
       return 3;
     }
     return 0;
@@ -173,11 +173,11 @@ CT::string CDirReader::makeCleanPath(const char *_path){
   if(path.length()==0)return path;
   CT::StackList<CT::string>parts =path.splitToStack("/");
   
-  /* Check if this should end with a slash or not */
-  bool appendSlash = false;
-  if(path.endsWith("/") == true) {
-    appendSlash = true;
-  }
+//   /* Check if this should end with a slash or not */
+//   bool appendSlash = false;
+//   if(path.endsWith("/") == true) {
+//     appendSlash = true;
+//   }
 
   /* Check if this should start with a slash or not */
   if(path.c_str()[0]=='/'){
@@ -200,9 +200,9 @@ CT::string CDirReader::makeCleanPath(const char *_path){
       }
     }
   }
-  if(appendSlash){
-    path.concat("/");
-  }
+//   if(appendSlash){
+//     path.concat("/");
+//   }
 //  CDBDebug("path = %s", path.c_str());
   return path;
 }
