@@ -21,7 +21,8 @@ docker run \
   -v $HOME/adaguc-server-docker/adaguc-autowms:/data/adaguc-autowms \
   -v $HOME/adaguc-server-docker/adagucdb:/adaguc/adagucdb \
   -v $HOME/adaguc-server-docker/adaguc-logs:/var/log/adaguc \
-  -it adaguc-server 
+  --name my-adaguc-server \
+  -it openearth/adaguc-server 
 
 ```
 
@@ -46,7 +47,7 @@ curl -kL https://raw.githubusercontent.com/KNMI/adaguc-server/master/data/config
 ```
 Now update the db:
 ```
-dockercontainerid=`docker ps -f ancestor=adaguc-server -q` && docker exec -i -t ${dockercontainerid} /adaguc/adaguc-server-updatedatasets.sh dataset_a
+docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh dataset_a
 ```
 Dataset configurations are referenced via the dataset= key value pair in the URL.
 This dataset is now accessible via 
@@ -102,7 +103,7 @@ Put a dataset configuration file named sat.xml inside $HOME/adaguc-server-docker
 ```
 Now update the db wit the sat dataset:
 ```
-dockercontainerid=`docker ps -f ancestor=adaguc-server -q` && docker exec -i -t ${dockercontainerid} /adaguc/adaguc-server-updatedatasets.sh sat
+docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh sat
 ```
 The following URL can be used in the viewer:
 http://localhost:8090/adaguc-services/adagucserver?service=wms&request=getcapabilities&dataset=sat&
