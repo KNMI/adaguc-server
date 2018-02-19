@@ -4,6 +4,18 @@ ADAGUC is a geographical information system to visualize netCDF files via the we
 See https://dev.knmi.nl/projects/adagucserver/wiki for details
 
 # Docker for adaguc-server:
+
+A docker image for adaguc-server is available from dockerhub. This image allows you to start with adaguc-server, as everything is pre-installed. You can mount your own directories from your workstation to the docker container, allowing you to serve and configure your own data.
+
+These directories are:
+* adaguc-data: Put your NetCDF, HDF5, GeoJSON or PNG files and sequences inside this directory, these are referenced in your dataset configurations.
+* adaguc-datasets: These are your dataset configuration files, defining a service. These are small XML files, see satellite imagery example below.
+* adaguc-autowms: Put your files you want to have visualised automatically without any scanning
+* adagucdb: Persistent place for the database files
+* adaguc-logs: Logfiles are placed here, inspect these if something does not work as expected.
+
+
+To start, do:
 ```
 docker pull openearth/adaguc-server # Or build latest docker from this repo yourself with "docker build -t adaguc-server ."
 
@@ -23,6 +35,10 @@ docker run \
   -v $HOME/adaguc-server-docker/adaguc-logs:/var/log/adaguc \
   --name my-adaguc-server \
   -it openearth/adaguc-server 
+
+# If the container does not want to run because the container name is aready in use, please do:
+# docker rm my-adaguc-server
+# first.
 
 ```
 
