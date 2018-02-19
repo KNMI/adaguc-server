@@ -25,43 +25,33 @@
 
 #ifndef CDirReader_H
 #define CDirReader_H
-#include <iostream>
-#include <vector>
-#include <map>
-#include <stdio.h>
-#include <string.h>
-#include <regex.h>
-#include <stddef.h>
-#include <sys/types.h>
-#include <dirent.h>
+
 #include "CTypes.h"
 #include "CDebugger.h"
-#include <sys/stat.h>
-
-class CFileObject{
-  public:
-    CT::string fullName;
-    CT::string baseName;
-    int isDir;
-};
-
+#include <string>
+#include <map>
 static std::map <std::string ,std::string> lookupTableFileModificationDateMap;
 
 class CDirReader{
   private: 
     int _ReadDir(const char* directory,const char *ext_filter,int recursive);
+    //int _listDir (const char* directory,const char *ext_filter);
+    int _listDirRecursive (const char* directory,const char *ext_filter);
+    CT::string currentDir;
     DEF_ERRORFUNCTION();
   public:
-    std::vector <CFileObject*> fileList;
+    std::vector <std::string> fileList;
     CDirReader();
     ~CDirReader();
-    int listDir (const char* directory,const char *ext_filter);
     int listDirRecursive (const char* directory,const char *ext_filter);
-    static void makeCleanPath(CT::string *path);
+    static CT::string makeCleanPath(const char *_path);
     static int getFileDate(CT::string *date,const char *file);
-    int testRegEx(const char *string,const char *pattern);
+    static int testRegEx(const char *string,const char *pattern);
     
     static CT::string getFileDate(const char *fileName);
+    
+    static bool isDir(const char *fileName);
+    
 
     /**
      * Create a public directory writable for everybody 
@@ -69,7 +59,26 @@ class CDirReader{
      * @param dirname 
      */
     static void makePublicDirectory(const char *dirname);
+    
+    static void compareLists(std::vector <std::string> a, std::vector <std::string> b, void (*handleMissing)(std::string), void (*handleNew)(std::string));
+    
+    static void test_compareLists();
+    static int test_makeCleanPath();
 };
+
+class CCachedDirReader{
+private:
+  DEF_ERRORFUNCTION();
+  static std::map<std::string,CDirReader*> dirReaderMap;
+public:
+  static void free();
+  static CDirReader * getDirReader(const char* directory,const char *ext_filter);
+  
+};
+
+
+
+
 #endif
 
 

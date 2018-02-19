@@ -1,4 +1,5 @@
 import unittest
+import sys
 from AdagucTests.TestWMS import TestWMS
 from AdagucTests.TestWMSDocumentCache import TestWMSDocumentCache
 from AdagucTests.TestOpenDAPServer import TestOpenDAPServer
@@ -11,7 +12,6 @@ testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWMSDocumentCac
 testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestOpenDAPServer))
 testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWMSPolylineRenderer))
 #testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWMSTiling))
-unittest.TextTestRunner(verbosity=2).run(unittest.TestSuite(testsuites))
+result=unittest.TextTestRunner(verbosity=2).run(unittest.TestSuite(testsuites))
 
-
-
+sys.exit(not result.wasSuccessful())

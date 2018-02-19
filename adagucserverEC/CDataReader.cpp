@@ -825,7 +825,10 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y, int *gridExt
 #ifdef CDATAREADER_DEBUG
   CDBDebug("Working on [%s] with mode %d and (%d,%d)",dataSourceFilename.c_str(),mode,x,y);
 #endif
-    
+  
+  if (mode == CNETCDFREADER_MODE_OPEN_ALL){
+    CDBDebug("Working on [%s]", dataSourceFilename.c_str());
+  }
   if(mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS  || mode == CNETCDFREADER_MODE_OPEN_HEADER ){
       //pthread_mutex_lock(&CDataReader_open_lock);
     cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource->srvParams,dataSourceFilename.c_str());

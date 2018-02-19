@@ -667,6 +667,10 @@ CDBStore::Store *CDBAdapterSQLLite::getFilesAndIndicesForDimensions(CDataSource 
 
 int  CDBAdapterSQLLite::autoUpdateAndScanDimensionTables(CDataSource *dataSource){
   CServerParams *srvParams = dataSource->srvParams;;
+//   if(srvParams->isAutoLocalFileResourceEnabled()==false){
+//     CDBDebug("Auto update is not available");
+//     return 0;
+//   }
   CServerConfig::XMLE_Layer * cfgLayer = dataSource->cfgLayer;
   CSQLLiteDB * dataBaseConnection = getDataBaseConnection(); if(dataBaseConnection == NULL){return -1;  }
   
@@ -1170,7 +1174,7 @@ int CDBAdapterSQLLite::addFilesToDataBase(){
     }
     it->second.clear();
   }
-  CDBDebug("clearing arrays");
+//   CDBDebug("clearing arrays");
   fileListPerTable.clear();
   return 0;
 }
