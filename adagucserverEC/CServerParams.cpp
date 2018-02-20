@@ -562,7 +562,11 @@ int CServerParams::parseConfigFile(CT::string &pszConfigFile){
   try{
     configFileData = CReadFile::open(pszConfigFile.c_str());
     const char *pszADAGUC_PATH=getenv("ADAGUC_PATH");
-    if(pszADAGUC_PATH!=NULL)configFileData.replaceSelf("{ADAGUC_PATH}",pszADAGUC_PATH);
+    if(pszADAGUC_PATH!=NULL){
+      CT::string adagucPath = CDirReader::makeCleanPath(pszADAGUC_PATH);
+      adagucPath = adagucPath + "/";
+      configFileData.replaceSelf("{ADAGUC_PATH}",adagucPath.c_str());
+    }
     const char *pszADAGUC_TMP=getenv("ADAGUC_TMP");
     if(pszADAGUC_TMP!=NULL)configFileData.replaceSelf("{ADAGUC_TMP}",pszADAGUC_TMP);
   }catch(int e){
