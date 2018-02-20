@@ -56,7 +56,7 @@ COPY ./Docker/start.sh /adaguc/
 COPY ./Docker/adaguc-server-logrotate /etc/logrotate.d/adaguc
 COPY ./Docker/adaguc-server-*.sh /adaguc/
 COPY ./Docker/baselayers.xml /data/adaguc-datasets-internal/baselayers.xml
-RUN  chmod +x /adaguc/adaguc-server-updatedatasets.sh && chmod +x /adaguc/start.sh
+RUN  chmod +x /adaguc/adaguc-server-*.sh && chmod +x /adaguc/start.sh
 
 # Set adaguc-services configuration file
 ENV ADAGUC_SERVICES_CONFIG=/adaguc/adaguc-services-config.xml 
