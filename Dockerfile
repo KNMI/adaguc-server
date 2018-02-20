@@ -24,7 +24,7 @@ RUN yum update -y && yum install -y \
     sqlite-devel \
     tomcat \
     udunits2 \
-    udunits2-devel
+    udunits2-devel 
     
 RUN mkdir /adaguc
 
@@ -54,7 +54,7 @@ COPY ./Docker/adaguc-server-config.xml /adaguc/adaguc-server-config.xml
 COPY ./Docker/adaguc-services-config.xml /adaguc/adaguc-services-config.xml
 COPY ./Docker/start.sh /adaguc/
 COPY ./Docker/adaguc-server-logrotate /etc/logrotate.d/adaguc
-COPY ./Docker/adaguc-server-updatedatasets.sh /adaguc/
+COPY ./Docker/adaguc-server-*.sh /adaguc/
 COPY ./Docker/baselayers.xml /data/adaguc-datasets-internal/baselayers.xml
 RUN  chmod +x /adaguc/adaguc-server-updatedatasets.sh && chmod +x /adaguc/start.sh
 
