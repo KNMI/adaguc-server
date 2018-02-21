@@ -28,7 +28,7 @@
 #include "CDebugger.h"
 #include "CTime.h"
 
-//#define CDBAdapterSQLLite_DEBUG
+#define CDBAdapterSQLLite_DEBUG
 
 const char *CDBAdapterSQLLite::className="CDBAdapterSQLLite";
 
