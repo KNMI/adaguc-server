@@ -462,7 +462,58 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource,int mo
     float *swathData = (float*)swathVar->data;
     float fillValueLat = fill;
     float fillValueLon = fill;
+    
+  
+    /* Get time variable */
+    double *timeData = NULL;
+    double timeNotLowerThan = -1, timeNotMoreThan = -1;;
+    
+    CDF::Variable *origTimeVar = cdfObject->getVariableNE("time");
+    
+   
+    /* Read time units and create ctime object */
+    CTime obsTime;
+    if (obsTime.init(origTimeVar)!=0){
+      CDBError("Unable to initialize time");
+    } else {
+      /* Read time data */
+      double tfill = -1;
+      try{
+        origTimeVar->getAttribute("_FillValue")->getData(&tfill,1);
+      }catch(int){
+      }
+      if(origTimeVar->readData(CDF_DOUBLE)!=0){
+        CDBError("Unable to read time variable");
+        
+      }else{
+        timeData = (double*)origTimeVar->data;
+        
+        /* Find timerange */
+        CT::string timeStringFromURL = "";
+        for(size_t j=0;j<dataSource->requiredDims.size();j++){
+          CDBDebug("%s", dataSource->requiredDims[j]->name.c_str());
+          if(dataSource->requiredDims[j]->name.equals("time")){
+            timeStringFromURL = dataSource->requiredDims[j]->value.c_str();
+          }
+        }
+        CDBDebug("timeStringFromURL = %s", timeStringFromURL.c_str());
+        std::vector<CT::string> timeStrings = timeStringFromURL.splitToStack("/");
+        if(timeStrings.size()==2){
+          timeNotLowerThan = obsTime.dateToOffset( obsTime.freeDateStringToDate(timeStrings[0].c_str()));
+          timeNotMoreThan = obsTime.dateToOffset( obsTime.freeDateStringToDate(timeStrings[1].c_str()));
+        }        
+      }
+    }
+    
+    
+    
+    
     for(int timeNr=0;timeNr<numTimes;timeNr++){ 
+      if(timeData != NULL && timeNotLowerThan!=timeNotMoreThan) {
+        double currentTimeValue = timeData[timeNr];
+        if(currentTimeValue < timeNotLowerThan || currentTimeValue > timeNotMoreThan) continue;
+      }
+      
       int pSwath = timeNr;
       
       double lons[4],lats[4];
