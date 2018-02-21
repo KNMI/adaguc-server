@@ -31,15 +31,26 @@
 const char *CConvertADAGUCVector::className = "CConvertADAGUCVector";
 
 /**
- * This function adjusts the cdfObject by creating virtual 2D variables
+ * Checks if the format of this file corresponds to the ADAGUC Vector format.
  */
-int CConvertADAGUCVector::convertADAGUCVectorHeader(CDFObject *cdfObject) {
-  //Check whether this is really an adaguc file
+bool isADAGUCVectorFormat (CDFObject *cdfObject) {
   try {
     cdfObject->getDimension("nv");
     cdfObject->getDimension("time");
     cdfObject->getVariable("product");
   } catch(int e) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * This function adjusts the cdfObject by creating virtual 2D variables
+ */
+int CConvertADAGUCVector::convertADAGUCVectorHeader(CDFObject *cdfObject) {
+  //Check whether this is really an adaguc file
+  if (!isADAGUCVectorFormat(cdfObject)) {
     return 1;
   }
 
@@ -244,14 +255,11 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
   CDBDebug("convertADAGUCVectorData");
   #endif
   CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
-  try {
-    cdfObject->getDimension("nv");
-    cdfObject->getDimension("time");
-    cdfObject->getVariable("product");
-  } catch(int e) {
+
+  if (!isADAGUCVectorFormat(cdfObject)) {
     return 1;
   }
-  //CDBDebug("THIS IS ADAGUC VECTOR DATA");
+
   size_t nrDataObjects = dataSource->getNumDataObjects();
   CDataSource::DataObject *dataObjects[nrDataObjects];
   for(size_t d = 0; d < nrDataObjects; d++) {
