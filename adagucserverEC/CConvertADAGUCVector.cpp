@@ -491,21 +491,10 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
         if(lons[j] > 185)moveTile = true;
       }
 
-
-//       float lon0 ;
-//       float lat0;
-
       if(tileIsTooLarge == false) {
         for(int j = 0; j < 4; j++) {
           if(moveTile == true)lons[j] -= 360;
           if(lons[j] < -280)lons[j] += 360;
-//           if(j==0){
-//             lon0 =lons[0];
-//             lat0 =lats[0];
-//           }else{
-//             if(fabs(lon0-lons[j])>1)tileIsTooLarge=true;
-//             if(fabs(lat0-lats[j])>1)tileIsTooLarge=true;
-//           }
 
           if(vals[j] == fill)tileHasNoData = true;
         }
