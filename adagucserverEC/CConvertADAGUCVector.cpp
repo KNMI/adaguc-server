@@ -80,44 +80,42 @@ int CConvertADAGUCVector::convertADAGUCVectorHeader(CDFObject *cdfObject) {
     cdfObject->addVariable(varT);
     
     //Detect time from the netcdf data and copy the same units from the original time variable
-    if(origT != NULL) {
-      try {
+    try {
+      #ifdef CCONVERTADAGUCVECTOR_DEBUG
+      CDBDebug("Start reading time dim");
+      #endif
+      varT->setAttributeText("units", origT->getAttribute("units")->toString().c_str());
+      if(origT->readData(CDF_DOUBLE) != 0) {
+        CDBError("Unable to read time variable");
+      } else {
         #ifdef CCONVERTADAGUCVECTOR_DEBUG
-        CDBDebug("Start reading time dim");
+        CDBDebug("Done reading time dim");
         #endif
-        varT->setAttributeText("units", origT->getAttribute("units")->toString().c_str());
-        if(origT->readData(CDF_DOUBLE) != 0) {
-          CDBError("Unable to read time variable");
-        } else {
-          #ifdef CCONVERTADAGUCVECTOR_DEBUG
-          CDBDebug("Done reading time dim");
-          #endif
-          
-          //Loop through the time variable and detect the earliest time
-          double tfill;
-          bool hastfill = false;
-          try {
-            origT->getAttribute("_FillValue")->getData(&tfill, 1);
-            hastfill = true;
-          } catch(int e) { }
-          double *tdata = ((double *) origT->data);
-          double firstTimeValue = tdata[0];
-          size_t tsize = origT->getSize();
-          if(hastfill == true) {
-            for(size_t j = 0; j < tsize; j++) {
-              if(tdata[j] != tfill) {
-                firstTimeValue = tdata[j];
-              }
+
+        //Loop through the time variable and detect the earliest time
+        double tfill;
+        bool hastfill = false;
+        try {
+          origT->getAttribute("_FillValue")->getData(&tfill, 1);
+          hastfill = true;
+        } catch(int e) { }
+        double *tdata = ((double *) origT->data);
+        double firstTimeValue = tdata[0];
+        size_t tsize = origT->getSize();
+        if(hastfill == true) {
+          for(size_t j = 0; j < tsize; j++) {
+            if(tdata[j] != tfill) {
+              firstTimeValue = tdata[j];
             }
           }
-          #ifdef CCONVERTADAGUCVECTOR_DEBUG
-          CDBDebug("firstTimeValue  = %f",firstTimeValue );
-          #endif
-          //Set the time data
-          varT->setData(CDF_DOUBLE, &firstTimeValue, 1);
         }
-      } catch(int e) { }
-    }
+        #ifdef CCONVERTADAGUCVECTOR_DEBUG
+        CDBDebug("firstTimeValue  = %f",firstTimeValue );
+        #endif
+        //Set the time data
+        varT->setData(CDF_DOUBLE, &firstTimeValue, 1);
+      }
+    } catch(int e) { }
   }
 
   //Standard bounding box of adaguc data is worldwide
