@@ -1,27 +1,27 @@
 /******************************************************************************
- * 
- * Project:  ADAGUC Server
- * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
- *
- ******************************************************************************
- *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * 
- ******************************************************************************/
+* 
+* Project:  ADAGUC Server
+* Purpose:  ADAGUC OGC Server
+* Author:   Maarten Plieger, plieger "at" knmi.nl
+* Date:     2013-06-01
+*
+******************************************************************************
+*
+* Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+* 
+*      http://www.apache.org/licenses/LICENSE-2.0
+* 
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+* 
+******************************************************************************/
 
 #include "CConvertADAGUCVector.h"
 #include "CFillTriangle.h"
@@ -30,8 +30,8 @@
 const char *CConvertADAGUCVector::className="CConvertADAGUCVector";
 
 /**
- * This function adjusts the cdfObject by creating virtual 2D variables
- */
+* This function adjusts the cdfObject by creating virtual 2D variables
+*/
 int CConvertADAGUCVector::convertADAGUCVectorHeader( CDFObject *cdfObject ){
   //Check whether this is really an adaguc file
   try{
@@ -41,16 +41,16 @@ int CConvertADAGUCVector::convertADAGUCVectorHeader( CDFObject *cdfObject ){
   }catch(int e){
     return 1;
   }
-
- CDBDebug("Using CConvertADAGUCVector.h");
-
+  
+  CDBDebug("Using CConvertADAGUCVector.h");
+  
   bool hasTimeData = false;
   
   //Is there a time variable
   CDF::Variable *origT = cdfObject->getVariableNE("time");
   if(origT!=NULL){
     hasTimeData=true;
-
+    
     //Create a new time dimension for the new 2D fields.
     CDF::Dimension *dimT=new CDF::Dimension();
     dimT->name="time2D";
@@ -70,16 +70,16 @@ int CConvertADAGUCVector::convertADAGUCVectorHeader( CDFObject *cdfObject ){
     //Detect time from the netcdf data and copy the same units from the original time variable
     if(origT!=NULL){
       try{
-#ifdef CCONVERTADAGUCVECTOR_DEBUG
- CDBDebug("Start reading time dim");
-#endif 
+        #ifdef CCONVERTADAGUCVECTOR_DEBUG
+        CDBDebug("Start reading time dim");
+        #endif 
         varT->setAttributeText("units",origT->getAttribute("units")->toString().c_str());
         if(origT->readData(CDF_DOUBLE)!=0){
           CDBError("Unable to read time variable");
         }else{
-#ifdef CCONVERTADAGUCVECTOR_DEBUG
- CDBDebug("Done reading time dim");
-#endif 
+          #ifdef CCONVERTADAGUCVECTOR_DEBUG
+          CDBDebug("Done reading time dim");
+          #endif 
           
           //Loop through the time variable and detect the earliest time
           double tfill;
@@ -107,7 +107,7 @@ int CConvertADAGUCVector::convertADAGUCVectorHeader( CDFObject *cdfObject ){
       }catch(int e){}
     }
   }
-
+  
   //Standard bounding box of adaguc data is worldwide
   double dfBBOX[]={-180,-90,180,90};
   
@@ -139,7 +139,7 @@ int CConvertADAGUCVector::convertADAGUCVectorHeader( CDFObject *cdfObject ){
     varX->dimensionlinks.push_back(dimX);
     cdfObject->addVariable(varX);
     CDF::allocateData(CDF_DOUBLE,&varX->data,dimX->length);
-
+    
     //For y 
     dimY=new CDF::Dimension();
     dimY->name="y";
@@ -230,7 +230,7 @@ int CConvertADAGUCVector::convertADAGUCVectorHeader( CDFObject *cdfObject ){
     
     new2DVar->setType(CDF_FLOAT);
   }
- 
+  
   return 0;
 }
 
@@ -238,8 +238,8 @@ int CConvertADAGUCVector::convertADAGUCVectorHeader( CDFObject *cdfObject ){
 
 
 /**
- * This function draws the virtual 2D variable into a new 2D field
- */
+* This function draws the virtual 2D variable into a new 2D field
+*/
 int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource,int mode){
   #ifdef CCONVERTADAGUCVECTOR_DEBUG
   CDBDebug("convertADAGUCVectorData");
@@ -271,7 +271,7 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource,int mo
   }
   CDF::Variable *swathLon;
   CDF::Variable *swathLat;
- 
+  
   try{
     swathLon = cdfObject->getVariable("lon_bnds");
     swathLat = cdfObject->getVariable("lat_bnds");
@@ -279,12 +279,12 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource,int mo
     CDBError("lat or lon variables not found");
     return 1;
   }
-
+  
   //Read original data first 
   swathVar->readData(CDF_FLOAT,true);
   swathLon->readData(CDF_FLOAT,true);
   swathLat->readData(CDF_FLOAT,true);
- 
+  
   CDF::Attribute *fillValue = swathVar->getAttributeNE("_FillValue");
   if(fillValue!=NULL){
     dataObjects[0]->hasNodataValue=true;
@@ -351,16 +351,16 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource,int mo
   double cellSizeY=(dataSource->srvParams->Geo->dfBBOX[3]-dataSource->srvParams->Geo->dfBBOX[1])/double(dataSource->dHeight);
   double offsetX=dataSource->srvParams->Geo->dfBBOX[0];
   double offsetY=dataSource->srvParams->Geo->dfBBOX[1];
- 
- 
-  
-
   
   
   
-
+  
+  
+  
+  
+  
   if(mode==CNETCDFREADER_MODE_OPEN_ALL){
-   
+    
     
     #ifdef CCONVERTADAGUCVECTOR_DEBUG
     CDBDebug("Drawing %s",new2DVar->name.c_str());
@@ -370,7 +370,7 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource,int mo
     CDF::Dimension *dimY;
     CDF::Variable *varX ;
     CDF::Variable *varY;
-  
+    
     //Create new dimensions and variables (X,Y,T)
     dimX=cdfObject->getDimension("x");
     dimX->setSize(dataSource->dWidth);
@@ -421,8 +421,8 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource,int mo
     #endif
     
     
-
-  
+    
+    
     CImageWarper imageWarper;
     bool projectionRequired=false;
     if(dataSource->srvParams->Geo->CRS.length()>0){
@@ -458,9 +458,10 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource,int mo
         return 1;
       }
     }
-  
-    float *swathData = (float*)swathVar->data;
     
+    float *swathData = (float*)swathVar->data;
+    float fillValueLat = fill;
+    float fillValueLon = fill;
     for(int timeNr=0;timeNr<numTimes;timeNr++){ 
       int pSwath = timeNr;
       
@@ -484,57 +485,51 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource,int mo
       
       bool tileHasNoData = false;
       
-      bool tileIsTooLarge=false;
-      bool moveTile=false;
-      
+      float lonMin,lonMax,lonMiddle=0;
       for(int j=0;j<4;j++){
-        if(lons[j]==fill){tileIsTooLarge=true;break;}
-        if(lons[j]>185)moveTile=true;
-      }
-
+        float lon = lons[j];
+        if(j==0){lonMin=lon;lonMax=lon;}else{
+          if(lon<lonMin)lonMin=lon;
+          if(lon>lonMax)lonMax=lon;
+        }
+        lonMiddle+=lon;
+        float lat = lats[j];
+        float val = vals[j];
+        if(val==fill||val==INFINITY||val==NAN||val==-INFINITY||!(val==val)){tileHasNoData=true;break;}
+        if(lat==fillValueLat||lat==INFINITY||lat==-INFINITY||!(lat==lat)){tileHasNoData=true;break;}
+        if(lon==fillValueLon||lon==INFINITY||lon==-INFINITY||!(lon==lon)){tileHasNoData=true;break;}
         
-//       float lon0 ;
-//       float lat0;
-     
-      if(tileIsTooLarge==false){
-        for(int j=0;j<4;j++){
-          if(moveTile==true)lons[j]-=360;
-          if(lons[j]<-280)lons[j]+=360;
-//           if(j==0){
-//             lon0 =lons[0];
-//             lat0 =lats[0];
-//           }else{
-//             if(fabs(lon0-lons[j])>1)tileIsTooLarge=true;
-//             if(fabs(lat0-lats[j])>1)tileIsTooLarge=true;
-//           }
-       
-          if(vals[j]==fill)tileHasNoData=true;
+      }
+      lonMiddle/=4;
+      if(lonMax-lonMin>=350){
+        if(lonMiddle>0){
+          for(int j=0;j<4;j++)if(lons[j]<lonMiddle)lons[j]+=360;
+        }else{
+          for(int j=0;j<4;j++)if(lons[j]>lonMiddle)lons[j]-=360;
         }
       }
-      //vals[0]=10;
+      
       vals[1]=vals[0];
       vals[2]=vals[0];
       vals[3]=vals[0];
       int dlons[4],dlats[4];
       bool projectionIsOk = true;
       if(tileHasNoData==false){
-        if(tileIsTooLarge==false){
-          for(int j=0;j<4;j++){
-            if(projectionRequired){
-              if(imageWarper.reprojfromLatLon(lons[j],lats[j])!=0)projectionIsOk = false;
-            }
-            dlons[j]=int((lons[j]-offsetX)/cellSizeX);
-            dlats[j]=int((lats[j]-offsetY)/cellSizeY);
+        for(int j=0;j<4;j++){
+          if(projectionRequired){
+            if(imageWarper.reprojfromLatLon(lons[j],lats[j])!=0)projectionIsOk = false;
           }
-          if(projectionIsOk){
-            fillQuadGouraud(sdata, vals, dataSource->dWidth,dataSource->dHeight, dlons,dlats);
-          }
+          dlons[j]=int((lons[j]-offsetX)/cellSizeX);
+          dlats[j]=int((lats[j]-offsetY)/cellSizeY);
+        }
+        if(projectionIsOk){
+          fillQuadGouraud(sdata, vals, dataSource->dWidth,dataSource->dHeight, dlons,dlats);
         }
       }
     }
-   
+    
     imageWarper.closereproj();
-   
+    
   }
   #ifdef CCONVERTADAGUCVECTOR_DEBUG
   CDBDebug("/convertADAGUCVectorData");
