@@ -1146,9 +1146,9 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource,CServerParams *
       ogcDim->netCDFDimName.copy("none");
     }
     
-  for(size_t j=0;j<dataSource->requiredDims.size();j++){
-    CDBDebug("dataSource->requiredDims[%d] = [%s]",j, dataSource->requiredDims[j]->value.c_str());
-  }
+//   for(size_t j=0;j<dataSource->requiredDims.size();j++){
+//     CDBDebug("dataSource->requiredDims[%d] = [%s]",j, dataSource->requiredDims[j]->value.c_str());
+//   }
   return 0;
 }
 
