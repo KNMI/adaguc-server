@@ -24,8 +24,8 @@
  * 
  ******************************************************************************/
 
-#define CREQUEST_DEBUG
-#define MEASURETIME
+// #define CREQUEST_DEBUG
+// #define MEASURETIME
 
 #include "CRequest.h"
 #include "COpenDAPHandler.h"
