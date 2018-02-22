@@ -33,7 +33,7 @@ const char *CConvertADAGUCVector::className = "CConvertADAGUCVector";
 /**
  * Checks if the format of this file corresponds to the ADAGUC Vector format.
  */
-bool isADAGUCVectorFormat (CDFObject *cdfObject) {
+bool isADAGUCVectorFormat(CDFObject *cdfObject) {
   try {
     cdfObject->getDimension("nv");
     cdfObject->getDimension("time");
@@ -54,7 +54,7 @@ bool isADAGUCVectorFormat (CDFObject *cdfObject) {
  */
 int CConvertADAGUCVector::convertADAGUCVectorHeader(CDFObject *cdfObject) {
   //Check whether this is really an adaguc file
-  if (!isADAGUCVectorFormat(cdfObject)) {
+  if(!isADAGUCVectorFormat(cdfObject)) {
     return 1;
   }
 
@@ -140,7 +140,7 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
   #endif
   CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
 
-  if (!isADAGUCVectorFormat(cdfObject)) {
+  if(!isADAGUCVectorFormat(cdfObject)) {
     return 1;
   }
 
@@ -359,43 +359,41 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
 
     /* Read time units and create ctime object */
     CTime obsTime;
-    if (obsTime.init(origTimeVar)!=0){
+    if(obsTime.init(origTimeVar) != 0) {
       CDBError("Unable to initialize time");
     } else {
       /* Read time data */
       double tfill = -1;
-      try{
-        origTimeVar->getAttribute("_FillValue")->getData(&tfill,1);
-      }catch(int){
+      try {
+        origTimeVar->getAttribute("_FillValue")->getData(&tfill, 1);
+      } catch(int) {
       }
-      if(origTimeVar->readData(CDF_DOUBLE)!=0){
+      if(origTimeVar->readData(CDF_DOUBLE) != 0) {
         CDBError("Unable to read time variable");
 
-      }else{
-        timeData = (double*)origTimeVar->data;
+      } else {
+        timeData = (double *) origTimeVar->data;
 
         /* Find timerange */
         CT::string timeStringFromURL = "";
-        for(size_t j=0;j<dataSource->requiredDims.size();j++){
+        for(size_t j = 0; j < dataSource->requiredDims.size(); j++) {
           CDBDebug("%s", dataSource->requiredDims[j]->name.c_str());
-          if(dataSource->requiredDims[j]->name.equals("time")){
+          if(dataSource->requiredDims[j]->name.equals("time")) {
             timeStringFromURL = dataSource->requiredDims[j]->value.c_str();
           }
         }
         CDBDebug("timeStringFromURL = %s", timeStringFromURL.c_str());
         std::vector<CT::string> timeStrings = timeStringFromURL.splitToStack("/");
-        if(timeStrings.size()==2){
-          timeNotLowerThan = obsTime.dateToOffset( obsTime.freeDateStringToDate(timeStrings[0].c_str()));
-          timeNotMoreThan = obsTime.dateToOffset( obsTime.freeDateStringToDate(timeStrings[1].c_str()));
+        if(timeStrings.size() == 2) {
+          timeNotLowerThan = obsTime.dateToOffset(obsTime.freeDateStringToDate(timeStrings[0].c_str()));
+          timeNotMoreThan = obsTime.dateToOffset(obsTime.freeDateStringToDate(timeStrings[1].c_str()));
         }
       }
     }
 
 
-
-
     for(int timeNr = 0; timeNr < numTimes; timeNr++) {
-      if(timeData != NULL && timeNotLowerThan!=timeNotMoreThan) {
+      if(timeData != NULL && timeNotLowerThan != timeNotMoreThan) {
         double currentTimeValue = timeData[timeNr];
         if(currentTimeValue < timeNotLowerThan || currentTimeValue > timeNotMoreThan) continue;
       }
@@ -422,27 +420,39 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
       
       bool tileHasNoData = false;
       
-      float lonMin,lonMax,lonMiddle=0;
-      for(int j=0;j<4;j++){
+      float lonMin, lonMax, lonMiddle = 0;
+      for(int j = 0; j < 4; j++) {
         float lon = lons[j];
-        if(j==0){lonMin=lon;lonMax=lon;}else{
-          if(lon<lonMin)lonMin=lon;
-          if(lon>lonMax)lonMax=lon;
+        if(j == 0) {
+          lonMin = lon;
+          lonMax = lon;
+        } else {
+          if(lon < lonMin)lonMin = lon;
+          if(lon > lonMax)lonMax = lon;
         }
-        lonMiddle+=lon;
+        lonMiddle += lon;
         float lat = lats[j];
         float val = vals[j];
-        if(val==fill||val==INFINITY||val==NAN||val==-INFINITY||!(val==val)){tileHasNoData=true;break;}
-        if(lat==fillValueLat||lat==INFINITY||lat==-INFINITY||!(lat==lat)){tileHasNoData=true;break;}
-        if(lon==fillValueLon||lon==INFINITY||lon==-INFINITY||!(lon==lon)){tileHasNoData=true;break;}
+        if(val == fill || val == INFINITY || val == NAN || val == -INFINITY || !(val == val)) {
+          tileHasNoData = true;
+          break;
+        }
+        if(lat == fillValueLat || lat == INFINITY || lat == -INFINITY || !(lat == lat)) {
+          tileHasNoData = true;
+          break;
+        }
+        if(lon == fillValueLon || lon == INFINITY || lon == -INFINITY || !(lon == lon)) {
+          tileHasNoData = true;
+          break;
+        }
 
       }
-      lonMiddle/=4;
-      if(lonMax-lonMin>=350){
-        if(lonMiddle>0){
-          for(int j=0;j<4;j++)if(lons[j]<lonMiddle)lons[j]+=360;
-        }else{
-          for(int j=0;j<4;j++)if(lons[j]>lonMiddle)lons[j]-=360;
+      lonMiddle /= 4;
+      if(lonMax - lonMin >= 350) {
+        if(lonMiddle > 0) {
+          for(int j = 0; j < 4; j++)if(lons[j] < lonMiddle)lons[j] += 360;
+        } else {
+          for(int j = 0; j < 4; j++)if(lons[j] > lonMiddle)lons[j] -= 360;
         }
       }
 
@@ -451,30 +461,34 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
       vals[3] = vals[0];
       int dlons[4], dlats[4];
       bool projectionIsOk = true;
-      if(tileHasNoData==false){
-         int dlonMin,dlonMax,dlatMin,dlatMax;
+      if(tileHasNoData == false) {
+        int dlonMin, dlonMax, dlatMin, dlatMax;
 
-        for(int j=0;j<4;j++){
-          if(projectionRequired){
-            if(imageWarper.reprojfromLatLon(lons[j],lats[j])!=0)projectionIsOk = false;
+        for(int j = 0; j < 4; j++) {
+          if(projectionRequired) {
+            if(imageWarper.reprojfromLatLon(lons[j], lats[j]) != 0)projectionIsOk = false;
           }
-          dlons[j]=int((lons[j]-offsetX)/cellSizeX);
-          dlats[j]=int((lats[j]-offsetY)/cellSizeY);
+          dlons[j] = int((lons[j] - offsetX) / cellSizeX);
+          dlats[j] = int((lats[j] - offsetY) / cellSizeY);
           int lon = dlons[j];
           int lat = dlats[j];
-          if(j==0){dlonMin=lon;dlonMax=lon;dlatMin=lat;dlatMax=lat;}else{
-            if(lon<dlonMin)dlonMin=lon;
-            if(lon>dlonMax)dlonMax=lon;
-            if(lat<dlatMin)dlatMin=lat;
-            if(lat>dlatMax)dlatMax=lat;
+          if(j == 0) {
+            dlonMin = lon;
+            dlonMax = lon;
+            dlatMin = lat;
+            dlatMax = lat;
+          } else {
+            if(lon < dlonMin)dlonMin = lon;
+            if(lon > dlonMax)dlonMax = lon;
+            if(lat < dlatMin)dlatMin = lat;
+            if(lat > dlatMax)dlatMax = lat;
           }
         }
-        if(dlonMax - dlonMin <256 &&
-          dlatMax - dlatMin <256 )
-        {
-        if(projectionIsOk){
-          fillQuadGouraud(sdata, vals, dataSource->dWidth,dataSource->dHeight, dlons,dlats);
-        }
+        if(dlonMax - dlonMin < 256 &&
+           dlatMax - dlatMin < 256) {
+          if(projectionIsOk) {
+            fillQuadGouraud(sdata, vals, dataSource->dWidth, dataSource->dHeight, dlons, dlats);
+          }
         }
       }
     }
