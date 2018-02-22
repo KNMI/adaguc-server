@@ -24,8 +24,8 @@
  * 
  ******************************************************************************/
 
- //#define CREQUEST_DEBUG
-//#define MEASURETIME
+// #define CREQUEST_DEBUG
+// #define MEASURETIME
 
 #include "CRequest.h"
 #include "COpenDAPHandler.h"
@@ -1109,7 +1109,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource,CServerParams *
         delete maxStore;
       }
     }        
-  
+   
     #ifdef CREQUEST_DEBUG
     CDBDebug("Fix found time values:");
     #endif
@@ -1136,6 +1136,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource,CServerParams *
     return 2;
   }
   
+
     if(dataSource->requiredDims.size()==0){
       CDBDebug("Required dims is still zero, add none now");
       COGCDims *ogcDim = new COGCDims();
@@ -1144,6 +1145,10 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource,CServerParams *
       ogcDim->value.copy("0");
       ogcDim->netCDFDimName.copy("none");
     }
+    
+//   for(size_t j=0;j<dataSource->requiredDims.size();j++){
+//     CDBDebug("dataSource->requiredDims[%d] = [%s]",j, dataSource->requiredDims[j]->value.c_str());
+//   }
   return 0;
 }
 

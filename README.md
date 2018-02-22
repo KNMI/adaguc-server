@@ -4,6 +4,23 @@ ADAGUC is a geographical information system to visualize netCDF files via the we
 See https://dev.knmi.nl/projects/adagucserver/wiki for details
 
 # Docker for adaguc-server:
+
+A docker image for adaguc-server is available from dockerhub. This image enables you to start quickly with adaguc-server, everything is pre-installed. You can mount your own directories from your workstation inside the docker container, allowing you to serve and configure your own data. This docker image can be used in production environments as well.
+
+## Directories and data
+
+The most important directories are:
+* adaguc-data: Put your NetCDF, HDF5, GeoJSON or PNG files inside this directory, these are referenced by your dataset configurations.
+* adaguc-datasets: These are your dataset configuration files, defining a service. These are small XML files allowing you to customize the styling and aggregation of datafiles. See satellite imagery example below. It is good practice to configure datasets to read data from the /data/adaguc-data folder, which can be mounted from your host machine. This ensures that dataset configurations will work on different environments where paths to the data can differ. Datasets are referenced in the WMS service by the dataset=<Your datasetname> keyword.
+* adaguc-autowms: Put your files here you want to have visualised automatically without any scanning.
+* adagucdb: Persistent place for the database files
+* adaguc-logs: Logfiles are placed here, you can inspect these if something does not work as expected.
+
+## Serve on another address and/or port
+
+By default adaguc-server docker is set to run on port 8090 and to serve content locally on http://127.0.0.1:8090/, configured via settings given to the docker run command. If you need to run adaguc-server on a different address and/or port, you can configure this with the EXTERNALADDRESS and port settings. The EXTERNALADDRESS setting is used by the WMS to describe the OnlineResource element in the WMS GetCapabilities document. The viewer needs this information to point correctly to WMS getmap requests. It is good practice to set the EXTERNALADDRESS to your systems publicy accessible name and port. Inside the docker container adaguc runs on port 8080, that is why the port mapping in the docker run command is set to 8080.
+
+## To start with the docker image, do:
 ```
 docker pull openearth/adaguc-server # Or build latest docker from this repo yourself with "docker build -t adaguc-server ."
 
@@ -24,6 +41,10 @@ docker run \
   --name my-adaguc-server \
   -it openearth/adaguc-server 
 
+```
+If the container does not want to run because the container name is aready in use, please do:
+```
+docker rm my-adaguc-server
 ```
 
 # Visualize a NetCDF file via autowms
@@ -55,7 +76,7 @@ http://localhost:8090/adaguc-services/adagucserver?service=wms&request=getcapabi
 
 # Aggregation of hi-res satellite imagery
 
-Download a sequence of satellite data:
+First download a sequence of satellite data from opendap.knmi.nla:
 ```
 cd $HOME/adaguc-server-docker/adaguc-data/
 wget -nc -r -l2 -A.h5   -I /knmi/thredds/fileServer/,/knmi/thredds/catalog/ 'http://opendap.knmi.nl/knmi/thredds/catalog/ADAGUC/testsets/projectedgrids/meteosat/catalog.html'
