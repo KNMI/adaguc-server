@@ -29,6 +29,8 @@
 class CConvertADAGUCVector{
   private:
   DEF_ERRORFUNCTION();
+  static bool createVirtualTimeVariable(CDFObject *cdfObject);
+  static bool createVirtualGeoVariables(CDFObject *cdfObject);
   public:
   static int convertADAGUCVectorHeader(CDFObject *cdfObject);
   static int convertADAGUCVectorData(CDataSource *dataSource,int mode);
