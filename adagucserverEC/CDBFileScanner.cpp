@@ -1059,7 +1059,6 @@ std::vector<std::string> CDBFileScanner::searchFileNames(const char * path,CT::s
       CDBDebug("Reading directory %s with filter %s",filePath.c_str(),fileFilterExpr.c_str()); 
       
       CDirReader * dirReader = CCachedDirReader::getDirReader(filePath.c_str(),fileFilterExpr.c_str());
-      CDBDebug("OK, %d",dirReader);
       dirReader->listDirRecursive(filePath.c_str(),fileFilterExpr.c_str());
       std::vector<std::string> fileList;
       
@@ -1069,9 +1068,8 @@ std::vector<std::string> CDBFileScanner::searchFileNames(const char * path,CT::s
           fileList.push_back(dirReader->fileList[j].c_str());
         }
       }
-      #ifdef CDBFILESCANNER_DEBUG
-        CDBDebug("Found %d file(s)",int(dirReader->fileList.size()));
-      #endif
+        
+      CDBDebug("Found %d file(s)",int(dirReader->fileList.size()));
       return fileList;
     }catch(const char *msg){
       CDBDebug("Directory %s does not exist, silently skipping...",filePath.c_str());
