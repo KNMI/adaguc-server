@@ -37,7 +37,11 @@ bool isADAGUCVectorFormat (CDFObject *cdfObject) {
   try {
     cdfObject->getDimension("nv");
     cdfObject->getDimension("time");
+    cdfObject->getVariable("time");
     cdfObject->getVariable("product");
+
+    // TODO: Geen X en Y variabelen!
+
   } catch(int e) {
     return false;
   }
@@ -56,124 +60,10 @@ int CConvertADAGUCVector::convertADAGUCVectorHeader(CDFObject *cdfObject) {
 
   CDBDebug("Using CConvertADAGUCVector.h");
 
-  bool hasTimeData = false;
-  
-  //Is there a time variable
-  CDF::Variable *origT = cdfObject->getVariableNE("time");
-  if(origT != NULL) {
-    hasTimeData = true;
+  // Create virtual X, Y and T variables.
+  createVirtualTimeVariable(cdfObject);
+  createVirtualGeoVariables(cdfObject);
 
-    //Create a new time dimension for the new 2D fields.
-    CDF::Dimension *dimT = new CDF::Dimension();
-    dimT->name = "time2D";
-    dimT->setSize(1);
-    cdfObject->addDimension(dimT);
-    
-    //Create a new time variable for the new 2D fields.
-    CDF::Variable *varT = new CDF::Variable();
-    varT->setType(CDF_DOUBLE);
-    varT->name.copy(dimT->name.c_str());
-    varT->setAttributeText("standard_name", "time");
-    varT->setAttributeText("long_name", "time");
-    varT->dimensionlinks.push_back(dimT);
-    CDF::allocateData(CDF_DOUBLE, &varT->data, dimT->length);
-    cdfObject->addVariable(varT);
-    
-    //Detect time from the netcdf data and copy the same units from the original time variable
-    try {
-      #ifdef CCONVERTADAGUCVECTOR_DEBUG
-      CDBDebug("Start reading time dim");
-      #endif
-      varT->setAttributeText("units", origT->getAttribute("units")->toString().c_str());
-      if(origT->readData(CDF_DOUBLE) != 0) {
-        CDBError("Unable to read time variable");
-      } else {
-        #ifdef CCONVERTADAGUCVECTOR_DEBUG
-        CDBDebug("Done reading time dim");
-        #endif
-
-        //Loop through the time variable and detect the earliest time
-        double tfill;
-        bool hastfill = false;
-        try {
-          origT->getAttribute("_FillValue")->getData(&tfill, 1);
-          hastfill = true;
-        } catch(int e) { }
-        double *tdata = ((double *) origT->data);
-        double firstTimeValue = tdata[0];
-        size_t tsize = origT->getSize();
-        if(hastfill == true) {
-          for(size_t j = 0; j < tsize; j++) {
-            if(tdata[j] != tfill) {
-              firstTimeValue = tdata[j];
-            }
-          }
-        }
-        #ifdef CCONVERTADAGUCVECTOR_DEBUG
-        CDBDebug("firstTimeValue  = %f",firstTimeValue );
-        #endif
-        //Set the time data
-        varT->setData(CDF_DOUBLE, &firstTimeValue, 1);
-      }
-    } catch(int e) { }
-  }
-
-  //Standard bounding box of adaguc data is worldwide
-  double dfBBOX[] = {-180, -90, 180, 90};
-  
-  //Default size of adaguc 2dField is 2x2
-  int width = 2;
-  int height = 2;
-  
-  double cellSizeX = (dfBBOX[2] - dfBBOX[0]) / double(width);
-  double cellSizeY = (dfBBOX[3] - dfBBOX[1]) / double(height);
-  double offsetX = dfBBOX[0];
-  double offsetY = dfBBOX[1];
-  
-  //Add geo variables, only if they are not there already
-  CDF::Dimension *dimX = cdfObject->getDimensionNE("x");
-  CDF::Dimension *dimY = cdfObject->getDimensionNE("y");
-  CDF::Variable *varX = cdfObject->getVariableNE("x");
-  CDF::Variable *varY = cdfObject->getVariableNE("y");
-  if(dimX == NULL || dimY == NULL || varX == NULL || varY == NULL) {
-    //If not available, create new dimensions and variables (X,Y,T)
-    //For x 
-    dimX = new CDF::Dimension();
-    dimX->name = "x";
-    dimX->setSize(width);
-    cdfObject->addDimension(dimX);
-    varX = new CDF::Variable();
-    varX->setType(CDF_DOUBLE);
-    varX->name.copy("x");
-    varX->isDimension = true;
-    varX->dimensionlinks.push_back(dimX);
-    cdfObject->addVariable(varX);
-    CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
-
-    //For y 
-    dimY = new CDF::Dimension();
-    dimY->name = "y";
-    dimY->setSize(height);
-    cdfObject->addDimension(dimY);
-    varY = new CDF::Variable();
-    varY->setType(CDF_DOUBLE);
-    varY->name.copy("y");
-    varY->isDimension = true;
-    varY->dimensionlinks.push_back(dimY);
-    cdfObject->addVariable(varY);
-    CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
-    
-    //Fill in the X and Y dimensions with the array of coordinates
-    for(size_t j = 0; j < dimX->length; j++) {
-      double x = offsetX + double(j) * cellSizeX + cellSizeX / 2;
-      ((double *) varX->data)[j] = x;
-    }
-    for(size_t j = 0; j < dimY->length; j++) {
-      double y = offsetY + double(j) * cellSizeY + cellSizeY / 2;
-      ((double *) varY->data)[j] = y;
-    }
-  }
-  
   //Make a list of variables which will be available as 2D fields  
   CT::StackList <CT::string> varsToConvert;
   for(size_t v = 0; v < cdfObject->variables.size(); v++) {
@@ -199,7 +89,7 @@ int CConvertADAGUCVector::convertADAGUCVectorHeader(CDFObject *cdfObject) {
     }
   }
   
-  //Create the new 2D field variables based on the swath variables
+  //Create the new 2D field variables based on the swath variables.
   for(size_t v = 0; v < varsToConvert.size(); v++) {
     CDF::Variable *swathVar = cdfObject->getVariable(varsToConvert[v].c_str());
     
@@ -210,15 +100,11 @@ int CConvertADAGUCVector::convertADAGUCVectorHeader(CDFObject *cdfObject) {
     CDF::Variable *new2DVar = new CDF::Variable();
     cdfObject->addVariable(new2DVar);
     
-    //Assign X,Y,T dims 
-    if(hasTimeData) {
-      CDF::Variable *newTimeVar = cdfObject->getVariableNE("time2D");
-      if(newTimeVar != NULL) {
-        new2DVar->dimensionlinks.push_back(newTimeVar->dimensionlinks[0]);
-      }
-    }
-    new2DVar->dimensionlinks.push_back(dimY);
-    new2DVar->dimensionlinks.push_back(dimX);
+    //Assign X,Y,T dims
+    CDF::Variable *newTimeVar = cdfObject->getVariableNE("time2D");
+    new2DVar->dimensionlinks.push_back(newTimeVar->dimensionlinks[0]);
+    new2DVar->dimensionlinks.push_back(cdfObject->getDimension("y"));
+    new2DVar->dimensionlinks.push_back(cdfObject->getDimension("x"));
     
     new2DVar->setType(swathVar->getType());
     new2DVar->name = swathVar->name.c_str();
@@ -534,4 +420,125 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
   CDBDebug("/convertADAGUCVectorData");
   #endif
   return 0;
+}
+
+/**
+ * Create virtual time variable.
+ * TODO: Currently mostly duplicate code with CConvertASCAT --> Refactor to general method.
+ */
+bool CConvertADAGUCVector::createVirtualTimeVariable(CDFObject *cdfObject) {
+
+  //Is there a time variable
+  CDF::Variable *origT = cdfObject->getVariableNE("time");
+  if(origT != NULL) {
+
+    //Create a new time dimension for the new 2D fields.
+    CDF::Dimension *dimT = new CDF::Dimension();
+    dimT->name = "time2D";
+    dimT->setSize(1);
+    cdfObject->addDimension(dimT);
+
+    //Create a new time variable for the new 2D fields.
+    CDF::Variable *varT = new CDF::Variable();
+    varT->setType(CDF_DOUBLE);
+    varT->name.copy(dimT->name.c_str());
+    varT->setAttributeText("standard_name", "time");
+    varT->setAttributeText("long_name", "time");
+    varT->dimensionlinks.push_back(dimT);
+    CDF::allocateData(CDF_DOUBLE, &varT->data, dimT->length);
+    cdfObject->addVariable(varT);
+
+    //Detect time from the netcdf data and copy the same units from the original time variable
+    try {
+      #ifdef CCONVERTADAGUCVECTOR_DEBUG
+      CDBDebug("Start reading time dim");
+      #endif
+      varT->setAttributeText("units", origT->getAttribute("units")->toString().c_str());
+      if(origT->readData(CDF_DOUBLE) != 0) {
+        CDBError("Unable to read time variable");
+      } else {
+        #ifdef CCONVERTADAGUCVECTOR_DEBUG
+        CDBDebug("Done reading time dim");
+        #endif
+
+        //Loop through the time variable and detect the earliest time
+        double tfill;
+        bool hastfill = false;
+        try {
+          origT->getAttribute("_FillValue")->getData(&tfill, 1);
+          hastfill = true;
+        } catch(int e) { }
+        double *tdata = ((double *) origT->data);
+        double firstTimeValue = tdata[0];
+        size_t tsize = origT->getSize();
+        if(hastfill == true) {
+          for(size_t j = 0; j < tsize; j++) {
+            if(tdata[j] != tfill) {
+              firstTimeValue = tdata[j];
+            }
+          }
+        }
+        #ifdef CCONVERTADAGUCVECTOR_DEBUG
+        CDBDebug("firstTimeValue  = %f",firstTimeValue );
+        #endif
+        //Set the time data
+        varT->setData(CDF_DOUBLE, &firstTimeValue, 1);
+      }
+    } catch(int e) { }
+  }
+}
+
+/**
+ * Creates the virtual X and Y variables for the headers.
+ */
+bool CConvertADAGUCVector::createVirtualGeoVariables(CDFObject *cdfObject) {
+
+  //Standard bounding box of adaguc data is worldwide.
+  double dfBBOX[] = {-180, -90, 180, 90};
+
+  //Default size of adaguc 2dField is 2x2
+  int width = 2;
+  int height = 2;
+
+  double cellSizeX = (dfBBOX[2] - dfBBOX[0]) / double(width);
+  double cellSizeY = (dfBBOX[3] - dfBBOX[1]) / double(height);
+  double offsetX = dfBBOX[0];
+  double offsetY = dfBBOX[1];
+
+  // Create the x and y variables.
+  //For x
+  CDF::Dimension *dimX = new CDF::Dimension();
+  dimX->name = "x";
+  dimX->setSize(width);
+  cdfObject->addDimension(dimX);
+  CDF::Variable *varX = new CDF::Variable();
+  varX->setType(CDF_DOUBLE);
+  varX->name.copy("x");
+  varX->isDimension = true;
+  varX->dimensionlinks.push_back(dimX);
+  cdfObject->addVariable(varX);
+  CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
+
+  //For y
+  CDF::Dimension *dimY = new CDF::Dimension();
+  dimY->name = "y";
+  dimY->setSize(height);
+  cdfObject->addDimension(dimY);
+  CDF::Variable *varY = new CDF::Variable();
+  varY->setType(CDF_DOUBLE);
+  varY->name.copy("y");
+  varY->isDimension = true;
+  varY->dimensionlinks.push_back(dimY);
+  cdfObject->addVariable(varY);
+  CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+
+  //Fill in the X and Y dimensions with the array of coordinates
+  for(size_t j = 0; j < dimX->length; j++) {
+    double x = offsetX + double(j) * cellSizeX + cellSizeX / 2;
+    ((double *) varX->data)[j] = x;
+  }
+  for(size_t j = 0; j < dimY->length; j++) {
+    double y = offsetY + double(j) * cellSizeY + cellSizeY / 2;
+    ((double *) varY->data)[j] = y;
+  }
 }
