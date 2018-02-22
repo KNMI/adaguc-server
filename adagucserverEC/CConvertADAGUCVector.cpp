@@ -239,10 +239,8 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
   //Width needs to be at least 2 in this case.
   if(dataSource->dWidth == 1)dataSource->dWidth = 2;
   if(dataSource->dHeight == 1)dataSource->dHeight = 2;
-  double cellSizeX =
-      (dataSource->srvParams->Geo->dfBBOX[2] - dataSource->srvParams->Geo->dfBBOX[0]) / double(dataSource->dWidth);
-  double cellSizeY =
-      (dataSource->srvParams->Geo->dfBBOX[3] - dataSource->srvParams->Geo->dfBBOX[1]) / double(dataSource->dHeight);
+  double cellSizeX = (dataSource->srvParams->Geo->dfBBOX[2] - dataSource->srvParams->Geo->dfBBOX[0]) / double(dataSource->dWidth);
+  double cellSizeY = (dataSource->srvParams->Geo->dfBBOX[3] - dataSource->srvParams->Geo->dfBBOX[1]) / double(dataSource->dHeight);
   double offsetX = dataSource->srvParams->Geo->dfBBOX[0];
   double offsetY = dataSource->srvParams->Geo->dfBBOX[1];
 
@@ -308,7 +306,7 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
     CDBDebug("numTimes %d ",numTimes);
     #endif
     
-    
+
     CImageWarper imageWarper;
     bool projectionRequired = false;
     if(dataSource->srvParams->Geo->CRS.length() > 0) {
@@ -348,8 +346,60 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
     }
 
     float *swathData = (float *) swathVar->data;
-    
+    float fillValueLat = fill;
+    float fillValueLon = fill;
+
+
+    /* Get time variable */
+    double *timeData = NULL;
+    double timeNotLowerThan = -1, timeNotMoreThan = -1;;
+
+    CDF::Variable *origTimeVar = cdfObject->getVariableNE("time");
+
+
+    /* Read time units and create ctime object */
+    CTime obsTime;
+    if (obsTime.init(origTimeVar)!=0){
+      CDBError("Unable to initialize time");
+    } else {
+      /* Read time data */
+      double tfill = -1;
+      try{
+        origTimeVar->getAttribute("_FillValue")->getData(&tfill,1);
+      }catch(int){
+      }
+      if(origTimeVar->readData(CDF_DOUBLE)!=0){
+        CDBError("Unable to read time variable");
+
+      }else{
+        timeData = (double*)origTimeVar->data;
+
+        /* Find timerange */
+        CT::string timeStringFromURL = "";
+        for(size_t j=0;j<dataSource->requiredDims.size();j++){
+          CDBDebug("%s", dataSource->requiredDims[j]->name.c_str());
+          if(dataSource->requiredDims[j]->name.equals("time")){
+            timeStringFromURL = dataSource->requiredDims[j]->value.c_str();
+          }
+        }
+        CDBDebug("timeStringFromURL = %s", timeStringFromURL.c_str());
+        std::vector<CT::string> timeStrings = timeStringFromURL.splitToStack("/");
+        if(timeStrings.size()==2){
+          timeNotLowerThan = obsTime.dateToOffset( obsTime.freeDateStringToDate(timeStrings[0].c_str()));
+          timeNotMoreThan = obsTime.dateToOffset( obsTime.freeDateStringToDate(timeStrings[1].c_str()));
+        }
+      }
+    }
+
+
+
+
     for(int timeNr = 0; timeNr < numTimes; timeNr++) {
+      if(timeData != NULL && timeNotLowerThan!=timeNotMoreThan) {
+        double currentTimeValue = timeData[timeNr];
+        if(currentTimeValue < timeNotLowerThan || currentTimeValue > timeNotMoreThan) continue;
+      }
+
       int pSwath = timeNr;
       
       double lons[4], lats[4];
@@ -372,43 +422,59 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
       
       bool tileHasNoData = false;
       
-      bool tileIsTooLarge = false;
-      bool moveTile = false;
-      
-      for(int j = 0; j < 4; j++) {
-        if(lons[j] == fill) {
-          tileIsTooLarge = true;
-          break;
+      float lonMin,lonMax,lonMiddle=0;
+      for(int j=0;j<4;j++){
+        float lon = lons[j];
+        if(j==0){lonMin=lon;lonMax=lon;}else{
+          if(lon<lonMin)lonMin=lon;
+          if(lon>lonMax)lonMax=lon;
         }
-        if(lons[j] > 185)moveTile = true;
+        lonMiddle+=lon;
+        float lat = lats[j];
+        float val = vals[j];
+        if(val==fill||val==INFINITY||val==NAN||val==-INFINITY||!(val==val)){tileHasNoData=true;break;}
+        if(lat==fillValueLat||lat==INFINITY||lat==-INFINITY||!(lat==lat)){tileHasNoData=true;break;}
+        if(lon==fillValueLon||lon==INFINITY||lon==-INFINITY||!(lon==lon)){tileHasNoData=true;break;}
+
+      }
+      lonMiddle/=4;
+      if(lonMax-lonMin>=350){
+        if(lonMiddle>0){
+          for(int j=0;j<4;j++)if(lons[j]<lonMiddle)lons[j]+=360;
+        }else{
+          for(int j=0;j<4;j++)if(lons[j]>lonMiddle)lons[j]-=360;
+        }
       }
 
-      if(tileIsTooLarge == false) {
-        for(int j = 0; j < 4; j++) {
-          if(moveTile == true)lons[j] -= 360;
-          if(lons[j] < -280)lons[j] += 360;
-
-          if(vals[j] == fill)tileHasNoData = true;
-        }
-      }
-      //vals[0]=10;
       vals[1] = vals[0];
       vals[2] = vals[0];
       vals[3] = vals[0];
       int dlons[4], dlats[4];
       bool projectionIsOk = true;
-      if(tileHasNoData == false) {
-        if(tileIsTooLarge == false) {
-          for(int j = 0; j < 4; j++) {
-            if(projectionRequired) {
-              if(imageWarper.reprojfromLatLon(lons[j], lats[j]) != 0)projectionIsOk = false;
-            }
-            dlons[j] = int((lons[j] - offsetX) / cellSizeX);
-            dlats[j] = int((lats[j] - offsetY) / cellSizeY);
+      if(tileHasNoData==false){
+         int dlonMin,dlonMax,dlatMin,dlatMax;
+
+        for(int j=0;j<4;j++){
+          if(projectionRequired){
+            if(imageWarper.reprojfromLatLon(lons[j],lats[j])!=0)projectionIsOk = false;
           }
-          if(projectionIsOk) {
-            fillQuadGouraud(sdata, vals, dataSource->dWidth, dataSource->dHeight, dlons, dlats);
+          dlons[j]=int((lons[j]-offsetX)/cellSizeX);
+          dlats[j]=int((lats[j]-offsetY)/cellSizeY);
+          int lon = dlons[j];
+          int lat = dlats[j];
+          if(j==0){dlonMin=lon;dlonMax=lon;dlatMin=lat;dlatMax=lat;}else{
+            if(lon<dlonMin)dlonMin=lon;
+            if(lon>dlonMax)dlonMax=lon;
+            if(lat<dlatMin)dlatMin=lat;
+            if(lat>dlatMax)dlatMax=lat;
           }
+        }
+        if(dlonMax - dlonMin <256 &&
+          dlatMax - dlatMin <256 )
+        {
+        if(projectionIsOk){
+          fillQuadGouraud(sdata, vals, dataSource->dWidth,dataSource->dHeight, dlons,dlats);
+        }
         }
       }
     }
