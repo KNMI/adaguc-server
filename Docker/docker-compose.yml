@@ -8,7 +8,8 @@ services:
             - "8091:80"
         environment:
             - "LOCAL_ADAGUCSERVER_ADDR=http://localhost:8090/" # Should be same as adaguc-server's EXTERNALADDRESS
-            - "REMOTE_ADAGUCSERVER_ADDR=http://adaguc-server:8080/"
+            - "REMOTE_ADAGUCSERVER_ADDR=http://adaguc-server:8080/" # Do not change this within the docker-compose environment
+            - "ADAGUCSERVICES_AUTOWMS=http://localhost:8090/adaguc-services/autowms?" 
     adaguc-server:
         image: openearth/adaguc-server
         container_name: adaguc-server
