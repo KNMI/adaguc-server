@@ -179,11 +179,16 @@ CT::string CDirReader::makeCleanPath(const char *_path){
 //     appendSlash = true;
 //   }
 
-  /* Check if this should start with a slash or not */
+  int startAtIndex = 0;
   if(path.c_str()[0]=='/'){
+    /* Check if this should start with a slash or not */
     path.copy("/");
-  }else path.copy("");
-  
+  } else if(path.indexOf("://")!=-1){
+    /*Check if this should start with the original prefix"*/
+    CT::string leftPart = path.splitToStack("://")[0] + "://";
+    path.copy(leftPart);
+    startAtIndex = 1;
+  } else path.copy("");
   
   std::vector<CT::string> parts2;
   for(size_t j=0;j<parts.size();j++){
@@ -192,7 +197,7 @@ CT::string CDirReader::makeCleanPath(const char *_path){
     }
   }
   
-  for(size_t j=0;j<parts2.size();j++){
+  for(size_t j=startAtIndex;j<parts2.size();j++){
     if(parts2[j].length()>0){
       path.concat(&(parts2[j]));
       if(j+1<parts2.size()){
