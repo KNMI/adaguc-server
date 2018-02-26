@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <adaguc-services>
-  <external-home-url>${ENV.EXTERNALADDRESS}</external-home-url>
+  <external-home-url>{ENV.EXTERNALADDRESS}/adaguc-services/</external-home-url>
   <userworkspace>/adaguc/userworkspace</userworkspace>
   <basedir>/adaguc/basedir</basedir>
   <server>
@@ -17,4 +17,9 @@
     <export>ADAGUC_FONT=/adaguc/adaguc-server-master/data/fonts/FreeSans.ttf</export>
     <export>ADAGUC_ONLINERESOURCE={ENV.EXTERNALADDRESS}/adaguc-services/adagucserver?</export>
   </adaguc-server>
+  <autowms>
+    <enabled>true</enabled>
+    <autowmspath>/data/adaguc-autowms/</autowmspath>
+    <datasetpath>/data/adaguc-datasets/</datasetpath>
+  </autowms>
 </adaguc-services>
