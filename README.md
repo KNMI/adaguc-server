@@ -27,10 +27,11 @@ docker pull openearth/adaguc-server # Or build latest docker from this repo your
 mkdir -p $HOME/adaguc-server-docker/adaguc-data
 mkdir -p $HOME/adaguc-server-docker/adaguc-datasets
 mkdir -p $HOME/adaguc-server-docker/adaguc-autowms
-mkdir -p $HOME/adaguc-server-docker/adagucdb && chmod 777 $HOME/adaguc-server-docker/adagucdb
-mkdir -p $HOME/adaguc-server-docker/adaguc-logs && chmod 777 $HOME/adaguc-server-docker/adaguc-logs
+mkdir -p $HOME/adaguc-server-docker/adagucdb
+mkdir -p $HOME/adaguc-server-docker/adaguc-logs
 
 docker run \
+  -e PGUSERID=${UID} \
   -e EXTERNALADDRESS="http://127.0.0.1:8090/" \
   -p 8090:8080 \
   -v $HOME/adaguc-server-docker/adaguc-data:/data/adaguc-data \
@@ -167,10 +168,10 @@ docker pull openearth/adaguc-server
 mkdir -p $HOME/adaguc-server-docker/adaguc-data
 mkdir -p $HOME/adaguc-server-docker/adaguc-datasets
 mkdir -p $HOME/adaguc-server-docker/adaguc-autowms
-mkdir -p $HOME/adaguc-server-docker/adagucdb && chmod 777 $HOME/adaguc-server-docker/adagucdb
-mkdir -p $HOME/adaguc-server-docker/adaguc-logs && chmod 777 $HOME/adaguc-server-docker/adaguc-logs
+mkdir -p $HOME/adaguc-server-docker/adagucdb 
+mkdir -p $HOME/adaguc-server-docker/adaguc-logs
 
-docker-compose -f ./Docker/docker-compose.yml up 
+export UID && docker-compose -f ./Docker/docker-compose.yml up 
 ```
 The following services are now available:
 * viewer at http://localhost:8091/adaguc-viewer/ 

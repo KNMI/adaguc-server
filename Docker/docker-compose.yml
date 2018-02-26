@@ -23,6 +23,7 @@ services:
             - $HOME/adaguc-server-docker/adaguc-logs:/var/log/adaguc
         environment:
             - "EXTERNALADDRESS=http://localhost:8090/"
+            - "PGUSERID=$UID"
 
 #cd ./adaguc-server/
 #docker pull openearth/adaguc-viewer
@@ -35,7 +36,7 @@ services:
 #mkdir -p $HOME/adaguc-server-docker/adagucdb && chmod 777 $HOME/adaguc-server-docker/adagucdb
 #mkdir -p $HOME/adaguc-server-docker/adaguc-logs && chmod 777 $HOME/adaguc-server-docker/adaguc-logs
 
-# docker-compose -f ./Docker/docker-compose.yml up 
+# export UID && docker-compose -f ./Docker/docker-compose.yml up 
 # Go to http://localhost:8091/adaguc-viewer/ or http://localhost:8090/adaguc-services/wms.cgi? 
 
 # CTRL+C and docker-compose down # To stop 
