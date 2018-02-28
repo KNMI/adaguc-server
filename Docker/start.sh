@@ -11,19 +11,13 @@ fi
 echo "Using PGUSERID : ${PGUSERID}"
 useradd --shell /bin/bash -u ${PGUSERID} -o -c "" -m user
 export HOME=/home/user
-chmod 777 /var/run/postgresql/ && chown -R user: ${ADAGUCDB} && chmod 700 ${ADAGUCDB}
-chmod 777 /var/log/adaguc && runuser -l user -c "touch /var/log/adaguc/postgresql.log" && chmod 777 /var/log/adaguc/postgresql.log
-
-files=$(shopt -s nullglob dotglob; echo ${ADAGUCDB}/*)
-if (( ${#files} ))
+chmod 777 /var/run/postgresql/
+runuser -l user -c "touch /var/log/adaguc/postgresql.log"
+runuser -l user -c "chmod 777 /var/log/adaguc/postgresql.log"
+runuser -l user -c "chmod 700 ${ADAGUCDB}"
+dbexists=`runuser -l user -c "(ls ${ADAGUCDB}/postgresql.conf >> /dev/null 2>&1 && echo yes) || echo no"`
+if [ ${dbexists} == "no" ]
 then
-  echo "Re-using persistent postgresql database from ${ADAGUCDB}" && \
-  runuser -l user -c "pg_ctl -w -U user -D ${ADAGUCDB} -l /var/log/adaguc/postgresql.log start"
-  if [ $? -ne 0 ]
-  then
-  exit 1
-  fi
-else 
   echo "Initializing new postgresql database"
   #mkdir -p ${ADAGUCDB} && chmod 777 ${ADAGUCDB} && chown postgres: ${ADAGUCDB} && #TODO NOT NEEDED ANYMORE?
   runuser -l user -c "pg_ctl initdb -U user -w -D ${ADAGUCDB}" && \
@@ -33,6 +27,13 @@ else
   runuser -l user -c "psql -U user postgres -c \"ALTER USER adaguc PASSWORD 'adaguc';\"" && \
   runuser -l user -c "psql -U user postgres -c \"CREATE DATABASE adaguc;\""
   
+  if [ $? -ne 0 ]
+  then
+  exit 1
+  fi
+else 
+  echo "Re-using persistent postgresql database from ${ADAGUCDB}" && \
+  runuser -l user -c "pg_ctl -w -U user -D ${ADAGUCDB} -l /var/log/adaguc/postgresql.log start"
   if [ $? -ne 0 ]
   then
   exit 1
@@ -57,5 +58,8 @@ then
   echo "Unable to update baselayers with adaguc-server --updatedb"
   exit 1
 fi  
+
+echo "Start serving on ${EXTERNALADDRESS}"
+
 echo "Starting adaguc-services Server" &&  /usr/libexec/tomcat/server start 
     
