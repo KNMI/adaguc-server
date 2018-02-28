@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PGUSERNAME=postgres
+PGUSERNAME=user
 
 # Detect postgres user id
 if [ -z ${PGUSERID+x} ] || [ -z ${PGUSERID} ]; then 
@@ -9,6 +9,7 @@ if [ -z ${PGUSERID+x} ] || [ -z ${PGUSERID} ]; then
   echo "Got ${PGUSERID} from owner of dir ${ADAGUCDB}"
   if [ ${PGUSERID} == 0 ]; then 
     echo "PGUSERID has root id, setting to postgres"; 
+    PGUSERNAME=postgres
     export PGUSERID=`id -u postgres`
   fi
 else 
