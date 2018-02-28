@@ -5,7 +5,7 @@ See https://dev.knmi.nl/projects/adagucserver/wiki for details
 
 # Docker for adaguc-server:
 
-A docker image for adaguc-server is available from dockerhub. This image enables you to start quickly with adaguc-server, everything is pre-installed. You can mount your own directories from your workstation inside the docker container, allowing you to serve and configure your own data. This docker image can be used in production environments as well.
+A docker image for adaguc-server is available from dockerhub. This image enables you to quickstart with adaguc-server, everything is configured and pre-installed. You can mount your own directories and configuration files from your workstation inside the docker container. This allows you to use and configure your own data from your workstation. There is no need to go inside the docker container. Inside the docker container the paths for data and configuration files are always the same, this is useful for sharing dataset configuration files between different instances. This docker image can be used in production environments as well. See the docker-compose file below to quickstart with both adaguc-server and adaguc-viewer at the same time.
 
 ## Directories and data
 
