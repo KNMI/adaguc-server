@@ -1,8 +1,14 @@
 #!/bin/bash
 
-if [ -z ${PGUSERID+x} ]; then echo "PGUSERID is unset"; export PGUSERID=`id -u postgres`; else echo "PGUSERID is set to '$PGUSERID'"; fi
+if [ -z ${PGUSERID+x} ] || [ -z ${PGUSERID} ]; then 
+  echo "PGUSERID is unset, trying to get id from directory"; 
+  PGUSERID=$(stat -c "%u" ${ADAGUCDB})
+  echo "Using ${PGUSERID} from owner of dir ${ADAGUCDB}"
+else 
+  echo "PGUSERID is set to '$PGUSERID'"; 
+fi
 
-echo "Starting with UID : ${PGUSERID}"
+echo "Using PGUSERID : ${PGUSERID}"
 useradd --shell /bin/bash -u ${PGUSERID} -o -c "" -m user
 export HOME=/home/user
 chmod 777 /var/run/postgresql/ && chown -R user: ${ADAGUCDB} && chmod 700 ${ADAGUCDB}

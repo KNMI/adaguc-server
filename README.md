@@ -31,7 +31,6 @@ mkdir -p $HOME/adaguc-server-docker/adagucdb
 mkdir -p $HOME/adaguc-server-docker/adaguc-logs
 
 docker run \
-  -e PGUSERID=${UID} \
   -e EXTERNALADDRESS="http://127.0.0.1:8090/" \
   -p 8090:8080 \
   -v $HOME/adaguc-server-docker/adaguc-data:/data/adaguc-data \
@@ -171,7 +170,7 @@ mkdir -p $HOME/adaguc-server-docker/adaguc-autowms
 mkdir -p $HOME/adaguc-server-docker/adagucdb 
 mkdir -p $HOME/adaguc-server-docker/adaguc-logs
 
-export UID && docker-compose -f ./Docker/docker-compose.yml up 
+docker-compose -f ./Docker/docker-compose.yml up 
 ```
 The following services are now available:
 * viewer at http://localhost:8091/adaguc-viewer/ 
