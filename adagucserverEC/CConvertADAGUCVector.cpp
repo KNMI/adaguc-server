@@ -35,13 +35,18 @@ const char *CConvertADAGUCVector::className = "CConvertADAGUCVector";
  */
 bool isADAGUCVectorFormat(CDFObject *cdfObject) {
   try {
-    cdfObject->getDimension("nv");
+
+    // Check if necessary variables and dimensions are present.
     cdfObject->getDimension("time");
     cdfObject->getVariable("time");
-    cdfObject->getVariable("product");
+    cdfObject->getVariable("lat_bnds");
+    cdfObject->getVariable("lon_bnds");
 
-    // TODO: Geen X en Y variabelen!
-
+    // Check if there are vertices defined and if there are exactly four.
+    CDF::Dimension *dimNv = cdfObject->getDimension("nv");
+    if (dimNv->getSize() != 4) {
+      return false;
+    }
   } catch(int e) {
     return false;
   }
