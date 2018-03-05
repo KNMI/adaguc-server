@@ -1,4 +1,7 @@
 # Summary
 
 * [Introduction](README.md)
-
+* [Format standard](format_standard/README.md)
+    * [Data format standard](format_standard/data_format_standard.md)
+    * [Metadata format standard](format_standard/metadata_format_standard.md)
+* [Glossary](GLOSSARY.md)
