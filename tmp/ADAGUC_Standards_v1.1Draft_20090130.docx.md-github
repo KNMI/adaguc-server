@@ -1,0 +1,1770 @@
+<span id="_Ref194745465" class="anchor"></span>
+
+**Atmospheric Data Access for the Geospatial User Community**
+
+**ADAGUC Data Products Standard**
+
+<img src="media/image1.png" width="727" height="38" /><img src="media/image25.jpeg" width="199" height="199" />
+**Delivery Slip**
+
+|              |                 |                       |          |               |
+|--------------|-----------------|-----------------------|----------|---------------|
+|              | **Name**        | **Institute/Company** | **Date** | **Signature** |
+| **Prepared** | S. de Witte     | SRON                  | 30/01/09 |               |
+| **Approved** | B. A. Domenico  
+                   
+  S. Nativi        
+                   
+  O. V. Wilhelmi   | Unidata               
+                          
+   IMAA                   
+                          
+   NCAR                   |          |               |
+| **Accepted** | J. van de Vegte | KNMI                  |          |               |
+
+**Authors**
+
+|                 |                       |                                                                                        |
+|-----------------|-----------------------|----------------------------------------------------------------------------------------|
+| **Name**        | **Institute/Company** | **Contact**                                                                            |
+| S. de Witte     | SRON                  | <img src="media/image26.png" alt="email_sdewitte_070110" width="251" height="30" />    |
+| R. van Hees     | SRON                  | <img src="media/image27.png" alt="email_rmvanhees_070109" width="251" height="30" />   |
+| M. Plieger      | KNMI                  | <img src="media/image28.png" alt="email_mplieger_070109" width="251" height="30" />    |
+| R. Sluiter      | KNMI                  | <img src="media/image29.png" alt="email_rsluiter_070109" width="251" height="30" />    |
+| W. Som de Cerff | KNMI                  | <img src="media/image30.png" alt="email_wsdecerff_070109" width="251" height="30" />   |
+| J. van de Vegte | KNMI                  | <img src="media/image31.png" alt="email_jvandevegte_070109" width="251" height="30" /> |
+| E. de Vreede    | KNMI                  | <img src="media/image32.png" alt="email_edevreede_070109" width="251" height="30" />   |
+| H. Manders      | KNMI                  | <img src="media/image33.png" alt="email_hmanders_070109" width="251" height="30" />    |
+| R. de Jeu       | VU                    | <img src="media/image34.png" alt="email_rdejeu_070109" width="251" height="30" />      |
+| N. de Reus      | VU                    | <img src="media/image35.png" alt="email_ndereus_070109" width="251" height="30" />     |
+
+**Acknowledgement**
+
+The authors of this document like to thank B.A. Domenico (Unidata), S. Nativi (IMAA) and O.V. Wilhelmi (NCAR) for their contributions.
+
+**Document Log**
+
+|           |          |                                                                                                                                  |                    |
+|-----------|----------|----------------------------------------------------------------------------------------------------------------------------------|--------------------|
+| **Issue** | **Date** | **Comment**                                                                                                                      | **Author/Partner** |
+| 0.1       |          | Initial Release                                                                                                                  | S. de Witte        |
+| 0.2       |          | Input from RvH, MP, RdJ added                                                                                                    | S. de Witte et al. |
+| 0.3       |          | Input from KNMI added                                                                                                            |                    |
+| 0.3.1     |          | Edits from SRON after KNMI input                                                                                                 | S. de Witte et al. |
+| 0.4       |          | Updates after ADAGUC meeting ()                                                                                                  | S. de Witte et al. |
+| 0.5       |          | Updates to Chapter 1 to 4                                                                                                        | S. de Witte et al. |
+| 0.6       | 10/04/08 | Updates after ADAGUC meeting ()                                                                                                  | S. de Witte et al. |
+| 0.7       | 20/06/08 | Updates after ADAGUC meetings at EGU () and SRON ()                                                                              | S. de Witte et al. |
+| 0.8       | 15/08/08 | Updates after input from B.A. Domenico, S. Nativi and O.V. Wilhelmi and further discussions during the ADAGUC meeting at KNMI () | S. de Witte et al. |
+| 1.0       | 02/10/08 | Final updates for the first official release                                                                                     | S. de Witte et al. |
+| 1.1       | 30/01/09 | Updates after ADAGUC meeting at KNMI ()                                                                                          | S. de Witte et al. |
+
+**Terms of Reference**
+
+The ADAGUC Data Products Standard (ADPS) is maintained by a commission consisting of three members. One from each of the partner organisations KNMI, SRON and VU. The objectives of the commission are:
+
+-   To promote use of ADPS in all applicable user domains
+
+-   To maintain ADPS in a fit-for-use state for (non)expert end users
+
+-   To collect feedback from end users regarding ADPS
+
+-   To monitor advances in INSPIRE, NetCDF-CF, etc. to ensure possible technology feedback into ADPS
+
+-   To assess changes and implementations regarding ADPS.
+
+The commission members are the point of contact regarding all ADPS matters. They will convene at least once per year to address the objectives of this Terms Of Reference and communicate the results of these meetings through the ADAGUC website (http://adaguc.knmi.nl).
+
+**Commission Members**
+
+|                 |                       |                                                                                        |
+|-----------------|-----------------------|----------------------------------------------------------------------------------------|
+| **Name**        | **Institute/Company** | **Contact**                                                                            |
+| J. van de Vegte | KNMI                  | <img src="media/image31.png" alt="email_jvandevegte_070109" width="251" height="30" /> |
+| R. van Hees     | SRON                  | <img src="media/image27.png" alt="email_rmvanhees_070109" width="251" height="30" />   |
+| R. de Jeu       | VU                    | <img src="media/image34.png" alt="email_rdejeu_070109" width="251" height="30" />      |
+
+**Document Change Record**
+
+|           |                                                                                                                                                                                                                                                                                                                                       |                         |
+|-----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------|
+| **Issue** | **Item**                                                                                                                                                                                                                                                                                                                              | **Reason for Change**   |
+|           |                                                                                                                                                                                                                                                                                                                                       |                         |
+|           |                                                                                                                                                                                                                                                                                                                                       |                         |
+|           |                                                                                                                                                                                                                                                                                                                                       |                         |
+|           |                                                                                                                                                                                                                                                                                                                                       |                         |
+|           |                                                                                                                                                                                                                                                                                                                                       |                         |
+|           |                                                                                                                                                                                                                                                                                                                                       |                         |
+|           |                                                                                                                                                                                                                                                                                                                                       |                         |
+| 1.0       | -   All contributing authors are now listed on the document info pages and an acknowledgement section has been added                                                                                                                                                                                                                  
+                                                                                                                                                                                                                                                                                                                                         
+  -   URL's in the "Applicable documents" and "Reference documents" paragraphs (1.5 and 1.6) have been checked and updated where necessary                                                                                                                                                                                               
+                                                                                                                                                                                                                                                                                                                                         
+  -   A top-level attribute "Conventions" is now required for all ADAGUC products, containing the version of the NetCDF Climate and Forecast (CF) Metadata Conventions the product complies to                                                                                                                                           
+                                                                                                                                                                                                                                                                                                                                         
+  -   Some attributes of the iso\_dataset group started with a capital letter by mistake, this has been fixed                                                                                                                                                                                                                            
+                                                                                                                                                                                                                                                                                                                                         
+  -   A new paragraph (4.4.2) has been added listing frequently used additional attributes attached to variables (in analogy to paragraph 4.3.2 which lists additional attributes to the metadata)                                                                                                                                       
+                                                                                                                                                                                                                                                                                                                                         
+  -   Two more products have been added to the list in table 3-3 (TOSOMI and TOGOMI)                                                                                                                                                                                                                                                     
+                                                                                                                                                                                                                                                                                                                                         
+  -   The use of the GDAL ADAGUC netCDF raster driver for exported netCDF products has been added (paragraph 5.2.2)                                                                                                                                                                                                                      
+                                                                                                                                                                                                                                                                                                                                         
+  -   Optional PyTables attributes in exported products are listed (paragraph 5.2.3)                                                                                                                                                                                                                                                     
+                                                                                                                                                                                                                                                                                                                                         
+  -   In chapter 8 a start has been made to paragraphs on the lack of a catalog service and on granularity; this could be extended in a next release                                                                                                                                                                                     | First official release  |
+| 1.1       | -   Authors e-mail addresses (page 2) changed from text into pictures to prevent spam                                                                                                                                                                                                                                                 
+                                                                                                                                                                                                                                                                                                                                         
+  -   Terms of reference added and ADPS commission members appointed (page 3)                                                                                                                                                                                                                                                            
+                                                                                                                                                                                                                                                                                                                                         
+  -   Document versions in the "Applicable documents" and "Reference documents" paragraphs (1.5 and 1.6) have been checked and updated where necessary. New applicable document added (INSPIRE Metadata Regulation)                                                                                                                      
+                                                                                                                                                                                                                                                                                                                                         
+  -   The term ‘dataset’ (both ISO and HDF5) in paragraph 1.8 (page 11) was updated for clarity. The sentence “otherwise the HDF5 definition for dataset is meant” in the ISO dataset description was removed. The term ‘dataset’ was updated throughout the document whereever confusion between the ISO and HDF5 definition may occur  
+                                                                                                                                                                                                                                                                                                                                         
+  -   UUID added to the list of abbreviations and acronyms and to the terminolgy                                                                                                                                                                                                                                                         
+                                                                                                                                                                                                                                                                                                                                         
+  -   Table 3-2 (Mission/Instrument/Model) put in alphabetical order and GOME added                                                                                                                                                                                                                                                      
+                                                                                                                                                                                                                                                                                                                                         
+  -   Chapter 4 and paragraph 4.2 renamed (“Internal” removed), chapter 5 (Conversion Format Standard) removed, following chapters renumbered.                                                                                                                                                                                           
+                                                                                                                                                                                                                                                                                                                                         
+  -   PyTables boundary condition removed, due to the removal of chapter 5 (it will still be possible to export data with the optional PyTables attributes, this will be described in the exported product descriptions, see also \[R08\])                                                                                               
+                                                                                                                                                                                                                                                                                                                                         
+  -   Inclusive and exlusive clarification added to the filename convention, filename examples and table headings updated                                                                                                                                                                                                                
+                                                                                                                                                                                                                                                                                                                                         
+  -   Reference \[R10\] added to dimension scales section of paragraph 4.2.3                                                                                                                                                                                                                                                             
+                                                                                                                                                                                                                                                                                                                                         
+  -   Introduction paragraph added to paragraph 4.3 explaining the structure of this paragraph. Subsequent paragraph numbers updated. For even more clarity, sentences like “Each \[…\] attribute from the list in Table \[…\] is described in more detail in Table \[…\]” added to paragraph 4.3.4 and 4.3.5                            
+                                                                                                                                                                                                                                                                                                                                         
+  -   Paragraph 4.3.2 (was: 4.3.1) updated (table to describe required global attributes added, other tables updated \[major updates to the iso\_dataset attributes\])                                                                                                                                                                   
+                                                                                                                                                                                                                                                                                                                                         
+  -   Paragraph 4.3.4 added, including a new table (describing the global metadata attributes in detail). Following table numbers of chapter 4 updated.                                                                                                                                                                                  
+                                                                                                                                                                                                                                                                                                                                         
+  -   Comment for the global “Conventions” attribute updated/clarified in Table 4-5                                                                                                                                                                                                                                                      
+                                                                                                                                                                                                                                                                                                                                         
+  -   Paragraph 4.3.5 (was: 4.3.3) updated (describing the ISO metadata attributes in detail), including the use of UUID’s to uniquely identify products and metadata                                                                                                                                                                    
+                                                                                                                                                                                                                                                                                                                                         
+  -   Paragraph 4.3.6 (was: 4.3.4) updated: the time format is not only ‘seconds’, but follows the netCDF CF conventions                                                                                                                                                                                                                 
+                                                                                                                                                                                                                                                                                                                                         
+  -   Comments in Table 4-9 (was: 4-7) in paragraph 4.3.7 (was: 4.3.5) updated                                                                                                                                                                                                                                                           
+                                                                                                                                                                                                                                                                                                                                         
+  -   Equations in paragraph 4.3.3 (was: 4.3.2) and 6.2 reformatted                                                                                                                                                                                                                                                                      
+                                                                                                                                                                                                                                                                                                                                         
+  -   Paragraph 4.4.1 updated (netCDF-4 API), attribute “coordinates” removed from Table 4-11 (was: 4-9)                                                                                                                                                                                                                                 
+                                                                                                                                                                                                                                                                                                                                         
+  -   Examples of vector and raster based ADAGUC products added (paragraph 4.4.3 and paragraph 4.4.4)                                                                                                                                                                                                                                    
+                                                                                                                                                                                                                                                                                                                                         
+  -   Definition of latitude and longitude clarified in paragraph 6.2 (including new figure \[6-1\])                                                                                                                                                                                                                                     
+                                                                                                                                                                                                                                                                                                                                         
+  -   3D explained in paragraph 7.2.2 (it is “x, y and time” and not “x, y and z”)                                                                                                                                                                                                                                                       | Major and minor updates |
+
+**Copyright notice and disclaimers**
+
+***Copyright***
+
+1.  All information in this document is copyrighted and may not be used except as provided in this copyright notice or other proprietary notice provided with the relevant materials.
+
+2.  The information contained in this document may be downloaded, printed or copied provided that ALL copies retain the copyright and any other proprietary notices contained on the materials. No material may be modified, edited or taken out of context such that its use creates a false or misleading statement or impression as to the positions, statements or actions of the ADAGUC Consortium (consisting of KNMI \[Royal Nederlands Meteorological Institute\], SRON \[Netherlands Institute for Space Research\], VU-FALW \[Vrije Universiteit Amsterdam, Faculty of Earth and Life Sciences\] and WUR \[Wageningen University and Research Centre\]).
+
+3.  The names of copyright holders may NOT be used in advertising or publicity pertaining to this document, its content, specifications, or software without specific, written prior permission of the copyright holder. Title to copyright in such document will at all times remain with copyright-holders.
+
+4.  The ADAGUC Consortium is not responsible for the content of any references to this document. Please understand that any referring document is independent from the ADAGUC Consortium, and the ADAGUC Consortium has no control over the content of such document. In addition, when a document refers to this document, this does not mean that the ADAGUC Consortium endorses or accepts any responsibility for the content, or the use, of such document.
+
+5.  The information the ADAGUC Consortium published in this document may contain references or cross references to the ADAGUC Consortium specifications, projects, programs and services that are not announced or available in your country.
+
+6.  The information in this document may contain technical inaccuracies or typographical errors. Information may be changed or updated without notice. The ADAGUC Consortium may make improvements and/or changes in the materials contained in or described in this document at any time without notice. The ADAGUC Consortium may also make changes in this copyright notice without notice. User is bound by such revisions and should therefore periodically check for said revisions to review the then current copyright notice.
+
+***Limitation on Warranties***
+
+ALL INFORMATION IN THIS DOCUMENT IS PROVID "AS IS." THE ADAGUC CONSORTIUM MAKES NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR IMPLI, INCLUDING, BUT NOT LIMIT TO, WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE OR NON-INFRINGEMENT. AS TO INFORMATION PUBLISH IN THIS DOCUMENT, THE ADAGUC CONSORTIUM MAKES NO REPRESENTATION OR WARRANTY THAT THE CONTENTS OF THIS DOCUMENT IS FREE FROM ERROR OR SUITABLE FOR ANY PURPOSE; NOR THAT IMPLEMENTATION OF SUCH INFORMATION WILL NOT INFRINGE ANY THIRD PARTY PATENTS, COPYRIGHTS, TRADEMARKS OR OTHER RIGHTS.
+
+Please note that some jurisdictions may not allow the exclusion of implied warranties, so some of the above exclusions may not apply to you.
+
+***Limitation on Liability***
+
+IN NO EVENT WILL THE ADAGUC CONSORTIUM BE LIABLE TO ANY PARTY FOR ANY DIRECT, INDIRECT, SPECIAL OR CONSEQUENTIAL DAMAGES FOR ANY USE OF THIS DOCUMENT, INCLUDING, WITHOUT LIMITATION, ANY LOST PROFITS, BUSINESS INTERRUPTION, LOSS OF PROGRAMS OR OTHER DATA ON YOUR INFORMATION HANDLING SYSTEM OR OTHERWISE, EVEN IF THE ADAGUC CONSORTIUM IS EXPRESSLY ADVIS OF THE POSSIBILITY OF SUCH DAMAGES.
+<span id="_Toc193090208" class="anchor"><span id="_Toc193090334" class="anchor"></span></span>**Contents**
+
+1 Introduction 8
+
+1.1 Background 8
+
+1.2 Overview 8
+
+1.3 Purpose and scope 8
+
+1.4 Standards applicability 8
+
+1.5 Applicable documents 9
+
+1.6 Reference documents 9
+
+1.7 Abbreviations and acronyms 10
+
+1.8 Terminology 11
+
+2 User requirements and boundary conditions 12
+
+2.1 Introduction 12
+
+2.2 User requirements 12
+
+2.3 Boundary conditions 13
+
+3 Filename convention 15
+
+3.1 Introduction 15
+
+3.2 Data product filename format 15
+
+3.3 Missions, Instruments, Models, Datasets and Products 17
+
+4 Format standard 19
+
+4.1 Justification 19
+
+4.2 Format description 19
+
+4.2.1 Introduction 19
+
+4.2.2 HDF5 File Organization 19
+
+4.2.3 ADAGUC HDF5 internal file structure 20
+
+4.3 Metadata format specification 22
+
+4.3.1 Introduction 22
+
+4.3.2 Overview of required variables and attributes 22
+
+4.3.3 Additional attributes 24
+
+4.3.4 Global metadata 25
+
+4.3.5 ISO Dataset metadata 25
+
+4.3.6 Product metadata 29
+
+4.3.7 Projection metadata 30
+
+4.4 Data format specification 31
+
+4.4.1 General format 31
+
+4.4.2 Additional attributes 32
+
+4.4.3 Raster based data 33
+
+4.4.4 Vector based data 34
+
+4.4.5 Model based data (additional) 36
+
+5 Units 37
+
+6 Coordinate systems 38
+
+6.1 Introduction 38
+
+6.2 Coordinate systems within ADAGUC 38
+
+7 Limitations and open issues 40
+
+7.1 Introduction 40
+
+7.2 Web Coverage Service 40
+
+7.2.1 HDF5 Datasets 40
+
+7.2.2 Dimensions 40
+
+7.3 Web Feature Service 40
+
+7.4 OGR Library 40
+
+7.5 Catalog services 41
+
+7.6 Granularity 41
+
+<span id="_Toc219208501" class="anchor"><span id="_Toc221078185" class="anchor"></span></span>Introduction
+
+Background
+----------
+
+Many tools and data formats exist for atmospherical data. To disseminate this wealth of information to the geospatial communities is still very difficult. It is complicated to easily share data among scientists representing the geospatial communities without performing some cumbersome conversions. ADAGUC aims to reduce the need for scientists to invent their own converter tools. Selected space borne atmospheric and land datasets will be made accessible to a Geographic Information System (GIS) for data comparison, resampling, selection, manipulation and visualization. The user community is intensively involved in the project for the definition of the use cases.
+
+The deliverables of the ADAGUC project are: Open Source conversion tools, selected atmospheric datasets in GIS format and web services to provide the datasets and to demonstrate the usability of the methodology to the geospatial and atmospheric community. Dissemination of results is pursued by publications, workshops and (inter)national cooperation.
+
+Overview
+--------
+
+This document builds further on the User Requirements Document (URD) \[A05\] and the Software Specification Document (SSD) \[A06\].
+
+The content of this document:
+
+-   Chapter 1, introduction.
+
+-   Chapter 2, relevant user requirements derived from the URD and relevant boundary conditions derived from the SSD.
+
+-   Chapter 3, filename conventions.
+
+-   Chapter 4, file format standard of the HDF5/netCDF-4 format adopted in the ADAGUC project.
+
+-   -   Chapter 5, units used within the ADAGUC project.
+
+-   Chapter 6, coordinate systems.
+
+-   Chapter 7, limitations, open issues and future challenges.
+
+Purpose and scope
+-----------------
+
+This document describes the standards that are applicable to the ADAGUC data products and relevant for the atmospheric and geospatial user communities. In particular, it describes the file name conventions and (meta)data standards that will be used within the ADAGUC project. Furthermore, it describes the file formats of netCDF-4 data products, extended and implemented on top of the HDF5 data format, adopted in the ADAGUC project. And it describes units and coordinate systems used in the ADAGUC project.
+
+Standards applicability
+-----------------------
+
+The conventions and standards described in this document must be followed for all data product files within the ADAGUC systems and should be considered for data product files originating from the ADAGUC systems. The application of these standards will be strictly enforced for all systems developed under ADAGUC responsibility, and will be encouraged as far as possible for other systems, not under ADAGUC responsibility.
+
+Applicable documents
+--------------------
+
+| A01 | International Organization for Standardization (ISO), *http://www.iso.org*                                                        |
+|-----|-----------------------------------------------------------------------------------------------------------------------------------|
+| A02 | OGC, Open Geospatial Consortium, Inc.®, *http://www.opengeospatial.org*                                                           |
+| A03 | Dutch Geoservices Profiles, *http://www.geonovum.nl/standaarden.html*                                                             |
+| A04 | INSPIRE, Infrastructure for Spatial Information in the European Community, *http://www.ec-gis.org/inspire*                        |
+| A05 | ADAGUC User Requirements Document (URD), V1.3, *http://adaguc.knmi.nl*                                                            |
+| A06 | ADAGUC Software Specification Document (SSD), V0.1, *http://adaguc.knmi.nl*                                                       |
+| A07 | Dutch metadata profile for geographical data, version 1.2, 8,                                                                     
+                                                                                                                                     
+  *http://www.geonovum.nl/images/stories/*                                                                                           
+                                                                                                                                     
+  *nederlands* *metadata* *profiel* *op* *iso* *19115* *voor* *geografie* *-* *v1* *2* *-* *definitief.pdf*                          |
+| A08 | Dutch metadata profile for services,                                                                                              
+                                                                                                                                     
+  *http://www.geonovum.nl/services/nieuws---services*                                                                                |
+| A09 | International Standard ISO 19115:2003, *http://www.iso.org/iso/iso\_catalogue/catalogue\_tc/catalogue\_detail.htm?csnumber=26020* |
+| A10 | International Standard ISO 8601:2004, *http://www.iso.org/iso/iso\_catalogue/catalogue\_tc/catalogue\_detail.htm?csnumber=40874*  |
+| A11 | International Standard ISO 639-2:1998, *http://www.iso.org/iso/iso\_catalogue/catalogue\_tc/catalogue\_detail.htm?csnumber=4767*  |
+| A12 | INSPIRE Metadata Regulation,                                                                                                      
+                                                                                                                                     
+  *http://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri=OJ:L:2008:326:0012:01:EN:HTML*                                              |
+
+Reference documents
+-------------------
+
+<table>
+<thead>
+<tr class="header">
+<th>R01</th>
+<th>HDF5: File Format Specification, Version 2.x, <em>http://www.hdfgroup.org/HDF5/doc/H5.format.html</em></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>R02</td>
+<td>WMO, World Meteorological Organization, <em>http://www.wmo.int</em></td>
+</tr>
+<tr class="even">
+<td>R03</td>
+<td>GALEON project, <em>http://www.unidata.ucar.edu/projects/THRDS/GALEON/Home.html</em></td>
+</tr>
+<tr class="odd">
+<td>R04</td>
+<td>UMN Mapserver, <em>http://mapserver.gis.umn.edu</em></td>
+</tr>
+<tr class="even">
+<td>R05</td>
+<td>GDAL, <em>http://www.gdal.org</em></td>
+</tr>
+<tr class="odd">
+<td>R06</td>
+<td>NetCDF, <em>http://www.unidata.ucar.edu/software/netcdf</em></td>
+</tr>
+<tr class="even">
+<td>R07</td>
+<td>NetCDF Climate and Forecast (CF) Metadata Conventions, version 1.4 (),<br />
+<em>http://cf-pcmdi.llnl.gov</em></td>
+</tr>
+<tr class="odd">
+<td>R08</td>
+<td>PyTables - Hierarchical Datasets in Python, <em>http://www.pytables.org</em></td>
+</tr>
+<tr class="even">
+<td>R09</td>
+<td><p>KNMI HDF5 Data Format Specification, v3.5.,</p>
+<p><em>http://www.knmi.nl/publications/showAbstract.php?id=368</em></p></td>
+</tr>
+<tr class="odd">
+<td>R10</td>
+<td>HDF5 Dimension Scale Specification and Design Notes, version 1.0, <em>http://www.hdfgroup.uiuc.edu/HDF5/doc_1.8pre/supplements/H5DimScales</em></td>
+</tr>
+<tr class="even">
+<td>R11</td>
+<td>Geonovum, <em>http://www.geonovum.nl</em></td>
+</tr>
+<tr class="odd">
+<td>R12</td>
+<td>Framework of standards for the Dutch GII, version 1.1, 14 June 2006, <em>http://www.rgi.nl/downloads/files/framework%20of%20standards%20v1.1.pdf</em></td>
+</tr>
+<tr class="even">
+<td>R13</td>
+<td><p>World Meteorological Organization (WMO) keyword list,</p>
+<p><em>http://www.wmo.int/pages/prog/www/metadata/WMO-keywords.html</em></p></td>
+</tr>
+<tr class="odd">
+<td>R14</td>
+<td>SCIAMACHY, <em>http://envisat.esa.int/instruments/SCIAMACHY</em></td>
+</tr>
+<tr class="even">
+<td>R15</td>
+<td>PROJ.4 - Cartographic Projections Library, <em>http://trac.osgeo.org/proj</em></td>
+</tr>
+<tr class="odd">
+<td>R16</td>
+<td>Netherlands SCIAMACHY Data Center (NL-SCIA-DC), <em>http://neonet.knmi.nl/neoaf</em></td>
+</tr>
+<tr class="even">
+<td>R17</td>
+<td>THRDS project, <em>http://www.unidata.ucar.edu/projects/THRDS</em></td>
+</tr>
+<tr class="odd">
+<td>R18</td>
+<td>NASA-EOS data product levels, <em>http://observer.gsfc.nasa.gov/sec3/ProductLevels.html</em></td>
+</tr>
+<tr class="even">
+<td>R19</td>
+<td>HDF5: API Specification Reference Manual, <em>http://hdfgroup.org/HDF5/doc/RM/RM_H5Front.html</em></td>
+</tr>
+<tr class="odd">
+<td>R20</td>
+<td>UDUNITS: Unidata units library, <em>http://www.unidata.ucar.edu/software/udunits/udunits-1/index.html</em></td>
+</tr>
+<tr class="even">
+<td>R21</td>
+<td><p>CF Standard Name Table, version 11, ,</p>
+<p><em>http://cf-pcmdi.llnl.gov/documents/cf-standard-names</em></p></td>
+</tr>
+<tr class="odd">
+<td>R22</td>
+<td>Understanding Map Projections, ArcInfo™ 8, Melita Kennedy, Environmental Systems Research Institute, Inc., 2000, <em>http://www.kartografie.nl/geometrics/Map%20projections/Understanding%20Map%20Projections.pdf</em></td>
+</tr>
+<tr class="even">
+<td>R23</td>
+<td>UMN Mapserver Filter Encoding (FE), <em>http://mapserver.gis.umn.edu/docs/howto/filterencoding</em></td>
+</tr>
+</tbody>
+</table>
+
+Abbreviations and acronyms
+--------------------------
+
+| ADAGUC    | Atmospheric Data Access for the Geospatial User Community             |
+|-----------|-----------------------------------------------------------------------|
+| ADPS      | ADAGUC Data Products Standard                                         |
+| AMSR      | Advanced Microwave Scanning Radiometer                                |
+| API       | Application Programming Interface                                     |
+| ASCII     | American Standard Code for Information Interchange                    |
+| BIL       | Band Interleaved by Line                                              |
+| BIP       | Band Interleaved by Pixel                                             |
+| BSQ       | Band SeQuential                                                       |
+| CF        | Climate and Forecast                                                  |
+| ECMWF     | European Centre for Medium-Range Weather Forecasts                    |
+| EOS       | Earth Observing System                                                |
+| ESA       | European Space Agency                                                 |
+| FRESCO    | Fast Retrieval Scheme for Cloud Observables                           |
+| GALEON    | Geo-interface to Atmosphere, Land, Earth, Ocean, NetCDF               |
+| GDAL      | Geospatial Data Abstraction Library                                   |
+| GIS       | Geographical Information System                                       |
+| GOME      | Global Ozone Monitoring Experiment                                    |
+| GRD       | ESRI Grid format                                                      |
+| GRIB      | GRIdded Binary                                                        |
+| HDF       | Hierarchical Data Format                                              |
+| IMAA      | for Environmental Analysis                                            |
+| IMAU      | Institute for Marine and Atmospheric Research,                        |
+| INSPIRE   | Infrastructure for Spatial Information in the European Community      |
+| ISO       | International Organization for Standardization                        |
+| IUP       | Institute of Environmental Physics,                                   |
+| JPG       | Joint Photographic Experts Group Interchange Format                   |
+| KML       | Keyhole Markup Language                                               |
+| KNMI      | Royal Nederlands Meteorological Institute                             |
+| LatLon    | Latitude, Longitude                                                   |
+| LPRM      | Land Parameter Retrieval Model                                        |
+| MERIS     | Medium-spectral Resolution Imaging Spectrometer                       |
+| NCAR      | for Atmospheric Research, Boulder CO                                  |
+| NetCDF    | Network Common Data Form                                              |
+| NRT       | Near Real Time                                                        |
+| OGC       | Open Geospatial Consortium                                            |
+| OMI       | Ozone Monitoring Instrument                                           |
+| PNG       | Portable Network Graphics                                             |
+| QoS       | Quality of Service                                                    |
+| RD        | Rijksdriehoeksmeting (Dutch Grid)                                     |
+| RGI       | Ruimte voor Geo-Informatie                                            |
+| RIVM      | Rijksinstituut voor Volksgezondheid en Milieu                         |
+| RT        | Real Time                                                             |
+| SCIAMACHY | Scanning Imaging Absorption Spectrometer for Atmospheric CHartographY |
+| SHP       | ESRI Shapefile                                                        |
+| SSD       | Software Specification Document                                       |
+| SRON      | SRON Netherlands Institute for Space Research                         |
+| TBD       | To Be Determined                                                      |
+| TBW       | To Be Written                                                         |
+| THRDS     | Thematic Realtime Environmental Distributed Data Services             |
+| TIFF      | Tagged Image File Format                                              |
+| UCAR      | University Corporation for Atmospheric Research                       |
+| UMN       |                                                                       |
+| URD       | User Requirements Document                                            |
+| UTC       | Coordinated Universal Time                                            |
+| UTM       | Universal Transverse Mercator                                         |
+| UUID      | Universally Unique Identifier                                         |
+| VU-FALW   | Vrije Universiteit , Faculty of Earth and Life Sciences               |
+| WCS       | Web Coverage Service                                                  |
+| WFS       | Web Feature Service                                                   |
+| WMO       | World Meteorological Organization                                     |
+| WMS       | Web Map Service                                                       |
+| WUR       | and Research Centre                                                   |
+| XML       | eXtensible Markup Language                                            |
+
+Terminology
+-----------
+
+|                |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+|----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Dataset (ISO)  | A collection of one product kind (same source/type). E.g. the SCIAMACHY \[R14\] daily average ozone. In this document when referring to the ISO term \[A01\], ‘Dataset (ISO)’ or ‘ISO dataset’ will be used, whenever there is a possibility of confusion with the HDF5 definition for datasets.                                                                                                                                                                                                                                                                                                                 |
+| Dataset (HDF5) | In the HDF5 data model ‘dataset’ is used for a multi-dimensional array of data elements, together with supporting metadata \[R01\]. For clarity the term ‘Dataset (HDF5)’ or ‘HDF5 dataset’ will be used, whenever there is a possibility of confusion with the ISO definition for datasets.                                                                                                                                                                                                                                                                                                                     |
+| Product        | One file from an ISO dataset containing data                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| Metadata       | Description on ISO dataset level according to the ISO19115 standard \[A09\]. There will also be metadata information on measurement level, mostly based by the netCDF-CF standard \[R07\].                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| Regular grid   | A grid with square pixels with fixed X and Y dimensions                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| Vector data    | A polygon described by 4 points (tile)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| NetCDF         | A set of interfaces for array-oriented data access and a freely-distributed collection of data access libraries for C, Fortran, C++, Java, and other languages. The netCDF libraries support a machine-independent format for representing scientific data.                                                                                                                                                                                                                                                                                                                                                      |
+|                |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+|                |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| UUID           | An identifier standard used in software construction, standardized by the Open Software Foundation (OSF) as part of the Distributed Computing Environment (DCE). The intent of UUIDs is to enable distributed systems to uniquely identify information without significant central coordination. Thus, anyone can create a UUID and use it to identify something with reasonable confidence that the identifier will never be unintentionally used by anyone for anything else. Information labeled with UUIDs can therefore be later combined into a single database without needing to resolve name conflicts. |
+
+User requirements and boundary conditions
+=========================================
+
+Introduction
+------------
+
+The user requirements of the ADAGUC system are described in \[A05\], the relevant user requirements for this document are given in paragraph 2.2, and additional boundary conditions derived from the SSD are given in paragraph 2.3.
+
+The ADAGUC project has both a national and international focus. To minimize repeating tasks the (inter)national developments are monitored closely and form the basis of this document. In the geo-standards are coordinated by Geonovum \[R11\], especially the Dutch metadata profiles for geographical data \[A07\] and services \[A08\] are important. In international context the developments by the GALEON project \[R03\] which focuses on netCDF \[R06\] and CF Conventions \[R07\], and the developments by OGC \[A02\], WMO \[R02\] and ISO \[A01\] are closely followed.
+
+User requirements
+-----------------
+
+In this section the user requirements relevant for this document are summarized.
+
+| UR-SOW-1   | ADAGUC services will be built using open standards                                                    |
+|------------|-------------------------------------------------------------------------------------------------------|
+| UR-SOW-2   | ADAGUC services will use open source software solutions where practically possible.                   |
+| UR-SOW-3   | ADAGUC will make maximum use of existing NL-SCIA-DC solutions                                         |
+| UR-SOW-4   | ADAGUC services shall be compliant with international standards (ISO \[A01\], OGC \[A02\])            |
+| UR-SOW-5   | ADAGUC services shall be “INSPIRE ready”                                                              |
+| UR-SOW-6   | ADAGUC services shall be compliant with the Dutch Geoservices profiles \[A03\]                        |
+| UR-SOP-2   | ADAGUC will provide OGC compliant web service access to datasets                                      |
+| UR-FUDA-8  | All created software shall comply with the RGI guidelines (OGC, Geonovum).                            |
+| UR-FUDA-16 | ADAGUC shall deliver data in a geographic coordinate system using Latitude-Longitude with WGS84 datum |
+| UR-FUDA-17 | ADAGUC should be able to deliver data in the ERTS89/UTM coordinate system (INSPIRE)                   |
+| UR-FUDA-18 | ADAGUC should be able to deliver data in the RD (Rijksdriehoek) coordinate system.                    |
+| UR-FUDA-26 | ADAGUC shall import data in the ASCII format                                                          |
+| UR-FUDA-27 | ADAGUC shall import data in the HDF-4 format                                                          |
+| UR-FUDA-28 | ADAGUC shall import data in the HDF-5 format                                                          |
+| UR-FUDA-29 | ADAGUC shall import data in the netCDF format                                                         |
+| UR-FUDA-30 | ADAGUC shall import data in the BIL format                                                            |
+| UR-FUDA-31 | ADAGUC shall import data in the GeoTIFF format                                                        |
+| UR-FUDA-32 | ADAGUC shall import data in the GRD format                                                            |
+| UR-FUDA-33 | ADAGUC shall import data in the GRIB format                                                           |
+| UR-FUDA-34 | ADAGUC shall export data in the GRD format                                                            |
+| UR-FUDA-35 | ADAGUC shall export data in the netCDF format                                                         |
+| UR-FUDA-36 | ADAGUC shall export data in the HDF-5 format                                                          |
+| UR-FUDA-38 | ADAGUC shall export data in the GeoTIFF format                                                        |
+| UR-FUDA-39 | ADAGUC shall export data in the SHP (Shapefile) format                                                |
+| UR-FUDA-40 | ADAGUC shall export data in KML (Google Earth) format                                                 |
+| UR-FUDA-41 | ADAGUC shall use the HDF-5 format as the common format for storage                                    |
+| UR-FUDA-42 | Metadata shall be provided conform the INSPIRE guidelines                                             |
+| UR-FUDA-43 | Metadata shall be provided conform the Dutch Geoservices profiles                                     |
+| UR-FUDA-44 | ISO19115 \[A09\] shall be used to document product metadata                                           |
+| UR-INTF-1  | A uniform filename convention for all ADAGUC datasets shall be used                                   |
+| UR-INTF-2  | The ADAGUC filename convention shall be based on existing international initiatives (ISO, OGC).       |
+| UR-INTF-3  | All internet services from ADAGUC shall be OGC compliant.                                             |
+| UR-INTF-4  | All datasets shall use the appropriate WMO \[R02\]/OGC/CF \[A02\] standard for variable names         |
+| UR-INTF-5  | All datasets shall use the ISO standard for metrics                                                   |
+| UR-INTF-6  | The ADAGUC web services shall be interoperable with international initiatives, like GALEON            |
+| UR-INTF-7  | The ADAGUC system shall be interoperable with the NL-SCIA-DC system                                   |
+| UR-INTF-8  | Dataset metadata shall be exchangeable between different instances of ADAGUC (NL-SCIA-DC and VU-FALW) |
+|            | Quality of datasets shall be documented and described using the appropriate metadata fields.          |
+|            | Dataset quality information shall be provided by the dataset provider                                 |
+
+Boundary conditions 
+--------------------
+
+From the SSD \[A06\] some extra boundary conditions can be derived. These boundary conditions may impose extra requirements for filename conventions and the formats/description of metadata.
+
+GDAL:
+
+ADAGUC will use the GDAL library \[R05\] to enable read and write access of non-native data formats. GDAL is widely accepted as the standard library for geo-based file conversions and used in OGC compliant services like UMN Mapserver \[R04\].
+
+HDF5:
+
+The HDF5 format is used to store all the ADAGUC products. The data products will follow the HDF5 1.8.x specification \[R01\], which includes support for dimension scales that provide an elegant solution for data presentation.
+
+NetCDF:
+
+Many users of ADAGUC use netCDF. Therefore it should be possible to use the netCDF API to generate and read ADAGUC products with netCDF. The netCDF version 4 API will be used within the ADAGUC project, because it is implemented on top of the HDF5 library, making it possible to create HDF5 and NetCDF files with the same API.
+
+Regular grids:
+
+The support of grids is limited to grids with square pixels with fixed X and Y dimensions.
+
+Vector data:
+
+Vector data is defined as a polygon described by 4 points (a tile). The ADAGUC Data Products Standard will not deal with other line or vector structures.
+
+Time Zone:
+
+All date/time fields, as used in the filenames or stored as fields/atributes in de files itself, will always be stated in the Coordinated Universal Time (UTC) timezone.
+
+Open Source:
+
+To be able to freely distribute the ADAGUC tools, any program used and/or developed within the ADAGUC project shall be Open Source.
+
+Filename convention
+===================
+
+Introduction
+------------
+
+The ADAGUC project will serve many different data products from different sources. Data products from different sources will be converted to the ADAGUC file format and stored in a central location. The filename convention should provide the information to make a clear distinction between the data products. The general directive of this filename convention is to keep the filename as short as possible, while still be able to uniquely identify the different products. Both internally stored products, as well as exported products from the webservices will follow the filename convention described in paragraph 3.2.
+
+Data product filename format
+----------------------------
+
+The data product files shall be named using a fixed set of elements, each of fixed size, separated by underscores “\_”. These elements constitute a smaller set of information which ensure that each filename is unique, within the context of the ADAGUC project. See Table 3‑1 for an overview. If this set of information is smaller than the elements fixed length it will be appended with underscores “\_” to make sure that all filenames are of fixed length. An exception to this latter rule is the extension (.XXX). This element does not need to be appended with underscores “\_” if the extension is smaller than three characters.
+
+The general format that applies to all ADAGUC data product files is:
+
+MMMMM\_CCCC\_T\_F\_PPPPPPP\_LLL\_-------------instance-id------------.XXX
+
+where
+
+-   MMMMM is a five-letter mission, instrument or model identifier (see paragraph 3.3),
+
+-   CCCC is the file class (OPER, CONS, TEST, etc.),
+
+-   T is the file type (V for vector data, R for raster data, I for in situ data and O for other),
+
+-   F is a flag for exported products (via the ADAGUC webservices) indicating whether the original internally stored ADAGUC product has been customized (resampled, resized or changed in any other way); if so, use a capital letter C, otherwise an underscore “\_”,
+
+-   PPPPPPP is the product acronym (see paragraph 3.3),
+
+-   LLL is the level of the data in the product starting with a capital letter L (for instance L1B, L2 or L3)
+
+-   -------------instance-id------------ is the instance ID that uniquely identifies one instance of a data product; the last four characters (digits only) of the instance ID always indicate the version number of the product (vvvv), starting at “0001“; the version is separated from the rest of the instance ID by an underscore “\_”,
+
+-   .XXX is the extension (for instance .nc, .h5, .tif).
+
+The instance ID has the following format:
+
+yyyymmddThhmmss\_YYYYMMDDTHHMMSS\_vvvv
+
+where
+
+-   yyyymmddThhmmss is the validity start date/time in UTC or the creation date/time in UTC. If the first and second date/time in the instance ID (yyyymmddThhmmss and YYYYMMDDTHHMMSS) differ, yyyymmddThhmmss is the validity start date/time. If they are equal, it is the creation date/time. In case the validity period instance ID format is used, it can have the special value 00000000T000000 for beginning of mission, or if a validity period is not applicable (conform ISO8601 \[A10\]),
+
+-   YYYYMMDDTHHMMSS is the validity stop time in UTC or the creation date/time in UTC. If the first and second date/time in the instance ID (yyyymmddThhmmss and YYYYMMDDTHHMMSS) differ, YYYYMMDDTHHMMSS is the validity stop date/time. If they are equal, it is the creation date/time. In case the validity period instance ID format is used, it can have the special value 99999999T999999 for end of mission, or if a validity period is not applicable,
+
+-   vvvv is the version number as defined above.
+
+The validity start date/time (yyyymmddThhmmss) indicates the first second of the validity period (inclusive). The validity stop date/time (YYYYMMDDTHHMMSS) indicates the last second of the validity period, however it does not include the second itself. The validity stop time is therefore exclusive as indicated in Figure 3‑1.
+
+<img src="media/image36.png" alt="IntervalNotation" width="155" height="74" />
+
+<span id="_Ref219187775" class="anchor"></span>Figure 3‑1 Validity period as indicated in the filename
+
+|                                                            |                                     |                                                         |                                                                                                                                                        |
+|------------------------------------------------------------|-------------------------------------|---------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Filename element**                                       | **Element number**                  | **Regular Expression** (without separating underscores) | **Length** (without separating underscores)                                                                                                            |
+| Mission/Instrument/Model                                   | 0                                   | (?=^.{5}$)(^\[A-Z0-9\]{1,5}\_{0,4}$)                    | 5                                                                                                                                                      |
+| File class                                                 | 1                                   | ^\[A-Z0-9\]{4}$                                         | 4                                                                                                                                                      |
+| Product type                                               | 2                                   | ^\[RVIO\]$                                              | 1                                                                                                                                                      |
+| Custom flag                                                | 3                                   | ^\[C\_\]$                                               | 1                                                                                                                                                      |
+| Product acronym                                            | 4                                   | (?=^.{7}$)(^\[A-Z0-9\]{1,7}\_{0,6}$)                    | 7                                                                                                                                                      |
+| Product level                                              | 5                                   | ^L\[0-4\]\[A-I\_\]$                                     | 3                                                                                                                                                      |
+| Instance ID                                                | Creation Date/Time, Validity Period | 6a                                                      | ^\[0-9\]{4}\[019\]\[0-9\]\[0-39\]\[0-9\]T\[0-29\]\[0-9\]\[0-69\]\[0-9\]{3}\_\[0-9\]{4}\[019\]\[0-9\]\[0-39\]\[0-9\]T\[0-29\]\[0-9\]\[0-69\]\[0-9\]{3}$ |
+|                                                            | Version                             | 6b                                                      | ^\[0-9\]{4}$                                                                                                                                           |
+| **Total** (with separating underscores, without extension) |                                     |                                                         | 63                                                                                                                                                     |
+
+<span id="_Ref192055576" class="anchor"><span id="_Ref194751490" class="anchor"></span></span>Table 3‑1 Filename elements overview
+
+Below are some examples of internally stored filenames:
+
+SCIA\_\_OPER\_R\_\_\_TMTNO2\_\_L3\_\_20060101T000000\_20060201T000000\_0001.nc
+
+AMSR\_\_OPER\_R\_\_\_LPRMSMD\_L3\_\_20070704T133000\_20070704T133000\_0003.nc
+
+And examples of exported filenames (via the ADAGUC webservices), in case resampling, resizing or any other change of the data (compared to the internally stored product) took place:
+
+SCIA\_\_OPER\_R\_C\_TMTNO2\_\_L3\_\_20060101T000000\_20060201T000000\_0001.nc
+
+AMSR\_\_OPER\_R\_C\_LPRMSMD\_L3\_\_20070704T133000\_20070704T133000\_0003.nc
+
+Note that, apart from the custom flag, only the validity period and extension for exported products could be different from the internally stored product. All other filename elements (including the version) should remain the same.<span id="_Toc193089958" class="anchor"><span id="_Toc193090487" class="anchor"></span></span>
+
+Missions, Instruments, Models, Datasets and Products
+----------------------------------------------------
+
+The following tables describe the situation at the time of writing this document. The latest list of possible missions, instruments, models, datasets and products can be found at the ADAGUC website (http://adaguc.knmi.nl).
+
+Table 3‑2 lists possible missions, instruments and models and the abbreviations / acronyms which should be used in the filename (filename element 0). Table 3‑3 describes possible datasets and the abbreviations / acronyms which should be used as variable names within the data product and, in case of a product with a single dataset, in the filename as well (filename element 4). Table 3‑4 lists possible combinations of datasets which can be combined in one data product. In that case, the abbreviations / acronyms from Table 3‑3 are used as variable names within the data product, while the abbreviations / acronyms from Table 3‑4 are used in the filename (filename element 4).
+
+|                              |                                                 |
+|------------------------------|-------------------------------------------------|
+| **Mission/Instrument/Model** | **Abbreviation / Acronym** (filename element 0) |
+| AMSR                         | AMSR                                            |
+| ECMWF                        | ECMWF                                           |
+| GOME                         | GOME                                            |
+| MERIS                        | MERIS                                           |
+| SCIAMACHY                    | SCIA                                            |
+| OMI                          | OMI                                             |
+| LPRM                         | LPRM                                            |
+
+<span id="_Ref205350332" class="anchor"></span>Table 3‑2 Abbreviations / Acronyms of possible missions, instruments and models
+
+|                                              |                                                   |
+|----------------------------------------------|---------------------------------------------------|
+| **Dataset**                                  | **Abbreviation / Acronym**                        
+                                                     
+  (filename element 4, in case of a single dataset)  |
+| Total Daily Tropospheric NO2                 | TDTNO2                                            |
+| Total Daily Column NO2                       | TDCNO2                                            |
+| Total Monthly Tropospheric NO2               | TMTNO2                                            |
+| Total Monthly Column NO2                     | TMCNO2                                            |
+| Relative Humidity                            | RELHUM                                            |
+| Land Parameter Retrieval Model Soil Moisture 
+                                               
+ (from the Descending swaths)                  | LPRMSMD                                           |
+| Land Parameter Retrieval Model Soil Moisture 
+                                               
+ (from the Ascending swaths)                   | LPRMSMA                                           |
+| Daily cloud pressure                         
+                                               
+ (FRESCO)                                      | CLOUDPR                                           |
+| Daily cloud fraction                         
+                                               
+ (MERIS: SciaMAX, Sciamachy: FRESCO)           | CLOUDFR                                           |
+| Volumetric soil water layer 1                | SWVL1                                             |
+| Soil surface temperature layer 1             | STL1                                              |
+| Large Scale precipitation (accumulated)      | LSP                                               |
+| Convective precipitation (accumulated)       | CP                                                |
+| Boundary layer height                        | BLH                                               |
+| 10 metres wind U-component                   | 10U                                               |
+| 10 metres wind V-component                   | 10V                                               |
+| 2 metres air temperature                     | 2T                                                |
+| Total precipitation (accumulated)            | TP                                                |
+| Averaged monthly column CH<sub>4</sub>       | AMCCH4                                            |
+| Total Ozone with SCIAMACHY algorithm         | TOSOMI                                            |
+| Total Ozone with GOME algorithm              | TOGOMI                                            |
+
+<span id="_Ref205363906" class="anchor"></span>Table 3‑3 Abbreviations / Acronyms of possible datasets
+
+|                       |                                                    |
+|-----------------------|----------------------------------------------------|
+| **Combined Datasets** | **Abbreviation / Acronym**                         
+                                                      
+  (filename element 4, in case of combined datasets)  |
+| TDTNO2, TDCNO2        | TDNO2                                              |
+| TMTNO2, TMCNO2        | TMNO2                                              |
+| CLOUDPR, CLOUDFR      | FRESCO                                             |
+| LPRMSMD, LPRMSMA      | LPRMSM                                             |
+
+<span id="_Ref205363754" class="anchor"></span>Table 3‑4 Abbreviations / Acronyms of possible combinations of datasets, which can be stored in a single data product (i.e. in one data file). See Table 3‑3 for descriptions of the individual datasets.
+
+**
+****Format standard**
+=====================
+
+**Justification**
+-----------------
+
+Based on user requirement UR-FUDA-41, the Hierarchical Data Format Version 5 (HDF5) \[R01\] is the common format for storage within the ADAGUC project. HDF implements a model for managing and storing data. The model includes an abstract data model and an abstract storage model (the data format). In addition it has libraries to implement the abstract model and to map the storage model to different storage mechanisms. The HDF5 library \[R19\] provides a programming interface to a concrete implementation of the abstract models. Furthermore, the library implements a model of data transfer, i.e. efficient movement of data from one stored representation to another stored representation.
+
+There are several good reasons to use the HDF5 data format:
+
+-   The HDF5 API provides platform independent data access
+
+-   The HDF5 API provides uniform and quick data access, also to very large datasets.
+
+-   Many scientific applications recognize HDF5 data products
+
+Disadvantages for novice users are the large number of HDF5 modules involved to read/write data, and complexity of the HDF5 API. For this reason, we have developed the ADAGUC internal file structure (see paragraph 4.2 through 4.4) such that writing or reading an ADAGUC compliant product can be achieved by only using the HDF5 high level API (v1.8) \[R19\].
+
+Many users from the geospatial community specified HDF5 as the preferred format for scientific data exchange, users from the atmospherical community specified NetCDF as the preferred format for scientific data exchange. Therefore a convenient API is the netCDF-4 API \[R06\], as NetCDF-4 is extended and implemented on top of the HDF5 data format. With NetCDF-4 one can serve both worlds simultaneously. Therefore the use of the netCDF-4 API \[R06\] is recommended.
+
+**Format description**
+----------------------
+
+### Introduction
+
+All data products within the ADAGUC project are stored in HDF5 format and can, if needed, be exported in several other formats. In this chapter we provide the current version of the ADAGUC general metadata specification and the ADAGUC data format specification for vector, raster and model based data.
+
+### HDF5 File Organization
+
+An HDF5 file is a container file for storing a variety of scientific data and is composed of two primary types of objects: groups and datasets. An HDF5 group is a grouping structure containing HDF5 objects. An HDF5 dataset, or variable, is an object consisting of (a multidimensional array of) data elements. Any HDF5 dataset may have an associated attribute list. This list is a user-defined HDF5 structure that provides extra information about an HDF5 object (metadata). The attributes are described in paragraph 4.3 and 4.4.
+
+### ADAGUC HDF5 internal file structure 
+
+<span id="_Ref193091080" class="anchor"></span>The ADAGUC internal file structure contains variables which can be subdivided in three types: variables to store the metadata, variables to store the dimension scales and variables to store the actual data. A schematic overview of the ADAGUC file structure for the different types is given in Figure 4‑1. The three types of variables (metadata, dimension scales and data) are indicated with A, B and C respectively.
+
+<span id="_Ref205876497" class="anchor"></span>
+
+<span id="_Ref205876905" class="anchor"><span id="_Ref220843141" class="anchor"></span></span>Figure 4‑1 Overview of the file structure used in the ADAGUC project. Left: file with vector data. Middle: file with geographic raster data. Right: file with projected raster data. A: the metadata part; B: the dimension scale part; C: the data.
+
+**(A) Metadata**
+
+Metadata is stored in attributes which are assigned to a variable. The variables ‘product’, ‘iso\_dataset’ and ‘projection’ are used to store the metadata. The iso\_dataset variable contains global attributes which are valid for all files in the ISO dataset, while the product variable contains specific metadata about the variables within the file. Specific attributes are assigned to all variables. Detailed information about the metadata for each of the variables can be found in paragraph 4.3.
+
+**(B) Dimension scales**
+
+Dimension scales \[R10\] are used as coordinate variables and time intervals. They provide information about geolocation and time to the data variables. The dimension scales follow the NetCDF Climate and Forecast (CF) Metadata Conventions General Metadata format specification \[R07\]. Dimension scales are lists containing coordinates or time intervals. Figure 4‑2 shows geographic raster data with the dimensions time, lat and lon. Its size is, in this example, 4x6x12. This means that there are 4 indexes for time, 6 for latitude and 12 for longitude. According to the CF conventions the dimensions should have the order time, lat, lon.
+
+<img src="media/image39.png" width="575" height="295" />
+
+<span id="_Ref205876730" class="anchor"></span>Figure 4‑2 Geographic raster data containing three dimensions (time, latitude and longitude) with a size of 4x6x12. The dimension scales are drawn along the axes of the data field.
+
+**Dimensions scales for vector data**
+
+For vector data the dimension scales are lat, lon, lat\_bnds, lon\_bnds and time. The lat and lon dimensions represent the center of the tile, while lat\_bnds and lon\_bnds represent the corners of the tile. These dimensions scales are a function of time, just like the variables TDTNO2 and TDCNO2 in Figure 4 1 (left). The geolocation of a tile and its corresponding value can be read by obtaining its corner coordinates from lat\_bnds and lon\_bnds and its value from the data variables (for example TDTNO2). The time of the corner coordinates and the time of the data value must be the same. The order of the vertices of the polygons must be counter-clockwise and the sides of the polygons are not allowed to cross (for an example of polygons and the order of the vertices see Figure 6‑1 in Paragraph 6.2).
+
+**Dimensions scales for raster data using a geographic** **coordinate system**
+
+In case the raster data uses a geographic coordinate system, the required dimensions are time, lat and lon which represent the center of the pixel. Figure 4‑2 shows an example of raster data using a geographic coordinate system.
+
+**Dimensions scales for raster data using a projected coordinate system**
+
+A projected coordinate system is defined on a flat, two-dimensional surface. When the raster data is projected the dimension scales x and y are included which represent the projected coordinates. The dimension scales lat and lon become a function of y and x (see Figure 4‑1, right), providing the latitude and longitude at the location of y and x, respectively. In this case y and x contain the projected coordinates, while lat and lon represent the geographic latitudes and longitudes in degrees at location y, x. For detailed information see the NetCDF Climate and Forecast (CF) Metadata Conventions \[R07\].
+
+**(C) Data**
+
+Part “C” contains the data in the file structure. The data is stored in variables which names are defined in Table 3‑3. The variables are functions of the dimension scales. In case of vector data the variable is a function of time. For geographic raster data the variable is a function of time, lat and lon. For projected raster data the variable is a function of time, y and x (see Figure 4‑1).
+
+Metadata format specification
+-----------------------------
+
+### Introduction
+
+In this paragraph all metadata variables and attributes, that are required (or at least conditionally required) for all ADAGUC products, are described in detail. Preceding the detailed description of each required attribute in paragraphs 4.3.4 to 4.3.7 is a general overview of these attributes (paragraph 4.3.2) and a description of additional attributes which are allowed (paragraph 4.3.3), including how to integrate extra, user defined metadata attributes.
+
+### Overview of required variables and attributes
+
+To fully comply with the NetCDF Climate and Forecast (CF) Metadata Conventions \[R07\] some global attributes are necessary. They need to be attached to the root of the data product. They are described in Table 4‑1.
+
+| **ID** **(1.1)** | **ID (1.0)** | **Variable**   | **Attribute Name** |
+|------------------|--------------|----------------|--------------------|
+| M0               |              | &lt;*root*&gt; |                    |
+| M0-0             | M1-0         |                | title              |
+| M0-1             | M1-1         |                | institution        |
+| M0-2             | M1-2         |                | source             |
+| M0-3             | M1-3         |                | history            |
+| M0-4             | M1-4         |                | references         |
+| M0-5             | M1-5         |                | comment            |
+| M0-6             |              |                | Conventions        |
+
+<span id="_Ref219191980" class="anchor"></span>Table 4‑1 Required global attributes (attached to the root of the data product). Column ‘ID (1.0)’ contains the ID an attribute had in version 1.0 of the ADAGUC Data Format Standard.
+
+The three metadata variables (iso\_dataset, product and projection) act as a container for the other metadata attributes. The iso\_dataset variable itself is a string (see paragraph 4.3.5), the other two variables (product and projection) are of arbitrary type since they do not contain data.
+
+The ADAGUC ISO metadata complies with the ISO19115 standard \[A09\]. This standard is a content standard, i.e. it defines which elements should be described.
+
+The attributes of the ISO dataset variable form the ISO dataset metadata (Table 4‑2). ISO19115 \[A09\] describes many mandatory and optional fields. To decide which fields should be applied, the “Nederlandse Kernset Metadata” (Dutch ISO metadata profile, \[A07\]) is defined and used here.
+
+| **ID** **(1.1)** | **ID** **(1.0)** | **Variable** | **Attribute Name**          | **INSPIRE Name**                            | **M/C** |
+|------------------|------------------|--------------|-----------------------------|---------------------------------------------|---------|
+| M1               | M0               | iso\_dataset |                             |                                             |         |
+| M1-0             | M0-9             |              | title                       | Resource Title                              | M       |
+| M1-1             | M0-12            |              | abstract                    | Resource Abstract                           | M       |
+| M1-2             | M0-13            |              | status                      | Dutch metadata profile                      | M       |
+| M1-3             |                  |              | type                        | Resource type                               | M       |
+| M1-4             |                  |              | url                         | Resource Locator                            | C       |
+| M1-5             |                  |              | protocol                    | Protocol                                    | C       |
+| M1-6             |                  |              | name                        | Name                                        | C       |
+| M1-7             |                  |              | uid                         | Unique Resource Identifier                  | M       |
+| M1-8             |                  |              | topic                       | Topic Category                              | M       |
+| M1-9             | M0-17            |              | keyword                     | Keyword Value                               | M       |
+| M1-10            |                  |              | keyword\_title              | Originating controlled vocabulary title     | C       |
+| M1-11            |                  |              | keyword\_date               | Originating controlled vocabulary date      | C       |
+| M1-12            |                  |              | keyword\_date\_type         | Originating controlled vocabulary date type | C       |
+| M1-13            |                  |              | max-x                       | Minimum x-coordinate                        | M       |
+| M1-14            |                  |              | min-x                       | Maximum x-coordinate                        | M       |
+| M1-15            |                  |              | max-y                       | Minimum y-coordinate                        | M       |
+| M1-16            |                  |              | min-y                       | Maximum y-coordinate                        | M       |
+| M1-17            |                  |              | temporal\_extent            | Temporal extent                             | M       |
+| M1-18            | M0-10            |              | date                        | Dataset reference date                      | M       |
+| M1-19            | M0-11            |              | dateType                    | Date of publication                         
+                                                  
+     Date of last revision                        
+                                                  
+     Date of creation                             | M       |
+| M1-20            | M0-26            |              | statement                   | Lineage                                     | M       |
+| M1-21            | M0-7             |              | code                        | Dutch metadata profile                      | M       |
+| M1-22            | M0-8             |              | codeSpace                   | Dutch metadata profile                      | M       |
+| M1-23            |                  |              | degree                      | Degree                                      | C       |
+| M1-24            |                  |              | specification\_title        | Specification title                         | C       |
+| M1-25            |                  |              | specification\_date         | Specification date                          | C       |
+| M1-26            |                  |              | specification\_type         | Specification type                          | C       |
+| M1-27            | M0-19            |              | accessConstraints           | accessConstraints                           | M       |
+| M1-28            | M0-18            |              | useLimitation               | useLimitation                               | M       |
+| M1-29            | M0-14            |              | organisationName\_dataset   | Responsible Party                           | M       |
+| M1-30            |                  |              | email\_dataset              | Responsible Party Email                     | M       |
+| M1-31            | M0-16            |              | role\_dataset               | Responsible Party Role                      | M       |
+| M1-32            |                  |              | metadata\_id                | Metadata ID                                 | M       |
+| M1-33            |                  |              | parent\_id                  | Parent ID                                   | C       |
+| M1-34            | M0-1             |              | organisationName\_metadata  | Metadata point of contact                   | M       |
+| M1-35            | M0-3             |              | role\_metadata              | Metadata point of contact role              | M       |
+| M1-36            |                  |              | email\_metadata             | Metadata point of contact email             | M       |
+| M1-37            | M0-2             |              | url\_metadata               | Metadata point of contact url               | M       |
+| M1-38            | M0-4             |              | datestamp                   | Metadata date                               | M       |
+| M1-39            | M0-0             |              | language                    | Metadata language                           | M       |
+| M1-40            | M0-5             |              | metadataStandardName        | Dutch metadata profile                      | M       |
+| M1-41            | M0-6             |              | metadataStandardNameVersion | Dutch metadata profile                      | M       |
+|                  |                  |              |                             |
+|                  |                  |              |                             |
+|                  |                  |              |                             |
+|                  |                  |              |                             |
+|                  |                  |              |                             |
+|                  |                  |              |                             |
+|                  |                  |              |                             |
+|                  |                  |              |                             |
+|                  |                  |              |                             |
+|                  |                  |              |                             |
+|                  |                  |              |                             |
+|                  |                  |              |                             |
+|                  |                  |              |                             |
+|                  |                  |              |                             |
+|                  |                  |              |                             |
+|                  |                  |              |                             |
+|                  |                  |              |                             |
+|                  |                  |              |                             |
+|                  |                  |              |                             |
+|                  |                  |              |                             |
+|                  |                  |              |                             |
+|                  |                  |              |                             |
+|                  |                  |              |                             |
+|                  |                  |              |                             |
+|                  |                  |              |                             |
+|                  |                  |              |                             |
+|                  |                  |              |                             |
+|                  |                  |              |                             |
+|                  |                  |              |                             |
+
+<span id="_Ref195521024" class="anchor"><span id="_Ref220825475" class="anchor"></span></span>Table 4‑2 Mandatory (M) and conditional (C) attributes of the ISO dataset variable, valid for the whole ISO dataset. All attributes are conform ISO 19115:2003 INSPIRE profile and Dutch metadata profile for geographical data \[A07, A12\]. Column ‘ID (1.0)’ contains the ID an attribute had in version 1.0 of the ADAGUC Data Format Standard. Table 4‑6 in paragraph 4.3.5 explains when a conditional field should be filled.
+
+Table 4‑3 gives an overview of the general required metadata for all products in the form of attributes of the product variable and indicates to which standard the attributes comply.
+
+| **ID (1.1)** | **ID** **(1.0)** | **Variable** | **Attribute Name** |
+|--------------|------------------|--------------|--------------------|
+| M2           | M1               | product      |                    |
+|              |                  |              |                    |
+|              |                  |              |                    |
+|              |                  |              |                    |
+|              |                  |              |                    |
+|              |                  |              |                    |
+|              |                  |              |                    |
+| M2-0         | M1-6             |              | ref\_doc           |
+| M2-1         | M1-7             |              | ref\_doc\_version  |
+| M2-2         | M1-8             |              | format\_version    |
+| M2-3         | M1-9             |              | input\_products    |
+| M2-4         | M1-10            |              | originator         |
+| M2-5         | M1-11            |              | creation\_date     |
+| M2-6         | M1-12            |              | software\_version  |
+| M2-7         | M1-13            |              | file\_class        |
+| M2-8         | M1-14            |              | type               |
+| M2-9         | M1-15            |              | acronym            |
+| M2-10        | M1-16            |              | level              |
+| M2-11        | M1-17            |              | variables          |
+| M2-12        | M1-18            |              | validity\_start    |
+| M2-13        | M1-19            |              | validity\_stop     |
+| M2-14        | M1-20            |              | style              |
+
+<span id="_Ref205270700" class="anchor"><span id="_Ref220825639" class="anchor"></span></span>Table 4‑3 Required product metadata, valid for one product. Column ‘ID (1.0)’ contains the ID an attribute had in version 1.0 of the ADAGUC Data Format Standard.
+
+Table 4‑4 gives an overview of the required metadata for all products in the form of attributes of the projection variable and indicates to which standard the attributes comply.
+
+| **ID (1.1)** | **ID** **(1.0)** | **Variable** | **Attribute Name**  |
+|--------------|------------------|--------------|---------------------|
+| M3           | M2               | projection   |                     |
+| M3-0         | M2-0             |              | projection\_name    |
+| M3-1         | M2-1             |              | EPSG\_code          |
+| M3-2         | M2-2             |              | proj4\_params       |
+| M3-3         | M2-3             |              | grid\_mapping\_name |
+
+<span id="_Ref194737289" class="anchor"></span>Table 4‑4 Required projection metadata (note that an EPSG code does not necessarilly have to exist for certain combinations of proj4 parameters, see paragraph 4.3.6 for details). Column ‘ID (1.0)’ contains the ID an attribute had in version 1.0 of the ADAGUC Data Format Standard.
+
+### Additional attributes
+
+Paragraph 4.3.2 describes the *mandatory* (and some conditional) attributes for all ADAGUC products. The following *additional* attributes are allowed in an ADAGUC data product.
+
+Scale and offset:
+
+The scale and offset attributes are used to convert integer values into meaningful physical quantities. Within the netCDF Climate and Forecast Conventions \[R07, paragraph 8.1\] this is referred to as “Packed Data”. The attributes scale\_factor and add\_offset are used to define the scale and offset factors. To retrieve a physical quantity from an integer value the input value is first multiplied with the scale factor and second the offset factor is added:
+
+The input value is called the packed data, while the resulting value is called the unpacked data. The packed data type must be of type byte, short or int. The resulting unpacked data type must have the same data type as the scale\_factor and add\_offset attributes. These attributes are usually of data type float or double.
+
+Projection metadata:
+
+Projection parameters can be added in case of a projected coordinate system, for example a polar stereographic projection. These projection attributes are derived from appendix F of the netCDF Climate and Forecast (CF) Metadata Conventions \[R07\]. Example attributes are listed in Table 4‑9 for a polar stereographic projection.
+
+Any other attributes can only be stored in the data product attached to a variable called “custom”, or, alternatively custom attributes can be added anywhere in the data product as long as the attribute prefix is “custom\_” (i.e. the attribute name starts with “custom\_”).
+
+### Global metadata
+
+Global metadata is supplied in the form of attributes attached to the root of the data product and are required to comply with the NetCDF Climate and Forecast (CF) Metadata Conventions \[R07\]. Each global attribute from the list in Table 4‑1 is described in more detail in Table 4‑5 below.
+
+|                    |                                                                                                                      |          |                                                                                                                    |
+|--------------------|----------------------------------------------------------------------------------------------------------------------|----------|--------------------------------------------------------------------------------------------------------------------|
+| **Attribute Name** | **Description**                                                                                                      | **Type** | **Comment**                                                                                                        |
+| title              | Short description of the file contents                                                                               | string   | Name of the contents of the product. This shall be the same as the title attribute under the ISO\_dataset variable |
+| institution        | Institution or organization where the original data was produced                                                     | string   |                                                                                                                    |
+| source             | Method of production of the original data                                                                            | string   | , Instrument or Modelname (1<sup>st</sup> element of the filenmame, see Table 3‑1)                                 |
+| history            | List of the applications that have modified the original data                                                        |          |                                                                                                                    |
+| references         | References that describe the data or methods used to produce it                                                      | string   | Reference to a document or webpage describing the product                                                          |
+| comment            | Miscellaneous information about the data or methods used to produce it                                               | string   | Extra notes (if needed, otherwise leave empty)                                                                     |
+| Conventions        | Indicates to which version of the NetCDF Climate and Forecast (CF) Metadata Conventions \[R07\] the product complies | string   | E.g. CF-1.4                                                                                                        
+                                                                                                                        
+    Capital C of the attribute name is mandatory, as well as the capitals in the value itself (i.e. ‘CF’)               |
+
+<span id="_Ref219781803" class="anchor"></span>Table 4‑5 Detailed global metadata
+
+### ISO Dataset metadata
+
+The ISO dataset variable holds the general metadata valid for the whole ISO dataset. It should be equal for all files belonging to a particular ISO dataset. The ISO dataset variable itself holds the version of the ISO dataset (for instance “ISO-19115:2003”). Each ISO dataset attribute from the list in Table 4‑2 is described in more detail in Table 4‑6 below.
+
+|                             |                                                                                                                                                                             |                  |                                                                                                                                                                                                                                                                      |         |
+|-----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|
+| **Attribute Name**          | **Description**                                                                                                                                                             | **Type**         | **Comment**                                                                                                                                                                                                                                                          | **M/C** |
+| title                       | Name by which the cited resource is known                                                                                                                                   | String           | Name of the ISO dataset. This shall be the same as the global title attribute                                                                                                                                                                                        | M       |
+| abstract                    | Brief narrative summary of the content of the resource                                                                                                                      | String           | Short description of the ISO dataset content                                                                                                                                                                                                                         | M       |
+| status                      | Status of the resource                                                                                                                                                      | Code list[1]     | Code list (B5.23) can be found in \[A07\]. Choose one of the following: completed, historicalArchive, obsolete, ongoing, planned, required, underDevelopment                                                                                                         | M       |
+| type                        | Hierarchy level resource (INSPIRE name: resource type)                                                                                                                      | Code list B.5.25 | Hierarchy level of the metadata. For ADAGUC products this is by default: dataset                                                                                                                                                                                     | M       |
+| url                         | Resource locator                                                                                                                                                            | URL              | URL of the ISO dataset. Mandatory if a URL to the dataset is available. Can be an URL directly to the set, but also to the data portal                                                                                                                               | C       |
+| protocol                    | Protocol                                                                                                                                                                    | ServiceType      | Mandatory if a URL is specified. Protocol used for downloading data. Example: OGC:WMS                                                                                                                                                                                | C       |
+| name                        | Name                                                                                                                                                                        | String           | Mandatory for OGC:WMS, OGC:WFS and OGC:WCS. Layer name for WMS or WCS or the featureType for name for WFS.                                                                                                                                                           | C       |
+| uid                         | Unique identifier of the source                                                                                                                                             | String           | Unique value to describe the data within a name space. Generate a UUID. Example:                                                                                                                                                                                     
+                                                                                                                                                                                                                                                                          
+    5a389ad2-22dd-11d1-aa77-002035b29093. This UUID shall be different from the UUID’s in the metadata\_id and parent\_id attributes                                                                                                                                      | M       |
+| topic                       | Topic category. Main theme of the ISO dataset                                                                                                                               | Enumeration      | Choose one or more themes from the enumeration of B.5.27 of the ISO standard.                                                                                                                                                                                        | M       |
+| keyword                     | Commonly used word(s)or formalized word(s) or phrases(s) used to describe the subject                                                                                       | String           | The use of keyword lists is encouraged (e.g. from netCDF-CF \[R07\], WMO keywords list \[R13\])                                                                                                                                                                      | M       |
+| keyword\_title              | Name of the thesaurus or keyword list                                                                                                                                       | String           | If a keyword list is used, this field is mandatory                                                                                                                                                                                                                   | C       |
+| keyword\_date               | Reference date of the thesaurus or keyword list                                                                                                                             | Date             | If a keyword list is used, this field is mandatory.                                                                                                                                                                                                                  
+                                                                                                                                                                                                                                                                          
+    Date coded according to ISO8601 \[A10\]:                                                                                                                                                                                                                              
+                                                                                                                                                                                                                                                                          
+    YYYY-MM-DD.                                                                                                                                                                                                                                                           
+                                                                                                                                                                                                                                                                          
+    Example: 2006-01-23.                                                                                                                                                                                                                                                  
+                                                                                                                                                                                                                                                                          
+    The type of event the date is valid for is in dateType.                                                                                                                                                                                                               | C       |
+| keyword\_date\_type         | Event the reference date is referring to.                                                                                                                                   | Code list B5.2   | If a keyword list is used, this field is mandatory. Code list (B5.2) can be found in \[A07\]. Choose one of the following: publication, revision, creation                                                                                                           | C       |
+| max-x                       | West bound longitude                                                                                                                                                        | Decimal          | Coordinates are given using the ETRS 89 reference system. Value range: -180 up to and including 180                                                                                                                                                                  | M       |
+| min-x                       | East bound longitude                                                                                                                                                        | Decimal          | Coordinates are given using the ETRS 89 reference system. Value range: -180 up to and including 180                                                                                                                                                                  | M       |
+| max-y                       | South bound latitude                                                                                                                                                        | Decimal          | Coordinates are given using the ETRS 89 reference system. Value range: -180 up to and including 180                                                                                                                                                                  | M       |
+| min-y                       | North bound latitude                                                                                                                                                        | Decimal          | Coordinates are given using the ETRS 89 reference system. Value range: -180 up to and including 180                                                                                                                                                                  | M       |
+| temporal\_extent            | Temporal coverage of the ISO dataset                                                                                                                                        | Class            | Temporal coverage of the ISO dataset, specified by begin and end date.                                                                                                                                                                                               | M       |
+| date                        | Reference date for cited resource                                                                                                                                           | Date             | Date coded according to ISO8601 \[A10\]:                                                                                                                                                                                                                             
+                                                                                                                                                                                                                                                                          
+    YYYY-MM-DD.                                                                                                                                                                                                                                                           
+                                                                                                                                                                                                                                                                          
+    Example: 2006-01-23.                                                                                                                                                                                                                                                  
+                                                                                                                                                                                                                                                                          
+    The type of event the date is valid for is in dateType.                                                                                                                                                                                                               | M       |
+| dateType                    | Event used for the reference date                                                                                                                                           | Code list        | Code list (B5.2) can be found in \[A07\]. Choose one of the following: creation, publication, revision                                                                                                                                                               | M       |
+| statement                   | General explanation of the data producers’ knowledge about he lineage of a dataset                                                                                          | String           | General description or remarks regarding the history of the ISO dataset                                                                                                                                                                                              | M       |
+| code                        | Alphanumeric value identifying the reference system of the ISO dataset                                                                                                      | Code list        | EPSG codes should be used, e.g. 28992 (RD), 7408 (RD/NAP), 4937 (ETRS89), 4326 (WGS84)                                                                                                                                                                               | M       |
+| codeSpace                   | Name or identifier for the organisation or person responsible for the code reference system                                                                                 | String           | Default value: EPSG                                                                                                                                                                                                                                                  
+                                                                                                                                                                                                                                                                          
+    EPSG codes should be used for better interoperability.                                                                                                                                                                                                                | M       |
+| degree                      | Indication of conformance to the standard                                                                                                                                   | Boolean          | Mandatory when a dataset is an INSPIRE data source or if the data is modeled according a specific information model. Example: TRUE                                                                                                                                   | C       |
+| specification\_title        | Name of the specification                                                                                                                                                   | String           | Mandatory if the dataset is an INSPIRE data source or if the data is modeled according a specific information model. Example: INSPIRE Implementing rules laying down technical arrangements for the interoperability and harmonization of administrative boundaries. | C       |
+| specification\_date         | Date of the specification                                                                                                                                                   | date             | Date coded according to ISO8601 \[A10\]:                                                                                                                                                                                                                             
+                                                                                                                                                                                                                                                                          
+    YYYY-MM-DD.                                                                                                                                                                                                                                                           
+                                                                                                                                                                                                                                                                          
+    Example: 2006-01-23.                                                                                                                                                                                                                                                  
+                                                                                                                                                                                                                                                                          
+    The type of event the date is valid for is in dateType.                                                                                                                                                                                                               | C       |
+| specification\_type         | Event used for the reference date                                                                                                                                           | Code list        | Code list (B5.2) can be found in \[A07\]. Choose one of the following: creation, publication, revision                                                                                                                                                               | C       |
+| accessConstraints           | Access constraints applied to assure the protection of privacy or intellectual property, and any special restrictions or limitations on obtaining the resource or metadata. | String           | Mandatory field. If no restrictions, use ‘N/A’ (for not applicable) or ‘none’ as value                                                                                                                                                                               | M       |
+| useLimitation               | Limitation affecting the fitness for use of the resource or metadata.                                                                                                       | String           | Examples: ‘Not to be used for navigation’, ‘Do not use the dataset for scales larger than 1:50,000’                                                                                                                                                                  | M       |
+| organisationName\_dataset   | Complete name of the organization responsible for the ISO dataset (responsible party).                                                                                      | String           | Use the complete name of the organization. Abbreviation of the name may be added. Examples: “Koninklijk Nederlands Meteorologish Insitituut (KNMI)” or “SRON Institute for Space Research”                                                                           
+                                                                                                                                                                                                                                                                          
+    Note: “\_dataset” is added because of usage within an HDF group                                                                                                                                                                                                       | M       |
+| email\_dataset              | Email address of the contact person or the organization                                                                                                                     | String           | Email address of the contact person or organization responsible for the data                                                                                                                                                                                         | M       |
+| role\_dataset               | Function performed by the responsible party                                                                                                                                 | Code list        | Default for ADAGUC: pointOfContact. Code list (B5.5) is available in appendix of \[A07\]. Values: resourceProvider, custodian, owner, user, distributor, originator, pointOfContact, principalInvestigator, processor, publisher, author                             
+                                                                                                                                                                                                                                                                          
+    Note: “\_dataset” is added because of usage within an HDF group                                                                                                                                                                                                       | M       |
+| metadata\_id                | Unique identifier of the metadata                                                                                                                                           | String           | Unique ID for the metadata file. Unique value to describe the data within a name space. Generate a UUID. Example:                                                                                                                                                    
+                                                                                                                                                                                                                                                                          
+    5a389ad2-22dd-11d1-aa77-002035b29093. This UUID shall be different from the UUID’s in the uid and parent\_id attributes                                                                                                                                               | M       |
+| parent\_id                  | Unique identiefier of the parent metadata                                                                                                                                   | String           | Mandatory if dataseset is a child or subset of a parent dataset. Unique ID for the metadata file of the parent of this dataset. Unique value to describe the data within a name space. Generate a UUID. Example:                                                     
+                                                                                                                                                                                                                                                                          
+    5a389ad2-22dd-11d1-aa77-002035b29093. This UUID shall be different from the UUID’s in the uid and metadata\_id attributes of this product                                                                                                                             | C       |
+| organisationName\_metadata  | Complete name of the organization responsible for the metadata (responsible party).                                                                                         | String           | Use the complete name of the organization. Abbreviation of the name may be added. Example: Koninklijk Nederlands Meteorologish Insitituut (KNMI)                                                                                                                     | M       |
+| role\_metadata              | Function performed by the responsible party                                                                                                                                 | Code list        | Example: pointOfContact. Code list (B5.5) is available in appendix of \[A07\]                                                                                                                                                                                        | M       |
+| email\_metadata             | Email address of the contact person or the organization                                                                                                                     | String           | Email address of the contact person or organization responsible for the metadata                                                                                                                                                                                     | M       |
+| url\_metadata               | URL of the organization                                                                                                                                                     | String           | Example: http://adaguc.knmi.nl                                                                                                                                                                                                                                       | M       |
+| datestamp                   | Date the metadata was created or altered                                                                                                                                    | Date             | Date coded according to ISO8601 \[A10\]: YYYY-MM-DD. Example: 2006-01-23                                                                                                                                                                                             | M       |
+| language                    | Language used to describe the metadata                                                                                                                                      | String           | ISO639-2 \[A11\] should be used here: English = ‘eng’, Dutch = ‘dut’                                                                                                                                                                                                 | M       |
+| metadataStandardName        | Name of the metadata standard name (including profile name) used                                                                                                            | String           | Default value is: ISO19115                                                                                                                                                                                                                                           | M       |
+| metadataStandardNameVersion | Version (profile) of the metadata standard used                                                                                                                             | String           | Default value: Nederlandse metadatastandaard voor geografie 1.2                                                                                                                                                                                                      | M       |
+
+<span id="_Ref219198803" class="anchor"></span>Table 4‑6 Detailed ISO dataset metadata (Mandatory \[M\] and conditional \[C\] attributes)
+
+The use of Universally Unique Identifiers (UUID’s) is mandatory for the uid, metadata\_id and parent\_id attributes. They will uniquely identify the defined metadata (metadata\_id), the ISO dataset itself (uid) and, in case of a series of ISO datasets, the parent ISO dataset (parent\_id) without the need for a central coordination of these identifiers. If the dataset is updated, e.g. reprocessed, both uid and metadata\_id attributes need to be updated. If only a metadata attribute is updated, e.g. a different point of contact for the dataset, only the metadata\_id needs to be updated.
+
+### Product metadata
+
+The product variable holds the general metadata valid for the whole product. The time format used within the ADAGUC HDF5 file format complies with the NetCDF Climate and Forecast (CF) Metadata Conventions \[R07\]. The time zone, as specified in the boundary conditions, is always UTC. Each product attribute from the list in Table 4‑3 is described in more detail in Table 4‑7 below.
+
+|                    |                                                                                                                                           |           |                                                                                         |
+|--------------------|-------------------------------------------------------------------------------------------------------------------------------------------|-----------|-----------------------------------------------------------------------------------------|
+| **Attribute Name** | **Description**                                                                                                                           | **Type**  | **Comment**                                                                             |
+|                    |                                                                                                                                           |           |                                                                                         |
+|                    |                                                                                                                                           |           |                                                                                         |
+|                    |                                                                                                                                           |           |                                                                                         |
+|                    |                                                                                                                                           |           |                                                                                         |
+|                    |                                                                                                                                           |           |                                                                                         |
+|                    |                                                                                                                                           |           |                                                                                         |
+| ref\_doc           | Name of the document describing the dataset (ISO)                                                                                         | string    | E.g. the Ozone product description                                                      |
+| ref\_doc\_version  | Version of the document describing the dataset (ISO)                                                                                      | string    | E.g. “1.0”                                                                              |
+| format\_version    | Version of the ADAGUC data format being used for the product                                                                              | string    | This is the ADAGUC data format version mentioned on the front page of this document.    |
+| input\_products    | List of input products                                                                                                                    | string    |                                                                                         |
+| originator         | Creator of the product                                                                                                                    | string    |                                                                                         |
+| creation\_date     | Creation date/time in UTC                                                                                                                 | date/time |                                                                                         |
+| software\_version  | The version of the software which created the file                                                                                        | string    | E.g. “V1.0.1”                                                                           |
+| file\_class        | File Class (2<sup>nd</sup> element of the filenmame, see Table 3‑1)                                                                       | string    | E.g. “OPER“, “CONS“, “TEST“, etc.                                                       |
+| type               | Product Type (3<sup>rd</sup> element of the filenmame, see Table 3‑1)                                                                     | string    | Can be either “R”, “V”, “I” or “O”                                                      |
+| acronym            | Product Acronym (5<sup>th</sup> element of the filenmame, see Table 3‑1 and Table 3‑3)                                                    | string    | E.g. “TRPNO2“                                                                           |
+| level              | Product Level (6<sup>th</sup> element of the filenmame, see Table 3‑1)                                                                    | string    | E.g. “L3”                                                                               |
+| variables          | List of all variables containing the actual data of the product                                                                           | string    | Variables in section C of Figure 4‑1                                                    |
+| validity\_start    | Start date/time of the validity period of the product (1<sup>st</sup> part of the 7<sup>th</sup> element of the filenmame, see Table 3‑1) | date/time | E.g. “20060101T000000“                                                                  |
+| validity\_stop     | End date/time of the validity period of the product (2<sup>nd</sup> part of the 7<sup>th</sup> element of the filenmame, see Table 3‑1)   | date/time | E.g. “20060201T000000“                                                                  |
+| style              | Style / form of the attributes                                                                                                            | string    | Can be either “lowercase”, “UPPERCASE”, “camelCase”, “separating\_character” or “mixed” |
+
+<span id="_Ref220825665" class="anchor"></span>Table 4‑7 Detailed product metadata
+
+### **Projection metadata**
+
+The projection variable holds the projection metadata for this product. Projection metadata is required to define the type of coordinate system, type of projection and datum for each HDF5 dataset. The projection metadata attributes follow the Climate and Forecast Conventions \[R07\], with the addition of three attributes from the ADAGUC data products standard. These additional attributes are projection\_name, EPSG\_code and proj4\_params. The netCDF Climate and Forecast grid mapping attributes can be found in Appendix F of the netCDF Climate and Forecast (CF) Metadata Conventions \[R07\]. The attributes depend on the type of coordinate system and type of projection.
+
+Examples of projection metadata are given for two datasets (TMNO2 and NL25PCP) in the last column of Table 4‑8 and Table 4‑9, respectively. The first dataset uses a geographic coordinate system (Table 4‑8). For this type of coordinate system the attribute grid\_mapping\_name is set to “latitude\_longitude”. This represents a geographic coordinate system with units in degrees and datum WGS84. This type of coordinate system is used for mapping the TMNO2 dataset, see Figure 4‑1 (middle).
+
+The second dataset uses a projected coordinate system with a polar stereographic projection (Table 4‑9). This type of projection requires several extra parameters: latitude\_of\_projection\_origin, straight\_vertical\_longitude\_from\_pole, scale\_factor\_at\_projection\_origin, false\_easting and false\_northing. Optionally, the ellipsoidal figure associated with the geodetic datum to approximate the shape of the earth can be defined using the semi\_major\_axis, semi\_minor\_axis, longitude\_of\_prime\_meridian and inverse\_flattening parameters. This type of coordinate system is used for mapping the NL25PCP dataset, see Figure 4‑1 (right).
+
+|                     |                                                                                                                              |          |                                                                                                                |
+|---------------------|------------------------------------------------------------------------------------------------------------------------------|----------|----------------------------------------------------------------------------------------------------------------|
+| **Attribute Name**  | **Description**                                                                                                              | **Type** | **Comment**                                                                                                    |
+| projection\_name    | Full (human readable) name of the projection being used                                                                      | string   | E.g. for TMNO2:                                                                                                
+                                                                                                                    
+    “Latitude Longitude”                                                                                            |
+| EPSG\_code          | The EPSG code of the projection being used (if available)                                                                    | string   | E.g. for TMNO2: “EPSG:4326”                                                                                    
+                                                                                                                    
+    If an EPSG code is not defined for the proj4\_params use “UNDEFIN”, if the EPSG code is unknown use “UNKNOWN”.  |
+| proj4\_params       | List of space separated tag=value pairs to be used with the PROJ.4 projection library \[R15\]. Each tag is preceded with a + | string   | E.g. for TMNO2: “+proj=longlat +ellps=WGS84 +datum=WGS84 +no\_defs”                                            |
+| grid\_mapping\_name | Name of the grid mapping                                                                                                     | string   | E.g. for TMNO2: “latitude\_longitude”                                                                          |
+
+<span id="_Ref206405862" class="anchor"></span>Table 4‑8 Projection parameters for a standard geographic coordinate system.
+
+|                                           |                                                                                                                                                                                   |          |                                                                                                                                |
+|-------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|--------------------------------------------------------------------------------------------------------------------------------|
+| **Attribute Name**                        | **Description **                                                                                                                                                                  | **Type** | **Comment**                                                                                                                    |
+| projection\_name                          | Full (human readable) name of the projection being used                                                                                                                           | string   | E.g. for NL25PCP:                                                                                                              
+                                                                                                                                    
+    “Polar Stereographic”                                                                                                           |
+| EPSG\_code                                | The EPSG code of the projection being used (if available)                                                                                                                         | string   | E.g. for NL25PCP: “UNKNOWN”                                                                                                    
+                                                                                                                                    
+    If an EPSG code is not defined for the proj4\_params use “UNDEFIN”, if the EPSG code is unknown use “UNKNOWN”.                  |
+| proj4\_params                             | List of space separated tag=value pairs to be used with the PROJ.4 projection library \[R15\]. Each tag is preceded with a +                                                      | string   | E.g. for NL25PCP: “+proj=stere +lat\_0=90 +lat\_ts=60 +lon\_0=0 +k=1 +x\_0=0 +y\_0=0 +a=6378.14 +b=6356.75 +units=m +no\_defs" |
+| grid\_mapping\_name                       | Name of the grid mapping                                                                                                                                                          | string   | E.g. for NL25PCP: “polar\_stereographic”                                                                                       |
+| latitude\_of\_projection\_origin          | The latitude chosen as the origin of rectangular coordinates for a map projection.                                                                                                | double   | E.g. for NL25PCP:                                                                                                              
+                                                                                                                                    
+    90                                                                                                                              |
+| straight\_vertical\_longitude\_from\_pole | The longitude to be oriented straight up from the North or South Pole.                                                                                                            | double   | E.g. for NL25PCP:                                                                                                              
+                                                                                                                                    
+    0                                                                                                                               |
+| scale\_factor\_at\_projection\_origin     | A multiplier for reducing a distance obtained from a map by computation or scaling to the actual distance at the projection origin.                                               | double   | E.g. for NL25PCP:                                                                                                              
+                                                                                                                                    
+    0.933012709177451                                                                                                               |
+| false\_easting                            | The value added to all abscissa values in the rectangular coordinates for a map projection.                                                                                       | double   | E.g. for NL25PCP:                                                                                                              
+                                                                                                                                    
+    0                                                                                                                               |
+| false\_northing                           | The value added to all ordinate values in the rectangular coordinates for a map projection.                                                                                       | double   | E.g. for NL25PCP:                                                                                                              
+                                                                                                                                    
+    0                                                                                                                               |
+| inverse\_flattening                       | Used to specify the inverse flattening (1/f) of the ellipsoidal figure associated with the geodetic datum and used to approximate the shape of the Earth (*optional*).            | double   | E.g. for NL25PCP:                                                                                                              
+                                                                                                                                    
+    298.183263207106                                                                                                                |
+| semi\_major\_axis                         | Specifies the length, in meters, of the semi-major axis of the ellipsoidal figure associated with the geodetic datum and used to approximate the shape of the Earth (*optional*). | double   | E.g. for NL25PCP:                                                                                                              
+                                                                                                                                    
+    6378140000                                                                                                                      |
+| semi\_minor\_axis                         | Specifies the length, in meters, of the semi-minor axis of the ellipsoidal figure associated with the geodetic datum and used to approximate the shape of the Earth (*optional*). | double   | E.g. for NL25PCP:                                                                                                              
+                                                                                                                                    
+    6356750000                                                                                                                      |
+| longitude\_of\_prime\_meridian            | Specifies the longitude, with respect to , of the prime meridian associated with the geodetic datum (*optional*).                                                                 | double   | E.g. for NL25PCP:                                                                                                              
+                                                                                                                                    
+    0                                                                                                                               |
+
+<span id="_Ref206405974" class="anchor"><span id="_Ref210798055" class="anchor"></span></span>Table 4‑9 Projection parameters for a projected coordinate system with a polar stereographic projection. Descriptions are derived from Appendix F of the netCDF Climate and Forecast (CF) Metadata Conventions \[R07\].
+
+Data format specification
+-------------------------
+
+### General format
+
+The ADAGUC data products shall follow the HDF5 file format specification \[R01\]. Both the HDF5 library and the netCDF-4 library provide a programming interface (API) to a concrete implementation of the HDF storage format. Furthermore, as indicated in paragraph 4.1, the ADAGUC file format requires the usage of “Dimension Scales” \[R10\]. This is offered by both API’s (introduced in HDF5 v1.8 and netCDF-4 \[R06\]). Because of arguments presented in paragraph 4.1 the usage of the netCDF-4 API is preferred. To create HDF5 files with the netCDF-4 API one has to set the creation flag to NC\_NETCDF4.
+
+The HD5 datasets included in the ADAGUC products need to be uniform in time and space. The datasets should be related and share the same metadata. See Table 3‑4 and the ADAGUC website (http://adaguc.knmi.nl) for possible combinations of HDF5 datasets within one data product (i.e. within one file).
+
+The geolocation and time of the variables can be supplied by dimension scales, see Figure 4‑1.
+
+Each dimension scale in section B of Figure 4‑1 will have, at least, the attributes described in Table 4‑10. These attributes follow the NetCDF Climate and Forecast (CF) Metadata Conventions \[R07\].
+
+|                    |                           |          |                                                                    |
+|--------------------|---------------------------|----------|--------------------------------------------------------------------|
+| **Attribute Name** | **Description**           | **Type** | **Comment**                                                        |
+| long\_name         | Full name of the variable | string   | E.g. “longitude” for variable “lon”, “latitude” for variable “lat” |
+| units              | Unit of the variable      | string   | E.g. “degrees\_east”                                               |
+
+<span id="_Ref205287119" class="anchor"></span>Table 4‑10 Required dimension scale attributes
+
+Each HDF5 data variable in section C of Figure 4‑1 will have, at least, the attributes described in Table 4‑11. These attributes follow the NetCDF Climate and Forecast (CF) Metadata Conventions \[R07\].
+
+|                    |                                                                                                |          |                                                                                                                                                                                                                                    |
+|--------------------|------------------------------------------------------------------------------------------------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Attribute Name** | **Description**                                                                                | **Type** | **Comment**                                                                                                                                                                                                                        |
+| long\_name         | Full name of the variable                                                                      | string   | E.g. ”air\_pressure\_at\_cloud\_top” for variable cloudTopPress                                                                                                                                                                    |
+| units              | Unit of the variable                                                                           | string   | E.g. “hPa”                                                                                                                                                                                                                         |
+| standard\_name     | Standard name for the variable                                                                 | string   | E.g. “precipitation\_flux”                                                                                                                                                                                                         |
+|                    |                                                                                                |          |                                                                                                                                                                                                                                    |
+| grid\_mapping      | Mapping between the given coordinate variables and the true latitude and longitude coordinates | string   | In general, this is the name of a variable that provides the description of the mapping with a set of attributes. For ADAGUC products this is always “projection”, i.e. pointing to the projection variable described in Table 4‑8 |
+
+<span id="_Ref201638299" class="anchor"></span>Table 4‑11 Required HDF5 dataset attributes
+
+### Additional attributes
+
+Paragraph 4.4.1 describes the mandatory attributes for all ADAGUC products. The following frequently used attributes can be added to variables of an ADAGUC data product.
+
+coordinates:
+
+The latitude and longitude coordinates of a horizontal grid that was not defined as a Cartesian product of latitude and longitude axes, can be represented using two-dimensional coordinate variables. These variables are identified as coordinates by use of the 'coordinates' attribute: “coordinates = lon lat”.
+
+\_FillValue:
+
+This attribute defines a value used to represent missing or undefined data. It is recognized by the netCDF library as the value to pre-fill disk space allocated to the variable it belongs to. Its data type should be the same as the data type of the variable.
+
+### Raster based data
+
+Below is an example of a raster based ADAGUC product.
+
+netcdf SCIA\_\_CONS\_R\_\_\_IMAP\_\_\_\_L3\_\_20040101T000000\_20040201T000000\_0001 {
+
+dimensions:
+
+lon = 360 ;
+
+lat = 180 ;
+
+time = 1 ;
+
+variables:
+
+double lon(lon) ;
+
+lon:long\_name = "longitude" ;
+
+lon:units = "degrees\_east" ;
+
+double lat(lat) ;
+
+lat:long\_name = "latitude" ;
+
+lat:units = "degrees\_north" ;
+
+double time(time) ;
+
+time:units = "seconds since 1950-01-01 0:0:0" ;
+
+time:long\_name = "time" ;
+
+time:standard\_name = "time" ;
+
+int nrofsamples(time, lat, lon) ;
+
+nrofsamples:grid\_mapping = "projection" ;
+
+nrofsamples:units = ;
+
+nrofsamples:long\_name = "number\_of\_samples" ;
+
+double stddev(time, lat, lon) ;
+
+stddev:grid\_mapping = "projection" ;
+
+stddev:\_FillValue = -1. ;
+
+stddev:units = ;
+
+stddev:long\_name = "standard\_deviation\_of\_the\_input\_values\_for\_each\_pixel" ;
+
+short xVMR\_CH4(time, lat, lon) ;
+
+xVMR\_CH4:grid\_mapping = "projection" ;
+
+xVMR\_CH4:\_FillValue = -999s ;
+
+xVMR\_CH4:long\_name = "vertical\_mixing\_ratio\_of\_methane\_in\_air" ;
+
+xVMR\_CH4:standard\_name = "xVMR\_CH4" ;
+
+xVMR\_CH4:units = "ppb" ;
+
+char product ;
+
+product:ref\_doc = "ADAGUC Data Products Standard" ;
+
+product:ref\_doc\_version = "1.1" ;
+
+product:format\_version = "1.1" ;
+
+product:originator = "SRON" ;
+
+product:file\_class = "CONS" ;
+
+product:type = "R" ;
+
+product:acronym = "IMAP" ;
+
+product:level = "L3" ;
+
+product:style = "lowercase" ;
+
+product:validity\_start = "20040101T000000" ;
+
+product:validity\_stop = "20040201T000000" ;
+
+product:input\_products = "SCIA\_\_CONS\_V\_\_\_IMAP\_\_\_\_L2\_\_20040107T024647\_20040108T011222\_0001.nc, SCIA\_\_CONS\_V\_\_\_IMAP\_\_\_\_L2\_\_20040108T021602\_20040109T004041\_0001.nc, SCIA\_\_CONS\_V\_\_\_IMAP\_\_\_\_L2\_\_20040109T014427\_20040110T000901\_0001.nc, SCIA\_\_CONS\_V\_\_\_IMAP\_\_\_\_L2\_\_20040110T011445\_20040110T233720\_0001.nc, SCIA\_\_CONS\_V\_\_\_IMAP\_\_\_\_L2\_\_20040111T004136\_20040112T004643\_0001.nc, SCIA\_\_CONS\_V\_\_\_IMAP\_\_\_\_L2\_\_20040112T015036\_20040113T001457\_0001.nc, SCIA\_\_CONS\_V\_\_\_IMAP\_\_\_\_L2\_\_20040113T012100\_20040113T234316\_0001.nc, SCIA\_\_CONS\_V\_\_\_IMAP\_\_\_\_L2\_\_20040114T004714\_20040115T005148\_0001.nc, SCIA\_\_CONS\_V\_\_\_IMAP\_\_\_\_L2\_\_20040115T015602\_20040116T002005\_0001.nc, SCIA\_\_CONS\_V\_\_\_IMAP\_\_\_\_L2\_\_20040116T012400\_20040116T234823\_0001.nc, SCIA\_\_CONS\_V\_\_\_IMAP\_\_\_\_L2\_\_20040117T010021\_20040118T005751\_0001.nc, SCIA\_\_CONS\_V\_\_\_IMAP\_\_\_\_L2\_\_20040118T020141\_20040119T002455\_0001.nc, SCIA\_\_CONS\_V\_\_\_IMAP\_\_\_\_L2\_\_20040119T013004\_20040119T084835\_0001.nc, SCIA\_\_CONS\_V\_\_\_IMAP\_\_\_\_L2\_\_20040120T174323\_20040121T010243\_0001.nc, SCIA\_\_CONS\_V\_\_\_IMAP\_\_\_\_L2\_\_20040121T020700\_20040122T003007\_0001.nc, SCIA\_\_CONS\_V\_\_\_IMAP\_\_\_\_L2\_\_20040122T014307\_20040122T235823\_0001.nc, SCIA\_\_CONS\_V\_\_\_IMAP\_\_\_\_L2\_\_20040123T010528\_20040124T010738\_0001.nc, SCIA\_\_CONS\_V\_\_\_IMAP\_\_\_\_L2\_\_20040124T021128\_20040125T003557\_0001.nc, SCIA\_\_CONS\_V\_\_\_IMAP\_\_\_\_L2\_\_20040125T014112\_20040125T222414\_0001.nc, SCIA\_\_CONS\_V\_\_\_IMAP\_\_\_\_L2\_\_20040126T010945\_20040126T233233\_0001.nc, SCIA\_\_CONS\_V\_\_\_IMAP\_\_\_\_L2\_\_20040127T003825\_20040128T004204\_0001.nc, SCIA\_\_CONS\_V\_\_\_IMAP\_\_\_\_L2\_\_20040128T014630\_20040129T001009\_0001.nc, SCIA\_\_CONS\_V\_\_\_IMAP\_\_\_\_L2\_\_20040129T011812\_20040129T233806\_0001.nc, SCIA\_\_CONS\_V\_\_\_IMAP\_\_\_\_L2\_\_20040130T004526\_20040131T004654\_0001.nc, SCIA\_\_CONS\_V\_\_\_IMAP\_\_\_\_L2\_\_20040131T015042\_20040131T223453\_0001.nc" ;
+
+product:software\_version = "ADAGUC NetCDF4 raster API V0.1" ;
+
+product:variables = "xVMR\_CH4,nrofsamples,stddev" ;
+
+product:long\_name = "product" ;
+
+product:creation\_date = "2009-01-15T14:54:43.000000" ;
+
+char iso\_dataset ;
+
+iso\_dataset:title = "SCIAMACHY Level 3 monthly averaged methane on 1x1 degree grid" ;
+
+iso\_dataset:abstract =
+
+"Files created with the Level2toLevel3 v0.2 averager using 20x10 samplepoints, created from SCIAMACHY Level 2 IMAP files from the Iterative Maximum A Posteriori (IMAP) DOAS algorithm" ;
+
+iso\_dataset:status = "ongoing" ;
+
+iso\_dataset:type = "dataset" ;
+
+iso\_dataset:uid = "0339c492-8e59-4bc8-9789-3183af45302d" ;
+
+iso\_dataset:topic = "Climatology Meteorology Atmosphere" ;
+
+iso\_dataset:keyword = "Monthly Global Atmospheric" ;
+
+iso\_dataset:max-x = 180.f ;
+
+iso\_dataset:min-x = -180.f ;
+
+iso\_dataset:max-y = 90.f ;
+
+iso\_dataset:min-y = -90.f ;
+
+iso\_dataset:temporal\_extent = "2002-01-01" ;
+
+iso\_dataset:date = "2009-01-15" ;
+
+iso\_dataset:dateType = "publication" ;
+
+iso\_dataset:statement =
+
+"Files created with the Level2toLevel3 v0.2 averager using 20x10 samplepoints from daily level 2 files. This dataset is the result of the application of the Iterative Maximum A Posteriori (IMAP) DOAS algorithm described by C. Frankenberg, U. Platt, and T. Wagner: Iterative maximum a posteriori (IMAP)-DOAS for retrieval of strongly absorbing trace gases: model studies for CH4 and CO2 retrieval from near infrared spectra of SCIAMACHY onboard ENVISAT \[Atmos. Chem. Phys., 5:9-22, 2005\]." ;
+
+iso\_dataset:code = "4326 (WGS84)" ;
+
+iso\_dataset:codeSpace = "EPSG" ;
+
+iso\_dataset:accessConstraints = "none" ;
+
+iso\_dataset:useLimitation = "none" ;
+
+iso\_dataset:organisationName\_dataset = "SRON Netherlands Institute for Space Research" ;
+
+iso\_dataset:email\_dataset = "&lt;*dataset* *contact email address*&gt;" ;
+
+iso\_dataset:role\_dataset = "pointOfContact" ;
+
+iso\_dataset:metadata\_id = "ca9dc063-1bcc-4891-b51e-d36ae14828fb" ;
+
+iso\_dataset:organisationName\_metadata = "Royal Dutch Meteorological Institute (KNMI)" ;
+
+iso\_dataset:role\_metadata = "pointOfContact" ;
+
+iso\_dataset:email\_metadata = "&lt;*metadata contact email address*&gt;" ;
+
+iso\_dataset:url\_metadata = "http://adaguc.knmi.nl" ;
+
+iso\_dataset:datestamp = "15-01-2009" ;
+
+iso\_dataset:language = "eng" ;
+
+iso\_dataset:metadataStandardName = "ISO 19115" ;
+
+iso\_dataset:metadataStandardNameVersion =
+
+"Nederlandse metadata profiel op ISO 19115 voor geografie 1.2" ;
+
+iso\_dataset:long\_name = "iso\_dataset" ;
+
+char projection ;
+
+projection:EPSG\_code = "EPSG:4326" ;
+
+projection:grid\_mapping\_name = "latitude\_longitude" ;
+
+projection:proj4\_params = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no\_defs" ;
+
+projection:long\_name = "projection" ;
+
+// global attributes:
+
+:title = "SCIAMACHY Level 3 monthly averaged methane on 1x1 degree grid" ;
+
+:institution = "SRON" ;
+
+:source =
+
+"SCIAMACHY Level 2 IMAP files from the Iterative Maximum A Posteriori (IMAP) DOAS algorithm" ;
+
+:history = "Level2toLevel3 v0.2 averager using 20x10 samplepoints" ;
+
+:references = "http://www.sron.nl/~chrisf" ;
+
+:comment = "Draft product" ;
+
+:Conventions = "CF-1.4" ;
+
+}
+
+### Vector based data
+
+Below is an example of a vector based ADAGUC product.
+
+netcdf SCIA\_\_TEST\_V\_\_\_TDTNO2\_\_L2\_\_20021231T000000\_20030101T000000\_0001 {
+
+dimensions:
+
+time = 50901
+
+nv = 4 ;
+
+variables:
+
+double time(time) ;
+
+time:long\_name = "time" ;
+
+time:standard\_name = "time" ;
+
+time:units = "seconds since 1950-01-01 0:0:0" ;
+
+int nv(nv) ;
+
+float lon\_bnds(time, nv) ;
+
+float lat\_bnds(time, nv) ;
+
+float lon(time) ;
+
+lon:long\_name = "longitude" ;
+
+lon:standard\_name = "longitude" ;
+
+lon:units = "degrees\_east" ;
+
+float lat(time) ;
+
+lat:long\_name = "latitude" ;
+
+lat:standard\_name = "latitude" ;
+
+lat:units = "degrees\_north" ;
+
+float vcdtrop(time) ;
+
+vcdtrop:long\_name = "Retrieved tropospheric NO2 vertical column density" ;
+
+vcdtrop:standard\_name = "vcdtrop" ;
+
+vcdtrop:units = "10e15 molecules cm-2" ;
+
+float sigvcdt(time) ;
+
+sigvcdt:long\_name = "Error in the tropospheric NO2 vertical column density" ;
+
+sigvcdt:standard\_name = "sigvcdt" ;
+
+sigvcdt:units = "10e15 molecules cm-2" ;
+
+char iso\_dataset ;
+
+iso\_dataset:title = "SCIAMACHY Level2 daily troposheric NO2 data" ;
+
+iso\_dataset:abstract =
+
+"Global tropospheric NO2 columns are retrieved from satellite observations. They are based on slant column NO2 retrievals with the DOAS technique, and the KNMI combined modelling/retrieval/assimilation approach. The slant columns from SCIAMACHY observations are derived by BIRA-IASB" ;
+
+iso\_dataset:status = "ongoing" ;
+
+iso\_dataset:type = "dataset" ;
+
+iso\_dataset:uid = "fcc318d4-1064-4556-85b1-77e6ad04f974" ;
+
+iso\_dataset:topic = "atmosphere" ;
+
+iso\_dataset:keyword = "Daily Tropospheric Atmospheric Global" ;
+
+iso\_dataset:max-x = 180.f ;
+
+iso\_dataset:min-x = -180.f ;
+
+iso\_dataset:max-y = 90.f ;
+
+iso\_dataset:min-y = -90.f ;
+
+iso\_dataset:temporal\_extent = "2002-01-01" ;
+
+iso\_dataset:date = "2005-08-01" ;
+
+iso\_dataset:dateType = "publication date" ;
+
+iso\_dataset:statement =
+
+"Satellite instruments use spectroscopy to retrieve atmospheric trace gas concentrations in the atmosphere. By comparing the measured spectrum of the backscattered light from the Earths atmosphere with a reference spectrum, the column density of nitrogen dioxide along the light path can be determined. The NO2 stratospheric column is deduced from a chemistry-transport model assimilation run of the NO2 column data. Subsequently, the assimilated stratospheric column is subtracted from the retrieved total column, resulting in a tropospheric column." ;
+
+iso\_dataset:code = "4326 (WGS84)" ;
+
+iso\_dataset:codeSpace = "EPSG" ;
+
+iso\_dataset:accessConstraints = "none" ;
+
+iso\_dataset:useLimitation = "none" ;
+
+iso\_dataset:organisationName\_dataset = "Royal Dutch Meteorological Institute (KNMI)" ;
+
+iso\_dataset:email\_dataset = "&lt;*dataset contact email address*&gt;" ;
+
+iso\_dataset:role\_dataset = "pointOfContact" ;
+
+iso\_dataset:metadata\_id = "347219ca-252e-4688-90ea-8155db12a111" ;
+
+iso\_dataset:organisationName\_metadata = "Royal Dutch Meteorological Institute (KNMI)" ;
+
+iso\_dataset:role\_metadata = "pointOfContact" ;
+
+iso\_dataset:email\_metadata = "&lt;*metadata contact email address*&gt;" ;
+
+iso\_dataset:url\_metadata = "http://adaguc.knmi.nl" ;
+
+iso\_dataset:datestamp = "15-01-2009" ;
+
+iso\_dataset:language = "eng" ;
+
+iso\_dataset:metadataStandardName = "ISO 19115" ;
+
+iso\_dataset:metadataStandardNameVersion =
+
+"Nederlandse metadata profiel op ISO 19115 voor geografie 1.2" ;
+
+iso\_dataset:long\_name = "iso\_dataset" ;
+
+char product ;
+
+product:ref\_doc = "ADAGUC Data Products Standard" ;
+
+product:ref\_doc\_version = "1.1" ;
+
+product:format\_version = "1.1" ;
+
+product:originator = "Royal Dutch Meteorological Institute (KNMI)" ;
+
+product:file\_class = "TEST" ;
+
+product:type = "V" ;
+
+product:acronym = "TDTNO2" ;
+
+product:level = "L2" ;
+
+product:style = "camelCase" ;
+
+product:validity\_start = "20021231T000000" ;
+
+product:validity\_stop = "20030101T000000" ;
+
+product:input\_products = "no2track20021230.hdf,no2track20021231.hdf,no2track20030101.hdf" ;
+
+product:software\_version = "ADAGUC NetCDF4 vector API V0.2" ;
+
+product:variables = "vcdtrop,sigvcdt" ;
+
+product:creation\_date = "2009-01-26T10:10:59.000000" ;
+
+char projection ;
+
+projection:EPSG\_code = "EPSG:4326" ;
+
+projection:projection\_name = "Latitude Longitude" ;
+
+projection:proj4\_params = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no\_defs" ;
+
+// global attributes:
+
+:title = "SCIAMACHY Level2 daily troposheric NO2 data" ;
+
+:institution = "Royal Dutch Meteorological Institute (KNMI)" ;
+
+:source = "SCIA" ;
+
+:history = "Source File obtained from temis" ;
+
+:references = "http://www.temis.nl" ;
+
+:comment = "none" ;
+
+:Conventions = "CF-1.4" ;
+
+}
+
+### Model based data (additional)
+
+*TBW* (example/dump of a HDF5 file with model data could be specified here)
+
+### 
+
+### 
+
+### 
+
+### 
+
+### 
+
+### 
+
+### 
+
+### 
+
+### 
+
+### 
+
+### 
+
+### 
+
+### 
+
+### 
+
+### 
+
+<span id="_Toc219181194" class="anchor"><span id="_Toc219182868" class="anchor"><span id="_Toc219189104" class="anchor"><span id="_Toc219197042" class="anchor"><span id="_Toc219201627" class="anchor"><span id="_Toc219204331" class="anchor"><span id="_Toc219207571" class="anchor"><span id="_Toc219208373" class="anchor"><span id="_Toc219208486" class="anchor"><span id="_Toc219208573" class="anchor"><span id="_Toc219208747" class="anchor"><span id="_Toc219208833" class="anchor"><span id="_Toc219208919" class="anchor"><span id="_Toc219209005" class="anchor"><span id="_Toc220813582" class="anchor"><span id="_Toc220832883" class="anchor"><span id="_Toc220834193" class="anchor"><span id="_Toc220834281" class="anchor"><span id="_Toc220843442" class="anchor"><span id="_Toc220844008" class="anchor"><span id="_Toc220845578" class="anchor"><span id="_Toc220846589" class="anchor"><span id="_Toc221078257" class="anchor"></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span>
+
+<span id="_Toc219181195" class="anchor"><span id="_Toc219182869" class="anchor"><span id="_Toc219189105" class="anchor"><span id="_Toc219197043" class="anchor"><span id="_Toc219201628" class="anchor"><span id="_Toc219204332" class="anchor"><span id="_Toc219207572" class="anchor"><span id="_Toc219208374" class="anchor"><span id="_Toc219208487" class="anchor"><span id="_Toc219208574" class="anchor"><span id="_Toc219208748" class="anchor"><span id="_Toc219208834" class="anchor"><span id="_Toc219208920" class="anchor"><span id="_Toc219209006" class="anchor"><span id="_Toc220813583" class="anchor"><span id="_Toc220832884" class="anchor"><span id="_Toc220834194" class="anchor"><span id="_Toc220834282" class="anchor"><span id="_Toc220843443" class="anchor"><span id="_Toc220844009" class="anchor"><span id="_Toc220845579" class="anchor"><span id="_Toc220846590" class="anchor"><span id="_Toc221078258" class="anchor"></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span>
+
+Units
+=====
+
+The units and standard names used in the ADAGUC data products standard follow the netCDF Climate and Forecast Conventions (CF) \[R07\] where possible. The units attribute is required for all variables except for the iso\_dataset, product and custom variables. The value of the units attributes is a string that can be recognized by Unidata’s Udunits package \[R20\].
+
+Standard names are used to precisely describe the physical quantities being represented. The standard name is applied to the attribute standard\_name, which takes a string as value. The set of available standard names are listed in the standard name table \[R21\].
+
+Coordinate systems
+==================
+
+Introduction
+------------
+
+Basically there are two types of coordinate systems, geographic and projected coordinate systems. A geographic coordinate system uses latitude and longitude to reference a point on the earth’s surface. The earth’s surface is represented as a three-dimensional spherical surface. The sphere is approximated by an ellipsoid. The ellipsoid can be described by two radii: the longer radius is called the semi major axis, and the shorter radius is called the semi minor axis. The datum of a geographic coordinate system defines the position of the spheroid relative to the center of the earth, e.g. the origin and orientation of latitude and longitude lines \[R22\].
+
+A projected coordinate system is a flat, two-dimensional representation of the earth. The projected coordinate system uses linear units of measure. The projected coordinate system is based on a spherical earth model, and its coordinates are related to geographic coordinates by a projection transformation. The projection transformation is called the map projection. It is used to convert the latitude and longitude coordinates to x, y coordinates on the flat projection. Examples of map projections are conic, cylindrical and planar surfaces \[R22\].
+
+Coordinate systems within ADAGUC
+--------------------------------
+
+The coordinate systems used in the ADAGUC *raster* data products are the coordinate systems defined in Appendix F of the NetCDF Climate and Forecast (CF) conventions \[R07\]. For *vector* data only the geographic coordinate system with name “latitude\_longitude” is supported. This means that coordinates of vector data are always represented by latitude and longitude on a spherical earth.
+
+The valid range for latitude is \[-90,90\] and for longitude \[-180,180&gt;. An exception is made for corners of tiles where the tile crosses the -180 meridian or the 180 meridian. Here the following rule needs to be applied: (*i*) if the longitude of the center of the tile is close to -180 meridian then the longitudes of the left corners are allowed to be less than -180 degrees, (*ii*) if the longitude of the center of the tile is close to 180 meridian then the longitudes of the right corners are allowed to be larger than 180 degrees. See Figure 6‑1.
+
+<img src="media/image41.png" alt="tiles_crossing" width="408" height="248" />
+
+<span id="_Ref220747205" class="anchor"></span>Figure 6‑1 Schematic drawing illustrates tiles that are crossing the -180 and 180 meridian, respectively. The center locations (C) of the tiles are within the longitude range \[-180, 180&gt;, however the left tile crosses the -180 meridian, while the right tile crosses the 180 meridian.
+
+In these cases some of the corners (3 and 4 for the left tile) may have longitude values smaller than -180 degrees or larger than 180 degrees (1 and 2 for the right tile).
+
+The approximation of the ellipsoid of the earth’s surface for all coordinate systems can be defined by the inverse\_flattening, semi\_major\_axis and semi\_minor\_axis attributes. The inverse flattening is related to semi major axis and semi minor axis with the formula:
+
+The Proj4 library \[R15\] in combination with GDAL is used to translate between coordinate systems. Chapter 4.3.7 lists examples for a geographic and a projected coordinate system.
+
+Limitations and open issues
+===========================
+
+Introduction
+------------
+
+This chapter discusses the current limitations and open issues, including: the granularity level of the published datasets, the need for a catalog service, etc.. It is important to explain to the
+
+community that the ADAGUC project is aware of these topics and is fully aware of the present shortcomings and (future) challenges. Naturally, these topics might be addressed in future projects.
+
+Web Coverage Service
+--------------------
+
+The current Web Coverage Service (WCS) is based on UMN MapServer \[R04\] and GDAL \[R05\]. GDAL is the data translator tool which is used by UMN MapServer to convert between various geographical formats. When a WCS GetCoverage request is done to UMN MapServer, one raster product is returned. The data is converted to the needs of the user. For example the geographical region, projection, resolution and file format can be adjusted.
+
+### HDF5 Datasets
+
+The current limitation of the GDAL/UMN MapServer combination \[R05, R04\] is that only one raster product for each request can be returned. For example, a user wants to retrieve Tropospheric NO2 and he or she is interested in the measurement error for each pixel as well. Within the ADAGUC system it is currently not possible to return a raster dataset with its accompanying error field in one request. Two requests need to be done, one request to retrieve the data and one request to retrieve the error fields.
+
+### Dimensions
+
+The current implementation of the ADAGUC raster driver in GDAL limits the maximum number of dimensions not to exceed three. Only a 2D (x and y) or 3D (x, y and time) grid is supported. GDAL supports multiple bands within a raster. This is used as the third dimension in the ADAGUC raster driver.
+
+Web Feature Service
+-------------------
+
+Time requests to the OGC \[A02\] services are used to request data for a certain time domain. The parameter to make these requests is named TIME. In contrast to the Web Map Service (WMS) and the Web Coverage Service (WCS), the Web Feature Service (WFS) does not support time requests. It is however possible to make selections in time by using WFS Filter Encoding (FE) \[R23\] which makes it possible to query the data. Filter Encoding is supported by UMN MapServer, but date comparison is not supported by UMN MapServer. Therefore the ADAGUC system will currently not support WFS Filter Encoding or WFS Time requests.
+
+OGR Library
+-----------
+
+Currently there is no support in OGR to create ADAGUC netCDF files from other vector formats. One of the problems is that the ADAGUC vector netCDF file format supports four vertices for each polygon. With OGR it is possible to use point, polygons and multi polygons with an unlimited amount of vertices. Because of this constraint, write support for the OGR ADAGUC driver has not been included.
+
+Catalog services
+----------------
+
+At the moment, ADAGUC does not provide catalog services, due to present lack of a well recognized and adapted standard and the consequent limitations in discovery clauses. Therefore, implementation was not feasible within the timeframe of the project. A follow up should investigate the different existing standards and try to select one in line with INSPIRE and GMES.
+
+Granularity
+-----------
+
+TBW – This section will explain a) the adopted approach to select the granularity level of published data, b) the consequential limitations for accessing the other possible levels of data granularities and c) the impact on the metadata ingestion/harvesting process.<img src="media/image43.png" width="66" height="66" /><img src="media/image44.png" width="38" height="39" />
+
+[1] A Code list consists of an enumeration (or list) of possible entries from which a value has to be chosen. The chosen value will have type 'String'.
