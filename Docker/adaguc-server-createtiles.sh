@@ -9,15 +9,9 @@ if [[ $1 ]]; then
     filename=/data/adaguc-datasets/"${configfile##*/}" 
     echo "Starting update for ${filename}" 
     /adaguc/adaguc-server-master/bin/adagucserver --updatedb --config /adaguc/adaguc-server-config.xml,${filename}
+    /adaguc/adaguc-server-master/bin/adagucserver --createtiles --config /adaguc/adaguc-server-config.xml,${filename}
   done
 
 else
-
-  # Update all datasets
-  for configfile in /data/adaguc-datasets/*xml ;do
-    filename=/data/adaguc-datasets/"${configfile##*/}" 
-    echo "Starting update for ${filename}" 
-    /adaguc/adaguc-server-master/bin/adagucserver --updatedb --config /adaguc/adaguc-server-config.xml,${filename}
-  done
-
+  echo "Please specify a dataset"
 fi

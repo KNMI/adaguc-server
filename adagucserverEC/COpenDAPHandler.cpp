@@ -464,16 +464,19 @@ CDBDebug("Found layer %s",layerName.c_str());
     #ifdef COPENDAPHANDLER_DEBUG      
     CDBDebug("This layer has no dims, adding one virtual time step.");
     #endif
-    CDirReader dirReader;
-    if(CDBFileScanner::searchFileNames(&dirReader,dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter,NULL)!=0){
-    CDBError("Could not find any filename");
-    delete dataSource;
-    return 1; 
+    
+    std::vector<std::string> fileList;
+    try {
+      fileList = CDBFileScanner::searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter,NULL);
+    }catch(int linenr) {
+      CDBError("Could not find any filename");
+      delete dataSource;
+      return 1; 
     }
-    if(dirReader.fileList.size()==0){
-    CDBError("dirReader.fileList.size()==0");delete dataSource;return 1;
+    if(fileList.size()==0){
+    CDBError("fileList.size()==0");delete dataSource;return 1;
     }
-    dataSource->addStep(dirReader.fileList[0]->fullName.c_str(),NULL);
+    dataSource->addStep(fileList[0].c_str(),NULL);
     dataSource->getCDFDims()->addDimension("time","0",0);
   }
   

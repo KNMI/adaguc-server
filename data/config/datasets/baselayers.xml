@@ -11,6 +11,7 @@
     <RenderMethod>nearest</RenderMethod>
     <NameMapping name="nearest"   title="Land sea mask" abstract="Land sea mask"/>
     <FeatureInterval match=".*" matchid="abbrev" bgcolor="#CCCCFF" fillcolor="#CCFFCC"/>
+    
   </Style>
 
   <Style name="overlay">

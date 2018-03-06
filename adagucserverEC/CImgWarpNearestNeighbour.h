@@ -29,254 +29,7 @@
 #include <pthread.h>
 #include "CImageWarperRenderInterface.h"
 #include "CGenericDataWarper.h"
-
-//#define CIMGWARPNEARESTNEIGHBOUR_DEBUG
-
-
-
-
-/**
- *  This tile just runs over the datasource field, and calculates the destination pixel color over and over again when it is requested twice.
- *  This class is very fast for large datasets, with low zoom levels (zoomed out completely)
- */
-class CDrawTileObj{
-private:
-  DEF_ERRORFUNCTION();
-public:
-  double dfTileWidth,dfTileHeight;
-  double dfSourceBBOX[4];
-  double dfImageBBOX[4];
-  double dfNodataValue;
-  double legendLowerRange;
-  double legendUpperRange;
-  double legendValueRange;
-  double hasNodataValue;
-  int width,height;
-  int internalWidth,internalHeight;
-  float legendLog,legendScale,legendOffset;
-  float legendLogAsLog;
-  CDataSource * dataSource;
-  CDrawImage *drawImage;
-  bool debug;
-  //size_t prev_imgpointer;
-  void init(CDataSource *dataSource,CDrawImage *drawImage,int tileWidth,int tileHeight){
-    this->dataSource = dataSource;
-    this->drawImage = drawImage;
-    dfTileWidth=tileWidth;dfTileHeight=tileHeight;
-    for(int k=0;k<4;k++){
-      dfSourceBBOX[k]=dataSource->dfBBOX[k];
-      dfImageBBOX[k]=dataSource->dfBBOX[k];
-    }
-    
-    //Look whether BBOX was swapped in y dir
-    if(dataSource->dfBBOX[3]<dataSource->dfBBOX[1]){
-      dfSourceBBOX[1]=dataSource->dfBBOX[3];
-      dfSourceBBOX[3]=dataSource->dfBBOX[1];
-    }
-    //Look whether BBOX was swapped in x dir
-    if(dataSource->dfBBOX[2]<dataSource->dfBBOX[0]){
-      dfSourceBBOX[0]=dataSource->dfBBOX[2];
-      dfSourceBBOX[2]=dataSource->dfBBOX[0];
-    }
-    
-    debug = false;
-    
-    if(dataSource->cfgLayer->TileSettings.size()==1){
-      if(dataSource->cfgLayer->TileSettings[0]->attr.debug.equals("true")){
-        debug = true;
-      }
-    }
-    
-    CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-    
-    
-    dfNodataValue    = dataSource->getDataObject(0)->dfNodataValue ;
-    legendValueRange = styleConfiguration->hasLegendValueRange;
-    legendLowerRange = styleConfiguration->legendLowerRange;
-    legendUpperRange = styleConfiguration->legendUpperRange;
-    hasNodataValue   = dataSource->getDataObject(0)->hasNodataValue;
-    width = dataSource->dWidth;
-    height = dataSource->dHeight;
-    legendLog = styleConfiguration->legendLog;
-    if(legendLog>0){
-      legendLogAsLog = log10(legendLog);
-    }else{
-      legendLogAsLog = 0;
-    }
-    legendScale = styleConfiguration->legendScale;
-    legendOffset = styleConfiguration->legendOffset;
-    
-    internalWidth = width;
-    internalHeight =height;
-  }
-  int drawTile(double *x_corners,double *y_corners,int &dDestX,int &dDestY){
-    CDFType dataType=dataSource->getDataObject(0)->cdfVariable->getType();
-    void *data=dataSource->getDataObject(0)->cdfVariable->data;
-    switch(dataType){
-      case CDF_CHAR  : return myDrawRawTile((char*)data,x_corners,y_corners,dDestX,dDestY);break;
-      case CDF_BYTE  : return myDrawRawTile((char*)data,x_corners,y_corners,dDestX,dDestY);break;
-      case CDF_UBYTE : return myDrawRawTile((unsigned char*)data,x_corners,y_corners,dDestX,dDestY);break;
-      case CDF_SHORT : return myDrawRawTile((short*)data,x_corners,y_corners,dDestX,dDestY);break;
-      case CDF_USHORT: return myDrawRawTile((ushort*)data,x_corners,y_corners,dDestX,dDestY);break;
-      case CDF_INT   : return myDrawRawTile((int*)data,x_corners,y_corners,dDestX,dDestY);break;
-      case CDF_UINT  : return myDrawRawTile((uint*)data,x_corners,y_corners,dDestX,dDestY);break;
-      case CDF_FLOAT : return myDrawRawTile((float*)data,x_corners,y_corners,dDestX,dDestY);break;
-      case CDF_DOUBLE: return myDrawRawTile((double*)data,x_corners,y_corners,dDestX,dDestY);break;
-    }
-    return 1;
-  }
-  template <class T>
-  int myDrawRawTile(T*data,double *x_corners,double *y_corners,int &dDestX,int &dDestY){
-    #ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
-//    CDBDebug("myDrawRawTile %f, %f, %f, %f, %d, %d %f %f",dfSourceBBOX[0],dfSourceBBOX[1],dfSourceBBOX[2],dfSourceBBOX[3],width,height,dfTileWidth,dfTileHeight);
-    #endif 
-    double sample_sy,sample_sx;
-    double line_dx1,line_dy1,line_dx2,line_dy2;
-    double rcx_1,rcy_1,rcx_2,rcy_2,rcx_3,rcy_3;
-    int x,y;
-    int srcpixel_x,srcpixel_y;
-    int dstpixel_x,dstpixel_y;
-    int k;
-    rcx_1= (x_corners[0] - x_corners[3])/dfTileWidth;
-    rcy_1= (y_corners[0] - y_corners[3])/dfTileWidth;
-    rcx_2= (x_corners[1] - x_corners[2])/dfTileWidth;
-    rcy_2= (y_corners[1] - y_corners[2])/dfTileWidth;
-    for(k=0;k<4;k++){
-      if(fabs(x_corners[k]-x_corners[0])>=fabs(dfSourceBBOX[2]-dfSourceBBOX[0]))break;
-    }
-    if(k==4){
-      for(k=0;k<4;k++){
-        if(x_corners[k]>dfSourceBBOX[0]&&x_corners[k]<dfSourceBBOX[2])break;
-      }
-      if(k==4){
-        return __LINE__;
-      }
-    }
-    for(k=0;k<4;k++){
-      if(fabs(y_corners[k]-y_corners[0])>=fabs(dfSourceBBOX[3]-dfSourceBBOX[1]))break;
-    }
-    if(k==4){
-      for(k=0;k<4;k++){
-        if(y_corners[k]>dfSourceBBOX[1]&&y_corners[k]<dfSourceBBOX[3])break;
-      }
-      if(k==4){
-        return __LINE__;
-      }
-    }
-    
-  
-        /*
-         * [D: CImgWarpNearestNeighbour.h, 490 in CImgWarpNearestNeighbour]   2012-07-25T09:52:02Z dfTileWidth, dfTileHeight:  1 1
-         * [D: CImgWarpNearestNeighbour.h, 491 in CImgWarpNearestNeighbour]   2012-07-25T09:52:02Z datasource:  6.668803 54.172408 100.846018 -15.367730
-         * [D: CImgWarpNearestNeighbour.h, 492 in CImgWarpNearestNeighbour]   2012-07-25T09:52:02Z destination: 6.668803 -15.367730 100.846018 54.172408
-         * [D: CImgWarpNearestNeighbour.h, 371 in CImgWarpNearestNeighbour]   2012-07-25T09:52:02Z Drawing tile 0
-         * [D: CImgWarpNearestNeighbour.h, 375 in CImgWarpNearestNeighbour]   2012-07-25T09:52:02Z Drawing tile id 0
-         * [D: CImgWarpNearestNeighbour.h, 257 in CDrawTileObj]               2012-07-25T09:52:02Z myDrawRawTile 6.668803, -15.367729, 100.846016, 54.172409
-         * 
-         * 
-         * [D: CImgWarpNearestNeighbour.h, 490 in CImgWarpNearestNeighbour]   2012-07-25T09:53:06Z dfTileWidth, dfTileHeight:  1 1
-         * [D: CImgWarpNearestNeighbour.h, 491 in CImgWarpNearestNeighbour]   2012-07-25T09:53:06Z datasource:  14.914277 46.821022 109.091492 -22.719116
-         * [D: CImgWarpNearestNeighbour.h, 492 in CImgWarpNearestNeighbour]   2012-07-25T09:53:06Z destination: 14.914277 -22.719116 109.091492 46.821022
-         * [D: CImgWarpNearestNeighbour.h, 371 in CImgWarpNearestNeighbour]   2012-07-25T09:53:06Z Drawing tile 0
-         * [D: CImgWarpNearestNeighbour.h, 375 in CImgWarpNearestNeighbour]   2012-07-25T09:53:06Z Drawing tile id 0
-         * [D: CImgWarpNearestNeighbour.h, 257 in CDrawTileObj]               2012-07-25T09:53:06Z myDrawRawTile 14.914276, -22.719116, 109.091492, 46.821022
-         * 
-         */
-      #ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
-      //CDBDebug("myDrawRawTile %f, %f, %f, %f, %d, %d %f %f",dfSourceBBOX[0],dfSourceBBOX[1],dfSourceBBOX[2],dfSourceBBOX[3],width,height,dfTileWidth,dfTileHeight);
-      #endif
-      line_dx1= x_corners[3];
-      line_dx2= x_corners[2];
-      line_dy1= y_corners[3];
-      line_dy2= y_corners[2];
-      
-//      CDBDebug("lines: %f %f %f %f",line_dx1,line_dx2,line_dy1,line_dy2);
-   //   CDBDebug("rcs: %f %f %f %f",rcx_1,rcy_1,rcx_2,rcy_2);
-      
-      bool isNodata=false;
-      T val;
-      T nodataValue=(T)dfNodataValue;
-      
-      size_t imgpointer;
-      for(x=0;x<=dfTileWidth-1;x++){
-        line_dx1+=rcx_1;line_dx2+=rcx_2;line_dy1+=rcy_1;line_dy2+=rcy_2;
-        rcx_3= (line_dx2 -line_dx1)/dfTileHeight;
-        rcy_3= (line_dy2 -line_dy1)/dfTileHeight;
-        dstpixel_x=int(x)+dDestX;
-        for(y=0;y<=dfTileHeight-1;y=y+1){
-          
-          dstpixel_y=y+dDestY-1;
-          sample_sx=line_dx1+rcx_3*double(y);
-          //CDBDebug("Drawing1 sx:%f l:%f rc:%f y:%d between %f-%f",sample_sx,line_dx1,rcx_3,y,dfSourceBBOX[0],dfSourceBBOX[2]);
-          if(sample_sx>=dfSourceBBOX[0]&&sample_sx<dfSourceBBOX[2])
-          {
-           //  CDBDebug("Drawing2");
-            sample_sy=line_dy1+rcy_3*y;
-            if(sample_sy>=dfSourceBBOX[1]&&sample_sy<dfSourceBBOX[3])
-            {
-               //CDBDebug("Drawing3");
-              srcpixel_x=int(((sample_sx-dfImageBBOX[0])/(dfImageBBOX[2]-dfImageBBOX[0]))*(width));
-              if(srcpixel_x>=0&&srcpixel_x<width){
-                //  CDBDebug("Drawing4");
-                srcpixel_y=int(((sample_sy-dfImageBBOX[1])/(dfImageBBOX[3]-dfImageBBOX[1]))*height);
-                if(srcpixel_y>=0&&srcpixel_y<height){
-                  //  CDBDebug("Drawing4");
-                  imgpointer=srcpixel_x+(height-1-srcpixel_y)*width;
-                  //imgpointer=srcpixel_x+(dHeight-1-srcpixel_y)*dWidth;
-                  val=data[imgpointer];
-
-/*#ifdef ADAGUC_TILESTITCHER_DEBUG
-                  
-                      if(srcpixel_x ==0||srcpixel_x==width-1||srcpixel_y ==0||srcpixel_y==height-1)val=12;
-                      
-                      
-                      if((srcpixel_x ==10||srcpixel_x==width-10)&& srcpixel_y >10 &&srcpixel_y<height-10){
-                        val = 5;
-                      }
-                      if((srcpixel_y ==10||srcpixel_y==width-10)&& srcpixel_x >10 &&srcpixel_x<width-10){
-                        val = 5;
-                      }
-#endif             */       
-                 
-                  
-                  isNodata=false;
-                  if(hasNodataValue){if(val==nodataValue)isNodata=true;}if(!(val==val))isNodata=true;
-                  if(!isNodata)if(legendValueRange)if(val<legendLowerRange||val>legendUpperRange)isNodata=true;
-                  if(!isNodata){
-                    if(legendLog!=0){
-                      if(val>0){
-                        val=(T)(log10(val)/legendLogAsLog);
-                      }else val=(T)(-legendOffset);
-                    }
-                    int pcolorind=(int)(val*legendScale+legendOffset);
-                    //val+=legendOffset;
-                    if(pcolorind>=239)pcolorind=239;else if(pcolorind<=0)pcolorind=0;
-                    
-                    //drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,drawImage->colors[(unsigned char)val]);
-                    drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,pcolorind);
-                  }
-                  if(debug){
-                    bool draw = false;
-                    bool draw2 = false;
-                    if(srcpixel_x ==0||srcpixel_x==width-1||srcpixel_y ==0||srcpixel_y==height-1){draw=true;}
-                    if((srcpixel_x ==10||srcpixel_x==width-10)&& srcpixel_y >10 &&srcpixel_y<height-10){draw2=true;}
-                    if((srcpixel_y ==10||srcpixel_y==width-10)&& srcpixel_x >10 &&srcpixel_x<width-10){draw2=true;}
-                    if(draw){
-                      drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,249);
-                    }
-                    if(draw2){
-                      drawImage->setPixelIndexed(dstpixel_x,dstpixel_y,244);
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-      return 0;
-  }
-};
+#include "CAreaMapper.h"
 
 /**
  *  This is the main class of this file. It renders the sourcedata on the destination image using nearest neighbour interpolation.
@@ -306,7 +59,7 @@ private:
     int id;
     double y_corners[4],x_corners[4];
     int tile_offset_x,tile_offset_y;
-    CDrawTileObj *drawTile;
+    CAreaMapper *drawTile;
   };
   //This class represents which bunch of tiles needs to be drawn by which thread.
   class DrawMultipleTileSettings{
@@ -752,16 +505,16 @@ private:
 
     
     //Setup the renderer to draw the tiles with.We do not keep the calculated results for CDF_CHAR (faster)
-        CDrawTileObj *drawTileClass= NULL;
+        CAreaMapper *drawTileClass= NULL;
         if(dataSource->getDataObject(0)->cdfVariable->getType()==CDF_CHAR||
           dataSource->getDataObject(0)->cdfVariable->getType()==CDF_BYTE||
           dataSource->getDataObject(0)->cdfVariable->getType()==CDF_UBYTE
         ){
-          drawTileClass = new CDrawTileObj();           //Do not keep the calculated results for CDF_CHAR
+          drawTileClass = new CAreaMapper();           //Do not keep the calculated results for CDF_CHAR
           
         }else{
           //drawTileClass = new CDrawTileObjByteCache();  //keep the calculated results
-          drawTileClass = new CDrawTileObj();           //Do not keep the calculated results for CDF_CHAR
+          drawTileClass = new CAreaMapper();           //Do not keep the calculated results for CDF_CHAR
         }
         //drawTileClass = new CDrawTileObjByteCache();           //Do not keep the calculated results for CDF_CHAR
         //drawTileClass = new CDrawTileObj();  //keep the calculated results

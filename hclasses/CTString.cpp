@@ -349,7 +349,7 @@ namespace CT{
       concat(szTemp);
     }
     
-    const char* string::c_str(){
+    const char* string::c_str() const{
       if(useStack == true){
         if(allocated == 0)return "";
         return stackValue;
@@ -475,14 +475,14 @@ namespace CT{
   }
 
 
-  void string::setChar(size_t location,const char character){
+  void string::setChar(size_t location,const char character) {
     if(location<privatelength){
       (useStack?stackValue:heapValue)[location]=character;
       if(character=='\0')privatelength=location;
     } 
   }
 
-  bool string::equals(const char *_value,size_t _length){
+  bool string::equals(const char *_value,size_t _length) const{
     if(_value==NULL)return false;
     if(allocated == 0)return false;
     if(privatelength!=_length)return false;
@@ -491,17 +491,17 @@ namespace CT{
     return false;
   }
 
-  bool string::equals(const char *_value){
+  bool string::equals(const char *_value) const{
     if(_value==NULL)return false;
     return equals(_value,strlen(_value));
   }
 
-  bool string::equals(CT::string* _string){
+  bool string::equals(CT::string* _string) const{
     if(_string==NULL)return false;
     return equals(_string->useStack?_string->stackValue:_string->heapValue,_string->privatelength);
   }
       
-  bool string::equals(CT::string _string){
+  bool string::equals(CT::string _string) const{
     if(allocated == 0)return false;
     return equals(_string.useStack?_string.stackValue:_string.heapValue,_string.privatelength);
   }
@@ -537,6 +537,11 @@ namespace CT{
   void string::copy(const CT::string*_string){
     if(_string==NULL){_Free();return;}
     copy(_string->useStack?_string->stackValue:_string->heapValue,_string->privatelength);      
+  };
+  
+  void string::copy(const CT::string _string){
+    if(_string.privatelength == 0){_Free();return;}
+    copy(_string.useStack?_string.stackValue:_string.heapValue,_string.privatelength);      
   };
   
   void string::copy(const char * _value){ if(_value==NULL){_Free();return;}copy(_value,strlen(_value));};
