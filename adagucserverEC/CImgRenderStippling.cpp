@@ -86,15 +86,17 @@ void CImgRenderStippling::render(CImageWarper *warper,CDataSource *dataSource,CD
     case CDF_DOUBLE:  GenericDataWarper::render<double>(warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
   }
   
- 
+  
   
   int xDistance = 22;
   int yDistance = 22;
   int discSize = 6;
-  
-  
+  #define CImgRenderStipplingModeDefault 0
+  #define CImgRenderStipplingModeThreshold 1
+  int mode = CImgRenderStipplingModeDefault; // Mode 0 is standard stippling
+  CT::string color;
   if(styleConfiguration!=NULL&&styleConfiguration->styleConfig!=NULL){
-    if(styleConfiguration->styleConfig->Stippling.size()==1){\
+    if(styleConfiguration->styleConfig->Stippling.size()==1){
       if(!styleConfiguration->styleConfig->Stippling[0]->attr.distancex.empty()){
         xDistance = styleConfiguration->styleConfig->Stippling[0]->attr.distancex.toInt();
       }
@@ -104,26 +106,28 @@ void CImgRenderStippling::render(CImageWarper *warper,CDataSource *dataSource,CD
       if(!styleConfiguration->styleConfig->Stippling[0]->attr.discradius.empty()){
         discSize = styleConfiguration->styleConfig->Stippling[0]->attr.discradius.toInt();
       }
+      if(!styleConfiguration->styleConfig->Stippling[0]->attr.mode.empty()){
+        CT::string smode = styleConfiguration->styleConfig->Stippling[0]->attr.mode;
+        if(smode.equals("threshold")){
+          mode = CImgRenderStipplingModeThreshold;
+        }
+      }
+      if(!styleConfiguration->styleConfig->Stippling[0]->attr.color.empty()){
+        color = styleConfiguration->styleConfig->Stippling[0]->attr.color;
+      }
     }
   }
   
   
   double bboxWidth = (dataSource->srvParams->Geo->dfBBOX[2]-dataSource->srvParams->Geo->dfBBOX[0]);
   double bboxHeight = (dataSource->srvParams->Geo->dfBBOX[3]-dataSource->srvParams->Geo->dfBBOX[1]);
-
+  
   
   int startX=int(((-dataSource->srvParams->Geo->dfBBOX[0])/bboxWidth)*dataSource->srvParams->Geo->dWidth);
   startX = (startX%(xDistance*2))-(xDistance*2);
   int startY=int(((dataSource->srvParams->Geo->dfBBOX[1])/bboxHeight)*dataSource->srvParams->Geo->dHeight);
   startY = (startY%(yDistance*2))-(yDistance*2);
-/*  
   
-  
-  CT::string text;
-  text.print("%d   %d  %d",startX,startY,fstartX);
-  drawImage->setText(text.c_str(),text.length(),8,8,CColor(0,0,0,0),10);*/
-
-
   
   for(int y=startY;y<(int)settings.height;y=y+yDistance){
     int oddeven=0;
@@ -143,11 +147,23 @@ void CImgRenderStippling::render(CImageWarper *warper,CDataSource *dataSource,CD
             }
           }
           int pcolorind=(int)(val*styleConfiguration->legendScale+styleConfiguration->legendOffset);
+          int pcolorindOrg = pcolorind;
           if(pcolorind>=239)pcolorind=239;else if(pcolorind<=0)pcolorind=0;
-          CColor c =drawImage->getColorForIndex(pcolorind);
-          drawImage->setDisc(x,y,discSize,c,c);
+          CColor c; 
+          if( color.empty() ){
+            c =drawImage->getColorForIndex(pcolorind);
+          } else {
+            c.parse(color.c_str());
+          }
+          if( mode == CImgRenderStipplingModeDefault) {
+            drawImage->setDisc(x,y,discSize,c,c);
+          } else if (mode == CImgRenderStipplingModeThreshold) {
+            if (pcolorindOrg >= 0 && pcolorindOrg < 239){
+              drawImage->setDisc(x,y,discSize,c,c);
+            }
+          }
         }
-    }
+      }
     }
   }
   settings.dataField = new float[settings.width*settings.height];

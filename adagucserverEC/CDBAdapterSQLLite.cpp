@@ -28,7 +28,7 @@
 #include "CDebugger.h"
 #include "CTime.h"
 
-//#define CDBAdapterSQLLite_DEBUG
+// #define CDBAdapterSQLLite_DEBUG
 
 const char *CDBAdapterSQLLite::className="CDBAdapterSQLLite";
 
@@ -579,7 +579,17 @@ CDBStore::Store *CDBAdapterSQLLite::getFilesAndIndicesForDimensions(CDataSource 
             if(sDims->count>=2){
               if(l==0){
                 if(!CServerParams::checkTimeFormat(sDims[l]))timeValidationError=true;
-                subQuery.printconcat("%s >= '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
+                subQuery.printconcat("%s >= (select max(%s) from %s where %s <= '%s' or %s = (select min(%s) from %s)) ",
+                                  netCDFDimName.c_str(),
+                                  netCDFDimName.c_str(),
+                                  tableName.c_str(),
+                                  netCDFDimName.c_str(),
+                                  sDims[l].c_str(),
+                                  netCDFDimName.c_str(),
+                                  netCDFDimName.c_str(),
+                                  tableName.c_str()
+                                  );
+                // subQuery.printconcat("%s >= '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
               }
               if(l==1){
                 if(!CServerParams::checkTimeFormat(sDims[l]))timeValidationError=true;
@@ -667,6 +677,10 @@ CDBStore::Store *CDBAdapterSQLLite::getFilesAndIndicesForDimensions(CDataSource 
 
 int  CDBAdapterSQLLite::autoUpdateAndScanDimensionTables(CDataSource *dataSource){
   CServerParams *srvParams = dataSource->srvParams;;
+//   if(srvParams->isAutoLocalFileResourceEnabled()==false){
+//     CDBDebug("Auto update is not available");
+//     return 0;
+//   }
   CServerConfig::XMLE_Layer * cfgLayer = dataSource->cfgLayer;
   CSQLLiteDB * dataBaseConnection = getDataBaseConnection(); if(dataBaseConnection == NULL){return -1;  }
   
@@ -1170,7 +1184,7 @@ int CDBAdapterSQLLite::addFilesToDataBase(){
     }
     it->second.clear();
   }
-  CDBDebug("clearing arrays");
+//   CDBDebug("clearing arrays");
   fileListPerTable.clear();
   return 0;
 }

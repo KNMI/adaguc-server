@@ -26,6 +26,7 @@
 #ifndef CServerConfig_H
 #define CServerConfig_H
 #include "CXMLSerializerInterface.h"
+#include "CDirReader.h"
 
 // f 102 >15
 // F 70 > 15
@@ -71,7 +72,7 @@ class CServerConfig:public CXMLSerializerInterface{
     public:
       class Cattr{
       public:
-        CXMLString name,format;
+        CT::string name,format;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("name",4,attrname)){attr.name.copy(attrvalue);return;}
@@ -83,7 +84,7 @@ class CServerConfig:public CXMLSerializerInterface{
     public:
       class Cattr{
       public:
-        CXMLString defaultValue, force;
+        CT::string defaultValue, force;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("defaultvalue",12,attrname)){attr.defaultValue.copy(attrvalue);return;}
@@ -95,7 +96,7 @@ class CServerConfig:public CXMLSerializerInterface{
     public:
       class Cattr{
       public:
-        CXMLString radius;
+        CT::string radius;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("radius",6 ,attrname)){attr.radius.copy(attrvalue);return;}
@@ -106,7 +107,7 @@ class CServerConfig:public CXMLSerializerInterface{
     public:
       class Cattr{
       public:
-        CXMLString skip, use;
+        CT::string skip, use;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("skip",4,attrname)){attr.skip.copy(attrvalue);return;}
@@ -121,7 +122,7 @@ class CServerConfig:public CXMLSerializerInterface{
       }
       class Cattr{
       public:
-        CXMLString linecolor,linewidth,plotstationid,vectorstyle,textformat,plotvalue;
+        CT::string linecolor,linewidth,plotstationid,vectorstyle,textformat,plotvalue;
         float scale;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
@@ -139,7 +140,7 @@ class CServerConfig:public CXMLSerializerInterface{
     public:
       class Cattr{
       public:
-        CXMLString fillcolor,linecolor,textcolor,fontfile,fontsize,discradius,textradius,dot,anglestart,anglestep,textformat,plotstationid,pointstyle;
+        CT::string fillcolor,linecolor,textcolor,fontfile,fontsize,discradius,textradius,dot,anglestart,anglestep,textformat,plotstationid,pointstyle;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("fillcolor",9,attrname)){attr.fillcolor.copy(attrvalue);return;}
@@ -166,7 +167,7 @@ class CServerConfig:public CXMLSerializerInterface{
         }
         class Cattr{
           public:
-            CXMLString name,type,tickround,tickinterval,fixedclasses,file;
+            CT::string name,type,tickround,tickinterval,fixedclasses,file;
         }attr;
         void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value){
           CXMLSerializerInterface * base = (CXMLSerializerInterface*)baseClass;
@@ -205,7 +206,7 @@ class CServerConfig:public CXMLSerializerInterface{
     public:
       class Cattr{
       public:
-        CXMLString width,linecolor,textcolor,classes,interval,textformatting;
+        CT::string width,linecolor,textcolor,classes,interval,textformatting;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("width",5,attrname)){attr.width.copy(attrvalue);return;}
@@ -222,7 +223,7 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
       class Cattr{
       public:
-        CXMLString min,max,label,fillcolor,bgcolor;
+        CT::string min,max,label,fillcolor,bgcolor;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("min",3,attrname)){attr.min.copy(attrvalue);return;}
@@ -237,9 +238,9 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
       class Cattr{
       public:
-        CXMLString min,max,binary_and;
-        CXMLString file;
-        CXMLString offsetX, offsetY;
+        CT::string min,max,binary_and;
+        CT::string file;
+        CT::string offsetX, offsetY;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("min",3,attrname)){attr.min.copy(attrvalue);return;}
@@ -256,7 +257,7 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
         public:
-          CXMLString units,standard_name,variable_name;
+          CT::string units,standard_name,variable_name;
         }attr;
         void addAttribute(const char *attrname,const char *attrvalue){
           if(equals("units",5,attrname)){attr.units.copy(attrvalue);return;}
@@ -269,7 +270,7 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
         public:
-          CXMLString value;
+          CT::string value;
         }attr;
         void addAttribute(const char *attrname,const char *attrvalue){
           if(equals("value",5,attrname)){attr.value.copy(attrvalue);return;}
@@ -282,7 +283,7 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString min,max;
+            CT::string min,max;
         }attr;
         void addAttribute(const char *attrname,const char *attrvalue){
           if(equals("min",3,attrname)){attr.min.copy(attrvalue);return;}
@@ -294,7 +295,7 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
       class Cattr{
         public:
-        CXMLString location,size;
+        CT::string location,size;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("size",4,attrname)){attr.size.copy(attrvalue);return;}
@@ -305,7 +306,7 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
       class Cattr{
       public:
-        CXMLString location,size;
+        CT::string location,size;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("size",4,attrname)){attr.size.copy(attrvalue);return;}
@@ -316,7 +317,7 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
       class Cattr{
       public:
-        CXMLString location,size;
+        CT::string location,size;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("size",4,attrname)){attr.size.copy(attrvalue);return;}
@@ -328,7 +329,7 @@ class CServerConfig:public CXMLSerializerInterface{
     public:
       class Cattr{
       public:
-        CXMLString location,size;
+        CT::string location,size;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("size",4,attrname)){attr.size.copy(attrvalue);return;}
@@ -339,7 +340,7 @@ class CServerConfig:public CXMLSerializerInterface{
     public:
       class Cattr{
       public:
-        CXMLString location,size;
+        CT::string location,size;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("size",4,attrname)){attr.size.copy(attrvalue);return;}
@@ -352,7 +353,7 @@ class CServerConfig:public CXMLSerializerInterface{
     public:
       class Cattr{
         public:
-        CXMLString basedir, prefix;
+        CT::string basedir, prefix;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("prefix",6,attrname)){attr.prefix.copy(attrvalue);return;}
@@ -364,7 +365,7 @@ class CServerConfig:public CXMLSerializerInterface{
     public:
       class Cattr{
       public:
-        CXMLString attribute;
+        CT::string attribute;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("attribute",9,attrname)){attr.attribute.copy(attrvalue);return;}
@@ -381,7 +382,7 @@ class CServerConfig:public CXMLSerializerInterface{
       }
       class Cattr{
       public:
-        CXMLString enableautoopendap, enablelocalfile,enablecache;
+        CT::string enableautoopendap, enablelocalfile,enablecache;
       }attr;
       
       void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value){
@@ -407,7 +408,7 @@ class CServerConfig:public CXMLSerializerInterface{
     public:
       class Cattr{
       public:
-        CXMLString enabled,location;
+        CT::string enabled,location;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("enabled",7,attrname)){attr.enabled.copy(attrvalue);return;}
@@ -419,7 +420,7 @@ class CServerConfig:public CXMLSerializerInterface{
     public:
       class Cattr{
       public:
-        CXMLString location;
+        CT::string location;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("location",8,attrname)){attr.location.copy(attrvalue);return;}
@@ -430,7 +431,7 @@ class CServerConfig:public CXMLSerializerInterface{
     public:
       class Cattr{
       public:
-        CXMLString name,title,abstract;
+        CT::string name,title,abstract;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("name",4,attrname)){attr.name.copy(attrvalue);return;}
@@ -443,7 +444,7 @@ class CServerConfig:public CXMLSerializerInterface{
     public:
       class Cattr{
       public:
-        CXMLString match,matchid,bgcolor,label,fillcolor,linecolor, linewidth, bordercolor, borderwidth;
+        CT::string match,matchid,bgcolor,label,fillcolor,linecolor, linewidth, bordercolor, borderwidth;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("match",5,attrname)){attr.match.copy(attrvalue); return;}
@@ -463,12 +464,14 @@ class CServerConfig:public CXMLSerializerInterface{
     public:
       class Cattr{
       public:
-        CXMLString distancex,distancey,discradius;
+        CT::string distancex,distancey,discradius,mode,color;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("distancex",9,attrname)){attr.distancex.copy(attrvalue); return;}
-        if(equals("distancey", 9,attrname)){attr.distancey.copy(attrvalue); return;}
-        if(equals("discradius",10,attrname)){attr.discradius.copy(attrvalue); return;}
+        else if(equals("distancey", 9,attrname)){attr.distancey.copy(attrvalue); return;}
+        else if(equals("discradius",10,attrname)){attr.discradius.copy(attrvalue); return;}
+        else if(equals("mode",4,attrname)){attr.mode.copy(attrvalue); return;}
+        else if(equals("color",5,attrname)){attr.color.copy(attrvalue); return;}        
       }
     };
     
@@ -479,10 +482,11 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString settings,striding;
+            CT::string settings,striding,renderer;
         }attr;
         void addAttribute(const char *name,const char *value){
           if(equals("settings",8,name)){attr.settings.copy(value);return;}
+          else if(equals("renderer",8,name)){attr.renderer.copy(value);return;}
           else if(equals("striding",8,name)){attr.striding.copy(value);return;}
         }
     };
@@ -546,7 +550,7 @@ class CServerConfig:public CXMLSerializerInterface{
         }
         class Cattr{
           public:
-            CXMLString name;
+            CT::string name;
         }attr;
         void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value){
           CXMLSerializerInterface * base = (CXMLSerializerInterface*)baseClass;
@@ -598,7 +602,7 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
         public:
-          CXMLString name,onlineresource;
+          CT::string name,onlineresource;
         }attr;
         void addAttribute(const char *name,const char *value){
           if(equals("name",4,name)){attr.name.copy(value);return;}
@@ -610,7 +614,7 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
         public:
-          CXMLString authority,id;
+          CT::string authority,id;
         }attr;
         void addAttribute(const char *name,const char *value){
           if(equals("id",2,name)){attr.id.copy(value);return;}
@@ -623,7 +627,7 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
         public:
-          CXMLString force;
+          CT::string force;
         }attr;
         void addAttribute(const char *name,const char *value){
           if(equals("force",5,name)){attr.force.copy(value);return;}
@@ -636,7 +640,7 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
         public:
-          CXMLString useendtime;
+          CT::string useendtime;
         }attr;
         void addAttribute(const char *name,const char *value){
           if(equals("useendtime", 10,name)){attr.useendtime.copy(value);return;}
@@ -646,8 +650,15 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString filter,gfi_openall,ncml;
+            CT::string filter,gfi_openall,ncml;
         }attr;
+        void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value){
+          CXMLSerializerInterface * base = (CXMLSerializerInterface*)baseClass;
+          base->currentNode=(CXMLObjectInterface*)this;
+          if(rc==0)if(value!=NULL)this->value.copy(CDirReader::makeCleanPath(value));
+          if(pt2Class!=NULL)pt2Class->addElement(baseClass,rc-pt2Class->level,name,value);
+        }
+        
         void addAttribute(const char *name,const char *value){
           if(equals("filter",6,name)){attr.filter.copy(value);return;}
           else if(equals("gfi_openall",11,name)){attr.gfi_openall.copy(value);return;}
@@ -659,7 +670,7 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString tilewidthpx,tileheightpx,
+            CT::string tilewidthpx,tileheightpx,
             tilecellsizex,tilecellsizey,
             left,right,bottom,top,
             numtilesx,numtilesy,
@@ -711,7 +722,7 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
       class Cattr{
         public:
-          CXMLString value;
+          CT::string value;
       }attr;
       void addAttribute(const char *name,const char *value){
         if(equals("value",5,name)){attr.value.copy(value);return;}
@@ -736,7 +747,7 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString name,interval,defaultV,units,quantizeperiod,quantizemethod;
+            CT::string name,interval,defaultV,units,quantizeperiod,quantizemethod;
         }attr;
         void addAttribute(const char *attrname,const char *attrvalue){
           if(equals("name",4,attrname)){attr.name.copy(attrvalue);return;}
@@ -752,7 +763,7 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString value;
+            CT::string value;
         }attr;
         void addAttribute(const char *attrname,const char *attrvalue){
           if(equals("value",5,attrname)){attr.value.copy(attrvalue);return;}
@@ -762,7 +773,7 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString value;
+            CT::string value;
         }attr;
         void addAttribute(const char *attrname,const char *attrvalue){
           if(equals("value",5,attrname)){attr.value.copy(attrvalue);return;}
@@ -772,7 +783,7 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString value;
+            CT::string value;
         }attr;
         void addAttribute(const char *attrname,const char *attrvalue){
           if(equals("value",5,attrname)){attr.value.copy(attrvalue);return;}
@@ -782,7 +793,7 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString parameters,dbtype,maxquerylimit;
+            CT::string parameters,dbtype,maxquerylimit;
         }attr;
         void addAttribute(const char *attrname,const char *attrvalue){
           if(equals("parameters",10,attrname)){attr.parameters.copy(attrvalue);return;}
@@ -794,7 +805,7 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString id,proj4;
+            CT::string id,proj4;
         }attr;
         std::vector <XMLE_LatLonBox*> LatLonBox;
         ~XMLE_Projection(){
@@ -819,7 +830,7 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString enabled,optimizeextent;
+            CT::string enabled,optimizeextent;
         }attr;
         void addAttribute(const char *attrname,const char *attrvalue){
           if(equals("enabled",7,attrname)){attr.enabled.copy(attrvalue);return;}
@@ -830,7 +841,7 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString name,driver,mimetype,options;
+            CT::string name,driver,mimetype,options;
         }attr;
         void addAttribute(const char *attrname,const char *attrvalue){
           if(equals("name",4,attrname)){attr.name.copy(attrvalue);return;}
@@ -961,7 +972,7 @@ class CServerConfig:public CXMLSerializerInterface{
     public:
       class Cattr{
       public:
-        CXMLString enabled,path;
+        CT::string enabled,path;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("enabled",7,attrname)){attr.enabled.copy(attrvalue);return;}
@@ -1001,7 +1012,7 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString enabled,cachefile;
+            CT::string enabled,cachefile;
         }attr;
         void addAttribute(const char *attrname,const char *attrvalue){
           if(equals("enabled",7,attrname)){attr.enabled.copy(attrvalue);return;}
@@ -1014,7 +1025,7 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString service,layer,bgcolor,style;
+            CT::string service,layer,bgcolor,style;
             bool transparent;
 
             Cattr() {
@@ -1036,7 +1047,7 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString a,b,c,units,algorithm,mode,name;
+            CT::string a,b,c,units,algorithm,mode,name;
         }attr;
         void addAttribute(const char *attrname,const char *attrvalue){
           if(equals("a",1,attrname)){attr.a.copy(attrvalue);return;}
@@ -1053,7 +1064,7 @@ class CServerConfig:public CXMLSerializerInterface{
     public:
       class Cattr{
       public:
-        CXMLString top,left,right,bottom;
+        CT::string top,left,right,bottom;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("top",3,attrname)){attr.top.copy(attrvalue);return;}
@@ -1069,7 +1080,7 @@ class CServerConfig:public CXMLSerializerInterface{
     public:
       class Cattr{
       public:
-        CXMLString name,precision,resolution;
+        CT::string name,precision,resolution;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if(equals("name",4,attrname)){attr.name.copy(attrvalue);return;}
@@ -1082,7 +1093,7 @@ class CServerConfig:public CXMLSerializerInterface{
     public:
       class Cattr{
       public:
-        CXMLString replace,style;
+        CT::string replace,style;
       }attr;
       void addAttribute(const char *attrname,const char *attrvalue){
         if (equals("replace",7,attrname)){attr.replace.copy(attrvalue);return;}
@@ -1094,7 +1105,7 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CXMLString type,hidden;
+            CT::string type,hidden;
         }attr;
         
         

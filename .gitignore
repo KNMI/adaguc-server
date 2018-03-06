@@ -44,5 +44,8 @@ bin/*
 tests/log
 tests/tmp
 tests/testresults/*
+tests/test.db
 
 Docker/adaguc-server.dockerimage
+
+hclasses/test

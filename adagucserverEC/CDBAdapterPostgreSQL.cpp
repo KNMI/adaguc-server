@@ -405,7 +405,18 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
             if(sDims->count>=2){
               if(l==0){
                 if(!CServerParams::checkTimeFormat(sDims[l]))timeValidationError=true;
-                subQuery.printconcat("%s >= '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
+                // Get closest lowest value to this requested one, or if request value is way below get earliest value:
+                subQuery.printconcat("%s >= (select max(%s) from %s where %s <= '%s' or %s = (select min(%s) from %s)) ",
+                                    netCDFDimName.c_str(),
+                                    netCDFDimName.c_str(),
+                                    tableName.c_str(),
+                                    netCDFDimName.c_str(),
+                                    sDims[l].c_str(),
+                                    netCDFDimName.c_str(),
+                                    netCDFDimName.c_str(),
+                                    tableName.c_str()
+                                    );
+                // subQuery.printconcat("%s >= '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
               }
               if(l==1){
                 if(!CServerParams::checkTimeFormat(sDims[l]))timeValidationError=true;

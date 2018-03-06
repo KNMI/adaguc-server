@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+    <!-- Custom styles -->
+  <Style name="testdata">
+    <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">multicolor</Legend>
+    <Min>0.0</Min>
+    <Max>255.0</Max>
+     <RenderMethod>nearest</RenderMethod>
+    <RenderSettings settings="fast"/>
+  </Style>
+  
+  <Layer type="database">
+    <Name>testdata</Name>
+    <Title>Tiled wcstest_lonlat.nc</Title>
+    <FilePath>{ADAGUC_PATH}/data/datasets/wcstest_lonlat.nc</FilePath>
+    <Variable>testdata</Variable>
+    <RenderMethod>nearest</RenderMethod>
+    <TileSettings tilewidthpx="90" 
+                  tileheightpx="90" 
+                  tilecellsizex="1"
+                  tilecellsizey="1"
+                  left="-180" right="180"  bottom="-90" top="90"
+                  tileprojection="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+                  minlevel="1"
+                  maxlevel="3"
+                  debug="false"
+                  tilepath="{ADAGUC_TMP}/tiling"/>
+    <Styles>testdata</Styles>
+   </Layer>
+   
+  <Layer type="database">
+    <Name>testdatant</Name>
+    <Title>Not tiled wcstest_lonlat.nc</Title>
+    <FilePath>{ADAGUC_PATH}/data/datasets/wcstest_lonlat.nc</FilePath>
+    <Variable>testdata</Variable>
+    <RenderMethod>nearest</RenderMethod>
+    <DataBaseTable>myown</DataBaseTable>
+    <Styles>testdata</Styles>
+  </Layer>
+  
+  
+  <!-- End of configuration /-->
+</Configuration>
