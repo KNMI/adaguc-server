@@ -288,14 +288,26 @@ int COpenDAPHandler::putVariableData(CDF::Variable *v,CDFType type){
   }
   return 0;
 }
-int COpenDAPHandler::handleOpenDAPRequest(const char *path,const char *query,CServerParams *srvParam){
+int COpenDAPHandler::handleOpenDAPRequest(const char *path,const char *_query,CServerParams *srvParam){
  
   #ifdef COPENDAPHANDLER_DEBUG
   CDBDebug("\n*****************************************************************************************");
 
   #endif
-  CDBDebug("OpenDAP Received [%s] [%s]",path,query);
-  CT::string dapName = path+8;
+  CT::string query;
+  if(_query!=NULL){
+    query=_query;
+    if(query.equals("null")){
+      query="";
+    }
+  }
+  CDBDebug("OpenDAP Received [%s] [%s]",path,query.c_str());
+  CT::string defaultPath = "opendap";
+  if(srvParam->cfg->OpenDAP[0]->attr.path.empty()==false){
+    defaultPath = srvParam->cfg->OpenDAP[0]->attr.path.c_str();
+  }
+
+  CT::string dapName = path+defaultPath.length() + 1;
   CT::string layerName  = "";
   CT::string pathQuery = "";
   bool isDDSRequest = false;
@@ -342,17 +354,17 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path,const char *query,CSe
   
   
   if(isDODRequest){
-    printf("%s%c%c","Connection: close ", 13,10);
+//     printf("%s%c%c","Connection: close ", 13,10);
     printf("%s%c%c","XDAP: 2.0 ", 13,10);
     printf("%s%c%c\n","Content-Type: application/octet-stream",13,10);
     
   }else{
-    printf("%s%c%c","Connection: close ", 13,10);
+//     printf("%s%c%c","Connection: close ", 13,10);
     printf("%s%c%c","XDAP: 2.0 ", 13,10);
     if (isDDSRequest) {
       printf("%s%c%c","Content-Description: dods-dds ", 13,10);
     }
-    printf("%s%c%c\n","Content-Type: text/plain",13,10);
+    printf("%s%c%c\n","Content-Type: text/plain; charset=utf-8",13,10);
     
   }
   
@@ -381,39 +393,53 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path,const char *query,CSe
   if(dataURL.length()>0){
     bool hasFoundDataSetOrAutoResource = false;
     
-    //Check if AUTORESOURCE is enabled
-    if(srvParam->isAutoResourceEnabled()){
-      srvParam->autoResourceLocation = dataURL;
-      if(CAutoResource::configure(srvParam,true)!=0){
-        CDBError("AutoResource failed, file provided with SOURCE identifier not found");
-        return 1;
-      } else {
-        hasFoundDataSetOrAutoResource = true;
-      }
-    }
     //Check if DATASET is enabled
     if(hasFoundDataSetOrAutoResource == false){
       for(size_t j=0;j<srvParam->cfg->Dataset.size();j++){
         if(srvParam->cfg->Dataset[j]->attr.enabled.equals("true")&&srvParam->cfg->Dataset[j]->attr.location.empty()==false){
           srvParam->datasetLocation = dataURL;
-          if(CAutoResource::configure(srvParam,true)!=0 && j == srvParam->cfg->Dataset.size() -1){
-            CDBError("File associated with provided DATASET identifier not found");
-            return 1;
+          CDBDebug("Checking %s", srvParam->cfg->Dataset[j]->attr.location.c_str());
+          int status = CAutoResource::configureDataset(srvParam,true);
+          if(status == 0) {
+            CDBDebug("Found dataset %s", srvParam->datasetLocation.c_str());
+            hasFoundDataSetOrAutoResource = true;
+            break;
           }
+          
         }
       }
     }
     
+    //Check if AUTORESOURCE is enabled
+    if(hasFoundDataSetOrAutoResource == false){
+      if(srvParam->isAutoResourceEnabled()){
+        srvParam->autoResourceLocation = dataURL;
+        if(CAutoResource::configure(srvParam,true)==0){
+          hasFoundDataSetOrAutoResource = true;
+        }
+      }
+    }
+    
+    if (!hasFoundDataSetOrAutoResource){
+      CDBError("No dataset or autoresource found");
+      return 1;
+    }
+  }
+  
+  if (srvParam->cfg->Layer.size() == 0){
+    CDBError("No layers found for this configuration");
+    return 1;
   }
   
   #ifdef COPENDAPHANDLER_DEBUG
   CDBDebug("Layername = %s",layerName.c_str());
   CDBDebug("pathQuery = %s",pathQuery.c_str());
   CDBDebug("autoResourceVariable = %s",srvParam->autoResourceVariable.c_str());
-  
+  CDBDebug("Num layers: %d ",srvParam->cfg->Layer.size());
   #endif
   CDataSource *dataSource = new CDataSource ();
   bool foundLayer = false;
+  
   
   for(size_t layerNo=0;layerNo<srvParam->cfg->Layer.size();layerNo++){
     if(srvParam->cfg->Layer[layerNo]->attr.type.equals("database")){
@@ -424,7 +450,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path,const char *query,CSe
         layerName=intLayerName;
       }
       intLayerName.replaceSelf("/","_");
-      CDBDebug("%s",intLayerName.c_str());
+      //CDBDebug("%s",intLayerName.c_str());
       
       if(intLayerName.equals(layerName.c_str())){
         if(dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[layerNo],intLayerName.c_str(),0)!=0){
@@ -460,10 +486,7 @@ CDBDebug("Found layer %s",layerName.c_str());
         return 1;
       }
     }
-    //This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.        
-    #ifdef COPENDAPHANDLER_DEBUG      
-    CDBDebug("This layer has no dims, adding one virtual time step.");
-    #endif
+    ///
     
     std::vector<std::string> fileList;
     try {
@@ -473,20 +496,42 @@ CDBDebug("Found layer %s",layerName.c_str());
       delete dataSource;
       return 1; 
     }
-    if(fileList.size()==0){
-    CDBError("fileList.size()==0");delete dataSource;return 1;
+    
+    if(dataSource->getFileName() == NULL){
+      if(fileList.size()==0){
+      CDBError("fileList.size()==0");delete dataSource;return 1;
+      }
+//       CDBDebug("No file selected for datasource");
+      dataSource->addStep(fileList[0].c_str(),NULL);
+      dataSource->getCDFDims()->addDimension("time","0",0);
     }
-    dataSource->addStep(fileList[0].c_str(),NULL);
-    dataSource->getCDFDims()->addDimension("time","0",0);
+    
+//     if(dataSource->cfgLayer->Dimension.size()==0){
+//       //This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.        
+//       #ifdef COPENDAPHANDLER_DEBUG      
+//       CDBDebug("This layer has no dims, adding one virtual time step.");
+//       #endif
+//       
+//       
+//       
+//       dataSource->addStep(fileList[0].c_str(),NULL);
+//       dataSource->getCDFDims()->addDimension("time","0",0);
+//     }
   }
   
-  
+  #ifdef COPENDAPHANDLER_DEBUG      
+  CDBDebug("This layer has %d dims.", dataSource->cfgLayer->Dimension.size());
+  for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
+    CDBDebug("%s %s", dataSource->cfgLayer->Dimension[d]->attr.name.c_str(), dataSource->cfgLayer->Dimension[d]->value.c_str());
+  }
+  #endif
   
   
   //Read the NetCDF header!
   
   
   try{
+
     CDFObject *cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(dataSource->srvParams,dataSource->getFileName());;// dataSource->getDataObject(0)->cdfObject;
       
     for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
@@ -494,7 +539,7 @@ CDBDebug("Found layer %s",layerName.c_str());
       //1 )Is this a scalar?
       CDF::Variable *  dimVar = cdfObject->getVariableNE(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
       CDF::Dimension * dimDim = cdfObject->getDimensionNE(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
-      
+    
       
       if(dimVar!=NULL&&dimDim==NULL){
         //Check for scalar variable
@@ -532,9 +577,9 @@ CDBDebug("Found layer %s",layerName.c_str());
       
       std::vector <VarInfo> selectedVariables;
       //Parsing dim queries per variable (e.g. precip[0][0:3] == x,y)
-      if(strlen(query)>0){
-        CT::string q= query;
-        CT::StackList<CT::string> items=q.splitToStack(",");
+//       CDBDebug("query = %s", query.c_str());
+      if(!query.empty()){
+        CT::StackList<CT::string> items=query.splitToStack(",");
         for(size_t j=0;j<items.size();j++){
           #ifdef COPENDAPHANDLER_DEBUG
           CDBDebug("Selected variable = \"%s\"",items[j].c_str());
@@ -955,6 +1000,8 @@ CDBDebug("Found layer %s",layerName.c_str());
     
 //    reader.close();
   }catch(int e){
+    CDBError("Exception with code %d found", e);
+    return 1;
   }
   
    

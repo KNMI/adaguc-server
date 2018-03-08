@@ -29,6 +29,7 @@ mkdir -p $HOME/adaguc-server-docker/adaguc-datasets
 mkdir -p $HOME/adaguc-server-docker/adaguc-autowms
 mkdir -p $HOME/adaguc-server-docker/adagucdb
 mkdir -p $HOME/adaguc-server-docker/adaguc-logs && chmod 777 $HOME/adaguc-server-docker/adaguc-logs
+mkdir -p $HOME/adaguc-server-docker/adaguc-security
 
 docker run \
   -e EXTERNALADDRESS="http://`hostname`:8090/" \
@@ -46,6 +47,28 @@ If the container does not want to run because the container name is aready in us
 ```
 docker rm my-adaguc-server
 ```
+The container should now be accessible via http://localhost:8090/adaguc-services/adagucserver?
+
+# Serving data using HTTPS
+
+For some cases it is required that the server is running over a secure connection (https). This can be the case when a secure site tries to load your services over normal http. The browser blocks your service and warns you that you are trying to load mixed content; e.g. https and http in one site. The browser blocks this to garantee that the site remains safe.
+To overcome this issue adaguc services can be served over https. During startup, the adaguc docker checks if you have provided a SSL certificate in the adaguc-security folder. If none available, it creates a self signed SSL certificate for you, the certificate is stored in a keystore in the adaguc-security folder. By default the self signed certificate is not automatically trusted by your browser. You have to make an exception in your browser in order to use the services. This can be done by visiting one of the URL's (https://localhost:8443/adaguc-services/adagucserver?) and confirm an exception. To overcome the security exception, you are free to add your own valid SSL certificate (from your certificate authority or letsencrypt) if you have one. The alias inside the keystore is currently 'tomcat' and the password is 'password'. 
+
+docker run \
+  -e EXTERNALADDRESS="https://`hostname`:8443/" \
+  -p 8443:8443 \
+  -v $HOME/adaguc-server-docker/adaguc-data:/data/adaguc-data \
+  -v $HOME/adaguc-server-docker/adaguc-datasets:/data/adaguc-datasets \
+  -v $HOME/adaguc-server-docker/adaguc-autowms:/data/adaguc-autowms \
+  -v $HOME/adaguc-server-docker/adagucdb:/adaguc/adagucdb \
+  -v $HOME/adaguc-server-docker/adaguc-logs:/var/log/adaguc \
+  -v $HOME/adaguc-server-docker/adaguc-security:/adaguc/security \
+  --name my-adaguc-server \
+  -it openearth/adaguc-server 
+
+The container is now accessible via :
+https://localhost:8443/adaguc-services/adagucserver?
+Remember: the first time you acces this link your browser will show a warning that there is a problem with the certificate. Make an exception for this service.
 
 # Visualize a NetCDF file via autowms
 
@@ -76,7 +99,7 @@ http://localhost:8090/adaguc-services/adagucserver?service=wms&request=getcapabi
 
 # Aggregation of hi-res satellite imagery
 
-First download a sequence of satellite data from opendap.knmi.nla:
+First download a sequence of satellite data from opendap.knmi.nl:
 ```
 cd $HOME/adaguc-server-docker/adaguc-data/
 wget -nc -r -l2 -A.h5   -I /knmi/thredds/fileServer/,/knmi/thredds/catalog/ 'http://opendap.knmi.nl/knmi/thredds/catalog/ADAGUC/testsets/projectedgrids/meteosat/catalog.html'
@@ -169,6 +192,7 @@ mkdir -p $HOME/adaguc-server-docker/adaguc-datasets
 mkdir -p $HOME/adaguc-server-docker/adaguc-autowms
 mkdir -p $HOME/adaguc-server-docker/adagucdb 
 mkdir -p $HOME/adaguc-server-docker/adaguc-logs && chmod 777 $HOME/adaguc-server-docker/adaguc-logs
+mkdir -p $HOME/adaguc-server-docker/adaguc-security
 
 docker-compose -f ./Docker/docker-compose.yml up 
 ```
@@ -184,6 +208,27 @@ docker-compose down
 
 Use the following command to scan datasets:
 ```
- docker exec -i -t adaguc-server /adaguc/adaguc-server-updatedatasets.sh <your dataset name>
+docker exec -i -t adaguc-server /adaguc/adaguc-server-updatedatasets.sh <your dataset name>
 ```
+
+# OpenDAP
+
+Adaguc can serve data via OpenDAP. The format is http(s)://<yourhost>/adaguc-services/adagucopendap/<dataset_name>/<layer_name>
+http://localhost:8090/adaguc-services/adagucopendap/dataset_a/testdata
+
+Opendap endpoints can be checked by testing the following URL's:
+* http://localhost:8090/adaguc-services/adagucopendap/dataset_a/testdata.das
+* http://localhost:8090/adaguc-services/adagucopendap/dataset_a/testdata.dds
+
+You can dump the header or visualize with:
+* ncdump -h http://localhost:8090/adaguc-services/adagucopendap/dataset_a/testdata
+* ncview http://localhost:8090/adaguc-services/adagucopendap/dataset_a/testdata
+
+# Endpoints
+
+* http://localhost:8090/adaguc-services/adagucserver? Will be forwarded automaticall to /wms or /wcs depending on the service type
+* http://localhost:8090/adaguc-services/wms? For serving Web Map Services
+* http://localhost:8090/adaguc-services/wcs? For serving Web Coverage Services
+* http://localhost:8090/adaguc-services/adagucopendap/ For serving OpenDAP services
+* http://localhost:8090/adaguc-services/autowms? For getting the list of visualizable resources
 
