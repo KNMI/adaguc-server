@@ -55,7 +55,7 @@ For some use cases it is required that the server is running over HTTPS. When a 
 To overcome this issue, the adaguc docker is able to create a self signed SSL certificate for you. This will be stored in the adaguc-security folder. By default the certificate is not trusted by your browser, because it does not recognize the certificate authority (you in this case). You have to make an exception in your browser for your services. If required, you can modify the files in the adaguc-security folder and add your own valid SSL certificate. The alias inside the keystoure is currently 'tomcat'.
 
 docker run \
-  -e EXTERNALADDRESS="http://`hostname`:8443/" \
+  -e EXTERNALADDRESS="https://`hostname`:8443/" \
   -p 8443:8443 \
   -v $HOME/adaguc-server-docker/adaguc-data:/data/adaguc-data \
   -v $HOME/adaguc-server-docker/adaguc-datasets:/data/adaguc-datasets \
@@ -66,7 +66,9 @@ docker run \
   --name my-adaguc-server \
   -it openearth/adaguc-server 
 
-The container is now accessible via https://localhost:8443/adaguc-services/adagucserver? . The first time you acces this link your browser will show a warning that there is a problem with the certificate. Make an exception for this service.
+The container is now accessible via :
+https://localhost:8443/adaguc-services/adagucserver?
+The first time you acces this link your browser will show a warning that there is a problem with the certificate. Make an exception for this service.
 
 # Visualize a NetCDF file via autowms
 
@@ -206,8 +208,18 @@ docker-compose down
 
 Use the following command to scan datasets:
 ```
- docker exec -i -t adaguc-server /adaguc/adaguc-server-updatedatasets.sh <your dataset name>
+docker exec -i -t adaguc-server /adaguc/adaguc-server-updatedatasets.sh <your dataset name>
 ```
+
+# OpenDAP
+
+Adaguc is can server data via OpenDAP. The data accessible through WMS/WCS with the link http://localhost:8090/adaguc-services/adagucserver?source=testdata.nc is also accessible via OpenDAP using adaguc-services/adagucopendap/<dataset name>/<layer name>:
+
+http://localhost:8090/adaguc-services/adagucopendap/dataset_a/testdata
+
+You can dump the header or visualize with:
+* ncdump -h http://localhost:8090/adaguc-services/adagucopendap/dataset_a/testdata
+* ncview http://localhost:8090/adaguc-services/adagucopendap/dataset_a/testdata
 
 # Endpoints
 
