@@ -44,5 +44,6 @@
   <Dataset enabled="true" location="/data/adaguc-datasets/"/>
   <Dataset enabled="true" location="/data/adaguc-datasets-internal/"/>
 
+  <OpenDAP enabled="true" path="adaguc-services/adagucopendap"/>
   <!-- End of configuration /-->
 </Configuration>
