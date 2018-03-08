@@ -29,21 +29,21 @@ RUN yum update -y && yum install -y \
 RUN mkdir /adaguc
 
 # Install adaguc-services (spring boot application for running adaguc-server)
-RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.0.2/adaguc-services-1.0.2.war > /usr/share/tomcat/webapps/adaguc-services.war
+RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.0.3/adaguc-services-1.0.3.war > /usr/share/tomcat/webapps/adaguc-services.war
 
 # Install adaguc-server from context
-#COPY . /adaguc/adaguc-server-master
+COPY . /adaguc/adaguc-server-master
 
 # Alternatively install adaguc from github
-WORKDIR /adaguc
-ADD https://github.com/KNMI/adaguc-server/archive/master.tar.gz /adaguc/adaguc-server-master.tar.gz
-RUN tar -xzvf adaguc-server-master.tar.gz
+# WORKDIR /adaguc
+# ADD https://github.com/KNMI/adaguc-server/archive/master.tar.gz /adaguc/adaguc-server-master.tar.gz
+# RUN tar -xzvf adaguc-server-master.tar.gz
 
 WORKDIR /adaguc/adaguc-server-master
 RUN bash compile.sh
 
 # Run adaguc-server functional tests
-#RUN bash runtests.sh
+RUN bash runtests.sh
 
 # Setup directories
 RUN mkdir -p /data/adaguc-autowms && \

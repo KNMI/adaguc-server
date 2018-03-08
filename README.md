@@ -29,6 +29,7 @@ mkdir -p $HOME/adaguc-server-docker/adaguc-datasets
 mkdir -p $HOME/adaguc-server-docker/adaguc-autowms
 mkdir -p $HOME/adaguc-server-docker/adagucdb
 mkdir -p $HOME/adaguc-server-docker/adaguc-logs && chmod 777 $HOME/adaguc-server-docker/adaguc-logs
+mkdir -p $HOME/adaguc-server-docker/adaguc-security
 
 docker run \
   -e EXTERNALADDRESS="http://`hostname`:8090/" \
@@ -46,6 +47,26 @@ If the container does not want to run because the container name is aready in us
 ```
 docker rm my-adaguc-server
 ```
+The container should be accessible via http://localhost:8090/adaguc-services/adagucserver?
+
+# Serving data using HTTPS
+
+For some use cases it is required that the server is running over HTTPS. When a website with a WMS client is using HTTPS, that site is unable to load anything over HTTP. This makes it impossible to load your adaguc wms services in that site using HTTP. 
+To overcome this issue, the adaguc docker is able to create a self signed SSL certificate for you. This will be stored in the adaguc-security folder. By default the certificate is not trusted by your browser, because it does not recognize the certificate authority (you in this case). You have to make an exception in your browser for your services. If required, you can modify the files in the adaguc-security folder and add your own valid SSL certificate. The alias inside the keystoure is currently 'tomcat'.
+
+docker run \
+  -e EXTERNALADDRESS="http://`hostname`:8443/" \
+  -p 8443:8443 \
+  -v $HOME/adaguc-server-docker/adaguc-data:/data/adaguc-data \
+  -v $HOME/adaguc-server-docker/adaguc-datasets:/data/adaguc-datasets \
+  -v $HOME/adaguc-server-docker/adaguc-autowms:/data/adaguc-autowms \
+  -v $HOME/adaguc-server-docker/adagucdb:/adaguc/adagucdb \
+  -v $HOME/adaguc-server-docker/adaguc-logs:/var/log/adaguc \
+  -v $HOME/adaguc-server-docker/adaguc-security:/adaguc/security \
+  --name my-adaguc-server \
+  -it openearth/adaguc-server 
+
+The container is now accessible via https://localhost:8443/adaguc-services/adagucserver? . The first time you acces this link your browser will show a warning that there is a problem with the certificate. Make an exception for this service.
 
 # Visualize a NetCDF file via autowms
 
@@ -169,6 +190,7 @@ mkdir -p $HOME/adaguc-server-docker/adaguc-datasets
 mkdir -p $HOME/adaguc-server-docker/adaguc-autowms
 mkdir -p $HOME/adaguc-server-docker/adagucdb 
 mkdir -p $HOME/adaguc-server-docker/adaguc-logs && chmod 777 $HOME/adaguc-server-docker/adaguc-logs
+mkdir -p $HOME/adaguc-server-docker/adaguc-security
 
 docker-compose -f ./Docker/docker-compose.yml up 
 ```
@@ -186,4 +208,12 @@ Use the following command to scan datasets:
 ```
  docker exec -i -t adaguc-server /adaguc/adaguc-server-updatedatasets.sh <your dataset name>
 ```
+
+# Endpoints
+
+* http://localhost:8090/adaguc-services/adagucserver? Will be forwarded automaticall to /wms or /wcs depending on the service type
+* http://localhost:8090/adaguc-services/wms? For serving Web Map Services
+* http://localhost:8090/adaguc-services/wcs? For serving Web Coverage Services
+* http://localhost:8090/adaguc-services/adagucopendap/ For serving OpenDAP services
+* http://localhost:8090/adaguc-services/autowms? For getting the list of visualizable resources
 
