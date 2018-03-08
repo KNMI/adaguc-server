@@ -47,17 +47,18 @@ class CDataReader{
   private:
     DEF_ERRORFUNCTION();
 
+    /**
+     * Copies CRS info from the config when the "Projection" tag is present in the ADAGUC config.
+     * If either of the id or the proj4 string is not defined, default values are copied.
+     *
+     * Returns false when the "Projection" tag is not present and nothing will be copied, otherwise true.
+     */
+    bool copyCRSFromConfigToDataSource(CDataSource *dataSource) const;
+
     
   public:
     CDataReader(){}
     ~CDataReader(){}
-  
-
-    
-    
-    
- 
-
     int open(CDataSource *dataSource,int mode,int x,int y);
     int openExtent(CDataSource *dataSource,int mode,int *gridExtent);
     int open(CDataSource *dataSource,int mode,int x,int y, int *gridExtent);
