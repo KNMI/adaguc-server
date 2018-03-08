@@ -13,12 +13,12 @@ variables:
         time:standard_name = "time" ;
         time:long_name = "time" ;
         time:units = "seconds since 1970-01-01 00:00:00" ;
-    float lon(time) ;                                           # TODO: Wordt dit gebruikt in ADAGUC?
+    float lon(time) ;
         lon:standard_name = "longitude" ;
         lon:long_name = "longitude" ;
         lon:units = "degrees_east" ;
         lon:bounds = "lon_bnds" ;
-    float lat(time) ;                                           # TODO: Wordt dit gebruikt in ADAGUC?
+    float lat(time) ;
         lat:standard_name = "latitude" ;
         lat:long_name = "latitude" ;
         lat:units = "degrees_north" ;
