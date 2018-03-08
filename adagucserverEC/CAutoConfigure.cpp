@@ -2,28 +2,42 @@
 
 #include "CDBFactory.h"
 #include "CDataReader.h"
+#include "CReporter.h"
 const char *CAutoConfigure::className="CAutoConfigure";
 
 //#define CAUTOCONFIGURE_DEBUG
+
+int CAutoConfigure::checkCascadedDimensions(const CDataSource *dataSource) {
+  if(dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
+    #ifdef CAUTOCONFIGURE_DEBUG
+    CDBDebug("Cascaded layers cannot have dimensions at the moment");
+    #endif
+
+    CReporter::getInstance()->addError(CT::string("Cascaded layer cannot have dimensions at the moment"));
+    
+    return 0;
+  }
+
+  return 1;
+}
 
 int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource){
 
   #ifdef CAUTOCONFIGURE_DEBUG
   CDBDebug("[autoConfigureDimensions]");
   #endif
-  if(dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
-    #ifdef CAUTOCONFIGURE_DEBUG
-    CDBDebug("Cascaded layers cannot have dimensions at the moment");
-    #endif
+
+  if (!checkCascadedDimensions(dataSource)) {
     return 0;
   }
 
   // Auto configure dimensions, in case they are not configured by the user.
   // Dimension configuration is added to the internal XML configuration structure.
   if(dataSource->cfgLayer->Dimension.size()>0){
-#ifdef CAUTOCONFIGURE_DEBUG
-        CDBDebug("[OK] Dimensions are already configured.");
-#endif
+    #ifdef CAUTOCONFIGURE_DEBUG
+    CDBDebug("[OK] Dimensions are already configured.");
+    #endif
+
     return 0;
   }
   if(dataSource==NULL){CDBDebug("datasource == NULL");return 1;}
