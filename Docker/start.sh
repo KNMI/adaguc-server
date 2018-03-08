@@ -33,7 +33,7 @@ useradd --shell /bin/bash -u ${KEYSTOREUSERID} -o -c "" -m useradaguc
 
 # If needed create a self signed certificate in a keystore for serving over HTTPS
 if [ ! -f ${ADAGUC_SERVICES_SECURITY}/keystore.jks ]; then
-  echo "Echo generating self signed certificate for HTTPS with hostname ${HOSTNAME}"
+  echo "Generating self signed certificate for HTTPS with hostname ${HOSTNAME}"
   runuser -l useradaguc -c "keytool -genkey -noprompt -keypass password -alias tomcat \
   -keyalg RSA -storepass password -keystore ${ADAGUC_SERVICES_SECURITY}/keystore.jks -deststoretype pkcs12 \
   -dname CN=${HOSTNAME}"
