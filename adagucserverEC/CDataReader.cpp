@@ -36,6 +36,7 @@
 #include "CConvertEProfile.h"
 #include "CConvertTROPOMI.h"
 #include "CDBFactory.h"
+#include "CReporter.h"
 const char *CDataReader::className="CDataReader";
 
 
@@ -339,8 +340,10 @@ int CDataReader::getCRS(CDataSource *dataSource) {
   if(dataSource->cfgLayer->Projection.size()==1){
     //Read projection information from configuration
     if(dataSource->cfgLayer->Projection[0]->attr.id.empty()==false){
+      CReporter::getInstance()->addInfo(CT::string("Projection is obtained from config file"));
       dataSource->nativeEPSG.copy(dataSource->cfgLayer->Projection[0]->attr.id.c_str());
     }else{
+      CReporter::getInstance()->addInfo(CT::string("Projection not in config, using EPSG:4326."));
       dataSource->nativeEPSG.copy("EPSG:4326");
       //dataSource->nativeEPSG.copy("unknown");
     }
@@ -357,6 +360,7 @@ int CDataReader::getCRS(CDataSource *dataSource) {
     dataSource->nativeProj4.copy("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
     //dataSource->nativeEPSG.copy("EPSG:4326");
     //dataSource->nativeProj4.copy("unknown");
+    CReporter::getInstance()->addInfo(CT::string("No config file, using EPSG:4326 as projection."));
     dataSource->nativeEPSG.copy("EPSG:4326");
     //Read projection attributes from the file
     CDF::Attribute *projvarnameAttr = dataSourceVar->getAttributeNE("grid_mapping");
@@ -389,14 +393,16 @@ int CDataReader::getCRS(CDataSource *dataSource) {
               CDBWarning("Unknown projection");
             }
           }
-          
-          
 
           //Get EPSG_code
           CDF::Attribute *epsgAttr = projVar->getAttributeNE("EPSG_code");
-          if(epsgAttr!=NULL){dataSource->nativeEPSG.copy((char*)epsgAttr->data);}else
+          if(epsgAttr!=NULL){
+            CReporter::getInstance()->addInfo(CT::string("EPSG_code defined in projection variable ") + projvarnameAttr->toString());
+            dataSource->nativeEPSG.copy((char*)epsgAttr->data);
+          }else
           {
             //Make a projection code based on PROJ4: namespace
+            CReporter::getInstance()->addInfo(CT::string("Projection variable defined without EPSG_code attribute, using nativeProj4 string to create EPSG code."));
             dataSource->nativeEPSG.print("PROJ4:%s",dataSource->nativeProj4.c_str());
             dataSource->nativeEPSG.replaceSelf("\"","");
             dataSource->nativeEPSG.replaceSelf("\n","");

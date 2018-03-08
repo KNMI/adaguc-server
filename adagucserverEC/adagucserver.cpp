@@ -24,6 +24,7 @@
  ******************************************************************************/
 
 #include "adagucserver.h"
+#include "CReporter.h"
 
 DEF_ERRORMAIN();
 
@@ -328,8 +329,11 @@ int main(int argc, const char *argv[]){
       useLogBuffer = true;
     } 
   }
-  int status = _main(argc,argv);  
-  
+  int status = _main(argc,argv);
+
+  // Print the check report.
+  CDBDebug(CReporter::getInstance()->generateReport().c_str());
+
   CCachedDirReader::free();
   
   if(pLogDebugFile!= NULL){
