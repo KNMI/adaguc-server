@@ -215,7 +215,11 @@ docker exec -i -t adaguc-server /adaguc/adaguc-server-updatedatasets.sh <your da
 
 ## OpenDAP
 
-Adaguc can serve data via OpenDAP. The format is http(s)://<yourhost>/adaguc-services/adagucopendap/<dataset_name>/<layer_name>
+Adaguc can serve data via OpenDAP. The format is 
+```
+http(s)://<yourhost>/adaguc-services/adagucopendap/<dataset_name>/<layer_name>
+```
+
 http://localhost:8090/adaguc-services/adagucopendap/dataset_a/testdata
 
 Opendap endpoints can be checked by testing the following URL's:
