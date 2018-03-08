@@ -54,6 +54,7 @@ The container should now be accessible via http://localhost:8090/adaguc-services
 For some cases it is required that the server is running over a secure connection (https). This can be the case when a secure site tries to load your services over normal http. The browser blocks your service and warns you that you are trying to load mixed content; e.g. https and http in one site. The browser blocks this to garantee that the site remains safe.
 To overcome this issue adaguc services can be served over https. During startup, the adaguc docker checks if you have provided a SSL certificate in the adaguc-security folder. If none available, it creates a self signed SSL certificate for you, the certificate is stored in a keystore in the adaguc-security folder. By default the self signed certificate is not automatically trusted by your browser. You have to make an exception in your browser in order to use the services. This can be done by visiting one of the URL's (https://localhost:8443/adaguc-services/adagucserver?) and confirm an exception. To overcome the security exception, you are free to add your own valid SSL certificate (from your certificate authority or letsencrypt) if you have one. The alias inside the keystore is currently 'tomcat' and the password is 'password'. 
 
+```
 docker run \
   -e EXTERNALADDRESS="https://`hostname`:8443/" \
   -p 8443:8443 \
@@ -65,6 +66,7 @@ docker run \
   -v $HOME/adaguc-server-docker/adaguc-security:/adaguc/security \
   --name my-adaguc-server \
   -it openearth/adaguc-server 
+```
 
 The container is now accessible via :
 https://localhost:8443/adaguc-services/adagucserver?
