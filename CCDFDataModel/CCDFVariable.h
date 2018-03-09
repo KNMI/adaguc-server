@@ -285,7 +285,7 @@ namespace CDF{
       }
 
       
-      Attribute * getAttribute(const char *name){
+      Attribute * getAttribute(const char *name) const {
         for(size_t j=0;j<attributes.size();j++){
           if(attributes[j]->name.equals(name)){
             return attributes[j];
@@ -294,7 +294,7 @@ namespace CDF{
         throw(CDF_E_ATTNOTFOUND);
         return NULL;
       }
-      Attribute * getAttributeNE(const char *name){try{return getAttribute(name);}catch(int e){return NULL;}}
+      Attribute * getAttributeNE(const char *name) const {try{return getAttribute(name);}catch(int e){return NULL;}}
       
       /**
        * Returns the dimension for given name. Throws error code  when something goes wrong
