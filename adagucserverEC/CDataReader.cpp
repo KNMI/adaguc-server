@@ -337,7 +337,6 @@ int CDataReader::getCRS(CDataSource *dataSource) {
 
   //Check if projection is overidden in the config file
   if(copyCRSFromConfigToDataSource(dataSource)){
-    CReporter::getInstance()->addInfo(CT::string("Blah."));
     return 0;
   }
 
