@@ -91,7 +91,11 @@ class CDataReader{
      */
     void copyEPSGCodeFromProjectionVariable(CDataSource *dataSource, const CDF::Variable *projVar) const;
 
-
+    /**
+     * Determines the X and Y dimension indices and copies them to the datasource.
+     * If the dimension on the X position contains 'y' or 'lat', the indices are swapped.
+     */
+    void copyXAndYDimIndices(CDataSource *dataSource, const CDF::Variable *dataSourceVar) const;
 
   public:
     CDataReader(){}
