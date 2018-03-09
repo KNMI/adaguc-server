@@ -495,10 +495,7 @@ void CDataReader::copyEPSGCodeFromProjectionVariable(CDataSource *dataSource, co
 }
 
 int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, int *gridExtent){
-  
-  
 
-  
   /**************************************************************************************************/
   /*  LEVEL 2 ASCAT COMPAT MODE!*/
   /**************************************************************************************************/
@@ -546,6 +543,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
   dataSource->dNetCDFNumDims = dataSourceVar->dimensionlinks.size();
   
   if(dataSource->dNetCDFNumDims<2){
+    CReporter::getInstance()->addError(CT::string("The following variable has less than two dimensions, while at least x and y dimensions are required: ") + dataSourceVar->name.c_str());
     CDBError("Variable %s has less than two dimensions", dataSourceVar->name.c_str());
     return 1;
   }
@@ -553,35 +551,18 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
   #ifdef CDATAREADER_DEBUG  
   CDBDebug("Number of dimensions = %d",dataSource->dNetCDFNumDims);
   #endif
-  
-  
- 
-  dataSource->dimXIndex=dataSource->dNetCDFNumDims-1;
-  dataSource->dimYIndex=dataSource->dNetCDFNumDims-2;
-  
-  dataSource->swapXYDimensions = false;
 
-  //If our X dimension has a character y/lat in it, XY dims are probably swapped.
-  CT::string dimensionXName=dataSourceVar->dimensionlinks[dataSource->dimXIndex]->name.c_str();
-  
-  dimensionXName.toLowerCaseSelf();
-  if(dimensionXName.indexOf("y")!=-1||dimensionXName.indexOf("lat")!=-1)dataSource->swapXYDimensions=true;
-  
-  //dataSource->swapXYDimensions=true;
-  if(dataSource->swapXYDimensions){
-    dataSource->dimXIndex=dataSource->dNetCDFNumDims-2;
-    dataSource->dimYIndex=dataSource->dNetCDFNumDims-1;
-  }
-  
+  // Determine the X and Y dimensions.
+  copyXAndYDimIndices(dataSource, dataSourceVar);
   CDF::Dimension *dimX=dataSourceVar->dimensionlinks[dataSource->dimXIndex];
   CDF::Dimension *dimY=dataSourceVar->dimensionlinks[dataSource->dimYIndex];
-  
-  if(dimX==NULL||dimY==NULL){CDBError("X and or Y dims not found...");return 1;}
- 
 
- #ifdef CDATAREADER_DEBUG  
- CDBDebug("Found xy dims for var %s:  %s and %s",dataSourceVar->name.c_str(),dimX->name.c_str(),dimY->name.c_str());
- #endif
+  if(dimX==NULL||dimY==NULL){CDBError("X and or Y dims not found...");return 1;}
+
+
+  #ifdef CDATAREADER_DEBUG
+  CDBDebug("Found xy dims for var %s:  %s and %s",dataSourceVar->name.c_str(),dimX->name.c_str(),dimY->name.c_str());
+  #endif
 
  //Read X and Y dimension data completely.
  dataSource->varX=cdfObject->getVariableNE(dimX->name.c_str());
@@ -796,7 +777,8 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
   dataSource->dfBBOX[2]=dfdim_X[dataSource->dWidth-1]+dataSource->dfCellSizeX/2.0f;
   dataSource->dfBBOX[3]=dfdim_Y[0]-dataSource->dfCellSizeY/2.0f;;
   
-
+  CT::string dimensionXName=dataSourceVar->dimensionlinks[dataSource->dimXIndex]->name.c_str();
+  dimensionXName.toLowerCaseSelf();
   if(dimensionXName.equals("col")){
     dataSource->dfBBOX[2]=dfdim_X[0]-dataSource->dfCellSizeX/2.0f;
     dataSource->dfBBOX[3]=dfdim_Y[dataSource->dHeight-1]+dataSource->dfCellSizeY/2.0f;
@@ -857,6 +839,38 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
   }
   
   return 0;
+}
+
+void CDataReader::copyXAndYDimIndices(CDataSource *dataSource, const CDF::Variable *dataSourceVar) const {
+
+  dataSource->dimXIndex=dataSource->dNetCDFNumDims-1;
+  dataSource->dimYIndex=dataSource->dNetCDFNumDims-2;
+
+  dataSource->swapXYDimensions = false;
+
+  //If our X dimension has a character y/lat in it, XY dims are probably swapped.
+  CT::string dimensionXName=dataSourceVar->dimensionlinks[dataSource->dimXIndex]->name.c_str();
+  CT::string dimensionYName=dataSourceVar->dimensionlinks[dataSource->dimYIndex]->name.c_str();
+
+  dimensionXName.toLowerCaseSelf();
+  if(dimensionXName.indexOf("y")!=-1||dimensionXName.indexOf("lat")!=-1) {
+    dataSource->swapXYDimensions=true;
+    dataSource->dimXIndex=dataSource->dNetCDFNumDims-2;
+    dataSource->dimYIndex=dataSource->dNetCDFNumDims-1;
+
+    CReporter::getInstance()->addWarning(CT::string("For variable ") + dataSourceVar->name +
+                                         CT::string(" the dimension on the X position, ") + dimensionXName +
+                                         CT::string(", contains y or lat, and is therefore swapped with the dimension on the Y position, ") + dimensionYName);
+  }
+
+  CDF::Dimension *dimX=dataSourceVar->dimensionlinks[dataSource->dimXIndex];
+  CDF::Dimension *dimY=dataSourceVar->dimensionlinks[dataSource->dimYIndex];
+
+  CReporter::getInstance()->addInfo(CT::string("Assuming that for variable ") + dataSourceVar->name +
+                                    CT::string(" the x dim equals ") + dimX->name +
+                                    CT::string(" and the y dim equals ") + dimY->name +
+                                    CT::string(" based on their position and name."));
+  CDBDebug("Found xy dims for var %s:  %s and %s",dataSourceVar->name.c_str(),dimX->name.c_str(),dimY->name.c_str());
 }
 
 
@@ -959,7 +973,9 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y, int *gridExt
     dataSource->getDataObject(varNr)->points.clear();
   }
 
-  
+
+  // TODO: Tot hier heb ik gecontroleerd op checker logica.
+
   if(parseDimensions(dataSource,mode,x,y, gridExtent)!=0){
     CDBError("Unable to parseDimensions");
     return 1;
