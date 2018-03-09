@@ -331,76 +331,24 @@ int CDataReader::open(CDataSource *dataSource, int x,int y){
 }
 
 int CDataReader::getCRS(CDataSource *dataSource) {
-  // Retrieve CRS
-  CDF::Variable * dataSourceVar=dataSource->getDataObject(0)->cdfVariable;
-  CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
 
-  //Check if projection is overidden in the config file
-  if(copyCRSFromConfigToDataSource(dataSource)){
+  //Check if projection is overidden in the config file.
+  if (copyCRSFromConfigToDataSource(dataSource)){
+    return 0;
+  }
+
+  //Check if we can copy the CRS from a projection variable.
+  if (copyCRSFromProjectionVariable(dataSource)) {
     return 0;
   }
 
   // If undefined, set standard lat lon projection
-  dataSource->nativeProj4.copy("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
-  //dataSource->nativeEPSG.copy("EPSG:4326");
-  //dataSource->nativeProj4.copy("unknown");
-  CReporter::getInstance()->addInfo(CT::string("No config file, using EPSG:4326 as projection."));
-  dataSource->nativeEPSG.copy("EPSG:4326");
-  //Read projection attributes from the file
-  CDF::Attribute *projvarnameAttr = dataSourceVar->getAttributeNE("grid_mapping");
-  if(projvarnameAttr!=NULL){
-    if(projvarnameAttr->toString().equals("latitude_longitude")==false){
-      CDF::Variable * projVar = cdfObject->getVariableNE(projvarnameAttr->toString().c_str());
-      if(projVar==NULL){CDBWarning("projection variable '%s' not found",(char*)projvarnameAttr->data);}
-      else {
-        //Get proj4_params according to ADAGUC metadata
-        CDF::Attribute *proj4Attr = projVar->getAttributeNE("proj4_params");
-
-        //If not found try alternative one
-        if (proj4Attr==NULL) proj4Attr = projVar->getAttributeNE("proj4");
-
-        //If a proj4 string was found set it in the datasource.
-        if(proj4Attr!=NULL)dataSource->nativeProj4.copy(proj4Attr->toString().c_str());
-
-        //if still not found, try to compose a proj4 string based on Climate and Forecast Conventions
-        if (proj4Attr==NULL||dataSource->nativeProj4.length()==0){
-          CProj4ToCF proj4ToCF;
-          proj4ToCF.debug=true;
-          CT::string projString;
-          int status = proj4ToCF.convertCFToProj(projVar,&projString);
-          if(status==0){
-            //Projection string was created, set it in the datasource.
-            dataSource->nativeProj4.copy(projString.c_str());
-            CDBDebug("Autogen proj4 string: %s",projString.c_str());
-            projVar->setAttributeText("autogen_proj",projString.c_str());
-          }else{
-            CDBWarning("Unknown projection");
-          }
-        }
-
-        //Get EPSG_code
-        CDF::Attribute *epsgAttr = projVar->getAttributeNE("EPSG_code");
-        if(epsgAttr!=NULL){
-          CReporter::getInstance()->addInfo(CT::string("EPSG_code defined in projection variable ") + projvarnameAttr->toString());
-          dataSource->nativeEPSG.copy((char*)epsgAttr->data);
-        }else
-        {
-          //Make a projection code based on PROJ4: namespace
-          CReporter::getInstance()->addInfo(CT::string("Projection variable defined without EPSG_code attribute, using nativeProj4 string to create EPSG code."));
-          dataSource->nativeEPSG.print("PROJ4:%s",dataSource->nativeProj4.c_str());
-          dataSource->nativeEPSG.replaceSelf("\"","");
-          dataSource->nativeEPSG.replaceSelf("\n","");
-          dataSource->nativeEPSG.trimSelf();
-          dataSource->nativeEPSG.encodeURLSelf();
-        }
-        //else {CDBWarning("EPSG_code not found in variable %s",(char*)projvarnameAttr->data);}
-      }
-    }
-  }
+  CReporter::getInstance()->addWarning(CT::string("No correct projection found, using by default the geographic coordinate system (latitude and longitude)."));
+  copyLatLonCRS(dataSource);
   return 0;
 }
 
-bool CDataReader::copyCRSFromConfigToDataSource(CDataSource *dataSource) const{
+bool CDataReader::copyCRSFromConfigToDataSource(CDataSource *dataSource) const {
 
   // Check if the projection is defined in the config file.
   if(dataSource->cfgLayer->Projection.size() != 1) {
@@ -429,6 +377,121 @@ bool CDataReader::copyCRSFromConfigToDataSource(CDataSource *dataSource) const{
   }
 
   return true;
+}
+
+void CDataReader::copyLatLonCRS(CDataSource *dataSource) const {
+  CReporter::getInstance()->addInfo(CT::string("Using the geographic coordinate system (latitude and longitude)"));
+  dataSource->nativeProj4.copy("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
+  dataSource->nativeEPSG.copy("EPSG:4326");
+}
+
+bool CDataReader::copyCRSFromProjectionVariable(CDataSource *dataSource) const {
+
+  // Determine if there is a grid mapping attribute is defined.
+  CDF::Variable * dataSourceVar=dataSource->getDataObject(0)->cdfVariable;
+  CDF::Attribute *projvarnameAttr = dataSourceVar->getAttributeNE("grid_mapping");
+
+  if (projvarnameAttr==NULL) {
+    return false;
+  }
+
+  // Determine if the grid mapping attribute is set to latitude_longitude.
+  if (projvarnameAttr!=NULL && projvarnameAttr->toString().equals("latitude_longitude")) {
+    copyLatLonCRS(dataSource);
+    return true;
+  }
+
+  // Retrieve the projection variable.
+  CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
+  CDF::Variable *projVar = cdfObject->getVariableNE(projvarnameAttr->toString().c_str());
+  if(projVar == NULL) {
+    CDBWarning("projection variable '%s' not found", (char *) projvarnameAttr->data);
+    CReporter::getInstance()->addError(CT::string("The projection variable name defined in grid_mapping attribute is not found: ") + projvarnameAttr->toString());
+    return false;
+  }
+
+  // Try to retrieve the projection according to the ADAGUC metadata standard.
+  if (copyCRSFromADAGUCProjectionVariable(dataSource, projVar)) {
+    return true;
+  }
+
+  // Try to retrieve the projection according to the Climate and Forecast Conventions.
+  if (copyCRSFromCFProjectionVariable(dataSource, projVar)) {
+    return true;
+  }
+
+  // It was not possible to determine the projection from the projection variable.
+  return false;
+
+}
+
+bool CDataReader::copyCRSFromADAGUCProjectionVariable(CDataSource *dataSource, const CDF::Variable *projVar) const {
+  //Get proj4_params according to ADAGUC metadata
+  CDF::Attribute *proj4Attr = projVar->getAttributeNE("proj4_params");
+
+  //If not found try alternative one
+  if(proj4Attr == NULL) proj4Attr = projVar->getAttributeNE("proj4");
+
+  // If not found, the projection is not defined according to the ADAGUC metadata standard.
+  if (proj4Attr == NULL) {
+    return false;
+  }
+
+  if (proj4Attr->toString().length() == 0) {
+    CReporter::getInstance()->addError(CT::string("Found a proj4 or proj4_params attribute, but it is empty. Skipping the attribute."));
+    return false;
+  }
+
+  CReporter::getInstance()->addInfo(CT::string("Retrieving the projection according to the ADAGUC standards from the proj4_params or proj4 attribute: ") + proj4Attr->toString());
+  dataSource->nativeProj4.copy(proj4Attr->toString().c_str());
+
+  // Copy the EPSG code.
+  copyEPSGCodeFromProjectionVariable(dataSource, projVar);
+
+  return true;
+}
+
+bool CDataReader::copyCRSFromCFProjectionVariable(CDataSource *dataSource, CDF::Variable *projVar) const {
+
+  CProj4ToCF proj4ToCF;
+  proj4ToCF.debug = true;
+  CT::string projString;
+  int status = proj4ToCF.convertCFToProj(projVar, &projString);
+
+  if (status != 0) {
+    CDBWarning("Unknown projection");
+    CReporter::getInstance()->addError(CT::string("Unknown CF conventions projection."));
+    return false;
+  }
+
+  //Projection string was created, set it in the datasource.
+  CReporter::getInstance()->addInfo(CT::string("Determined the projection string using the CF conventions: ") + projString);
+  dataSource->nativeProj4.copy(projString.c_str());
+  CDBDebug("Autogen proj4 string: %s", projString.c_str());
+  projVar->setAttributeText("autogen_proj", projString.c_str());
+
+  // Copy the EPSG code.
+  copyEPSGCodeFromProjectionVariable(dataSource, projVar);
+
+  return true;
+}
+
+
+void CDataReader::copyEPSGCodeFromProjectionVariable(CDataSource *dataSource, const CDF::Variable *projVar) const {
+  //Get EPSG_code
+  CDF::Attribute *epsgAttr = projVar->getAttributeNE("EPSG_code");
+  if(epsgAttr != NULL) {
+    CReporter::getInstance()->addInfo(CT::string("Using EPSG_code defined in projection variable ") + projVar->name);
+    dataSource->nativeEPSG.copy((char *) epsgAttr->data);
+  } else {
+    //Make a projection code based on PROJ4: namespace
+    CReporter::getInstance()->addInfo(CT::string("Using projection string to create EPSG code.") + dataSource->nativeProj4);
+    dataSource->nativeEPSG.print("PROJ4:%s", dataSource->nativeProj4.c_str());
+    dataSource->nativeEPSG.replaceSelf("\"", "");
+    dataSource->nativeEPSG.replaceSelf("\n", "");
+    dataSource->nativeEPSG.trimSelf();
+    dataSource->nativeEPSG.encodeURLSelf();
+  }
 }
 
 int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, int *gridExtent){
