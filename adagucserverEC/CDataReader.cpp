@@ -559,15 +559,20 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
 
   if(dimX==NULL||dimY==NULL){CDBError("X and or Y dims not found...");return 1;}
 
-
   #ifdef CDATAREADER_DEBUG
   CDBDebug("Found xy dims for var %s:  %s and %s",dataSourceVar->name.c_str(),dimX->name.c_str(),dimY->name.c_str());
   #endif
 
- //Read X and Y dimension data completely.
- dataSource->varX=cdfObject->getVariableNE(dimX->name.c_str());
- dataSource->varY=cdfObject->getVariableNE(dimY->name.c_str());
- if(dataSource->varX==NULL||dataSource->varY==NULL){CDBError("X ('%s') and or Y ('%s') vars not found for variable %s...",dimX->name.c_str(),dimY->name.c_str(),dataSourceVar->name.c_str());return 1;}
+  //Read X and Y dimension data completely.
+  dataSource->varX=cdfObject->getVariableNE(dimX->name.c_str());
+  dataSource->varY=cdfObject->getVariableNE(dimY->name.c_str());
+  if(dataSource->varX==NULL||dataSource->varY==NULL){
+    CReporter::getInstance()->addError(CT::string("Not possible to find variable for dimensions with names ") + dimX->name +
+                                       CT::string(" and ") + dimY->name +
+                                       CT::string(" for variable ") + dataSourceVar->name);
+    CDBError("X ('%s') and or Y ('%s') vars not found for variable %s...",dimX->name.c_str(),dimY->name.c_str(),dataSourceVar->name.c_str());
+    return 1;
+  }
   #ifdef CDATAREADER_DEBUG  
   CDBDebug("Found xy vars for var %s:  %s and %s",dataSourceVar->name.c_str(),dataSource->varX->name.c_str(),dataSource->varY->name.c_str());
   #endif
