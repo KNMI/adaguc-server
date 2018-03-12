@@ -244,7 +244,7 @@ private:
   
   
   //Used for vectors and points
-  bool level2CompatMode;
+  bool formatConverterActive;
   
   //The index of the X and Y dimension in the variable dimensionlist (not the id's from the netcdf file)
   int dimXIndex;

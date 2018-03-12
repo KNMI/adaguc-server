@@ -327,21 +327,19 @@ void CDataReader::copyEPSGCodeFromProjectionVariable(CDataSource *dataSource, co
 int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, int *gridExtent){
 
   /**************************************************************************************************/
-  /*  LEVEL 2 ASCAT COMPAT MODE!*/
+  /*  Check if the format needs to be converted.
   /**************************************************************************************************/
-  dataSource->level2CompatMode = false;
-  if(!dataSource->level2CompatMode)if(CConvertEProfile::convertEProfileData(dataSource,mode)==0)dataSource->level2CompatMode=true;     
-  if(!dataSource->level2CompatMode)if(CConvertASCAT::convertASCATData(dataSource,mode)==0)dataSource->level2CompatMode=true;
-  if(!dataSource->level2CompatMode)if(CConvertUGRIDMesh::convertUGRIDMeshData(dataSource,mode)==0)dataSource->level2CompatMode=true;
-  if(!dataSource->level2CompatMode)if(CConvertADAGUCVector::convertADAGUCVectorData(dataSource,mode)==0)dataSource->level2CompatMode=true;
-  if(!dataSource->level2CompatMode)if(CConvertADAGUCPoint::convertADAGUCPointData(dataSource,mode)==0)dataSource->level2CompatMode=true;
-  if(!dataSource->level2CompatMode)if(CConvertCurvilinear::convertCurvilinearData(dataSource,mode)==0)dataSource->level2CompatMode=true;
-  if(!dataSource->level2CompatMode)if(CConvertHexagon::convertHexagonData(dataSource,mode)==0)dataSource->level2CompatMode=true;
-  if(!dataSource->level2CompatMode)if(CConvertGeoJSON::convertGeoJSONData(dataSource,mode)==0)dataSource->level2CompatMode=true;
-  if(!dataSource->level2CompatMode)if(CConvertTROPOMI::convertTROPOMIData(dataSource,mode)==0)dataSource->level2CompatMode=true;     
-//   if(dataSource->level2CompatMode){
-//    cache->removeClaimedCachefile();
-//   }
+  dataSource->formatConverterActive = false;
+  if(!dataSource->formatConverterActive)if(CConvertEProfile::convertEProfileData(dataSource,mode)==0)dataSource->formatConverterActive=true;
+  if(!dataSource->formatConverterActive)if(CConvertASCAT::convertASCATData(dataSource,mode)==0)dataSource->formatConverterActive=true;
+  if(!dataSource->formatConverterActive)if(CConvertUGRIDMesh::convertUGRIDMeshData(dataSource,mode)==0)dataSource->formatConverterActive=true;
+  if(!dataSource->formatConverterActive)if(CConvertADAGUCVector::convertADAGUCVectorData(dataSource,mode)==0)dataSource->formatConverterActive=true;
+  if(!dataSource->formatConverterActive)if(CConvertADAGUCPoint::convertADAGUCPointData(dataSource,mode)==0)dataSource->formatConverterActive=true;
+  if(!dataSource->formatConverterActive)if(CConvertCurvilinear::convertCurvilinearData(dataSource,mode)==0)dataSource->formatConverterActive=true;
+  if(!dataSource->formatConverterActive)if(CConvertHexagon::convertHexagonData(dataSource,mode)==0)dataSource->formatConverterActive=true;
+  if(!dataSource->formatConverterActive)if(CConvertGeoJSON::convertGeoJSONData(dataSource,mode)==0)dataSource->formatConverterActive=true;
+  if(!dataSource->formatConverterActive)if(CConvertTROPOMI::convertTROPOMIData(dataSource,mode)==0)dataSource->formatConverterActive=true;
+
   int status = 0;
 
   CDF::Variable * dataSourceVar=dataSource->getDataObject(0)->cdfVariable;
@@ -400,7 +398,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
     }
   }
 
-  if(dataSource->level2CompatMode == false){
+  if(dataSource->formatConverterActive == false){
     
      
     if( mode == CNETCDFREADER_MODE_OPEN_EXTENT && gridExtent != NULL ){
@@ -453,7 +451,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
       return 1;
     }
 
-    // Get CRS info DataObject
+    // Get CRS info DataObject. Note: It is not necessary to call this for converted files, since the CRS info should be set correctly in the converters.
     getCRS(dataSource);
 
     //if units="rad" and grid_mapping variable contains perspective_point_height attribute
@@ -511,7 +509,6 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
   StopWatch_Stop("XY dimensions read");
 #endif
 
-  //getCRS(dataSource); // TODO: Dit wordt nu niet aangeropen voor level2compat mode, is dat terecht?
   #ifdef CDATAREADER_DEBUG
   CDBDebug("PROJ4 = [%s]",dataSource->nativeProj4.c_str());
   #endif
@@ -531,7 +528,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
   
   
   
-  if(dataSource->level2CompatMode==false && dataSource->dfCellSizeX > 0){
+  if(dataSource->formatConverterActive==false && dataSource->dfCellSizeX > 0){
   
     
     if( CGeoParams::isLonLatProjection(&dataSource->nativeProj4)){
@@ -627,7 +624,7 @@ bool CDataReader::determineXandYVars(CDataSource *dataSource, const CDF::Variabl
 
 void CDataReader::determineStride2DMap(CDataSource *dataSource) const {
 
-  if(dataSource->level2CompatMode) {
+  if(dataSource->formatConverterActive) {
     dataSource->stride2DMap = 1;
     CReporter::getInstance()->addInfo(CT::string("In level 2 compatibility mode, using a default stride of 1, not considering RenderSettings."));
     return;
@@ -1009,7 +1006,7 @@ if( mode == CNETCDFREADER_MODE_OPEN_EXTENT && gridExtent != NULL ){
     
       
       //if( dataSource->getDataObject(varNr)->cdfVariable->data==NULL){
-      if( dataSource->level2CompatMode == false){
+      if( dataSource->formatConverterActive == false){
         //#ifdef MEASURETIME
         //StopWatch_Stop("Freeing data");
         //#endif
