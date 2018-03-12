@@ -362,14 +362,10 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
   if(x!=-1&&y!=-1){
     singleCellMode = true;
   }
-  
-  //CDBDebug("singlecellmode: %d %d %d",x,y,singleCellMode);
-  
-  // It is possible to skip every N cell in x and y. When set to 1, all data is displayed.
-  // When set to 2, every second datacell is displayed, etc...
-  
- 
-  // Retrieve X, Y Dimensions and Width, Height
+
+  // -------------------------------------------
+  // Retrieve X, Y Dimensions and Width, Height |
+  // -------------------------------------------
   dataSource->dNetCDFNumDims = dataSourceVar->dimensionlinks.size();
   
   if(dataSource->dNetCDFNumDims<2){
@@ -382,67 +378,21 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
   CDBDebug("Number of dimensions = %d",dataSource->dNetCDFNumDims);
   #endif
 
-  // Determine the X and Y dimensions.
-  copyXAndYDimIndices(dataSource, dataSourceVar);
-  CDF::Dimension *dimX=dataSourceVar->dimensionlinks[dataSource->dimXIndex];
-  CDF::Dimension *dimY=dataSourceVar->dimensionlinks[dataSource->dimYIndex];
-
-  if(dimX==NULL||dimY==NULL){CDBError("X and or Y dims not found...");return 1;}
-
-  #ifdef CDATAREADER_DEBUG
-  CDBDebug("Found xy dims for var %s:  %s and %s",dataSourceVar->name.c_str(),dimX->name.c_str(),dimY->name.c_str());
-  #endif
-
-  //Read X and Y dimension data completely.
-  dataSource->varX=cdfObject->getVariableNE(dimX->name.c_str());
-  dataSource->varY=cdfObject->getVariableNE(dimY->name.c_str());
-  if(dataSource->varX==NULL||dataSource->varY==NULL){
-    CReporter::getInstance()->addError(CT::string("Not possible to find variable for dimensions with names ") + dimX->name +
-                                       CT::string(" and ") + dimY->name +
-                                       CT::string(" for variable ") + dataSourceVar->name);
-    CDBError("X ('%s') and or Y ('%s') vars not found for variable %s...",dimX->name.c_str(),dimY->name.c_str(),dataSourceVar->name.c_str());
+  // Determine the X and Y dimensions and variables.
+  determineXAndYDimIndices(dataSource, dataSourceVar);
+  if(!determineXandYVars(dataSource, dataSourceVar, cdfObject)) {
     return 1;
   }
-  #ifdef CDATAREADER_DEBUG  
-  CDBDebug("Found xy vars for var %s:  %s and %s",dataSourceVar->name.c_str(),dataSource->varX->name.c_str(),dataSource->varY->name.c_str());
-  #endif
 
-  // Determine the width and height based on the stride. TODO: Goed commentaar!
-  copyStride2DMap(dataSource);
-  dataSource->dWidth = dimX->length / dataSource->stride2DMap;
-  dataSource->dHeight = dimY->length / dataSource->stride2DMap;
-  
-  
-#ifdef CDATAREADER_DEBUG  
-  if(gridExtent!=NULL){
-      CDBDebug("gridExtent = [%d %d %d %d]", gridExtent[0], gridExtent[1], gridExtent[2], gridExtent[3]);
-  }else{
-      CDBDebug("gridExtent = NULL");
-  }
-#endif
-  
-  
-  dataSource->dOrigWidth = dataSource->dWidth;
-  
-  
-  if( mode == CNETCDFREADER_MODE_OPEN_EXTENT && gridExtent != NULL ){
-    dataSource->dWidth = (gridExtent[2]-gridExtent[0])/dataSource->stride2DMap;
-    dataSource->dHeight = (gridExtent[3]-gridExtent[1])/dataSource->stride2DMap;
-  }
-  
-  if(singleCellMode){
-    dataSource->dWidth=2;
-    dataSource->dHeight=2;
-  }
-  
-  
+  // Determine the width and height based on the stride.
+  determineStride2DMap(dataSource);
+  determineDWidthAndDHeight(dataSource, singleCellMode, gridExtent, mode);
+
   size_t start[dataSource->dNetCDFNumDims+1];
   
   //Everything starts at zero
   for(int j=0;j<dataSource->dNetCDFNumDims;j++){start[j]=0;}
-  
-  
-  
+
   //Set other dimensions than X and Y.
   if(dataSource->dNetCDFNumDims>2){
     for(int j=0;j<dataSource->dNetCDFNumDims-2;j++){
@@ -644,7 +594,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
   return 0;
 }
 
-void CDataReader::copyXAndYDimIndices(CDataSource *dataSource, const CDF::Variable *dataSourceVar) const {
+void CDataReader::determineXAndYDimIndices(CDataSource *dataSource, const CDF::Variable *dataSourceVar) const {
 
   dataSource->dimXIndex=dataSource->dNetCDFNumDims-1;
   dataSource->dimYIndex=dataSource->dNetCDFNumDims-2;
@@ -673,10 +623,47 @@ void CDataReader::copyXAndYDimIndices(CDataSource *dataSource, const CDF::Variab
                                     CT::string(" the x dim equals ") + dimX->name +
                                     CT::string(" and the y dim equals ") + dimY->name +
                                     CT::string(" based on their position and name."));
+  #ifdef CDATAREADER_DEBUG
   CDBDebug("Found xy dims for var %s:  %s and %s",dataSourceVar->name.c_str(),dimX->name.c_str(),dimY->name.c_str());
+  #endif
 }
 
-void CDataReader::copyStride2DMap(CDataSource *dataSource) const {
+bool CDataReader::determineXandYVars(CDataSource *dataSource, const CDF::Variable *dataSourceVar, CDFObject *cdfObject) const {
+  CDF::Dimension *dimX = dataSourceVar->dimensionlinks[dataSource->dimXIndex];
+  CDF::Dimension *dimY = dataSourceVar->dimensionlinks[dataSource->dimYIndex];
+
+  if(dimX == NULL || dimY == NULL) {
+    CReporter::getInstance()->addError(CT::string("X and or Y dims not found."));
+    CDBError("X and or Y dims not found...");
+    return false;
+  }
+
+  //Read X and Y dimension data completely.
+  dataSource->varX = cdfObject->getVariableNE(dimX->name.c_str());
+  dataSource->varY = cdfObject->getVariableNE(dimY->name.c_str());
+  if(dataSource->varX == NULL || dataSource->varY == NULL) {
+    CReporter::getInstance()->addError(
+        CT::string("Not possible to find variable for dimensions with names ") + dimX->name +
+        CT::string(" and ") + dimY->name +
+        CT::string(" for variable ") + dataSourceVar->name);
+    CDBError("X ('%s') and or Y ('%s') vars not found for variable %s...", dimX->name.c_str(), dimY->name.c_str(),
+             dataSourceVar->name.c_str());
+    return false;
+  }
+
+  CReporter::getInstance()->addInfo(
+      CT::string("Using variable ") + dataSource->varX->name +
+      CT::string(" as X variable and variable ") + dataSource->varY->name +
+      CT::string(" as Y variable."));
+
+  #ifdef CDATAREADER_DEBUG
+  CDBDebug("Found xy vars for var %s:  %s and %s",dataSourceVar->name.c_str(),dataSource->varX->name.c_str(),dataSource->varY->name.c_str());
+  #endif
+
+  return true;
+}
+
+void CDataReader::determineStride2DMap(CDataSource *dataSource) const {
 
   if(dataSource->level2CompatMode) {
     dataSource->stride2DMap = 1;
@@ -701,6 +688,39 @@ void CDataReader::copyStride2DMap(CDataSource *dataSource) const {
   dataSource->stride2DMap = 1;
   CReporter::getInstance()->addInfo(CT::string("No stride defined in the RenderSettings, using a default stride of 1."));
   return;
+}
+
+void CDataReader::determineDWidthAndDHeight(CDataSource *dataSource, const bool singleCellMode, const int *gridExtent, int mode) const {
+
+  // Determine the width and height based on dimension length and stride.
+  CDF::Variable * dataSourceVar=dataSource->getDataObject(0)->cdfVariable;
+  CDF::Dimension *dimX=dataSourceVar->dimensionlinks[dataSource->dimXIndex];
+  CDF::Dimension *dimY=dataSourceVar->dimensionlinks[dataSource->dimYIndex];
+  dataSource->dWidth = dimX->length / dataSource->stride2DMap;
+  dataSource->dHeight = dimY->length / dataSource->stride2DMap;
+  dataSource->dOrigWidth = dataSource->dWidth;
+
+  #ifdef CDATAREADER_DEBUG
+  if(gridExtent!=NULL){
+      CDBDebug("gridExtent = [%d %d %d %d]", gridExtent[0], gridExtent[1], gridExtent[2], gridExtent[3]);
+  }else{
+      CDBDebug("gridExtent = NULL");
+  }
+  #endif
+
+  // Check if we need to apply a gridExtent.
+  if(mode == CNETCDFREADER_MODE_OPEN_EXTENT && gridExtent != NULL) {
+    CReporter::getInstance()->addInfo(CT::string("Determining the width based on the given gridExtent instead of dimension lengths."));
+    dataSource->dWidth = (gridExtent[2] - gridExtent[0]) / dataSource->stride2DMap;
+    dataSource->dHeight = (gridExtent[3] - gridExtent[1]) / dataSource->stride2DMap;
+  }
+
+  // Check if we operate in single cell mode.
+  if(singleCellMode) {
+    CReporter::getInstance()->addInfo(CT::string("Running in single cell mode, setting width and height equal to 2."));
+    dataSource->dWidth = 2;
+    dataSource->dHeight = 2;
+  }
 }
 
 
