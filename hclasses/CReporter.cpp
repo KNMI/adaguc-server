@@ -1,5 +1,8 @@
 #include "CReporter.h"
 
+#include <fstream>
+#include <string>
+
 CReporter *CReporter::instance = NULL;
 
 CReporter *CReporter::getInstance() {
@@ -48,4 +51,14 @@ CT::string CReporter::generateReport() {
   }
 
   return report;
+}
+
+int CReporter::writeReport(const CT::string reportfilename) {
+    std::ofstream reportfile(reportfilename.c_str());
+    if (!reportfile) {
+        return -1;
+    }
+    reportfile << this->generateReport().c_str();
+    reportfile.close();
+    return 0;
 }

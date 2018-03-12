@@ -21,6 +21,8 @@ public:
   void addWarning(CT::string warning);
   void addInfo(CT::string infoMessage);
   CT::string generateReport();
+
+  int writeReport(const CT::string reportfilename);
 };
 
 
