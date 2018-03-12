@@ -332,7 +332,7 @@ int main(int argc, const char *argv[]){
   int status = _main(argc,argv);
 
   // Print the check report.
-  CDBDebug(CReporter::getInstance()->generateReport().c_str());
+  CReporter::getInstance()->writeReport("checker_report.txt");
 
   CCachedDirReader::free();
   
