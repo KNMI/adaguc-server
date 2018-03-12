@@ -285,8 +285,8 @@ int CServerParams::makeLayerGroupName(CT::string *groupName,CServerConfig::XMLE_
 
 bool CServerParams::isAutoResourceCacheEnabled() const {
 
-  if (cfg->AutoResource[0]->attr.enablecache.equals("true"))
-      return cfg->AutoResource[0]->attr.enablecache.equals("true");
+  if (cfg->AutoResource.size() > 0)
+    return cfg->AutoResource[0]->attr.enablecache.equals("true");
   return false;
 }
 
