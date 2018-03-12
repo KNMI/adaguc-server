@@ -97,6 +97,11 @@ class CDataReader{
      */
     void copyXAndYDimIndices(CDataSource *dataSource, const CDF::Variable *dataSourceVar) const;
 
+    /**
+     * Determines the value of stride2D map based on the compatibility mode and the configuration.
+     */
+    void copyStride2DMap(CDataSource *dataSource) const;
+
   public:
     CDataReader(){}
     ~CDataReader(){}
