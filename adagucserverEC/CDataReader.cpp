@@ -389,7 +389,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
   determineDWidthAndDHeight(dataSource, singleCellMode, gridExtent, mode);
 
   size_t start[dataSource->dNetCDFNumDims+1];
-  
+
   //Everything starts at zero
   for(int j=0;j<dataSource->dNetCDFNumDims;j++){start[j]=0;}
 
@@ -502,54 +502,16 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
     }
   }
 
-  
-  // Calculate cellsize based on read X,Y dims
-  double *dfdim_X=(double*)dataSource->varX->data;
-  double *dfdim_Y=(double*)dataSource->varY->data;
-  
-//   CDBDebug("dfdim_X :");
-//   for(int j=0;j<dataSource->dWidth;j++){
-//     CDBDebug("dfdim_X %d / %f",j,dfdim_X[j]);
-//   }
-  
-  if(dfdim_X == NULL || dfdim_Y == NULL){
-    CDBError("For variable '%s': No data available for '%s' or '%s' dimensions",dataSourceVar->name.c_str(),dataSource->varX->name.c_str(),dataSource->varY->name.c_str());
+  // Calculate cellsize and BBOX based on read X,Y dims.
+  if (!calculateCellSizeAndBBox(dataSource, dataSourceVar)) {
     return 1;
   }
-  
-//   CDBssDebug("SOFAR %d %d %f %f",dataSource->dWidth,dataSource->dHeight,dfdim_X[0],dfdim_Y[0]);
-  
-  dataSource->dfCellSizeX=(dfdim_X[dataSource->dWidth-1]-dfdim_X[0])/double(dataSource->dWidth-1);
-  dataSource->dfCellSizeY=(dfdim_Y[dataSource->dHeight-1]-dfdim_Y[0])/double(dataSource->dHeight-1);
-  
-//  CDBDebug("cX: %f W: %d BBOXL: %f BBOXR: %f",dataSource->dfCellSizeX,dataSource->dWidth,dfdim_X[0],dfdim_X[dataSource->dWidth-1]);
-  // Calculate BBOX
-//   CDBDebug("dfdim_X: %f",dfdim_X[0]);
-  dataSource->dfBBOX[0]=dfdim_X[0]-dataSource->dfCellSizeX/2.0f;
-  dataSource->dfBBOX[1]=dfdim_Y[dataSource->dHeight-1]+dataSource->dfCellSizeY/2.0f;
-  dataSource->dfBBOX[2]=dfdim_X[dataSource->dWidth-1]+dataSource->dfCellSizeX/2.0f;
-  dataSource->dfBBOX[3]=dfdim_Y[0]-dataSource->dfCellSizeY/2.0f;;
-  
-  CT::string dimensionXName=dataSourceVar->dimensionlinks[dataSource->dimXIndex]->name.c_str();
-  dimensionXName.toLowerCaseSelf();
-  if(dimensionXName.equals("col")){
-    dataSource->dfBBOX[2]=dfdim_X[0]-dataSource->dfCellSizeX/2.0f;
-    dataSource->dfBBOX[3]=dfdim_Y[dataSource->dHeight-1]+dataSource->dfCellSizeY/2.0f;
-    dataSource->dfBBOX[0]=dfdim_X[dataSource->dWidth-1]+dataSource->dfCellSizeX/2.0f;
-    dataSource->dfBBOX[1]=dfdim_Y[0]-dataSource->dfCellSizeY/2.0f;;
-  }
-  
-  dataSource->origBBOXLeft = dataSource->dfBBOX[0];
-  dataSource->origBBOXRight = dataSource->dfBBOX[2];
-  
-  
-//   CDBDebug("%f %f %f %f",dataSource->dfBBOX[0], dataSource->dfBBOX[1], dataSource->dfBBOX[2], dataSource->dfBBOX[3]);
-  
+
 #ifdef MEASURETIME
   StopWatch_Stop("XY dimensions read");
 #endif
 
-  //getCRS(dataSource);
+  //getCRS(dataSource); // TODO: Dit wordt nu niet aangeropen voor level2compat mode, is dat terecht?
   #ifdef CDATAREADER_DEBUG
   CDBDebug("PROJ4 = [%s]",dataSource->nativeProj4.c_str());
   #endif
@@ -721,6 +683,44 @@ void CDataReader::determineDWidthAndDHeight(CDataSource *dataSource, const bool 
     dataSource->dWidth = 2;
     dataSource->dHeight = 2;
   }
+}
+
+bool CDataReader::calculateCellSizeAndBBox(CDataSource *dataSource, const CDF::Variable *dataSourceVar) const {
+
+  double *dfdim_X=(double*)dataSource->varX->data;
+  double *dfdim_Y=(double*)dataSource->varY->data;
+
+  if(dfdim_X == NULL || dfdim_Y == NULL){
+    CReporter::getInstance()->addError(
+        CT::string("No data available for ") + dataSource->varX->name +
+        CT::string(" and ") + dataSource->varY->name +
+        CT::string(" dimensions."));
+    CDBError("For variable '%s': No data available for '%s' or '%s' dimensions",dataSourceVar->name.c_str(),dataSource->varX->name.c_str(),dataSource->varY->name.c_str());
+    return false;
+  }
+
+  dataSource->dfCellSizeX=(dfdim_X[dataSource->dWidth-1]-dfdim_X[0])/double(dataSource->dWidth-1);
+  dataSource->dfCellSizeY=(dfdim_Y[dataSource->dHeight-1]-dfdim_Y[0])/double(dataSource->dHeight-1);
+
+  CT::string dimensionXName=dataSourceVar->dimensionlinks[dataSource->dimXIndex]->name.c_str();
+  dimensionXName.toLowerCaseSelf();
+  if(dimensionXName.equals("col")){
+    CReporter::getInstance()->addWarning(CT::string("X dimension name equals 'col', bounding box is calculated differently."));
+    dataSource->dfBBOX[2]=dfdim_X[0]-dataSource->dfCellSizeX/2.0f;
+    dataSource->dfBBOX[3]=dfdim_Y[dataSource->dHeight-1]+dataSource->dfCellSizeY/2.0f;
+    dataSource->dfBBOX[0]=dfdim_X[dataSource->dWidth-1]+dataSource->dfCellSizeX/2.0f;
+    dataSource->dfBBOX[1]=dfdim_Y[0]-dataSource->dfCellSizeY/2.0f;
+  } else {
+    dataSource->dfBBOX[0]=dfdim_X[0]-dataSource->dfCellSizeX/2.0f;
+    dataSource->dfBBOX[1]=dfdim_Y[dataSource->dHeight-1]+dataSource->dfCellSizeY/2.0f;
+    dataSource->dfBBOX[2]=dfdim_X[dataSource->dWidth-1]+dataSource->dfCellSizeX/2.0f;
+    dataSource->dfBBOX[3]=dfdim_Y[0]-dataSource->dfCellSizeY/2.0f;
+  }
+
+  dataSource->origBBOXLeft = dataSource->dfBBOX[0];
+  dataSource->origBBOXRight = dataSource->dfBBOX[2];
+
+  return true;
 }
 
 
