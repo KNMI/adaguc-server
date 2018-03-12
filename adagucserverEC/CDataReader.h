@@ -117,15 +117,6 @@ class CDataReader{
      * @return NULL if not available, otherwise a CDF::Variable.
      */
     static CDF::Variable *getTimeDimension(CDataSource *dataSource);
-       
-    /**
-     * Get current time string for datasource based on the current timestep
-     * @param dataSource 
-     * @param charachter array where an ISO8601 time string fits in
-     * @return zero on success
-     */
-    //DEPRECATED
-    int getTimeString(CDataSource *dataSource,char * pszTime);
     
     /**
      * Get time units for this datasource, throws exception of int when failed.

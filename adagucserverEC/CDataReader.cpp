@@ -46,176 +46,6 @@ const char *CDataReader::className="CDataReader";
 #define uchar unsigned char
 #define MAX_STR_LEN 8191
 
-
-
-void writeLogFile2(const char * msg){
-  char * logfile=getenv("ADAGUC_LOGFILE");
-  if(logfile!=NULL){
-    FILE * pFile = NULL;
-    pFile = fopen (logfile , "a" );
-    if(pFile != NULL){
-      fputs  (msg, pFile );
-      if(strncmp(msg,"[D:",3)==0||strncmp(msg,"[W:",3)==0||strncmp(msg,"[E:",3)==0){
-        time_t myTime = time(NULL);
-        tm *myUsableTime = localtime(&myTime);
-        char szTemp[128];
-        snprintf(szTemp,127,"%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ ",
-                 myUsableTime->tm_year+1900,myUsableTime->tm_mon+1,myUsableTime->tm_mday,
-                 myUsableTime->tm_hour,myUsableTime->tm_min,myUsableTime->tm_sec
-                );
-        fputs  (szTemp, pFile );
-      }
-      fclose (pFile);
-    }//else CDBError("Unable to write logfile %s",logfile);
-  }
-}
-
-/*void printStatus(const char *status,const char *a,...){
-  va_list ap;
-  char message[8192+1];
-  va_start (ap, a);
-  vsnprintf (message, 8192, a, ap);
-  va_end (ap);
-  message[8192]='\0';
-
-  size_t s=strlen(message);
-  size_t statuslen=strlen(status);
-  char outMessage[80];
-  char newStatus[statuslen+4];
-  snprintf(newStatus,statuslen+3,"[%s]",status);
-  statuslen=strlen(newStatus);
-  int m=s;if(m>79)m=79;
-  strncpy(outMessage,message,m);
-  for(int j=m;j<80;j++)outMessage[j]=' ';
-  
-  strncpy(outMessage+79-statuslen,newStatus,statuslen);
-  outMessage[79]='\0';
-  printf("%s\n",outMessage);
-}*/
-
-
-
-/*
-
-
-int CDataReader::getCacheFileName(CDataSource *dataSource,CT::string *cacheFilename){
-  
-  if(dataSource==NULL)return 1;
-  if(dataSource->srvParams==NULL)return 1;
-#ifdef CDATAREADER_DEBUG    
-  CDBDebug("GetCacheFileName");
-#endif
-  
-  CT::string cacheLocation;dataSource->srvParams->getCacheDirectory(&cacheLocation);
-  if(cacheLocation.empty())return 1;else if(cacheLocation.length()==0)return 1;  
-#ifdef CDATAREADER_DEBUG  
-  CDBDebug("/GetCacheFileName");
-#endif  
-  cacheFilename->copy(cacheLocation.c_str());
-  cacheFilename->concat("/");
-  
-  
-  
-  CDirReader::makePublicDirectory(cacheFilename->c_str());
-  
-  
-  if(dataSource->getFileName()==NULL){
-     CDBError("No filename for datasource");
-    return 1;
-  }
-  
-  //Make the cache unique directory name, based on the filename
-  CT::string validFileName(dataSource->getFileName());
-  //Replace : and / by nothing, so we can use the string as a directory name
-  validFileName.replaceSelf(":",""); 
-  validFileName.replaceSelf("/",""); 
-  //Concat the filename to the cache directory
-  cacheFilename->concat(&validFileName);
-  cacheFilename->concat("cache");
-
-  CDirReader::makePublicDirectory(cacheFilename->c_str());
-  
-  //Now make the filename, based on variable name and dimension properties
-  int timeStep = dataSource->getCurrentTimeStep();
-    
-  cacheFilename->concat("/");
-  cacheFilename->concat(dataSource->getDataObject(0)->variableName.c_str());
-#ifdef CDATAREADER_DEBUG    
-  CDBDebug("Add dimension properties to the filename");
-#endif  
-  //Add dimension properties to the filename
-  if(dataSource->timeSteps[timeStep]->dims.dimensions.size()>0){
-    for(size_t j=0;j<dataSource->timeSteps[timeStep]->dims.dimensions.size();j++){
-      cacheFilename->printconcat("_[%s=%d]", 
-                                      dataSource->timeSteps[timeStep]->dims.dimensions[j]->name.c_str(),
-                                      dataSource->timeSteps[timeStep]->dims.dimensions[j]->index);
-    }
-  }
-  
-  
-  return 0;
-}*/
-
-/**
- * Function to apply quickly scale and offset to a float data array
- * Is static so it can be used in a multithreaded way.
- */
-
-/*class ApplyScaleAndOffsetFloatSettings{
-  public:
-    size_t start;size_t stop;float *data;float scale;float offset;
-};
-
-void *applyScaleAndOffsetFloatThread(void *vsettings){
-
-  ApplyScaleAndOffsetFloatSettings *settings=(ApplyScaleAndOffsetFloatSettings *)vsettings;
-  size_t start = settings->start;
-  size_t stop = settings->stop;
-  float *data = settings->data;
-  float scale = settings ->scale;
-  float offset = settings->offset;
-  char msg[256];
-  sprintf(msg,"sf %d - %d == %d\n",start,stop,stop-start);
-  writeLogFile2(msg);
-          
-  for(size_t j=start;j<stop;j++){
-    data[j]=data[j]*scale+offset;
-  }
-  return NULL;
-}
-
-int applyScaleAndOffsetFloat(size_t start,size_t stop,float *data,float scale,float offset){
-  size_t numThreads=2;
-  int errcode;
-  int errorOccured = 0;
-  int blocksDone = 0;
-  int blockSize = (stop-start)/numThreads;
-  if(blockSize <=0 )return 1;
-  
-  pthread_t threads[numThreads];
-  ApplyScaleAndOffsetFloatSettings settings[numThreads];
-  try{
-    for(int j=0;j<numThreads;j++){
-      settings[j].start=start+blocksDone;
-      settings[j].stop=start+blocksDone+blockSize;
-      blocksDone+=blockSize;
-      if(j==numThreads-1)settings[j].stop=stop;
-      settings[j].data=data;
-      settings[j].scale=scale;
-      settings[j].offset=offset;
-      errcode=pthread_create(&threads[j],NULL,applyScaleAndOffsetFloatThread,(void*)(&settings[j]));
-      if(errcode){throw(__LINE__);}
-    }
-  }catch(int line){
-    errorOccured=1;
-  }
-  for (size_t j=0; j<numThreads; j++) {
-    errcode=pthread_join(threads[j],NULL);
-    if(errcode){ return 1;}
-  }
-  return errorOccured;
-}*/
-
 class Proc{
   public:
     DEF_ERRORFUNCTION();
@@ -576,6 +406,8 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
   #ifdef CDATAREADER_DEBUG  
   CDBDebug("Found xy vars for var %s:  %s and %s",dataSourceVar->name.c_str(),dataSource->varX->name.c_str(),dataSource->varY->name.c_str());
   #endif
+
+  // TODO: Tot aan hier gecheckt voor logica!
     
 /* Experimental feature to reduce the amount of time to load quicklooks of opendap URL's */
 //   dataSource->stride2DMap=1;
@@ -957,15 +789,6 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y, int *gridExt
     CDBError("Unable to attach CDFObject");
     return 1;
   }
-
-  
-
-
-
-  /* CT::string dumpString;
-   CDF::dump(cdfObject,&dumpString);
-  CDBDebug("\nSTART\n%s\nEND\n",dumpString.c_str());
-  writeLogFile2(dumpString.c_str());*/
   
   
   for(size_t varNr=0;varNr<dataSource->getNumDataObjects();varNr++){
@@ -1405,10 +1228,6 @@ if( mode == CNETCDFREADER_MODE_OPEN_EXTENT && gridExtent != NULL ){
     */
     
    CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource,CDATAPOSTPROCESSOR_RUNAFTERREADING);
-//    CT::string dumpString;
-//    CDF::dump(cdfObject,&dumpString);
-//   CDBDebug("\nSTART\n%s\nEND\n",dumpString.c_str());
-//   writeLogFile2(dumpString.c_str());
   
   }
  //pthread_mutex_unlock(&CDataReader_open_lock);
@@ -1434,56 +1253,6 @@ CT::string CDataReader::getTimeUnit(CDataSource *dataSource){
   CT::string timeUnitsString=timeUnits->toString().c_str();
   
   return timeUnitsString;
-}
-
-//DEPRECATED
-int CDataReader::getTimeString(CDataSource *dataSource,char * pszTime){
-  //TODO We assume that the first configured DIM is always time. This might be not the case!
-  pszTime[0]='\0';
-  if(dataSource->isConfigured==false){
-    CDBError("dataSource is not configured");
-    return 1;
-  }
-  if(dataSource->cfgLayer->Dimension.size()==0){
-    snprintf(pszTime,MAX_STR_LEN,"No time dimension available");
-    CDBDebug("%s",pszTime);
-    return 1;
-  }
-
-  CDF::Variable *time = getDimensionVariableByType(dataSource->getDataObject(0)->cdfVariable,dtype_time);
-  if(time==NULL){CDBDebug("No time variable found");return 1;}
-  CDF::Attribute *timeUnits = time->getAttributeNE("units");
-  if(timeUnits ==NULL){CDBDebug("No time units found");return 1;}
-  time->readData(CDF_DOUBLE);
-  if(dataSource->dNetCDFNumDims>2){
-    size_t currentTimeIndex=dataSource->getDimensionIndex(time->name.c_str());
-    if(currentTimeIndex>=0&&currentTimeIndex<time->getSize()){
-      CTime adagucTime;
-      try{
-        adagucTime.init(time);
-        CT::string isoString = "No time dimension available";
-        try{
-          isoString = adagucTime.dateToISOString(adagucTime.getDate(((double*)time->data)[currentTimeIndex]));
-        }catch(int e){
-        }
-        snprintf(pszTime,MAX_STR_LEN,"%s",isoString.c_str());
-        
-      }catch(int e){
-        CDBError("Unable to initialize CTime with units %s",timeUnits->toString().c_str());
-        return 1;
-      }
-
-    }else{
-      CDBDebug("time index out of bounds");
-      snprintf(pszTime,MAX_STR_LEN,"No time dimension available");
-      return 1;
-    }
-  }else{
-    snprintf(pszTime,MAX_STR_LEN,"No time dimension available");
-    return 1;
-  }
-  //CDBDebug("[OK] pszTime = %s",pszTime);
-  return 0;
 }
 
 CDF::Variable *CDataReader::addBlankDimVariable(CDFObject* cdfObject, const char *dimName) {
