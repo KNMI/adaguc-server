@@ -2,6 +2,7 @@
 #include "CTypes.h"
 #include "CServerError.h"
 #include "CDFObjectStore.h"
+#include "CReporter.h"
 
 const char *CAutoResource::className = "CAutoResource";
 
@@ -160,6 +161,7 @@ int CAutoResource::setServerTitle(CServerParams* srvParam, CT::string serverTitl
 
 int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
   // Configure the server automically based on an OpenDAP resource
+  // This method does nothing if srvParam->autoResourceLocation is empty.
   if(srvParam->autoResourceLocation.empty()==false){
     srvParam->internalAutoResourceLocation=srvParam->autoResourceLocation.c_str();
     
@@ -305,9 +307,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
     CT::string serverHistory="";
     CT::string serverComments="";
     CT::string serverDisclaimer="";
-    
-    
-    
+
     try{cdfObject->getAttribute("summary")->getDataAsString(&serverSummary);}catch(int e){}
     try{cdfObject->getAttribute("description")->getDataAsString(&serverDescription);}catch(int e){}
     try{cdfObject->getAttribute("source")->getDataAsString(&serverSource);}catch(int e){}
@@ -380,6 +380,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
         variableNames.push_back(varSpeed->name.c_str());
         variableNames.push_back(varDirection->name.c_str());
         addXMLLayerToConfig(srvParam,cdfObject,&variableNames,"derived",srvParam->internalAutoResourceLocation.c_str());
+        CReporter::getInstance()->addInfo("Found derived wind parameters. ASCAT Data?");
       }
     }
     
@@ -448,7 +449,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
   return 0;
 };
 
-void CAutoResource::addXMLLayerToConfig(CServerParams *srvParam,CDFObject *cdfObject,std::vector<CT::string>*variableNames, const char *group,const char *location){
+void CAutoResource::addXMLLayerToConfig(CServerParams* const srvParam,CDFObject *cdfObject,std::vector<CT::string>*variableNames, const char *group,const char *location){
   CServerConfig::XMLE_Layer *xmleLayer=new CServerConfig::XMLE_Layer();
   CServerConfig::XMLE_FilePath* xmleFilePath = new CServerConfig::XMLE_FilePath();
   
@@ -477,6 +478,7 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *srvParam,CDFObject *cdfOb
         // TODO This must be accomplished with standard name / global attribute mappings
         if(featureType->getDataAsString().equals("timeSeries")||featureType->getDataAsString().equals("point")){
           CServerConfig::XMLE_RenderMethod* xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
+          CReporter::getInstance()->addInfo((*variableNames)[0]+" featureType timeSeries or point. Using point render method.");
           xmleRenderMethod->value.copy("point");
           xmleLayer->RenderMethod.insert(xmleLayer->RenderMethod.begin(),xmleRenderMethod);
         }
@@ -485,6 +487,7 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *srvParam,CDFObject *cdfOb
       if (adaguc_data_type != NULL){
         if (adaguc_data_type->toString().equals("CConvertGeoJSON")){
           CServerConfig::XMLE_RenderMethod* xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
+          CReporter::getInstance()->addInfo("adaguc_data_type set to CConvertGeoJSON. Using polyline render method.");
           xmleRenderMethod->value.copy("polyline");
           xmleLayer->RenderMethod.insert(xmleLayer->RenderMethod.begin(),xmleRenderMethod);
         }
@@ -500,6 +503,7 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *srvParam,CDFObject *cdfOb
         if(attribute!=NULL){
           if(attribute->getDataAsString().equals("rgba")){
             CServerConfig::XMLE_RenderMethod* xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
+            CReporter::getInstance()->addInfo("Setting render method to rgba. Overriding previously set render method.");
             xmleRenderMethod->value.copy("rgba");
             xmleLayer->RenderMethod.push_back(xmleRenderMethod);
           }
@@ -523,6 +527,7 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *srvParam,CDFObject *cdfOb
     xmleName->value.copy(newName.c_str());
     xmleLayer->Name.push_back(xmleName);
     CServerConfig::XMLE_RenderMethod* xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
+    CReporter::getInstance()->addInfo("Setting render method to nearestpoint. Overriding previously set render method.");
     xmleRenderMethod->value.copy("nearestpoint");
     xmleLayer->RenderMethod.push_back(xmleRenderMethod);
     
@@ -552,7 +557,8 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *srvParam,CDFObject *cdfOb
       
     }
   }
-  
+
+  // Add the layer to the configuration
   srvParam->cfg->Layer.push_back(xmleLayer);
 };
 

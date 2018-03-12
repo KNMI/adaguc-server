@@ -42,7 +42,7 @@ private:
     * @param group
     * @param location
     */
-  static void addXMLLayerToConfig(CServerParams *srvParam,CDFObject *cdfObject,std::vector<CT::string>*variableNames, const char *group, const char *location);
+  static void addXMLLayerToConfig(CServerParams * const srvParam,CDFObject *cdfObject,std::vector<CT::string>*variableNames, const char *group, const char *location);
   
   /**
     * configures Source, based on  srvParam->autoResourceLocation parameter.
