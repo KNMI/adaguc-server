@@ -95,12 +95,24 @@ class CDataReader{
      * Determines the X and Y dimension indices and copies them to the datasource.
      * If the dimension on the X position contains 'y' or 'lat', the indices are swapped.
      */
-    void copyXAndYDimIndices(CDataSource *dataSource, const CDF::Variable *dataSourceVar) const;
+    void determineXAndYDimIndices(CDataSource *dataSource, const CDF::Variable *dataSourceVar) const;
+
+    /**
+     * Determines the X and Y variables and copies them to the datasource.
+     * Returns false when it is not possible to find either the X or Y variable.
+     */
+    bool determineXandYVars(CDataSource *dataSource, const CDF::Variable *dataSourceVar, CDFObject *cdfObject) const;
 
     /**
      * Determines the value of stride2D map based on the compatibility mode and the configuration.
      */
-    void copyStride2DMap(CDataSource *dataSource) const;
+    void determineStride2DMap(CDataSource *dataSource) const;
+
+    /**
+     * Determines the width and height based on stride. The width and height can be adjusted by passing a gridExtent.
+     * When singleCellMode equals true, the width and height are set to a single cell.
+     */
+    void determineDWidthAndDHeight(CDataSource *dataSource, const bool singleCellMode, const int *gridExtent, int mode) const;
 
   public:
     CDataReader(){}
