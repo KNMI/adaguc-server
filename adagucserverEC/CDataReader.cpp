@@ -46,176 +46,6 @@ const char *CDataReader::className="CDataReader";
 #define uchar unsigned char
 #define MAX_STR_LEN 8191
 
-
-
-void writeLogFile2(const char * msg){
-  char * logfile=getenv("ADAGUC_LOGFILE");
-  if(logfile!=NULL){
-    FILE * pFile = NULL;
-    pFile = fopen (logfile , "a" );
-    if(pFile != NULL){
-      fputs  (msg, pFile );
-      if(strncmp(msg,"[D:",3)==0||strncmp(msg,"[W:",3)==0||strncmp(msg,"[E:",3)==0){
-        time_t myTime = time(NULL);
-        tm *myUsableTime = localtime(&myTime);
-        char szTemp[128];
-        snprintf(szTemp,127,"%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ ",
-                 myUsableTime->tm_year+1900,myUsableTime->tm_mon+1,myUsableTime->tm_mday,
-                 myUsableTime->tm_hour,myUsableTime->tm_min,myUsableTime->tm_sec
-                );
-        fputs  (szTemp, pFile );
-      }
-      fclose (pFile);
-    }//else CDBError("Unable to write logfile %s",logfile);
-  }
-}
-
-/*void printStatus(const char *status,const char *a,...){
-  va_list ap;
-  char message[8192+1];
-  va_start (ap, a);
-  vsnprintf (message, 8192, a, ap);
-  va_end (ap);
-  message[8192]='\0';
-
-  size_t s=strlen(message);
-  size_t statuslen=strlen(status);
-  char outMessage[80];
-  char newStatus[statuslen+4];
-  snprintf(newStatus,statuslen+3,"[%s]",status);
-  statuslen=strlen(newStatus);
-  int m=s;if(m>79)m=79;
-  strncpy(outMessage,message,m);
-  for(int j=m;j<80;j++)outMessage[j]=' ';
-  
-  strncpy(outMessage+79-statuslen,newStatus,statuslen);
-  outMessage[79]='\0';
-  printf("%s\n",outMessage);
-}*/
-
-
-
-/*
-
-
-int CDataReader::getCacheFileName(CDataSource *dataSource,CT::string *cacheFilename){
-  
-  if(dataSource==NULL)return 1;
-  if(dataSource->srvParams==NULL)return 1;
-#ifdef CDATAREADER_DEBUG    
-  CDBDebug("GetCacheFileName");
-#endif
-  
-  CT::string cacheLocation;dataSource->srvParams->getCacheDirectory(&cacheLocation);
-  if(cacheLocation.empty())return 1;else if(cacheLocation.length()==0)return 1;  
-#ifdef CDATAREADER_DEBUG  
-  CDBDebug("/GetCacheFileName");
-#endif  
-  cacheFilename->copy(cacheLocation.c_str());
-  cacheFilename->concat("/");
-  
-  
-  
-  CDirReader::makePublicDirectory(cacheFilename->c_str());
-  
-  
-  if(dataSource->getFileName()==NULL){
-     CDBError("No filename for datasource");
-    return 1;
-  }
-  
-  //Make the cache unique directory name, based on the filename
-  CT::string validFileName(dataSource->getFileName());
-  //Replace : and / by nothing, so we can use the string as a directory name
-  validFileName.replaceSelf(":",""); 
-  validFileName.replaceSelf("/",""); 
-  //Concat the filename to the cache directory
-  cacheFilename->concat(&validFileName);
-  cacheFilename->concat("cache");
-
-  CDirReader::makePublicDirectory(cacheFilename->c_str());
-  
-  //Now make the filename, based on variable name and dimension properties
-  int timeStep = dataSource->getCurrentTimeStep();
-    
-  cacheFilename->concat("/");
-  cacheFilename->concat(dataSource->getDataObject(0)->variableName.c_str());
-#ifdef CDATAREADER_DEBUG    
-  CDBDebug("Add dimension properties to the filename");
-#endif  
-  //Add dimension properties to the filename
-  if(dataSource->timeSteps[timeStep]->dims.dimensions.size()>0){
-    for(size_t j=0;j<dataSource->timeSteps[timeStep]->dims.dimensions.size();j++){
-      cacheFilename->printconcat("_[%s=%d]", 
-                                      dataSource->timeSteps[timeStep]->dims.dimensions[j]->name.c_str(),
-                                      dataSource->timeSteps[timeStep]->dims.dimensions[j]->index);
-    }
-  }
-  
-  
-  return 0;
-}*/
-
-/**
- * Function to apply quickly scale and offset to a float data array
- * Is static so it can be used in a multithreaded way.
- */
-
-/*class ApplyScaleAndOffsetFloatSettings{
-  public:
-    size_t start;size_t stop;float *data;float scale;float offset;
-};
-
-void *applyScaleAndOffsetFloatThread(void *vsettings){
-
-  ApplyScaleAndOffsetFloatSettings *settings=(ApplyScaleAndOffsetFloatSettings *)vsettings;
-  size_t start = settings->start;
-  size_t stop = settings->stop;
-  float *data = settings->data;
-  float scale = settings ->scale;
-  float offset = settings->offset;
-  char msg[256];
-  sprintf(msg,"sf %d - %d == %d\n",start,stop,stop-start);
-  writeLogFile2(msg);
-          
-  for(size_t j=start;j<stop;j++){
-    data[j]=data[j]*scale+offset;
-  }
-  return NULL;
-}
-
-int applyScaleAndOffsetFloat(size_t start,size_t stop,float *data,float scale,float offset){
-  size_t numThreads=2;
-  int errcode;
-  int errorOccured = 0;
-  int blocksDone = 0;
-  int blockSize = (stop-start)/numThreads;
-  if(blockSize <=0 )return 1;
-  
-  pthread_t threads[numThreads];
-  ApplyScaleAndOffsetFloatSettings settings[numThreads];
-  try{
-    for(int j=0;j<numThreads;j++){
-      settings[j].start=start+blocksDone;
-      settings[j].stop=start+blocksDone+blockSize;
-      blocksDone+=blockSize;
-      if(j==numThreads-1)settings[j].stop=stop;
-      settings[j].data=data;
-      settings[j].scale=scale;
-      settings[j].offset=offset;
-      errcode=pthread_create(&threads[j],NULL,applyScaleAndOffsetFloatThread,(void*)(&settings[j]));
-      if(errcode){throw(__LINE__);}
-    }
-  }catch(int line){
-    errorOccured=1;
-  }
-  for (size_t j=0; j<numThreads; j++) {
-    errcode=pthread_join(threads[j],NULL);
-    if(errcode){ return 1;}
-  }
-  return errorOccured;
-}*/
-
 class Proc{
   public:
     DEF_ERRORFUNCTION();
@@ -331,97 +161,171 @@ int CDataReader::open(CDataSource *dataSource, int x,int y){
 }
 
 int CDataReader::getCRS(CDataSource *dataSource) {
-  // Retrieve CRS
-  
-  CDF::Variable * dataSourceVar=dataSource->getDataObject(0)->cdfVariable;
-  CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
 
-  //Check if projection is overidden in the config file
-  if(dataSource->cfgLayer->Projection.size()==1){
-    //Read projection information from configuration
-    if(dataSource->cfgLayer->Projection[0]->attr.id.empty()==false){
-      CReporter::getInstance()->addInfo(CT::string("Projection is obtained from config file"));
-      dataSource->nativeEPSG.copy(dataSource->cfgLayer->Projection[0]->attr.id.c_str());
-    }else{
-      CReporter::getInstance()->addInfo(CT::string("Projection not in config, using EPSG:4326."));
-      dataSource->nativeEPSG.copy("EPSG:4326");
-      //dataSource->nativeEPSG.copy("unknown");
-    }
-    //Read proj4 string
-    if(dataSource->cfgLayer->Projection[0]->attr.proj4.empty()==false){
-      dataSource->nativeProj4.copy(dataSource->cfgLayer->Projection[0]->attr.proj4.c_str());
-    }
-    else {
-      dataSource->nativeProj4.copy("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
-      //dataSource->nativeProj4.copy("unknown");
-    }
-  }else{
-    // If undefined, set standard lat lon projection
-    dataSource->nativeProj4.copy("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
-    //dataSource->nativeEPSG.copy("EPSG:4326");
-    //dataSource->nativeProj4.copy("unknown");
-    CReporter::getInstance()->addInfo(CT::string("No config file, using EPSG:4326 as projection."));
-    dataSource->nativeEPSG.copy("EPSG:4326");
-    //Read projection attributes from the file
-    CDF::Attribute *projvarnameAttr = dataSourceVar->getAttributeNE("grid_mapping");
-    if(projvarnameAttr!=NULL){
-      if(projvarnameAttr->toString().equals("latitude_longitude")==false){
-        CDF::Variable * projVar = cdfObject->getVariableNE(projvarnameAttr->toString().c_str());
-        if(projVar==NULL){CDBWarning("projection variable '%s' not found",(char*)projvarnameAttr->data);}
-        else {
-          //Get proj4_params according to ADAGUC metadata
-          CDF::Attribute *proj4Attr = projVar->getAttributeNE("proj4_params");
-          
-          //If not found try alternative one
-          if (proj4Attr==NULL) proj4Attr = projVar->getAttributeNE("proj4");
-          
-          //If a proj4 string was found set it in the datasource.
-          if(proj4Attr!=NULL)dataSource->nativeProj4.copy(proj4Attr->toString().c_str());
-          
-          //if still not found, try to compose a proj4 string based on Climate and Forecast Conventions
-          if (proj4Attr==NULL||dataSource->nativeProj4.length()==0){
-            CProj4ToCF proj4ToCF;
-            proj4ToCF.debug=true;
-            CT::string projString;
-            int status = proj4ToCF.convertCFToProj(projVar,&projString);
-            if(status==0){
-              //Projection string was created, set it in the datasource.
-              dataSource->nativeProj4.copy(projString.c_str());
-              CDBDebug("Autogen proj4 string: %s",projString.c_str());
-              projVar->setAttributeText("autogen_proj",projString.c_str());
-            }else{
-              CDBWarning("Unknown projection");
-            }
-          }
-
-          //Get EPSG_code
-          CDF::Attribute *epsgAttr = projVar->getAttributeNE("EPSG_code");
-          if(epsgAttr!=NULL){
-            CReporter::getInstance()->addInfo(CT::string("EPSG_code defined in projection variable ") + projvarnameAttr->toString());
-            dataSource->nativeEPSG.copy((char*)epsgAttr->data);
-          }else
-          {
-            //Make a projection code based on PROJ4: namespace
-            CReporter::getInstance()->addInfo(CT::string("Projection variable defined without EPSG_code attribute, using nativeProj4 string to create EPSG code."));
-            dataSource->nativeEPSG.print("PROJ4:%s",dataSource->nativeProj4.c_str());
-            dataSource->nativeEPSG.replaceSelf("\"","");
-            dataSource->nativeEPSG.replaceSelf("\n","");
-            dataSource->nativeEPSG.trimSelf();
-            dataSource->nativeEPSG.encodeURLSelf();
-          }
-          //else {CDBWarning("EPSG_code not found in variable %s",(char*)projvarnameAttr->data);}
-        }
-      }
-    }
+  //Check if projection is overidden in the config file.
+  if (copyCRSFromConfigToDataSource(dataSource)){
+    return 0;
   }
+
+  //Check if we can copy the CRS from a projection variable.
+  if (copyCRSFromProjectionVariable(dataSource)) {
+    return 0;
+  }
+
+  // If undefined, set standard lat lon projection
+  CReporter::getInstance()->addWarning(CT::string("No correct projection found, using by default the geographic coordinate system (latitude and longitude)."));
+  copyLatLonCRS(dataSource);
   return 0;
 }
 
-int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, int *gridExtent){
-  
-  
+bool CDataReader::copyCRSFromConfigToDataSource(CDataSource *dataSource) const {
 
-  
+  // Check if the projection is defined in the config file.
+  if(dataSource->cfgLayer->Projection.size() != 1) {
+    return false;
+  }
+
+  CReporter::getInstance()->addInfo("Projection is obtained from ADAGUC config file");
+
+  //Read the EPSG-code from configuration.
+  if(dataSource->cfgLayer->Projection[0]->attr.id.empty() == false) {
+    dataSource->nativeEPSG.copy(dataSource->cfgLayer->Projection[0]->attr.id.c_str());
+  } else {
+    CT::string defaultEPSGCode = "EPSG:4326";
+    CReporter::getInstance()->addWarning(CT::string("Projection id not in config, using default value ") + defaultEPSGCode);
+    dataSource->nativeEPSG.copy(defaultEPSGCode);
+  }
+
+  //Read proj4 string from configuration.
+  if(dataSource->cfgLayer->Projection[0]->attr.proj4.empty() == false) {
+    dataSource->nativeProj4.copy(dataSource->cfgLayer->Projection[0]->attr.proj4.c_str());
+  }
+  else {
+    CT::string defaultProj4String = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
+    CReporter::getInstance()->addWarning(CT::string("Proj4 string not in config, using default value ") + defaultProj4String);
+    dataSource->nativeProj4.copy(defaultProj4String);
+  }
+
+  return true;
+}
+
+void CDataReader::copyLatLonCRS(CDataSource *dataSource) const {
+  CReporter::getInstance()->addInfo(CT::string("Using the geographic coordinate system (latitude and longitude)"));
+  dataSource->nativeProj4.copy("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
+  dataSource->nativeEPSG.copy("EPSG:4326");
+}
+
+bool CDataReader::copyCRSFromProjectionVariable(CDataSource *dataSource) const {
+
+  // Determine if there is a grid mapping attribute is defined.
+  CDF::Variable * dataSourceVar=dataSource->getDataObject(0)->cdfVariable;
+  CDF::Attribute *projvarnameAttr = dataSourceVar->getAttributeNE("grid_mapping");
+
+  if (projvarnameAttr==NULL) {
+    return false;
+  }
+
+  // Determine if the grid mapping attribute is set to latitude_longitude.
+  if (projvarnameAttr!=NULL && projvarnameAttr->toString().equals("latitude_longitude")) {
+    copyLatLonCRS(dataSource);
+    return true;
+  }
+
+  // Retrieve the projection variable.
+  CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
+  CDF::Variable *projVar = cdfObject->getVariableNE(projvarnameAttr->toString().c_str());
+  if(projVar == NULL) {
+    CDBWarning("projection variable '%s' not found", (char *) projvarnameAttr->data);
+    CReporter::getInstance()->addError(CT::string("The projection variable name defined in grid_mapping attribute is not found: ") + projvarnameAttr->toString());
+    return false;
+  }
+
+  // Try to retrieve the projection according to the ADAGUC metadata standard.
+  if (copyCRSFromADAGUCProjectionVariable(dataSource, projVar)) {
+    return true;
+  }
+
+  // Try to retrieve the projection according to the Climate and Forecast Conventions.
+  if (copyCRSFromCFProjectionVariable(dataSource, projVar)) {
+    return true;
+  }
+
+  // It was not possible to determine the projection from the projection variable.
+  return false;
+
+}
+
+bool CDataReader::copyCRSFromADAGUCProjectionVariable(CDataSource *dataSource, const CDF::Variable *projVar) const {
+  //Get proj4_params according to ADAGUC metadata
+  CDF::Attribute *proj4Attr = projVar->getAttributeNE("proj4_params");
+
+  //If not found try alternative one
+  if(proj4Attr == NULL) proj4Attr = projVar->getAttributeNE("proj4");
+
+  // If not found, the projection is not defined according to the ADAGUC metadata standard.
+  if (proj4Attr == NULL) {
+    return false;
+  }
+
+  if (proj4Attr->toString().length() == 0) {
+    CReporter::getInstance()->addError(CT::string("Found a proj4 or proj4_params attribute, but it is empty. Skipping the attribute."));
+    return false;
+  }
+
+  CReporter::getInstance()->addInfo(CT::string("Retrieving the projection according to the ADAGUC standards from the proj4_params or proj4 attribute: ") + proj4Attr->toString());
+  dataSource->nativeProj4.copy(proj4Attr->toString().c_str());
+
+  // Copy the EPSG code.
+  copyEPSGCodeFromProjectionVariable(dataSource, projVar);
+
+  return true;
+}
+
+bool CDataReader::copyCRSFromCFProjectionVariable(CDataSource *dataSource, CDF::Variable *projVar) const {
+
+  CProj4ToCF proj4ToCF;
+  proj4ToCF.debug = true;
+  CT::string projString;
+  int status = proj4ToCF.convertCFToProj(projVar, &projString);
+
+  if (status != 0) {
+    CDBWarning("Unknown projection");
+    CReporter::getInstance()->addError(CT::string("Unknown CF conventions projection."));
+    return false;
+  }
+
+  //Projection string was created, set it in the datasource.
+  CReporter::getInstance()->addInfo(CT::string("Determined the projection string using the CF conventions: ") + projString);
+  dataSource->nativeProj4.copy(projString.c_str());
+  CDBDebug("Autogen proj4 string: %s", projString.c_str());
+  projVar->setAttributeText("autogen_proj", projString.c_str());
+
+  // Copy the EPSG code.
+  copyEPSGCodeFromProjectionVariable(dataSource, projVar);
+
+  return true;
+}
+
+
+void CDataReader::copyEPSGCodeFromProjectionVariable(CDataSource *dataSource, const CDF::Variable *projVar) const {
+  //Get EPSG_code
+  CDF::Attribute *epsgAttr = projVar->getAttributeNE("EPSG_code");
+  if(epsgAttr != NULL) {
+    CReporter::getInstance()->addInfo(CT::string("Using EPSG_code defined in projection variable ") + projVar->name);
+    dataSource->nativeEPSG.copy((char *) epsgAttr->data);
+  } else {
+    //Make a projection code based on PROJ4: namespace
+    CReporter::getInstance()->addInfo(CT::string("Using projection string to create EPSG code.") + dataSource->nativeProj4);
+    dataSource->nativeEPSG.print("PROJ4:%s", dataSource->nativeProj4.c_str());
+    dataSource->nativeEPSG.replaceSelf("\"", "");
+    dataSource->nativeEPSG.replaceSelf("\n", "");
+    dataSource->nativeEPSG.trimSelf();
+    dataSource->nativeEPSG.encodeURLSelf();
+  }
+}
+
+int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, int *gridExtent){
+
   /**************************************************************************************************/
   /*  LEVEL 2 ASCAT COMPAT MODE!*/
   /**************************************************************************************************/
@@ -469,6 +373,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
   dataSource->dNetCDFNumDims = dataSourceVar->dimensionlinks.size();
   
   if(dataSource->dNetCDFNumDims<2){
+    CReporter::getInstance()->addError(CT::string("The following variable has less than two dimensions, while at least x and y dimensions are required: ") + dataSourceVar->name.c_str());
     CDBError("Variable %s has less than two dimensions", dataSourceVar->name.c_str());
     return 1;
   }
@@ -476,80 +381,36 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
   #ifdef CDATAREADER_DEBUG  
   CDBDebug("Number of dimensions = %d",dataSource->dNetCDFNumDims);
   #endif
-  
-  
- 
-  dataSource->dimXIndex=dataSource->dNetCDFNumDims-1;
-  dataSource->dimYIndex=dataSource->dNetCDFNumDims-2;
-  
-  dataSource->swapXYDimensions = false;
 
-  //If our X dimension has a character y/lat in it, XY dims are probably swapped.
-  CT::string dimensionXName=dataSourceVar->dimensionlinks[dataSource->dimXIndex]->name.c_str();
-  
-  dimensionXName.toLowerCaseSelf();
-  if(dimensionXName.indexOf("y")!=-1||dimensionXName.indexOf("lat")!=-1)dataSource->swapXYDimensions=true;
-  
-  //dataSource->swapXYDimensions=true;
-  if(dataSource->swapXYDimensions){
-    dataSource->dimXIndex=dataSource->dNetCDFNumDims-2;
-    dataSource->dimYIndex=dataSource->dNetCDFNumDims-1;
-  }
-  
+  // Determine the X and Y dimensions.
+  copyXAndYDimIndices(dataSource, dataSourceVar);
   CDF::Dimension *dimX=dataSourceVar->dimensionlinks[dataSource->dimXIndex];
   CDF::Dimension *dimY=dataSourceVar->dimensionlinks[dataSource->dimYIndex];
-  
+
   if(dimX==NULL||dimY==NULL){CDBError("X and or Y dims not found...");return 1;}
- 
 
- #ifdef CDATAREADER_DEBUG  
- CDBDebug("Found xy dims for var %s:  %s and %s",dataSourceVar->name.c_str(),dimX->name.c_str(),dimY->name.c_str());
- #endif
+  #ifdef CDATAREADER_DEBUG
+  CDBDebug("Found xy dims for var %s:  %s and %s",dataSourceVar->name.c_str(),dimX->name.c_str(),dimY->name.c_str());
+  #endif
 
- //Read X and Y dimension data completely.
- dataSource->varX=cdfObject->getVariableNE(dimX->name.c_str());
- dataSource->varY=cdfObject->getVariableNE(dimY->name.c_str());
- if(dataSource->varX==NULL||dataSource->varY==NULL){CDBError("X ('%s') and or Y ('%s') vars not found for variable %s...",dimX->name.c_str(),dimY->name.c_str(),dataSourceVar->name.c_str());return 1;}
+  //Read X and Y dimension data completely.
+  dataSource->varX=cdfObject->getVariableNE(dimX->name.c_str());
+  dataSource->varY=cdfObject->getVariableNE(dimY->name.c_str());
+  if(dataSource->varX==NULL||dataSource->varY==NULL){
+    CReporter::getInstance()->addError(CT::string("Not possible to find variable for dimensions with names ") + dimX->name +
+                                       CT::string(" and ") + dimY->name +
+                                       CT::string(" for variable ") + dataSourceVar->name);
+    CDBError("X ('%s') and or Y ('%s') vars not found for variable %s...",dimX->name.c_str(),dimY->name.c_str(),dataSourceVar->name.c_str());
+    return 1;
+  }
   #ifdef CDATAREADER_DEBUG  
   CDBDebug("Found xy vars for var %s:  %s and %s",dataSourceVar->name.c_str(),dataSource->varX->name.c_str(),dataSource->varY->name.c_str());
   #endif
-    
-/* Experimental feature to reduce the amount of time to load quicklooks of opendap URL's */
-//   dataSource->stride2DMap=1;
-//   while(dimX->length/dataSource->stride2DMap>5000){
-//     dataSource->stride2DMap++;
-//   }
-  
-  
-  dataSource->stride2DMap=1;
-  
-  CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-  if(styleConfiguration != NULL && styleConfiguration->styleConfig != NULL){
-    if( styleConfiguration->styleConfig->RenderSettings.size() ==1 ){
-      if(( styleConfiguration->styleConfig->RenderSettings[0])->attr.striding.empty() == false){
-        dataSource->stride2DMap =  styleConfiguration->styleConfig->RenderSettings[0]->attr.striding.toInt();
-      }
-    }
-  }
-  
-  
-  
-  
-  if(dataSource->stride2DMap != 1){
-    CDBDebug("dataSource->stride2DMap == %d",dataSource->stride2DMap);
-  }
-  //When we are reading from cache, the file has been written based on strided data
-//   if(cache->cacheIsAvailable()){
-//     dataSource->stride2DMap=1;
-//   }
-  //dataSource->stride2DMap=1;
-  
-  if(dataSource->level2CompatMode){
-    dataSource->stride2DMap=1;
-  }
-  
-  dataSource->dWidth=dimX->length/dataSource->stride2DMap;
-  dataSource->dHeight=dimY->length/dataSource->stride2DMap;
+
+  // Determine the width and height based on the stride. TODO: Goed commentaar!
+  copyStride2DMap(dataSource);
+  dataSource->dWidth = dimX->length / dataSource->stride2DMap;
+  dataSource->dHeight = dimY->length / dataSource->stride2DMap;
   
   
 #ifdef CDATAREADER_DEBUG  
@@ -719,7 +580,8 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
   dataSource->dfBBOX[2]=dfdim_X[dataSource->dWidth-1]+dataSource->dfCellSizeX/2.0f;
   dataSource->dfBBOX[3]=dfdim_Y[0]-dataSource->dfCellSizeY/2.0f;;
   
-
+  CT::string dimensionXName=dataSourceVar->dimensionlinks[dataSource->dimXIndex]->name.c_str();
+  dimensionXName.toLowerCaseSelf();
   if(dimensionXName.equals("col")){
     dataSource->dfBBOX[2]=dfdim_X[0]-dataSource->dfCellSizeX/2.0f;
     dataSource->dfBBOX[3]=dfdim_Y[dataSource->dHeight-1]+dataSource->dfCellSizeY/2.0f;
@@ -780,6 +642,65 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
   }
   
   return 0;
+}
+
+void CDataReader::copyXAndYDimIndices(CDataSource *dataSource, const CDF::Variable *dataSourceVar) const {
+
+  dataSource->dimXIndex=dataSource->dNetCDFNumDims-1;
+  dataSource->dimYIndex=dataSource->dNetCDFNumDims-2;
+
+  dataSource->swapXYDimensions = false;
+
+  //If our X dimension has a character y/lat in it, XY dims are probably swapped.
+  CT::string dimensionXName=dataSourceVar->dimensionlinks[dataSource->dimXIndex]->name.c_str();
+  CT::string dimensionYName=dataSourceVar->dimensionlinks[dataSource->dimYIndex]->name.c_str();
+
+  dimensionXName.toLowerCaseSelf();
+  if(dimensionXName.indexOf("y")!=-1||dimensionXName.indexOf("lat")!=-1) {
+    dataSource->swapXYDimensions=true;
+    dataSource->dimXIndex=dataSource->dNetCDFNumDims-2;
+    dataSource->dimYIndex=dataSource->dNetCDFNumDims-1;
+
+    CReporter::getInstance()->addWarning(CT::string("For variable ") + dataSourceVar->name +
+                                         CT::string(" the dimension on the X position, ") + dimensionXName +
+                                         CT::string(", contains 'y' or 'lat' in its name, and is therefore swapped with the dimension on the Y position, ") + dimensionYName);
+  }
+
+  CDF::Dimension *dimX=dataSourceVar->dimensionlinks[dataSource->dimXIndex];
+  CDF::Dimension *dimY=dataSourceVar->dimensionlinks[dataSource->dimYIndex];
+
+  CReporter::getInstance()->addInfo(CT::string("Assuming that for variable ") + dataSourceVar->name +
+                                    CT::string(" the x dim equals ") + dimX->name +
+                                    CT::string(" and the y dim equals ") + dimY->name +
+                                    CT::string(" based on their position and name."));
+  CDBDebug("Found xy dims for var %s:  %s and %s",dataSourceVar->name.c_str(),dimX->name.c_str(),dimY->name.c_str());
+}
+
+void CDataReader::copyStride2DMap(CDataSource *dataSource) const {
+
+  if(dataSource->level2CompatMode) {
+    dataSource->stride2DMap = 1;
+    CReporter::getInstance()->addInfo(CT::string("In level 2 compatibility mode, using a default stride of 1, not considering RenderSettings."));
+    return;
+  }
+
+  CStyleConfiguration *styleConfiguration = dataSource->getStyle();
+  if(styleConfiguration != NULL && styleConfiguration->styleConfig != NULL) {
+    if(styleConfiguration->styleConfig->RenderSettings.size() == 1) {
+      if((styleConfiguration->styleConfig->RenderSettings[0])->attr.striding.empty() == false) {
+        dataSource->stride2DMap = styleConfiguration->styleConfig->RenderSettings[0]->attr.striding.toInt();
+        CReporter::getInstance()->addInfo(CT::string("Determined a stride of ") +
+                                              styleConfiguration->styleConfig->RenderSettings[0]->attr.striding +
+                                              CT::string(" based on RenderSettings."));
+        CDBDebug("dataSource->stride2DMap == %d", dataSource->stride2DMap);
+        return;
+      }
+    }
+  }
+
+  dataSource->stride2DMap = 1;
+  CReporter::getInstance()->addInfo(CT::string("No stride defined in the RenderSettings, using a default stride of 1."));
+  return;
 }
 
 
@@ -861,15 +782,6 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y, int *gridExt
     CDBError("Unable to attach CDFObject");
     return 1;
   }
-
-  
-
-
-
-  /* CT::string dumpString;
-   CDF::dump(cdfObject,&dumpString);
-  CDBDebug("\nSTART\n%s\nEND\n",dumpString.c_str());
-  writeLogFile2(dumpString.c_str());*/
   
   
   for(size_t varNr=0;varNr<dataSource->getNumDataObjects();varNr++){
@@ -882,7 +794,9 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y, int *gridExt
     dataSource->getDataObject(varNr)->points.clear();
   }
 
-  
+
+  // TODO: Tot hier heb ik gecontroleerd op checker logica.
+
   if(parseDimensions(dataSource,mode,x,y, gridExtent)!=0){
     CDBError("Unable to parseDimensions");
     return 1;
@@ -1307,10 +1221,6 @@ if( mode == CNETCDFREADER_MODE_OPEN_EXTENT && gridExtent != NULL ){
     */
     
    CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource,CDATAPOSTPROCESSOR_RUNAFTERREADING);
-//    CT::string dumpString;
-//    CDF::dump(cdfObject,&dumpString);
-//   CDBDebug("\nSTART\n%s\nEND\n",dumpString.c_str());
-//   writeLogFile2(dumpString.c_str());
   
   }
  //pthread_mutex_unlock(&CDataReader_open_lock);
@@ -1336,56 +1246,6 @@ CT::string CDataReader::getTimeUnit(CDataSource *dataSource){
   CT::string timeUnitsString=timeUnits->toString().c_str();
   
   return timeUnitsString;
-}
-
-//DEPRECATED
-int CDataReader::getTimeString(CDataSource *dataSource,char * pszTime){
-  //TODO We assume that the first configured DIM is always time. This might be not the case!
-  pszTime[0]='\0';
-  if(dataSource->isConfigured==false){
-    CDBError("dataSource is not configured");
-    return 1;
-  }
-  if(dataSource->cfgLayer->Dimension.size()==0){
-    snprintf(pszTime,MAX_STR_LEN,"No time dimension available");
-    CDBDebug("%s",pszTime);
-    return 1;
-  }
-
-  CDF::Variable *time = getDimensionVariableByType(dataSource->getDataObject(0)->cdfVariable,dtype_time);
-  if(time==NULL){CDBDebug("No time variable found");return 1;}
-  CDF::Attribute *timeUnits = time->getAttributeNE("units");
-  if(timeUnits ==NULL){CDBDebug("No time units found");return 1;}
-  time->readData(CDF_DOUBLE);
-  if(dataSource->dNetCDFNumDims>2){
-    size_t currentTimeIndex=dataSource->getDimensionIndex(time->name.c_str());
-    if(currentTimeIndex>=0&&currentTimeIndex<time->getSize()){
-      CTime adagucTime;
-      try{
-        adagucTime.init(time);
-        CT::string isoString = "No time dimension available";
-        try{
-          isoString = adagucTime.dateToISOString(adagucTime.getDate(((double*)time->data)[currentTimeIndex]));
-        }catch(int e){
-        }
-        snprintf(pszTime,MAX_STR_LEN,"%s",isoString.c_str());
-        
-      }catch(int e){
-        CDBError("Unable to initialize CTime with units %s",timeUnits->toString().c_str());
-        return 1;
-      }
-
-    }else{
-      CDBDebug("time index out of bounds");
-      snprintf(pszTime,MAX_STR_LEN,"No time dimension available");
-      return 1;
-    }
-  }else{
-    snprintf(pszTime,MAX_STR_LEN,"No time dimension available");
-    return 1;
-  }
-  //CDBDebug("[OK] pszTime = %s",pszTime);
-  return 0;
 }
 
 CDF::Variable *CDataReader::addBlankDimVariable(CDFObject* cdfObject, const char *dimName) {
