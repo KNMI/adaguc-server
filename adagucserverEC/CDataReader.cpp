@@ -407,44 +407,10 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
   CDBDebug("Found xy vars for var %s:  %s and %s",dataSourceVar->name.c_str(),dataSource->varX->name.c_str(),dataSource->varY->name.c_str());
   #endif
 
-  // TODO: Tot aan hier gecheckt voor logica!
-    
-/* Experimental feature to reduce the amount of time to load quicklooks of opendap URL's */
-//   dataSource->stride2DMap=1;
-//   while(dimX->length/dataSource->stride2DMap>5000){
-//     dataSource->stride2DMap++;
-//   }
-  
-  
-  dataSource->stride2DMap=1;
-  
-  CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-  if(styleConfiguration != NULL && styleConfiguration->styleConfig != NULL){
-    if( styleConfiguration->styleConfig->RenderSettings.size() ==1 ){
-      if(( styleConfiguration->styleConfig->RenderSettings[0])->attr.striding.empty() == false){
-        dataSource->stride2DMap =  styleConfiguration->styleConfig->RenderSettings[0]->attr.striding.toInt();
-      }
-    }
-  }
-  
-  
-  
-  
-  if(dataSource->stride2DMap != 1){
-    CDBDebug("dataSource->stride2DMap == %d",dataSource->stride2DMap);
-  }
-  //When we are reading from cache, the file has been written based on strided data
-//   if(cache->cacheIsAvailable()){
-//     dataSource->stride2DMap=1;
-//   }
-  //dataSource->stride2DMap=1;
-  
-  if(dataSource->level2CompatMode){
-    dataSource->stride2DMap=1;
-  }
-  
-  dataSource->dWidth=dimX->length/dataSource->stride2DMap;
-  dataSource->dHeight=dimY->length/dataSource->stride2DMap;
+  // Determine the width and height based on the stride. TODO: Goed commentaar!
+  copyStride2DMap(dataSource);
+  dataSource->dWidth = dimX->length / dataSource->stride2DMap;
+  dataSource->dHeight = dimY->length / dataSource->stride2DMap;
   
   
 #ifdef CDATAREADER_DEBUG  
@@ -697,7 +663,7 @@ void CDataReader::copyXAndYDimIndices(CDataSource *dataSource, const CDF::Variab
 
     CReporter::getInstance()->addWarning(CT::string("For variable ") + dataSourceVar->name +
                                          CT::string(" the dimension on the X position, ") + dimensionXName +
-                                         CT::string(", contains y or lat, and is therefore swapped with the dimension on the Y position, ") + dimensionYName);
+                                         CT::string(", contains 'y' or 'lat' in its name, and is therefore swapped with the dimension on the Y position, ") + dimensionYName);
   }
 
   CDF::Dimension *dimX=dataSourceVar->dimensionlinks[dataSource->dimXIndex];
@@ -708,6 +674,33 @@ void CDataReader::copyXAndYDimIndices(CDataSource *dataSource, const CDF::Variab
                                     CT::string(" and the y dim equals ") + dimY->name +
                                     CT::string(" based on their position and name."));
   CDBDebug("Found xy dims for var %s:  %s and %s",dataSourceVar->name.c_str(),dimX->name.c_str(),dimY->name.c_str());
+}
+
+void CDataReader::copyStride2DMap(CDataSource *dataSource) const {
+
+  if(dataSource->level2CompatMode) {
+    dataSource->stride2DMap = 1;
+    CReporter::getInstance()->addInfo(CT::string("In level 2 compatibility mode, using a default stride of 1, not considering RenderSettings."));
+    return;
+  }
+
+  CStyleConfiguration *styleConfiguration = dataSource->getStyle();
+  if(styleConfiguration != NULL && styleConfiguration->styleConfig != NULL) {
+    if(styleConfiguration->styleConfig->RenderSettings.size() == 1) {
+      if((styleConfiguration->styleConfig->RenderSettings[0])->attr.striding.empty() == false) {
+        dataSource->stride2DMap = styleConfiguration->styleConfig->RenderSettings[0]->attr.striding.toInt();
+        CReporter::getInstance()->addInfo(CT::string("Determined a stride of ") +
+                                              styleConfiguration->styleConfig->RenderSettings[0]->attr.striding +
+                                              CT::string(" based on RenderSettings."));
+        CDBDebug("dataSource->stride2DMap == %d", dataSource->stride2DMap);
+        return;
+      }
+    }
+  }
+
+  dataSource->stride2DMap = 1;
+  CReporter::getInstance()->addInfo(CT::string("No stride defined in the RenderSettings, using a default stride of 1."));
+  return;
 }
 
 
