@@ -332,7 +332,7 @@ int main(int argc, const char *argv[]){
   int status = _main(argc,argv);
 
   // Print the check report.
-  CReporter::getInstance()->writeReport("checker_report.txt");
+  CReporter::getInstance()->writeReport("/var/log/adaguc/checker_report.txt");
 
   CCachedDirReader::free();
   
