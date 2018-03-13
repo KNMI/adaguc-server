@@ -340,8 +340,6 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
   if(!dataSource->formatConverterActive)if(CConvertGeoJSON::convertGeoJSONData(dataSource,mode)==0)dataSource->formatConverterActive=true;
   if(!dataSource->formatConverterActive)if(CConvertTROPOMI::convertTROPOMIData(dataSource,mode)==0)dataSource->formatConverterActive=true;
 
-  int status = 0;
-
   CDF::Variable * dataSourceVar=dataSource->getDataObject(0)->cdfVariable;
   CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
  
@@ -386,68 +384,60 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
   determineStride2DMap(dataSource);
   determineDWidthAndDHeight(dataSource, singleCellMode, gridExtent, mode);
 
-  size_t start[dataSource->dNetCDFNumDims+1];
-
-  //Everything starts at zero
-  for(int j=0;j<dataSource->dNetCDFNumDims;j++){start[j]=0;}
-
-  //Set other dimensions than X and Y.
-  if(dataSource->dNetCDFNumDims>2){
-    for(int j=0;j<dataSource->dNetCDFNumDims-2;j++){
-      start[j]=dataSource->getDimensionIndex(dataSourceVar->dimensionlinks[j]->name.c_str());//dOGCDimValues[0];// time dim
-    }
-  }
-
+  // ----------------------------------------------------------------------------------------------------
+  // Read X and Y variable data. NOTE: For converted files this has already been done in the converters. |
+  // ----------------------------------------------------------------------------------------------------
   if(dataSource->formatConverterActive == false){
-    
-     
+
+    size_t start[dataSource->dNetCDFNumDims+1]; // Saves the start position of the dimension variable data.
+
+    //Determine the indices of the data. Everything starts at 0 by default.
+    for(int j=0;j<dataSource->dNetCDFNumDims;j++){start[j]=0;}
+
     if( mode == CNETCDFREADER_MODE_OPEN_EXTENT && gridExtent != NULL ){
       start[dataSource->dimXIndex] = gridExtent[0];
       start[dataSource->dimYIndex] = gridExtent[1];
-//       CDBDebug("START X, %d",start[dataSource->dimXIndex]);
-//       CDBDebug("START Y, %d",start[dataSource->dimYIndex]);
-//       CDBDebug("WIDTH, %d",dataSource->dWidth);
-//       CDBDebug("HEIGHT, %d",dataSource->dHeight);
     }
-      
-    size_t sta[1],sto[1];ptrdiff_t str[1];
-    sta[0]=start[dataSource->dimXIndex];str[0]=dataSource->stride2DMap; sto[0]=dataSource->dWidth;
-    
-    if(singleCellMode){sta[0]=0;str[0]=1;sto[0]=2;}
-    #ifdef CDATAREADER_DEBUG  
-    CDBDebug("[%d %d %d] for %s/%s",sta[0],str[0],sto[0],dataSourceVar->name.c_str(),dataSource->varX->name.c_str());
-    #endif
 
     if(gridExtent != NULL){
       //TODO We are using a different start/count, but the data is not re-read until it is freed first.
       dataSource->varX->freeData();
       dataSource->varY->freeData();
-    
-      
     }
-    
-    status = dataSource->varX->readData(CDF_DOUBLE,sta,sto,str,true);
-    if(status!=0){
+
+    // Read the X data.
+    size_t sta[1],sto[1];ptrdiff_t str[1];
+    sta[0]=start[dataSource->dimXIndex];str[0]=dataSource->stride2DMap; sto[0]=dataSource->dWidth;
+    if(singleCellMode) {sta[0]=0;str[0]=1;sto[0]=2;}
+
+    #ifdef CDATAREADER_DEBUG
+    CDBDebug("[%d %d %d] for %s/%s",sta[0],str[0],sto[0],dataSourceVar->name.c_str(),dataSource->varX->name.c_str());
+    #endif
+
+    int statusX = dataSource->varX->readData(CDF_DOUBLE,sta,sto,str,true);
+    if(statusX!=0){
+      CReporter::getInstance()->addError(CT::string("Not possible to read data for dimension ") + dataSource->varX->name);
       CDBError("Unable to read x dimension with name %s for variable %s",dataSource->varX->name.c_str(),dataSourceVar->name.c_str());
       return 1;
     }
 
-//     CDBDebug("Read data X %f",((double*)dataSource->varX->data)[0]);
-
-
-    //CDBDebug("Done");
-    
+    // Read the Y data
     sta[0]=start[dataSource->dimYIndex];str[0]=dataSource->stride2DMap; sto[0]=dataSource->dHeight;
     if(singleCellMode){
       sta[0]=0;str[0]=1;sto[0]=2;
     }
-    
-    status = dataSource->varY->readData(CDF_DOUBLE,sta,sto,str,true);
-    if(status!=0){
+
+    #ifdef CDATAREADER_DEBUG
+    CDBDebug("[%d %d %d] for %s/%s",sta[0],str[0],sto[0],dataSourceVar->name.c_str(),dataSource->varY->name.c_str());
+    #endif
+
+    int statusY = dataSource->varY->readData(CDF_DOUBLE,sta,sto,str,true);
+    if(statusY!=0){
+      CReporter::getInstance()->addError(CT::string("Not possible to read data for dimension ") + dataSource->varY->name);
       CDBError("Unable to read y dimension for variable %s",dataSourceVar->name.c_str());
       for(size_t j=0;j<dataSource->varY->dimensionlinks.size();j++){
-            CDBDebug("For var %s, reading dim %s of size %d (%d %d %d)", dataSource->varY->name.c_str(),dataSource->varY->dimensionlinks[j]->name.c_str(),dataSource->varY->dimensionlinks[j]->getSize(),sta[j],sto[j],str[j]);
-          }
+        CDBDebug("For var %s, reading dim %s of size %d (%d %d %d)", dataSource->varY->name.c_str(),dataSource->varY->dimensionlinks[j]->name.c_str(),dataSource->varY->dimensionlinks[j]->getSize(),sta[j],sto[j],str[j]);
+      }
       return 1;
     }
 
@@ -483,6 +473,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
               }
 	    }
 
+      // TODO: Dit moet voor alle data gebeuren toch, niet een subset van de data?
 	    sta[0]=start[dataSource->dimXIndex];str[0]=dataSource->stride2DMap; sto[0]=dataSource->dWidth;
 	    if(singleCellMode){sta[0]=0;str[0]=1;sto[0]=2;}
 	    for (size_t j=sta[0];j<sto[0];j+=str[0]) {
@@ -1303,6 +1294,7 @@ CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *cdfObject,CD
   return getDimensionType(cdfObject,variable);
 }
 
+// TODO: Zit hier logica voor de checker?
 CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *cdfObject,CDF::Variable *variable){
   if(variable == NULL){
     CDBWarning("Warning no dimension variable specified for dimension ");
