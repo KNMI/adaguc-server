@@ -30,9 +30,8 @@ variables:
         data_var_1:long_name = "Long name of data variable 1" ;
         data_var_1:units = "Units of data variable 1" ;
 data:
-
  time = 1508052712, 1508052713 ;
-
+ 
  lon = 5.05, 6,05 ;
  
  lat = 53.5, 53.5 ;
@@ -44,10 +43,10 @@ data:
  lat_bnds =
   53, 54, 54, 53,
   53, 54, 54, 53 ;
- 
+  
  data_var_1 = 1, 2 ;
  
 ```
 
-## Resulting image
+### Resulting image
 ![Vector format example](images/vector_format_example_1.png)

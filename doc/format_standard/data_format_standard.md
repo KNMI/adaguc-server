@@ -1,12 +1,9 @@
-* Uitleg over netcdf CF conventies voor data structuur.
-    * Uitleg generieke regels, zoals naamgeving etc.
-* Korte introductie naar verschillende formaten + links
-
+# Generic file structure
 
 # Supported data types
 
 ## Grid based data
-Grid data is defined as a grid with rectangular pixels with constant X and Y dimensions over time.
+Grid data is defined as a data grid with rectangular pixels with constant X and Y dimensions over time.
 The pixels should be rectangular either in the geographic coordinate system (latitude and longitude)
 or in a projected coordinate system.
 
@@ -14,7 +11,7 @@ or in a projected coordinate system.
 ![Grid format image](images/grid_format.png)
 
 ## Vector based data
-Vector data is defined as a polygon described by 4 points (a tile) per time step.
+Vector data is defined as a data polygon described by 4 points (a tile) per time step.
 
 [Detailed vector format description](data_format_standard_vector.md)
 
@@ -23,3 +20,5 @@ Vector data is defined as a polygon described by 4 points (a tile) per time step
 
 ## Point based data
 [Detailed point format description](data_format_standard_point.md)
+
+
