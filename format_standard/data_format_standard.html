@@ -250,18 +250,18 @@
     
                                 <section class="normal markdown-section">
                                 
-                                <ul>
-<li>Uitleg over <a href="../GLOSSARY.html#netcdf" class="glossary-term" title="Network Common Data Form.">netcdf</a> <a href="../GLOSSARY.html#cf" class="glossary-term" title="Climate and Forecast.">CF</a> conventies voor data structuur.<ul>
-<li>Uitleg generieke regels, zoals naamgeving etc.</li>
-</ul>
-</li>
-<li>Korte introductie naar verschillende formaten + links</li>
-</ul>
+                                <h1 id="generic-file-structure">Generic file structure</h1>
 <h1 id="supported-data-types">Supported data types</h1>
-<h2 id="raster-based-data">Raster based data</h2>
-<p><a href="data_format_standard_grid.html">Detailed grid format description</a></p>
+<h2 id="grid-based-data">Grid based data</h2>
+<p>Grid data is defined as a data grid with rectangular pixels with constant X and Y dimensions over time.
+The pixels should be rectangular either in the geographic coordinate system (latitude and longitude)
+or in a projected coordinate system.</p>
+<p><a href="data_format_standard_grid.html">Detailed grid format description</a>
+<img src="images/grid_format.png" alt="Grid format image"></p>
 <h2 id="vector-based-data">Vector based data</h2>
+<p>Vector data is defined as a data polygon described by 4 points (a tile) per time step.</p>
 <p><a href="data_format_standard_vector.html">Detailed vector format description</a></p>
+<p><img src="images/vector_format.png" alt="Vector format image"></p>
 <h2 id="point-based-data">Point based data</h2>
 <p><a href="data_format_standard_point.html">Detailed point format description</a></p>
 
@@ -307,7 +307,7 @@
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Data format standard","level":"1.2.1","depth":2,"next":{"title":"Grid format","level":"1.2.1.1","depth":3,"path":"format_standard/data_format_standard_grid.md","ref":"format_standard/data_format_standard_grid.md","articles":[]},"previous":{"title":"Format standard","level":"1.2","depth":1,"path":"format_standard/README.md","ref":"format_standard/README.md","articles":[{"title":"Data format standard","level":"1.2.1","depth":2,"path":"format_standard/data_format_standard.md","ref":"format_standard/data_format_standard.md","articles":[{"title":"Grid format","level":"1.2.1.1","depth":3,"path":"format_standard/data_format_standard_grid.md","ref":"format_standard/data_format_standard_grid.md","articles":[]},{"title":"Vector format","level":"1.2.1.2","depth":3,"path":"format_standard/data_format_standard_vector.md","ref":"format_standard/data_format_standard_vector.md","articles":[]},{"title":"Point format","level":"1.2.1.3","depth":3,"path":"format_standard/data_format_standard_point.md","ref":"format_standard/data_format_standard_point.md","articles":[]}]},{"title":"Metadata format standard","level":"1.2.2","depth":2,"path":"format_standard/metadata_format_standard.md","ref":"format_standard/metadata_format_standard.md","articles":[]}]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"format_standard/data_format_standard.md","mtime":"2018-03-06T15:10:11.410Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-03-06T15:18:39.367Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Data format standard","level":"1.2.1","depth":2,"next":{"title":"Grid format","level":"1.2.1.1","depth":3,"path":"format_standard/data_format_standard_grid.md","ref":"format_standard/data_format_standard_grid.md","articles":[]},"previous":{"title":"Format standard","level":"1.2","depth":1,"path":"format_standard/README.md","ref":"format_standard/README.md","articles":[{"title":"Data format standard","level":"1.2.1","depth":2,"path":"format_standard/data_format_standard.md","ref":"format_standard/data_format_standard.md","articles":[{"title":"Grid format","level":"1.2.1.1","depth":3,"path":"format_standard/data_format_standard_grid.md","ref":"format_standard/data_format_standard_grid.md","articles":[]},{"title":"Vector format","level":"1.2.1.2","depth":3,"path":"format_standard/data_format_standard_vector.md","ref":"format_standard/data_format_standard_vector.md","articles":[]},{"title":"Point format","level":"1.2.1.3","depth":3,"path":"format_standard/data_format_standard_point.md","ref":"format_standard/data_format_standard_point.md","articles":[]}]},{"title":"Metadata format standard","level":"1.2.2","depth":2,"path":"format_standard/metadata_format_standard.md","ref":"format_standard/metadata_format_standard.md","articles":[]}]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"format_standard/data_format_standard.md","mtime":"2018-03-13T11:55:44.821Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-03-14T08:40:06.968Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>

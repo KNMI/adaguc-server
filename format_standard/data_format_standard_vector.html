@@ -250,8 +250,8 @@
     
                                 <section class="normal markdown-section">
                                 
-                                <p>Hallo</p>
-<h1 id="example-format">Example format</h1>
+                                <h1 id="example-format">Example format</h1>
+<h2 id="netcdf-file">NetCDF file</h2>
 <pre><code>dimensions:
     time = 2 ; 
     nv = 4 ;
@@ -260,12 +260,12 @@ variables:
         time:standard_name = &quot;time&quot; ;
         time:long_name = &quot;time&quot; ;
         time:units = &quot;seconds since 1970-01-01 00:00:00&quot; ;
-    float lon(time) ;                                           # TODO: Wordt dit gebruikt in ADAGUC?
+    float lon(time) ;
         lon:standard_name = &quot;longitude&quot; ;
         lon:long_name = &quot;longitude&quot; ;
         lon:units = &quot;degrees_east&quot; ;
         lon:bounds = &quot;lon_bnds&quot; ;
-    float lat(time) ;                                           # TODO: Wordt dit gebruikt in ADAGUC?
+    float lat(time) ;
         lat:standard_name = &quot;latitude&quot; ;
         lat:long_name = &quot;latitude&quot; ;
         lat:units = &quot;degrees_north&quot; ;
@@ -276,12 +276,7 @@ variables:
         data_var_1:standard_name = &quot;Standard name of data variable 1&quot; ;
         data_var_1:long_name = &quot;Long name of data variable 1&quot; ;
         data_var_1:units = &quot;Units of data variable 1&quot; ;
-    double data_var_2(time) ;
-        data_var_2:standard_name = &quot;Standard name of data variable 2&quot; ;
-        data_var_2:long_name = &quot;Long name of data variable 2&quot; ;
-        data_var_2:units = &quot;Units of data variable 2&quot; ;
 data:
-
  time = 1508052712, 1508052713 ;
 
  lon = 5.05, 6,05 ;
@@ -297,9 +292,8 @@ data:
   53, 54, 54, 53 ;
 
  data_var_1 = 1, 2 ;
-
- data_var_2 = 100, 200 ;
-</code></pre><p>file: <a href="test_vector_data.nc">Example netcdf file</a></p>
+</code></pre><h3 id="resulting-image">Resulting image</h3>
+<p><img src="images/vector_format_example_1.png" alt="Vector format example"></p>
 
                                 
                                 </section>
@@ -343,7 +337,7 @@ data:
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Vector format","level":"1.2.1.2","depth":3,"next":{"title":"Point format","level":"1.2.1.3","depth":3,"path":"format_standard/data_format_standard_point.md","ref":"format_standard/data_format_standard_point.md","articles":[]},"previous":{"title":"Grid format","level":"1.2.1.1","depth":3,"path":"format_standard/data_format_standard_grid.md","ref":"format_standard/data_format_standard_grid.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"format_standard/data_format_standard_vector.md","mtime":"2018-03-06T15:18:20.434Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-03-06T15:18:39.367Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Vector format","level":"1.2.1.2","depth":3,"next":{"title":"Point format","level":"1.2.1.3","depth":3,"path":"format_standard/data_format_standard_point.md","ref":"format_standard/data_format_standard_point.md","articles":[]},"previous":{"title":"Grid format","level":"1.2.1.1","depth":3,"path":"format_standard/data_format_standard_grid.md","ref":"format_standard/data_format_standard_grid.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"format_standard/data_format_standard_vector.md","mtime":"2018-03-13T14:40:07.301Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-03-14T08:40:06.968Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>

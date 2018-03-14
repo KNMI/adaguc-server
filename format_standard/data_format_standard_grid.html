@@ -250,7 +250,100 @@
     
                                 <section class="normal markdown-section">
                                 
-                                <p>Hallo</p>
+                                <h2 id="netcdf-file-example-geographic-coordinate-system">NetCDF file example geographic coordinate system</h2>
+<pre><code>dimensions:
+    lon = 4 ;
+    lat = 3 ;
+    time = 2 ; 
+variables:
+    float lon(lon) ;
+        lon:standard_name = &quot;longitude&quot; ;
+        lon:long_name = &quot;longitude&quot; ;
+        lon:units = &quot;degrees_east&quot; ;
+        lon:bounds = &quot;lon_bnds&quot; ;
+    float lat(lat) ;
+        lat:standard_name = &quot;latitude&quot; ;
+        lat:long_name = &quot;latitude&quot; ;
+        lat:units = &quot;degrees_north&quot; ;
+        lat:bounds = &quot;lat_bnds&quot; ;
+    double time(time) ;
+        time:standard_name = &quot;time&quot; ;
+        time:long_name = &quot;time&quot; ;
+        time:units = &quot;seconds since 1970-01-01 00:00:00&quot; ;
+    double data_var_1(time, lat, lon) ;
+        data_var_1:standard_name = &quot;Standard name of data variable 1&quot; ;
+        data_var_1:long_name = &quot;Long name of data variable 1&quot; ;
+        data_var_1:units = &quot;Units of data variable 1&quot; ;
+data:
+ lon = 5.05, 6,05, 7,05, 8,05;
+
+ lat = 53.5, 52.5, 51.5;
+
+ time = 1508052712, 1508052713 ;
+
+ data_var_1 =
+  1, 2, 3, 4,
+  5, 6, 7, 8,
+  9, 10, 11, 12,
+  11, 12, 13, 14,
+  15, 16, 17, 18,
+  19, 20, 21, 22 ;
+</code></pre><h3 id="resulting-image">Resulting image</h3>
+<p><img src="images/grid_format_lat_lon_example_1.png" alt="Grid format example"></p>
+<h2 id="netcdf-file-example-with-projection">NetCDF file example with projection</h2>
+<pre><code>dimensions:
+    x = 4 ;
+    y = 3 ;
+    time = 2 ; 
+variables:
+    float x(x) ;
+        lon:standard_name = &quot;x coordinate of projection&quot; ;
+        lon:long_name = &quot;projection_x_coordinate&quot; ;
+        lon:units = &quot;km&quot; ;
+    float y(y) ;
+        lat:standard_name = &quot;y coordinate of projection&quot; ;
+        lat:long_name = &quot;projection_y_coordinate&quot; ;
+        lat:units = &quot;km&quot; ;
+    double time(time) ;
+        time:standard_name = &quot;time&quot; ;
+        time:long_name = &quot;time&quot; ;
+        time:units = &quot;seconds since 1970-01-01 00:00:00&quot; ;
+    double data_var_1(time, lat, lon) ;
+        data_var_1:standard_name = &quot;Standard name of data variable 1&quot; ;
+        data_var_1:long_name = &quot;Long name of data variable 1&quot; ;
+        data_var_1:units = &quot;Units of data variable 1&quot; ;
+        data_var_1:grid_mapping = &quot;projection&quot; ;
+    char projection ;
+        projection:EPSG_code = &quot;none&quot; ;
+        projection:grid_mapping_name = &quot;polar_stereographic&quot; ;
+        projection:latitude_of_projection_origin = 90. ;
+        projection:straight_vertical_longitude_from_pole = 0. ;
+        projection:scale_factor_at_projection_origin = 0.933012709177451 ;
+        projection:false_easting = 0. ;
+        projection:false_northing = 0. ;
+        projection:semi_major_axis = 6378140. ;
+        projection:semi_minor_axis = 6356750. ;
+        projection:proj4_params = &quot;+proj=stere +lat_0=90 +lon_0=0 +lat_ts=60 +a=6378.14 +b=6356.75 +x_0=0 y_0=0&quot; ;
+        projection:long_name = &quot;projection&quot; ;
+
+data:
+ x = 340, 370, 400, 430 ;
+
+ y = -3950, -3980, -4000 ;
+
+ time = 1508052712, 1508052713 ;
+
+ data_var_1 =
+  1, 2, 3, 4,
+  5, 6, 7, 8,
+  9, 10, 11, 12,
+  11, 12, 13, 14,
+  15, 16, 17, 18,
+  19, 20, 21, 22 ;
+
+  projection = &quot;&quot; ;
+</code></pre><h3 id="resulting-image">Resulting image</h3>
+<p><img src="images/grid_format_proj_example_1.png" alt="Grid format example"></p>
 
                                 
                                 </section>
@@ -294,7 +387,7 @@
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Grid format","level":"1.2.1.1","depth":3,"next":{"title":"Vector format","level":"1.2.1.2","depth":3,"path":"format_standard/data_format_standard_vector.md","ref":"format_standard/data_format_standard_vector.md","articles":[]},"previous":{"title":"Data format standard","level":"1.2.1","depth":2,"path":"format_standard/data_format_standard.md","ref":"format_standard/data_format_standard.md","articles":[{"title":"Grid format","level":"1.2.1.1","depth":3,"path":"format_standard/data_format_standard_grid.md","ref":"format_standard/data_format_standard_grid.md","articles":[]},{"title":"Vector format","level":"1.2.1.2","depth":3,"path":"format_standard/data_format_standard_vector.md","ref":"format_standard/data_format_standard_vector.md","articles":[]},{"title":"Point format","level":"1.2.1.3","depth":3,"path":"format_standard/data_format_standard_point.md","ref":"format_standard/data_format_standard_point.md","articles":[]}]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"format_standard/data_format_standard_grid.md","mtime":"2018-03-05T15:00:51.000Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-03-06T15:18:39.367Z"},"basePath":"..","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Grid format","level":"1.2.1.1","depth":3,"next":{"title":"Vector format","level":"1.2.1.2","depth":3,"path":"format_standard/data_format_standard_vector.md","ref":"format_standard/data_format_standard_vector.md","articles":[]},"previous":{"title":"Data format standard","level":"1.2.1","depth":2,"path":"format_standard/data_format_standard.md","ref":"format_standard/data_format_standard.md","articles":[{"title":"Grid format","level":"1.2.1.1","depth":3,"path":"format_standard/data_format_standard_grid.md","ref":"format_standard/data_format_standard_grid.md","articles":[]},{"title":"Vector format","level":"1.2.1.2","depth":3,"path":"format_standard/data_format_standard_vector.md","ref":"format_standard/data_format_standard_vector.md","articles":[]},{"title":"Point format","level":"1.2.1.3","depth":3,"path":"format_standard/data_format_standard_point.md","ref":"format_standard/data_format_standard_point.md","articles":[]}]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"format_standard/data_format_standard_grid.md","mtime":"2018-03-14T08:12:16.841Z","type":"markdown"},"gitbook":{"version":"3.2.3","time":"2018-03-14T08:40:06.968Z"},"basePath":"..","book":{"language":""}});
         });
     </script>
 </div>
