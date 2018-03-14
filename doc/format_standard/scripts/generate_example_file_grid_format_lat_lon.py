@@ -5,20 +5,16 @@
 #*                     Copyright (c) 2018 KNMI                        **
 #*             Royal Netherlands Meteorological Institute             **
 #***********************************************************************
-#* Function   : TODO
-#* Purpose    : TODO
-#* Usage      : TODO
+#* Purpose   : Generate an example NetCDF file in the ADAGUC grid format.
 #*
-#* Project    : EUNADICS-AV
+#* Project    : ADAGUC
 #*
 #* initial programmer :  S.E. Wagenaar
-#* initial date       :  20180206
+#* initial date       :  20180314
 #**********************************************************************
 
 import netCDF4
-import argparse
 import os.path
-import numpy
 
 lon_dim_name = "lon"
 lat_dim_name = "lat"
