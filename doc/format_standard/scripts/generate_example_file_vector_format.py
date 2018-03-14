@@ -39,13 +39,13 @@ def main():
     time_var.units = "seconds since 1970-01-01 00:00:00"
     time_var.valid_range = 0,2170706400 ## Valid range 1970-01-01 00:00:00.000 to 2038-01-01T00:00:00.000
 
-    lon_var = netcdf_file.createVariable("lat", "f8", (time_dim_name))
+    lon_var = netcdf_file.createVariable("lon", "f8", (time_dim_name))
     lon_var.standard_name = "longitude"
     lon_var.long_name = "longitude"
     lon_var.units = "degrees_east"
     lon_var.bounds = "lon_bnds"
 
-    lat_var = netcdf_file.createVariable("lon", "f8", (time_dim_name))
+    lat_var = netcdf_file.createVariable("lat", "f8", (time_dim_name))
     lat_var.standard_name = "latitude"
     lat_var.long_name = "latitude"
     lat_var.units = "degrees_north"
