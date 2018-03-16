@@ -1,5 +1,7 @@
 FROM centos:7
 
+MAINTAINER Adaguc Team at KNMI <adaguc@knmi.nl>
+
 RUN yum update -y && yum install -y \
     epel-release deltarpm
     
@@ -50,7 +52,7 @@ RUN mkdir -p /data/adaguc-autowms && \
     mkdir -p /data/adaguc-datasets && \
     mkdir -p /data/adaguc-data && \
     mkdir -p /adaguc/userworkspace && \
-    mkdir -p /adaguc/adaguc-services-home && \
+    mkdir -p /data/adaguc-services-home && \
     mkdir -p /adaguc/basedir && \
     mkdir -p /var/log/adaguc && \
     mkdir -p /adaguc/adagucdb && \

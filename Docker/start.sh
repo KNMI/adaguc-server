@@ -56,6 +56,27 @@ keytool -export -alias tomcat -rfc -file adaguc-services-cert.pem -keystore ${AD
 keytool -delete -alias adagucservicescert -keystore ${ADAGUC_SERVICES_SECURITY}/truststore.ts -storepass changeit -noprompt
 keytool -import -v -trustcacerts -alias adagucservicescert -file adaguc-services-cert.pem -keystore ${ADAGUC_SERVICES_SECURITY}/truststore.ts -storepass changeit -noprompt
 
+# Create CA for tokenapi: file and key for  authority /O=KNMI/OU=RDWDT/CN=adaguc-services_ca_tokenapi"
+
+if [ ! -f ${ADAGUC_SERVICES_SECURITY}/adaguc-services-ca.cert ]; then
+
+openssl req \
+    -new \
+    -newkey rsa:4096 \
+    -days 365 \
+    -nodes \
+    -x509 \
+    -subj "/O=KNMI/OU=RDWDT/CN=adaguc-services_ca_tokenapi" \
+    -keyout ${ADAGUC_SERVICES_SECURITY}/adaguc-services-ca.key \
+    -out ${ADAGUC_SERVICES_SECURITY}/adaguc-services-ca.cert
+
+# Put this CA in the truststore
+
+keytool -delete -alias adaguc-services-ca -keystore ${ADAGUC_SERVICES_SECURITY}/truststore.ts -storepass changeit -noprompt
+keytool -import -v -trustcacerts -alias adaguc-services-ca -file ${ADAGUC_SERVICES_SECURITY}/adaguc-services-ca.cert -keystore ${ADAGUC_SERVICES_SECURITY}/truststore.ts -storepass changeit -noprompt
+else
+  echo "Using CA file ${ADAGUC_SERVICES_SECURITY}/adaguc-services-ca.cert"
+fi
 
 ### Configure postgres ###
 
@@ -88,6 +109,8 @@ fi
 chmod 777 /var/run/postgresql/
 runuser -l $PGUSERNAME -c "touch /var/log/adaguc/postgresql.log"
 runuser -l $PGUSERNAME -c "chmod 777 /var/log/adaguc/postgresql.log"
+touch /var/log/adaguc/postgresql.log
+chmod 777 /var/log/adaguc/postgresql.log
 chown $PGUSERNAME ${ADAGUCDB}
 runuser -l $PGUSERNAME -c "chmod 700 ${ADAGUCDB}"
 
