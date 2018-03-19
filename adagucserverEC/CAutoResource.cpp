@@ -198,7 +198,8 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
           return 1;
         }
         if(srvParam->checkResolvePath(srvParam->autoResourceLocation.c_str(),&srvParam->internalAutoResourceLocation)==false){
-          CDBError("Unable to resolve path for file %s",srvParam->autoResourceLocation.c_str());
+          CDBDebug("Unable to resolve path for autoresource file %s",srvParam->autoResourceLocation.c_str());
+          CDBDebug("Please note that only absolute paths without symbolic links can be used");
           return 1;
         }
         isValidResource=true;
