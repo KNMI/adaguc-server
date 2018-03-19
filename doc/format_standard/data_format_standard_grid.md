@@ -14,12 +14,10 @@ variables:
         lon:standard_name = "longitude" ;
         lon:long_name = "longitude" ;
         lon:units = "degrees_east" ;
-        lon:bounds = "lon_bnds" ;
     float lat(lat) ;
         lat:standard_name = "latitude" ;
         lat:long_name = "latitude" ;
         lat:units = "degrees_north" ;
-        lat:bounds = "lat_bnds" ;
     double time(time) ;
         time:standard_name = "time" ;
         time:long_name = "time" ;
