@@ -260,10 +260,10 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
       return 1;
     }
     outputCRS->copy(inputCRS);
-    if(inputCRS->indexOf("proj")!=-1)return 0;
+    //if(inputCRS->indexOf("+proj")!=-1)return 0;
     dMaxExtentDefined=0;
     //CDBDebug("Check");
-    outputCRS->decodeURLSelf();
+    // outputCRS->decodeURLSelf();
     //CDBDebug("Check");
     //CDBDebug("Check %d",(*prj).size());
     for(size_t j=0;j<(*prj).size();j++){
@@ -283,7 +283,7 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
         break;
       }
     }
-    //CDBDebug("Check");
+//     CDBDebug("Check [%s]", outputCRS->c_str());
     if(outputCRS->indexOf("PROJ4:")==0){
       CT::string temp(outputCRS->c_str()+6);
       outputCRS->copy(&temp);
