@@ -30,6 +30,10 @@
 #include "CImageWarperRenderInterface.h"
 #include "CGenericDataWarper.h"
 
+#define CImgRenderStipplingModeDefault 0
+#define CImgRenderStipplingModeThreshold 1
+
+  
 /**
  *  This is the main class of this file. It renders the sourcedata on the destination image using nearest neighbour interpolation.
  *  It uses tile blocks to render the data. Only the corners of these tiles are projected. Not each source pixel is projected,
@@ -38,6 +42,18 @@
 class CImgRenderStippling:public CImageWarperRenderInterface{
 private:
   DEF_ERRORFUNCTION();
+  
+  int xDistance,yDistance,discSize,mode;
+  CT::string color;
+  CStyleConfiguration *styleConfiguration;
+  CDataSource *dataSource;
+  CDrawImage *drawImage;
+  void *sourceData;
+  CImageWarper *warper;
+  
+  void _setStippling (int screenX, int screenY, float val) ;
+  template<typename T>
+  void _stippleMiddleOfPoints();
   class Settings{
   public:
     double dfNodataValue;
@@ -48,6 +64,8 @@ private:
     float *dataField;
     size_t width,height;
   };
+  Settings *settings;
+  
   
   
   template <class T>
@@ -62,7 +80,6 @@ private:
       }
     }
   };
-  
   
   
   int set(const char *settings);
