@@ -49,3 +49,6 @@ tests/test.db
 Docker/adaguc-server.dockerimage
 
 hclasses/test
+
+# GitHub pages/Gitbook output should only be committed on gh-pages branch.
+doc/_book
