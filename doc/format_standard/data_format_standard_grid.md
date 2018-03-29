@@ -2,7 +2,7 @@
 
 
 ## NetCDF file example geographic coordinate system
-[Script to generate NetCDF file](https://github.com/KNMI/adaguc-server/blob/master/doc/format_standard/scripts/generate_example_file_grid_format_lat_lon.py)
+[Script to generate NetCDF file](https://github.com/KNMI/adaguc-server/blob/master/data/python/format_standard/generate_example_file_grid_format_lat_lon.py)
 
 ``` 
 dimensions:
@@ -14,12 +14,10 @@ variables:
         lon:standard_name = "longitude" ;
         lon:long_name = "longitude" ;
         lon:units = "degrees_east" ;
-        lon:bounds = "lon_bnds" ;
     float lat(lat) ;
         lat:standard_name = "latitude" ;
         lat:long_name = "latitude" ;
         lat:units = "degrees_north" ;
-        lat:bounds = "lat_bnds" ;
     double time(time) ;
         time:standard_name = "time" ;
         time:long_name = "time" ;
@@ -51,7 +49,7 @@ data:
 
 
 ## NetCDF file example with projection
-[Script to generate NetCDF file](https://github.com/KNMI/adaguc-server/blob/master/doc/format_standard/scripts/generate_example_file_grid_format_proj.py)
+[Script to generate NetCDF file](https://github.com/KNMI/adaguc-server/blob/master/data/python/format_standard/generate_example_file_grid_format_proj.py)
 
 ``` 
 dimensions:

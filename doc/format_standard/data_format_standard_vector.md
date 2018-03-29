@@ -1,8 +1,5 @@
-
-
-
 # Example format
-[Script to generate NetCDF file](https://github.com/KNMI/adaguc-server/blob/master/doc/format_standard/scripts/generate_example_file_vector_format.py)
+[Script to generate NetCDF file](https://github.com/KNMI/adaguc-server/blob/master/data/python/format_standard/generate_example_file_vector_format.py)
 
 ## NetCDF file
 ``` 
