@@ -13,7 +13,7 @@ int CAutoConfigure::checkCascadedDimensions(const CDataSource *dataSource) {
     CDBDebug("Cascaded layers cannot have dimensions at the moment");
     #endif
 
-    CReporter::getInstance()->addError(CT::string("Cascaded layer cannot have dimensions at the moment"));
+    CREPORT_ERROR(CT::string("Cascaded layer cannot have dimensions at the moment"));
     
     return 0;
   }

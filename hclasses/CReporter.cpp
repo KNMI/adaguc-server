@@ -1,29 +1,64 @@
 #include "CReporter.h"
+#include "CDebugger_H2.h"
 
 #include <fstream>
+#include <sstream>
 #include <string>
+
+/*
+ * These functions are declared and defined in CDebugger.cpp
+ */
+extern void (*_printErrorStreamPointer)(const char*);
+extern void (*_printWarningStreamPointer)(const char*);
+extern void (*_printDebugStreamPointer)(const char*);
 
 CReporter *CReporter::instance = NULL;
 
-CReporter *CReporter::getInstance() {
+CReporter::CReporter(bool report_and_log) : errorList(), warningList(), infoList(),
+                                            writelog(report_and_log)
+{
+    // Empty at this point
+}
 
+CReporter *CReporter::getInstance() {
   if (instance == NULL) {
-    instance = new CReporter();
+      if (REPORT_AND_LOG == true)
+          instance = new CReporter(REPORT_AND_LOG);
+      else
+          instance = new CReporter();
   }
 
   return instance;
 }
 
-void CReporter::addError(CT::string error) {
-  errorList.push_back(error);
+void CReporter::addError(const CT::string error, const char* file, int line, const char* className) {
+    if (this->writelog) {
+        std::ostringstream error_str;
+        error_str << "[EEE:" << file << ", " << " " << line << " in " << className << "] "
+                << error.c_str() << std::endl;
+        _printErrorStreamPointer(error_str.str().c_str());
+    }
+    errorList.push_back(error);
 }
 
-void CReporter::addWarning(CT::string warning) {
-  warningList.push_back(warning);
+void CReporter::addWarning(const CT::string warning, const char* file, int line, const char* className) {
+    if (this->writelog) {
+        std::ostringstream warn_str;
+        warn_str << "[WWW:" << file << ", " << " " << line << " in " << className << "] "
+                << warning.c_str() << std::endl;
+        _printWarningStreamPointer(warn_str.str().c_str());
+    }
+    warningList.push_back(warning);
 }
 
-void CReporter::addInfo(CT::string infoMessage) {
-  infoList.push_back(infoMessage);
+void CReporter::addInfo(const CT::string infoMessage, const char* file, int line, const char* className) {
+    if (this->writelog) {
+        std::ostringstream dbg_str;
+        dbg_str << "[DDDD:" << file << ", " << " " << line << " in " << className << "] "
+                << infoMessage.c_str() << std::endl;
+        _printDebugStreamPointer(dbg_str.str().c_str());
+    }
+    infoList.push_back(infoMessage);
 }
 
 CT::string CReporter::generateReport() {
