@@ -62,39 +62,14 @@ void CReporter::addInfo(const CT::string infoMessage, const char* file, int line
     infoList.push_back(infoMessage);
 }
 
-CT::string CReporter::generateReport() {
-
-  CT::string report = CT::string("Errors: \n");
-
-  for (std::list<CT::string>::iterator it=errorList.begin(); it != errorList.end(); ++it) {
-     report.concat(*it);
-     report.concat(CT::string("\n"));
-  }
-
-  report.concat("\nWarnings: \n");
-
-  for (std::list<CT::string>::iterator it=warningList.begin(); it != warningList.end(); ++it) {
-    report.concat(*it);
-    report.concat(CT::string("\n"));
-  }
-
-
-  report.concat("\nInfo: \n");
-
-  for (std::list<CT::string>::iterator it=infoList.begin(); it != infoList.end(); ++it) {
-    report.concat(*it);
-    report.concat(CT::string("\n"));
-  }
-
-  return report;
+const std::list<CT::string> CReporter::getErrorList() const {
+  return errorList;
 }
 
-int CReporter::writeReport(const CT::string reportfilename) {
-    std::ofstream reportfile(reportfilename.c_str());
-    if (!reportfile) {
-        return -1;
-    }
-    reportfile << this->generateReport().c_str();
-    reportfile.close();
-    return 0;
+const std::list<CT::string> CReporter::getWarningList() const {
+  return warningList;
+}
+
+const std::list<CT::string> CReporter::getInfoList() const {
+  return infoList;
 }
