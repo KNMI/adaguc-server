@@ -13,7 +13,7 @@ fi
 #For operational, use:
 #export ADAGUCCOMPILERSETTINGS="-msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2"
 
-DEFAULTCOMPILERSETTINGS="-msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2"
+DEFAULTCOMPILERSETTINGS="-msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 -std=c++11"
 DEFAULTADAGUCCOMPONENTS="-DENABLE_CURL -DADAGUC_USE_GDAL -DADAGUC_USE_SQLITE -DADAGUC_USE_POSTGRESQL"
 
 CURRENTDIR=`pwd`
