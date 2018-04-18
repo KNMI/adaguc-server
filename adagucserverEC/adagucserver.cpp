@@ -333,7 +333,7 @@ int main(int argc, const char *argv[]){
   int status = _main(argc,argv);
 
   // Print the check report formatted as JSON.
-  CReportWriter::writeJSONReportToFile("checker_report.txt");
+  CReportWriter::writeJSONReportToFile("/var/log/adaguc/checker_report.txt");
 
   CCachedDirReader::free();
   
