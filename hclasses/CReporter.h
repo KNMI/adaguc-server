@@ -2,8 +2,8 @@
 // Created by wagenaar on 3/7/18.
 //
 
-#ifndef ADAGUC_SERVER_EUNADICS_CREPORTER_H
-#define ADAGUC_SERVER_EUNADICS_CREPORTER_H
+#ifndef CREPORTER_H
+#define CREPORTER_H
 #include <list>
 #include "CTString.h"
 
@@ -28,13 +28,13 @@ protected:
   
 public:
   static CReporter *getInstance();
+  const std::list<CT::string> getErrorList() const;
+  const std::list<CT::string> getWarningList() const;
+  const std::list<CT::string> getInfoList() const;
   void addError(const CT::string error, const char* file="", int line=-1, const char* className="");
   void addWarning(const CT::string warning, const char* file="", int line=-1, const char* className="");
   void addInfo(const CT::string infoMessage, const char* file="", int line=-1, const char* className="");
-  CT::string generateReport();
-
-  int writeReport(const CT::string reportfilename);
 };
 
 
-#endif //ADAGUC_SERVER_EUNADICS_CREPORTER_H
+#endif //CREPORTER_H
