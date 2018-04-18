@@ -36,7 +36,7 @@ void CReporter::addError(const CT::string error, const char* file, int line, con
     if (this->writelog) {
         std::ostringstream error_str;
         error_str << "[E:" << file << ", " << " " << line << " in " << className << "] "
-                  << error.c_str() << std::endl;
+                  << error << std::endl;
         _printErrorStreamPointer(error_str.str().c_str());
     }
     errorList.push_back(error);
@@ -46,7 +46,7 @@ void CReporter::addWarning(const CT::string warning, const char* file, int line,
     if (this->writelog) {
         std::ostringstream warn_str;
         warn_str << "[W:" << file << ", " << " " << line << " in " << className << "] "
-                 << warning.c_str() << std::endl;
+                 << warning << std::endl;
         _printWarningStreamPointer(warn_str.str().c_str());
     }
     warningList.push_back(warning);
@@ -56,7 +56,7 @@ void CReporter::addInfo(const CT::string infoMessage, const char* file, int line
     if (this->writelog) {
         std::ostringstream dbg_str;
         dbg_str << "[D:" << file << ", " << " " << line << " in " << className << "] "
-                << infoMessage.c_str() << std::endl;
+                << infoMessage << std::endl;
         _printDebugStreamPointer(dbg_str.str().c_str());
     }
     infoList.push_back(infoMessage);
