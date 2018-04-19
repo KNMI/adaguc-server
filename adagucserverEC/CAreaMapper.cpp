@@ -141,14 +141,14 @@ int CAreaMapper::myDrawRawTile(const T *data,CDFType dataType, double *x_corners
   double destBoxBR[2] = {x_corners[1], y_corners[1]};
   
   
-  double sourceBBOXWidth = dfSourceBBOX[2] - dfSourceBBOX[0];
-  double sourceBBOXHeight = dfSourceBBOX[1] - dfSourceBBOX[3];
+  double sourceBBOXWidth = dfImageBBOX[2] - dfImageBBOX[0];
+  double sourceBBOXHeight = dfImageBBOX[1] - dfImageBBOX[3];
   double sourceWidth = double(width);
   double sourceHeight = double(height);
-  double destPXTL[2] = {((destBoxTL[0] - dfSourceBBOX[0]) / sourceBBOXWidth) * sourceWidth, ((destBoxTL[1] - dfSourceBBOX[3]) / sourceBBOXHeight) * sourceHeight};
-  double destPXTR[2] = {((destBoxTR[0] - dfSourceBBOX[0]) / sourceBBOXWidth) * sourceWidth, ((destBoxTR[1] - dfSourceBBOX[3]) / sourceBBOXHeight) * sourceHeight};
-  double destPXBL[2] = {((destBoxBL[0] - dfSourceBBOX[0]) / sourceBBOXWidth) * sourceWidth, ((destBoxBL[1] - dfSourceBBOX[3]) / sourceBBOXHeight) * sourceHeight};
-  double destPXBR[2] = {((destBoxBR[0] - dfSourceBBOX[0]) / sourceBBOXWidth) * sourceWidth, ((destBoxBR[1] - dfSourceBBOX[3]) / sourceBBOXHeight) * sourceHeight};
+  double destPXTL[2] = {((destBoxTL[0] - dfImageBBOX[0]) / sourceBBOXWidth) * sourceWidth, ((destBoxTL[1] - dfImageBBOX[3]) / sourceBBOXHeight) * sourceHeight};
+  double destPXTR[2] = {((destBoxTR[0] - dfImageBBOX[0]) / sourceBBOXWidth) * sourceWidth, ((destBoxTR[1] - dfImageBBOX[3]) / sourceBBOXHeight) * sourceHeight};
+  double destPXBL[2] = {((destBoxBL[0] - dfImageBBOX[0]) / sourceBBOXWidth) * sourceWidth, ((destBoxBL[1] - dfImageBBOX[3]) / sourceBBOXHeight) * sourceHeight};
+  double destPXBR[2] = {((destBoxBR[0] - dfImageBBOX[0]) / sourceBBOXWidth) * sourceWidth, ((destBoxBR[1] - dfImageBBOX[3]) / sourceBBOXHeight) * sourceHeight};
   
   for(double dstpixel_y = 0.5;dstpixel_y < dfTileHeight + 0.5; dstpixel_y++){
     /* Calculate left and right ribs of source image, leftLineY  and rightLineY follow the ribs according to dstpixel_y */
