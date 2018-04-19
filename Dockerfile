@@ -1,5 +1,7 @@
 FROM centos:7
 
+MAINTAINER Adaguc Team at KNMI <adaguc@knmi.nl>
+
 RUN yum update -y && yum install -y \
     epel-release deltarpm
     
@@ -29,7 +31,7 @@ RUN yum update -y && yum install -y \
 RUN mkdir /adaguc
 
 # Install adaguc-services (spring boot application for running adaguc-server)
-RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.0.3/adaguc-services-1.0.3.war > /usr/share/tomcat/webapps/adaguc-services.war
+RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.0.4/adaguc-services-1.0.4.war > /usr/share/tomcat/webapps/adaguc-services.war
 
 # Install adaguc-server from context
 COPY . /adaguc/adaguc-server-master
@@ -50,7 +52,7 @@ RUN mkdir -p /data/adaguc-autowms && \
     mkdir -p /data/adaguc-datasets && \
     mkdir -p /data/adaguc-data && \
     mkdir -p /adaguc/userworkspace && \
-    mkdir -p /adaguc/adaguc-services-home && \
+    mkdir -p /data/adaguc-services-home && \
     mkdir -p /adaguc/basedir && \
     mkdir -p /var/log/adaguc && \
     mkdir -p /adaguc/adagucdb && \
@@ -90,5 +92,7 @@ EXPOSE 8080
 # For HTTPS
 EXPOSE 8443 
 
+
+RUN mkdir /servicehealth
 
 ENTRYPOINT /adaguc/start.sh
