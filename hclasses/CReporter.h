@@ -23,7 +23,7 @@ class CReporter {
 private:
   static CReporter *instance;
   std::list<CReportMessage> messageList;
-  void writeMessageToLog(const CT::string message, CReportMessage::Severities severity, const char* file, int line, const char* className);
+  void writeMessageToLog(const CT::string message, CReportMessage::Severities severity, const char* file, int line, const char* className) const;
   bool writelog = false;
 
 protected:
