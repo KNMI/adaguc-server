@@ -5,7 +5,7 @@
 
 class CReportMessage {
 public:
-    enum Severities { INFO, WARNING, ERROR, FATAL };
+    enum Severities { INFO, WARNING, ERROR };
     enum Categories { PROJECTION, GENERAL };
     CReportMessage(const CReportMessage &m);
     CReportMessage(CT::string message, Severities severity, Categories category, CT::string documentationLink);

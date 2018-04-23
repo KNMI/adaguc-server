@@ -235,8 +235,7 @@ bool CDataReader::copyCRSFromProjectionVariable(CDataSource *dataSource) const {
   CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
   CDF::Variable *projVar = cdfObject->getVariableNE(projvarnameAttr->toString().c_str());
   if(projVar == NULL) {
-    CDBWarning("projection variable '%s' not found", (char *) projvarnameAttr->data);
-    CREPORT_ERROR_NODOC(CT::string("The projection variable name defined in grid_mapping attribute is not found: ") + projvarnameAttr->toString(), CReportMessage::Categories::GENERAL);
+    CREPORT_WARN_NODOC(CT::string("The projection variable name defined in grid_mapping attribute is not found: ") + projvarnameAttr->toString(), CReportMessage::Categories::GENERAL);
     return false;
   }
 
@@ -268,7 +267,7 @@ bool CDataReader::copyCRSFromADAGUCProjectionVariable(CDataSource *dataSource, c
   }
 
   if (proj4Attr->toString().length() == 0) {
-    CREPORT_ERROR_NODOC(CT::string("Found a proj4 or proj4_params attribute, but it is empty. Skipping the attribute."), CReportMessage::Categories::GENERAL);
+    CREPORT_WARN_NODOC(CT::string("Found a proj4 or proj4_params attribute, but it is empty. Skipping the attribute."), CReportMessage::Categories::GENERAL);
     return false;
   }
 
@@ -289,8 +288,7 @@ bool CDataReader::copyCRSFromCFProjectionVariable(CDataSource *dataSource, CDF::
   int status = proj4ToCF.convertCFToProj(projVar, &projString);
 
   if (status != 0) {
-    CDBWarning("Unknown projection");
-    CREPORT_ERROR_NODOC(CT::string("Unknown CF conventions projection."), CReportMessage::Categories::GENERAL);
+    CREPORT_WARN_NODOC(CT::string("Unknown CF conventions projection."), CReportMessage::Categories::GENERAL);
     return false;
   }
 
@@ -366,7 +364,6 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
 
   if(dataSource->dNetCDFNumDims<2){
     CREPORT_ERROR_NODOC(CT::string("The following variable has less than two dimensions, while at least x and y dimensions are required: ") + dataSourceVar->name.c_str(), CReportMessage::Categories::GENERAL);
-    CDBError("Variable %s has less than two dimensions", dataSourceVar->name.c_str());
     return 1;
   }
 
@@ -417,7 +414,6 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
     int statusX = dataSource->varX->readData(CDF_DOUBLE,sta,sto,str,true);
     if(statusX!=0){
       CREPORT_ERROR_NODOC(CT::string("Not possible to read data for dimension ") + dataSource->varX->name, CReportMessage::Categories::GENERAL);
-      CDBError("Unable to read x dimension with name %s for variable %s",dataSource->varX->name.c_str(),dataSourceVar->name.c_str());
       return 1;
     }
 
@@ -434,7 +430,6 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
     int statusY = dataSource->varY->readData(CDF_DOUBLE,sta,sto,str,true);
     if(statusY!=0){
       CREPORT_ERROR_NODOC(CT::string("Not possible to read data for dimension ") + dataSource->varY->name, CReportMessage::Categories::GENERAL);
-      CDBError("Unable to read y dimension for variable %s",dataSourceVar->name.c_str());
       for(size_t j=0;j<dataSource->varY->dimensionlinks.size();j++){
         CDBDebug("For var %s, reading dim %s of size %d (%d %d %d)", dataSource->varY->name.c_str(),dataSource->varY->dimensionlinks[j]->name.c_str(),dataSource->varY->dimensionlinks[j]->getSize(),sta[j],sto[j],str[j]);
       }
@@ -585,7 +580,6 @@ bool CDataReader::determineXandYVars(CDataSource *dataSource, const CDF::Variabl
 
   if(dimX == NULL || dimY == NULL) {
     CREPORT_ERROR_NODOC(CT::string("X and or Y dims not found."), CReportMessage::Categories::GENERAL);
-    CDBError("X and or Y dims not found...");
     return false;
   }
 
@@ -597,8 +591,6 @@ bool CDataReader::determineXandYVars(CDataSource *dataSource, const CDF::Variabl
         CT::string("Not possible to find variable for dimensions with names ") + dimX->name +
         CT::string(" and ") + dimY->name +
         CT::string(" for variable ") + dataSourceVar->name, CReportMessage::Categories::GENERAL);
-    CDBError("X ('%s') and or Y ('%s') vars not found for variable %s...", dimX->name.c_str(), dimY->name.c_str(),
-             dataSourceVar->name.c_str());
     return false;
   }
 
@@ -684,7 +676,6 @@ bool CDataReader::calculateCellSizeAndBBox(CDataSource *dataSource, const CDF::V
         CT::string("No data available for ") + dataSource->varX->name +
         CT::string(" and ") + dataSource->varY->name +
         CT::string(" dimensions."), CReportMessage::Categories::GENERAL);
-    CDBError("For variable '%s': No data available for '%s' or '%s' dimensions",dataSourceVar->name.c_str(),dataSource->varX->name.c_str(),dataSource->varY->name.c_str());
     return false;
   }
 
