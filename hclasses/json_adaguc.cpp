@@ -5,3 +5,12 @@ namespace CT {
     j = json(s.c_str());
   }
 }
+
+void to_json(json& j, const CReportMessage& m) {
+  j = {
+    {"message", m.getMessage()},
+    {"severity", m.getSeverity()},
+    {"category", m.getCategory()},
+    {"documentationLink", m.getDocumentationLink()}
+  };
+}
