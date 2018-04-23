@@ -38,7 +38,7 @@ void CReporter::addMessage(const CT::string message, CReportMessage::Severities 
 }
 
 void CReporter::writeMessageToLog(const CT::string message, CReportMessage::Severities severity, const char *file,
-                                  int line, const char *className) {
+                                  int line, const char *className) const {
 
 
   if(severity == Severities::INFO) {
