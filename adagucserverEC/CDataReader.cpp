@@ -295,7 +295,6 @@ bool CDataReader::copyCRSFromCFProjectionVariable(CDataSource *dataSource, CDF::
   //Projection string was created, set it in the datasource.
   CREPORT_INFO_NODOC(CT::string("Determined the projection string using the CF conventions: ") + projString, CReportMessage::Categories::GENERAL);
   dataSource->nativeProj4.copy(projString.c_str());
-  CDBDebug("Autogen proj4 string: %s", projString.c_str());
   projVar->setAttributeText("autogen_proj", projString.c_str());
 
   // Copy the EPSG code.
@@ -569,9 +568,6 @@ void CDataReader::determineXAndYDimIndices(CDataSource *dataSource, const CDF::V
                                     CT::string(" the x dim equals ") + dimX->name +
                                     CT::string(" and the y dim equals ") + dimY->name +
                                     CT::string(" based on their position and name."), CReportMessage::Categories::GENERAL);
-  #ifdef CDATAREADER_DEBUG
-  CDBDebug("Found xy dims for var %s:  %s and %s",dataSourceVar->name.c_str(),dimX->name.c_str(),dimY->name.c_str());
-  #endif
 }
 
 bool CDataReader::determineXandYVars(CDataSource *dataSource, const CDF::Variable *dataSourceVar, CDFObject *cdfObject) const {
@@ -599,10 +595,6 @@ bool CDataReader::determineXandYVars(CDataSource *dataSource, const CDF::Variabl
       CT::string(" as X variable and variable ") + dataSource->varY->name +
       CT::string(" as Y variable."), CReportMessage::Categories::GENERAL);
 
-  #ifdef CDATAREADER_DEBUG
-  CDBDebug("Found xy vars for var %s:  %s and %s",dataSourceVar->name.c_str(),dataSource->varX->name.c_str(),dataSource->varY->name.c_str());
-  #endif
-
   return true;
 }
 
@@ -622,7 +614,6 @@ void CDataReader::determineStride2DMap(CDataSource *dataSource) const {
         CREPORT_INFO_NODOC(CT::string("Determined a stride of ") +
                                               styleConfiguration->styleConfig->RenderSettings[0]->attr.striding +
                                               CT::string(" based on RenderSettings."), CReportMessage::Categories::GENERAL);
-        CDBDebug("dataSource->stride2DMap == %d", dataSource->stride2DMap);
         return;
       }
     }
