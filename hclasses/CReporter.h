@@ -17,8 +17,6 @@
 #define CREPORT_WARN_NODOC(message, category) CReporter::getInstance()->addMessage(message, CReportMessage::Severities::WARNING, category, "", __FILE__, __LINE__, className)
 #define CREPORT_ERROR(message, category, documentationLink) CReporter::getInstance()->addMessage(message, CReportMessage::Severities::ERROR, category, documentationLink, __FILE__, __LINE__, className)
 #define CREPORT_ERROR_NODOC(message, category) CReporter::getInstance()->addMessage(message, CReportMessage::Severities::ERROR, category, "", __FILE__, __LINE__, className)
-#define CREPORT_FATAL(message, category, documentationLink) CReporter::getInstance()->addMessage(message, CReportMessage::Severities::FATAL, category, documentationLink, __FILE__, __LINE__, className)
-#define CREPORT_FATAL_NODOC(message, category) CReporter::getInstance()->addMessage(message, CReportMessage::Severities::FATAL, category, "", __FILE__, __LINE__, className)
 
 class CReporter {
 

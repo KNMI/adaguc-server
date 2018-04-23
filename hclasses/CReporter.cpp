@@ -46,7 +46,7 @@ void CReporter::writeMessageToLog(const CT::string message, CReportMessage::Seve
     _printWarningLine(message);
   }
 
-  if(severity >= Severities::ERROR) {
+  if(severity == Severities::ERROR) {
     _printError("[E: %s, %d in %s] ", file, line, className);
     _printErrorLine(message);
   }
