@@ -1,11 +1,15 @@
-FROM centos:7
+FROM centos/devtoolset-7-toolchain-centos7:7
 
 MAINTAINER Adaguc Team at KNMI <adaguc@knmi.nl>
 
+USER root
+
 RUN yum update -y && yum install -y \
     epel-release deltarpm
-    
-RUN yum update -y && yum clean all && yum groupinstall -y "Development tools"
+
+RUN yum update -y && yum clean all
+
+RUN yum install -y centos-release-scl && yum install -y devtoolset-7-gcc-c++ && source /opt/rh/devtoolset-7/enable
 
 RUN yum update -y && yum install -y \
     cairo-devel \
@@ -18,6 +22,7 @@ RUN yum update -y && yum install -y \
     make \
     netcdf \
     netcdf-devel \
+    openssl \
     postgresql-devel \
     postgresql-server \
     proj \
@@ -27,7 +32,7 @@ RUN yum update -y && yum install -y \
     tomcat \
     udunits2 \
     udunits2-devel 
-    
+
 RUN mkdir /adaguc
 
 # Install adaguc-services (spring boot application for running adaguc-server)
@@ -91,6 +96,5 @@ VOLUME /adaguc/security
 EXPOSE 8080 
 # For HTTPS
 EXPOSE 8443 
-
 
 ENTRYPOINT /adaguc/start.sh
