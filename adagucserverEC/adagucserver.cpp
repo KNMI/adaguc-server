@@ -25,6 +25,7 @@
 
 #include "adagucserver.h"
 #include "CReporter.h"
+#include "CReportWriter.h"
 
 DEF_ERRORMAIN();
 
@@ -331,8 +332,8 @@ int main(int argc, const char *argv[]){
   }
   int status = _main(argc,argv);
 
-  // Print the check report.
-  CReporter::getInstance()->writeReport("/var/log/adaguc/checker_report.txt");
+  // Print the check report formatted as JSON.
+  CReportWriter::writeJSONReportToFile("/var/log/adaguc/checker_report.txt");
 
   CCachedDirReader::free();
   
@@ -341,4 +342,4 @@ int main(int argc, const char *argv[]){
   }
   
   return status;
-}      
+}

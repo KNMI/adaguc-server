@@ -381,7 +381,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
         variableNames.push_back(varSpeed->name.c_str());
         variableNames.push_back(varDirection->name.c_str());
         addXMLLayerToConfig(srvParam,cdfObject,&variableNames,"derived",srvParam->internalAutoResourceLocation.c_str());
-        CREPORT_INFO("Found derived wind parameters *_dir and *_speed. Assuming ASCAT data.");
+        CREPORT_INFO_NODOC("Found derived wind parameters *_dir and *_speed. Assuming ASCAT data.", CReportMessage::Categories::GENERAL);
       }
     }
     
@@ -394,7 +394,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
         variableNames.push_back(varSpeed->name.c_str());
         variableNames.push_back(varDirection->name.c_str());
         addXMLLayerToConfig(srvParam,cdfObject,&variableNames,"derived",srvParam->internalAutoResourceLocation.c_str());
-        CREPORT_INFO("Detected ff and dd wind variables.");
+        CREPORT_INFO_NODOC("Detected ff and dd wind variables.", CReportMessage::Categories::GENERAL);
       }
     }
     
@@ -415,11 +415,10 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
         }
       
         if(varindex_x!=-1&&varindex_y!=-1){
-          CDBDebug("WindData");
           std::vector<CT::string> variableNames;
           variableNames.push_back(cdfObject->variables[varindex_x]->name.c_str());
           variableNames.push_back(cdfObject->variables[varindex_y]->name.c_str());
-          CREPORT_INFO("Detected standard name wind variables.");
+          CREPORT_INFO_NODOC("Detected standard name wind variables.", CReportMessage::Categories::GENERAL);
           addXMLLayerToConfig(srvParam,cdfObject,&variableNames,"derived",srvParam->internalAutoResourceLocation.c_str());
           varindex_x = -1;
           varindex_y = -1;
@@ -481,7 +480,7 @@ void CAutoResource::addXMLLayerToConfig(CServerParams* const srvParam,CDFObject 
         // TODO This must be accomplished with standard name / global attribute mappings
         if(featureType->getDataAsString().equals("timeSeries")||featureType->getDataAsString().equals("point")){
           CServerConfig::XMLE_RenderMethod* xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
-          CREPORT_INFO((*variableNames)[0]+" featureType is timeSeries or point. Assuming point render method for now.");
+          CREPORT_INFO_NODOC((*variableNames)[0]+" featureType is timeSeries or point. Assuming point render method for now.", CReportMessage::Categories::GENERAL);
           xmleRenderMethod->value.copy("point");
           xmleLayer->RenderMethod.insert(xmleLayer->RenderMethod.begin(),xmleRenderMethod);
         }
@@ -490,7 +489,7 @@ void CAutoResource::addXMLLayerToConfig(CServerParams* const srvParam,CDFObject 
       if (adaguc_data_type != NULL){
         if (adaguc_data_type->toString().equals("CConvertGeoJSON")){
           CServerConfig::XMLE_RenderMethod* xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
-          CREPORT_INFO("adaguc_data_type set to CConvertGeoJSON. Assuming polyline render method for now.");
+          CREPORT_INFO_NODOC("adaguc_data_type set to CConvertGeoJSON. Assuming polyline render method for now.", CReportMessage::Categories::GENERAL);
           xmleRenderMethod->value.copy("polyline");
           xmleLayer->RenderMethod.insert(xmleLayer->RenderMethod.begin(),xmleRenderMethod);
         }
@@ -506,7 +505,7 @@ void CAutoResource::addXMLLayerToConfig(CServerParams* const srvParam,CDFObject 
         if(attribute!=NULL){
           if(attribute->getDataAsString().equals("rgba")){
             CServerConfig::XMLE_RenderMethod* xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
-            CREPORT_INFO("Only one variable. Assuming grid and setting render method to rgba. Overriding previously set render method.");
+            CREPORT_INFO_NODOC("Only one variable. Assuming grid and setting render method to rgba. Overriding previously set render method.", CReportMessage::Categories::GENERAL);
             xmleRenderMethod->value.copy("rgba");
             xmleLayer->RenderMethod.push_back(xmleRenderMethod);
           }
@@ -530,7 +529,7 @@ void CAutoResource::addXMLLayerToConfig(CServerParams* const srvParam,CDFObject 
     xmleName->value.copy(newName.c_str());
     xmleLayer->Name.push_back(xmleName);
     CServerConfig::XMLE_RenderMethod* xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
-    CREPORT_INFO("Exactly two variables: Assuming wind and setting render method to nearestpoint. Overriding previously set render method.");
+    CREPORT_INFO_NODOC("Exactly two variables: Assuming wind and setting render method to nearestpoint. Overriding previously set render method.", CReportMessage::Categories::GENERAL);
     xmleRenderMethod->value.copy("nearestpoint");
     xmleLayer->RenderMethod.push_back(xmleRenderMethod);
     
