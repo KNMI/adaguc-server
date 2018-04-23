@@ -41,6 +41,11 @@ void CReporter::writeMessageToLog(const CT::string message, CReportMessage::Seve
                                   int line, const char *className) {
 
 
+  if(severity == Severities::INFO) {
+    _printDebug("[D: %s, %d in %s] ", file, line, className);
+    _printDebugLine(message);
+  }
+
   if(severity == Severities::WARNING) {
     _printWarning("[W: %s, %d in %s] ", file, line, className);
     _printWarningLine(message);

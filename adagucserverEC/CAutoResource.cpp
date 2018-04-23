@@ -415,7 +415,6 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
         }
       
         if(varindex_x!=-1&&varindex_y!=-1){
-          CDBDebug("WindData");
           std::vector<CT::string> variableNames;
           variableNames.push_back(cdfObject->variables[varindex_x]->name.c_str());
           variableNames.push_back(cdfObject->variables[varindex_y]->name.c_str());
