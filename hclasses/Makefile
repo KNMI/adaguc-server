@@ -7,7 +7,7 @@ endif
 
 CCOMPILER=g++ -g $(BUILDER_ADAGUCCOMPILERSETTINGS) -I $(INCLUDEDIR)
 
-OBJECTS =  CTypes.o CTString.o CXMLParser.o CDebugger.o CDirReader.o CStopWatch.o CHTTPTools.o CReadFile.o CReporter.o CReportWriter.o json_adaguc.o test.o
+OBJECTS =  CTypes.o CTString.o CXMLParser.o CDebugger.o CDirReader.o CStopWatch.o CHTTPTools.o CReadFile.o CReporter.o CReportMessage.o CReportWriter.o json_adaguc.o test.o
 
 EXECUTABLE= hclasses
 
