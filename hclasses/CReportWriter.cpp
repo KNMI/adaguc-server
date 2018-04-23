@@ -14,9 +14,7 @@ namespace CReportWriter {
     json report;
     CReporter *cReporter = CReporter::getInstance();
 
-    report["error"] = json(cReporter->getErrorList());
-    report["info"] = json(cReporter->getInfoList());
-    report["warning"] = json(cReporter->getWarningList());
+    report["messages"] = json(cReporter->getMessageList());
 
     std::ofstream reportfile(reportFilename.c_str());
     if(!reportfile) {

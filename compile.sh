@@ -1,17 +1,17 @@
 #!/bin/bash
 
 if [[ $1 == dev ]]; then
-  export ADAGUCCOMPILERSETTINGS="-Wall -DMEMLEAKCHECK -g"
+  export ADAGUCCOMPILERSETTINGS="-Wall -DMEMLEAKCHECK -std=c++11 -g"
   ulimit -c unlimited
 fi
 #For developing, use:
-#export ADAGUCCOMPILERSETTINGS="-Wall -DMEMLEAKCHECK -g"
+#export ADAGUCCOMPILERSETTINGS="-Wall -DMEMLEAKCHECK -std=c++11 -g"
 
 #For time measurement of components use
-#export ADAGUCCOMPILERSETTINGS="-Wall -DMEMLEAKCHECK -DMEASURETIME -g"
+#export ADAGUCCOMPILERSETTINGS="-Wall -DMEMLEAKCHECK -DMEASURETIME -std=c++11 -g"
 
 #For operational, use:
-#export ADAGUCCOMPILERSETTINGS="-msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2"
+#export ADAGUCCOMPILERSETTINGS="-msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 -std=c++11"
 
 DEFAULTCOMPILERSETTINGS="-msse -msse2 -msse3 -mssse3 -mfpmath=sse -O2 -std=c++11"
 DEFAULTADAGUCCOMPONENTS="-DENABLE_CURL -DADAGUC_USE_GDAL -DADAGUC_USE_SQLITE -DADAGUC_USE_POSTGRESQL"

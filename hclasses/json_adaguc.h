@@ -3,6 +3,8 @@
 
 #include "CTString.h"
 #include "json.hpp"
+#include "CReportMessage.h"
+
 using json = nlohmann::json;
 
 
@@ -17,5 +19,6 @@ namespace CT {
   void to_json(json& j, const string& s);
 };
 
+void to_json(json& j, const CReportMessage& m);
 
 #endif //JSON_ADAGUC_H
