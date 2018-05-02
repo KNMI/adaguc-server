@@ -99,7 +99,7 @@ namespace CDF{
       void setParentCDFObject(void *parentCDFObject){
         this->parentCDFObject=parentCDFObject;
       }
-      void * getParentCDFObject(){
+      void * getParentCDFObject() const {
         if(parentCDFObject==NULL){
           throw(CDF_E_VARHASNOPARENT);
         }

@@ -61,7 +61,8 @@ class CProj4ToCF{
      * @input CDF::Variable *: The projection variable.
      * return integer: Equals to of CPROJ4TOCF_UNITS_METER or CPROJ4TOCF_UNITS_KILOMETER
      */
-    int getProjectionUnits(CDF::Variable *projectionVariable);
+    int getProjectionUnits(const CDF::Variable *const projectionVariable) const;
+    CT::string setProjectionUnits(const CDF::Variable *const projectionVariable) const;
     
     CT::string *getProj4Value(const char *proj4Key,std::vector <KVP*> projKVPList);
     
