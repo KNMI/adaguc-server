@@ -1,6 +1,6 @@
 #include "CReportMessage.h"
 
-const char * CReportMessage::severity_names[] = { "INFO", "WARNING", "ERROR", "FATAL"};
+const char * CReportMessage::severity_names[] = { "INFO", "WARNING", "ERROR"};
 const char * CReportMessage::category_names[] = { "PROJECTION", "GENERAL"};
 
 CReportMessage::CReportMessage(const CReportMessage &m) : message(m.message), severity(m.severity),
