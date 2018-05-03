@@ -26,6 +26,7 @@
 #include "CDBFileScanner.h"
 #include "CDBFactory.h"
 #include "CDebugger.h"
+#include "CReporter.h"
 #include "adagucserver.h"
 #include "CNetCDFDataWriter.h"
 #include <set>
@@ -574,7 +575,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
                     CDF::Attribute *dimUnits = dimVar->getAttributeNE("units");
                     if(dimUnits==NULL){
                       if(isTimeDim[d]){
-                        CDBError("No time units found for variable %s",dimVar->name.c_str());
+                        CREPORT_ERROR_NODOC(CT::string("No time units found for variable ")+dimVar->name, CReportMessage::Categories::GENERAL);
                         throw(__LINE__);
                       }
                       dimVar->setAttributeText("units","1");
