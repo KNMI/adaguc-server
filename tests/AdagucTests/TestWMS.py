@@ -1,9 +1,10 @@
-import os
+import os, os.path
 from StringIO import StringIO
 from adaguc.CGIRunner import CGIRunner
 import unittest
 import shutil
 import subprocess
+import json
 from lxml import etree
 from lxml import objectify
 import re
@@ -231,3 +232,28 @@ class TestWMS(unittest.TestCase):
         AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
         self.assertEqual(status, 0)
         self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))
+
+    def test_WMSGetMap_Report_nounits(self):
+        AdagucTestTools().cleanTempDir()
+        filename="test_WMSGetMap_Report_nounits"
+        status,data,headers = AdagucTestTools().runADAGUCServer(
+            "source=testdata_report_nounits.nc&service=WMS&request=GetMap&version=1.3.0&layers=sow_a1&crs=EPSG%3A4326&bbox=47.80599631376197%2C1.4162628389784275%2C56.548995855839685%2C9.526486675156528&width=863&height=981&format=image%2Fpng&info_format=application%2Fjson&time=1000-01-01T00%3A00%3A00Z%2F3000-01-01T00%3A00%3A00Z&dim_reference_time=2017-12-15T09%3A00%3A00Z",
+            env=self.env, isCGI=False, showLogOnError=False)
+        AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
+        self.assertEqual(status, 1)
+        self.assertTrue(os.path.exists("./checker_report.txt"))
+        reportfile = open("./checker_report.txt", "r")
+        report = json.load(reportfile)
+        self.assertTrue(report.has_key("messages"))
+        expectedErrors = ["No time units found for variable time", ] ## add more errors to this list if we expect more.
+        foundErrors = []
+        for message in report["messages"]:
+            self.assertTrue(message.has_key("category"))
+            self.assertTrue(message.has_key("documentationLink"))
+            self.assertTrue(message.has_key("message"))
+            self.assertTrue(message.has_key("severity"))
+            if (message["severity"] == "ERROR"):
+                foundErrors.append(message["message"])
+                self.assertIn(message["message"], expectedErrors)
+        self.assertEqual(len(expectedErrors), len(foundErrors))
+        
