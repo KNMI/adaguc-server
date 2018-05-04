@@ -48,22 +48,36 @@ class TestWMS(unittest.TestCase):
         expect = etree.tostring(obj2)     
 
         self.assertEquals(expect, result)
+
+    def checkReport(self, reportFilename="", expectedReportFilename=""):
+        self.assertTrue(os.path.exists(reportFilename))
+        self.assertEqual(AdagucTestTools().readfromfile(reportFilename),
+                         AdagucTestTools().readfromfile(self.expectedoutputsspath + expectedReportFilename))
+        os.remove(reportFilename)
     
     def test_WMSGetCapabilities_testdatanc(self):
         AdagucTestTools().cleanTempDir()
+        os.remove("checker_report.txt") ## TODO: when check cmd line argument, remove this. should be in tempdir set by cmd line
         filename="test_WMSGetCapabilities_testdatanc"
         status,data,headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WMS&request=getcapabilities", env = self.env)
         AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
         self.assertEqual(status, 0)
         self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))
 
+        self.checkReport(reportFilename="checker_report.txt",
+                         expectedReportFilename="checker_report_WMSGetCapabilities_testdatanc.txt")
+
     def test_WMSGetMap_testdatanc(self):
         AdagucTestTools().cleanTempDir()
+        os.remove("checker_report.txt") ## TODO: when check cmd line argument, remove this. should be in tempdir set by cmd line
         filename="test_WMSGetMap_testdatanc"
         status,data,headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&", env = self.env)
         AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
         self.assertEqual(status, 0)
         self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+
+        self.checkReport(reportFilename="checker_report.txt",
+                         expectedReportFilename="checker_report_WMSGetMap_testdatanc.txt")
 
     def test_WMSGetMap_testdatanc_customprojectionstring(self):
         AdagucTestTools().cleanTempDir()
@@ -256,4 +270,3 @@ class TestWMS(unittest.TestCase):
                 foundErrors.append(message["message"])
                 self.assertIn(message["message"], expectedErrors)
         self.assertEqual(len(expectedErrors), len(foundErrors))
-        
