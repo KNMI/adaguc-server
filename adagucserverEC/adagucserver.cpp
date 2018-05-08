@@ -333,7 +333,13 @@ int main(int argc, const char *argv[]){
   int status = _main(argc,argv);
 
   // Print the check report formatted as JSON.
-  CReportWriter::writeJSONReportToFile("/var/log/adaguc/checker_report.txt");
+  const char *  ADAGUC_CHECKER_DIR =getenv("ADAGUC_CHECKER_DIR");
+  if (ADAGUC_CHECKER_DIR != NULL) {
+    CReportWriter::writeJSONReportToFile(CT::string(ADAGUC_CHECKER_DIR) + "/checker_report.txt");
+  } else {
+    // Default config used by tests.
+    CReportWriter::writeJSONReportToFile("./checker_report.txt");
+  }
 
   CCachedDirReader::free();
   

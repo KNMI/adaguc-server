@@ -77,6 +77,7 @@ RUN  chmod +x /adaguc/adaguc-server-*.sh && chmod +x /adaguc/start.sh
 # Set adaguc-services configuration file
 ENV ADAGUC_SERVICES_CONFIG=/adaguc/adaguc-services-config.xml 
 ENV ADAGUCDB=/adaguc/adagucdb
+ENV ADAGUC_CHECKER_DIR=/var/log/adaguc
 
 # These volumes are configured in /adaguc/adaguc-server-config.xml
 # Place your netcdfs, HDF5 and GeoJSONS here, they will be visualized with the source=<file> KVP via the URI

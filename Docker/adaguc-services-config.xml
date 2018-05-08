@@ -16,6 +16,7 @@
     <export>ADAGUC_LOGFILE=/var/log/adaguc/adaguc-server.log</export>
     <export>ADAGUC_FONT=/adaguc/adaguc-server-master/data/fonts/FreeSans.ttf</export>
     <export>ADAGUC_ONLINERESOURCE={ENV.EXTERNALADDRESS}/adaguc-services/adagucserver?</export>
+    <export>ADAGUC_CHECKER_DIR={ENV.ADAGUC_CHECKER_DIR}</export>
   </adaguc-server>
   <autowms>
     <enabled>true</enabled>
