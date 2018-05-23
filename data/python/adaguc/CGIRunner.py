@@ -44,7 +44,8 @@ class CGIRunner:
     # read line without blocking
     while True:
       try:
-        line = q.get_nowait()
+        #line = q.get_nowait() #<-- Causes a lot of CPU usage!
+        line = q.get(timeout=.01)
         if(callback != None):
           callback(line)
       except Empty:
@@ -54,7 +55,7 @@ class CGIRunner:
     """ Somehow sometimes stuff is still in que """
     while True:
       try:  
-        line = q.get(timeout=.001)
+        line = q.get(timeout=.1)
         if(callback != None):
           callback(line)
       except Empty:
