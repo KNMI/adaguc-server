@@ -36,7 +36,7 @@ RUN yum update -y && yum install -y \
 RUN mkdir /adaguc
 
 # Install adaguc-services (spring boot application for running adaguc-server)
-RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.0.3/adaguc-services-1.0.3.war > /usr/share/tomcat/webapps/adaguc-services.war
+RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.0.4/adaguc-services-1.0.4.war > /usr/share/tomcat/webapps/adaguc-services.war
 
 # Install adaguc-server from context
 COPY . /adaguc/adaguc-server-master
@@ -97,5 +97,7 @@ VOLUME /adaguc/security
 EXPOSE 8080 
 # For HTTPS
 EXPOSE 8443 
+
+RUN mkdir /servicehealth
 
 ENTRYPOINT /adaguc/start.sh
