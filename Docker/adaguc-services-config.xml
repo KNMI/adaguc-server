@@ -23,4 +23,8 @@
     <autowmspath>/data/adaguc-autowms/</autowmspath>
     <datasetpath>/data/adaguc-datasets/</datasetpath>
   </autowms>
+  <servicehealth>
+    <enabled>true</enabled>
+    <servicehealthpath>/servicehealth</servicehealthpath>
+  </servicehealth>
 </adaguc-services>
