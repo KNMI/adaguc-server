@@ -3,28 +3,22 @@
 ### Setup truststore and keystore ###
 ADAGUC_SERVICES_SECURITY=/adaguc/security
 
-# Get configured hostname
+# Get configured hostname from the EXTERNALADDRESS env
 HOSTNAME=${EXTERNALADDRESS}
  
 # Remove protocol part of url  #
-HOSTNAME="${HOSTNAME#http://}"
-HOSTNAME="${HOSTNAME#https://}"
-HOSTNAME="${HOSTNAME#ftp://}"
-HOSTNAME="${HOSTNAME#scp://}"
-HOSTNAME="${HOSTNAME#scp://}"
-HOSTNAME="${HOSTNAME#sftp://}"
+HOSTNAME="${HOSTNAME#http://}" && HOSTNAME="${HOSTNAME#https://}" && HOSTNAME="${HOSTNAME#ftp://}" && HOSTNAME="${HOSTNAME#scp://}" && HOSTNAME="${HOSTNAME#scp://}" && HOSTNAME="${HOSTNAME#sftp://}"
  
 # Remove username and/or username:password part of URL  #
-HOSTNAME="${HOSTNAME#*:*@}"
-HOSTNAME="${HOSTNAME#*@}"
+HOSTNAME="${HOSTNAME#*:*@}" && HOSTNAME="${HOSTNAME#*@}"
  
 # Remove rest of urls #
-HOSTNAME=${HOSTNAME%%/*}
-HOSTNAME=${HOSTNAME%%:*}
+HOSTNAME=${HOSTNAME%%/*} && HOSTNAME=${HOSTNAME%%:*}
  
 # Show domain name only #
 echo "Derived hostname is $HOSTNAME"
 
+#Setup keystore
 export KEYSTOREUSERID=$(stat -c "%u" ${ADAGUC_SERVICES_SECURITY})
 echo "Got ${KEYSTOREUSERID} from owner of dir ${ADAGUC_SERVICES_SECURITY}"
 # Create security user
@@ -50,11 +44,11 @@ fi
 ### Make sure that this service trusts itself by adding its certificate to the trust store ###
 
 # 1) Export certificate from a keystore to a file called adaguc-services-cert.pem
-keytool -export -alias tomcat -rfc -file adaguc-services-cert.pem -keystore ${ADAGUC_SERVICES_SECURITY}/keystore.jks -storepass password
+keytool -export -alias tomcat -rfc -file  ${ADAGUC_SERVICES_SECURITY}/adaguc-services-cert.pem -keystore ${ADAGUC_SERVICES_SECURITY}/keystore.jks -storepass password
 
 # 2) Put this certificate from adaguc-services-cert.pem into the truststore
 keytool -delete -alias adagucservicescert -keystore ${ADAGUC_SERVICES_SECURITY}/truststore.ts -storepass changeit -noprompt
-keytool -import -v -trustcacerts -alias adagucservicescert -file adaguc-services-cert.pem -keystore ${ADAGUC_SERVICES_SECURITY}/truststore.ts -storepass changeit -noprompt
+keytool -import -v -trustcacerts -alias adagucservicescert -file  ${ADAGUC_SERVICES_SECURITY}/adaguc-services-cert.pem -keystore ${ADAGUC_SERVICES_SECURITY}/truststore.ts -storepass changeit -noprompt
 
 # Create CA for tokenapi: file and key for  authority /O=KNMI/OU=RDWDT/CN=adaguc-services_ca_tokenapi"
 
@@ -71,7 +65,6 @@ openssl req \
     -out ${ADAGUC_SERVICES_SECURITY}/adaguc-services-ca.cert
 
 # Put this CA in the truststore
-
 keytool -delete -alias adaguc-services-ca -keystore ${ADAGUC_SERVICES_SECURITY}/truststore.ts -storepass changeit -noprompt
 keytool -import -v -trustcacerts -alias adaguc-services-ca -file ${ADAGUC_SERVICES_SECURITY}/adaguc-services-ca.cert -keystore ${ADAGUC_SERVICES_SECURITY}/truststore.ts -storepass changeit -noprompt
 else
