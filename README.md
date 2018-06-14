@@ -109,12 +109,13 @@ http://localhost:8090/adaguc-services/adagucserver?service=wms&request=getcapabi
 
 First download a sequence of satellite data from opendap.knmi.nl:
 ```
+export ADAGUCHOME=$HOME
 cd $ADAGUCHOME/adaguc-server-docker/adaguc-data/
 wget -nc -r -l2 -A.h5   -I /knmi/thredds/fileServer/,/knmi/thredds/catalog/ 'http://opendap.knmi.nl/knmi/thredds/catalog/ADAGUC/testsets/projectedgrids/meteosat/catalog.html'
 ls opendap.knmi.nl/knmi/thredds/fileServer/ADAGUC/testsets/projectedgrids/meteosat/
 ```
 
-Put a dataset configuration file named sat.xml inside $ADAGUCHOME/adaguc-server-docker/adaguc-datasets/ :
+Create a dataset configuration file named $ADAGUCHOME/adaguc-server-docker/adaguc-datasets/sat.xml :
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
 <Configuration>
