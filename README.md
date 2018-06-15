@@ -237,4 +237,5 @@ You can dump the header or visualize with:
 * http://localhost:8090/adaguc-services/wcs? For serving Web Coverage Services
 * http://localhost:8090/adaguc-services/adagucopendap/ For serving OpenDAP services
 * http://localhost:8090/adaguc-services/autowms? For getting the list of visualizable resources
+* http://localhost:8090/adaguc-services/servicehealth? For getting overview and status of available datasets
 
