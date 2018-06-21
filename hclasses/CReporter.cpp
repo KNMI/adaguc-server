@@ -10,7 +10,8 @@ using Categories = CReportMessage::Categories;
 
 CReporter *CReporter::instance = NULL;
 
-CReporter::CReporter(bool report_and_log) : messageList(), writelog(report_and_log) {
+CReporter::CReporter(bool report_and_log)
+    : messageList(), writelog(report_and_log), _filename() {
     // Empty at this point
 }
 
@@ -59,4 +60,14 @@ void CReporter::writeMessageToLog(const CT::string message, CReportMessage::Seve
 
 const std::list<CReportMessage> CReporter::getMessageList() const {
   return messageList;
+}
+
+void CReporter::filename(const CT::string filename)
+{
+    this->_filename = filename;
+}
+
+CT::string CReporter::filename() const
+{
+    return this->_filename;
 }
