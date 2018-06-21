@@ -57,21 +57,18 @@ class TestWMS(unittest.TestCase):
     
     def test_WMSGetCapabilities_testdatanc(self):
         AdagucTestTools().cleanTempDir()
-        os.remove("checker_report.txt") ## TODO: when check cmd line argument, remove this. should be in tempdir set by cmd line
         filename="test_WMSGetCapabilities_testdatanc"
         status,data,headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WMS&request=getcapabilities", env = self.env)
         AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
         self.assertEqual(status, 0)
         self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))
-
-        self.checkReport(reportFilename="checker_report.txt",
-                         expectedReportFilename="checker_report_WMSGetCapabilities_testdatanc.txt")
+        self.assertFalse(os.path.exists("checker_report.txt"))
 
     def test_WMSGetMap_testdatanc(self):
         AdagucTestTools().cleanTempDir()
-        os.remove("checker_report.txt") ## TODO: when check cmd line argument, remove this. should be in tempdir set by cmd line
         filename="test_WMSGetMap_testdatanc"
-        status,data,headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&", env = self.env)
+        status,data,headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&",
+                                                                env = self.env, args=["--report"])
         AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
         self.assertEqual(status, 0)
         self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
@@ -250,13 +247,14 @@ class TestWMS(unittest.TestCase):
     def test_WMSGetMap_Report_nounits(self):
         AdagucTestTools().cleanTempDir()
         filename="test_WMSGetMap_Report_nounits"
+        reportfilename="./nounits_checker_report.txt"
         status,data,headers = AdagucTestTools().runADAGUCServer(
             "source=testdata_report_nounits.nc&service=WMS&request=GetMap&version=1.3.0&layers=sow_a1&crs=EPSG%3A4326&bbox=47.80599631376197%2C1.4162628389784275%2C56.548995855839685%2C9.526486675156528&width=863&height=981&format=image%2Fpng&info_format=application%2Fjson&time=1000-01-01T00%3A00%3A00Z%2F3000-01-01T00%3A00%3A00Z&dim_reference_time=2017-12-15T09%3A00%3A00Z",
-            env=self.env, isCGI=False, showLogOnError=False)
+            env=self.env, args=["--report=%s" % reportfilename], isCGI=False, showLogOnError=False)
         AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
         self.assertEqual(status, 1)
-        self.assertTrue(os.path.exists("./checker_report.txt"))
-        reportfile = open("./checker_report.txt", "r")
+        self.assertTrue(os.path.exists(reportfilename))
+        reportfile = open(reportfilename, "r")
         report = json.load(reportfile)
         self.assertTrue(report.has_key("messages"))
         expectedErrors = ["No time units found for variable time", ] ## add more errors to this list if we expect more.
