@@ -23,24 +23,26 @@ By default adaguc-server docker is set to run on port 8090 and to serve content 
 ## To start with the docker image, do:
 ```
 docker pull openearth/adaguc-server # Or build latest docker from this repo yourself with "docker build -t adaguc-server ."
+export ADAGUCHOME=$HOME # You are free to set ADAGUCHOME to any directory you like
+mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-data
+mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-datasets
+mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-autowms
+mkdir -p $ADAGUCHOME/adaguc-server-docker/adagucdb
+mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-logs && chmod 777 $ADAGUCHOME/adaguc-server-docker/adaguc-logs
+mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-security
 
-mkdir -p $HOME/adaguc-server-docker/adaguc-data
-mkdir -p $HOME/adaguc-server-docker/adaguc-datasets
-mkdir -p $HOME/adaguc-server-docker/adaguc-autowms
-mkdir -p $HOME/adaguc-server-docker/adagucdb
-mkdir -p $HOME/adaguc-server-docker/adaguc-logs && chmod 777 $HOME/adaguc-server-docker/adaguc-logs
-mkdir -p $HOME/adaguc-server-docker/adaguc-security
-
+export ADAGUCHOME=$HOME
 docker run \
   -e EXTERNALADDRESS="http://`hostname`:8090/" \
   -p 8090:8080 \
-  -v $HOME/adaguc-server-docker/adaguc-data:/data/adaguc-data \
-  -v $HOME/adaguc-server-docker/adaguc-datasets:/data/adaguc-datasets \
-  -v $HOME/adaguc-server-docker/adaguc-autowms:/data/adaguc-autowms \
-  -v $HOME/adaguc-server-docker/adagucdb:/adaguc/adagucdb \
-  -v $HOME/adaguc-server-docker/adaguc-logs:/var/log/adaguc \
+  -v $ADAGUCHOME/adaguc-server-docker/adaguc-data:/data/adaguc-data \
+  -v $ADAGUCHOME/adaguc-server-docker/adaguc-datasets:/data/adaguc-datasets \
+  -v $ADAGUCHOME/adaguc-server-docker/adaguc-autowms:/data/adaguc-autowms \
+  -v $ADAGUCHOME/adaguc-server-docker/adagucdb:/adaguc/adagucdb \
+  -v $ADAGUCHOME/adaguc-server-docker/adaguc-logs:/var/log/adaguc \
+  --tmpfs /tmp \
   --name my-adaguc-server \
-  -it openearth/adaguc-server 
+  -d openearth/adaguc-server 
 
 ```
 If the container does not want to run because the container name is aready in use, please do:
@@ -55,15 +57,16 @@ For some cases it is required that the server is running over a secure connectio
 To overcome this issue adaguc services can be served over https. During startup, the adaguc docker checks if you have provided a SSL certificate in the adaguc-security folder. If none available, it creates a self signed SSL certificate for you, the certificate is stored in a keystore in the adaguc-security folder. By default the self signed certificate is not automatically trusted by your browser. You have to make an exception in your browser in order to use the services. This can be done by visiting one of the URL's (https://localhost:8443/adaguc-services/adagucserver?) and confirm an exception. To overcome the security exception, you are free to add your own valid SSL certificate (from your certificate authority or letsencrypt) if you have one. The alias inside the keystore is currently 'tomcat' and the password is 'password'. 
 
 ```
+export ADAGUCHOME=$HOME
 docker run \
   -e EXTERNALADDRESS="https://`hostname`:8443/" \
   -p 8443:8443 \
-  -v $HOME/adaguc-server-docker/adaguc-data:/data/adaguc-data \
-  -v $HOME/adaguc-server-docker/adaguc-datasets:/data/adaguc-datasets \
-  -v $HOME/adaguc-server-docker/adaguc-autowms:/data/adaguc-autowms \
-  -v $HOME/adaguc-server-docker/adagucdb:/adaguc/adagucdb \
-  -v $HOME/adaguc-server-docker/adaguc-logs:/var/log/adaguc \
-  -v $HOME/adaguc-server-docker/adaguc-security:/adaguc/security \
+  -v $ADAGUCHOME/adaguc-server-docker/adaguc-data:/data/adaguc-data \
+  -v $ADAGUCHOME/adaguc-server-docker/adaguc-datasets:/data/adaguc-datasets \
+  -v $ADAGUCHOME/adaguc-server-docker/adaguc-autowms:/data/adaguc-autowms \
+  -v $ADAGUCHOME/adaguc-server-docker/adagucdb:/adaguc/adagucdb \
+  -v $ADAGUCHOME/adaguc-server-docker/adaguc-logs:/var/log/adaguc \
+  -v $ADAGUCHOME/adaguc-server-docker/adaguc-security:/adaguc/security \
   --name my-adaguc-server \
   -it openearth/adaguc-server 
 ```
@@ -76,10 +79,13 @@ Remember: the first time you acces this link your browser will show a warning th
 
 ```
 # Put a NetCDF testfile into your autowms folder
-curl -kL https://github.com/KNMI/adaguc-server/raw/master/data/datasets/testdata.nc > $HOME/adaguc-server-docker/adaguc-autowms/testdata.nc
+export ADAGUCHOME=$HOME
+curl -kL https://github.com/KNMI/adaguc-server/raw/master/data/datasets/testdata.nc > $ADAGUCHOME/adaguc-server-docker/adaguc-autowms/testdata.nc
 ```
 AutoWMS files are referenced via the source= key value pair in the URL. Filenames must be URLEncoded. Supported files are NetCDF, HDF5 and GeoJSON.
-This file is now accessible via http://localhost:8090/adaguc-services/adagucserver?source=testdata.nc
+This file is now accessible via http://localhost:8090/adaguc-services/adagucserver?source=testdata.nc&service=WMS&request=GetCapabilities (An XML document about this NetCDF is shown)
+
+A GetMap request looks like http://localhost:8090/adaguc-services/adagucserver?%26source%3Dtestdata%2Enc&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=1249&HEIGHT=716&CRS=EPSG%3A4326&BBOX=34.29823486999199,-24.906440270168137,69.33472934198558,36.21169044983186&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&&0.47843952121424993
 
 You can visualize this link in the adaguc-viewer via "Add data", for example in http://geoservices.knmi.nl/viewer2.0/
 
@@ -89,7 +95,7 @@ Other testdata can be found here: http://opendap.knmi.nl/knmi/thredds/catalog/AD
 
 Get a dataset configurationfile:
 ```
-curl -kL https://raw.githubusercontent.com/KNMI/adaguc-server/master/data/config/datasets/dataset_a.xml > $HOME/adaguc-server-docker/adaguc-datasets/dataset_a.xml
+curl -kL https://raw.githubusercontent.com/KNMI/adaguc-server/master/data/config/datasets/dataset_a.xml > $ADAGUCHOME/adaguc-server-docker/adaguc-datasets/dataset_a.xml
 ```
 Now update the db:
 ```
@@ -103,12 +109,13 @@ http://localhost:8090/adaguc-services/adagucserver?service=wms&request=getcapabi
 
 First download a sequence of satellite data from opendap.knmi.nl:
 ```
-cd $HOME/adaguc-server-docker/adaguc-data/
+export ADAGUCHOME=$HOME
+cd $ADAGUCHOME/adaguc-server-docker/adaguc-data/
 wget -nc -r -l2 -A.h5   -I /knmi/thredds/fileServer/,/knmi/thredds/catalog/ 'http://opendap.knmi.nl/knmi/thredds/catalog/ADAGUC/testsets/projectedgrids/meteosat/catalog.html'
 ls opendap.knmi.nl/knmi/thredds/fileServer/ADAGUC/testsets/projectedgrids/meteosat/
 ```
 
-Put a dataset configuration file named sat.xml inside $HOME/adaguc-server-docker/adaguc-datasets/ :
+Create a dataset configuration file named $ADAGUCHOME/adaguc-server-docker/adaguc-datasets/sat.xml :
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
 <Configuration>
@@ -189,12 +196,13 @@ cd ./adaguc-server
 docker pull openearth/adaguc-viewer
 docker pull openearth/adaguc-server
 
-mkdir -p $HOME/adaguc-server-docker/adaguc-data
-mkdir -p $HOME/adaguc-server-docker/adaguc-datasets
-mkdir -p $HOME/adaguc-server-docker/adaguc-autowms
-mkdir -p $HOME/adaguc-server-docker/adagucdb 
-mkdir -p $HOME/adaguc-server-docker/adaguc-logs && chmod 777 $HOME/adaguc-server-docker/adaguc-logs
-mkdir -p $HOME/adaguc-server-docker/adaguc-security
+export ADAGUCHOME=$HOME
+mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-data
+mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-datasets
+mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-autowms
+mkdir -p $ADAGUCHOME/adaguc-server-docker/adagucdb 
+mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-logs && chmod 777 $ADAGUCHOME/adaguc-server-docker/adaguc-logs
+mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-security
 
 docker-compose -f ./Docker/docker-compose.yml up 
 ```
@@ -237,4 +245,5 @@ You can dump the header or visualize with:
 * http://localhost:8090/adaguc-services/wcs? For serving Web Coverage Services
 * http://localhost:8090/adaguc-services/adagucopendap/ For serving OpenDAP services
 * http://localhost:8090/adaguc-services/autowms? For getting the list of visualizable resources
+* http://localhost:8090/adaguc-services/servicehealth? For getting overview and status of available datasets
 
