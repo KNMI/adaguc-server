@@ -6,8 +6,9 @@ MAINTAINER Adaguc Team at KNMI <adaguc@knmi.nl>
 
 # production packages, same as stage two
 RUN yum update -y && yum install -y \
-    epel-release deltarpm && \
-    yum update -y && yum install -y \
+    epel-release deltarpm
+
+RUN yum update -y && yum install -y \
     python-lxml \
     cairo \
     curl \
@@ -57,8 +58,9 @@ FROM centos:7
 
 # production packages, same as stage one
 RUN yum update -y && yum install -y \
-    epel-release deltarpm && \
-    yum update -y && yum install -y \
+    epel-release deltarpm
+
+RUN yum update -y && yum install -y \
     python-lxml \
     cairo \
     curl \
@@ -73,6 +75,7 @@ RUN yum update -y && yum install -y \
     udunits2 \
     openssl \
     netcdf
+
 
 WORKDIR /adaguc/adaguc-server-master
 
