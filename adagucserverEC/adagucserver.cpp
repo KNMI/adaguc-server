@@ -168,7 +168,8 @@ int _main(int argc, char **argv){
           { "file", required_argument, 0, 0 },
           { "inspiredatasetcsw", required_argument, 0, 0 },
           { "datasetpath", required_argument, 0, 0 },
-          { "test", no_argument, 0, 0 }
+          { "test", no_argument, 0, 0 },
+          { "report", optional_argument, 0, 0 }
       };
 
       opt = getopt_long(argc, argv, "", long_options, &opt_idx);
@@ -219,6 +220,12 @@ int _main(int argc, char **argv){
               inspireDatasetCSW = optarg;
           if(strncmp(long_options[opt_idx].name, "datasetpath", 11) == 0)
               datasetPath = optarg;
+          if(strncmp(long_options[opt_idx].name, "report", 6) == 0) {
+              if(optarg) CReporter::getInstance()->filename(optarg);
+              else if (getenv("ADAGUC_CHECKER_FILE"))
+                  CReporter::getInstance()->filename(getenv("ADAGUC_CHECKER_FILE"));
+              else CReporter::getInstance()->filename(REPORT_DEFAULT_FILE);
+          }
       }
   }
 
@@ -310,13 +317,7 @@ int main(int argc, char **argv){
   int status = _main(argc,argv);
 
   // Print the check report formatted as JSON.
-  const char *  ADAGUC_CHECKER_DIR =getenv("ADAGUC_CHECKER_DIR");
-  if (ADAGUC_CHECKER_DIR != NULL) {
-    CReportWriter::writeJSONReportToFile(CT::string(ADAGUC_CHECKER_DIR) + "/checker_report.txt");
-  } else {
-    // Default config used by tests.
-    CReportWriter::writeJSONReportToFile("./checker_report.txt");
-  }
+  CReportWriter::writeJSONReportToFile();
 
   CCachedDirReader::free();
   
