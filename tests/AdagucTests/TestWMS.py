@@ -76,6 +76,20 @@ class TestWMS(unittest.TestCase):
         self.checkReport(reportFilename="checker_report.txt",
                          expectedReportFilename="checker_report_WMSGetMap_testdatanc.txt")
 
+    def test_WMSGetMap_Report_env(self):
+        AdagucTestTools().cleanTempDir()
+        filename="test_WMSGetMap_Report_env"
+        reportfilename="./env_checker_report.txt"
+        self.env['ADAGUC_CHECKER_FILE']=reportfilename
+        status,data,headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&",
+                                                                env = self.env, args=["--report"])
+        AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertTrue(os.path.exists(reportfilename))
+        self.env.pop('ADAGUC_CHECKER_FILE', None)
+        if(os.path.exists(reportfilename)):
+            os.remove(reportfilename)
+
     def test_WMSGetMap_testdatanc_customprojectionstring(self):
         AdagucTestTools().cleanTempDir()
         
