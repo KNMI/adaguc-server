@@ -24,10 +24,9 @@ namespace CReportWriter {
    *         "Warning message 2."
    *     ]
    *
-   * @param reportFilename The filename (including path) of the resulting file.
    * @returns True if it was possible to write the report to a file.
    */
-  bool writeJSONReportToFile(const CT::string reportFilename);
+  bool writeJSONReportToFile();
 };
 
 #endif //CREPORT_WRITER_JSON_H

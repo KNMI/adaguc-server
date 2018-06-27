@@ -10,13 +10,14 @@ using json = nlohmann::json;
 
 namespace CReportWriter {
 
-  bool writeJSONReportToFile(const CT::string reportFilename) {
+  bool writeJSONReportToFile() {
     json report;
     CReporter *cReporter = CReporter::getInstance();
 
+    if (!cReporter->filename()) return false;
     report["messages"] = json(cReporter->getMessageList());
 
-    std::ofstream reportfile(reportFilename.c_str());
+    std::ofstream reportfile(cReporter->filename().c_str());
     if(!reportfile) {
       return false;
     }
