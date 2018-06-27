@@ -67,8 +67,9 @@ docker run \
   -v $ADAGUCHOME/adaguc-server-docker/adagucdb:/adaguc/adagucdb \
   -v $ADAGUCHOME/adaguc-server-docker/adaguc-logs:/var/log/adaguc \
   -v $ADAGUCHOME/adaguc-server-docker/adaguc-security:/adaguc/security \
+  --tmpfs /tmp \
   --name my-adaguc-server \
-  -it openearth/adaguc-server 
+  -d openearth/adaguc-server 
 ```
 
 The container is now accessible via :
