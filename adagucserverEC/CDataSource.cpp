@@ -1230,18 +1230,19 @@ void CDataSource::calculateScaleAndOffsetFromMinMax(float &scale, float &offset,
 }
 
 CStyleConfiguration *CDataSource::getStyle(){
-  #ifdef CDATASOURCE_DEBUG      
-  CDBDebug("getStyle");
-#endif
-  if(_styles == NULL){
-    _styles = getStyleListForDataSource(this);
-  }
-  if(_styles->size() == 0){
-    CDBError("There are no styles available");
-    return NULL;
-  }
+//   #ifdef CDATASOURCE_DEBUG      
+//   CDBDebug("getStyle");
+// #endif
+  
   if(_currentStyle == NULL){
-        
+    CDBDebug("_currentStyle == NULL");
+    if(_styles == NULL){
+      _styles = getStyleListForDataSource(this);
+    }
+    if(_styles->size() == 0){
+      CDBError("There are no styles available");
+      return NULL;
+    }        
     CT::string styleName="default";
     CT::string styles(srvParams->Styles.c_str());
 
@@ -1288,9 +1289,9 @@ CStyleConfiguration *CDataSource::getStyle(){
     }
   }
   
-    #ifdef CDATASOURCE_DEBUG      
-  CDBDebug("/getStyle");
-#endif
+//     #ifdef CDATASOURCE_DEBUG      
+//   CDBDebug("/getStyle");
+// #endif
   return _currentStyle;
 }
 

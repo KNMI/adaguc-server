@@ -27,7 +27,7 @@
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
 #include <set>
-//#define CCONVERTEPROFILE_DEBUG
+#define CCONVERTEPROFILE_DEBUG
 // #define CCONVERTEPROFILE_DEBUG
 const char *CConvertEProfile::className="CConvertEProfile";
 

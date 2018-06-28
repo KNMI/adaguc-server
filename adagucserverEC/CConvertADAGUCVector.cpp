@@ -626,4 +626,5 @@ bool CConvertADAGUCVector::createVirtualGeoVariables(CDFObject *cdfObject) {
     double y = offsetY + double(j) * cellSizeY + cellSizeY / 2;
     ((double *) varY->data)[j] = y;
   }
+  return true;
 }
