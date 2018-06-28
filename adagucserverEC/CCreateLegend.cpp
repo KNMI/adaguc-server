@@ -549,7 +549,9 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage,
       }
     }
     
+    
     if(definedLegendForFeatures){
+      
       char szTemp[1024];
       for(size_t j=0;j<styleConfiguration->featureIntervals->size();j++){
         CServerConfig::XMLE_FeatureInterval *s=(*styleConfiguration->featureIntervals)[j];
@@ -577,6 +579,9 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage,
     
     
     if(discreteLegendOnInterval){
+      int maxIterations = 250;
+      int currentIteration = 0;
+      
       /**
        * Discrete blocks based on continous interval
        */
@@ -601,6 +606,8 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage,
       
       int classNr=0;
       for(float j=iMin;j<iMax+legendInterval;j=j+legendInterval){
+        currentIteration++;
+        if (currentIteration> maxIterations)break;
         float v=j;
         int cY= int((cbH-(classNr-5))+6);
         
@@ -633,6 +640,8 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage,
         
       }
     }
+    
+    
     #ifdef CIMAGEDATAWRITER_DEBUG
     
     CDBDebug("set units");
