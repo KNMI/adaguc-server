@@ -229,6 +229,13 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
   }
     
   
+  int CImageWarper::reprojpoint_inv_topx(double &dfx,double &dfy){
+    if (reprojpoint_inv(dfx,dfy) != 0) return 1;
+    dfx = (dfx - _geoDest->dfBBOX[0] ) / (_geoDest->dfBBOX[2]- _geoDest->dfBBOX[0]) * double(_geoDest->dWidth);
+    dfy = (dfy - _geoDest->dfBBOX[3] ) / (_geoDest->dfBBOX[1]- _geoDest->dfBBOX[3]) * double(_geoDest->dHeight);
+    return 0;
+  }
+  
   int CImageWarper::reprojpoint_inv(double &dfx,double &dfy){
     
     if(sourceNeedsDegreeRadianConversion){
@@ -347,6 +354,8 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
       CDBError("prj==NULL");
       return 1;
     }
+    
+    this->_geoDest = GeoDest;
    
     if(proj4Context!=NULL){
       pj_ctx_free(proj4Context);
