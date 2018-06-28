@@ -72,7 +72,7 @@ class CImageWarper{
     DEF_ERRORFUNCTION();
     unsigned char pixel;
     CDataSource * _dataSource;
-    //CGeoParams * _geoDest;
+    CGeoParams * _geoDest;
     CT::string sourceCRSString;
     CT::string destinationCRS;
 //     int _decodeCRS(CT::string *CRS);
@@ -113,6 +113,7 @@ class CImageWarper{
     int reprojpoint(double &dfx,double &dfy);
     int reprojpoint(CPoint &p);
     int reprojpoint_inv(double &dfx,double &dfy);
+    int reprojpoint_inv_topx(double &dfx,double &dfy);
     int reprojpoint_inv(CPoint &p);
     int reprojModelToLatLon(double &dfx,double &dfy);
     int reprojModelFromLatLon(double &dfx,double &dfy);
