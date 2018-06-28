@@ -1104,7 +1104,23 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
               }
             }
             
-            CDBDebug("closestIndex: %d", closestIndex);
+            /* Now we have detected the closest point, check if it is in a certain distance in the map in pixel coordinates */
+            double pointPX = dataSource->getDataObject(o)->points[closestIndex].lon, pointPY = dataSource->getDataObject(o)->points[closestIndex].lat;
+            double gfiPX = getFeatureInfoResult->lon_coordinate, gfiPY = getFeatureInfoResult->lat_coordinate;
+            CImageWarper warper;
+            int status = warper.initreproj(LATLONPROJECTION,srvParam->Geo,&srvParam->cfg->Projection);
+            if (status != 0){CDBError("Unable to initialize projection");}
+            status = warper.reprojpoint_inv_topx(pointPX, pointPY);
+            status = warper.reprojpoint_inv_topx(gfiPX, gfiPY);
+            float pixelDistance = hypot(pointPX-gfiPX,pointPY-gfiPY);
+            warper.closereproj();
+
+            CDBDebug("closestIndex: %d, pixelDistance: %f", closestIndex, pixelDistance);
+            
+            if (pixelDistance>30){
+              hasData = false;
+              continue;
+            }
             
             PointDVWithLatLon point = dataSource->getDataObject(o)->points[closestIndex];
             
