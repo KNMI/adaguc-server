@@ -571,6 +571,7 @@ bool CConvertADAGUCVector::createVirtualTimeVariable(CDFObject *cdfObject) {
       }
     } catch(int e) { }
   }
+  return true;
 }
 
 /**

@@ -1417,12 +1417,18 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
       dataSource->nativeViewPortBBOX[3] =  9.24119e+06;
       dataSource->queryLevel = 0;*/
       int maxQueryResultLimit = 512;
+      
+      /* Get maxquerylimit from database configuration */
       if (srvParam->cfg->DataBase.size() == 1 && srvParam->cfg->DataBase[0]->attr.maxquerylimit.empty() == false) {
         maxQueryResultLimit = srvParam->cfg->DataBase[0]->attr.maxquerylimit.toInt();
-        CDBDebug("Using maxquerylimit %d", maxQueryResultLimit);
-      } else {
-        CDBDebug("Using default maxquerylimit %d", maxQueryResultLimit);
       }
+      /* Get maxquerylimit from layer */
+      if (dataSource->isConfigured && dataSource->cfgLayer != NULL && dataSource->cfgLayer->FilePath.size() > 0) {
+        if (dataSource->cfgLayer->FilePath[0]->attr.maxquerylimit.empty() == false) {
+          maxQueryResultLimit = dataSource->cfgLayer->FilePath[0]->attr.maxquerylimit.toInt();
+        }
+      }
+      CDBDebug("Using maxquerylimit %d", maxQueryResultLimit);
       store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource,maxQueryResultLimit);
     }
   
