@@ -466,7 +466,7 @@ int CProj4ToCF::convertCFToProj( CDF::Variable *projectionVariable,CT::string *p
   try{
     CT::string grid_mapping_name;
     projectionVariable->getAttribute("grid_mapping_name")->getDataAsString(&grid_mapping_name);
-    CREPORT_INFO_NODOC(CT::string("Unsupported projection. Using CF conventions to determine projection. grid_mapping_name variable: ")+grid_mapping_name,
+    CREPORT_INFO_NODOC(CT::string("Unable to obtain projection from proj4 string variable. Trying to use CF conventions to determine projection. grid_mapping_name variable: ")+grid_mapping_name,
                        CReportMessage::Categories::GENERAL);
     grid_mapping_name.toLowerCaseSelf();
 
