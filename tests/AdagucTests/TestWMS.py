@@ -260,6 +260,8 @@ class TestWMS(unittest.TestCase):
 
     def test_WMSGetMap_Report_nounits(self):
         AdagucTestTools().cleanTempDir()
+        if os.path.exists(os.environ["ADAGUC_LOGFILE"]):
+            os.remove(os.environ["ADAGUC_LOGFILE"])
         filename="test_WMSGetMap_Report_nounits"
         reportfilename="./nounits_checker_report.txt"
         status,data,headers = AdagucTestTools().runADAGUCServer(
@@ -268,11 +270,16 @@ class TestWMS(unittest.TestCase):
         AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
         self.assertEqual(status, 1)
         self.assertTrue(os.path.exists(reportfilename))
+        self.assertTrue(os.path.exists(os.environ["ADAGUC_LOGFILE"]))
+
         reportfile = open(reportfilename, "r")
         report = json.load(reportfile)
+        reportfile.close()
+        os.remove(reportfilename)
         self.assertTrue(report.has_key("messages"))
-        expectedErrors = ["No time units found for variable time", ] ## add more errors to this list if we expect more.
+        expectedErrors = ["No time units found for variable time"] ## add more errors to this list if we expect more.
         foundErrors = []
+        #self.assertIsNone("TODO: test if error messages end up in normale log file as well as report.")
         for message in report["messages"]:
             self.assertTrue(message.has_key("category"))
             self.assertTrue(message.has_key("documentationLink"))
@@ -281,4 +288,14 @@ class TestWMS(unittest.TestCase):
             if (message["severity"] == "ERROR"):
                 foundErrors.append(message["message"])
                 self.assertIn(message["message"], expectedErrors)
+        self.assertEqual(len(expectedErrors), len(foundErrors))
+
+        expectedErrors.append("WMS GetMap Request failed")
+        foundErrors = []
+        with open(os.environ["ADAGUC_LOGFILE"]) as logfile:
+            for line in logfile.readlines():
+                if "E:" in line:
+                    for error in expectedErrors:
+                        if error in line:
+                            foundErrors.append(error)
         self.assertEqual(len(expectedErrors), len(foundErrors))
