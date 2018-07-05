@@ -298,4 +298,32 @@ class TestWMS(unittest.TestCase):
                     for error in expectedErrors:
                         if error in line:
                             foundErrors.append(error)
+        logfile.close()
+        self.assertEqual(len(expectedErrors), len(foundErrors))
+
+    def test_WMSGetMap_NoReport_nounits(self):
+        AdagucTestTools().cleanTempDir()
+        if os.path.exists(os.environ["ADAGUC_LOGFILE"]):
+            os.remove(os.environ["ADAGUC_LOGFILE"])
+        filename="test_WMSGetMap_Report_nounits"
+        reportfilename="./checker_report.txt"
+        status,data,headers = AdagucTestTools().runADAGUCServer(
+            "source=test/testdata_report_nounits.nc&service=WMS&request=GetMap&version=1.3.0&layers=sow_a1&crs=EPSG%3A4326&bbox=47.80599631376197%2C1.4162628389784275%2C56.548995855839685%2C9.526486675156528&width=863&height=981&format=image%2Fpng&info_format=application%2Fjson&time=1000-01-01T00%3A00%3A00Z%2F3000-01-01T00%3A00%3A00Z&dim_reference_time=2017-12-15T09%3A00%3A00Z",
+            env=self.env, isCGI=False, showLogOnError=False)
+        AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
+        self.assertEqual(status, 1)
+        self.assertFalse(os.path.exists(reportfilename))
+        self.assertTrue(os.path.exists(os.environ["ADAGUC_LOGFILE"]))
+        expectedErrors = ["No time units found for variable time",
+                          "Exception in DBLoopFiles",
+                          "Invalid dimensions values: No data available for layer sow_a1",
+                          "WMS GetMap Request failed"]
+        foundErrors = []
+        with open(os.environ["ADAGUC_LOGFILE"]) as logfile:
+            for line in logfile.readlines():
+                if "E:" in line:
+                    for error in expectedErrors:
+                        if error in line:
+                            foundErrors.append(error)
+        logfile.close()
         self.assertEqual(len(expectedErrors), len(foundErrors))
