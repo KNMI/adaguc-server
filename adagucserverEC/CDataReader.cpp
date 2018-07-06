@@ -281,22 +281,22 @@ class Proc{
     if(imageSize==0)imageSize=1;
     if(variable->data == NULL)return;
     
-    
+    size_t origSize = size_t(dataSource->dOrigWidth)*size_t(dataSource->dHeight);
+    if (imageSize < origSize){
+      CDBError("Unable to apply LON warp to -180 till 180 on the original data: imageSize < origSize");
+      return;
+    }
     T*data = (T*) variable->data;
     T *tempData = new T[imageSize];
-    size_t origSize = size_t(dataSource->dOrigWidth)*size_t(dataSource->dHeight);
     for(size_t j=0;j<origSize;j++){
       tempData[j]=data[j];
     }
-    
     variable->freeData();
     variable->allocateData(imageSize);
-    
     data = (T*) variable->data;
     for(size_t j=0;j<imageSize;j++){
       data[j]=(T)dataSource->getDataObject(0)->dfNodataValue;
     }
-    
     
     for(int y=0;y<dataSource->dHeight;y++){
       for(int x=0;x<dataSource->dOrigWidth;x=x+1){
