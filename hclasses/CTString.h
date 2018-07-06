@@ -112,6 +112,12 @@ namespace CT{
     * @param f The input character array
     */
     string& operator+ (const char*const &f);
+
+    /**
+     * const char* conversion operator
+     * Now it is not necessary to call c_str when a const char* is expected.
+     */
+    operator const char* () const;
     
     /**
      * Compare operator

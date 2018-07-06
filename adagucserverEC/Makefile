@@ -72,7 +72,7 @@ EXECUTABLE= adagucserver
 default: $(EXECUTABLE)
 $(EXECUTABLE): $(OBJECTS) $(EXECUTABLE).o h5ncdump.o aggregate_time.o aggregate_dim.o geojsondump.o 
 	g++ $(EXECUTABLE).o $(OBJECTS) $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  $(EXECUTABLE) $(LIBS)
-	g++ "h5ncdump.o" $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  "h5ncdump" $(LIBS)
+	g++ "h5ncdump.o" $(CCDFDATAMODELOBJ) $(HELPOBJECTS) -o  "h5ncdump" $(LIBS)
 	g++ "aggregate_time.o" $(CCDFDATAMODELOBJ)  $(HELPOBJECTS) -o  "aggregate_time" $(LIBS)
 	g++ "aggregate_dim.o"  $(CCDFDATAMODELOBJ) $(HELPOBJECTS) -o  "aggregate_dim" $(LIBS)
 	g++ "geojsondump.o"  $(OBJECTS) $(CCDFDATAMODELOBJ) $(HELPOBJECTS)  -o  "geojsondump" $(LIBS)
