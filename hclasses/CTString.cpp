@@ -103,6 +103,10 @@ namespace CT{
     
   }
 
+  string::operator const char* () const {
+    return this->c_str();
+  }
+
   string * string::splitToArray(const char * _value){
     string str(useStack?stackValue:heapValue,privatelength);
     void *temp[8000];
@@ -150,6 +154,7 @@ namespace CT{
     }
     allocated=1;
   }
+
 
   const char *string::strrstr(const char *x, const char *y) {
     const char *prev = NULL;

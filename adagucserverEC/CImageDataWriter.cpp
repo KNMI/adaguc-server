@@ -34,6 +34,7 @@
 #include "CImageDataWriter.h"
 #include "CMakeJSONTimeSeries.h"
 #include "CMakeEProfile.h"
+#include "CReporter.h"
 #ifndef M_PI
 #define M_PI            3.14159265358979323846  // pi 
 #endif
@@ -3356,10 +3357,7 @@ int CImageDataWriter::end(){
   
   //Output WMS getmap results
   if(errorsOccured()){
-      
-    
-    CDBError("Errors occured during image data writing");
-    
+    CREPORT_ERROR_NODOC(CT::string("Error occured during image data writing"), CReportMessage::Categories::GENERAL);
     return 1;
   }
   

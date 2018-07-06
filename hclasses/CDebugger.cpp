@@ -119,6 +119,11 @@ void operator delete (void * p)
 }
 
 #include "CTypes.h"
+/*
+ * If these prototypes are changed, also change the extern
+ * declarations in CReporter.cpp that are referring to the
+ * pointers declared here.
+ */
 void (*_printErrorStreamPointer)(const char*)=&_printErrorStream;
 void (*_printDebugStreamPointer)(const char*)=&_printDebugStream;
 void (*_printWarningStreamPointer)(const char*)=&_printWarningStream;
