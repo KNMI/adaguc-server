@@ -323,7 +323,7 @@ CDataSource::CDataSource(){
   cfgLayer = NULL;
   cfg=NULL;
   datasourceIndex=0;
-  level2CompatMode=false;
+  formatConverterActive=false;
   useLonTransformation = -1;
   dOrigWidth = -1;
   lonTransformDone = false;
@@ -1417,7 +1417,7 @@ CDataSource *CDataSource::clone(){
   d->nativeEPSG=nativeEPSG;
   d->nativeProj4=nativeProj4;
   d->isConfigured=isConfigured;
-  d->level2CompatMode=level2CompatMode;
+  d->formatConverterActive=formatConverterActive;
   d->dimXIndex = dimXIndex;
   d->dimYIndex = dimYIndex;
   d->stride2DMap = stride2DMap;
