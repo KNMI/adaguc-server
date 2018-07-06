@@ -1,4 +1,5 @@
-FROM centos:7
+FROM centos/devtoolset-7-toolchain-centos7:7
+USER root
 
 MAINTAINER Adaguc Team at KNMI <adaguc@knmi.nl>
 
@@ -8,7 +9,7 @@ MAINTAINER Adaguc Team at KNMI <adaguc@knmi.nl>
 RUN yum update -y && yum install -y \
     epel-release deltarpm
 
-RUN yum update -y && yum install -y \
+RUN yum install -y \
     python-lxml \
     cairo \
     curl \
@@ -25,9 +26,9 @@ RUN yum update -y && yum install -y \
     netcdf
 
 # building / development packages
-RUN yum update -y && yum clean all && yum groupinstall -y "Development tools"
-
-RUN yum update -y && yum install -y \
+RUN yum update -y && yum clean all
+RUN yum install -y centos-release-scl && yum install -y devtoolset-7-gcc-c++ && source /opt/rh/devtoolset-7/enable
+RUN yum install -y \
     cairo-devel \
     curl-devel \
     gd-devel \
@@ -36,11 +37,12 @@ RUN yum update -y && yum install -y \
     libxml2-devel \
     make \
     netcdf-devel \
+    openssl \
     postgresql-devel \
     proj-devel \
     sqlite-devel \
     udunits2-devel 
-    
+
 # Install adaguc-server from context
 WORKDIR /adaguc
 COPY . /adaguc/adaguc-server-master
@@ -60,7 +62,7 @@ FROM centos:7
 RUN yum update -y && yum install -y \
     epel-release deltarpm
 
-RUN yum update -y && yum install -y \
+RUN yum install -y \
     python-lxml \
     cairo \
     curl \
@@ -75,7 +77,6 @@ RUN yum update -y && yum install -y \
     udunits2 \
     openssl \
     netcdf
-
 
 WORKDIR /adaguc/adaguc-server-master
 
