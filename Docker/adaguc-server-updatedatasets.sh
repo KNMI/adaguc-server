@@ -9,9 +9,15 @@ if [[ $1 ]]; then
     filebasename=${filename##*/}
     # remove all old service status file such that only active services are monitored
     rm -f /servicehealth/${filebasename%.*}
-    echo "Starting update for ${filename}" 
-    /adaguc/adaguc-server-master/bin/adagucserver --updatedb --config /adaguc/adaguc-server-config.xml,${filename}
-    OUT=$?
+    if [[ $2 ]]; then
+      echo "Starting update with tailparth $2 for dataset ${filename}" 
+      /adaguc/adaguc-server-master/bin/adagucserver --updatedb --config /adaguc/adaguc-server-config.xml,${filename} --tailpath $2
+      OUT=$?
+    else
+      echo "Starting update for ${filename}" 
+      /adaguc/adaguc-server-master/bin/adagucserver --updatedb --config /adaguc/adaguc-server-config.xml,${filename}
+      OUT=$?
+    fi
     echo "$OUT" > /servicehealth/${filebasename%.*}
   done
 
