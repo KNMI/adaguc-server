@@ -5,7 +5,7 @@ export ADAGUC_ONLINERESOURCE=""
 
 if [[ $1 ]]; then
   # Update a specific dataset
-  for configfile in /data/adaguc-datasets/$1.xml ;do
+  for configfile in /data/adaguc-datasets/$1 ;do
     filename=/data/adaguc-datasets/"${configfile##*/}" 
     filebasename=${filename##*/}
     # remove all old service status file such that only active services are monitored
