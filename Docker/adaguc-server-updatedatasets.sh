@@ -12,7 +12,7 @@ if [[ $1 ]]; then
     rm -f /servicehealth/${filebasename%.*}
     echo ""
     if [[ $2 ]]; then
-      echo "*** Starting update with tailparth $2 for dataset ${filename}" 
+      echo "*** Starting update with tailpath $2 for dataset ${filename}" 
       /adaguc/adaguc-server-master/bin/adagucserver --updatedb --config /adaguc/adaguc-server-config.xml,${filename} --tailpath $2
       OUT=$?
     else
