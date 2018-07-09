@@ -1,14 +1,22 @@
 # ADAGUC / adaguc-server
-ADAGUC is a geographical information system to visualize netCDF files via the web. The software consists of a server side C++ application and a client side JavaScript application. The software provides several features to access and visualize data over the web, it uses OGC standards for data dissemination.
+ADAGUC is a geographical information system to visualize netCDF files via the web. The software consists of a server side C++ application (ADAGUC-Server) and a client side JavaScript application (ADAGUC-Viewer). The software provides several features to access and visualize data over the web, it uses OGC standards for data dissemination.
 
-See https://dev.knmi.nl/projects/adagucserver/wiki for details
+# Useful links
+ 
+* https://dev.knmi.nl/projects/adagucserver/wiki - For adaguc-server documentation 
+* https://dev.knmi.nl/projects/adagucserver/wiki/Configuration - For configuration details.
+* https://github.com/KNMI/adaguc-viewer - ADAGUC-viewer, a WMS client which can connect to ADAGUC-server
+* https://knmi.github.io/adaguc-server/ - Gitbook documentation, currently information about supported data formats is written
+* ```docker rm -f my-adaguc-server``` - For stopping and removing your docker container, useful when you want to start it with other arguments
+* ```docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh``` - For updating adaguc-server datasets
 
 # Docker for adaguc-server:
 
-A docker image for adaguc-server is available from dockerhub. This image enables you to quickstart with adaguc-server, everything is configured and pre-installed. You can mount your own directories and configuration files from your workstation inside the docker container. This allows you to use and configure your own data from your workstation. There is no need to go inside the docker container. Inside the docker container the paths for data and configuration files are always the same, this is useful for sharing dataset configuration files between different instances. This docker image can be used in production environments as well. See the docker-compose file below to quickstart with both adaguc-server and adaguc-viewer at the same time.
+A docker image for adaguc-server is available from [dockerhub](https://hub.docker.com/r/openearth/adaguc-server/). This image enables you to quickstart with adaguc-server, everything is configured and pre-installed. You can mount your own directories and configuration files from your workstation inside the docker container. This allows you to use and configure your own data from your workstation. 
+Inside the docker container the paths for data and configuration files are always the same, this is useful for sharing dataset configuration files between different instances because configuration files can be the same across different environments. 
+You can check the [docker-compose.yml](Docker/docker-compose.yml) file to quickstart with both adaguc-server and adaguc-viewer at the same time.
 
 ## Directories and data
-
 The most important directories are:
 * adaguc-data: Put your NetCDF, HDF5, GeoJSON or PNG files inside this directory, these are referenced by your dataset configurations.
 * adaguc-datasets: These are your dataset configuration files, defining a service. These are small XML files allowing you to customize the styling and aggregation of datafiles. See satellite imagery example below. It is good practice to configure datasets to read data from the /data/adaguc-data folder, which can be mounted from your host machine. This ensures that dataset configurations will work on different environments where paths to the data can differ. Datasets are referenced in the WMS service by the dataset=<Your datasetname> keyword.
@@ -16,11 +24,8 @@ The most important directories are:
 * adagucdb: Persistent place for the database files
 * adaguc-logs: Logfiles are placed here, you can inspect these if something does not work as expected.
 
-## Serve on another address and/or port
-
-By default adaguc-server docker is set to run on port 8090 and to serve content locally on http://127.0.0.1:8090/, configured via settings given to the docker run command. If you need to run adaguc-server on a different address and/or port, you can configure this with the EXTERNALADDRESS and port settings. The EXTERNALADDRESS setting is used by the WMS to describe the OnlineResource element in the WMS GetCapabilities document. The viewer needs this information to point correctly to WMS getmap requests. It is good practice to set the EXTERNALADDRESS to your systems publicy accessible name and port. Inside the docker container adaguc runs on port 8080, that is why the port mapping in the docker run command is set to 8080.
-
-## To start with the docker image, do:
+## Start the docker to serve your data using http *
+__* Secure http is required if you want to use your services in GeoWeb, see below in the https section__
 ```
 docker pull openearth/adaguc-server # Or build latest docker from this repo yourself with "docker build -t adaguc-server ."
 export ADAGUCHOME=$HOME # You are free to set ADAGUCHOME to any directory you like
@@ -47,18 +52,34 @@ docker run \
 ```
 If the container does not want to run because the container name is aready in use, please do:
 ```
-docker rm my-adaguc-server
+docker rm -f my-adaguc-server
 ```
 The container should now be accessible via http://localhost:8090/adaguc-services/adagucserver?
 
-## Serving data using HTTPS
+## Serve on another address and/or port
 
-For some cases it is required that the server is running over a secure connection (https). This can be the case when a secure site tries to load your services over normal http. The browser blocks your service and warns you that you are trying to load mixed content; e.g. https and http in one site. The browser blocks this to garantee that the site remains safe.
-To overcome this issue adaguc services can be served over https. During startup, the adaguc docker checks if you have provided a SSL certificate in the adaguc-security folder. If none available, it creates a self signed SSL certificate for you, the certificate is stored in a keystore in the adaguc-security folder. By default the self signed certificate is not automatically trusted by your browser. You have to make an exception in your browser in order to use the services. This can be done by visiting one of the URL's (https://localhost:8443/adaguc-services/adagucserver?) and confirm an exception. To overcome the security exception, you are free to add your own valid SSL certificate (from your certificate authority or letsencrypt) if you have one. The alias inside the keystore is currently 'tomcat' and the password is 'password'. 
+By default adaguc-server docker is set to run on port 8090 and to serve content locally on http://127.0.0.1:8090/, configured via settings given to the docker run command. If you need to run adaguc-server on a different address and/or port, you can configure this with the EXTERNALADDRESS and port settings. The EXTERNALADDRESS setting is used by the WMS to describe the OnlineResource element in the WMS GetCapabilities document. The viewer needs this information to point correctly to WMS getmap requests. It is good practice to set the EXTERNALADDRESS to your systems publicy accessible name and port. Inside the docker container adaguc runs on port 8080, that is why the port mapping in the docker run command is set to 8080. It is also possible to run ADAGUC-server automatically via HTTPS, it will create a self signed certificate for you.
 
+## Start the docker to serve your data securely using https *
+__* Secure http is required if you want to show your ADAGUC services in GeoWeb__
+
+For some cases it is required that your adagucserver is running over a secure connection (https). This can be the case when you want to open your services in a secure site. If you are trying to read http content on a https site, the browser blocks the http contents and warns you that you are trying to load insecure or mixed content; e.g. https and http in one site. The browser blocks this to garantee that the secure site remains safe.
+To overcome this issue adaguc services can be served over https. During startup, the adaguc docker checks if you have provided a SSL certificate in the adaguc-security folder. If none available, the docker container will create a self signed SSL certificate for you; the certificate is stored in a keystore in the adaguc-security folder. By default the self signed certificate is not automatically trusted by your browser. You have to make an exception in your browser in order to use the services. This can be done by visiting one of the URL's (https://<your hostname>:8443/adaguc-services/adagucserver?) and confirm an exception. To overcome the security exception, you are free to add your own valid SSL certificate (from your certificate authority or letsencrypt) if you have one. The alias inside the keystore is currently 'tomcat' and the password is 'password'. Please note that you need to use your hostname in the URL instead of locahost when accessing your services, this is becauses services running over https will check the hostname for you. You also need to use https:// as prefix for your URL.
+
+### Setup directories ###
 ```
-export ADAGUCHOME=$HOME
-docker run \
+docker pull openearth/adaguc-server # Or build latest docker from this repo yourself with "docker build -t adaguc-server ."
+export ADAGUCHOME=$HOME # You are free to set ADAGUCHOME to any directory you like
+mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-data
+mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-datasets
+mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-autowms
+mkdir -p $ADAGUCHOME/adaguc-server-docker/adagucdb
+mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-logs && chmod 777 $ADAGUCHOME/adaguc-server-docker/adaguc-logs
+mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-security
+```
+### Start adaguc-server ###
+```
+export ADAGUCHOME=$HOME && docker run \
   -e EXTERNALADDRESS="https://`hostname`:8443/" \
   -p 8443:8443 \
   -v $ADAGUCHOME/adaguc-server-docker/adaguc-data:/data/adaguc-data \
@@ -71,10 +92,23 @@ docker run \
   --name my-adaguc-server \
   -d openearth/adaguc-server 
 ```
+If the container does not want to run because the container name is aready in use, please do:
+```
+docker rm -f my-adaguc-server
+```
+
+Find your hostname via the ```hostname``` command, you need your hostname to access your service via HTTPS.
+```
+hostname
+> bhw485.knmi.nl
+```
 
 The container is now accessible via :
-https://localhost:8443/adaguc-services/adagucserver?
-Remember: the first time you acces this link your browser will show a warning that there is a problem with the certificate. Make an exception for this service.
+```https://<your hostname>:8443/adaguc-services/adagucserver?```
+
+Note:
+* _The first time you acces the service,  your browser will show a warning that there is a problem with the certificate. Make an exception for this service._
+* _The following examples are made with the server running over HTTP on port 8090. Replace the prefix with the correct information if you are running over https._
 
 ## Visualize a NetCDF file via autowms
 
@@ -193,10 +227,6 @@ Prebuilt images are available at https://hub.docker.com/ through openearth:
                      
 To get an instance online with docker compose: 
 ```
-cd ./adaguc-server
-docker pull openearth/adaguc-viewer
-docker pull openearth/adaguc-server
-
 export ADAGUCHOME=$HOME
 mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-data
 mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-datasets
@@ -205,7 +235,7 @@ mkdir -p $ADAGUCHOME/adaguc-server-docker/adagucdb
 mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-logs && chmod 777 $ADAGUCHOME/adaguc-server-docker/adaguc-logs
 mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-security
 
-docker-compose -f ./Docker/docker-compose.yml up 
+docker-compose -f docker-compose.yml up 
 ```
 The following services are now available:
 * viewer at http://localhost:8091/adaguc-viewer/ 
@@ -247,4 +277,5 @@ You can dump the header or visualize with:
 * http://localhost:8090/adaguc-services/adagucopendap/ For serving OpenDAP services
 * http://localhost:8090/adaguc-services/autowms? For getting the list of visualizable resources
 * http://localhost:8090/adaguc-services/servicehealth? For getting overview and status of available datasets
+
 
