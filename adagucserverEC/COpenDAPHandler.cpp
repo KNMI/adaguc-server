@@ -412,6 +412,8 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path,const char *_query,CS
     
     //Check if AUTORESOURCE is enabled
     if(hasFoundDataSetOrAutoResource == false){
+      srvParam->datasetLocation = "";
+      resetErrors();
       if(srvParam->isAutoResourceEnabled()){
         srvParam->autoResourceLocation = dataURL;
         if(CAutoResource::configure(srvParam,true)==0){
