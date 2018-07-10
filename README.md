@@ -82,6 +82,7 @@ mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-security
 export ADAGUCHOME=$HOME && docker run \
   -e EXTERNALADDRESS="https://`hostname`:8443/" \
   -p 8443:8443 \
+  -p 8090:8080 \
   -v $ADAGUCHOME/adaguc-server-docker/adaguc-data:/data/adaguc-data \
   -v $ADAGUCHOME/adaguc-server-docker/adaguc-datasets:/data/adaguc-datasets \
   -v $ADAGUCHOME/adaguc-server-docker/adaguc-autowms:/data/adaguc-autowms \
