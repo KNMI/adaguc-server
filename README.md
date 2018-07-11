@@ -199,6 +199,10 @@ http://localhost:8090/adaguc-services/adagucserver?service=wms&request=getcapabi
 
 You can use this URL for example in http://geoservices.knmi.nl/viewer2.0/
 
+## Make a movie of the sat dataset
+
+You can use the python script at [data/python/createmovie.py](data/python/createmovie.py)
+
 ## Opendap services can be visualized
 
 The following OpenDAP URL can be visualized:
