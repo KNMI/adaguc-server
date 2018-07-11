@@ -157,6 +157,10 @@ Create a dataset configuration file named $ADAGUCHOME/adaguc-server-docker/adagu
 <Configuration>
   <!-- Custom styles -->
   <Legend name="gray" type="colorRange">
+    <palette index="0"   red="0"   green="0"   blue="0" alpha="255"/>
+    <palette index="240" red="255" green="255"   blue="255"/>
+  </Legend>
+  <Legend name="gray-trans" type="colorRange">
     <palette index="0"   red="0"   green="0"   blue="0" alpha="0"/>
     <palette index="240" red="255" green="255"   blue="255"/>
   </Legend>
@@ -169,7 +173,7 @@ Create a dataset configuration file named $ADAGUCHOME/adaguc-server-docker/adagu
     <NameMapping name="nearest"        title="Albedo 0-30000" abstract="Albedo values from satellite imagery"/>
   </Style>
   <Style name="hrvis_0till30000_transparent">
-    <Legend fixed="true">gray</Legend>
+    <Legend fixed="true">gray-trans</Legend>
     <Min>0</Min>
     <Max>30000</Max>
     <RenderMethod>nearest</RenderMethod>
@@ -188,6 +192,27 @@ Create a dataset configuration file named $ADAGUCHOME/adaguc-server-docker/adagu
     <Dimension name="time" interval="PT15M">time</Dimension>
     <Styles>hrvis_0till30000,hrvis_0till30000_transparent</Styles>
   </Layer>
+  <Layer type="cascaded" hidden="false">
+    <Name force="true">baselayer</Name>
+    <Title>NPS - Natural Earth II</Title>
+    <WMSLayer service="http://geoservices.knmi.nl/cgi-bin/bgmaps.cgi?" layer="naturalearth2"/>
+    <LatLonBox minx="-180"  miny="-90" maxx="180" maxy="90"/>
+  </Layer>
+  <!-- Layer with name overlay from geoservices.knmi.nl -->
+  <Layer type="cascaded" hidden="false">
+    <Name force="true">overlay</Name>
+    <Title>NPS - Natural Earth II</Title>
+    <WMSLayer service="http://geoservices.knmi.nl/cgi-bin/worldmaps.cgi?" layer="world_line_thick"/>
+    <LatLonBox minx="-180"  miny="-90" maxx="180" maxy="90"/>
+    <WMSFormat name="image/png32"/>
+  </Layer>
+  <!-- Layer with name grid10 from geoservices.knmi.nl -->
+  <Layer type="grid">
+    <Name force="true">grid10</Name>
+    <Title>grid 10 degrees</Title>
+    <Grid resolution="10"/>
+    <WMSFormat name="image/png32"/>
+  </Layer>
 </Configuration>
 ```
 Now update the db wit the sat dataset:
@@ -201,7 +226,7 @@ You can use this URL for example in http://geoservices.knmi.nl/viewer2.0/
 
 ## Aggregation of ERA interim model data
 
-```
+```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration>
   <!-- Custom styles -->
@@ -256,6 +281,10 @@ You can use this URL for example in http://geoservices.knmi.nl/viewer2.0/
 ## Make a movie of the sat dataset
 
 You can use the python script at [data/python/createmovie.py](data/python/createmovie.py)
+
+Demo image:
+
+![Loop of MSG HRVIS made with adaguc-server](http://adaguc.knmi.nl/data/msg_hrvis_demo.gif)
 
 ## Opendap services can be visualized
 
