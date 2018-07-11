@@ -154,5 +154,10 @@ fi
 
 echo "Start serving on ${EXTERNALADDRESS}"
 
-echo "Starting adaguc-services Server" &&  /usr/libexec/tomcat/server start 
+echo "Starting adaguc-services Server" 
+
+/usr/libexec/tomcat/server start 
+
+
+# TODO run tomcat as runuser -l $useradaguc /usr/libexec/tomcat/server start 
     

@@ -650,7 +650,7 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CT::string filter,gfi_openall,ncml;
+            CT::string filter,gfi_openall,ncml, maxquerylimit;
         }attr;
         void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value){
           CXMLSerializerInterface * base = (CXMLSerializerInterface*)baseClass;
@@ -662,6 +662,7 @@ class CServerConfig:public CXMLSerializerInterface{
         void addAttribute(const char *name,const char *value){
           if(equals("filter",6,name)){attr.filter.copy(value);return;}
           else if(equals("gfi_openall",11,name)){attr.gfi_openall.copy(value);return;}
+          else if(equals("maxquerylimit",13,name)){attr.maxquerylimit.copy(value);return;}
           else if(equals("ncml",4,name)){attr.ncml.copy(value);return;}
         }
     };
