@@ -283,7 +283,7 @@ You can use this URL for example in http://geoservices.knmi.nl/viewer2.0/
 You can use the python script at [data/python/createmovie.py](data/python/createmovie.py)
 
 Demo image:
-
+http://adaguc.knmi.nl/data/msg_hrvis_demo.gif
 ![Loop of MSG HRVIS made with adaguc-server](http://adaguc.knmi.nl/data/msg_hrvis_demo.gif)
 
 ## Opendap services can be visualized
