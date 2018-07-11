@@ -5,7 +5,7 @@
 
 const char * CMakeEProfile::className = "CMakeEProfile";
 
-//#define CMakeEProfile_DEBUG
+// #define CMakeEProfile_DEBUG
 
 #define CMakeEProfile_MAX_DIMS 255
 
@@ -900,18 +900,19 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage,CDF::Variable *va
 //   
    
   for(size_t j=0;j<dayPasses.size();j++){
-    CT::string dateStr  =adagucTime.dateToISOString(adagucTime.offsetToDate(dayPasses[j].offset));
-    dateStr.setSize(10);
-    drawImage->setText(dateStr.c_str(),dateStr.length(),dayPasses[j].x+4,5,CColor(0,0,0,0),12);
-     
-    for(int y=0;y<imageHeight;y++){
-      drawImage->setPixelTrueColor(dayPasses[j].x,y,0,0,255,255);
-    }
-    
+    CTime::Date d = adagucTime.offsetToDate(dayPasses[j].offset);
+    if (d.minute == 0 && d.hour == 0){
+      CT::string dateStr  =adagucTime.dateToISOString(d);
+      dateStr.setSize(10);
+      drawImage->setText(dateStr.c_str(),dateStr.length(),dayPasses[j].x+4,5,CColor(0,0,0,0),12);
+      
+      for(int y=0;y<imageHeight;y++){
+        drawImage->setPixelTrueColor(dayPasses[j].x,y,0,0,255,255);
+      }
+    }    
   }
 
   
-
 
   //drawImage->line(0,0,100,100,248);
   return 0;

@@ -41,7 +41,7 @@ const char *CDataReader::className="CDataReader";
 
 
 // #define CDATAREADER_DEBUG
-//  #define MEASURETIME
+// #define MEASURETIME
 
 #define uchar unsigned char
 #define MAX_STR_LEN 8191
@@ -111,11 +111,15 @@ class Proc{
 #endif
     if(imageSize==0)imageSize=1;
     if(variable->data == NULL)return;
-
+    
+    size_t origSize = size_t(dataSource->dOrigWidth)*size_t(dataSource->dHeight);
+    if (imageSize < origSize){
+      CDBError("Unable to apply LON warp to -180 till 180 on the original data: imageSize < origSize");
+      return;
+    }
 
     T*data = (T*) variable->data;
     T *tempData = new T[imageSize];
-    size_t origSize = size_t(dataSource->dOrigWidth)*size_t(dataSource->dHeight);
     for(size_t j=0;j<origSize;j++){
       tempData[j]=data[j];
     }
@@ -127,7 +131,6 @@ class Proc{
     for(size_t j=0;j<imageSize;j++){
       data[j]=(T)dataSource->getDataObject(0)->dfNodataValue;
     }
-
 
     for(int y=0;y<dataSource->dHeight;y++){
       for(int x=0;x<dataSource->dOrigWidth;x=x+1){
@@ -324,7 +327,7 @@ void CDataReader::copyEPSGCodeFromProjectionVariable(CDataSource *dataSource, co
 int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, int *gridExtent){
 
   /**************************************************************************************************/
-  /*  Check if the format needs to be converted.
+  /*  Check if the format needs to be converted. */
   /**************************************************************************************************/
   dataSource->formatConverterActive = false;
   if(!dataSource->formatConverterActive)if(CConvertEProfile::convertEProfileData(dataSource,mode)==0)dataSource->formatConverterActive=true;

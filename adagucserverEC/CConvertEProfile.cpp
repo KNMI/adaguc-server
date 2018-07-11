@@ -27,7 +27,7 @@
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
 #include <set>
-//#define CCONVERTEPROFILE_DEBUG
+// #define CCONVERTEPROFILE_DEBUG
 // #define CCONVERTEPROFILE_DEBUG
 const char *CConvertEProfile::className="CConvertEProfile";
 
@@ -111,6 +111,9 @@ int CConvertEProfile::convertEProfileHeader( CDFObject *cdfObject,CServerParams 
   CDF::Variable *varX = cdfObject->getVariableNE("x");
   CDF::Variable *varY = cdfObject->getVariableNE("y");
   if(dimX==NULL||dimY==NULL||varX==NULL||varY==NULL) {
+    #ifdef CCONVERTEPROFILE_DEBUG
+      StopWatch_Stop("Need to add varX and varY");
+    #endif
     //If not available, create new dimensions and variables (X,Y,T)
     //For x 
     dimX=new CDF::Dimension();
@@ -147,6 +150,11 @@ int CConvertEProfile::convertEProfileHeader( CDFObject *cdfObject,CServerParams 
       double y=offsetY+double(j)*cellSizeY+cellSizeY/2;
       ((double*)varY->data)[j]=y;
     }
+    
+     
+    #ifdef CCONVERTEPROFILE_DEBUG
+      StopWatch_Stop("Added varX and varY");
+    #endif
   }
   
   CDF::Variable *timev = cdfObject->getVariable("time");
@@ -155,21 +163,37 @@ int CConvertEProfile::convertEProfileHeader( CDFObject *cdfObject,CServerParams 
   timev->name="time_obs";
   timed->name="time_obs";
   
-   
+  #ifdef CCONVERTEPROFILE_DEBUG
+    StopWatch_Stop("Start Reading dates ");
+  #endif  
   timev->readData(CDF_DOUBLE);
   double*timeData=((double*)timev->data);
+  #ifdef CCONVERTEPROFILE_DEBUG
+    StopWatch_Stop("Finished Reading dates ");
+  #endif  
   
      
   double currentTime = -1;
   std::set<double> datesToAdd;
   
   //The startdate of the file will be used in time_file
+  
+  #ifdef CCONVERTEPROFILE_DEBUG
+    StopWatch_Stop("Creating CTIME");
+  #endif  
   CTime obsTime;
 
+  #ifdef CCONVERTEPROFILE_DEBUG
+    StopWatch_Stop("Initializing CTIME");
+  #endif  
   if(obsTime.init(timev)!=0){
     return 1;
   }
     
+  
+  #ifdef CCONVERTEPROFILE_DEBUG
+      StopWatch_Stop("Inserting dates %d", timev->getSize());
+  #endif    
   for(size_t j=0;j<timev->getSize();j++){
     double inTime = timeData[j];
     double outTime = obsTime.quantizeTimeToISO8601(inTime, "PT5M", "low");
@@ -178,7 +202,12 @@ int CConvertEProfile::convertEProfileHeader( CDFObject *cdfObject,CServerParams 
       currentTime = outTime;
     }
   }
-  CDBDebug("Set time Size = %d",datesToAdd.size());
+  
+  
+  #ifdef CCONVERTEPROFILE_DEBUG
+      StopWatch_Stop("Inserted dates");
+  #endif
+  // CDBDebug("Set time Size = %d",datesToAdd.size());
  
   CDF::Dimension *dimT=new CDF::Dimension();
   dimT->name="time";
@@ -194,6 +223,9 @@ int CConvertEProfile::convertEProfileHeader( CDFObject *cdfObject,CServerParams 
   cdfObject->addVariable(varT);
   CDF::allocateData(CDF_DOUBLE,&varT->data,dimT->length);
   
+  #ifdef CCONVERTEPROFILE_DEBUG
+      StopWatch_Stop("Allocated time data");
+  #endif
   std::set<double>::iterator it;
   size_t counter = 0;
   for (it=datesToAdd.begin(); it!=datesToAdd.end(); ++it){
@@ -235,7 +267,7 @@ int CConvertEProfile::convertEProfileHeader( CDFObject *cdfObject,CServerParams 
         ){
           bool added = false;
           if(var->dimensionlinks.size()==2){
-            if(var->dimensionlinks[0]->getSize()>100){
+            if(var->dimensionlinks[0]->getSize()>20){
             if(var->dimensionlinks[1]->getSize()>100){
               varsToConvert.add(CT::string(var->name.c_str()));
               added=true;
@@ -259,7 +291,7 @@ int CConvertEProfile::convertEProfileHeader( CDFObject *cdfObject,CServerParams 
     CDF::Variable *pointVar=cdfObject->getVariable(varsToConvert[v].c_str());
     
     #ifdef CCONVERTEPROFILE_DEBUG
-    CDBDebug("Converting %s",pointVar->name.c_str());
+    StopWatch_Stop("Converting %s",pointVar->name.c_str());
     #endif
     
     CDF::Variable *new2DVar = new CDF::Variable();
