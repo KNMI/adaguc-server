@@ -1230,10 +1230,6 @@ void CDataSource::calculateScaleAndOffsetFromMinMax(float &scale, float &offset,
 }
 
 CStyleConfiguration *CDataSource::getStyle(){
-//   #ifdef CDATASOURCE_DEBUG      
-//   CDBDebug("getStyle");
-// #endif
-  
   if(_currentStyle == NULL){
     CDBDebug("_currentStyle == NULL");
     if(_styles == NULL){
@@ -1247,7 +1243,6 @@ CStyleConfiguration *CDataSource::getStyle(){
     CT::string styles(srvParams->Styles.c_str());
 
     //TODO CHECK CDBDebug("Server Styles=%s",srvParam->Styles.c_str());
-    //CDBDebug("Server Styles=%s",srvParam->Styles.c_str());
     CT::StackList<CT::string> layerstyles = styles.splitToStack(",");
     int layerIndex=datasourceIndex;
     if(layerstyles.size()!=0){
@@ -1259,23 +1254,18 @@ CStyleConfiguration *CDataSource::getStyle(){
         styleName.copy("default");
       }
     }
-    
-    //CDBDebug("Trying to find a style for %s",styleName.c_str());
 
-
-    //CDBDebug("There are %d styles combinations",_styles->size());
     _currentStyle = _styles->get(0);
     
     for(size_t j=0;j<_styles->size();j++){
       if(_styles->get(j)->styleCompositionName.equals(styleName)){
           _currentStyle=_styles->get(j);
-          //CDBDebug("Found style for %s",styleName.c_str());
           break;
       }
     }
     
     if(_currentStyle->styleIndex == -1){
-      int status = makeStyleConfig(_currentStyle,this);//,styleNames->get(i)->c_str(),legendList->get(l)->c_str(),renderMethods->get(r)->c_str());
+      int status = makeStyleConfig(_currentStyle,this);
       if(status == -1){
         _currentStyle->hasError=true;
       }
@@ -1289,9 +1279,6 @@ CStyleConfiguration *CDataSource::getStyle(){
     }
   }
   
-//     #ifdef CDATASOURCE_DEBUG      
-//   CDBDebug("/getStyle");
-// #endif
   return _currentStyle;
 }
 
