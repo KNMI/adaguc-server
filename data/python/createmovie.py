@@ -32,13 +32,16 @@ import ssl
     <Grid resolution="10"/>
     <WMSFormat name="image/png32"/>
   </Layer>
+  
+  The movie can be displayed in a browser by using:
+  $ firefox out.mp4
 """
 
 # Pick a WMS request and remoce the TIME key value pair
 url="http://localhost:8090//adaguc-services/adagucserver?DATASET=sat&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=HRVIS&WIDTH=926&HEIGHT=982&CRS=EPSG%3A3857&BBOX=-3416822.7594446274,5182866.049499422,877249.2808489851,9736622.792013815&STYLES=hrvis_0till30000%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&"
 
 # URL with overlays
-#url="https://compute-test.c3s-magic.eu:8443//adaguc-services/adagucserver?DATASET=sat&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=HRVIS,overlay,grid10&WIDTH=926&HEIGHT=982&CRS=EPSG%3A32661&BBOX=43923.30841535237,-5093568.6573570175,4865123.617713443,19194.521617847146&STYLES=hrvis_0till30000%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&"
+url="https://compute-test.c3s-magic.eu:8443//adaguc-services/adagucserver?DATASET=sat&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=HRVIS,overlay,grid10&WIDTH=926&HEIGHT=982&CRS=EPSG%3A32661&BBOX=43923.30841535237,-5093568.6573570175,4865123.617713443,19194.521617847146&STYLES=hrvis_0till30000%2Fnearest&FORMAT=image/png32&TRANSPARENT=TRUE&"
 
 # Specify the time range, it is start/stop/resolution, in this case 15 minutes. 
 # This is the ISO8601 convention, check https://dev.knmi.nl/projects/adagucserver/wiki/ISO8601
