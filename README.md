@@ -9,6 +9,7 @@ ADAGUC is a geographical information system to visualize netCDF files via the we
 * https://knmi.github.io/adaguc-server/ - Gitbook documentation, currently information about supported data formats is written
 * ```docker rm -f my-adaguc-server``` - For stopping and removing your docker container, useful when you want to start it with other arguments
 * ```docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh``` - For updating adaguc-server datasets
+* ```docker exec -i -t my-adaguc-server /adaguc/adaguc-server-checkfile.sh <file in autowms folder, e.g. testdata.nc>``` - For generating reports  about your files, provides feedback on what decisions adaguc-server makes based on your file metadata.
 
 # Docker for adaguc-server:
 
@@ -157,6 +158,10 @@ Create a dataset configuration file named $ADAGUCHOME/adaguc-server-docker/adagu
 <Configuration>
   <!-- Custom styles -->
   <Legend name="gray" type="colorRange">
+    <palette index="0"   red="0"   green="0"   blue="0" alpha="255"/>
+    <palette index="240" red="255" green="255"   blue="255"/>
+  </Legend>
+  <Legend name="gray-trans" type="colorRange">
     <palette index="0"   red="0"   green="0"   blue="0" alpha="0"/>
     <palette index="240" red="255" green="255"   blue="255"/>
   </Legend>
@@ -169,7 +174,7 @@ Create a dataset configuration file named $ADAGUCHOME/adaguc-server-docker/adagu
     <NameMapping name="nearest"        title="Albedo 0-30000" abstract="Albedo values from satellite imagery"/>
   </Style>
   <Style name="hrvis_0till30000_transparent">
-    <Legend fixed="true">gray</Legend>
+    <Legend fixed="true">gray-trans</Legend>
     <Min>0</Min>
     <Max>30000</Max>
     <RenderMethod>nearest</RenderMethod>
@@ -188,6 +193,27 @@ Create a dataset configuration file named $ADAGUCHOME/adaguc-server-docker/adagu
     <Dimension name="time" interval="PT15M">time</Dimension>
     <Styles>hrvis_0till30000,hrvis_0till30000_transparent</Styles>
   </Layer>
+  <Layer type="cascaded" hidden="false">
+    <Name force="true">baselayer</Name>
+    <Title>NPS - Natural Earth II</Title>
+    <WMSLayer service="http://geoservices.knmi.nl/cgi-bin/bgmaps.cgi?" layer="naturalearth2"/>
+    <LatLonBox minx="-180"  miny="-90" maxx="180" maxy="90"/>
+  </Layer>
+  <!-- Layer with name overlay from geoservices.knmi.nl -->
+  <Layer type="cascaded" hidden="false">
+    <Name force="true">overlay</Name>
+    <Title>NPS - Natural Earth II</Title>
+    <WMSLayer service="http://geoservices.knmi.nl/cgi-bin/worldmaps.cgi?" layer="world_line_thick"/>
+    <LatLonBox minx="-180"  miny="-90" maxx="180" maxy="90"/>
+    <WMSFormat name="image/png32"/>
+  </Layer>
+  <!-- Layer with name grid10 from geoservices.knmi.nl -->
+  <Layer type="grid">
+    <Name force="true">grid10</Name>
+    <Title>grid 10 degrees</Title>
+    <Grid resolution="10"/>
+    <WMSFormat name="image/png32"/>
+  </Layer>
 </Configuration>
 ```
 Now update the db wit the sat dataset:
@@ -198,6 +224,68 @@ The following URL can be used in the viewer:
 http://localhost:8090/adaguc-services/adagucserver?service=wms&request=getcapabilities&dataset=sat&
 
 You can use this URL for example in http://geoservices.knmi.nl/viewer2.0/
+
+## Aggregation of ERA interim model data
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+  <!-- Custom styles -->
+  <Legend name="ColorPalette" type="colorRange">
+    <palette index="0" red="0" green="0" blue="255" />
+    <palette index="80" red="0" green="255" blue="255" />
+    <palette index="120" red="0" green="255" blue="0" />
+    <palette index="160" red="255" green="255" blue="0" />
+    <palette index="240" red="255" green="0" blue="0" />
+  </Legend>
+  <Style name="era5_style">
+    <Legend fixed="true">ColorPalette</Legend>
+    <ContourLine width="3" linecolor="#ff0000" textcolor="#ff0000" textformatting="%2.0f" classes="300" />
+    <ContourLine width="0.3" linecolor="#444444" textcolor="#444444" textformatting="%2.0f" interval="100" />
+    <Min>0</Min>
+    <Max>1500</Max>
+    <ValueRange min="350" max="10000000" />
+    <RenderMethod>nearest,contour,nearestcontour</RenderMethod>
+    <NameMapping name="nearest" title="IVT 0-1500" abstract="IVT" />
+  </Style>
+  <!-- Layer with name baselayer from geoservices.knmi.nl -->
+  <Layer type="cascaded" hidden="false">
+    <Name force="true">baselayer</Name>
+    <Title>NPS - Natural Earth II</Title>
+    <WMSLayer service="http://geoservices.knmi.nl/cgi-bin/bgmaps.cgi?" layer="naturalearth2" />
+    <LatLonBox minx="-180" miny="-90" maxx="180" maxy="90" />
+  </Layer>
+  <!-- Layer with name overlay from geoservices.knmi.nl -->
+  <Layer type="cascaded" hidden="false">
+    <Name force="true">overlay</Name>
+    <Title>NPS - Natural Earth II</Title>
+    <WMSLayer service="http://geoservices.knmi.nl/cgi-bin/worldmaps.cgi?" layer="world_line_thick" />
+    <LatLonBox minx="-180" miny="-90" maxx="180" maxy="90" />
+  </Layer>
+  <!-- Layer with name grid10 from geoservices.knmi.nl -->
+  <Layer type="grid">
+    <Name force="true">grid10</Name>
+    <Title>grid 10 degrees</Title>
+    <Grid resolution="10" />
+    <WMSFormat name="image/png32" />
+  </Layer>
+  <!-- Layer with name ivt (Integrated Water Vapor Transport) with ERA interim data -->
+  <Layer type="database">
+    <Variable>ivt</Variable>
+    <FilePath filter="^IVT.ERAINT.2.*\.nc">/data/adaguc-data/TWEX/ERAInt/</FilePath>
+    <Styles>era5_style,auto</Styles>
+  </Layer>
+</Configuration>
+
+```
+
+## Make a movie of the sat dataset
+
+You can use the python script at [data/python/createmovie.py](data/python/createmovie.py)
+
+Demo image:
+http://adaguc.knmi.nl/data/msg_hrvis_demo.gif
+![Loop of MSG HRVIS made with adaguc-server](http://adaguc.knmi.nl/data/msg_hrvis_demo.gif)
 
 ## Opendap services can be visualized
 

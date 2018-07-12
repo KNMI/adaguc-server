@@ -327,7 +327,7 @@ void CDataReader::copyEPSGCodeFromProjectionVariable(CDataSource *dataSource, co
 int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, int *gridExtent){
 
   /**************************************************************************************************/
-  /*  Check if the format needs to be converted.
+  /*  Check if the format needs to be converted. */
   /**************************************************************************************************/
   dataSource->formatConverterActive = false;
   if(!dataSource->formatConverterActive)if(CConvertEProfile::convertEProfileData(dataSource,mode)==0)dataSource->formatConverterActive=true;

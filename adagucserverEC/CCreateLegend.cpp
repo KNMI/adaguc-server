@@ -579,7 +579,11 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage,
     
     
     if(discreteLegendOnInterval){
-      int maxIterations = 250;
+      /* 
+       * maxIterations is the maximum number of labels in the legendgraphic, more makes no sense as legend image is quite small 
+       * Sometimes this function tries to render thousands of labels in a few pixels, maxIterations prevents this.       
+       */
+      int maxIterations = 250; 
       int currentIteration = 0;
       
       /**

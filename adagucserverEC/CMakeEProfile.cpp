@@ -914,7 +914,6 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage,CDF::Variable *va
 
   
 
-  // StopWatch_Stop("Draw done");    
   //drawImage->line(0,0,100,100,248);
   return 0;
 }
