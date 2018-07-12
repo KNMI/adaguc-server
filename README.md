@@ -9,6 +9,7 @@ ADAGUC is a geographical information system to visualize netCDF files via the we
 * https://knmi.github.io/adaguc-server/ - Gitbook documentation, currently information about supported data formats is written
 * ```docker rm -f my-adaguc-server``` - For stopping and removing your docker container, useful when you want to start it with other arguments
 * ```docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh``` - For updating adaguc-server datasets
+* ```docker exec -i -t my-adaguc-server /adaguc/adaguc-server-checkfile.sh <file in autowms folder, e.g. testdata.nc>``` - For generating reports  about your files, provides feedback on what decisions adaguc-server makes based on your file metadata.
 
 # Docker for adaguc-server:
 
@@ -283,7 +284,8 @@ You can use this URL for example in http://geoservices.knmi.nl/viewer2.0/
 You can use the python script at [data/python/createmovie.py](data/python/createmovie.py)
 
 Demo image:
-![Loop of MSG HRVIS made with adaguc-server](https://geoservices.knmi.nl/msg_hrvis_demo.gif)
+http://adaguc.knmi.nl/data/msg_hrvis_demo.gif
+![Loop of MSG HRVIS made with adaguc-server](http://adaguc.knmi.nl/data/msg_hrvis_demo.gif)
 
 ## Opendap services can be visualized
 
