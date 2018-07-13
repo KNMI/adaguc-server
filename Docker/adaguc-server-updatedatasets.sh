@@ -31,6 +31,12 @@ else
   for configfile in /data/adaguc-datasets/*xml ;do
     filename=/data/adaguc-datasets/"${configfile##*/}" 
     filebasename=${filename##*/}
+    if [[ "${ADAGUC_DATASET_MASK}" && `echo ${filebasename} | grep -E ${ADAGUC_DATASET_MASK}` != ${filebasename} ]] ; then
+        if [[ "${ADAGUC_DATASET_MASK}" ]] ; then
+            echo "${filebasename} doesn't match ${ADAGUC_DATASET_MASK}"
+        fi
+        continue
+    fi
     echo ""
     echo "Starting update for ${filename}" 
     /adaguc/adaguc-server-master/bin/adagucserver --updatedb --config /adaguc/adaguc-server-config.xml,${filename}
