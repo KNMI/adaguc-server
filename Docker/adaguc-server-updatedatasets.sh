@@ -1,4 +1,7 @@
 #!/bin/bash
+
+# TODO: https://github.com/KNMI/adaguc-server/issues/71
+
 export ADAGUC_PATH=/adaguc/adaguc-server-master/
 export ADAGUC_TMP=/tmp
 export ADAGUC_ONLINERESOURCE=""
@@ -25,12 +28,20 @@ if [[ $1 ]]; then
   done
 
 else
-  # remove all old service status files such that only active services are monitored
-  rm -f /servicehealth/*
+  if [[ ! "${ADAGUC_DATASET_MASK}" ]] ; then
+      # remove all old service status files such that only active services are monitored
+      rm -f /servicehealth/*
+  fi
   # Update all datasets
   for configfile in /data/adaguc-datasets/*xml ;do
     filename=/data/adaguc-datasets/"${configfile##*/}" 
     filebasename=${filename##*/}
+    if [[ "${ADAGUC_DATASET_MASK}" && `echo ${filebasename} | grep -E ${ADAGUC_DATASET_MASK}` != ${filebasename} ]] ; then
+        if [[ "${ADAGUC_DATASET_MASK}" ]] ; then
+            echo "${filebasename} doesn't match ${ADAGUC_DATASET_MASK}"
+        fi
+        continue
+    fi
     echo ""
     echo "Starting update for ${filename}" 
     /adaguc/adaguc-server-master/bin/adagucserver --updatedb --config /adaguc/adaguc-server-config.xml,${filename}
