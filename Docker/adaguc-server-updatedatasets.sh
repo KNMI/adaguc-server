@@ -25,8 +25,10 @@ if [[ $1 ]]; then
   done
 
 else
-  # remove all old service status files such that only active services are monitored
-  rm -f /servicehealth/*
+  if [[ ! "${ADAGUC_DATASET_MASK}" ]] ; then
+      # remove all old service status files such that only active services are monitored
+      rm -f /servicehealth/*
+  fi
   # Update all datasets
   for configfile in /data/adaguc-datasets/*xml ;do
     filename=/data/adaguc-datasets/"${configfile##*/}" 
