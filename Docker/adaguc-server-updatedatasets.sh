@@ -1,4 +1,7 @@
 #!/bin/bash
+
+# TODO: https://github.com/KNMI/adaguc-server/issues/71
+
 export ADAGUC_PATH=/adaguc/adaguc-server-master/
 export ADAGUC_TMP=/tmp
 export ADAGUC_ONLINERESOURCE=""
