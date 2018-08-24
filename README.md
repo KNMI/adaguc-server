@@ -8,7 +8,8 @@ ADAGUC is a geographical information system to visualize netCDF files via the we
 * https://github.com/KNMI/adaguc-viewer - ADAGUC-viewer, a WMS client which can connect to ADAGUC-server
 * https://knmi.github.io/adaguc-server/ - Gitbook documentation, currently information about supported data formats is written
 * ```docker rm -f my-adaguc-server``` - For stopping and removing your docker container, useful when you want to start it with other arguments
-* ```docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh``` - For updating adaguc-server datasets
+* ```docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh``` - For updating adaguc-server datasets.
+* ```docker exec --env ADAGUC_DATASET_MASK='^eprofile_L0_[0-9]{5}-[A-Z]\.xml$' -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh``` - For updating adaguc-server datasets where the datasetname matches the provided ADAGUC_DATASET_MASK.
 * ```docker exec -i -t my-adaguc-server /adaguc/adaguc-server-checkfile.sh <file in autowms folder, e.g. testdata.nc>``` - For generating reports  about your files, provides feedback on what decisions adaguc-server makes based on your file metadata.
 
 # Docker for adaguc-server:
