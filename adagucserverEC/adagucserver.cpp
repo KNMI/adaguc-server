@@ -321,6 +321,8 @@ int main(int argc, char **argv){
 
   CCachedDirReader::free();
   
+  CTime::cleanInstances();
+  
   if(pLogDebugFile!= NULL){
     fclose (pLogDebugFile);
   }
