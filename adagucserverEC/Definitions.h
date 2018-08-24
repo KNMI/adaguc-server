@@ -29,7 +29,7 @@
 #ifndef Definitions_H
 #define Definitions_H
 
-#define ADAGUCSERVER_VERSION             "2.0.33"
+#define ADAGUCSERVER_VERSION             "2.0.34"
 
 //CConfigReaderLayerType
 #define CConfigReaderLayerTypeUnknown     0
