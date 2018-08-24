@@ -32,6 +32,7 @@
 #include <time.h>
 #include <sys/types.h>
 #include <stdlib.h>
+#include <map>
 #define CTIME_CONVERSION_ERROR 1
 
 #define CTIME_MODE_UTCALENDAR      0
