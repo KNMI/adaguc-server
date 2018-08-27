@@ -708,12 +708,12 @@ CDBDebug("Found layer %s",layerName.c_str());
       #endif
       
       CT::string output = createDDSHeader(layerName,cdfObject,selectedVariables);
-      fprintf(opendapoutstream, "%s\r\n",output.c_str());
+      fprintf(opendapoutstream, "%s\n",output.c_str());
       
       CDFObject* cdfObjectToRead = NULL;
       //Data request
       if(isDODRequest){
-        fprintf(opendapoutstream, "Data:\r\n"); 
+        fprintf(opendapoutstream, "Data:\n"); 
         for(size_t i=0;i<selectedVariables.size();i++){
           for(size_t j=0;j<cdfObject->variables.size();j++){
             CDF::Variable *v = cdfObject->variables[j];
