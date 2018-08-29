@@ -254,51 +254,83 @@ int COpenDAPHandler::putVariableData(CDF::Variable *v,CDFType type){
   size_t varSize = v->getSize();
   
   if (jsonWriter) {
-    for(size_t d=0;d<varSize;d++){
+    {
       switch(type){
-        case CDF_CHAR:
-        case CDF_BYTE:{
+        case CDF_BYTE:for(size_t d=0;d<varSize;d++){
             int a = (int)((char*)v->data)[d];
             writeInt(a);
           }
           break;
-        case CDF_UBYTE:{
+        case CDF_UBYTE:for(size_t d=0;d<varSize;d++){
             int a = (unsigned int)((unsigned char*)v->data)[d];
             writeInt(a);
           }
           break;
-        case CDF_SHORT: {
+        case CDF_SHORT: for(size_t d=0;d<varSize;d++){
             int a = (int)((short*)v->data)[d];
             writeInt(a);
           }
           break;
-        case CDF_USHORT: {
+        case CDF_USHORT: for(size_t d=0;d<varSize;d++){
             int a = (unsigned int)((unsigned short*)v->data)[d];
             writeInt(a);
           }
           break;
-        case CDF_INT: {
+        case CDF_INT: for(size_t d=0;d<varSize;d++){
             int a = (int)((int*)v->data)[d];
             writeInt(a);
           }
           break;
-        case CDF_UINT: {
+        case CDF_UINT:for(size_t d=0;d<varSize;d++) {
             int a = (unsigned int)((unsigned int*)v->data)[d];
             writeInt(a);
           }
           break;
-        case CDF_FLOAT: {
+        case CDF_FLOAT:for(size_t d=0;d<varSize;d++) {
             double a = (double)((float*)v->data)[d];
             writeDouble(a);
-            break;
           }
-        case CDF_DOUBLE: {
+          break;
+        case CDF_DOUBLE:for(size_t d=0;d<varSize;d++) {
             double a = (double)((double*)v->data)[d];
             writeDouble(a);
-            break;
+          } 
+          break;
+        case CDF_CHAR: {
+            if (v->dimensionlinks.size() == 2) {
+              /* Support strings, often they have two dimensionions indicating the number of strings and the string length */
+              for(size_t d=0;d<v->dimensionlinks[0]->getSize();d++) {
+                size_t stringLength = v->dimensionlinks[1]->getSize();
+                if ( d > 0) fprintf(opendapoutstream, ", ");
+                fprintf(opendapoutstream, "\"%s\"", (CT::string((const char*)v->data + d*stringLength, stringLength)).c_str());
+              }
+            } else {
+              for(size_t d=0;d<varSize;d++) {
+                int a = (unsigned int)((char*)v->data)[d];
+                writeInt(a);
+              }
+            }
           }
+          break;
+        case CDF_STRING:
+          if(type==CDF_STRING)
+          for(size_t d=0;d<varSize;d++){
+            const char **data = (const char**)v->data;
+            for(size_t d=0;d<varSize;d++){
+              if (d > 0) fprintf(opendapoutstream, ", ");
+              int l = int(strlen(data[d]));
+              if (l<0){
+                CDBError("String too large");
+                return 1;
+              }
+              for(int e=0;e<l;e++){
+                putc(data[d][e],opendapoutstream);
+              }
+            }
+          }
+          break;
         default:
-          fprintf(opendapoutstream, "unsupported data type");
+          fprintf(opendapoutstream, " ? ");
           break;
         
       }
