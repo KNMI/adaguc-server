@@ -47,7 +47,7 @@ namespace CT{
     #ifdef CTYPES_DEBUG
     printf("string(const char * _value == %s)\n",_value);
     #endif      
-    init();copy(_value,strlen(_value));
+    init();if (_value!=NULL) copy(_value,strlen(_value));
   }
   
   string::string(string const &f){
