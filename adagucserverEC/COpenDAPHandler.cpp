@@ -883,7 +883,9 @@ CDBDebug("Found layer %s",layerName.c_str());
               }
               varHasBeenWritten = true;
               jsonValuesWritten = false;
-              fprintf(opendapoutstream, "    \"%s\": [\n      ", v->name.c_str());
+              if (jsonWriter) {
+                fprintf(opendapoutstream, "    \"%s\": [\n      ", v->name.c_str());
+              }
               #ifdef COPENDAPHANDLER_DEBUG
               CDBDebug("selectedVariables[i].dimInfo.size() = %d",selectedVariables[i].dimInfo.size());
               CDBDebug("v->dimensionlinks.size()  = %d",v->dimensionlinks.size() );
