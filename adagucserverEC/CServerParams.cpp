@@ -44,7 +44,6 @@ CServerParams::CServerParams(){
   imageMode=SERVERIMAGEMODE_8BIT;
   autoOpenDAPEnabled=-1;
   autoLocalFileResourceEnabled = -1;
-  autoResourceCacheEnabled = -1;
   showDimensionsInImage = false;
   showLegendInImage = false;
   showScaleBarInImage = false;
@@ -284,14 +283,10 @@ int CServerParams::makeLayerGroupName(CT::string *groupName,CServerConfig::XMLE_
   return 0;
 }
 
-bool CServerParams::isAutoResourceCacheEnabled(){
-  if(autoResourceCacheEnabled==-1){
-     autoResourceCacheEnabled = 0;
-    if(cfg->AutoResource.size()>0){
-      if(cfg->AutoResource[0]->attr.enablecache.equals("true"))autoResourceCacheEnabled = 1;
-    }
-  }
-  if(autoResourceCacheEnabled==1)return true;
+bool CServerParams::isAutoResourceCacheEnabled() const {
+
+  if (cfg->AutoResource.size() > 0)
+    return cfg->AutoResource[0]->attr.enablecache.equals("true");
   return false;
 }
 

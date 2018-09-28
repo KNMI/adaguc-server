@@ -9,7 +9,7 @@ CCDFDATAMODELOBJ = $(CCDFDATAMODEL)/CCDFDataModel.a
 INCLUDEDIR= $(CPPFLAGS) -I $(HELPERCLASSES) -I $(CCDFDATAMODEL) -I/usr/include/libxml2/  -I/usr/include/udunits2/ -I/usr/include/hdf5/serial/ -I/usr/include/freetype2/ -I/usr/include/freetype2/freetype/ -I/usr/include/postgresql/ -I/usr/include/cairo/ -I/usr/include/gdal/
 
 ifndef BUILDER_ADAGUCCOMPILERSETTINGS
-  BUILDER_ADAGUCCOMPILERSETTINGS=-Wall -DMEMLEAKCHECK -g
+  BUILDER_ADAGUCCOMPILERSETTINGS=-Wall -DMEMLEAKCHECK -g -std=c++11
 endif
 
 ifdef ADAGUCCOMPONENTS
@@ -72,7 +72,7 @@ EXECUTABLE= adagucserver
 default: $(EXECUTABLE)
 $(EXECUTABLE): $(OBJECTS) $(EXECUTABLE).o h5ncdump.o aggregate_time.o aggregate_dim.o geojsondump.o 
 	g++ $(EXECUTABLE).o $(OBJECTS) $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  $(EXECUTABLE) $(LIBS)
-	g++ "h5ncdump.o" $(HELPOBJECTS) $(CCDFDATAMODELOBJ) -o  "h5ncdump" $(LIBS)
+	g++ "h5ncdump.o" $(CCDFDATAMODELOBJ) $(HELPOBJECTS) -o  "h5ncdump" $(LIBS)
 	g++ "aggregate_time.o" $(CCDFDATAMODELOBJ)  $(HELPOBJECTS) -o  "aggregate_time" $(LIBS)
 	g++ "aggregate_dim.o"  $(CCDFDATAMODELOBJ) $(HELPOBJECTS) -o  "aggregate_dim" $(LIBS)
 	g++ "geojsondump.o"  $(OBJECTS) $(CCDFDATAMODELOBJ) $(HELPOBJECTS)  -o  "geojsondump" $(LIBS)

@@ -24,6 +24,8 @@
  ******************************************************************************/
 
 #include "adagucserver.h"
+#include "CReporter.h"
+#include "CReportWriter.h"
 #include <getopt.h>
 
 DEF_ERRORMAIN();
@@ -134,7 +136,7 @@ int runRequest(){
 
       
       
-int _main(int argc, char **argv){
+int _main(int argc, char **argv, char **envp){
 
   // Initialize error functions
   seterrormode(EXCEPTIONS_PLAINTEXT);
@@ -151,6 +153,7 @@ int _main(int argc, char **argv){
   CT::string inspireDatasetCSW;
   CT::string datasetPath;
   
+ 
   while(true) {
       int opt_idx = 0;
       static struct option long_options[] = {
@@ -166,7 +169,8 @@ int _main(int argc, char **argv){
           { "file", required_argument, 0, 0 },
           { "inspiredatasetcsw", required_argument, 0, 0 },
           { "datasetpath", required_argument, 0, 0 },
-          { "test", no_argument, 0, 0 }
+          { "test", no_argument, 0, 0 },
+          { "report", optional_argument, 0, 0 }
       };
 
       opt = getopt_long(argc, argv, "", long_options, &opt_idx);
@@ -217,6 +221,12 @@ int _main(int argc, char **argv){
               inspireDatasetCSW = optarg;
           if(strncmp(long_options[opt_idx].name, "datasetpath", 11) == 0)
               datasetPath = optarg;
+          if(strncmp(long_options[opt_idx].name, "report", 6) == 0) {
+              if(optarg) CReporter::getInstance()->filename(optarg);
+              else if (getenv("ADAGUC_CHECKER_FILE"))
+                  CReporter::getInstance()->filename(getenv("ADAGUC_CHECKER_FILE"));
+              else CReporter::getInstance()->filename(REPORT_DEFAULT_FILE);
+          }
       }
   }
 
@@ -274,6 +284,15 @@ int _main(int argc, char **argv){
   setWarningFunction(serverWarningFunction);
   setDebugFunction(serverDebugFunction);
   
+//    if (envp != NULL){
+//     for (char **env = envp; *env != 0; env++)  {
+//       char *thisEnv = *env;
+//       if (thisEnv!=NULL){
+//         CDBDebug("%s", thisEnv);    
+//       }
+//     }
+//   }
+  
 #ifdef MEASURETIME
   StopWatch_Start();
 #endif
@@ -289,7 +308,7 @@ int _main(int argc, char **argv){
 }
 
 
-int main(int argc, char **argv){
+int main(int argc, char **argv, char **envp){
   
   const char * ADAGUC_LOGFILE=getenv("ADAGUC_LOGFILE");
   if(ADAGUC_LOGFILE!=NULL){
@@ -305,13 +324,18 @@ int main(int argc, char **argv){
       useLogBuffer = true;
     } 
   }
-  int status = _main(argc,argv);  
-  
+  int status = _main(argc,argv, envp);
+
+  // Print the check report formatted as JSON.
+  CReportWriter::writeJSONReportToFile();
+
   CCachedDirReader::free();
+  
+  CTime::cleanInstances();
   
   if(pLogDebugFile!= NULL){
     fclose (pLogDebugFile);
   }
   
   return status;
-}      
+}

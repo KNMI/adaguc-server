@@ -1,39 +1,50 @@
-FROM centos:7
+FROM centos/devtoolset-7-toolchain-centos7:7
+USER root
 
 MAINTAINER Adaguc Team at KNMI <adaguc@knmi.nl>
 
+######### First stage (build) ############
+
+# production packages, same as stage two
 RUN yum update -y && yum install -y \
     epel-release deltarpm
-    
-RUN yum update -y && yum clean all && yum groupinstall -y "Development tools"
 
-RUN yum update -y && yum install -y \
+RUN yum install -y \
+    python-lxml \
+    cairo \
+    curl \
+    gd \
+    gdal \
+    hdf5 \
+    libxml2 \
+    logrotate \
+    postgresql-server \
+    proj \
+    tomcat \
+    udunits2 \
+    openssl \
+    netcdf
+
+# building / development packages
+RUN yum update -y && yum clean all
+RUN yum install -y centos-release-scl && yum install -y devtoolset-7-gcc-c++ && source /opt/rh/devtoolset-7/enable
+RUN yum install -y \
     cairo-devel \
     curl-devel \
     gd-devel \
     gdal-devel \
     hdf5-devel \
     libxml2-devel \
-    logrotate \
     make \
-    netcdf \
     netcdf-devel \
+    openssl \
     postgresql-devel \
-    postgresql-server \
-    proj \
     proj-devel \
-    sqlite \
     sqlite-devel \
-    tomcat \
-    udunits2 \
     udunits2-devel 
-    
-RUN mkdir /adaguc
-
-# Install adaguc-services (spring boot application for running adaguc-server)
-RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.0.4/adaguc-services-1.0.4.war > /usr/share/tomcat/webapps/adaguc-services.war
 
 # Install adaguc-server from context
+WORKDIR /adaguc
 COPY . /adaguc/adaguc-server-master
 
 # Alternatively install adaguc from github
@@ -43,6 +54,40 @@ COPY . /adaguc/adaguc-server-master
 
 WORKDIR /adaguc/adaguc-server-master
 RUN bash compile.sh
+
+######### Second stage (production) ############
+FROM centos:7
+
+# production packages, same as stage one
+RUN yum update -y && yum install -y \
+    epel-release deltarpm
+
+RUN yum install -y \
+    python-lxml \
+    cairo \
+    curl \
+    gd \
+    gdal \
+    hdf5 \
+    libxml2 \
+    logrotate \
+    postgresql-server \
+    proj \
+    tomcat \
+    udunits2 \
+    openssl \
+    netcdf
+
+WORKDIR /adaguc/adaguc-server-master
+
+# Install adaguc-services (spring boot application for running adaguc-server)
+RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.0.8/adaguc-services-1.0.8.war > /usr/share/tomcat/webapps/adaguc-services.war
+   
+# Install compiled adaguc binaries from stage one    
+COPY --from=0 /adaguc/adaguc-server-master/bin /adaguc/adaguc-server-master/bin
+COPY --from=0 /adaguc/adaguc-server-master/data /adaguc/adaguc-server-master/data
+COPY --from=0 /adaguc/adaguc-server-master/tests /adaguc/adaguc-server-master/tests
+COPY --from=0 /adaguc/adaguc-server-master/runtests.sh /adaguc/adaguc-server-master/runtests.sh
 
 # Run adaguc-server functional tests
 RUN bash runtests.sh
@@ -57,8 +102,9 @@ RUN mkdir -p /data/adaguc-autowms && \
     mkdir -p /var/log/adaguc && \
     mkdir -p /adaguc/adagucdb && \
     mkdir -p /adaguc/security && \
-    mkdir -p /data/adaguc-datasets-internal
-   
+    mkdir -p /data/adaguc-datasets-internal && \
+    mkdir -p /servicehealth
+    
 # Configure
 COPY ./Docker/adaguc-server-config.xml /adaguc/adaguc-server-config.xml
 COPY ./Docker/adaguc-services-config.xml /adaguc/adaguc-services-config.xml
@@ -72,6 +118,7 @@ RUN  chmod +x /adaguc/adaguc-server-*.sh && chmod +x /adaguc/start.sh
 # Set adaguc-services configuration file
 ENV ADAGUC_SERVICES_CONFIG=/adaguc/adaguc-services-config.xml 
 ENV ADAGUCDB=/adaguc/adagucdb
+ENV EXTERNALADDRESS="http://localhost:8080/"
 
 # These volumes are configured in /adaguc/adaguc-server-config.xml
 # Place your netcdfs, HDF5 and GeoJSONS here, they will be visualized with the source=<file> KVP via the URI
@@ -91,8 +138,5 @@ VOLUME /adaguc/security
 EXPOSE 8080 
 # For HTTPS
 EXPOSE 8443 
-
-
-RUN mkdir /servicehealth
 
 ENTRYPOINT /adaguc/start.sh

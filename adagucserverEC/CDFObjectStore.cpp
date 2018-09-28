@@ -315,25 +315,25 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *s
 
   
   if(plain == false){
-    bool level2CompatMode = false;
+    bool formatConverterActive = false;
     
-    if(!level2CompatMode)if(CConvertUGRIDMesh::convertUGRIDMeshHeader(cdfObject)==0){level2CompatMode=true;};
+    if(!formatConverterActive)if(CConvertUGRIDMesh::convertUGRIDMeshHeader(cdfObject)==0){formatConverterActive=true;};
     
-    if(!level2CompatMode)if(CConvertASCAT::convertASCATHeader(cdfObject)==0){level2CompatMode=true;};
+    if(!formatConverterActive)if(CConvertASCAT::convertASCATHeader(cdfObject)==0){formatConverterActive=true;};
     
-    if(!level2CompatMode)if(CConvertADAGUCVector::convertADAGUCVectorHeader(cdfObject)==0){level2CompatMode=true;};
+    if(!formatConverterActive)if(CConvertADAGUCVector::convertADAGUCVectorHeader(cdfObject)==0){formatConverterActive=true;};
     
-    if(!level2CompatMode)if(CConvertADAGUCPoint::convertADAGUCPointHeader(cdfObject)==0){level2CompatMode=true;};
+    if(!formatConverterActive)if(CConvertADAGUCPoint::convertADAGUCPointHeader(cdfObject)==0){formatConverterActive=true;};
     
-    if(!level2CompatMode)if(CConvertCurvilinear::convertCurvilinearHeader(cdfObject,srvParams)==0){level2CompatMode=true;};
+    if(!formatConverterActive)if(CConvertCurvilinear::convertCurvilinearHeader(cdfObject,srvParams)==0){formatConverterActive=true;};
     
-    if(!level2CompatMode)if(CConvertHexagon::convertHexagonHeader(cdfObject,srvParams)==0){level2CompatMode=true;};
+    if(!formatConverterActive)if(CConvertHexagon::convertHexagonHeader(cdfObject,srvParams)==0){formatConverterActive=true;};
     
-    if(!level2CompatMode)if(CConvertGeoJSON::convertGeoJSONHeader(cdfObject)==0){level2CompatMode=true;};
+    if(!formatConverterActive)if(CConvertGeoJSON::convertGeoJSONHeader(cdfObject)==0){formatConverterActive=true;};
     
-    if(!level2CompatMode)if(CConvertEProfile::convertEProfileHeader(cdfObject,srvParams)==0){level2CompatMode=true;};
+    if(!formatConverterActive)if(CConvertEProfile::convertEProfileHeader(cdfObject,srvParams)==0){formatConverterActive=true;};
     
-    if(!level2CompatMode)if(CConvertTROPOMI::convertTROPOMIHeader(cdfObject,srvParams)==0){level2CompatMode=true;};
+    if(!formatConverterActive)if(CConvertTROPOMI::convertTROPOMIHeader(cdfObject,srvParams)==0){formatConverterActive=true;};
     
   }
   
