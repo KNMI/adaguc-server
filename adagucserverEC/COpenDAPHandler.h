@@ -50,6 +50,9 @@ private:
   FILE *opendapoutstream;
   void writeInt(int &v);
   void writeDouble(double &v);
+  CT::string httpHeaderContentType;
+  bool jsonWriter;
+  bool jsonValuesWritten;
 public:
   DEF_ERRORFUNCTION();
 //   COpenDAPHandler();

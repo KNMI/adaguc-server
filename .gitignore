@@ -30,6 +30,7 @@
 
 #Other binaries
 CCDFDataModel/anydump
+CCDFDataModel/test
 adagucserverEC/adagucserver
 adagucserverEC/aggregate_dim
 adagucserverEC/aggregate_time
@@ -52,3 +53,8 @@ hclasses/test
 
 # GitHub pages/Gitbook output should only be committed on gh-pages branch.
 doc/_book
+
+# Tag files, gdb history files
+TAGS
+.gdb_history
+
