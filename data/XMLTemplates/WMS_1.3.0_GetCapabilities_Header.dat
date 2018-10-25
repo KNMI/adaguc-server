@@ -56,4 +56,5 @@
             <Format>INIMAGE</Format>
             <Format>BLANK</Format>
         </Exception>
+        <UserDefinedSymbolization SupportSLD="1" UserLayer="1" UserStyle="1" RemoteWFS="0"/>
             

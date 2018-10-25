@@ -426,6 +426,17 @@ class CServerConfig:public CXMLSerializerInterface{
         if(equals("location",8,attrname)){attr.location.copy(attrvalue);return;}
       }
     };
+
+    class XMLE_SLD: public CXMLObjectInterface{
+    public:
+        class Cattr{
+        public:
+            CT::string sldlocation;
+        }attr;
+        void addAttribute(const char *attrname,const char *attrvalue){
+            if(equals("sldlocation",11,attrname)){attr.sldlocation.copy(attrvalue);return;}
+        }
+    };
     
     class XMLE_NameMapping: public CXMLObjectInterface{
     public:
@@ -1258,6 +1269,7 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_AutoResource*> AutoResource;
         std::vector <XMLE_Dataset*> Dataset;
         std::vector <XMLE_Include*> Include;
+        std::vector <XMLE_SLD*> SLD;
         
         ~XMLE_Configuration(){
           XMLE_DELOBJ(Legend);
@@ -1275,6 +1287,7 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(AutoResource);
           XMLE_DELOBJ(Dataset);
           XMLE_DELOBJ(Include);
+          XMLE_DELOBJ(SLD);
         }
         void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value){
           CXMLSerializerInterface * base = (CXMLSerializerInterface*)baseClass;
@@ -1283,6 +1296,7 @@ class CServerConfig:public CXMLSerializerInterface{
           if(rc==1){
             pt2Class=NULL;
             if(equals("Legend",6,name)){XMLE_ADDOBJ(Legend);}
+            else if(equals("SLD",3,name)){XMLE_SETOBJ(SLD);}
             else if(equals("WMS",3,name)){XMLE_SETOBJ(WMS);}
             else if(equals("WCS",3,name)){XMLE_SETOBJ(WCS);}
             else if(equals("Path",4,name)){XMLE_ADDOBJ(Path);}

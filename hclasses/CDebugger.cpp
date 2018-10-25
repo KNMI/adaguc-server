@@ -150,30 +150,30 @@ void _printDebugStream(const char *pszMessage){
 }
 
 void _printDebugLine(const char *pszMessage,...){
-  char szTemp[1024];
+  char szTemp[2048];
   va_list ap;
   va_start (ap, pszMessage);
-  vsnprintf ( szTemp, 1023,pszMessage, ap);
+  vsnprintf ( szTemp, 2047,pszMessage, ap);
   printDebugStream(szTemp);
   va_end (ap);
   printDebugStream("\n");
 }
 
 void _printWarningLine(const char *pszMessage,...){
-  char szTemp[1024];
+  char szTemp[2048];
   va_list ap;
   va_start (ap, pszMessage);
-  vsnprintf ( szTemp, 1023,pszMessage, ap);
+  vsnprintf ( szTemp, 2047,pszMessage, ap);
   printWarningStream(szTemp);
   va_end (ap);
   printWarningStream("\n");
 }
 
 void _printErrorLine(const char *pszMessage,...){
-  char szTemp[1024];
+  char szTemp[2048];
   va_list ap;
   va_start (ap, pszMessage);
-  vsnprintf ( szTemp, 1023,pszMessage, ap);
+  vsnprintf ( szTemp, 2047,pszMessage, ap);
   printErrorStream(szTemp);
   va_end (ap);
   printErrorStream("\n");
@@ -189,10 +189,10 @@ void makeEqualWidth(CT::string *t1){
   // t1.concat(&t2);
 }
 void _printDebug(const char *pszMessage,...){
-  char szTemp[1024];
+  char szTemp[2048];
   va_list ap;
   va_start (ap, pszMessage);
-  vsnprintf ( szTemp, 1023,pszMessage, ap);
+  vsnprintf ( szTemp, 2047,pszMessage, ap);
   CT::string t1=szTemp;
   makeEqualWidth(&t1); 
   printDebugStream(t1.c_str());
@@ -200,10 +200,10 @@ void _printDebug(const char *pszMessage,...){
 }
 
 void _printWarning(const char *pszMessage,...){
-  char szTemp[1024];
+  char szTemp[2048];
   va_list ap;
   va_start (ap, pszMessage);
-  vsnprintf ( szTemp, 1023,pszMessage, ap);
+  vsnprintf ( szTemp, 2047,pszMessage, ap);
   CT::string t1=szTemp;
   makeEqualWidth(&t1); 
   printWarningStream(t1.c_str());
@@ -211,10 +211,10 @@ void _printWarning(const char *pszMessage,...){
 }
 
 void _printError(const char *pszMessage,...){
-  char szTemp[1024];
+  char szTemp[2048];
   va_list ap;
   va_start (ap, pszMessage);
-  vsnprintf ( szTemp, 1023,pszMessage, ap);
+  vsnprintf ( szTemp, 2047,pszMessage, ap);
   CT::string t1=szTemp;
   makeEqualWidth(&t1); 
   printErrorStream(t1.c_str());
