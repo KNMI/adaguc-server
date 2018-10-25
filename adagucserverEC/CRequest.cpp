@@ -34,9 +34,11 @@
 #include "CNetCDFDataWriter.h"
 #include "CConvertGeoJSON.h"
 #include "CCreateScaleBar.h"
+#include "CSLD.h"
+
 const char *CRequest::className="CRequest";
 int CRequest::CGI=0;
-
+CSLD csld;
 //Entry point for all runs
 int CRequest::runRequest(){
   int status=process_querystring();
@@ -127,6 +129,10 @@ int CRequest::setConfigFile(const char *pszConfigFile){
     if(pszQueryString!=NULL){
       CT::string queryString(pszQueryString);
       queryString.decodeURLSelf();
+
+      CDBDebug("Query String: %s ", queryString.c_str());
+
+
       CT::string * parameters=queryString.splitToArray("&");
       for(size_t j=0;j<parameters->count;j++){
         CT::string value0Cap;
@@ -153,7 +159,27 @@ int CRequest::setConfigFile(const char *pszConfigFile){
             }
           }
         }
-      }      
+
+        //Check if parameter name is a SLD parameter.
+        if(csld.parameterIsSld(values[0])){
+          CDBDebug("SLD parameter gevonden!");
+
+          //Check if serverConfig is OK.
+          if(csld.serverConfigCheck(srvParam->cfg)){
+            //Server config is good for sld, initialize;
+            csld.setServerConfig(srvParam->cfg);
+
+            //values[1] contains parameter value, like [Service=WMS, SLD=file.xml]
+            //Check if SLD has a value.
+            if(!values[1].empty()){
+              //Validate SLD file
+              csld.validateSLDFile(values[1]);
+            } else {
+              //no value found
+            }
+          }
+        }
+      }
     }
 
     
