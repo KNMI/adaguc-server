@@ -61,7 +61,7 @@
   </Layer>
 
 
-  <SLD sldlocation="/nobackup/users/bennekom/data/slds/" />
+  <SLD sldlocation="{ADAGUC_PATH}/data/sld/" />
 
 
   <!-- End of configuration /-->
