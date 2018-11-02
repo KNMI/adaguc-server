@@ -47,52 +47,22 @@
     <WMSFormat name="image/png32"/>
   </Layer>
 
-  <Include location="/nobackup/users/bennekom/data/slds/radar.xml"/>
-  <Include location="/nobackup/users/bennekom/data/radar.xml"/>
-
   <!-- Layers -->
-  <!-- <Legend name="radarlegend" type="svg" file="/nobackup/users/bennekom/data/red.svg" />   -->
   <Layer type="database">
-    <Name force="true">radar</Name>
+    <Name>radar</Name>
     <FilePath filter="">/nobackup/users/bennekom/data/radardata.nc</FilePath>
     <Variable>precipitation</Variable>
-    <Styles>radarstyle</Styles>
   </Layer>
-  
-  <Legend name="depth" type="svg" file="/usr/people/bennekom/data/haline.svg"/>
-  
-   <Style name="depth">
-    <Legend fixedclasses="true" tickinterval="10" tickround="1">depth</Legend>
-    <Min>-10.0</Min>
-    <Max>40</Max>
-    <NameMapping name="nearest"   title="Rainbow colors" abstract="Drawing with rainbow colors"/>
-    <RenderMethod>nearest</RenderMethod>    
-  </Style>
-  
+
   <Layer type="database">
-    
-    <FilePath filter="">/usr/people/bennekom/data/mv100.nc</FilePath>
+    <Name>depth</Name>
+    <FilePath filter="">/nobackup/users/bennekom/data/mv100.nc</FilePath>
     <Variable>depth</Variable>
-    <Styles>depth,testdata</Styles>
-  </Layer>
-
-  <Style name="rgba">
-      <Legend fixedclasses="true" tickinterval="10" tickround="1">depth</Legend>
-      <RenderMethod>rgba</RenderMethod>
-  </Style>
-
-  <Layer type="database">
-    
-    <FilePath filter="">http://opendap.knmi.nl/knmi/thredds/dodsC/ADAGUC/testsets/rgba_truecolor_images/butterfly_fromjpg_truecolor.nc</FilePath>
-    <Variable>butterfly</Variable>
-    <Styles>rgba</Styles>
   </Layer>
 
 
   <SLD sldlocation="/nobackup/users/bennekom/data/slds/" />
-  
-  
-  
-  
+
+
   <!-- End of configuration /-->
 </Configuration>
