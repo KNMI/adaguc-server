@@ -80,6 +80,8 @@ int CDFGeoJSONReader::open(const char *fileName){
   }
   CT::string jsonData=CReadFile::open(fileName);
   CDF::Variable * jsonVar = new CDF::Variable();
+  
+  // jsonVar->setCDFReaderPointer((void*)this); TODO: Check if this is really needed.
   cdfObject->addVariable(jsonVar);
   jsonVar->setName("jsoncontent");
   jsonVar->currentType=CDF_CHAR;
