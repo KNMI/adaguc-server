@@ -35,6 +35,7 @@ const char *CDFObjectStore::className="CDFObjectStore";
 #include "CConvertEProfile.h"
 #include "CConvertTROPOMI.h"
 #include "CDataReader.h"
+#include "CCDFCSVReader.h"
 //#define CDFOBJECTSTORE_DEBUG
 #define MAX_OPEN_FILES 50
 extern CDFObjectStore cdfObjectStore;
@@ -69,13 +70,16 @@ CDFReader *CDFObjectStore::getCDFReader(CDataSource *dataSource,const char *file
         CDBDebug("Creating GEOJSON reader");
         #endif
         cdfReader = new CDFGeoJSONReader();
- //       CDFGeoJSONReader * geoJSONReader = (CDFGeoJSONReader*)cdfReader;
-      }
-      else if(dataSource->cfgLayer->DataReader[0]->value.equals("PNG")){
+      } else if(dataSource->cfgLayer->DataReader[0]->value.equals("PNG")){
         #ifdef CDFOBJECTSTORE_DEBUG
         CDBDebug("Creating PNG reader");
         #endif
         cdfReader = new CDFPNGReader();
+      } else if(dataSource->cfgLayer->DataReader[0]->value.equals("CSV")){
+        #ifdef CDFOBJECTSTORE_DEBUG
+        CDBDebug("Creating CSV reader");
+        #endif
+        cdfReader = new CDFCSVReader();
       }
     }else{
       cdfReader=getCDFReader(fileName);
@@ -166,6 +170,17 @@ CDFReader *CDFObjectStore::getCDFReader(const char *fileName){
               CDBDebug("Creating PNG reader");
             }
             cdfReader = new CDFPNGReader();
+          }
+        }
+      }
+      if(cdfReader==NULL){
+        a=name.indexOf(".csv");
+        if(a!=-1){
+          if(a==int(name.length())-4){
+            if(EXTRACT_HDF_NC_VERBOSE){
+              CDBDebug("Creating CSV reader");
+            }
+            cdfReader = new CDFCSVReader();
           }
         }
       }
