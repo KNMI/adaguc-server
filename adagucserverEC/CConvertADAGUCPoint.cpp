@@ -119,8 +119,14 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
   #ifdef MEASURETIME
     StopWatch_Stop("ADAGUC POINT DATA");
   #endif
-  pointLon->readData(CDF_FLOAT,true);
-  pointLat->readData(CDF_FLOAT,true);
+  if (pointLon->readData(CDF_FLOAT,true)!=0){
+    CDBError("Unable to read lon data");
+    return 1;
+  }
+  if (pointLat->readData(CDF_FLOAT,true)!=0){
+    CDBError("Unable to read lat data");
+    return 1;
+  }
   
   #ifdef MEASURETIME
     StopWatch_Stop("DATA READ");
@@ -438,8 +444,14 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
 //     #endif
     pointLon->freeData();
     pointLat->freeData();
-    pointLon->readData(CDF_FLOAT,start,count,stride,true);
-    pointLat->readData(CDF_FLOAT,start,count,stride,true);
+    if (pointLon->readData(CDF_FLOAT,start,count,stride,true)!=0){
+      CDBError("Unable to read pointLon data");
+      return 1;
+    }
+    if(pointLat->readData(CDF_FLOAT,start,count,stride,true)!=0){
+      CDBError("Unable to read pointLat data");
+      return 1;
+    }
 //   }else{
 //     #ifdef CCONVERTADAGUCPOINT_DEBUG
 //     CDBDebug("NON Dimension dependant location");
@@ -503,7 +515,10 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
 //           }
 //         
         
-        pointVar[d]->readData(CDF_FLOAT,start,count,stride,true);
+        if(pointVar[d]->readData(CDF_FLOAT,start,count,stride,true)!=0){
+          CDBError("Unable to read pointVar[d] data");
+          return 1;
+        }
         }else{
 
         if(pointVar[d]->nativeType==CDF_CHAR){
@@ -511,7 +526,10 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
             start[1]=0;
             count[1]=pointVar[d]->dimensionlinks[1]->getSize();
             CT::string data[count[0]];
-            pointVar[d]->readData(CDF_CHAR,start,count,stride,false);
+            if (pointVar[d]->readData(CDF_CHAR,start,count,stride,false)!=0){
+              CDBError("Unable to read pointVar[d] data");
+              return 1;
+            }
             for(size_t j=0;j<count[0];j++){
             data[j].copy(((char*)pointVar[d]->data+j*count[1]),count[1]-1);
             }
@@ -537,7 +555,10 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
             }
             #endif
             pointVar[d]->freeData();
-            pointVar[d]->readData(CDF_STRING,start,count,stride,false);
+            if (pointVar[d]->readData(CDF_STRING,start,count,stride,false)!=0){
+              CDBError("Unable to read pointVar[d] data");
+              return 1;
+            }
         }
         }
         //pointVar[d]->readData(CDF_FLOAT,true);
