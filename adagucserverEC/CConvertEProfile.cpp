@@ -51,7 +51,7 @@ int CConvertEProfile::convertEProfileHeader( CDFObject *cdfObject,CServerParams 
   }catch(int e){
     return 1;
   }
-  CDBDebug("Using CConvertEProfile.h");
+//   CDBDebug("Using CConvertEProfile.h");
   
   cdfObject->setAttributeText("ADAGUC_PROFILE","true");
   
@@ -178,25 +178,30 @@ int CConvertEProfile::convertEProfileHeader( CDFObject *cdfObject,CServerParams 
   
   //The startdate of the file will be used in time_file
   
-  #ifdef CCONVERTEPROFILE_DEBUG
-    StopWatch_Stop("Creating CTIME");
-  #endif  
-  CTime obsTime;
-
-  #ifdef CCONVERTEPROFILE_DEBUG
-    StopWatch_Stop("Initializing CTIME");
-  #endif  
-  if(obsTime.init(timev)!=0){
+//   #ifdef CCONVERTEPROFILE_DEBUG
+//     StopWatch_Stop("Creating CTIME");
+//   #endif  
+//   CTime obsTime;
+// 
+//   #ifdef CCONVERTEPROFILE_DEBUG
+//     StopWatch_Stop("Initializing CTIME");
+//   #endif  
+//   if(obsTime.init(timev)!=0){
+//     return 1;
+//   }
+  CTime * obsTime = CTime::GetCTimeInstance(timev);
+  
+  if (obsTime == NULL){
+    CDBError("Unable to get CTime instance");
     return 1;
   }
-    
   
   #ifdef CCONVERTEPROFILE_DEBUG
       StopWatch_Stop("Inserting dates %d", timev->getSize());
   #endif    
   for(size_t j=0;j<timev->getSize();j++){
     double inTime = timeData[j];
-    double outTime = obsTime.quantizeTimeToISO8601(inTime, "PT5M", "low");
+    double outTime = obsTime->quantizeTimeToISO8601(inTime, "PT5M", "low");
     if(outTime > currentTime){
       datesToAdd.insert(outTime);
       currentTime = outTime;
@@ -794,7 +799,9 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource,int mode){
     
     //Read dates for obs
 //     bool hasTimeValuePerObs = false;
-    CTime obsTime;
+    
+    
+    CDBDebug("CTIME");
 //     double *obsTimeData = NULL;
     CDF::Variable * timeVarPerObs =  cdfObject0->getVariableNE("time");
       if(timeVarPerObs!= NULL){
@@ -803,7 +810,9 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource,int mode){
           CDF::Attribute* timeStringAttr = timeVarPerObs->getAttributeNE("units");
           if(timeStringAttr !=NULL){
               if(timeStringAttr -> data != NULL){
-              if(obsTime.init(timeVarPerObs)==0){
+              CTime * obsTime = CTime::GetCTimeInstance(timeVarPerObs);
+              if(obsTime!= NULL){
+                
 //                 hasTimeValuePerObs = true;
                 timeVarPerObs->readData(CDF_DOUBLE,start,count,stride,true);
 //                 obsTimeData = (double*)timeVarPerObs->data;

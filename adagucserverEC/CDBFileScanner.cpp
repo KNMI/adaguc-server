@@ -1047,7 +1047,10 @@ std::vector<std::string> CDBFileScanner::searchFileNames(const char * path,CT::s
   // CDBDebug("Checking if this is a file: [%s]", filePath.c_str());
   if(filePath.endsWith(".nc")||
      filePath.endsWith(".h5")||
+     filePath.endsWith(".hdf5")||
+     filePath.endsWith(".he5")||
      filePath.endsWith(".png")||
+     filePath.endsWith(".csv")||
      filePath.endsWith(".geojson")||
      filePath.endsWith(".json")||
      filePath.startsWith("http://")||

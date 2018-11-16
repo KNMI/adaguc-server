@@ -32,6 +32,7 @@
 #include <time.h>
 #include <sys/types.h>
 #include <stdlib.h>
+#include <map>
 #define CTIME_CONVERSION_ERROR 1
 
 #define CTIME_MODE_UTCALENDAR      0
@@ -76,11 +77,11 @@ class CTime{
   
   
   DEF_ERRORFUNCTION();
-  public:
+private:
   utUnit  dataunits;
   bool isInitialized;
   int mode;
-  
+  public:
   int getMode(){
       return mode;
   }
@@ -227,6 +228,10 @@ public:
   
   double quantizeTimeToISO8601( double offsetOrig, CT::string period, CT::string method);
 
+  static CTime *GetCTimeInstance(CDF::Variable *timeVariable);
+  static void cleanInstances();
+  static std::map <CT::string, CTime*> CTimeInstances;
 };
+
 #endif
 

@@ -1,3 +1,18 @@
+Version 2.0.37 2018-08-29
+    - OpenDAP server can now output JSON if header "Content-Type: application/json" is set
+
+Version 2.0.36 2018-08-29
+    - OpenDAP server is now compatible with jsdap JavaScript client
+    
+Version 2.0.35 2018-08-24
+    - CTime has now a singleton keeper for reducing CTime intialization times
+   
+Version 2.0.34 2018-07-24   
+    - Adaguc has ability to generate a report about the files to indicate what choices are made for visualisation and projection
+    
+Version 2.0.33 2018-06-06
+    - Dockerfile is now using a multistage build resulting in smaller docker images
+   
 Version 2.0.32 2018-01-22
     - Polylines smaller then 1 px can now be rendered.
     - OpenDAPServer is now compatible with Java NetCDF library

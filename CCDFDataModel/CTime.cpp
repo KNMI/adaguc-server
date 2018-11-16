@@ -30,7 +30,68 @@
 #include <math.h>
 
 const char *CTime::className="CTime";
-//                                                    1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12
+
+std::map <CT::string, CTime*> CTime::CTimeInstances;
+
+CTime * CTime::GetCTimeInstance(CDF::Variable *timeVariable) {
+  if(timeVariable == NULL){
+    CDBError("CTime::init: Given timeVariable == NULL");
+    return NULL;
+  }
+  CT::string units,calendar;
+  
+  CDF::Attribute *unitsAttr = timeVariable->getAttributeNE("units");
+  CDF::Attribute *calendarAttr = timeVariable->getAttributeNE("calendar");
+  
+  if(unitsAttr == NULL){
+    CDBError("No time units available for dimension %s",timeVariable->name.c_str());
+    return NULL;
+  }
+  
+  if(unitsAttr->data == NULL){
+    CDBError("No units data available for dimension %s",timeVariable->name.c_str());
+    return NULL;
+  }
+  
+  units=unitsAttr->getDataAsString();
+  
+  if(units.length() == 0){
+    CDBError("No units data available for dimension %s",timeVariable->name.c_str());
+    return NULL;
+  }
+  
+  if(calendarAttr!=NULL){
+    if(calendarAttr->data!=NULL){
+      calendar = calendarAttr->getDataAsString();
+    }
+  }
+  CT::string key = units + CT::string("_") + calendar;
+  
+  CTime *ctime = NULL;
+  std::map<CT::string, CTime *>::iterator it = CTimeInstances.find(key);
+  if (it != CTimeInstances.end()) {
+    ctime = it->second;
+  } else {
+    ctime = new CTime();
+    if(ctime->init(timeVariable)!=0){
+      CDBError("Unable to initialize CTime");
+      return NULL;
+    }
+    CTimeInstances.insert(std::pair<CT::string, CTime *>(key, ctime));
+    CDBDebug("Inserting new CTime with key %s and pointer %d", key.c_str(), ctime);
+    
+  }
+  return ctime;
+}
+
+
+void CTime::cleanInstances(){
+   for (std::map<CT::string, CTime *>::iterator it=CTimeInstances.begin(); it!=CTimeInstances.end(); ++it) {
+     delete it->second;
+   }
+  CTime::CTimeInstances.clear();
+}
+
 int CTime::CTIME_CALENDARTYPE_360day_Months[]=     { 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30};
 int CTime::CTIME_CALENDARTYPE_360day_MonthsCumul[]={ 0, 30, 60, 90,120,150,180,210,240,270,300,330,360};
 
@@ -62,7 +123,7 @@ CT::string CTime::getErrorMessage(int CTimeParserException){
 
 void CTime::reset(){
   if(isInitialized){
-    utTerm();
+    // utTerm(); // TODO: Deleting this instance will kill al other udunit instances!
   }
   currentUnit="";
   currentCalendar="";
@@ -108,6 +169,7 @@ int CTime::init(CDF::Variable *timeVariable){
 }
 
 int CTime::init(const char *units, const char *calendar){
+  CDBDebug("Initializing CTime with %s", units);
   if(isInitialized){
     if(!currentUnit.equals(units)){
       if(mode == CTIME_MODE_360day){
