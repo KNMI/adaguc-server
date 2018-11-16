@@ -25,6 +25,7 @@
 
 #ifndef CRequest_H
 #define CRequest_H
+
 #include <sys/stat.h>
 #include <set>
 #include "CImageDataWriter.h"

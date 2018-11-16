@@ -12,7 +12,7 @@
       <FeatureTypeStyle>
         <Rule>
           <MinScaleDenominator>0.1</MinScaleDenominator>
-          <MaxScaleDenominator>100</MaxScaleDenominator>
+          <MaxScaleDenominator>200</MaxScaleDenominator>
           <RasterSymbolizer>
             <ColorMap>
               <ColorMapEntry color="#ffffff" quantity="0.1" />
@@ -33,12 +33,16 @@
       <FeatureTypeStyle>
         <Rule>
           <MinScaleDenominator>-20</MinScaleDenominator>
-          <MaxScaleDenominator>50</MaxScaleDenominator>
+          <MaxScaleDenominator>100</MaxScaleDenominator>
           <RasterSymbolizer>
             <ColorMap>
-              <ColorMapEntry color="#ffffff" quantity="-20" />
-              <ColorMapEntry color="#AAAAAA" quantity="10" />
-              <ColorMapEntry color="#555555" quantity="50" />
+              <ColorMapEntry color="#001958" quantity="-20" />
+              <ColorMapEntry color="#173379" quantity="-15" />
+              <ColorMapEntry color="#29458B" quantity="-10" />
+              <ColorMapEntry color="#3D5BA4" quantity="-5" />
+              <ColorMapEntry color="#5E78B7" quantity="0" />
+              <ColorMapEntry color="#7992CD" quantity="50" />
+
             </ColorMap>
           </RasterSymbolizer>
         </Rule>

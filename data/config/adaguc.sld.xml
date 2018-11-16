@@ -54,6 +54,7 @@
     <Variable>precipitation</Variable>
   </Layer>
 
+
   <Layer type="database">
     <Name>depth</Name>
     <FilePath filter="">/nobackup/users/bennekom/data/mv100.nc</FilePath>

@@ -124,6 +124,15 @@
 #define ADAGUC_USE_CAIRO
 
 
+//CREQUEST Definitions
+
+
+//CSLD Definitions
+
+
+//CLSD Post Request Definitions
+
+
 //#define CImgWarpBilinear_DEBUG
 //#define CImgWarpBilinear_TIME
 // #define MEASURETIME
@@ -183,6 +192,7 @@
 //#define CIMAGEDATAWRITER_DEBUG
 //#define CDATASOURCE_DEBUG
 #define CSLD_DEBUG
+#define CSLD_POST_REQUEST_DEBUG
 
 //#define ENABLE_CURL in Makefile
 
