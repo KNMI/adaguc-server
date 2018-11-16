@@ -23,7 +23,9 @@ RUN yum install -y \
     tomcat \
     udunits2 \
     openssl \
-    netcdf
+    netcdf \
+    netcdf4-python \
+    python-six
 
 # building / development packages
 RUN yum update -y && yum clean all
@@ -76,7 +78,9 @@ RUN yum install -y \
     tomcat \
     udunits2 \
     openssl \
-    netcdf
+    netcdf \
+    netcdf4-python \
+    python-six
 
 WORKDIR /adaguc/adaguc-server-master
 
