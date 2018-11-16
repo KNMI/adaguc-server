@@ -1911,13 +1911,13 @@ int CRequest::process_all_layers(){
           
  
           
-          int textY=5;
+          int textY=16;
           //int prevTextY=0;
           if(srvParam->mapTitle.length()>0){
             if(srvParam->cfg->WMS[0]->TitleFont.size()==1){
               float fontSize=parseFloat(srvParam->cfg->WMS[0]->TitleFont[0]->attr.size.c_str());
               textY+=int(fontSize);
-              textY+=imageDataWriter.drawImage.drawTextArea(5,textY,srvParam->cfg->WMS[0]->TitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapTitle.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
+              textY+=imageDataWriter.drawImage.drawTextArea(16,textY,srvParam->cfg->WMS[0]->TitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapTitle.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
               //textY+=12;
             }
           }
@@ -1925,7 +1925,7 @@ int CRequest::process_all_layers(){
             if(srvParam->cfg->WMS[0]->SubTitleFont.size()==1){
               float fontSize=parseFloat(srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.size.c_str());
               textY+=int(fontSize)/2;
-              textY+=imageDataWriter.drawImage.drawTextArea(6,textY,srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapSubTitle.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
+              textY+=imageDataWriter.drawImage.drawTextArea(16,textY,srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapSubTitle.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
               //textY+=8;
             }
           }
@@ -1960,7 +1960,7 @@ int CRequest::process_all_layers(){
                 imageDataWriter.drawImage.enableTransparency(true);
                 //legendImage.setBGColor(255,255,255);
 
-                legendImage.createImage(&imageDataWriter.drawImage,legendWidth,imageDataWriter.drawImage.Geo->dHeight-padding*2+2);
+                legendImage.createImage(&imageDataWriter.drawImage,legendWidth,(imageDataWriter.drawImage.Geo->dHeight / 2)-padding*2+2);
                 
                 //legendImage.rectangle(0,0,legendImage.Geo->dWidth,legendImage.Geo->dHeight,CColor(0,0,0,0),CColor(0,0,0,255));
                 status = imageDataWriter.createLegend(dataSources[d],&legendImage);if(status != 0)throw(__LINE__);
@@ -1986,7 +1986,7 @@ int CRequest::process_all_layers(){
             imageDataWriter.drawImage.enableTransparency(true);
             //scaleBarImage.setBGColor(1,0,0);
 
-            scaleBarImage.createImage(&imageDataWriter.drawImage,200,20);
+            scaleBarImage.createImage(&imageDataWriter.drawImage,200,30);
             
             //scaleBarImage.rectangle(0,0,scaleBarImage.Geo->dWidth,scaleBarImage.Geo->dHeight,CColor(0,0,0,0),CColor(0,0,0,255));
             status = imageDataWriter.createScaleBar(dataSources[0]->srvParams->Geo,&scaleBarImage);if(status != 0)throw(__LINE__);
