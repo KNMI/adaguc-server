@@ -37,7 +37,7 @@ const char *CDFObjectStore::className="CDFObjectStore";
 #include "CDataReader.h"
 #include "CCDFCSVReader.h"
 //#define CDFOBJECTSTORE_DEBUG
-#define MAX_OPEN_FILES 50
+#define MAX_OPEN_FILES 500
 extern CDFObjectStore cdfObjectStore;
 CDFObjectStore cdfObjectStore;
 bool EXTRACT_HDF_NC_VERBOSE = false;
