@@ -156,7 +156,7 @@ def defaultCallback(message,percentage):
 This requires a working ADAGUC server in the PATH environment, ADAGUC_CONFIG environment variable must point to ADAGUC's config file.
 """
 def iteratewcs(TIME = "",BBOX = "-180,-90,180,90",CRS = "EPSG:4326",RESX=None,RESY=None,WIDTH=None, HEIGHT= None,WCSURL="",TMP=".",COVERAGE="pr",LOGFILE=None,OUTFILE="out.nc",FORMAT="netcdf",CALLBACK=defaultCallback):
-  maxRequestsAtOnce = 50
+  maxRequestsAtOnce = 1
   adagucenv=os.environ.copy()
   #adagucenv.update(env)
   ADAGUC_PATH = adagucenv['ADAGUC_PATH']
@@ -312,7 +312,8 @@ def iteratewcs(TIME = "",BBOX = "-180,-90,180,90",CRS = "EPSG:4326",RESX=None,RE
       cleanlog(tmpdir);
       dolog(tmpdir,tmpdir)
       dolog(tmpdir,OUTFILE)
-      cmds=['aggregate_time',tmpdir,OUTFILE]
+      aggregate_timeexecutable = ADAGUC_PATH+"/bin/aggregate_time";
+      cmds=[aggregate_timeexecutable,tmpdir,OUTFILE]
       dolog(tmpdir,cmds)
       status = CGIRunner.CGIRunner().startProcess(cmds,monitor2)
       

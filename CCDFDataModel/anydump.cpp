@@ -31,6 +31,9 @@
 #include "CCDFDataModel.h"
 #include "CCDFNetCDFIO.h"
 #include "CCDFHDF5IO.h"
+#include "CCDFGeoJSONIO.h"
+#include "CCDFCSVReader.h"
+
 DEF_ERRORMAIN();
 
 int main(int argCount,char **argVars){
@@ -67,6 +70,16 @@ int main(int argCount,char **argVars){
       if(inputFile.endsWith(".h5")){
         cdfReader = new CDFHDF5Reader();
       }
+      if(inputFile.endsWith(".geojson")){
+        cdfReader = new CDFGeoJSONReader();
+      }
+      if(inputFile.endsWith(".csv")){
+        cdfReader = new CDFCSVReader();
+      }
+      if (cdfReader == NULL){
+        CDBError("Unrecognized extension");
+        throw __LINE__;
+      }
       cdfObject->attachCDFReader(cdfReader);
       status = cdfReader->open(inputFile.c_str());
       if(status != 0){CDBError("Unable to read file %s",inputFile.c_str());throw(__LINE__);}
@@ -84,9 +97,9 @@ int main(int argCount,char **argVars){
         printf("%s\n",dumpString.c_str());
         
         bool isString = var->getNativeType()==CDF_STRING;
-        isString = true;
+        
         if(!isString){
-          var->readData(CDF_FLOAT);
+          var->readData(var->getNativeType());
           printf("[");
           for(size_t j=0;j<var->getSize();j++){
             if(var->dimensionlinks.size()>0){
@@ -95,12 +108,24 @@ int main(int argCount,char **argVars){
                 printf("]\n[");
               }
             }
-            printf("%g, ",((float*)var->data)[j]);
+            if (var->getNativeType() == CDF_CHAR){
+              printf("%c",((char*)var->data)[j]);
+            } if (var->getNativeType() == CDF_SHORT || var->getNativeType() == CDF_USHORT){
+              printf("%d",((short*)var->data)[j]);
+            } if (var->getNativeType() == CDF_INT || var->getNativeType() == CDF_UINT){
+              printf("%d",((int*)var->data)[j]);
+            } else if (var->getNativeType() == CDF_FLOAT){
+              printf("%g, ",((float*)var->data)[j]);
+            } else if (var->getNativeType() == CDF_DOUBLE){
+              printf("%g, ",((double*)var->data)[j]);
+            }
           }
           printf("]\n");
         }else{
+          
           var->readData(CDF_STRING);
           printf("[");
+          
           for(size_t j=0;j<var->getSize();j++){
             if(var->dimensionlinks.size()>0){
               size_t firstDimSize = var->dimensionlinks[var->dimensionlinks.size()-1]->getSize();

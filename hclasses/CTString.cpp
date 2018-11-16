@@ -1,5 +1,6 @@
 #include "CTString.h"
-
+#include <iostream>
+#include <algorithm>
 #ifdef CTYPES_DEBUG
 const char *CT::string::className = "CT::string";
 #endif
@@ -47,7 +48,7 @@ namespace CT{
     #ifdef CTYPES_DEBUG
     printf("string(const char * _value == %s)\n",_value);
     #endif      
-    init();copy(_value,strlen(_value));
+    init();if (_value!=NULL) copy(_value,strlen(_value));
   }
   
   string::string(string const &f){
@@ -624,5 +625,40 @@ namespace CT{
       fileBaseName.copy(this);
     }
     return fileBaseName;
+  }
+  
+  
+
+  
+  CT::StackList<CT::stringref> string::splitToStackReferences(const char * _value){
+    StackList<CT::stringref> stringList;
+    const char *fo = strstr(useStack?stackValue:heapValue,_value);
+    const char *prevFo=useStack?stackValue:heapValue;
+    while(fo!=NULL){
+      stringList.push_back(CT::stringref(prevFo,(fo-prevFo)));
+      prevFo=fo+1;
+      fo = strstr(fo+1,_value);
+    }
+    size_t prevFoLength = strlen(prevFo);
+    if(prevFoLength>0){
+      stringList.push_back(CT::stringref(prevFo,prevFoLength));
+    }
+    return stringList;
+  }
+  
+  
+  bool is_digit(const char value) { return std::isdigit(value); }
+    
+  bool string::isNumeric(){
+    const std::string value = this->c_str();
+    // printf("Test %s", value.c_str());
+    return std::all_of(value.begin(), value.end(), is_digit);
+  }
+  
+  bool string::isFloat() {
+    double a = this->toDouble();
+    CT::string s;s.print("%g",a);
+    // printf("%s == %s", s.c_str(), this->c_str());
+    return (s.equals(this));
   }
 }

@@ -62,7 +62,7 @@ The container should now be accessible via http://localhost:8090/adaguc-services
 
 By default adaguc-server docker is set to run on port 8090 and to serve content locally on http://127.0.0.1:8090/, configured via settings given to the docker run command. If you need to run adaguc-server on a different address and/or port, you can configure this with the EXTERNALADDRESS and port settings. The EXTERNALADDRESS setting is used by the WMS to describe the OnlineResource element in the WMS GetCapabilities document. The viewer needs this information to point correctly to WMS getmap requests. It is good practice to set the EXTERNALADDRESS to your systems publicy accessible name and port. Inside the docker container adaguc runs on port 8080, that is why the port mapping in the docker run command is set to 8080. It is also possible to run ADAGUC-server automatically via HTTPS, it will create a self signed certificate for you.
 
-## Start the docker to serve your data securely using https *
+## Start the docker to serve your data securely using https*
 __* Secure http is required if you want to show your ADAGUC services in GeoWeb__
 
 For some cases it is required that your adagucserver is running over a secure connection (https). This can be the case when you want to open your services in a secure site. If you are trying to read http content on a https site, the browser blocks the http contents and warns you that you are trying to load insecure or mixed content; e.g. https and http in one site. The browser blocks this to garantee that the secure site remains safe.

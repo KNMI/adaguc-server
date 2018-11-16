@@ -136,7 +136,7 @@ int runRequest(){
 
       
       
-int _main(int argc, char **argv){
+int _main(int argc, char **argv, char **envp){
 
   // Initialize error functions
   seterrormode(EXCEPTIONS_PLAINTEXT);
@@ -153,6 +153,7 @@ int _main(int argc, char **argv){
   CT::string inspireDatasetCSW;
   CT::string datasetPath;
   
+ 
   while(true) {
       int opt_idx = 0;
       static struct option long_options[] = {
@@ -283,6 +284,15 @@ int _main(int argc, char **argv){
   setWarningFunction(serverWarningFunction);
   setDebugFunction(serverDebugFunction);
   
+//    if (envp != NULL){
+//     for (char **env = envp; *env != 0; env++)  {
+//       char *thisEnv = *env;
+//       if (thisEnv!=NULL){
+//         CDBDebug("%s", thisEnv);    
+//       }
+//     }
+//   }
+  
 #ifdef MEASURETIME
   StopWatch_Start();
 #endif
@@ -298,7 +308,7 @@ int _main(int argc, char **argv){
 }
 
 
-int main(int argc, char **argv){
+int main(int argc, char **argv, char **envp){
   
   const char * ADAGUC_LOGFILE=getenv("ADAGUC_LOGFILE");
   if(ADAGUC_LOGFILE!=NULL){
@@ -314,12 +324,14 @@ int main(int argc, char **argv){
       useLogBuffer = true;
     } 
   }
-  int status = _main(argc,argv);
+  int status = _main(argc,argv, envp);
 
   // Print the check report formatted as JSON.
   CReportWriter::writeJSONReportToFile();
 
   CCachedDirReader::free();
+  
+  CTime::cleanInstances();
   
   if(pLogDebugFile!= NULL){
     fclose (pLogDebugFile);
