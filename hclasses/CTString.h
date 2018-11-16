@@ -512,6 +512,16 @@ namespace CT{
      */
     CT::string basename();
     
+    /** 
+     * Checks if this string represents a numeric value
+     */
+    bool isNumeric();
+    
+    /**
+     * Checks if this string represents a float value
+     */
+    bool isFloat();
+    
   };
 };
 
