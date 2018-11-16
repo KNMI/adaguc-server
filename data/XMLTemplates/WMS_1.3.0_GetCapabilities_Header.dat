@@ -29,7 +29,16 @@
         <Request>
             <GetCapabilities>
                 <Format>text/xml</Format>
-                <DCPType><HTTP><Get><OnlineResource xlink:type="simple" xlink:href="[SERVICEONLINERESOURCE]"/></Get></HTTP></DCPType>
+                <DCPType>
+                    <HTTP>
+                        <Get>
+                            <OnlineResource xlink:type="simple" xlink:href="[SERVICEONLINERESOURCE]"/>
+                        </Get>
+                        <Post>
+                            <OnlineResource xlink:type="simple" xlink:href="[SERVICEONLINERESOURCE]"/>
+                        </Post>
+                    </HTTP>
+                </DCPType>
             </GetCapabilities>
             <GetMap>
                 <Format>image/png</Format>
