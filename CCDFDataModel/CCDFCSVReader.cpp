@@ -23,6 +23,8 @@
  * 
  ******************************************************************************/
 
+
+/* Tested with https://raw.githubusercontent.com/JuliaData/CSV.jl/master/test/testfiles/FL_insurance_sample.csv */
 #include "CCDFCSVReader.h"
 
 const char *CDFCSVReader::className="CSVReader";
@@ -44,6 +46,10 @@ int CDFCSVReader::open(const char *fileName){
   if(cdfObject == NULL){
     CDBError("No CDFObject defined, use CDFObject::attachCDFReader(CDFNetCDFReader*). Please note that this function should be called by CDFObject open routines.");
     return 1;
+  }
+  if (this->csvLines.size() > 0 && this->fileName.equals(fileName)){
+    CDBDebug("Already opened");
+    return 0;
   }
   this->fileName=fileName;
   
@@ -82,6 +88,9 @@ int CDFCSVReader::open(const char *fileName){
   
   /* Detect variables from header */
   this->csvLines = csvData.splitToStackReferences("\n");
+  if (this->csvLines.size() < 2){
+    this->csvLines = csvData.splitToStackReferences("\r");
+  }
   #ifdef CCDFCSVREADER_DEBUG     
   CDBDebug("Found %d lines", this->csvLines.size());
   #endif
@@ -93,13 +102,47 @@ int CDFCSVReader::open(const char *fileName){
   
   size_t numLines = this->csvLines.size() -1; /* Minus header */
   
-  CT::StackList<CT::stringref> header = this->csvLines[0].splitToStackReferences(",");
+  CT::StackList<CT::string> header = CT::string(this->csvLines[0].c_str()).splitToStack(",");
   CT::StackList<CT::stringref> firstLine = this->csvLines[1].splitToStackReferences(",");
   
   if (header.size() < 3) {
     CDBError("No CSV data found, less than 3 columns detected");
     return 1;
   }
+  
+  int foundLat = -1;
+  int foundLon = -1;
+  for(size_t c=0;c<header.size();c++){
+    CT::string name = header[c];
+    name = name.toLowerCase();
+    if (foundLat == -1 && name.equals("lat")){
+      foundLat = c;      
+    } else if (foundLat == -1 && name.equals("y")){
+      foundLat = c;      
+    } else if (foundLat == -1 && name.indexOf("latitude") != -1){
+      foundLat = c;      
+    } else if (foundLat == -1 && name.indexOf("lat") != -1){
+      foundLat = c;      
+    }
+    
+    if (foundLon == -1 && name.equals("lon")){
+      foundLon = c;      
+    } else if (foundLon == -1 && name.equals("x")){
+      foundLon = c;      
+    } else if (foundLon == -1 && name.indexOf("longitude") != -1){
+      foundLon = c;      
+    } else if (foundLon == -1 && name.indexOf("lon") != -1){
+      foundLon = c;      
+    }
+  }
+  if (foundLat == -1 || foundLon == -1){
+    CDBError("Unable to determine lat or lon variables");
+    return 1;
+  }
+  
+  header[foundLat] = "lat";
+  header[foundLon] = "lon";
+
   
   /* Define station dimension and variable */
   CDF::Dimension * stationDim = new CDF::Dimension();stationDim->setName("station");
@@ -148,6 +191,7 @@ int CDFCSVReader::open(const char *fileName){
 }
 
 int CDFCSVReader::close() {
+  CDBDebug("Closing CSV reader");
   return 0;
 }
 
@@ -156,8 +200,15 @@ int CDFCSVReader::_readVariableData(CDF::Variable *varToRead, CDFType type){
     CDBError("No CSV data found, less than 2 lines detected");
     return 1;
   }
+  
+  if (varToRead->getSize() == this->csvLines.size() -1 && type == varToRead->currentType){
+    CDBDebug("Already loaded variable %s", varToRead->name.c_str());
+    return 0;
+  }
+  
   varToRead->currentType = type;
   varToRead->allocateData(this->csvLines.size() - 1);
+  varToRead->setSize(this->csvLines.size() - 1);
   
   for(size_t j=1;j<this->csvLines.size();j++){
     if (this->csvLines[j].length() == 0) {
@@ -200,7 +251,6 @@ int CDFCSVReader::_readVariableData(CDF::Variable *varToRead, CDFType type){
     }
   
   }
-  
   
   return 0;
 
