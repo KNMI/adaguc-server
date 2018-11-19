@@ -29,7 +29,7 @@
 #include <string>
 #include "CXMLGen.h"
 #include "CDBFactory.h"
-//#define CXMLGEN_DEBUG
+// #define CXMLGEN_DEBUG
 
 const char *CFile::className="CFile";
 
@@ -76,7 +76,9 @@ CDBDebug("getFileNameForLayer");
       }
      
       //Check if any dimension is given:
-      if(myWMSLayer->layer->Dimension.size()==0){
+      if(
+        (myWMSLayer->layer->Dimension.size()==0) || 
+        (myWMSLayer->layer->Dimension.size()==1 && myWMSLayer->layer->Dimension[0]->attr.name.equals("none"))){
         #ifdef CXMLGEN_DEBUG        
         CDBDebug("Layer %s has no dimensions",myWMSLayer->dataSource->layerName.c_str());
         #endif   
@@ -353,10 +355,11 @@ CDBDebug("Number of dimensions is %d",myWMSLayer->dataSource->cfgLayer->Dimensio
 #endif         
     /* Auto configure dimensions */
     for(size_t i=0;i<myWMSLayer->dataSource->cfgLayer->Dimension.size();i++){
-      if(i==0&&myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.equals("none"))break;
+      
       #ifdef CXMLGEN_DEBUG
       CDBDebug("%d = %s / %s",i,myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str(),myWMSLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
       #endif    
+      if(i==0&&myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.equals("none"))break;
       //Shorthand dimName
       const char *pszDimName = myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str();
       
