@@ -39,7 +39,7 @@
 
   <Dataset enabled="true" location="/data/adaguc-datasets/"/>
   
-  <OpenDAP enabled="true" path="opendap"/>
+  <OpenDAP enabled="true" path="adaguc-services/adagucopendap"/>
   
  <Legend name="baselayer" type="interval">
     <palette min="0" max="240" red="0"  green="0" blue="0"/>
