@@ -16,11 +16,11 @@ services:
         ports:
             - "8090:8080"
         volumes:
-            - $HOME/adaguc-server-docker/adaguc-datasets:/data/adaguc-datasets
-            - $HOME/adaguc-server-docker/adaguc-autowms:/data/adaguc-autowms
-            - $HOME/adaguc-server-docker/adaguc-data:/data/adaguc-data
-            - $HOME/adaguc-server-docker/adagucdb:/adaguc/adagucdb
-            - $HOME/adaguc-server-docker/adaguc-logs:/var/log/adaguc
+            - $ADAGUC_HOME/adaguc-server-docker/adaguc-datasets:/data/adaguc-datasets
+            - $ADAGUC_HOME/adaguc-server-docker/adaguc-autowms:/data/adaguc-autowms
+            - $ADAGUC_HOME/adaguc-server-docker/adaguc-data:/data/adaguc-data
+            - $ADAGUC_HOME/adaguc-server-docker/adagucdb:/adaguc/adagucdb
+            - $ADAGUC_HOME/adaguc-server-docker/adaguc-logs:/var/log/adaguc
         environment:
             - "EXTERNALADDRESS=http://localhost:8090/"
 
@@ -29,11 +29,12 @@ services:
 #Either do:
 #docker pull openearth/adaguc-server #<-- Pull docker image from dockerhub, or do docker build -t openearth/adaguc-server . 
 
-#mkdir -p $HOME/adaguc-server-docker/adaguc-data
-#mkdir -p $HOME/adaguc-server-docker/adaguc-datasets
-#mkdir -p $HOME/adaguc-server-docker/adaguc-autowms
-#mkdir -p $HOME/adaguc-server-docker/adagucdb && chmod 777 $HOME/adaguc-server-docker/adagucdb
-#mkdir -p $HOME/adaguc-server-docker/adaguc-logs && chmod 777 $HOME/adaguc-server-docker/adaguc-logs
+#export ADAGUC_HOME=HOME
+#mkdir -p $ADAGUC_HOME/adaguc-server-docker/adaguc-data
+#mkdir -p $ADAGUC_HOME/adaguc-server-docker/adaguc-datasets
+#mkdir -p $ADAGUC_HOME/adaguc-server-docker/adaguc-autowms
+#mkdir -p $ADAGUC_HOME/adaguc-server-docker/adagucdb && chmod 777 $ADAGUC_HOME/adaguc-server-docker/adagucdb
+#mkdir -p $ADAGUC_HOME/adaguc-server-docker/adaguc-logs && chmod 777 $ADAGUC_HOME/adaguc-server-docker/adaguc-logs
 
 # docker-compose -f ./Docker/docker-compose.yml up 
 # Go to http://localhost:8091/adaguc-viewer/ or http://localhost:8090/adaguc-services/wms.cgi? 

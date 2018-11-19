@@ -1034,7 +1034,10 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource,CServerParams *
       }
       if(alreadyAdded==false){
         CT::string netCDFDimName(dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
-
+        if (netCDFDimName.equals("none")){
+          dataSource->addStep(dataSource->cfgLayer->FilePath[0]->value.c_str(),NULL);
+          continue;
+        }
         CT::string tableName;
         try{
           tableName =  CDBFactory::getDBAdapter(srvParam->cfg)->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str(),dataSource);
@@ -1237,6 +1240,14 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
       nativeViewPortBBOX[1]=srvParam->Geo->dfBBOX[1];
       nativeViewPortBBOX[2]=srvParam->Geo->dfBBOX[2];
       nativeViewPortBBOX[3]=srvParam->Geo->dfBBOX[3];
+      
+      if (nativeViewPortBBOX[0] == nativeViewPortBBOX[2]){
+        CDBDebug("View port BBOX is wrong: %f %f %f %f", nativeViewPortBBOX[0], nativeViewPortBBOX[1], nativeViewPortBBOX[2], nativeViewPortBBOX[3] );
+        nativeViewPortBBOX[0] = -180;
+        nativeViewPortBBOX[1] = -90;
+        nativeViewPortBBOX[2] = 180;
+        nativeViewPortBBOX[3] = 90;
+      }
       findExtent(nativeProj4.c_str(),srvParam,nativeViewPortBBOX);
       
 
@@ -1409,6 +1420,13 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
     }else{
          dataSource->queryBBOX = false;
          
+      /* This layer has no dims */
+      if (dataSource->cfgLayer->Dimension.size()==1 && dataSource->cfgLayer->Dimension[0]->attr.name.equals("none")){
+        CDBDebug("Layer has no dimensions");
+        return 0;
+      }
+
+         
 /*
       dataSource->queryBBOX = true;
       dataSource->nativeViewPortBBOX[0] =111615;
@@ -1442,6 +1460,11 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
       delete store;
       if(dataSource->queryBBOX){
         //No tiles found can mean that we are outside an area. TODO check whether this has to to with wrong dims or with missing area.
+        CDBDebug("No tiles found can mean that we are outside an area. TODO check whether this has to to with wrong dims or with missing area.");
+        CDBDebug("dataSource->requiredDims.size() %d", dataSource->requiredDims.size());
+        for(size_t i=0;i<dataSource->requiredDims.size();i++){
+          CDBDebug("  [%s] = [%s]",dataSource->requiredDims[i]->netCDFDimName.c_str(),dataSource->requiredDims[i]->value.c_str());
+        }        
         return 0;
       }
       throw InvalidDimensionValue;
