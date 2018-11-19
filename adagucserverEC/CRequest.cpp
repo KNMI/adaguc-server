@@ -1034,7 +1034,10 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource,CServerParams *
       }
       if(alreadyAdded==false){
         CT::string netCDFDimName(dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
-
+        if (netCDFDimName.equals("none")){
+          dataSource->addStep(dataSource->cfgLayer->FilePath[0]->value.c_str(),NULL);
+          continue;
+        }
         CT::string tableName;
         try{
           tableName =  CDBFactory::getDBAdapter(srvParam->cfg)->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str(),dataSource);
@@ -1408,6 +1411,13 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
       
     }else{
          dataSource->queryBBOX = false;
+         
+      /* This layer has no dims */
+      if (dataSource->cfgLayer->Dimension.size()==1 && dataSource->cfgLayer->Dimension[0]->attr.name.equals("none")){
+        CDBDebug("Layer has no dimensions");
+        return 0;
+      }
+
          
 /*
       dataSource->queryBBOX = true;
