@@ -313,8 +313,10 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
     }
     return 0;
   }
-      int CCairoPlotter::_drawFreeTypeText(int x,int y,int &w,int &h,float angle,const char *text,bool render){
+  
+  int CCairoPlotter::_drawFreeTypeText(int x,int y,int &w,int &h,float angle,const char *text,bool render){
       //Draw text :)
+    
       w=0;h=0;
       if(library==NULL){
         int status  = initializeFreeType();

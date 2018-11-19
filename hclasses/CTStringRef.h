@@ -28,7 +28,7 @@
 
 #include "CTypes.h"
 #include "CTString.h"
-
+#define CTSTRINGREFSTACKLENGTH 15
 namespace CT{
   /**
   * Read only class of string
@@ -39,6 +39,7 @@ namespace CT{
     
     const char *constdata;
     char *voldata;
+    char stackValue[CTSTRINGREFSTACKLENGTH + 1];
     size_t _length;
    public:
     ~stringref();
