@@ -2,42 +2,37 @@ version: '2'
 
 services:
     adaguc-viewer:
-        image: openearth/adaguc-viewer
+        build: adaguc-viewer
         container_name: adaguc-viewer
-        ports:
-            - "8091:80"
         environment:
-            - "LOCAL_ADAGUCSERVER_ADDR=http://localhost:8090/" # Should be same as adaguc-server's EXTERNALADDRESS
+            - "LOCAL_ADAGUCSERVER_ADDR=https://${HOSTNAME}/" # Should be same as adaguc-server's EXTERNALADDRESS
             - "REMOTE_ADAGUCSERVER_ADDR=http://adaguc-server:8080/" # Do not change this within the docker-compose environment
-            - "ADAGUCSERVICES_AUTOWMS=http://localhost:8090/adaguc-services/autowms?" 
+            - "ADAGUCSERVICES_AUTOWMS=https://${HOSTNAME}/adaguc-services/autowms?" 
+        env_file:
+          - .env
     adaguc-server:
         image: openearth/adaguc-server
         container_name: adaguc-server
-        ports:
-            - "8090:8080"
         volumes:
-            - $ADAGUC_HOME/adaguc-server-docker/adaguc-datasets:/data/adaguc-datasets
-            - $ADAGUC_HOME/adaguc-server-docker/adaguc-autowms:/data/adaguc-autowms
-            - $ADAGUC_HOME/adaguc-server-docker/adaguc-data:/data/adaguc-data
-            - $ADAGUC_HOME/adaguc-server-docker/adagucdb:/adaguc/adagucdb
-            - $ADAGUC_HOME/adaguc-server-docker/adaguc-logs:/var/log/adaguc
+            - ${ADAGUC_DATASET_DIR}/:/data/adaguc-datasets
+            - ${ADAGUC_AUTOWMS_DIR}/:/data/adaguc-autowms
+            - ${ADAGUC_DATA_DIR}/:/data/adaguc-data
+            - ${ADAGUC_HOME}/adaguc-server-docker/adagucdb:/adaguc/adagucdb
+            - ${ADAGUC_HOME}/adaguc-server-docker/adaguc-logs:/var/log/adaguc
         environment:
-            - "EXTERNALADDRESS=http://localhost:8090/"
+            - "EXTERNALADDRESS=https://${HOSTNAME}/"
+        env_file:
+          - .env            
+    nginx:
+        build: nginx-adaguc
+        container_name: nginx-adaguc
+        ports:
+          #- "80:80"
+          - "443:443"
+        volumes:
+          - ./letsencrypt:/etc/letsencrypt
+          - ./cert:/cert
+        restart: unless-stopped
 
-#cd ./adaguc-server/
-#docker pull openearth/adaguc-viewer
-#Either do:
-#docker pull openearth/adaguc-server #<-- Pull docker image from dockerhub, or do docker build -t openearth/adaguc-server . 
-
-#export ADAGUC_HOME=HOME
-#mkdir -p $ADAGUC_HOME/adaguc-server-docker/adaguc-data
-#mkdir -p $ADAGUC_HOME/adaguc-server-docker/adaguc-datasets
-#mkdir -p $ADAGUC_HOME/adaguc-server-docker/adaguc-autowms
-#mkdir -p $ADAGUC_HOME/adaguc-server-docker/adagucdb && chmod 777 $ADAGUC_HOME/adaguc-server-docker/adagucdb
-#mkdir -p $ADAGUC_HOME/adaguc-server-docker/adaguc-logs && chmod 777 $ADAGUC_HOME/adaguc-server-docker/adaguc-logs
-
-# docker-compose -f ./Docker/docker-compose.yml up 
-# Go to http://localhost:8091/adaguc-viewer/ or http://localhost:8090/adaguc-services/wms.cgi? 
-
-# CTRL+C and docker-compose down # To stop 
-
+        
+#Run docker exec -i -t adaguc-server /adaguc/adaguc-server-updatedatasets.sh        
