@@ -5,9 +5,9 @@ services:
         build: adaguc-viewer
         container_name: adaguc-viewer
         environment:
-            - "LOCAL_ADAGUCSERVER_ADDR=https://${HOSTNAME}/" # Should be same as adaguc-server's EXTERNALADDRESS
+            - "LOCAL_ADAGUCSERVER_ADDR=${EXTERNALADDRESS}" # Should be same as adaguc-server's EXTERNALADDRESS
             - "REMOTE_ADAGUCSERVER_ADDR=http://adaguc-server:8080/" # Do not change this within the docker-compose environment
-            - "ADAGUCSERVICES_AUTOWMS=https://${HOSTNAME}/adaguc-services/autowms?" 
+            - "ADAGUCSERVICES_AUTOWMS=${EXTERNALADDRESS}/adaguc-services/autowms?" 
         env_file:
           - .env
     adaguc-server:
@@ -20,15 +20,18 @@ services:
             - ${ADAGUC_HOME}/adaguc-server-docker/adagucdb:/adaguc/adagucdb
             - ${ADAGUC_HOME}/adaguc-server-docker/adaguc-logs:/var/log/adaguc
         environment:
-            - "EXTERNALADDRESS=https://${HOSTNAME}/"
+            - "EXTERNALADDRESS=${EXTERNALADDRESS}"
         env_file:
-          - .env            
+          - .env     
+        ports:
+          #- "80:80"
+          - "8090:8080"          
     nginx:
         build: nginx-adaguc
         container_name: nginx-adaguc
         ports:
           #- "80:80"
-          - "443:443"
+          - "444:443"
         volumes:
           - ./letsencrypt:/etc/letsencrypt
           - ./cert:/cert
