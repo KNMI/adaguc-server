@@ -2,7 +2,7 @@ version: '2'
 
 services:
     adaguc-viewer:
-        build: adaguc-viewer
+        image: openearth/adaguc-viewer
         container_name: adaguc-viewer
         environment:
             - "LOCAL_ADAGUCSERVER_ADDR=${EXTERNALADDRESS}" # Should be same as adaguc-server's EXTERNALADDRESS
@@ -12,13 +12,13 @@ services:
           - .env
     adaguc-server:
         image: openearth/adaguc-server
-        container_name: adaguc-server
+        container_name: my-adaguc-server
         volumes:
             - ${ADAGUC_DATASET_DIR}/:/data/adaguc-datasets
             - ${ADAGUC_AUTOWMS_DIR}/:/data/adaguc-autowms
             - ${ADAGUC_DATA_DIR}/:/data/adaguc-data
-            - ${ADAGUC_HOME}/adaguc-server-docker/adagucdb:/adaguc/adagucdb
-            - ${ADAGUC_HOME}/adaguc-server-docker/adaguc-logs:/var/log/adaguc
+            - adaguc-server-compose-adagucdb:/adaguc/adagucdb
+            - adaguc-server-compose-logs:/var/log/adaguc
         environment:
             - "EXTERNALADDRESS=${EXTERNALADDRESS}"
         env_file:
@@ -36,6 +36,13 @@ services:
           - ./letsencrypt:/etc/letsencrypt
           - ./cert:/cert
         restart: unless-stopped
-
-        
-#Run docker exec -i -t adaguc-server /adaguc/adaguc-server-updatedatasets.sh        
+volumes:
+    adaguc-server-compose-adagucdb:
+    adaguc-server-compose-logs:
+      
+#Run 
+# bash docker-compose-generate-env.sh
+# docker-compose pull
+# docker-compose build
+# docker-compose up -d
+# docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh        
