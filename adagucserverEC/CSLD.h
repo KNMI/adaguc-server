@@ -37,7 +37,7 @@ public:
 
   void setServerParams(CServerParams *serverParams);
 
-  int processSLD(CT::string fileName);
+  int processSLD(CT::string sldUrl);
 
 private:
   CT::string parameterName;

@@ -166,7 +166,7 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
             //Server config is good for sld, initialize serverParams
             csld.setServerParams(srvParam);
 
-            //Check if SLD= have file name
+            //Check if URL in SLD=URL !Empty
             if (!values[1].empty()) {
 
               //Process SLD file
@@ -2284,37 +2284,44 @@ int CRequest::process_all_layers() {
 
 int CRequest::process_querystring() {
 
-  char * method = getenv("REQUEST_METHOD");
 
-  //strcmp returns 0, means they are equal.
-  if (!strcmp(method, "POST")) {
-
-    CT::string * post_body;
-    long body_length = atoi(getenv("CONTENT_LENGTH"));
-
-    //Buffer size in memory
-    char *buffer = (char*) malloc (sizeof(char)*body_length);
-
-    //Copy the content_body into the buffer:
-    fread(buffer, body_length, 1, stdin);
-    buffer[body_length] = 0;
-
-    //Copy Buffer to CT::string
-    post_body->copy(buffer);
-
-    //Clear buffer
-    free(buffer);
-
-    int status = CSLDPostRequest::startProcessing(post_body);
-
-    if(status != 0){
-      CDBError("Something went wrong processing Post request");
-    } else {
-      #ifdef CSLD_POST_REQUEST_DEBUG
-        CDBDebug("POST request is succesfully processed!");
-      #endif
-    }
-  }
+  /**
+   * START Implementation of POST request.
+   */
+//  char * method = getenv("REQUEST_METHOD");
+//
+//  //strcmp returns 0, means they are equal.
+//  if (!strcmp(method, "POST")) {
+//
+//    CT::string * post_body;
+//    long body_length = atoi(getenv("CONTENT_LENGTH"));
+//
+//    //Buffer size in memory
+//    char *buffer = (char*) malloc (sizeof(char)*body_length);
+//
+//    //Copy the content_body into the buffer:
+//    fread(buffer, body_length, 1, stdin);
+//    buffer[body_length] = 0;
+//
+//    //Copy Buffer to CT::string
+//    post_body->copy(buffer);
+//
+//    //Clear buffer
+//    free(buffer);
+//
+//    int status = CSLDPostRequest::startProcessing(post_body);
+//
+//    if(status != 0){
+//      CDBError("Something went wrong processing Post request");
+//    } else {
+//      #ifdef CSLD_POST_REQUEST_DEBUG
+//        CDBDebug("POST request is succesfully processed!");
+//      #endif
+//    }
+//  }
+  /**
+   * END Implementation of POST request.
+   */
 
 
 #ifdef MEASURETIME
