@@ -5,7 +5,9 @@
 #include "../hclasses/CDirReader.h"
 #include "../hclasses/CReadFile.h"
 #include "../hclasses/CXMLParser.h"
-
+#include "../hclasses/CHTTPTools.h"
+#include <stdio.h>
+#include <curl/curl.h>
 
 const char *CSLD::className = "CSLD";
 CT::string CSLD::XML_RULES::RASTER_SYMBOLIZER::NAME = "RasterSymbolizer";
@@ -29,31 +31,22 @@ void CSLD::setServerParams(CServerParams *serverParams) {
   this->serverConfig = serverParams->cfg;
 }
 
-int CSLD::processSLD(CT::string sldName) {
-  CDirReader cDirReader;
-  CReadFile cReadFile;
-  CT::string sldFile;
+int CSLD::processSLD(CT::string sldUrl) {
+  CServerParams cServerParams;
 
-  CT::string fileName = this->serverConfig->SLD[0]->attr.sldlocation + "/" + sldName;
-
-  try {
-    sldFile = cReadFile.open(fileName.c_str());
-  } catch (int e) {
-    if (e == CREADFILE_FILENOTFOUND) {
-      CDBError("File [%s] not found", fileName.c_str());
-      return 1;
-    }
-    if (e == CREADFILE_FILENOTREAD) {
-      CDBError("Unable to read file [%s]", fileName.c_str());
-      return 2;
-    }
+  //Check if url extension is .xml
+  if(!sldUrl.endsWith(".xml")){
+    CDBError("File is not a .xml file, which is required for SLD format");
   }
+
+  //Get SLD file from URL
+  CT::string sldFromUrl = CHTTPTools::getString(sldUrl);
 
   //Loop trough all NamedLayers in SLD, can be multiple for styling multiple Layers
   try {
 
     CXMLParserElement parsedElement;
-    parsedElement.parse(sldFile);
+    parsedElement.parse(sldFromUrl);
 
     //Extract NamedLayers
     CXMLParser::XMLElement::XMLElementPointerList namedLayers = parsedElement.get("StyledLayerDescriptor")->getList("NamedLayer");

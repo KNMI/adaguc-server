@@ -4,8 +4,7 @@
 
 #ifndef PROJECT_CSLDPOSTREQUEST_H
 #define PROJECT_CSLDPOSTREQUEST_H
-
-#endif //PROJECT_CSLDPOSTREQUEST_H
+#endif PROJECT_CSLDPOSTREQUEST_H
 
 #include "CDebugger.h"
 #include "CTString.h"

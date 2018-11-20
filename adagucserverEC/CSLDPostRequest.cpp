@@ -11,7 +11,5 @@ CSLDPostRequest::CSLDPostRequest(){
 }
 
 int CSLDPostRequest::startProcessing(CT::string *post_body) {
-  CDBDebug("HOI %s", post_body->c_str());
-
   return 0;
 }
