@@ -61,9 +61,5 @@
     <Variable>depth</Variable>
   </Layer>
 
-
-  <SLD sldlocation="{ADAGUC_PATH}/data/sld/" />
-
-
   <!-- End of configuration /-->
 </Configuration>

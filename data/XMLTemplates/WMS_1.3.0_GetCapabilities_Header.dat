@@ -29,16 +29,7 @@
         <Request>
             <GetCapabilities>
                 <Format>text/xml</Format>
-                <DCPType>
-                    <HTTP>
-                        <Get>
-                            <OnlineResource xlink:type="simple" xlink:href="[SERVICEONLINERESOURCE]"/>
-                        </Get>
-                        <Post>
-                            <OnlineResource xlink:type="simple" xlink:href="[SERVICEONLINERESOURCE]"/>
-                        </Post>
-                    </HTTP>
-                </DCPType>
+                <DCPType><HTTP><Get><OnlineResource xlink:type="simple" xlink:href="[SERVICEONLINERESOURCE]"/></Get></HTTP></DCPType>
             </GetCapabilities>
             <GetMap>
                 <Format>image/png</Format>
@@ -65,5 +56,3 @@
             <Format>INIMAGE</Format>
             <Format>BLANK</Format>
         </Exception>
-        <UserDefinedSymbolization SupportSLD="1" UserLayer="1" UserStyle="1" RemoteWFS="0"/>
-            
