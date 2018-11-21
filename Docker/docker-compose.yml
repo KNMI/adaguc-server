@@ -45,3 +45,4 @@ volumes:
 # docker-compose up -d
 # wait 10 seconds for the services to start
 # docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh        
+# docker exec -it my-adaguc-server tail -f  /var/log/adaguc/adaguc-server.log
