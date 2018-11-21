@@ -561,7 +561,6 @@ public:
             if(readDataAsCDFDouble){
               variable->setType(CDF_DOUBLE);
             }
-            CDBDebug("Reading data");
             int status = variable->readData(variable->currentType,start,count,stride,true);
             
             if(status != 0){
@@ -573,7 +572,6 @@ public:
               /**
               * DataPostProc: Here our datapostprocessor comes into action!
               */
-              CDBDebug("Applying postprocs");
               for(size_t dpi=0;dpi<dataSource->cfgLayer->DataPostProc.size();dpi++){
                 CServerConfig::XMLE_DataPostProc * proc = dataSource->cfgLayer->DataPostProc[dpi];
                 //Algorithm ax+b:

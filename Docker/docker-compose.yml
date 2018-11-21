@@ -10,6 +10,7 @@ services:
             - "ADAGUCSERVICES_AUTOWMS=${EXTERNALADDRESS}/adaguc-services/autowms?" 
         env_file:
           - .env
+        restart: unless-stopped
     adaguc-server:
         image: openearth/adaguc-server
         container_name: my-adaguc-server
@@ -23,15 +24,12 @@ services:
             - "EXTERNALADDRESS=${EXTERNALADDRESS}"
         env_file:
           - .env     
-        ports:
-          #- "80:80"
-          - "8090:8080"          
+        restart: unless-stopped
     nginx:
         build: nginx-adaguc
         container_name: nginx-adaguc
         ports:
-          #- "80:80"
-          - "444:443"
+          - "${ADAGUC_PORT}:443"
         volumes:
           - ./letsencrypt:/etc/letsencrypt
           - ./cert:/cert
@@ -41,8 +39,10 @@ volumes:
     adaguc-server-compose-logs:
       
 #Run 
-# bash docker-compose-generate-env.sh
+# bash docker-compose-generate-env.sh -a ~/adaguc-server-docker/adaguc-autowms/ -d ~/adaguc-server-docker/adaguc-datasets/ -f ~/adaguc-server-docker/adaguc-data -p 443
 # docker-compose pull
 # docker-compose build
 # docker-compose up -d
+# wait 10 seconds for the services to start
 # docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh        
+# docker exec -it my-adaguc-server tail -f  /var/log/adaguc/adaguc-server.log
