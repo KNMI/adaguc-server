@@ -1,26 +1,11 @@
-#include "CDirReader.h"
 #include "CDebugger.h"
 #include "CSLD.h"
-#include "../hclasses/CReadFile.h"
-#include "../hclasses/CDirReader.h"
-#include "../hclasses/CReadFile.h"
 #include "../hclasses/CXMLParser.h"
 #include "../hclasses/CHTTPTools.h"
-#include <stdio.h>
-#include <curl/curl.h>
 
 const char *CSLD::className = "CSLD";
-CT::string CSLD::XML_RULES::RASTER_SYMBOLIZER::NAME = "RasterSymbolizer";
-CT::string CSLD::XML_RULES::RASTER_SYMBOLIZER::CHILDS::COLOR_MAP = "ColorMap";
-
-CT::string CSLD::XML_RULES::MIN_SCALE_DENOMINATOR::NAME = "MinScaleDenominator";
-CT::string CSLD::XML_RULES::MAX_SCALE_DENOMINATOR::NAME = "MaxScaleDenominator";
-
-CT::string CSLD::STYLE_NAME_TEMPLATE = "ADAGUCSLD_";
 
 CSLD::CSLD() {
-  this->parameterName = "SLD";
-
   //SETUP STYLE variables
   this->myOwnStyle = new CServerConfig::XMLE_Style();
   this->myOwnLegend = new CServerConfig::XMLE_Legend();
@@ -31,12 +16,20 @@ void CSLD::setServerParams(CServerParams *serverParams) {
   this->serverConfig = serverParams->cfg;
 }
 
-int CSLD::processSLD(CT::string sldUrl) {
+//Start processing the SLD url
+int CSLD::processSLDUrl(CT::string sldUrl) {
   CServerParams cServerParams;
 
   //Check if url extension is .xml
   if(!sldUrl.endsWith(".xml")){
     CDBError("File is not a .xml file, which is required for SLD format");
+    return 1;
+  }
+
+  //Check if serverParams are initialized in this class
+  if(!serverParams || !serverConfig){
+    CDBError("Variable serverParams or serverConfig config are not set. See function setServerParams.");
+    return 1;
   }
 
   //Get SLD file from URL
@@ -76,7 +69,9 @@ int CSLD::processSLD(CT::string sldUrl) {
         int status = 0;
 
         if (layerUniqueName.equals(sldLayerName)) {
+          #ifdef CSLD_DEBUG
           CDBDebug("Found layer [%s], adding style.", layerUniqueName.c_str());
+          #endif
 
           /* Add SLD style name to Styles element of Layer */
           if (layer->Styles.size() == 0) {
@@ -126,7 +121,9 @@ int CSLD::processSLD(CT::string sldUrl) {
          * status from validating the SLD is 0
          */
         if (i == (namedLayers.size() - 1) && j == (this->serverConfig->Layer.size() - 1) && status == 0) {
+          #ifdef CSLD_DEBUG
           CDBDebug("Looping NamedLayers in SLD and Layers in server configuration are completed with 0 errors");
+          #endif
           return 0;
         } else {
           if (status != 0) {
@@ -141,6 +138,8 @@ int CSLD::processSLD(CT::string sldUrl) {
     CDBError("%s\n", message.c_str());
     return 1;
   }
+  //Prevent warning while compiling, must return a value. If code gets here, something is not right
+  return 1;
 }
 
 
@@ -168,17 +167,17 @@ int CSLD::validateSLDElements(CXMLParserElement *element) {
           CXMLParserElement childElement = childElementsList->at(i);
 
           //Check if rule Child is supported
-          if (childElement.getName().equals(XML_RULES_MIN_SCALE_DENOMINATOR_NAME)) {
+          if (childElement.getName().equals(RULE_MIN_SCALE_DENOMINATOR)) {
 
             //MinScaleDenominator support
             status = this->buildScaleDenominator(&childElement);
 
-          } else if (childElement.getName().equals(XML_RULES_MAX_SCALE_DENOMINATOR_NAME)) {
+          } else if (childElement.getName().equals(RULE_MAX_SCALE_DENOMINATOR)) {
 
             //MaxScaleDenominator support
             status = this->buildScaleDenominator(&childElement);
 
-          } else if (childElement.getName().equals(XML_RULES_RASTER_SYMBOLIZER_NAME)) {
+          } else if (childElement.getName().equals(RULE_RASTER_SYMBOLIZER)) {
 
             //RasterSymbolizer support
             status = this->buildRasterSymbolizer(&childElement);
@@ -203,18 +202,20 @@ int CSLD::validateSLDElements(CXMLParserElement *element) {
     CDBError("%s\n", message.c_str());
     return 1;
   }
+  //Prevent warning while compiling, must return a value. If code gets here, something is not right
+  return 1;
 }
 
 int CSLD::buildScaleDenominator(CXMLParserElement *element) {
 
-  if (element->getName() == XML_RULES_MIN_SCALE_DENOMINATOR_NAME) {
+  if (element->getName().equals(RULE_MIN_SCALE_DENOMINATOR)) {
 
     CServerConfig::XMLE_Min *min = new CServerConfig::XMLE_Min();
     min->value = element->getValue();
     this->myOwnStyle->Min.push_back(min);
     return 0;
 
-  } else if (element->getName() == XML_RULES_MAX_SCALE_DENOMINATOR_NAME) {
+  } else if (element->getName().equals(RULE_MAX_SCALE_DENOMINATOR)) {
 
     CServerConfig::XMLE_Max *max = new CServerConfig::XMLE_Max();
     max->value = element->getValue();
@@ -235,10 +236,8 @@ int CSLD::buildRasterSymbolizer(CXMLParserElement *childElement) {
   for (size_t i = 0; i < childElementsList->size(); i++) {
     CXMLParserElement element = childElementsList->at(i);
 
-    if (element.getName().equals(XML_RULES_RASTER_SYMBOLIZER_CHILD_COLOR_MAP)) {
-
+    if (element.getName().equals(RULE_RASTER_SYMBOLIZER_CHILD_COLOR_MAP)) {
       return this->buildColorMap(&element);
-
     } else {
       CDBError("Child %s in %s Element not supported (yet)", element.getName().c_str(),childElement->getName().c_str());
       return 1;
@@ -264,13 +263,15 @@ int CSLD::buildColorMap(CXMLParserElement *element) {
 
     //Set Max attribute, Current element is < the amount of entries
     if (i + 1 < colorMapEntries.size()) {
+      //Get the quantity of the next colorMapEntry.
       max = colorMapEntries.get(i + 1)->getAttrValue("quantity");
+      //Set the quantity value as max on ShadeInterval
       shadeInterval->attr.max = max;
     } else {
       if (this->myOwnStyle->Max.size() == 1) {
         shadeInterval->attr.max = this->myOwnStyle->Max[0]->value;
       } else {
-        CDBError("Missing element %s for setting the last ColorMapEntry Max attribute", XML_RULES_MAX_SCALE_DENOMINATOR_NAME.c_str());
+        CDBError("Missing element %s for setting the last ColorMapEntry Max attribute", RULE_MAX_SCALE_DENOMINATOR);
         return 1;
       }
     }
@@ -283,7 +284,9 @@ int CSLD::buildColorMap(CXMLParserElement *element) {
     this->myOwnStyle->ShadeInterval.push_back(shadeInterval);
 
     if (i == (colorMapEntries.size() - 1)) {
+      #ifdef CSLD_DEBUG
       CDBDebug("Building ColorMap complete");
+      #endif
       return 0;
     }
   }
@@ -293,19 +296,10 @@ int CSLD::buildColorMap(CXMLParserElement *element) {
 }
 
 bool CSLD::parameterIsSld(CT::string param) {
-  if (param.equals(this->parameterName)) {
+  if (param.equals(SLD_PARAMETER_NAME)) {
     return true;
   }
   return false;
 }
-
-bool CSLD::serverConfigCheck(CServerConfig::XMLE_Configuration *serverConfig) {
-  if (serverConfig->SLD.size() != 1) {
-    CDBError("SLD not correctly configured.");
-    return false;
-  }
-  return true;
-}
-
 
 
