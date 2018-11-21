@@ -304,7 +304,7 @@ The ADAGUC WMS URL becomes:
 http://localhost:8090/adaguc-services/adagucserver?source=http%3A%2F%2Fopendap.knmi.nl%2Fknmi%2Fthredds%2FdodsC%2Fomi%2FOMI___OPER_R___TYTRCNO_L3%2FTYTRCNO%2FOMI___OPER_R___TYTRCNO_3.nc&service=wms&request=getcapabilities
 ```
 
-This WMS URL can be visualized in the viewer by using "Add data". (http://localhost:8091/adaguc-viewer/ if you use the compose)
+This WMS URL can be visualized in the viewer by using "Add data". 
 
 ## Docker compose with server and viewer:
 
@@ -321,25 +321,34 @@ export ADAGUCHOME=$HOME
 mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-data
 mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-datasets
 mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-autowms
-mkdir -p $ADAGUCHOME/adaguc-server-docker/adagucdb 
-mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-logs && chmod 777 $ADAGUCHOME/adaguc-server-docker/adaguc-logs
-mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-security
 
-docker-compose -f docker-compose.yml up 
+cd adaguc-server/Docker
+bash docker-compose-generate-env.sh \
+  -a $ADAGUCHOME/adaguc-server-docker/adaguc-autowms \
+  -d $ADAGUCHOME/adaguc-server-docker/adaguc-datasets \
+  -f $ADAGUCHOME/adaguc-server-docker/adaguc-data \
+  -p 443
+
+docker-compose pull
+docker-compose build
+docker-compose up -d && sleep 10
+
+# Scan datasets:
+docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh        
+
+# To view logs:
+docker exec -it my-adaguc-server tail -f  /var/log/adaguc/adaguc-server.log
 ```
-The following services are now available:
-* viewer at http://localhost:8091/adaguc-viewer/ 
-* server http://localhost:8090/adaguc-services/adagucserver? 
+The docker-compose-generate-env.sh tells you where you services can be accessed in the browser. Alternatively you can have a look at the ./adaguc-server/Docker/.env file
+```
+cat ./adaguc-server/Docker/.env
+
+```
 
 To stop:
 ```
 ## Press CTRL+C
 docker-compose down
-```
-
-Use the following command to scan datasets:
-```
-docker exec -i -t adaguc-server /adaguc/adaguc-server-updatedatasets.sh <your dataset name>
 ```
 
 ## OpenDAP
