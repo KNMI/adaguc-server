@@ -23,7 +23,9 @@ RUN yum install -y \
     tomcat \
     udunits2 \
     openssl \
-    netcdf
+    netcdf \
+    netcdf4-python \
+    python-six
 
 # building / development packages
 RUN yum update -y && yum clean all
@@ -76,12 +78,14 @@ RUN yum install -y \
     tomcat \
     udunits2 \
     openssl \
-    netcdf
+    netcdf \
+    netcdf4-python \
+    python-six
 
 WORKDIR /adaguc/adaguc-server-master
 
 # Install adaguc-services (spring boot application for running adaguc-server)
-RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.0.5/adaguc-services-1.0.5.war > /usr/share/tomcat/webapps/adaguc-services.war
+RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.0.13/adaguc-services-1.0.13.war > /usr/share/tomcat/webapps/adaguc-services.war
    
 # Install compiled adaguc binaries from stage one    
 COPY --from=0 /adaguc/adaguc-server-master/bin /adaguc/adaguc-server-master/bin

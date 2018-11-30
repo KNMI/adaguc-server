@@ -151,8 +151,10 @@ public:
     float TTFFontSize;
     //char *fontConfig ;
     
-    static std::map<int,int> myColorMap;
-    static std::map<int,int>::iterator myColorIter;
+    std::map<int,int> myColorMap;
+    std::map<int,int>::iterator myColorIter;
+    std::map<CT::string,CCairoPlotter*> myCCairoPlotterMap;
+    CCairoPlotter *getCairoPlotter(const char *fontfile, float size, int w, int h, unsigned char *b);
     int getClosestGDColor(unsigned char r,unsigned char g,unsigned char b);
     int gdTranspColor;
     float lineMoveToX,lineMoveToY;

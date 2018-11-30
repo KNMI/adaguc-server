@@ -124,9 +124,9 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
       CT::string queryString(pszQueryString);
       queryString.decodeURLSelf();
 
-      #ifdef CREQUEST_DEBUG
+#ifdef CREQUEST_DEBUG
       CDBDebug("Query String: %s ", queryString.c_str());
-      #endif
+#endif
 
       CT::string *parameters = queryString.splitToArray("&");
       for (size_t j = 0; j < parameters->count; j++) {
@@ -158,9 +158,9 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
         //Check if parameter name is a SLD parameter AND have file name
         CSLD csld;
         if (csld.parameterIsSld(values[0])) {
-          #ifdef CREQUEST_DEBUG
+#ifdef CREQUEST_DEBUG
           CDBDebug("Found SLD parameter in query");
-          #endif
+#endif
           //Check if the value of parameter SLD={value} is not empty
           if (!values[1].empty()) {
 
@@ -590,7 +590,7 @@ int CRequest::process_wcs_getcoverage_request() {
   CServerParams::showWCSNotEnabledErrorMessage();
   return 1;
 #else
-                                                                                                                          if(srvParam->WMSLayers!=NULL)
+  if(srvParam->WMSLayers!=NULL)
     for(size_t j=0;j<srvParam->WMSLayers->count;j++){
       CDBDebug("WCS GETCOVERAGE %s",srvParam->WMSLayers[j].c_str());
     }
@@ -1104,7 +1104,10 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
       }
       if (alreadyAdded == false) {
         CT::string netCDFDimName(dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
-
+        if (netCDFDimName.equals("none")) {
+          dataSource->addStep(dataSource->cfgLayer->FilePath[0]->value.c_str(), NULL);
+          continue;
+        }
         CT::string tableName;
         try {
           tableName = CDBFactory::getDBAdapter(srvParam->cfg)->getTableNameForPathFilterAndDimension(
@@ -1320,6 +1323,15 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
       nativeViewPortBBOX[1] = srvParam->Geo->dfBBOX[1];
       nativeViewPortBBOX[2] = srvParam->Geo->dfBBOX[2];
       nativeViewPortBBOX[3] = srvParam->Geo->dfBBOX[3];
+
+      if (nativeViewPortBBOX[0] == nativeViewPortBBOX[2]) {
+        CDBDebug("View port BBOX is wrong: %f %f %f %f", nativeViewPortBBOX[0], nativeViewPortBBOX[1],
+                 nativeViewPortBBOX[2], nativeViewPortBBOX[3]);
+        nativeViewPortBBOX[0] = -180;
+        nativeViewPortBBOX[1] = -90;
+        nativeViewPortBBOX[2] = 180;
+        nativeViewPortBBOX[3] = 90;
+      }
       findExtent(nativeProj4.c_str(), srvParam, nativeViewPortBBOX);
 
 
@@ -1397,7 +1409,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
       }
 
 #ifdef CREQUEST_DEBUG
-                                                                                                                              CDBDebug("Cellsize screen %f",screenCellSize);
+      CDBDebug("Cellsize screen %f",screenCellSize);
       CDBDebug("Cellsize basetile %f",level1BBOXWidth/double(tilewidth));
 #endif
 
@@ -1481,6 +1493,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
 
       double tileCellSize = levelXBBOXWidth / double(tilewidth);
       //CDBDebug("level %d, tiles %0d cellsize %f",dataSource->queryLevel,store->getSize(),tileCellSize);
+
       if (tileSettingsDebug) {
         srvParam->mapTitle.print("level %d, tiles %d", dataSource->queryLevel, store->getSize());
         srvParam->mapSubTitle.print("level %d, tiles %0d, tileCellSize %f, screenCellSize %f", dataSource->queryLevel,
@@ -1490,6 +1503,13 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
 
     } else {
       dataSource->queryBBOX = false;
+
+      /* This layer has no dims */
+      if (dataSource->cfgLayer->Dimension.size() == 1 && dataSource->cfgLayer->Dimension[0]->attr.name.equals("none")) {
+        CDBDebug("Layer has no dimensions");
+        return 0;
+      }
+
 
 /*
       dataSource->queryBBOX = true;
@@ -1524,6 +1544,13 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
       delete store;
       if (dataSource->queryBBOX) {
         //No tiles found can mean that we are outside an area. TODO check whether this has to to with wrong dims or with missing area.
+        CDBDebug(
+          "No tiles found can mean that we are outside an area. TODO check whether this has to to with wrong dims or with missing area.");
+        CDBDebug("dataSource->requiredDims.size() %d", dataSource->requiredDims.size());
+        for (size_t i = 0; i < dataSource->requiredDims.size(); i++) {
+          CDBDebug("  [%s] = [%s]", dataSource->requiredDims[i]->netCDFDimName.c_str(),
+                   dataSource->requiredDims[i]->value.c_str());
+        }
         return 0;
       }
       throw InvalidDimensionValue;
@@ -1542,7 +1569,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
         dataSource->getCDFDims()->addDimension(dataSource->requiredDims[i]->netCDFDimName.c_str(), value.c_str(),
                                                atoi(record->get(2 + i * 2)->c_str()));
 #ifdef CREQUEST_DEBUG
-                                                                                                                                CDBDebug("queryDimValuesForDataSource dataSource->queryBBOX %s for step %d/%d",dataSource->layerName.c_str(),dataSource->getCurrentTimeStep(),dataSource->getNumTimeSteps());
+        CDBDebug("queryDimValuesForDataSource dataSource->queryBBOX %s for step %d/%d",dataSource->layerName.c_str(),dataSource->getCurrentTimeStep(),dataSource->getNumTimeSteps());
         CDBDebug("  [%s][%d] = [%s]",dataSource->requiredDims[i]->netCDFDimName.c_str(),atoi(record->get(2+i*2)->c_str()),value.c_str());
 #endif
         dataSource->requiredDims[i]->addValue(value.c_str());
@@ -1562,7 +1589,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
     return 2;
   }
 #ifdef CREQUEST_DEBUG
-                                                                                                                          CDBDebug("Datasource has %d steps",dataSource->getNumTimeSteps());
+  CDBDebug("Datasource has %d steps",dataSource->getNumTimeSteps());
     StopWatch_Stop("[/setDimValuesForDataSource]");
 #endif
   return 0;
@@ -1602,12 +1629,9 @@ int CRequest::process_all_layers() {
 
 
         srvParam->makeUniqueLayerName(&layerName, srvParam->cfg->Layer[layerNo]);
-
-
         //CDBError("comparing (%d) %s==%s",j,layerName.c_str(),srvParam->WMSLayers[j].c_str());
         if (layerName.equals(srvParam->WMSLayers[j].c_str())) {
           CDataSource *dataSource = new CDataSource();
-
 
           dataSources.push_back(dataSource);
 
@@ -1615,8 +1639,6 @@ int CRequest::process_all_layers() {
                                       layerName.c_str(), j) != 0) {
             return 1;
           }
-
-
 
           //Check if layer has an additional layer
           for (size_t additionalLayerNr = 0;
@@ -1855,9 +1877,9 @@ int CRequest::process_all_layers() {
         CImageDataWriter imageDataWriter;
 
         /**
-            We want like give priority to our own internal layers, instead to external cascaded layers. This is because
-            our internal layers have an exact customized legend, and we would like to use this always.
-          */
+          We want like give priority to our own internal layers, instead to external cascaded layers. This is because
+          our internal layers have an exact customized legend, and we would like to use this always.
+        */
 
         bool imageDataWriterIsInitialized = false;
         int dataSourceToUse = 0;
@@ -1985,10 +2007,10 @@ int CRequest::process_all_layers() {
               status = imageDataWriter.addData(dataSources);
               if (status != 0) {
                 /**
-                  * Adding data failed:
-                  * Do not ruin an animation if one timestep fails to load.
-                  * If there is a single time step then throw an exception otherwise continue.
-                  */
+                * Adding data failed:
+                * Do not ruin an animation if one timestep fails to load.
+                * If there is a single time step then throw an exception otherwise continue.
+                */
                 if (dataSources[dataSourceToUse]->getNumTimeSteps() == 1) {
                   //Not an animation, so throw an exception
                   CDBError("Unable to convert datasource %s to image", dataSources[j]->layerName.c_str());
@@ -2018,13 +2040,13 @@ int CRequest::process_all_layers() {
         if (measurePerformance) { StopWatch_Stop("Finished imagewarper"); }
 
 
-        int textY = 5;
+        int textY = 16;
         //int prevTextY=0;
         if (srvParam->mapTitle.length() > 0) {
           if (srvParam->cfg->WMS[0]->TitleFont.size() == 1) {
             float fontSize = parseFloat(srvParam->cfg->WMS[0]->TitleFont[0]->attr.size.c_str());
             textY += int(fontSize);
-            textY += imageDataWriter.drawImage.drawTextArea(5, textY,
+            textY += imageDataWriter.drawImage.drawTextArea(16, textY,
                                                             srvParam->cfg->WMS[0]->TitleFont[0]->attr.location.c_str(),
                                                             fontSize, 0, srvParam->mapTitle.c_str(),
                                                             CColor(0, 0, 0, 255), CColor(255, 255, 255, 100));
@@ -2035,7 +2057,7 @@ int CRequest::process_all_layers() {
           if (srvParam->cfg->WMS[0]->SubTitleFont.size() == 1) {
             float fontSize = parseFloat(srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.size.c_str());
             textY += int(fontSize) / 2;
-            textY += imageDataWriter.drawImage.drawTextArea(6, textY,
+            textY += imageDataWriter.drawImage.drawTextArea(16, textY,
                                                             srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(),
                                                             fontSize, 0, srvParam->mapSubTitle.c_str(),
                                                             CColor(0, 0, 0, 255), CColor(255, 255, 255, 100));
@@ -2077,7 +2099,7 @@ int CRequest::process_all_layers() {
               //legendImage.setBGColor(255,255,255);
 
               legendImage.createImage(&imageDataWriter.drawImage, legendWidth,
-                                      imageDataWriter.drawImage.Geo->dHeight - padding * 2 + 2);
+                                      (imageDataWriter.drawImage.Geo->dHeight / 2) - padding * 2 + 2);
 
               //legendImage.rectangle(0,0,legendImage.Geo->dWidth,legendImage.Geo->dHeight,CColor(0,0,0,0),CColor(0,0,0,255));
               status = imageDataWriter.createLegend(dataSources[d], &legendImage);
@@ -2104,7 +2126,7 @@ int CRequest::process_all_layers() {
           imageDataWriter.drawImage.enableTransparency(true);
           //scaleBarImage.setBGColor(1,0,0);
 
-          scaleBarImage.createImage(&imageDataWriter.drawImage, 200, 20);
+          scaleBarImage.createImage(&imageDataWriter.drawImage, 200, 30);
 
           //scaleBarImage.rectangle(0,0,scaleBarImage.Geo->dWidth,scaleBarImage.Geo->dHeight,CColor(0,0,0,0),CColor(0,0,0,255));
           status = imageDataWriter.createScaleBar(dataSources[0]->srvParams->Geo, &scaleBarImage);
@@ -2143,7 +2165,7 @@ int CRequest::process_all_layers() {
         }
 
 #ifdef ADAGUC_USE_GDAL
-                                                                                                                                if(wcsWriter==NULL){
+        if(wcsWriter==NULL){
           wcsWriter = new CGDALDataWriter();
         }
 #endif
@@ -2979,7 +3001,8 @@ int CRequest::process_querystring() {
     if (srvParam->OGCVersion == WMS_VERSION_1_1_1) {
       seterrormode(WMS_EXCEPTIONS_XML_1_1_1);
       //Check if default has been set for EXCEPTIONS
-      if ((srvParam->requestType == REQUEST_WMS_GETMAP) || (srvParam->requestType == REQUEST_WMS_GETLEGENDGRAPHIC)) {
+      if ((srvParam->requestType == REQUEST_WMS_GETMAP) ||
+          (srvParam->requestType == REQUEST_WMS_GETLEGENDGRAPHIC)) {
         if ((dFound_Exceptions == 0) && (srvParam->cfg->WMS[0]->WMSExceptions.size() > 0)) {
           if (srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.defaultValue.empty() == false) {
             Exceptions = srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.defaultValue;
@@ -2992,7 +3015,8 @@ int CRequest::process_querystring() {
     if (srvParam->OGCVersion == WMS_VERSION_1_3_0) {
       seterrormode(WMS_EXCEPTIONS_XML_1_3_0);
       //Check if default has been set for EXCEPTIONS
-      if ((srvParam->requestType == REQUEST_WMS_GETMAP) || (srvParam->requestType == REQUEST_WMS_GETLEGENDGRAPHIC)) {
+      if ((srvParam->requestType == REQUEST_WMS_GETMAP) ||
+          (srvParam->requestType == REQUEST_WMS_GETLEGENDGRAPHIC)) {
         if ((dFound_Exceptions == 0) && (srvParam->cfg->WMS[0]->WMSExceptions.size() > 0)) {
           if (srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.defaultValue.empty() == false) {
             Exceptions = srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.defaultValue;
@@ -3017,7 +3041,8 @@ int CRequest::process_querystring() {
     }
 
     if (dFound_Exceptions != 0) {
-      if ((srvParam->requestType == REQUEST_WMS_GETMAP) || (srvParam->requestType == REQUEST_WMS_GETLEGENDGRAPHIC)) {
+      if ((srvParam->requestType == REQUEST_WMS_GETMAP) ||
+          (srvParam->requestType == REQUEST_WMS_GETLEGENDGRAPHIC)) {
         //Overrule found EXCEPTIONS with value of WMSExceptions.default if force is set and default is defined
         if (srvParam->cfg->WMS[0]->WMSExceptions.size() > 0) {
           if ((srvParam->cfg->WMS[0]->WMSExceptions[0]->attr.defaultValue.empty() == false) &&
@@ -3143,7 +3168,8 @@ int CRequest::process_querystring() {
 
         )) {
 
-      if (srvParam->requestType == REQUEST_WMS_GETFEATUREINFO || srvParam->requestType == REQUEST_WMS_GETPOINTVALUE ||
+      if (srvParam->requestType == REQUEST_WMS_GETFEATUREINFO ||
+          srvParam->requestType == REQUEST_WMS_GETPOINTVALUE ||
           srvParam->requestType == REQUEST_WMS_GETHISTOGRAM) {
         int status = CServerParams::checkDataRestriction();
         if ((status & ALLOW_GFI) == false) {
@@ -3227,7 +3253,8 @@ int CRequest::process_querystring() {
       if (srvParam->Geo->dHeight < 0)srvParam->Geo->dHeight = 1;
 
       // When error is image, utilize full image size
-      setErrorImageSize(srvParam->Geo->dWidth, srvParam->Geo->dHeight, srvParam->imageFormat, srvParam->Transparent);
+      setErrorImageSize(srvParam->Geo->dWidth, srvParam->Geo->dHeight, srvParam->imageFormat,
+                        srvParam->Transparent);
 
       if (srvParam->OGCVersion == WMS_VERSION_1_0_0 || srvParam->OGCVersion == WMS_VERSION_1_1_1) {
         if (dFound_SRS == 0) {
@@ -3506,8 +3533,9 @@ int CRequest::updatedb(CT::string *tailPath, CT::string *layerPathToScan, int sc
   for (size_t layerNo = 0; layerNo < numberOfLayers; layerNo++) {
     CDataSource *dataSource = new CDataSource();
     dataSources.push_back(dataSource);
-    if (dataSource->setCFGLayer(srvParam, srvParam->configObj->Configuration[0], srvParam->cfg->Layer[layerNo], NULL,
-                                layerNo) != 0) {
+    if (
+      dataSource->setCFGLayer(srvParam, srvParam->configObj->Configuration[0], srvParam->cfg->Layer[layerNo], NULL,
+                              layerNo) != 0) {
       return 1;
     }
   }
