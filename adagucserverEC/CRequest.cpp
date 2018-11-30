@@ -35,12 +35,10 @@
 #include "CConvertGeoJSON.h"
 #include "CCreateScaleBar.h"
 #include "CSLD.h"
-#include "CSLDPostRequest.h"
 
 const char *CRequest::className = "CRequest";
 int CRequest::CGI = 0;
-CSLD csld;
-CSLDPostRequest csldPostRequest;
+
 
 //Entry point for all runs
 int CRequest::runRequest() {
@@ -158,6 +156,7 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
         }
 
         //Check if parameter name is a SLD parameter AND have file name
+        CSLD csld;
         if (csld.parameterIsSld(values[0])) {
           #ifdef CREQUEST_DEBUG
           CDBDebug("Found SLD parameter in query");
@@ -177,6 +176,7 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
             }
           } else {
             CDBError("SLD parameter needs to contain a Url pointed to a SLD file with .xml extension");
+            return 1;
           }
         }
       }

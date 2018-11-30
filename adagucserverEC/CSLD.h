@@ -13,13 +13,13 @@
 #define RULE_MIN_SCALE_DENOMINATOR "MinScaleDenominator"
 #define RULE_MAX_SCALE_DENOMINATOR "MaxScaleDenominator"
 
-#define STYLE_NAME_TEMPLATE "AdagucSld_"
+#define STYLE_NAME_TEMPLATE "AdagucSldStyle_"
+#define LEGEND_NAME_TEMPLATE "AdagucSldLegend_"
+
 
 class CSLD {
 
 public:
-  CSLD();
-
   bool parameterIsSld(CT::string param);
 
   void setServerParams(CServerParams *serverParams);
@@ -29,13 +29,11 @@ public:
 private:
   CServerConfig::XMLE_Configuration *serverConfig;
   CServerParams *serverParams;
-  CServerConfig::XMLE_Style *myOwnStyle;
-  CServerConfig::XMLE_Legend *myOwnLegend;
 
   DEF_ERRORFUNCTION();
 
-  int buildRasterSymbolizer(CXMLParserElement *childElement);
-  int buildColorMap(CXMLParserElement *element);
-  int buildScaleDenominator(CXMLParserElement *element);
-  int validateSLDElements(CXMLParserElement *element);
+  int buildRasterSymbolizer(CXMLParserElement *childElement, CServerConfig::XMLE_Style *myOwnStyle);
+  int buildColorMap(CXMLParserElement *element, CServerConfig::XMLE_Style *myOwnStyle);
+  int buildScaleDenominator(CXMLParserElement *element, CServerConfig::XMLE_Style *myOwnStyle);
+  int validateAndParseSLDElements(CXMLParserElement *element, CServerConfig::XMLE_Style *myOwnStyle);
 };

@@ -38,27 +38,11 @@
 
   <Include location="{ADAGUC_PATH}/data/config/includes/DefaultLayers.include.xml"/>
   
-
-  <Layer type="grid">
-    <Group value="baselayers"/>
-    <Name force="true">grid10</Name>
-    <Title>grid 10 degrees</Title>
-    <Grid resolution="10"/>
-    <WMSFormat name="image/png32"/>
-  </Layer>
-
   <!-- Layers -->
   <Layer type="database">
-    <Name>radar</Name>
-    <FilePath filter="">/nobackup/users/bennekom/data/radardata.nc</FilePath>
-    <Variable>precipitation</Variable>
-  </Layer>
-
-
-  <Layer type="database">
-    <Name>depth</Name>
-    <FilePath filter="">/nobackup/users/bennekom/data/mv100.nc</FilePath>
-    <Variable>depth</Variable>
+    <FilePath filter="">{ADAGUC_PATH}data/datasets/testdata.nc</FilePath>
+    <Variable>testdata</Variable>
+    <Styles>testdata</Styles>
   </Layer>
 
   <!-- End of configuration /-->
