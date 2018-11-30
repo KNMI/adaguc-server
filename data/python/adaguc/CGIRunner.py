@@ -34,6 +34,7 @@ class CGIRunner:
     #print cmds
     #print env
     
+    
     p = Popen(cmds, stdout=PIPE, stderr=STDOUT,bufsize=bufsize, close_fds=ON_POSIX,env=env)
     q = Queue()
     t = Thread(target=enqueue_output, args=(p.stdout, q))
