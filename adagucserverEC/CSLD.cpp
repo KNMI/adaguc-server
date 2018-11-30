@@ -5,12 +5,6 @@
 
 const char *CSLD::className = "CSLD";
 
-CSLD::CSLD() {
-  //SETUP STYLE variables
-  this->myOwnStyle = new CServerConfig::XMLE_Style();
-  this->myOwnLegend = new CServerConfig::XMLE_Legend();
-}
-
 void CSLD::setServerParams(CServerParams *serverParams) {
   this->serverParams = serverParams;
   this->serverConfig = serverParams->cfg;
@@ -18,10 +12,8 @@ void CSLD::setServerParams(CServerParams *serverParams) {
 
 //Start processing the SLD url
 int CSLD::processSLDUrl(CT::string sldUrl) {
-  CServerParams cServerParams;
-
   //Check if url extension is .xml
-  if(!sldUrl.endsWith(".xml")){
+  if(!sldUrl.startsWith("http") || !sldUrl.endsWith(".xml")){
     CDBError("File is not a .xml file, which is required for SLD format");
     return 1;
   }
@@ -83,26 +75,32 @@ int CSLD::processSLDUrl(CT::string sldUrl) {
           uniqueStyleName.printconcat("%i", i);
 
           //Initialize styling variables, to make sure they are empty and new
-          this->myOwnStyle = new CServerConfig::XMLE_Style();
-          this->myOwnLegend = new CServerConfig::XMLE_Legend();
-
-          layer->Styles[0]->value = uniqueStyleName.c_str();
-          this->myOwnStyle->attr.name = uniqueStyleName.c_str();
+          CServerConfig::XMLE_Style *myOwnStyle = new CServerConfig::XMLE_Style();
           this->serverConfig->Style.push_back(myOwnStyle);
-
-          this->myOwnLegend->attr.name = "radarlegend";
-          this->myOwnLegend->attr.type.print("interval");
+          
+          CServerConfig::XMLE_Legend *myOwnLegend = new CServerConfig::XMLE_Legend();
           this->serverConfig->Legend.push_back(myOwnLegend);
+          
+          layer->Styles[0]->value = uniqueStyleName.c_str();
+          myOwnStyle->attr.name = uniqueStyleName.c_str();
+          
+          CT::string uniqueLegendName = LEGEND_NAME_TEMPLATE;
+          uniqueLegendName.printconcat("%i", i);
+          myOwnLegend->attr.name = uniqueLegendName.c_str();          
+          myOwnLegend->attr.type.print("interval");
+          
 
           CServerConfig::XMLE_Legend *styleLegend = new CServerConfig::XMLE_Legend();
+          myOwnStyle->Legend.push_back(styleLegend);
           styleLegend->value = myOwnLegend->attr.name;
-          this->myOwnStyle->Legend.push_back(styleLegend);
+          
 
           CServerConfig::XMLE_RenderMethod *renderMethod = new CServerConfig::XMLE_RenderMethod();
+          myOwnStyle->RenderMethod.push_back(renderMethod);
           renderMethod->value = "shadedContour";
-          this->myOwnStyle->RenderMethod.push_back(renderMethod);
+          
 
-          status = this->validateSLDElements(namedLayerElement);
+          status = this->validateAndParseSLDElements(namedLayerElement, myOwnStyle);
 
           /*
            * Layer in server matched with SLD.
@@ -143,7 +141,7 @@ int CSLD::processSLDUrl(CT::string sldUrl) {
 }
 
 
-int CSLD::validateSLDElements(CXMLParserElement *element) {
+int CSLD::validateAndParseSLDElements(CXMLParserElement *element, CServerConfig::XMLE_Style *myOwnStyle) {
   try {
     //Extract UserStyle
     CXMLParser::XMLElement *userStyle = element->get("UserStyle");
@@ -170,17 +168,17 @@ int CSLD::validateSLDElements(CXMLParserElement *element) {
           if (childElement.getName().equals(RULE_MIN_SCALE_DENOMINATOR)) {
 
             //MinScaleDenominator support
-            status = this->buildScaleDenominator(&childElement);
+            status = this->buildScaleDenominator(&childElement, myOwnStyle);
 
           } else if (childElement.getName().equals(RULE_MAX_SCALE_DENOMINATOR)) {
 
             //MaxScaleDenominator support
-            status = this->buildScaleDenominator(&childElement);
+            status = this->buildScaleDenominator(&childElement, myOwnStyle);
 
           } else if (childElement.getName().equals(RULE_RASTER_SYMBOLIZER)) {
 
             //RasterSymbolizer support
-            status = this->buildRasterSymbolizer(&childElement);
+            status = this->buildRasterSymbolizer(&childElement, myOwnStyle);
 
           } else {
             CDBError("Child %s in Rule Element not supported (yet)", childElement.getName().c_str());
@@ -206,20 +204,20 @@ int CSLD::validateSLDElements(CXMLParserElement *element) {
   return 1;
 }
 
-int CSLD::buildScaleDenominator(CXMLParserElement *element) {
+int CSLD::buildScaleDenominator(CXMLParserElement *element, CServerConfig::XMLE_Style *myOwnStyle) {
 
   if (element->getName().equals(RULE_MIN_SCALE_DENOMINATOR)) {
 
     CServerConfig::XMLE_Min *min = new CServerConfig::XMLE_Min();
     min->value = element->getValue();
-    this->myOwnStyle->Min.push_back(min);
+    myOwnStyle->Min.push_back(min);
     return 0;
 
   } else if (element->getName().equals(RULE_MAX_SCALE_DENOMINATOR)) {
 
     CServerConfig::XMLE_Max *max = new CServerConfig::XMLE_Max();
     max->value = element->getValue();
-    this->myOwnStyle->Max.push_back(max);
+    myOwnStyle->Max.push_back(max);
 
     return 0;
   }
@@ -229,7 +227,7 @@ int CSLD::buildScaleDenominator(CXMLParserElement *element) {
 }
 
 
-int CSLD::buildRasterSymbolizer(CXMLParserElement *childElement) {
+int CSLD::buildRasterSymbolizer(CXMLParserElement *childElement, CServerConfig::XMLE_Style *myOwnStyle) {
 
   CXMLParser::XMLElement::XMLElementList *childElementsList = childElement->getElements();
 
@@ -237,7 +235,7 @@ int CSLD::buildRasterSymbolizer(CXMLParserElement *childElement) {
     CXMLParserElement element = childElementsList->at(i);
 
     if (element.getName().equals(RULE_RASTER_SYMBOLIZER_CHILD_COLOR_MAP)) {
-      return this->buildColorMap(&element);
+      return this->buildColorMap(&element, myOwnStyle);
     } else {
       CDBError("Child %s in %s Element not supported (yet)", element.getName().c_str(),childElement->getName().c_str());
       return 1;
@@ -248,7 +246,7 @@ int CSLD::buildRasterSymbolizer(CXMLParserElement *childElement) {
   return 1;
 }
 
-int CSLD::buildColorMap(CXMLParserElement *element) {
+int CSLD::buildColorMap(CXMLParserElement *element, CServerConfig::XMLE_Style *myOwnStyle) {
   CXMLParser::XMLElement::XMLElementPointerList colorMapEntries = element->getList("ColorMapEntry");
 
   //Foreach colorMapEntries
@@ -268,8 +266,8 @@ int CSLD::buildColorMap(CXMLParserElement *element) {
       //Set the quantity value as max on ShadeInterval
       shadeInterval->attr.max = max;
     } else {
-      if (this->myOwnStyle->Max.size() == 1) {
-        shadeInterval->attr.max = this->myOwnStyle->Max[0]->value;
+      if (myOwnStyle->Max.size() == 1) {
+        shadeInterval->attr.max = myOwnStyle->Max[0]->value;
       } else {
         CDBError("Missing element %s for setting the last ColorMapEntry Max attribute", RULE_MAX_SCALE_DENOMINATOR);
         return 1;
@@ -281,7 +279,7 @@ int CSLD::buildColorMap(CXMLParserElement *element) {
     hexColor.toUpperCaseSelf();
 
     shadeInterval->attr.fillcolor.print(hexColor.c_str());
-    this->myOwnStyle->ShadeInterval.push_back(shadeInterval);
+    myOwnStyle->ShadeInterval.push_back(shadeInterval);
 
     if (i == (colorMapEntries.size() - 1)) {
       #ifdef CSLD_DEBUG
