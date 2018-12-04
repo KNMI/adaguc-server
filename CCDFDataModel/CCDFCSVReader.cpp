@@ -24,8 +24,15 @@
  ******************************************************************************/
 
 
-/* Tested with https://raw.githubusercontent.com/JuliaData/CSV.jl/master/test/testfiles/FL_insurance_sample.csv */
+/* Tested with https://raw.githubusercontent.com/JuliaData/CSV.jl/master/test/testfiles/FL_insurance_sample.csv 
+ * 
+ * To develop this code, go to CCDFDataModel and do:
+ * 
+ * make anydump && ./anydump -h ../data/datasets/csvexample.csv
+ * 
+ */
 #include "CCDFCSVReader.h"
+#include "CTime.h"
 
 const char *CDFCSVReader::className="CSVReader";
 
@@ -100,16 +107,27 @@ int CDFCSVReader::open(const char *fileName){
     return 1;
   }
   
-  size_t numLines = this->csvLines.size() -1; /* Minus header */
+  /* Skip header */
+  this->headerStartsAtLine = 0;
+  for(size_t j=0;j<this->csvLines.size();j++){
+    if (this->csvLines[j].length() < 2 || (this->csvLines[j].length() > 1 && this->csvLines[j].c_str()[0] == '#')){
+      this->headerStartsAtLine++;
+    } else {
+      break;
+    }
+  }
   
-  CT::StackList<CT::string> header = CT::string(this->csvLines[0].c_str()).splitToStack(",");
-  CT::StackList<CT::stringref> firstLine = this->csvLines[1].splitToStackReferences(",");
+  size_t numLines = this->csvLines.size() -(1 + this->headerStartsAtLine); /* Minus header */
+  
+  CT::StackList<CT::string> header = CT::string(this->csvLines[this->headerStartsAtLine + 0].c_str()).splitToStack(",");
+  CT::StackList<CT::stringref> firstLine = this->csvLines[this->headerStartsAtLine + 1].splitToStackReferences(",");
   
   if (header.size() < 3) {
     CDBError("No CSV data found, less than 3 columns detected");
     return 1;
   }
-  
+
+  /* Search for lat and lon variables */
   int foundLat = -1;
   int foundLon = -1;
   for(size_t c=0;c<header.size();c++){
@@ -143,7 +161,23 @@ int CDFCSVReader::open(const char *fileName){
   header[foundLat] = "lat";
   header[foundLon] = "lon";
 
-  
+  /* Search for time dim */
+  CT::string timeString;
+  for(size_t j=0;j<this->headerStartsAtLine;j++){
+   CT::string metadataLine = this->csvLines[j].c_str();
+   int timeStart = metadataLine.indexOf("time=");
+   if (timeStart!=-1){
+     CT::string timeMetadataString = metadataLine.substring(timeStart, -1);
+     int timeEnd = timeMetadataString.indexOf("&");
+     if (timeEnd == -1) timeEnd = timeMetadataString.indexOf(";");
+     if (timeEnd == -1) timeEnd =timeMetadataString.length();
+     timeMetadataString.setSize(timeEnd);     
+     CT::StackList<CT::string> kvp = timeMetadataString.splitToStack("=");
+     if (kvp.size() == 2 && kvp[1].length() > 5){
+       timeString = kvp[1].c_str();
+     }
+   }
+  }
   /* Define station dimension and variable */
   CDF::Dimension * stationDim = new CDF::Dimension();stationDim->setName("station");
   stationDim->setSize(numLines);
@@ -160,8 +194,19 @@ int CDFCSVReader::open(const char *fileName){
   cdfObject->addDimension(timeDim); 
   
   CDF::Variable * timeVar = new CDF::Variable();cdfObject->addVariable(timeVar);
-  timeVar->setName(timeDim->getName());timeVar->currentType=CDF_DOUBLE;timeVar->nativeType=CDF_DOUBLE;timeVar->setType(CDF_DOUBLE);timeVar->isDimension=true;timeVar->allocateData(numLines);
+  timeVar->setName(timeDim->getName());timeVar->currentType=CDF_DOUBLE;timeVar->nativeType=CDF_DOUBLE;timeVar->setType(CDF_DOUBLE);timeVar->isDimension=true;timeVar->allocateData(timeDim->getSize());
   timeVar->dimensionlinks.push_back(timeDim);
+  timeVar->setAttributeText("standard_name", "time");
+  timeVar->setAttributeText("long_name", "time");
+  timeVar->setAttributeText("units", "seconds since 1970-1-1");
+  if (timeString.length() > 5){
+    CDBDebug("timeString = [%s]", timeString.c_str());
+    CTime *ctime = CTime::GetCTimeInstance(timeVar);
+    ((double*)timeVar->data)[0] = ctime->dateToOffset(ctime->freeDateStringToDate(timeString.c_str()));
+  } else {
+    ((double*)timeVar->data)[0] = 0;
+  }
+  
 
   /* Just in case open is done twice, clear the var indices vector */
   this->variableIndexer.clear();
@@ -182,6 +227,9 @@ int CDFCSVReader::open(const char *fileName){
     CDF::Variable * dataVar = new CDF::Variable();cdfObject->addVariable(dataVar);
     dataVar->setCDFReaderPointer((void*)this);
     dataVar->setName(header[c].c_str());dataVar->currentType=dataType;dataVar->nativeType=dataType;dataVar->setType(dataType);dataVar->isDimension=false;
+    if (timeString.length() > 5 && int(c) != foundLat && int(c) != foundLon){
+      dataVar->dimensionlinks.push_back(timeDim);
+    }
     dataVar->dimensionlinks.push_back(stationDim);
     this->variableIndexer.push_back(dataVar);
   }
@@ -200,17 +248,17 @@ int CDFCSVReader::_readVariableData(CDF::Variable *varToRead, CDFType type){
     CDBError("No CSV data found, less than 2 lines detected");
     return 1;
   }
-  
-  if (varToRead->getSize() == this->csvLines.size() -1 && type == varToRead->currentType){
+  size_t varSize = this->csvLines.size() - (1 + this->headerStartsAtLine);
+  if (varToRead->getSize() == varSize && type == varToRead->currentType){
     CDBDebug("Already loaded variable %s", varToRead->name.c_str());
     return 0;
   }
-  
   varToRead->currentType = type;
-  varToRead->allocateData(this->csvLines.size() - 1);
-  varToRead->setSize(this->csvLines.size() - 1);
+  varToRead->allocateData(varSize);
+  varToRead->setSize(varSize);
   
-  for(size_t j=1;j<this->csvLines.size();j++){
+  for(size_t j=(1 + this->headerStartsAtLine);j<this->csvLines.size();j++){
+    size_t varPointer = j - (1 + this->headerStartsAtLine);
     if (this->csvLines[j].length() == 0) {
       CDBWarning("Found empty CSV line at line %d", j);
       continue;
@@ -229,17 +277,17 @@ int CDFCSVReader::_readVariableData(CDF::Variable *varToRead, CDFType type){
         if (var->currentType == CDF_STRING){
           const char*stringToAdd = csvColumns[c].c_str();
           size_t length = strlen(stringToAdd);
-          ((char**)var->data)[j-1]=(char*)malloc(length+1);
-          snprintf(((char**)var->data)[j-1],length+1,"%s",stringToAdd);
+          ((char**)var->data)[varPointer]=(char*)malloc(length+1);
+          snprintf(((char**)var->data)[varPointer],length+1,"%s",stringToAdd);
         }
         if (var->currentType == CDF_INT){
-          ((int*)var->data)[j-1] =  CT::string(csvColumns[c].c_str()).toInt();
+          ((int*)var->data)[varPointer] =  CT::string(csvColumns[c].c_str()).toInt();
         }
         if (var->currentType == CDF_FLOAT){
-          ((float*)var->data)[j-1] =  CT::string(csvColumns[c].c_str()).toFloat();
+          ((float*)var->data)[varPointer] =  CT::string(csvColumns[c].c_str()).toFloat();
         }
         if (var->currentType == CDF_DOUBLE){
-          ((double*)var->data)[j-1] =  CT::string(csvColumns[c].c_str()).toDouble();
+          ((double*)var->data)[varPointer] =  CT::string(csvColumns[c].c_str()).toDouble();
         }
         break;
       }

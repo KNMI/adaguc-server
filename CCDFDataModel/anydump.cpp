@@ -155,6 +155,7 @@ int main(int argCount,char **argVars){
       delete cdfReader;cdfReader=NULL;
       delete cdfObject;cdfObject=NULL;
     }
-      
+
+  CTime::cleanInstances();
   return 0;
 }
