@@ -588,6 +588,16 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
         for(int j=0;j<4;j++)dfBBOX[j]=dfMaxExtent[j];
 
     }
+    
+    if (long(dfBBOX[0]*100.) == long(dfBBOX[2])*100.){
+      dfBBOX[0]-=1;
+      dfBBOX[2]+=1;
+    }
+    
+    if (long(dfBBOX[1]*100.) == long(dfBBOX[3]*100.)){
+      dfBBOX[1]-=1;
+      dfBBOX[3]+=1;
+    }
    
     pKey.setFoundExtent(dfBBOX);
     projectionStore.keys.push_back(pKey);

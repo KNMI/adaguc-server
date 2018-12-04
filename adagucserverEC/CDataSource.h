@@ -89,8 +89,9 @@ class CDataSource{
       CT::string meaning;
       double value;
   };
-  
+  bool dimsAreAutoConfigured;
 private:
+  
   CT::PointerList<CStyleConfiguration*> *_styles;
   CStyleConfiguration *_currentStyle;
   public:

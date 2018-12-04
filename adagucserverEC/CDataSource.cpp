@@ -310,6 +310,7 @@ CDataSource::CDataSource(){
   stretchMinMaxDone = false;
   isConfigured=false;
   threadNr=-1;
+  dimsAreAutoConfigured = false;
 //   legendScale=1;
 //   legendOffset=0;
 //   legendLog=0.0f;
