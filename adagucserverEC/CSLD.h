@@ -5,6 +5,7 @@
 #include "../hclasses/CXMLParser.h"
 
 #define MAX_RULE_ELEMENTS 1
+#define MAX_FILE_SIZE_ALLOWED 10000
 #define SLD_PARAMETER_NAME "SLD"
 
 #define RULE_RASTER_SYMBOLIZER  "RasterSymbolizer"
