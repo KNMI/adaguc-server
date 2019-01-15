@@ -78,15 +78,16 @@ class TestWMSSLD(unittest.TestCase):
         AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
         self.assertEqual(status, 1)
 
-    #def test_WMSGetMap_WITHSLD_testdatanc(self):
-        #AdagucTestTools().cleanTempDir()
-        #filename="test_WMSGetMap_testdatanc_WITHSLD.png"
-
-        #status,data,headers = AdagucTestTools().runADAGUCServer(args = ['--updatedb', '--config', ADAGUC_PATH + '/data/config/adaguc.sld.xml'], env = self.env, isCGI = False, showLogOnError = True)
-        #self.assertEqual(status, 0)
-
-        #status,data,headers = AdagucTestTools().runADAGUCServer("SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=radar&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&FORMAT=image/png&TRANSPARENT=FALSE&SHOWLEGEND=TRUE&SLD=http://bhw485.knmi.nl:8080/radar.xml",
-                                                                #env = self.env)
-        #AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
-        #self.assertEqual(status, 0)
-        #self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+    # def test_WMSGetMap_WITHSLD_testdatanc(self):
+    #     AdagucTestTools().cleanTempDir()
+    #     Start flask server
+    #     filename="test_WMSGetMap_testdatanc_WITHSLD.png"
+    #
+    #     status,data,headers = AdagucTestTools().runADAGUCServer(args = ['--updatedb', '--config', ADAGUC_PATH + '/data/config/adaguc.sld.xml'], env = self.env, isCGI = False, showLogOnError = True)
+    #     self.assertEqual(status, 0)
+    #
+    #     status,data,headers = AdagucTestTools().runADAGUCServer("SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=radar&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&FORMAT=image/png&TRANSPARENT=FALSE&SHOWLEGEND=TRUE&SLD=http://0.0.0.0:5000/sldFiles/radar.xml",
+    #                                                             env = self.env)
+    #     AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
+    #     self.assertEqual(status, 0)
+    #     self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))

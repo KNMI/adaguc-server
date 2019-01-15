@@ -20,12 +20,24 @@ int CSLD::processSLDUrl(CT::string sldUrl) {
 
   //Check if serverParams are initialized in this class
   if(!serverParams || !serverConfig){
-    CDBError("Variable serverParams or serverConfig config are not set. See function setServerParams.");
+    CDBDebug("Variable serverParams or serverConfig config are not set. See function setServerParams.");
     return 1;
   }
 
   //Get SLD file from URL
-  CT::string sldFromUrl = CHTTPTools::getString(sldUrl);
+  CT::string sldFromUrl;
+  try {
+    sldFromUrl = CHTTPTools::getString(sldUrl, MAX_FILE_SIZE_ALLOWED);
+  } catch(int error){
+    CDBError("Could not retrieve SLD from: %s", sldUrl.c_str());
+    return 1;
+  }
+
+  //Check if the retrieved file contains SLD standard
+  if(!sldFromUrl.startsWith("<?xml") || !sldFromUrl.endsWith("StyledLayerDescriptor>")){
+    CDBError("Invalid SLD, not matching standard");
+    return 1;
+  }
 
   //Loop trough all NamedLayers in SLD, can be multiple for styling multiple Layers
   try {
