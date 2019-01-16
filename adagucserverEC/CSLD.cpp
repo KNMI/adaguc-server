@@ -14,7 +14,7 @@ void CSLD::setServerParams(CServerParams *serverParams) {
 int CSLD::processSLDUrl(CT::string sldUrl) {
   //Check if url extension is .xml
   if(!sldUrl.startsWith("http") || !sldUrl.endsWith(".xml")){
-    CDBError("File is not a .xml file, which is required for SLD format");
+    CDBError("SLD parameter value needs to be a url pointed to a .xml file");
     return 1;
   }
 

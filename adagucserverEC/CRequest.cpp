@@ -161,8 +161,6 @@ int CRequest::setConfigFile(const char *pszConfigFile){
           #ifdef CREQUEST_DEBUG
             CDBDebug("Found SLD parameter in query");
           #endif
-          //Check if the value of parameter SLD={value} is not empty
-          if (!values[1].empty()) {
 
             //Set server params
             csld.setServerParams(srvParam);
@@ -174,10 +172,6 @@ int CRequest::setConfigFile(const char *pszConfigFile){
               CDBError("Processing SLD failed");
               return status;
             }
-          } else {
-            CDBError("SLD parameter needs to contain a Url pointed to a SLD file with .xml extension");
-            return 1;
-          }
         }
       }
     }
