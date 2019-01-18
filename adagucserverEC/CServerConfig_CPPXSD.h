@@ -28,6 +28,7 @@
 #include "CXMLSerializerInterface.h"
 #include "CDirReader.h"
 
+
 // f 102 >15
 // F 70 > 15
 // 0 48 > 0
@@ -1258,7 +1259,7 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_AutoResource*> AutoResource;
         std::vector <XMLE_Dataset*> Dataset;
         std::vector <XMLE_Include*> Include;
-        
+
         ~XMLE_Configuration(){
           XMLE_DELOBJ(Legend);
           XMLE_DELOBJ(WMS);
