@@ -182,6 +182,7 @@
 //#define CDATAREADER_DEBUG
 //#define CIMAGEDATAWRITER_DEBUG
 //#define CDATASOURCE_DEBUG
+#define CSLD_DEBUG
 
 //#define ENABLE_CURL in Makefile
 

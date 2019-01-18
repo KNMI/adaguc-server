@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<StyledLayerDescriptor version="1.0.0"
+  xmlns="http://www.opengis.net/sld"
+  xmlns:ogc="http://www.opengis.net/ogc"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.opengis.net/sld
+  http://schemas.opengis.net/sld/1.0.0/StyledLayerDescriptor.xsd">
+  <NamedLayer>
+    <Name>radar</Name>
+    <UserStyle>
+      <FeatureTypeStyle>
+        <Rule>
+          <MinScaleDenominator>0.1</MinScaleDenominator>
+          <MaxScaleDenominator>200</MaxScaleDenominator>
+          <RasterSymbolizer>
+            <ColorMap>
+              <ColorMapEntry color="#ffffff" quantity="0.1" />
+              <ColorMapEntry color="#AAAAAA" quantity="0.3" />
+              <ColorMapEntry color="#555555" quantity="1.0" />
+              <ColorMapEntry color="#FF8080" quantity="3" />
+              <ColorMapEntry color="#FF0000" quantity="10" />
+              <ColorMapEntry color="#010000" quantity="30" />
+            </ColorMap>
+          </RasterSymbolizer>
+        </Rule>        
+      </FeatureTypeStyle>
+    </UserStyle>
+  </NamedLayer>
+  <NamedLayer>
+    <Name>depth</Name>
+    <UserStyle>
+      <FeatureTypeStyle>
+        <Rule>
+          <MinScaleDenominator>-20</MinScaleDenominator>
+          <MaxScaleDenominator>100</MaxScaleDenominator>
+          <RasterSymbolizer>
+            <ColorMap>
+              <ColorMapEntry color="#001958" quantity="-20" />
+              <ColorMapEntry color="#173379" quantity="-15" />
+              <ColorMapEntry color="#29458B" quantity="-10" />
+              <ColorMapEntry color="#3D5BA4" quantity="-5" />
+              <ColorMapEntry color="#5E78B7" quantity="0" />
+              <ColorMapEntry color="#7992CD" quantity="50" />
+
+            </ColorMap>
+          </RasterSymbolizer>
+        </Rule>
+      </FeatureTypeStyle>
+    </UserStyle>
+  </NamedLayer>
+</StyledLayerDescriptor>

@@ -74,9 +74,10 @@ class CHTTPTools{
    * @param url The URL to read
    * @param buffer The buffer to use, must be a NULL pointer and should be freed with free
    * @param length The length of the buffer, is set by this function after succesful completion
+   * @param maxFileSize The maximum allowed size of file in bytes, refuse to download if larger
    * @return Zero on succes
    */
-  int static getBuffer(const char * url,char * &buffer, size_t &length){
+  int static getBuffer(const char * url,char * &buffer, size_t &length, long maxFileSize = 0){
     CDBDebug("Getting [%s]",url);
     if(buffer!=NULL){
       CDBError("curl buffer is not empty");
@@ -95,7 +96,7 @@ class CHTTPTools{
   
     /* init the curl session */ 
     curl_handle = curl_easy_init();
-    
+
     if(curl_handle == NULL){
       CDBError("curl_easy_init failed");
     }
@@ -103,6 +104,13 @@ class CHTTPTools{
     /* specify URL to get */ 
     if(curl_easy_setopt(curl_handle, CURLOPT_URL, url)!=0){
       CDBError("curl_easy_setopt failed CURLOPT_URL");
+    }
+
+    /* the maximum allowed size of file in bytes, refuse to download if larger */
+    if(maxFileSize > 0){
+      if(curl_easy_setopt(curl_handle, CURLOPT_MAXFILESIZE, maxFileSize) != 0){
+        CDBError("curl_easy_setopt failed CURLOPT_MAXFILESIZE");
+      }
     }
   
     /* send all data to this function  */ 
@@ -121,10 +129,12 @@ class CHTTPTools{
     if(curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, "Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:51.0) Gecko/20100101 Firefox/51.0")!=0){
       CDBError("curl_easy_setopt failed CURLOPT_USERAGENT");
     }
-  
-    /* get it! */ 
-    if(curl_easy_perform(curl_handle)!=0){
-      CDBError("curl_easy_perform failed");
+
+    /* get it! */
+    CURLcode response = curl_easy_perform(curl_handle);
+
+    if(response !=0){
+      CDBError("curl_easy_perform failed with error: %s", curl_easy_strerror(response));
     }
   
     /* cleanup curl stuff */ 
@@ -145,16 +155,14 @@ class CHTTPTools{
     return 0;
   }
   
-  CT::string static getString(const char * url){
+  CT::string static getString(const char * url, float maxFileSize = 0){
     char *buffer = NULL;
     size_t length = 0;
-    int status = getBuffer(url,buffer,length);
+    int status = getBuffer(url,buffer,length, maxFileSize);
     if(status!=0)throw 1;
     if(length==0)throw 2;
     return CT::string(buffer,length);
   }
-  
- 
 
 };
 #endif
