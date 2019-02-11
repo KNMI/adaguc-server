@@ -56,4 +56,4 @@
             <Format>INIMAGE</Format>
             <Format>BLANK</Format>
         </Exception>
-            
+        <UserDefinedSymbolization SupportSLD="1" />
