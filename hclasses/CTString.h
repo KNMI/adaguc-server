@@ -32,7 +32,6 @@
 
 namespace CT{
 
-    
   class string:public basetype{
   private:
     char stackValue[CTSTRINGSTACKLENGTH+1];
@@ -51,7 +50,7 @@ namespace CT{
     inline char *getValuePointer(){
       return useStack?stackValue:heapValue;
     }
-
+    
     //DEF_ERRORFUNCTION();
   public:
     /**
@@ -63,7 +62,28 @@ namespace CT{
     *Copy constructor
     */
     string(string const &f);
+
+ 
+    /**
+    * Copy constructor which initialize the string with a character array
+    * @param _value The character array to copy
+    * @param _length the length of the character array
+    */
+    string(const char * _value,size_t _length);
+
+    /**
+    * Copy constructor which initialize the string with a character array
+    * @param _value The character array to copy
+    */
+    string(const char * _value);
+
+    /**
+    * Copy constructor which initialize the string with the contents of a string pointer
+    * @param _string Pointer to the string to copy
+    */
+    string(CT::string*_string);
     
+
     /**
     * assign operator
     * @param f The input string
@@ -75,19 +95,6 @@ namespace CT{
     * @param f The input character array
     */
     string& operator= (const char*const &f);
-    
-    /**
-    * assign operator
-    * @param f The input integer (checking for 0 or NULL pointer);
-    */
-/*    
-*    TODO DOES NOT WORK YET
-*    string& operator= (int const& f){
-      #ifdef CTYPES_DEBUG
-      CDBDebug("string::operator= (int *const &f)\n");
-      #endif
-      init();return *this;
-    }*/
     
     /**
     * addition assignment operator
@@ -105,13 +112,13 @@ namespace CT{
     * addition operator
     * @param f The input string
     */
-    string& operator+ (string const& f);
+    string operator+ (string const& f);
     
     /**
     * addition operator
     * @param f The input character array
     */
-    string& operator+ (const char*const &f);
+    string operator+ (const char*const &f);
 
     /**
      * const char* conversion operator
@@ -135,26 +142,7 @@ namespace CT{
      bool operator != (const string& str) const {
        return !this->equals(str);
      }
-    
-    /**
-    * Copy constructor which initialize the string with a character array
-    * @param _value The character array to copy
-    * @param _length the length of the character array
-    */
-    string(const char * _value,size_t _length);
-
-    /**
-    * Copy constructor which initialize the string with a character array
-    * @param _value The character array to copy
-    */
-    string(const char * _value);
-
-    /**
-    * Copy constructor which initialize the string with the contents of a string pointer
-    * @param _string Pointer to the string to copy
-    */
-    string(CT::string*_string);
-    
+   
     /**
     * Destructor
     */

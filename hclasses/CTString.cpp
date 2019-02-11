@@ -93,15 +93,16 @@ namespace CT{
     return *this;
   }
 
-  string& string::operator+ (string const& f){
-    if (this == &f) return *this;  
-    concat(f.useStack?f.stackValue:f.heapValue,f.privatelength);
-    return *this;
+  string string::operator+ (string const& f){
+    CT::string n(*this);
+    n.concat(f);
+    return n;
   }
 
-  string& string::operator+ (const char*const &f){
-    this->concat(f);return *this;
-    
+  string string::operator+ (const char*const &f){
+    CT::string n(*this);
+    n.concat(f);
+    return n;
   }
 
   string::operator const char* () const {
