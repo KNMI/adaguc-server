@@ -83,16 +83,16 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource,int &removeNonE
     CDBError("Unable to get CDFObject for file %s",(*fileList)[0].c_str());
     return 1;
   }
-  
 
-  
   if(dataSource->cfgLayer->Dimension.size()==0){
     if(CAutoConfigure::autoConfigureDimensions(dataSource)!=0){
       CREPORT_ERROR_NODOC(CT::string("Unable to configure dimensions automatically"), CReportMessage::Categories::GENERAL);
       return 1;
     }
   }
+  
 #ifdef CDBFILESCANNER_DEBUG  
+  CDBDebug("dataSource->dimsAreAutoConfigured %d", dataSource->dimsAreAutoConfigured);
   CDBDebug("fileList->size() = %d",fileList->size());
 #endif
   
@@ -458,11 +458,26 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
             //The file is not there. If isAutoResourceEnabled and there is no file, force cleaning of autoConfigureDimensions table.
             if(removeNonExistingFiles == 1){   
               if(fileList->size() == 1){
+                CT::string layerTableId;
+                try{
+
+                  layerTableId = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), NULL,dataSource);
+
+                }catch(int e){
+                  CDBError("Unable to get layerTableId for autoconfigure_dimensions");
+                  return 1;
+                }
                 
-                CDBDebug("Removing autoConfigureDimensions [%s_%s]",tableNames[d].c_str(),dataSource->getLayerName());
+                CDBDebug("Removing autoConfigureDimensions [%s_%s] and [%s]",tableNames[d].c_str(),dataSource->getLayerName(), layerTableId.c_str());
+                
+                CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->removeDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(),NULL);
                 CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->removeDimensionInfoForLayerTableAndLayerName(tableNames[d].c_str(),dataSource->getLayerName());
                 
-                CDBDebug("Creating autoConfigureDimensions");
+                if (dataSource->dimsAreAutoConfigured){
+                  XMLE_DELOBJ(dataSource->cfgLayer->Dimension);
+                  dataSource->cfgLayer->Dimension.clear();
+                }
+
                 status = createDBUpdateTables(dataSource,removeNonExistingFiles,fileList, false);
                 if(status > 0 ){
                   CDBError("Exception at createDBUpdateTables");

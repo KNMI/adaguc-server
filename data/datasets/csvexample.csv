@@ -1,7 +1,7 @@
-lat,lon,Name,Index
-48.1,0.25,"First point",2
-49.2,1.1,"Second point",2
-47.5,0.75,"Third point",2
-50.5,0.75,"Fourth point",2
-50.1,7.2,"Fifth point",2
-52,5,De Bilt,2
+lat,lon,Name,Index,ff,dd
+48.1,0.25,"North",2,4,0
+49.2,1.1,"Second point",2,10,90
+47.5,0.75,"South",2,20,180
+50.5,0.75,"Fourth point",2,30,270
+50.1,7.2,"Fifth point",2,15,100
+52,5,De Bilt,2,17,25

@@ -37,8 +37,8 @@
 #include "CCDFReader.h"
 #include "CDebugger.h"
 
-#define CCDFCSVREADER_DEBUG
-#define CCDFCSVREADER_DEBUG_OPEN
+// #define CCDFCSVREADER_DEBUG
+// #define CCDFCSVREADER_DEBUG_OPEN
 
 class CDFCSVReader :public CDFReader{
   private:
@@ -46,6 +46,7 @@ class CDFCSVReader :public CDFReader{
     std::vector<CDF::Variable*> variableIndexer;
     CT::StackList<CT::stringref> csvLines;
     CT::string csvData;
+    size_t headerStartsAtLine;
   public:
     CDFCSVReader();
     ~CDFCSVReader();
