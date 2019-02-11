@@ -97,6 +97,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource){
       delete store;
       if(storeSize>0){
         lock.release();
+        dataSource->dimsAreAutoConfigured = true;
         return 0;
       }
     }catch(int e){
@@ -149,6 +150,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource){
             #ifdef CAUTOCONFIGURE_DEBUG
             CDBDebug("Creating an empty table, because variable [%s] has only x and y dims",variable->name.c_str());
             #endif
+            dataSource->dimsAreAutoConfigured = true;
             return 0;
           }
 
@@ -262,6 +264,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource){
   #ifdef CAUTOCONFIGURE_DEBUG
                 CDBDebug("/[DONE] Done AutoConfigureDimensions");
 #endif
+  dataSource->dimsAreAutoConfigured = true;
   return 0;
 }
 
