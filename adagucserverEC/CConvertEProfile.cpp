@@ -57,12 +57,33 @@ bool isADAGUCProfileFormat(CDFObject *cdfObject) {
   return true;
 }
 
+/*
+ * Checks if the format of this file corresponds to the deprecated ADAGUC EProfile format.
+ */
+bool isDeprecatedADAGUCEProfileFormat(CDFObject *cdfObject) {
+  try{
+    cdfObject->getVariable("range");
+    cdfObject->getDimension("range");
+
+    if( cdfObject->getAttribute("source")->toString().startsWith("CHM")==false){
+      return false;
+    }
+    if( cdfObject->getAttribute("serlom")->toString().startsWith("TUB")==false){
+      return false;
+    }
+  } catch(int e){
+    return false;
+  }
+
+  return true;
+}
+
 /**
  * This function adjusts the cdfObject by creating virtual 2D variables
  */
 int CConvertEProfile::convertEProfileHeader( CDFObject *cdfObject,CServerParams *srvParams){
   //Check whether this is really a profile file
-  if(!isADAGUCProfileFormat(cdfObject)) {
+  if(!isADAGUCProfileFormat(cdfObject) && !isDeprecatedADAGUCEProfileFormat(cdfObject)) {
     return 1;
   }
 //   CDBDebug("Using CConvertEProfile.h");
@@ -401,7 +422,7 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource,int mode){
   #endif
   
   CDFObject *cdfObject0 = dataSource->getDataObject(0)->cdfObject;
-  if(!isADAGUCProfileFormat(cdfObject0)) {
+  if(!isADAGUCProfileFormat(cdfObject0) && !isDeprecatedADAGUCEProfileFormat(cdfObject0)) {
     return 1;
   }
 
