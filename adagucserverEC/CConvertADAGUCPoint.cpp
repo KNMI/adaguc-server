@@ -90,9 +90,7 @@ void CConvertADAGUCPoint::lineInterpolated(float *grid , int W,int H, int startX
   
 }
 
-
-int CConvertADAGUCPoint::checkIfADAGUCPointFormat(CDFObject *cdfObject) {
-  /* Some conversions for non ADAGUC point data */
+void CConvertADAGUCPoint::convert_BIRA_IASB_NETCDF(CDFObject *cdfObject) {
   try{
     if (cdfObject->getAttribute("source")->toString().equals("BIRA-IASB NETCDF") && cdfObject->getVariableNE("obs") == NULL){
       CT::string timeString = cdfObject->getAttribute("measurement_time")->toString();
@@ -149,10 +147,13 @@ int CConvertADAGUCPoint::checkIfADAGUCPointFormat(CDFObject *cdfObject) {
     }
   }catch(int e){
   }
+}
 
-  
-  
-  
+
+int CConvertADAGUCPoint::checkIfADAGUCPointFormat(CDFObject *cdfObject) {
+  /* Some conversions for non ADAGUC point data */
+  convert_BIRA_IASB_NETCDF(cdfObject);
+    
   try{
     if(cdfObject->getAttribute("featureType")->toString().equals("timeSeries")==false&&cdfObject->getAttribute("featureType")->toString().equals("point")==false)return 1;
   }catch(int e){
