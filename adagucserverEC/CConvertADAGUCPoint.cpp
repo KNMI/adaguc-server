@@ -836,6 +836,26 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
     #ifdef MEASURETIME
     CDBDebug("Date numStations = %d",numStations);
     #endif
+    
+    
+    float discRadius = 8;
+    float discRadiusX = discRadius;
+    float discRadiusY = discRadius;
+    bool hasZoomableDiscRadius = false;
+    float discSize = 1;
+    if (dataSource!=NULL){
+      CStyleConfiguration * styleConfiguration = dataSource->getStyle();
+       if (styleConfiguration != NULL && styleConfiguration->styleConfig!=NULL){
+         if (styleConfiguration->styleConfig->Point.size() == 1){
+          
+          if(!styleConfiguration->styleConfig->Point[0]->attr.discradius.empty()){
+            hasZoomableDiscRadius = true;
+             discSize = styleConfiguration->styleConfig->Point[0]->attr.discradius.toFloat();
+          }
+         }
+       }
+    }
+    
     int prevLon,prevLat;
     float prevVal;
     bool hasPrevLatLon = false;
@@ -854,17 +874,54 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
       double lat = (double)latData[pGeo];
       
 //      CDBDebug("Found coordinate %f %f",lon,lat);
-      
+      double rotation = 0;
       double projectedX = lon;
       double projectedY = lat;
+      double projectedXOffsetY = lon ;
+      double projectedYOffsetY = lat + 0.1;
+      double latCorrection = 1;
+      if (hasZoomableDiscRadius){
+        latCorrection = cos((lat / 90) * (3.141592654/2));;
+        if (latCorrection <0.01) latCorrection = 0.01;
+      }
+      double projectedXOffsetX = lon + 0.1 / latCorrection;
+      double projectedYOffsetX = lat;
       bool projectionError = false;
       if(projectionRequired){
         if(imageWarper.reprojfromLatLon(projectedX,projectedY)!=0){
           projectionError = true;
           hasPrevLatLon = false;
         }
+        if (hasZoomableDiscRadius){
+          if(imageWarper.reprojfromLatLon(projectedXOffsetY,projectedYOffsetY)!=0){
+            projectionError = true;
+          }
+          if(imageWarper.reprojfromLatLon(projectedXOffsetX,projectedYOffsetX)!=0){
+            projectionError = true;
+          }
+          float dX = projectedXOffsetY - projectedX;
+          float dY = projectedYOffsetY - projectedY;
+          rotation = -atan2(dY,dX) + (3.141592654/2);
+
+        }
       }
-//      CDBDebug("proj OK : %f %f",projectedX, projectedY);
+      
+      if (hasZoomableDiscRadius){
+        float yDistanceProjected = projectedYOffsetY - projectedY;
+        // CDBDebug("yDistanceProjected = %f", yDistanceProjected);
+        discRadius = ((dataSource->srvParams->Geo->dfBBOX[3] - dataSource->srvParams->Geo->dfBBOX[1])/yDistanceProjected) / 
+          float(dataSource->srvParams->Geo->dWidth);
+        discRadius = (discSize/5)/ discRadius;
+        if (discRadius < 0.1) discRadius = 0.1;
+        discRadiusY = discRadius;
+        
+        float xDistanceProjected = projectedXOffsetX - projectedX;
+        discRadiusX = ((dataSource->srvParams->Geo->dfBBOX[2] - dataSource->srvParams->Geo->dfBBOX[0])/xDistanceProjected) / 
+          float(dataSource->srvParams->Geo->dWidth);
+        discRadiusX = (discSize/5)/ discRadiusX;
+        if (discRadiusX < 0.1) discRadiusX = 0.1;       
+      }
+      
       if(projectionError == false){
         int dlon=int((projectedX-offsetX)/cellSizeX);
         int dlat=int((projectedY-offsetY)/cellSizeY);
@@ -893,7 +950,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
             const char *b = ((const char**)pointVar[d]->data)[pPoint];
             lastPoint->paramList.push_back(CKeyValue(key,description ,b));
             float a = 0;
-            drawCircle(sdata,a,dataSource->dWidth,dataSource->dHeight,dlon-1,dlat,8);
+            drawCircle(sdata,a,dataSource->dWidth,dataSource->dHeight,dlon-1,dlat,int(discRadius));
           }
           
           
@@ -915,7 +972,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
             /* Get the last pushed point from the array and push the character text data in the paramlist */
             lastPoint->paramList.push_back(CKeyValue(key,description ,((const char**)pointVar[d]->data)[pPoint]));
             float a = 0;
-            drawCircle(sdata,a,dataSource->dWidth,dataSource->dHeight,dlon-1,dlat,8);
+            drawCircle(sdata,a,dataSource->dWidth,dataSource->dHeight,dlon-1,dlat,int(discRadius));
           }
           
           
@@ -926,8 +983,8 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
             if(val!=fill){
             
               //CDBDebug("P %d %d %f",dlon,dlat,val);
-              
-                dataObjects[d]->points.push_back(PointDVWithLatLon(dlon,dlat,lon,lat,val));//,id));
+
+                dataObjects[d]->points.push_back(PointDVWithLatLon(dlon,dlat,lon,lat,val, rotation, discRadiusX, discRadiusY));//,id));
                 lastPoint = &(dataObjects[d]->points.back());
                 if(pointID!=NULL){
                 
@@ -940,7 +997,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource,int mode
                   lastPoint->paramList.push_back(CKeyValue(key,description ,((const char**)pointID->data)[pGeo]));
                 }
                 if(doDrawCircle){
-                  drawCircle(sdata,val,dataSource->dWidth,dataSource->dHeight,dlon-1,dlat,8);
+                  drawCircle(sdata,val,dataSource->dWidth,dataSource->dHeight,dlon-1,dlat,int(discRadius));
                 }
                 if(doDrawLinearInterpolated && roadIdData != NULL){
                   if(hasPrevLatLon){
