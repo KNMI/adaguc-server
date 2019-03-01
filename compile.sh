@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [[ $1 == dev ]]; then
-  export ADAGUCCOMPILERSETTINGS="-Wall -DMEMLEAKCHECK -std=c++11 -g"
+  export ADAGUCCOMPILERSETTINGS="-Wall -DMEMLEAKCHECK -std=c++11 -g -pipe"
   ulimit -c unlimited
 fi
 #For developing, use:

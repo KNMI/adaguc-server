@@ -1006,6 +1006,32 @@ void CDrawImage::setDisc(int x,int y,int discRadius, CColor fillColor, CColor li
     circle( x,  y, discRadius,lineColor,1);    
   }
 }
+
+void CDrawImage::setEllipse(int x,int y,float discRadiusX, float discRadiusY, float rotation,  CColor fillColor, CColor lineColor) {
+  if(currentGraphicsRenderer==CDRAWIMAGERENDERER_CAIRO){
+    if(currentLegend==NULL)return;
+    cairo->setFillColor(fillColor.r,fillColor.g,fillColor.b,fillColor.a);
+    cairo->setColor(lineColor.r,lineColor.g,lineColor.b,lineColor.a);
+    cairo->filledEllipse(x, y, discRadiusX, discRadiusY, rotation);
+//    circle( x,  y,  discRadius,lineColor,1);
+  }
+}
+
+void CDrawImage::setDisc(int x,int y,float discRadius, CColor fillColor, CColor lineColor){
+  if(currentGraphicsRenderer==CDRAWIMAGERENDERER_CAIRO){
+    if(currentLegend==NULL)return;
+    cairo->setFillColor(fillColor.r,fillColor.g,fillColor.b,fillColor.a);
+    cairo->setColor(lineColor.r,lineColor.g,lineColor.b,lineColor.a);
+    cairo->filledcircle(x, y, discRadius);
+//    circle( x,  y,  discRadius,lineColor,1);
+  }else{
+    int fillCol=getClosestGDColor(fillColor.r,fillColor.g,fillColor.b);
+    gdImageFilledEllipse(image, x, y, discRadius*2, discRadius*2, fillCol);
+    circle( x,  y, discRadius,lineColor,1);    
+  }
+}
+
+
 void CDrawImage::setTextDisc(int x,int y,int discRadius, const char *text,const char *fontfile, float fontsize,CColor textcolor,CColor fillcolor, CColor lineColor){
   if(currentGraphicsRenderer==CDRAWIMAGERENDERER_CAIRO){
     if(currentLegend==NULL)return;
