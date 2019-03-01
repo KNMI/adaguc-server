@@ -557,8 +557,8 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource,int mode){
                           rotation+=180;
                         }
                 
-                        
-                        dataObjects[d]->points.push_back(PointDVWithLatLon(dlons[0],dlats[0],origLon,origLat,vals[0],rotation));
+                        float rad = 10;
+                        dataObjects[d]->points.push_back(PointDVWithLatLon(dlons[0],dlats[0],origLon,origLat,vals[0],rotation, rad, rad));
                       }
                     }
                   }
