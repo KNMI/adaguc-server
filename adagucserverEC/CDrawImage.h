@@ -239,6 +239,8 @@ public:
     //void setTextDisc(const char *text, size_t length, int x, int y, int r, CColor color, const char *fontfile,int fontSize);
     void setDisc(int x,int y,int discRadius, CColor fillColor, CColor lineColor);
     void setDisc(int x,int y,int discRadius, int fillCol, int lineCol);
+    void setDisc(int x,int y,float discRadius,  CColor fillColor, CColor lineColor);
+    void setEllipse(int x,int y,float discRadiusX, float discRadiusY, float rotation,  CColor fillColor, CColor lineColor);
     void setTextDisc(int x,int y,int discRadius, const char *text,const char *fontfile, float fontsize,CColor textcolor,CColor fillcolor, CColor lineColor);
     void setTextStroke(const char * text, size_t length,int x,int y, int fgcolor,int bgcolor, int fontSize);
     void rectangle( int x1, int y1, int x2, int y2,int innercolor,int outercolor);

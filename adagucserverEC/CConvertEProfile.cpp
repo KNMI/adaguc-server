@@ -33,29 +33,63 @@ const char *CConvertEProfile::className="CConvertEProfile";
 
 
 /**
- * This function adjusts the cdfObject by creating virtual 2D variables
+ * Checks if the format of this file corresponds to the ADAGUC Profile format.
  */
-int CConvertEProfile::convertEProfileHeader( CDFObject *cdfObject,CServerParams *srvParams){
-  //Check whether this is really a profile file
+bool isADAGUCProfileFormat(CDFObject *cdfObject) {
+  try{
+    cdfObject->getVariable("range");
+    cdfObject->getDimension("range");
+
+    if( cdfObject->getAttribute("featureType")->toString().equalsIgnoreCase("profile")==false) {
+
+      // The file is not a profile according to the format standards, check if it adheres to the deprecated format:
+      if( cdfObject->getAttribute("source")->toString().startsWith("CHM")==false){
+        return false;
+      }
+      if( cdfObject->getAttribute("serlom")->toString().startsWith("TUB")==false){
+        return false;
+      }
+    }
+  } catch(int e){
+    return false;
+  }
+
+  return true;
+}
+
+/*
+ * Checks if the format of this file corresponds to the deprecated ADAGUC EProfile format.
+ */
+bool isDeprecatedADAGUCEProfileFormat(CDFObject *cdfObject) {
   try{
     cdfObject->getVariable("range");
     cdfObject->getDimension("range");
 
     if( cdfObject->getAttribute("source")->toString().startsWith("CHM")==false){
-      return 1;
+      return false;
     }
     if( cdfObject->getAttribute("serlom")->toString().startsWith("TUB")==false){
-      return 1;
+      return false;
     }
-    
-  }catch(int e){
+  } catch(int e){
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * This function adjusts the cdfObject by creating virtual 2D variables
+ */
+int CConvertEProfile::convertEProfileHeader( CDFObject *cdfObject,CServerParams *srvParams){
+  //Check whether this is really a profile file
+  if(!isADAGUCProfileFormat(cdfObject) && !isDeprecatedADAGUCEProfileFormat(cdfObject)) {
     return 1;
   }
 //   CDBDebug("Using CConvertEProfile.h");
   
   cdfObject->setAttributeText("ADAGUC_PROFILE","true");
-  
- 
+
   //Standard bounding box of adaguc data is worldwide
   CDF::Variable *pointLon;
   CDF::Variable *pointLat;
@@ -273,7 +307,7 @@ int CConvertEProfile::convertEProfileHeader( CDFObject *cdfObject,CServerParams 
           bool added = false;
           if(var->dimensionlinks.size()==2){
             if(var->dimensionlinks[0]->getSize()>20){
-            if(var->dimensionlinks[1]->getSize()>100){
+            if(var->dimensionlinks[1]->getSize()>50){
               varsToConvert.add(CT::string(var->name.c_str()));
               added=true;
             }
@@ -386,25 +420,13 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource,int mode){
   #ifdef CCONVERTEPROFILE_DEBUG
   CDBDebug("convertEProfileData");
   #endif
-
- 
   
   CDFObject *cdfObject0 = dataSource->getDataObject(0)->cdfObject;
-  try{
-    cdfObject0->getVariable("range");
-    cdfObject0->getDimension("range");
-    
-    if( cdfObject0->getAttribute("source")->toString().startsWith("CHM")==false){
-      return 1;
-    }
-    if( cdfObject0->getAttribute("serlom")->toString().startsWith("TUB")==false){
-      return 1;
-    }
-
-  }catch(int e){
+  if(!isADAGUCProfileFormat(cdfObject0) && !isDeprecatedADAGUCEProfileFormat(cdfObject0)) {
     return 1;
   }
-  CDBDebug("THIS IS EPROFILE LIDAR DATA");
+
+  CDBDebug("THIS IS PROFILE DATA");
   
   #ifdef CCONVERTEPROFILE_DEBUG
     StopWatch_Stop("Reading data");

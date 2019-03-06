@@ -432,7 +432,7 @@ int CXMLParser::XMLElement::parse(const char *xmlData,size_t xmlSize){
   xmlNode *root_element = NULL;
   doc = xmlParseMemory(xmlData,xmlSize);
   if (doc == NULL) {
-    xmlFreeDoc(doc);
+    xmlFreeDoc(doc); // Please remove this code. It is either unnecesary or in worst case: FREES MEMORY AT ADDRESS 0x0
     xmlCleanupParser();
     throw(CXMLPARSER_INVALID_XML);
     return 1;
@@ -458,7 +458,7 @@ int CXMLParser::XMLElement::parse(const char *xmlFile){
   xmlNode *root_element = NULL;
   doc = xmlParseFile(xmlFile);
   if (doc == NULL) {
-    xmlFreeDoc(doc);
+    xmlFreeDoc(doc); // Please remove this code. It is either unnecesary or in worst case: FREES MEMORY AT ADDRESS 0x0
     xmlCleanupParser();
     throw(CXMLPARSER_INVALID_XML);
     return 1;
