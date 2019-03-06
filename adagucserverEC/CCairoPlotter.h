@@ -113,6 +113,7 @@ public:
   void line(float x1,float y1,float x2,float y2,float width) ;
   void circle(int x, int y, int r) ;
   void filledcircle(int x, int y, int r) ;
+  void filledEllipse(int x, int y, float rX, float rY, float rotation) ;
   void circle(int x, int y, int r,float lineWidth);
   void poly(float x[], float y[], int n, bool closePath, bool fill) ;
   void poly(float x[], float y[], int n, float lineWidth, bool closePath, bool fill) ;

@@ -9,7 +9,7 @@ CCDFDATAMODELOBJ = $(CCDFDATAMODEL)/CCDFDataModel.a
 INCLUDEDIR= $(CPPFLAGS) -I $(HELPERCLASSES) -I $(CCDFDATAMODEL) -I/usr/include/libxml2/  -I/usr/include/udunits2/ -I/usr/include/hdf5/serial/ -I/usr/include/freetype2/ -I/usr/include/freetype2/freetype/ -I/usr/include/postgresql/ -I/usr/include/cairo/ -I/usr/include/gdal/
 
 ifndef BUILDER_ADAGUCCOMPILERSETTINGS
-  BUILDER_ADAGUCCOMPILERSETTINGS=-Wall -DMEMLEAKCHECK -g -std=c++11
+  BUILDER_ADAGUCCOMPILERSETTINGS=-Wall -DMEMLEAKCHECK -g -std=c++11 -pipe
 endif
 
 ifdef ADAGUCCOMPONENTS
