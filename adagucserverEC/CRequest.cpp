@@ -937,30 +937,30 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource,CServerParams *
 
             if(ogcDim->name.equals("time")||ogcDim->name.equals("reference_time")){
               //Make nice time value 1970-01-01T00:33:26 --> 1970-01-01T00:33:26Z
-              if(dataSource->requiredDims[i]->value.charAt(10)=='T'){
+              if(ogcDim->value.charAt(10)=='T'){
                 if(ogcDim->value.length()==19){
-                  dataSource->requiredDims[i]->value.concat("Z");
+                  ogcDim->value.concat("Z");
                 }
 
                 /* Try to make sense of other timestrings as well */
-                if(dataSource->requiredDims[i]->value.indexOf("/")==-1&&dataSource->requiredDims[i]->value.indexOf(",")==-1)
+                if(ogcDim->value.indexOf("/")==-1&&ogcDim->value.indexOf(",")==-1)
                 {
 #ifdef CREQUEST_DEBUG
-                  CDBDebug("Got Time value [%s]",dataSource->requiredDims[i]->value.c_str());
+                  CDBDebug("Got Time value [%s]",ogcDim->value.c_str());
 #endif
                   CTime ctime;
                   ctime.init("seconds since 1970",NULL);
                   double currentTimeAsEpoch ;
 
                   try{
-                    currentTimeAsEpoch = ctime.dateToOffset( ctime.freeDateStringToDate(dataSource->requiredDims[i]->value.c_str()));
+                    currentTimeAsEpoch = ctime.dateToOffset( ctime.freeDateStringToDate(ogcDim->value.c_str()));
                     CT::string currentDateConverted = ctime.dateToISOString(ctime.getDate(currentTimeAsEpoch));
-                    dataSource->requiredDims[i]->value=currentDateConverted;
+                    ogcDim->value=currentDateConverted;
                   }catch(int e){
-                    CDBDebug("Unable to convert %s to epoch",dataSource->requiredDims[i]->value.c_str());
+                    CDBDebug("Unable to convert %s to epoch",ogcDim->value.c_str());
                   }
 #ifdef CREQUEST_DEBUG
-                  CDBDebug("Converted to Time value [%s]",dataSource->requiredDims[i]->value.c_str());
+                  CDBDebug("Converted to Time value [%s]",ogcDim->value.c_str());
 #endif
                 }
 
