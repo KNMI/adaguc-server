@@ -100,6 +100,12 @@ void CDrawImage::destroyImage(){
 CDrawImage::~CDrawImage(){
 //   CDBDebug("[DESC] CDrawImage %dx%d", Geo->dWidth, Geo->dHeight);
   destroyImage();
+  std::map<CT::string,CCairoPlotter*>::iterator myCCairoPlotterIter = myCCairoPlotterMap.begin();
+  while (myCCairoPlotterIter != myCCairoPlotterMap.end()) {
+    delete myCCairoPlotterIter->second;
+    myCCairoPlotterIter++;
+  }
+  myCCairoPlotterMap.clear();
   delete Geo; Geo=NULL;
 }
 
