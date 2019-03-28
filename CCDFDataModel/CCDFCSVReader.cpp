@@ -166,7 +166,7 @@ int CDFCSVReader::open(const char *fileName){
   for(size_t j=0;j<this->headerStartsAtLine;j++){
    CT::string metadataLine = this->csvLines[j].c_str();
    int timeStart = metadataLine.indexOf("time=");
-   if (timeStart!=-1){
+   if ((timeStart!=-1)&&(metadataLine.indexOf("reference_time=")<0)){
      CT::string timeMetadataString = metadataLine.substring(timeStart, -1);
      int timeEnd = timeMetadataString.indexOf("&");
      if (timeEnd == -1) timeEnd = timeMetadataString.indexOf(";");
@@ -178,6 +178,26 @@ int CDFCSVReader::open(const char *fileName){
      }
    }
   }
+
+  /* Search for reference_time dim */
+  CT::string referenceTimeString;
+  for(size_t j=0;j<this->headerStartsAtLine;j++){
+   CT::string metadataLine = this->csvLines[j].c_str();
+   int referenceTimeStart = metadataLine.indexOf("reference_time=");
+   if (referenceTimeStart!=-1){
+     CT::string referenceTimeMetadataString = metadataLine.substring(referenceTimeStart, -1);
+     int referenceTimeEnd = referenceTimeMetadataString.indexOf("&");
+     if (referenceTimeEnd == -1) referenceTimeEnd = referenceTimeMetadataString.indexOf(";");
+     if (referenceTimeEnd == -1) referenceTimeEnd =referenceTimeMetadataString.length();
+     referenceTimeMetadataString.setSize(referenceTimeEnd);     
+     CT::StackList<CT::string> kvp = referenceTimeMetadataString.splitToStack("=");
+     if (kvp.size() == 2 && kvp[1].length() > 5){
+       referenceTimeString = kvp[1].c_str();
+     }
+   }
+  }
+
+
   /* Define station dimension and variable */
   CDF::Dimension * stationDim = new CDF::Dimension();stationDim->setName("station");
   stationDim->setSize(numLines);
@@ -189,22 +209,52 @@ int CDFCSVReader::open(const char *fileName){
   stationVar->dimensionlinks.push_back(stationDim);
 
   /* Define time dimension and variable */
-  CDF::Dimension * timeDim = new CDF::Dimension();timeDim->setName("time");
-  timeDim->setSize(1);
-  cdfObject->addDimension(timeDim); 
+  CDF::Dimension * timeDim = 0;
+
+  if (timeString.length() > 5) {
+  /* Add time dimension and variable */
+    timeDim = new CDF::Dimension();timeDim->setName("time");
+    timeDim->setSize(1);
+    cdfObject->addDimension(timeDim); 
+    
+    CDF::Variable * timeVar = new CDF::Variable();cdfObject->addVariable(timeVar);
+    timeVar->setName(timeDim->getName());timeVar->currentType=CDF_DOUBLE;timeVar->nativeType=CDF_DOUBLE;timeVar->setType(CDF_DOUBLE);timeVar->isDimension=true;timeVar->allocateData(timeDim->getSize());
+    timeVar->dimensionlinks.push_back(timeDim);
+    timeVar->setAttributeText("standard_name", "time");
+    timeVar->setAttributeText("long_name", "time");
+    timeVar->setAttributeText("units", "seconds since 1970-1-1");
+//    if (timeString.length() > 5){
+      CDBDebug("timeString = [%s]", timeString.c_str());
+      CTime *ctime = CTime::GetCTimeInstance(timeVar);
+      ((double*)timeVar->data)[0] = ctime->dateToOffset(ctime->freeDateStringToDate(timeString.c_str()));
+//    } else {
+//      ((double*)timeVar->data)[0] = 0;
+//    }
+  }
+
+  /* Define reference_time dimension and variable */
+  CDF::Dimension * referenceTimeDim = 0;
   
-  CDF::Variable * timeVar = new CDF::Variable();cdfObject->addVariable(timeVar);
-  timeVar->setName(timeDim->getName());timeVar->currentType=CDF_DOUBLE;timeVar->nativeType=CDF_DOUBLE;timeVar->setType(CDF_DOUBLE);timeVar->isDimension=true;timeVar->allocateData(timeDim->getSize());
-  timeVar->dimensionlinks.push_back(timeDim);
-  timeVar->setAttributeText("standard_name", "time");
-  timeVar->setAttributeText("long_name", "time");
-  timeVar->setAttributeText("units", "seconds since 1970-1-1");
-  if (timeString.length() > 5){
-    CDBDebug("timeString = [%s]", timeString.c_str());
-    CTime *ctime = CTime::GetCTimeInstance(timeVar);
-    ((double*)timeVar->data)[0] = ctime->dateToOffset(ctime->freeDateStringToDate(timeString.c_str()));
-  } else {
-    ((double*)timeVar->data)[0] = 0;
+  if (referenceTimeString.length() > 5) {
+  /* Add reference_time dimension and variable */
+    referenceTimeDim = new CDF::Dimension();
+    referenceTimeDim->setName("forecast_reference_time");
+    referenceTimeDim->setSize(1);
+    cdfObject->addDimension(referenceTimeDim); 
+    
+    CDF::Variable * referenceTimeVar = new CDF::Variable();cdfObject->addVariable(referenceTimeVar);
+    referenceTimeVar->setName(referenceTimeDim->getName());referenceTimeVar->currentType=CDF_DOUBLE;referenceTimeVar->nativeType=CDF_DOUBLE;referenceTimeVar->setType(CDF_DOUBLE);referenceTimeVar->isDimension=true;referenceTimeVar->allocateData(referenceTimeDim->getSize());
+    referenceTimeVar->dimensionlinks.push_back(referenceTimeDim);
+    referenceTimeVar->setAttributeText("standard_name", "forecast_reference_time");
+    referenceTimeVar->setAttributeText("long_name", "forecast_reference_time");
+    referenceTimeVar->setAttributeText("units", "seconds since 1970-1-1");
+//    if (timeString.length() > 5){
+      CDBDebug("referenceTimeString = [%s]", referenceTimeString.c_str());
+      CTime *ctime = CTime::GetCTimeInstance(referenceTimeVar);
+      ((double*)referenceTimeVar->data)[0] = ctime->dateToOffset(ctime->freeDateStringToDate(referenceTimeString.c_str()));
+//    } else {
+//      ((double*)timeVar->data)[0] = 0;
+//    }
   }
   
 
@@ -227,6 +277,9 @@ int CDFCSVReader::open(const char *fileName){
     CDF::Variable * dataVar = new CDF::Variable();cdfObject->addVariable(dataVar);
     dataVar->setCDFReaderPointer((void*)this);
     dataVar->setName(header[c].c_str());dataVar->currentType=dataType;dataVar->nativeType=dataType;dataVar->setType(dataType);dataVar->isDimension=false;
+    if (referenceTimeString.length() > 5 && int(c) != foundLat && int(c) != foundLon){
+      dataVar->dimensionlinks.push_back(referenceTimeDim);
+    }
     if (timeString.length() > 5 && int(c) != foundLat && int(c) != foundLon){
       dataVar->dimensionlinks.push_back(timeDim);
     }
