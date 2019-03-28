@@ -49,4 +49,4 @@ class TestADAGUCFeatureFunctions(unittest.TestCase):
         self.assertEqual( 
             AdagucTestTools().readfromfile(self.testresultspath + filenamecsv), AdagucTestTools().readfromfile(self.expectedoutputsspath + filenamecsv))
 
-   
+  
