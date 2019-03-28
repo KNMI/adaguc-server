@@ -27,7 +27,7 @@
 #include "CReporter.h"
 #include "CReportWriter.h"
 #include <getopt.h>
-
+#include "CDebugger_H.h"
 extern Tracer NewTrace;
 
 DEF_ERRORMAIN();
