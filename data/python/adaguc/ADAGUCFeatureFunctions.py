@@ -10,7 +10,7 @@ import logging
 import ADAGUCWCS
 from netCDF4 import num2date 
 
-logging.basicConfig(level=logging.DEBUG)
+#logging.basicConfig(level=logging.DEBUG)
 
 def defaultCallback(message,percentage):
   print "defaultCallback:: "+message+" "+str(percentage)
@@ -266,6 +266,7 @@ def ADAGUCFeatureCombineNuts( featureNCFile,dataNCFile,bbox= "-40,20,60,85",vari
     for currentStep in range(0,numTimeSteps):
       logging.debug("iterateing timestep %d" % currentStep);
       if timeVar is not None:
+        logging.debug("Has timeVar");
         """ Read time value """
         timeValueDouble = timeVar[currentStep]
         timeValue = num2date(timeValueDouble, units=timeVar.units,calendar=calendarAttr).isoformat()#strftime("%Y %M %D %h %m %S")
@@ -283,6 +284,7 @@ def ADAGUCFeatureCombineNuts( featureNCFile,dataNCFile,bbox= "-40,20,60,85",vari
         dataout_point_stdflat = outvar_point_std[currentStep]
         dataout_point_maskflat = outvar_point_mask[currentStep]
       else:
+        logging.debug("Has NO timeVar");
         timeValue = "None"
         """ Read data from netCDF Variables """
         datainflat = invar_datain[:]
@@ -292,11 +294,11 @@ def ADAGUCFeatureCombineNuts( featureNCFile,dataNCFile,bbox= "-40,20,60,85",vari
         dataout_stdflat = outvar_std[:]
         dataout_maskflat = outvar_mask[:]
         
-        dataout_point_minflat = outvar_point_min[:]
-        dataout_point_meanflat = outvar_point_mean[:]
-        dataout_point_maxflat = outvar_point_max[:]
-        dataout_point_stdflat = outvar_point_std[:]
-        dataout_point_maskflat = outvar_point_mask[:]
+        dataout_point_minflat = outvar_point_min[0]
+        dataout_point_meanflat = outvar_point_mean[0]
+        dataout_point_maxflat = outvar_point_max[0]
+        dataout_point_stdflat = outvar_point_std[0]
+        dataout_point_maskflat = outvar_point_mask[0]
         
       totalmean = numpy.nanmean(datainflat)
       
