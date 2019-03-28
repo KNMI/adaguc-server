@@ -59,8 +59,9 @@ Tracer::~Tracer ()
   Dump ();
 }
 
-void Tracer::Dump ()
+int Tracer::Dump ()
 {
+  int status = 0;
   if (_map.size () != 0)
   {
     //std::cout << _map.size () << " memory leaks detected\n";
@@ -69,11 +70,14 @@ void Tracer::Dump ()
       char const * file = it->second.File ();
       int line = it->second.Line ();
       if(line!=0){
+        status++;
         _printErrorLine("*** Memory leak in %s, line %d",file,line);
         //std::cout << "*** Memory leak in " << file << ", line "  << line << std::endl;
       }
     }
   }
+  _map.clear();
+  return status;
 }
 
 Tracer::Tracer () 
