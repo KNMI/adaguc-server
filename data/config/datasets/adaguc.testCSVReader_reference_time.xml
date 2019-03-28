@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <CacheDocs enabled="false"/>
+  <!-- Custom styles -->
+  <Style name="windbarb">
+    <Legend fixedclasses="true" tickinterval="2" tickround="1">no2</Legend>
+    <Min>0.0</Min>
+    <Max>10</Max>
+    <Point pointstyle="point" textcolor="#111111"/>
+    <Vector vectorstyle="barb" linecolor="#0000FF" />
+    <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#000000" borderwidth="2"/> <!-- Used in CImgRenderPolylines -->
+    <RenderMethod>point</RenderMethod>
+  </Style>
+  
+  <Style name="windvector">
+    <Legend fixedclasses="true" tickinterval="2" tickround="1">no2</Legend>
+    <Min>0.0</Min>
+    <Max>10</Max>
+    <Point pointstyle="point" textcolor="#111111"/>
+    <Vector vectorstyle="vector" linecolor="#0000FF" />
+    <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#000000" borderwidth="2"/> <!-- Used in CImgRenderPolylines -->
+    <RenderMethod>point</RenderMethod>
+  </Style>
+  
+  <Style name="name">
+    <Legend fixedclasses="true" tickinterval="2" tickround="1">no2</Legend>
+    <Min>0.0</Min>
+    <Max>10</Max>
+    <Point pointstyle="point" textcolor="#111111"/>
+    <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#000000" borderwidth="2"/> <!-- Used in CImgRenderPolylines -->
+    <RenderMethod>point</RenderMethod>
+  </Style>
+  
+  
+  <Layer type="database">
+    <FilePath filter="^.*\.csv$">{ADAGUC_PATH}/data/datasets/csv_reference_timedim</FilePath>
+    <Name>wind</Name>
+    <Title>Wind</Title>
+    <Variable>ff</Variable>
+    <Variable>dd</Variable>
+    <Styles>windbarb,windvector</Styles>
+  </Layer>
+  
+  <Layer type="database">
+    <FilePath filter="^.*\.csv$">{ADAGUC_PATH}/data/datasets/csv_reference_timedim</FilePath>
+    <Name>index</Name>
+    <Title>Index</Title>
+    <Variable>Index</Variable>
+    <Styles>name</Styles>
+  </Layer>
+  
+  
+  <Layer type="database">
+    <FilePath filter="^.*\.csv$">{ADAGUC_PATH}/data/datasets/csv_reference_timedim</FilePath>
+    <Name>name</Name>
+    <Title>Name</Title>
+    <Variable>Name</Variable>
+    <Styles>name</Styles>
+  </Layer>
+  
+  <!-- End of configuration /-->
+</Configuration>

@@ -57,7 +57,7 @@ doc/_book
 # Tag files, gdb history files
 TAGS
 .gdb_history
-
+tests/core*
 
 Docker/cert
 Docker/.env

@@ -7,6 +7,8 @@ from AdagucTests.TestOpenDAPServer import TestOpenDAPServer
 from AdagucTests.TestWMSTiling import TestWMSTiling
 from AdagucTests.TestWMSPolylineRenderer import TestWMSPolylineRenderer
 from AdagucTests.TestADAGUCFeatureFunctions import TestADAGUCFeatureFunctions
+from AdagucTests.TestCSV import TestCSV
+from AdagucTests.TestGeoJSON import TestGeoJSON
 
 testsuites=[];
 testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWMS))
@@ -15,7 +17,9 @@ testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWMSDocumentCac
 testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestOpenDAPServer))
 testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWMSPolylineRenderer))
 testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWMSTiling))
-#testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestADAGUCFeatureFunctions))
+testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestADAGUCFeatureFunctions))
+testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestCSV))
+testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestGeoJSON))
 result=unittest.TextTestRunner(verbosity=2).run(unittest.TestSuite(testsuites))
 
 
