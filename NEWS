@@ -1,3 +1,9 @@
+Version 2.0.38 2019-03-28
+    - CSV reader with support for time and reference time dimensions added
+    - GeoJSON supports time
+    - Fixed bug in CRequests causing segmentation fault
+    - Fixed bug in Tracer which started to write to a closed logfile
+
 Version 2.0.37 2018-08-29
     - OpenDAP server can now output JSON if header "Content-Type: application/json" is set
 

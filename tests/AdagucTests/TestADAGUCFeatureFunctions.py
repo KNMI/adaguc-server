@@ -30,12 +30,12 @@ class TestADAGUCFeatureFunctions(unittest.TestCase):
        
         ADAGUCFeatureCombineNuts(
             featureNCFile = "countries.geojson",
-            dataNCFile = "myfile.nc",
-            #dataNCFile = "testdata.nc",
+            #dataNCFile = "myfile.nc",
+            dataNCFile = "testdata.nc",
             bbox= "0,50,10,55",
-            time= "*",
-            #variable="testdata",
-            variable="index", 
+            time= None,
+            variable="testdata",
+            #variable="index", 
             width=800,
             height=800,
             outncrasterfile=os.getcwd() + "/"+ self.testresultspath + filenamencraster,
@@ -43,10 +43,10 @@ class TestADAGUCFeatureFunctions(unittest.TestCase):
             outcsvfile=os.getcwd() + "/"+ self.testresultspath + filenamecsv, 
             tmpFolderPath="/tmp",
             callback=progressCallback)
-        # AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
-        #self.assertEqual( 
-            #AdagucTestTools().readfromfile(self.testresultspath + filenamencraster), AdagucTestTools().readfromfile(self.expectedoutputsspath + filenamencraster))
-        #self.assertEqual( 
-            #AdagucTestTools().readfromfile(self.testresultspath + filenamecsv), AdagucTestTools().readfromfile(self.expectedoutputsspath + filenamecsv))
+        #AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
+        self.assertEqual( 
+            AdagucTestTools().readfromfile(self.testresultspath + filenamencraster), AdagucTestTools().readfromfile(self.expectedoutputsspath + filenamencraster))
+        self.assertEqual( 
+            AdagucTestTools().readfromfile(self.testresultspath + filenamecsv), AdagucTestTools().readfromfile(self.expectedoutputsspath + filenamecsv))
 
-   
+  

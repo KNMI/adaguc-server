@@ -42,6 +42,7 @@ class CConvertGeoJSON{
   private:
   DEF_ERRORFUNCTION();
   static void getBBOX(CDFObject *cdfObject, BBOX &bbox, json_value& json, std::vector<Feature*>& features);
+  static void getDimensions(CDFObject *cdfObject, json_value& json, bool openAll);
   static void getPolygons(json_value &j);
   static void addCDFInfo(CDFObject *cdfObject, CServerParams *srvParams, BBOX &dfBBOX, std::vector<Feature*>& featureMap, bool openAll);
   static void drawpoly(float *imagedata,int w,int h,int polyCorners,float *polyX,float *polyY,float value);
