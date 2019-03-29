@@ -9,6 +9,7 @@ from sets import Set
 import logging
 import ADAGUCWCS
 from netCDF4 import num2date 
+from datetime import date
 
 #logging.basicConfig(level=logging.DEBUG)
 
@@ -269,7 +270,13 @@ def ADAGUCFeatureCombineNuts( featureNCFile,dataNCFile,bbox= "-40,20,60,85",vari
         logging.debug("Has timeVar");
         """ Read time value """
         timeValueDouble = timeVar[currentStep]
-        timeValue = num2date(timeValueDouble, units=timeVar.units,calendar=calendarAttr).isoformat()#strftime("%Y %M %D %h %m %S")
+        #logging.debug("timeValueDouble:" + str(timeValueDouble))
+        #logging.debug("units:" + str(timeVar.units))
+        #logging.debug("calendar:" + str(calendarAttr))
+        num2dateValue = num2date(timeValueDouble, units=timeVar.units,calendar=calendarAttr);
+        #logging.debug("num2dateValue:" + str(num2dateValue))
+        timeValue = str(num2dateValue).replace(" ","T") + "Z"
+        logging.debug("timeValue:" + str(timeValue))
         """ Read data from netCDF Variables """
         datainflat = invar_datain[currentStep]
         dataout_minflat = outvar_min[currentStep]
