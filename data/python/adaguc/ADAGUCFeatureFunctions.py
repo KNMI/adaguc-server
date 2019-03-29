@@ -9,6 +9,7 @@ from sets import Set
 import logging
 import ADAGUCWCS
 from netCDF4 import num2date 
+from datetime import date
 
 #logging.basicConfig(level=logging.DEBUG)
 
@@ -218,7 +219,7 @@ def ADAGUCFeatureCombineNuts( featureNCFile,dataNCFile,bbox= "-40,20,60,85",vari
 
   
   logging.debug('starting');
-  CSV="time;variable;index;id;name;numsamples;min;mean;max;std;\n"
+  CSV="time;variable;index;id;name;numsamples;min;mean;max;std\n"
 
   numVariables = len(varstodo)
   numVariablesDone = -1;
@@ -269,7 +270,13 @@ def ADAGUCFeatureCombineNuts( featureNCFile,dataNCFile,bbox= "-40,20,60,85",vari
         logging.debug("Has timeVar");
         """ Read time value """
         timeValueDouble = timeVar[currentStep]
-        timeValue = num2date(timeValueDouble, units=timeVar.units,calendar=calendarAttr).isoformat()#strftime("%Y %M %D %h %m %S")
+        #logging.debug("timeValueDouble:" + str(timeValueDouble))
+        #logging.debug("units:" + str(timeVar.units))
+        #logging.debug("calendar:" + str(calendarAttr))
+        num2dateValue = num2date(timeValueDouble, units=timeVar.units,calendar=calendarAttr);
+        #logging.debug("num2dateValue:" + str(num2dateValue))
+        timeValue = str(num2dateValue).replace(" ","T") + "Z"
+        logging.debug("timeValue:" + str(timeValue))
         """ Read data from netCDF Variables """
         datainflat = invar_datain[currentStep]
         dataout_minflat = outvar_min[currentStep]
@@ -300,6 +307,7 @@ def ADAGUCFeatureCombineNuts( featureNCFile,dataNCFile,bbox= "-40,20,60,85",vari
         dataout_point_stdflat = outvar_point_std[0]
         dataout_point_maskflat = outvar_point_mask[0]
         
+      # Numpy 1.7.1 has no numpy.nanmean
       totalmean = numpy.nanmean(datainflat)
       
       numRegionsDone = -1
@@ -348,7 +356,7 @@ def ADAGUCFeatureCombineNuts( featureNCFile,dataNCFile,bbox= "-40,20,60,85",vari
                 reglongname = nutsascidata[regionindex]
                 
               # Assign to CSV file
-              CSV += timeValue+";"+str(currentVarName)+";"+str(regionindex)+";"+str(regid)+";"+str(reglongname)+";"+str(len(selecteddata))+";"+str(minval)+";"+str(meanval)+";"+str(maxval)+";"+str(stdval)+"\n"
+              CSV += "%s;%s;%d;%s;%s;%d;%f;%f;%f;%f\n" % (timeValue,currentVarName,regionindex,regid,reglongname,len(selecteddata),minval,meanval,maxval,stdval);
               
               # Assign to point version of NetCDF
               logging.debug("numRegionsDone %d, regionindex %d" % (numRegionsDone, regionindex));

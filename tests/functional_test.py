@@ -17,7 +17,7 @@ testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWMSDocumentCac
 testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestOpenDAPServer))
 testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWMSPolylineRenderer))
 testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWMSTiling))
-#testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestADAGUCFeatureFunctions))
+testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestADAGUCFeatureFunctions))
 testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestCSV))
 testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestGeoJSON))
 result=unittest.TextTestRunner(verbosity=2).run(unittest.TestSuite(testsuites))
