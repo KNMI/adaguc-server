@@ -219,7 +219,7 @@ def ADAGUCFeatureCombineNuts( featureNCFile,dataNCFile,bbox= "-40,20,60,85",vari
 
   
   logging.debug('starting');
-  CSV="time;variable;index;id;name;numsamples;min;mean;max;std;\n"
+  CSV="time;variable;index;id;name;numsamples;min;mean;max;std\n"
 
   numVariables = len(varstodo)
   numVariablesDone = -1;
@@ -307,6 +307,7 @@ def ADAGUCFeatureCombineNuts( featureNCFile,dataNCFile,bbox= "-40,20,60,85",vari
         dataout_point_stdflat = outvar_point_std[0]
         dataout_point_maskflat = outvar_point_mask[0]
         
+      # Numpy 1.7.1 has no numpy.nanmean
       totalmean = numpy.nanmean(datainflat)
       
       numRegionsDone = -1
@@ -355,7 +356,7 @@ def ADAGUCFeatureCombineNuts( featureNCFile,dataNCFile,bbox= "-40,20,60,85",vari
                 reglongname = nutsascidata[regionindex]
                 
               # Assign to CSV file
-              CSV += timeValue+";"+str(currentVarName)+";"+str(regionindex)+";"+str(regid)+";"+str(reglongname)+";"+str(len(selecteddata))+";"+str(minval)+";"+str(meanval)+";"+str(maxval)+";"+str(stdval)+"\n"
+              CSV += "%s;%s;%d;%s;%s;%d;%f;%f;%f;%f\n" % (timeValue,currentVarName,regionindex,regid,reglongname,len(selecteddata),minval,meanval,maxval,stdval);
               
               # Assign to point version of NetCDF
               logging.debug("numRegionsDone %d, regionindex %d" % (numRegionsDone, regionindex));
