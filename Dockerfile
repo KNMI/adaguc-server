@@ -10,7 +10,6 @@ RUN yum update -y && yum install -y \
     epel-release deltarpm
 
 RUN yum install -y \
-    python-lxml \
     cairo \
     curl \
     gd \
@@ -23,9 +22,7 @@ RUN yum install -y \
     tomcat \
     udunits2 \
     openssl \
-    netcdf \
-    netcdf4-python \
-    python-six
+    netcdf
 
 # building / development packages
 RUN yum update -y && yum clean all
@@ -65,7 +62,6 @@ RUN yum update -y && yum install -y \
     epel-release deltarpm
 
 RUN yum install -y \
-    python-lxml \
     cairo \
     curl \
     gd \
@@ -78,9 +74,7 @@ RUN yum install -y \
     tomcat \
     udunits2 \
     openssl \
-    netcdf \
-    netcdf4-python \
-    python-six
+    netcdf
 
 WORKDIR /adaguc/adaguc-server-master
 
@@ -93,7 +87,13 @@ COPY --from=0 /adaguc/adaguc-server-master/data /adaguc/adaguc-server-master/dat
 COPY --from=0 /adaguc/adaguc-server-master/tests /adaguc/adaguc-server-master/tests
 COPY --from=0 /adaguc/adaguc-server-master/runtests.sh /adaguc/adaguc-server-master/runtests.sh
 
-# Run adaguc-server functional tests
+
+# Install newer numpy
+RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+RUN python get-pip.py
+RUN pip install numpy netcdf4 six lxml
+
+# Run adaguc-server functional and regression tests
 RUN bash runtests.sh
 
 # Setup directories
