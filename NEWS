@@ -1,3 +1,6 @@
+Version 2.1.0 2019-04-04
+    - Use of new adaguc-services framework version 1.2.0 (Spring boot 2.0)
+
 Version 2.0.38 2019-03-28
     - CSV reader with support for time and reference time dimensions added
     - GeoJSON supports time
