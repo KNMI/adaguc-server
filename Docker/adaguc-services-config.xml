@@ -3,9 +3,27 @@
   <external-home-url>{ENV.EXTERNALADDRESS}/adaguc-services/</external-home-url>
   <userworkspace>/adaguc/userworkspace</userworkspace>
   <basedir>/adaguc/basedir</basedir>
+
   <server>
     <port>8080</port>
+    <porthttps>8443</porthttps>
+    <contextpath>/adaguc-services</contextpath>
   </server>
+
+  <security>
+    <enablessl>true</enablessl>
+    
+    <truststore>/adaguc/security/truststore.ts</truststore>
+    <trustrootscadirectory>/root/.globus/certificates/</trustrootscadirectory>
+    <truststorepassword>changeit</truststorepassword>
+
+    <keystore>/adaguc/security/keystore.jks</keystore>
+    <keystorepassword>password</keystorepassword>
+    <keystoretype>JKS</keystoretype>
+    <keyalias>tomcat</keyalias>
+    
+  </security>
+
   <adaguc-server>
     <adagucexecutable>/adaguc/adaguc-server-master/bin/adagucserver</adagucexecutable>
     <export>ADAGUC_PATH=/adaguc/adaguc-server-master/</export>
@@ -17,6 +35,7 @@
     <export>ADAGUC_FONT=/adaguc/adaguc-server-master/data/fonts/FreeSans.ttf</export>
     <export>ADAGUC_ONLINERESOURCE={ENV.EXTERNALADDRESS}/adaguc-services/adagucserver?</export>
  </adaguc-server>
+ 
   <autowms>
     <enabled>true</enabled>
     <autowmspath>/data/adaguc-autowms/</autowmspath>

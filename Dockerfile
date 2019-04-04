@@ -19,10 +19,10 @@ RUN yum install -y \
     logrotate \
     postgresql-server \
     proj \
-    tomcat \
     udunits2 \
     openssl \
-    netcdf
+    netcdf \
+    java-1.8.0-openjdk
 
 # building / development packages
 RUN yum update -y && yum clean all
@@ -71,15 +71,15 @@ RUN yum install -y \
     logrotate \
     postgresql-server \
     proj \
-    tomcat \
     udunits2 \
     openssl \
-    netcdf
+    netcdf \
+    java-1.8.0-openjdk
 
 WORKDIR /adaguc/adaguc-server-master
 
 # Install adaguc-services (spring boot application for running adaguc-server)
-RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.0.13/adaguc-services-1.0.13.war > /usr/share/tomcat/webapps/adaguc-services.war
+RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.0/adaguc-services-1.2.0.jar > /adaguc/adaguc-services.jar
    
 # Install compiled adaguc binaries from stage one    
 COPY --from=0 /adaguc/adaguc-server-master/bin /adaguc/adaguc-server-master/bin
@@ -116,7 +116,6 @@ COPY ./Docker/start.sh /adaguc/
 COPY ./Docker/adaguc-server-logrotate /etc/logrotate.d/adaguc
 COPY ./Docker/adaguc-server-*.sh /adaguc/
 COPY ./Docker/baselayers.xml /data/adaguc-datasets-internal/baselayers.xml
-COPY ./Docker/tomcat-server.xml /etc/tomcat/server.xml
 RUN  chmod +x /adaguc/adaguc-server-*.sh && chmod +x /adaguc/start.sh
 
 # Set adaguc-services configuration file
