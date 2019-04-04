@@ -79,7 +79,7 @@ RUN yum install -y \
 WORKDIR /adaguc/adaguc-server-master
 
 # Install adaguc-services (spring boot application for running adaguc-server)
-RUN curl -L https://jitpack.io/com/github/maartenplieger/adaguc-services/1.1.4/adaguc-services-1.1.4.jar > /adaguc/adaguc-services.jar
+RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.0/adaguc-services-1.2.0.jar > /adaguc/adaguc-services.jar
    
 # Install compiled adaguc binaries from stage one    
 COPY --from=0 /adaguc/adaguc-server-master/bin /adaguc/adaguc-server-master/bin
