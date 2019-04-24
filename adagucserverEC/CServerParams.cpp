@@ -565,6 +565,9 @@ int CServerParams::parseConfigFile(CT::string &pszConfigFile){
     }
     const char *pszADAGUC_TMP=getenv("ADAGUC_TMP");
     if(pszADAGUC_TMP!=NULL)configFileData.replaceSelf("{ADAGUC_TMP}",pszADAGUC_TMP);
+
+    const char *pszADAGUC_DB=getenv("ADAGUC_DB");
+    if(pszADAGUC_DB!=NULL)configFileData.replaceSelf("{ADAGUC_DB}",pszADAGUC_DB);
   }catch(int e){
   }
   
