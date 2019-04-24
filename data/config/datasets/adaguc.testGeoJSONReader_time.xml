@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <CacheDocs enabled="false"/>
+  <!-- Custom styles -->
+  
+  <Style name="features">
+    <Legend fixedclasses="true" tickinterval="2" tickround="1">no2</Legend>
+    <Min>0.0</Min>
+    <Max>10</Max>
+    <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#000000" borderwidth="2"/> <!-- Used in CImgRenderPolylines -->
+    <RenderMethod>nearest</RenderMethod>
+  </Style>
+  
+  <Layer type="database">
+    <FilePath filter="^.*\.geojson$">{ADAGUC_PATH}/data/datasets/geojson_time/</FilePath>
+    <Name>features</Name>
+    <Title>Features</Title>
+    <Variable>features</Variable>
+    <Styles>features</Styles>
+  </Layer>
+  
+  <!-- End of configuration /-->
+</Configuration>

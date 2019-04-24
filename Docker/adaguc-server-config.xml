@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <CacheDocs enabled="false"/>
+  <TempDir value="{ADAGUC_TMP}"/>
+  <Path value="{ADAGUC_PATH}/data"/>
+  <DataBase parameters="host=localhost port=5432 user=adaguc password=adaguc dbname=adaguc"/>
+
+  
+  <!-- WMS settings -->
+  <WMS>
+    <Title>ADAGUC WMS Service</Title>
+    <Abstract>This service demonstrates how the ADAGUC server can be used to create OGC services.</Abstract>
+    <RootLayer>
+      <Title>Root Layer Title</Title>
+      <Abstract>Root Layer Abstract</Abstract>
+    </RootLayer>
+  
+  </WMS>
+  
+  
+  <!-- WMS -->
+  <Include location="{ADAGUC_PATH}/data/config/includes/WMS.include.xml"/>
+
+  <!-- WCS settings -->
+  <WCS>
+    <Title>ADAGUC WCS Service</Title>
+    <Label>wcsLabel</Label>
+  </WCS>
+
+  <!-- WCSFormat -->
+  <Include location="{ADAGUC_PATH}/data/config/includes/WCSFormat.include.xml"/>
+
+  <!-- Projections -->
+  <Include location="{ADAGUC_PATH}/data/config/includes/Projection.include.xml"/>
+           
+  <!--Legends -->
+  <Include location="{ADAGUC_PATH}/data/config/includes/DefaultStyles.include.xml"/>
+
+  <AutoResource enableautoopendap="true" enablelocalfile="true" enablecache="false">
+    <Dir basedir="/data/adaguc-autowms" prefix="/data/adaguc-autowms/"/>
+    <ImageText attribute="source"></ImageText>
+  </AutoResource>
+
+  <Dataset enabled="true" location="/data/adaguc-datasets/"/>
+  <Dataset enabled="true" location="/data/adaguc-datasets-internal/"/>
+
+  <OpenDAP enabled="true" path="adaguc-services/adagucopendap"/>
+  <!-- End of configuration /-->
+</Configuration>

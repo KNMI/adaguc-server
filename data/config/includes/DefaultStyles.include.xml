@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <!--
+  http://soliton.vm.bytemark.co.uk/pub/cpt-city/views/totp-cpt.html
+  -->
+  <Legend name="multicolor" type="colorRange">
+    <palette index="000" red="143" green="133" blue="186"/>
+    <palette index="006" red="079" green="072" blue="149"/>
+    <palette index="012" red="000" green="057" blue="128"/>
+    <palette index="018" red="000" green="084" blue="157"/>
+    <palette index="024" red="000" green="112" blue="184"/>
+    <palette index="030" red="000" green="139" blue="208"/>
+    <palette index="036" red="000" green="158" blue="205"/>
+    <palette index="042" red="001" green="168" blue="186"/>
+    <palette index="048" red="045" green="183" blue="185"/>
+    <palette index="054" red="000" green="153" blue="161"/>
+    <palette index="060" red="000" green="125" blue="143"/>
+    <palette index="066" red="000" green="113" blue="109"/>
+    <palette index="072" red="001" green="089" blue="047"/>
+    <palette index="078" red="000" green="109" blue="051"/>
+    <palette index="084" red="040" green="154" blue="067"/>
+    <palette index="090" red="118" green="184" blue="086"/>
+    <palette index="096" red="149" green="195" blue="107"/>
+    <palette index="102" red="175" green="203" blue="082"/>
+    <palette index="108" red="197" green="213" blue="080"/>
+    <palette index="120" red="222" green="219" blue="000"/>
+    <palette index="126" red="241" green="229" blue="031"/>
+    <palette index="132" red="255" green="240" blue="063"/>
+    <palette index="138" red="255" green="244" blue="129"/>
+    <palette index="144" red="255" green="246" blue="177"/>
+    <palette index="150" red="255" green="241" blue="196"/>
+    <palette index="156" red="255" green="231" blue="171"/>
+    <palette index="162" red="253" green="213" blue="144"/>
+    <palette index="168" red="250" green="193" blue="114"/>
+    <palette index="174" red="247" green="170" blue="066"/>
+    <palette index="180" red="239" green="127" blue="001"/>
+    <palette index="186" red="235" green="105" blue="009"/>
+    <palette index="192" red="232" green="079" blue="019"/>
+    <palette index="198" red="228" green="046" blue="024"/>
+    <palette index="204" red="227" green="000" blue="027"/>
+    <palette index="210" red="209" green="000" blue="024"/>
+    <palette index="216" red="189" green="010" blue="029"/>
+    <palette index="222" red="152" green="027" blue="033"/>
+    <palette index="228" red="102" green="038" blue="036"/>
+    <palette index="234" red="080" green="041" blue="036"/>
+    <palette index="240" red="080" green="041" blue="036"/>
+  </Legend>
+
+  <Legend name="rainbow" type="colorRange">
+    <palette index="0"   red="0"   green="0"   blue="255"/> 
+    <palette index="80"   red="0"   green="255"   blue="255"/> 
+    <palette index="120" red="0"   green="255" blue="0"/> 
+    <palette index="160" red="255"   green="255" blue="0"/> 
+    <palette index="240" red="255"   green="0" blue="0"/> 
+  </Legend>
+
+  <Legend name="gray" type="colorRange">
+    <palette index="0"   red="0"   green="0"   blue="0"/> 
+    <palette index="240" red="255"   green="255" blue="255"/> 
+  </Legend>
+  
+  <Legend name="no2" type="colorRange">
+    <palette index="0"   red="0"  green="0"    blue="190"/> 
+    <palette index="5"   red="0"  green="0"    blue="255"/> 
+    <palette index="17"  red="0"  green="255"  blue="255"/> 
+    <palette index="40"  red="0"  green="255"  blue="0"/> 
+    <palette index="81"  red="255" green="255" blue="0"/> 
+    <palette index="156" red="255" green="0" blue="0"/> 
+    <palette index="190" red="255" green="0" blue="160"/> 
+    <palette index="240" red="255" green="0" blue="160"/> 
+  </Legend>
+  
+  <Legend name="isoluminant" type="colorRange">
+    <palette index="0"   red="216"  green="15" blue="15"/>
+    <palette index="48"  red="134"  green="134"   blue="0"/>
+    <palette index="96"  red="0"    green="151"   blue="0"/>
+    <palette index="144"  red="0"    green="143"   blue="143"/>
+    <palette index="192" red="81"   green="253" blue="247"/>
+    <palette index="240" red="183"   green="0" blue="183"/>
+  </Legend>
+  
+  <Legend name="elevation" type="colorRange">
+    <palette index="0"   red="0"   green="191" blue="191"/>
+    <palette index="48"  red="0"   green="255" blue="0"/>
+    <palette index="96"  red="255" green="255" blue="0"/>
+    <palette index="144" red="255" green="127" blue="0"/>
+    <palette index="192" red="191" green="127" blue="63"/>
+    <palette index="240" red="20"  green="20"  blue="20"/>
+  </Legend>
+
+  <Legend name="bluewhitered" type="colorRange">
+    <palette index="0"   red="0"  green="60" blue="123"/>
+    <palette index="30"  red="0"  green="100"   blue="140"/>
+    <palette index="60"  red="8"    green="130"   blue="206"/>
+    <palette index="85"  red="132"    green="211"   blue="255"/>
+    <palette index="120" red="247"   green="247" blue="247"/>
+    <palette index="155" red="255"   green="195" blue="57"/>
+    <palette index="180" red="232"  green="28" blue="0"/>
+    <palette index="210" red="165"  green="0" blue="0"/>
+    <palette index="240" red="90"   green="0" blue="0"/>
+  </Legend>
+
+
+  <!-- Style configuration -->
+  <Style name="rainbow">
+    <Legend fixedclasses="true" tickinterval="500" tickround="1">rainbow</Legend>
+    <Min>0.0</Min>
+    <Max>3500</Max>
+    <NameMapping name="nearest"   title="Rainbow colors" abstract="Drawing images with rainbow colors"/>
+  </Style>
+  
+    
+  <Style name="elevation">
+    <Legend fixedclasses="true" tickinterval="1" tickround="1">elevation</Legend>
+    <Min>0.0</Min>
+    <Max>10</Max>
+    <NameMapping name="nearest"   title="Elevation colors" abstract="Drawing images with elevation colors"/>
+  </Style>
+  
+  <Style name="isoluminant">
+    <Legend fixedclasses="true" tickinterval="1" tickround="1">isoluminant</Legend>
+    <Min>0.0</Min>
+    <Max>10</Max>
+    <NameMapping name="nearest"   title="Isoluminant colors" abstract="Drawing images with isoluminant colors"/>
+  </Style>
+  
+   <Style name="no2">
+    <Legend fixedclasses="true" tickinterval="500" tickround="1">no2</Legend>
+    <Min>0.0</Min>
+    <Max>3500</Max>
+    <RenderMethod>nearest,bilinear</RenderMethod>
+    <NameMapping name="nearest"   title="NO2 colors" abstract="Drawing  images with NO2 colors"/>
+    <NameMapping name="bilinear"   title="NO2 colors smooth" abstract="Drawing images with NO2 colors and bilinear interpolation"/>
+  </Style>
+
+    <!--Styles -->
+  <Style name="auto">
+    <Legend fixedclasses="true" tickround="1">bluewhitered</Legend>
+    <Point pointstyle="point" textcolor="#111111"/>
+    <Vector vectorstyle="barb" linecolor="#0000FF" />
+    <Scale>0</Scale>
+    <Offset>0</Offset>
+    <RenderMethod>nearest,bilinear,point,barb</RenderMethod>
+    <StandardNames standard_name="*"/>
+  </Style>
+  
+  <Style name="autofeatures">
+    <Legend fixedclasses="true" tickround="1">elevation</Legend>
+    <Point pointstyle="point" textcolor="#111111"/>
+    <Vector vectorstyle="barb" linecolor="#0000FF" />
+    <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#000000" borderwidth="2"/> <!-- Used in CImgRenderPolylines -->
+    <Scale>0</Scale>
+    <Offset>0</Offset>
+    <RenderMethod>nearest,bilinear,point,barb</RenderMethod>
+    <StandardNames standard_name="features"/>
+  </Style>
+
+</Configuration>

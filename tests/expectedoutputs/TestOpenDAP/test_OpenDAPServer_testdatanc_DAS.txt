@@ -1,0 +1,37 @@
+Attributes {
+    testdata {
+        String long_name "Testdata";
+        String standard_name "test_data";
+        String units "1";
+        String grid_mapping "projection";
+        String coordinates "lon lat";
+        Float32 _FillValue -0.010000;
+    }
+    y {
+        String long_name "y coordinate of projection";
+        String standard_name "projection_y_coordinate";
+        String units "metre";
+    }
+    x {
+        String long_name "x coordinate of projection";
+        String standard_name "projection_x_coordinate";
+        String units "metre";
+    }
+    time {
+        String long_name "time";
+        String units "seconds since 1970-01-01 00:00:00";
+    }
+    projection {
+        String long_name "projection";
+        String proj4_params "+proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.9999079 +x_0=155000 +y_0=463000 +ellps=bessel +towgs84=565.417,50.3319,465.552,-0.398957,0.343988,-1.8774,4.0725 +units=m +no_defs ";
+        String EPSG_code "EPSG:28992";
+        String grid_mapping_name "stereographic";
+        Float32 latitude_of_projection_origin 52.156162;
+        Float32 longitude_of_projection_origin 5.387639;
+        Float32 scale_factor_at_projection_origin 0.999908;
+        Float32 false_easting 155000.000000;
+        Float32 false_northing 463000.000000;
+        Float32 semi_major_axis 6377397.000000;
+        Float32 semi_minor_axis 6356079.000000;
+    }
+}

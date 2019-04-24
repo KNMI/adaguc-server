@@ -1,0 +1,4 @@
+XDAP: 2.0 
+Content-Description: dods-dds 
+Content-Type: text/plain; charset=utf-8
+
