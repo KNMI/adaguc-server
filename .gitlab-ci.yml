@@ -1,0 +1,140 @@
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_HOST: tcp://localhost:2375
+  ECR_REGION: eu-west-1
+  ECR_REGISTRY_IMAGE: 127206424101.dkr.ecr.eu-west-1.amazonaws.com/knmi/adaguc-server
+  AWS_CONFIG_FILE: ./aws-config
+  REGION: eu-west-1
+
+services:
+  - docker:dind
+
+stages:
+  - build
+  - deploy-dev
+  - deploy-acc
+  - deploy-prd
+
+.build:
+  image: docker:latest
+  before_script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
+    - apk add --no-cache py-pip
+    - pip install awscli
+  stage: build
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE:latest .
+    - docker push $CI_REGISTRY_IMAGE:latest
+    - docker tag $CI_REGISTRY_IMAGE:latest $CI_REGISTRY_IMAGE:$IMAGE_TAG
+    - docker push $CI_REGISTRY_IMAGE:$IMAGE_TAG
+    - "sh ecr.sh -r adaguc-server"
+    - $(aws ecr get-login --no-include-email --region $ECR_REGION)
+    - docker tag $CI_REGISTRY_IMAGE:latest $ECR_REGISTRY_IMAGE:$IMAGE_TAG
+    - docker push $ECR_REGISTRY_IMAGE:$IMAGE_TAG
+  only:
+    refs:
+      - master
+
+.deploy:
+  image: python:3
+  before_script:
+    - pip install awscli
+  variables:
+    STACK_NAME: knmi-adaguc-server
+    TEMPLATE_FILE: cloudformation.yaml
+
+build:
+  extends: .build
+  variables:
+    IMAGE_TAG: "1.0.$CI_PIPELINE_ID"
+  only:
+    - master
+
+.deploy-acc:
+  extends: .deploy
+  stage: deploy-acc
+  variables:
+    IMAGE_TAG: "1.0.$CI_PIPELINE_ID"
+    ENVIRONMENT: acc
+    PROFILE: wlm-dta
+    ROLE_ARN: arn:aws:iam::517047996289:role/knmi-cloudformation-stack-execution
+  script:
+    - aws --profile $PROFILE cloudformation deploy --stack-name ${STACK_NAME}-${ENVIRONMENT} --template-file $TEMPLATE_FILE --capabilities CAPABILITY_NAMED_IAM --role-arn $ROLE_ARN --region $REGION --parameter-overrides Environment=$ENVIRONMENT AppContainerImageTag=$IMAGE_TAG
+  environment:
+    name: $ENVIRONMENT
+    url: http://adaguc-server.wlm.${ENVIRONMENT}.knmi.cloud
+  only:
+    - master
+  when: manual
+
+.deploy-prd:
+  extends: .deploy
+  stage: deploy-prd
+  variables:
+    IMAGE_TAG: "1.0.$CI_PIPELINE_ID"
+    ENVIRONMENT: prd
+    PROFILE: wlm-prd
+    ROLE_ARN: arn:aws:iam::865722340438:role/knmi-cloudformation-stack-execution
+  script:
+    - aws --profile $PROFILE cloudformation deploy --stack-name ${STACK_NAME} --template-file $TEMPLATE_FILE --capabilities CAPABILITY_NAMED_IAM --role-arn $ROLE_ARN --region $REGION --parameter-overrides Environment=$ENVIRONMENT AppContainerImageTag=$IMAGE_TAG
+  environment:
+    name: $ENVIRONMENT
+    url: http://adaguc-server.knmi.nl
+  only:
+    - master
+  when: manual
+
+build-dev:
+  extends: .build
+  variables:
+    IMAGE_TAG: "dev-$CI_COMMIT_REF_SLUG-$CI_PIPELINE_ID"
+  only:
+    - branches
+  except:
+    - master
+
+.deploy-dev:
+  extends: .deploy
+  stage: deploy-dev
+  variables:
+    STACK_NAME: knmi-adaguc-server-$CI_ENVIRONMENT_SLUG
+    IMAGE_TAG: "dev-$CI_COMMIT_REF_SLUG-$CI_PIPELINE_ID"
+    ENVIRONMENT: dev
+    PROFILE: wlm-dta
+    ROLE_ARN: arn:aws:iam::517047996289:role/knmi-cloudformation-stack-execution
+  script:
+    - aws --profile $PROFILE cloudformation deploy --stack-name ${STACK_NAME} --template-file $TEMPLATE_FILE --capabilities CAPABILITY_NAMED_IAM --role-arn $ROLE_ARN --region $REGION --parameter-overrides Environment=$ENVIRONMENT EnvironmentSuffix=$CI_ENVIRONMENT_SLUG AppContainerImageTag=$IMAGE_TAG --no-fail-on-empty-changeset
+  environment:
+    name: $ENVIRONMENT/$CI_COMMIT_REF_SLUG
+    url: http://adaguc-server-${CI_ENVIRONMENT_SLUG}.wlm.${ENVIRONMENT}.knmi.cloud
+    on_stop: stop-dev
+  only:
+    - branches
+  except:
+    - master
+
+.stop-dev:
+  image: python:3
+  stage: deploy-dev
+  variables:
+    STACK_NAME: knmi-adaguc-server-$CI_ENVIRONMENT_SLUG
+    ENVIRONMENT: dev
+    PROFILE: wlm-dta
+    ROLE_ARN: arn:aws:iam::517047996289:role/knmi-cloudformation-stack-execution
+    # Manually run GIT_CHECKOUT to catch race condition on merge requests where branch is deleted
+    # Workaround until https://gitlab.com/gitlab-org/gitlab-ce/issues/48361 is fixed
+    GIT_CHECKOUT: 'false'
+  environment:
+    name: $ENVIRONMENT/$CI_COMMIT_REF_SLUG
+    action: stop
+  before_script:
+    # Manually run git checkout, see above
+    - pip install awscli
+    - git checkout $CI_COMMIT_SHA || git checkout master
+  script:
+    - aws --profile $PROFILE cloudformation delete-stack --stack-name ${STACK_NAME} --role-arn $ROLE_ARN --region $REGION
+  only:
+    - branches
+  except:
+    - master
+  when: manual

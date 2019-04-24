@@ -17,7 +17,6 @@ RUN yum install -y \
     hdf5 \
     libxml2 \
     logrotate \
-    postgresql-server \
     proj \
     udunits2 \
     openssl \
@@ -69,7 +68,6 @@ RUN yum install -y \
     hdf5 \
     libxml2 \
     logrotate \
-    postgresql-server \
     proj \
     udunits2 \
     openssl \
@@ -145,4 +143,4 @@ EXPOSE 8080
 # For HTTPS
 EXPOSE 8443 
 
-ENTRYPOINT /adaguc/start.sh
+ENTRYPOINT java -jar /adaguc/adaguc-services.jar
