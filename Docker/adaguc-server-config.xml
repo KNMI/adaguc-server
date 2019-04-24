@@ -3,7 +3,7 @@
   <CacheDocs enabled="false"/>
   <TempDir value="{ADAGUC_TMP}"/>
   <Path value="{ADAGUC_PATH}/data"/>
-  <DataBase parameters="host=localhost port=5432 user=adaguc password=adaguc dbname=adaguc"/>
+  <DataBase parameters="{ADAGUC_DB}"/>
 
   
   <!-- WMS settings -->

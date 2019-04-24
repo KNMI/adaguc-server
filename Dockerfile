@@ -120,7 +120,10 @@ RUN  chmod +x /adaguc/adaguc-server-*.sh && chmod +x /adaguc/start.sh
 
 # Set adaguc-services configuration file
 ENV ADAGUC_SERVICES_CONFIG=/adaguc/adaguc-services-config.xml 
+# Location where postgresql writes its files:
 ENV ADAGUCDB=/adaguc/adagucdb
+# Configuration settings for postgresql database connection
+ENV ADAGUC_DB="host=localhost port=5432 user=adaguc password=adaguc dbname=adaguc"
 ENV EXTERNALADDRESS="http://localhost:8080/"
 
 # These volumes are configured in /adaguc/adaguc-server-config.xml
