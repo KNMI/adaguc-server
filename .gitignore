@@ -1,0 +1,63 @@
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+#Other binaries
+CCDFDataModel/anydump
+CCDFDataModel/test
+adagucserverEC/adagucserver
+adagucserverEC/aggregate_dim
+adagucserverEC/aggregate_time
+adagucserverEC/geojsondump
+adagucserverEC/h5ncdump
+bin/*
+
+#Python pyc files
+*.pyc
+
+#Test results
+tests/log
+tests/tmp
+tests/testresults/*
+tests/test.db
+
+Docker/adaguc-server.dockerimage
+
+hclasses/test
+
+# GitHub pages/Gitbook output should only be committed on gh-pages branch.
+doc/_book
+
+# Tag files, gdb history files
+TAGS
+.gdb_history
+tests/core*
+
+Docker/cert
+Docker/.env

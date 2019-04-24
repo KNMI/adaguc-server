@@ -1,0 +1,48 @@
+version: '2'
+
+services:
+    adaguc-viewer:
+        image: openearth/adaguc-viewer
+        container_name: adaguc-viewer
+        environment:
+            - "LOCAL_ADAGUCSERVER_ADDR=${EXTERNALADDRESS}" # Should be same as adaguc-server's EXTERNALADDRESS
+            - "REMOTE_ADAGUCSERVER_ADDR=http://adaguc-server:8080/" # Do not change this within the docker-compose environment
+            - "ADAGUCSERVICES_AUTOWMS=${EXTERNALADDRESS}/adaguc-services/autowms?" 
+        env_file:
+          - .env
+        restart: unless-stopped
+    adaguc-server:
+        image: openearth/adaguc-server
+        container_name: my-adaguc-server
+        volumes:
+            - ${ADAGUC_DATASET_DIR}/:/data/adaguc-datasets
+            - ${ADAGUC_AUTOWMS_DIR}/:/data/adaguc-autowms
+            - ${ADAGUC_DATA_DIR}/:/data/adaguc-data
+            - adaguc-server-compose-adagucdb:/adaguc/adagucdb
+            - adaguc-server-compose-logs:/var/log/adaguc
+        environment:
+            - "EXTERNALADDRESS=${EXTERNALADDRESS}"
+        env_file:
+          - .env     
+        restart: unless-stopped
+    nginx:
+        build: nginx-adaguc
+        container_name: nginx-adaguc
+        ports:
+          - "${ADAGUC_PORT}:443"
+        volumes:
+          - ./letsencrypt:/etc/letsencrypt
+          - ./cert:/cert
+        restart: unless-stopped
+volumes:
+    adaguc-server-compose-adagucdb:
+    adaguc-server-compose-logs:
+      
+#Run 
+# bash docker-compose-generate-env.sh -a ~/adaguc-server-docker/adaguc-autowms/ -d ~/adaguc-server-docker/adaguc-datasets/ -f ~/adaguc-server-docker/adaguc-data -p 443
+# docker-compose pull
+# docker-compose build
+# docker-compose up -d
+# wait 10 seconds for the services to start
+# docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh        
+# docker exec -it my-adaguc-server tail -f  /var/log/adaguc/adaguc-server.log

@@ -1,0 +1,126 @@
+Version 2.1.0 2019-04-04
+    - Use of new adaguc-services framework version 1.2.0 (Spring boot 2.0)
+
+Version 2.0.38 2019-03-28
+    - CSV reader with support for time and reference time dimensions added
+    - GeoJSON supports time
+    - Fixed bug in CRequests causing segmentation fault
+    - Fixed bug in Tracer which started to write to a closed logfile
+
+Version 2.0.37 2018-08-29
+    - OpenDAP server can now output JSON if header "Content-Type: application/json" is set
+
+Version 2.0.36 2018-08-29
+    - OpenDAP server is now compatible with jsdap JavaScript client
+    
+Version 2.0.35 2018-08-24
+    - CTime has now a singleton keeper for reducing CTime intialization times
+   
+Version 2.0.34 2018-07-24   
+    - Adaguc has ability to generate a report about the files to indicate what choices are made for visualisation and projection
+    
+Version 2.0.33 2018-06-06
+    - Dockerfile is now using a multistage build resulting in smaller docker images
+   
+Version 2.0.32 2018-01-22
+    - Polylines smaller then 1 px can now be rendered.
+    - OpenDAPServer is now compatible with Java NetCDF library
+    - OpenDAPServer tests and polyline tests added
+
+Version 2.0.31 2017-10-23
+    - When using ?DATASET=<yourdateset> configurations the autoscan is now not started, this should be done by you.
+    - Support for NOAA GOES NetCDF files
+    - Bug fixing in reading dimensions with scale and offset applied
+
+Version 2.0.29 2017-10-23
+    - Striding of gridfields can now be controlled with attribute striding in RenderSettings (e.g. <Style><RenderSettings striding="4"/></Style>)
+
+Version 2.0.28 2017-09-10
+    - Added 8 functional tests
+    - Added postgres index on dimension column
+    - Query limit can now be configured: <DataBase maxquerylimit="1000"/>
+    
+Version 2.0.27 2017-08-16
+    - Dimensions without a dimension variable now get an automatically assigned dimension variable, values start with 1 and are increased onwards.
+    - Initial PNG support with initial slippy map support added
+
+Version 2.0.26 2017-07-31
+    - Added support for LSA SAF hdf5 files for MeteoRomania
+
+Version 2.0.25 2017-07-28
+    - Tilecreation speed is optimized. When optimizeextent is set to true in TileSettings, only the partial area from the big netcdf file is read into memory and used for warping and tilecreation
+    - The bottom, left, right and top parameters in TileSettings are now optional, when left out they will be automatically detected based on the input file. This simplifies TileSettings if only one input file is needed as input.
+    
+
+Version 2.0.24 2017-07-28
+    - Updatedb has a new flag called --recreate. This drops the filetables and will recreate the them
+    - Updatedb now synchronizes scanned files with the database per 50 scanned files.
+
+Version 2.0.23 2017-08-01
+    - TileSettings has an extra configuration attribute called "optimizeextent" for optimizing reading small chunks from big grids
+    - TileSettings debug mode now draw the border of the tiles on the GetMap with lines
+    - Nearest neighbour renderer mode can be set to precise or fast with RenderSettings element in Styles
+
+Version 2.0.22 2017-03-27
+    - Worked on dockerizing and modularizing 
+    - Added extra configuration examples for adaguc workshop 2017
+    
+Version 2.0.20 2016-11-28
+    - CCDFDataModel supports NC_STRING types for attributes
+
+Version 2.0.19 2016-11-20
+    - Tiles can now be generated from very big grids in any cartographic projection
+    - GeoJSON supports line rendering
+
+Version 2.0.18 2016-11-06
+    - Added linear transformation in Nearest neighbour renderer when geographic mappings are equal.
+    
+Version 2.0.17 2016-10-13
+    - Support for POI markers
+    
+Version 2.0.18 2016-10-12
+    - Support for 365_day calendars    
+    
+Version 2.0.13, 2016-08-15:
+    - OpenDAP strings are encoded with two dimensions data(numstrings,maxStrlen64) by the NetCDF library. Internally this is now translated to CDF_STRING
+    - Anydump is able to list strings
+    - Timeseries/points are now plotted correctly over opendap
+
+Version 2.0.12, 2016-08-10:
+    - Added support for NetCDF4 groups
+    - Added anydump tool in CCDFDataModel, make with "make anydump"
+    - Added initial support for TROPOMI
+    - Added 360_day calendar support for CLIPC
+    - Bugfix: GetFeatureInfo now works on Byte data
+    - Bugfix: Layers with groups can now be served over ADAGUC OpenDAP, group separator is replaced by "_"
+    
+Version 2.0.9, 2016-07-22:
+    - AdditionalLayer functionality now works with NetCDF files with two dimensions per variable (only y,x data).
+    - Added datamask datapostprocessor
+    - Added include_layer datapostprocessor
+    - WCS NetCDFDataWriter now supports multiple dataobjects as output.
+    - WMS GetFeatureInfo can now output multiple data objects when they have the same standard name
+
+
+--------
+
+- Added Dataset configuration option to load additional datasets through the URL
+- Added Include configuration option to include additional configuration files
+
+Version 1.4 October 2013
+- Inspire view services support
+
+Version 1.3 Augustus 2013
+- Added WMS 1.3 support
+
+Version 1.2 (10 June 2013)
+- Version made ready for the workshop
+
+Version 1.0.0 (22 August 2011):
+
+   New features:
+     * 
+
+   Fixed bugs:
+     * 
+ 
