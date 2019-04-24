@@ -62,4 +62,4 @@ tests/core*
 Docker/cert
 Docker/.env
 
-.vsode
+.vscode
