@@ -182,7 +182,7 @@ Resources:
   DatabaseCluster:
     Type: AWS::RDS::DBCluster
     Properties:
-      Engine: aurora
+      Engine: aurora-postgresql
       EngineMode: serverless
       ScalingConfiguration:
         MinCapacity: 2
@@ -198,7 +198,7 @@ Resources:
       PreferredBackupWindow: !If [CreateNewDBCluster, '01:00-02:00', !Ref "AWS::NoValue"]
       PreferredMaintenanceWindow: !If [CreateNewDBCluster, 'mon:03:00-mon:05:00', !Ref "AWS::NoValue"]
       DBSubnetGroupName: !Ref DBSubnetId
-      DBClusterParameterGroupName: default.aurora5.6
+      DBClusterParameterGroupName: default.aurora-postgresql9.6
       Port: 5432
       VpcSecurityGroupIds:
         - !Ref DatabaseSecurityGroup
