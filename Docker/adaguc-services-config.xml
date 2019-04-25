@@ -11,7 +11,7 @@
   </server>
 
   <security>
-    <enablessl>true</enablessl>
+    <enablessl>false</enablessl>
     
     <truststore>/adaguc/security/truststore.ts</truststore>
     <trustrootscadirectory>/root/.globus/certificates/</trustrootscadirectory>
@@ -34,6 +34,7 @@
     <export>ADAGUC_LOGFILE=/var/log/adaguc/adaguc-server.log</export>
     <export>ADAGUC_FONT=/adaguc/adaguc-server-master/data/fonts/FreeSans.ttf</export>
     <export>ADAGUC_ONLINERESOURCE={ENV.EXTERNALADDRESS}/adaguc-services/adagucserver?</export>
+    <export>ADAGUC_DB={ENV.ADAGUC_DB}</export>
  </adaguc-server>
  
   <autowms>
