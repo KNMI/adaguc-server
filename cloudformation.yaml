@@ -220,13 +220,13 @@ Resources:
     DependsOn:
       - DatabasePassword
     Properties:
-      User: adaguc-server
+      User: adaguc
       PasswordParameterName: !If [IsDev, !Sub '/knmi/applications/adaguc-server/${EnvironmentSuffix}/database/password', !Sub '/knmi/applications/adaguc-server/${Environment}/database/password']
       WithDatabase: true
       DeletionPolicy: Retain
       Database:
         Host: !GetAtt DatabaseCluster.Endpoint.Address
-        Port: 3306
+        Port: 5432
         DBName: root
         User: root
         PasswordParameterName: !If [IsDev, !Sub '/knmi/applications/adaguc-server/${EnvironmentSuffix}/database/root', !Sub '/knmi/applications/adaguc-server/${Environment}/database/root']
