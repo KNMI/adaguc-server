@@ -516,7 +516,7 @@ Resources:
 # 
 # SSHD
 # 
-  Adaguc-serverSSHGateway:
+  AdagucserverSSHGateway:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub "https://s3-eu-west-1.amazonaws.com/knmi-nested-stack-templates-eu-west-1/ssh-gateway-cfn-${SSHGatewayTag}.yaml"
