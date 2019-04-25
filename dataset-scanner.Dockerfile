@@ -17,11 +17,11 @@ RUN yum install -y \
     hdf5 \
     libxml2 \
     logrotate \
+    postgresql-server \
     proj \
     udunits2 \
     openssl \
-    netcdf \
-    java-1.8.0-openjdk
+    netcdf
 
 # building / development packages
 RUN yum update -y && yum clean all
@@ -71,8 +71,7 @@ RUN yum install -y \
     proj \
     udunits2 \
     openssl \
-    netcdf \
-    java-1.8.0-openjdk
+    netcdf
 
 WORKDIR /adaguc/adaguc-server-master
 
@@ -102,6 +101,7 @@ RUN mkdir -p /data/adaguc-autowms && \
     mkdir -p /data/adaguc-services-home && \
     mkdir -p /adaguc/basedir && \
     mkdir -p /var/log/adaguc && \
+    mkdir -p /adaguc/adagucdb && \
     mkdir -p /adaguc/security && \
     mkdir -p /data/adaguc-datasets-internal && \
     mkdir -p /servicehealth
@@ -117,22 +117,11 @@ RUN  chmod +x /adaguc/adaguc-server-*.sh && chmod +x /adaguc/start.sh
 
 # Set adaguc-services configuration file
 ENV ADAGUC_SERVICES_CONFIG=/adaguc/adaguc-services-config.xml
+# Location where postgresql writes its files:
+ENV ADAGUCDB=/adaguc/adagucdb
+# Configuration settings for postgresql database connection
+ENV ADAGUC_DB="host=localhost port=5432 user=adaguc password=adaguc dbname=adaguc"
 
-ENV EXTERNALADDRESS="http://localhost:8080/"
-
-# These volumes are configured in /adaguc/adaguc-server-config.xml
-# Place your netcdfs, HDF5 and GeoJSONS here, they will be visualized with the source=<file> KVP via the URI
-VOLUME /data/adaguc-autowms   
-# Place your dataset XML configuration here, they will be accessible with the dataset=<dataset basename> KVP via the URI
-VOLUME /data/adaguc-datasets  
-# Place your netcdfs, HDF5 and GeoJSONS here you don't want to have accessible via dataset configurations.
-VOLUME /data/adaguc-data      
-# Loggings are save here, including logrotate
-VOLUME /var/log/adaguc/       
-# Settings for HTTPS / SSL can be set via keystore and truststore. Self signed cert will be created if nothing is provided.
-VOLUME /adaguc/security
-
-# For HTTP
-EXPOSE 8080
-
-ENTRYPOINT ["sh", "/adaguc/start.sh"]
+ENTRYPOINT ["sh", "/adaguc/adaguc-server-updatedatasets.sh"]
+# Override this at runtime with the target dataset
+CMD ["some_data_set"]
