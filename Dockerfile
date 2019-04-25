@@ -136,3 +136,4 @@ VOLUME /adaguc/security
 EXPOSE 8080
 
 ENTRYPOINT ["sh", "/adaguc/start.sh"]
+
