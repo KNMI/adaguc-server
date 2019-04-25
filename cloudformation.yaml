@@ -172,12 +172,12 @@ Resources:
       SecurityGroupIngress:
         - SourceSecurityGroupId: !Ref PostgreSQLProviderSecurityGroupId
           IpProtocol: tcp
-          FromPort: 3306
-          ToPort: 3306
+          FromPort: 5432
+          ToPort: 5432
         - SourceSecurityGroupId: !Ref ECSSecurityGroupId
           IpProtocol: tcp
-          FromPort: 3306
-          ToPort: 3306
+          FromPort: 5432
+          ToPort: 5432
 
   DatabaseCluster:
     Type: AWS::RDS::DBCluster
