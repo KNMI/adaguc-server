@@ -93,7 +93,7 @@ build-dev:
   except:
     - master
 
-.deploy-dev:
+deploy-dev:
   extends: .deploy
   stage: deploy-dev
   variables:
@@ -113,7 +113,7 @@ build-dev:
   except:
     - master
 
-.stop-dev:
+stop-dev:
   image: python:3
   stage: deploy-dev
   variables:

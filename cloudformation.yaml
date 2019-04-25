@@ -1,0 +1,533 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: KNMI Adaguc-server
+Parameters:
+  BuildAccountId:
+    Type: String
+    Default: '127206424101'
+  Environment:
+    Type: String
+    AllowedValues:
+    - dev
+    - acc
+    - prd
+    Default: dev
+  EnvironmentSuffix:
+    Type: String
+    Default: ''
+  AppContainerCpu:
+    Type: Number
+    Default: 256 # 1024 == 1 CPU
+  AppContainerMemory:
+    Type: Number
+    Default: 512
+  AppContainerPort:
+    Type: Number
+    Default: 80
+  AppContainerImageTag:
+    Type: String
+    Default: latest
+  VpcId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::VPC::Id>
+    Default: /knmi/landing-zone/vpc/vpc-id
+  PrivateSubnet1Id:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Subnet::Id>
+    Default: /knmi/landing-zone/vpc/private-subnet-1-id
+  PrivateSubnet2Id:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Subnet::Id>
+    Default: /knmi/landing-zone/vpc/private-subnet-2-id
+  PrivateSubnet3Id:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Subnet::Id>
+    Default: /knmi/landing-zone/vpc/private-subnet-3-id
+  DataSubnet1Id:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Subnet::Id>
+    Default: /knmi/landing-zone/vpc/data-subnet-1-id
+  DataSubnet2Id:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Subnet::Id>
+    Default: /knmi/landing-zone/vpc/data-subnet-2-id
+  DataSubnet3Id:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Subnet::Id>
+    Default: /knmi/landing-zone/vpc/data-subnet-3-id
+  DBSubnetId:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /knmi/landing-zone/vpc/db-subnet-group-id
+  RdsKmsKeyId:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /knmi/landing-zone/kms/rds
+  Subdomain:
+    Type: String
+    Default: adaguc-server
+  HostedZoneNamePrd:
+    Type: String
+    Default: adaguc-server.knmi.nl
+  SSHGatewayTag:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /knmi/applications/vivid-sshd/image-tag
+  PostgreSQLProviderSecurityGroupId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::SecurityGroup::Id>
+    Default: /knmi/landing-zone/cfn/postgresql-user-provider/security-group-id
+  ECSSecurityGroupId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::SecurityGroup::Id>
+    Default: /knmi/landing-zone/ecs/knmi-ecs-security-group-id
+  EFSContainerPath:
+    Type: String
+    Default: '/data'
+  EFSKmsKeyId:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /knmi/landing-zone/kms/efs
+  SnapshotIdentifier:
+    Type: String
+    Default: ''
+  ApplicationName:
+    Type: String
+    Default: Adaguc-server
+  Department:
+    Type: String
+    Default: WKD
+  InternalOrderNumber:
+    Type: String
+    Default: '00000011'
+Mappings:
+  EnvironmentMap:
+    dev:
+      DBSnapshotRetentionPeriod: 7
+      DBInstanceClass: db.t2.small
+    acc:
+      DBSnapshotRetentionPeriod: 7
+      DBInstanceClass: db.t2.small
+    prd:
+      DBSnapshotRetentionPeriod: 35
+      DBInstanceClass: db.t2.small
+Conditions:
+  IsDev: !Equals [!Ref Environment, dev]
+  IsDTA: !Or [!Equals [!Ref Environment, dev], !Equals [!Ref Environment, acc]]
+  CreateNewDBCluster: !Equals [!Ref SnapshotIdentifier, '']
+
+Resources:
+
+  PublicHostedZoneId:
+    Type: Custom::Parameter
+    Properties:
+      Name: !If [IsDTA, !Sub '/knmi/landing-zone/dns/public/${Environment}/hosted-zone-id', '/knmi/landing-zone/dns/public/hosted-zone-id']
+      ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:knmi-cfn-parameter-provider'
+
+  PublicHostedZoneName:
+    Type: Custom::Parameter
+    Properties:
+      Name: !If [IsDTA, !Sub '/knmi/landing-zone/dns/public/${Environment}/hosted-zone-name', '/knmi/landing-zone/dns/public/hosted-zone-name']
+      ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:knmi-cfn-parameter-provider'
+
+  PrivateHostedZoneId:
+    Type: Custom::Parameter
+    Properties:
+      Name: !If [IsDTA, !Sub '/knmi/landing-zone/dns/private/${Environment}/hosted-zone-id', '/knmi/landing-zone/dns/private/hosted-zone-id']
+      ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:knmi-cfn-parameter-provider'
+
+  PrivateHostedZoneName:
+    Type: Custom::Parameter
+    Properties:
+      Name: !If [IsDTA, !Sub '/knmi/landing-zone/dns/private/${Environment}/hosted-zone-name', '/knmi/landing-zone/dns/private/hosted-zone-name']
+      ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:knmi-cfn-parameter-provider'
+
+#
+# Generate Database Password
+#
+
+  DatabaseClusterMasterPassword:
+    Type: Custom::Secret
+    Properties:
+      Name: !If [IsDev, !Sub '/knmi/applications/adaguc-server/${EnvironmentSuffix}/database/root', !Sub '/knmi/applications/adaguc-server/${Environment}/database/root']
+      Alphabet: abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789
+      Length: 30
+      ReturnSecret: True
+      ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:knmi-cfn-secret-provider'
+
+  DatabasePassword:
+    Type: Custom::Secret
+    Properties:
+      Name: !If [IsDev, !Sub '/knmi/applications/adaguc-server/${EnvironmentSuffix}/database/password', !Sub '/knmi/applications/adaguc-server/${Environment}/database/password']
+      Alphabet: abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789
+      Length: 30
+      ReturnSecret: True
+      ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:knmi-cfn-secret-provider'
+
+#
+# Database Resources
+#
+
+  DatabaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VpcId
+      GroupDescription: !Sub Security group for Adaguc-server database ${Environment}
+      Tags:
+        - Key: Name
+          Value: !If [IsDev, !Sub 'adaguc-server-database-${EnvironmentSuffix}', !Sub 'adaguc-server-database-${Environment}']
+        - Key: ApplicationName
+          Value: !Ref ApplicationName
+        - Key: Department
+          Value: !Ref Department
+        - Key: InternalOrderNumber
+          Value: !Ref InternalOrderNumber
+      SecurityGroupIngress:
+        - SourceSecurityGroupId: !Ref PostgreSQLProviderSecurityGroupId
+          IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+        - SourceSecurityGroupId: !Ref ECSSecurityGroupId
+          IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+
+  DatabaseCluster:
+    Type: AWS::RDS::DBCluster
+    Properties:
+      Engine: aurora
+      EngineMode: serverless
+      ScalingConfiguration:
+        MinCapacity: 2
+        MaxCapacity: 4
+      StorageEncrypted: true
+      KmsKeyId: !Ref RdsKmsKeyId
+      DatabaseName: root
+      MasterUsername:
+        !If [CreateNewDBCluster, 'root', !Ref "AWS::NoValue"]
+      MasterUserPassword:
+        !If [CreateNewDBCluster, !GetAtt "DatabaseClusterMasterPassword.Secret", !Ref "AWS::NoValue"]
+      BackupRetentionPeriod: !FindInMap [EnvironmentMap, !Ref Environment, DBSnapshotRetentionPeriod]
+      PreferredBackupWindow: !If [CreateNewDBCluster, '01:00-02:00', !Ref "AWS::NoValue"]
+      PreferredMaintenanceWindow: !If [CreateNewDBCluster, 'mon:03:00-mon:05:00', !Ref "AWS::NoValue"]
+      DBSubnetGroupName: !Ref DBSubnetId
+      DBClusterParameterGroupName: default.aurora5.6
+      Port: 3306
+      VpcSecurityGroupIds:
+        - !Ref DatabaseSecurityGroup
+      SnapshotIdentifier:
+        !If [CreateNewDBCluster, !Ref "AWS::NoValue", !Ref "SnapshotIdentifier"]
+      Tags:
+        - Key: Name
+          Value: !If [IsDev, !Sub 'adaguc-server-database-${EnvironmentSuffix}', !Sub 'adaguc-server-database-${Environment}']
+        - Key: ApplicationName
+          Value: !Ref ApplicationName
+        - Key: Department
+          Value: !Ref Department
+        - Key: InternalOrderNumber
+          Value: !Ref InternalOrderNumber
+
+  Database:
+    Type: Custom::PostgreSQLUser
+    Condition: CreateNewDBCluster
+    DependsOn:
+      - DatabasePassword
+    Properties:
+      User: adaguc-server
+      PasswordParameterName: !If [IsDev, !Sub '/knmi/applications/adaguc-server/${EnvironmentSuffix}/database/password', !Sub '/knmi/applications/adaguc-server/${Environment}/database/password']
+      WithDatabase: true
+      DeletionPolicy: Retain
+      Database:
+        Host: !GetAtt DatabaseCluster.Endpoint.Address
+        Port: 3306
+        DBName: root
+        User: root
+        PasswordParameterName: !If [IsDev, !Sub '/knmi/applications/adaguc-server/${EnvironmentSuffix}/database/root', !Sub '/knmi/applications/adaguc-server/${Environment}/database/root']
+      ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:knmi-cfn-postgresql-user-provider'
+
+#
+# Loadbalancer
+#
+
+  AppPrivateLoadbalancerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub Security group for Adaguc-server Loadbalancer ${Environment}
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+      Tags:
+        - Key: Name
+          Value: !If [IsDev, !Sub 'adaguc-server-loadbalancer-${EnvironmentSuffix}', !Sub 'adaguc-server-loadbalancer-${Environment}']
+        - Key: ApplicationName
+          Value: !Ref ApplicationName
+        - Key: Department
+          Value: !Ref Department
+        - Key: InternalOrderNumber
+          Value: !Ref InternalOrderNumber
+
+  AppPrivateLoadbalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Scheme: internal
+      LoadBalancerAttributes:
+      - Key: idle_timeout.timeout_seconds
+        Value: '30'
+      Subnets:
+        - !Ref PrivateSubnet1Id
+        - !Ref PrivateSubnet2Id
+        - !Ref PrivateSubnet3Id
+      SecurityGroups:
+        - !Ref AppPrivateLoadbalancerSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !If [IsDev, !Sub 'adaguc-server-${EnvironmentSuffix}', !Sub 'adaguc-server-${Environment}']
+        - Key: ApplicationName
+          Value: !Ref ApplicationName
+        - Key: Department
+          Value: !Ref Department
+        - Key: InternalOrderNumber
+          Value: !Ref InternalOrderNumber
+
+  AppPrivateLoadbalancerHTTPListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref AppTargetGroup
+          Type: forward
+      LoadBalancerArn: !Ref AppPrivateLoadbalancer
+      Port: 80
+      Protocol: HTTP
+
+#
+# Adaguc-server
+#
+
+  ContainerSecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref ECSSecurityGroupId
+      SourceSecurityGroupId: !Ref AppPrivateLoadbalancerSecurityGroup
+      IpProtocol: tcp
+      FromPort: 32000
+      ToPort: 65535
+      Description: !Sub Ingress for Adaguc-server ${Environment}
+
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn:
+      - Database
+    Properties:
+      Family: !If [IsDev, !Sub 'adaguc-server-${EnvironmentSuffix}', !Sub 'adaguc-server-${Environment}']
+      NetworkMode: bridge
+      RequiresCompatibilities:
+        - EC2
+      Volumes:
+        - Name: !If [IsDev, !Sub 'adaguc-server-${EnvironmentSuffix}', !Sub 'adaguc-server-${Environment}']
+          DockerVolumeConfiguration:
+            Driver: local
+            DriverOpts:
+              type: nfs
+              device: !Sub "${EFSVolume}.efs.${AWS::Region}.amazonaws.com:/"
+              o: !Sub "addr=${EFSVolume}.efs.${AWS::Region}.amazonaws.com,nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport"
+            Scope: task
+      ContainerDefinitions:
+        - Name: !If [IsDev, !Sub 'adaguc-server-app-${EnvironmentSuffix}', !Sub 'adaguc-server-app-${Environment}']
+          Image: !Sub '${BuildAccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/knmi/adaguc-server:${AppContainerImageTag}'
+          Cpu: !Ref AppContainerCpu
+          Memory: !Ref AppContainerMemory
+          PortMappings:
+            - ContainerPort: !Ref AppContainerPort
+          LogConfiguration:
+            LogDriver: json-file
+          Environment:
+            - Name: POSTGRESQL_HOST
+              Value: !GetAtt DatabaseCluster.Endpoint.Address
+            - Name: POSTGRESQL_LOGIN
+              Value: adaguc
+            - Name: POSTGRESQL_DATABASE
+              Value: adagucdb
+            - Name: POSTGRESQL_PASSWORD
+              Value: !GetAtt DatabasePassword.Secret
+            - Name: ADAGUC_DB
+              Value: !Sub 'host=${DatabaseCluster.Endpoint.Address} port=5432 user=adaguc password=${DatabasePassword.Secret} dbname=adagucdb'
+          MountPoints:
+            - ContainerPath: !Ref EFSContainerPath
+              SourceVolume: !If [IsDev, !Sub 'adaguc-server-${EnvironmentSuffix}', !Sub 'adaguc-server-${Environment}']
+
+  AppService:
+    Type: AWS::ECS::Service
+    DependsOn: AppLoadBalancerRule
+    Properties:
+      Cluster: knmi-ecs
+      DesiredCount: 2
+      TaskDefinition: !Ref TaskDefinition
+      LaunchType: EC2
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 75
+      LoadBalancers:
+        - ContainerName: !If [IsDev, !Sub 'adaguc-server-app-${EnvironmentSuffix}', !Sub 'adaguc-server-app-${Environment}']
+          ContainerPort: !Ref AppContainerPort
+          TargetGroupArn: !Ref AppTargetGroup
+
+  EFSVolume:
+    Type: AWS::EFS::FileSystem
+    Properties:
+      FileSystemTags:
+        - Key: Name
+          Value: !If [IsDev, !Sub 'adaguc-server-${EnvironmentSuffix}', !Sub 'adaguc-server-${Environment}']
+      Encrypted: True
+      KmsKeyId: !Ref EFSKmsKeyId
+
+  EFSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VpcId
+      GroupDescription: Security group for Adaguc-server EFS
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 2049
+        ToPort: 2049
+        CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: ApplicationName
+          Value: !Ref ApplicationName
+        - Key: Department
+          Value: !Ref Department
+        - Key: InternalOrderNumber
+          Value: !Ref InternalOrderNumber
+
+  EFSMountTargetSubnet1:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref EFSVolume
+      SecurityGroups:
+        - !Ref EFSSecurityGroup
+      SubnetId: !Ref DataSubnet1Id
+  EFSMountTargetSubnet2:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref EFSVolume
+      SecurityGroups:
+        - !Ref EFSSecurityGroup
+      SubnetId: !Ref DataSubnet2Id
+  EFSMountTargetSubnet3:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref EFSVolume
+      SecurityGroups:
+        - !Ref EFSSecurityGroup
+      SubnetId: !Ref DataSubnet3Id
+
+  AppTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 6
+      HealthCheckPath: /
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 3
+      Matcher:
+        HttpCode: '200'
+      Port: !Ref AppContainerPort
+      Protocol: HTTP
+      UnhealthyThresholdCount: 3
+      VpcId: !Ref VpcId
+      TargetGroupAttributes:
+        - Key: stickiness.enabled
+          Value: 'true'
+        - Key: stickiness.lb_cookie.duration_seconds
+          Value: '14400' # 4 hours
+      Tags:
+        - Key: ApplicationName
+          Value: !Ref ApplicationName
+        - Key: Department
+          Value: !Ref Department
+        - Key: InternalOrderNumber
+          Value: !Ref InternalOrderNumber
+
+  AppLoadBalancerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Actions:
+        - TargetGroupArn: !Ref AppTargetGroup
+          Type: 'forward'
+      Conditions:
+        - Field: path-pattern
+          Values:
+            - '*'
+      ListenerArn: !Ref AppPrivateLoadbalancerHTTPListener
+      Priority: 1
+
+  AppLoadBalancerRedirectRule:
+    Type: Custom::AlbListenerRule
+    Properties:
+      ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:knmi-cfn-alb-redirect-listener-provider'
+      Conditions:
+        - Field: host-header
+          Values:
+            - "*.*"
+      Actions:
+        - Type: redirect
+          RedirectConfig:
+            Protocol: HTTPS
+            Port: 443
+            StatusCode: HTTP_301
+      ListenerArn: !Ref AppPrivateLoadbalancerHTTPListener
+      Priority: 10
+
+  PrivateDNSRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !GetAtt PrivateHostedZoneId.Value
+      Name: !If [IsDev, !Sub '${Subdomain}-${EnvironmentSuffix}.${PrivateHostedZoneName.Value}', !Sub '${Subdomain}.${PrivateHostedZoneName.Value}']
+      Type: A
+      AliasTarget:
+        HostedZoneId: !GetAtt AppPrivateLoadbalancer.CanonicalHostedZoneID
+        DNSName: !GetAtt AppPrivateLoadbalancer.DNSName
+
+#
+# Output
+#
+
+  DatabaseSecurityGroupIdParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !If [IsDev, !Sub '/knmi/applications/adaguc-server/${Environment}-${EnvironmentSuffix}/database/security-group-id', !Sub '/knmi/applications/adaguc-server/${Environment}/database/security-group-id']
+      Type: String
+      Value: !Ref DatabaseSecurityGroup
+      Description: Database Security Group Id
+
+  DatabaseHostParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !If [IsDev, !Sub '/knmi/applications/adaguc-server/${Environment}-${EnvironmentSuffix}/database/host', !Sub '/knmi/applications/adaguc-server/${Environment}/database/host']
+      Type: String
+      Value: !GetAtt DatabaseCluster.Endpoint.Address
+      Description: Database Host
+
+  DatabaseNameParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !If [IsDev, !Sub '/knmi/applications/adaguc-server/${Environment}-${EnvironmentSuffix}/database/name', !Sub '/knmi/applications/adaguc-server/${Environment}/database/name']
+      Type: String
+      Value: adaguc-server
+      Description: Database Name
+
+  DatabaseUserParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !If [IsDev, !Sub '/knmi/applications/adaguc-server/${Environment}-${EnvironmentSuffix}/database/user', !Sub '/knmi/applications/adaguc-server/${Environment}/database/user']
+      Type: String
+      Value: adaguc-server
+      Description: Database User
+
+# 
+# SSHD
+# 
+  Adaguc-serverSSHGateway:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3-eu-west-1.amazonaws.com/knmi-nested-stack-templates-eu-west-1/ssh-gateway-cfn-${SSHGatewayTag}.yaml"
+      Parameters:
+        SSHGatewayContainerName: !If [IsDev, !Sub '${Subdomain}-sshgw-${EnvironmentSuffix}', !Sub '${Subdomain}-sshgw-${Environment}']
+        SSHGatewayContainerImageTag: !Ref SSHGatewayTag
+        VolumeDriverOptionDevice: !Sub "${EFSVolume}.efs.${AWS::Region}.amazonaws.com:/"
+        VolumeDriverOptionO: !Sub "addr=${EFSVolume}.efs.${AWS::Region}.amazonaws.com,nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport"
+        PrivateHostedZoneName: !If [IsDev, !Sub '${Subdomain}-sshgw-${EnvironmentSuffix}.${PrivateHostedZoneName.Value}.', !Sub '${Subdomain}-sshgw.${PrivateHostedZoneName.Value}.']
+        PrivateHostedZoneId: !GetAtt 'PrivateHostedZoneId.Value'
+        ApplicationIdentifier: adaguc-server
+        ApplicationName: !Ref ApplicationName
+        Department: !Ref Department
+        InternalOrderNumber: !Ref InternalOrderNumber
