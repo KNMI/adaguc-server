@@ -199,7 +199,7 @@ Resources:
       PreferredMaintenanceWindow: !If [CreateNewDBCluster, 'mon:03:00-mon:05:00', !Ref "AWS::NoValue"]
       DBSubnetGroupName: !Ref DBSubnetId
       DBClusterParameterGroupName: default.aurora5.6
-      Port: 3306
+      Port: 5432
       VpcSecurityGroupIds:
         - !Ref DatabaseSecurityGroup
       SnapshotIdentifier:
