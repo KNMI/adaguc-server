@@ -2,9 +2,10 @@ variables:
   DOCKER_DRIVER: overlay2
   DOCKER_HOST: tcp://localhost:2375
   ECR_REGION: eu-west-1
-  ECR_REGISTRY_IMAGE: 127206424101.dkr.ecr.eu-west-1.amazonaws.com/knmi/adaguc-server
+  ECR_REGISTRY: 127206424101.dkr.ecr.eu-west-1.amazonaws.com/knmi
   AWS_CONFIG_FILE: ./aws-config
   REGION: eu-west-1
+  TEMPLATE_FILE: cloudformation.yaml
 
 services:
   - docker:dind
@@ -23,43 +24,79 @@ stages:
     - pip install awscli
   stage: build
   script:
-    - docker build -t $CI_REGISTRY_IMAGE:latest .
-    - docker push $CI_REGISTRY_IMAGE:latest
-    - docker tag $CI_REGISTRY_IMAGE:latest $CI_REGISTRY_IMAGE:$IMAGE_TAG
-    - docker push $CI_REGISTRY_IMAGE:$IMAGE_TAG
-    - "sh ecr.sh -r adaguc-server"
+    - docker build -t "$CI_REGISTRY_IMAGE/$REPOSITORY:$IMAGE_TAG" ${DOCKER_FILE_OPTION} .
+    - docker push $CI_REGISTRY_IMAGE/$REPOSITORY:$IMAGE_TAG
+    - "sh ecr.sh -r $REPOSITORY"
     - $(aws ecr get-login --no-include-email --region $ECR_REGION)
-    - docker tag $CI_REGISTRY_IMAGE:latest $ECR_REGISTRY_IMAGE:$IMAGE_TAG
-    - docker push $ECR_REGISTRY_IMAGE:$IMAGE_TAG
-  only:
-    refs:
-      - master
+    - docker tag $CI_REGISTRY_IMAGE/$REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$REPOSITORY:$IMAGE_TAG
+    - docker push $ECR_REGISTRY/$REPOSITORY:$IMAGE_TAG
+    - echo "${COMPONENT}ContainerImageTag=$IMAGE_TAG" >> $COMPONENT.cfn.properties
+  artifacts:
+    paths:
+    - $COMPONENT.cfn.properties
 
 .deploy:
   image: python:3
   before_script:
     - pip install awscli
-  variables:
-    STACK_NAME: knmi-adaguc-server
-    TEMPLATE_FILE: cloudformation.yaml
+  script:
+    - cat *.cfn.properties
+    - >-
+      aws --profile $PROFILE cloudformation deploy --stack-name ${STACK_NAME} --template-file $TEMPLATE_FILE --capabilities
+      CAPABILITY_NAMED_IAM --role-arn $ROLE_ARN --region $REGION --parameter-overrides $(cat *.cfn.properties)
+      --no-fail-on-empty-changeset
 
-build:
+build-server:
   extends: .build
   variables:
     IMAGE_TAG: "1.0.$CI_PIPELINE_ID"
+    REPOSITORY: adaguc-server
+    COMPONENT: AdagucServer
   only:
+    - master
+
+build-scanner:
+  extends: .build
+  variables:
+    IMAGE_TAG: "1.0.$CI_PIPELINE_ID"
+    REPOSITORY: adaguc-dataset-scanner
+    COMPONENT: AdagucDatasetScanner
+    DOCKER_FILE_OPTION: "-f dataset-scanner.Dockerfile"
+  only:
+    - master
+
+build-server-dev:
+  extends: .build
+  variables:
+    IMAGE_TAG: "dev-$CI_COMMIT_REF_SLUG-$CI_PIPELINE_ID"
+    REPOSITORY: adaguc-server
+    COMPONENT: AdagucServer
+  only:
+    - branches
+  except:
+    - master
+
+build-scanner-dev:
+  extends: .build
+  variables:
+    IMAGE_TAG: "dev-$CI_COMMIT_REF_SLUG-$CI_PIPELINE_ID"
+    REPOSITORY: adaguc-dataset-scanner
+    COMPONENT: AdagucDatasetScanner
+    DOCKER_FILE_OPTION: "-f dataset-scanner.Dockerfile"
+  only:
+    - branches
+  except:
     - master
 
 .deploy-acc:
   extends: .deploy
   stage: deploy-acc
   variables:
+    STACK_NAME: knmi-adaguc-server-acc
     IMAGE_TAG: "1.0.$CI_PIPELINE_ID"
     ENVIRONMENT: acc
     PROFILE: wlm-dta
     ROLE_ARN: arn:aws:iam::517047996289:role/knmi-cloudformation-stack-execution
-  script:
-    - aws --profile $PROFILE cloudformation deploy --stack-name ${STACK_NAME}-${ENVIRONMENT} --template-file $TEMPLATE_FILE --capabilities CAPABILITY_NAMED_IAM --role-arn $ROLE_ARN --region $REGION --parameter-overrides Environment=$ENVIRONMENT AppContainerImageTag=$IMAGE_TAG
   environment:
     name: $ENVIRONMENT
     url: http://adaguc-server.wlm.${ENVIRONMENT}.knmi.cloud
@@ -71,27 +108,17 @@ build:
   extends: .deploy
   stage: deploy-prd
   variables:
+    STACK_NAME: knmi-adaguc-server
     IMAGE_TAG: "1.0.$CI_PIPELINE_ID"
     ENVIRONMENT: prd
     PROFILE: wlm-prd
     ROLE_ARN: arn:aws:iam::865722340438:role/knmi-cloudformation-stack-execution
-  script:
-    - aws --profile $PROFILE cloudformation deploy --stack-name ${STACK_NAME} --template-file $TEMPLATE_FILE --capabilities CAPABILITY_NAMED_IAM --role-arn $ROLE_ARN --region $REGION --parameter-overrides Environment=$ENVIRONMENT AppContainerImageTag=$IMAGE_TAG
   environment:
     name: $ENVIRONMENT
     url: http://adaguc-server.knmi.nl
   only:
     - master
   when: manual
-
-build-dev:
-  extends: .build
-  variables:
-    IMAGE_TAG: "dev-$CI_COMMIT_REF_SLUG-$CI_PIPELINE_ID"
-  only:
-    - branches
-  except:
-    - master
 
 deploy-dev:
   extends: .deploy
@@ -102,12 +129,13 @@ deploy-dev:
     ENVIRONMENT: dev
     PROFILE: wlm-dta
     ROLE_ARN: arn:aws:iam::517047996289:role/knmi-cloudformation-stack-execution
-  script:
-    - aws --profile $PROFILE cloudformation deploy --stack-name ${STACK_NAME} --template-file $TEMPLATE_FILE --capabilities CAPABILITY_NAMED_IAM --role-arn $ROLE_ARN --region $REGION --parameter-overrides Environment=$ENVIRONMENT EnvironmentSuffix=$CI_ENVIRONMENT_SLUG AppContainerImageTag=$IMAGE_TAG --no-fail-on-empty-changeset
   environment:
     name: $ENVIRONMENT/$CI_COMMIT_REF_SLUG
     url: http://adaguc-server-${CI_ENVIRONMENT_SLUG}.wlm.${ENVIRONMENT}.knmi.cloud
     on_stop: stop-dev
+  before_script:
+    - echo "Environment=$ENVIRONMENT" >> deploy.cfn.properties
+    - echo "EnvironmentSuffix=${CI_ENVIRONMENT_SLUG}" >> deploy.cfn.properties
   only:
     - branches
   except:
