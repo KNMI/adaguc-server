@@ -183,7 +183,6 @@ Resources:
     Type: AWS::RDS::DBCluster
     Properties:
       Engine: aurora-postgresql
-      EngineMode: serverless
       ScalingConfiguration:
         MinCapacity: 2
         MaxCapacity: 4
