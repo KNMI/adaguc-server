@@ -183,9 +183,6 @@ Resources:
     Type: AWS::RDS::DBCluster
     Properties:
       Engine: aurora-postgresql
-      ScalingConfiguration:
-        MinCapacity: 2
-        MaxCapacity: 4
       StorageEncrypted: true
       KmsKeyId: !Ref RdsKmsKeyId
       DatabaseName: root
