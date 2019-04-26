@@ -1,0 +1,9 @@
+[profile wlm-dta]
+role_arn = arn:aws:iam::517047996289:role/knmi-gitlab-runner
+region = eu-west-1
+credential_source = Ec2InstanceMetadata
+
+[profile wlm-prd]
+role_arn = arn:aws:iam::865722340438:role/knmi-gitlab-runner
+region = eu-west-1
+credential_source = Ec2InstanceMetadata
