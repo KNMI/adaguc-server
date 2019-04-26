@@ -24,7 +24,10 @@ Parameters:
   AppContainerPort:
     Type: Number
     Default: 80
-  AppContainerImageTag:
+  AdagucServerContainerImageTag:
+    Type: String
+    Default: latest
+  AdagucDatasetScannerContainerImageTag:
     Type: String
     Default: latest
   VpcId:
@@ -319,7 +322,7 @@ Resources:
             Scope: task
       ContainerDefinitions:
         - Name: !If [IsDev, !Sub 'adaguc-server-app-${EnvironmentSuffix}', !Sub 'adaguc-server-app-${Environment}']
-          Image: !Sub '${BuildAccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/knmi/adaguc-server:${AppContainerImageTag}'
+          Image: !Sub '${BuildAccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/knmi/adaguc-server:${AdagucServerContainerImageTag}'
           Cpu: !Ref AppContainerCpu
           Memory: !Ref AppContainerMemory
           PortMappings:
