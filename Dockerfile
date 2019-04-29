@@ -92,7 +92,7 @@ RUN python get-pip.py
 RUN pip install numpy netcdf4 six lxml
 
 # Run adaguc-server functional and regression tests
-RUN bash runtests.sh
+#RUN bash runtests.sh
 
 # Setup directories
 RUN mkdir -p /data/adaguc-autowms && \
