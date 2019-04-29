@@ -94,6 +94,12 @@ Parameters:
     Type: AWS::SSM::Parameter::Value<String>
     Default: /knmi/landing-zone/certificate/dev/wildcard
     Description: 'Wildcard certificate ARN used only in development environments'
+  DbUser:
+    Type: String
+    Default: adaguc
+  DbName:
+    Type: String
+    Default: adaguc
 Mappings:
   EnvironmentMap:
     dev:
@@ -197,7 +203,7 @@ Resources:
       EngineVersion: 9.6.1
       VPCSecurityGroups:
         - !Ref 'DatabaseSecurityGroup'
-      DBName: root
+      DBName: !Ref DbName
       MasterUsername: !If [CreateNewDBCluster, 'root', !Ref "AWS::NoValue"]
       MasterUserPassword: !If [CreateNewDBCluster, !GetAtt "DatabaseClusterMasterPassword.Secret", !Ref "AWS::NoValue"]
       MultiAZ: false
@@ -229,12 +235,12 @@ Resources:
     DependsOn:
       - DatabasePassword
     Properties:
-      User: adaguc
+      User: !Ref DbUser
       PasswordParameterName: !If [IsDev, !Sub '/knmi/applications/adaguc-server/${EnvironmentSuffix}/database/password', !Sub '/knmi/applications/adaguc-server/${Environment}/database/password']
       Database:
         Host: !GetAtt Database.Endpoint.Address
         Port: 5432
-        DBName: root
+        DBName: !Ref DbName
         User: root
         PasswordParameterName: !If [IsDev, !Sub '/knmi/applications/adaguc-server/${EnvironmentSuffix}/database/root', !Sub '/knmi/applications/adaguc-server/${Environment}/database/root']
       ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:knmi-cfn-postgresql-user-provider'
@@ -368,7 +374,7 @@ Resources:
             LogDriver: json-file
           Environment:
             - Name: ADAGUC_DB
-              Value: !Sub '"host=${Database.Endpoint.Address} port=5432 user=adaguc password=${DatabasePassword.Secret} dbname=adagucdb"'
+              Value: !Sub '"host=${Database.Endpoint.Address} port=5432 user=${DbUser} password=${DatabasePassword.Secret} dbname=${DbName}"'
           MountPoints:
             - ContainerPath: !Ref EFSContainerPath
               SourceVolume: !If [IsDev, !Sub 'adaguc-server-${EnvironmentSuffix}', !Sub 'adaguc-server-${Environment}']
