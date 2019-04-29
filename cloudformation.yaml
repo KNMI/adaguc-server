@@ -83,7 +83,7 @@ Parameters:
     Default: ''
   ApplicationName:
     Type: String
-    Default: Adaguc-server
+    Default: adaguc-server
   Department:
     Type: String
     Default: WKD
@@ -92,7 +92,7 @@ Parameters:
     Default: '00000011'
   WildcardCertificateArn:
     Type: AWS::SSM::Parameter::Value<String>
-    Default: /knmi/landing-zone/certificate/${Environment}/wildcard
+    Default: /knmi/landing-zone/certificate/dev/wildcard
     Description: 'Wildcard certificate ARN used only in development environments'
   DbClusterEndpoint:
     Type: AWS::SSM::Parameter::Value<String>
@@ -170,79 +170,80 @@ Resources:
 # Database Resources
 #
 
-#  DatabaseSecurityGroup:
-#    Type: AWS::EC2::SecurityGroup
-#    Properties:
-#      VpcId: !Ref VpcId
-#      GroupDescription: !Sub Security group for Adaguc-server database ${Environment}
-#      Tags:
-#        - Key: Name
-#          Value: !If [IsDev, !Sub 'adaguc-server-database-${EnvironmentSuffix}', !Sub 'adaguc-server-database-${Environment}']
-#        - Key: ApplicationName
-#          Value: !Ref ApplicationName
-#        - Key: Department
-#          Value: !Ref Department
-#        - Key: InternalOrderNumber
-#          Value: !Ref InternalOrderNumber
-#      SecurityGroupIngress:
-#        - SourceSecurityGroupId: !Ref PostgreSQLProviderSecurityGroupId
-#          IpProtocol: tcp
-#          FromPort: 5432
-#          ToPort: 5432
-#        - SourceSecurityGroupId: !Ref ECSSecurityGroupId
-#          IpProtocol: tcp
-#          FromPort: 5432
-#          ToPort: 5432
-#
-#  DatabaseCluster:
-#    Type: AWS::RDS::DBCluster
-#    Properties:
-#      Engine: aurora-postgresql
-#      EngineVersion: 9.6.8
-#      StorageEncrypted: true
-#      KmsKeyId: !Ref RdsKmsKeyId
-#      DatabaseName: root
-#      MasterUsername:
-#        !If [CreateNewDBCluster, 'root', !Ref "AWS::NoValue"]
-#      MasterUserPassword:
-#        !If [CreateNewDBCluster, !GetAtt "DatabaseClusterMasterPassword.Secret", !Ref "AWS::NoValue"]
-#      BackupRetentionPeriod: !FindInMap [EnvironmentMap, !Ref Environment, DBSnapshotRetentionPeriod]
-#      PreferredBackupWindow: !If [CreateNewDBCluster, '01:00-02:00', !Ref "AWS::NoValue"]
-#      PreferredMaintenanceWindow: !If [CreateNewDBCluster, 'mon:03:00-mon:05:00', !Ref "AWS::NoValue"]
-#      DBSubnetGroupName: !Ref DBSubnetId
-#      DBClusterParameterGroupName: default.aurora-postgresql9.6
-#      Port: 5432
-#      VpcSecurityGroupIds:
-#        - !Ref DatabaseSecurityGroup
-#      SnapshotIdentifier:
-#        !If [CreateNewDBCluster, !Ref "AWS::NoValue", !Ref "SnapshotIdentifier"]
-#      Tags:
-#        - Key: Name
-#          Value: !If [IsDev, !Sub 'adaguc-server-database-${EnvironmentSuffix}', !Sub 'adaguc-server-database-${Environment}']
-#        - Key: ApplicationName
-#          Value: !Ref ApplicationName
-#        - Key: Department
-#          Value: !Ref Department
-#        - Key: InternalOrderNumber
-#          Value: !Ref InternalOrderNumber
-#
-#  Database:
-#    Type: Custom::PostgreSQLUser
-#    Condition: CreateNewDBCluster
-#    DependsOn:
-#      - DatabasePassword
-#    Properties:
-#      User: adaguc
-#      PasswordParameterName: !If [IsDev, !Sub '/knmi/applications/adaguc-server/${EnvironmentSuffix}/database/password', !Sub '/knmi/applications/adaguc-server/${Environment}/database/password']
-#      WithDatabase: true
-#      DeletionPolicy: Retain
-#      Database:
-#        Host: !GetAtt DatabaseCluster.Endpoint.Address
-#        Port: 5432
-#        DBName: root
-#        User: root
-#        PasswordParameterName: !If [IsDev, !Sub '/knmi/applications/adaguc-server/${EnvironmentSuffix}/database/root', !Sub '/knmi/applications/adaguc-server/${Environment}/database/root']
-#      ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:knmi-cfn-postgresql-user-provider'
+  DatabaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VpcId
+      GroupDescription: !Sub Security group for Adaguc-server database ${Environment}
+      Tags:
+        - Key: Name
+          Value: !If [IsDev, !Sub 'adaguc-server-database-${EnvironmentSuffix}', !Sub 'adaguc-server-database-${Environment}']
+        - Key: ApplicationName
+          Value: !Ref ApplicationName
+        - Key: Department
+          Value: !Ref Department
+        - Key: InternalOrderNumber
+          Value: !Ref InternalOrderNumber
+      SecurityGroupIngress:
+        - SourceSecurityGroupId: !Ref PostgreSQLProviderSecurityGroupId
+          IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+        - SourceSecurityGroupId: !Ref ECSSecurityGroupId
+          IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+
+  Database:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      AllocatedStorage: '10'
+      DBInstanceClass: db.t2.micro
+      Engine: Postgres
+      EngineVersion: 9.6.1
+      VPCSecurityGroups:
+        - !Ref 'DatabaseSecurityGroup'
+      DBName: root
+      MasterUsername: !If [CreateNewDBCluster, 'root', !Ref "AWS::NoValue"]
+      MasterUserPassword: !If [CreateNewDBCluster, !GetAtt "DatabaseClusterMasterPassword.Secret", !Ref "AWS::NoValue"]
+      MultiAZ: false
+      Port: '5432'
+      PubliclyAccessible: false
+      DBSubnetGroupName: !Ref 'DBSubnetId'
+      DBParameterGroupName: !Ref 'DatabaseParameterGroup'
+      Tags:
+        - Key: Name
+          Value: !If [IsDev, !Sub 'adaguc-server-database-${EnvironmentSuffix}', !Sub 'adaguc-server-database-${Environment}']
+        - Key: ApplicationName
+          Value: !Ref ApplicationName
+        - Key: Department
+          Value: !Ref Department
+        - Key: InternalOrderNumber
+          Value: !Ref InternalOrderNumber
+    DeletionPolicy: Snapshot
+
+  DatabaseParameterGroup:
+    Type: AWS::RDS::DBParameterGroup
+    Properties:
+      Description: Parameters for PostgreSQL
+      Family: postgres9.6
+      Parameters: {}
+
+  AdagucUser:
+    Type: Custom::PostgreSQLUser
+    Condition: CreateNewDBCluster
+    DependsOn:
+      - DatabasePassword
+    Properties:
+      User: adaguc
+      PasswordParameterName: !If [IsDev, !Sub '/knmi/applications/adaguc-server/${EnvironmentSuffix}/database/password', !Sub '/knmi/applications/adaguc-server/${Environment}/database/password']
+      Database:
+        Host: !GetAtt Database.Endpoint.Address
+        Port: 5432
+        DBName: root
+        User: root
+        PasswordParameterName: !If [IsDev, !Sub '/knmi/applications/adaguc-server/${EnvironmentSuffix}/database/root', !Sub '/knmi/applications/adaguc-server/${Environment}/database/root']
+      ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:knmi-cfn-postgresql-user-provider'
 
 #
 # Loadbalancer
@@ -346,8 +347,8 @@ Resources:
 
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
-#    DependsOn:
-#      - Database
+    DependsOn:
+      - Database
     Properties:
       Family: !If [IsDev, !Sub 'adaguc-server-${EnvironmentSuffix}', !Sub 'adaguc-server-${Environment}']
       NetworkMode: bridge
@@ -372,20 +373,13 @@ Resources:
           LogConfiguration:
             LogDriver: json-file
           Environment:
-#            - Name: POSTGRESQL_HOST
-#              Value: !Ref DBClusterEndpoint
-#            - Name: POSTGRESQL_LOGIN
-#              Value: adaguc
-#            - Name: POSTGRESQL_DATABASE
-#              Value: adaguc
-#            - Name: POSTGRESQL_PASSWORD
-#              Value: !GetAtt DatabasePassword.Secret
             - Name: ADAGUC_DB
-#              Value: !Sub 'host=${DatabaseCluster.Endpoint.Address} port=5432 user=adaguc password=${DatabasePassword.Secret} dbname=adaguc'
-              Value: !Join ['', ['host=', !Ref DbClusterEndpoint, ' port=5432 user=adaguc password=', !Join ['', ['{{resolve:secretsmanager:', !Ref DbClusterPasswordKey, ':SecretString:password}}' ]], ' dbname=adaguc']]
+              Value: !Sub '"host=${Database.Endpoint.Address} port=5432 user=adaguc password=${DatabasePassword.Secret} dbname=adagucdb"'
           MountPoints:
             - ContainerPath: !Ref EFSContainerPath
               SourceVolume: !If [IsDev, !Sub 'adaguc-server-${EnvironmentSuffix}', !Sub 'adaguc-server-${Environment}']
+          DockerLabels:
+            logstash-filter: adaguc-server
 
   AppService:
     Type: AWS::ECS::Service
