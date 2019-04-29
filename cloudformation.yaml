@@ -90,6 +90,16 @@ Parameters:
   InternalOrderNumber:
     Type: String
     Default: '00000011'
+  WildcardCertificateArn:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /knmi/landing-zone/certificate/${Environment}/wildcard
+    Description: 'Wildcard certificate ARN used only in development environments'
+  DbClusterEndpoint:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /knmi/application/adaguc-server/db-cluster-enddpoint
+  DbClusterPasswordKey:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /knmi/application/adaguc-server/db-master-secret
 Mappings:
   EnvironmentMap:
     dev:
@@ -105,6 +115,8 @@ Conditions:
   IsDev: !Equals [!Ref Environment, dev]
   IsDTA: !Or [!Equals [!Ref Environment, dev], !Equals [!Ref Environment, acc]]
   CreateNewDBCluster: !Equals [!Ref SnapshotIdentifier, '']
+  UseSpecificCertificate: !Not [!Equals [!Ref Environment, dev]]
+  UseWildcardCertificate: !Equals [!Ref Environment, dev]
 
 Resources:
 
@@ -158,78 +170,79 @@ Resources:
 # Database Resources
 #
 
-  DatabaseSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      VpcId: !Ref VpcId
-      GroupDescription: !Sub Security group for Adaguc-server database ${Environment}
-      Tags:
-        - Key: Name
-          Value: !If [IsDev, !Sub 'adaguc-server-database-${EnvironmentSuffix}', !Sub 'adaguc-server-database-${Environment}']
-        - Key: ApplicationName
-          Value: !Ref ApplicationName
-        - Key: Department
-          Value: !Ref Department
-        - Key: InternalOrderNumber
-          Value: !Ref InternalOrderNumber
-      SecurityGroupIngress:
-        - SourceSecurityGroupId: !Ref PostgreSQLProviderSecurityGroupId
-          IpProtocol: tcp
-          FromPort: 5432
-          ToPort: 5432
-        - SourceSecurityGroupId: !Ref ECSSecurityGroupId
-          IpProtocol: tcp
-          FromPort: 5432
-          ToPort: 5432
-
-  DatabaseCluster:
-    Type: AWS::RDS::DBCluster
-    Properties:
-      Engine: aurora-postgresql
-      StorageEncrypted: true
-      KmsKeyId: !Ref RdsKmsKeyId
-      DatabaseName: root
-      MasterUsername:
-        !If [CreateNewDBCluster, 'root', !Ref "AWS::NoValue"]
-      MasterUserPassword:
-        !If [CreateNewDBCluster, !GetAtt "DatabaseClusterMasterPassword.Secret", !Ref "AWS::NoValue"]
-      BackupRetentionPeriod: !FindInMap [EnvironmentMap, !Ref Environment, DBSnapshotRetentionPeriod]
-      PreferredBackupWindow: !If [CreateNewDBCluster, '01:00-02:00', !Ref "AWS::NoValue"]
-      PreferredMaintenanceWindow: !If [CreateNewDBCluster, 'mon:03:00-mon:05:00', !Ref "AWS::NoValue"]
-      DBSubnetGroupName: !Ref DBSubnetId
-      DBClusterParameterGroupName: default.aurora-postgresql9.6
-      Port: 5432
-      VpcSecurityGroupIds:
-        - !Ref DatabaseSecurityGroup
-      SnapshotIdentifier:
-        !If [CreateNewDBCluster, !Ref "AWS::NoValue", !Ref "SnapshotIdentifier"]
-      Tags:
-        - Key: Name
-          Value: !If [IsDev, !Sub 'adaguc-server-database-${EnvironmentSuffix}', !Sub 'adaguc-server-database-${Environment}']
-        - Key: ApplicationName
-          Value: !Ref ApplicationName
-        - Key: Department
-          Value: !Ref Department
-        - Key: InternalOrderNumber
-          Value: !Ref InternalOrderNumber
-
-  Database:
-    Type: Custom::PostgreSQLUser
-    Condition: CreateNewDBCluster
-    DependsOn:
-      - DatabasePassword
-    Properties:
-      User: adaguc
-      PasswordParameterName: !If [IsDev, !Sub '/knmi/applications/adaguc-server/${EnvironmentSuffix}/database/password', !Sub '/knmi/applications/adaguc-server/${Environment}/database/password']
-      WithDatabase: true
-      DeletionPolicy: Retain
-      Database:
-        Host: !GetAtt DatabaseCluster.Endpoint.Address
-        Port: 5432
-        DBName: root
-        User: root
-        PasswordParameterName: !If [IsDev, !Sub '/knmi/applications/adaguc-server/${EnvironmentSuffix}/database/root', !Sub '/knmi/applications/adaguc-server/${Environment}/database/root']
-      ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:knmi-cfn-postgresql-user-provider'
+#  DatabaseSecurityGroup:
+#    Type: AWS::EC2::SecurityGroup
+#    Properties:
+#      VpcId: !Ref VpcId
+#      GroupDescription: !Sub Security group for Adaguc-server database ${Environment}
+#      Tags:
+#        - Key: Name
+#          Value: !If [IsDev, !Sub 'adaguc-server-database-${EnvironmentSuffix}', !Sub 'adaguc-server-database-${Environment}']
+#        - Key: ApplicationName
+#          Value: !Ref ApplicationName
+#        - Key: Department
+#          Value: !Ref Department
+#        - Key: InternalOrderNumber
+#          Value: !Ref InternalOrderNumber
+#      SecurityGroupIngress:
+#        - SourceSecurityGroupId: !Ref PostgreSQLProviderSecurityGroupId
+#          IpProtocol: tcp
+#          FromPort: 5432
+#          ToPort: 5432
+#        - SourceSecurityGroupId: !Ref ECSSecurityGroupId
+#          IpProtocol: tcp
+#          FromPort: 5432
+#          ToPort: 5432
+#
+#  DatabaseCluster:
+#    Type: AWS::RDS::DBCluster
+#    Properties:
+#      Engine: aurora-postgresql
+#      EngineVersion: 9.6.8
+#      StorageEncrypted: true
+#      KmsKeyId: !Ref RdsKmsKeyId
+#      DatabaseName: root
+#      MasterUsername:
+#        !If [CreateNewDBCluster, 'root', !Ref "AWS::NoValue"]
+#      MasterUserPassword:
+#        !If [CreateNewDBCluster, !GetAtt "DatabaseClusterMasterPassword.Secret", !Ref "AWS::NoValue"]
+#      BackupRetentionPeriod: !FindInMap [EnvironmentMap, !Ref Environment, DBSnapshotRetentionPeriod]
+#      PreferredBackupWindow: !If [CreateNewDBCluster, '01:00-02:00', !Ref "AWS::NoValue"]
+#      PreferredMaintenanceWindow: !If [CreateNewDBCluster, 'mon:03:00-mon:05:00', !Ref "AWS::NoValue"]
+#      DBSubnetGroupName: !Ref DBSubnetId
+#      DBClusterParameterGroupName: default.aurora-postgresql9.6
+#      Port: 5432
+#      VpcSecurityGroupIds:
+#        - !Ref DatabaseSecurityGroup
+#      SnapshotIdentifier:
+#        !If [CreateNewDBCluster, !Ref "AWS::NoValue", !Ref "SnapshotIdentifier"]
+#      Tags:
+#        - Key: Name
+#          Value: !If [IsDev, !Sub 'adaguc-server-database-${EnvironmentSuffix}', !Sub 'adaguc-server-database-${Environment}']
+#        - Key: ApplicationName
+#          Value: !Ref ApplicationName
+#        - Key: Department
+#          Value: !Ref Department
+#        - Key: InternalOrderNumber
+#          Value: !Ref InternalOrderNumber
+#
+#  Database:
+#    Type: Custom::PostgreSQLUser
+#    Condition: CreateNewDBCluster
+#    DependsOn:
+#      - DatabasePassword
+#    Properties:
+#      User: adaguc
+#      PasswordParameterName: !If [IsDev, !Sub '/knmi/applications/adaguc-server/${EnvironmentSuffix}/database/password', !Sub '/knmi/applications/adaguc-server/${Environment}/database/password']
+#      WithDatabase: true
+#      DeletionPolicy: Retain
+#      Database:
+#        Host: !GetAtt DatabaseCluster.Endpoint.Address
+#        Port: 5432
+#        DBName: root
+#        User: root
+#        PasswordParameterName: !If [IsDev, !Sub '/knmi/applications/adaguc-server/${EnvironmentSuffix}/database/root', !Sub '/knmi/applications/adaguc-server/${Environment}/database/root']
+#      ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:knmi-cfn-postgresql-user-provider'
 
 #
 # Loadbalancer
@@ -288,6 +301,35 @@ Resources:
       Port: 80
       Protocol: HTTP
 
+  ApplicationLoadBalancerListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Condition: UseSpecificCertificate
+    DependsOn: IssuedCertificate
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref AppTargetGroup
+          Type: forward
+      LoadBalancerArn: !Ref AppPrivateLoadbalancer
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: !If [UseSpecificCertificate, !Ref AppCertificate, !Ref WildcardCertificateArn]
+
+  # We use a separate listener because we depend on the wildcard certificate which is always available whereas in acc and prd
+  # we must wait for our certificate manager request to complete.
+  ApplicationLoadBalancerWildcardListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Condition: UseWildcardCertificate
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref AppTargetGroup
+          Type: forward
+      LoadBalancerArn: !Ref AppPrivateLoadbalancer
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: !Ref WildcardCertificateArn
+
 #
 # Adaguc-server
 #
@@ -304,8 +346,8 @@ Resources:
 
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
-    DependsOn:
-      - Database
+#    DependsOn:
+#      - Database
     Properties:
       Family: !If [IsDev, !Sub 'adaguc-server-${EnvironmentSuffix}', !Sub 'adaguc-server-${Environment}']
       NetworkMode: bridge
@@ -330,16 +372,17 @@ Resources:
           LogConfiguration:
             LogDriver: json-file
           Environment:
-            - Name: POSTGRESQL_HOST
-              Value: !GetAtt DatabaseCluster.Endpoint.Address
-            - Name: POSTGRESQL_LOGIN
-              Value: adaguc
-            - Name: POSTGRESQL_DATABASE
-              Value: adagucdb
-            - Name: POSTGRESQL_PASSWORD
-              Value: !GetAtt DatabasePassword.Secret
+#            - Name: POSTGRESQL_HOST
+#              Value: !Ref DBClusterEndpoint
+#            - Name: POSTGRESQL_LOGIN
+#              Value: adaguc
+#            - Name: POSTGRESQL_DATABASE
+#              Value: adaguc
+#            - Name: POSTGRESQL_PASSWORD
+#              Value: !GetAtt DatabasePassword.Secret
             - Name: ADAGUC_DB
-              Value: !Sub 'host=${DatabaseCluster.Endpoint.Address} port=5432 user=adaguc password=${DatabasePassword.Secret} dbname=adagucdb'
+#              Value: !Sub 'host=${DatabaseCluster.Endpoint.Address} port=5432 user=adaguc password=${DatabasePassword.Secret} dbname=adaguc'
+              Value: !Join ['', ['host=', !Ref DbClusterEndpoint, ' port=5432 user=adaguc password=', !Join ['', ['{{resolve:secretsmanager:', !Ref DbClusterPasswordKey, ':SecretString:password}}' ]], ' dbname=adaguc']]
           MountPoints:
             - ContainerPath: !Ref EFSContainerPath
               SourceVolume: !If [IsDev, !Sub 'adaguc-server-${EnvironmentSuffix}', !Sub 'adaguc-server-${Environment}']
@@ -476,41 +519,78 @@ Resources:
         HostedZoneId: !GetAtt AppPrivateLoadbalancer.CanonicalHostedZoneID
         DNSName: !GetAtt AppPrivateLoadbalancer.DNSName
 
+  AppCertificate:
+    Type: Custom::Certificate
+    Condition: UseSpecificCertificate
+    Properties:
+      DomainName: !If [IsDev, !Sub '${Subdomain}-${EnvironmentSuffix}.${PublicHostedZoneName.Value}', !Sub '${Subdomain}.${PublicHostedZoneName.Value}']
+      ValidationMethod: DNS
+      ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:knmi-cfn-certificate-provider'
+
+  IssuedCertificate:
+    Type: Custom::IssuedCertificate
+    Condition: UseSpecificCertificate
+    Properties:
+      CertificateArn: !Ref AppCertificate
+      ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:knmi-cfn-certificate-provider'
+
+  CertificateDNSRecord:
+    Type: Custom::CertificateDNSRecord
+    Condition: UseSpecificCertificate
+    Properties:
+      CertificateArn: !Ref AppCertificate
+      DomainName: !If [IsDev, !Sub '${Subdomain}-${EnvironmentSuffix}.${PublicHostedZoneName.Value}', !Sub '${Subdomain}.${PublicHostedZoneName.Value}']
+      ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:knmi-cfn-certificate-provider'
+
+  DomainValidationRecord:
+    Type: AWS::Route53::RecordSetGroup
+    Condition: UseSpecificCertificate
+    Properties:
+      HostedZoneId: !GetAtt 'PublicHostedZoneId.Value'
+      RecordSets:
+        - Name: !GetAtt CertificateDNSRecord.Name
+          Type: !GetAtt CertificateDNSRecord.Type
+          TTL: '60'
+          Weight: 1
+          SetIdentifier: !Ref AppCertificate
+          ResourceRecords:
+            - !GetAtt CertificateDNSRecord.Value
+
 #
 # Output
 #
 
-  DatabaseSecurityGroupIdParameter:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Name: !If [IsDev, !Sub '/knmi/applications/adaguc-server/${Environment}-${EnvironmentSuffix}/database/security-group-id', !Sub '/knmi/applications/adaguc-server/${Environment}/database/security-group-id']
-      Type: String
-      Value: !Ref DatabaseSecurityGroup
-      Description: Database Security Group Id
-
-  DatabaseHostParameter:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Name: !If [IsDev, !Sub '/knmi/applications/adaguc-server/${Environment}-${EnvironmentSuffix}/database/host', !Sub '/knmi/applications/adaguc-server/${Environment}/database/host']
-      Type: String
-      Value: !GetAtt DatabaseCluster.Endpoint.Address
-      Description: Database Host
-
-  DatabaseNameParameter:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Name: !If [IsDev, !Sub '/knmi/applications/adaguc-server/${Environment}-${EnvironmentSuffix}/database/name', !Sub '/knmi/applications/adaguc-server/${Environment}/database/name']
-      Type: String
-      Value: adaguc-server
-      Description: Database Name
-
-  DatabaseUserParameter:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Name: !If [IsDev, !Sub '/knmi/applications/adaguc-server/${Environment}-${EnvironmentSuffix}/database/user', !Sub '/knmi/applications/adaguc-server/${Environment}/database/user']
-      Type: String
-      Value: adaguc-server
-      Description: Database User
+#  DatabaseSecurityGroupIdParameter:
+#    Type: AWS::SSM::Parameter
+#    Properties:
+#      Name: !If [IsDev, !Sub '/knmi/applications/adaguc-server/${Environment}-${EnvironmentSuffix}/database/security-group-id', !Sub '/knmi/applications/adaguc-server/${Environment}/database/security-group-id']
+#      Type: String
+#      Value: !Ref DatabaseSecurityGroup
+#      Description: Database Security Group Id
+#
+#  DatabaseHostParameter:
+#    Type: AWS::SSM::Parameter
+#    Properties:
+#      Name: !If [IsDev, !Sub '/knmi/applications/adaguc-server/${Environment}-${EnvironmentSuffix}/database/host', !Sub '/knmi/applications/adaguc-server/${Environment}/database/host']
+#      Type: String
+#      Value: !GetAtt DatabaseCluster.Endpoint.Address
+#      Description: Database Host
+#
+#  DatabaseNameParameter:
+#    Type: AWS::SSM::Parameter
+#    Properties:
+#      Name: !If [IsDev, !Sub '/knmi/applications/adaguc-server/${Environment}-${EnvironmentSuffix}/database/name', !Sub '/knmi/applications/adaguc-server/${Environment}/database/name']
+#      Type: String
+#      Value: adaguc-server
+#      Description: Database Name
+#
+#  DatabaseUserParameter:
+#    Type: AWS::SSM::Parameter
+#    Properties:
+#      Name: !If [IsDev, !Sub '/knmi/applications/adaguc-server/${Environment}-${EnvironmentSuffix}/database/user', !Sub '/knmi/applications/adaguc-server/${Environment}/database/user']
+#      Type: String
+#      Value: adaguc-server
+#      Description: Database User
 
 # 
 # SSHD

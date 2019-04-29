@@ -40,6 +40,8 @@ stages:
   before_script:
     - pip install awscli
   script:
+    - echo "Environment=$ENVIRONMENT" >> deploy.cfn.properties
+    - echo "EnvironmentSuffix=${CI_ENVIRONMENT_SLUG}" >> deploy.cfn.properties
     - cat *.cfn.properties
     - >-
       aws --profile $PROFILE cloudformation deploy --stack-name ${STACK_NAME} --template-file $TEMPLATE_FILE --capabilities
@@ -133,9 +135,6 @@ deploy-dev:
     name: $ENVIRONMENT/$CI_COMMIT_REF_SLUG
     url: http://adaguc-server-${CI_ENVIRONMENT_SLUG}.wlm.${ENVIRONMENT}.knmi.cloud
     on_stop: stop-dev
-  before_script:
-    - echo "Environment=$ENVIRONMENT" >> deploy.cfn.properties
-    - echo "EnvironmentSuffix=${CI_ENVIRONMENT_SLUG}" >> deploy.cfn.properties
   only:
     - branches
   except:
