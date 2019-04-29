@@ -94,12 +94,6 @@ Parameters:
     Type: AWS::SSM::Parameter::Value<String>
     Default: /knmi/landing-zone/certificate/dev/wildcard
     Description: 'Wildcard certificate ARN used only in development environments'
-  DbClusterEndpoint:
-    Type: AWS::SSM::Parameter::Value<String>
-    Default: /knmi/application/adaguc-server/db-cluster-enddpoint
-  DbClusterPasswordKey:
-    Type: AWS::SSM::Parameter::Value<String>
-    Default: /knmi/application/adaguc-server/db-master-secret
 Mappings:
   EnvironmentMap:
     dev:
