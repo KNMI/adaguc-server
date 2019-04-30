@@ -507,7 +507,7 @@ Resources:
     Type: AWS::Route53::RecordSet
     Properties:
       HostedZoneId: !GetAtt PrivateHostedZoneId.Value
-      Name: !If [IsDev, !Sub '${Subdomain}-${EnvironmentSuffix}.${PrivateHostedZoneName.Value}', !Sub '${Subdomain}.${PrivateHostedZoneName.Value}']
+      Name: !If [IsDev, !Sub '${Subdomain}-${EnvironmentSuffix}.${PublicHostedZoneName.Value}', !Sub '${Subdomain}.${PublicHostedZoneName.Value}']
       Type: A
       AliasTarget:
         HostedZoneId: !GetAtt AppPrivateLoadbalancer.CanonicalHostedZoneID
