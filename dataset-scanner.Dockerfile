@@ -93,6 +93,9 @@ RUN pip install numpy netcdf4 six lxml
 # Run adaguc-server functional and regression tests
 # RUN bash runtests.sh
 
+# Set same uid as vivid
+RUN useradd -m adaguc -u 1000
+
 # Setup directories
 RUN mkdir -p /data/adaguc-autowms && \
     mkdir -p /data/adaguc-datasets && \
@@ -113,7 +116,10 @@ COPY ./Docker/start.sh /adaguc/
 COPY ./Docker/adaguc-server-logrotate /etc/logrotate.d/adaguc
 COPY ./Docker/adaguc-server-*.sh /adaguc/
 COPY ./Docker/baselayers.xml /data/adaguc-datasets-internal/baselayers.xml
-RUN  chmod +x /adaguc/adaguc-server-*.sh && chmod +x /adaguc/start.sh
+RUN  chmod +x /adaguc/adaguc-server-*.sh && chmod +x /adaguc/start.sh \
+    && chown -R adaguc:adaguc /data/adaguc* /adaguc /var/log/adaguc /servicehealth
+
+USER adaguc
 
 # Set adaguc-services configuration file
 ENV ADAGUC_SERVICES_CONFIG=/adaguc/adaguc-services-config.xml
