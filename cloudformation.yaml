@@ -483,7 +483,7 @@ Resources:
         - Field: path-pattern
           Values:
             - '*'
-      ListenerArn: !Ref AppPrivateLoadbalancerHTTPListener
+      ListenerArn: !If [UseSpecificCertificate, !Ref ApplicationLoadBalancerListener, !Ref ApplicationLoadBalancerWildcardListener]
       Priority: 1
 
   AppLoadBalancerRedirectRule:
