@@ -23,7 +23,7 @@ Parameters:
     Default: 512
   AppContainerPort:
     Type: Number
-    Default: 80
+    Default: 8080
   AdagucServerContainerImageTag:
     Type: String
     Default: latest
@@ -450,7 +450,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       HealthCheckIntervalSeconds: 6
-      HealthCheckPath: /
+      HealthCheckPath: /adaguc-services/adagucserver
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 3
