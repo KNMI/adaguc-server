@@ -257,6 +257,10 @@ Resources:
       SecurityGroupIngress:
         - CidrIp: 0.0.0.0/0
           IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
           FromPort: 80
           ToPort: 80
       Tags:
@@ -483,7 +487,7 @@ Resources:
         - Field: path-pattern
           Values:
             - '*'
-      ListenerArn: !Ref AppPrivateLoadbalancerHTTPListener
+      ListenerArn: !If [UseSpecificCertificate, !Ref ApplicationLoadBalancerListener, !Ref ApplicationLoadBalancerWildcardListener]
       Priority: 1
 
   AppLoadBalancerRedirectRule:
