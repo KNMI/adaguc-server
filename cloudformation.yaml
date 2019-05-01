@@ -26,10 +26,10 @@ Parameters:
     Default: 8080
   AdagucServerContainerImageTag:
     Type: String
-    Default: latest
+    Default: ''
   AdagucDatasetScannerContainerImageTag:
     Type: String
-    Default: latest
+    Default: ''
   VpcId:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::VPC::Id>
     Default: /knmi/landing-zone/vpc/vpc-id
@@ -72,6 +72,9 @@ Parameters:
   ECSSecurityGroupId:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::SecurityGroup::Id>
     Default: /knmi/landing-zone/ecs/knmi-ecs-security-group-id
+  ECSClusterArn:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /knmi/landing-zone/ecs/knmi-ecs-arn
   EFSContainerPath:
     Type: String
     Default: '/data'
@@ -385,6 +388,81 @@ Resources:
           DockerLabels:
             logstash-filter: adaguc-server
 
+  DatasetScannerTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !If [IsDev, !Sub 'adaguc-dataset-scanner-${EnvironmentSuffix}', !Sub 'adaguc-dataset-scanner-${Environment}']
+      NetworkMode: none
+      RequiresCompatibilities:
+        - EC2
+      Volumes:
+        - Name: !If [IsDev, !Sub 'adaguc-dataset-scanner-${EnvironmentSuffix}', !Sub 'adaguc-dataset-scanner-${Environment}']
+          DockerVolumeConfiguration:
+            Driver: local
+            DriverOpts:
+              type: nfs
+              device: !Sub "${EFSVolume}.efs.${AWS::Region}.amazonaws.com:/"
+              o: !Sub "addr=${EFSVolume}.efs.${AWS::Region}.amazonaws.com,nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport"
+            Scope: task
+      ContainerDefinitions:
+        - Name: !If [IsDev, !Sub 'adaguc-dataset-scanner-${EnvironmentSuffix}', !Sub 'adaguc-dataset-scanner-${Environment}']
+          Image: !Sub '${BuildAccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/knmi/adaguc-dataset-scanner:${AdagucDatasetScannerContainerImageTag}'
+          Cpu: !Ref AppContainerCpu
+          Memory: !Ref AppContainerMemory
+          Command:
+            - msgrt
+          LogConfiguration:
+            LogDriver: json-file
+          MountPoints:
+            - ContainerPath: !Ref EFSContainerPath
+              SourceVolume: !If [IsDev, !Sub 'adaguc-dataset-scanner-${EnvironmentSuffix}', !Sub 'adaguc-dataset-scanner-${Environment}']
+          Environment:
+            - Name: ENVIRONMENT
+              Value: !If [IsDev, !Sub 'adaguc-dataset-scanner-${EnvironmentSuffix}', !Sub 'adaguc-dataset-scanner-${Environment}']
+          DockerLabels:
+            logstash-filter: adaguc-dataset-scanner
+
+  DatasetScannerEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: Regularly scans adaguc datasets
+      ScheduleExpression: rate(2 minutes)
+      State: ENABLED
+      Targets:
+      - Id: adaguc-dataset-scanner-task
+        RoleArn:
+          Fn::GetAtt:
+          - EventExecutionRole
+          - Arn
+        EcsParameters:
+          TaskDefinitionArn:
+            Ref: DatasetScannerTaskDefinition
+          TaskCount: 1
+        Arn: !Ref ECSClusterArn
+
+  EventExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+              - events.amazonaws.com
+          Action:
+            - sts:AssumeRole
+      Policies:
+      - PolicyName: AllowEcsRunTask
+        PolicyDocument:
+          Statement:
+          - Effect: Allow
+            Action:
+              - ecs:RunTask
+            Resource: !Ref DatasetScannerTaskDefinition
+            Condition:
+              ArnLike:
+                ecs:cluster: !Ref ECSClusterArn
+
   AppService:
     Type: AWS::ECS::Service
     DependsOn: AppLoadBalancerRule
@@ -553,7 +631,7 @@ Resources:
           SetIdentifier: !Ref AppCertificate
           ResourceRecords:
             - !GetAtt CertificateDNSRecord.Value
-
+                
 #
 # Output
 #
