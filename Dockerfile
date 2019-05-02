@@ -127,12 +127,6 @@ ENV ADAGUC_SERVICES_CONFIG=/adaguc/adaguc-services-config.xml
 ENV EXTERNALADDRESS="http://localhost:8080/"
 
 # These volumes are configured in /adaguc/adaguc-server-config.xml
-# Place your netcdfs, HDF5 and GeoJSONS here, they will be visualized with the source=<file> KVP via the URI
-VOLUME /data/adaguc-autowms   
-# Place your dataset XML configuration here, they will be accessible with the dataset=<dataset basename> KVP via the URI
-VOLUME /data/adaguc-datasets  
-# Place your netcdfs, HDF5 and GeoJSONS here you don't want to have accessible via dataset configurations.
-VOLUME /data/adaguc-data      
 # Loggings are save here, including logrotate
 VOLUME /var/log/adaguc/       
 # Settings for HTTPS / SSL can be set via keystore and truststore. Self signed cert will be created if nothing is provided.

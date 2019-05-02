@@ -380,6 +380,14 @@ Resources:
           LogConfiguration:
             LogDriver: json-file
           Environment:
+            - Name: ADAGUC_AUTOWMS_DIR
+              Value: /data/adaguc-autowms/
+            - Name: ADAGUC_DATASET_DIR
+              Value: /data/adaguc-datasets/
+            - Name: ADAGUC_SERVICES_CONFIG
+              Value: /adaguc/adaguc-services-config.xml
+            - Name: EXTERNALADDRESS
+              Value: !If [IsDev, !Sub 'https://${Subdomain}-${EnvironmentSuffix}.${PublicHostedZoneName.Value}', !Sub 'https://${Subdomain}.${PublicHostedZoneName.Value}']
             - Name: ADAGUC_DB
               Value: !Sub '"host=${Database.Endpoint.Address} port=5432 user=${DbUser} password=${DatabasePassword.Secret} dbname=${DbName}"'
           MountPoints:
@@ -417,6 +425,16 @@ Resources:
             - ContainerPath: !Ref EFSContainerPath
               SourceVolume: !If [IsDev, !Sub 'adaguc-dataset-scanner-${EnvironmentSuffix}', !Sub 'adaguc-dataset-scanner-${Environment}']
           Environment:
+            - Name: ADAGUC_AUTOWMS_DIR
+              Value: /data/adaguc-autowms/
+            - Name: ADAGUC_DATASET_DIR
+              Value: /data/adaguc-datasets/
+            - Name: ADAGUC_SERVICES_CONFIG
+              Value: /adaguc/adaguc-services-config.xml
+            - Name: EXTERNALADDRESS
+              Value: !If [IsDev, !Sub 'https://${Subdomain}-${EnvironmentSuffix}.${PublicHostedZoneName.Value}', !Sub 'https://${Subdomain}.${PublicHostedZoneName.Value}']
+            - Name: ADAGUC_DB
+              Value: !Sub '"host=${Database.Endpoint.Address} port=5432 user=${DbUser} password=${DatabasePassword.Secret} dbname=${DbName}"'
             - Name: ENVIRONMENT
               Value: !If [IsDev, !Sub 'adaguc-dataset-scanner-${EnvironmentSuffix}', !Sub 'adaguc-dataset-scanner-${Environment}']
           DockerLabels:

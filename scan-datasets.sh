@@ -3,7 +3,7 @@
 
 usage() {
   echo ""
-  echo "Usage: `basename $0` -a <adaguc_home_dir> -s <dataset_name>"
+  echo "Usage: `basename $0` -h <adaguc_home_dir> -d <dataset_name>"
   echo "\n-h\t<adaguc_home_dir>:\tfully-qualified root folder under which adaguc directories were created"
   echo "-d\t<dataset>:\t\tname of dataset to scan"
   echo ""
