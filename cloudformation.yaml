@@ -400,7 +400,7 @@ Resources:
     Type: AWS::ECS::TaskDefinition
     Properties:
       Family: !If [IsDev, !Sub 'adaguc-dataset-scanner-${EnvironmentSuffix}', !Sub 'adaguc-dataset-scanner-${Environment}']
-      NetworkMode: none
+      NetworkMode: bridge
       RequiresCompatibilities:
         - EC2
       Volumes:
