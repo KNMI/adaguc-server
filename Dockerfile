@@ -57,8 +57,8 @@ RUN bash compile.sh
 FROM centos:7
 
 # production packages, same as stage one
-RUN yum update -y && yum install -y \
-    epel-release deltarpm
+RUN yum update -y \
+    && yum install -y epel-release deltarpm
 
 RUN yum install -y \
     cairo \
@@ -72,33 +72,32 @@ RUN yum install -y \
     udunits2 \
     openssl \
     netcdf \
-    java-1.8.0-openjdk
+    java-1.8.0-openjdk && \
+    yum clean all && \
+    rm -rf /var/cache/yum
 
 WORKDIR /adaguc/adaguc-server-master
 
-# Install adaguc-services (spring boot application for running adaguc-server)
-RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.0/adaguc-services-1.2.0.jar > /adaguc/adaguc-services.jar
-   
 # Install compiled adaguc binaries from stage one    
 COPY --from=0 /adaguc/adaguc-server-master/bin /adaguc/adaguc-server-master/bin
 COPY --from=0 /adaguc/adaguc-server-master/data /adaguc/adaguc-server-master/data
 COPY --from=0 /adaguc/adaguc-server-master/tests /adaguc/adaguc-server-master/tests
 COPY --from=0 /adaguc/adaguc-server-master/runtests.sh /adaguc/adaguc-server-master/runtests.sh
 
-
+# Install adaguc-services (spring boot application for running adaguc-server)
 # Install newer numpy
-RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-RUN python get-pip.py
-RUN pip install numpy netcdf4 six lxml
+RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.0/adaguc-services-1.2.0.jar -o /adaguc/adaguc-services.jar && \
+    curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
+    python get-pip.py && \
+    pip install numpy netcdf4 six lxml
 
 # Run adaguc-server functional and regression tests
 #RUN bash runtests.sh
 
 # Set same uid as vivid
-RUN useradd -m adaguc -u 1000
-
 # Setup directories
-RUN mkdir -p /data/adaguc-autowms && \
+RUN useradd -m adaguc -u 1000 && \
+    mkdir -p /data/adaguc-autowms && \
     mkdir -p /data/adaguc-datasets && \
     mkdir -p /data/adaguc-data && \
     mkdir -p /adaguc/userworkspace && \
@@ -116,14 +115,14 @@ COPY ./Docker/start.sh /adaguc/
 COPY ./Docker/adaguc-server-logrotate /etc/logrotate.d/adaguc
 COPY ./Docker/adaguc-server-*.sh /adaguc/
 COPY ./Docker/baselayers.xml /data/adaguc-datasets-internal/baselayers.xml
-RUN  chmod +x /adaguc/adaguc-server-*.sh && chmod +x /adaguc/start.sh \
-    && chown -R adaguc:adaguc /data/adaguc* /adaguc /var/log/adaguc /servicehealth
+RUN  chmod +x /adaguc/adaguc-server-*.sh && \
+     chmod +x /adaguc/start.sh && \
+     chown -R adaguc:adaguc /data/adaguc* /adaguc /var/log/adaguc /servicehealth
 
 USER adaguc
 
 # Set adaguc-services configuration file
 ENV ADAGUC_SERVICES_CONFIG=/adaguc/adaguc-services-config.xml
-
 ENV EXTERNALADDRESS="http://localhost:8080/"
 
 # These volumes are configured in /adaguc/adaguc-server-config.xml
