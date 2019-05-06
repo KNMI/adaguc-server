@@ -6,11 +6,9 @@ MAINTAINER Adaguc Team at KNMI <adaguc@knmi.nl>
 ######### First stage (build) ############
 
 # production packages, same as stage two
-RUN yum update -y && yum install -y \
-    epel-release deltarpm
-
-RUN yum install -y \
-    cairo \
+RUN yum update -y && \
+    yum install -y epel-release deltarpm && \
+    yum install -y cairo \
     curl \
     gd \
     gdal \
@@ -21,13 +19,12 @@ RUN yum install -y \
     proj \
     udunits2 \
     openssl \
-    netcdf
-
+    netcdf && \
 # building / development packages
-RUN yum update -y && yum clean all
-RUN yum install -y centos-release-scl && yum install -y devtoolset-7-gcc-c++ && source /opt/rh/devtoolset-7/enable
-RUN yum install -y \
-    cairo-devel \
+    yum install -y centos-release-scl && \
+    yum install -y devtoolset-7-gcc-c++ && \
+    source /opt/rh/devtoolset-7/enable && \
+    yum install -y cairo-devel \
     curl-devel \
     gd-devel \
     gdal-devel \
@@ -39,10 +36,11 @@ RUN yum install -y \
     postgresql-devel \
     proj-devel \
     sqlite-devel \
-    udunits2-devel 
+    udunits2-devel && \
+    yum clean all && \
+    rm -rf /var/cache/yum
 
 # Install adaguc-server from context
-WORKDIR /adaguc
 COPY . /adaguc/adaguc-server-master
 
 # Alternatively install adaguc from github
@@ -57,11 +55,9 @@ RUN bash compile.sh
 FROM centos:7
 
 # production packages, same as stage one
-RUN yum update -y && yum install -y \
-    epel-release deltarpm
-
-RUN yum install -y \
-    cairo \
+RUN yum update -y && \
+    yum install -y epel-release deltarpm && \
+    yum install -y cairo \
     curl \
     gd \
     gdal \
@@ -71,12 +67,11 @@ RUN yum install -y \
     proj \
     udunits2 \
     openssl \
-    netcdf
+    netcdf && \
+    yum clean all && \
+    rm -rf /var/cache/yum
 
 WORKDIR /adaguc/adaguc-server-master
-
-# Install adaguc-services (spring boot application for running adaguc-server)
-RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.0/adaguc-services-1.2.0.jar > /adaguc/adaguc-services.jar
    
 # Install compiled adaguc binaries from stage one    
 COPY --from=0 /adaguc/adaguc-server-master/bin /adaguc/adaguc-server-master/bin
@@ -84,20 +79,18 @@ COPY --from=0 /adaguc/adaguc-server-master/data /adaguc/adaguc-server-master/dat
 COPY --from=0 /adaguc/adaguc-server-master/tests /adaguc/adaguc-server-master/tests
 COPY --from=0 /adaguc/adaguc-server-master/runtests.sh /adaguc/adaguc-server-master/runtests.sh
 
-
+# Install adaguc-services (spring boot application for running adaguc-server)
+RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.0/adaguc-services-1.2.0.jar > /adaguc/adaguc-services.jar && \
 # Install newer numpy
-RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-RUN python get-pip.py
-RUN pip install numpy netcdf4 six lxml
-
+    curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
+    python get-pip.py && \
+    pip install numpy netcdf4 six lxml && \
 # Run adaguc-server functional and regression tests
-# RUN bash runtests.sh
-
+    bash runtests.sh && \
 # Set same uid as vivid
-RUN useradd -m adaguc -u 1000
-
+    useradd -m adaguc -u 1000 && \
 # Setup directories
-RUN mkdir -p /data/adaguc-autowms && \
+    mkdir -p /data/adaguc-autowms && \
     mkdir -p /data/adaguc-datasets && \
     mkdir -p /data/adaguc-data && \
     mkdir -p /adaguc/userworkspace && \
