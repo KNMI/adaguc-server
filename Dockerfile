@@ -57,10 +57,9 @@ RUN bash compile.sh
 FROM centos:7
 
 # production packages, same as stage one
-RUN yum update -y \
-    && yum install -y epel-release deltarpm
-
-RUN yum install -y \
+RUN yum update -y && \
+    yum install -y epel-release \
+    deltarpm \
     cairo \
     curl \
     gd \
@@ -92,7 +91,7 @@ RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.0/adaguc-serv
     pip install numpy netcdf4 six lxml
 
 # Run adaguc-server functional and regression tests
-#RUN bash runtests.sh
+RUN bash runtests.sh
 
 # Set same uid as vivid
 # Setup directories
