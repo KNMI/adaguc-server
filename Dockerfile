@@ -6,11 +6,9 @@ MAINTAINER Adaguc Team at KNMI <adaguc@knmi.nl>
 ######### First stage (build) ############
 
 # production packages, same as stage two
-RUN yum update -y && yum install -y \
-    epel-release deltarpm
-
-RUN yum install -y \
-    cairo \
+RUN yum update -y && \
+    yum install -y epel-release deltarpm && \
+    yum install -y cairo \
     curl \
     gd \
     gdal \
@@ -21,14 +19,12 @@ RUN yum install -y \
     udunits2 \
     openssl \
     netcdf \
-    java-1.8.0-openjdk
-
+    java-1.8.0-openjdk && \
 # building / development packages
-RUN yum update -y && yum clean all
-RUN yum install -y centos-release-scl && yum install -y devtoolset-7-gcc-c++ && source /opt/rh/devtoolset-7/enable
-RUN yum install -y \
-    cairo-devel \
-    curl-devel \
+    yum install -y centos-release-scl && \
+    yum install -y devtoolset-7-gcc-c++ && \
+    source /opt/rh/devtoolset-7/enable && \
+    yum install -y cairo-devel \
     gd-devel \
     gdal-devel \
     hdf5-devel \
@@ -39,10 +35,11 @@ RUN yum install -y \
     postgresql-devel \
     proj-devel \
     sqlite-devel \
-    udunits2-devel 
+    udunits2-devel && \
+    yum clean all && \
+    rm -rf /var/cache/yum
 
 # Install adaguc-server from context
-WORKDIR /adaguc
 COPY . /adaguc/adaguc-server-master
 
 # Alternatively install adaguc from github
@@ -58,8 +55,8 @@ FROM centos:7
 
 # production packages, same as stage one
 RUN yum update -y && \
-    yum install -y epel-release \
-    deltarpm \
+    yum install -y epel-release && \
+    yum install -y deltarpm \
     cairo \
     curl \
     gd \
@@ -84,18 +81,16 @@ COPY --from=0 /adaguc/adaguc-server-master/tests /adaguc/adaguc-server-master/te
 COPY --from=0 /adaguc/adaguc-server-master/runtests.sh /adaguc/adaguc-server-master/runtests.sh
 
 # Install adaguc-services (spring boot application for running adaguc-server)
-# Install newer numpy
 RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.0/adaguc-services-1.2.0.jar -o /adaguc/adaguc-services.jar && \
     curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
+# Install newer numpy
     python get-pip.py && \
-    pip install numpy netcdf4 six lxml
-
+    pip install numpy netcdf4 six lxml && \
 # Run adaguc-server functional and regression tests
-RUN bash runtests.sh
-
+    bash runtests.sh && \
 # Set same uid as vivid
 # Setup directories
-RUN useradd -m adaguc -u 1000 && \
+    useradd -m adaguc -u 1000 && \
     mkdir -p /data/adaguc-autowms && \
     mkdir -p /data/adaguc-datasets && \
     mkdir -p /data/adaguc-data && \
