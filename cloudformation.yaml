@@ -417,8 +417,6 @@ Resources:
           Image: !Sub '${BuildAccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/knmi/adaguc-dataset-scanner:${AdagucDatasetScannerContainerImageTag}'
           Cpu: !Ref AppContainerCpu
           Memory: !Ref AppContainerMemory
-          Command:
-            - msgrt
           LogConfiguration:
             LogDriver: json-file
           MountPoints:
