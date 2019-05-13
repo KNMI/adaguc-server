@@ -162,11 +162,16 @@ int CConvertTROPOMI::convertTROPOMIHeader( CDFObject *cdfObject,CServerParams *s
       double y=offsetY+double(j)*cellSizeY+cellSizeY/2;
       ((double*)varY->data)[j]=y;
     }
-  }  
-  
-  
+  }
+
+
   CDF::Dimension *dimT = cdfObject->getDimensionNE("time");
   CDF::Variable *varT = cdfObject->getVariableNE("time");
+  CDF::Variable *productT = cdfObject->getVariableNE("PRODUCT/time");
+  if (!productT) {
+    CDBError("Could not get PRODUCT/time variable");
+    return 1;
+  }
   dimT=new CDF::Dimension();
   dimT->name="time";
   dimT->setSize(1);
@@ -178,45 +183,55 @@ int CConvertTROPOMI::convertTROPOMIHeader( CDFObject *cdfObject,CServerParams *s
   varT->dimensionlinks.push_back(dimT);
   cdfObject->addVariable(varT);
   CDF::allocateData(CDF_DOUBLE,&varT->data,dimT->length);
-  
-  ((double*)varT->data)[0]=0;
-    
+  varT->setAttributeText("standard_name", "time");
+  try {
+    varT->setAttributeText("units", productT->getAttribute("units")->toString().c_str());
+    CTime myTime;
+    myTime.init(productT);
+    //CTime::cleanInstances();
+    CTime::Date date =myTime.freeDateStringToDate(cdfObject->getAttribute("time_coverage_start")->toString().c_str());
+    ((double*)varT->data)[0] = myTime.dateToOffset(date);
+  } catch (int) {
+    CDBError("Could not get units for time_coverage_start");
+    return 1;
+  }
+
   CT::StackList<CT::string> varsToConvert;
   for(size_t v=0;v<cdfObject->variables.size();v++){
     CDF::Variable *var = cdfObject->variables[v];
     if(var->isDimension==false){
-      
+
       if(var->name.startsWith("PRODUCT/")&&var->dimensionlinks.size()>2){
         if(
           !var->name.equals("PRODUCT/longitude")&&
           !var->name.equals("PRODUCT/latitude")&&
           var->name.indexOf("bounds")==-1&&
           !var->name.equals("PRODUCT/time")
-          
+
         ){
           varsToConvert.add(CT::string(var->name.c_str()));
         }
       }
-      
+
       var->setAttributeText("ADAGUC_SKIP","true");
-      
+
     }
   }
-  
+
   //Create the new 2D field variables based on the swath variables
   for(size_t v=0;v<varsToConvert.size();v++){
     CDF::Variable *swathVar=cdfObject->getVariable(varsToConvert[v].c_str());
-    
+
     #ifdef CCONVERTTROPOMI_DEBUG
     CDBDebug("Converting %s",swathVar->name.c_str());
     #endif
-    
+
     CDF::Variable *new2DVar = new CDF::Variable();
     cdfObject->addVariable(new2DVar);
-    
-    //Assign X,Y,T dims 
-/*    
-    CDF::Variable *newTimeVar=cdfObject->getVariableNE("time");             
+
+    //Assign X,Y,T dims
+/*
+    CDF::Variable *newTimeVar=cdfObject->getVariableNE("time");
     if(newTimeVar!=NULL){
       new2DVar->dimensionlinks.push_back(newTimeVar->dimensionlinks[0]);
     }*/
