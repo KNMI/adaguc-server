@@ -130,4 +130,4 @@ ENV ADAGUC_DB="host=localhost port=5432 user=adaguc password=adaguc dbname=adagu
 
 ENTRYPOINT ["sh", "/adaguc/adaguc-server-updatedatasets.sh"]
 # Override this at runtime with the target dataset
-CMD ["some_data_set"]
+CMD [""]
