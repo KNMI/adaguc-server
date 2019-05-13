@@ -23,11 +23,14 @@ services:
             - ${ADAGUC_AUTOWMS_DIR}/:/data/adaguc-autowms
             - ${ADAGUC_DATA_DIR}/:/data/adaguc-data
             - adaguc-server-compose-logs:/var/log/adaguc
+            - /var/log/adaguc
+            - /adaguc/security
         networks:
             - adaguc-network
         environment:
             - "EXTERNALADDRESS=${EXTERNALADDRESS}"
             - 'ADAGUC_DB="host=adaguc-db port=5432 user=adaguc password=adaguc dbname=adaguc"'
+            - "ADAGUC_SERVICES_CONFIG=/adaguc/adaguc-services-config.xml"
         env_file:
             - .env
         restart: unless-stopped
