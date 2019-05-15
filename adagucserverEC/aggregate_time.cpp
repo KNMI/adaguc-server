@@ -214,10 +214,11 @@ int main( int argc, const char* argv[]){
   delete netCDFWriter;
   
   for(size_t j=0;j<fileObjects.size();j++)delete fileObjects[j];
-   delete cdfReader;
-   delete destCDFObject;
-//   
-   
+  delete cdfReader;
+  delete destCDFObject;
+  
+  CCachedDirReader::free();
+  CTime::cleanInstances();
 
   return 0;
 }
