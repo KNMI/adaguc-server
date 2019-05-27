@@ -565,12 +565,16 @@ int CServerParams::parseConfigFile(CT::string &pszConfigFile){
     }
     const char *pszADAGUC_TMP=getenv("ADAGUC_TMP");
     if(pszADAGUC_TMP!=NULL)configFileData.replaceSelf("{ADAGUC_TMP}",pszADAGUC_TMP);
-    
+
     const char *pszADAGUC_DB=getenv("ADAGUC_DB");
-    if(pszADAGUC_DB!=NULL)configFileData.replaceSelf("{ADAGUC_DB}",pszADAGUC_DB);
+
+    if(pszADAGUC_DB!=NULL)configFileData.replaceSelf("{ADAGUC_DB}",pszADAGUC_DB);else {
+      CDBDebug("ADAGUC_DB not set in env");
+    }
   }catch(int e){
+    CDBError("Exception %d in substituting");
   }
-  
+
   int status = configObj->parse(configFileData.c_str(),configFileData.length());
   
   if(status == 0 && configObj->Configuration.size()==1){
