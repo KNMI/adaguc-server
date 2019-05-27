@@ -15,16 +15,17 @@ RUN yum update -y && \
     hdf5 \
     libxml2 \
     logrotate \
+    postgresql-server \
     proj \
     udunits2 \
     openssl \
-    netcdf \
-    java-1.8.0-openjdk && \
+    netcdf && \
 # building / development packages
     yum install -y centos-release-scl && \
     yum install -y devtoolset-7-gcc-c++ && \
     source /opt/rh/devtoolset-7/enable && \
     yum install -y cairo-devel \
+    curl-devel \
     gd-devel \
     gdal-devel \
     hdf5-devel \
@@ -55,9 +56,8 @@ FROM centos:7
 
 # production packages, same as stage one
 RUN yum update -y && \
-    yum install -y epel-release && \
-    yum install -y deltarpm \
-    cairo \
+    yum install -y epel-release deltarpm && \
+    yum install -y cairo \
     curl \
     gd \
     gdal \
@@ -67,13 +67,12 @@ RUN yum update -y && \
     proj \
     udunits2 \
     openssl \
-    netcdf \
-    java-1.8.0-openjdk && \
+    netcdf && \
     yum clean all && \
     rm -rf /var/cache/yum
 
 WORKDIR /adaguc/adaguc-server-master
-
+   
 # Install compiled adaguc binaries from stage one    
 COPY --from=0 /adaguc/adaguc-server-master/bin /adaguc/adaguc-server-master/bin
 COPY --from=0 /adaguc/adaguc-server-master/data /adaguc/adaguc-server-master/data
@@ -81,7 +80,7 @@ COPY --from=0 /adaguc/adaguc-server-master/tests /adaguc/adaguc-server-master/te
 COPY --from=0 /adaguc/adaguc-server-master/runtests.sh /adaguc/adaguc-server-master/runtests.sh
 
 # Install adaguc-services (spring boot application for running adaguc-server)
-RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.0/adaguc-services-1.2.0.jar -o /adaguc/adaguc-services.jar && \
+RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.0/adaguc-services-1.2.0.jar > /adaguc/adaguc-services.jar && \
 # Install newer numpy
     curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
     python get-pip.py && \
@@ -98,10 +97,11 @@ RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.0/adaguc-serv
     mkdir -p /data/adaguc-services-home && \
     mkdir -p /adaguc/basedir && \
     mkdir -p /var/log/adaguc && \
+    mkdir -p /adaguc/adagucdb && \
     mkdir -p /adaguc/security && \
     mkdir -p /data/adaguc-datasets-internal && \
     mkdir -p /servicehealth
- 
+    
 # Configure
 COPY ./Docker/adaguc-server-config.xml /adaguc/adaguc-server-config.xml
 COPY ./Docker/adaguc-services-config.xml /adaguc/adaguc-services-config.xml
@@ -109,16 +109,18 @@ COPY ./Docker/start.sh /adaguc/
 COPY ./Docker/adaguc-server-logrotate /etc/logrotate.d/adaguc
 COPY ./Docker/adaguc-server-*.sh /adaguc/
 COPY ./Docker/baselayers.xml /data/adaguc-datasets-internal/baselayers.xml
-RUN  chmod +x /adaguc/adaguc-server-*.sh && \
-     chmod +x /adaguc/start.sh && \
-     chown -R adaguc:adaguc /data/adaguc* /adaguc /var/log/adaguc /servicehealth
+RUN  chmod +x /adaguc/adaguc-server-*.sh && chmod +x /adaguc/start.sh \
+    && chown -R adaguc:adaguc /data/adaguc* /adaguc /var/log/adaguc /servicehealth
 
 USER adaguc
 
-# Settings for HTTPS / SSL can be set via keystore and truststore. Self signed cert will be created if nothing is provided.
-# VOLUME /adaguc/security
+# Set adaguc-services configuration file
+ENV ADAGUC_SERVICES_CONFIG=/adaguc/adaguc-services-config.xml
+# Location where postgresql writes its files:
+ENV ADAGUCDB=/adaguc/adagucdb
+# Configuration settings for postgresql database connection
+ENV ADAGUC_DB="host=localhost port=5432 user=adaguc password=adaguc dbname=adaguc"
 
-# For HTTP
-EXPOSE 8080
-
-ENTRYPOINT ["sh", "/adaguc/start.sh"]
+ENTRYPOINT ["sh", "/adaguc/adaguc-server-updatedatasets.sh"]
+# Override this at runtime with the target dataset
+CMD [""]
