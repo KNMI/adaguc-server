@@ -1,6 +1,21 @@
 #!/bin/bash
 
+### Check if conditions are OK ###
+
+if [ "$ADAGUC_DB" = "" ]
+then
+   echo "ADAGUC_DB env is not set"
+   exit 1
+fi
+
+if [ "$EXTERNALADDRESS" = "" ]
+then
+   echo "EXTERNALADDRESS env is not set"
+   exit 1
+fi
+
 ### Update baselayers and check if this succeeds ###
+
 export ADAGUC_PATH=/adaguc/adaguc-server-master/ && \
 export ADAGUC_TMP=/tmp && \
 /adaguc/adaguc-server-master/bin/adagucserver --updatedb \
