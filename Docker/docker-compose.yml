@@ -29,11 +29,15 @@ services:
             - adaguc-network
         environment:
             - "EXTERNALADDRESS=${EXTERNALADDRESS}"
-            - 'ADAGUC_DB="host=adaguc-db port=5432 user=adaguc password=adaguc dbname=adaguc"'
+            - 'ADAGUC_DB=host=adaguc-db port=5432 user=adaguc password=adaguc dbname=adaguc'
             - "ADAGUC_SERVICES_CONFIG=/adaguc/adaguc-services-config.xml"
         env_file:
             - .env
         restart: unless-stopped
+        links: 
+            - adaguc-db
+        depends_on: 
+            - adaguc-db
     nginx:
         build: nginx-adaguc
         container_name: nginx-adaguc
@@ -47,7 +51,7 @@ services:
             - ./cert:/cert
         restart: unless-stopped
     adaguc-db:
-        image: postgres:9.6.12-alpine
+        image: postgres
         container_name: adaguc-db
         hostname: adaguc-db
         # Ensures containers running in the adaguc-network docker network can connect to the database, provided they use the
@@ -61,6 +65,7 @@ services:
         environment:
             - "POSTGRES_USER=adaguc"
             - "POSTGRES_PASSWORD=adaguc"
+            - "POSTGRES_DB=adaguc"
         restart: unless-stopped
 volumes:
     adaguc-server-compose-adagucdb:

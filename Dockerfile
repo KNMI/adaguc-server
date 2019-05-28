@@ -115,9 +115,6 @@ RUN  chmod +x /adaguc/adaguc-server-*.sh && \
 
 USER adaguc
 
-# Settings for HTTPS / SSL can be set via keystore and truststore. Self signed cert will be created if nothing is provided.
-# VOLUME /adaguc/security
-
 # For HTTP
 EXPOSE 8080
 
