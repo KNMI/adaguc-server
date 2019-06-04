@@ -16,7 +16,6 @@ RUN yum install -y \
     gd \
     hdf5 \
     libxml2 \
-    logrotate \
     postgresql-server \
     proj \
     tomcat \
@@ -85,7 +84,6 @@ RUN yum install -y \
     gd \
     hdf5 \
     libxml2 \
-    logrotate \
     postgresql-server \
     proj \
     tomcat \
@@ -135,7 +133,6 @@ RUN mkdir -p /data/adaguc-autowms && \
 COPY ./Docker/adaguc-server-config.xml /adaguc/adaguc-server-config.xml
 COPY ./Docker/adaguc-services-config.xml /adaguc/adaguc-services-config.xml
 COPY ./Docker/start.sh /adaguc/
-COPY ./Docker/adaguc-server-logrotate /etc/logrotate.d/adaguc
 COPY ./Docker/adaguc-server-*.sh /adaguc/
 COPY ./Docker/baselayers.xml /data/adaguc-datasets-internal/baselayers.xml
 COPY ./Docker/tomcat-server.xml /etc/tomcat/server.xml
