@@ -73,36 +73,32 @@ docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh <opti
 
 # Visit the webservice:
 
-Find your hostname via the ```hostname``` command, you need your hostname to access your service via HTTPS.
-```
-hostname
-> bhw485.knmi.nl
-```
-
-The container should now be accessible via :
-```
-https://<your hostname>/adaguc-services/adagucserver?
-```
-or, if you specified a port other than 443
-```
-https://<your hostname>:<port>/adaguc-services/adagucserver?
-```
-
-Note:
-* _The first time you acces the service,  your browser will show a warning that there is a problem with the certificate. Make an exception for this service._
-* _The following examples are made with the server running over HTTP on port 8090. Replace the prefix with the correct information if you are running over https._
-
-# To view logs:
-```
-docker logs -f my-adaguc-server
-```
 The docker-compose-generate-env.sh tells you where you services can be accessed in the browser. Alternatively you can have a look at the ./adaguc-server/Docker/.env file
 ```
 cat ./adaguc-server/Docker/.env
 
 ```
 
-To stop:
+The webservices should now be accessible via :
+```
+https://<your hostname>/
+```
+or, if you specified a port other than 443
+```
+https://<your hostname>:<port>/
+```
+
+Note:
+* _The first time you acces the service,  your browser will show a warning that there is a problem with the certificate. Make an exception for this service._
+* _The following examples are made with the server running over HTTP on port 8090. Replace the prefix with the correct information if you are running over https._
+
+
+# To view logs:
+```
+docker logs -f my-adaguc-server
+```
+
+# To stop:
 ```
 ## Press CTRL+C
 docker-compose down
