@@ -90,8 +90,6 @@ https://<your hostname>:<port>/
 
 Note:
 * _The first time you acces the service,  your browser will show a warning that there is a problem with the certificate. Make an exception for this service._
-* _The following examples are made with the server running over HTTP on port 8090. Replace the prefix with the correct information if you are running over https._
-
 
 # To view logs:
 ```
@@ -213,7 +211,7 @@ Now update the db wit the sat dataset:
 docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh sat
 ```
 The following URL can be used in the viewer:
-http://localhost:8090/adaguc-services/adagucserver?service=wms&request=getcapabilities&dataset=sat&
+https://<your hostname>:<port>/adaguc-services/adagucserver?service=wms&request=getcapabilities&dataset=sat&
 
 You can use this URL for example in http://geoservices.knmi.nl/viewer2.0/
 
@@ -292,7 +290,7 @@ http%3A%2F%2Fopendap.knmi.nl%2Fknmi%2Fthredds%2FdodsC%2Fomi%2FOMI___OPER_R___TYT
 
 The ADAGUC WMS URL becomes: 
 ```
-http://localhost:8090/adaguc-services/adagucserver?source=http%3A%2F%2Fopendap.knmi.nl%2Fknmi%2Fthredds%2FdodsC%2Fomi%2FOMI___OPER_R___TYTRCNO_L3%2FTYTRCNO%2FOMI___OPER_R___TYTRCNO_3.nc&service=wms&request=getcapabilities
+https://<your hostname>:<port>/adaguc-services/adagucserver?source=http%3A%2F%2Fopendap.knmi.nl%2Fknmi%2Fthredds%2FdodsC%2Fomi%2FOMI___OPER_R___TYTRCNO_L3%2FTYTRCNO%2FOMI___OPER_R___TYTRCNO_3.nc&service=wms&request=getcapabilities
 ```
 
 This WMS URL can be visualized in the viewer by using "Add data". 
@@ -313,24 +311,25 @@ Adaguc can serve data via OpenDAP. The format is
 http(s)://<yourhost>/adaguc-services/adagucopendap/<dataset_name>/<layer_name>
 ```
 
-http://localhost:8090/adaguc-services/adagucopendap/dataset_a/testdata
+https://<your hostname>:<port>/adaguc-services/adagucopendap/dataset_a/testdata
 
 Opendap endpoints can be checked by testing the following URL's:
-* http://localhost:8090/adaguc-services/adagucopendap/dataset_a/testdata.das
-* http://localhost:8090/adaguc-services/adagucopendap/dataset_a/testdata.dds
+* https://<your hostname>:<port>/adaguc-services/adagucopendap/dataset_a/testdata.das
+* https://<your hostname>:<port>/adaguc-services/adagucopendap/dataset_a/testdata.dds
 
 You can dump the header or visualize with:
-* ncdump -h http://localhost:8090/adaguc-services/adagucopendap/dataset_a/testdata
-* ncview http://localhost:8090/adaguc-services/adagucopendap/dataset_a/testdata
+* ncdump -h https://<your hostname>:<port>/adaguc-services/adagucopendap/dataset_a/testdata
+* ncview https://<your hostname>:<port>/adaguc-services/adagucopendap/dataset_a/testdata
 
 ## Endpoints
 
-* http://localhost:8090/adaguc-services/adagucserver? Will be forwarded automaticall to /wms or /wcs depending on the service type
-* http://localhost:8090/adaguc-services/wms? For serving Web Map Services
-* http://localhost:8090/adaguc-services/wcs? For serving Web Coverage Services
-* http://localhost:8090/adaguc-services/adagucopendap/ For serving OpenDAP services
-* http://localhost:8090/adaguc-services/autowms? For getting the list of visualizable resources
-* http://localhost:8090/adaguc-services/servicehealth? For getting overview and status of available datasets
+* https://<your hostname>:<port>/adaguc-services/adagucserver? Will be forwarded automaticall to /wms or /wcs depending on the service type
+* https://<your hostname>:<port>/adaguc-services/wms? For serving Web Map Services
+* https://<your hostname>:<port>/adaguc-services/wcs? For serving Web Coverage Services
+* https://<your hostname>:<port>/adaguc-services/adagucopendap/ For serving OpenDAP services
+* https://<your hostname>:<port>/adaguc-services/autowms? For getting the list of visualizable resources
+* https://<your hostname>:<port>/adaguc-services/adagucload? For getting system load
+* https://<your hostname>:<port>/adaguc-services/servicehealth? For getting overview and status of available datasets
 
 
 # Alternatively there is a dedicated adaguc scanner container:
