@@ -14,6 +14,11 @@ services:
         env_file:
             - .env
         restart: unless-stopped
+        logging:
+              driver: "json-file"
+              options:
+                max-size: "200k"
+                max-file: "10"
     adaguc-server:
         image: openearth/adaguc-server:ext-db
         container_name: my-adaguc-server
@@ -35,6 +40,11 @@ services:
             - adaguc-db
         depends_on: 
             - adaguc-db
+        logging:
+              driver: "json-file"
+              options:
+                max-size: "200k"
+                max-file: "10"
     nginx:
         build: nginx-adaguc
         container_name: nginx-adaguc
@@ -47,6 +57,11 @@ services:
             - ./letsencrypt:/etc/letsencrypt
             - ./cert:/cert
         restart: unless-stopped
+        logging:
+              driver: "json-file"
+              options:
+                max-size: "200k"
+                max-file: "10"
     adaguc-db:
         image: postgres
         container_name: adaguc-db
@@ -64,6 +79,11 @@ services:
             - "POSTGRES_PASSWORD=adaguc"
             - "POSTGRES_DB=adaguc"
         restart: unless-stopped
+        logging:
+              driver: "json-file"
+              options:
+                max-size: "200k"
+                max-file: "10"
 volumes:
     adaguc-server-compose-adagucdb:
 networks:
