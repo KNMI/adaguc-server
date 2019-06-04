@@ -22,9 +22,6 @@ services:
             - ${ADAGUC_DATASET_DIR}/:/data/adaguc-datasets
             - ${ADAGUC_AUTOWMS_DIR}/:/data/adaguc-autowms
             - ${ADAGUC_DATA_DIR}/:/data/adaguc-data
-            - adaguc-server-compose-logs:/var/log/adaguc
-            - /var/log/adaguc
-            - /adaguc/security
         networks:
             - adaguc-network
         environment:
@@ -69,7 +66,6 @@ services:
         restart: unless-stopped
 volumes:
     adaguc-server-compose-adagucdb:
-    adaguc-server-compose-logs:
 networks:
     adaguc-network:
 
@@ -79,4 +75,3 @@ networks:
 # docker-compose build
 # docker-compose up -d
 # wait 10 seconds for the services to start
-# docker exec -it my-adaguc-server tail -f  /var/log/adaguc/adaguc-server.log

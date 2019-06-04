@@ -23,33 +23,15 @@ The most important directories are:
 * adaguc-data: Put your NetCDF, HDF5, GeoJSON or PNG files inside this directory, these are referenced by your dataset configurations.
 * adaguc-datasets: These are your dataset configuration files, defining a service. These are small XML files allowing you to customize the styling and aggregation of datafiles. See satellite imagery example below. It is good practice to configure datasets to read data from the /data/adaguc-data folder, which can be mounted from your host machine. This ensures that dataset configurations will work on different environments where paths to the data can differ. Datasets are referenced in the WMS service by the dataset=<Your datasetname> keyword.
 * adaguc-autowms: Put your files here you want to have visualised automatically without any scanning.
-* adagucdb: Persistent place for the database files
-* adaguc-logs: Logfiles are placed here, you can inspect these if something does not work as expected.
 
-## Start docker to serve your data securely using https*
-__* Secure http is required if you want to show your ADAGUC services in GeoWeb__
-
-The adaguc server is configured to running over a secure connection (https) and currently uses a self-signed certificate that it
-generates. You would need to explicitly trust this certificate in your browser
-
-### Setup directories ###
-```
-docker pull openearth/adaguc-server # Or build latest docker from this repo yourself with "docker build -t adaguc-server ."
-export ADAGUCHOME=$HOME # You are free to set ADAGUCHOME to any directory you like
-mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-data
-mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-datasets
-mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-autowms
-mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-logs && chmod 777 $ADAGUCHOME/adaguc-server-docker/adaguc-logs
-
-```
-### Start adaguc ###
+### Start adaguc via Docker (compose)  ###
 
 Adaguc comprises the following components run in separate containers:
 
 1. adaguc-server
 2. adaguc-viewer
 3. nginx webserver
-4. postgresql database  
+4. postgresql database
 
 To start adaguc run the following command from the folder ${SRC_ROOT_DIR}/Docker
 
@@ -57,17 +39,17 @@ To get an instance online with docker compose:
 ```
 git clone https://github.com/KNMI/adaguc-server/
 export ADAGUCHOME=$HOME
-mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-data
-mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-datasets
-mkdir -p $ADAGUCHOME/adaguc-server-docker/adaguc-autowms
+mkdir -p $ADAGUCHOME/adaguc-data
+mkdir -p $ADAGUCHOME/adaguc-datasets
+mkdir -p $ADAGUCHOME/adaguc-autowms
 
 cd adaguc-server/Docker
 
 # Generate environment for adaguc:
 bash docker-compose-generate-env.sh \
-  -a $ADAGUCHOME/adaguc-server-docker/adaguc-autowms \
-  -d $ADAGUCHOME/adaguc-server-docker/adaguc-datasets \
-  -f $ADAGUCHOME/adaguc-server-docker/adaguc-data \
+  -a $ADAGUCHOME/adaguc-autowms \
+  -d $ADAGUCHOME/adaguc-datasets \
+  -f $ADAGUCHOME/adaguc-data \
   -p 443
 # You can view or edit the file ./.env
 
@@ -81,7 +63,15 @@ docker-compose up -d && sleep 10
 ```
 
 # Scanning datasets
-Datasets are scanned using a separate container image
+
+Datasets can be scanned using a separate container image, or by the built in scanner script of the adaguc-server container.
+
+Scan with the adaguc-server container:
+```
+docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh <optional datasetname>
+```
+
+Alternatively there is a dedicated adaguc scanner container:
 
 Pull or build the dataset scanner image
 ```
@@ -98,7 +88,8 @@ From the ${PROJECT_ROOT_DIR}, run
 ```        
 
 # To view logs:
-docker exec -it my-adaguc-server tail -f  /var/log/adaguc/adaguc-server.log
+```
+docker logs -f my-adaguc-server
 ```
 The docker-compose-generate-env.sh tells you where you services can be accessed in the browser. Alternatively you can have a look at the ./adaguc-server/Docker/.env file
 ```
@@ -136,7 +127,7 @@ Note:
 ```
 # Put a NetCDF testfile into your autowms folder
 export ADAGUCHOME=$HOME
-curl -kL https://github.com/KNMI/adaguc-server/raw/master/data/datasets/testdata.nc > $ADAGUCHOME/adaguc-server-docker/adaguc-autowms/testdata.nc
+curl -kL https://github.com/KNMI/adaguc-server/raw/master/data/datasets/testdata.nc > $ADAGUCHOME/adaguc-autowms/testdata.nc
 ```
 AutoWMS files are referenced via the source= key value pair in the URL. Filenames must be URLEncoded. Supported files are NetCDF, HDF5 and GeoJSON.
 This file is now accessible via https://<host>/adaguc-services/adagucserver?source=testdata.nc&service=WMS&request=GetCapabilities (An XML document about this NetCDF is shown)
@@ -151,7 +142,7 @@ Other testdata can be found here: http://opendap.knmi.nl/knmi/thredds/catalog/AD
 
 Get a dataset configurationfile:
 ```
-curl -kL https://raw.githubusercontent.com/KNMI/adaguc-server/master/data/config/datasets/dataset_a.xml > $ADAGUCHOME/adaguc-server-docker/adaguc-datasets/dataset_a.xml
+curl -kL https://raw.githubusercontent.com/KNMI/adaguc-server/master/data/config/datasets/dataset_a.xml > $ADAGUCHOME/adaguc-datasets/dataset_a.xml
 ```
 Now update the db:
 ```
@@ -166,12 +157,12 @@ https://<host>/adaguc-services/adagucserver?service=wms&request=getcapabilities&
 First download a sequence of satellite data from opendap.knmi.nl:
 ```
 export ADAGUCHOME=$HOME
-cd $ADAGUCHOME/adaguc-server-docker/adaguc-data/
+cd $ADAGUCHOME/adaguc-data/
 wget -nc -r -l2 -A.h5   -I /knmi/thredds/fileServer/,/knmi/thredds/catalog/ 'http://opendap.knmi.nl/knmi/thredds/catalog/ADAGUC/testsets/projectedgrids/meteosat/catalog.html'
 ls opendap.knmi.nl/knmi/thredds/fileServer/ADAGUC/testsets/projectedgrids/meteosat/
 ```
 
-Create a dataset configuration file named $ADAGUCHOME/adaguc-server-docker/adaguc-datasets/sat.xml :
+Create a dataset configuration file named $ADAGUCHOME/adaguc-datasets/sat.xml :
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
 <Configuration>
