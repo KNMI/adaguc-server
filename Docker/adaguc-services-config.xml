@@ -11,7 +11,7 @@
   </server>
 
   <security>
-    <enablessl>true</enablessl>
+    <enablessl>false</enablessl>
     
     <truststore>/adaguc/security/truststore.ts</truststore>
     <trustrootscadirectory>/root/.globus/certificates/</trustrootscadirectory>

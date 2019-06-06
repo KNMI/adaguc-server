@@ -1,3 +1,21 @@
+# Eclipse
+**/.project
+**/.classpath
+**/.settings
+**/target
+
+# IntelliJ
+.idea
+*.iml
+
+# Git itself
+# Comment .gitignore only when introducing the file.
+# After that, Git knows the file, and all other .gitignore files can be ignored.
+**/.gitignore
+/target/
+.DS_Store
+.tags
+
 # Compiled Object files
 *.slo
 *.lo
@@ -61,3 +79,5 @@ tests/core*
 
 Docker/cert
 Docker/.env
+
+.vscode

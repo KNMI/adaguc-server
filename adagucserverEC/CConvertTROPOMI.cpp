@@ -200,14 +200,12 @@ int CConvertTROPOMI::convertTROPOMIHeader( CDFObject *cdfObject,CServerParams *s
   for(size_t v=0;v<cdfObject->variables.size();v++){
     CDF::Variable *var = cdfObject->variables[v];
     if(var->isDimension==false){
-
       if(var->name.startsWith("PRODUCT/")&&var->dimensionlinks.size()>2){
         if(
           !var->name.equals("PRODUCT/longitude")&&
           !var->name.equals("PRODUCT/latitude")&&
           var->name.indexOf("bounds")==-1&&
           !var->name.equals("PRODUCT/time")
-
         ){
           varsToConvert.add(CT::string(var->name.c_str()));
         }
