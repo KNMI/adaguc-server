@@ -14,7 +14,6 @@ RUN yum update -y && \
     gdal \
     hdf5 \
     libxml2 \
-    logrotate \
     proj \
     udunits2 \
     openssl \
@@ -63,8 +62,8 @@ RUN yum update -y && \
     gdal \
     hdf5 \
     libxml2 \
-    logrotate \
     proj \
+    postgresql \
     udunits2 \
     openssl \
     netcdf \
@@ -81,7 +80,7 @@ COPY --from=0 /adaguc/adaguc-server-master/tests /adaguc/adaguc-server-master/te
 COPY --from=0 /adaguc/adaguc-server-master/runtests.sh /adaguc/adaguc-server-master/runtests.sh
 
 # Install adaguc-services (spring boot application for running adaguc-server)
-RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.0/adaguc-services-1.2.0.jar -o /adaguc/adaguc-services.jar && \
+RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.1/adaguc-services-1.2.1.jar -o /adaguc/adaguc-services.jar && \
 # Install newer numpy
     curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
     python get-pip.py && \
@@ -97,7 +96,6 @@ RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.0/adaguc-serv
     mkdir -p /adaguc/userworkspace && \
     mkdir -p /data/adaguc-services-home && \
     mkdir -p /adaguc/basedir && \
-    mkdir -p /var/log/adaguc && \
     mkdir -p /adaguc/security && \
     mkdir -p /data/adaguc-datasets-internal && \
     mkdir -p /servicehealth
@@ -106,12 +104,11 @@ RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.0/adaguc-serv
 COPY ./Docker/adaguc-server-config.xml /adaguc/adaguc-server-config.xml
 COPY ./Docker/adaguc-services-config.xml /adaguc/adaguc-services-config.xml
 COPY ./Docker/start.sh /adaguc/
-COPY ./Docker/adaguc-server-logrotate /etc/logrotate.d/adaguc
 COPY ./Docker/adaguc-server-*.sh /adaguc/
 COPY ./Docker/baselayers.xml /data/adaguc-datasets-internal/baselayers.xml
 RUN  chmod +x /adaguc/adaguc-server-*.sh && \
      chmod +x /adaguc/start.sh && \
-     chown -R adaguc:adaguc /data/adaguc* /adaguc /var/log/adaguc /servicehealth
+     chown -R adaguc:adaguc /data/adaguc* /adaguc /servicehealth
 
 USER adaguc
 
