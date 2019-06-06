@@ -1,8 +1,0 @@
-/var/log/adaguc/*log {
-    su root root
-    daily
-    rotate 10
-    size 100k
-    missingok
-    notifempty
-}

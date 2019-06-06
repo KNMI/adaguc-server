@@ -25,15 +25,18 @@
   </security>
 
   <adaguc-server>
+    <!-- timeout: How long adaguc-server is allowed to run in milliseconds, -1 is unlimited -->
+    <timeout>120000</timeout> 
+    <!-- maxinstances: Number of maximum simultaneous instances before instances are queued, -1 is unlimited -->
+    <maxinstances>4</maxinstances> 
+    <!-- queuesize: Maximum queuesize, -1 is unlimited -->
+    <queuesize>32</queuesize>
     <adagucexecutable>/adaguc/adaguc-server-master/bin/adagucserver</adagucexecutable>
     <export>ADAGUC_PATH=/adaguc/adaguc-server-master/</export>
-    <export>ADAGUC_TMP=/tmp</export>
     <export>ADAGUC_CONFIG=/adaguc/adaguc-server-config.xml</export>
     <export>ADAGUC_DATARESTRICTION=FALSE</export>
-    <export>ADAGUC_ENABLELOGBUFFER=TRUE</export>
-    <export>ADAGUC_LOGFILE=/var/log/adaguc/adaguc-server.log</export>
+    <export>ADAGUC_ENABLELOGBUFFER=FALSE</export>
     <export>ADAGUC_FONT=/adaguc/adaguc-server-master/data/fonts/FreeSans.ttf</export>
-    <export>ADAGUC_ONLINERESOURCE={ENV.EXTERNALADDRESS}/adaguc-services/adagucserver?</export>
     <export>ADAGUC_DB={ENV.ADAGUC_DB}</export>
  </adaguc-server>
  

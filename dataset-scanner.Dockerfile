@@ -14,7 +14,6 @@ RUN yum update -y && \
     gdal \
     hdf5 \
     libxml2 \
-    logrotate \
     postgresql-server \
     proj \
     udunits2 \
@@ -63,7 +62,6 @@ RUN yum update -y && \
     gdal \
     hdf5 \
     libxml2 \
-    logrotate \
     proj \
     udunits2 \
     openssl \
@@ -106,7 +104,6 @@ RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.0/adaguc-serv
 COPY ./Docker/adaguc-server-config.xml /adaguc/adaguc-server-config.xml
 COPY ./Docker/adaguc-services-config.xml /adaguc/adaguc-services-config.xml
 COPY ./Docker/start.sh /adaguc/
-COPY ./Docker/adaguc-server-logrotate /etc/logrotate.d/adaguc
 COPY ./Docker/adaguc-server-*.sh /adaguc/
 COPY ./Docker/baselayers.xml /data/adaguc-datasets-internal/baselayers.xml
 RUN  chmod +x /adaguc/adaguc-server-*.sh && chmod +x /adaguc/start.sh \
