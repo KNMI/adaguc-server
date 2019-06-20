@@ -459,7 +459,7 @@ public:
         CImageDataWriter::ProjCacheInfo projCacheInfo = CImageDataWriter::GetProjInfo(ckey,drawImage,dataSource,imageWarper, dataSource->srvParams,dX,dY);
         
         if(projCacheInfo.isOutsideBBOX == false){
-          CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource->srvParams,(filemapiterator->first).c_str());
+          CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams,(filemapiterator->first).c_str());
           
 
           if(cdfObject->getVariableNE("forecast_reference_time")!=NULL){
