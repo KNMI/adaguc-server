@@ -568,9 +568,7 @@ int CServerParams::parseConfigFile(CT::string &pszConfigFile){
 
     const char *pszADAGUC_DB=getenv("ADAGUC_DB");
 
-    if(pszADAGUC_DB!=NULL)configFileData.replaceSelf("{ADAGUC_DB}",pszADAGUC_DB);else {
-      CDBDebug("ADAGUC_DB not set in env");
-    }
+    if(pszADAGUC_DB!=NULL)configFileData.replaceSelf("{ADAGUC_DB}",pszADAGUC_DB);
   }catch(int e){
     CDBError("Exception %d in substituting");
   }

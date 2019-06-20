@@ -402,7 +402,7 @@ namespace CT{
     //}
     size_t newSize = privatelength+occurences.size()*(newStringl-substrl);
     _Allocate(newSize);
-    char * newvalue =getValuePointer();
+    char * newvalue = getValuePointer();
     size_t pt=0,ps=0,j=0;
     do{
       if(j<occurences.size()){
@@ -560,7 +560,7 @@ namespace CT{
     return t;
   }
   
-  bool string::empty(){
+  const bool string::empty(){
     if(privatelength == 0){
       return true;
     }
