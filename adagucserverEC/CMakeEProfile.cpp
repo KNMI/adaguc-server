@@ -452,7 +452,7 @@ public:
         {
 
           
-          CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource->srvParams,(filemapiterator->first).c_str());
+          CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams,(filemapiterator->first).c_str());
           CDF::Variable *variable =cdfObject->getVariableNE(variableName.c_str());
           dataObject->cdfVariable= variable;
           if(variable == NULL){

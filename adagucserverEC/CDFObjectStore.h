@@ -82,8 +82,8 @@ public:
    */
   CDFObject *getCDFObject(CDataSource *dataSource,const char *fileName);
   
-  CDFObject *getCDFObjectHeader(CServerParams *srvParams,const char *fileName);
-  CDFObject *getCDFObjectHeaderPlain(CServerParams *srvParams,const char *fileName);
+  CDFObject *getCDFObjectHeader(CDataSource *dataSource, CServerParams *srvParams,const char *fileName);
+  CDFObject *getCDFObjectHeaderPlain(CDataSource *dataSource, CServerParams *srvParams,const char *fileName);
   static CT::StackList<CT::string> getListOfVisualizableVariables(CDFObject *cdfObject);
   
   /**

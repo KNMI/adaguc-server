@@ -198,22 +198,22 @@ CDFReader *CDFObjectStore::getCDFReader(const char *fileName){
   return cdfReader;
 }
 
-CDFObject *CDFObjectStore::getCDFObjectHeader(CServerParams *srvParams,const char *fileName){
+CDFObject *CDFObjectStore::getCDFObjectHeader(CDataSource *dataSource, CServerParams *srvParams,const char *fileName){
     if(srvParams == NULL){
       CDBError("srvParams == NULL");
       return NULL;
     }
 
-    return getCDFObject(NULL,srvParams,fileName,false);
+    return getCDFObject(dataSource,srvParams,fileName,false);
 }
 
-CDFObject *CDFObjectStore::getCDFObjectHeaderPlain(CServerParams *srvParams,const char *fileName){
+CDFObject *CDFObjectStore::getCDFObjectHeaderPlain(CDataSource *dataSource, CServerParams *srvParams,const char *fileName){
   if(srvParams == NULL){
     CDBError("srvParams == NULL");
     return NULL;
   }
 
-  return getCDFObject(NULL,srvParams,fileName,true);
+  return getCDFObject(dataSource,srvParams,fileName,true);
 }
 
 /**
@@ -306,6 +306,29 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *s
   cdfObject->attachCDFReader(cdfReader);
   
   int status = cdfObject->open(fileLocationToOpen);
+
+  /* Apply NCML file to the datamodel */
+  if (dataSource) {
+    if (dataSource->cfgLayer) {
+      if ( dataSource->cfgLayer->FilePath.size() == 1) {
+        CT::string ncmlFileName = dataSource->cfgLayer->FilePath[0]->attr.ncml;
+        if (!ncmlFileName.empty()) {
+          CDBDebug("NCML: Applying NCML file %s", ncmlFileName.c_str());
+          cdfObject->applyNCMLFile(ncmlFileName.c_str());
+        } else {
+          CDBDebug("NCML: ncml attribute is not set in FilePath");
+        }
+      } else {
+        CDBDebug("NCML: FilePath not configured in DataSource");  
+      }
+    } else {
+      CDBDebug("NCML: CFGLayer not configured in DataSource");
+    }
+  } else {
+    CDBDebug("NCML: DataSource is not set");
+  }
+
+
    //CDBDebug("opened");
   if(status!=0){
     //TODO in case of basic/digest authentication, username and password is currently also listed....
