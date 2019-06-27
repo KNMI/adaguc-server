@@ -228,8 +228,13 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,const char *file
 
 CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *srvParams,const char *fileName,bool plain){
   CT::string uniqueIDForFile = fileName;
-  
-
+  if (srvParams == NULL && dataSource !=NULL){
+    srvParams = dataSource->srvParams;
+  }
+  if (srvParams == NULL){
+    CDBError("getCDFObject:: srvParams is not set");
+    throw(__LINE__);
+  }
   for(size_t j=0;j<fileNames.size();j++){
     if(fileNames[j]->equals(uniqueIDForFile.c_str())){
       #ifdef CDFOBJECTSTORE_DEBUG                          
@@ -315,17 +320,9 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *s
         if (!ncmlFileName.empty()) {
           CDBDebug("NCML: Applying NCML file %s", ncmlFileName.c_str());
           cdfObject->applyNCMLFile(ncmlFileName.c_str());
-        } else {
-          CDBDebug("NCML: ncml attribute is not set in FilePath");
         }
-      } else {
-        CDBDebug("NCML: FilePath not configured in DataSource");  
       }
-    } else {
-      CDBDebug("NCML: CFGLayer not configured in DataSource");
     }
-  } else {
-    CDBDebug("NCML: DataSource is not set");
   }
 
 
