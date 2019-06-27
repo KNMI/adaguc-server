@@ -231,7 +231,7 @@ int CConvertCurvilinear::convertCurvilinearHeader( CDFObject *cdfObject,CServerP
   #ifdef CCONVERTCURVILINEAR_DEBUG
   CDBDebug("Width = %d, Height = %d", width, height);
   #endif
-  if (width <= 2 || height <= 2){
+  if (width < 2 || height < 2){
     CDBError("width and height are too small");
     return 1;
   }
@@ -433,7 +433,7 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource,int mode
   origSwathName.concat("_backup");
   swathVar=cdfObject->getVariableNE(origSwathName.c_str());
   if(swathVar==NULL){
-    //CDBError("Unable to find orignal swath variable with name %s",origSwathName.c_str());
+    CDBError("Unable to find orignal swath variable with name %s",origSwathName.c_str());
     return 1;
   }
  
@@ -603,22 +603,21 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource,int mode
       CDF::Variable *projectionVar = new CDF::Variable();
       projectionVar->name.copy("customgridprojection");
       cdfObject->addVariable(projectionVar);
-    dataSource->nativeEPSG = dataSource->srvParams->Geo->CRS.c_str();
-    imageWarper.decodeCRS(&dataSource->nativeProj4,&dataSource->nativeEPSG,&dataSource->srvParams->cfg->Projection);
-    CDBDebug("dataSource->nativeProj4 %s", dataSource->nativeProj4.c_str());
-    if(dataSource->nativeProj4.length()==0){
-      dataSource->nativeProj4=LATLONPROJECTION;
-      dataSource->nativeEPSG="EPSG:4326";
-      projectionRequired=false;
-    }
-    if (projectionRequired) {
-      CDBDebug("Reprojection is needed");
-    }
+      dataSource->nativeEPSG = dataSource->srvParams->Geo->CRS.c_str();
+      imageWarper.decodeCRS(&dataSource->nativeProj4,&dataSource->nativeEPSG,&dataSource->srvParams->cfg->Projection);
+      CDBDebug("dataSource->nativeProj4 %s", dataSource->nativeProj4.c_str());
+      if(dataSource->nativeProj4.length()==0){
+        dataSource->nativeProj4=LATLONPROJECTION;
+        dataSource->nativeEPSG="EPSG:4326";
+        projectionRequired=false;
+      }
+      if (projectionRequired) {
+        CDBDebug("Reprojection is needed");
+      }
 
-    projectionVar->setAttributeText("proj4_params",dataSource->nativeProj4.c_str());
+      projectionVar->setAttributeText("proj4_params",dataSource->nativeProj4.c_str());
     }
   }
-
 
   #ifdef CCONVERTCURVILINEAR_DEBUG
   CDBDebug("Datasource CRS = %s nativeproj4 = %s",dataSource->nativeEPSG.c_str(),dataSource->nativeProj4.c_str());
