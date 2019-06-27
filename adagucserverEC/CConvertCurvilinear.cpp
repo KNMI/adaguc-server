@@ -456,8 +456,7 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource,int mode
     #endif
   }
   
-  swathVar->readData(CDF_FLOAT,start,count,stride,true);
- 
+  
 
   //Read original data first 
   
@@ -490,31 +489,18 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource,int mode
   
   //Detect minimum and maximum values
   float fill = (float)dataObjects[0]->dfNodataValue;
-  float min = 0;float max=0;
-  bool firstValueDone = false;
   
 #ifdef CCONVERTCURVILINEAR_DEBUG
   CDBDebug("Size == %d",swathVar->getSize());
 #endif
-  for(size_t j=0;j<swathVar->getSize();j++){
-    float v=((float*)swathVar->data)[j];
-    
-    if(v!=fill&&v!=INFINITY&&v!=NAN&&v!=-INFINITY&&v==v){
-      if(!firstValueDone){min=v;max=v;firstValueDone=true;}
-      if(v<min)min=v;
-      if(v>max){
-        max=v;
-      }
-     
-//      CDBDebug("Swathvar %f %f %f",v,min,max);
-    }
-  }
-  
+ 
   #ifdef CCONVERTCURVILINEAR_DEBUG
   CDBDebug("Calculated min/max : %f %f",min,max);
   #endif
   
   //Set statistics
+  swathVar->readData(CDF_FLOAT,start,count,stride,true);
+
   if(dataSource->stretchMinMax){
     #ifdef CCONVERTCURVILINEAR_DEBUG
     CDBDebug("dataSource->stretchMinMax");
@@ -524,8 +510,8 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource,int mode
       CDBDebug("Setting statistics: min/max : %f %f",min,max);
       #endif
       dataSource->statistics = new CDataSource::Statistics();
-      dataSource->statistics->setMaximum(max);
-      dataSource->statistics->setMinimum(min);
+      dataSource->statistics->calculate(swathVar->getSize(), swathVar->data, swathVar->getType(), dataObjects[0]->dfNodataValue, dataObjects[0]->hasNodataValue);
+      
     }
   }
   
@@ -540,7 +526,7 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource,int mode
     dataSource->srvParams->Geo->dfBBOX[3]=dataSource->srvParams->Geo->dfBBOX[3];
   }*/
   
-  //Width needs to be at least 2 in this case.
+  //Width needs to be at least 2, the bounding box is calculated from these.
   if(dataSource->dWidth == 1)dataSource->dWidth=2;
   if(dataSource->dHeight == 1)dataSource->dHeight=2;
   double cellSizeX=(dataSource->srvParams->Geo->dfBBOX[2]-dataSource->srvParams->Geo->dfBBOX[0])/double(dataSource->dWidth);
@@ -657,6 +643,7 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource,int mode
     float *swathData = (float*)swathVar->data;
     
     bool drawBilinear=false;
+    bool drawNearestWithGouraud = false;
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
     if(styleConfiguration->styleCompositionName.indexOf("bilinear")>=0){
       
@@ -667,6 +654,7 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource,int mode
       cdfObject->getVariable("lat_bnds");
     }catch(int e){
       drawBilinear=true;
+      drawNearestWithGouraud = true;
     }
     /*
      * Bilinear rendering is based on gouraud shading using the center of each quads by using lat and lon variables, while nearest neighbour rendering is based on lat_bnds and lat_bnds variables, drawing the corners of the quads..
@@ -729,6 +717,12 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource,int mode
             vals[1]=  swathData[pSwath+1];
             vals[2] = swathData[pSwath+numCols];
             vals[3] = swathData[pSwath+numCols+1];
+            
+            if (drawNearestWithGouraud){
+              vals[1]=vals[0];
+              vals[2]=vals[0];
+              vals[3]=vals[0];
+            }
 
             bool tileHasNoData = false;
             float lonMin,lonMax,lonMiddle=0;
