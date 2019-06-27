@@ -614,6 +614,8 @@ CDFType CDFNetCDFReader::_typeConversionAtt(nc_type type){
   if(type==NC_USHORT)return CDF_USHORT;
   if(type==NC_INT)return CDF_INT;
   if(type==NC_UINT)return CDF_UINT;
+  if(type==NC_INT64)return CDF_INT64;
+  if(type==NC_UINT64)return CDF_UINT64;
   if(type==NC_FLOAT)return CDF_FLOAT;
   if(type==NC_DOUBLE)return CDF_DOUBLE;
   if(type==NC_STRING)return CDF_STRING;
@@ -631,6 +633,8 @@ CDFType CDFNetCDFReader::_typeConversionVar(nc_type type, bool isUnsigned){
     if(type==NC_USHORT)return CDF_USHORT;
     if(type==NC_INT)   return CDF_UINT;
     if(type==NC_UINT)  return CDF_UINT;
+    if(type==NC_INT64) return CDF_UINT64;
+    if(type==NC_UINT64)return CDF_UINT64;
   }else{
     if(type==NC_BYTE)  return CDF_BYTE;
     if(type==NC_UBYTE) return CDF_UBYTE;
@@ -639,6 +643,8 @@ CDFType CDFNetCDFReader::_typeConversionVar(nc_type type, bool isUnsigned){
     if(type==NC_USHORT)return CDF_USHORT;
     if(type==NC_INT)   return CDF_INT;
     if(type==NC_UINT)  return CDF_UINT;
+    if(type==NC_INT64) return CDF_INT64;
+    if(type==NC_UINT64)return CDF_UINT64;
   }
   if(type==NC_FLOAT)return CDF_FLOAT;
   if(type==NC_DOUBLE)return CDF_DOUBLE;
@@ -759,6 +765,8 @@ nc_type CDFNetCDFWriter::NCtypeConversion(CDFType  type){
   if(type==CDF_USHORT)return NC_USHORT;
   if(type==CDF_INT)return NC_INT;
   if(type==CDF_UINT)return NC_UINT;
+  if(type==CDF_INT64)return NC_INT64;
+  if(type==CDF_UINT64)return NC_UINT64;
   if(type==CDF_FLOAT)return NC_FLOAT;
   if(type==CDF_DOUBLE)return NC_DOUBLE;
   if(type==CDF_STRING)return NC_STRING;
@@ -775,6 +783,8 @@ CT::string CDFNetCDFWriter::NCtypeConversionToString(CDFType  type){
   if(type==CDF_USHORT)r="NC_USHORT";
   if(type==CDF_INT)r="NC_INT";
   if(type==CDF_UINT)r="NC_UINT";
+  if(type==CDF_INT64)r="NC_INT64";
+  if(type==CDF_UINT64)r="NC_UINT64";
   if(type==CDF_FLOAT)r="NC_FLOAT";
   if(type==CDF_DOUBLE)r="NC_DOUBLE";
   if(type==CDF_STRING)r="NC_STRING";
@@ -911,6 +921,17 @@ int CDFNetCDFWriter::_write(void(*progress)(const char*message,float percentage)
           NCCommands.printconcat("int attrData_%d[]={",i);
           for(size_t n=0;n<length;n++){
             NCCommands.printconcat("%d",((int*)data)[n]);
+            if(n<length-1){
+              NCCommands.printconcat(",");
+            }
+            NCCommands.printconcat("};\n");
+          }
+        }
+
+        if(type==CDF_INT64||type==CDF_UINT64){
+          NCCommands.printconcat("int64 attrData_%d[]={",i);
+          for(size_t n=0;n<length;n++){
+            NCCommands.printconcat("%ld",((long*)data)[n]);
             if(n<length-1){
               NCCommands.printconcat(",");
             }
@@ -1136,6 +1157,17 @@ int CDFNetCDFWriter::_write(void(*progress)(const char*message,float percentage)
                     }
                   }
                   
+                  if(type==CDF_INT64||type==CDF_UINT64){
+                    NCCommands.printconcat("int attrData_%d_%d[]={",j,i);
+                    for(size_t n=0;n<length;n++){
+                      NCCommands.printconcat("%ld",((long*)data)[n]);
+                      if(n<length-1){
+                        NCCommands.printconcat(",");
+                      }
+                      NCCommands.printconcat("};\n");
+                    }
+                  }
+                  
                   if(type==CDF_SHORT||type==CDF_USHORT){
                     NCCommands.printconcat("short attrData_%d_%d[]={",j,i);
                     for(size_t n=0;n<length;n++){
@@ -1160,7 +1192,7 @@ int CDFNetCDFWriter::_write(void(*progress)(const char*message,float percentage)
                   }
                   
                   if(type==CDF_DOUBLE){
-                    NCCommands.printconcat("float attrData_%d_%d[]={",j,i);
+                    NCCommands.printconcat("double attrData_%d_%d[]={",j,i);
                     for(size_t n=0;n<length;n++){
                       NCCommands.printconcat("%f",((double*)data)[n]);
                       if(n<length-1){

@@ -47,11 +47,13 @@ void CDF::_dumpPrintAttributes(const char *variableName, std::vector<CDF::Attrib
     }
     
     if(attr->type==CDF_BYTE)for(size_t n=0;n<attr->length;n++)dumpString->printconcat(" %db",((char*)attr->data)[n]);
-    if(attr->type==CDF_UBYTE)for(size_t n=0;n<attr->length;n++)dumpString->printconcat(" %dub",((unsigned char*)attr->data)[n]);
+    if(attr->type==CDF_UBYTE)for(size_t n=0;n<attr->length;n++)dumpString->printconcat(" %uub",((unsigned char*)attr->data)[n]);
     if(attr->type==CDF_INT)for(size_t n=0;n<attr->length;n++)dumpString->printconcat(" %d",((int*)attr->data)[n]);
-    if(attr->type==CDF_UINT)for(size_t n=0;n<attr->length;n++)dumpString->printconcat(" %d",((unsigned int*)attr->data)[n]);
+    if(attr->type==CDF_UINT)for(size_t n=0;n<attr->length;n++)dumpString->printconcat(" %u",((unsigned int*)attr->data)[n]);
+    if(attr->type==CDF_INT64)for(size_t n=0;n<attr->length;n++)dumpString->printconcat(" %ldll",((long*)attr->data)[n]);
+    if(attr->type==CDF_UINT64)for(size_t n=0;n<attr->length;n++)dumpString->printconcat(" %luul",((unsigned long*)attr->data)[n]);
     if(attr->type==CDF_SHORT)for(size_t n=0;n<attr->length;n++)dumpString->printconcat(" %d",((short*)attr->data)[n]);
-    if(attr->type==CDF_USHORT)for(size_t n=0;n<attr->length;n++)dumpString->printconcat(" %d",((unsigned short*)attr->data)[n]);
+    if(attr->type==CDF_USHORT)for(size_t n=0;n<attr->length;n++)dumpString->printconcat(" %u",((unsigned short*)attr->data)[n]);
     if(attr->type==CDF_FLOAT)for(size_t n=0;n<attr->length;n++)dumpString->printconcat(" %ff",((float*)attr->data)[n]);
     if(attr->type==CDF_DOUBLE)for(size_t n=0;n<attr->length;n++)dumpString->printconcat(" %fdf",((double*)attr->data)[n]);
     if(attr->type==CDF_STRING)for(size_t n=0;n<attr->length;n++)dumpString->printconcat(" \"%s\"",((char**)attr->data)[n]);
