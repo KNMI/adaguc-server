@@ -169,7 +169,7 @@ int CTime::init(CDF::Variable *timeVariable){
 }
 
 int CTime::init(const char *units, const char *calendar){
-  CDBDebug("Initializing CTime with %s", units);
+//   CDBDebug("Initializing CTime with %s", units);
   if(isInitialized){
     if(!currentUnit.equals(units)){
       if(mode == CTIME_MODE_360day){

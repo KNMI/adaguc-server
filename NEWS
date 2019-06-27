@@ -1,3 +1,9 @@
+Version 2.2.0 2019-06-27
+    - adaguc-server docker compose uses decoupled postgres, started as separate container
+    - logfiles are embedded in adaguc-services, single stream of logging
+    - Improved support for curvilinear grids 
+    - Support for NC_INT64 and NC_UINT64 data types
+
 Version 2.1.0 2019-04-04
     - Use of new adaguc-services framework version 1.2.0 (Spring boot 2.0)
 
