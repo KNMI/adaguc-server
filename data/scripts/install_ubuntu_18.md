@@ -31,7 +31,8 @@ pushd .
 cd /data/adaguc-data
 wget -nc -r -l2 -A.h5   -I /knmi/thredds/fileServer/,/knmi/thredds/catalog/ 'http://opendap.knmi.nl/knmi/thredds/catalog/ADAGUC/testsets/projectedgrids/meteosat/catalog.html'
 popd
-bash ./Docker/adaguc-server-updatedatasets.sh msg_hrvis_hdf5_example.xml
+export ADAGUC_CONFIG=./data/config/adaguc.vm.xml
+bash ./Docker/adaguc-server-updatedatasets.sh msg_hrvis_hdf5_example
 ```
 * You can now load the test dataset via http://localhost:8080//wms?dataset=msg_hrvis_hdf5_example& in http://geoservices.knmi.nl/viewer2.0
 * Or directly via: http://geoservices.knmi.nl/viewer2.0/?#addlayer('http://localhost:8080//wms?dataset=msg_hrvis_hdf5_example&','HRVIS')
