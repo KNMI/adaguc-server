@@ -346,4 +346,12 @@ docker build -t openearth/adaguc-dataset-scanner -f dataset-scanner.Dockerfile .
 From the ${PROJECT_ROOT_DIR}, run
 ```
 ./scan-datasets.sh
-```        
+```
+
+# Installation instructions without docker on Ubuntu 18:
+
+
+* [data/scripts/install_ubuntu_18.md](data/scripts/install_ubuntu_18.md)
+
+
+
