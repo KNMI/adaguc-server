@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <!-- Custom styles -->
+  <Legend name="gray" type="colorRange">
+    <palette index="0"   red="0"   green="0"   blue="0" alpha="255"/>
+    <palette index="240" red="255" green="255"   blue="255"/>
+  </Legend>
+  <Legend name="gray-trans" type="colorRange">
+    <palette index="0"   red="0"   green="0"   blue="0" alpha="0"/>
+    <palette index="240" red="255" green="255"   blue="255"/>
+  </Legend>
+  <Style name="hrvis_0till30000">
+    <Legend fixed="true">gray</Legend>
+    <Min>0</Min>
+    <Max>30000</Max>
+    <RenderMethod>nearest</RenderMethod>
+    <RenderSettings renderer="gd"/>
+    <NameMapping name="nearest"        title="Albedo 0-30000" abstract="Albedo values from satellite imagery"/>
+  </Style>
+  <Style name="hrvis_0till30000_transparent">
+    <Legend fixed="true">gray-trans</Legend>
+    <Min>0</Min>
+    <Max>30000</Max>
+    <RenderMethod>nearest</RenderMethod>
+    <RenderSettings renderer="cairo"/>
+    <NameMapping name="nearest"        title="Albedo 0-30000 transparent" abstract="Albedo values from satellite imagery with the lower values made transparent"/>
+  </Style>
+  <!-- Layers -->
+  <Layer type="database">
+    <Projection proj4="+proj=geos +lon_0=0.000000 +lat_0=0 +h=35807.414063 +a=6378.169000 +b=6356.583984"/>
+    <Name>HRVIS</Name>
+    <Title>HRVIS</Title>
+    <Variable>image1.image_data</Variable>
+    <FilePath
+      filter="^METEOSAT_(8|9|10|11).*EUROPEHVIS.*\.h5">/data/adaguc-data/opendap.knmi.nl/knmi/thredds/fileServer/ADAGUC/testsets/projectedgrids/meteosat/</FilePath>
+    <DataReader>HDF5</DataReader>
+    <Dimension name="time" interval="PT15M">time</Dimension>
+    <Styles>hrvis_0till30000,hrvis_0till30000_transparent</Styles>
+  </Layer>
+  <Layer type="cascaded" hidden="false">
+    <Name force="true">baselayer</Name>
+    <Title>NPS - Natural Earth II</Title>
+    <WMSLayer service="http://geoservices.knmi.nl/cgi-bin/bgmaps.cgi?" layer="naturalearth2"/>
+    <LatLonBox minx="-180"  miny="-90" maxx="180" maxy="90"/>
+  </Layer>
+  <!-- Layer with name overlay from geoservices.knmi.nl -->
+  <Layer type="cascaded" hidden="false">
+    <Name force="true">overlay</Name>
+    <Title>NPS - Natural Earth II</Title>
+    <WMSLayer service="http://geoservices.knmi.nl/cgi-bin/worldmaps.cgi?" layer="world_line_thick"/>
+    <LatLonBox minx="-180"  miny="-90" maxx="180" maxy="90"/>
+    <WMSFormat name="image/png32"/>
+  </Layer>
+  <!-- Layer with name grid10 from geoservices.knmi.nl -->
+  <Layer type="grid">
+    <Name force="true">grid10</Name>
+    <Title>grid 10 degrees</Title>
+    <Grid resolution="10"/>
+    <WMSFormat name="image/png32"/>
+  </Layer>
+</Configuration>

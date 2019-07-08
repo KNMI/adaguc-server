@@ -231,6 +231,7 @@ public:
   static CTime *GetCTimeInstance(CDF::Variable *timeVariable);
   static void cleanInstances();
   static std::map <CT::string, CTime*> CTimeInstances;
+  static void *currentInitializedVar;
 };
 
 #endif
