@@ -20,7 +20,7 @@ services:
                 max-size: "200k"
                 max-file: "10"
     adaguc-server:
-        image: openearth/adaguc-server:ext-db
+        image: openearth/adaguc-server
         container_name: my-adaguc-server
         hostname: my-adaguc-server
         volumes:
@@ -48,7 +48,7 @@ services:
     nginx:
         build: nginx-adaguc
         container_name: nginx-adaguc
-        hostname: nginx-adacuc
+        hostname: nginx-adaguc
         ports:
             - "${ADAGUC_PORT}:443"
         networks:

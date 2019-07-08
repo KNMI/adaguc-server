@@ -101,7 +101,7 @@ int COpenDAPHandler::getDimSize(CDataSource *dataSource, const char *name){
     #ifdef COPENDAPHANDLER_DEBUG
     CDBDebug("getDimSize Trying to lookup in cdfObject");
     #endif
-    CDF::Dimension *v= CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(dataSource->srvParams,dataSource->getFileName())->getDimension(name);
+    CDF::Dimension *v= CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(dataSource, dataSource->srvParams,dataSource->getFileName())->getDimension(name);
     #ifdef COPENDAPHANDLER_DEBUG
     CDBDebug("Length = %d",v->length);
     #endif
@@ -679,7 +679,7 @@ CDBDebug("Found layer %s",layerName.c_str());
   
   try{
 
-    CDFObject *cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(dataSource->srvParams,dataSource->getFileName());;// dataSource->getDataObject(0)->cdfObject;
+    CDFObject *cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(dataSource, dataSource->srvParams,dataSource->getFileName());;// dataSource->getDataObject(0)->cdfObject;
       
     for(size_t d=0;d<dataSource->cfgLayer->Dimension.size();d++){
       //Check for the configured dimensions or scalar variables
@@ -1015,7 +1015,7 @@ CDBDebug("Found layer %s",layerName.c_str());
                           #ifdef COPENDAPHANDLER_DEBUG
                           CDBDebug("Found file %s",fileName.c_str());
                           #endif
-                          cdfObjectToRead = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(dataSource->srvParams,fileName.c_str());
+                          cdfObjectToRead = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(dataSource, dataSource->srvParams,fileName.c_str());
                           start[0]=store->getRecord(storeIndex)->get(2)->toInt();
                           count[0]=1;
                           #ifdef COPENDAPHANDLER_DEBUG
@@ -1127,7 +1127,7 @@ CDBDebug("Found layer %s",layerName.c_str());
     }
     
     if(isDASRequest){
-      CDFObject *cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(dataSource->srvParams,dataSource->getFileName());
+      CDFObject *cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(dataSource, dataSource->srvParams,dataSource->getFileName());
       CT::string output = "";
       if (jsonWriter) output.concat("{\n  \"attributes\": {\n"); else output.concat("Attributes {\n");
       for(size_t i=0;i<cdfObject->variables.size();i++){

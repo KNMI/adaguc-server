@@ -752,7 +752,7 @@ int CDataReader::open(CDataSource *dataSource,int mode,int x,int y, int *gridExt
   }
   if(mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS  || mode == CNETCDFREADER_MODE_OPEN_HEADER ){
       //pthread_mutex_lock(&CDataReader_open_lock);
-    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource->srvParams,dataSourceFilename.c_str());
+    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams,dataSourceFilename.c_str());
      //pthread_mutex_unlock(&CDataReader_open_lock);
 
 //     enableDataCache = false;

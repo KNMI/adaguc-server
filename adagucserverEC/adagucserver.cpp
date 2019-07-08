@@ -190,7 +190,7 @@ int _main(int argc, char **argv, char **envp){
               scanFlags+=CDBFILESCANNER_UPDATEDB;
           }
           if(strncmp(long_options[opt_idx].name,"createtiles",11)==0){
-              scanFlags+=CDBFILESCANNER_CREATETILES;
+              scanFlags+=CDBFILESCANNER_CREATETILES + CDBFILESCANNER_UPDATEDB;
           }
           if(strncmp(long_options[opt_idx].name,"config",6)==0){
               setenv("ADAGUC_CONFIG",optarg,1);
