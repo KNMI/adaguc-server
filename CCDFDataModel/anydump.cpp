@@ -114,6 +114,8 @@ int main(int argCount,char **argVars){
               printf("%d",((short*)var->data)[j]);
             } if (var->getNativeType() == CDF_INT || var->getNativeType() == CDF_UINT){
               printf("%d",((int*)var->data)[j]);
+            } if (var->getNativeType() == CDF_INT64 || var->getNativeType() == CDF_UINT64){
+              printf("%ld",((long*)var->data)[j]);
             } else if (var->getNativeType() == CDF_FLOAT){
               printf("%g, ",((float*)var->data)[j]);
             } else if (var->getNativeType() == CDF_DOUBLE){

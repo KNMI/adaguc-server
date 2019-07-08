@@ -219,9 +219,9 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
       CDBDebug("OGC REQUEST Remote resource %s",srvParam->internalAutoResourceLocation.c_str());
       CDFObject * cdfObject =  NULL;
       if(plain == false){
-        cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(srvParam,srvParam->internalAutoResourceLocation.c_str());
+        cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(NULL, srvParam,srvParam->internalAutoResourceLocation.c_str());
       }else{
-        cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(srvParam,srvParam->internalAutoResourceLocation.c_str());
+        cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(NULL, srvParam,srvParam->internalAutoResourceLocation.c_str());
        
       }
       //int status=cdfObject->open(srvParam->internalAutoResourceLocation.c_str());
@@ -277,9 +277,9 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain){
     //CDBDebug("Opening %s",srvParam->internalAutoResourceLocation.c_str());
     CDFObject * cdfObject =  NULL;
     if(plain == false){
-      cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(srvParam,srvParam->internalAutoResourceLocation.c_str());
+      cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(NULL, srvParam,srvParam->internalAutoResourceLocation.c_str());
     }else{
-      cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(srvParam,srvParam->internalAutoResourceLocation.c_str());
+      cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeaderPlain(NULL, srvParam,srvParam->internalAutoResourceLocation.c_str());
      
     }
     //int status=cdfObject->open(srvParam->internalAutoResourceLocation.c_str());

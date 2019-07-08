@@ -266,7 +266,7 @@ int CRequest::setConfigFile(const char *pszConfigFile){
 
             //Open file
             //CDBDebug("Opening file %s",fileList[j].c_str());
-            CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(srvParam,fileList[j].c_str());
+            CDFObject * cdfObject =  CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(NULL, srvParam,fileList[j].c_str());
             if(cdfObject == NULL){CDBError("Unable to read file %s",fileList[j].c_str());throw(__LINE__);}
 
             //std::vector<CT::string> variables;

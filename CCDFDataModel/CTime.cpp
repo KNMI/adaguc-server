@@ -30,6 +30,7 @@
 #include <math.h>
 
 const char *CTime::className="CTime";
+void *CTime::currentInitializedVar = NULL;
 
 std::map <CT::string, CTime*> CTime::CTimeInstances;
 
@@ -71,8 +72,18 @@ CTime * CTime::GetCTimeInstance(CDF::Variable *timeVariable) {
   std::map<CT::string, CTime *>::iterator it = CTimeInstances.find(key);
   if (it != CTimeInstances.end()) {
     ctime = it->second;
+    /* TODO ASK UNITDATA WHY MULTIPLE INSTANCES OF UDUNITS is not allowed */
+    if (currentInitializedVar != timeVariable) {
+        currentInitializedVar = timeVariable;
+        ctime->reset();
+        if(ctime->init(timeVariable)!=0){
+        CDBError("Unable to initialize CTime");
+        return NULL;
+      }
+    }
   } else {
     ctime = new CTime();
+    currentInitializedVar = timeVariable;
     if(ctime->init(timeVariable)!=0){
       CDBError("Unable to initialize CTime");
       return NULL;
@@ -97,10 +108,6 @@ int CTime::CTIME_CALENDARTYPE_360day_MonthsCumul[]={ 0, 30, 60, 90,120,150,180,2
 
 int CTime::CTIME_CALENDARTYPE_365day_Months[]=     { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 int CTime::CTIME_CALENDARTYPE_365day_MonthsCumul[]={ 0, 31, 59, 90,120,151,181,212,243,273,304,334,365};
-// utUnit CTime::dataunits;
-// bool CTime::isInitialized;
-// 
-// int CTime::mode ;
 
 void CTime::safestrcpy(char *s1,const char*s2,size_t size_s1){
   strncpy(s1,s2,size_s1);
@@ -169,7 +176,6 @@ int CTime::init(CDF::Variable *timeVariable){
 }
 
 int CTime::init(const char *units, const char *calendar){
-  CDBDebug("Initializing CTime with %s", units);
   if(isInitialized){
     if(!currentUnit.equals(units)){
       if(mode == CTIME_MODE_360day){
@@ -441,6 +447,10 @@ int CTime::getMonthByDayInYear(int day,int *monthsCumul){
 }
 
 CTime::Date CTime::getDate(double offset){
+  if(!isInitialized) {
+    CDBError("getDate: not initialized");
+    throw CTIME_CONVERSION_ERROR;
+  }
   Date date;
   date.offset=offset;
   
@@ -550,8 +560,10 @@ CTime::Date CTime::getDate(double offset){
   
   if(mode == CTIME_MODE_UTCALENDAR){
     float s;
-    if(utCalendar(date.offset,&dataunits,&date.year,&date.month,&date.day,&date.hour,&date.minute,&s)!=0) {
-      CDBError("OffsetToAdaguc: Internal error: utCalendar");throw CTIME_CONVERSION_ERROR;
+    int status = utCalendar(date.offset,&dataunits,&date.year,&date.month,&date.day,&date.hour,&date.minute,&s);
+    if(status!=0) {
+//       CDBError("dataunits: %d", dataunits);
+      CDBError("OffsetToAdaguc: Internal error: utCalendar, status = [%d]", status);throw CTIME_CONVERSION_ERROR;
     }
     date.second = s;
   }

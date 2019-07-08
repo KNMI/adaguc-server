@@ -496,7 +496,7 @@ int CAutoConfigure::justLoadAFileHeader(CDataSource *dataSource){
   //Open a file
   try{
     CDBDebug("Loading header [%s]",foundFileName.c_str());
-    CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource->srvParams,foundFileName.c_str());
+    CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams,foundFileName.c_str());
     if(cdfObject == NULL)throw(__LINE__);
 
 

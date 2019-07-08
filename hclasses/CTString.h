@@ -493,7 +493,7 @@ namespace CT{
     /** 
     * Test whether string is empty or not
     */
-    bool empty();
+    const bool empty();
     
     /**
      * Returns posix basename of path
