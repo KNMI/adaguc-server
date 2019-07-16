@@ -368,14 +368,20 @@ bool CServerParams::checkResolvePath(const char *path,CT::string *resolvedPath){
     if(checkIfPathHasValidTokens(path)==false)return false;
     
     for(size_t d=0;d<cfg->AutoResource[0]->Dir.size();d++){
-      const char *baseDir =cfg->AutoResource[0]->Dir[d]->attr.basedir.c_str();
+      const char *_baseDir =cfg->AutoResource[0]->Dir[d]->attr.basedir.c_str();
       const char *dirPrefix=cfg->AutoResource[0]->Dir[d]->attr.prefix.c_str();
+
+      char baseDir[PATH_MAX];
+      if(realpath(_baseDir,baseDir)==NULL){
+        CDBError("Skipping AutoResource[0]->Dir[%d]->basedir: Configured value is not a valid realpath", d);
+        continue;
+      }
       
       if(baseDir!=NULL&&dirPrefix!=NULL){
         //Prepend the prefix to make the absolute path
         CT::string pathToCheck;
         pathToCheck.print("%s/%s",dirPrefix,path);
-        
+        CDBDebug("Checking %s", pathToCheck.c_str());
         //Make a realpath
         char szResolvedPath[PATH_MAX];
         if(realpath(pathToCheck.c_str(),szResolvedPath)==NULL){
@@ -384,6 +390,8 @@ bool CServerParams::checkResolvePath(const char *path,CT::string *resolvedPath){
         }else{
           //Check if the resolved path is within the basedir
           //CDBDebug("basedir='%s', prefix='%s', inputpath='%s', absolutepath='%s'",baseDir,dirPrefix,path,pathToCheck.c_str());
+          CDBDebug("szResolvedPath: %s", szResolvedPath);
+          CDBDebug("baseDir       : %s", baseDir);
           CT::string resolvedPathStr=szResolvedPath;
           if(resolvedPathStr.indexOf(baseDir)==0){
             resolvedPath->copy(szResolvedPath);

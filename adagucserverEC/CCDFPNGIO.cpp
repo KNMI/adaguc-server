@@ -73,10 +73,47 @@ int CDFPNGReader::open(const char *fileName){
     fileBaseName.copy(fileName);
   }
   
-  if (!((strlen(fileName)>4)||(strcmp("json",fileName+strlen(fileName-4))==0))){
-    return 1;
+
+  try{
+    CT::string infoFile = fileName;
+    infoFile.concat(".info");
+    CDBDebug("Trying info file %s", infoFile.c_str());
+    CT::string infoData=CReadFile::open(infoFile);
+    CDBDebug("Found info file %s", infoData.c_str());
+    CT::StackList<CT::string> lines = infoData.splitToStack("\n");
+    CDBDebug("Numlines %d", lines.size());
+    CDF::Variable * CRS = cdfObject->getVariableNE("crs");
+
+    if (CRS == NULL) {
+      CRS = cdfObject->addVariable(new CDF::Variable("crs",CDF_UINT,NULL,0, false));
+    }
+    for (size_t l = 0; l < lines.size(); l++) {
+      CDBDebug("line %s", lines[l].c_str());
+      if (lines[l].startsWith("proj4_params=")) {
+        CT::string proj4Params = lines[l];
+        proj4Params.substringSelf(13, -1);
+        CDBDebug("proj4params=%s", proj4Params.c_str());        
+        CRS->setAttributeText("proj4", proj4Params.c_str());
+      }
+      if (lines[l].startsWith("bbox=")) {
+        CT::string bbox = lines[l];
+        bbox.substringSelf(5, -1);
+        CT::StackList<CT::string> bboxItems = bbox.splitToStack(",");
+        if (bboxItems.size() == 4) {
+          double d[4];
+          d[0] = bboxItems[0].trim().toDouble();
+          d[1] = bboxItems[1].trim().toDouble();
+          d[2] = bboxItems[2].trim().toDouble();
+          d[3] = bboxItems[3].trim().toDouble();
+          CRS->setAttribute("bbox", CDF_DOUBLE, d, 4);
+        }
+        
+      }
+    
+    } 
+  }catch(int e){
+    CDBDebug("No .info file present for PNG (%d)", e);
   }
-  CT::string jsonData=CReadFile::open(fileName);
   
   if(isSlippyMapFormat == true){
     rasterWidth=256;
@@ -119,6 +156,7 @@ int CDFPNGReader::open(const char *fileName){
   
   PNGData->setAttributeText("ADAGUC_BASENAME",fileBaseName.c_str());
   PNGData->setAttributeText("grid_mapping","crs");
+  PNGData->setAttributeText("standard_name","rgba");
   
   if(isSlippyMapFormat == true){
     CT::string * parts=this->fileName.splitToArray("/");
@@ -202,7 +240,27 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType type){
     }
     delete[] parts;
   }
+  BoundingBox bbox;
+  bbox.west = -180;
+  bbox.north = 90;
+  bbox.east = 180;
+  bbox.south = -90;
+
+  CDF::Variable *CRS = cdfObject->getVariableNE("crs");
+  if (CRS != NULL) {
+    CDF::Attribute *bboxAttr = CRS->getAttributeNE("bbox");
+    if (bboxAttr != NULL) {
+      double bboxData[4];
+      bboxAttr->getData(bboxData, 4);
+      bbox.west = bboxData[0];
+      bbox.north = bboxData[1];
+      bbox.east = bboxData[2];
+      bbox.south = bboxData[3];
+    }
+  }
   
+  
+
   if(var->name.equals("x")){
    
     CDF::Variable *xVar =var;
@@ -212,8 +270,8 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType type){
     
     if(isSingleImageWithCoordinates){
       for(size_t j=0;j<xDim->getSize();j++){
-        float r=(float(j)/float(xDim->getSize())) * 360.0f;
-        ((double*)xVar->data)[j]=(r-180.0f);
+        float r=((float(j)+0.5)/float(xDim->getSize())) * (bbox.east - bbox.west);
+        ((double*)xVar->data)[j]=(r+bbox.west);
       }
     }
     if(isSlippyMapFormat){     
@@ -232,8 +290,9 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType type){
     yVar->allocateData(yDim->getSize());
     if(isSingleImageWithCoordinates){
       for(size_t j=0;j<yDim->getSize();j++){
-        float r=(float(j)/float(yDim->getSize())) * 180.0f;
-        ((double*)yVar->data)[j]=(90.0f-r);
+        float r=((float(j)+0.5)/float(yDim->getSize())) * (bbox.north - bbox.south);
+        //((double*)yVar->data)[j]=(r + bbox.south);
+        ((double*)yVar->data)[j]=(bbox.north - r);
       }
     }
     if(isSlippyMapFormat){
