@@ -827,11 +827,15 @@ int CProj4ToCF::convertCFToProj( CDF::Variable *projectionVariable,CT::string *p
     CREPORT_INFO_NODOC(CT::string("Determined the projection string using the CF conventions: ")+proj4String, CReportMessage::Categories::GENERAL);
   }catch(int e){
     //CDBError("%s\n",CDF::lastErrorMessage.c_str());
-    CREPORT_INFO_NODOC(CT::string("Unsupported projection: ")+projectionVariable->getAttribute("grid_mapping_name")->toString(),
+    try{
+      CREPORT_INFO_NODOC(CT::string("Unsupported projection: ")+projectionVariable->getAttribute("grid_mapping_name")->toString(),
                        CReportMessage::Categories::GENERAL);
+    } catch(int e) {
+      CREPORT_INFO_NODOC(CT::string("Unsupported projection: ")+projectionVariable->name,
+                       CReportMessage::Categories::GENERAL);
+    }
     return CPROJ4TOCF_UNSUPPORTED_PROJECTION;
   }
-
   return 0;
 }
 
