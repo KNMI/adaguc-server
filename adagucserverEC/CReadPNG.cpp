@@ -37,6 +37,8 @@ const char *CReadPNG::className="CReadPNG";
 #define PNG_DEBUG 3
 #include <png.h>
 
+// #define CREADPNG_DEBUG
+
 
 // https://aiddata.rvo.nl/projects
 
@@ -146,9 +148,11 @@ CReadPNG::CPNGRaster * CReadPNG::read_png_file(const char* file_name, bool pngRe
     png_get_PLTE(png_ptr, info_ptr, &palette, &num_palette);
   }
   
-#ifdef CREADPNG_DEBUG  
-  CDBDebug("pngRaster->data already defined, return");
-#endif  
+  if (pngRaster->data !=NULL) {
+    CDBDebug("pngRaster->data already defined, return");
+    return pngRaster;
+  }
+
   
   pngRaster->data = new unsigned char[pngRaster->width*pngRaster->height*4];
   for (size_t y=0; y<pngRaster->height; y++){
