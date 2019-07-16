@@ -9,11 +9,14 @@ sudo mkdir -p /data/adaguc-datasets && sudo chown $USER: /data/adaguc-datasets
 ADAGUC_PATH=${THISSCRIPTDIR}/../../
 
 
+
+git clone http://github.com/KNMI/adaguc-services
+
 mkdir -p ${ADAGUC_PATH}/adaguc-services/config
 mkdir -p ${ADAGUC_PATH}/adaguc-services/space
 
 
-git clone http://github.com/KNMI/adaguc-services
+
 
 
 mvn package -f ${ADAGUC_PATH}/adaguc-services
@@ -36,6 +39,7 @@ printf "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\
     <export>ADAGUC_PATH={ENV.ADAGUC_PATH}/</export>\n\
     <export>ADAGUC_DB={ENV.ADAGUC_DB}/</export>\n\
     <export>ADAGUC_CONFIG={ENV.ADAGUC_PATH}/data/config/adaguc.vm.xml</export>\n\
+    <export>ADAGUC_DATARESTRICTION=SHOW_QUERYINFO|ALLOW_WCS|ALLOW_GFI|ALLOW_METADATA</export>\n\
     <export>ADAGUC_FONT={ENV.ADAGUC_PATH}/data/fonts/FreeSans.ttf</export>\n    
   </adaguc-server>\n\
   <autowms>\n\
