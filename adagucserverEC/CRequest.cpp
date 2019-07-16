@@ -842,27 +842,6 @@ int CRequest::setDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
 #ifdef CREQUEST_DEBUG
   CDBDebug("setDimValuesForDataSource");
 #endif
-  //TODO inneficient
-  if(dataSource->cfgLayer->Dimension.size()==0){
-    //This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
-    CDBDebug("setDimValuesForDataSource dataSource->cfgLayer->Dimension.size()==0");
-    std::vector<std::string> fileList;
-    try {
-      fileList= CDBFileScanner::searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter,NULL);
-    }catch(int linenr){
-      CDBError("Could not find any filename");
-      return 1;
-    }
-    if(fileList.size()==0){
-      CDBError("fileList.size()==0");return 1;
-    }
-#ifdef CREQUEST_DEBUG
-    CDBDebug("Addstep");
-#endif
-    dataSource->addStep(fileList[0].c_str(),NULL);
-//     dataSource->getCDFDims()->addDimension("none","0",0);
-    return 0;
-  }
   int status = fillDimValuesForDataSource(dataSource,srvParam);if(status != 0)return status;
   status = queryDimValuesForDataSource(dataSource,srvParam);if(status != 0)return status;
   return 0;
@@ -871,7 +850,7 @@ int CRequest::setDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
 
 int CRequest::fillDimValuesForDataSource(CDataSource *dataSource,CServerParams *srvParam){
 #ifdef CREQUEST_DEBUG
-  StopWatch_Stop("[fillDimValuesForDataSource]");
+  StopWatch_Stop("### [fillDimValuesForDataSource]");
 #endif
   int status = 0;
   try{
@@ -1055,7 +1034,6 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource,CServerParams *
       if(alreadyAdded==false){
         CT::string netCDFDimName(dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
         if (netCDFDimName.equals("none")){
-          dataSource->addStep(dataSource->cfgLayer->FilePath[0]->value.c_str(),NULL);
           continue;
         }
         CT::string tableName;
@@ -1169,9 +1147,12 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource,CServerParams *
     ogcDim->netCDFDimName.copy("none");
   }
 
-//   for(size_t j=0;j<dataSource->requiredDims.size();j++){
-//     CDBDebug("dataSource->requiredDims[%d] = [%s]",j, dataSource->requiredDims[j]->value.c_str());
-//   }
+  #ifdef CREQUEST_DEBUG
+    for(size_t j=0;j<dataSource->requiredDims.size();j++){
+      CDBDebug("dataSource->requiredDims[%d][%s] = [%s] (%s)",j, dataSource->requiredDims[j]->name.c_str(), dataSource->requiredDims[j]->value.c_str(), dataSource->requiredDims[j]->netCDFDimName.c_str());
+    }
+    CDBDebug("### [</fillDimValuesForDataSource>]");
+  #endif
   return 0;
 }
 
@@ -1439,13 +1420,6 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
 
     }else{
       dataSource->queryBBOX = false;
-
-      /* This layer has no dims */
-      if (dataSource->cfgLayer->Dimension.size()==1 && dataSource->cfgLayer->Dimension[0]->attr.name.equals("none")){
-        CDBDebug("Layer has no dimensions");
-        return 0;
-      }
-
 
 /*
       dataSource->queryBBOX = true;

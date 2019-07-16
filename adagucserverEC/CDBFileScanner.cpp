@@ -32,7 +32,7 @@
 #include <set>
 const char *CDBFileScanner::className="CDBFileScanner";
 std::vector <CT::string> CDBFileScanner::tableNamesDone;
-// #define CDBFILESCANNER_DEBUG
+#define CDBFILESCANNER_DEBUG
 #define ISO8601TIME_LEN 32
 
 #define CDBFILESCANNER_TILECREATIONFAILED -100
@@ -71,20 +71,21 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource,int &removeNonE
   #endif
   int status = 0;
   CT::string query;
-  
+  dataSource->headerFileName = (*fileList)[0].c_str();
   
   CDBAdapter * dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
   
   
   CDFObject *cdfObject = NULL;
   try{
-    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource,(*fileList)[0].c_str());
+    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource,dataSource->headerFileName.c_str());
   }catch(int e){
-    CDBError("Unable to get CDFObject for file %s",(*fileList)[0].c_str());
+    CDBError("Unable to get CDFObject for file %s",dataSource->headerFileName.c_str());
     return 1;
   }
 
   if(dataSource->cfgLayer->Dimension.size()==0){
+    
     if(CAutoConfigure::autoConfigureDimensions(dataSource)!=0){
       CREPORT_ERROR_NODOC(CT::string("Unable to configure dimensions automatically"), CReportMessage::Categories::GENERAL);
       return 1;
