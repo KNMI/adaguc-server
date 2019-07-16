@@ -1,7 +1,7 @@
 # TODO display in adaguc-services startup where adaguc is hosted
 
 THISSCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-ADAGUC_PATH=${THISSCRIPTDIR}/../../
+export ADAGUC_PATH=${THISSCRIPTDIR}/../../
 
 export ADAGUC_DB='dbname=adaguc user=adaguc password=adaguc host=localhost'
 export ADAGUC_PORT=8080

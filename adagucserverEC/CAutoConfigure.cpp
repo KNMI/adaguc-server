@@ -150,6 +150,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource){
             #ifdef CAUTOCONFIGURE_DEBUG
             CDBDebug("Creating an empty table, because variable [%s] has only x and y dims",variable->name.c_str());
             #endif
+            CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->storeDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(),dataSource->getLayerName(),"none", "none", "none");
             dataSource->dimsAreAutoConfigured = true;
             return 0;
           }
@@ -470,39 +471,53 @@ int CAutoConfigure::justLoadAFileHeader(CDataSource *dataSource){
 
   CT::string foundFileName;
 
-  foundFileName = dataSource->getFileName();
-  //CDBDebug("Loading header [%s]",fileName);
- /*
-  //TODO TRY to get first one from DB
-  CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getFilesAndIndicesForDimensions(dataSource,1);
-  if(store!=NULL && store->getSize() == 1){
-    CT::string fileNamestr = store->getRecord(0)->get(0)->c_str();
-    CDBDebug("fileName %s",fileNamestr.c_str());
+  /* Use the file specified as header file */
+  foundFileName = dataSource->headerFileName.c_str();
+  if (foundFileName.empty()) {
+ 
+    /* Try to get a file from DB */
+    CDBDebug("Looking up first file");
+    
+    /* ADAGUC-Server database queries don't work if there are no dimensions */
+    bool removeRequiredDims = false;
+    if(dataSource->requiredDims.size()==0){
+      removeRequiredDims = true;
+      CDBDebug("Required dims is still zero, add none now");
+      COGCDims *ogcDim = new COGCDims();
+      dataSource->requiredDims.push_back(ogcDim);
+      ogcDim->name.copy("none");
+      ogcDim->value.copy("0");
+      ogcDim->netCDFDimName.copy("none");
+    }
+    CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getFilesAndIndicesForDimensions(dataSource,1);
+    if(store!=NULL && store->getSize() > 0){
+      CT::string fileNamestr = store->getRecord(0)->get(0)->c_str();
+      CDBDebug("fileName from DB: %s",fileNamestr.c_str());
+      foundFileName = fileNamestr;
+    }
+    delete store;
+
+    /* Restoremodifications to requiredDims*/
+    if (removeRequiredDims) {
+      for (size_t j = 0;j < dataSource->requiredDims.size(); j++) {
+        delete dataSource->requiredDims[j];
+      }
+      dataSource->requiredDims.clear();
+    }
+  
+    /* If still no file found, something is configured in the wrong way */ 
+    if(foundFileName.empty()){
+      CDBError("No files found in the database, did you already update the database?");
+      return 1;
+    }
   }
-  delete store;
-  */
-  if(foundFileName.empty()){
-    //TODO VERY INNEFICIENT
-    std::vector<std::string> fileList;
-    try {
-      fileList = CDBFileScanner::searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter,NULL);
-    }catch(int e){CDBError("Could not find any filename");return 1; }
-    if(fileList.size()==0){CDBError("fileList.size()==0");return 1; }
 
-    foundFileName = fileList[0].c_str();
-  }
-
-
-  //Open a file
+  /* Open a file */
   try{
     CDBDebug("Loading header [%s]",foundFileName.c_str());
     CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams,foundFileName.c_str());
     if(cdfObject == NULL)throw(__LINE__);
-
-
-
-   dataSource->attachCDFObject(cdfObject);
-
+    dataSource->attachCDFObject(cdfObject);
   }catch(int linenr){
     CDBError("Returning from line %d");
     dataSource->detachCDFObject();

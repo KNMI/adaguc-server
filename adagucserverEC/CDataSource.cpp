@@ -424,7 +424,9 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Confi
     dLayerType=CConfigReaderLayerTypeDataBase;//CConfigReaderLayerTypeFile;
   }
   
-  
+  if (!_srvParams->internalAutoResourceLocation.empty()) {
+    headerFileName = _srvParams->internalAutoResourceLocation.c_str();
+  }
  
 
   isConfigured=true;
