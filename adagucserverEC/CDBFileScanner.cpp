@@ -32,7 +32,7 @@
 #include <set>
 const char *CDBFileScanner::className="CDBFileScanner";
 std::vector <CT::string> CDBFileScanner::tableNamesDone;
-#define CDBFILESCANNER_DEBUG
+// #define CDBFILESCANNER_DEBUG
 #define ISO8601TIME_LEN 32
 
 #define CDBFILESCANNER_TILECREATIONFAILED -100
@@ -666,6 +666,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
                   
                   if(requiresProjectionInfo){
                     CDataReader reader;
+                    reader.enableReporting(false);
                     dataSource->addStep((*fileList)[j].c_str(),NULL);
                     reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
 //                      CDBDebug("---> CRS:  [%s]",dataSource->nativeProj4.c_str());
@@ -1145,6 +1146,7 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
   }
 
   CDataReader *reader = new CDataReader();;
+  reader->enableReporting(false);
   dataSource->addStep(fileList[0].c_str(),NULL);
   reader->open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
   delete reader;
@@ -1356,7 +1358,9 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
           if(minlevel<=1)minlevel=1;
         }
         int maxlevel            = ts->attr.maxlevel.toInt();
-        for(int level = minlevel;level<maxlevel+1;level++){
+        // for(int level = minlevel;level<maxlevel+1;level++){
+        for(int level = maxlevel;level>=minlevel;level--){  
+
           int numFound = 0;
           int numCreated = 0;
         
@@ -1387,14 +1391,6 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
                 return 1;
               }
               ds.requiredDims[dd]->value = dataSource->requiredDims[dd]->value;
-                
-//               for(size_t j=0;j<dataSource->requiredDims.size();j++){
-//                 //for(size_t ddd=0;ddd<dataSource->requiredDims[dd]->uniqueValues.size();ddd++){
-//                   dataSource->requiredDims[j]->currentValue = dataSource->requiredDims[j]->uniqueValues[ddd].c_str();
-// //                   ds.addStep("",NULL);
-// //                   ds.getCDFDims()->addDimension(dataSource->requiredDims[j]->netCDFDimName.c_str(), dataSource->requiredDims[j]->currentValue.c_str() , dataSource->requiredDims[j]->currentIndex);
-//                 //}
-//               }
               
               CT::string fileNameToWrite = ts->attr.tilepath.c_str(); 
               CT::string prefix = "";
@@ -1437,15 +1433,18 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
               
                 try{
                 
-            
-                
-                  ds.queryLevel=level-1;
-                  ds.queryBBOX=1;
-                  
-                  //bool dimensionLess= false;
-                
-                  store = dbAdapter->getFilesAndIndicesForDimensions(&ds,3000);
-                  
+                  bool baseOnRootDataFile = true;
+                 
+                  // ds.queryLevel=level-1;
+                  if(baseOnRootDataFile){
+                    ds.queryBBOX=0;
+                    ds.queryLevel = 1;//TODO MAKE CONFIGURABLE
+                    store = dbAdapter->getFilesAndIndicesForDimensions(dataSource,1);
+                  }else{
+                    ds.queryBBOX=1;
+                    ds.queryLevel=level-1;
+                    store = dbAdapter->getFilesAndIndicesForDimensions(&ds,3000);
+                  }
                   
                   if(store!=NULL){
                     #ifdef CDBFILESCANNER_DEBUG
@@ -1523,11 +1522,11 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
                           }
                           
 
-                          //if(verbose)
-                          {
-                            CDBDebug("Checking tile for [%f,%f,%f,%f] with WH [%d,%d]",dfMinX,dfMinY,dfMaxX,dfMaxY,newSrvParams.Geo->dWidth,newSrvParams.Geo->dHeight);
-                          }
+                          
+                          
+                          
                           #ifdef CDBFILESCANNER_DEBUG
+                            CDBDebug("Checking tile for [%f,%f,%f,%f] with WH [%d,%d]",dfMinX,dfMinY,dfMaxX,dfMaxY,newSrvParams.Geo->dWidth,newSrvParams.Geo->dHeight);
                           CDBDebug("wcswriter init");
                           #endif
                           status = wcsWriter->init(&newSrvParams,&ds,ds.getNumTimeSteps());if(status!=0){throw(__LINE__);};
@@ -1561,15 +1560,18 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
                             status = 0;
                           }
                   
-                          
-                          for(size_t d=0;d<dataSources.size();d++){
-                            for(size_t k=0;k<(size_t)dataSources[d]->getNumTimeSteps();k++){
-                              dataSources[d]->setTimeStep(k);
-                              if(dataSources[d]->queryLevel!=0){
-                                CDFObjectStore::getCDFObjectStore()->deleteCDFObject(dataSources[d]->getFileName());
+                          if(!baseOnRootDataFile) {
+                            for(size_t d=0;d<dataSources.size();d++){
+                              for(size_t k=0;k<(size_t)dataSources[d]->getNumTimeSteps();k++){
+                                dataSources[d]->setTimeStep(k);
+                                if(dataSources[d]->queryLevel!=0){
+                                  /* Remove from the cache the datasources we just read from  */
+                                  CDFObjectStore::getCDFObjectStore()->deleteCDFObject(dataSources[d]->getFileName());
+                                }
                               }
                             }
                           }
+                          /* Remove the datasource from the cache we just wrote */
                           CDFObjectStore::getCDFObjectStore()->deleteCDFObject(fileNameToWrite.c_str());
                           
                           #ifdef CDBFILESCANNER_DEBUG

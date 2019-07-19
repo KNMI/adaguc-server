@@ -34,7 +34,7 @@ const char *CDFPNGReader::className="PNGReader";
 #include <string.h>
 #include <stdarg.h>
 
-
+// #define CCDFPNGIO_DEBUG
 
 int CDFPNGReader::open(const char *fileName){
 
@@ -303,17 +303,24 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType type){
     }
   }
   if(var->name.equals("pngdata")){
-    if(pngRaster !=NULL){
-      CDBDebug("Warning: rereading pngdata");
-      delete pngRaster;
-    }
-    pngRaster= CReadPNG::read_png_file(this->fileName.c_str(),false);  
-    var->allocateData(rasterWidth*rasterHeight);
-    for(size_t y=0;y<rasterHeight;y++){
-      for(size_t x=0;x<rasterWidth;x++){
-        size_t j=x+y*rasterWidth;
-        ((unsigned int*)var->data)[x+y*rasterWidth]=pngRaster->data[j*4+0]+pngRaster->data[j*4+1]*256+pngRaster->data[j*4+2]*256*256+pngRaster->data[j*4+3]*(256*256*256);
+    if (var->data != NULL) {
+      CDBDebug("Warning: reusing pngdata variable");
+    } else {
+      if(pngRaster !=NULL && pngRaster->data){
+        CDBDebug("Info: reusing pngdata");
+        // delete pngRaster;
+      } else {
+        pngRaster= CReadPNG::read_png_file(this->fileName.c_str(),false);  
       }
+      var->allocateData(rasterWidth*rasterHeight);
+      for(size_t y=0;y<rasterHeight;y++){
+        for(size_t x=0;x<rasterWidth;x++){
+          size_t j=x+y*rasterWidth;
+          ((unsigned int*)var->data)[x+y*rasterWidth]=pngRaster->data[j*4+0]+pngRaster->data[j*4+1]*256+pngRaster->data[j*4+2]*256*256+pngRaster->data[j*4+3]*(256*256*256);
+          // ((unsigned int*)var->data)[x+y*rasterWidth] = 255*256*256 + 255*(256*256*256);
+        }
+      }
+      CDBDebug("Info: pngdata read");
     }
   }
   return 0;
@@ -331,22 +338,43 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var,CDFType type,size_t *star
     requestedSize*=count[j];
   }
   var->allocateData(requestedSize);
+
+
+  if(var->name.equals("x") || var->name.equals("y")){
+    CDF::Variable *dummyVar = new CDF::Variable();
+    dummyVar->name=var->name;
+    dummyVar->setType(type);
+    dummyVar->setParentCDFObject(var->getParentCDFObject());
+    this->_readVariableData(dummyVar, type);
+    for(size_t j=0;j<count[0];j++){
+      size_t i = j + start[0];
+      if (i<dummyVar->getSize()) {
+        ((double*)var->data)[j] = ((double*)dummyVar->data)[i];
+      }
+    }
+    
+    delete dummyVar;
+  }
   
   if(var->name.equals("pngdata")){
-    if(pngRaster !=NULL){
-      CDBError("Warning: rereading pngdata");
-      delete pngRaster;
+    if(pngRaster !=NULL && pngRaster->data){
+      CDBDebug("Info: reusing pngdata with start/count");
+    } else {
+      pngRaster= CReadPNG::read_png_file(this->fileName.c_str(),false);  
     }
-    pngRaster= CReadPNG::read_png_file(this->fileName.c_str(),false);
     if(pngRaster == NULL){
       CDBError("Unable to open PNG check logs");
       return 1;
     }
-    
-    for(size_t y=0;y<count[1];y++){
-      for(size_t x=0;x<count[0];x++){
-        size_t j=(x+count[0])+(y+count[1])*rasterWidth;
-        ((unsigned int*)var->data)[x+y*count[0]]=pngRaster->data[j*4+0]+pngRaster->data[j*4+1]*256+pngRaster->data[j*4+2]*256*256+pngRaster->data[j*4+3]*(256*256*256);
+    // CDBDebug("READ: %d\t%d\t%d\t%d\t%d\t%d", start[0], start[1], count[0], count[1],rasterWidth, rasterHeight);
+    for(size_t y=0;y<count[0];y++){
+      for(size_t x=0;x<count[1];x++){
+        size_t sourceX = x+start[1];
+        size_t sourceY = y+start[0];
+        if (sourceX < rasterWidth && sourceY< rasterHeight) {
+          size_t j=(sourceX)+(sourceY)*rasterWidth;
+          ((unsigned int*)var->data)[x+y*count[1]]=pngRaster->data[j*4+0]+pngRaster->data[j*4+1]*256+pngRaster->data[j*4+2]*256*256+pngRaster->data[j*4+3]*(256*256*256);
+        }
       }
     }
   }

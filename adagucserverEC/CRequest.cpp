@@ -1139,7 +1139,6 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource,CServerParams *
 
 
   if(dataSource->requiredDims.size()==0){
-    CDBDebug("Required dims is still zero, add none now");
     COGCDims *ogcDim = new COGCDims();
     dataSource->requiredDims.push_back(ogcDim);
     ogcDim->name.copy("none");
@@ -1348,8 +1347,12 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
           //break;
         }
       }
-      //if(dataSource->queryLevel>0)dataSource->queryLevel--;
 
+
+      CDBDebug("dataSource->queryLevel%d", dataSource->queryLevel);
+      // if(dataSource->queryLevel < minlevel ) {
+      //   dataSource->queryLevel = minlevel ;
+      // }
 
 
 
@@ -1386,10 +1389,15 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
       }
 
       if(store->getSize() == 0){
+        CDBDebug("Found no tiles, trying level %d", maxlevel);
         delete store;
-        dataSource->queryLevel=1;
+        dataSource->queryLevel=maxlevel;
+        dataSource->nativeViewPortBBOX[0]=-2000000;
+        dataSource->nativeViewPortBBOX[1]=-2000000;
+        dataSource->nativeViewPortBBOX[2]=2000000;
+        dataSource->nativeViewPortBBOX[3]=2000000;
         dataSource->queryBBOX=true;
-        store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource,maxTilesInImage);
+        store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource,1);
         if(store == NULL){
           CDBError("Unable to query bbox for tiles");
           return 1;
@@ -2983,15 +2991,15 @@ int CRequest::process_querystring(){
         // Set format
         //CDBDebug("FORMAT: %s",srvParam->Format.c_str());
         //srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8;
-
-        if(srvParam->Format.indexOf("32")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG32;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
-        else if(srvParam->Format.indexOf("24")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG24;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
-        else if(srvParam->Format.indexOf("8bit_noalpha")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8_NOALPHA;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
-        else if(srvParam->Format.indexOf("png8_noalpha")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8_NOALPHA;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
-        else if(srvParam->Format.indexOf("8")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
-        else if(srvParam->Format.indexOf("webp")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEWEBP;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
-        else if(srvParam->Format.indexOf("gif")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEGIF;srvParam->imageMode=SERVERIMAGEMODE_8BIT;}
-        else if(srvParam->Format.indexOf("GIF")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEGIF;srvParam->imageMode=SERVERIMAGEMODE_8BIT;}
+        CT::string outputFormat = srvParam->Format;
+        if(outputFormat.indexOf("32")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG32;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
+        else if(outputFormat.indexOf("24")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG24;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
+        else if(outputFormat.indexOf("8bit_noalpha")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8_NOALPHA;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
+        else if(outputFormat.indexOf("png8_noalpha")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8_NOALPHA;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
+        else if(outputFormat.indexOf("8")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
+        else if(outputFormat.indexOf("webp")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEWEBP;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
+        else if(outputFormat.indexOf("gif")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEGIF;srvParam->imageMode=SERVERIMAGEMODE_8BIT;}
+        else if(outputFormat.indexOf("GIF")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEGIF;srvParam->imageMode=SERVERIMAGEMODE_8BIT;}
 
       }
     }
