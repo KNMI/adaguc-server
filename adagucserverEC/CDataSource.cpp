@@ -1234,7 +1234,6 @@ void CDataSource::calculateScaleAndOffsetFromMinMax(float &scale, float &offset,
 
 CStyleConfiguration *CDataSource::getStyle(){
   if(_currentStyle == NULL){
-    CDBDebug("_currentStyle == NULL");
     if(_styles == NULL){
       _styles = getStyleListForDataSource(this);
     }

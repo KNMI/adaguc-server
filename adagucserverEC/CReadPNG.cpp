@@ -27,6 +27,7 @@
 
 
 const char *CReadPNG::className="CReadPNG";
+const char *CReadPNG::CPNGRaster::className="CPNGRaster";
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -43,7 +44,7 @@ const char *CReadPNG::className="CReadPNG";
 // https://aiddata.rvo.nl/projects
 
 CReadPNG::CPNGRaster * CReadPNG::read_png_file(const char* file_name, bool pngReadHeaderOnly) {
-  CDBDebug("CReadPNG::open");
+  CDBDebug("CReadPNG::open %s", file_name);
   png_byte color_type;
   png_byte bit_depth;
   
@@ -94,6 +95,7 @@ CReadPNG::CPNGRaster * CReadPNG::read_png_file(const char* file_name, bool pngRe
   
   pngRaster->width = png_get_image_width(png_ptr, info_ptr);
   pngRaster->height = png_get_image_height(png_ptr, info_ptr);
+  CDBDebug("CReadPNG::open PNG of size [%dx%d]", pngRaster->width, pngRaster->height );
   color_type = png_get_color_type(png_ptr, info_ptr);
   bit_depth = png_get_bit_depth(png_ptr, info_ptr);
   
