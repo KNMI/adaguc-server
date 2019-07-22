@@ -327,3 +327,20 @@ class TestWMS(unittest.TestCase):
                             foundErrors.append(error)
         logfile.close()
         self.assertEqual(len(expectedErrors), len(foundErrors))
+
+
+    def test_WMSGetMap_worldmap_latlon_PNGFile_withoutinfofile(self):
+        AdagucTestTools().cleanTempDir()
+        filename="test_WMSGetMap_worldmap_latlon_PNGFile_withoutinfofile.png"
+        status,data,headers = AdagucTestTools().runADAGUCServer("source=worldmap_latlon.png&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=pngdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=rgba%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&", env = self.env)
+        AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+
+    def test_WMSGetMap_worldmap_mercator_PNGFile_withinfofile(self):
+        AdagucTestTools().cleanTempDir()
+        filename="test_WMSGetMap_worldmap_mercator_PNGFile_withinfofile.png"
+        status,data,headers = AdagucTestTools().runADAGUCServer("source=worldmap_mercator.png&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=pngdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=rgba%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&", env = self.env)
+        AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))        

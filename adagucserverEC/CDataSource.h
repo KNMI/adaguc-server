@@ -90,6 +90,7 @@ class CDataSource{
       double value;
   };
   bool dimsAreAutoConfigured;
+  CT::string headerFileName;
 private:
   
   CT::PointerList<CStyleConfiguration*> *_styles;
