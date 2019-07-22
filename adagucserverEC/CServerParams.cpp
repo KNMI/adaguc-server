@@ -381,7 +381,6 @@ bool CServerParams::checkResolvePath(const char *path,CT::string *resolvedPath){
         //Prepend the prefix to make the absolute path
         CT::string pathToCheck;
         pathToCheck.print("%s/%s",dirPrefix,path);
-        CDBDebug("Checking %s", pathToCheck.c_str());
         //Make a realpath
         char szResolvedPath[PATH_MAX];
         if(realpath(pathToCheck.c_str(),szResolvedPath)==NULL){

@@ -666,7 +666,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
                   
                   if(requiresProjectionInfo){
                     CDataReader reader;
-                    reader.enableReporting(false);
+                    // reader.enableReporting(false); //Functional tests fail if set to false
                     dataSource->addStep((*fileList)[j].c_str(),NULL);
                     reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
 //                      CDBDebug("---> CRS:  [%s]",dataSource->nativeProj4.c_str());
@@ -1146,7 +1146,7 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
   }
 
   CDataReader *reader = new CDataReader();;
-  reader->enableReporting(false);
+  // reader->enableReporting(false);
   dataSource->addStep(fileList[0].c_str(),NULL);
   reader->open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
   delete reader;
