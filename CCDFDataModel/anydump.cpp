@@ -92,8 +92,7 @@ int main(int argCount,char **argVars){
         }
         
         
-        CT::string dumpString;
-        CDF::dump(var,&dumpString);
+        CT::string dumpString = CDF::dump(var);
         printf("%s\n",dumpString.c_str());
         
         bool isString = var->getNativeType()==CDF_STRING;
@@ -146,8 +145,11 @@ int main(int argCount,char **argVars){
       
       
       if(cmdType.equals("-h")) {
-        CT::string dumpString;
-        CDF::dump(cdfObject,&dumpString);
+        CT::string dumpString = CDF::dump(cdfObject);
+        printf("%s\n",dumpString.c_str());
+      }
+      if(cmdType.equals("-json")) {
+        CT::string dumpString = CDF::dumpAsJSON(cdfObject);
         printf("%s\n",dumpString.c_str());
       }
       delete cdfReader;cdfReader=NULL;
