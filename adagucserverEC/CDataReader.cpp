@@ -274,7 +274,9 @@ bool CDataReader::copyCRSFromADAGUCProjectionVariable(CDataSource *dataSource, c
     return false;
   }
 
-  CREPORT_INFO_NODOC(CT::string("Retrieving the projection according to the ADAGUC standards from the proj4_params or proj4 attribute: ") + proj4Attr->toString(), CReportMessage::Categories::GENERAL);
+  if (this->_enableReporting) {
+    CREPORT_INFO_NODOC(CT::string("Retrieving the projection according to the ADAGUC standards from the proj4_params or proj4 attribute: ") + proj4Attr->toString(), CReportMessage::Categories::GENERAL);
+  }
   dataSource->nativeProj4.copy(proj4Attr->toString().c_str());
 
   // Copy the EPSG code.
@@ -315,7 +317,9 @@ void CDataReader::copyEPSGCodeFromProjectionVariable(CDataSource *dataSource, co
     dataSource->nativeEPSG.copy((char *) epsgAttr->data);
   } else {
     //Make a projection code based on PROJ4: namespace
-    CREPORT_INFO_NODOC(CT::string("Using projection string to create EPSG code.") + dataSource->nativeProj4, CReportMessage::Categories::GENERAL);
+    if (this->_enableReporting) {
+      CREPORT_INFO_NODOC(CT::string("Using projection string to create EPSG code.") + dataSource->nativeProj4, CReportMessage::Categories::GENERAL);
+    }
     dataSource->nativeEPSG.print("PROJ4:%s", dataSource->nativeProj4.c_str());
     dataSource->nativeEPSG.replaceSelf("\"", "");
     dataSource->nativeEPSG.replaceSelf("\n", "");
@@ -558,19 +562,21 @@ void CDataReader::determineXAndYDimIndices(CDataSource *dataSource, const CDF::V
     dataSource->dimXIndex=dataSource->dNetCDFNumDims-2;
     dataSource->dimYIndex=dataSource->dNetCDFNumDims-1;
 
-
-    CREPORT_WARN_NODOC(CT::string("For variable ") + dataSourceVar->name +
-                                         CT::string(" the dimension on the X position, ") + dimensionXName +
-                                         CT::string(", contains 'y' or 'lat' in its name, and is therefore swapped with the dimension on the Y position, ") + dimensionYName, CReportMessage::Categories::GENERAL);
+    if (this->_enableReporting) {
+      CREPORT_WARN_NODOC(CT::string("For variable ") + dataSourceVar->name +
+                                           CT::string(" the dimension on the X position, ") + dimensionXName +
+                                           CT::string(", contains 'y' or 'lat' in its name, and is therefore swapped with the dimension on the Y position, ") + dimensionYName, CReportMessage::Categories::GENERAL);
+    }
   }
 
   CDF::Dimension *dimX=dataSourceVar->dimensionlinks[dataSource->dimXIndex];
   CDF::Dimension *dimY=dataSourceVar->dimensionlinks[dataSource->dimYIndex];
-
-  CREPORT_INFO_NODOC(CT::string("Assuming that for variable ") + dataSourceVar->name +
-                                    CT::string(" the x dim equals ") + dimX->name +
-                                    CT::string(" and the y dim equals ") + dimY->name +
-                                    CT::string(" based on their position and name."), CReportMessage::Categories::GENERAL);
+  if (this->_enableReporting) {
+    CREPORT_INFO_NODOC(CT::string("Assuming that for variable ") + dataSourceVar->name +
+                                      CT::string(" the x dim equals ") + dimX->name +
+                                      CT::string(" and the y dim equals ") + dimY->name +
+                                      CT::string(" based on their position and name."), CReportMessage::Categories::GENERAL);
+  }
 }
 
 bool CDataReader::determineXandYVars(CDataSource *dataSource, const CDF::Variable *dataSourceVar, CDFObject *cdfObject) const {
@@ -592,12 +598,12 @@ bool CDataReader::determineXandYVars(CDataSource *dataSource, const CDF::Variabl
         CT::string(" for variable ") + dataSourceVar->name, CReportMessage::Categories::GENERAL);
     return false;
   }
-
-  CREPORT_INFO_NODOC(
-      CT::string("Using variable ") + dataSource->varX->name +
-      CT::string(" as X variable and variable ") + dataSource->varY->name +
-      CT::string(" as Y variable."), CReportMessage::Categories::GENERAL);
-
+  if (this->_enableReporting) {
+    CREPORT_INFO_NODOC(
+        CT::string("Using variable ") + dataSource->varX->name +
+        CT::string(" as X variable and variable ") + dataSource->varY->name +
+        CT::string(" as Y variable."), CReportMessage::Categories::GENERAL);
+  }
   return true;
 }
 
@@ -623,7 +629,9 @@ void CDataReader::determineStride2DMap(CDataSource *dataSource) const {
   }
 
   dataSource->stride2DMap = 1;
-  CREPORT_INFO_NODOC(CT::string("No stride defined in the RenderSettings, using a default stride of 1."), CReportMessage::Categories::GENERAL);
+  if (this->_enableReporting) {
+    CREPORT_INFO_NODOC(CT::string("No stride defined in the RenderSettings, using a default stride of 1."), CReportMessage::Categories::GENERAL);
+  }
   return;
 }
 
@@ -647,7 +655,9 @@ void CDataReader::determineDWidthAndDHeight(CDataSource *dataSource, const bool 
 
   // Check if we need to apply a gridExtent.
   if(mode == CNETCDFREADER_MODE_OPEN_EXTENT && gridExtent != NULL) {
-    CREPORT_INFO_NODOC(CT::string("Determining the width based on the given gridExtent instead of dimension lengths."), CReportMessage::Categories::GENERAL);
+    if (this->_enableReporting) {
+      CREPORT_INFO_NODOC(CT::string("Determining the width based on the given gridExtent instead of dimension lengths."), CReportMessage::Categories::GENERAL);
+    }
     dataSource->dWidth = (gridExtent[2] - gridExtent[0]) / dataSource->stride2DMap;
     dataSource->dHeight = (gridExtent[3] - gridExtent[1]) / dataSource->stride2DMap;
   }
