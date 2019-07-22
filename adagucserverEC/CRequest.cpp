@@ -3349,13 +3349,13 @@ int CRequest::process_querystring(){
 
 
   if(dErrorOccured==0&&srvParam->serviceType==SERVICE_METADATA){
-    if(REQUEST.equals("GETMEDATA"))srvParam->requestType=REQUEST_METADATA_GETMETADATA;
+    if(REQUEST.equals("GETMETADATA"))srvParam->requestType=REQUEST_METADATA_GETMETADATA;
     if (srvParam->autoResourceLocation.empty()) {
       CDBError("No source defined for metadata request");
       dErrorOccured = 1;
     }
     if(dErrorOccured==0&&srvParam->requestType==REQUEST_METADATA_GETMETADATA){
-      return CHandleMetadata().process();
+      return CHandleMetadata().process(srvParam);
     }
   }
   //An error occured, stopping..

@@ -22,10 +22,11 @@
  * limitations under the License.
  * 
  ******************************************************************************/
-
+#include "json_adaguc.h"
 #include "CCDFDataModel.h"
 
-void CDF::_dumpPrintAttributes(const char *variableName, std::vector<CDF::Attribute *>attributes,CT::string *dumpString){
+
+void CDF::_dumpPrintAttributes(const char *variableName, std::vector<CDF::Attribute *>attributes,CT::string *dumpString, int returnType){
   //print attributes:
   for(size_t a=0;a<attributes.size();a++){
     CDF::Attribute *attr=attributes[a];
@@ -61,7 +62,7 @@ void CDF::_dumpPrintAttributes(const char *variableName, std::vector<CDF::Attrib
   }
 }
 
-void CDF::dump(CDF::Variable* cdfVariable,CT::string* dumpString){
+void CDF::_dump(CDF::Variable* cdfVariable,CT::string* dumpString, int returnType){
   char temp[1024];
   char dataTypeName[20];
   CDF::getCDataTypeName(dataTypeName,19,cdfVariable->getNativeType());
@@ -76,16 +77,57 @@ void CDF::dump(CDF::Variable* cdfVariable,CT::string* dumpString){
       dumpString->printconcat(")");
     }
     dumpString->printconcat(" ;\n");
-  _dumpPrintAttributes(cdfVariable->name.c_str(),cdfVariable->attributes,dumpString);
+  _dumpPrintAttributes(cdfVariable->name.c_str(),cdfVariable->attributes, dumpString, returnType);
 }
 
 CT::string CDF::dump(CDFObject* cdfObject){
   CT::string d;
-  dump(cdfObject,&d);
+  _dump(cdfObject, &d, CCDFDATAMODEL_DUMP_STANDARD);
   return d;
 }
 
-void CDF::dump(CDFObject* cdfObject,CT::string* dumpString){
+CT::string CDF::dumpAsJSON(CDFObject* cdfObject){
+  CT::string d;
+  /* List dimensions */
+  json dimensionsJSON;
+  for(size_t j=0;j<cdfObject->dimensions.size();j++){
+    json dimensionJSON;
+    dimensionJSON = {
+      {"length", cdfObject->dimensions[j]->getSize()}
+    };
+    dimensionsJSON[cdfObject->dimensions[j]->name.c_str()] = dimensionJSON;
+  }
+  json resultJSON;
+  resultJSON["dimensions"] = dimensionsJSON;
+  /* List variables */
+  json variablesJSON;
+  for(size_t j=0;j<cdfObject->variables.size();j++){
+    json variableJSON;
+    json variableDimensionsJSON = json::array();
+    for(size_t i=0;i<cdfObject->variables[j]->dimensionlinks.size();i++){
+      variableDimensionsJSON.push_back(cdfObject->variables[j]->dimensionlinks[i]->name.c_str());
+    }
+    json variableAttributesJSON = json::object();
+    for(size_t i=0;i<cdfObject->variables[j]->attributes.size();i++){
+      CDF::Attribute *attr=cdfObject->variables[j]->attributes[i];
+      variableAttributesJSON[attr->name.c_str()] = attr->toString().c_str();
+    }
+    variableJSON["dimensions"]  = variableDimensionsJSON;
+    variableJSON["attributes"] = variableAttributesJSON;
+    variablesJSON[cdfObject->variables[j]->name.c_str()] = variableJSON;
+  }
+  resultJSON["variables"] = variablesJSON;
+  d = resultJSON.dump(2).c_str();
+  return d;
+}
+
+CT::string CDF::dump(CDF::Variable* cdfVariable) {
+  CT::string d;
+  _dump(cdfVariable, &d, CCDFDATAMODEL_DUMP_STANDARD);
+  return d;
+}
+
+void CDF::_dump(CDFObject* cdfObject,CT::string* dumpString, int returnType){
   //print dimensions:
   char temp[1024];
   char dataTypeName[20];
@@ -115,11 +157,12 @@ void CDF::dump(CDFObject* cdfObject,CT::string* dumpString){
       //print attributes:
       _dumpPrintAttributes(cdfObject->variables[j]->name.c_str(),
                            cdfObject->variables[j]->attributes,
-                           dumpString);
+                           dumpString,
+                           returnType);
     }
   }
   //print GLOBAL attributes:
   dumpString->concat("\n// global attributes:\n");
-  _dumpPrintAttributes("",cdfObject->attributes,dumpString);
+  _dumpPrintAttributes("",cdfObject->attributes,dumpString, returnType);
   dumpString->concat("}\n");
 }
