@@ -494,7 +494,6 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   }catch(int e){
     if((CServerParams::checkDataRestriction()&SHOW_QUERYINFO)==false)query.copy("hidden");
     setExceptionType(InvalidDimensionValue);
-    CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
     CDBDebug("Query failed with code %d (%s)",e,query.c_str());
     return NULL;
   }

@@ -1,8 +1,9 @@
 # TODO display in adaguc-services startup where adaguc is hosted
 
 THISSCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-ADAGUC_PATH=${THISSCRIPTDIR}/../../
+export ADAGUC_PATH=`realpath -sm ${THISSCRIPTDIR}/../../`
 
+echo "Using ADAGUC_PATH "${ADAGUC_PATH}
 export ADAGUC_DB='dbname=adaguc user=adaguc password=adaguc host=localhost'
 export ADAGUC_PORT=8080
 export ADAGUC_HOSTNAME=`hostname`
@@ -12,5 +13,5 @@ export ADAGUC_SERVICES_CONFIG=${ADAGUC_PATH}/adaguc-services/config/adaguc-servi
 # Copy a test dataset
 cp ${ADAGUC_PATH}/data/datasets/testdata.nc /data/adaguc-autowms/
 
-nohup java -jar ${ADAGUC_PATH}/adaguc-services/target/adaguc-services-*.jar > adaguc-services.log 2> adaguc-services.log < /dev/null &
+nohup java -jar ${ADAGUC_PATH}/adaguc-services/target/adaguc-services-*.jar > ${ADAGUC_PATH}/adaguc-services.log 2> ${ADAGUC_PATH}/adaguc-services.log < /dev/null &
  
