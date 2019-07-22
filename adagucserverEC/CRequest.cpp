@@ -35,6 +35,7 @@
 #include "CConvertGeoJSON.h"
 #include "CCreateScaleBar.h"
 #include "CSLD.h"
+#include "CHandleMetadata.h"
 const char *CRequest::className="CRequest";
 int CRequest::CGI=0;
 
@@ -2827,6 +2828,7 @@ int CRequest::process_querystring(){
   }
   if(SERVICE.equals("WMS"))srvParam->serviceType=SERVICE_WMS;
   if(SERVICE.equals("WCS"))srvParam->serviceType=SERVICE_WCS;
+  if(SERVICE.equals("METADATA"))srvParam->serviceType=SERVICE_METADATA;
 
   if(dErrorOccured==0&&srvParam->serviceType==SERVICE_WMS){
 #ifdef CREQUEST_DEBUG
@@ -3360,6 +3362,18 @@ int CRequest::process_querystring(){
     }
     if(dErrorOccured==0&&srvParam->requestType==REQUEST_WCS_GETCAPABILITIES){
       return process_wcs_getcap_request();
+    }
+  }
+
+
+  if(dErrorOccured==0&&srvParam->serviceType==SERVICE_METADATA){
+    if(REQUEST.equals("GETMEDATA"))srvParam->requestType=REQUEST_METADATA_GETMETADATA;
+    if (srvParam->autoResourceLocation.empty()) {
+      CDBError("No source defined for metadata request");
+      dErrorOccured = 1;
+    }
+    if(dErrorOccured==0&&srvParam->requestType==REQUEST_METADATA_GETMETADATA){
+      return CHandleMetadata().process();
     }
   }
   //An error occured, stopping..
