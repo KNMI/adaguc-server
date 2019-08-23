@@ -12,6 +12,9 @@ export ADAGUC_SERVICES_CONFIG=${ADAGUC_PATH}/adaguc-services/config/adaguc-servi
 
 # Copy a test dataset
 cp ${ADAGUC_PATH}/data/datasets/testdata.nc /data/adaguc-autowms/
-
+rm ${ADAGUC_PATH}/adaguc-services.log
 nohup java -jar ${ADAGUC_PATH}/adaguc-services/target/adaguc-services-*.jar > ${ADAGUC_PATH}/adaguc-services.log 2> ${ADAGUC_PATH}/adaguc-services.log < /dev/null &
- 
+sleep 3
+cat ${ADAGUC_PATH}/adaguc-services.log
+echo "---"
+echo "Done" 
