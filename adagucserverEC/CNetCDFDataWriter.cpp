@@ -81,6 +81,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int
   CT::string randomString = CServerParams::randomString(32);
   tempFileName.print("%s/%s.nc",srvParam->cfg->TempDir[0]->attr.value.c_str(),randomString.c_str());
   CDataReader reader;
+  // reader.enableReporting(false); // DO not set to false, functional test will fail if set to false
   
   int status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
   if(status!=0){
@@ -453,7 +454,7 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
   for(size_t i=0;i<dataSources.size();i++){
     CDataSource *dataSource = dataSources[i];
     CDataReader reader;
-    
+    reader.enableReporting(verbose);
 //     render
   
      if(verbose){
