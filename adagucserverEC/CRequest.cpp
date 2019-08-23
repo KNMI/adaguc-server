@@ -842,27 +842,6 @@ int CRequest::setDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
 #ifdef CREQUEST_DEBUG
   CDBDebug("setDimValuesForDataSource");
 #endif
-  //TODO inneficient
-  if(dataSource->cfgLayer->Dimension.size()==0){
-    //This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
-    CDBDebug("setDimValuesForDataSource dataSource->cfgLayer->Dimension.size()==0");
-    std::vector<std::string> fileList;
-    try {
-      fileList= CDBFileScanner::searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(),dataSource->cfgLayer->FilePath[0]->attr.filter,NULL);
-    }catch(int linenr){
-      CDBError("Could not find any filename");
-      return 1;
-    }
-    if(fileList.size()==0){
-      CDBError("fileList.size()==0");return 1;
-    }
-#ifdef CREQUEST_DEBUG
-    CDBDebug("Addstep");
-#endif
-    dataSource->addStep(fileList[0].c_str(),NULL);
-//     dataSource->getCDFDims()->addDimension("none","0",0);
-    return 0;
-  }
   int status = fillDimValuesForDataSource(dataSource,srvParam);if(status != 0)return status;
   status = queryDimValuesForDataSource(dataSource,srvParam);if(status != 0)return status;
   return 0;
@@ -871,7 +850,7 @@ int CRequest::setDimValuesForDataSource(CDataSource *dataSource,CServerParams *s
 
 int CRequest::fillDimValuesForDataSource(CDataSource *dataSource,CServerParams *srvParam){
 #ifdef CREQUEST_DEBUG
-  StopWatch_Stop("[fillDimValuesForDataSource]");
+  StopWatch_Stop("### [fillDimValuesForDataSource]");
 #endif
   int status = 0;
   try{
@@ -1055,7 +1034,6 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource,CServerParams *
       if(alreadyAdded==false){
         CT::string netCDFDimName(dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
         if (netCDFDimName.equals("none")){
-          dataSource->addStep(dataSource->cfgLayer->FilePath[0]->value.c_str(),NULL);
           continue;
         }
         CT::string tableName;
@@ -1161,7 +1139,6 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource,CServerParams *
 
 
   if(dataSource->requiredDims.size()==0){
-    CDBDebug("Required dims is still zero, add none now");
     COGCDims *ogcDim = new COGCDims();
     dataSource->requiredDims.push_back(ogcDim);
     ogcDim->name.copy("none");
@@ -1169,9 +1146,12 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource,CServerParams *
     ogcDim->netCDFDimName.copy("none");
   }
 
-//   for(size_t j=0;j<dataSource->requiredDims.size();j++){
-//     CDBDebug("dataSource->requiredDims[%d] = [%s]",j, dataSource->requiredDims[j]->value.c_str());
-//   }
+  #ifdef CREQUEST_DEBUG
+    for(size_t j=0;j<dataSource->requiredDims.size();j++){
+      CDBDebug("dataSource->requiredDims[%d][%s] = [%s] (%s)",j, dataSource->requiredDims[j]->name.c_str(), dataSource->requiredDims[j]->value.c_str(), dataSource->requiredDims[j]->netCDFDimName.c_str());
+    }
+    CDBDebug("### [</fillDimValuesForDataSource>]");
+  #endif
   return 0;
 }
 
@@ -1367,8 +1347,12 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
           //break;
         }
       }
-      //if(dataSource->queryLevel>0)dataSource->queryLevel--;
 
+
+      CDBDebug("dataSource->queryLevel%d", dataSource->queryLevel);
+      // if(dataSource->queryLevel < minlevel ) {
+      //   dataSource->queryLevel = minlevel ;
+      // }
 
 
 
@@ -1405,10 +1389,15 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
       }
 
       if(store->getSize() == 0){
+        CDBDebug("Found no tiles, trying level %d", maxlevel);
         delete store;
-        dataSource->queryLevel=1;
+        dataSource->queryLevel=maxlevel;
+        dataSource->nativeViewPortBBOX[0]=-2000000;
+        dataSource->nativeViewPortBBOX[1]=-2000000;
+        dataSource->nativeViewPortBBOX[2]=2000000;
+        dataSource->nativeViewPortBBOX[3]=2000000;
         dataSource->queryBBOX=true;
-        store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource,maxTilesInImage);
+        store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource,1);
         if(store == NULL){
           CDBError("Unable to query bbox for tiles");
           return 1;
@@ -1439,13 +1428,6 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
 
     }else{
       dataSource->queryBBOX = false;
-
-      /* This layer has no dims */
-      if (dataSource->cfgLayer->Dimension.size()==1 && dataSource->cfgLayer->Dimension[0]->attr.name.equals("none")){
-        CDBDebug("Layer has no dimensions");
-        return 0;
-      }
-
 
 /*
       dataSource->queryBBOX = true;
@@ -3009,15 +2991,15 @@ int CRequest::process_querystring(){
         // Set format
         //CDBDebug("FORMAT: %s",srvParam->Format.c_str());
         //srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8;
-
-        if(srvParam->Format.indexOf("32")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG32;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
-        else if(srvParam->Format.indexOf("24")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG24;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
-        else if(srvParam->Format.indexOf("8bit_noalpha")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8_NOALPHA;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
-        else if(srvParam->Format.indexOf("png8_noalpha")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8_NOALPHA;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
-        else if(srvParam->Format.indexOf("8")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
-        else if(srvParam->Format.indexOf("webp")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEWEBP;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
-        else if(srvParam->Format.indexOf("gif")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEGIF;srvParam->imageMode=SERVERIMAGEMODE_8BIT;}
-        else if(srvParam->Format.indexOf("GIF")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEGIF;srvParam->imageMode=SERVERIMAGEMODE_8BIT;}
+        CT::string outputFormat = srvParam->Format;
+        if(outputFormat.indexOf("32")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG32;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
+        else if(outputFormat.indexOf("24")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG24;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
+        else if(outputFormat.indexOf("8bit_noalpha")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8_NOALPHA;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
+        else if(outputFormat.indexOf("png8_noalpha")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8_NOALPHA;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
+        else if(outputFormat.indexOf("8")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
+        else if(outputFormat.indexOf("webp")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEWEBP;srvParam->imageMode=SERVERIMAGEMODE_RGBA;}
+        else if(outputFormat.indexOf("gif")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEGIF;srvParam->imageMode=SERVERIMAGEMODE_8BIT;}
+        else if(outputFormat.indexOf("GIF")>0){srvParam->imageFormat=IMAGEFORMAT_IMAGEGIF;srvParam->imageMode=SERVERIMAGEMODE_8BIT;}
 
       }
     }
