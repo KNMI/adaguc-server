@@ -47,6 +47,7 @@ COPY . /adaguc/adaguc-server-master
 # RUN tar -xzvf adaguc-server-master.tar.gz
 
 WORKDIR /adaguc/adaguc-server-master
+
 RUN bash compile.sh
 
 ######### Second stage (production) ############
