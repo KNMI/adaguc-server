@@ -24,6 +24,7 @@
  ******************************************************************************/
 #include "json_adaguc.h"
 #include "CCDFDataModel.h"
+#include "CCDFNetCDFIO.h"
 
 
 void CDF::_dumpPrintAttributes(const char *variableName, std::vector<CDF::Attribute *>attributes,CT::string *dumpString, int returnType){
@@ -86,6 +87,23 @@ CT::string CDF::dump(CDFObject* cdfObject){
   return d;
 }
 
+json convertCDFVariableToJSON(CDF::Variable *variable) {
+  json variableJSON;
+  json variableDimensionsJSON = json::array();
+  for(size_t i=0;i<variable->dimensionlinks.size();i++){
+    variableDimensionsJSON.push_back(variable->dimensionlinks[i]->name.c_str());
+  }
+  json variableAttributesJSON = json::object();
+  for(size_t i=0;i<variable->attributes.size();i++){
+    CDF::Attribute *attr=variable->attributes[i];
+    variableAttributesJSON[attr->name.c_str()] = attr->toString().c_str();
+  }
+  variableJSON["dimensions"]  = variableDimensionsJSON;
+  variableJSON["attributes"] = variableAttributesJSON;
+  variableJSON["type"] = CDFNetCDFWriter::NCtypeConversionToString(variable->getNativeType()).c_str();
+  return variableJSON;
+}
+
 CT::string CDF::dumpAsJSON(CDFObject* cdfObject){
   CT::string d;
   /* List dimensions */
@@ -102,19 +120,9 @@ CT::string CDF::dumpAsJSON(CDFObject* cdfObject){
   /* List variables */
   json variablesJSON;
   for(size_t j=0;j<cdfObject->variables.size();j++){
-    json variableJSON;
-    json variableDimensionsJSON = json::array();
-    for(size_t i=0;i<cdfObject->variables[j]->dimensionlinks.size();i++){
-      variableDimensionsJSON.push_back(cdfObject->variables[j]->dimensionlinks[i]->name.c_str());
-    }
-    json variableAttributesJSON = json::object();
-    for(size_t i=0;i<cdfObject->variables[j]->attributes.size();i++){
-      CDF::Attribute *attr=cdfObject->variables[j]->attributes[i];
-      variableAttributesJSON[attr->name.c_str()] = attr->toString().c_str();
-    }
-    variableJSON["dimensions"]  = variableDimensionsJSON;
-    variableJSON["attributes"] = variableAttributesJSON;
-    variablesJSON[cdfObject->variables[j]->name.c_str()] = variableJSON;
+    CDF::Variable *variable = cdfObject->variables[j];
+    variablesJSON[variable->name.c_str()] = convertCDFVariableToJSON(variable);
+    variablesJSON["nc_global"] = convertCDFVariableToJSON(cdfObject);
   }
   resultJSON["variables"] = variablesJSON;
   d = resultJSON.dump(2).c_str();
