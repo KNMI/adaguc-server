@@ -23,8 +23,7 @@ int main(int argCount,char **argVars){
       cdfObject->attachCDFReader(geoJSONReader);
       status = geoJSONReader->open(inputfile);
       if(status != 0){CDBError("Unable to read file %s",inputfile);throw(__LINE__);}
-      CT::string dumpString;
-      CDF::dump(cdfObject,&dumpString);
+      CT::string dumpString = CDF::dump(cdfObject);
       printf("%s\n",dumpString.c_str());
       delete geoJSONReader;geoJSONReader=NULL;
       delete cdfObject;cdfObject=NULL;
