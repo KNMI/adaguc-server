@@ -42,6 +42,7 @@
 //Service options
 #define SERVICE_WMS                       1
 #define SERVICE_WCS                       2
+#define SERVICE_METADATA                  3
 
 //Request options
 #define REQUEST_WMS_GETCAPABILITIES       1
@@ -57,6 +58,7 @@
 #define REQUEST_WMS_GETREFERENCETIMES     11
 #define REQUEST_WMS_GETHISTOGRAM          12
 #define REQUEST_WMS_GETSCALEBAR           13
+#define REQUEST_METADATA_GETMETADATA      14
 #define REQUEST_UPDATEDB                  100
 
 //Legend

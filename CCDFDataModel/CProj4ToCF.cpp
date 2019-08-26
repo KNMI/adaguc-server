@@ -365,7 +365,7 @@ int CProj4ToCF::convertBackAndFort(const char *projString,CDF::Variable *project
   }
 
   CT::string dumpString = "";
-  CDF::dump(projectionVariable,&dumpString);
+  CDF::_dump(projectionVariable, &dumpString, CCDFDATAMODEL_DUMP_STANDARD);
   CDBDebug("\n%s",dumpString.c_str());
   
   CT::string projCTString;
