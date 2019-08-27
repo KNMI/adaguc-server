@@ -458,7 +458,7 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
                             //012345678901234
       strncpy(pszADAGUCTime, "20000101T000000", 15);
         
-      snprintf(szMonth,3,"%02d\n",M);
+      snprintf(szMonth,3,"%02d",M);
       strncpy(pszADAGUCTime,pszRadarTime+7,4);
       strncpy(pszADAGUCTime+4,szMonth,2);
       strncpy(pszADAGUCTime+6,pszRadarTime,2);

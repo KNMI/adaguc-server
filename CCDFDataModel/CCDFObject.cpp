@@ -119,6 +119,45 @@ void CDFObject::putNCMLAttributes(void* _a_node){
             }
           }
         }
+        //Dimension elements
+        if(strncmp("dimension",(char*)cur_node->name,8)==0){
+          NCMLVarName=NULL;
+          if(cur_node->properties->name!=NULL){
+            if(cur_node->properties->children->content!=NULL){
+              xmlAttr*node=cur_node->properties;
+              char * pszOrgName=NULL,*pszName=NULL,*pszType=NULL;
+              while(node!=NULL){
+                if(strncmp("name",(char*)node->name,4)==0)
+                  pszName=(char*)node->children->content;
+                if(strncmp("orgName",(char*)node->name,7)==0)
+                  pszOrgName=(char*)node->children->content;
+                if(strncmp("type",(char*)node->name,4)==0)
+                  pszType=(char*)node->children->content;
+                node=node->next;
+              }
+              //Rename a dimension
+              if(pszOrgName!=NULL&&pszName!=NULL){
+                try{
+                  CDF::Dimension *dim= getDimension(pszOrgName);
+                  dim->name.copy(pszName);
+                }catch(...){}
+              }
+              if(pszName!=NULL){
+                NCMLVarName=pszName;
+                CDF::Dimension *dim=NULL;
+                try{
+                  dim= getDimension(pszName);
+                }catch(...){
+                  if(pszOrgName==NULL){
+                    dim = new CDF::Dimension();
+                    dim->name.copy(pszName);
+                    addDimension(dim);
+                  }
+                }                    
+              }
+            }
+          }
+        }
         //Remove elements
         if(strncmp("remove",(char*)cur_node->name,6)==0){
           if(cur_node->properties->name!=NULL){
@@ -257,6 +296,7 @@ int CDFObject::applyNCMLFile(const char * ncmlFileName){
   // remove a variable with <remove name="..." type="variable"/>
   // remove a attribute with <remove name="..." type="attribute"/>
   // rename a variable with <variable name="LavaFlow" orgName="TDCSO2" />
+  // rename a dimension with <dimension name="time" orgName="TIME" />
   // rename a attribute with <attribute name="LavaFlow" orgName="TDCSO2" />
   int errorRaised=0;
   // Read the XML file and put the attributes into the data model

@@ -9,6 +9,7 @@ from AdagucTests.TestWMSPolylineRenderer import TestWMSPolylineRenderer
 from AdagucTests.TestADAGUCFeatureFunctions import TestADAGUCFeatureFunctions
 from AdagucTests.TestCSV import TestCSV
 from AdagucTests.TestGeoJSON import TestGeoJSON
+from AdagucTests.TestMetadataService import TestMetadataService
 
 testsuites=[];
 testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWMS))
@@ -20,6 +21,7 @@ testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWMSTiling))
 testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestADAGUCFeatureFunctions))
 testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestCSV))
 testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestGeoJSON))
+testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestMetadataService))
 result=unittest.TextTestRunner(verbosity=2).run(unittest.TestSuite(testsuites))
 
 
