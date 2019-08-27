@@ -306,13 +306,11 @@ int CConvertEProfile::convertEProfileHeader( CDFObject *cdfObject,CServerParams 
         ){
           bool added = false;
           if(var->dimensionlinks.size()==2){
-            if(var->dimensionlinks[0]->getSize()>20){
-            if(var->dimensionlinks[1]->getSize()>50){
+            // Check if this is a profile variable which we added.
+            if(var->dimensionlinks[0]->name.equals("time_obs") && var->dimensionlinks[1]->name.equals("range")){
               varsToConvert.add(CT::string(var->name.c_str()));
               added=true;
             }
-            }
-            
           }
           if(added == false){
             var->setAttributeText("ADAGUC_SKIP","true");
