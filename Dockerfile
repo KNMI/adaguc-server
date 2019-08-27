@@ -18,6 +18,7 @@ RUN yum update -y && \
     udunits2 \
     openssl \
     netcdf \
+    libwebp-devel \
     java-1.8.0-openjdk && \
 # building / development packages
     yum install -y centos-release-scl && \
@@ -68,6 +69,7 @@ RUN yum update -y && \
     udunits2 \
     openssl \
     netcdf \
+    libwebp-devel \
     java-1.8.0-openjdk && \
     yum clean all && \
     rm -rf /var/cache/yum

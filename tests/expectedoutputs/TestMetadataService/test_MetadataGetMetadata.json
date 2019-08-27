@@ -1,0 +1,77 @@
+{
+  "dimensions": {
+    "lat": {
+      "length": 308
+    },
+    "lon": {
+      "length": 720
+    },
+    "time": {
+      "length": 1
+    }
+  },
+  "variables": {
+    "lat": {
+      "attributes": {
+        "axis": "Y",
+        "long_name": "latitude",
+        "standard_name": "latitude",
+        "units": "degrees_north"
+      },
+      "dimensions": [
+        "lat"
+      ],
+      "type": "NC_FLOAT"
+    },
+    "lon": {
+      "attributes": {
+        "axis": "X",
+        "long_name": "longitude",
+        "standard_name": "longitude",
+        "units": "degrees_east"
+      },
+      "dimensions": [
+        "lon"
+      ],
+      "type": "NC_FLOAT"
+    },
+    "nc_global": {
+      "attributes": {
+        "NCO": "4.6.7",
+        "description": "Crop areas (status represents about year 2005), crop calendar data and crop mega environments (consistent with climate at about turn of century) in support of Agricultural Climate Indicator calculations",
+        "history": "Thu May  3 16:52:54 2018: ncks -O -v sow_a1 /nobackup/users/neutvd/data/autowms/adaguc-test-data/FAULTY_soybean_2vars_characterictics_05d.nc /nobackup/users/neutvd/data/autowms/adaguc-test-data/FAULTY_soybean_2vars_characterictics_05d_sow_a1.nc\nWed May  2 10:34:28 2018: ncatted -O -a units,time,d,, FAULTY_soybean_2vars_characterictics_05d.nc\nFri Apr 20 07:42:43 2018: ncatted -O -a units,time,o,c,days since 2005-06-30 00:00:00 soybean_2vars_characterictics_05d.nc\nAggregation to 0.5degrees, compilation and netcdf reformatting, (19-Apr-2018): R.W.A. Hutjes, Wageningen University]",
+        "project_id": "Copernicus Climate Change Service: C3S_422_Lot1_WEnR_Global_Agriculture",
+        "source crop area data": "You, L., U. Wood-Sichra, S. Fritz, Z. Guo, L. See, and J. Koo (2017). Spatial Production Allocation Model (SPAM) 2005 v3.2., Retrieved from http://mapspam.info",
+        "source crop calendar data": "Sacks, W.J., D. Deryng, J.A. Foley and N. Ramankutty (2010). Crop planting dates: an analysis of global patterns, Global Ecology and Biogeography 19, 607-620. DOI: 10.1111/j.1466-8238.2010.00551.x.",
+        "source crop mega environments": "Fischer, R. A., Byerlee, D. and Edmeades, G. O. (2014). Crop yields and global food security: will yield increase continue to feed the world?, Canberra: Australian Centre for International Agricultural Research, Retrieved from http://aciar.gov.au/publication/mn158"
+      },
+      "dimensions": [],
+      "type": "NC_DOUBLE"
+    },
+    "sow_a1": {
+      "attributes": {
+        "comment": "soybean main season",
+        "long_name": "average sowing/planting date",
+        "standard_name": "sowing_avg",
+        "units": "day of year"
+      },
+      "dimensions": [
+        "time",
+        "lat",
+        "lon"
+      ],
+      "type": "NC_FLOAT"
+    },
+    "time": {
+      "attributes": {
+        "calendar": "standard",
+        "standard_name": "time",
+        "units": "seconds since 1970-01-01 00:00:00"
+      },
+      "dimensions": [
+        "time"
+      ],
+      "type": "NC_FLOAT"
+    }
+  }
+}
