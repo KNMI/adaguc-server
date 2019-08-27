@@ -96,7 +96,9 @@ json convertCDFVariableToJSON(CDF::Variable *variable) {
   json variableAttributesJSON = json::object();
   for(size_t i=0;i<variable->attributes.size();i++){
     CDF::Attribute *attr=variable->attributes[i];
-    variableAttributesJSON[attr->name.c_str()] = attr->toString().c_str();
+    if (!attr->name.equals("_NCProperties")) { /* The NetCDF library sometimes add their own attributes, skip those */
+      variableAttributesJSON[attr->name.c_str()] = attr->toString().c_str();
+    }
   }
   variableJSON["dimensions"]  = variableDimensionsJSON;
   variableJSON["attributes"] = variableAttributesJSON;
