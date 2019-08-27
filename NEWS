@@ -1,3 +1,7 @@
+Version 2.2.1 2019-08-27
+    - adaguc-server has a new feature called getmetadata. It can dump a NetCDF file via the source parameter and return a json document containing the NetCDF metadata
+    - Example: <adaguc host>/wms?source=<URLEncoded opendapURL>&service=metdata&request=getmetadata
+
 Version 2.2.0 2019-06-27
     - adaguc-server docker compose uses decoupled postgres, started as separate container
     - logfiles are embedded in adaguc-services, single stream of logging
