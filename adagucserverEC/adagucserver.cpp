@@ -334,6 +334,8 @@ int main(int argc, char **argv, char **envp){
   CCachedDirReader::free();
   
   CTime::cleanInstances();
+
+  CDFObjectStore::getCDFObjectStore()->clear();
   
   /* Check Tracer for leaks */
   if (NewTrace.Dump() != 0){
