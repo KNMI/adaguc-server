@@ -234,7 +234,7 @@ int CSLD::buildScaleDenominator(CXMLParserElement *element, CServerConfig::XMLE_
     return 0;
   }
 
-  CDBError("Something went wrong building element %s", element->getName());
+  CDBError("Something went wrong building element %s", element->getName().c_str());
   return 1;
 }
 
