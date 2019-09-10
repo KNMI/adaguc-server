@@ -914,6 +914,7 @@ int CDBFileScanner::updatedb( CDataSource *dataSource,CT::string *_tailPath,CT::
   }
 
   //We only need to update the provided path in layerPathToScan. We will simply ignore the other directories
+  CT::string fileToUpdate;
   if(_layerPathToScan!=NULL){
     if(_layerPathToScan->length()!=0){
       CT::string layerPath,layerPathToScan;
@@ -926,10 +927,15 @@ int CDBFileScanner::updatedb( CDataSource *dataSource,CT::string *_tailPath,CT::
       layerPathToScan = CDirReader::makeCleanPath(layerPathToScan.c_str());
       
       //If this is another directory we will simply ignore it.
-      if(layerPath.equals(&layerPathToScan)==false){
-        //CDBDebug ("Skipping %s==%s\n",layerPath.c_str(),layerPathToScan.c_str());
+      if (layerPathToScan.startsWith(layerPath)==false) {
+        CDBDebug ("Skipping %s==%s\n",layerPath.c_str(),layerPathToScan.c_str());
         return 0;
       }
+      fileToUpdate=layerPathToScan;
+//      if(layerPath.equals(&layerPathToScan)==false){
+//        CDBDebug ("Skipping %s==%s\n",layerPath.c_str(),layerPathToScan.c_str());
+//        return 0;
+//      }
     }
   }
   // This variable enables the query to remove files that no longer exist in the filesystem
@@ -945,6 +951,9 @@ int CDBFileScanner::updatedb( CDataSource *dataSource,CT::string *_tailPath,CT::
   
   //if tailpath is defined than removeNonExistingFiles must be zero
   if(tailPath.length()>0)removeNonExistingFiles=0;
+
+  //if layerPathToScan is defined than removeNonExistingFiles must be zero
+  if (fileToUpdate.length()>0) removeNonExistingFiles=0;
   
   if(scanFlags&CDBFILESCANNER_DONTREMOVEDATAFROMDB){
     removeNonExistingFiles = 0;
@@ -964,11 +973,15 @@ int CDBFileScanner::updatedb( CDataSource *dataSource,CT::string *_tailPath,CT::
   
   
   std::vector<std::string> fileList;
+  if (fileToUpdate.length()==0) {
   try{
     fileList = searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(),filter.c_str(),tailPath.c_str());
   }catch(int linenr){
     CDBDebug("Exception in searchFileNames [%s] [%s]", dataSource->cfgLayer->FilePath[0]->value.c_str(),filter.c_str(),tailPath.c_str());
     return 0;
+  }
+  } else {
+    fileList.push_back(fileToUpdate.c_str());
   }
   
   //Include tiles
