@@ -2,7 +2,9 @@
 
 # TODO: https://github.com/KNMI/adaguc-server/issues/71
 
-. adaguc-server-chkconfig.sh
+THISSCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+. ${THISSCRIPTDIR}/adaguc-server-chkconfig.sh
 
 ADAGUC_DATASET='*.xml'
 
