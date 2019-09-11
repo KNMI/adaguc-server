@@ -28,6 +28,7 @@
 #include "CReportWriter.h"
 #include <getopt.h>
 #include "CDebugger_H.h"
+
 extern Tracer NewTrace;
 
 DEF_ERRORMAIN();
@@ -311,7 +312,7 @@ int _main(int argc, char **argv, char **envp){
 
 
 int main(int argc, char **argv, char **envp){
-  
+  /* Check if ADAGUC_LOGFILE is set */
   const char * ADAGUC_LOGFILE=getenv("ADAGUC_LOGFILE");
   if(ADAGUC_LOGFILE!=NULL){
     pLogDebugFile = fopen (ADAGUC_LOGFILE , "a" );
@@ -319,6 +320,8 @@ int main(int argc, char **argv, char **envp){
       fprintf(stderr,"Unable to write ADAGUC_LOGFILE %s\n",ADAGUC_LOGFILE);
     }
   }
+
+  /* Check if we enable logbuffer, true means unbuffered output with live logging but means a slower service */
   const char * ADAGUC_ENABLELOGBUFFER=getenv("ADAGUC_ENABLELOGBUFFER");
   if(ADAGUC_ENABLELOGBUFFER!=NULL){
     CT::string check = ADAGUC_ENABLELOGBUFFER;
@@ -326,6 +329,28 @@ int main(int argc, char **argv, char **envp){
       useLogBuffer = true;
     } 
   }
+
+  /* Check if ADAGUC_PATH is set, if not set it here */
+  const char * ADAGUC_PATH=getenv("ADAGUC_PATH");
+  if(ADAGUC_PATH==NULL) {
+    char str[1024];getcwd(str, 1023); // TODO: maybe CWD is not the best
+    CT::string currentPath = str;
+    currentPath.replaceSelf("/adaguc-server/adagucserverEC", "/adaguc-server/"); /* If we are developing directly in adagucserverEC path, remove the last dir */
+    currentPath.replaceSelf("/adaguc-server/bin", "/adaguc-server/"); /* If we are developing directly in adagucserverEC path, remove the last dir */
+    setenv("ADAGUC_PATH", currentPath.c_str(), currentPath.length());
+    ADAGUC_PATH=getenv("ADAGUC_PATH");
+    CDBDebug("ADAGUC_PATH environment variable is not set, guessing path using CWD: [%s]", ADAGUC_PATH);
+  }
+
+  /* Check if ADAGUC_TMP is set, if not set here */
+  const char * ADAGUC_TMP=getenv("ADAGUC_TMP");
+  if(ADAGUC_TMP==NULL) {
+    setenv("ADAGUC_TMP", "/tmp/", 6);
+     ADAGUC_TMP=getenv("ADAGUC_TMP");
+     CDBDebug("ADAGUC_TMP environment variable is not set, setting to : [%s]", ADAGUC_TMP);
+  }
+
+
   int status = _main(argc,argv, envp);
 
   // Print the check report formatted as JSON.
@@ -334,6 +359,8 @@ int main(int argc, char **argv, char **envp){
   CCachedDirReader::free();
   
   CTime::cleanInstances();
+
+  CDFObjectStore::getCDFObjectStore()->clear();
   
   /* Check Tracer for leaks */
   if (NewTrace.Dump() != 0){
