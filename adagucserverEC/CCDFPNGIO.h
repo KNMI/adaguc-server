@@ -25,12 +25,11 @@
 
 #ifndef CCDFPNGIO_H
 #define CCDFPNGIO_H
-
+#include "CDebugger.h"
 #include "CCDFDataModel.h"
 #include <stdio.h>
 #include <vector>
 #include <iostream>
-#include <hdf5.h>
 #include "CDebugger.h"
 #include "CTime.h"
 #include "CProj4ToCF.h"
@@ -58,12 +57,10 @@ class CDFPNGReader :public CDFReader{
     }
     ~CDFPNGReader(){
 #ifdef CCDFPNGIO_DEBUG            
-      CDBDebug("CCDFPNGIO close");
+      CDBDebug("CCDFPNGIO ~CDFPNGReader");
 #endif     
       close();
-      if(pngRaster!=NULL){
-        delete pngRaster;pngRaster=NULL;
-      }
+     
     }
     
     int open(const char *fileName);

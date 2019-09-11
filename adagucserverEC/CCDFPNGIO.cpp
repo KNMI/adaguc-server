@@ -121,6 +121,7 @@ int CDFPNGReader::open(const char *fileName){
   }
   
   if(isSlippyMapFormat == false){
+    if (pngRaster != NULL) delete pngRaster;
     pngRaster= CReadPNG::read_png_file(this->fileName.c_str(),true);
     if(pngRaster == NULL){
       CDBError("Unable to open PNG check logs");
@@ -310,6 +311,7 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType type){
         CDBDebug("Info: reusing pngdata");
         // delete pngRaster;
       } else {
+        if (pngRaster != NULL) delete pngRaster;
         pngRaster= CReadPNG::read_png_file(this->fileName.c_str(),false);  
       }
       var->allocateData(rasterWidth*rasterHeight);
@@ -360,6 +362,7 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var,CDFType type,size_t *star
     if(pngRaster !=NULL && pngRaster->data){
       CDBDebug("Info: reusing pngdata with start/count");
     } else {
+      if (pngRaster != NULL) delete pngRaster;
       pngRaster= CReadPNG::read_png_file(this->fileName.c_str(),false);  
     }
     if(pngRaster == NULL){
@@ -383,6 +386,9 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var,CDFType type,size_t *star
 }
 
 int CDFPNGReader::close(){
+  if(pngRaster!=NULL){
+    delete pngRaster;pngRaster=NULL;
+  }
   return 0;
 }
 

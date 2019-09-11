@@ -563,7 +563,12 @@ int CServerParams::parseConfigFile(CT::string &pszConfigFile){
   
   configFileData = "";
   try{
-    configFileData = CReadFile::open(pszConfigFile.c_str());
+    try {
+      configFileData = CReadFile::open(pszConfigFile.c_str());
+    } catch(int e){
+      CDBError("Unable to open configuration file [%s], error %d", pszConfigFile.c_str(), e);
+      return 1;
+    }
     const char *pszADAGUC_PATH=getenv("ADAGUC_PATH");
     if(pszADAGUC_PATH!=NULL){
       CT::string adagucPath = CDirReader::makeCleanPath(pszADAGUC_PATH);
@@ -572,12 +577,10 @@ int CServerParams::parseConfigFile(CT::string &pszConfigFile){
     }
     const char *pszADAGUC_TMP=getenv("ADAGUC_TMP");
     if(pszADAGUC_TMP!=NULL)configFileData.replaceSelf("{ADAGUC_TMP}",pszADAGUC_TMP);
-
     const char *pszADAGUC_DB=getenv("ADAGUC_DB");
-
     if(pszADAGUC_DB!=NULL)configFileData.replaceSelf("{ADAGUC_DB}",pszADAGUC_DB);
   }catch(int e){
-    CDBError("Exception %d in substituting");
+    CDBError("Exception %d in substituting", e);
   }
 
   int status = configObj->parse(configFileData.c_str(),configFileData.length());

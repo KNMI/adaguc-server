@@ -928,7 +928,7 @@ int CDBFileScanner::updatedb( CDataSource *dataSource,CT::string *_tailPath,CT::
       
       //If this is another directory we will simply ignore it.
       if (layerPathToScan.startsWith(layerPath)==false) {
-        CDBDebug ("Skipping %s==%s\n",layerPath.c_str(),layerPathToScan.c_str());
+        // CDBDebug ("Skipping %s==%s\n",layerPath.c_str(),layerPathToScan.c_str());
         return 0;
       }
       fileToUpdate=layerPathToScan;
