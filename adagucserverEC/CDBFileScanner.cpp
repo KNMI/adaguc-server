@@ -894,14 +894,16 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
   return 0;
 }
 
-
-
 int CDBFileScanner::updatedb( CDataSource *dataSource,CT::string *_tailPath,CT::string *_layerPathToScan,int scanFlags){
  
   if(dataSource->dLayerType!=CConfigReaderLayerTypeDataBase&&
     dataSource->dLayerType!=CConfigReaderLayerTypeBaseLayer
   )return 0;
  
+  if (scanFlags&CDBFILESCANNER_CLEANFILES){
+    return cleanFiles (dataSource, scanFlags);    
+  }
+
   CCache::Lock lock;
   
 
@@ -913,29 +915,22 @@ int CDBFileScanner::updatedb( CDataSource *dataSource,CT::string *_tailPath,CT::
     lock.claim(cacheDirectory.c_str(),identifier.c_str(),"updatedb",dataSource->srvParams->isAutoResourceEnabled());
   }
 
-  //We only need to update the provided path in layerPathToScan. We will simply ignore the other directories
+  /* We only need to update the provided path in layerPathToScan. We will simply ignore the other directories */
   CT::string fileToUpdate;
   if(_layerPathToScan!=NULL){
     if(_layerPathToScan->length()!=0){
       CT::string layerPath,layerPathToScan;
       layerPath.copy(dataSource->cfgLayer->FilePath[0]->value.c_str());
       layerPathToScan.copy(_layerPathToScan);
-      
-      
-      
       layerPath = CDirReader::makeCleanPath(layerPath.c_str());
       layerPathToScan = CDirReader::makeCleanPath(layerPathToScan.c_str());
       
-      //If this is another directory we will simply ignore it.
+      /* If this is another directory we will simply ignore it. */
       if (layerPathToScan.startsWith(layerPath)==false) {
         // CDBDebug ("Skipping %s==%s\n",layerPath.c_str(),layerPathToScan.c_str());
         return 0;
       }
       fileToUpdate=layerPathToScan;
-//      if(layerPath.equals(&layerPathToScan)==false){
-//        CDBDebug ("Skipping %s==%s\n",layerPath.c_str(),layerPathToScan.c_str());
-//        return 0;
-//      }
     }
   }
   // This variable enables the query to remove files that no longer exist in the filesystem
@@ -1648,3 +1643,4 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
   }         
   return 0;
 };
+
