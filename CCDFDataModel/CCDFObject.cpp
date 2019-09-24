@@ -28,6 +28,7 @@
 
 #include "CCDFObject.h"
 #include "CCDFReader.h"
+#include "CTime.h"
 
 const char *CDFObject::className="CDFObject";
 
@@ -92,22 +93,8 @@ void ncmlHandletimeValueFromGlobalAttribute (xmlNode *cur_node,CT:: string NCMLV
         CDF::Variable *variable = cdfObject->getVariable(NCMLVarName.c_str());
         CDF::Attribute *attribute = cdfObject->getAttribute(attr_attribute.c_str());
         CT::string attributeValue = attribute->getDataAsString();
-        time_t timeSinceEpoch = 0;
-        struct tm result;
-        // setlocale(LC_ALL,"/QSYS.LIB/EN_US.LOCALE");
-        if (strptime(attributeValue.c_str(), "%a %b %d %H:%M:%S %Y",&result)!=NULL){
-          result.tm_isdst = 0;
-          // printf("tm_hour:  %d\n",result.tm_hour);
-          // printf("tm_min:  %d\n",result.tm_min);
-          // printf("tm_sec:  %d\n",result.tm_sec);
-          // printf("tm_mon:  %d\n",result.tm_mon +  1);
-          // printf("tm_mday:  %d\n",result.tm_mday);
-          // printf("tm_year:  %d\n",result.tm_year+1900);          
-          timeSinceEpoch = mktime(&result)- timezone;
-          // printf("%u\n", timeSinceEpoch);//1569151398 --> 1569154998 -> 1569158598
-        }
         variable->allocateData(1);
-        ((double *)variable->data)[0] = timeSinceEpoch;
+        ((double *)variable->data)[0] = CTime::getEpochTimeFromDateString(attributeValue);
       }catch(...){}
     }
   }
