@@ -232,7 +232,8 @@ public:
   static void cleanInstances();
   static std::map <CT::string, CTime*> CTimeInstances;
   static void *currentInitializedVar;
+
+  static time_t getEpochTimeFromDateString(CT::string dateString);
 };
 
 #endif
-
