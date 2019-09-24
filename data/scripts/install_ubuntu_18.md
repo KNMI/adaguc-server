@@ -31,6 +31,7 @@ pushd .
 cd /data/adaguc-data
 wget -nc -r -l2 -A.h5   -I /knmi/thredds/fileServer/,/knmi/thredds/catalog/ 'http://opendap.knmi.nl/knmi/thredds/catalog/ADAGUC/testsets/projectedgrids/meteosat/catalog.html'
 popd
+export ADAGUC_PATH=`pwd`
 export ADAGUC_CONFIG=./data/config/adaguc.vm.xml
 bash ./Docker/adaguc-server-updatedatasets.sh msg_hrvis_hdf5_example
 ```
