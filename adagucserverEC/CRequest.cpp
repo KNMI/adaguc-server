@@ -1428,7 +1428,8 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
 
 
     }else{
-      dataSource->queryBBOX = false;
+      /* Do queries without tiling and boundingbox */
+        dataSource->queryBBOX = false;
 
 /*
       dataSource->queryBBOX = true;
@@ -1574,22 +1575,45 @@ int CRequest::process_all_layers(){
               srvParam->makeUniqueLayerName(&additional,srvParam->cfg->Layer[additionalLayerNo]);
               CDBDebug("comparing for additionallayer %s==%s", additionalLayerName.c_str(), additional.c_str());
               if (additionalLayerName.equals(additional)) {
+                CDBDebug("Found additionalLayer [%s]", additional.c_str());
                 CDataSource *additionalDataSource = new CDataSource ();
 
-
+                CDBDebug("setCFGLayer for additionallayer %s", additionalLayerName.c_str());
                 if(additionalDataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[additionalLayerNo],additionalLayerName.c_str(),j)!=0){
                   delete additionalDataSource;
                   return 1;
                 }
+
+                /* Configure the Dimensions object if not set. */
+                if(additionalDataSource->cfgLayer->Dimension.size()==0){
+                  CDBDebug("additionalDataSource: Dimensions not configured, trying to do now");
+                  if(CAutoConfigure::autoConfigureDimensions(additionalDataSource)!=0){
+                    CDBError("additionalDataSource: : setCFGLayer::Unable to configure dimensions automatically");
+                  }else {
+                    for(size_t j=0;j<additionalDataSource->cfgLayer->Dimension.size();j++) {
+                      CDBDebug("additionalDataSource: : Configured dim %d %s",j, additionalDataSource->cfgLayer->Dimension[j]->value.c_str());
+                    }
+                  }
+                }
+
+                /* Set the dims based on server parameters */
+                try{
+                  CRequest::fillDimValuesForDataSource(additionalDataSource,additionalDataSource->srvParams);
+                }catch(ServiceExceptionCode e){
+                  CDBError("additionalDataSource: Exception in setDimValuesForDataSource");
+                  return 1;
+                }
                 bool add = true;
 
-                CDataSource *checkForData = new CDataSource ();
-                checkForData->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[additionalLayerNo],additionalLayerName.c_str(),j);
+                CDataSource *checkForData = additionalDataSource->clone();
+ 
                 try{
                   if(setDimValuesForDataSource(checkForData,srvParam)!=0){
+                    CDBDebug("setDimValuesForDataSource for additionallayer %s failed", additionalLayerName.c_str());
                     add = false;
                   }
                 }catch(ServiceExceptionCode e){
+                  CDBDebug("setDimValuesForDataSource for additionallayer %s failed", additionalLayerName.c_str());
                   add = false;
                 }
                 delete checkForData;
@@ -1621,7 +1645,7 @@ int CRequest::process_all_layers(){
 
                 break;
               }
-            }
+            } /* End of looping additionallayers */
           }
           break;
         }
