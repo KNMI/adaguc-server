@@ -82,6 +82,55 @@ int testCTime2Init (CDF::Variable*testVar, double valueToCheck) {
   }
   return 0;
 }
+
+int testCTimeEpochTimeConversion() {
+  bool failed = false;
+  try{
+    if (CTime::getEpochTimeFromDateString("Sun Sep 22 13:23:18 2019") != 1569158598) {
+      CDBError("[FAILED] CTime::getEpochTimeFromDateString(\"Sun Sep 22 13:23:18 2019\") != 1569158598");
+      failed = true;
+    } else {
+      CDBDebug("[OK] CTime::getEpochTimeFromDateString(\"Sun Sep 22 13:23:18 2019\") == 1569158598");
+    }
+  }catch(int e) {
+    failed = true;
+    CDBError("[FAILED] CTime::getEpochTimeFromDateString(\"Sun Sep 22 13:23:18 2019\") throws an exception");
+  }
+
+  try{
+    if (CTime::getEpochTimeFromDateString("2019-09-22T13:23:18") != 1569158598) {
+      CDBError("[FAILED] CTime::getEpochTimeFromDateString(\"2019-09-22T13:23:18\") != 1569158598");
+      failed = true;
+    } else {
+      CDBDebug("[OK] CTime::getEpochTimeFromDateString(\"2019-09-22T13:23:18\") == 1569158598");
+    }
+  }catch(int e) {
+    failed = true;
+    CDBError("[FAILED] CTime::getEpochTimeFromDateString(\"2019-09-22T13:23:18\") throws an exception");
+  }
+
+   try{
+    if (CTime::getEpochTimeFromDateString("2019-09-22T13:23:18Z") != 1569158598) {
+      CDBError("[FAILED] CTime::getEpochTimeFromDateString(\"2019-09-22T13:23:18Z\") != 1569158598");
+      failed = true;
+    } else {
+      CDBDebug("[OK] CTime::getEpochTimeFromDateString(\"2019-09-22T13:23:18Z\") == 1569158598");
+    }
+  }catch(int e) {
+    failed = true;
+    CDBError("[FAILED] CTime::getEpochTimeFromDateString(\"2019-09-22T13:23:18Z\") throws an exception");
+  }
+
+  try{
+    CTime::getEpochTimeFromDateString("SHOULDTHROWEXCEPTION");
+    failed = true;
+    CDBError("[FAILED] CTime::getEpochTimeFromDateString(\"SHOULDTHROWEXCEPTION\") did not throw an exception");
+  }catch(int e) {
+    CDBDebug("[OK] CTime::getEpochTimeFromDateString(\"SHOULDTHROWEXCEPTION\") throws an exception");
+  }
+  return failed;
+}
+
 int main(int argCount,char **argVars){
   bool failed = false;
   CDBDebug("Testing CTime");
@@ -96,6 +145,8 @@ int main(int argCount,char **argVars){
   if (testCTimeInit (testVarA, "21130221T212000")!=0) failed= true;
   if (testCTimeInit (testVarB, "22130222T212000")!=0) failed= true;
   
+  if (testCTimeEpochTimeConversion() != 0) failed = true;
+
   CTime::cleanInstances();
   delete testVarA;
   delete testVarB;

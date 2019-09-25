@@ -946,4 +946,23 @@ CT::string CTime::quantizeTimeToISO8601(CT::string value, CT::string period, CT:
   //return "2016-01-13T09:50:00Z";
 }
 
-
+time_t CTime::getEpochTimeFromDateString(CT::string dateString) {
+  struct tm result;
+  CT::StackList<CT::string> formats;
+  formats.push_back("%a %b %d %H:%M:%S %Y"); /* 'Sun Sep 22 13:23:18 2019' string  */
+  formats.push_back("%Y-%m-%dT%H:%M:%S");    /* 'yyyy-mm-ddTHH:MM:SS' string  */
+  
+  for(size_t j=0;j < formats.size(); j++) {
+  CT::string format = formats[j];
+    if (strptime(dateString.c_str(), format.c_str() ,&result)!=NULL){
+      /* Disable timezone, try to do conversion in UTC */        
+      time_t timeSinceEpoch = 0;
+      result.tm_isdst = 0;
+      timeSinceEpoch = mktime(&result) - timezone;
+      return timeSinceEpoch;
+    }
+  }
+  
+  CDBDebug("Warning: CTime::getEpochTimeFromDateString: Unable to convert [%s] to epoch time.", dateString.c_str());
+  throw (CTIME_CONVERSION_ERROR);
+}
