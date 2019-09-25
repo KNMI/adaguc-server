@@ -1,3 +1,12 @@
+Version 2.2.4 2019-09-25
+    - AdditionalLayer functionality is Fixed (https://dev.knmi.nl/projects/adagucserver/wiki/AdditionalLayer)
+
+Version 2.2.3 2019-09-24
+    - The CDF Data model supports more NCML features to support DLR-PA VADUGS files out of the box. 
+        In addition it is possible to add a time dimension using NCML. 
+        Its value can be created from a global attribute using the timeValueFromGlobalAttribute.
+    - Anydump has the commandline option -ncml to dump with the specified NCML file
+
 Version 2.2.2 2019-09-10
     - Updatedb supports the --path parameter to scan files specified by an absolute path
 
