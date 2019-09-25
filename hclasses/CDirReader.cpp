@@ -391,7 +391,6 @@ CDirReader *CCachedDirReader::getDirReader(const char* directory,const char *ext
 }
 
 void CCachedDirReader::free(){
-  CDBDebug("Cleaningup dirReaders");
   for (std::map<std::string,CDirReader*>::iterator it=dirReaderMap.begin(); it!=dirReaderMap.end(); ++it) {
     delete it->second;
   }
