@@ -537,20 +537,24 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   }
   
   // WMS Format in layer always overrides all
-//   if(dataSource!=NULL){
-//     if(dataSource->cfgLayer->WMSFormat.size()>0){
-//         if(dataSource->cfgLayer->WMSFormat[0]->attr.name.equals("image/png32")){
-//         drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-//         }
-//         if(dataSource->cfgLayer->WMSFormat[0]->attr.format.equals("image/png32")){
-//         drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-//         }
-//         if(dataSource->cfgLayer->WMSFormat[0]->attr.format.equals("image/png24")){
-//           drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-//         }
-//         
-//     }
-//   }
+  if(dataSource!=NULL){
+    if(dataSource->cfgLayer->WMSFormat.size()>0){
+        if(dataSource->cfgLayer->WMSFormat[0]->attr.name.equals("image/png32")){
+        drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
+        }
+        if(dataSource->cfgLayer->WMSFormat[0]->attr.format.equals("image/png32")){
+        drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
+        }
+        if(dataSource->cfgLayer->WMSFormat[0]->attr.format.equals("image/png24")){
+          drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
+        }
+         if(dataSource->cfgLayer->WMSFormat[0]->attr.format.equals("image/webp")){
+          drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
+          srvParam->imageFormat=IMAGEFORMAT_IMAGEWEBP;
+        }
+        
+    }
+  }
   //Set font location
   if(srvParam->cfg->WMS[0]->ContourFont.size()!=0){
     if(srvParam->cfg->WMS[0]->ContourFont[0]->attr.location.empty()==false){

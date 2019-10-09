@@ -424,7 +424,9 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Confi
     dLayerType=CConfigReaderLayerTypeDataBase;//CConfigReaderLayerTypeFile;
   }
   
-  
+  if (!_srvParams->internalAutoResourceLocation.empty()) {
+    headerFileName = _srvParams->internalAutoResourceLocation.c_str();
+  }
  
 
   isConfigured=true;
@@ -1232,7 +1234,6 @@ void CDataSource::calculateScaleAndOffsetFromMinMax(float &scale, float &offset,
 
 CStyleConfiguration *CDataSource::getStyle(){
   if(_currentStyle == NULL){
-    CDBDebug("_currentStyle == NULL");
     if(_styles == NULL){
       _styles = getStyleListForDataSource(this);
     }

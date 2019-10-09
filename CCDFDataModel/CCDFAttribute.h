@@ -86,6 +86,7 @@ namespace CDF{
         if(type==CDF_CHAR||type==CDF_UBYTE||type==CDF_BYTE)memcpy(data,dataToSet,length);
         if(type==CDF_SHORT||type==CDF_USHORT)memcpy(data,dataToSet,length*sizeof(short));
         if(type==CDF_INT||type==CDF_UINT)memcpy(data,dataToSet,length*sizeof(int));
+        if(type==CDF_INT64||type==CDF_UINT64)memcpy(data,dataToSet,length*sizeof(long));
         if(type==CDF_FLOAT)memcpy(data,dataToSet,length*sizeof(float));
         if(type==CDF_DOUBLE){memcpy(data,dataToSet,length*sizeof(double));}
         return 0;
@@ -102,6 +103,8 @@ namespace CDF{
         if(type==CDF_USHORT){unsigned short d=data; setData(type,&d,1);}
         if(type==CDF_INT){int d=data; setData(type,&d,1);}
         if(type==CDF_UINT){unsigned int d=data; setData(type,&d,1);}
+        if(type==CDF_INT64){long d=data; setData(type,&d,1);}
+        if(type==CDF_UINT64){unsigned long d=data; setData(type,&d,1);}
         if(type==CDF_FLOAT){float d=data; setData(type,&d,1);}
         if(type==CDF_DOUBLE){double d=data; setData(type,&d,1);}
         return 0;
@@ -135,13 +138,16 @@ namespace CDF{
           return 0;
         }
         if(type==CDF_BYTE)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%d",((char*)data)[n]);}
-        if(type==CDF_UBYTE)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%d",((unsigned char*)data)[n]);}
+        if(type==CDF_UBYTE)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%u",((unsigned char*)data)[n]);}
         
         if(type==CDF_INT)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%d",((int*)data)[n]);}
-        if(type==CDF_UINT)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%d",((unsigned int*)data)[n]);}
+        if(type==CDF_UINT)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%u",((unsigned int*)data)[n]);}
         
+        if(type==CDF_INT64)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%ld",((long*)data)[n]);}
+        if(type==CDF_UINT64)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%lu",((unsigned long*)data)[n]);}
+
         if(type==CDF_SHORT)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%d",((short*)data)[n]);}
-        if(type==CDF_USHORT)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%d",((unsigned short*)data)[n]);}
+        if(type==CDF_USHORT)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%u",((unsigned short*)data)[n]);}
         
         if(type==CDF_FLOAT)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%f",((float*)data)[n]);}
         if(type==CDF_DOUBLE)for(size_t n=0;n<length;n++){if(out->length()>0)out->concat(" ");out->printconcat("%f",((double*)data)[n]);}

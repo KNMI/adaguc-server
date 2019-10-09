@@ -2,9 +2,9 @@
 
 # TODO: https://github.com/KNMI/adaguc-server/issues/71
 
-export ADAGUC_PATH=/adaguc/adaguc-server-master/
-export ADAGUC_TMP=/tmp
-export ADAGUC_ONLINERESOURCE=""
+THISSCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+. ${THISSCRIPTDIR}/adaguc-server-chkconfig.sh
 
 if [[ $1 ]]; then
   # Update a specific dataset
@@ -16,14 +16,16 @@ if [[ $1 ]]; then
     echo ""
     if [[ $2 ]]; then
       echo "*** Starting update with tailpath $2 for dataset ${filename}" 
-      /adaguc/adaguc-server-master/bin/adagucserver --updatedb --config /adaguc/adaguc-server-config.xml,${filename} --tailpath $2
+      ${ADAGUC_PATH}/bin/adagucserver --updatedb --config ${ADAGUC_CONFIG},${filename} --tailpath $2
       OUT=$?
     else
       echo "*** Starting update for ${filename}" 
-      /adaguc/adaguc-server-master/bin/adagucserver --updatedb --config /adaguc/adaguc-server-config.xml,${filename}
+      ${ADAGUC_PATH}/bin/adagucserver --updatedb --config ${ADAGUC_CONFIG},${filename}
       OUT=$?
     fi
-    echo "$OUT" > /servicehealth/${filebasename%.*}
+    if [ -d /servicehealth ]; then
+      echo "$OUT" > /servicehealth/${filebasename%.*} 
+    fi
     echo ""
   done
 
@@ -44,9 +46,11 @@ else
     fi
     echo ""
     echo "Starting update for ${filename}" 
-    /adaguc/adaguc-server-master/bin/adagucserver --updatedb --config /adaguc/adaguc-server-config.xml,${filename}
+    ${ADAGUC_PATH}/bin/adagucserver --updatedb --config ${ADAGUC_CONFIG},${filename}
     OUT=$?
-    echo "$OUT" > /servicehealth/${filebasename%.*}
+    if [ -d /servicehealth ]; then
+      echo "$OUT" > /servicehealth/${filebasename%.*}
+    fi
   done
 
 fi

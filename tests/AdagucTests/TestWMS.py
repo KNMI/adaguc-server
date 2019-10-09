@@ -231,6 +231,38 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))
 
+    def test_WMSCMDUpdateDBPath(self):
+        AdagucTestTools().cleanTempDir()
+        ADAGUC_PATH = os.environ['ADAGUC_PATH']
+        status,data,headers = AdagucTestTools().runADAGUCServer(
+          args = ['--updatedb', '--config', 
+          ADAGUC_PATH + '/data/config/adaguc.timeseries.xml', 
+          '--path', ADAGUC_PATH + '/data/datasets/netcdf_5dims/netcdf_5dims_seq1/nc_5D_20170101000000-20170101001000.nc'], 
+          isCGI = False, 
+          showLogOnError = False,
+          showLog = False)
+        self.assertEqual(status, 0)
+        
+        filename="test_WMSGetCapabilities_timeseries_path_netcdf_5dims_seq1"
+        status,data,headers = AdagucTestTools().runADAGUCServer("SERVICE=WMS&request=getcapabilities", {'ADAGUC_CONFIG': ADAGUC_PATH + '/data/config/adaguc.timeseries.xml'})
+        AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))
+        
+        status,data,headers = AdagucTestTools().runADAGUCServer(
+          args = ['--updatedb', 
+          '--config', ADAGUC_PATH + '/data/config/adaguc.timeseries.xml', 
+          '--path', ADAGUC_PATH + '/data/datasets/netcdf_5dims/netcdf_5dims_seq2/nc_5D_20170101001500-20170101002500.nc'], 
+          isCGI = False, 
+          showLogOnError = False)
+        self.assertEqual(status, 0)
+        
+        filename="test_WMSGetCapabilities_timeseries_path_netcdf_5dims_seq2"
+        status,data,headers = AdagucTestTools().runADAGUCServer("SERVICE=WMS&request=getcapabilities", {'ADAGUC_CONFIG': ADAGUC_PATH + '/data/config/adaguc.timeseries.xml'})
+        AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))
+
     def test_WMSGetFeatureInfo_forecastreferencetime_texthtml(self):
         AdagucTestTools().cleanTempDir()
         filename="test_WMSGetFeatureInfo_forecastreferencetime.html"
@@ -327,3 +359,20 @@ class TestWMS(unittest.TestCase):
                             foundErrors.append(error)
         logfile.close()
         self.assertEqual(len(expectedErrors), len(foundErrors))
+
+
+    def test_WMSGetMap_worldmap_latlon_PNGFile_withoutinfofile(self):
+        AdagucTestTools().cleanTempDir()
+        filename="test_WMSGetMap_worldmap_latlon_PNGFile_withoutinfofile.png"
+        status,data,headers = AdagucTestTools().runADAGUCServer("source=worldmap_latlon.png&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=pngdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=rgba%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&", env = self.env)
+        AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+
+    def test_WMSGetMap_worldmap_mercator_PNGFile_withinfofile(self):
+        AdagucTestTools().cleanTempDir()
+        filename="test_WMSGetMap_worldmap_mercator_PNGFile_withinfofile.png"
+        status,data,headers = AdagucTestTools().runADAGUCServer("source=worldmap_mercator.png&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=pngdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=rgba%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&", env = self.env)
+        AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))        
