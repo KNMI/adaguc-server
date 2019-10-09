@@ -38,6 +38,7 @@
 
   <AutoResource enableautoopendap="true" enablelocalfile="true" enablecache="false">
     <Dir basedir="/data/adaguc-autowms" prefix="/data/adaguc-autowms/"/>
+    <Dir basedir="{ADAGUC_PATH}/data/datasets" prefix="{ADAGUC_PATH}/data/datasets/"/>
     <ImageText attribute="source"></ImageText>
   </AutoResource>
 
@@ -68,7 +69,7 @@
     <FeatureInterval match=".*" matchid="abbrev" bordercolor="#000000" borderwidth="1" linecolor="#000000" linewidth="1"/>
   </Style>
 
-  <Layer>
+  <Layer hidden="true">
       <Name>baselayer</Name>
       <Title>baselayer</Title>
       <FilePath>{ADAGUC_PATH}/data/datasets/countries.geojson</FilePath>
@@ -76,7 +77,7 @@
       <Styles>baselayer</Styles>
   </Layer>
 
-  <Layer>
+  <Layer hidden="true">
       <Name>overlay</Name>
       <Title>overlay</Title>
       <FilePath>{ADAGUC_PATH}/data/datasets/countries.geojson</FilePath>

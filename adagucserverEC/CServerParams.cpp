@@ -244,6 +244,7 @@ int CServerParams::makeUniqueLayerName(CT::string *layerName,CServerConfig::XMLE
   if(!cfgLayer->Name[0]->attr.force.equals("true")){
     layerName->concat(cfgLayer->Name[0]->value.c_str());
     //layerName->replaceSelf(".","_");//TODO CHECK WHY?
+    layerName->replaceSelf(" ", "_");
   }else{
     layerName->copy(cfgLayer->Name[0]->value.c_str());
   }
@@ -367,14 +368,19 @@ bool CServerParams::checkResolvePath(const char *path,CT::string *resolvedPath){
     if(checkIfPathHasValidTokens(path)==false)return false;
     
     for(size_t d=0;d<cfg->AutoResource[0]->Dir.size();d++){
-      const char *baseDir =cfg->AutoResource[0]->Dir[d]->attr.basedir.c_str();
+      const char *_baseDir =cfg->AutoResource[0]->Dir[d]->attr.basedir.c_str();
       const char *dirPrefix=cfg->AutoResource[0]->Dir[d]->attr.prefix.c_str();
+
+      char baseDir[PATH_MAX];
+      if(realpath(_baseDir,baseDir)==NULL){
+        CDBError("Skipping AutoResource[0]->Dir[%d]->basedir: Configured value is not a valid realpath", d);
+        continue;
+      }
       
       if(baseDir!=NULL&&dirPrefix!=NULL){
         //Prepend the prefix to make the absolute path
         CT::string pathToCheck;
         pathToCheck.print("%s/%s",dirPrefix,path);
-        
         //Make a realpath
         char szResolvedPath[PATH_MAX];
         if(realpath(pathToCheck.c_str(),szResolvedPath)==NULL){
@@ -383,6 +389,8 @@ bool CServerParams::checkResolvePath(const char *path,CT::string *resolvedPath){
         }else{
           //Check if the resolved path is within the basedir
           //CDBDebug("basedir='%s', prefix='%s', inputpath='%s', absolutepath='%s'",baseDir,dirPrefix,path,pathToCheck.c_str());
+          CDBDebug("szResolvedPath: %s", szResolvedPath);
+          CDBDebug("baseDir       : %s", baseDir);
           CT::string resolvedPathStr=szResolvedPath;
           if(resolvedPathStr.indexOf(baseDir)==0){
             resolvedPath->copy(szResolvedPath);
@@ -555,7 +563,12 @@ int CServerParams::parseConfigFile(CT::string &pszConfigFile){
   
   configFileData = "";
   try{
-    configFileData = CReadFile::open(pszConfigFile.c_str());
+    try {
+      configFileData = CReadFile::open(pszConfigFile.c_str());
+    } catch(int e){
+      CDBError("Unable to open configuration file [%s], error %d", pszConfigFile.c_str(), e);
+      return 1;
+    }
     const char *pszADAGUC_PATH=getenv("ADAGUC_PATH");
     if(pszADAGUC_PATH!=NULL){
       CT::string adagucPath = CDirReader::makeCleanPath(pszADAGUC_PATH);
@@ -564,9 +577,12 @@ int CServerParams::parseConfigFile(CT::string &pszConfigFile){
     }
     const char *pszADAGUC_TMP=getenv("ADAGUC_TMP");
     if(pszADAGUC_TMP!=NULL)configFileData.replaceSelf("{ADAGUC_TMP}",pszADAGUC_TMP);
+    const char *pszADAGUC_DB=getenv("ADAGUC_DB");
+    if(pszADAGUC_DB!=NULL)configFileData.replaceSelf("{ADAGUC_DB}",pszADAGUC_DB);
   }catch(int e){
+    CDBError("Exception %d in substituting", e);
   }
-  
+
   int status = configObj->parse(configFileData.c_str(),configFileData.length());
   
   if(status == 0 && configObj->Configuration.size()==1){

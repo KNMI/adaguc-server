@@ -180,7 +180,7 @@ def iteratewcs(TIME = "",BBOX = "-180,-90,180,90",CRS = "EPSG:4326",RESX=None,RE
   start_date=""
   end_date=""
   
-  if len(TIME) > 0 :
+  if TIME and len(TIME) > 0 :
     if len(TIME.split("/")) >= 2:
       start_date = isodate.parse_datetime(TIME.split("/")[0]);
       end_date = isodate.parse_datetime(TIME.split("/")[1]);

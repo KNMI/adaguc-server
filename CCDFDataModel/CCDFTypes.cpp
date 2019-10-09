@@ -37,6 +37,7 @@ int CDF::getTypeSize(CDFType type){
   if(type == CDF_CHAR || type == CDF_UBYTE || type == CDF_BYTE)return 1;
   if(type == CDF_SHORT || type == CDF_USHORT)return 2;
   if(type == CDF_INT || type == CDF_UINT)return 4;
+  if(type == CDF_INT64 || type == CDF_UINT64)return 8;
   if(type == CDF_FLOAT)return 4;
   if(type == CDF_DOUBLE)return 8;
   if(type == CDF_UNKNOWN)return 8;
@@ -91,12 +92,14 @@ void CDF::getCDFDataTypeName(char *name,const size_t maxlen,const int type){
   if(type==CDF_CHAR  )snprintf(name,maxlen,"CDF_CHAR");
   if(type==CDF_SHORT )snprintf(name,maxlen,"CDF_SHORT");
   if(type==CDF_INT   )snprintf(name,maxlen,"CDF_INT");
+  if(type==CDF_INT64 )snprintf(name,maxlen,"CDF_INT64");
   if(type==CDF_FLOAT )snprintf(name,maxlen,"CDF_FLOAT");
   if(type==CDF_DOUBLE)snprintf(name,maxlen,"CDF_DOUBLE");
   if(type==CDF_UNKNOWN)snprintf(name,maxlen,"CDF_UNKNOWN");
   if(type==CDF_UBYTE )snprintf(name,maxlen,"CDF_UBYTE");
   if(type==CDF_USHORT)snprintf(name,maxlen,"CDF_USHORT");
   if(type==CDF_UINT  )snprintf(name,maxlen,"CDF_UINT");
+  if(type==CDF_UINT64  )snprintf(name,maxlen,"CDF_UINT64");
   if(type==CDF_STRING)snprintf(name,maxlen,"CDF_STRING");
 }
 
@@ -107,11 +110,13 @@ void CDF::getCDataTypeName(char *name,const size_t maxlen,const int type){
   if(type==CDF_CHAR  )snprintf(name,maxlen,"char");
   if(type==CDF_SHORT )snprintf(name,maxlen,"short");
   if(type==CDF_INT   )snprintf(name,maxlen,"int");
+  if(type==CDF_INT64 )snprintf(name,maxlen,"long");
   if(type==CDF_FLOAT )snprintf(name,maxlen,"float");
   if(type==CDF_DOUBLE)snprintf(name,maxlen,"double");
   if(type==CDF_UBYTE )snprintf(name,maxlen,"ubyte");
   if(type==CDF_USHORT)snprintf(name,maxlen,"ushort");
   if(type==CDF_UINT  )snprintf(name,maxlen,"uint");
+  if(type==CDF_UINT64)snprintf(name,maxlen,"ulong");
   if(type==CDF_STRING)snprintf(name,maxlen,"char*");
 }
 
@@ -171,6 +176,8 @@ int CDF::DataCopier::copy(void *destdata,CDFType destType,void *sourcedata,CDFTy
     case CDF_USHORT:_copy((unsigned short*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
     case CDF_INT:_copy((int*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
     case CDF_UINT:_copy((unsigned int*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
+    case CDF_INT64:_copy((long*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
+    case CDF_UINT64:_copy((unsigned long*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
     case CDF_FLOAT:_copy((float*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
     case CDF_DOUBLE:_copy((double*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
     default:return 1;
@@ -195,32 +202,11 @@ int CDF::fill(void *destdata,CDFType destType,double value,size_t size){
     case CDF_USHORT:DataCopier::_fill((unsigned short*)destdata,value,size);break;
     case CDF_INT:DataCopier::_fill((int*)destdata,value,size);break;
     case CDF_UINT:DataCopier::_fill((unsigned int*)destdata,value,size);break;
+    case CDF_INT64:DataCopier::_fill((long*)destdata,value,size);break;
+    case CDF_UINT64:DataCopier::_fill((unsigned long*)destdata,value,size);break;
     case CDF_FLOAT:DataCopier::_fill((float*)destdata,value,size);break;
     case CDF_DOUBLE:DataCopier::_fill((double*)destdata,value,size);break;
     default:return 1;
   }
   return 0;
-  
 }
-/*
-int CDF::DataCopier::copy(void *destdata,void *sourcedata,CDFType sourcetype,size_t destinationOffset,size_t sourceOffset,size_t length){
-  if(sourcetype==CDF_STRING){
-    //CDBError("Unable to copy CDF_STRING");
-    return 1;
-  }
-  switch(sourcetype){
-    case CDF_CHAR:copy((char*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
-    case CDF_BYTE:copy((char*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
-    case CDF_UBYTE:copy((unsigned char*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
-    case CDF_SHORT:copy((short*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
-    case CDF_USHORT:copy((unsigned short*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
-    case CDF_INT:copy((int*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
-    case CDF_UINT:copy((unsigned int*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
-    case CDF_FLOAT:copy((float*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
-    case CDF_DOUBLE:copy((double*)destdata,sourcedata,sourcetype,destinationOffset,sourceOffset,length);break;
-    default:return 1;
-  }
-  return 0;
-}          */
-  
-
