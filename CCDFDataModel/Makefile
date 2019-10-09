@@ -8,7 +8,7 @@ CCOMPILER=g++ $(BUILDER_ADAGUCCOMPILERSETTINGS) $(INCLUDEDIR)
 
 OBJECTS = CCDFDataModel.o  CCDFNetCDFIO.o CTime.o CCDFHDF5IO.o CProj4ToCF.o CCDFVariable.o CCDFObject.o CCDFTypes.o CCDFCache.o CCache.o CCDFStore.o CCDFGeoJSONIO.o CCDFCSVReader.o
 
-default: CCDFDataModel
+default: CCDFDataModel test
 CCDFDataModel: $(OBJECTS)
 	ar rcs  CCDFDataModel.a $(OBJECTS) 
 

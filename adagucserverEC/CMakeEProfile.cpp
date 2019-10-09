@@ -452,7 +452,7 @@ public:
         {
 
           
-          CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource->srvParams,(filemapiterator->first).c_str());
+          CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams,(filemapiterator->first).c_str());
           CDF::Variable *variable =cdfObject->getVariableNE(variableName.c_str());
           dataObject->cdfVariable= variable;
           if(variable == NULL){
@@ -879,14 +879,8 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage,CDF::Variable *va
       }
       
     }
-    
-    if(time == 0){
-//       for(int y=0;y<imageHeight;y++){
-//        drawImage->setPixelTrueColor(x1-1,y,0,0,255,255);
-//       }
-      dayPasses.push_back(CMakeEProfile::DayPass(x1,((double*)varTime->data)[time]));
-      
-    }
+
+    dayPasses.push_back(CMakeEProfile::DayPass(x1,((double*)varTime->data)[time]));
    
   }
  

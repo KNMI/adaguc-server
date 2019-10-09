@@ -49,8 +49,7 @@ int main(int argCount,char **argVars){
       cdfObject->attachCDFReader(hdf5Reader);
       status = hdf5Reader->open(inputfile);
       if(status != 0){CDBError("Unable to read file %s",inputfile);throw(__LINE__);}
-      CT::string dumpString;
-      CDF::dump(cdfObject,&dumpString);
+      CT::string dumpString = CDF::dump(cdfObject);
       printf("%s\n",dumpString.c_str());
       delete hdf5Reader;hdf5Reader=NULL;
       delete cdfObject;cdfObject=NULL;

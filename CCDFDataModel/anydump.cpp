@@ -40,21 +40,38 @@ int main(int argCount,char **argVars){
     CDFReader*cdfReader = NULL;
     CDFObject *cdfObject = NULL;
     if(argCount<=2){
-      printf("anydump [-h] file\n");
-      printf("  [-h]             Header information only, no data\n");
+      printf("anydump [-h] [-json] [-v <variable name>] [-ncml <ncml file>] file\n");
+      printf("File can be any of the ADAGUC supported files, like NetCDF, HDF5, PNG, GeoJSON, CSV\n");
+      printf("  [-h]                  Header information in ncdump format.\n");
+      printf("  [-json]               Header information in ADAGUC json format\n");
+      printf("  [-v <variable name>]  Dump specific variable\n");
+      printf("  [-ncml <ncml file>]   Dump with ncml file\n");
       return 0;
     }
     
-    CT::string cmdType = argVars[1];
-    CT::string variableName;
-    if(cmdType.equals("-v")) {
-      if(argCount!=4){
-        CDBError("Not enough arguments");
-        return 1;
+    
+    CT::string variableName, ncmlFile;
+    bool dumpHeader = false;
+    bool dumpAsJSON = false;
+
+    for(int j=0;j< argCount; j++) {
+      CT::string cmdType = argVars[j];
+      if(cmdType.equals("-h")) dumpHeader = true;
+      if(cmdType.equals("-json")) dumpAsJSON = true;
+      if(cmdType.equals("-v")) {
+        if(j + 1 >= argCount){
+          CDBError("Not enough arguments, please specify the variable");
+          return 1;
+        }
+        variableName = argVars[j + 1];
       }
-      variableName = argVars[2];
-      CDBDebug("Dumpvar %s",variableName.c_str());
-      
+      if(cmdType.equals("-ncml")) {
+        if(j + 1 >= argCount){
+          CDBError("Not enough arguments, please specify the ncml file");
+          return 1;
+        }
+        ncmlFile = argVars[j + 1];
+      }
     }
     
     CT::string inputFile=argVars[argCount-1];//"/nobackup/users/plieger/projects/msgcpp/oud/meteosat9.fl.geo.h5";
@@ -84,16 +101,29 @@ int main(int argCount,char **argVars){
       status = cdfReader->open(inputFile.c_str());
       if(status != 0){CDBError("Unable to read file %s",inputFile.c_str());throw(__LINE__);}
       
-      if(cmdType.equals("-v")) {
+      if (!ncmlFile.empty()) {
+        CDBDebug("Applying NCML [%s]", ncmlFile.c_str());
+        cdfObject->applyNCMLFile(ncmlFile.c_str());
+      }
+
+      if(dumpHeader && !dumpAsJSON) {
+        CT::string dumpString = CDF::dump(cdfObject);
+        printf("%s\n",dumpString.c_str());
+      }
+      if(dumpAsJSON) {
+        CT::string dumpString = CDF::dumpAsJSON(cdfObject);
+        printf("%s\n",dumpString.c_str());
+      }
+
+      if(!variableName.empty()) {
         CDF::Variable *var = cdfObject->getVariableNE(variableName.c_str());
         if(var == NULL){
           CDBError("Variable not found");
           throw(__LINE__);
         }
         
-        
-        CT::string dumpString;
-        CDF::dump(var,&dumpString);
+        printf("// Data dump for variable [%s]:\n", var->name.c_str());
+        CT::string dumpString = CDF::dump(var);
         printf("%s\n",dumpString.c_str());
         
         bool isString = var->getNativeType()==CDF_STRING;
@@ -114,6 +144,8 @@ int main(int argCount,char **argVars){
               printf("%d",((short*)var->data)[j]);
             } if (var->getNativeType() == CDF_INT || var->getNativeType() == CDF_UINT){
               printf("%d",((int*)var->data)[j]);
+            } if (var->getNativeType() == CDF_INT64 || var->getNativeType() == CDF_UINT64){
+              printf("%ld",((long*)var->data)[j]);
             } else if (var->getNativeType() == CDF_FLOAT){
               printf("%g, ",((float*)var->data)[j]);
             } else if (var->getNativeType() == CDF_DOUBLE){
@@ -143,11 +175,7 @@ int main(int argCount,char **argVars){
       
       
       
-      if(cmdType.equals("-h")) {
-        CT::string dumpString;
-        CDF::dump(cdfObject,&dumpString);
-        printf("%s\n",dumpString.c_str());
-      }
+  
       delete cdfReader;cdfReader=NULL;
       delete cdfObject;cdfObject=NULL;
     }

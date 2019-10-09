@@ -33,6 +33,7 @@ class CConvertCurvilinear{
   
   DEF_ERRORFUNCTION();
   static double *getBBOXFromLatLonFields( CDF::Variable *swathMiddleLon, CDF::Variable *swathMiddleLat);
+  static int checkIfIsCurvilinear(CDFObject *cdfObject,CServerParams *srvParams, bool &hasLatLonBounds);
   public:
   static int convertCurvilinearHeader(CDFObject *cdfObject,CServerParams *srvParams);
   static int convertCurvilinearData(CDataSource *dataSource,int mode);

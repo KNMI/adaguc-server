@@ -32,10 +32,10 @@
 
 
 class CDFObject:public CDF::Variable{
-   
-  private:
-    char *NCMLVarName;
+  public:
     CDFType ncmlTypeToCDFType(const char *type);
+  private:
+    
     void putNCMLAttributes(void * a_node);
       
   void *reader;

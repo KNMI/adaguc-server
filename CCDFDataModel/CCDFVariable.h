@@ -175,6 +175,8 @@ namespace CDF{
         if(currentType == CDF_USHORT)dataElement=(T)((ushort*)data)[index];
         if(currentType == CDF_INT)dataElement=(T)((int*)data)[index];
         if(currentType == CDF_UINT)dataElement=(T)((unsigned int*)data)[index];
+        if(currentType == CDF_INT64)dataElement=(T)((long*)data)[index];
+        if(currentType == CDF_UINT64)dataElement=(T)((unsigned long*)data)[index];
         if(currentType == CDF_FLOAT)dataElement=(T)((float*)data)[index];
         if(currentType == CDF_DOUBLE)dataElement=(T)((double*)data)[index];
         
@@ -420,6 +422,7 @@ namespace CDF{
         if(type==CDF_CHAR||type==CDF_UBYTE||type==CDF_BYTE)memcpy(data,dataToSet,currentSize);
         if(type==CDF_SHORT||type==CDF_USHORT)memcpy(data,dataToSet,currentSize*sizeof(short));
         if(type==CDF_INT||type==CDF_UINT)memcpy(data,dataToSet,currentSize*sizeof(int));
+        if(type==CDF_INT64||type==CDF_UINT64)memcpy(data,dataToSet,currentSize*sizeof(long));
         if(type==CDF_FLOAT)memcpy(data,dataToSet,currentSize*sizeof(float));
         if(type==CDF_DOUBLE){memcpy(data,dataToSet,currentSize*sizeof(double));}
         return 0;

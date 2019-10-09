@@ -157,16 +157,18 @@ public:
     this->lat=lat;
     rotation=0;
   }
-  PointDVWithLatLon(int &x,int &y,double &lon,double &lat,float &v,double &rotation){
+  PointDVWithLatLon(int &x,int &y,double &lon,double &lat,float &v,double &rotation, float &radiusX, float &radiusY){
     this->x=x;
     this->y=y;
     this->v=v;
     this->lon=lon;
     this->lat=lat;
     this->rotation=rotation;
+    this->radiusX = radiusX;
+    this->radiusY = radiusY;
   }
   int x,y;
-  float v,lon,lat,rotation;
+  float v,lon,lat,rotation, radiusX, radiusY;
   
   /** Array containing key description and values
    * can be used to assign extra attributes to a point

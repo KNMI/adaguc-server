@@ -1,3 +1,35 @@
+Version 2.2.4 2019-09-25
+    - AdditionalLayer functionality is Fixed (https://dev.knmi.nl/projects/adagucserver/wiki/AdditionalLayer)
+
+Version 2.2.3 2019-09-24
+    - The CDF Data model supports more NCML features to support DLR-PA VADUGS files out of the box. 
+        In addition it is possible to add a time dimension using NCML. 
+        Its value can be created from a global attribute using the timeValueFromGlobalAttribute.
+    - Anydump has the commandline option -ncml to dump with the specified NCML file
+
+Version 2.2.2 2019-09-10
+    - Updatedb supports the --path parameter to scan files specified by an absolute path
+
+Version 2.2.1 2019-08-27
+    - adaguc-server has a new feature called getmetadata. It can dump a NetCDF file via the source parameter and return a json document containing the NetCDF metadata
+    - Example: <adaguc host>/wms?source=<URLEncoded opendapURL>&service=metdata&request=getmetadata
+    - adaguc-server supports reading PNG files accompanied by a info file, functional tests are added to demonstrate.
+
+Version 2.2.0 2019-06-27
+    - adaguc-server docker compose uses decoupled postgres, started as separate container
+    - logfiles are embedded in adaguc-services, single stream of logging
+    - Improved support for curvilinear grids 
+    - Support for NC_INT64 and NC_UINT64 data types
+
+Version 2.1.0 2019-04-04
+    - Use of new adaguc-services framework version 1.2.0 (Spring boot 2.0)
+
+Version 2.0.38 2019-03-28
+    - CSV reader with support for time and reference time dimensions added
+    - GeoJSON supports time
+    - Fixed bug in CRequests causing segmentation fault
+    - Fixed bug in Tracer which started to write to a closed logfile
+
 Version 2.0.37 2018-08-29
     - OpenDAP server can now output JSON if header "Content-Type: application/json" is set
 

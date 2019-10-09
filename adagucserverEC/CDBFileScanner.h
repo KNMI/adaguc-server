@@ -39,6 +39,7 @@
 #define CDBFILESCANNER_DONTREMOVEDATAFROMDB 8
 #define CDBFILESCANNER_IGNOREFILTER 16
 #define CDBFILESCANNER_RECREATETABLES 32
+#define CDBFILESCANNER_CLEANFILES 64
 
 /**
  * Class which scans files and updates the database.
@@ -82,6 +83,11 @@ private:
   static int updatedb(CDataSource *dataSource,CT::string *tailPath,CT::string *_layerPathToScan,int scanFlags);
   
   static int createTiles(CDataSource *dataSource,int scanFlags);
+
+  /**
+    * 
+    */
+  static int cleanFiles(CDataSource *dataSource, int scanFlags) ;
   
 };
 
