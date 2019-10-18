@@ -969,14 +969,23 @@ int CDBFileScanner::updatedb( CDataSource *dataSource,CT::string *_tailPath,CT::
   
   std::vector<std::string> fileList;
   if (fileToUpdate.length()==0) {
-  try{
-    fileList = searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(),filter.c_str(),tailPath.c_str());
-  }catch(int linenr){
-    CDBDebug("Exception in searchFileNames [%s] [%s]", dataSource->cfgLayer->FilePath[0]->value.c_str(),filter.c_str(),tailPath.c_str());
-    return 0;
-  }
+    // No file specified, just scan the directory for matching filenames.
+    try{
+      fileList = searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(),filter.c_str(),tailPath.c_str());
+    }catch(int linenr){
+      CDBDebug("Exception in searchFileNames [%s] [%s]", dataSource->cfgLayer->FilePath[0]->value.c_str(),filter.c_str(),tailPath.c_str());
+      return 0;
+    }
   } else {
-    fileList.push_back(fileToUpdate.c_str());
+    // File specified, check if it matches the layer filter.
+    CDBDebug("Checking specified fileToUpdate %s with filter %s", fileToUpdate.c_str(), filter.c_str());
+    CT::string fileToCheckAgainstRegexp = fileToUpdate.basename();
+    if (CDirReader::testRegEx(fileToCheckAgainstRegexp, filter.c_str())!=1) {
+        CDBDebug("Ignoring specified file %s does not match filter %s", fileToCheckAgainstRegexp.c_str(), filter.c_str());
+    } else {
+        CDBDebug("Adding specified file %s with filter %s", fileToCheckAgainstRegexp.c_str(), filter.c_str());
+        fileList.push_back(fileToUpdate.c_str());
+    }
   }
   
   //Include tiles
