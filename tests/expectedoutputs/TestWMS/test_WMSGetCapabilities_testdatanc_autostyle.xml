@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WMS_Capabilities
+        version="1.3.0"
+        updateSequence="0"
+        xmlns="http://www.opengis.net/wms"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.opengis.net/wms http://schemas.opengis.net/wms/1.3.0/capabilities_1_3_0.xsd"
+
+     >
+    <Service>
+        <Name>WMS</Name>
+        <Title>AutoResource testdata.nc</Title>
+        <Abstract>This service demonstrates how the ADAGUC server can be used to create OGC services.</Abstract>
+        <KeywordList>
+            <Keyword>view</Keyword>
+            <Keyword>infoMapAccessService</Keyword>
+            <Keyword>ADAGUCServer version 2.2.5, of Nov 13 2019 12:56:56 </Keyword>
+        </KeywordList>
+        <OnlineResource xlink:type="simple" xlink:href="%26source%3Dtestdata%2Enc&amp;SERVICE=WMS&amp;"/>
+        <ContactInformation>
+          
+        </ContactInformation>
+        <Fees>no conditions apply</Fees>
+        <AccessConstraints>None</AccessConstraints>
+        <MaxWidth>8192</MaxWidth>
+        <MaxHeight>8192</MaxHeight>
+    </Service>
+    <Capability>
+        <Request>
+            <GetCapabilities>
+                <Format>text/xml</Format>
+                <DCPType><HTTP><Get><OnlineResource xlink:type="simple" xlink:href="%26source%3Dtestdata%2Enc&amp;SERVICE=WMS&amp;"/></Get></HTTP></DCPType>
+            </GetCapabilities>
+            <GetMap>
+                <Format>image/png</Format>
+                <Format>image/png;mode=8bit</Format>
+                <Format>image/png;mode=8bit_noalpha</Format>
+                <Format>image/png;mode=24bit</Format>
+                <Format>image/png;mode=32bit</Format>
+                <Format>image/gif</Format>
+                <Format>image/jpeg</Format>
+                <!--<Format>image/webp</Format>-->
+                <DCPType><HTTP><Get><OnlineResource xlink:type="simple" xlink:href="%26source%3Dtestdata%2Enc&amp;SERVICE=WMS&amp;"/></Get></HTTP></DCPType>
+            </GetMap>
+            <GetFeatureInfo>
+                <Format>image/png</Format>
+                <Format>text/plain</Format>
+                <Format>text/html</Format>
+                <Format>text/xml</Format>
+                <Format>application/json</Format>
+                <DCPType><HTTP><Get><OnlineResource xlink:type="simple" xlink:href="%26source%3Dtestdata%2Enc&amp;SERVICE=WMS&amp;"/></Get></HTTP></DCPType>
+            </GetFeatureInfo>
+        </Request>
+        <Exception>
+            <Format>XML</Format>
+            <Format>INIMAGE</Format>
+            <Format>BLANK</Format>
+        </Exception>
+        <UserDefinedSymbolization SupportSLD="1" />
+<Layer>
+<Title>WMS of  AutoResource testdata.nc</Title>
+<CRS>EPSG:3411</CRS>
+<CRS>EPSG:3412</CRS>
+<CRS>EPSG:3575</CRS>
+<CRS>EPSG:3857</CRS>
+<CRS>EPSG:4258</CRS>
+<CRS>EPSG:4326</CRS>
+<CRS>CRS:84</CRS>
+<CRS>EPSG:25831</CRS>
+<CRS>EPSG:25832</CRS>
+<CRS>EPSG:28992</CRS>
+<CRS>EPSG:7399</CRS>
+<CRS>EPSG:50001</CRS>
+<CRS>EPSG:54030</CRS>
+<CRS>EPSG:32661</CRS>
+<CRS>EPSG:40000</CRS>
+<CRS>EPSG:900913</CRS>
+<CRS>EPSG:28992</CRS>
+<BoundingBox CRS="EPSG:3411" minx="933738.467048" miny="-5198602.302407" maxx="5505159.473396" maxy="-624860.474641" />
+<BoundingBox CRS="EPSG:3412" minx="-22730542.445110" miny="23540323.467699" maxx="28030213.239617" maxy="57270128.565974" />
+<BoundingBox CRS="EPSG:3575" minx="-2218769.469677" miny="-5518468.599995" maxx="1133233.008108" maxy="-2440685.041382" />
+<BoundingBox CRS="EPSG:3857" minx="-3032706.025370" miny="4488462.769264" maxx="3637528.401374" maxy="9846321.862963" />
+<BoundingBox CRS="EPSG:4258" minx="37.352373" miny="-27.248854" maxx="65.890829" maxy="32.682179" />
+<BoundingBox CRS="EPSG:4326" minx="37.353267" miny="-27.243262" maxx="65.888228" maxy="32.676474" />
+<BoundingBox CRS="CRS:84" minx="37.353267" miny="-27.243262" maxx="65.888228" maxy="32.676474" />
+<BoundingBox CRS="EPSG:25831" minx="-1027208.918278" miny="4257313.340443" maxx="2043762.674535" maxy="7377735.559200" />
+<BoundingBox CRS="EPSG:25832" minx="-1466672.497489" miny="4259561.094168" maxx="1661151.953190" maxy="7434111.038690" />
+<BoundingBox CRS="EPSG:28992" minx="-1500000.013502" miny="-999999.971392" maxx="1500000.013695" maxy="1999999.970643" />
+<BoundingBox CRS="EPSG:7399" minx="-1688218.598491" miny="4491365.234972" maxx="1973986.260472" maxy="7420353.104506" />
+<BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
+<BoundingBox CRS="EPSG:54030" minx="-2010910.349488" miny="3994561.026658" maxx="2383791.664599" maxy="6899708.714622" />
+<BoundingBox CRS="EPSG:32661" minx="563088.214526" miny="-4115048.787613" maxx="4171081.663734" maxy="-526949.004322" />
+<BoundingBox CRS="EPSG:40000" minx="-1445783.122941" miny="-6152041.625092" maxx="2184444.508852" maxy="-2541858.533346" />
+<BoundingBox CRS="EPSG:900913" minx="-3032706.025370" miny="4488462.769264" maxx="3637528.401374" maxy="9846321.862963" />
+<BoundingBox CRS="EPSG:28992" minx="-1500000.013393" miny="1999999.970833" maxx="1500000.013393" maxy="-999999.970833" />
+<Layer queryable="1" opaque="1" cascaded="0">
+<Name>testdata</Name>
+<Title>Testdata (testdata)</Title>
+<EX_GeographicBoundingBox>
+  <westBoundLongitude>-27.243262</westBoundLongitude>
+  <eastBoundLongitude>32.676474</eastBoundLongitude>
+  <southBoundLatitude>37.353267</southBoundLatitude>
+  <northBoundLatitude>65.888228</northBoundLatitude>
+</EX_GeographicBoundingBox><BoundingBox CRS="EPSG:3411" minx="933738.467048" miny="-5198602.302407" maxx="5505159.473396" maxy="-624860.474641" />
+<BoundingBox CRS="EPSG:3412" minx="-22730542.445110" miny="23540323.467699" maxx="28030213.239617" maxy="57270128.565974" />
+<BoundingBox CRS="EPSG:3575" minx="-2218769.469677" miny="-5518468.599995" maxx="1133233.008108" maxy="-2440685.041382" />
+<BoundingBox CRS="EPSG:3857" minx="-3032706.025370" miny="4488462.769264" maxx="3637528.401374" maxy="9846321.862963" />
+<BoundingBox CRS="EPSG:4258" minx="37.352373" miny="-27.248854" maxx="65.890829" maxy="32.682179" />
+<BoundingBox CRS="EPSG:4326" minx="37.353267" miny="-27.243262" maxx="65.888228" maxy="32.676474" />
+<BoundingBox CRS="CRS:84" minx="37.353267" miny="-27.243262" maxx="65.888228" maxy="32.676474" />
+<BoundingBox CRS="EPSG:25831" minx="-1027208.918278" miny="4257313.340443" maxx="2043762.674535" maxy="7377735.559200" />
+<BoundingBox CRS="EPSG:25832" minx="-1466672.497489" miny="4259561.094168" maxx="1661151.953190" maxy="7434111.038690" />
+<BoundingBox CRS="EPSG:28992" minx="-1500000.013502" miny="-999999.971392" maxx="1500000.013695" maxy="1999999.970643" />
+<BoundingBox CRS="EPSG:7399" minx="-1688218.598491" miny="4491365.234972" maxx="1973986.260472" maxy="7420353.104506" />
+<BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
+<BoundingBox CRS="EPSG:54030" minx="-2010910.349488" miny="3994561.026658" maxx="2383791.664599" maxy="6899708.714622" />
+<BoundingBox CRS="EPSG:32661" minx="563088.214526" miny="-4115048.787613" maxx="4171081.663734" maxy="-526949.004322" />
+<BoundingBox CRS="EPSG:40000" minx="-1445783.122941" miny="-6152041.625092" maxx="2184444.508852" maxy="-2541858.533346" />
+<BoundingBox CRS="EPSG:900913" minx="-3032706.025370" miny="4488462.769264" maxx="3637528.401374" maxy="9846321.862963" />
+<BoundingBox CRS="EPSG:28992" minx="-1500000.013393" miny="1999999.970833" maxx="1500000.013393" maxy="-999999.970833" />
+   <Style>    <Name>testdata_style_1/nearest</Name>    <Title>Rainbow colors</Title>    <Abstract>Drawing with rainbow colors</Abstract>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="%26source%3Dtestdata%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=testdata&amp;format=image/png&amp;STYLE=testdata_style_1/nearest"/>    </LegendURL>  </Style>   <Style>    <Name>testdata_style_1/bilinear</Name>    <Title>Rainbow colors, bilinear</Title>    <Abstract>Drawing with rainbow colors, bilinear interpolation</Abstract>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="%26source%3Dtestdata%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=testdata&amp;format=image/png&amp;STYLE=testdata_style_1/bilinear"/>    </LegendURL>  </Style>   <Style>    <Name>testdata_style_1/nearestcontour</Name>    <Title>Rainbow colors, contours</Title>    <Abstract>Drawing with rainbow colors, contours</Abstract>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="%26source%3Dtestdata%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=testdata&amp;format=image/png&amp;STYLE=testdata_style_1/nearestcontour"/>    </LegendURL>  </Style>   <Style>    <Name>testdata_style_1/shadedcontour</Name>    <Title>Rainbow colors, shading and contours</Title>    <Abstract>Drawing with rainbow colors, shading and contours</Abstract>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="%26source%3Dtestdata%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=testdata&amp;format=image/png&amp;STYLE=testdata_style_1/shadedcontour"/>    </LegendURL>  </Style>   <Style>    <Name>testdata_style_2/nearest</Name>    <Title>Rainbow colors</Title>    <Abstract>Drawing with rainbow colors</Abstract>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="%26source%3Dtestdata%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=testdata&amp;format=image/png&amp;STYLE=testdata_style_2/nearest"/>    </LegendURL>  </Style>   <Style>    <Name>testdata_style_2/bilinear</Name>    <Title>Rainbow colors, bilinear</Title>    <Abstract>Drawing with rainbow colors, bilinear interpolation</Abstract>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="%26source%3Dtestdata%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=testdata&amp;format=image/png&amp;STYLE=testdata_style_2/bilinear"/>    </LegendURL>  </Style>   <Style>    <Name>testdata_style_2/nearestcontour</Name>    <Title>Rainbow colors, contours</Title>    <Abstract>Drawing with rainbow colors, contours</Abstract>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="%26source%3Dtestdata%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=testdata&amp;format=image/png&amp;STYLE=testdata_style_2/nearestcontour"/>    </LegendURL>  </Style>   <Style>    <Name>testdata_style_2/shadedcontour</Name>    <Title>Rainbow colors, shading and contours</Title>    <Abstract>Drawing with rainbow colors, shading and contours</Abstract>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="%26source%3Dtestdata%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=testdata&amp;format=image/png&amp;STYLE=testdata_style_2/shadedcontour"/>    </LegendURL>  </Style>   <Style>    <Name>auto/nearest</Name>    <Title>auto/nearest</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="%26source%3Dtestdata%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=testdata&amp;format=image/png&amp;STYLE=auto/nearest"/>    </LegendURL>  </Style>   <Style>    <Name>auto/bilinear</Name>    <Title>auto/bilinear</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="%26source%3Dtestdata%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=testdata&amp;format=image/png&amp;STYLE=auto/bilinear"/>    </LegendURL>  </Style>   <Style>    <Name>auto/point</Name>    <Title>auto/point</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="%26source%3Dtestdata%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=testdata&amp;format=image/png&amp;STYLE=auto/point"/>    </LegendURL>  </Style>   <Style>    <Name>auto/barb</Name>    <Title>auto/barb</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="%26source%3Dtestdata%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=testdata&amp;format=image/png&amp;STYLE=auto/barb"/>    </LegendURL>  </Style></Layer>
+    </Layer>
+  </Capability>
+</WMS_Capabilities>

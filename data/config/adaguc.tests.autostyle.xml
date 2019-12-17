@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+
+  <TempDir value="{ADAGUC_TMP}"/>
+  <Path value="{ADAGUC_PATH}/data"/>
+  <DataBase dbtype="sqlite" parameters="{ADAGUC_TMP}/adaguc.autoresource.db"/>
+  
+  <!-- WMS settings -->
+  <WMS>
+    <Title>ADAGUC WMS Service</Title>
+    <Abstract>This service demonstrates how the ADAGUC server can be used to create OGC services.</Abstract>
+    <RootLayer>
+      <Title>Root Layer Title</Title>
+      <Abstract>Root Layer Abstract</Abstract>
+    </RootLayer>
+    <!-- PNG 8 bit requests are forced to 32 bit: better for antialiasing and combining layers with many colors -->
+    <!--<WMSFormat name="image/png" format="image/png32"/> -->
+  </WMS>
+  
+  
+  <!-- WMS -->
+  <Include location="{ADAGUC_PATH}/data/config/includes/WMS.include.xml"/>
+
+  <!-- WCS settings -->
+  <WCS>
+    <Title>ADAGUC WCS Service</Title>
+    <Label>wcsLabel</Label>
+  </WCS>
+
+  <!-- WCSFormat -->
+  <Include location="{ADAGUC_PATH}/data/config/includes/WCSFormat.include.xml"/>
+
+  <!-- Projections -->
+  <Include location="{ADAGUC_PATH}/data/config/includes/Projection.include.xml"/>
+           
+  <!--Legends -->
+  <Include location="{ADAGUC_PATH}/data/config/includes/DefaultStyles.include.xml"/>
+  
+  <!-- DefaultLayers -->
+  <Include location="{ADAGUC_PATH}/data/config/includes/DefaultLayers.include.xml"/>
+  
+  <AutoResource enableautoopendap="true" enablelocalfile="true" enablecache="false">
+    <Dir basedir="/data/adaguc-autowms" prefix="/data/adaguc-autowms/"/>
+    <Dir basedir="{ADAGUC_PATH}/data/datasets" prefix="{ADAGUC_PATH}/data/datasets/"/>
+    <ImageText attribute="source"></ImageText>
+  </AutoResource>
+
+  <Style name="testdata_style_1">
+    <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
+    <Min>0.0</Min>
+    <Max>0.5</Max>
+    <ContourLine width="1.8" linecolor="#888888" textcolor="#000000" textformatting="%2.2f" classes="0.05,0.1,0.15,0.2,0.3"/>
+    <ContourLine width="3" linecolor="#0000FF" textcolor="#0000FF" textformatting="%2.2f" classes="0.35"/>
+  
+    <ShadeInterval min="0.05" max="0.15"    label="0.05-0.15"    fillcolor="#E6E6FFA0"/>
+    <ShadeInterval min="0.20" max="0.30"    label="0.20-0.30"    fillcolor="#B3B3FF"/>
+    <ShadeInterval min="0.30" max="0.35"    label="0.30-0.35"    fillcolor="#8080FF"/>
+    <ShadeInterval min="0.35" max="1.00"    label="0.35-1.00"    fillcolor="#FF0040"/>
+
+
+    <NameMapping name="nearest"   title="Rainbow colors" abstract="Drawing with rainbow colors"/>
+    <NameMapping name="bilinear"   title="Rainbow colors, bilinear" abstract="Drawing with rainbow colors, bilinear interpolation"/>
+    <NameMapping name="nearestcontour"   title="Rainbow colors, contours" abstract="Drawing with rainbow colors, contours"/>
+    <NameMapping name="shadedcontour"   title="Rainbow colors, shading and contours" abstract="Drawing with rainbow colors, shading and contours"/>
+    <RenderMethod>nearest,bilinear,nearestcontour,shadedcontour</RenderMethod>
+    <StandardNames standard_name="test_data"/>
+  </Style>
+  <Style name="testdata_style_2">
+    <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
+    <Min>0.0</Min>
+    <Max>0.5</Max>
+    <ContourLine width="1.8" linecolor="#888888" textcolor="#000000" textformatting="%2.2f" classes="0.05,0.1,0.15,0.2,0.3"/>
+    <ContourLine width="3" linecolor="#0000FF" textcolor="#0000FF" textformatting="%2.2f" classes="0.35"/>
+  
+    <ShadeInterval min="0.05" max="0.15"    label="0.05-0.15"    fillcolor="#E6E6FFA0"/>
+    <ShadeInterval min="0.20" max="0.30"    label="0.20-0.30"    fillcolor="#B3B3FF"/>
+    <ShadeInterval min="0.30" max="0.35"    label="0.30-0.35"    fillcolor="#8080FF"/>
+    <ShadeInterval min="0.35" max="1.00"    label="0.35-1.00"    fillcolor="#FF0040"/>
+
+
+    <NameMapping name="nearest"   title="Rainbow colors" abstract="Drawing with rainbow colors"/>
+    <NameMapping name="bilinear"   title="Rainbow colors, bilinear" abstract="Drawing with rainbow colors, bilinear interpolation"/>
+    <NameMapping name="nearestcontour"   title="Rainbow colors, contours" abstract="Drawing with rainbow colors, contours"/>
+    <NameMapping name="shadedcontour"   title="Rainbow colors, shading and contours" abstract="Drawing with rainbow colors, shading and contours"/>
+    <RenderMethod>nearest,bilinear,nearestcontour,shadedcontour</RenderMethod>
+    <StandardNames standard_name="test_data"/>
+  </Style>
+  
+</Configuration>
+
