@@ -376,3 +376,12 @@ class TestWMS(unittest.TestCase):
         AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
         self.assertEqual(status, 0)
         self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))        
+
+    def test_WMSGetCapabilities_testdatanc_autostyle(self):
+        AdagucTestTools().cleanTempDir()
+        filename="test_WMSGetCapabilities_testdatanc_autostyle.xml"
+        status,data,headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WMS&request=getcapabilities", {'ADAGUC_CONFIG': ADAGUC_PATH + '/data/config/adaguc.tests.autostyle.xml'})
+        
+        AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))
