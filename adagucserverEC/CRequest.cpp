@@ -3401,7 +3401,7 @@ int CRequest::process_querystring(){
 }
 
 
-int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan, int scanFlags){
+int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan, int scanFlags, CT::string layerName){
   int errorHasOccured = 0;
   int status;
   //Fill in all data sources from the configuration object
@@ -3409,15 +3409,25 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan, int sca
 
   for(size_t layerNo=0;layerNo<numberOfLayers;layerNo++){
     CDataSource *dataSource = new CDataSource ();
-    dataSources.push_back(dataSource);
     if(dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[layerNo],NULL,layerNo)!=0){
       return 1;
     }
+    if (!layerName.empty()) {
+      if (srvParam->cfg->Layer[layerNo]->Name.size() == 1) {
+        CT::string simpleLayerName = srvParam->cfg->Layer[layerNo]->Name[0]->value;
+        if (layerName.equals(simpleLayerName)) {
+          dataSources.push_back(dataSource);
+        }
+      }
+    } else {
+      dataSources.push_back(dataSource);
+    }
+    
   }
 
   srvParam->requestType=REQUEST_UPDATEDB;
 
-  for(size_t j=0;j<numberOfLayers;j++){
+  for(size_t j=0;j<dataSources.size();j++){
     if(dataSources[j]->dLayerType==CConfigReaderLayerTypeDataBase||
        dataSources[j]->dLayerType==CConfigReaderLayerTypeBaseLayer){
       if(scanFlags&CDBFILESCANNER_UPDATEDB){

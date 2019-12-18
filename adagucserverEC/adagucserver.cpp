@@ -133,7 +133,7 @@ int _main(int argc, char **argv, char **envp){
   CT::string file;
   CT::string inspireDatasetCSW;
   CT::string datasetPath;
-  
+  CT::string layerName;
  
   while(true) {
       int opt_idx = 0;
@@ -152,7 +152,8 @@ int _main(int argc, char **argv, char **envp){
           { "inspiredatasetcsw", required_argument, 0, 0 },
           { "datasetpath", required_argument, 0, 0 },
           { "test", no_argument, 0, 0 },
-          { "report", optional_argument, 0, 0 }
+          { "report", optional_argument, 0, 0 },
+          { "layername", required_argument, 0, 0 }
       };
 
       opt = getopt_long(argc, argv, "", long_options, &opt_idx);
@@ -178,6 +179,9 @@ int _main(int argc, char **argv, char **envp){
           }
           if(strncmp(long_options[opt_idx].name,"tailpath",8)==0){
               tailPath.copy(optarg);
+          }
+          if(strncmp(long_options[opt_idx].name,"layername",9)==0){
+              layerName.copy(optarg);
           }
           if(strncmp(long_options[opt_idx].name,"path",4)==0){
               layerPathToScan.copy(optarg);
@@ -230,7 +234,7 @@ int _main(int argc, char **argv, char **envp){
           CDBError("Unable to read configuration file");
           return 1;
       }
-      status = request.updatedb(&tailPath,&layerPathToScan,scanFlags);
+      status = request.updatedb(&tailPath,&layerPathToScan,scanFlags, layerName);
       if(status != 0){
           CDBError("Error occured in updating the database");
       }
