@@ -14,6 +14,7 @@ RUN yum update -y && \
     gdal \
     hdf5 \
     libxml2 \
+    libwebp-devel \
     postgresql-server \
     proj \
     udunits2 \
@@ -62,6 +63,7 @@ RUN yum update -y && \
     gdal \
     hdf5 \
     libxml2 \
+    libwebp-devel \
     proj \
     udunits2 \
     openssl \
