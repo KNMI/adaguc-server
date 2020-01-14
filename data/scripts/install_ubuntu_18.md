@@ -12,6 +12,10 @@ Step 3: Compile adaguc-server:
 Step 4: Setup adaguc-services server:
 ```sudo bash ./data/scripts/ubuntu_18_setup_adaguc-services.sh```
 
+Step 5: Start adaguc-services server:
+```sudo bash ./data/scripts/ubuntu_18_start_adaguc-services.sh```
+
+
 # Verify that adaguc-server is working
 
 ### Test a NetCDF file with autoWMS ###
