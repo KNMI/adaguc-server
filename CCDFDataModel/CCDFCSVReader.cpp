@@ -330,7 +330,7 @@ int CDFCSVReader::_readVariableData(CDF::Variable *varToRead, CDFType type){
         if (var->currentType == CDF_STRING){
           const char*stringToAdd = csvColumns[c].c_str();
           size_t length = strlen(stringToAdd);
-          ((char**)var->data)[varPointer]=(char*)malloc(length+1);
+          ((char**)var->data)[varPointer]=(char*)malloc(length+1);              // Is never freed? Maybe use stack instead
           snprintf(((char**)var->data)[varPointer],length+1,"%s",stringToAdd);
         }
         if (var->currentType == CDF_INT){
