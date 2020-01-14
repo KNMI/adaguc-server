@@ -49,7 +49,7 @@ int CProj4ToCF::getProjectionUnits(const CDF::Variable *const projectionVariable
                   return CPROJ4TOCF_UNITS_KILOMETER;
                 }else if(units.equals("m")){
                   return CPROJ4TOCF_UNITS_METER;
-                }else if(units.equals("rad")){
+                }else if(units.equals("rad") || units.equals("radian")){
                   return CPROJ4TOCF_UNITS_RADIANS;
                 }
               }
