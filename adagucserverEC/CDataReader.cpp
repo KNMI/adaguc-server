@@ -450,44 +450,46 @@ int CDataReader::parseDimensions(CDataSource *dataSource,int mode,int x, int y, 
     //
     CDF::Attribute* units=dataSource->varX->getAttributeNE("units");
 
-    if ((units!=NULL) && units->toString().equals("rad")){
-      CDBDebug("units: %s", units->toString().c_str());
-      CDBDebug("Correct varX and varY");
-      double *xdata=(double*)dataSource->varX->data;
-      double *ydata=(double*)dataSource->varY->data;
-      CDF::Attribute *projvarnameAttr = dataSourceVar->getAttributeNE("grid_mapping");
-      if(projvarnameAttr!=NULL){
-	CDF::Variable * projVar = cdfObject->getVariableNE(projvarnameAttr->toString().c_str());
-	if(projVar==NULL){
-          CDBWarning("projection variable '%s' not found",(char*)projvarnameAttr->data);
-        } else {
-	  CDF::Attribute *grid_mapping_name = projVar->getAttributeNE("grid_mapping_name");
-          if ((grid_mapping_name!=NULL) && grid_mapping_name->toString().equals("geostationary")) {
-	    //Get perspective_height
-	    CDF::Attribute *perspectiveHeightAttr = projVar->getAttributeNE("perspective_point_height");
-	    double perspectiveHeight=35786000.;
-	    if (perspectiveHeightAttr!=NULL) {
-	      try{
-		perspectiveHeight = perspectiveHeightAttr->toString().toDouble();
-	      }catch(int e){
-		CDBDebug("Falling back to default perspective_point_height: 35786000");
+    if (units!=NULL) {
+      const CT::string unitString = units->toString();
+      if(unitString.equals("rad") || unitString.equals("radian")){
+        CDBDebug("units: %s", units->toString().c_str());
+        CDBDebug("Correct varX and varY");
+        double *xdata=(double*)dataSource->varX->data;
+        double *ydata=(double*)dataSource->varY->data;
+        CDF::Attribute *projvarnameAttr = dataSourceVar->getAttributeNE("grid_mapping");
+        if(projvarnameAttr!=NULL){
+          CDF::Variable * projVar = cdfObject->getVariableNE(projvarnameAttr->toString().c_str());
+          if(projVar==NULL){
+            CDBWarning("projection variable '%s' not found",(char*)projvarnameAttr->data);
+          } else {
+            CDF::Attribute *grid_mapping_name = projVar->getAttributeNE("grid_mapping_name");
+            if ((grid_mapping_name!=NULL) && grid_mapping_name->toString().equals("geostationary")) {
+              //Get perspective_height
+              CDF::Attribute *perspectiveHeightAttr = projVar->getAttributeNE("perspective_point_height");
+              double perspectiveHeight=35786000.;
+              if (perspectiveHeightAttr!=NULL) {
+                try{
+                  perspectiveHeight = perspectiveHeightAttr->toString().toDouble();
+                }catch(int e){
+                  CDBDebug("Falling back to default perspective_point_height: 35786000");
+                }
               }
-	    }
+              // TODO: Dit moet voor alle data gebeuren toch, niet een subset van de data?
+              sta[0]=start[dataSource->dimXIndex];str[0]=dataSource->stride2DMap; sto[0]=dataSource->dWidth;
+              if(singleCellMode){sta[0]=0;str[0]=1;sto[0]=2;}
+              for (size_t j=sta[0];j<sto[0];j+=str[0]) {
+                xdata[j]=xdata[j]*perspectiveHeight;
+              }
 
-      // TODO: Dit moet voor alle data gebeuren toch, niet een subset van de data?
-	    sta[0]=start[dataSource->dimXIndex];str[0]=dataSource->stride2DMap; sto[0]=dataSource->dWidth;
-	    if(singleCellMode){sta[0]=0;str[0]=1;sto[0]=2;}
-	    for (size_t j=sta[0];j<sto[0];j+=str[0]) {
-	      xdata[j]=xdata[j]*perspectiveHeight;
-	    }
-
-	    sta[0]=start[dataSource->dimYIndex];str[0]=dataSource->stride2DMap; sto[0]=dataSource->dHeight;
-	    if(singleCellMode){sta[0]=0;str[0]=1;sto[0]=2;}
-	    for (size_t j=sta[0];j<sto[0];j+=str[0]) {
-	      ydata[j]=ydata[j]*perspectiveHeight;
-	    }
+              sta[0]=start[dataSource->dimYIndex];str[0]=dataSource->stride2DMap; sto[0]=dataSource->dHeight;
+              if(singleCellMode){sta[0]=0;str[0]=1;sto[0]=2;}
+              for (size_t j=sta[0];j<sto[0];j+=str[0]) {
+                ydata[j]=ydata[j]*perspectiveHeight;
+              }
+            }
           }
-	}
+        }
       }
     }
   }
