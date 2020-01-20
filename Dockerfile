@@ -113,6 +113,9 @@ RUN  chmod +x /adaguc/adaguc-server-*.sh && \
      chmod +x /adaguc/start.sh && \
      chown -R adaguc:adaguc /data/adaguc* /adaguc /servicehealth
 
+# Put in default java truststore
+RUN cp /etc/pki/java/cacerts /adaguc/security/truststore.ts
+
 USER adaguc
 
 # For HTTP
