@@ -489,7 +489,7 @@ int CAutoConfigure::justLoadAFileHeader(CDataSource *dataSource){
       ogcDim->value.copy("0");
       ogcDim->netCDFDimName.copy("none");
     }
-    CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getFilesAndIndicesForDimensions(dataSource,1);
+    CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getFilesAndIndicesForDimensions(dataSource,1000);
     if(store!=NULL && store->getSize() > 0){
       CT::string fileNamestr = store->getRecord(0)->get(0)->c_str();
       CDBDebug("fileName from DB: %s",fileNamestr.c_str());
