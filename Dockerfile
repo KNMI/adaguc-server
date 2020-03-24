@@ -52,7 +52,7 @@ WORKDIR /adaguc/adaguc-server-master
 RUN bash compile.sh
 
 ######### Second stage (production) ############
-FROM centos:7
+FROM centos/devtoolset-7-toolchain-centos7:7
 USER root
 
 # production packages, same as stage one
