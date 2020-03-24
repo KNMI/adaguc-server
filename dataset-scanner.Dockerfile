@@ -71,7 +71,8 @@ RUN yum update -y && \
     proj \
     udunits2 \
     openssl \
-    netcdf && \
+    netcdf \
+    python-devel && \
     yum clean all && \
     rm -rf /var/cache/yum
 
