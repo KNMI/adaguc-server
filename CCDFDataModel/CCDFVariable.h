@@ -99,7 +99,7 @@ namespace CDF{
       void setParentCDFObject(void *parentCDFObject){
         this->parentCDFObject=parentCDFObject;
       }
-      void * getParentCDFObject(){
+      void * getParentCDFObject() const {
         if(parentCDFObject==NULL){
           throw(CDF_E_VARHASNOPARENT);
         }
@@ -175,6 +175,8 @@ namespace CDF{
         if(currentType == CDF_USHORT)dataElement=(T)((ushort*)data)[index];
         if(currentType == CDF_INT)dataElement=(T)((int*)data)[index];
         if(currentType == CDF_UINT)dataElement=(T)((unsigned int*)data)[index];
+        if(currentType == CDF_INT64)dataElement=(T)((long*)data)[index];
+        if(currentType == CDF_UINT64)dataElement=(T)((unsigned long*)data)[index];
         if(currentType == CDF_FLOAT)dataElement=(T)((float*)data)[index];
         if(currentType == CDF_DOUBLE)dataElement=(T)((double*)data)[index];
         
@@ -285,7 +287,7 @@ namespace CDF{
       }
 
       
-      Attribute * getAttribute(const char *name){
+      Attribute * getAttribute(const char *name) const {
         for(size_t j=0;j<attributes.size();j++){
           if(attributes[j]->name.equals(name)){
             return attributes[j];
@@ -294,7 +296,7 @@ namespace CDF{
         throw(CDF_E_ATTNOTFOUND);
         return NULL;
       }
-      Attribute * getAttributeNE(const char *name){try{return getAttribute(name);}catch(int e){return NULL;}}
+      Attribute * getAttributeNE(const char *name) const {try{return getAttribute(name);}catch(int e){return NULL;}}
       
       /**
        * Returns the dimension for given name. Throws error code  when something goes wrong
@@ -420,6 +422,7 @@ namespace CDF{
         if(type==CDF_CHAR||type==CDF_UBYTE||type==CDF_BYTE)memcpy(data,dataToSet,currentSize);
         if(type==CDF_SHORT||type==CDF_USHORT)memcpy(data,dataToSet,currentSize*sizeof(short));
         if(type==CDF_INT||type==CDF_UINT)memcpy(data,dataToSet,currentSize*sizeof(int));
+        if(type==CDF_INT64||type==CDF_UINT64)memcpy(data,dataToSet,currentSize*sizeof(long));
         if(type==CDF_FLOAT)memcpy(data,dataToSet,currentSize*sizeof(float));
         if(type==CDF_DOUBLE){memcpy(data,dataToSet,currentSize*sizeof(double));}
         return 0;

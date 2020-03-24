@@ -313,8 +313,10 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
     }
     return 0;
   }
-      int CCairoPlotter::_drawFreeTypeText(int x,int y,int &w,int &h,float angle,const char *text,bool render){
+  
+  int CCairoPlotter::_drawFreeTypeText(int x,int y,int &w,int &h,float angle,const char *text,bool render){
       //Draw text :)
+    
       w=0;h=0;
       if(library==NULL){
         int status  = initializeFreeType();
@@ -610,12 +612,19 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
 
   void CCairoPlotter::filledcircle(int x, int y, int r) {
     cairo_save(cr);
-//    cairo_set_line_width(cr, 1);
-//   cairo_set_source_rgba(cr, rfr, rfg, rfb, rfa);
-//    cairo_arc(cr, x, y, r, 0, 2*M_PI);
-//    cairo_stroke_preserve(cr);
     cairo_set_source_rgba(cr, rfr, rfg, rfb, rfa);
     cairo_arc(cr, x, y, r, 0, 2*M_PI);
+    cairo_fill(cr);
+    cairo_restore(cr);
+  }
+
+  void CCairoPlotter::filledEllipse(int x, int y, float  rX, float rY, float rotation) {
+    cairo_save(cr);
+    cairo_set_source_rgba(cr, rfr, rfg, rfb, rfa);
+    cairo_translate(cr, x, y);
+    cairo_rotate(cr, rotation);
+    cairo_scale(cr, rX, rY);
+    cairo_arc(cr, 0, 0, 1, 0, 2*M_PI);
     cairo_fill(cr);
     cairo_restore(cr);
   }

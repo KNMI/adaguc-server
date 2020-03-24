@@ -310,6 +310,7 @@ CDataSource::CDataSource(){
   stretchMinMaxDone = false;
   isConfigured=false;
   threadNr=-1;
+  dimsAreAutoConfigured = false;
 //   legendScale=1;
 //   legendOffset=0;
 //   legendLog=0.0f;
@@ -323,7 +324,7 @@ CDataSource::CDataSource(){
   cfgLayer = NULL;
   cfg=NULL;
   datasourceIndex=0;
-  level2CompatMode=false;
+  formatConverterActive=false;
   useLonTransformation = -1;
   dOrigWidth = -1;
   lonTransformDone = false;
@@ -423,7 +424,9 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams,CServerConfig::XMLE_Confi
     dLayerType=CConfigReaderLayerTypeDataBase;//CConfigReaderLayerTypeFile;
   }
   
-  
+  if (!_srvParams->internalAutoResourceLocation.empty()) {
+    headerFileName = _srvParams->internalAutoResourceLocation.c_str();
+  }
  
 
   isConfigured=true;
@@ -1230,23 +1233,18 @@ void CDataSource::calculateScaleAndOffsetFromMinMax(float &scale, float &offset,
 }
 
 CStyleConfiguration *CDataSource::getStyle(){
-  #ifdef CDATASOURCE_DEBUG      
-  CDBDebug("getStyle");
-#endif
-  if(_styles == NULL){
-    _styles = getStyleListForDataSource(this);
-  }
-  if(_styles->size() == 0){
-    CDBError("There are no styles available");
-    return NULL;
-  }
   if(_currentStyle == NULL){
-        
+    if(_styles == NULL){
+      _styles = getStyleListForDataSource(this);
+    }
+    if(_styles->size() == 0){
+      CDBError("There are no styles available");
+      return NULL;
+    }        
     CT::string styleName="default";
     CT::string styles(srvParams->Styles.c_str());
 
     //TODO CHECK CDBDebug("Server Styles=%s",srvParam->Styles.c_str());
-    //CDBDebug("Server Styles=%s",srvParam->Styles.c_str());
     CT::StackList<CT::string> layerstyles = styles.splitToStack(",");
     int layerIndex=datasourceIndex;
     if(layerstyles.size()!=0){
@@ -1258,23 +1256,18 @@ CStyleConfiguration *CDataSource::getStyle(){
         styleName.copy("default");
       }
     }
-    
-    //CDBDebug("Trying to find a style for %s",styleName.c_str());
 
-
-    //CDBDebug("There are %d styles combinations",_styles->size());
     _currentStyle = _styles->get(0);
     
     for(size_t j=0;j<_styles->size();j++){
       if(_styles->get(j)->styleCompositionName.equals(styleName)){
           _currentStyle=_styles->get(j);
-          //CDBDebug("Found style for %s",styleName.c_str());
           break;
       }
     }
     
     if(_currentStyle->styleIndex == -1){
-      int status = makeStyleConfig(_currentStyle,this);//,styleNames->get(i)->c_str(),legendList->get(l)->c_str(),renderMethods->get(r)->c_str());
+      int status = makeStyleConfig(_currentStyle,this);
       if(status == -1){
         _currentStyle->hasError=true;
       }
@@ -1288,9 +1281,6 @@ CStyleConfiguration *CDataSource::getStyle(){
     }
   }
   
-    #ifdef CDATASOURCE_DEBUG      
-  CDBDebug("/getStyle");
-#endif
   return _currentStyle;
 }
 
@@ -1416,7 +1406,7 @@ CDataSource *CDataSource::clone(){
   d->nativeEPSG=nativeEPSG;
   d->nativeProj4=nativeProj4;
   d->isConfigured=isConfigured;
-  d->level2CompatMode=level2CompatMode;
+  d->formatConverterActive=formatConverterActive;
   d->dimXIndex = dimXIndex;
   d->dimYIndex = dimYIndex;
   d->stride2DMap = stride2DMap;

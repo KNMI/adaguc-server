@@ -459,7 +459,7 @@ public:
         CImageDataWriter::ProjCacheInfo projCacheInfo = CImageDataWriter::GetProjInfo(ckey,drawImage,dataSource,imageWarper, dataSource->srvParams,dX,dY);
         
         if(projCacheInfo.isOutsideBBOX == false){
-          CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource->srvParams,(filemapiterator->first).c_str());
+          CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams,(filemapiterator->first).c_str());
           
 
           if(cdfObject->getVariableNE("forecast_reference_time")!=NULL){
@@ -561,7 +561,6 @@ public:
             if(readDataAsCDFDouble){
               variable->setType(CDF_DOUBLE);
             }
-            CDBDebug("Reading data");
             int status = variable->readData(variable->currentType,start,count,stride,true);
             
             if(status != 0){
@@ -573,7 +572,6 @@ public:
               /**
               * DataPostProc: Here our datapostprocessor comes into action!
               */
-              CDBDebug("Applying postprocs");
               for(size_t dpi=0;dpi<dataSource->cfgLayer->DataPostProc.size();dpi++){
                 CServerConfig::XMLE_DataPostProc * proc = dataSource->cfgLayer->DataPostProc[dpi];
                 //Algorithm ax+b:

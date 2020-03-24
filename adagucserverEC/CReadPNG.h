@@ -28,19 +28,22 @@
 #define CREADPNG_H
 #include "CDebugger.h"
 
-//#define CREADPNG_DEBUG
+// #define CREADPNG_DEBUG
 class CReadPNG  {
   private: 
     DEF_ERRORFUNCTION();
   
   public:
     class CPNGRaster {
+      private: 
+        DEF_ERRORFUNCTION();
       public:
       CPNGRaster(){
         data = NULL;
         hasOnlyHeaders = true;
       }
       ~CPNGRaster() {
+        CDBDebug("~CPNGRaster");
         if(data!=NULL){
           delete[] data;
           data = NULL;

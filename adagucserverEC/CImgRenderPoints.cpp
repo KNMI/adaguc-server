@@ -36,9 +36,17 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
 //   bool drawText = true;
   bool drawVolume = false;
   bool drawSymbol = false;
-  
+  bool drawZoomablePoints = false;
   bool doThinning=false;
   int thinningRadius = 25;
+  
+  int doneMatrixH = 32;
+  int doneMatrixW = 32;
+  unsigned char doneMatrix[doneMatrixW*doneMatrixH];
+  for(size_t j=0;j<size_t(doneMatrixW*doneMatrixH);j++){
+    doneMatrix[j] = 0;
+  }
+  int doneMatrixMaxPerSector = 16;
   
   CT::string drawPointPointStyle("point");
   const char *drawPointFontFile = dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.location.c_str();
@@ -159,6 +167,13 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
     drawDiscs=false;
 //     drawText=false;
     drawSymbol=true;
+  } else if (drawPointPointStyle.equalsIgnoreCase("zoomablepoint")){
+    drawPoints=true;
+    drawVolume=false;
+    drawDiscs=false;
+//     drawText=false;
+    drawSymbol=false;
+    drawZoomablePoints = true;
   } else {
     drawPoints=true;
     drawDiscs=false;
@@ -409,10 +424,28 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
               if (drawPointDot) drawImage->circle(x,y, 1, drawPointLineColor,0.65);
             }
           }
-          
+
           if(drawPoints){
             int x=(*pts)[j].x;
             int y=dataSource->dHeight-(*pts)[j].y;
+            
+            if (!drawZoomablePoints){
+              size_t doneMatrixPointer = 0;
+              if (x >= 0 && y >= 0 && x< drawImage->Geo->dWidth && y< drawImage->Geo->dHeight){
+                doneMatrixPointer = int((float(x) / float(drawImage->Geo->dWidth)) * float(doneMatrixW)) + int((float(y) / float(drawImage->Geo->dHeight)) * float(doneMatrixH)) * doneMatrixH;
+                if (int(doneMatrix[doneMatrixPointer]) < 200)  {
+                  doneMatrix[doneMatrixPointer]++;
+                }
+              }
+              
+              if(int(doneMatrix[doneMatrixPointer]) > doneMatrixMaxPerSector){
+                continue;
+              }
+            }
+            
+            
+
+
    
             if(v==v){
               //Determine text to plot for value
@@ -440,7 +473,6 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
                 }
               }
               if (drawPointDiscRadius==0) {
-                  CDBDebug("radius==0 => centeredtext only %f", v);
                 if (drawPointPlotStationId) {
                   drawImage->drawCenteredText(x,y+drawPointTextRadius+3, drawPointFontFile, drawPointFontSize, 0, t.c_str(), drawPointTextColor);
                 } else {
@@ -455,7 +487,12 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
                     drawPointFillColor=drawImage->getColorForIndex(pointColorIndex);
                   }
                 }
-                if (dataObject==0) drawImage->setDisc(x, y, drawPointDiscRadius, drawPointFillColor, drawPointLineColor);
+                
+                if (drawZoomablePoints){
+                  drawImage->setEllipse(x, y, (*pts)[j].radiusX, (*pts)[j].radiusY, (*pts)[j].rotation, drawPointFillColor, drawPointLineColor);
+                }else{
+                  if (dataObject==0) drawImage->setDisc(x, y, drawPointDiscRadius, drawPointFillColor, drawPointLineColor);
+                }
                 if (drawText) {
                   if (useDrawPointAngles) {
                     drawImage->drawAnchoredText(x+usedx,y-usedy, drawPointFontFile, drawPointFontSize, 0, t.c_str(), drawPointTextColor, kwadrant);
@@ -488,6 +525,7 @@ void CImgRenderPoints::render(CImageWarper*warper, CDataSource*dataSource, CDraw
             if (drawPointDot) drawImage->circle(x,y, 1, drawPointLineColor,0.65);
             
           }
+          
           
           if (drawDiscs) { //Filled disc with circle around it and value inside
             int x=(*pts)[j].x;
