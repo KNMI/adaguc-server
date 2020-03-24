@@ -67,7 +67,7 @@ public:
 class CServerParams{
   DEF_ERRORFUNCTION();
   private:
-    int autoOpenDAPEnabled,autoLocalFileResourceEnabled,autoResourceCacheEnabled;
+    int autoOpenDAPEnabled,autoLocalFileResourceEnabled;
     
     CT::string _onlineResource;
     static int dataRestriction;
@@ -183,7 +183,7 @@ class CServerParams{
      * Function which checks whether remote resources should be cached or not
      * @return true if enablecache attribute in AutoResource is undefined or set to true 
      */
-    bool isAutoResourceCacheEnabled();
+    bool isAutoResourceCacheEnabled() const;
     
     /**
      * Function which can be used to check whether automatic resources have been enabled or not

@@ -25,6 +25,7 @@
 
 #ifndef CRequest_H
 #define CRequest_H
+
 #include <sys/stat.h>
 #include <set>
 #include "CImageDataWriter.h"
@@ -218,7 +219,7 @@ private:
     int process_all_layers();
     int process_wms_getreferencetimes_request();
     int process_wms_gethistogram_request();
-    int updatedb(CT::string *tailPath,CT::string *layerPathToScan,int scanFlags);
+    int updatedb(CT::string *tailPath,CT::string *layerPathToScan,int scanFlags, CT::string layerName);
     
     int runRequest();
 

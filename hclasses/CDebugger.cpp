@@ -59,8 +59,9 @@ Tracer::~Tracer ()
   Dump ();
 }
 
-void Tracer::Dump ()
+int Tracer::Dump ()
 {
+  int status = 0;
   if (_map.size () != 0)
   {
     //std::cout << _map.size () << " memory leaks detected\n";
@@ -69,11 +70,14 @@ void Tracer::Dump ()
       char const * file = it->second.File ();
       int line = it->second.Line ();
       if(line!=0){
+        status++;
         _printErrorLine("*** Memory leak in %s, line %d",file,line);
         //std::cout << "*** Memory leak in " << file << ", line "  << line << std::endl;
       }
     }
   }
+  _map.clear();
+  return status;
 }
 
 Tracer::Tracer () 
@@ -119,6 +123,11 @@ void operator delete (void * p)
 }
 
 #include "CTypes.h"
+/*
+ * If these prototypes are changed, also change the extern
+ * declarations in CReporter.cpp that are referring to the
+ * pointers declared here.
+ */
 void (*_printErrorStreamPointer)(const char*)=&_printErrorStream;
 void (*_printDebugStreamPointer)(const char*)=&_printDebugStream;
 void (*_printWarningStreamPointer)(const char*)=&_printWarningStream;
@@ -145,30 +154,30 @@ void _printDebugStream(const char *pszMessage){
 }
 
 void _printDebugLine(const char *pszMessage,...){
-  char szTemp[1024];
+  char szTemp[2048];
   va_list ap;
   va_start (ap, pszMessage);
-  vsnprintf ( szTemp, 1023,pszMessage, ap);
+  vsnprintf ( szTemp, 2047,pszMessage, ap);
   printDebugStream(szTemp);
   va_end (ap);
   printDebugStream("\n");
 }
 
 void _printWarningLine(const char *pszMessage,...){
-  char szTemp[1024];
+  char szTemp[2048];
   va_list ap;
   va_start (ap, pszMessage);
-  vsnprintf ( szTemp, 1023,pszMessage, ap);
+  vsnprintf ( szTemp, 2047,pszMessage, ap);
   printWarningStream(szTemp);
   va_end (ap);
   printWarningStream("\n");
 }
 
 void _printErrorLine(const char *pszMessage,...){
-  char szTemp[1024];
+  char szTemp[2048];
   va_list ap;
   va_start (ap, pszMessage);
-  vsnprintf ( szTemp, 1023,pszMessage, ap);
+  vsnprintf ( szTemp, 2047,pszMessage, ap);
   printErrorStream(szTemp);
   va_end (ap);
   printErrorStream("\n");
@@ -184,10 +193,10 @@ void makeEqualWidth(CT::string *t1){
   // t1.concat(&t2);
 }
 void _printDebug(const char *pszMessage,...){
-  char szTemp[1024];
+  char szTemp[2048];
   va_list ap;
   va_start (ap, pszMessage);
-  vsnprintf ( szTemp, 1023,pszMessage, ap);
+  vsnprintf ( szTemp, 2047,pszMessage, ap);
   CT::string t1=szTemp;
   makeEqualWidth(&t1); 
   printDebugStream(t1.c_str());
@@ -195,10 +204,10 @@ void _printDebug(const char *pszMessage,...){
 }
 
 void _printWarning(const char *pszMessage,...){
-  char szTemp[1024];
+  char szTemp[2048];
   va_list ap;
   va_start (ap, pszMessage);
-  vsnprintf ( szTemp, 1023,pszMessage, ap);
+  vsnprintf ( szTemp, 2047,pszMessage, ap);
   CT::string t1=szTemp;
   makeEqualWidth(&t1); 
   printWarningStream(t1.c_str());
@@ -206,10 +215,10 @@ void _printWarning(const char *pszMessage,...){
 }
 
 void _printError(const char *pszMessage,...){
-  char szTemp[1024];
+  char szTemp[2048];
   va_list ap;
   va_start (ap, pszMessage);
-  vsnprintf ( szTemp, 1023,pszMessage, ap);
+  vsnprintf ( szTemp, 2047,pszMessage, ap);
   CT::string t1=szTemp;
   makeEqualWidth(&t1); 
   printErrorStream(t1.c_str());

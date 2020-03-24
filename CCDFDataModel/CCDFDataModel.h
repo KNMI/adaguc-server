@@ -28,6 +28,10 @@
 
 //#define CCDFDATAMODEL_DEBUG
 
+#define CCDFDATAMODEL_DUMP_STANDARD 0
+#define CCDFDATAMODEL_DUMP_JSON     1
+
+
 #include "CCDFTypes.h"
 #include "CCDFAttribute.h"
 #include "CCDFDimension.h"
@@ -37,10 +41,12 @@
 #include "CCDFWarper.h"
 namespace CDF{
   
-  void dump(CDFObject* cdfObject,CT::string* dumpString);
-  void dump(CDF::Variable* cdfVariable,CT::string* dumpString);
+  void _dump(CDFObject* cdfObject,CT::string* dumpString, int returnType);
+  void _dump(CDF::Variable* cdfVariable,CT::string* dumpString, int returnType);
   CT::string dump(CDFObject* cdfObject);
-  void _dumpPrintAttributes(const char *variableName, std::vector<CDF::Attribute *>attributes,CT::string *dumpString);
+  CT::string dump(CDF::Variable* cdfVariable);
+  CT::string dumpAsJSON(CDFObject* cdfObject);
+  void _dumpPrintAttributes(const char *variableName, std::vector<CDF::Attribute *>attributes,CT::string *dumpString, int returnType);
   
 };
 

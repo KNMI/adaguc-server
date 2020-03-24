@@ -5,7 +5,7 @@
 
 const char * CMakeEProfile::className = "CMakeEProfile";
 
-//#define CMakeEProfile_DEBUG
+// #define CMakeEProfile_DEBUG
 
 #define CMakeEProfile_MAX_DIMS 255
 
@@ -452,7 +452,7 @@ public:
         {
 
           
-          CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource->srvParams,(filemapiterator->first).c_str());
+          CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams,(filemapiterator->first).c_str());
           CDF::Variable *variable =cdfObject->getVariableNE(variableName.c_str());
           dataObject->cdfVariable= variable;
           if(variable == NULL){
@@ -709,8 +709,9 @@ int EProfileUniqueRequests::plotHeightRetrieval(CDrawImage *drawImage, CDFObject
 
 int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage,CDF::Variable *variable,size_t *start,size_t *count,EProfileUniqueRequests::Request*request,CDataSource *dataSource){
 
-  CTime adagucTime;
-  adagucTime.init(((CDFObject*)variable->getParentCDFObject())->getVariableNE("time_obs"));
+  // CTime adagucTime;
+  // adagucTime->init(((CDFObject*)variable->getParentCDFObject())->getVariableNE("time_obs"));
+  CTime *adagucTime = CTime::GetCTimeInstance(((CDFObject*)variable->getParentCDFObject())->getVariableNE("time_obs"));
   
   COGCDims *ogcDim=dataSource->requiredDims[0];
 
@@ -739,8 +740,8 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage,CDF::Variable *va
   
   
   
-  double startGraphTime = adagucTime.dateToOffset(adagucTime.freeDateStringToDate(ogcDim->uniqueValues[0].c_str()));
-  double stopGraphTime = adagucTime.dateToOffset(adagucTime.freeDateStringToDate(ogcDim->uniqueValues[ogcDim->uniqueValues.size()-1].c_str()));
+  double startGraphTime = adagucTime->dateToOffset(adagucTime->freeDateStringToDate(ogcDim->uniqueValues[0].c_str()));
+  double stopGraphTime = adagucTime->dateToOffset(adagucTime->freeDateStringToDate(ogcDim->uniqueValues[ogcDim->uniqueValues.size()-1].c_str()));
   
   
   double startGraphRange = ((float*)varRange->data)[0];
@@ -765,8 +766,8 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage,CDF::Variable *va
 #ifdef CMakeEProfile_DEBUG              
     CDBDebug("elevation=%s",dataSource->srvParams->requestDims[foundTimeDim]->value.c_str());
 #endif    
-      startGraphTime =  adagucTime.dateToOffset(adagucTime.freeDateStringToDate(timeEntries[0].c_str()));
-      stopGraphTime =  adagucTime.dateToOffset(adagucTime.freeDateStringToDate(timeEntries[1].c_str()));
+      startGraphTime =  adagucTime->dateToOffset(adagucTime->freeDateStringToDate(timeEntries[0].c_str()));
+      stopGraphTime =  adagucTime->dateToOffset(adagucTime->freeDateStringToDate(timeEntries[1].c_str()));
     }
     delete[] timeEntries;
   }
@@ -878,19 +879,13 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage,CDF::Variable *va
       }
       
     }
-    
-    if(time == 0){
-//       for(int y=0;y<imageHeight;y++){
-//        drawImage->setPixelTrueColor(x1-1,y,0,0,255,255);
-//       }
-      dayPasses.push_back(CMakeEProfile::DayPass(x1,((double*)varTime->data)[time]));
-      
-    }
+
+    dayPasses.push_back(CMakeEProfile::DayPass(x1,((double*)varTime->data)[time]));
    
   }
  
  /*  
-  CT::string dateStr  =adagucTime.dateToISOString(adagucTime.offsetToDate(((double*)varTime->data)[time]));
+  CT::string dateStr  =adagucTime->dateToISOString(adagucTime->offsetToDate(((double*)varTime->data)[time]));
       drawImage->setText(dateStr.c_str(),dateStr.length(),x1,1,CColor(0,0,0,0),12);*/
   
   plotHeightRetrieval(drawImage,((CDFObject*)variable->getParentCDFObject()),"cbh",CColor(0,0,255,255),count[0],startGraphTime,startGraphRange,graphWidth,graphHeight,minWidth);
@@ -900,18 +895,19 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage,CDF::Variable *va
 //   
    
   for(size_t j=0;j<dayPasses.size();j++){
-    CT::string dateStr  =adagucTime.dateToISOString(adagucTime.offsetToDate(dayPasses[j].offset));
-    dateStr.setSize(10);
-    drawImage->setText(dateStr.c_str(),dateStr.length(),dayPasses[j].x+4,5,CColor(0,0,0,0),12);
-     
-    for(int y=0;y<imageHeight;y++){
-      drawImage->setPixelTrueColor(dayPasses[j].x,y,0,0,255,255);
-    }
-    
+    CTime::Date d = adagucTime->offsetToDate(dayPasses[j].offset);
+    if (d.minute == 0 && d.hour == 0){
+      CT::string dateStr  =adagucTime->dateToISOString(d);
+      dateStr.setSize(10);
+      drawImage->setText(dateStr.c_str(),dateStr.length(),dayPasses[j].x+4,5,CColor(0,0,0,0),12);
+      
+      for(int y=0;y<imageHeight;y++){
+        drawImage->setPixelTrueColor(dayPasses[j].x,y,0,0,255,255);
+      }
+    }    
   }
 
   
-
 
   //drawImage->line(0,0,100,100,248);
   return 0;

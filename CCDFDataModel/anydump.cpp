@@ -31,27 +31,47 @@
 #include "CCDFDataModel.h"
 #include "CCDFNetCDFIO.h"
 #include "CCDFHDF5IO.h"
+#include "CCDFGeoJSONIO.h"
+#include "CCDFCSVReader.h"
+
 DEF_ERRORMAIN();
 
 int main(int argCount,char **argVars){
     CDFReader*cdfReader = NULL;
     CDFObject *cdfObject = NULL;
     if(argCount<=2){
-      printf("anydump [-h] file\n");
-      printf("  [-h]             Header information only, no data\n");
+      printf("anydump [-h] [-json] [-v <variable name>] [-ncml <ncml file>] file\n");
+      printf("File can be any of the ADAGUC supported files, like NetCDF, HDF5, PNG, GeoJSON, CSV\n");
+      printf("  [-h]                  Header information in ncdump format.\n");
+      printf("  [-json]               Header information in ADAGUC json format\n");
+      printf("  [-v <variable name>]  Dump specific variable\n");
+      printf("  [-ncml <ncml file>]   Dump with ncml file\n");
       return 0;
     }
     
-    CT::string cmdType = argVars[1];
-    CT::string variableName;
-    if(cmdType.equals("-v")) {
-      if(argCount!=4){
-        CDBError("Not enough arguments");
-        return 1;
+    
+    CT::string variableName, ncmlFile;
+    bool dumpHeader = false;
+    bool dumpAsJSON = false;
+
+    for(int j=0;j< argCount; j++) {
+      CT::string cmdType = argVars[j];
+      if(cmdType.equals("-h")) dumpHeader = true;
+      if(cmdType.equals("-json")) dumpAsJSON = true;
+      if(cmdType.equals("-v")) {
+        if(j + 1 >= argCount){
+          CDBError("Not enough arguments, please specify the variable");
+          return 1;
+        }
+        variableName = argVars[j + 1];
       }
-      variableName = argVars[2];
-      CDBDebug("Dumpvar %s",variableName.c_str());
-      
+      if(cmdType.equals("-ncml")) {
+        if(j + 1 >= argCount){
+          CDBError("Not enough arguments, please specify the ncml file");
+          return 1;
+        }
+        ncmlFile = argVars[j + 1];
+      }
     }
     
     CT::string inputFile=argVars[argCount-1];//"/nobackup/users/plieger/projects/msgcpp/oud/meteosat9.fl.geo.h5";
@@ -67,26 +87,49 @@ int main(int argCount,char **argVars){
       if(inputFile.endsWith(".h5")){
         cdfReader = new CDFHDF5Reader();
       }
+      if(inputFile.endsWith(".geojson")){
+        cdfReader = new CDFGeoJSONReader();
+      }
+      if(inputFile.endsWith(".csv")){
+        cdfReader = new CDFCSVReader();
+      }
+      if (cdfReader == NULL){
+        CDBError("Unrecognized extension");
+        throw __LINE__;
+      }
       cdfObject->attachCDFReader(cdfReader);
       status = cdfReader->open(inputFile.c_str());
       if(status != 0){CDBError("Unable to read file %s",inputFile.c_str());throw(__LINE__);}
       
-      if(cmdType.equals("-v")) {
+      if (!ncmlFile.empty()) {
+        CDBDebug("Applying NCML [%s]", ncmlFile.c_str());
+        cdfObject->applyNCMLFile(ncmlFile.c_str());
+      }
+
+      if(dumpHeader && !dumpAsJSON) {
+        CT::string dumpString = CDF::dump(cdfObject);
+        printf("%s\n",dumpString.c_str());
+      }
+      if(dumpAsJSON) {
+        CT::string dumpString = CDF::dumpAsJSON(cdfObject);
+        printf("%s\n",dumpString.c_str());
+      }
+
+      if(!variableName.empty()) {
         CDF::Variable *var = cdfObject->getVariableNE(variableName.c_str());
         if(var == NULL){
           CDBError("Variable not found");
           throw(__LINE__);
         }
         
-        
-        CT::string dumpString;
-        CDF::dump(var,&dumpString);
+        printf("// Data dump for variable [%s]:\n", var->name.c_str());
+        CT::string dumpString = CDF::dump(var);
         printf("%s\n",dumpString.c_str());
         
         bool isString = var->getNativeType()==CDF_STRING;
-        isString = true;
+        
         if(!isString){
-          var->readData(CDF_FLOAT);
+          var->readData(var->getNativeType());
           printf("[");
           for(size_t j=0;j<var->getSize();j++){
             if(var->dimensionlinks.size()>0){
@@ -95,12 +138,26 @@ int main(int argCount,char **argVars){
                 printf("]\n[");
               }
             }
-            printf("%g, ",((float*)var->data)[j]);
+            if (var->getNativeType() == CDF_CHAR){
+              printf("%c",((char*)var->data)[j]);
+            } if (var->getNativeType() == CDF_SHORT || var->getNativeType() == CDF_USHORT){
+              printf("%d",((short*)var->data)[j]);
+            } if (var->getNativeType() == CDF_INT || var->getNativeType() == CDF_UINT){
+              printf("%d",((int*)var->data)[j]);
+            } if (var->getNativeType() == CDF_INT64 || var->getNativeType() == CDF_UINT64){
+              printf("%ld",((long*)var->data)[j]);
+            } else if (var->getNativeType() == CDF_FLOAT){
+              printf("%g, ",((float*)var->data)[j]);
+            } else if (var->getNativeType() == CDF_DOUBLE){
+              printf("%g, ",((double*)var->data)[j]);
+            }
           }
           printf("]\n");
         }else{
+          
           var->readData(CDF_STRING);
           printf("[");
+          
           for(size_t j=0;j<var->getSize();j++){
             if(var->dimensionlinks.size()>0){
               size_t firstDimSize = var->dimensionlinks[var->dimensionlinks.size()-1]->getSize();
@@ -118,11 +175,7 @@ int main(int argCount,char **argVars){
       
       
       
-      if(cmdType.equals("-h")) {
-        CT::string dumpString;
-        CDF::dump(cdfObject,&dumpString);
-        printf("%s\n",dumpString.c_str());
-      }
+  
       delete cdfReader;cdfReader=NULL;
       delete cdfObject;cdfObject=NULL;
     }
@@ -130,6 +183,7 @@ int main(int argCount,char **argVars){
       delete cdfReader;cdfReader=NULL;
       delete cdfObject;cdfObject=NULL;
     }
-      
+
+  CTime::cleanInstances();
   return 0;
 }

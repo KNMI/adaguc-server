@@ -1,9 +1,10 @@
-import os
+import os, os.path
 from StringIO import StringIO
 from adaguc.CGIRunner import CGIRunner
 import unittest
 import shutil
 import subprocess
+import json
 from lxml import etree
 from lxml import objectify
 import re
@@ -47,6 +48,12 @@ class TestWMS(unittest.TestCase):
         expect = etree.tostring(obj2)     
 
         self.assertEquals(expect, result)
+
+    def checkReport(self, reportFilename="", expectedReportFilename=""):
+        self.assertTrue(os.path.exists(reportFilename))
+        self.assertEqual(AdagucTestTools().readfromfile(reportFilename),
+                         AdagucTestTools().readfromfile(self.expectedoutputsspath + expectedReportFilename))
+        os.remove(reportFilename)
     
     def test_WMSGetCapabilities_testdatanc(self):
         AdagucTestTools().cleanTempDir()
@@ -55,15 +62,55 @@ class TestWMS(unittest.TestCase):
         AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
         self.assertEqual(status, 0)
         self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))
+        self.assertFalse(os.path.exists("checker_report.txt"))
 
     def test_WMSGetMap_testdatanc(self):
         AdagucTestTools().cleanTempDir()
         filename="test_WMSGetMap_testdatanc"
-        status,data,headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&", env = self.env)
+        status,data,headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&",
+                                                                env = self.env, args=["--report"])
         AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
         self.assertEqual(status, 0)
         self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+
+        self.checkReport(reportFilename="checker_report.txt",
+                         expectedReportFilename="checker_report_WMSGetMap_testdatanc.txt")
+
+    def test_WMSGetMap_Report_env(self):
+        AdagucTestTools().cleanTempDir()
+        filename="test_WMSGetMap_Report_env"
+        reportfilename="./env_checker_report.txt"
+        self.env['ADAGUC_CHECKER_FILE']=reportfilename
+        status,data,headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&",
+                                                                env = self.env, args=["--report"])
+        AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertTrue(os.path.exists(reportfilename))
+        self.env.pop('ADAGUC_CHECKER_FILE', None)
+        if(os.path.exists(reportfilename)):
+            os.remove(reportfilename)
+
+    def test_WMSGetMap_testdatanc_customprojectionstring(self):
+        AdagucTestTools().cleanTempDir()
         
+        #https://geoservices.knmi.nl/cgi-bin/RADNL_OPER_R___25PCPRR_L3.cgi?SERVICE=WMS&REQUEST=GETMAP&VERSION=1.1.1&SRS%3DPROJ4%3A%2Bproj%3Dstere%20%2Bx_0%3D0%20%2By_0%3D0%20%2Blat_ts%3D60%20%2Blon_0%3D0%20%2Blat_0%3D90%20%2Ba%3D6378140%20%2Bb%3D6356750%20%2Bunits%3Dm&FORMAT=image/png&TRANSPARENT=true&WIDTH=750&HEIGHT=660&BBOX=100000,-4250000,600000,-3810000&LAYERS=RADNL_OPER_R___25PCPRR_L3_KNMI&TIME=2018-03-12T12:40:00
+        
+        filename="test_WMSGetMap_testdatanc_customprojectionstring.png"
+        status,data,headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=%2Bproj%3Dstere%20%2Bx_0%3D0%20%2By_0%3D0%20%2Blat_ts%3D60%20%2Blon_0%3D0%20%2Blat_0%3D90%20%2Ba%3D6378140%20%2Bb%3D6356750%20%2Bunits%3Dm&BBOX=100000,-4250000,600000,-3810000&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&", env = self.env)
+        AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+
+    def test_WMSGetMap_testdatanc_customprojectionstring_proj4namespace(self):
+        AdagucTestTools().cleanTempDir()
+        
+        filename="test_WMSGetMap_testdatanc_customprojectionstring_proj4namespace.png"
+        status,data,headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=PROJ4%3A%2Bproj%3Dstere%20%2Bx_0%3D0%20%2By_0%3D0%20%2Blat_ts%3D60%20%2Blon_0%3D0%20%2Blat_0%3D90%20%2Ba%3D6378140%20%2Bb%3D6356750%20%2Bunits%3Dm&BBOX=100000,-4250000,600000,-3810000&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&", env = self.env)
+        AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+
+  
     def test_WMSGetCapabilitiesGetMap_testdatanc(self):
         AdagucTestTools().cleanTempDir()
         filename="test_WMSGetCapabilities_testdatanc"
@@ -184,6 +231,38 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))
 
+    def test_WMSCMDUpdateDBPath(self):
+        AdagucTestTools().cleanTempDir()
+        ADAGUC_PATH = os.environ['ADAGUC_PATH']
+        status,data,headers = AdagucTestTools().runADAGUCServer(
+          args = ['--updatedb', '--config', 
+          ADAGUC_PATH + '/data/config/adaguc.timeseries.xml', 
+          '--path', ADAGUC_PATH + '/data/datasets/netcdf_5dims/netcdf_5dims_seq1/nc_5D_20170101000000-20170101001000.nc'], 
+          isCGI = False, 
+          showLogOnError = False,
+          showLog = False)
+        self.assertEqual(status, 0)
+        
+        filename="test_WMSGetCapabilities_timeseries_path_netcdf_5dims_seq1"
+        status,data,headers = AdagucTestTools().runADAGUCServer("SERVICE=WMS&request=getcapabilities", {'ADAGUC_CONFIG': ADAGUC_PATH + '/data/config/adaguc.timeseries.xml'})
+        AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))
+        
+        status,data,headers = AdagucTestTools().runADAGUCServer(
+          args = ['--updatedb', 
+          '--config', ADAGUC_PATH + '/data/config/adaguc.timeseries.xml', 
+          '--path', ADAGUC_PATH + '/data/datasets/netcdf_5dims/netcdf_5dims_seq2/nc_5D_20170101001500-20170101002500.nc'], 
+          isCGI = False, 
+          showLogOnError = False)
+        self.assertEqual(status, 0)
+        
+        filename="test_WMSGetCapabilities_timeseries_path_netcdf_5dims_seq2"
+        status,data,headers = AdagucTestTools().runADAGUCServer("SERVICE=WMS&request=getcapabilities", {'ADAGUC_CONFIG': ADAGUC_PATH + '/data/config/adaguc.timeseries.xml'})
+        AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))
+
     def test_WMSGetFeatureInfo_forecastreferencetime_texthtml(self):
         AdagucTestTools().cleanTempDir()
         filename="test_WMSGetFeatureInfo_forecastreferencetime.html"
@@ -207,6 +286,102 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
         filename="test_WMSGetCapabilities_testdatanc"
         status,data,headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WMS&request=getcapabilities", env = self.env)
+        AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))
+
+    def test_WMSGetMap_Report_nounits(self):
+        AdagucTestTools().cleanTempDir()
+        if os.path.exists(os.environ["ADAGUC_LOGFILE"]):
+            os.remove(os.environ["ADAGUC_LOGFILE"])
+        filename="test_WMSGetMap_Report_nounits"
+        reportfilename="./nounits_checker_report.txt"
+        status,data,headers = AdagucTestTools().runADAGUCServer(
+            "source=test/testdata_report_nounits.nc&service=WMS&request=GetMap&version=1.3.0&layers=sow_a1&crs=EPSG%3A4326&bbox=47.80599631376197%2C1.4162628389784275%2C56.548995855839685%2C9.526486675156528&width=863&height=981&format=image%2Fpng&info_format=application%2Fjson&time=1000-01-01T00%3A00%3A00Z%2F3000-01-01T00%3A00%3A00Z&dim_reference_time=2017-12-15T09%3A00%3A00Z",
+            env=self.env, args=["--report=%s" % reportfilename], isCGI=False, showLogOnError=False)
+        AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
+        self.assertEqual(status, 1)
+        self.assertTrue(os.path.exists(reportfilename))
+        self.assertTrue(os.path.exists(os.environ["ADAGUC_LOGFILE"]))
+
+        reportfile = open(reportfilename, "r")
+        report = json.load(reportfile)
+        reportfile.close()
+        os.remove(reportfilename)
+        self.assertTrue(report.has_key("messages"))
+        expectedErrors = ["No time units found for variable time"] ## add more errors to this list if we expect more.
+        foundErrors = []
+        #self.assertIsNone("TODO: test if error messages end up in normale log file as well as report.")
+        for message in report["messages"]:
+            self.assertTrue(message.has_key("category"))
+            self.assertTrue(message.has_key("documentationLink"))
+            self.assertTrue(message.has_key("message"))
+            self.assertTrue(message.has_key("severity"))
+            if (message["severity"] == "ERROR"):
+                foundErrors.append(message["message"])
+                self.assertIn(message["message"], expectedErrors)
+        self.assertEqual(len(expectedErrors), len(foundErrors))
+
+        expectedErrors.append("WMS GetMap Request failed")
+        foundErrors = []
+        with open(os.environ["ADAGUC_LOGFILE"]) as logfile:
+            for line in logfile.readlines():
+                if "E:" in line:
+                    for error in expectedErrors:
+                        if error in line:
+                            foundErrors.append(error)
+        logfile.close()
+        self.assertEqual(len(expectedErrors), len(foundErrors))
+
+    def test_WMSGetMap_NoReport_nounits(self):
+        AdagucTestTools().cleanTempDir()
+        if os.path.exists(os.environ["ADAGUC_LOGFILE"]):
+            os.remove(os.environ["ADAGUC_LOGFILE"])
+        filename="test_WMSGetMap_Report_nounits"
+        reportfilename="./checker_report.txt"
+        status,data,headers = AdagucTestTools().runADAGUCServer(
+            "source=test/testdata_report_nounits.nc&service=WMS&request=GetMap&version=1.3.0&layers=sow_a1&crs=EPSG%3A4326&bbox=47.80599631376197%2C1.4162628389784275%2C56.548995855839685%2C9.526486675156528&width=863&height=981&format=image%2Fpng&info_format=application%2Fjson&time=1000-01-01T00%3A00%3A00Z%2F3000-01-01T00%3A00%3A00Z&dim_reference_time=2017-12-15T09%3A00%3A00Z",
+            env=self.env, isCGI=False, showLogOnError=False)
+        AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
+        self.assertEqual(status, 1)
+        self.assertFalse(os.path.exists(reportfilename))
+        self.assertTrue(os.path.exists(os.environ["ADAGUC_LOGFILE"]))
+        expectedErrors = ["No time units found for variable time",
+                          "Exception in DBLoopFiles",
+                          "Invalid dimensions values: No data available for layer sow_a1",
+                          "WMS GetMap Request failed"]
+        foundErrors = []
+        with open(os.environ["ADAGUC_LOGFILE"]) as logfile:
+            for line in logfile.readlines():
+                if "E:" in line:
+                    for error in expectedErrors:
+                        if error in line:
+                            foundErrors.append(error)
+        logfile.close()
+        self.assertEqual(len(expectedErrors), len(foundErrors))
+
+
+    def test_WMSGetMap_worldmap_latlon_PNGFile_withoutinfofile(self):
+        AdagucTestTools().cleanTempDir()
+        filename="test_WMSGetMap_worldmap_latlon_PNGFile_withoutinfofile.png"
+        status,data,headers = AdagucTestTools().runADAGUCServer("source=worldmap_latlon.png&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=pngdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=rgba%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&", env = self.env)
+        AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+
+    def test_WMSGetMap_worldmap_mercator_PNGFile_withinfofile(self):
+        AdagucTestTools().cleanTempDir()
+        filename="test_WMSGetMap_worldmap_mercator_PNGFile_withinfofile.png"
+        status,data,headers = AdagucTestTools().runADAGUCServer("source=worldmap_mercator.png&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=pngdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=rgba%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&", env = self.env)
+        AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))        
+
+    def test_WMSGetCapabilities_testdatanc_autostyle(self):
+        AdagucTestTools().cleanTempDir()
+        filename="test_WMSGetCapabilities_testdatanc_autostyle.xml"
+        status,data,headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WMS&request=getcapabilities", {'ADAGUC_CONFIG': ADAGUC_PATH + '/data/config/adaguc.tests.autostyle.xml'})
+        
         AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
         self.assertEqual(status, 0)
         self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))

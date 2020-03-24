@@ -2,12 +2,12 @@ INCLUDEDIR=. -I/usr/include/libxml2/ $(CPPFLAGS) $(LDFLAGS)
 
 
 ifndef BUILDER_ADAGUCCOMPILERSETTINGS
-  BUILDER_ADAGUCCOMPILERSETTINGS=-Wall -DMEMLEAKCHECK
+  BUILDER_ADAGUCCOMPILERSETTINGS=-g -Wall -DMEMLEAKCHECK -std=c++11
 endif
 
 CCOMPILER=g++ $(BUILDER_ADAGUCCOMPILERSETTINGS) -I $(INCLUDEDIR)
 
-OBJECTS =  CTypes.o CTString.o CXMLParser.o CDebugger.o CDirReader.o CStopWatch.o CHTTPTools.o CReadFile.o test.o
+OBJECTS =  CTypes.o CTString.o CTStringRef.o CXMLParser.o CDebugger.o CDirReader.o CStopWatch.o CHTTPTools.o CReadFile.o CReporter.o CReportMessage.o CReportWriter.o json_adaguc.o test.o
 
 EXECUTABLE= hclasses
 

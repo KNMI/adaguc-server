@@ -26,8 +26,6 @@
 #include "CDrawImage.h"
 #include "CXMLParser.h"
 const char *CDrawImage::className="CDrawImage";
-std::map<int,int> CDrawImage::myColorMap;
-std::map<int,int>::iterator CDrawImage::myColorIter;
 
 float convertValueToClass(float val,float interval){
   float f=int(val/interval);
@@ -102,6 +100,12 @@ void CDrawImage::destroyImage(){
 CDrawImage::~CDrawImage(){
 //   CDBDebug("[DESC] CDrawImage %dx%d", Geo->dWidth, Geo->dHeight);
   destroyImage();
+  std::map<CT::string,CCairoPlotter*>::iterator myCCairoPlotterIter = myCCairoPlotterMap.begin();
+  while (myCCairoPlotterIter != myCCairoPlotterMap.end()) {
+    delete myCCairoPlotterIter->second;
+    myCCairoPlotterIter++;
+  }
+  myCCairoPlotterMap.clear();
   delete Geo; Geo=NULL;
 }
 
@@ -159,6 +163,8 @@ int CDrawImage::createImage(CGeoParams *_Geo){
   return 0;
 
 }
+
+
 
 
 int CDrawImage::getClosestGDColor(unsigned char r,unsigned char g,unsigned char b){
@@ -964,12 +970,11 @@ int CDrawImage::drawTextArea(int x,int y,const char *fontfile, float size, float
  
 void CDrawImage::drawText(int x,int y,const char *fontfile, float size, float angle,const char *text,CColor fgcolor,CColor bgcolor){
   if(currentGraphicsRenderer==CDRAWIMAGERENDERER_CAIRO){
-     CCairoPlotter * freeType = new CCairoPlotter (Geo->dWidth,Geo->dHeight,(cairo->getByteBuffer()),size,fontfile);
+     CCairoPlotter * freeType = this->getCairoPlotter(fontfile, size, Geo->dWidth, Geo->dHeight, cairo->getByteBuffer());
      freeType->setColor(fgcolor.r,fgcolor.g,fgcolor.b,fgcolor.a);
      freeType->setFillColor(bgcolor.r,bgcolor.g,bgcolor.b,bgcolor.a);
      freeType->drawFilledText(x,y,angle,text);
      cairo->isAlphaUsed|=freeType->isAlphaUsed; //remember freetype's isAlphaUsed flag
-     delete freeType;
    }else{
      char *_text = new char[strlen(text)+1];
      memcpy(_text,text,strlen(text)+1);
@@ -1007,6 +1012,32 @@ void CDrawImage::setDisc(int x,int y,int discRadius, CColor fillColor, CColor li
     circle( x,  y, discRadius,lineColor,1);    
   }
 }
+
+void CDrawImage::setEllipse(int x,int y,float discRadiusX, float discRadiusY, float rotation,  CColor fillColor, CColor lineColor) {
+  if(currentGraphicsRenderer==CDRAWIMAGERENDERER_CAIRO){
+    if(currentLegend==NULL)return;
+    cairo->setFillColor(fillColor.r,fillColor.g,fillColor.b,fillColor.a);
+    cairo->setColor(lineColor.r,lineColor.g,lineColor.b,lineColor.a);
+    cairo->filledEllipse(x, y, discRadiusX, discRadiusY, rotation);
+//    circle( x,  y,  discRadius,lineColor,1);
+  }
+}
+
+void CDrawImage::setDisc(int x,int y,float discRadius, CColor fillColor, CColor lineColor){
+  if(currentGraphicsRenderer==CDRAWIMAGERENDERER_CAIRO){
+    if(currentLegend==NULL)return;
+    cairo->setFillColor(fillColor.r,fillColor.g,fillColor.b,fillColor.a);
+    cairo->setColor(lineColor.r,lineColor.g,lineColor.b,lineColor.a);
+    cairo->filledcircle(x, y, discRadius);
+//    circle( x,  y,  discRadius,lineColor,1);
+  }else{
+    int fillCol=getClosestGDColor(fillColor.r,fillColor.g,fillColor.b);
+    gdImageFilledEllipse(image, x, y, discRadius*2, discRadius*2, fillCol);
+    circle( x,  y, discRadius,lineColor,1);    
+  }
+}
+
+
 void CDrawImage::setTextDisc(int x,int y,int discRadius, const char *text,const char *fontfile, float fontsize,CColor textcolor,CColor fillcolor, CColor lineColor){
   if(currentGraphicsRenderer==CDRAWIMAGERENDERER_CAIRO){
     if(currentLegend==NULL)return;
@@ -1028,11 +1059,10 @@ void CDrawImage::setTextDisc(int x,int y,int discRadius, const char *text,const 
 
 void CDrawImage::drawAnchoredText(int x,int y,const char *fontfile, float size, float angle,const char *text,CColor color, int anchor){
   if(currentGraphicsRenderer==CDRAWIMAGERENDERER_CAIRO){
-    CCairoPlotter * freeType = new CCairoPlotter (Geo->dWidth,Geo->dHeight,(cairo->getByteBuffer()),size,fontfile);
+    CCairoPlotter * freeType = this->getCairoPlotter(fontfile, size, Geo->dWidth, Geo->dHeight, cairo->getByteBuffer());
     freeType->setColor(color.r,color.g,color.b,color.a);
     freeType->drawAnchoredText(x,y,angle,text,anchor);
     cairo->isAlphaUsed|=freeType->isAlphaUsed; //remember freetype's isAlphaUsed flag
-    delete freeType;
   }else{
     //TODO GD renderer does not center text yet
     char *_text = new char[strlen(text)+1];
@@ -1043,16 +1073,31 @@ void CDrawImage::drawAnchoredText(int x,int y,const char *fontfile, float size, 
     delete[] _text;
   }
 }
+
+
+CCairoPlotter *CDrawImage::getCairoPlotter(const char *fontfile, float size, int w, int h, unsigned char *b) {
+  CT::string _key;
+  _key.print("%s_%f_%d_%d", fontfile, size, w, h);
+  // std::string key = _key.c_str();
+  std::map<CT::string,CCairoPlotter*>::iterator myCCairoPlotterIter = myCCairoPlotterMap.find(_key);
+  if(myCCairoPlotterIter==myCCairoPlotterMap.end()){
+    CCairoPlotter * cairoPlotter = new CCairoPlotter (w,h,b,size,fontfile);
+    myCCairoPlotterMap[_key] = cairoPlotter;
+    return cairoPlotter;
+  } else {
+    return (*myCCairoPlotterIter).second;
+  } 
+}
+  
   
 
 void CDrawImage::drawCenteredText(int x,int y,const char *fontfile, float size, float angle,const char *text,CColor color){
   
   if(currentGraphicsRenderer==CDRAWIMAGERENDERER_CAIRO){
-    CCairoPlotter * freeType = new CCairoPlotter (Geo->dWidth,Geo->dHeight,(cairo->getByteBuffer()),size,fontfile);
+    CCairoPlotter * freeType = this->getCairoPlotter(fontfile, size, Geo->dWidth, Geo->dHeight, cairo->getByteBuffer());
     freeType->setColor(color.r,color.g,color.b,color.a);
     freeType->drawCenteredText(x,y,angle,text);
     cairo->isAlphaUsed|=freeType->isAlphaUsed; //remember freetype's isAlphaUsed flag
-    delete freeType;
   }else{
     //TODO GD renderer does not center text yet
     char *_text = new char[strlen(text)+1];
@@ -1071,11 +1116,10 @@ void CDrawImage::drawCenteredText(int x,int y,const char *fontfile, float size, 
 void CDrawImage::drawText(int x,int y,const char *fontfile, float size, float angle,const char *text,CColor color){
   
   if(currentGraphicsRenderer==CDRAWIMAGERENDERER_CAIRO){
-    CCairoPlotter * freeType = new CCairoPlotter (Geo->dWidth,Geo->dHeight,(cairo->getByteBuffer()),size,fontfile);
+    CCairoPlotter * freeType = this->getCairoPlotter(fontfile, size, Geo->dWidth, Geo->dHeight, cairo->getByteBuffer());
     freeType->setColor(color.r,color.g,color.b,color.a);
     freeType->drawText(x,y,angle,text);
     cairo->isAlphaUsed|=freeType->isAlphaUsed; //remember freetype's isAlphaUsed flag
-    delete freeType;
   }else{
     char *_text = new char[strlen(text)+1];
     memcpy(_text,text,strlen(text)+1);

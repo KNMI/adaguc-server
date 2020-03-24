@@ -89,8 +89,10 @@ class CDataSource{
       CT::string meaning;
       double value;
   };
-  
+  bool dimsAreAutoConfigured;
+  CT::string headerFileName;
 private:
+  
   CT::PointerList<CStyleConfiguration*> *_styles;
   CStyleConfiguration *_currentStyle;
   public:
@@ -124,6 +126,19 @@ private:
   
   class Statistics{
     public:
+      
+    void calculate(size_t size,void*data,CDFType type,double dfNodataValue, bool hasNodataValue) {
+      if(type==CDF_CHAR)calculate<char>(size, (char*)data, type, dfNodataValue, hasNodataValue);
+      if(type==CDF_BYTE)calculate<char>(size, (char*)data, type, dfNodataValue, hasNodataValue);
+      if(type==CDF_UBYTE)calculate<unsigned char>(size, (unsigned char*)data, type, dfNodataValue, hasNodataValue);
+      if(type==CDF_SHORT)calculate<short>(size, (short*)data, type, dfNodataValue, hasNodataValue);
+      if(type==CDF_USHORT)calculate<unsigned short>(size, (unsigned short*)data, type, dfNodataValue, hasNodataValue);
+      if(type==CDF_INT)calculate<int>(size, (int*)data, type, dfNodataValue, hasNodataValue);
+      if(type==CDF_UINT)calculate<unsigned int>(size, (unsigned int*)data, type, dfNodataValue, hasNodataValue);
+      if(type==CDF_FLOAT)calculate<float>(size, (float*)data, type, dfNodataValue, hasNodataValue);
+      if(type==CDF_DOUBLE)calculate<double>(size, (double*)data, type, dfNodataValue, hasNodataValue);   
+    }
+      
     template <class T>
     void calculate(size_t size,T*data,CDFType type,double dfNodataValue, bool hasNodataValue){
     T _min=(T)NAN,_max=(T)NAN;
@@ -244,7 +259,7 @@ private:
   
   
   //Used for vectors and points
-  bool level2CompatMode;
+  bool formatConverterActive;
   
   //The index of the X and Y dimension in the variable dimensionlist (not the id's from the netcdf file)
   int dimXIndex;

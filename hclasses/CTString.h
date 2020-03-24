@@ -32,7 +32,6 @@
 
 namespace CT{
 
-    
   class string:public basetype{
   private:
     char stackValue[CTSTRINGSTACKLENGTH+1];
@@ -51,7 +50,7 @@ namespace CT{
     inline char *getValuePointer(){
       return useStack?stackValue:heapValue;
     }
-
+    
     //DEF_ERRORFUNCTION();
   public:
     /**
@@ -63,73 +62,8 @@ namespace CT{
     *Copy constructor
     */
     string(string const &f);
-    
-    /**
-    * assign operator
-    * @param f The input string
-    */
-    string& operator= (string const& f);
-    
-    /**
-    * assign operator
-    * @param f The input character array
-    */
-    string& operator= (const char*const &f);
-    
-    /**
-    * assign operator
-    * @param f The input integer (checking for 0 or NULL pointer);
-    */
-/*    
-*    TODO DOES NOT WORK YET
-*    string& operator= (int const& f){
-      #ifdef CTYPES_DEBUG
-      CDBDebug("string::operator= (int *const &f)\n");
-      #endif
-      init();return *this;
-    }*/
-    
-    /**
-    * addition assignment operator
-    * @param f The input string
-    */
-    string& operator+= (string const& f);
-    
-    /**
-    * addition assignment operator
-    * @param f The input character array
-    */
-    string& operator+= (const char*const &f);
-    
-    /**
-    * addition operator
-    * @param f The input string
-    */
-    string& operator+ (string const& f);
-    
-    /**
-    * addition operator
-    * @param f The input character array
-    */
-    string& operator+ (const char*const &f);
-    
-    /**
-     * Compare operator
-     * @param f The input string
-     */
-     bool operator < (const string& str) const {
-       return strcmp(this->c_str(),str.c_str()) < 0;
-     }
-     bool operator > (const string& str) const {
-       return strcmp(this->c_str(),str.c_str()) > 0;
-     }
-     bool operator == (const string& str) const {
-       return this->equals(str);
-     }
-     bool operator != (const string& str) const {
-       return !this->equals(str);
-     }
-    
+
+ 
     /**
     * Copy constructor which initialize the string with a character array
     * @param _value The character array to copy
@@ -149,6 +83,66 @@ namespace CT{
     */
     string(CT::string*_string);
     
+
+    /**
+    * assign operator
+    * @param f The input string
+    */
+    string& operator= (string const& f);
+    
+    /**
+    * assign operator
+    * @param f The input character array
+    */
+    string& operator= (const char*const &f);
+    
+    /**
+    * addition assignment operator
+    * @param f The input string
+    */
+    string& operator+= (string const& f);
+    
+    /**
+    * addition assignment operator
+    * @param f The input character array
+    */
+    string& operator+= (const char*const &f);
+    
+    /**
+    * addition operator
+    * @param f The input string
+    */
+    string operator+ (string const& f);
+    
+    /**
+    * addition operator
+    * @param f The input character array
+    */
+    string operator+ (const char*const &f);
+
+    /**
+     * const char* conversion operator
+     * Now it is not necessary to call c_str when a const char* is expected.
+     */
+    operator const char* () const;
+    
+    /**
+     * Compare operator
+     * @param f The input string
+     */
+     bool operator < (const string& str) const {
+       return strcmp(this->c_str(),str.c_str()) < 0;
+     }
+     bool operator > (const string& str) const {
+       return strcmp(this->c_str(),str.c_str()) > 0;
+     }
+     bool operator == (const string& str) const {
+       return this->equals(str);
+     }
+     bool operator != (const string& str) const {
+       return !this->equals(str);
+     }
+   
     /**
     * Destructor
     */
@@ -499,12 +493,22 @@ namespace CT{
     /** 
     * Test whether string is empty or not
     */
-    bool empty();
+    const bool empty();
     
     /**
      * Returns posix basename of path
      */
     CT::string basename();
+    
+    /** 
+     * Checks if this string represents a numeric value
+     */
+    bool isNumeric();
+    
+    /**
+     * Checks if this string represents a float value
+     */
+    bool isFloat();
     
   };
 };
