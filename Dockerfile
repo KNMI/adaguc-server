@@ -53,12 +53,17 @@ RUN bash compile.sh
 
 ######### Second stage (production) ############
 FROM centos:7
+USER root
 
 # production packages, same as stage one
 RUN yum update -y && \
     yum install -y epel-release && \
     yum install -y deltarpm \
-    cairo \
+# building / development packages
+    yum install -y centos-release-scl && \
+    yum install -y devtoolset-7-gcc-c++ && \
+    source /opt/rh/devtoolset-7/enable && \
+    yum install -y cairo \
     curl \
     gd \
     gdal \
@@ -70,7 +75,8 @@ RUN yum update -y && \
     openssl \
     netcdf \
     libwebp-devel \
-    java-1.8.0-openjdk && \
+    java-1.8.0-openjdk \
+    python-devel && \
     yum clean all && \
     rm -rf /var/cache/yum
 
