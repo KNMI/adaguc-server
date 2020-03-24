@@ -24,6 +24,12 @@
  ******************************************************************************/
 
 #include "adagucserver.h"
+#include "CReporter.h"
+#include "CReportWriter.h"
+#include <getopt.h>
+#include "CDebugger_H.h"
+
+extern Tracer NewTrace;
 
 DEF_ERRORMAIN();
 
@@ -53,28 +59,6 @@ void writeLogFile(const char * msg){
 }
 
 void writeErrorFile(const char * msg){
-//   //fprintf(stderr,"%s",msg);
-//   char * logfile=getenv("ADAGUC_ERRORFILE");
-//   if(logfile!=NULL){
-//     FILE * pFile;
-//     pFile = fopen (logfile , "a" );
-//     if(pFile != NULL){
-// //      setvbuf(pFile, NULL, _IONBF, 0);
-//       fputs  (msg, pFile );
-//       if(strncmp(msg,"[D:",3)==0||strncmp(msg,"[W:",3)==0||strncmp(msg,"[E:",3)==0){
-//         time_t myTime = time(NULL);
-//         tm *myUsableTime = localtime(&myTime);
-//         char szTemp[128];
-//         snprintf(szTemp,127,"%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ/%d ",
-//                  myUsableTime->tm_year+1900,myUsableTime->tm_mon+1,myUsableTime->tm_mday,
-//                  myUsableTime->tm_hour,myUsableTime->tm_min,myUsableTime->tm_sec,
-//                  myPID
-//         );
-//         fputs  (szTemp, pFile );
-//       }
-//       fclose (pFile);
-//     }else fprintf(stderr,"Unable to write error logfile %s\n",logfile);
-//   };
    writeLogFile(msg);
 }
 
@@ -133,39 +117,7 @@ int runRequest(){
 
       
       
-int _main(int argc, const char *argv[]){
-//   CDBDebug("Start");
-//   CDBAdapterSQLLite::CSQLLiteDB *db = new CDBAdapterSQLLite::CSQLLiteDB();
-//   db->connect("test.db");
-//   
-// //   CPGSQLDB *db = new CPGSQLDB();
-// //   db->connect("dbname=autoopendap  host=127.0.0.1 user=plieger");
-// 
-//   
-//   CDBStore::Store *s = db->queryToStore("PRAGMA table_info(t20150506t165354054_irajwhnerk3l6twcfta)");
-//   if(s == NULL){
-//     CDBError("error!");
-//     return 0;
-//   }
-//   CT::string col = "";
-//   for(size_t c=0;c<s->getColumnModel()->getSize();c++){
-//     col.printconcat("%s\t\t",s->getColumnModel()->getName(c));
-//   }
-//   CDBDebug("%s",col.c_str());
-//   
-//   
-//   for(size_t j=0;j<s->getSize();j++){
-//      CDBStore::Record* r =s->getRecord(j);
-//      CT::string row = "";
-//      for(size_t c=0;c<s->getColumnModel()->getSize();c++){
-//        row.printconcat("%s\t\t",r->get(c)->c_str());
-//      }
-//      CDBDebug("%s",row.c_str());
-//   }
-//   
-//   delete s;
-//   delete db;
-//   return 0;
+int _main(int argc, char **argv, char **envp){
 
   // Initialize error functions
   seterrormode(EXCEPTIONS_PLAINTEXT);
@@ -173,147 +125,181 @@ int _main(int argc, const char *argv[]){
   setWarningFunction(serverLogFunctionCMDLine);
   setDebugFunction(serverLogFunctionCMDLine);
 
-  //Check if a database update was requested
-  if(argc>=2){
+  int opt;
+  int scanFlags = 0;
+  int configSet = 0;
+  bool getlayers=false;
+  CT::string tailPath, layerPathToScan;
+  CT::string file;
+  CT::string inspireDatasetCSW;
+  CT::string datasetPath;
+  CT::string layerName;
+ 
+  while(true) {
+      int opt_idx = 0;
+      static struct option long_options[] = {
+          { "updatedb", no_argument, 0, 0 },
+          { "config", required_argument, 0, 0 },
+          { "createtiles", no_argument, 0, 0 },
+          { "tailpath", required_argument, 0, 0 },
+          { "path", required_argument, 0, 0 },
+          { "rescan", no_argument, 0, 0 },
+          { "nocleanup", no_argument, 0, 0 },
+          { "cleanfiles", optional_argument, 0, 0 },
+          { "recreate", no_argument, 0, 0 },
+          { "getlayers", no_argument, 0, 0 },
+          { "file", required_argument, 0, 0 },
+          { "inspiredatasetcsw", required_argument, 0, 0 },
+          { "datasetpath", required_argument, 0, 0 },
+          { "test", no_argument, 0, 0 },
+          { "report", optional_argument, 0, 0 },
+          { "layername", required_argument, 0, 0 }
+      };
+
+      opt = getopt_long(argc, argv, "", long_options, &opt_idx);
+      if (opt == -1) {
+          break;
+      } else if (opt == 0) {
+          if(strncmp(long_options[opt_idx].name,"test",4)==0){
+              CDBDebug("Test");
+              CProj4ToCF proj4ToCF;
+              proj4ToCF.debug=true;
+              proj4ToCF.unitTest();
+              return 0;
+          }
+          if(strncmp(long_options[opt_idx].name,"updatedb",8)==0){
+              scanFlags+=CDBFILESCANNER_UPDATEDB;
+          }
+          if(strncmp(long_options[opt_idx].name,"createtiles",11)==0){
+              scanFlags+=CDBFILESCANNER_CREATETILES + CDBFILESCANNER_UPDATEDB;
+          }
+          if(strncmp(long_options[opt_idx].name,"config",6)==0){
+              setenv("ADAGUC_CONFIG",optarg,1);
+              configSet = 1;
+          }
+          if(strncmp(long_options[opt_idx].name,"tailpath",8)==0){
+              tailPath.copy(optarg);
+          }
+          if(strncmp(long_options[opt_idx].name,"layername",9)==0){
+              layerName.copy(optarg);
+          }
+          if(strncmp(long_options[opt_idx].name,"path",4)==0){
+              layerPathToScan.copy(optarg);
+          }
+          if(strncmp(long_options[opt_idx].name,"rescan",6)==0){
+              CDBDebug("RESCAN: Forcing rescan of dataset");
+              scanFlags|=CDBFILESCANNER_RESCAN;
+          }
+          if(strncmp(long_options[opt_idx].name,"nocleanup",9)==0){
+              CDBDebug("NOCLEANUP: Leave all records in DB, don't check if files have disappeared");
+              scanFlags|=CDBFILESCANNER_DONTREMOVEDATAFROMDB;
+          }
+          if(strncmp(long_options[opt_idx].name,"cleanfiles",10)==0){
+              CDBDebug("CLEAN: Delete old files according to Layer configuration");
+              scanFlags|=CDBFILESCANNER_CLEANFILES;
+          }
+          if(strncmp(long_options[opt_idx].name,"recreate",8)==0){
+              CDBDebug("RECREATE: Drop tables and recreate them");
+              scanFlags|=CDBFILESCANNER_RECREATETABLES;
+          }
+          if(strncmp(long_options[opt_idx].name,"getlayers",9)==0){
+              getlayers = true;
+          }
+          if(strncmp(long_options[opt_idx].name, "file", 4) == 0)
+              file = optarg;
+          if(strncmp(long_options[opt_idx].name, "inspiredatasetcsw", 17) == 0)
+              inspireDatasetCSW = optarg;
+          if(strncmp(long_options[opt_idx].name, "datasetpath", 11) == 0)
+              datasetPath = optarg;
+          if(strncmp(long_options[opt_idx].name, "report", 6) == 0) {
+              if(optarg) CReporter::getInstance()->filename(optarg);
+              else if (getenv("ADAGUC_CHECKER_FILE"))
+                  CReporter::getInstance()->filename(getenv("ADAGUC_CHECKER_FILE"));
+              else CReporter::getInstance()->filename(REPORT_DEFAULT_FILE);
+          }
+      }
+  }
+
+  int status = -1; // exit status. Tests should fail if exit status is not set: -1 is never OK.
   
-    if(strncmp(argv[1],"--updatedb",10)==0||strncmp(argv[1],"--createtiles",13)==0){
-      int scanFlags = 0;
-      if(strncmp(argv[1],"--updatedb",10)==0){
-        scanFlags+=CDBFILESCANNER_UPDATEDB;
-      }
-      if(strncmp(argv[1],"--createtiles",13)==0){
-        scanFlags+=CDBFILESCANNER_CREATETILES;
-      }
-      CDBDebug("***** Starting DB update *****\n");
+  //Check if a database update was requested
+  if(((scanFlags & CDBFILESCANNER_UPDATEDB) == CDBFILESCANNER_UPDATEDB) && (configSet == 0)){
+      CDBError("Error: Configuration file is not set: use '--updatedb --config configfile.xml'" );
+      CDBError("And --tailpath for scanning specific sub directory, specify --path for a absolute path to update" );
+      return 1;
+  } else if (((scanFlags & CDBFILESCANNER_UPDATEDB) == CDBFILESCANNER_UPDATEDB) && (configSet == 1)) { // Update database
       CRequest request;
-      int configSet = 0;
-     
-      CT::string tailPath,layerPathToScan;
-      for(int j=0;j<argc;j++){
-        if(strncmp(argv[j],"--config",8)==0&&argc>j+1){
-          
-          //CDBDebug("Setting environment variable ADAGUC_CONFIG to \"%s\"\n",argv[j+1]);
-          setenv("ADAGUC_CONFIG",argv[j+1],1);
-          configSet = 1;
-        }
-        if(strncmp(argv[j],"--tailpath",10)==0&&argc>j+1){
-          //printf("Setting tailpath to \"%s\"\n",argv[j+1]);
-          tailPath.copy(argv[j+1]);
-        }
-        if(strncmp(argv[j],"--path",6)==0&&argc>j+1){
-          //printf("Setting path to \"%s\"\n",argv[j+1]);
-          layerPathToScan.copy(argv[j+1]);
-        }
-        if(strncmp(argv[j],"--rescan",8)==0){
-          CDBDebug("RESCAN: Forcing rescan of dataset");
-          scanFlags|=CDBFILESCANNER_RESCAN;
-        }
-        if(strncmp(argv[j],"--nocleanup",11)==0){
-          CDBDebug("NOCLEANUP: Leave all records in DB, don't check if files have disappeared");
-          scanFlags|=CDBFILESCANNER_DONTREMOVEDATAFROMDB;
-        }
-        if(strncmp(argv[j],"--recreate",10)==0){
-          CDBDebug("RECREATE: Drop tables and recreate them");
-          scanFlags|=CDBFILESCANNER_RECREATETABLES;
-        }
-        
-      }
-      if(configSet == 0){
-        CDBError("Error: Configuration file is not set: use '--updatedb --config configfile.xml'" );
-        CDBError("And --tailpath for scanning specific sub directory, specify --path for a absolute path to update" );
-
-        return 1;
-      }
-      int status = setCRequestConfigFromEnvironment(&request);
+      status = setCRequestConfigFromEnvironment(&request);
       if(status!=0){
-        CDBError("Unable to read configuration file");
-        return 1;
+          CDBError("Unable to read configuration file");
+          return 1;
       }
-
-      status = request.updatedb(&tailPath,&layerPathToScan,scanFlags);
+      status = request.updatedb(&tailPath,&layerPathToScan,scanFlags, layerName);
       if(status != 0){
-        CDBError("Error occured in updating the database");
+          CDBError("Error occured in updating the database");
       }
-    
-
-                
       readyerror();
       return status;
-    }
-    
-    if(strncmp(argv[1],"--getlayers",11)==0){
-      int status = 0;
-      CT::string file;
-      CT::string inspireDatasetCSW;
-      CT::string datasetPath;
-      
-      for(int j=0;j<argc;j++){
-        CT::string argument = argv[j];
-        if(j+1<argc&&argument.equals("--file"))file = argv[j+1];
-        if(j+1<argc&&argument.equals("--inspiredatasetcsw"))inspireDatasetCSW = argv[j+1];
-        if(j+1<argc&&argument.equals("--datasetpath"))datasetPath = argv[j+1];
+  }
+
+  // Check if layers need to be obtained.
+  if(getlayers && file.empty()){
+      CDBError("--file parameter missing");
+      CDBError("Optional parameters are: --datasetpath <path> and --inspiredatasetcsw <cswurl>");
+      status=1;
+  } else if (getlayers) {
         
-      }
-      if(file.empty()){
-         CDBError("--file parameter missing");
-         CDBError("Optional parameters are: --datasetpath <path> and --inspiredatasetcsw <cswurl>");
-         status=1;
-      }else{
+      setWarningFunction(serverWarningFunction);
+      setDebugFunction(serverDebugFunction);
         
-        setWarningFunction(serverWarningFunction);
-        setDebugFunction(serverDebugFunction);
-        
-        CT::string fileInfo = CGetFileInfo::getLayersForFile(file.c_str());
-        if(inspireDatasetCSW.empty() == false){
+      CT::string fileInfo = CGetFileInfo::getLayersForFile(file.c_str());
+      if(inspireDatasetCSW.empty() == false){
           inspireDatasetCSW.encodeXMLSelf();
           CT::string inspireDatasetCSWXML;
           inspireDatasetCSWXML.print("<!--header-->\n\n  <WMS>\n    <Inspire>\n      <DatasetCSW>%s</DatasetCSW>\n    </Inspire>\n  </WMS>",inspireDatasetCSW.c_str());
           fileInfo.replaceSelf("<!--header-->",inspireDatasetCSWXML.c_str());
-          
-        
-          
-        }
-        if(datasetPath.empty() == false){
-          fileInfo.replaceSelf("[DATASETPATH]",datasetPath.c_str());
-        }
-        printf("%s\n",fileInfo.c_str());
-        status = 0;
       }
+      if(datasetPath.empty() == false){
+          fileInfo.replaceSelf("[DATASETPATH]",datasetPath.c_str());
+      }
+      printf("%s\n",fileInfo.c_str());
+      status = 0;
+      
       readyerror();
       return status;
-    }
-    
-    if(strncmp(argv[1],"--test",6)==0){
-      CDBDebug("Test");
-      CProj4ToCF proj4ToCF;
-      proj4ToCF.debug=true;
-      proj4ToCF.unitTest();
-      return 0;
-    }
   }
+
   //Process the OGC request
   setErrorFunction(serverErrorFunction);
   setWarningFunction(serverWarningFunction);
   setDebugFunction(serverDebugFunction);
   
+//    if (envp != NULL){
+//     for (char **env = envp; *env != 0; env++)  {
+//       char *thisEnv = *env;
+//       if (thisEnv!=NULL){
+//         CDBDebug("%s", thisEnv);    
+//       }
+//     }
+//   }
+  
 #ifdef MEASURETIME
   StopWatch_Start();
 #endif
   
-  int status = runRequest();
+  status = runRequest();
   //Display errors if any
   readyerror();
 #ifdef MEASURETIME
    StopWatch_Stop("Ready!!!");
 #endif
-   
 
   return status;
 }
 
 
-int main(int argc, const char *argv[]){
-  
+int main(int argc, char **argv, char **envp){
+  /* Check if ADAGUC_LOGFILE is set */
   const char * ADAGUC_LOGFILE=getenv("ADAGUC_LOGFILE");
   if(ADAGUC_LOGFILE!=NULL){
     pLogDebugFile = fopen (ADAGUC_LOGFILE , "a" );
@@ -321,6 +307,8 @@ int main(int argc, const char *argv[]){
       fprintf(stderr,"Unable to write ADAGUC_LOGFILE %s\n",ADAGUC_LOGFILE);
     }
   }
+
+  /* Check if we enable logbuffer, true means unbuffered output with live logging but means a slower service */
   const char * ADAGUC_ENABLELOGBUFFER=getenv("ADAGUC_ENABLELOGBUFFER");
   if(ADAGUC_ENABLELOGBUFFER!=NULL){
     CT::string check = ADAGUC_ENABLELOGBUFFER;
@@ -328,13 +316,48 @@ int main(int argc, const char *argv[]){
       useLogBuffer = true;
     } 
   }
-  int status = _main(argc,argv);  
-  
+
+  /* Check if ADAGUC_PATH is set, if not set it here */
+  const char * ADAGUC_PATH=getenv("ADAGUC_PATH");
+  if(ADAGUC_PATH==NULL) {
+    char str[1024];getcwd(str, 1023); // TODO: maybe CWD is not the best
+    CT::string currentPath = str;
+    currentPath.replaceSelf("/adaguc-server/adagucserverEC", "/adaguc-server/"); /* If we are developing directly in adagucserverEC path, remove the last dir */
+    currentPath.replaceSelf("/adaguc-server/bin", "/adaguc-server/"); /* If we are developing directly in adagucserverEC path, remove the last dir */
+    setenv("ADAGUC_PATH", currentPath.c_str(), currentPath.length());
+    ADAGUC_PATH=getenv("ADAGUC_PATH");
+    CDBDebug("ADAGUC_PATH environment variable is not set, guessing path using CWD: [%s]", ADAGUC_PATH);
+  }
+
+  /* Check if ADAGUC_TMP is set, if not set here */
+  const char * ADAGUC_TMP=getenv("ADAGUC_TMP");
+  if(ADAGUC_TMP==NULL) {
+    setenv("ADAGUC_TMP", "/tmp/", 6);
+     ADAGUC_TMP=getenv("ADAGUC_TMP");
+     CDBDebug("ADAGUC_TMP environment variable is not set, setting to : [%s]", ADAGUC_TMP);
+  }
+
+
+  int status = _main(argc,argv, envp);
+
+  // Print the check report formatted as JSON.
+  CReportWriter::writeJSONReportToFile();
+
   CCachedDirReader::free();
+  
+  CTime::cleanInstances();
+
+  CDFObjectStore::getCDFObjectStore()->clear();
+  
+  /* Check Tracer for leaks */
+  if (NewTrace.Dump() != 0){
+    if (status == 0) status = 1; //Indicates that we have a memory leak
+  }
   
   if(pLogDebugFile!= NULL){
     fclose (pLogDebugFile);
+    pLogDebugFile = NULL;
   }
   
   return status;
-}      
+}

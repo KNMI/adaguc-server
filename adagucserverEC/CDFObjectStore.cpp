@@ -35,8 +35,9 @@ const char *CDFObjectStore::className="CDFObjectStore";
 #include "CConvertEProfile.h"
 #include "CConvertTROPOMI.h"
 #include "CDataReader.h"
+#include "CCDFCSVReader.h"
 //#define CDFOBJECTSTORE_DEBUG
-#define MAX_OPEN_FILES 50
+#define MAX_OPEN_FILES 500
 extern CDFObjectStore cdfObjectStore;
 CDFObjectStore cdfObjectStore;
 bool EXTRACT_HDF_NC_VERBOSE = false;
@@ -69,13 +70,16 @@ CDFReader *CDFObjectStore::getCDFReader(CDataSource *dataSource,const char *file
         CDBDebug("Creating GEOJSON reader");
         #endif
         cdfReader = new CDFGeoJSONReader();
- //       CDFGeoJSONReader * geoJSONReader = (CDFGeoJSONReader*)cdfReader;
-      }
-      else if(dataSource->cfgLayer->DataReader[0]->value.equals("PNG")){
+      } else if(dataSource->cfgLayer->DataReader[0]->value.equals("PNG")){
         #ifdef CDFOBJECTSTORE_DEBUG
         CDBDebug("Creating PNG reader");
         #endif
         cdfReader = new CDFPNGReader();
+      } else if(dataSource->cfgLayer->DataReader[0]->value.equals("CSV")){
+        #ifdef CDFOBJECTSTORE_DEBUG
+        CDBDebug("Creating CSV reader");
+        #endif
+        cdfReader = new CDFCSVReader();
       }
     }else{
       cdfReader=getCDFReader(fileName);
@@ -169,6 +173,17 @@ CDFReader *CDFObjectStore::getCDFReader(const char *fileName){
           }
         }
       }
+      if(cdfReader==NULL){
+        a=name.indexOf(".csv");
+        if(a!=-1){
+          if(a==int(name.length())-4){
+            if(EXTRACT_HDF_NC_VERBOSE){
+              CDBDebug("Creating CSV reader");
+            }
+            cdfReader = new CDFCSVReader();
+          }
+        }
+      }
     }
   }
   //Defaults to the netcdf reader
@@ -183,22 +198,22 @@ CDFReader *CDFObjectStore::getCDFReader(const char *fileName){
   return cdfReader;
 }
 
-CDFObject *CDFObjectStore::getCDFObjectHeader(CServerParams *srvParams,const char *fileName){
+CDFObject *CDFObjectStore::getCDFObjectHeader(CDataSource *dataSource, CServerParams *srvParams,const char *fileName){
     if(srvParams == NULL){
       CDBError("srvParams == NULL");
       return NULL;
     }
 
-    return getCDFObject(NULL,srvParams,fileName,false);
+    return getCDFObject(dataSource,srvParams,fileName,false);
 }
 
-CDFObject *CDFObjectStore::getCDFObjectHeaderPlain(CServerParams *srvParams,const char *fileName){
+CDFObject *CDFObjectStore::getCDFObjectHeaderPlain(CDataSource *dataSource, CServerParams *srvParams,const char *fileName){
   if(srvParams == NULL){
     CDBError("srvParams == NULL");
     return NULL;
   }
 
-  return getCDFObject(NULL,srvParams,fileName,true);
+  return getCDFObject(dataSource,srvParams,fileName,true);
 }
 
 /**
@@ -213,8 +228,13 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,const char *file
 
 CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *srvParams,const char *fileName,bool plain){
   CT::string uniqueIDForFile = fileName;
-  
-
+  if (srvParams == NULL && dataSource !=NULL){
+    srvParams = dataSource->srvParams;
+  }
+  if (srvParams == NULL){
+    CDBError("getCDFObject:: srvParams is not set");
+    throw(__LINE__);
+  }
   for(size_t j=0;j<fileNames.size();j++){
     if(fileNames[j]->equals(uniqueIDForFile.c_str())){
       #ifdef CDFOBJECTSTORE_DEBUG                          
@@ -291,6 +311,21 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *s
   cdfObject->attachCDFReader(cdfReader);
   
   int status = cdfObject->open(fileLocationToOpen);
+
+  /* Apply NCML file to the datamodel */
+  if (dataSource) {
+    if (dataSource->cfgLayer) {
+      if ( dataSource->cfgLayer->FilePath.size() == 1) {
+        CT::string ncmlFileName = dataSource->cfgLayer->FilePath[0]->attr.ncml;
+        if (!ncmlFileName.empty()) {
+          CDBDebug("NCML: Applying NCML file %s", ncmlFileName.c_str());
+          cdfObject->applyNCMLFile(ncmlFileName.c_str());
+        }
+      }
+    }
+  }
+
+
    //CDBDebug("opened");
   if(status!=0){
     //TODO in case of basic/digest authentication, username and password is currently also listed....
@@ -315,25 +350,25 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource,CServerParams *s
 
   
   if(plain == false){
-    bool level2CompatMode = false;
+    bool formatConverterActive = false;
     
-    if(!level2CompatMode)if(CConvertUGRIDMesh::convertUGRIDMeshHeader(cdfObject)==0){level2CompatMode=true;};
+    if(!formatConverterActive)if(CConvertUGRIDMesh::convertUGRIDMeshHeader(cdfObject)==0){formatConverterActive=true;};
     
-    if(!level2CompatMode)if(CConvertASCAT::convertASCATHeader(cdfObject)==0){level2CompatMode=true;};
+    if(!formatConverterActive)if(CConvertASCAT::convertASCATHeader(cdfObject)==0){formatConverterActive=true;};
     
-    if(!level2CompatMode)if(CConvertADAGUCVector::convertADAGUCVectorHeader(cdfObject)==0){level2CompatMode=true;};
+    if(!formatConverterActive)if(CConvertADAGUCVector::convertADAGUCVectorHeader(cdfObject)==0){formatConverterActive=true;};
     
-    if(!level2CompatMode)if(CConvertADAGUCPoint::convertADAGUCPointHeader(cdfObject)==0){level2CompatMode=true;};
+    if(!formatConverterActive)if(CConvertADAGUCPoint::convertADAGUCPointHeader(cdfObject)==0){formatConverterActive=true;};
     
-    if(!level2CompatMode)if(CConvertCurvilinear::convertCurvilinearHeader(cdfObject,srvParams)==0){level2CompatMode=true;};
+    if(!formatConverterActive)if(CConvertCurvilinear::convertCurvilinearHeader(cdfObject,srvParams)==0){formatConverterActive=true;};
     
-    if(!level2CompatMode)if(CConvertHexagon::convertHexagonHeader(cdfObject,srvParams)==0){level2CompatMode=true;};
+    if(!formatConverterActive)if(CConvertHexagon::convertHexagonHeader(cdfObject,srvParams)==0){formatConverterActive=true;};
     
-    if(!level2CompatMode)if(CConvertGeoJSON::convertGeoJSONHeader(cdfObject)==0){level2CompatMode=true;};
+    if(!formatConverterActive)if(CConvertGeoJSON::convertGeoJSONHeader(cdfObject)==0){formatConverterActive=true;};
     
-    if(!level2CompatMode)if(CConvertEProfile::convertEProfileHeader(cdfObject,srvParams)==0){level2CompatMode=true;};
+    if(!formatConverterActive)if(CConvertEProfile::convertEProfileHeader(cdfObject,srvParams)==0){formatConverterActive=true;};
     
-    if(!level2CompatMode)if(CConvertTROPOMI::convertTROPOMIHeader(cdfObject,srvParams)==0){level2CompatMode=true;};
+    if(!formatConverterActive)if(CConvertTROPOMI::convertTROPOMIHeader(cdfObject,srvParams)==0){formatConverterActive=true;};
     
   }
   

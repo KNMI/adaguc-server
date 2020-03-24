@@ -153,6 +153,8 @@ private:
     
     bool isProfileData;
     
+    /* Loops over the points, calculates the closest points, then calculates if point is within specified range in pixels */
+    void getFeatureInfoGetPointDataResults(CDataSource *dataSource, CImageDataWriter::GetFeatureInfoResult *getFeatureInfoResult, int dataObjectNrInDataSource, GetFeatureInfoResult::Element * element, int maxPixelDistance);
   public:
     CDrawImage drawImage;
     

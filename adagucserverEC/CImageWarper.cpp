@@ -229,6 +229,13 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
   }
     
   
+  int CImageWarper::reprojpoint_inv_topx(double &dfx,double &dfy){
+    if (reprojpoint_inv(dfx,dfy) != 0) return 1;
+    dfx = (dfx - _geoDest->dfBBOX[0] ) / (_geoDest->dfBBOX[2]- _geoDest->dfBBOX[0]) * double(_geoDest->dWidth);
+    dfy = (dfy - _geoDest->dfBBOX[3] ) / (_geoDest->dfBBOX[1]- _geoDest->dfBBOX[3]) * double(_geoDest->dHeight);
+    return 0;
+  }
+  
   int CImageWarper::reprojpoint_inv(double &dfx,double &dfy){
     
     if(sourceNeedsDegreeRadianConversion){
@@ -260,10 +267,10 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
       return 1;
     }
     outputCRS->copy(inputCRS);
-    if(inputCRS->indexOf("proj")!=-1)return 0;
+    //if(inputCRS->indexOf("+proj")!=-1)return 0;
     dMaxExtentDefined=0;
     //CDBDebug("Check");
-    outputCRS->decodeURLSelf();
+    // outputCRS->decodeURLSelf();
     //CDBDebug("Check");
     //CDBDebug("Check %d",(*prj).size());
     for(size_t j=0;j<(*prj).size();j++){
@@ -283,7 +290,7 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
         break;
       }
     }
-    //CDBDebug("Check");
+//     CDBDebug("Check [%s]", outputCRS->c_str());
     if(outputCRS->indexOf("PROJ4:")==0){
       CT::string temp(outputCRS->c_str()+6);
       outputCRS->copy(&temp);
@@ -347,6 +354,8 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
       CDBError("prj==NULL");
       return 1;
     }
+    
+    this->_geoDest = GeoDest;
    
     if(proj4Context!=NULL){
       pj_ctx_free(proj4Context);
@@ -578,6 +587,16 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
       if(dfBBOX[0]<=dfBBOX[2])
         for(int j=0;j<4;j++)dfBBOX[j]=dfMaxExtent[j];
 
+    }
+    
+    if (long(dfBBOX[0]*100.) == long(dfBBOX[2])*100.){
+      dfBBOX[0]-=1;
+      dfBBOX[2]+=1;
+    }
+    
+    if (long(dfBBOX[1]*100.) == long(dfBBOX[3]*100.)){
+      dfBBOX[1]-=1;
+      dfBBOX[3]+=1;
     }
    
     pKey.setFoundExtent(dfBBOX);

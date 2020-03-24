@@ -34,6 +34,7 @@
 #include "CImageDataWriter.h"
 #include "CMakeJSONTimeSeries.h"
 #include "CMakeEProfile.h"
+#include "CReporter.h"
 #ifndef M_PI
 #define M_PI            3.14159265358979323846  // pi 
 #endif
@@ -299,6 +300,81 @@ int CImageDataWriter::_setTransparencyAndBGColor(CServerParams *srvParam,CDrawIm
   return 0;
 }
 
+void CImageDataWriter::getFeatureInfoGetPointDataResults(CDataSource *dataSource, CImageDataWriter::GetFeatureInfoResult *getFeatureInfoResult, int dataObjectNrInDataSource, GetFeatureInfoResult::Element * element, int maxPixelDistance) {
+  bool hasData = false;
+  // Add info about point data
+  if (dataSource->getDataObject(dataObjectNrInDataSource)->points.size()>0/*&&hasData==true*/){
+    CDBDebug("GFI value = %s, %d", element->value.c_str(),dataSource->getDataObject(dataObjectNrInDataSource)->cdfVariable->getAttributeNE("ADAGUC_SKIP_POINTS")==NULL);
+  }
+  if(dataSource->getDataObject(dataObjectNrInDataSource)->points.size()>0/*&&hasData==true*/){
+    if (dataSource->getDataObject(dataObjectNrInDataSource)->cdfVariable->getAttributeNE("ADAGUC_SKIP_POINTS")==NULL) {
+      float closestDistance =0;
+      int closestIndex =0;
+      
+      for(size_t j=0;j<dataSource->getDataObject(dataObjectNrInDataSource)->points.size();j++){
+        PointDVWithLatLon point = dataSource->getDataObject(dataObjectNrInDataSource)->points[j];
+        float distance = hypot(point.lon-getFeatureInfoResult->lon_coordinate,point.lat-getFeatureInfoResult->lat_coordinate);
+        if(distance<closestDistance||j==0){
+          closestIndex=j;
+          closestDistance = distance;
+        }
+      }
+      
+      /* Now we have detected the closest point, check if it is in a certain distance in the map in pixel coordinates */
+      double pointPX = dataSource->getDataObject(dataObjectNrInDataSource)->points[closestIndex].lon, pointPY = dataSource->getDataObject(dataObjectNrInDataSource)->points[closestIndex].lat;
+      double gfiPX = getFeatureInfoResult->lon_coordinate, gfiPY = getFeatureInfoResult->lat_coordinate;
+      CImageWarper warper;
+      /* We can always use LATLONPROJECTION, because getFeatureInfoResult->lon_coordinate and getFeatureInfoResult->lat_coordinate are always converted to latlon in CImageDataWriter */
+      int status = warper.initreproj(LATLONPROJECTION,srvParam->Geo,&srvParam->cfg->Projection);
+      if (status != 0){CDBError("Unable to initialize projection");}
+      status = warper.reprojpoint_inv_topx(pointPX, pointPY);
+      status = warper.reprojpoint_inv_topx(gfiPX, gfiPY);
+      float pixelDistance = hypot(pointPX-gfiPX,pointPY-gfiPY);
+      warper.closereproj();
+
+      if (pixelDistance>maxPixelDistance){
+        hasData = false;
+        return;
+      }
+      
+      PointDVWithLatLon point = dataSource->getDataObject(dataObjectNrInDataSource)->points[closestIndex];
+      
+      if (!hasData) {
+        double val=dataSource->getDataObject(dataObjectNrInDataSource)->points[closestIndex].v; 
+        if(dataSource->getDataObject(dataObjectNrInDataSource)->hasStatusFlag){
+          //Add status flag
+          CT::string flagMeaning;
+          CDataSource::getFlagMeaningHumanReadable(&flagMeaning,&dataSource->getDataObject(dataObjectNrInDataSource)->statusFlagList,(int)val);
+          element->value.print("%s (%d)",flagMeaning.c_str(),(int)val);
+          element->units="";
+        }else{             
+          element->value.print("%f",val);
+        }
+      }
+      
+      //Loop over point paramlist
+      for(size_t p=0;p<point.paramList.size();p++){
+        GetFeatureInfoResult::Element *pointID=new GetFeatureInfoResult::Element();
+        pointID->dataSource= dataSource;
+        //pointID->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
+        for(size_t j=0;j<dataSource->requiredDims.size();j++){
+          CCDFDims * cdfDims = dataSource->getCDFDims();
+          CT::string value=cdfDims->getDimensionValue(j);
+          CT::string name=cdfDims->getDimensionName(j);
+          pointID->cdfDims.addDimension(name.c_str(),value.c_str(),cdfDims->getDimensionIndex(j));
+        }
+        getFeatureInfoResult->elements.push_back(pointID);
+        pointID->long_name=point.paramList[p].description;
+        pointID->var_name=point.paramList[p].key;
+        pointID->standard_name=point.paramList[p].key;
+        pointID->feature_name=point.paramList[p].key;
+        pointID->value=point.paramList[p].value;
+        pointID->units="";
+      }
+    }      
+  }
+}
+
 int CImageDataWriter::drawCascadedWMS(CDataSource * dataSource, const char *service,const char *layers, const char *styles,bool transparent, const char *bgcolor){
 
 #ifndef ENABLE_CURL
@@ -461,20 +537,24 @@ int CImageDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int 
   }
   
   // WMS Format in layer always overrides all
-//   if(dataSource!=NULL){
-//     if(dataSource->cfgLayer->WMSFormat.size()>0){
-//         if(dataSource->cfgLayer->WMSFormat[0]->attr.name.equals("image/png32")){
-//         drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-//         }
-//         if(dataSource->cfgLayer->WMSFormat[0]->attr.format.equals("image/png32")){
-//         drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-//         }
-//         if(dataSource->cfgLayer->WMSFormat[0]->attr.format.equals("image/png24")){
-//           drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-//         }
-//         
-//     }
-//   }
+  if(dataSource!=NULL){
+    if(dataSource->cfgLayer->WMSFormat.size()>0){
+        if(dataSource->cfgLayer->WMSFormat[0]->attr.name.equals("image/png32")){
+        drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
+        }
+        if(dataSource->cfgLayer->WMSFormat[0]->attr.format.equals("image/png32")){
+        drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
+        }
+        if(dataSource->cfgLayer->WMSFormat[0]->attr.format.equals("image/png24")){
+          drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
+        }
+         if(dataSource->cfgLayer->WMSFormat[0]->attr.format.equals("image/webp")){
+          drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
+          srvParam->imageFormat=IMAGEFORMAT_IMAGEWEBP;
+        }
+        
+    }
+  }
   //Set font location
   if(srvParam->cfg->WMS[0]->ContourFont.size()!=0){
     if(srvParam->cfg->WMS[0]->ContourFont[0]->attr.location.empty()==false){
@@ -1082,73 +1162,9 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *>dataSources,int d
           
           }
         
-        
+          getFeatureInfoGetPointDataResults(dataSource, getFeatureInfoResult, o, element, 30);
    
-        
-          // Add info about point data
-          if (dataSource->getDataObject(o)->points.size()>0/*&&hasData==true*/){
-            CDBDebug("GFI value = %s, %d", element->value.c_str(),dataSource->getDataObject(o)->cdfVariable->getAttributeNE("ADAGUC_SKIP_POINTS")==NULL);
-          }
-          if(dataSource->getDataObject(o)->points.size()>0/*&&hasData==true*/){
-            if (dataSource->getDataObject(o)->cdfVariable->getAttributeNE("ADAGUC_SKIP_POINTS")==NULL) {
-            float closestDistance =0;
-            int closestIndex =0;
-            
-            for(size_t j=0;j<dataSource->getDataObject(o)->points.size();j++){
-              PointDVWithLatLon point = dataSource->getDataObject(o)->points[j];
-              float distance = hypot(point.lon-getFeatureInfoResult->lon_coordinate,point.lat-getFeatureInfoResult->lat_coordinate);
-    //          CDBDebug("[%d] dist=%f", o, distance);
-              if(distance<closestDistance||j==0){
-                closestIndex=j;
-                closestDistance = distance;
-              }
-            }
-            
-            CDBDebug("closestIndex: %d", closestIndex);
-            
-            PointDVWithLatLon point = dataSource->getDataObject(o)->points[closestIndex];
-            
-            if (!hasData) {
-              double val=dataSource->getDataObject(o)->points[closestIndex].v; 
-              if(dataSource->getDataObject(o)->hasStatusFlag){
-                //Add status flag
-                CT::string flagMeaning;
-                CDataSource::getFlagMeaningHumanReadable(&flagMeaning,&dataSource->getDataObject(o)->statusFlagList,(int)val);
-                element->value.print("%s (%d)",flagMeaning.c_str(),(int)val);
-                element->units="";
-              }else{             
-                element->value.print("%f",val);
-              }
-            }
-            
-            //Loop over point paramlist
-            for(size_t p=0;p<point.paramList.size();p++){
-              GetFeatureInfoResult::Element *pointID=new GetFeatureInfoResult::Element();
-              pointID->dataSource= dataSource;
-              //pointID->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
-              for(size_t j=0;j<dataSources[d]->requiredDims.size();j++){
-                value=cdfDims->getDimensionValue(j);
-                name=cdfDims->getDimensionName(j);
-  //               if(name.indexOf("time")==0){
-  //                 value=pointID->cdfDims.getDimensionValue("time").c_str();
-  //               }
-                pointID->cdfDims.addDimension(name.c_str(),value.c_str(),cdfDims->getDimensionIndex(j));
-              }
-              getFeatureInfoResult->elements.push_back(pointID);
-              pointID->long_name=point.paramList[p].description;
-              pointID->var_name=point.paramList[p].key;
-              pointID->standard_name=point.paramList[p].key;
-              pointID->feature_name=point.paramList[p].key;
-              pointID->value=point.paramList[p].value;
-              pointID->units="";
-              
-              /*char szTemp[1024];
-              floatToString(szTemp,1023,point.v);
-              element->value=szTemp;*/
-            }
-            }
-              
-          }
+          
         }
         //reader.close();
         #ifdef CIMAGEDATAWRITER_DEBUG 
@@ -3356,10 +3372,7 @@ int CImageDataWriter::end(){
   
   //Output WMS getmap results
   if(errorsOccured()){
-      
-    
-    CDBError("Errors occured during image data writing");
-    
+    CREPORT_ERROR_NODOC(CT::string("Error occured during image data writing"), CReportMessage::Categories::GENERAL);
     return 1;
   }
   

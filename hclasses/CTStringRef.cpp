@@ -1,3 +1,5 @@
+#include "CTString.h"
+#include "CTStringRef.h"
 
 namespace CT{
   
@@ -85,29 +87,13 @@ CT::StackList<CT::stringref> CT::stringref::splitToStackReferences(const char * 
       str._length=this->_length-rel;
       a = str.indexOf(_value);
     }
-    if(this->_length-rel>0){
+    if(str._length > 0 && this->_length-rel>0){
       stringList.push_back(str);
     }
     return stringList;  
 }
 
   
-  CT::StackList<CT::stringref> string::splitToStackReferences(const char * _value){
-    StackList<CT::stringref> stringList;
-    const char *fo = strstr(useStack?stackValue:heapValue,_value);
-    const char *prevFo=useStack?stackValue:heapValue;
-    while(fo!=NULL){
-      stringList.push_back(CT::stringref(prevFo,(fo-prevFo)-1));
-      prevFo=fo+1;
-      fo = strstr(fo+1,_value);
-    }
-    size_t prevFoLength = strlen(prevFo);
-    if(prevFoLength>0){
-      stringList.push_back(CT::stringref(prevFo,prevFoLength));
-    }
-    return stringList;
-  }
-    
 
 /*    int32::int32(){
         value=0;

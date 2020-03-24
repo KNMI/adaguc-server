@@ -27,35 +27,69 @@
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
 #include <set>
-//#define CCONVERTEPROFILE_DEBUG
+// #define CCONVERTEPROFILE_DEBUG
 // #define CCONVERTEPROFILE_DEBUG
 const char *CConvertEProfile::className="CConvertEProfile";
 
+
+/**
+ * Checks if the format of this file corresponds to the ADAGUC Profile format.
+ */
+bool isADAGUCProfileFormat(CDFObject *cdfObject) {
+  try{
+    cdfObject->getVariable("range");
+    cdfObject->getDimension("range");
+
+    if( cdfObject->getAttribute("featureType")->toString().equalsIgnoreCase("profile")==false) {
+
+      // The file is not a profile according to the format standards, check if it adheres to the deprecated format:
+      if( cdfObject->getAttribute("source")->toString().startsWith("CHM")==false){
+        return false;
+      }
+      if( cdfObject->getAttribute("serlom")->toString().startsWith("TUB")==false){
+        return false;
+      }
+    }
+  } catch(int e){
+    return false;
+  }
+
+  return true;
+}
+
+/*
+ * Checks if the format of this file corresponds to the deprecated ADAGUC EProfile format.
+ */
+bool isDeprecatedADAGUCEProfileFormat(CDFObject *cdfObject) {
+  try{
+    cdfObject->getVariable("range");
+    cdfObject->getDimension("range");
+
+    if( cdfObject->getAttribute("source")->toString().startsWith("CHM")==false){
+      return false;
+    }
+    if( cdfObject->getAttribute("serlom")->toString().startsWith("TUB")==false){
+      return false;
+    }
+  } catch(int e){
+    return false;
+  }
+
+  return true;
+}
 
 /**
  * This function adjusts the cdfObject by creating virtual 2D variables
  */
 int CConvertEProfile::convertEProfileHeader( CDFObject *cdfObject,CServerParams *srvParams){
   //Check whether this is really a profile file
-  try{
-    cdfObject->getVariable("range");
-    cdfObject->getDimension("range");
-
-    if( cdfObject->getAttribute("source")->toString().startsWith("CHM")==false){
-      return 1;
-    }
-    if( cdfObject->getAttribute("serlom")->toString().startsWith("TUB")==false){
-      return 1;
-    }
-    
-  }catch(int e){
+  if(!isADAGUCProfileFormat(cdfObject) && !isDeprecatedADAGUCEProfileFormat(cdfObject)) {
     return 1;
   }
-  CDBDebug("Using CConvertEProfile.h");
+//   CDBDebug("Using CConvertEProfile.h");
   
   cdfObject->setAttributeText("ADAGUC_PROFILE","true");
-  
- 
+
   //Standard bounding box of adaguc data is worldwide
   CDF::Variable *pointLon;
   CDF::Variable *pointLat;
@@ -111,6 +145,9 @@ int CConvertEProfile::convertEProfileHeader( CDFObject *cdfObject,CServerParams 
   CDF::Variable *varX = cdfObject->getVariableNE("x");
   CDF::Variable *varY = cdfObject->getVariableNE("y");
   if(dimX==NULL||dimY==NULL||varX==NULL||varY==NULL) {
+    #ifdef CCONVERTEPROFILE_DEBUG
+      StopWatch_Stop("Need to add varX and varY");
+    #endif
     //If not available, create new dimensions and variables (X,Y,T)
     //For x 
     dimX=new CDF::Dimension();
@@ -147,6 +184,11 @@ int CConvertEProfile::convertEProfileHeader( CDFObject *cdfObject,CServerParams 
       double y=offsetY+double(j)*cellSizeY+cellSizeY/2;
       ((double*)varY->data)[j]=y;
     }
+    
+     
+    #ifdef CCONVERTEPROFILE_DEBUG
+      StopWatch_Stop("Added varX and varY");
+    #endif
   }
   
   CDF::Variable *timev = cdfObject->getVariable("time");
@@ -155,30 +197,56 @@ int CConvertEProfile::convertEProfileHeader( CDFObject *cdfObject,CServerParams 
   timev->name="time_obs";
   timed->name="time_obs";
   
-   
+  #ifdef CCONVERTEPROFILE_DEBUG
+    StopWatch_Stop("Start Reading dates ");
+  #endif  
   timev->readData(CDF_DOUBLE);
   double*timeData=((double*)timev->data);
+  #ifdef CCONVERTEPROFILE_DEBUG
+    StopWatch_Stop("Finished Reading dates ");
+  #endif  
   
      
   double currentTime = -1;
   std::set<double> datesToAdd;
   
   //The startdate of the file will be used in time_file
-  CTime obsTime;
-
-  if(obsTime.init(timev)!=0){
+  
+//   #ifdef CCONVERTEPROFILE_DEBUG
+//     StopWatch_Stop("Creating CTIME");
+//   #endif  
+//   CTime obsTime;
+// 
+//   #ifdef CCONVERTEPROFILE_DEBUG
+//     StopWatch_Stop("Initializing CTIME");
+//   #endif  
+//   if(obsTime.init(timev)!=0){
+//     return 1;
+//   }
+  CTime * obsTime = CTime::GetCTimeInstance(timev);
+  
+  if (obsTime == NULL){
+    CDBError("Unable to get CTime instance");
     return 1;
   }
-    
+  
+  #ifdef CCONVERTEPROFILE_DEBUG
+      StopWatch_Stop("Inserting dates %d", timev->getSize());
+  #endif    
   for(size_t j=0;j<timev->getSize();j++){
     double inTime = timeData[j];
-    double outTime = obsTime.quantizeTimeToISO8601(inTime, "PT5M", "low");
+    double outTime = obsTime->quantizeTimeToISO8601(inTime, "PT5M", "low");
     if(outTime > currentTime){
       datesToAdd.insert(outTime);
       currentTime = outTime;
     }
   }
-  CDBDebug("Set time Size = %d",datesToAdd.size());
+  
+  
+  #ifdef CCONVERTEPROFILE_DEBUG
+      StopWatch_Stop("Inserted dates");
+  #endif
+  // CDBDebug("Set time Size = %d",datesToAdd.size());
  
   CDF::Dimension *dimT=new CDF::Dimension();
   dimT->name="time";
@@ -194,6 +262,9 @@ int CConvertEProfile::convertEProfileHeader( CDFObject *cdfObject,CServerParams 
   cdfObject->addVariable(varT);
   CDF::allocateData(CDF_DOUBLE,&varT->data,dimT->length);
   
+  #ifdef CCONVERTEPROFILE_DEBUG
+      StopWatch_Stop("Allocated time data");
+  #endif
   std::set<double>::iterator it;
   size_t counter = 0;
   for (it=datesToAdd.begin(); it!=datesToAdd.end(); ++it){
@@ -235,13 +306,11 @@ int CConvertEProfile::convertEProfileHeader( CDFObject *cdfObject,CServerParams 
         ){
           bool added = false;
           if(var->dimensionlinks.size()==2){
-            if(var->dimensionlinks[0]->getSize()>100){
-            if(var->dimensionlinks[1]->getSize()>100){
+            // Check if this is a profile variable which we added.
+            if(var->dimensionlinks[0]->name.equals("time_obs") && var->dimensionlinks[1]->name.equals("range")){
               varsToConvert.add(CT::string(var->name.c_str()));
               added=true;
             }
-            }
-            
           }
           if(added == false){
             var->setAttributeText("ADAGUC_SKIP","true");
@@ -259,7 +328,7 @@ int CConvertEProfile::convertEProfileHeader( CDFObject *cdfObject,CServerParams 
     CDF::Variable *pointVar=cdfObject->getVariable(varsToConvert[v].c_str());
     
     #ifdef CCONVERTEPROFILE_DEBUG
-    CDBDebug("Converting %s",pointVar->name.c_str());
+    StopWatch_Stop("Converting %s",pointVar->name.c_str());
     #endif
     
     CDF::Variable *new2DVar = new CDF::Variable();
@@ -349,25 +418,13 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource,int mode){
   #ifdef CCONVERTEPROFILE_DEBUG
   CDBDebug("convertEProfileData");
   #endif
-
- 
   
   CDFObject *cdfObject0 = dataSource->getDataObject(0)->cdfObject;
-  try{
-    cdfObject0->getVariable("range");
-    cdfObject0->getDimension("range");
-    
-    if( cdfObject0->getAttribute("source")->toString().startsWith("CHM")==false){
-      return 1;
-    }
-    if( cdfObject0->getAttribute("serlom")->toString().startsWith("TUB")==false){
-      return 1;
-    }
-
-  }catch(int e){
+  if(!isADAGUCProfileFormat(cdfObject0) && !isDeprecatedADAGUCEProfileFormat(cdfObject0)) {
     return 1;
   }
-  CDBDebug("THIS IS EPROFILE LIDAR DATA");
+
+  CDBDebug("THIS IS PROFILE DATA");
   
   #ifdef CCONVERTEPROFILE_DEBUG
     StopWatch_Stop("Reading data");
@@ -762,7 +819,9 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource,int mode){
     
     //Read dates for obs
 //     bool hasTimeValuePerObs = false;
-    CTime obsTime;
+    
+    
+    CDBDebug("CTIME");
 //     double *obsTimeData = NULL;
     CDF::Variable * timeVarPerObs =  cdfObject0->getVariableNE("time");
       if(timeVarPerObs!= NULL){
@@ -771,7 +830,9 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource,int mode){
           CDF::Attribute* timeStringAttr = timeVarPerObs->getAttributeNE("units");
           if(timeStringAttr !=NULL){
               if(timeStringAttr -> data != NULL){
-              if(obsTime.init(timeVarPerObs)==0){
+              CTime * obsTime = CTime::GetCTimeInstance(timeVarPerObs);
+              if(obsTime!= NULL){
+                
 //                 hasTimeValuePerObs = true;
                 timeVarPerObs->readData(CDF_DOUBLE,start,count,stride,true);
 //                 obsTimeData = (double*)timeVarPerObs->data;

@@ -79,7 +79,7 @@ class Tracer
     ~Tracer ();
     void Add (void * p, char const * file, int line);
     void Remove (void * p);
-    void Dump ();
+    int Dump ();
 
     static bool Ready;
   private:

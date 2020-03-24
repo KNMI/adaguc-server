@@ -54,6 +54,10 @@ typedef int CDFType;
 #define CDF_UINT    9  /* unsigned 4-byte int */
 #define CDF_STRING  10 /* variable string */
 #define CDF_UNKNOWN 11 /* Unknown type, using CDF_DOUBLE */
+#define CDF_INT64   12 /* signed 8 byte integer */
+#define CDF_UINT64  13 /* unsigned 8 byte integer */
+
+
 
 /* Possible error codes, thrown by CDF */
 typedef int CDFError;
@@ -108,6 +112,8 @@ namespace CDF{
       if(sourcetype==CDF_USHORT)for(size_t t=0;t<length;t++){destdata[t+dsto]=(T)((unsigned short*)sourcedata)[t+srco];}
       if(sourcetype==CDF_INT)for(size_t t=0;t<length;t++){destdata[t+dsto]=(T)((int*)sourcedata)[t+srco];}
       if(sourcetype==CDF_UINT)for(size_t t=0;t<length;t++){destdata[t+dsto]=(T)((unsigned int*)sourcedata)[t+srco];}
+      if(sourcetype==CDF_INT64)for(size_t t=0;t<length;t++){destdata[t+dsto]=(T)((long*)sourcedata)[t+srco];}
+      if(sourcetype==CDF_UINT64)for(size_t t=0;t<length;t++){destdata[t+dsto]=(T)((unsigned long*)sourcedata)[t+srco];}
       if(sourcetype==CDF_FLOAT)for(size_t t=0;t<length;t++){destdata[t+dsto]=(T)((float*)sourcedata)[t+srco];}
       if(sourcetype==CDF_DOUBLE)for(size_t t=0;t<length;t++){destdata[t+dsto]=(T)((double*)sourcedata)[t+srco];}
       return 0;
