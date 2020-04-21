@@ -47,4 +47,5 @@ tests/testresults/*
 
 
 Docker/adaguc-server.dockerimage
+Docker/scanner
 Dockerfile
