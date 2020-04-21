@@ -1,5 +1,6 @@
 #!/bin/sh
 
+# 2020-04-17: Deprecated script, should use adaguc-docker-scandataset.sh from now on.
 
 usage() {
   echo ""
