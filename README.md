@@ -10,7 +10,6 @@ ADAGUC is a geographical information system to visualize netCDF files via the we
 * ```docker rm -f my-adaguc-server``` - For stopping and removing your docker container, useful when you want to start it with other arguments
 * ```docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh``` - For updating adaguc-server datasets.
 * ```docker exec --env ADAGUC_DATASET_MASK='^eprofile_L0_[0-9]{5}-[A-Z]\.xml$' -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh``` - For updating adaguc-server datasets where the datasetname matches the provided ADAGUC_DATASET_MASK.
-* ```docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatefile.sh -f <file> -d <dataset>``` - to add a specific file to a dataset.
 * ```docker exec -i -t my-adaguc-server /adaguc/adaguc-server-checkfile.sh <file in autowms folder, e.g. testdata.nc>``` - For generating reports  about your files, provides feedback on what decisions adaguc-server makes based on your file metadata.
 
 # Docker for adaguc-server:
@@ -344,9 +343,30 @@ or, from ${PROJECT_ROOT_DIR}
 docker build -t openearth/adaguc-dataset-scanner -f dataset-scanner.Dockerfile .
 ```
 
-From the ${PROJECT_ROOT_DIR}, run
+To list all datasets do:
 ```
-./scan-datasets.sh
+bash ./Docker/scanner/adaguc-docker-listdatasets.sh
+```
+
+To scan all files for a dataset do:
+```
+bash ./Docker/scanner/adaguc-docker-scandataset.sh <datasetname>
+```
+
+To scan/add a file for any dataset do: (adaguc will find out which is the correct dataset)
+```
+bash ./Docker/scanner/adaguc-docker-addfile.sh <filename>
+```
+
+To scan/add a file for specific dataset do: 
+```
+bash ./Docker/scanner/adaguc-docker-addfile.sh <filename> -d <datasetname>
+```
+
+To clean files older than n days, do:
+```
+bash ./Docker/scanner/adaguc-docker-cleanoldfiles.sh  <directory> <filter> <number of days>
+#Example: bash adaguc-docker-cleanoldfiles.sh  /data/adaguc-autowms/EGOWS_radar ".*\.nc$" 7
 ```
 
 # Installation instructions without docker on Ubuntu 18:
