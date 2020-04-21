@@ -2,6 +2,16 @@
 
 # TODO: https://github.com/KNMI/adaguc-server/issues/71
 
+# Author: maarten.plieger@knmi.nl
+# 2020-04-17
+#
+# This script is for scanning files with adaguc-server. Adaguc can detect automatically to which dataset(s) the file belongs.
+#
+# With -f you can specify the file to add
+# With -d you can optionally specify the dataset to add.
+#
+# Usage: ./adaguc-server-addfile.sh -d <datasetname (optional)> -f <file to add>
+
 THISSCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 . ${THISSCRIPTDIR}/adaguc-server-chkconfig.sh
