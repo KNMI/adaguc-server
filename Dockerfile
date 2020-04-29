@@ -20,7 +20,7 @@ RUN yum update -y && \
     netcdf \
     libwebp-devel \
     java-1.8.0-openjdk && \
-# building / development packages
+    # building / development packages
     yum install -y centos-release-scl && \
     yum install -y devtoolset-7-gcc-c++ && \
     source /opt/rh/devtoolset-7/enable && \
@@ -59,7 +59,7 @@ USER root
 RUN yum update -y && \
     yum install -y epel-release && \
     yum install -y deltarpm \
-# building / development packages
+    # building / development packages
     yum install -y centos-release-scl && \
     yum install -y devtoolset-7-gcc-c++ && \
     source /opt/rh/devtoolset-7/enable && \
@@ -89,16 +89,16 @@ COPY --from=0 /adaguc/adaguc-server-master/tests /adaguc/adaguc-server-master/te
 COPY --from=0 /adaguc/adaguc-server-master/runtests.sh /adaguc/adaguc-server-master/runtests.sh
 
 # Install adaguc-services (spring boot application for running adaguc-server)
-RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.4/adaguc-services-1.2.4.jar -o /adaguc/adaguc-services.jar && \
-# Install newer numpy
+RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.6/adaguc-services-1.2.6.jar -o /adaguc/adaguc-services.jar && \
+    # Install newer numpy
     curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
     python get-pip.py && \
     pip install numpy netcdf4 six lxml && \
-# Run adaguc-server functional and regression tests
+    # Run adaguc-server functional and regression tests
     bash runtests.sh && \
-# Set same uid as vivid
+    # Set same uid as vivid
     useradd -m adaguc -u 1000 && \
-# Setup directories
+    # Setup directories
     mkdir -p /data/adaguc-autowms && \
     mkdir -p /data/adaguc-datasets && \
     mkdir -p /data/adaguc-data && \
@@ -108,7 +108,7 @@ RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.4/adaguc-serv
     mkdir -p /adaguc/security && \
     mkdir -p /data/adaguc-datasets-internal && \
     mkdir -p /servicehealth
- 
+
 # Configure
 COPY ./Docker/adaguc-server-config.xml /adaguc/adaguc-server-config.xml
 COPY ./Docker/adaguc-services-config.xml /adaguc/adaguc-services-config.xml
@@ -116,8 +116,8 @@ COPY ./Docker/start.sh /adaguc/
 COPY ./Docker/adaguc-server-*.sh /adaguc/
 COPY ./Docker/baselayers.xml /data/adaguc-datasets-internal/baselayers.xml
 RUN  chmod +x /adaguc/adaguc-server-*.sh && \
-     chmod +x /adaguc/start.sh && \
-     chown -R adaguc:adaguc /data/adaguc* /adaguc /servicehealth
+    chmod +x /adaguc/start.sh && \
+    chown -R adaguc:adaguc /data/adaguc* /adaguc /servicehealth
 
 # Put in default java truststore
 RUN cp /etc/pki/java/cacerts /adaguc/security/truststore.ts
