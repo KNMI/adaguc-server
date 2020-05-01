@@ -3,27 +3,83 @@
 # Author: maarten.plieger@knmi.nl
 # 2020-04-23
 # This script cleans the adaguc database for files which are older than specified nr of days
-# TODO: Should also clean tables depending on other dimensions
 
-#Usage: bash adaguc-server-cleandb.sh  <directory> <filter> <number of days>
-#Example: bash adaguc-server-cleandb.sh  /data/adaguc-autowms/EGOWS_radar ".*\.nc$" 7
+#Usage: bash adaguc-server-cleandb.sh -p <directory> -f <filter> -d <number of days> -q filetimedate -t <delete_db or delete_db_and_fs>
+#Example: bash adaguc-server-cleandb.sh  -p /data/adaguc-autowms/EGOWS_radar -f ".*\.nc$" -d 7 -q filetimedate -t delete_db
 
 # The script should only print the deleted files.
 
-if [ "$#" -ne 3 ]; then
+usage () {
     echo "This script cleans the database for files which are older than specified nr of days"
-    echo "Error: Expected three parameters: <path> <filter> <number of days>"
+    echo "-p: is for the filepath as configured in your Layers FilePath value"
+    echo "-f: is for the filefilter as configured in your Layers FilePath filter attribute"
+    echo "-d: Specify how many days old the files need to be for removal"
+    echo "-q: Querytype, currently filetimedate, this is the date inside the time variable of the NetCDF file"
+    echo "-t: Deletetype, delete_db means it will be removed from the db only, delete_db_and_fs will also delete the files from disk"
     exit
+}
+
+
+while getopts "p:f:d:q:t:" o; do
+    case "${o}" in
+        p)
+            FILEPATH=${OPTARG}
+            ;;
+        f)
+            FILEFILTER=${OPTARG}
+            ;;
+        d)
+            FILEDAYS=${OPTARG}
+            ;;
+        q)
+            QUERYTYPE=${OPTARG}
+            ;;
+        t)
+            DELETEMODE=${OPTARG}
+            ;;
+        h)
+            usage
+            ;;
+        *)
+            usage
+            ;;
+    esac
+done
+
+if [ ! -n "${FILEPATH}" ]; then
+  echo "You did not supply a filepath with -p <filepath>"
+  exit 1
 fi
 
+if [ ! -n "${FILEFILTER}" ]; then
+  echo "You did not supply a filefilter with -f <filefilter>"
+  exit 1
+fi
+
+if [ ! -n "${FILEDAYS}" ]; then
+  echo "You did not supply the days argument with -d <nr of days>"
+  exit 1
+fi
+
+if [ ! -n "${QUERYTYPE}" ]; then
+  echo "You did not supply the QUERYTYPE argument with -q filetimedate"
+  exit 1
+fi
+
+if [ ! -n "${DELETEMODE}" ]; then
+  echo "You did not supply the delete mode argument with -t <delete_db or delete_db_and_fs>"
+  exit 1
+fi
+
+    
 THISSCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 . ${THISSCRIPTDIR}/adaguc-server-chkconfig.sh
 
 
-datadir=$1 #, as configured in your dataset
-datafilter=$2
-limitdaysold=$3
+datadir=${FILEPATH} #, as configured in your dataset
+datafilter=${FILEFILTER}
+limitdaysold=${FILEDAYS}
 
 # Cut trailing slash
 datadir=${datadir%/} 
@@ -43,6 +99,14 @@ timetablename=$(psql -t "${postgrescredentials}" -c "select tablename from ${pat
 timeolder=`date --date="${limitdaysold} days ago" +%Y-%m-%d`T00:00:00Z
 filelist=$(psql -t "${postgrescredentials}" -c "select path from ${timetablename} where time < '${timeolder}' order by time asc;")
 
+
+# Delete the files from the FS
+if [ ${DELETEMODE} == "delete_db_and_fs" ]; then
+  for f in $filelist; do
+    rm -f $f
+  done
+fi
+
 function join_by { local d=$1; shift; echo -n "$1"; shift; printf "%s" "${@/#/$d}"; }
 
 echo {\"filelist\":[\"`join_by "\",\"" ${filelist}`\"]}
@@ -52,5 +116,5 @@ for tablename in $tablenames;do
   psql -t "${postgrescredentials}" -c "delete from ${tablename} where path in (select path from ${timetablename} where time < '${timeolder}' order by time asc);" >/dev/null
 done
 
-# Finally delete also from tim dim
+# Finally delete also from time dim
 psql -t "${postgrescredentials}" -c "delete from ${timetablename} where path in (select path from ${timetablename} where time < '${timeolder}' order by time asc);" >/dev/null
