@@ -8,8 +8,16 @@
 # Adaguc will detect automatically to which dataset(s) the file belongs.
 # This script uses the settings as provided in the Docker/.env file.
 #
-# Usage: bash ./Docker/scanner/adaguc-docker-addfile.sh <filetoadd>
-# Example: bash ./Docker/scanner/adaguc-docker-addfile.sh /data/adaguc-data/tg_ens_mean_0.25deg_reg_v20.0e.nc
+# Usage: bash ./Docker/scanner/adaguc-docker-scanner.sh -f <filetoadd>
+# Example: bash ./Docker/scanner/adaguc-docker-scanner.sh -f /data/adaguc-data/tg_ens_mean_0.25deg_reg_v20.0e.nc
+#
+# With -f you can optionally specify the file to add
+# With -d you can optionally specify the dataset to add.
+#
+# Usage: ./adaguc-docker-scanner.sh -d <datasetname (optional)> -f <file to add>
+# Usage: ./adaguc-docker-scanner.sh -d <datasetname> 
+# Usage: ./adaguc-docker-scanner.sh  
+
 #
 # This script uses the scanner container, 
 # which can be obtained by doing:
@@ -51,5 +59,5 @@ docker run -it --rm --network docker_adaguc-network \
     --tmpfs /tmp \
     --name adaguc-dataset-sync \
     --entrypoint '/adaguc/adaguc-server-addfile.sh' \
-    openearth/adaguc-dataset-scanner -f $@
+    openearth/adaguc-dataset-scanner $@
 
