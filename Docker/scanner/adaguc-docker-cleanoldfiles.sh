@@ -2,8 +2,9 @@
 
 #This scripts calls the adaguc-server docker to clean files older then n days.
 
-#Usage: bash adaguc-docker-cleanoldfiles.sh  <directory> <filter> <number of days>
-#Example: bash adaguc-docker-cleanoldfiles.sh  /data/adaguc-autowms/EGOWS_radar ".*\.nc$" 7
+#Usage: bash adaguc-docker-cleanoldfiles.sh  -p <directory> -f <filter> -d <number of days> -q filetimedate -t <delete_db or delete_db_and_fs>
+#Example: bash adaguc-docker-cleanoldfiles.sh -p /data/adaguc-autowms/EGOWS_radar -f ".*\.nc$" -d 7 -q filetimedate -t delete_db
+
 
 THISSCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
