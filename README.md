@@ -334,40 +334,7 @@ You can dump the header or visualize with:
 
 # Alternatively there is a dedicated adaguc scanner container:
 
-Pull or build the dataset scanner image
-```
-docker pull openearth/adaguc-dataset-scanner
-```
-or, from ${PROJECT_ROOT_DIR}
-```
-docker build -t openearth/adaguc-dataset-scanner -f dataset-scanner.Dockerfile .
-```
-
-To list all datasets do:
-```
-bash ./Docker/scanner/adaguc-docker-listdatasets.sh
-```
-
-To scan all files for a dataset do:
-```
-bash ./Docker/scanner/adaguc-docker-scandataset.sh <datasetname>
-```
-
-To scan/add a file for any dataset do: (adaguc will find out which is the correct dataset)
-```
-bash ./Docker/scanner/adaguc-docker-addfile.sh <filename>
-```
-
-To scan/add a file for specific dataset do: 
-```
-bash ./Docker/scanner/adaguc-docker-addfile.sh <filename> -d <datasetname>
-```
-
-To clean files older than n days, do:
-```
-bash ./Docker/scanner/adaguc-docker-cleanoldfiles.sh  <directory> <filter> <number of days>
-#Example: bash adaguc-docker-cleanoldfiles.sh  /data/adaguc-autowms/EGOWS_radar ".*\.nc$" 7
-```
+* [doc/adaguc-scanner-container.md](doc/adaguc-scanner-container.md)
 
 # Installation instructions without docker on Ubuntu 18:
 
