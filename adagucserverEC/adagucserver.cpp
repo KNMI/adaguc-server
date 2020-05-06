@@ -36,8 +36,6 @@ DEF_ERRORMAIN();
 FILE * pLogDebugFile = NULL;
 bool useLogBuffer = false;
 
-int myPID = int(getpid());
-
 void writeLogFile(const char * msg){
   if(pLogDebugFile != NULL){
     if (useLogBuffer == false) {
@@ -48,10 +46,9 @@ void writeLogFile(const char * msg){
       time_t myTime = time(NULL);
       tm *myUsableTime = localtime(&myTime);
       char szTemp[128];
-      snprintf(szTemp,127,"%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ/%d ",
+      snprintf(szTemp,127,"%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ ",
               myUsableTime->tm_year+1900,myUsableTime->tm_mon+1,myUsableTime->tm_mday,
-              myUsableTime->tm_hour,myUsableTime->tm_min,myUsableTime->tm_sec,
-              myPID
+              myUsableTime->tm_hour,myUsableTime->tm_min,myUsableTime->tm_sec
               );
       fputs  (szTemp, pLogDebugFile );
     }
