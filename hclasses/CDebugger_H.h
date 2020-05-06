@@ -39,6 +39,7 @@ void operator delete (void * p, char const * file, int line);
 void * operator new (std::size_t mem,const std::nothrow_t&) ;
 void operator delete (void * p,const std::nothrow_t&);
 
+
 class Tracer
 {
   private:

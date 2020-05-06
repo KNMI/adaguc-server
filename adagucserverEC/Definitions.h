@@ -153,7 +153,7 @@
 
 //#define MEASURETIME
 //#define ADAGUC_TILESTITCHER_DEBUG
-//#define DEBUGON
+#define DEBUGON
 #ifdef DEBUGON
 #define CDATASOURCE_DEBUG
 #define CREQUEST_DEBUG

@@ -3410,6 +3410,7 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan, int sca
   for(size_t layerNo=0;layerNo<numberOfLayers;layerNo++){
     CDataSource *dataSource = new CDataSource ();
     if(dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[layerNo],NULL,layerNo)!=0){
+      delete dataSource;
       return 1;
     }
     if (!layerName.empty()) {
