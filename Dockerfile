@@ -74,8 +74,8 @@ RUN yum update -y && \
     udunits2 \
     openssl \
     netcdf \
-    libwebp-devel \
-    java-11-openjdk \
+    libwebp \
+    java-11-openjdk-headless \
     python-devel && \
     yum clean all && \
     rm -rf /var/cache/yum
@@ -121,6 +121,8 @@ RUN  chmod +x /adaguc/adaguc-server-*.sh && \
 
 # Put in default java truststore
 RUN cp /etc/pki/java/cacerts /adaguc/security/truststore.ts
+
+ENV ADAGUC_SERVICES_CONFIG=/adaguc/adaguc-services-config.xml
 
 USER adaguc
 

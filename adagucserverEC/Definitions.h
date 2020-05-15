@@ -136,7 +136,7 @@
 #define CImgWarpBilinear_TIME
 
 //Log a summary of different time durations during execution
-#define MEASURETIME
+//#define MEASURETIME
 
 //#define CXMLGEN_DEBUG
 //#define CCDFNETCDFIO_DEBUG
@@ -153,7 +153,7 @@
 
 //#define MEASURETIME
 //#define ADAGUC_TILESTITCHER_DEBUG
-#define DEBUGON
+//#define DEBUGON
 #ifdef DEBUGON
 #define CDATASOURCE_DEBUG
 #define CREQUEST_DEBUG
