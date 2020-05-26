@@ -10,6 +10,7 @@ RUN yum update -y && \
     yum install -y epel-release deltarpm && \
     yum install -y cairo \
     curl \
+    python3 \
     gd \
     gdal \
     hdf5 \
@@ -49,7 +50,15 @@ COPY . /adaguc/adaguc-server-master
 
 WORKDIR /adaguc/adaguc-server-master
 
-RUN bash compile.sh
+
+# Force to use Python 3
+RUN ln -sf /usr/bin/python3 /usr/bin/python
+RUN echo #############################
+RUN python --version
+RUN python3 --version
+RUN echo #############################
+
+# RUN bash compile.sh
 
 ######### Second stage (production) ############
 FROM centos:7
@@ -115,6 +124,11 @@ RUN  chmod +x /adaguc/adaguc-server-*.sh && \
 
 # Put in default java truststore
 RUN cp /etc/pki/java/cacerts /adaguc/security/truststore.ts
+
+RUN echo #############################
+RUN python --version
+RUN python3 --version
+RUN echo #############################
 
 USER adaguc
 
