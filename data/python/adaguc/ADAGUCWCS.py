@@ -1,5 +1,5 @@
 import urllib
-from StringIO import StringIO
+from io import StringIO
 import isodate 
 import time
 import netCDF4
@@ -10,7 +10,7 @@ from threading  import Thread
 import json
 import os
 import shutil
-from mkdir_p import *
+import pathlib
 import zipfile
 from xml.sax.saxutils import escape
 from xml.dom import minidom
@@ -170,7 +170,7 @@ def iteratewcs(TIME = "",BBOX = "-180,-90,180,90",CRS = "EPSG:4326",RESX=None,RE
   CALLBACK("Starting iterateWCS",1)
   tmpdir = TMP+"/iteratewcstmp";
   shutil.rmtree(tmpdir, ignore_errors=True)
-  mkdir_p(tmpdir);
+  pathlib.Path(tmpdir).mkdir(parents=True, exist_ok=True)
   
   """ Determine which dates to do based on describe coverage call"""
   CALLBACK("Starting WCS DescribeCoverage request",1)
@@ -274,7 +274,7 @@ def iteratewcs(TIME = "",BBOX = "-180,-90,180,90",CRS = "EPSG:4326",RESX=None,RE
       raise ValueError ("Succesfully completed WCS GetCoverage, but no data found for "+url+"\n"+adaguclog+"\n");
    
     if(CALLBACK==None):
-      print str(int((float(datesdone)/numdatestodo)*90.))
+      print(str(int((float(datesdone)/numdatestodo)*90.)))
     else:
       CALLBACK(messagetime,((float(datesdone)/float(numdatestodo))*90.))
     return filetogenerate
@@ -297,7 +297,7 @@ def iteratewcs(TIME = "",BBOX = "-180,-90,180,90",CRS = "EPSG:4326",RESX=None,RE
     try:
       data = json.loads(line)
       if(CALLBACK == None):
-        print float(data["percentage"])*(1./10)+90
+        print(float(data["percentage"])*(1./10)+90)
       else:
         CALLBACK(data["message"],float(data["percentage"])*(1./10)+90)
     except:
