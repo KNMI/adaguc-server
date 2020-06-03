@@ -14,7 +14,7 @@ import pathlib
 import zipfile
 from xml.sax.saxutils import escape
 from xml.dom import minidom
-import CGIRunner
+from .CGIRunner import CGIRunner
 import re
 import logging;
 
