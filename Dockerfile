@@ -96,7 +96,8 @@ RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.4/adaguc-serv
 # Install newer numpy
     curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
     python get-pip.py && \
-    pip install numpy netcdf4 six lxml && \
+    pip install numpy netcdf4 six python3-lxml && \
+    # pip install numpy netcdf4 six lxml && \
 # Run adaguc-server functional and regression tests
     bash runtests.sh && \
 # Set same uid as vivid
