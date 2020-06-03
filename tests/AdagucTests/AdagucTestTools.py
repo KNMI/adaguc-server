@@ -1,5 +1,5 @@
 import os
-from StringIO import StringIO
+from io import StringIO
 from adaguc.CGIRunner import CGIRunner
 import unittest
 import shutil
@@ -25,9 +25,9 @@ class AdagucTestTools:
     
   def printLogFile(self):
       ADAGUC_LOGFILE = os.environ['ADAGUC_LOGFILE']
-      print "\n=== START ADAGUC LOGS ==="
-      print self.getLogFile()
-      print "=== END ADAGUC LOGS ==="
+      print("\n=== START ADAGUC LOGS ===")
+      print(self.getLogFile())
+      print("=== END ADAGUC LOGS ===")
       
   def runADAGUCServer(self, url = None, env = [], path = None, args = None, isCGI = True, showLogOnError = True, showLog = False):
     
@@ -67,16 +67,16 @@ class AdagucTestTools:
       print("\n\n--- START ADAGUC DEBUG INFO ---")
       print("Adaguc-server has non zero exit status %d " % status)
       if isCGI == False:
-        print filetogenerate.getvalue()
+        print(filetogenerate.getvalue())
       else:
         self.printLogFile();
       if status == -9: print("Process: Killed")
       if status == -11: print("Process: Segmentation Fault ")
       
       if len(headers)!=0: 
-        print "=== START ADAGUC HTTP HEADER ==="
-        print headers
-        print "=== END ADAGUC HTTP HEADER ==="
+        print("=== START ADAGUC HTTP HEADER ===")
+        print(headers)
+        print("=== END ADAGUC HTTP HEADER ===")
       else: 
         print("Process: No HTTP Headers written")
 

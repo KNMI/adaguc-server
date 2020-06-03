@@ -2,26 +2,25 @@
 
 import os
 import netCDF4
-import urllib2
+import urllib.request
 import warnings
 import numpy
-from sets import Set
 import logging
-import ADAGUCWCS
+from .ADAGUCWCS import ADAGUCWCS
 from netCDF4 import num2date 
 from datetime import date
 
 #logging.basicConfig(level=logging.DEBUG)
 
 def defaultCallback(message,percentage):
-  print "defaultCallback:: "+message+" "+str(percentage)
+  print("defaultCallback:: "+message+" "+str(percentage))
 
 def printfield(featuredata):
   for y in range(0,numpy.shape(featuredata)[0]):
     mstr = ""
     for x in range(0,numpy.shape(featuredata)[1]):
       mstr = "%s%0.2d" %(mstr, (featuredata[y][x]))
-    print mstr
+    print(mstr)
 
 def ADAGUCFeatureCombineNuts( featureNCFile,dataNCFile,bbox= "-40,20,60,85",variable = None, time= None,width=300,height=300,crs="EPSG:4326",outncrasterfile="/tmp/stat.nc",outncpointfile="/tmp/statpoints.nc", outcsvfile="/tmp/stat.csv",callback=defaultCallback, tmpFolderPath = "/tmp", homeFolderPath="/tmp"):
 
