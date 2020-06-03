@@ -6,7 +6,7 @@ import urllib.request
 import warnings
 import numpy
 import logging
-from .ADAGUCWCS import ADAGUCWCS
+from . import ADAGUCWCS
 from netCDF4 import num2date 
 from datetime import date
 
