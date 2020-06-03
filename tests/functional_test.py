@@ -12,15 +12,15 @@ from AdagucTests.TestGeoJSON import TestGeoJSON
 from AdagucTests.TestMetadataService import TestMetadataService
 
 testsuites=[];
-testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWMS))
-testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWMSSLD))
-testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWMSDocumentCache))
-testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestOpenDAPServer))
-testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWMSPolylineRenderer))
-testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWMSTiling))
-testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestADAGUCFeatureFunctions))
-testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestCSV))
-testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestGeoJSON))
+# testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWMS))
+# testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWMSSLD))
+# testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWMSDocumentCache))
+# testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestOpenDAPServer))
+# testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWMSPolylineRenderer))
+# testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWMSTiling))
+# testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestADAGUCFeatureFunctions))
+# testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestCSV))
+# testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestGeoJSON))
 testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestMetadataService))
 result=unittest.TextTestRunner(verbosity=2).run(unittest.TestSuite(testsuites))
 

@@ -1,6 +1,5 @@
 import os, os.path
 from io import StringIO
-from adaguc.CGIRunner import CGIRunner
 import unittest
 import shutil
 import subprocess
@@ -9,6 +8,10 @@ from lxml import etree
 from lxml import objectify
 import re
 from .AdagucTestTools import AdagucTestTools
+
+import sys
+sys.path.append('../../adaguc')
+from adaguc.CGIRunner import CGIRunner
 
 ADAGUC_PATH = os.environ['ADAGUC_PATH']
 
