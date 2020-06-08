@@ -89,11 +89,11 @@ COPY --from=0 /adaguc/adaguc-server-master/tests /adaguc/adaguc-server-master/te
 COPY --from=0 /adaguc/adaguc-server-master/runtests.sh /adaguc/adaguc-server-master/runtests.sh
 
 # Install adaguc-services (spring boot application for running adaguc-server)
-RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.9/adaguc-services-1.2.9.jar -o /adaguc/adaguc-services.jar && \
+RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.11/adaguc-services-1.2.11.jar -o /adaguc/adaguc-services.jar && \
     # Install newer numpy
     curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
     python get-pip.py && \
-    pip install numpy netcdf4 six lxml && \
+    pip install numpy netcdf4 six lxml requests && \
     # Run adaguc-server functional and regression tests
     bash runtests.sh && \
     # Set same uid as vivid
