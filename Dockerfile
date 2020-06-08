@@ -19,7 +19,7 @@ RUN yum update -y && \
     openssl \
     netcdf \
     libwebp-devel \
-    java-1.8.0-openjdk && \
+    java-11-openjdk && \
     # building / development packages
     yum install -y centos-release-scl && \
     yum install -y devtoolset-7-gcc-c++ && \
@@ -74,8 +74,8 @@ RUN yum update -y && \
     udunits2 \
     openssl \
     netcdf \
-    libwebp-devel \
-    java-1.8.0-openjdk \
+    libwebp \
+    java-11-openjdk-headless \
     python-devel && \
     yum clean all && \
     rm -rf /var/cache/yum
@@ -89,11 +89,11 @@ COPY --from=0 /adaguc/adaguc-server-master/tests /adaguc/adaguc-server-master/te
 COPY --from=0 /adaguc/adaguc-server-master/runtests.sh /adaguc/adaguc-server-master/runtests.sh
 
 # Install adaguc-services (spring boot application for running adaguc-server)
-RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.6/adaguc-services-1.2.6.jar -o /adaguc/adaguc-services.jar && \
+RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.11/adaguc-services-1.2.11.jar -o /adaguc/adaguc-services.jar && \
     # Install newer numpy
     curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
     python get-pip.py && \
-    pip install numpy netcdf4 six lxml && \
+    pip install numpy netcdf4 six lxml requests && \
     # Run adaguc-server functional and regression tests
     bash runtests.sh && \
     # Set same uid as vivid
@@ -121,6 +121,8 @@ RUN  chmod +x /adaguc/adaguc-server-*.sh && \
 
 # Put in default java truststore
 RUN cp /etc/pki/java/cacerts /adaguc/security/truststore.ts
+
+ENV ADAGUC_SERVICES_CONFIG=/adaguc/adaguc-services-config.xml
 
 USER adaguc
 
