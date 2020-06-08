@@ -1,0 +1,64 @@
+######### Second stage (production) ############
+FROM centos:7
+USER root
+
+WORKDIR /adaguc/adaguc-server-master
+
+RUN yum update -y && \
+    yum install -y epel-release deltarpm && \
+    yum install -y cairo \
+    curl \
+    gd \
+    gdal \
+    hdf5 \
+    libxml2 \
+    proj \
+    postgresql \
+    udunits2 \
+    openssl \
+    netcdf \
+    libwebp \
+    java-11-openjdk-headless \
+    yum clean all && \
+    rm -rf /var/cache/yum
+    
+# Copy adaguc-server
+COPY --from=openearth/adaguc-server /adaguc/adaguc-server-master/bin /adaguc/adaguc-server-master/bin
+COPY --from=openearth/adaguc-server /adaguc/adaguc-server-master/data /adaguc/adaguc-server-master/data
+
+# Install adaguc-services (spring boot application for running adaguc-server)
+RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.11/adaguc-services-1.2.11.jar -o /adaguc/adaguc-services.jar && \
+    # Set same uid as vivid
+    useradd -m adaguc -u 1000 && \
+    # Setup directories
+    mkdir -p /data/adaguc-autowms && \
+    mkdir -p /data/adaguc-datasets && \
+    mkdir -p /data/adaguc-data && \
+    mkdir -p /adaguc/userworkspace && \
+    mkdir -p /data/adaguc-services-home && \
+    mkdir -p /adaguc/basedir && \
+    mkdir -p /adaguc/security && \
+    mkdir -p /data/adaguc-datasets-internal && \
+    mkdir -p /servicehealth
+
+# Configure
+COPY ./Docker/adaguc-server-config.xml /adaguc/adaguc-server-config.xml
+COPY ./Docker/adaguc-services-config.xml /adaguc/adaguc-services-config.xml
+COPY ./Docker/start.sh /adaguc/
+COPY ./Docker/adaguc-server-*.sh /adaguc/
+COPY ./Docker/baselayers.xml /data/adaguc-datasets-internal/baselayers.xml
+RUN  chmod +x /adaguc/adaguc-server-*.sh && \
+    chmod +x /adaguc/start.sh && \
+    chown -R adaguc:adaguc /data/adaguc* /adaguc /servicehealth
+
+# Put in default java truststore
+RUN cp /etc/pki/java/cacerts /adaguc/security/truststore.ts
+
+#ENTRYPOINT ["bash"]
+
+USER adaguc
+
+# For HTTP
+EXPOSE 8080
+
+ENTRYPOINT ["sh", "/adaguc/start.sh"]
