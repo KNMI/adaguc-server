@@ -64,6 +64,7 @@
     <NameMapping name="shadedcontour"   title="Rainbow colors, shading and contours" abstract="Drawing with rainbow colors, shading and contours"/>
     <RenderMethod>nearest,bilinear,nearestcontour,shadedcontour</RenderMethod>
     <StandardNames standard_name="test_data"/>
+    <StandardNames standard_name="data"/>
   </Style>
   <Style name="testdata_style_2">
     <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
@@ -84,6 +85,7 @@
     <NameMapping name="shadedcontour"   title="Rainbow colors, shading and contours" abstract="Drawing with rainbow colors, shading and contours"/>
     <RenderMethod>nearest,bilinear,nearestcontour,shadedcontour</RenderMethod>
     <StandardNames standard_name="test_data"/>
+    <StandardNames standard_name="data"/>
   </Style>
   
 </Configuration>
