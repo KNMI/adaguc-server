@@ -36,6 +36,8 @@
 
 const char *CDFCSVReader::className="CSVReader";
 
+// #define CCDFCSVREADER_DEBUG
+
 CDFCSVReader::CDFCSVReader():CDFReader(){
   #ifdef CCDFCSVREADER_DEBUG        
   CDBDebug("New CDFCSVReader");
@@ -262,7 +264,7 @@ int CDFCSVReader::open(const char *fileName){
   this->variableIndexer.clear();
   
   /* Determine data vars */
-  for(size_t c=0;c<header.size();c++){
+  for(size_t c=0;c<header.size() && c < firstLine.size();c++){
     #ifdef CCDFCSVREADER_DEBUG     
     CDBDebug("col %d is [%s] with value %s", c, header[c].c_str(), firstLine[c].c_str());
     #endif
@@ -332,7 +334,7 @@ int CDFCSVReader::_readVariableData(CDF::Variable *varToRead, CDFType type){
           size_t length = strlen(stringToAdd);
           ((char**)var->data)[varPointer]=(char*)malloc(length+1);              // Is never freed? Maybe use stack instead
           snprintf(((char**)var->data)[varPointer],length+1,"%s",stringToAdd);
-        }
+        } 
         if (var->currentType == CDF_INT){
           ((int*)var->data)[varPointer] =  CT::string(csvColumns[c].c_str()).toInt();
         }
