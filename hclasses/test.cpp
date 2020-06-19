@@ -49,8 +49,35 @@ int main(){
     throw __LINE__;
   }
 
-  if (CT::string("14.1").isNumeric() == true) {
-    CDBError("[14.1] should not be numeric");
+  if (CT::string("14.1").isNumeric() == false) {
+    CDBError("[14.1] should be numeric");
+    throw __LINE__;
+  }
+
+/* CT::string.isInt() tests */
+
+  if (CT::string("").isInt() == true) {
+    CDBError("[] should not be int");
+    throw __LINE__;
+  }
+
+  if (CT::string(".").isInt() == true) {
+    CDBError("[.] should not be int");
+    throw __LINE__;
+  }
+
+  if (CT::string("HELLO").isInt() == true) {
+    CDBError("[HELLO] should not be int");
+    throw __LINE__;
+  }
+
+  if (CT::string("14").isInt() == false) {
+    CDBError("[14] should be int");
+    throw __LINE__;
+  }
+
+  if (CT::string("14.1").isInt() == true) {
+    CDBError("[14.1] should not be int");
     throw __LINE__;
   }
 
@@ -67,6 +94,11 @@ int main(){
 
   if (CT::string("HELLO").isFloat() == true) {
     CDBError("[HELLO] should not be float");
+    throw __LINE__;
+  }
+
+  if (CT::string("15").isFloat() == true) {
+    CDBError("[15] should not be float");
     throw __LINE__;
   }
 

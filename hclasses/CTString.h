@@ -509,6 +509,11 @@ namespace CT{
      * Checks if this string represents a float value
      */
     bool isFloat();
+
+    /**
+     * Checks if this string represents an int value
+     */
+    bool isInt();
     
   };
 };

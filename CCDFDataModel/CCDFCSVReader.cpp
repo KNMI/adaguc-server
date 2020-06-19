@@ -270,7 +270,7 @@ int CDFCSVReader::open(const char *fileName){
     #endif
     CT::string col = firstLine[c].c_str();
     CDFType dataType = CDF_FLOAT;
-    if (col.isNumeric()){ 
+    if (col.isInt()){ 
       dataType = CDF_INT; 
     }else if (col.isFloat()){ 
       dataType = CDF_FLOAT;
