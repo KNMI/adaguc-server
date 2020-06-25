@@ -66,7 +66,7 @@ class CGIRunner:
     return p.wait()  
 
   def _filterHeader(self,_message,writefunction):
-      
+      print(_message)
       
       if self.headersSent == False:
         self.headers = self.headers + _message
