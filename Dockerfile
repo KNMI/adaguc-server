@@ -53,10 +53,7 @@ WORKDIR /adaguc/adaguc-server-master
 
 # Force to use Python 3
 RUN ln -sf /usr/bin/python3 /usr/bin/python
-RUN echo #############################
-RUN python --version
-RUN python3 --version
-RUN echo #############################
+
 
 # RUN bash compile.sh
 
@@ -103,7 +100,7 @@ RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.11/adaguc-ser
     curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
     python get-pip.py && \
     pip install numpy netcdf4 six python3-lxml requests pillow aggdraw && \
-    # pip install numpy netcdf4 six lxml && \
+    
 # Run adaguc-server functional and regression tests
     bash runtests.sh && \
     # Set same uid as vivid
@@ -132,14 +129,7 @@ RUN  chmod +x /adaguc/adaguc-server-*.sh && \
 # Put in default java truststore
 RUN cp /etc/pki/java/cacerts /adaguc/security/truststore.ts
 
-<<<<<<< HEAD
-RUN echo #############################
-RUN python --version
-RUN python3 --version
-RUN echo #############################
-=======
 ENV ADAGUC_SERVICES_CONFIG=/adaguc/adaguc-services-config.xml
->>>>>>> dd2cef4db7ad2acaedce2449df8954fb9c09a86f
 
 USER adaguc
 
