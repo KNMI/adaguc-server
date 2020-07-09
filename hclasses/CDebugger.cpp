@@ -26,12 +26,21 @@
 #include "CDebugger_H.h"
 #include "CDebugger_H2.h"
 #include <iostream>
+#include <unistd.h>
 #include <stdlib.h>
 #include <new>   
- 
+
+
+
 bool Tracer::Ready = false;
 extern Tracer NewTrace;
 Tracer NewTrace;
+
+extern unsigned int logMessageNumber;
+unsigned int logMessageNumber = 0;
+
+extern unsigned long logProcessIdentifier;
+unsigned long logProcessIdentifier = getpid();
 
 void Tracer::Add (void * p, char const * file, int line)
 {
@@ -143,6 +152,7 @@ void printErrorStream(const char* message){
 }
 
 void _printErrorStream(const char *pszMessage){
+    
   fprintf(stderr,"%s",pszMessage);
 }
 void _printWarningStream(const char *pszMessage){
@@ -154,6 +164,7 @@ void _printDebugStream(const char *pszMessage){
 }
 
 void _printDebugLine(const char *pszMessage,...){
+  logMessageNumber++;
   char szTemp[2048];
   va_list ap;
   va_start (ap, pszMessage);
@@ -164,6 +175,7 @@ void _printDebugLine(const char *pszMessage,...){
 }
 
 void _printWarningLine(const char *pszMessage,...){
+  logMessageNumber++;
   char szTemp[2048];
   va_list ap;
   va_start (ap, pszMessage);
@@ -174,6 +186,7 @@ void _printWarningLine(const char *pszMessage,...){
 }
 
 void _printErrorLine(const char *pszMessage,...){
+  logMessageNumber++;
   char szTemp[2048];
   va_list ap;
   va_start (ap, pszMessage);
@@ -189,7 +202,7 @@ void makeEqualWidth(CT::string *t1){
   //CT::string t1=t.substringr(0,i);
   //CT::string t2=t.substringr(i,-1);
   //size_t l=t1.length();
-  for(int j=i;j<67;j++){t1->concat(" ");}
+  for(int j=i;j<72;j++){t1->concat(" ");}
   // t1.concat(&t2);
 }
 void _printDebug(const char *pszMessage,...){

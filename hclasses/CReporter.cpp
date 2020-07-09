@@ -8,19 +8,25 @@
 using Severities = CReportMessage::Severities;
 using Categories = CReportMessage::Categories;
 
+extern unsigned int logMessageNumber;
+extern unsigned long logProcessIdentifier;
+
 CReporter *CReporter::instance = NULL;
 
 CReporter::CReporter(bool report_and_log)
-    : messageList(), writelog(report_and_log), _filename() {
-    // Empty at this point
+    : messageList(), writelog(report_and_log), _filename()
+{
+  // Empty at this point
 }
 
-CReporter *CReporter::getInstance() {
-  if (instance == NULL) {
-      if (REPORT_AND_LOG == true)
-          instance = new CReporter(REPORT_AND_LOG);
-      else
-          instance = new CReporter();
+CReporter *CReporter::getInstance()
+{
+  if (instance == NULL)
+  {
+    if (REPORT_AND_LOG == true)
+      instance = new CReporter(REPORT_AND_LOG);
+    else
+      instance = new CReporter();
   }
 
   return instance;
@@ -28,9 +34,11 @@ CReporter *CReporter::getInstance() {
 
 void CReporter::addMessage(const CT::string message, CReportMessage::Severities severity,
                            CReportMessage::Categories category, CT::string documentationLink, const char *file,
-                           int line, const char *className) {
+                           int line, const char *className)
+{
 
-  if(this->writelog) {
+  if (this->writelog)
+  {
     writeMessageToLog(message, severity, file, line, className);
   }
 
@@ -39,35 +47,39 @@ void CReporter::addMessage(const CT::string message, CReportMessage::Severities 
 }
 
 void CReporter::writeMessageToLog(const CT::string message, CReportMessage::Severities severity, const char *file,
-                                  int line, const char *className) const {
+                                  int line, const char *className) const
+{
 
-
-  if(severity == Severities::INFO) {
-    _printDebug("[D: %s, %d in %s] ", file, line, className);
+  if (severity == Severities::INFO)
+  {
+    _printDebug("[D:%03d:pid%lu: %s, %d in %s] ", logMessageNumber, logProcessIdentifier, file, line, className);
     _printDebugLine(message);
   }
 
-  if(severity == Severities::WARNING) {
-    _printWarning("[W: %s, %d in %s] ", file, line, className);
+  if (severity == Severities::WARNING)
+  {
+    _printWarning("[W:%03d:pid%lu: %s, %d in %s] ", logMessageNumber, logProcessIdentifier, file, line, className);
     _printWarningLine(message);
   }
 
-  if(severity == Severities::ERROR) {
-    _printError("[E: %s, %d in %s] ", file, line, className);
+  if (severity == Severities::ERROR)
+  {
+    _printError("[E:%03d:pid%lu: %s, %d in %s] ", logMessageNumber, logProcessIdentifier, file, line, className);
     _printErrorLine(message);
   }
 }
 
-const std::list<CReportMessage> CReporter::getMessageList() const {
+const std::list<CReportMessage> CReporter::getMessageList() const
+{
   return messageList;
 }
 
 void CReporter::filename(const CT::string filename)
 {
-    this->_filename = filename;
+  this->_filename = filename;
 }
 
 CT::string CReporter::filename() const
 {
-    return this->_filename;
+  return this->_filename;
 }
