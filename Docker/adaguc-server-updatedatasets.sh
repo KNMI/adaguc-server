@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# This script requires ADAGUC_CONFIG to be set. In case of running locally with adaguc-services, this is probably 
+# `export ADAGUC_CONFIG=./data/config/adaguc.vm.xml`
+
 # TODO: https://github.com/KNMI/adaguc-server/issues/71
 
 THISSCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
