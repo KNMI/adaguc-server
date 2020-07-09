@@ -1,0 +1,1 @@
+docker run -it   --name my-adaguc-server   --network=host   -e ADAGUC_DB="host=localhost port=5432 user=adaguc password=adaguc dbname=adaguc"   -e EXTERNALADDRESS="http://localhost:8080"   -v /data/adaguc-testsets/adaguc-data:/data/adaguc-data   -v /data/adaguc-testsets/adaguc-datasets/:/data/adaguc-datasets openearth/adaguc-server

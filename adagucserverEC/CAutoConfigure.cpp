@@ -3,6 +3,7 @@
 #include "CDBFactory.h"
 #include "CDataReader.h"
 #include "CReporter.h"
+#include "CRequest.h"
 const char *CAutoConfigure::className="CAutoConfigure";
 
 //#define CAUTOCONFIGURE_DEBUG
@@ -478,16 +479,22 @@ int CAutoConfigure::justLoadAFileHeader(CDataSource *dataSource){
     /* Try to get a file from DB */
     CDBDebug("Looking up first file");
     
+    
+    
     /* ADAGUC-Server database queries don't work if there are no dimensions */
     bool removeRequiredDims = false;
     if(dataSource->requiredDims.size()==0){
       removeRequiredDims = true;
-      CDBDebug("Required dims is still zero, add none now");
-      COGCDims *ogcDim = new COGCDims();
-      dataSource->requiredDims.push_back(ogcDim);
-      ogcDim->name.copy("none");
-      ogcDim->value.copy("0");
-      ogcDim->netCDFDimName.copy("none");
+      if (dataSource->cfgLayer->Dimension.size()>0) {
+        CRequest::fillDimValuesForDataSource(dataSource, dataSource->srvParams);
+      } else {
+        CDBDebug("Required dims is still zero, add none now");
+        COGCDims *ogcDim = new COGCDims();
+        dataSource->requiredDims.push_back(ogcDim);
+        ogcDim->name.copy("none");
+        ogcDim->value.copy("0");
+        ogcDim->netCDFDimName.copy("none");
+      }
     }
     CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getFilesAndIndicesForDimensions(dataSource,1000);
     if(store!=NULL && store->getSize() > 0){
