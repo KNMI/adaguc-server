@@ -12,7 +12,7 @@
 usage () {
     echo "This script cleans the database for files which are older than specified nr of days"
     echo "-p: is for the filepath as configured in your Layers FilePath value"
-    echo "-f: is for the filefilter as configured in your Layers FilePath filter attribute. Can be set to * to ignore"
+    echo "-f: is for the filefilter as configured in your Layers FilePath filter attribute. Can be set to * to ignore or left out"
     echo "-d: Specify how many days old the files need to be for removal"
     echo "-q: Querytype, currently filetimedate, this is the date inside the time variable of the NetCDF file"
     echo "-t: Deletetype, delete_db means it will be removed from the db only, delete_db_and_fs will also delete the files from disk"
@@ -51,11 +51,6 @@ if [ ! -n "${FILEPATH}" ]; then
   exit 1
 fi
 
-if [ ! -n "${FILEFILTER}" ]; then
-  echo "You did not supply a filefilter with -f <filefilter>"
-  exit 1
-fi
-
 if [ ! -n "${FILEDAYS}" ]; then
   echo "You did not supply the days argument with -d <nr of days>"
   exit 1
@@ -78,7 +73,7 @@ THISSCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )
 
 
 datadir=${FILEPATH} #, as configured in your dataset
-datafilter=${FILEFILTER}
+datafilter=${FILEFILTER:-""}
 limitdaysold=${FILEDAYS}
 
 # Cut trailing slash
@@ -97,6 +92,10 @@ if [[ "${datafilter}" == "*" ]];then
 encodeddatafilter=""
 fi
 
+if [[ "${datafilter}" == "" ]];then
+encodeddatafilter=""
+fi
+#echo "select tablename from ${pathfiltertablelookuptable} where path = E'P_${datadir}' ${encodeddatafilter} and dimension!='time';"
 # Get the right tablenames from the database, based on the directory.
 tablenames=$(psql -t "${postgrescredentials}" -c "select tablename from ${pathfiltertablelookuptable} where path = E'P_${datadir}' ${encodeddatafilter} and dimension!='time';")
 timetablename=$(psql -t "${postgrescredentials}" -c "select tablename from ${pathfiltertablelookuptable} where path = E'P_${datadir}' ${encodeddatafilter} and dimension='time';")
