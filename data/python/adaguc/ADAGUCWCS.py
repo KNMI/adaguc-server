@@ -104,7 +104,7 @@ def callADAGUC(adagucexecutable,tmpdir,LOGFILE,url,filetogenerate, env = {}):
 """
 def describeCoverage(adagucexecutable,tmpdir,LOGFILE,WCSURL,COVERAGE, env = None):
   
-  filetogenerate =  StringIO();
+  filetogenerate = StringIO();
   #filetogenerate = tmpdir+"/describecoverage.xml"
   url = WCSURL + "&SERVICE=WCS&REQUEST=DescribeCoverage&";
   url = url + "COVERAGE="+COVERAGE+"&";

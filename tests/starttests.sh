@@ -17,8 +17,8 @@ export ADAGUC_FONT="${ADAGUC_PATH}/data/fonts/FreeSans.ttf"
 export ADAGUC_ONLINERESOURCE=""
 export ADAGUC_ENABLELOGBUFFER=FALSE
 ulimit -c unlimited
-# conda install --yes --file requirements.txt
-pip install -r requirements.txt
+conda install --yes --file requirements.txt
+# pip install -r requirements.txt
 python3 ${ADAGUC_PATH}/tests/functional_test.py $1
 
 
