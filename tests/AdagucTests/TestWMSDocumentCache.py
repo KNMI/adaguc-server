@@ -1,5 +1,5 @@
 import os
-from io import StringIO
+from io import BytesIO
 from adaguc.CGIRunner import CGIRunner
 import unittest
 import shutil

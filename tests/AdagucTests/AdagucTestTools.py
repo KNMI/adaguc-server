@@ -1,5 +1,5 @@
 import os
-from io import StringIO
+from io import BytesIO
 from adaguc.CGIRunner import CGIRunner
 import unittest
 import shutil
@@ -57,7 +57,7 @@ class AdagucTestTools:
     
     
 
-    filetogenerate =  StringIO()
+    filetogenerate =  BytesIO()
     status, headers = CGIRunner().run(adagucargs,url=url,output = filetogenerate, env=adagucenv, path=path, isCGI= isCGI)
 
 
@@ -88,12 +88,12 @@ class AdagucTestTools:
       return [status,filetogenerate, headers]
       
   def writetofile(self, filename, data):
-    with open(filename, 'w') as f:
+    with open(filename, 'wb') as f:
       f.write(data)
 
   def readfromfile(self, filename):
     ADAGUC_PATH = os.environ['ADAGUC_PATH']
-    with open(ADAGUC_PATH + "/tests/" + filename, 'r') as f:
+    with open(ADAGUC_PATH + "/tests/" + filename, 'rb') as f:
       return f.read()
     
   def cleanTempDir(self):
@@ -113,9 +113,9 @@ class AdagucTestTools:
   def compareGetCapabilitiesXML(self,testresultFileLocation,expectedOutputFileLocation):
     expectedxml = self.readfromfile(expectedOutputFileLocation)
     testxml = self.readfromfile(testresultFileLocation)
-    
-    obj1 = objectify.fromstring(re.sub(' xmlns="[^"]+"', '', expectedxml, count=1))
-    obj2 = objectify.fromstring(re.sub(' xmlns="[^"]+"', '', testxml, count=1))
+
+    obj1 = objectify.fromstring(re.sub(b' xmlns="[^"]+"', b'', expectedxml, count=1))
+    obj2 = objectify.fromstring(re.sub(b' xmlns="[^"]+"', b'', testxml, count=1))
 
     # Remove ADAGUC build date and version from keywordlists
     for child in obj1.findall("Service/KeywordList")[0]:child.getparent().remove(child)
