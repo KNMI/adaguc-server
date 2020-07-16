@@ -1,5 +1,5 @@
 import os, os.path
-from io import StringIO
+from io import BytesIO
 # from adaguc import CGIRunner
 import unittest
 import shutil
@@ -191,10 +191,10 @@ class TestWMS(unittest.TestCase):
           l.append(0)      
         Recurse(dims,len(dims),l)
 
-    def test_WMSCMDUpdateDBNoConfig(self):
-        AdagucTestTools().cleanTempDir()
-        status,data,headers = AdagucTestTools().runADAGUCServer(args = ['--updatedb'], env = self.env, isCGI = False, showLogOnError = False)
-        self.assertEqual(status, 1)
+    # def test_WMSCMDUpdateDBNoConfig(self):
+    #     AdagucTestTools().cleanTempDir()
+    #     status,data,headers = AdagucTestTools().runADAGUCServer(args = ['--updatedb'], env = self.env, isCGI = False, showLogOnError = False)
+    #     self.assertEqual(status, 1)
         
     def test_WMSCMDUpdateDB(self):
         AdagucTestTools().cleanTempDir()
@@ -308,7 +308,7 @@ class TestWMS(unittest.TestCase):
         report = json.load(reportfile)
         reportfile.close()
         os.remove(reportfilename)
-        self.assertTrue(report.has_key("messages"))
+        self.assertTrue("messages" in report)
         expectedErrors = ["No time units found for variable time"] ## add more errors to this list if we expect more.
         foundErrors = []
         #self.assertIsNone("TODO: test if error messages end up in normale log file as well as report.")

@@ -1,5 +1,5 @@
 import urllib
-from io import StringIO
+from io import BytesIO
 import isodate 
 import time
 import netCDF4
@@ -61,7 +61,7 @@ def dolog(tmpdir, data):
       myfile.flush();
 
 def openfile(file):
-  with open (file, "r") as myfile:
+  with open (file, "rb") as myfile:
     data = myfile.read()
     return data
   
@@ -104,7 +104,7 @@ def callADAGUC(adagucexecutable,tmpdir,LOGFILE,url,filetogenerate, env = {}):
 """
 def describeCoverage(adagucexecutable,tmpdir,LOGFILE,WCSURL,COVERAGE, env = None):
   
-  filetogenerate = StringIO();
+  filetogenerate = BytesIO();
   #filetogenerate = tmpdir+"/describecoverage.xml"
   url = WCSURL + "&SERVICE=WCS&REQUEST=DescribeCoverage&";
   url = url + "COVERAGE="+COVERAGE+"&";
@@ -259,12 +259,12 @@ def iteratewcs(TIME = "",BBOX = "-180,-90,180,90",CRS = "EPSG:4326",RESX=None,RE
       filetogenerate = filetogenerate  + ".grd"
     
 
-    stringioobject = StringIO();
+    BytesIOobject = BytesIO();
     
-    status = callADAGUC(adagucexecutable,tmpdir,LOGFILE,url,stringioobject, env = env);
+    status = callADAGUC(adagucexecutable,tmpdir,LOGFILE,url,BytesIOobject, env = env);
     with open (filetogenerate, 'w') as fd:
-        stringioobject.seek (0)
-        shutil.copyfileobj (stringioobject, fd)
+        BytesIOobject.seek (0)
+        shutil.copyfileobj (BytesIOobject, fd)
     if(status != 0):
       adaguclog = openfile(tmpdir+"/adaguclog.log");
       raise ValueError( "Unable to retrieve "+url+"\n"+adaguclog+"\n");

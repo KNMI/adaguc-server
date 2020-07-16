@@ -98,7 +98,7 @@ class CGIRunner:
         writefunction(_message)
     
   """
-    Run the CGI script with specified URL and environment. Stdout is captured and put in a StringIO object provided in output
+    Run the CGI script with specified URL and environment. Stdout is captured and put in a BytesIO object provided in output
   """
   def run(self,cmds,url,output,env = [], path = None, isCGI = True):
     #output = subprocess.Popen(["../../bin/adagucserver", "myarg"], stdout=subprocess.PIPE, env=adagucenv).communicate()[0]
