@@ -112,15 +112,6 @@ class CGIRunner:
     
     def writefunction(data):
         output.write(data)
-
-      # if(isinstance(data, (bytes, bytearray))):
-      #   try:
-      #     output.write(data.decode())
-      #   except UnicodeDecodeError as e:
-      #     print(e)
-      # else:
-      #   print(data, type(data))
-      #   output.write(data)
     
     def monitor1(_message):
       self._filterHeader(_message,writefunction)

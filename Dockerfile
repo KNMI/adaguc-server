@@ -54,7 +54,6 @@ WORKDIR /adaguc/adaguc-server-master
 # Force to use Python 3
 RUN ln -sf /usr/bin/python3 /usr/bin/python
 
-
 # RUN bash compile.sh
 
 ######### Second stage (production) ############
@@ -101,7 +100,7 @@ RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.11/adaguc-ser
     python get-pip.py && \
     pip install numpy netcdf4 six python3-lxml requests pillow aggdraw && \
     
-# Run adaguc-server functional and regression tests
+    # Run adaguc-server functional and regression tests
     bash runtests.sh && \
     # Set same uid as vivid
     useradd -m adaguc -u 1000 && \
