@@ -1,5 +1,5 @@
 import os
-from StringIO import StringIO
+from BytesIO import BytesIO
 from adaguc.CGIRunner import CGIRunner
 from adaguc.ADAGUCFeatureFunctions import ADAGUCFeatureCombineNuts
 import shutil
