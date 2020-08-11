@@ -31,7 +31,7 @@ class TestOpenDAPServer(unittest.TestCase):
       AdagucTestTools().cleanTempDir()
       filename="test_OpenDAPServer_testdatanc_DDS_headers.txt"
       status,data,headers = AdagucTestTools().runADAGUCServer(path="opendap/testdata.nc.dds", env = self.env)
-      AdagucTestTools().writetofile(self.testresultspath + filename,headers)
+      AdagucTestTools().writetofile(self.testresultspath + filename,headers.encode(encoding='UTF-8'))
       self.assertEqual(status, 0)
       # print ("\nHEADERS\n" + headers +"\n")
       self.assertEqual(headers, AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
