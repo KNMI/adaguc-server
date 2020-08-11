@@ -1,5 +1,5 @@
 import os, os.path
-from io import StringIO
+from io import BytesIO
 import unittest
 import shutil
 import subprocess
