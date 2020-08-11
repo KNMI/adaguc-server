@@ -1,6 +1,5 @@
 import os, os.path
 from io import BytesIO
-# from adaguc import CGIRunner
 import unittest
 import shutil
 import subprocess
@@ -93,7 +92,7 @@ class TestWMS(unittest.TestCase):
     def test_WMSGetMap_testdatanc_customprojectionstring(self):
         AdagucTestTools().cleanTempDir()
         
-        # https://geoservices.knmi.nl/cgi-bin/RADNL_OPER_R___25PCPRR_L3.cgi?SERVICE=WMS&REQUEST=GETMAP&VERSION=1.1.1&SRS%3DPROJ4%3A%2Bproj%3Dstere%20%2Bx_0%3D0%20%2By_0%3D0%20%2Blat_ts%3D60%20%2Blon_0%3D0%20%2Blat_0%3D90%20%2Ba%3D6378140%20%2Bb%3D6356750%20%2Bunits%3Dm&FORMAT=image/png&TRANSPARENT=true&WIDTH=750&HEIGHT=660&BBOX=100000,-4250000,600000,-3810000&LAYERS=RADNL_OPER_R___25PCPRR_L3_KNMI&TIME=2018-03-12T12:40:00
+        #https://geoservices.knmi.nl/cgi-bin/RADNL_OPER_R___25PCPRR_L3.cgi?SERVICE=WMS&REQUEST=GETMAP&VERSION=1.1.1&SRS%3DPROJ4%3A%2Bproj%3Dstere%20%2Bx_0%3D0%20%2By_0%3D0%20%2Blat_ts%3D60%20%2Blon_0%3D0%20%2Blat_0%3D90%20%2Ba%3D6378140%20%2Bb%3D6356750%20%2Bunits%3Dm&FORMAT=image/png&TRANSPARENT=true&WIDTH=750&HEIGHT=660&BBOX=100000,-4250000,600000,-3810000&LAYERS=RADNL_OPER_R___25PCPRR_L3_KNMI&TIME=2018-03-12T12:40:00
         
         filename="test_WMSGetMap_testdatanc_customprojectionstring.png"
         status,data,headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=%2Bproj%3Dstere%20%2Bx_0%3D0%20%2By_0%3D0%20%2Blat_ts%3D60%20%2Blon_0%3D0%20%2Blat_0%3D90%20%2Ba%3D6378140%20%2Bb%3D6356750%20%2Bunits%3Dm&BBOX=100000,-4250000,600000,-3810000&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&", env = self.env)
@@ -191,10 +190,10 @@ class TestWMS(unittest.TestCase):
           l.append(0)      
         Recurse(dims,len(dims),l)
 
-    # def test_WMSCMDUpdateDBNoConfig(self):
-    #     AdagucTestTools().cleanTempDir()
-    #     status,data,headers = AdagucTestTools().runADAGUCServer(args = ['--updatedb'], env = self.env, isCGI = False, showLogOnError = False)
-    #     self.assertEqual(status, 1)
+    def test_WMSCMDUpdateDBNoConfig(self):
+        AdagucTestTools().cleanTempDir()
+        status,data,headers = AdagucTestTools().runADAGUCServer(args = ['--updatedb'], env = self.env, isCGI = False, showLogOnError = False)
+        self.assertEqual(status, 1)
         
     def test_WMSCMDUpdateDB(self):
         AdagucTestTools().cleanTempDir()
