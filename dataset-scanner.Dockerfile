@@ -87,26 +87,26 @@ COPY --from=0 /adaguc/adaguc-server-master/runtests.sh /adaguc/adaguc-server-mas
 
 # Install adaguc-services (spring boot application for running adaguc-server)
 RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.0/adaguc-services-1.2.0.jar > /adaguc/adaguc-services.jar && \
-    # Install newer numpy
-    curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
-    python get-pip.py && \
-    pip install numpy netcdf4 six python3-lxml requests && \
-    # Run adaguc-server functional and regression tests
-    bash runtests.sh && \
-    # Set same uid as vivid
-    useradd -m adaguc -u 1000 && \
-    # Setup directories
-    mkdir -p /data/adaguc-autowms && \
-    mkdir -p /data/adaguc-datasets && \
-    mkdir -p /data/adaguc-data && \
-    mkdir -p /adaguc/userworkspace && \
-    mkdir -p /data/adaguc-services-home && \
-    mkdir -p /adaguc/basedir && \
-    mkdir -p /var/log/adaguc && \
-    mkdir -p /adaguc/adagucdb && \
-    mkdir -p /adaguc/security && \
-    mkdir -p /data/adaguc-datasets-internal && \
-    mkdir -p /servicehealth
+  # Install newer numpy
+  curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
+  python get-pip.py && \
+  pip install numpy netcdf4 six python3-lxml requests && \
+  # Run adaguc-server functional and regression tests
+  bash runtests.sh && \
+  # Set same uid as vivid
+  useradd -m adaguc -u 1000 && \
+  # Setup directories
+  mkdir -p /data/adaguc-autowms && \
+  mkdir -p /data/adaguc-datasets && \
+  mkdir -p /data/adaguc-data && \
+  mkdir -p /adaguc/userworkspace && \
+  mkdir -p /data/adaguc-services-home && \
+  mkdir -p /adaguc/basedir && \
+  mkdir -p /var/log/adaguc && \
+  mkdir -p /adaguc/adagucdb && \
+  mkdir -p /adaguc/security && \
+  mkdir -p /data/adaguc-datasets-internal && \
+  mkdir -p /servicehealth
     
 # Configure
 COPY ./Docker/adaguc-server-config.xml /adaguc/adaguc-server-config.xml
