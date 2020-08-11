@@ -93,7 +93,7 @@ class TestWMS(unittest.TestCase):
     def test_WMSGetMap_testdatanc_customprojectionstring(self):
         AdagucTestTools().cleanTempDir()
         
-        #https://geoservices.knmi.nl/cgi-bin/RADNL_OPER_R___25PCPRR_L3.cgi?SERVICE=WMS&REQUEST=GETMAP&VERSION=1.1.1&SRS%3DPROJ4%3A%2Bproj%3Dstere%20%2Bx_0%3D0%20%2By_0%3D0%20%2Blat_ts%3D60%20%2Blon_0%3D0%20%2Blat_0%3D90%20%2Ba%3D6378140%20%2Bb%3D6356750%20%2Bunits%3Dm&FORMAT=image/png&TRANSPARENT=true&WIDTH=750&HEIGHT=660&BBOX=100000,-4250000,600000,-3810000&LAYERS=RADNL_OPER_R___25PCPRR_L3_KNMI&TIME=2018-03-12T12:40:00
+        # https://geoservices.knmi.nl/cgi-bin/RADNL_OPER_R___25PCPRR_L3.cgi?SERVICE=WMS&REQUEST=GETMAP&VERSION=1.1.1&SRS%3DPROJ4%3A%2Bproj%3Dstere%20%2Bx_0%3D0%20%2By_0%3D0%20%2Blat_ts%3D60%20%2Blon_0%3D0%20%2Blat_0%3D90%20%2Ba%3D6378140%20%2Bb%3D6356750%20%2Bunits%3Dm&FORMAT=image/png&TRANSPARENT=true&WIDTH=750&HEIGHT=660&BBOX=100000,-4250000,600000,-3810000&LAYERS=RADNL_OPER_R___25PCPRR_L3_KNMI&TIME=2018-03-12T12:40:00
         
         filename="test_WMSGetMap_testdatanc_customprojectionstring.png"
         status,data,headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=%2Bproj%3Dstere%20%2Bx_0%3D0%20%2By_0%3D0%20%2Blat_ts%3D60%20%2Blon_0%3D0%20%2Blat_0%3D90%20%2Ba%3D6378140%20%2Bb%3D6356750%20%2Bunits%3Dm&BBOX=100000,-4250000,600000,-3810000&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&", env = self.env)
@@ -165,17 +165,17 @@ class TestWMS(unittest.TestCase):
         AdagucTestTools().cleanTempDir()
         
         def Recurse (dims, number, l):
-          for value in range(len(dims[dims.keys()[number-1]]['values'])):
+          for value in range(len(dims[list(dims.keys())[number-1]]['values'])):
             l[number-1] = value
             if number > 1:
                 Recurse ( dims, number - 1 ,l)
             else:
                 kvps = ""
-                for i in range(len(l)):
-                  key = (dims[dims.keys()[i]]['wmsname'])
-                  value = (dims[dims.keys()[i]]['values'])[l[i]]
+                for i in reversed(range(len(l))):
+                  key = (dims[list(dims)[i]]['wmsname'])
+                  value = (dims[list(dims)[i]]['values'])[l[i]]
                   kvps += "&" + key +'=' + str(value)
-                #print "Checking dims" + kvps
+                # print("Checking dims" + kvps)
                 filename="test_WMSGetMap_getmap_3dims_"+kvps+".png"
                 filename = filename.replace("&","_").replace(":","_").replace("=","_");
                 #print filename
@@ -313,10 +313,10 @@ class TestWMS(unittest.TestCase):
         foundErrors = []
         #self.assertIsNone("TODO: test if error messages end up in normale log file as well as report.")
         for message in report["messages"]:
-            self.assertTrue(message.has_key("category"))
-            self.assertTrue(message.has_key("documentationLink"))
-            self.assertTrue(message.has_key("message"))
-            self.assertTrue(message.has_key("severity"))
+            self.assertTrue("category" in message)
+            self.assertTrue("documentationLink" in message)
+            self.assertTrue("message" in message)
+            self.assertTrue("severity" in message)
             if (message["severity"] == "ERROR"):
                 foundErrors.append(message["message"])
                 self.assertIn(message["message"], expectedErrors)
