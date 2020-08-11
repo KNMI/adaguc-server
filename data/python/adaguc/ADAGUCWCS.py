@@ -95,7 +95,7 @@ def callADAGUC(adagucexecutable,tmpdir,LOGFILE,url,filetogenerate, env = {}):
   #  status, headers = CGIRunner().run(adagucargs,url=url,output = filetogenerate, env=adagucenv, path=path, isCGI= isCGI)
 
   
-  status, headers = CGIRunner.CGIRunner().run([adagucexecutable],url,output = filetogenerate,env=env)  
+  status, headers = CGIRunner().run([adagucexecutable],url,output = filetogenerate,env=env)
   return status
 
 
@@ -221,8 +221,8 @@ def iteratewcs(TIME = "",BBOX = "-180,-90,180,90",CRS = "EPSG:4326",RESX=None,RE
     messagetime = ""
     
     url = WCSURL + "&SERVICE=WCS&REQUEST=GetCoverage&";
-    url = url + "FORMAT="+urllib.quote_plus(FORMAT)+"&";
-    url = url + "COVERAGE="+urllib.quote_plus(COVERAGE)+"&";
+    url = url + "FORMAT="+urllib.parse.quote_plus(FORMAT)+"&";
+    url = url + "COVERAGE="+urllib.parse.quote_plus(COVERAGE)+"&";
     
     logging.debug("WCS GetCoverage URL: "+str(url));
     
@@ -234,7 +234,7 @@ def iteratewcs(TIME = "",BBOX = "-180,-90,180,90",CRS = "EPSG:4326",RESX=None,RE
         wcstime=wcstime + time.strftime("%Y-%m-%dT%H:%M:%SZ", wcsdate.timetuple())
         filetime=time.strftime("%Y%m%dT%H%M%SZ", single_date[0].timetuple()) + '-'  + time.strftime("%Y%m%dT%H%M%SZ", single_date[-1].timetuple())
         messagetime=time.strftime("%Y%m%dT%H%M%SZ", single_date[0].timetuple()) 
-        url = url + "TIME="+urllib.quote_plus(wcstime)+"&";
+        url = url + "TIME="+urllib.parse.quote_plus(wcstime)+"&";
         
         
     url = url + "BBOX="+BBOX+"&";
@@ -247,7 +247,7 @@ def iteratewcs(TIME = "",BBOX = "-180,-90,180,90",CRS = "EPSG:4326",RESX=None,RE
     if HEIGHT != None:
       url = url + "HEIGHT="+str(HEIGHT)+"&";
       
-    url = url + "CRS="+urllib.quote_plus(CRS)+"&";
+    url = url + "CRS="+urllib.parse.quote_plus(CRS)+"&";
     logging.debug(url);
     filetogenerate = tmpdir+"/file"+filetime
     
@@ -262,7 +262,7 @@ def iteratewcs(TIME = "",BBOX = "-180,-90,180,90",CRS = "EPSG:4326",RESX=None,RE
     BytesIOobject = BytesIO();
     
     status = callADAGUC(adagucexecutable,tmpdir,LOGFILE,url,BytesIOobject, env = env);
-    with open (filetogenerate, 'w') as fd:
+    with open (filetogenerate, 'wb') as fd:
         BytesIOobject.seek (0)
         shutil.copyfileobj (BytesIOobject, fd)
     if(status != 0):
