@@ -1,5 +1,5 @@
 import os, os.path
-from StringIO import StringIO
+from io import BytesIO
 from adaguc.CGIRunner import CGIRunner
 import unittest
 import shutil
@@ -8,7 +8,7 @@ import json
 from lxml import etree
 from lxml import objectify
 import re
-from AdagucTestTools import AdagucTestTools
+from .AdagucTestTools import AdagucTestTools
 # import sys
 # sys.path.insert(0, '/nobackup/users/bennekom/adaguc-webmapjs-sld-server/env/lib/python3.6/site-packages/flask/__init__.py')
 # from flask import Flask

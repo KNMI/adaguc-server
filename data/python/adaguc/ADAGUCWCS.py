@@ -1,5 +1,5 @@
 import urllib
-from StringIO import StringIO
+from io import BytesIO
 import isodate 
 import time
 import netCDF4
@@ -10,11 +10,11 @@ from threading  import Thread
 import json
 import os
 import shutil
-from mkdir_p import *
+import pathlib
 import zipfile
 from xml.sax.saxutils import escape
 from xml.dom import minidom
-import CGIRunner
+from .CGIRunner import CGIRunner
 import re
 import logging;
 
@@ -61,7 +61,7 @@ def dolog(tmpdir, data):
       myfile.flush();
 
 def openfile(file):
-  with open (file, "r") as myfile:
+  with open (file, "rb") as myfile:
     data = myfile.read()
     return data
   
@@ -95,7 +95,7 @@ def callADAGUC(adagucexecutable,tmpdir,LOGFILE,url,filetogenerate, env = {}):
   #  status, headers = CGIRunner().run(adagucargs,url=url,output = filetogenerate, env=adagucenv, path=path, isCGI= isCGI)
 
   
-  status, headers = CGIRunner.CGIRunner().run([adagucexecutable],url,output = filetogenerate,env=env)  
+  status, headers = CGIRunner().run([adagucexecutable],url,output = filetogenerate,env=env)
   return status
 
 
@@ -104,7 +104,7 @@ def callADAGUC(adagucexecutable,tmpdir,LOGFILE,url,filetogenerate, env = {}):
 """
 def describeCoverage(adagucexecutable,tmpdir,LOGFILE,WCSURL,COVERAGE, env = None):
   
-  filetogenerate =  StringIO();
+  filetogenerate = BytesIO();
   #filetogenerate = tmpdir+"/describecoverage.xml"
   url = WCSURL + "&SERVICE=WCS&REQUEST=DescribeCoverage&";
   url = url + "COVERAGE="+COVERAGE+"&";
@@ -170,7 +170,7 @@ def iteratewcs(TIME = "",BBOX = "-180,-90,180,90",CRS = "EPSG:4326",RESX=None,RE
   CALLBACK("Starting iterateWCS",1)
   tmpdir = TMP+"/iteratewcstmp";
   shutil.rmtree(tmpdir, ignore_errors=True)
-  mkdir_p(tmpdir);
+  pathlib.Path(tmpdir).mkdir(parents=True, exist_ok=True)
   
   """ Determine which dates to do based on describe coverage call"""
   CALLBACK("Starting WCS DescribeCoverage request",1)
@@ -221,8 +221,8 @@ def iteratewcs(TIME = "",BBOX = "-180,-90,180,90",CRS = "EPSG:4326",RESX=None,RE
     messagetime = ""
     
     url = WCSURL + "&SERVICE=WCS&REQUEST=GetCoverage&";
-    url = url + "FORMAT="+urllib.quote_plus(FORMAT)+"&";
-    url = url + "COVERAGE="+urllib.quote_plus(COVERAGE)+"&";
+    url = url + "FORMAT="+urllib.parse.quote_plus(FORMAT)+"&";
+    url = url + "COVERAGE="+urllib.parse.quote_plus(COVERAGE)+"&";
     
     logging.debug("WCS GetCoverage URL: "+str(url));
     
@@ -234,7 +234,7 @@ def iteratewcs(TIME = "",BBOX = "-180,-90,180,90",CRS = "EPSG:4326",RESX=None,RE
         wcstime=wcstime + time.strftime("%Y-%m-%dT%H:%M:%SZ", wcsdate.timetuple())
         filetime=time.strftime("%Y%m%dT%H%M%SZ", single_date[0].timetuple()) + '-'  + time.strftime("%Y%m%dT%H%M%SZ", single_date[-1].timetuple())
         messagetime=time.strftime("%Y%m%dT%H%M%SZ", single_date[0].timetuple()) 
-        url = url + "TIME="+urllib.quote_plus(wcstime)+"&";
+        url = url + "TIME="+urllib.parse.quote_plus(wcstime)+"&";
         
         
     url = url + "BBOX="+BBOX+"&";
@@ -247,7 +247,7 @@ def iteratewcs(TIME = "",BBOX = "-180,-90,180,90",CRS = "EPSG:4326",RESX=None,RE
     if HEIGHT != None:
       url = url + "HEIGHT="+str(HEIGHT)+"&";
       
-    url = url + "CRS="+urllib.quote_plus(CRS)+"&";
+    url = url + "CRS="+urllib.parse.quote_plus(CRS)+"&";
     logging.debug(url);
     filetogenerate = tmpdir+"/file"+filetime
     
@@ -259,12 +259,12 @@ def iteratewcs(TIME = "",BBOX = "-180,-90,180,90",CRS = "EPSG:4326",RESX=None,RE
       filetogenerate = filetogenerate  + ".grd"
     
 
-    stringioobject = StringIO();
+    BytesIOobject = BytesIO();
     
-    status = callADAGUC(adagucexecutable,tmpdir,LOGFILE,url,stringioobject, env = env);
-    with open (filetogenerate, 'w') as fd:
-        stringioobject.seek (0)
-        shutil.copyfileobj (stringioobject, fd)
+    status = callADAGUC(adagucexecutable,tmpdir,LOGFILE,url,BytesIOobject, env = env);
+    with open (filetogenerate, 'wb') as fd:
+        BytesIOobject.seek (0)
+        shutil.copyfileobj (BytesIOobject, fd)
     if(status != 0):
       adaguclog = openfile(tmpdir+"/adaguclog.log");
       raise ValueError( "Unable to retrieve "+url+"\n"+adaguclog+"\n");
@@ -274,7 +274,7 @@ def iteratewcs(TIME = "",BBOX = "-180,-90,180,90",CRS = "EPSG:4326",RESX=None,RE
       raise ValueError ("Succesfully completed WCS GetCoverage, but no data found for "+url+"\n"+adaguclog+"\n");
    
     if(CALLBACK==None):
-      print str(int((float(datesdone)/numdatestodo)*90.))
+      print(str(int((float(datesdone)/numdatestodo)*90.)))
     else:
       CALLBACK(messagetime,((float(datesdone)/float(numdatestodo))*90.))
     return filetogenerate
@@ -297,7 +297,7 @@ def iteratewcs(TIME = "",BBOX = "-180,-90,180,90",CRS = "EPSG:4326",RESX=None,RE
     try:
       data = json.loads(line)
       if(CALLBACK == None):
-        print float(data["percentage"])*(1./10)+90
+        print(float(data["percentage"])*(1./10)+90)
       else:
         CALLBACK(data["message"],float(data["percentage"])*(1./10)+90)
     except:
