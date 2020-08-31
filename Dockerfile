@@ -1,7 +1,10 @@
 FROM centos/devtoolset-7-toolchain-centos7:7
 USER root
 
-MAINTAINER Adaguc Team at KNMI <adaguc@knmi.nl>
+LABEL maintainer="adaguc@knmi.nl"
+
+# Version should be same as in Definitions.h
+LABEL version="2.4.0" 
 
 ######### First stage (build) ############
 
@@ -10,6 +13,7 @@ RUN yum update -y && \
     yum install -y epel-release deltarpm && \
     yum install -y cairo \
     curl \
+    python3 \
     gd \
     gdal \
     hdf5 \
@@ -49,20 +53,19 @@ COPY . /adaguc/adaguc-server-master
 
 WORKDIR /adaguc/adaguc-server-master
 
+
+# Force to use Python 3
+RUN ln -sf /usr/bin/python3 /usr/bin/python
+
 RUN bash compile.sh
 
 ######### Second stage (production) ############
-FROM centos/devtoolset-7-toolchain-centos7:7
+FROM centos:7
 USER root
 
 # production packages, same as stage one
 RUN yum update -y && \
-    yum install -y epel-release && \
-    yum install -y deltarpm \
-    # building / development packages
-    yum install -y centos-release-scl && \
-    yum install -y devtoolset-7-gcc-c++ && \
-    source /opt/rh/devtoolset-7/enable && \
+    yum install -y epel-release deltarpm && \
     yum install -y cairo \
     curl \
     gd \
@@ -70,13 +73,14 @@ RUN yum update -y && \
     hdf5 \
     libxml2 \
     proj \
+    python3 \
+    python3-lxml \
     postgresql \
     udunits2 \
     openssl \
     netcdf \
     libwebp \
     java-11-openjdk-headless \
-    python-devel && \
     yum clean all && \
     rm -rf /var/cache/yum
 
@@ -89,15 +93,16 @@ COPY --from=0 /adaguc/adaguc-server-master/tests /adaguc/adaguc-server-master/te
 COPY --from=0 /adaguc/adaguc-server-master/runtests.sh /adaguc/adaguc-server-master/runtests.sh
 
 # Install adaguc-services (spring boot application for running adaguc-server)
-RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.11/adaguc-services-1.2.11.jar -o /adaguc/adaguc-services.jar && \
-    # Install newer numpy
-    curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
-    python get-pip.py && \
-    pip install numpy netcdf4 six lxml requests && \
-    # Run adaguc-server functional and regression tests
-    bash runtests.sh && \
+RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.11/adaguc-services-1.2.11.jar -o /adaguc/adaguc-services.jar
+
+#Install python dependencies
+RUN  pip3 install --user numpy netcdf4 six requests pillow aggdraw lxml
+
+# Run adaguc-server functional and regression tests
+RUN  bash runtests.sh 
+
     # Set same uid as vivid
-    useradd -m adaguc -u 1000 && \
+RUN useradd -m adaguc -u 1000 && \
     # Setup directories
     mkdir -p /data/adaguc-autowms && \
     mkdir -p /data/adaguc-datasets && \
