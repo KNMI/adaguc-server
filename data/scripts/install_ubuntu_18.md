@@ -48,3 +48,9 @@ bash ./Docker/adaguc-server-updatedatasets.sh msg_hrvis_hdf5_example
 * Adaguc-services and adaguc-server log file is: `${ADAGUC_PATH}/adaguc-services.log`
 * Look in the database via `psql "host=localhost port=5432 user=adaguc password=adaguc dbname=adaguc"`
 * 
+
+# Stop Adaguc Server:
+Use this command to kill the service:
+```
+sudo kill  `ps -ef | grep -v grep | grep java |  grep adaguc-services | grep root | awk '{print $2}'`
+```
