@@ -21,7 +21,7 @@ import subprocess
 import os
 from os.path import expanduser
 from PIL import Image
-from StringIO import StringIO
+from BytesIO import BytesIO
 from adaguc.CGIRunner import CGIRunner
 import io
 import tempfile
@@ -49,12 +49,12 @@ adagucenv['ADAGUC_FONT']=ADAGUC_PATH+"/data/fonts/FreeSans.ttf"
 adagucenv['ADAGUC_ONLINERESOURCE']=""
 
 """ Run the ADAGUC executable and capture the output """
-filetogenerate =  StringIO()
+filetogenerate =  BytesIO()
 status = CGIRunner().run([ADAGUC_PATH+"/bin/adagucserver"],url,output = filetogenerate,extraenv=adagucenv)
 
 try:
   """ Try to show the image """
-  img = Image.open(StringIO(filetogenerate.getvalue()))
+  img = Image.open(BytesIO(filetogenerate.getvalue()))
   img.show()
 except:
   """ Otherwise print the logfile, giving information on what went wrong """
