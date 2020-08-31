@@ -21,36 +21,36 @@ import subprocess
 import os
 from os.path import expanduser
 from PIL import Image
-from BytesIO import BytesIO
+from io import BytesIO
 from adaguc.CGIRunner import CGIRunner
 import io
 import tempfile
 import shutil
 
-""" ADAGUC_TMP is the location where logfiles are stored. 
+""" ADAGUC_LOGFILE is the location where logfiles are stored. 
   In current config file adaguc.autoresource.xml, the DB is written to this temporary directory. 
   Please note regenerating the DB each time for each request can cause performance problems. 
   You can safely configure a permanent location for the database which is permanent in adaguc.autoresource.xml (or your own config)"""
-ADAGUC_TMP = tempfile.mkdtemp()
+ADAGUC_LOGFILE = "/tmp/adaguc-server-python.log"
 
-# ADAGUC_PATH is the location of the adagucserver repository.
-ADAGUC_PATH=expanduser("~")+"/adagucserver/"
+
+
+ADAGUC_PATH="./"
 
 """ Setup a new environment """
-adagucenv=os.environ.copy()
+adagucenv={}
 
 """ Set required environment variables """
-adagucenv['ADAGUC_PATH']=ADAGUC_PATH
-adagucenv['ADAGUC_TMP']=ADAGUC_TMP
 adagucenv['ADAGUC_CONFIG']=ADAGUC_PATH+"/data/config/adaguc.autoresource.xml"
-adagucenv['ADAGUC_DATARESTRICTION=']="FALSE" 
-adagucenv['ADAGUC_LOGFILE']=ADAGUC_TMP+"/adaguc.autoresource.log"
-adagucenv['ADAGUC_FONT']=ADAGUC_PATH+"/data/fonts/FreeSans.ttf"
-adagucenv['ADAGUC_ONLINERESOURCE']=""
+adagucenv['ADAGUC_LOGFILE']=ADAGUC_LOGFILE
+
+print(ADAGUC_LOGFILE)
 
 """ Run the ADAGUC executable and capture the output """
 filetogenerate =  BytesIO()
-status = CGIRunner().run([ADAGUC_PATH+"/bin/adagucserver"],url,output = filetogenerate,extraenv=adagucenv)
+adagucexecutable = ADAGUC_PATH+"/bin/adagucserver";
+adagucargs = [adagucexecutable]
+status, headers = CGIRunner().run(adagucargs,url=url,output = filetogenerate, env=adagucenv)
 
 try:
   """ Try to show the image """
@@ -58,11 +58,14 @@ try:
   img.show()
 except:
   """ Otherwise print the logfile, giving information on what went wrong """
-  print "Unable to run ADAGUC WMS, listing logs:"
-  f=open(ADAGUC_TMP+"/adaguc.autoresource.log")
-  print f.read()
+  print ("Unable to run ADAGUC WMS, listing logs:")
+  f=open(ADAGUC_LOGFILE)
+  print (f.read())
   f.close()
   pass
 
 """ Remove the temporary directory """
-shutil.rmtree(ADAGUC_TMP)
+try:
+  os.remove(ADAGUC_LOGFILE)
+except:
+  pass
