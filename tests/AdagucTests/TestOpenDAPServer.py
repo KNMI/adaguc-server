@@ -1,5 +1,5 @@
 import os
-from StringIO import StringIO
+from io import BytesIO
 from adaguc.CGIRunner import CGIRunner
 import unittest
 import shutil
@@ -7,7 +7,7 @@ import subprocess
 from lxml import etree
 from lxml import objectify
 import re
-from AdagucTestTools import AdagucTestTools
+from .AdagucTestTools import AdagucTestTools
 
 ADAGUC_PATH = os.environ['ADAGUC_PATH']
 
@@ -31,10 +31,10 @@ class TestOpenDAPServer(unittest.TestCase):
       AdagucTestTools().cleanTempDir()
       filename="test_OpenDAPServer_testdatanc_DDS_headers.txt"
       status,data,headers = AdagucTestTools().runADAGUCServer(path="opendap/testdata.nc.dds", env = self.env)
-      AdagucTestTools().writetofile(self.testresultspath + filename,headers)
+      AdagucTestTools().writetofile(self.testresultspath + filename,headers.encode())
       self.assertEqual(status, 0)
       # print ("\nHEADERS\n" + headers +"\n")
-      self.assertEqual(headers, AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+      self.assertEqual(headers.encode(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
 
     def test_OpenDAPServer_testdatanc_DAS(self):
       AdagucTestTools().cleanTempDir()
