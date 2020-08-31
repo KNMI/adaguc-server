@@ -1,5 +1,6 @@
 #ifndef GenericDataWarper_H
 #define GenericDataWarper_H
+#define ACCEPT_USE_OF_DEPRECATED_PROJ_API_H 1
 #include <math.h>
 #include <stdlib.h>
 #include <proj_api.h>

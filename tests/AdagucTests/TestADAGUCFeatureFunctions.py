@@ -1,5 +1,5 @@
 import os
-from StringIO import StringIO
+from io import BytesIO
 from adaguc.CGIRunner import CGIRunner
 from adaguc.ADAGUCFeatureFunctions import ADAGUCFeatureCombineNuts
 import unittest
@@ -8,7 +8,7 @@ import subprocess
 from lxml import etree
 from lxml import objectify
 import re
-from AdagucTestTools import AdagucTestTools
+from .AdagucTestTools import AdagucTestTools
 
 ADAGUC_PATH = os.environ['ADAGUC_PATH']
 
