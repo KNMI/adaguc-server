@@ -20,6 +20,26 @@ class runAdaguc:
     self.ADAGUC_LOGFILE = "/tmp/adaguc-server-" + self.get_random_string(10) + ".log"
     self.ADAGUC_PATH=os.getenv('ADAGUC_PATH', "./")
     self.ADAGUC_CONFIG = self.ADAGUC_PATH+"/data/config/adaguc.autoresource.xml"
+    self.ADAGUC_DATA_DIR=os.getenv('ADAGUC_DATA_DIR', "/data/adaguc-data")
+    self.ADAGUC_AUTOWMS_DIR=os.getenv('ADAGUC_AUTOWMS_DIR', "/data/adaguc-autowms")
+    self.ADAGUC_DATASET_DIR=os.getenv('ADAGUC_DATASET_DIR', "/data/adaguc-datasets")
+    self.ADAGUC_TMP=os.getenv('ADAGUC_TMP', "/data/adaguc-datasets")
+
+  def setAdagucPath(self, newAdagucPath):
+    self.ADAGUC_PATH=newAdagucPath
+  
+  def setDatasetDir(self, newDataSetDir):
+    self.ADAGUC_DATASET_DIR=newDataSetDir
+
+  def setDataDir(self, newDataDir):
+    self.ADAGUC_DATA_DIR=newDataDir
+
+  def setAutoWMSDir(self, newAutoWMSDir):
+    self.ADAGUC_AUTOWMS_DIR=newAutoWMSDir
+
+  def setTmpDir(self, newTmpDir):
+    self.ADAGUC_TMP=newTmpDir
+
 
   def get_random_string(self, length):
     letters = string.ascii_lowercase
@@ -37,6 +57,11 @@ class runAdaguc:
     adagucenv['ADAGUC_CONFIG']=self.ADAGUC_CONFIG
     adagucenv['ADAGUC_LOGFILE']=self.ADAGUC_LOGFILE
     adagucenv['ADAGUC_PATH']=self.ADAGUC_PATH
+    adagucenv['ADAGUC_DATA_DIR']=self.ADAGUC_DATA_DIR
+    adagucenv['ADAGUC_AUTOWMS_DIR']=self.ADAGUC_AUTOWMS_DIR
+    adagucenv['ADAGUC_DATASET_DIR']=self.ADAGUC_DATASET_DIR
+    adagucenv['ADAGUC_TMP']=self.ADAGUC_TMP
+
     status,data,headers = self.runADAGUCServer(args = ['--updatedb', '--config', config], env = adagucenv, isCGI = False)
 
 
@@ -49,11 +74,20 @@ class runAdaguc:
     adagucenv['ADAGUC_CONFIG']=self.ADAGUC_CONFIG
     adagucenv['ADAGUC_LOGFILE']=self.ADAGUC_LOGFILE
     adagucenv['ADAGUC_PATH']=self.ADAGUC_PATH
-    status,data,headers = self.runADAGUCServer(url, env = adagucenv)
+    adagucenv['ADAGUC_DATA_DIR']=self.ADAGUC_DATA_DIR
+    adagucenv['ADAGUC_AUTOWMS_DIR']=self.ADAGUC_AUTOWMS_DIR
+    adagucenv['ADAGUC_DATASET_DIR']=self.ADAGUC_DATASET_DIR
+    adagucenv['ADAGUC_TMP']=self.ADAGUC_TMP
+    status,data,headers = self.runADAGUCServer(url, env = adagucenv,  showLogOnError = False)
     logfile = self.getLogFile();
     self.removeLogFile();
     if data is not None:
-      return Image.open(data), logfile
+      image = None
+      try:
+        image = Image.open(data)
+      except:
+        pass
+      return image, logfile
     else: 
       return None,logfile
    
@@ -74,7 +108,7 @@ class runAdaguc:
       return ""
     
   def printLogFile(self):
-      ADAGUC_LOGFILE = os.environ['ADAGUC_LOGFILE']
+      ADAGUC_LOGFILE = self.ADAGUC_LOGFILE
       print("\n=== START ADAGUC LOGS ===")
       print(self.getLogFile())
       print("=== END ADAGUC LOGS ===")
@@ -88,7 +122,6 @@ class runAdaguc:
     adagucenv=env
 
     ADAGUC_PATH = adagucenv['ADAGUC_PATH']
-    print("ADAGUC_PATH" + ADAGUC_PATH)
     ADAGUC_LOGFILE = adagucenv['ADAGUC_LOGFILE']
     
     try:
@@ -107,9 +140,6 @@ class runAdaguc:
     
 
     filetogenerate =  BytesIO()
-    print("-----------------------")
-    print(adagucenv)
-    print("-----------------------")
     status, headers = CGIRunner().run(adagucargs,url=url,output = filetogenerate, env=adagucenv, path=path, isCGI= isCGI)
 
 
