@@ -36,14 +36,11 @@
   <Include location="{ADAGUC_PATH}/data/config/includes/DefaultStyles.include.xml"/>
 
   <AutoResource enableautoopendap="true" enablelocalfile="true" enablecache="false">
-    <Dir basedir="/data/adaguc-autowms" prefix="/data/adaguc-autowms/"/>
-    <Dir basedir="/data/adaguc-data" prefix="/data/adaguc-data/"/>
+    <Dir basedir="{ADAGUC_AUTOWMS_DIR}" prefix="{ADAGUC_AUTOWMS_DIR}/"/>
+    <Dir basedir="{ADAGUC_DATA_DIR}" prefix="{ADAGUC_DATA_DIR}/"/>
     <ImageText attribute="source"></ImageText>
   </AutoResource>
 
-  <Dataset enabled="true" location="/data/adaguc-datasets/"/>
-  <Dataset enabled="true" location="/data/adaguc-datasets-internal/"/>
-
-  <OpenDAP enabled="true" path="adaguc-services/adagucopendap"/>
+  <Dataset enabled="true" location="{ADAGUC_DATASET_DIR}"/>
   <!-- End of configuration /-->
 </Configuration>
