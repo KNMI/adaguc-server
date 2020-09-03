@@ -3,18 +3,20 @@
  Created by Maarten Plieger - 2020-09-02
 """
 
+import os
+
 url="source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&"
 
 from adaguc.runAdaguc import runAdaguc
 
 adagucInstance = runAdaguc()
 
-import os
-adagucServerHome = os.getcwd() + "/../../../../"
+
+adagucServerHome = os.getenv('ADAGUC_PATH', os.getcwd() + "/../../../../")
 adagucInstance.setAdagucPath(adagucServerHome)
-adagucInstance.setConfiguration(adagucServerHome + "./data/python/adaguc/adaguc-server-config-python.xml")
-adagucInstance.setAutoWMSDir(adagucServerHome + "./data/datasets/")
-adagucInstance.setTmpDir(adagucServerHome + "./data/python/examples/runautowms/")
+adagucInstance.setConfiguration(adagucServerHome + "/data/python/adaguc/adaguc-server-config-python.xml")
+adagucInstance.setAutoWMSDir(adagucServerHome + "/data/datasets/")
+adagucInstance.setTmpDir(adagucServerHome + "/data/python/examples/runautowms/")
 
 img, logfile = adagucInstance.runGetMapUrl(url)
 
