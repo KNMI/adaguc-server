@@ -85,3 +85,6 @@ Docker/keystore.jks
 
 adaguc-services
 adaguc-services.log
+
+
+data/python/env
