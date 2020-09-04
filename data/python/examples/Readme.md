@@ -12,6 +12,11 @@ python3 -m pip install Pillow chardet numpy netcdf4 six requests pillow aggdraw 
 python3 setup.py develop
 ```
 
+To create a package of the library do:
+```
+python setup.py sdist
+```
+
 Adaguc needs to be compiled in order to let the examples work.
 
 
