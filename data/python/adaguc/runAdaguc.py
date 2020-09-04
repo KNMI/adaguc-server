@@ -24,6 +24,7 @@ class runAdaguc:
     self.ADAGUC_AUTOWMS_DIR=os.getenv('ADAGUC_AUTOWMS_DIR', "/data/adaguc-autowms")
     self.ADAGUC_DATASET_DIR=os.getenv('ADAGUC_DATASET_DIR', "/data/adaguc-datasets")
     self.ADAGUC_TMP=os.getenv('ADAGUC_TMP', "/data/adaguc-datasets")
+    self.ADAGUC_FONT=os.getenv('ADAGUC_FONT', self.ADAGUC_PATH + "./data/fonts/Roboto-Medium.ttf")
 
   def setAdagucPath(self, newAdagucPath):
     self.ADAGUC_PATH=newAdagucPath
@@ -39,6 +40,9 @@ class runAdaguc:
 
   def setTmpDir(self, newTmpDir):
     self.ADAGUC_TMP=newTmpDir
+
+  def setFontDir(self, newFontDir):
+    self.ADAGUC_FONT = newFontDir
 
 
   def get_random_string(self, length):
@@ -61,6 +65,7 @@ class runAdaguc:
     adagucenv['ADAGUC_AUTOWMS_DIR']=self.ADAGUC_AUTOWMS_DIR
     adagucenv['ADAGUC_DATASET_DIR']=self.ADAGUC_DATASET_DIR
     adagucenv['ADAGUC_TMP']=self.ADAGUC_TMP
+    adagucenv['ADAGUC_FONT']=self.ADAGUC_FONT
 
     status,data,headers = self.runADAGUCServer(args = ['--updatedb', '--config', config], env = adagucenv, isCGI = False)
 
@@ -78,6 +83,7 @@ class runAdaguc:
     adagucenv['ADAGUC_AUTOWMS_DIR']=self.ADAGUC_AUTOWMS_DIR
     adagucenv['ADAGUC_DATASET_DIR']=self.ADAGUC_DATASET_DIR
     adagucenv['ADAGUC_TMP']=self.ADAGUC_TMP
+    adagucenv['ADAGUC_FONT']=self.ADAGUC_FONT
     status,data,headers = self.runADAGUCServer(url, env = adagucenv,  showLogOnError = False)
     logfile = self.getLogFile();
     self.removeLogFile();
