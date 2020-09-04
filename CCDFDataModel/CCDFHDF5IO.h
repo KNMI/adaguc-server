@@ -825,12 +825,12 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
       
       //Loop through all images and set grid_mapping name
       CT::string varName;
-      int v=1;
+      int variableCounter=1;
 
       //This is the image looping section
       {
         do{
-          varName.print("image%d%simage_data",v,CCDFHDF5IO_GROUPSEPARATOR);
+          varName.print("image%d%simage_data",variableCounter,CCDFHDF5IO_GROUPSEPARATOR);
           var = cdfObject->getVariableNE(varName.c_str());
           if(var!=NULL){
             if(isForecastData == false)var->removeAttribute("ADAGUC_SKIP");
@@ -846,7 +846,7 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
             
             
             //Set units
-            varName.print("image%d",v);
+            varName.print("image%d",variableCounter);
             CDF::Variable *imageN = cdfObject->getVariableNE(varName.c_str());
             if(imageN!=NULL){
               CDF::Attribute * image_geo_parameter = imageN->getAttributeNE("image_geo_parameter"); 
@@ -864,7 +864,7 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
             //Get nodatavalue:
             // Get calibration group: First check if one is defined for specified image number, if not, use from image 1.
             
-            varName.print("image%d%scalibration",v,CCDFHDF5IO_GROUPSEPARATOR);
+            varName.print("image%d%scalibration",variableCounter,CCDFHDF5IO_GROUPSEPARATOR);
             CDF::Variable *calibration = cdfObject->getVariableNE(varName.c_str());
             if(calibration==NULL){
               varName.print("image%d%scalibration",1,CCDFHDF5IO_GROUPSEPARATOR);
@@ -940,16 +940,20 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
               char valid_time_iso[100];
               status = HDF5ToADAGUCTime(valid_time_iso,datetime_valid.c_str());if(status!=0){CDBError("Could not initialize time");return 1;}
               #ifdef CCDFHDF5IO_DEBUG
-              CDBDebug("image%d:image_datetime_valid = [%s] is [%s]",v,datetime_valid.c_str(),valid_time_iso);
+              CDBDebug("image%d:image_datetime_valid = [%s] is [%s]",variableCounter,datetime_valid.c_str(),valid_time_iso);
               #endif
               
               double offset;
               try{
                 offset = ctime.dateToOffset(ctime.stringToDate(valid_time_iso));
                 #ifdef CCDFHDF5IO_DEBUG
-                CDBDebug("Setting time offset %f for image %d",offset,v);
+                CDBDebug("Setting time offset %f for image %d",offset,variableCounter);
                 #endif
-                ((double*)time->data)[v-1]=offset;
+                if (variableCounter - 1 >= time->getSize()) {
+                  CDBWarning("More images found than specified in overview:number_image_groups, number_image_groups is set to %d",  time->getSize());
+                } else {
+                  ((double*)time->data)[variableCounter-1]=offset;
+                }
               }catch(int e){
                 CT::string message=CTime::getErrorMessage(e);
                 CDBError("CTime Exception %s",message.c_str());
@@ -957,7 +961,7 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
               }
             }
           }
-          v++;
+          variableCounter++;
         }while(var!=NULL);
       }
         
