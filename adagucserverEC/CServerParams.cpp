@@ -45,7 +45,7 @@ CServerParams::CServerParams(){
   autoOpenDAPEnabled=-1;
   autoLocalFileResourceEnabled = -1;
   showDimensionsInImage = false;
-  showLegendInImage = false;
+  showLegendInImage = "false";
   showScaleBarInImage = false;
   figWidth=-1;
   figHeight=-1;
