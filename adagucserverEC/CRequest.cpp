@@ -1995,31 +1995,45 @@ int CRequest::process_all_layers(){
           }
         }
 
-        if(srvParam->showLegendInImage){
+        if(!srvParam->showLegendInImage.equals("false") && !srvParam->showLegendInImage.empty()){
           //Draw legend
-          bool legendDrawn = false;
-          for(size_t d=0;d<dataSources.size()&&legendDrawn==false;d++){
+
+          bool drawAllLegends = srvParam->showLegendInImage.equals("true");
+
+          /* List of specified legends */
+          CT::StackList<CT::string> legendLayerList = srvParam->showLegendInImage.splitToStack(",");
+
+          int numberOflegendsDrawn = 0;
+          int legendOffsetX = 0;
+          for(size_t d=0;d<dataSources.size();d++){
             if(dataSources[d]->dLayerType!=CConfigReaderLayerTypeCascaded){
+              bool drawThisLegend = false;
 
-
-              int padding=4;
-              int minimumLegendWidth=100;
-              CDrawImage legendImage;
-              int legendWidth = LEGEND_WIDTH;//imageDataWriter.drawImage.Geo->dWidth/6;
-              if(legendWidth<minimumLegendWidth)legendWidth=minimumLegendWidth;
-              imageDataWriter.drawImage.enableTransparency(true);
-              //legendImage.setBGColor(255,255,255);
-
-              legendImage.createImage(&imageDataWriter.drawImage,legendWidth,(imageDataWriter.drawImage.Geo->dHeight / 2)-padding*2+2);
-
-              //legendImage.rectangle(0,0,legendImage.Geo->dWidth,legendImage.Geo->dHeight,CColor(0,0,0,0),CColor(0,0,0,255));
-              status = imageDataWriter.createLegend(dataSources[d],&legendImage);if(status != 0)throw(__LINE__);
-              int posX=imageDataWriter.drawImage.Geo->dWidth-(legendImage.Geo->dWidth+padding);
-              int posY=imageDataWriter.drawImage.Geo->dHeight-(legendImage.Geo->dHeight+padding);
-              //imageDataWriter.drawImage.rectangle(posX,posY,legendImage.Geo->dWidth+posX+1,legendImage.Geo->dHeight+posY+1,CColor(255,255,255,180),CColor(255,255,255,0));
-              imageDataWriter.drawImage.draw(posX,posY,0,0,&legendImage);
-              legendDrawn=true;
-
+              if (!drawAllLegends) {
+                for(size_t li=0;li<legendLayerList.size();li++){
+                  if (dataSources[d]->layerName.equals(legendLayerList[li])) {
+                    drawThisLegend = true;
+                  }
+                }
+              }else {
+                drawThisLegend = true;
+              }
+              if (drawThisLegend) {
+                /* Draw the legend */
+                int padding=4;
+                int minimumLegendWidth=100;
+                CDrawImage legendImage;
+                int legendWidth = LEGEND_WIDTH;
+                if(legendWidth<minimumLegendWidth)legendWidth=minimumLegendWidth;
+                imageDataWriter.drawImage.enableTransparency(true);
+                legendImage.createImage(&imageDataWriter.drawImage,legendWidth,(imageDataWriter.drawImage.Geo->dHeight / 2)-padding*2+2);
+                status = imageDataWriter.createLegend(dataSources[d],&legendImage);if(status != 0)throw(__LINE__);
+                int posX=imageDataWriter.drawImage.Geo->dWidth-(legendImage.Geo->dWidth+padding) - legendOffsetX;
+                int posY=imageDataWriter.drawImage.Geo->dHeight-(legendImage.Geo->dHeight+padding);
+                imageDataWriter.drawImage.draw(posX,posY,0,0,&legendImage);
+                numberOflegendsDrawn++;
+                legendOffsetX += legendImage.Geo->dWidth+padding;
+              }
 
             }
           }
@@ -2747,9 +2761,8 @@ int CRequest::process_querystring(){
         }
       }
       if(value0Cap.equals("SHOWLEGEND")){
-        values[1].toLowerCaseSelf();
-        if(values[1].equals("true")){
-          srvParam->showLegendInImage = true;
+        if(!values[1].toLowerCase().equals("false")){
+          srvParam->showLegendInImage = values[1];
         }
       }
       if(value0Cap.equals("SHOWSCALEBAR")){
