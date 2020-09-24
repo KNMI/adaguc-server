@@ -2027,6 +2027,11 @@ int CRequest::process_all_layers(){
                 if(legendWidth<minimumLegendWidth)legendWidth=minimumLegendWidth;
                 imageDataWriter.drawImage.enableTransparency(true);
                 legendImage.createImage(&imageDataWriter.drawImage,legendWidth,(imageDataWriter.drawImage.Geo->dHeight / 2)-padding*2+2);
+
+                CStyleConfiguration *styleConfiguration = dataSources[d]->getStyle();
+                if (styleConfiguration!=NULL && styleConfiguration->legendIndex != -1) {
+                  legendImage.createGDPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);
+                }
                 status = imageDataWriter.createLegend(dataSources[d],&legendImage);if(status != 0)throw(__LINE__);
                 int posX=imageDataWriter.drawImage.Geo->dWidth-(legendImage.Geo->dWidth+padding) - legendOffsetX;
                 int posY=imageDataWriter.drawImage.Geo->dHeight-(legendImage.Geo->dHeight+padding);
