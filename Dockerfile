@@ -4,7 +4,7 @@ USER root
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="2.4.1" 
+LABEL version="2.4.2" 
 
 ######### First stage (build) ############
 
@@ -81,8 +81,16 @@ RUN yum update -y && \
     netcdf \
     libwebp \
     java-11-openjdk-headless \
+    python36-numpy  \
+    python36-netcdf4  \
+    python36-six  \
+    python36-requests \
+    python36-pillow  \
+    python36-lxml && \
     yum clean all && \
     rm -rf /var/cache/yum
+
+RUN yum install -y  
 
 WORKDIR /adaguc/adaguc-server-master
 
@@ -94,9 +102,6 @@ COPY --from=0 /adaguc/adaguc-server-master/runtests.sh /adaguc/adaguc-server-mas
 
 # Install adaguc-services (spring boot application for running adaguc-server)
 RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.11/adaguc-services-1.2.11.jar -o /adaguc/adaguc-services.jar
-
-#Install python dependencies
-RUN  pip3 install --user numpy netcdf4 six requests pillow aggdraw lxml
 
 # Run adaguc-server functional and regression tests
 RUN  bash runtests.sh 
