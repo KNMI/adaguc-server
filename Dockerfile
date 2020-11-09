@@ -81,16 +81,14 @@ RUN yum update -y && \
     netcdf \
     libwebp \
     java-11-openjdk-headless \
-    python36-numpy  \
-    python36-netcdf4  \
-    python36-six  \
+    python36-numpy \
+    python36-netcdf4 \
+    python36-six \
     python36-requests \
-    python36-pillow  \
+    python36-pillow \
     python36-lxml && \
     yum clean all && \
     rm -rf /var/cache/yum
-
-RUN yum install -y  
 
 WORKDIR /adaguc/adaguc-server-master
 
