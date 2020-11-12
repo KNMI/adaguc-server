@@ -1,6 +1,3 @@
-cmake_minimum_required(VERSION 3.12)
-project(adaguc-server VERSION 3.0.0)
-
 find_package(LibXml2 REQUIRED)
 find_package(Cairo REQUIRED) 
 find_package(Freetype REQUIRED)
@@ -8,7 +5,7 @@ find_package(NetCDF REQUIRED)
 find_package(Threads REQUIRED)
 find_package(PNG REQUIRED)
 find_package(PROJ4 REQUIRED)
-find_package(UDUNITS REQUIRED)
+find_package(UDUNITS2 REQUIRED)
 find_package(GD REQUIRED)
 find_package(CURL)
 find_package(HDF5 REQUIRED)
@@ -143,5 +140,5 @@ add_library(
 )
 
 target_include_directories(adagucserverEC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${Cairo_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS} ${PostgreSQL_INCLUDE_DIRS} ${GDAL_INCLUDE_DIRS})
-target_link_libraries(adagucserverEC CCDFDataModel hclasses ${NetCDF_LIBRARIES} ${HDF5_LIBRARIES} ${Cairo_LIBRARIES} ${FREETYPE_LIBRARIES} ${LIBXML2_LIBRARY} Threads::Threads ${PNG_LIBRARY} ${PROJ4_LIBRARIES} ${UDUNITS_LIBRARIES} ${GD_LIBRARIES} ${CURL_LIBRARIES} ${SQLite3_LIBRARIES} ${GDAL_LIBRARIES} ${PostgreSQL_LIBRARIES} ${WebP_LIBRARIES})
+target_link_libraries(adagucserverEC CCDFDataModel hclasses ${NetCDF_LIBRARIES} ${HDF5_LIBRARIES} ${Cairo_LIBRARIES} ${FREETYPE_LIBRARIES} ${LIBXML2_LIBRARY} Threads::Threads ${PNG_LIBRARY} ${PROJ4_LIBRARIES} ${UDUNITS2_LIBRARIES} ${GD_LIBRARIES} ${CURL_LIBRARIES} ${SQLite3_LIBRARIES} ${GDAL_LIBRARIES} ${PostgreSQL_LIBRARIES} ${WebP_LIBRARIES})
 
