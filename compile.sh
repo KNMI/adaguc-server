@@ -7,13 +7,18 @@ function quit {
 }
 
 function clean {
+  rm -rf $CURRENTDIR/bin
+  mkdir -p $CURRENTDIR/bin
+
   cd $CURRENTDIR/hclasses
   rm -f *.o
   rm -f *.a
+  rm -rf CMakeFiles
 
   cd $CURRENTDIR/CCDFDataModel
   rm -f *.o
   rm -f *.a
+  rm -rf CMakeFiles
 
   cd $CURRENTDIR/adagucserverEC
   rm -f *.o
@@ -21,6 +26,7 @@ function clean {
   rm -f h5ncdump
   rm -f aggregate_time
   rm -f geojsondump
+  rm -rf CMakeFiles
 
   test -d $CURRENTDIR/bin || mkdir $CURRENTDIR/bin/
   rm -f $CURRENTDIR/bin/adagucserver
