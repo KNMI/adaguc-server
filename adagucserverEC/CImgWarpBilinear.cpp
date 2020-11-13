@@ -40,8 +40,8 @@
 #endif
 
 
-#define CONTOURDEFINITIONLOOKUPLENGTH 256
-#define DISTANCEFIELDTYPE unsigned short
+#define CONTOURDEFINITIONLOOKUPLENGTH 32
+#define DISTANCEFIELDTYPE unsigned int
 #include "CImgRenderFieldVectors.h"
 class Point{
 public:
@@ -1279,6 +1279,7 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
   std::vector<Point> textLocations;
   
   DISTANCEFIELDTYPE lineMask = 1;
+  CDBDebug("========> contourDefinitions = %d", contourDefinitions.size());
   for(size_t j=0;j<contourDefinitions.size();j++){
     lineColor=contourDefinitions[j].linecolor;
     textColor=contourDefinitions[j].textcolor;
@@ -1294,8 +1295,8 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
       }
     }
     lineMask=lineMask+lineMask;
-  }
     
+  }
 
   #ifdef CImgWarpBilinear_DEBUG
   CDBDebug("Deleting distance[]");

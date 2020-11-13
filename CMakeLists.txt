@@ -4,6 +4,14 @@ project(adaguc-server VERSION 3.0.0)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 set(CMAKE_CXX_STANDARD 11)
 
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+
+set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -Wextra")
+set(CMAKE_CXX_FLAGS_RELEASE "-O2 -msse2")
+
+
 add_definitions(-DENABLE_CURL -DADAGUC_USE_GDAL -DADAGUC_USE_SQLITE -DADAGUC_USE_POSTGRESQL -DADAGUC_USE_WEBP)
 
 add_subdirectory(hclasses)
