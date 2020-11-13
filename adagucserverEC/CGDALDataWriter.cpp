@@ -749,7 +749,7 @@ CT::string CGDALDataWriter::generateGetCoverageFileName(){
 void CGDALDataWriter::generateUniqueGetCoverageFileName(char *pszTempFileName){
   //CDBDebug("generateUniqueGetCoverageFileName");
   int len,offset;
-  char szRandomPart[MAX_STR_LEN+1];
+  char szRandomPart[MAX_STR_LEN];
   char szTemp[MAX_STR_LEN+1];
   generateString(szRandomPart,12);
   snprintf(pszTempFileName,MAX_STR_LEN,
