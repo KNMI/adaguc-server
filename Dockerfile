@@ -4,7 +4,7 @@ USER root
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="2.4.2" 
+LABEL version="2.5.0" 
 
 ######### First stage (build) ############
 
@@ -28,7 +28,7 @@ RUN yum update -y && \
     yum install -y centos-release-scl && \
     yum install -y devtoolset-7-gcc-c++ && \
     source /opt/rh/devtoolset-7/enable && \
-    yum install -y cairo-devel \
+    yum install -y cmake3 cairo-devel \
     gd-devel \
     gdal-devel \
     hdf5-devel \
@@ -56,6 +56,8 @@ WORKDIR /adaguc/adaguc-server-master
 
 # Force to use Python 3
 RUN ln -sf /usr/bin/python3 /usr/bin/python
+RUN ln -sf /usr/bin/cmake3 /usr/bin/cmake
+RUN cp -r /usr/include/udunits2/* /usr/include/
 
 RUN bash compile.sh
 
