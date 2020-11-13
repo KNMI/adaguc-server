@@ -36,9 +36,9 @@ function clean {
 }
 
 function build {
-  
+
+  clean  
   cd $CURRENTDIR/bin
-  rm adagucserver
   cmake .. &&  cmake --build . -v
 
   if [ -f adagucserver ]
