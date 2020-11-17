@@ -98,3 +98,8 @@ data/python/adagucserver.egg-info/
 data/python/env/
 data/python/dist/
         
+.cmake
+*/.cmake
+*CMakeFiles*
+
+build

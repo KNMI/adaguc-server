@@ -37,6 +37,8 @@
 #include "CConvertTROPOMI.h"
 #include "CDBFactory.h"
 #include "CReporter.h"
+#include "CCDFHDF5IO.h"
+#include "CDBFileScanner.h"
 const char *CDataReader::className="CDataReader";
 
 

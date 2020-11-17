@@ -24,6 +24,8 @@
  ******************************************************************************/
 
 #include "CServerError.h"
+#include "CDrawImage.h"
+
 //#define ERRORMSGS_SIZE 30000 
 
 

@@ -423,6 +423,19 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
 
+    def test_WMSGetMapWithManyContourDefinitions_testdatanc(self):
+        AdagucTestTools().cleanTempDir()
+        filename="test_WMSGetMapWithManyContourDefinitions_testdatanc.png"
+
+        status,data,headers = AdagucTestTools().runADAGUCServer(args = ['--updatedb', '--config',  ADAGUC_PATH + '/data/config/adaguc.tests.manycontours.xml'], env = self.env, isCGI = False)
+        self.assertEqual(status, 0)
+
+        status,data,headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata_style_manycontours/contour&FORMAT=image/png&TRANSPARENT=FALSE&"
+                                                                 , {'ADAGUC_CONFIG': ADAGUC_PATH + '/data/config/adaguc.tests.manycontours.xml'})
+        AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+
     def test_WMSGetMapWithShowLegendFalse_testdatanc(self):
         AdagucTestTools().cleanTempDir()
         filename="test_WMSGetMapWithShowLegendFalse_testdatanc.png"
