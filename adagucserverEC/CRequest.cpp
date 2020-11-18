@@ -1964,7 +1964,7 @@ int CRequest::process_all_layers(){
         int textY=16;
         //int prevTextY=0;
         if(srvParam->mapTitle.length()>0){
-          if(srvParam->cfg->WMS[0]->TitleFont.size()==1){
+          if(srvParam->cfg->WMS[0]->TitleFont.size()>0){
             float fontSize=parseFloat(srvParam->cfg->WMS[0]->TitleFont[0]->attr.size.c_str());
             textY+=int(fontSize);
             textY+=imageDataWriter.drawImage.drawTextArea(16,textY,srvParam->cfg->WMS[0]->TitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapTitle.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
@@ -1972,7 +1972,7 @@ int CRequest::process_all_layers(){
           }
         }
         if(srvParam->mapSubTitle.length()>0){
-          if(srvParam->cfg->WMS[0]->SubTitleFont.size()==1){
+          if(srvParam->cfg->WMS[0]->SubTitleFont.size()>0){
             float fontSize=parseFloat(srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.size.c_str());
             textY+=int(fontSize)/2;
             textY+=imageDataWriter.drawImage.drawTextArea(16,textY,srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapSubTitle.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
@@ -2027,6 +2027,11 @@ int CRequest::process_all_layers(){
                 if(legendWidth<minimumLegendWidth)legendWidth=minimumLegendWidth;
                 imageDataWriter.drawImage.enableTransparency(true);
                 legendImage.createImage(&imageDataWriter.drawImage,legendWidth,(imageDataWriter.drawImage.Geo->dHeight / 2)-padding*2+2);
+
+                CStyleConfiguration *styleConfiguration = dataSources[d]->getStyle();
+                if (styleConfiguration!=NULL && styleConfiguration->legendIndex != -1) {
+                  legendImage.createGDPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);
+                }
                 status = imageDataWriter.createLegend(dataSources[d],&legendImage);if(status != 0)throw(__LINE__);
                 int posX=imageDataWriter.drawImage.Geo->dWidth-(legendImage.Geo->dWidth+padding) - legendOffsetX;
                 int posY=imageDataWriter.drawImage.Geo->dHeight-(legendImage.Geo->dHeight+padding);

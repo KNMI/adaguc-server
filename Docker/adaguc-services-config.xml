@@ -33,6 +33,9 @@
     <queuesize>32</queuesize>
     <adagucexecutable>/adaguc/adaguc-server-master/bin/adagucserver</adagucexecutable>
     <export>ADAGUC_PATH=/adaguc/adaguc-server-master/</export>
+    <export>ADAGUC_DATASET_DIR={ENV.ADAGUC_DATASET_DIR}</export>
+    <export>ADAGUC_DATA_DIR={ENV.ADAGUC_DATA_DIR}</export>
+    <export>ADAGUC_AUTOWMS_DIR={ENV.ADAGUC_AUTOWMS_DIR}</export>
     <export>ADAGUC_CONFIG=/adaguc/adaguc-server-config.xml</export>
     <export>ADAGUC_DATARESTRICTION=FALSE</export>
     <export>ADAGUC_ENABLELOGBUFFER=FALSE</export>
