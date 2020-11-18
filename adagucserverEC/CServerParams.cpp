@@ -569,16 +569,34 @@ int CServerParams::parseConfigFile(CT::string &pszConfigFile){
       CDBError("Unable to open configuration file [%s], error %d", pszConfigFile.c_str(), e);
       return 1;
     }
+
+    /* Substitute ADAGUC_PATH */
     const char *pszADAGUC_PATH=getenv("ADAGUC_PATH");
     if(pszADAGUC_PATH!=NULL){
       CT::string adagucPath = CDirReader::makeCleanPath(pszADAGUC_PATH);
       adagucPath = adagucPath + "/";
       configFileData.replaceSelf("{ADAGUC_PATH}",adagucPath.c_str());
     }
+
+    /* Substitute ADAGUC_TMP */
     const char *pszADAGUC_TMP=getenv("ADAGUC_TMP");
     if(pszADAGUC_TMP!=NULL)configFileData.replaceSelf("{ADAGUC_TMP}",pszADAGUC_TMP);
+
+    /* Substitute ADAGUC_DB */
     const char *pszADAGUC_DB=getenv("ADAGUC_DB");
     if(pszADAGUC_DB!=NULL)configFileData.replaceSelf("{ADAGUC_DB}",pszADAGUC_DB);
+
+    /* Substitute ADAGUC_DATASET_DIR */
+    const char *pszADAGUC_DATASET_DIR=getenv("ADAGUC_DATASET_DIR");
+    if(pszADAGUC_DATASET_DIR!=NULL)configFileData.replaceSelf("{ADAGUC_DATASET_DIR}",pszADAGUC_DATASET_DIR);
+
+    /* Substitute ADAGUC_DATA_DIR */
+    const char *pszADAGUC_DATA_DIR=getenv("ADAGUC_DATA_DIR");
+    if(pszADAGUC_DATA_DIR!=NULL)configFileData.replaceSelf("{ADAGUC_DATA_DIR}",pszADAGUC_DATA_DIR);
+
+    /* Substitute ADAGUC_AUTOWMS_DIR */
+    const char *pszADAGUC_AUTOWMS_DIR=getenv("ADAGUC_AUTOWMS_DIR");
+    if(pszADAGUC_AUTOWMS_DIR!=NULL)configFileData.replaceSelf("{ADAGUC_AUTOWMS_DIR}",pszADAGUC_AUTOWMS_DIR);
   }catch(int e){
     CDBError("Exception %d in substituting", e);
   }

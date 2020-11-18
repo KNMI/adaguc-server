@@ -59,6 +59,10 @@ bin/*
 #Python pyc files
 *.pyc
 
+#Sqlite files
+*db
+*result.png*
+
 #Test results
 tests/log
 tests/tmp
@@ -86,8 +90,19 @@ Docker/keystore.jks
 adaguc-services
 adaguc-services.log
 
+
+data/python/adaguc.egg-info/
+data/python/adaguc_knmi.nl.egg-info/
+data/python/adaguc_server.egg-info/
+data/python/adagucserver.egg-info/
+data/python/env/
+data/python/dist/
+        
 .cmake
 */.cmake
 *CMakeFiles*
 
 build
+adaguc.egg-info
+env
+dist
