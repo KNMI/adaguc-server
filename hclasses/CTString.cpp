@@ -650,16 +650,79 @@ namespace CT{
   
   bool is_digit(const char value) { return std::isdigit(value); }
     
-  bool string::isNumeric(){
-    const std::string value = this->c_str();
-    // printf("Test %s", value.c_str());
-    return std::all_of(value.begin(), value.end(), is_digit);
+  bool includesFunction (const char *inputStr, size_t inputLength, const char testChar) {
+    for (size_t intputCounter = 0;intputCounter< inputLength;intputCounter++) {
+        if (testChar == inputStr[intputCounter]) return true;
+    }
+    return false;
   }
-  
+
+  bool string::isNumeric(){
+     if (this->empty()) return false;
+    const char digitsAllowedForFloat[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', 'f'};
+    const size_t numDigits = 12;
+    const char *inputStr = this->c_str();
+    const size_t inputLength = this->length();
+    /* Only a dot is not a float */
+    if (inputLength == 1 && inputStr[0] == '.') {
+      return false;
+    }
+    if (inputLength == 3 && this->equals("NaN")) {
+      return true;
+    }
+    /* Check for allowed characters, and check if '.' is included */
+    for (size_t c = 0;c< inputLength;c++) {
+      if (includesFunction(digitsAllowedForFloat ,numDigits, inputStr[c])!=true){
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool string::isInt(){
+     if (this->empty()) return false;
+    const char digitsAllowedForFloat[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
+    const size_t numDigits = 12;
+    const char *inputStr = this->c_str();
+    const size_t inputLength = this->length();
+    /* Only a dot is not a float */
+    if (inputLength == 1 && inputStr[0] == '.') {
+      return false;
+    }
+    if (inputLength == 3 && this->equals("NaN")) {
+      return true;
+    }
+    /* Check for allowed characters, and check if '.' is included */
+    for (size_t c = 0;c< inputLength;c++) {
+      if (includesFunction(digitsAllowedForFloat ,numDigits, inputStr[c])!=true){
+        return false;
+      }
+    }
+    return true;
+  }
+
   bool string::isFloat() {
-    double a = this->toDouble();
-    CT::string s;s.print("%g",a);
-    // printf("%s == %s", s.c_str(), this->c_str());
-    return (s.equals(this));
+    if (this->empty()) return false;
+    const char digitsAllowedForFloat[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', 'f'};
+    const size_t numDigits = 12;
+    const char *inputStr = this->c_str();
+    const size_t inputLength = this->length();
+    /* Only a dot is not a float */
+    if (inputLength == 1 && inputStr[0] == '.') {
+      return false;
+    }
+    if (inputLength == 3 && this->equals("NaN")) {
+      return true;
+    }
+    /* Check for allowed characters, and check if '.' is included */
+    bool hasDotCharacter = false;
+    for (size_t c = 0;c< inputLength;c++) {
+      if (includesFunction(digitsAllowedForFloat ,numDigits, inputStr[c])!=true){
+        return false;
+      }
+      if (inputStr[c] == '.') hasDotCharacter = true;
+    }
+    if (!hasDotCharacter) return false;
+    return true;
   }
 }

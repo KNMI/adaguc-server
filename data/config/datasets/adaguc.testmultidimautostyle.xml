@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <CacheDocs enabled="true"/>
+  <!-- Custom styles -->
+  <Style name="testdata">
+    <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
+    <Min>0.01</Min>
+    <Max>30</Max>
+    <Log>10</Log>
+    <ContourLine width="1.8" linecolor="#888888" textcolor="#000000" textformatting="%2.2f" classes="0.05,0.1,0.15,0.2,0.3"/>
+    <ContourLine width="3" linecolor="#0000FF" textcolor="#0000FF" textformatting="%2.2f" classes="0.35"/>
+  
+    <ShadeInterval min="0.05" max="0.15"    label="0.05-0.15"    fillcolor="#E6E6FFA0"/>
+    <ShadeInterval min="0.20" max="0.30"    label="0.20-0.30"    fillcolor="#B3B3FF"/>
+    <ShadeInterval min="0.30" max="0.35"    label="0.30-0.35"    fillcolor="#8080FF"/>
+    <ShadeInterval min="0.35" max="1.00"    label="0.35-1.00"    fillcolor="#FF0040"/>
+
+
+    <NameMapping name="nearest"   title="Rainbow colors" abstract="Drawing with rainbow colors"/>
+    <NameMapping name="bilinear"   title="Rainbow colors, bilinear" abstract="Drawing with rainbow colors, bilinear interpolation"/>
+    <NameMapping name="nearestcontour"   title="Rainbow colors, contours" abstract="Drawing with rainbow colors, contours"/>
+    <NameMapping name="shadedcontour"   title="Rainbow colors, shading and contours" abstract="Drawing with rainbow colors, shading and contours"/>
+    <RenderMethod>nearest,bilinear,nearestcontour,shadedcontour</RenderMethod>
+    <StandardNames standard_name="data"/>
+  </Style>
+  
+  <Layer type="database">
+    <FilePath filter="^nc_5D_.*\.nc$">{ADAGUC_PATH}/data/datasets/netcdf_5dims/</FilePath>
+    <Variable>data</Variable>
+  </Layer>
+  
+  
+  <!-- End of configuration /-->
+</Configuration>

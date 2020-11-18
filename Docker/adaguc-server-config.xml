@@ -37,6 +37,7 @@
 
   <AutoResource enableautoopendap="true" enablelocalfile="true" enablecache="false">
     <Dir basedir="/data/adaguc-autowms" prefix="/data/adaguc-autowms/"/>
+    <Dir basedir="/data/adaguc-data" prefix="/data/adaguc-data/"/>
     <ImageText attribute="source"></ImageText>
   </AutoResource>
 

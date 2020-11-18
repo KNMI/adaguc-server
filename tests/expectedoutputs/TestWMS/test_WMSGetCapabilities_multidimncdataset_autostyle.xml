@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WMS_Capabilities
+        version="1.3.0"
+        updateSequence="0"
+        xmlns="http://www.opengis.net/wms"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.opengis.net/wms http://schemas.opengis.net/wms/1.3.0/capabilities_1_3_0.xsd"
+
+     >
+    <Service>
+        <Name>WMS</Name>
+        <Title>adaguc.testmultidimautostyle</Title>
+        <Abstract>This service demonstrates how the ADAGUC server can be used to create OGC services.</Abstract>
+        <KeywordList>
+            <Keyword>view</Keyword>
+            <Keyword>infoMapAccessService</Keyword>
+            <Keyword>ADAGUCServer version 2.3.0, of Jun 10 2020 18:16:34 </Keyword>
+        </KeywordList>
+        <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testmultidimautostyle&amp;SERVICE=WMS&amp;"/>
+        <ContactInformation>
+          
+        </ContactInformation>
+        <Fees>no conditions apply</Fees>
+        <AccessConstraints>None</AccessConstraints>
+        <MaxWidth>8192</MaxWidth>
+        <MaxHeight>8192</MaxHeight>
+    </Service>
+    <Capability>
+        <Request>
+            <GetCapabilities>
+                <Format>text/xml</Format>
+                <DCPType><HTTP><Get><OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testmultidimautostyle&amp;SERVICE=WMS&amp;"/></Get></HTTP></DCPType>
+            </GetCapabilities>
+            <GetMap>
+                <Format>image/png</Format>
+                <Format>image/png;mode=8bit</Format>
+                <Format>image/png;mode=8bit_noalpha</Format>
+                <Format>image/png;mode=24bit</Format>
+                <Format>image/png;mode=32bit</Format>
+                <Format>image/gif</Format>
+                <Format>image/jpeg</Format>
+                <!--<Format>image/webp</Format>-->
+                <DCPType><HTTP><Get><OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testmultidimautostyle&amp;SERVICE=WMS&amp;"/></Get></HTTP></DCPType>
+            </GetMap>
+            <GetFeatureInfo>
+                <Format>image/png</Format>
+                <Format>text/plain</Format>
+                <Format>text/html</Format>
+                <Format>text/xml</Format>
+                <Format>application/json</Format>
+                <DCPType><HTTP><Get><OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testmultidimautostyle&amp;SERVICE=WMS&amp;"/></Get></HTTP></DCPType>
+            </GetFeatureInfo>
+        </Request>
+        <Exception>
+            <Format>XML</Format>
+            <Format>INIMAGE</Format>
+            <Format>BLANK</Format>
+        </Exception>
+        <UserDefinedSymbolization SupportSLD="1" />
+<Layer>
+<Title>WMS of  adaguc.testmultidimautostyle</Title>
+<CRS>EPSG:3411</CRS>
+<CRS>EPSG:3412</CRS>
+<CRS>EPSG:3575</CRS>
+<CRS>EPSG:3857</CRS>
+<CRS>EPSG:4258</CRS>
+<CRS>EPSG:4326</CRS>
+<CRS>CRS:84</CRS>
+<CRS>EPSG:25831</CRS>
+<CRS>EPSG:25832</CRS>
+<CRS>EPSG:28992</CRS>
+<CRS>EPSG:7399</CRS>
+<CRS>EPSG:50001</CRS>
+<CRS>EPSG:54030</CRS>
+<CRS>EPSG:32661</CRS>
+<CRS>EPSG:40000</CRS>
+<CRS>EPSG:900913</CRS>
+<CRS>EPSG:4326</CRS>
+<BoundingBox CRS="EPSG:3411" minx="-399240949.703126" miny="-399607437.540236" maxx="399487065.269511" maxy="398879979.546020" />
+<BoundingBox CRS="EPSG:3412" minx="-2868126705.493289" miny="-2870740092.047615" maxx="2869855924.003392" maxy="2865475278.583187" />
+<BoundingBox CRS="EPSG:3575" minx="-12712149.336113" miny="-12731583.256617" maxx="12735505.704073" maxy="12723911.899582" />
+<BoundingBox CRS="EPSG:3857" minx="-19201993.871211" miny="-22228632.557364" maxx="19982466.888021" maxy="34805382.412607" />
+<BoundingBox CRS="EPSG:4258" minx="-90.488892" miny="-180.494446" maxx="89.511108" maxy="179.505554" />
+<BoundingBox CRS="EPSG:4326" minx="-90.488892" miny="-180.494446" maxx="89.511108" maxy="179.505554" />
+<BoundingBox CRS="CRS:84" minx="-90.488892" miny="-180.494446" maxx="89.511108" maxy="179.505554" />
+<BoundingBox CRS="EPSG:25831" minx="-15931605.907041" miny="-19720315.591565" maxx="17051580.684528" maxy="19828593.536145" />
+<BoundingBox CRS="EPSG:25832" minx="-14709787.414601" miny="-19720736.728277" maxx="17177711.901099" maxy="47405035.658741" />
+<BoundingBox CRS="EPSG:28992" minx="-352494887.244099" miny="-527708138.497500" maxx="319428390.883463" maxy="521690003.576276" />
+<BoundingBox CRS="EPSG:7399" minx="-17284159.484400" miny="-8898366.230070" maxx="17986681.325950" maxy="9020047.848074" />
+<BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
+<BoundingBox CRS="EPSG:54030" minx="-16294244.470419" miny="-8493172.970167" maxx="16956530.805045" maxy="8610630.466538" />
+<BoundingBox CRS="EPSG:32661" minx="-407173329.856896" miny="-406795071.401438" maxx="411420024.012518" maxy="411546161.390659" />
+<BoundingBox CRS="EPSG:40000" minx="-411643188.990841" miny="-411262647.285149" maxx="411891372.245994" maxy="412018271.016760" />
+<BoundingBox CRS="EPSG:900913" minx="-19201993.871211" miny="-22228632.557364" maxx="19982466.888021" maxy="34805382.412607" />
+<BoundingBox CRS="EPSG:4326" minx="89.511108" miny="-180.494446" maxx="-90.488892" maxy="179.505554" />
+<Layer queryable="1" opaque="1" cascaded="0">
+<Name>data</Name>
+<Title>data</Title>
+<EX_GeographicBoundingBox>
+  <westBoundLongitude>-180.494446</westBoundLongitude>
+  <eastBoundLongitude>179.505554</eastBoundLongitude>
+  <southBoundLatitude>-90.488892</southBoundLatitude>
+  <northBoundLatitude>89.511108</northBoundLatitude>
+</EX_GeographicBoundingBox><BoundingBox CRS="EPSG:3411" minx="-399240949.703126" miny="-399607437.540236" maxx="399487065.269511" maxy="398879979.546020" />
+<BoundingBox CRS="EPSG:3412" minx="-2868126705.493289" miny="-2870740092.047615" maxx="2869855924.003392" maxy="2865475278.583187" />
+<BoundingBox CRS="EPSG:3575" minx="-12712149.336113" miny="-12731583.256617" maxx="12735505.704073" maxy="12723911.899582" />
+<BoundingBox CRS="EPSG:3857" minx="-19201993.871211" miny="-22228632.557364" maxx="19982466.888021" maxy="34805382.412607" />
+<BoundingBox CRS="EPSG:4258" minx="-90.488892" miny="-180.494446" maxx="89.511108" maxy="179.505554" />
+<BoundingBox CRS="EPSG:4326" minx="-90.488892" miny="-180.494446" maxx="89.511108" maxy="179.505554" />
+<BoundingBox CRS="CRS:84" minx="-90.488892" miny="-180.494446" maxx="89.511108" maxy="179.505554" />
+<BoundingBox CRS="EPSG:25831" minx="-15931605.907041" miny="-19720315.591565" maxx="17051580.684528" maxy="19828593.536145" />
+<BoundingBox CRS="EPSG:25832" minx="-14709787.414601" miny="-19720736.728277" maxx="17177711.901099" maxy="47405035.658741" />
+<BoundingBox CRS="EPSG:28992" minx="-352494887.244099" miny="-527708138.497500" maxx="319428390.883463" maxy="521690003.576276" />
+<BoundingBox CRS="EPSG:7399" minx="-17284159.484400" miny="-8898366.230070" maxx="17986681.325950" maxy="9020047.848074" />
+<BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
+<BoundingBox CRS="EPSG:54030" minx="-16294244.470419" miny="-8493172.970167" maxx="16956530.805045" maxy="8610630.466538" />
+<BoundingBox CRS="EPSG:32661" minx="-407173329.856896" miny="-406795071.401438" maxx="411420024.012518" maxy="411546161.390659" />
+<BoundingBox CRS="EPSG:40000" minx="-411643188.990841" miny="-411262647.285149" maxx="411891372.245994" maxy="412018271.016760" />
+<BoundingBox CRS="EPSG:900913" minx="-19201993.871211" miny="-22228632.557364" maxx="19982466.888021" maxy="34805382.412607" />
+<BoundingBox CRS="EPSG:4326" minx="89.511108" miny="-180.494446" maxx="-90.488892" maxy="179.505554" />
+<Dimension name="member" units="member number" default="member1" multipleValues="1" nearestValue="0" >member6,member5,member4,member3,member2,member1</Dimension>
+<Dimension name="elevation" units="meters" default="9000.0" multipleValues="1" nearestValue="0" >1000.0,2000.0,3000.0,4000.0,5000.0,6000.0,7000.0,8000.0,9000.0</Dimension>
+<Dimension name="time" units="ISO8601" default="2017-01-01T00:25:00Z" multipleValues="1" nearestValue="0" current="1">2017-01-01T00:00:00Z/2017-01-01T00:25:00Z/PT5M</Dimension>
+   <Style>    <Name>testdata/nearest</Name>    <Title>Rainbow colors</Title>    <Abstract>Drawing with rainbow colors</Abstract>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testmultidimautostyle&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data&amp;format=image/png&amp;STYLE=testdata/nearest"/>    </LegendURL>  </Style>   <Style>    <Name>testdata/bilinear</Name>    <Title>Rainbow colors, bilinear</Title>    <Abstract>Drawing with rainbow colors, bilinear interpolation</Abstract>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testmultidimautostyle&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data&amp;format=image/png&amp;STYLE=testdata/bilinear"/>    </LegendURL>  </Style>   <Style>    <Name>testdata/nearestcontour</Name>    <Title>Rainbow colors, contours</Title>    <Abstract>Drawing with rainbow colors, contours</Abstract>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testmultidimautostyle&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data&amp;format=image/png&amp;STYLE=testdata/nearestcontour"/>    </LegendURL>  </Style>   <Style>    <Name>testdata/shadedcontour</Name>    <Title>Rainbow colors, shading and contours</Title>    <Abstract>Drawing with rainbow colors, shading and contours</Abstract>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testmultidimautostyle&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data&amp;format=image/png&amp;STYLE=testdata/shadedcontour"/>    </LegendURL>  </Style>   <Style>    <Name>auto/nearest</Name>    <Title>auto/nearest</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testmultidimautostyle&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data&amp;format=image/png&amp;STYLE=auto/nearest"/>    </LegendURL>  </Style>   <Style>    <Name>auto/bilinear</Name>    <Title>auto/bilinear</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testmultidimautostyle&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data&amp;format=image/png&amp;STYLE=auto/bilinear"/>    </LegendURL>  </Style>   <Style>    <Name>auto/point</Name>    <Title>auto/point</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testmultidimautostyle&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data&amp;format=image/png&amp;STYLE=auto/point"/>    </LegendURL>  </Style>   <Style>    <Name>auto/barb</Name>    <Title>auto/barb</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testmultidimautostyle&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data&amp;format=image/png&amp;STYLE=auto/barb"/>    </LegendURL>  </Style></Layer>
+    </Layer>
+  </Capability>
+</WMS_Capabilities>
