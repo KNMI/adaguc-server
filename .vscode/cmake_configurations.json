@@ -1,0 +1,24 @@
+{
+  "configurations": [
+    {
+      "name": "Debug",
+      "buildType": "Debug",
+      "buildDirectory": "${workspaceFolder}/bin"
+    },
+    {
+      "name": "Release",
+      "buildType": "Release",
+      "buildDirectory": "${workspaceFolder}/bin"
+    },
+    {
+      "name": "RelWithDebInfo",
+      "buildType": "RelWithDebInfo",
+      "buildDirectory": "${workspaceFolder}/bin"
+    },
+    {
+      "name": "MinSizeRel",
+      "buildType": "MinSizeRel",
+      "buildDirectory": "${workspaceFolder}/bin"
+    }
+  ]
+}
