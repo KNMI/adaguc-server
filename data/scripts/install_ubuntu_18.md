@@ -12,6 +12,10 @@ Step 3: Compile adaguc-server:
 Step 4: Setup adaguc-services server:
 ```sudo bash ./data/scripts/ubuntu_18_setup_adaguc-services.sh```
 
+Step 5: Start adaguc-services server:
+```sudo bash ./data/scripts/ubuntu_18_start_adaguc-services.sh```
+
+
 # Verify that adaguc-server is working
 
 ### Test a NetCDF file with autoWMS ###
@@ -33,7 +37,23 @@ wget -nc -r -l2 -A.h5   -I /knmi/thredds/fileServer/,/knmi/thredds/catalog/ 'htt
 popd
 export ADAGUC_PATH=`pwd`
 export ADAGUC_CONFIG=./data/config/adaguc.vm.xml
+export ADAGUC_DATASET_DIR=/data/adaguc-datasets/
+export ADAGUC_DATA_DIR=/data/adaguc-data/
+export ADAGUC_AUTOWMS_DIR=/data/adaguc-autowms/
 bash ./Docker/adaguc-server-updatedatasets.sh msg_hrvis_hdf5_example
 ```
 * You can now load the test dataset via http://localhost:8080//wms?dataset=msg_hrvis_hdf5_example& in http://geoservices.knmi.nl/viewer2.0
 * Or directly via: http://geoservices.knmi.nl/viewer2.0/?#addlayer('http://localhost:8080//wms?dataset=msg_hrvis_hdf5_example&','HRVIS')
+
+### Important files
+
+* Adaguc-services configuration file is `${ADAGUC_PATH}/adaguc-services/config/adaguc-services-config.xml`
+* Adaguc-services and adaguc-server log file is: `${ADAGUC_PATH}/adaguc-services.log`
+* Look in the database via `psql "host=localhost port=5432 user=adaguc password=adaguc dbname=adaguc"`
+* 
+
+# Stop Adaguc Server:
+Use this command to kill the service:
+```
+sudo kill  `ps -ef | grep -v grep | grep java |  grep adaguc-services | grep root | awk '{print $2}'`
+```

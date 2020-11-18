@@ -30,6 +30,9 @@
 #include <iostream>
 #include <vector>
 
+extern unsigned int logMessageNumber;
+extern unsigned long logProcessIdentifier;
+
 void _printDebugStream(const char* message);
 void _printWarningStream(const char* message);
 void _printErrorStream(const char* message);
@@ -53,10 +56,10 @@ void _printError(const char *pszMessage,...);
 
 
 
-#define CDBWarning             _printWarning("[W: %s, %d in %s] ",__FILE__,__LINE__,className);_printWarningLine
-#define CDBError               _printError("[E: %s, %d in %s] ",__FILE__,__LINE__,className);_printErrorLine
+#define CDBWarning             _printWarning("[W:%03d:pid%lu: %s, %d in %s] ",logMessageNumber, logProcessIdentifier, __FILE__,__LINE__,className);_printWarningLine
+#define CDBError               _printError("[E:%03d:pid%lu: %s, %d in %s] ",logMessageNumber, logProcessIdentifier, __FILE__,__LINE__,className);_printErrorLine
 #define CDBErrormessage        _printErrorLine
-#define CDBDebug               _printDebug("[D: %s, %d in %s] ",__FILE__,__LINE__,className);_printDebugLine
+#define CDBDebug               _printDebug("[D:%03d:pid%lu: %s, %d in %s] ",logMessageNumber, logProcessIdentifier, __FILE__,__LINE__,className);_printDebugLine
 #define CDBEnterFunction(name) const char *functionName=name;_printDebugLine("D %s, %d class %s: Entering function '%s'",__FILE__,__LINE__,className,functionName);
 #define CDBReturn(id)          {_printDebug("D %s, %d class %s::%s: returns %d\n",__FILE__,__LINE__,className,functionName,id);return id;}
 #define CDBDebugFunction       _printDebug("D %s, %d class %s::%s: ",__FILE__,__LINE__,className,functionName);_printDebugLine

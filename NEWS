@@ -1,3 +1,18 @@
+Version 2.5.3 2020-11-18
+    - More resilient reading of KNMI HDF5 files
+
+Version 2.5.2 2020-11-13
+    - Support to run Adaguc-server from python3.
+
+Version 2.5.1 2020-11-13
+    - Support for 32 contourline definitions (previousely 8)
+
+Version 2.5.0 2020-11-13
+    - Support CMAKE
+
+Version 2.4.2 2020-11-09
+    - Support for Python 3
+
 Version 2.2.5 2019-10-18
     - Update db with specified path will now also use the filter specified in the layer.
 

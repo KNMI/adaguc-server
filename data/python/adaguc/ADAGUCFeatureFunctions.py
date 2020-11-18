@@ -2,26 +2,25 @@
 
 import os
 import netCDF4
-import urllib2
+import urllib.request
 import warnings
 import numpy
-from sets import Set
 import logging
-import ADAGUCWCS
+from . import ADAGUCWCS
 from netCDF4 import num2date 
 from datetime import date
 
 #logging.basicConfig(level=logging.DEBUG)
 
 def defaultCallback(message,percentage):
-  print "defaultCallback:: "+message+" "+str(percentage)
+  print("defaultCallback:: "+message+" "+str(percentage))
 
 def printfield(featuredata):
   for y in range(0,numpy.shape(featuredata)[0]):
     mstr = ""
     for x in range(0,numpy.shape(featuredata)[1]):
       mstr = "%s%0.2d" %(mstr, (featuredata[y][x]))
-    print mstr
+    print(mstr)
 
 def ADAGUCFeatureCombineNuts( featureNCFile,dataNCFile,bbox= "-40,20,60,85",variable = None, time= None,width=300,height=300,crs="EPSG:4326",outncrasterfile="/tmp/stat.nc",outncpointfile="/tmp/statpoints.nc", outcsvfile="/tmp/stat.csv",callback=defaultCallback, tmpFolderPath = "/tmp", homeFolderPath="/tmp"):
 
@@ -104,10 +103,10 @@ def ADAGUCFeatureCombineNuts( featureNCFile,dataNCFile,bbox= "-40,20,60,85",vari
   logging.debug('writing outncrasterfile to %s' % outncrasterfile);
   nc_raster_out = netCDF4.Dataset( outncrasterfile,'w',format="NETCDF4")
 
-  for var_name, dimension in reversed(list(nc_data.dimensions.iteritems())):
+  for var_name, dimension in reversed(list(nc_data.dimensions.items())):
     nc_raster_out.createDimension(var_name, len(dimension if not dimension.isunlimited() else None))
     
-  for var_name, ncvar in nc_data.variables.iteritems():
+  for var_name, ncvar in nc_data.variables.items():
     outVar = nc_raster_out.createVariable(var_name, ncvar.datatype, ncvar.dimensions)
     ad = dict((k , ncvar.getncattr(k) ) for k in ncvar.ncattrs() )
     outVar.setncatts(  ad  )
@@ -187,7 +186,7 @@ def ADAGUCFeatureCombineNuts( featureNCFile,dataNCFile,bbox= "-40,20,60,85",vari
     nc_point_timevar.units = "seconds since 1970-1-1"
     nc_point_timevar[0] = 0
   
-  for var_name, ncvar in nc_data.variables.iteritems():
+  for var_name, ncvar in nc_data.variables.items():
       if var_name in varstodo:
           for name in statistic_names:
               new_var_name = var_name+"_"+name
@@ -204,7 +203,7 @@ def ADAGUCFeatureCombineNuts( featureNCFile,dataNCFile,bbox= "-40,20,60,85",vari
                   outVar.setncatts(  ad  )
 
   """ Copy NutsID names to output file """
-  for var_name, dimension in nc_features.dimensions.iteritems():
+  for var_name, dimension in nc_features.dimensions.items():
     if not var_name in nc_raster_out.dimensions:
       nc_raster_out.createDimension(var_name, len(dimension) if not dimension.isunlimited() else None)
   outVar = nc_raster_out.createVariable("features", "i4", featurevar.dimensions)
@@ -411,7 +410,7 @@ def ADAGUCFeatureCombineNuts( featureNCFile,dataNCFile,bbox= "-40,20,60,85",vari
   
   
 
-  out = open( outcsvfile , 'wb')
+  out = open( outcsvfile , 'w')
   out.write( CSV )
   out.close()
   return

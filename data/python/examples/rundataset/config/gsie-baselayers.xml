@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <Legend name="baselayer" type="interval">
+    <palette min="0" max="240" red="0"  green="0" blue="0"/>
+  </Legend>
+
+    
+
+      <Style name="filledcountries">
+    <Legend fixedclasses="true" tickinterval="1000" tickround="1">baselayer</Legend>
+    <Min>0.0</Min>
+    <Max>1000</Max>
+    <RenderMethod>nearest</RenderMethod>
+    <NameMapping name="polyline"   title="Overlay countries" abstract="Overlay countries"/>
+    <FeatureInterval match="0" matchid="Type"  fillcolor="#D2FEFE"/>
+    <FeatureInterval match="2" matchid="Type"  fillcolor="#D1E1FC"/>
+    <FeatureInterval match="3" matchid="Type"  fillcolor="#D2D2D2"/>
+    <FeatureInterval match="4" matchid="Type"  fillcolor="#D2D2D2"/>
+    <FeatureInterval match="5" matchid="Type"  fillcolor="#D2D2D2"/>
+    <FeatureInterval match="6" matchid="Type" fillcolor="#D2D2D2"/>
+<!--     <FeatureInterval match="1" matchid="Type" label="The Netherlands"/> -->
+  </Style>
+  
+      <Style name="countryborders">
+    <Legend fixedclasses="true" tickinterval="1000" tickround="1">baselayer</Legend>
+    <Min>0.0</Min>
+    <Max>1000</Max>
+    <RenderMethod>polyline</RenderMethod>
+    <NameMapping name="polyline"   title="Overlay countries" abstract="Overlay countries"/>
+    <!--<FeatureInterval match=".*" matchid="ISO_A3" bgcolor="#CCCCFF" bordercolor="#000000" borderwidth="1" linecolor="#000000" linewidth="1"/>-->
+<!--     <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#000000FF" borderwidth="0.5"/> -->
+    <FeatureInterval match="0" matchid="Type"  bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#7EAFFFFF" borderwidth="0.67"/>
+    <FeatureInterval match="1" matchid="Type"  bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#444444FF" borderwidth="0.5"/>
+    <FeatureInterval match="2" matchid="Type"  bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#7EAFFFFF" borderwidth=".27"/>
+    <FeatureInterval match="3" matchid="Type"  bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#444444FF" borderwidth="0.6"/>
+    <FeatureInterval match="4" matchid="Type"  bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#444444FF" borderwidth="0.6"/>
+    <FeatureInterval match="5" matchid="Type"  bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#444444FF" borderwidth="0.6"/>
+    <FeatureInterval match="6" matchid="Type"  bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#444444FF" borderwidth="0.6"/>
+  </Style>
+  
+    <Style name="provinces">
+    <Legend fixedclasses="true" tickinterval="1000" tickround="1">baselayer</Legend>
+    <Min>0.0</Min>
+    <Max>1000</Max>
+    <RenderMethod>polyline</RenderMethod>
+    <NameMapping name="polyline"   title="Overlay countries" abstract="Overlay countries"/>
+    <FeatureInterval match=".*" bgcolor="#00FF00FF" fillcolor="#FFFFFFFF"  bordercolor="#555555" borderwidth="0.5"/>
+  </Style>
+  
+  
+  
+   <Layer>
+      <Name>filledcountries</Name>
+      <Title>filledcountries</Title>
+      <FilePath>{ADAGUC_DATA_DIR}/baselayers/GSIE-NL-CountryOverlay-with-waterbodies.geojson</FilePath>
+      <Variable>features</Variable>
+      <Styles>filledcountries</Styles>
+  </Layer>
+  
+  
+   <Layer>
+      <Name>countryborders</Name>
+      <Title>countryborders</Title>
+      <FilePath>{ADAGUC_DATA_DIR}/baselayers/GSIE-NL-CountryOverlay-with-waterbodies.geojson</FilePath>
+      <Variable>features</Variable>
+      <Styles>countryborders</Styles>
+  </Layer>
+  
+  
+    <Layer>
+      <Name>provinces</Name>
+      <Title>provinces</Title>
+      <FilePath>{ADAGUC_DATA_DIR}/baselayers/GSIE-NL-provinces-overlay.geojson</FilePath>
+      <Variable>features</Variable>
+      <Styles>provinces</Styles>
+  </Layer>
+</Configuration>  

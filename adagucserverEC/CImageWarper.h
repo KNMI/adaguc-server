@@ -25,6 +25,7 @@
 
 #ifndef CImageWarper_H
 #define CImageWarper_H
+#define ACCEPT_USE_OF_DEPRECATED_PROJ_API_H 1
 #include "CServerParams.h"
 #include "CDataReader.h"
 #include "CDrawImage.h"
