@@ -1964,7 +1964,7 @@ int CRequest::process_all_layers(){
         int textY=16;
         //int prevTextY=0;
         if(srvParam->mapTitle.length()>0){
-          if(srvParam->cfg->WMS[0]->TitleFont.size()==1){
+          if(srvParam->cfg->WMS[0]->TitleFont.size()>0){
             float fontSize=parseFloat(srvParam->cfg->WMS[0]->TitleFont[0]->attr.size.c_str());
             textY+=int(fontSize);
             textY+=imageDataWriter.drawImage.drawTextArea(16,textY,srvParam->cfg->WMS[0]->TitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapTitle.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
@@ -1972,7 +1972,7 @@ int CRequest::process_all_layers(){
           }
         }
         if(srvParam->mapSubTitle.length()>0){
-          if(srvParam->cfg->WMS[0]->SubTitleFont.size()==1){
+          if(srvParam->cfg->WMS[0]->SubTitleFont.size()>0){
             float fontSize=parseFloat(srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.size.c_str());
             textY+=int(fontSize)/2;
             textY+=imageDataWriter.drawImage.drawTextArea(16,textY,srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapSubTitle.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
@@ -1995,31 +1995,50 @@ int CRequest::process_all_layers(){
           }
         }
 
-        if(srvParam->showLegendInImage){
+        if(!srvParam->showLegendInImage.equals("false") && !srvParam->showLegendInImage.empty()){
           //Draw legend
-          bool legendDrawn = false;
-          for(size_t d=0;d<dataSources.size()&&legendDrawn==false;d++){
+
+          bool drawAllLegends = srvParam->showLegendInImage.equals("true");
+
+          /* List of specified legends */
+          CT::StackList<CT::string> legendLayerList = srvParam->showLegendInImage.splitToStack(",");
+
+          int numberOflegendsDrawn = 0;
+          int legendOffsetX = 0;
+          for(size_t d=0;d<dataSources.size();d++){
             if(dataSources[d]->dLayerType!=CConfigReaderLayerTypeCascaded){
+              bool drawThisLegend = false;
 
+              if (!drawAllLegends) {
+                for(size_t li=0;li<legendLayerList.size();li++){
+                  if (dataSources[d]->layerName.equals(legendLayerList[li])) {
+                    drawThisLegend = true;
+                  }
+                }
+              }else {
+                drawThisLegend = true;
+              }
+              if (drawThisLegend) {
+                /* Draw the legend */
+                int padding=4;
+                int minimumLegendWidth=100;
+                CDrawImage legendImage;
+                int legendWidth = LEGEND_WIDTH;
+                if(legendWidth<minimumLegendWidth)legendWidth=minimumLegendWidth;
+                imageDataWriter.drawImage.enableTransparency(true);
+                legendImage.createImage(&imageDataWriter.drawImage,legendWidth,(imageDataWriter.drawImage.Geo->dHeight / 2)-padding*2+2);
 
-              int padding=4;
-              int minimumLegendWidth=100;
-              CDrawImage legendImage;
-              int legendWidth = LEGEND_WIDTH;//imageDataWriter.drawImage.Geo->dWidth/6;
-              if(legendWidth<minimumLegendWidth)legendWidth=minimumLegendWidth;
-              imageDataWriter.drawImage.enableTransparency(true);
-              //legendImage.setBGColor(255,255,255);
-
-              legendImage.createImage(&imageDataWriter.drawImage,legendWidth,(imageDataWriter.drawImage.Geo->dHeight / 2)-padding*2+2);
-
-              //legendImage.rectangle(0,0,legendImage.Geo->dWidth,legendImage.Geo->dHeight,CColor(0,0,0,0),CColor(0,0,0,255));
-              status = imageDataWriter.createLegend(dataSources[d],&legendImage);if(status != 0)throw(__LINE__);
-              int posX=imageDataWriter.drawImage.Geo->dWidth-(legendImage.Geo->dWidth+padding);
-              int posY=imageDataWriter.drawImage.Geo->dHeight-(legendImage.Geo->dHeight+padding);
-              //imageDataWriter.drawImage.rectangle(posX,posY,legendImage.Geo->dWidth+posX+1,legendImage.Geo->dHeight+posY+1,CColor(255,255,255,180),CColor(255,255,255,0));
-              imageDataWriter.drawImage.draw(posX,posY,0,0,&legendImage);
-              legendDrawn=true;
-
+                CStyleConfiguration *styleConfiguration = dataSources[d]->getStyle();
+                if (styleConfiguration!=NULL && styleConfiguration->legendIndex != -1) {
+                  legendImage.createGDPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);
+                }
+                status = imageDataWriter.createLegend(dataSources[d],&legendImage);if(status != 0)throw(__LINE__);
+                int posX=imageDataWriter.drawImage.Geo->dWidth-(legendImage.Geo->dWidth+padding) - legendOffsetX;
+                int posY=imageDataWriter.drawImage.Geo->dHeight-(legendImage.Geo->dHeight+padding);
+                imageDataWriter.drawImage.draw(posX,posY,0,0,&legendImage);
+                numberOflegendsDrawn++;
+                legendOffsetX += legendImage.Geo->dWidth+padding;
+              }
 
             }
           }
@@ -2747,9 +2766,8 @@ int CRequest::process_querystring(){
         }
       }
       if(value0Cap.equals("SHOWLEGEND")){
-        values[1].toLowerCaseSelf();
-        if(values[1].equals("true")){
-          srvParam->showLegendInImage = true;
+        if(!values[1].toLowerCase().equals("false")){
+          srvParam->showLegendInImage = values[1];
         }
       }
       if(value0Cap.equals("SHOWSCALEBAR")){
@@ -3401,7 +3419,7 @@ int CRequest::process_querystring(){
 }
 
 
-int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan, int scanFlags){
+int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan, int scanFlags, CT::string layerName){
   int errorHasOccured = 0;
   int status;
   //Fill in all data sources from the configuration object
@@ -3409,15 +3427,26 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan, int sca
 
   for(size_t layerNo=0;layerNo<numberOfLayers;layerNo++){
     CDataSource *dataSource = new CDataSource ();
-    dataSources.push_back(dataSource);
     if(dataSource->setCFGLayer(srvParam,srvParam->configObj->Configuration[0],srvParam->cfg->Layer[layerNo],NULL,layerNo)!=0){
+      delete dataSource;
       return 1;
     }
+    if (!layerName.empty()) {
+      if (srvParam->cfg->Layer[layerNo]->Name.size() == 1) {
+        CT::string simpleLayerName = srvParam->cfg->Layer[layerNo]->Name[0]->value;
+        if (layerName.equals(simpleLayerName)) {
+          dataSources.push_back(dataSource);
+        }
+      }
+    } else {
+      dataSources.push_back(dataSource);
+    }
+    
   }
 
   srvParam->requestType=REQUEST_UPDATEDB;
 
-  for(size_t j=0;j<numberOfLayers;j++){
+  for(size_t j=0;j<dataSources.size();j++){
     if(dataSources[j]->dLayerType==CConfigReaderLayerTypeDataBase||
        dataSources[j]->dLayerType==CConfigReaderLayerTypeBaseLayer){
       if(scanFlags&CDBFILESCANNER_UPDATEDB){

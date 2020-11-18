@@ -45,6 +45,7 @@ tests/log
 tests/tmp
 tests/testresults/*
 
-
+Dockerfile
 Docker/adaguc-server.dockerimage
+Docker/scanner
 Dockerfile
