@@ -1,0 +1,1662 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+    <!--<Font location="/home/gsie/gsiews/fonts/ProfiReg.bin"/>-->
+  <!-- <Font location="/data/adaguc-datasets/ROsanswebtextregular.woff"/> -->
+  <WMS>
+    <TitleFont location="/data/adaguc-datasets/ROsanswebtextregular.woff" size="20"/>
+    <SubTitleFont location="/data/adaguc-datasets/ROsanswebtextregular.woff" size="14"/>
+    <DimensionFont location="/data/adaguc-datasets/ROsanswebtextregular.woff" size="7"/> 
+    <ContourFont location="/data/adaguc-datasets/ROsanswebtextregular.woff" size="8"/>
+    <GridFont location="/data/adaguc-datasets/ROsanswebtextregular.woff" size="5"/>
+  </WMS>
+  <Legend name="Pr_pbl" type="colorRange">
+    <palette index="0"   red="248"   green="228"   blue="162"/> 
+    <palette index="40"  red="218"   green="228"   blue="176"/> 
+    <palette index="80"  red="180"   green="204"   blue="113"/> 
+    <palette index="120" red="138"   green="181"   blue="059"/> 
+    <palette index="160" red="086"   green="168"   blue="148"/> 
+    <palette index="200" red="000"   green="134"   blue="189"/> 
+    <palette index="240" red="042"   green="066"   blue="143"/> 
+  </Legend>
+
+  
+  <!-- Gemiddelde temperatuur -->
+  <Legend name="Tg_winter" type="colorRange">
+    <palette index="0"   red="1" green="110" blue="151"/> 
+    <palette index="240" red="234"   green="229" blue="235"/>  
+  </Legend>
+  <Legend name="Tg_summer" type="colorRange">
+    <palette index="0"   red="255" green="228" blue="125"/> 
+    <palette index="240" red="231"   green="81" blue="20"/>  
+  </Legend>
+  
+  <Style name="Tg_winter_d0.1">
+    <Legend>Tg_winter</Legend>
+    <ShadeInterval>0.1</ShadeInterval>
+    <ContourIntervalL>0.1</ContourIntervalL>
+    <ContourIntervalH>1000000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>46</Offset>
+    <SmoothingFilter>1</SmoothingFilter> 
+  </Style>
+  
+  <Style name="Tg_winter_d0.3">
+    <Legend>Tg_winter</Legend>
+    <ShadeInterval>0.3</ShadeInterval>
+    <ContourIntervalL>0.3</ContourIntervalL>
+    <ContourIntervalH>1000000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>46</Offset>
+    <SmoothingFilter>1</SmoothingFilter> 
+  </Style>
+  
+  <Style name="Tg_winter_d0.5">
+    <Legend>Tg_winter</Legend>
+    <ShadeInterval>0.5</ShadeInterval>
+    <ContourIntervalL>0.5</ContourIntervalL>
+    <ContourIntervalH>1000000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>46</Offset>
+    <SmoothingFilter>1</SmoothingFilter> 
+  </Style>
+ <Style name="Tg_winterdays_d2">
+    <Legend>Tg_winter</Legend>
+    <ShadeInterval>2</ShadeInterval>
+    <ContourIntervalL>2</ContourIntervalL>
+    <ContourIntervalH>1000000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>-24</Scale>
+    <Offset>336</Offset>
+    <SmoothingFilter>1</SmoothingFilter> 
+  </Style>
+  <Style name="Tg_winterdays_d5">
+    <Legend>Tg_winter</Legend>
+    <ShadeInterval>5</ShadeInterval>
+    <ContourIntervalL>5</ContourIntervalL>
+    <ContourIntervalH>1000000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>-4.8</Scale>
+    <Offset>336</Offset>
+    <SmoothingFilter>1</SmoothingFilter> 
+  </Style>
+
+  <Style name="Tg_winterdays_d1">
+    <Legend>Tg_winter</Legend>
+    <ShadeInterval>1</ShadeInterval>
+    <ContourIntervalL>1</ContourIntervalL>
+    <ContourIntervalH>1000000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>-60</Scale>
+    <Offset>240</Offset>
+    <SmoothingFilter>1</SmoothingFilter> 
+  </Style>
+
+  <Style name="Tg_summer_d0.1">
+    <Legend>Tg_summer</Legend>
+    <ShadeInterval>0.1</ShadeInterval>
+    <ContourIntervalL>0.1</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>46</Offset>
+  </Style>
+  
+  <Style name="Tg_summer_d0.3">
+    <Legend>Tg_summer</Legend>
+    <ShadeInterval>0.3</ShadeInterval>
+    <ContourIntervalL>0.3</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>46</Offset>
+  </Style>
+  <Style name="Tg_summer_d0.5">
+    <Legend>Tg_summer</Legend>
+    <ShadeInterval>0.5</ShadeInterval>
+    <ContourIntervalL>0.5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>46</Offset>
+  </Style>
+  
+  
+  <Style name="Q_d4">
+    <Legend>Q24</Legend>
+    <ShadeInterval>4</ShadeInterval>
+    <ContourIntervalL>4</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>6</Scale>
+    <Offset>-36</Offset>
+  </Style>
+  
+  <Style name="Tg_summer_d2">
+    <Legend>Tg_summer</Legend>
+    <ShadeInterval>2</ShadeInterval>
+    <ContourIntervalL>2</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>46</Offset>
+  </Style>
+  
+  <Style name="Tg_summer_d5">
+    <Legend>Tg_summer</Legend>
+    <ShadeInterval>5</ShadeInterval>
+    <ContourIntervalL>5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>46</Offset>
+  </Style>
+  
+  
+  
+  <Style name="Tg_summer_d10">
+    <Legend>Tg_summer</Legend>
+    <ShadeInterval>10</ShadeInterval>
+    <ContourIntervalL>10</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>46</Offset>
+  </Style>
+  
+  <Legend name="Tg_fixed" type="colorRange">
+    <palette index="0"   red="32"   green="32"   blue="96"/> 
+    <palette index="30"   red="0"   green="0"   blue="255"/> 
+    <palette index="60"   red="128"   green="255"   blue="255"/> 
+    <palette index="95"   red="0"   green="192"   blue="255"/> 
+    <palette index="120" red="0"   green="255" blue="0"/> 
+    <palette index="135" red="255"   green="192" blue="0"/> 
+    <palette index="195" red="255"   green="0" blue="0"/> 
+    <palette index="240" red="128"   green="0" blue="64"/>  
+  </Legend>
+  
+   <Legend name="Tg_woltnhoff" type="colorRange">
+    <palette index="000" red="143" green="133" blue="186"/> 
+    <palette index="006" red="079" green="072" blue="149"/>
+    <palette index="012" red="000" green="057" blue="128"/> 
+    <palette index="018" red="000" green="084" blue="157"/> 
+    <palette index="024" red="000" green="112" blue="184"/> 
+    <palette index="030" red="000" green="139" blue="208"/> 
+    <palette index="036" red="000" green="158" blue="205"/> 
+    <palette index="042" red="001" green="168" blue="186"/>
+    <palette index="048" red="045" green="183" blue="185"/> 
+    <palette index="054" red="000" green="153" blue="161"/> 
+    <palette index="060" red="000" green="125" blue="143"/> 
+    <palette index="066" red="000" green="113" blue="109"/> 
+    <palette index="072" red="001" green="089" blue="047"/> 
+    <palette index="078" red="000" green="109" blue="051"/>
+    <palette index="084" red="040" green="154" blue="067"/> 
+    <palette index="090" red="118" green="184" blue="086"/> 
+    <palette index="096" red="149" green="195" blue="107"/> 
+    <palette index="102" red="175" green="203" blue="082"/> 
+    <palette index="108" red="197" green="213" blue="080"/> 
+    <palette index="120" red="222" green="219" blue="000"/>
+    <palette index="126" red="241" green="229" blue="031"/> 
+    <palette index="132" red="255" green="240" blue="063"/> 
+    <palette index="138" red="255" green="244" blue="129"/> 
+    <palette index="144" red="255" green="246" blue="177"/> 
+    <palette index="150" red="255" green="241" blue="196"/> 
+    <palette index="156" red="255" green="231" blue="171"/>
+    <palette index="162" red="253" green="213" blue="144"/> 
+    <palette index="168" red="250" green="193" blue="114"/> 
+    <palette index="174" red="247" green="170" blue="066"/> 
+    <palette index="180" red="239" green="127" blue="001"/> 
+    <palette index="186" red="235" green="105" blue="009"/> 
+    <palette index="192" red="232" green="079" blue="019"/>
+    <palette index="198" red="228" green="046" blue="024"/> 
+    <palette index="204" red="227" green="000" blue="027"/> 
+    <palette index="210" red="209" green="000" blue="024"/> 
+    <palette index="216" red="189" green="010" blue="029"/>
+    <palette index="222" red="152" green="027" blue="033"/> 
+    <palette index="228" red="102" green="038" blue="036"/> 
+    <palette index="234" red="080" green="041" blue="036"/> 
+    <palette index="240" red="080" green="041" blue="036"/> 
+  </Legend>
+  
+  <Style name="Tg_fixed_d0.1">
+    <Legend>Tg_fixed</Legend>
+    <ShadeInterval>0.1</ShadeInterval>
+    <ContourIntervalL>0.1</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>10</Scale>
+    <Offset>0</Offset>
+  </Style>
+  <Style name="Tg_fixed_d0.3">
+    <Legend>Tg_fixed</Legend>
+    <ShadeInterval>0.3</ShadeInterval>
+    <ContourIntervalL>0.3</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>10</Scale>
+    <Offset>0</Offset>
+  </Style>
+  <Style name="Tg_fixed_d0.5">
+    <Legend>Tg_fixed</Legend>
+    <ShadeInterval>0.5</ShadeInterval>
+    <ContourIntervalL>0.5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>10</Scale>
+    <Offset>0</Offset>
+  </Style>
+  <Style name="Tg_woltnhoff">
+    <Legend>Tg_woltnhoff</Legend>
+    <ShadeInterval>0.1</ShadeInterval>
+    <ContourIntervalL>0.1</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>nearest</RenderMethod>
+    <Scale>10</Scale>
+    <Offset>0</Offset>
+  </Style>
+  <Style name="Tg_woltnhoff_d0.1">
+    <Legend>Tg_woltnhoff</Legend>
+    <ShadeInterval>0.1</ShadeInterval>
+    <ContourIntervalL>0.1</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>10</Scale>
+    <Offset>0</Offset>
+  </Style>
+  <Style name="Tg_woltnhoff_d0.3">
+    <Legend>Tg_woltnhoff</Legend>
+    <ShadeInterval>0.3</ShadeInterval>
+    <ContourIntervalL>0.3</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,contour/HQ</RenderMethod>
+    <Scale>10</Scale>
+    <Offset>0</Offset>
+  </Style>
+  <Style name="Tg_woltnhoff_d0.5">
+    <Legend>Tg_woltnhoff</Legend>
+    <ShadeInterval>0.5</ShadeInterval>
+    <ContourIntervalL>0.5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>10</Scale>
+    <Offset>0</Offset>
+  </Style>
+  
+    <Style name="Tng_woltnhoff_d0.5">
+    <Legend>Tg_woltnhoff</Legend>
+    <ShadeInterval>0.5</ShadeInterval>
+    <ContourIntervalL>0.5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>10</Scale>
+    <Offset>10</Offset>
+  </Style>
+  
+  
+    <Style name="Txg_woltnhoff_d0.5">
+    <Legend>Tg_woltnhoff</Legend>
+    <ShadeInterval>0.5</ShadeInterval>
+    <ContourIntervalL>0.5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>10</Scale>
+    <Offset>-10</Offset>
+  </Style>
+  
+  <Style name="Tg_woltnhoff_auto">
+    <Legend>Tg_woltnhoff</Legend>
+    <ShadeInterval>0.3</ShadeInterval>
+    <ContourIntervalL>0.3</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>nearest</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>0</Offset>
+  </Style>
+  <Style name="Tg_woltnhoff_auto_d0.1">
+    <Legend>Tg_woltnhoff</Legend>
+    <ShadeInterval>0.1</ShadeInterval>
+    <ContourIntervalL>0.1</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>0</Offset>
+  </Style>
+  <Style name="Tg_woltnhoff_auto_d0.3">
+    <Legend>Tg_woltnhoff</Legend>
+    <ShadeInterval>0.3</ShadeInterval>
+    <ContourIntervalL>0.3</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>0</Offset>
+  </Style>
+  <Style name="Tg_woltnhoff_auto_d0.5">
+    <Legend>Tg_woltnhoff</Legend>
+    <ShadeInterval>0.5</ShadeInterval>
+    <ContourIntervalL>0.5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>0</Offset>
+  </Style>  
+
+    <Style name="Tg_longrange_d0.1">
+    <Legend>Tg_woltnhoff</Legend>
+    <ShadeInterval>0.1</ShadeInterval>
+    <ContourIntervalL>0.1</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>nearest,shadedcontour/HQ</RenderMethod>
+    <Scale>3</Scale>
+    <Offset>78</Offset>
+  </Style>
+
+    <Style name="Tg_longrange_d0.3">
+    <Legend>Tg_woltnhoff</Legend>
+    <ShadeInterval>0.3</ShadeInterval>
+    <ContourIntervalL>0.3</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>3</Scale>
+    <Offset>78</Offset>
+  </Style>
+
+  <Style name="Tg_longrange_d0.5">
+    <Legend>Tg_woltnhoff</Legend>
+    <ShadeInterval>0.5</ShadeInterval>
+    <ContourIntervalL>0.5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>3</Scale>
+    <Offset>78</Offset>
+  </Style>
+    <Style name="Tg_longrange_d1.0">
+    <Legend>Tg_woltnhoff</Legend>
+    <ShadeInterval>1.0</ShadeInterval>
+    <ContourIntervalL>1.0</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>3</Scale>
+    <Offset>78</Offset>
+  </Style>
+    <Style name="Tg_longrange_d2.0">
+    <Legend>Tg_woltnhoff</Legend>
+    <ShadeInterval>2.0</ShadeInterval>
+    <ContourIntervalL>2.0</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>3</Scale>
+    <Offset>78</Offset>
+  </Style>
+   <Legend name="Tg_fwd" type="colorRange">
+    <palette index="0"   color="#FDF9D9"/>
+    <palette index="30"  color="#EBF0C4"/>
+    <palette index="60"  color="#C0DA98"/>
+    <palette index="90"  color="#8FC26C"/>
+    <palette index="120" color="#72B658"/>
+    <palette index="150" color="#1F9747"/>
+    <palette index="180" color="#006D37"/>
+    <palette index="210" color="#005933"/>
+  </Legend>
+  <Style name="Tg_fwd_4_d0.5">
+    <Legend>Tg_fwd</Legend>
+    <ShadeInterval>0.5</ShadeInterval>
+    <ContourIntervalL>0.5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>6</Scale>
+    <Offset>-570</Offset>
+  </Style>
+  
+  <Style name="Tg_fwd_4_d5">
+    <Legend>Tg_fwd</Legend>
+    <ShadeInterval>5</ShadeInterval>
+    <ContourIntervalL>5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>6</Scale>
+    <Offset>-570</Offset>
+  </Style>
+  
+  
+  <!-- /Gemiddelde temperatuur -->
+  
+  <!-- Default legendas -->
+  <Legend name="temperaturelegend" type="colorRange">
+    <palette index="0"   red="1" green="110" blue="151"/> 
+    <palette index="240" red="234"   green="229" blue="235"/>  
+  </Legend>
+  
+  <Legend name="default" type="colorRange">
+    <palette index="0"   red="32"   green="32"   blue="96"/> 
+    <palette index="30"   red="0"   green="0"   blue="255"/> 
+    <palette index="60"   red="128"   green="255"   blue="255"/> 
+    <palette index="95"   red="0"   green="192"   blue="255"/> 
+    <palette index="120" red="0"   green="255" blue="0"/> 
+    <palette index="135" red="255"   green="192" blue="0"/> 
+    <palette index="195" red="255"   green="0" blue="0"/> 
+    <palette index="240" red="128"   green="0" blue="64"/>  
+  </Legend>
+  <Style name="default">
+    <Legend>default</Legend>
+    <ShadeInterval>0.01</ShadeInterval>
+    <ContourIntervalL>1</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>nearest,bilinear,shaded/HQ,shadedcontour/HQ,contour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+  </Style>
+  <Style name="variance">
+    <Legend>default</Legend>
+    <ShadeInterval>0.01</ShadeInterval>
+    <ContourIntervalL>1</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>nearest,shaded</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+  </Style>
+  <Legend name="smooth" type="colorRange">
+    <palette index="0"   red="0"   green="0"   blue="255"/> 
+    <palette index="80"   red="0"   green="255"   blue="255"/> 
+    <palette index="120" red="0"   green="255" blue="0"/> 
+    <palette index="160" red="255"   green="255" blue="0"/> 
+    <palette index="240" red="255"   green="0" blue="0"/> 
+  </Legend>
+  <Legend name="stations_style" type="interval">
+    <palette min="0" max="240"  red="0"   green="0"   blue="0"/> 
+  </Legend>
+  <Style name="standard_d0.1">
+    <Legend>default</Legend>
+    <ShadeInterval>0.1</ShadeInterval>
+    <ContourIntervalL>0.1</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+  </Style>
+  <Style name="standard_d0.2">
+    <Legend>default</Legend>
+    <ShadeInterval>0.2</ShadeInterval>
+    <ContourIntervalL>0.2</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+  </Style>
+
+  <Style name="standard_d0.3">
+    <Legend>default</Legend>
+    <ShadeInterval>0.3</ShadeInterval>
+    <ContourIntervalL>0.3</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+  </Style>
+  <Style name="standard_d0.5">
+    <Legend>default</Legend>
+    <ShadeInterval>0.5</ShadeInterval>
+    <ContourIntervalL>0.5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+  </Style>
+  <Style name="standard_d1">
+    <Legend>default</Legend>
+    <ShadeInterval>1</ShadeInterval>
+    <ContourIntervalL>1</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+  </Style>
+  <Style name="standard_d2">
+    <Legend>default</Legend>
+    <ShadeInterval>2</ShadeInterval>
+    <ContourIntervalL>2</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+  </Style>
+  <Style name="standard_d3">
+    <Legend>default</Legend>
+    <ShadeInterval>3</ShadeInterval>
+    <ContourIntervalL>3</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+  </Style>
+
+  <Style name="standard_d4">
+    <Legend>default</Legend>
+    <ShadeInterval>4</ShadeInterval>
+    <ContourIntervalL>4</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+  </Style>
+
+  <Style name="standard_d5">
+    <Legend>default</Legend>
+    <ShadeInterval>5</ShadeInterval>
+    <ContourIntervalL>5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+  </Style>
+  <Style name="standard_d10">
+    <Legend>default</Legend>
+    <ShadeInterval>10</ShadeInterval>
+    <ContourIntervalL>10</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+  </Style>
+  <Style name="standard_d15">
+    <Legend>default</Legend>
+    <ShadeInterval>15</ShadeInterval>
+    <ContourIntervalL>15</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+  </Style>
+  <Style name="standard_d20">
+    <Legend>default</Legend>
+    <ShadeInterval>20</ShadeInterval>
+    <ContourIntervalL>20</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+  </Style>
+  <Style name="standard_d25">
+    <Legend>default</Legend>
+    <ShadeInterval>25</ShadeInterval>
+    <ContourIntervalL>25</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+  </Style>
+  <Style name="standard_d50">
+    <Legend>default</Legend>
+    <ShadeInterval>50</ShadeInterval>
+    <ContourIntervalL>50</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+  </Style>
+  <Style name="standard_d100">
+    <Legend>default</Legend>
+    <ShadeInterval>100</ShadeInterval>
+    <ContourIntervalL>100</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+  </Style>
+  <Style name="standard_d250">
+    <Legend>default</Legend>
+    <ShadeInterval>250</ShadeInterval>
+    <ContourIntervalL>250</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+  </Style>
+  <Style name="standard_d500">
+    <Legend>default</Legend>
+    <ShadeInterval>500</ShadeInterval>
+    <ContourIntervalL>500</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+  </Style>
+  <Style name="standard_d1000">
+    <Legend>default</Legend>
+    <ShadeInterval>1000</ShadeInterval>
+    <ContourIntervalL>1000</ContourIntervalL>
+    <ContourIntervalH>1000000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+  </Style>
+  <Style name="standard_d2500">
+    <Legend>default</Legend>
+    <ShadeInterval>2500</ShadeInterval>
+    <ContourIntervalL>2500</ContourIntervalL>
+    <ContourIntervalH>1000000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+  </Style>
+  <Style name="standard_d5000">
+    <Legend>default</Legend>
+    <ShadeInterval>5000</ShadeInterval>
+    <ContourIntervalL>5000</ContourIntervalL>
+    <ContourIntervalH>1000000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+  </Style>
+  <Style name="standard_d10000">
+    <Legend>default</Legend>
+    <ShadeInterval>10000</ShadeInterval>
+    <ContourIntervalL>10000</ContourIntervalL>
+    <ContourIntervalH>1000000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+  </Style>
+  <Style name="standard_d25000">
+    <Legend>default</Legend>
+    <ShadeInterval>25000</ShadeInterval>
+    <ContourIntervalL>25000</ContourIntervalL>
+    <ContourIntervalH>100000000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+  </Style>
+  <Style name="standard_d50000">
+    <Legend>default</Legend>
+    <ShadeInterval>50000</ShadeInterval>
+    <ContourIntervalL>50000</ContourIntervalL>
+    <ContourIntervalH>100000000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+  </Style>
+  <Style name="standard_d100000">
+    <Legend>default</Legend>
+    <ShadeInterval>100000</ShadeInterval>
+    <ContourIntervalL>100000</ContourIntervalL>
+    <ContourIntervalH>100000000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+  </Style>
+  <!-- /Default legenda -->
+  
+  <!-- Neerslag -->
+  <Legend name="Pr" type="colorRange">
+    <palette index="0"     red="250"   green="100"   blue="0"/>
+    <palette index="100"    red="255"   green="255"   blue="0"/>
+    <palette index="120"   red="0" green="255" blue="0"/>
+    <palette index="150"   red="0" green="255" blue="255"/>
+    <palette index="240"   red="50" green="50" blue="150"/>
+  </Legend>
+  
+  <Legend name="Pr_wn2" type="colorRange">
+    <palette index="0"   color="#D6ECE9"/>
+    <palette index="48" color="#A4D8E3"/>
+    <palette index="96" color="#65BFDA"/>
+    <palette index="144" color="#00A0DA"/>
+    <palette index="192" color="#3374B6"/>
+    <palette index="240" color="#4F4794"/>
+  </Legend>
+  
+  <Legend name="Pr_wn-o" type="colorRange">
+    <palette index="0"   color="#932226"/>
+    <palette index="16"  color="#944C26"/>
+    <palette index="32"  color="#C39301"/>
+    <palette index="48"  color="#ECDA1E"/>
+    <palette index="64"  color="#89B03B"/>
+    <palette index="80"  color="#279942"/>
+    <palette index="96"  color="#016F52"/>
+    <palette index="112" color="#009E9D"/>
+    <palette index="128" color="#00A5DB"/>
+    <palette index="144" color="#00549D"/>
+    <palette index="160" color="#122371"/>
+    <palette index="176" color="#324776"/>
+    <palette index="192" color="#765081"/>
+    <palette index="208" color="#B24E8A"/>
+    <palette index="224" color="#CB83A8"/>
+    <palette index="240" color="#EEB8C5"/>
+  </Legend>
+  
+  <Legend name="Pr_wn" type="colorRange">
+    <palette index="0"   color="#932226"/>
+    <palette index="15"  color="#944C26"/>
+    <palette index="30"  color="#C39301"/>
+    <palette index="45"  color="#ECDA1E"/>
+    <palette index="60"  color="#89B03B"/>
+    <palette index="75"  color="#279942"/>
+    <palette index="90"  color="#016F52"/>
+    <palette index="105" color="#009E9D"/>
+    <palette index="120" color="#00A5DB"/>
+    <palette index="135" color="#00549D"/>
+    <palette index="150" color="#122371"/>
+    <palette index="165" color="#324776"/>
+    <palette index="180" color="#765081"/>
+    <palette index="195" color="#B24E8A"/>
+    <palette index="210" color="#CB83A8"/>
+    <palette index="225" color="#EEB8C5"/>
+    <palette index="240" color="#EEB8C5"/>
+  </Legend>
+  
+  
+  <Style name="Pr_nearest">
+    <Legend>Pr</Legend>
+    <ShadeInterval>1</ShadeInterval>
+    <ContourIntervalL>1</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>nearest</RenderMethod>
+    <Scale>80</Scale>
+    <Offset>80</Offset>
+    <Log>10</Log>
+  </Style>
+  <Style name="Pr_fixed_d0.1">
+    <Legend>Pr</Legend>
+    <ShadeInterval>0.1</ShadeInterval>
+    <ContourIntervalL>0.1</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>80</Scale>
+    <Offset>80</Offset>
+    <Log>10</Log>
+  </Style>
+  <Style name="Pr_fixed_d0.5">
+    <Legend>Pr</Legend>
+    <ShadeInterval>0.5</ShadeInterval>
+    <ContourIntervalL>0.5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>80</Scale>
+    <Offset>80</Offset>
+    <Log>10</Log>
+  </Style>
+  <Style name="Pr_fixed_d1">
+    <Legend>Pr</Legend>
+    <ShadeInterval>1</ShadeInterval>
+    <ContourIntervalL>1</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>80</Scale>
+    <Offset>80</Offset>
+    <Log>10</Log>
+  </Style>
+  <Style name="Pr_fixed_d2">
+    <Legend>Pr</Legend>
+    <ShadeInterval>2</ShadeInterval>
+    <ContourIntervalL>2</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>80</Scale>
+    <Offset>80</Offset>
+    <Log>10</Log>
+  </Style>
+  <Style name="Pr_fixed_d5">
+    <Legend>Pr</Legend>
+    <ShadeInterval>5</ShadeInterval>
+    <ContourIntervalL>5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>80</Scale>
+    <Offset>80</Offset>
+    <Log>10</Log>
+  </Style>
+  <Style name="Pr_wn_auto_d1">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>1</ShadeInterval>
+    <ContourIntervalL>1</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+    <!--<Log>10</Log>-->
+  </Style>
+  
+  
+  <Style name="Pr_wn_auto_d2">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>2</ShadeInterval>
+    <ContourIntervalL>2</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+    <!--<Log>10</Log>-->
+  </Style>
+  
+  <Style name="Pr_wn_auto_d5">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>5</ShadeInterval>
+    <ContourIntervalL>5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+    <!--<Log>10</Log>-->
+  </Style>
+  <Style name="Pr_wn_auto_d15">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>15</ShadeInterval>
+    <ContourIntervalL>15</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+    <!--<Log>10</Log>-->
+  </Style>
+    <Style name="DR5_d15">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>15</ShadeInterval>
+    <ContourIntervalL>15</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>1.333333333</Scale>
+    <Offset>-120</Offset>
+    <!--<Log>10</Log>-->
+  </Style>
+  <Style name="DR4_d15">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>15</ShadeInterval>
+    <ContourIntervalL>15</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>0.6</Scale>
+    <Offset>-348</Offset>
+    <!--<Log>10</Log>-->
+  </Style>
+  
+  <Style name="Pr_wn_auto_d20">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>20</ShadeInterval>
+    <ContourIntervalL>20</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+    <!--<Log>10</Log>-->
+  </Style>
+  <Style name="Pr_wn_auto_d25">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>25</ShadeInterval>
+    <ContourIntervalL>25</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+    <!--<Log>10</Log>-->
+  </Style>
+  <Style name="Pr_wn_auto_d30">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>30</ShadeInterval>
+    <ContourIntervalL>30</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+    <!--<Log>10</Log>-->
+  </Style>
+  <Style name="Pr_wn_auto_d40">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>40</ShadeInterval>
+    <ContourIntervalL>40</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>80</Offset>
+    <!--<Log>10</Log>-->
+  </Style>
+  <Style name="Pr_4_wn_fixed_d20">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>20</ShadeInterval>
+    <ContourIntervalL>20</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>0.6</Scale>
+    <Offset>-390</Offset>
+    <!--<Log>10</Log>-->
+  </Style>
+  <Style name="Pr_4_wn_fixed_d25">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>25</ShadeInterval>
+    <ContourIntervalL>25</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>0.6</Scale>
+    <Offset>-390</Offset>
+    <!--<Log>10</Log>-->
+  </Style>
+  
+  <Style name="Pr_3_wn_fixed_d2">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>2</ShadeInterval>
+    <ContourIntervalL>2</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>3</Scale>
+    <Offset>-90</Offset>
+    <!--<Log>10</Log>-->
+  </Style>
+  <Style name="Pr_3_wn_fixed_d5">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>5</ShadeInterval>
+    <ContourIntervalL>5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>3</Scale>
+    <Offset>-90</Offset>
+    <!--<Log>10</Log>-->
+  </Style>
+  
+  <Style name="Pr_3_wn_auto_d5">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>5</ShadeInterval>
+    <ContourIntervalL>5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>0</Offset>
+    <!--<Log>10</Log>-->
+  </Style>
+  
+  <!-- Neerslag overschot -->
+  <Style name="Pr_3_SP_tgwn_fixed_d10">
+    <Legend>Tg_woltnhoff</Legend>
+    <ShadeInterval>10</ShadeInterval>
+    <ContourIntervalL>10</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>-1.6</Scale>
+    <Offset>144</Offset>
+    <!--<Log>10</Log>-->
+  </Style>
+  
+   <Style name="Rd_4_10_wn_fixed_d2">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>2</ShadeInterval>
+    <ContourIntervalL>2</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>7.5</Scale>
+    <Offset>-75</Offset>
+    <!--<Log>10</Log>-->
+  </Style>
+  
+   <Style name="Rd_4_0_wn_fixed_d5">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>5</ShadeInterval>
+    <ContourIntervalL>5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>3</Scale>
+    <Offset>-360</Offset>
+    <!--<Log>10</Log>-->
+  </Style>
+  
+  <Legend name="yelloworangered" type="colorRange">
+    <palette index="0"   red="230" green="255" blue="0"/> 
+    <palette index="120" red="255"   green="120" blue="30"/>
+    <palette index="180" red="200"   green="0" blue="0"/>
+    <palette index="240" red="240"   green="0" blue="192"/>  
+  </Legend>
+  
+  <Style name="RD4NsTx_d15">
+    <Legend>yelloworangered</Legend>
+    <ShadeInterval>15</ShadeInterval>
+    <ContourIntervalL>15</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>1.2</Scale>
+    <Offset>-144</Offset>
+    <!--<Log>10</Log>-->
+  </Style>
+  
+  
+ <Style name="Pr_4_SP_wn_fixed_d40">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>40</ShadeInterval>
+    <ContourIntervalL>40</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>0.375</Scale>
+    <Offset>0</Offset>
+    <!--<Log>10</Log>-->
+  </Style>
+
+  
+  <!-- Verdamping -->
+  <Style name="Ev_4_wn_fixed_d10">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>10</ShadeInterval>
+    <ContourIntervalL>10</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>-1.5</Scale>
+    <Offset>960</Offset>
+    <!--<Log>10</Log>-->
+  </Style>
+
+  <Style name="Ev_4_wn_fixed_d15">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>15</ShadeInterval>
+    <ContourIntervalL>15</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>-1.5</Scale>
+    <Offset>960</Offset>
+    <!--<Log>10</Log>-->
+  </Style>
+  <Style name="Ev_3_Tgwn_fixed_d2">
+    <Legend>Tg_woltnhoff</Legend>
+    <ShadeInterval>2</ShadeInterval>
+    <ContourIntervalL>2</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>2.181818</Scale>
+    <Offset>0</Offset>
+    <!--<Log>10</Log>-->
+  </Style>
+  <Style name="Ev_3_wn_fixed_d2">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>2</ShadeInterval>
+    <ContourIntervalL>2</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>2.181818</Scale>
+    <Offset>0</Offset>
+    <!--<Log>10</Log>-->
+  </Style>
+  
+ <Style name="Ev_3_wn_fixed_winter_d2">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>2</ShadeInterval>
+    <ContourIntervalL>2</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>3.75</Scale>
+    <Offset>0</Offset>
+    <!--<Log>10</Log>-->
+  </Style>
+  <Style name="Ev_3_wn_fixed_summer_d2">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>2</ShadeInterval>
+    <ContourIntervalL>2</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>3.75</Scale>
+    <Offset>-157.5</Offset>
+    <!--<Log>10</Log>-->
+  </Style>
+ 
+  
+ <Style name="Ev_3_Tgwn_auto_d2">
+    <Legend>Tg_woltnhoff</Legend>
+    <ShadeInterval>2</ShadeInterval>
+    <ContourIntervalL>2</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,bilinearcontour/HQ,nearest</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>240</Offset>
+    <!--<Log>10</Log>-->
+  </Style>
+  <Style name="Ev_3_wn_auto_d2">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>2</ShadeInterval>
+    <ContourIntervalL>2</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,bilinearcontour/HQ,nearest</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>-9.6</Offset>
+    <!--<Log>10</Log>-->
+  </Style>
+  <!-- Luchtdruk -->
+   <Style name="Pg_3_d0.3">
+    <Legend>Tg_woltnhoff</Legend>
+    <ShadeInterval>0.3</ShadeInterval>
+    <ContourIntervalL>0.3</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>30</Scale>
+    <Offset>-30360</Offset>
+  </Style>
+  
+   <Style name="Pg_4_d0.5">
+    <Legend>Q24</Legend>
+    <ShadeInterval>0.5</ShadeInterval>
+    <ContourIntervalL>0.5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>0.0</Scale>
+    <Offset>-1360</Offset>
+  </Style>
+  
+  <!-- Luchtdruk -->
+  <Style name="Ug_4_d1">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>1</ShadeInterval>
+    <ContourIntervalL>1</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>4.0</Scale>
+    <Offset>-200</Offset>
+  </Style>
+  
+    <Style name="Ug_4_d2">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>2</ShadeInterval>
+    <ContourIntervalL>2</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>4.0</Scale>
+    <Offset>-200</Offset>
+  </Style>
+   <!-- Straling -->
+  <Legend name="Q24" type="colorRange">
+    <palette index="0"  color="#FFFBDB"/>
+    <palette index="30" color="#FFF481"/>
+    <palette index="60"  color="#FFE47D"/>
+    <palette index="90"  color="#FABE5C"/>
+    <palette index="120" color="#F2963F"/>
+    <palette index="150" color="#E75114"/>
+    <palette index="180" color="#E3001B"/>
+    <palette index="210" color="#D4021D"/>
+    <palette index="240" color="#A41D23"/>
+  </Legend>
+  <Style name="Q24_auto_nearest">
+    <Legend>Q24</Legend>
+    <ShadeInterval>0.5</ShadeInterval>
+    <ContourIntervalL>0.5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>nearest</RenderMethod>
+    <Scale>0.0</Scale>
+    <Offset>-1360</Offset>
+  </Style>
+  <Style name="Q24_auto_d0.5">
+    <Legend>Q24</Legend>
+    <ShadeInterval>0.5</ShadeInterval>
+    <ContourIntervalL>0.5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0.0</Scale>
+    <Offset>-1360</Offset>
+  </Style>
+  <Style name="Q24_auto_d1">
+    <Legend>Q24</Legend>
+    <ShadeInterval>1</ShadeInterval>
+    <ContourIntervalL>1</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0.0</Scale>
+    <Offset>-1360</Offset>
+  </Style>
+  <Style name="Q24_auto_d2">
+    <Legend>Q24</Legend>
+    <ShadeInterval>2</ShadeInterval>
+    <ContourIntervalL>2</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0.0</Scale>
+    <Offset>-1360</Offset>
+  </Style>
+  <Style name="Q24_auto_d5">
+    <Legend>Q24</Legend>
+    <ShadeInterval>5</ShadeInterval>
+    <ContourIntervalL>5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0.0</Scale>
+    <Offset>-1360</Offset>
+  </Style>
+  <Style name="Q24_auto_d50">
+    <Legend>Q24</Legend>
+    <ShadeInterval>50</ShadeInterval>
+    <ContourIntervalL>50</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0.0</Scale>
+    <Offset>-1360</Offset>
+  </Style>
+  <Style name="Q24_auto_d5000">
+    <Legend>Q24</Legend>
+    <ShadeInterval>5000</ShadeInterval>
+    <ContourIntervalL>5000</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ</RenderMethod>
+    <Scale>0.0</Scale>
+    <Offset>-1360</Offset>
+  </Style>
+
+  <!-- Wind snelheid -->
+  <Legend name="Fg_wn2" type="colorRange">
+    <palette index="0"    color="#D7BDCD"/>
+    <palette index="80"   color="#AAB89F"/>
+    <palette index="160"  color="#959E73"/>
+    <palette index="240"  color="#66724A"/>
+  </Legend>
+  <Legend name="Fg_wn3" type="colorRange">
+    <palette index="0"    red="255" green="255" blue="0"/>
+    <palette index="180"  red="255" green="165" blue="0"/>
+    <palette index="240"  red="255" green="0" blue="0"/>
+  </Legend>
+ <Legend name="U" type="colorRange">
+    <palette index="0"    red="255" green="255" blue="255"/>
+    <palette index="60"   red="255" green="251" blue="219"/>    
+    <palette index="70"   red="238" green="241" blue="198"/>
+    <palette index="80"   red="197" green="219" blue="154"/>    
+    <palette index="90"   red="149" green="195" blue="107"/>
+    <palette index="100"  red="119" green="183" blue="086"/>    
+    <palette index="110"  red="040" green="154" blue="069"/>
+    <palette index="120"  red="000" green="109" blue="051"/>    
+    <palette index="240"  red="001" green="089" blue="047"/>
+</Legend>
+ 
+  <Legend name="Fg_wn" type="interval">
+    <!--<palette min="0"   max="29" color="#FFFBDB"/>-->
+    <palette min="0"  max="29" color="#FFF481"/>
+    <palette min="30"  max="59" color="#FFF481"/>
+    <palette min="60"  max="89" color="#FFE47D"/>
+    <palette min="90"  max="119" color="#FABE5C"/>
+    <palette min="120" max="149" color="#F2963F"/>
+    <palette min="150" max="179" color="#E75114"/>
+    <palette min="180" max="209" color="#E3001B"/>
+    <palette min="210" max="240" color="#B00230"/>
+  </Legend>
+  
+  <Legend name="Fg_wn_100m" type="interval">
+    <!--<palette min="0"   max="29" color="#FFFBDB"/>-->
+    <palette min="0"  max="29"   red="255" green="255" blue="255"/>
+    <palette min="30"  max="59"  red="238" green="241" blue="198"/>
+    <palette min="60"  max="89"  red="197" green="219" blue="154"/>
+    <palette min="90"  max="119" red="149" green="195" blue="107"/>
+    <palette min="120" max="149" red="119" green="183" blue="086"/>
+    <palette min="150" max="179" red="040" green="154" blue="069"/>
+    <palette min="180" max="209" red="000" green="109" blue="051"/>
+    <palette min="210" max="240" red="001" green="089" blue="047"/>
+  </Legend>
+  
+  
+  <Legend name="Fg_wn_summer" type="interval">
+    <palette min="0"   max="29" color="#FFFBDB"/>
+    <palette min="30"  max="59" color="#FFF481"/>
+    <palette min="60"  max="89" color="#FFE47D"/>
+    <palette min="90"  max="119" color="#FABE5C"/>
+    <palette min="120" max="149" color="#F2963F"/>
+    <palette min="150" max="179" color="#E75114"/>
+    <palette min="180" max="209" color="#E3001B"/>
+    <palette min="210" max="240" color="#B00230"/>
+  </Legend>
+
+<Style name="Fg_wn_auto_nearest">
+    <Legend>Fg_wn</Legend>
+    <ShadeInterval>0.5</ShadeInterval>
+    <ContourIntervalL>0.5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>nearest</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>-420</Offset>
+  </Style>
+  <Style name="Fg_wn_nearest">
+    <Legend>Fg_wn</Legend>
+    <ShadeInterval>0.5</ShadeInterval>
+    <ContourIntervalL>0.5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>nearest</RenderMethod>
+    <Scale>120</Scale>
+    <Offset>-420</Offset>
+  </Style>
+  <Style name="Fg_4_wn_d1">
+    <Legend>Fg_wn</Legend>
+    <ShadeInterval>1</ShadeInterval>
+    <ContourIntervalL>1</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>120</Scale>
+    <Offset>-420</Offset>
+  </Style>
+  
+  <Style name="U_4_wn_d1">
+    <Legend>Fg_wn</Legend>
+    <ShadeInterval>1</ShadeInterval>
+    <ContourIntervalL>1</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>48</Scale>
+    <Offset>-192</Offset>
+  </Style>
+  <Style name="U_4_wn_kustgras_d0.5">
+    <Legend>Fg_wn</Legend>
+    <ShadeInterval>0.5</ShadeInterval>
+    <ContourIntervalL>0.5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>nearest,shadedcontour/HQ</RenderMethod>
+    <Scale>60</Scale>
+    <Offset>-150</Offset>
+  </Style>
+  <Style name="U_4_wn_kustgras_v0005_d0.5">
+    <Legend>Fg_wn</Legend>
+    <ShadeInterval>0.5</ShadeInterval>
+    <ContourIntervalL>0.5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>nearest,shadedcontour/HQ</RenderMethod>
+    <Min>6.5</Min>
+    <Max>10.5</Max>
+  </Style>
+  <Style name="U_4_wn_kustgras_100m_d0.5">
+    <Legend>Fg_wn_100m</Legend>
+    <ShadeInterval>0.5</ShadeInterval>
+    <ContourIntervalL>0.5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>nearest,shadedcontour/HQ</RenderMethod>
+    <Scale>60</Scale>
+    <Offset>-330</Offset>
+  </Style>
+  <Style name="U_4_wn_kustgras_100m_v0005_d0.5">
+    <Legend>Fg_wn_100m</Legend>
+    <ShadeInterval>0.5</ShadeInterval>
+    <ContourIntervalL>0.5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>nearest,shadedcontour/HQ</RenderMethod>
+    <Min>6.5</Min>
+    <Max>10.5</Max>
+  </Style>
+  <Style name="U_3_wn_kustgras_summer_d0.5">
+    <Legend>Fg_wn_summer</Legend>
+    <ShadeInterval>0.5</ShadeInterval>
+    <ContourIntervalL>0.5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>nearest</RenderMethod>
+    <Scale>60</Scale>
+    <Offset>-150</Offset>
+    <SmoothingFilter>0</SmoothingFilter>
+  </Style>
+  <Style name="U_3_wn_kustgras_winter_d0.5">
+    <Legend>Fg_wn</Legend>
+    <ShadeInterval>0.5</ShadeInterval>
+    <ContourIntervalL>0.5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>nearest</RenderMethod>
+    <Scale>60</Scale>
+    <Offset>-150</Offset>
+    <SmoothingFilter>0</SmoothingFilter>
+  </Style>
+  
+  <Style name="U10_kustgras_d1">
+    <Legend>U</Legend>
+    <ShadeInterval>1</ShadeInterval>
+    <ContourIntervalL>1</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>nearest,shadedcontour/HQ</RenderMethod>
+    <Scale>20</Scale>
+    <Offset>0</Offset>
+    <SmoothingFilter>1</SmoothingFilter>
+  </Style>
+
+  <Style name="Fg_4_wn_auto_d1">
+    <Legend>Fg_wn</Legend>
+    <ShadeInterval>1</ShadeInterval>
+    <ContourIntervalL>1</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>-420</Offset>
+  </Style>
+  <!-- Sneeuwdek -->
+   <Legend name="Sx" type="colorRange">
+    <palette index="0"      color="#FBF1F5"/>
+    <palette index="40"     color="#F8DAE7"/>
+    <palette index="80"     color="#E4C1D9"/>
+    <palette index="120"    color="#BBB3D5"/>
+    <palette index="160"    color="#9B8EBF"/>
+    <palette index="200"    color="#7B6CAA"/>
+    <palette index="240"    color="#5D4F97"/>
+  </Legend>
+  <Style name="Sx_d3">
+    <Legend>Sx</Legend>
+    <ShadeInterval>3</ShadeInterval>
+    <ContourIntervalL>3</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>-420</Offset>
+  </Style>
+  
+  
+    <!-- BNAS Legendas -->
+<!--
+BNAS_RD4NsTx_d15
+BNAS_RD4NsT5_d15
+BNAS_TG3_07_d0.5
+BNAS_RD4_0_d5
+BNAS_TG4_30_d2
+BNAS_TG4_25_d4
+BNAS_TG4_20_d5
+BNAS_TNG4_0_d5
+BNAS_TXG4_0_d2
+BNAS_RD4_d25
+BNAS_RD5_d25
+BNAS_RD5_d25
+BNAS_RD4_1_d5
+BNAS_RD4_15_d2
+  -->
+  <Style name="BNAS_RD4NsTx_d15">
+    <Legend>yelloworangered</Legend>
+    <ShadeInterval>15</ShadeInterval>
+    <ContourIntervalL>15</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Min>125</Min>
+    <Max>405</Max>
+  </Style>
+  
+  <Style name="BNAS_RD4NsT5_d15">
+    <Legend>yelloworangered</Legend>
+    <ShadeInterval>15</ShadeInterval>
+    <ContourIntervalL>15</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Min>195</Min>
+    <Max>540</Max>
+  </Style>
+  
+  <Style name="BNAS_TG3_07_d0.5">
+    <Legend>Tg_woltnhoff</Legend>
+    <ShadeInterval>0.5</ShadeInterval>
+    <ContourIntervalL>0.5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Min>12</Min>
+    <Max>19.5</Max>
+  </Style>
+  
+  <Style name="BNAS_RD4_0_d5">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>5</ShadeInterval>
+    <ContourIntervalL>5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Min>135</Min>
+    <Max>220</Max>
+  </Style>
+  
+  <Style name="BNAS_TG4_30_d2">
+    <Legend>Tg_summer</Legend>
+    <ShadeInterval>2</ShadeInterval>
+    <ContourIntervalL>2</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Min>0</Min>
+    <Max>44</Max>
+  </Style>
+  
+  <Style name="BNAS_TG4_25_d4">
+    <Legend>Q24</Legend>
+    <ShadeInterval>4</ShadeInterval>
+    <ContourIntervalL>4</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Min>0</Min>
+    <Max>100</Max>
+  </Style>
+  
+  <Style name="BNAS_TG4_20_d5">
+    <Legend>Tg_summer</Legend>
+    <ShadeInterval>5</ShadeInterval>
+    <ContourIntervalL>5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Min>35</Min>
+    <Max>175</Max>
+  </Style>
+
+  <Style name="BNAS_TNG4_0_d5">
+    <Legend>Tg_winter</Legend>
+    <ShadeInterval>5</ShadeInterval>
+    <ContourIntervalL>5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Min>70</Min>
+    <Max>0</Max>
+  </Style>
+  
+  <Style name="BNAS_TXG4_0_d2">
+    <Legend>Tg_winter</Legend>
+    <ShadeInterval>2</ShadeInterval>
+    <ContourIntervalL>2</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Min>70</Min>
+    <Max>0</Max>
+  </Style>
+
+  <Style name="BNAS_RD4_d25">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>25</ShadeInterval>
+    <ContourIntervalL>25</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Min>725</Min>
+    <Max>1100</Max>
+  </Style> 
+
+  <Style name="BNAS_RD5_d25">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>25</ShadeInterval>
+    <ContourIntervalL>25</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    
+    <Min>250</Min>
+    <Max>625</Max>
+  </Style>   
+  
+  <Style name="KNMI14_RD5_d25">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>25</ShadeInterval>
+    <ContourIntervalL>25</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Min>100</Min>
+    <Max>475</Max>
+  </Style> 
+  
+      <Style name="KNMI14_RD4_10_d2">
+    <Legend>Pr_pbl</Legend>
+    <ShadeInterval>2</ShadeInterval>
+    <ContourIntervalL>2</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Min>18</Min>
+    <Max>34</Max>
+  </Style> 
+  
+        <Style name="KNMI14_RD4_30_d1">
+    <Legend>Pr_pbl</Legend>
+    <ShadeInterval>1</ShadeInterval>
+    <ContourIntervalL>1</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Min>0</Min>
+    <Max>4</Max>
+  </Style> 
+  
+          <Style name="KNMI14_RD4_20_d2">
+    <Legend>Pr_pbl</Legend>
+    <ShadeInterval>2</ShadeInterval>
+    <ContourIntervalL>2</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Min>2</Min>
+    <Max>10</Max>
+  </Style> 
+  
+  
+   <Style name="KNMI14_RD5_1_d2">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>2</ShadeInterval>
+    <ContourIntervalL>2</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Min>20</Min>
+    <Max>45</Max>
+  </Style>  
+  
+  
+  <Style name="KNMI14_TXG5_d0.5">
+    <Legend>Tg_woltnhoff</Legend>
+    <ShadeInterval>0.5</ShadeInterval>
+    <ContourIntervalL>0.5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,contour/HQ</RenderMethod>
+    <Min>4.8</Min>
+    <Max>32</Max>
+  </Style>  
+  
+    <Style name="KNMI14_TXG4_d0.3">
+    <Legend>Tg_woltnhoff</Legend>
+    <ShadeInterval>0.3</ShadeInterval>
+    <ContourIntervalL>0.3</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,contour/HQ</RenderMethod>
+    <Min>12.0</Min>
+    <Max>18.3</Max>
+  </Style>  
+  
+  
+ 
+  <Style name="KNMI14_TXG4_0_d2">
+    <Legend>Tg_winter</Legend>
+    <ShadeInterval>2</ShadeInterval>
+    <ContourIntervalL>2</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Min>0</Min>
+    <Max>14</Max>
+  </Style>
+ 
+ 
+ 
+  <Style name="BNAS_RD4_1_d5">
+    <Legend>Pr_wn</Legend>
+    <ShadeInterval>5</ShadeInterval>
+    <ContourIntervalL>5</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Min>105</Min>
+    <Max>165</Max>
+  </Style> 
+
+  <Style name="BNAS_RD4_15_d2">
+    <Legend>Pr_pbl</Legend>
+    <ShadeInterval>2</ShadeInterval>
+    <ContourIntervalL>2</ContourIntervalL>
+    <ContourIntervalH>100000.5</ContourIntervalH>
+    <RenderMethod>shadedcontour/HQ,nearest</RenderMethod>
+    <Scale>20</Scale>
+    <Offset>-120</Offset>
+  </Style> 
+
+</Configuration>  
+  

@@ -29,6 +29,8 @@
 #include "CDebugger.h"
 #include "CDataSource.h"
 #include "CDrawImage.h"
+#include <stdio.h>
+
 class CAreaMapper{
 private:
   DEF_ERRORFUNCTION();

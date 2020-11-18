@@ -37,6 +37,9 @@ wget -nc -r -l2 -A.h5   -I /knmi/thredds/fileServer/,/knmi/thredds/catalog/ 'htt
 popd
 export ADAGUC_PATH=`pwd`
 export ADAGUC_CONFIG=./data/config/adaguc.vm.xml
+export ADAGUC_DATASET_DIR=/data/adaguc-datasets/
+export ADAGUC_DATA_DIR=/data/adaguc-data/
+export ADAGUC_AUTOWMS_DIR=/data/adaguc-autowms/
 bash ./Docker/adaguc-server-updatedatasets.sh msg_hrvis_hdf5_example
 ```
 * You can now load the test dataset via http://localhost:8080//wms?dataset=msg_hrvis_hdf5_example& in http://geoservices.knmi.nl/viewer2.0
