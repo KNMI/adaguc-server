@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+
+  <!-- http://bibliotheek.knmi.nl/knmipubTR/TR335.pdf -->
+
+  <Include location="/data/adaguc-datasets/gsie-styles.xml"/>
+  <Include location="/data/adaguc-datasets/gsie-baselayers.xml"/>
+
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_DATA_DIR}/sequence/</FilePath>
+    <Dimension name="time" interval="P1M">time</Dimension>
+    <Variable>interpolatedObs</Variable>
+    <Styles>Tg_woltnhoff_d0.5</Styles>
+  </Layer>
+
+
+</Configuration>
+  
+  

@@ -1,6 +1,6 @@
 EXTERNALADDRESS=https://bhw485.knmi.nl/
 ADAGUC_HOME=/nobackup/users/plieger/pliegerhome
-ADAGUC_DATA_DIR=/data/adaguc-autowms
+ADAGUC_DATA_DIR=/data/adaguc-data
 ADAGUC_AUTOWMS_DIR=/data/adaguc-autowms
 ADAGUC_DATASET_DIR=/data/adaguc-datasets
 ADAGUC_PORT=443
