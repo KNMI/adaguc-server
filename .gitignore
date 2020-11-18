@@ -91,6 +91,7 @@ adaguc-services
 adaguc-services.log
 
 
+data/python/env
 data/python/adaguc.egg-info/
 data/python/adaguc_knmi.nl.egg-info/
 data/python/adaguc_server.egg-info/
