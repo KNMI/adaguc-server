@@ -115,6 +115,11 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource){
   /* Dimension information is not available in the database. We need to load it from a file.*/
   int status=justLoadAFileHeader(dataSource);
   if(status!=0){
+    if (dataSource->cfgLayer->FilePath.size() > 0) {
+      CDBDebug("Unable to Path %s", dataSource->cfgLayer->FilePath[0]->value.c_str());
+    }else {
+      CDBError("Layer configuration error");  
+    }
     CDBError("justLoadAFileHeader failed");
     return 1;
   }
