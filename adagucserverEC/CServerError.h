@@ -27,7 +27,7 @@
 #define MY_ERROR_H
 #include <stdio.h>
 #include <CDebugger.h>
-#include "CDrawImage.h"
+
 enum ServiceExceptionCode { OperationNotSupported, InvalidDimensionValue}; // OGC WMS Exceptions
 
 

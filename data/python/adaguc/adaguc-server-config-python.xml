@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <CacheDocs enabled="false"/>
+  <TempDir value="{ADAGUC_TMP}"/>
+  <Path value="{ADAGUC_PATH}/data"/>
+  <DataBase dbtype="sqlite" parameters="{ADAGUC_TMP}/adaguc.autoresource.db"/>
+  
+  <!-- WMS settings -->
+  <WMS>
+    <Title>ADAGUC WMS Service</Title>
+    <Abstract>This service demonstrates how the ADAGUC server can be used to create OGC services.</Abstract>
+    <RootLayer>
+      <Title>Root Layer Title</Title>
+      <Abstract>Root Layer Abstract</Abstract>
+    </RootLayer>
+  
+  </WMS>
+  
+  
+  <!-- WMS -->
+  <Include location="{ADAGUC_PATH}/data/config/includes/WMS.include.xml"/>
+
+  <!-- WCS settings -->
+  <WCS>
+    <Title>ADAGUC WCS Service</Title>
+    <Label>wcsLabel</Label>
+  </WCS>
+
+  <!-- WCSFormat -->
+  <Include location="{ADAGUC_PATH}/data/config/includes/WCSFormat.include.xml"/>
+
+  <!-- Projections -->
+  <Include location="{ADAGUC_PATH}/data/config/includes/Projection.include.xml"/>
+           
+  <!--Legends -->
+  <Include location="{ADAGUC_PATH}/data/config/includes/DefaultStyles.include.xml"/>
+
+  <AutoResource enableautoopendap="true" enablelocalfile="true" enablecache="false">
+    <Dir basedir="{ADAGUC_AUTOWMS_DIR}" prefix="{ADAGUC_AUTOWMS_DIR}/"/>
+    <Dir basedir="{ADAGUC_DATA_DIR}" prefix="{ADAGUC_DATA_DIR}/"/>
+    <ImageText attribute="source"></ImageText>
+  </AutoResource>
+
+  <Dataset enabled="true" location="{ADAGUC_DATASET_DIR}"/>
+  <!-- End of configuration /-->
+</Configuration>
