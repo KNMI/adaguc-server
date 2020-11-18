@@ -2,23 +2,19 @@
   "configurations": [
     {
       "name": "Debug",
-      "buildType": "Debug",
-      "buildDirectory": "${workspaceFolder}/bin"
+      "buildType": "Debug"
     },
     {
       "name": "Release",
-      "buildType": "Release",
-      "buildDirectory": "${workspaceFolder}/bin"
+      "buildType": "Release"
     },
     {
       "name": "RelWithDebInfo",
-      "buildType": "RelWithDebInfo",
-      "buildDirectory": "${workspaceFolder}/bin"
+      "buildType": "RelWithDebInfo"
     },
     {
       "name": "MinSizeRel",
-      "buildType": "MinSizeRel",
-      "buildDirectory": "${workspaceFolder}/bin"
+      "buildType": "MinSizeRel"
     }
   ]
 }

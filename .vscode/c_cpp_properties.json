@@ -22,11 +22,11 @@
         "databaseFilename": "${default}",
         "path": ["${default}"]
       },
-      "intelliSenseMode": "${default}",
+      // "intelliSenseMode": "${default}",
       "cStandard": "${default}",
       "cppStandard": "${default}",
-      "compilerPath": "${default}",
-      "configurationProvider": "go2sh.cmake-integration"
+      "compilerPath": "${default}"
+      // "configurationProvider": "go2sh.cmake-integration"
     }
   ],
   "version": 4
