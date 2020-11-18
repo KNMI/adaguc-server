@@ -9,6 +9,9 @@ export ADAGUC_PORT=8080
 export ADAGUC_HOSTNAME=`hostname`
 export ADAGUC_SERVICES_SPACE=${ADAGUC_PATH}/adaguc-services/space
 export ADAGUC_SERVICES_CONFIG=${ADAGUC_PATH}/adaguc-services/config/adaguc-services-config.xml
+export ADAGUC_DATASET_DIR=/data/adaguc-datasets/
+export ADAGUC_DATA_DIR=/data/adaguc-data/
+export ADAGUC_AUTOWMS_DIR=/data/adaguc-autowms/
 
 # Copy a test dataset
 cp ${ADAGUC_PATH}/data/datasets/testdata.nc /data/adaguc-autowms/

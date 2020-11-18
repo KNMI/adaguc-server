@@ -37,6 +37,9 @@ printf "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\
   <adaguc-server>\n\
     <adagucexecutable>{ENV.ADAGUC_PATH}/bin/adagucserver</adagucexecutable>\n\
     <export>ADAGUC_PATH={ENV.ADAGUC_PATH}/</export>\n\
+    <export>ADAGUC_DATASET_DIR={ENV.ADAGUC_DATASET_DIR}</export>\n\
+    <export>ADAGUC_DATA_DIR={ENV.ADAGUC_DATA_DIR}</export>\n\
+    <export>ADAGUC_AUTOWMS_DIR={ENV.ADAGUC_AUTOWMS_DIR}</export>\n\
     <export>ADAGUC_DB={ENV.ADAGUC_DB}/</export>\n\
     <export>ADAGUC_CONFIG={ENV.ADAGUC_PATH}/data/config/adaguc.vm.xml</export>\n\
     <export>ADAGUC_DATARESTRICTION=SHOW_QUERYINFO|ALLOW_WCS|ALLOW_GFI|ALLOW_METADATA</export>\n\

@@ -111,7 +111,7 @@ class CServerParams{
     CT::string mapTitle;
     CT::string mapSubTitle;
     bool showDimensionsInImage;
-    bool showLegendInImage;
+    CT::string showLegendInImage;
     bool showScaleBarInImage;
     bool showNorthArrow;
     

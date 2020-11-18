@@ -2,7 +2,7 @@
 
 
 ADAGUC_PORT=443
-ADAGUC_DATA_DIR=/data/adaguc-autowms
+ADAGUC_DATA_DIR=/data/adaguc-data
 ADAGUC_AUTOWMS_DIR=/data/adaguc-autowms
 ADAGUC_DATASET_DIR=/data/adaguc-datasets
 
