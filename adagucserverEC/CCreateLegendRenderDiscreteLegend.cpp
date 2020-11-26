@@ -18,6 +18,25 @@ int CCreateLegend::renderDiscreteLegend (CDataSource *dataSource,
     int pTop=(int)(legendImage->Geo->dHeight-legendHeight);
     char szTemp[256];
     
+
+    CT::string textformatting;
+
+    /* Take the textformatting from the Style->Legend configuration */
+    if(styleConfiguration != NULL && 
+      styleConfiguration->styleConfig != NULL && 
+      styleConfiguration->styleConfig->Legend.size()>0 && 
+      !styleConfiguration->styleConfig->Legend[0]->attr.textformatting.empty())
+      {
+        textformatting = styleConfiguration->styleConfig->Legend[0]->attr.textformatting;
+      }
+
+    CDBDebug("styleTitle = [%s]", styleConfiguration->styleTitle.c_str());
+    CDBDebug("ShadeInterval = [%s]", styleConfiguration->styleConfig->ShadeInterval[0]->value.c_str());
+    
+    CDBDebug("textformatting = [%s]", textformatting.c_str());
+
+
+
     //int dH=0;
     //cbW = 90.0/3.0;
     // We always need to have the min/max of the data
@@ -234,14 +253,20 @@ int CCreateLegend::renderDiscreteLegend (CDataSource *dataSource,
           }else{
             legendImage->rectangle(4+pLeft,cY2+pTop,int(cbW)+7+pLeft,cY+pTop,(y),(y));
           }
-          if(textRounding<=0)sprintf(szTemp,"%2.0f - %2.0f",v,v+legendInterval);
-          if(textRounding==1)sprintf(szTemp,"%2.1f - %2.1f",v,v+legendInterval);
-          if(textRounding==2)sprintf(szTemp,"%2.2f - %2.2f",v,v+legendInterval);
-          if(textRounding==3)sprintf(szTemp,"%2.3f - %2.3f",v,v+legendInterval);
-          if(textRounding==4)sprintf(szTemp,"%2.4f - %2.4f",v,v+legendInterval);
-          if(textRounding==5)sprintf(szTemp,"%2.5f - %2.5f",v,v+legendInterval);
-          if(textRounding==5)sprintf(szTemp,"%2.6f - %2.6f",v,v+legendInterval);
-          if(textRounding>6)sprintf(szTemp,"%f - %f",v,v+legendInterval);
+          if (textformatting.empty() == false) {
+            CT::string textFormat;
+            textFormat.print("%s - %s", textformatting.c_str(), textformatting.c_str());
+            sprintf(szTemp, textFormat.c_str(),v,v+legendInterval);
+          } else {
+            if(textRounding<=0)sprintf(szTemp,"%2.0f - %2.0f",v,v+legendInterval);
+            if(textRounding==1)sprintf(szTemp,"%2.1f - %2.1f",v,v+legendInterval);
+            if(textRounding==2)sprintf(szTemp,"%2.2f - %2.2f",v,v+legendInterval);
+            if(textRounding==3)sprintf(szTemp,"%2.3f - %2.3f",v,v+legendInterval);
+            if(textRounding==4)sprintf(szTemp,"%2.4f - %2.4f",v,v+legendInterval);
+            if(textRounding==5)sprintf(szTemp,"%2.5f - %2.5f",v,v+legendInterval);
+            if(textRounding==5)sprintf(szTemp,"%2.6f - %2.6f",v,v+legendInterval);
+            if(textRounding>6)sprintf(szTemp,"%f - %f",v,v+legendInterval);
+          }
           int l=strlen(szTemp);
           legendImage->setText(szTemp,l,(int)cbW+10+pLeft,((cY+cY2)/2)-6+pTop,248,-1);
         }

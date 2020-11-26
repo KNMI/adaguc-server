@@ -168,7 +168,7 @@ class CServerConfig:public CXMLSerializerInterface{
         }
         class Cattr{
           public:
-            CT::string name,type,tickround,tickinterval,fixedclasses,file;
+            CT::string name,type,tickround,tickinterval,fixedclasses,file,textformatting;
         }attr;
         void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value){
           CXMLSerializerInterface * base = (CXMLSerializerInterface*)baseClass;
@@ -188,9 +188,7 @@ class CServerConfig:public CXMLSerializerInterface{
           else if(equals("tickround",9,name)){attr.tickround.copy(value);return;}
           else if(equals("tickinterval",12,name)){attr.tickinterval.copy(value);return;}
           else if(equals("fixedclasses",12,name)){attr.fixedclasses.copy(value);return;}
-          
-          
-          
+          else if(equals("textformatting",14,name)){attr.textformatting.copy(value);return;}
         }
     };
     class XMLE_Scale: public CXMLObjectInterface{};
