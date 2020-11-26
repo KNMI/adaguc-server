@@ -1,3 +1,5 @@
+#ifdef ENABLE_CURL
+
 #include "CDebugger.h"
 #include "CSLD.h"
 #include "../hclasses/CXMLParser.h"
@@ -313,3 +315,4 @@ bool CSLD::parameterIsSld(CT::string param) {
 }
 
 
+#endif
