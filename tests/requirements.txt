@@ -1,3 +1,0 @@
-netcdf4
-# lxml
-# urllib -- stdlib

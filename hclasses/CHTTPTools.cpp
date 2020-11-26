@@ -22,7 +22,7 @@
  * limitations under the License.
  * 
  ******************************************************************************/
-
+#ifdef ENABLE_CURL
 #include "CHTTPTools.h"
-
 const char *CHTTPTools::className="CHTTPTools";
+#endif
