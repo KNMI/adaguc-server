@@ -40,9 +40,8 @@
 #endif
 
 
-#define CONTOURDEFINITIONLOOKUPTYPE unsigned char
-#define CONTOURDEFINITIONLOOKUPLENGTH 16
-#define DISTANCEFIELDTYPE unsigned char
+#define CONTOURDEFINITIONLOOKUPLENGTH 32
+#define DISTANCEFIELDTYPE unsigned int
 #include "CImgRenderFieldVectors.h"
 class Point{
 public:
@@ -64,13 +63,7 @@ bool IsTextTooClose(std::vector<Point> *textLocations,int x,int y){
   }
   return false;
 }
-/*#define CONTOURDEFINITIONLOOKUPTYPE unsigned short
-  #define CONTOURDEFINITIONLOOKUPLENGTH 256
-*/
 
-//#define CImgWarpBilinear_DEBUG
-
-//DEF_ERRORMAIN();
 const char *CImgWarpBilinear::className="CImgWarpBilinear";
 void CImgWarpBilinear::render(CImageWarper *warper,CDataSource *sourceImage,CDrawImage *drawImage){
   #ifdef CImgWarpBilinear_DEBUG
@@ -1301,8 +1294,8 @@ void CImgWarpBilinear::drawContour(float *valueData,float fNodataValue,float int
       }
     }
     lineMask=lineMask+lineMask;
-  }
     
+  }
 
   #ifdef CImgWarpBilinear_DEBUG
   CDBDebug("Deleting distance[]");

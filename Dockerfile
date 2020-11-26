@@ -4,7 +4,7 @@ USER root
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="2.4.1" 
+LABEL version="2.5.3" 
 
 ######### First stage (build) ############
 
@@ -28,7 +28,7 @@ RUN yum update -y && \
     yum install -y centos-release-scl && \
     yum install -y devtoolset-7-gcc-c++ && \
     source /opt/rh/devtoolset-7/enable && \
-    yum install -y cairo-devel \
+    yum install -y cmake3 cairo-devel \
     gd-devel \
     gdal-devel \
     hdf5-devel \
@@ -56,8 +56,11 @@ WORKDIR /adaguc/adaguc-server-master
 
 # Force to use Python 3
 RUN ln -sf /usr/bin/python3 /usr/bin/python
+RUN ln -sf /usr/bin/cmake3 /usr/bin/cmake
+RUN cp -r /usr/include/udunits2/* /usr/include/
 
 RUN bash compile.sh
+
 
 ######### Second stage (production) ############
 FROM centos:7
@@ -81,6 +84,12 @@ RUN yum update -y && \
     netcdf \
     libwebp \
     java-11-openjdk-headless \
+    python36-numpy \
+    python36-netcdf4 \
+    python36-six \
+    python36-requests \
+    python36-pillow \
+    python36-lxml && \
     yum clean all && \
     rm -rf /var/cache/yum
 
@@ -94,9 +103,6 @@ COPY --from=0 /adaguc/adaguc-server-master/runtests.sh /adaguc/adaguc-server-mas
 
 # Install adaguc-services (spring boot application for running adaguc-server)
 RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.11/adaguc-services-1.2.11.jar -o /adaguc/adaguc-services.jar
-
-#Install python dependencies
-RUN  pip3 install --user numpy netcdf4 six requests pillow aggdraw lxml
 
 # Run adaguc-server functional and regression tests
 RUN  bash runtests.sh 
@@ -128,6 +134,13 @@ RUN  chmod +x /adaguc/adaguc-server-*.sh && \
 RUN cp /etc/pki/java/cacerts /adaguc/security/truststore.ts
 
 ENV ADAGUC_SERVICES_CONFIG=/adaguc/adaguc-services-config.xml
+ENV ADAGUC_PATH=/adaguc/adaguc-server-master
+
+# Build and test adaguc python support
+WORKDIR /adaguc/adaguc-server-master/data/python/
+RUN python3 setup.py install
+RUN bash -c "python3 /adaguc/adaguc-server-master/data/python/examples/runautowms/run.py && ls result.png" 
+WORKDIR /adaguc/adaguc-server-master
 
 USER adaguc
 
