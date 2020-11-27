@@ -53,6 +53,10 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage,
   
   CDataReader reader;
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
+  if (styleConfiguration == NULL) {
+    CDBError("No style configuration");
+    return 1;
+  }
   CStyleConfiguration::RenderMethod renderMethod = styleConfiguration->renderMethod;
   
   if(renderMethod&RM_RGBA||renderMethod&RM_AVG_RGBA){
@@ -71,29 +75,16 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage,
     return 0;
   }
   
-  //if(renderMethod==shadedcontour||renderMethod==shaded||renderMethod==contour){
-  if(renderMethod&RM_SHADED||renderMethod&RM_CONTOUR){
-    //We need to open all the data, because we need to estimate min/max for legend drawing
+  if(styleConfiguration->legendScale==0.0f || styleConfiguration->legendHasFixedMinMax==false){
     estimateMinMax = true;
-    if(styleConfiguration->legendHasFixedMinMax==true){
-      estimateMinMax=false;
-    }
-  }else {
-    //When the scale factor is zero (0.0f) we need to open the data too, because we want to estimate min/max in this case.
-    //When the scale factor is given, we only need to open the header, for displaying the units.
-    if(styleConfiguration->legendScale==0.0f){
-      estimateMinMax = true;
-    }else{
-      estimateMinMax = false;
-    }
+  }else{
+    estimateMinMax = false;
   }
-  
+   
   if(dataSource->srvParams->wmsExtensions.colorScaleRangeSet&&dataSource->srvParams->wmsExtensions.numColorBandsSet){
     estimateMinMax = false;
   }
   
-  
-  //if(dataSource->getDataObject(0)->cdfVariable->data==NULL){
   if(strlen(dataSource->getFileName())>0){
     if(estimateMinMax){
       #ifdef CIMAGEDATAWRITER_DEBUG
