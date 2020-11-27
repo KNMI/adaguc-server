@@ -46,7 +46,9 @@ int CCreateLegend::renderDiscreteLegend (CDataSource *dataSource,
     //Get the min/max values
     float minValue = CImageDataWriter::getValueForColorIndex(dataSource,0);
     float maxValue = CImageDataWriter::getValueForColorIndex(dataSource,239);
-    
+    if(styleConfiguration->legendHasFixedMinMax==false){
+      estimateMinMax = true;
+    }
     if(estimateMinMax){
       if(dataSource->statistics==NULL){
         dataSource->statistics = new CDataSource::Statistics();
@@ -56,7 +58,9 @@ int CCreateLegend::renderDiscreteLegend (CDataSource *dataSource,
       maxValue=(float)dataSource->statistics->getMaximum();
       
     }
-    
+    // }
+   
+    // CDBDebug("Using %f and %f for legend values", minValue, maxValue);
     
     //Calculate the number of classes
     float legendInterval=styleConfiguration->shadeInterval;
