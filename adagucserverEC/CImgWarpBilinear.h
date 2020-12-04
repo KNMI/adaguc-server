@@ -140,7 +140,17 @@ public:
 };
 
 
+class Point{
+public:
+  Point(int x,int y){
+   this->x=x;
+   this->y=y;
+  }
+  int x,y;
+};
 
+#define CONTOURDEFINITIONLOOKUPLENGTH 32
+#define DISTANCEFIELDTYPE unsigned int
 class CImgWarpBilinear:public CImageWarperRenderInterface{
   private:
     bool drawMap,enableContour,enableVector,enableBarb,enableShade,drawGridVectors;
@@ -156,6 +166,8 @@ class CImgWarpBilinear:public CImageWarperRenderInterface{
     std::vector<PointD*> minimaPoints;
     std::vector<PointD*> maximaPoints;
     DEF_ERRORFUNCTION();
+    void drawTextForContourLines(CDrawImage * drawImage,ContourDefinition *contourDefinition, int lineX, int lineY,int endX, int endY, std::vector<Point> *textLocations,float value,CColor textColor);
+    void traverseLine(CDrawImage * drawImage,DISTANCEFIELDTYPE *distance,float *valueField,int lineX,int lineY,int dImageWidth,int dImageHeight,float lineWidth,CColor lineColor,CColor textColor,ContourDefinition *contourDefinition,DISTANCEFIELDTYPE lineMask,bool drawText,std::vector<Point> *textLocations);
   public:
     CImgWarpBilinear(){
       drawMap=false;
