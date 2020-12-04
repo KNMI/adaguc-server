@@ -37,7 +37,7 @@
         #include <map>
         #include <cstdlib>
         #include <queue>
-        #define CCONVERTGEOJSON_DEBUG
+        // #define CCONVERTGEOJSON_DEBUG
         const char *CConvertGeoJSON::className="CConvertGeoJSON";
 
         #define CCONVERTUGRIDMESH_NODATA -32000
@@ -590,9 +590,9 @@
           CDF::Variable *varY = cdfObject->getVariableNE("y");
           
           CDF::Dimension *timeDim = cdfObject->getDimensionNE("time");
-          CDBDebug("timeDim: %d", timeDim);
+          // CDBDebug("timeDim: %d", timeDim);
           CDF::Dimension *elevationDim = cdfObject->getDimensionNE("elevation");
-          CDBDebug("elevationDim: %d", elevationDim);
+          // CDBDebug("elevationDim: %d", elevationDim);
           
           if(dimX==NULL||dimY==NULL||varX==NULL||varY==NULL) 
           {
@@ -668,7 +668,7 @@
             found=true;
           } catch (int e) {}
           if (!found) {
-            CDBDebug("Creating dim %s %d", "features", nrFeatures);
+            // CDBDebug("Creating dim %s %d", "features", nrFeatures);
             dimFeatures=new CDF::Dimension();
             dimFeatures->name="features";
             dimFeatures->setSize(nrFeatures);
@@ -767,9 +767,9 @@
                     json_object_entry dimObject = dimensions.u.object.values[dimCnt];
                     CT::string dimName(dimObject.name);
                     json_value dim = *dimObject.value;
-                    CDBDebug("[%d] dim[%s] %d %d", dimCnt, dimName.c_str(), dim.type, dim.type==json_string);
+                    // CDBDebug("[%d] dim[%s] %d %d", dimCnt, dimName.c_str(), dim.type, dim.type==json_string);
                     if (dimName.equals("time")) {
-                      CDBDebug("time found !!!!");
+                      // CDBDebug("time found !!!!");
                       
                       if (dim.type==json_object) {
                         for (unsigned int fldCnt = 0; fldCnt < dim.u.object.length; fldCnt++) {
@@ -778,7 +778,7 @@
                           json_value fldValue = *fldObject.value;
                           if (fldValue.type==json_string) {
                             CT::string value(fldValue.u.string.ptr);
-                            CDBDebug("[ ] dim[%s]: %s=%s", dimName.c_str(), fldName.c_str(), value.c_str());
+                            // CDBDebug("[ ] dim[%s]: %s=%s", dimName.c_str(), fldName.c_str(), value.c_str());
                             //                      CDBDebug("[%d] prop[%s]=%s", cnt, propName.c_str(), prop.u.string.ptr);
                             //                      CDBDebug("[%d] prop[%s]S =%s", cnt, propName.c_str(),prop.u.string.ptr);
                             if (fldName.equals("units")) {
@@ -788,7 +788,7 @@
                             }
                           }
                           if (fldValue.type==json_double) {
-                            CDBDebug("[ ] dim[%s]: dbl", dimName.c_str(), fldName.c_str());
+                            // CDBDebug("[ ] dim[%s]: dbl", dimName.c_str(), fldName.c_str());
                             if (fldName.equals("value")) {
                               dTimeVal=fldValue.u.dbl;
                             }
@@ -801,7 +801,7 @@
                         }
                       }
 
-                      CDBDebug("time: %s %s %f %d", timeVal.c_str(), timeUnits.c_str(), dTimeVal, iTimeVal);
+                      // CDBDebug("time: %s %s %f %d", timeVal.c_str(), timeUnits.c_str(), dTimeVal, iTimeVal);
                       CDF::Variable timeVarHelper;
                       timeVarHelper.setAttributeText("units", "seconds since 1970-1-1");
                       CTime timeHelper;
@@ -815,7 +815,7 @@
                       } else if (iTimeVal>0) {
                         timeOffset=iTimeVal;
                       }
-                      CDBDebug("timeOffset=%f", timeOffset);
+                      // CDBDebug("timeOffset=%f", timeOffset);
                       CDF::Dimension *timeDim=new CDF::Dimension();
                       timeDim->name="time";
                       timeDim->setSize(1);
@@ -832,7 +832,7 @@
                       timeVar->setType(CDF_DOUBLE);
                       ((double*)timeVar->data)[0]=timeOffset;
                     } else {
-                      CDBDebug("other dim: %s", dimName.c_str());
+                      // CDBDebug("other dim: %s", dimName.c_str());
                       CT::string dimUnits;
                       CT::string dimVal;
                       double dDimVal;
@@ -854,7 +854,7 @@
                             }
                           }
                           if (fldValue.type==json_double) {
-                            CDBDebug("[ ] dim[%s]: dbl", dimName.c_str(), fldName.c_str());
+                            // CDBDebug("[ ] dim[%s]: dbl", dimName.c_str(), fldName.c_str());
                             if (fldName.equals("value")) {
                               dDimVal=fldValue.u.dbl;
                             }
@@ -867,7 +867,7 @@
                         }
                       }
                         
-                      CDBDebug("%s: %s %s %f %d", dimName.c_str(), dimVal.c_str(), dimUnits.c_str(), dDimVal, iDimVal);
+                      // CDBDebug("%s: %s %s %f %d", dimName.c_str(), dimVal.c_str(), dimUnits.c_str(), dDimVal, iDimVal);
                       CDF::Dimension *dim=new CDF::Dimension();
                       dim->name.copy(dimName);
                       dim->setSize(1);
@@ -879,7 +879,7 @@
                       dimVar->setAttributeText("units", dimUnits.c_str());
                       dimVar->setAttributeText("standard_name", dimName.c_str());
                       dimVar->dimensionlinks.push_back(dim);
-                      CDBDebug("Pushed_back %s dim", dim->name.c_str());  
+                      // CDBDebug("Pushed_back %s dim", dim->name.c_str());  
                       cdfObject->addVariable(dimVar);
                       CDF::allocateData(CDF_DOUBLE,&dimVar->data,dim->length);
                       dimVar->setType(CDF_DOUBLE);
