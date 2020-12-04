@@ -64,13 +64,13 @@
                       std::map<std::string,std::string>::iterator attributeValueItr =  feature->second.paramMap.find(attributeName.c_str());
                       if(attributeValueItr!=feature->second.paramMap.end()){
                         attributeValues[featureNr] = attributeValueItr->second.c_str();
-                        CDBDebug("attributeValues[%d]=%s", featureNr, attributeValues[featureNr].c_str());
+                        // CDBDebug("attributeValues[%d]=%s", featureNr, attributeValues[featureNr].c_str());
                       }
                     }
                   }
                   if(featureInterval->attr.fillcolor.empty()==false){
-                    CDBDebug("feature[%d] %s %s %s", j, featureInterval->attr.fillcolor.c_str(), 
-                             featureInterval->attr.bgcolor.c_str(), featureInterval->attr.label.c_str());;
+                    // CDBDebug("feature[%d] %s %s %s", j, featureInterval->attr.fillcolor.c_str(), 
+                            //  featureInterval->attr.bgcolor.c_str(), featureInterval->attr.label.c_str());;
 //                     std::vector<CImageDataWriter::IndexRange*> ranges=getIndexRangesForRegex(featureInterval->attr.match, attributeValues, numFeatures);
 //                     for (size_t i=0; i<ranges.size(); i++) {
 //                       CDBDebug("feature[%d] %d-%d %s %s %s",ranges[i]->min,ranges[i]->max, featureInterval->attr.fillcolor, featureInterval->attr.bgcolor?featureInterval->attr.bgcolor:"null", featureInterval->attr.label?featureInterval->attr.label:"null");
@@ -109,7 +109,7 @@
           for (std::map<std::string, std::vector<Feature*> >::iterator itf=featureStore.begin();itf!=featureStore.end();++itf){
             std::string fileName= itf->first.c_str();
             if (fileName==name.c_str()) {
-              CDBDebug("Plotting %d features ONLY for %s", featureStore[fileName].size(), fileName.c_str());
+              // CDBDebug("Plotting %d features ONLY for %s", featureStore[fileName].size(), fileName.c_str());
               for (std::vector<Feature*>::iterator feature=featureStore[ fileName].begin();feature!=featureStore[fileName].end(); ++feature) {
                   //FindAttributes for this feature
                   BorderStyle borderStyle = getAttributesForFeature(&(dataSource->getDataObject(0)->features[featureIndex]) ,(*feature)->getId(), styleConfiguration);
@@ -191,7 +191,7 @@
                   
                   std::vector<Polyline>polylines=(*feature)->getPolylines();
                               CT::string idl=(*feature)->getId();
-//                              CDBDebug("feature[%s] %d of %d with %d polylines", idl.c_str(), featureIndex, featureStore[fileName].size(), polylines.size());
+                            //  CDBDebug("feature[%s] %d of %d with %d polylines", idl.c_str(), featureIndex, featureStore[fileName].size(), polylines.size());
                   for(std::vector<Polyline>::iterator itpoly = polylines.begin(); itpoly != polylines.end(); ++itpoly) {
                     float *polyX=itpoly->getLons();
                     float *polyY=itpoly->getLats();
@@ -214,7 +214,7 @@
                         projectedY[cnt]=height-dlat;
                         cnt++;
                       }else{
-                        CDBDebug("status: %d %d [%f,%f]", status, j, tprojectedX, tprojectedY);
+                        // CDBDebug("status: %d %d [%f,%f]", status, j, tprojectedX, tprojectedY);
                         //                         dlat=CCONVERTUGRIDMESH_NODATA;
                         //                         dlon=CCONVERTUGRIDMESH_NODATA;
                       }
