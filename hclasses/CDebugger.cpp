@@ -111,7 +111,7 @@ void * operator new[] (size_t size, char const * file, int line)
   return p;
 }
 
-void operator delete (void * p, char const * file, int line)
+void operator delete (void * p, char const *, int)
 {
   if (Tracer::Ready)
     NewTrace.Remove (p);

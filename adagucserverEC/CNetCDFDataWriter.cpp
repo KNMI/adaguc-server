@@ -731,30 +731,32 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
       }
 
       if(drawFunctionMode == CNetCDFDataWriter_NEAREST){
+        GenericDataWarper genericDataWarper;
         switch(variable->getType()){
-          case CDF_CHAR  :  GenericDataWarper::render<char>  (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_nearest);break;
-          case CDF_BYTE  :  GenericDataWarper::render<char>  (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_nearest);break;
-          case CDF_UBYTE :  GenericDataWarper::render<unsigned char> (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_nearest);break;
-          case CDF_SHORT :  GenericDataWarper::render<short> (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_nearest);break;
-          case CDF_USHORT:  GenericDataWarper::render<ushort>(&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_nearest);break;
-          case CDF_INT   :  GenericDataWarper::render<int>   (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_nearest);break;
-          case CDF_UINT  :  GenericDataWarper::render<uint>  (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_nearest);break;
-          case CDF_FLOAT :  GenericDataWarper::render<float> (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_nearest);break;
-          case CDF_DOUBLE:  GenericDataWarper::render<double>(&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_nearest);break;
+          case CDF_CHAR  :  genericDataWarper.render<char>  (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_nearest);break;
+          case CDF_BYTE  :  genericDataWarper.render<char>  (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_nearest);break;
+          case CDF_UBYTE :  genericDataWarper.render<unsigned char> (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_nearest);break;
+          case CDF_SHORT :  genericDataWarper.render<short> (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_nearest);break;
+          case CDF_USHORT:  genericDataWarper.render<ushort>(&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_nearest);break;
+          case CDF_INT   :  genericDataWarper.render<int>   (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_nearest);break;
+          case CDF_UINT  :  genericDataWarper.render<uint>  (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_nearest);break;
+          case CDF_FLOAT :  genericDataWarper.render<float> (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_nearest);break;
+          case CDF_DOUBLE:  genericDataWarper.render<double>(&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_nearest);break;
         }
       }
       
       if(drawFunctionMode == CNetCDFDataWriter_AVG_RGB){
+        GenericDataWarper genericDataWarper;
         switch(variable->getType()){
-          case CDF_CHAR  :  GenericDataWarper::render<char>  (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_avg_rbg);break;
-          case CDF_BYTE  :  GenericDataWarper::render<char>  (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_avg_rbg);break;
-          case CDF_UBYTE :  GenericDataWarper::render<unsigned char> (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_avg_rbg);break;
-          case CDF_SHORT :  GenericDataWarper::render<short> (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_avg_rbg);break;
-          case CDF_USHORT:  GenericDataWarper::render<ushort>(&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_avg_rbg);break;
-          case CDF_INT   :  GenericDataWarper::render<int>   (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_avg_rbg);break;
-          case CDF_UINT  :  GenericDataWarper::render<uint>  (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_avg_rbg);break;
-          case CDF_FLOAT :  GenericDataWarper::render<float> (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_avg_rbg);break;
-          case CDF_DOUBLE:  GenericDataWarper::render<double>(&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_avg_rbg);break;
+          case CDF_CHAR  :  genericDataWarper.render<char>  (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_avg_rbg);break;
+          case CDF_BYTE  :  genericDataWarper.render<char>  (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_avg_rbg);break;
+          case CDF_UBYTE :  genericDataWarper.render<unsigned char> (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_avg_rbg);break;
+          case CDF_SHORT :  genericDataWarper.render<short> (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_avg_rbg);break;
+          case CDF_USHORT:  genericDataWarper.render<ushort>(&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_avg_rbg);break;
+          case CDF_INT   :  genericDataWarper.render<int>   (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_avg_rbg);break;
+          case CDF_UINT  :  genericDataWarper.render<uint>  (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_avg_rbg);break;
+          case CDF_FLOAT :  genericDataWarper.render<float> (&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_avg_rbg);break;
+          case CDF_DOUBLE:  genericDataWarper.render<double>(&warper,sourceData,&sourceGeo,srvParam->Geo,&settings,&drawFunction_avg_rbg);break;
         }
       }
         

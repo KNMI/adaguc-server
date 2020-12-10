@@ -1295,7 +1295,7 @@ CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *cdfObject,CD
 }
 
 // TODO: Zit hier logica voor de checker?
-CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *cdfObject,CDF::Variable *variable){
+CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *,CDF::Variable *variable){
   if(variable == NULL){
     CDBWarning("Warning no dimension variable specified for dimension ");
     return dtype_none;

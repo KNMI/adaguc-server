@@ -61,8 +61,8 @@ void _printError(const char *pszMessage,...);
 #define CDBErrormessage        _printErrorLine
 #define CDBDebug               _printDebug("[D:%03d:pid%lu: %s, %d in %s] ",logMessageNumber, logProcessIdentifier, __FILE__,__LINE__,className);_printDebugLine
 #define CDBEnterFunction(name) const char *functionName=name;_printDebugLine("D %s, %d class %s: Entering function '%s'",__FILE__,__LINE__,className,functionName);
-#define CDBReturn(id)          {_printDebug("D %s, %d class %s::%s: returns %d\n",__FILE__,__LINE__,className,functionName,id);return id;}
-#define CDBDebugFunction       _printDebug("D %s, %d class %s::%s: ",__FILE__,__LINE__,className,functionName);_printDebugLine
+// #define CDBReturn(id)          {_printDebug("D %s, %d class %s::%s: returns %d\n",__FILE__,__LINE__,className,functionName,id);return id;}
+// #define CDBDebugFunction       _printDebug("D %s, %d class %s::%s: ",__FILE__,__LINE__,className,functionName);_printDebugLine
 #define DEF_ERRORFUNCTION()    static const char *className;
 #define DEF_ERRORMAIN()        static const char *className="main";
 

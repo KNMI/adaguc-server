@@ -69,7 +69,7 @@ private:
   
   
   template <class T>
-  static void drawFunction(int x,int y,T val, void *_settings){
+  static void drawFunction(int x,int y,T val, void *_settings, void *){
     Settings *settings = (Settings*)_settings;
     bool isNodata=false;
     if(settings->hasNodataValue){if((val)==(T)settings->dfNodataValue)isNodata=true;}if(!(val==val))isNodata=true;

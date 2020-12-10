@@ -91,7 +91,7 @@ class CDFHDF5Reader :public CDFReader{
     int readDimensions(){
       return 0;
     }
-    int readAttributes(std::vector<CDF::Attribute *> &attributes,int varID,int natt){
+    int readAttributes(std::vector<CDF::Attribute *> &,int ,int ){
       return 0;
     }
     int readVariables(){
@@ -825,7 +825,7 @@ CDBDebug("Opened dataset %s with id %d from %d",name,datasetID,groupID);
       
       //Loop through all images and set grid_mapping name
       CT::string varName;
-      int variableCounter=1;
+      size_t variableCounter=1;
 
       //This is the image looping section
       {
@@ -1058,6 +1058,7 @@ CDBDebug("convertKNMIHDF5toCF()");
       return HDF5_group;
     }
     void closeH5GroupByName(const char *variableGroupName){
+      CDBError("Warrning %s variableGroupName not used", variableGroupName);
       while(opengroups.size()>0){
         #ifdef CCDFHDF5IO_DEBUG
         CDBDebug("closing with id %d",opengroups.back());
@@ -1065,7 +1066,7 @@ CDBDebug("convertKNMIHDF5toCF()");
         opengroups.pop_back();
       }
     }
-    int _readVariableData(CDF::Variable *var, CDFType type,size_t *start,size_t *count,ptrdiff_t *stride){
+    int _readVariableData(CDF::Variable *var, CDFType type,size_t *start,size_t *count,ptrdiff_t *){
       if(var->data!=NULL){
         CDBWarning("Not reading any data because it is already in memory");
         return 0;

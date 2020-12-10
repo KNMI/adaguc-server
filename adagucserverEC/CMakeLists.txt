@@ -33,6 +33,7 @@ add_library(
     CXMLSerializerInterface.h
     CDataSource.h
     CImgWarpBilinear.h
+    CImgWarpHillShaded.h
     CImgWarpBoolean.h
     CImgWarpNearestNeighbour.h
     CGenericDataWarper.h
@@ -94,6 +95,7 @@ add_library(
     CXMLSerializerInterface.cpp
     CDataSource.cpp
     CImgWarpBilinear.cpp
+    CImgWarpHillShaded.cpp
     CImgWarpBoolean.cpp
     CImgWarpNearestNeighbour.cpp
     CGenericDataWarper.cpp
