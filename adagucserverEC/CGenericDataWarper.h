@@ -16,7 +16,7 @@ class GenericDataWarper{
  private:
   DEF_ERRORFUNCTION();
   template <class T>
-  static int drawTriangle(int *xP,int *yP, T value,int destWidth,int destHeight,void *settings, void (*drawFunction)(int ,int,T,void *settings)){
+  static int drawTriangle(int *xP,int *yP, T value,int destWidth,int destHeight,void *settings, void (*drawFunction)(int ,int,T,void *settings, void *genericDataWarper), void *genericDataWarper){
     
     int W = destWidth;
     int H = destHeight;
@@ -56,7 +56,7 @@ class GenericDataWarper{
       int minx=X1;if(minx>X2)minx=X2;if(minx>X3)minx=X3;
       int maxx=X1;if(maxx<X2)maxx=X2;if(maxx<X3)maxx=X3;
       for(int x=minx;x<maxx+1;x++){
-        drawFunction(x,yP[2],value,settings);
+        drawFunction(x,yP[2],value,settings, genericDataWarper);
       }
       return 1;
     }
@@ -77,7 +77,7 @@ class GenericDataWarper{
           int sx = (x1<0)?0:x1;
           int ex = (x2>W)?W:x2;
           for(int x=sx;x<=ex-1;x++){
-            drawFunction(x,y,value,settings);
+            drawFunction(x,y,value,settings,genericDataWarper);
           }
         }
       }
@@ -96,7 +96,7 @@ class GenericDataWarper{
           int sx = (x1<0)?0:x1;
           int ex = (x2>W)?W:x2;
           for(int x=sx;x<=ex-1;x++){
-            drawFunction(x,y,value,settings);
+            drawFunction(x,y,value,settings,genericDataWarper);
           }
         } 
       }
@@ -108,11 +108,17 @@ class GenericDataWarper{
   
    
   public:
+
+  /* Can be used in drawfunctions */
+  void *sourceData;
+  
+  int sourceDataPX, sourceDataPY,sourceDataWidth,sourceDataHeight;
+
     static int findPixelExtent(int *PXExtentBasedOnSource,CGeoParams*sourceGeoParams,CGeoParams*destGeoParams,CImageWarper*warper);
     
   template <class T>
-  static int render(CImageWarper *warper,void *sourceData,CGeoParams*sourceGeoParams,CGeoParams*destGeoParams,void *drawFunctionSettings,void (*drawFunction)(int ,int,T,void *drawFunctionSettings)){
-        
+  int render(CImageWarper *warper,void *_sourceData,CGeoParams*sourceGeoParams,CGeoParams*destGeoParams,void *drawFunctionSettings,void (*drawFunction)(int ,int,T,void *drawFunctionSettings, void *genericDataWarper)){
+    this->sourceData = _sourceData;
 #ifdef GenericDataWarper_DEBUG
     CDBDebug("render");
 #endif
@@ -189,8 +195,8 @@ class GenericDataWarper{
     CDBDebug("Creating px extent");
 #endif    
     
-    int sourceDataWidth = sourceGeoParams->dWidth;
-    int sourceDataHeight = sourceGeoParams->dHeight;
+    sourceDataWidth = sourceGeoParams->dWidth;
+    sourceDataHeight = sourceGeoParams->dHeight;
     
     int PXExtentBasedOnSource[4];
     
@@ -203,7 +209,7 @@ class GenericDataWarper{
     
     
     if(tryToFindExtend){
-      findPixelExtent(PXExtentBasedOnSource,sourceGeoParams,destGeoParams,warper);
+      // findPixelExtent(PXExtentBasedOnSource,sourceGeoParams,destGeoParams,warper);
 
     }
      
@@ -250,7 +256,9 @@ class GenericDataWarper{
           
           
           if(!skip){
-            T value = ((T*)sourceData)[x+(sourceGeoParams->dHeight-1-y)*sourceGeoParams->dWidth];
+            this->sourceDataPX = x;
+            this->sourceDataPY = sourceGeoParams->dHeight-1-y;
+            T value = ((T*)sourceData)[this->sourceDataPX+(this->sourceDataPY)*sourceGeoParams->dWidth];
             int lx1,lx2,ly1,ly2;
             if(sx1>sx2){lx2=sx1;lx1=sx2;}else{lx2=sx2;lx1=sx1;}
             if(sy1>sy2){ly2=sy1;ly1=sy2;}else{ly2=sy2;ly1=sy1;}
@@ -258,7 +266,7 @@ class GenericDataWarper{
             if(lx2==lx1)lx2++;
             for(int sjy=ly1;sjy<ly2;sjy++){
               for(int sjx=lx1;sjx<lx2;sjx++){
-                drawFunction(sjx,sjy,value,drawFunctionSettings);
+                drawFunction(sjx,sjy,value,drawFunctionSettings, this);
               }
             }
           }
@@ -423,10 +431,11 @@ class GenericDataWarper{
           
           if(doDraw){
             int sourceGridX = x+PXExtentBasedOnSource[0];
-            int sourceGridY = y+PXExtentBasedOnSource[1];
-            T value = ((T*)sourceData)[sourceGridX+(sourceDataHeight-1-sourceGridY)*sourceDataWidth];
-
-            
+            int  sourceGridY = y+PXExtentBasedOnSource[1];
+            this->sourceDataPX = sourceGridX;
+            this->sourceDataPY = (sourceDataHeight-1-sourceGridY);
+            T value = ((T*)sourceData)[ this->sourceDataPX +this->sourceDataPY*sourceDataWidth];
+           
 //             if(sourceGridX ==0||sourceGridX==sourceDataWidth-1||sourceGridY ==0||sourceGridY==sourceDataHeight-1){value=blue;}
 //             if((sourceGridX ==10||sourceGridX==sourceDataWidth-10)&& sourceGridY >10 &&sourceGridY<sourceDataHeight-10){value=yellow;}
 //             if((sourceGridY ==10||sourceGridY==sourceDataHeight-10)&& sourceGridX >10 &&sourceGridX<sourceDataWidth-10){value=yellow;}
@@ -462,7 +471,7 @@ class GenericDataWarper{
 
             xP[2] = dmX;
             yP[2] = dmY;
-            drawTriangle<T>( xP,yP,value,imageWidth,imageHeight,drawFunctionSettings,drawFunction); //bottom
+            drawTriangle<T>( xP,yP,value,imageWidth,imageHeight,drawFunctionSettings,drawFunction, (void*)this); //bottom
 
             xP[0] = dpx3;
             yP[0] = dpy3;
@@ -472,7 +481,7 @@ class GenericDataWarper{
 
             xP[2] = dmX;
             yP[2] = dmY;
-            drawTriangle<T>( xP,yP,value,imageWidth,imageHeight,drawFunctionSettings,drawFunction);//right
+            drawTriangle<T>( xP,yP,value,imageWidth,imageHeight,drawFunctionSettings,drawFunction, (void*)this);//right
 
             xP[0] = dpx3;
             yP[0] = dpy3;
@@ -482,7 +491,7 @@ class GenericDataWarper{
 
             xP[2] = dmX;
             yP[2] = dmY;
-            drawTriangle<T>( xP,yP,value,imageWidth,imageHeight,drawFunctionSettings,drawFunction);//top
+            drawTriangle<T>( xP,yP,value,imageWidth,imageHeight,drawFunctionSettings,drawFunction, (void*)this);//top
 
             xP[0] = dpx1;
             yP[0] = dpy1;
@@ -492,7 +501,7 @@ class GenericDataWarper{
 
             xP[2] = dmX;
             yP[2] = dmY;
-            drawTriangle<T>( xP,yP,value,imageWidth,imageHeight,drawFunctionSettings,drawFunction);//left
+            drawTriangle<T>( xP,yP,value,imageWidth,imageHeight,drawFunctionSettings,drawFunction, (void*)this);//left
 //             for(int vy=-1;vy<2;vy++)for(int vx=-1;vx<2;vx++)
 //             drawFunction(dmX+vx,dmY+vy,1,drawFunctionSettings);
 

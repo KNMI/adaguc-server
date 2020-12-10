@@ -16,6 +16,7 @@
 #define RM_AVG_RGBA    1024
 #define RM_POLYLINE    2048
 #define RM_POINT_LINEARINTERPOLATION 4096
+#define RM_HILLSHADED 8192
 
 #include "CServerConfig_CPPXSD.h"
 #include "CXMLParser.h"

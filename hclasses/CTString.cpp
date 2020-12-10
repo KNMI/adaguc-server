@@ -170,7 +170,7 @@ namespace CT{
   }
 
   char string::charAt(size_t n){
-    if(n<0||n>privatelength)return 0;
+    if(n>privatelength)return 0;
     return (useStack?stackValue:heapValue)[n];
   }
 
@@ -452,12 +452,12 @@ namespace CT{
     int s=-1,e=privatelength;
     const char *value = useStack?stackValue:heapValue;
     for(size_t j=0;j<privatelength;j++){if(value[j]!=' '){s=j;break;}}
-    for(size_t j=privatelength-1;j>=0;j--){if(value[j]!=' '){e=j;break;}}
+    for(size_t j=privatelength-1;j>0;j--){if(value[j]!=' '){e=j;break;}}
     substringSelf(s,e+1);
   }
 
   int string::substringSelf(CT::string *string, size_t start,size_t end){
-    if(start<0||start>=string->privatelength||end-start<=0){
+    if(start>=string->privatelength||end-start<=0){
       copy("");
       return 0;
     }
@@ -560,7 +560,7 @@ namespace CT{
     return t;
   }
   
-  const bool string::empty(){
+  bool string::empty(){
     if(privatelength == 0){
       return true;
     }
@@ -725,4 +725,29 @@ namespace CT{
     if (!hasDotCharacter) return false;
     return true;
   }
+
+  string getHex(unsigned int number) {
+    int hex = number %256;
+    unsigned char a=hex/16;
+    unsigned char b=hex%16;
+    CT::string result = "00";
+    result.setChar(0, a<10?a+48:a+55);
+    result.setChar(1, b<10?b+48:b+55);
+    return result;
+  }
+
+  string string::toHex8() {
+    return getHex(this->toInt());
+  }
+
+  string string::toHex24() {
+    string result;
+    unsigned int value = this->toInt();
+    result.print("%s%s%s",
+      getHex(value %256).c_str(), 
+      getHex((value >>8)%256).c_str(),  
+      getHex((value>>16)%256).c_str());
+    return result;
+  }
+
 }

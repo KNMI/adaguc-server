@@ -37,6 +37,8 @@ std::vector <CT::string> CDBFileScanner::tableNamesDone;
 
 #define CDBFILESCANNER_TILECREATIONFAILED -100
 
+
+
 std::vector <std::string> CDBFileScanner::filesToDeleteFromDB;
 bool CDBFileScanner::isTableAlreadyScanned(CT::string *tableName){
   for(size_t t=0;t<tableNamesDone.size();t++){
@@ -309,7 +311,7 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource,int &removeNonE
 
 int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFiles,std::vector <std::string> *fileList,int scanFlags){
 //  CDBDebug("DBLoopFiles");
-  bool verbose = false;
+  
   CT::string query;
   CDFObject *cdfObject = NULL;
   int status = 0;
@@ -508,15 +510,6 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
           CDBDebug("fileExistsInDB == 0");
           #endif
             try{
-              
-        
-              if(d==0){
-                if(verbose)CDBDebug("Adding: %zu/%zu %s\t %s",
-                j,
-                fileList->size(),
-                dimensionTextList.c_str(),
-                (*fileList)[j].c_str());
-              };
               #ifdef CDBFILESCANNER_DEBUG
               CDBDebug("Creating new CDFObject");
               #endif
@@ -1131,7 +1124,7 @@ std::vector<std::string> CDBFileScanner::searchFileNames(const char * path,CT::s
 }
 
 
-int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
+int CDBFileScanner::createTiles( CDataSource *dataSource,int ){
   CDBDebug("createTiles");
   //bool verbose=false;
               

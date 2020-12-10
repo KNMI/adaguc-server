@@ -35,6 +35,7 @@
 #include "CMakeJSONTimeSeries.h"
 #include "CMakeEProfile.h"
 #include "CReporter.h"
+#include "CImgWarpHillShaded.h"
 #ifndef M_PI
 #define M_PI            3.14159265358979323846  // pi 
 #endif
@@ -1663,6 +1664,18 @@ if(renderMethod==contour){CDBDebug("contour");}*/
   }
   
   /**
+  * Use HillShade renderer
+  */
+  if(renderMethod&RM_HILLSHADED){
+     #ifdef CIMAGEDATAWRITER_DEBUG  
+       CDBDebug("Using CImgWarpHillShaded");
+     #endif
+     imageWarperRenderer = new CImgWarpHillShaded();
+     imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
+     delete imageWarperRenderer;
+  }
+
+  /**
    * Use stippling renderer
    */
   if(renderMethod&RM_STIPPLING){
@@ -2468,7 +2481,16 @@ int CImageDataWriter::end(){
             }
             if(e->value.length()>0){
               if(resultFormat==texthtml){
-                resultHTML.printconcat("<td>%s</td><td><b>%s</b></td>",e->long_name.c_str(),e->value.c_str());
+                if (e->long_name.equals("pngdata")) {
+                  CT::string newValue = "";
+                  size_t color = e->value.toInt();
+                  newValue.print("RGB: (%d, %d, %d) / #%s / %s", color %256, (color>>8)%256, (color>>16)%256, e->value.toHex24().c_str(), e->value.c_str());
+                  
+                  resultHTML.printconcat("<td>%s</td><td><b >%s</b><div style=\"background-color:#%s;width:100%;height:30px;\"/></td>",e->long_name.c_str(),newValue.c_str(),e->value.toHex24().c_str());
+                }else{
+                  resultHTML.printconcat("<td>%s</td><td><b>%s</b></td>",e->long_name.c_str(),e->value.c_str());
+                }
+                
               }else{
                 resultHTML.printconcat("  %s %s",e->long_name.c_str(),e->value.c_str());
               }

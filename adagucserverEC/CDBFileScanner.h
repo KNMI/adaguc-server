@@ -51,7 +51,7 @@ private:
   static int DBLoopFiles(CDataSource *dataSource,int removeNonExistingFiles,std::vector <std::string> *fileList ,int scanFlags);
   static std::vector <CT::string> tableNamesDone;
   
-  static void handleDirHasNewFile(std::string a){
+  static void handleDirHasNewFile(std::string ){
   }
   
   static std::vector <std::string> filesToDeleteFromDB;
