@@ -65,7 +65,7 @@ public:
 class CImgWarpNearestRGBA:public CImageWarperRenderInterface{
 private:
   DEF_ERRORFUNCTION();
-  int set(const char *settings){
+  int set(const char *){
     return 0;
   }
   int status;

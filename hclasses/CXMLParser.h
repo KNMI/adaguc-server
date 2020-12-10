@@ -124,6 +124,11 @@ class CXMLParser{
       copy(f);
       return *this;
      }
+
+     XMLElement (XMLElement const& f){
+       if (this == &f) return;
+      copy(f);
+     }
      
      XMLElement();
      

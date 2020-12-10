@@ -51,7 +51,7 @@ class CXMLObjectInterface{
     CT::string value;
     CXMLObjectInterface* pt2Class;
     virtual void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value);
-    virtual void addAttribute(const char *name,const char *value){}
+    virtual void addAttribute(const char *,const char *){}
 };
 
 /**
