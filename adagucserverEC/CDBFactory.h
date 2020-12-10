@@ -29,7 +29,7 @@
 #include "CDBAdapter.h"
 #include "CDBAdapterPostgreSQL.h"
 #include "CDBAdapterSQLLite.h"
-#include "CDBAdapterMongoDB.h"
+
 
 class CDBFactory{
 private:
