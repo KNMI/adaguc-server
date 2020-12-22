@@ -28,6 +28,8 @@ add_library(hclasses
     CReportMessage.cpp
     CReportWriter.cpp
     json_adaguc.cpp
+    utils.h
+    utils.cpp
     test.h
     test.cpp
 )

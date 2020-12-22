@@ -36,6 +36,7 @@
 #include "CMakeEProfile.h"
 #include "CReporter.h"
 #include "CImgWarpHillShaded.h"
+#include "CImgWarpNewBilinear.h"
 #ifndef M_PI
 #define M_PI            3.14159265358979323846  // pi 
 #endif
@@ -1671,6 +1672,18 @@ if(renderMethod==contour){CDBDebug("contour");}*/
        CDBDebug("Using CImgWarpHillShaded");
      #endif
      imageWarperRenderer = new CImgWarpHillShaded();
+     imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
+     delete imageWarperRenderer;
+  }
+
+   /**
+  * Use New bilinear renderer
+  */
+  if(renderMethod&RM_NEWBILINEAR){
+     #ifdef CIMAGEDATAWRITER_DEBUG  
+       CDBDebug("Using CImgWarpNewBilinear");
+     #endif
+     imageWarperRenderer = new CImgWarpNewBilinear();
      imageWarperRenderer->render(&imageWarper,dataSource,drawImage);
      delete imageWarperRenderer;
   }

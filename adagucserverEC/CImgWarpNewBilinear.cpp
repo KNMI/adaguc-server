@@ -23,14 +23,13 @@
  * 
  ******************************************************************************/
 
-#include "CImgWarpHillShaded.h"
+#include "CImgWarpNewBilinear.h"
 #include "CImageDataWriter.h"
 #include "CGenericDataWarper.h"
 
+const char *CImgWarpNewBilinear::className="CImgWarpNewBilinear";
 
-const char *CImgWarpHillShaded::className="CImgWarpHillShaded";
-
-void CImgWarpHillShaded::render(CImageWarper *warper,CDataSource *dataSource,CDrawImage *drawImage){
+void CImgWarpNewBilinear::render(CImageWarper *warper,CDataSource *dataSource,CDrawImage *drawImage){
   CDBDebug("render");
   
   int xDistance,yDistance,discSize,mode;
@@ -75,6 +74,7 @@ void CImgWarpHillShaded::render(CImageWarper *warper,CDataSource *dataSource,CDr
   double bboxWidth = (dataSource->srvParams->Geo->dfBBOX[2]-dataSource->srvParams->Geo->dfBBOX[0]);
   double bboxHeight = (dataSource->srvParams->Geo->dfBBOX[3]-dataSource->srvParams->Geo->dfBBOX[1]);
   GenericDataWarper genericDataWarper;
+  genericDataWarper.useHalfCellOffset = true;
   switch(dataType){
     case CDF_CHAR  :  genericDataWarper.render<char>  (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
     case CDF_BYTE  :  genericDataWarper.render<char>  (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
@@ -103,6 +103,6 @@ void CImgWarpHillShaded::render(CImageWarper *warper,CDataSource *dataSource,CDr
   return;
 }
 
- int CImgWarpHillShaded::set(const char *pszSettings){
+ int CImgWarpNewBilinear::set(const char *pszSettings){
      return 0;
  }
