@@ -25,6 +25,7 @@
 
 #include "CImgWarpBilinear.h"
 #include "CImageDataWriter.h"
+
 #include <gd.h>
 #include <set>
 #ifndef M_PI

@@ -9,7 +9,7 @@ const char *CAutoConfigure::className="CAutoConfigure";
 //#define CAUTOCONFIGURE_DEBUG
 
 int CAutoConfigure::checkCascadedDimensions(const CDataSource *dataSource) {
-  if(dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
+  if(dataSource != NULL && dataSource->dLayerType==CConfigReaderLayerTypeCascaded){
     #ifdef CAUTOCONFIGURE_DEBUG
     CDBDebug("Cascaded layers cannot have dimensions at the moment");
     #endif
