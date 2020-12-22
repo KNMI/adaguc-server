@@ -277,6 +277,7 @@ int CImageWarper::reprojpoint_inv(CPoint &p){
       //CDBDebug("Check");
       if(outputCRS->equals((*prj)[j]->attr.id.c_str())){
         outputCRS->copy((*prj)[j]->attr.proj4.c_str());
+        outputCRS->concat("+over");
         if((*prj)[j]->LatLonBox.size()==1){
           //if(getMaxExtentBBOX!=NULL)
           {
