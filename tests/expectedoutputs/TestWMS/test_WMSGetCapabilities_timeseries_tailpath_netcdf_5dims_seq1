@@ -15,7 +15,7 @@
         <KeywordList>
             <Keyword>view</Keyword>
             <Keyword>infoMapAccessService</Keyword>
-            <Keyword>ADAGUCServer version 2.0.37, of Nov 30 2018 09:30:55 </Keyword>
+            <Keyword>ADAGUCServer version 2.5.4, of Dec 22 2020 15:30:04 </Keyword>
         </KeywordList>
         <OnlineResource xlink:type="simple" xlink:href="SERVICE=WMS&amp;"/>
         <ContactInformation>
@@ -78,7 +78,7 @@
 <CRS>EPSG:900913</CRS>
 <CRS>EPSG:4326</CRS>
 <BoundingBox CRS="EPSG:3411" minx="-399240949.703126" miny="-399607437.540236" maxx="399487065.269511" maxy="398879979.546020" />
-<BoundingBox CRS="EPSG:3412" minx="-2868126705.493289" miny="-2870740092.047615" maxx="2869855924.003392" maxy="2865475278.583187" />
+<BoundingBox CRS="EPSG:3412" minx="-2868126705.493289" miny="-2870740092.047614" maxx="2869855924.003391" maxy="2865475278.583187" />
 <BoundingBox CRS="EPSG:3575" minx="-12712149.336113" miny="-12731583.256617" maxx="12735505.704073" maxy="12723911.899582" />
 <BoundingBox CRS="EPSG:3857" minx="-19201993.871211" miny="-22228632.557364" maxx="19982466.888021" maxy="34805382.412607" />
 <BoundingBox CRS="EPSG:4258" minx="-90.488892" miny="-180.494446" maxx="89.511108" maxy="179.505554" />
@@ -103,7 +103,7 @@
   <southBoundLatitude>-90.488892</southBoundLatitude>
   <northBoundLatitude>89.511108</northBoundLatitude>
 </EX_GeographicBoundingBox><BoundingBox CRS="EPSG:3411" minx="-399240949.703126" miny="-399607437.540236" maxx="399487065.269511" maxy="398879979.546020" />
-<BoundingBox CRS="EPSG:3412" minx="-2868126705.493289" miny="-2870740092.047615" maxx="2869855924.003392" maxy="2865475278.583187" />
+<BoundingBox CRS="EPSG:3412" minx="-2868126705.493289" miny="-2870740092.047614" maxx="2869855924.003391" maxy="2865475278.583187" />
 <BoundingBox CRS="EPSG:3575" minx="-12712149.336113" miny="-12731583.256617" maxx="12735505.704073" maxy="12723911.899582" />
 <BoundingBox CRS="EPSG:3857" minx="-19201993.871211" miny="-22228632.557364" maxx="19982466.888021" maxy="34805382.412607" />
 <BoundingBox CRS="EPSG:4258" minx="-90.488892" miny="-180.494446" maxx="89.511108" maxy="179.505554" />
