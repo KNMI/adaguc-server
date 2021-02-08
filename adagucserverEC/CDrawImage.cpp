@@ -915,6 +915,7 @@ int CDrawImage::drawTextArea(int x,int y,const char *fontfile, float size, float
       float textY = 0;
       int width = Geo->dWidth-x;
       int widthOfText,heightOfText;
+      //
       do{
         do{
           text.copy((const char*)(title.c_str()+offset),length);
@@ -925,7 +926,7 @@ int CDrawImage::drawTextArea(int x,int y,const char *fontfile, float size, float
         length++;
         if(length+offset<(int)title.length()){
           int sl = length;
-          while(text.charAt(sl+offset)!=' '&&sl>0){
+          while(text.charAt(sl)!=' '&&sl>0){
             sl--;
           }
           if(sl>0)length=(sl+1);
