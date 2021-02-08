@@ -521,7 +521,7 @@ int CRequest::process_wms_getstyles_request(){
 // //             //posX = (legendNr++)*legendWidth;
 // //
 // //             plotCanvas.draw(posX,posY,0,0,&legendImage);
-// //             plotCanvas.drawText(posX+4,posY+legendHeight-4,srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(),8,0,styleName.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
+// //             plotCanvas.drawText(posX+4,posY+legendHeight-4,srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(),8,0,styleName.c_str(),CColor(0,0,0,255),textBGColor);
 // //
 // //             posX+=legendWidth;
 // //             if(posX>plotCanvas.Geo->dWidth){
@@ -1959,7 +1959,7 @@ int CRequest::process_all_layers(){
         }
         if(measurePerformance){StopWatch_Stop("Finished imagewarper");}
 
-
+        CColor textBGColor = CColor(255,255,255,0); /* TODO: 2021-01-12, Maarten Plieger: Should make the text background configurable */
 
         int textY=6;
         //int prevTextY=0;
@@ -1967,7 +1967,7 @@ int CRequest::process_all_layers(){
           if(srvParam->cfg->WMS[0]->TitleFont.size()>0){
             float fontSize=parseFloat(srvParam->cfg->WMS[0]->TitleFont[0]->attr.size.c_str());
             textY+=int(fontSize);
-            textY+=imageDataWriter.drawImage.drawTextArea(6,textY,srvParam->cfg->WMS[0]->TitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapTitle.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
+            textY+=imageDataWriter.drawImage.drawTextArea(6,textY,srvParam->cfg->WMS[0]->TitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapTitle.c_str(),CColor(0,0,0,255),textBGColor);
             //textY+=12;
           }
         }
@@ -1975,7 +1975,7 @@ int CRequest::process_all_layers(){
           if(srvParam->cfg->WMS[0]->SubTitleFont.size()>0){
             float fontSize=parseFloat(srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.size.c_str());
             // textY+=int(fontSize)/5;
-            textY+=imageDataWriter.drawImage.drawTextArea(6,textY,srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapSubTitle.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
+            textY+=imageDataWriter.drawImage.drawTextArea(6,textY,srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapSubTitle.c_str(),CColor(0,0,0,255),textBGColor);
             //textY+=8;
           }
         }
@@ -1990,7 +1990,7 @@ int CRequest::process_all_layers(){
             float fontSize=parseFloat(srvParam->cfg->WMS[0]->DimensionFont[0]->attr.size.c_str());
             textY+=int(fontSize*1.2);
             message.print("%s: %s",dataSource->requiredDims[d]->name.c_str(),dataSource->requiredDims[d]->value.c_str());
-            imageDataWriter.drawImage.drawText(6,textY,srvParam->cfg->WMS[0]->DimensionFont[0]->attr.location.c_str(),fontSize,0,message.c_str(),CColor(0,0,0,255),CColor(255,255,255,100));
+            imageDataWriter.drawImage.drawText(6,textY,srvParam->cfg->WMS[0]->DimensionFont[0]->attr.location.c_str(),fontSize,0,message.c_str(),CColor(0,0,0,255),textBGColor);
             textY+=4;
           }
         }
