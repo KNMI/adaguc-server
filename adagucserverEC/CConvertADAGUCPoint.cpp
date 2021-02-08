@@ -26,6 +26,7 @@
 #include "CConvertADAGUCPoint.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
+#include "CConvertADAGUCPoint_convert_BIRA_IASB_NETCDF.cpp"
 // #define CCONVERTADAGUCPOINT_DEBUG
 // #define MEASURETIME
 const char *CConvertADAGUCPoint::className="CConvertADAGUCPoint";
@@ -90,69 +91,10 @@ void CConvertADAGUCPoint::lineInterpolated(float *grid , int W,int H, int startX
   
 }
 
-void CConvertADAGUCPoint::convert_BIRA_IASB_NETCDF(CDFObject *cdfObject) {
-  try{
-    if (cdfObject->getAttribute("source")->toString().equals("BIRA-IASB NETCDF") && cdfObject->getVariableNE("obs") == NULL){
-      CT::string timeString = cdfObject->getAttribute("measurement_time")->toString();
-      cdfObject->setAttributeText("featureType", "point");
-      CDF::Variable *time= cdfObject->getVariable("time");
-      CDF::Dimension*dim= cdfObject->getDimension("time");
-      dim->name="obs";
-      time->name="obs";
-      
-
-      CDF::Dimension*realTimeDim;
-      CDF::Variable*realTimeVar;
-      
-      realTimeDim=new CDF::Dimension();
-      realTimeDim->name="time";
-      realTimeDim->setSize(1);
-      cdfObject->addDimension(realTimeDim);
-      realTimeVar = new CDF::Variable();
-      realTimeVar->setType(CDF_DOUBLE);
-      realTimeVar->name.copy("time");
-      realTimeVar->setAttributeText("standard_name", "time");
-      realTimeVar->setAttributeText("units", "seconds since 1970-01-01 0:0:0");
-      realTimeVar->isDimension=true;
-      realTimeVar->dimensionlinks.push_back(realTimeDim);
-      cdfObject->addVariable(realTimeVar);
-      CDF::allocateData(CDF_DOUBLE,&realTimeVar->data,realTimeDim->length);
-      CTime ctime;
-      ctime.init("seconds since 1970",NULL);
-      ((double*)realTimeVar->data)[0] = ctime.dateToOffset( ctime.freeDateStringToDate(timeString));
-      for(size_t v=0;v<cdfObject->variables.size();v++){
-        CDF::Variable *var = cdfObject->variables[v];
-        if(var->isDimension==false){
-          if(!var->name.equals("time2D")&&
-            !var->name.equals("time")&&
-            !var->name.equals("lon")&&
-            !var->name.equals("lat")&&
-            !var->name.equals("x")&&
-            !var->name.equals("y")&&
-            !var->name.equals("lat_bnds")&&
-            !var->name.equals("lon_bnds")&&
-            !var->name.equals("custom")&&
-            !var->name.equals("projection")&&
-            !var->name.equals("product")&&
-            !var->name.equals("iso_dataset")&&
-            !var->name.equals("tile_properties")&&
-            !var->name.equals("forecast_reference_time")
-          ){
-            var->dimensionlinks.push_back(realTimeDim);
-          }
-        }
-      }
-      // CDBDebug("%s", CDF::dump(cdfObject).c_str());
-
-    }
-  }catch(int e){
-  }
-}
-
 
 int CConvertADAGUCPoint::checkIfADAGUCPointFormat(CDFObject *cdfObject) {
   /* Some conversions for non ADAGUC point data */
-  convert_BIRA_IASB_NETCDF(cdfObject);
+  CConvertADAGUCPoint_convert_BIRA_IASB_NETCDF(cdfObject);
     
   try{
     if(cdfObject->getAttribute("featureType")->toString().equals("timeSeries")==false&&cdfObject->getAttribute("featureType")->toString().equals("point")==false)return 1;
@@ -325,21 +267,14 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
       if(pointVar->dimensionlinks[d]->name.equals("station")==true){
         skip = true;
       }
-      // if(d == 0 && pointVar->dimensionlinks[d]->name.equals("time") == false){
-      //   skip = true;
-      // }
       if(!skip){
         new2DVar->dimensionlinks.push_back( pointVar->dimensionlinks[d]);
       }
     }
+
     
-    //if(dimT!=NULL)new2DVar->dimensionlinks.push_back(dimT);
     new2DVar->dimensionlinks.push_back(dimY);
     new2DVar->dimensionlinks.push_back(dimX);
-    
-    
-    //new2DVar->setType(pointVar->getType());
-    
     
     new2DVar->setType(CDF_FLOAT);
     
