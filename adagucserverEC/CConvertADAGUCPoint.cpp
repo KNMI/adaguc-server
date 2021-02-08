@@ -325,9 +325,9 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader( CDFObject *cdfObject ){
       if(pointVar->dimensionlinks[d]->name.equals("station")==true){
         skip = true;
       }
-      if(d == 0 && pointVar->dimensionlinks[d]->name.equals("time") == false){
-        skip = true;
-      }
+      // if(d == 0 && pointVar->dimensionlinks[d]->name.equals("time") == false){
+      //   skip = true;
+      // }
       if(!skip){
         new2DVar->dimensionlinks.push_back( pointVar->dimensionlinks[d]);
       }
