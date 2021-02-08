@@ -235,18 +235,29 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource){
                   throw(e);
                 }
 
-                CServerConfig::XMLE_Dimension *xmleDim=new CServerConfig::XMLE_Dimension();
-                dataSource->cfgLayer->Dimension.push_back(xmleDim);
-                xmleDim->value.copy("reference_time");
-                xmleDim->attr.name.copy(cdfObject->variables[j]->name.c_str());
-                xmleDim->attr.units.copy(units.c_str());
-                //Store the data in the db for quick access.
-                CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->storeDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(),layerIdentifier.c_str(),cdfObject->variables[j]->name.c_str(),"reference_time",units.c_str());
-#ifdef CAUTOCONFIGURE_DEBUG
-                CDBDebug("[OK] From DB: Stored dim %s-%s for layer %s", xmleDim->value.c_str(),xmleDim->attr.name.c_str(),layerTableId.c_str());
-#endif
+                /* But only add if it is not already added */
+                bool forecastRefererenceIsAlreadyThere = false;
+                for (size_t check = 0; check < dataSource->cfgLayer->Dimension.size(); check+=1) {
+                   if (dataSource->cfgLayer->Dimension[check]->value.equals("reference_time")){
+                     CDBDebug("Found forecast_reference_time variable with name [%s], but it is already configured.",cdfObject->variables[j]->name.c_str());
+                     forecastRefererenceIsAlreadyThere = true;
+                     break;
+                   }
+                }
+                if (!forecastRefererenceIsAlreadyThere){
+                  CServerConfig::XMLE_Dimension *xmleDim=new CServerConfig::XMLE_Dimension();
+                  dataSource->cfgLayer->Dimension.push_back(xmleDim);
+                  xmleDim->value.copy("reference_time");
+                  xmleDim->attr.name.copy(cdfObject->variables[j]->name.c_str());
+                  xmleDim->attr.units.copy(units.c_str());
+                  //Store the data in the db for quick access.
+                  CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->storeDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(),layerIdentifier.c_str(),cdfObject->variables[j]->name.c_str(),"reference_time",units.c_str());
+  #ifdef CAUTOCONFIGURE_DEBUG
+                  CDBDebug("[OK] From DB: Stored dim %s-%s for layer %s", xmleDim->value.c_str(),xmleDim->attr.name.c_str(),layerTableId.c_str());
+  #endif
 
-                //status = DB->query(query.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",query.c_str());throw(__LINE__); }
+                  //status = DB->query(query.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",query.c_str());throw(__LINE__); }
+                }
               }
             }catch(int e){
             }
