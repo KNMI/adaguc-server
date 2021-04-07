@@ -121,10 +121,8 @@ public:
     this->continuousInterval=continuousInterval;
     
     if(_textFormat!=NULL){
-      if(strlen(_textFormat)>1){
-        this->textFormat=_textFormat;
-        return;
-      }
+      this->textFormat=_textFormat;
+      return;
     }
     
     float fracPart=continuousInterval-int(continuousInterval);
