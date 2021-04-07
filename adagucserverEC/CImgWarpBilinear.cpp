@@ -969,25 +969,32 @@ void CImgWarpBilinear::traverseLine(CDrawImage * drawImage,DISTANCEFIELDTYPE *di
   // textLocations->clear();
   /* Now draw this line */  
   drawImage->moveTo(lineSegmentsX[0], lineSegmentsY[0]);
+
+  bool doDrawText = !contourDefinition->textFormat.empty();
+
   bool textSkip = false;
   bool textOn = false;
 
   for(int j=0; j < lineSegmentCounter; j++){
-    if (j%50 == 0 && j+5 <lineSegmentCounter) {
-      textOn = false;
-      if(IsTextTooClose(textLocations,lineSegmentsX[j],lineSegmentsY[j])==false){
-        textSkip = false;
-        textLocations->push_back(Point(lineSegmentsX[j],lineSegmentsY[j]));
-        this->drawTextForContourLines(drawImage, contourDefinition, lineSegmentsX[j+3],lineSegmentsY[j+3],lineSegmentsX[j+4],lineSegmentsY[j+4], textLocations, binnedLineSegmentsValue,textColor);
-        textOn = true;
-      } else {
-        textSkip = true;
+    if (doDrawText) {
+      if (j%50 == 0 && j+5 <lineSegmentCounter) {
+        textOn = false;
+        if(IsTextTooClose(textLocations,lineSegmentsX[j],lineSegmentsY[j])==false){
+          textSkip = false;
+          textLocations->push_back(Point(lineSegmentsX[j],lineSegmentsY[j]));
+          this->drawTextForContourLines(drawImage, contourDefinition, lineSegmentsX[j+3],lineSegmentsY[j+3],lineSegmentsX[j+4],lineSegmentsY[j+4], textLocations, binnedLineSegmentsValue,textColor);
+          textOn = true;
+        } else {
+          textSkip = true;
+        }
       }
-    }
-    if (j%50 == 0 && textOn && !textSkip){
-      drawImage->endLine();
-    }
-    if (j%50 > 5 || textSkip){
+      if (j%50 == 0 && textOn && !textSkip){
+        drawImage->endLine();
+      }
+      if (j%50 > 5 || textSkip){
+        drawImage->lineTo(lineSegmentsX[j],lineSegmentsY[j], lineWidth,lineColor);
+      }
+    } else {
       drawImage->lineTo(lineSegmentsX[j],lineSegmentsY[j], lineWidth,lineColor);
     }
   }
