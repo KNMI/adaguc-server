@@ -49,7 +49,6 @@ CServerParams::CServerParams(){
   showScaleBarInImage = false;
   figWidth=-1;
   figHeight=-1;
-
 }
 
 CServerParams::~CServerParams(){
@@ -291,6 +290,22 @@ bool CServerParams::isAutoResourceCacheEnabled() const {
   return false;
 }
 
+
+char CServerParams::debugLoggingIsEnabled = -1; // Not configured yet, 1 means enabled, 0 means disabled
+
+bool CServerParams::isDebugLoggingEnabled() const {
+  if (debugLoggingIsEnabled == 0) return false;
+  else if (debugLoggingIsEnabled == 1) return true;
+  else if (cfg->Logging.size() > 0){
+    if (cfg->Logging[cfg->Logging.size()-1]->attr.debug.equals("false")){
+      debugLoggingIsEnabled = 0;
+      return false;
+    }
+
+  }
+  debugLoggingIsEnabled = 1;
+  return true;
+}
 
 bool CServerParams::isAutoOpenDAPResourceEnabled(){
   if (this->datasetLocation.empty() == false){

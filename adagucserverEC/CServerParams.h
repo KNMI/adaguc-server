@@ -71,6 +71,7 @@ class CServerParams{
     
     CT::string _onlineResource;
     static int dataRestriction;
+    static char debugLoggingIsEnabled;
   public:
     double dfResX,dfResY;
     int dFound_BBOX;
@@ -184,6 +185,12 @@ class CServerParams{
      * @return true if enablecache attribute in AutoResource is undefined or set to true 
      */
     bool isAutoResourceCacheEnabled() const;
+
+    /**
+     * Function which checks whether logging should be done
+     * @return true if logging is enabled
+     */
+    bool isDebugLoggingEnabled() const;
     
     /**
      * Function which can be used to check whether automatic resources have been enabled or not
