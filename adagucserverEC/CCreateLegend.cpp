@@ -418,7 +418,7 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage,
 
   double scaling = dataSource->getScaling();
   
-  legendImage->crop(5*scaling);
+  legendImage->crop(4*scaling);
   if (rotate) {
     CDBDebug("rotate");
     legendImage->rotate();

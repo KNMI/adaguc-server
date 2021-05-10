@@ -977,14 +977,14 @@ void CImgWarpBilinear::traverseLine(CDrawImage * drawImage,DISTANCEFIELDTYPE *di
   bool textOn = false;
 
   int drawTextAtEveryNPixels = 50 * int(scaling);
-  int drawTextAngleNSteps = 1+int(scaling);
-  int drawTextAngleNSteps5 = 5 * int(scaling);
+  int drawTextAngleNSteps = 4;
+  int drawTextAngleNSteps5 = 6 * int(scaling);
 
   float scaledLineWidth = lineWidth * scaling;
 
   for(int j=0; j < lineSegmentCounter; j++){
     if (doDrawText) {
-      if (j%drawTextAtEveryNPixels == 0 && j+3 <lineSegmentCounter) {
+      if (j%drawTextAtEveryNPixels == drawTextAngleNSteps && j+drawTextAngleNSteps <lineSegmentCounter) {
         textOn = false;
         if(IsTextTooClose(textLocations,lineSegmentsX[j],lineSegmentsY[j])==false){
           textSkip = false;
@@ -995,7 +995,7 @@ void CImgWarpBilinear::traverseLine(CDrawImage * drawImage,DISTANCEFIELDTYPE *di
           textSkip = true;
         }
       }
-      if (j%drawTextAtEveryNPixels == 0 && textOn && !textSkip){
+      if (j%drawTextAtEveryNPixels == drawTextAngleNSteps && textOn && !textSkip){
         drawImage->endLine();
       }
       if (j%drawTextAtEveryNPixels > drawTextAngleNSteps5 || textSkip){
