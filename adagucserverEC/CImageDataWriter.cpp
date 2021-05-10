@@ -3702,8 +3702,8 @@ int CImageDataWriter::drawText(int x,int y,const char * fontlocation, float size
               
     }
     
-int CImageDataWriter::createScaleBar(CGeoParams *geoParams,CDrawImage *scaleBarImage){
-  return CCreateScaleBar::createScaleBar(scaleBarImage,geoParams);
+int CImageDataWriter::createScaleBar(CGeoParams *geoParams,CDrawImage *scaleBarImage, float scaling){
+  return CCreateScaleBar::createScaleBar(scaleBarImage, geoParams, scaling);
 }
 
 

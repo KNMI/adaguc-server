@@ -278,7 +278,7 @@ int CCreateLegend::renderDiscreteLegend (CDataSource *dataSource,
             if(textRounding>6)sprintf(szTemp,"%f - %f",v,v+legendInterval);
           }
           int l=strlen(szTemp);
-          legendImage->drawText(((int)cbW+10+pLeft)*scaling,(((boxLowerY))+pTop)-scaling+1,fontLocation, fontSize*scaling, 0, szTemp, 248);
+          legendImage->drawText(((int)cbW+10+pLeft)*scaling,(((boxLowerY))+pTop)-fontSize*scaling/4,fontLocation, fontSize*scaling, 0, szTemp, 248);
         }
         
       }

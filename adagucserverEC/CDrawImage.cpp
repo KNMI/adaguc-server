@@ -1835,3 +1835,13 @@ int CDrawImage::getHeight() {
 int CDrawImage::getWidth() {
   return Geo->dWidth;
 }
+
+const char* CDrawImage::getFontLocation() {
+  return this->TTFFontLocation;
+}
+
+float CDrawImage::getFontSize() {
+  return this->TTFFontSize;
+}
+
+

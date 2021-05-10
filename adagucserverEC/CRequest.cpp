@@ -2040,7 +2040,9 @@ int CRequest::process_all_layers(){
                 status = imageDataWriter.createLegend(dataSources[d],&legendImage);if(status != 0)throw(__LINE__);
                 // legendImage.rectangle(0,0,10000,10000,240);
                 int posX=imageDataWriter.drawImage.Geo->dWidth-(legendImage.Geo->dWidth+padding) - legendOffsetX;
-                int posY=imageDataWriter.drawImage.Geo->dHeight-(legendImage.Geo->dHeight+padding);
+                // int posY=imageDataWriter.drawImage.Geo->dHeight-(legendImage.Geo->dHeight+padding);
+                // int posX=padding*scaling;//imageDataWriter.drawImage.Geo->dWidth-(scaleBarImage.Geo->dWidth+padding);
+                int posY=imageDataWriter.drawImage.Geo->dHeight-(legendImage.Geo->dHeight+padding*scaling);
                 imageDataWriter.drawImage.draw(posX,posY,0,0,&legendImage);
                 numberOflegendsDrawn++;
                 legendOffsetX += legendImage.Geo->dWidth+padding;
@@ -2061,12 +2063,12 @@ int CRequest::process_all_layers(){
           imageDataWriter.drawImage.enableTransparency(true);
           //scaleBarImage.setBGColor(1,0,0);
 
-          scaleBarImage.createImage(&imageDataWriter.drawImage,200,30);
+          scaleBarImage.createImage(&imageDataWriter.drawImage,200*scaling,30*scaling);
 
           //scaleBarImage.rectangle(0,0,scaleBarImage.Geo->dWidth,scaleBarImage.Geo->dHeight,CColor(0,0,0,0),CColor(0,0,0,255));
-          status = imageDataWriter.createScaleBar(dataSources[0]->srvParams->Geo,&scaleBarImage);if(status != 0)throw(__LINE__);
-          int posX=padding;//imageDataWriter.drawImage.Geo->dWidth-(scaleBarImage.Geo->dWidth+padding);
-          int posY=imageDataWriter.drawImage.Geo->dHeight-(scaleBarImage.Geo->dHeight+padding);
+          status = imageDataWriter.createScaleBar(dataSources[0]->srvParams->Geo,&scaleBarImage, scaling);if(status != 0)throw(__LINE__);
+          int posX=padding*scaling;//imageDataWriter.drawImage.Geo->dWidth-(scaleBarImage.Geo->dWidth+padding);
+          int posY=imageDataWriter.drawImage.Geo->dHeight-(scaleBarImage.Geo->dHeight+padding*scaling);
           //posY-=50;
           //imageDataWriter.drawImage.rectangle(posX,posY,scaleBarImage.Geo->dWidth+posX+1,scaleBarImage.Geo->dHeight+posY+1,CColor(255,255,255,180),CColor(255,255,255,0));
           imageDataWriter.drawImage.draw(posX,posY,0,0,&scaleBarImage);
@@ -3249,7 +3251,7 @@ int CRequest::process_querystring(){
       drawImage.createImage(300,30);
       drawImage.create685Palette();
       try{
-        CCreateScaleBar::createScaleBar(&drawImage,srvParam->Geo);
+        CCreateScaleBar::createScaleBar(&drawImage,srvParam->Geo, 1);
       }catch(int e){
         CDBError("Exception %d",e);
         return 1;
