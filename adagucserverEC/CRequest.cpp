@@ -1966,6 +1966,8 @@ int CRequest::process_all_layers(){
         if(srvParam->mapTitle.length()>0){
           if(srvParam->cfg->WMS[0]->TitleFont.size()>0){
             float fontSize=parseFloat(srvParam->cfg->WMS[0]->TitleFont[0]->attr.size.c_str());
+            /* Check if scaling in relation to a reference width/height is needed */
+            fontSize = fontSize * dataSources[dataSourceToUse]->getScaling();
             textY+=int(fontSize);
             textY+=imageDataWriter.drawImage.drawTextArea(6,textY,srvParam->cfg->WMS[0]->TitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapTitle.c_str(),CColor(0,0,0,255),textBGColor);
             //textY+=12;
