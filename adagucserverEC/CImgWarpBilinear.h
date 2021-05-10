@@ -164,8 +164,8 @@ class CImgWarpBilinear:public CImageWarperRenderInterface{
     std::vector<PointD*> minimaPoints;
     std::vector<PointD*> maximaPoints;
     DEF_ERRORFUNCTION();
-    void drawTextForContourLines(CDrawImage * drawImage,ContourDefinition *contourDefinition, int lineX, int lineY,int endX, int endY, std::vector<Point> *textLocations,float value,CColor textColor);
-    void traverseLine(CDrawImage * drawImage,DISTANCEFIELDTYPE *distance,float *valueField,int lineX,int lineY,int dImageWidth,int dImageHeight,float lineWidth,CColor lineColor,CColor textColor,ContourDefinition *contourDefinition,DISTANCEFIELDTYPE lineMask,bool drawText,std::vector<Point> *textLocations);
+    void drawTextForContourLines(CDrawImage * drawImage,ContourDefinition *contourDefinition, int lineX, int lineY,int endX, int endY, std::vector<Point> *textLocations,float value,CColor textColor, const char *fontLocation, float fontSize);
+    void traverseLine(CDrawImage * drawImage,DISTANCEFIELDTYPE *distance,float *valueField,int lineX,int lineY,int dImageWidth,int dImageHeight,float lineWidth,CColor lineColor,CColor textColor,ContourDefinition *contourDefinition,DISTANCEFIELDTYPE lineMask,bool drawText,std::vector<Point> *textLocations, double scaling, const char *fontLocation, float fontSize);
   public:
     CImgWarpBilinear(){
       drawMap=false;
