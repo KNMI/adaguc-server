@@ -417,7 +417,12 @@ private:
    * returns zero on success.
    */
   int setStyle(const char *styleName);
-  
+
+  /**
+   * Returns the amount of need image scaling. This can be the case if the scalewidth property in the RenderSettings is set
+   */
+  double getScaling();
+    
 };
 
 #endif
