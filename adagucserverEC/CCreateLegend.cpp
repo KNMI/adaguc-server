@@ -415,8 +415,10 @@ int CCreateLegend::createLegend(CDataSource *dataSource,CDrawImage *legendImage,
   #ifdef CIMAGEDATAWRITER_DEBUG
   CDBDebug("cropping");
   #endif
+
+  double scaling = dataSource->getScaling();
   
-  legendImage->crop(5);
+  legendImage->crop(5*scaling);
   if (rotate) {
     CDBDebug("rotate");
     legendImage->rotate();
