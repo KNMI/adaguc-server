@@ -977,19 +977,20 @@ void CImgWarpBilinear::traverseLine(CDrawImage * drawImage,DISTANCEFIELDTYPE *di
   bool textOn = false;
 
   int drawTextAtEveryNPixels = 50 * int(scaling);
-  int drawTextAngleNSteps = 4;
-  int drawTextAngleNSteps5 = 6 * int(scaling);
+  int drawTextAngleNSteps = 0;
+  int drawTextAngleNSteps5 = 5 * int(scaling);
+  int drawTextAngleNSteps3 = 3 * int(scaling);
 
   float scaledLineWidth = lineWidth * scaling;
 
   for(int j=0; j < lineSegmentCounter; j++){
     if (doDrawText) {
-      if (j%drawTextAtEveryNPixels == drawTextAngleNSteps && j+drawTextAngleNSteps <lineSegmentCounter) {
+      if (j%drawTextAtEveryNPixels == drawTextAngleNSteps && j+drawTextAngleNSteps5 <lineSegmentCounter) {
         textOn = false;
         if(IsTextTooClose(textLocations,lineSegmentsX[j],lineSegmentsY[j])==false){
           textSkip = false;
           textLocations->push_back(Point(lineSegmentsX[j],lineSegmentsY[j]));
-          this->drawTextForContourLines(drawImage, contourDefinition, lineSegmentsX[j+drawTextAngleNSteps],lineSegmentsY[j+drawTextAngleNSteps],lineSegmentsX[j+drawTextAngleNSteps+1],lineSegmentsY[j+drawTextAngleNSteps+1], textLocations, binnedLineSegmentsValue,textColor, fontLocation, fontSize * scaling);
+          this->drawTextForContourLines(drawImage, contourDefinition, lineSegmentsX[j+drawTextAngleNSteps3],lineSegmentsY[j+drawTextAngleNSteps3],lineSegmentsX[j+drawTextAngleNSteps3+1],lineSegmentsY[j+drawTextAngleNSteps3+1], textLocations, binnedLineSegmentsValue,textColor, fontLocation, fontSize * scaling);
           textOn = true;
         } else {
           textSkip = true;
