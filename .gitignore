@@ -83,6 +83,7 @@ tests/core*
 
 Docker/cert
 Docker/.env
+Docker/letsencrypt
 Docker/keystore.jks
 
 .vscode

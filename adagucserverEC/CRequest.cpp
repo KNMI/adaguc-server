@@ -330,6 +330,10 @@ int CRequest::process_wms_getmetadata_request(){
   return process_all_layers();
 }
 
+CServerParams* CRequest::getServerParams() {
+  return srvParam;
+}
+
 int CRequest::generateGetReferenceTimesDoc(CT::string *result,CDataSource *dataSource){
   bool hasReferenceTimeDimension = false;
   CT::string dimName = "";
