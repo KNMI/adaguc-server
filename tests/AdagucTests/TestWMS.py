@@ -495,7 +495,7 @@ class TestWMS(unittest.TestCase):
 
         status,data,headers = AdagucTestTools().runADAGUCServer(args = ['--updatedb', '--config',  ADAGUC_PATH + '/data/config/adaguc.tests.autostyle.xml'], env = self.env, isCGI = False)
         self.assertEqual(status, 0)
-        status,data,headers = AdagucTestTools().runADAGUCServer("source=test/sample_tas_cmip6_ssp585_preIndustrial_warming2_year.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=tas,geojsonoverlay&WIDTH=600&HEIGHT=300&CRS=EPSG%3A54030&BBOX=-17001389.305075,-8625154.665100,17001389.305075,8625154.665100&STYLES=auto/nearest&FORMAT=image/png&TRANSPARENT=FALSE"
+        status,data,headers = AdagucTestTools().runADAGUCServer("source=test/sample_tas_cmip6_ssp585_preIndustrial_warming2_year.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=tas&WIDTH=600&HEIGHT=300&CRS=EPSG%3A54030&BBOX=-17002000,-8700000,17002000,8700000&STYLES=auto/nearest&FORMAT=image/png32&TRANSPARENT=FALSE"
                                                                  , {'ADAGUC_CONFIG': ADAGUC_PATH + '/data/config/adaguc.tests.autostyle.xml'})
         AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
         self.assertEqual(status, 0)
