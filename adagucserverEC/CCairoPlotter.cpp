@@ -348,14 +348,16 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
       //line_noaa(matrix.xx+x,matrix.xy+y,matrix.yx+x,matrix.yy+y);
       /* start at (300,200) */ 
       pen.x = x * 64; pen.y = ( my_target_height - y ) * 64;
-
+      /* Using the 8859-15 standard */
       for ( n = 0; n < num_chars; n++ ) { /* set transformation */  
         
         
         FT_Set_Transform( face, &matrix, &pen ); /* load glyph image into the slot (erase previous one) */  
         //error = FT_Load_Char( face, text[n], FT_LOAD_RENDER ); 
         //error = FT_Load_Glyph(face, text[n]-29, FT_LOAD_RENDER);
-        int glyphIndex = FT_Get_Char_Index(face,(unsigned char)(text[n]));
+        unsigned char characterToPrint = (unsigned char )text[n];
+        if ( characterToPrint == 194) continue;
+        int glyphIndex = FT_Get_Char_Index(face,(characterToPrint));
         error = FT_Load_Glyph(face,glyphIndex, FT_LOAD_RENDER);
 
         if ( error ){
