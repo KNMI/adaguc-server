@@ -92,6 +92,18 @@ class CServerConfig:public CXMLSerializerInterface{
         else if(equals("force",5,attrname)){attr.force.copy(attrvalue);return;}
       }
     };
+
+    class XMLE_Logging: public CXMLObjectInterface{
+    public:
+      class Cattr{
+      public:
+        CT::string debug;
+      }attr;
+      void addAttribute(const char *attrname,const char *attrvalue){
+        if(equals("debug",5,attrname)){attr.debug.copy(attrvalue);return;}
+
+      }
+    };
     
     class XMLE_Thinning: public CXMLObjectInterface{
     public:
@@ -1259,6 +1271,8 @@ class CServerConfig:public CXMLSerializerInterface{
         std::vector <XMLE_AutoResource*> AutoResource;
         std::vector <XMLE_Dataset*> Dataset;
         std::vector <XMLE_Include*> Include;
+        std::vector <XMLE_Logging*> Logging;
+        
 
         ~XMLE_Configuration(){
           XMLE_DELOBJ(Legend);
@@ -1276,6 +1290,7 @@ class CServerConfig:public CXMLSerializerInterface{
           XMLE_DELOBJ(AutoResource);
           XMLE_DELOBJ(Dataset);
           XMLE_DELOBJ(Include);
+          XMLE_DELOBJ(Logging);
         }
         void addElement(CXMLObjectInterface *baseClass,int rc, const char *name,const char *value){
           CXMLSerializerInterface * base = (CXMLSerializerInterface*)baseClass;
@@ -1298,6 +1313,7 @@ class CServerConfig:public CXMLSerializerInterface{
             else if(equals("AutoResource",12,name)){XMLE_ADDOBJ(AutoResource);}
             else if(equals("Dataset",7,name)){XMLE_ADDOBJ(Dataset);}
             else if(equals("Include",7,name)){XMLE_ADDOBJ(Include);}
+            else if(equals("Logging",7,name)){XMLE_ADDOBJ(Logging);}
           }
           if(pt2Class!=NULL)pt2Class->addElement(baseClass,rc-pt2Class->level,name,value);
         }

@@ -1,4 +1,10 @@
-Version 2.5.6 2021-04-07
+Version 2.5.9 2021-05-11
+    - Added tests for custom projection of Robinson, EPSG:3411 and EPSG:3413 for handling correct visualization of CMIP6 data for IPCC atlas by Predictia and Unican
+
+Version 2.5.8 2021-04-07
+    - Debug logging can be switched off from a dataset configuration
+
+Version 2.5.7 2021-04-07
     - Contourlines can now be rendered without text
 
 Version 2.5.4 2020-11-27

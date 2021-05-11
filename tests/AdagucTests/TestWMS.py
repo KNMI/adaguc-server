@@ -488,3 +488,39 @@ class TestWMS(unittest.TestCase):
         AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
         self.assertEqual(status, 0)
         self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+
+    def test_WMSGetMapRobinsonProjection_sample_tas_cmip6_ssp585_preIndustrial_warming2_year(self):
+        AdagucTestTools().cleanTempDir()
+        filename="test_WMSGetMapRobinsonProjection_sample_tas_cmip6_ssp585_preIndustrial_warming2_year.png"
+
+        status,data,headers = AdagucTestTools().runADAGUCServer(args = ['--updatedb', '--config',  ADAGUC_PATH + '/data/config/adaguc.tests.autostyle.xml'], env = self.env, isCGI = False)
+        self.assertEqual(status, 0)
+        status,data,headers = AdagucTestTools().runADAGUCServer("source=test/sample_tas_cmip6_ssp585_preIndustrial_warming2_year.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=tas&WIDTH=600&HEIGHT=300&CRS=EPSG%3A54030&BBOX=-17002000,-8700000,17002000,8700000&STYLES=auto/nearest&FORMAT=image/png32&TRANSPARENT=FALSE"
+                                                                 , {'ADAGUC_CONFIG': ADAGUC_PATH + '/data/config/adaguc.tests.autostyle.xml'})
+        AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+    
+    def test_WMSGetMapCustomCRSEPSG3412Projection_sample_tas_cmip6_ssp585_preIndustrial_warming2_year(self):
+        AdagucTestTools().cleanTempDir()
+        filename="test_WMSGetMapCustomCRSEPSG3412Projection_sample_tas_cmip6_ssp585_preIndustrial_warming2_year.png"
+
+        status,data,headers = AdagucTestTools().runADAGUCServer(args = ['--updatedb', '--config',  ADAGUC_PATH + '/data/config/adaguc.tests.autostyle.xml'], env = self.env, isCGI = False)
+        self.assertEqual(status, 0)
+        status,data,headers = AdagucTestTools().runADAGUCServer("source=test/sample_tas_cmip6_ssp585_preIndustrial_warming2_year.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=tas,geojsonoverlay&&format=image%2Fpng32&crs=%2Bproj%3Dstere+%2Blat_0%3D-90+%2Blat_ts%3D-70+%2Blon_0%3D0+%2Bk%3D1+%2Bx_0%3D0+%2By_0%3D0+%2Ba%3D6378273+%2Bb%3D6356889.449+%2Bunits%3Dm+%2Bno_defs&width=800&height=600&BBOX=-4630165.372231959,-4523993.082972504,5384973.558397711,4717659.691530302&"
+                                                                 , {'ADAGUC_CONFIG': ADAGUC_PATH + '/data/config/adaguc.tests.autostyle.xml'})
+        AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+
+    def test_WMSGetMapCustomCRSEPSG3413Projection_sample_tas_cmip6_ssp585_preIndustrial_warming2_year(self):
+        AdagucTestTools().cleanTempDir()
+        filename="test_WMSGetMapCustomCRSEPSG3413Projection_sample_tas_cmip6_ssp585_preIndustrial_warming2_year.png"
+
+        status,data,headers = AdagucTestTools().runADAGUCServer(args = ['--updatedb', '--config',  ADAGUC_PATH + '/data/config/adaguc.tests.autostyle.xml'], env = self.env, isCGI = False)
+        self.assertEqual(status, 0)
+        status,data,headers = AdagucTestTools().runADAGUCServer("source=test/sample_tas_cmip6_ssp585_preIndustrial_warming2_year.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=tas,geojsonoverlay&&format=image%2Fpng32&crs=%2Bproj%3Dstere%20%2Blat_0%3D90%20%2Blat_ts%3D70%20%2Blon_0%3D-45%20%2Bk%3D1%20%2Bx_0%3D0%20%2By_0%3D0%20%2Bdatum%3DWGS84%20%2Bunits%3Dm%20%2Bno_defs&width=800&height=600&BBOX=-4630165.372231959,-4523993.082972504,5384973.558397711,4717659.691530302&"
+                                                                 , {'ADAGUC_CONFIG': ADAGUC_PATH + '/data/config/adaguc.tests.autostyle.xml'})
+        AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))

@@ -2,6 +2,7 @@
 
 
 ADAGUC_PORT=443
+ADAGUC_PORT_HTTP=80
 ADAGUC_DATA_DIR=/data/adaguc-data
 ADAGUC_AUTOWMS_DIR=/data/adaguc-autowms
 ADAGUC_DATASET_DIR=/data/adaguc-datasets
@@ -51,6 +52,7 @@ echo "ADAGUC_DATA_DIR=${ADAGUC_DATA_DIR}" >> .env
 echo "ADAGUC_AUTOWMS_DIR=${ADAGUC_AUTOWMS_DIR=}" >> .env
 echo "ADAGUC_DATASET_DIR=${ADAGUC_DATASET_DIR}" >> .env
 echo "ADAGUC_PORT=${ADAGUC_PORT}" >> .env
+echo "ADAGUC_PORT_HTTP=${ADAGUC_PORT_HTTP}" >> .env
 echo "EXTERNALADDRESS=${EXTERNALADDRESS}" >> .env
 echo "############### env file ###############"
 cat .env
