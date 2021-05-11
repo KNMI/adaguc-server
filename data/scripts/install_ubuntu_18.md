@@ -61,3 +61,9 @@ Use this command to kill the service:
 ```
 sudo kill  `ps -ef | grep -v grep | grep java |  grep adaguc-services | grep root | awk '{print $2}'`
 ```
+
+# Reset the db:
+
+```
+sudo -u postgres psql postgres -c "DROP DATABASE adaguc;" ; sudo -u postgres psql postgres -c "CREATE DATABASE adaguc;"
+```

@@ -1,4 +1,4 @@
-FROM python:3.7.0-alpine3.7
+FROM python:3.8.0-alpine3.10
 
 RUN apk update && apk add --no-cache nginx certbot runit gettext openssl
 
