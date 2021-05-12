@@ -329,11 +329,6 @@ class GenericDataWarper{
     
     double avgDX = 0;
     double avgDY = 0;
-    double prevpx1,prevpx2;
-/*    
-    T blue = T(double(255.+0*256.+0*256.*256.+255.*256.*256.*256.));
-    T yellow  = T(double(0.+255.*256.+255.*256.*256.+255.*256.*256.*256.));
-    */
     
     for(int y=0;y<dataHeight;y=y+1){
       for(int x=0;x<dataWidth;x=x+1){
@@ -404,25 +399,6 @@ class GenericDataWarper{
 
           if(x==0)avgDX = px2;
           if(y==0)avgDY = py4;
-
-          /* 
-            If the previous pixel width is suddenly 10 times bigger, 
-            or 10 times smaller, skip it .
-            It is probably wrapped arround the date border.
-          */
-          if (x ==0 && y==0) {
-            prevpx1=px1;
-            prevpx2=px2;
-          }
-          if (fabs(prevpx2-prevpx1) < (fabs(px2-px1)/10.0f)) {
-             doDraw = false;
-          }
-          if (fabs(prevpx2-prevpx1) > (fabs(px2-px1)*10.0f)) {
-             doDraw = false;
-          }
-          
-          prevpx1=px1;
-          prevpx2=px2;
 
           if(x==dataWidth-1){
             if(fabs(avgDX-px1)<fabs(px1-px2)/2){
