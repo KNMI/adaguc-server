@@ -28,7 +28,7 @@
 #ifndef Definitions_H
 #define Definitions_H
 
-#define ADAGUCSERVER_VERSION "2.5.10" // Please also update in the Dockerfile to the same version
+#define ADAGUCSERVER_VERSION "2.5.11" // Please also update in the Dockerfile to the same version
 
 //CConfigReaderLayerType
 #define CConfigReaderLayerTypeUnknown 0
