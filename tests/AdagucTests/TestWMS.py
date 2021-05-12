@@ -560,3 +560,17 @@ class TestWMS(unittest.TestCase):
         AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
         self.assertEqual(status, 0)
         self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+
+
+    # def test_WMSGetMapCustomCRSClippedRobinsonProjection_ipcc_cmip5_tas_historical_subset_nc(self):
+    #     AdagucTestTools().cleanTempDir()
+    #     filename="test_WMSGetMapCustomCRSClippedRobinsonProjection_ipcc_cmip5_tas_historical_subset_nc.nc.png"
+
+    #     status,data,headers = AdagucTestTools().runADAGUCServer(args = ['--updatedb', '--config',  ADAGUC_PATH + '/data/config/adaguc.tests.autostyle.xml'], env = self.env, isCGI = False)
+    #     self.assertEqual(status, 0)
+    #     status,data,headers = AdagucTestTools().runADAGUCServer("source=test/ipcc_cmip5_tas_historical_subset.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=tas&format=image%2Fpng32&crs=%2Bproj%3Drobin+%2Blon_0%3D-150+%2Bx_0%3D0+%2By_0%3D0+%2Bellps%3DWGS84+%2Bdatum%3DWGS84+%2Bunits%3Dm+%2Bno_defs&width=800&height=600&BBOX=-17002000,-8700000,17002000,8700000"
+    #                                                              , {'ADAGUC_CONFIG': ADAGUC_PATH + '/data/config/adaguc.tests.autostyle.xml'})
+    #     AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
+    #     self.assertEqual(status, 0)
+    #     self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+

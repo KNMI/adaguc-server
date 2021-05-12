@@ -329,6 +329,7 @@ class GenericDataWarper{
     
     double avgDX = 0;
     double avgDY = 0;
+    double pLengthD = 0;
     
     for(int y=0;y<dataHeight;y=y+1){
       for(int x=0;x<dataWidth;x=x+1){
@@ -336,6 +337,11 @@ class GenericDataWarper{
         if(skip[p]==false&&skip[p+1]==false&&skip[p+dataWidth+1]==false&&skip[p+dataWidth+2]==false)
         {
           bool doDraw = true;
+          // Order for the quad corners is:
+          //  px1 -- px2
+          //   |      |
+          //  px4 -- px3
+
           double px1 = px[p];
           double px2 = px[p+1];
           double px3 = px[p+dataWidth+2];
@@ -400,6 +406,18 @@ class GenericDataWarper{
           if(x==0)avgDX = px2;
           if(y==0)avgDY = py4;
 
+          // Calculate the diagonal length of the quad.
+          double lengthD = (px3-px1)*(px3-px1) + (py3-py1)*(py3-py1);
+        
+          if (x ==0 && y==0) {
+            pLengthD = lengthD;
+          }
+        
+          // If suddenly the length of the quad is 10 times bigger, we probably have an anomaly and we should not draw it.
+          if (lengthD > pLengthD * 10) {
+            doDraw = false;
+          }
+          
           if(x==dataWidth-1){
             if(fabs(avgDX-px1)<fabs(px1-px2)/2){
               doDraw = false;
@@ -421,8 +439,7 @@ class GenericDataWarper{
             int sourceGridX = x+PXExtentBasedOnSource[0];
             int sourceGridY = y+PXExtentBasedOnSource[1];
             T value = ((T*)sourceData)[sourceGridX+(sourceDataHeight-1-sourceGridY)*sourceDataWidth];
-
-            
+          
 //             if(sourceGridX ==0||sourceGridX==sourceDataWidth-1||sourceGridY ==0||sourceGridY==sourceDataHeight-1){value=blue;}
 //             if((sourceGridX ==10||sourceGridX==sourceDataWidth-10)&& sourceGridY >10 &&sourceGridY<sourceDataHeight-10){value=yellow;}
 //             if((sourceGridY ==10||sourceGridY==sourceDataHeight-10)&& sourceGridX >10 &&sourceGridX<sourceDataWidth-10){value=yellow;}
@@ -493,6 +510,7 @@ class GenericDataWarper{
 //             drawFunction(dmX+vx,dmY+vy,1,drawFunctionSettings);
 
           }
+          pLengthD = lengthD;
         }
       }
     }
