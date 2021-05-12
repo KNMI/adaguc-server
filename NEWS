@@ -1,3 +1,6 @@
+Version 2.5.11 2021-05-12
+    - Correct rendering of IPCC data on North and South pole projections
+
 Version 2.5.9 2021-05-11
     - Added tests for custom projection of Robinson, EPSG:3411 and EPSG:3413 for handling correct visualization of CMIP6 data for IPCC atlas by Predictia and Unican
 
