@@ -2046,8 +2046,21 @@ int CImageDataWriter::addData(std::vector <CDataSource*>&dataSources){
             
             if(imageText.length()>0){
               size_t len=imageText.length();
+              double scaling = dataSource->getScaling();
               //CDBDebug("Watermark: %s",imageText.c_str());
-              drawImage.setTextStroke(imageText.c_str(),len,int(drawImage.Geo->dWidth/2-len*3),drawImage.Geo->dHeight-16,240,254,-1);
+              float fontSize = 10;
+              if(srvParam->cfg->WMS[0]->SubTitleFont.size()>0) {
+                fontSize=parseFloat(srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.size.c_str());
+                fontSize = fontSize * scaling;
+              }
+              drawImage.drawText(
+                int(drawImage.Geo->dWidth/2-len*3),
+                drawImage.Geo->dHeight-2*fontSize,
+                srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(),
+                fontSize,
+                0,
+                imageText.c_str(),CColor(0,0,0,255)
+              );
             }
           }
         }
