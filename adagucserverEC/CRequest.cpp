@@ -1965,37 +1965,42 @@ int CRequest::process_all_layers(){
 
         CColor textBGColor = CColor(255,255,255,0); /* TODO: 2021-01-12, Maarten Plieger: Should make the text background configurable */
 
-        int textY=6;
+        double scaling = dataSources[dataSourceToUse]->getScaling();
+        int textY=(int)(scaling*6);
         //int prevTextY=0;
         if(srvParam->mapTitle.length()>0){
           if(srvParam->cfg->WMS[0]->TitleFont.size()>0){
             float fontSize=parseFloat(srvParam->cfg->WMS[0]->TitleFont[0]->attr.size.c_str());
+            /* Check if scaling in relation to a reference width/height is needed */
+            fontSize = fontSize * scaling;
             textY+=int(fontSize);
-            textY+=imageDataWriter.drawImage.drawTextArea(6,textY,srvParam->cfg->WMS[0]->TitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapTitle.c_str(),CColor(0,0,0,255),textBGColor);
+            textY+=imageDataWriter.drawImage.drawTextArea((int)(scaling*6),textY,srvParam->cfg->WMS[0]->TitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapTitle.c_str(),CColor(0,0,0,255),textBGColor);
             //textY+=12;
           }
         }
         if(srvParam->mapSubTitle.length()>0){
           if(srvParam->cfg->WMS[0]->SubTitleFont.size()>0){
             float fontSize=parseFloat(srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.size.c_str());
+            fontSize = fontSize * scaling;
             // textY+=int(fontSize)/5;
-            textY+=imageDataWriter.drawImage.drawTextArea(6,textY,srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapSubTitle.c_str(),CColor(0,0,0,255),textBGColor);
+            textY+=imageDataWriter.drawImage.drawTextArea((int)(scaling*6),textY,srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(),fontSize,0,srvParam->mapSubTitle.c_str(),CColor(0,0,0,255),textBGColor);
             //textY+=8;
           }
         }
 
         if(srvParam->showDimensionsInImage){
-          textY+=4;
+          textY+=4 * (int)scaling;
           CDataSource *dataSource = dataSources[dataSourceToUse];
           size_t nDims = dataSource->requiredDims.size();
 
           for(size_t d=0;d<nDims;d++){
             CT::string message;
             float fontSize=parseFloat(srvParam->cfg->WMS[0]->DimensionFont[0]->attr.size.c_str());
+            fontSize = fontSize * scaling;
             textY+=int(fontSize*1.2);
             message.print("%s: %s",dataSource->requiredDims[d]->name.c_str(),dataSource->requiredDims[d]->value.c_str());
             imageDataWriter.drawImage.drawText(6,textY,srvParam->cfg->WMS[0]->DimensionFont[0]->attr.location.c_str(),fontSize,0,message.c_str(),CColor(0,0,0,255),textBGColor);
-            textY+=4;
+            textY+=4 * (int)scaling;
           }
         }
 
@@ -2027,7 +2032,7 @@ int CRequest::process_all_layers(){
                 int padding=4;
                 int minimumLegendWidth=100;
                 CDrawImage legendImage;
-                int legendWidth = LEGEND_WIDTH;
+                int legendWidth = LEGEND_WIDTH*scaling;
                 if(legendWidth<minimumLegendWidth)legendWidth=minimumLegendWidth;
                 imageDataWriter.drawImage.enableTransparency(true);
                 legendImage.createImage(&imageDataWriter.drawImage,legendWidth,(imageDataWriter.drawImage.Geo->dHeight / 2)-padding*2+2);
@@ -2037,8 +2042,11 @@ int CRequest::process_all_layers(){
                   legendImage.createGDPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);
                 }
                 status = imageDataWriter.createLegend(dataSources[d],&legendImage);if(status != 0)throw(__LINE__);
+                // legendImage.rectangle(0,0,10000,10000,240);
                 int posX=imageDataWriter.drawImage.Geo->dWidth-(legendImage.Geo->dWidth+padding) - legendOffsetX;
-                int posY=imageDataWriter.drawImage.Geo->dHeight-(legendImage.Geo->dHeight+padding);
+                // int posY=imageDataWriter.drawImage.Geo->dHeight-(legendImage.Geo->dHeight+padding);
+                // int posX=padding*scaling;//imageDataWriter.drawImage.Geo->dWidth-(scaleBarImage.Geo->dWidth+padding);
+                int posY=imageDataWriter.drawImage.Geo->dHeight-(legendImage.Geo->dHeight+padding*scaling);
                 imageDataWriter.drawImage.draw(posX,posY,0,0,&legendImage);
                 numberOflegendsDrawn++;
                 legendOffsetX += legendImage.Geo->dWidth+padding;
@@ -2059,12 +2067,12 @@ int CRequest::process_all_layers(){
           imageDataWriter.drawImage.enableTransparency(true);
           //scaleBarImage.setBGColor(1,0,0);
 
-          scaleBarImage.createImage(&imageDataWriter.drawImage,200,30);
+          scaleBarImage.createImage(&imageDataWriter.drawImage,200*scaling,30*scaling);
 
           //scaleBarImage.rectangle(0,0,scaleBarImage.Geo->dWidth,scaleBarImage.Geo->dHeight,CColor(0,0,0,0),CColor(0,0,0,255));
-          status = imageDataWriter.createScaleBar(dataSources[0]->srvParams->Geo,&scaleBarImage);if(status != 0)throw(__LINE__);
-          int posX=padding;//imageDataWriter.drawImage.Geo->dWidth-(scaleBarImage.Geo->dWidth+padding);
-          int posY=imageDataWriter.drawImage.Geo->dHeight-(scaleBarImage.Geo->dHeight+padding);
+          status = imageDataWriter.createScaleBar(dataSources[0]->srvParams->Geo,&scaleBarImage, scaling);if(status != 0)throw(__LINE__);
+          int posX=padding*scaling;//imageDataWriter.drawImage.Geo->dWidth-(scaleBarImage.Geo->dWidth+padding);
+          int posY=imageDataWriter.drawImage.Geo->dHeight-(scaleBarImage.Geo->dHeight+padding*scaling);
           //posY-=50;
           //imageDataWriter.drawImage.rectangle(posX,posY,scaleBarImage.Geo->dWidth+posX+1,scaleBarImage.Geo->dHeight+posY+1,CColor(255,255,255,180),CColor(255,255,255,0));
           imageDataWriter.drawImage.draw(posX,posY,0,0,&scaleBarImage);
@@ -3247,7 +3255,7 @@ int CRequest::process_querystring(){
       drawImage.createImage(300,30);
       drawImage.create685Palette();
       try{
-        CCreateScaleBar::createScaleBar(&drawImage,srvParam->Geo);
+        CCreateScaleBar::createScaleBar(&drawImage,srvParam->Geo, 1);
       }catch(int e){
         CDBError("Exception %d",e);
         return 1;
