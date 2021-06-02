@@ -493,12 +493,14 @@ class CServerConfig:public CXMLSerializerInterface{
       public:
         class Cattr{
           public:
-            CT::string settings,striding,renderer;
+            CT::string settings,striding,renderer,scalewidth,scalecontours;
         }attr;
         void addAttribute(const char *name,const char *value){
           if(equals("settings",8,name)){attr.settings.copy(value);return;}
           else if(equals("renderer",8,name)){attr.renderer.copy(value);return;}
           else if(equals("striding",8,name)){attr.striding.copy(value);return;}
+          else if(equals("scalewidth",10,name)){attr.scalewidth.copy(value);return;}          
+          else if(equals("scalecontours",13,name)){attr.scalecontours.copy(value);return;}          
         }
     };
     
