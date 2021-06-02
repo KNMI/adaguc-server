@@ -22,8 +22,9 @@ Step 5: Start adaguc-services server:
 Copy a test netcdf file and display:
 `cp ./data/datasets/testdata.nc /data/adaguc-autowms/`
 
-- You can now load the test dataset via http://localhost:8080//wms?source=testdata.nc& in http://geoservices.knmi.nl/viewer2.0
-- Or directly via: http://geoservices.knmi.nl/viewer2.0/?#addlayer('http://localhost:8080//wms?source=testdata.nc&','testdata')
+- You can browse your local instance via autowms using http://adaguc.knmi.nl/adaguc-viewer/?autowms=http://localhost:8080/autowms
+- You can now load the test dataset via http://localhost:8080//wms?source=testdata.nc& in http://adaguc.knmi.nl/adaguc-viewer/
+- Or directly via: http://adaguc.knmi.nl/adaguc-viewer/?#addlayer('http://localhost:8080//wms?source=testdata.nc&','testdata')
 
 ### Test a Dataset configuration with aggregation of MSG HRVIS
 

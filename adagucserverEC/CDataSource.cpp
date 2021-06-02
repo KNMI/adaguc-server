@@ -1433,3 +1433,27 @@ CDataSource *CDataSource::clone(){
 
   return d;
 }
+
+
+double CDataSource::getScaling() {
+  CStyleConfiguration *styleConfiguration = this->getStyle();
+  if (this->getStyle() != NULL && this->getStyle()->styleConfig != NULL) { 
+    if (this->getStyle()->styleConfig->RenderSettings.size() > 0) {
+      double scaleWidth = this->getStyle()->styleConfig->RenderSettings[0]->attr.scalewidth.toDouble();
+      double imageWidth = (double)this->srvParams->Geo->dWidth;
+      return imageWidth/scaleWidth;
+    }
+  }
+  return 1;
+}
+
+double CDataSource::getContourScaling() {
+  CStyleConfiguration *styleConfiguration = this->getStyle();
+  if (this->getStyle() != NULL && this->getStyle()->styleConfig != NULL) { 
+    if (this->getStyle()->styleConfig->RenderSettings.size() > 0) {
+      double scalecontours = this->getStyle()->styleConfig->RenderSettings[0]->attr.scalecontours.toDouble();
+      return scalecontours;
+    }
+  }
+  return 1;
+}
