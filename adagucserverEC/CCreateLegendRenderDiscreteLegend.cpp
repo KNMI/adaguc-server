@@ -10,14 +10,19 @@ int CCreateLegend::renderDiscreteLegend (CDataSource *dataSource,
       #ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("legendtype discrete");
     #endif
+    double scaling = dataSource->getScaling();
     float cbW = 20;//legendWidth/8;
     float legendHeight = legendImage->Geo->dHeight;
-    float cbH = legendHeight-13-13;
+    float cbH = legendHeight-13-13*scaling;
 
     int pLeft=4;
     int pTop=(int)(legendImage->Geo->dHeight-legendHeight);
     char szTemp[256];
     
+    
+    float fontSize=dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.size.toDouble();
+    const char *fontLocation = dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.location.c_str();
+
 
     CT::string textformatting;
 
@@ -217,6 +222,7 @@ int CCreateLegend::renderDiscreteLegend (CDataSource *dataSource,
       
       int classSizeY=((legendHeight-24)/(numClasses));
       if(classSizeY>12)classSizeY=12;
+      classSizeY = (int)((float)classSizeY * scaling);
       
       
       // Rounding of legend text depends on legendInterval
@@ -240,22 +246,22 @@ int CCreateLegend::renderDiscreteLegend (CDataSource *dataSource,
         currentIteration++;
         if (currentIteration> maxIterations)break;
         float v=j;
-        int cY= int((cbH-(classNr-5))+6);
+        int boxLowerY= int((cbH-(classNr-5))+6);
         
         int dDistanceBetweenClasses=(classSizeY-10);
         if(dDistanceBetweenClasses<4){dDistanceBetweenClasses=2;};
         if(dDistanceBetweenClasses>4)dDistanceBetweenClasses=4;
-        cY-=dDistanceBetweenClasses;
-        int cY2=int((cbH-(classNr+classSizeY-5))+6);
+        boxLowerY-=dDistanceBetweenClasses;
+        int boxUpperY=int((cbH-(classNr+classSizeY-5))+6);
         classNr+=classSizeY;
         
         if(j<iMax)
         {
-          int y=CImageDataWriter::getColorIndexForValue(dataSource,v);
+          int colorIndex=CImageDataWriter::getColorIndexForValue(dataSource,v);
           if(classSizeY>4){
-            legendImage->rectangle(4+pLeft,cY2+pTop,int(cbW)+7+pLeft,cY+pTop,(y),248);
+            legendImage->rectangle(pLeft+4*scaling,pTop + boxUpperY,pLeft + (int(cbW)+7)*scaling,pTop+boxLowerY,(colorIndex),248);
           }else{
-            legendImage->rectangle(4+pLeft,cY2+pTop,int(cbW)+7+pLeft,cY+pTop,(y),(y));
+            legendImage->rectangle(pLeft+4*scaling,pTop+boxUpperY,pLeft+ (int(cbW)+7)*scaling,pTop + boxLowerY,(colorIndex),(colorIndex));
           }
           if (textformatting.empty() == false) {
             CT::string textFormat;
@@ -272,7 +278,7 @@ int CCreateLegend::renderDiscreteLegend (CDataSource *dataSource,
             if(textRounding>6)sprintf(szTemp,"%f - %f",v,v+legendInterval);
           }
           int l=strlen(szTemp);
-          legendImage->setText(szTemp,l,(int)cbW+10+pLeft,((cY+cY2)/2)-6+pTop,248,-1);
+          legendImage->drawText(((int)cbW+10+pLeft)*scaling,(((boxLowerY))+pTop)-fontSize*scaling/4,fontLocation, fontSize*scaling, 0, szTemp, 248);
         }
         
       }
@@ -288,7 +294,7 @@ int CCreateLegend::renderDiscreteLegend (CDataSource *dataSource,
     if(dataSource->getDataObject(0)->getUnits().length()>0){
       units.concat(dataSource->getDataObject(0)->getUnits().c_str());
     }
-    if(units.length()>0)legendImage->setText(units.c_str(),units.length(),2+pLeft,int(legendHeight)-14+pTop,248,-1);
+    if(units.length()>0)legendImage->drawText((2+pLeft)*scaling,int(legendHeight)-pTop-scaling*2,fontLocation, fontSize*scaling, 0, units.c_str(), 248);
     //legendImage->crop(4,4);
     return 0;
 }

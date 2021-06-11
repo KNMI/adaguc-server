@@ -911,56 +911,37 @@ int CDrawImage::drawTextArea(int x,int y,const char *fontfile, float size, float
       int offset = 0;
       CT::string title = _text;
       int length = title.length();
-       CCairoPlotter * ftTitle = new CCairoPlotter (Geo->dWidth,Geo->dHeight,(cairo->getByteBuffer()),size,fontfile);
-    // ftTitle->setColor(fgcolor.r,fgcolor.g,fgcolor.b,fgcolor.a);
-     
-//      freeType->drawFilledText(x,y,angle,text);
-    //float textScale = 1;
+      CCairoPlotter * ftTitle = new CCairoPlotter (Geo->dWidth,Geo->dHeight,(cairo->getByteBuffer()),size,fontfile);
       float textY = 0;
       int width = Geo->dWidth-x;
-      int w,h;
-      
+      int widthOfText,heightOfText;
+      //
       do{
-        
-     
         do{
           text.copy((const char*)(title.c_str()+offset),length);
-          ftTitle->getTextSize(w,h,0.0,text.c_str());
+          ftTitle->getTextSize(widthOfText,heightOfText,0.0,text.c_str());
           length--;
           //if(!needsLineBreak)if(w>width-10)needsLineBreak = true;
-        }while(w>width&&length>=0);
+        }while(widthOfText>width&&length>=0);
         length++;
-      
         if(length+offset<(int)title.length()){
           int sl = length;
-          while(text.charAt(sl+offset)!=' '&&sl>0){
+          while(text.charAt(sl)!=' '&&sl>0){
             sl--;
           }
           if(sl>0)length=(sl+1);
         }
-
-//         if(length>int(title.length())){
-//           length = title.length();
-//         }
-//         if(offset>int(title.length())){
-//             break;
-//         }
-//         
         text.copy((const char*)(title.c_str()+offset),length);
+        ftTitle->getTextSize(widthOfText,heightOfText,0.0,text.c_str());
         if(bgcolor.a!=0){
           ftTitle->setColor(bgcolor.r,bgcolor.g,bgcolor.b,0);
           ftTitle->setFillColor(bgcolor.r,bgcolor.g,bgcolor.b,bgcolor.a);
-          ftTitle->filledRectangle(x-3,y+textY+3,x+w+3,y-h-3);
+          ftTitle->filledRectangle(x-3,y+textY+5,x+widthOfText+3,y+textY-3-heightOfText);
         }
         ftTitle->setColor(fgcolor.r,fgcolor.g,fgcolor.b,fgcolor.a);
         ftTitle->drawText(x,y+textY,0.0,text.c_str());textY+=size*1.5;  
         
         offset+=length;
-        //length+=(length);
-//         if(length>int(title.length())-1){
-//           length = title.length();
-//           break;
-//         }
       }while(length<(int)(title.length())-1&&(int)offset<(int)title.length()-1);
       cairo->isAlphaUsed|=ftTitle->isAlphaUsed; //remember ftTile's isAlphaUsed flag
       delete ftTitle;
@@ -1854,3 +1835,13 @@ int CDrawImage::getHeight() {
 int CDrawImage::getWidth() {
   return Geo->dWidth;
 }
+
+const char* CDrawImage::getFontLocation() {
+  return this->TTFFontLocation;
+}
+
+float CDrawImage::getFontSize() {
+  return this->TTFFontSize;
+}
+
+

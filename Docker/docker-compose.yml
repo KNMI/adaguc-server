@@ -51,8 +51,13 @@ services:
         hostname: nginx-adaguc
         ports:
             - "${ADAGUC_PORT}:443"
+            - "${ADAGUC_PORT_HTTP}:80"
         networks:
             - adaguc-network
+        environment: 
+            - "SSL_ADMIN_EMAIL=adaguc@knmi.nl"
+            - "SSL_DOMAINS=${EXTERNALADDRESS}"
+            - "EXTERNAL_HOSTNAME=${EXTERNALADDRESS}"
         volumes:
             - ./letsencrypt:/etc/letsencrypt
             - ./cert:/cert
