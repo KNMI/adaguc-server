@@ -82,6 +82,9 @@ void serverLogFunctionCMDLine(const char *msg){
   printf("%s", msg);
 }
 
+void serverLogFunctionNothing(const char *msg){
+}
+
 
 //Set config file from environment variable ADAGUC_CONFIG
 int setCRequestConfigFromEnvironment(CRequest *request){
@@ -89,6 +92,12 @@ int setCRequestConfigFromEnvironment(CRequest *request){
   if(configfile!=NULL){
     // CDBDebug( "Setting to [%s]",configfile);
     int status = request->setConfigFile(configfile);
+
+    /* Check logging level */
+      if (request->getServerParams()->isDebugLoggingEnabled()==false) {
+      setDebugFunction(serverLogFunctionNothing);
+  }
+
     return status;
   }else{
     CDBError("No configuration file is set. Please set ADAGUC_CONFIG environment variable accordingly.");

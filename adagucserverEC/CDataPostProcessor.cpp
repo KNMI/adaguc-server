@@ -48,30 +48,36 @@ int CDPPAXplusB::execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* da
   if(isApplicable(proc,dataSource)!=CDATAPOSTPROCESSOR_RUNBEFOREREADING){
     return -1;
   }
+  if (dataSource->formatConverterActive) {
+    /**
+     * See issue https://github.com/KNMI/adaguc-server/issues/155
+     * 
+     * Data post processor is meant for grids, not for other types of data like point times series.
+     */
+    CDBError("CDPPAXplusB not possible when a format converter is active.");
+    return -1;
+  }
   CDBDebug("Applying ax+b");
   for(size_t varNr=0;varNr<dataSource->getNumDataObjects();varNr++){
     dataSource->getDataObject(varNr)->hasScaleOffset=true;
     dataSource->getDataObject(varNr)->cdfVariable->setType(CDF_DOUBLE);
-    CDF::Attribute *scale_factor = dataSource->getDataObject(varNr)->cdfVariable->getAttributeNE("scale_factor");
-    CDF::Attribute *add_offset =  dataSource->getDataObject(varNr)->cdfVariable->getAttributeNE("add_offset");
+    
     //Apply offset
     if(proc->attr.b.empty()==false){
-      CT::string b;
-      b.copy(proc->attr.b.c_str());
+      CDF::Attribute *add_offset =  dataSource->getDataObject(varNr)->cdfVariable->getAttributeNE("add_offset");
       if(add_offset==NULL){
-        dataSource->getDataObject(varNr)->dfadd_offset=b.toDouble();
+        dataSource->getDataObject(varNr)->dfadd_offset=proc->attr.b.toDouble();
       }else{
-        dataSource->getDataObject(varNr)->dfadd_offset+=b.toDouble();
+        dataSource->getDataObject(varNr)->dfadd_offset+=proc->attr.b.toDouble();
       }
     }
     //Apply scale
     if(proc->attr.a.empty()==false){
-      CT::string a;
-      a.copy(proc->attr.a.c_str());
+      CDF::Attribute *scale_factor = dataSource->getDataObject(varNr)->cdfVariable->getAttributeNE("scale_factor");
       if(scale_factor==NULL){
-        dataSource->getDataObject(varNr)->dfscale_factor=a.toDouble();
+        dataSource->getDataObject(varNr)->dfscale_factor=proc->attr.a.toDouble();
       }else{
-        dataSource->getDataObject(varNr)->dfscale_factor*=a.toDouble();
+        dataSource->getDataObject(varNr)->dfscale_factor*=proc->attr.a.toDouble();
       }
     }
     if(proc->attr.units.empty()==false){
@@ -719,7 +725,7 @@ int CDPPMSGCPPHIWCMask::execute(CServerConfig::XMLE_DataPostProc* proc, CDataSou
 const char *CDPPExecutor::className="CDPPExecutor";
 
 CDPPExecutor::CDPPExecutor(){
-//  CDBDebug("CDPPExecutor");
+  CDBDebug("CDPPExecutor");
   dataPostProcessorList = new  CT::PointerList<CDPPInterface*>();
   dataPostProcessorList->push_back(new CDPPIncludeLayer());
   dataPostProcessorList->push_back(new CDPPAXplusB());
@@ -731,6 +737,9 @@ CDPPExecutor::CDPPExecutor(){
   dataPostProcessorList->push_back(new CDPPToKnots());
   dataPostProcessorList->push_back(new CDPDBZtoRR());
   dataPostProcessorList->push_back(new CDPPAddFeatures());
+  dataPostProcessorList->push_back(new CDPPGoes16Metadata());
+
+  
 }
 
 CDPPExecutor::~CDPPExecutor(){
@@ -744,7 +753,7 @@ const CT::PointerList<CDPPInterface*> *CDPPExecutor::getPossibleProcessors(){
 
 int CDPPExecutor::executeProcessors( CDataSource *dataSource,int mode){
   //const CT::PointerList<CDPPInterface*> *availableProcs = getPossibleProcessors();
-  //CDBDebug("executeProcessors, found %d",dataSource->cfgLayer->DataPostProc.size());
+  CDBDebug("executeProcessors, found %d",dataSource->cfgLayer->DataPostProc.size());
   for(size_t dpi=0;dpi<dataSource->cfgLayer->DataPostProc.size();dpi++){
     CServerConfig::XMLE_DataPostProc * proc = dataSource->cfgLayer->DataPostProc[dpi];
     for(size_t procId = 0;procId<dataPostProcessorList->size();procId++){

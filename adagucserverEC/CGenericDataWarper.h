@@ -414,11 +414,8 @@ class GenericDataWarper{
     double avgDX = 0;
     double avgDY = 0;
     double prevpx1,prevpx2;
-/*   
-/*    
-    T blue = T(double(255.+0*256.+0*256.*256.+255.*256.*256.*256.));
-    T yellow  = T(double(0.+255.*256.+255.*256.*256.+255.*256.*256.*256.));
-    */
+
+    double pLengthD = 0;
     
     for(int y=0;y<dataHeight;y=y+1){
       for(int x=0;x<dataWidth;x=x+1){
@@ -426,6 +423,11 @@ class GenericDataWarper{
         if(skip[p]==false&&skip[p+1]==false&&skip[p+dataWidth+1]==false&&skip[p+dataWidth+2]==false)
         {
           bool doDraw = true;
+          // Order for the quad corners is:
+          //  px1 -- px2
+          //   |      |
+          //  px4 -- px3
+
           double px1 = px[p];
           double px2 = px[p+1];
           double px3 = px[p+dataWidth+2];
@@ -489,6 +491,18 @@ class GenericDataWarper{
 
           if(x==0)avgDX = px2;
           if(y==0)avgDY = py4;
+
+          // Calculate the diagonal length of the quad.
+          double lengthD = (px3-px1)*(px3-px1) + (py3-py1)*(py3-py1);
+        
+          if (x ==0 && y==0) {
+            pLengthD = lengthD;
+          }
+        
+          // If suddenly the length of the quad is 10 times bigger, we probably have an anomaly and we should not draw it.
+          if (lengthD > pLengthD * 10) {
+            doDraw = false;
+          }
           
 
 
@@ -559,6 +573,7 @@ class GenericDataWarper{
             yP[2] = py4;
              drawTriangle<T>( xP,yP,value,imageWidth,imageHeight,drawFunctionSettings,drawFunction, (void*)this, true);
           }
+          pLengthD = lengthD;
         }
       }
     }

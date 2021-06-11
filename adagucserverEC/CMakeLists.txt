@@ -139,6 +139,7 @@ add_library(
     CAreaMapper.cpp
     CSLD.cpp
     CHandleMetadata.cpp
+    CDPPGoes16Metadata.cpp
 )
 
 target_include_directories(adagucserverEC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${Cairo_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS} ${PostgreSQL_INCLUDE_DIRS} ${GDAL_INCLUDE_DIRS})

@@ -224,6 +224,7 @@ private:
     int runRequest();
 
     static void getCacheFileName(CT::string *cacheFileName,CServerParams *srvParam);
+    CServerParams * getServerParams();
  
 
 };
