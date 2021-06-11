@@ -417,7 +417,17 @@ private:
    * returns zero on success.
    */
   int setStyle(const char *styleName);
-  
+
+  /**
+   * Returns the amount of need image scaling for elements like title and legend. This can be the case if the scalewidth property in the RenderSettings is set
+   */
+  double getScaling();
+
+  /**
+   * Returns the amount of need image map scaling for elements lice contours. This can be the case if the scalecontours property in the RenderSettings is set
+   */
+  double getContourScaling();
+    
 };
 
 #endif

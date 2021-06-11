@@ -1,26 +1,27 @@
 #include "CCreateScaleBar.h"
-  int CCreateScaleBar::createScaleBar(CDrawImage *scaleBarImage,CGeoParams *geoParams){
+  int CCreateScaleBar::createScaleBar(CDrawImage *scaleBarImage,CGeoParams *geoParams, float scaling){
       
-    CCreateScaleBar::Props p=CCreateScaleBar::getScaleBarProperties(geoParams);
+    CCreateScaleBar::Props p=CCreateScaleBar::getScaleBarProperties(geoParams, scaling);
   
-    int offsetX=3;
-    int scaleBarHeight = 23;
+
+    int offsetX = int(3.0f * scaling);
+    int scaleBarHeight = int(23.0f * scaling);
  
+    // Draw horizontal base, thick line
+    scaleBarImage->line(offsetX-0.5,scaleBarHeight-2.0f * scaling,p.width*2.0f+offsetX + 0.5,scaleBarHeight-int(2.0f * scaling), scaling * 2,240);
     
-    for(int j=0;j<2;j++){
-      scaleBarImage->line(offsetX,scaleBarHeight-2-j,p.width*2+offsetX,scaleBarHeight-2-j,240);
-    }
-       
-    int subDivXW = p.width/5;
+    // Draw four horizontal smaller subdivisions   
+    float subDivXW = p.width/5.0f;
     for(int j=1;j<5;j++){
-      scaleBarImage->line(offsetX+subDivXW*j,scaleBarHeight-2,offsetX+subDivXW*j,scaleBarHeight-2-3,240);
+      scaleBarImage->line(offsetX+subDivXW*float(j),scaleBarHeight-2.0f*scaling,offsetX+subDivXW*float(j),scaleBarHeight-(5.0f*scaling),scaling * .5,240);
     }
     
-    scaleBarImage->line(offsetX,scaleBarHeight-2,offsetX,scaleBarHeight-2-7,240);
-    scaleBarImage->line(offsetX+p.width,scaleBarHeight-2,offsetX+p.width,scaleBarHeight-2-7,240);
-    scaleBarImage->line(offsetX+p.width*2,scaleBarHeight-2,offsetX+p.width*2,scaleBarHeight-2-7,240);
-    
-    
+    // Draw three bigger divisions
+    scaleBarImage->line(offsetX             ,scaleBarHeight-1.0f*scaling,offsetX             ,scaleBarHeight-9.0f*scaling,scaling * 1,240);
+    scaleBarImage->line(offsetX+p.width*1.0f,scaleBarHeight-2.0f*scaling,offsetX+p.width*1.0f,scaleBarHeight-9.0f*scaling,scaling * 1,240);
+    scaleBarImage->line(offsetX+p.width*2.0f,scaleBarHeight-1.0f*scaling,offsetX+p.width*2.0f,scaleBarHeight-9.0f*scaling,scaling * 1,240);
+
+    // Draw text
     CT::string units="";
     CT::string projection = geoParams->CRS.c_str();
     if(projection.equals("EPSG:3411"))units="meter";
@@ -42,22 +43,24 @@
     
     
     CT::string valueStr;
-    
-    scaleBarImage->drawText(offsetX-2,12,0,"0",240);
+    const char * fontFile = scaleBarImage->getFontLocation();;
+    float fontSize = scaleBarImage->getFontSize()*scaling;
+    scaleBarImage->drawText(offsetX-2.5*scaling,scaleBarHeight-11.0f*scaling,fontFile, fontSize*.7, 0, "0",240);
     
     valueStr.print("%g",(p.mapunits));
-    scaleBarImage->drawText(offsetX+p.width-valueStr.length()*2.5+0,12,0,valueStr.c_str(),240);
-    
+    scaleBarImage->drawText(offsetX+p.width*1.0f-valueStr.length()*(2.0*scaling)+0,scaleBarHeight-11.0f*scaling,fontFile, fontSize*.7,0,valueStr.c_str(),240);
+  
     valueStr.print("%g",(p.mapunits*2));
-    scaleBarImage->drawText(offsetX+p.width*2-valueStr.length()*2.5+0,12,0,valueStr.c_str(),240);
-    
-    scaleBarImage->drawText(offsetX+p.width*2+10,18,0,units.c_str(),240);
+    scaleBarImage->drawText(offsetX+p.width*2.0f-valueStr.length()*(2.0*scaling)+0,scaleBarHeight-11.0f*scaling,fontFile, fontSize*.7,0,valueStr.c_str(),240);
+      
+    scaleBarImage->drawText(offsetX+p.width*2.0f+10,scaleBarHeight-(3.0f*scaling),fontFile, fontSize*.7,0,units.c_str(),240);
+    scaleBarImage->crop(4*scaling);
     return 0;
   }
   
   
-  CCreateScaleBar::Props CCreateScaleBar::getScaleBarProperties(CGeoParams *geoParams){
-    double desiredWidth = 25;
+  CCreateScaleBar::Props CCreateScaleBar::getScaleBarProperties(CGeoParams *geoParams, float scaling){
+    double desiredWidth = 25 * scaling;
     double realWidth = 0;
     double numMapUnits=1./10000000.;
     
@@ -68,7 +71,7 @@
       throw (__LINE__);
     }
     
-    double a = desiredWidth/pixelsPerUnit;
+    double a = (desiredWidth/pixelsPerUnit);
     
     double divFactor=0;
     do{
