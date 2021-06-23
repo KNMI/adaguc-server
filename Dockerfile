@@ -4,7 +4,7 @@ USER root
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="2.5.11" 
+LABEL version="2.5.12" 
 
 ######### First stage (build) ############
 
