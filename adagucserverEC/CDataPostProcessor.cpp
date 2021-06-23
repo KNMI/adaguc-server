@@ -803,6 +803,20 @@ int CDPPExecutor::executeProcessors( CDataSource *dataSource,int mode, double * 
         CDBError("Constraints for DPP %s are not met",dataPostProcessorList->get(procId)->getId());
       }
    
+      /*Will be runned when datasource metadata been loaded */
+      if(mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING){
+        if(code&CDATAPOSTPROCESSOR_RUNBEFOREREADING){
+          try{
+            int status = dataPostProcessorList->get(procId)->execute(proc,dataSource,CDATAPOSTPROCESSOR_RUNBEFOREREADING,  NULL, 0);
+            if(status != 0){
+              CDBError("Processor %s failed RUNBEFOREREADING, statuscode %d",dataPostProcessorList->get(procId)->getId(),status);
+            }
+          }catch(int e){
+            CDBError("Exception in Processor %s failed RUNBEFOREREADING, exceptioncode %d",dataPostProcessorList->get(procId)->getId(),e);
+          }
+        }
+      }
+
       /*Will be runned when datasource data been loaded */
       if(mode == CDATAPOSTPROCESSOR_RUNAFTERREADING){
         if(code&CDATAPOSTPROCESSOR_RUNAFTERREADING){
@@ -1149,6 +1163,7 @@ float CDPDBZtoRR::getRR(float dbZ) {
 }
 
 int CDPDBZtoRR::execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode, double *data, size_t numItems){
+  CDBDebug("CDPDBZtoRR");
   if((isApplicable(proc,dataSource)&mode)==false){
     return -1;
   }
@@ -1173,7 +1188,6 @@ int CDPDBZtoRR::execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dat
     return -1;
   }
   if(mode==CDATAPOSTPROCESSOR_RUNBEFOREREADING){  
-//    dataSource->getDataObject(0)->cdfVariable->setAttributeText("units","mm/hr");
     dataSource->getDataObject(0)->setUnits("mm/hr");
   }
   if(mode==CDATAPOSTPROCESSOR_RUNAFTERREADING){  
