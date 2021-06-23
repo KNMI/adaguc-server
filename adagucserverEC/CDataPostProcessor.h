@@ -51,9 +51,14 @@
     virtual int isApplicable(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource) = 0;
 
     /**
-    * Executes the data postprocessor
+    * Executes the data postprocessor on a datasource, on the full grid
     */
     virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode) = 0;
+
+    /**
+    * Executes the data postprocessor for a given array
+    */
+    virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode, double *data, size_t numItems) = 0;
   };
 
   /**
@@ -66,6 +71,7 @@
     virtual const char *getId();
     virtual int isApplicable(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource);
     virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode);
+    virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode, double *data, size_t numItems){return 1;} // TODO: Still need to implement
   };
   
   /**
@@ -94,6 +100,7 @@
     virtual const char *getId();
     virtual int isApplicable(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource);
     virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode);
+    virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode, double *data, size_t numItems){return 1;} // TODO: Still need to implement
   };
 
   
@@ -114,6 +121,7 @@
     virtual const char *getId();
     virtual int isApplicable(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource);
     virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode);
+    virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode, double *data, size_t numItems){return 1;} // TODO: Still need to implement
   };
 
   /**
@@ -145,6 +153,7 @@
     virtual const char *getId();
     virtual int isApplicable(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource);
     virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode);
+    virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode, double *data, size_t numItems){return 1;} // TODO: Still need to implement
   };
   
   /**
@@ -181,6 +190,7 @@
     virtual const char *getId();
     virtual int isApplicable(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource);
     virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode);
+    virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode, double *data, size_t numItems){return 1;} // TODO: Still need to implement
   };
 
   class CDPPExecutor{
@@ -192,6 +202,7 @@
     ~CDPPExecutor();
     const CT::PointerList<CDPPInterface*> *getPossibleProcessors();
     int executeProcessors( CDataSource *dataSource,int mode);
+    int executeProcessors( CDataSource *dataSource,int mode, double * data, size_t numItems);
   };
   
   /**
@@ -205,6 +216,7 @@
     virtual const char *getId();
     virtual int isApplicable(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource);
     virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode);
+    virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode, double *data, size_t numItems){return 1;} // TODO: Still need to implement
   };
 
   /**
@@ -217,6 +229,7 @@
     virtual const char *getId();
     virtual int isApplicable(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource);
     virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode);
+    virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode, double *data, size_t numItems){return 1;} // TODO: Still need to implement
   };
 
   /**
@@ -230,6 +243,7 @@
     virtual const char *getId();
     virtual int isApplicable(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource);
     virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode);
+    virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode, double *data, size_t numItems);
   };
   
   /**
@@ -243,6 +257,7 @@
     virtual const char *getId();
     virtual int isApplicable(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource);
     virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode);
+    virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode, double *data, size_t numItems){return 1;} // TODO: Still need to implement
   };
   
   
