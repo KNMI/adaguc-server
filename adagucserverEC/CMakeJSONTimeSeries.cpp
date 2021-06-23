@@ -461,7 +461,6 @@ public:
         if(projCacheInfo.isOutsideBBOX == false){
           CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams,(filemapiterator->first).c_str());
           
-
           if(cdfObject->getVariableNE("forecast_reference_time")!=NULL){
             CDBDebug("IS REFERENCE TIME");
             CDF::Dimension *forecastRefDim = new CDF::Dimension();
@@ -552,6 +551,8 @@ public:
               CDBDebug("  %d %s [%d:%d]",i,"",start[i],count[i]);
             }
 #endif       
+
+        
             /* 
              * In case a scale_factor and add_offset attribute is present, we need to read the data into the same datatype as this attribute
              * This allows it to be unpacked properly to the final scaled values 
