@@ -127,16 +127,15 @@ int CDF::Variable::readData(CDFType readType,size_t *_start,size_t *_count,ptrdi
       float fscale = float(scaleFactor);
       float foffset = float(addOffset);
       for(size_t j=0;j<lsize;j++)scaleData[j]=scaleData[j]*fscale+foffset;
-      fillValue=fillValue*fscale+foffset;
-      float f=(float)fillValue;
-      if( hasFillValue)getAttribute("_FillValue")->setData(CDF_FLOAT,&f,1);
+      float newFillValue = fillValue * fscale + foffset;
+      if( hasFillValue)getAttribute("_FillValue")->setData(CDF_FLOAT,&newFillValue,1);
     }
     
     if(scaleType == CDF_DOUBLE){
       double *scaleData = (double*)data;
       for(size_t j=0;j<lsize;j++)scaleData[j]=scaleData[j]*scaleFactor+addOffset;
-      fillValue=fillValue*scaleFactor+addOffset;
-      if( hasFillValue)getAttribute("_FillValue")->setData(CDF_DOUBLE,&fillValue,1);
+      double newFillValue=fillValue*scaleFactor+addOffset;
+      if( hasFillValue)getAttribute("_FillValue")->setData(CDF_DOUBLE,&newFillValue,1);
     }
     //removeAttribute("scale_factor");
     //removeAttribute("add_offset");
