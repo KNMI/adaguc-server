@@ -552,11 +552,17 @@ public:
               CDBDebug("  %d %s [%d:%d]",i,"",start[i],count[i]);
             }
 #endif       
-  
-  /*
-            if(variable->getAttributeNE("scale_factor")!=NULL){
-              readDataAsCDFDouble = true;
-            }*/
+            /* 
+             * In case a scale_factor and add_offset attribute is present, we need to read the data into the same datatype as this attribute
+             * This allows it to be unpacked properly to the final scaled values 
+             */
+            CDF::Attribute *scale_factor = variable->getAttributeNE("scale_factor");
+            if(scale_factor!=NULL) {
+              variable->setType(CDF_FLOAT);
+              if(scale_factor->getType()==CDF_DOUBLE){
+                variable->setType(CDF_DOUBLE);
+              }
+            }
 
             if(readDataAsCDFDouble){
               variable->setType(CDF_DOUBLE);
@@ -572,7 +578,7 @@ public:
               /**
               * DataPostProc: Here our datapostprocessor comes into action!
               */
-              for(size_t dpi=0;dpi<dataSource->cfgLayer->DataPostProc.size();dpi++){
+              for(size_t dpi=0;dpi<dataSource->cfgLayer->DataPostProc.size();dpi++) {
                 CServerConfig::XMLE_DataPostProc * proc = dataSource->cfgLayer->DataPostProc[dpi];
                 //Algorithm ax+b:
                 if(proc->attr.algorithm.equals("ax+b")){
@@ -594,8 +600,10 @@ public:
                 //Apply units:
                 if(proc->attr.units.empty()==false){
                   dataSource->getDataObject(dataObjectNr)->setUnits(proc->attr.units.c_str());
-                }
-            
+                } 
+              }
+              if (readDataAsCDFDouble) {
+                CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource,CDATAPOSTPROCESSOR_RUNAFTERREADING, (double*)variable->data, variable->getSize());
               }
               /* End of data postproc */
 #ifdef CMakeJSONTimeSeries_DEBUG          
@@ -659,14 +667,17 @@ int CMakeJSONTimeSeries::MakeJSONTimeSeries(CDrawImage *drawImage,CImageWarper *
   /**
   * DataPostProc: Here our datapostprocessor comes into action!
   */
-  for(size_t dpi=0;dpi<dataSource->cfgLayer->DataPostProc.size();dpi++){
-    CServerConfig::XMLE_DataPostProc * proc = dataSource->cfgLayer->DataPostProc[dpi];
-    //Algorithm ax+b:
-    if(proc->attr.algorithm.equals("ax+b")){
-      uniqueRequest.readDataAsCDFDouble = true;
-      break;
-    }
+  if (dataSource->cfgLayer->DataPostProc.size() > 0) {
+    uniqueRequest.readDataAsCDFDouble = true;
   }
+  // for(size_t dpi=0;dpi<dataSource->cfgLayer->DataPostProc.size();dpi++){
+  //   CServerConfig::XMLE_DataPostProc * proc = dataSource->cfgLayer->DataPostProc[dpi];
+  //   //Algorithm ax+b:
+  //   if(proc->attr.algorithm.equals("ax+b")){
+  //     uniqueRequest.readDataAsCDFDouble = true;
+  //     break;
+  //   }
+  // }
           
   int numberOfDims = dataSource->requiredDims.size();
   int numberOfSteps = dataSource->getNumTimeSteps();
