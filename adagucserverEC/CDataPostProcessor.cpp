@@ -1,5 +1,6 @@
 #include "CDataPostProcessor.h"
 #include "CRequest.h"
+#include "CDataPostProcessor_ClipMinMax.h"
 
 void writeLogFileLocal(const char * msg){
   char * logfile=getenv("ADAGUC_LOGFILE");
@@ -737,6 +738,7 @@ CDPPExecutor::CDPPExecutor(){
   dataPostProcessorList->push_back(new CDPPToKnots());
   dataPostProcessorList->push_back(new CDPDBZtoRR());
   dataPostProcessorList->push_back(new CDPPAddFeatures());
+  dataPostProcessorList->push_back(new CDPPClipMinMax());
 }
 
 CDPPExecutor::~CDPPExecutor(){
