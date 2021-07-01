@@ -131,5 +131,5 @@ class CGIRunner:
     localenv.update(env)
     status = self.startProcess(cmds,monitor1,localenv,bufsize=8192)
     output.flush()
-    
-    return status, self.headers
+    headersList = self.headers.split("\r\n")
+    return status, [s for s in headersList if s is not "\n" and ":" in s]

@@ -23,7 +23,7 @@ class runAdaguc:
     self.ADAGUC_DATA_DIR=os.getenv('ADAGUC_DATA_DIR', "/data/adaguc-data")
     self.ADAGUC_AUTOWMS_DIR=os.getenv('ADAGUC_AUTOWMS_DIR', "/data/adaguc-autowms")
     self.ADAGUC_DATASET_DIR=os.getenv('ADAGUC_DATASET_DIR', "/data/adaguc-datasets")
-    self.ADAGUC_TMP=os.getenv('ADAGUC_TMP', "/data/adaguc-datasets")
+    self.ADAGUC_TMP=os.getenv('ADAGUC_TMP', "/tmp")
     self.ADAGUC_FONT=os.getenv('ADAGUC_FONT', self.ADAGUC_PATH + "./data/fonts/Roboto-Medium.ttf")
 
   def setAdagucPath(self, newAdagucPath):
