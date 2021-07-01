@@ -329,8 +329,9 @@ for(size_t varNr=0;varNr<sourceImage->getNumDataObjects();varNr++){
    }
    */
   
-    int avgDX = 0;
-//     int avgDY = 0;
+  int avgDX = 0;
+
+  double pLengthD;
 
   for(int y=dPixelExtent[1];y<dPixelExtent[3]-1;y++){
     for(int x=dPixelExtent[0];x<dPixelExtent[2];x++){
@@ -347,18 +348,9 @@ for(size_t varNr=0;varNr<sourceImage->getNumDataObjects();varNr++){
         
         yP[0]=dpDestY[p00]; yP[1]=dpDestY[p01]; yP[2]=dpDestY[p10]; yP[3]=dpDestY[p11];
         xP[0]=dpDestX[p00]; xP[1]=dpDestX[p01]; xP[2]=dpDestX[p10]; xP[3]=dpDestX[p11];
-        
-
         vP[0]=fpValues[p00]; vP[1]=fpValues[p01]; vP[2]=fpValues[p10]; vP[3]=fpValues[p11]; 
-        
-        
-        
         bool doDraw = true;
-       
-                  
         if(x==dPixelExtent[0])avgDX = xP[2];
-//         if(y==dPixelExtent[1])avgDY = yP[3];
-        
         if(x==dPixelExtent[2]-1){
           if(abs(avgDX-xP[0])>dImageWidth/4){
              doDraw= false;
@@ -370,53 +362,26 @@ for(size_t varNr=0;varNr<sourceImage->getNumDataObjects();varNr++){
             }
           }
         }
-//         if(y==dPixelExtent[3]-1){
-//           if(abs(avgDY-yP[0])>0){
-//             if(abs(avgDY-yP[0])<abs(yP[3]-yP[0])/2){
-//               doDraw = false;
-//             }
-//           }
-//         }
-        
-        
-        
 
-        
-        if(doDraw){
-        
-          fillQuadGouraud(valueData,vP,  dImageWidth,dImageHeight, xP,yP);
-        
+           
+          
+        // Calculate the diagonal length of the quad.
+        double lengthD = (xP[3]-xP[0])*(xP[3]-xP[0]) + (yP[3]-yP[0])*(yP[3]-yP[0]);
+      
+        if (x ==0 && y==0) {
+          pLengthD = lengthD;
         }
-//         /*for(int iy=-15;iy<16;iy++){
-//           for(int ix=-15;ix<16;ix++){
-//             if(iy+dpDestY[p00]>0&&ix+dpDestX[p00]>0&&iy+dpDestY[p00]<dImageHeight&&ix+dpDestX[p00]<dImageWidth){
-//               valueData[(iy+dpDestY[p00])*dImageWidth+ix+dpDestX[p00]]=fpValues[p00];
-//             }
-//           }
-//         }*/
+      
+        // If suddenly the length of the quad is 10 times bigger, we probably have an anomaly and we should not draw it.
+        if (lengthD > pLengthD * 10) {
+          doDraw = false;
+        }
+        if(doDraw){
+          fillQuadGouraud(valueData,vP,  dImageWidth,dImageHeight, xP,yP);
+        }
       }
     }
   }
-  
-  
-  /*(for(int y=dPixelExtent[1];y<dPixelExtent[3]-3;y=y+1){
-    for(int x=dPixelExtent[0];x<dPixelExtent[2]-3;x=x+1){
-      size_t p = size_t((x-(dPixelExtent[0]))+((y-(dPixelExtent[1]))*dPixelDestW));
-      size_t p00=p;
-      size_t p10=p+1;
-      size_t p01=p+dPixelDestW;
-      size_t p11=p+1+dPixelDestW;
-      
-      size_t pc00=p;
-      size_t pc01=p+1;
-      size_t pc02=p+2;
-      size_t pc03=p+3;
-      
-      
-      float a = -0.5*fpValues[pc00]+
-      
-    }
-  }*/
 }
 
 //Copy pointerdatabitmap to graphics
