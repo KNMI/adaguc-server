@@ -36,5 +36,6 @@ then
 fi  
 
 echo "Start serving on ${EXTERNALADDRESS}"
-java -jar /adaguc/adaguc-services.jar
+python3 /adaguc/adaguc-server-master/python/python-adaguc-server/main.py 
+
     

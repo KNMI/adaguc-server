@@ -36,13 +36,13 @@ def handleBaseRoute():
   )
   return response
 
-def handleDatasetsRoute(adagucDataSetDir):
+def handleDatasetsRoute(adagucDataSetDir, adagucOnlineResource):
   datasetFiles = [f for f in os.listdir(adagucDataSetDir) if os.path.isfile(os.path.join(adagucDataSetDir, f)) and f.endswith(".xml")]
   datasets = []
   for datasetFile in datasetFiles:
     datasets.append({
       "path": "/adaguc::datasets/" + datasetFile,
-      "adaguc": request.base_url.replace("/autowms", "/wms") + "?dataset=" + datasetFile.replace(".xml","") + "&",
+      "adaguc": adagucOnlineResource + "/adagucserver?dataset=" + datasetFile.replace(".xml","") + "&",
       "name": datasetFile.replace(".xml",""),
       "leaf": True
       })
@@ -64,7 +64,7 @@ def isFileAllowed(fileName):
   if (fileName.endswith(".geojson")): return True;
   if (fileName.endswith(".csv")): return True;
 
-def handleDataRoute(adagucDataDir, urlParamPath):
+def handleDataRoute(adagucDataDir, urlParamPath, adagucOnlineResource):
   subPath = urlParamPath.replace("/adaguc::data/", "")
   subPath = subPath.replace("/adaguc::data", "")
   logging.info("adagucDataDir [%s] and subPath [%s]" % (adagucDataDir, subPath))
@@ -95,7 +95,7 @@ def handleDataRoute(adagucDataDir, urlParamPath):
   for dataFile in dataFiles:
     data.append({
       "path": os.path.join("/adaguc::data", subPath, dataFile),
-      "adaguc": request.base_url.replace("/autowms", "/wms") + "?source=" + urllib.parse.quote_plus(subPath+"/"+dataFile) + "&",
+      "adaguc": adagucOnlineResource + "/adagucserver?source=" + urllib.parse.quote_plus(subPath+"/"+dataFile) + "&",
       "name": dataFile,
       "leaf": True
       })
@@ -107,7 +107,7 @@ def handleDataRoute(adagucDataDir, urlParamPath):
   )
   return response
 
-def handleAutoWMSDIRRoute(adagucAutoWMSDir, urlParamPath):
+def handleAutoWMSDIRRoute(adagucAutoWMSDir, urlParamPath, adagucOnlineResource):
   subPath = urlParamPath.replace("/adaguc::autowms/", "")
   subPath = subPath.replace("/adaguc::autowms", "")
   logging.info("adagucAutoWMSDir [%s] and subPath [%s]" % (adagucAutoWMSDir, subPath))
@@ -138,7 +138,7 @@ def handleAutoWMSDIRRoute(adagucAutoWMSDir, urlParamPath):
   for dataFile in dataFiles:
     data.append({
       "path": os.path.join("/adaguc::autowms",subPath, dataFile),
-      "adaguc": request.base_url.replace( "/autowms", "/wms") + "?source=" + urllib.parse.quote_plus(subPath+"/"+dataFile) + "&",
+      "adaguc": adagucOnlineResource + "/adagucserver?source=" + urllib.parse.quote_plus(subPath+"/"+dataFile) + "&",
       "name": dataFile,
       "leaf": True
       })
@@ -158,7 +158,9 @@ def handleAutoWMS():
     adagucDataSetDir = adagucInstance.ADAGUC_DATASET_DIR
     adagucDataDir = adagucInstance.ADAGUC_DATA_DIR
     adagucAutoWMSDir = adagucInstance.ADAGUC_AUTOWMS_DIR
-
+    baseUrl = request.base_url.replace(request.path,"");
+    adagucOnlineResource=os.getenv('EXTERNALADDRESS', baseUrl)
+    print('Online resource = [%s]' % adagucOnlineResource)
     urlParamRequest = request.args.get('request')
     urlParamPath = request.args.get('path')
     if urlParamRequest is None or urlParamPath is None:
@@ -179,13 +181,13 @@ def handleAutoWMS():
       return handleBaseRoute()
 
     if urlParamPath.startswith("/adaguc::datasets"):
-      return handleDatasetsRoute(adagucDataSetDir)
+      return handleDatasetsRoute(adagucDataSetDir, adagucOnlineResource)
     
     if urlParamPath.startswith("/adaguc::data"):
-      return handleDataRoute(adagucDataDir, urlParamPath)
+      return handleDataRoute(adagucDataDir, urlParamPath, adagucOnlineResource)
 
     if urlParamPath.startswith("/adaguc::autowms"):
-      return handleAutoWMSDIRRoute(adagucAutoWMSDir, urlParamPath)
+      return handleAutoWMSDIRRoute(adagucAutoWMSDir, urlParamPath, adagucOnlineResource)
      
     response = app.response_class(
         response="Path parameter not understood..",
