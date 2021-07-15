@@ -2,19 +2,14 @@ import sys
 import os
 from flask import Flask
 import logging
-
-root = logging.getLogger()
-root.setLevel(logging.DEBUG)
-handler = logging.StreamHandler(sys.stdout)
-handler.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-root.addHandler(handler)
+from configureLogging import configureLogging
+configureLogging(logging)
+from routeAdagucServer import routeAdagucServer
+from routeAutoWMS import routeAutoWMS
 
 app = Flask(__name__)
-
-import routeAdagucServer
-import routeAutoWMS
+app.register_blueprint(routeAdagucServer)
+app.register_blueprint(routeAutoWMS)
 
 if __name__ == "__main__":
     app.secret_key = os.urandom(24)

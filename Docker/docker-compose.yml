@@ -30,9 +30,8 @@ services:
         networks:
             - adaguc-network
         environment:
-            - "EXTERNALADDRESS=${EXTERNALADDRESS}/adaguc-services/"
+            - "EXTERNALADDRESS=${EXTERNALADDRESS}adaguc-services"
             - 'ADAGUC_DB=host=adaguc-db port=5432 user=adaguc password=adaguc dbname=adaguc'
-            - "ADAGUC_SERVICES_CONFIG=/adaguc/adaguc-services-config.xml"
         env_file:
             - .env
         restart: unless-stopped
