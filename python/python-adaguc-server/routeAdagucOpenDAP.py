@@ -5,21 +5,23 @@ from flask import request, Blueprint, Response
 import logging
 
 
-routeAdagucServer = Blueprint('routeAdagucServer', __name__)
+routeAdagucOpenDAP = Blueprint('routeAdagucOpenDAP', __name__)
 
 from setupAdaguc import setupAdaguc
-
-@routeAdagucServer.route("/wms", methods=["GET"]) 
-@routeAdagucServer.route("/wcs", methods=["GET"]) 
-@routeAdagucServer.route("/adagucserver", methods=["GET"]) 
-@routeAdagucServer.route("/adaguc-server", methods=["GET"]) 
+@routeAdagucOpenDAP.route("/adagucopendap/<string:text>", methods=["GET"]) 
 @cross_origin()
-def handleWMS():
+def handleWMS(text):
+    logging.info(text)
     adagucInstance = setupAdaguc()
     url = request.query_string
     logging.info(request.query_string)
     adagucenv={}
 
+    """
+                environmentVariables.add("ADAGUC_ONLINERESOURCE=" + homeURL + "/adagucopendap?");
+			environmentVariables.add("REQUEST_URI=" + request.getRequestURI());
+			environmentVariables.add("SCRIPT_NAME=");
+    """
     """ Set required environment variables """
     adagucenv['ADAGUC_CONFIG']=adagucInstance.ADAGUC_CONFIG
     adagucenv['ADAGUC_LOGFILE']=adagucInstance.ADAGUC_LOGFILE
@@ -33,8 +35,13 @@ def handleWMS():
     adagucenv['ADAGUC_TMP']=adagucInstance.ADAGUC_TMP
     adagucenv['ADAGUC_FONT']=adagucInstance.ADAGUC_FONT
     baseUrl = request.base_url.replace(request.path,"");
-    adagucenv['ADAGUC_ONLINERESOURCE']=os.getenv('EXTERNALADDRESS', baseUrl) + "/adagucserver?"
+    adagucenv['ADAGUC_ONLINERESOURCE']=os.getenv('EXTERNALADDRESS', baseUrl) + "/adagucopendap?"
     adagucenv['ADAGUC_DB']=os.getenv('ADAGUC_DB', "user=adaguc password=adaguc host=localhost dbname=adaguc")
+
+    logging.info('Setting request_uri to %s' % request.base_url)
+    adagucenv['REQUEST_URI']=request.path
+    adagucenv['SCRIPT_NAME']=""
+
     status,data,headers = adagucInstance.runADAGUCServer(url, env = adagucenv,  showLogOnError = False)
     logfile = adagucInstance.getLogFile()
     adagucInstance.removeLogFile()
