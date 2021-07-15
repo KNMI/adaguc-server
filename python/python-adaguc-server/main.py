@@ -6,10 +6,13 @@ from configureLogging import configureLogging
 configureLogging(logging)
 from routeAdagucServer import routeAdagucServer
 from routeAutoWMS import routeAutoWMS
+from routeAdagucOpenDAP import routeAdagucOpenDAP
 
 app = Flask(__name__)
 app.register_blueprint(routeAdagucServer)
 app.register_blueprint(routeAutoWMS)
+app.register_blueprint(routeAdagucOpenDAP)
+
 
 if __name__ == "__main__":
     app.secret_key = os.urandom(24)
