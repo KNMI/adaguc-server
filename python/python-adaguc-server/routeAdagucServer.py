@@ -23,19 +23,23 @@ def handleWMS():
     adagucenv['ADAGUC_CONFIG']=adagucInstance.ADAGUC_CONFIG
     adagucenv['ADAGUC_LOGFILE']=adagucInstance.ADAGUC_LOGFILE
     adagucenv['ADAGUC_PATH']=adagucInstance.ADAGUC_PATH
+    adagucenv['ADAGUC_DATARESTRICTION']="FALSE"
+    adagucenv['ADAGUC_ENABLELOGBUFFER']="FALSE"
+    adagucenv['ADAGUC_FONT']="/adaguc/adaguc-server-master/data/fonts/FreeSans.ttf"
     adagucenv['ADAGUC_DATA_DIR']=adagucInstance.ADAGUC_DATA_DIR
     adagucenv['ADAGUC_AUTOWMS_DIR']=adagucInstance.ADAGUC_AUTOWMS_DIR
     adagucenv['ADAGUC_DATASET_DIR']=adagucInstance.ADAGUC_DATASET_DIR
     adagucenv['ADAGUC_TMP']=adagucInstance.ADAGUC_TMP
     adagucenv['ADAGUC_FONT']=adagucInstance.ADAGUC_FONT
-    adagucenv['ADAGUC_ONLINERESOURCE']=request.base_url + "?"
+    baseUrl = request.base_url.replace(request.path,"");
+    adagucenv['ADAGUC_ONLINERESOURCE']=os.getenv('EXTERNALADDRESS', baseUrl) + "/adagucserver?"
     adagucenv['ADAGUC_DB']=os.getenv('ADAGUC_DB', "user=adaguc password=adaguc host=localhost dbname=adaguc")
     status,data,headers = adagucInstance.runADAGUCServer(url, env = adagucenv,  showLogOnError = False)
     logfile = adagucInstance.getLogFile()
     adagucInstance.removeLogFile()
 
     logging.info(logfile)
-
+    
 
     response = app.response_class(
         response=data.getvalue(),
