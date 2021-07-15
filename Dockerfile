@@ -119,6 +119,8 @@ RUN  chmod +x /adaguc/adaguc-server-*.sh && \
 
 ENV ADAGUC_PATH=/adaguc/adaguc-server-master
 
+ENV PYTHONPATH=${ADAGUC_PATH}/python/python-adaguc-server
+
 # Build and test adaguc python support
 WORKDIR /adaguc/adaguc-server-master/python/lib/
 RUN python3 setup.py install

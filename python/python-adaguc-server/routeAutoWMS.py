@@ -3,10 +3,11 @@ import os
 import json
 import urllib.parse
 from flask_cors import cross_origin
-from flask import request
+from flask import request,Blueprint, Response
+import logging
 
-from __main__ import app
-from __main__ import logging
+
+routeAutoWMS = Blueprint('routeAutoWMS', __name__)
 
 from setupAdaguc import setupAdaguc
 
@@ -29,7 +30,7 @@ def handleBaseRoute():
     "leaf": False
   })
       
-  response = app.response_class(
+  response = Response(
     response=json.dumps({"result":datasets}),
     mimetype='application/json',
     status=200,
@@ -47,7 +48,7 @@ def handleDatasetsRoute(adagucDataSetDir, adagucOnlineResource):
       "leaf": True
       })
       
-  response = app.response_class(
+  response = Response(
     response=json.dumps({"result":datasets}),
     mimetype='application/json',
     status=200,
@@ -73,7 +74,7 @@ def handleDataRoute(adagucDataDir, urlParamPath, adagucOnlineResource):
 
   if not localPathToBrowse.startswith(adagucDataDir):
     logging.error("Invalid path detected = constructed [%s] from [%s]" % (localPathToBrowse, urlParamPath))
-    response = app.response_class(
+    response = Response(
       response="Invalid path detected",
       mimetype='application/json',
       status=400,
@@ -100,7 +101,7 @@ def handleDataRoute(adagucDataDir, urlParamPath, adagucOnlineResource):
       "leaf": True
       })
       
-  response = app.response_class(
+  response = Response(
     response=json.dumps({"result":data}),
     mimetype='application/json',
     status=200,
@@ -116,7 +117,7 @@ def handleAutoWMSDIRRoute(adagucAutoWMSDir, urlParamPath, adagucOnlineResource):
 
   if not localPathToBrowse.startswith(adagucAutoWMSDir):
     logging.error("Invalid path detected = constructed [%s] from [%s]" % (localPathToBrowse, urlParamPath))
-    response = app.response_class(
+    response = Response(
       response="Invalid path detected",
       mimetype='application/json',
       status=400,
@@ -143,14 +144,14 @@ def handleAutoWMSDIRRoute(adagucAutoWMSDir, urlParamPath, adagucOnlineResource):
       "leaf": True
       })
       
-  response = app.response_class(
+  response = Response(
     response=json.dumps({"result":data}),
     mimetype='application/json',
     status=200,
   )
   return response  
 
-@app.route("/autowms", methods=["GET"]) 
+@routeAutoWMS.route("/autowms", methods=["GET"]) 
 @cross_origin()
 def handleAutoWMS():
     adagucInstance = setupAdaguc()
@@ -164,13 +165,13 @@ def handleAutoWMS():
     urlParamRequest = request.args.get('request')
     urlParamPath = request.args.get('path')
     if urlParamRequest is None or urlParamPath is None:
-      response = app.response_class(
+      response = Response(
         response="Mandatory parameters [request] and or [path] are missing",
         status=400,
       )
       return response
     if urlParamRequest != "getfiles":
-      response = app.response_class(
+      response = Response(
         response="Only request=getfiles is supported",
         status=400,
       )
@@ -188,8 +189,9 @@ def handleAutoWMS():
 
     if urlParamPath.startswith("/adaguc::autowms"):
       return handleAutoWMSDIRRoute(adagucAutoWMSDir, urlParamPath, adagucOnlineResource)
-     
-    response = app.response_class(
+    
+
+    response = Response(
         response="Path parameter not understood..",
         mimetype='application/json',
         status=400,

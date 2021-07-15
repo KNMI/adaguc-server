@@ -36,6 +36,5 @@ then
 fi  
 
 echo "Start serving on ${EXTERNALADDRESS}"
-python3 /adaguc/adaguc-server-master/python/python-adaguc-server/main.py 
-
+gunicorn --bind 0.0.0.0:8080 wsgi:app
     

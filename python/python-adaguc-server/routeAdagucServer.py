@@ -1,17 +1,18 @@
 import sys
 import os
 from flask_cors import cross_origin
-from flask import request
+from flask import request, Blueprint, Response
+import logging
 
-from __main__ import app
-from __main__ import logging
+
+routeAdagucServer = Blueprint('routeAdagucServer', __name__)
 
 from setupAdaguc import setupAdaguc
 
-@app.route("/wms", methods=["GET"]) 
-@app.route("/wcs", methods=["GET"]) 
-@app.route("/adagucserver", methods=["GET"]) 
-@app.route("/adaguc-server", methods=["GET"]) 
+@routeAdagucServer.route("/wms", methods=["GET"]) 
+@routeAdagucServer.route("/wcs", methods=["GET"]) 
+@routeAdagucServer.route("/adagucserver", methods=["GET"]) 
+@routeAdagucServer.route("/adaguc-server", methods=["GET"]) 
 @cross_origin()
 def handleWMS():
     adagucInstance = setupAdaguc()
@@ -40,11 +41,7 @@ def handleWMS():
 
     logging.info(logfile)
     
-
-    response = app.response_class(
-        response=data.getvalue(),
-        status=200,
-    )
+    response = Response( response=data.getvalue(), status=200)
 
     # Append the headers from adaguc-server to the headers from flask.
     for header in headers:
