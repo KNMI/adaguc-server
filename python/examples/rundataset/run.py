@@ -5,10 +5,10 @@ adagucInstance = runAdaguc()
 import os
 adagucServerHome = os.getenv('ADAGUC_PATH', os.getcwd() + "/../../../../")
 adagucInstance.setAdagucPath(adagucServerHome)
-adagucInstance.setConfiguration(adagucServerHome + "/data/python/adaguc/adaguc-server-config-python.xml")
-adagucInstance.setDatasetDir(adagucServerHome + "/data/python/examples/rundataset/config")
-adagucInstance.setDataDir(adagucServerHome + "/data/python/examples/rundataset/data")
-adagucInstance.setTmpDir(adagucServerHome + "/data/python/examples/rundataset/")
+adagucInstance.setConfiguration(adagucServerHome + "/python/lib/adaguc/adaguc-server-config-python.xml")
+adagucInstance.setDatasetDir(adagucServerHome + "/python/examples/rundataset/config")
+adagucInstance.setDataDir(adagucServerHome + "/python/examples/rundataset/data")
+adagucInstance.setTmpDir(adagucServerHome + "/python/examples/rundataset/")
 
 # Scan the dataset:
 logfile = adagucInstance.scanDataset("exampledataset")

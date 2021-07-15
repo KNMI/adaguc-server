@@ -21,6 +21,6 @@ def setupAdaguc():
 
   adagucInstance = runAdaguc()
   adagucInstance.setAdagucPath(adagucServerHome)
-  adagucInstance.setConfiguration(adagucServerHome + "/data/python/adaguc/adaguc-server-config-python-postgres.xml")
+  adagucInstance.setConfiguration(adagucServerHome + "/python/lib/adaguc/adaguc-server-config-python-postgres.xml")
   return adagucInstance
 

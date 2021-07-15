@@ -98,6 +98,7 @@ WORKDIR /adaguc/adaguc-server-master
 # Install compiled adaguc binaries from stage one    
 COPY --from=0 /adaguc/adaguc-server-master/bin /adaguc/adaguc-server-master/bin
 COPY --from=0 /adaguc/adaguc-server-master/data /adaguc/adaguc-server-master/data
+COPY --from=0 /adaguc/adaguc-server-master/python /adaguc/adaguc-server-master/python
 COPY --from=0 /adaguc/adaguc-server-master/tests /adaguc/adaguc-server-master/tests
 COPY --from=0 /adaguc/adaguc-server-master/runtests.sh /adaguc/adaguc-server-master/runtests.sh
 
@@ -137,9 +138,9 @@ ENV ADAGUC_SERVICES_CONFIG=/adaguc/adaguc-services-config.xml
 ENV ADAGUC_PATH=/adaguc/adaguc-server-master
 
 # Build and test adaguc python support
-WORKDIR /adaguc/adaguc-server-master/data/python/
+WORKDIR /adaguc/adaguc-server-master/python/lib/
 RUN python3 setup.py install
-RUN bash -c "python3 /adaguc/adaguc-server-master/data/python/examples/runautowms/run.py && ls result.png" 
+RUN bash -c "python3 /adaguc/adaguc-server-master/python/examples/runautowms/run.py && ls result.png" 
 WORKDIR /adaguc/adaguc-server-master
 
 USER adaguc
