@@ -7,7 +7,7 @@ unset ADAGUC_CONFIG
 unset QUERY_STRING
 export ADAGUC_PATH=${SCRIPTPATH}/../
 export ADAGUC_PATH=`readlink -f ${ADAGUC_PATH}`/
-export PYTHONPATH=${ADAGUC_PATH}/data/python/
+export PYTHONPATH=${ADAGUC_PATH}/python/lib/
 echo "ADAGUC-Server path is [$ADAGUC_PATH]"
 export ADAGUC_TMP=${ADAGUC_PATH}/tests/tmp/
 export ADAGUC_LOGFILE=${ADAGUC_PATH}/tests/log/

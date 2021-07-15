@@ -35,12 +35,7 @@ python3 -m pip install Pillow chardet numpy netcdf4 six requests pillow aggdraw 
 
 ### Install the adaguc python library
 
-```
-cd data/python/
-python3 setup.py sdist
-pip3 install dist/adaguc-0.0.1.tar.gz
-cd ../../
-```
+Please check the readme at ./python/start-with-python.md
 
 ### Set the ADAGUC_PATH environment variable which points to your adaguc-server folder (with compiled binaries):
 
@@ -51,14 +46,14 @@ export ADAGUC_PATH="${PWD}"
 ### The run.py example scripts should now work:
 
 ```
-python3 ./data/python/examples/runautowms/run.py
+python3 ./python/examples/runautowms/run.py
 ```
 
 ## Developing the python wrapper for adaguc-server
 
 To develop the python code from this directory you can do:
 
-In ./adaguc-server/data/python:
+In ./adaguc-server/python/lib/:
 
 ```
 python3 -m pip install --user --upgrade setuptools wheel
@@ -75,3 +70,20 @@ python setup.py sdist
 ```
 
 Adaguc needs to be compiled in order to let the examples work.
+
+
+## To install the python wrapper:
+
+```
+python3 -m venv env
+source env/bin/activate
+python3 -m pip install Pillow chardet numpy netcdf4 six requests pillow aggdraw lxml setuptools wheel flask flask_cors gunicorn
+pip install ./lib/dist/adaguc-0.0.2.tar.gz
+
+export ADAGUC_PATH=`pwd`
+export ADAGUC_DATASET_DIR=/data/adaguc-datasets
+export ADAGUC_DATA_DIR=/data/adaguc-data
+export ADAGUC_AUTOWMS_DIR=/data/adaguc-autowms
+
+python3 ./python-adaguc-runner/main.py 
+```
