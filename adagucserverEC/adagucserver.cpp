@@ -34,13 +34,13 @@ extern Tracer NewTrace;
 DEF_ERRORMAIN();
 
 FILE * pLogDebugFile = NULL;
-enum LogBufferMode { TRUE, FALSE, DISABLELOGGING };
-LogBufferMode logMode = FALSE;
+enum LogBufferMode { LogBufferMode_TRUE, LogBufferMode_FALSE, LogBufferMode_DISABLELOGGING };
+LogBufferMode logMode = LogBufferMode::LogBufferMode_FALSE;
 
 void writeLogFile(const char * msg){
-  if (logMode == DISABLELOGGING) return;
+  if (logMode == LogBufferMode_DISABLELOGGING) return;
   if(pLogDebugFile != NULL){
-    if (logMode == FALSE) {
+    if (logMode == LogBufferMode_FALSE) {
       setvbuf(pLogDebugFile, NULL, _IONBF, 0);
     }
     fputs  (msg, pLogDebugFile );
@@ -325,10 +325,10 @@ int main(int argc, char **argv, char **envp){
   if(ADAGUC_ENABLELOGBUFFER!=NULL){
     CT::string check = ADAGUC_ENABLELOGBUFFER;
     if(check.equalsIgnoreCase("true")){
-      logMode = TRUE;
+      logMode = LogBufferMode::LogBufferMode_TRUE;
     } 
     if(check.equalsIgnoreCase("DISABLELOGGING")){
-      logMode = DISABLELOGGING;
+      logMode = LogBufferMode::LogBufferMode_DISABLELOGGING;
     } 
   }
 
