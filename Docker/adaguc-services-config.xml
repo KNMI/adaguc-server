@@ -38,7 +38,7 @@
     <export>ADAGUC_AUTOWMS_DIR={ENV.ADAGUC_AUTOWMS_DIR}</export>
     <export>ADAGUC_CONFIG=/adaguc/adaguc-server-config.xml</export>
     <export>ADAGUC_DATARESTRICTION=FALSE</export>
-    <export>ADAGUC_ENABLELOGBUFFER=FALSE</export>
+    <export>ADAGUC_ENABLELOGBUFFER=DISABLELOGGING</export>
     <export>ADAGUC_FONT=/adaguc/adaguc-server-master/data/fonts/FreeSans.ttf</export>
     <export>ADAGUC_DB={ENV.ADAGUC_DB}</export>
  </adaguc-server>
