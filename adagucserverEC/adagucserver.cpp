@@ -34,11 +34,13 @@ extern Tracer NewTrace;
 DEF_ERRORMAIN();
 
 FILE * pLogDebugFile = NULL;
-bool useLogBuffer = false;
+enum LogBufferMode { TRUE, FALSE, DISABLELOGGING };
+LogBufferMode logMode = FALSE;
 
 void writeLogFile(const char * msg){
+  if (logMode == DISABLELOGGING) return;
   if(pLogDebugFile != NULL){
-    if (useLogBuffer == false) {
+    if (logMode == FALSE) {
       setvbuf(pLogDebugFile, NULL, _IONBF, 0);
     }
     fputs  (msg, pLogDebugFile );
@@ -314,12 +316,19 @@ int main(int argc, char **argv, char **envp){
     }
   }
 
-  /* Check if we enable logbuffer, true means unbuffered output with live logging but means a slower service */
+  /* Check if we enable logbuffer:
+    - true means unbuffered output with live logging but means a slower service 
+    - false means buffered logging
+    - nologging means no logging at all
+  */
   const char * ADAGUC_ENABLELOGBUFFER=getenv("ADAGUC_ENABLELOGBUFFER");
   if(ADAGUC_ENABLELOGBUFFER!=NULL){
     CT::string check = ADAGUC_ENABLELOGBUFFER;
     if(check.equalsIgnoreCase("true")){
-      useLogBuffer = true;
+      logMode = TRUE;
+    } 
+    if(check.equalsIgnoreCase("DISABLELOGGING")){
+      logMode = DISABLELOGGING;
     } 
   }
 
