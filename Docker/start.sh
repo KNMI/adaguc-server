@@ -36,5 +36,5 @@ then
 fi  
 
 echo "Start serving on ${EXTERNALADDRESS}"
-java -jar /adaguc/adaguc-services.jar
+gunicorn --bind 0.0.0.0:8080 wsgi:app
     

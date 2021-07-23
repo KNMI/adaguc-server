@@ -5,9 +5,9 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="adaguc",
-    version="0.0.1",
+    version="0.0.2",
     author="KNMI Geospatial Task Force",
-    author_email="adaguc@knmi.nl",
+    author_email="gstf@knmi.nl",
     description="Python wrapper arround the adaguc-server",
     long_description=long_description,
     long_description_content_type="text/markdown",
