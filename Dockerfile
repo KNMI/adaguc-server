@@ -109,7 +109,7 @@ RUN useradd -m adaguc -u 1000 && \
     mkdir -p /data/adaguc-datasets-internal 
 
 # Configure
-COPY ./Docker/adaguc-server-config.xml /adaguc/adaguc-server-config.xml
+COPY ./Docker/adaguc-server-config-python-postgres.xml /adaguc/adaguc-server-config.xml
 COPY ./Docker/start.sh /adaguc/
 COPY ./Docker/adaguc-server-*.sh /adaguc/
 COPY ./Docker/baselayers.xml /data/adaguc-datasets-internal/baselayers.xml
