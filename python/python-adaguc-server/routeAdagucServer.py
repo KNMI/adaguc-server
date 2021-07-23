@@ -33,7 +33,7 @@ def handleWMS():
     adagucenv['ADAGUC_TMP']=adagucInstance.ADAGUC_TMP
     adagucenv['ADAGUC_FONT']=adagucInstance.ADAGUC_FONT
     baseUrl = request.base_url.replace(request.path,"");
-    adagucenv['ADAGUC_ONLINERESOURCE']=os.getenv('EXTERNALADDRESS', baseUrl) + "/adagucserver?"
+    adagucenv['ADAGUC_ONLINERESOURCE']=os.getenv('EXTERNALADDRESS', baseUrl) + "/adaguc-server?"
     adagucenv['ADAGUC_DB']=os.getenv('ADAGUC_DB', "user=adaguc password=adaguc host=localhost dbname=adaguc")
     status,data,headers = adagucInstance.runADAGUCServer(url, env = adagucenv,  showLogOnError = False)
     logfile = adagucInstance.getLogFile()
