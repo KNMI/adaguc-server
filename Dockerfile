@@ -4,7 +4,7 @@ USER root
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="2.5.12" 
+LABEL version="2.5.13" 
 
 ######### First stage (build) ############
 
@@ -96,6 +96,12 @@ COPY --from=0 /adaguc/adaguc-server-master/python /adaguc/adaguc-server-master/p
 COPY --from=0 /adaguc/adaguc-server-master/tests /adaguc/adaguc-server-master/tests
 COPY --from=0 /adaguc/adaguc-server-master/runtests.sh /adaguc/adaguc-server-master/runtests.sh
 
+<<<<<<< HEAD
+=======
+# Install adaguc-services (spring boot application for running adaguc-server)
+RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.12/adaguc-services-1.2.12.jar -o /adaguc/adaguc-services.jar
+
+>>>>>>> 8445034d3cdbb35215d0d7dea7a1a00b96a4656f
 # Run adaguc-server functional and regression tests
 RUN  bash runtests.sh 
 
