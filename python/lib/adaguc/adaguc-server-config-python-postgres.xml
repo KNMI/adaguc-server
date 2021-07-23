@@ -42,6 +42,7 @@
   </AutoResource>
 
   <Dataset enabled="true" location="{ADAGUC_DATASET_DIR}"/>
+  <Dataset enabled="true" location="/data/adaguc-datasets-internal/"/>
 
   <OpenDAP enabled="true" path="adagucopendap"/>
 
