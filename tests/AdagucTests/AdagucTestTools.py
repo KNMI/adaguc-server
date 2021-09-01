@@ -1,9 +1,7 @@
 import os
 from io import BytesIO
-from adaguc.CGIRunner import CGIRunner
-import unittest
 import shutil
-import subprocess
+from adaguc.CGIRunnerNoThreads import CGIRunnerNoThreads
 from lxml import etree
 from lxml import objectify
 import re
@@ -58,7 +56,7 @@ class AdagucTestTools:
     
 
     filetogenerate =  BytesIO()
-    status, headers = CGIRunner().run(adagucargs,url=url,output = filetogenerate, env=adagucenv, path=path, isCGI= isCGI)
+    status, headers = CGIRunnerNoThreads().run(adagucargs,url=url,output = filetogenerate, env=adagucenv, path=path, isCGI= isCGI)
 
 
     

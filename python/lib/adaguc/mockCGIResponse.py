@@ -12,7 +12,6 @@ To create cgidata.bin, do:
    export ADAGUC_CONFIG=./Docker/adaguc-server-config-python-postgres.xml 
    export ADAGUC_DATA_DIR=/data/adaguc-data
    export ADAGUC_AUTOWMS_DIR=/data/adaguc-autowms
-   export ADAGUC_DATASET_DIR=/data/adaguc-dataset
    export ADAGUC_DATASET_DIR=/data/adaguc-datasets
    #export QUERY_STRING="source=testdata.nc&&service=WMS&request=getmap&format=image/png&layers=testdata&width=80&CRS=EPSG:4326&STYLES=&EXCEPTIONS=INIMAGE&showlegend=true&0.6600876848451054"
    export QUERY_STRING="source%3Dtestdata.nc&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=8000&CRS=EPSG%3A3857&BBOX=-1900028.4595329016,4186308.413385826,2753660.6953178523,9667705.962693866&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&&0.8416868811008116"
