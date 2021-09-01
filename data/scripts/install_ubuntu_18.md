@@ -9,11 +9,26 @@ Step 2: Setup the postgres server:
 Step 3: Compile adaguc-server:
 `bash compile.sh && bash runtests.sh`
 
-Step 4: Setup adaguc-services server:
-`sudo bash ./data/scripts/ubuntu_18_setup_adaguc-services.sh`
+Step 4: Install python wrapper for adaguc-server
 
-Step 5: Start adaguc-services server:
-`sudo bash ./data/scripts/ubuntu_18_start_adaguc-services.sh`
+```
+python3 -m venv env
+source env/bin/activate
+python3 -m pip install Pillow chardet numpy netcdf4 six requests pillow aggdraw lxml setuptools wheel flask flask_cors gunicorn
+pip install ./lib/dist/adaguc-0.0.2.tar.gz
+```
+
+Step 5: Start adaguc-server using the python wrapper:
+
+```
+source env/bin/activate
+export ADAGUC_PATH=`pwd`
+export ADAGUC_DATASET_DIR=/data/adaguc-datasets
+export ADAGUC_DATA_DIR=/data/adaguc-data
+export ADAGUC_AUTOWMS_DIR=/data/adaguc-autowms
+
+python3 ./python/python-adaguc-server/main.py
+```
 
 # Verify that adaguc-server is working
 

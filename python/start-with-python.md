@@ -85,5 +85,5 @@ export ADAGUC_DATASET_DIR=/data/adaguc-datasets
 export ADAGUC_DATA_DIR=/data/adaguc-data
 export ADAGUC_AUTOWMS_DIR=/data/adaguc-autowms
 
-python3 ./python-adaguc-runner/main.py 
+python3 ./python/python-adaguc-server/main.py
 ```

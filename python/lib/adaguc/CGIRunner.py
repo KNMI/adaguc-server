@@ -11,6 +11,8 @@ import io
 import errno
 import time
 import chardet
+from queue import Queue, Empty  # python 3.x
+#from numba import jit
 
 class CGIRunner:
   
@@ -20,11 +22,6 @@ class CGIRunner:
     self.foundLF = False
     
   def startProcess(self,cmds,callback=None,env = None,bufsize=0):
-
-    try:
-        from Queue import Queue, Empty
-    except ImportError:
-        from queue import Queue, Empty  # python 3.x
 
     ON_POSIX = 'posix' in sys.builtin_module_names
 
@@ -52,7 +49,7 @@ class CGIRunner:
         if(callback != None):
           callback(line)
       except Empty:
-          if(t.isAlive() == False):
+          if(t.is_alive() == False):
             break;
     
     """ Somehow sometimes stuff is still in que """
@@ -62,11 +59,12 @@ class CGIRunner:
         if(callback != None):
           callback(line)
       except Empty:
-          if(t.isAlive() == False):
+          if(t.is_alive() == False):
             break;
   
     return p.wait()  
 
+  #@jit(nopython=True)
   def _filterHeader(self,_message,writefunction):
       
       if self.headersSent == False:
@@ -132,4 +130,4 @@ class CGIRunner:
     status = self.startProcess(cmds,monitor1,localenv,bufsize=8192)
     output.flush()
     headersList = self.headers.split("\r\n")
-    return status, [s for s in headersList if s is not "\n" and ":" in s]
+    return status, [s for s in headersList if s != "\n" and ":" in s]
