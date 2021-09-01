@@ -1,6 +1,9 @@
 """
  This Python script runs CGI scripts without an webserver.
  Created by Maarten Plieger - 20151104
+
+
+ Please NOTE!, Maarten Plieger, 2021-09-01: This code is quite expensive to run. Use CGIRunnerNoThreads instead for best performance
 """
 
 import sys

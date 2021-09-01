@@ -4,12 +4,13 @@ import os
 from os.path import expanduser
 from PIL import Image
 from io import BytesIO
-from adaguc.CGIRunner import CGIRunner
 import io
 import tempfile
 import shutil
 import random
 import string
+
+from adaguc.CGIRunnerNoThreads import CGIRunnerNoThreads
 
 class runAdaguc:
   def __init__(self):
@@ -146,7 +147,7 @@ class runAdaguc:
     
 
     filetogenerate =  BytesIO()
-    status, headers = CGIRunner().run(adagucargs,url=url,output = filetogenerate, env=adagucenv, path=path, isCGI= isCGI)
+    status, headers = CGIRunnerNoThreads().run(adagucargs,url=url,output = filetogenerate, env=adagucenv, path=path, isCGI= isCGI)
 
 
     
