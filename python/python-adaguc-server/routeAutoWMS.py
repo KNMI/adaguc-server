@@ -111,6 +111,8 @@ def handleDataRoute(adagucDataDir, urlParamPath, adagucOnlineResource):
 def handleAutoWMSDIRRoute(adagucAutoWMSDir, urlParamPath, adagucOnlineResource):
   subPath = urlParamPath.replace("/adaguc::autowms/", "")
   subPath = subPath.replace("/adaguc::autowms", "")
+  if len(subPath) != 0:
+    subPath = subPath + "/"
   logging.info("adagucAutoWMSDir [%s] and subPath [%s]" % (adagucAutoWMSDir, subPath))
   localPathToBrowse = os.path.realpath(os.path.join(adagucAutoWMSDir, subPath))
   logging.info("localPathToBrowse = [%s]" % localPathToBrowse)
@@ -139,7 +141,7 @@ def handleAutoWMSDIRRoute(adagucAutoWMSDir, urlParamPath, adagucOnlineResource):
   for dataFile in dataFiles:
     data.append({
       "path": os.path.join("/adaguc::autowms",subPath, dataFile),
-      "adaguc": adagucOnlineResource + "/adagucserver?source=" + urllib.parse.quote_plus(subPath+"/"+dataFile) + "&",
+      "adaguc": adagucOnlineResource + "/adagucserver?source=" + urllib.parse.quote_plus(subPath+dataFile) + "&",
       "name": dataFile,
       "leaf": True
       })
