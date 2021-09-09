@@ -15,6 +15,7 @@ app.register_blueprint(routeAdagucServer)
 app.register_blueprint(routeAutoWMS)
 app.register_blueprint(routeAdagucOpenDAP)
 app.register_blueprint(routeRoot)
+app.register_blueprint(routeHealthCheck)
 
 
 
