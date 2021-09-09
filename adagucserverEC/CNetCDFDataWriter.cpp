@@ -896,8 +896,12 @@ int CNetCDFDataWriter::end(){
   }
   CDFNetCDFWriter *netCDFWriter = new CDFNetCDFWriter(destCDFObject);
  
-  netCDFWriter->setNetCDFMode(4);
-  netCDFWriter->setDeflateShuffle(1,2,0);
+  if (srvParam->Format.equals("NetCDF3")){
+    netCDFWriter->setNetCDFMode(3);
+  }else{
+    netCDFWriter->setNetCDFMode(4);
+    netCDFWriter->setDeflateShuffle(1,2,0);
+  }
   int  status = netCDFWriter->write(tempFileName.c_str());
  
   delete netCDFWriter;
@@ -936,7 +940,7 @@ int CNetCDFDataWriter::end(){
     printf("Content-Description: File Transfer\r\n");
     printf("Content-Transfer-Encoding: binary\r\n");
     printf("Content-Length: %zu\r\n",endPos); 
-    printf("%s\r\n\r\n","Content-Type:application/netcdf");
+    printf("%s\r\n\n","Content-Type:application/netcdf");
     for(size_t j=0;j<endPos;j++)putchar(getc(fp));
     fclose(fp);
     fclose(stdout);
