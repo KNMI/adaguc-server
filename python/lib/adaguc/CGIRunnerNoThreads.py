@@ -47,6 +47,10 @@ class CGIRunnerNoThreads:
     if search:
       headersEndAt  = search.start()
       headers=(processOutput[0:headersEndAt-1]).decode()
+    else:
+      output.write(b'Error: No headers found in response from adaguc-server application')
+      return 1, []
+          
       
     body=processOutput[headersEndAt+2:]
     output.write(body)

@@ -638,7 +638,7 @@ int  CGDALDataWriter::end(){
     printf("Content-Description: File Transfer\r\n");
     printf("Content-Transfer-Encoding: binary\r\n");
     printf("Content-Length: %zu\r\n",endPos); 
-    printf("%s\r\n\r\n",mimeType.c_str());
+    printf("%s\r\n\n",mimeType.c_str());
     for(size_t j=0;j<endPos;j++)putchar(getc(fp));
     fclose(fp);
     fclose(stdout);
