@@ -50,7 +50,7 @@ class TestWCS(unittest.TestCase):
         status,data,headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=testdata&CRS=EPSG%3A4326&FORMAT=NetCDF4&BBOX=-180,-90,180,90&RESX=1&RESY=1",
                                                                 env = self.env, args=["--report"])
         self.assertEqual(status, 0)
-        self.assertEqual(data.getvalue()[0:10], b'\x89HDF\r\n\x1a\n\x00\x00')
+        self.assertEqual(data.getvalue()[0:6], b'\x89HDF\r\n')
 
     def test_WCSGetCoverageGeoTiff_testdatanc(self):
         AdagucTestTools().cleanTempDir()
