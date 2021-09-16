@@ -20,7 +20,7 @@ services:
                 max-size: "200k"
                 max-file: "10"
     adaguc-server:
-        image: openearth/adaguc-server
+        image: openearth/adaguc-server:pythonwrapper-2021-09-13
         container_name: my-adaguc-server
         hostname: my-adaguc-server
         volumes:
@@ -32,6 +32,7 @@ services:
         environment:
             - "EXTERNALADDRESS=${EXTERNALADDRESS}"
             - 'ADAGUC_DB=host=adaguc-db port=5432 user=adaguc password=adaguc dbname=adaguc'
+            - 'ADAGUC_ENABLELOGBUFFER=DISABLELOGGING'
         env_file:
             - .env
         restart: unless-stopped

@@ -1,5 +1,6 @@
 import os
 from adaguc.runAdaguc import runAdaguc
+import logging
 
 def setupAdaguc():
   # Check if environment is specified
@@ -19,8 +20,17 @@ def setupAdaguc():
     print('Your ADAGUC_PATH environment variable is not set! It should point to the adaguc-server folder.')
     exit(1)
 
+  # Get the location of the adaguc-server configuration file
+  adagucServerConfig = os.getenv('ADAGUC_CONFIG', adagucServerHome + "/python/lib/adaguc/adaguc-server-config-python-postgres.xml")
+  if adagucServerConfig is None or len(adagucServerConfig) < 1:
+    print('Your ADAGUC_CONFIG environment variable is not set! It should point to a adaguc-server config file.')
+    exit(1)
+
+  logging.info("Using config file %s" % adagucServerConfig)
+
   adagucInstance = runAdaguc()
   adagucInstance.setAdagucPath(adagucServerHome)
-  adagucInstance.setConfiguration(adagucServerHome + "/python/lib/adaguc/adaguc-server-config-python-postgres.xml")
+  adagucInstance.setConfiguration(adagucServerConfig)
   return adagucInstance
+
 

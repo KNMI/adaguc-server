@@ -17,23 +17,7 @@ def handleWMS(text):
     logging.info(request.query_string)
     adagucenv={}
 
-    """
-                environmentVariables.add("ADAGUC_ONLINERESOURCE=" + homeURL + "/adagucopendap?");
-			environmentVariables.add("REQUEST_URI=" + request.getRequestURI());
-			environmentVariables.add("SCRIPT_NAME=");
-    """
     """ Set required environment variables """
-    adagucenv['ADAGUC_CONFIG']=adagucInstance.ADAGUC_CONFIG
-    adagucenv['ADAGUC_LOGFILE']=adagucInstance.ADAGUC_LOGFILE
-    adagucenv['ADAGUC_PATH']=adagucInstance.ADAGUC_PATH
-    adagucenv['ADAGUC_DATARESTRICTION']="FALSE"
-    adagucenv['ADAGUC_ENABLELOGBUFFER']="FALSE"
-    adagucenv['ADAGUC_FONT']="/adaguc/adaguc-server-master/data/fonts/FreeSans.ttf"
-    adagucenv['ADAGUC_DATA_DIR']=adagucInstance.ADAGUC_DATA_DIR
-    adagucenv['ADAGUC_AUTOWMS_DIR']=adagucInstance.ADAGUC_AUTOWMS_DIR
-    adagucenv['ADAGUC_DATASET_DIR']=adagucInstance.ADAGUC_DATASET_DIR
-    adagucenv['ADAGUC_TMP']=adagucInstance.ADAGUC_TMP
-    adagucenv['ADAGUC_FONT']=adagucInstance.ADAGUC_FONT
     baseUrl = request.base_url.replace(request.path,"");
     adagucenv['ADAGUC_ONLINERESOURCE']=os.getenv('EXTERNALADDRESS', baseUrl) + "/adagucopendap?"
     adagucenv['ADAGUC_DB']=os.getenv('ADAGUC_DB', "user=adaguc password=adaguc host=localhost dbname=adaguc")
@@ -43,6 +27,8 @@ def handleWMS(text):
     adagucenv['SCRIPT_NAME']=""
 
     status,data,headers = adagucInstance.runADAGUCServer(url, env = adagucenv,  showLogOnError = False)
+
+    """ Obtain logfile """
     logfile = adagucInstance.getLogFile()
     adagucInstance.removeLogFile()
 
