@@ -128,9 +128,21 @@ class runAdaguc:
     
     adagucenv=env
 
+    
+    adagucenv['ADAGUC_ENABLELOGBUFFER']=os.getenv('ADAGUC_ENABLELOGBUFFER', 'TRUE')
+    adagucenv['ADAGUC_CONFIG']=self.ADAGUC_CONFIG
+    adagucenv['ADAGUC_LOGFILE']=self.ADAGUC_LOGFILE
+    adagucenv['ADAGUC_PATH']=self.ADAGUC_PATH
+    adagucenv['ADAGUC_DATARESTRICTION']="FALSE"
+    adagucenv['ADAGUC_DATA_DIR']=self.ADAGUC_DATA_DIR
+    adagucenv['ADAGUC_AUTOWMS_DIR']=self.ADAGUC_AUTOWMS_DIR
+    adagucenv['ADAGUC_DATASET_DIR']=self.ADAGUC_DATASET_DIR
+    adagucenv['ADAGUC_TMP']=self.ADAGUC_TMP
+    adagucenv['ADAGUC_FONT']=self.ADAGUC_FONT
+
     ADAGUC_PATH = adagucenv['ADAGUC_PATH']
     ADAGUC_LOGFILE = adagucenv['ADAGUC_LOGFILE']
-    
+
     try:
       os.remove(ADAGUC_LOGFILE);
     except:
