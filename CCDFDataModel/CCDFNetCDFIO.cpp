@@ -1113,12 +1113,14 @@ int CDFNetCDFWriter::_write(void(*progress)(const char*message,float percentage)
             }
           }
           
+           if (netcdfMode>=4){
           //CDBDebug("shuffle ,deflate, deflate_level %d,%d,%d",shuffle ,deflate, deflate_level);
-          status = nc_def_var_deflate(root_id,nc_var_id,shuffle ,deflate, deflate_level);
-          if(status!=NC_NOERR){ncError(__LINE__,className,"nc_def_var_deflate: ",status);return 1;}
-          if(listNCCommands){
-            NCCommands.printconcat("nc_def_var_deflate(root_id,var_id_%d,shuffle ,deflate, deflate_level);\n",j);
-          } 
+            status = nc_def_var_deflate(root_id,nc_var_id,shuffle ,deflate, deflate_level);
+            if(status!=NC_NOERR){ncError(__LINE__,className,"nc_def_var_deflate: ",status);return 1;}
+            if(listNCCommands){
+              NCCommands.printconcat("nc_def_var_deflate(root_id,var_id_%d,shuffle ,deflate, deflate_level);\n",j);
+            } 
+          }
           
           //copy data
           #ifdef CCDFNETCDFWRITER_DEBUG     

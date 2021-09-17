@@ -1,9 +1,9 @@
 /******************************************************************************
  * 
- * Project:  ADAGUC Server
- * Purpose:  ADAGUC OGC Server
+ * Project:  Helper classes
+ * Purpose:  Generic functions
  * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2017-08-11
+ * Date:     2021-09-17
  *
  ******************************************************************************
  *
@@ -24,38 +24,20 @@
  ******************************************************************************/
 
 
-#ifndef CREADPNG_H
-#define CREADPNG_H
-#include "CDebugger.h"
-#include "CKeyValuePair.h"
-// #define CREADPNG_DEBUG
-class CReadPNG  {
-  private: 
-    DEF_ERRORFUNCTION();
-  
-  public:
-    class CPNGRaster {
-      private: 
-        DEF_ERRORFUNCTION();
+#ifndef CKEYVALUEPAIR_H
+#define CKEYVALUEPAIR_H
+#include <iostream>
+#include <vector>
+#include <stdio.h>
+#include "CTypes.h"
+    class CKeyValuePair{
       public:
-      CPNGRaster(){
-        data = NULL;
-        hasOnlyHeaders = true;
-      }
-      ~CPNGRaster() {
-        CDBDebug("~CPNGRaster");
-        if(data!=NULL){
-          delete[] data;
-          data = NULL;
+        CKeyValuePair(CT::string name, CT::string value) {
+          this->name = name;
+          this->value = value;
         }
-      }
-      bool hasOnlyHeaders;
-      CKeyValuePairs headers;
-      unsigned char * data;
-      size_t width, height;
+        CT::string name;
+        CT::string value; 
     };
-    
-    static CPNGRaster* read_png_file(const char* file_name, bool readHeaderOnly);
-};
-
+    typedef CT::StackList<CKeyValuePair> CKeyValuePairs;
 #endif

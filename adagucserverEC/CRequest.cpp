@@ -2756,7 +2756,7 @@ int CRequest::process_querystring(){
       if(value0Cap.equals("DEBUG")){
         if(values[1].equals("ON")){
           printf("%s%c%c\n","Content-Type:text/plain",13,10);
-          printf("Debug mode:ON\nDebug messages:<br>\r\n\r\n");
+          printf("Debug mode:ON\nDebug messages:<br>\r\n\n");
           //dFound_Debug=1;
         }
       }
