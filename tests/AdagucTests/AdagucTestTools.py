@@ -118,9 +118,17 @@ class AdagucTestTools:
     obj2 = objectify.fromstring(re.sub(b' xmlns="[^"]+"', b'', testxml, count=1))
 
     # Remove ADAGUC build date and version from keywordlists
-    for child in obj1.findall("Service/KeywordList")[0]:child.getparent().remove(child)
-    for child in obj2.findall("Service/KeywordList")[0]:child.getparent().remove(child)
-    
+    try:
+      for child in obj1.findall("Service/KeywordList")[0]:child.getparent().remove(child)
+      for child in obj2.findall("Service/KeywordList")[0]:child.getparent().remove(child)
+    except:
+      pass
+    try:
+      for child in obj1.findall("Service/ServerInfo")[0]:child.getparent().remove(child)
+      for child in obj2.findall("Service/ServerInfo")[0]:child.getparent().remove(child)
+    except:
+      pass
+        
     # Boundingbox extent values are too varying by different Proj libraries
     def removeBBOX(root):
       if (root.tag.title() == "Boundingbox"):
