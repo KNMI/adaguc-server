@@ -73,6 +73,11 @@ int CDFPNGReader::open(const char *fileName){
     fileBaseName.copy(fileName);
   }
   
+  /* Now always add a CRS variable */
+  CDF::Variable * CRS = cdfObject->getVariableNE("crs");
+  if (CRS == NULL) {
+    CRS = cdfObject->addVariable(new CDF::Variable("crs",CDF_UINT,NULL,0, false));
+  }
 
   try{
     CT::string infoFile = fileName;
@@ -82,11 +87,7 @@ int CDFPNGReader::open(const char *fileName){
     CDBDebug("Found info file %s", infoData.c_str());
     CT::StackList<CT::string> lines = infoData.splitToStack("\n");
     CDBDebug("Numlines %d", lines.size());
-    CDF::Variable * CRS = cdfObject->getVariableNE("crs");
-
-    if (CRS == NULL) {
-      CRS = cdfObject->addVariable(new CDF::Variable("crs",CDF_UINT,NULL,0, false));
-    }
+   
     for (size_t l = 0; l < lines.size(); l++) {
       CDBDebug("line %s", lines[l].c_str());
       if (lines[l].startsWith("proj4_params=")) {
@@ -129,10 +130,58 @@ int CDFPNGReader::open(const char *fileName){
     }
     rasterWidth=pngRaster->width;
     rasterHeight=pngRaster->height;
+    
+    /* Put in headers from PNG */
+    double bbox[] = {0, 0, 0, 0};
+    for(size_t j=0;j<pngRaster->headers.size();j++) {
+      CDBDebug("HEADERS [%s]=[%s]", pngRaster->headers[j].name.c_str(), pngRaster->headers[j].value.c_str());
+
+      /* Proj4 params */
+      if (pngRaster->headers[j].name.equals("proj4_params")) {
+        CRS->setAttributeText("proj4", pngRaster->headers[j].value.c_str());
+      }
+      
+      /* BBOX */
+      if (pngRaster->headers[j].name.equals("bbox")) {
+        CT::StackList<CT::string> bboxItems = pngRaster->headers[j].value.splitToStack(",");
+        if (bboxItems.size() == 4) {
+          
+          bbox[0] = bboxItems[0].trim().toDouble();
+          bbox[1] = bboxItems[1].trim().toDouble();
+          bbox[2] = bboxItems[2].trim().toDouble();
+          bbox[3] = bboxItems[3].trim().toDouble();
+          CRS->setAttribute("bbox", CDF_DOUBLE, bbox, 4);
+        }
+      }
+
+      /* Time dimension */
+      if (pngRaster->headers[j].name.equals("time")) {
+        CDF::Dimension *timeDimension = cdfObject->getDimensionNE("time");
+        if (!timeDimension) {
+          timeDimension = cdfObject->addDimension(new CDF::Dimension("time", 1));
+        }
+        CDF::Variable * timeVariable = cdfObject->getVariableNE("time");
+        if (timeVariable == NULL) {
+          timeVariable = cdfObject->addVariable(new CDF::Variable("time",CDF_DOUBLE,&timeDimension,1, true));
+        }
+        timeVariable->setAttributeText("units", "seconds since 1970-01-01 0:0:0");
+        timeVariable->setAttributeText("standard_name", "time");
+        timeVariable->allocateData(1);
+        CTime ctime;
+        ctime.init(timeVariable);
+        ((double*)timeVariable->data)[0] = ctime.dateToOffset( ctime.freeDateStringToDate(pngRaster->headers[j].value));
+      }
+    }
+    /* Temporarily checking invalid metadata */
+    if (bbox[0]< -5570000) {
+      if (CRS->getAttribute("proj4")->getDataAsString().equals("+proj=geos +a=6378.169 +b=6356.584 +h=35785.831 +lat_0=0 +lon_0=0.0")) {
+        for(size_t j=0;j<4;j++){bbox[j]/=1000;}
+        CRS->setAttribute("bbox", CDF_DOUBLE, bbox, 4);
+      }
+    } 
   }
   
   CDF::Dimension * xDim = cdfObject->addDimension(new CDF::Dimension("x",rasterWidth));
-
   CDF::Variable * xVar = cdfObject->addVariable(new CDF::Variable(xDim->getName().c_str(),CDF_DOUBLE,&xDim,1, true));
   CDF::Dimension * yDim = cdfObject->addDimension(new CDF::Dimension("y",rasterHeight));
   CDF::Variable * yVar = cdfObject->addVariable(new CDF::Variable(yDim->getName().c_str(),CDF_DOUBLE,&yDim,1, true));
@@ -141,9 +190,17 @@ int CDFPNGReader::open(const char *fileName){
 #ifdef CCDFPNGIO_DEBUG                   
   CDBDebug("Defining PNG variable");
 #endif  
-  CDF::Dimension *varDims[]={yDim, xDim};
-  CDF::Variable * PNGData = cdfObject->addVariable(new CDF::Variable("pngdata",CDF_UINT,varDims,2, false));
-  
+  CDF::Dimension *timeDimension = cdfObject->getDimensionNE("time");
+
+  if (!timeDimension) {
+    CDF::Dimension *varDims[]={yDim, xDim};
+    cdfObject->addVariable(new CDF::Variable("pngdata",CDF_UINT,varDims,2, false));
+  }else {
+    CDF::Dimension *varDims[]={timeDimension, yDim, xDim};
+    cdfObject->addVariable(new CDF::Variable("pngdata",CDF_UINT,varDims,3, false));
+  }
+  CDF::Variable *PNGData = cdfObject->getVariable("pngdata");
+
   xVar->setCDFReaderPointer(this);
   xVar->setParentCDFObject(cdfObject);
   

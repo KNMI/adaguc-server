@@ -1,6 +1,7 @@
 import unittest
 import sys
 from AdagucTests.TestWMS import TestWMS
+from AdagucTests.TestWCS import TestWCS
 from AdagucTests.TestWMSSLD import TestWMSSLD
 from AdagucTests.TestWMSDocumentCache import TestWMSDocumentCache
 from AdagucTests.TestOpenDAPServer import TestOpenDAPServer
@@ -13,6 +14,7 @@ from AdagucTests.TestMetadataService import TestMetadataService
 
 testsuites=[];
 testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWMS))
+testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWCS))
 testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWMSSLD))
 testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWMSDocumentCache))
 testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestOpenDAPServer))

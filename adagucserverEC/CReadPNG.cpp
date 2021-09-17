@@ -99,7 +99,15 @@ CReadPNG::CPNGRaster * CReadPNG::read_png_file(const char* file_name, bool pngRe
   color_type = png_get_color_type(png_ptr, info_ptr);
   bit_depth = png_get_bit_depth(png_ptr, info_ptr);
   
-//  number_of_passes = png_set_interlace_handling(png_ptr);
+  /* Read text properties from PNG file */
+  png_textp text_ptr;
+  int num_text=0;
+  png_get_text(png_ptr, info_ptr, &text_ptr, &num_text);
+
+  for(size_t j=0; j< num_text;j++) {
+    pngRaster->headers.add(CKeyValuePair( text_ptr[j].key, text_ptr[j].text));
+  }
+
   png_read_update_info(png_ptr, info_ptr);
   
   if(pngReadHeaderOnly == true){

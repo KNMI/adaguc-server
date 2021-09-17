@@ -117,17 +117,27 @@ int CNetCDFDataWriter::init(CServerParams *srvParam,CDataSource *dataSource, int
   //Setup projection
   // Set up geo parameters
   if(srvParam->WCS_GoNative==1){
+    #ifdef CNetCDFDataWriter_DEBUG
+    CDBDebug("GO NATIVE");
+    #endif
     //Native!
     for(int j=0;j<4;j++)dfSrcBBOX[j]=dataSource->dfBBOX[j];
     dfDstBBOX[0]=dfSrcBBOX[0];
-    dfDstBBOX[1]=dfSrcBBOX[3];
+    dfDstBBOX[1]=dfSrcBBOX[1];
     dfDstBBOX[2]=dfSrcBBOX[2];
-    dfDstBBOX[3]=dfSrcBBOX[1];
+    dfDstBBOX[3]=dfSrcBBOX[3];
+    srvParam->Geo->dfBBOX[0]=dfSrcBBOX[0];
+    srvParam->Geo->dfBBOX[1]=dfSrcBBOX[1];
+    srvParam->Geo->dfBBOX[2]=dfSrcBBOX[2];
+    srvParam->Geo->dfBBOX[3]=dfSrcBBOX[3];
     srvParam->Geo->dWidth=dataSource->dWidth;
     srvParam->Geo->dHeight=dataSource->dHeight;
     srvParam->Geo->CRS.copy(&dataSource->nativeProj4);
     if(srvParam->Format.length()==0)srvParam->Format.copy("adagucnetcdf");
   }else{
+    #ifdef CNetCDFDataWriter_DEBUG
+    CDBDebug("GO NON NATIVE");
+    #endif
     // Non native projection units
     for(int j=0;j<4;j++)dfSrcBBOX[j]=dataSource->dfBBOX[j];
     for(int j=0;j<4;j++)dfDstBBOX[j]=srvParam->Geo->dfBBOX[j];
@@ -511,6 +521,9 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
           return 1;
         }
         
+        if(verbose){
+         CDBDebug("Opening extent [%d, %d, %d, %d]", PXExtentBasedOnSource[0], PXExtentBasedOnSource[1], PXExtentBasedOnSource[2], PXExtentBasedOnSource[3]);
+        }
         status = reader.openExtent(dataSource,CNETCDFREADER_MODE_OPEN_EXTENT,PXExtentBasedOnSource);
         
         /* Check if there is any data in the found grid */
@@ -525,6 +538,9 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
           if(dataSource->statistics->getNumSamples() ==0)return 1;
         }
       }else{
+        if(verbose){
+          CDBDebug("Reading datafield");
+        }
         status = reader.open(dataSource,CNETCDFREADER_MODE_OPEN_ALL);
       }
       sourceGeo.dWidth = dataSource->dWidth;
@@ -536,12 +552,12 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
       sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
       sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
       sourceGeo.CRS = dataSource->nativeProj4;
-    if(status!=0){
+   
+
+     if(status!=0){
       CDBError("Could not open file: %s",dataSource->getFileName());
       return 1;
     }
-
-    
     
     
     for(size_t j=0;j<baseDataSource->getNumDataObjects();j++){
@@ -570,10 +586,15 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
       
       //CDBDebug("baseDataSource->requiredDims.size(); = %d",baseDataSource->requiredDims.size());
 
-      
+      if(verbose){
+        CDBDebug("Looping dims [%d]", baseDataSource->requiredDims.size());
+      }
       for(size_t d=0;d<baseDataSource->requiredDims.size();d++){
         dimIndices[d]=0;
         CT::string dimName = baseDataSource->requiredDims[d]->netCDFDimName;
+        if(verbose){
+          CDBDebug("Looping dim [%s]",dimName.c_str());
+        }
         if(dimName.equals("none")==true){
           break;
         }
@@ -590,7 +611,9 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
         CT::string dimValue = dataSource->getDimensionValueForNameAndStep(dimName.c_str(),dataSource->getCurrentTimeStep());
         int indexTofind = -1;
         
-        //CDBDebug("dimName.c_str() %s dimValue  = %s  step %d",dimName.c_str(),dimValue.c_str(),dataSource->getCurrentTimeStep());
+        if(verbose) {
+          CDBDebug("dimName.c_str() %s dimValue  = %s  step %d",dimName.c_str(),dimValue.c_str(),dataSource->getCurrentTimeStep());
+        }
         
         
         CDF::Variable *var=destCDFObject->getVariable(dimName.c_str());
@@ -632,7 +655,10 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
                 case CDF_UINT  : value = ((unsigned int*)  var->data)[j];break;
                 case CDF_FLOAT : value = ((float*)         var->data)[j];break;
                 case CDF_DOUBLE: value = ((double*)        var->data)[j];break;
-                default:return 1;
+                default:{
+                  CDBError("Unknown var type [%d]", var->getType());
+                  return 1;
+                }
               }
               if(value == valueToFind){
                 indexTofind = j;
@@ -707,6 +733,9 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
       
 //      CDBDebug("Setting pointers");
       size_t elementOffset = dataStepIndex*settings.width*settings.height;
+      if(verbose) {
+        CDBDebug("elementOffset = %d", elementOffset);
+      }
       void *warpedData = NULL;
       switch(variable->getType()){
         case CDF_CHAR  : warpedData = ((char*)variable->data)+elementOffset;break;
@@ -718,7 +747,10 @@ int CNetCDFDataWriter::addData(std::vector <CDataSource*> &dataSources){
         case CDF_UINT  : warpedData = ((unsigned int*)variable->data)+elementOffset;break;
         case CDF_FLOAT : warpedData = ((float*)variable->data)+elementOffset;break;
         case CDF_DOUBLE: warpedData = ((double*)variable->data)+elementOffset;break;
-        default:return 1;
+        default:{
+          CDBError("Unknown var type [%d]", variable->getType());
+          return 1;
+        }
       }
         
       settings.data=warpedData;
@@ -896,9 +928,14 @@ int CNetCDFDataWriter::end(){
   }
   CDFNetCDFWriter *netCDFWriter = new CDFNetCDFWriter(destCDFObject);
  
-  netCDFWriter->setNetCDFMode(4);
-  netCDFWriter->setDeflateShuffle(1,2,0);
-  int  status = netCDFWriter->write(tempFileName.c_str());
+  if (srvParam->Format.equals("NetCDF3")){
+    netCDFWriter->setNetCDFMode(3);
+  } else {
+    netCDFWriter->setNetCDFMode(4);
+    netCDFWriter->setDeflateShuffle(1,2,0);
+  }
+
+  int status = netCDFWriter->write(tempFileName.c_str());
  
   delete netCDFWriter;
  
@@ -936,7 +973,7 @@ int CNetCDFDataWriter::end(){
     printf("Content-Description: File Transfer\r\n");
     printf("Content-Transfer-Encoding: binary\r\n");
     printf("Content-Length: %zu\r\n",endPos); 
-    printf("%s\r\n\r\n","Content-Type:application/netcdf");
+    printf("%s\r\n\n","Content-Type:application/netcdf");
     for(size_t j=0;j<endPos;j++)putchar(getc(fp));
     fclose(fp);
     fclose(stdout);

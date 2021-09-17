@@ -100,6 +100,10 @@ int  CGDALDataWriter::init(CServerParams *_srvParam,CDataSource *dataSource, int
     dfDstBBOX[1]=dfSrcBBOX[3];
     dfDstBBOX[2]=dfSrcBBOX[2];
     dfDstBBOX[3]=dfSrcBBOX[1];
+    srvParam->Geo->dfBBOX[0]=dfSrcBBOX[0];
+    srvParam->Geo->dfBBOX[1]=dfSrcBBOX[1];
+    srvParam->Geo->dfBBOX[2]=dfSrcBBOX[2];
+    srvParam->Geo->dfBBOX[3]=dfSrcBBOX[3];
     srvParam->Geo->dWidth=dataSource->dWidth;
     srvParam->Geo->dHeight=dataSource->dHeight;
     srvParam->Geo->CRS.copy(&dataSource->nativeProj4);
@@ -638,7 +642,7 @@ int  CGDALDataWriter::end(){
     printf("Content-Description: File Transfer\r\n");
     printf("Content-Transfer-Encoding: binary\r\n");
     printf("Content-Length: %zu\r\n",endPos); 
-    printf("%s\r\n\r\n",mimeType.c_str());
+    printf("%s\r\n\n",mimeType.c_str());
     for(size_t j=0;j<endPos;j++)putchar(getc(fp));
     fclose(fp);
     fclose(stdout);
