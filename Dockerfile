@@ -57,6 +57,7 @@ WORKDIR /adaguc/adaguc-server-master
 # Force to use Python 3
 RUN ln -sf /usr/bin/python3 /usr/bin/python
 RUN ln -sf /usr/bin/cmake3 /usr/bin/cmake
+RUN ln -sf /usr/bin/ctest3 /usr/bin/ctest
 RUN cp -r /usr/include/udunits2/* /usr/include/
 
 RUN bash compile.sh
