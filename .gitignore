@@ -108,3 +108,5 @@ build
 adaguc.egg-info
 env
 dist
+
+tests/checker_report.txt
