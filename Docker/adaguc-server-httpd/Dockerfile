@@ -27,7 +27,7 @@ COPY --from=openearth/adaguc-server /adaguc/adaguc-server-master/bin /adaguc/ada
 COPY --from=openearth/adaguc-server /adaguc/adaguc-server-master/data /adaguc/adaguc-server-master/data
 COPY --from=openearth/adaguc-server /adaguc/adaguc-server-config.xml /adaguc/adaguc-server-config.xml
 COPY --from=openearth/adaguc-server /adaguc/adaguc-server-*.sh /adaguc/
-COPY --from=openearth/adaguc-server /data/adaguc-datasets-internal/baselayers.xml /data/adaguc-datasets-internal/baselayers.xml
+COPY --from=openearth/adaguc-server /adaguc/adaguc-datasets-internal/baselayers.xml /adaguc/adaguc-datasets-internal/baselayers.xml
 COPY --from=openearth/adaguc-server /adaguc/adaguc-server-master/bin/adagucserver /var/www/cgi-bin/adaguc-server
 
 # Copy httpd scripts
@@ -41,10 +41,10 @@ RUN useradd -m adaguc -u 1000 && \
     mkdir -p /data/adaguc-datasets && \
     mkdir -p /data/adaguc-data && \
     mkdir -p /adaguc/userworkspace && \
-    mkdir -p /data/adaguc-services-home && \
+    mkdir -p /adaguc/adaguc-services-home && \
     mkdir -p /adaguc/basedir && \
     mkdir -p /adaguc/security && \
-    mkdir -p /data/adaguc-datasets-internal && \
+    mkdir -p /adaguc/adaguc-datasets-internal && \
     mkdir -p /servicehealth && \
     chmod +x /adaguc/adaguc-server-*.sh && \
     chmod +x /adaguc/start.sh && \

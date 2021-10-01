@@ -4,7 +4,7 @@ USER root
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="2.5.14" 
+LABEL version="2.5.15" 
 
 ######### First stage (build) ############
 
@@ -115,10 +115,10 @@ RUN useradd -m adaguc -u 1000 && \
     mkdir -p /data/adaguc-datasets && \
     mkdir -p /data/adaguc-data && \
     mkdir -p /adaguc/userworkspace && \
-    mkdir -p /data/adaguc-services-home && \
+    mkdir -p /adaguc/adaguc-services-home && \
     mkdir -p /adaguc/basedir && \
     mkdir -p /adaguc/security && \
-    mkdir -p /data/adaguc-datasets-internal && \
+    mkdir -p /adaguc/adaguc-datasets-internal && \
     mkdir -p /servicehealth
 
 # Configure
@@ -126,10 +126,10 @@ COPY ./Docker/adaguc-server-config.xml /adaguc/adaguc-server-config.xml
 COPY ./Docker/adaguc-services-config.xml /adaguc/adaguc-services-config.xml
 COPY ./Docker/start.sh /adaguc/
 COPY ./Docker/adaguc-server-*.sh /adaguc/
-COPY ./Docker/baselayers.xml /data/adaguc-datasets-internal/baselayers.xml
+COPY ./Docker/baselayers.xml /adaguc/adaguc-datasets-internal/baselayers.xml
 RUN  chmod +x /adaguc/adaguc-server-*.sh && \
     chmod +x /adaguc/start.sh && \
-    chown -R adaguc:adaguc /data/adaguc* /adaguc /servicehealth
+    chown -R adaguc:adaguc /data/adaguc* /adaguc /adaguc/* /servicehealth
 
 # Put in default java truststore
 RUN cp /etc/pki/java/cacerts /adaguc/security/truststore.ts
