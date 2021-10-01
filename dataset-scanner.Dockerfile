@@ -100,12 +100,12 @@ RUN curl -L https://jitpack.io/com/github/KNMI/adaguc-services/1.2.0/adaguc-serv
   mkdir -p /data/adaguc-datasets && \
   mkdir -p /data/adaguc-data && \
   mkdir -p /adaguc/userworkspace && \
-  mkdir -p /data/adaguc-services-home && \
+  mkdir -p /adaguc/adaguc-services-home && \
   mkdir -p /adaguc/basedir && \
   mkdir -p /var/log/adaguc && \
   mkdir -p /adaguc/adagucdb && \
   mkdir -p /adaguc/security && \
-  mkdir -p /data/adaguc-datasets-internal && \
+  mkdir -p /adaguc/adaguc-datasets-internal && \
   mkdir -p /servicehealth
     
 # Configure
@@ -113,7 +113,7 @@ COPY ./Docker/adaguc-server-config.xml /adaguc/adaguc-server-config.xml
 COPY ./Docker/adaguc-services-config.xml /adaguc/adaguc-services-config.xml
 COPY ./Docker/start.sh /adaguc/
 COPY ./Docker/adaguc-server-*.sh /adaguc/
-COPY ./Docker/baselayers.xml /data/adaguc-datasets-internal/baselayers.xml
+COPY ./Docker/baselayers.xml /adaguc/adaguc-datasets-internal/baselayers.xml
 RUN  chmod +x /adaguc/adaguc-server-*.sh && chmod +x /adaguc/start.sh \
   && chown -R adaguc:adaguc /data/adaguc* /adaguc /var/log/adaguc /servicehealth
 
