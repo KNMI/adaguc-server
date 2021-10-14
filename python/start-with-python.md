@@ -14,7 +14,7 @@ From the root adaguc-server folder:
 python3 -m venv env
 source env/bin/activate
 python3 -m pip install Pillow chardet numpy netcdf4 six requests pillow aggdraw lxml setuptools wheel flask flask_cors gunicorn
-python3 ./python/lib/setup.py develop
+cd ./python/lib/ && python3 setup.py develop && cd ../../
 ```
 
 ## To start the python flask webserver for adaguc:
@@ -26,8 +26,12 @@ export ADAGUC_PATH=`pwd`
 export ADAGUC_DATASET_DIR=/data/adaguc-datasets
 export ADAGUC_DATA_DIR=/data/adaguc-data
 export ADAGUC_AUTOWMS_DIR=/data/adaguc-autowms
+export ADAGUC_CONFIG=${ADAGUC_PATH}/python/lib/adaguc/adaguc-server-config-python-postgres.xml
+export ADAGUC_DB="user=adaguc password=adaguc host=localhost dbname=adaguc"
 python3 ./python/python-adaguc-server/main.py
 ```
+
+Note: the data directories cannot point to a symbolic link, the realpath is checked for security purposes.
 
 ## Reminder on how to install a python virtual env:
 
