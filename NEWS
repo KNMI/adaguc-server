@@ -1,3 +1,10 @@
+Version 2.5.15 2021-09-22
+    - The /data folder can now completely be mounted from another filesystem, all adaguc internal folders have moved to /adaguc.
+
+Version 2.5.14 2021-09-17
+    - WCS GetCoverage with Native parameters now returns data
+    - PNG reader can extraxt bbox, time and crs from png text metadata properties
+
 Version 2.5.13 2021-07-22
     - Extended logging options:
         - ADAGUC_ENABLELOGBUFFER=FALSE: buffered logging

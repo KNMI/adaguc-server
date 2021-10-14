@@ -4,7 +4,7 @@ USER root
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="2.5.13" 
+LABEL version="2.5.15" 
 
 ######### First stage (build) ############
 
@@ -50,6 +50,7 @@ WORKDIR /adaguc/adaguc-server-master
 # Force to use Python 3
 RUN ln -sf /usr/bin/python3 /usr/bin/python
 RUN ln -sf /usr/bin/cmake3 /usr/bin/cmake
+RUN ln -sf /usr/bin/ctest3 /usr/bin/ctest
 RUN cp -r /usr/include/udunits2/* /usr/include/
 
 RUN bash compile.sh
@@ -106,16 +107,16 @@ RUN useradd -m adaguc -u 1000 && \
     mkdir -p /data/adaguc-datasets && \
     mkdir -p /data/adaguc-data && \
     mkdir -p /adaguc/userworkspace && \
-    mkdir -p /data/adaguc-datasets-internal 
+    mkdir -p /adaguc/adaguc-datasets-internal
 
 # Configure
 COPY ./Docker/adaguc-server-config-python-postgres.xml /adaguc/adaguc-server-config.xml
 COPY ./Docker/start.sh /adaguc/
 COPY ./Docker/adaguc-server-*.sh /adaguc/
-COPY ./Docker/baselayers.xml /data/adaguc-datasets-internal/baselayers.xml
+COPY ./Docker/baselayers.xml /adaguc/adaguc-datasets-internal/baselayers.xml
 RUN  chmod +x /adaguc/adaguc-server-*.sh && \
     chmod +x /adaguc/start.sh && \
-    chown -R adaguc:adaguc /data/adaguc* /adaguc
+    chown -R adaguc:adaguc /data/adaguc* /adaguc /adaguc/*
 
 ENV ADAGUC_PATH=/adaguc/adaguc-server-master
 
