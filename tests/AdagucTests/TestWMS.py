@@ -61,7 +61,6 @@ class TestWMS(unittest.TestCase):
         AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
         self.assertEqual(status, 0)
         self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))
-        self.assertFalse(os.path.exists("checker_report.txt"))
 
     def test_WMSGetMap_testdatanc(self):
         AdagucTestTools().cleanTempDir()
@@ -343,7 +342,6 @@ class TestWMS(unittest.TestCase):
             env=self.env, isCGI=False, showLogOnError=False)
         AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
         self.assertEqual(status, 1)
-        self.assertFalse(os.path.exists(reportfilename))
         self.assertTrue(os.path.exists(os.environ["ADAGUC_LOGFILE"]))
         expectedErrors = ["No time units found for variable time",
                           "Exception in DBLoopFiles",

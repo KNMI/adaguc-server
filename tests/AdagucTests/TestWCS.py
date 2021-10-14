@@ -59,3 +59,12 @@ class TestWCS(unittest.TestCase):
                                                                 env = self.env, args=["--report"])
         self.assertEqual(status, 0)
         self.assertEqual(data.getvalue()[0:10], b'II*\x00\x08\x00\x00\x00\x12\x00')
+
+    def test_WCSGetCoverageAAIGRID_NATIVE_testdatanc(self):
+        AdagucTestTools().cleanTempDir()
+        filename="test_WCSGetCoverageAAIGRID_NATIVE_testdatanc.grd"
+        status,data,headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=testdata&FORMAT=aaigrid&",
+                                                                env = self.env, args=["--report"])
+        AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
