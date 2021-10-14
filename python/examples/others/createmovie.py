@@ -1,16 +1,17 @@
-import isodate 
+import isodate
 import time
 import urllib
+import urllib.request
 import os
 import ssl
 
 """
   This script creates a movie from an ADAGUC Web Map Service.
-  The script will work out of the box with the sat dataset which can be 
+  The script will work out of the box with the sat dataset which can be
   configured in the tutorial as described inside the Readme of adaguc-server.
-  
+
   You can also add overlays or baselayers if you configure these as layers in your service:
-  
+
   <!-- Layer with name baselayer from geoservices.knmi.nl -->
   <Layer type="cascaded" hidden="false">
     <Name force="true">baselayer</Name>
@@ -32,20 +33,21 @@ import ssl
     <Grid resolution="10"/>
     <WMSFormat name="image/png32"/>
   </Layer>
-  
+
   The movie can be displayed in a browser by using:
   $ firefox out.mp4
 """
+bbox = "BBOX=246032.58891774912,6415470.813887446,976823.012917749,7229569.237160173"
 
 # Pick a WMS request and remoce the TIME key value pair
-url="http://localhost:8090//adaguc-services/adagucserver?DATASET=sat&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=HRVIS&WIDTH=926&HEIGHT=982&CRS=EPSG%3A3857&BBOX=-3416822.7594446274,5182866.049499422,877249.2808489851,9736622.792013815&STYLES=hrvis_0till30000%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&"
+url="https://geoservices.knmi.nl/adagucserver?DATASET=RADAR&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=RAD_NL25_PCP_CM&WIDTH=926&HEIGHT=982&CRS=EPSG%3A3857&"+bbox+"&STYLES=&FORMAT=image/png&TRANSPARENT=TRUE&"
 
 # URL with overlays
-url="https://compute-test.c3s-magic.eu:8443//adaguc-services/adagucserver?DATASET=sat&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=HRVIS,overlay,grid10&WIDTH=926&HEIGHT=982&CRS=EPSG%3A32661&BBOX=43923.30841535237,-5093568.6573570175,4865123.617713443,19194.521617847146&STYLES=hrvis_0till30000%2Fnearest&FORMAT=image/png32&TRANSPARENT=TRUE&"
+#url="https://compute-test.c3s-magic.eu:8443//adaguc-services/adagucserver?DATASET=sat&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=HRVIS,overlay,grid10&WIDTH=926&HEIGHT=982&CRS=EPSG%3A32661&BBOX=43923.30841535237,-5093568.6573570175,4865123.617713443,19194.521617847146&STYLES=hrvis_0till30000%2Fnearest&FORMAT=image/png32&TRANSPARENT=TRUE&"
 
-# Specify the time range, it is start/stop/resolution, in this case 15 minutes. 
+# Specify the time range, it is start/stop/resolution, in this case 15 minutes.
 # This is the ISO8601 convention, check https://dev.knmi.nl/projects/adagucserver/wiki/ISO8601
-TIME="2015-06-05T10:45:00Z/2015-06-05T23:45:00Z/PT15M"
+TIME="2021-10-12T22:45:00Z/2021-10-12T23:45:00Z/PT5M"
 
 
 # Allow self signed certificates over HTTPS: Note, not secure!
@@ -69,12 +71,12 @@ for date in datestodo:
   wmstime=time.strftime("%Y-%m-%dT%H:%M:%SZ", date.timetuple())
   wmsurl=url+"&time="+wmstime+"&"
   filetowrite = "img%03d.png"%(num)
-  urllib.urlretrieve (wmsurl, filetowrite)
-  print wmsurl
-  print "Saving "+str(num)+"/"+str(len(datestodo))+": "+filetowrite
+  urllib.request.urlretrieve (wmsurl, filetowrite)
+  print(wmsurl)
+  print("Saving "+str(num)+"/"+str(len(datestodo))+": "+filetowrite)
   num = num+1
 
 #ffmpeg -i img%03d.png -c:v libx264 -vf fps=25 -pix_fmt yuv420p out.mp4
 
 
-os.system("ffmpeg -y -i img%03d.png -c:v libx264 -vf fps=25 -pix_fmt yuv420p out.mp4")  
+os.system("ffmpeg -y -i img%03d.png -c:v libx264 -vf fps=25 -pix_fmt yuv420p out.mp4")
