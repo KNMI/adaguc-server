@@ -1,9 +1,4 @@
 FROM openearth/adaguc-server
-
-WORKDIR /adaguc/adaguc-server-master/python/
-RUN python3 -m pip install --user --upgrade setuptools wheel
-RUN python3 -m venv env
-RUN source env/bin/activate && python3 -m pip install Pillow chardet numpy netcdf4 six requests pillow aggdraw lxml setuptools &&  python3 setup.py develop
-WORKDIR /adaguc/adaguc-server-master/python/examples/runautowms
-ENTRYPOINT [ "bash", "-c", "source ../../env/bin/activate && python3 run.py && ls result.png" ] 
-
+USER root
+WORKDIR /adaguc/adaguc-server-master/python/lib/
+ENTRYPOINT [ "bash", "-c", "python3 /adaguc/adaguc-server-master/python/examples/runautowms/run.py && ls result.png" ] 
