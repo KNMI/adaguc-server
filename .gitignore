@@ -99,7 +99,9 @@ data/python/adaguc_server.egg-info/
 data/python/adagucserver.egg-info/
 data/python/env/
 data/python/dist/
+python/lib/dist
 *.pytest_cache*
+*__pycache__*
 Testing
         
 .cmake
