@@ -114,3 +114,5 @@ env
 dist
 
 tests/checker_report.txt
+
+.vscode

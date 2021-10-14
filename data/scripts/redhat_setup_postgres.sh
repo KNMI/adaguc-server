@@ -17,4 +17,8 @@ runuser -l postgres -c "psql postgres -c \"CREATE DATABASE adaguc;\""
 echo "\q" | psql "dbname=adaguc user=adaguc password=adaguc host=localhost"
 if [ ${?} -eq 0 ];then
     echo "Postgres database setup correctly"
+    echo "Use the following setting for ADAGUC:"
+    echo "export ADAGUC_DB=\"dbname=adaguc user=adaguc password=adaguc host=localhost\""
+else
+    echo "Postgres database not fully functional, please check"
 fi
