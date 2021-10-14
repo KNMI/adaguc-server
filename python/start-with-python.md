@@ -2,10 +2,11 @@
 
 This can be used to run adaguc-server from Python.
 
-## Prerequisites: 
+## Prerequisites:
 
-- You need to have the adaguc-server binaries available. The adaguc Python library is using these binaries to work with the adaguc-server. You can compile adaguc with the `bash compile.sh` command, you will need some dependencies in order to compile adaguc. For details look at `sudo bash ./data/scripts/ubuntu_20_install_dependencies.sh `
 - You will need python3 and the ability to create virtualenv with python
+- You need to have the adaguc-server binaries available. The adaguc Python library will use these binaries to work with the adaguc-server. You can compile adaguc in your root adaguc-server directory with the `bash compile.sh` command. Building adaguc requires some dependencies in order to compile adaguc. For details look at the data/scripts directory in the root adaguc folder, there you can find some scripts to install dependencies and setup Postgres for Ubuntu18/20 and RedHat.
+
 
 ## To install the python wrapper:
 
@@ -16,7 +17,7 @@ source env/bin/activate
 python3 -m pip install Pillow chardet numpy netcdf4 six requests pillow aggdraw lxml setuptools wheel flask flask_cors gunicorn
 cd ./python/lib/ && python3 setup.py develop && cd ../../
 ```
-
+This will create and activate a `env` virtualenv directory in your adaguc root folder.
 ## To start the python flask webserver for adaguc:
 
 From the root adaguc-server folder:
@@ -31,13 +32,14 @@ export ADAGUC_DB="user=adaguc password=adaguc host=localhost dbname=adaguc"
 python3 ./python/python-adaguc-server/main.py
 ```
 
-Note: the data directories cannot point to a symbolic link, the realpath is checked for security purposes.
+Note: the data directories cannot point to a symbolic link, for security purposes adaguc checks if the path contains no symbolic links.
 
 ## To scan the datasets
 
 `bash ./Docker/adaguc-server-updatedatasets.sh <dataset name>`
 
 ## Reminder on how to install a python virtual env:
+## Reminder on how to install a python virtual env on Ubuntu:
 
 ```
 apt-get install python3-venv python3-pip
