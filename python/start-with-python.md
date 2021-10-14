@@ -33,6 +33,10 @@ python3 ./python/python-adaguc-server/main.py
 
 Note: the data directories cannot point to a symbolic link, the realpath is checked for security purposes.
 
+## To scan the datasets
+
+`bash ./Docker/adaguc-server-updatedatasets.sh <dataset name>`
+
 ## Reminder on how to install a python virtual env:
 
 ```
@@ -42,3 +46,15 @@ python3 -m pip install --user --upgrade setuptools wheel
 python3 -m venv env
 source env/bin/activate
 ```
+
+## To start the adaguc-server with gunicorn
+
+source env/bin/activate
+export ADAGUC_PATH=`pwd`
+export ADAGUC_DATASET_DIR=/data/adaguc-datasets
+export ADAGUC_DATA_DIR=/data/adaguc-data
+export ADAGUC_AUTOWMS_DIR=/data/adaguc-autowms
+export ADAGUC_CONFIG=${ADAGUC_PATH}/python/lib/adaguc/adaguc-server-config-python-postgres.xml
+export ADAGUC_DB="user=adaguc password=adaguc host=localhost dbname=adaguc"
+export PYTHONPATH=${ADAGUC_PATH}/python/python-adaguc-server
+gunicorn --bind 0.0.0.0:8080 --workers=16 wsgi:app
