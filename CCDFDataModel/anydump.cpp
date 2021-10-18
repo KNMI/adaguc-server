@@ -33,6 +33,7 @@
 #include "CCDFHDF5IO.h"
 #include "CCDFGeoJSONIO.h"
 #include "CCDFCSVReader.h"
+#include "utils.h"
 
 DEF_ERRORMAIN();
 
@@ -81,18 +82,8 @@ int main(int argCount,char **argVars){
     int status = 0;
     try{
       cdfObject=new CDFObject();
-      if(inputFile.endsWith(".nc")){
-        cdfReader = new CDFNetCDFReader() ;
-      }
-      if(inputFile.endsWith(".h5")){
-        cdfReader = new CDFHDF5Reader();
-      }
-      if(inputFile.endsWith(".geojson")){
-        cdfReader = new CDFGeoJSONReader();
-      }
-      if(inputFile.endsWith(".csv")){
-        cdfReader = new CDFCSVReader();
-      }
+      cdfReader= findReaderByFileName(inputFile);
+     
       if (cdfReader == NULL){
         CDBError("Unrecognized extension");
         throw __LINE__;
