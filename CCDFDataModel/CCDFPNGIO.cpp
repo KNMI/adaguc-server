@@ -82,14 +82,11 @@ int CDFPNGReader::open(const char *fileName){
   try{
     CT::string infoFile = fileName;
     infoFile.concat(".info");
-    CDBDebug("Trying info file %s", infoFile.c_str());
     CT::string infoData=CReadFile::open(infoFile);
-    CDBDebug("Found info file %s", infoData.c_str());
     CT::StackList<CT::string> lines = infoData.splitToStack("\n");
-    CDBDebug("Numlines %d", lines.size());
    
     for (size_t l = 0; l < lines.size(); l++) {
-      CDBDebug("line %s", lines[l].c_str());
+      CDBDebug("Info file line %s", lines[l].c_str());
       if (lines[l].startsWith("proj4_params=")) {
         CT::string proj4Params = lines[l];
         proj4Params.substringSelf(13, -1);
@@ -113,7 +110,6 @@ int CDFPNGReader::open(const char *fileName){
     
     } 
   }catch(int e){
-    CDBDebug("No .info file present for PNG (%d)", e);
   }
   
   if(isSlippyMapFormat == true){
@@ -134,7 +130,9 @@ int CDFPNGReader::open(const char *fileName){
     /* Put in headers from PNG */
     double bbox[] = {0, 0, 0, 0};
     for(size_t j=0;j<pngRaster->headers.size();j++) {
+      #ifdef CCDFPNGIO_DEBUG                   
       CDBDebug("HEADERS [%s]=[%s]", pngRaster->headers[j].name.c_str(), pngRaster->headers[j].value.c_str());
+      #endif
 
       /* Proj4 params */
       if (pngRaster->headers[j].name.equals("proj4_params")) {
@@ -365,7 +363,8 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType type){
       CDBDebug("Warning: reusing pngdata variable");
     } else {
       if(pngRaster !=NULL && pngRaster->data){
-        CDBDebug("Info: reusing pngdata");
+        // CDBDebug("Info: reusing pngdata");
+        // return 0;
         // delete pngRaster;
       } else {
         if (pngRaster != NULL) delete pngRaster;
@@ -379,7 +378,7 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType type){
           // ((unsigned int*)var->data)[x+y*rasterWidth] = 255*256*256 + 255*(256*256*256);
         }
       }
-      CDBDebug("Info: pngdata read");
+      // CDBDebug("Info: pngdata read");
     }
   }
   return 0;

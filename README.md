@@ -55,7 +55,7 @@ bash docker-compose-generate-env.sh \
 
 docker-compose pull
 docker-compose build
-docker-compose up -d && sleep 10
+docker-compose up -d --build && sleep 10
 
 # Visit the url as configured in the .env file under EXTERNALADDRESS
 # The server runs with a self signed certificate, this means you get a warning. Add an exception.

@@ -26,6 +26,13 @@
 #ifndef CDEBUGGER_H_H2
 #define CDEBUGGER_H_H2
 
+#ifndef SOURCE_PATH_SIZE
+#define SOURCE_PATH_SIZE 80
+#endif
+
+#define __FILENAME__ (__FILE__ + SOURCE_PATH_SIZE)
+
+
 #include <stdio.h>
 #include <iostream>
 #include <vector>
@@ -56,13 +63,13 @@ void _printError(const char *pszMessage,...);
 
 
 
-#define CDBWarning             _printWarning("[W:%03d:pid%lu: %s, %d in %s] ",logMessageNumber, logProcessIdentifier, __FILE__,__LINE__,className);_printWarningLine
-#define CDBError               _printError("[E:%03d:pid%lu: %s, %d in %s] ",logMessageNumber, logProcessIdentifier, __FILE__,__LINE__,className);_printErrorLine
+#define CDBWarning             _printWarning("[W:%03d:pid%lu: %s:%d %s] ",logMessageNumber, logProcessIdentifier, __FILENAME__,__LINE__,className);_printWarningLine
+#define CDBError               _printError("[E:%03d:pid%lu: %s:%d %s] ",logMessageNumber, logProcessIdentifier, __FILENAME__,__LINE__,className);_printErrorLine
 #define CDBErrormessage        _printErrorLine
-#define CDBDebug               _printDebug("[D:%03d:pid%lu: %s, %d in %s] ",logMessageNumber, logProcessIdentifier, __FILE__,__LINE__,className);_printDebugLine
-#define CDBEnterFunction(name) const char *functionName=name;_printDebugLine("D %s, %d class %s: Entering function '%s'",__FILE__,__LINE__,className,functionName);
-#define CDBReturn(id)          {_printDebug("D %s, %d class %s::%s: returns %d\n",__FILE__,__LINE__,className,functionName,id);return id;}
-#define CDBDebugFunction       _printDebug("D %s, %d class %s::%s: ",__FILE__,__LINE__,className,functionName);_printDebugLine
+#define CDBDebug               _printDebug("[D:%03d:pid%lu: %s:%d %s] ",logMessageNumber, logProcessIdentifier, __FILENAME__,__LINE__,className);_printDebugLine
+#define CDBEnterFunction(name) const char *functionName=name;_printDebugLine("D %s, %d class %s: Entering function '%s'",__FILENAME__,__LINE__,className,functionName);
+#define CDBReturn(id)          {_printDebug("D %s, %d class %s::%s: returns %d\n",__FILENAME__,__LINE__,className,functionName,id);return id;}
+#define CDBDebugFunction       _printDebug("D %s, %d class %s::%s: ",__FILENAME__,__LINE__,className,functionName);_printDebugLine
 #define DEF_ERRORFUNCTION()    static const char *className;
 #define DEF_ERRORMAIN()        static const char *className="main";
 
@@ -81,7 +88,7 @@ template <class myFreeType>
 #endif
     }
       
-#define allocateArray(object,size) _allocateArray(object,size,__FILE__,__LINE__)
+#define allocateArray(object,size) _allocateArray(object,size,__FILENAME__,__LINE__)
 //allocateArray(&nc.varids,nc.numvars);
 template <class myFreeType>
     void deleteArray(myFreeType **object){
