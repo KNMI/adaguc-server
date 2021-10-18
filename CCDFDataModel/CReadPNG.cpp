@@ -95,7 +95,7 @@ CReadPNG::CPNGRaster * CReadPNG::read_png_file(const char* file_name, bool pngRe
   
   pngRaster->width = png_get_image_width(png_ptr, info_ptr);
   pngRaster->height = png_get_image_height(png_ptr, info_ptr);
-  CDBDebug("CReadPNG::open PNG of size [%dx%d]", pngRaster->width, pngRaster->height );
+  // CDBDebug("CReadPNG::open PNG of size [%dx%d]", pngRaster->width, pngRaster->height );
   color_type = png_get_color_type(png_ptr, info_ptr);
   bit_depth = png_get_bit_depth(png_ptr, info_ptr);
   
