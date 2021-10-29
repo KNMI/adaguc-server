@@ -32,7 +32,7 @@ services:
         environment:
             - "EXTERNALADDRESS=${EXTERNALADDRESS}"
             - 'ADAGUC_DB=host=adaguc-db port=5432 user=adaguc password=adaguc dbname=adaguc'
-            - 'ADAGUC_ENABLELOGBUFFER=FALSE'
+            # - 'ADAGUC_ENABLELOGBUFFER=FALSE'
         env_file:
             - .env
         restart: unless-stopped
