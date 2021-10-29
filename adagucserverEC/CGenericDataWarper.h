@@ -245,17 +245,19 @@ class GenericDataWarper{
       // CDBDebug("dfDestOrigX [%f] ", dfDestOrigX);
       // CDBDebug("dfDestExtW [%f] ", dfDestExtW);
 
-      double tX = ((dfDestOrigX-dfSourceOrigX)/dfSourceExtW)*dfSourceW;
-      double eY = ((dfDestOrigY-dfSourceOrigY)/dfSourceExtH)*dfSourceH;
-      double eX = (((dfDestOrigX+dfDestExtW + 1)-dfSourceOrigX)/dfSourceExtW)*dfSourceW;
-      double tY = (((dfDestOrigY+dfDestExtH + 1)-dfSourceOrigY)/dfSourceExtH)*dfSourceH;
-      // CDBDebug("TESTX = %f;%f, %f;%f", tX, eX, tY, eY);
+      // double tX = ((dfDestOrigX-dfSourceOrigX)/dfSourceExtW)*dfSourceW;
+      // double tY = (((dfDestOrigY+dfDestExtH)-dfSourceOrigY)/dfSourceExtH)*dfSourceH;
 
-      PXExtentBasedOnSource[0] = tX < 0 ? 0 : tX;
-      PXExtentBasedOnSource[1] = tY < 0 ? 0 : tY;
-      PXExtentBasedOnSource[2] = eX > sourceDataWidth  ?  sourceDataWidth : eX;
-      PXExtentBasedOnSource[3] = eY > sourceDataHeight  ? sourceDataHeight : eY;
-      // CDBDebug("PX extent is [%d,%d,%d,%d] ", PXExtentBasedOnSource[0], PXExtentBasedOnSource[1], PXExtentBasedOnSource[2], PXExtentBasedOnSource[3]);
+      // double eY = ((dfDestOrigY-dfSourceOrigY)/dfSourceExtH)*dfSourceH + 1;
+      // double eX = (((dfDestOrigX+dfDestExtW)-dfSourceOrigX)/dfSourceExtW)*dfSourceW + 1;
+      
+      // // CDBDebug("TESTX = %f;%f, %f;%f", tX, eX, tY, eY);
+
+      // PXExtentBasedOnSource[0] = tX < 0 ? 0 : tX;
+      // PXExtentBasedOnSource[1] = tY < 0 ? 0 : tY;
+      // PXExtentBasedOnSource[2] = eX > sourceDataWidth  ?  sourceDataWidth : eX;
+      // PXExtentBasedOnSource[3] = eY > sourceDataHeight  ? sourceDataHeight : eY;
+      // // CDBDebug("PX extent is [%d,%d,%d,%d] ", PXExtentBasedOnSource[0], PXExtentBasedOnSource[1], PXExtentBasedOnSource[2], PXExtentBasedOnSource[3]);
 
       dataWidth = PXExtentBasedOnSource[2]-PXExtentBasedOnSource[0];
       dataHeight = PXExtentBasedOnSource[3]-PXExtentBasedOnSource[1];
