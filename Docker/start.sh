@@ -35,6 +35,10 @@ then
   exit 1
 fi  
 
+export ADAGUC_AUTOWMS_DIR=/data/adaguc-autowms
+export ADAGUC_DATA_DIR=/data/adaguc-data
+export ADAGUC_DATASET_DIR=/data/adaguc-datasets
+
 echo "Start serving on ${EXTERNALADDRESS}"
-java -jar /adaguc/adaguc-services.jar
+gunicorn --bind 0.0.0.0:8080 --workers=16 wsgi:app --disable-redirect-access-to-syslog --access-logfile -
     
