@@ -1303,11 +1303,11 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource,CServerParams 
         return 1;
       }
 
-      for(double wy=0;wy<1;wy+=0.1){
-        for(double wx=0;wx<1;wx+=0.1){
+      for(double wy=0.2;wy<0.8;wy+=0.1){
+        for(double wx=0.2;wx<0.8;wx+=0.1){
           double viewPortMX = srvParam->Geo->dfBBOX[2]*(1-wx)+srvParam->Geo->dfBBOX[0]*wx;
           double viewPortMY = srvParam->Geo->dfBBOX[3]*(1-wy)+srvParam->Geo->dfBBOX[1]*wy;
-          //CDBDebug("viewPortMX, viewPortMY = (%f,%f)",viewPortMX,viewPortMY);
+          // CDBDebug("viewPortMX, viewPortMY at (%f %f) = (%f,%f)",wx, wy, viewPortMX,viewPortMY);
           double x1 = viewPortMX;
           double y1 = viewPortMY;
           double x2 = viewPortMX+viewportCellsizeX;

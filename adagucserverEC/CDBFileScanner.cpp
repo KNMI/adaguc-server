@@ -511,11 +511,9 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource,int removeNonExistingFil
               
         
               if(d==0){
-                if(verbose)CDBDebug("Adding: %zu/%zu %s\t %s",
-                j,
-                fileList->size(),
-                dimensionTextList.c_str(),
-                (*fileList)[j].c_str());
+                if(verbose){
+                  CDBDebug("Adding: %zu/%zu %s\t %s", j, fileList->size(), dimensionTextList.c_str(), (*fileList)[j].c_str());
+                }
               };
               #ifdef CDBFILESCANNER_DEBUG
               CDBDebug("Creating new CDFObject");
@@ -1163,7 +1161,7 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
   }
 
   CDataReader *reader = new CDataReader();;
-  // reader->enableReporting(false);
+  reader->enableReporting(false);
   dataSource->addStep(fileList[0].c_str(),NULL);
   reader->open(dataSource,CNETCDFREADER_MODE_OPEN_HEADER);
   delete reader;
@@ -1187,8 +1185,7 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
   int configErrors = 0;
   if(ts->attr.tilewidthpx.empty()){CDBError("tilewidthpx not defined");configErrors++;}
   if(ts->attr.tileheightpx.empty()){CDBError("tileheightpx not defined");configErrors++;}
-  if(ts->attr.tilecellsizex.empty()){CDBError("tilecellsizex not defined");configErrors++;}
-  if(ts->attr.tilecellsizey.empty()){CDBError("tilecellsizey not defined");configErrors++;}
+  
   
   bool autoTileExtent = false;
   if(ts->attr.left.empty() && ts->attr.bottom.empty() && ts->attr.right.empty() && ts->attr.top.empty()){
@@ -1207,9 +1204,12 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
   int tilewidthpx         = ts->attr.tilewidthpx.toInt();
   int tileheightpx        = ts->attr.tileheightpx.toInt();
   
-  double tilecellsizex  = ts->attr.tilecellsizex.toDouble();
-  double tilecellsizey  = ts->attr.tilecellsizey.toDouble();
+  double tilecellsizex  = dataSource->dfCellSizeX;
+  double tilecellsizey  = dataSource->dfCellSizeY;
    
+  if(!ts->attr.tilecellsizex.empty()){ts->attr.tilecellsizex.toDouble();}
+  if(!ts->attr.tilecellsizey.empty()){ts->attr.tilecellsizey.toDouble();}
+
   CT::string tileprojection = dataSource->nativeProj4;
   
   if(ts->attr.tileprojection.empty()==false){
@@ -1240,14 +1240,22 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
       CREPORT_ERROR_NODOC("Unable to initialize projection", CReportMessage::Categories::GENERAL);
       return 1;
     }
-    double dfBBOX[4];
-    warper.findExtent(dataSource,dfBBOX);
-    
-    CDBDebug("Found TILEEXTENT BBOX [%f, %f, %f, %f]", dfBBOX[0],dfBBOX[1],dfBBOX[2],dfBBOX[3]);
-    tilesetstartx  = dfBBOX[0];
-    tilesetstarty  = dfBBOX[1];
-    tilesetstopx   = dfBBOX[2];
-    tilesetstopy   = dfBBOX[3];
+
+    if(warper.isProjectionRequired()) {
+      double dfBBOX[4];
+      warper.findExtent(dataSource,dfBBOX);
+      
+      CDBDebug("Found TILEEXTENT BBOX [%f, %f, %f, %f]", dfBBOX[0],dfBBOX[1],dfBBOX[2],dfBBOX[3]);
+      tilesetstartx  = dfBBOX[0];
+      tilesetstarty  = dfBBOX[1];
+      tilesetstopx   = dfBBOX[2];
+      tilesetstopy   = dfBBOX[3];
+    } else {
+      tilesetstartx  = dataSource->dfBBOX[0];
+      tilesetstarty  = dataSource->dfBBOX[1];
+      tilesetstopx   = dataSource->dfBBOX[2];
+      tilesetstopy   = dataSource->dfBBOX[3];
+    }
  
   }
   
@@ -1334,9 +1342,7 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
   
   for(size_t dd=0;dd<dataSource->requiredDims.size();dd++){
     for(size_t ddd=0;ddd<dataSource->requiredDims[dd]->uniqueValues.size();ddd++){
-      //dataSource->requiredDims[dd]->currentValue = dataSource->requiredDims[dd]->uniqueValues[ddd].c_str();
       dataSource->requiredDims[dd]->value = dataSource->requiredDims[dd]->uniqueValues[ddd].c_str();
-      //dataSource->requiredDims[dd]->currentIndex = dataSource->requiredDims[dd]->uniqueIndexes[ddd];
       try{
 
         CT::string dimName = dataSource->cfgLayer->Dimension[dd]->attr.name.c_str();
@@ -1346,16 +1352,7 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
         double globalBBOX[4];
         
         CDBStore::Store *store = NULL;
-  //       store = dbAdapter->getMin("minx",tableName.c_str());globalBBOX[0] = store->getRecord(0)->get(0)->toDouble();delete store;
-  //       store = dbAdapter->getMin("miny",tableName.c_str());globalBBOX[1] = store->getRecord(0)->get(0)->toDouble();delete store;
-  //       store = dbAdapter->getMax("maxx",tableName.c_str());globalBBOX[2] = store->getRecord(0)->get(0)->toDouble();delete store;
-  //       store = dbAdapter->getMax("maxy",tableName.c_str());globalBBOX[3] = store->getRecord(0)->get(0)->toDouble();delete store;
-    /*    
-        globalBBOX[0]=-2099.359;
-        globalBBOX[2]=91.10042;
-        globalBBOX[1]=-2000.16;
-        globalBBOX[3]=2002.185;*/
-        
+
         globalBBOX[0]=tilesetstartx;
         globalBBOX[2]=tilesetstopx;
         globalBBOX[1]=tilesetstarty;
@@ -1366,8 +1363,6 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
         int nrTilesX = floor(tilesetWidth/tileBBOXWidth+0.5);
         int nrTilesY = floor(tilesetHeight/tileBBOXHeight+0.5);
         
-        //´CDBDebug("globalBBOX         : [%f,%f,%f,%f]",globalBBOX[0],globalBBOX[1],globalBBOX[2],globalBBOX[3]);
-        //CDBDebug("nrTilesX,nrTilesY  : [%d,%d]",nrTilesX,nrTilesY);
         
         int minlevel = 1;
         if(ts->attr.minlevel.empty()==false){
@@ -1375,17 +1370,13 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
           if(minlevel<=1)minlevel=1;
         }
         int maxlevel            = ts->attr.maxlevel.toInt();
-        // for(int level = minlevel;level<maxlevel+1;level++){
         for(int level = maxlevel;level>=minlevel;level--){  
 
           int numFound = 0;
           int numCreated = 0;
         
-          //CDBDebug("Tiling level %d",level);
           int levelInc = pow(2,level-1);
-          //CDBDebug("Tiling levelInc %d",levelInc);
           for(int y=0;y<nrTilesY;y=y+levelInc){
-            
             for(int x=0;x<nrTilesX;x=x+levelInc){
               int tilesCreated = 0;
               CDataSource ds;
@@ -1394,9 +1385,7 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
               ds.srvParams=&newSrvParams;
               ds.cfgLayer=dataSource->cfgLayer;
               ds.cfg=dataSource->srvParams->cfg;
-              
-              
-              
+
               double dfMinX = globalBBOX[0]+tileBBOXWidth*x-tileBBOXWidth/2;
               double dfMinY = globalBBOX[1]+tileBBOXHeight*y-tileBBOXHeight/2;
               double dfMaxX = globalBBOX[0]+tileBBOXWidth*(x+levelInc)+tileBBOXWidth/2;
@@ -1414,7 +1403,17 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags){
               if(ts->attr.prefix.empty()==false){
                 prefix = ts->attr.prefix+"/";
               }
-              fileNameToWrite.printconcat("/%slevel%0.2d/left%f/",prefix.c_str(),level,dfMinY);
+              CT::string timeValue="1970-01-01T00:00:00Z";
+              for(size_t i=0;i<ds.requiredDims.size();i++){
+                if (ds.requiredDims[i]->isATimeDimension) {
+                  timeValue = ds.requiredDims[i]->value;
+                  timeValue.replaceSelf(":","");
+                  timeValue.replaceSelf("-","");
+                }
+              }
+              
+              fileNameToWrite.printconcat("/%s/%slevel%0.2d/left%f/",timeValue.c_str(),prefix.c_str(),level,dfMinY);
+              CDBDebug("fileNameToWritefileNameToWrite %s", fileNameToWrite.c_str());
               CDirReader::makePublicDirectory(fileNameToWrite.c_str());
               fileNameToWrite.printconcat("left[%f]_bottom[%f]_right[%f]_top[%f]",dfMinX,dfMinY,dfMaxX,dfMaxY);
               for(size_t i=0;i<ds.requiredDims.size();i++){
