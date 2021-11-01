@@ -28,7 +28,7 @@ def setupAdaguc():
     print('Your ADAGUC_CONFIG environment variable is not set! It should point to a adaguc-server config file.')
     exit(1)
 
-  # logging.info("Using config file %s" % adagucServerConfig)
+  logging.info("Using config file %s" % adagucServerConfig)
 
   adagucInstance = runAdaguc()
   adagucInstance.setAdagucPath(adagucServerHome)
