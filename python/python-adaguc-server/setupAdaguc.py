@@ -14,6 +14,9 @@ def setupAdaguc():
   if not os.getenv('ADAGUC_DATA_DIR'):
     print("ADAGUC_DATA_DIR not set")
     exit(1)
+  if not os.getenv('ADAGUC_AUTOWMS_DIR'):
+    print("ADAGUC_AUTOWMS_DIR not set")
+    exit(1)
 
   # Get the location of the binaries
   adagucServerHome = os.getenv('ADAGUC_PATH') + '/'
