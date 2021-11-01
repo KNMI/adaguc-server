@@ -40,5 +40,5 @@ export ADAGUC_DATA_DIR=/data/adaguc-data
 export ADAGUC_DATASET_DIR=/data/adaguc-datasets
 
 echo "Start serving on ${EXTERNALADDRESS}"
-gunicorn --bind 0.0.0.0:8080 --workers=16 wsgi:app
+gunicorn --bind 0.0.0.0:8080 --workers=16 wsgi:app --disable-redirect-access-to-syslog --access-logfile -
     
