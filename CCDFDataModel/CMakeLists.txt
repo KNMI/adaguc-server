@@ -4,6 +4,10 @@ find_package(HDF5 REQUIRED)
 add_library(CCDFDataModel
     CCDFDataModel.h
     CCDFNetCDFIO.h
+    CReadPNG.h
+    CReadPNG.cpp
+    CCDFPNGIO.h
+    CCDFPNGIO.cpp
     CTime.h
     CCDFHDF5IO.h
     CProj4ToCF.h
@@ -32,7 +36,3 @@ add_library(CCDFDataModel
 
 target_include_directories(CCDFDataModel PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${LIBXML2_INCLUDE_DIR} ${HDF5_INCLUDE_DIR})
 target_link_libraries(CCDFDataModel hclasses ${NetCDF_LIBRARIES} ${HDF5_LIBRARIES})
-
-# add_executable(cmake-adaguc test.cpp)
-
-# target_link_libraries(cmake-adaguc PRIVATE hclasses)

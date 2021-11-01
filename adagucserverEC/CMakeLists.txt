@@ -16,8 +16,6 @@ find_package(WebP REQUIRED)
 
 add_library(
     adagucserverEC
-    CReadPNG.h
-    CCDFPNGIO.h
     CDataReader.h
     COGCDims.h
     CImageWarper.h
@@ -77,8 +75,6 @@ add_library(
     CAreaMapper.h
     CSLD.h
     CHandleMetadata.h
-    CReadPNG.cpp
-    CCDFPNGIO.cpp
     CDataReader.cpp
     COGCDims.cpp
     CImageWarper.cpp
