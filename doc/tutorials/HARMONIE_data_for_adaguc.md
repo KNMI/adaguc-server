@@ -81,6 +81,6 @@ variables:
 This file can be copied to the autowms directory of Adaguc to see if everything works.
 
 ## Configure dataset for files
-This file can also be configured as a dataset. One or more of these files can be copied to the data directory HARM_N55 of this dataset. The parameters in the file can then be configured for visualisation in the dataset configuration file [HARM_N55.xml](data/HARMONIE/HARM_N55.xml)
+This file can also be configured as a dataset. One or more of these files can be copied to the data directory HARM_N55 of this dataset. The parameters in the file can then be configured for visualisation in the dataset configuration file [HARM_N55.xml](data/HARMONIE/HARM_N55.xml). This file also needs a [StandardStyles_HARM_N55.xml](data/HARMONIE/StandardStyles_HARM_N55.xml) file for Adaguc
 This file only configures a few layers. The layers icing_index and vertical_integral_of_cloud_liquid are left out as an exercise.
 

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <Include location="/data/adaguc-datasets/includes/StandardStyles_HARM_N55.xml"/>
+
+  <Layer type="database">
+    <Name>air_temperature__at_2m</Name>
+    <Title>Temperatuur 2m</Title>
+    <Variable>air_temperature__at_2m</Variable>
+    <FilePath filter="^HARM_N55_.*\.nc$">/data/adaguc-data/HARM_N55</FilePath>
+    <DataPostProc algorithm="ax+b" a="1" b="-273.15" units="Celsius"/>
+    <Dimension name="time" interval="PT1H" units="ISO8601" default="min">time</Dimension>
+    <Dimension name="forecast_reference_time" interval="PT3H" units="ISO8601">reference_time</Dimension>
+    <Styles>temperature</Styles>
+  </Layer>
+
+  <Layer type="database">
+    <Name>air_temperature__at_pl</Name>
+    <Title>Temperatuur (PL)</Title>
+    <Variable>air_temperature__at_pl</Variable>
+    <FilePath filter="^HARM_N55_.*\.nc$">/data/adaguc-data/HARM_N55</FilePath>
+    <DataPostProc algorithm="ax+b" a="1" b="-273.15" units="Celsius"/>
+    <Dimension name="time" interval="PT1H" units="ISO8601" default="min">time</Dimension>
+    <Dimension name="forecast_reference_time" interval="PT3H" units="ISO8601">reference_time</Dimension>
+    <Dimension name="pressure" interval="PT3H" units="hPa">elevation</Dimension>
+    <Styles>temperature</Styles>
+  </Layer>
+
+  <Layer type="database">
+    <Name>air_pressure_at_sea_level</Name>
+    <Title>Luchtdruk</Title>
+    <Variable>air_pressure_at_sea_level</Variable>
+    <FilePath filter="^HARM_N55_.*\.nc$">/data/adaguc-data/HARM_N55</FilePath>
+    <DataPostProc algorithm="ax+b" a="0.01" b="0" units="hPa"/>
+    <Dimension name="time" interval="PT1H" units="ISO8601" default="min">time</Dimension>
+    <Dimension name="forecast_reference_time" interval="PT3H" units="ISO8601">reference_time</Dimension>
+    <Styles>pressure_1_5</Styles>
+  </Layer>
+  
+  <Layer type="database">
+    <Name>wind__at_10m_barb</Name>
+    <Title>Windvaantjes</Title>
+    <Variable>x_wind__at_10m</Variable>
+    <Variable>y_wind__at_10m</Variable>
+    <FilePath filter="^HARM_N55_.*\.nc$">/data/adaguc-data/HARM_N55</FilePath>
+    <DataPostProc algorithm="ax+b" a="1" b="0" units="m/s"/>
+    <Dimension name="time" interval="PT1H" units="ISO8601" default="min">time</Dimension>
+    <Dimension name="forecast_reference_time" interval="PT3H" units="ISO8601">reference_time</Dimension>
+    <Styles>Windbarbs</Styles>
+  </Layer>
+  
+  <Layer type="database">
+    <Name>wind__at_10m_speed</Name>
+    <Title>Windsnelheid Bft</Title>
+    <Variable>x_wind__at_10m</Variable>
+    <Variable>y_wind__at_10m</Variable>
+    <FilePath filter="^HARM_N55_.*\.nc$">/data/adaguc-data/HARM_N55</FilePath>
+    <Dimension name="time" interval="PT1H" units="ISO8601" default="min">time</Dimension>
+    <Dimension name="forecast_reference_time" interval="PT3H" units="ISO8601">reference_time</Dimension>
+    <DataPostProc algorithm="beaufort" units="bft"/>
+    <Styles>Windspeed</Styles>
+  </Layer>
+  
+</Configuration>
