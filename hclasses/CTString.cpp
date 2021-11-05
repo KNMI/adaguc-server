@@ -681,7 +681,7 @@ namespace CT{
 
   bool string::isInt(){
      if (this->empty()) return false;
-    const char digitsAllowedForFloat[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
+    const char digitsAllowedForFloat[] = {'-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
     const size_t numDigits = 12;
     const char *inputStr = this->c_str();
     const size_t inputLength = this->length();
@@ -703,7 +703,7 @@ namespace CT{
 
   bool string::isFloat() {
     if (this->empty()) return false;
-    const char digitsAllowedForFloat[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', 'f'};
+    const char digitsAllowedForFloat[] = {'-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', 'f'};
     const size_t numDigits = 12;
     const char *inputStr = this->c_str();
     const size_t inputLength = this->length();
