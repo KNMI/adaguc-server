@@ -118,6 +118,16 @@ int main(){
   }
   
   
+  if (CT::string("-15.0").isFloat() == false) {
+    CDBError("[-15.0] should be a float");
+    throw __LINE__;
+  }
+
+  if (CT::string("-15").isInt() == false) {
+    CDBError("[-15] should be a int");
+    throw __LINE__;
+  }
+
   CDBDebug("OK");
   return 0;
 }
