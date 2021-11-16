@@ -25,6 +25,9 @@
 
 #include "CServerParams.h"
 #include "CStopWatch.h"
+#include <string>
+#include <vector>
+#include <sstream>
 const char *CServerParams::className="CServerParams";
 
 
@@ -573,6 +576,21 @@ bool CServerParams::checkTimeFormat(CT::string& timeToCheck){
   return isValidTime;*/
 }
 
+static std::vector<std::string> split(std::string input){
+	std::vector<std::string> result;
+	std::istringstream ss(input);
+	std::string token;
+	while(std::getline(ss, token, ',')) {
+		result.push_back(token);
+	}
+	return result;
+}
+
+static bool ends_with(std::string const & value, std::string const & ending){
+    if (ending.size() > value.size()) return false;
+    return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
+}
+
 int CServerParams::parseConfigFile(CT::string &pszConfigFile){
   CT::string configFileData;
   
@@ -584,34 +602,31 @@ int CServerParams::parseConfigFile(CT::string &pszConfigFile){
       CDBError("Unable to open configuration file [%s], error %d", pszConfigFile.c_str(), e);
       return 1;
     }
-
-    /* Substitute ADAGUC_PATH */
-    const char *pszADAGUC_PATH=getenv("ADAGUC_PATH");
-    if(pszADAGUC_PATH!=NULL){
-      CT::string adagucPath = CDirReader::makeCleanPath(pszADAGUC_PATH);
-      adagucPath = adagucPath + "/";
-      configFileData.replaceSelf("{ADAGUC_PATH}",adagucPath.c_str());
+    std::string replaceVars[5] = { "ADAGUC_PATH", "ADAGUC_TMP", "ADAGUC_DB", "ADAGUC_DATASET_DIR", "ADAGUC_AUTOWMS_DIR" };
+    for (std::string replaceVar : replaceVars) {
+      std::string replaceText = "{" + replaceVar + "}";
+      const char *replaceValue = getenv(replaceVar.c_str());
+      if (replaceValue != NULL) {
+        if (ends_with(replaceVar, "PATH")) {
+          CT::string adagucPath = CDirReader::makeCleanPath(replaceValue);
+          adagucPath = adagucPath + "/";
+          configFileData.replaceSelf(replaceText.c_str(), adagucPath.c_str());
+        }else{
+          configFileData.replaceSelf(replaceText.c_str(), replaceValue);
+        }
+      }
     }
-
-    /* Substitute ADAGUC_TMP */
-    const char *pszADAGUC_TMP=getenv("ADAGUC_TMP");
-    if(pszADAGUC_TMP!=NULL)configFileData.replaceSelf("{ADAGUC_TMP}",pszADAGUC_TMP);
-
-    /* Substitute ADAGUC_DB */
-    const char *pszADAGUC_DB=getenv("ADAGUC_DB");
-    if(pszADAGUC_DB!=NULL)configFileData.replaceSelf("{ADAGUC_DB}",pszADAGUC_DB);
-
-    /* Substitute ADAGUC_DATASET_DIR */
-    const char *pszADAGUC_DATASET_DIR=getenv("ADAGUC_DATASET_DIR");
-    if(pszADAGUC_DATASET_DIR!=NULL)configFileData.replaceSelf("{ADAGUC_DATASET_DIR}",pszADAGUC_DATASET_DIR);
-
-    /* Substitute ADAGUC_DATA_DIR */
-    const char *pszADAGUC_DATA_DIR=getenv("ADAGUC_DATA_DIR");
-    if(pszADAGUC_DATA_DIR!=NULL)configFileData.replaceSelf("{ADAGUC_DATA_DIR}",pszADAGUC_DATA_DIR);
-
-    /* Substitute ADAGUC_AUTOWMS_DIR */
-    const char *pszADAGUC_AUTOWMS_DIR=getenv("ADAGUC_AUTOWMS_DIR");
-    if(pszADAGUC_AUTOWMS_DIR!=NULL)configFileData.replaceSelf("{ADAGUC_AUTOWMS_DIR}",pszADAGUC_AUTOWMS_DIR);
+    const char *replaceDynVars = getenv("ADAGUC_EENV");
+    if (replaceDynVars != NULL) {
+      std::string replaceDynVarsStr(replaceDynVars);
+      for (std::string replaceVar : split(replaceDynVarsStr)) {
+        std::string replaceText = "{" + replaceVar + "}";
+        const char *replaceValue = getenv(replaceVar.c_str());
+        if (replaceValue != NULL) {
+          configFileData.replaceSelf(replaceText.c_str(), replaceValue);
+        }
+      }
+    }
   }catch(int e){
     CDBError("Exception %d in substituting", e);
   }
