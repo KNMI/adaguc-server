@@ -9,13 +9,14 @@ THISSCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )
 
 . ${THISSCRIPTDIR}/adaguc-server-chkconfig.sh
 
+# Unbufferd logging for realtime output
+export ADAGUC_ENABLELOGBUFFER=FALSE
+
 if [[ $1 ]]; then
   # Update a specific dataset
   for configfile in /data/adaguc-datasets/$1 ;do
     filename=/data/adaguc-datasets/"${configfile##*/}" 
     filebasename=${filename##*/}
-    # remove all old service status file such that only active services are monitored
-    rm -f /servicehealth/${filebasename%.*}
     echo ""
     if [[ $2 ]]; then
       echo "*** Starting update with tailpath $2 for dataset ${filename}" 
@@ -26,17 +27,12 @@ if [[ $1 ]]; then
       ${ADAGUC_PATH}/bin/adagucserver --updatedb --config ${ADAGUC_CONFIG},${filename}
       OUT=$?
     fi
-    if [ -d /servicehealth ]; then
-      echo "$OUT" > /servicehealth/${filebasename%.*} 
-    fi
+  
     echo ""
   done
 
 else
-  if [[ ! "${ADAGUC_DATASET_MASK}" ]] ; then
-      # remove all old service status files such that only active services are monitored
-      rm -f /servicehealth/*
-  fi
+ 
   # Update all datasets
   for configfile in /data/adaguc-datasets/*xml ;do
     filename=/data/adaguc-datasets/"${configfile##*/}" 
@@ -51,9 +47,6 @@ else
     echo "Starting update for ${filename}" 
     ${ADAGUC_PATH}/bin/adagucserver --updatedb --config ${ADAGUC_CONFIG},${filename}
     OUT=$?
-    if [ -d /servicehealth ]; then
-      echo "$OUT" > /servicehealth/${filebasename%.*}
-    fi
-  done
+     done
 
 fi

@@ -15,7 +15,7 @@ rm -rf $ADAGUC_LOGFILE && mkdir -p $ADAGUC_LOGFILE
 export ADAGUC_LOGFILE=${ADAGUC_PATH}/tests/log/adaguc-server.log
 export ADAGUC_FONT="${ADAGUC_PATH}/data/fonts/FreeSans.ttf"
 export ADAGUC_ONLINERESOURCE=""
-export ADAGUC_ENABLELOGBUFFER=FALSE
+export ADAGUC_ENABLELOGBUFFER=TRUE
 ulimit -c unlimited
 
 python3 ${ADAGUC_PATH}/tests/functional_test.py $1
