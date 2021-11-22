@@ -2,8 +2,10 @@ import os
 from adaguc.runAdaguc import runAdaguc
 import logging
 
+logger = logging.getLogger(__name__)
 
-def setupAdaguc():
+
+def setupAdaguc(displayLogging=True):
   # Check if environment is specified
   if not os.getenv('ADAGUC_PATH'):
     print("ADAGUC_PATH not set")
@@ -31,7 +33,8 @@ def setupAdaguc():
     print('Your ADAGUC_CONFIG environment variable is not set! It should point to a adaguc-server config file.')
     exit(1)
 
-  logging.info("Using config file %s" % adagucServerConfig)
+  if displayLogging == True:
+    logger.info("Using config file %s" % adagucServerConfig)
 
   adagucInstance = runAdaguc()
   adagucInstance.setAdagucPath(adagucServerHome)
