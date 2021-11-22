@@ -1,4 +1,4 @@
-Version 2.6.1 2021-11-22
+Version 2.6.2 2021-11-22
     - Adjusted logging format, differentiating between acces log and application log.
 
 Version 2.6.0 2021-11-01
