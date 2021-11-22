@@ -36,5 +36,5 @@ then
 fi  
 
 echo "Start serving on ${EXTERNALADDRESS}"
-gunicorn --bind 0.0.0.0:8080 --workers=16 wsgi:app --disable-redirect-access-to-syslog --access-logfile -
+gunicorn --bind 0.0.0.0:8080 --workers=16 wsgi:app --disable-redirect-access-to-syslog --access-logfile - --access-logformat 'accesslog %(h)s ; %(t)s ; %(H)s ; %(m)s ; %(u)s ; %(q)s ; %(s)s ; %(M)s ; "%(a)s"'
     

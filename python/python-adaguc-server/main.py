@@ -1,3 +1,4 @@
+from configureLogging import configureLogging
 from setupAdaguc import setupAdaguc
 from routeRoot import routeRoot
 from routeHealthCheck import routeHealthCheck
@@ -8,8 +9,9 @@ import sys
 import os
 from flask import Flask
 import logging
-from configureLogging import configureLogging
+
 configureLogging(logging)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.register_blueprint(routeAdagucServer)
@@ -20,7 +22,7 @@ app.register_blueprint(routeHealthCheck)
 
 
 def testadaguc():
-  logging.info("Checking adaguc-server.")
+  logger.info("Checking adaguc-server.")
   adagucInstance = setupAdaguc()
   url = "SERVICE=WMS&REQUEST=GETCAPABILITIES"
   adagucenv = {}
@@ -37,7 +39,7 @@ def testadaguc():
       url, env=adagucenv,  showLogOnError=False)
   assert status == 0
   assert headers == ['Content-Type:text/xml']
-  logging.info("adaguc-server seems [OK]")
+  logger.info("adaguc-server seems [OK]")
 
 
 if __name__ == "__main__":

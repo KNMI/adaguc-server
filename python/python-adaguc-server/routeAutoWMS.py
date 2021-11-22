@@ -10,6 +10,8 @@ import logging
 
 routeAutoWMS = Blueprint('routeAutoWMS', __name__)
 
+logger = logging.getLogger(__name__)
+
 
 def handleBaseRoute():
   datasets = []
@@ -80,13 +82,13 @@ def isFileAllowed(fileName):
 def handleDataRoute(adagucDataDir, urlParamPath, adagucOnlineResource):
   subPath = urlParamPath.replace("/adaguc::data/", "")
   subPath = subPath.replace("/adaguc::data", "")
-  logging.info("adagucDataDir [%s] and subPath [%s]" %
-               (adagucDataDir, subPath))
+  logger.info("adagucDataDir [%s] and subPath [%s]" %
+              (adagucDataDir, subPath))
   localPathToBrowse = os.path.realpath(os.path.join(adagucDataDir, subPath))
-  logging.info("localPathToBrowse = [%s]" % localPathToBrowse)
+  logger.info("localPathToBrowse = [%s]" % localPathToBrowse)
 
   if not localPathToBrowse.startswith(adagucDataDir):
-    logging.error("Invalid path detected = constructed [%s] from [%s]" % (
+    logger.error("Invalid path detected = constructed [%s] from [%s]" % (
         localPathToBrowse, urlParamPath))
     response = Response(
         response="Invalid path detected",
@@ -129,13 +131,13 @@ def handleAutoWMSDIRRoute(adagucAutoWMSDir, urlParamPath, adagucOnlineResource):
   subPath = subPath.replace("/adaguc::autowms", "")
   if len(subPath) != 0:
     subPath = subPath + "/"
-  logging.info("adagucAutoWMSDir [%s] and subPath [%s]" % (
+  logger.info("adagucAutoWMSDir [%s] and subPath [%s]" % (
       adagucAutoWMSDir, subPath))
   localPathToBrowse = os.path.realpath(os.path.join(adagucAutoWMSDir, subPath))
-  logging.info("localPathToBrowse = [%s]" % localPathToBrowse)
+  logger.info("localPathToBrowse = [%s]" % localPathToBrowse)
 
   if not localPathToBrowse.startswith(adagucAutoWMSDir):
-    logging.error("Invalid path detected = constructed [%s] from [%s]" % (
+    logger.error("Invalid path detected = constructed [%s] from [%s]" % (
         localPathToBrowse, urlParamPath))
     response = Response(
         response="Invalid path detected",
@@ -177,7 +179,7 @@ def handleAutoWMSDIRRoute(adagucAutoWMSDir, urlParamPath, adagucOnlineResource):
 @cross_origin()
 def handleAutoWMS():
   adagucInstance = setupAdaguc()
-  logging.info(request.query_string)
+  logger.info(request.query_string)
   adagucDataSetDir = adagucInstance.ADAGUC_DATASET_DIR
   adagucDataDir = adagucInstance.ADAGUC_DATA_DIR
   adagucAutoWMSDir = adagucInstance.ADAGUC_AUTOWMS_DIR
