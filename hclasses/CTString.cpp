@@ -659,9 +659,9 @@ namespace CT{
   }
 
   /* These need to be initialized once, this is a costly function */
-  std::__cxx11::regex isNumericRegex = std::regex("[+-]?([0-9]*[.])?[0-9]+");
-  std::__cxx11::regex isFloatRegex = std::regex("[+-]?[0-9]*[.][0-9]+f?");
-  std::__cxx11::regex isIntRegex = std::regex("[+-]?[0-9]+");
+  std::regex isNumericRegex = std::regex("[+-]?([0-9]*[.])?[0-9]+");
+  std::regex isFloatRegex = std::regex("[+-]?[0-9]*[.][0-9]+f?");
+  std::regex isIntRegex = std::regex("[+-]?[0-9]+");
 
 
   bool string::isNumeric()
