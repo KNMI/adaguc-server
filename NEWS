@@ -1,5 +1,7 @@
 Version 2.6.2 2021-11-22
     - Adjusted logging format, differentiating between acces log and application log.
+Version 2.6.1 2021-11-09
+    - CSV reader now detects floats, ints and strings properly with RegExp (thanks EduardoCastanho)
 
 Version 2.6.0 2021-11-01
     - Moving to a python wrapper to run adaguc-server. For development with flask, for production with gunicorn.

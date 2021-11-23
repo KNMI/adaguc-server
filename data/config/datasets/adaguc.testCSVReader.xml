@@ -57,6 +57,15 @@
     <Variable>Name</Variable>
     <Styles>name</Styles>
   </Layer>
+
+   
+  <Layer type="database">
+    <FilePath>{ADAGUC_PATH}/data/datasets/test/csv_negative_values.csv</FilePath>
+    <Name>tn</Name>
+    <Title>tn</Title>
+    <Variable>tn</Variable>
+    <Styles>name</Styles>
+  </Layer>
   
   <!-- End of configuration /-->
 </Configuration>
