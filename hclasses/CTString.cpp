@@ -664,12 +664,12 @@ namespace CT{
     const size_t inputLength = this->length();
     const char *inputStr = this->c_str();
     /*check size */
-    if (this->empty() || inputLength > 39)
+    if (this->empty() || inputLength > CT_MAX_NUM_CHARACTERS_FOR_NUMERIC)
     {
       return false;
     }
     /* NaN is a "number"...in this context */
-    if (inputLength == 3 && this->equals("NaN"))
+    if (this->equals("NaN"))
     {
       return true;
     }
@@ -686,16 +686,11 @@ namespace CT{
     const size_t inputLength = this->length();
     const char *inputStr = this->c_str();
     /*check size */
-    if (this->empty() || inputLength > 12)
+    if (this->empty() || inputLength > CT_MAX_NUM_CHARACTERS_FOR_INT)
     {
       return false;
     }
-    /* NaN is a "int"...in this context */
-    if (inputLength == 3 && this->equals("NaN"))
-    {
-      return true;
-    }
-
+   
     if (std::regex_match(inputStr, std::regex("[+-]?[0-9]+")))
     {
       return true;
@@ -708,12 +703,12 @@ namespace CT{
     const size_t inputLength = this->length();
     const char *inputStr = this->c_str();
     /*check size */
-    if (this->empty() || inputLength > 12)
+    if (this->empty() || inputLength > CT_MAX_NUM_CHARACTERS_FOR_FLOAT)
     {
       return false;
     }
     /* NaN is a "float"...in this context */
-    if (inputLength == 3 && this->equals("NaN"))
+    if (this->equals("NaN"))
     {
       return true;
     }
