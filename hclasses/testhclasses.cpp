@@ -116,8 +116,21 @@ int main(){
     CDBError("[NaN] should be a float");
     throw __LINE__;
   }
+  if (CT::string("2019-07-28").isFloat() == true) {
+    CDBError("[2019-07-28] should be a string");
+    throw __LINE__;
+  }
   
-  
+  if (CT::string("-15.0").isFloat() == false) {
+    CDBError("[-15.0] should be a float");
+    throw __LINE__;
+  }
+
+  if (CT::string("-15").isInt() == false) {
+    CDBError("[-15] should be a int");
+    throw __LINE__;
+  }
+
   CDBDebug("OK");
   return 0;
 }
