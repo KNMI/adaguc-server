@@ -1,3 +1,5 @@
+Version 2.6.2 2021-11-22
+    - Adjusted logging format, differentiating between acces log and application log.
 Version 2.6.1 2021-11-09
     - CSV reader now detects floats, ints and strings properly with RegExp (thanks EduardoCastanho)
 
@@ -13,8 +15,8 @@ Version 2.5.14 2021-09-17
 
 Version 2.5.13 2021-07-22
     - Extended logging options:
-        - ADAGUC_ENABLELOGBUFFER=FALSE: buffered logging
-        - ADAGUC_ENABLELOGBUFFER=TRUE: unbuffered output, gives realtime logging. Unbuffered output can cause a slower service
+        - ADAGUC_ENABLELOGBUFFER=FALSE: unbuffered output, gives realtime logging. Unbuffered output can cause a slower service
+        - ADAGUC_ENABLELOGBUFFER=TRUE: buffered logging
         - ADAGUC_ENABLELOGBUFFER=DISABLELOGGING: no logging at all
 
 Version 2.5.11 2021-05-12
