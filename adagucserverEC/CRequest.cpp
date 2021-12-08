@@ -3465,7 +3465,7 @@ int CRequest::updatedb(CT::string *tailPath,CT::string *layerPathToScan, int sca
         status = CDBFileScanner::updatedb(dataSources[j],tailPath,layerPathToScan,scanFlags);
       }
       if(scanFlags&CDBFILESCANNER_CREATETILES){
-        status = CDBFileScanner::createTiles(dataSources[j],scanFlags);
+        status = CDBFileScanner::createTiles(dataSources[j],scanFlags, "*");
       }
       if(status !=0){CDBError("Could not update db for: %s",dataSources[j]->cfgLayer->Name[0]->value.c_str());errorHasOccured++;}
     }
