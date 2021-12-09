@@ -1380,7 +1380,7 @@ int CDBFileScanner::createTiles( CDataSource *dataSource,int scanFlags, CT::stri
                 }
               }
               
-              tileBasePath.printconcat("/%s/%s/%slevel%0.2d/",dataSource->layerName.c_str(), timeValue.c_str(),prefix.c_str(),level);
+              tileBasePath.printconcat("/%s/%s/%slevel%0.2d/",tableName.c_str(), timeValue.c_str(),prefix.c_str(),level);
 
               /* Now make the fileNameToWrite */
               CT::string fileNameToWrite = tileBasePath;
