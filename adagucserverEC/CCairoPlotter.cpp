@@ -1104,11 +1104,11 @@ void CCairoPlotter::_cairoPlotterInit(int width,int height,float fontSize, const
 #include "webp/decode.h"
 #include "webp/types.h"
 #endif
- void CCairoPlotter::writeToWebP32Stream(FILE *fp,unsigned char alpha){
+ void CCairoPlotter::writeToWebP32Stream(FILE *fp,unsigned char alpha, int quality){
 #ifdef ADAGUC_USE_WEBP
    /* sudo apt-get install libwebp-dev */
   uint8_t* output = NULL;
-  size_t numBytes = WebPEncodeBGRA(ARGBByteBuffer,  width,  height,  stride,80,&output);
+  size_t numBytes = WebPEncodeBGRA(ARGBByteBuffer,  width,  height,  stride,quality,&output);
   if(numBytes == 0){
     CDBError("Unable to encode WebPEncodeBGRA");
   }else{
