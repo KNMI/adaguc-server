@@ -32,6 +32,10 @@
 #include "CCDFNetCDFIO.h"
 #include "CCDFHDF5IO.h"
 #include "CTime.h"
+#include "CCDFDataModel.h"
+#include "CCDFHDF5IO.h"
+#include "utils.h"
+
 DEF_ERRORMAIN();
 
 int testCTimeInit(CDF::Variable*testVar, const char *testDate){
@@ -131,6 +135,36 @@ int testCTimeEpochTimeConversion() {
   return failed;
 }
 
+int testHDF5Reader () {
+  CDBDebug("testHDF5Reader");
+  CT::string testFile = "./testdata/variable_string.h5";
+  CDFReader *cdfReader = findReaderByFileName(testFile.c_str());
+  CDFObject *cdfObject=new CDFObject();
+  cdfObject->attachCDFReader(cdfReader);
+  if (cdfReader->open(testFile.c_str()) != 0){
+     CDBError("[FAILED] testHDF5Reader was unable to open file %s", testFile.c_str());
+     return 1;
+  }
+  CT::string dumpString = CDF::dump(cdfObject);
+  
+  // throw (dumpString.c_str());
+  CT::string expectedString = cdfObject->getVariable("overview")->getAttribute("product_datetime_start")->getDataAsString();
+
+  if (expectedString.equals("22-NOV-2021;08:00:00.000") == false) {
+    CDBDebug("[FAILED] testHDF5Reader: expectedString 22-NOV-2021;08:00:00.000 is different then ");
+    return 1;
+  }else {
+    CDBDebug("[OK] testHDF5Reader: expectedString is equal to dumpstring");
+  }
+
+  delete cdfObject;
+  delete cdfReader;
+  CTime::cleanInstances();
+
+  return 0;
+}
+
+
 int main(int argCount,char **argVars){
   bool failed = false;
   CDBDebug("Testing CTime");
@@ -146,6 +180,9 @@ int main(int argCount,char **argVars){
   if (testCTimeInit (testVarB, "22130222T212000")!=0) failed= true;
   
   if (testCTimeEpochTimeConversion() != 0) failed = true;
+
+  if (testHDF5Reader() != 0) failed = true;
+
 
   CTime::cleanInstances();
   delete testVarA;
