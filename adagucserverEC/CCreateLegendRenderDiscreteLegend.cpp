@@ -183,7 +183,7 @@ int CCreateLegend::renderDiscreteLegend (CDataSource *dataSource,
           }
           
           // legendImage->setText(szTemp,strlen(szTemp),int(cbW)+12+pLeft,cY2+pTop,248,-1);
-          legendImage->drawText(((int)cbW+12+pLeft)*scaling,(cY1+pTop)-((fontSize*scaling)/4),fontLocation, fontSize*scaling, 0, szTemp, 248);
+          legendImage->drawText(((int)cbW+12+pLeft)*scaling,(cY1+pTop)-((fontSize*scaling)/4)+3,fontLocation, fontSize*scaling, 0, szTemp, 248);
         }
       }
     }
