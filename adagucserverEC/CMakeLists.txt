@@ -112,6 +112,7 @@ add_library(
     CStyleConfiguration.cpp
     CMakeJSONTimeSeries.cpp
     COpenDAPHandler.cpp
+    CDataPostProcessor_ClipMinMax.cpp
     CDataPostProcessor.cpp
     CDBFactory.cpp
     CDBAdapterPostgreSQL.cpp

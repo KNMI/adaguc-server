@@ -259,7 +259,7 @@
     virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode);
     virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode, double *data, size_t numItems){return 1;} // TODO: Still need to implement
   };
-  
+
   
   class CDataPostProcessor{
   public:
