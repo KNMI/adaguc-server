@@ -48,7 +48,7 @@
 
 #Other binaries
 CCDFDataModel/anydump
-CCDFDataModel/test
+CCDFDataModel/testccdfdatamodel
 adagucserverEC/adagucserver
 adagucserverEC/aggregate_dim
 adagucserverEC/aggregate_time

@@ -53,7 +53,7 @@ function build {
   echo "[OK] Everything is installed in the ./bin directory"
 
   echo "Testing..."
-  ctest
+  ctest --verbose
   retVal=$?
   if [ $retVal -ne 0 ]; then
     echo "[FAILED] Some of the tests failed"

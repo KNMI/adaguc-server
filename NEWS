@@ -1,3 +1,6 @@
+Version 2.6.3 2021-11-30
+    - HDF reader now reads variable length string attributes. These are usually written with h5py, using type H5T_C_S1.
+
 Version 2.6.2 2021-11-22
     - Adjusted logging format, differentiating between acces log and application log.
 Version 2.6.1 2021-11-09
