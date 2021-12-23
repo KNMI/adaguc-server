@@ -132,6 +132,8 @@ add_library(
     CAreaMapper.cpp
     CSLD.cpp
     CHandleMetadata.cpp
+    CCreateTiles.h
+    CCreateTiles.cpp
     testadagucserver.cpp
 )
 

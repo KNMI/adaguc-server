@@ -22,7 +22,7 @@ class CGIRunner:
       Run the CGI script with specified URL and environment. Stdout is captured and put in a BytesIO object provided in output
     """
 
-    def run(self, cmds, url, output, env=[],  path=None):
+    def run(self, cmds, url, output, env=[],  path=None, isCGI=True):
         localenv = {}
         if url != None:
             localenv['QUERY_STRING'] = url
@@ -43,15 +43,16 @@ class CGIRunner:
         # Split headers from body using a regex
         headersEndAt = -2
         headers = ""
-        pattern = re.compile(b"\x0A\x0A")
-        search = pattern.search(processOutput)
-        if search:
-            headersEndAt = search.start()
-            headers = (processOutput[0:headersEndAt-1]).decode()
-        else:
-            output.write(
-                b'Error: No headers found in response from adaguc-server application')
-            return 1, []
+        if isCGI == True:
+            pattern = re.compile(b"\x0A\x0A")
+            search = pattern.search(processOutput)
+            if search:
+                headersEndAt = search.start()
+                headers = (processOutput[0:headersEndAt-1]).decode()
+            else:
+                output.write(
+                    b'Error: No headers found in response from adaguc-server application')
+                return 1, []
 
         body = processOutput[headersEndAt+2:]
         output.write(body)

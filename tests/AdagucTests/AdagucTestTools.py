@@ -53,7 +53,7 @@ class AdagucTestTools:
 
         filetogenerate = BytesIO()
         status, headers = CGIRunner().run(adagucargs, url=url, output=filetogenerate,
-                                          env=adagucenv, path=path)
+                                          env=adagucenv, path=path, isCGI=isCGI)
 
         if (status != 0 and showLogOnError == True) or showLog == True:
             print("\n\n--- START ADAGUC DEBUG INFO ---")

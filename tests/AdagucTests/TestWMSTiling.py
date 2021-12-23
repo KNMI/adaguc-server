@@ -39,7 +39,7 @@ class TestWMSTiling(unittest.TestCase):
 
         ADAGUC_TMP = os.environ['ADAGUC_TMP']
         AdagucTestTools().mkdir_p(os.environ['ADAGUC_TMP']+"/tiling/")
-        exit
+        print("TILING  NOW")
         config = ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml,' + \
             ADAGUC_PATH + '/data/config/datasets/adaguc.testtiling.xml'
         status, data, headers = AdagucTestTools().runADAGUCServer(
