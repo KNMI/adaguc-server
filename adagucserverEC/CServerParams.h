@@ -81,6 +81,7 @@ class CServerParams{
     CT::string Format;
     CT::string InfoFormat;
     int imageFormat;
+    int imageQuality; // 0-100
     int imageMode;
     CWMSExtensions wmsExtensions;
     

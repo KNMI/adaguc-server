@@ -179,7 +179,7 @@ public:
     int printImagePng8(bool useBitAlpha);
     int printImagePng24();
     int printImagePng32();
-    int printImageWebP32();
+    int printImageWebP32(int quality);
     int printImageGif();
     int createGDPalette(CServerConfig::XMLE_Legend *palette);
     int create685Palette();
