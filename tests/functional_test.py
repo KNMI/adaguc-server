@@ -1,3 +1,8 @@
+"""
+  Running functional tests for adaguc-server.
+  The adaguc-server executable is ran with various settings and configuration files.
+  Results are checked against expected results and should not differ.
+"""
 import unittest
 import sys
 from AdagucTests.TestWMS import TestWMS
@@ -12,19 +17,20 @@ from AdagucTests.TestCSV import TestCSV
 from AdagucTests.TestGeoJSON import TestGeoJSON
 from AdagucTests.TestMetadataService import TestMetadataService
 
-testsuites=[];
-testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWMS))
-testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWCS))
-testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWMSSLD))
-testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWMSDocumentCache))
-testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestOpenDAPServer))
-testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWMSPolylineRenderer))
-testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestWMSTiling))
-testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestADAGUCFeatureFunctions))
-testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestCSV))
-testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestGeoJSON))
-testsuites.append(unittest.TestLoader().loadTestsFromTestCase(TestMetadataService))
-result=unittest.TextTestRunner(verbosity=2).run(unittest.TestSuite(testsuites))
+suites = []
+TestLoader = unittest.TestLoader
+suites.append(TestLoader().loadTestsFromTestCase(TestWMS))
+suites.append(TestLoader().loadTestsFromTestCase(TestWCS))
+suites.append(TestLoader().loadTestsFromTestCase(TestWMSSLD))
+suites.append(TestLoader().loadTestsFromTestCase(TestWMSDocumentCache))
+suites.append(TestLoader().loadTestsFromTestCase(TestOpenDAPServer))
+suites.append(TestLoader().loadTestsFromTestCase(TestWMSPolylineRenderer))
+suites.append(TestLoader().loadTestsFromTestCase(TestWMSTiling))
+suites.append(TestLoader().loadTestsFromTestCase(TestADAGUCFeatureFunctions))
+suites.append(TestLoader().loadTestsFromTestCase(TestCSV))
+suites.append(TestLoader().loadTestsFromTestCase(TestGeoJSON))
+suites.append(TestLoader().loadTestsFromTestCase(TestMetadataService))
+result = unittest.TextTestRunner(verbosity=2).run(unittest.TestSuite(suites))
 
 
 sys.exit(not result.wasSuccessful())

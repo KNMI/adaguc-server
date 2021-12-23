@@ -29,8 +29,32 @@ int CCreateTiles::createTiles(CDataSource *dataSource, int scanFlags) {
       return 1;
     }
   }
+  /* Find all files on disk */
+  std::vector<std::string> fileList;
+  CT::string filter = dataSource->cfgLayer->FilePath[0]->attr.filter.c_str();
+  CT::string tailPath;
+  if (scanFlags & CDBFILESCANNER_IGNOREFILTER) {
+    filter = "^.*$";
+  }
+  try {
+    fileList = CDBFileScanner::searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(), filter.c_str(),
+                                               tailPath.c_str());
+  } catch (int linenr) {
+    CDBError("Exception in searchFileNames [%s] [%s]", dataSource->cfgLayer->FilePath[0]->value.c_str(), filter.c_str(),
+             tailPath.c_str());
+    return 1;
+  }
+  if (fileList.size() == 0) {
+    CDBError("No files found");
+    return 1;
+  }
 
-  return 1;
+  CDBDebug("Found %d files", fileList.size());
+  for (size_t j = 0; j < fileList.size(); j++) {
+    CCreateTiles::createTilesForFile(dataSource, scanFlags, fileList[j].c_str());
+  }
+
+  return 0;
 }
 
 int CCreateTiles::createTilesForFile(CDataSource *dataSource, int scanFlags, CT::string fileToTile) {
@@ -183,9 +207,6 @@ int CCreateTiles::createTilesForFile(CDataSource *dataSource, int scanFlags, CT:
     CREPORT_ERROR_NODOC("Unable to configure dimensions automatically", CReportMessage::Categories::GENERAL);
     return 1;
   }
-
-  // CDBDebug("dataSource->requiredDims value %s",
-  // dataSource->requiredDims[0]->value.c_str());
 
   try {
     CRequest::fillDimValuesForDataSource(dataSource, dataSource->srvParams);
@@ -352,7 +373,6 @@ int CCreateTiles::createTilesForFile(CDataSource *dataSource, int scanFlags, CT:
 
                   bool baseOnRootDataFile = true;
 
-                  // ds.queryLevel=level-1;
                   if (baseOnRootDataFile) {
                     ds.queryBBOX = 0;
                     ds.queryLevel = 1; // TODO MAKE CONFIGURABLE
@@ -411,10 +431,10 @@ int CCreateTiles::createTilesForFile(CDataSource *dataSource, int scanFlags, CT:
                       try {
                         newSrvParams.Geo->dWidth = (tilewidthpx);
                         newSrvParams.Geo->dHeight = (tileheightpx);
-                        dfMinX = globalBBOX[0] + tileBBOXWidth * x;              //+(tilecellsizex*double(levelInc))/2;;
-                        dfMinY = globalBBOX[1] + tileBBOXHeight * y;             //+(tilecellsizey*double(levelInc))/2;;
-                        dfMaxX = globalBBOX[0] + tileBBOXWidth * (x + levelInc); //+(tilecellsizex*double(levelInc))/2;
-                        dfMaxY = globalBBOX[1] + tileBBOXHeight * (y + levelInc); //+(tilecellsizey*double(levelInc))/2;
+                        dfMinX = globalBBOX[0] + tileBBOXWidth * x;
+                        dfMinY = globalBBOX[1] + tileBBOXHeight * y;
+                        dfMaxX = globalBBOX[0] + tileBBOXWidth * (x + levelInc);
+                        dfMaxY = globalBBOX[1] + tileBBOXHeight * (y + levelInc);
 
                         newSrvParams.Geo->dfBBOX[0] = dfMinX;
                         newSrvParams.Geo->dfBBOX[1] = dfMinY;
