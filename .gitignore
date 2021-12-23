@@ -116,3 +116,4 @@ dist
 tests/checker_report.txt
 
 .vscode
+.log.txt.kate-swp

@@ -248,6 +248,28 @@ int CDBAdapterSQLLite::setConfig(CServerConfig::XMLE_Configuration *cfg){
   return 0;
 }
 
+
+
+CT::string CDBAdapterSQLLite::getDimValueForFileName(const char *filename, const char *table){
+   CSQLLiteDB * DB = getDataBaseConnection(); if(DB == NULL){return "";  }
+  
+  CT::string query;
+  query.print("select * from %s where path = '%s' limit 1",table, filename);
+  CDBStore::Store *store = DB->queryToStore(query.c_str());
+  if(store == NULL || store->size() == 0){
+    setExceptionType(InvalidDimensionValue);
+    CDBError("Invalid filename value for  %s",filename);
+    CDBError("query failed"); 
+    return "";
+  }
+  #ifdef MEASURETIME
+  StopWatch_Stop("<CDBAdapterPostgreSQL::getMax");
+  #endif
+  CT::string dimValue = store->getRecord(0)->get(1);
+  delete store;
+  return dimValue;
+}
+
 CDBStore::Store *CDBAdapterSQLLite::getMax(const char *name,const char *table){
   CSQLLiteDB * DB = getDataBaseConnection(); if(DB == NULL){return NULL;  }
   

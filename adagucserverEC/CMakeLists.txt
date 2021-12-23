@@ -57,7 +57,6 @@ add_library(
     CDBAdapterPostgreSQL.h
     CAutoResource.h
     CDBAdapterSQLLite.h
-    CDBAdapterMongoDB.h
     COctTreeColorQuantizer.h
     CCreateLegend.h
     CCreateHistogram.h
@@ -118,7 +117,6 @@ add_library(
     CDBAdapterPostgreSQL.cpp
     CAutoResource.cpp
     CDBAdapterSQLLite.cpp
-    CDBAdapterMongoDB.cpp
     COctTreeColorQuantizer.cpp
     CCreateLegend.cpp
     CCreateHistogram.cpp
@@ -134,6 +132,8 @@ add_library(
     CAreaMapper.cpp
     CSLD.cpp
     CHandleMetadata.cpp
+    CCreateTiles.h
+    CCreateTiles.cpp
     testadagucserver.cpp
 )
 
