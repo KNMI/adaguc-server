@@ -7,4 +7,4 @@ IndentWidth: 2
 AccessModifierOffset: -2
 SortIncludes: false
 NamespaceIndentation: All
-ColumnLimit: 120
+ColumnLimit: 200
