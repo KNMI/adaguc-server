@@ -65,5 +65,8 @@
     "variant": "cpp"
   },
   "cmake.buildDirectory": "${workspaceFolder}/bin",
-  "cmake.configureOnOpen": true
+  "cmake.configureOnOpen": true,
+  "clang-format.executable": "/usr/bin/clang-format-13",
+  "editor.formatOnSave": true
+
 }
