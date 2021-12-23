@@ -1,3 +1,5 @@
+---
+Language: Cpp
 AlignTrailingComments: true
 AllowShortFunctionsOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: true
