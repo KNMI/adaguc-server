@@ -1,13 +1,13 @@
 /******************************************************************************
  *
  * Project:  ADAGUC Server
- * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Purpose:  Class with static functions to create tiles for files in the db.
+ * Author:   Maarten Plieger, maarten.plieger "at" knmi.nl
+ * Date:     2021-12-23
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2021, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,14 +30,31 @@
 #include "CDataSource.h"
 
 /**
- * Class which scans files and updates the database.
+ * @brief Class with static functions to create tiles for files in the db.
+ *
  */
 class CCreateTiles {
 private:
   DEF_ERRORFUNCTION();
 
 public:
+  /**
+   * @brief Create tiles for all files.
+   *
+   * @param dataSource
+   * @param scanFlags
+   * @return int
+   */
   static int createTiles(CDataSource *dataSource, int scanFlags);
+
+  /**
+   * @brief Create tiles For a single file
+   *
+   * @param dataSource
+   * @param scanFlags
+   * @param fileToTile
+   * @return int
+   */
   static int createTilesForFile(CDataSource *dataSource, int scanFlags, CT::string fileToTile);
 };
 
