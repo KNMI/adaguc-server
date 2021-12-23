@@ -1,16 +1,19 @@
-Version 2.6.3 2021-11-30
-    - HDF reader now reads variable length string attributes. These are usually written with h5py, using type H5T_C_S1.
+**Version 2.6.4 2021-12-23**
+- Tiling system has been refactored and has an extra option called autotile="true". This allows to generating tiles during file scanning with updatedb.
 
-Version 2.6.2 2021-11-22
-    - Adjusted logging format, differentiating between acces log and application log.
+**Version 2.6.3 2021-11-30**
+- HDF reader now reads variable length string attributes. These are usually written with h5py, using type H5T_C_S1.
+
+**Version 2.6.2 2021-11-22**
+- Adjusted logging format, differentiating between acces log and application log.
 Version 2.6.1 2021-11-09
-    - CSV reader now detects floats, ints and strings properly with RegExp (thanks EduardoCastanho)
+- CSV reader now detects floats, ints and strings properly with RegExp (thanks EduardoCastanho)
 
-Version 2.6.0 2021-11-01
-    - Moving to a python wrapper to run adaguc-server. For development with flask, for production with gunicorn.
+**Version 2.6.0 2021-11-01**
+- Moving to a python wrapper to run adaguc-server. For development with flask, for production with gunicorn.
 
-Version 2.5.15 2021-09-22
-    - The /data folder can now completely be mounted from another filesystem, all adaguc internal folders have moved to /adaguc.
+**Version 2.5.15 2021-09-22**
+- The /data folder can now completely be mounted from another filesystem, all adaguc internal folders have moved to /adaguc.
 
 Version 2.5.14 2021-09-17
     - WCS GetCoverage with Native parameters now returns data
