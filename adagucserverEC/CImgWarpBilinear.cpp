@@ -365,17 +365,17 @@ for(size_t varNr=0;varNr<sourceImage->getNumDataObjects();varNr++){
 
            
           
-        // Calculate the diagonal length of the quad.
-        double lengthD = (xP[3]-xP[0])*(xP[3]-xP[0]) + (yP[3]-yP[0])*(yP[3]-yP[0]);
+        // // Calculate the diagonal length of the quad.
+        // double lengthD = (xP[3]-xP[0])*(xP[3]-xP[0]) + (yP[3]-yP[0])*(yP[3]-yP[0]);
       
-        if (x ==0 && y==0) {
-          pLengthD = lengthD;
-        }
+        // if (x ==0 && y==0) {
+        //   pLengthD = lengthD;
+        // }
       
-        // If suddenly the length of the quad is 10 times bigger, we probably have an anomaly and we should not draw it.
-        if (lengthD > pLengthD * 10) {
-          doDraw = false;
-        }
+        // // If suddenly the length of the quad is 10 times bigger, we probably have an anomaly and we should not draw it.
+        // if (lengthD > pLengthD * 10) {
+        //   doDraw = false;
+        // }
         if(doDraw){
           fillQuadGouraud(valueData,vP,  dImageWidth,dImageHeight, xP,yP);
         }
