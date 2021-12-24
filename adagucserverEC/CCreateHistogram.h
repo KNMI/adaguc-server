@@ -20,7 +20,7 @@ private:
   };
   
   template <class T>
-  static void drawFunction(int x,int y,T val, void *_settings){
+  static void drawFunction(int x,int y,T val, void *_settings, void *){
     Settings*settings = (Settings*)_settings;
     if(x>=0&&y>=0&&x<(int)settings->width&&y<(int)settings->height){
       ((float*)settings->data)[x+y*settings->width]=val;

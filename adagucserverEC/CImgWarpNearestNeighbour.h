@@ -45,7 +45,7 @@ private:
   static void drawTriangleBil(CDrawImage *drawImage, float * destField,int *xP,int *yP, float *values);
   
   
-  int set(const char *settings){
+  int set(const char *){
     return 0;
   }
   int status;
@@ -92,7 +92,7 @@ private:
   //Reproject the corners of the tiles
   double y_corners[4],x_corners[4];
   double dfMaskBBOX[4];
-  int reproj(CImageWarper *warper,CDataSource *dataSource,CGeoParams *GeoDest,double dfx,double dfy,double x_div,double y_div){
+  int reproj(CImageWarper *warper,CDataSource *,CGeoParams *GeoDest,double dfx,double dfy,double x_div,double y_div){
     double psx[4];
     double psy[4];
     double dfTiledBBOX[4];
@@ -158,7 +158,7 @@ private:
   }
   
   template <class T>
-  void _plot(CImageWarper *warper,CDataSource *dataSource,CDrawImage *drawImage){
+  void _plot(CImageWarper *,CDataSource *dataSource,CDrawImage *drawImage){
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
     double dfNodataValue    = dataSource->getDataObject(0)->dfNodataValue ;
     double legendValueRange = styleConfiguration->hasLegendValueRange;
@@ -278,7 +278,7 @@ private:
 
   
   template <class T>
-  static void drawFunction(int x,int y,T val, void *_settings){
+  static void drawFunction(int x,int y,T val, void *_settings, void*){
     Settings *settings = (Settings*)_settings;
     if(settings->drawImage->trueColorAVG_RGBA == false){
 
@@ -428,16 +428,17 @@ private:
       sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
       sourceGeo.CRS = dataSource->nativeProj4;
       
+      GenericDataWarper genericDataWarper;
       switch(dataType){
-        case CDF_CHAR  :  GenericDataWarper::render<char>  (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
-        case CDF_BYTE  :  GenericDataWarper::render<char>  (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
-        case CDF_UBYTE :  GenericDataWarper::render<unsigned char> (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
-        case CDF_SHORT :  GenericDataWarper::render<short> (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
-        case CDF_USHORT:  GenericDataWarper::render<ushort>(warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
-        case CDF_INT   :  GenericDataWarper::render<int>   (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
-        case CDF_UINT  :  GenericDataWarper::render<uint>  (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
-        case CDF_FLOAT :  GenericDataWarper::render<float> (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
-        case CDF_DOUBLE:  GenericDataWarper::render<double>(warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
+        case CDF_CHAR  :  genericDataWarper.render<char>  (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
+        case CDF_BYTE  :  genericDataWarper.render<char>  (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
+        case CDF_UBYTE :  genericDataWarper.render<unsigned char> (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
+        case CDF_SHORT :  genericDataWarper.render<short> (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
+        case CDF_USHORT:  genericDataWarper.render<ushort>(warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
+        case CDF_INT   :  genericDataWarper.render<int>   (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
+        case CDF_UINT  :  genericDataWarper.render<uint>  (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
+        case CDF_FLOAT :  genericDataWarper.render<float> (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
+        case CDF_DOUBLE:  genericDataWarper.render<double>(warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
       }
       
       

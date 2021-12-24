@@ -199,17 +199,17 @@ void CImgRenderStippling::render(CImageWarper *warper,CDataSource *dataSource,CD
   int startY=int(((dataSource->srvParams->Geo->dfBBOX[1])/bboxHeight)*dataSource->srvParams->Geo->dHeight);
   startY = (startY%(yDistance*2))-(yDistance*2);
 
-  
+  GenericDataWarper genericDataWarper;
   switch(dataType){
-    case CDF_CHAR  :  GenericDataWarper::render<char>  (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
-    case CDF_BYTE  :  GenericDataWarper::render<char>  (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
-    case CDF_UBYTE :  GenericDataWarper::render<unsigned char> (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
-    case CDF_SHORT :  GenericDataWarper::render<short> (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
-    case CDF_USHORT:  GenericDataWarper::render<ushort>(warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
-    case CDF_INT   :  GenericDataWarper::render<int>   (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
-    case CDF_UINT  :  GenericDataWarper::render<uint>  (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
-    case CDF_FLOAT :  GenericDataWarper::render<float> (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
-    case CDF_DOUBLE:  GenericDataWarper::render<double>(warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
+    case CDF_CHAR  :  genericDataWarper.render<char>  (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
+    case CDF_BYTE  :  genericDataWarper.render<char>  (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
+    case CDF_UBYTE :  genericDataWarper.render<unsigned char> (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
+    case CDF_SHORT :  genericDataWarper.render<short> (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
+    case CDF_USHORT:  genericDataWarper.render<ushort>(warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
+    case CDF_INT   :  genericDataWarper.render<int>   (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
+    case CDF_UINT  :  genericDataWarper.render<uint>  (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
+    case CDF_FLOAT :  genericDataWarper.render<float> (warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
+    case CDF_DOUBLE:  genericDataWarper.render<double>(warper,sourceData,&sourceGeo,drawImage->Geo,&settings,&drawFunction);break;
   }
   
   for(int y=startY;y<(int)settings.height;y=y+yDistance){
