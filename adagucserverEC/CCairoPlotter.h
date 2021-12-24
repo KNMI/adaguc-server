@@ -122,7 +122,7 @@ public:
   void writeToPng8Stream(FILE *fp,unsigned char alpha,bool use8bitpalAlpha);
   void writeToPng24Stream(FILE *fp,unsigned char alpha);
   void writeToPng32Stream(FILE *fp,unsigned char alpha);
-  void writeToWebP32Stream(FILE *fp,unsigned char alpha);
+  void writeToWebP32Stream(FILE *fp,unsigned char alpha, int quality);
   void setToSurface(cairo_surface_t *png) ;
 };
 

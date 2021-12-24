@@ -55,7 +55,7 @@ bash docker-compose-generate-env.sh \
 
 docker-compose pull
 docker-compose build
-docker-compose up -d && sleep 10
+docker-compose up -d --build && sleep 10
 
 # Visit the url as configured in the .env file under EXTERNALADDRESS
 # The server runs with a self signed certificate, this means you get a warning. Add an exception.
@@ -110,9 +110,9 @@ export ADAGUCHOME=$HOME
 curl -kL https://github.com/KNMI/adaguc-server/raw/master/data/datasets/testdata.nc > $ADAGUCHOME/adaguc-autowms/testdata.nc
 ```
 AutoWMS files are referenced via the source= key value pair in the URL. Filenames must be URLEncoded. Supported files are NetCDF, HDF5 and GeoJSON.
-This file is now accessible via https://&lt;your hostname&gt;:&lt;port&gt;/adaguc-services/adagucserver?source=testdata.nc&service=WMS&request=GetCapabilities (An XML document about this NetCDF is shown)
+This file is now accessible via https://&lt;your hostname&gt;:&lt;port&gt;/adagucserver?source=testdata.nc&service=WMS&request=GetCapabilities (An XML document about this NetCDF is shown)
 
-A GetMap request looks like https://&lt;your hostname&gt;:&lt;port&gt;/adaguc-services/adagucserver?source=testdata%2Enc&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=1249&HEIGHT=716&CRS=EPSG%3A4326&BBOX=34.29823486999199,-24.906440270168137,69.33472934198558,36.21169044983186&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&
+A GetMap request looks like https://&lt;your hostname&gt;:&lt;port&gt;/adagucserver?source=testdata%2Enc&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=1249&HEIGHT=716&CRS=EPSG%3A4326&BBOX=34.29823486999199,-24.906440270168137,69.33472934198558,36.21169044983186&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&
 
 You can visualize this link in the adaguc-viewer via "Add data", for example in http://geoservices.knmi.nl/viewer2.0/ or locally in https://&lt;your hostname&gt;:&lt;port&gt;/
 
@@ -130,7 +130,7 @@ docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh datas
 ```
 Dataset configurations are referenced via the dataset= key value pair in the URL.
 This dataset is now accessible via 
-https://&lt;your hostname&gt;:&lt;port&gt;/adaguc-services/adagucserver?service=wms&request=getcapabilities&dataset=dataset_a&
+https://&lt;your hostname&gt;:&lt;port&gt;/adagucserver?service=wms&request=getcapabilities&dataset=dataset_a&
 
 ## Aggregation of hi-res satellite imagery
 
@@ -211,7 +211,7 @@ Now update the db wit the sat dataset:
 docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh sat
 ```
 The following URL can be used in the viewer:
-https://&lt;your hostname&gt;:&lt;port&gt;/adaguc-services/adagucserver?service=wms&request=getcapabilities&dataset=sat&
+https://&lt;your hostname&gt;:&lt;port&gt;/adagucserver?service=wms&request=getcapabilities&dataset=sat&
 
 You can use this URL for example in http://geoservices.knmi.nl/viewer2.0/ or locally in  https://&lt;your hostname&gt;:&lt;port&gt;/
 
@@ -271,7 +271,7 @@ You can use this URL for example in http://geoservices.knmi.nl/viewer2.0/ or loc
 
 ## Make a movie of the sat dataset
 
-You can use the python script at [data/python/createmovie.py](data/python/createmovie.py)
+You can use the python script at [python/examples/others/createmovie.py](python/examples/others/createmovie.py)
 
 Demo image:
 http://adaguc.knmi.nl/data/msg_hrvis_demo.gif
@@ -290,7 +290,7 @@ http%3A%2F%2Fopendap.knmi.nl%2Fknmi%2Fthredds%2FdodsC%2Fomi%2FOMI___OPER_R___TYT
 
 The ADAGUC WMS URL becomes: 
 ```
-https://&lt;your hostname&gt;:&lt;port&gt;/adaguc-services/adagucserver?source=http%3A%2F%2Fopendap.knmi.nl%2Fknmi%2Fthredds%2FdodsC%2Fomi%2FOMI___OPER_R___TYTRCNO_L3%2FTYTRCNO%2FOMI___OPER_R___TYTRCNO_3.nc&service=wms&request=getcapabilities
+https://&lt;your hostname&gt;:&lt;port&gt;/adagucserver?source=http%3A%2F%2Fopendap.knmi.nl%2Fknmi%2Fthredds%2FdodsC%2Fomi%2FOMI___OPER_R___TYTRCNO_L3%2FTYTRCNO%2FOMI___OPER_R___TYTRCNO_3.nc&service=wms&request=getcapabilities
 ```
 
 This WMS URL can be visualized in the viewer by using "Add data". 
@@ -308,28 +308,26 @@ Prebuilt images are available at https://hub.docker.com/ through openearth:
 
 Adaguc can serve data via OpenDAP. The format is 
 ```
-http(s)://<yourhost>/adaguc-services/adagucopendap/<dataset_name>/<layer_name>
+http(s)://<yourhost>/adagucopendap/<dataset_name>/<layer_name>
 ```
 
-https://&lt;your hostname&gt;:&lt;port&gt;/adaguc-services/adagucopendap/dataset_a/testdata
+https://&lt;your hostname&gt;:&lt;port&gt;/adagucopendap/dataset_a/testdata
 
 Opendap endpoints can be checked by testing the following URL's:
-* https://&lt;your hostname&gt;:&lt;port&gt;/adaguc-services/adagucopendap/dataset_a/testdata.das
-* https://&lt;your hostname&gt;:&lt;port&gt;/adaguc-services/adagucopendap/dataset_a/testdata.dds
+* https://&lt;your hostname&gt;:&lt;port&gt;/adagucopendap/dataset_a/testdata.das
+* https://&lt;your hostname&gt;:&lt;port&gt;/adagucopendap/dataset_a/testdata.dds
 
 You can dump the header or visualize with:
-* ncdump -h https://&lt;your hostname&gt;:&lt;port&gt;/adaguc-services/adagucopendap/dataset_a/testdata
-* ncview https://&lt;your hostname&gt;:&lt;port&gt;/adaguc-services/adagucopendap/dataset_a/testdata
+* ncdump -h https://&lt;your hostname&gt;:&lt;port&gt;/adagucopendap/dataset_a/testdata
+* ncview https://&lt;your hostname&gt;:&lt;port&gt;/adagucopendap/dataset_a/testdata
 
 ## Endpoints
 
-* https://&lt;your hostname&gt;:&lt;port&gt;/adaguc-services/adagucserver? Will be forwarded automaticall to /wms or /wcs depending on the service type
-* https://&lt;your hostname&gt;:&lt;port&gt;/adaguc-services/wms? For serving Web Map Services
-* https://&lt;your hostname&gt;:&lt;port&gt;/adaguc-services/wcs? For serving Web Coverage Services
-* https://&lt;your hostname&gt;:&lt;port&gt;/adaguc-services/adagucopendap/ For serving OpenDAP services
-* https://&lt;your hostname&gt;:&lt;port&gt;/adaguc-services/autowms? For getting the list of visualizable resources
-* https://&lt;your hostname&gt;:&lt;port&gt;/adaguc-services/adagucload? For getting system load
-* https://&lt;your hostname&gt;:&lt;port&gt;/adaguc-services/servicehealth? For getting overview and status of available datasets
+* https://&lt;your hostname&gt;:&lt;port&gt;/adagucserver? Will be forwarded automaticall to /wms or /wcs depending on the service type
+* https://&lt;your hostname&gt;:&lt;port&gt;/wms? For serving Web Map Services
+* https://&lt;your hostname&gt;:&lt;port&gt;/wcs? For serving Web Coverage Services
+* https://&lt;your hostname&gt;:&lt;port&gt;/adagucopendap/ For serving OpenDAP services
+* https://&lt;your hostname&gt;:&lt;port&gt;/autowms? For getting the list of visualizable resources
 
 
 # Alternatively there is a dedicated adaguc scanner container:

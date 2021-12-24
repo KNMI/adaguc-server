@@ -30,7 +30,6 @@
 #include "CDBAdapterPostgreSQL.h"
 #include "CDBAdapterSQLLite.h"
 
-
 class CDBFactory{
 private:
   private:
