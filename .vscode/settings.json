@@ -69,5 +69,8 @@
   "clang-format.executable": "/usr/bin/clang-format-13",
   "[C++]": {
     "editor.formatOnSave": true
+  },
+  "[cpp]": {
+    "editor.formatOnSave": true
   }
 }
