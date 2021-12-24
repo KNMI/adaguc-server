@@ -726,7 +726,7 @@ int CDPPMSGCPPHIWCMask::execute(CServerConfig::XMLE_DataPostProc* proc, CDataSou
 const char *CDPPExecutor::className="CDPPExecutor";
 
 CDPPExecutor::CDPPExecutor(){
-  CDBDebug("CDPPExecutor");
+  // CDBDebug("CDPPExecutor");
   dataPostProcessorList = new  CT::PointerList<CDPPInterface*>();
   dataPostProcessorList->push_back(new CDPPIncludeLayer());
   dataPostProcessorList->push_back(new CDPPAXplusB());
