@@ -2,8 +2,10 @@
 CStyleConfiguration::RenderMethod CStyleConfiguration::getRenderMethodFromString(CT::string *renderMethodString){
   RenderMethod renderMethod = RM_UNDEFINED;
   if(renderMethodString->indexOf("nearest" )!=-1)renderMethod|=RM_NEAREST;
-  if(renderMethodString->indexOf("bilinear")!=-1)renderMethod|=RM_BILINEAR;
-  if(renderMethodString->indexOf("shaded"  )!=-1)renderMethod|=RM_SHADED;
+  if(renderMethodString->indexOf("newbilinear"  )!=-1)renderMethod|=RM_NEWBILINEAR;
+  else if(renderMethodString->indexOf("bilinear")!=-1)renderMethod|=RM_BILINEAR;
+  if(renderMethodString->indexOf("hillshaded"  )!=-1)renderMethod|=RM_HILLSHADED;
+  else if(renderMethodString->indexOf("shaded"  )!=-1)renderMethod|=RM_SHADED;
   if(renderMethodString->indexOf("contour" )!=-1)renderMethod|=RM_CONTOUR;
   if(renderMethodString->indexOf("linearinterpolation")!=-1)renderMethod|=RM_POINT_LINEARINTERPOLATION;
   if(renderMethodString->indexOf("point"   )!=-1)renderMethod|=RM_POINT;
@@ -45,4 +47,6 @@ void CStyleConfiguration::getRenderMethodAsString(CT::string *renderMethodString
   if(renderMethod & RM_STIPPLING)renderMethodString->concat("stippling");
   if(renderMethod & RM_POLYLINE)renderMethodString->concat("polyline");
   if(renderMethod & RM_POINT_LINEARINTERPOLATION)renderMethodString->concat("linearinterpolation");
+  if(renderMethod & RM_HILLSHADED)renderMethodString->concat("hillshaded");
+  if(renderMethod & RM_NEWBILINEAR)renderMethodString->concat("newbilinear");
 }

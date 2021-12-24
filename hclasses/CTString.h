@@ -495,7 +495,7 @@ namespace CT{
     /** 
     * Test whether string is empty or not
     */
-    const bool empty();
+    bool empty();
     
     /**
      * Returns posix basename of path
@@ -517,6 +517,15 @@ namespace CT{
      */
     bool isInt();
     
+    /**
+     * Converts to hex8
+     */
+    CT::string toHex8();
+    
+     /**
+     * Converts to hex24
+     */
+    CT::string toHex24();
   };
 };
 

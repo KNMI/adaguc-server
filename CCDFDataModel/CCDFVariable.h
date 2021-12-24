@@ -70,7 +70,7 @@ namespace CDF{
         ~CustomMemoryReader(){
           
         }
-        int readData(CDF::Variable *thisVar,size_t *start,size_t *count,ptrdiff_t *stride){
+        int readData(CDF::Variable *thisVar,size_t *,size_t *count,ptrdiff_t *stride) override{
           int size = 1;
           for(size_t j=0;j<thisVar->dimensionlinks.size();j++){
             size*=int((float(count[j])/float(stride[j]))+0.5);
