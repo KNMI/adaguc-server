@@ -1793,7 +1793,7 @@ void CDrawImage::rotate() {
 //  return 0;
 }
 
-unsigned char* CDrawImage::getCanvasMemory(){
+unsigned char* const CDrawImage::getCanvasMemory(){
   if(currentGraphicsRenderer==CDRAWIMAGERENDERER_GD){
     CDBError("Unable to return canvas memory for indexed colors");
     return NULL;
