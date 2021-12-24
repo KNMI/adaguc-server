@@ -10,7 +10,7 @@ services:
         environment:
             - "LOCAL_ADAGUCSERVER_ADDR=${EXTERNALADDRESS}" # Should be same as adaguc-server's EXTERNALADDRESS
             - "REMOTE_ADAGUCSERVER_ADDR=http://adaguc-server:8080/" # Do not change this within the docker-compose environment
-            - "ADAGUCSERVICES_AUTOWMS=${EXTERNALADDRESS}/adaguc-services/autowms?"
+            - "ADAGUCSERVICES_AUTOWMS=${EXTERNALADDRESS}/autowms?"
         env_file:
             - .env
         restart: unless-stopped
@@ -32,7 +32,10 @@ services:
         environment:
             - "EXTERNALADDRESS=${EXTERNALADDRESS}"
             - 'ADAGUC_DB=host=adaguc-db port=5432 user=adaguc password=adaguc dbname=adaguc'
-            - "ADAGUC_SERVICES_CONFIG=/adaguc/adaguc-services-config.xml"
+            - 'ADAGUC_ENABLELOGBUFFER=TRUE'
+            - 'ADAGUC_AUTOWMS_DIR=/data/adaguc-autowms'
+            - 'ADAGUC_DATA_DIR=/data/adaguc-data'
+            - 'ADAGUC_DATASET_DIR=/data/adaguc-datasets'
         env_file:
             - .env
         restart: unless-stopped
@@ -68,7 +71,7 @@ services:
                 max-size: "200k"
                 max-file: "10"
     adaguc-db:
-        image: postgres
+        image: postgres:13.4
         container_name: adaguc-db
         hostname: adaguc-db
         # Ensures containers running in the adaguc-network docker network can connect to the database, provided they use the
@@ -98,5 +101,5 @@ networks:
 # bash docker-compose-generate-env.sh -a ~/adaguc-server-docker/adaguc-autowms/ -d ~/adaguc-server-docker/adaguc-datasets/ -f ~/adaguc-server-docker/adaguc-data -p 443
 # docker-compose pull
 # docker-compose build
-# docker-compose up -d
+# docker-compose up -d --build
 # wait 10 seconds for the services to start

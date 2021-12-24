@@ -3457,7 +3457,7 @@ StopWatch_Stop("Drawing finished, start printing image");
   }else if(srvParam->imageFormat==IMAGEFORMAT_IMAGEWEBP){
     CDBDebug("Creating 32 bit webp");
     printf("%s%c%c\n","Content-Type:image/webp",13,10);
-    status=drawImage.printImageWebP32();
+    status=drawImage.printImageWebP32(srvParam->imageQuality);
   }else if(srvParam->imageFormat==IMAGEFORMAT_IMAGEGIF){
     //CDBDebug("LegendGraphic GIF");
     if(animation == 0){

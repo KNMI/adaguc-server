@@ -64,5 +64,10 @@
     "valarray": "cpp",
     "variant": "cpp"
   },
-  "cmake.buildDirectory": "${workspaceFolder}/bin"
+  "cmake.buildDirectory": "${workspaceFolder}/bin",
+  "cmake.configureOnOpen": true,
+  "clang-format.executable": "/usr/bin/clang-format-13",
+  "[C++]": {
+    "editor.formatOnSave": true
+  }
 }

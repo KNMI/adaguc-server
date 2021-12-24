@@ -65,6 +65,11 @@ static inline float DotProduct(const Vector &a, const Vector &b){
 }
 
 
+static inline int mfast_mod(const int input, const int ceil) {
+       return input >= ceil ? input % ceil : input;
+ }
+
+
 class CImgWarpHillShaded:public CImageWarperRenderInterface{
   private:
   DEF_ERRORFUNCTION();
@@ -102,15 +107,15 @@ class CImgWarpHillShaded:public CImageWarperRenderInterface{
        /* TODO make window size configurable */
       for(int wy=-1;wy<2;wy++){
         for(int wx=-1;wx<2;wx++){
-          values[0][0]+=(float)((T*)sourceData)[fast_mod(sourceDataPX + 0 + wx, sourceDataWidth) + fast_mod(sourceDataPY + wy + 0, sourceDataHeight) * sourceDataWidth];
-          values[1][0]+=(float)((T*)sourceData)[fast_mod(sourceDataPX + 1 + wx, sourceDataWidth) + fast_mod(sourceDataPY + wy + 0, sourceDataHeight) * sourceDataWidth];
-          values[2][0]+=(float)((T*)sourceData)[fast_mod(sourceDataPX + 2 + wx, sourceDataWidth) + fast_mod(sourceDataPY + wy + 0, sourceDataHeight) * sourceDataWidth];
-          values[0][1]+=(float)((T*)sourceData)[fast_mod(sourceDataPX + 0 + wx, sourceDataWidth) + fast_mod(sourceDataPY + wy + 1, sourceDataHeight) * sourceDataWidth];
-          values[1][1]+=(float)((T*)sourceData)[fast_mod(sourceDataPX + 1 + wx, sourceDataWidth) + fast_mod(sourceDataPY + wy + 1, sourceDataHeight) * sourceDataWidth];
-          values[2][1]+=(float)((T*)sourceData)[fast_mod(sourceDataPX + 2 + wx, sourceDataWidth) + fast_mod(sourceDataPY + wy + 1, sourceDataHeight) * sourceDataWidth];
-          values[0][2]+=(float)((T*)sourceData)[fast_mod(sourceDataPX + 0 + wx, sourceDataWidth) + fast_mod(sourceDataPY + wy + 2, sourceDataHeight) * sourceDataWidth];
-          values[1][2]+=(float)((T*)sourceData)[fast_mod(sourceDataPX + 1 + wx, sourceDataWidth) + fast_mod(sourceDataPY + wy + 2, sourceDataHeight) * sourceDataWidth];
-          values[2][2]+=(float)((T*)sourceData)[fast_mod(sourceDataPX + 2 + wx, sourceDataWidth) + fast_mod(sourceDataPY + wy + 2, sourceDataHeight) * sourceDataWidth];
+          values[0][0]+=(float)((T*)sourceData)[mfast_mod(sourceDataPX + 0 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 0, sourceDataHeight) * sourceDataWidth];
+          values[1][0]+=(float)((T*)sourceData)[mfast_mod(sourceDataPX + 1 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 0, sourceDataHeight) * sourceDataWidth];
+          values[2][0]+=(float)((T*)sourceData)[mfast_mod(sourceDataPX + 2 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 0, sourceDataHeight) * sourceDataWidth];
+          values[0][1]+=(float)((T*)sourceData)[mfast_mod(sourceDataPX + 0 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 1, sourceDataHeight) * sourceDataWidth];
+          values[1][1]+=(float)((T*)sourceData)[mfast_mod(sourceDataPX + 1 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 1, sourceDataHeight) * sourceDataWidth];
+          values[2][1]+=(float)((T*)sourceData)[mfast_mod(sourceDataPX + 2 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 1, sourceDataHeight) * sourceDataWidth];
+          values[0][2]+=(float)((T*)sourceData)[mfast_mod(sourceDataPX + 0 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 2, sourceDataHeight) * sourceDataWidth];
+          values[1][2]+=(float)((T*)sourceData)[mfast_mod(sourceDataPX + 1 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 2, sourceDataHeight) * sourceDataWidth];
+          values[2][2]+=(float)((T*)sourceData)[mfast_mod(sourceDataPX + 2 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 2, sourceDataHeight) * sourceDataWidth];
         }
       }
 

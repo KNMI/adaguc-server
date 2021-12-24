@@ -9,6 +9,7 @@
 #include "CGeoParams.h"
 #include "CImageWarper.h"
 #include "CDebugger.h"
+#include "CGenericDataWarperTools.h"
 
 //#define GenericDataWarper_DEBUG
 
@@ -164,7 +165,11 @@ class GenericDataWarper{
     double y2=sourceGeoParams->dfBBOX[3];
     double x1=sourceGeoParams->dfBBOX[0];
     double x2=sourceGeoParams->dfBBOX[2];
-    
+
+    #ifdef GenericDataWarper_DEBUG
+    CDBDebug("sourceGeoParams->dfBBOX %f, %f, %f, %f", sourceGeoParams->dfBBOX[0],sourceGeoParams->dfBBOX[1],sourceGeoParams->dfBBOX[2],sourceGeoParams->dfBBOX[3]);
+    CDBDebug("destGeoParams->dfBBOX %f, %f, %f, %f", destGeoParams->dfBBOX[0],destGeoParams->dfBBOX[1],destGeoParams->dfBBOX[2],destGeoParams->dfBBOX[3]);
+    #endif
     if(y2<y1){
       if(y1>-360&&y2<360&&x1>-720&&x2<720){
         if( CGeoParams::isLonLatProjection(&sourceGeoParams->CRS)==false){
@@ -239,21 +244,71 @@ class GenericDataWarper{
     /* When geographical map projections are equal, just do a simple linear transformation */
     if(warper->isProjectionRequired()==false)
     {
+      // CDBDebug("warper->isProjectionRequired() = %d: Applying simple linear transformation",warper->isProjectionRequired());
+
+      // // PXExtentBasedOnSource[0] = source
+
+      
+      // CDBDebug("dfSourceW [%f] ", dfSourceW);
+      // CDBDebug("dfSourceOrigX [%f] ", dfSourceOrigX);
+      // CDBDebug("dfSourceExtW [%f] ", dfSourceExtW);
+      
+      // CDBDebug("dfDestW [%f] ", dfDestW);
+      // CDBDebug("dfDestOrigX [%f] ", dfDestOrigX);
+      // CDBDebug("dfDestExtW [%f] ", dfDestExtW);
+
+      // double tX = ((dfDestOrigX-dfSourceOrigX)/dfSourceExtW)*dfSourceW;
+      // double tY = (((dfDestOrigY+dfDestExtH)-dfSourceOrigY)/dfSourceExtH)*dfSourceH;
+
+      // double eY = ((dfDestOrigY-dfSourceOrigY)/dfSourceExtH)*dfSourceH + 1;
+      // double eX = (((dfDestOrigX+dfDestExtW)-dfSourceOrigX)/dfSourceExtW)*dfSourceW + 1;
+      
+      // // CDBDebug("TESTX = %f;%f, %f;%f", tX, eX, tY, eY);
+
+      // PXExtentBasedOnSource[0] = tX < 0 ? 0 : tX;
+      // PXExtentBasedOnSource[1] = tY < 0 ? 0 : tY;
+      // PXExtentBasedOnSource[2] = eX > sourceDataWidth  ?  sourceDataWidth : eX;
+      // PXExtentBasedOnSource[3] = eY > sourceDataHeight  ? sourceDataHeight : eY;
+      // // CDBDebug("PX extent is [%d,%d,%d,%d] ", PXExtentBasedOnSource[0], PXExtentBasedOnSource[1], PXExtentBasedOnSource[2], PXExtentBasedOnSource[3]);
+
+      dataWidth = PXExtentBasedOnSource[2]-PXExtentBasedOnSource[0];
+      dataHeight = PXExtentBasedOnSource[3]-PXExtentBasedOnSource[1];
+    
 #ifdef GenericDataWarper_DEBUG
-      CDBDebug("warper->isProjectionRequired() = %d: Applying simple linear transformation",warper->isProjectionRequired());
+
+
+      CDBDebug("PX extent is [%d,%d,%d,%d] ", PXExtentBasedOnSource[0], PXExtentBasedOnSource[1], PXExtentBasedOnSource[2], PXExtentBasedOnSource[3]);
+
+      CDBDebug("dfSourceW [%f] ", dfSourceW);
+      CDBDebug("dfDestW [%f] ", dfDestW);
+      CDBDebug("dfSourceExtW [%f] ", dfSourceExtW);
+      CDBDebug("dfDestExtW [%f] ", dfDestExtW);
+      CDBDebug("dfSourceOrigX [%f] ", dfSourceOrigX);
+      CDBDebug("dfDestOrigX [%f] ", dfDestOrigX);
+
+      CDBDebug("dfSourceH [%f] ", dfSourceH);
+      CDBDebug("dfDestH [%f] ", dfDestH);
+      CDBDebug("dfSourceExtH [%f] ", dfSourceExtH);
+      CDBDebug("dfDestExtH [%f] ", dfDestExtH);
+      CDBDebug("dfSourceOrigY [%f] ", dfSourceOrigX);
+      CDBDebug("dfDestOrigY [%f] ", dfDestOrigX);
+      
+      
 #endif
+
       for(int y=PXExtentBasedOnSource[1];y<PXExtentBasedOnSource[3];y++){
         for(int x=PXExtentBasedOnSource[0];x<PXExtentBasedOnSource[2];x++){
           
           double dfx=x;
           double dfy=y;
-          int sx1=floor((((((dfx)/(dfSourceW))*dfSourceExtW+dfSourceOrigX)-dfDestOrigX)/dfDestExtW)*dfDestW+0.5);
-          int sy1=floor((((((dfy)/(dfSourceH))*dfSourceExtH+dfSourceOrigY)-dfDestOrigY)/dfDestExtH)*dfDestH+0.5);
-          int sx2=floor((((((dfx+1)/(dfSourceW))*dfSourceExtW+dfSourceOrigX)-dfDestOrigX)/dfDestExtW)*dfDestW+0.5);
-          int sy2=floor((((((dfy+1)/(dfSourceH))*dfSourceExtH+dfSourceOrigY)-dfDestOrigY)/dfDestExtH)*dfDestH+0.5);
+          int sx1 = roundedLinearTransform(dfx  , dfSourceW, dfSourceExtW, dfSourceOrigX, dfDestOrigX, dfDestExtW, dfDestW);
+          int sx2 = roundedLinearTransform(dfx+1, dfSourceW, dfSourceExtW, dfSourceOrigX, dfDestOrigX, dfDestExtW, dfDestW);
+          int sy1 = roundedLinearTransform(dfy  , dfSourceH, dfSourceExtH, dfSourceOrigY, dfDestOrigY, dfDestExtH, dfDestH);
+          int sy2 = roundedLinearTransform(dfy+1, dfSourceH, dfSourceExtH, dfSourceOrigY, dfDestOrigY, dfDestExtH, dfDestH);
           bool skip = false;
           int sxw=floor(fabs(sx2-sx1))+1;
           int syh=floor(fabs(sy2-sy1))+1;
+          // CDBDebug("%d %d %d %d", sx1, sy1, sx2 ,sy2);
           if(sx1<-sxw&&sx2<-sxw)skip=true;
           if(sy1<-syh&&sy2<-syh)skip=true;
           if(sx1>=destGeoParams->dWidth+sxw&&sx2>=destGeoParams->dWidth+sxw)skip=true;
@@ -280,7 +335,7 @@ class GenericDataWarper{
           }
         }
       }
-     // CDBDebug("warper->isProjectionRequired() = %d: Finished simple linear transformation",warper->isProjectionRequired());
+      // CDBDebug("warper->isProjectionRequired() = %d: Finished simple linear transformation",warper->isProjectionRequired());
       return 0;
     }
 #ifdef GenericDataWarper_DEBUG

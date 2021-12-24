@@ -48,7 +48,7 @@
 
 #Other binaries
 CCDFDataModel/anydump
-CCDFDataModel/test
+CCDFDataModel/testccdfdatamodel
 adagucserverEC/adagucserver
 adagucserverEC/aggregate_dim
 adagucserverEC/aggregate_time
@@ -99,6 +99,10 @@ data/python/adaguc_server.egg-info/
 data/python/adagucserver.egg-info/
 data/python/env/
 data/python/dist/
+python/lib/dist
+*.pytest_cache*
+*__pycache__*
+Testing
         
 .cmake
 */.cmake
@@ -108,3 +112,8 @@ build
 adaguc.egg-info
 env
 dist
+
+tests/checker_report.txt
+
+.vscode
+.log.txt.kate-swp

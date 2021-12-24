@@ -156,15 +156,25 @@ int CCreateLegend::renderDiscreteLegend (CDataSource *dataSource,
       for(size_t j=0;j<styleConfiguration->shadeIntervals->size();j++){
         CServerConfig::XMLE_ShadeInterval *s=(*styleConfiguration->shadeIntervals)[j];
         if(s->attr.min.empty()==false&&s->attr.max.empty()==false){
-          int cY1 = int(cbH-(j*12));
-          int cY2 = int(cbH-(((j+1)*12)-2));
+          int cY1 = int(cbH-(j*12)*scaling);
+          int cY2 = int(cbH-((((j+1)*12)-2))*scaling);
           CColor color;
           if(s->attr.fillcolor.empty()==false){
             color=CColor(s->attr.fillcolor.c_str());
           }else{
             color=legendImage->getColorForIndex(CImageDataWriter::getColorIndexForValue(dataSource,parseFloat(s->attr.min.c_str())));
           }
-          legendImage->rectangle(4+pLeft,cY2+pTop,int(cbW)+7+pLeft,cY1+pTop,color,CColor(0,0,0,255));
+          legendImage->rectangle(4*scaling+pLeft,
+            cY2+pTop,
+            (int(cbW)+7)*scaling+pLeft,
+            cY1+pTop,
+            color,CColor(0,0,0,255));
+
+          //legendImage->rectangle(pLeft+4*scaling,
+          //pTop + boxUpperY,
+          //pLeft + (int(cbW)+7)*scaling,
+          //pTop+boxLowerY,
+          //(colorIndex),248);
           
           if(s->attr.label.empty()){
             snprintf(szTemp,1000,"%s - %s",s->attr.min.c_str(),s->attr.max.c_str());
@@ -172,7 +182,8 @@ int CCreateLegend::renderDiscreteLegend (CDataSource *dataSource,
             snprintf(szTemp,1000,"%s",s->attr.label.c_str());
           }
           
-          legendImage->setText(szTemp,strlen(szTemp),int(cbW)+12+pLeft,cY2+pTop,248,-1);
+          // legendImage->setText(szTemp,strlen(szTemp),int(cbW)+12+pLeft,cY2+pTop,248,-1);
+          legendImage->drawText(((int)cbW+12+pLeft)*scaling,(cY1+pTop)-((fontSize*scaling)/4)+3,fontLocation, fontSize*scaling, 0, szTemp, 248);
         }
       }
     }

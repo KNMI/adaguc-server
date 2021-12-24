@@ -16,8 +16,6 @@ find_package(WebP REQUIRED)
 
 add_library(
     adagucserverEC
-    CReadPNG.h
-    CCDFPNGIO.h
     CDataReader.h
     COGCDims.h
     CImageWarper.h
@@ -78,8 +76,6 @@ add_library(
     CAreaMapper.h
     CSLD.h
     CHandleMetadata.h
-    CReadPNG.cpp
-    CCDFPNGIO.cpp
     CDataReader.cpp
     COGCDims.cpp
     CImageWarper.cpp
@@ -119,6 +115,7 @@ add_library(
     CStyleConfiguration.cpp
     CMakeJSONTimeSeries.cpp
     COpenDAPHandler.cpp
+    CDataPostProcessor_ClipMinMax.cpp
     CDataPostProcessor.cpp
     CDBFactory.cpp
     CDBAdapterPostgreSQL.cpp
@@ -140,8 +137,14 @@ add_library(
     CSLD.cpp
     CHandleMetadata.cpp
     CDPPGoes16Metadata.cpp
+    CCreateTiles.h
+    CCreateTiles.cpp
+    testadagucserver.cpp
 )
 
 target_include_directories(adagucserverEC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${Cairo_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS} ${PostgreSQL_INCLUDE_DIRS} ${GDAL_INCLUDE_DIRS})
 target_link_libraries(adagucserverEC CCDFDataModel hclasses ${NetCDF_LIBRARIES} ${HDF5_LIBRARIES} ${Cairo_LIBRARIES} ${FREETYPE_LIBRARIES} ${LIBXML2_LIBRARY} Threads::Threads ${PNG_LIBRARY} ${PROJ4_LIBRARIES} ${UDUNITS2_LIBRARIES} ${GD_LIBRARIES} ${CURL_LIBRARIES} ${SQLite3_LIBRARIES} ${GDAL_LIBRARIES} ${PostgreSQL_LIBRARIES} ${WebP_LIBRARIES})
 
+# Build unit test executable
+add_executable(testadagucserver testadagucserver.cpp)
+target_link_libraries(testadagucserver PRIVATE adagucserverEC CCDFDataModel hclasses)

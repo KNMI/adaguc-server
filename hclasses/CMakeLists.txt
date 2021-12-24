@@ -14,7 +14,7 @@ add_library(hclasses
     CReportMessage.h
     CReportWriter.h
     json_adaguc.h
-    test.h
+    CKeyValuePair.h
     CTypes.cpp
     CTString.cpp
     CTStringRef.cpp
@@ -28,14 +28,13 @@ add_library(hclasses
     CReportMessage.cpp
     CReportWriter.cpp
     json_adaguc.cpp
-    utils.h
-    utils.cpp
-    test.h
-    test.cpp
+    testhclasses.cpp
 )
 
 target_include_directories(hclasses PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${LIBXML2_INCLUDE_DIR})
 
 # Build unit test executable
-add_executable(test test.cpp)
-target_link_libraries(test PRIVATE hclasses)
+add_executable(testhclasses testhclasses.cpp)
+target_link_libraries(testhclasses PRIVATE hclasses)
+
+

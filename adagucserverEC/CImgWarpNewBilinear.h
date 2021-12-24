@@ -26,9 +26,14 @@
 #ifndef CImgWarpNewBilinear_H
 #define CImgWarpNewBilinear_H
 #include <stdlib.h>
+
 #include "CImageWarperRenderInterface.h"
 #include "CGenericDataWarper.h"
-#include "utils.h"
+
+
+static inline int nfast_mod(const int input, const int ceil) {
+       return input >= ceil ? input % ceil : input;
+ }
 
 
 
@@ -64,11 +69,11 @@ class CImgWarpNewBilinear:public CImageWarperRenderInterface{
       if ( sourceDataPX > sourceDataWidth-1) return;
 
       T values[2][2]={{0,0},{0,0}};
-    
-      values[0][0]+=((T*)sourceData)[fast_mod(sourceDataPX + 0 , sourceDataWidth) + fast_mod(sourceDataPY  + 0, sourceDataHeight) * sourceDataWidth];
-      values[1][0]+=((T*)sourceData)[fast_mod(sourceDataPX + 1 , sourceDataWidth) + fast_mod(sourceDataPY  + 0, sourceDataHeight) * sourceDataWidth];
-      values[0][1]+=((T*)sourceData)[fast_mod(sourceDataPX + 0 , sourceDataWidth) + fast_mod(sourceDataPY  + 1, sourceDataHeight) * sourceDataWidth];
-      values[1][1]+=((T*)sourceData)[fast_mod(sourceDataPX + 1 , sourceDataWidth) + fast_mod(sourceDataPY  + 1, sourceDataHeight) * sourceDataWidth];
+      
+      values[0][0]+=((T*)sourceData)[nfast_mod(sourceDataPX + 0 , sourceDataWidth) + nfast_mod(sourceDataPY  + 0, sourceDataHeight) * sourceDataWidth];
+      values[1][0]+=((T*)sourceData)[nfast_mod(sourceDataPX + 1 , sourceDataWidth) + nfast_mod(sourceDataPY  + 0, sourceDataHeight) * sourceDataWidth];
+      values[0][1]+=((T*)sourceData)[nfast_mod(sourceDataPX + 0 , sourceDataWidth) + nfast_mod(sourceDataPY  + 1, sourceDataHeight) * sourceDataWidth];
+      values[1][1]+=((T*)sourceData)[nfast_mod(sourceDataPX + 1 , sourceDataWidth) + nfast_mod(sourceDataPY  + 1, sourceDataHeight) * sourceDataWidth];
     
       if(x>=0&&y>=0&&x<(int)drawSettings->width&&y<(int)drawSettings->height){
         float dx = genericDataWarper->tileDx;
