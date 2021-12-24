@@ -51,6 +51,17 @@ function build {
   fi
  
   echo "[OK] Everything is installed in the ./bin directory"
+
+  echo "Testing..."
+  ctest --verbose
+  retVal=$?
+  if [ $retVal -ne 0 ]; then
+    echo "[FAILED] Some of the tests failed"
+  else
+    echo "[OK] Tests succeeded"
+  fi
+  exit $retVal
+
 }
 
 if [ "$*" = "--clean" ]; then

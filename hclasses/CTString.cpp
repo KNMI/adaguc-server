@@ -1,5 +1,6 @@
 #include "CTString.h"
 #include <iostream>
+#include <regex>
 #include <algorithm>
 #ifdef CTYPES_DEBUG
 const char *CT::string::className = "CT::string";
@@ -657,73 +658,72 @@ namespace CT{
     return false;
   }
 
-  bool string::isNumeric(){
-     if (this->empty()) return false;
-    const char digitsAllowedForFloat[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', 'f'};
-    const size_t numDigits = 12;
-    const char *inputStr = this->c_str();
+  /* These need to be initialized once, this is a costly function */
+  std::regex isNumericRegex = std::regex("[+-]?([0-9]*[.])?[0-9]+");
+  std::regex isFloatRegex = std::regex("[+-]?[0-9]*[.][0-9]+f?");
+  std::regex isIntRegex = std::regex("[+-]?[0-9]+");
+
+
+  bool string::isNumeric()
+  {
+
     const size_t inputLength = this->length();
-    /* Only a dot is not a float */
-    if (inputLength == 1 && inputStr[0] == '.') {
+    const char *inputStr = this->c_str();
+    /*check size */
+    if (this->empty() || inputLength > CT_MAX_NUM_CHARACTERS_FOR_NUMERIC)
+    {
       return false;
     }
-    if (inputLength == 3 && this->equals("NaN")) {
+    /* NaN is a "number"...in this context */
+    if (this->equals("NaN"))
+    {
       return true;
     }
-    /* Check for allowed characters, and check if '.' is included */
-    for (size_t c = 0;c< inputLength;c++) {
-      if (includesFunction(digitsAllowedForFloat ,numDigits, inputStr[c])!=true){
-        return false;
-      }
+
+    if (std::regex_match(inputStr, isNumericRegex))
+    {
+      return true;
     }
-    return true;
+    return false;
   }
 
-  bool string::isInt(){
-     if (this->empty()) return false;
-    const char digitsAllowedForFloat[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
-    const size_t numDigits = 12;
-    const char *inputStr = this->c_str();
+  bool string::isInt()
+  {
     const size_t inputLength = this->length();
-    /* Only a dot is not a float */
-    if (inputLength == 1 && inputStr[0] == '.') {
+    const char *inputStr = this->c_str();
+    /*check size */
+    if (this->empty() || inputLength > CT_MAX_NUM_CHARACTERS_FOR_INT)
+    {
       return false;
     }
-    if (inputLength == 3 && this->equals("NaN")) {
+   
+    if (std::regex_match(inputStr, isIntRegex))
+    {
       return true;
     }
-    /* Check for allowed characters, and check if '.' is included */
-    for (size_t c = 0;c< inputLength;c++) {
-      if (includesFunction(digitsAllowedForFloat ,numDigits, inputStr[c])!=true){
-        return false;
-      }
-    }
-    return true;
+    return false;
   }
 
-  bool string::isFloat() {
-    if (this->empty()) return false;
-    const char digitsAllowedForFloat[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', 'f'};
-    const size_t numDigits = 12;
-    const char *inputStr = this->c_str();
+  bool string::isFloat()
+  {
     const size_t inputLength = this->length();
-    /* Only a dot is not a float */
-    if (inputLength == 1 && inputStr[0] == '.') {
+    const char *inputStr = this->c_str();
+    /*check size */
+    if (this->empty() || inputLength > CT_MAX_NUM_CHARACTERS_FOR_FLOAT)
+    {
       return false;
     }
-    if (inputLength == 3 && this->equals("NaN")) {
+    /* NaN is a "float"...in this context */
+    if (this->equals("NaN"))
+    {
       return true;
     }
-    /* Check for allowed characters, and check if '.' is included */
-    bool hasDotCharacter = false;
-    for (size_t c = 0;c< inputLength;c++) {
-      if (includesFunction(digitsAllowedForFloat ,numDigits, inputStr[c])!=true){
-        return false;
-      }
-      if (inputStr[c] == '.') hasDotCharacter = true;
+
+    if (std::regex_match(inputStr, isFloatRegex))
+    {
+      return true;
     }
-    if (!hasDotCharacter) return false;
-    return true;
+    return false;
   }
 
   string getHex(unsigned int number) {

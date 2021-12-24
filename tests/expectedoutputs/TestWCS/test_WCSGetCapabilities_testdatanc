@@ -1,0 +1,74 @@
+<?xml version='1.0' encoding="ISO-8859-1" standalone="no" ?>
+<WCS_Capabilities
+   version="1.0.0" 
+   updateSequence="0" 
+   xmlns="http://www.opengis.net/wcs" 
+   xmlns:xlink="http://www.w3.org/1999/xlink" 
+   xmlns:gml="http://www.opengis.net/gml" 
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.opengis.net/wcs http://schemas.opengis.net/wcs/1.0.0/wcsCapabilities.xsd">
+<Service>
+  <name>ADAGUC_AUTO_WCS_AutoResource testdata.nc</name>
+  <label>ADAGUC_AUTO_WCS_AutoResource testdata.nc</label>
+  <abstract>ADAGUC_AUTO_WCS_AutoResource testdata.nc</abstract>
+  <ServerInfo>ADAGUCServer version 2.5.13, of Sep  1 2021 15:34:53</ServerInfo>
+  <fees>NONE</fees>
+  <accessConstraints>
+    NONE
+  </accessConstraints>
+</Service>
+<Capability>
+  <Request>
+    <GetCapabilities>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xlink:type="simple" xlink:href="%26source%3Dtestdata%2Enc&amp;SERVICE=WCS&amp;" /></Get>
+        </HTTP>
+      </DCPType>
+      <DCPType>
+        <HTTP>
+          <Post><OnlineResource xlink:type="simple" xlink:href="%26source%3Dtestdata%2Enc&amp;SERVICE=WCS&amp;" /></Post>
+        </HTTP>
+      </DCPType>
+    </GetCapabilities>
+    <DescribeCoverage>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xlink:type="simple" xlink:href="%26source%3Dtestdata%2Enc&amp;SERVICE=WCS&amp;" /></Get>
+        </HTTP>
+      </DCPType>
+      <DCPType>
+        <HTTP>
+          <Post><OnlineResource xlink:type="simple" xlink:href="%26source%3Dtestdata%2Enc&amp;SERVICE=WCS&amp;" /></Post>
+        </HTTP>
+      </DCPType>
+    </DescribeCoverage>
+    <GetCoverage>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xlink:type="simple" xlink:href="%26source%3Dtestdata%2Enc&amp;SERVICE=WCS&amp;" /></Get>
+        </HTTP>
+      </DCPType>
+      <DCPType>
+        <HTTP>
+          <Post><OnlineResource xlink:type="simple" xlink:href="%26source%3Dtestdata%2Enc&amp;SERVICE=WCS&amp;" /></Post>
+        </HTTP>
+      </DCPType>
+    </GetCoverage>
+  </Request>
+  <Exception>
+    <Format>application/vnd.ogc.se_xml</Format>
+  </Exception>
+</Capability>
+<ContentMetadata>
+<CoverageOfferingBrief>
+<description>testdata</description>
+<name>testdata</name>
+<label>Testdata (testdata)</label>
+  <lonLatEnvelope srsName="urn:ogc:def:crs:OGC:1.3:CRS84">
+    <gml:pos>-27.243262 37.353267</gml:pos>
+    <gml:pos>32.676474 65.888228</gml:pos>
+</lonLatEnvelope>
+</CoverageOfferingBrief>
+</ContentMetadata>
+</WCS_Capabilities>

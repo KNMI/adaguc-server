@@ -253,11 +253,11 @@ int CDrawImage::printImagePng32(){
   }
   return 0;
 }
-int CDrawImage::printImageWebP32(){
+int CDrawImage::printImageWebP32(int quality){
   if(dImageCreated==0){CDBError("print: image not created");return 1;}
   
   if(currentGraphicsRenderer==CDRAWIMAGERENDERER_CAIRO){
-    cairo->writeToWebP32Stream(stdout,backgroundAlpha);
+    cairo->writeToWebP32Stream(stdout,backgroundAlpha, quality);
   }
   
   if(currentGraphicsRenderer==CDRAWIMAGERENDERER_GD){
