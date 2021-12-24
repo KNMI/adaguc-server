@@ -17,8 +17,8 @@ class GenericDataWarper{
  private:
   DEF_ERRORFUNCTION();
   template <class T>
-  static int drawTriangle(int *xP,int *yP, T value,int destWidth,int destHeight,void *settings, void (*drawFunction)(int ,int,T,void *settings)){
-    
+  static int drawTriangle(int *xP,int *yP, T value,int destWidth,int destHeight,void *settings, void (*drawFunction)(int ,int,T,void *settings, void *genericDataWarper), void *genericDataWarper, bool aOrB){
+    GenericDataWarper *g = (GenericDataWarper*)genericDataWarper;
     int W = destWidth;
     int H = destHeight;
     if(xP[0]<0&&xP[1]<0&&xP[2]<0)return 0;
@@ -44,6 +44,14 @@ class GenericDataWarper{
     int Y2 = yP[middle];
     int Y3 = yP[upper];
     
+    float vX1 = aOrB ? 1 : 0;
+    float vY1 = aOrB ? 0 : 1;
+    float vX2 = aOrB ? 0 : 1;
+    float vY2 = 1;
+    float vX3 = aOrB ? 0 : 1;
+    float vY3 = 0;
+
+    // return 1;
     /*
     //  1
     //   \
@@ -56,13 +64,16 @@ class GenericDataWarper{
     if((Y1 == Y3)||(Y2==Y1&&Y3==Y2)){
       int minx=X1;if(minx>X2)minx=X2;if(minx>X3)minx=X3;
       int maxx=X1;if(maxx<X2)maxx=X2;if(maxx<X3)maxx=X3;
+      g->tileDy = 0;
       for(int x=minx;x<maxx+1;x++){
-        drawFunction(x,yP[2],value,settings);
+        g->tileDx =0;//(x - minx) / float(maxx-minx);
+        drawFunction(x,yP[2],value,settings, genericDataWarper);
       }
       return 1;
     }
  
-    
+    /* https://codeplea.com/triangular-interpolation */
+    float dn = ((yP[1]-yP[2])*(xP[0]-xP[2])+(xP[2]-xP[1])*(yP[0]-yP[2]));
 
     float rcl = float(X3-X1)/float(Y3-Y1);
     if(Y2!=Y1&&Y1<H&&Y2>0){
@@ -78,12 +89,19 @@ class GenericDataWarper{
           int sx = (x1<0)?0:x1;
           int ex = (x2>W)?W:x2;
           for(int x=sx;x<=ex-1;x++){
-            drawFunction(x,y,value,settings);
+            float WV1 = ((yP[1]-yP[2])*(x-xP[2])+(xP[2]-xP[1])*(y-yP[2])) / dn;
+            float WV2 = ((yP[2]-yP[0])*(x-xP[2])+(xP[0]-xP[2])*(y-yP[2])) / dn;
+            float WV3 = 1-WV1-WV2;
+
+
+            g->tileDx = WV1 * vX1 + WV2 * vX2 + WV3 * vX3;
+            g->tileDy = WV1 * vY1 + WV2 * vY2 + WV3 * vY3;
+            drawFunction(x,y,value,settings,genericDataWarper);
           }
         }
       }
     }
-    
+    // return 0;
     if(Y3 != Y2&&Y2<H&&Y3>0){
       float rcb = float(X3-X2)/float(Y3-Y2);
       int sy = (Y2<0)?0:Y2;
@@ -97,7 +115,15 @@ class GenericDataWarper{
           int sx = (x1<0)?0:x1;
           int ex = (x2>W)?W:x2;
           for(int x=sx;x<=ex-1;x++){
-            drawFunction(x,y,value,settings);
+            float WV1 = ((yP[1]-yP[2])*(x-xP[2])+(xP[2]-xP[1])*(y-yP[2])) / dn;
+            float WV2 = ((yP[2]-yP[0])*(x-xP[2])+(xP[0]-xP[2])*(y-yP[2])) / dn;
+            float WV3 = 1-WV1-WV2;
+    
+
+            g->tileDx = WV1 * vX1 + WV2 * vX2 + WV3 * vX3;
+            g->tileDy = WV1 * vY1 + WV2 * vY2 + WV3 * vY3;
+
+           drawFunction(x,y,value,settings,genericDataWarper);
           }
         } 
       }
@@ -109,11 +135,22 @@ class GenericDataWarper{
   
    
   public:
+  GenericDataWarper() {
+    useHalfCellOffset=false;
+  }
+
+  /* Can be used in drawfunctions */
+  void *sourceData;
+  
+  int sourceDataPX, sourceDataPY,sourceDataWidth,sourceDataHeight;
+  float tileDx, tileDy;
+  bool useHalfCellOffset;
+
     static int findPixelExtent(int *PXExtentBasedOnSource,CGeoParams*sourceGeoParams,CGeoParams*destGeoParams,CImageWarper*warper);
     
   template <class T>
-  static int render(CImageWarper *warper,void *sourceData,CGeoParams*sourceGeoParams,CGeoParams*destGeoParams,void *drawFunctionSettings,void (*drawFunction)(int ,int,T,void *drawFunctionSettings)){
-        
+  int render(CImageWarper *warper,void *_sourceData,CGeoParams*sourceGeoParams,CGeoParams*destGeoParams,void *drawFunctionSettings,void (*drawFunction)(int ,int,T,void *drawFunctionSettings, void *genericDataWarper)){
+    this->sourceData = _sourceData;
 #ifdef GenericDataWarper_DEBUG
     CDBDebug("render");
 #endif
@@ -175,27 +212,14 @@ class GenericDataWarper{
     
     double dfDestOrigX = destGeoParams->dfBBOX[0];//-0.5/multiDestX;;
     double dfDestOrigY = destGeoParams->dfBBOX[3];//+0.5/multiDestY;;;
-
-    
-
-  /*      
-    CT::string destinationCRS;
-    warper->decodeCRS(&destinationCRS,&destGeoParams->CRS);
-    if(destinationCRS.indexOf("longlat")>=0){
-      destNeedsDegreeRadianConversion = true;
-    }
-    if(sourceGeoParams->CRS.indexOf("longlat")>=0){
-      sourceNeedsDegreeRadianConversion = true;
-    }*/
-    
     
     //Determine source BBOX of based on destination grid
 #ifdef GenericDataWarper_DEBUG    
     CDBDebug("Creating px extent");
 #endif    
     
-    int sourceDataWidth = sourceGeoParams->dWidth;
-    int sourceDataHeight = sourceGeoParams->dHeight;
+    sourceDataWidth = sourceGeoParams->dWidth;
+    sourceDataHeight = sourceGeoParams->dHeight;
     
     int PXExtentBasedOnSource[4];
     
@@ -208,28 +232,16 @@ class GenericDataWarper{
     
     
     if(tryToFindExtend){
-      findPixelExtent(PXExtentBasedOnSource,sourceGeoParams,destGeoParams,warper);
+       findPixelExtent(PXExtentBasedOnSource,sourceGeoParams,destGeoParams,warper);
 
     }
      
     if(PXExtentBasedOnSource[2]-PXExtentBasedOnSource[0]<=0)return 0;
     if(PXExtentBasedOnSource[3]-PXExtentBasedOnSource[1]<=0)return 0;
-
-    
-
-    
-    
-//     dfDestOrigX-=fabs(0.5/multiDestX);
-//     dfDestOrigY-=fabs(0.5/multiDestY);
-//     
-//     double dfCellSizeX = dataSource->dfCellSizeX;
-//     double dfCellSizeY = dataSource->dfCellSizeY;
-    
     int dataWidth = PXExtentBasedOnSource[2]-PXExtentBasedOnSource[0];
     int dataHeight = PXExtentBasedOnSource[3]-PXExtentBasedOnSource[1];
     
-
-        /* When geographical map projections are equal, just do a simple linear transformation */
+    /* When geographical map projections are equal, just do a simple linear transformation */
     if(warper->isProjectionRequired()==false)
     {
       // CDBDebug("warper->isProjectionRequired() = %d: Applying simple linear transformation",warper->isProjectionRequired());
@@ -305,7 +317,9 @@ class GenericDataWarper{
           
           
           if(!skip){
-            T value = ((T*)sourceData)[x+(sourceGeoParams->dHeight-1-y)*sourceGeoParams->dWidth];
+            this->sourceDataPX = x;
+            this->sourceDataPY = sourceGeoParams->dHeight-1-y;
+            T value = ((T*)sourceData)[this->sourceDataPX+(this->sourceDataPY)*sourceGeoParams->dWidth];
             int lx1,lx2,ly1,ly2;
             if(sx1>sx2){lx2=sx1;lx1=sx2;}else{lx2=sx2;lx1=sx1;}
             if(sy1>sy2){ly2=sy1;ly1=sy2;}else{ly2=sy2;ly1=sy1;}
@@ -313,8 +327,9 @@ class GenericDataWarper{
             if(lx2==lx1)lx2++;
             for(int sjy=ly1;sjy<ly2;sjy++){
               for(int sjx=lx1;sjx<lx2;sjx++){
-                //CDBDebug("%d %d %f", sjx,sjy, sjx,sjy,value);
-                drawFunction(sjx,sjy,value,drawFunctionSettings);
+                this->tileDy = (sjy - ly1) / float(ly2-ly1);
+                this->tileDx = (sjx - lx1) / float(lx2-lx1);
+                drawFunction(sjx,sjy,value,drawFunctionSettings, this);
               }
             }
           }
@@ -328,51 +343,119 @@ class GenericDataWarper{
 #endif
 
     
-   
+    bool useStridingProjection = false; 
+    int projStrideFactor = 16;
+    if (dataWidth*dataHeight > 1000*1000){
+      useStridingProjection = true;
+    }
+
+
+    double halfCell = useHalfCellOffset ? 0.5 : 0;
 
     size_t dataSize = (dataWidth+1) * (dataHeight+1);
-
     
-
     double *px = new double[dataSize];
     double *py = new double[dataSize];
     char *skip = new char[dataSize];
     
-      
-    for(int y=0;y<dataHeight+1;y++){
-      for(int x=0;x<dataWidth+1;x++){
-        size_t p = x+y*(dataWidth+1);
-        px[p] =dfSourcedExtW*double(double(x)+PXExtentBasedOnSource[0])+dfSourceOrigX;//+dfSourcedExtW/2.0;
-        py[p] =dfSourcedExtH*double(double(y)+PXExtentBasedOnSource[1])+dfSourceOrigY;//+dfSourcedExtH/2.0;
-        skip[p] = false;
-      }
-    }
     
+    if (!useStridingProjection) {
+      for(int y=0;y<dataHeight+1;y++){
+        for(int x=0;x<dataWidth+1;x++){
+          size_t p = x+y*(dataWidth+1);
+          double valX = dfSourcedExtW*double(double(x+halfCell)+PXExtentBasedOnSource[0])+dfSourceOrigX;
+          double valY = dfSourcedExtH*double(double(y-halfCell)+PXExtentBasedOnSource[1])+dfSourceOrigY;
+          px[p] = valX;
+          py[p] = valY;
+          skip[p] = false;
+        }
+      }
+      if(warper->isProjectionRequired()){
+        if(warper->sourceNeedsDegreeRadianConversion){
+          for(size_t j=0;j<dataSize;j++){
+            px[j]*=DEG_TO_RAD;
+            py[j]*=DEG_TO_RAD;
+          }
+        }
+        
+        if(pj_transform(warper->sourcepj,warper->destpj, dataSize,0,px,py,NULL)){
+          CDBDebug("Unable to do pj_transform");
+        }
+        if(warper->destNeedsDegreeRadianConversion){
+          for(size_t j=0;j<dataSize;j++){
+            px[j]/=DEG_TO_RAD;
+            py[j]/=DEG_TO_RAD;
+          }
+        }
+      }
+      
+    }else{
+      
+      size_t dataWidthStrided = dataWidth / projStrideFactor + projStrideFactor;
+      size_t dataHeightStrided = dataHeight / projStrideFactor +projStrideFactor;
+      size_t dataSizeStrided = (dataWidthStrided) * (dataHeightStrided);
 
-   
-//     for(size_t j=0;j<dataSize;j++){
-//       if(px[j]>0&&px[j]<1)skip[j]=true;        
-//     }
-    
-    if(warper->isProjectionRequired()){
-      if(warper->sourceNeedsDegreeRadianConversion){
-        for(size_t j=0;j<dataSize;j++){
-          px[j]*=DEG_TO_RAD;
-          py[j]*=DEG_TO_RAD;
+      double *pxStrided = new double[dataSizeStrided];
+      double *pyStrided = new double[dataSizeStrided];
+
+      /* TODO faster init */
+      for(int y=0;y<dataHeight+1;y++){
+        for(int x=0;x<dataWidth+1;x++){
+          size_t p = x+y*(dataWidth+1);
+          px[p] = DBL_MAX;
+          py[p] = DBL_MAX;
+          skip[p] = false;
+        }
+      }  
+      for(int y=0;y<dataHeightStrided;y++){
+        for(int x=0;x<dataWidthStrided;x++){
+          size_t pS = x+y*dataWidthStrided;
+          double valX = dfSourcedExtW*double(double(x*projStrideFactor+halfCell)  +PXExtentBasedOnSource[0])+dfSourceOrigX ;
+          double valY = dfSourcedExtH*double(double(y*projStrideFactor-halfCell)+PXExtentBasedOnSource[1])+dfSourceOrigY;
+          pxStrided[pS] = valX;
+          pyStrided[pS] = valY;
+        
         }
       }
       
-      if(pj_transform(warper->sourcepj,warper->destpj, dataSize,0,px,py,NULL)){
-        CDBDebug("Unable to do pj_transform");
-      }
-      if(warper->destNeedsDegreeRadianConversion){
-        for(size_t j=0;j<dataSize;j++){
-          px[j]/=DEG_TO_RAD;
-          py[j]/=DEG_TO_RAD;
+
+      if(warper->isProjectionRequired()){
+        if(warper->sourceNeedsDegreeRadianConversion){
+          for(size_t j=0;j<dataSizeStrided;j++){
+            pxStrided[j]*=DEG_TO_RAD;
+            pyStrided[j]*=DEG_TO_RAD;
+          }
+        }
+        
+        if(pj_transform(warper->sourcepj,warper->destpj, dataSizeStrided,0,pxStrided,pyStrided,NULL)){
+          CDBDebug("Unable to do pj_transform");
+        }
+        if(warper->destNeedsDegreeRadianConversion){
+          for(size_t j=0;j<dataSizeStrided;j++){
+            pxStrided[j]/=DEG_TO_RAD;
+            pyStrided[j]/=DEG_TO_RAD;
+          }
         }
       }
+      for(int y=0;y<dataHeight + 1;y++){
+        for(int x=0;x<dataWidth + 1;x++){
+          size_t p = x+y*(dataWidth+1);
+          size_t pS = (x/projStrideFactor)+(y/projStrideFactor)*(dataWidthStrided);
+          float sX = float(x%projStrideFactor)/float(projStrideFactor);
+          float sY = float(y%projStrideFactor)/float(projStrideFactor);
+          double x1 = pxStrided[pS]*(1-sX) + pxStrided[pS+1]*sX;;
+          double x2 = pxStrided[pS+dataWidthStrided]*(1-sX) + pxStrided[pS+1+dataWidthStrided]*sX;;
+          px[p] = x1*(1-sY)+ x2*sY;
+          
+          double y1 = pyStrided[pS]*(1-sY) + pyStrided[pS+dataWidthStrided]*sY;;
+          double y2 = pyStrided[pS+1]*(1-sY) + pyStrided[pS+dataWidthStrided+1]*sY;;
+          py[p] =  y1*(1-sX)+ y2*sX;
+          
+        }
+      }
+      delete[] pyStrided;
+      delete[] pxStrided;
     }
-    
 #ifdef GenericDataWarper_DEBUG
     CDBDebug("Reprojection done");
 #endif
@@ -385,6 +468,8 @@ class GenericDataWarper{
     
     double avgDX = 0;
     double avgDY = 0;
+    // double prevpx1,prevpx2;
+
     double pLengthD = 0;
     
     for(int y=0;y<dataHeight;y=y+1){
@@ -442,10 +527,10 @@ class GenericDataWarper{
             px4=lons[3]; 
           }
           
-          px1-=dfDestOrigX;px1*=multiDestX;//px1+=0.5;
-          px2-=dfDestOrigX;px2*=multiDestX;//px2+=0.5;
-          px3-=dfDestOrigX;px3*=multiDestX;//px3+=0.5;
-          px4-=dfDestOrigX;px4*=multiDestX;//px4+=0.5;
+          px1-=dfDestOrigX;px1*=multiDestX;px1+=0.5;
+          px2-=dfDestOrigX;px2*=multiDestX;px2+=0.5;
+          px3-=dfDestOrigX;px3*=multiDestX;px3+=0.5;
+          px4-=dfDestOrigX;px4*=multiDestX;px4+=0.5;
  
           
 
@@ -454,10 +539,10 @@ class GenericDataWarper{
           double py3 = py[p+dataWidth+2];
           double py4 = py[p+dataWidth+1];
           
-          py1-=dfDestOrigY;py1*=multiDestY;//py1+=0.5;
-          py2-=dfDestOrigY;py2*=multiDestY;//py2+=0.5;
-          py3-=dfDestOrigY;py3*=multiDestY;//py3+=0.5;
-          py4-=dfDestOrigY;py4*=multiDestY;//py4+=0.5;
+          py1-=dfDestOrigY;py1*=multiDestY;py1+=0.5;
+          py2-=dfDestOrigY;py2*=multiDestY;py2+=0.5;
+          py3-=dfDestOrigY;py3*=multiDestY;py3+=0.5;
+          py4-=dfDestOrigY;py4*=multiDestY;py4+=0.5;
 
           if(x==0)avgDX = px2;
           if(y==0)avgDY = py4;
@@ -474,6 +559,32 @@ class GenericDataWarper{
             doDraw = false;
           }
           
+
+
+          // /* 
+          //   If the previous pixel width is suddenly 10 times bigger, 
+          //   or 10 times smaller, skip it .
+          //   It is probably wrapped arround the date border.
+          // */
+          // if (x ==0 && y==0) {
+          //   prevpx1=px1;
+          //   prevpx2=px2;
+          // }
+          // if (fabs(prevpx2-prevpx1) < (fabs(px2-px1)/10.0f)) {
+          //    doDraw = false;
+          // }
+          // if (fabs(prevpx2-prevpx1) > (fabs(px2-px1)*10.0f)) {
+          //    doDraw = false;
+          // }
+
+          // prevpx1=px1;
+          // prevpx2=px2;
+
+          
+
+          
+
+
           if(x==dataWidth-1){
             if(fabs(avgDX-px1)<fabs(px1-px2)/2){
               doDraw = false;
@@ -487,96 +598,40 @@ class GenericDataWarper{
               doDraw = false;
             }
           }
-        
-          
-
           
           if(doDraw){
             int sourceGridX = x+PXExtentBasedOnSource[0];
-            int sourceGridY = y+PXExtentBasedOnSource[1];
-            T value = ((T*)sourceData)[sourceGridX+(sourceDataHeight-1-sourceGridY)*sourceDataWidth];
-          
-//             if(sourceGridX ==0||sourceGridX==sourceDataWidth-1||sourceGridY ==0||sourceGridY==sourceDataHeight-1){value=blue;}
-//             if((sourceGridX ==10||sourceGridX==sourceDataWidth-10)&& sourceGridY >10 &&sourceGridY<sourceDataHeight-10){value=yellow;}
-//             if((sourceGridY ==10||sourceGridY==sourceDataHeight-10)&& sourceGridX >10 &&sourceGridX<sourceDataWidth-10){value=yellow;}
-//                      
-
-            
-            double mX = (px1+px2+px3+px4)/4;
-            double mY = (py1+py2+py3+py4)/4;
-/*            
-            if(px2>px1)px2--;else if (px2<px1)px2++;
-            if(px3>px1)px3--;else if (px3<px1)px3++;
-            if(py3>py1)py3--;else if (py3<py1)py3++;
-            if(py4>py1)py4--;else if (py4<py1)py4++;*/
-            int dmX=floor(mX+0.5);
-            int dmY=floor(mY+0.5);
-            int dpx1=floor(px1+0.5);
-            int dpy1=floor(py1+0.5);
-            int dpx2=floor(px2+0.5);
-            int dpy2=floor(py2+0.5);
-            int dpx3=floor(px3+0.5);
-            int dpy3=floor(py3+0.5);
-            int dpx4=floor(px4+0.5);
-            int dpy4=floor(py4+0.5);
-
-           
+            int  sourceGridY = y+PXExtentBasedOnSource[1];
+            this->sourceDataPX = sourceGridX;
+            this->sourceDataPY = (sourceDataHeight-1-sourceGridY);
+            T value = ((T*)sourceData)[ this->sourceDataPX +this->sourceDataPY*sourceDataWidth];
+      
             int xP[3];
             int yP[3];
-            xP[0] = dpx1;
-            yP[0] = dpy1;
+            xP[0] = px1;
+            yP[0] = py1;
             
-            xP[1] = dpx2;
-            yP[1] = dpy2;
+            xP[1] = px2;
+            yP[1] = py2;
 
-            xP[2] = dmX;
-            yP[2] = dmY;
-            drawTriangle<T>( xP,yP,value,imageWidth,imageHeight,drawFunctionSettings,drawFunction); //bottom
+            xP[2] = px3;
+            yP[2] = py3;
+            drawTriangle<T>( xP,yP,value,imageWidth,imageHeight,drawFunctionSettings,drawFunction, (void*)this, false); 
 
-            xP[0] = dpx3;
-            yP[0] = dpy3;
+            xP[0] = px3;
+            yP[0] = py3;
             
-            xP[1] = dpx2;
-            yP[1] = dpy2;
+            xP[1] = px1;
+            yP[1] = py1;
 
-            xP[2] = dmX;
-            yP[2] = dmY;
-            drawTriangle<T>( xP,yP,value,imageWidth,imageHeight,drawFunctionSettings,drawFunction);//right
-
-            xP[0] = dpx3;
-            yP[0] = dpy3;
-            
-            xP[1] = dpx4;
-            yP[1] = dpy4;
-
-            xP[2] = dmX;
-            yP[2] = dmY;
-            drawTriangle<T>( xP,yP,value,imageWidth,imageHeight,drawFunctionSettings,drawFunction);//top
-
-            xP[0] = dpx1;
-            yP[0] = dpy1;
-            
-            xP[1] = dpx4;
-            yP[1] = dpy4;
-
-            xP[2] = dmX;
-            yP[2] = dmY;
-            drawTriangle<T>( xP,yP,value,imageWidth,imageHeight,drawFunctionSettings,drawFunction);//left
-//             for(int vy=-1;vy<2;vy++)for(int vx=-1;vx<2;vx++)
-//             drawFunction(dmX+vx,dmY+vy,1,drawFunctionSettings);
-
+            xP[2] = px4;
+            yP[2] = py4;
+             drawTriangle<T>( xP,yP,value,imageWidth,imageHeight,drawFunctionSettings,drawFunction, (void*)this, true);
           }
           pLengthD = lengthD;
         }
       }
     }
-//     for(int y=0;y<dataHeight;y=y+1){
-//       for(int x=0;x<dataWidth;x=x+1){
-//         size_t p=x+y*(dataWidth+1);
-//         drawFunction(px[p],py[p],12,drawFunctionSettings);
-//       }
-//     }
-//  
     delete[] px;
     delete[] py;
     delete[] skip;

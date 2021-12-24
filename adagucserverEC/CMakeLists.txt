@@ -31,6 +31,8 @@ add_library(
     CXMLSerializerInterface.h
     CDataSource.h
     CImgWarpBilinear.h
+    CImgWarpHillShaded.h
+    CImgWarpNewBilinear.h
     CImgWarpBoolean.h
     CImgWarpNearestNeighbour.h
     CGenericDataWarper.h
@@ -89,6 +91,8 @@ add_library(
     CXMLSerializerInterface.cpp
     CDataSource.cpp
     CImgWarpBilinear.cpp
+    CImgWarpHillShaded.cpp
+    CImgWarpNewBilinear.cpp
     CImgWarpBoolean.cpp
     CImgWarpNearestNeighbour.cpp
     CGenericDataWarper.cpp
@@ -132,6 +136,7 @@ add_library(
     CAreaMapper.cpp
     CSLD.cpp
     CHandleMetadata.cpp
+    CDPPGoes16Metadata.cpp
     CCreateTiles.h
     CCreateTiles.cpp
     testadagucserver.cpp
