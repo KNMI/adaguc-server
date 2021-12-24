@@ -468,7 +468,7 @@ class GenericDataWarper{
     
     double avgDX = 0;
     double avgDY = 0;
-    double prevpx1,prevpx2;
+    // double prevpx1,prevpx2;
 
     double pLengthD = 0;
     
@@ -527,10 +527,10 @@ class GenericDataWarper{
             px4=lons[3]; 
           }
           
-          px1-=dfDestOrigX;px1*=multiDestX;//px1+=0.5;
-          px2-=dfDestOrigX;px2*=multiDestX;//px2+=0.5;
-          px3-=dfDestOrigX;px3*=multiDestX;//px3+=0.5;
-          px4-=dfDestOrigX;px4*=multiDestX;//px4+=0.5;
+          px1-=dfDestOrigX;px1*=multiDestX;px1+=0.5;
+          px2-=dfDestOrigX;px2*=multiDestX;px2+=0.5;
+          px3-=dfDestOrigX;px3*=multiDestX;px3+=0.5;
+          px4-=dfDestOrigX;px4*=multiDestX;px4+=0.5;
  
           
 
@@ -539,10 +539,10 @@ class GenericDataWarper{
           double py3 = py[p+dataWidth+2];
           double py4 = py[p+dataWidth+1];
           
-          py1-=dfDestOrigY;py1*=multiDestY;//py1+=0.5;
-          py2-=dfDestOrigY;py2*=multiDestY;//py2+=0.5;
-          py3-=dfDestOrigY;py3*=multiDestY;//py3+=0.5;
-          py4-=dfDestOrigY;py4*=multiDestY;//py4+=0.5;
+          py1-=dfDestOrigY;py1*=multiDestY;py1+=0.5;
+          py2-=dfDestOrigY;py2*=multiDestY;py2+=0.5;
+          py3-=dfDestOrigY;py3*=multiDestY;py3+=0.5;
+          py4-=dfDestOrigY;py4*=multiDestY;py4+=0.5;
 
           if(x==0)avgDX = px2;
           if(y==0)avgDY = py4;
@@ -561,24 +561,24 @@ class GenericDataWarper{
           
 
 
-          /* 
-            If the previous pixel width is suddenly 10 times bigger, 
-            or 10 times smaller, skip it .
-            It is probably wrapped arround the date border.
-          */
-          if (x ==0 && y==0) {
-            prevpx1=px1;
-            prevpx2=px2;
-          }
-          if (fabs(prevpx2-prevpx1) < (fabs(px2-px1)/10.0f)) {
-             doDraw = false;
-          }
-          if (fabs(prevpx2-prevpx1) > (fabs(px2-px1)*10.0f)) {
-             doDraw = false;
-          }
+          // /* 
+          //   If the previous pixel width is suddenly 10 times bigger, 
+          //   or 10 times smaller, skip it .
+          //   It is probably wrapped arround the date border.
+          // */
+          // if (x ==0 && y==0) {
+          //   prevpx1=px1;
+          //   prevpx2=px2;
+          // }
+          // if (fabs(prevpx2-prevpx1) < (fabs(px2-px1)/10.0f)) {
+          //    doDraw = false;
+          // }
+          // if (fabs(prevpx2-prevpx1) > (fabs(px2-px1)*10.0f)) {
+          //    doDraw = false;
+          // }
 
-          prevpx1=px1;
-          prevpx2=px2;
+          // prevpx1=px1;
+          // prevpx2=px2;
 
           
 

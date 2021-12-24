@@ -286,7 +286,7 @@ public:
     /**
      * Returns canvas memory in case of true color images
      */
-    unsigned char* getCanvasMemory();
+    unsigned char* const getCanvasMemory();
     
     /**
      * Returns canvas colortype, either COLORTYPE_INDEXED or COLORTYPE_ARGB

@@ -10,9 +10,6 @@ class CDPPGoes16Metadata : public CDPPInterface {
     DEF_ERRORFUNCTION();
 
   public:
-    CDPPGoes16Metadata () {
-      CDBDebug("CDPPGoes16Metadata");
-    }
     virtual const char *getId();
     virtual int isApplicable(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource);
     virtual int execute(CServerConfig::XMLE_DataPostProc* proc, CDataSource* dataSource,int mode);
