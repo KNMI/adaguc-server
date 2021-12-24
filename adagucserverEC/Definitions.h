@@ -121,7 +121,7 @@
 
 #define ADAGUC_USE_CAIRO
 
-#define CImgWarpBilinear_DEBUG
+// #define CImgWarpBilinear_DEBUG
 //#define CImgWarpBilinear_TIME
 // #define MEASURETIME
 
