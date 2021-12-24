@@ -1,3 +1,6 @@
+**Version 2.6.5 2021-12-23**
+- Rendermethod `hillshaded` has been added
+
 **Version 2.6.4 2021-12-23**
 - Tiling system has been refactored and has an extra option called autotile="true". This allows to generating tiles during file scanning with updatedb.
 
