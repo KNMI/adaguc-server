@@ -8,6 +8,7 @@
 class GeoPoint {
   float lon;
   float lat;
+
 public:
   GeoPoint(float lon, float lat);
   float getLon();
@@ -18,6 +19,7 @@ public:
 class PointArray {
   std::vector<float> lons;
   std::vector<float> lats;
+
 public:
   void addPoint(float lon, float lat);
   float *getLons();
@@ -28,21 +30,23 @@ public:
 
 class Polygon {
   PointArray points;
-  std::vector<PointArray>holes;
+  std::vector<PointArray> holes;
+
 public:
   void addPoint(float lon, float lat);
   void newHole();
   void addHolePoint(float lon, float lat);
-  PointArray& getHole(int i);
+  PointArray &getHole(int i);
   CT::string toString();
   int getSize();
   float *getLats();
   float *getLons();
-  std::vector<PointArray>getHoles();
+  std::vector<PointArray> getHoles();
 };
 
 class Polyline {
   PointArray points;
+
 public:
   void addPoint(float lon, float lat);
   CT::string toString();
@@ -51,12 +55,7 @@ public:
   float *getLons();
 };
 
-typedef enum {
-  typeNone,
-  typeInt,
-  typeDouble,
-  typeStr
-} FeaturePropertyType;
+typedef enum { typeNone, typeInt, typeDouble, typeStr } FeaturePropertyType;
 
 class FeatureProperty {
 private:
@@ -65,42 +64,39 @@ private:
   int intVal;
   double dblVal;
   DEF_ERRORFUNCTION();
+
 public:
   FeatureProperty(int i) {
-    type=typeInt;
-    intVal=i;
-    dblVal=-12;
-    pstr="EMPTY i";
+    type = typeInt;
+    intVal = i;
+    dblVal = -12;
+    pstr = "EMPTY i";
   }
   FeatureProperty(CT::string s) {
-    type=typeStr;
-    pstr=CT::string(s);
-    intVal=-1;
-    dblVal=-2;
+    type = typeStr;
+    pstr = CT::string(s);
+    intVal = -1;
+    dblVal = -2;
   }
-  
+
   FeatureProperty(double d) {
-    type=typeDouble;
-    dblVal=d;
-    intVal=-21;
-    pstr="EMPTY d";
+    type = typeDouble;
+    dblVal = d;
+    intVal = -21;
+    pstr = "EMPTY d";
   }
-  
-  FeatureProperty() {
-    type=typeNone;
-  }
-  
-  FeaturePropertyType getType() {
-    return type;
-  }
-  
+
+  FeatureProperty() { type = typeNone; }
+
+  FeaturePropertyType getType() { return type; }
+
   CT::string toString() {
     CT::string s;
-    if (type==typeInt) {
+    if (type == typeInt) {
       s.print("%d", intVal);
-    } else if (type==typeStr) {
+    } else if (type == typeStr) {
       s.print("%s", pstr.c_str());
-    } else if (type==typeDouble) {
+    } else if (type == typeDouble) {
       s.print("%f", dblVal);
     } else {
       s.print("NONE");
@@ -116,10 +112,11 @@ public:
 class Feature {
   CT::string id;
   std::vector<Polygon> polygons;
-  std::map<std::string, FeatureProperty*> fp;
+  std::map<std::string, FeatureProperty *> fp;
   std::vector<Polyline> polylines;
-  std::vector<GeoPoint>points;
+  std::vector<GeoPoint> points;
   DEF_ERRORFUNCTION();
+
 public:
   Feature();
   ~Feature();
@@ -132,19 +129,15 @@ public:
   void newHole();
   void addHolePoint(float lon, float lat);
   CT::string toString();
-  std::vector<Polygon>getPolygons();
-  std::vector<Polyline>getPolylines();
-  CT::string getId() {
-    return id;
-  }
-  void setId(CT::string s) {
-    id=s;
-  }
+  std::vector<Polygon> getPolygons();
+  std::vector<Polyline> getPolylines();
+  CT::string getId() { return id; }
+  void setId(CT::string s) { id = s; }
   void addPoint(float lon, float lat);
   void addProp(CT::string name, int v);
   void addProp(CT::string name, char *v);
   void addProp(CT::string name, double v);
-  std::map<std::string, FeatureProperty*>& getFp();
+  std::map<std::string, FeatureProperty *> &getFp();
   bool hasHoles();
 };
 

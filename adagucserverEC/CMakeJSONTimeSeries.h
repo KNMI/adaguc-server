@@ -13,13 +13,11 @@
 #include "CImageDataWriter.h"
 #include "CDebugger.h"
 
-
-class CMakeJSONTimeSeries{
+class CMakeJSONTimeSeries {
 public:
-   DEF_ERRORFUNCTION();
-   
-  static int MakeJSONTimeSeries(CDrawImage *drawImage,CImageWarper *imageWarper,std::vector<CDataSource *>dataSources,int dataSourceIndex,int dX,int dY,CXMLParser::XMLElement *gfiStructure);
-};
+  DEF_ERRORFUNCTION();
 
+  static int MakeJSONTimeSeries(CDrawImage *drawImage, CImageWarper *imageWarper, std::vector<CDataSource *> dataSources, int dataSourceIndex, int dX, int dY, CXMLParser::XMLElement *gfiStructure);
+};
 
 #endif

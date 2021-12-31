@@ -27,6 +27,6 @@ namespace CReportWriter {
    * @returns True if it was possible to write the report to a file.
    */
   bool writeJSONReportToFile();
-};
+}; // namespace CReportWriter
 
-#endif //CREPORT_WRITER_JSON_H
+#endif // CREPORT_WRITER_JSON_H
