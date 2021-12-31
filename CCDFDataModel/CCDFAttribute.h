@@ -159,7 +159,7 @@ namespace CDF {
     template <class T> int getData(T *dataToGet, size_t getlength) {
       if (data == NULL) return 0;
       if (getlength > length) getlength = length;
-      CDF::DataCopier::copy(dataToGet, data, type, getlength);
+      CDF::DataCopierDestDataTemplated<T>::copy(dataToGet, data, type, getlength);
       return getlength;
     }
     int getDataAsString(CT::string *out) {

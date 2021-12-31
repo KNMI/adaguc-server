@@ -208,9 +208,9 @@ int CXMLGen::getDataSourceForLayer(WMSLayer *myWMSLayer) {
         myWMSLayer->title.copy(attributeValue.c_str());
         myWMSLayer->title.printconcat(" (%s)", myWMSLayer->dataSource->getDataObject(0)->cdfVariable->name.c_str());
       } catch (int e) {
-        CT::string errorMessage;
-        CDF::getErrorMessage(&errorMessage, e);
+
 #ifdef CXMLGEN_DEBUG
+        CT::string errorMessage = CDF::getErrorMessage(e);
         CDBDebug("No long_name: %s (%d)", errorMessage.c_str(), e);
 #endif
         try {
@@ -219,9 +219,9 @@ int CXMLGen::getDataSourceForLayer(WMSLayer *myWMSLayer) {
           // CDBDebug("attributeValue %s",attributeValue.c_str());
           myWMSLayer->title.copy(attributeValue.c_str());
         } catch (int e) {
-          CT::string errorMessage;
-          CDF::getErrorMessage(&errorMessage, e);
+
 #ifdef CXMLGEN_DEBUG
+          CT::string errorMessage = CDF::getErrorMessage(e);
           CDBDebug("No standard_name: %s (%d)", errorMessage.c_str(), e);
 #endif
         }

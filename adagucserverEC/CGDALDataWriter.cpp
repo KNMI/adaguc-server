@@ -192,16 +192,14 @@ int CGDALDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource, int
   if (dataSource->getDataObject(0)->cdfVariable->getType() == CDF_FLOAT) datatype = GDT_Float32;
   if (dataSource->getDataObject(0)->cdfVariable->getType() == CDF_DOUBLE) datatype = GDT_Float64;
   if (datatype == GDT_Unknown) {
-    char temp[100];
-    CDF::getCDFDataTypeName(temp, 99, dataSource->getDataObject(0)->cdfVariable->getType());
-    CDBError("Invalid datatype: dataSource->getDataObject(0)->cdfVariable->getType()=%s", temp);
+    CT::string typeName = CDF::getCDFDataTypeName(dataSource->getDataObject(0)->cdfVariable->getType());
+    CDBError("Invalid datatype: dataSource->getDataObject(0)->cdfVariable->getType()=%s", typeName.c_str());
     return 1;
   }
 
 #ifdef CGDALDATAWRITER_DEBUG
-  char dataTypeName[256];
-  CDF::getCDFDataTypeName(dataTypeName, 255, dataSource->getDataObject(0)->cdfVariable->getType());
-  CDBDebug("Dataset datatype = %s WH = [%d,%d], NrOfBands = [%d]", dataTypeName, dataSource->dWidth, dataSource->dHeight, NrOfBands);
+  CT::string dataTypeName = CDF::getCDFDataTypeName(dataSource->getDataObject(0)->cdfVariable->getType());
+  CDBDebug("Dataset datatype = %s WH = [%d,%d], NrOfBands = [%d]", dataTypeName.c_str(), dataSource->dWidth, dataSource->dHeight, NrOfBands);
 #endif
 
   destinationGDALDataSet = GDALCreate(hMemDriver2, "memory_dataset_2", srvParam->Geo->dWidth, srvParam->Geo->dHeight, NrOfBands, datatype, NULL);

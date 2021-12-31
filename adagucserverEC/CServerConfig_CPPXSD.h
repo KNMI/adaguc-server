@@ -22,7 +22,7 @@
  * limitations under the License.
  *
  ******************************************************************************/
-
+#pragma once
 #ifndef CServerConfig_H
 #define CServerConfig_H
 #include "CXMLSerializerInterface.h"

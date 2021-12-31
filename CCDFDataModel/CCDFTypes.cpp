@@ -25,14 +25,6 @@
 
 #include "CCDFTypes.h"
 
-//#include "CDebugger.h"
-//#ifdef MEMLEAKCHECK
-// extern Tracer NewTrace;
-//#define MEMLEAKCHECK
-//#endif
-
-// DEF_ERRORMAIN()
-
 int CDF::getTypeSize(CDFType type) {
   if (type == CDF_CHAR || type == CDF_UBYTE || type == CDF_BYTE) return 1;
   if (type == CDF_SHORT || type == CDF_USHORT) return 2;
@@ -54,7 +46,7 @@ int CDF::freeData(void **p) {
   return 0;
 }
 
-// Data must be freed with freeData()
+/* NOTE! Data must be freed with freeData() */
 int CDF::allocateData(CDFType type, void **p, size_t length) {
 
   if ((*p) != NULL) {
@@ -64,13 +56,11 @@ int CDF::allocateData(CDFType type, void **p, size_t length) {
 
   size_t typeSize = getTypeSize(type);
   if (typeSize == 0) {
-    // CDBError("In CDF::allocateData: Unknown type");
     return 1;
   }
   *p = malloc(length * typeSize);
 
   if (*p == NULL) {
-    // CDBError("In CDF::allocateData: Unable to allocate %d elements",length);
     return 1;
   }
 
@@ -86,71 +76,129 @@ int CDF::allocateData(CDFType type, void **p, size_t length) {
   return 0;
 }
 
-void CDF::getCDFDataTypeName(char *name, const size_t maxlen, const int type) {
-  snprintf(name, maxlen, "CDF_UNDEFINED");
-  if (type == CDF_NONE) snprintf(name, maxlen, "CDF_NONE");
-  if (type == CDF_BYTE) snprintf(name, maxlen, "CDF_BYTE");
-  if (type == CDF_CHAR) snprintf(name, maxlen, "CDF_CHAR");
-  if (type == CDF_SHORT) snprintf(name, maxlen, "CDF_SHORT");
-  if (type == CDF_INT) snprintf(name, maxlen, "CDF_INT");
-  if (type == CDF_INT64) snprintf(name, maxlen, "CDF_INT64");
-  if (type == CDF_FLOAT) snprintf(name, maxlen, "CDF_FLOAT");
-  if (type == CDF_DOUBLE) snprintf(name, maxlen, "CDF_DOUBLE");
-  if (type == CDF_UNKNOWN) snprintf(name, maxlen, "CDF_UNKNOWN");
-  if (type == CDF_UBYTE) snprintf(name, maxlen, "CDF_UBYTE");
-  if (type == CDF_USHORT) snprintf(name, maxlen, "CDF_USHORT");
-  if (type == CDF_UINT) snprintf(name, maxlen, "CDF_UINT");
-  if (type == CDF_UINT64) snprintf(name, maxlen, "CDF_UINT64");
-  if (type == CDF_STRING) snprintf(name, maxlen, "CDF_STRING");
+CT::string CDF::getCDataTypeName(CDFType type) {
+  if (type == CDF_NONE) return ("none");
+  if (type == CDF_BYTE) return ("uchar");
+  if (type == CDF_CHAR) return ("char");
+  if (type == CDF_SHORT) return ("short");
+  if (type == CDF_INT) return ("int");
+  if (type == CDF_INT64) return ("long");
+  if (type == CDF_FLOAT) return ("float");
+  if (type == CDF_DOUBLE) return ("double");
+  if (type == CDF_UBYTE) return ("ubyte");
+  if (type == CDF_USHORT) return ("ushort");
+  if (type == CDF_UINT) return ("uint");
+  if (type == CDF_UINT64) return ("ulong");
+  if (type == CDF_STRING) return ("char*");
+  return "CDF_UNDEFINED";
 }
 
-void CDF::getCDataTypeName(char *name, const size_t maxlen, const int type) {
-  snprintf(name, maxlen, "CDF_UNDEFINED");
-  if (type == CDF_NONE) snprintf(name, maxlen, "none");
-  if (type == CDF_BYTE) snprintf(name, maxlen, "uchar");
-  if (type == CDF_CHAR) snprintf(name, maxlen, "char");
-  if (type == CDF_SHORT) snprintf(name, maxlen, "short");
-  if (type == CDF_INT) snprintf(name, maxlen, "int");
-  if (type == CDF_INT64) snprintf(name, maxlen, "long");
-  if (type == CDF_FLOAT) snprintf(name, maxlen, "float");
-  if (type == CDF_DOUBLE) snprintf(name, maxlen, "double");
-  if (type == CDF_UBYTE) snprintf(name, maxlen, "ubyte");
-  if (type == CDF_USHORT) snprintf(name, maxlen, "ushort");
-  if (type == CDF_UINT) snprintf(name, maxlen, "uint");
-  if (type == CDF_UINT64) snprintf(name, maxlen, "ulong");
-  if (type == CDF_STRING) snprintf(name, maxlen, "char*");
-}
-
-void CDF::getErrorMessage(char *errorMessage, const size_t maxlen, const int errorCode) {
-  snprintf(errorMessage, maxlen, "CDF_E_UNDEFINED");
-  if (errorCode == CDF_E_NONE) snprintf(errorMessage, maxlen, "CDF_E_NONE");
-  if (errorCode == CDF_E_DIMNOTFOUND) snprintf(errorMessage, maxlen, "CDF_E_DIMNOTFOUND");
-  if (errorCode == CDF_E_ATTNOTFOUND) snprintf(errorMessage, maxlen, "CDF_E_ATTNOTFOUND");
-  if (errorCode == CDF_E_VARNOTFOUND) snprintf(errorMessage, maxlen, "CDF_E_VARNOTFOUND");
-  if (errorCode == CDF_E_NRDIMSNOTEQUAL) snprintf(errorMessage, maxlen, "CDF_E_NRDIMSNOTEQUAL");
-  if (errorCode == CDF_E_VARHASNOPARENT) snprintf(errorMessage, maxlen, "CDF_E_VARHASNOPARENT");
-  if (errorCode == CDF_E_VARHASNODATA) snprintf(errorMessage, maxlen, "CDF_E_VARHASNODATA");
-}
-
-CT::string CDF::getCDFDataTypeName(const int type) {
-  char data[100];
-  getCDFDataTypeName(data, 99, type);
-  CT::string d = data;
-  return d;
-}
-void CDF::getErrorMessage(CT::string *errorMessage, const int errorCode) {
-  char msg[1024];
-  getErrorMessage(msg, 1023, errorCode);
-  errorMessage->copy(msg);
+CT::string CDF::getCDFDataTypeName(CDFType type) {
+  if (type == CDF_NONE) return ("CDF_NONE");
+  if (type == CDF_BYTE) return ("CDF_BYTE");
+  if (type == CDF_CHAR) return ("CDF_CHAR");
+  if (type == CDF_SHORT) return ("CDF_SHORT");
+  if (type == CDF_INT) return ("CDF_INT");
+  if (type == CDF_INT64) return ("CDF_INT64");
+  if (type == CDF_FLOAT) return ("CDF_FLOAT");
+  if (type == CDF_DOUBLE) return ("CDF_DOUBLE");
+  if (type == CDF_UNKNOWN) return ("CDF_UNKNOWN");
+  if (type == CDF_UBYTE) return ("CDF_UBYTE");
+  if (type == CDF_USHORT) return ("CDF_USHORT");
+  if (type == CDF_UINT) return ("CDF_UINT");
+  if (type == CDF_UINT64) return ("CDF_UINT64");
+  if (type == CDF_STRING) return ("CDF_STRING");
+  return "CDF_UNDEFINED";
 }
 
 CT::string CDF::getErrorMessage(int errorCode) {
-  CT::string errorMessage;
-  getErrorMessage(&errorMessage, errorCode);
-  return errorMessage;
+  if (errorCode == CDF_E_NONE) return ("CDF_E_NONE");
+  if (errorCode == CDF_E_DIMNOTFOUND) return ("CDF_E_DIMNOTFOUND");
+  if (errorCode == CDF_E_ATTNOTFOUND) return ("CDF_E_ATTNOTFOUND");
+  if (errorCode == CDF_E_VARNOTFOUND) return ("CDF_E_VARNOTFOUND");
+  if (errorCode == CDF_E_NRDIMSNOTEQUAL) return ("CDF_E_NRDIMSNOTEQUAL");
+  if (errorCode == CDF_E_VARHASNOPARENT) return ("CDF_E_VARHASNOPARENT");
+  if (errorCode == CDF_E_VARHASNODATA) return ("CDF_E_VARHASNODATA");
+  return "CDF_E_UNDEFINED";
 }
 
-int CDF::DataCopier::copy(void *destdata, CDFType destType, void *sourcedata, CDFType sourcetype, size_t destinationOffset, size_t sourceOffset, size_t length) {
+template <class T> int CDF::DataCopierDestDataTemplated<T>::copy(T *destdata, void *sourcedata, CDFType sourcetype, size_t destinationOffset, size_t sourceOffset, size_t length) {
+
+  size_t dsto = destinationOffset;
+  size_t srco = sourceOffset;
+  if (sourcetype == CDF_STRING) {
+    // CDBError("Unable to copy CDF_STRING");
+    return 1;
+  }
+  CT::string t = typeid(T).name();
+  if (t.equals(typeid(void).name())) {
+    return 1;
+  }
+
+  if (sourcetype == CDF_CHAR || sourcetype == CDF_BYTE)
+    for (size_t t = 0; t < length; t++) {
+      destdata[t + dsto] = (T)((char *)sourcedata)[t + srco];
+    }
+  if (sourcetype == CDF_CHAR || sourcetype == CDF_UBYTE)
+    for (size_t t = 0; t < length; t++) {
+      destdata[t + dsto] = (T)((unsigned char *)sourcedata)[t + srco];
+    }
+  if (sourcetype == CDF_SHORT)
+    for (size_t t = 0; t < length; t++) {
+      destdata[t + dsto] = (T)((short *)sourcedata)[t + srco];
+    }
+  if (sourcetype == CDF_USHORT)
+    for (size_t t = 0; t < length; t++) {
+      destdata[t + dsto] = (T)((unsigned short *)sourcedata)[t + srco];
+    }
+  if (sourcetype == CDF_INT)
+    for (size_t t = 0; t < length; t++) {
+      destdata[t + dsto] = (T)((int *)sourcedata)[t + srco];
+    }
+  if (sourcetype == CDF_UINT)
+    for (size_t t = 0; t < length; t++) {
+      destdata[t + dsto] = (T)((unsigned int *)sourcedata)[t + srco];
+    }
+  if (sourcetype == CDF_INT64)
+    for (size_t t = 0; t < length; t++) {
+      destdata[t + dsto] = (T)((long *)sourcedata)[t + srco];
+    }
+  if (sourcetype == CDF_UINT64)
+    for (size_t t = 0; t < length; t++) {
+      destdata[t + dsto] = (T)((unsigned long *)sourcedata)[t + srco];
+    }
+  if (sourcetype == CDF_FLOAT)
+    for (size_t t = 0; t < length; t++) {
+      destdata[t + dsto] = (T)((float *)sourcedata)[t + srco];
+    }
+  if (sourcetype == CDF_DOUBLE)
+    for (size_t t = 0; t < length; t++) {
+      destdata[t + dsto] = (T)((double *)sourcedata)[t + srco];
+    }
+  return 0;
+}
+
+template <class T> int CDF::DataCopierDestDataTemplated<T>::copy(T *destdata, void *sourcedata, CDFType sourcetype, size_t length) { return copy(destdata, sourcedata, sourcetype, 0, 0, length); }
+
+template <class T> void CDF::DataCopierDestDataTemplated<T>::fill(T *data, double value, size_t size) {
+  for (size_t j = 0; j < size; j++) {
+    data[j] = value;
+  }
+}
+
+// Explicit template instantiation for DataCopierDestDataTemplated
+template class CDF::DataCopierDestDataTemplated<unsigned char>;
+template class CDF::DataCopierDestDataTemplated<char>;
+template class CDF::DataCopierDestDataTemplated<unsigned short>;
+template class CDF::DataCopierDestDataTemplated<short>;
+template class CDF::DataCopierDestDataTemplated<unsigned int>;
+template class CDF::DataCopierDestDataTemplated<int>;
+template class CDF::DataCopierDestDataTemplated<unsigned long>;
+template class CDF::DataCopierDestDataTemplated<long>;
+template class CDF::DataCopierDestDataTemplated<float>;
+template class CDF::DataCopierDestDataTemplated<double>;
+
+int CDF::copy(void *destdata, CDFType destType, void *sourcedata, CDFType sourcetype, size_t destinationOffset, size_t sourceOffset, size_t length) {
   if (sourcetype == CDF_STRING || destType == CDF_STRING) {
     if (sourcetype == CDF_STRING && destType == CDF_STRING) {
       for (size_t t = 0; t < length; t++) {
@@ -169,37 +217,35 @@ int CDF::DataCopier::copy(void *destdata, CDFType destType, void *sourcedata, CD
   switch (destType) {
 
   case CDF_CHAR:
-    _copy((char *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
-    break;
   case CDF_BYTE:
-    _copy((char *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
+    CDF::DataCopierDestDataTemplated<char>::copy((char *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
     break;
   case CDF_UBYTE:
-    _copy((unsigned char *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
+    CDF::DataCopierDestDataTemplated<unsigned char>::copy((unsigned char *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
     break;
   case CDF_SHORT:
-    _copy((short *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
+    CDF::DataCopierDestDataTemplated<short>::copy((short *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
     break;
   case CDF_USHORT:
-    _copy((unsigned short *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
+    CDF::DataCopierDestDataTemplated<unsigned short>::copy((unsigned short *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
     break;
   case CDF_INT:
-    _copy((int *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
+    CDF::DataCopierDestDataTemplated<int>::copy((int *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
     break;
   case CDF_UINT:
-    _copy((unsigned int *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
+    CDF::DataCopierDestDataTemplated<unsigned int>::copy((unsigned int *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
     break;
   case CDF_INT64:
-    _copy((long *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
+    CDF::DataCopierDestDataTemplated<long>::copy((long *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
     break;
   case CDF_UINT64:
-    _copy((unsigned long *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
+    CDF::DataCopierDestDataTemplated<unsigned long>::copy((unsigned long *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
     break;
   case CDF_FLOAT:
-    _copy((float *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
+    CDF::DataCopierDestDataTemplated<float>::copy((float *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
     break;
   case CDF_DOUBLE:
-    _copy((double *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
+    CDF::DataCopierDestDataTemplated<double>::copy((double *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
     break;
   default:
     return 1;
@@ -217,37 +263,37 @@ int CDF::fill(void *destdata, CDFType destType, double value, size_t size) {
   }
   switch (destType) {
   case CDF_CHAR:
-    DataCopier::_fill((char *)destdata, value, size);
+    DataCopierDestDataTemplated<char>::fill((char *)destdata, value, size);
     break;
   case CDF_BYTE:
-    DataCopier::_fill((char *)destdata, value, size);
+    DataCopierDestDataTemplated<char>::fill((char *)destdata, value, size);
     break;
   case CDF_UBYTE:
-    DataCopier::_fill((unsigned char *)destdata, value, size);
+    DataCopierDestDataTemplated<unsigned char>::fill((unsigned char *)destdata, value, size);
     break;
   case CDF_SHORT:
-    DataCopier::_fill((short *)destdata, value, size);
+    DataCopierDestDataTemplated<short>::fill((short *)destdata, value, size);
     break;
   case CDF_USHORT:
-    DataCopier::_fill((unsigned short *)destdata, value, size);
+    DataCopierDestDataTemplated<unsigned short>::fill((unsigned short *)destdata, value, size);
     break;
   case CDF_INT:
-    DataCopier::_fill((int *)destdata, value, size);
+    DataCopierDestDataTemplated<int>::fill((int *)destdata, value, size);
     break;
   case CDF_UINT:
-    DataCopier::_fill((unsigned int *)destdata, value, size);
+    DataCopierDestDataTemplated<unsigned int>::fill((unsigned int *)destdata, value, size);
     break;
   case CDF_INT64:
-    DataCopier::_fill((long *)destdata, value, size);
+    DataCopierDestDataTemplated<long>::fill((long *)destdata, value, size);
     break;
   case CDF_UINT64:
-    DataCopier::_fill((unsigned long *)destdata, value, size);
+    DataCopierDestDataTemplated<unsigned long>::fill((unsigned long *)destdata, value, size);
     break;
   case CDF_FLOAT:
-    DataCopier::_fill((float *)destdata, value, size);
+    DataCopierDestDataTemplated<float>::fill((float *)destdata, value, size);
     break;
   case CDF_DOUBLE:
-    DataCopier::_fill((double *)destdata, value, size);
+    DataCopierDestDataTemplated<double>::fill((double *)destdata, value, size);
     break;
   default:
     return 1;

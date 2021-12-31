@@ -214,9 +214,8 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
       }
     }
     if (status != NC_NOERR) {
-      char typeName[254];
-      CDF::getCDFDataTypeName(typeName, 255, var->currentType);
-      CDBError("Problem with variable %s of type %s (requested %s):", var->name.c_str(), typeName, CDF::getCDFDataTypeName(type).c_str());
+      CT::string typeName = CDF::getCDFDataTypeName(var->currentType);
+      CDBError("Problem with variable %s of type %s (requested %s):", var->name.c_str(), typeName.c_str(), CDF::getCDFDataTypeName(type).c_str());
       ncError(__LINE__, className, "nc_get_var: ", status);
       return 1;
     }
@@ -273,9 +272,8 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
     }
 
     if (status != NC_NOERR) {
-      char typeName[254];
-      CDF::getCDFDataTypeName(typeName, 255, var->currentType);
-      CDBError("Problem with variable %s of type %s (requested %s):", var->name.c_str(), typeName, CDF::getCDFDataTypeName(type).c_str());
+      CT::string typeName = CDF::getCDFDataTypeName(var->currentType);
+      CDBError("Problem with variable %s of type %s (requested %s):", var->name.c_str(), typeName.c_str(), CDF::getCDFDataTypeName(type).c_str());
       ncError(__LINE__, className, "nc_get_var: ", status);
       return 1;
     }
@@ -284,7 +282,7 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
     CDBDebug("Copying %d elements from type %s to %s", var->getSize(), CDF::getCDFDataTypeName(var->nativeType).c_str(), CDF::getCDFDataTypeName(type).c_str());
 #endif
 
-    CDF::DataCopier::copy(var->data, type, voidData, var->nativeType, 0, 0, var->getSize());
+    CDF::copy(var->data, type, voidData, var->nativeType, 0, 0, var->getSize());
 
 #ifdef CCDFNETCDFIO_DEBUG
     CDBDebug("Freeing temporary data object");
@@ -333,9 +331,8 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
       }
     }
     if (status != NC_NOERR) {
-      char typeName[254];
-      CDF::getCDFDataTypeName(typeName, 255, var->currentType);
-      CDBError("Problem with variable %s of type %s (requested %s):", var->name.c_str(), typeName, CDF::getCDFDataTypeName(type).c_str());
+      CT::string typeName = CDF::getCDFDataTypeName(var->currentType);
+      CDBError("Problem with variable %s of type %s (requested %s):", var->name.c_str(), typeName.c_str(), CDF::getCDFDataTypeName(type).c_str());
       ncError(__LINE__, className, "nc_get_var: ", status);
       return 1;
     }
@@ -1052,9 +1049,8 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
     }
 
     if (status != NC_NOERR) {
-      char name[1023];
-      CDF::getCDFDataTypeName(name, 1000, cdfObject->attributes[i]->getType());
-      CDBError("For attribute NC_GLOBAL::%s of type %s:", cdfObject->attributes[i]->name.c_str(), name);
+      CT::string name = CDF::getCDFDataTypeName(cdfObject->attributes[i]->getType());
+      CDBError("For attribute NC_GLOBAL::%s of type %s:", cdfObject->attributes[i]->name.c_str(), name.c_str());
       ncError(__LINE__, className, "nc_put_att: ", status);
       return 1;
     }
@@ -1287,11 +1283,10 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
               }
 
               if (status != NC_NOERR) {
-                char attrType[256], varType[256];
-                CDF::getCDFDataTypeName(attrType, 255, variable->attributes[i]->getType());
-                CDF::getCDFDataTypeName(varType, 255, variable->currentType);
-                CDBError("Trying to write attribute %s with type %s for variable %s with type %s\nnc_put_att: %s", variable->attributes[i]->name.c_str(), attrType, variable->name.c_str(), varType,
-                         nc_strerror(status));
+                CT::string attrType = CDF::getCDFDataTypeName(variable->attributes[i]->getType());
+                CT::string varType = CDF::getCDFDataTypeName(variable->currentType);
+                CDBError("Trying to write attribute %s with type %s for variable %s with type %s\nnc_put_att: %s", variable->attributes[i]->name.c_str(), attrType.c_str(), variable->name.c_str(),
+                         varType.c_str(), nc_strerror(status));
                 return 1;
               }
             } else {

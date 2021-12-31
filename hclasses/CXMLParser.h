@@ -149,16 +149,7 @@ public:
     public:
       XMLElement *get(size_t nr);
       void add(XMLElement *element);
-      CT::string toJSON(int mode) {
-        CT::string json = "[";
-        for (size_t j = 0; j < size(); j++) {
-          if (j > 0) json += ",";
-          CT::string subdata = get(j)->toJSON(mode);
-          json.concat((subdata.c_str() + 1), subdata.length() - 3);
-        }
-        json += "]";
-        return json;
-      }
+      CT::string toJSON(int mode);
     };
 
   private:

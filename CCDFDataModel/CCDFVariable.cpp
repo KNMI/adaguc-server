@@ -265,7 +265,7 @@ int CDF::Variable::readData(CDFType type, size_t *_start, size_t *_count, ptrdif
 #ifdef CCDFDATAMODEL_DEBUG
           CDBDebug("Copying %d elements to variable %s", tVar->getSize(), name.c_str());
 #endif
-          DataCopier::copy(data, type, tVar->data, type, dataReadOffset, 0, tVar->getSize());
+          copy(data, type, tVar->data, type, dataReadOffset, 0, tVar->getSize());
           dataReadOffset += tVar->getSize();
           // Free the read data
 #ifdef CCDFDATAMODEL_DEBUG
@@ -552,7 +552,7 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
           throw("__LINE__");
         }
         // CDBDebug("try adding %f",srcDimVar->getDataAt<double>(indimsize));
-        status = DataCopier::copy(dstData, currentType, iterativeVar->data, currentType, 0, 0, currentDimSize);
+        status = copy(dstData, currentType, iterativeVar->data, currentType, 0, 0, currentDimSize);
         if (status != 0) {
           CDBError("Unable to copy data");
           throw("__LINE__");

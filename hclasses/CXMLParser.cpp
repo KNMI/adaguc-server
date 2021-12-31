@@ -71,6 +71,17 @@ CXMLParser::XMLElement *CXMLParser::XMLElement::XMLElementPointerList::get(size_
 }
 void CXMLParser::XMLElement::XMLElementPointerList::add(XMLElement *element) { this->push_back(element); }
 
+CT::string CXMLParser::XMLElement::XMLElementPointerList::toJSON(int mode) {
+  CT::string json = "[";
+  for (size_t j = 0; j < size(); j++) {
+    if (j > 0) json += ",";
+    CT::string subdata = get(j)->toJSON(mode);
+    json.concat((subdata.c_str() + 1), subdata.length() - 3);
+  }
+  json += "]";
+  return json;
+}
+
 /**
  * Constructor which parses libXmlNode
  * @param xmlNode The libXML node to parse

@@ -75,9 +75,9 @@ void CDF::_dumpPrintAttributes(const char *variableName, std::vector<CDF::Attrib
 
 void CDF::_dump(CDF::Variable *cdfVariable, CT::string *dumpString, int returnType) {
   char temp[1024];
-  char dataTypeName[20];
-  CDF::getCDataTypeName(dataTypeName, 19, cdfVariable->getNativeType());
-  snprintf(temp, 1023, "\t%s %s", dataTypeName, cdfVariable->name.c_str());
+
+  CT::string dataTypeName = CDF::getCDataTypeName(cdfVariable->getNativeType());
+  snprintf(temp, 1023, "\t%s %s", dataTypeName.c_str(), cdfVariable->name.c_str());
   dumpString->printconcat("%s", temp);
   if (cdfVariable->dimensionlinks.size() > 0) {
     dumpString->printconcat("(");
@@ -148,7 +148,6 @@ CT::string CDF::dump(CDF::Variable *cdfVariable) {
 void CDF::_dump(CDFObject *cdfObject, CT::string *dumpString, int returnType) {
   // print dimensions:
   char temp[1024];
-  char dataTypeName[20];
 
   dumpString->copy("CCDFDataModel {\ndimensions:\n");
 
@@ -159,8 +158,8 @@ void CDF::_dump(CDFObject *cdfObject, CT::string *dumpString, int returnType) {
   dumpString->printconcat("variables:\n");
   for (size_t j = 0; j < cdfObject->variables.size(); j++) {
     {
-      CDF::getCDataTypeName(dataTypeName, 19, cdfObject->variables[j]->getNativeType());
-      snprintf(temp, 1023, "\t%s %s", dataTypeName, cdfObject->variables[j]->name.c_str());
+      CT::string dataTypeName = CDF::getCDataTypeName(cdfObject->variables[j]->getNativeType());
+      snprintf(temp, 1023, "\t%s %s", dataTypeName.c_str(), cdfObject->variables[j]->name.c_str());
       dumpString->printconcat("%s", temp);
       if (cdfObject->variables[j]->dimensionlinks.size() > 0) {
         dumpString->printconcat("(");
