@@ -57,34 +57,30 @@ void writeLogFile(const char *msg) {
 
 void writeErrorFile(const char *msg) { writeLogFile(msg); }
 
-// Called by CDebugger
+/* Called by CDebugger */
 void serverDebugFunction(const char *msg) {
   writeLogFile(msg);
   printdebug(msg, 1);
 }
-// Called by CDebugger
+/* Called by CDebugger */
 void serverErrorFunction(const char *msg) {
   writeErrorFile(msg);
   printerror(msg);
 }
-// Called by CDebugger
+/* Called by CDebugger */
 void serverWarningFunction(const char *msg) {
   writeLogFile(msg);
   printdebug(msg, 1);
-  //   if(strncmp(msg,"[W: ",4)!=0){ //<-- do not enable: when something printed with printerror causes getmap to fail!!!
-  //     printerror(msg);
-  //   }
 }
 
 void serverLogFunctionCMDLine(const char *msg) { printf("%s", msg); }
 
 void serverLogFunctionNothing(const char *msg) {}
 
-// Set config file from environment variable ADAGUC_CONFIG
+/* Set config file from environment variable ADAGUC_CONFIG */
 int setCRequestConfigFromEnvironment(CRequest *request) {
   char *configfile = getenv("ADAGUC_CONFIG");
   if (configfile != NULL) {
-    // CDBDebug( "Setting to [%s]",configfile);
     int status = request->setConfigFile(configfile);
 
     /* Check logging level */
@@ -95,13 +91,12 @@ int setCRequestConfigFromEnvironment(CRequest *request) {
     return status;
   } else {
     CDBError("No configuration file is set. Please set ADAGUC_CONFIG environment variable accordingly.");
-    // request->setConfigFile("/nobackup/users/plieger/cpp/oper/config/DWD.xml");
     return 1;
   }
   return 0;
 }
 
-// Start handling the OGC request
+/* Start handling the OGC request */
 int runRequest() {
   CRequest request;
   int status = setCRequestConfigFromEnvironment(&request);
@@ -112,12 +107,9 @@ int runRequest() {
   return request.runRequest();
 }
 
-// #include "CDBAdapterSQLLite.h"
-// #include "CPGSQLDB.h"
-
 int _main(int argc, char **argv, char **envp) {
 
-  // Initialize error functions
+  /* Initialize error functions */
   seterrormode(EXCEPTIONS_PLAINTEXT);
   setErrorFunction(serverLogFunctionCMDLine);
   setWarningFunction(serverLogFunctionCMDLine);
@@ -204,14 +196,14 @@ int _main(int argc, char **argv, char **envp) {
     }
   }
 
-  int status = -1; // exit status. Tests should fail if exit status is not set: -1 is never OK.
+  int status = -1; /* exit status. Tests should fail if exit status is not set: -1 is never OK. */
 
-  // Check if a database update was requested
+  /* Check if a database update was requested */
   if (((scanFlags & CDBFILESCANNER_UPDATEDB) == CDBFILESCANNER_UPDATEDB) && (configSet == 0)) {
     CDBError("Error: Configuration file is not set: use '--updatedb --config configfile.xml'");
     CDBError("And --tailpath for scanning specific sub directory, specify --path for a absolute path to update");
     return 1;
-  } else if (((scanFlags & CDBFILESCANNER_UPDATEDB) == CDBFILESCANNER_UPDATEDB) && (configSet == 1)) { // Update database
+  } else if (((scanFlags & CDBFILESCANNER_UPDATEDB) == CDBFILESCANNER_UPDATEDB) && (configSet == 1)) { /* Update database */
     CRequest request;
     status = setCRequestConfigFromEnvironment(&request);
     if (status != 0) {
@@ -226,7 +218,7 @@ int _main(int argc, char **argv, char **envp) {
     return status;
   }
 
-  // Check if layers need to be obtained.
+  /* Check if layers need to be obtained. */
   if (getlayers && file.empty()) {
     CDBError("--file parameter missing");
     CDBError("Optional parameters are: --datasetpath <path> and --inspiredatasetcsw <cswurl>");
@@ -253,26 +245,17 @@ int _main(int argc, char **argv, char **envp) {
     return status;
   }
 
-  // Process the OGC request
+  /* Process the OGC request */
   setErrorFunction(serverErrorFunction);
   setWarningFunction(serverWarningFunction);
   setDebugFunction(serverDebugFunction);
-
-  //    if (envp != NULL){
-  //     for (char **env = envp; *env != 0; env++)  {
-  //       char *thisEnv = *env;
-  //       if (thisEnv!=NULL){
-  //         CDBDebug("%s", thisEnv);
-  //       }
-  //     }
-  //   }
 
 #ifdef MEASURETIME
   StopWatch_Start();
 #endif
 
   status = runRequest();
-  // Display errors if any
+  /* Display errors if any */
   readyerror();
 #ifdef MEASURETIME
   StopWatch_Stop("Ready!!!");
@@ -311,7 +294,7 @@ int main(int argc, char **argv, char **envp) {
   const char *ADAGUC_PATH = getenv("ADAGUC_PATH");
   if (ADAGUC_PATH == NULL) {
     char str[1024];
-    getcwd(str, 1023); // TODO: maybe CWD is not the best
+    getcwd(str, 1023); /* TODO: maybe CWD is not the best */
     CT::string currentPath = str;
     currentPath.replaceSelf("/adaguc-server/adagucserverEC", "/adaguc-server/"); /* If we are developing directly in adagucserverEC path, remove the last dir */
     currentPath.replaceSelf("/adaguc-server/bin", "/adaguc-server/");            /* If we are developing directly in adagucserverEC path, remove the last dir */
@@ -330,7 +313,7 @@ int main(int argc, char **argv, char **envp) {
 
   int status = _main(argc, argv, envp);
 
-  // Print the check report formatted as JSON.
+  /* Print the check report formatted as JSON. */
   CReportWriter::writeJSONReportToFile();
 
   CCachedDirReader::free();
@@ -341,7 +324,7 @@ int main(int argc, char **argv, char **envp) {
 
   /* Check Tracer for leaks */
   if (NewTrace.Dump() != 0) {
-    if (status == 0) status = 1; // Indicates that we have a memory leak
+    if (status == 0) status = 1; /* Indicates that we have a memory leak */
   }
 
   if (pLogDebugFile != NULL) {

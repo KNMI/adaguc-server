@@ -124,7 +124,6 @@ public:
 
     /* some servers don't like requests that are made without a user-agent
     field, so we provide one */
-    // if(curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, "libcurl-agent/1.0")!=0){
     if (curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, "Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:51.0) Gecko/20100101 Firefox/51.0") != 0) {
       CDBError("curl_easy_setopt failed CURLOPT_USERAGENT");
     }

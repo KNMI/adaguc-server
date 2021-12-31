@@ -61,7 +61,6 @@ void CCairoPlotter::_cairoPlotterInit(int width, int height, float fontSize, con
 
   surface = cairo_image_surface_create_for_data(ARGBByteBuffer, CCairoPlotter::FORMAT, width, height, stride);
   cr = cairo_create(this->surface);
-  //    fprintf(stderr, "cairo status: %s\n", cairo_status_to_string(cairo_status(cr)));
   r = 0;
   g = 0;
   b = 0;
@@ -91,17 +90,10 @@ void CCairoPlotter::pixel_overwrite(int x, int y, unsigned char r, unsigned char
     isAlphaUsed = true;
   }
   size_t p = x * 4 + y * stride;
-  //     if(a!=255){
-  //       ARGBByteBuffer[p]=(unsigned char)((float(b)/256.0)*float(a));
-  //       ARGBByteBuffer[p+1]=(unsigned char)((float(g)/256.0)*float(a));
-  //       ARGBByteBuffer[p+2]=(unsigned char)((float(r)/256.0)*float(a));
-  //       ARGBByteBuffer[p+3]=a;
-  //     }else{
   ARGBByteBuffer[p] = b;
   ARGBByteBuffer[p + 1] = g;
   ARGBByteBuffer[p + 2] = r;
   ARGBByteBuffer[p + 3] = a;
-  //     }
 }
 
 void CCairoPlotter::pixel_blend(int x, int y, unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
@@ -181,45 +173,6 @@ void CCairoPlotter::pixel_blend(int x, int y, unsigned char r, unsigned char g, 
     ARGBByteBuffer[p + 3] = 255;
   }
 }
-
-//   void CCairoPlotter::pixel(int x,int y, unsigned char r,unsigned char g,unsigned char b,unsigned char a){
-//     pixel_blend(x,y,r,g,b,a);
-//   }
-//
-
-//   void  CCairoPlotter::_plot(int x, int y, float alpha){
-// //    fprintf(stderr, "plot([%d,%d], %d,%d,%d,%f)\n", x, y, r, g, b,a);
-// //
-//     cairo_surface_flush(surface);
-//     //plot the pixel at (x, y) with brightness c (where 0 ≤ c ≤ 1)
-//     if(x<0||y<0)return;
-//     if(x>=width||y>=height)return;
-//     size_t p=x*4+y*stride;
-//     float a1=1-(a/255)*alpha;
-//     if(a1==0){
-//       ARGBByteBuffer[p]=b;
-//       ARGBByteBuffer[p+1]=g;
-//       ARGBByteBuffer[p+2]=r;
-//       ARGBByteBuffer[p+3]=255;
-//     }else{
-//       pixel_blend(x,y,r,g,b,alpha);
-// //       // ALpha is increased
-// //       float sf=ARGBByteBuffer[p+3];
-// //       float alphaRatio=(alpha*(1-sf/255));
-// //       float tf=sf+a*alphaRatio;if(tf>255)tf=255;
-// //       float a2=1-a1;//1-alphaRatio;
-// //       float sr=ARGBByteBuffer[p+2];sr=sr*a1+r*a2;if(sr>255)sr=255;
-// //       float sg=ARGBByteBuffer[p+1];sg=sg*a1+g*a2;if(sg>255)sg=255;
-// //       float sb=ARGBByteBuffer[p];sb=sb*a1+b*a2;if(sb>255)sb=255;
-// //       ARGBByteBuffer[p]=(unsigned char)sb;
-// //       ARGBByteBuffer[p+1]=(unsigned char)sg;
-// //       ARGBByteBuffer[p+2]=(unsigned char)sr;
-// //       ARGBByteBuffer[p+3]=(unsigned char)tf;
-//     }
-//     cairo_surface_mark_dirty(surface);
-//   }
-//
-//
 
 CCairoPlotter::CCairoPlotter(int width, int height, float fontSize, const char *fontLocation, unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
   byteBufferPointerIsOwned = true;
@@ -354,12 +307,6 @@ int CCairoPlotter::_drawFreeTypeText(int x, int y, int &w, int &h, float angle, 
   };
   int error;
 
-  //
-  //         FT_Stroker  stroker = NULL;
-  //       error = FT_Stroker_New( library, &stroker );
-
-  //
-
   FT_GlyphSlot slot;
   FT_Matrix matrix; /* transformation matrix */
   FT_Vector pen;    /* untransformed origin */
@@ -373,7 +320,6 @@ int CCairoPlotter::_drawFreeTypeText(int x, int y, int &w, int &h, float angle, 
   matrix.yx = (FT_Fixed)(sin(angle) * 0x10000L);
   matrix.yy = (FT_Fixed)(cos(angle) * 0x10000L); /* the pen position in 26.6 cartesian space coordinates */
 
-  // line_noaa(matrix.xx+x,matrix.xy+y,matrix.yx+x,matrix.yy+y);
   /* start at (300,200) */
   pen.x = x * 64;
   pen.y = (my_target_height - y) * 64;
@@ -381,8 +327,7 @@ int CCairoPlotter::_drawFreeTypeText(int x, int y, int &w, int &h, float angle, 
   for (n = 0; n < num_chars; n++) { /* set transformation */
 
     FT_Set_Transform(face, &matrix, &pen); /* load glyph image into the slot (erase previous one) */
-    // error = FT_Load_Char( face, text[n], FT_LOAD_RENDER );
-    // error = FT_Load_Glyph(face, text[n]-29, FT_LOAD_RENDER);
+
     unsigned char characterToPrint = (unsigned char)text[n];
     if (characterToPrint == 194) continue;
     int glyphIndex = FT_Get_Char_Index(face, (characterToPrint));
@@ -397,16 +342,12 @@ int CCairoPlotter::_drawFreeTypeText(int x, int y, int &w, int &h, float angle, 
       renderFont(&slot->bitmap, slot->bitmap_left, my_target_height - slot->bitmap_top);
     }
     /* increment pen position */
-    // char t[2];t[1]=0;t[0]=text[n];
-    // printf("%s %d\n",t,face->glyph->linearHoriAdvance);
-    // plot(slot->bitmap_left, my_target_height - slot->bitmap_top, 1);
 
     if (int(slot->bitmap.rows) > h) h = (int)slot->bitmap.rows;
 
     pen.x += slot->advance.x;
     pen.y += slot->advance.y;
     w += slot->advance.x / 64;
-    //        h += slot->advance.y/64;
   }
   return 0;
 }
@@ -521,17 +462,6 @@ void CCairoPlotter::setFillColor(unsigned char r, unsigned char g, unsigned char
   fa = float(a);
   rfa = a / 256.;
 }
-
-//   void CCairoPlotter::pixel(int x,int y){
-//      pixel_blend(x,y,r,g,b,255);
-//   }
-//
-//
-//
-//   void CCairoPlotter::pixel(int x,int y, unsigned char r,unsigned char g,unsigned char b){
-//     pixel_blend(x,y,r,g,b,255);
-//   }
-//
 
 void CCairoPlotter::getPixel(int x, int y, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a) {
   if (x < 0 || y < 0 || x >= width || y >= height) {
@@ -709,36 +639,7 @@ void CCairoPlotter::drawText(int x, int y, double angle, const char *text) {
 
 void CCairoPlotter::writeToPng24Stream(FILE *fp, unsigned char alpha) { writeARGBPng(width, height, ARGBByteBuffer, fp, 24, false); }
 
-void CCairoPlotter::writeToPng8Stream(FILE *fp, unsigned char alpha, bool use8bitpalAlpha) {
-  //     bool useCairo = false;
-  //     if(!useCairo){
-
-  writeARGBPng(width, height, ARGBByteBuffer, fp, 8, use8bitpalAlpha);
-  //     }else{
-  //       if(isAlphaUsed){
-  //         CDBDebug("Alpha was used");
-  //         for(int y=0;y<height;y++){
-  //           for(int x=0;x<width;x++){
-  //             size_t p=x*4+y*stride;
-  //             if(ARGBByteBuffer[p+3]!=255){
-  //               float a =ARGBByteBuffer[p+3];
-  //               ARGBByteBuffer[p]=(unsigned char)((float(ARGBByteBuffer[p])/256.0)*float(a));
-  //               ARGBByteBuffer[p+1]=(unsigned char)((float(ARGBByteBuffer[p+1])/256.0)*float(a));
-  //               ARGBByteBuffer[p+2]=(unsigned char)((float(ARGBByteBuffer[p+2])/256.0)*float(a));
-  //
-  //             }
-  //           }
-  //         }
-  //       }
-  //
-  //       cairo_surface_flush(surface);
-  //
-  //
-  //
-  //       this->fp=fp;
-  //       cairo_surface_write_to_png_stream(surface, writerFunc, (void *)fp);
-  //     }
-}
+void CCairoPlotter::writeToPng8Stream(FILE *fp, unsigned char alpha, bool use8bitpalAlpha) { writeARGBPng(width, height, ARGBByteBuffer, fp, 8, use8bitpalAlpha); }
 
 void CCairoPlotter::writeToPng32Stream(FILE *fp, unsigned char alpha) {
   if (isAlphaUsed) {
@@ -833,9 +734,6 @@ int CCairoPlotter::writeARGBPng(int width, int height, unsigned char *ARGBByteBu
 
   } else if (bitDepth == 8) {
     // CDBDebug("Starting header");
-    //       png_set_IHDR(png_ptr, info_ptr, width, height, 8,
-    //                    PNG_COLOR_TYPE_GRAY, PNG_INTERLACE_NONE,
-    //                    PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_NONE);
     png_set_IHDR(png_ptr, info_ptr, width, height, 8, PNG_COLOR_TYPE_PALETTE, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
     // CDBDebug("Finished header");
 
@@ -912,15 +810,8 @@ int CCairoPlotter::writeARGBPng(int width, int height, unsigned char *ARGBByteBu
         palette[j].green = table[j].g;
         palette[j].blue = table[j].realblue;
         unsigned char alpha = table[j].realalpha;
-        // if(alpha!=255)
-        {
-          a[numAlphaColors] = alpha;
-          //             trans_values[numAlphaColors].index=alpha;
-          //             trans_values[numAlphaColors].red=table[j].r;
-          //             trans_values[numAlphaColors].green=table[j].g;
-          //             trans_values[numAlphaColors].blue=table[j].realblue;
-          numAlphaColors++;
-        }
+        a[numAlphaColors] = alpha;
+        numAlphaColors++;
       }
       png_set_PLTE(png_ptr, info_ptr, palette, numColors);
       CDBDebug("Num alpha colors: %d", numAlphaColors);
@@ -948,25 +839,9 @@ int CCairoPlotter::writeARGBPng(int width, int height, unsigned char *ARGBByteBu
       trans_values[0].blue = 0;
       png_set_tRNS(png_ptr, info_ptr, a, 1, trans_values);
     }
-
-    //       if(use8bitpalAlpha){
-
-    //       }else{
-    //         png_byte a[1];
-    //         png_color_16 trans_values[1];
-    //         a[0]=0;
-    //         trans_values[0].index=0;
-    //         trans_values[0].red=0;
-    //         trans_values[0].green=0;
-    //         trans_values[0].blue=0;
-    //         png_set_tRNS(png_ptr, info_ptr, a, 1, trans_values);
-    //       }
   }
 
   png_set_filter(png_ptr, 0, PNG_FILTER_NONE);
-  // png_set_compression_level (png_ptr, 2);
-  // png_set_filter_heuristics(png_ptr, PNG_FILTER_HEURISTIC_DEFAULT,1, NULL, NULL);
-  // png_set_invert_alpha(png_ptr);
   png_write_info(png_ptr, info_ptr);
 
   /* write bytes */

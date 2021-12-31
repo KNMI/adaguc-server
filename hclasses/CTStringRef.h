@@ -98,5 +98,5 @@ namespace CT {
      */
     int indexOf(const char *search);
   };
-}; // namespace CT
+}; /* namespace CT */
 #endif

@@ -2,7 +2,6 @@
 #include <sys/stat.h>
 
 CT::string CReadFile::open(const char *fileName) {
-  // printf("--> Reading %s\n", fileName);
   FILE *fp = fopen(fileName, "r");
   if (fp == NULL) {
     throw(CREADFILE_FILENOTFOUND);

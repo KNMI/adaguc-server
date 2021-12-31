@@ -25,8 +25,8 @@
 
 #include "CStopWatch.h"
 #include "CTypes.h"
-// Stopwatch functions for timing
-// DEF_ERRORMAIN();
+/* Stopwatch functions for timing */
+
 timespec starttime, stoptime, currenttime;
 double CSTOPWATCH_H_prevTime = 0;
 int content_type_provided = 0;
@@ -41,9 +41,7 @@ void StopWatch_Start() {
   starttime.tv_nsec = tv.tv_usec * 1000;
 #endif
   double stop;
-  //  start = double(starttime.tv_nsec)/1000000+starttime.tv_sec*1000;
   stop = double(stoptime.tv_nsec) / 1000000 + stoptime.tv_sec * 1000;
-  // CDBDebug("%.3f ms\t%.3f ms\t%s",stop-start,stop-CSTOPWATCH_H_prevTime ,"*** START ***");
   CSTOPWATCH_H_prevTime = stop;
 }
 void __StopWatch_Stop(const char *msg) {

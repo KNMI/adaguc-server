@@ -72,8 +72,6 @@ void _printError(const char *pszMessage, ...);
 #define CDBEnterFunction(name)                                                                                                                                                                         \
   const char *functionName = name;                                                                                                                                                                     \
   _printDebugLine("D %s, %d class %s: Entering function '%s'", __FILENAME__, __LINE__, className, functionName);
-// #define CDBReturn(id)          {_printDebug("D %s, %d class %s::%s: returns %d\n",__FILENAME__,__LINE__,className,functionName,id);return id;}
-// #define CDBDebugFunction       _printDebug("D %s, %d class %s::%s: ",__FILENAME__,__LINE__,className,functionName);_printDebugLine
 #define DEF_ERRORFUNCTION() static const char *className;
 #define DEF_ERRORMAIN() static const char *className = "main";
 
@@ -90,7 +88,6 @@ template <class myFreeType> void _allocateArray(myFreeType *object[], size_t ele
 }
 
 #define allocateArray(object, size) _allocateArray(object, size, __FILENAME__, __LINE__)
-// allocateArray(&nc.varids,nc.numvars);
 template <class myFreeType> void deleteArray(myFreeType **object) {
   if (*object != NULL) {
     delete[] * object;

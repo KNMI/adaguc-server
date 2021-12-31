@@ -35,7 +35,6 @@ static std::map<std::string, std::string> lookupTableFileModificationDateMap;
 class CDirReader {
 private:
   int _ReadDir(const char *directory, const char *ext_filter, int recursive);
-  // int _listDir (const char* directory,const char *ext_filter);
   int _listDirRecursive(const char *directory, const char *ext_filter);
   CT::string currentDir;
   DEF_ERRORFUNCTION();

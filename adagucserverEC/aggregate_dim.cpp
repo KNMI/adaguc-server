@@ -104,7 +104,6 @@ void applyChangesToCDFObject(const char *_fileName, CDFObject *cdfObject, CT::St
 
       CDF::allocateData(dimVar->currentType, &dimVar->data, dimVar->getSize());
       ((char **)dimVar->data)[0] = strdup(memberValue.c_str());
-      // CDBDebug("Defining member %s",((char**)dimVar->data)[0]);
     }
 
     CDF::Variable *varWithoutDimension = cdfObject->getVariableNE(variablesToDo[j].c_str());
@@ -119,7 +118,7 @@ void applyChangesToCDFObject(const char *_fileName, CDFObject *cdfObject, CT::St
 int main(int argc, const char *argv[]) {
   const char *dimNameToAggregate = "member";
   int status = 0;
-  // Chunk cache needs to be set to zero, otherwise netcdf runs out of its memory....
+  /* Chunk cache needs to be set to zero, otherwise netcdf runs out of its memory.... */
   status = nc_set_chunk_cache(0, 0, 0);
   if (status != NC_NOERR) {
     CDBError("Unable to set nc_set_chunk_cache to zero");
@@ -153,7 +152,7 @@ int main(int argc, const char *argv[]) {
     variablesToAddDimTo = variableList.splitToStack(",");
   }
 
-  // Create a vector which holds information for all the inputfiles.
+  /* Create a vector which holds information for all the inputfiles. */
   std::vector<NCFileObject *> fileObjects;
   std::vector<NCFileObject *>::iterator fileObjectsIt;
 
@@ -228,8 +227,6 @@ int main(int argc, const char *argv[]) {
         }
       }
 
-      // message.print("[\"status\":\"Checking files\",\"currentfile\":\"%d\",\"totalfiles\":\"%d\",\"filename\":\"%s\"]",j,dirReader.fileList.size(),fileObject->baseName.c_str());
-
       progress(message.c_str(), (float(j) / float(dirReader.fileList.size())) * 50);
 
       fileObject->keep = true;
@@ -242,15 +239,12 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
 
-  // Sort the dates according the dimAggregationValue
+  /* Sort the dates according the dimAggregationValue */
   std::sort(fileObjects.begin(), fileObjects.end(), NCFileObject::sortFunction);
-
-  // CDBDebug("Found %d files",fileObjects.size());
 
   CT::string netcdfFile = fileObjects[0]->fullName.c_str();
   CT::string netcdfFileBase = fileObjects[0]->baseName.c_str();
   CDBDebug("Reading %s", netcdfFile.c_str());
-  // CDFObject *destCDFObject=fileObjects[0]->cdfObject;
   CDFObject *destCDFObject = new CDFObject();
   CDFReader *cdfReader;
   if (netcdfFile.endsWith(".h5")) {
@@ -271,9 +265,6 @@ int main(int argc, const char *argv[]) {
   try {
     for (size_t j = 0; j < fileObjects.size(); j++) {
       try {
-        // CT::string data = dump(fileObjects[j]->cdfObject);
-        //       // printf("%s",data.c_str());
-
         if (destCDFObject->aggregateDim(fileObjects[j]->cdfObject, dimNameToAggregate) != 0) throw(__LINE__);
       } catch (int e) {
         CDBError("Unable to aggregate dimension for %s", fileObjects[j]->baseName.c_str());
@@ -299,13 +290,6 @@ int main(int argc, const char *argv[]) {
   CT::string history;
   history.print("Aggregated members into a single file with ADAGUC. Used input files: %s", usedInputFiles.c_str());
   destCDFObject->setAttributeText("history", history.c_str());
-
-  // destCDFObject->aggregateDim(fileObjects[0]->cdfObject,dimNameToAggregate);
-  // destCDFObject->aggregateDim(fileObjects[1]->cdfObject,dimNameToAggregate);
-  // destCDFObject->aggregateDim(fileObjects[2]->cdfObject,dimNameToAggregate);
-
-  // CDF::Variable * aggregationDim = destCDFObject->getVariable(dimNameToAggregate);
-  // CDBDebug("aggregationDim->getSize() %d",aggregationDim->getSize());
 
   CDFNetCDFWriter *netCDFWriter = new CDFNetCDFWriter(destCDFObject);
   netCDFWriter->setNetCDFMode(4);
