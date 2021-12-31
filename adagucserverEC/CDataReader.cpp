@@ -617,15 +617,6 @@ void CDataReader::determineXAndYDimIndices(CDataSource *dataSource, const CDF::V
                          CReportMessage::Categories::GENERAL);
     }
   }
-
-  CDF::Dimension *dimX = dataSourceVar->dimensionlinks[dataSource->dimXIndex];
-  CDF::Dimension *dimY = dataSourceVar->dimensionlinks[dataSource->dimYIndex];
-  // if (this->_enableReporting) {
-  //   CREPORT_INFO_NODOC(CT::string("Assuming that for variable ") + dataSourceVar->name +
-  //                                     CT::string(" the x dim equals ") + dimX->name +
-  //                                     CT::string(" and the y dim equals ") + dimY->name +
-  //                                     CT::string(" based on their position and name."), CReportMessage::Categories::GENERAL);
-  // }
 }
 
 bool CDataReader::determineXandYVars(CDataSource *dataSource, const CDF::Variable *dataSourceVar, CDFObject *cdfObject) const {

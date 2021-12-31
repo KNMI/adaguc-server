@@ -201,10 +201,7 @@ CCairoPlotter::CCairoPlotter(int width, int height, unsigned char *_ARGBByteBuff
   this->fontSize = fontSize;
   this->fontLocation = fontLocation;
   stride = cairo_format_stride_for_width(FORMAT, width);
-  // size_t bufferSize = size_t(height)*stride;
-  // ARGBByteBuffer = new unsigned char[bufferSize];
   this->ARGBByteBuffer = (_ARGBByteBuffer);
-  // for(size_t j=0;j<bufferSize;j++)ARGBByteBuffer[j]=0;
   surface = cairo_image_surface_create_for_data(ARGBByteBuffer, CCairoPlotter::FORMAT, width, height, stride);
   cr = cairo_create(this->surface);
   library = NULL;
@@ -637,9 +634,9 @@ void CCairoPlotter::drawText(int x, int y, double angle, const char *text) {
   _drawFreeTypeText(x, y, w, h, angle, text, true);
 }
 
-void CCairoPlotter::writeToPng24Stream(FILE *fp, unsigned char alpha) { writeARGBPng(width, height, ARGBByteBuffer, fp, 24, false); }
+void CCairoPlotter::writeToPng24Stream(FILE *fp, unsigned char) { writeARGBPng(width, height, ARGBByteBuffer, fp, 24, false); }
 
-void CCairoPlotter::writeToPng8Stream(FILE *fp, unsigned char alpha, bool use8bitpalAlpha) { writeARGBPng(width, height, ARGBByteBuffer, fp, 8, use8bitpalAlpha); }
+void CCairoPlotter::writeToPng8Stream(FILE *fp, unsigned char, bool use8bitpalAlpha) { writeARGBPng(width, height, ARGBByteBuffer, fp, 8, use8bitpalAlpha); }
 
 void CCairoPlotter::writeToPng32Stream(FILE *fp, unsigned char alpha) {
   if (isAlphaUsed) {
@@ -976,7 +973,7 @@ void CCairoPlotter::setToSurface(cairo_surface_t *png) {
 #include "webp/decode.h"
 #include "webp/types.h"
 #endif
-void CCairoPlotter::writeToWebP32Stream(FILE *fp, unsigned char alpha, int quality) {
+void CCairoPlotter::writeToWebP32Stream(FILE *fp, unsigned char, int quality) {
 #ifdef ADAGUC_USE_WEBP
   /* sudo apt-get install libwebp-dev */
   uint8_t *output = NULL;

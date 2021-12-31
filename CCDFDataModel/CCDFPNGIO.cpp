@@ -263,7 +263,7 @@ BoundingBox getBounds(int tile_x, int tile_y, int zoom) {
   b.north = p1.y;
   return b;
 }
-int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType type) {
+int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType) {
 
   bool isSingleImageWithCoordinates = true;
 
@@ -373,7 +373,7 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType type) {
   return 0;
 }
 
-int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType type, size_t *start, size_t *count, ptrdiff_t *stride) {
+int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType type, size_t *start, size_t *count, ptrdiff_t *) {
 #ifdef CCDFPNGIO_DEBUG
   CDBDebug("_readVariableData %s %d", var->name.c_str(), type);
 #endif

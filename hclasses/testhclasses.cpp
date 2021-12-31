@@ -130,6 +130,15 @@ int main() {
     throw __LINE__;
   }
 
+  /* Test concat */
+
+  CT::string teststring = "teststring";
+  teststring.concat("abc", 3);
+  if (teststring.equals("teststringabc") == false) {
+    CDBError("concat failed");
+    throw __LINE__;
+  }
+
   CDBDebug("OK");
   return 0;
 }

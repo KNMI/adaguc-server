@@ -232,7 +232,7 @@ void *CImgWarpNearestRGBA::drawTiles(void *arg) {
   return arg;
 }
 
-int CImgWarpNearestRGBA::reproj(CImageWarper *warper, CDataSource *dataSource, CGeoParams *GeoDest, double dfx, double dfy, double x_div, double y_div) {
+int CImgWarpNearestRGBA::reproj(CImageWarper *warper, CDataSource *, CGeoParams *GeoDest, double dfx, double dfy, double x_div, double y_div) {
   double psx[4];
   double psy[4];
   double dfTiledBBOX[4];

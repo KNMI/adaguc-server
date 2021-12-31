@@ -25,7 +25,7 @@
 
 #include "CImgRenderStippling.h"
 #include "CGenericDataWarper.h"
-int CImgRenderStippling::set(const char *settings) { return 0; }
+int CImgRenderStippling::set(const char *) { return 0; }
 
 const char *CImgRenderStippling::className = "CImgRenderStippling";
 

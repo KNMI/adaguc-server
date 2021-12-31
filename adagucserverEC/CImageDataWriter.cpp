@@ -465,7 +465,7 @@ int CImageDataWriter::drawCascadedWMS(CDataSource *dataSource, const char *servi
   return 0;
 }
 
-int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int NrOfBands) {
+int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int) {
   int status = 0;
 #ifdef CIMAGEDATAWRITER_DEBUG
   CDBDebug("init");

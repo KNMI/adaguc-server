@@ -164,7 +164,7 @@ int testHDF5Reader() {
   return 0;
 }
 
-int main(int argCount, char **argVars) {
+int main(int, char **) {
   bool failed = false;
   CDBDebug("Testing CTime");
   CDF::Variable *testVarA = new CDF::Variable();

@@ -22,7 +22,6 @@ int CCreateTiles::createTiles(CDataSource *dataSource, int scanFlags) {
     CDBDebug("TileSettings is not set for this layer");
     return 0;
   }
-  CDBAdapter *dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
   if (dataSource->cfgLayer->Dimension.size() == 0) {
     if (CAutoConfigure::autoConfigureDimensions(dataSource) != 0) {
       CREPORT_ERROR_NODOC("Unable to configure dimensions automatically", CReportMessage::Categories::GENERAL);
@@ -55,7 +54,7 @@ int CCreateTiles::createTiles(CDataSource *dataSource, int scanFlags) {
   return 0;
 }
 
-int CCreateTiles::createTilesForFile(CDataSource *dataSource, int scanFlags, CT::string fileToTile) {
+int CCreateTiles::createTilesForFile(CDataSource *dataSource, int, CT::string fileToTile) {
   if (dataSource->isConfigured == false) {
     CDBError("Error! dataSource->isConfigured == false");
     return 1;

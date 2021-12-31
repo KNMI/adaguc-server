@@ -2,7 +2,7 @@
 #include "CGenericDataWarper.h"
 const char *CCreateHistogram::className = "CCreateHistogram";
 
-int CCreateHistogram::createHistogram(CDataSource *dataSource, CDrawImage *legendImage) {
+int CCreateHistogram::createHistogram(CDataSource *dataSource, CDrawImage *) {
 
   CDBDebug("createHistogram");
   CDBDebug("Building JSON");
@@ -24,10 +24,9 @@ int CCreateHistogram::createHistogram(CDataSource *dataSource, CDrawImage *legen
   resetErrors();
 
   return 0;
-  return 0;
 }
 
-int CCreateHistogram::init(CServerParams *srvParam, CDataSource *dataSource, int nrOfBands) {
+int CCreateHistogram::init(CServerParams *, CDataSource *dataSource, int) {
   baseDataSource = dataSource;
 
   //  int numTimeSteps = dataSource->getNumTimeSteps();

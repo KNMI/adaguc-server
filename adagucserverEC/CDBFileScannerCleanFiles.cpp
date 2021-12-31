@@ -6,7 +6,7 @@
 #include "CNetCDFDataWriter.h"
 #include <set>
 
-int CDBFileScanner::cleanFiles(CDataSource *dataSource, int scanFlags) {
+int CDBFileScanner::cleanFiles(CDataSource *dataSource, int) {
   CDBDebug("Cleanfiles");
   CDBAdapter *dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
   if (dataSource->cfgLayer->Dimension.size() == 0) {

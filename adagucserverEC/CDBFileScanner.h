@@ -52,7 +52,7 @@ private:
 
   static std::vector<CT::string> tableNamesDone;
 
-  static void handleDirHasNewFile(std::string a) {}
+  static void handleDirHasNewFile(std::string) {}
 
   static std::vector<std::string> filesToDeleteFromDB;
   static void handleFileFromDBIsMissing(std::string a) {

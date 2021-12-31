@@ -26,7 +26,7 @@ private:
 
   template <class T> static void drawFunction(int x, int y, T val, void *_settings, void *) {}
 
-  template <class T> static void drawFunction_nearest(int x, int y, T val, void *_settings, void *g) {
+  template <class T> static void drawFunction_nearest(int x, int y, T val, void *_settings, void *) {
     Settings *settings = (Settings *)_settings;
     if (x >= 0 && y >= 0 && x < (int)settings->width && y < (int)settings->height) {
       ((T *)settings->data)[x + y * settings->width] = val;
@@ -35,7 +35,7 @@ private:
 
   int drawFunctionMode;
 
-  template <class T> static void drawFunction_avg_rbg(int x, int y, T val, void *_settings, void *g) {
+  template <class T> static void drawFunction_avg_rbg(int x, int y, T val, void *_settings, void *) {
     Settings *settings = (Settings *)_settings;
     if (x >= 0 && y >= 0 && x < (int)settings->width && y < (int)settings->height) {
 
