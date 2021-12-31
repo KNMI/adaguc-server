@@ -1,6 +1,27 @@
-//
-// Created by wagenaar on 3/7/18.
-//
+/******************************************************************************
+ *
+ * Project:  Reporting function
+ * Purpose:  For generic reporting
+ * Author:   Saskia Wagenaar
+ * Date:     2018-07-18
+ *
+ ******************************************************************************
+ *
+ * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************************/
 
 #ifndef CREPORTER_H
 #define CREPORTER_H
@@ -8,7 +29,7 @@
 #include "CTString.h"
 #include "CReportMessage.h"
 
-// Set this to false if you don't want report messages in the log file also.
+/* Set this to false if you don't want report messages in the log file also. */
 #define REPORT_AND_LOG true
 
 #define REPORT_DEFAULT_FILE "./checker_report.txt"
@@ -44,4 +65,4 @@ public:
   CT::string filename() const;
 };
 
-#endif // CREPORTER_H
+#endif

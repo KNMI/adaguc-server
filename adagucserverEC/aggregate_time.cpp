@@ -61,7 +61,7 @@ void applyChangesToCDFObject(CDFObject *cdfObject, CT::StackList<CT::string> var
 
 int main(int argc, const char *argv[]) {
   int status = 0;
-  // Chunk cache needs to be set to zero, otherwise netcdf runs out of its memory....
+  /* Chunk cache needs to be set to zero, otherwise netcdf runs out of its memory.... */
   status = nc_set_chunk_cache(0, 0, 0);
   if (status != NC_NOERR) {
     CDBError("Unable to set nc_set_chunk_cache to zero");
@@ -95,7 +95,7 @@ int main(int argc, const char *argv[]) {
     variablesToAddTimeTo = variableList.splitToStack(",");
   }
 
-  // Create a vector which holds information for all the inputfiles.
+  /* Create a vector which holds information for all the inputfiles. */
   std::vector<NCFileObject *> fileObjects;
   std::vector<NCFileObject *>::iterator fileObjectsIt;
 
@@ -139,7 +139,6 @@ int main(int argc, const char *argv[]) {
       fileObject->timeValue = epochCTime.dateToOffset(date);
 
       CT::string message;
-      // message.print("[\"status\":\"Checking files\",\"currentfile\":\"%d\",\"totalfiles\":\"%d\",\"filename\":\"%s\"]",j,dirReader.fileList.size(),fileObject->baseName.c_str());
       message.print("\"Checking file (%d/%d) %s, has start date %s\"", j, dirReader.fileList.size(), fileObject->baseName.c_str(), epochCTime.dateToISOString(date).c_str());
       progress(message.c_str(), (float(j) / float(dirReader.fileList.size())) * 50);
 
@@ -153,13 +152,11 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
 
-  // Sort the dates according the timeValue
+  /* Sort the dates according the timeValue */
   std::sort(fileObjects.begin(), fileObjects.end(), NCFileObject::sortFunction);
 
   CT::string netcdfFile = fileObjects[0]->fullName.c_str();
   CT::string netcdfFileBase = fileObjects[0]->baseName.c_str();
-  // CDBDebug("Reading %s",netcdfFile.c_str());
-  // CDFObject *destCDFObject=fileObjects[0]->cdfObject;
   CDFObject *destCDFObject = new CDFObject();
   CDFReader *cdfReader;
   if (netcdfFile.endsWith(".h5")) {
@@ -179,8 +176,6 @@ int main(int argc, const char *argv[]) {
   try {
     for (size_t j = 0; j < fileObjects.size(); j++) {
       try {
-        // CT::string data = dump(fileObjects[j]->cdfObject);
-        //       // printf("%s",data.c_str());
         applyChangesToCDFObject(fileObjects[j]->cdfObject, variablesToAddTimeTo);
         if (destCDFObject->aggregateDim(fileObjects[j]->cdfObject, "time") != 0) throw(__LINE__);
       } catch (int e) {
@@ -194,12 +189,6 @@ int main(int argc, const char *argv[]) {
     delete destCDFObject;
     return 1;
   }
-  // destCDFObject->aggregateDim(fileObjects[0]->cdfObject,"time");
-  // destCDFObject->aggregateDim(fileObjects[1]->cdfObject,"time");
-  // destCDFObject->aggregateDim(fileObjects[2]->cdfObject,"time");
-
-  //  CDF::Variable * timeVar = destCDFObject->getVariable("time");
-  // CDBDebug("timeVar->getSize() %d",timeVar->getSize());
 
   CDFNetCDFWriter *netCDFWriter = new CDFNetCDFWriter(destCDFObject);
   netCDFWriter->setNetCDFMode(4);

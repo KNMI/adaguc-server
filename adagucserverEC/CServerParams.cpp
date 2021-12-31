@@ -170,7 +170,7 @@ const CT::string CServerParams::randomString(const int len) {
 #ifdef USE_DEVRANDOM
   FILE *randomData = fopen("/dev/urandom", "r");
   int myRandomInteger;
-  fread(&myRandomInteger, sizeof myRandomInteger, 1, randomData);
+  (void)!fread(&myRandomInteger, sizeof myRandomInteger, 1, randomData);
   srand(myRandomInteger);
   fclose(randomData);
 #else

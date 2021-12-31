@@ -95,10 +95,6 @@ public:
   void initFont();
   void setColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
   void setFillColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
-  //   void pixel(int x,int y);
-
-  //   void pixel(int x,int y, unsigned char r,unsigned char g,unsigned char b);
-  //   void pixel(int x,int y, unsigned char r,unsigned char g,unsigned char b,unsigned char a);
   void getPixel(int x, int y, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a);
 
   void pixel_overwrite(int x, int y, unsigned char r, unsigned char g, unsigned char b, unsigned char a);
