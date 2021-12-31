@@ -17,7 +17,7 @@
 #define RM_POLYLINE 2048
 #define RM_POINT_LINEARINTERPOLATION 4096
 #define RM_HILLSHADED 8192
-#define RM_NEWBILINEAR 16384
+#define RM_GENERIC 16384
 
 #include "CServerConfig_CPPXSD.h"
 #include "CXMLParser.h"

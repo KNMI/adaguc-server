@@ -32,7 +32,7 @@ add_library(
     CDataSource.h
     CImgWarpBilinear.h
     CImgWarpHillShaded.h
-    CImgWarpNewBilinear.h
+    CImgWarpGeneric.h
     CImgWarpBoolean.h
     CImgWarpNearestNeighbour.h
     CGenericDataWarper.h
@@ -92,7 +92,7 @@ add_library(
     CDataSource.cpp
     CImgWarpBilinear.cpp
     CImgWarpHillShaded.cpp
-    CImgWarpNewBilinear.cpp
+    CImgWarpGeneric.cpp
     CImgWarpBoolean.cpp
     CImgWarpNearestNeighbour.cpp
     CGenericDataWarper.cpp
