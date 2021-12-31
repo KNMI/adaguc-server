@@ -29,7 +29,7 @@ const char *CXMLSerializerInterface::className = "CXMLSerializerInterface";
 
 CXMLObjectInterface::CXMLObjectInterface() { pt2Class = NULL; }
 
-void CXMLObjectInterface::addElement(CXMLObjectInterface *baseClass, int rc, const char *name, const char *value) {
+void CXMLObjectInterface::addElement(CXMLObjectInterface *baseClass, int rc, const char *, const char *value) {
   CXMLSerializerInterface *base = (CXMLSerializerInterface *)baseClass;
   base->currentNode = (CXMLObjectInterface *)this;
   if (rc == 0)

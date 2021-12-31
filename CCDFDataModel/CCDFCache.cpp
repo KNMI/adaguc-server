@@ -36,7 +36,7 @@ const char *CDFCache::className = "CDFCache";
 #define CCDFCACHE_DEBUG_LOW
 #endif
 
-CCache *CDFCache::getCCache(const char *directory, const char *fileName) {
+CCache *CDFCache::getCCache(const char *, const char *) {
   if (cache == NULL) {
     cache = new CCache();
   }
@@ -81,9 +81,9 @@ int CDFCache::readBinaryData(const char *filename, void **data, CDFType type, si
     for (size_t j = 0; j < varSize; j++) {
 
       size_t stringLength = 0;
-      fread(&stringLength, sizeof(size_t), 1, pFile);
+      (void)!fread(&stringLength, sizeof(size_t), 1, pFile);
       ((char **)(*data))[j] = (char *)malloc(stringLength + 1);
-      fread(((char **)(*data))[j], 1, stringLength, pFile);
+      (void)!fread(((char **)(*data))[j], 1, stringLength, pFile);
       (((char **)(*data))[j])[stringLength] = 0;
 
       // CDBDebug("%d = %s",j,(((char**)(*data))[j]));

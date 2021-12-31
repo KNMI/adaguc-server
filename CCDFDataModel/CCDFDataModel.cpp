@@ -26,7 +26,7 @@
 #include "CCDFDataModel.h"
 #include "CCDFNetCDFIO.h"
 
-void CDF::_dumpPrintAttributes(const char *variableName, std::vector<CDF::Attribute *> attributes, CT::string *dumpString, int returnType) {
+void CDF::_dumpPrintAttributes(const char *variableName, std::vector<CDF::Attribute *> attributes, CT::string *dumpString, int) {
   // print attributes:
   for (size_t a = 0; a < attributes.size(); a++) {
     CDF::Attribute *attr = attributes[a];

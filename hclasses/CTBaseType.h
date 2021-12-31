@@ -53,11 +53,14 @@ namespace CT {
     void add(T3 t) { this->push_back(t); }
     StackList() {}
     /*Copy constructor*/
-    StackList(StackList<T3> const &f) {
+    StackList(StackList<T3> const &f) : StackList<T3>() {
       for (size_t j = 0; j < f.size(); j++) {
         add(f[j]);
       }
     }
+    StackList(StackList &&) = default;
+    StackList &operator=(const StackList &) = default;
+    StackList &operator=(StackList &&) = default;
   };
 
   /**

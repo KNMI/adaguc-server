@@ -63,7 +63,7 @@ int CConvertTROPOMI::isThisTROPOMIData(CDFObject *cdfObject) {
 /**
  * This function adjusts the cdfObject by creating virtual 2D variables
  */
-int CConvertTROPOMI::convertTROPOMIHeader(CDFObject *cdfObject, CServerParams *srvParams) {
+int CConvertTROPOMI::convertTROPOMIHeader(CDFObject *cdfObject, CServerParams *) {
   // Check whether this is really an TROPOMI file
   if (isThisTROPOMIData(cdfObject) != 0) return 1;
   CDBDebug("Using CConvertTROPOMI.h");

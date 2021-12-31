@@ -384,7 +384,7 @@ public:
   // //     }
   //   }
 
-  void makeRequests(CDrawImage *drawImage, CImageWarper *imageWarper, CDataSource *dataSource, int dX, int dY) {
+  void makeRequests(CDrawImage *drawImage, CImageWarper *, CDataSource *dataSource, int, int) {
 #ifdef CMakeEProfile_DEBUG
     CDBDebug("\\makeRequests");
 #endif
@@ -661,7 +661,7 @@ int EProfileUniqueRequests::plotHeightRetrieval(CDrawImage *drawImage, CDFObject
   return 0;
 }
 
-int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *variable, size_t *start, size_t *count, EProfileUniqueRequests::Request *request, CDataSource *dataSource) {
+int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *variable, size_t *, size_t *count, EProfileUniqueRequests::Request *, CDataSource *dataSource) {
 
   // CTime adagucTime;
   // adagucTime->init(((CDFObject*)variable->getParentCDFObject())->getVariableNE("time_obs"));

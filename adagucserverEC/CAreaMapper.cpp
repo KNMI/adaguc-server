@@ -89,37 +89,37 @@ int CAreaMapper::drawTile(double *x_corners, double *y_corners, int &dDestX, int
   void *data = dataSource->getDataObject(0)->cdfVariable->data;
   switch (dataType) {
   case CDF_CHAR:
-    return myDrawRawTile((const char *)data, dataType, x_corners, y_corners, dDestX, dDestY);
+    return myDrawRawTile((const char *)data, x_corners, y_corners, dDestX, dDestY);
     break;
   case CDF_BYTE:
-    return myDrawRawTile((const char *)data, dataType, x_corners, y_corners, dDestX, dDestY);
+    return myDrawRawTile((const char *)data, x_corners, y_corners, dDestX, dDestY);
     break;
   case CDF_UBYTE:
-    return myDrawRawTile((const unsigned char *)data, dataType, x_corners, y_corners, dDestX, dDestY);
+    return myDrawRawTile((const unsigned char *)data, x_corners, y_corners, dDestX, dDestY);
     break;
   case CDF_SHORT:
-    return myDrawRawTile((const short *)data, dataType, x_corners, y_corners, dDestX, dDestY);
+    return myDrawRawTile((const short *)data, x_corners, y_corners, dDestX, dDestY);
     break;
   case CDF_USHORT:
-    return myDrawRawTile((const ushort *)data, dataType, x_corners, y_corners, dDestX, dDestY);
+    return myDrawRawTile((const ushort *)data, x_corners, y_corners, dDestX, dDestY);
     break;
   case CDF_INT:
-    return myDrawRawTile((const int *)data, dataType, x_corners, y_corners, dDestX, dDestY);
+    return myDrawRawTile((const int *)data, x_corners, y_corners, dDestX, dDestY);
     break;
   case CDF_UINT:
-    return myDrawRawTile((const uint *)data, dataType, x_corners, y_corners, dDestX, dDestY);
+    return myDrawRawTile((const uint *)data, x_corners, y_corners, dDestX, dDestY);
     break;
   case CDF_FLOAT:
-    return myDrawRawTile((const float *)data, dataType, x_corners, y_corners, dDestX, dDestY);
+    return myDrawRawTile((const float *)data, x_corners, y_corners, dDestX, dDestY);
     break;
   case CDF_DOUBLE:
-    return myDrawRawTile((const double *)data, dataType, x_corners, y_corners, dDestX, dDestY);
+    return myDrawRawTile((const double *)data, x_corners, y_corners, dDestX, dDestY);
     break;
   }
   return 1;
 }
 
-template <class T> int CAreaMapper::myDrawRawTile(const T *data, CDFType dataType, double *x_corners, double *y_corners, int &dDestX, int &dDestY) {
+template <class T> int CAreaMapper::myDrawRawTile(const T *data, double *x_corners, double *y_corners, int &dDestX, int &dDestY) {
   int imageWidth = drawImage->getWidth();
   int imageHeight = drawImage->getHeight();
   int k;

@@ -334,8 +334,6 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
 
     int avgDX = 0;
 
-    double pLengthD;
-
     for (int y = dPixelExtent[1]; y < dPixelExtent[3] - 1; y++) {
       for (int x = dPixelExtent[0]; x < dPixelExtent[2]; x++) {
         size_t p = size_t((x - (dPixelExtent[0])) + ((y - (dPixelExtent[1])) * (dPixelDestW + 1)));
@@ -372,18 +370,6 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
             }
           }
 
-          // Calculate the diagonal length of the quad.
-          double lengthD = (xP[3] - xP[0]) * (xP[3] - xP[0]) + (yP[3] - yP[0]) * (yP[3] - yP[0]);
-
-          // if (x == 0 && y == 0) {
-          //   pLengthD = lengthD;
-          // }
-
-          // If suddenly the length of the quad is 10 times bigger, we probably have an anomaly and we should not draw it.
-          // if (lengthD > 0.01 && lengthD > pLengthD * 20) {
-          //   doDraw = false; /* This does not work, it causes holes in GSIE datasets */
-          // }
-          pLengthD = lengthD;
           if (doDraw) {
             fillQuadGouraud(valueData, vP, dImageWidth, dImageHeight, xP, yP);
           }
@@ -795,7 +781,7 @@ bool IsTextTooClose(std::vector<Point> *textLocations, int x, int y) {
   return false;
 }
 
-void CImgWarpBilinear::drawTextForContourLines(CDrawImage *drawImage, ContourDefinition *contourDefinition, int lineX, int lineY, int endX, int endY, std::vector<Point> *textLocations, float value,
+void CImgWarpBilinear::drawTextForContourLines(CDrawImage *drawImage, ContourDefinition *contourDefinition, int lineX, int lineY, int endX, int endY, std::vector<Point> *, float value,
                                                CColor textColor, const char *fontLocation, float fontSize) {
 
   /* Draw text */
@@ -841,7 +827,7 @@ int ydirOuter[] = {2, 2, 2, 2, 2, 1, 0, -1, -2, -2, -2, -2, -2, -1, 0, 1};
 #define MAX_LINE_SEGMENTS 1000
 
 void CImgWarpBilinear::traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *valueField, int lineX, int lineY, int dImageWidth, int dImageHeight, float lineWidth, CColor lineColor,
-                                    CColor textColor, ContourDefinition *contourDefinition, DISTANCEFIELDTYPE lineMask, bool drawText, std::vector<Point> *textLocations, double scaling,
+                                    CColor textColor, ContourDefinition *contourDefinition, DISTANCEFIELDTYPE lineMask, bool, std::vector<Point> *textLocations, double scaling,
                                     const char *fontLocation, float fontSize) {
   size_t p = lineX + lineY * dImageWidth; /* Starting pointer */
   bool foundLine = true;                  /* This function starts at the beginning of a line segment */
@@ -1222,7 +1208,7 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
               // Check for continuous lines
               if (contourDefinitions[j].continuousInterval != 0.0) {
                 float contourinterval = contourDefinitions[j].continuousInterval;
-                float allowedDifference = contourinterval / 100000;
+                // float allowedDifference = contourinterval / 100000;
                 /*float a,b;
                 a = (val[0]<val[1]?val[0]:val[1]);b = (val[2]<val[3]?val[2]:val[3]);
                 //float min=a<b?a:b;
@@ -1242,7 +1228,7 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
                 if (max < 0) iMax -= 1;
                 iMax *= contourinterval;
                 iMax += contourinterval;
-                float difference = iMax - iMin;
+                // float difference = iMax - iMin;
 
                 float classStart = round(val[0] / contourinterval) * contourinterval;
                 {

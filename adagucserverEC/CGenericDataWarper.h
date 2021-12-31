@@ -444,8 +444,8 @@ public:
           skip[p] = false;
         }
       }
-      for (int y = 0; y < dataHeightStrided; y++) {
-        for (int x = 0; x < dataWidthStrided; x++) {
+      for (size_t y = 0; y < dataHeightStrided; y++) {
+        for (size_t x = 0; x < dataWidthStrided; x++) {
           size_t pS = x + y * dataWidthStrided;
           double valX = dfSourcedExtW * double(double(x * projStrideFactor + halfCell) + PXExtentBasedOnSource[0]) + dfSourceOrigX;
           double valY = dfSourcedExtH * double(double(y * projStrideFactor - halfCell) + PXExtentBasedOnSource[1]) + dfSourceOrigY;

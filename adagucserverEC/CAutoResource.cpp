@@ -14,7 +14,7 @@ int CAutoResource::configure(CServerParams *srvParam, bool plain) {
   return 0;
 };
 
-int CAutoResource::configureDataset(CServerParams *srvParam, bool plain) {
+int CAutoResource::configureDataset(CServerParams *srvParam, bool) {
 
   if (srvParam == NULL || srvParam->cfg == NULL) {
     CDBDebug("configureDataset: srvParam->cfg == NULL");
