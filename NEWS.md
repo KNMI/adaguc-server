@@ -1,5 +1,9 @@
+**Version 2.6.6 2021-12-23**
+- Formatted code with clang-formatter and resolved all warnings.
+
+
 **Version 2.6.5 2021-12-23**
-- Rendermethod `hillshaded` has been added
+- Rendermethod `hillshaded` and `generic` has been added. Demo will follow.
 
 **Version 2.6.4 2021-12-23**
 - Tiling system has been refactored and has an extra option called autotile="true". This allows to generating tiles during file scanning with updatedb.
