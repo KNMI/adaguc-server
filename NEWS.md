@@ -1,4 +1,4 @@
-**Version 2.6.6 2021-12-23**
+**Version 2.6.6 2021-12-31**
 - Formatted code with clang-formatter and resolved all warnings.
 
 
