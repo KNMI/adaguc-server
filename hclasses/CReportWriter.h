@@ -29,4 +29,4 @@ namespace CReportWriter {
   bool writeJSONReportToFile();
 };
 
-#endif //CREPORT_WRITER_JSON_H
+#endif

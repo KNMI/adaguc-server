@@ -1,33 +1,40 @@
 {
-  "configurations": [
-    {
-      "name": "ADAGUC",
-      "includePath": [
-        "/usr/include/cairo/",
-        "/usr/include/freetype2/",
-        "/usr/include/freetype2/",
-        "/usr/include/hdf5/serial/",
-        "./hclasses/",
-        "./CCDFDataModel/",
-        "./adagucserverEC/",
-        "${default}",
-        "${workspaceRoot}"
-      ],
-      "defines": ["${default}"],
-      "macFrameworkPath": ["${default}"],
-      "forcedInclude": ["${default}"],
-      "compileCommands": "${default}",
-      "browse": {
-        "limitSymbolsToIncludedHeaders": true,
-        "databaseFilename": "${default}",
-        "path": ["${default}"]
-      },
-      // "intelliSenseMode": "${default}",
-      "cStandard": "${default}",
-      "cppStandard": "${default}",
-      "compilerPath": "${default}"
-      // "configurationProvider": "go2sh.cmake-integration"
-    }
-  ],
-  "version": 4
+    "configurations": [
+        {
+            "name": "ADAGUC",
+            "includePath": [
+                "/usr/include/cairo/",
+                "/usr/include/freetype2/",
+                "/usr/include/freetype2/",
+                "/usr/include/hdf5/serial/",
+                "./hclasses/",
+                "./CCDFDataModel/",
+                "./adagucserverEC/",
+                "${default}",
+                "${workspaceRoot}",
+                "/usr/include/libxml2"
+            ],
+            "defines": [
+                "${default}"
+            ],
+            "macFrameworkPath": [
+                "${default}"
+            ],
+            "forcedInclude": [
+                "${default}"
+            ],
+            "compileCommands": "${default}",
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": "${default}",
+                "path": [
+                    "${default}"
+                ]
+            },
+            "cStandard": "${default}",
+            "cppStandard": "${default}",
+            "compilerPath": "${default}"
+        }
+    ],
+    "version": 4
 }

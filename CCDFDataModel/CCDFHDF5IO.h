@@ -397,13 +397,13 @@ public:
       return 1;
     }
     // 012345678901234
-    strncpy(pszADAGUCTime, "20000101T000000", 15);
+    strncpy(pszADAGUCTime, "20000101T000000\0", 16);
 
     snprintf(szMonth, 3, "%02d", M);
     strncpy(pszADAGUCTime, pszRadarTime + 7, 4);
     strncpy(pszADAGUCTime + 4, szMonth, 2);
     strncpy(pszADAGUCTime + 6, pszRadarTime, 2);
-    strncpy(pszADAGUCTime + 8, "T", 1);
+    strncpy(pszADAGUCTime + 8, "T\0", 2);
     strncpy(pszADAGUCTime + 9, pszRadarTime + 12, 2);  // Hours
     strncpy(pszADAGUCTime + 11, pszRadarTime + 15, 2); // Minutes
     //       if(strlen(pszRadarTime) > 15 ) {
@@ -1063,7 +1063,7 @@ public:
     return HDF5_group;
   }
   void closeH5GroupByName(const char *variableGroupName) {
-    // CDBDebug("Warrning %s variableGroupName not used", variableGroupName);
+    CDBDebug("Warning %s variableGroupName not used", variableGroupName);
     while (opengroups.size() > 0) {
 #ifdef CCDFHDF5IO_DEBUG
       CDBDebug("closing with id %d", opengroups.back());

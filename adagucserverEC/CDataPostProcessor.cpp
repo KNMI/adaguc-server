@@ -34,13 +34,13 @@ CDPPExecutor *CDataPostProcessor::getCDPPExecutor() { return &cdppExecutorInstan
 const char *CDPPAXplusB::className = "CDPPAXplusB";
 
 const char *CDPPAXplusB::getId() { return "AX+B"; }
-int CDPPAXplusB::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource) {
+int CDPPAXplusB::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *) {
   if (proc->attr.algorithm.equals("ax+b")) {
     return CDATAPOSTPROCESSOR_RUNBEFOREREADING;
   }
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
 }
-int CDPPAXplusB::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
+int CDPPAXplusB::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int) {
   if (isApplicable(proc, dataSource) != CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
     return -1;
   }
@@ -89,7 +89,7 @@ int CDPPAXplusB::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *da
 const char *CDPPIncludeLayer::className = "CDPPIncludeLayer";
 
 const char *CDPPIncludeLayer::getId() { return "include_layer"; }
-int CDPPIncludeLayer::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource) {
+int CDPPIncludeLayer::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *) {
   if (proc->attr.algorithm.equals("include_layer")) {
     return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;
   }
@@ -400,7 +400,7 @@ void CDPPDATAMASK::DOIT<TT, SS>::doIt(void *newData, void *orginalData, void *ma
 }
 
 template <typename TT, typename SS>
-void CDPPDATAMASK::DOIT<TT, SS>::reallyDoIt(void *newData, void *orginalData, void *maskData, double newDataNoDataValue, CDFType maskType, double a, double b, double c, int mode, size_t l) {
+void CDPPDATAMASK::DOIT<TT, SS>::reallyDoIt(void *newData, void *orginalData, void *maskData, double newDataNoDataValue, CDFType, double a, double b, double c, int mode, size_t l) {
   // if_mask_includes_then_nodata_else_data
   if (mode == 0) {
     for (size_t j = 0; j < l; j++) {
@@ -1203,7 +1203,7 @@ int CDPPToKnots::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *da
 const char *CDPDBZtoRR::className = "CDPDBZtoRR";
 
 const char *CDPDBZtoRR::getId() { return "dbztorr"; }
-int CDPDBZtoRR::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource) {
+int CDPDBZtoRR::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *) {
   if (proc->attr.algorithm.equals("dbztorr")) {
     return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;
   }
@@ -1266,7 +1266,7 @@ int CDPDBZtoRR::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dat
 const char *CDPPAddFeatures::className = "CDPPAddFeatures";
 
 const char *CDPPAddFeatures::getId() { return "addfeatures"; }
-int CDPPAddFeatures::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource) {
+int CDPPAddFeatures::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *) {
   if (proc->attr.algorithm.equals("addfeatures")) {
     return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;
   }

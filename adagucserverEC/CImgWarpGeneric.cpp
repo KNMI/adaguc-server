@@ -23,13 +23,13 @@
  *
  ******************************************************************************/
 
-#include "CImgWarpHillShaded.h"
+#include "CImgWarpGeneric.h"
 #include "CImageDataWriter.h"
 #include "CGenericDataWarper.h"
 
-const char *CImgWarpHillShaded::className = "CImgWarpHillShaded";
+const char *CImgWarpGeneric::className = "CImgWarpGeneric";
 
-void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) {
+void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) {
   // CDBDebug("render");
 
   CT::string color;
@@ -71,6 +71,7 @@ void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, C
   sourceGeo.CRS = dataSource->nativeProj4;
 
   GenericDataWarper genericDataWarper;
+  genericDataWarper.useHalfCellOffset = true;
   switch (dataType) {
   case CDF_CHAR:
     genericDataWarper.render<char>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);
@@ -121,4 +122,4 @@ void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, C
   return;
 }
 
-int CImgWarpHillShaded::set(const char *) { return 0; }
+int CImgWarpGeneric::set(const char *) { return 0; }

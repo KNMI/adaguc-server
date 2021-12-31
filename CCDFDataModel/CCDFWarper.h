@@ -1,5 +1,5 @@
 // /******************************************************************************
-//  * 
+//  *
 //  * Project:  Generic common data format
 //  * Purpose:  Generic Data model to read netcdf and hdf5
 //  * Author:   Maarten Plieger, plieger "at" knmi.nl
@@ -12,21 +12,21 @@
 //  * Licensed under the Apache License, Version 2.0 (the "License");
 //  * you may not use this file except in compliance with the License.
 //  * You may obtain a copy of the License at
-//  * 
+//  *
 //  *      http://www.apache.org/licenses/LICENSE-2.0
-//  * 
+//  *
 //  * Unless required by applicable law or agreed to in writing, software
 //  * distributed under the License is distributed on an "AS IS" BASIS,
 //  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //  * See the License for the specific language governing permissions and
 //  * limitations under the License.
-//  * 
+//  *
 //  ******************************************************************************/
-// 
+//
 // #ifndef CCDFWARPER_H
 // #define CCDFWARPER_H
-// 
-// 
+//
+//
 // #include <stdio.h>
 // #include <vector>
 // #include <iostream>
@@ -34,12 +34,12 @@
 // #include <math.h>
 // #include "CDebugger.h"
 // #include "CCDFDataModel.h"
-// 
+//
 // class CCDFWarper{
 //   private:
 //   DEF_ERRORFUNCTION();
 //   bool lonWarpNeeded;size_t lonWarpStartIndex;
-//   
+//
 //   public:
 //     bool enableLonWarp;
 //   CCDFWarper(){
@@ -47,21 +47,21 @@
 //     lonWarpStartIndex = 0;
 //     enableLonWarp=false;//true;//true;
 //   }
-//   
-// 
+//
+//
 //   int warpLonData(CDF::Variable *variable){
 //     //Apply longitude warping of the data
 //     //Longitude data must be already present in order to make variable warping available.
 //     //EG 0-360 to -180 till -180
 //     //TODO This function only works on a single 2D datafield!
 //     if(enableLonWarp){
-//       
+//
 //       CDBDebug("Warping data");
-//       
+//
 //       //Find and warp lon variable
 //       if(variable->name.equals("lon")){
 //         if(variable->dimensionlinks.size()==1){
-//           
+//
 //           //CDBDebug("Warplon: Found variable lon");
 //           double *lonData = new double[variable->getSize()];
 //           CDF::DataCopier::copy(lonData,CDF_DOUBLE,variable->data,variable->getType(),0,0,variable->getSize());
@@ -85,7 +85,7 @@
 //           return 0;
 //         }
 //       }
-//       
+//
 //       if(lonWarpNeeded==true){
 //         //Warp all other variables (except lon)
 //         if(variable->dimensionlinks.size()>=2){

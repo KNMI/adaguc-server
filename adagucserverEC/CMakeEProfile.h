@@ -13,21 +13,19 @@
 #include "CImageDataWriter.h"
 #include "CDebugger.h"
 
-
-class CMakeEProfile{
+class CMakeEProfile {
 public:
-   DEF_ERRORFUNCTION();
-  class DayPass{
+  DEF_ERRORFUNCTION();
+  class DayPass {
   public:
-    DayPass(int x,double offset){
+    DayPass(int x, double offset) {
       this->x = x;
-      this->offset=offset;
+      this->offset = offset;
     };
     double offset;
     int x;
   };
-  static int MakeEProfile(CDrawImage *drawImage,CImageWarper *imageWarper,std::vector<CDataSource *>dataSources,int dataSourceIndex,int dX,int dY);
+  static int MakeEProfile(CDrawImage *drawImage, CImageWarper *imageWarper, std::vector<CDataSource *> dataSources, int dataSourceIndex, int dX, int dY);
 };
-
 
 #endif

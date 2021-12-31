@@ -8,7 +8,7 @@
 #define MAX_FILE_SIZE_ALLOWED 10000
 #define SLD_PARAMETER_NAME "SLD"
 
-#define RULE_RASTER_SYMBOLIZER  "RasterSymbolizer"
+#define RULE_RASTER_SYMBOLIZER "RasterSymbolizer"
 #define RULE_RASTER_SYMBOLIZER_CHILD_COLOR_MAP "ColorMap"
 
 #define RULE_MIN_SCALE_DENOMINATOR "MinScaleDenominator"
@@ -16,7 +16,6 @@
 
 #define STYLE_NAME_TEMPLATE "AdagucSldStyle_"
 #define LEGEND_NAME_TEMPLATE "AdagucSldLegend_"
-
 
 class CSLD {
 
