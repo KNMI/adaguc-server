@@ -50,8 +50,8 @@ std::vector<std::string> CDBAdapterSQLLite::CSQLLiteDB::columnNames;
 std::vector<std::string> CDBAdapterSQLLite::CSQLLiteDB::queryValues;
 std::pair<std::set<std::string>::iterator, bool> CDBAdapterSQLLite::CSQLLiteDB::ret;
 
-int CDBAdapterSQLLite::CSQLLiteDB::callbacknoresults(void *NotUsed, int argc, char **argv, char **azColName) { return 0; };
-int CDBAdapterSQLLite::CSQLLiteDB::callback(void *NotUsed, int argc, char **argv, char **azColName) {
+int CDBAdapterSQLLite::CSQLLiteDB::callbacknoresults(void *, int, char **, char **) { return 0; };
+int CDBAdapterSQLLite::CSQLLiteDB::callback(void *, int argc, char **argv, char **azColName) {
   int i;
   // Set column names
   for (i = 0; i < argc; i++) {
@@ -138,7 +138,7 @@ int CDBAdapterSQLLite::CSQLLiteDB::checkTable(const char *pszTableName, const ch
   return 1;
 }
 
-CDBStore::Store *CDBAdapterSQLLite::CSQLLiteDB::queryToStore(const char *pszQuery, bool throwException) {
+CDBStore::Store *CDBAdapterSQLLite::CSQLLiteDB::queryToStore(const char *pszQuery, bool) {
 #ifdef CDBAdapterSQLLite_DEBUG
   CDBDebug("queryToStore %s", pszQuery);
 #endif
@@ -306,7 +306,7 @@ CDBStore::Store *CDBAdapterSQLLite::getUniqueValuesOrderedByValue(const char *na
   return store;
 }
 
-CDBStore::Store *CDBAdapterSQLLite::getUniqueValuesOrderedByIndex(const char *name, int limit, bool orderDescOrAsc, const char *table) {
+CDBStore::Store *CDBAdapterSQLLite::getUniqueValuesOrderedByIndex(const char *name, int limit, bool, const char *table) {
   CSQLLiteDB *DB = getDataBaseConnection();
   if (DB == NULL) {
     return NULL;
@@ -991,7 +991,7 @@ int CDBAdapterSQLLite::storeDimensionInfoForLayerTableAndLayerName(const char *l
   return 0;
 }
 
-int CDBAdapterSQLLite::removeDimensionInfoForLayerTableAndLayerName(const char *layertable, const char *layername) {
+int CDBAdapterSQLLite::removeDimensionInfoForLayerTableAndLayerName(const char *layertable, const char *) {
   CSQLLiteDB *dataBaseConnection = getDataBaseConnection();
   if (dataBaseConnection == NULL) {
     return -1;
@@ -1216,7 +1216,7 @@ int CDBAdapterSQLLite::addFilesToDataBase() {
   return 0;
 }
 
-CDBStore::Store *CDBAdapterSQLLite::getFilesForIndices(CDataSource *dataSource, size_t *start, size_t *count, ptrdiff_t *stride, int limit) {
+CDBStore::Store *CDBAdapterSQLLite::getFilesForIndices(CDataSource *dataSource, size_t *start, size_t *count, ptrdiff_t *, int) {
 #ifdef CDBAdapterSQLLite_DEBUG
   CDBDebug("getFilesForIndices");
 #endif

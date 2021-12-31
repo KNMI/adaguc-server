@@ -43,7 +43,7 @@ private:
     double legendUpperRange;
     bool hasNodataValue;
     float *dataField;
-    size_t width, height;
+    int width, height;
   };
 
   template <class T> static void drawFunction(int x, int y, T val, void *_settings, void *g) {

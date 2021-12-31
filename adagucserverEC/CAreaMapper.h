@@ -50,7 +50,7 @@ private:
   CDrawImage *drawImage;
   bool debug;
   ;
-  template <typename T> int myDrawRawTile(const T *data, CDFType dataType, double *x_corners, double *y_corners, int &dDestX, int &dDestY);
+  template <typename T> int myDrawRawTile(const T *data, double *x_corners, double *y_corners, int &dDestX, int &dDestY);
 
 public:
   int drawTile(double *x_corners, double *y_corners, int &dDestX, int &dDestY);

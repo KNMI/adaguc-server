@@ -376,7 +376,7 @@ int CDFCSVReader::_readVariableData(CDF::Variable *varToRead, CDFType type) {
   return 0;
 };
 
-int CDFCSVReader::_readVariableData(CDF::Variable *var, CDFType type, size_t *start, size_t *count, ptrdiff_t *stride) {
+int CDFCSVReader::_readVariableData(CDF::Variable *, CDFType, size_t *, size_t *, ptrdiff_t *) {
   CDBError("Error: CSV readVariableData with start,count and stride is NOT YET IMPLEMENTED");
   return 1;
 };

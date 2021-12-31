@@ -67,7 +67,7 @@ void CNetCDFDataWriter::createProjectionVariables(CDFObject *cdfObject, int widt
   }
 }
 
-int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int nrOfBands) {
+int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int) {
 
 #ifdef CNetCDFDataWriter_DEBUG
   CDBDebug(">CNetCDFDataWriter::init");

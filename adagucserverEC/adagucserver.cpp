@@ -75,7 +75,7 @@ void serverWarningFunction(const char *msg) {
 
 void serverLogFunctionCMDLine(const char *msg) { printf("%s", msg); }
 
-void serverLogFunctionNothing(const char *msg) {}
+void serverLogFunctionNothing(const char *) {}
 
 /* Set config file from environment variable ADAGUC_CONFIG */
 int setCRequestConfigFromEnvironment(CRequest *request) {
@@ -107,7 +107,7 @@ int runRequest() {
   return request.runRequest();
 }
 
-int _main(int argc, char **argv, char **envp) {
+int _main(int argc, char **argv, char **) {
 
   /* Initialize error functions */
   seterrormode(EXCEPTIONS_PLAINTEXT);
@@ -294,7 +294,7 @@ int main(int argc, char **argv, char **envp) {
   const char *ADAGUC_PATH = getenv("ADAGUC_PATH");
   if (ADAGUC_PATH == NULL) {
     char str[1024];
-    getcwd(str, 1023); /* TODO: maybe CWD is not the best */
+    (void)!getcwd(str, 1023); /* TODO: maybe CWD is not the best */
     CT::string currentPath = str;
     currentPath.replaceSelf("/adaguc-server/adagucserverEC", "/adaguc-server/"); /* If we are developing directly in adagucserverEC path, remove the last dir */
     currentPath.replaceSelf("/adaguc-server/bin", "/adaguc-server/");            /* If we are developing directly in adagucserverEC path, remove the last dir */

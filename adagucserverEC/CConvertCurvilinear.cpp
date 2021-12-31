@@ -29,7 +29,7 @@
 // #define CCONVERTCURVILINEAR_DEBUG
 const char *CConvertCurvilinear::className = "CConvertCurvilinear";
 
-int CConvertCurvilinear::checkIfIsCurvilinear(CDFObject *cdfObject, CServerParams *srvParams, bool &hasLatLonBounds) {
+int CConvertCurvilinear::checkIfIsCurvilinear(CDFObject *cdfObject, CServerParams *, bool &hasLatLonBounds) {
   // Check whether this is really a curvilinear file
   try {
     // cdfObject->getDimension("col");

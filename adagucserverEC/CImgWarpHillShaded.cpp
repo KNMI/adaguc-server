@@ -32,7 +32,6 @@ const char *CImgWarpHillShaded::className = "CImgWarpHillShaded";
 void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) {
   // CDBDebug("render");
 
-  int xDistance, yDistance, discSize, mode;
   CT::string color;
   void *sourceData;
 
@@ -52,8 +51,8 @@ void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, C
   settings.height = drawImage->Geo->dHeight;
 
   settings.dataField = new float[settings.width * settings.height];
-  for (size_t y = 0; y < settings.height; y++) {
-    for (size_t x = 0; x < settings.width; x++) {
+  for (int y = 0; y < settings.height; y++) {
+    for (int x = 0; x < settings.width; x++) {
       settings.dataField[x + y * settings.width] = (float)settings.dfNodataValue;
     }
   }
@@ -70,8 +69,7 @@ void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, C
   sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
   sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
   sourceGeo.CRS = dataSource->nativeProj4;
-  double bboxWidth = (dataSource->srvParams->Geo->dfBBOX[2] - dataSource->srvParams->Geo->dfBBOX[0]);
-  double bboxHeight = (dataSource->srvParams->Geo->dfBBOX[3] - dataSource->srvParams->Geo->dfBBOX[1]);
+
   GenericDataWarper genericDataWarper;
   switch (dataType) {
   case CDF_CHAR:
@@ -123,4 +121,4 @@ void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, C
   return;
 }
 
-int CImgWarpHillShaded::set(const char *pszSettings) { return 0; }
+int CImgWarpHillShaded::set(const char *) { return 0; }

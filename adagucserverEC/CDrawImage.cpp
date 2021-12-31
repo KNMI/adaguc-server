@@ -917,7 +917,7 @@ void CDrawImage::drawText(int x, int y, const char *fontfile, float size, float 
   drawText(x, y, fontfile, size, angle, text, color);
 }
 
-int CDrawImage::drawTextArea(int x, int y, const char *fontfile, float size, float angle, const char *_text, CColor fgcolor, CColor bgcolor) {
+int CDrawImage::drawTextArea(int x, int y, const char *fontfile, float size, float, const char *_text, CColor fgcolor, CColor bgcolor) {
   CT::string text;
   int offset = 0;
   CT::string title = _text;
@@ -1817,7 +1817,7 @@ void CDrawImage::rotate() {
   //  return 0;
 }
 
-unsigned char *const CDrawImage::getCanvasMemory() {
+unsigned char *CDrawImage::getCanvasMemory() const {
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
     CDBError("Unable to return canvas memory for indexed colors");
     return NULL;

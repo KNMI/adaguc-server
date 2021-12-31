@@ -596,7 +596,7 @@ int CConvertGeoJSON::convertGeoJSONHeader(CDFObject *cdfObject) {
   return 0;
 }
 
-void CConvertGeoJSON::addCDFInfo(CDFObject *cdfObject, CServerParams *srvParams, BBOX &dfBBOX, std::vector<Feature *> &featureMap, bool openAll) {
+void CConvertGeoJSON::addCDFInfo(CDFObject *cdfObject, CServerParams *, BBOX &dfBBOX, std::vector<Feature *> &featureMap, bool) {
   // Create variables for all properties fields
 
   // Default size of adaguc 2dField is 2x2
@@ -725,7 +725,7 @@ void CConvertGeoJSON::addCDFInfo(CDFObject *cdfObject, CServerParams *srvParams,
   }
 }
 
-void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool openAll) {
+void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool) {
   if (json.type == json_object) {
     CT::string type;
     if (json["type"].type != json_null) {
@@ -817,7 +817,7 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
               CT::string dimUnits;
               CT::string dimVal;
               double dDimVal;
-              int iDimVal;
+
               if (dim.type == json_object) {
                 for (unsigned int fldCnt = 0; fldCnt < dim.u.object.length; fldCnt++) {
                   json_object_entry fldObject = dim.u.object.values[fldCnt];
@@ -840,15 +840,9 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
                       dDimVal = fldValue.u.dbl;
                     }
                   }
-                  if (fldValue.type == json_integer) {
-                    if (fldName.equals("value")) {
-                      iDimVal = fldValue.u.integer;
-                    }
-                  }
                 }
               }
 
-              // CDBDebug("%s: %s %s %f %d", dimName.c_str(), dimVal.c_str(), dimUnits.c_str(), dDimVal, iDimVal);
               CDF::Dimension *dim = new CDF::Dimension();
               dim->name.copy(dimName);
               dim->setSize(1);
@@ -908,7 +902,7 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
-void CConvertGeoJSON::getBBOX(CDFObject *cdfObject, BBOX &bbox, json_value &json, std::vector<Feature *> &featureMap) {
+void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::vector<Feature *> &featureMap) {
   double minLat = 90., maxLat = -90., minLon = 180, maxLon = -180;
   bool BBOXFound = false;
   if (json.type == json_object) {

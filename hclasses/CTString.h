@@ -68,7 +68,7 @@ namespace CT {
     /**
      *Copy constructor
      */
-    string(string const &f);
+    string(string const &);
 
     /**
      * Copy constructor which initialize the string with a character array

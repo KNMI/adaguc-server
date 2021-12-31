@@ -80,7 +80,7 @@ bool isDeprecatedADAGUCEProfileFormat(CDFObject *cdfObject) {
 /**
  * This function adjusts the cdfObject by creating virtual 2D variables
  */
-int CConvertEProfile::convertEProfileHeader(CDFObject *cdfObject, CServerParams *srvParams) {
+int CConvertEProfile::convertEProfileHeader(CDFObject *cdfObject, CServerParams *) {
   // Check whether this is really a profile file
   if (!isADAGUCProfileFormat(cdfObject) && !isDeprecatedADAGUCEProfileFormat(cdfObject)) {
     return 1;

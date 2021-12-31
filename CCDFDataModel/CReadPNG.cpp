@@ -59,7 +59,7 @@ CReadPNG::CPNGRaster *CReadPNG::read_png_file(const char *file_name, bool pngRea
     CDBError("[read_png_file] File %s could not be opened for reading", file_name);
     return NULL;
   }
-  fread(header, 1, 8, fp);
+  (void)!fread(header, 1, 8, fp);
   if (png_sig_cmp(header, 0, 8)) {
     CDBError("[read_png_file] File %s is not recognized as a PNG file", file_name);
     return NULL;
@@ -102,7 +102,7 @@ CReadPNG::CPNGRaster *CReadPNG::read_png_file(const char *file_name, bool pngRea
   int num_text = 0;
   png_get_text(png_ptr, info_ptr, &text_ptr, &num_text);
 
-  for (size_t j = 0; j < num_text; j++) {
+  for (int j = 0; j < num_text; j++) {
     pngRaster->headers.add(CKeyValuePair(text_ptr[j].key, text_ptr[j].text));
   }
 

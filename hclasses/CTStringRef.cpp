@@ -19,20 +19,13 @@ namespace CT {
     assign(data, length);
   }
 
-  CT::stringref::stringref(CT::stringref const &f) {
+  CT::stringref::stringref(CT::stringref const &f) : basetype(f) {
     init();
-    if ((&f) == NULL) {
-      return;
-    }
     _length = f._length;
     constdata = f.constdata;
   }
 
   CT::stringref &CT::stringref::operator=(stringref const &f) {
-    if ((&f) == NULL) {
-      init();
-      return *this;
-    }
     if (this == &f) return *this;
     init();
     _length = f._length;
@@ -82,7 +75,7 @@ namespace CT {
     }
     r.constdata = r.constdata + s;
     int e = _length - s;
-    for (size_t j = _length - 1 - s; j >= 0; j--) {
+    for (int j = _length - 1 - s; j >= 0; j--) {
       if (r.constdata[j] != ' ') {
         e = j;
         break;

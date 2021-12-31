@@ -50,7 +50,7 @@ namespace CT {
     /**
      *Copy constructor
      */
-    stringref(stringref const &f);
+    stringref(stringref const &);
 
     /**
      * assign operator

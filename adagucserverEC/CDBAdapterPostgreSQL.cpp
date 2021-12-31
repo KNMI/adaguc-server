@@ -174,7 +174,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getUniqueValuesOrderedByValue(const char 
   return store;
 }
 
-CDBStore::Store *CDBAdapterPostgreSQL::getUniqueValuesOrderedByIndex(const char *name, int limit, bool orderDescOrAsc, const char *table) {
+CDBStore::Store *CDBAdapterPostgreSQL::getUniqueValuesOrderedByIndex(const char *name, int limit, bool, const char *table) {
 #ifdef MEASURETIME
   StopWatch_Stop(">CDBAdapterPostgreSQL::getUniqueValuesOrderedByIndex");
 #endif
@@ -232,7 +232,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getClosestDataTimeToSystemTime(const char
   return DB->queryToStore(query.c_str());
 };
 
-CDBStore::Store *CDBAdapterPostgreSQL::getFilesForIndices(CDataSource *dataSource, size_t *start, size_t *count, ptrdiff_t *stride, int limit) {
+CDBStore::Store *CDBAdapterPostgreSQL::getFilesForIndices(CDataSource *dataSource, size_t *start, size_t *count, ptrdiff_t *, int) {
 #ifdef MEASURETIME
   StopWatch_Stop(">CDBAdapterPostgreSQL::getFilesForIndices");
 #endif
@@ -848,7 +848,7 @@ int CDBAdapterPostgreSQL::storeDimensionInfoForLayerTableAndLayerName(const char
   return 0;
 }
 
-int CDBAdapterPostgreSQL::removeDimensionInfoForLayerTableAndLayerName(const char *layertable, const char *layername) {
+int CDBAdapterPostgreSQL::removeDimensionInfoForLayerTableAndLayerName(const char *layertable, const char *) {
 #ifdef MEASURETIME
   StopWatch_Stop(">CDBAdapterPostgreSQL::removeDimensionInfoForLayerTableAndLayerName");
 #endif

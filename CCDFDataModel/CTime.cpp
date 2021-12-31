@@ -879,8 +879,8 @@ CT::string CTime::currentDateTime() {
   char buffer[80];
   strftime(buffer, 80, "%Y-%m-%dT%H:%M:%S", gmtime(&curTime.tv_sec));
 
-  char currentTime[84] = "";
-  sprintf(currentTime, "%s:%03dZ", buffer, milli);
+  char currentTime[100] = "";
+  snprintf(currentTime, 99, "%s:%03dZ", buffer, milli);
 
   return currentTime;
 }
