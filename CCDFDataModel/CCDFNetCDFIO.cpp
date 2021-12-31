@@ -44,10 +44,10 @@ CDFNetCDFReader::CDFNetCDFReader() : CDFReader() {
 }
 CDFNetCDFReader::~CDFNetCDFReader() { close(); }
 
-void CDFNetCDFReader::enableLonWarp(bool enableLonWarp) {
+void CDFNetCDFReader::enableLonWarp(bool) {
   // warper.enableLonWarp=enableLonWarp;
 }
-void CDFNetCDFReader::ncError(int line, const char *className, const char *msg, int e) {
+void CDFNetCDFReader::ncError(int, const char *className, const char *msg, int e) {
   if (e == NC_NOERR) return;
   CDBError("%s %s", msg, nc_strerror(e));
 }

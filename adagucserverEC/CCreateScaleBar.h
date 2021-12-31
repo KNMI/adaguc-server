@@ -7,9 +7,8 @@
 #include "CDrawImage.h"
 #include "CDebugger.h"
 
+class CCreateScaleBar {
 
-class CCreateScaleBar{
- 
 public:
   /**
    * Create scalebar creates a scalebar image for given geoParams.
@@ -18,16 +17,15 @@ public:
    * @param scaling The scaling of the scalebar, 1.0 is natural, 2.0 is twice as big.
    * @return 0 on success nonzero on failure.
    */
-  static int createScaleBar(CDrawImage *scaleBarImage,CGeoParams *geoParams, float scaling);
-  
+  static int createScaleBar(CDrawImage *scaleBarImage, CGeoParams *geoParams, float scaling);
+
 private:
-  class Props{
+  class Props {
   public:
     int width;
     double mapunits;
   };
-  
+
   static Props getScaleBarProperties(CGeoParams *geoParams, float scaling);
-  
 };
 #endif
