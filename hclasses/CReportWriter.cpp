@@ -18,7 +18,7 @@ namespace CReportWriter {
     report["messages"] = json(cReporter->getMessageList());
 
     std::ofstream reportfile(cReporter->filename().c_str());
-    if(!reportfile) {
+    if (!reportfile) {
       return false;
     }
 
@@ -28,4 +28,4 @@ namespace CReportWriter {
 
     return true;
   }
-}
+} // namespace CReportWriter

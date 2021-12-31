@@ -48,8 +48,7 @@
 class CDBFileScanner {
 private:
   DEF_ERRORFUNCTION();
-  static int createDBUpdateTables(CDataSource *dataSource, int &removeNonExistingFiles,
-                                  std::vector<std::string> *fileList, bool recreateTable);
+  static int createDBUpdateTables(CDataSource *dataSource, int &removeNonExistingFiles, std::vector<std::string> *fileList, bool recreateTable);
 
   static std::vector<CT::string> tableNamesDone;
 
@@ -62,8 +61,7 @@ private:
   }
 
 public:
-  static int DBLoopFiles(CDataSource *dataSource, int removeNonExistingFiles, std::vector<std::string> *fileList,
-                         int scanFlags);
+  static int DBLoopFiles(CDataSource *dataSource, int removeNonExistingFiles, std::vector<std::string> *fileList, int scanFlags);
   static bool isTableAlreadyScanned(CT::string *tableName);
   static void markTableDirty(CT::string *tableName);
   /**
