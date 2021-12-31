@@ -403,7 +403,7 @@ namespace CDF {
         addAttribute(attr);
       }
       attr->type = attrType;
-      attr->setData(attrType, data);
+      attr->setData(data);
       return 0;
     }
 

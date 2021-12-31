@@ -29,76 +29,59 @@
 #include "CCDFTypes.h"
 namespace CDF {
   class Attribute {
+  private:
   public:
-    void setName(const char *value) { name.copy(value); }
-
-    Attribute() {
-      data = NULL;
-      length = 0;
-    }
-
-    Attribute(Attribute *att) {
-      data = NULL;
-      length = 0;
-
-      name.copy(&att->name);
-      setData(att);
-    }
-
-    Attribute(const char *attrName, const char *attrString) {
-      data = NULL;
-      length = 0;
-      name.copy(attrName);
-      setData(CDF_CHAR, attrString, strlen(attrString));
-    }
-
-    Attribute(const char *attrName, CDFType type, const void *dataToSet, size_t dataLength) {
-      data = NULL;
-      length = 0;
-      name.copy(attrName);
-      setData(type, dataToSet, dataLength);
-    }
-
-    ~Attribute() {
-      if (data != NULL) {
-        freeData(&data);
-      };
-      data = NULL;
-    }
-    CDFType type;
     CT::string name;
-    size_t length;
+    CDFType type;
     void *data;
+    size_t length;
 
-    CDFType getType() { return type; }
+    void setName(const char *value);
 
-    int setData(Attribute *attribute) {
-      this->setData(attribute->type, attribute->data, attribute->size());
-      return 0;
-    }
-    int setData(CDFType type, const void *dataToSet, size_t dataLength) {
-      if (data != NULL) {
-        freeData(&data);
-      };
-      data = NULL;
-      length = dataLength;
-      this->type = type;
-      allocateData(type, &data, length);
-      if (type == CDF_CHAR || type == CDF_UBYTE || type == CDF_BYTE) memcpy(data, dataToSet, length);
-      if (type == CDF_SHORT || type == CDF_USHORT) memcpy(data, dataToSet, length * sizeof(short));
-      if (type == CDF_INT || type == CDF_UINT) memcpy(data, dataToSet, length * sizeof(int));
-      if (type == CDF_INT64 || type == CDF_UINT64) memcpy(data, dataToSet, length * sizeof(long));
-      if (type == CDF_FLOAT) memcpy(data, dataToSet, length * sizeof(float));
-      if (type == CDF_DOUBLE) {
-        memcpy(data, dataToSet, length * sizeof(double));
-      }
-      return 0;
-    }
+    Attribute();
+
+    Attribute(Attribute *att);
+
+    Attribute(const char *attrName, const char *attrString);
+
+    Attribute(const char *attrName, CDFType type, const void *dataToSet, size_t dataLength);
+
+    ~Attribute();
 
     /**
-     * Sets one element of data
+     * @brief Get the Type object
+     *
+     * @return CDFType
      */
-    template <class T> int setData(CDFType type, T data) {
+    CDFType getType();
+
+    /**
+     * @brief Set the data based on the data from another CDF::Attribute
+     *
+     * @param attribute
+     * @return int
+     */
+
+    int setData(Attribute *attribute);
+
+    /**
+     * @brief Set the attribute data.
+     *
+     * @param type
+     * @param dataToSet
+     * @param dataLength
+     * @return int
+     */
+    int setData(CDFType type, const void *dataToSet, size_t dataLength);
+
+    /**
+     * @brief Sets one element in the attribute. The data type can be of anytype and will be converted to the type defined for the attribute.
+     *
+     * @tparam T
+     * @param data The data value to set.
+     * @return int
+     */
+    template <class T> int setData(T data) {
       if (type == CDF_CHAR || type == CDF_BYTE) {
         char d = data;
         setData(type, &d, 1);
@@ -142,105 +125,59 @@ namespace CDF {
       return 0;
     }
 
-    int setData(const char *dataToSet) {
-      if (data != NULL) {
-        freeData(&data);
-      };
-      data = NULL;
-      length = strlen(dataToSet);
-      this->type = CDF_CHAR;
-      allocateData(type, &data, length + 1);
-      if (type == CDF_CHAR) {
-        memcpy(data, dataToSet, length); // TODO support other data types as well
-        ((char *)data)[length] = '\0';
-      }
-      return 0;
-    }
+    /**
+     * @brief Set a string value for this attribute
+     *
+     * @param The string to set.
+     * @return int Zero on Success.
+     */
+    int setData(const char *dataToSet);
+
+    /**
+     * @brief Get the data from the attribute
+     *
+     * @tparam T
+     * @param dataToGet
+     * @param getlength
+     * @return int
+     */
     template <class T> int getData(T *dataToGet, size_t getlength) {
       if (data == NULL) return 0;
       if (getlength > length) getlength = length;
       CDF::DataCopierDestDataTemplated<T>::copy(dataToGet, data, type, getlength);
       return getlength;
     }
-    int getDataAsString(CT::string *out) {
-      out->copy("");
-      if (type == CDF_CHAR) {
-        out->copy((const char *)data, length);
-        int a = strlen(out->c_str());
-        out->setSize(a);
-        return 0;
-      }
-      if (type == CDF_BYTE)
-        for (size_t n = 0; n < length; n++) {
-          if (out->length() > 0) out->concat(" ");
-          out->printconcat("%d", ((char *)data)[n]);
-        }
-      if (type == CDF_UBYTE)
-        for (size_t n = 0; n < length; n++) {
-          if (out->length() > 0) out->concat(" ");
-          out->printconcat("%u", ((unsigned char *)data)[n]);
-        }
 
-      if (type == CDF_INT)
-        for (size_t n = 0; n < length; n++) {
-          if (out->length() > 0) out->concat(" ");
-          out->printconcat("%d", ((int *)data)[n]);
-        }
-      if (type == CDF_UINT)
-        for (size_t n = 0; n < length; n++) {
-          if (out->length() > 0) out->concat(" ");
-          out->printconcat("%u", ((unsigned int *)data)[n]);
-        }
+    /**
+     * @brief Returns the attribute value as string using the pointer
+     *
+     * @param out Point to a CT::string
+     * @return int
+     */
+    int getDataAsString(CT::string *out);
 
-      if (type == CDF_INT64)
-        for (size_t n = 0; n < length; n++) {
-          if (out->length() > 0) out->concat(" ");
-          out->printconcat("%ld", ((long *)data)[n]);
-        }
-      if (type == CDF_UINT64)
-        for (size_t n = 0; n < length; n++) {
-          if (out->length() > 0) out->concat(" ");
-          out->printconcat("%lu", ((unsigned long *)data)[n]);
-        }
+    /**
+     * @brief Returns the attribute value as string
+     *
+     * @param out
+     * @return int
+     */
+    CT::string toString();
 
-      if (type == CDF_SHORT)
-        for (size_t n = 0; n < length; n++) {
-          if (out->length() > 0) out->concat(" ");
-          out->printconcat("%d", ((short *)data)[n]);
-        }
-      if (type == CDF_USHORT)
-        for (size_t n = 0; n < length; n++) {
-          if (out->length() > 0) out->concat(" ");
-          out->printconcat("%u", ((unsigned short *)data)[n]);
-        }
+    /**
+     * @brief Returns the attribute value as string, same as toString
+     *
+     * @param out
+     * @return int
+     */
+    CT::string getDataAsString();
 
-      if (type == CDF_FLOAT)
-        for (size_t n = 0; n < length; n++) {
-          if (out->length() > 0) out->concat(" ");
-          out->printconcat("%f", ((float *)data)[n]);
-        }
-      if (type == CDF_DOUBLE)
-        for (size_t n = 0; n < length; n++) {
-          if (out->length() > 0) out->concat(" ");
-          out->printconcat("%f", ((double *)data)[n]);
-        }
-      if (type == CDF_STRING)
-        for (size_t n = 0; n < length; n++) {
-          if (out->length() > 0) out->concat(" ");
-          out->printconcat("%s", ((char **)data)[n]);
-        }
-      return 0;
-    }
-
-    CT::string toString() {
-      CT::string out = "";
-      getDataAsString(&out);
-      return out;
-    }
-
-    CT::string getDataAsString() { return toString(); }
-
-    size_t size() { return length; }
+    /**
+     * @brief Data size in nr of elements for this attribute
+     *
+     * @return size_t
+     */
+    size_t size();
   };
 } // namespace CDF
 #endif
