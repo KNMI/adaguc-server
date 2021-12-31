@@ -2,7 +2,7 @@
 #include "CDataReader.h"
 #include "CImageDataWriter.h"
 
-int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *legendImage, CStyleConfiguration *styleConfiguration, bool rotate, bool estimateMinMax) {
+int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *legendImage, CStyleConfiguration *styleConfiguration, bool, bool estimateMinMax) {
 #ifdef CIMAGEDATAWRITER_DEBUG
   CDBDebug("legendtype discrete");
 #endif
@@ -255,7 +255,6 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
           if (textRounding == 5) sprintf(szTemp, "%2.6f - %2.6f", v, v + legendInterval);
           if (textRounding > 6) sprintf(szTemp, "%f - %f", v, v + legendInterval);
         }
-        int l = strlen(szTemp);
         legendImage->drawText(((int)cbW + 10 + pLeft) * scaling, (((boxLowerY)) + pTop) - fontSize * scaling / 4, fontLocation, fontSize * scaling, 0, szTemp, 248);
       }
     }

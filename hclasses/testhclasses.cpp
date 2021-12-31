@@ -1,10 +1,10 @@
 #include "CDirReader.h"
 #include "CDebugger.h"
 
-DEF_ERRORMAIN ()
+DEF_ERRORMAIN()
 
-int main(){
-  
+int main() {
+
   CDirReader::test_makeCleanPath();
   CDirReader::test_compareLists();
 
@@ -14,17 +14,16 @@ int main(){
     CT::string c = a + "b";
     if (!a.equals("teststring_a")) throw __LINE__;
     if (!c.equals("teststring_ab")) throw __LINE__;
-    a+="bc";
+    a += "bc";
     if (!a.equals("teststring_abc")) throw __LINE__;
-    a+=CT::string("d") + "e";
+    a += CT::string("d") + "e";
     if (!a.equals("teststring_abcde")) throw __LINE__;
     CT::string b = "f";
     if (!a.equals("teststring_abcde")) throw __LINE__;
     CT::string d = a + b;
     if (!a.equals("teststring_abcde")) throw __LINE__;
-  }catch(int e) {
+  } catch (int e) {
     CDBError("Error at line %d", e);
-
   }
 
   /* CT::string.isNumeric() tests */
@@ -54,7 +53,7 @@ int main(){
     throw __LINE__;
   }
 
-/* CT::string.isInt() tests */
+  /* CT::string.isInt() tests */
 
   if (CT::string("").isInt() == true) {
     CDBError("[] should not be int");
@@ -120,7 +119,7 @@ int main(){
     CDBError("[2019-07-28] should be a string");
     throw __LINE__;
   }
-  
+
   if (CT::string("-15.0").isFloat() == false) {
     CDBError("[-15.0] should be a float");
     throw __LINE__;
@@ -128,6 +127,15 @@ int main(){
 
   if (CT::string("-15").isInt() == false) {
     CDBError("[-15] should be a int");
+    throw __LINE__;
+  }
+
+  /* Test concat */
+
+  CT::string teststring = "teststring";
+  teststring.concat("abc", 3);
+  if (teststring.equals("teststringabc") == false) {
+    CDBError("concat failed");
     throw __LINE__;
   }
 

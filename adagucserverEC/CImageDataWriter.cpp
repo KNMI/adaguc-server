@@ -36,7 +36,7 @@
 #include "CMakeEProfile.h"
 #include "CReporter.h"
 #include "CImgWarpHillShaded.h"
-#include "CImgWarpNewBilinear.h"
+#include "CImgWarpGeneric.h"
 #ifndef M_PI
 #define M_PI 3.14159265358979323846 // pi
 #endif
@@ -465,7 +465,7 @@ int CImageDataWriter::drawCascadedWMS(CDataSource *dataSource, const char *servi
   return 0;
 }
 
-int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int NrOfBands) {
+int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int) {
   int status = 0;
 #ifdef CIMAGEDATAWRITER_DEBUG
   CDBDebug("init");
@@ -1637,11 +1637,11 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
   /**
    * Use New bilinear renderer
    */
-  if (renderMethod & RM_NEWBILINEAR) {
+  if (renderMethod & RM_GENERIC) {
 #ifdef CIMAGEDATAWRITER_DEBUG
-    CDBDebug("Using CImgWarpNewBilinear");
+    CDBDebug("Using CImgWarpGeneric");
 #endif
-    imageWarperRenderer = new CImgWarpNewBilinear();
+    imageWarperRenderer = new CImgWarpGeneric();
     imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
     delete imageWarperRenderer;
   }
