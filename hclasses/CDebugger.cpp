@@ -63,14 +63,12 @@ Tracer::~Tracer() {
 int Tracer::Dump() {
   int status = 0;
   if (_map.size() != 0) {
-    // std::cout << _map.size () << " memory leaks detected\n";
     for (iterator it = _map.begin(); it != _map.end(); ++it) {
       char const *file = it->second.File();
       int line = it->second.Line();
       if (line != 0) {
         status++;
         _printErrorLine("*** Memory leak in %s, line %d", file, line);
-        // std::cout << "*** Memory leak in " << file << ", line "  << line << std::endl;
       }
     }
   }
@@ -122,7 +120,6 @@ void printErrorStream(const char *message) { _printErrorStreamPointer(message); 
 void _printErrorStream(const char *pszMessage) { fprintf(stderr, "%s", pszMessage); }
 void _printWarningStream(const char *pszMessage) { fprintf(stderr, "%s", pszMessage); }
 void _printDebugStream(const char *pszMessage) {
-  // fprintf(stdout,"%s",pszMessage);
   printf("%s", pszMessage);
 }
 
@@ -160,15 +157,10 @@ void _printErrorLine(const char *pszMessage, ...) {
 }
 
 void makeEqualWidth(CT::string *t1) {
-  // int i=t.indexOf("]")+1;
   size_t i = t1->length();
-  // CT::string t1=t.substringr(0,i);
-  // CT::string t2=t.substringr(i,-1);
-  // size_t l=t1.length();
   for (int j = i; j < 80; j++) {
     t1->concat(" ");
   }
-  // t1.concat(&t2);
 }
 void _printDebug(const char *pszMessage, ...) {
   char szTemp[2048];

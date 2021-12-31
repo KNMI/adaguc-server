@@ -32,8 +32,9 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
     return 0;
   }
 
-  // Auto configure dimensions, in case they are not configured by the user.
-  // Dimension configuration is added to the internal XML configuration structure.
+  /* Auto configure dimensions, in case they are not configured by the user.
+   * Dimension configuration is added to the internal XML configuration structure.
+   */
   if (dataSource->cfgLayer->Dimension.size() > 0) {
 #ifdef CAUTOCONFIGURE_DEBUG
     CDBDebug("[OK] Dimensions are already configured.");
@@ -49,10 +50,6 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
     CDBDebug("datasource->cfgLayer == NULL");
     return 1;
   }
-
-  // #ifdef CAUTOCONFIGURE_DEBUG
-  //  CDBDebug("No dims configured, need to do autoconfigure %s",dataSource->getLayerName());
-  // #endif
 
   /**
    * Load dimension information about the layer from the autoconfigure_dimensions table
@@ -130,8 +127,6 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
     return 1;
   }
 
-  //  CDBDebug("Dimensions: %d - %d",dataSource->cfgLayer->Dimension.size(),dataSource->getDataObject(0)->cdfVariable->dimensionlinks.size());
-
   try {
     if (dataSource->getNumDataObjects() == 0) {
       CDBDebug("dataSource->getNumDataObjects()==0");
@@ -141,22 +136,19 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
       CDBDebug("dataSource->getDataObject(0)->cdfVariable==NULL");
       throw(__LINE__);
     }
-    // CDBDebug("OK %d",dataSource->cfgLayer->Dimension.size());
 
     if (dataSource->cfgLayer->Dimension.size() == 0) {
 
-      /*No dimensions are configured by the user, try to detect them from the netcdf file automatically
-       and store them in the table.
+      /*
+       * No dimensions are configured by the user, try to detect them from the netcdf file automatically
+       * and store them in the table.
        */
       if (dataSource->getDataObject(0)->cdfVariable->dimensionlinks.size() >= 2) {
-        // try{
-        // Create the database table
+        /* Create the database table */
 
         CDF::Variable *variable = dataSource->getDataObject(0)->cdfVariable;
-        // CDBDebug("OK %d",variable->dimensionlinks.size()-2);
-
-        // When there are no extra dims besides x and y we can skip
-        // Each time to find the non existing dims.
+        /* When there are no extra dims besides x and y we can skip
+         * Each time to find the non existing dims. */
         if (variable->dimensionlinks.size() == 2) {
           CServerConfig::XMLE_Dimension *xmleDim = new CServerConfig::XMLE_Dimension();
           xmleDim->value.copy("0");
@@ -198,10 +190,10 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
             } catch (int e) {
             }
 
-            // By default use the netcdf dimname
+            /* By default use the netcdf dimname */
             OGCDimName.copy(&netcdfdimname);
 
-            // Try to specify the OGC name based on dimtype
+            /* Try to specify the OGC name based on dimtype */
             CDataReader::DimensionType dtype = CDataReader::getDimensionType(dataSource->getDataObject(0)->cdfObject, dimVar);
             if (dtype == CDataReader::dtype_time) OGCDimName = "time";
             if (dtype == CDataReader::dtype_reference_time) OGCDimName = "reference_time";
@@ -217,21 +209,19 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
             xmleDim->attr.name.copy(netcdfdimname.c_str());
             xmleDim->attr.units.copy(units.c_str());
 
-            // Store the data in the db for quick access.
-            // query.print("INSERT INTO %s values (E'%s',E'%s',E'%s',E'%s')",autoconfigureDimensionsTable.c_str(),layerTableId.c_str(),netcdfdimname.c_str(),OGCDimName.c_str(),units.c_str());
+            /* Store the data in the db for quick access. */
             CDBFactory::getDBAdapter(dataSource->srvParams->cfg)
                 ->storeDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(), dataSource->getLayerName(), netcdfdimname.c_str(), OGCDimName.c_str(), units.c_str());
 #ifdef CAUTOCONFIGURE_DEBUG
             CDBDebug("[OK] From DB: Stored dim %s-%s for layer %s", xmleDim->value.c_str(), xmleDim->attr.name.c_str(), layerTableId.c_str());
 #endif
-            // status = DB->query(query.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",query.c_str());throw(__LINE__); }
 
           } else {
             CDBDebug("variable->dimensionlinks[d]");
           }
         }
 
-        // Check for global variable with standard_name forecast_reference_time
+        /* Check for global variable with standard_name forecast_reference_time */
         CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
         for (size_t j = 0; j < cdfObject->variables.size(); j++) {
           try {
@@ -260,24 +250,17 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
                 xmleDim->value.copy("reference_time");
                 xmleDim->attr.name.copy(cdfObject->variables[j]->name.c_str());
                 xmleDim->attr.units.copy(units.c_str());
-                // Store the data in the db for quick access.
+                /* Store the data in the db for quick access. */
                 CDBFactory::getDBAdapter(dataSource->srvParams->cfg)
                     ->storeDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(), layerIdentifier.c_str(), cdfObject->variables[j]->name.c_str(), "reference_time", units.c_str());
 #ifdef CAUTOCONFIGURE_DEBUG
                 CDBDebug("[OK] From DB: Stored dim %s-%s for layer %s", xmleDim->value.c_str(), xmleDim->attr.name.c_str(), layerTableId.c_str());
 #endif
-
-                // status = DB->query(query.c_str()); if(status!=0){CDBError("Unable to insert records: \"%s\"",query.c_str());throw(__LINE__); }
               }
             }
           } catch (int e) {
           }
         }
-
-        //}catch(int e){
-        //  CT::string errorMessage;CDF::getErrorMessage(&errorMessage,e); CDBDebug("Unable to configure dims automatically: %s (%d)",errorMessage.c_str(),e);
-        //  throw(__LINE__);
-        //}
       }
     }
   } catch (int linenr) {
@@ -301,7 +284,6 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
     return 0;
   }
 
-//   bool useDBCache = false;
 #ifdef CAUTOCONFIGURE_DEBUG
   CDBDebug("[AutoConfigureStyles]");
 #endif
@@ -314,14 +296,16 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
     return 1;
   }
   if (dataSource->cfgLayer->Styles.size() != 0) {
+    /* Configured by user, auto styles is not required */
     return 0;
-  }; // Configured by user, auto styles is not required
+  };
 
   if (dataSource->cfgLayer->Legend.size() != 0) {
+    /* Configured by user, auto styles is not required */
     return 0;
-  }; // Configured by user, auto styles is not required
+  };
 
-  // Try to find a style corresponding the the standard_name attribute of the file.
+  /* Try to find a style corresponding the the standard_name attribute of the file. */
   CServerConfig::XMLE_Styles *xmleStyle = new CServerConfig::XMLE_Styles();
   dataSource->cfgLayer->Styles.push_back(xmleStyle);
 
@@ -335,9 +319,9 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
     return 1;
   }
 
-  // Auto style is not available in the database, so look it up in the file.
+  /* Auto style is not available in the database, so look it up in the file.*/
 
-  // If the file header is not yet loaded, load it.
+  /* If the file header is not yet loaded, load it.*/
   if (dataSource->getDataObject(0)->cdfVariable == NULL) {
     int status = justLoadAFileHeader(dataSource);
     if (status != 0) {
@@ -346,7 +330,7 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
     }
   }
 
-  // Get the searchname, based on variable, standard name or long name.
+  /* Get the searchname, based on variable, standard name or long name.*/
   CT::string searchStandardName = dataSource->getDataObject(0)->variableName.c_str();
 
   CT::string searchVariableName = dataSource->getDataObject(0)->variableName.c_str();
@@ -359,7 +343,7 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
   searchStandardName.toLowerCaseSelf();
   searchVariableName.toLowerCaseSelf();
 
-  // Get the units
+  /* Get the units */
   CT::string dataSourceUnits;
   if (dataSource->getDataObject(0)->getUnits().length() > 0) {
     dataSourceUnits = dataSource->getDataObject(0)->getUnits().c_str();
@@ -369,7 +353,7 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
 #ifdef CAUTOCONFIGURE_DEBUG
   CDBDebug("Retrieving auto styles by using fileinfo \"%s\"", searchStandardName.c_str());
 #endif
-  // We now have the keyword searchname, with this keyword we are going to lookup all StandardName's in the server configured Styles
+  /* We now have the keyword searchname, with this keyword we are going to lookup all StandardName's in the server configured Styles */
 
   std::vector<CT::string> styleList;
 
@@ -406,7 +390,6 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
         CDBDebug("Searching StandardNames \"%s\"", standard_name.c_str());
 #endif
         if (standard_name.length() > 0) {
-          // CT::stringlist *standardNameList=standard_name.splitN(",");
           CT::StackList<CT::string> standardNameList;
 
           if (standard_name.charAt(0) == '^') {
@@ -429,21 +412,21 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
             if (searchStandardName.equals(standardNameList[n].c_str()) || standardNameList[n].equals("*")) {
               standardNameMatch = true;
             } else if (standardNameList[n].charAt(0) == '^') {
-              // Regex
+              /* Regex */
               if (searchStandardName.testRegEx(standardNameList[n].c_str())) {
                 standardNameMatch = true;
               }
             }
             if (standardNameMatch && variableNameMatch) {
-              // StandardName matches.
+              /* StandardName matches. */
               bool unitsMatch = true;
               if (dataSourceUnits.length() != 0 && units.length() != 0) {
                 unitsMatch = false;
-                // Test for same units
+                /* Test for same units */
                 if (dataSourceUnits.equals(&units))
                   unitsMatch = true;
                 else {
-                  // Test for regexp
+                  /* Test for regexp */
                   if (units.charAt(0) == '^') {
                     CDBDebug("Found regex %s", units.c_str());
                     if (dataSourceUnits.testRegEx(units.c_str())) {
@@ -457,17 +440,10 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
                 CDBDebug("*** Match: \"%s\"== \"%s\"", searchStandardName.c_str(), standardNameList[n].c_str());
 #endif
                 styleList.push_back(dataSource->cfg->Style[j]->attr.name.c_str());
-                // if(styles.length()!=0)styles.concat(",");
-                // styles.concat(dataSource->cfg->Style[j]->attr.name.c_str());
               }
             }
           }
         }
-        //           if(standard_name.equals("*")){
-        //             //if(styles.length()!=0)styles.concat(",");
-        //             //styles.concat(dataSource->cfg->Style[j]->attr.name.c_str());
-        //             styleList.push_back(dataSource->cfg->Style[j]->attr.name.c_str());
-        //           }
       }
     }
   }

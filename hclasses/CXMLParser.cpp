@@ -65,37 +65,11 @@ void CXMLParser::XMLElement::copy(XMLElement const &f) {
 
 CXMLParser::XMLElement::XMLElement() {}
 
-// CXMLParser::XMLElement CXMLParser::XMLElement::XMLElements::get(size_t nr){
-//   if(nr>size()||nr+1>size())throw CXMLPARSER_ELEMENT_OUT_OF_BOUNDS;
-//   return (*this)[nr];
-// }
-//
-//
-// void CXMLParser::XMLElement::XMLElements::add(XMLElement element){
-//   this->push_back(element);
-// }
-
 CXMLParser::XMLElement *CXMLParser::XMLElement::XMLElementPointerList::get(size_t nr) {
   if (nr > size() || nr + 1 > size()) throw CXMLPARSER_ELEMENT_OUT_OF_BOUNDS;
   return (*this)[nr];
 }
 void CXMLParser::XMLElement::XMLElementPointerList::add(XMLElement *element) { this->push_back(element); }
-
-/**
- * getFirst returns the first XMLElement
- */
-// CXMLParser::XMLElement CXMLParser::XMLElement::XMLElements::getFirst(){
-//   if(size()==0)throw CXMLPARSER_ELEMENT_OUT_OF_BOUNDS;
-//   return this->get(0);
-// }
-
-/**
- * getFirst returns the last XMLElement
- */
-// CXMLParser::XMLElement CXMLParser::XMLElement::XMLElements::getLast(){
-//   if(size()==0)throw CXMLPARSER_ELEMENT_OUT_OF_BOUNDS;
-//   return this->get(this->size()-1);
-// }
 
 /**
  * Constructor which parses libXmlNode
@@ -209,7 +183,6 @@ CT::string CXMLParser::XMLElement::toJSON(XMLElement el, int depth, int mode) {
   if (el.xmlAttributes.size() > 0) {
     CXMLParser::XMLElement xmlattr("xmlattr");
     for (size_t j = 0; j < el.xmlAttributes.size(); j++) {
-      // xmlattr.add(CXMLParser::XMLElement(el.xmlAttributes[j].name.c_str(),el.xmlAttributes[j].value.c_str()));
       xmlattr.add(CXMLParser::XMLElement(el.xmlAttributes[j].name.c_str(), el.xmlAttributes[j].value.c_str()));
     }
     el.add(xmlattr);
@@ -356,7 +329,6 @@ CXMLParser::XMLElement::XMLElementPointerList CXMLParser::XMLElement::getList(co
   XMLElementPointerList elements;
   for (size_t j = 0; j < xmlElements.size(); j++) {
     if (xmlElements[j].name.equals(name)) {
-      // printf("Found %s\n",name);
       elements.add(&xmlElements[j]);
     }
   }
@@ -372,7 +344,6 @@ CXMLParser::XMLElement::XMLElementPointerList CXMLParser::XMLElement::getList(co
 CXMLParser::XMLElement *CXMLParser::XMLElement::get(const char *name) {
   for (size_t j = 0; j < xmlElements.size(); j++) {
     if (xmlElements[j].name.equals(name)) {
-      // printf("Found %s\n",name);
       return &xmlElements[j];
     }
   }

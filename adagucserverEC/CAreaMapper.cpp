@@ -43,12 +43,12 @@ void CAreaMapper::init(CDataSource *dataSource, CDrawImage *drawImage, int tileW
     dfImageBBOX[k] = dataSource->dfBBOX[k];
   }
 
-  // Look whether BBOX was swapped in y dir
+  /* Look whether BBOX was swapped in y dir */
   if (dataSource->dfBBOX[3] < dataSource->dfBBOX[1]) {
     dfSourceBBOX[1] = dataSource->dfBBOX[3];
     dfSourceBBOX[3] = dataSource->dfBBOX[1];
   }
-  // Look whether BBOX was swapped in x dir
+  /* Look whether BBOX was swapped in x dir */
   if (dataSource->dfBBOX[2] < dataSource->dfBBOX[0]) {
     dfSourceBBOX[0] = dataSource->dfBBOX[2];
     dfSourceBBOX[2] = dataSource->dfBBOX[0];
@@ -120,7 +120,6 @@ int CAreaMapper::drawTile(double *x_corners, double *y_corners, int &dDestX, int
 }
 
 template <class T> int CAreaMapper::myDrawRawTile(const T *data, CDFType dataType, double *x_corners, double *y_corners, int &dDestX, int &dDestY) {
-  // CDBDebug("dataType %d %s",dataType, CDF::getCDFDataTypeName(dataType).c_str());
   int imageWidth = drawImage->getWidth();
   int imageHeight = drawImage->getHeight();
   int k;
@@ -167,18 +166,18 @@ template <class T> int CAreaMapper::myDrawRawTile(const T *data, CDFType dataTyp
 
   for (double dstpixel_y = 0.5; dstpixel_y < dfTileHeight + 0.5; dstpixel_y++) {
     /* Calculate left and right ribs of source image, leftLineY  and rightLineY follow the ribs according to dstpixel_y */
-    double leftLineA = (destPXBL[0] - destPXTL[0]) / (destPXBL[1] - destPXTL[1]);                 // RC coefficient of left rib, (X2-X1)/(Y2-Y1) by (X = AY + B)
-    double leftLineB = destPXTL[0] - destPXTL[1] * leftLineA;                                     // X1 - Y1 * RC
-    double leftLineY = (dstpixel_y / (dfTileHeight)) * (destPXBL[1] - destPXTL[1]) + destPXTL[1]; // 0 - dfTileHeight --> 0 - 1 --> destPXTL[1] - destPXBL[1]
+    double leftLineA = (destPXBL[0] - destPXTL[0]) / (destPXBL[1] - destPXTL[1]);                 /* RC coefficient of left rib, (X2-X1)/(Y2-Y1) by (X = AY + B) */
+    double leftLineB = destPXTL[0] - destPXTL[1] * leftLineA;                                     /* X1 - Y1 * RC */
+    double leftLineY = (dstpixel_y / (dfTileHeight)) * (destPXBL[1] - destPXTL[1]) + destPXTL[1]; /* 0 - dfTileHeight --> 0 - 1 --> destPXTL[1] - destPXBL[1]*/
     double leftLineX = leftLineY * leftLineA + leftLineB;
 
-    double rightLineA = (destPXBR[0] - destPXTR[0]) / (destPXBR[1] - destPXTR[1]);                 // RC coefficient of right rib, (X2-X1)/(Y2-Y1)
-    double rightLineB = destPXTR[0] - destPXTR[1] * rightLineA;                                    // X1 - Y1 * RC
-    double rightLineY = (dstpixel_y / (dfTileHeight)) * (destPXBR[1] - destPXTR[1]) + destPXTR[1]; // 0 - dfTileHeight --> 0 - 1 --> destPXTL[1] - destPXBL[1]
+    double rightLineA = (destPXBR[0] - destPXTR[0]) / (destPXBR[1] - destPXTR[1]);                 /* RC coefficient of right rib, (X2-X1)/(Y2-Y1) */
+    double rightLineB = destPXTR[0] - destPXTR[1] * rightLineA;                                    /* X1 - Y1 * RC */
+    double rightLineY = (dstpixel_y / (dfTileHeight)) * (destPXBR[1] - destPXTR[1]) + destPXTR[1]; /* 0 - dfTileHeight --> 0 - 1 --> destPXTL[1] - destPXBL[1] */
     double rightLineX = rightLineY * rightLineA + rightLineB;
 
     /* Now calculate points from leftLineX, leftLineY to rightLineX, rightLineY */
-    double lineA = (rightLineY - leftLineY) / (rightLineX - leftLineX); // RC coefficient of top rib (Y= AX + B)
+    double lineA = (rightLineY - leftLineY) / (rightLineX - leftLineX); /* RC coefficient of top rib (Y= AX + B)*/
     double lineB = leftLineY - leftLineX * lineA;
 
     for (double dstpixel_x = 0.5; dstpixel_x < dfTileWidth + 0.5; dstpixel_x++) {
@@ -208,7 +207,6 @@ template <class T> int CAreaMapper::myDrawRawTile(const T *data, CDFType dataTyp
               val = (T)(-legendOffset);
           }
           int pcolorind = (int)(val * legendScale + legendOffset);
-          // val+=legendOffset;
           if (pcolorind >= 239)
             pcolorind = 239;
           else if (pcolorind <= 0)

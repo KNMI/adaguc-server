@@ -28,4 +28,4 @@ namespace CReportWriter {
 
     return true;
   }
-} // namespace CReportWriter
+}

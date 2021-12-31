@@ -14,7 +14,7 @@ extern unsigned long logProcessIdentifier;
 CReporter *CReporter::instance = NULL;
 
 CReporter::CReporter(bool report_and_log) : messageList(), writelog(report_and_log), _filename() {
-  // Empty at this point
+  /* Empty at this point */
 }
 
 CReporter *CReporter::getInstance() {

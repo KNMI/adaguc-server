@@ -45,7 +45,5 @@
 
 #include "CTBaseType.h"
 #include "CTString.h"
-// #include "CTStringRef.h"
-//#define CTYPES_DEBUG
 
 #endif

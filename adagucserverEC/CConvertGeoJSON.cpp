@@ -721,49 +721,7 @@ void CConvertGeoJSON::addCDFInfo(CDFObject *cdfObject, CServerParams *srvParams,
 
   int featureCnt = 0;
   for (std::vector<Feature *>::iterator sample = featureMap.begin(); sample != featureMap.end(); ++sample) {
-    //            CDBDebug("Feature id %s", (*sample)->getId().c_str());
     ((const char **)featureIdVar->data)[featureCnt++] = strdup((*sample)->getId().c_str());
-
-    // TODO Check if this code is really needed; looks useless
-    //              for (std::map<std::string, FeatureProperty*>::iterator ftit=(*sample)->getFp().begin(); ftit!=(*sample)->getFp().end(); ++ftit) {
-    //               CDBDebug("Create var %s %s %d", ftit->first.c_str(), ftit->second->toString().c_str(),ftit->second->getType() );
-    //                if (ftit->second->getType()!=typeStr) {
-    //                  bool found=false;
-    //                  try {
-    //                    cdfObject->getVariable(ftit->first.c_str());
-    //                    found=true;
-    //                  } catch(int e){}
-    //                  if (!found) {
-    //                    CDF::Variable *newVar = new CDF::Variable();
-    //                    cdfObject->addVariable(newVar);
-    //                    newVar->dimensionlinks.push_back(dimFeatures);
-    //                    CDF::Variable *polygonIndexVar = new CDF::Variable();
-    //                    cdfObject->addVariable(polygonIndexVar);
-    //                    polygonIndexVar->dimensionlinks.push_back(dimY);
-    //                    polygonIndexVar->dimensionlinks.push_back(dimX);
-    //                    FeaturePropertyType tp=ftit->second->getType();
-    //                    if (tp==typeStr) {
-    //                      newVar->setType(CDF_STRING);
-    //                      polygonIndexVar->setType(CDF_STRING);
-    //                    } else if (tp==typeInt) {
-    //                      newVar->setType(CDF_USHORT);
-    //                      polygonIndexVar->setType(CDF_USHORT);
-    //                      unsigned short f=65535u;
-    //                      newVar->setAttribute("_FillValue",CDF_USHORT,&f,1);
-    //                      polygonIndexVar->setAttribute("_FillValue",CDF_USHORT,&f,1);
-    //                    } else if (tp==typeDouble) {
-    //                      newVar->setType(CDF_FLOAT);
-    //                      float f=-99999;
-    //                      newVar->setAttribute("_FillValue",CDF_FLOAT,&f,1);
-    //                      polygonIndexVar->setAttribute("_FillValue",CDF_FLOAT,&f,1);
-    //                    }
-    //                    newVar->name=(ftit->first+"_backup").c_str();
-    //                    polygonIndexVar->name=ftit->first.c_str();
-    //                    polygonIndexVar->setAttributeText("grid_mapping","customgridprojection");
-    //
-    //                  }
-    //                }
-    //              }
   }
 }
 

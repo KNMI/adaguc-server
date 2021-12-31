@@ -14,10 +14,9 @@ using json = nlohmann::json;
  */
 
 namespace CT {
-  // CT::string
   void to_json(json &j, const string &s);
-}; // namespace CT
+}; /* namespace CT */
 
 void to_json(json &j, const CReportMessage &m);
 
-#endif // JSON_ADAGUC_H
+#endif /* JSON_ADAGUC_H */

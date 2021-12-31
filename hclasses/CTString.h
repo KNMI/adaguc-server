@@ -59,7 +59,6 @@ namespace CT {
     }
     inline char *getValuePointer() { return useStack ? stackValue : heapValue; }
 
-    // DEF_ERRORFUNCTION();
   public:
     /**
      * Default constructor
@@ -521,6 +520,6 @@ namespace CT {
      */
     CT::string toHex24();
   };
-}; // namespace CT
+}; /* namespace CT */
 
 #endif

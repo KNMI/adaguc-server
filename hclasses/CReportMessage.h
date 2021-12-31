@@ -25,4 +25,4 @@ private:
   static const char *category_names[];
 };
 
-#endif // CREPORTMESSAGE_H
+#endif

@@ -61,7 +61,6 @@ namespace CT {
     printf("string(string const &f);\n");
 #endif
 
-    // if((&f)==NULL){init();return;}
     init();
     copy(f.useStack ? f.stackValue : f.heapValue, f.privatelength);
   }
@@ -80,7 +79,6 @@ namespace CT {
 #ifdef CTYPES_DEBUG
     printf("string::operator= (string const& f);\n");
 #endif
-    // if((&f)==NULL){init();return *this;}
     if (this == &f) return *this;
     _Free();
     init();
@@ -92,7 +90,6 @@ namespace CT {
 #ifdef CTYPES_DEBUG
     printf("string::operator= (const char*const &f)\n");
 #endif
-    // if((&f)==NULL){init();return *this;}
     _Free();
     init();
     this->copy(f);
@@ -227,13 +224,13 @@ namespace CT {
     if (_value == NULL) return;
 
     if (len == 0) return;
-    // Destination is still clean, this is just a copy.
+    /* Destination is still clean, this is just a copy. */
     if (allocated == 0) {
       copy(_value, len);
       return;
     }
 
-    // Check if the source fits in the destination buffer.
+    /* Check if the source fits in the destination buffer. */
     size_t cat_len = len, total_len = privatelength + cat_len;
     if (total_len < bufferlength) {
       char *value = useStack ? stackValue : heapValue;
@@ -243,8 +240,8 @@ namespace CT {
       return;
     }
 
-    // Source buffer is to small, reallocate and copy to bigger buffer.
-    bufferlength = total_len + privatelength * 2; // 8192*4-1;
+    /* Source buffer is to small, reallocate and copy to bigger buffer. */
+    bufferlength = total_len + privatelength * 2; /* 8192*4-1; */
 
     char *temp = new char[bufferlength + 1];
 
@@ -266,11 +263,11 @@ namespace CT {
     return in;
   }
   char string::_fromhex(char in) {
-    // From lowercase to uppercase
+    /* From lowercase to uppercase */
     if (in > 96) in -= 32;
-    // From number character to numeric value
+    /* From number character to numeric value */
     in -= 48;
-    // When numeric value is more than 16 (eg ABCDEF) substract 7 to get numeric value 10,11,12,etc...
+    /* When numeric value is more than 16 (eg ABCDEF) substract 7 to get numeric value 10,11,12,etc... */
     if (in > 16) in -= 7;
     return in;
   }
@@ -398,7 +395,6 @@ namespace CT {
     size_t oc = 0;
     do {
       tempVal = value + oc;
-      // printf("testing '%s'\n",tempVal);
       const char *pi = strstr(tempVal, search);
       if (pi != NULL) {
         c = pi - tempVal;
@@ -407,15 +403,11 @@ namespace CT {
       }
       if (c >= 0) {
         oc += c;
-        // printf("!%d\n",oc);
         occurences.push_back(oc);
         oc += substrl;
       }
 
     } while (c >= 0 && oc < thisString.privatelength);
-    // for(size_t j=0;j<occurences.size();j++){
-    //         printf("%d\n",occurences[j]);
-    //}
     size_t newSize = privatelength + occurences.size() * (newStringl - substrl);
     _Allocate(newSize);
     char *newvalue = getValuePointer();
@@ -434,9 +426,7 @@ namespace CT {
       newvalue[pt++] = thisStringValue[ps++];
     } while (pt < newSize);
     newvalue[newSize] = '\0';
-    // privatelength
     privatelength = newSize;
-    // printf("newSize %d\n",privatelength);
     return 0;
   }
 
@@ -494,6 +484,7 @@ namespace CT {
   bool string::testRegEx(const char *pattern) {
     int status;
     regex_t re;
+    /* TODO: Maarten Plieger 2021-12-31, cache compiled regcomp */
     if (regcomp(&re, pattern, REG_EXTENDED | REG_NOSUB) != 0) {
       return false;
     }
@@ -622,7 +613,8 @@ namespace CT {
 
   void string::concat(const char *_value) {
     if (_value == NULL) return;
-    concat(_value, strlen(_value));
+    const size_t length = strlen(_value);
+    concat(_value, length);
   };
 
   int string::indexOf(const char *search) { return indexOf(search, strlen(search)); };
@@ -792,4 +784,4 @@ namespace CT {
     return result;
   }
 
-} // namespace CT
+} /* namespace CT */

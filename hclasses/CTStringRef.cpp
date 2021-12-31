@@ -125,4 +125,4 @@ namespace CT {
           value=_value;
       }*/
 
-} // namespace CT
+} /* namespace CT */

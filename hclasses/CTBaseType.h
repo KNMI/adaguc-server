@@ -69,7 +69,7 @@ namespace CT {
     virtual ~basetype() {}
     int id;
     size_t count;
-    basetype *next, *prev, *start, *end; // For linked list
+    basetype *next, *prev, *start, *end; /* For linked list */
   };
 
   /**
@@ -89,6 +89,6 @@ namespace CT {
     object[nr].start = &object[0];
     object[nr].end = &object[nr];
   }
-}; // namespace CT
+}; /* namespace CT */
 
 #endif
