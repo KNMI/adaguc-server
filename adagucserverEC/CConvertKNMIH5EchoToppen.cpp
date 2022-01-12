@@ -1,0 +1,268 @@
+/******************************************************************************
+ *
+ * Project:  ADAGUC Server
+ * Purpose:  ADAGUC OGC Server
+ * Author:   Geo Spatial Team gstf@knmi.nl
+ * Date:     2022-01-12
+ *
+ ******************************************************************************
+ *
+ * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************************/
+
+#include "CConvertKNMIH5EchoToppen.h"
+#include "CFillTriangle.h"
+#include "CImageWarper.h"
+#define CConvertKNMIH5EchoToppen_DEBUG
+
+const char *CConvertKNMIH5EchoToppen::className = "CConvertKNMIH5EchoToppen";
+
+int CConvertKNMIH5EchoToppen::checkIfKNMIH5EchoToppenFormat(CDFObject *cdfObject) {
+  try {
+    /* Check if the image1.statistics variable and stat_cell_number is set */
+    cdfObject->getVariable("image1.statistics")->getAttribute("stat_cell_number");
+    /* TODO: Return 1 in case it is not a point renderer*/
+  } catch (int e) {
+    return 1;
+  }
+  return 0;
+}
+
+/**
+ * This function adjusts the cdfObject by creating virtual 2D variables
+ */
+int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenHeader(CDFObject *cdfObject) {
+  // Check whether this is really an KNMIH5EchoToppenFormat file
+  if (CConvertKNMIH5EchoToppen::checkIfKNMIH5EchoToppenFormat(cdfObject) == 1) return 1;
+  CDBDebug("Using CConvertKNMIH5EchoToppen.h");
+  // Default size of adaguc 2dField is 2x2
+  int width = 2;
+  int height = 2;
+
+  double dfBBOX[] = {-180, -90, 180, 90};
+
+  double cellSizeX = (dfBBOX[2] - dfBBOX[0]) / double(width);
+  double cellSizeY = (dfBBOX[3] - dfBBOX[1]) / double(height);
+  double offsetX = dfBBOX[0];
+  double offsetY = dfBBOX[1];
+  // Add geo variables, only if they are not there already
+  CDF::Dimension *dimX = cdfObject->getDimensionNE("xet");
+  CDF::Dimension *dimY = cdfObject->getDimensionNE("yet");
+
+  CDF::Variable *varX = cdfObject->getVariableNE("xet");
+  CDF::Variable *varY = cdfObject->getVariableNE("yet");
+  if (dimX == NULL || dimY == NULL || varX == NULL || varY == NULL) {
+    // If not available, create new dimensions and variables (X,Y,T)
+    // For x
+    dimX = new CDF::Dimension();
+    dimX->name = "xet";
+    dimX->setSize(width);
+    cdfObject->addDimension(dimX);
+    varX = new CDF::Variable();
+    varX->setType(CDF_DOUBLE);
+    varX->name.copy("xet");
+    varX->isDimension = true;
+    varX->dimensionlinks.push_back(dimX);
+    cdfObject->addVariable(varX);
+    CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
+
+    // For y
+    dimY = new CDF::Dimension();
+    dimY->name = "yet";
+    dimY->setSize(height);
+    cdfObject->addDimension(dimY);
+    varY = new CDF::Variable();
+    varY->setType(CDF_DOUBLE);
+    varY->name.copy("yet");
+    varY->isDimension = true;
+    varY->dimensionlinks.push_back(dimY);
+    cdfObject->addVariable(varY);
+    CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+
+    // Fill in the X and Y dimensions with the array of coordinates
+    for (size_t j = 0; j < dimX->length; j++) {
+      double x = offsetX + double(j) * cellSizeX + cellSizeX / 2;
+      ((double *)varX->data)[j] = x;
+    }
+    for (size_t j = 0; j < dimY->length; j++) {
+      double y = offsetY + double(j) * cellSizeY + cellSizeY / 2;
+      ((double *)varY->data)[j] = y;
+    }
+  }
+
+  CDF::Variable *echoToppenVar = new CDF::Variable();
+  cdfObject->addVariable(echoToppenVar);
+
+  // // Assign X,Y,T dims
+
+  // for (size_t d = 0; d < pointVar->dimensionlinks.size(); d++) {
+  //   bool skip = false;
+  //   if (pointVar->dimensionlinks[d]->name.equals("station") == true) {
+  //     skip = true;
+  //   }
+  //   if (!skip) {
+  //     echoToppenVar->dimensionlinks.push_back(pointVar->dimensionlinks[d]);
+  //   }
+  // }
+
+  echoToppenVar->dimensionlinks.push_back(dimY);
+  echoToppenVar->dimensionlinks.push_back(dimX);
+  echoToppenVar->setAttributeText("grid_mapping", "projection");
+  // image1.image_data:grid_mapping = "projection" ;
+  echoToppenVar->setType(CDF_FLOAT);
+
+  echoToppenVar->name = "echotoppen";
+  return 0;
+}
+
+/**
+ * This function draws the virtual 2D variable into a new 2D field
+ */
+int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSource, int mode) {
+  CDFObject *cdfObject0 = dataSource->getDataObject(0)->cdfObject;
+  if (CConvertKNMIH5EchoToppen::checkIfKNMIH5EchoToppenFormat(cdfObject0) == 1) return 1;
+#ifdef CConvertKNMIH5EchoToppen_DEBUG
+  CDBDebug("ConvertKNMIH5EchoToppenData");
+#endif
+  // Make the width and height of the new 2D adaguc field the same as the viewing window
+  dataSource->dWidth = dataSource->srvParams->Geo->dWidth;
+  dataSource->dHeight = dataSource->srvParams->Geo->dHeight;
+
+  if (dataSource->dWidth == 1 && dataSource->dHeight == 1) {
+    dataSource->srvParams->Geo->dfBBOX[0] = dataSource->srvParams->Geo->dfBBOX[0];
+    dataSource->srvParams->Geo->dfBBOX[1] = dataSource->srvParams->Geo->dfBBOX[1];
+    dataSource->srvParams->Geo->dfBBOX[2] = dataSource->srvParams->Geo->dfBBOX[2];
+    dataSource->srvParams->Geo->dfBBOX[3] = dataSource->srvParams->Geo->dfBBOX[3];
+  }
+
+  // Width needs to be at least 2 in this case.
+  if (dataSource->dWidth == 1) dataSource->dWidth = 2;
+  if (dataSource->dHeight == 1) dataSource->dHeight = 2;
+  double cellSizeX = (dataSource->srvParams->Geo->dfBBOX[2] - dataSource->srvParams->Geo->dfBBOX[0]) / double(dataSource->dWidth);
+  double cellSizeY = (dataSource->srvParams->Geo->dfBBOX[3] - dataSource->srvParams->Geo->dfBBOX[1]) / double(dataSource->dHeight);
+  double offsetX = dataSource->srvParams->Geo->dfBBOX[0];
+  double offsetY = dataSource->srvParams->Geo->dfBBOX[1];
+
+  if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
+
+#ifdef CCONVERTADAGUCPOINT_DEBUG
+    for (size_t d = 0; d < nrDataObjects; d++) {
+      if (pointVar[d] != NULL) {
+        CDBDebug("Drawing %s", new2DVar[d]->name.c_str());
+      }
+    }
+#endif
+
+    CDF::Dimension *dimX;
+    CDF::Dimension *dimY;
+    CDF::Variable *varX;
+    CDF::Variable *varY;
+
+    // Create new dimensions and variables (X,Y,T)
+    dimX = cdfObject0->getDimension("xet");
+    dimX->setSize(dataSource->dWidth);
+
+    dimY = cdfObject0->getDimension("yet");
+    dimY->setSize(dataSource->dHeight);
+
+    varX = cdfObject0->getVariable("xet");
+    varY = cdfObject0->getVariable("yet");
+
+    CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
+    CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+
+    // Fill in the X and Y dimensions with the array of coordinates
+    for (size_t j = 0; j < dimX->length; j++) {
+      double x = offsetX + double(j) * cellSizeX + cellSizeX / 2;
+      ((double *)varX->data)[j] = x;
+    }
+    for (size_t j = 0; j < dimY->length; j++) {
+      double y = offsetY + double(j) * cellSizeY + cellSizeY / 2;
+      ((double *)varY->data)[j] = y;
+    }
+  }
+
+  if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
+    // double lon = 5.2, lat = 52.2;
+    float v = 6.2;
+    double cellSizeX = (dataSource->srvParams->Geo->dfBBOX[2] - dataSource->srvParams->Geo->dfBBOX[0]) / double(dataSource->dWidth);
+    double cellSizeY = (dataSource->srvParams->Geo->dfBBOX[3] - dataSource->srvParams->Geo->dfBBOX[1]) / double(dataSource->dHeight);
+    double offsetX = dataSource->srvParams->Geo->dfBBOX[0];
+    double offsetY = dataSource->srvParams->Geo->dfBBOX[1];
+    CImageWarper imageWarper;
+
+    imageWarper.initreproj(dataSource, dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
+
+    CImageWarper imageWarperEchoToppen;
+    CT::string projectionString = cdfObject0->getVariable("projection")->getAttribute("proj4_params")->toString();
+    CDBDebug("projectionString %s", projectionString.c_str());
+    imageWarperEchoToppen.initreproj(projectionString.c_str(), dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
+
+    CDBDebug("dataSource->srvParams->Geo->dfBBOX left %f", dataSource->srvParams->Geo->dfBBOX[0]);
+    CDBDebug("dataSource->srvParams->Geo->dfBBOX bottom %f", dataSource->srvParams->Geo->dfBBOX[1]);
+    CDBDebug("dataSource->srvParams->Geo->dfBBOX right %f", dataSource->srvParams->Geo->dfBBOX[2]);
+    CDBDebug("dataSource->srvParams->Geo->dfBBOX top %f", dataSource->srvParams->Geo->dfBBOX[3]);
+    CDBDebug("dataSource->dWidth %d", dataSource->dWidth);
+    CDBDebug("dataSource->dHeight %d", dataSource->dHeight);
+
+    float left = cdfObject0->getVariable("x")->getDataAt<float>(0);
+    float right = cdfObject0->getVariable("x")->getDataAt<float>(cdfObject0->getVariable("x")->getSize() - 1);
+    float bottom = cdfObject0->getVariable("y")->getDataAt<float>(0);
+    float top = cdfObject0->getVariable("y")->getDataAt<float>(cdfObject0->getVariable("y")->getSize() - 1);
+    float cellsizeX = (right - left) / float(cdfObject0->getVariable("x")->getSize());
+    float cellsizeY = (bottom - top) / float(cdfObject0->getVariable("y")->getSize());
+    CDBDebug("HDFGrid left %f and %f cellsize %f %f", left, right, cellsizeX, cellsizeY);
+
+    size_t numPoints = 10;
+    for (size_t j = 0; j < numPoints; j += 1) {
+      /* Echotoppen grid coordinates / row and col */
+      double col = 384 - j * 10;
+      double row = 651 - j * 10;
+
+      /* Put something at the corners for check */
+      if (j < 4) {
+        if (j == 0 || j == 1) {
+          row = 0;
+        } else {
+          row = 764;
+        }
+        if (j == 0 || j == 2) {
+          col = 0;
+        } else {
+          col = 699;
+        }
+      }
+
+      /* Echotoppen projection coordinates */
+      CDBDebug("grid coords: h5X, h5Y %f, %f", col, row);
+      double h5X = col / cellsizeX + left;
+      double h5Y = row / cellsizeY + top;
+      CDBDebug("proj coords: h5X, h5Y %f, %f", h5X, h5Y);
+      imageWarperEchoToppen.reprojpoint_inv(h5X, h5Y);
+      CDBDebug("h5X, h5Y %f, %f", h5X, h5Y);
+
+      // imageWarper.reprojfromLatLon(h5X, h5Y);
+
+      int dlon = int((h5X - offsetX) / cellSizeX);
+      int dlat = int((h5Y - offsetY) / cellSizeY);
+
+      CDBDebug("dlon %d dlat %d", dlon, dlat);
+
+      dataSource->dataObjects[0]->points.push_back(PointDVWithLatLon(dlon, dlat, h5X, h5Y, v));
+    }
+  }
+  return 0;
+}
