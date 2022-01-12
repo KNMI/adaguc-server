@@ -61,9 +61,11 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenHeader(CDFObject *cdfObject
   // Add geo variables, only if they are not there already
   CDF::Dimension *dimX = cdfObject->getDimensionNE("xet");
   CDF::Dimension *dimY = cdfObject->getDimensionNE("yet");
+  CDF::Dimension *dimT = cdfObject->getDimensionNE("time_et");
 
   CDF::Variable *varX = cdfObject->getVariableNE("xet");
   CDF::Variable *varY = cdfObject->getVariableNE("yet");
+  CDF::Variable *varT = cdfObject->getVariableNE("time_et");
   if (dimX == NULL || dimY == NULL || varX == NULL || varY == NULL) {
     // If not available, create new dimensions and variables (X,Y,T)
     // For x
@@ -92,6 +94,19 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenHeader(CDFObject *cdfObject
     cdfObject->addVariable(varY);
     CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
 
+   // For time
+    dimT = new CDF::Dimension();
+    dimT->name = "time_et";
+    dimT->setSize(1);
+    cdfObject->addDimension(dimT);
+    varT = new CDF::Variable();
+    varT->setType(CDF_DOUBLE);
+    varT->name.copy("yet");
+    varT->isDimension = true;
+    varT->dimensionlinks.push_back(dimT);
+    cdfObject->addVariable(varT);
+    CDF::allocateData(CDF_DOUBLE, &varT->data, dimT->length);
+
     // Fill in the X and Y dimensions with the array of coordinates
     for (size_t j = 0; j < dimX->length; j++) {
       double x = offsetX + double(j) * cellSizeX + cellSizeX / 2;
@@ -101,6 +116,7 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenHeader(CDFObject *cdfObject
       double y = offsetY + double(j) * cellSizeY + cellSizeY / 2;
       ((double *)varY->data)[j] = y;
     }
+    ((double *)varT->data)[0] = 0;
   }
 
   CDF::Variable *echoToppenVar = new CDF::Variable();
@@ -118,6 +134,7 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenHeader(CDFObject *cdfObject
   //   }
   // }
 
+  echoToppenVar->dimensionlinks.push_back(dimT);
   echoToppenVar->dimensionlinks.push_back(dimY);
   echoToppenVar->dimensionlinks.push_back(dimX);
   echoToppenVar->setAttributeText("grid_mapping", "projection");
@@ -126,6 +143,12 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenHeader(CDFObject *cdfObject
 
   echoToppenVar->name = "echotoppen";
   return 0;
+}
+
+int calcFlightLevel(float height) {
+    float feet=height*1000*3.281f;
+    int roundedFeet=((int )(feet/1000+0.5)*10);
+    return roundedFeet;
 }
 
 /**
@@ -196,8 +219,6 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
   }
 
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
-    // double lon = 5.2, lat = 52.2;
-    float v = 6.2;
     double cellSizeX = (dataSource->srvParams->Geo->dfBBOX[2] - dataSource->srvParams->Geo->dfBBOX[0]) / double(dataSource->dWidth);
     double cellSizeY = (dataSource->srvParams->Geo->dfBBOX[3] - dataSource->srvParams->Geo->dfBBOX[1]) / double(dataSource->dHeight);
     double offsetX = dataSource->srvParams->Geo->dfBBOX[0];
@@ -226,25 +247,36 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
     float cellsizeY = (bottom - top) / float(cdfObject0->getVariable("y")->getSize());
     CDBDebug("HDFGrid left %f and %f cellsize %f %f", left, right, cellsizeX, cellsizeY);
 
-    size_t numPoints = 10;
-    for (size_t j = 0; j < numPoints; j += 1) {
+    int stat_cell_number;
+    cdfObject0->getVariable("image1.statistics")->getAttribute("stat_cell_number")->getData(&stat_cell_number, 1);
+    CT::string stat_cell_column=cdfObject0->getVariable("image1.statistics")->getAttribute("stat_cell_column")->getDataAsString();
+    CT::string stat_cell_row=cdfObject0->getVariable("image1.statistics")->getAttribute("stat_cell_row")->getDataAsString();
+    CT::string stat_cell_max=cdfObject0->getVariable("image1.statistics")->getAttribute("stat_cell_max")->getDataAsString();
+    CT::StackList<CT::stringref>cell_max=stat_cell_max.splitToStackReferences(" ");
+    CT::StackList<CT::stringref>cell_column=stat_cell_column.splitToStackReferences(" ");
+    CT::StackList<CT::stringref>cell_row=stat_cell_row.splitToStackReferences(" ");
+
+    for (size_t k = 0; k<(size_t)stat_cell_number; k++) {
+        CDBDebug("%d: %s", k, cell_column[k].c_str(), cell_row[k].c_str());
       /* Echotoppen grid coordinates / row and col */
-      double col = 384 - j * 10;
-      double row = 651 - j * 10;
+      double col = CT::string(cell_column[k].c_str()).toDouble();
+      double row = CT::string(cell_row[k].c_str()).toDouble();
+      float v = calcFlightLevel(CT::string(cell_max[k].c_str()).toFloat());
+      CDBDebug("%d [%f,%f]: %f", k, col, row, v);
 
       /* Put something at the corners for check */
-      if (j < 4) {
-        if (j == 0 || j == 1) {
-          row = 0;
-        } else {
-          row = 764;
-        }
-        if (j == 0 || j == 2) {
-          col = 0;
-        } else {
-          col = 699;
-        }
-      }
+    //   if (k < 4) {
+    //     if (k == 0 || k == 1) {
+    //       row = 0;
+    //     } else {
+    //       row = 764;
+    //     }
+    //     if (k == 0 || k == 2) {
+    //       col = 0;
+    //     } else {
+    //       col = 699;
+    //     }
+    //   }
 
       /* Echotoppen projection coordinates */
       CDBDebug("grid coords: h5X, h5Y %f, %f", col, row);
@@ -263,6 +295,7 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
 
       dataSource->dataObjects[0]->points.push_back(PointDVWithLatLon(dlon, dlat, h5X, h5Y, v));
     }
+    CDBDebug("points: %d", dataSource->dataObjects[0]->points.size());
   }
   return 0;
 }
