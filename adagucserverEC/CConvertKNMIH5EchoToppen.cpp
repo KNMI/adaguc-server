@@ -52,7 +52,29 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenHeader(CDFObject *cdfObject
   int width = 2;
   int height = 2;
 
+
   double dfBBOX[] = {-180, -90, 180, 90};
+  CDF::Variable *xVar = cdfObject->getVariableNE("x");
+  CDF::Dimension *xDim = cdfObject->getDimensionNE("x");
+  CDF::Variable *yVar = cdfObject->getVariableNE("y");
+  CDF::Dimension *yDim = cdfObject->getDimensionNE("y");
+  if ((xVar!=NULL)&&(yVar!=NULL)) {
+    int w = xDim->getSize();
+    int h = yDim->getSize();
+    double llLon, llLat, urLon, urLat;
+    llLon = xVar->getDataAt<double>(0);
+    llLat = yVar->getDataAt<double>(0);
+    urLon = xVar->getDataAt<double>(w-1);
+    urLat = yVar->getDataAt<double>(h-1);
+    if (llLat>urLat) {
+      double swap=llLat;
+      llLat=urLat;
+      urLat=swap;
+    }
+    dfBBOX[0]=llLon; dfBBOX[1]=llLat;
+    dfBBOX[2]=urLon; dfBBOX[3]=urLat;
+  }
+  CDBDebug("dfBBOX: %f %f %f %f", dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]);
 
   double cellSizeX = (dfBBOX[2] - dfBBOX[0]) / double(width);
   double cellSizeY = (dfBBOX[3] - dfBBOX[1]) / double(height);
@@ -61,11 +83,9 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenHeader(CDFObject *cdfObject
   // Add geo variables, only if they are not there already
   CDF::Dimension *dimX = cdfObject->getDimensionNE("xet");
   CDF::Dimension *dimY = cdfObject->getDimensionNE("yet");
-  CDF::Dimension *dimT = cdfObject->getDimensionNE("time_et");
 
   CDF::Variable *varX = cdfObject->getVariableNE("xet");
   CDF::Variable *varY = cdfObject->getVariableNE("yet");
-  CDF::Variable *varT = cdfObject->getVariableNE("time_et");
   if (dimX == NULL || dimY == NULL || varX == NULL || varY == NULL) {
     // If not available, create new dimensions and variables (X,Y,T)
     // For x
@@ -94,19 +114,6 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenHeader(CDFObject *cdfObject
     cdfObject->addVariable(varY);
     CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
 
-   // For time
-    dimT = new CDF::Dimension();
-    dimT->name = "time_et";
-    dimT->setSize(1);
-    cdfObject->addDimension(dimT);
-    varT = new CDF::Variable();
-    varT->setType(CDF_DOUBLE);
-    varT->name.copy("yet");
-    varT->isDimension = true;
-    varT->dimensionlinks.push_back(dimT);
-    cdfObject->addVariable(varT);
-    CDF::allocateData(CDF_DOUBLE, &varT->data, dimT->length);
-
     // Fill in the X and Y dimensions with the array of coordinates
     for (size_t j = 0; j < dimX->length; j++) {
       double x = offsetX + double(j) * cellSizeX + cellSizeX / 2;
@@ -116,12 +123,18 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenHeader(CDFObject *cdfObject
       double y = offsetY + double(j) * cellSizeY + cellSizeY / 2;
       ((double *)varY->data)[j] = y;
     }
-    ((double *)varT->data)[0] = 0;
   }
 
   CDF::Variable *echoToppenVar = new CDF::Variable();
   cdfObject->addVariable(echoToppenVar);
 
+  CDF::Dimension *dimT;
+  CDF::Variable *eth = cdfObject->getVariable("image1.image_data");
+  for (size_t d=0; d<eth->dimensionlinks.size(); d++) {
+    if (eth->dimensionlinks[d]->name.equals("time")) {
+      dimT = eth->dimensionlinks[d];
+    }
+  }
   // // Assign X,Y,T dims
 
   // for (size_t d = 0; d < pointVar->dimensionlinks.size(); d++) {
@@ -137,11 +150,10 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenHeader(CDFObject *cdfObject
   echoToppenVar->dimensionlinks.push_back(dimT);
   echoToppenVar->dimensionlinks.push_back(dimY);
   echoToppenVar->dimensionlinks.push_back(dimX);
-  echoToppenVar->setAttributeText("grid_mapping", "projection");
-  // image1.image_data:grid_mapping = "projection" ;
   echoToppenVar->setType(CDF_FLOAT);
 
   echoToppenVar->name = "echotoppen";
+  echoToppenVar->addAttribute(new CDF::Attribute("units", "FL (ft*100)"));
   return 0;
 }
 
@@ -157,9 +169,23 @@ int calcFlightLevel(float height) {
 int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSource, int mode) {
   CDFObject *cdfObject0 = dataSource->getDataObject(0)->cdfObject;
   if (CConvertKNMIH5EchoToppen::checkIfKNMIH5EchoToppenFormat(cdfObject0) == 1) return 1;
+  if (!dataSource->getDataObject(0)->cdfVariable->name.equals("echotoppen")) {
+    CDBDebug("Skipping convertKNMIH5EchoToppenData");
+    return 0;
+  }
 #ifdef CConvertKNMIH5EchoToppen_DEBUG
   CDBDebug("ConvertKNMIH5EchoToppenData");
 #endif
+
+  {
+    CDF::Variable *echoToppenVar = dataSource->getDataObject(0)->cdfVariable;
+    echoToppenVar->setAttributeText("grid_mapping", "projection");
+    CDBDebug("CRS:%s", dataSource->srvParams->Geo->CRS.c_str());
+    CImageWarper imageWarper;
+    imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
+    // image1.image_data:grid_mapping = "projection" ;
+    CDBDebug("nativeProj4: %s nativeEPSG: %s", dataSource->nativeProj4.c_str(), dataSource->nativeEPSG.c_str() );
+  }
   // Make the width and height of the new 2D adaguc field the same as the viewing window
   dataSource->dWidth = dataSource->srvParams->Geo->dWidth;
   dataSource->dHeight = dataSource->srvParams->Geo->dHeight;
@@ -279,12 +305,12 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
     //   }
 
       /* Echotoppen projection coordinates */
-      CDBDebug("grid coords: h5X, h5Y %f, %f", col, row);
+      // CDBDebug("grid coords: h5X, h5Y %f, %f", col, row);
       double h5X = col / cellsizeX + left;
       double h5Y = row / cellsizeY + top;
-      CDBDebug("proj coords: h5X, h5Y %f, %f", h5X, h5Y);
+      // CDBDebug("proj coords: h5X, h5Y %f, %f", h5X, h5Y);
       imageWarperEchoToppen.reprojpoint_inv(h5X, h5Y);
-      CDBDebug("h5X, h5Y %f, %f", h5X, h5Y);
+      // CDBDebug("h5X, h5Y %f, %f", h5X, h5Y);
 
       // imageWarper.reprojfromLatLon(h5X, h5Y);
 
