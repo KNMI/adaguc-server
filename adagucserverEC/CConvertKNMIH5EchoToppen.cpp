@@ -47,11 +47,12 @@ int CConvertKNMIH5EchoToppen::checkIfKNMIH5EchoToppenFormat(CDFObject *cdfObject
 int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenHeader(CDFObject *cdfObject) {
   // Check whether this is really an KNMIH5EchoToppenFormat file
   if (CConvertKNMIH5EchoToppen::checkIfKNMIH5EchoToppenFormat(cdfObject) == 1) return 1;
-  CDBDebug("Using CConvertKNMIH5EchoToppen.h");
-  // Default size of adaguc 2dField is 2x2
+
+  CDBDebug("Starting convertKNMIH5EchoToppenHeader");
+
+  // Default size of adaguc 2d Field is 2x2
   int width = 2;
   int height = 2;
-
 
   double dfBBOX[] = {-180, -90, 180, 90};
   CDF::Variable *xVar = cdfObject->getVariableNE("x");
@@ -125,16 +126,11 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenHeader(CDFObject *cdfObject
     }
   }
 
+  CDF::Dimension *dimT = cdfObject->getDimensionNE("time");
+
   CDF::Variable *echoToppenVar = new CDF::Variable();
   cdfObject->addVariable(echoToppenVar);
 
-  CDF::Dimension *dimT;
-  CDF::Variable *eth = cdfObject->getVariable("image1.image_data");
-  for (size_t d=0; d<eth->dimensionlinks.size(); d++) {
-    if (eth->dimensionlinks[d]->name.equals("time")) {
-      dimT = eth->dimensionlinks[d];
-    }
-  }
   // // Assign X,Y,T dims
 
   // for (size_t d = 0; d < pointVar->dimensionlinks.size(); d++) {
@@ -169,6 +165,7 @@ int calcFlightLevel(float height) {
 int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSource, int mode) {
   CDFObject *cdfObject0 = dataSource->getDataObject(0)->cdfObject;
   if (CConvertKNMIH5EchoToppen::checkIfKNMIH5EchoToppenFormat(cdfObject0) == 1) return 1;
+
   if (!dataSource->getDataObject(0)->cdfVariable->name.equals("echotoppen")) {
     CDBDebug("Skipping convertKNMIH5EchoToppenData");
     return 0;
