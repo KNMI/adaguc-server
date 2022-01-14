@@ -42,8 +42,8 @@
 #include "CDBFileScanner.h"
 const char *CDataReader::className = "CDataReader";
 
-// #define CDATAREADER_DEBUG
-// #define MEASURETIME
+#define CDATAREADER_DEBUG
+#define MEASURETIME
 
 #define uchar unsigned char
 #define MAX_STR_LEN 8191
