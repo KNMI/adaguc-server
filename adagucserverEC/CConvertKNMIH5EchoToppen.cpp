@@ -55,29 +55,44 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenHeader(CDFObject *cdfObject
   int width = 2;
   int height = 2;
 
-  double dfBBOX[] = {-180, -90, 180, 90};
-  CDF::Variable *xVar = cdfObject->getVariableNE("x");
-  CDF::Dimension *xDim = cdfObject->getDimensionNE("x");
-  CDF::Variable *yVar = cdfObject->getVariableNE("y");
-  CDF::Dimension *yDim = cdfObject->getDimensionNE("y");
-  if ((xVar != NULL) && (yVar != NULL)) {
-    int w = xDim->getSize();
-    int h = yDim->getSize();
-    double llLon, llLat, urLon, urLat;
-    llLon = xVar->getDataAt<double>(0);
-    llLat = yVar->getDataAt<double>(0);
-    urLon = xVar->getDataAt<double>(w - 1);
-    urLat = yVar->getDataAt<double>(h - 1);
-    if (llLat > urLat) {
-      double swap = llLat;
-      llLat = urLat;
-      urLat = swap;
-    }
-    dfBBOX[0] = llLon;
-    dfBBOX[1] = llLat;
-    dfBBOX[2] = urLon;
-    dfBBOX[3] = urLat;
+  // Deterimine product corners based on file metadata:
+
+  CT::string geo_product_corners = cdfObject->getVariable("geographic")->getAttribute("geo_product_corners")->getDataAsString();
+  CT::StackList<CT::stringref> cell_max = geo_product_corners.splitToStackReferences(" ");
+
+  double minX = 1000, maxX = -1000, minY = 1000, maxY = -1000;
+  for (size_t j = 0; j < 4; j++) {
+    double x = (CT::string(cell_max[j * 2].c_str())).toDouble();
+    double y = (CT::string(cell_max[j * 2 + 1].c_str())).toDouble();
+    if (minX > x) minX = x;
+    if (minY > y) minY = y;
+    if (maxX < x) maxX = x;
+    if (maxY < y) maxY = y;
   }
+  double dfBBOX[] = {minX, minY, maxX, maxY};
+
+  // CDF::Variable *xVar = cdfObject->getVariableNE("x");
+  // CDF::Dimension *xDim = cdfObject->getDimensionNE("x");
+  // CDF::Variable *yVar = cdfObject->getVariableNE("y");
+  // CDF::Dimension *yDim = cdfObject->getDimensionNE("y");
+  // if ((xVar != NULL) && (yVar != NULL)) {
+  //   int w = xDim->getSize();
+  //   int h = yDim->getSize();
+  //   double llLon, llLat, urLon, urLat;
+  //   llLon = xVar->getDataAt<double>(0);
+  //   llLat = yVar->getDataAt<double>(0);
+  //   urLon = xVar->getDataAt<double>(w - 1);
+  //   urLat = yVar->getDataAt<double>(h - 1);
+  //   if (llLat > urLat) {
+  //     double swap = llLat;
+  //     llLat = urLat;
+  //     urLat = swap;
+  //   }
+  //   dfBBOX[0] = llLon;
+  //   dfBBOX[1] = llLat;
+  //   dfBBOX[2] = urLon;
+  //   dfBBOX[3] = urLat;
+  // }
   CDBDebug("dfBBOX: %f %f %f %f", dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]);
 
   double cellSizeX = (dfBBOX[2] - dfBBOX[0]) / double(width);
@@ -180,8 +195,7 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
 #endif
 
   {
-    CDF::Variable *echoToppenVar = dataSource->getDataObject(0)->cdfVariable;
-    echoToppenVar->setAttributeText("grid_mapping", "projection");
+    // CDF::Variable *echoToppenVar = dataSource->getDataObject(0)->cdfVariable;
 
     CImageWarper imageWarper;
     imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
