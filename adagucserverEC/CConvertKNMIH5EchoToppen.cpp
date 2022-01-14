@@ -125,18 +125,10 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenHeader(CDFObject *cdfObject
 
   CDF::Variable *echoToppenVar = new CDF::Variable();
   cdfObject->addVariable(echoToppenVar);
-
-  // // Assign X,Y,T dims
-
-  // for (size_t d = 0; d < pointVar->dimensionlinks.size(); d++) {
-  //   bool skip = false;
-  //   if (pointVar->dimensionlinks[d]->name.equals("station") == true) {
-  //     skip = true;
-  //   }
-  //   if (!skip) {
-  //     echoToppenVar->dimensionlinks.push_back(pointVar->dimensionlinks[d]);
-  //   }
-  // }
+  echoToppenVar->setType(CDF_FLOAT);
+  float fillValue[] = {-1};
+  echoToppenVar->setAttribute("_FillValue", echoToppenVar->getType(), fillValue, 1);
+  echoToppenVar->setAttributeText("ADAGUC_POINT", "true");
 
   echoToppenVar->dimensionlinks.push_back(dimT);
   echoToppenVar->dimensionlinks.push_back(dimY);
@@ -217,7 +209,10 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
     size_t fieldSize = dimX->length * dimY->length;
     echoToppenVar->setSize(fieldSize);
     CDF::allocateData(echoToppenVar->getType(), &(echoToppenVar->data), fieldSize);
+    float fillValue = -1;
+    CDF::fill(echoToppenVar->data, echoToppenVar->getType(), fillValue, fieldSize);
 
+    echoToppenVar->setAttributeText("grid_mapping", "projection");
     // Fill in the X and Y dimensions with the array of coordinates
     for (size_t j = 0; j < dimX->length; j++) {
       double x = offsetX + double(j) * cellSizeX + cellSizeX / 2;
@@ -264,12 +259,22 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
 
       double h5X = col / cellsizeX + left;
       double h5Y = row / cellsizeY + top;
+
+      /* Convert from HDF5 projection to requested coordinate system (in the WMS request)  */
       imageWarperEchoToppen.reprojpoint_inv(h5X, h5Y);
+
+      /* Convert from requested coordinate system (in the WMS request) to latlon */
+      double lat = h5Y;
+      double lon = h5X;
+      imageWarperEchoToppen.reprojToLatLon(lon, lat);
 
       int dlon = int((h5X - offsetX) / cellSizeX);
       int dlat = int((h5Y - offsetY) / cellSizeY);
 
-      dataSource->dataObjects[0]->points.push_back(PointDVWithLatLon(dlon, dlat, h5X, h5Y, v));
+      dataSource->dataObjects[0]->points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, v));
+      // lastPoint = &(dataSource->dataObjects[0]->points.back());
+      // lastPoint->paramList.push_back(CKeyValue("echotoppen", "echotoppen", "0.1"));
+
       CConvertADAGUCPoint::drawDot(dlon, dlat, v, dimX->length, dimY->length, (float *)echoToppenVar->data);
     }
   }
