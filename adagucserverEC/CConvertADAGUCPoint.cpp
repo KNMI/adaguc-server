@@ -30,7 +30,8 @@
 // #define CCONVERTADAGUCPOINT_DEBUG
 // #define MEASURETIME
 const char *CConvertADAGUCPoint::className = "CConvertADAGUCPoint";
-void drawDot(int px, int py, int v, int W, int H, float *grid) {
+
+void CConvertADAGUCPoint::drawDot(int px, int py, int v, int W, int H, float *grid) {
   for (int x = -4; x < 6; x++) {
     for (int y = -4; y < 6; y++) {
       int pointX = px + x;
