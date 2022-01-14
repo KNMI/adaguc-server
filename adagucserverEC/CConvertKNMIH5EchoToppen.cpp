@@ -59,21 +59,23 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenHeader(CDFObject *cdfObject
   CDF::Dimension *xDim = cdfObject->getDimensionNE("x");
   CDF::Variable *yVar = cdfObject->getVariableNE("y");
   CDF::Dimension *yDim = cdfObject->getDimensionNE("y");
-  if ((xVar!=NULL)&&(yVar!=NULL)) {
+  if ((xVar != NULL) && (yVar != NULL)) {
     int w = xDim->getSize();
     int h = yDim->getSize();
     double llLon, llLat, urLon, urLat;
     llLon = xVar->getDataAt<double>(0);
     llLat = yVar->getDataAt<double>(0);
-    urLon = xVar->getDataAt<double>(w-1);
-    urLat = yVar->getDataAt<double>(h-1);
-    if (llLat>urLat) {
-      double swap=llLat;
-      llLat=urLat;
-      urLat=swap;
+    urLon = xVar->getDataAt<double>(w - 1);
+    urLat = yVar->getDataAt<double>(h - 1);
+    if (llLat > urLat) {
+      double swap = llLat;
+      llLat = urLat;
+      urLat = swap;
     }
-    dfBBOX[0]=llLon; dfBBOX[1]=llLat;
-    dfBBOX[2]=urLon; dfBBOX[3]=urLat;
+    dfBBOX[0] = llLon;
+    dfBBOX[1] = llLat;
+    dfBBOX[2] = urLon;
+    dfBBOX[3] = urLat;
   }
   CDBDebug("dfBBOX: %f %f %f %f", dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]);
 
@@ -154,9 +156,9 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenHeader(CDFObject *cdfObject
 }
 
 int calcFlightLevel(float height) {
-    float feet=height*1000*3.281f;
-    int roundedFeet=((int )(feet/1000+0.5)*10);
-    return roundedFeet;
+  float feet = height * 1000 * 3.281f;
+  int roundedFeet = ((int)(feet / 1000 + 0.5) * 10);
+  return roundedFeet;
 }
 
 /**
@@ -168,8 +170,9 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
 
   if (!dataSource->getDataObject(0)->cdfVariable->name.equals("echotoppen")) {
     CDBDebug("Skipping convertKNMIH5EchoToppenData");
-    return 0;
+    return 1;
   }
+
 #ifdef CConvertKNMIH5EchoToppen_DEBUG
   CDBDebug("ConvertKNMIH5EchoToppenData");
 #endif
@@ -177,11 +180,11 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
   {
     CDF::Variable *echoToppenVar = dataSource->getDataObject(0)->cdfVariable;
     echoToppenVar->setAttributeText("grid_mapping", "projection");
-    CDBDebug("CRS:%s", dataSource->srvParams->Geo->CRS.c_str());
+
     CImageWarper imageWarper;
     imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
     // image1.image_data:grid_mapping = "projection" ;
-    CDBDebug("nativeProj4: %s nativeEPSG: %s", dataSource->nativeProj4.c_str(), dataSource->nativeEPSG.c_str() );
+    CDBDebug("nativeProj4: %s nativeEPSG: %s", dataSource->nativeProj4.c_str(), dataSource->nativeEPSG.c_str());
   }
   // Make the width and height of the new 2D adaguc field the same as the viewing window
   dataSource->dWidth = dataSource->srvParams->Geo->dWidth;
@@ -229,6 +232,11 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
 
     CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
     CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+    CDF::Variable *echoToppenVar = dataSource->getDataObject(0)->cdfVariable;
+    size_t fieldSize = dimX->length * dimY->length;
+    echoToppenVar->setSize(fieldSize);
+    CDF::allocateData(echoToppenVar->getType(), &(echoToppenVar->data), fieldSize);
+    CDBDebug("CRS:%s", dataSource->srvParams->Geo->CRS.c_str());
 
     // Fill in the X and Y dimensions with the array of coordinates
     for (size_t j = 0; j < dimX->length; j++) {
@@ -272,15 +280,15 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
 
     int stat_cell_number;
     cdfObject0->getVariable("image1.statistics")->getAttribute("stat_cell_number")->getData(&stat_cell_number, 1);
-    CT::string stat_cell_column=cdfObject0->getVariable("image1.statistics")->getAttribute("stat_cell_column")->getDataAsString();
-    CT::string stat_cell_row=cdfObject0->getVariable("image1.statistics")->getAttribute("stat_cell_row")->getDataAsString();
-    CT::string stat_cell_max=cdfObject0->getVariable("image1.statistics")->getAttribute("stat_cell_max")->getDataAsString();
-    CT::StackList<CT::stringref>cell_max=stat_cell_max.splitToStackReferences(" ");
-    CT::StackList<CT::stringref>cell_column=stat_cell_column.splitToStackReferences(" ");
-    CT::StackList<CT::stringref>cell_row=stat_cell_row.splitToStackReferences(" ");
+    CT::string stat_cell_column = cdfObject0->getVariable("image1.statistics")->getAttribute("stat_cell_column")->getDataAsString();
+    CT::string stat_cell_row = cdfObject0->getVariable("image1.statistics")->getAttribute("stat_cell_row")->getDataAsString();
+    CT::string stat_cell_max = cdfObject0->getVariable("image1.statistics")->getAttribute("stat_cell_max")->getDataAsString();
+    CT::StackList<CT::stringref> cell_max = stat_cell_max.splitToStackReferences(" ");
+    CT::StackList<CT::stringref> cell_column = stat_cell_column.splitToStackReferences(" ");
+    CT::StackList<CT::stringref> cell_row = stat_cell_row.splitToStackReferences(" ");
 
-    for (size_t k = 0; k<(size_t)stat_cell_number; k++) {
-        CDBDebug("%d: %s", k, cell_column[k].c_str(), cell_row[k].c_str());
+    for (size_t k = 0; k < (size_t)stat_cell_number; k++) {
+      CDBDebug("%d: %s", k, cell_column[k].c_str(), cell_row[k].c_str());
       /* Echotoppen grid coordinates / row and col */
       double col = CT::string(cell_column[k].c_str()).toDouble();
       double row = CT::string(cell_row[k].c_str()).toDouble();
@@ -288,18 +296,18 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
       CDBDebug("%d [%f,%f]: %f", k, col, row, v);
 
       /* Put something at the corners for check */
-    //   if (k < 4) {
-    //     if (k == 0 || k == 1) {
-    //       row = 0;
-    //     } else {
-    //       row = 764;
-    //     }
-    //     if (k == 0 || k == 2) {
-    //       col = 0;
-    //     } else {
-    //       col = 699;
-    //     }
-    //   }
+      //   if (k < 4) {
+      //     if (k == 0 || k == 1) {
+      //       row = 0;
+      //     } else {
+      //       row = 764;
+      //     }
+      //     if (k == 0 || k == 2) {
+      //       col = 0;
+      //     } else {
+      //       col = 699;
+      //     }
+      //   }
 
       /* Echotoppen projection coordinates */
       // CDBDebug("grid coords: h5X, h5Y %f, %f", col, row);

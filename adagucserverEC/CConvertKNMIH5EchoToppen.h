@@ -2,8 +2,8 @@
  *
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Author:   Geo Spatial Team gstf@knmi.nl
+ * Date:     2022-01-12
  *
  ******************************************************************************
  *
