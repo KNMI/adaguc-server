@@ -26,6 +26,7 @@
 #include "CConvertKNMIH5EchoToppen.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
+#include "CConvertADAGUCPoint.h"
 #define CConvertKNMIH5EchoToppen_DEBUG
 
 const char *CConvertKNMIH5EchoToppen::className = "CConvertKNMIH5EchoToppen";
@@ -247,9 +248,7 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
       double y = offsetY + double(j) * cellSizeY + cellSizeY / 2;
       ((double *)varY->data)[j] = y;
     }
-  }
 
-  if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
     double cellSizeX = (dataSource->srvParams->Geo->dfBBOX[2] - dataSource->srvParams->Geo->dfBBOX[0]) / double(dataSource->dWidth);
     double cellSizeY = (dataSource->srvParams->Geo->dfBBOX[3] - dataSource->srvParams->Geo->dfBBOX[1]) / double(dataSource->dHeight);
     double offsetX = dataSource->srvParams->Geo->dfBBOX[0];
@@ -291,7 +290,7 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
       CDBDebug("%d: %s", k, cell_column[k].c_str(), cell_row[k].c_str());
       /* Echotoppen grid coordinates / row and col */
       double col = CT::string(cell_column[k].c_str()).toDouble();
-      double row = CT::string(cell_row[k].c_str()).toDouble();
+      double row = cdfObject0->getVariable("y")->getSize() - CT::string(cell_row[k].c_str()).toDouble();
       float v = calcFlightLevel(CT::string(cell_max[k].c_str()).toFloat());
       CDBDebug("%d [%f,%f]: %f", k, col, row, v);
 
@@ -325,6 +324,7 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
       CDBDebug("dlon %d dlat %d", dlon, dlat);
 
       dataSource->dataObjects[0]->points.push_back(PointDVWithLatLon(dlon, dlat, h5X, h5Y, v));
+      CConvertADAGUCPoint::drawDot(dlon, dlat, v, dimX->length, dimY->length, (float *)echoToppenVar->data);
     }
     CDBDebug("points: %d", dataSource->dataObjects[0]->points.size());
   }
