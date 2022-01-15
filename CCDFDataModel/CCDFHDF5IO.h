@@ -376,7 +376,7 @@ public:
   /*******************************/
   /*  Time function        */
   /*******************************/
-  int HDF5ToADAGUCTime(char *pszADAGUCTime, const char *pszRadarTime) {
+  static int HDF5ToADAGUCTime(char *pszADAGUCTime, const char *pszRadarTime) {
     int M;
     char szMonth[4];
     // All month abbreviations
