@@ -144,10 +144,19 @@ public:
 };
 
 /**
- * Class which represent discrete points as integer with float values and latlon as double values
+ * Class which represent points in the screenspace coordinates accompanied with lat and lon coordinates.
  */
 class PointDVWithLatLon {
 public:
+  /**
+   * @brief Construct a new Point with a value. Both screenspace coordinates and lat/lon coordinates need to be provided.
+   *
+   * @param x X coordinate of the point in the current screenspace, as defined in the GetMap request, available in srvParams->Geo.
+   * @param y Y coordinate of the point in the current screenspace, as defined in the GetMap request, available in srvParams->Geo.
+   * @param lon Longitude of the point
+   * @param lat Latitude of the point
+   * @param v Value of the point (float)
+   */
   PointDVWithLatLon(int &x, int &y, double &lon, double &lat, float &v) {
     this->x = x;
     this->y = y;
@@ -156,6 +165,18 @@ public:
     this->lat = lat;
     rotation = 0;
   }
+  /**
+   * @brief Construct a new Point with a value. Both screenspace coordinates, lat/lon coordinates, rotation and radius need to be provided.
+   *
+   * @param x X coordinate of the point in the current screenspace, as defined in the GetMap request, available in srvParams->Geo.
+   * @param y Y coordinate of the point in the current screenspace, as defined in the GetMap request, available in srvParams->Geo.
+   * @param lon Longitude of the point
+   * @param lat Latitude of the point
+   * @param v Value of the point (float)
+   * @param rotation Rotation of the point (vector)
+   * @param radiusX X Radius of the point/disc
+   * @param radiusY Y Radius of the point/disc
+   */
   PointDVWithLatLon(int &x, int &y, double &lon, double &lat, float &v, double &rotation, float &radiusX, float &radiusY) {
     this->x = x;
     this->y = y;
@@ -170,7 +191,8 @@ public:
   float v, lon, lat, rotation, radiusX, radiusY;
 
   /** Array containing key description and values
-   * can be used to assign extra attributes to a point
+   * can be used to assign extra attributes to a point. By default the system will add the value of the point.
+   * You are free to add additional parameters. These will show up in the GetFeatureInfo.
    */
   std::vector<CKeyValue> paramList;
 };
