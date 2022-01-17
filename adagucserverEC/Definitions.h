@@ -103,11 +103,11 @@
 #define DEFAULT_FONT "./fonts/FreeSans.ttf"
 
 // CNetCDFReader opening options
-#define CNETCDFREADER_MODE_OPEN_HEADER 1
-#define CNETCDFREADER_MODE_OPEN_ALL 2
-#define CNETCDFREADER_MODE_GET_METADATA 3
-#define CNETCDFREADER_MODE_OPEN_DIMENSIONS 4
-#define CNETCDFREADER_MODE_OPEN_EXTENT 5
+#define CNETCDFREADER_MODE_OPEN_HEADER 1     /* Only set the header in the cdfObject, like dimensions, variables and attributes. Data can still be undefined */
+#define CNETCDFREADER_MODE_OPEN_ALL 2        /* Open all, including data */
+#define CNETCDFREADER_MODE_GET_METADATA 3    /* Process only data needed for metadata */
+#define CNETCDFREADER_MODE_OPEN_DIMENSIONS 4 /* Open dimensions only, like used in the WMS GetCapabilities generation of CXMLGen.*/
+#define CNETCDFREADER_MODE_OPEN_EXTENT 5     /* Open a subset of the grid, read data for given extent (bbox) */
 
 // Web Coverage restriction and Get Feature Info restriction
 #define ALLOW_NONE 1

@@ -29,10 +29,39 @@
 class CConvertKNMIH5EchoToppen {
 private:
   DEF_ERRORFUNCTION();
+  /**
+   * @brief Quickly checks if the format is suitable for this converter
+   *
+   * @param cdfObject
+   * @return int zero when this is indeed a echotoppen HDF5 file.
+   */
   static int checkIfKNMIH5EchoToppenFormat(CDFObject *cdfObject);
 
+  /**
+   * @brief Calculate the flight level based on the given echotoppen height from the HDF5 file
+   *
+   * @param height
+   * @return int
+   */
+  static int calcFlightLevel(float height);
+
 public:
+  /**
+   * @brief Populate the cdfObject, by defining dimensions, variables and attributes, should not yet read any data. This function adjusts the cdfObject by creating a virtual 2D variable named
+   * echotoppen.
+   *
+   * @param cdfObject
+   * @return int
+   */
   static int convertKNMIH5EchoToppenHeader(CDFObject *cdfObject);
+
+  /**
+   * @brief Set the data for the variable in screenspace coordinates as defined in dataSource->srvParams->Geo. Wheter all data is read or only the CDM structure depends on the mode.
+   *
+   * @param dataSource
+   * @param mode CNETCDFREADER_MODE_OPEN_HEADER or CNETCDFREADER_MODE_OPEN_ALL
+   * @return int
+   */
   static int convertKNMIH5EchoToppenData(CDataSource *dataSource, int mode);
 };
 #endif
