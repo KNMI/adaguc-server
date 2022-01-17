@@ -513,6 +513,188 @@ int CDFHDF5Reader::convertLSASAFtoCF() {
   return 0;
 }
 
+int CDFHDF5Reader::convertKNMIH5VolScan() {
+  try {
+    /* Check if the image1.statistics variable and stat_cell_number is set */
+    CDF::Attribute *attr = cdfObject->getVariable("overview")->getAttribute("number_scan_groups");
+    int number_scan_groups;
+    attr->getData(&number_scan_groups, 1);
+    if (number_scan_groups==0) return 0;
+    /* TODO: Return 1 in case it is not a point renderer*/
+  } catch (int e) {
+    return 0;
+  }
+
+  int scans[] = { 8, 9, 10, 2, 11, 3, 12, 4, 13, 5, 14, 6, 7};
+  int nrscans = 13; // length(scans)
+  CT::string scan_params[] = {"KDP", "PhiDP","RhoHV", "V", "W", "Z"};
+
+  for (size_t v = 0; v < cdfObject->variables.size(); v++) {
+    CDF::Variable *var = cdfObject->variables[v];
+    CT::string *terms = var->name.splitToArray(".");
+    if (terms->count>1) {
+      if (terms[0].startsWith("scan")&&terms[1].startsWith("scan_")&&terms[1].endsWith("_data")) {
+        var->setAttributeText("ADAGUC_SKIP", "TRUE");
+      }
+    }
+    if (var->name.startsWith("visualisation")){
+      var->setAttributeText("ADAGUC_SKIP", "TRUE");
+    }
+  }
+
+  size_t width=700;
+  size_t height=765;
+  double startX=0;
+  double startY=-3649.980;
+  double step_x=1.000;
+  double step_y=-1.000;
+
+  //For x
+  CDF::Dimension *dimX = new CDF::Dimension();
+  dimX->name = "x";
+  dimX->setSize(width);
+  cdfObject->addDimension(dimX);
+  CDF::Variable *varX = new CDF::Variable();
+  varX->setType(CDF_DOUBLE);
+  varX->name.copy("x");
+  varX->isDimension = true;
+  varX->dimensionlinks.push_back(dimX);
+  cdfObject->addVariable(varX);
+  CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
+  double *px = (double *)varX->data;
+  double xval=startX;
+  for (size_t i=0; i<dimX->length; i++) {
+    *px++=xval;
+    xval+=step_x;
+  }
+  CDBDebug("X filled from %f to %f", startX, xval);
+
+  // For y
+  CDF::Dimension *dimY = new CDF::Dimension();
+  dimY->name = "y";
+  dimY->setSize(height);
+  cdfObject->addDimension(dimY);
+  CDF::Variable *varY = new CDF::Variable();
+  varY->setType(CDF_DOUBLE);
+  varY->name.copy("y");
+  varY->isDimension = true;
+  varY->dimensionlinks.push_back(dimY);
+  cdfObject->addVariable(varY);
+  CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+  double *py = (double *)varY->data;
+  double yval=startY;
+  for (size_t i=0; i<height; i++) {
+    *py++=yval;
+    yval+=step_y;
+  }
+  CDBDebug("Y filled from %f to %f", startY, yval);
+
+  // Create a new time dimension for the new 2D fields.
+  CDF::Dimension *dimT = new CDF::Dimension();
+  dimT->name = "time";
+  dimT->setSize(1);
+  cdfObject->addDimension(dimT);
+  CT::string time = cdfObject->getVariable("overview")->getAttribute("product_datetime_start")->getDataAsString();
+  CDF::Variable *timeVar = new CDF::Variable();
+  timeVar->setType(CDF_DOUBLE);
+  timeVar->name.copy("time");
+  timeVar->setAttributeText("standard_name", "time");
+  timeVar->setAttributeText("long_name", "time");
+  timeVar->isDimension=true;
+  char szStartTime[100];
+  CT::string time_units="minutes since 2000-01-01 00:00:00\0";
+  CT::string h5Time = cdfObject->getVariable("overview")->getAttribute("product_datetime_start")->getDataAsString();
+  CDFHDF5Reader::HDF5ToADAGUCTime(szStartTime, h5Time.c_str());
+  // Set adaguc time
+  CTime ctime;
+  if (ctime.init(time_units, NULL) != 0) {
+    CDBError("Could not initialize CTIME: %s", time_units.c_str());
+    return 1;
+  }
+  double offset;
+  try {
+    offset = ctime.dateToOffset(ctime.stringToDate(szStartTime));
+  } catch (int e) {
+    CT::string message = CTime::getErrorMessage(e);
+    CDBError("CTime Exception %s", message.c_str());
+    return 1;
+  }
+  // CDBDebug("offset from %s = %f", szStartTime, offset);
+
+  timeVar->setAttributeText("units", time_units.c_str());
+  timeVar->dimensionlinks.push_back(dimT);
+  CDF::allocateData(CDF_DOUBLE, &timeVar->data, 1);
+  ((double *)timeVar->data)[0] = offset;
+  cdfObject->addVariable(timeVar);
+
+  // Create a new elevation dimension for the new 2D fields.
+  CDF::Dimension *dimElevation = new CDF::Dimension();
+  dimElevation->name = "scan_elevation";
+  dimElevation->setSize(nrscans);
+  cdfObject->addDimension(dimElevation);
+  CDF::Variable *varElevation = new CDF::Variable();
+  varElevation->setType(CDF_DOUBLE);
+  varElevation->name.copy("scan_elevation");
+  CDF::Attribute *unit = new CDF::Attribute("units", "degrees");
+  varElevation->addAttribute(unit);
+  varElevation->isDimension = true;
+  varElevation->dimensionlinks.push_back(dimElevation);
+  cdfObject->addVariable(varElevation);
+  CDF::allocateData(CDF_DOUBLE, &varElevation->data, dimElevation->length);
+
+  CDF::Variable *varScan = new CDF::Variable();
+  varScan->setType(CDF_UINT);
+  varScan->name.copy("scan_number");
+  varScan->isDimension = false;
+  varScan->dimensionlinks.push_back(dimElevation);
+  cdfObject->addVariable(varScan);
+  CDF::allocateData(varScan->getType(), &varScan->data, dimElevation->length);
+
+  for (int i=0; i<nrscans; i++) {
+    CT::string scanVarName;
+    scanVarName.print("scan%1d", scans[i]);
+    CDF::Variable *scanVar = cdfObject->getVariable(scanVarName.c_str());
+    float scanElevation;
+    scanVar->getAttribute("scan_elevation")->getData(&scanElevation, 1);
+    CDBDebug("scanelevation[%d] %d:%f", i, scans[i], scanElevation);
+    ((double*)varElevation->data)[i]=scanElevation;
+    ((unsigned int *)varScan->data)[i]=scans[i];
+  }
+
+  CDF::Variable *projection = new CDF::Variable();
+  projection->name = "projection";
+  projection->setType(CDF_CHAR);
+  projection->setAttributeText("projection_name", "STEREOGRAPHIC");
+  projection->setAttributeText("grid_mapping_name", "polar_stereographic");
+  projection->setAttributeText("proj4_params", KNMI_VOLSCAN_PROJ4);
+  cdfObject->addVariable(projection);
+
+  volScanReader = new CustomVolScanReader();
+  for (CT::string s: scan_params) {
+    CDBDebug("Adding variable %s", s.c_str());
+    CDF::Variable *var = new CDF::Variable();
+    var->setType(CDF_FLOAT);;
+    var->name.copy(s);
+    cdfObject->addVariable(var);
+    var->setAttributeText("standard_name", s.c_str());
+    var->setAttributeText("long_name", s.c_str());
+    var->setAttributeText("grid_mapping", "projection");
+    var->setAttributeText("ADAGUC_VOL_SCAN", "TRUE");
+    var->setAttributeText("units", "fixedUnits");
+    float fillValue = MAXFLOAT;
+    var->setAttribute("_FillValue", CDF_FLOAT, &fillValue, 1);
+    var->setCustomReader(volScanReader);
+
+    var->dimensionlinks.push_back(dimT);
+    var->dimensionlinks.push_back(dimElevation);
+    var->dimensionlinks.push_back(dimY);
+    var->dimensionlinks.push_back(dimX);
+
+  }
+
+  return 0;
+}
+
 int CDFHDF5Reader::readAttributes(std::vector<CDF::Attribute *> &attributes, hid_t HDF5_group) {
   hid_t HDF5_attr_class, HDF5_attribute;
   int dNumAttributes = H5Aget_num_attrs(HDF5_group);

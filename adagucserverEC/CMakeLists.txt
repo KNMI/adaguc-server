@@ -49,7 +49,6 @@ add_library(
     CImgRenderPoints.h
     CConvertCurvilinear.h
     CConvertHexagon.h
-    CConvertKNMIH5VolScan.h
     CInspire.h
     CGetFileInfo.h
     CStyleConfiguration.h
@@ -111,7 +110,6 @@ add_library(
     CImgRenderPoints.cpp
     CConvertCurvilinear.cpp
     CConvertHexagon.cpp
-    CConvertKNMIH5VolScan.cpp
     CInspire.cpp
     CGetFileInfo.cpp
     CStyleConfiguration.cpp

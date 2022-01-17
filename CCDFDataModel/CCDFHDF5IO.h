@@ -34,9 +34,13 @@
 #include "CDebugger.h"
 #include "CTime.h"
 #include "CProj4ToCF.h"
+#include "proj_api.h"
 //#define CCDFHDF5IO_DEBUG
 
 #define CCDFHDF5IO_GROUPSEPARATOR "."
+
+#define KNMI_VOLSCAN_PROJ4 "+proj=stere +lat_0=90 +lon_0=0 +lat_ts=60 +a=6378.14 +b=6356.75 +x_0=0 y_0=0 +unit=km"
+
 void ncError(int line, const char *className, const char *msg, int e);
 class CDFHDF5Reader : public CDFReader {
 private:
@@ -118,6 +122,172 @@ private:
   bool b_KNMIHDF5UseEndTime;
 
 public:
+  class CustomVolScanReader : public CDF::Variable::CustomReader {
+public:
+  ~CustomVolScanReader() {}
+
+  int getCalibrationParameters(CT::string formula, float &factor, float &offset) {
+    CDBDebug("Formula: %s",formula.c_str());
+    int rightPartFormulaPos = formula.indexOf("=");
+    int multiplicationSignPos = formula.indexOf("*");
+    int additionSignPos = formula.indexOf("+");
+    if (rightPartFormulaPos != -1 && multiplicationSignPos != -1 && additionSignPos != -1) {
+      factor = formula.substring(rightPartFormulaPos + 1, multiplicationSignPos).trim().toFloat();
+      offset = formula.substring(additionSignPos + 1, formula.length()).trim().toFloat();
+      return 0;
+    }
+    CDBDebug("Using default factor/offset from %s", formula.c_str());
+    factor = 1;
+    offset = 0;
+    return 1;
+  }
+
+  int readData(CDF::Variable *thisVar, size_t *start, size_t *count, ptrdiff_t *stride) {
+#ifdef CCDFHDF5IO_DEBUG
+    CDBDebug("READ data for %s called", thisVar->name.c_str());
+#endif
+
+    size_t newstart[thisVar->dimensionlinks.size()];
+    for (size_t j = 0; j < thisVar->dimensionlinks.size(); j++) {
+      newstart[j] = start[j];
+#ifdef CCDFHDF5IO_DEBUG
+      CDBDebug("%s %d %d %d %d", thisVar->dimensionlinks[j]->name.c_str(), j, start[j], count[j], stride[j]);
+#endif
+    }
+    CDBDebug("Continuing for %s", thisVar->name.c_str());
+    newstart[0] = 0;
+    if (newstart[0]==0) {} //Silence TODO
+
+    CDF::Variable *varScanNumber = ((CDFObject *)thisVar->getParentCDFObject())->getVariable("scan_number");
+    unsigned int * scanNumbers = (unsigned int *)(varScanNumber->data);
+
+    CT::string varName;
+    varName.print("scan%d%sscan_%s_data", scanNumbers[(int)start[1]], CCDFHDF5IO_GROUPSEPARATOR, thisVar->name.c_str());
+    CDBDebug("varName: %s", varName.c_str());
+    CDF::Variable *var = ((CDFObject *)thisVar->getParentCDFObject())->getVariable(varName.c_str());
+
+    CDF::Dimension *xDim = ((CDFObject *)thisVar->getParentCDFObject())->getDimension("x");
+    size_t xSize = xDim->getSize();
+    CDF::Variable *xDimVar = ((CDFObject *)thisVar->getParentCDFObject())->getVariable("x");
+    double xMin=xDimVar->getDataAt<double>(0);
+    double xMax=xDimVar->getDataAt<double>(xSize-1);
+    double xStep = (xMax-xMin)/(xSize-1);
+
+    CDF::Dimension *yDim = ((CDFObject *)thisVar->getParentCDFObject())->getDimension("y");
+    size_t ySize = yDim->getSize();
+    CDF::Variable *yDimVar = ((CDFObject *)thisVar->getParentCDFObject())->getVariable("y");
+    double yMin=yDimVar->getDataAt<double>(0);
+    double yMax=yDimVar->getDataAt<double>(ySize-1);
+    double yStep = (yMax-yMin)/(ySize-1);
+
+    CT::string scanCalibrationVarName;
+    scanCalibrationVarName.print("scan%1d.calibration", scanNumbers[start[1]]);
+    CDF::Variable * scanCalibrationVar = ((CDFObject *)thisVar->getParentCDFObject())->getVariable(scanCalibrationVarName);
+    CT::string componentCalibrationStringName;
+    componentCalibrationStringName.print("calibration_%s_formulas", thisVar->name.c_str());
+    CT::string calibrationFormula = scanCalibrationVar->getAttribute(componentCalibrationStringName.c_str())->getDataAsString();
+    float factor, offset;
+    getCalibrationParameters(calibrationFormula, factor, offset);
+
+    CDBDebug("Using factor %f and offset %f for scan%d", factor, offset, scanNumbers[start[1]]);
+    float nodata = MAXFLOAT;
+
+    CDBDebug("Start reading %s %d", var->name.c_str(), var->getType());
+
+    CDFType readType = var->getType();
+    CDBDebug("readType: %d", readType);
+    int status = var->readData(readType, false);
+    float *scanData = (float *)malloc(sizeof(float)*var->getSize());
+    float *pp = scanData;
+    for (size_t i=0; i<var->getSize(); i++) {
+      if (((unsigned short *)var->data)[i]==0) {
+        *pp++=nodata;
+      } else {
+        *pp++=((unsigned short *)var->data)[i]*factor+offset;
+      }
+    }
+
+    CDBDebug("read and converted %d values (%d, %f)",var->getSize(), ((unsigned short *)(var->data))[0], *scanData);
+    //int status = var->readData(readType, newstart, count, stride, true);
+
+    if (status != 0) {
+      CDBError("CustomVolScanReader: Unable to read variable %s", thisVar->name.c_str());
+      return 1;
+    }
+
+    CDF::freeData(&thisVar->data);
+    int size = 1;
+    for (size_t j = 0; j < thisVar->dimensionlinks.size(); j++) {
+      size *= int((float(count[j]) / float(stride[j])) + 0.5);
+    }
+    thisVar->setSize(size);
+
+    CDBDebug("Reading size: %d", size);
+
+    CDF::allocateData(thisVar->getType(), &thisVar->data, size);
+
+    float radarLonLat[2];
+    ((CDFObject *)thisVar->getParentCDFObject())->getVariable("radar1")->getAttribute("radar_location")
+          ->getData<float>(radarLonLat, 2);
+    float radarLon=radarLonLat[0];
+    float radarLat=radarLonLat[1];
+
+    CT::string scanName;
+    scanName.print("scan%1d", scanNumbers[start[1]]);
+    CDF::Variable * scanVar = ((CDFObject *)thisVar->getParentCDFObject())->getVariable(scanName);
+    float scan_elevation;
+    scanVar->getAttribute("scan_elevation")->getData<float>(&scan_elevation, 1);
+    int scan_nrang;
+    scanVar->getAttribute("scan_number_range")->getData<int>(&scan_nrang, 1);
+    int scan_nazim;
+    scanVar->getAttribute("scan_number_azim")->getData<int>(&scan_nazim, 1);
+    float scan_rscale;
+    scanVar->getAttribute("scan_range_bin")->getData<float>(&scan_rscale, 1);
+    float scan_ascale;
+    scanVar->getAttribute("scan_azim_bin")->getData<float>(&scan_ascale, 1);
+    CDBDebug("scanparameters [%d:%d] %f, %d, %d, %f, %f", start[1], scanNumbers[start[1]],
+             scan_elevation, scan_nrang,scan_nazim,  scan_rscale, scan_ascale);
+
+    /*Setting geographical projection parameters of input Cartesian grid.*/
+    CT::string scanProj4;
+    scanProj4.print("+proj=aeqd +a=6378.137 +b=6356.752 +R_A +lat_0=%.3f +lon_0=%.3f +x_0=0 +y_0=0", radarLat, radarLon);
+    projPJ projAeqd = pj_init_plus(scanProj4.c_str());
+    if (projAeqd == NULL)
+    {
+    }
+
+    CT::string compositeProj4 = KNMI_VOLSCAN_PROJ4;
+    projPJ projComposite = pj_init_plus(compositeProj4.c_str());
+
+
+    double x, y;
+    float rang, azim;
+    int ir, ia;
+    float *p = (float *)thisVar->data;
+    float *pScan = scanData;
+
+    CDBDebug("Filling %d * %d cells", count[2]*stride[2], count[3]*stride[3]);
+    for (size_t row=start[2]; row<count[2]; row+=stride[2]) {
+      for (size_t col=start[3]; col<count[3]; col+=stride[3]) {
+        x = xMin + (col + 0.5) * xStep;
+        y = yMin +(row + 0.5) * yStep;
+        pj_transform(projComposite, projAeqd, 1, 1, &x, &y, NULL);
+        rang = sqrt(x * x + y * y);
+        azim = atan2(x, y) * 180.0 / M_PI;
+        ir = (int) (rang / scan_rscale);
+        ia = (int) (azim / scan_ascale);
+        ia = (ia + scan_nazim) % scan_nazim;
+        if (ir < scan_nrang) *p++ = pScan[ir + ia * scan_nrang];
+        else *p++ = nodata;
+      }
+    }
+
+    free(scanData);
+
+    return 0;
+  }
+};
+
   class CustomForecastReader : public CDF::Variable::CustomReader {
   public:
     ~CustomForecastReader() {}
@@ -180,6 +350,7 @@ public:
     b_EnableKNMIHDF5toCFConversion = false;
     b_KNMIHDF5UseEndTime = false;
     forecastReader = NULL;
+    volScanReader = NULL;
     fileIsOpen = false;
   }
   ~CDFHDF5Reader() {
@@ -421,6 +592,8 @@ public:
   int convertNWCSAFtoCF();
 
   int convertLSASAFtoCF();
+
+  int convertKNMIH5VolScan();
 
   int convertKNMIHDF5toCF() {
 
@@ -1012,6 +1185,8 @@ public:
       if (status == 1) return 1;
       status = convertLSASAFtoCF();
       if (status == 1) return 1;
+      status = convertKNMIH5VolScan();
+      if (status == 1) return 1;
     }
     fileIsOpen = true;
     return 0;
@@ -1021,6 +1196,10 @@ public:
     if (forecastReader != NULL) {
       delete forecastReader;
       forecastReader = NULL;
+    }
+    if (volScanReader != NULL) {
+       delete volScanReader;
+       volScanReader = NULL;
     }
     fileIsOpen = false;
     return 0;
@@ -1245,6 +1424,7 @@ public:
 
 private:
   CustomForecastReader *forecastReader;
+  CustomVolScanReader *volScanReader;
 };
 
 #endif
