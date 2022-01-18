@@ -37,6 +37,54 @@
 
 const char *CImgRenderPolylines::className = "CImgRenderPolylines";
 
+struct Point2D {
+  double x;
+  double y;
+};
+
+Point2D compute2DPolygonCentroid(const Point2D *vertices, int vertexCount) {
+  Point2D centroid = {0, 0};
+  double signedArea = 0.0;
+  double x0 = 0.0; // Current vertex X
+  double y0 = 0.0; // Current vertex Y
+  double x1 = 0.0; // Next vertex X
+  double y1 = 0.0; // Next vertex Y
+  double a = 0.0;  // Partial signed area
+
+  int lastdex = vertexCount - 1;
+  const Point2D *prev = &(vertices[lastdex]);
+  const Point2D *next;
+
+  // For all vertices in a loop
+  for (int i = 0; i < vertexCount; ++i) {
+    next = &(vertices[i]);
+    x0 = prev->x;
+    y0 = prev->y;
+    x1 = next->x;
+    y1 = next->y;
+    a = x0 * y1 - x1 * y0;
+    signedArea += a;
+    centroid.x += (x0 + x1) * a;
+    centroid.y += (y0 + y1) * a;
+    prev = next;
+  }
+
+  signedArea *= 0.5;
+  centroid.x /= (6.0 * signedArea);
+  centroid.y /= (6.0 * signedArea);
+
+  return centroid;
+}
+
+Point2D getCentroid(const float *polyX, const float *polyY, const int numPoints) {
+  Point2D vertices[numPoints];
+  for (int i = 0; i < numPoints; i++) {
+    vertices[i].x = polyX[i];
+    vertices[i].y = polyY[i];
+  }
+  return compute2DPolygonCentroid(vertices, numPoints);
+}
+
 void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSource, CDrawImage *drawImage) {
   CColor drawPointTextColor(0, 0, 0, 255);
   CColor drawPointFillColor(0, 0, 0, 128);
@@ -120,13 +168,14 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
         // if(featureIndex!=0)break;
         std::vector<Polygon> polygons = (*feature)->getPolygons();
         CT::string id = (*feature)->getId();
-        //                  CDBDebug("feature[%s] %d of %d with %d polygons", id.c_str(), featureIndex,           featureStore[fileName].size(), polygons.size());
+        CDBDebug("feature[%s] %d of %d with %d polygons", id.c_str(), featureIndex, featureStore[fileName].size(), polygons.size());
         for (std::vector<Polygon>::iterator itpoly = polygons.begin(); itpoly != polygons.end(); ++itpoly) {
           float *polyX = itpoly->getLons();
           float *polyY = itpoly->getLats();
           int numPoints = itpoly->getSize();
           float projectedX[numPoints];
           float projectedY[numPoints];
+          bool firstPolygon = true;
 
           // CDBDebug("Plotting a polygon of %d points with %d holes [? of %d]", numPoints, itpoly->getHoles().size(), featureIndex);
           int cnt = 0;
@@ -151,8 +200,38 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
             //                       projectedY[j]=height-dlat;
           }
 
-          //                    CDBDebug("Draw polygon: %d points (%d)", cnt, numPoints);
+          CDBDebug("Draw polygon: %d points (%d)", cnt, numPoints);
           drawImage->poly(projectedX, projectedY, cnt, drawPointLineWidth, drawPointLineColor2, true, false);
+          if (firstPolygon) {
+            Point2D centroid = getCentroid(polyX, polyY, numPoints);
+            double centroidX = centroid.x;
+            double centroidY = centroid.y;
+            int status = 0;
+            if (projectionRequired) status = imageWarper->reprojfromLatLon(centroidX, centroidY);
+            if (!status) {
+              int dlon, dlat;
+              dlon = int((centroidX - offsetX) / cellSizeX) + 1;
+              dlat = int((centroidY - offsetY) / cellSizeY);
+              // projectedX[cnt] = dlon;
+              // projectedY[cnt] = height - dlat;
+              CDBDebug("Centroid [%f, %f] [%d, %d]of %s", centroidX, centroidY, dlon, dlat, (*feature)->getId().c_str());
+              std::map<std::string, FeatureProperty *>::iterator it;
+              CT::string id_s;
+              CT::string featureId;
+              it = (*feature)->getFp().find("Gemeentenaam");
+              if (it != (*feature)->getFp().end()) {
+                featureId = it->second->toString().c_str();
+                //                     CDBDebug("Found %s %s", it->first.c_str(), id_s.c_str());
+              } else {
+                featureId = (*feature)->getId();
+              }
+              drawImage->drawCenteredText(dlon, height - dlat, "/home/vreedede/Projects/adaguc-server-test/adaguc-server-workshop/data/fonts/Roboto-Regular.ttf", 8, 0, featureId, drawPointTextColor);
+            } else {
+              CDBDebug("Status: %d centroid [%f,%f]", status, centroidX, centroidY);
+            }
+            firstPolygon = false;
+          }
+
           //                    break;
           if (true) {
             std::vector<PointArray> holes = itpoly->getHoles();
@@ -223,7 +302,7 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
             //                       projectedY[j]=height-dlat;
           }
 
-          //                                        CDBDebug("Draw polygon: %d points (%d)", cnt, numPoints);
+          CDBDebug("Draw polygon: %d points (%d)", cnt, numPoints);
           drawImage->poly(projectedX, projectedY, cnt, drawPointLineWidth, drawPointLineColor2, false, false);
           //                    break;
         }
