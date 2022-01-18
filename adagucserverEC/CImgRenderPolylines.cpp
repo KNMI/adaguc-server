@@ -230,7 +230,7 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
                 } else {
                   featureId = (*feature)->getId();
                 }
-                drawImage->drawCenteredText(dlon, height - dlat, "/home/vreedede/Projects/adaguc-server-test/adaguc-server-workshop/data/fonts/Roboto-Regular.ttf", 8, 0, featureId,
+                drawImage->drawCenteredText(dlon, height - dlat, "/home/vreedede/Projects/adaguc-server-test/adaguc-server-workshop/data/fonts/Roboto-Regular.ttf", 7, 0, featureId,
                                             drawPointTextColor);
               } else {
                 CDBDebug("Status: %d centroid [%f,%f]", status, centroidX, centroidY);
