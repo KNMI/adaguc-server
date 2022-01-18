@@ -28,6 +28,7 @@
 #include "CConvertGeoJSON.h"
 #include <values.h>
 #include <string>
+#include <algorithm>
 
 //   #define MEASURETIME
 
@@ -154,6 +155,8 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
 
   std::map<std::string, std::vector<Feature *>> featureStore = CConvertGeoJSON::featureStore;
 
+  srand(time(NULL));
+
   int featureIndex = 0;
   for (std::map<std::string, std::vector<Feature *>>::iterator itf = featureStore.begin(); itf != featureStore.end(); ++itf) {
     std::string fileName = itf->first.c_str();
@@ -202,36 +205,39 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
 
           CDBDebug("Draw polygon: %d points (%d)", cnt, numPoints);
           drawImage->poly(projectedX, projectedY, cnt, drawPointLineWidth, drawPointLineColor2, true, false);
-          if (firstPolygon) {
-            Point2D centroid = getCentroid(polyX, polyY, numPoints);
-            double centroidX = centroid.x;
-            double centroidY = centroid.y;
-            int status = 0;
-            if (projectionRequired) status = imageWarper->reprojfromLatLon(centroidX, centroidY);
-            if (!status) {
-              int dlon, dlat;
-              dlon = int((centroidX - offsetX) / cellSizeX) + 1;
-              dlat = int((centroidY - offsetY) / cellSizeY);
-              // projectedX[cnt] = dlon;
-              // projectedY[cnt] = height - dlat;
-              CDBDebug("Centroid [%f, %f] [%d, %d]of %s", centroidX, centroidY, dlon, dlat, (*feature)->getId().c_str());
-              std::map<std::string, FeatureProperty *>::iterator it;
-              CT::string id_s;
-              CT::string featureId;
-              it = (*feature)->getFp().find("Gemeentenaam");
-              if (it != (*feature)->getFp().end()) {
-                featureId = it->second->toString().c_str();
-                //                     CDBDebug("Found %s %s", it->first.c_str(), id_s.c_str());
+          if (true /* rand() % 1 == 0 */) {
+            // Determine centroid for first polygon.
+            if (firstPolygon) {
+              Point2D centroid = getCentroid(polyX, polyY, numPoints);
+              double centroidX = centroid.x;
+              double centroidY = centroid.y;
+              int status = 0;
+              if (projectionRequired) status = imageWarper->reprojfromLatLon(centroidX, centroidY);
+              if (!status) {
+                int dlon, dlat;
+                dlon = int((centroidX - offsetX) / cellSizeX) + 1;
+                dlat = int((centroidY - offsetY) / cellSizeY);
+                // projectedX[cnt] = dlon;
+                // projectedY[cnt] = height - dlat;
+                CDBDebug("Centroid [%f, %f] [%d, %d]of %s", centroidX, centroidY, dlon, dlat, (*feature)->getId().c_str());
+                std::map<std::string, FeatureProperty *>::iterator it;
+                CT::string id_s;
+                CT::string featureId;
+                it = (*feature)->getFp().find("Gemeentenaam");
+                if (it != (*feature)->getFp().end()) {
+                  featureId = it->second->toString().c_str();
+                  //                     CDBDebug("Found %s %s", it->first.c_str(), id_s.c_str());
+                } else {
+                  featureId = (*feature)->getId();
+                }
+                drawImage->drawCenteredText(dlon, height - dlat, "/home/vreedede/Projects/adaguc-server-test/adaguc-server-workshop/data/fonts/Roboto-Regular.ttf", 8, 0, featureId,
+                                            drawPointTextColor);
               } else {
-                featureId = (*feature)->getId();
+                CDBDebug("Status: %d centroid [%f,%f]", status, centroidX, centroidY);
               }
-              drawImage->drawCenteredText(dlon, height - dlat, "/home/vreedede/Projects/adaguc-server-test/adaguc-server-workshop/data/fonts/Roboto-Regular.ttf", 8, 0, featureId, drawPointTextColor);
-            } else {
-              CDBDebug("Status: %d centroid [%f,%f]", status, centroidX, centroidY);
+              firstPolygon = false;
             }
-            firstPolygon = false;
           }
-
           //                    break;
           if (true) {
             std::vector<PointArray> holes = itpoly->getHoles();
