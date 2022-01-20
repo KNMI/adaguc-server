@@ -32,6 +32,7 @@
 const char *CConvertKNMIH5EchoToppen::className = "CConvertKNMIH5EchoToppen";
 
 #define CConvertKNMIH5EchoToppen_FillValue -1
+#define CConvertKNMIH5EchoToppen_EchoToppenVar "echotops"
 
 int CConvertKNMIH5EchoToppen::calcFlightLevel(float height) {
   float feet = height * 1000 * 3.281f;
@@ -135,7 +136,7 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenHeader(CDFObject *cdfObject
     echoToppenVar->dimensionlinks.push_back(dimY);
     echoToppenVar->dimensionlinks.push_back(dimX);
     echoToppenVar->setType(CDF_FLOAT);
-    echoToppenVar->name = "echotoppen";
+    echoToppenVar->name = CConvertKNMIH5EchoToppen_EchoToppenVar;
     echoToppenVar->addAttribute(new CDF::Attribute("units", "FL (ft*100)"));
     echoToppenVar->setAttributeText("grid_mapping", "projection");
   }
@@ -153,7 +154,7 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
   if (CConvertKNMIH5EchoToppen::checkIfKNMIH5EchoToppenFormat(cdfObject0) == 1) return 1;
 
   /* In case echotoppen is not defined in the datasource, we should do nothing otherwise we might mess up the actual image data request */
-  if (!dataSource->getDataObject(0)->cdfVariable->name.equals("echotoppen")) {
+  if (!dataSource->getDataObject(0)->cdfVariable->name.equals(CConvertKNMIH5EchoToppen_EchoToppenVar)) {
     CDBDebug("Skipping convertKNMIH5EchoToppenData");
     return 1;
   }
@@ -270,7 +271,9 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
       /* Finally add the found point to the datasource, these will become visibile when the point rendermethod is selected */
       dataSource->dataObjects[0]->points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, v));
 
-      /* Also draw a dot on the virtual echotoppen grid, useful to see something in neartest neighbour rendermethod */
+      /* Also draw a dot on the virtual echotoppen grid, useful to see something in neartest neighbour rendermethod
+         The AutoWMS defaults to nearest neightbour, so it will at least show the echotoppen as dots on a grid.
+       */
       CConvertADAGUCPoint::drawDot(dlon, dlat, v, dimX->length, dimY->length, (float *)echoToppenVar->data);
     }
   }
