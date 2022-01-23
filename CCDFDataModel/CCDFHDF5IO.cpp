@@ -514,42 +514,43 @@ int CDFHDF5Reader::convertLSASAFtoCF() {
 }
 
 int CDFHDF5Reader::convertKNMIH5VolScan() {
+  return 0;
   try {
     /* Check if the image1.statistics variable and stat_cell_number is set */
     CDF::Attribute *attr = cdfObject->getVariable("overview")->getAttribute("number_scan_groups");
     int number_scan_groups;
     attr->getData(&number_scan_groups, 1);
-    if (number_scan_groups==0) return 0;
+    if (number_scan_groups == 0) return 0;
     /* TODO: Return 1 in case it is not a point renderer*/
   } catch (int e) {
     return 0;
   }
 
-  int scans[] = { 8, 9, 10, 2, 11, 3, 12, 4, 13, 5, 14, 6, 7};
+  int scans[] = {8, 9, 10, 2, 11, 3, 12, 4, 13, 5, 14, 6, 7};
   int nrscans = 13; // length(scans)
-  CT::string scan_params[] = {"KDP", "PhiDP","RhoHV", "V", "W", "Z"};
+  CT::string scan_params[] = {"KDP", "PhiDP", "RhoHV", "V", "W", "Z"};
 
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
     CT::string *terms = var->name.splitToArray(".");
-    if (terms->count>1) {
-      if (terms[0].startsWith("scan")&&terms[1].startsWith("scan_")&&terms[1].endsWith("_data")) {
+    if (terms->count > 1) {
+      if (terms[0].startsWith("scan") && terms[1].startsWith("scan_") && terms[1].endsWith("_data")) {
         var->setAttributeText("ADAGUC_SKIP", "TRUE");
       }
     }
-    if (var->name.startsWith("visualisation")){
+    if (var->name.startsWith("visualisation")) {
       var->setAttributeText("ADAGUC_SKIP", "TRUE");
     }
   }
 
-  size_t width=700;
-  size_t height=765;
-  double startX=0;
-  double startY=-3649.980;
-  double step_x=1.000;
-  double step_y=-1.000;
+  size_t width = 700;
+  size_t height = 765;
+  double startX = 0;
+  double startY = -3649.980;
+  double step_x = 1.000;
+  double step_y = -1.000;
 
-  //For x
+  // For x
   CDF::Dimension *dimX = new CDF::Dimension();
   dimX->name = "x";
   dimX->setSize(width);
@@ -562,10 +563,10 @@ int CDFHDF5Reader::convertKNMIH5VolScan() {
   cdfObject->addVariable(varX);
   CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
   double *px = (double *)varX->data;
-  double xval=startX;
-  for (size_t i=0; i<dimX->length; i++) {
-    *px++=xval;
-    xval+=step_x;
+  double xval = startX;
+  for (size_t i = 0; i < dimX->length; i++) {
+    *px++ = xval;
+    xval += step_x;
   }
   CDBDebug("X filled from %f to %f", startX, xval);
 
@@ -582,10 +583,10 @@ int CDFHDF5Reader::convertKNMIH5VolScan() {
   cdfObject->addVariable(varY);
   CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
   double *py = (double *)varY->data;
-  double yval=startY;
-  for (size_t i=0; i<height; i++) {
-    *py++=yval;
-    yval+=step_y;
+  double yval = startY;
+  for (size_t i = 0; i < height; i++) {
+    *py++ = yval;
+    yval += step_y;
   }
   CDBDebug("Y filled from %f to %f", startY, yval);
 
@@ -600,9 +601,9 @@ int CDFHDF5Reader::convertKNMIH5VolScan() {
   timeVar->name.copy("time");
   timeVar->setAttributeText("standard_name", "time");
   timeVar->setAttributeText("long_name", "time");
-  timeVar->isDimension=true;
+  timeVar->isDimension = true;
   char szStartTime[100];
-  CT::string time_units="minutes since 2000-01-01 00:00:00\0";
+  CT::string time_units = "minutes since 2000-01-01 00:00:00\0";
   CT::string h5Time = cdfObject->getVariable("overview")->getAttribute("product_datetime_start")->getDataAsString();
   CDFHDF5Reader::HDF5ToADAGUCTime(szStartTime, h5Time.c_str());
   // Set adaguc time
@@ -650,15 +651,15 @@ int CDFHDF5Reader::convertKNMIH5VolScan() {
   cdfObject->addVariable(varScan);
   CDF::allocateData(varScan->getType(), &varScan->data, dimElevation->length);
 
-  for (int i=0; i<nrscans; i++) {
+  for (int i = 0; i < nrscans; i++) {
     CT::string scanVarName;
     scanVarName.print("scan%1d", scans[i]);
     CDF::Variable *scanVar = cdfObject->getVariable(scanVarName.c_str());
     float scanElevation;
     scanVar->getAttribute("scan_elevation")->getData(&scanElevation, 1);
     CDBDebug("scanelevation[%d] %d:%f", i, scans[i], scanElevation);
-    ((double*)varElevation->data)[i]=scanElevation;
-    ((unsigned int *)varScan->data)[i]=scans[i];
+    ((double *)varElevation->data)[i] = scanElevation;
+    ((unsigned int *)varScan->data)[i] = scans[i];
   }
 
   CDF::Variable *projection = new CDF::Variable();
@@ -670,10 +671,11 @@ int CDFHDF5Reader::convertKNMIH5VolScan() {
   cdfObject->addVariable(projection);
 
   volScanReader = new CustomVolScanReader();
-  for (CT::string s: scan_params) {
+  for (CT::string s : scan_params) {
     CDBDebug("Adding variable %s", s.c_str());
     CDF::Variable *var = new CDF::Variable();
-    var->setType(CDF_FLOAT);;
+    var->setType(CDF_FLOAT);
+    ;
     var->name.copy(s);
     cdfObject->addVariable(var);
     var->setAttributeText("standard_name", s.c_str());
@@ -689,7 +691,6 @@ int CDFHDF5Reader::convertKNMIH5VolScan() {
     var->dimensionlinks.push_back(dimElevation);
     var->dimensionlinks.push_back(dimY);
     var->dimensionlinks.push_back(dimX);
-
   }
 
   return 0;
