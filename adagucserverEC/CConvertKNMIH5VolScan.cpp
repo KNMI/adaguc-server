@@ -1,0 +1,504 @@
+/******************************************************************************
+ *
+ * Project:  ADAGUC Server
+ * Purpose:  ADAGUC OGC Server
+ * Author:   Maarten Plieger, plieger "at" knmi.nl
+ * Date:     2013-06-01
+ *
+ ******************************************************************************
+ *
+ * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************************/
+
+#include "CConvertKNMIH5VolScan.h"
+#include "CImageWarper.h"
+#include "COGCDims.h"
+#include "CCDFHDF5IO.h"
+
+#define CCONVERTKNMIH5VOLSCAN_DEBUG
+const char *CConvertKNMIH5VolScan::className = "CConvertKNMIH5VolScan";
+
+int CConvertKNMIH5VolScan::checkIfIsKNMIH5VolScan(CDFObject *cdfObject, CServerParams *) {
+  try {
+    /* Check if the image1.statistics variable and stat_cell_number is set */
+    CDF::Attribute *attr = cdfObject->getVariable("overview")->getAttribute("number_scan_groups");
+    int number_scan_groups;
+    attr->getData(&number_scan_groups, 1);
+    if (number_scan_groups == 0) return 1;
+    /* TODO: Return 1 in case it is not a point renderer*/
+  } catch (int e) {
+    return 1;
+  }
+  return 0;
+}
+
+int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CServerParams *srvParams) {
+  if (checkIfIsKNMIH5VolScan(cdfObject, srvParams) != 0) return 1;
+  CDBDebug("convertKNMIH5VolScanHeader()");
+
+  int scans[] = {8, 9, 10, 2, 11, 3, 12, 4, 13, 5, 14, 6, 7};
+  int nrscans = 13; // length(scans)
+  CT::string scan_params[] = {"KDP", "PhiDP", "RhoHV", "V", "W", "Z"};
+
+  for (size_t v = 0; v < cdfObject->variables.size(); v++) {
+    CDF::Variable *var = cdfObject->variables[v];
+    CT::string *terms = var->name.splitToArray(".");
+    if (terms->count > 1) {
+      if (terms[0].startsWith("scan") && terms[1].startsWith("scan_") && terms[1].endsWith("_data")) {
+        var->setAttributeText("ADAGUC_SKIP", "TRUE");
+      }
+    }
+    if (var->name.startsWith("visualisation")) {
+      var->setAttributeText("ADAGUC_SKIP", "TRUE");
+    }
+  }
+
+  // double *dfBBOX = new double[4];
+  double dfBBOX[] = {0, 48, 10, 58};
+  // Default size of adaguc 2dField is 2x2
+  int width = 2;  // swathMiddleLon->dimensionlinks[1]->getSize();
+  int height = 2; // swathMiddleLon->dimensionlinks[0]->getSize();
+
+  if (srvParams == NULL) {
+    CDBError("srvParams is not set");
+    return 1;
+  }
+  if (srvParams->Geo->dWidth > 1 && srvParams->Geo->dHeight > 1) {
+    width = srvParams->Geo->dWidth;
+    height = srvParams->Geo->dHeight;
+  }
+
+#ifdef CCONVERTKNMIH5VOLSCAN_DEBUG
+  CDBDebug("Width = %d, Height = %d", width, height);
+#endif
+  if (width < 2 || height < 2) {
+    CDBError("width and height are too small");
+    return 1;
+  }
+
+  double cellSizeX = (dfBBOX[2] - dfBBOX[0]) / double(width);
+  double cellSizeY = (dfBBOX[3] - dfBBOX[1]) / double(height);
+  double offsetX = dfBBOX[0];
+  double offsetY = dfBBOX[1];
+  // delete[] dfBBOX;
+  // dfBBOX = NULL;
+
+  CDBDebug("%f %f %f %f", cellSizeX, cellSizeY, offsetX, offsetY);
+
+  // Add geo variables, only if they are not there already
+  CDF::Dimension *dimX = cdfObject->getDimensionNE("adaguccoordinatex");
+  CDF::Dimension *dimY = cdfObject->getDimensionNE("adaguccoordinatey");
+  CDF::Variable *varX = cdfObject->getVariableNE("adaguccoordinatex");
+  CDF::Variable *varY = cdfObject->getVariableNE("adaguccoordinatey");
+  CDF::Dimension *dimT = new CDF::Dimension();
+  CDF::Variable *timeVar = new CDF::Variable();
+  CDF::Dimension *dimElevation = new CDF::Dimension();
+  CDF::Variable *varElevation = new CDF::Variable();
+
+  if (dimX == NULL || dimY == NULL || varX == NULL || varY == NULL) {
+    // If not available, create new dimensions and variables (X,Y,T)
+    // For x
+    dimX = new CDF::Dimension();
+    dimX->name = "adaguccoordinatex";
+    dimX->setSize(width);
+    cdfObject->addDimension(dimX);
+    varX = new CDF::Variable();
+    varX->setType(CDF_DOUBLE);
+    varX->name.copy("adaguccoordinatex");
+    varX->isDimension = true;
+    varX->dimensionlinks.push_back(dimX);
+    cdfObject->addVariable(varX);
+    CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
+
+    // For y
+    dimY = new CDF::Dimension();
+    dimY->name = "adaguccoordinatey";
+    dimY->setSize(height);
+    cdfObject->addDimension(dimY);
+    varY = new CDF::Variable();
+    varY->setType(CDF_DOUBLE);
+    varY->name.copy("adaguccoordinatey");
+    varY->isDimension = true;
+    varY->dimensionlinks.push_back(dimY);
+    cdfObject->addVariable(varY);
+    CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+
+#ifdef CCONVERTKNMIH5VOLSCAN_DEBUG
+    CDBDebug("Data allocated for 'x' and 'y' variables (%d x %d)", varX->getSize(), varY->getSize());
+#endif
+
+    // Fill in the X and Y dimensions with the array of coordinates
+    for (size_t j = 0; j < dimX->length; j++) {
+      double x = offsetX + double(j) * cellSizeX + cellSizeX / 2;
+      ((double *)varX->data)[j] = x;
+    }
+    for (size_t j = 0; j < dimY->length; j++) {
+      double y = offsetY + double(j) * cellSizeY + cellSizeY / 2;
+      ((double *)varY->data)[j] = y;
+    }
+
+    // Create a new time dimension for the new 2D fields.
+    dimT->name = "time";
+    dimT->setSize(1);
+    cdfObject->addDimension(dimT);
+    CT::string time = cdfObject->getVariable("overview")->getAttribute("product_datetime_start")->getDataAsString();
+    timeVar->setType(CDF_DOUBLE);
+    timeVar->name.copy("time");
+    timeVar->setAttributeText("standard_name", "time");
+    timeVar->setAttributeText("long_name", "time");
+    timeVar->isDimension = true;
+    char szStartTime[100];
+    CT::string time_units = "minutes since 2000-01-01 00:00:00\0";
+    CT::string h5Time = cdfObject->getVariable("overview")->getAttribute("product_datetime_start")->getDataAsString();
+    CDFHDF5Reader::HDF5ToADAGUCTime(szStartTime, h5Time.c_str());
+    // Set adaguc time
+    CTime ctime;
+    if (ctime.init(time_units, NULL) != 0) {
+      CDBError("Could not initialize CTIME: %s", time_units.c_str());
+      return 1;
+    }
+    double offset;
+    try {
+      offset = ctime.dateToOffset(ctime.stringToDate(szStartTime));
+    } catch (int e) {
+      CT::string message = CTime::getErrorMessage(e);
+      CDBError("CTime Exception %s", message.c_str());
+      return 1;
+    }
+    // CDBDebug("offset from %s = %f", szStartTime, offset);
+
+    timeVar->setAttributeText("units", time_units.c_str());
+    timeVar->dimensionlinks.push_back(dimT);
+    CDF::allocateData(CDF_DOUBLE, &timeVar->data, 1);
+    ((double *)timeVar->data)[0] = offset;
+    cdfObject->addVariable(timeVar);
+
+    // Create a new elevation dimension for the new 2D fields.
+    dimElevation->name = "scan_elevation";
+    dimElevation->setSize(nrscans);
+    cdfObject->addDimension(dimElevation);
+    varElevation->setType(CDF_DOUBLE);
+    varElevation->name.copy("scan_elevation");
+    CDF::Attribute *unit = new CDF::Attribute("units", "degrees");
+    varElevation->addAttribute(unit);
+    varElevation->isDimension = true;
+    varElevation->dimensionlinks.push_back(dimElevation);
+    cdfObject->addVariable(varElevation);
+    CDF::allocateData(CDF_DOUBLE, &varElevation->data, dimElevation->length);
+
+    CDF::Variable *varScan = new CDF::Variable();
+    varScan->setType(CDF_UINT);
+    varScan->name.copy("scan_number");
+    varScan->isDimension = false;
+    varScan->dimensionlinks.push_back(dimElevation);
+    cdfObject->addVariable(varScan);
+    CDF::allocateData(varScan->getType(), &varScan->data, dimElevation->length);
+
+    for (int i = 0; i < nrscans; i++) {
+      CT::string scanVarName;
+      scanVarName.print("scan%1d", scans[i]);
+      CDF::Variable *scanVar = cdfObject->getVariable(scanVarName.c_str());
+      float scanElevation;
+      scanVar->getAttribute("scan_elevation")->getData(&scanElevation, 1);
+      CDBDebug("scanelevation[%d] %d:%f", i, scans[i], scanElevation);
+      ((double *)varElevation->data)[i] = scanElevation;
+      ((unsigned int *)varScan->data)[i] = scans[i];
+    }
+  }
+  // CDFHDF5Reader::CustomVolScanReader *volScanReader = new CDFHDF5Reader::CustomVolScanReader();
+  // CDF::Variable::CustomMemoryReader *memoryReader = CDF::Variable::CustomMemoryReaderInstance;
+  for (CT::string s : scan_params) {
+    CDBDebug("Adding variable %s", s.c_str());
+    CDF::Variable *var = new CDF::Variable();
+    var->setType(CDF_FLOAT);
+    ;
+    var->name.copy(s);
+    cdfObject->addVariable(var);
+    var->setAttributeText("standard_name", s.c_str());
+    var->setAttributeText("long_name", s.c_str());
+    var->setAttributeText("grid_mapping", "projection");
+    var->setAttributeText("ADAGUC_VOL_SCAN", "TRUE");
+    var->setAttributeText("units", "fixedUnits");
+    float fillValue = MAXFLOAT;
+    var->setAttribute("_FillValue", CDF_FLOAT, &fillValue, 1);
+    // var->setCustomReader(memoryReader);
+
+    var->dimensionlinks.push_back(dimT);
+    var->dimensionlinks.push_back(dimElevation);
+    var->dimensionlinks.push_back(dimY);
+    var->dimensionlinks.push_back(dimX);
+  }
+
+  // CT::string dumpString = CDF::dump(cdfObject);
+  // CDBDebug("[After Header]:");
+  // CT::string *lines = dumpString.splitToArray("\n");
+  // for (size_t i = 0; i < lines[0].count; i++) {
+  //   CDBDebug(lines[i]);
+  // }
+
+  return 0;
+}
+
+int CConvertKNMIH5VolScan::getCalibrationParameters(CT::string formula, float &factor, float &offset) {
+  CDBDebug("Formula: %s", formula.c_str());
+  int rightPartFormulaPos = formula.indexOf("=");
+  int multiplicationSignPos = formula.indexOf("*");
+  int additionSignPos = formula.indexOf("+");
+  if (rightPartFormulaPos != -1 && multiplicationSignPos != -1 && additionSignPos != -1) {
+    factor = formula.substring(rightPartFormulaPos + 1, multiplicationSignPos).trim().toFloat();
+    offset = formula.substring(additionSignPos + 1, formula.length()).trim().toFloat();
+    return 0;
+  }
+  CDBDebug("Using default factor/offset from %s", formula.c_str());
+  factor = 1;
+  offset = 0;
+  return 1;
+}
+
+int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int mode) {
+  CDBDebug("convertKNMIH5VolScanData(%d)", mode);
+  CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
+  if (checkIfIsKNMIH5VolScan(cdfObject, dataSource->srvParams) != 0) return 1;
+
+  size_t nrDataObjects = dataSource->getNumDataObjects();
+  CDataSource::DataObject *dataObjects[nrDataObjects];
+  for (size_t d = 0; d < nrDataObjects; d++) {
+    dataObjects[d] = dataSource->getDataObject(d);
+  }
+  CDF::Variable *new2DVar;
+  new2DVar = dataObjects[0]->cdfVariable;
+  CDBDebug("var: %s", new2DVar->name.c_str());
+
+  // Make the width and height of the new 2D adaguc field the same as the viewing window
+  dataSource->dWidth = dataSource->srvParams->Geo->dWidth;
+  dataSource->dHeight = dataSource->srvParams->Geo->dHeight;
+  // Width needs to be at least 2, the bounding box is calculated from these.
+  if (dataSource->dWidth == 1) dataSource->dWidth = 2;
+  if (dataSource->dHeight == 1) dataSource->dHeight = 2;
+  double cellSizeX = (dataSource->srvParams->Geo->dfBBOX[2] - dataSource->srvParams->Geo->dfBBOX[0]) / double(dataSource->dWidth);
+  double cellSizeY = (dataSource->srvParams->Geo->dfBBOX[3] - dataSource->srvParams->Geo->dfBBOX[1]) / double(dataSource->dHeight);
+  double offsetX = dataSource->srvParams->Geo->dfBBOX[0];
+  double offsetY = dataSource->srvParams->Geo->dfBBOX[1];
+
+#ifdef CCONVERTKNMIH5VOLSCAN_DEBUG
+  CDBDebug("Drawing %s with WH = [%d,%d]", "new2DVar" /*new2DVar->name.c_str()*/, dataSource->dWidth, dataSource->dHeight);
+  CDBDebug("  %f %f %f %f", cellSizeX, cellSizeY, offsetX, offsetY);
+#endif
+  CDBDebug("dataSource->srvParams->Geo->CRS = %s", dataSource->srvParams->Geo->CRS.c_str());
+
+  CDF::Dimension *dimX;
+  CDF::Dimension *dimY;
+  CDF::Variable *varX;
+  CDF::Variable *varY;
+
+  // Create new dimensions and variables (X,Y,T)
+  dimX = cdfObject->getDimension("adaguccoordinatex");
+  dimX->setSize(dataSource->dWidth);
+
+  dimY = cdfObject->getDimension("adaguccoordinatey");
+  dimY->setSize(dataSource->dHeight);
+  CDBDebug("Dimensions set for x=%d and y=%d", dataSource->dWidth, dataSource->dHeight);
+
+  varX = cdfObject->getVariable("adaguccoordinatex");
+  varY = cdfObject->getVariable("adaguccoordinatey");
+
+  CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
+  CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+
+#ifdef CCONVERTKNMIH5VOLSCAN_DEBUG
+  CDBDebug("Data allocated for 'x' and 'y' variables");
+#endif
+
+  // Fill in the X and Y dimensions with the array of coordinates
+  for (size_t j = 0; j < dimX->length; j++) {
+    double x = offsetX + double(j) * cellSizeX + cellSizeX / 2;
+    ((double *)varX->data)[j] = x;
+  }
+  int width = dimX->length;
+  for (size_t j = 0; j < dimY->length; j++) {
+    double y = offsetY + double(j) * cellSizeY + cellSizeY / 2;
+    ((double *)varY->data)[j] = y;
+  }
+  int height = dimY->length;
+
+  CDF::Variable *scanVar;
+  CT::string origScanName = new2DVar->name.c_str();
+  origScanName.concat("_backup");
+  scanVar = cdfObject->getVariableNE(origScanName.c_str());
+  if (scanVar == NULL) {
+    // CDBError("Unable to find orignal swath variable with name %s", origScanName.c_str());
+    // return 1;
+  }
+
+  CImageWarper imageWarper;
+  bool projectionRequired = false;
+  CDBDebug("dataSource->srvParams->Geo->CRS = %s", dataSource->srvParams->Geo->CRS.c_str());
+  if (dataSource->srvParams->Geo->CRS.length() > 0) {
+    projectionRequired = true;
+    new2DVar->setAttributeText("grid_mapping", "customgridprojection");
+    // Apply once
+    if (cdfObject->getVariableNE("customgridprojection") == NULL) {
+      CDBDebug("Adding customgridprojection");
+      CDF::Variable *projectionVar = new CDF::Variable();
+      projectionVar->name.copy("customgridprojection");
+      cdfObject->addVariable(projectionVar);
+      dataSource->nativeEPSG = dataSource->srvParams->Geo->CRS.c_str();
+      imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
+      CDBDebug("dataSource->nativeProj4 %s", dataSource->nativeProj4.c_str());
+      if (dataSource->nativeProj4.length() == 0) {
+        dataSource->nativeProj4 = LATLONPROJECTION;
+        dataSource->nativeEPSG = "EPSG:4326";
+        projectionRequired = false;
+      }
+      if (projectionRequired) {
+        CDBDebug("Reprojection is needed");
+      }
+
+      projectionVar->setAttributeText("proj4_params", dataSource->nativeProj4.c_str());
+    }
+  }
+
+#ifdef CCONVERTKNMIH5VOLSCAN_DEBUG
+  CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
+  CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->Geo->dfBBOX[0], dataSource->srvParams->Geo->dfBBOX[1], dataSource->srvParams->Geo->dfBBOX[2], dataSource->srvParams->Geo->dfBBOX[3]);
+  CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
+#endif
+
+  if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
+    int i = 0;
+    for (COGCDims *rDim : dataSource->requiredDims) {
+      CDBDebug("d:%s [%s,%d]", rDim->name.c_str(), dataSource->getDimensionValue(i++).c_str(), dataSource->getDimensionIndex(rDim->name.c_str()));
+    }
+
+    int scan_index = dataSource->getDimensionIndex("scan_elevation");
+    CDF::Variable *scanNumberVar = cdfObject->getVariable("scan_number");
+    int scan = scanNumberVar->getDataAt<int>(scan_index);
+    CDBDebug("reading scan%d", scan);
+
+    size_t fieldSize = dataSource->dWidth * dataSource->dHeight;
+    new2DVar->setSize(fieldSize);
+    CDBDebug("fieldSize: %d", fieldSize);
+
+    CDF::allocateData(new2DVar->getType(), &(new2DVar->data), fieldSize);
+    // Draw data!
+    if (dataObjects[0]->hasNodataValue) {
+      float *fp = ((float *)dataObjects[0]->cdfVariable->data);
+      for (size_t j = 0; j < fieldSize; j++) {
+        *fp++ = (float)dataObjects[0]->dfNodataValue;
+      }
+    } else {
+      float *fp = ((float *)dataObjects[0]->cdfVariable->data);
+      for (size_t j = 0; j < fieldSize; j++) {
+        *fp++ = NAN;
+      }
+    }
+    CDBDebug("Data initialized");
+
+    float *fp = ((float *)dataObjects[0]->cdfVariable->data);
+    for (size_t j = 0; j < fieldSize; j++) {
+      if ((j % fieldSize) > fieldSize / 2) {
+        *fp++ = 10;
+      } else {
+        *fp++ = 20;
+      }
+    }
+    CDBDebug("read scan%d", scan);
+
+    float radarLonLat[2];
+    cdfObject->getVariable("radar1")->getAttribute("radar_location")->getData<float>(radarLonLat, 2);
+    float radarLon = radarLonLat[0];
+    float radarLat = radarLonLat[1];
+
+    CT::string scanName;
+    scanName.print("scan%1d", scan);
+    CDF::Variable *scanVar = cdfObject->getVariable(scanName);
+    float scan_elevation;
+    scanVar->getAttribute("scan_elevation")->getData<float>(&scan_elevation, 1);
+    int scan_nrang;
+    scanVar->getAttribute("scan_number_range")->getData<int>(&scan_nrang, 1);
+    int scan_nazim;
+    scanVar->getAttribute("scan_number_azim")->getData<int>(&scan_nazim, 1);
+    float scan_rscale;
+    scanVar->getAttribute("scan_range_bin")->getData<float>(&scan_rscale, 1);
+    float scan_ascale;
+    scanVar->getAttribute("scan_azim_bin")->getData<float>(&scan_ascale, 1);
+    CDBDebug("scanparameters [%d] %f, %d, %d, %f, %f", scan, scan_elevation, scan_nrang, scan_nazim, scan_rscale, scan_ascale);
+
+    CT::string scanCalibrationVarName;
+    scanCalibrationVarName.print("scan%1d.calibration", scan);
+    CDF::Variable *scanCalibrationVar = cdfObject->getVariable(scanCalibrationVarName);
+    CT::string componentCalibrationStringName;
+    componentCalibrationStringName.print("calibration_%s_formulas", new2DVar->name.c_str());
+    CT::string calibrationFormula = scanCalibrationVar->getAttribute(componentCalibrationStringName.c_str())->getDataAsString();
+    float factor, offset;
+    getCalibrationParameters(calibrationFormula, factor, offset);
+
+    CDBDebug("Using factor %f and offset %f for scan%d", factor, offset, scan);
+
+    CT::string scanDataVarName;
+    scanDataVarName.print("scan%d.scan_%s_data", scan, new2DVar->name.c_str());
+    CDF::Variable *scanDataVar = cdfObject->getVariable(scanDataVarName);
+    scanDataVar->readData(scanDataVar->getType());
+    CDBDebug("scanDataVar: %x %s {%d %d}", scanDataVar, CDF::dump(scanDataVar).c_str(), scanDataVar->getSize(), scanDataVar->getType());
+
+    /*Setting geographical projection parameters of input Cartesian grid.*/
+    CT::string scanProj4;
+    scanProj4.print("+proj=aeqd +a=6378.137 +b=6356.752 +R_A +lat_0=%.3f +lon_0=%.3f +x_0=0 +y_0=0", radarLat, radarLon);
+    projPJ projAeqd = pj_init_plus(scanProj4.c_str());
+    if (projAeqd == NULL) {
+    }
+
+    projPJ projComposite = pj_init_plus(dataSource->nativeProj4.c_str());
+
+    double x, y;
+    float rang, azim;
+    int ir, ia;
+    float *p = (float *)new2DVar->data;                          // ptr to store data
+    unsigned short *pScan = (unsigned short *)scanDataVar->data; // ptr to get ray data
+
+    CDBDebug("Filling %d * %d cells", width, height);
+    //    CDBDebug("x:%s", CDF::dump(varX).c_str());
+    for (int row = 0; row < height; row++) {
+      //      CDBDebug("row: %d", row);
+      for (int col = 0; col < width; col++) {
+        x = ((double *)varX->data)[col];
+        y = ((double *)varY->data)[row];
+        pj_transform(projComposite, projAeqd, 1, 1, &x, &y, NULL);
+        rang = sqrt(x * x + y * y);
+        azim = atan2(x, y) * 180.0 / M_PI;
+        ir = (int)(rang / scan_rscale);
+        ia = (int)(azim / scan_ascale);
+        ia = (ia + scan_nazim) % scan_nazim;
+        if (ir < scan_nrang) {
+          unsigned short v = pScan[ir + ia * scan_nrang];
+          *p++ = v * factor + offset;
+        } else {
+          *p++ = MAXFLOAT;
+        }
+      }
+    }
+    CDBDebug("scanVar: %s", CDF::dump(scanVar).c_str());
+  }
+  CT::string dumpString = CDF::dump(new2DVar);
+  CDBDebug("[After Data]:\n%s", dumpString.c_str());
+  // CT::string *lines = dumpString.splitToArray("\n");
+  // for (size_t i = 0; i < lines[0].count; i++) {
+  //   // CDBDebug(lines[i]);
+  // }
+  // CDBDebug("End");
+
+  return 0;
+}
