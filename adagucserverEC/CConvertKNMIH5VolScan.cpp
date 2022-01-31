@@ -236,6 +236,7 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
     var->setAttributeText("long_name", s.c_str());
     var->setAttributeText("grid_mapping", "projection");
     var->setAttributeText("ADAGUC_VOL_SCAN", "TRUE");
+    var->setAttributeText("ADAGUC_VECTOR", "true"); /* Set this to true to tell adagucserverEC/CImageDataWriter.cpp, 708 to use full screenspace to retrieve GetFeatureInfo value */
     var->setAttributeText("units", "fixedUnits");
     float fillValue = MAXFLOAT;
     var->setAttribute("_FillValue", CDF_FLOAT, &fillValue, 1);
@@ -277,115 +278,115 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
   CDBDebug("convertKNMIH5VolScanData(%d)", mode);
   CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
   if (checkIfIsKNMIH5VolScan(cdfObject, dataSource->srvParams) != 0) return 1;
-
-  size_t nrDataObjects = dataSource->getNumDataObjects();
-  CDataSource::DataObject *dataObjects[nrDataObjects];
-  for (size_t d = 0; d < nrDataObjects; d++) {
-    dataObjects[d] = dataSource->getDataObject(d);
-  }
-  CDF::Variable *new2DVar;
-  new2DVar = dataObjects[0]->cdfVariable;
-  CDBDebug("var: %s [%d]", new2DVar->name.c_str(), new2DVar->dimensionlinks.size());
-
-  CDBDebug("%dx%d", dataSource->srvParams->Geo->dWidth, dataSource->srvParams->Geo->dHeight);
-  CDBDebug("(pre)%dx%d", dataSource->dWidth, dataSource->dHeight);
-
-  // Make the width and height of the new 2D adaguc field the same as the viewing window
-  dataSource->dWidth = dataSource->srvParams->Geo->dWidth;
-  dataSource->dHeight = dataSource->srvParams->Geo->dHeight;
-  // Width needs to be at least 2, the bounding box is calculated from these.
-  if (dataSource->dWidth == 1) dataSource->dWidth = 2;
-  if (dataSource->dHeight == 1) dataSource->dHeight = 2;
-  double cellSizeX = (dataSource->srvParams->Geo->dfBBOX[2] - dataSource->srvParams->Geo->dfBBOX[0]) / double(dataSource->dWidth);
-  double cellSizeY = (dataSource->srvParams->Geo->dfBBOX[3] - dataSource->srvParams->Geo->dfBBOX[1]) / double(dataSource->dHeight);
-  double offsetX = dataSource->srvParams->Geo->dfBBOX[0];
-  double offsetY = dataSource->srvParams->Geo->dfBBOX[1];
-
-#ifdef CCONVERTKNMIH5VOLSCAN_DEBUG
-  CDBDebug("Drawing %s with WH = [%d,%d]", "new2DVar" /*new2DVar->name.c_str()*/, dataSource->dWidth, dataSource->dHeight);
-  CDBDebug("  %f %f %f %f", cellSizeX, cellSizeY, offsetX, offsetY);
-#endif
-  CDBDebug("dataSource->srvParams->Geo->CRS = %s", dataSource->srvParams->Geo->CRS.c_str());
-
-  CDF::Dimension *dimX;
-  CDF::Dimension *dimY;
-  CDF::Variable *varX;
-  CDF::Variable *varY;
-
-  // Create new dimensions and variables (X,Y,T)
-  dimX = cdfObject->getDimension("adaguccoordinatex");
-  dimX->setSize(dataSource->dWidth);
-
-  dimY = cdfObject->getDimension("adaguccoordinatey");
-  dimY->setSize(dataSource->dHeight);
-  CDBDebug("Dimensions set for x=%d and y=%d", dataSource->dWidth, dataSource->dHeight);
-
-  varX = cdfObject->getVariable("adaguccoordinatex");
-  varY = cdfObject->getVariable("adaguccoordinatey");
-
-  CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
-  CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
-
-#ifdef CCONVERTKNMIH5VOLSCAN_DEBUG
-  CDBDebug("Data allocated for 'x' and 'y' variables");
-#endif
-
-  // Fill in the X and Y dimensions with the array of coordinates
-  for (size_t j = 0; j < dimX->length; j++) {
-    double x = offsetX + double(j) * cellSizeX + cellSizeX / 2;
-    ((double *)varX->data)[j] = x;
-  }
-  int width = dimX->length;
-  for (size_t j = 0; j < dimY->length; j++) {
-    double y = offsetY + double(j) * cellSizeY + cellSizeY / 2;
-    ((double *)varY->data)[j] = y;
-  }
-  int height = dimY->length;
-
-  CDF::Variable *scanVar;
-  CT::string origScanName = new2DVar->name.c_str();
-  origScanName.concat("_backup");
-  scanVar = cdfObject->getVariableNE(origScanName.c_str());
-  if (scanVar == NULL) {
-    // CDBError("Unable to find orignal swath variable with name %s", origScanName.c_str());
-    // return 1;
-  }
-
-  CImageWarper imageWarper;
-  bool projectionRequired = false;
-  CDBDebug("dataSource->srvParams->Geo->CRS = %s", dataSource->srvParams->Geo->CRS.c_str());
-  if (dataSource->srvParams->Geo->CRS.length() > 0) {
-    projectionRequired = true;
-    new2DVar->setAttributeText("grid_mapping", "customgridprojection");
-    // Apply once
-    if (cdfObject->getVariableNE("customgridprojection") == NULL) {
-      CDBDebug("Adding customgridprojection");
-      CDF::Variable *projectionVar = new CDF::Variable();
-      projectionVar->name.copy("customgridprojection");
-      cdfObject->addVariable(projectionVar);
-      dataSource->nativeEPSG = dataSource->srvParams->Geo->CRS.c_str();
-      imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
-      CDBDebug("dataSource->nativeProj4 %s", dataSource->nativeProj4.c_str());
-      if (dataSource->nativeProj4.length() == 0) {
-        dataSource->nativeProj4 = LATLONPROJECTION;
-        dataSource->nativeEPSG = "EPSG:4326";
-        projectionRequired = false;
-      }
-      if (projectionRequired) {
-        CDBDebug("Reprojection is needed");
-      }
-
-      projectionVar->setAttributeText("proj4_params", dataSource->nativeProj4.c_str());
-    }
-  }
-
-#ifdef CCONVERTKNMIH5VOLSCAN_DEBUG
-  CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
-  CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->Geo->dfBBOX[0], dataSource->srvParams->Geo->dfBBOX[1], dataSource->srvParams->Geo->dfBBOX[2], dataSource->srvParams->Geo->dfBBOX[3]);
-  CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
-#endif
-
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
+    size_t nrDataObjects = dataSource->getNumDataObjects();
+    CDataSource::DataObject *dataObjects[nrDataObjects];
+    for (size_t d = 0; d < nrDataObjects; d++) {
+      dataObjects[d] = dataSource->getDataObject(d);
+    }
+    CDF::Variable *new2DVar;
+    new2DVar = dataObjects[0]->cdfVariable;
+    CDBDebug("var: %s [%d]", new2DVar->name.c_str(), new2DVar->dimensionlinks.size());
+
+    CDBDebug("%dx%d", dataSource->srvParams->Geo->dWidth, dataSource->srvParams->Geo->dHeight);
+    CDBDebug("(pre)%dx%d", dataSource->dWidth, dataSource->dHeight);
+
+    // Make the width and height of the new 2D adaguc field the same as the viewing window
+    dataSource->dWidth = dataSource->srvParams->Geo->dWidth;
+    dataSource->dHeight = dataSource->srvParams->Geo->dHeight;
+
+    // Width needs to be at least 2, the bounding box is calculated from these.
+    if (dataSource->dWidth == 1) dataSource->dWidth = 2;
+    if (dataSource->dHeight == 1) dataSource->dHeight = 2;
+    double cellSizeX = (dataSource->srvParams->Geo->dfBBOX[2] - dataSource->srvParams->Geo->dfBBOX[0]) / double(dataSource->dWidth);
+    double cellSizeY = (dataSource->srvParams->Geo->dfBBOX[3] - dataSource->srvParams->Geo->dfBBOX[1]) / double(dataSource->dHeight);
+    double offsetX = dataSource->srvParams->Geo->dfBBOX[0];
+    double offsetY = dataSource->srvParams->Geo->dfBBOX[1];
+
+#ifdef CCONVERTKNMIH5VOLSCAN_DEBUG
+    CDBDebug("Drawing %s with WH = [%d,%d]", "new2DVar" /*new2DVar->name.c_str()*/, dataSource->dWidth, dataSource->dHeight);
+    CDBDebug("  %f %f %f %f", cellSizeX, cellSizeY, offsetX, offsetY);
+#endif
+    CDBDebug("dataSource->srvParams->Geo->CRS = %s", dataSource->srvParams->Geo->CRS.c_str());
+
+    CDF::Dimension *dimX;
+    CDF::Dimension *dimY;
+    CDF::Variable *varX;
+    CDF::Variable *varY;
+
+    // Create new dimensions and variables (X,Y,T)
+    dimX = cdfObject->getDimension("adaguccoordinatex");
+    dimX->setSize(dataSource->dWidth);
+
+    dimY = cdfObject->getDimension("adaguccoordinatey");
+    dimY->setSize(dataSource->dHeight);
+    CDBDebug("Dimensions set for x=%d and y=%d", dataSource->dWidth, dataSource->dHeight);
+
+    varX = cdfObject->getVariable("adaguccoordinatex");
+    varY = cdfObject->getVariable("adaguccoordinatey");
+
+    CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
+    CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+
+#ifdef CCONVERTKNMIH5VOLSCAN_DEBUG
+    CDBDebug("Data allocated for 'x' and 'y' variables");
+#endif
+
+    // Fill in the X and Y dimensions with the array of coordinates
+    for (size_t j = 0; j < dimX->length; j++) {
+      double x = offsetX + double(j) * cellSizeX + cellSizeX / 2;
+      ((double *)varX->data)[j] = x;
+    }
+    int width = dimX->length;
+    for (size_t j = 0; j < dimY->length; j++) {
+      double y = offsetY + double(j) * cellSizeY + cellSizeY / 2;
+      ((double *)varY->data)[j] = y;
+    }
+    int height = dimY->length;
+
+    CDF::Variable *scanVar;
+    CT::string origScanName = new2DVar->name.c_str();
+    origScanName.concat("_backup");
+    scanVar = cdfObject->getVariableNE(origScanName.c_str());
+    if (scanVar == NULL) {
+      // CDBError("Unable to find orignal swath variable with name %s", origScanName.c_str());
+      // return 1;
+    }
+
+    CImageWarper imageWarper;
+    bool projectionRequired = false;
+    CDBDebug("dataSource->srvParams->Geo->CRS = %s", dataSource->srvParams->Geo->CRS.c_str());
+    if (dataSource->srvParams->Geo->CRS.length() > 0) {
+      projectionRequired = true;
+      new2DVar->setAttributeText("grid_mapping", "customgridprojection");
+      // Apply once
+      if (cdfObject->getVariableNE("customgridprojection") == NULL) {
+        CDBDebug("Adding customgridprojection");
+        CDF::Variable *projectionVar = new CDF::Variable();
+        projectionVar->name.copy("customgridprojection");
+        cdfObject->addVariable(projectionVar);
+        dataSource->nativeEPSG = dataSource->srvParams->Geo->CRS.c_str();
+        imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
+        CDBDebug("dataSource->nativeProj4 %s", dataSource->nativeProj4.c_str());
+        if (dataSource->nativeProj4.length() == 0) {
+          dataSource->nativeProj4 = LATLONPROJECTION;
+          dataSource->nativeEPSG = "EPSG:4326";
+          projectionRequired = false;
+        }
+        if (projectionRequired) {
+          CDBDebug("Reprojection is needed");
+        }
+
+        projectionVar->setAttributeText("proj4_params", dataSource->nativeProj4.c_str());
+      }
+    }
+
+#ifdef CCONVERTKNMIH5VOLSCAN_DEBUG
+    CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
+    CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->Geo->dfBBOX[0], dataSource->srvParams->Geo->dfBBOX[1], dataSource->srvParams->Geo->dfBBOX[2], dataSource->srvParams->Geo->dfBBOX[3]);
+    CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
+#endif
+
     int i = 0;
     for (COGCDims *rDim : dataSource->requiredDims) {
       CDBDebug("d:%s [%s,%d]", rDim->name.c_str(), dataSource->getDimensionValue(i++).c_str(), dataSource->getDimensionIndex(rDim->name.c_str()));
@@ -424,7 +425,7 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
 
     CT::string scanName;
     scanName.print("scan%1d", scan);
-    CDF::Variable *scanVar = cdfObject->getVariable(scanName);
+    scanVar = cdfObject->getVariable(scanName);
     float scan_elevation;
     scanVar->getAttribute("scan_elevation")->getData<float>(&scan_elevation, 1);
     int scan_nrang;
@@ -456,14 +457,10 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
 
     /*Setting geographical projection parameters of input Cartesian grid.*/
     CT::string scanProj4;
-    scanProj4.print("+proj=aeqd +a=6378.137 +b=6356.752 +R_A +lat_0=%.3f +lon_0=%.3f +x_0=0 +y_0=0", radarLat, radarLon);
-    projPJ projAeqd = pj_init_plus(scanProj4.c_str());
-    if (projAeqd == NULL) {
-    }
 
-    CDBDebug("projecting with %s", dataSource->nativeProj4.c_str());
-    projPJ projComposite = pj_init_plus(dataSource->nativeProj4.c_str());
-    CDBDebug("projPJ: %x", projComposite);
+    scanProj4.print("+proj=aeqd +a=6378.137 +b=6356.752 +R_A +lat_0=%.3f +lon_0=%.3f +x_0=0 +y_0=0", radarLat, radarLon);
+    CImageWarper radarProj;
+    radarProj.initreproj(scanProj4.c_str(), dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
 
     double x, y;
     float rang, azim;
@@ -478,13 +475,13 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
       for (int col = 0; col < width; col++) {
         x = ((double *)varX->data)[col];
         y = ((double *)varY->data)[row];
-        pj_transform(projComposite, projAeqd, 1, 1, &x, &y, NULL);
+        radarProj.reprojpoint(x, y);
         rang = sqrt(x * x + y * y);
         azim = atan2(x, y) * 180.0 / M_PI;
         ir = (int)(rang / scan_rscale);
-        ia = (int)(azim / scan_ascale);
-        ia = (ia + scan_nazim) % scan_nazim;
         if (ir < scan_nrang) {
+          ia = (int)(azim / scan_ascale);
+          ia = (ia + scan_nazim) % scan_nazim;
           unsigned short v = pScan[ir + ia * scan_nrang];
           *p++ = v * factor + offset;
         } else {
@@ -492,9 +489,9 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
         }
       }
     }
-  }
-  CT::string dumpString = CDF::dump(new2DVar);
-  CDBDebug("[After Data]:\n%s", dumpString.c_str());
 
+    CT::string dumpString = CDF::dump(new2DVar);
+    CDBDebug("[After Data]:\n%s", dumpString.c_str());
+  }
   return 0;
 }
