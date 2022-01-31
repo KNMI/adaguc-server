@@ -63,7 +63,7 @@ public:
 
   typedef std::map<std::string, FileInfo *>::iterator it_type_file;
 
-  CT::string *dimensionKeys[CMakeJSONTimeSeries_MAX_DIMS];
+  CT::string dimensionKeys[CMakeJSONTimeSeries_MAX_DIMS];
 
   int dimOrdering[CMakeJSONTimeSeries_MAX_DIMS];
 
@@ -75,7 +75,7 @@ public:
 
   public:
     Result(UniqueRequests *parent) { this->parent = parent; }
-    CT::string *dimensionKeys[CMakeJSONTimeSeries_MAX_DIMS];
+    CT::string dimensionKeys[CMakeJSONTimeSeries_MAX_DIMS];
     CT::string value;
     int numDims;
     int *getDimOrder() { return parent->getDimOrder(); }
@@ -295,7 +295,7 @@ public:
   void recurDataStructure(CXMLParser::XMLElement *dataStructure, Result *result, int depth, int *dimOrdering) {
     int dimIndex = dimOrdering[depth];
 
-    CT::string dimindexvalue = result->dimensionKeys[dimIndex]->c_str();
+    CT::string dimindexvalue = result->dimensionKeys[dimIndex].c_str();
 
     CXMLParser::XMLElement *el = NULL;
     try {
@@ -316,9 +316,15 @@ public:
       int *dimOrder = result1->getDimOrder();
       std::string s1;
       std::string s2;
+
       for (int d = 0; d < result1->numDims; d++) {
-        s1 += result1->dimensionKeys[dimOrder[d]]->c_str();
-        s2 += result2->dimensionKeys[dimOrder[d]]->c_str();
+        int dimOrderIndex = dimOrder[d];
+        CDBDebug("Dimension order = %d", dimOrderIndex);
+
+        CDBDebug("Dimension order A= %d", result1->dimensionKeys[dimOrderIndex].c_str());
+        CDBDebug("Dimension order B= %d", result2->dimensionKeys[dimOrderIndex].c_str());
+        s1 += result1->dimensionKeys[dimOrderIndex].c_str();
+        s2 += result2->dimensionKeys[dimOrderIndex].c_str();
       }
       if (s1.compare(s2) < 0) return true;
       return false;
@@ -409,6 +415,7 @@ public:
     int numberOfDims = dataSource->requiredDims.size();
     size_t start[numberOfDims + 2], count[numberOfDims + 2];
     ptrdiff_t stride[numberOfDims + 2];
+    CT::string dimName[numberOfDims + 2];
 
     reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
 
@@ -451,7 +458,10 @@ public:
           if (foundReferenceTime == false) {
             CDF::Dimension *forecastRefDim = cdfObject->getDimensionNE("forecast_reference_time");
             if (forecastRefDim != NULL) {
-              dataObject->cdfVariable->dimensionlinks.insert(dataObject->cdfVariable->dimensionlinks.begin() + dataObject->cdfVariable->dimensionlinks.size() - 2, forecastRefDim);
+              // TODO: Maarten Plieger 2022-01-20, This is inserted at thewrong place
+              // dataObject->cdfVariable->dimensionlinks.insert(dataObject->cdfVariable->dimensionlinks.begin() + dataObject->cdfVariable->dimensionlinks.size() - 2, forecastRefDim);
+              dataObject->cdfVariable->dimensionlinks.insert(dataObject->cdfVariable->dimensionlinks.begin(), forecastRefDim);
+              // dataObject->cdfVariable->dimensionlinks.push_back(forecastRefDim);
             }
           }
 
@@ -486,8 +496,11 @@ public:
 #endif
             start[dataSource->dimXIndex] = projCacheInfo.imx;
             start[dataSource->dimYIndex] = projCacheInfo.imy;
+            dimName[dataSource->dimXIndex] = "x";
+            dimName[dataSource->dimYIndex] = "y";
 
             for (int i = 0; i < request->numDims; i++) {
+              CDBDebug("Checking %s", request->dimensions[i]->name.c_str());
 
               int netcdfDimIndex = -1;
               CDataReader::DimensionType dtype = CDataReader::getDimensionType(cdfObject, request->dimensions[i]->name.c_str());
@@ -507,8 +520,10 @@ public:
                     throw(__LINE__);
                   }
                 }
+
                 start[netcdfDimIndex] = request->dimensions[i]->start;
                 count[netcdfDimIndex] = request->dimensions[i]->values.size();
+                dimName[netcdfDimIndex] = request->dimensions[i]->name;
 #ifdef CMakeJSONTimeSeries_DEBUG
                 CDBDebug("  request index: %d  netcdfdimindex %d  %s %d %d", i, netcdfDimIndex, request->dimensions[i]->name.c_str(), request->dimensions[i]->start,
                          request->dimensions[i]->values.size());
@@ -517,7 +532,7 @@ public:
             }
 #ifdef CMakeJSONTimeSeries_DEBUG
             for (int i = 0; i < numberOfDims + 2; i++) {
-              CDBDebug("  %d %s [%d:%d]", i, "", start[i], count[i]);
+              CDBDebug("  %d %s [%d:%d:%d]", i, dimName[i].c_str(), start[i], count[i], stride[i]);
             }
 #endif
 
@@ -536,13 +551,19 @@ public:
             if (readDataAsCDFDouble) {
               variable->setType(CDF_DOUBLE);
             }
+
+            CDBDebug("Starting read data as type %s", CDF::getCDFDataTypeName(variable->currentType).c_str());
             int status = variable->readData(variable->currentType, start, count, stride, true);
 
+            CDBDebug("Read %d elements", variable->getSize());
             if (status != 0) {
               CDBError("Unable to read variable %s", variable->name.c_str());
               throw(__LINE__);
             }
 
+            for (size_t j = 0; j < variable->getSize(); j++) {
+              CDBDebug("Orig Data value %d is \t %f", j, ((double *)variable->data)[j]);
+            }
             if (status == 0) {
               /**
                * DataPostProc: Here our datapostprocessor comes into action!
@@ -579,7 +600,7 @@ public:
               CDBDebug("Read %d elements", variable->getSize());
 
               for (size_t j = 0; j < variable->getSize(); j++) {
-                CDBDebug("Data value %d is \t %f", j, ((float *)variable->data)[j]);
+                CDBDebug("New Data value %d is \t %f", j, ((double *)variable->data)[j]);
               }
 #endif
               try {
