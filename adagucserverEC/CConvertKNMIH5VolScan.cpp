@@ -67,7 +67,7 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
   }
 
   // double *dfBBOX = new double[4];
-  double dfBBOX[] = {0, 48, 10, 58};
+  double dfBBOX[] = {0, 48, 10, 58}; // TODO: retrieve actual bbox from HDF5
   // Default size of adaguc 2dField is 2x2
   int width = 2;  // swathMiddleLon->dimensionlinks[1]->getSize();
   int height = 2; // swathMiddleLon->dimensionlinks[0]->getSize();
@@ -76,6 +76,7 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
     CDBError("srvParams is not set");
     return 1;
   }
+  CDBDebug("srvParams:%dx%d", srvParams->Geo->dWidth, srvParams->Geo->dHeight);
   if (srvParams->Geo->dWidth > 1 && srvParams->Geo->dHeight > 1) {
     width = srvParams->Geo->dWidth;
     height = srvParams->Geo->dHeight;
@@ -137,17 +138,21 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
     CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
 
 #ifdef CCONVERTKNMIH5VOLSCAN_DEBUG
-    CDBDebug("Data allocated for 'x' and 'y' variables (%d x %d)", varX->getSize(), varY->getSize());
+    CDBDebug("Data allocated for 'x' and 'y' variables (%zu x %zu)", dimX->getSize(), dimY->getSize());
 #endif
 
     // Fill in the X and Y dimensions with the array of coordinates
-    for (size_t j = 0; j < dimX->length; j++) {
+    for (size_t j = 0; j < dimX->getSize(); j++) {
       double x = offsetX + double(j) * cellSizeX + cellSizeX / 2;
       ((double *)varX->data)[j] = x;
     }
-    for (size_t j = 0; j < dimY->length; j++) {
+    for (size_t j = 0; j < dimY->getSize(); j++) {
       double y = offsetY + double(j) * cellSizeY + cellSizeY / 2;
       ((double *)varY->data)[j] = y;
+    }
+#define MIN(A, B) ((A < B) ? (A) : (B))
+    for (size_t j = 0; j < MIN(width, 20); j++) {
+      CDBDebug("(hdr)X[%d]=%f Y[%d]=%f", j, ((double *)varX->data)[j], j, ((double *)varY->data)[j]);
     }
 
     // Create a new time dimension for the new 2D fields.
@@ -280,7 +285,10 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
   }
   CDF::Variable *new2DVar;
   new2DVar = dataObjects[0]->cdfVariable;
-  CDBDebug("var: %s", new2DVar->name.c_str());
+  CDBDebug("var: %s [%d]", new2DVar->name.c_str(), new2DVar->dimensionlinks.size());
+
+  CDBDebug("%dx%d", dataSource->srvParams->Geo->dWidth, dataSource->srvParams->Geo->dHeight);
+  CDBDebug("(pre)%dx%d", dataSource->dWidth, dataSource->dHeight);
 
   // Make the width and height of the new 2D adaguc field the same as the viewing window
   dataSource->dWidth = dataSource->srvParams->Geo->dWidth;
@@ -407,15 +415,7 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     }
     CDBDebug("Data initialized");
 
-    float *fp = ((float *)dataObjects[0]->cdfVariable->data);
-    for (size_t j = 0; j < fieldSize; j++) {
-      if ((j % fieldSize) > fieldSize / 2) {
-        *fp++ = 10;
-      } else {
-        *fp++ = 20;
-      }
-    }
-    CDBDebug("read scan%d", scan);
+    CDBDebug("Reading scan%d", scan);
 
     float radarLonLat[2];
     cdfObject->getVariable("radar1")->getAttribute("radar_location")->getData<float>(radarLonLat, 2);
@@ -461,7 +461,9 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     if (projAeqd == NULL) {
     }
 
+    CDBDebug("projecting with %s", dataSource->nativeProj4.c_str());
     projPJ projComposite = pj_init_plus(dataSource->nativeProj4.c_str());
+    CDBDebug("projPJ: %x", projComposite);
 
     double x, y;
     float rang, azim;
@@ -490,15 +492,9 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
         }
       }
     }
-    CDBDebug("scanVar: %s", CDF::dump(scanVar).c_str());
   }
   CT::string dumpString = CDF::dump(new2DVar);
   CDBDebug("[After Data]:\n%s", dumpString.c_str());
-  // CT::string *lines = dumpString.splitToArray("\n");
-  // for (size_t i = 0; i < lines[0].count; i++) {
-  //   // CDBDebug(lines[i]);
-  // }
-  // CDBDebug("End");
 
   return 0;
 }
