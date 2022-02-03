@@ -101,6 +101,28 @@ public:
   }
 };
 
+class RectangleText {
+public:
+  int llx;
+  int lly;
+  int urx;
+  int ury;
+  float angle;
+  int padding;
+  CT::string text;
+
+  RectangleText(int llx, int lly, int urx, int ury, float angle, int padding, const char *text) {
+    this->llx = llx;
+    this->lly = lly;
+    this->urx = urx;
+    this->ury = ury;
+    this->angle = angle;
+    this->padding = padding;
+    this->text = CT::string(text);
+  }
+  bool overlaps(RectangleText &r1);
+};
+
 class CDrawImage {
 public:
   /*
@@ -172,6 +194,8 @@ public:
   CGeoParams *Geo;
   CDrawImage();
   ~CDrawImage();
+
+public:
   int createImage(int _dW, int _dH);
   int createImage(CGeoParams *_Geo);
   int createImage(const char *fn);
@@ -195,6 +219,7 @@ public:
   void drawText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor fgcolor, CColor bgcolor);
   void drawAnchoredText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color, int anchor);
   void drawCenteredText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color);
+  void drawCenteredTextNoOverlap(int x, int y, const char *fontfile, float size, float angle, int padding, const char *text, CColor color, std::vector<RectangleText> &rects);
   int drawTextArea(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor fgcolor, CColor bgcolor);
 
   // void drawTextAngle(const char * text, size_t length,double angle,int x,int y,int color,int fontSize);

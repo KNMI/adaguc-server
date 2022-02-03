@@ -93,6 +93,15 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
 
   CColor defaultColor(0, 0, 0, 255);
 
+  const char *drawPointFontFile = dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.location.c_str();
+
+  int polygonLabelFontSize = 10;
+  CT::string polygonLabelPropertyName = "Gemeentenaam";
+  CT::string polygonLabelPropertyformat = "%s";
+  bool polygonLabelRandomize = true;
+  double polygonLabelAngle = 0;
+  int polygonLabelPadding = 3;
+
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   if (styleConfiguration != NULL) {
     if (styleConfiguration->styleConfig != NULL) {
@@ -156,22 +165,28 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
   std::map<std::string, std::vector<Feature *>> featureStore = CConvertGeoJSON::featureStore;
 
   srand(time(NULL));
-
-  int featureIndex = 0;
   for (std::map<std::string, std::vector<Feature *>>::iterator itf = featureStore.begin(); itf != featureStore.end(); ++itf) {
     std::string fileName = itf->first.c_str();
     if (fileName == name.c_str()) {
       // CDBDebug("Plotting %d features ONLY for %s", featureStore[fileName].size(), fileName.c_str());
-      for (std::vector<Feature *>::iterator feature = featureStore[fileName].begin(); feature != featureStore[fileName].end(); ++feature) {
+      std::vector<RectangleText> rects;
+      int featureRandomStart = 0; // For specifying a random polygon index to draw first
+      if (polygonLabelRandomize) {
+        featureRandomStart = rand() % featureStore[fileName].size(); // Random start for first feature to draw
+      }
+      size_t featureStoreSize = featureStore[fileName].size();
+      for (size_t featureStepper = 0; featureStepper < featureStoreSize; featureStepper++) {
+        size_t featureIndex = (featureStepper + featureRandomStart) % featureStoreSize;
+        Feature *feature = featureStore[fileName][featureIndex];
         // FindAttributes for this feature
-        BorderStyle borderStyle = getAttributesForFeature(&(dataSource->getDataObject(0)->features[featureIndex]), (*feature)->getId(), styleConfiguration);
+        BorderStyle borderStyle = getAttributesForFeature(&(dataSource->getDataObject(0)->features[featureIndex]), feature->getId(), styleConfiguration);
         // CDBDebug("bs: %s %s", borderStyle.width.c_str(), borderStyle.color.c_str());
         CColor drawPointLineColor2(borderStyle.color.c_str());
         float drawPointLineWidth = borderStyle.width.toFloat();
         // if(featureIndex!=0)break;
-        std::vector<Polygon> polygons = (*feature)->getPolygons();
-        CT::string id = (*feature)->getId();
-        CDBDebug("feature[%s] %d of %d with %d polygons", id.c_str(), featureIndex, featureStore[fileName].size(), polygons.size());
+        std::vector<Polygon> polygons = feature->getPolygons();
+        CT::string id = feature->getId();
+        //        CDBDebug("feature[%s] %d of %d with %d polygons", id.c_str(), featureIndex, featureStore[fileName].size(), polygons.size());
         for (std::vector<Polygon>::iterator itpoly = polygons.begin(); itpoly != polygons.end(); ++itpoly) {
           float *polyX = itpoly->getLons();
           float *polyY = itpoly->getLats();
@@ -199,46 +214,39 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
               //                         dlat=CCONVERTUGRIDMESH_NODATA;
               //                         dlon=CCONVERTUGRIDMESH_NODATA;
             }
-            //                       projectedX[j]=dlon;
-            //                       projectedY[j]=height-dlat;
           }
 
-          CDBDebug("Draw polygon: %d points (%d)", cnt, numPoints);
-          drawImage->poly(projectedX, projectedY, cnt, drawPointLineWidth, drawPointLineColor2, true, false);
-          if (true /* rand() % 1 == 0 */) {
-            // Determine centroid for first polygon.
-            if (firstPolygon) {
-              Point2D centroid = getCentroid(polyX, polyY, numPoints);
-              double centroidX = centroid.x;
-              double centroidY = centroid.y;
-              int status = 0;
-              if (projectionRequired) status = imageWarper->reprojfromLatLon(centroidX, centroidY);
-              if (!status) {
-                int dlon, dlat;
-                dlon = int((centroidX - offsetX) / cellSizeX) + 1;
-                dlat = int((centroidY - offsetY) / cellSizeY);
-                // projectedX[cnt] = dlon;
-                // projectedY[cnt] = height - dlat;
-                CDBDebug("Centroid [%f, %f] [%d, %d]of %s", centroidX, centroidY, dlon, dlat, (*feature)->getId().c_str());
-                std::map<std::string, FeatureProperty *>::iterator it;
-                CT::string id_s;
-                CT::string featureId;
-                it = (*feature)->getFp().find("Gemeentenaam");
-                if (it != (*feature)->getFp().end()) {
-                  featureId = it->second->toString().c_str();
-                  //                     CDBDebug("Found %s %s", it->first.c_str(), id_s.c_str());
-                } else {
-                  featureId = (*feature)->getId();
-                }
-                drawImage->drawCenteredText(dlon, height - dlat, "/home/vreedede/Projects/adaguc-server-test/adaguc-server-workshop/data/fonts/Roboto-Regular.ttf", 7, 0, featureId,
-                                            drawPointTextColor);
+          //          CDBDebug("Draw polygon: %d points (%d)", cnt, numPoints);
+          drawImage->poly(projectedX, projectedY, cnt, drawPointLineWidth / 2, drawPointLineColor2, true, false);
+          // Determine centroid for first polygon.
+          if (firstPolygon) {
+            Point2D centroid = getCentroid(polyX, polyY, numPoints);
+            double centroidX = centroid.x;
+            double centroidY = centroid.y;
+            int status = 0;
+            if (projectionRequired) status = imageWarper->reprojfromLatLon(centroidX, centroidY);
+            if (!status) {
+              int dlon, dlat;
+              dlon = int((centroidX - offsetX) / cellSizeX) + 1;
+              dlat = int((centroidY - offsetY) / cellSizeY);
+              std::map<std::string, FeatureProperty *>::iterator it;
+              CT::string featureId;
+              it = feature->getFp().find(polygonLabelPropertyName.c_str());
+              if (it != feature->getFp().end()) {
+                CDBDebug("{%s", it->second->toString().c_str());
+                featureId.print(it->second->toString(polygonLabelPropertyformat));
               } else {
-                CDBDebug("Status: %d centroid [%f,%f]", status, centroidX, centroidY);
+                featureId = feature->getId();
               }
-              firstPolygon = false;
+              drawImage->drawCenteredTextNoOverlap(dlon, height - dlat, drawPointFontFile, polygonLabelFontSize, polygonLabelAngle, polygonLabelPadding, featureId, drawPointTextColor, rects);
+            } else {
+              CDBDebug("Status: %d centroid [%f,%f]", status, centroidX, centroidY);
             }
+            firstPolygon = false;
+          } else {
+            CDBDebug("2nd polygon for %d", cnt);
           }
-          //                    break;
+          // Draw the polygon holes
           if (true) {
             std::vector<PointArray> holes = itpoly->getHoles();
             int h = 0;
@@ -275,8 +283,8 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
           }
         }
 
-        std::vector<Polyline> polylines = (*feature)->getPolylines();
-        CT::string idl = (*feature)->getId();
+        std::vector<Polyline> polylines = feature->getPolylines();
+        CT::string idl = feature->getId();
         //  CDBDebug("feature[%s] %d of %d with %d polylines", idl.c_str(), featureIndex, featureStore[fileName].size(), polylines.size());
         for (std::vector<Polyline>::iterator itpoly = polylines.begin(); itpoly != polylines.end(); ++itpoly) {
           float *polyX = itpoly->getLons();
@@ -315,7 +323,10 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
 #ifdef MEASURETIME
         StopWatch_Stop("Feature drawn %d", featureIndex);
 #endif
-        featureIndex++;
+      }
+      // Draw polygon labels here, so they end up on top
+      for (RectangleText rect : rects) {
+        drawImage->drawText(rect.llx, rect.lly, drawPointFontFile, polygonLabelFontSize, rect.angle, rect.text, drawPointTextColor);
       }
     }
   }

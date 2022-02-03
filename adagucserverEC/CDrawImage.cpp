@@ -1101,6 +1101,44 @@ void CDrawImage::drawCenteredText(int x, int y, const char *fontfile, float size
   }
 }
 
+bool RectangleText::overlaps(RectangleText &r2) {
+  // CDBDebug("Checking %d,%d,%d,%d => %d,%d,%d,%d", r1.x0, r1.y0, r1.x1, r1.y1, r2.x0, r2.y0, r2.y1, r2.y1);
+  if ((this->ury + padding < r2.lly) || (this->lly - padding > r2.ury)) return false;
+  if ((this->urx + padding < r2.llx) || (this->llx - padding > r2.urx)) return false;
+  return true;
+}
+
+void CDrawImage::drawCenteredTextNoOverlap(int x, int y, const char *fontfile, float size, float angle, int padding, const char *text, CColor color, std::vector<RectangleText> &rects) {
+  int w, h;
+  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
+    CCairoPlotter *freeType = this->getCairoPlotter(fontfile, size, Geo->dWidth, Geo->dHeight, cairo->getByteBuffer());
+    freeType->setColor(color.r, color.g, color.b, color.a);
+    freeType->getTextSize(w, h, 0, text); // Use the text size for angle 0 for detecting overlaps
+    RectangleText rect(x - w / 2, y - h / 2, x + w / 2, y + h / 2, angle, padding, text);
+    bool overlapFound = false;
+    for (size_t j = 0; j < rects.size(); j++) {
+      if (rects[j].overlaps(rect)) {
+        overlapFound = true;
+      }
+    }
+    if (overlapFound) {
+      return;
+    }
+    rects.push_back(rect);
+  } else {
+    // TODO GD renderer does not center text yet
+    char *_text = new char[strlen(text) + 1];
+    memcpy(_text, text, strlen(text) + 1);
+    int tcolor = getClosestGDColor(color.r, color.g, color.b);
+    if (_bEnableTrueColor) tcolor = -tcolor;
+    // Use the text size for angle 0 for detecting overlaps
+    gdImageStringFT(NULL, &brect[0], tcolor, (char *)TTFFontLocation, 8.0f, 0, x, y, (char *)_text);
+    RectangleText rect(brect[0], brect[3], brect[2], brect[5], angle, padding, text);
+    rects.push_back(rect);
+    delete[] _text;
+  }
+}
+
 void CDrawImage::drawText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color) {
 
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
