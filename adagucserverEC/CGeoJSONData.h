@@ -102,7 +102,21 @@ public:
       s.print("NONE");
     }
     return s;
-  }
+  };
+
+  CT::string toString(const char *fmt) {
+    CT::string s;
+    if (type == typeInt) {
+      s.print(fmt, intVal);
+    } else if (type == typeStr) {
+      s.print(fmt, pstr.c_str());
+    } else if (type == typeDouble) {
+      s.print(fmt, dblVal);
+    } else {
+      s.print("NONE");
+    }
+    return s;
+  };
 };
 
 // class FeatureProperties {
@@ -140,5 +154,4 @@ public:
   std::map<std::string, FeatureProperty *> &getFp();
   bool hasHoles();
 };
-
 #endif

@@ -47,29 +47,29 @@
   </Legend>
 
   <Legend name="rainbow" type="colorRange">
-    <palette index="0"   red="0"   green="0"   blue="255"/> 
-    <palette index="80"   red="0"   green="255"   blue="255"/> 
-    <palette index="120" red="0"   green="255" blue="0"/> 
-    <palette index="160" red="255"   green="255" blue="0"/> 
-    <palette index="240" red="255"   green="0" blue="0"/> 
+    <palette index="0"   red="0"   green="0"   blue="255"/>
+    <palette index="80"   red="0"   green="255"   blue="255"/>
+    <palette index="120" red="0"   green="255" blue="0"/>
+    <palette index="160" red="255"   green="255" blue="0"/>
+    <palette index="240" red="255"   green="0" blue="0"/>
   </Legend>
 
   <Legend name="gray" type="colorRange">
-    <palette index="0"   red="0"   green="0"   blue="0"/> 
-    <palette index="240" red="255"   green="255" blue="255"/> 
+    <palette index="0"   red="0"   green="0"   blue="0"/>
+    <palette index="240" red="255"   green="255" blue="255"/>
   </Legend>
-  
+
   <Legend name="no2" type="colorRange">
-    <palette index="0"   red="0"  green="0"    blue="190"/> 
-    <palette index="5"   red="0"  green="0"    blue="255"/> 
-    <palette index="17"  red="0"  green="255"  blue="255"/> 
-    <palette index="40"  red="0"  green="255"  blue="0"/> 
-    <palette index="81"  red="255" green="255" blue="0"/> 
-    <palette index="156" red="255" green="0" blue="0"/> 
-    <palette index="190" red="255" green="0" blue="160"/> 
-    <palette index="240" red="255" green="0" blue="160"/> 
+    <palette index="0"   red="0"  green="0"    blue="190"/>
+    <palette index="5"   red="0"  green="0"    blue="255"/>
+    <palette index="17"  red="0"  green="255"  blue="255"/>
+    <palette index="40"  red="0"  green="255"  blue="0"/>
+    <palette index="81"  red="255" green="255" blue="0"/>
+    <palette index="156" red="255" green="0" blue="0"/>
+    <palette index="190" red="255" green="0" blue="160"/>
+    <palette index="240" red="255" green="0" blue="160"/>
   </Legend>
-  
+
   <Legend name="isoluminant" type="colorRange">
     <palette index="0"   red="216"  green="15" blue="15"/>
     <palette index="48"  red="134"  green="134"   blue="0"/>
@@ -78,7 +78,7 @@
     <palette index="192" red="81"   green="253" blue="247"/>
     <palette index="240" red="183"   green="0" blue="183"/>
   </Legend>
-  
+
   <Legend name="elevation" type="colorRange">
     <palette index="0"   red="0"   green="191" blue="191"/>
     <palette index="48"  red="0"   green="255" blue="0"/>
@@ -108,22 +108,22 @@
     <Max>3500</Max>
     <NameMapping name="nearest"   title="Rainbow colors" abstract="Drawing images with rainbow colors"/>
   </Style>
-  
-    
+
+
   <Style name="elevation">
     <Legend fixedclasses="true" tickinterval="1" tickround="1">elevation</Legend>
     <Min>0.0</Min>
     <Max>10</Max>
     <NameMapping name="nearest"   title="Elevation colors" abstract="Drawing images with elevation colors"/>
   </Style>
-  
+
   <Style name="isoluminant">
     <Legend fixedclasses="true" tickinterval="1" tickround="1">isoluminant</Legend>
     <Min>0.0</Min>
     <Max>10</Max>
     <NameMapping name="nearest"   title="Isoluminant colors" abstract="Drawing images with isoluminant colors"/>
   </Style>
-  
+
    <Style name="no2">
     <Legend fixedclasses="true" tickinterval="500" tickround="1">no2</Legend>
     <Min>0.0</Min>
@@ -143,7 +143,7 @@
     <RenderMethod>nearest,bilinear,point,barb</RenderMethod>
     <StandardNames standard_name="*"/>
   </Style>
-  
+
   <Style name="autofeatures">
     <Legend fixedclasses="true" tickround="1">elevation</Legend>
     <Point pointstyle="point" textcolor="#111111"/>
