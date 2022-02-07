@@ -9,8 +9,6 @@ on:
   release:
     types: [published]
   push:
-    branches:
-    tags:
     
 jobs:
   push_to_registry:
