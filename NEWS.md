@@ -1,3 +1,8 @@
+**Version 2.6.8 2022-02-07**
+
+- Adding GitHub workflow to push automatically to dockerhub
+
+
 **Version 2.6.7 2022-01-20**
 - Support for KNMI HDF5 echotops files (see data/datasets/test/RAD_NL25_ETH_NA_202004301315.h5). When such a file is used, a virtual variable with name "echotops" is available.
 
