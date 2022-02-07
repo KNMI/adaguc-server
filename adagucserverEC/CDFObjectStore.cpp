@@ -29,6 +29,7 @@ const char *CDFObjectStore::className = "CDFObjectStore";
 #include "CConvertUGRIDMesh.h"
 #include "CConvertADAGUCVector.h"
 #include "CConvertADAGUCPoint.h"
+#include "CConvertKNMIH5EchoToppen.h"
 #include "CConvertCurvilinear.h"
 #include "CConvertHexagon.h"
 #include "CConvertGeoJSON.h"
@@ -343,6 +344,11 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
 
     if (!formatConverterActive)
       if (CConvertADAGUCPoint::convertADAGUCPointHeader(cdfObject) == 0) {
+        formatConverterActive = true;
+      };
+
+    if (!formatConverterActive)
+      if (CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenHeader(cdfObject) == 0) {
         formatConverterActive = true;
       };
 
