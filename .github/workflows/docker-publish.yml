@@ -4,11 +4,11 @@ on:
   release:
     types: [published]
   push:
-    branches: [ $default-branch ]
+    branches: [master]
     # Publish semver tags as releases.
     tags: [ '*.*.*' ]
   pull_request:
-    branches: [ $default-branch ]
+    branches: [master]
 
 jobs:
   push_to_registry:
