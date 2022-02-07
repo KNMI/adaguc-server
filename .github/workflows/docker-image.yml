@@ -2,9 +2,9 @@ name: Docker image CI
 
 on:
   push:
-    branches-ignore: [ $default-branch ]
+    branches-ignore: [master]
   pull_request:
-    branches-ignore: [ $default-branch ]
+    branches-ignore: [master]
 
 jobs:
 
