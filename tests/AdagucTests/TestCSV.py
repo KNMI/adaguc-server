@@ -8,7 +8,7 @@ import subprocess
 from lxml import etree
 from lxml import objectify
 import re
-from .AdagucTestTools import AdagucTestTools
+from adaguc.AdagucTestTools import AdagucTestTools
 
 ADAGUC_PATH = os.environ['ADAGUC_PATH']
 
