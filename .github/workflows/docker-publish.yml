@@ -1,13 +1,14 @@
 name: Docker image build and publish
 
 on:
-  release:
-    types: [published]
   push:
-  pull_request:
+    branches:
+      - '**'
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
 
 jobs:
-  push_to_registry:
+  docker-build-and-publish:
     name: Build Docker image and potentially push to Docker Hub
     runs-on: ubuntu-latest
     steps:
@@ -15,7 +16,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Log in to Docker Hub
-        if: github.repository == 'KNMI/adaguc-server' && github.event_name != 'pull_request'
+        if: github.repository == 'KNMI/adaguc-server'
         uses: docker/login-action@v1
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -31,6 +32,6 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
-          push: ${{ github.repository == 'KNMI/adaguc-server' &&  github.event_name != 'pull_request' }}
+          push: ${{ github.repository == 'KNMI/adaguc-server' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
