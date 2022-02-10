@@ -33,6 +33,9 @@ class AdagucTestTools:
 
   def runADAGUCServer(self, url=None, env=None, path=None, args=None, isCGI=True, showLogOnError=True, showLog=False):
 
+    if env is None:
+      env = []
+
     adagucenv = os.environ.copy()
     adagucenv.update(env)
 
