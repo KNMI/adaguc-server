@@ -4,41 +4,43 @@ import shutil
 from .CGIRunner import CGIRunner
 import re
 from lxml import etree, objectify
+import urllib.request
 
-
-ADAGUC_PATH = os.environ['ADAGUC_PATH']
+ADAGUC_PATH = os.getenv('ADAGUC_PATH', " ")
 
 
 class AdagucTestTools:
   def getLogFile(self):
     ADAGUC_LOGFILE = os.environ['ADAGUC_LOGFILE']
     try:
-      f = open(ADAGUC_LOGFILE)
+      f = open(ADAGUC_LOGFILE, encoding="utf-8")
       data = f.read()
       f.close()
       return data
-    except:
+    except Exception:
       pass
     return ""
 
   def printLogFile(self):
-    ADAGUC_LOGFILE = os.environ['ADAGUC_LOGFILE']
     print("\n=== START ADAGUC LOGS ===")
     print(self.getLogFile())
     print("=== END ADAGUC LOGS ===")
 
-  def runADAGUCServer(self, url=None, env=[], path=None, args=None, isCGI=True, showLogOnError=True, showLog=False):
+  def runRemoteADAGUCServer(self, url=None):
+    req = urllib.request.Request(url)
+    content = urllib.request.urlopen(req)
+    return [content.getcode(), content.read(), content.getheaders()]
+
+  def runADAGUCServer(self, url=None, env=None, path=None, args=None, isCGI=True, showLogOnError=True, showLog=False):
 
     adagucenv = os.environ.copy()
     adagucenv.update(env)
-
-    ADAGUC_PATH = adagucenv['ADAGUC_PATH']
 
     ADAGUC_LOGFILE = os.environ['ADAGUC_LOGFILE']
 
     try:
       os.remove(ADAGUC_LOGFILE)
-    except:
+    except Exception:
       pass
 
     adagucexecutable = ADAGUC_PATH+"/bin/adagucserver"
@@ -84,17 +86,16 @@ class AdagucTestTools:
       f.write(data)
 
   def readfromfile(self, filename):
-    ADAGUC_PATH = os.environ['ADAGUC_PATH']
-    with open(ADAGUC_PATH + "/tests/" + filename, 'rb') as f:
+    with open(os.environ['ADAGUC_PATH'] + "/tests/" + filename, 'rb') as f:
       return f.read()
 
   def cleanTempDir(self):
-    ADAGUC_TMP = os.environ['ADAGUC_TMP']
+    ADAGUC_TMP = os.getenv('ADAGUC_TMP', 'adaguctmp')
     try:
       shutil.rmtree(ADAGUC_TMP)
-    except:
+    except Exception:
       pass
-    self.mkdir_p(os.environ['ADAGUC_TMP'])
+    self.mkdir_p(ADAGUC_TMP)
     return
 
   def mkdir_p(self, directory):
@@ -116,14 +117,14 @@ class AdagucTestTools:
         child.getparent().remove(child)
       for child in obj2.findall("Service/KeywordList")[0]:
         child.getparent().remove(child)
-    except:
+    except Exception:
       pass
     try:
       for child in obj1.findall("Service/ServerInfo")[0]:
         child.getparent().remove(child)
       for child in obj2.findall("Service/ServerInfo")[0]:
         child.getparent().remove(child)
-    except:
+    except Exception:
       pass
 
     # Boundingbox extent values are too varying by different Proj libraries
@@ -135,7 +136,7 @@ class AdagucTestTools:
           del root.attrib["miny"]
           del root.attrib["maxx"]
           del root.attrib["maxy"]
-        except:
+        except Exception:
           pass
       for elem in root.getchildren():
         removeBBOX(elem)
