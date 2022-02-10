@@ -1,11 +1,11 @@
 import setuptools
 
 with open("README.md", "r") as fh:
-    long_description = fh.read()
+  long_description = fh.read()
 
 setuptools.setup(
     name="adaguc",
-    version="0.0.2",
+    version="0.0.3",
     author="KNMI Geospatial Task Force",
     author_email="gstf@knmi.nl",
     description="Python wrapper arround the adaguc-server",
