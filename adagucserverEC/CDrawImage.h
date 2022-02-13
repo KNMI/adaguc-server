@@ -110,8 +110,11 @@ public:
   float angle;
   int padding;
   CT::string text;
+  CT::string fontFile;
+  float fontSize;
+  CColor color;
 
-  RectangleText(int llx, int lly, int urx, int ury, float angle, int padding, const char *text) {
+  RectangleText(int llx, int lly, int urx, int ury, float angle, int padding, const char *text, const char *fontFile, float fontSize, CColor color) {
     this->llx = llx;
     this->lly = lly;
     this->urx = urx;
@@ -119,6 +122,9 @@ public:
     this->angle = angle;
     this->padding = padding;
     this->text = CT::string(text);
+    this->fontFile = CT::string(fontFile);
+    this->fontSize = fontSize;
+    this->color = color;
   }
   bool overlaps(RectangleText &r1);
 };
