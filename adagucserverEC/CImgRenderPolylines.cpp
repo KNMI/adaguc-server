@@ -93,15 +93,6 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
 
   CColor defaultColor(0, 0, 0, 255);
 
-  const char *drawPointFontFile = dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.location.c_str();
-
-  int polygonLabelFontSize = 10;
-  CT::string polygonLabelPropertyName = "Gemeentenaam";
-  CT::string polygonLabelPropertyformat = "%s";
-  bool polygonLabelRandomize = true;
-  double polygonLabelAngle = 0;
-  int polygonLabelPadding = 3;
-
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   if (styleConfiguration != NULL) {
     if (styleConfiguration->styleConfig != NULL) {
@@ -125,23 +116,6 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
                 // CDBDebug("attributeValues[%d]=%s", featureNr, attributeValues[featureNr].c_str());
               }
             }
-          }
-          if (featureInterval->attr.fillcolor.empty() == false) {
-            // CDBDebug("feature[%d] %s %s %s", j, featureInterval->attr.fillcolor.c_str(),
-            //  featureInterval->attr.bgcolor.c_str(), featureInterval->attr.label.c_str());;
-            //                     std::vector<CImageDataWriter::IndexRange*> ranges=getIndexRangesForRegex(featureInterval->attr.match, attributeValues, numFeatures);
-            //                     for (size_t i=0; i<ranges.size(); i++) {
-            //                       CDBDebug("feature[%d] %d-%d %s %s %s",ranges[i]->min,ranges[i]->max, featureInterval->attr.fillcolor,
-            //                       featureInterval->attr.bgcolor?featureInterval->attr.bgcolor:"null", featureInterval->attr.label?featureInterval->attr.label:"null");
-            //                       CServerConfig::XMLE_ShadeInterval *shadeInterval = new CServerConfig::XMLE_ShadeInterval ();
-            //                       styleConfiguration->shadeIntervals->push_back(shadeInterval);
-            //                       shadeInterval->attr.min.print("%d",ranges[i]->min);
-            //                       shadeInterval->attr.max.print("%d",ranges[i]->max);
-            //                       shadeInterval->attr.fillcolor=featureInterval->attr.fillcolor;
-            //                       shadeInterval->attr.bgcolor=featureInterval->attr.bgcolor;
-            //                       shadeInterval->attr.label=featureInterval->attr.label;
-            //                       delete ranges[i];
-            //                     }
           }
         }
       }
@@ -171,7 +145,7 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
       // CDBDebug("Plotting %d features ONLY for %s", featureStore[fileName].size(), fileName.c_str());
       std::vector<RectangleText> rects;
       int featureRandomStart = 0; // For specifying a random polygon index to draw first
-      if (polygonLabelRandomize) {
+      if (true) {
         featureRandomStart = rand() % featureStore[fileName].size(); // Random start for first feature to draw
       }
       size_t featureStoreSize = featureStore[fileName].size();
@@ -179,10 +153,9 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
         size_t featureIndex = (featureStepper + featureRandomStart) % featureStoreSize;
         Feature *feature = featureStore[fileName][featureIndex];
         // FindAttributes for this feature
-        BorderStyle borderStyle = getAttributesForFeature(&(dataSource->getDataObject(0)->features[featureIndex]), feature->getId(), styleConfiguration);
-        // CDBDebug("bs: %s %s", borderStyle.width.c_str(), borderStyle.color.c_str());
-        CColor drawPointLineColor2(borderStyle.color.c_str());
-        float drawPointLineWidth = borderStyle.width.toFloat();
+        FeatureStyle featureStyle = getAttributesForFeature(&(dataSource->getDataObject(0)->features[featureIndex]), feature->getId(), styleConfiguration);
+        CColor drawPointLineColor2(featureStyle.color.c_str());
+        float drawPointLineWidth = featureStyle.width.toFloat();
         // if(featureIndex!=0)break;
         std::vector<Polygon> polygons = feature->getPolygons();
         CT::string id = feature->getId();
@@ -231,14 +204,15 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
               dlat = int((centroidY - offsetY) / cellSizeY);
               std::map<std::string, FeatureProperty *>::iterator it;
               CT::string featureId;
-              it = feature->getFp().find(polygonLabelPropertyName.c_str());
+              it = feature->getFp().find(featureStyle.propertyName.c_str());
               if (it != feature->getFp().end()) {
-                CDBDebug("{%s", it->second->toString().c_str());
-                featureId.print(it->second->toString(polygonLabelPropertyformat));
+                // CDBDebug("{%s", it->second->toString().c_str());
+                featureId.print(it->second->toString(featureStyle.propertyFormat));
               } else {
                 featureId = feature->getId();
               }
-              drawImage->drawCenteredTextNoOverlap(dlon, height - dlat, drawPointFontFile, polygonLabelFontSize, polygonLabelAngle, polygonLabelPadding, featureId, drawPointTextColor, rects);
+              CColor labelColor(featureStyle.fontColor);
+              drawImage->drawCenteredTextNoOverlap(dlon, height - dlat, featureStyle.fontPath.c_str(), featureStyle.fontSize, featureStyle.angle, featureStyle.padding, featureId, labelColor, rects);
             } else {
               CDBDebug("Status: %d centroid [%f,%f]", status, centroidX, centroidY);
             }
@@ -324,9 +298,10 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
         StopWatch_Stop("Feature drawn %d", featureIndex);
 #endif
       }
+      CDBDebug("Drawing %d rects", rects.size());
       // Draw polygon labels here, so they end up on top
       for (RectangleText rect : rects) {
-        drawImage->drawText(rect.llx, rect.lly, drawPointFontFile, polygonLabelFontSize, rect.angle, rect.text, drawPointTextColor);
+        drawImage->drawText(rect.llx, rect.lly, rect.fontFile.c_str(), rect.fontSize, rect.angle, rect.text.c_str(), rect.color);
       }
     }
   }
@@ -338,14 +313,17 @@ int CImgRenderPolylines::set(const char *values) {
   return 0;
 }
 
-BorderStyle CImgRenderPolylines::getAttributesForFeature(CFeature *feature, CT::string id, CStyleConfiguration *styleConfig) {
-  CT::string borderWidth = "3";
-  CT::string borderColor = "#008000FF";
+FeatureStyle CImgRenderPolylines::getAttributesForFeature(CFeature *feature, CT::string id, CStyleConfiguration *styleConfig) {
+  FeatureStyle fs;
+  fs.width = "2";
+  fs.fontSize = 0;
+
+  // CDBDebug("getAttributesForFeature(%d, %s, %d)", feature->id, id.c_str(), styleConfig->featureIntervals->size());
   for (size_t j = 0; j < styleConfig->featureIntervals->size(); j++) {
     // Draw border if borderWidth>0
     if ((*styleConfig->featureIntervals)[j]->attr.match.empty() == false) {
       CT::string match = (*styleConfig->featureIntervals)[j]->attr.match;
-      CT::string matchString = id;
+      CT::string matchString;
       if ((*styleConfig->featureIntervals)[j]->attr.matchid.empty() == false) {
         // match on matchid
         CT::string matchId;
@@ -361,29 +339,56 @@ BorderStyle CImgRenderPolylines::getAttributesForFeature(CFeature *feature, CT::
         // match on id
         matchString = id;
       }
-      // CDBDebug("matchString: %s", matchString.c_str());
+      CDBDebug("Matching %s on %s", (*styleConfig->featureIntervals)[j]->attr.match.c_str(), matchString.c_str());
       regex_t regex;
       int ret = regcomp(&regex, match.c_str(), 0);
       if (!ret) {
         if (regexec(&regex, matchString.c_str(), 0, NULL, 0) == 0) {
+          CServerConfig::XMLE_FeatureInterval *fi = (*styleConfig->featureIntervals)[j];
           // Matched
-          // CDBDebug("Matched %s on %s!!", matchString.c_str(), match.c_str());
-          if (((*styleConfig->featureIntervals)[j]->attr.borderwidth.empty() == false) && (((*styleConfig->featureIntervals)[j]->attr.borderwidth.toFloat()) > 0)) {
-            borderWidth = (*styleConfig->featureIntervals)[j]->attr.borderwidth;
+          CDBDebug("Matched %s on %s w:%s!!", matchString.c_str(), match.c_str(), fi->attr.borderwidth.c_str());
+          if ((fi->attr.borderwidth.empty() == false) && ((fi->attr.borderwidth.toFloat()) > 0)) {
+            fs.width = fi->attr.borderwidth;
             // A border should be drawn
-            if ((*styleConfig->featureIntervals)[j]->attr.bordercolor.empty() == false) {
-              borderColor = (*styleConfig->featureIntervals)[j]->attr.bordercolor;
+            if (fi->attr.bordercolor.empty() == false) {
+              fs.color = fi->attr.bordercolor;
             } else {
               // Use default color
+              fs.color = CT::string("#00AA22FF");
             }
           } else {
             // Draw no border
+            fs.width = 0;
           }
+          if ((fi->attr.labelfontsize.empty() == false) && (fi->attr.labelfontsize.toFloat() > 0)) {
+            fs.fontSize = fi->attr.labelfontsize.toFloat();
+            if (fi->attr.labelfontpath.empty() == false) {
+              fs.fontPath = fi->attr.labelfontpath;
+            }
+            if (fi->attr.labelcolor.empty() == false) {
+              fs.fontColor = fi->attr.labelcolor;
+            }
+            if (fi->attr.labelpropertyname.empty() == false) {
+              fs.propertyName = fi->attr.labelpropertyname;
+            }
+            if (fi->attr.labelpropertyformat.empty() == false) {
+              fs.propertyFormat = fi->attr.labelpropertyformat;
+            }
+            if ((fi->attr.labelangle.empty() == false) && (fi->attr.labelangle.isNumeric())) {
+              fs.angle = fi->attr.labelangle.toFloat() * M_PI / 180;
+            }
+            if ((fi->attr.labelpadding.empty() == false) && (fi->attr.labelpadding.isInt())) {
+              fs.padding = fi->attr.labelpadding.toInt();
+            }
+            if ((fi->attr.labelrandomize.empty() == false) && (fi->attr.labelrandomize.isInt())) {
+              fs.randomize = (fi->attr.labelrandomize.toInt() == 0);
+            }
+          }
+          CDBDebug("found %s %s", fs.width.c_str(), fs.color.c_str());
+          return fs;
         }
       }
     }
   }
-  // CDBDebug("found: %s %s", borderWidth.c_str(), borderColor.c_str());
-  BorderStyle bs = {borderWidth, borderColor};
-  return bs;
+  return fs;
 }

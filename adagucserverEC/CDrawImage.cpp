@@ -1108,13 +1108,18 @@ bool RectangleText::overlaps(RectangleText &r2) {
   return true;
 }
 
-void CDrawImage::drawCenteredTextNoOverlap(int x, int y, const char *fontfile, float size, float angle, int padding, const char *text, CColor color, std::vector<RectangleText> &rects) {
+void CDrawImage::drawCenteredTextNoOverlap(int x, int y, const char *fontFile, float size, float angle, int padding, const char *text, CColor color, std::vector<RectangleText> &rects) {
+  if (size <= 0) { // size 0 means do not draw label
+    CDBDebug("Skipping for size %f", size);
+    return;
+  }
+
   int w, h;
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    CCairoPlotter *freeType = this->getCairoPlotter(fontfile, size, Geo->dWidth, Geo->dHeight, cairo->getByteBuffer());
+    CCairoPlotter *freeType = this->getCairoPlotter(fontFile, size, Geo->dWidth, Geo->dHeight, cairo->getByteBuffer());
     freeType->setColor(color.r, color.g, color.b, color.a);
     freeType->getTextSize(w, h, 0, text); // Use the text size for angle 0 for detecting overlaps
-    RectangleText rect(x - w / 2, y - h / 2, x + w / 2, y + h / 2, angle, padding, text);
+    RectangleText rect((int)(x - w / 2), (int)(y - h / 2), (int)(x + w / 2), (int)(y + h / 2), angle, padding, text, fontFile, size, color);
     bool overlapFound = false;
     for (size_t j = 0; j < rects.size(); j++) {
       if (rects[j].overlaps(rect)) {
@@ -1125,6 +1130,7 @@ void CDrawImage::drawCenteredTextNoOverlap(int x, int y, const char *fontfile, f
       return;
     }
     rects.push_back(rect);
+    CDBDebug("pushing with %f", rect.angle);
   } else {
     // TODO GD renderer does not center text yet
     char *_text = new char[strlen(text) + 1];
@@ -1133,7 +1139,7 @@ void CDrawImage::drawCenteredTextNoOverlap(int x, int y, const char *fontfile, f
     if (_bEnableTrueColor) tcolor = -tcolor;
     // Use the text size for angle 0 for detecting overlaps
     gdImageStringFT(NULL, &brect[0], tcolor, (char *)TTFFontLocation, 8.0f, 0, x, y, (char *)_text);
-    RectangleText rect(brect[0], brect[3], brect[2], brect[5], angle, padding, text);
+    RectangleText rect(brect[0], brect[3], brect[2], brect[5], angle, padding, text, fontFile, size, color);
     rects.push_back(rect);
     delete[] _text;
   }

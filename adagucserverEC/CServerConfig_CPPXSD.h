@@ -653,6 +653,8 @@ public:
     class Cattr {
     public:
       CT::string match, matchid, bgcolor, label, fillcolor, linecolor, linewidth, bordercolor, borderwidth;
+      CT::string labelfontpath, labelfontsize, labelcolor, labelpropertyname, labelpropertyformat, labelangle;
+      CT::string labelrandomize, labelpadding;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("match", 5, attrname)) {
@@ -681,6 +683,30 @@ public:
         return;
       } else if (equals("bordercolor", 11, attrname)) {
         attr.bordercolor.copy(attrvalue);
+        return;
+      } else if (equals("labelfontpath", 13, attrname)) {
+        attr.labelfontpath.copy(attrvalue);
+        return;
+      } else if (equals("labelfontsize", 13, attrname)) {
+        attr.labelfontsize.copy(attrvalue);
+        return;
+      } else if (equals("labelcolor", 10, attrname)) {
+        attr.labelcolor.copy(attrvalue);
+        return;
+      } else if (equals("labelpropertyname", 17, attrname)) {
+        attr.labelpropertyname.copy(attrvalue);
+        return;
+      } else if (equals("labelpropertyformat", 19, attrname)) {
+        attr.labelpropertyformat.copy(attrvalue);
+        return;
+      } else if (equals("labelangle", 10, attrname)) {
+        attr.labelangle.copy(attrvalue);
+        return;
+      } else if (equals("labelrandomize", 14, attrname)) {
+        attr.labelrandomize.copy(attrvalue);
+        return;
+      } else if (equals("labelpadding", 12, attrname)) {
+        attr.labelpadding.copy(attrvalue);
         return;
       }
     }
