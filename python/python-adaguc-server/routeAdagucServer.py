@@ -6,7 +6,7 @@ from flask import request, Blueprint, Response
 import logging
 import time
 
-
+import random
 routeAdagucServer = Blueprint('routeAdagucServer', __name__)
 
 
@@ -19,45 +19,55 @@ logger = logging.getLogger(__name__)
 @routeAdagucServer.route("/adaguc-server", methods=["GET"])
 @cross_origin()
 def handleWMS():
-  start = time.perf_counter()
-  adagucInstance = setupAdaguc()
-  url = request.query_string
+    start = time.perf_counter()
+    adagucInstance = setupAdaguc()
+    url = request.query_string
 
-  logger.info(request.query_string)
-  stage1 = time.perf_counter()
+    logger.info(request.query_string)
+    stage1 = time.perf_counter()
 
-  adagucenv = {}
+    adagucenv = {}
 
-  """ Set required environment variables """
-  baseUrl = request.base_url.replace(request.path, "")
-  adagucenv['ADAGUC_ONLINERESOURCE'] = os.getenv(
-      'EXTERNALADDRESS', baseUrl) + "/adaguc-server?"
-  adagucenv['ADAGUC_DB'] = os.getenv(
-      'ADAGUC_DB', "user=adaguc password=adaguc host=localhost dbname=adaguc")
+    """ Set required environment variables """
+    baseUrl = request.base_url.replace(request.path, "")
+    adagucenv['ADAGUC_ONLINERESOURCE'] = os.getenv(
+        'EXTERNALADDRESS', baseUrl) + "/adaguc-server?"
+    adagucenv['ADAGUC_DB'] = os.getenv(
+        'ADAGUC_DB', "user=adaguc password=adaguc host=localhost dbname=adaguc")
 
-  """ Run adaguc-server """
-  status, data, headers = adagucInstance.runADAGUCServer(
-      url, env=adagucenv,  showLogOnError=False)
+    """ Run adaguc-server """
+    status, data, headers = adagucInstance.runADAGUCServer(
+        url, env=adagucenv,  showLogOnError=False)
 
-  """ Obtain logfile """
-  logfile = adagucInstance.getLogFile()
-  adagucInstance.removeLogFile()
+    """ Obtain logfile """
+    logfile = adagucInstance.getLogFile()
+    adagucInstance.removeLogFile()
 
-  stage2 = time.perf_counter()
-  logger.info("[PERF] Adaguc executation took: %f" % (stage2 - stage1))
+    stage2 = time.perf_counter()
+    logger.info("[PERF] Adaguc executation took: %f" % (stage2 - stage1))
 
-  if len(logfile) > 0:
-    logger.info(logfile)
+    if len(logfile) > 0:
+        logger.info(logfile)
 
-  response = Response(response=data.getvalue(), status=200)
+    # Lets check if this is getmap, and lets make the getmap less reliable
+    url_upper_case = url.upper()
+    chaos_mode = False
+    if "GETMAP".encode() in url_upper_case:
+        chaos_mode = True
 
-  stage3 = time.perf_counter()
+    response = None
+    if chaos_mode == True and random.randint(1, 100) > 75:
+        response = Response(response=None, status=500)
+    else:
+        response = Response(response=data.getvalue(), status=200)
 
-  # Append the headers from adaguc-server to the headers from flask.
-  for header in headers:
-    key = header.split(":")[0]
-    value = header.split(":")[1]
-    response.headers[key] = value
-  stage4 = time.perf_counter()
+    stage3 = time.perf_counter()
 
-  return response
+    # Append the headers from adaguc-server to the headers from flask.
+    for header in headers:
+        key = header.split(":")[0]
+        value = header.split(":")[1]
+        response.headers[key] = value
+    stage4 = time.perf_counter()
+
+    return response
