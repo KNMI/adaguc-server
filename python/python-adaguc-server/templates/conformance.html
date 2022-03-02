@@ -1,0 +1,29 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+  <div class="container">
+      <h1>{{title}}</h1>
+      <p>{{description}}</p>
+  </div>
+
+{% endblock %}
+
+{% block links %}
+  <div class="links">
+     <nav>
+        {% for link in conformance.conformsTo %}
+           <p>{{link}}
+           </p>
+        {% endfor %}
+     </nav>
+  </div>
+{% endblock %}
+{% block json %}
+  <div id="jsonContainer" class="jsonContainer">
+      <script>
+         renderjson.set_show_to_level(3);
+         renderjson.set_icons("+", "-");
+         document.getElementById("jsonContainer").appendChild(renderjson({{conformance|tojson}}));
+      </script>
+  </div>
+{% endblock %}
