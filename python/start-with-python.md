@@ -10,6 +10,7 @@ This can be used to run adaguc-server from Python.
 
 ## To install the python wrapper:
 
+Note: Make sure to use Python 3.8 or higher.
 From the root adaguc-server folder:
 ```
 python3 -m venv env
