@@ -37,7 +37,7 @@
     <Log>10</Log>
   </Style>
 
-  <!-- Layers -->
+  <!-- Precipitation radar layer CM -->
   <Layer type="database" hidden="false">
     <Name>RAD_NL25_PCP_CM</Name>
     <Title>Precipitation Radar NL</Title>
@@ -47,5 +47,31 @@
     <Dimension name="time" units="ISO8601" interval="PT5M" default="max">time</Dimension>
     <Styles>radar</Styles>
     <DataPostProc algorithm="dbztorr" units="mm/hr"/>
+  </Layer>
+
+  <!-- Echotoppen layer ETH grid from RAD_NL25_ETH_NA_202102170000 -->
+  <Layer type="database" hidden="false">
+    <Name>RAD_NL25_ETH_NA_GRID</Name>
+    <Title>Echotoppen grid</Title>
+    <Variable>image1.image_data</Variable>
+    <!--               RAD_NL25_ETH_NA_202102170000.h5  -->
+    <FilePath filter="^RAD_NL25_ETH_NA_.*\.h5$">{ADAGUC_PATH}/data/datasets/test/</FilePath>
+    <Dimension name="time" units="ISO8601" interval="PT5M" default="max">time</Dimension>
+    <RenderMethod>nearest</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>1</Offset>
+  </Layer>
+
+  <!-- Echotoppen layer ETH tops from RAD_NL25_ETH_NA_202102170000 -->
+  <Layer type="database" hidden="false">
+    <Name>RAD_NL25_ETH_NA_TOPS</Name>
+    <Title>Echotoppen tops</Title>
+    <Variable>echotops</Variable>
+    <!--               RAD_NL25_ETH_NA_202102170000.h5  -->
+    <FilePath filter="^RAD_NL25_ETH_NA_.*\.h5$">{ADAGUC_PATH}/data/datasets/test/</FilePath>
+    <Dimension name="time" units="ISO8601" interval="PT5M" default="max">time</Dimension>
+    <RenderMethod>point</RenderMethod>
+    <Scale>0</Scale>
+    <Offset>1</Offset>
   </Layer>
 </Configuration>
