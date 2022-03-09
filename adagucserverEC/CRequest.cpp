@@ -2025,7 +2025,7 @@ int CRequest::process_all_layers() {
                 int legendWidth = LEGEND_WIDTH * scaling;
                 if (legendWidth < minimumLegendWidth) legendWidth = minimumLegendWidth;
                 imageDataWriter.drawImage.enableTransparency(true);
-                legendImage.createImage(&imageDataWriter.drawImage, legendWidth, (imageDataWriter.drawImage.Geo->dHeight / 2) - padding * 2 + 2);
+                legendImage.createImage(&imageDataWriter.drawImage, legendWidth, (imageDataWriter.drawImage.Geo->dHeight / 3) - padding * 2 + 2);
 
                 CStyleConfiguration *styleConfiguration = dataSources[d]->getStyle();
                 if (styleConfiguration != NULL && styleConfiguration->legendIndex != -1) {
