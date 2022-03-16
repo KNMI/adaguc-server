@@ -119,3 +119,8 @@ tests/checker_report.txt
 .log.txt.kate-swp
 hclasses/CMakeLists.txt
 hclasses/testhclasses
+
+*CMakeCache.txt*
+*CTestTestfile.cmake*
+*Makefile*
+*cmake_install.cmake*
