@@ -309,6 +309,7 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
 
     // The swath variable is not directly plotable, so skip it
     pointVar->setAttributeText("ADAGUC_SKIP", "true");
+    pointVar->setAttributeText("ADAGUC_ORGPOINT", "true");
 
     // Scale and offset are already applied
     new2DVar->removeAttribute("scale_factor");
@@ -367,6 +368,14 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
       CDBWarning("Unable to find orignal swath variable with name %s", origSwathName.c_str());
 
       // return 1;
+    }
+  }
+
+  /* Find out which variables are point data variables */
+  std::vector<CDF::Variable *> pointVariables;
+  for (size_t j = 0; j < cdfObject0->variables.size(); j++) {
+    if (cdfObject0->variables[j]->getAttributeNE("ADAGUC_ORGPOINT") != NULL) {
+      pointVariables.push_back(cdfObject0->variables[j]);
     }
   }
 
@@ -507,7 +516,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
 
 #ifdef CCONVERTADAGUCPOINT_DEBUG
           CDBDebug("Reading CDF_CHAR array");
-          for (int j = 0; j < numDims; j++) {
+          for (size_t j = 0; j < numDims; j++) {
             CDBDebug("CDF_CHAR %d: %s %d till %d ", j, pointVar[d]->dimensionlinks[j]->name.c_str(), start[j], count[j]);
           }
 #endif
@@ -520,7 +529,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
         if (pointVar[d]->nativeType == CDF_STRING) {
 #ifdef CCONVERTADAGUCPOINT_DEBUG
           CDBDebug("Reading CDF_STRING array");
-          for (int j = 0; j < numDims; j++) {
+          for (size_t j = 0; j < numDims; j++) {
             CDBDebug("CDF_STRING %d: %s %d till %d ", j, pointVar[d]->dimensionlinks[j]->name.c_str(), start[j], count[j]);
           }
 #endif
@@ -729,6 +738,9 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
     CDF::Variable *pointID = cdfObject0->getVariableNE("station");
     if (pointID == NULL) {
       pointID = cdfObject0->getVariableNE("location_backup");
+      if (pointID == NULL) {
+        pointID = cdfObject0->getVariableNE("id_backup");
+      }
     }
     if (pointID != NULL) {
       if (pointID->getType() == CDF_STRING) {

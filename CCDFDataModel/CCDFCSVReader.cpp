@@ -134,6 +134,7 @@ int CDFCSVReader::open(const char *fileName) {
   /* Search for lat and lon variables */
   int foundLat = -1;
   int foundLon = -1;
+  int foundId = -1;
   for (size_t c = 0; c < header.size(); c++) {
     CT::string name = header[c];
     name = name.toLowerCase();
@@ -156,6 +157,10 @@ int CDFCSVReader::open(const char *fileName) {
     } else if (foundLon == -1 && name.indexOf("lon") != -1) {
       foundLon = c;
     }
+
+    if (foundId == -1 && name.equals("id")) {
+      foundId = c;
+    }
   }
   if (foundLat == -1 || foundLon == -1) {
     CDBError("Unable to determine lat or lon variables");
@@ -164,6 +169,10 @@ int CDFCSVReader::open(const char *fileName) {
 
   header[foundLat] = "lat";
   header[foundLon] = "lon";
+
+  if (foundId != -1) {
+    header[foundId] = "station";
+  }
 
   /* Search for time dim */
   CT::string timeString;
