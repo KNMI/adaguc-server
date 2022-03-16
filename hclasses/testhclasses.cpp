@@ -1,5 +1,6 @@
 #include "CDirReader.h"
 #include "CDebugger.h"
+#include "CppUnitLite/TestHarness.h"
 
 DEF_ERRORMAIN()
 
@@ -139,6 +140,23 @@ int main() {
     throw __LINE__;
   }
 
+  /* Test splitting */
+
+  CT::string stringToSplit = "abc,def,,ghi";
+
+  CT::StackList<CT::stringref> splittedRefs = stringToSplit.splitToStackReferences(",");
+  if (splittedRefs.size() != 4) {
+    CDBError("Expected 4 elements for for splitted string");
+    throw __LINE__;
+  }
+
+  TestResult tr;
+  TestRegistry::runAllTests(tr);
   CDBDebug("OK");
   return 0;
+}
+
+TEST(Whatever, MyTest) {
+  float fnum = 2.00001f;
+  CHECK_EQUAL(fnum, 3.0f);
 }
