@@ -117,3 +117,5 @@ tests/checker_report.txt
 
 .vscode
 .log.txt.kate-swp
+hclasses/CMakeLists.txt
+hclasses/testhclasses

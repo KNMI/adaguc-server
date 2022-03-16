@@ -31,10 +31,13 @@ add_library(hclasses
     testhclasses.cpp
 )
 
-target_include_directories(hclasses PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${LIBXML2_INCLUDE_DIR})
+
+add_subdirectory(CppUnitLite)
+
+target_include_directories(hclasses PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${LIBXML2_INCLUDE_DIR}  CppUnitLite)
 
 # Build unit test executable
 add_executable(testhclasses testhclasses.cpp)
-target_link_libraries(testhclasses PRIVATE hclasses)
+target_link_libraries(testhclasses PRIVATE hclasses CppUnitLite)
 
 
