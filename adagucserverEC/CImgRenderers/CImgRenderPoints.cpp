@@ -142,6 +142,8 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
       }
     }
   }
+
+  CDBDebug("drawPointPointStyle %s", drawPointPointStyle.c_str());
   //   CDBDebug("point style after: %d %d %f %f t:#%02x%02x%02x%02x f:#%02x%02x%02x%02x l:#%02x%02x%02x%02x",drawPointDiscRadius, drawPointDot, drawPointAngleStart, drawPointAngleStep,
   //             drawPointTextColor.r,drawPointTextColor.g,drawPointTextColor.b,drawPointTextColor.a,
   //             drawPointFillColor.r,drawPointFillColor.g,drawPointFillColor.b,drawPointFillColor.a,
