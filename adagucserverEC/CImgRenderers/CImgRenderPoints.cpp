@@ -27,9 +27,12 @@
 
 const char *CImgRenderPoints::className = "CImgRenderPoints";
 
-void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration) {
+void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, CServerConfig::XMLE_Point *pointConfig) {
   // CDBDebug("drawPointFillcolor: %x%x%x%x", drawPointFillColor.r,drawPointFillColor.g,drawPointFillColor.b,drawPointFillColor.a);
-  int alphaPoint[(2 * drawPointDiscRadius + 1) * (2 * drawPointDiscRadius + 1)];
+  int drawPointDiscRadiusInt = int(drawPointDiscRadius);
+  int alphaPoint[(2 * drawPointDiscRadiusInt + 1) * (2 * drawPointDiscRadiusInt + 1)];
+
+  /* Preparation for volume draw */
   if (drawVolume) {
     int p = 0;
     for (int y1 = -drawPointDiscRadius; y1 <= drawPointDiscRadius; y1++) {
@@ -44,6 +47,8 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
     }
     CDBDebug("alphaPoint inited");
   }
+
+  /* For thinning */
   int doneMatrixH = 32;
   int doneMatrixW = 32;
   unsigned char doneMatrix[doneMatrixW * doneMatrixH];
@@ -54,14 +59,14 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
   std::map<std::string, CDrawImage *> symbolCache;
   //     CDBDebug("symbolCache created, size=%d", symbolCache.size());
   std::map<std::string, CDrawImage *>::iterator symbolCacheIter;
-  for (size_t dataObject = 0; dataObject < dataSource->getNumDataObjects(); dataObject++) {
-    std::vector<PointDVWithLatLon> *pts = &dataSource->getDataObject(dataObject)->points;
+  for (size_t dataObjectIndex = 0; dataObjectIndex < dataSource->getNumDataObjects(); dataObjectIndex++) {
+    std::vector<PointDVWithLatLon> *pts = &dataSource->getDataObject(dataObjectIndex)->points;
 
     float usedx = 0;
     float usedy = 0;
     int kwadrant = 0;
     if (useDrawPointAngles) {
-      float useangle = drawPointAngleStart + drawPointAngleStep * dataObject;
+      float useangle = drawPointAngleStart + drawPointAngleStep * dataObjectIndex;
       if (useangle < 0) {
         kwadrant = 3 - int(useangle / 90);
       } else {
@@ -73,7 +78,7 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
     }
 
     // THINNING
-    std::vector<PointDVWithLatLon> *p1 = &dataSource->getDataObject(dataObject)->points;
+    std::vector<PointDVWithLatLon> *p1 = &dataSource->getDataObject(dataObjectIndex)->points;
     size_t l = p1->size();
     size_t nrThinnedPoints = l;
     std::vector<size_t> thinnedPointsIndex;
@@ -109,12 +114,22 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
       nrThinnedPoints = thinnedPointsIndex.size();
     }
 
-    //      CDBDebug("After thinning %d", nrThinnedPoints);
+    bool pointMinMaxSet = false;
+    float pointMin = 0;
+    float pointMax = 0;
+    if (!pointConfig->attr.min.empty() && !pointConfig->attr.max.empty()) {
+      pointMinMaxSet = 1;
+      pointMin = pointConfig->attr.min.toFloat();
+      pointMax = pointConfig->attr.max.toFloat();
+    }
+
     CT::string t;
     for (size_t pointNo = 0; pointNo < nrThinnedPoints; pointNo++) {
       size_t j = pointNo;
       j = thinnedPointsIndex[pointNo];
       float v = (*pts)[j].v;
+
+      float perPointDrawPointDiscRadius = drawPointDiscRadius;
       bool skipPoint = false;
       if (styleConfiguration != NULL) {
         if (styleConfiguration->hasLegendValueRange) {
@@ -126,6 +141,12 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
           }
         }
       }
+      if (pointMinMaxSet && dataObjectIndex == 0) {
+        if (v < pointMin || v > pointMax) {
+          skipPoint = true;
+        }
+      }
+
       if (!skipPoint) {
         if (drawVolume) {
           int x = (*pts)[j].x;
@@ -243,9 +264,9 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
           if (v == v) {
             // Determine text to plot for value
             bool drawText = true;
-            if (dataSource->getDataObject(dataObject)->hasStatusFlag) {
+            if (dataSource->getDataObject(dataObjectIndex)->hasStatusFlag) {
               CT::string flagMeaning;
-              CDataSource::getFlagMeaningHumanReadable(&flagMeaning, &dataSource->getDataObject(dataObject)->statusFlagList, v);
+              CDataSource::getFlagMeaningHumanReadable(&flagMeaning, &dataSource->getDataObject(dataObjectIndex)->statusFlagList, v);
               t.print("%s", flagMeaning.c_str());
             } else if (drawPointTextFormat.length() < 2) {
               drawText = false;
@@ -253,8 +274,15 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
               t.print(drawPointTextFormat.c_str(), v);
             }
 
+            if (isRadiusAndValue) {
+              if (dataSource->getNumDataObjects() == 2) {
+                std::vector<PointDVWithLatLon> *p2 = &dataSource->getDataObject(1)->points;
+                perPointDrawPointDiscRadius = std::vector<PointDVWithLatLon>(*p2)[j].v * drawPointDiscRadius;
+              }
+            }
+
             if (!useDrawPointTextColor) {
-              if (dataObject == 0) { // Only calculate color for 1st dataObject, rest gets defaultColor
+              if (dataObjectIndex == 0) { // Only calculate color for 1st dataObject, rest gets defaultColor
                 if ((dataSource->getStyle() != NULL) && (dataSource->getStyle()->shadeIntervals != NULL) && (dataSource->getStyle()->shadeIntervals->size() > 0)) {
                   drawPointTextColor = getPixelColorForValue(dataSource, v);
                 } else {
@@ -280,17 +308,27 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
                   drawPointFillColor = drawImage->getColorForIndex(pointColorIndex);
                 }
               }
-
-              if (drawZoomablePoints) {
-                drawImage->setEllipse(x, y, (*pts)[j].radiusX, (*pts)[j].radiusY, (*pts)[j].rotation, drawPointFillColor, drawPointLineColor);
+              if (isRadiusAndValue) {
+                if (dataObjectIndex == 0) {
+                  drawImage->setDisc(x, y, perPointDrawPointDiscRadius, drawPointFillColor, drawPointLineColor);
+                }
               } else {
-                if (dataObject == 0) drawImage->setDisc(x, y, drawPointDiscRadius, drawPointFillColor, drawPointLineColor);
+                if (drawZoomablePoints) {
+                  drawImage->setEllipse(x, y, (*pts)[j].radiusX, (*pts)[j].radiusY, (*pts)[j].rotation, drawPointFillColor, drawPointLineColor);
+                } else {
+                  if (dataObjectIndex == 0) drawImage->setDisc(x, y, drawPointDiscRadius, drawPointFillColor, drawPointLineColor);
+                }
               }
+
               if (drawText) {
                 if (useDrawPointAngles) {
-                  drawImage->drawAnchoredText(x + usedx, y - usedy, drawPointFontFile, drawPointFontSize, 0, t.c_str(), drawPointTextColor, kwadrant);
+                  if (dataObjectIndex == 0) {
+                    drawImage->drawAnchoredText(x + usedx, y - usedy, drawPointFontFile, drawPointFontSize, 0, t.c_str(), drawPointTextColor, kwadrant);
+                  }
                 } else {
-                  drawImage->drawCenteredText(x, y + drawPointTextRadius, drawPointFontFile, drawPointFontSize, 0, t.c_str(), drawPointTextColor);
+                  if (dataObjectIndex == 0) {
+                    drawImage->drawCenteredText(x, y + drawPointTextRadius, drawPointFontFile, drawPointFontSize, 0, t.c_str(), drawPointTextColor);
+                  }
                 }
               }
               if (drawPointDot) drawImage->circle(x, y, 1, drawPointLineColor, 1);
@@ -332,9 +370,9 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
             }
           }
           if (v == v) {
-            if (dataSource->getDataObject(dataObject)->hasStatusFlag) {
+            if (dataSource->getDataObject(dataObjectIndex)->hasStatusFlag) {
               CT::string flagMeaning;
-              CDataSource::getFlagMeaningHumanReadable(&flagMeaning, &dataSource->getDataObject(dataObject)->statusFlagList, v);
+              CDataSource::getFlagMeaningHumanReadable(&flagMeaning, &dataSource->getDataObject(dataObjectIndex)->statusFlagList, v);
               t.print("%s", flagMeaning.c_str());
             } else {
               t.print(drawPointTextFormat.c_str(), v);
@@ -575,164 +613,161 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
   useFilter = false;
   useDrawPointFillColor = false;
   useDrawPointTextColor = false;
+  isRadiusAndValue = false;
 
   symbolIntervals = NULL;
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-  if (styleConfiguration != NULL) {
-    if (styleConfiguration->styleConfig != NULL) {
-      CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
-      if (s->Point.size() == 1) {
-        if (s->Point[0]->attr.fillcolor.empty() == false) {
-          drawPointFillColor.parse(s->Point[0]->attr.fillcolor.c_str());
-          useDrawPointFillColor = true;
-        }
-        if (s->Point[0]->attr.linecolor.empty() == false) {
-          drawPointLineColor.parse(s->Point[0]->attr.linecolor.c_str());
-        }
-        if (s->Point[0]->attr.textcolor.empty() == false) {
-          drawPointTextColor.parse(s->Point[0]->attr.textcolor.c_str());
-          useDrawPointTextColor = true;
-        }
-        if (s->Point[0]->attr.fontfile.empty() == false) {
-          drawPointFontFile = s->Point[0]->attr.fontfile.c_str();
-        }
-        if (s->Point[0]->attr.fontsize.empty() == false) {
-          drawPointFontSize = s->Point[0]->attr.fontsize.toFloat();
-        }
-        if (s->Point[0]->attr.discradius.empty() == false) {
-          drawPointDiscRadius = s->Point[0]->attr.discradius.toInt();
-          if (s->Point[0]->attr.textradius.empty() == true) {
-            drawPointTextRadius = drawPointDiscRadius + 4;
-          }
-        }
-        if (s->Point[0]->attr.textradius.empty() == false) {
-          drawPointTextRadius = s->Point[0]->attr.textradius.toInt();
-        }
-        if (s->Point[0]->attr.dot.empty() == false) {
-          drawPointDot = s->Point[0]->attr.dot.equalsIgnoreCase("true");
-        }
-        if (s->Point[0]->attr.anglestart.empty() == false) {
-          drawPointAngleStart = s->Point[0]->attr.anglestart.toFloat();
-          useDrawPointAngles = true;
-        }
-        if (s->Point[0]->attr.anglestep.empty() == false) {
-          drawPointAngleStep = s->Point[0]->attr.anglestep.toFloat();
-        }
-        if (s->Point[0]->attr.textformat.empty() == false) {
-          drawPointTextFormat = s->Point[0]->attr.textformat.c_str();
-        }
-        if (s->Point[0]->attr.pointstyle.empty() == false) {
-          drawPointPointStyle = s->Point[0]->attr.pointstyle.c_str();
-        }
-        if (s->Point[0]->attr.plotstationid.empty() == false) {
-          drawPointPlotStationId = s->Point[0]->attr.plotstationid.equalsIgnoreCase("true");
-        }
+  if (styleConfiguration == NULL || styleConfiguration->styleConfig == NULL) {
+    return;
+  }
+  CServerConfig::XMLE_Style *styleConfig = styleConfiguration->styleConfig;
+  for (size_t pointDefinitionIndex = 0; pointDefinitionIndex < styleConfig->Point.size(); pointDefinitionIndex += 1) {
+    CServerConfig::XMLE_Point *pointConfig = styleConfig->Point[pointDefinitionIndex];
+
+    if (pointConfig->attr.fillcolor.empty() == false) {
+      drawPointFillColor.parse(pointConfig->attr.fillcolor.c_str());
+      useDrawPointFillColor = true;
+    }
+    if (pointConfig->attr.linecolor.empty() == false) {
+      drawPointLineColor.parse(pointConfig->attr.linecolor.c_str());
+    }
+    if (pointConfig->attr.textcolor.empty() == false) {
+      drawPointTextColor.parse(pointConfig->attr.textcolor.c_str());
+      useDrawPointTextColor = true;
+    }
+    if (pointConfig->attr.fontfile.empty() == false) {
+      drawPointFontFile = pointConfig->attr.fontfile.c_str();
+    }
+    if (pointConfig->attr.fontsize.empty() == false) {
+      drawPointFontSize = pointConfig->attr.fontsize.toFloat();
+    }
+    if (pointConfig->attr.discradius.empty() == false) {
+      drawPointDiscRadius = pointConfig->attr.discradius.toFloat();
+      if (pointConfig->attr.textradius.empty() == true) {
+        drawPointTextRadius = drawPointDiscRadius + 4;
       }
     }
-  }
-
-  CDBDebug("drawPointPointStyle %s", drawPointPointStyle.c_str());
-  //   CDBDebug("point style after: %d %d %f %f t:#%02x%02x%02x%02x f:#%02x%02x%02x%02x l:#%02x%02x%02x%02x",drawPointDiscRadius, drawPointDot, drawPointAngleStart, drawPointAngleStep,
-  //             drawPointTextColor.r,drawPointTextColor.g,drawPointTextColor.b,drawPointTextColor.a,
-  //             drawPointFillColor.r,drawPointFillColor.g,drawPointFillColor.b,drawPointFillColor.a,
-  //             drawPointLineColor.r,drawPointLineColor.g,drawPointLineColor.b,drawPointLineColor.a
-  //           );
-
-  if (drawPointPointStyle.equalsIgnoreCase("disc")) {
-    drawDiscs = true;
-    drawPoints = false;
-    drawVolume = false;
-    //     drawText=true;
-    drawSymbol = false;
-  } else if (drawPointPointStyle.equalsIgnoreCase("volume")) {
-    drawPoints = false;
-    drawVolume = true;
-    drawDiscs = false;
-    //     drawText=false;
-    drawSymbol = false;
-  } else if (drawPointPointStyle.equalsIgnoreCase("symbol")) {
-    drawPoints = false;
-    drawVolume = false;
-    drawDiscs = false;
-    //     drawText=false;
-    drawSymbol = true;
-  } else if (drawPointPointStyle.equalsIgnoreCase("zoomablepoint")) {
-    drawPoints = true;
-    drawVolume = false;
-    drawDiscs = false;
-    //     drawText=false;
-    drawSymbol = false;
-    drawZoomablePoints = true;
-  } else {
-    drawPoints = true;
-    drawDiscs = false;
-    drawVolume = false;
-    //     drawText=true;
-    drawSymbol = false;
-  }
-  //   CDBDebug("drawPoints=%d drawText=%d drawBarb=%d drawVector=%d drawVolume=%d drawSymbol=%d", drawPoints, drawText, drawBarb, drawVector, drawVolume, drawSymbol);
-
-  // CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-  if (styleConfiguration != NULL) {
-    if (drawSymbol) {
-      if (styleConfiguration->symbolIntervals != NULL) {
-        symbolIntervals = styleConfiguration->symbolIntervals;
-      }
+    if (pointConfig->attr.textradius.empty() == false) {
+      drawPointTextRadius = pointConfig->attr.textradius.toInt();
     }
-    if (styleConfiguration->styleConfig != NULL) {
-      CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
-      if (s->FilterPoints.size() == 1) {
-        if (s->FilterPoints[0]->attr.use.empty() == false) {
-          CT::string filterPointsUse = s->FilterPoints[0]->attr.use.c_str();
-          std::vector<CT::string> use = filterPointsUse.splitToStack(",");
-          for (std::vector<CT::string>::iterator it = use.begin(); it != use.end(); ++it) {
-            //            CDBDebug("adding %s to usePoints", it->c_str());
-            usePoints.insert(it->c_str());
-          }
-          useFilter = true;
-        }
-        if (s->FilterPoints[0]->attr.skip.empty() == false) {
-          CT::string filterPointsSkip = s->FilterPoints[0]->attr.skip.c_str();
-          useFilter = true;
-          std::vector<CT::string> skip = filterPointsSkip.splitToStack(",");
-          for (std::vector<CT::string>::iterator it = skip.begin(); it != skip.end(); ++it) {
-            skipPoints.insert(it->c_str());
-          }
-        }
-      }
+    if (pointConfig->attr.dot.empty() == false) {
+      drawPointDot = pointConfig->attr.dot.equalsIgnoreCase("true");
+    }
+    if (pointConfig->attr.anglestart.empty() == false) {
+      drawPointAngleStart = pointConfig->attr.anglestart.toFloat();
+      useDrawPointAngles = true;
+    }
+    if (pointConfig->attr.anglestep.empty() == false) {
+      drawPointAngleStep = pointConfig->attr.anglestep.toFloat();
+    }
+    if (pointConfig->attr.textformat.empty() == false) {
+      drawPointTextFormat = pointConfig->attr.textformat.c_str();
+    }
+    if (pointConfig->attr.pointstyle.empty() == false) {
+      drawPointPointStyle = pointConfig->attr.pointstyle.c_str();
+    }
+    if (pointConfig->attr.plotstationid.empty() == false) {
+      drawPointPlotStationId = pointConfig->attr.plotstationid.equalsIgnoreCase("true");
     }
 
-  } else {
-    CDBDebug("styleConfiguration==NULL!!!!");
-  }
+    if (drawPointPointStyle.equalsIgnoreCase("disc")) {
+      drawDiscs = true;
+      drawPoints = false;
+      drawVolume = false;
+      //     drawText=true;
+      drawSymbol = false;
+    } else if (drawPointPointStyle.equalsIgnoreCase("volume")) {
+      drawPoints = false;
+      drawVolume = true;
+      drawDiscs = false;
+      //     drawText=false;
+      drawSymbol = false;
+    } else if (drawPointPointStyle.equalsIgnoreCase("symbol")) {
+      drawPoints = false;
+      drawVolume = false;
+      drawDiscs = false;
+      //     drawText=false;
+      drawSymbol = true;
+    } else if (drawPointPointStyle.equalsIgnoreCase("zoomablepoint")) {
+      drawPoints = true;
+      drawVolume = false;
+      drawDiscs = false;
+      //     drawText=false;
+      drawSymbol = false;
+      drawZoomablePoints = true;
+    } else {
+      drawPoints = true;
+      drawDiscs = false;
+      drawVolume = false;
+      //     drawText=true;
+      drawSymbol = false;
+    }
+    //   CDBDebug("drawPoints=%d drawText=%d drawBarb=%d drawVector=%d drawVolume=%d drawSymbol=%d", drawPoints, drawText, drawBarb, drawVector, drawVolume, drawSymbol);
 
-  if (settings.indexOf("thin") != -1) {
-    doThinning = true;
+    // CStyleConfiguration *styleConfiguration = dataSource->getStyle();
     if (styleConfiguration != NULL) {
+      if (drawSymbol) {
+        if (styleConfiguration->symbolIntervals != NULL) {
+          symbolIntervals = styleConfiguration->symbolIntervals;
+        }
+      }
       if (styleConfiguration->styleConfig != NULL) {
         CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
-        if (s->Thinning.size() == 1) {
-          if (s->Thinning[0]->attr.radius.empty() == false) {
-            thinningRadius = s->Thinning[0]->attr.radius.toInt();
-            // CDBDebug("Thinning radius = %d",s -> Thinning[0]->attr.radius.toInt());
+        if (s->FilterPoints.size() == 1) {
+          if (s->FilterPoints[0]->attr.use.empty() == false) {
+            CT::string filterPointsUse = s->FilterPoints[0]->attr.use.c_str();
+            std::vector<CT::string> use = filterPointsUse.splitToStack(",");
+            for (std::vector<CT::string>::iterator it = use.begin(); it != use.end(); ++it) {
+              //            CDBDebug("adding %s to usePoints", it->c_str());
+              usePoints.insert(it->c_str());
+            }
+            useFilter = true;
+          }
+          if (s->FilterPoints[0]->attr.skip.empty() == false) {
+            CT::string filterPointsSkip = s->FilterPoints[0]->attr.skip.c_str();
+            useFilter = true;
+            std::vector<CT::string> skip = filterPointsSkip.splitToStack(",");
+            for (std::vector<CT::string>::iterator it = skip.begin(); it != skip.end(); ++it) {
+              skipPoints.insert(it->c_str());
+            }
+          }
+        }
+      }
+
+    } else {
+
+      CDBDebug("styleConfiguration==NULL!!!!");
+    }
+
+    if (settings.indexOf("thin") != -1) {
+      doThinning = true;
+      if (styleConfiguration != NULL) {
+        if (styleConfiguration->styleConfig != NULL) {
+          CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
+          if (s->Thinning.size() == 1) {
+            if (s->Thinning[0]->attr.radius.empty() == false) {
+              thinningRadius = s->Thinning[0]->attr.radius.toInt();
+              // CDBDebug("Thinning radius = %d",s -> Thinning[0]->attr.radius.toInt());
+            }
           }
         }
       }
     }
-  }
 
-  bool isVector = ((dataSource->getNumDataObjects() == 2) && (dataSource->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_GEOJSONPOINT") == NULL));
-  if (drawPointPointStyle.equals("radiusandvalue")) {
-    isVector = false;
-  }
-  if (!isVector) {
-    renderSinglePoints(warper, dataSource, drawImage, styleConfiguration);
-  }
+    bool isVector = ((dataSource->getNumDataObjects() == 2) && (dataSource->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_GEOJSONPOINT") == NULL));
+    if (drawPointPointStyle.equals("radiusandvalue")) {
+      isVector = false;
+      isRadiusAndValue = true;
+    }
+    if (!isVector) {
+      renderSinglePoints(warper, dataSource, drawImage, styleConfiguration, pointConfig);
+    }
 
-  if (isVector) {
-    CDBDebug("VECTOR");
-    renderVectorPoints(warper, dataSource, drawImage, styleConfiguration);
+    if (isVector) {
+      CDBDebug("VECTOR");
+      renderVectorPoints(warper, dataSource, drawImage, styleConfiguration);
+    }
   }
 }
 

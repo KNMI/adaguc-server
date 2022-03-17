@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+  <Legend name="magnitude" type="colorRange">
+    <palette index="0" color="#55005550" />
+    <!-- 0 Nothing -->
+    <palette index="20" color="#66009980" />
+    <!-- 1 Insignificant -->
+    <palette index="40" color="#0099FF80" />
+    <!-- 2 Low -->
+    <palette index="60" color="#00CC99B0" />
+    <!-- 3 Minor -->
+    <palette index="80" color="#99CC66B0" />
+    <!-- 4 Moderate -->
+    <palette index="100" color="#99FF33B0" />
+    <!-- 5 Intermediate -->
+    <palette index="120" color="#FFFF33B0" />
+    <!-- 6 Noteworthy -->
+    <palette index="140" color="#FFCC66C0" />
+    <!-- 7 High -->
+    <palette index="160" color="#FF9966D0" />
+    <!-- 8 Far-reaching -->
+    <palette index="180" color="#FF3300E0" />
+    <!-- 9 Outstanding -->
+    <palette index="200" color="#CC0000FF" />
+    <!-- 10 Extraordinary -->
+    <palette index="220" color="#880000FF" />
+    <!-- 11 ! -->
+    <palette index="239" color="#000000FF" />
+    <!-- 12 !! -->
+  </Legend>
+  <Style name="magnitude">
+    <Legend fixed="true" tickinterval="100000">magnitude</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Min>0</Min>
+    <Max>2000000</Max>
+    <NameMapping name="point" title="Richter magnitude scale" abstract="Wth continuous colors" />
+    <Point min="2592000" max="1000000000000" pointstyle="radiusandvalue" textformat=" " plotstationid="false" fillcolor="#CCCCCC" discradius="2.2" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF" />
+    <Point min="604800" max="2592000" pointstyle="radiusandvalue" textformat=" " plotstationid="false" fillcolor="#FFFFFFFF" discradius="2.2" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF" />
+    <Point min="86400" max="604800" pointstyle="radiusandvalue" textformat=" " plotstationid="false" fillcolor="#FFFF00FF" discradius="2.2" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF" />
+    <Point min="3600" max="86400" pointstyle="radiusandvalue" textformat=" " plotstationid="false" fillcolor="#FF9900FF" discradius="2.2" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF" />
+    <Point min="0" max="3600" pointstyle="radiusandvalue" textformat=" " plotstationid="false" fillcolor="#FF0000" discradius="2.2" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF" />
+    <LegendGraphic value="{ADAGUC_DATASET_DIR}/csv_radiusandvalue_legend.png" />
+  </Style>
+  <Layer type="database">
+    <Name>radiusandvalue</Name>
+    <Title>magnitude</Title>
+    <FilePath filter="">{ADAGUC_PATH}/data/datasets/test/csv_radiusandvalue.csv</FilePath>
+    <Variable>age</Variable>
+    <Variable>magnitude</Variable>
+    <Styles>magnitude</Styles>
+    <DataBaseTable>ok</DataBaseTable>
+  </Layer>
+</Configuration>
+
