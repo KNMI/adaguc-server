@@ -42,7 +42,7 @@ private:
   bool doThinning;
   int thinningRadius;
   int drawPointFontSize;
-  int drawPointDiscRadius;
+  float drawPointDiscRadius;
   int drawPointTextRadius;
   bool drawPointDot;
   float drawPointAngleStart;
@@ -67,13 +67,14 @@ private:
 
   std::set<std::string> usePoints;
   std::set<std::string> skipPoints;
-  bool useFilter = false;
-  bool useDrawPointFillColor = false;
-  bool useDrawPointTextColor = false;
+  bool useFilter;
+  bool useDrawPointFillColor;
+  bool useDrawPointTextColor;
+  bool isRadiusAndValue;
 
   std::vector<CServerConfig::XMLE_SymbolInterval *> *symbolIntervals;
 
-  void renderSinglePoints(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration);
+  void renderSinglePoints(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, CServerConfig::XMLE_Point *pointConfig);
   void renderVectorPoints(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration);
 
 public:
