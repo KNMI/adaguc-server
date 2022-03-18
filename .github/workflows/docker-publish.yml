@@ -1,0 +1,37 @@
+name: Docker image build and publish
+
+on:
+  push:
+    branches:
+      - '**'
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+  docker-build-and-publish:
+    name: Build Docker image and potentially push to Docker Hub
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+
+      - name: Log in to Docker Hub
+        if: github.repository == 'KNMI/adaguc-server'
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: openearth/adaguc-server
+
+      - name: Build and potentially push Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: ${{ github.repository == 'KNMI/adaguc-server' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

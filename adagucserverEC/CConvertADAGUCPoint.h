@@ -34,6 +34,7 @@ private:
   static void convert_BIRA_IASB_NETCDF(CDFObject *cdfObject);
 
 public:
+  static void drawDot(int px, int py, int v, int W, int H, float *grid);
   static int convertADAGUCPointHeader(CDFObject *cdfObject);
   static int convertADAGUCPointData(CDataSource *dataSource, int mode);
 };
