@@ -114,6 +114,7 @@ public:
   float fontSize;
   CColor color;
 
+  DEF_ERRORFUNCTION();
   RectangleText(int llx, int lly, int urx, int ury, float angle, int padding, const char *text, const char *fontFile, float fontSize, CColor color) {
     this->llx = llx;
     this->lly = lly;
@@ -225,7 +226,7 @@ public:
   void drawText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor fgcolor, CColor bgcolor);
   void drawAnchoredText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color, int anchor);
   void drawCenteredText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color);
-  void drawCenteredTextNoOverlap(int x, int y, const char *fontfile, float size, float angle, int padding, const char *text, CColor color, std::vector<RectangleText> &rects);
+  void drawCenteredTextNoOverlap(int x, int y, const char *fontfile, float size, float angle, int padding, const char *text, CColor color, bool noOverlap, std::vector<RectangleText> &rects);
   int drawTextArea(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor fgcolor, CColor bgcolor);
 
   // void drawTextAngle(const char * text, size_t length,double angle,int x,int y,int color,int fontSize);

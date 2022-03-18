@@ -15,9 +15,9 @@ from adaguc.CGIRunner import CGIRunner
 
 class runAdaguc:
   def __init__(self):
-    """ ADAGUC_LOGFILE is the location where logfiles are stored. 
-      In current config file adaguc.autoresource.xml, the DB is written to this temporary directory. 
-      Please note regenerating the DB each time for each request can cause performance problems. 
+    """ ADAGUC_LOGFILE is the location where logfiles are stored.
+      In current config file adaguc.autoresource.xml, the DB is written to this temporary directory.
+      Please note regenerating the DB each time for each request can cause performance problems.
       You can safely configure a permanent location for the database which is permanent in adaguc.autoresource.xml (or your own config)"""
     self.ADAGUC_LOGFILE = "/tmp/adaguc-server-" + \
         self.get_random_string(10) + ".log"
@@ -30,7 +30,7 @@ class runAdaguc:
         'ADAGUC_DATASET_DIR', "/data/adaguc-datasets")
     self.ADAGUC_TMP = os.getenv('ADAGUC_TMP', "/tmp")
     self.ADAGUC_FONT = os.getenv(
-        'ADAGUC_FONT', self.ADAGUC_PATH + "./data/fonts/Roboto-Medium.ttf")
+        'ADAGUC_FONT', self.ADAGUC_PATH + "/data/fonts/Roboto-Medium.ttf")
 
   def setAdagucPath(self, newAdagucPath):
     self.ADAGUC_PATH = newAdagucPath

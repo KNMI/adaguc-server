@@ -154,14 +154,13 @@
         fillcolor="#000080FF"
         bordercolor="#800000"
         borderwidth="0.3"
-        labelfontpath="/home/vreedede/Projects/adaguc-server-test/adaguc-server-workshop/data/fonts/Roboto-Black.ttf"
+	    labelfontpath="{ADAGUC_PATH}/data/fonts/Roboto-Black.ttf"
         labelfontsize="12"
         labelcolor="#0000AAFF"
         labelpropertyname="Gemeentenaam"
         labelpropertyformat="%s"
         labelangle="90"
         labelpadding="3"
-        labelrandomize="true"
         />
     <FeatureInterval match=".*"
         matchid="Gemeentenaam"
@@ -169,19 +168,19 @@
         fillcolor="#000080FF"
         bordercolor="#000000"
         borderwidth="0.3"
-        labelfontpath="/home/vreedede/Projects/adaguc-server-test/adaguc-server-workshop/data/fonts/Roboto-Black.ttf"
-        labelfontsize="6"
+	    labelfontpath="{ADAGUC_PATH}/data/fonts/Roboto-Black.ttf"
+        labelfontsize="8"
         labelcolor="#800000FF"
         labelpropertyname="Gemeentenaam"
         labelpropertyformat="%s"
         labelangle="0"
         labelpadding="3"
-        labelrandomize="true"
         /> <!-- Used in CImgRenderPolylines -->
     <Scale>0</Scale>
     <Offset>0</Offset>
     <RenderMethod>nearest,bilinear,point,barb</RenderMethod>
     <StandardNames standard_name="features"/>
+    <RenderSettings featuresoverlap="true" randomizefeatures="true"/>
   </Style>
 
 </Configuration>

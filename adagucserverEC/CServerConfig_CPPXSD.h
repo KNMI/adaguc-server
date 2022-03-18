@@ -653,8 +653,8 @@ public:
     class Cattr {
     public:
       CT::string match, matchid, bgcolor, label, fillcolor, linecolor, linewidth, bordercolor, borderwidth;
-      CT::string labelfontpath, labelfontsize, labelcolor, labelpropertyname, labelpropertyformat, labelangle;
-      CT::string labelrandomize, labelpadding;
+      CT::string labelfontfile, labelfontsize, labelcolor, labelpropertyname, labelpropertyformat, labelangle;
+      CT::string labelpadding;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("match", 5, attrname)) {
@@ -684,8 +684,8 @@ public:
       } else if (equals("bordercolor", 11, attrname)) {
         attr.bordercolor.copy(attrvalue);
         return;
-      } else if (equals("labelfontpath", 13, attrname)) {
-        attr.labelfontpath.copy(attrvalue);
+      } else if (equals("labelfontfile", 13, attrname)) {
+        attr.labelfontfile.copy(attrvalue);
         return;
       } else if (equals("labelfontsize", 13, attrname)) {
         attr.labelfontsize.copy(attrvalue);
@@ -701,9 +701,6 @@ public:
         return;
       } else if (equals("labelangle", 10, attrname)) {
         attr.labelangle.copy(attrvalue);
-        return;
-      } else if (equals("labelrandomize", 14, attrname)) {
-        attr.labelrandomize.copy(attrvalue);
         return;
       } else if (equals("labelpadding", 12, attrname)) {
         attr.labelpadding.copy(attrvalue);
@@ -744,7 +741,7 @@ public:
   public:
     class Cattr {
     public:
-      CT::string settings, striding, renderer, scalewidth, scalecontours;
+      CT::string settings, striding, renderer, scalewidth, scalecontours, randomizefeatures, featuresoverlap;
     } attr;
     void addAttribute(const char *name, const char *value) {
       if (equals("settings", 8, name)) {
@@ -761,6 +758,12 @@ public:
         return;
       } else if (equals("scalecontours", 13, name)) {
         attr.scalecontours.copy(value);
+        return;
+      } else if (equals("randomizefeatures", 17, name)) {
+        attr.randomizefeatures.copy(value);
+        return;
+      } else if (equals("featuresoverlap", 15, name)) {
+        attr.featuresoverlap.copy(value);
         return;
       }
     }
