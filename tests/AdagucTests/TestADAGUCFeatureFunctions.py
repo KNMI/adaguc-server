@@ -4,13 +4,13 @@
 # pylint: disable=unused-argument
 
 """
-  Run test for ADAGUC Feature functions
+ Run test for ADAGUC Feature functions
 """
 import unittest
 import os
 from adaguc.ADAGUCFeatureFunctions import ADAGUCFeatureCombineNuts
 
-from .AdagucTestTools import AdagucTestTools
+from adaguc.AdagucTestTools import AdagucTestTools
 
 ADAGUC_PATH = os.environ['ADAGUC_PATH']
 
@@ -19,10 +19,13 @@ class TestADAGUCFeatureFunctions(unittest.TestCase):
     """
     Run test for ADAGUC Feature functions
     """
-    testresultspath = "testresults/TestADAGUCFeatureFunctions/"
-    expectedoutputsspath = "expectedoutputs/TestADAGUCFeatureFunctions/"
+    testresultspath = "{ADAGUC_PATH}/tests/testresults/TestADAGUCFeatureFunctions/"
+    expectedoutputsspath = "{ADAGUC_PATH}/tests/expectedoutputs/TestADAGUCFeatureFunctions/"
     env = {'ADAGUC_CONFIG': ADAGUC_PATH +
            "/data/config/adaguc.autoresource.xml"}
+    testresultspath = testresultspath.replace("{ADAGUC_PATH}/", ADAGUC_PATH)
+    expectedoutputsspath = expectedoutputsspath.replace(
+        "{ADAGUC_PATH}/", ADAGUC_PATH)
 
     AdagucTestTools().mkdir_p(testresultspath)
 
@@ -49,9 +52,9 @@ class TestADAGUCFeatureFunctions(unittest.TestCase):
             # variable="index",
             width=800,
             height=800,
-            outncrasterfile=os.getcwd() + "/" + self.testresultspath + filenamencraster,
-            outncpointfile=os.getcwd() + "/" + self.testresultspath + filenamencpoint,
-            outcsvfile=os.getcwd() + "/" + self.testresultspath + filenamecsv,
+            outncrasterfile=self.testresultspath + filenamencraster,
+            outncpointfile=self.testresultspath + filenamencpoint,
+            outcsvfile=self.testresultspath + filenamecsv,
             tmpFolderPath="/tmp",
             callback=progressCallback)
         #AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
