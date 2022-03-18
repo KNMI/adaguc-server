@@ -26,6 +26,7 @@
 #include "CDrawImage.h"
 #include "CXMLParser.h"
 const char *CDrawImage::className = "CDrawImage";
+const char *RectangleText::className = "RectangleText";
 
 float convertValueToClass(float val, float interval) {
   float f = int(val / interval);
@@ -1102,13 +1103,13 @@ void CDrawImage::drawCenteredText(int x, int y, const char *fontfile, float size
 }
 
 bool RectangleText::overlaps(RectangleText &r2) {
-  // CDBDebug("Checking %d,%d,%d,%d => %d,%d,%d,%d", r1.x0, r1.y0, r1.x1, r1.y1, r2.x0, r2.y0, r2.y1, r2.y1);
   if ((this->ury + padding < r2.lly) || (this->lly - padding > r2.ury)) return false;
   if ((this->urx + padding < r2.llx) || (this->llx - padding > r2.urx)) return false;
   return true;
 }
 
-void CDrawImage::drawCenteredTextNoOverlap(int x, int y, const char *fontFile, float size, float angle, int padding, const char *text, CColor color, std::vector<RectangleText> &rects) {
+void CDrawImage::drawCenteredTextNoOverlap(int x, int y, const char *fontFile, float size, float angle, int padding, const char *text, CColor color, bool noOverlap,
+                                           std::vector<RectangleText> &rects) {
   if (size <= 0) { // size 0 means do not draw label
     CDBDebug("Skipping for size %f", size);
     return;
@@ -1120,17 +1121,15 @@ void CDrawImage::drawCenteredTextNoOverlap(int x, int y, const char *fontFile, f
     freeType->setColor(color.r, color.g, color.b, color.a);
     freeType->getTextSize(w, h, 0, text); // Use the text size for angle 0 for detecting overlaps
     RectangleText rect((int)(x - w / 2), (int)(y - h / 2), (int)(x + w / 2), (int)(y + h / 2), angle, padding, text, fontFile, size, color);
-    bool overlapFound = false;
-    for (size_t j = 0; j < rects.size(); j++) {
-      if (rects[j].overlaps(rect)) {
-        overlapFound = true;
+    if (noOverlap) {
+      for (size_t j = 0; j < rects.size(); j++) {
+        if (rects[j].overlaps(rect)) {
+          return;
+        }
       }
     }
-    if (overlapFound) {
-      return;
-    }
     rects.push_back(rect);
-    CDBDebug("pushing with %f", rect.angle);
+    CDBDebug("pushing with %f [%d,%d]-[%d,%d] %dx%d", rect.angle, rect.llx, rect.lly, rect.urx, rect.ury, w, h);
   } else {
     // TODO GD renderer does not center text yet
     char *_text = new char[strlen(text) + 1];
@@ -1148,6 +1147,7 @@ void CDrawImage::drawCenteredTextNoOverlap(int x, int y, const char *fontFile, f
 void CDrawImage::drawText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color) {
 
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
+    CDBDebug("drawing %s with %s", text, fontfile);
     CCairoPlotter *freeType = this->getCairoPlotter(fontfile, size, Geo->dWidth, Geo->dHeight, cairo->getByteBuffer());
     freeType->setColor(color.r, color.g, color.b, color.a);
     freeType->drawText(x, y, angle, text);

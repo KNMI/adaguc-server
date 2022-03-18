@@ -138,6 +138,14 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
 
   std::map<std::string, std::vector<Feature *>> featureStore = CConvertGeoJSON::featureStore;
 
+  bool noOverlap = true;
+  if (styleConfiguration->styleConfig->RenderSettings.size() == 1) {
+    noOverlap = !styleConfiguration->styleConfig->RenderSettings[0]->attr.featuresoverlap.equals("true");
+  }
+  bool randomStart = true;
+  if (styleConfiguration->styleConfig->RenderSettings.size() == 1) {
+    randomStart = !styleConfiguration->styleConfig->RenderSettings[0]->attr.randomizefeatures.equals("false");
+  }
   srand(time(NULL));
   for (std::map<std::string, std::vector<Feature *>>::iterator itf = featureStore.begin(); itf != featureStore.end(); ++itf) {
     std::string fileName = itf->first.c_str();
@@ -145,7 +153,7 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
       // CDBDebug("Plotting %d features ONLY for %s", featureStore[fileName].size(), fileName.c_str());
       std::vector<RectangleText> rects;
       int featureRandomStart = 0; // For specifying a random polygon index to draw first
-      if (true) {
+      if (randomStart) {
         featureRandomStart = rand() % featureStore[fileName].size(); // Random start for first feature to draw
       }
       size_t featureStoreSize = featureStore[fileName].size();
@@ -155,11 +163,10 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
         // FindAttributes for this feature
         FeatureStyle featureStyle = getAttributesForFeature(&(dataSource->getDataObject(0)->features[featureIndex]), feature->getId(), styleConfiguration);
         CColor drawPointLineColor2(featureStyle.color.c_str());
-        float drawPointLineWidth = featureStyle.width.toFloat();
+        float drawPointLineWidth = featureStyle.width;
         // if(featureIndex!=0)break;
         std::vector<Polygon> polygons = feature->getPolygons();
         CT::string id = feature->getId();
-        //        CDBDebug("feature[%s] %d of %d with %d polygons", id.c_str(), featureIndex, featureStore[fileName].size(), polygons.size());
         for (std::vector<Polygon>::iterator itpoly = polygons.begin(); itpoly != polygons.end(); ++itpoly) {
           float *polyX = itpoly->getLons();
           float *polyY = itpoly->getLats();
@@ -184,12 +191,10 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
               cnt++;
             } else {
               CDBDebug("status: %d %d [%f,%f]", status, j, tprojectedX, tprojectedY);
-              //                         dlat=CCONVERTUGRIDMESH_NODATA;
-              //                         dlon=CCONVERTUGRIDMESH_NODATA;
             }
           }
 
-          //          CDBDebug("Draw polygon: %d points (%d)", cnt, numPoints);
+          // CDBDebug("Draw polygon: %d points (%d)", cnt, numPoints);
           drawImage->poly(projectedX, projectedY, cnt, drawPointLineWidth / 2, drawPointLineColor2, true, false);
           // Determine centroid for first polygon.
           if (firstPolygon) {
@@ -206,13 +211,13 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
               CT::string featureId;
               it = feature->getFp().find(featureStyle.propertyName.c_str());
               if (it != feature->getFp().end()) {
-                // CDBDebug("{%s", it->second->toString().c_str());
                 featureId.print(it->second->toString(featureStyle.propertyFormat));
               } else {
                 featureId = feature->getId();
               }
               CColor labelColor(featureStyle.fontColor);
-              drawImage->drawCenteredTextNoOverlap(dlon, height - dlat, featureStyle.fontPath.c_str(), featureStyle.fontSize, featureStyle.angle, featureStyle.padding, featureId, labelColor, rects);
+              drawImage->drawCenteredTextNoOverlap(dlon, height - dlat, featureStyle.fontFile.c_str(), featureStyle.fontSize, featureStyle.angle, featureStyle.padding, featureId, labelColor,
+                                                   noOverlap, rects);
             } else {
               CDBDebug("Status: %d centroid [%f,%f]", status, centroidX, centroidY);
             }
@@ -281,18 +286,11 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
               projectedX[cnt] = dlon;
               projectedY[cnt] = height - dlat;
               cnt++;
-            } else {
-              // CDBDebug("status: %d %d [%f,%f]", status, j, tprojectedX, tprojectedY);
-              //                         dlat=CCONVERTUGRIDMESH_NODATA;
-              //                         dlon=CCONVERTUGRIDMESH_NODATA;
             }
-            //                       projectedX[j]=dlon;
-            //                       projectedY[j]=height-dlat;
           }
 
           CDBDebug("Draw polygon: %d points (%d)", cnt, numPoints);
           drawImage->poly(projectedX, projectedY, cnt, drawPointLineWidth, drawPointLineColor2, false, false);
-          //                    break;
         }
 #ifdef MEASURETIME
         StopWatch_Stop("Feature drawn %d", featureIndex);
@@ -301,7 +299,22 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
       CDBDebug("Drawing %d rects", rects.size());
       // Draw polygon labels here, so they end up on top
       for (RectangleText rect : rects) {
-        drawImage->drawText(rect.llx, rect.lly, rect.fontFile.c_str(), rect.fontSize, rect.angle, rect.text.c_str(), rect.color);
+        int halfw = (rect.urx - rect.llx) / 2;
+        int halfh = (rect.ury - rect.lly) / 2;
+        // drawImage->setDisc(rect.llx + halfw, rect.lly + halfh, 6, rect.color, rect.color);
+        if (rect.angle == 0) {
+          drawImage->drawText(rect.llx, rect.lly, rect.fontFile.c_str(), rect.fontSize, rect.angle, rect.text.c_str(), rect.color);
+        } else {
+          // drawImage->drawText(rect.llx, rect.lly + halfh, rect.fontFile.c_str(), rect.fontSize, 0, rect.text.c_str(), rect.color);
+          // drawImage->rectangle(rect.llx, rect.lly, rect.urx, rect.ury, 0);
+          float radAngle = rect.angle * M_PI / 180;
+          int nx = (int)(cos(radAngle) * -halfw - sin(radAngle) * -halfh + rect.llx + halfw);
+          int ny = (int)(sin(radAngle) * -halfw + cos(radAngle) * -halfh + rect.lly - halfh);
+          // int nx1 = (int)(cos(radAngle) * halfw - sin(radAngle) * halfh + rect.llx + halfw);
+          // int ny1 = (int)(sin(radAngle) * halfw + cos(radAngle) * halfh + rect.lly - halfh);
+          drawImage->drawText(nx, ny, rect.fontFile.c_str(), rect.fontSize, rect.angle, rect.text.c_str(), rect.color);
+          // drawImage->rectangle(nx, ny, nx1, ny1, 0);
+        }
       }
     }
   }
@@ -315,10 +328,18 @@ int CImgRenderPolylines::set(const char *values) {
 
 FeatureStyle CImgRenderPolylines::getAttributesForFeature(CFeature *feature, CT::string id, CStyleConfiguration *styleConfig) {
   FeatureStyle fs;
-  fs.width = "2";
+  fs.color = "#008000FF";
+  fs.width = 2;
   fs.fontSize = 0;
+  fs.propertyFormat = "%s";
+  fs.padding = 3;
+  fs.angle = 0;
+  fs.fontColor = "#000000FF";
+  const char *fontLoc = getenv("ADAGUC_FONT");
+  if (fontLoc != NULL) {
+    fs.fontFile = fontLoc;
+  }
 
-  // CDBDebug("getAttributesForFeature(%d, %s, %d)", feature->id, id.c_str(), styleConfig->featureIntervals->size());
   for (size_t j = 0; j < styleConfig->featureIntervals->size(); j++) {
     // Draw border if borderWidth>0
     if ((*styleConfig->featureIntervals)[j]->attr.match.empty() == false) {
@@ -339,16 +360,14 @@ FeatureStyle CImgRenderPolylines::getAttributesForFeature(CFeature *feature, CT:
         // match on id
         matchString = id;
       }
-      CDBDebug("Matching %s on %s", (*styleConfig->featureIntervals)[j]->attr.match.c_str(), matchString.c_str());
       regex_t regex;
       int ret = regcomp(&regex, match.c_str(), 0);
       if (!ret) {
         if (regexec(&regex, matchString.c_str(), 0, NULL, 0) == 0) {
           CServerConfig::XMLE_FeatureInterval *fi = (*styleConfig->featureIntervals)[j];
           // Matched
-          CDBDebug("Matched %s on %s w:%s!!", matchString.c_str(), match.c_str(), fi->attr.borderwidth.c_str());
           if ((fi->attr.borderwidth.empty() == false) && ((fi->attr.borderwidth.toFloat()) > 0)) {
-            fs.width = fi->attr.borderwidth;
+            fs.width = fi->attr.borderwidth.toFloat();
             // A border should be drawn
             if (fi->attr.bordercolor.empty() == false) {
               fs.color = fi->attr.bordercolor;
@@ -362,29 +381,25 @@ FeatureStyle CImgRenderPolylines::getAttributesForFeature(CFeature *feature, CT:
           }
           if ((fi->attr.labelfontsize.empty() == false) && (fi->attr.labelfontsize.toFloat() > 0)) {
             fs.fontSize = fi->attr.labelfontsize.toFloat();
-            if (fi->attr.labelfontpath.empty() == false) {
-              fs.fontPath = fi->attr.labelfontpath;
-            }
-            if (fi->attr.labelcolor.empty() == false) {
-              fs.fontColor = fi->attr.labelcolor;
-            }
-            if (fi->attr.labelpropertyname.empty() == false) {
-              fs.propertyName = fi->attr.labelpropertyname;
-            }
-            if (fi->attr.labelpropertyformat.empty() == false) {
-              fs.propertyFormat = fi->attr.labelpropertyformat;
-            }
-            if ((fi->attr.labelangle.empty() == false) && (fi->attr.labelangle.isNumeric())) {
-              fs.angle = fi->attr.labelangle.toFloat() * M_PI / 180;
-            }
-            if ((fi->attr.labelpadding.empty() == false) && (fi->attr.labelpadding.isInt())) {
-              fs.padding = fi->attr.labelpadding.toInt();
-            }
-            if ((fi->attr.labelrandomize.empty() == false) && (fi->attr.labelrandomize.isInt())) {
-              fs.randomize = (fi->attr.labelrandomize.toInt() == 0);
-            }
           }
-          CDBDebug("found %s %s", fs.width.c_str(), fs.color.c_str());
+          if (fi->attr.labelfontfile.empty() == false) {
+            fs.fontFile = fi->attr.labelfontfile;
+          }
+          if (fi->attr.labelcolor.empty() == false) {
+            fs.fontColor = fi->attr.labelcolor;
+          }
+          if (fi->attr.labelpropertyname.empty() == false) {
+            fs.propertyName = fi->attr.labelpropertyname;
+          }
+          if (fi->attr.labelpropertyformat.empty() == false) {
+            fs.propertyFormat = fi->attr.labelpropertyformat;
+          }
+          if ((fi->attr.labelangle.empty() == false) && (fi->attr.labelangle.isNumeric())) {
+            fs.angle = fi->attr.labelangle.toFloat() * M_PI / 180;
+          }
+          if ((fi->attr.labelpadding.empty() == false) && (fi->attr.labelpadding.isInt())) {
+            fs.padding = fi->attr.labelpadding.toInt();
+          }
           return fs;
         }
       }

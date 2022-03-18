@@ -13,7 +13,7 @@ routeAdagucServer = Blueprint('routeAdagucServer', __name__)
 logger = logging.getLogger(__name__)
 
 
-@routeAdagucServer.route("/wms", methods=["GET"])
+@routeAdagucServer.route("/wms", methods=["GET"], strict_slashes=False)
 @routeAdagucServer.route("/wcs", methods=["GET"])
 @routeAdagucServer.route("/adagucserver", methods=["GET"])
 @routeAdagucServer.route("/adaguc-server", methods=["GET"])

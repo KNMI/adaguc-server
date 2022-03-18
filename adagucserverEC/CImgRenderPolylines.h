@@ -28,16 +28,15 @@
 #include "CImageWarperRenderInterface.h"
 
 typedef struct _FeatureStyle {
-  CT::string width;
+  float width;
   CT::string color;
-  CT::string fontPath;
+  CT::string fontFile;
   float fontSize;
   CT::string fontColor;
   CT::string propertyName;
   CT::string propertyFormat;
   float angle;
   int padding;
-  bool randomize;
 } FeatureStyle;
 
 class CImgRenderPolylines : public CImageWarperRenderInterface {
