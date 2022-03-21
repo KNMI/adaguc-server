@@ -691,10 +691,11 @@ namespace CT {
     StackList<CT::stringref> stringList;
     const char *fo = strstr(useStack ? stackValue : heapValue, _value);
     const char *prevFo = useStack ? stackValue : heapValue;
+    size_t keyLength = strlen(_value);
     while (fo != NULL) {
       stringList.push_back(CT::stringref(prevFo, (fo - prevFo)));
-      prevFo = fo + 1;
-      fo = strstr(fo + 1, _value);
+      prevFo = fo + keyLength;
+      fo = strstr(fo + keyLength, _value);
     }
     size_t prevFoLength = strlen(prevFo);
     if (prevFoLength > 0) {

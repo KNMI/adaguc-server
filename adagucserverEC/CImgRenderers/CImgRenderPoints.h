@@ -26,10 +26,56 @@
 #ifndef CIMGRENDERPOINTS_H
 #define CIMGRENDERPOINTS_H
 #include "CImageWarperRenderInterface.h"
+#include <set>
 class CImgRenderPoints : public CImageWarperRenderInterface {
 private:
   DEF_ERRORFUNCTION();
   CT::string settings;
+
+  bool drawVector;
+  bool drawPoints;
+  bool drawBarb;
+  bool drawDiscs;
+  bool drawVolume;
+  bool drawSymbol;
+  bool drawZoomablePoints;
+  bool doThinning;
+  int thinningRadius;
+  int drawPointFontSize;
+  float drawPointDiscRadius;
+  int drawPointTextRadius;
+  bool drawPointDot;
+  float drawPointAngleStart;
+  float drawPointAngleStep;
+  bool useDrawPointAngles;
+  bool drawPointPlotStationId;
+  const char *drawPointFontFile;
+  CT::string drawPointTextFormat;
+  CT::string drawPointPointStyle;
+  CColor drawPointTextColor;
+  CColor drawPointFillColor;
+  CColor drawPointLineColor;
+  CColor defaultColor;
+
+  CColor drawVectorLineColor;
+  float drawVectorLineWidth;
+  bool drawVectorPlotStationId;
+  bool drawVectorPlotValue;
+  float drawVectorVectorScale;
+  CT::string drawVectorTextFormat;
+  CT::string drawVectorVectorStyle;
+
+  std::set<std::string> usePoints;
+  std::set<std::string> skipPoints;
+  bool useFilter;
+  bool useDrawPointFillColor;
+  bool useDrawPointTextColor;
+  bool isRadiusAndValue;
+
+  std::vector<CServerConfig::XMLE_SymbolInterval *> *symbolIntervals;
+
+  void renderSinglePoints(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, CServerConfig::XMLE_Point *pointConfig);
+  void renderVectorPoints(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration);
 
 public:
   void render(CImageWarper *, CDataSource *, CDrawImage *);
