@@ -345,7 +345,8 @@ int CDFCSVReader::_readVariableData(CDF::Variable *varToRead, CDFType type) {
   }
   varToRead->currentType = type;
   varToRead->allocateData(varSize);
-  varToRead->setSize(varSize);
+
+  CDF::fill(varToRead->data, varToRead->currentType, NAN, varToRead->getSize());
 
   for (size_t j = (1 + this->headerStartsAtLine); j < this->csvLines.size(); j++) {
     size_t varPointer = j - (1 + this->headerStartsAtLine);
