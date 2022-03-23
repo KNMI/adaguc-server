@@ -52,3 +52,7 @@ Dockerfile
 Docker/letsencrypt
 Docker/letsencrypt/*
 
+*CMakeCache.txt*
+*CTestTestfile.cmake*
+*Makefile*
+*cmake_install.cmake*

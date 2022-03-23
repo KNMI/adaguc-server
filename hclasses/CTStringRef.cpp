@@ -93,7 +93,7 @@ namespace CT {
     int a = this->indexOf(_value);
     size_t rel = 0;
     while (a != -1) {
-      if (a > 0) {
+      if (a >= 0) {
         str._length = a;
         stringList.push_back(str);
       }
@@ -103,9 +103,7 @@ namespace CT {
       str._length = this->_length - rel;
       a = str.indexOf(_value);
     }
-    if (str._length > 0 && this->_length - rel > 0) {
-      stringList.push_back(str);
-    }
+    stringList.push_back(str);
     return stringList;
   }
 
