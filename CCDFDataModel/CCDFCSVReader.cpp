@@ -92,9 +92,12 @@ int CDFCSVReader::open(const char *fileName) {
   this->csvData = CReadFile::open(fileName);
 
   /* Detect variables from header */
-  this->csvLines = csvData.splitToStackReferences("\n");
+  this->csvLines = csvData.splitToStackReferences("\r\n");
   if (this->csvLines.size() < 2) {
-    this->csvLines = csvData.splitToStackReferences("\r");
+    this->csvLines = csvData.splitToStackReferences("\n");
+    if (this->csvLines.size() < 2) {
+      this->csvLines = csvData.splitToStackReferences("\r");
+    }
   }
 #ifdef CCDFCSVREADER_DEBUG
   CDBDebug("Found %d lines", this->csvLines.size());
@@ -118,6 +121,9 @@ int CDFCSVReader::open(const char *fileName) {
   size_t numLines = this->csvLines.size() - (1 + this->headerStartsAtLine); /* Minus header */
 
   CT::StackList<CT::string> header = CT::string(this->csvLines[this->headerStartsAtLine + 0].c_str()).splitToStack(",");
+  for (size_t c = 0; c < header.size(); c++) {
+    header[c].replaceSelf("\r", "");
+  }
   CT::StackList<CT::stringref> firstLine = this->csvLines[this->headerStartsAtLine + 1].splitToStackReferences(",");
 
   if (header.size() < 3) {
@@ -128,6 +134,7 @@ int CDFCSVReader::open(const char *fileName) {
   /* Search for lat and lon variables */
   int foundLat = -1;
   int foundLon = -1;
+  int foundId = -1;
   for (size_t c = 0; c < header.size(); c++) {
     CT::string name = header[c];
     name = name.toLowerCase();
@@ -150,6 +157,10 @@ int CDFCSVReader::open(const char *fileName) {
     } else if (foundLon == -1 && name.indexOf("lon") != -1) {
       foundLon = c;
     }
+
+    if (foundId == -1 && name.equals("id")) {
+      foundId = c;
+    }
   }
   if (foundLat == -1 || foundLon == -1) {
     CDBError("Unable to determine lat or lon variables");
@@ -158,6 +169,10 @@ int CDFCSVReader::open(const char *fileName) {
 
   header[foundLat] = "lat";
   header[foundLon] = "lon";
+
+  if (foundId != -1) {
+    header[foundId] = "station";
+  }
 
   /* Search for time dim */
   CT::string timeString;
@@ -330,7 +345,8 @@ int CDFCSVReader::_readVariableData(CDF::Variable *varToRead, CDFType type) {
   }
   varToRead->currentType = type;
   varToRead->allocateData(varSize);
-  varToRead->setSize(varSize);
+
+  CDF::fill(varToRead->data, varToRead->currentType, NAN, varToRead->getSize());
 
   for (size_t j = (1 + this->headerStartsAtLine); j < this->csvLines.size(); j++) {
     size_t varPointer = j - (1 + this->headerStartsAtLine);
@@ -341,7 +357,7 @@ int CDFCSVReader::_readVariableData(CDF::Variable *varToRead, CDFType type) {
     CT::StackList<CT::stringref> csvColumns = this->csvLines[j].splitToStackReferences(",");
 
     if (csvColumns.size() != this->variableIndexer.size()) {
-      CDBWarning("CSV Columns at line %d have unexpected size of %d, expected %d", csvColumns.size(), this->variableIndexer.size());
+      CDBWarning("CSV Columns at line %d have unexpected size of %d, expected %d", j, csvColumns.size(), this->variableIndexer.size());
       continue;
     }
     bool foundVar = false;

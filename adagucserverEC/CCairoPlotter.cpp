@@ -342,8 +342,8 @@ int CCairoPlotter::_drawFreeTypeText(int x, int y, int &w, int &h, float angle, 
     error = FT_Load_Glyph(face, glyphIndex, FT_LOAD_RENDER);
 
     if (error) {
-      CDBError("unable toFT_Load_Char");
-      return 1;
+      // CDBError("unable toFT_Load_Char");
+      continue;
     }
     /* now, draw to our target surface (convert position) */
     if (render) {
