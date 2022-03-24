@@ -299,22 +299,8 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
       CDBDebug("Drawing %d rects", rects.size());
       // Draw polygon labels here, so they end up on top
       for (RectangleText rect : rects) {
-        int halfw = (rect.urx - rect.llx) / 2;
-        int halfh = (rect.ury - rect.lly) / 2;
-        // drawImage->setDisc(rect.llx + halfw, rect.lly + halfh, 6, rect.color, rect.color);
-        if (rect.angle == 0) {
-          drawImage->drawText(rect.llx, rect.lly, rect.fontFile.c_str(), rect.fontSize, rect.angle, rect.text.c_str(), rect.color);
-        } else {
-          // drawImage->drawText(rect.llx, rect.lly + halfh, rect.fontFile.c_str(), rect.fontSize, 0, rect.text.c_str(), rect.color);
-          // drawImage->rectangle(rect.llx, rect.lly, rect.urx, rect.ury, 0);
-          float radAngle = rect.angle * M_PI / 180;
-          int nx = (int)(cos(radAngle) * -halfw - sin(radAngle) * -halfh + rect.llx + halfw);
-          int ny = (int)(sin(radAngle) * -halfw + cos(radAngle) * -halfh + rect.lly - halfh);
-          // int nx1 = (int)(cos(radAngle) * halfw - sin(radAngle) * halfh + rect.llx + halfw);
-          // int ny1 = (int)(sin(radAngle) * halfw + cos(radAngle) * halfh + rect.lly - halfh);
-          drawImage->drawText(nx, ny, rect.fontFile.c_str(), rect.fontSize, rect.angle, rect.text.c_str(), rect.color);
-          // drawImage->rectangle(nx, ny, nx1, ny1, 0);
-        }
+        drawImage->setDisc(rect.llx, rect.lly, 2, rect.color, rect.color); // dot
+        drawImage->drawText(rect.llx, rect.lly, rect.fontFile.c_str(), rect.fontSize, rect.angle, rect.text.c_str(), rect.color);
       }
     }
   }
