@@ -195,7 +195,7 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
           }
 
           // CDBDebug("Draw polygon: %d points (%d)", cnt, numPoints);
-          drawImage->poly(projectedX, projectedY, cnt, drawPointLineWidth / 2, drawPointLineColor2, true, false);
+          drawImage->poly(projectedX, projectedY, cnt, drawPointLineWidth, drawPointLineColor2, true, false);
           // Determine centroid for first polygon.
           if (firstPolygon) {
             Point2D centroid = getCentroid(polyX, polyY, numPoints);
@@ -315,7 +315,7 @@ int CImgRenderPolylines::set(const char *values) {
 FeatureStyle CImgRenderPolylines::getAttributesForFeature(CFeature *feature, CT::string id, CStyleConfiguration *styleConfig) {
   FeatureStyle fs;
   fs.color = "#008000FF";
-  fs.width = 2;
+  fs.width = 3;
   fs.fontSize = 0;
   fs.propertyFormat = "%s";
   fs.padding = 3;
