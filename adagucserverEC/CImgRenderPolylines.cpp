@@ -142,7 +142,7 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
   if (styleConfiguration->styleConfig->RenderSettings.size() == 1) {
     noOverlap = !styleConfiguration->styleConfig->RenderSettings[0]->attr.featuresoverlap.equals("true");
   }
-  bool randomStart = true;
+  bool randomStart = false;
   if (styleConfiguration->styleConfig->RenderSettings.size() == 1) {
     randomStart = !styleConfiguration->styleConfig->RenderSettings[0]->attr.randomizefeatures.equals("false");
   }
