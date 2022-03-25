@@ -30,6 +30,7 @@
 #include "CConvertUGRIDMesh.h"
 #include "CConvertADAGUCVector.h"
 #include "CConvertADAGUCPoint.h"
+#include "CConvertKNMIH5EchoToppen.h"
 #include "CConvertCurvilinear.h"
 #include "CConvertHexagon.h"
 #include "CConvertGeoJSON.h"
@@ -370,6 +371,8 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
     if (CConvertTROPOMI::convertTROPOMIData(dataSource, mode) == 0) dataSource->formatConverterActive = true;
   if (!dataSource->formatConverterActive)
     if (CConvertKNMIH5VolScan::convertKNMIH5VolScanData(dataSource, mode) == 0) dataSource->formatConverterActive = true;
+  if (!dataSource->formatConverterActive)
+    if (CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(dataSource, mode) == 0) dataSource->formatConverterActive = true;
 
   CDF::Variable *dataSourceVar = dataSource->getDataObject(0)->cdfVariable;
   CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
