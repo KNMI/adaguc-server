@@ -1111,7 +1111,6 @@ bool RectangleText::overlaps(RectangleText &r2) {
 void CDrawImage::drawCenteredTextNoOverlap(int x, int y, const char *fontFile, float size, float angle, int padding, const char *text, CColor color, bool noOverlap,
                                            std::vector<RectangleText> &rects) {
   if (size <= 0) { // size 0 means do not draw label
-    CDBDebug("Skipping for size %f", size);
     return;
   }
 

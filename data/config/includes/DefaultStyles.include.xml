@@ -148,26 +148,12 @@
     <Legend fixedclasses="true" tickround="1">elevation</Legend>
     <Point pointstyle="point" textcolor="#111111"/>
     <Vector vectorstyle="barb" linecolor="#0000FF" />
-    <FeatureInterval match="Amsterdam"
-        matchid="Gemeentenaam"
-        bgcolor="#CCCCFF"
-        fillcolor="#000080FF"
-        bordercolor="#800000"
-        borderwidth="0.3"
-	    labelfontpath="{ADAGUC_PATH}/data/fonts/Roboto-Black.ttf"
-        labelfontsize="12"
-        labelcolor="#0000AAFF"
-        labelpropertyname="Gemeentenaam"
-        labelpropertyformat="%s"
-        labelangle="90"
-        labelpadding="3"
-        />
     <FeatureInterval match=".*"
         matchid="Gemeentenaam"
         bgcolor="#CCCCFF"
         fillcolor="#000080FF"
         bordercolor="#000000"
-        borderwidth="0.3"
+        borderwidth="4.0"
 	    labelfontpath="{ADAGUC_PATH}/data/fonts/Roboto-Black.ttf"
         labelfontsize="8"
         labelcolor="#800000FF"
@@ -180,7 +166,7 @@
     <Offset>0</Offset>
     <RenderMethod>nearest,bilinear,point,barb</RenderMethod>
     <StandardNames standard_name="features"/>
-    <RenderSettings featuresoverlap="true" randomizefeatures="true"/>
+    <RenderSettings featuresoverlap="true" randomizefeatures="false"/>
   </Style>
 
 </Configuration>
