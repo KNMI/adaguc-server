@@ -13,9 +13,7 @@ extern unsigned long logProcessIdentifier;
 
 CReporter *CReporter::instance = NULL;
 
-CReporter::CReporter(bool report_and_log) : messageList(), writelog(report_and_log), _filename() {
-  /* Empty at this point */
-}
+CReporter::CReporter(bool report_and_log) : messageList(), writelog(report_and_log), _filename() { /* Empty at this point */ }
 
 CReporter *CReporter::getInstance() {
   if (instance == NULL) {
@@ -42,17 +40,17 @@ void CReporter::addMessage(const CT::string message, CReportMessage::Severities 
 void CReporter::writeMessageToLog(const CT::string message, CReportMessage::Severities severity, const char *file, int line, const char *className) const {
 
   if (severity == Severities::INFO) {
-    _printDebug("[D:%03d:pid%lu: %s, %d in %s] ", logMessageNumber, logProcessIdentifier, file, line, className);
+    _printDebug("[D:%03d:pid%lu: %s:%d %s] ", logMessageNumber, logProcessIdentifier, file, line, className);
     _printDebugLine(message);
   }
 
   if (severity == Severities::WARNING) {
-    _printWarning("[W:%03d:pid%lu: %s, %d in %s] ", logMessageNumber, logProcessIdentifier, file, line, className);
+    _printWarning("[W:%03d:pid%lu: %s:%d %s] ", logMessageNumber, logProcessIdentifier, file, line, className);
     _printWarningLine(message);
   }
 
   if (severity == Severities::ERROR) {
-    _printError("[E:%03d:pid%lu: %s, %d in %s] ", logMessageNumber, logProcessIdentifier, file, line, className);
+    _printError("[E:%03d:pid%lu: %s:%d %s] ", logMessageNumber, logProcessIdentifier, file, line, className);
     _printErrorLine(message);
   }
 }
