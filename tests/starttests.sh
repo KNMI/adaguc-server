@@ -19,8 +19,11 @@ export ADAGUC_ENABLELOGBUFFER=FALSE
 export ADAGUC_DATASET_DIR=${ADAGUC_PATH}/data/config/datasets/
 ulimit -c unlimited
 
-python3 ${ADAGUC_PATH}/tests/functional_test.py $1
-
+if [ -z "$1" ]; then
+  python3 ${ADAGUC_PATH}/tests/functional_test.py $1
+else
+  python3 -m unittest $1
+ fi
 
 # To run a specific test:
 # bash starttests.sh TestStringMethods.test_WMSCMDUpdateDBTailPath
