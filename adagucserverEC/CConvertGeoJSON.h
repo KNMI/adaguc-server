@@ -60,5 +60,7 @@ public:
 
   static int convertGeoJSONHeader(CDFObject *cdfObject);
   static int convertGeoJSONData(CDataSource *dataSource, int mode);
+  static int addPropertyVariables(CDFObject *cdfObject, std::vector<Feature *> features);
+  static int addPropertyValues(CDataSource *dataSource, std::vector<Feature *> features);
 };
 #endif
