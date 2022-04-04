@@ -1,3 +1,7 @@
+**Version 2.7.0 2022-04-04**
+
+- The time dimension for a layer in a GetCapabilities document can now be set based on the modification time of the file by configuring a dimension using: `<Dimension default="filetimedate">time</Dimension>`
+
 **Version 2.6.9 2022-03-17**
 
 - Support for pointstyle radiusandvalue, to display earthquakes with a disc depending on magnitude and color depending on age.

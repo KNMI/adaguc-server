@@ -8,6 +8,8 @@ import json
 from lxml import etree, objectify
 import re
 from adaguc.AdagucTestTools import AdagucTestTools
+from lxml import etree, objectify
+import datetime
 
 ADAGUC_PATH = os.environ['ADAGUC_PATH']
 
@@ -813,3 +815,25 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertEqual(data.getvalue(), AdagucTestTools(
         ).readfromfile(self.expectedoutputsspath + filename))
+
+    def test_WMSGetCapabilities_KMDS_PointNetCDF_dimension_filetimedate(self):
+        AdagucTestTools().cleanTempDir()
+        config = ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml,' + \
+            ADAGUC_PATH + '/data/config/datasets/adaguc.testKMDS_PointNetCDF_filetimedate.xml'
+        env = {'ADAGUC_CONFIG': config}
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=['--updatedb', '--config', config], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.testKMDS_PointNetCDF_filetimedate.xml&SERVICE=WMS&request=getcapabilities", env=env)
+        obj1 = objectify.fromstring(
+            re.sub(b' xmlns="[^"]+"', b'', data.getvalue(), count=1))
+        foundTimeFromXML = obj1.findall("Capability/Layer/Layer/Dimension")[0]
+
+        fileToCheck = '%s/data/datasets/test/netcdfpointtimeseries/Actuele10mindataKNMIstations_20201220123000.nc' % ADAGUC_PATH
+        foundTimeFromFile = datetime.datetime.utcfromtimestamp(
+            os.path.getmtime(fileToCheck)).strftime('%Y-%m-%dT%H:%M:%SZ')
+
+        self.assertEqual(foundTimeFromXML, foundTimeFromFile)
