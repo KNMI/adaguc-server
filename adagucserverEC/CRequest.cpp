@@ -891,6 +891,11 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
       // Check if this dim is not already added
       bool alreadyAdded = false;
 
+      /* A dimension where the default value is set to filetimedate is not a required dim and should not be queried from the db */
+      if (dataSource->cfgLayer->Dimension[i]->attr.defaultV.equals("filetimedate")) {
+        alreadyAdded = true;
+      }
+
       for (size_t l = 0; l < dataSource->requiredDims.size(); l++) {
         if (dataSource->requiredDims[l]->name.equals(&dimName)) {
           alreadyAdded = true;
@@ -1039,6 +1044,11 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
       if (alreadyAdded == false) {
         CT::string netCDFDimName(dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
         if (netCDFDimName.equals("none")) {
+          continue;
+        }
+
+        /* A dimension where the default value is set to filetimedate should not be queried from the db */
+        if (dataSource->cfgLayer->Dimension[i]->attr.defaultV.equals("filetimedate")) {
           continue;
         }
         CT::string tableName;
