@@ -124,6 +124,8 @@ std::vector<Polygon> Feature::getPolygons() { return polygons; }
 
 std::vector<Polyline> Feature::getPolylines() { return polylines; }
 
+std::vector<GeoPoint> Feature::getPoints() { return points; }
+
 CT::string Feature::toString() {
   CT::string s;
   s.print("polygons: %d\n", polygons.size());
@@ -137,6 +139,14 @@ CT::string Feature::toString() {
   s.printconcat("points: %d\n", points.size());
   for (unsigned int i = 0; i < points.size(); i++) {
     s += points[i].toString();
+  }
+  s.printconcat("\n");
+
+  for (std::map<std::string, FeatureProperty *>::iterator it = fp.begin(); it != fp.end(); ++it) {
+    CDBDebug("it:", it->first.c_str());
+    s += it->first.c_str();
+    s += ":";
+    s += it->second->toString();
   }
   return s;
 }
@@ -170,6 +180,8 @@ void Feature::addProp(CT::string name, double v) {
 }
 
 std::map<std::string, FeatureProperty *> &Feature::getFp() { return fp; }
+
+void Feature::addPoint(float lon, float lat) { points.push_back(GeoPoint(lon, lat)); }
 
 //#define TESTIT
 #ifdef TESTIT

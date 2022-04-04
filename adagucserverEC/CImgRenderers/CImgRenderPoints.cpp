@@ -24,6 +24,7 @@
  ******************************************************************************/
 
 #include "CImgRenderPoints.h"
+#include "CConvertGeoJSON.h"
 
 const char *CImgRenderPoints::className = "CImgRenderPoints";
 
@@ -616,6 +617,14 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
   isRadiusAndValue = false;
 
   symbolIntervals = NULL;
+
+  CDBDebug("featureSet: %s", dataSource->featureSet.c_str());
+  std::map<std::string, std::vector<Feature *>> featureStore = CConvertGeoJSON::featureStore;
+  std::vector<Feature *> features;
+  features = featureStore[dataSource->featureSet.c_str()];
+  for (Feature *f : features) {
+    CDBDebug("feature %d %d", f->getPoints().size(), dataSource->getDataObject(0)->points.size());
+  }
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   if (styleConfiguration == NULL || styleConfiguration->styleConfig == NULL) {

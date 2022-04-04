@@ -36,7 +36,7 @@
 #include <map>
 #include <cstdlib>
 #include <queue>
-// #define CCONVERTGEOJSON_DEBUG
+#define CCONVERTGEOJSON_DEBUG
 const char *CConvertGeoJSON::className = "CConvertGeoJSON";
 
 #define CCONVERTUGRIDMESH_NODATA -32000
@@ -578,6 +578,11 @@ int CConvertGeoJSON::convertGeoJSONHeader(CDFObject *cdfObject) {
   CDBDebug("addCDFInfo");
   addCDFInfo(cdfObject, NULL, dfBBOX, features, false);
 
+  addPropertyVariables(cdfObject, features);
+
+  CT::string dumpString = CDF::dump(cdfObject);
+  fprintf(stderr, "%s\n", dumpString.c_str());
+
   std::string geojsonkey = jsonVar->getAttributeNE("ADAGUC_BASENAME")->toString().c_str();
   featureStore[geojsonkey] = features;
 
@@ -722,6 +727,7 @@ void CConvertGeoJSON::addCDFInfo(CDFObject *cdfObject, CServerParams *, BBOX &df
   int featureCnt = 0;
   for (std::vector<Feature *>::iterator sample = featureMap.begin(); sample != featureMap.end(); ++sample) {
     ((const char **)featureIdVar->data)[featureCnt++] = strdup((*sample)->getId().c_str());
+    fprintf(stderr, "F[%d]>(%s) %s\n", featureCnt - 1, (*sample)->getId().c_str(), (*sample)->toString().c_str());
   }
 }
 
@@ -1123,10 +1129,19 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
                     }
                   }
                 }
+              } else if (strcmp(geomType.u.string.ptr, "Point") == 0) { // TODO is this useful?
+                json_value coords = geom["coordinates"];
+                if (coords.type == json_array) {
+                  json_value lo = *coords.u.array.values[0];
+                  json_value la = *coords.u.array.values[1];
+                  double lon = (double)lo;
+                  double lat = (double)la;
+                  feat->addPoint(lon, lat);
+                }
               }
             }
           }
-          //                CDBDebug("FEAT %s", feat.toString().c_str());
+          CDBDebug("FEAT %s", feat->toString().c_str());
           featureMap.push_back(feat);
         }
       }
@@ -1157,6 +1172,99 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
   CDBDebug("BBOX: %f,%f,%f,%f", bbox.llX, bbox.llY, bbox.urX, bbox.urY);
 #endif
   return;
+}
+int CConvertGeoJSON::addPropertyVariables(CDFObject *cdfObject, std::vector<Feature *> features) {
+  CDBDebug("Adding propertyVariables");
+  std::map<CT::string, CDF::Variable *> newVars;
+  CDF::Dimension *dimStation = new CDF::Dimension();
+  dimStation->name = "station";
+  dimStation->setSize(features.size());
+  cdfObject->addDimension(dimStation);
+  CDF::Variable *varStation = new CDF::Variable();
+  varStation->setType(CDF_DOUBLE);
+  varStation->name.copy("station");
+  varStation->isDimension = true;
+  varStation->dimensionlinks.push_back(dimStation);
+  cdfObject->addVariable(varStation);
+
+  for (Feature *f : features) {
+    CDBDebug(">>%d %s", f->getPoints().size(), f->toString().c_str());
+
+    std::vector<GeoPoint> pts = f->getPoints();
+    if (pts.size() > 0) {
+      for (auto iter = f->getFp().begin(); iter != f->getFp().end(); ++iter) {
+        CT::string name = iter->first.c_str();
+        if (newVars.find(name.c_str()) == newVars.end()) {
+          CDBDebug("Creating var %s", name.c_str());
+          CDF::Variable *newVar = new CDF::Variable();
+          newVar->name.copy(name.c_str());
+          switch (iter->second->getType()) {
+          case typeInt:
+            newVar->setType(CDF_INT);
+            newVar->currentType = newVar->nativeType = CDF_INT;
+            break;
+          case typeDouble:
+            newVar->setType(CDF_DOUBLE);
+            newVar->currentType = newVar->nativeType = CDF_DOUBLE;
+            break;
+          case typeStr:
+            newVar->setType(CDF_STRING);
+            newVar->currentType = newVar->nativeType = CDF_STRING;
+            break;
+          case typeNone:
+            break;
+          }
+          newVar->setAttributeText("ADAGUC_POINT", "true");
+          newVar->isDimension = false;
+          newVar->dimensionlinks.push_back(dimStation);
+          newVar->setAttributeText("standard_name", name);
+          newVar->setAttributeText("grid_mapping", "projection");
+          cdfObject->addVariable(newVar);
+          newVars[name] = newVar;
+        }
+      }
+    }
+  }
+  CDBDebug("/Adding propertyVariables");
+  return 0;
+}
+
+int CConvertGeoJSON::addPropertyValues(CDataSource *dataSource, std::vector<Feature *> features) {
+  CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
+  CDBDebug("Adding propertyValues");
+  int nrFeatures = features.size(); // TODO or count where points>0
+  std::map<CT::string, CDF::Variable *> newVars;
+  int pos = 0;
+  for (Feature *f : features) {
+    std::vector<GeoPoint> pts = f->getPoints();
+    if (pts.size() > 0) {
+      for (auto iter = f->getFp().begin(); iter != f->getFp().end(); ++iter) {
+        CT::string name = iter->first.c_str();
+        if (newVars.find(name.c_str()) == newVars.end()) {
+          CDBDebug("Initializing propertyValues into var %s", name.c_str());
+          CDF::Variable *newVar = cdfObject->getVariable(name.c_str());
+          CDF::allocateData(newVar->getType(), &(newVar->data), nrFeatures);
+          CDF::fill(newVar->data, newVar->getType(), -99.0, nrFeatures);
+          newVars[name] = newVar;
+        }
+        CDBDebug("Add value %s to var %s[%d]", iter->second->toString().c_str(), name.c_str(), pos);
+        CDF::Variable *newVar = newVars[name];
+        switch (newVar->getType()) {
+        case CDF_INT:
+          ((int *)newVar->data)[pos] = iter->second->getIntVal();
+          break;
+        case CDF_DOUBLE:
+          ((double *)newVar->data)[pos] = iter->second->getDblVal();
+          break;
+        default:
+          break;
+        }
+      }
+      pos++;
+    }
+  }
+  CDBDebug("/Adding propertyValues");
+  return 0;
 }
 
 int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
@@ -1195,12 +1303,21 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
     CDBDebug("addCDFInfo again");
     addCDFInfo(cdfObject, dataSource->srvParams, dfBBOX, features, true);
   }
+
+  addPropertyValues(dataSource, features);
+
   // Store featureSet name (geojsonkey) in datasource
   dataSource->featureSet = geojsonkey.c_str();
 
   // Make the width and height of the new 2D adaguc field the same as the viewing window
   dataSource->dWidth = dataSource->srvParams->Geo->dWidth;
   dataSource->dHeight = dataSource->srvParams->Geo->dHeight;
+  int x = 20;
+  int y = 20;
+  double lon = 5.2;
+  double lat = 52.0;
+  float value = 15.6;
+  dataSource->getDataObject(0)->points.push_back(PointDVWithLatLon(x, y, lon, lat, value));
 
   // Set statistics
   if (dataSource->stretchMinMax) {
@@ -1233,7 +1350,7 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
 #ifdef CCONVERTGEOJSON_DEBUG
     CDBDebug("convertGeoJSONData OPEN ALL");
 #endif
-
+    CDBDebug("convertGeoJSONData OPEN ALL (*)");
     size_t nrDataObjects = dataSource->getNumDataObjects();
     CDataSource::DataObject *dataObjects[nrDataObjects];
     for (size_t d = 0; d < nrDataObjects; d++) {

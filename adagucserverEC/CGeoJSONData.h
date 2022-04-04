@@ -90,14 +90,20 @@ public:
 
   FeaturePropertyType getType() { return type; }
 
+  double getDblVal() { return dblVal; }
+
+  int getIntVal() { return intVal; }
+
+  CT::string getStringVal() { return pstr; }
+
   CT::string toString() {
     CT::string s;
     if (type == typeInt) {
-      s.print("%d", intVal);
+      s.print("{i}%d", intVal);
     } else if (type == typeStr) {
-      s.print("%s", pstr.c_str());
+      s.print("{s}%s", pstr.c_str());
     } else if (type == typeDouble) {
-      s.print("%f", dblVal);
+      s.print("{d}%f", dblVal);
     } else {
       s.print("NONE");
     }
@@ -131,6 +137,7 @@ public:
   CT::string toString();
   std::vector<Polygon> getPolygons();
   std::vector<Polyline> getPolylines();
+  std::vector<GeoPoint> getPoints();
   CT::string getId() { return id; }
   void setId(CT::string s) { id = s; }
   void addPoint(float lon, float lat);
