@@ -157,3 +157,22 @@ class TestCSV(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertEqual(data.getvalue(), AdagucTestTools(
         ).readfromfile(self.expectedoutputsspath + filename))
+
+    def test_CSV_radiusandvalue_and_symbol(self):
+        AdagucTestTools().cleanTempDir()
+        env = {'ADAGUC_CONFIG': ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," +
+               ADAGUC_PATH + "/data/config/datasets/adaguc.testCSV_radiusandvalue.xml"}
+
+        config = ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml,' + \
+            ADAGUC_PATH + '/data/config/datasets/adaguc.testCSV_radiusandvalue.xml'
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=['--updatedb', '--config', config], env=env, isCGI=False, showLog=False)
+        self.assertEqual(status, 0)
+        filename = "test_CSV_radiusandvalue_and_symbol.png"
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=radiusandvalue_and_symbol&WIDTH=256&HEIGHT=512&CRS=EPSG%3A3857&BBOX=-8003558.6330057755,1638420.481402514,-7346556.700484946,2491778.5155690867&STYLES=magnitude&FORMAT=image/png&TRANSPARENT=TRUE&showlegend=true", env=env)
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools(
+        ).readfromfile(self.expectedoutputsspath + filename))

@@ -7,7 +7,9 @@
       <Title>stationsnaam</Title>
       <Variable>stationname</Variable>
       <Abstract>stationnaam</Abstract>
-      <Styles>auto</Styles>
+      <Min>0</Min>
+      <Max>1</Max>
+      <Legend fixedclasses="true" tickround="1">bluewhitered</Legend>
       <Dimension default="filetimedate">time</Dimension> 
     </Layer>
 
