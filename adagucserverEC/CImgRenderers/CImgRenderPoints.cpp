@@ -28,7 +28,29 @@
 const char *CImgRenderPoints::className = "CImgRenderPoints";
 
 void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, CServerConfig::XMLE_Point *pointConfig) {
-  // CDBDebug("drawPointFillcolor: %x%x%x%x", drawPointFillColor.r,drawPointFillColor.g,drawPointFillColor.b,drawPointFillColor.a);
+  SimpleSymbol *currentSymbol = NULL;
+  if (pointConfig->attr.symbol.empty() == false) {
+    CT::string symbolName = pointConfig->attr.symbol.c_str();
+    /* Lets see if the symbol is already in the map */
+    if (SimpleSymbolMap.find(symbolName.c_str()) == SimpleSymbolMap.end()) {
+      /* No Lets add it */
+      for (size_t j = 0; j < dataSource->cfg->Symbol.size(); j++) {
+        if (dataSource->cfg->Symbol[j]->attr.name.equals(symbolName)) {
+          CT::string coordinates = dataSource->cfg->Symbol[j]->attr.coordinates;
+          coordinates.replaceSelf("[", "");
+          coordinates.replaceSelf("]", "");
+          coordinates.replaceSelf(" ", "");
+          CT::StackList<CT::string> e = coordinates.splitToStack(",");
+          SimpleSymbol s;
+          for (size_t p = 0; p < e.size() && p < e.size() + 1; p += 2) {
+            s.coordinates.push_back(SimpleSymbol::Coordinate(e[p].toFloat(), e[p + 1].toFloat()));
+          }
+          SimpleSymbolMap[symbolName.c_str()] = s;
+          currentSymbol = &SimpleSymbolMap.find(symbolName.c_str())->second;
+        }
+      }
+    }
+  }
   int drawPointDiscRadiusInt = int(drawPointDiscRadius);
   int alphaPoint[(2 * drawPointDiscRadiusInt + 1) * (2 * drawPointDiscRadiusInt + 1)];
 
@@ -310,7 +332,20 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
               }
               if (isRadiusAndValue) {
                 if (dataObjectIndex == 0) {
-                  drawImage->setDisc(x, y, perPointDrawPointDiscRadius, drawPointFillColor, drawPointLineColor);
+                  if (currentSymbol != NULL) {
+                    float xPoly[currentSymbol->coordinates.size()];
+                    float yPoly[currentSymbol->coordinates.size()];
+
+                    xPoly[0] = x + currentSymbol->coordinates[0].x * perPointDrawPointDiscRadius;
+                    yPoly[0] = y - currentSymbol->coordinates[0].y * perPointDrawPointDiscRadius;
+                    for (size_t l = 1; l < currentSymbol->coordinates.size(); l++) {
+                      xPoly[l] = x + currentSymbol->coordinates[l].x * perPointDrawPointDiscRadius;
+                      yPoly[l] = y - currentSymbol->coordinates[l].y * perPointDrawPointDiscRadius;
+                    }
+                    drawImage->poly(xPoly, yPoly, currentSymbol->coordinates.size(), 1, drawPointLineColor, drawPointFillColor, true, true);
+                  } else {
+                    drawImage->setDisc(x, y, perPointDrawPointDiscRadius, drawPointFillColor, drawPointLineColor);
+                  }
                 }
               } else {
                 if (drawZoomablePoints) {

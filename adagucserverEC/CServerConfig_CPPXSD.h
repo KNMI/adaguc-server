@@ -162,6 +162,23 @@ public:
     }
   };
 
+  class XMLE_Symbol : public CXMLObjectInterface {
+  public:
+    class Cattr {
+    public:
+      CT::string name, coordinates;
+    } attr;
+    void addAttribute(const char *attrname, const char *attrvalue) {
+      if (equals("name", 4, attrname)) {
+        attr.name.copy(attrvalue);
+        return;
+      } else if (equals("coordinates", 11, attrname)) {
+        attr.coordinates.copy(attrvalue);
+        return;
+      }
+    }
+  };
+
   class XMLE_Vector : public CXMLObjectInterface {
   public:
     XMLE_Vector() { attr.scale = 1.0; }
@@ -200,7 +217,7 @@ public:
   public:
     class Cattr {
     public:
-      CT::string fillcolor, linecolor, textcolor, fontfile, fontsize, discradius, textradius, dot, anglestart, anglestep, textformat, plotstationid, pointstyle, min, max;
+      CT::string fillcolor, linecolor, textcolor, fontfile, fontsize, discradius, textradius, dot, anglestart, anglestep, textformat, plotstationid, pointstyle, min, max, symbol;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("fillcolor", 9, attrname)) {
@@ -247,6 +264,9 @@ public:
         return;
       } else if (equals("max", 3, attrname)) {
         attr.max.copy(attrvalue);
+        return;
+      } else if (equals("symbol", 6, attrname)) {
+        attr.symbol.copy(attrvalue);
         return;
       }
     }
@@ -1786,6 +1806,7 @@ public:
     std::vector<XMLE_Dataset *> Dataset;
     std::vector<XMLE_Include *> Include;
     std::vector<XMLE_Logging *> Logging;
+    std::vector<XMLE_Symbol *> Symbol;
 
     ~XMLE_Configuration() {
       XMLE_DELOBJ(Legend);
@@ -1804,6 +1825,7 @@ public:
       XMLE_DELOBJ(Dataset);
       XMLE_DELOBJ(Include);
       XMLE_DELOBJ(Logging);
+      XMLE_DELOBJ(Symbol);
     }
     void addElement(CXMLObjectInterface *baseClass, int rc, const char *name, const char *value) {
       CXMLSerializerInterface *base = (CXMLSerializerInterface *)baseClass;
@@ -1844,6 +1866,8 @@ public:
           XMLE_ADDOBJ(Include);
         } else if (equals("Logging", 7, name)) {
           XMLE_ADDOBJ(Logging);
+        } else if (equals("Symbol", 6, name)) {
+          XMLE_ADDOBJ(Symbol);
         }
       }
       if (pt2Class != NULL) pt2Class->addElement(baseClass, rc - pt2Class->level, name, value);
