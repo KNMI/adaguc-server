@@ -1,3 +1,7 @@
+**Version 2.7.1 2022-04-06**
+
+- Points can now be rendered with customizable and scalable symbols
+
 **Version 2.7.0 2022-04-04**
 
 - The time dimension for a layer in a GetCapabilities document can now be set based on the modification time of the file by configuring a dimension using: `<Dimension default="filetimedate">time</Dimension>`

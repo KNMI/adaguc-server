@@ -837,3 +837,11 @@ class TestWMS(unittest.TestCase):
             os.path.getmtime(fileToCheck)).strftime('%Y-%m-%dT%H:%M:%SZ')
 
         self.assertEqual(foundTimeFromXML, foundTimeFromFile)
+
+        filename = "test_WMSGetCapabilities_KMDS_PointNetCDF_dimension_filetimedate.png"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.testKMDS_PointNetCDF_filetimedate.xml&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=stationname&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=294179.7001580532,6411290.650918596,901204.9572071509,7199735.637765654&STYLES=&FORMAT=image/png32&TRANSPARENT=TRUE&", env=env)
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools(
+        ).readfromfile(self.expectedoutputsspath + filename))
