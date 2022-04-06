@@ -46,11 +46,27 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
             s.coordinates.push_back(SimpleSymbol::Coordinate(e[p].toFloat(), e[p + 1].toFloat()));
           }
           SimpleSymbolMap[symbolName.c_str()] = s;
-          currentSymbol = &SimpleSymbolMap.find(symbolName.c_str())->second;
         }
       }
     }
+    if (SimpleSymbolMap.find(symbolName.c_str()) != SimpleSymbolMap.end()) {
+      currentSymbol = &SimpleSymbolMap.find(symbolName.c_str())->second;
+    }
   }
+
+  int doneMatrixH = 2;
+  int doneMatrixW = 2;
+  int doneMatrixMaxPerSector = -1;
+
+  if (!pointConfig->attr.maxpointcellsize.empty()) {
+    doneMatrixH = pointConfig->attr.maxpointcellsize.toInt();
+    doneMatrixW = pointConfig->attr.maxpointcellsize.toInt();
+  }
+
+  if (!pointConfig->attr.maxpointspercell.empty()) {
+    doneMatrixMaxPerSector = pointConfig->attr.maxpointspercell.toInt();
+  }
+
   int drawPointDiscRadiusInt = int(drawPointDiscRadius);
   int alphaPoint[(2 * drawPointDiscRadiusInt + 1) * (2 * drawPointDiscRadiusInt + 1)];
 
@@ -71,13 +87,12 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
   }
 
   /* For thinning */
-  int doneMatrixH = 32;
-  int doneMatrixW = 32;
+
   unsigned char doneMatrix[doneMatrixW * doneMatrixH];
   for (size_t j = 0; j < size_t(doneMatrixW * doneMatrixH); j++) {
     doneMatrix[j] = 0;
   }
-  int doneMatrixMaxPerSector = 16;
+
   std::map<std::string, CDrawImage *> symbolCache;
   //     CDBDebug("symbolCache created, size=%d", symbolCache.size());
   std::map<std::string, CDrawImage *>::iterator symbolCacheIter;
@@ -278,7 +293,7 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
               }
             }
 
-            if (int(doneMatrix[doneMatrixPointer]) > doneMatrixMaxPerSector) {
+            if (int(doneMatrix[doneMatrixPointer]) > doneMatrixMaxPerSector && doneMatrixMaxPerSector != -1) {
               continue;
             }
           }
