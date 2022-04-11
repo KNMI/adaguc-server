@@ -5,7 +5,7 @@ import json
 from flask import Flask, request, Response, render_template, Blueprint, current_app
 import logging
 import marshmallow as ma
-from flask_smorest import Api, Blueprint, abort
+#from flask_smorest import Api, Blueprint, abort
 from owslib.wms import WebMapService
 import yaml
 from datetime import datetime
@@ -26,7 +26,7 @@ TIMEOUT=20
 
 EXTRA_SETTINGS = """
 servers:
-- url: http://192.168.178.113:8087/ogcapi
+- url: http://192.168.178.113:8087/
   description: The OGCAPI development server
 """
 
@@ -167,7 +167,7 @@ def make_link(pth, rel, typ, title):
     link = {
         "rel": rel,
         "type": typ,
-        "title": title
+        # "title": title
     }
     # logger.info("%s<>%s<>%s", request.root_url, request.url_rule.rule, pth)
     l = request.root_url+request.url_rule.rule[1:]
@@ -782,10 +782,10 @@ def callADAGUC(url):
 
 def init_views():
     with current_app.app_context():
-        spec.path(view=hello)
-        spec.path(view=getconformance)
-        spec.path(view=getcollection)
-        spec.path(view=getcollections)
-        spec.path(view=getcollitems)
-        spec.path(view=getcollitembyid)
+        spec.path(view=hello, path="/")
+        spec.path(view=getconformance, path="/conformance")
+        spec.path(view=getcollection, path="/collection/<coll>")
+        spec.path(view=getcollections, path="/collections")
+        spec.path(view=getcollitems, path="/collection/<coll>/items")
+        spec.path(view=getcollitembyid, path="/collection/<coll>/items/<featureid>")
 

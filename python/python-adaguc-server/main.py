@@ -28,6 +28,8 @@ app.register_blueprint(routeOGCApi, url_prefix="/ogcapi")
 with app.app_context():
   init_views()
 
+logger.info("APP:%s", app.url_map)
+
 WSGIRequestHandler.protocol_version = "HTTP/1.1"
 
 def testadaguc():
