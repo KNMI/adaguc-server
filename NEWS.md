@@ -1,3 +1,15 @@
+**Version 2.7.2 2022-04-06**
+
+- Points can now be rendered with customizable and scalable symbols
+
+**Version 2.7.0 2022-04-04**
+
+- The time dimension for a layer in a GetCapabilities document can now be set based on the modification time of the file by configuring a dimension using: `<Dimension default="filetimedate">time</Dimension>`
+
+**Version 2.6.9 2022-03-17**
+
+- Support for pointstyle radiusandvalue, to display earthquakes with a disc depending on magnitude and color depending on age.
+
 **Version 2.6.8 2022-02-07**
 
 - Adding GitHub workflow to push automatically to dockerhub
