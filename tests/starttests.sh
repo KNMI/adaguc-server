@@ -16,6 +16,7 @@ export ADAGUC_LOGFILE=${ADAGUC_PATH}/tests/log/adaguc-server.log
 export ADAGUC_FONT="${ADAGUC_PATH}/data/fonts/FreeSans.ttf"
 export ADAGUC_ONLINERESOURCE=""
 export ADAGUC_ENABLELOGBUFFER=FALSE
+export ADAGUC_DATASET_DIR=${ADAGUC_PATH}/data/config/datasets/
 ulimit -c unlimited
 
 python3 ${ADAGUC_PATH}/tests/functional_test.py $1
