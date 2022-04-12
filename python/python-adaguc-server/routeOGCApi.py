@@ -2,7 +2,7 @@ import os
 import time
 import itertools
 import json
-from flask import Flask, request, Response, render_template, Blueprint, current_app
+from flask import Flask, request, Response, render_template, Blueprint, current_app, url_for
 import logging
 import marshmallow as ma
 #from flask_smorest import Api, Blueprint, abort
@@ -40,6 +40,8 @@ servers:
 
 """
 settings =  yaml.safe_load(EXTRA_SETTINGS)
+logger.debug("settings: %s", str(settings))
+
 spec = create_apispec(
         title="OGCAPI_F",
         version="0.0.1",
@@ -163,13 +165,26 @@ def get_args(request):
 
     return args, len(request_args)
 
-def make_link(pth, rel, typ, title):
+
+def make_link(pth, rel, typ, title, vars=None):
     link = {
         "rel": rel,
         "type": typ,
-        # "title": title
+        "title": title
     }
-    # logger.info("%s<>%s<>%s", request.root_url, request.url_rule.rule, pth)
+    if vars:
+        link["href"]=url_for(pth, **vars)
+    else:
+        link["href"]=url_for(pth)
+    return link
+
+def make_link2(pth, rel, typ, title):
+    link = {
+        "rel": rel,
+        "type": typ,
+        "title": title
+    }
+    logger.info("%s<>%s<>%s", request.root_url, request.url_rule.rule, pth)
     l = request.root_url+request.url_rule.rule[1:]
     if pth.startswith("http"):
         link["href"] = pth.replace("http:", "http:") #TODO
@@ -196,11 +211,11 @@ def hello():
         "description": "ADAGUC OGCAPI-Features server demo",
         "links": []
     }
-    root["links"].append(make_link("", "self", "application/json", "ADAGUC OGCAPI_Features server"))
-    root["links"].append(make_link("api", "service-desc", "application/vnd.oai.openapi+json;version=3.0", "API definition (JSON)"))
-    root["links"].append(make_link("api.yaml", "service-desc", "application/vnd.oai.openapi;version=3.0", "API definition (YAML)"))
-    root["links"].append(make_link("conformance", "conformance", "application/json", "OGC API Features conformance classes implemented by this server"))
-    root["links"].append(make_link("collections", "data", "application/json", "Metadata about the feature collections"))
+    root["links"].append(make_link("routeOGCApi.hello", "self", "application/json", "ADAGUC OGCAPI_Features server"))
+    root["links"].append(make_link("routeOGCApi.api", "service-desc", "application/vnd.oai.openapi+json;version=3.0", "API definition (JSON)"))
+    root["links"].append(make_link("routeOGCApi.api_yaml", "service-desc", "application/vnd.oai.openapi;version=3.0", "API definition (YAML)"))
+    root["links"].append(make_link("routeOGCApi.getconformance", "conformance", "application/json", "OGC API Features conformance classes implemented by this server"))
+    root["links"].append(make_link("routeOGCApi.getcollections", "data", "application/json", "Metadata about the feature collections"))
 
     if "f" in request.args and request.args["f"]=="html":
         response = render_template("root.html", root=root)
@@ -306,35 +321,40 @@ def getcollection_by_name(coll):
             "title": collectiondata["title"],
             "extent": { "spatial": { "bbox": [collectiondata["extent"]]}},
             "description": collectiondata["name"]+" with parameters: "+param_s,
-            "links": [
-                {
-                    "href": request.root_url+"collections/%s"%(collectiondata["name"],),
-                    "rel": "self",
-                    "type": "application/json",
-                    "title": "Metadata of "+collectiondata["title"]
-                },
-                {
-                    "href": request.root_url+"collections/%s?f=html"%(collectiondata["name"],),
-                    "rel": "alternate",
-                    "type": "text/html",
-                    "title": "Metadata of "+collectiondata["title"]
-                },
-                {
-                    "href": request.root_url+"collections/%s/items?f=json"%(collectiondata["name"],),
-                    "rel": "items",
-                    "type": "application/geo+json",
-                    "title": collectiondata["title"]
-                },
-                {
-                    "href": request.root_url+"collections/%s/items?f=html"%(collectiondata["name"],),
-                    "rel": "items",
-                    "type": "text/html",
-                    "title": collectiondata["title"]+" (HTML)"
-                },
-            ],
+            "links": [],
             "crs": ["http://www.opengis.net/def/crs/OGC/1.3/CRS84"],
             "storageCrs": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
         }
+
+    coll_args={"coll":collectiondata["name"]}
+    link=make_link(".getcollections",
+            "self", "application/json", "Metadata of "+collectiondata["title"], {"coll": collectiondata["name"]})
+    link["href"]=url_for(".getcollection", **coll_args)
+    c["links"].append(link)
+
+    args={**coll_args, "f": "html"}
+    link=make_link(".getcollections",
+            "self", "text/html", "Metadata of "+collectiondata["title"], {"coll": collectiondata["name"], "f": "html"})
+    link["href"]=url_for(".getcollection", **args)
+    c["links"].append(link)
+
+    args={**coll_args}
+    link=make_link(".getcollitems",
+            "self", "application/geo+json", "Items of "+collectiondata["title"], {"coll": collectiondata["name"], "f": "html"})
+    link["href"]=url_for(".getcollitems", **args)
+    c["links"].append(link)
+
+    args={**coll_args, "f": "html"}
+    link=make_link(".getcollitems",
+            "self", "text/html", "Items of "+collectiondata["title"], {"coll": collectiondata["name"], "f": "html"})
+    link["href"]=url_for(".getcollitems", **args)
+    c["links"].append(link)
+    # c["links"].append(make_link("/%s?f=html"%(collectiondata["name"],),
+    #         "alternate", "text/html", "Metadata of "+collectiondata["title"]))
+    # c["links"].append(make_link("/%s/items?f=json"%(collectiondata["name"],),
+    #         "items", "application/geo+json", collectiondata["title"]))
+    # c["links"].append(make_link("/%s/items?f=html"%(collectiondata["name"],),
+    #         "items", "application/geo+json", collectiondata["title"]+" (HTML)"))
     return c
 
 @routeOGCApi.route("/collections", methods=["GET"])
@@ -356,21 +376,25 @@ def getcollections():
             "http://www.opengis.net/def/crs/EPSG/0/4326",
         ],
         "collections":[],
-        "links": [
-            {
-                "href": request.root_url+"collections",
-                "rel": "self",
-                "type": "application/json",
-                "title": "Metadata about the feature collections"
-            },
-                    {
-                "href": request.root_url+"collections?f=html",
-                "rel": "alternate",
-                "type": "text/html",
-                "title": "Metadata about the feature collections"
-            }
-        ]
-    }
+        "links": []
+        #     {
+        #         "href": request.root_url+"collections",
+        #         "rel": "self",
+        #         "type": "application/json",
+        #         "title": "Metadata about the feature collections"
+        #     },
+        #             {
+        #         "href": request.root_url+"collections?f=html",
+        #         "rel": "alternate",
+        #         "type": "text/html",
+        #         "title": "Metadata about the feature collections"
+        #     }
+        # ]
+        }
+    res["links"].append(make_link("routeOGCApi.getcollections",
+        "self", "application/json", "Metadata about the feature collections"))
+    res["links"].append(make_link("routeOGCApi.getcollections",
+        "alternate", "text/html", "Metadata about the feature collections (HTML)"))
     for c in collections:
         res["collections"].append(getcollection_by_name(c["name"]))
 
