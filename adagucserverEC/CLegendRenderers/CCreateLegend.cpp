@@ -195,12 +195,12 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
     // legendImage->crop(4,4);
   }
 
- if( legendType == continous){
-    if (renderContinuousLegend(dataSource,legendImage, styleConfiguration, rotate, estimateMinMax) != 0){
+  if (legendType == continous) {
+    if (renderContinuousLegend(dataSource, legendImage, styleConfiguration, rotate, estimateMinMax) != 0) {
       CDBError("renderContinuousLegend did not succeed.");
       return 1;
     }
- }
+  }
   // Draw legend with fixed intervals
   if (legendType == discrete) {
     if (renderDiscreteLegend(dataSource, legendImage, styleConfiguration, rotate, estimateMinMax) != 0) {
