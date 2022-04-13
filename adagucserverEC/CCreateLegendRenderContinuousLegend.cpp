@@ -43,19 +43,16 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
     cbH -= triangleHeight;
   }
 
-  int minColor;
-  int maxColor;
-  int legendPositiveUp = 1;
+  int minColor = 239;
+  int maxColor = 0;
+
   int pLeft = 4;
   int pTop = (int)(legendImage->Geo->dHeight - legendHeight);
   for (int j = 0; j < cbH; j++) {
-    float c = (float(cbH * legendPositiveUp - (j + 1)) / cbH) * 240.0f;
+    int c = int((float(cbH - (j + 1)) / cbH) * 240.0f + 0.5);
     for (int x = pLeft; x < pLeft + ((int)cbW + 1) * scaling; x++) {
-      legendImage->setPixelIndexed(x, j + 7 + dH + pTop, int(c));
+      legendImage->setPixelIndexed(x, j + 7 + dH + pTop, c);
     }
-
-    if (j == 0) minColor = int(c);
-    maxColor = int(c);
   }
 
   // TODO: Remove scaling, investigate how scaling factor applies
@@ -133,7 +130,7 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
   char szTemp[256];
   if (styleConfiguration->legendLog != 0) {
     for (int j = 0; j <= classes; j++) {
-      double c = ((double(classes * legendPositiveUp - j) / classes)) * (cbH);
+      double c = ((double(classes - j) / classes)) * (cbH);
       double v = ((double(j) / classes)) * (240.0f);
       v -= styleConfiguration->legendOffset;
       if (styleConfiguration->legendScale != 0) v /= styleConfiguration->legendScale;
