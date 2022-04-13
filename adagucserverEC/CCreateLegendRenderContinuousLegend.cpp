@@ -10,8 +10,15 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
   bool drawLowerTriangle = true;
 
   float fontSize = dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.size.toDouble();
-  const char *fontLocation = dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.location.c_str();
+  CT::string fontLocation = dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.location;
+  CT::string textformatting;
 
+  /* Take the textformatting from the Style->Legend configuration */
+  if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL && styleConfiguration->styleConfig->Legend.size() > 0 &&
+      !styleConfiguration->styleConfig->Legend[0]->attr.textformatting.empty()) {
+    textformatting = styleConfiguration->styleConfig->Legend[0]->attr.textformatting;
+  }
+  CDBDebug("TextFormatting=%s", textformatting.c_str());
   double scaling = dataSource->getScaling();
   float legendHeight = legendImage->Geo->dHeight;
   float cbH = legendHeight - 13 - 13 * scaling;
@@ -139,12 +146,20 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
       }
       {
         legendImage->line(((int)cbW - 1) * scaling + pLeft, (int)c + 6 + dH + pTop, ((int)cbW + 6) * scaling + pLeft, (int)c + 6 + dH + pTop, lineWidth, 248);
-        if (tickRound == 0) {
-          floatToString(szTemp, 255, min, max, v);
+        if (textformatting.empty() == false) {
+          CT::string textFormat;
+          textFormat.print("%s", textformatting.c_str());
+          sprintf(szTemp, textFormat.c_str(), v);
         } else {
-          floatToString(szTemp, 255, tickRound, v);
+          if (tickRound == 0) {
+            floatToString(szTemp, 255, min, max, v);
+          } else {
+            floatToString(szTemp, 255, tickRound, v);
+          }
         }
-        legendImage->drawText(((int)cbW + 12 + pLeft) * scaling, (pTop) - ((fontSize * scaling) / 4) + 3, fontLocation, fontSize * scaling, 0, szTemp, 248);
+        if (!fontLocation.empty()) {
+          legendImage->drawText(((int)cbW + 12 + pLeft) * scaling, (pTop) - ((fontSize * scaling) / 4) + 3, fontLocation.c_str(), fontSize * scaling, 0, szTemp, 248);
+        }
       }
     }
   } else {
@@ -155,12 +170,20 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
 
       if (lineY >= -2 && lineY < cbH + 2) {
         legendImage->line(((int)cbW - 1) * scaling + pLeft, (int)lineY + 6 + dH + pTop, ((int)cbW + 6) * scaling + pLeft, (int)lineY + 6 + dH + pTop, lineWidth, 248);
-        if (tickRound == 0) {
-          floatToString(szTemp, 255, min, max, v);
+        if (textformatting.empty() == false) {
+          CT::string textFormat;
+          textFormat.print("%s", textformatting.c_str());
+          sprintf(szTemp, textFormat.c_str(), v);
         } else {
-          floatToString(szTemp, 255, tickRound, v);
+          if (tickRound == 0) {
+            floatToString(szTemp, 255, min, max, v);
+          } else {
+            floatToString(szTemp, 255, tickRound, v);
+          }
         }
-        legendImage->drawText(((int)cbW + 12 + pLeft) * scaling, ((int)lineY + dH + pTop) + ((fontSize * scaling) / 4) + 6, fontLocation, fontSize * scaling, 0, szTemp, 248);
+        if (!fontLocation.empty()) {
+          legendImage->drawText(((int)cbW + 12 + pLeft) * scaling, ((int)lineY + dH + pTop) + ((fontSize * scaling) / 4) + 6, fontLocation.c_str(), fontSize * scaling, 0, szTemp, 248);
+        }
       }
     }
   }
@@ -173,8 +196,9 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
     units = "-";
   }
 
-  legendImage->drawText((2 + pLeft) * scaling, int(legendHeight) - pTop - scaling * 2, fontLocation, fontSize * scaling, 0, units.c_str(), 248);
-
+  if (!fontLocation.empty()) {
+    legendImage->drawText((2 + pLeft) * scaling, int(legendHeight) - pTop - scaling * 2, fontLocation.c_str(), fontSize * scaling, 0, units.c_str(), 248);
+  }
 #ifdef CIMAGEDATAWRITER_DEBUG
 
   CDBDebug("set units");
