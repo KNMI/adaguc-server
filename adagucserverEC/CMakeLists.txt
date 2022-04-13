@@ -62,7 +62,7 @@ add_library(
     CAutoResource.h
     CDBAdapterSQLLite.h
     COctTreeColorQuantizer.h
-    CCreateLegend.h
+    CLegendRenderers/CCreateLegend.h
     CCreateHistogram.h
     CNetCDFDataWriter.h
     CAutoConfigure.h
@@ -124,7 +124,7 @@ add_library(
     CAutoResource.cpp
     CDBAdapterSQLLite.cpp
     COctTreeColorQuantizer.cpp
-    CCreateLegend.cpp
+    CLegendRenderers/CCreateLegend.cpp
     CCreateHistogram.cpp
     CNetCDFDataWriter.cpp
     CAutoConfigure.cpp
