@@ -48,7 +48,7 @@ add_library(
     CConvertADAGUCPoint.h
     CConvertKNMIH5EchoToppen.h
     CConvertKNMIH5EchoToppen.cpp
-    CImgRenderPoints.h
+    CImgRenderers/CImgRenderPoints.h
     CConvertCurvilinear.h
     CConvertHexagon.h
     CInspire.h
@@ -109,7 +109,7 @@ add_library(
     CConvertADAGUCVector.cpp
     CConvertEProfile.cpp
     CConvertADAGUCPoint.cpp
-    CImgRenderPoints.cpp
+    CImgRenderers/CImgRenderPoints.cpp
     CConvertCurvilinear.cpp
     CConvertHexagon.cpp
     CInspire.cpp

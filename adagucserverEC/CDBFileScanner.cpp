@@ -109,6 +109,13 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
   // Check and create all tables...
   for (size_t d = 0; d < dataSource->cfgLayer->Dimension.size(); d++) {
 
+    /* A dimension where the default value is set to filetimedate is not a required dim and should not be queried from the db */
+    if (dataSource->cfgLayer->Dimension[d]->attr.defaultV.equals("filetimedate")) {
+      dataSource->cfgLayer->Dimension[d]->value.copy("0");
+      dataSource->cfgLayer->Dimension[d]->attr.name.copy("none");
+      dataSource->cfgLayer->Dimension[d]->attr.units.copy("none");
+    }
+
     CT::string dimName = "";
     if (dataSource->cfgLayer->Dimension[d]->attr.name.empty() == false) {
       dimName = dataSource->cfgLayer->Dimension[d]->attr.name.c_str();
@@ -340,6 +347,13 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
 
       isTimeDim[d] = false;
       skipDim[d] = false;
+
+      /* A dimension where the default value is set to filetimedate is not a required dim and should not be queried from the db */
+      if (dataSource->cfgLayer->Dimension[d]->attr.defaultV.equals("filetimedate")) {
+        dataSource->cfgLayer->Dimension[d]->value.copy("0");
+        dataSource->cfgLayer->Dimension[d]->attr.name.copy("none");
+        dataSource->cfgLayer->Dimension[d]->attr.units.copy("none");
+      }
 
       CDataReader::DimensionType dtype = CDataReader::getDimensionType(cdfObjectOfFirstFile, dimNames[d].c_str());
 

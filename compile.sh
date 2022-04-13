@@ -33,6 +33,8 @@ function clean {
   rm -f $CURRENTDIR/bin/h5ncdump
   rm -f $CURRENTDIR/bin/aggregate_time
   rm -f $CURRENTDIR/bin/geojsondump
+
+  rm -f $CURRENTDIR/CMakeCache.txt $CURRENTDIR/CMakeFiles
 }
 
 function build {
