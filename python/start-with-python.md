@@ -35,6 +35,8 @@ ulimit -c unlimited
 python3 ./python/python-adaguc-server/main.py
 ```
 
+The WMS server will then be accessible at http://127.0.0.1:8080/wms. The autowms can be explored at the adaguc-viewer via the following link: https://adaguc.knmi.nl/adaguc-viewer/index.html?autowms=http://localhost:8080/autowms. Keep in mind that you have to disable security, as the server is not running on https.
+
 Note: the data directories cannot point to a symbolic link, for security purposes adaguc checks if the path contains no symbolic links.
 
 ## To scan the datasets
