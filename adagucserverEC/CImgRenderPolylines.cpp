@@ -152,7 +152,7 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
           }
 
           //                    CDBDebug("Draw polygon: %d points (%d)", cnt, numPoints);
-          drawImage->poly(projectedX, projectedY, cnt, drawPointLineWidth, drawPointLineColor2, true, false);
+          drawImage->poly(projectedX, projectedY, cnt, drawPointLineWidth, drawPointLineColor2, drawPointLineColor2, true, false);
           //                    break;
           if (true) {
             std::vector<PointArray> holes = itpoly->getHoles();
@@ -184,7 +184,7 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
                 //                      CDBDebug("J: %d", j);
               }
               //                         CDBDebug("Draw hole[%d]: %d points", h, holeSize);
-              drawImage->poly(projectedHoleX, projectedHoleY, holeSize, drawPointLineWidth, drawPointLineColor2, true, false);
+              drawImage->poly(projectedHoleX, projectedHoleY, holeSize, drawPointLineWidth, drawPointLineColor2, drawPointLineColor2, true, false);
               h++;
             }
           }
@@ -224,7 +224,7 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
           }
 
           //                                        CDBDebug("Draw polygon: %d points (%d)", cnt, numPoints);
-          drawImage->poly(projectedX, projectedY, cnt, drawPointLineWidth, drawPointLineColor2, false, false);
+          drawImage->poly(projectedX, projectedY, cnt, drawPointLineWidth, drawPointLineColor2, drawPointLineColor2, false, false);
           //                    break;
         }
 #ifdef MEASURETIME

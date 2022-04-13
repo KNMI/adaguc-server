@@ -35,7 +35,7 @@
 #include "CImgWarpNearestRGBA.h"
 #include "CImgWarpBilinear.h"
 #include "CImgWarpBoolean.h"
-#include "CImgRenderPoints.h"
+#include "CImgRenderers/CImgRenderPoints.h"
 #include "CImgRenderStippling.h"
 #include "CImgRenderPolylines.h"
 #include "CStyleConfiguration.h"
