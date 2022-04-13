@@ -1,3 +1,7 @@
+**Version 2.7.3 2022-04-13**
+
+- Legend graphic code splitted and refactored
+
 **Version 2.7.2 2022-04-06**
 
 - Points can now be rendered with customizable and scalable symbols
