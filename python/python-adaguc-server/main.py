@@ -6,8 +6,7 @@ from routeHealthCheck import routeHealthCheck
 from routeAdagucOpenDAP import routeAdagucOpenDAP
 from routeAutoWMS import routeAutoWMS
 from routeAdagucServer import routeAdagucServer
-# from routeOGCApiFeatures import routeOGCApiFeatures
-from routeOGCApi import routeOGCApi, init_views
+from ogcapi.routeOGCApi import routeOGCApi, init_views
 import sys
 import os
 from flask import Flask
@@ -23,10 +22,11 @@ app.register_blueprint(routeAutoWMS)
 app.register_blueprint(routeAdagucOpenDAP)
 app.register_blueprint(routeRoot)
 app.register_blueprint(routeHealthCheck)
-# app.register_blueprint(routeOGCApiFeatures, url_prefix="/ogcapi-f")
 app.register_blueprint(routeOGCApi, url_prefix="/ogcapi")
 with app.app_context():
   init_views()
+
+app.config['EXPLAIN_TEMPLATE_LOADING']=True
 
 logger.info("APP:%s", app.url_map)
 
