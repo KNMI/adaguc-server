@@ -23,7 +23,7 @@
   </Style>
   
    <Style name="testdatascaling4x">
-    <Legend textformatting="bla" fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
+    <Legend textformatting=" " fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
     <Min>0.0</Min>
     <Max>0.5</Max>
     <ContourLine width="1.8" linecolor="#888888" textcolor="#000000" textformatting="%2.2f" classes="0.05,0.1,0.15,0.2,0.3"/>
