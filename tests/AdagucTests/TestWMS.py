@@ -852,3 +852,60 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertEqual(data.getvalue(), AdagucTestTools(
         ).readfromfile(self.expectedoutputsspath + filename))
+
+    def test_WMSGetLegendGraphic_adaguc_scaling_dataset_scaling1x(self):
+        AdagucTestTools().cleanTempDir()
+        ADAGUC_PATH = os.environ['ADAGUC_PATH']
+        config = ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml,' + \
+            ADAGUC_PATH + '/data/config/datasets/adaguc.tests.scaling.xml'
+        env = {'ADAGUC_CONFIG': config}
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=['--updatedb', '--config', config], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSGetLegendGraphic_adaguc_scaling_dataset_scaling1x.png"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.scaling&SERVICE=WMS&&version=1.1.1&service=WMS&request=GetLegendGraphic&layer=testdata&format=image/png&STYLE=testdata/nearest&layers=testdata&&&transparent=true", env=env)
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools(
+        ).readfromfile(self.expectedoutputsspath + filename))
+
+    def test_WMSGetMapWithGetLegendGraphic_adaguc_scaling_dataset_scaling1x(self):
+        AdagucTestTools().cleanTempDir()
+        ADAGUC_PATH = os.environ['ADAGUC_PATH']
+        config = ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml,' + \
+            ADAGUC_PATH + '/data/config/datasets/adaguc.tests.scaling.xml'
+        env = {'ADAGUC_CONFIG': config}
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=['--updatedb', '--config', config], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSGetMapWithGetLegendGraphic_adaguc_scaling_dataset_scaling1x.png"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.scaling&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=1024&HEIGHT=1024&CRS=EPSG%3A3857&BBOX=-3099408.36963744,3701316.1668297593,3704230.74564144,10633468.46539724&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&showlegend=true", env=env)
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools(
+        ).readfromfile(self.expectedoutputsspath + filename))
+
+    def test_WMSGetMapWithGetLegendGraphic_adaguc_scaling_dataset_scaling4x(self):
+        AdagucTestTools().cleanTempDir()
+        ADAGUC_PATH = os.environ['ADAGUC_PATH']
+        config = ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml,' + \
+            ADAGUC_PATH + '/data/config/datasets/adaguc.tests.scaling.xml'
+        env = {'ADAGUC_CONFIG': config}
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=['--updatedb', '--config', config], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSGetMapWithGetLegendGraphic_adaguc_scaling_dataset_scaling4x.png"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.scaling&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=1024&HEIGHT=1024&CRS=EPSG%3A3857&BBOX=-3099408.36963744,3701316.1668297593,3704230.74564144,10633468.46539724&STYLES=testdatascaling4x%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&showlegend=true", env=env)
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools(
+        ).readfromfile(self.expectedoutputsspath + filename))
