@@ -16,8 +16,7 @@ from .schemas.schemas import create_apispec
 from setupAdaguc import setupAdaguc
 
 from collections import OrderedDict
-from defusedxml.ElementTree import fromstring
-
+from defusedxml.ElementTree import fromstring, parse, ParseError
 
 routeOGCApi = Blueprint('routeOGCApi', __name__, template_folder='templates')
 
@@ -59,20 +58,98 @@ collections = [
     {
         "name": "precip",
         "title": "precipitation",
-    #    "dataset": "RADAR",
-        "service": "https://geoservices.knmi.nl/wms?DATASET=RADAR",
+        "dataset": "RADAR",
+    #    "service": "https://geoservices.knmi.nl/wms?DATASET=RADAR",
+        "service": "http://192.168.178.113:8087/wms?DATASET=RADAR",
         "extent": [0.000000, 48.895303, 10.85645, 55.97360]
         #TODO Native projection?
     },
     {
         "name": "harmonie",
         "title": "Harmonie",
-     #   "dataset": "HARM_N25",
-        "service": "https://geoservices.knmi.nl/wms?DATASET=HARM_N25",
+        "dataset": "HARM_N25",
+     #   "service": "https://geoservices.knmi.nl/wms?DATASET=HARM_N25",
+        "service": "http://192.168.178.113:8087/wms?DATASET=HARM_N25",
         "extent": [-0.018500, 48.988500, 11.081500, 55.888500]
         #TODO Native projection?
     }
 ]
+
+def callADAGUC(url):
+  start = time.perf_counter()
+  adagucInstance = setupAdaguc()
+
+  logger.info(url)
+  stage1 = time.perf_counter()
+
+  adagucenv = {}
+
+  """ Set required environment variables """
+  adagucenv['ADAGUC_ONLINERESOURCE'] = os.getenv(
+      'EXTERNALADDRESS', 'http://192.168.178.113:8087') + "/adaguc-server?"
+  adagucenv['ADAGUC_DB'] = os.getenv(
+      'ADAGUC_DB', "user=adaguc password=adaguc host=localhost dbname=adaguc")
+
+  """ Run adaguc-server """
+  status, data, headers = adagucInstance.runADAGUCServer(
+      url, env=adagucenv,  showLogOnError=True)
+
+  """ Obtain logfile """
+  logfile = adagucInstance.getLogFile()
+  adagucInstance.removeLogFile()
+
+  stage2 = time.perf_counter()
+  logger.info("[PERF] Adaguc execution took: %f" % (stage2 - stage1))
+
+  if len(logfile) > 0:
+    logger.info(logfile)
+
+  return status, data
+
+def get_extent(coll):
+    if "dataset" in coll:
+        logger.info("callADAGUC by dataset")
+        urlrequest="dataset=%s&service=wms&version=1.3.0&request=getcapabilities"%(coll["dataset"],)
+        status, response = callADAGUC(url=urlrequest.encode('UTF-8'))
+        logger.info("status: %d", status)
+        if status==0:
+            xml = response.getvalue()
+            wms = WebMapService(coll["service"], xml=xml, version='1.3.0')
+        else:
+            logger.error("status: %d", status)
+            return {}
+    else:
+        logger.info("callADAGUC by service")
+        wms = WebMapService(coll["service"], version='1.3.0')
+    return wms.contents[next(iter(wms.contents))].boundingBoxWGS84
+
+def get_datasets(adagucDataSetDir):
+    logger.info("getDatasets(%s)", adagucDataSetDir)
+    datasetFiles = [f for f in os.listdir(adagucDataSetDir) if os.path.isfile(
+        os.path.join(adagucDataSetDir, f)) and f.endswith(".xml")]
+    datasets = []
+    for datasetFile in datasetFiles:
+        logger.info("parsing %s", os.path.join(adagucDataSetDir, datasetFile))
+        try:
+            tree = parse(os.path.join(adagucDataSetDir, datasetFile))
+
+            root = tree.getroot()
+            for ogcapi in root.iter('OgcApiFeatures'):
+                logger.info("ogcapi: %s", ogcapi)
+                dataset = {
+                    "dataset": datasetFile.replace(".xml", ""),
+                    "name": datasetFile.replace(".xml", ""),
+                    "title": datasetFile.replace(".xml", "").lower().capitalize(),
+                    "service": "http://localhost:8087/wms?DATASET="+datasetFile.replace(".xml", ""),
+                }
+                dataset["extent"] = get_extent(dataset)
+                datasets.append(dataset)
+        except ParseError:
+            pass
+
+    return datasets
+
+collections = get_datasets(os.environ.get("ADAGUC_DATASET_DIR"))
 
 coll_by_name={}
 for c in collections:
@@ -282,7 +359,7 @@ def get_parameters(collname):
             logger.error("status: %d", status)
             return {}
     else:
-        logger.info("callADAGUC by service")
+        logger.info("callADAGUC by service %s", coll["service"])
         wms = WebMapService(coll["service"], version='1.3.0')
     layers=[]
     for l in wms.contents:
@@ -415,15 +492,12 @@ def request_by_id(url, name, headers=None, requested_id=None):
         url = "%s&TIME=%s"%(url, "/".join(terms[-1].split("$")))
         response = requests.get(url, headers=headers, timeout=TIMEOUT)
         if response.status_code == 200:
-            print("R:", response.content)
             try:
                 data = json.loads(response.content.decode('utf-8'), object_pairs_hook=OrderedDict)
             except ValueError:
                 root = fromstring(response.content.decode('utf-8'))
-                print("ET:", root)
 
                 retval =  json.dumps({"Error":  { "code": root[0].attrib["code"], "message": root[0].text}})
-                print("retval=", retval)
                 return 400, root[0].text.strip(), None, None
             dat = data[0]
             item_feature = feature_from_dat(dat, observedPropertyName, name)
@@ -453,13 +527,13 @@ def feature_from_dat(dat, name, observedPropertyName):
     tuples = list(itertools.product(*valstack))
 
     features=[]
-    logger.info("TUPLES: %s [%d]",json.dumps(tuples), len(tuples))
+    logger.info("TUPLES: %s [%d] %s",json.dumps(tuples), len(tuples), json.dumps(dims_without_time))
 
     for t in tuples:
         logger.info("T:%s", t)
         result=[]
         for ts in timeSteps:
-            v = multi_get(dat["data"], (ts,)+t)
+            v = multi_get(dat["data"], t+(ts,))
             if v:
                 result.append(float(v))
 
@@ -524,7 +598,6 @@ def getcollitembyid(coll, featureid):
                 application/geo+json:
                   schema: FeatureGeoJSONSchema
     """
-    print("REQUESTING FEATURE", featureid, "of", coll)
 
     params = get_parameters(coll)
     headers = {
@@ -602,25 +675,23 @@ def request_(url, args, name, headers=None):
     if "dims" in args and args["dims"]:
         for dim in args["dims"].split(";"):
             dimname,dimval=dim.split(":")
-            print("DIM:", dimname, dimval)
             if dimname.upper()=="ELEVATION":
                 url = "%s&%s=%s"%(url, dimname, dimval)
             else:
                 url = "%s&DIM_%s=%s"%(url, dimname, dimval)
 
-    print("URL:", url)
+    logger.info("URL:", url)
     response = requests.get(url, headers=headers, timeout=TIMEOUT)
     if response.status_code == 200:
         try:
             response_data = json.loads(response.content.decode('utf-8'), object_pairs_hook=OrderedDict)
         except ValueError:
             root = fromstring(response.content.decode('utf-8'))
-            print("ET:", root)
+            logger.info("ET:", root)
 
             retval =  json.dumps({"Error":  { "code": root[0].attrib["code"], "message": root[0].text}})
-            print("retval=", retval)
+            logger.info("retval=", retval)
             return 400, root[0].text.strip()
-        # print("RESP:", json.dumps(response_data, indent=2))
         features=[]
         for data in response_data:
             data_features = feature_from_dat(data, args["observedPropertyName"], name)
@@ -706,7 +777,6 @@ def getcollitems(coll):
             if latest_reference_time:
                 param_args["resultTime"]=latest_reference_time
         if "lonlat" in param_args or "latlon" in param_args:
-            print("single")
             status, coordfeatures = request_(coll_info["service"], param_args, coll_info["name"], headers)
             if status==200:
                 features.extend(coordfeatures)
@@ -747,37 +817,6 @@ def getcollitems(coll):
         response = render_template("items.html", collection=coll_info["name"], items=featurecollection)
         return response
     return Response(json.dumps(featurecollection), 200, mimetype=mime_type, headers=headers)
-
-def callADAGUC(url):
-  start = time.perf_counter()
-  adagucInstance = setupAdaguc()
-
-  logger.info(url)
-  stage1 = time.perf_counter()
-
-  adagucenv = {}
-
-  """ Set required environment variables """
-  adagucenv['ADAGUC_ONLINERESOURCE'] = os.getenv(
-      'EXTERNALADDRESS', 'http://192.168.178.113:8087') + "/adaguc-server?"
-  adagucenv['ADAGUC_DB'] = os.getenv(
-      'ADAGUC_DB', "user=adaguc password=adaguc host=localhost dbname=adaguc")
-
-  """ Run adaguc-server """
-  status, data, headers = adagucInstance.runADAGUCServer(
-      url, env=adagucenv,  showLogOnError=True)
-
-  """ Obtain logfile """
-  logfile = adagucInstance.getLogFile()
-  adagucInstance.removeLogFile()
-
-  stage2 = time.perf_counter()
-  logger.info("[PERF] Adaguc executation took: %f" % (stage2 - stage1))
-
-  if len(logfile) > 0:
-    logger.info(logfile)
-
-  return status, data
 
 def init_views():
     with current_app.app_context():
