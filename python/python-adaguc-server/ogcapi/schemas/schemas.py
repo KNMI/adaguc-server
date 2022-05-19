@@ -15,9 +15,9 @@ class ExceptionSchema(Schema):
 
 class LinkSchema(Schema):
     href = fields.Str(required=True)
-    rel = fields.Str(example="prev")
-    type = fields.Str(example="application/json")
-    hreflang = fields.Str(example="en", description="Language")
+    rel = fields.Str(metadata={'example':"prev"})
+#    hreflang = fields.Str(example="en", description="Language")
+    hreflang = fields.Str(metadata={'example':"en", 'description':"Language"})
 
 class ExtentSchema(Schema):
     crs = fields.Str()
@@ -45,7 +45,7 @@ class ReqClassesSchema(Schema):
                'http://www.opengis.net/spec/wfs-1/3.0/req/oas30',
                'http://www.opengis.net/spec/wfs-1/3.0/req/html',
                'http://www.opengis.net/spec/wfs-1/3.0/req/geojson']
-    conformsTo = fields.List(fields.Str(), example=example, required=True)
+    conformsTo = fields.List(fields.Str(), metadata={'example':example, 'required':True})
 
 class GeometryGeoJSONSchema(Schema):
     type = fields.Str(validate=OneOf([

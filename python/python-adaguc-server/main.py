@@ -15,18 +15,21 @@ import logging
 configureLogging(logging)
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__)
+def create_app():
+  app = Flask(__name__)
 
-app.register_blueprint(routeAdagucServer)
-app.register_blueprint(routeAutoWMS)
-app.register_blueprint(routeAdagucOpenDAP)
-app.register_blueprint(routeRoot)
-app.register_blueprint(routeHealthCheck)
-app.register_blueprint(routeOGCApi, url_prefix="/ogcapi")
-with app.app_context():
-  init_views()
+  app.register_blueprint(routeAdagucServer)
+  app.register_blueprint(routeAutoWMS)
+  app.register_blueprint(routeAdagucOpenDAP)
+  app.register_blueprint(routeRoot)
+  app.register_blueprint(routeHealthCheck)
+  app.register_blueprint(routeOGCApi, url_prefix="/ogcapi")
+  with app.app_context():
+    init_views()
+  return app
 
-app.config['EXPLAIN_TEMPLATE_LOADING']=True
+app = create_app()
+app.config.update({'EXPLAIN_TEMPLATE_LOADING':True})
 
 logger.info("APP:%s", app.url_map)
 

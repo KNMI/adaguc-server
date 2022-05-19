@@ -149,11 +149,19 @@ def get_datasets(adagucDataSetDir):
 
     return datasets
 
-collections = get_datasets(os.environ.get("ADAGUC_DATASET_DIR"))
+collections = None
+coll_by_name = None
 
-coll_by_name={}
-for c in collections:
-    coll_by_name[c["name"]]=c
+def generate_collections():
+    global collections, coll_by_name
+    if collections is not None:
+        return collections
+    collections = get_datasets(os.environ.get("ADAGUC_DATASET_DIR"))
+    coll_by_name={}
+    for c in collections:
+        coll_by_name[c["name"]]=c
+    return collections
+
 
 def makedims(dims, data):
     dimlist=[]
@@ -437,7 +445,7 @@ def getcollections():
         "self", "application/json", "Metadata about the feature collections"))
     res["links"].append(make_link(".getcollections",
         "alternate", "text/html", "Metadata about the feature collections (HTML)", {"f": "html"}))
-    for c in collections:
+    for c in generate_collections():
         res["collections"].append(getcollection_by_name(c["name"]))
 
     if "f" in request.args and request.args["f"]=="html":
