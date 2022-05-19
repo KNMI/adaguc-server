@@ -12,36 +12,29 @@ import unittest
 logger = logging.getLogger(__name__)
 
 def set_environ():
-    tempdir = tempfile.mkdtemp()
-    # print("tmpdir: %s", tempdir)
     os.environ["ADAGUC_CONFIG"]=os.path.join(os.environ["ADAGUC_PATH"], 'data', 'config', "adaguc.ogcfeatures.xml")
 
-    return tempdir
 
-def setup_test_data(tmpdir):
-    datasetdir=os.environ["ADAGUC_DATASET_DIR"]
-
+def setup_test_data():
     print("About to ingest data")
     AdagucTestTools().cleanTempDir()
-    status, data, headers = AdagucTestTools().runADAGUCServer(
-        args=['--updatedb', '--config',
-                os.environ["ADAGUC_CONFIG"]+","+"netcdf_5d.xml"],
-        isCGI=False,
-        showLogOnError=False,
-        showLog=True)
+    for service in ["netcdf_5d.xml", "dataset_a.xml"]:
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=['--updatedb', '--config',
+                    os.environ["ADAGUC_CONFIG"]+","+service],
+            isCGI=False,
+            showLogOnError=False,
+            showLog=True)
 
     return None
 
 @pytest.fixture
 def app():
     #Initialize adaguc-server
-    tempdir=set_environ()
-    print("tempdir", tempdir)
-    setup_test_data(tempdir)
+    set_environ()
+    setup_test_data()
     app = create_app()
     yield app
-    print("tempdir",tempdir)
-# shutil.rmtree(tempdir)
 
 @pytest.fixture
 def client(app):
@@ -55,15 +48,8 @@ def test_root(client):
     resp = client.get("/ogcapi/")
     print("resp:", resp, resp.json)
     assert resp.json["description"]  ==  'ADAGUC OGCAPI-Features server demo'
-    print(">>>>>>")
-
-    resp = client.get("/ogcapi/collections")
-    colls = resp.json
-    assert len(colls["collections"])==1
-    print("resp:", resp, resp.json)
 
 def test_collections(client):
     resp = client.get("/ogcapi/collections")
     colls = resp.json
-    assert len(colls["collections"])==1
-    #print("resp:", resp, resp.json)
+    assert len(colls["collections"])==2
