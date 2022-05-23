@@ -6,7 +6,6 @@ from flask import Flask, request, Response, render_template, Blueprint, current_
 from flask_cors import cross_origin
 import logging
 import marshmallow as ma
-#from flask_smorest import Api, Blueprint, abort
 from owslib.wms import WebMapService
 import yaml
 from datetime import datetime
@@ -26,18 +25,8 @@ TIMEOUT=20
 
 EXTRA_SETTINGS = """
 servers:
-- url: http://192.168.178.113:8087/
-  description: The OGCAPI development server
-"""
-
-"""
-  variables:
-    port:
-      enum:
-      - '5000'
-      - '5001'
-      default: '5000'
-
+- url: /ogcapi
+  description: The OGCAPI server on ADAGUC
 """
 settings =  yaml.safe_load(EXTRA_SETTINGS)
 logger.debug("settings: %s", str(settings))
@@ -52,27 +41,6 @@ spec = create_apispec(
 SUPPORTED_CRS=[
     "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
     "http://www.opengis.net/def/crs/EPSG/0/4326",
-]
-
-collections = [
-    {
-        "name": "precip",
-        "title": "precipitation",
-        "dataset": "RADAR",
-    #    "service": "https://geoservices.knmi.nl/wms?DATASET=RADAR",
-        "service": "http://192.168.178.113:8087/wms?DATASET=RADAR",
-        "extent": [0.000000, 48.895303, 10.85645, 55.97360]
-        #TODO Native projection?
-    },
-    {
-        "name": "harmonie",
-        "title": "Harmonie",
-        "dataset": "HARM_N25",
-     #   "service": "https://geoservices.knmi.nl/wms?DATASET=HARM_N25",
-        "service": "http://192.168.178.113:8087/wms?DATASET=HARM_N25",
-        "extent": [-0.018500, 48.988500, 11.081500, 55.888500]
-        #TODO Native projection?
-    }
 ]
 
 def callADAGUC(url):
@@ -151,6 +119,13 @@ def get_datasets(adagucDataSetDir):
 
 collections = None
 coll_by_name = None
+
+'''
+runs before each request for this blueprint
+'''
+@routeOGCApi.before_request
+def init_collections():
+    generate_collections()
 
 def generate_collections():
     global collections, coll_by_name
@@ -385,7 +360,6 @@ def get_parameters(collname):
 
 def getcollection_by_name(coll):
     collectiondata = coll_by_name[coll]
-    obj = get_parameters(collectiondata["name"])
     params = get_parameters(collectiondata["name"])["layers"]
     param_s = ""
     for p in params:
@@ -406,14 +380,14 @@ def getcollection_by_name(coll):
             "storageCrs": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
         }
 
-    c["links"].append(make_link(".getcollections",
+    c["links"].append(make_link(".getcollection",
             "self", "application/json", "Metadata of "+collectiondata["title"], {"coll": collectiondata["name"]}))
 
-    c["links"].append(make_link(".getcollections",
+    c["links"].append(make_link(".getcollection",
             "self", "text/html", "Metadata of "+collectiondata["title"], {"coll": collectiondata["name"], "f": "html"}))
 
     c["links"].append(make_link(".getcollitems",
-            "self", "application/geo+json", "Items of "+collectiondata["title"], {"coll": collectiondata["name"], "f": "html"}))
+            "self", "application/geo+json", "Items of "+collectiondata["title"], {"coll": collectiondata["name"], "f": "json"}))
 
     c["links"].append(make_link(".getcollitems",
             "self", "text/html", "Items of "+collectiondata["title"], {"coll": collectiondata["name"], "f": "html"}))
@@ -468,7 +442,7 @@ def getcollection(coll):
               schema: CollectionParameter
         responses:
             200:
-              description: retu5ctionInfoSchema
+              description: CollectionInfoSchema
     """
     collection = getcollection_by_name(coll)
     if "f" in request.args and request.args["f"]=="html":
@@ -543,7 +517,11 @@ def feature_from_dat(dat, name, observedPropertyName):
         for ts in timeSteps:
             v = multi_get(dat["data"], t+(ts,))
             if v:
-                result.append(float(v))
+                try:
+                    value = float(v)
+                    result.append(value)
+                except ValueError:
+                    result.append(v)
 
         feature_dims={}
 
@@ -599,6 +577,11 @@ def getcollitembyid(coll, featureid):
     ---
     get:
         description: Get collection item with id featureid
+        parameters:
+            - in: path
+              schema: CollectionParameter
+            - in: path
+              schema: FeatureIdParameter
         responses:
             200:
               description: returns items from a collection

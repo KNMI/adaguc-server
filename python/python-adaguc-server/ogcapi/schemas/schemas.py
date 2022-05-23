@@ -41,11 +41,14 @@ class RootSchema(Schema):
     links = fields.List(fields.Nested(LinkSchema))
 
 class ReqClassesSchema(Schema):
-    example = ['http://www.opengis.net/spec/wfs-1/3.0/req/core',
-               'http://www.opengis.net/spec/wfs-1/3.0/req/oas30',
-               'http://www.opengis.net/spec/wfs-1/3.0/req/html',
-               'http://www.opengis.net/spec/wfs-1/3.0/req/geojson']
-    conformsTo = fields.List(fields.Str(), metadata={'example':example, 'required':True})
+    example = { "conformsTo": [
+            'http://www.opengis.net/spec/wfs-1/3.0/req/core',
+            'http://www.opengis.net/spec/wfs-1/3.0/req/oas30',
+            'http://www.opengis.net/spec/wfs-1/3.0/req/html',
+            'http://www.opengis.net/spec/wfs-1/3.0/req/geojson'
+        ]
+    }
+    conformsTo = fields.List(fields.Str(), metadata={'example':example}, required=True)
 
 class GeometryGeoJSONSchema(Schema):
     type = fields.Str(validate=OneOf([
@@ -104,6 +107,9 @@ class FeatureCollectionGeoJSONSchema(Schema):
 
 class CollectionParameter(Schema):
     coll = fields.Str()
+
+class FeatureIdParameter(Schema):
+    featureid = fields.Str()
 
 class LimitParameter(Schema):
     limit = fields.Int(validate=Range(1, 10000), metadata={"style": "form"})
