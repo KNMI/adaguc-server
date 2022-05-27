@@ -1083,7 +1083,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
           CT::string timeValue;
           CT::string netcdfTimeDimName;
           for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
-            CDBDebug("DIMS: %d [%s] [%s]", j, dataSource->requiredDims[j]->name.c_str(), dataSource->requiredDims[j]->value.c_str());
+            // CDBDebug("DIMS: %d [%s] [%s]", j, dataSource->requiredDims[j]->name.c_str(), dataSource->requiredDims[j]->value.c_str());
             if (dataSource->requiredDims[j]->name.equals("time")) {
               timeValue = dataSource->requiredDims[j]->value;
               netcdfTimeDimName = dataSource->requiredDims[j]->netCDFDimName;
