@@ -129,14 +129,12 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
   }
   if ((max - min) / increment > 250) increment = (max - min) / 250;
   if (increment <= 0) {
-    CDBDebug("Increment is %f, reversing it...", increment);
     increment = -increment;
   }
   classes = abs(int((max - min) / increment));
 
   char szTemp[256];
   if (styleConfiguration->legendLog != 0) {
-    CDBDebug("CASE 1");
     for (int j = 0; j <= classes; j++) {
       double c = ((double(classes - j) / classes)) * (cbH);
       double v = ((double(j) / classes)) * (240.0f);
@@ -152,7 +150,6 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
           textFormat.print("%s", textformatting.c_str());
           sprintf(szTemp, textFormat.c_str(), v);
         } else {
-          CDBDebug("DEFAULT FORMATTING 1");
           if (tickRound == 0) {
             floatToString(szTemp, 255, min, max, v);
           } else {
@@ -160,26 +157,24 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
           }
         }
         if (!fontLocation.empty()) {
-          CDBDebug("DRAW LOCATION 1");
           legendImage->drawText(((int)cbW + 12 + pLeft) * scaling, (pTop) - ((fontSize * scaling) / 4) + 3, fontLocation.c_str(), fontSize * scaling, 0, szTemp, 248);
-        } else {
-          CDBDebug("NOOO DRAW LOCATION 1");
-        }
+        } 
       }
     }
   } else {
-    CDBDebug("CASE 2 with min=%f and max + increment=%f",min,max + increment);
     bool isInverted = min > max;
-    double loopMin = -min;
-    double loopMax = -max;
+    double loopMin = min;
+    double loopMax = max;
     if (isInverted) {
-      
+      loopMin = -min;
+      loopMax = -max;
     }
     for (double j = loopMin; j < loopMax + increment; j = j + increment) {
-      CDBDebug("j with value %f", j);
       double lineY = cbH - ((j - loopMin) / (loopMax - loopMin)) * cbH;
       double v = j; // pow(j,10);
-
+      if (isInverted) {
+        v = -v;
+      }
       if (lineY >= -2 && lineY < cbH + 2) {
         legendImage->line(((int)cbW - 1) * scaling + pLeft, (int)lineY + 6 + dH + pTop, ((int)cbW + 6) * scaling + pLeft, (int)lineY + 6 + dH + pTop, lineWidth, 248);
         if (textformatting.empty() == false) {
@@ -187,7 +182,6 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
           textFormat.print("%s", textformatting.c_str());
           sprintf(szTemp, textFormat.c_str(), v);
         } else {
-          CDBDebug("DEFAULT FORMATTING 2");
           if (tickRound == 0) {
             floatToString(szTemp, 255, min, max, v);
           } else {
@@ -195,10 +189,7 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
           }
         }
         if (!fontLocation.empty()) {
-          CDBDebug("DRAW LOCATION 2");
           legendImage->drawText(((int)cbW + 12 + pLeft) * scaling, ((int)lineY + dH + pTop) + ((fontSize * scaling) / 4) + 6, fontLocation.c_str(), fontSize * scaling, 0, szTemp, 248);
-        } else {
-          CDBDebug("NOOO DRAW LOCATION 2");
         }
       }
     }
