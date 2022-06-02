@@ -111,6 +111,12 @@ def get_capabilities(collname):
         wms = WebMapService(coll["service"], version='1.3.0')
     return wms.contents
 
+def make_bbox(extent):
+    s=[]
+    for i in extent:
+        s.append("%f"%(i,))
+    return ",".join(s)
+
 def get_extent(coll):
     """
     Get the boundingbox extent from the WMS GetCapabilities
@@ -301,7 +307,7 @@ def make_link(pth, rel, typ, title, tvars=None):
     return link
 
 
-@routeOGCApi.route("/", methods=['GET'])
+@routeOGCApi.route("/", methods=['GET'], strict_slashes=False)
 @cross_origin()
 def hello():
     """Root endpoint.
@@ -467,6 +473,7 @@ def getcollection_by_name(coll):
     c = {
         "id": collectiondata["name"],
         "title": collectiondata["title"],
+        "name": collectiondata["name"],
         "extent": {"spatial": {"bbox": [get_extent(collectiondata["name"])]}},
         "description": collectiondata["name"]+" with parameters: "+param_s,
         "links": [],
@@ -707,13 +714,14 @@ def getcollitembyid(coll, featureid):
 
 def calculate_coords(bbox, nlon, nlat):
     """calculate_coords"""
-    dlon = (bbox[2]-bbox[0])/(nlon+1)
-    dlat = (bbox[3]-bbox[1])/(nlat+1)
+    bboxvalues=[float(i) for i in bbox.split(",")]
+    dlon = (bboxvalues[2]-bboxvalues[0])/(nlon+1)
+    dlat = (bboxvalues[3]-bboxvalues[1])/(nlat+1)
     coords = []
     for lo in range(nlon):
-        lon = bbox[0]+lo*dlon+dlon/2.
+        lon = bboxvalues[0]+lo*dlon+dlon/2.
         for la in range(nlat):
-            lat = bbox[1]+la*dlat+dlat/2
+            lat = bboxvalues[1]+la*dlat+dlat/2
             coords.append([lon, lat])
     return coords
 
@@ -872,11 +880,12 @@ def getcollitems(coll):
     coll_info = generate_collections().get(coll)
 
     args, leftover_args = get_args(request)
+    logger.info("EXTENT: %s", get_extent(coll))
     if "bbox" not in args or args["bbox"] is None:
-        args["bbox"] = get_extent(coll)
+        args["bbox"] = make_bbox(get_extent(coll))
     if "npoints" not in args or args["npoints"] is None:
-        args["npoints"] = 1
-    coords = calculate_coords(args["bbox"], args["npoints"], args["npoints"])
+        args["npoints"] = "4"
+    coords = calculate_coords(args["bbox"], int(args["npoints"]), int(args["npoints"]))
     if "crs" in args and args.get("crs") not in SUPPORTED_CRS:
         return Response("Unsupported CRS", 400)
     if "bbox-crs" in args and args.get("bbox-crs") not in SUPPORTED_CRS:
@@ -898,7 +907,6 @@ def getcollitems(coll):
         args["observedPropertyName"] = [collinfo["layers"][0]["name"]] # Default observedPropertyName = first layername
     logger.info("OBS:%s", args["observedPropertyName"])
 
-    layers = []
     if "resultTime" not in args:
         collinfo = get_parameters(coll)
 
