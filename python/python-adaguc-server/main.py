@@ -10,18 +10,18 @@ from routeAdagucOpenDAP import routeAdagucOpenDAP
 from routeAutoWMS import routeAutoWMS
 from routeAdagucServer import routeAdagucServer
 from ogcapi.routeOGCApi import routeOGCApi, init_views
-
+from cacher import cacher, init_cache
 
 from flask import Flask
-
 
 configureLogging(logging)
 logger = logging.getLogger(__name__)
 
-
 def create_app():
     """Create the Flask/Gunicorn appliicaiton"""
     _app = Flask(__name__)
+
+    init_cache(_app)
 
     _app.register_blueprint(routeAdagucServer)
     _app.register_blueprint(routeAutoWMS)
@@ -68,4 +68,4 @@ def testadaguc():
 if __name__ == "__main__":
     app.secret_key = os.urandom(24)
     testadaguc()
-    app.run(debug=True, host="0.0.0.0", port=8080)
+    app.run(debug=True, host="0.0.0.0", port=8087)
