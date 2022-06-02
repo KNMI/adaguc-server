@@ -13,15 +13,16 @@ from datetime import datetime
 from collections import OrderedDict
 import requests
 
+from cacher import cacher
 
 from flask import request, Response, render_template, Blueprint, current_app, url_for
 from flask_cors import cross_origin
+from flask_caching import Cache
 from owslib.wms import WebMapService
 from setup_adaguc import setup_adaguc
 from defusedxml.ElementTree import fromstring, parse, ParseError
 import yaml
 from .schemas.schemas import create_apispec
-
 
 routeOGCApi = Blueprint('routeOGCApi', __name__, template_folder='templates')
 
@@ -54,6 +55,10 @@ def callADAGUC(url):
     """Call adaguc-server"""
     adagucInstance = setup_adaguc()
 
+    url = url.decode()
+    logger.info(">>>>>%s", url)
+    if '?' in url:
+        url=url[url.index('?')+1:]
     logger.info(url)
     stage1 = time.perf_counter()
 
@@ -83,10 +88,12 @@ def callADAGUC(url):
     return status, data
 
 
-def get_extent(coll):
+@cacher.memoize(timeout=30)
+def get_capabilities(collname):
     """
-    Get the boundingbox extent from the WMS GetCapabilities
+    Get the collectioninfo from the WMS GetCapabilities
     """
+    coll = generate_collections().get(collname)
     if "dataset" in coll:
         logger.info("callADAGUC by dataset")
         dataset = coll["dataset"]
@@ -100,9 +107,18 @@ def get_extent(coll):
             logger.error("status: %d", status)
             return {}
     else:
-        logger.info("callADAGUC by service")
+        logger.info("callADAGUC by service %s", coll)
         wms = WebMapService(coll["service"], version='1.3.0')
-    return wms.contents[next(iter(wms.contents))].boundingBoxWGS84
+    return wms.contents
+
+def get_extent(coll):
+    """
+    Get the boundingbox extent from the WMS GetCapabilities
+    """
+    contents = get_capabilities(coll)
+    if len(contents):
+        return contents[next(iter(contents))].boundingBoxWGS84
+    return None
 
 
 def get_datasets(adagucDataSetDir):
@@ -112,7 +128,7 @@ def get_datasets(adagucDataSetDir):
     logger.info("getDatasets(%s)", adagucDataSetDir)
     datasetFiles = [f for f in os.listdir(adagucDataSetDir) if os.path.isfile(
         os.path.join(adagucDataSetDir, f)) and f.endswith(".xml")]
-    datasets = []
+    datasets = {}
     for datasetFile in datasetFiles:
         #logger.info("parsing %s", os.path.join(adagucDataSetDir, datasetFile))
         try:
@@ -127,16 +143,15 @@ def get_datasets(adagucDataSetDir):
                     "title": datasetFile.replace(".xml", "").lower().capitalize(),
                     "service": "http://localhost:8080/wms?DATASET="+datasetFile.replace(".xml", ""),
                 }
-                dataset["extent"] = get_extent(dataset)
-                datasets.append(dataset)
+                datasets[dataset["name"]]=dataset
+                # dataset["extent"] = get_extent(dataset["name"])
+                # if dataset["extent"] is not None:
+                #     datasets[dataset["name"]]=dataset
         except ParseError:
             pass
 
     return datasets
 
-
-collections = None
-coll_by_name = None
 
 '''
 runs before each request for this blueprint
@@ -150,20 +165,12 @@ def init_collections():
     """
     generate_collections()
 
-
+@cacher.cached(timeout=30, key_prefix="collections")
 def generate_collections():
     """
     Generate OGC API Feature collections
     """
-    # # pylint: disable=global-statement
-    global collections, coll_by_name
-    # TODO: This does not work if dataset configs are changed after the server had been started
-    # if collections is not None:
-    #     return collections
     collections = get_datasets(os.environ.get("ADAGUC_DATASET_DIR"))
-    coll_by_name = {}
-    for c in collections:
-        coll_by_name[c["name"]] = c
     return collections
 
 
@@ -353,6 +360,7 @@ def api_yaml():
 
 
 @routeOGCApi.route("/conformance", methods=["GET"])
+@cacher.cached(timeout=30)
 @cross_origin()
 def getconformance():
     """Conformance endpoint.
@@ -402,30 +410,32 @@ def get_dimensions(l, skip_dims=None):
     return dims
 
 
+@cacher.memoize(timeout=30)
 def get_parameters(collname):
     """
-    get_paramters
+    get_parameters
     """
-    coll = coll_by_name[collname]
-    if "dataset" in coll:
-        logger.info("callADAGUC by dataset")
-        dataset = coll["dataset"]
-        urlrequest = f"dataset={dataset}&service=wms&version=1.3.0&request=getcapabilities"
-        status, response = callADAGUC(url=urlrequest.encode('UTF-8'))
-        logger.info("status: %d", status)
-        if status == 0:
-            xml = response.getvalue()
-            wms = WebMapService(coll["service"], xml=xml, version='1.3.0')
-        else:
-            logger.error("status: %d", status)
-            return {}
-    else:
-        logger.info("callADAGUC by service %s", coll["service"])
-        wms = WebMapService(coll["service"], version='1.3.0')
+    contents = get_capabilities(collname)
+    # if "dataset" in coll:
+    #     logger.info("callADAGUC by dataset")
+    #     dataset = coll["dataset"]
+    #     urlrequest = f"dataset={dataset}&service=wms&version=1.3.0&request=getcapabilities"
+    #     status, response = callADAGUC(url=urlrequest.encode('UTF-8'))
+    #     logger.info("status: %d", status)
+    #     if status == 0:
+    #         xml = response.getvalue()
+    #         wms = WebMapService(coll["service"], xml=xml, version='1.3.0')
+    #     else:
+    #         logger.error("status: %d", status)
+    #         return {}
+    # else:
+    #     logger.info("callADAGUC by service %s", coll["service"])
+    #     wms = WebMapService(coll["service"], version='1.3.0')
     layers = []
-    for l in wms.contents:
+    for l in contents:
+        logger.info("l: %s", l)
         ls = l
-        dims = get_dimensions(wms[l], ["time"])
+        dims = get_dimensions(contents[l], ["time"])
         if len(dims) > 0:
             layer = {"name": ls, "dims": dims}
         else:
@@ -441,7 +451,7 @@ def getcollection_by_name(coll):
     """
     getcollection_by_name
     """
-    collectiondata = coll_by_name[coll]
+    collectiondata = generate_collections().get(coll)
     params = get_parameters(collectiondata["name"])["layers"]
     param_s = ""
     for p in params:
@@ -457,7 +467,7 @@ def getcollection_by_name(coll):
     c = {
         "id": collectiondata["name"],
         "title": collectiondata["title"],
-        "extent": {"spatial": {"bbox": [collectiondata["extent"]]}},
+        "extent": {"spatial": {"bbox": [get_extent(collectiondata["name"])]}},
         "description": collectiondata["name"]+" with parameters: "+param_s,
         "links": [],
         "crs": ["http://www.opengis.net/def/crs/OGC/1.3/CRS84"],
@@ -504,7 +514,7 @@ def getcollections():
                                   "self", "application/json", "Metadata about the feature collections"))
     res["links"].append(make_link(".getcollections",
                                   "alternate", "text/html", "Metadata about the feature collections (HTML)", {"f": "html"}))
-    for c in generate_collections():
+    for c in generate_collections().values():
         res["collections"].append(getcollection_by_name(c["name"]))
 
     if "f" in request.args and request.args["f"] == "html":
@@ -689,7 +699,7 @@ def getcollitembyid(coll, featureid):
         'Content-Type': 'application/geo+json',
     }
 
-    coll_info = coll_by_name[coll]
+    coll_info = generate_collections().get(coll)
     (status, feature, headers) = request_by_id(
         coll_info["service"], coll_info["name"], headers, featureid)
     return Response(feature, status, headers=headers)
@@ -730,10 +740,10 @@ def replaceFormat(url, newFormat):
     return url+"&f="+newFormat
 
 
-def get_reference_times(layers, layer, last=False):
+def get_reference_times(collinfo, layer, last=False):
     """get_reference_times"""
-    if "layers" in layers:
-        for l in layers["layers"]:
+    if "layers" in collinfo:
+        for l in collinfo["layers"]:
             if l["name"] == layer and "dims" in l:
                 for d in l["dims"]:
                     if d["name"] == "reference_time":
@@ -744,8 +754,7 @@ def get_reference_times(layers, layer, last=False):
 
     return None
 
-
-def request_(url, args, name, headers=None):
+def request_(call_adaguc, url, args, name, headers=None):
     # pylint: disable=consider-using-f-string
     """request_"""
     url = make_wms1_3(
@@ -781,31 +790,51 @@ def request_(url, args, name, headers=None):
             else:
                 url = "%s&DIM_%s=%s" % (url, dimname, dimval)
 
-    logger.info("URL: %s", url)
-    response = requests.get(url, headers=headers, timeout=TIMEOUT)
-    if response.status_code == 200:
-        try:
-            response_data = json.loads(response.content.decode(
-                'utf-8'), object_pairs_hook=OrderedDict)
-        except ValueError:
-            root = fromstring(response.content.decode('utf-8'))
-            logger.info("ET:%s", root)
+    if call_adaguc:
+        status, data = callADAGUC(url.encode('UTF-8'))
+        print('s: %d, data=%s', status, data)
+        if status == 0:
+            try:
+                response_data = json.loads(data.getvalue(), object_pairs_hook=OrderedDict)
+            except ValueError:
+                root = fromstring(data)
+                logger.info("ET:%s", root)
 
-            retval = json.dumps(
-                {"Error":  {"code": root[0].attrib["code"], "message": root[0].text}})
-            logger.info("retval=%s", retval)
-            return 400, root[0].text.strip()
-        features = []
-        for data in response_data:
-            data_features = feature_from_dat(
-                data, args["observedPropertyName"], name)
-            features.extend(data_features)
+                retval = json.dumps(
+                    {"Error":  {"code": root[0].attrib["code"], "message": root[0].text}})
+                logger.info("retval=%s", retval)
+                return 400, root[0].text.strip()
+            features = []
+            for data in response_data:
+                data_features = feature_from_dat(
+                    data, args["observedPropertyName"], name)
+                features.extend(data_features)
+            return 200, features
+    else:
+        response = requests.get(url, headers=headers, timeout=TIMEOUT)
+        if response.status_code == 200:
+            try:
+                response_data = json.loads(response.content.decode(
+                    'utf-8'), object_pairs_hook=OrderedDict)
+            except ValueError:
+                root = fromstring(response.content.decode('utf-8'))
+                logger.info("ET:%s", root)
 
-        return 200, features
+                retval = json.dumps(
+                    {"Error":  {"code": root[0].attrib["code"], "message": root[0].text}})
+                logger.info("retval=%s", retval)
+                return 400, root[0].text.strip()
+            features = []
+            for data in response_data:
+                data_features = feature_from_dat(
+                    data, args["observedPropertyName"], name)
+                features.extend(data_features)
+            return 200, features
     return 400, "Error"
 
 
 @routeOGCApi.route("/collections/<coll>/items", methods=["GET"])
+@cacher.cached(timeout=30)
 @cross_origin()
 def getcollitems(coll):
     """Collection items endpoint.
@@ -840,11 +869,11 @@ def getcollitems(coll):
                 application/json:
                   schema: FeatureCollectionGeoJSONSchema
     """
-    coll_info = coll_by_name[coll]
+    coll_info = generate_collections().get(coll)
 
     args, leftover_args = get_args(request)
     if "bbox" not in args or args["bbox"] is None:
-        args["bbox"] = coll_info["extent"]
+        args["bbox"] = get_extent(coll)
     if "npoints" not in args or args["npoints"] is None:
         args["npoints"] = 1
     coords = calculate_coords(args["bbox"], args["npoints"], args["npoints"])
@@ -865,25 +894,27 @@ def getcollitems(coll):
 
     features = []
     if "observedPropertyName" not in args or args["observedPropertyName"] is None:
-        params = get_parameters(coll)
-        args["observedPropertyName"] = [params["layers"][0]["name"]]
+        collinfo = get_parameters(coll)
+        args["observedPropertyName"] = [collinfo["layers"][0]["name"]] # Default observedPropertyName = first layername
     logger.info("OBS:%s", args["observedPropertyName"])
 
     layers = []
     if "resultTime" not in args:
-        layers = get_parameters(coll)
+        collinfo = get_parameters(coll)
 
+    logger.info("observedPropertyName: %s", args["observedPropertyName"])
     for parameter_name in args["observedPropertyName"]:
+        logger.info("pn: %s", parameter_name)
         param_args = {**args}
         param_args["observedPropertyName"] = parameter_name
         if "resultTime" not in param_args:
             latest_reference_time = get_reference_times(
-                layers, parameter_name, True)
+                collinfo, parameter_name, True)
             if latest_reference_time:
                 param_args["resultTime"] = latest_reference_time
         if "lonlat" in param_args or "latlon" in param_args:
             status, coordfeatures = request_(
-                coll_info["service"], param_args, coll_info["name"], headers)
+                "dataset" in coll_info, coll_info["service"], param_args, coll_info["name"], headers)
             if status == 200:
                 features.extend(coordfeatures)
         else:
@@ -891,7 +922,7 @@ def getcollitems(coll):
             for c in coords:
                 param_args["lonlat"] = f"{c[0]},{c[1]}"
                 status, coordfeatures = request_(
-                    coll_info["service"], param_args, coll_info["name"], headers)
+                    "dataset" in coll_info, coll_info["service"], param_args, coll_info["name"], headers)
                 if status == 200:
                     features.extend(coordfeatures)
 
