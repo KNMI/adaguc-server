@@ -86,7 +86,7 @@ RUN yum update -y && \
     yum clean all && \
     rm -rf /var/cache/yum
 
-RUN pip3 install flask flask-cors gunicorn pytest marshmallow owslib pyproj==2.6.1 apispec apispec-webframeworks marshmallow-oneofschema defusedxml
+RUN pip3 install flask flask-cors flask-caching gunicorn pytest marshmallow owslib pyproj==2.6.1 apispec apispec-webframeworks marshmallow-oneofschema defusedxml
 
 WORKDIR /adaguc/adaguc-server-master
 
