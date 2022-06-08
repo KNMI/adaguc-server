@@ -336,6 +336,17 @@ namespace CT {
      * Encodes string using XML encoding
      */
     void encodeXMLSelf();
+
+    /**
+     * Encodes string using URL encoding
+     */
+    CT::string encode();
+
+
+    /**
+     * Encodes string using JSON encoding
+     */
+    CT::string encodeJSON();
     static CT::string encodeXML(CT::string stringToEncode);
     CT::string encodeXML();
 
