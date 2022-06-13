@@ -656,7 +656,7 @@ int EProfileUniqueRequests::plotHeightRetrieval(CDrawImage *drawImage, CDFObject
       }
     }
   } else {
-    CDBDebug("plotHeightRetrievalVariable == NULL");
+//    CDBDebug("plotHeightRetrievalVariable == NULL");
   }
   return 0;
 }
@@ -721,7 +721,7 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
     CT::string *timeEntries = dataSource->srvParams->requestDims[foundTimeDim]->value.splitToArray("/");
     if (timeEntries->count == 2) {
 #ifdef CMakeEProfile_DEBUG
-      CDBDebug("elevation=%s", dataSource->srvParams->requestDims[foundTimeDim]->value.c_str());
+      CDBDebug("time=%s", dataSource->srvParams->requestDims[foundTimeDim]->value.c_str());
 #endif
       startGraphTime = adagucTime->dateToOffset(adagucTime->freeDateStringToDate(timeEntries[0].c_str()));
       stopGraphTime = adagucTime->dateToOffset(adagucTime->freeDateStringToDate(timeEntries[1].c_str()));
@@ -775,17 +775,48 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
     eProfileJson->concat("\n\"heights\":["); 
     for(size_t j=0;j<varRange->getSize();j+=1){
       if (j > 0){ eProfileJson->concat(","); };
-      eProfileJson->printconcat("%g",  float(data[j]));
+      float v = float(data[j]);
+      if (v == v) {
+        eProfileJson->printconcat("%g", v);
+      } else {
+        eProfileJson->printconcat("null");
+      }
     }
     eProfileJson->concat("],"); 
     eProfileJson->concat("\n\"values\":["); 
+
+    CDBDebug("%d", variable->getSize());
+ 
+    size_t colOffset = varRange->getSize()*0;
+    if (count[0]>1){
+      for (size_t timeIndex = 0; timeIndex < count[0]-1; timeIndex++) {
+        double dataTimeStart = ((double *)varTime->data)[timeIndex];
+        double dataTimeEnd = ((double *)varTime->data)[timeIndex+1];
+        if (startGraphTime > dataTimeStart && startGraphTime < dataTimeEnd){
+          
+          colOffset = timeIndex;
+        }
+      }
+    }
+
+    CDBDebug("Querying for time index %d and file %s", colOffset, dataSource->getFileName());
     for(size_t j=0;j<varRange->getSize();j+=1){
       if (j > 0){ eProfileJson->concat(","); };
       if (variable->getType()==CDF_FLOAT){
-        eProfileJson->printconcat("%g", ((float*)variable->data)[j]);
+        float v = ((float*)variable->data)[j+colOffset ];
+        if (v==v){
+          eProfileJson->printconcat("%g", v);
+        } else {
+          eProfileJson->printconcat("null");
+        }
       }
       if (variable->getType()==CDF_DOUBLE){
-        eProfileJson->printconcat("%g", ((double*)variable->data)[j]);
+        double v = ((double*)variable->data)[j+colOffset];
+        if (v==v){
+          eProfileJson->printconcat("%g", v);
+        } else {
+          eProfileJson->printconcat("null");
+        }
       }
     }
     eProfileJson->concat("]"); 
@@ -801,6 +832,14 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
 
   double imageWidth = drawImage->Geo->dWidth;
   double imageHeight = drawImage->Geo->dHeight;
+
+  if (graphWidth<=0) {
+    graphWidth = imageWidth;
+  }
+  if(graphHeight<=0){
+    graphHeight = imageHeight;
+  }
+
 #ifdef CMakeEProfile_DEBUG
   CDBDebug("startGraphTime = %f stopGraphTime = %f graphWidth = %f imageWidth = %f", startGraphTime, stopGraphTime, graphWidth, imageWidth);
   CDBDebug("startGraphRange = %f stopGraphTime = %f graphWidth = %f imageWidth = %f", startGraphRange, stopGraphTime, graphHeight, imageHeight);
@@ -828,6 +867,15 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
 
   std::vector<CMakeEProfile::DayPass> dayPasses;
   int minWidth = 0;
+
+  /* Validity length of the observation, in case there is only one observatin in the file */
+  double duration = 12.0f;
+
+  CDF::Attribute * durationAttribute = varTime->getAttributeNE("duration");
+  if (durationAttribute != NULL && durationAttribute->getType()==CDF_DOUBLE){
+    durationAttribute->getData(&duration, 1);
+  }
+
   for (size_t time = 0; time < count[0]; time++) {
 
     int x1 = int(((((double *)varTime->data)[time] - startGraphTime) / graphWidth) * imageWidth);
@@ -842,8 +890,11 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
           minWidth = x2 - x1;
         }
       }
-    } else
+    } else {
       x2 = x1 + minWidth + 1;
+      // 3600 seconds hardcoded for Harmonie
+      x2 = x1+ int(((duration / graphWidth) * imageWidth)+0.5) +1;
+    }
     if (x2 >= 0 && x1 < imageWidth && x1 < x2) {
 
       // CDBDebug("x1 = %d fileTime = %f",x1,fileTime);
