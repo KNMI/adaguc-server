@@ -794,7 +794,7 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
         double dataTimeEnd = ((double *)varTime->data)[timeIndex+1];
         if (startGraphTime > dataTimeStart && startGraphTime < dataTimeEnd){
           
-          colOffset = timeIndex;
+          colOffset = timeIndex*varRange->getSize();
         }
       }
     }
