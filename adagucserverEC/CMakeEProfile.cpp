@@ -567,7 +567,7 @@ const char *EProfileUniqueRequests::className = "EProfileUniqueRequests";
 
 int CMakeEProfile::MakeEProfile(CDrawImage *drawImage, CImageWarper *imageWarper, std::vector<CDataSource *> dataSources, int dataSourceIndex, int dX, int dY, CT::string *eProfileJson) {
   CDataSource *dataSource = dataSources[dataSourceIndex];
-  
+
   EProfileUniqueRequests uniqueRequest;
   /**
    * DataPostProc: Here our datapostprocessor comes into action!
@@ -656,12 +656,13 @@ int EProfileUniqueRequests::plotHeightRetrieval(CDrawImage *drawImage, CDFObject
       }
     }
   } else {
-//    CDBDebug("plotHeightRetrievalVariable == NULL");
+    //    CDBDebug("plotHeightRetrievalVariable == NULL");
   }
   return 0;
 }
 
-int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *variable, size_t *, size_t *count, EProfileUniqueRequests::Request *, CDataSource *dataSource, CT::string *eProfileJson) {
+int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *variable, size_t *, size_t *count, EProfileUniqueRequests::Request *, CDataSource *dataSource,
+                                         CT::string *eProfileJson) {
 
   // CTime adagucTime;
   // adagucTime->init(((CDFObject*)variable->getParentCDFObject())->getVariableNE("time_obs"));
@@ -751,30 +752,32 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
     delete[] elevationEntries;
   }
 
-  if(dataSource->srvParams->InfoFormat.equals("application/json")) {
-    float *data=(float*)varRange->data;
+  if (dataSource->srvParams->InfoFormat.equals("application/json")) {
+    float *data = (float *)varRange->data;
     eProfileJson->concat("{");
     CT::string units = dataSource->getDataObject(0)->getUnits();
-    if (!units.empty()){
-      eProfileJson->printconcat("\"units\":\"%s\",", units.c_str()); 
-    }else{
-      eProfileJson->printconcat("\"units\":null,"); 
+    if (!units.empty()) {
+      eProfileJson->printconcat("\"units\":\"%s\",", units.c_str());
+    } else {
+      eProfileJson->printconcat("\"units\":null,");
     }
-    CDF::Attribute*unitsY = varRange->getAttributeNE("units");
-    CDF::Attribute*standardName = variable->getAttributeNE("standard_name");
-    CDF::Attribute*longName = variable->getAttributeNE("long_name");
+    CDF::Attribute *unitsY = varRange->getAttributeNE("units");
+    CDF::Attribute *standardName = variable->getAttributeNE("standard_name");
+    CDF::Attribute *longName = variable->getAttributeNE("long_name");
 
-    unitsY !=NULL?eProfileJson->printconcat("\"units_y\":\"%s\",", unitsY->getDataAsString().c_str()):eProfileJson->printconcat("\"units_y\":null,"); 
-    standardName !=NULL?eProfileJson->printconcat("\"standard_name\":\"%s\",", standardName->getDataAsString().c_str()):eProfileJson->printconcat("\"standard_name\":null,"); 
-    longName !=NULL?eProfileJson->printconcat("\"long_name\":\"%s\",", longName->getDataAsString().encodeJSON().c_str()):eProfileJson->printconcat("\"long_name\":null,"); 
-    
-    eProfileJson->printconcat("\"numValues\":%d,", varRange->getSize()); 
-    eProfileJson->printconcat("\"name\":\"%s\",", variable->name.replace("_backup","").c_str()); 
-    
-    eProfileJson->concat("\"profile\":{"); 
-    eProfileJson->concat("\n\"heights\":["); 
-    for(size_t j=0;j<varRange->getSize();j+=1){
-      if (j > 0){ eProfileJson->concat(","); };
+    unitsY != NULL ? eProfileJson->printconcat("\"units_y\":\"%s\",", unitsY->getDataAsString().c_str()) : eProfileJson->printconcat("\"units_y\":null,");
+    standardName != NULL ? eProfileJson->printconcat("\"standard_name\":\"%s\",", standardName->getDataAsString().c_str()) : eProfileJson->printconcat("\"standard_name\":null,");
+    longName != NULL ? eProfileJson->printconcat("\"long_name\":\"%s\",", longName->getDataAsString().encodeJSON().c_str()) : eProfileJson->printconcat("\"long_name\":null,");
+
+    eProfileJson->printconcat("\"numValues\":%d,", varRange->getSize());
+    eProfileJson->printconcat("\"name\":\"%s\",", variable->name.replace("_backup", "").c_str());
+
+    eProfileJson->concat("\"profile\":{");
+    eProfileJson->concat("\n\"heights\":[");
+    for (size_t j = 0; j < varRange->getSize(); j += 1) {
+      if (j > 0) {
+        eProfileJson->concat(",");
+      };
       float v = float(data[j]);
       if (v == v) {
         eProfileJson->printconcat("%g", v);
@@ -782,50 +785,51 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
         eProfileJson->printconcat("null");
       }
     }
-    eProfileJson->concat("],"); 
-    eProfileJson->concat("\n\"values\":["); 
+    eProfileJson->concat("],");
+    eProfileJson->concat("\n\"values\":[");
 
     CDBDebug("%d", variable->getSize());
- 
-    size_t colOffset = varRange->getSize()*0;
-    if (count[0]>1){
-      for (size_t timeIndex = 0; timeIndex < count[0]-1; timeIndex++) {
+
+    size_t colOffset = varRange->getSize() * 0;
+    if (count[0] > 1) {
+      for (size_t timeIndex = 0; timeIndex < count[0] - 1; timeIndex++) {
         double dataTimeStart = ((double *)varTime->data)[timeIndex];
-        double dataTimeEnd = ((double *)varTime->data)[timeIndex+1];
-        if (startGraphTime > dataTimeStart && startGraphTime < dataTimeEnd){
-          
-          colOffset = timeIndex*varRange->getSize();
+        double dataTimeEnd = ((double *)varTime->data)[timeIndex + 1];
+        if (startGraphTime > dataTimeStart && startGraphTime < dataTimeEnd) {
+
+          colOffset = timeIndex * varRange->getSize();
         }
       }
     }
 
     CDBDebug("Querying for time index %d and file %s", colOffset, dataSource->getFileName());
-    for(size_t j=0;j<varRange->getSize();j+=1){
-      if (j > 0){ eProfileJson->concat(","); };
-      if (variable->getType()==CDF_FLOAT){
-        float v = ((float*)variable->data)[j+colOffset ];
-        if (v==v){
+    for (size_t j = 0; j < varRange->getSize(); j += 1) {
+      if (j > 0) {
+        eProfileJson->concat(",");
+      };
+      if (variable->getType() == CDF_FLOAT) {
+        float v = ((float *)variable->data)[j + colOffset];
+        if (v == v) {
           eProfileJson->printconcat("%g", v);
         } else {
           eProfileJson->printconcat("null");
         }
       }
-      if (variable->getType()==CDF_DOUBLE){
-        double v = ((double*)variable->data)[j+colOffset];
-        if (v==v){
+      if (variable->getType() == CDF_DOUBLE) {
+        double v = ((double *)variable->data)[j + colOffset];
+        if (v == v) {
           eProfileJson->printconcat("%g", v);
         } else {
           eProfileJson->printconcat("null");
         }
       }
     }
-    eProfileJson->concat("]"); 
-    
-    eProfileJson->concat("\n}}"); 
-    
+    eProfileJson->concat("]");
+
+    eProfileJson->concat("\n}}");
+
     return 0;
   }
-
 
   double graphWidth = stopGraphTime - startGraphTime;
   double graphHeight = stopGraphRange - startGraphRange;
@@ -833,10 +837,10 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
   double imageWidth = drawImage->Geo->dWidth;
   double imageHeight = drawImage->Geo->dHeight;
 
-  if (graphWidth<=0) {
+  if (graphWidth <= 0) {
     graphWidth = imageWidth;
   }
-  if(graphHeight<=0){
+  if (graphHeight <= 0) {
     graphHeight = imageHeight;
   }
 
@@ -871,8 +875,8 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
   /* Validity length of the observation, in case there is only one observatin in the file */
   double duration = 12.0f;
 
-  CDF::Attribute * durationAttribute = varTime->getAttributeNE("duration");
-  if (durationAttribute != NULL && durationAttribute->getType()==CDF_DOUBLE){
+  CDF::Attribute *durationAttribute = varTime->getAttributeNE("duration");
+  if (durationAttribute != NULL && durationAttribute->getType() == CDF_DOUBLE) {
     durationAttribute->getData(&duration, 1);
   }
 
@@ -893,7 +897,7 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
     } else {
       x2 = x1 + minWidth + 1;
       // 3600 seconds hardcoded for Harmonie
-      x2 = x1+ int(((duration / graphWidth) * imageWidth)+0.5) +1;
+      x2 = x1 + int(((duration / graphWidth) * imageWidth) + 0.5) + 1;
     }
     if (x2 >= 0 && x1 < imageWidth && x1 < x2) {
 
@@ -922,16 +926,22 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
               } else
                 val = (-legendOffset);
             }
-            int pcolorind = (int)(val * legendScale + legendOffset);
-            // val+=legendOffset;
-            if (pcolorind >= 239)
-              pcolorind = 239;
-            else if (pcolorind <= 0)
-              pcolorind = 0;
+            if (variable->name.equals("windbarb_backup")) {
+              double spd = int(val) / 1000;
+              double dir = 1000 * (val - int(val));
+              drawImage->drawBarb(x1, y1, dir / 180 * 3.141592, spd, 240, true, true);
+            } else {
+              int pcolorind = (int)(val * legendScale + legendOffset);
+              // val+=legendOffset;
+              if (pcolorind >= 239)
+                pcolorind = 239;
+              else if (pcolorind <= 0)
+                pcolorind = 0;
 
-            for (int y = y1; y < y2; y++) {
-              for (int x = x1; x < x2; x++) {
-                drawImage->setPixelIndexed(x, y, pcolorind);
+              for (int y = y1; y < y2; y++) {
+                for (int x = x1; x < x2; x++) {
+                  drawImage->setPixelIndexed(x, y, pcolorind);
+                }
               }
             }
           }
