@@ -136,13 +136,12 @@ def get_datasets(adagucDataSetDir):
         os.path.join(adagucDataSetDir, f)) and f.endswith(".xml")]
     datasets = {}
     for datasetFile in datasetFiles:
-        #logger.info("parsing %s", os.path.join(adagucDataSetDir, datasetFile))
         try:
             tree = parse(os.path.join(adagucDataSetDir, datasetFile))
-
             root = tree.getroot()
             for ogcapi in root.iter('OgcApiFeatures'):
                 logger.info("ogcapi: %s", ogcapi)
+                """Note, service is just a placeholder because it is needed by OWSLib. Adaguc is still ran as executable, not as service"""
                 dataset = {
                     "dataset": datasetFile.replace(".xml", ""),
                     "name": datasetFile.replace(".xml", ""),
@@ -150,9 +149,6 @@ def get_datasets(adagucDataSetDir):
                     "service": "http://localhost:8080/wms?DATASET="+datasetFile.replace(".xml", ""),
                 }
                 datasets[dataset["name"]]=dataset
-                # dataset["extent"] = get_extent(dataset["name"])
-                # if dataset["extent"] is not None:
-                #     datasets[dataset["name"]]=dataset
         except ParseError:
             pass
 
@@ -602,7 +598,7 @@ def request_by_id(url, name, headers=None, requested_id=None):
     return 400, None, None
 
 
-def feature_from_dat(dat, name, observedPropertyName):
+def feature_from_dat(dat, observedPropertyName, name):
     """
     feature_from_dat
     """
@@ -640,7 +636,7 @@ def feature_from_dat(dat, name, observedPropertyName):
         feature_dims = {}
         datname = dat["name"]
         datpointcoords = dat["point"]["coords"]
-        feature_id = f"{observedPropertyName};{datname};{datpointcoords}"
+        feature_id = f"{name};{datname};{datpointcoords}"
         i = 0
         for dim_value in t:
             feature_dims[list(dims_without_time[i].keys())[0]] = dim_value
@@ -654,7 +650,7 @@ def feature_from_dat(dat, name, observedPropertyName):
             properties = {
                 "timestep": timeSteps,
                 "observationType": "MeasureTimeseriesObservation",
-                "observedPropertyName": name,
+                "observedPropertyName": observedPropertyName,
                 "result": result
             }
         else:
@@ -662,7 +658,7 @@ def feature_from_dat(dat, name, observedPropertyName):
                 "timestep": timeSteps,
                 "dims": feature_dims,
                 "observationType": "MeasureTimeseriesObservation",
-                "observedPropertyName": name,
+                "observedPropertyName": observedPropertyName,
                 "result": result
             }
 
