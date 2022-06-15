@@ -896,7 +896,6 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
       }
     } else {
       x2 = x1 + minWidth + 1;
-      // 3600 seconds hardcoded for Harmonie
       x2 = x1 + int(((duration / graphWidth) * imageWidth) + 0.5) + 1;
     }
     if (x2 >= 0 && x1 < imageWidth && x1 < x2) {
@@ -929,7 +928,7 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
             if (variable->name.equals("windbarb_backup")) {
               double spd = int(val) / 1000;
               double dir = 1000 * (val - int(val));
-              drawImage->drawBarb(x1, y1, dir / 180 * 3.141592, spd, 240, true, true);
+              drawImage->drawBarb(x1, y1, dir / 180 * M_PI, spd, 240, true, true);
             } else {
               int pcolorind = (int)(val * legendScale + legendOffset);
               // val+=legendOffset;
