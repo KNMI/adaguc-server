@@ -379,6 +379,8 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Conf
     layerName = "";
   layerName.concat(_layerName);
 
+  layerTitle = cfgLayer->Title.size() > 0 && cfgLayer->Title[0]->value.empty() == false ? cfgLayer->Title[0]->value.c_str() : layerName.c_str();
+
 #ifdef CDATASOURCE_DEBUG
   CDBDebug("LayerName=\"%s\"", layerName.c_str());
 #endif
@@ -462,6 +464,7 @@ CT::string CDataSource::getDimensionValue(int i) { return timeSteps[currentAnima
 int CDataSource::getNumTimeSteps() { return (int)timeSteps.size(); }
 
 const char *CDataSource::getLayerName() { return layerName.c_str(); }
+const char *CDataSource::getLayerTitle() { return layerTitle.c_str(); }
 
 CCDFDims *CDataSource::getCDFDims() {
   if (currentAnimationStep >= int(timeSteps.size())) {

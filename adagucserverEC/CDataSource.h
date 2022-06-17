@@ -275,6 +275,7 @@ public:
   int dNetCDFNumDims;
   int dLayerType;
   CT::string layerName;
+  CT::string layerTitle;
 
   //
   bool queryBBOX; // True: query on viewport
@@ -343,6 +344,7 @@ public:
   CCDFDims *getCDFDims();
   int getNumTimeSteps();
   const char *getLayerName();
+  const char *getLayerTitle();
 
   int attachCDFObject(CDFObject *cdfObject) {
     if (cdfObject == NULL) {

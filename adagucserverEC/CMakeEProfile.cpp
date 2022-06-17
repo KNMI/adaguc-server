@@ -764,11 +764,14 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
     CDF::Attribute *unitsY = varRange->getAttributeNE("units");
     CDF::Attribute *standardName = variable->getAttributeNE("standard_name");
     CDF::Attribute *longName = variable->getAttributeNE("long_name");
+    CT::string layerName = dataSource->getLayerName();
+    CT::string layerTitle = dataSource->getLayerTitle();
 
     unitsY != NULL ? eProfileJson->printconcat("\"units_y\":\"%s\",", unitsY->getDataAsString().c_str()) : eProfileJson->printconcat("\"units_y\":null,");
     standardName != NULL ? eProfileJson->printconcat("\"standard_name\":\"%s\",", standardName->getDataAsString().c_str()) : eProfileJson->printconcat("\"standard_name\":null,");
     longName != NULL ? eProfileJson->printconcat("\"long_name\":\"%s\",", longName->getDataAsString().encodeJSON().c_str()) : eProfileJson->printconcat("\"long_name\":null,");
-
+    layerName.empty() == false ? eProfileJson->printconcat("\"layer_name\":\"%s\",", layerName.encodeJSON().c_str()) : eProfileJson->printconcat("\"layer_name\":null,");
+    layerTitle.empty() == false ? eProfileJson->printconcat("\"layer_title\":\"%s\",", layerTitle.encodeJSON().c_str()) : eProfileJson->printconcat("\"layer_title\":null,");
     eProfileJson->printconcat("\"numValues\":%d,", varRange->getSize());
     eProfileJson->printconcat("\"name\":\"%s\",", variable->name.replace("_backup", "").c_str());
 
