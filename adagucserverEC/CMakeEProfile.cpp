@@ -775,22 +775,6 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
     eProfileJson->printconcat("\"numValues\":%d,", varRange->getSize());
     eProfileJson->printconcat("\"name\":\"%s\",", variable->name.replace("_backup", "").c_str());
 
-    eProfileJson->concat("\"profile\":{");
-    eProfileJson->concat("\n\"heights\":[");
-    for (size_t j = 0; j < varRange->getSize(); j += 1) {
-      if (j > 0) {
-        eProfileJson->concat(",");
-      };
-      float v = float(data[j]);
-      if (v == v) {
-        eProfileJson->printconcat("%g", v);
-      } else {
-        eProfileJson->printconcat("null");
-      }
-    }
-    eProfileJson->concat("],");
-    eProfileJson->concat("\n\"values\":[");
-
     CDBDebug("%d", variable->getSize());
 
     size_t colOffset = varRange->getSize() * 0;
@@ -806,24 +790,49 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
     }
 
     CDBDebug("Querying for time index %d and file %s", colOffset, dataSource->getFileName());
+    eProfileJson->concat("\"profile\":{");
+    eProfileJson->concat("\n\"heights\":[");
+    CDBDebug("startGraphRange %f %f", startGraphRange, stopGraphRange);
+    bool firstElDone = false;
     for (size_t j = 0; j < varRange->getSize(); j += 1) {
-      if (j > 0) {
-        eProfileJson->concat(",");
-      };
-      if (variable->getType() == CDF_FLOAT) {
-        float v = ((float *)variable->data)[j + colOffset];
+      float v = float(data[j]);
+      if (v >= startGraphRange && v < stopGraphRange) {
+        if (firstElDone) {
+          eProfileJson->concat(",");
+        };
+        firstElDone = true;
         if (v == v) {
           eProfileJson->printconcat("%g", v);
         } else {
           eProfileJson->printconcat("null");
         }
       }
-      if (variable->getType() == CDF_DOUBLE) {
-        double v = ((double *)variable->data)[j + colOffset];
-        if (v == v) {
-          eProfileJson->printconcat("%g", v);
-        } else {
-          eProfileJson->printconcat("null");
+    }
+    eProfileJson->concat("],");
+    eProfileJson->concat("\n\"values\":[");
+    firstElDone = false;
+    for (size_t j = 0; j < varRange->getSize(); j += 1) {
+      float v = float(data[j]);
+      if (v >= startGraphRange && v < stopGraphRange) {
+        if (firstElDone) {
+          eProfileJson->concat(",");
+        };
+        firstElDone = true;
+        if (variable->getType() == CDF_FLOAT) {
+          float v = ((float *)variable->data)[j + colOffset];
+          if (v == v) {
+            eProfileJson->printconcat("%g", v);
+          } else {
+            eProfileJson->printconcat("null");
+          }
+        }
+        if (variable->getType() == CDF_DOUBLE) {
+          double v = ((double *)variable->data)[j + colOffset];
+          if (v == v) {
+            eProfileJson->printconcat("%g", v);
+          } else {
+            eProfileJson->printconcat("null");
+          }
         }
       }
     }
