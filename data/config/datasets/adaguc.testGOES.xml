@@ -182,7 +182,7 @@
     <Name>goes16-c10</Name>
     <Title>GOES16-10-WV</Title>
     <Variable>CMI</Variable>
-    <FilePath filter="^OR_ABI-L2-CMIPF-M6C10_G16.*\.nc$">/data/adaguc-data/SAT/goes</FilePath>
+    <FilePath>{ADAGUC_PATH}/data/datasets/testinvertedminmax.nc</FilePath>
     <Dimension name="t" interval="PT10M" units="ISO8601">time</Dimension>
     <Legend>gray</Legend>
     <Min>313.15</Min>
