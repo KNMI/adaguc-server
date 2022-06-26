@@ -90,7 +90,17 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertEqual(data.getvalue(), AdagucTestTools(
         ).readfromfile(self.expectedoutputsspath + filename))
-
+        
+    def test_WMSGetLegendGraphic_testInvertedMinMax(self):
+        AdagucTestTools().cleanTempDir()
+        filename = "test_invertedminmax.webp"
+        status, data, headers = AdagucTestTools().runADAGUCServer("source=testinvertedminmax.nc&SERVICE=WMS&VERSION=1.1.1&request=GetLegendGraphic&layer=goes16-c10&format=image/png&STYLE=default&layers=goes16-c10&&time=2022-04-11T13%3A35%3A06Z&&transparent=true",
+                                                                  env=self.env, args=["--report"])
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools(
+        ).readfromfile(self.expectedoutputsspath + filename))
+        
     def test_WMSGetMap_Report_env(self):
         AdagucTestTools().cleanTempDir()
         filename = "test_WMSGetMap_Report_env"

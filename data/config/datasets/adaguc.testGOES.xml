@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <WMS>
+    <WMSFormat name="image/png" format="image/webp"/>
+  </WMS>
+  <Include location="/data/adaguc-datasets/includes/StandardStyles_SAT.xml"/>
+
+  <!-- Custom styles -->
+  <Legend name="gray" type="colorRange">
+    <palette index="0"   red="0"   green="0"   blue="0"/>
+    <palette index="240" red="255" green="255"   blue="255"/>
+  </Legend>
+  <Legend name="invgray" type="colorRange">
+    <palette index="0" red="255" green="255"   blue="255"/>
+    <palette index="240"   red="0"   green="0"   blue="0"/>
+  </Legend>
+
+  <!-- Layers -->
+  <Layer type="database">
+    <Projection proj4="+proj=geos +lon_0=0.000000 +lat_0=0 +h=35807.414063 +a=6378.169000 +b=6356.583984"/>
+    <Name>HRVIS</Name>
+    <Title>HRVIS</Title>
+    <Variable>image1.image_data</Variable>
+    <FilePath
+      filter="^METEOSAT_(8|9|10|11).*EUROPEHVIS.*\.h5">/data/adaguc-data/SAT</FilePath>
+    <DataReader>HDF5</DataReader>
+    <Dimension name="time" interval="PT15M">time</Dimension>
+    <Legend>gray</Legend>
+    <Min>0</Min>
+    <Style><RenderMethod>nearest,bilinear</RenderMethod></Style>
+    <Max>16384</Max>
+  </Layer>
+  <Layer type="database">
+    <!--    <Group value="VIS"/> -->
+    <Name>VIS006</Name>
+    <Title>VIS006</Title>
+    <Variable>image8.image_data</Variable>
+    <FilePath filter="^METEOSAT_(8|9|10|11).*EUROPE_.*\.h5">/data/adaguc-data/SAT</FilePath>
+    <DataReader>HDF5</DataReader>
+    <Dimension name="time" interval="PT15M">time</Dimension>
+    <Legend>gray</Legend>
+    <Min>0</Min>
+    <Max>16384</Max>
+  </Layer>
+
+  <Layer type="database">
+    <!--    <Group value="VIS"/> -->
+    <Name>VIS008</Name>
+    <Title>VIS008</Title>
+    <Variable>image9.image_data</Variable>
+    <FilePath filter="^METEOSAT_(8|9|10|11).*EUROPE_.*\.h5">/data/adaguc-data/SAT</FilePath>
+    <DataReader>HDF5</DataReader>
+    <Dimension name="time" interval="PT15M">time</Dimension>
+    <Legend>gray</Legend>
+    <Min>0</Min>
+    <Max>16384</Max>
+  </Layer>
+
+  <Layer type="database">
+    <!--    <Group value="VIS"/> -->
+    <Name>IR039</Name>
+    <Title>IR039</Title>
+    <Variable>image2.image_data</Variable>
+    <FilePath filter="^METEOSAT_(8|9|10|11).*EUROPE_.*\.h5">/data/adaguc-data/SAT</FilePath>
+    <DataReader>HDF5</DataReader>
+    <Dimension name="time" interval="PT15M">time</Dimension>
+    <Legend>gray</Legend>
+    <Min>31315</Min>
+    <Max>19315</Max>
+  </Layer>
+
+  <Layer type="database">
+    <!--    <Group value="VIS"/> -->
+    <Name>IR108</Name>
+    <Title>IR108</Title>
+    <Variable>image5.image_data</Variable>
+    <FilePath filter="^METEOSAT_(8|9|10|11).*EUROPE_.*\.h5">/data/adaguc-data/SAT</FilePath>
+    <DataReader>HDF5</DataReader>
+    <Dimension name="time" interval="PT15M">time</Dimension>
+    <Legend>gray</Legend>
+    <Min>31315</Min>
+    <Max>19315</Max>
+  </Layer>
+  <Layer type="database">
+    <!--    <Group value="VIS"/> -->
+    <Name>IR120</Name>
+    <Title>IR120</Title>
+    <Variable>image6.image_data</Variable>
+    <FilePath filter="^METEOSAT_(8|9|10|11).*EUROPE_.*\.h5">/data/adaguc-data/SAT</FilePath>
+    <DataReader>HDF5</DataReader>
+    <Dimension name="time" interval="PT15M">time</Dimension>
+    <Legend>gray</Legend>
+    <Min>31315</Min>
+    <Max>19315</Max>
+  </Layer>
+  <Layer type="database">
+    <!--    <Group value="VIS"/> -->
+    <Name>WV062</Name>
+    <Title>WV062</Title>
+    <Variable>image10.image_data</Variable>
+    <FilePath filter="^METEOSAT_(8|9|10|11).*EUROPE_.*\.h5">/data/adaguc-data/SAT</FilePath>
+    <DataReader>HDF5</DataReader>
+    <Dimension name="time" interval="PT15M">time</Dimension>
+    <Legend>gray</Legend>
+    <Min>31315</Min>
+    <Max>19315</Max>
+  </Layer>
+  <Layer type="database">
+    <!--    <Group value="VIS"/> -->
+    <Name>WV073</Name>
+    <Title>WV073</Title>
+    <Variable>image11.image_data</Variable>
+    <FilePath filter="^METEOSAT_(8|9|10|11).*EUROPE_.*\.h5">/data/adaguc-data/SAT</FilePath>
+    <DataReader>HDF5</DataReader>
+    <Dimension name="time" interval="PT15M">time</Dimension>
+    <Legend>gray</Legend>
+    <Min>31315</Min>
+    <Max>19315</Max>
+  </Layer>
+
+  <Layer type="database">
+    <Name>HRV_RGB</Name>
+    <Title>RGB-HRV-RGB</Title>
+    <Variable>RGB-HRV-RGB_rgbknmi1600m</Variable>
+    <FilePath filter="^.*RGB-HRV-RGB_rgbknmi1600m.*\.nc$">/data/adaguc-data/SAT</FilePath>
+    <Dimension name="time" interval="PT15M" units="ISO8601" default="max" quantizeperiod="PT15M" quantizemethod="low">time</Dimension>
+    <RenderMethod>rgba</RenderMethod>
+    <Styles>auto</Styles>
+  </Layer>
+
+  <Layer type="database">
+    <Name>nightlowcl</Name>
+    <Title>RGB-night-low-cl</Title>
+    <Variable>RGB-night-low-cl_rgbknmi</Variable>
+    <FilePath filter="^.*RGB-night-low-cl_rgbknmi.*\.nc$">/data/adaguc-data/SAT</FilePath>
+    <Dimension name="time" interval="PT15M" units="ISO8601" default="max" quantizeperiod="PT15M" quantizemethod="low">time</Dimension>
+    <RenderMethod>rgba</RenderMethod>
+    <Styles>auto</Styles>
+  </Layer>
+
+  <Layer type="database">
+    <Name>vulkaanas</Name>
+    <Title>RGB-vulkaanas</Title>
+    <Variable>RGB-vulkaanas_rgbknmi</Variable>
+    <FilePath filter="^.*RGB-vulkaanas_rgbknmi.*\.nc$">/data/adaguc-data/SAT</FilePath>
+    <Dimension name="time" interval="PT15M" units="ISO8601" default="max" quantizeperiod="PT15M" quantizemethod="low">time</Dimension>
+    <RenderMethod>rgba</RenderMethod>
+    <Styles>auto</Styles>
+  </Layer>
+
+  <Layer type="database">
+    <Name>HRV-COMB</Name>
+    <Title>RGB-HRV-COMB</Title>
+    <Variable>RGB-HRV-COMB_rgbknmi1600m</Variable>
+    <FilePath filter="^.*RGB-HRV-COMB.*\.nc$">/data/adaguc-data/SAT</FilePath>
+    <Dimension name="time" interval="PT15M" units="ISO8601" default="max" quantizeperiod="PT15M" quantizemethod="low">time</Dimension>
+    <RenderMethod>rgba</RenderMethod>
+    <Styles>auto</Styles>
+  </Layer>
+
+  <Layer type="database">
+    <Name>day-ice-water-snow</Name>
+    <Title>RGB-day-ice-water-snow</Title>
+    <Variable>RGB-day-ice-water-snow_rgbknmi</Variable>
+    <FilePath filter="^.*RGB-day-ice-water-snow_rgbknmi.*\.nc$">/data/adaguc-data/SAT</FilePath>
+    <Dimension name="time" interval="PT15M" units="ISO8601" default="max" quantizeperiod="PT15M" quantizemethod="low">time</Dimension>
+    <RenderMethod>rgba</RenderMethod>
+    <Styles>auto</Styles>
+  </Layer>
+
+  <Layer type="database">
+    <Name>day-hl-clouds</Name>
+    <Title>RGB-day-hl-clouds-RGB</Title>
+    <Variable>RGB-day-hl-clouds_rgbknmi</Variable>
+    <FilePath filter="^.*RGB-day-hl-clouds_rgbknmi.*\.nc$">/data/adaguc-data/SAT</FilePath>
+    <Dimension name="time" interval="PT15M" units="ISO8601" default="max" quantizeperiod="PT15M" quantizemethod="low">time</Dimension>
+    <RenderMethod>rgba</RenderMethod>
+    <Styles>auto</Styles>
+  </Layer>
+
+  <Layer type="database">
+    <Name>goes16-c10</Name>
+    <Title>GOES16-10-WV</Title>
+    <Variable>CMI</Variable>
+    <FilePath filter="^OR_ABI-L2-CMIPF-M6C10_G16.*\.nc$">/data/adaguc-data/SAT/goes</FilePath>
+    <Dimension name="t" interval="PT10M" units="ISO8601">time</Dimension>
+    <Legend>gray</Legend>
+    <Min>313.15</Min>
+    <Max>193.15</Max>
+  </Layer>
+
+  <Layer type="database">
+    <Name>goes16-c12</Name>
+    <Title>GOES16-12-9.6</Title>
+    <Variable>CMI</Variable>
+    <FilePath filter="^OR_ABI-L2-CMIPF-M6C12_G16.*\.nc$">/data/adaguc-data/SAT/goes</FilePath>
+    <Dimension name="t" interval="PT10M" units="ISO8601">time</Dimension>
+    <Legend>gray</Legend>
+    <Min>313.15</Min>
+    <Max>193.15</Max>
+  </Layer>
+
+  <Layer type="database">
+    <Name>goes16-c13</Name>
+    <Title>GOES16-13-10.3</Title>
+    <Variable>CMI</Variable>
+    <FilePath filter="^OR_ABI-L2-CMIPF-M6C13_G16.*\.nc$">/data/adaguc-data/SAT/goes</FilePath>
+    <Dimension name="t" interval="PT10M" units="ISO8601">time</Dimension>
+    <Legend>gray</Legend>
+    <Min>313.15</Min>
+    <Max>193.15</Max>
+  </Layer>
+  <Layer type="database">
+    <Name>goes16-c14</Name>
+    <Title>GOES16-14-11.2</Title>
+    <Variable>ACH</Variable>
+    <FilePath filter="^OR_ABI-L2-CMIPF-M6C14_G16.*\.nc$">/data/adaguc-data/SAT/goes</FilePath>
+    <Dimension name="t" interval="PT10M" units="ISO8601">time</Dimension>
+    <Legend>gray</Legend>
+    <Min>313.15</Min>
+    <Max>193.15</Max>
+  </Layer>
+
+  <!-- End of configuration /-->
+</Configuration>
