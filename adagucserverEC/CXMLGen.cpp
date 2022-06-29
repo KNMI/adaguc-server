@@ -67,8 +67,15 @@ int CXMLGen::getFileNameForLayer(WMSLayer *myWMSLayer) {
       }
     }
 
+    bool dataBaseDimension = true;
+
+    /* A dimension where the default value is set to filetimedate should not be queried from the db */
+    if (myWMSLayer->layer->Dimension.size() == 1 && myWMSLayer->layer->Dimension[0]->attr.defaultV.equals("filetimedate")) {
+      dataBaseDimension = false;
+    }
+
     // Check if any dimension is given:
-    if ((myWMSLayer->layer->Dimension.size() == 0) || (myWMSLayer->layer->Dimension.size() == 1 && myWMSLayer->layer->Dimension[0]->attr.name.equals("none"))) {
+    if (dataBaseDimension == false || (myWMSLayer->layer->Dimension.size() == 0) || (myWMSLayer->layer->Dimension.size() == 1 && myWMSLayer->layer->Dimension[0]->attr.name.equals("none"))) {
 #ifdef CXMLGEN_DEBUG
       CDBDebug("Layer %s has no dimensions", myWMSLayer->dataSource->layerName.c_str());
 #endif
@@ -86,7 +93,6 @@ int CXMLGen::getFileNameForLayer(WMSLayer *myWMSLayer) {
       return 0;
     }
 
-    // if(srvParam->isAutoLocalFileResourceEnabled()==true){
     status = CDBFactory::getDBAdapter(srvParam->cfg)->autoUpdateAndScanDimensionTables(myWMSLayer->dataSource);
     if (status != 0) {
       CDBError("Unable to checkDimTables");
@@ -327,6 +333,18 @@ int CXMLGen::getDimsForLayer(WMSLayer *myWMSLayer) {
     /* Auto configure dimensions */
     for (size_t i = 0; i < myWMSLayer->dataSource->cfgLayer->Dimension.size(); i++) {
 
+      /* This dimension is a filetimedate type, its values come from the modification date of the file */
+      if (myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.defaultV.equals("filetimedate")) {
+        CT::string fileDate = CDirReader::getFileDate(myWMSLayer->layer->FilePath[0]->value.c_str());
+        WMSLayer::Dim *dim = new WMSLayer::Dim();
+        myWMSLayer->dimList.push_back(dim);
+        dim->name.copy("time");
+        dim->units.copy("ISO8601");
+        dim->values.copy(fileDate.c_str());
+        dim->defaultValue.copy(fileDate.c_str());
+        dim->hasMultipleValues = true;
+        break;
+      }
 #ifdef CXMLGEN_DEBUG
       CDBDebug("%d = %s / %s", i, myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str(), myWMSLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
 #endif
@@ -1480,7 +1498,6 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<WMSLa
               if (dim->units.equals("ISO8601")) {
                 timeDimIndex = d;
               }
-              //}
             }
 
             if (srvParam->requestType == REQUEST_WCS_DESCRIBECOVERAGE) {

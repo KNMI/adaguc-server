@@ -62,8 +62,8 @@ services:
             - "SSL_DOMAINS=${EXTERNALADDRESS}"
             - "EXTERNAL_HOSTNAME=${EXTERNALADDRESS}"
         volumes:
-            - ./letsencrypt:/etc/letsencrypt
-            - ./cert:/cert
+            - /etc/letsencrypt
+            - /cert
         restart: unless-stopped
         logging:
               driver: "json-file"

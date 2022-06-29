@@ -29,7 +29,7 @@
 #include <sstream>
 #include <algorithm>
 #include "CCreateScaleBar.h"
-#include "CCreateLegend.h"
+#include "CLegendRenderers/CCreateLegend.h"
 
 #include "CImageDataWriter.h"
 #include "CMakeJSONTimeSeries.h"
