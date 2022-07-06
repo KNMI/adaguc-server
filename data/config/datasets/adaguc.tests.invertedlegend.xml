@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <!-- Custom styles -->
+  <Style name="testdatainverted">
+    <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
+    <Min>0.5</Min>
+    <Max>0.0</Max>
+    <RenderMethod>nearest</RenderMethod>
+  </Style>
+
+  
+  <!-- Layers -->
+  <Layer type="database">
+    
+    <FilePath filter="">{ADAGUC_PATH}data/datasets/testdata.nc</FilePath>
+    <Variable>testdata</Variable>
+    <Styles>testdatainverted</Styles>
+  </Layer>
+
+</Configuration>
+
