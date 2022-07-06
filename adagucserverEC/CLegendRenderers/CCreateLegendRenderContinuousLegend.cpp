@@ -1,7 +1,7 @@
 #include "CCreateLegend.h"
 #include "CDataReader.h"
 #include "CImageDataWriter.h"
-
+#include <algorithm>
 int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *legendImage, CStyleConfiguration *styleConfiguration, bool, bool estimateMinMax) {
 #ifdef CIMAGEDATAWRITER_DEBUG
   CDBDebug("legendtype continous");
@@ -118,20 +118,22 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
   if (styleConfiguration->legendTickInterval > 0) {
     increment = double(styleConfiguration->legendTickInterval);
   }
-  if (increment <= 0) increment = 1;
 
   if (styleConfiguration->legendTickRound > 0) {
     tickRound = int(round(log10(styleConfiguration->legendTickRound)) + 3);
   }
 
-  if (increment > max - min) {
+  if (std::abs(increment) > std::max(max, min) - std::min(max, min)) {
     increment = max - min;
   }
+
   if ((max - min) / increment > 250) increment = (max - min) / 250;
   if (increment <= 0) {
     increment = -increment;
   }
+
   classes = abs(int((max - min) / increment));
+  if (increment <= 0) increment = (std::max(max, min) - std::min(max, min)) / 3;
 
   char szTemp[256];
   if (styleConfiguration->legendLog != 0) {
@@ -158,7 +160,7 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
         }
         if (!fontLocation.empty()) {
           legendImage->drawText(((int)cbW + 12 + pLeft) * scaling, (pTop) - ((fontSize * scaling) / 4) + 3, fontLocation.c_str(), fontSize * scaling, 0, szTemp, 248);
-        } 
+        }
       }
     }
   } else {
