@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <!-- Custom styles -->
+  <!-- Layers -->
+  <Layer type="database">
+    <FilePath filter="^.*\.csv$">{ADAGUC_PATH}/data/datasets/quantize</FilePath>
+    <Name>wind</Name>
+    <Title>Wind</Title>
+    <Variable>wind</Variable>
+    <Styles>auto/point</Styles>
+    <Dimension name="time" quantizeperiod="PT10M" quantizemethod="low">time</Dimension>
+  </Layer>
+</Configuration>
+
