@@ -910,7 +910,6 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(data.getvalue(), AdagucTestTools(
         ).readfromfile(self.expectedoutputsspath + filename))
 
-
     def test_WMSGetLegendGraphic_inverted_min_max(self):
         AdagucTestTools().cleanTempDir()
         ADAGUC_PATH = os.environ['ADAGUC_PATH']
@@ -921,6 +920,7 @@ class TestWMS(unittest.TestCase):
         status, data, headers = AdagucTestTools().runADAGUCServer(
             args=['--updatedb', '--config', config], env=self.env, isCGI=False)
         self.assertEqual(status, 0)
+
         filename = "test_WMSGetLegendGraphic_inverted_min_max.png"
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "DATASET=adaguc.tests.invertedlegend&SERVICE=WMS&&version=1.1.1&service=WMS&request=GetLegendGraphic&layer=testdata&format=image/png&STYLE=testdatainverted/nearest&layers=testdata&&&transparent=true", env=env)
@@ -934,22 +934,56 @@ class TestWMS(unittest.TestCase):
         ADAGUC_PATH = os.environ['ADAGUC_PATH']
         config = ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml,' + \
             ADAGUC_PATH + '/data/config/datasets/adaguc.tests.quantizelow.xml'
-        filename = "test_WMSGetCapabilitiesQuantizeLow.xml"
-        status, data, headers = AdagucTestTools().runADAGUCServer(
-            "DATASET=adaguc.tests.quantizelow&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities", env=env)
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
-        self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
-            self.testresultspath + filename, self.expectedoutputsspath + filename))
-        self.assertEqual(status, 0)
         env = {'ADAGUC_CONFIG': config}
 
         status, data, headers = AdagucTestTools().runADAGUCServer(
             args=['--updatedb', '--config', config], env=self.env, isCGI=False)
         self.assertEqual(status, 0)
-        filename = "test_WMSGetCapabilitiesQuantizeLow.xml"
+
+        filename = "testWMSGetCapabilities_quantizelow.xml"
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "DATASET=adaguc.tests.quantizelow&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities", env=env)
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
             self.testresultspath + filename, self.expectedoutputsspath + filename))
         self.assertEqual(status, 0)
+
+    def test_WMSGetMapQuantizeHigh(self):
+        AdagucTestTools().cleanTempDir()
+        ADAGUC_PATH = os.environ['ADAGUC_PATH']
+        config = ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml,' + \
+            ADAGUC_PATH + '/data/config/datasets/adaguc.tests.quantizehigh.xml'
+        env = {'ADAGUC_CONFIG': config}
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=['--updatedb', '--config', config], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+
+        filename = "testWMSGetCapabilities_quantizehigh.xml"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.quantizelow&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities", env=env)
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
+            self.testresultspath + filename, self.expectedoutputsspath + filename))
+        self.assertEqual(status, 0)
+
+    def test_WMSGetMapQuantizeRound(self):
+        AdagucTestTools().cleanTempDir()
+        ADAGUC_PATH = os.environ['ADAGUC_PATH']
+        config = ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml,' + \
+            ADAGUC_PATH + '/data/config/datasets/adaguc.tests.quantizeround.xml'
+        env = {'ADAGUC_CONFIG': config}
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=['--updatedb', '--config', config], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+
+        filename = "testWMSGetCapabilities_quantizeround.xml"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.quantizelow&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities", env=env)
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
+            self.testresultspath + filename, self.expectedoutputsspath + filename))
+        self.assertEqual(status, 0)
+
+

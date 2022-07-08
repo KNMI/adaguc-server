@@ -3,11 +3,11 @@
   <!-- Custom styles -->
   <!-- Layers -->
   <Layer type="database">
-    <FilePath filter="^.*\.csv$">{ADAGUC_PATH}/data/datasets/quantize</FilePath>
+    <FilePath filter="^.*\.csv$">{ADAGUC_PATH}/data/datasets/quantize_low</FilePath>
     <Name>wind</Name>
     <Title>Wind</Title>
-    <Variable>wind</Variable>
-    <Styles>auto/point</Styles>
+    <Variable>ff</Variable>
+    <Styles>default</Styles>
     <Dimension name="time" quantizeperiod="PT10M" quantizemethod="low">time</Dimension>
   </Layer>
 </Configuration>
