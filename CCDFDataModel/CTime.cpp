@@ -911,26 +911,35 @@ double CTime::quantizeTimeToISO8601(double offsetOrig, CT::string period, CT::st
       int origH = date.hour;
       date.minute = 0;
       date.second = 0;
-      date.hour = origH - origH % H;
+      int restH = origH % H;
+      date.hour = origH - restH;
       offsetLow = thisTime->dateToOffset(date);
-      date.hour = date.hour + H;
+      if (restH > 0) {
+        date.hour = date.hour + restH;
+      }
       offsetHigh = thisTime->dateToOffset(date);
     } else if (hmsPart.indexOf("M") != -1) { // 5M
       hmsPart.replaceSelf("M", "");
       int M = hmsPart.toInt();
       int origM = date.minute;
       date.second = 0;
-      date.minute = origM - origM % M;
+      int restM = origM % M;
+      date.minute = origM - restM;
       offsetLow = thisTime->dateToOffset(date);
-      date.minute = date.minute + M;
+      if (restM != 0) {
+        date.minute = date.minute + M;
+      }
       offsetHigh = thisTime->dateToOffset(date);
     } else if (hmsPart.indexOf("S") != -1) { // 30S
       hmsPart.replaceSelf("S", "");
       int S = hmsPart.toInt();
       int origS = date.second;
-      date.second = origS - origS % S;
+      int restS = origS % S;
+      date.second = origS - restS;
       offsetLow = thisTime->dateToOffset(date);
-      date.second = date.second + S;
+      if (restS > 0) {
+        date.second = origS + restS;
+      }
       offsetHigh = thisTime->dateToOffset(date);
     }
 
@@ -949,9 +958,12 @@ double CTime::quantizeTimeToISO8601(double offsetOrig, CT::string period, CT::st
       date.hour = 0;
       date.minute = 0;
       date.second = 0;
-      date.year = origY - origY % Y;
+      int restY = origY % Y;
+      date.year = origY - restY;
       offsetLow = thisTime->dateToOffset(date);
-      date.year = date.year + Y;
+      if (restY > 0) {
+        date.year = date.year + Y;
+      }
       offsetHigh = thisTime->dateToOffset(date);
     } else if (hmsPart.indexOf("M") != -1) { // 5M
       date.day = 1;
@@ -961,9 +973,12 @@ double CTime::quantizeTimeToISO8601(double offsetOrig, CT::string period, CT::st
       hmsPart.replaceSelf("M", "");
       int M = hmsPart.toInt();
       int origM = date.month;
-      date.month = origM - origM % M;
+      int restM = origM % M;
+      date.month = origM - restM;
       offsetLow = thisTime->dateToOffset(date);
-      date.month = date.month + M;
+      if (restM > 0) {
+        date.month = date.month + M;
+      }
       offsetHigh = thisTime->dateToOffset(date);
     } else if (hmsPart.indexOf("D") != -1) { // 30S
       date.hour = 0;
@@ -972,9 +987,12 @@ double CTime::quantizeTimeToISO8601(double offsetOrig, CT::string period, CT::st
       hmsPart.replaceSelf("D", "");
       int D = hmsPart.toInt();
       int origD = date.day;
-      date.day = origD - origD % D;
+      int restD = origD % D;
+      date.day = origD - restD;
       offsetLow = thisTime->dateToOffset(date);
-      date.day = date.day + D;
+      if (restD > 0) {
+        date.day = date.day + D;
+      }
       offsetHigh = thisTime->dateToOffset(date);
     }
   }
