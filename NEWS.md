@@ -1,3 +1,7 @@
+**Version 2.7.4 2022-07-06**
+
+- Continuous Legend graphic supports inverted min and max
+
 **Version 2.7.3 2022-04-13**
 
 - Legend graphic code splitted and refactored
