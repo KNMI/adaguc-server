@@ -731,12 +731,11 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
 
                             try {
                               uniqueKey = adagucTime.dateToISOString(adagucTime.getDate(dimValues[i]));
-                              if (!dataSource->cfgLayer->Dimension[i]->attr.quantizeperiod.empty()) {
-                                CDBDebug("For dataSource %s found quantizeperiod %s", dataSource->layerName.c_str(), dataSource->cfgLayer->Dimension[i]->attr.quantizeperiod.c_str());
+                              if (!dataSource->cfgLayer->Dimension[d]->attr.quantizeperiod.empty()) {
                                 CT::string quantizemethod = "round";
-                                CT::string quantizeperiod = dataSource->cfgLayer->Dimension[i]->attr.quantizeperiod;
-                                if (!dataSource->cfgLayer->Dimension[i]->attr.quantizemethod.empty()) {
-                                  quantizemethod = dataSource->cfgLayer->Dimension[i]->attr.quantizemethod;
+                                CT::string quantizeperiod = dataSource->cfgLayer->Dimension[d]->attr.quantizeperiod;
+                                if (!dataSource->cfgLayer->Dimension[d]->attr.quantizemethod.empty()) {
+                                  quantizemethod = dataSource->cfgLayer->Dimension[d]->attr.quantizemethod;
                                 }
                                 // Start time quantization with quantizeperiod and quantizemethod
                                 uniqueKey = CTime::quantizeTimeToISO8601(uniqueKey, quantizeperiod, quantizemethod);
