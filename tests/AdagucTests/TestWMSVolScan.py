@@ -61,16 +61,6 @@ class TestWMSVolScan(unittest.TestCase):
                          AdagucTestTools().readfromfile(self.expectedoutputsspath + expectedReportFilename))
         os.remove(reportFilename)
 
-    def test_WMSGetCapabilities_testdatanc(self):
-        AdagucTestTools().cleanTempDir()
-        filename = "test_WMSGetCapabilities_testdatanc.xml"
-        status, data, headers = AdagucTestTools().runADAGUCServer(
-            "source=testdata.nc&SERVICE=WMS&request=getcapabilities", env=self.env)
-        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
-        self.assertEqual(status, 0)
-        self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
-            self.testresultspath + filename, self.expectedoutputsspath + filename))
-
     def test_WMSGetCapabilities_VolScan(self):
         AdagucTestTools().cleanTempDir()
         filename = "test_WMSGetCapabilities_VolScan.xml"
