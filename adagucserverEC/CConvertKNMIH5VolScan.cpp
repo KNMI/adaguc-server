@@ -76,7 +76,6 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
     CDBError("srvParams is not set");
     return 1;
   }
-  CDBDebug("srvParams:%dx%d", srvParams->Geo->dWidth, srvParams->Geo->dHeight);
   if (srvParams->Geo->dWidth > 1 && srvParams->Geo->dHeight > 1) {
     width = srvParams->Geo->dWidth;
     height = srvParams->Geo->dHeight;
@@ -96,8 +95,6 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
   double offsetY = dfBBOX[1];
   // delete[] dfBBOX;
   // dfBBOX = NULL;
-
-  CDBDebug("%f %f %f %f", cellSizeX, cellSizeY, offsetX, offsetY);
 
   // Add geo variables, only if they are not there already
   CDF::Dimension *dimX = cdfObject->getDimensionNE("adaguccoordinatex");
@@ -150,10 +147,6 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
       double y = offsetY + double(j) * cellSizeY + cellSizeY / 2;
       ((double *)varY->data)[j] = y;
     }
-#define MIN(A, B) ((A < B) ? (A) : (B))
-    for (size_t j = 0; j < MIN(width, 20); j++) {
-      CDBDebug("(hdr)X[%d]=%f Y[%d]=%f", j, ((double *)varX->data)[j], j, ((double *)varY->data)[j]);
-    }
 
     // Create a new time dimension for the new 2D fields.
     dimT->name = "time";
@@ -183,7 +176,6 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
       CDBError("CTime Exception %s", message.c_str());
       return 1;
     }
-    // CDBDebug("offset from %s = %f", szStartTime, offset);
 
     timeVar->setAttributeText("units", time_units.c_str());
     timeVar->dimensionlinks.push_back(dimT);
@@ -218,7 +210,6 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
       CDF::Variable *scanVar = cdfObject->getVariable(scanVarName.c_str());
       float scanElevation;
       scanVar->getAttribute("scan_elevation")->getData(&scanElevation, 1);
-      CDBDebug("scanelevation[%d] %d:%f", i, scans[i], scanElevation);
       ((double *)varElevation->data)[i] = scanElevation;
       ((unsigned int *)varScan->data)[i] = scans[i];
     }
@@ -226,7 +217,6 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
   // CDFHDF5Reader::CustomVolScanReader *volScanReader = new CDFHDF5Reader::CustomVolScanReader();
   // CDF::Variable::CustomMemoryReader *memoryReader = CDF::Variable::CustomMemoryReaderInstance;
   for (CT::string s : scan_params) {
-    CDBDebug("Adding variable %s", s.c_str());
     CDF::Variable *var = new CDF::Variable();
     var->setType(CDF_FLOAT);
     ;
@@ -248,18 +238,10 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
     var->dimensionlinks.push_back(dimX);
   }
 
-  // CT::string dumpString = CDF::dump(cdfObject);
-  // CDBDebug("[After Header]:");
-  // CT::string *lines = dumpString.splitToArray("\n");
-  // for (size_t i = 0; i < lines[0].count; i++) {
-  //   CDBDebug(lines[i]);
-  // }
-
   return 0;
 }
 
 int CConvertKNMIH5VolScan::getCalibrationParameters(CT::string formula, float &factor, float &offset) {
-  CDBDebug("Formula: %s", formula.c_str());
   int rightPartFormulaPos = formula.indexOf("=");
   int multiplicationSignPos = formula.indexOf("*");
   int additionSignPos = formula.indexOf("+");
@@ -286,10 +268,6 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     }
     CDF::Variable *new2DVar;
     new2DVar = dataObjects[0]->cdfVariable;
-    CDBDebug("var: %s [%d]", new2DVar->name.c_str(), new2DVar->dimensionlinks.size());
-
-    CDBDebug("%dx%d", dataSource->srvParams->Geo->dWidth, dataSource->srvParams->Geo->dHeight);
-    CDBDebug("(pre)%dx%d", dataSource->dWidth, dataSource->dHeight);
 
     // Make the width and height of the new 2D adaguc field the same as the viewing window
     dataSource->dWidth = dataSource->srvParams->Geo->dWidth;
@@ -307,7 +285,6 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     CDBDebug("Drawing %s with WH = [%d,%d]", "new2DVar" /*new2DVar->name.c_str()*/, dataSource->dWidth, dataSource->dHeight);
     CDBDebug("  %f %f %f %f", cellSizeX, cellSizeY, offsetX, offsetY);
 #endif
-    CDBDebug("dataSource->srvParams->Geo->CRS = %s", dataSource->srvParams->Geo->CRS.c_str());
 
     CDF::Dimension *dimX;
     CDF::Dimension *dimY;
@@ -320,7 +297,6 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
 
     dimY = cdfObject->getDimension("adaguccoordinatey");
     dimY->setSize(dataSource->dHeight);
-    CDBDebug("Dimensions set for x=%d and y=%d", dataSource->dWidth, dataSource->dHeight);
 
     varX = cdfObject->getVariable("adaguccoordinatex");
     varY = cdfObject->getVariable("adaguccoordinatey");
@@ -355,7 +331,6 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
 
     CImageWarper imageWarper;
     bool projectionRequired = false;
-    CDBDebug("dataSource->srvParams->Geo->CRS = %s", dataSource->srvParams->Geo->CRS.c_str());
     if (dataSource->srvParams->Geo->CRS.length() > 0) {
       projectionRequired = true;
       new2DVar->setAttributeText("grid_mapping", "customgridprojection");
@@ -367,7 +342,6 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
         cdfObject->addVariable(projectionVar);
         dataSource->nativeEPSG = dataSource->srvParams->Geo->CRS.c_str();
         imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
-        CDBDebug("dataSource->nativeProj4 %s", dataSource->nativeProj4.c_str());
         if (dataSource->nativeProj4.length() == 0) {
           dataSource->nativeProj4 = LATLONPROJECTION;
           dataSource->nativeEPSG = "EPSG:4326";
@@ -387,19 +361,12 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
 #endif
 
-    int i = 0;
-    for (COGCDims *rDim : dataSource->requiredDims) {
-      CDBDebug("d:%s [%s,%d]", rDim->name.c_str(), dataSource->getDimensionValue(i++).c_str(), dataSource->getDimensionIndex(rDim->name.c_str()));
-    }
-
     int scan_index = dataSource->getDimensionIndex("scan_elevation");
     CDF::Variable *scanNumberVar = cdfObject->getVariable("scan_number");
     int scan = scanNumberVar->getDataAt<int>(scan_index);
-    CDBDebug("reading scan%d", scan);
 
     size_t fieldSize = dataSource->dWidth * dataSource->dHeight;
     new2DVar->setSize(fieldSize);
-    CDBDebug("fieldSize: %d", fieldSize);
 
     CDF::allocateData(new2DVar->getType(), &(new2DVar->data), fieldSize);
     // Draw data!
@@ -414,9 +381,6 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
         *fp++ = NAN;
       }
     }
-    CDBDebug("Data initialized");
-
-    CDBDebug("Reading scan%d", scan);
 
     float radarLonLat[2];
     cdfObject->getVariable("radar1")->getAttribute("radar_location")->getData<float>(radarLonLat, 2);
@@ -436,7 +400,6 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     scanVar->getAttribute("scan_range_bin")->getData<float>(&scan_rscale, 1);
     float scan_ascale;
     scanVar->getAttribute("scan_azim_bin")->getData<float>(&scan_ascale, 1);
-    CDBDebug("scanparameters [%d] %f, %d, %d, %f, %f", scan, scan_elevation, scan_nrang, scan_nazim, scan_rscale, scan_ascale);
 
     CT::string scanCalibrationVarName;
     scanCalibrationVarName.print("scan%1d.calibration", scan);
@@ -447,13 +410,10 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     float factor, offset;
     getCalibrationParameters(calibrationFormula, factor, offset);
 
-    CDBDebug("Using factor %f and offset %f for scan%d", factor, offset, scan);
-
     CT::string scanDataVarName;
     scanDataVarName.print("scan%d.scan_%s_data", scan, new2DVar->name.c_str());
     CDF::Variable *scanDataVar = cdfObject->getVariable(scanDataVarName);
     scanDataVar->readData(scanDataVar->getType());
-    CDBDebug("scanDataVar: %x %s {%d %d}", scanDataVar, CDF::dump(scanDataVar).c_str(), scanDataVar->getSize(), scanDataVar->getType());
 
     /*Setting geographical projection parameters of input Cartesian grid.*/
     CT::string scanProj4;
@@ -468,10 +428,7 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     float *p = (float *)new2DVar->data;                          // ptr to store data
     unsigned short *pScan = (unsigned short *)scanDataVar->data; // ptr to get ray data
 
-    CDBDebug("Filling %d * %d cells", width, height);
-    //    CDBDebug("x:%s", CDF::dump(varX).c_str());
     for (int row = 0; row < height; row++) {
-      //      CDBDebug("row: %d", row);
       for (int col = 0; col < width; col++) {
         x = ((double *)varX->data)[col];
         y = ((double *)varY->data)[row];
@@ -491,7 +448,6 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     }
 
     CT::string dumpString = CDF::dump(new2DVar);
-    CDBDebug("[After Data]:\n%s", dumpString.c_str());
   }
   return 0;
 }
