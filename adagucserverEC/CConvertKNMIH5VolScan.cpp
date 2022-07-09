@@ -228,7 +228,7 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
     var->setAttributeText("ADAGUC_VOL_SCAN", "TRUE");
     var->setAttributeText("ADAGUC_VECTOR", "true"); /* Set this to true to tell adagucserverEC/CImageDataWriter.cpp, 708 to use full screenspace to retrieve GetFeatureInfo value */
     var->setAttributeText("units", "fixedUnits");
-    float fillValue = MAXFLOAT;
+    float fillValue = FLT_MAX;
     var->setAttribute("_FillValue", CDF_FLOAT, &fillValue, 1);
     // var->setCustomReader(memoryReader);
 
@@ -442,7 +442,7 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
           unsigned short v = pScan[ir + ia * scan_nrang];
           *p++ = v * factor + offset;
         } else {
-          *p++ = MAXFLOAT;
+          *p++ = FLT_MAX;
         }
       }
     }

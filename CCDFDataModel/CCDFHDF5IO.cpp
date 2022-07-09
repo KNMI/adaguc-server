@@ -683,7 +683,7 @@ int CDFHDF5Reader::convertKNMIH5VolScan() {
     var->setAttributeText("grid_mapping", "projection");
     var->setAttributeText("ADAGUC_VOL_SCAN", "TRUE");
     var->setAttributeText("units", "fixedUnits");
-    float fillValue = MAXFLOAT;
+    float fillValue = FLT_MAX;
     var->setAttribute("_FillValue", CDF_FLOAT, &fillValue, 1);
     var->setCustomReader(volScanReader);
 
