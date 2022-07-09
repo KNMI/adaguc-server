@@ -16,6 +16,7 @@ from AdagucTests.TestADAGUCFeatureFunctions import TestADAGUCFeatureFunctions
 from AdagucTests.TestCSV import TestCSV
 from AdagucTests.TestGeoJSON import TestGeoJSON
 from AdagucTests.TestMetadataService import TestMetadataService
+from AdagucTests.TestWMSVolScan import TestWMSVolScan
 
 suites = []
 TestLoader = unittest.TestLoader
@@ -30,6 +31,7 @@ suites.append(TestLoader().loadTestsFromTestCase(TestADAGUCFeatureFunctions))
 suites.append(TestLoader().loadTestsFromTestCase(TestCSV))
 suites.append(TestLoader().loadTestsFromTestCase(TestGeoJSON))
 suites.append(TestLoader().loadTestsFromTestCase(TestMetadataService))
+suites.append(TestLoader().loadTestsFromTestCase(TestWMSVolScan))
 result = unittest.TextTestRunner(verbosity=2).run(unittest.TestSuite(suites))
 
 
