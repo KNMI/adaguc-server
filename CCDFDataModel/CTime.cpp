@@ -926,7 +926,7 @@ double CTime::quantizeTimeToISO8601(double offsetOrig, CT::string period, CT::st
       int restM = origM % M;
       date.minute = origM - restM;
       offsetLow = thisTime->dateToOffset(date);
-      if (restM != 0) {
+      if (restM > 0) {
         date.minute = date.minute + M;
       }
       offsetHigh = thisTime->dateToOffset(date);
