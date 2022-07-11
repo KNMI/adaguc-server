@@ -33,7 +33,7 @@
 #include <set>
 const char *CDBFileScanner::className = "CDBFileScanner";
 std::vector<CT::string> CDBFileScanner::tableNamesDone;
-// #define CDBFILESCANNER_DEBUG
+//#define CDBFILESCANNER_DEBUG
 #define ISO8601TIME_LEN 32
 
 #define CDBFILESCANNER_TILECREATIONFAILED -100
@@ -731,6 +731,15 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
 
                             try {
                               uniqueKey = adagucTime.dateToISOString(adagucTime.getDate(dimValues[i]));
+                              if (!dataSource->cfgLayer->Dimension[d]->attr.quantizeperiod.empty()) {
+                                CT::string quantizemethod = "round";
+                                CT::string quantizeperiod = dataSource->cfgLayer->Dimension[d]->attr.quantizeperiod;
+                                if (!dataSource->cfgLayer->Dimension[d]->attr.quantizemethod.empty()) {
+                                  quantizemethod = dataSource->cfgLayer->Dimension[d]->attr.quantizemethod;
+                                }
+                                // Start time quantization with quantizeperiod and quantizemethod
+                                uniqueKey = CTime::quantizeTimeToISO8601(uniqueKey, quantizeperiod, quantizemethod);
+                              }
                               uniqueKey.setSize(19);
                               uniqueKey.concat("Z");
                               dbAdapter->setFileTimeStamp(tableNames[d].c_str(), (*fileList)[j].c_str(), uniqueKey.c_str(), int(i), fileDate.c_str(), &geoOptions);

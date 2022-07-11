@@ -4,7 +4,7 @@ USER root
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="2.7.4"
+LABEL version="2.7.5"
 
 ######### First stage (build) ############
 
@@ -90,7 +90,7 @@ RUN pip3 install flask flask-cors gunicorn
 
 WORKDIR /adaguc/adaguc-server-master
 
-# Install compiled adaguc binaries from stage one    
+# Install compiled adaguc binaries from stage one
 COPY --from=0 /adaguc/adaguc-server-master/bin /adaguc/adaguc-server-master/bin
 COPY --from=0 /adaguc/adaguc-server-master/data /adaguc/adaguc-server-master/data
 COPY --from=0 /adaguc/adaguc-server-master/python /adaguc/adaguc-server-master/python
@@ -98,7 +98,7 @@ COPY --from=0 /adaguc/adaguc-server-master/tests /adaguc/adaguc-server-master/te
 COPY --from=0 /adaguc/adaguc-server-master/runtests.sh /adaguc/adaguc-server-master/runtests.sh
 
 # Run adaguc-server functional and regression tests
-RUN  bash runtests.sh 
+RUN  bash runtests.sh
 
     # Set same uid as vivid
 RUN useradd -m adaguc -u 1000 && \
@@ -125,7 +125,7 @@ ENV PYTHONPATH=${ADAGUC_PATH}/python/python-adaguc-server
 # Build and test adaguc python support
 WORKDIR /adaguc/adaguc-server-master/python/lib/
 RUN python3 setup.py install
-RUN bash -c "python3 /adaguc/adaguc-server-master/python/examples/runautowms/run.py && ls result.png" 
+RUN bash -c "python3 /adaguc/adaguc-server-master/python/examples/runautowms/run.py && ls result.png"
 WORKDIR /adaguc/adaguc-server-master
 
 USER adaguc
