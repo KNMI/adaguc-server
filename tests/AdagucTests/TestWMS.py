@@ -928,6 +928,25 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertEqual(data.getvalue(), AdagucTestTools(
         ).readfromfile(self.expectedoutputsspath + filename))
+    
+    def test_WMSGetLegendGraphic_log10(self):
+        AdagucTestTools().cleanTempDir()
+        ADAGUC_PATH = os.environ['ADAGUC_PATH']
+        config = ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml,' + \
+            ADAGUC_PATH + '/data/config/datasets/adaguc.tests.invertedlegend.xml'
+        env = {'ADAGUC_CONFIG': config}
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=['--updatedb', '--config', config], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSGetLegendGraphic_log10.png"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.invertedlegend&SERVICE=WMS&&version=1.1.1&service=WMS&request=GetLegendGraphic&layer=testdata&format=image/png&STYLE=testdatalog10/nearest&layers=testdata&&&transparent=false", env=env)
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools(
+        ).readfromfile(self.expectedoutputsspath + filename))
 
     def test_WMSGetMapQuantizeLow(self):
         AdagucTestTools().cleanTempDir()
