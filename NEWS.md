@@ -1,3 +1,7 @@
+**Version 2.7.6 2022-07-12**
+
+- Fix: Legend with a logaritmic scale do work again.
+
 **Version 2.7.5 2022-07-11**
 
 - Implemented quantize for time on ingest too (for rounding product times up/down to values spaced with fixed intervals)
