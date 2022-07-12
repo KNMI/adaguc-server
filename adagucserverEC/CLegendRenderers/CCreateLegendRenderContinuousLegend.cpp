@@ -2,7 +2,7 @@
 #include "CDataReader.h"
 #include "CImageDataWriter.h"
 #include <algorithm>
-int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *legendImage, CStyleConfiguration *styleConfiguration, bool, bool estimateMinMax) {
+int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *legendImage, CStyleConfiguration *styleConfiguration, bool, bool ) {
 #ifdef CIMAGEDATAWRITER_DEBUG
   CDBDebug("legendtype continous");
 #endif
@@ -146,7 +146,8 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
         v = pow(styleConfiguration->legendLog, v);
       }
       {
-        legendImage->line(((int)cbW - 1) * scaling + pLeft, (int)c + 6 + dH + pTop, ((int)cbW + 6) * scaling + pLeft, (int)c + 6 + dH + pTop, lineWidth, 248);
+        int labelY = (int)c + 6 + dH + pTop;
+        legendImage->line(((int)cbW - 1) * scaling + pLeft, labelY, ((int)cbW + 6) * scaling + pLeft, (int)c + 6 + dH + pTop, lineWidth, 248);
         if (textformatting.empty() == false) {
           CT::string textFormat;
           textFormat.print("%s", textformatting.c_str());
@@ -158,8 +159,11 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
             floatToString(szTemp, 255, tickRound, v);
           }
         }
+        
         if (!fontLocation.empty()) {
-          legendImage->drawText(((int)cbW + 12 + pLeft) * scaling, (pTop) - ((fontSize * scaling) / 4) + 3, fontLocation.c_str(), fontSize * scaling, 0, szTemp, 248);
+          int textX = ((int)cbW + 12 + pLeft) * scaling;
+          int textY = labelY + 4;
+          legendImage->drawText(textX, textY, fontLocation.c_str(), fontSize * scaling, 0, szTemp, 248);
         }
       }
     }
