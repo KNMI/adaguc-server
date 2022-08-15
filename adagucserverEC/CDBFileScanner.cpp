@@ -33,7 +33,7 @@
 #include <set>
 const char *CDBFileScanner::className = "CDBFileScanner";
 std::vector<CT::string> CDBFileScanner::tableNamesDone;
-// #define CDBFILESCANNER_DEBUG
+//#define CDBFILESCANNER_DEBUG
 #define ISO8601TIME_LEN 32
 
 #define CDBFILESCANNER_TILECREATIONFAILED -100
@@ -108,6 +108,13 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
 #endif
   // Check and create all tables...
   for (size_t d = 0; d < dataSource->cfgLayer->Dimension.size(); d++) {
+
+    /* A dimension where the default value is set to filetimedate is not a required dim and should not be queried from the db */
+    if (dataSource->cfgLayer->Dimension[d]->attr.defaultV.equals("filetimedate")) {
+      dataSource->cfgLayer->Dimension[d]->value.copy("0");
+      dataSource->cfgLayer->Dimension[d]->attr.name.copy("none");
+      dataSource->cfgLayer->Dimension[d]->attr.units.copy("none");
+    }
 
     CT::string dimName = "";
     if (dataSource->cfgLayer->Dimension[d]->attr.name.empty() == false) {
@@ -340,6 +347,13 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
 
       isTimeDim[d] = false;
       skipDim[d] = false;
+
+      /* A dimension where the default value is set to filetimedate is not a required dim and should not be queried from the db */
+      if (dataSource->cfgLayer->Dimension[d]->attr.defaultV.equals("filetimedate")) {
+        dataSource->cfgLayer->Dimension[d]->value.copy("0");
+        dataSource->cfgLayer->Dimension[d]->attr.name.copy("none");
+        dataSource->cfgLayer->Dimension[d]->attr.units.copy("none");
+      }
 
       CDataReader::DimensionType dtype = CDataReader::getDimensionType(cdfObjectOfFirstFile, dimNames[d].c_str());
 
@@ -717,6 +731,15 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
 
                             try {
                               uniqueKey = adagucTime.dateToISOString(adagucTime.getDate(dimValues[i]));
+                              if (!dataSource->cfgLayer->Dimension[d]->attr.quantizeperiod.empty()) {
+                                CT::string quantizemethod = "round";
+                                CT::string quantizeperiod = dataSource->cfgLayer->Dimension[d]->attr.quantizeperiod;
+                                if (!dataSource->cfgLayer->Dimension[d]->attr.quantizemethod.empty()) {
+                                  quantizemethod = dataSource->cfgLayer->Dimension[d]->attr.quantizemethod;
+                                }
+                                // Start time quantization with quantizeperiod and quantizemethod
+                                uniqueKey = CTime::quantizeTimeToISO8601(uniqueKey, quantizeperiod, quantizemethod);
+                              }
                               uniqueKey.setSize(19);
                               uniqueKey.concat("Z");
                               dbAdapter->setFileTimeStamp(tableNames[d].c_str(), (*fileList)[j].c_str(), uniqueKey.c_str(), int(i), fileDate.c_str(), &geoOptions);

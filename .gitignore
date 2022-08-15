@@ -117,4 +117,13 @@ tests/checker_report.txt
 
 .vscode
 .log.txt.kate-swp
+
 core-adagucserver
+
+hclasses/CMakeLists.txt
+hclasses/testhclasses
+
+*CMakeCache.txt*
+*CTestTestfile.cmake*
+*Makefile*
+*cmake_install.cmake*
