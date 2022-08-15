@@ -331,8 +331,8 @@ int CCairoPlotter::_drawFreeTypeText(int x, int y, int &w, int &h, float angle, 
     error = FT_Load_Glyph(face, glyphIndex, FT_LOAD_RENDER);
 
     if (error) {
-      CDBError("unable toFT_Load_Char");
-      return 1;
+      // CDBError("unable toFT_Load_Char");
+      continue;
     }
     /* now, draw to our target surface (convert position) */
     if (render) {
@@ -557,9 +557,16 @@ void CCairoPlotter::circle(int x, int y, int r) {
 
 void CCairoPlotter::filledcircle(int x, int y, int r) {
   cairo_save(cr);
+  // cairo_set_line_width(cr, 1.0);
+  // cairo_set_source_rgba(cr, 1, 0.2, 0.2, 0.6);
   cairo_set_source_rgba(cr, rfr, rfg, rfb, rfa);
   cairo_arc(cr, x, y, r, 0, 2 * M_PI);
   cairo_fill(cr);
+
+  cairo_arc(cr, x, y, r, 0, 2 * M_PI);
+  cairo_set_line_width(cr, 0.8);
+  cairo_set_source_rgba(cr, rr, rg, rb, ra);
+  cairo_stroke(cr);
   cairo_restore(cr);
 }
 

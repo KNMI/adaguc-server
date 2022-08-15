@@ -10,9 +10,11 @@
                 "./hclasses/",
                 "./CCDFDataModel/",
                 "./adagucserverEC/",
+                "./hclasses/CppUnitLite/",
                 "${default}",
                 "${workspaceRoot}",
-                "/usr/include/libxml2"
+                "/usr/include/libxml2",
+                "${workspaceFolder}/hclasses/CppUnitLite/CppUnitLite"
             ],
             "defines": [
                 "${default}"

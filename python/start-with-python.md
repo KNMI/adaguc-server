@@ -10,6 +10,7 @@ This can be used to run adaguc-server from Python.
 
 ## To install the python wrapper:
 
+Note: Make sure to use Python 3.8 or higher.
 From the root adaguc-server folder:
 ```
 python3 -m venv env
@@ -35,6 +36,8 @@ sudo sysctl -w kernel.core_pattern=core-adagucserver # to enable core generation
 #http://localhost:8080/adagucserver?dataset=HARM_N25&service=WMS&request=GetFeatureInfo&version=1.3.0&layers=dew_point_temperature__at_2m,air_temperature__at_2m&query_layers=dew_point_temperature__at_2m,air_temperature__at_2m&crs=EPSG%3A3857&bbox=-372338.0360813602%2C3280767.55373992%2C1697184.6492152796%2C10107214.68473639&width=278&height=917&i=139&j=426&format=image%2Fgif&info_format=application%2Fjson&time=*&dim_reference_time=2022-01-13T18:00:00Z
 python3 ./python/python-adaguc-server/main.py
 ```
+
+The WMS server will then be accessible at http://127.0.0.1:8080/wms. The autowms can be explored at the adaguc-viewer via the following link: https://adaguc.knmi.nl/adaguc-viewer/index.html?autowms=http://localhost:8080/autowms. Keep in mind that you have to disable security, as the server is not running on https.
 
 Note: the data directories cannot point to a symbolic link, for security purposes adaguc checks if the path contains no symbolic links.
 
