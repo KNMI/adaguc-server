@@ -39,6 +39,8 @@ def handleWMS():
   status, data, headers = adagucInstance.runADAGUCServer(
       url, env=adagucenv,  showLogOnError=False)
 
+  
+
   """ Obtain logfile """
   logfile = adagucInstance.getLogFile()
   adagucInstance.removeLogFile()
@@ -48,8 +50,12 @@ def handleWMS():
 
   if len(logfile) > 0:
     logger.info(logfile)
-
-  response = Response(response=data.getvalue(), status=200)
+  
+  responseCode = 200
+  if status != 0:
+    logger.info("Adaguc status code was %d" % status)
+    responseCode = 500
+  response = Response(response=data.getvalue(), status=responseCode)
 
   stage3 = time.perf_counter()
 
