@@ -302,6 +302,25 @@ class TestWMS(unittest.TestCase):
         self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
             self.testresultspath + filename, self.expectedoutputsspath + filename))
 
+    def test_WMSGetFeatureInfo_timeseries_5dims_json(self):
+        AdagucTestTools().cleanTempDir()
+        ADAGUC_PATH = os.environ['ADAGUC_PATH']
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=['--updatedb', '--config',
+                  ADAGUC_PATH + '/data/config/adaguc.timeseries.xml'],
+            isCGI=False,
+            showLogOnError=False,
+            showLog=False)
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSGetFeatureInfo_timeseries_5dims_json.json"
+        status, data, headers = AdagucTestTools().runADAGUCServer("service=WMS&request=GetFeatureInfo&version=1.3.0&layers=data&query_layers=data&crs=EPSG%3A4326&bbox=-403.75436389819754%2C-192.99495925556732%2C220.28509739554607%2C253.15304074443293&width=943&height=1319&i=783&j=292&format=image%2Fgif&info_format=application%2Fjson&dim_member=*&elevation=*&time=1000-01-01T00%3A00%3A00Z%2F3000-01-01T00%3A00%3A00Z&",
+                                                                  {'ADAGUC_CONFIG': ADAGUC_PATH + '/data/config/adaguc.timeseries.xml'})
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools(
+        ).readfromfile(self.expectedoutputsspath + filename))
+            
     def test_WMSGetFeatureInfo_forecastreferencetime_texthtml(self):
         AdagucTestTools().cleanTempDir()
         filename = "test_WMSGetFeatureInfo_forecastreferencetime.html"
