@@ -33,9 +33,6 @@ export ADAGUC_DB="user=adaguc password=adaguc host=localhost dbname=adaguc"
 export ADAGUC_ENABLELOGBUFFER=FALSE
 ulimit -c unlimited
 sudo sysctl -w kernel.core_pattern=core-adagucserver # to enable core generation
-#http://localhost:8080/adagucserver?dataset=HARM_N25&service=WMS&request=GetFeatureInfo&version=1.3.0&layers=dew_point_temperature__at_2m,air_temperature__at_2m&query_layers=dew_point_temperature__at_2m,air_temperature__at_2m&crs=EPSG%3A3857&bbox=-372338.0360813602%2C3280767.55373992%2C1697184.6492152796%2C10107214.68473639&width=278&height=917&i=139&j=426&format=image%2Fgif&info_format=application%2Fjson&time=*&dim_reference_time=2022-01-13T18:00:00Z
-# http://localhost:8080/adagucserver?dataset=EGOWS_radar&service=WMS&request=GetFeatureInfo&version=1.3.0&layers=RADNL_OPER_R___25PCPRR_L3_KNMI&query_layers=RADNL_OPER_R___25PCPRR_L3_KNMI&crs=EPSG%3A3857&bbox=-56716.858399459976%2C5980601.607557797%2C1265250.87076246%2C7829674.178888203&width=943&height=1319&i=562&j=441&format=image%2Fgif&info_format=application%2Fjson&time=2015-06-05T21:45:00Z/2015-06-05T22:05:00Z
-
 
 python3 ./python/python-adaguc-server/main.py
 ```
