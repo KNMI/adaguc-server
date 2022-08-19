@@ -30,7 +30,6 @@
 
 #define ADAGUCSERVER_VERSION "2.7.7" // Please also update in the Dockerfile to the same version
 
-
 // CConfigReaderLayerType
 #define CConfigReaderLayerTypeUnknown 0
 #define CConfigReaderLayerTypeDataBase 1
