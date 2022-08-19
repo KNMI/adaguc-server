@@ -4,12 +4,11 @@
 #include "CServerParams.h"
 
 class CHandleMetadata {
-    private:
-    DEF_ERRORFUNCTION();
-  
-    public:
-    int process(CServerParams *srvParam);
+private:
+  DEF_ERRORFUNCTION();
 
+public:
+  int process(CServerParams *srvParam);
 };
 
 #endif

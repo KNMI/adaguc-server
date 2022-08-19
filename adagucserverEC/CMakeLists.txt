@@ -31,6 +31,8 @@ add_library(
     CXMLSerializerInterface.h
     CDataSource.h
     CImgWarpBilinear.h
+    CImgWarpHillShaded.h
+    CImgWarpGeneric.h
     CImgWarpBoolean.h
     CImgWarpNearestNeighbour.h
     CGenericDataWarper.h
@@ -44,7 +46,9 @@ add_library(
     CConvertADAGUCVector.h
     CConvertEProfile.h
     CConvertADAGUCPoint.h
-    CImgRenderPoints.h
+    CConvertKNMIH5EchoToppen.h
+    CConvertKNMIH5EchoToppen.cpp
+    CImgRenderers/CImgRenderPoints.h
     CConvertCurvilinear.h
     CConvertHexagon.h
     CInspire.h
@@ -57,9 +61,8 @@ add_library(
     CDBAdapterPostgreSQL.h
     CAutoResource.h
     CDBAdapterSQLLite.h
-    CDBAdapterMongoDB.h
     COctTreeColorQuantizer.h
-    CCreateLegend.h
+    CLegendRenderers/CCreateLegend.h
     CCreateHistogram.h
     CNetCDFDataWriter.h
     CAutoConfigure.h
@@ -90,6 +93,8 @@ add_library(
     CXMLSerializerInterface.cpp
     CDataSource.cpp
     CImgWarpBilinear.cpp
+    CImgWarpHillShaded.cpp
+    CImgWarpGeneric.cpp
     CImgWarpBoolean.cpp
     CImgWarpNearestNeighbour.cpp
     CGenericDataWarper.cpp
@@ -104,7 +109,7 @@ add_library(
     CConvertADAGUCVector.cpp
     CConvertEProfile.cpp
     CConvertADAGUCPoint.cpp
-    CImgRenderPoints.cpp
+    CImgRenderers/CImgRenderPoints.cpp
     CConvertCurvilinear.cpp
     CConvertHexagon.cpp
     CInspire.cpp
@@ -112,14 +117,14 @@ add_library(
     CStyleConfiguration.cpp
     CMakeJSONTimeSeries.cpp
     COpenDAPHandler.cpp
+    CDataPostProcessor_ClipMinMax.cpp
     CDataPostProcessor.cpp
     CDBFactory.cpp
     CDBAdapterPostgreSQL.cpp
     CAutoResource.cpp
     CDBAdapterSQLLite.cpp
-    CDBAdapterMongoDB.cpp
     COctTreeColorQuantizer.cpp
-    CCreateLegend.cpp
+    CLegendRenderers/CCreateLegend.cpp
     CCreateHistogram.cpp
     CNetCDFDataWriter.cpp
     CAutoConfigure.cpp
@@ -133,6 +138,10 @@ add_library(
     CAreaMapper.cpp
     CSLD.cpp
     CHandleMetadata.cpp
+    CDPPGoes16Metadata.cpp
+    CCreateTiles.h
+    CCreateTiles.cpp
+    CUniqueRequests/CUniqueRequests.cpp
     testadagucserver.cpp
 )
 
