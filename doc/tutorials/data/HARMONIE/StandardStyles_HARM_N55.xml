@@ -958,7 +958,7 @@
     <Legend fixed="true">windspeed_cwk</Legend>
     <Min>0</Min>
     <Max>240</Max>
-    <ShadeInterval min="0" max="7"    label="0-7 (&lt;3)"    fillcolor="#FFFFB3"/>
+    <ShadeInterval min="0" max="7"    label="0-7 (<3)"    fillcolor="#FFFFB3"/>
     <ShadeInterval min="7" max="11"    label="7-11 (3)"    fillcolor="#FFFF00"/>
     <ShadeInterval min="11" max="16"    label="11-16 (4)"    fillcolor="#80FF00"/>
     <ShadeInterval min="16" max="21"    label="16-21 (5)"    fillcolor="#008C40"/>
@@ -985,7 +985,7 @@
     <Legend fixed="true">windspeed_cwk</Legend>
     <Min>0</Min>
     <Max>240</Max>
-    <ShadeInterval min="0" max="3.4"    label="0-3.4 (&lt;3)"    fillcolor="#FFFFB3"/>
+    <ShadeInterval min="0" max="3.4"    label="0-3.4 (<3)"    fillcolor="#FFFFB3"/>
     <ShadeInterval min="3.4" max="5.5"    label="3.4-5.5 (3)"    fillcolor="#FFFF00"/>
     <ShadeInterval min="5.5" max="8"    label="5.5-8 (4)"    fillcolor="#80FF00"/>
     <ShadeInterval min="8" max="10.8"    label="8-10.8 (5)"    fillcolor="#008C40"/>
@@ -995,7 +995,7 @@
     <ShadeInterval min="20.8" max="24.4"    label="20.8-24.4 (9)"    fillcolor="#FF51FF"/>
     <ShadeInterval min="24.4" max="28.4"    label="24.4-28.4 (10)"    fillcolor="#FF8000"/>
     <ShadeInterval min="28.4" max="32.6"    label="28.4-32.6 (11)"    fillcolor="#FF0000"/>
-    <ShadeInterval min="32.6" max="200"    label="&gt;32.6 (12)"    fillcolor="#FFFF00"/>
+    <ShadeInterval min="32.6" max="200"    label=">32.6 (12)"    fillcolor="#FFFF00"/>
     <!--    <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" classes="7,11,16,21,27,34,41,48,56,64,200"/> -->
     <ContourLine width=".5" linecolor="#800000" textcolor="#800000" textformatting="%2.0f" interval="5"/>
     <RenderMethod>barbshaded</RenderMethod>
@@ -1012,7 +1012,7 @@
     <Legend fixed="true">windspeed_cwk</Legend>
     <Min>0</Min>
     <Max>240</Max>
-    <ShadeInterval min="0" max="7"    label="0-7 (&lt;3)"    fillcolor="#FFFFB3"/>
+    <ShadeInterval min="0" max="7"    label="0-7 (<3)"    fillcolor="#FFFFB3"/>
     <ShadeInterval min="7" max="11"    label="7-11 (3)"    fillcolor="#FFFF00"/>
     <ShadeInterval min="11" max="16"    label="11-16 (4)"    fillcolor="#80FF00"/>
     <ShadeInterval min="16" max="21"    label="16-21 (5)"    fillcolor="#008C40"/>
@@ -1137,7 +1137,7 @@
     <ShadeInterval min="70" max="90"    label="70-90"    fillcolor="#7FFF00"/>
     <ShadeInterval min="90" max="95"    label="90-95"    fillcolor="#FF7F00"/>
     <ShadeInterval min="95" max="99"    label="95-99"    fillcolor="#FF0000"/>
-    <ShadeInterval min="99" max="110"    label="&gt;99"    fillcolor="#000000"/>
+    <ShadeInterval min="99" max="110"    label=">99"    fillcolor="#000000"/>
     <ShadeInterval>10</ShadeInterval>
     <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" interval="10"/>
     <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" classes="50,70,90,95,99,100"/>
