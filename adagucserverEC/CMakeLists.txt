@@ -143,6 +143,7 @@ add_library(
     CDPPGoes16Metadata.cpp
     CCreateTiles.h
     CCreateTiles.cpp
+    CUniqueRequests/CUniqueRequests.cpp
     testadagucserver.cpp
 )
 

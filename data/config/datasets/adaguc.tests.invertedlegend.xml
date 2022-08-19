@@ -8,13 +8,21 @@
     <RenderMethod>nearest</RenderMethod>
   </Style>
 
+  <Style name="testdatalog10">
+    <Legend fixedclasses="true" tickinterval="5" tickround=".01">no2</Legend>
+    <Min>0.1</Min>
+    <Max>30.0</Max>
+    <Log>10</Log>
+    <RenderMethod>nearest</RenderMethod>
+  </Style>
+
   
   <!-- Layers -->
   <Layer type="database">
     
     <FilePath filter="">{ADAGUC_PATH}data/datasets/testdata.nc</FilePath>
     <Variable>testdata</Variable>
-    <Styles>testdatainverted</Styles>
+    <Styles>testdatainverted,testdatalog10</Styles>
   </Layer>
 
 </Configuration>
