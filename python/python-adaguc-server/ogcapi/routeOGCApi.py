@@ -362,7 +362,6 @@ def api_yaml():
 
 
 @routeOGCApi.route("/conformance", methods=["GET"])
-@cacher.cached(timeout=30)
 @cross_origin()
 def getconformance():
     """Conformance endpoint.
@@ -838,7 +837,6 @@ def request_(call_adaguc, url, args, name, headers=None):
 
 
 @routeOGCApi.route("/collections/<coll>/items", methods=["GET"])
-@cacher.cached(timeout=30)
 @cross_origin()
 def getcollitems(coll):
     """Collection items endpoint.
@@ -923,6 +921,7 @@ def getcollitems(coll):
                 features.extend(coordfeatures)
         else:
             # get_coords(coords, int(args["nextToken"]), int(args["limit"])):
+            # TODO: Parallelize requests to adaguc-server
             for c in coords:
                 param_args["lonlat"] = f"{c[0]},{c[1]}"
                 status, coordfeatures = request_(
