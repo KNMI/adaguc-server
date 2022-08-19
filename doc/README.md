@@ -1,6 +1,7 @@
 # Table of contents
 
-* [Introduction](README.md)
+* [Overview](Overview.md)
+* [Configuration](./configuration/Configuration.md)
 * [Format standard](format_standard/README.md)
     * [Data format standard](format_standard/data_format_standard.md)
         * [Grid format](format_standard/data_format_standard_grid.md)
