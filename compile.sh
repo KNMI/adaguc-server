@@ -33,6 +33,8 @@ function clean {
   rm -f $CURRENTDIR/bin/h5ncdump
   rm -f $CURRENTDIR/bin/aggregate_time
   rm -f $CURRENTDIR/bin/geojsondump
+
+  rm -f $CURRENTDIR/CMakeCache.txt $CURRENTDIR/CMakeFiles
 }
 
 function build {
@@ -53,7 +55,7 @@ function build {
   echo "[OK] Everything is installed in the ./bin directory"
 
   echo "Testing..."
-  ctest
+  ctest --verbose
   retVal=$?
   if [ $retVal -ne 0 ]; then
     echo "[FAILED] Some of the tests failed"
