@@ -1,9 +1,9 @@
 /******************************************************************************
  *
  * Project:  ADAGUC Server
- * Purpose:  ADAGUC OGC Server
- * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Purpose:  Convert KNMI HDF5 volume scan data to CDM
+ * Author:   Ernst de Vreede, ernst.de.vreede "at" knmi.nl
+ * Date:     2022-08-15
  *
  ******************************************************************************
  *
@@ -28,7 +28,7 @@
 #include "COGCDims.h"
 #include "CCDFHDF5IO.h"
 
-#define CCONVERTKNMIH5VOLSCAN_DEBUG
+//#define CCONVERTKNMIH5VOLSCAN_DEBUG
 const char *CConvertKNMIH5VolScan::className = "CConvertKNMIH5VolScan";
 
 int CConvertKNMIH5VolScan::checkIfIsKNMIH5VolScan(CDFObject *cdfObject, CServerParams *) {
@@ -38,7 +38,6 @@ int CConvertKNMIH5VolScan::checkIfIsKNMIH5VolScan(CDFObject *cdfObject, CServerP
     int number_scan_groups;
     attr->getData(&number_scan_groups, 1);
     if (number_scan_groups == 0) return 1;
-    /* TODO: Return 1 in case it is not a point renderer*/
   } catch (int e) {
     return 1;
   }
