@@ -28,15 +28,20 @@
 
 #include "CCDFDataModel.h"
 #include <stdio.h>
+#include <cfloat>
 #include <vector>
 #include <iostream>
 #include <hdf5.h>
 #include "CDebugger.h"
 #include "CTime.h"
 #include "CProj4ToCF.h"
+#include "proj_api.h"
 //#define CCDFHDF5IO_DEBUG
 
 #define CCDFHDF5IO_GROUPSEPARATOR "."
+
+#define KNMI_VOLSCAN_PROJ4 "+proj=stere +lat_0=90 +lon_0=0 +lat_ts=60 +a=6378.14 +b=6356.75 +x_0=0 y_0=0 +unit=km"
+
 void ncError(int line, const char *className, const char *msg, int e);
 class CDFHDF5Reader : public CDFReader {
 private:
@@ -118,6 +123,14 @@ private:
   bool b_KNMIHDF5UseEndTime;
 
 public:
+  class CustomVolScanReader : public CDF::Variable::CustomReader {
+  public:
+    ~CustomVolScanReader() {}
+    int getCalibrationParameters(CT::string formula, float &factor, float &offset);
+
+    int readData(CDF::Variable *thisVar, size_t *start, size_t *count, ptrdiff_t *stride);
+  };
+
   class CustomForecastReader : public CDF::Variable::CustomReader {
   public:
     ~CustomForecastReader() {}
@@ -180,6 +193,7 @@ public:
     b_EnableKNMIHDF5toCFConversion = false;
     b_KNMIHDF5UseEndTime = false;
     forecastReader = NULL;
+    volScanReader = NULL;
     fileIsOpen = false;
   }
   ~CDFHDF5Reader() {
@@ -376,7 +390,7 @@ public:
   /*******************************/
   /*  Time function        */
   /*******************************/
-  int HDF5ToADAGUCTime(char *pszADAGUCTime, const char *pszRadarTime) {
+  static int HDF5ToADAGUCTime(char *pszADAGUCTime, const char *pszRadarTime) {
     int M;
     char szMonth[4];
     // All month abbreviations
@@ -421,6 +435,8 @@ public:
   int convertNWCSAFtoCF();
 
   int convertLSASAFtoCF();
+
+  int convertKNMIH5VolScan();
 
   int convertKNMIHDF5toCF() {
 
@@ -1012,6 +1028,8 @@ public:
       if (status == 1) return 1;
       status = convertLSASAFtoCF();
       if (status == 1) return 1;
+      status = convertKNMIH5VolScan();
+      if (status == 1) return 1;
     }
     fileIsOpen = true;
     return 0;
@@ -1021,6 +1039,10 @@ public:
     if (forecastReader != NULL) {
       delete forecastReader;
       forecastReader = NULL;
+    }
+    if (volScanReader != NULL) {
+      delete volScanReader;
+      volScanReader = NULL;
     }
     fileIsOpen = false;
     return 0;
@@ -1245,6 +1267,7 @@ public:
 
 private:
   CustomForecastReader *forecastReader;
+  CustomVolScanReader *volScanReader;
 };
 
 #endif

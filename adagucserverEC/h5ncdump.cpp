@@ -46,6 +46,7 @@ int main(int argCount, char **argVars) {
   try {
     cdfObject = new CDFObject();
     hdf5Reader = new CDFHDF5Reader();
+    hdf5Reader->enableKNMIHDF5toCFConversion();
     cdfObject->attachCDFReader(hdf5Reader);
     status = hdf5Reader->open(inputfile);
     if (status != 0) {
