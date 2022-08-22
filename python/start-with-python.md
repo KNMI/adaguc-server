@@ -15,7 +15,7 @@ From the root adaguc-server folder:
 ```
 python3 -m venv env
 source env/bin/activate
-python3 -m pip install Pillow chardet numpy netcdf4 six requests pillow aggdraw lxml setuptools wheel flask flask_cors gunicorn
+pip3 install flask flask-cors flask-caching gunicorn pytest marshmallow owslib pyproj==2.6.1 apispec apispec-webframeworks marshmallow-oneofschema defusedxml
 cd ./python/lib/ && python3 setup.py develop && cd ../../
 ```
 This will create and activate a `env` virtualenv directory in your adaguc root folder.
