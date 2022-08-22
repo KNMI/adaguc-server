@@ -418,8 +418,12 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     CT::string scanProj4;
 
     scanProj4.print("+proj=aeqd +a=6378.137 +b=6356.752 +R_A +lat_0=%.3f +lon_0=%.3f +x_0=0 +y_0=0", radarLat, radarLon);
+    if (!projectionRequired) {
+      return 0;
+    }
     CImageWarper radarProj;
     radarProj.initreproj(scanProj4.c_str(), dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
+
 
     double x, y;
     float rang, azim;
