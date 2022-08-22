@@ -262,7 +262,7 @@ CURUniqueRequests::~CURUniqueRequests() {
 
     for (int dimnr = 0; dimnr < numberOfDims; dimnr++) {
       COGCDims *ogcDim = dataSource->requiredDims[dimnr];
-      if (ogcDim->isATimeDimension) {
+      if (ogcDim->name.equalsIgnoreCase("time")) {
         timeDimIndex = dimnr;
         break;
       }
