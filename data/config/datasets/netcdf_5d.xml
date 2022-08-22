@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Configuration>
+
   <OgcApiFeatures/>
-  <!--
-  See https://dev.knmi.nl/projects/adagucserver/wiki/Dataset, for details
-  This file can be included by using the adaguc.dataset.cgi?service=wms&DATASET=testdata& key value pair in the URL
-  -->
+
+  <!-- Custom styles -->
   <Style name="testdata">
     <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
-    <Min>0.0</Min>
-    <Max>0.5</Max>
+    <Min>0.01</Min>
+    <Max>30</Max>
+    <Log>10</Log>
     <ContourLine width="1.8" linecolor="#888888" textcolor="#000000" textformatting="%2.2f" classes="0.05,0.1,0.15,0.2,0.3"/>
     <ContourLine width="3" linecolor="#0000FF" textcolor="#0000FF" textformatting="%2.2f" classes="0.35"/>
 
@@ -27,11 +27,12 @@
   </Style>
 
   <Layer type="database">
-    <FilePath filter="">{ADAGUC_PATH}data/datasets/testdata.nc</FilePath>
-
-    <Variable>testdata</Variable>
+    <FilePath filter="^nc_5D_.*\.nc$">{ADAGUC_PATH}/data/datasets/netcdf_5dims</FilePath>
+    <Variable>data</Variable>
     <Styles>testdata</Styles>
+
   </Layer>
 
-</Configuration>
 
+  <!-- End of configuration /-->
+</Configuration>

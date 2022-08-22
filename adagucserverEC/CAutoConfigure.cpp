@@ -492,7 +492,7 @@ int CAutoConfigure::justLoadAFileHeader(CDataSource *dataSource) {
   if (foundFileName.empty()) {
 
     /* Try to get a file from DB */
-    CDBDebug("Looking up first file");
+    // CDBDebug("Looking up first file");
 
     /* ADAGUC-Server database queries don't work if there are no dimensions */
     bool removeRequiredDims = false;
@@ -512,7 +512,7 @@ int CAutoConfigure::justLoadAFileHeader(CDataSource *dataSource) {
     CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getFilesAndIndicesForDimensions(dataSource, 1000);
     if (store != NULL && store->getSize() > 0) {
       CT::string fileNamestr = store->getRecord(0)->get(0)->c_str();
-      CDBDebug("fileName from DB: %s", fileNamestr.c_str());
+      // CDBDebug("fileName from DB: %s", fileNamestr.c_str());
       foundFileName = fileNamestr;
     }
     delete store;
@@ -534,7 +534,7 @@ int CAutoConfigure::justLoadAFileHeader(CDataSource *dataSource) {
 
   /* Open a file */
   try {
-    CDBDebug("Loading header [%s]", foundFileName.c_str());
+    // CDBDebug("Loading header [%s]", foundFileName.c_str());
     CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams, foundFileName.c_str());
     if (cdfObject == NULL) throw(__LINE__);
     dataSource->attachCDFObject(cdfObject);
