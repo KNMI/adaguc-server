@@ -491,7 +491,10 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
     // coordinates can be converted to (k)m
     //
     CDF::Attribute *units = dataSource->varX->getAttributeNE("units");
-
+    CDF::Attribute *X_standard_name = dataSource->varX->getAttributeNE("standard_name");
+    CDBDebug("Standard Name of the nx variable: %s", X_standard_name->toString().c_str());
+    const CT::string XStdNameString = X_standard_name->toString();
+    
     if (units != NULL) {
       const CT::string unitString = units->toString();
       if (unitString.equals("rad") || unitString.equals("radian")) {
