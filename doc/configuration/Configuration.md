@@ -1,6 +1,8 @@
 Configuration
 =============
 
+[Back to readme](../../Readme.md)
+
 Below a quick overview of the configuration options is given. Some
 options provide a detailed description when clicked.
 
