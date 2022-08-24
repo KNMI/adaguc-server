@@ -1,1 +1,1 @@
-Please check the start-with-python.md in the adaguc-server python folder.
+Please check the [Development](../../doc/Developing.md) readme in the adaguc-server doc folder.

@@ -330,14 +330,5 @@ You can dump the header or visualize with:
 * https://&lt;your hostname&gt;:&lt;port&gt;/autowms? For getting the list of visualizable resources
 
 
-# Alternatively there is a dedicated adaguc scanner container:
-
-* [doc/adaguc-scanner-container.md](doc/adaguc-scanner-container.md)
-
-# Installation instructions without docker on Ubuntu 18:
-
-
-* [data/scripts/install_ubuntu_18.md](data/scripts/install_ubuntu_18.md)
-
 
 

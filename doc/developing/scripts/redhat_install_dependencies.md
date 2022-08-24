@@ -1,3 +1,8 @@
+# Instructions on how to install dependencies for red hat
+
+[Back to Developing](../../Developing.md)
+
+```
 #/bin/bash
 yum update -y && yum install -y \
     epel-release
@@ -22,3 +27,4 @@ yum update -y && yum install -y \
     postgresql-server \
     gdal-devel
 
+```

@@ -1,3 +1,8 @@
+# Instructions on how to setup postgres server for adaguc on Ubuntu 18
+
+[Back to Developing](../../Developing.md)
+
+```
 #/bin/bash
 
 ### Setup postgres database for user adaguc and password adaguc, databasename adaguc ###
@@ -12,3 +17,4 @@ if [ ${?} -eq 0 ];then
 else
     echo "Postgres database not fully functional, please check"
 fi
+```
