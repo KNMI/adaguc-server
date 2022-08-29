@@ -43,7 +43,7 @@ Make sure that the cgi is executable, if not you can use chmod +x
 If no errors are given, you can check the new service by requesting it's
 getcapabilities document:
 
-http://localhost/cgi-bin/demo/newservice.cgi?service=wms&amp;request=getcapabilities
+http://localhost/cgi-bin/demo/newservice.cgi?service=wms&request=getcapabilities
 
 You can also import the URL
 http://localhost/cgi-bin/demo/newservice.cgi? via 'Add data' into the
@@ -53,13 +53,13 @@ CGI Template to use for new files:
 ```
 \#!/bin/bash
 
-export LD\_LIBRARY\_PATH=/data/build/lib/:\$LD\_LIBRARY\_PATH
-export PROJ\_LIB=/data/build/share/proj/
-export ADAGUC\_CONFIG=/data/services/config/config.xml
-export ADAGUC\_LOGFILE=data/log/server.log
-export ADAGUC\_ERRORFILE=/data/log/server.errlog
-export ADAGUC\_FONT=/data/fonts/FreeSans.ttf
-export ADAGUC\_DATARESTRICTION="FALSE"
+export LD_LIBRARY_PATH=/data/build/lib/:\$LD_LIBRARY_PATH
+export PROJ_LIB=/data/build/share/proj/
+export ADAGUC_CONFIG=/data/services/config/config.xml
+export ADAGUC_LOGFILE=data/log/server.log
+export ADAGUC_ERRORFILE=/data/log/server.errlog
+export ADAGUC_FONT=/data/fonts/FreeSans.ttf
+export ADAGUC_DATARESTRICTION="FALSE"
 
 /data/build/bin/adagucserver
 ```
@@ -107,11 +107,11 @@ size="5"/>
 
 <!-- WCS settings -->
 <WCS>
-<Title>BTD\_DATA</Title>
+<Title>BTD_DATA</Title>
 <Label>wcsLabel</Label>
 <WCSFormat name="netcdf" driver="NetCDF"
 mimetype="Content-Type:application/netcdf"
-options="WRITE\_GDAL\_TAGS=FALSE,WRITE\_LONLAT=FALSE,WRITE\_BOTTOMUP=FALSE,ZLEVEL=2,FORMAT=NC4C"/>
+options="WRITE_GDAL_TAGS=FALSE,WRITE_LONLAT=FALSE,WRITE_BOTTOMUP=FALSE,ZLEVEL=2,FORMAT=NC4C"/>
 <WCSFormat name="aaigrid" driver="AAIGrid"
 mimetype="Content-Type:text/plain" />
 <WCSFormat name="geotiff" driver="GTiff"
@@ -120,17 +120,17 @@ mimetype="Content-Type:text/plain" />
 </WCS>
 
 <!-- Projections -->
-<Projection id="EPSG:3411" proj4="+proj=stere +lat\_0=90 +lat\_ts=70
-+lon\_0=-45 +k=1 +x\_0=0 +y\_0=0 +a=6378273 +b=6356889.449 +units=m
-+no\_defs"/>
-<Projection id="EPSG:3412" proj4="+proj=stere +lat\_0=-90
-+lat\_ts=-70 +lon\_0=0 +k=1 +x\_0=0 +y\_0=0 +a=6378273 +b=6356889.449
-+units=m +no\_defs"/>
-<Projection id="EPSG:3575" proj4="+proj=laea +lat\_0=90 +lon\_0=10
-+x\_0=0 +y\_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no\_defs"/>
+<Projection id="EPSG:3411" proj4="+proj=stere +lat_0=90 +lat_ts=70
++lon_0=-45 +k=1 +x_0=0 +y_0=0 +a=6378273 +b=6356889.449 +units=m
++no_defs"/>
+<Projection id="EPSG:3412" proj4="+proj=stere +lat_0=-90
++lat_ts=-70 +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378273 +b=6356889.449
++units=m +no_defs"/>
+<Projection id="EPSG:3575" proj4="+proj=laea +lat_0=90 +lon_0=10
++x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"/>
 
 <Projection id="EPSG:3857" proj4="+proj=merc +a=6378137 +b=6378137
-+lat\_ts=0.0 +lon\_0=0.0 +x\_0=0.0 +y\_0=0 +k=1.0 +units=m
++lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m
 +nadgrids=`null +wktext  +no_defs"/>
   <Projection id="EPSG:4258" proj4="+proj=longlat +ellps=GRS80 +no_defs"/>
   <Projection id="EPSG:4326" proj4="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"/>
@@ -147,7 +147,7 @@ mimetype="Content-Type:text/plain" />
   <Projection id="EPSG:32661" proj4="+proj=stere +lat_0=90 +lat_ts=90 +lon_0=0 +k=0.994 +x_0=2000000 +y_0=2000000 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"/>
   <Projection id="EPSG:40000" proj4="+proj=stere +ellps=WGS84 +lat_0=90 +lon_0=0 +no_defs"/>
   <Projection id="EPSG:900913" proj4=" +proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=`null
-+no\_defs"/>
++no_defs"/>
 
 <!-~~Legends -~~>
 <Legend name="multicolor" type="colorRange">

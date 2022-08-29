@@ -77,6 +77,6 @@ Stippling distance and disc radius can be specified in [Stippling](Stippling.md)
 abstract="Uncertainty"/>
 <NameMapping name="stippling" title="Uncertainty stippled"
 abstract="Uncertainty stippled"/>
-<StandardNames standard\_name="uncertainty"/>
+<StandardNames standard_name="uncertainty"/>
 </Style>
 ```

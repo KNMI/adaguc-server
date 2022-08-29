@@ -40,10 +40,10 @@ adagucserver
 
 -   --report=filename to write report specified by filename
 -   --report to write report specified in environment variable
-    ADAGUC\_CHECKER\_FILE. If variable ADAGUC\_CHECKER\_FILE is not set,
-    write file to default location ./checker\_report.txt
+    ADAGUC_CHECKER_FILE. If variable ADAGUC_CHECKER_FILE is not set,
+    write file to default location ./checker_report.txt
 
-aggregate\_time
+aggregate_time
 ---------------
 
 Aggregates multiple files over the time dimension into one big file.
@@ -54,5 +54,5 @@ to add the time dimension to.
 
 E.g.
 ```
-aggregate\_time /data/swe\_L3A\_daily/ /tmp/swe\_L3A\_daily.nc swe
+aggregate_time /data/swe_L3A_daily/ /tmp/swe_L3A_daily.nc swe
 ```

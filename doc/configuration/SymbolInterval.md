@@ -1,4 +1,4 @@
-SymbolInterval(min,max,binary\_and,file, offset\_x, offset\_y)
+SymbolInterval(min,max,binary_and,file, offset_x, offset_y)
 ==============================================================
 
 Draw symbols for point values
@@ -17,7 +17,7 @@ points will be plotted as symbols.
 
 - The **file** attribute specifies the symbol icon to be plotted at the
 station's location.
-- Optional settings **offset\_x** and **offset\_y** are used to position
+- Optional settings **offset_x** and **offset_y** are used to position
 the symbol, symbol is centered around 0,0
 
 Configuration:
@@ -26,13 +26,13 @@ Configuration:
 <Legend>bluewhitered</Legend>
 <ValueRange min="1" max="4"/>
 <SymbolInterval min="1" max="2"
-file="/home/vreedede/nob/web/WWWRADAR/bolt1\_yellow.png"/>
+file="/home/vreedede/nob/web/WWWRADAR/bolt1_yellow.png"/>
 <SymbolInterval min="2" max="3"
-file="/home/vreedede/nob/web/WWWRADAR/bolt2\_yellow.png"/>
+file="/home/vreedede/nob/web/WWWRADAR/bolt2_yellow.png"/>
 <SymbolInterval min="3" max="4"
-file="/home/vreedede/nob/web/WWWRADAR/bolt1\_orange.png"/>
+file="/home/vreedede/nob/web/WWWRADAR/bolt1_orange.png"/>
 <SymbolInterval min="4" max="5"
-file="/home/vreedede/nob/web/WWWRADAR/bolt2\_orange.png"/>
+file="/home/vreedede/nob/web/WWWRADAR/bolt2_orange.png"/>
 <RenderMethod>point</RenderMethod>
 <Point pointstyle="symbol" fillcolor="\#000000FF"
 textcolor="\#FFFFFFFF" linecolor="\#000000A0" discradius="16"
@@ -45,27 +45,27 @@ This can be used for example for lightning data where vertical and
 horizontal discharges are marked differently:
 ![](/attachments/694/symbol.png)
 
-Binary\_and example: Combines images based on binary operator &
+Binary_and example: Combines images based on binary operator &
 ---------------------------------------------------------------
 
 ```
-<Style name="BTD300\_sensor">
+<Style name="BTD300_sensor">
 <Legend>bluewhitered</Legend>
 <SymbolInterval min="0" max="63"
 file="/ssd1/adaguc/btd300/symbols/btdsensor/0.png"/> <!-- Base
 image -->
-<SymbolInterval binary\_and="1"
+<SymbolInterval binary_and="1"
 file="/ssd1/adaguc/btd300/symbols/btdsensor/1.png"/> <!-- combined
 with binary operator -->
-<SymbolInterval binary\_and="2"
+<SymbolInterval binary_and="2"
 file="/ssd1/adaguc/btd300/symbols/btdsensor/2.png"/>
-<SymbolInterval binary\_and="4"
+<SymbolInterval binary_and="4"
 file="/ssd1/adaguc/btd300/symbols/btdsensor/4.png"/>
-<SymbolInterval binary\_and="8"
+<SymbolInterval binary_and="8"
 file="/ssd1/adaguc/btd300/symbols/btdsensor/8.png"/>
-<SymbolInterval binary\_and="16"
+<SymbolInterval binary_and="16"
 file="/ssd1/adaguc/btd300/symbols/btdsensor/16.png"/>
-<SymbolInterval binary\_and="32"
+<SymbolInterval binary_and="32"
 file="/ssd1/adaguc/btd300/symbols/btdsensor/32.png"/>
 <RenderMethod>point</RenderMethod>
 <Point pointstyle="symbol" fillcolor="\#000000FF"
@@ -89,7 +89,7 @@ a point. for example, to draw a Google maps like marker for every
 station that has a name.
 This can be done by selecting pointstyle symbol and specifying exactly
 one SymbolInterval without min and max attributes.
-The offset\_x and offset\_y can be used to offset the image around the
+The offset_x and offset_y can be used to offset the image around the
 plot coordinate.
 The attribute plotstationid (true/false) determines if the station name
 will be plotted above the point.
@@ -102,8 +102,8 @@ This would look like:
 ```
 <Style name="marker">
 <Legend>bluewhitered</Legend>
-<SymbolInterval file="/home/vreedede/adaguc/marker.png" offset\_x="0"
-offset\_y="-8"/>
+<SymbolInterval file="/home/vreedede/adaguc/marker.png" offset_x="0"
+offset_y="-8"/>
 <RenderMethod>point</RenderMethod>
 <Point pointstyle="symbol" fillcolor="\#000000FF"
 textcolor="\#FFFFFFFF" linecolor="\#000000A0" discradius="16"

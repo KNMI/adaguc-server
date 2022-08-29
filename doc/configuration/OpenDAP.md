@@ -1,7 +1,9 @@
 OpenDAP (enabled, path) - Settings for the ADAGUC OpenDAP server
 ================================================================
 
-```
+Back to [Configuration](./Configuration.md)
+
+```xml
 <OpenDAP enabled="true" path="opendap"/>
 ```
 
@@ -12,12 +14,12 @@ serving layers over opendap.
 
 When a layer called "yourlayer" is configured, it can be accessed in the
 following way:
-https://yourdomain.com/cgi-bin/adagucserver.cgi/opendap/yourlayer
+https://yourdomain.com/opendap/yourlayer
 
 Example usages:
 
-https://yourdomain.com/cgi-bin/adagucserver.cgi/opendap/yourlayer.das
-https://yourdomain.com/cgi-bin/adagucserver.cgi/opendap/yourlayer.dds
+https://yourdomain.com/opendap/yourlayer.das
+https://yourdomain.com/opendap/yourlayer.dds
 ncdump -h
-https://yourdomain.com/cgi-bin/adagucserver.cgi/opendap/yourlayer
-ncview https://yourdomain.com/cgi-bin/adagucserver.cgi/opendap/yourlayer
+https://yourdomain.com/opendap/yourlayer
+ncview https://yourdomain.com/opendap/yourlayer

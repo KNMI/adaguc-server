@@ -4,7 +4,7 @@ Tutorials
 -   [Create a WMS service on a file](Create a WMS service on a file.md)
 -   \[\[Create a WMS service on a series of files with a time
     dimension\]\]
--   \[\[WMS\_OPENDAP|Create a WMS service based on a remote dataset via
+-   \[\[WMS_OPENDAP|Create a WMS service based on a remote dataset via
     OpenDAP\]\]
 -   [Create a WMS service with multiple layers](Create a WMS service with multiple layers.md)
 -   [Styling of Layers with shading and contourlines](Styling of Layers with shading and contourlines.md)

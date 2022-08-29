@@ -9,7 +9,7 @@ Below an example of a minimum Layer configuration is given:
 ```
 <Layer type="database">
 <Variable>T2m</Variable>
-<FilePath>/data/sdpkdc/har\_nc/t2mtest.nc</FilePath>
+<FilePath>/data/sdpkdc/har_nc/t2mtest.nc</FilePath>
 <Styles>temperature</Styles>
 </Layer>
 ```

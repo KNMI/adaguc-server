@@ -1,25 +1,28 @@
 OnlineResource (value)
 ======================
 
+Back to [Configuration](./Configuration.md)
+
 Sets the external location of the server. There are three options to
 configure this:
 
 1). Specify the full path in the configuration:
-```
-<OnlineResource
-value="http://yourserver/cgi-bin/adagucserver.cgi?"/>
+
+```xml
+<OnlineResource value="http://yourserver/adagucserver?"/>
 ```
 
-2). Specify the suffix, the server will prepend the HTTP\_HOST
+2). Specify the suffix, the server will prepend the HTTP_HOST
 environment variable for you:
-```
-<OnlineResource value="/cgi-bin/adagucserver.cgi?"/>
+
+```xml
+<OnlineResource value="/adagucserver?"/>
 ```
 
-3). Specify it in the environment via ADAGUC\_ONLINERESOURCE
+3). Specify it in the environment via ADAGUC_ONLINERESOURCE
 You can leave out the OnlineResource and specify it as environment
-variable ADAGUC\_ONLINERESOURCE in the cgi shell script.
+variable ADAGUC_ONLINERESOURCE in the cgi shell script.
+
 ```
-export
-ADAGUC\_ONLINERESOURCE="http://yourserver/cgi-bin/adagucserver.cgi?"
+export ADAGUC_ONLINERESOURCE="http://yourserver/adagucserver?"
 ```

@@ -157,13 +157,13 @@ textcolor="\#FFFFFF" />
 plotstationid="false" fillcolor="\#FF0000" discradius="2.2"
 textradius="0" dot="false" fontsize="14" textcolor="\#FFFFFF" />
 <LegendGraphic
-value="{ADAGUC\_DATASET\_DIR}/csv\_radiusandvalue\_legend.png" />
+value="{ADAGUC_DATASET_DIR}/csv_radiusandvalue_legend.png" />
 </Style>
 <Layer type="database">
 <Name>radiusandvalue</Name>
 <Title>magnitude</Title>
 <FilePath
-filter="">{ADAGUC\_PATH}/data/datasets/test/csv\_radiusandvalue.csv</FilePath>
+filter="">{ADAGUC_PATH}/data/datasets/test/csv_radiusandvalue.csv</FilePath>
 <Variable>age</Variable>
 <Variable>magnitude</Variable>
 <Styles>magnitude</Styles>

@@ -17,7 +17,7 @@ simple unit conversions from Kelvin to Celsius.
 Current data postprocessors:
 
 1.  ax+b: Linear transformation ax+b - Suitable for unit conversions
-2.  include\_layer: Include another layer into your layer as new
+2.  include_layer: Include another layer into your layer as new
     dataobject
 3.  datamask: Mask one variable with another variable with several
     options
@@ -40,7 +40,7 @@ Example to convert cloudcover fraction to octa:
 <DataPostProc algorithm="ax+b" a="8" b="0" units="octa"/>
 ```
 
-2. include\_layer: Include another layer into your layer as new dataobject
+2. include_layer: Include another layer into your layer as new dataobject
 --------------------------------------------------------------------------
 
 -   Available since adagucserver version 2.0.9
@@ -54,7 +54,7 @@ processor allows you to combine them into one layer.
 projection, the other layer will be transformed to fit into the new
 layer. The grids will be made the same.
 
--   algorithm: should be set to "include\_layer"
+-   algorithm: should be set to "include_layer"
 -   name: the other configured layer you wish to include
 -   mode: prepend or append, e.g. will the new layer be put in front of
     the current variables or after.
@@ -69,7 +69,7 @@ layer. The grids will be made the same.
 <Layer>
 ...
 <Name>combinedlayer</Name>
-<DataPostProc algorithm="include\_layer" name="theotherlayer"
+<DataPostProc algorithm="include_layer" name="theotherlayer"
 mode="prepend"/>
 ...
 </Layer>
@@ -102,9 +102,9 @@ minimum, average and maximum temperature:
 <Styles>auto</Styles>
 <Min>250</Min>
 <Max>300</Max>
-<DataPostProc algorithm="include\_layer" name="t2minlayer"
+<DataPostProc algorithm="include_layer" name="t2minlayer"
 mode="prepend"/>
-<DataPostProc algorithm="include\_layer" name="t2maxlayer"
+<DataPostProc algorithm="include_layer" name="t2maxlayer"
 mode="append"/>
 </Layer>
 ```
@@ -133,38 +133,38 @@ first variable is the data and the second variable is the mask.
     included as mask
     -   Mask is active when a>=maskvalue and b<=maskvalue.
 -   mode : optional, the masking operation, can be
-    -   if\_mask\_includes\_then\_nodata\_else\_data, fills in nodata,
+    -   if_mask_includes_then_nodata_else_data, fills in nodata,
         e.g. areas become transparent
-    -   if\_mask\_excludes\_then\_nodata\_else\_data, fills in nodata,
+    -   if_mask_excludes_then_nodata_else_data, fills in nodata,
         e.g. areas become transparent
-    -   if\_mask\_includes\_then\_valuec\_else\_data, value c will be
+    -   if_mask_includes_then_valuec_else_data, value c will be
         used
-    -   if\_mask\_excludes\_then\_valuec\_else\_data, value c will be
+    -   if_mask_excludes_then_valuec_else_data, value c will be
         used
-    -   if\_mask\_includes\_then\_mask\_else\_data, combines the sets
-    -   if\_mask\_excludes\_then\_mask\_else\_data, combines the sets
+    -   if_mask_includes_then_mask_else_data, combines the sets
+    -   if_mask_excludes_then_mask_else_data, combines the sets
 -   c : optional, the value to write when mask applies
--   name : optional, the new long\_name of the mask
+-   name : optional, the new long_name of the mask
 -   units : optional, the new units of the mask
 
 Example usage:
 ```
 <DataPostProc algorithm="datamask" a="0" b="0" name="newmask"
 units="newunits" c="0"
-mode="if\_mask\_excludes\_then\_nodata\_else\_data"/>
+mode="if_mask_excludes_then_nodata_else_data"/>
 ```
 
 Two variables need to be defined in the layer. This can be done by
 adding an extra <Variable>...varname..</Variable> element in
 the Layer config if the corresponding file has the two variables. If the
 masking variable is in another file, it can be added by using the
-datapostproc include\_layer. The example below uses two different files
+datapostproc include_layer. The example below uses two different files
 with different grid to create a masked result.
 
 ### Study case: Only display temperature field where precipitation is zero
 
 This example demonstrates how a temperature field can be masked by
-precipitation. By using the include\_layer postproc first, the layer
+precipitation. By using the include_layer postproc first, the layer
 gets two variables. The first variable is the temperature from the KNMI
 next scenarios, the second variable is precipitation from EOBS gridded
 observations. Both grids are very different and are regridded to the
@@ -187,7 +187,7 @@ Configuration which has been used to create image above:
 <Layer type="database">
 <Name>precipitation</Name>
 <Title>precipitation</Title>
-<FilePath>http://opendap.knmi.nl/knmi/thredds/dodsC/e-obs\_0.25regular/rr\_0.25deg\_reg\_v15.0.nc</FilePath>
+<FilePath>http://opendap.knmi.nl/knmi/thredds/dodsC/e-obs_0.25regular/rr_0.25deg_reg_v15.0.nc</FilePath>
 <Variable>rr</Variable>
 <Styles>auto</Styles>
 </Layer>
@@ -200,11 +200,11 @@ Configuration which has been used to create image above:
 <Styles>auto</Styles>
 <Min>250</Min>
 <Max>300</Max>
-<DataPostProc algorithm="include\_layer" name="precipitation"
+<DataPostProc algorithm="include_layer" name="precipitation"
 mode="append"/>
 <DataPostProc algorithm="datamask" a="0" b="0" name="newmask"
 units="newunits" c="0"
-mode="if\_mask\_excludes\_then\_nodata\_else\_data"/>
+mode="if_mask_excludes_then_nodata_else_data"/>
 </Layer>
 ```
 
@@ -219,12 +219,12 @@ Parameter a is sunz+satz threshold and b is satz threshold
 <Group value="auxiliary" />
 <Name force="true">mask</Name>
 <Title>Mask (-)</Title>
-<DataBaseTable>msgcpp\_0001</DataBaseTable>
+<DataBaseTable>msgcpp_0001</DataBaseTable>
 <Variable>sunz</Variable>
 <Variable>satz</Variable>
 <RenderMethod>nearest</RenderMethod>
 <FilePath
-filter="\^SEVIR\_OPER\_R*MSGCPP*\_L2.\*\\.nc\$">/data/ogcrt/data/temporary/</FilePath>
+filter="\^SEVIR_OPER_R*MSGCPP*_L2.\*\\.nc\$">/data/ogcrt/data/temporary/</FilePath>
 <Styles>mask,red,green,blue</Styles>
 <Dimension name="time" interval="PT15M">time</Dimension>
 <LatLonBox minx="-80" maxx="80" miny="-82" maxy="82" />
@@ -249,15 +249,15 @@ according to HAIC case.
 <Group value="auxiliary" />
 <Name force="true">hiwc</Name>
 <Title>High Ice Water Content (-)</Title>
-<DataBaseTable>msgcpp\_0001</DataBaseTable>
+<DataBaseTable>msgcpp_0001</DataBaseTable>
 <Variable>cph</Variable>
 <Variable>cwp</Variable>
 <Variable>ctt</Variable>
 <Variable>cot</Variable>
 <RenderMethod>nearest</RenderMethod>
 <FilePath
-filter="\^SEVIR\_OPER\_R*MSGCPP*\_L2.\*\\.nc\$">/data/ogcrt/data/temporary/</FilePath>
-<Styles>red,green,blue,mask,gray\_red,gray\_green,gray\_blue</Styles>
+filter="\^SEVIR_OPER_R*MSGCPP*_L2.\*\\.nc\$">/data/ogcrt/data/temporary/</FilePath>
+<Styles>red,green,blue,mask,gray_red,gray_green,gray_blue</Styles>
 <Dimension name="time" interval="PT15M">time</Dimension>
 <LatLonBox minx="-80" maxx="80" miny="-82" maxy="82" />
 <Cache enabled="false" />
@@ -287,23 +287,23 @@ time = 1 ;
 station = 3 ;
 variables:
 double time(time) ;
-time:standard\_name = "time" ;
+time:standard_name = "time" ;
 time:units = "seconds since 1970-1-1" ;
 double lon(station) ;
-lon:standard\_name = "longitude" ;
-lon:units = "degrees\_east" ;
+lon:standard_name = "longitude" ;
+lon:units = "degrees_east" ;
 double lat(station) ;
-lat:standard\_name = "latitude" ;
-lat:units = "degrees\_north" ;
+lat:standard_name = "latitude" ;
+lat:units = "degrees_north" ;
 string station(station) ;
-station:long\_name = "station\_name" ;
-station:cf\_role = "timeseries\_id" ;
+station:long_name = "station_name" ;
+station:cf_role = "timeseries_id" ;
 double maxw(station, time) ;
 maxw:units = "m/s" ;
-maxw:standard\_name = "maximum\_windspeed" ;
-maxw:grid\_mapping = "projection" ;
+maxw:standard_name = "maximum_windspeed" ;
+maxw:grid_mapping = "projection" ;
 char projection ;
-projection:proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no\_defs" ;
+projection:proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs" ;
 
 // global attributes:
 :Conventions = "CF-1.5" ;
@@ -347,10 +347,10 @@ The DataPostProc element would be defined in a layer like this:
 <Title>Wind Areas</Title>
 <Variable>maxw</Variable>
 <DataPostProc
-a="/usr/people/vreedede/nob/adaguc\_gladheid/testgeojson/data/map.geojson"
+a="/usr/people/vreedede/nob/adaguc_gladheid/testgeojson/data/map.geojson"
 algorithm="addfeatures"/>
 <FilePath
-filter="windareas.nc\$">/usr/people/vreedede/nob/adaguc\_gladheid/testgeojson/data</FilePath>
+filter="windareas.nc\$">/usr/people/vreedede/nob/adaguc_gladheid/testgeojson/data</FilePath>
 <Styles>weatherall</Styles>
 </Layer>
 

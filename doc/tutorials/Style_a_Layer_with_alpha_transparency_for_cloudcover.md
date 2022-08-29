@@ -50,9 +50,9 @@ This is is the layer definition with cloudcover
 <Cache enabled="false"/>
 <Styles>cloudcover</Styles>
 <Dimension name="time" interval="P1D">time</Dimension>
-<Variable>hih\_cld</Variable>
+<Variable>hih_cld</Variable>
 <DataPostProc algorithm="ax+b" a="8" b="0" units="octa"/>
 <FilePath
-filter=".\*\\.nc\$">http://opendap.nmdc.eu/knmi/thredds/dodsC/essence/run021/2D\_daymean/hih\_cld\_021\_2026-2100.nc</FilePath>
+filter=".\*\\.nc\$">http://opendap.nmdc.eu/knmi/thredds/dodsC/essence/run021/2D_daymean/hih_cld_021_2026-2100.nc</FilePath>
 </Layer>
 ```

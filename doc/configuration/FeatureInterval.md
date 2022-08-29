@@ -12,13 +12,13 @@ FeatureInterval (match, matchid, label, bgcolor, fillcolor)
 -   fillcolor - Required, the color to shade.
 
 ```
-<Style name="countries\_nlmask">
+<Style name="countries_nlmask">
 <Legend fixed="true">bluewhitered</Legend>
 <FeatureInterval match=".\*" matchid="abbrev" bgcolor="\#CCCCFF"
 fillcolor="\#CCFFCCFF" label="Other"/>
-<FeatureInterval match="NLD.\*" matchid="adm0\_a3"
+<FeatureInterval match="NLD.\*" matchid="adm0_a3"
 fillcolor="\#DFFFDF00" label="The Netherlands"/>
-<FeatureInterval match="\^Luxembourg\$" matchid="brk\_name"
+<FeatureInterval match="\^Luxembourg\$" matchid="brk_name"
 fillcolor="\#0000FF" label="Luxembourg"/>
 <FeatureInterval match="\^Asia\$" matchid="continent"
 fillcolor="\#808080" label="Asia"/>
@@ -33,9 +33,9 @@ fillcolor="\#80FF80" label="India"/>
 <Name>countries</Name>
 <!-- Data obtained from https://geojson-maps.kyd.com.au/ -->
 <FilePath
-filter="">{ADAGUC\_PATH}data/datasets/countries.geojson</FilePath>
+filter="">{ADAGUC_PATH}data/datasets/countries.geojson</FilePath>
 <Variable>features</Variable>
-<Styles>countries\_nlmask</Styles>
+<Styles>countries_nlmask</Styles>
 </Layer>
 ```
 

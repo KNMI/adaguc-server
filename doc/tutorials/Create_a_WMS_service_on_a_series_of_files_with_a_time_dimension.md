@@ -30,7 +30,7 @@ default="max">time</Dimension>
 ```
 
 (\^mydailyfiles.\*\\.nc\$ is a regular expression, see
-http://en.wikipedia.org/wiki/Regular\_expression)
+http://en.wikipedia.org/wiki/Regular_expression)
 
 When everything is configured, you have to scan the files, this can be
 done with the following command:
@@ -101,7 +101,7 @@ corresponding records:
 
 PSQL="psql mydatabase -h localhost -U adagucuser "
 datesevendays=\`date -~~date="7 days ago" +%Y~~%m-%d\\ %H:%M:%S\`
-\$PSQL -c "delete from <table>\_time where time <
+\$PSQL -c "delete from <table>_time where time <
 '\$datesevendays'" > /dev/null
 touch /data/services/config/newservice.xml
 ```

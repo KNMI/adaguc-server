@@ -1,6 +1,8 @@
 Projection (id,proj4)
 =====================
 
+Back to [Configuration](./Configuration.md)
+
 Projection defines the supported projections by the server. Optionally a
 LatLonBox (minx, miny, maxx, maxy) can be used under Projection to
 define the region corresponding to the projection.
@@ -10,38 +12,26 @@ define the region corresponding to the projection.
 -   proj4 - The proj4 string corresponding to the identifier.
     https://trac.osgeo.org/proj/
 
-```
+```xml
 
 <!-- Projections -->
-<Projection id="EPSG:3411" proj4="+proj=stere +lat\_0=90 +lat\_ts=70
-+lon\_0=-45 +k=1 +x\_0=0 +y\_0=0 +a=6378273 +b=6356889.449 +units=m
-+no\_defs"/>
-<Projection id="EPSG:3412" proj4="+proj=stere +lat\_0=-90
-+lat\_ts=-70 +lon\_0=0 +k=1 +x\_0=0 +y\_0=0 +a=6378273 +b=6356889.449
-+units=m +no\_defs"/>
-<Projection id="EPSG:3575" proj4="+proj=laea +lat\_0=90 +lon\_0=10
-+x\_0=0 +y\_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no\_defs"/>
-
-<Projection id="EPSG:3857" proj4="+proj=merc +a=6378137 +b=6378137
-+lat\_ts=0.0 +lon\_0=0.0 +x\_0=0.0 +y\_0=0 +k=1.0 +units=m
-+nadgrids=`null +wktext  +no_defs"/>
-  <Projection id="EPSG:4258" proj4="+proj=longlat +ellps=GRS80 +no_defs"/>
-  <Projection id="EPSG:4326" proj4="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"/>
-  <Projection id="CRS:84" proj4="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"/>
-  <Projection id="EPSG:25831" proj4="+proj=utm +zone=31 +ellps=GRS80 +units=m +no_defs"/>
-  <Projection id="EPSG:25832" proj4="+proj=utm +zone=32 +ellps=GRS80 +units=m +no_defs"/>
-  <Projection id="EPSG:28992" proj4="+proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.9999079 +x_0=155000 +y_0=463000 +ellps=bessel +towgs84=565.4171,50.3319,465.5524,-0.398957388243134,0.343987817378283,-1.87740163998045,4.0725 +units=m +no_defs">
-  </Projection>
-  <Projection id="EPSG:7399" proj4="+proj=moll +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs "/>
-  <Projection id="EPSG:50001" proj4="+proj=stere +lat_ts=60.0 +lat_0=90 +lon_0=-111.0 +k_0=1.0 +x_0=3020946.0 +y_0=7622187.0 +units=m +ellps=WGS84 +datum=WGS84 +no_defs ">
-    <LatLonBox minx="-2000000"  miny="-2000000" maxx="10000000" maxy="8500000"/>
-  </Projection>
-  <Projection id="EPSG:54030" proj4="+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs "/>
-  <Projection id="EPSG:32661" proj4="+proj=stere +lat_0=90 +lat_ts=90 +lon_0=0 +k=0.994 +x_0=2000000 +y_0=2000000 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"/>
-  <Projection id="EPSG:40000" proj4="+proj=stere +ellps=WGS84 +lat_0=90 +lon_0=0 +no_defs"/>
-  <Projection id="EPSG:900913" proj4=" +proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=`null
-+no\_defs"/>
-<Projection id="EPSG:102100" proj4="+proj=merc +a=6378137 +b=6378137
-+lat\_ts=0.0 +lon\_0=0.0 +x\_0=0.0 +y\_0=0 +k=1.0 +units=m
-+nadgrids=@null +wktext +no\_defs"/>
+<Projection id="EPSG:3411" proj4="+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_0=0 +y_0=0 +a=6378273 +b=6356889.449 +units=m +no_defs"/>
+<Projection id="EPSG:3412" proj4="+proj=stere +lat_0=-90 +lat_ts=-70 +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378273 +b=6356889.449 +units=m +no_defs"/>
+<Projection id="EPSG:3575" proj4="+proj=laea +lat_0=90 +lon_0=10 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"/>
+<Projection id="EPSG:3857" proj4="+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=`null +wktext  +no_defs"/>
+<Projection id="EPSG:4258" proj4="+proj=longlat +ellps=GRS80 +no_defs"/>
+<Projection id="EPSG:4326" proj4="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"/>
+<Projection id="CRS:84" proj4="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"/>
+<Projection id="EPSG:25831" proj4="+proj=utm +zone=31 +ellps=GRS80 +units=m +no_defs"/>
+<Projection id="EPSG:25832" proj4="+proj=utm +zone=32 +ellps=GRS80 +units=m +no_defs"/>
+<Projection id="EPSG:28992" proj4="+proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.9999079 +x_0=155000 +y_0=463000 +ellps=bessel +towgs84=565.4171,50.3319,465.5524,-0.398957388243134,0.343987817378283,-1.87740163998045,4.0725 +units=m +no_defs"/>
+<Projection id="EPSG:7399" proj4="+proj=moll +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs "/>
+<Projection id="EPSG:50001" proj4="+proj=stere +lat_ts=60.0 +lat_0=90 +lon_0=-111.0 +k_0=1.0 +x_0=3020946.0 +y_0=7622187.0 +units=m +ellps=WGS84 +datum=WGS84 +no_defs ">
+  <LatLonBox minx="-2000000"  miny="-2000000" maxx="10000000" maxy="8500000"/>
+</Projection>
+<Projection id="EPSG:54030" proj4="+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs "/>
+<Projection id="EPSG:32661" proj4="+proj=stere +lat_0=90 +lat_ts=90 +lon_0=0 +k=0.994 +x_0=2000000 +y_0=2000000 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"/>
+<Projection id="EPSG:40000" proj4="+proj=stere +ellps=WGS84 +lat_0=90 +lon_0=0 +no_defs"/>
+<Projection id="EPSG:900913" proj4=" +proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=`null +no_defs"/>
+<Projection id="EPSG:102100" proj4="+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs"/>
 ```

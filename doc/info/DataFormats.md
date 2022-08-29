@@ -39,15 +39,15 @@ lat = 180 ;
 time = 12 ;
 variables:
 double lon(lon) ;
-lon:long\_name = "longitude" ;
-lon:standard\_name = "longitude" ;
-lon:units = "degrees\_east" ;
+lon:long_name = "longitude" ;
+lon:standard_name = "longitude" ;
+lon:units = "degrees_east" ;
 double lat(lat) ;
-lat:long\_name = "latitude" ;
-lat:standard\_name = "latitude" ;
-lat:units = "degrees\_north" ;
+lat:long_name = "latitude" ;
+lat:standard_name = "latitude" ;
+lat:units = "degrees_north" ;
 double time(time) ;
-time:long\_name = "time" ;
+time:long_name = "time" ;
 time:units = "days since 2010-01-01 00:00:00" ;
 double NOx(time, lat, lon) ;
 NOx:Units = "Gg N/km2" ;
@@ -67,36 +67,36 @@ y = 765 ;
 time = 1 ;
 variables:
 double x(x) ;
-x:long\_name = "x coordinate of projection" ;
-x:standard\_name = "projection\_x\_coordinate" ;
+x:long_name = "x coordinate of projection" ;
+x:standard_name = "projection_x_coordinate" ;
 x:units = "km" ;
 double y(y) ;
-y:long\_name = "y coordinate of projection" ;
-y:standard\_name = "projection\_y\_coordinate" ;
+y:long_name = "y coordinate of projection" ;
+y:standard_name = "projection_y_coordinate" ;
 y:units = "km" ;
 double time(time) ;
 time:units = "minutes since 1950-01-01 0:0:0" ;
-time:long\_name = "time" ;
-time:standard\_name = "time" ;
+time:long_name = "time" ;
+time:standard_name = "time" ;
 float precipitation(time, y, x) ;
-precipitation:grid\_mapping = "projection" ;
-precipitation:\_FillValue = -1.f ;
-precipitation:long\_name = "precipitation flux" ;
+precipitation:grid_mapping = "projection" ;
+precipitation:_FillValue = -1.f ;
+precipitation:long_name = "precipitation flux" ;
 precipitation:units = "kg/m2/h" ;
-precipitation:standard\_name = "precipitation\_flux" ;
+precipitation:standard_name = "precipitation_flux" ;
 char projection ;
-projection:EPSG\_code = "none" ;
-projection:grid\_mapping\_name = "polar\_stereographic" ;
-projection:latitude\_of\_projection\_origin = 90. ;
-projection:straight\_vertical\_longitude\_from\_pole = 0. ;
-projection:scale\_factor\_at\_projection\_origin = 0.933012709177451 ;
-projection:false\_easting = 0. ;
-projection:false\_northing = 0. ;
-projection:semi\_major\_axis = 6378140. ;
-projection:semi\_minor\_axis = 6356750. ;
-projection:proj4\_params = "+proj=stere +lat\_0=90 +lon\_0=0 +lat\_ts=60
-+a=6378.14 +b=6356.75 +x\_0=0 y\_0=0" ;
-projection:long\_name = "projection" ;
+projection:EPSG_code = "none" ;
+projection:grid_mapping_name = "polar_stereographic" ;
+projection:latitude_of_projection_origin = 90. ;
+projection:straight_vertical_longitude_from_pole = 0. ;
+projection:scale_factor_at_projection_origin = 0.933012709177451 ;
+projection:false_easting = 0. ;
+projection:false_northing = 0. ;
+projection:semi_major_axis = 6378140. ;
+projection:semi_minor_axis = 6356750. ;
+projection:proj4_params = "+proj=stere +lat_0=90 +lon_0=0 +lat_ts=60
++a=6378.14 +b=6356.75 +x_0=0 y_0=0" ;
+projection:long_name = "projection" ;
 
 // global attributes:
 :Conventions = "CF-1.4" ;
@@ -121,13 +121,13 @@ service that the parameter values should be interpreted as pixel color
 values, this can be done by choosing [RenderMethod](RenderMethod.md) rgba. The
 service can then reproject the image from the source projection, if
 needed, by doing a nearest neighbor "interpolation". When the
-standard\_name "rgba" and units "rgba" is given for the corresponding
+standard_name "rgba" and units "rgba" is given for the corresponding
 variable, the system detects that this is a RGBA/True color variable.
-The variable type should be unsigned integer (NC\_UINT) and represents 4
+The variable type should be unsigned integer (NC_UINT) and represents 4
 bytes for R,G,B and A respectively.
 
 ```
-netcdf butterfly\_fromjpg\_truecolor {
+netcdf butterfly_fromjpg_truecolor {
 dimensions:
 y = 1080 ;
 x = 1920 ;
@@ -135,22 +135,22 @@ time = 1 ;
 variables:
 double y(y) ;
 y:units = "m" ;
-y:standard\_name = "projection\_y\_coordinate" ;
+y:standard_name = "projection_y_coordinate" ;
 double x(x) ;
 x:units = "m" ;
-x:standard\_name = "projection\_x\_coordinate" ;
+x:standard_name = "projection_x_coordinate" ;
 double time(time) ;
 time:units = "seconds since 1970-01-01 00:00:00" ;
-time:standard\_name = "time" ;
+time:standard_name = "time" ;
 byte projection ;
-projection:proj4 = "+proj=sterea +lat\_0=52.15616055555555
-+lon\_0=5.38763888888889 +k=0.9999079 +x\_0=155000 +y\_0=463000
-+ellps=bessel +units=m +no\_defs" ;
+projection:proj4 = "+proj=sterea +lat_0=52.15616055555555
++lon_0=5.38763888888889 +k=0.9999079 +x_0=155000 +y_0=463000
++ellps=bessel +units=m +no_defs" ;
 uint butterfly(time, y, x) ;
 butterfly:units = "rgba" ;
-butterfly:standard\_name = "rgba" ;
-butterfly:long\_name = "butterfly" ;
-butterfly:grid\_mapping = "projection" ;
+butterfly:standard_name = "rgba" ;
+butterfly:long_name = "butterfly" ;
+butterfly:grid_mapping = "projection" ;
 
 // global attributes:
 :Conventions = "CF-1.4" ;
@@ -162,21 +162,21 @@ butterfly:grid\_mapping = "projection" ;
 Point data is new in CF Conventions is characterised by a global
 attribute **featureType = "timeSeries"** in the NetCDF file.
 ![](https://dev.knmi.nl/attachments/679/point_timeseries_adaguc_automated_weatherobservations.jpg)
-A detailed example is described here: \[\[Pointtimeseries\_example\]\]
+A detailed example is described here: \[\[Pointtimeseries_example\]\]
 
 ### Forecast reference times from model runs
 
 Adaguc can display model data with forecasts. Multiple files with
-different forecast\_reference\_time's and overlapping times can be
+different forecast_reference_time's and overlapping times can be
 aggregated in a single layer.
 
-A variable with standard\_name forecast\_reference\_time should be
+A variable with standard_name forecast_reference_time should be
 present in the netcdf file(s):
 ```
-double forecast\_reference\_time ;
-forecast\_reference\_time:units = "seconds since 1970-01-01 00:00:00
+double forecast_reference_time ;
+forecast_reference_time:units = "seconds since 1970-01-01 00:00:00
 +00:00" ;
-forecast\_reference\_time:standard\_name = "forecast\_reference\_time"
+forecast_reference_time:standard_name = "forecast_reference_time"
 ```
 
 This variable can be either a scalar or a variable with multiple dates.
@@ -199,7 +199,7 @@ https://github.com/ugrid-conventions/ugrid-conventions.
 
 The ADAGUC service can handle swath data from orbiting satellites in the
 so called ADAGUC-format, described at
-http://adaguc.knmi.nl/contents/documents/ADAGUC\_Standard.html (called
+http://adaguc.knmi.nl/contents/documents/ADAGUC_Standard.html (called
 vector data there). This data is organized in time related rows of
 geographical "tiles" or "pixels" each representing one measured value.
 
@@ -235,7 +235,7 @@ is expressed in a rotated lat lon grid, with grid-oriented u and v
 vectors.
 When calculating (wind) speed and direction from grid-oriented u and v
 vectors for display of barbs or vectors, the service takes into account
-the rotated grid if needed by inspection of the standard\_name attribute
+the rotated grid if needed by inspection of the standard_name attribute
 of the u-component.
 
 ### HDF5 data
@@ -250,7 +250,7 @@ The server is able to read KNMI HDF5 precipitation forecast data. These
 files contain several image groups with a forecast date timestamp. These
 image groups are aggregated to a single variable with time dimension,
 this new variable is called "forecast". An example file is attached. See
-https://dev.knmi.nl/attachments/712/RAD\_NL25\_PCP\_FM\_201506180815.h5
+https://dev.knmi.nl/attachments/712/RAD_NL25_PCP_FM_201506180815.h5
 
 Data organisation
 -----------------
@@ -279,7 +279,7 @@ manipulating NetCDF data files.
 Weather model data is most often coded in GRIB-1 or GRIB-2 format. Some
 tools which can convert GRIB files to NetCDF files are:
 
-- **grib2netcdf** from ECMWF's grib\_api package (in development)
+- **grib2netcdf** from ECMWF's grib_api package (in development)
 
 - **cdo** from the Max Planck Institute for Meteorology
 (https://code.zmaw.de/projects/cdo)
@@ -292,7 +292,7 @@ from GRIB files.
 Python has some very good possibilities for manipulating large fields of
 data and writing data into NetCDF4 files is fairly easy with the
 [netcdf4-python](http://code.google.com/p/netcdf4-python) library. In
-combination with for example the grib\_api library and/or the
+combination with for example the grib_api library and/or the
 [pygrib](https://code.google.com/p/pygrib) library converters can be
 built from GRIB to NetCDF.
 Python also has [Numpy](http://www.numpy.org) modules which make

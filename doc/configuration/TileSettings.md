@@ -10,7 +10,7 @@ Mandatory settings:
 -   tileheightpx="720"
 -   tilecellsizex="0.0125"
 -   tilecellsizey="0.0125"
--   tileprojection="+proj=longlat +ellps=WGS84 +datum=WGS84 +no\_defs"
+-   tileprojection="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
 -   minlevel="1"
 -   maxlevel="4"
 -   debug="false"
@@ -29,7 +29,7 @@ Optional settings:
 
 -   left="50" right="180" bottom="~~90" top="90" <-~~ Note these are
     optional and when left out they will be calculated automatically.
--   tilemode="avg\_rgba" or "rgba" <!-- only useful when using rgba
+-   tilemode="avg_rgba" or "rgba" <!-- only useful when using rgba
     netcdf's, dont use if you have standard byte/short/int/float/double
     data in your variable
 -   threads="1" <!-- Optional, default is "1". Experimental setting

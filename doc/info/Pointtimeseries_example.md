@@ -22,19 +22,19 @@ and displayed in ADAGUC.
 
 The NetCDF file should have the following structure:
 ```
-netcdf points\_10000\_random {
+netcdf points_10000_random {
 dimensions:
 numpoints = 10000 ;
 variables:
 double lat(numpoints) ;
-lat:units = "degrees\_north" ;
-lat:standard\_name = "latitude" ;
+lat:units = "degrees_north" ;
+lat:standard_name = "latitude" ;
 double lon(numpoints) ;
-lon:units = "degrees\_east" ;
-lon:standard\_name = "longitude" ;
+lon:units = "degrees_east" ;
+lon:standard_name = "longitude" ;
 double percent(numpoints) ;
 percent:units = "percentage" ;
-percent:standard\_name = "percent" ;
+percent:standard_name = "percent" ;
 
 // global attributes:
 :featureType = "point" ;
@@ -73,7 +73,7 @@ textformat=" "/>
 <Group value="tests"/>
 <Title>10000 random points!</Title>
 <FilePath
-filter="\^.\*\\.nc\$">/data/services/data/testsets/pointtimeseries/points\_10000\_random.nc</FilePath>
+filter="\^.\*\\.nc\$">/data/services/data/testsets/pointtimeseries/points_10000_random.nc</FilePath>
 <Variable>percent</Variable>
 <Styles>randompoint1</Styles>
 </Layer>
@@ -91,43 +91,43 @@ over time.
 The data for each parameter is organised as a table with a station and a
 time dimension.
 ```
-netcdf KIS*OPER\_POBS*\_L2 {
+netcdf KIS*OPER_POBS*_L2 {
 dimensions:
 station = 149 ;
 time = 23538 ;
 variables:
 string station(station) ;
-station:long\_name = "station name" ;
-station:cf\_role = "timeseries\_id" ;
+station:long_name = "station name" ;
+station:cf_role = "timeseries_id" ;
 double time(time) ;
-time:long\_name = "time of measurement" ;
-time:standard\_name = "time" ;
+time:long_name = "time of measurement" ;
+time:standard_name = "time" ;
 time:units = "seconds since 1950-01-01 00:00:00" ;
 double lat(station) ;
-lat:long\_name = "station latitude" ;
-lat:standard\_name = "latitude" ;
-lat:units = "degrees\_north" ;
+lat:long_name = "station latitude" ;
+lat:standard_name = "latitude" ;
+lat:units = "degrees_north" ;
 double lon(station) ;
-lon:long\_name = "station longitude" ;
-lon:standard\_name = "longitude" ;
-lon:units = "degrees\_east" ;
+lon:long_name = "station longitude" ;
+lon:standard_name = "longitude" ;
+lon:units = "degrees_east" ;
 short TG (station, time) ;
 TG:coordinates = "lat lon" ;
 TG:kisid = "TG" ;
 TG:description = "Daily mean temperature in (0.1 degrees Celsius);" ;
-TG:\_FillValue = -9999s ;
-TG:standard\_name = "air\_temperature" ;
+TG:_FillValue = -9999s ;
+TG:standard_name = "air_temperature" ;
 TG:units = "degrees Celsius" ;
-TG:long\_name = "Temperature" ;
-TG:scale\_factor = 0.1f ;
-TG:add\_offset = 0.f ;
+TG:long_name = "Temperature" ;
+TG:scale_factor = 0.1f ;
+TG:add_offset = 0.f ;
 char projection ;
-projection:EPSG\_code = "EPSG:4326" ;
+projection:EPSG_code = "EPSG:4326" ;
 
 // global attributes:
 :featureType = "timeSeries" ;
 :Conventions = "CF-1.4" ;
-:title = "KIS*OPER\_POBS*\_L2" ;
+:title = "KIS*OPER_POBS*_L2" ;
 :institution = "Royal Netherlands Meteorological Institute (KNMI)" ;
 :source = "Royal Netherlands Meteorological Institute (KNMI)" ;
 :history = "File created from KIS ASCII file. " ;
@@ -185,7 +185,7 @@ textradius="0" dot="false" fontsize="8" textcolor="\#000000" />
 <Layer type="database">
 <Group value="KNMI Daily Obs"/>
 <FilePath
-filter="\^.\*\\.nc\$">/data/services/data/testsets/pointtimeseries/KIS*OPER\_POBS*\_L2.nc</FilePath>
+filter="\^.\*\\.nc\$">/data/services/data/testsets/pointtimeseries/KIS*OPER_POBS*_L2.nc</FilePath>
 <Variable>TG</Variable>
 <Styles>temperature</Styles>
 </Layer>
@@ -200,52 +200,52 @@ observation.
 
 ![](https://dev.knmi.nl/attachments/662/earthquakes_last_100_nl_adaguc.jpg)
 ```
-netcdf EQ*OPER\_POBS*\_\_L2 {
+netcdf EQ*OPER_POBS*__L2 {
 dimensions:
 obs = 100 ;
 variables:
 string location(obs) ;
-location:long\_name = "Location name" ;
+location:long_name = "Location name" ;
 location:units = "string" ;
 location:coordinates = "time lat lon depth" ;
-string phase\_file(obs) ;
-phase\_file:long\_name = "Phase file name" ;
-phase\_file:units = "string" ;
-phase\_file:coordinates = "time lat lon depth" ;
+string phase_file(obs) ;
+phase_file:long_name = "Phase file name" ;
+phase_file:units = "string" ;
+phase_file:coordinates = "time lat lon depth" ;
 string type(obs) ;
-type:long\_name = "Event type" ;
+type:long_name = "Event type" ;
 type:units = "string" ;
 type:coordinates = "time lat lon depth" ;
 double time(obs) ;
-time:long\_name = "Time of measurement" ;
-time:standard\_name = "time" ;
+time:long_name = "Time of measurement" ;
+time:standard_name = "time" ;
 time:units = "days since 1970-01-01 00:00:00" ;
 double lat(obs) ;
-lat:long\_name = "Latitude of the observation" ;
-lat:standard\_name = "latitude" ;
-lat:units = "degrees\_north" ;
+lat:long_name = "Latitude of the observation" ;
+lat:standard_name = "latitude" ;
+lat:units = "degrees_north" ;
 double lon(obs) ;
-lon:long\_name = "Longitude of the observation" ;
-lon:standard\_name = "longitude" ;
-lon:units = "degrees\_east" ;
+lon:long_name = "Longitude of the observation" ;
+lon:standard_name = "longitude" ;
+lon:units = "degrees_east" ;
 double depth(obs) ;
-depth:long\_name = "Vertical distance below the surface" ;
-depth:standard\_name = "height" ;
+depth:long_name = "Vertical distance below the surface" ;
+depth:standard_name = "height" ;
 depth:units = "km" ;
 depth:axis = "Z" ;
 depth:positive = "down" ;
 double magnitude(obs) ;
-magnitude:long\_name = "Richter magnitude scale" ;
-magnitude:standard\_name = "magnitude" ;
+magnitude:long_name = "Richter magnitude scale" ;
+magnitude:standard_name = "magnitude" ;
 magnitude:units = "magnitude" ;
 magnitude:coordinates = "time lat lon depth" ;
 char projection ;
-projection:EPSG\_code = "EPSG:4326" ;
+projection:EPSG_code = "EPSG:4326" ;
 
 // global attributes:
 :featureType = "point" ;
 :Conventions = "CF-1.4" ;
-:title = "EQ*OPER\_POBS*\_\_L2" ;
+:title = "EQ*OPER_POBS*__L2" ;
 :institution = "Royal Netherlands Meteorological Institute (KNMI)" ;
 :source = "Royal Netherlands Meteorological Institute (KNMI)" ;
 :history = "File created from last100.json JSON file. " ;
@@ -293,7 +293,7 @@ textradius="0" dot="false" fontsize="14" textcolor="\#FFFFFF"/>
 <Layer type="database">
 <Group value="KNMI Earthquakes NL"/>
 <FilePath
-filter="\^.\*\\.nc\$">/data/services/data/testsets/pointtimeseries/EQ*OPER\_POBS*\_\_L2.nc</FilePath>
+filter="\^.\*\\.nc\$">/data/services/data/testsets/pointtimeseries/EQ*OPER_POBS*__L2.nc</FilePath>
 <Variable>magnitude</Variable>
 <Styles>magnitude</Styles>
 </Layer>
@@ -315,26 +315,26 @@ http://opendap.knmi.nl/knmi/thredds/catalog/ADAGUC/testsets/btdsensor/catalog.ht
 ![](https://dev.knmi.nl/attachments/663/btd300_adaguc.jpg)
 
 ```
-netcdf btd\_20150605T180000 {
+netcdf btd_20150605T180000 {
 dimensions:
 obs = 5 ;
 time = 1 ;
 variables:
 double lat(obs) ;
-lat:units = "degrees\_north" ;
-lat:standard\_name = "latitude" ;
+lat:units = "degrees_north" ;
+lat:standard_name = "latitude" ;
 double lon(obs) ;
-lon:units = "degrees\_east" ;
-lon:standard\_name = "longitude" ;
+lon:units = "degrees_east" ;
+lon:standard_name = "longitude" ;
 double time(time) ;
 time:units = "seconds since 1970-01-01 00:00:00" ;
-time:standard\_name = "time" ;
+time:standard_name = "time" ;
 double warningindicator(obs, time) ;
 warningindicator:units = "warningindicator" ;
-warningindicator:standard\_name = "warningindicator" ;
+warningindicator:standard_name = "warningindicator" ;
 double warningflag(obs, time) ;
 warningflag:units = "warningflag" ;
-warningflag:standard\_name = "warningflag" ;
+warningflag:standard_name = "warningflag" ;
 
 // global attributes:
 :featureType = "point" ;
@@ -360,7 +360,7 @@ this dimension has an interval of 5 minutes:
 <Title>BTD300 warning flag</Title>
 <Variable>warningflag</Variable>
 <FilePath
-filter="\^btd\_.\*\\.nc\$">/data/services/data/testsets/btdsensor/</FilePath>
+filter="\^btd_.\*\\.nc\$">/data/services/data/testsets/btdsensor/</FilePath>
 <Dimension name="time" interval="PT5M"
 default="min">time</Dimension>
 <Styles>btd</Styles>
