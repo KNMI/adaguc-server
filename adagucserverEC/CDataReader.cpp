@@ -557,9 +557,32 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
 		}
 		}
 	   else if ((X_standard_name != NULL && X_standard_name->toString().equals("projection_x_angular_coordinate"))){
-          	dataSource->nativeProj4.copy("+proj=geos +a=0.17823063258248095 +b=0.17763305861870649 +lon_0=0.0 +h=1.0 +sweep=y +units=m");
-          	CDBDebug("Assuming  CF 1.9 geostationary");
-    
+          	
+          	
+          	CDF::Attribute *projvarnameAttr = dataSourceVar->getAttributeNE("grid_mapping");
+          	if (projvarnameAttr != NULL) {
+		  CDF::Variable *projVar = cdfObject->getVariableNE(projvarnameAttr->toString().c_str());
+		  if (projVar == NULL) {
+		    CDBWarning("projection variable '%s' not found", (char *)projvarnameAttr->data);
+		    }
+		  else {
+		    CDF::Attribute *grid_mapping_name = projVar->getAttributeNE("grid_mapping_name");
+		    if ((grid_mapping_name != NULL) && grid_mapping_name->toString().equals("geostationary")) {
+		    	CDBDebug("Assuming  CF 1.9. geostationary projection, keeping radians as units");
+		    	CT::string UpdatedProjString = "+proj=geos +a=0.17823063258248095 +b=0.17763305861870649 +lon_0=0.0 +h=1.0 +sweep=y";
+		    	CDBDebug("Overwriting the projection string with: %s", UpdatedProjString.c_str());
+		    	
+		    	dataSource->nativeProj4.copy(UpdatedProjString.c_str());
+		    	CDF::Attribute *proj4 = projVar->getAttributeNE("proj4");
+		    	if (proj4 == NULL) {
+		    		projVar->setAttributeText("autogen_proj", UpdatedProjString.c_str());
+		    	}	    
+		    }
+		    
+		    }
+		  
+		  }
+          	
     
     }
       
