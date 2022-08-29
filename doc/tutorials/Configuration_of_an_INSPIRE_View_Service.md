@@ -41,10 +41,10 @@ Service:
 <GridFont location="/data/fonts/FreeSans.ttf" size="5"/>
 <WMSFormat name="image/png" format="image/png"/>
 <Inspire>
-<ViewServiceCSW>http://data-test.knmi.nl/inspire/csw?Service=CSW&amp;amp;Request=GetRecordById&amp;amp;Version=2.0.2&amp;amp;id=9155a021-ac62-464c-99e2-b4c809e5ecde&amp;amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;amp;elementSetName=full</ViewServiceCSW>
-<DatasetCSW>http://data-test.knmi.nl/inspire/csw?Service=CSW&amp;amp;Request=GetRecordById&amp;amp;Version=2.0.2&amp;amp;id=0d6f8f49-94d0-4e21-a7c1-2d703ce1fd22&amp;amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;amp;elementSetName=full</DatasetCSW>
+<ViewServiceCSW>http://data-test.knmi.nl/inspire/csw?Service=CSW&amp;Request=GetRecordById&amp;Version=2.0.2&amp;id=9155a021-ac62-464c-99e2-b4c809e5ecde&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;elementSetName=full</ViewServiceCSW>
+<DatasetCSW>http://data-test.knmi.nl/inspire/csw?Service=CSW&amp;Request=GetRecordById&amp;Version=2.0.2&amp;id=0d6f8f49-94d0-4e21-a7c1-2d703ce1fd22&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;elementSetName=full</DatasetCSW>
 <AuthorityURL name="NL.KNMI" onlineresource="http://knmi.nl/"/>
-<Identifier authority="NL.KNMI" id="id\_value"/>
+<Identifier authority="NL.KNMI" id="id_value"/>
 </Inspire>
 </WMS>
 
@@ -70,7 +70,7 @@ Datasets within the WMS service are identified with the DATASET=
 parameter, for example:
 
 ```
-http://data-test.knmi.nl/inspire/wms/cgi-bin/wms.cgi?DATASET=urn:xkdc:ds:nl.knmi::kisinspire2/1/&amp;
+http://data-test.knmi.nl/inspire/wms/cgi-bin/wms.cgi?DATASET=urn:xkdc:ds:nl.knmi::kisinspire2/1/&
 ```
 
 In the GetCapabilities document this URL is returned as online resource
@@ -86,11 +86,11 @@ configuration file and several dataset configuration files representing
 the datasets.
 
 -   /data/config/inswms.xml - The global configuration file
--   /data/datasetconfigs/urn\_xkdc\_ds\_nl.knmi\_*kisinspire2\_1*.xml -
+-   /data/datasetconfigs/urn_xkdc_ds_nl.knmi_*kisinspire2_1*.xml -
     The dataset configuration file, which is loaded by using the
     DATASET=urn:xkdc:ds:nl.knmi::kisinspire2/1/ parameter. Note that the
     DATASET identifier is escaped, the ':' and '/' characters become
-    '\_' on the filesystem.
+    '_' on the filesystem.
 
 The global configuration file is named /data/config/inswms.xml and can
 look like this:
@@ -111,9 +111,9 @@ look like this:
 <GridFont location="/data/fonts/FreeSans.ttf" size="5"/>
 <WMSFormat name="image/png" format="image/png"/>
 <Inspire>
-<ViewServiceCSW>http://data-test.knmi.nl/inspire/csw?Service=CSW&amp;amp;Request=GetRecordById&amp;amp;Version=2.0.2&amp;amp;id=9155a021-ac62-464c-99e2-b4c809e5ecde&amp;amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;amp;elementSetName=full</ViewServiceCSW>
+<ViewServiceCSW>http://data-test.knmi.nl/inspire/csw?Service=CSW&amp;Request=GetRecordById&amp;Version=2.0.2&amp;id=9155a021-ac62-464c-99e2-b4c809e5ecde&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;elementSetName=full</ViewServiceCSW>
 <AuthorityURL name="NL.KNMI" onlineresource="http://knmi.nl/"/>
-<Identifier authority="NL.KNMI" id="id\_value"/>
+<Identifier authority="NL.KNMI" id="id_value"/>
 </Inspire>
 </WMS>
 
@@ -124,19 +124,19 @@ Note that in the Inspire section the DatasetCSW is removed, as this
 option is dependent of the dataset in question.
 
 The dataset configuration file needs to have the filename
-urn\_xkdc\_ds\_nl.knmi\_*kisinspire2\_1*.xml and looks like this:
+urn_xkdc_ds_nl.knmi_*kisinspire2_1*.xml and looks like this:
 ```
 <?xml version="1.0" encoding="UTF-8" ?>
 <Configuration>
 <WMS>
 <Inspire>
-<DatasetCSW>http://data-test.knmi.nl/inspire/csw?Service=CSW&amp;amp;Request=GetRecordById&amp;amp;Version=2.0.2&amp;amp;id=0d6f8f49-94d0-4e21-a7c1-2d703ce1fd22&amp;amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;amp;elementSetName=full</DatasetCSW>
+<DatasetCSW>http://data-test.knmi.nl/inspire/csw?Service=CSW&amp;Request=GetRecordById&amp;Version=2.0.2&amp;id=0d6f8f49-94d0-4e21-a7c1-2d703ce1fd22&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;elementSetName=full</DatasetCSW>
 </Inspire>
 </WMS>
 <Layer type="database">
 <FilePath
 filter=".\*\\.nc\$">/data/kisinspire2/1/</FilePath>
-<Name>TG\_air\_temperature</Name>
+<Name>TG_air_temperature</Name>
 <Title>Temperature</Title>
 <Variable>TG</Variable>
 <Abstract>Daily mean temperature in (0.1 degrees
@@ -153,11 +153,11 @@ the following command:
 
 ```
 adagucserver --getlayers --file
-/data/kisinspire2/1/inspire\_daily\_weather\_observations\_kis\_v20131021.nc
+/data/kisinspire2/1/inspire_daily_weather_observations_kis_v20131021.nc
 --inspiredatasetcsw
-"http://data-test.knmi.nl/inspire/csw?Service=CSW&amp;Request=GetRecordById&amp;Version=2.0.2&amp;id=0d6f8f49-94d0-4e21-a7c1-2d703ce1fd22&amp;outputSchema=http://www.isotc211.org/2005/gmd&amp;elementSetName=full"
+"http://data-test.knmi.nl/inspire/csw?Service=CSW&Request=GetRecordById&Version=2.0.2&id=0d6f8f49-94d0-4e21-a7c1-2d703ce1fd22&outputSchema=http://www.isotc211.org/2005/gmd&elementSetName=full"
 --datasetpath /data/kisinspire2/1/ >
-/data/datasetconfigs/urn\_xkdc\_ds\_nl.knmi\_*kisinspire2\_1*.xml
+/data/datasetconfigs/urn_xkdc_ds_nl.knmi_*kisinspire2_1*.xml
 ```
 
 To update the database with these two configuration files you can use
@@ -165,6 +165,6 @@ the following command:
 
 ```
 adagucserver --updatedb --config
-/data/config/inswms.xml,/data/datasetconfigs/urn\_xkdc\_ds\_nl.knmi\_*kisinspire2\_1*.xml
+/data/config/inswms.xml,/data/datasetconfigs/urn_xkdc_ds_nl.knmi_*kisinspire2_1*.xml
 --tailpath <optional, path to granule in datasetdirectory>
 ```

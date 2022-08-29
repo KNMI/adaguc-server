@@ -11,7 +11,7 @@ workstation:
 -   https://github.com/KNMI/adaguc-server\#docker-compose-with-server-and-viewer
 
 On the Preinstalled ADAGUC VM
-(\[\[Preinstalled\_virtual\_environment\]\]) you do:
+(\[\[Preinstalled_virtual_environment\]\]) you do:
 ```
 git clone https://github.com/KNMI/adaguc-server
 /src/KNMI/adaguc-server/Docker

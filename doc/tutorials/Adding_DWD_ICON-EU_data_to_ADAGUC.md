@@ -17,8 +17,8 @@ The script copyICON.sh (attached below) uses the aws client program to
 retrieve data files for a number of parameters and is called like this:
 
 ```
-mkdir \$HOME/ICON\_data
-cd \$HOME/ICON\_data
+mkdir \$HOME/ICON_data
+cd \$HOME/ICON_data
 bash copyICON.sh 2018112200
 ```
 The ICO files should appear in a subdirectory named 2018112200
@@ -34,23 +34,23 @@ docker build -t fimex .
 This Docker image can be run as followed:
 ```
 docker run --mount type=bind,source=\`pwd\`,target=/app -w /app fimex
-fimex --input.config cdmGribReaderConfig\_DWD\_ICON\_EU.xml --input.file
+fimex --input.config cdmGribReaderConfig_DWD_ICON_EU.xml --input.file
 "glob:2018112200/\*grib2" --input.type grib2 --input.printNcML
---ncml.config DWD\_ICON\_EU.ncml --output.type nc4 --output.file
-ICON\_2018112200.nc
+--ncml.config DWD_ICON_EU.ncml --output.type nc4 --output.file
+ICON_2018112200.nc
 ```
 
 FIMEX needs a few configuration files to describe the conversion:
 
--   cdmGribReaderConfig\_DWD\_ICON\_EU.xml - describes the grib
+-   cdmGribReaderConfig_DWD_ICON_EU.xml - describes the grib
     parameters
--   DWD\_ICON\_EU.ncml - describes some changes to be made to the NetCDF
+-   DWD_ICON_EU.ncml - describes some changes to be made to the NetCDF
     parameters for removing unwanted dimensions
 
 We can then copy the file the AutoWMS directory for previewing:
 ```
-cp ICON\_2018112200.nc \$HOME/data/adaguc-autowms
+cp ICON_2018112200.nc \$HOME/data/adaguc-autowms
 ```
 
 URL:
-http://localhost:3382/adaguc-services/adagucserver?source=ICON\_2018112109.nc&amp;service=wms&amp;request=getcapabilities
+http://localhost:3382/adaguc-services/adagucserver?source=ICON_2018112109.nc&service=wms&request=getcapabilities

@@ -6,7 +6,7 @@ GetFeatureInfo
 
 The GetFeatureInfo call needs all parameters for a GetMap request,
 except REQUEST and adds X and Y (the pixel coordinates of interest) and
-QUERY\_LAYERS (the layer(s) of interest)
+QUERY_LAYERS (the layer(s) of interest)
 
 For multimodel timeseries please check [Ensemble timeseries](Ensemble timeseries.md)
 
@@ -16,29 +16,29 @@ aspects:
 New request parameters:
 
 -   ...
--   JSONP=<javascript\_function\_name> *data is returned as
+-   JSONP=<javascript_function_name> *data is returned as
     JavaScript code, where provided function is called with JSON result*
 
 Extended request parameters:
 
--   INFO\_FORMAT=<FORMAT> \_which can be image/gif, image/png,
+-   INFO_FORMAT=<FORMAT> _which can be image/gif, image/png,
     text/plain, application/xml, text/html, application/json
 
 ### JSON format
 
 The URL
-http://bvmlab-218-41.knmi.nl/cgi-bin/ECMD\_EUR.cgi?&SERVICE=WMS&amp;REQUEST=GetFeatureInfo&amp;VERSION=1.1.1
-&SRS=EPSG%3A4326&amp;LAYERS=201306130000%2FLS\_precipitation&amp;QUERY\_LAYERS=201306130000%2FLS\_precipitation
-&BBOX=-180,-131.06076210092687,180,131.06076210092687&amp;WIDTH=971&amp;HEIGHT=707&amp;X=482&amp;Y=224
-&FORMAT=image/gif&amp;INFO\_FORMAT=application/json&amp;STYLES=&&time=2013-06-13T00:00:00Z/2013-06-16T03:00:00Z
+http://bvmlab-218-41.knmi.nl/cgi-bin/ECMD_EUR.cgi?&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.1.1
+&SRS=EPSG%3A4326&LAYERS=201306130000%2FLS_precipitation&QUERY_LAYERS=201306130000%2FLS_precipitation
+&BBOX=-180,-131.06076210092687,180,131.06076210092687&WIDTH=971&HEIGHT=707&X=482&Y=224
+&FORMAT=image/gif&INFO_FORMAT=application/json&STYLES=&&time=2013-06-13T00:00:00Z/2013-06-16T03:00:00Z
 
 gives the following result:
 ```<code class="json">
 \[
 
 {
-"name": "large\_scale\_precipitation",
-"standard\_name": "large\_scale\_precipitation",
+"name": "large_scale_precipitation",
+"standard_name": "large_scale_precipitation",
 "units": "mm",
 "point": {
 "SRS": "EPSG:4326",
@@ -102,17 +102,17 @@ timeseries for a "plume" image.
 Parameters for a GetPointValue request are:
 
 An example of a multi-dimensional data request:
-http://bvmlab-218-41.knmi.nl/cgi-bin/ECMD\_EUR.cgi?&SERVICE=WMS&amp;REQUEST=GetPointValue&amp;VERSION=1.1.1
-&SRS=EPSG:4326&amp;QUERY\_LAYERS=201306130000/Temperature\_pl&amp;X=5.2&amp;Y=52.0&amp;INFO\_FORMAT=application/json&amp;
-time=2013-06-13T00:00:00Z/2013-06-13T12:00:00Z&amp;DIM\_pressure=300,500
+http://bvmlab-218-41.knmi.nl/cgi-bin/ECMD_EUR.cgi?&SERVICE=WMS&REQUEST=GetPointValue&VERSION=1.1.1
+&SRS=EPSG:4326&QUERY_LAYERS=201306130000/Temperature_pl&X=5.2&Y=52.0&INFO_FORMAT=application/json&
+time=2013-06-13T00:00:00Z/2013-06-13T12:00:00Z&DIM_pressure=300,500
 
 Output:
 ```<code class="json">
 \[
 
 {
-"name": "air\_temperature",
-"standard\_name": "air\_temperature",
+"name": "air_temperature",
+"standard_name": "air_temperature",
 "units": "Celsius",
 "point": {
 "SRS": "EPSG:4326",
@@ -144,17 +144,17 @@ Output:
 </code>```
 
 A request can also be for multiple variables:
-http://bvmlab-218-41.knmi.nl/cgi-bin/ECMD\_EUR.cgi?&SERVICE=WMS&amp;REQUEST=GetPointValue&amp;VERSION=1.1.1
-&SRS=EPSG:4326&amp;QUERY\_LAYERS=201306130000/Temperature\_pl,201306130000/ZGeo\_Height&amp;X=5.2&amp;Y=52.0
-&INFO\_FORMAT=application/json&amp;time=2013-06-13T00:00:00Z/2013-06-13T12:00:00Z&amp;DIM\_pressure=300,500
+http://bvmlab-218-41.knmi.nl/cgi-bin/ECMD_EUR.cgi?&SERVICE=WMS&REQUEST=GetPointValue&VERSION=1.1.1
+&SRS=EPSG:4326&QUERY_LAYERS=201306130000/Temperature_pl,201306130000/ZGeo_Height&X=5.2&Y=52.0
+&INFO_FORMAT=application/json&time=2013-06-13T00:00:00Z/2013-06-13T12:00:00Z&DIM_pressure=300,500
 
 Output:
 ```<code class="json">
 \[
 
 {
-"name": "air\_temperature",
-"standard\_name": "air\_temperature",
+"name": "air_temperature",
+"standard_name": "air_temperature",
 "units": "Celsius",
 "point": {
 "SRS": "EPSG:4326",
@@ -183,7 +183,7 @@ Output:
 },
 {
 "name": "height",
-"standard\_name": "height",
+"standard_name": "height",
 "units": "m",
 "point": {
 "SRS": "EPSG:4326",
@@ -221,36 +221,36 @@ The GetMetaData request fetches the metadata for a layer of a service.
 
 An example URL:
 
-http://bvmlab-218-41.knmi.nl/cgi-bin/ECMD\_EUR.cgi?&SERVICE=WMS&amp;REQUEST=GetMetaData&amp;VERSION=1.1.1
-&LAYER=201306130000%2FZGeo\_Height&amp;FORMAT=text/html&amp;&time=2013-06-16T03%3A00%3A00Z&amp;DIM\_pressure=300
+http://bvmlab-218-41.knmi.nl/cgi-bin/ECMD_EUR.cgi?&SERVICE=WMS&REQUEST=GetMetaData&VERSION=1.1.1
+&LAYER=201306130000%2FZGeo_Height&FORMAT=text/html&&time=2013-06-16T03%3A00%3A00Z&DIM_pressure=300
 
 Output:
 ```
 CCDFDataModel {
 dimensions:
-lats\_1 = 101 ;
-lons\_1 = 201 ;
+lats_1 = 101 ;
+lons_1 = 201 ;
 time = 26 ;
-pressure\_level = 5 ;
+pressure_level = 5 ;
 time2 = 25 ;
 variables:
-float lats\_1(lats\_1) ;
-lats\_1:units = "degrees\_north" ;
-lats\_1:long\_name = "latitude" ;
-lats\_1:standard\_name = "latitude" ;
-float lons\_1(lons\_1) ;
-lons\_1:units = "degrees\_east" ;
-lons\_1:long\_name = "longitude" ;
-lons\_1:standard\_name = "longitude" ;
+float lats_1(lats_1) ;
+lats_1:units = "degrees_north" ;
+lats_1:long_name = "latitude" ;
+lats_1:standard_name = "latitude" ;
+float lons_1(lons_1) ;
+lons_1:units = "degrees_east" ;
+lons_1:long_name = "longitude" ;
+lons_1:standard_name = "longitude" ;
 double time(time) ;
-time:long\_name = "time" ;
-time:standard\_name = "time" ;
+time:long_name = "time" ;
+time:standard_name = "time" ;
 time:units = "hours since 2013-06-13 00:00:00" ;
-float pressure\_level(pressure\_level) ;
-pressure\_level:units = "hPa" ;
-pressure\_level:standard\_name = "pressure\_level" ;
-pressure\_level:long\_name = "pressure\_level" ;
-pressure\_level:positive = "down" ;
+float pressure_level(pressure_level) ;
+pressure_level:units = "hPa" ;
+pressure_level:standard_name = "pressure_level" ;
+pressure_level:long_name = "pressure_level" ;
+pressure_level:positive = "down" ;
 double time2(time2) ;
 ...
 ...

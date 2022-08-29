@@ -19,7 +19,7 @@ password=adaguc"/>
 
 <!-- WMS settings -->
 <WMS>
-<Title>OMI\_Pytroll\_DEMO\_SERVICE</Title>
+<Title>OMI_Pytroll_DEMO_SERVICE</Title>
 <Abstract>This service demonstrates how the ADAGUC server can be
 used to create OGC services.</Abstract>
 <RootLayer>
@@ -46,7 +46,7 @@ size="5"/>
 
 <!-- WCS settings -->
 <WCS>
-<Title>DEMO\_SERVICE</Title>
+<Title>DEMO_SERVICE</Title>
 <Label>wcsLabel</Label>
 <WCSFormat name="NetCDF3" driver="ADAGUC"
 mimetype="Content-Type:text/plain" options="FORCENC3=TRUE"/>
@@ -55,16 +55,16 @@ mimetype="Content-Type:text/plain"/>
 </WCS>
 
 <!-- Projections -->
-<Projection id="EPSG:3411" proj4="+proj=stere +lat\_0=90 +lat\_ts=70
-+lon\_0=-45 +k=1 +x\_0=0 +y\_0=0 +a=6378273 +b=6356889.449 +units=m
-+no\_defs"/>
-<Projection id="EPSG:3412" proj4="+proj=stere +lat\_0=-90
-+lat\_ts=-70 +lon\_0=0 +k=1 +x\_0=0 +y\_0=0 +a=6378273 +b=6356889.449
-+units=m +no\_defs"/>
-<Projection id="EPSG:3575" proj4="+proj=laea +lat\_0=90 +lon\_0=10
-+x\_0=0 +y\_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no\_defs"/>
+<Projection id="EPSG:3411" proj4="+proj=stere +lat_0=90 +lat_ts=70
++lon_0=-45 +k=1 +x_0=0 +y_0=0 +a=6378273 +b=6356889.449 +units=m
++no_defs"/>
+<Projection id="EPSG:3412" proj4="+proj=stere +lat_0=-90
++lat_ts=-70 +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378273 +b=6356889.449
++units=m +no_defs"/>
+<Projection id="EPSG:3575" proj4="+proj=laea +lat_0=90 +lon_0=10
++x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"/>
 <Projection id="EPSG:3857" proj4="+proj=merc +a=6378137 +b=6378137
-+lat\_ts=0.0 +lon\_0=0.0 +x\_0=0.0 +y\_0=0 +k=1.0 +units=m
++lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m
 +nadgrids=`null +wktext  +no_defs"/>
   <Projection id="EPSG:4258"   proj4="+proj=longlat +ellps=GRS80 +no_defs"/>
   <Projection id="EPSG:4326"   proj4="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"/>
@@ -74,10 +74,10 @@ mimetype="Content-Type:text/plain"/>
   <Projection id="EPSG:32661"  proj4="+proj=stere +lat_0=90 +lat_ts=90 +lon_0=0 +k=0.994 +x_0=2000000 +y_0=2000000 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"/>
   <Projection id="EPSG:40000"  proj4="+proj=stere +ellps=WGS84 +lat_0=90 +lon_0=0 +no_defs"/>
   <Projection id="EPSG:900913" proj4=" +proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=`null
-+no\_defs"/>
++no_defs"/>
 <Projection id="EPSG:102100" proj4="+proj=merc +a=6378137 +b=6378137
-+lat\_ts=0.0 +lon\_0=0.0 +x\_0=0.0 +y\_0=0 +k=1.0 +units=m
-+nadgrids=@null +wktext +no\_defs"/>
++lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m
++nadgrids=@null +wktext +no_defs"/>
 
 <!-~~Legends -~~>
 
@@ -98,118 +98,118 @@ mimetype="Content-Type:text/plain"/>
 
 <!-- Layer configuration -->
 <Layer type="database">
-<Group value="MSG\_RGB\_EuropeCanary"/>
+<Group value="MSG_RGB_EuropeCanary"/>
 <FilePath
-filter=".\*\\.nc\$">/data/services/data/pytroll/MSG\_RGB\_EuropeCanary/</FilePath>
+filter=".\*\\.nc\$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
 <Variable>overview</Variable>
 <RenderMethod>rgba</RenderMethod>
 <Dimension name="time" interval="PT15M">time</Dimension>
 </Layer>
 
 <Layer type="database">
-<Group value="MSG\_RGB\_EuropeCanary"/>
+<Group value="MSG_RGB_EuropeCanary"/>
 <FilePath
-filter=".\*\\.nc\$">/data/services/data/pytroll/MSG\_RGB\_EuropeCanary/</FilePath>
+filter=".\*\\.nc\$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
 <Variable>airmass</Variable>
 <RenderMethod>rgba</RenderMethod>
 <Dimension name="time" interval="PT15M">time</Dimension>
 </Layer>
 
 <Layer type="database">
-<Group value="MSG\_RGB\_EuropeCanary"/>
+<Group value="MSG_RGB_EuropeCanary"/>
 <FilePath
-filter=".\*\\.nc\$">/data/services/data/pytroll/MSG\_RGB\_EuropeCanary/</FilePath>
+filter=".\*\\.nc\$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
 <Variable>ash</Variable>
 <RenderMethod>rgba</RenderMethod>
 <Dimension name="time" interval="PT15M">time</Dimension>
 </Layer>
 
 <Layer type="database">
-<Group value="MSG\_RGB\_EuropeCanary"/>
+<Group value="MSG_RGB_EuropeCanary"/>
 <FilePath
-filter=".\*\\.nc\$">/data/services/data/pytroll/MSG\_RGB\_EuropeCanary/</FilePath>
+filter=".\*\\.nc\$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
 <Variable>cloudtop</Variable>
 <RenderMethod>rgba</RenderMethod>
 <Dimension name="time" interval="PT15M">time</Dimension>
 </Layer>
 
 <Layer type="database">
-<Group value="MSG\_RGB\_EuropeCanary"/>
+<Group value="MSG_RGB_EuropeCanary"/>
 <FilePath
-filter=".\*\\.nc\$">/data/services/data/pytroll/MSG\_RGB\_EuropeCanary/</FilePath>
+filter=".\*\\.nc\$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
 <Variable>convection</Variable>
 <RenderMethod>rgba</RenderMethod>
 <Dimension name="time" interval="PT15M">time</Dimension>
 </Layer>
 
 <Layer type="database">
-<Group value="MSG\_RGB\_EuropeCanary"/>
+<Group value="MSG_RGB_EuropeCanary"/>
 <FilePath
-filter=".\*\\.nc\$">/data/services/data/pytroll/MSG\_RGB\_EuropeCanary/</FilePath>
+filter=".\*\\.nc\$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
 <Variable>dust</Variable>
 <RenderMethod>rgba</RenderMethod>
 <Dimension name="time" interval="PT15M">time</Dimension>
 </Layer>
 
 <Layer type="database">
-<Group value="MSG\_RGB\_EuropeCanary"/>
+<Group value="MSG_RGB_EuropeCanary"/>
 <FilePath
-filter=".\*\\.nc\$">/data/services/data/pytroll/MSG\_RGB\_EuropeCanary/</FilePath>
-<Variable>green\_snow</Variable>
+filter=".\*\\.nc\$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
+<Variable>green_snow</Variable>
 <RenderMethod>rgba</RenderMethod>
 <Dimension name="time" interval="PT15M">time</Dimension>
 </Layer>
 
 <Layer type="database">
-<Group value="MSG\_RGB\_EuropeCanary"/>
+<Group value="MSG_RGB_EuropeCanary"/>
 <FilePath
-filter=".\*\\.nc\$">/data/services/data/pytroll/MSG\_RGB\_EuropeCanary/</FilePath>
+filter=".\*\\.nc\$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
 <Variable>natural</Variable>
 <RenderMethod>rgba</RenderMethod>
 <Dimension name="time" interval="PT15M">time</Dimension>
 </Layer>
 
 <Layer type="database">
-<Group value="MSG\_RGB\_EuropeCanary"/>
+<Group value="MSG_RGB_EuropeCanary"/>
 <FilePath
-filter=".\*\\.nc\$">/data/services/data/pytroll/MSG\_RGB\_EuropeCanary/</FilePath>
-<Variable>night\_fog</Variable>
+filter=".\*\\.nc\$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
+<Variable>night_fog</Variable>
 <RenderMethod>rgba</RenderMethod>
 <Dimension name="time" interval="PT15M">time</Dimension>
 </Layer>
 
 <Layer type="database">
-<Group value="MSG\_RGB\_EuropeCanary"/>
+<Group value="MSG_RGB_EuropeCanary"/>
 <FilePath
-filter=".\*\\.nc\$">/data/services/data/pytroll/MSG\_RGB\_EuropeCanary/</FilePath>
-<Variable>red\_snow</Variable>
+filter=".\*\\.nc\$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
+<Variable>red_snow</Variable>
 <RenderMethod>rgba</RenderMethod>
 <Dimension name="time" interval="PT15M">time</Dimension>
 </Layer>
 
 <Layer type="database">
 <Group value="noaa"/>
-<Name>overview\_neur</Name>
+<Name>overview_neur</Name>
 <Title>Overview Northern Europe</Title>
-<FilePath>/data/services/data/pytroll/noaa/NOAA19\_RGB\_20121127\_0959\_NEur.nc</FilePath>
+<FilePath>/data/services/data/pytroll/noaa/NOAA19_RGB_20121127_0959_NEur.nc</FilePath>
 <Variable>overview</Variable>
 <RenderMethod>rgba</RenderMethod>
 </Layer>
 
 <Layer type="database">
 <Group value="noaa"/>
-<Name>overview\_moll</Name>
+<Name>overview_moll</Name>
 <Title>Overview Mollweide</Title>
-<FilePath>/data/services/data/pytroll/noaa/NOAA19\_RGB\_20121127\_0959\_moll.nc</FilePath>
+<FilePath>/data/services/data/pytroll/noaa/NOAA19_RGB_20121127_0959_moll.nc</FilePath>
 <Variable>overview</Variable>
 <RenderMethod>rgba</RenderMethod>
 </Layer>
 
 <Layer type="database">
 <Group value="npp"/>
-<Name>overview\_moll</Name>
+<Name>overview_moll</Name>
 <Title>Overview Mollweide</Title>
-<FilePath>/data/services/data/pytroll/npp/NPP\_RGB\_20121125\_1046\_moll.nc</FilePath>
+<FilePath>/data/services/data/pytroll/npp/NPP_RGB_20121125_1046_moll.nc</FilePath>
 <Variable>overview</Variable>
 <RenderMethod>rgba</RenderMethod>
 </Layer>

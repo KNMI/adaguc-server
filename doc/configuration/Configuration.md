@@ -97,15 +97,15 @@ Configuration
     -   [FeatureInterval](FeatureInterval.md) (match, matchid, label, bgcolor,
         fillcolor) - Draw GeoJSON features and select features based on
         regular expressions.
-    -   [SymbolInterval](SymbolInterval.md) (min, max, binary\_and, file, offset\_x,
-        offset\_y) - Draw symbols according to point value
+    -   [SymbolInterval](SymbolInterval.md) (min, max, binary_and, file, offset_x,
+        offset_y) - Draw symbols according to point value
     -   SmoothingFilter <value> - Optional, defaults to 1. The
         filter to smooth the image when using contour lines and shading.
     -   [NameMapping](NameMapping.md) (name,title,abstract) - Optional, Provide
         detailed descriptions and human readable names for every style.
-    -   [StandardNames](StandardNames.md) (standard\_name, variable\_name, units) -
+    -   [StandardNames](StandardNames.md) (standard_name, variable_name, units) -
         Optional, assigns this style to layers matching the
-        standard\_name and optionally the units.
+        standard_name and optionally the units.
     -   [Point](Point.md)
         (min,max,pointstyle,fillcolor,linecolor,textcolor,textformat,fontfile,fontsize,discradius,textradius,dot,anglestart,anglestop,plotstationid))
         Configuration of rendering point data. See also \[\[Point data
@@ -133,7 +133,7 @@ Configuration
         configured, otherwise the name is adjusted to become unique
         within groups.
     -   Title <value> - Optional, provide a title for the layer.
-        If not configured it is derived from long\_name, standard\_name
+        If not configured it is derived from long_name, standard_name
         or variable names of the selected variable from the file.
     -   [Group](Group.md) (value) - Optional, layers are hierarchically
         nested based on the value attribute set in the Group element.

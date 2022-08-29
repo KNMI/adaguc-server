@@ -1,6 +1,8 @@
 AutoResource (enableautoopendap, enablelocalfile, enablecache)
 ==============================================================
 
+Back to [Configuration](./Configuration.md)
+
 AutoResource enables the creation of WMS services on the fly from
 opendap resources and local files. This can be useful to quicklook an
 opendap data resource, or to create WMS services on the fly on a bunch
@@ -12,13 +14,13 @@ of files residing in a directory.
     files, in this case additional [Dir](Dir.md) elements must be
     configured.
 -   enablecache - Optional defaults to false
-    ```
-    <AutoResource enableautoopendap="false" enablelocalfile="false"
-    enablecache="false" >
-    <Dir basedir="/data/sdpkdc/" prefix="/data/sdpkdc/"/>
-    <Dir basedir="/data/omi/" prefix="/data/omi/"/>
+  
+```xml
+    <AutoResource enableautoopendap="false" enablelocalfile="false" enablecache="false" >
+      <Dir basedir="/data/sdpkdc/" prefix="/data/sdpkdc/"/>
+      <Dir basedir="/data/omi/" prefix="/data/omi/"/>
     </AutoResource>
-    ```
+```
 
 Files can now be accessed by adding the source=/data/myfile.nc to the
 WMS and WCS urls.

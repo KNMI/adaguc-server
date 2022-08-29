@@ -1,10 +1,12 @@
 Style (name)
 ============
 
+Back to [Configuration](./Configuration.md)
+
 Configures a style configuration, which can be assigned to a layer by
 using the <Styles> element in that Layer. Styles can also be
 assigned automatically to a Layer by configuring one or more
-StandardNames element(s). When the Layers standard\_name matches with
+StandardNames element(s). When the Layers standard_name matches with
 one of the names configured in a Style, this Style will also be assigned
 to that Layer.
 
@@ -18,7 +20,7 @@ data with automatically detected min/max values.
 ```
 
 <Style name="auto">
-<Legend>Tg\_woltnhoff</Legend>
+<Legend>Tg_woltnhoff</Legend>
 <Scale>0</Scale>
 <Offset>0</Offset>
 <RenderMethod>nearest,bilinear,point</RenderMethod>
@@ -54,7 +56,7 @@ abstract="Shaded with contourlines"/>
 abstract="Nearest neighbour with contourlines"/>
 <NameMapping name="bilinearcontour" title="Temperature 0-10 bilinear"
 abstract="Bilinear with contourlines"/>
-<StandardNames standard\_name="air\_temperature"
+<StandardNames standard_name="air_temperature"
 units="Celsius"/>
 <Min>0</Min>
 <Max>10</Max>
@@ -99,7 +101,7 @@ background"/>
 background"/>
 <NameMapping name="shadedcontour" title="High cloud cover shaded +
 contours" abstract="Contours with shaded background"/>
-<StandardNames standard\_name="high\_cloud\_cover"/>
+<StandardNames standard_name="high_cloud_cover"/>
 </Style>
 ```
 

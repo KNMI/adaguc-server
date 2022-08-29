@@ -9,7 +9,7 @@ For example:
 ```
 <!-- Layer configuration -->
 <Layer type="database">
-<FilePath>http://opendap.nmdc.eu/knmi/thredds/dodsC/essence/run031/2D\_3hrly/temp2\_031\_2006-2010.nc</FilePath>
+<FilePath>http://opendap.nmdc.eu/knmi/thredds/dodsC/essence/run031/2D_3hrly/temp2_031_2006-2010.nc</FilePath>
 <Variable>temp2</Variable>
 <Styles>rainbow</Styles>
 <Dimension name="time" interval="PT3H"

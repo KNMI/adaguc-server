@@ -43,33 +43,33 @@ log file) and connects to the database and reads in NetCDF files.
 Finally the server returns an image or document. The required
 environment variables are:
 
--   ADAGUC\_CONFIG - pointer to the configuration file
--   ADAGUC\_LOGFILE - pointer where log messages should be stored,
+-   ADAGUC_CONFIG - pointer to the configuration file
+-   ADAGUC_LOGFILE - pointer where log messages should be stored,
     includes information logs and error logs
--   ADAGUC\_ERRORFILE - optional pointer which logs only error messages
--   ADAGUC\_FONT - Place where a TrueType font is stored, e.g.
+-   ADAGUC_ERRORFILE - optional pointer which logs only error messages
+-   ADAGUC_FONT - Place where a TrueType font is stored, e.g.
     FreeSans.ttf
--   ADAGUC\_DATARESTRICTION - Optional pointer which controls access
+-   ADAGUC_DATARESTRICTION - Optional pointer which controls access
     restrictions, by default set to FALSE, can be combinations of
-    "ALLOW\_WCS|ALLOW\_GFI|ALLOW\_METADATA|SHOW\_QUERYINFO", separated
+    "ALLOW_WCS|ALLOW_GFI|ALLOW_METADATA|SHOW_QUERYINFO", separated
     with the | token.
     -   FALSE: No restrictions (default, same as
-        "ALLOW\_WCS|ALLOW\_GFI|ALLOW\_METADATA")
-    -   ALLOW\_WCS: Allows the Web Coverage Service, download of data
-    -   ALLOW\_GFI: Allows GetFeatureInfo requests, e.g. getting
+        "ALLOW_WCS|ALLOW_GFI|ALLOW_METADATA")
+    -   ALLOW_WCS: Allows the Web Coverage Service, download of data
+    -   ALLOW_GFI: Allows GetFeatureInfo requests, e.g. getting
         information about a certain location
-    -   ALLOW\_METADATA: Allows getting NetCDF header metadata
+    -   ALLOW_METADATA: Allows getting NetCDF header metadata
         information
-    -   SHOW\_QUERYINFO: When a query has failed, the corresponding
+    -   SHOW_QUERYINFO: When a query has failed, the corresponding
         query will be presented to the user. This feature is disabled by
         default.
--   ADAGUC\_PATH - optional, is used as variable susbstitution
-    {ADAGUC\_PATH} in the configuration files, should point to the
+-   ADAGUC_PATH - optional, is used as variable susbstitution
+    {ADAGUC_PATH} in the configuration files, should point to the
     adagucserver installation
--   ADAGUC\_TMP - optional, is used as variable susbstitution
-    {ADAGUC\_TMP} in the configuration files, location where tempfiles
+-   ADAGUC_TMP - optional, is used as variable susbstitution
+    {ADAGUC_TMP} in the configuration files, location where tempfiles
     need to be written
--   ADAGUC\_ONLINERESOURCE - optional, specify the online resource in
+-   ADAGUC_ONLINERESOURCE - optional, specify the online resource in
     the CGI script itself, see [OnlineResource](OnlineResource.md) to configure in
     the xml file.
 
@@ -83,13 +83,13 @@ Example bash script:
 ```
 \#!/bin/bash
 
-export LD\_LIBRARY\_PATH=/build/lib/:\$LD\_LIBRARY\_PATH
-export PROJ\_LIB=/build/share/proj/
-export ADAGUC\_CONFIG=/data/services/config/config.xml
-export ADAGUC\_LOGFILE=data/log/server.log
-export ADAGUC\_ERRORFILE=/data/log/server.errlog
-export ADAGUC\_FONT=/data/fonts/FreeSans.ttf
-export ADAGUC\_DATARESTRICTION="FALSE"
+export LD_LIBRARY_PATH=/build/lib/:\$LD_LIBRARY_PATH
+export PROJ_LIB=/build/share/proj/
+export ADAGUC_CONFIG=/data/services/config/config.xml
+export ADAGUC_LOGFILE=data/log/server.log
+export ADAGUC_ERRORFILE=/data/log/server.errlog
+export ADAGUC_FONT=/data/fonts/FreeSans.ttf
+export ADAGUC_DATARESTRICTION="FALSE"
 
 echo "Access-Control-Allow-Origin: \*"
 echo "Access-Control-Allow-Methods: GET"
@@ -102,9 +102,9 @@ tutorials are available under [Tutorials](Tutorials.md)
 
 The server is able to read CF compliant files. In case of projected
 source data, a number of CF projections are supported. The server uses
-the ADAGUC standard for projected files, this means that a proj4\_params
+the ADAGUC standard for projected files, this means that a proj4_params
 attribute is used in the projection definition. See
-http://adaguc.knmi.nl/contents/documents/ADAGUC\_Standard.html for
+http://adaguc.knmi.nl/contents/documents/ADAGUC_Standard.html for
 details.
 
 The server can read single files, or multiple files varying along a
@@ -121,7 +121,7 @@ The viewer is an independent and standalone package. After downloading
 and extracting the package in a www directory of a webserver, the viewer
 should already work. The viewer can be downloaded from the ADAGUC
 software download page at
-http://adaguc.knmi.nl/contents/documents/ADAGUC\_software.html or it can
+http://adaguc.knmi.nl/contents/documents/ADAGUC_software.html or it can
 be cloned from the repository at https://github.com/KNMI/adaguc-viewer
 
 ![](ADAGUC_Overview_viewer.jpg)

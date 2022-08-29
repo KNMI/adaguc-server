@@ -11,11 +11,11 @@ FilePath (filter, maxquerylimit, ncml) <value>
 -   <value> - Directory, file or OpenDAP url
 
 The following configuration adds all files in the specified directory
-matching the regular expression \^KMDS*TEST\_P1M\_OBSL2*\_.\*\\.nc\$ to
+matching the regular expression \^KMDS*TEST_P1M_OBSL2*_.\*\\.nc\$ to
 the service:
 ```
 <FilePath
-filter="\^KMDS*TEST\_P1M\_OBSL2*\_.\*\\.nc\$">/data/sdpkdc/kmds/</FilePath>
+filter="\^KMDS*TEST_P1M_OBSL2*_.\*\\.nc\$">/data/sdpkdc/kmds/</FilePath>
 ```
 
 filter
@@ -30,10 +30,10 @@ filter
     expressions.
     For example, if you would like to filter the following files based
     on prefixes:
-    -   CFD\_index\_0.25deg\_reg\_v8.0.nc
-    -   FD\_index\_0.25deg\_reg\_v8.0.nc
-        You can use the filter "\^CFD\_index.**\$" and
-        "\^FD\_index.**\$" respectively.
+    -   CFD_index_0.25deg_reg_v8.0.nc
+    -   FD_index_0.25deg_reg_v8.0.nc
+        You can use the filter "\^CFD_index.**\$" and
+        "\^FD_index.**\$" respectively.
 
 <!-- -->
 

@@ -135,7 +135,7 @@ Seismological data
 ------------------
 
 ```
-<Legend name="magnitude\_int" type="interval">
+<Legend name="magnitude_int" type="interval">
 <palette index="0" color="\#55005550"/> <!-- 0 Nothing -->
 <palette index="20" color="\#66009980"/> <!-- 1 Insignificant
 -->
@@ -158,7 +158,7 @@ Seismological data
 <palette index="239" color="\#000000FF"/> <!-- 12 !! -->
 </Legend>
 
-<Legend name="magnitude\_col" type="colorRange">
+<Legend name="magnitude_col" type="colorRange">
 <palette index="0" color="\#55005550"/> <!-- 0 Nothing -->
 <palette index="20" color="\#66009980"/> <!-- 1 Insignificant
 -->
@@ -181,7 +181,7 @@ Seismological data
 <palette index="239" color="\#000000FF"/> <!-- 12 !! -->
 </Legend>
 
-<Legend name="magnitude\_noalpha" type="colorRange">
+<Legend name="magnitude_noalpha" type="colorRange">
 <palette index="0" color="\#550055"/> <!-- 0 Nothing -->
 <palette index="20" color="\#660099"/> <!-- 1 Insignificant
 -->
@@ -203,9 +203,9 @@ Seismological data
 <palette index="239" color="\#000000"/> <!-- 12 !! -->
 </Legend>
 
-<Style name="magnitude\_int">
+<Style name="magnitude_int">
 <Legend fixed="true"
-tickinterval="1">magnitude\_int</Legend>
+tickinterval="1">magnitude_int</Legend>
 <RenderMethod>point</RenderMethod>
 <Min>0</Min>
 <Max>12</Max>
@@ -215,9 +215,9 @@ abstract="With discrete colors"/>
 textradius="0" dot="false" fontsize="14" textcolor="\#FFFFFF"/>
 </Style>
 
-<Style name="magnitude\_col">
+<Style name="magnitude_col">
 <Legend fixed="true"
-tickinterval="1">magnitude\_col</Legend>
+tickinterval="1">magnitude_col</Legend>
 <RenderMethod>point</RenderMethod>
 <Min>0</Min>
 <Max>12</Max>
@@ -229,7 +229,7 @@ textradius="0" dot="false" fontsize="14" textcolor="\#FFFFFF"/>
 
 <Style name="magnitude2">
 <Legend fixed="true"
-tickinterval="1">magnitude\_int</Legend>
+tickinterval="1">magnitude_int</Legend>
 <RenderMethod>point</RenderMethod>
 <Min>0</Min>
 <Max>12</Max>
@@ -242,7 +242,7 @@ textradius="0" dot="false" fontsize="14" textcolor="\#FFFFFF"/>
 
 <Style name="magnitude3">
 <Legend fixed="true"
-tickinterval="1">magnitude\_int</Legend>
+tickinterval="1">magnitude_int</Legend>
 <RenderMethod>point</RenderMethod>
 <Min>0</Min>
 <Max>12</Max>

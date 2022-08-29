@@ -10,5 +10,5 @@ ImageText (attribute)
 ```
 
 ```
-<ImageText attribute="E-OBS\_version"/>
+<ImageText attribute="E-OBS_version"/>
 ```

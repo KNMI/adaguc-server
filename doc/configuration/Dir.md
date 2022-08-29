@@ -1,6 +1,8 @@
 Dir (basedir,prefix)
 ====================
 
+Back to [Configuration](./Configuration.md)
+
 Directory to read netcdf files from to create WMS services from netcdf
 files on the fly.
 
@@ -13,11 +15,10 @@ files on the fly.
 Multiple Dir elements are allowed.
 
 For example:
-```
-<AutoResource enableautoopendap="false" enablelocalfile="false"
-enablecache="false" >
-<Dir basedir="/data/sdpkdc/" prefix="/data/sdpkdc/"/>
-<Dir basedir="/data/omi/" prefix="/data/omi/"/>
+```xml
+<AutoResource enableautoopendap="false" enablelocalfile="false" enablecache="false" >
+  <Dir basedir="/data/sdpkdc/" prefix="/data/sdpkdc/"/>
+  <Dir basedir="/data/omi/" prefix="/data/omi/"/>
 </AutoResource>
 ```
 
