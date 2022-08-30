@@ -494,101 +494,84 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
     CDF::Attribute *X_standard_name = dataSource->varX->getAttributeNE("standard_name");
     if (X_standard_name != NULL) {
 	    CDBDebug("Standard Name of the nx variable: %s", X_standard_name->toString().c_str());
-	    	    }
-    
-    CDF::Attribute *units = dataSource->varX->getAttributeNE("units");
-    if (units != NULL) {
-      
-	    if ((X_standard_name != NULL && X_standard_name->toString().equals("projection_x_coordinate"))) {
-				     
-		const CT::string unitString = units->toString();
-		if (unitString.equals("rad") || unitString.equals("radian")) {
-		CDBDebug("units: %s", units->toString().c_str());
+	    	    
+	    CDF::Attribute *projvarnameAttr = dataSourceVar->getAttributeNE("grid_mapping");
+	    if (projvarnameAttr != NULL) {    
+		    CDF::Variable *projVar = cdfObject->getVariableNE(projvarnameAttr->toString().c_str());
+		    if (projVar != NULL) {
+		    	    CDF::Attribute *units = dataSource->varX->getAttributeNE("units");
+			    if (units != NULL) {
+			      	    CDF::Attribute *grid_mapping_name = projVar->getAttributeNE("grid_mapping_name");
+			      	    if (grid_mapping_name != NULL){
+				      	    if (grid_mapping_name->toString().equals("geostationary")){
+						    
+						    if (X_standard_name->toString().equals("projection_x_coordinate")) {
+							// geo projection following  CF <= CF-1.8		     
+							const CT::string unitString = units->toString();
+							if (unitString.equals("rad") || unitString.equals("radian")) {
+							CDBDebug("units: %s", units->toString().c_str());
 
-		double *xdata = (double *)dataSource->varX->data;
-		double *ydata = (double *)dataSource->varY->data;
-		CDF::Attribute *projvarnameAttr = dataSourceVar->getAttributeNE("grid_mapping");
-		if (projvarnameAttr != NULL) {
-		  CDF::Variable *projVar = cdfObject->getVariableNE(projvarnameAttr->toString().c_str());
-		  if (projVar == NULL) {
-		    CDBWarning("projection variable '%s' not found", (char *)projvarnameAttr->data);
-		  } else {
-		    CDF::Attribute *grid_mapping_name = projVar->getAttributeNE("grid_mapping_name");
-		    if ((grid_mapping_name != NULL) && grid_mapping_name->toString().equals("geostationary")) {
-		      // Get perspective_height
-		      CDF::Attribute *perspectiveHeightAttr = projVar->getAttributeNE("perspective_point_height");
-		      double perspectiveHeight = 35786000.;
-		      if (perspectiveHeightAttr != NULL) {
-			try {
-			  perspectiveHeight = perspectiveHeightAttr->toString().toDouble();
-			} catch (int e) {
-			  CDBDebug("Falling back to default perspective_point_height: 35786000");
-			}
-		      }
-		      // TODO: Dit moet voor alle data gebeuren toch, niet een subset van de data?
-		      sta[0] = start[dataSource->dimXIndex];
-		      str[0] = dataSource->stride2DMap;
-		      sto[0] = dataSource->dWidth;
-		      if (singleCellMode) {
-			sta[0] = 0;
-			str[0] = 1;
-			sto[0] = 2;
-		      }
-		      CDBDebug("Correcting varX");
-		      for (size_t j = sta[0]; j < sto[0]; j += str[0]) {
-			xdata[j] = xdata[j] * perspectiveHeight;
-		      }
+							double *xdata = (double *)dataSource->varX->data;
+							double *ydata = (double *)dataSource->varY->data;
+							    
+							      CDF::Attribute *perspectiveHeightAttr = projVar->getAttributeNE("perspective_point_height");
+							      double perspectiveHeight = 35786000.;
+							      if (perspectiveHeightAttr != NULL) {
+								try {
+								  perspectiveHeight = perspectiveHeightAttr->toString().toDouble();
+								} catch (int e) {
+								  CDBDebug("Falling back to default perspective_point_height: 35786000");
+								}
+							      }
+							      // TODO: overwrite internally the proj string with something like:
+							      // +proj=geos +lon_0=0.000000 +lat_0=0.000000 +h=35785863.000000 +a=6378137.000000 +b=6356752.300000 +sweep=y
+							      sta[0] = start[dataSource->dimXIndex];
+							      str[0] = dataSource->stride2DMap;
+							      sto[0] = dataSource->dWidth;
+							      if (singleCellMode) {
+								sta[0] = 0;
+								str[0] = 1;
+								sto[0] = 2;
+							      }
+							      CDBDebug("Correcting varX");
+							      for (size_t j = sta[0]; j < sto[0]; j += str[0]) {
+								xdata[j] = xdata[j] * perspectiveHeight;
+							      }
 
-		      sta[0] = start[dataSource->dimYIndex];
-		      str[0] = dataSource->stride2DMap;
-		      sto[0] = dataSource->dHeight;
-		      if (singleCellMode) {
-			sta[0] = 0;
-			str[0] = 1;
-			sto[0] = 2;
-		      }
-		      CDBDebug("Correcting varY");
-		      for (size_t j = sta[0]; j < sto[0]; j += str[0]) {
-			ydata[j] = ydata[j] * perspectiveHeight;
-		      }
-		    }
-		  }
-		}
-		}
-		}
-	   else if ((X_standard_name != NULL && X_standard_name->toString().equals("projection_x_angular_coordinate"))){
-          	
-          	
-          	CDF::Attribute *projvarnameAttr = dataSourceVar->getAttributeNE("grid_mapping");
-          	if (projvarnameAttr != NULL) {
-		  CDF::Variable *projVar = cdfObject->getVariableNE(projvarnameAttr->toString().c_str());
-		  if (projVar == NULL) {
-		    CDBWarning("projection variable '%s' not found", (char *)projvarnameAttr->data);
-		    }
-		  else {
-		    CDF::Attribute *grid_mapping_name = projVar->getAttributeNE("grid_mapping_name");
-		    if ((grid_mapping_name != NULL) && grid_mapping_name->toString().equals("geostationary")) {
-		    	CDBDebug("Assuming  CF 1.9. geostationary projection, keeping radians as units");
-		    	CT::string UpdatedProjString = "+proj=geos +a=0.17823063258248095 +b=0.17763305861870649 +lon_0=0.0 +h=1.0 +sweep=y";
-		    	CDBDebug("Overwriting the projection string with: %s", UpdatedProjString.c_str());
-		    	
-		    	dataSource->nativeProj4.copy(UpdatedProjString.c_str());
-		    	CDF::Attribute *proj4 = projVar->getAttributeNE("proj4");
-		    	if (proj4 == NULL) {
-		    		projVar->setAttributeText("autogen_proj", UpdatedProjString.c_str());
-		    	}	    
-		    }
+							      sta[0] = start[dataSource->dimYIndex];
+							      str[0] = dataSource->stride2DMap;
+							      sto[0] = dataSource->dHeight;
+							      if (singleCellMode) {
+								sta[0] = 0;
+								str[0] = 1;
+								sto[0] = 2;
+							      }
+							      CDBDebug("Correcting varY");
+							      for (size_t j = sta[0]; j < sto[0]; j += str[0]) {
+								ydata[j] = ydata[j] * perspectiveHeight;
+							      }
+							}
+						   }
+						   else if (X_standard_name->toString().equals("projection_x_angular_coordinate")){
+						   	    	CDBDebug("Assuming  CF 1.9. geostationary projection, keeping radians as units");
+							    	CT::string UpdatedProjString = "+proj=geos +a=0.17823063258248095 +b=0.17763305861870649 +lon_0=0.0 +h=1.0 +sweep=y";
+							    	CDBDebug("Overwriting the projection string with: %s", UpdatedProjString.c_str());
+							    	
+							    	dataSource->nativeProj4.copy(UpdatedProjString.c_str());
+							    	CDF::Attribute *proj4 = projVar->getAttributeNE("proj4");
+							    	if (proj4 == NULL) {
+							    		projVar->setAttributeText("autogen_proj", UpdatedProjString.c_str());
+							    	}	    
+							
+						  }
+		                         }
+		                  }		   
+		         }
 		    
 		    }
-		  
-		  }
-          	
-    
-    }
-      
-    }
-    
-    
+		} 
+	   else { CDBWarning("projection variable '%s' not found", (char *)projvarnameAttr->data); }  
+	}
   }
 
   // Calculate cellsize and BBOX based on read X,Y dims.
