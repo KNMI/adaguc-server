@@ -1,6 +1,8 @@
 StandardNames (standard_name,variable_name, units)
 ====================================================
 
+Back to [Configuration](./Configuration.md)
+
 Apply this style to all layers if requirements match.
 
 -   standard_name - Optional, comma separated list of standard_names
@@ -21,17 +23,15 @@ assigned to that Layer. Optionally the units attribute can also be used
 to discriminate in for example temperature layers with units in Kelvin
 and units in Celsius
 
-```
+```xml
 <Style name="air_temp_celsius">
-<StandardNames standard_name="air_temperature,temperature"
-units="Celsius"/>
-...
+  <StandardNames standard_name="air_temperature,temperature" units="Celsius"/>
+ ...
 </Style>
 
 <Style name="air_temp_kelvin">
-<StandardNames standard_name="air_temperature,temperature"
-units="Kelvin"/>
-...
+  <StandardNames standard_name="air_temperature,temperature" units="Kelvin"/>
+ ...
 </Style>
 
 ```

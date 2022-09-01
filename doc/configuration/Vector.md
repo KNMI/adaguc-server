@@ -1,6 +1,8 @@
 Vector (linecolor, linewidth,scale,vectorstyle,plotstationid,plotvalue,textformat)
 ==================================================================================
 
+Back to [Configuration](./Configuration.md)
+
 Configuration of rendering vector point data
 --------------------------------------------
 
@@ -22,24 +24,26 @@ to the barb. Can not be combined with plotstationid.
 The textformat attribute is used for formatting the value if
 plotvalue="true"
 
-```
-<Style name="bftalldiscvec">
-<Legend fixed="true">bluewhitered</Legend>
-<Min>0</Min>
-<Max>10000</Max>
-<Thinning radius="40"/>
-<RenderMethod>barb,barbthin</RenderMethod>
-<Point pointstyle="point" fillcolor="\#00000060"
-textcolor="\#FFFFFFFF" linecolor="\#00000060" discradius="20" dot="true"
-anglestart="0" anglestep="120" fontsize="10" textformat="%1.0f"/>
-<Vector vectorstyle="disc" linewidth="1.0"
-linecolor="\#00FF00FF"/>
-</Style>
+```xml
+ <Style name="bftalldiscvec">
+    <Legend fixed="true">bluewhitered</Legend>
+    <Min>0</Min>
+    <Max>10000</Max>
+    <Thinning radius="40"/>
+    <RenderMethod>barb,barbthin</RenderMethod>
+    <Point pointstyle="point" fillcolor="#00000060" textcolor="#FFFFFFFF" linecolor="#00000060" discradius="20" dot="true" anglestart="0" anglestep="120" fontsize="10" textformat="%1.0f"/>
+    <Vector vectorstyle="disc" linewidth="1.0" linecolor="#00FF00FF"/>
+ </Style>
 ```
 
-Example of wind as an arrow:
+### Example of wind as an arrow:
+
 ![](barbvector.png)
-Example of wind as a barb:
+
+### Example of wind as a barb:
+
 ![](barb.png)
-Example of wind as a disc:
+
+### Example of wind as a disc:
+
 ![](barbdisc.png)

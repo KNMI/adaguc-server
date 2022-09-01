@@ -7,7 +7,7 @@ Below a quick overview of the configuration options is given. Some
 options provide a detailed description when clicked.
 
 -   (name1,name2) - Indicates the possible attributes of an XML element
--   <value> - Indicates that a value can be assigned to the XML
+-   `<value>` - Indicates that a value can be assigned to the XML
     element.
 
 Configuration
@@ -77,38 +77,20 @@ Configuration
 -   [Style](Style.md) - Style definitions used within layers.it Watch Lock
     Rename Delete History
     Configuration
-    -   [Style~~>Legend|Legend](Style~~>Legend|Legend.md) (tickinterval, tickround,
-        fixed) <value>~~ Specifies which legend to use
-    -   Min <value> - The minimum value of the image to display,
-        corresponds with the first colors in the legend.
-    -   Max <value> - The minimum value of the image to display,
-        corresponds with the last colors in the legend.
-    -   Log <value> - Scale the colors using log transformation
-    -   [ValueRange](ValueRange.md) (min,max) - Values between min and max are
-        visible, outside this range is transparent
-    -   [RenderMethod](RenderMethod.md) <value> - The way to render the
-        image, e.g. contour, nearest or bilinear.
-    -   [ContourLine](ContourLine.md)
-        (width,linecolor,textcolor,textformatting,interval,classes) -
-        Draw contourlines in the images, if the appropriate
-        [RenderMethod](RenderMethod.md) is selected.
-    -   [ShadeInterval](ShadeInterval.md) (min,max,label,bgcolor, fillcolor) - Draw
-        the image using shading.
-    -   [FeatureInterval](FeatureInterval.md) (match, matchid, label, bgcolor,
-        fillcolor) - Draw GeoJSON features and select features based on
-        regular expressions.
-    -   [SymbolInterval](SymbolInterval.md) (min, max, binary_and, file, offset_x,
-        offset_y) - Draw symbols according to point value
-    -   SmoothingFilter <value> - Optional, defaults to 1. The
-        filter to smooth the image when using contour lines and shading.
-    -   [NameMapping](NameMapping.md) (name,title,abstract) - Optional, Provide
-        detailed descriptions and human readable names for every style.
-    -   [StandardNames](StandardNames.md) (standard_name, variable_name, units) -
-        Optional, assigns this style to layers matching the
-        standard_name and optionally the units.
-    -   [Point](Point.md)
-        (min,max,pointstyle,fillcolor,linecolor,textcolor,textformat,fontfile,fontsize,discradius,textradius,dot,anglestart,anglestop,plotstationid))
-        Configuration of rendering point data. See also \[\[Point data
+    -   [Legend](Legend.md) (tickinterval, tickround, fixed) `<value>` - Specifies which legend to use
+    -   Min `<value>` - The minimum value of the image to display, corresponds with the first colors in the legend.
+    -   Max `<value>` - The minimum value of the image to display, corresponds with the last colors in the legend.
+    -   Log `<value>` - Scale the colors using log transformation
+    -   [ValueRange](ValueRange.md) (min,max) - Values between min and max are visible, outside this range is transparent
+    -   [RenderMethod](RenderMethod.md) `<value>` - The way to render the image, e.g. contour, nearest or bilinear.
+    -   [ContourLine](ContourLine.md) (width,linecolor,textcolor,textformatting,interval,classes) - Draw contourlines in the images, if the appropriate [RenderMethod](RenderMethod.md) is selected.
+    -   [ShadeInterval](ShadeInterval.md) (min,max,label,bgcolor, fillcolor) - Draw the image using shading.
+    -   [FeatureInterval](FeatureInterval.md) (match, matchid, label, bgcolor, fillcolor) - Draw GeoJSON features and select features based on regular expressions.
+    -   [SymbolInterval](SymbolInterval.md) (min, max, binary_and, file, offset_x, offset_y) - Draw symbols according to point value
+    -   SmoothingFilter `<value>` - Optional, defaults to 1. The filter to smooth the image when using contour lines and shading.
+    -   [NameMapping](NameMapping.md) (name,title,abstract) - Optional, Provide detailed descriptions and human readable names for every style.
+    -   [StandardNames](StandardNames.md) (standard_name, variable_name, units) - Optional, assigns this style to layers matching the standard_name and optionally the units.
+    -   [Point](Point.md) (min,max,pointstyle,fillcolor,linecolor,textcolor,textformat,fontfile,fontsize,discradius,textradius,dot,anglestart,anglestop,plotstationid)) Configuration of rendering point data. See also \[\[Point data
         rendering\]\].
     -   [Vector](Vector.md) (linecolor,
         linewidth,scale,vectorstyle,plotstationid) Configuration of
@@ -128,43 +110,43 @@ Configuration
 <!-- -->
 
 -   [Layer](Layer.md) (type,hidden)
-    -   Name (force) <value> - Recommended, provide a name for the
+    -   Name (force) `<value>` - Recommended, provide a name for the
         layer. Use the force="true" attribute to display the name as
         configured, otherwise the name is adjusted to become unique
         within groups.
-    -   Title <value> - Optional, provide a title for the layer.
+    -   Title `<value>` - Optional, provide a title for the layer.
         If not configured it is derived from long_name, standard_name
         or variable names of the selected variable from the file.
     -   [Group](Group.md) (value) - Optional, layers are hierarchically
         nested based on the value attribute set in the Group element.
         The "/" token nests the layer further.
-    -   Variable <value> - Mandatory, The variable from the file
+    -   Variable `<value>` - Mandatory, The variable from the file
         to use in the Layer. Multiple can be used for e.g. wind vector
         plotting.
-    -   [FilePath](FilePath.md) (filter, maxquerylimit, ncml) <value> -
+    -   [FilePath](FilePath.md) (filter, maxquerylimit, ncml) `<value>` -
         Mandatory, The directory to scan files with additional filter,
         or the file to use, or the OpenDAP url to use.
     -   [Dimension](Dimension.md)
         (name,interval,default,units,quantizeperiod,quantizemethod)
-        <value> - Optional, Configure the dimensions (time,
+        `<value>` - Optional, Configure the dimensions (time,
         elevation, member) used. If none given the server tries to
         autodetect the dimensions.
-    -   Styles <value> - Optional, A comma separated list of
+    -   Styles `<value>` - Optional, A comma separated list of
         styles to use for this layer.
     -   [Projection](Projection.md) (proj4) - Override the projection defined in
         the file
     -   Cache (enabled) - <deprecated> Set enabled to "true" to
         enable caching of this layer. Useful when visualizing OpenDAP
         resources.
-    -   [ImageText](ImageText.md) (attribute) <value> - Optional, print
+    -   [ImageText](ImageText.md) (attribute) `<value>` - Optional, print
         text in the bottom of the map.
     -   MetadataURL
     -   [TileSettings](TileSettings.md) - Configuration settings for tiling high
         resolution layers
     -   [DataPostProc](DataPostProc.md) (algorithm, a, b, c, units, name, mode)
-    -   [DataBaseTable](DataBaseTable.md) <value> Override the auto assigned
+    -   DataBaseTable `<value>` Override the auto assigned
         database table
-    -   [AdditionalLayer](AdditionalLayer.md) (replace, style) <value> -
+    -   [AdditionalLayer](AdditionalLayer.md) (replace, style) `<value>` -
         Configure a new layer which is a composition of multiple other
         layers.
     -   \*All Style elements are accessible in Layer and can be

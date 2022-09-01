@@ -1,6 +1,8 @@
 Datapostprocessors (algorithm, a, b, c, units, name, mode)
 ==========================================================
 
+Back to [Configuration](./Configuration.md)
+
 Data postprocessors modify the data inside the adagucserver before any
 further operations are applied. The modified data can be visualized
 using WMS and retrieved using WCS. DataPostprocessors can be for example
@@ -30,13 +32,13 @@ Current data postprocessors:
 8.  toknots: do conversion of wind speeds in m/s to kts
 
 New datapost processors can be implemented via
-https://github.com/KNMI/adaguc-server/blob/master/adagucserverEC/CDataPostProcessor.h
+[../../adagucserverEC/CDataPostProcessor.cpp](../../adagucserverEC/CDataPostProcessor.cpp)
 
 1. ax+b: Linear transformation ax+b - Suitable for unit conversions
 -------------------------------------------------------------------
 
 Example to convert cloudcover fraction to octa:
-```
+```xml
 <DataPostProc algorithm="ax+b" a="8" b="0" units="octa"/>
 ```
 
@@ -59,53 +61,50 @@ layer. The grids will be made the same.
 -   mode: prepend or append, e.g. will the new layer be put in front of
     the current variables or after.
 
-```
+```xml
 <Layer>
-...
-<Name>theotherlayer</Name>
-...
+  ...
+  <Name>theotherlayer</Name>
+  ...
 </Layer>
 
 <Layer>
-...
-<Name>combinedlayer</Name>
-<DataPostProc algorithm="include_layer" name="theotherlayer"
-mode="prepend"/>
-...
+  ...
+  <Name>combinedlayer</Name>
+  <DataPostProc algorithm="include_layer" name="theotherlayer" mode="prepend"/>
+  ...
 </Layer>
 ```
 
 It is for example also possible to create a layer with 3 variables,
 minimum, average and maximum temperature:
-```
+```xml
 <Layer type="database">
-<Name>t2minlayer</Name>
-<Title>t2minlayer</Title>
-<FilePath>http://opendap.knmi.nl/knmi/thredds/dodsC/ADAGUC/testsets/projectedgrids/t2min.KNMI-2014.KNXT12.HCAST2.DD.nc.fixed.nc</FilePath>
-<Variable>t2min</Variable>
-<Styles>auto</Styles>
+  <Name>t2minlayer</Name>
+  <Title>t2minlayer</Title>
+  <FilePath>http://opendap.knmi.nl/knmi/thredds/dodsC/ADAGUC/testsets/projectedgrids/t2min.KNMI-2014.KNXT12.HCAST2.DD.nc.fixed.nc</FilePath>
+  <Variable>t2min</Variable>
+  <Styles>auto</Styles>
 </Layer>
 
 <Layer type="database">
-<Name>t2maxlayer</Name>
-<Title>t2maxlayer</Title>
-<FilePath>http://opendap.knmi.nl/knmi/thredds/dodsC/ADAGUC/testsets/projectedgrids/t2max.KNMI-2014.KNXT12.HCAST2.DD.nc.fixed.nc</FilePath>
-<Variable>t2max</Variable>
-<Styles>auto</Styles>
+  <Name>t2maxlayer</Name>
+  <Title>t2maxlayer</Title>
+  <FilePath>http://opendap.knmi.nl/knmi/thredds/dodsC/ADAGUC/testsets/projectedgrids/t2max.KNMI-2014.KNXT12.HCAST2.DD.nc.fixed.nc</FilePath>
+  <Variable>t2max</Variable>
+  <Styles>auto</Styles>
 </Layer>
 
 <Layer type="database">
-<Name>combinedlayer</Name>
-<Title>combinedlayer</Title>
-<FilePath>http://opendap.knmi.nl/knmi/thredds/dodsC/ADAGUC/testsets/projectedgrids/t2m.KNMI-2014.KNXT12.HCAST2.DD.nc.fixed.nc</FilePath>
-<Variable>t2m</Variable>
-<Styles>auto</Styles>
-<Min>250</Min>
-<Max>300</Max>
-<DataPostProc algorithm="include_layer" name="t2minlayer"
-mode="prepend"/>
-<DataPostProc algorithm="include_layer" name="t2maxlayer"
-mode="append"/>
+  <Name>combinedlayer</Name>
+  <Title>combinedlayer</Title>
+  <FilePath>http://opendap.knmi.nl/knmi/thredds/dodsC/ADAGUC/testsets/projectedgrids/t2m.KNMI-2014.KNXT12.HCAST2.DD.nc.fixed.nc</FilePath>
+  <Variable>t2m</Variable>
+  <Styles>auto</Styles>
+  <Min>250</Min>
+  <Max>300</Max>
+  <DataPostProc algorithm="include_layer" name="t2minlayer" mode="prepend"/>
+  <DataPostProc algorithm="include_layer" name="t2maxlayer" mode="append"/>
 </Layer>
 ```
 
@@ -113,9 +112,9 @@ A get featureinfo request will show the 3 values for a point:
 ```
 Coordinates - (lon=5.25; lat=51.96)
 Minimum 2-m Temperature (secondlayer)
-- Minimum 2-m Temperature 279.701904 K
-- 2-m Temperature 281.849213 K
-- Maximum 2-m Temperature 284.590302 K
+     -    Minimum 2-m Temperature    279.701904    K
+     -    2-m Temperature    281.849213    K
+     -    Maximum 2-m Temperature    284.590302    K
 ```
 
 3. datamask: Mask one variable with another variable with several options
@@ -148,10 +147,9 @@ first variable is the data and the second variable is the mask.
 -   units : optional, the new units of the mask
 
 Example usage:
-```
-<DataPostProc algorithm="datamask" a="0" b="0" name="newmask"
-units="newunits" c="0"
-mode="if_mask_excludes_then_nodata_else_data"/>
+
+```xml
+<DataPostProc algorithm="datamask" a="0" b="0" name="newmask" units="newunits" c="0" mode="if_mask_excludes_then_nodata_else_data"/>
 ```
 
 Two variables need to be defined in the layer. This can be done by
@@ -173,39 +171,36 @@ from this layer).
 
 ![](adaguc_masking_example.png)
 Configuration which has been used to create image above:
-```
+```xml
 <Layer type="database">
-<Name>temperature</Name>
-<Title>temperature</Title>
-<FilePath>http://opendap.knmi.nl/knmi/thredds/dodsC/ADAGUC/testsets/projectedgrids/t2m.KNMI-2014.KNXT12.HCAST2.DD.nc.fixed.nc</FilePath>
-<Variable>t2m</Variable>
-<Styles>auto</Styles>
-<Min>250</Min>
-<Max>300</Max>
-</Layer>
+    <Name>temperature</Name>
+    <Title>temperature</Title>
+    <FilePath>http://opendap.knmi.nl/knmi/thredds/dodsC/ADAGUC/testsets/projectedgrids/t2m.KNMI-2014.KNXT12.HCAST2.DD.nc.fixed.nc</FilePath>
+    <Variable>t2m</Variable>
+    <Styles>auto</Styles>
+    <Min>250</Min>
+    <Max>300</Max>
+  </Layer>
 
-<Layer type="database">
-<Name>precipitation</Name>
-<Title>precipitation</Title>
-<FilePath>http://opendap.knmi.nl/knmi/thredds/dodsC/e-obs_0.25regular/rr_0.25deg_reg_v15.0.nc</FilePath>
-<Variable>rr</Variable>
-<Styles>auto</Styles>
-</Layer>
+  <Layer type="database">
+    <Name>precipitation</Name>
+    <Title>precipitation</Title>
+    <FilePath>http://opendap.knmi.nl/knmi/thredds/dodsC/e-obs_0.25regular/rr_0.25deg_reg_v15.0.nc</FilePath>
+    <Variable>rr</Variable>
+    <Styles>auto</Styles>
+  </Layer>
 
-<Layer type="database">
-<Name>masked</Name>
-<Title>masked</Title>
-<FilePath>http://opendap.knmi.nl/knmi/thredds/dodsC/ADAGUC/testsets/projectedgrids/t2m.KNMI-2014.KNXT12.HCAST2.DD.nc.fixed.nc</FilePath>
-<Variable>t2m</Variable>
-<Styles>auto</Styles>
-<Min>250</Min>
-<Max>300</Max>
-<DataPostProc algorithm="include_layer" name="precipitation"
-mode="append"/>
-<DataPostProc algorithm="datamask" a="0" b="0" name="newmask"
-units="newunits" c="0"
-mode="if_mask_excludes_then_nodata_else_data"/>
-</Layer>
+  <Layer type="database">
+    <Name>masked</Name>
+    <Title>masked</Title>
+    <FilePath>http://opendap.knmi.nl/knmi/thredds/dodsC/ADAGUC/testsets/projectedgrids/t2m.KNMI-2014.KNXT12.HCAST2.DD.nc.fixed.nc</FilePath>
+    <Variable>t2m</Variable>
+    <Styles>auto</Styles>
+    <Min>250</Min>
+    <Max>300</Max>
+    <DataPostProc algorithm="include_layer" name="precipitation" mode="append"/>
+    <DataPostProc algorithm="datamask" a="0" b="0" name="newmask" units="newunits" c="0" mode="if_mask_excludes_then_nodata_else_data"/>
+  </Layer>
 ```
 
 4. MSGCPP VISIBLE-mask - Display the visible part of the disk
@@ -214,24 +209,23 @@ mode="if_mask_excludes_then_nodata_else_data"/>
 Based on sunz and satz.
 Parameter a is sunz+satz threshold and b is satz threshold
 
-```
+```xml
 <Layer type="database">
-<Group value="auxiliary" />
-<Name force="true">mask</Name>
-<Title>Mask (-)</Title>
-<DataBaseTable>msgcpp_0001</DataBaseTable>
-<Variable>sunz</Variable>
-<Variable>satz</Variable>
-<RenderMethod>nearest</RenderMethod>
-<FilePath
-filter="\^SEVIR_OPER_R*MSGCPP*_L2.\*\\.nc\$">/data/ogcrt/data/temporary/</FilePath>
-<Styles>mask,red,green,blue</Styles>
-<Dimension name="time" interval="PT15M">time</Dimension>
-<LatLonBox minx="-80" maxx="80" miny="-82" maxy="82" />
-<Cache enabled="false" />
-<DataPostProc algorithm="msgcppvisiblemask" a="78" b="80" />
-<ImageText>source: EUMETSAT/KNMI</ImageText>
-</Layer>
+    <Group value="auxiliary" />
+    <Name force="true">mask</Name>
+    <Title>Mask (-)</Title>
+    <DataBaseTable>msgcpp_0001</DataBaseTable>
+    <Variable>sunz</Variable>
+    <Variable>satz</Variable>
+    <RenderMethod>nearest</RenderMethod>
+    <FilePath filter="^SEVIR_OPER_R___MSGCPP__L2.*\.nc$">/data/ogcrt/data/temporary/</FilePath>
+    <Styles>mask,red,green,blue</Styles>
+    <Dimension name="time" interval="PT15M">time</Dimension>
+    <LatLonBox minx="-80" maxx="80" miny="-82" maxy="82" />
+    <Cache enabled="false" />
+    <DataPostProc algorithm="msgcppvisiblemask" a="78" b="80" />
+    <ImageText>source: EUMETSAT/KNMI</ImageText>
+  </Layer>
 ```
 
 5. MSGCPP HIWC-mask - Used for detecting high ice water content derived from four input variables.
@@ -244,26 +238,25 @@ according to HAIC case.
 \* - Cloud top temperature < 270 K
 \* - Cloud optical thickness > 20
 
-```
-<Layer type="database">
-<Group value="auxiliary" />
-<Name force="true">hiwc</Name>
-<Title>High Ice Water Content (-)</Title>
-<DataBaseTable>msgcpp_0001</DataBaseTable>
-<Variable>cph</Variable>
-<Variable>cwp</Variable>
-<Variable>ctt</Variable>
-<Variable>cot</Variable>
-<RenderMethod>nearest</RenderMethod>
-<FilePath
-filter="\^SEVIR_OPER_R*MSGCPP*_L2.\*\\.nc\$">/data/ogcrt/data/temporary/</FilePath>
-<Styles>red,green,blue,mask,gray_red,gray_green,gray_blue</Styles>
-<Dimension name="time" interval="PT15M">time</Dimension>
-<LatLonBox minx="-80" maxx="80" miny="-82" maxy="82" />
-<Cache enabled="false" />
-<DataPostProc algorithm="msgcpphiwcmask" a="78" b="80" />
-<ImageText>source: EUMETSAT/KNMI</ImageText>
-</Layer>
+```xml
+ <Layer type="database">
+    <Group value="auxiliary" />
+    <Name force="true">hiwc</Name>
+    <Title>High Ice Water Content (-)</Title>
+    <DataBaseTable>msgcpp_0001</DataBaseTable>
+    <Variable>cph</Variable>
+    <Variable>cwp</Variable>
+    <Variable>ctt</Variable>
+    <Variable>cot</Variable>
+    <RenderMethod>nearest</RenderMethod>
+    <FilePath filter="^SEVIR_OPER_R___MSGCPP__L2.*\.nc$">/data/ogcrt/data/temporary/</FilePath>
+    <Styles>red,green,blue,mask,gray_red,gray_green,gray_blue</Styles>
+    <Dimension name="time" interval="PT15M">time</Dimension>
+    <LatLonBox minx="-80" maxx="80" miny="-82" maxy="82" />
+    <Cache enabled="false" />
+    <DataPostProc algorithm="msgcpphiwcmask" a="78" b="80" />
+    <ImageText>source: EUMETSAT/KNMI</ImageText>
+  </Layer>
 ```
 
 6. Colour geographical features according to point values
@@ -280,79 +273,75 @@ according to the value in the point file.
 For example, let's say we have a netCDF poimt file with the maximum
 windspeed for 3 areas:
 ```
-ncdump windareas.nc
+ncdump  windareas.nc
 netcdf windareas {
 dimensions:
-time = 1 ;
-station = 3 ;
+        time = 1 ;
+        station = 3 ;
 variables:
-double time(time) ;
-time:standard_name = "time" ;
-time:units = "seconds since 1970-1-1" ;
-double lon(station) ;
-lon:standard_name = "longitude" ;
-lon:units = "degrees_east" ;
-double lat(station) ;
-lat:standard_name = "latitude" ;
-lat:units = "degrees_north" ;
-string station(station) ;
-station:long_name = "station_name" ;
-station:cf_role = "timeseries_id" ;
-double maxw(station, time) ;
-maxw:units = "m/s" ;
-maxw:standard_name = "maximum_windspeed" ;
-maxw:grid_mapping = "projection" ;
-char projection ;
-projection:proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs" ;
+        double time(time) ;
+                time:standard_name = "time" ;
+                time:units = "seconds since 1970-1-1" ;
+        double lon(station) ;
+                lon:standard_name = "longitude" ;
+                lon:units = "degrees_east" ;
+        double lat(station) ;
+                lat:standard_name = "latitude" ;
+                lat:units = "degrees_north" ;
+        string station(station) ;
+                station:long_name = "station_name" ;
+                station:cf_role = "timeseries_id" ;
+        double maxw(station, time) ;
+                maxw:units = "m/s" ;
+                maxw:standard_name = "maximum_windspeed" ;
+                maxw:grid_mapping = "projection" ;
+        char projection ;
+                projection:proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs" ;
 
 // global attributes:
-:Conventions = "CF-1.5" ;
-:featureType = "timeSeries" ;
+                :Conventions = "CF-1.5" ;
+                :featureType = "timeSeries" ;
 data:
-time = 1458226800 ;
-lon = 4.86, 5.73, 6.61 ;
-lat = 52.8, 53.04, 53.17 ;
-station = "23", "34", "67" ;
-maxw =
-30.2,
-18.2,
-6.5 ;
-projection = "" ;
+ time = 1458226800 ;
+ lon = 4.86, 5.73, 6.61 ;
+ lat = 52.8, 53.04, 53.17 ;
+ station = "23", "34", "67" ;
+ maxw =
+  30.2,
+  18.2,
+  6.5 ;
+ projection = "" ;
 }
 ```
+
+
 As point data this file could be displayed as:
 ![](windareas_point.png)
 
 The geographical information for the wind areas could be in the
 windareas.geojson file:
 ```
-{ [type]("FeatureCollection","bbox":[2.0,48.0,8.0,55.0]),
-[features]([)
-{[type]("Feature","id":"67"),
-[properties]({"name":"GR"},"geometry":{"type":"Polygon","coordinates":[[[6.976318359375,53.4291738804146],[6.13037109375,53.40298249424814],[6.15234375,52.928774525801366],[7.05322265625,52.93539665862318],[6.976318359375,53.4291738804146]]]}}),
-{[type]("Feature","id":"34"),
-[properties]({"name":"FR"},"geometry":{"type":"Polygon","coordinates":[[[6.141357421875,53.409531853086435],[5.38330078125,53.32431151982718],[5.328369140625,52.796119005678506],[6.15234375,52.80940281068805],[6.141357421875,53.409531853086435]]]}}),
-{[type]("Feature","id":"23"),
-[properties]({"name":"WFR"},"geometry":{"type":"Polygon","coordinates":[[[4.6,52.7],[4.6,53],[5.2,53],[5.2,52.7],[4.6,52.7]]]}})
-\]}
+{ "type":"FeatureCollection","bbox":[2.0,48.0,8.0,55.0],
+"features":[
+  {"type":"Feature","id":"67", "properties":{"name":"GR"},"geometry":{"type":"Polygon","coordinates":[[[6.976318359375,53.4291738804146],[6.13037109375,53.40298249424814],[6.15234375,52.928774525801366],[7.05322265625,52.93539665862318],[6.976318359375,53.4291738804146]]]}},
+  {"type":"Feature","id":"34", "properties":{"name":"FR"},"geometry":{"type":"Polygon","coordinates":[[[6.141357421875,53.409531853086435],[5.38330078125,53.32431151982718],[5.328369140625,52.796119005678506],[6.15234375,52.80940281068805],[6.141357421875,53.409531853086435]]]}},
+  {"type":"Feature","id":"23", "properties":{"name":"WFR"},"geometry":{"type":"Polygon","coordinates":[[[4.6,52.7],[4.6,53],[5.2,53],[5.2,52.7],[4.6,52.7]]]}}
+]}
 ```
 
 The addfeature datapostproc can join these two files, by generating a
 grid where each grid cell has the value of the maxwind in the grid cell
 it belongs to.
 The DataPostProc element would be defined in a layer like this:
-```
-<Layer type="database" hidden="false">
-<Name>windareas</Name>
-<Title>Wind Areas</Title>
-<Variable>maxw</Variable>
-<DataPostProc
-a="/usr/people/vreedede/nob/adaguc_gladheid/testgeojson/data/map.geojson"
-algorithm="addfeatures"/>
-<FilePath
-filter="windareas.nc\$">/usr/people/vreedede/nob/adaguc_gladheid/testgeojson/data</FilePath>
-<Styles>weatherall</Styles>
-</Layer>
+```xml
+  <Layer type="database" hidden="false">
+    <Name>windareas</Name>
+    <Title>Wind Areas</Title>
+    <Variable>maxw</Variable>
+    <DataPostProc a="/usr/people/vreedede/nob/adaguc_gladheid/testgeojson/data/map.geojson" algorithm="addfeatures"/>
+    <FilePath filter="windareas.nc$">/usr/people/vreedede/nob/adaguc_gladheid/testgeojson/data</FilePath>
+    <Styles>weatherall</Styles>
+  </Layer>
 
 ```
 

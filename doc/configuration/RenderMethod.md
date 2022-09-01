@@ -1,6 +1,8 @@
 RenderMethod <value>
 ==========================
 
+Back to [Configuration](./Configuration.md)
+
 Rendermethod defines the way the data is rendered inside the service.
 There are currently four mechanisms to render an image:
 

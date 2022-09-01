@@ -73,5 +73,5 @@ The legend with type "file" is loaded from a SVG gradient file, in that
 case only the file attribute needs to be specified. E.g.
 
 ```xml
-<Legend name="test" type="svg" file="/usr/people/plieger/M_Documents/Logos/Legends/earth.svg"/>
+<Legend name="test" type="svg" file="/data/adaguc-datasets/legends/earth.svg"/>
 ```

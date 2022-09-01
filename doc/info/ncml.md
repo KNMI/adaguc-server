@@ -1,5 +1,12 @@
+# NCML support
+
+[Back to readme](../../Readme.md)
+
+Adaguc-server supports some features of the NCML language. For details please look at Unidata's website [https://docs.unidata.ucar.edu/netcdf-java/current/userguide/basic_ncml_tutorial.html](https://docs.unidata.ucar.edu/netcdf-java/current/userguide/basic_ncml_tutorial.html).
+
+
 The following NCML file, which can be stored in the datasets folder with the path /data/adaguc-datasets/myncml.ncml:
-```
+```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <netcdf xmlns="http://www.unidata.ucar.edu/namespaces/netcdf/ncml-2.2">
   <attribute name="test" type="String" value="Example Data" />
@@ -32,3 +39,5 @@ The responding NetCDF metadata looks like:
 ```
 
 You can see that the extra global attribute test has been added.
+
+## Supported NCML operations
