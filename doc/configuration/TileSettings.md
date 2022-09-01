@@ -1,6 +1,8 @@
 TileSettings - Tiling functionality for high resolution datasets
 ================================================================
 
+Back to [Configuration](./Configuration.md)
+
 See https://github.com/KNMI/adaguc-datasets/blob/master/adaguc.tiled.xml
 for example configuration
 
@@ -35,15 +37,15 @@ Optional settings:
 -   threads="1" <!-- Optional, default is "1". Experimental setting
     to render a GetMap request with multiple threads
 
-```
 
 1.  To recreate all tiles, do:
+   ```
     rm -rf /data/adaguc-autowm/tiles/\*
     ./adagucserver --updatedb --config /config/tilesconfig.xml
     --recreate
     ./adagucserver --createtiles --config /config/tilesconfig.xml
     ./adagucserver --updatedb --config /config/tilesconfig.xml
-    ```
+  ```
 
 Some datasets in CLIPC are in such a high resolution that they cannot be
 stored in a single file. For example the flooding indicator from

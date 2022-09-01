@@ -1,6 +1,8 @@
 Point(min,max,pointstyle,fillcolor,linecolor,textcolor,textformat,fontfile,fontsize,discradius,textradius,dot,anglestart,anglestop,plotstationid)
 =================================================================================================================================================
 
+Back to [Configuration](./Configuration.md)
+
 Configuration of rendering point data
 -------------------------------------
 
@@ -33,11 +35,9 @@ no text is rendered when textformat is set to a blank space (" ").
 
 ### Pointstyle point
 
-```
-<Point fillcolor="" linecolor="" textcolor="" fontfile="" fontsize=""
-discradius="5" textradius="" textformat="%f" dot="false" anglestart=""
-anglestep="" plotstationid="true" pointstyle="point"></Point>
-<RenderMethod>point</RenderMethod>
+```xml
+  <Point fillcolor="" linecolor="" textcolor="" fontfile="" fontsize="" discradius="5" textradius="" textformat="%f" dot="false" anglestart="" anglestep="" plotstationid="true" pointstyle="point"></Point>
+  <RenderMethod>point</RenderMethod>
 ```
 This pointstyle draws a circle at the station location, coloured
 according to the value of the first variable of the layer and the
@@ -105,17 +105,15 @@ Symbols/Icons on the map
 When set to "zoomablepoint", the point keeps the same size across
 zooming and reprojections. This is used to plot IASI satellite imagery:
 
-```
-<Style name="IASI">
-<Legend fixed="true" tickinterval=".1">temperature</Legend>
-<Min>0</Min>
-<Max>1</Max>
-<NameMapping name="point" title="IASI" abstract="IASI"/>
-<Point plotstationid="false" pointstyle="zoomablepoint" textformat="
-" discradius="10" textradius="0" dot="false" fontsize="8"
-textcolor="\#000000" />
-<RenderMethod>point</RenderMethod>
-</Style>
+```xml
+  <Style name="IASI">
+    <Legend fixed="true" tickinterval=".1">temperature</Legend>
+    <Min>0</Min>
+    <Max>1</Max> 
+    <NameMapping name="point"        title="IASI" abstract="IASI"/>
+    <Point plotstationid="false" pointstyle="zoomablepoint" textformat=" " discradius="10" textradius="0" dot="false" fontsize="8" textcolor="#000000" />
+    <RenderMethod>point</RenderMethod>
+  </Style>
 
 ```
 
@@ -128,47 +126,29 @@ example below the magnitude is the radius of the disc, while the color
 depends on age. The radius can be adjusted with the discradius property,
 it multiplies the magnitude variable with the discradius value.
 
-```
+```xml
 <Style name="magnitude">
-<Legend fixed="true"
-tickinterval="100000">magnitude</Legend>
-<RenderMethod>point</RenderMethod>
-<Min>0</Min>
-<Max>2000000</Max>
-<NameMapping name="point" title="Richter magnitude scale"
-abstract="Wth continuous colors" />
-<Point min="2592000" max="1000000000000" pointstyle="radiusandvalue"
-textformat=" " plotstationid="false" fillcolor="\#CCCCCC"
-discradius="2.2" textradius="0" dot="false" fontsize="14"
-textcolor="\#FFFFFF" />
-<Point min="604800" max="2592000" pointstyle="radiusandvalue"
-textformat=" " plotstationid="false" fillcolor="\#FFFFFFFF"
-discradius="2.2" textradius="0" dot="false" fontsize="14"
-textcolor="\#FFFFFF" />
-<Point min="86400" max="604800" pointstyle="radiusandvalue"
-textformat=" " plotstationid="false" fillcolor="\#FFFF00FF"
-discradius="2.2" textradius="0" dot="false" fontsize="14"
-textcolor="\#FFFFFF" />
-<Point min="3600" max="86400" pointstyle="radiusandvalue"
-textformat=" " plotstationid="false" fillcolor="\#FF9900FF"
-discradius="2.2" textradius="0" dot="false" fontsize="14"
-textcolor="\#FFFFFF" />
-<Point min="0" max="3600" pointstyle="radiusandvalue" textformat=" "
-plotstationid="false" fillcolor="\#FF0000" discradius="2.2"
-textradius="0" dot="false" fontsize="14" textcolor="\#FFFFFF" />
-<LegendGraphic
-value="{ADAGUC_DATASET_DIR}/csv_radiusandvalue_legend.png" />
-</Style>
-<Layer type="database">
-<Name>radiusandvalue</Name>
-<Title>magnitude</Title>
-<FilePath
-filter="">{ADAGUC_PATH}/data/datasets/test/csv_radiusandvalue.csv</FilePath>
-<Variable>age</Variable>
-<Variable>magnitude</Variable>
-<Styles>magnitude</Styles>
-<DataBaseTable>ok</DataBaseTable>
-</Layer>
+    <Legend fixed="true" tickinterval="100000">magnitude</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Min>0</Min>
+    <Max>2000000</Max>
+    <NameMapping name="point" title="Richter magnitude scale" abstract="Wth continuous colors" />
+    <Point min="2592000" max="1000000000000" pointstyle="radiusandvalue" textformat=" " plotstationid="false" fillcolor="#CCCCCC" discradius="2.2" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF" />
+    <Point min="604800" max="2592000" pointstyle="radiusandvalue" textformat=" " plotstationid="false" fillcolor="#FFFFFFFF" discradius="2.2" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF" />
+    <Point min="86400" max="604800" pointstyle="radiusandvalue" textformat=" " plotstationid="false" fillcolor="#FFFF00FF" discradius="2.2" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF" />
+    <Point min="3600" max="86400" pointstyle="radiusandvalue" textformat=" " plotstationid="false" fillcolor="#FF9900FF" discradius="2.2" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF" />
+    <Point min="0" max="3600" pointstyle="radiusandvalue" textformat=" " plotstationid="false" fillcolor="#FF0000" discradius="2.2" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF" />
+    <LegendGraphic value="{ADAGUC_DATASET_DIR}/csv_radiusandvalue_legend.png" />
+  </Style>
+  <Layer type="database">
+    <Name>radiusandvalue</Name>
+    <Title>magnitude</Title>
+    <FilePath filter="">{ADAGUC_PATH}/data/datasets/test/csv_radiusandvalue.csv</FilePath>
+    <Variable>age</Variable>
+    <Variable>magnitude</Variable>
+    <Styles>magnitude</Styles>
+    <DataBaseTable>ok</DataBaseTable>
+  </Layer>
 ```
 
 ![](pointstyle_radiusandvalue.png)

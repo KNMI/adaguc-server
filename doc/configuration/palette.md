@@ -1,6 +1,8 @@
 palette (index,min,max,red,green,blue,alpha,color)
 ==================================================
 
+Back to [Legend](./Legend.md)
+
 palette is used in either a colorRange or interval based [Legend](Legend.md)
 
 -   index - Used to position colors when defining a continuous

@@ -1,6 +1,8 @@
 Dimension (name,interval,default,units) <value>
 =====================================================
 
+Back to [Configuration](./Configuration.md)
+
 -   name - The name of the dimension in the netcdf file
 -   interval - Optional, the time resolution of the dataset in
     [ISO8601](ISO8601.md) format.
@@ -12,10 +14,9 @@ Dimension (name,interval,default,units) <value>
 -   quantizemethod - Optional, see below
 -   <value> - The name of the dimension in the WMS service
 
-```
+```xml
 <Layer>
-<Dimension name="time" interval="P1D"
-default="2011-06-30T00:00:00Z">time</Dimension>
+  <Dimension name="time" interval="P1D" default="2011-06-30T00:00:00Z">time</Dimension>
 ....
 </Layer>
 ```
@@ -30,22 +31,17 @@ time periods. For example when noon, 12:03:53, is received as input, it
 is possible to round this to 12:00:00. This enables the service to
 respond to fuzzy time intervals.
 
-\* quantizeperiod - The time resolution to round to
-
-\* quantizemethod - Optional, can be either low, high and round,
+* quantizeperiod - The time resolution to round to
+* quantizemethod - Optional, can be either low, high and round,
 defaults to round.
-
-****\* low - rounds down
-
-****\* high - rounds up
-
-****\* round - rounds to closest
+  * low - rounds down
+  * high - rounds up
+  * round - rounds to closest
 
 Example with 5 minute quantization perdiod and method round:
 
-```
-<Dimension name="time" interval="PT5M" quantizeperiod="PT5M"
-quantizemethod="round" >time</Dimension>
+```xml 
+<Dimension name="time" interval="PT5M" quantizeperiod="PT5M" quantizemethod="round" >time</Dimension>
 ```
 
 This will convert the following inputs to internal dates:

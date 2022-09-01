@@ -1,21 +1,21 @@
 FilePath (filter, maxquerylimit, ncml) <value>
 ====================================================
 
+Back to [Configuration](./Configuration.md)
+
 -   filter - A regular expression, used to filter files inside a
     directory
 -   maxquerylimit - The maximum amount of time values will be used in
     the single request
--   ncml - The ncmlfile to apply, see
-    https://github.com/KNMI/adaguc-server/blob/master/doc/ncml.md for
+-   ncml - The ncmlfile to apply, see [NCML support](../info/ncml.md) for
     details
 -   <value> - Directory, file or OpenDAP url
 
 The following configuration adds all files in the specified directory
 matching the regular expression \^KMDS*TEST_P1M_OBSL2*_.\*\\.nc\$ to
 the service:
-```
-<FilePath
-filter="\^KMDS*TEST_P1M_OBSL2*_.\*\\.nc\$">/data/sdpkdc/kmds/</FilePath>
+```xml
+<FilePath filter="\^KMDS*TEST_P1M_OBSL2*_.\*\\.nc\$">/data/sdpkdc/kmds/</FilePath>
 ```
 
 filter
