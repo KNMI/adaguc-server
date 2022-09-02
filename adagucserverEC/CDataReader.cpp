@@ -488,8 +488,8 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
     getCRS(dataSource);
 
     // if units="rad" and grid_mapping variable contains perspective_point_height attribute
-    // coordinates can be converted to (k)m
-    // 
+    // coordinates can be converted to (k)m. In the geostationary projection under CF-1.9
+    // specifications, the x y values are kept, in this case the proj string is overwrote internally.
     
     CDF::Attribute *X_standard_name = dataSource->varX->getAttributeNE("standard_name");
     if (X_standard_name != NULL) {
@@ -504,17 +504,8 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
 			      	    CDF::Attribute *grid_mapping_name = projVar->getAttributeNE("grid_mapping_name");
 			      	    if (grid_mapping_name != NULL){
 				      	    if (grid_mapping_name->toString().equals("geostationary")){
-						    
-						    if (X_standard_name->toString().equals("projection_x_coordinate")) {
-							// geo projection following  CF <= CF-1.8		     
-							const CT::string unitString = units->toString();
-							if (unitString.equals("rad") || unitString.equals("radian")) {
-							CDBDebug("units: %s", units->toString().c_str());
-
-							double *xdata = (double *)dataSource->varX->data;
-							double *ydata = (double *)dataSource->varY->data;
-							    
-							      CDF::Attribute *perspectiveHeightAttr = projVar->getAttributeNE("perspective_point_height");
+				      	            CT::string UpdatedProjString = "undefined";
+				      	            CDF::Attribute *perspectiveHeightAttr = projVar->getAttributeNE("perspective_point_height");
 							      double perspectiveHeight = 35786000.;
 							      if (perspectiveHeightAttr != NULL) {
 								try {
@@ -523,8 +514,96 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
 								  CDBDebug("Falling back to default perspective_point_height: 35786000");
 								}
 							      }
-							      // TODO: overwrite internally the proj string with something like:
-							      // +proj=geos +lon_0=0.000000 +lat_0=0.000000 +h=35785863.000000 +a=6378137.000000 +b=6356752.300000 +sweep=y
+				      	            
+				      	            CDF::Attribute *lon_0Attr = projVar->getAttributeNE("longitude_of_projection_origin");
+							    double lon_0 = 0.0;
+							    if (lon_0Attr != NULL) {
+							    try {
+								  lon_0 = lon_0Attr->toString().toDouble();
+								  } catch (int e) {
+								  CDBDebug("Falling back to default lon_0: 0.0");
+								}
+							    }
+				      	    
+				      	    	    CDF::Attribute *lat_0Attr = projVar->getAttributeNE("latitude_of_projection_origin");
+							    double lat_0 = 0.0;
+							    if (lat_0Attr != NULL) {
+							    try {
+								  lat_0 = lat_0Attr->toString().toDouble();
+								} catch (int e) {
+								  CDBDebug("Falling back to default lat_0: 0.0");
+								}
+							    }
+							    
+					           CDF::Attribute *false_eastAttr = projVar->getAttributeNE("false_easting");
+							    double false_east = 0.0;
+							    if (false_eastAttr != NULL) {
+							    try {
+								  false_east = false_eastAttr->toString().toDouble();
+								} catch (int e) {
+								  CDBDebug("Falling back to default false easting: 0.0");
+								}
+							    } 
+
+						   CDF::Attribute *false_northAttr = projVar->getAttributeNE("false_northing");
+							    double false_north = 0.0;
+							    if (false_northAttr != NULL) {
+							    try {
+								  false_east = false_northAttr->toString().toDouble();
+								} catch (int e) {
+								  CDBDebug("Falling back to default false northing: 0.0");
+								}
+							    } 
+
+						   CDF::Attribute *aAttr = projVar->getAttributeNE("semi_major_axis");
+							    double a = 6378137.0;
+							    if (aAttr != NULL) {
+							    try {
+								  a = aAttr->toString().toDouble();
+								} catch (int e) {
+								  CDBDebug("Falling back to default semimajor axis: 6378137.0");
+								}
+							    }
+							    
+						    CDF::Attribute *bAttr = projVar->getAttributeNE("semi_minor_axis");
+							    double b = 6356752.30;
+							    if (bAttr != NULL) {
+							    try {
+								  b = bAttr->toString().toDouble();
+								} catch (int e) {
+								  CDBDebug("Falling back to default semiminor axis: 6356752.30");
+								}
+							    }
+						    
+						    CDF::Attribute *sweepAttr = projVar->getAttributeNE("sweep_angle_axis");
+							    CT::string sweep ="y";
+							    if (sweepAttr != NULL) {							     
+							     try {
+								  sweep = sweepAttr->toString();
+								} catch (int e) {
+								  CDBDebug("Falling back to default sweep angle: y");
+								}
+							    }
+							    else {
+								    CDF::Attribute *angleAttr = projVar->getAttributeNE("fixed_angle_axis");
+								    CT::string angle ="x";
+								    if (angleAttr != NULL) {							     
+								    try {
+									  angle = angleAttr->toString();
+									  if (angle.equals("y")) {sweep = CT::string("x");}
+									} catch (int e) {
+									  CDBDebug("Falling back to default sweep angle: y");
+									}
+								    }
+						             }
+				
+						    if (X_standard_name->toString().equals("projection_x_coordinate")) {
+							// geo projection following  CF <= CF-1.8		     
+							const CT::string unitString = units->toString();
+							if (unitString.equals("rad") || unitString.equals("radian")) {
+							      CDBDebug("units: %s", units->toString().c_str());	    
+							      double *xdata = (double *)dataSource->varX->data;
+							      double *ydata = (double *)dataSource->varY->data;
 							      sta[0] = start[dataSource->dimXIndex];
 							      str[0] = dataSource->stride2DMap;
 							      sto[0] = dataSource->dWidth;
@@ -550,11 +629,33 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
 							      for (size_t j = sta[0]; j < sto[0]; j += str[0]) {
 								ydata[j] = ydata[j] * perspectiveHeight;
 							      }
+							      CT::string UpdatedProjString = "+proj=geos";
+							    	UpdatedProjString.printconcat(" +a=%.10lf", a);
+                                                                UpdatedProjString.printconcat(" +b=%.10lf", b);
+								UpdatedProjString.printconcat(" +lat_0=%.3lf", lat_0);
+								UpdatedProjString.printconcat(" +lon_0=%.3lf", lon_0);
+								UpdatedProjString.printconcat(" +x_0=%.3lf", false_east);
+								UpdatedProjString.printconcat(" +y_0=%.3lf", false_north);
+ 								UpdatedProjString.printconcat(" +h=%.3lf", perspectiveHeight);
+                                                                UpdatedProjString.printconcat(" +sweep=%s", sweep.c_str());
+							    	CDBDebug("Overwriting the projection string with: %s", UpdatedProjString.c_str());
+							    	
+							    	dataSource->nativeProj4.copy(UpdatedProjString.c_str());
+							    	CDF::Attribute *proj4 = projVar->getAttributeNE("proj4");
+					           		projVar->setAttributeText("autogen_proj", UpdatedProjString.c_str());
+							    		    
 							}
 						   }
 						   else if (X_standard_name->toString().equals("projection_x_angular_coordinate")){
 						   	    	CDBDebug("Assuming  CF 1.9. geostationary projection, keeping radians as units");
-							    	CT::string UpdatedProjString = "+proj=geos +a=0.17823063258248095 +b=0.17763305861870649 +lon_0=0.0 +h=1.0 +sweep=y";
+							    	CT::string UpdatedProjString = "+proj=geos";
+							    	UpdatedProjString.printconcat(" +a=%.10lf", a / perspectiveHeight);
+                                                                UpdatedProjString.printconcat(" +b=%.10lf", b / perspectiveHeight);
+								UpdatedProjString.printconcat(" +lat_0=%.3lf", lat_0);
+								UpdatedProjString.printconcat(" +lon_0=%.3lf", lon_0);
+								UpdatedProjString.printconcat(" +x_0=%.3lf", false_east);
+								UpdatedProjString.printconcat(" +y_0=%.3lf", false_north);
+                                                                UpdatedProjString.printconcat(" +h=1.0 +sweep=%s", sweep.c_str());
 							    	CDBDebug("Overwriting the projection string with: %s", UpdatedProjString.c_str());
 							    	
 							    	dataSource->nativeProj4.copy(UpdatedProjString.c_str());
