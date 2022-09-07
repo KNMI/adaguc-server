@@ -19,7 +19,7 @@ This demonstrates how a file with 10000 points can be created and displayed in A
   
   
 
-<img src="create_featuretype_point_notimedim.py.png" alt="create_featuretype_point_notimedim" width="500"/>
+<img src="create_featuretype_point_notimedim.py.jpg" alt="create_featuretype_point_notimedim" width="500"/>
 
 Or see it in the [adaguc-viewer](https://adaguc.knmi.nl/adaguc-viewer/index.html#addlayer('https://geoservices.knmi.nl/adagucserver?dataset=create_featuretype_point_notimedim&','create_featuretype_point_notimedim'))
 

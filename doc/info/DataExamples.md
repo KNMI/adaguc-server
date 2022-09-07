@@ -28,7 +28,7 @@ projection coordinates to calculated the coordinates for each grid
 point, it does not read all latitudes and longitudes for every grid
 point and are not required to plot the data correctly.
 
-![](https://dev.knmi.nl/attachments/681/regular_and_projected_grids.jpg)
+![](./regular_and_projected_grids.jpg)
 
 Example of a regular lat/lon NetCDF file (topleft image):
 ```
@@ -113,7 +113,9 @@ in satellite products, where the values of different bands are combined
 grid point is the value that should be plotted on the visualisation. You
 could see these fields as color photos, where each pixel is
 georeferenced.
-![](https://dev.knmi.nl/attachments/678/truecolor_rgba_netcdf_adaguc.jpg)
+
+![](./truecolor_rgba_netcdf_adaguc.jpg)
+
 The CF-conventions currently have no way to describe these parameters,
 so these files are generated as fields of 32 bit unsigned integers, each
 containing an RGBA value. The configuration of the layer tells the
@@ -161,7 +163,9 @@ butterfly:grid_mapping = "projection" ;
 
 Point data is new in CF Conventions is characterised by a global
 attribute **featureType = "timeSeries"** in the NetCDF file.
-![](https://dev.knmi.nl/attachments/679/point_timeseries_adaguc_automated_weatherobservations.jpg)
+
+![](./point_timeseries_adaguc_automated_weatherobservations.jpg)
+
 A detailed example is described here: \[\[Pointtimeseries_example\]\]
 
 ### Forecast reference times from model runs
@@ -187,13 +191,15 @@ Experimental support for UGRID data (meshes and polygons) is built in.
 When a NetCDF file with UGRID convention is configured in the service,
 the service will render a GetMap image with the UGRID mesh displayed in
 it.
-![](https://dev.knmi.nl/attachments/680/ugrid_mesh_adaguc.jpg)
+
+![](./ugrid_mesh_adaguc.jpg)
+
 For details on the UGRID format you can visit
 https://github.com/ugrid-conventions/ugrid-conventions.
 
 ### Curvilinear data
 
-![](https://dev.knmi.nl/attachments/675/curvilinear_adaguc.jpg)
+![](./curvilinear_adaguc.jpg)
 
 ### Vector data - Swath information (NetCDF)
 
@@ -249,58 +255,4 @@ data.
 The server is able to read KNMI HDF5 precipitation forecast data. These
 files contain several image groups with a forecast date timestamp. These
 image groups are aggregated to a single variable with time dimension,
-this new variable is called "forecast". An example file is attached. See
-https://dev.knmi.nl/attachments/712/RAD_NL25_PCP_FM_201506180815.h5
-
-Data organisation
------------------
-
-Tools to handle data
---------------------
-
-### Generic NetCDF tools - ncgen and ncdump
-
-The NetCDF4 software contains two very useful tools for exploring and
-manipulating NetCDF data files.
-
-1.  **ncdump** can show the contents (headers only or headers and data)
-    for any NetCDF file (or OpenDAP url). It has several command-line
-    options (like -h for showing headers only). ncdump is very useful
-    for inspection of NetCDF data when configuring an ADAGUC service
-    layer.
-2.  **ncgen** can generate a NetCDF file from an ASCII file in the CDL
-    format which happens to be the format that ncdump dumps the data in.
-    So for simple NetCDF manipulations one could ncdump the file, edit
-    the resulting text and run that through ncgen to generate a new
-    NetCDF file.
-
-### GRIB data conversion tools
-
-Weather model data is most often coded in GRIB-1 or GRIB-2 format. Some
-tools which can convert GRIB files to NetCDF files are:
-
-- **grib2netcdf** from ECMWF's grib_api package (in development)
-
-- **cdo** from the Max Planck Institute for Meteorology
-(https://code.zmaw.de/projects/cdo)
-- **fimex** from the Norwegian Meteorological Institute met.no
-(http://fimex.met.no) which is a nice tool for generating NetCDF data
-from GRIB files.
-
-### Manipulating NetCDF data with Python
-
-Python has some very good possibilities for manipulating large fields of
-data and writing data into NetCDF4 files is fairly easy with the
-[netcdf4-python](http://code.google.com/p/netcdf4-python) library. In
-combination with for example the grib_api library and/or the
-[pygrib](https://code.google.com/p/pygrib) library converters can be
-built from GRIB to NetCDF.
-Python also has [Numpy](http://www.numpy.org) modules which make
-handling of large arrays easy.
-
-### Satellite data with PyTroll
-
-Satellite data from polar orbiting and geostationary satellites can be
-turned into products with the [pytroll](http://www.pytroll.org)
-software, based on Python. A module to generate RGBA or normal grid
-products as part of Pytroll is almost finished.
+this new variable is called "forecast". KNMI files lik RAD_NL25_PCP_FM_201506180815.h5 are supported.

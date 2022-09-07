@@ -1,6 +1,6 @@
 # Quick tips:
 
-[Back to readme](../Readme.md)
+[Back to readme](../../Readme.md)
 
 ## Scanning datasets
 
