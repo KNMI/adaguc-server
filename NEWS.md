@@ -1,3 +1,10 @@
+**Version 2.7.7 2022-09-09**
+
+- Added OGCAPI support
+- Added RADAR volume scan support
+- Updated documentation
+
+
 **Version 2.7.6 2022-07-12**
 
 - Fix: Legend with a logaritmic scale do work again.
