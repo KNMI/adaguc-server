@@ -3,10 +3,10 @@
 [Back to readme](../Readme.md)
 
 For developing the code locally, you need:
-* 1. Compile the C++ adaguc-server
-* 2. A postgresql server
-* 3. Start the application with the python wrapper. 
-* 4. Test the server with geographical referenced testdata
+* Compile the C++ adaguc-server
+* A postgresql server
+* Start the application with the python wrapper. 
+* Test the server with geographical referenced testdata
 
 After the python wrapper is started, the adaguc-server is accessible on your workstation via http. The easiest way to explore datasets is via de autowms feature, which will give you an overview of available data on your machine via de browser.
 
@@ -55,7 +55,8 @@ You have to do once:
 ```
 python3 -m venv env
 source env/bin/activate
-pip3 install flask flask-cors flask-caching gunicorn pytest marshmallow owslib pyproj==2.6.1 apispec apispec-webframeworks marshmallow-oneofschema defusedxml werkzeug
+pip3 install --upgrade pip
+pip3 install flask flask-cors flask-caching gunicorn pytest marshmallow owslib pyproj==2.6.1 apispec apispec-webframeworks marshmallow-oneofschema defusedxml werkzeug netCDF4 pillow lxml chardet
 cd ./python/lib/ && python3 setup.py develop && cd ../../
 
 ```
