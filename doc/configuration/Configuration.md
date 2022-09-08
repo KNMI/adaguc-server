@@ -3,8 +3,7 @@ Configuration
 
 [Back to readme](../../Readme.md)
 
-Below a quick overview of the configuration options is given. Some
-options provide a detailed description when clicked.
+Here all configuration options of adaguc-server are listed. The configuration is done in XML. The hierarchical structure of the configuration is reflected in this document. XML elements can be configured with attributes and values. 
 
 -   (name1,name2) - Indicates the possible attributes of an XML element
 -   `<value>` - Indicates that a value can be assigned to the XML
