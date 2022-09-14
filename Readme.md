@@ -15,9 +15,9 @@ Graphical representations of the data can be made using contour lines, shading, 
 
 ## Overview
 
-* [Running the adaguc-server - using Docker](./doc/Running.md)
+* [Using adaguc-server with Docker](./doc/Running.md)
+* [For developers - installing dependencies](./doc/Developing.md)
 * [Configuration](./doc/configuration/Configuration.md)
-* [Developing - installing dependencies](./doc/Developing.md)
 * [Format standard](./doc/format_standard/README.md)
 * [Glossary](./doc/GLOSSARY.md)
 * [Quick Tips](./doc/overview/QuickTips.md)
