@@ -24,9 +24,7 @@ Part of mymonthlyconfig.xml, stored in the dataset folder (/data/adaguc-datasets
 </Configuration>
 ```
 
-You could copy these files from [here - python/examples/rundataset/data/sequence](../../python/examples/rundataset/data/sequence) to /data/adaguc-data/mymonthlyfiles/.  By using a command like 
-
-```cp python/examples/rundataset/data/sequence/*.nc /data/adaguc-data/mymonthlyfiles/```
+You could copy these files from [here - python/examples/rundataset/data/sequence](../../python/examples/rundataset/data/sequence) to /data/adaguc-data/mymonthlyfiles/.
 
 (`"^.*\.nc$"` is a regular expression, see http://en.wikipedia.org/wiki/Regular_expression)
 
@@ -36,7 +34,7 @@ When everything is configured, you are ready to scan (or ingest) the files, this
 docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh mymonthlyconfig
 ```
 
-It should print something like 
+It should print something like:
 
 ```
 $ docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh mymonthlyconfig
@@ -61,6 +59,8 @@ Using config from /adaguc/adaguc-server-config.xml
 
 [D:014:pid137: adagucserverEC/CRequest.cpp:3501 CRequest]                       ***** Finished DB Update *****
 ```
+
+Your WMS is now available. You can find it via the `wms?dataset=mymonthlyconfig&` parameters in the Url, or by exploring with the autowms in the `adaguc::datasets` folder.
 
 
 The scan is recursive, e.g. files may be nested in subdirectories:
