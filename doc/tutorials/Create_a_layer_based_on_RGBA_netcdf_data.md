@@ -1,6 +1,8 @@
 Create a layer based on RGBA netcdf data
 ========================================
 
+[Back to readme](./Readme.md)
+
 A special case in the NetCDF files are goegraphical grids which do not
 contain values of a parameter, but contains the RGBA value of the colour
 that should be presented at that grid point. This kind of information is

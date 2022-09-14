@@ -1,6 +1,8 @@
 Create a WMS service on a file
 ==============================
 
+[Back to readme](./Readme.md)
+
 The best way to create a new ADAGUC service is by using a template of an
 existing configuration file. You can adjust the configuration to match
 the requirements for the new service.

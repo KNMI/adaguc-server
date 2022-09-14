@@ -191,7 +191,7 @@ The ADAGUC configuration looks like this:
 
 <Layer type="database">
   <Group value="KNMI Daily Obs"/>
-  <FilePath filter="\^.\*\\.nc\$">/data/services/data/testsets/pointtimeseries/KIS*OPER_POBS*_L2.nc</FilePath>
+  <FilePath filter="\^.*\.nc$">/data/services/data/testsets/pointtimeseries/KIS*OPER_POBS*_L2.nc</FilePath>
   <Variable>TG</Variable>
   <Styles>temperature</Styles>
 </Layer>

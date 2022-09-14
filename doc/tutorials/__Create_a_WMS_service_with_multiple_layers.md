@@ -100,7 +100,7 @@ mimetype="Content-Type:text/plain"/>
 <Layer type="database">
 <Group value="MSG_RGB_EuropeCanary"/>
 <FilePath
-filter=".\*\\.nc\$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
+filter=".*\.nc$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
 <Variable>overview</Variable>
 <RenderMethod>rgba</RenderMethod>
 <Dimension name="time" interval="PT15M">time</Dimension>
@@ -109,7 +109,7 @@ filter=".\*\\.nc\$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
 <Layer type="database">
 <Group value="MSG_RGB_EuropeCanary"/>
 <FilePath
-filter=".\*\\.nc\$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
+filter=".*\.nc$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
 <Variable>airmass</Variable>
 <RenderMethod>rgba</RenderMethod>
 <Dimension name="time" interval="PT15M">time</Dimension>
@@ -118,7 +118,7 @@ filter=".\*\\.nc\$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
 <Layer type="database">
 <Group value="MSG_RGB_EuropeCanary"/>
 <FilePath
-filter=".\*\\.nc\$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
+filter=".*\.nc$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
 <Variable>ash</Variable>
 <RenderMethod>rgba</RenderMethod>
 <Dimension name="time" interval="PT15M">time</Dimension>
@@ -127,7 +127,7 @@ filter=".\*\\.nc\$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
 <Layer type="database">
 <Group value="MSG_RGB_EuropeCanary"/>
 <FilePath
-filter=".\*\\.nc\$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
+filter=".*\.nc$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
 <Variable>cloudtop</Variable>
 <RenderMethod>rgba</RenderMethod>
 <Dimension name="time" interval="PT15M">time</Dimension>
@@ -136,7 +136,7 @@ filter=".\*\\.nc\$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
 <Layer type="database">
 <Group value="MSG_RGB_EuropeCanary"/>
 <FilePath
-filter=".\*\\.nc\$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
+filter=".*\.nc$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
 <Variable>convection</Variable>
 <RenderMethod>rgba</RenderMethod>
 <Dimension name="time" interval="PT15M">time</Dimension>
@@ -145,7 +145,7 @@ filter=".\*\\.nc\$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
 <Layer type="database">
 <Group value="MSG_RGB_EuropeCanary"/>
 <FilePath
-filter=".\*\\.nc\$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
+filter=".*\.nc$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
 <Variable>dust</Variable>
 <RenderMethod>rgba</RenderMethod>
 <Dimension name="time" interval="PT15M">time</Dimension>
@@ -154,7 +154,7 @@ filter=".\*\\.nc\$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
 <Layer type="database">
 <Group value="MSG_RGB_EuropeCanary"/>
 <FilePath
-filter=".\*\\.nc\$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
+filter=".*\.nc$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
 <Variable>green_snow</Variable>
 <RenderMethod>rgba</RenderMethod>
 <Dimension name="time" interval="PT15M">time</Dimension>
@@ -163,7 +163,7 @@ filter=".\*\\.nc\$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
 <Layer type="database">
 <Group value="MSG_RGB_EuropeCanary"/>
 <FilePath
-filter=".\*\\.nc\$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
+filter=".*\.nc$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
 <Variable>natural</Variable>
 <RenderMethod>rgba</RenderMethod>
 <Dimension name="time" interval="PT15M">time</Dimension>
@@ -172,7 +172,7 @@ filter=".\*\\.nc\$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
 <Layer type="database">
 <Group value="MSG_RGB_EuropeCanary"/>
 <FilePath
-filter=".\*\\.nc\$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
+filter=".*\.nc$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
 <Variable>night_fog</Variable>
 <RenderMethod>rgba</RenderMethod>
 <Dimension name="time" interval="PT15M">time</Dimension>
@@ -181,7 +181,7 @@ filter=".\*\\.nc\$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
 <Layer type="database">
 <Group value="MSG_RGB_EuropeCanary"/>
 <FilePath
-filter=".\*\\.nc\$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
+filter=".*\.nc$">/data/services/data/pytroll/MSG_RGB_EuropeCanary/</FilePath>
 <Variable>red_snow</Variable>
 <RenderMethod>rgba</RenderMethod>
 <Dimension name="time" interval="PT15M">time</Dimension>
