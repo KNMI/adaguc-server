@@ -1,7 +1,7 @@
-[Configuration](Configuration.md)
-
 Configuration of an INSPIRE View Service
 ========================================
+
+[Back to readme](./Readme.md)
 
 The following elements need to be configured to create an INSPIRE View
 Service:
@@ -135,7 +135,7 @@ urn_xkdc_ds_nl.knmi_*kisinspire2_1*.xml and looks like this:
 </WMS>
 <Layer type="database">
 <FilePath
-filter=".\*\\.nc\$">/data/kisinspire2/1/</FilePath>
+filter=".*\.nc$">/data/kisinspire2/1/</FilePath>
 <Name>TG_air_temperature</Name>
 <Title>Temperature</Title>
 <Variable>TG</Variable>

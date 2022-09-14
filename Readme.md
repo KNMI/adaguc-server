@@ -15,12 +15,14 @@ Graphical representations of the data can be made using contour lines, shading, 
 
 ## Overview
 
-* [Running the adaguc-server](./doc/Running.md)
+* [Running the adaguc-server - using Docker](./doc/Running.md)
 * [Configuration](./doc/configuration/Configuration.md)
-* [Developing](./doc/Developing.md)
+* [Developing - installing dependencies](./doc/Developing.md)
 * [Format standard](./doc/format_standard/README.md)
 * [Glossary](./doc/GLOSSARY.md)
 * [Quick Tips](./doc/overview/QuickTips.md)
+* [Tutorials](./doc/tutorials/Readme.md)
+
 
 For our detailed paper please read https://doi.org/10.5334/jors.382
 

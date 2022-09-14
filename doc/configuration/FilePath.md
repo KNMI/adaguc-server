@@ -12,10 +12,10 @@ Back to [Configuration](./Configuration.md)
 -   <value> - Directory, file or OpenDAP url
 
 The following configuration adds all files in the specified directory
-matching the regular expression \^KMDS*TEST_P1M_OBSL2*_.\*\\.nc\$ to
+matching the regular expression ^KMDS*TEST_P1M_OBSL2*_.*\.nc$ to
 the service:
 ```xml
-<FilePath filter="\^KMDS*TEST_P1M_OBSL2*_.\*\\.nc\$">/data/sdpkdc/kmds/</FilePath>
+<FilePath filter="^KMDS*TEST_P1M_OBSL2*_.*\.nc$">/data/sdpkdc/kmds/</FilePath>
 ```
 
 filter
@@ -32,12 +32,12 @@ filter
     on prefixes:
     -   CFD_index_0.25deg_reg_v8.0.nc
     -   FD_index_0.25deg_reg_v8.0.nc
-        You can use the filter "\^CFD_index.**\$" and
-        "\^FD_index.**\$" respectively.
+        You can use the filter "^CFD_index.**\$" and
+  `      "^FD_index.**\$" respectively.
 
 <!-- -->
 
--   The default to scan all files with .nc extension is "\^.\*\\.nc\$"
+-   The default to scan all files with .nc extension is "^.*\.nc$"
 
 maxquerylimit
 -------------
