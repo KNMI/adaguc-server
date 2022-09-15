@@ -533,6 +533,18 @@ void CConvertGeoJSON::clearFeatureStore(CT::string name) {
     }
   }
 }
+
+std::vector<Feature *> getPointFeatures(std::vector<Feature *> features) {
+  std::vector<Feature *> pointFeatures;
+  for (Feature *f : features) {
+    std::vector<GeoPoint> pts = f->getPoints();
+    if (pts.size() > 0) {
+      pointFeatures.push_back(f);
+    }
+  }
+  return pointFeatures;
+}
+
 /**
  * This function adjusts the cdfObject by creating virtual 2D variables
  */
@@ -1173,55 +1185,91 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
 #endif
   return;
 }
+
+std::vector<CDF::Dimension *> getVarDimensions(CDFObject *cdfObject) {
+  std::vector<CDF::Dimension *> dims;
+
+  for (CDF::Dimension *dim : cdfObject->dimensions) {
+    // CDataReader::DimensionType dtyp = CDataReader::getDimensionType(cdfObject, dim->getName());
+    CDataReader::DimensionType dtyp = CDataReader::dtype_normal;
+    switch (dtyp) {
+    case CDataReader::dtype_reference_time:
+    case CDataReader::dtype_time:
+      dims.push_back(dim);
+      break;
+    default:
+      break;
+    }
+  }
+  CDF::Dimension *dimy = cdfObject->getDimension("y");
+  dims.push_back(dimy);
+  CDF::Dimension *dimx = cdfObject->getDimension("x");
+  dims.push_back(dimx);
+  return dims;
+}
+
+size_t getDimensionSize(CDFObject *cdfObject) {
+  size_t size = 1;
+
+  CDF::Dimension *dimx = cdfObject->getDimension("x");
+  size = size * dimx->getSize();
+  CDF::Dimension *dimy = cdfObject->getDimension("y");
+  size = size * dimy->getSize();
+
+  for (CDF::Dimension *dim : cdfObject->dimensions) {
+    CDataReader::DimensionType dtyp = CDataReader::getDimensionType(cdfObject, dim->getName());
+    switch (dtyp) {
+    case CDataReader::dtype_reference_time:
+    case CDataReader::dtype_time:
+      size = size * dim->length;
+      break;
+    default:
+      break;
+    }
+  }
+  return size;
+}
+
 int CConvertGeoJSON::addPropertyVariables(CDFObject *cdfObject, std::vector<Feature *> features) {
   CDBDebug("Adding propertyVariables");
+  std::vector<Feature *> pointFeatures = getPointFeatures(features);
   std::map<CT::string, CDF::Variable *> newVars;
-  CDF::Dimension *dimStation = new CDF::Dimension();
-  dimStation->name = "station";
-  dimStation->setSize(features.size());
-  cdfObject->addDimension(dimStation);
-  CDF::Variable *varStation = new CDF::Variable();
-  varStation->setType(CDF_DOUBLE);
-  varStation->name.copy("station");
-  varStation->isDimension = true;
-  varStation->dimensionlinks.push_back(dimStation);
-  cdfObject->addVariable(varStation);
 
-  for (Feature *f : features) {
-    CDBDebug(">>%d %s", f->getPoints().size(), f->toString().c_str());
+  std::vector<CDF::Dimension *> varDims = getVarDimensions(cdfObject);
 
+  for (Feature *f : pointFeatures) {
+    CDBDebug(">>%zu", f->getPoints().size());
     std::vector<GeoPoint> pts = f->getPoints();
-    if (pts.size() > 0) {
-      for (auto iter = f->getFp().begin(); iter != f->getFp().end(); ++iter) {
-        CT::string name = iter->first.c_str();
-        if (newVars.find(name.c_str()) == newVars.end()) {
-          CDBDebug("Creating var %s", name.c_str());
-          CDF::Variable *newVar = new CDF::Variable();
-          newVar->name.copy(name.c_str());
-          switch (iter->second->getType()) {
-          case typeInt:
-            newVar->setType(CDF_INT);
-            newVar->currentType = newVar->nativeType = CDF_INT;
-            break;
-          case typeDouble:
-            newVar->setType(CDF_DOUBLE);
-            newVar->currentType = newVar->nativeType = CDF_DOUBLE;
-            break;
-          case typeStr:
-            newVar->setType(CDF_STRING);
-            newVar->currentType = newVar->nativeType = CDF_STRING;
-            break;
-          case typeNone:
-            break;
-          }
-          newVar->setAttributeText("ADAGUC_POINT", "true");
-          newVar->isDimension = false;
-          newVar->dimensionlinks.push_back(dimStation);
-          newVar->setAttributeText("standard_name", name);
-          newVar->setAttributeText("grid_mapping", "projection");
-          cdfObject->addVariable(newVar);
-          newVars[name] = newVar;
+    for (auto iter = f->getFp().begin(); iter != f->getFp().end(); ++iter) {
+      CT::string name = iter->first.c_str();
+      if (newVars.find(name.c_str()) == newVars.end()) {
+        CDBDebug("Creating var %s", name.c_str());
+        CDF::Variable *newVar = new CDF::Variable();
+        newVar->name.copy(name.c_str());
+        switch (iter->second->getType()) {
+        case typeInt:
+          newVar->setType(CDF_FLOAT);
+          newVar->currentType = newVar->nativeType = CDF_FLOAT;
+          break;
+        case typeDouble:
+          newVar->setType(CDF_FLOAT);
+          newVar->currentType = newVar->nativeType = CDF_FLOAT;
+          break;
+        case typeStr:
+          newVar->setType(CDF_STRING);
+          newVar->currentType = newVar->nativeType = CDF_STRING;
+          break;
+        case typeNone:
+          break;
         }
+        newVar->isDimension = false;
+        for (auto it = std::begin(varDims); it != std::end(varDims); ++it) {
+          newVar->dimensionlinks.push_back(*it);
+        }
+        newVar->setAttributeText("standard_name", name);
+        newVar->setAttributeText("grid_mapping", "projection");
+        cdfObject->addVariable(newVar);
+        newVars[name] = newVar;
       }
     }
   }
@@ -1230,38 +1278,40 @@ int CConvertGeoJSON::addPropertyVariables(CDFObject *cdfObject, std::vector<Feat
 }
 
 int CConvertGeoJSON::addPropertyValues(CDataSource *dataSource, std::vector<Feature *> features) {
+  for (auto iter : *dataSource->getDataObjectsVector()) {
+    CDBDebug("variable: %s", iter->variableName.c_str());
+  }
   CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
   CDBDebug("Adding propertyValues");
-  int nrFeatures = features.size(); // TODO or count where points>0
+  std::vector<Feature *> pointFeatures = getPointFeatures(features);
   std::map<CT::string, CDF::Variable *> newVars;
+
   int pos = 0;
-  for (Feature *f : features) {
+  size_t size = getDimensionSize(cdfObject);
+  CDBDebug("size to allocate new point vairiables: %d", size);
+
+  for (Feature *f : pointFeatures) {
     std::vector<GeoPoint> pts = f->getPoints();
-    if (pts.size() > 0) {
-      for (auto iter = f->getFp().begin(); iter != f->getFp().end(); ++iter) {
-        CT::string name = iter->first.c_str();
-        if (newVars.find(name.c_str()) == newVars.end()) {
-          CDBDebug("Initializing propertyValues into var %s", name.c_str());
-          CDF::Variable *newVar = cdfObject->getVariable(name.c_str());
-          CDF::allocateData(newVar->getType(), &(newVar->data), nrFeatures);
-          CDF::fill(newVar->data, newVar->getType(), -99.0, nrFeatures);
-          newVars[name] = newVar;
-        }
-        CDBDebug("Add value %s to var %s[%d]", iter->second->toString().c_str(), name.c_str(), pos);
-        CDF::Variable *newVar = newVars[name];
-        switch (newVar->getType()) {
-        case CDF_INT:
-          ((int *)newVar->data)[pos] = iter->second->getIntVal();
-          break;
-        case CDF_DOUBLE:
-          ((double *)newVar->data)[pos] = iter->second->getDblVal();
-          break;
-        default:
-          break;
-        }
+    for (auto iter = f->getFp().begin(); iter != f->getFp().end(); ++iter) {
+      CT::string name = iter->first.c_str();
+      if (newVars.find(name.c_str()) == newVars.end()) {
+        CDBDebug("Initializing propertyValues into var %s", name.c_str());
+        CDF::Variable *newVar = cdfObject->getVariable(name.c_str());
+        newVar->allocateData(size);
+        CDF::fill(newVar->data, newVar->getType(), NAN, size);
+        newVars[name] = newVar;
       }
-      pos++;
+      CDBDebug("Add value %s to var %s[%d]", iter->second->toString().c_str(), name.c_str(), pos);
+      CDF::Variable *newVar = newVars[name];
+      switch (newVar->getType()) {
+      case CDF_FLOAT:
+        ((float *)newVar->data)[pos] = (float)iter->second->getDblVal();
+        break;
+      default:
+        break;
+      }
     }
+    pos++;
   }
   CDBDebug("/Adding propertyValues");
   return 0;
@@ -1476,13 +1526,10 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
 #endif
     CDBDebug("nrFeatures: %d", features.size());
 
-    int featureIndex = 0;
+    unsigned short int featureIndex = 0;
     typedef std::vector<Feature *>::iterator it_type;
     for (it_type feature = features.begin(); feature != features.end(); ++feature) { // Loop over all features
-      // if(featureIndex!=0)break;
       std::vector<Polygon> polygons = (*feature)->getPolygons();
-      //            CT::string id=(*feature)->getId();
-      //            CDBDebug("feature[%s] %d of %d with %d polygons", id.c_str(), featureIndex, features.size(), polygons.size());
       for (std::vector<Polygon>::iterator itpoly = polygons.begin(); itpoly != polygons.end(); ++itpoly) {
         float *polyX = itpoly->getLons();
         float *polyY = itpoly->getLats();
@@ -1577,14 +1624,9 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
               }
               h++;
             }
-
             {
-
-              //                  CDBDebug("passed %d, %d", featureIndex, nrHoles);
-              //                  int dpCount=(last-result)/sizeof(float)*2;
               int dpCount = numPoints;
               drawpolyWithHoles_index(pxMin, pyMin, pxMax, pyMax, sdata, dataSource->dWidth, dataSource->dHeight, dpCount, projectedXY, featureIndex, nrHoles, holeSize, projectedHoleXY);
-              //                  delete[]result;
 
               for (int h = 0; h < nrHoles; h++) {
                 delete[] projectedHoleXY[h];
@@ -1592,6 +1634,22 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
             }
           }
         }
+      }
+      std::vector<GeoPoint> points = (*feature)->getPoints();
+
+      for (std::vector<GeoPoint>::iterator itpoint = points.begin(); itpoint != points.end(); ++itpoint) {
+        // Draw point
+        double tprojectedX = itpoint->getLon();
+        double tprojectedY = itpoint->getLat();
+        int status = 0;
+        if (projectionRequired) status = imageWarper.reprojfromLatLon(tprojectedX, tprojectedY);
+        int dlon, dlat;
+        if (!status) {
+          dlon = int((tprojectedX - offsetX) / cellSizeX) + 1;
+          dlat = int((tprojectedY - offsetY) / cellSizeY);
+        }
+        CDBDebug("PT [%d,%d] [%f,%f] %f", dlon, dlat, itpoint->getLon(), itpoint->getLat(), (float)featureIndex);
+        drawDot(dlon, dlat, featureIndex, dimX->length, dimY->length, sdata);
       }
 #ifdef MEASURETIME
       StopWatch_Stop("Feature drawn %d", featureIndex);
@@ -1610,4 +1668,14 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
 #endif
   }
   return result;
+}
+
+void CConvertGeoJSON::drawDot(int px, int py, unsigned short int v, int W, int H, unsigned short int *grid) {
+  for (int x = -4; x < 6; x++) {
+    for (int y = -4; y < 6; y++) {
+      int pointX = px + x;
+      int pointY = py + y;
+      if (pointX >= 0 && pointY >= 0 && pointX < W && pointY < H) grid[pointX + pointY * W] = v;
+    }
+  }
 }
