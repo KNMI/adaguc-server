@@ -53,7 +53,7 @@ class CGIRunner:
             else:
                 output.write(
                     b'Error: No headers found in response from adaguc-server application, status was %d' % status)
-                return 1, []
+                return 1, [], None
 
         body = processOutput[headersEndAt+2:]
         output.write(body)

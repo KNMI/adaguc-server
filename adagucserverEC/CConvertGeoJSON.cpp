@@ -36,7 +36,7 @@
 #include <map>
 #include <cstdlib>
 #include <queue>
-#define CCONVERTGEOJSON_DEBUG
+// #define CCONVERTGEOJSON_DEBUG
 const char *CConvertGeoJSON::className = "CConvertGeoJSON";
 
 #define CCONVERTUGRIDMESH_NODATA -32000
@@ -524,7 +524,7 @@ void CConvertGeoJSON::clearFeatureStore(CT::string name) {
   for (std::map<std::string, std::vector<Feature *>>::iterator itf = featureStore.begin(); itf != featureStore.end(); ++itf) {
     std::string fileName = itf->first.c_str();
     if (fileName == name.c_str()) {
-      CDBDebug("Deleting %d features ONLY for %s", featureStore[fileName].size(), fileName.c_str());
+      // CDBDebug("Deleting %d features ONLY for %s", featureStore[fileName].size(), fileName.c_str());
       for (std::vector<Feature *>::iterator it = featureStore[fileName].begin(); it != featureStore[fileName].end(); ++it) {
         //                          CDBDebug("deleting %s", (*it)->getId().c_str());
         delete *it;
@@ -593,7 +593,6 @@ int CConvertGeoJSON::convertGeoJSONHeader(CDFObject *cdfObject) {
   addPropertyVariables(cdfObject, features);
 
   CT::string dumpString = CDF::dump(cdfObject);
-  fprintf(stderr, "%s\n", dumpString.c_str());
 
   std::string geojsonkey = jsonVar->getAttributeNE("ADAGUC_BASENAME")->toString().c_str();
   featureStore[geojsonkey] = features;
@@ -739,7 +738,6 @@ void CConvertGeoJSON::addCDFInfo(CDFObject *cdfObject, CServerParams *, BBOX &df
   int featureCnt = 0;
   for (std::vector<Feature *>::iterator sample = featureMap.begin(); sample != featureMap.end(); ++sample) {
     ((const char **)featureIdVar->data)[featureCnt++] = strdup((*sample)->getId().c_str());
-    fprintf(stderr, "F[%d]>(%s) %s\n", featureCnt - 1, (*sample)->getId().c_str(), (*sample)->toString().c_str());
   }
 }
 
@@ -1153,7 +1151,7 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
               }
             }
           }
-          CDBDebug("FEAT %s", feat->toString().c_str());
+          // CDBDebug("FEAT %s", feat->toString().c_str());
           featureMap.push_back(feat);
         }
       }
@@ -1231,19 +1229,22 @@ size_t getDimensionSize(CDFObject *cdfObject) {
 }
 
 int CConvertGeoJSON::addPropertyVariables(CDFObject *cdfObject, std::vector<Feature *> features) {
+  #ifdef CCONVERTGEOJSON_DEBUG
   CDBDebug("Adding propertyVariables");
+  #endif
   std::vector<Feature *> pointFeatures = getPointFeatures(features);
   std::map<CT::string, CDF::Variable *> newVars;
 
   std::vector<CDF::Dimension *> varDims = getVarDimensions(cdfObject);
 
   for (Feature *f : pointFeatures) {
-    CDBDebug(">>%zu", f->getPoints().size());
     std::vector<GeoPoint> pts = f->getPoints();
     for (auto iter = f->getFp().begin(); iter != f->getFp().end(); ++iter) {
       CT::string name = iter->first.c_str();
-      if (newVars.find(name.c_str()) == newVars.end()) {
+      if (newVars.find(name.c_str()) == newVars.end() && cdfObject->getVariableNE(name.c_str())==NULL) {
+        #ifdef CCONVERTGEOJSON_DEBUG
         CDBDebug("Creating var %s", name.c_str());
+        #endif
         CDF::Variable *newVar = new CDF::Variable();
         newVar->name.copy(name.c_str());
         switch (iter->second->getType()) {
@@ -1256,8 +1257,8 @@ int CConvertGeoJSON::addPropertyVariables(CDFObject *cdfObject, std::vector<Feat
           newVar->currentType = newVar->nativeType = CDF_FLOAT;
           break;
         case typeStr:
-          newVar->setType(CDF_STRING);
-          newVar->currentType = newVar->nativeType = CDF_STRING;
+          newVar->setType(CDF_FLOAT);
+          newVar->currentType = newVar->nativeType = CDF_FLOAT;
           break;
         case typeNone:
           break;
@@ -1269,11 +1270,16 @@ int CConvertGeoJSON::addPropertyVariables(CDFObject *cdfObject, std::vector<Feat
         newVar->setAttributeText("standard_name", name);
         newVar->setAttributeText("grid_mapping", "projection");
         cdfObject->addVariable(newVar);
+        #ifdef CCONVERTGEOJSON_DEBUG
+        CDBDebug("adding variable %s", name.c_str());
+        #endif
         newVars[name] = newVar;
       }
     }
   }
+  #ifdef CCONVERTGEOJSON_DEBUG
   CDBDebug("/Adding propertyVariables");
+  #endif
   return 0;
 }
 
@@ -1288,20 +1294,19 @@ int CConvertGeoJSON::addPropertyValues(CDataSource *dataSource, std::vector<Feat
 
   int pos = 0;
   size_t size = getDimensionSize(cdfObject);
-  CDBDebug("size to allocate new point vairiables: %d", size);
 
   for (Feature *f : pointFeatures) {
     std::vector<GeoPoint> pts = f->getPoints();
     for (auto iter = f->getFp().begin(); iter != f->getFp().end(); ++iter) {
       CT::string name = iter->first.c_str();
       if (newVars.find(name.c_str()) == newVars.end()) {
-        CDBDebug("Initializing propertyValues into var %s", name.c_str());
+        // CDBDebug("Initializing propertyValues into var %s", name.c_str());
         CDF::Variable *newVar = cdfObject->getVariable(name.c_str());
-        newVar->allocateData(size);
-        CDF::fill(newVar->data, newVar->getType(), NAN, size);
+        CDF::allocateData(newVar->getType(), &(newVar->data), size);
+        CDF::fill(newVar->data, newVar->getType(), 0, size);
         newVars[name] = newVar;
       }
-      CDBDebug("Add value %s to var %s[%d]", iter->second->toString().c_str(), name.c_str(), pos);
+      // CDBDebug("Add value %s to var %s[%d]", iter->second->toString().c_str(), name.c_str(), pos);
       CDF::Variable *newVar = newVars[name];
       switch (newVar->getType()) {
       case CDF_FLOAT:
@@ -1313,7 +1318,6 @@ int CConvertGeoJSON::addPropertyValues(CDataSource *dataSource, std::vector<Feat
     }
     pos++;
   }
-  CDBDebug("/Adding propertyValues");
   return 0;
 }
 
@@ -1327,7 +1331,7 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
     return 1;
   }
 
-  CDBDebug("convertGEOJSONData %s", (mode == CNETCDFREADER_MODE_OPEN_ALL) ? "ALL" : "NOT ALL");
+  // CDBDebug("convertGEOJSONData %s", (mode == CNETCDFREADER_MODE_OPEN_ALL) ? "ALL" : "NOT ALL");
   int result = 0;
 
   // Check whether this is really an geojson file
@@ -1341,16 +1345,20 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
   std::vector<Feature *> features = featureStore[geojsonkey];
 
   if (features.size() == 0) {
+    #ifdef CCONVERTGEOJSON_DEBUG
     CDBDebug("Rereading JSON");
+    #endif
     CT::string inputjsondata = (char *)jsonVar->data;
     json_value *json = json_parse((json_char *)inputjsondata.c_str(), inputjsondata.length());
 #ifdef CCONVERTGEOJSON_DEBUG
-    CDBDebug("JSON result: %x", json);
+      CDBDebug("JSON result: %x", json);
 #endif
 
     BBOX dfBBOX;
     getBBOX(cdfObject, dfBBOX, *json, features);
+    #ifdef CCONVERTGEOJSON_DEBUG
     CDBDebug("addCDFInfo again");
+    #endif
     addCDFInfo(cdfObject, dataSource->srvParams, dfBBOX, features, true);
   }
 
@@ -1362,14 +1370,8 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
   // Make the width and height of the new 2D adaguc field the same as the viewing window
   dataSource->dWidth = dataSource->srvParams->Geo->dWidth;
   dataSource->dHeight = dataSource->srvParams->Geo->dHeight;
-  int x = 20;
-  int y = 20;
-  double lon = 5.2;
-  double lat = 52.0;
-  float value = 15.6;
-  dataSource->getDataObject(0)->points.push_back(PointDVWithLatLon(x, y, lon, lat, value));
-
-  // Set statistics
+ 
+ // Set statistics
   if (dataSource->stretchMinMax) {
 #ifdef CCONVERTGEOJSON_DEBUG
     CDBDebug("dataSource->stretchMinMax");
@@ -1637,10 +1639,40 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
       }
       std::vector<GeoPoint> points = (*feature)->getPoints();
 
+      std::map<std::string, FeatureProperty *> fp = (*feature)->getFp();
+      std::map<std::string, FeatureProperty*>::iterator ftit;
+      for (std::map<std::string, FeatureProperty*>::iterator ftit=fp.begin(); ftit!=fp.end(); ++ftit) {
+        // CDBDebug("FT: [%s]=[%s]", ftit->first.c_str(), ftit->second->toString().c_str());
+        dataSource->getDataObject(0)->features[featureIndex] = CFeature(featureIndex);
+      }
+
+
+    
+      CT::string pointValue;
+      CT::string pointName;
+      CT::string pointDescription;
+      bool isString = false;
+      ftit = fp.find(polygonIndexVar->name.c_str());
+      if (ftit!=fp.end()) {
+        // CDBDebug("Value === %s", ftit->second->toString().c_str());
+        isString = (ftit->second->getType() == typeStr);
+        pointValue = ftit->second->toString().c_str();
+        pointName = polygonIndexVar->name.c_str();
+        pointDescription = pointName;
+        CDF::Attribute *longName = polygonIndexVar->getAttributeNE("long_name");
+        if(longName) {
+          pointDescription = (const char *)longName->data;
+        }
+      }
+
+
       for (std::vector<GeoPoint>::iterator itpoint = points.begin(); itpoint != points.end(); ++itpoint) {
         // Draw point
-        double tprojectedX = itpoint->getLon();
-        double tprojectedY = itpoint->getLat();
+
+        double pointLongitude = itpoint->getLon();
+        double pointLatitude = itpoint->getLat();
+        double tprojectedX = pointLongitude;
+        double tprojectedY = pointLatitude;
         int status = 0;
         if (projectionRequired) status = imageWarper.reprojfromLatLon(tprojectedX, tprojectedY);
         int dlon, dlat;
@@ -1648,12 +1680,21 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
           dlon = int((tprojectedX - offsetX) / cellSizeX) + 1;
           dlat = int((tprojectedY - offsetY) / cellSizeY);
         }
-        CDBDebug("PT [%d,%d] [%f,%f] %f", dlon, dlat, itpoint->getLon(), itpoint->getLat(), (float)featureIndex);
+        // CDBDebug("PT [%d,%d] [%f,%f] %f", dlon, dlat, itpoint->getLon(), itpoint->getLat(), pointValue);
         drawDot(dlon, dlat, featureIndex, dimX->length, dimY->length, sdata);
+        PointDVWithLatLon *lastPoint = NULL;
+        float f = isString ? NAN : pointValue.toFloat();
+        dataSource->getDataObject(0)->points.push_back(PointDVWithLatLon(dlon, dlat,pointLongitude, pointLatitude, f));
+        lastPoint = &(dataSource->getDataObject(0)->points.back());
+        /* Get the last pushed point from the array and push the character text data in the paramlist */
+    
+        lastPoint->paramList.push_back(CKeyValue(pointName.c_str(),pointDescription.c_str(),pointValue.c_str()));
+
       }
 #ifdef MEASURETIME
       StopWatch_Stop("Feature drawn %d", featureIndex);
 #endif
+      
       for (std::map<std::string, FeatureProperty *>::iterator ftit = (*feature)->getFp().begin(); ftit != (*feature)->getFp().end(); ++ftit) {
         if (dataSource->getDataObject(0)->features.count(featureIndex) == 0) {
           dataSource->getDataObject(0)->features[featureIndex] = CFeature(featureIndex);

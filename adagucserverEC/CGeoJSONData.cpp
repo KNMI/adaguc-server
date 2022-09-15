@@ -143,7 +143,6 @@ CT::string Feature::toString() {
   s.printconcat("\n");
 
   for (std::map<std::string, FeatureProperty *>::iterator it = fp.begin(); it != fp.end(); ++it) {
-    CDBDebug("it:", it->first.c_str());
     s += it->first.c_str();
     s += ":";
     s += it->second->toString();
