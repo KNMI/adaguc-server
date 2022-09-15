@@ -69,7 +69,7 @@ public:
   FeatureProperty(int i) {
     type = typeInt;
     intVal = i;
-    dblVal = -12;
+    dblVal = i;
     pstr = "EMPTY i";
   }
   FeatureProperty(CT::string s) {
