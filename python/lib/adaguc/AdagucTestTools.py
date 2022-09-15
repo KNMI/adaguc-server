@@ -94,7 +94,7 @@ class AdagucTestTools:
             # Check if the code did not write a too big logfile
             logfileSize = self.getLogFileSize()
             if logfileSize > maxLogFileSize:
-                #self.printLogFile()
+                self.printLogFile()
                 print("[WARNING]: Adaguc-server writes too many lines to the logfile, size = %d kilobytes" % (logfileSize/1024))
             return [status, filetogenerate, headers]
 
