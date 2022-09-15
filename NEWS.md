@@ -1,3 +1,27 @@
+**Version 2.7.6 2022-07-12**
+
+- Fix: Legend with a logaritmic scale do work again.
+
+**Version 2.7.5 2022-07-11**
+
+- Implemented quantize for time on ingest too (for rounding product times up/down to values spaced with fixed intervals)
+
+**Version 2.7.4 2022-07-06**
+
+- Continuous Legend graphic supports inverted min and max
+
+**Version 2.7.3 2022-04-13**
+
+- Legend graphic code splitted and refactored
+
+**Version 2.7.2 2022-04-06**
+
+- Points can now be rendered with customizable and scalable symbols
+
+**Version 2.7.0 2022-04-04**
+
+- The time dimension for a layer in a GetCapabilities document can now be set based on the modification time of the file by configuring a dimension using: `<Dimension default="filetimedate">time</Dimension>`
+
 **Version 2.6.9 2022-03-17**
 
 - Support for pointstyle radiusandvalue, to display earthquakes with a disc depending on magnitude and color depending on age.
@@ -95,7 +119,7 @@ Version 2.6.1 2021-11-09
 **Version 2.2.0 2019-06-27**
 - adaguc-server docker compose uses decoupled postgres, started as separate container
 - logfiles are embedded in adaguc-services, single stream of logging
-- Improved support for curvilinear grids 
+- Improved support for curvilinear grids
 - Support for NC_INT64 and NC_UINT64 data types
 
 **Version 2.1.0 2019-04-04**
@@ -112,16 +136,16 @@ Version 2.6.1 2021-11-09
 
 **Version 2.0.36 2018-08-29**
 - OpenDAP server is now compatible with jsdap JavaScript client
-    
+
 **Version 2.0.35 2018-08-24**
 - CTime has now a singleton keeper for reducing CTime intialization times
-   
+
 **Version 2.0.34 2018-07-24**
 - Adaguc has ability to generate a report about the files to indicate what choices are made for visualisation and projection
-    
+
 **Version 2.0.33 2018-06-06**
 - Dockerfile is now using a multistage build resulting in smaller docker images
-   
+
 **Version 2.0.32 2018-01-22**
 - Polylines smaller then 1 px can now be rendered.
 - OpenDAPServer is now compatible with Java NetCDF library
@@ -139,7 +163,7 @@ Version 2.6.1 2021-11-09
 - Added 8 functional tests
 - Added postgres index on dimension column
 - Query limit can now be configured: <DataBase maxquerylimit="1000"/>
-    
+
 **Version 2.0.27 2017-08-16**
 - Dimensions without a dimension variable now get an automatically assigned dimension variable, values start with 1 and are increased onwards.
 - Initial PNG support with initial slippy map support added
@@ -150,7 +174,7 @@ Version 2.6.1 2021-11-09
 **Version 2.0.25 2017-07-28**
 - Tilecreation speed is optimized. When optimizeextent is set to true in TileSettings, only the partial area from the big netcdf file is read into memory and used for warping and tilecreation
 - The bottom, left, right and top parameters in TileSettings are now optional, when left out they will be automatically detected based on the input file. This simplifies TileSettings if only one input file is needed as input.
-    
+
 
 **Version 2.0.24 2017-07-28**
 - Updatedb has a new flag called --recreate. This drops the filetables and will recreate the them
@@ -162,9 +186,9 @@ Version 2.6.1 2021-11-09
 - Nearest neighbour renderer mode can be set to precise or fast with RenderSettings element in Styles
 
 **Version 2.0.22 2017-03-27**
-- Worked on dockerizing and modularizing 
+- Worked on dockerizing and modularizing
 - Added extra configuration examples for adaguc workshop 2017
-    
+
 **Version 2.0.20 2016-11-28**
 - CCDFDataModel supports NC_STRING types for attributes
 
@@ -174,13 +198,13 @@ Version 2.6.1 2021-11-09
 
 **Version 2.0.18 2016-11-06**
 - Added linear transformation in Nearest neighbour renderer when geographic mappings are equal.
-    
+
 **Version 2.0.17 2016-10-13**
 - Support for POI markers
-    
+
 **Version 2.0.18 2016-10-12**
-- Support for 365_day calendars    
-    
+- Support for 365_day calendars
+
 **Version 2.0.13, 2016-08-15:**
 - OpenDAP strings are encoded with two dimensions data(numstrings,maxStrlen64) by the NetCDF library. Internally this is now translated to CDF_STRING
 - Anydump is able to list strings
@@ -193,7 +217,7 @@ Version 2.6.1 2021-11-09
 - Added 360_day calendar support for CLIPC
 - Bugfix: GetFeatureInfo now works on Byte data
 - Bugfix: Layers with groups can now be served over ADAGUC OpenDAP, group separator is replaced by "_"
-    
+
 **Version 2.0.9, 2016-07-22:**
 - AdditionalLayer functionality now works with NetCDF files with two dimensions per variable (only y,x data).
 - Added datamask datapostprocessor
@@ -219,8 +243,8 @@ Version 1.2 (10 June 2013)
 Version 1.0.0 (22 August 2011):
 
    New features:
-     * 
+     *
 
    Fixed bugs:
-     * 
- 
+     *
+
