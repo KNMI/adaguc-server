@@ -52,6 +52,7 @@ private:
   static void drawpolyWithHoles_index(int xMin, int yMin, int xMax, int yMax, unsigned short *imagedata, int w, int h, int polyCorners, float *polyXY, unsigned short int value, int holes,
                                       int *holeCorners, float *holeXY[]);
   static void drawpolyWithHoles_indexORG(unsigned short *imagedata, int w, int h, int polyCorners, float *polyXY, unsigned short int value, int holes, int *holeCorners, float *holeXY[]);
+  static void drawDot(int px, int py, unsigned short int v, int W, int H, unsigned short int *grid);
 
 public:
   static std::map<std::string, std::vector<Feature *>> featureStore;
