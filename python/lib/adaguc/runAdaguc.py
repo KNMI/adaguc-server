@@ -161,7 +161,7 @@ class runAdaguc:
             adagucargs = adagucargs + args
 
         filetogenerate = BytesIO()
-        status, headers = CGIRunner().run(adagucargs, url=url, output=filetogenerate,
+        status, headers, processErr = CGIRunner().run(adagucargs, url=url, output=filetogenerate,
                                           env=adagucenv, path=path, isCGI=isCGI)
 
         if (status != 0 and showLogOnError == True) or showLog == True:
