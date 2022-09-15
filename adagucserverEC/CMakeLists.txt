@@ -1,5 +1,5 @@
 find_package(LibXml2 REQUIRED)
-find_package(Cairo REQUIRED) 
+find_package(Cairo REQUIRED)
 find_package(Freetype REQUIRED)
 find_package(NetCDF REQUIRED)
 find_package(Threads REQUIRED)
@@ -11,8 +11,8 @@ find_package(CURL)
 find_package(HDF5 REQUIRED)
 find_package(PostgreSQL REQUIRED)
 find_package(GDAL REQUIRED)
-find_package(SQLite3 REQUIRED) 
-find_package(WebP REQUIRED) 
+find_package(SQLite3 REQUIRED)
+find_package(WebP REQUIRED)
 
 add_library(
     adagucserverEC
@@ -51,6 +51,7 @@ add_library(
     CImgRenderers/CImgRenderPoints.h
     CConvertCurvilinear.h
     CConvertHexagon.h
+    CConvertKNMIH5VolScan.h
     CInspire.h
     CGetFileInfo.h
     CStyleConfiguration.h
@@ -62,7 +63,7 @@ add_library(
     CAutoResource.h
     CDBAdapterSQLLite.h
     COctTreeColorQuantizer.h
-    CCreateLegend.h
+    CLegendRenderers/CCreateLegend.h
     CCreateHistogram.h
     CNetCDFDataWriter.h
     CAutoConfigure.h
@@ -112,6 +113,7 @@ add_library(
     CImgRenderers/CImgRenderPoints.cpp
     CConvertCurvilinear.cpp
     CConvertHexagon.cpp
+    CConvertKNMIH5VolScan.cpp
     CInspire.cpp
     CGetFileInfo.cpp
     CStyleConfiguration.cpp
@@ -124,7 +126,7 @@ add_library(
     CAutoResource.cpp
     CDBAdapterSQLLite.cpp
     COctTreeColorQuantizer.cpp
-    CCreateLegend.cpp
+    CLegendRenderers/CCreateLegend.cpp
     CCreateHistogram.cpp
     CNetCDFDataWriter.cpp
     CAutoConfigure.cpp
@@ -141,6 +143,7 @@ add_library(
     CDPPGoes16Metadata.cpp
     CCreateTiles.h
     CCreateTiles.cpp
+    CUniqueRequests/CUniqueRequests.cpp
     testadagucserver.cpp
 )
 

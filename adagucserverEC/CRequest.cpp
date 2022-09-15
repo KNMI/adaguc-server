@@ -891,6 +891,11 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
       // Check if this dim is not already added
       bool alreadyAdded = false;
 
+      /* A dimension where the default value is set to filetimedate is not a required dim and should not be queried from the db */
+      if (dataSource->cfgLayer->Dimension[i]->attr.defaultV.equals("filetimedate")) {
+        alreadyAdded = true;
+      }
+
       for (size_t l = 0; l < dataSource->requiredDims.size(); l++) {
         if (dataSource->requiredDims[l]->name.equals(&dimName)) {
           alreadyAdded = true;
@@ -1041,6 +1046,11 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
         if (netCDFDimName.equals("none")) {
           continue;
         }
+
+        /* A dimension where the default value is set to filetimedate should not be queried from the db */
+        if (dataSource->cfgLayer->Dimension[i]->attr.defaultV.equals("filetimedate")) {
+          continue;
+        }
         CT::string tableName;
         try {
           tableName =
@@ -1073,7 +1083,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
           CT::string timeValue;
           CT::string netcdfTimeDimName;
           for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
-            CDBDebug("DIMS: %d [%s] [%s]", j, dataSource->requiredDims[j]->name.c_str(), dataSource->requiredDims[j]->value.c_str());
+            // CDBDebug("DIMS: %d [%s] [%s]", j, dataSource->requiredDims[j]->name.c_str(), dataSource->requiredDims[j]->value.c_str());
             if (dataSource->requiredDims[j]->name.equals("time")) {
               timeValue = dataSource->requiredDims[j]->value;
               netcdfTimeDimName = dataSource->requiredDims[j]->netCDFDimName;
@@ -2025,7 +2035,7 @@ int CRequest::process_all_layers() {
                 int legendWidth = LEGEND_WIDTH * scaling;
                 if (legendWidth < minimumLegendWidth) legendWidth = minimumLegendWidth;
                 imageDataWriter.drawImage.enableTransparency(true);
-                legendImage.createImage(&imageDataWriter.drawImage, legendWidth, (imageDataWriter.drawImage.Geo->dHeight / 2) - padding * 2 + 2);
+                legendImage.createImage(&imageDataWriter.drawImage, legendWidth, (imageDataWriter.drawImage.Geo->dHeight / 3) - padding * 2 + 2);
 
                 CStyleConfiguration *styleConfiguration = dataSources[d]->getStyle();
                 if (styleConfiguration != NULL && styleConfiguration->legendIndex != -1) {

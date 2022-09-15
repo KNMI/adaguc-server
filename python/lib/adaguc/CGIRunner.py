@@ -51,7 +51,7 @@ class CGIRunner:
                 headers = (processOutput[0:headersEndAt-1]).decode()
             else:
                 output.write(
-                    b'Error: No headers found in response from adaguc-server application')
+                    b'Error: No headers found in response from adaguc-server application, status was %d' % status)
                 return 1, []
 
         body = processOutput[headersEndAt+2:]

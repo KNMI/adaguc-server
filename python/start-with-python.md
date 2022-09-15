@@ -10,11 +10,12 @@ This can be used to run adaguc-server from Python.
 
 ## To install the python wrapper:
 
+Note: Make sure to use Python 3.8 or higher.
 From the root adaguc-server folder:
 ```
 python3 -m venv env
 source env/bin/activate
-python3 -m pip install Pillow chardet numpy netcdf4 six requests pillow aggdraw lxml setuptools wheel flask flask_cors gunicorn
+pip3 install flask flask-cors flask-caching gunicorn pytest marshmallow owslib pyproj==2.6.1 apispec apispec-webframeworks marshmallow-oneofschema defusedxml
 cd ./python/lib/ && python3 setup.py develop && cd ../../
 ```
 This will create and activate a `env` virtualenv directory in your adaguc root folder.
@@ -31,8 +32,12 @@ export ADAGUC_CONFIG=${ADAGUC_PATH}/python/lib/adaguc/adaguc-server-config-pytho
 export ADAGUC_DB="user=adaguc password=adaguc host=localhost dbname=adaguc"
 export ADAGUC_ENABLELOGBUFFER=FALSE
 ulimit -c unlimited
+#sudo sysctl -w kernel.core_pattern=core-adagucserver # to enable core generation
+
 python3 ./python/python-adaguc-server/main.py
 ```
+
+The WMS server will then be accessible at http://127.0.0.1:8080/wms. The autowms can be explored at the adaguc-viewer via the following link: https://adaguc.knmi.nl/adaguc-viewer/index.html?autowms=http://localhost:8080/autowms. Keep in mind that you have to disable security, as the server is not running on https.
 
 Note: the data directories cannot point to a symbolic link, for security purposes adaguc checks if the path contains no symbolic links.
 

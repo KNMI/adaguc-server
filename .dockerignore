@@ -51,6 +51,8 @@ Docker/scanner
 Dockerfile
 Docker/letsencrypt
 Docker/letsencrypt/*
+Docker/cert
+Docker/cert/*
 
 *CMakeCache.txt*
 *CTestTestfile.cmake*
