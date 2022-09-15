@@ -99,11 +99,11 @@ public:
   CT::string toString() {
     CT::string s;
     if (type == typeInt) {
-      s.print("{i}%d", intVal);
+      s.print("%d", intVal);
     } else if (type == typeStr) {
-      s.print("{s}%s", pstr.c_str());
+      s.print("%s", pstr.c_str());
     } else if (type == typeDouble) {
-      s.print("{d}%f", dblVal);
+      s.print("%f", dblVal);
     } else {
       s.print("NONE");
     }
