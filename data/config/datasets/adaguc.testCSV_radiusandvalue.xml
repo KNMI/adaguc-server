@@ -50,5 +50,38 @@
     <Styles>magnitude</Styles>
     <DataBaseTable>ok</DataBaseTable>
   </Layer>
+
+
+
+
+  <Symbol name="triangle" coordinates="[[-1, -1], [1, -1], [0.0, 1], [-1, -1]]"/>
+  <Symbol name="square" coordinates="[[-1, -1], [1, -1], [1, 1], [-1, 1], [-1, -1]]"/>
+
+  <Style name="magnitude_withsymbol">
+    <Legend fixed="true" tickinterval="100000">magnitude</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Min>0</Min>
+    <Max>2000000</Max>
+    <NameMapping name="point" title="Richter magnitude scale" abstract="Wth continuous colors" />
+    <Point min="2592000" max="1000000000000" pointstyle="radiusandvalue" symbol="triangle" textformat=" " plotstationid="false" fillcolor="#CCCCCC" discradius="2.2" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF" />
+    <Point min="604800" max="2592000" pointstyle="radiusandvalue" symbol="square" textformat=" " plotstationid="false" fillcolor="#FFFFFFFF" discradius="2.2" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF" />
+    <Point min="86400" max="604800" pointstyle="radiusandvalue" textformat=" " plotstationid="false" fillcolor="#FFFF00FF" discradius="2.2" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF" />
+    <Point min="3600" max="86400" pointstyle="radiusandvalue" textformat=" " plotstationid="false" fillcolor="#FF9900FF" discradius="2.2" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF" />
+    <Point min="0" max="3600" pointstyle="radiusandvalue" textformat=" " plotstationid="false" fillcolor="#FF0000" discradius="2.2" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF" />
+    <LegendGraphic value="{ADAGUC_DATASET_DIR}/csv_radiusandvalue_legend.png" />
+  </Style>
+
+  <Layer type="database">
+    <Name>radiusandvalue_and_symbol</Name>
+    <Title>magnitude</Title>
+    <FilePath filter="">{ADAGUC_PATH}/data/datasets/test/csv_radiusandvalue.csv</FilePath>
+    <Variable>age</Variable>
+    <Variable>magnitude</Variable>
+    <Styles>magnitude_withsymbol</Styles>
+    <DataBaseTable>ok</DataBaseTable>
+  </Layer>
+
+
+  
 </Configuration>
 

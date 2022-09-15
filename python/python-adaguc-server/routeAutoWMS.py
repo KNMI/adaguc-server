@@ -1,4 +1,4 @@
-from setupAdaguc import setupAdaguc
+from setup_adaguc import setup_adaguc
 import sys
 import os
 import json
@@ -179,7 +179,7 @@ def handleAutoWMSDIRRoute(adagucAutoWMSDir, urlParamPath, adagucOnlineResource):
 @routeAutoWMS.route("/autowms", methods=["GET"])
 @cross_origin()
 def handleAutoWMS():
-    adagucInstance = setupAdaguc()
+    adagucInstance = setup_adaguc()
     logger.info(request.query_string)
     adagucDataSetDir = adagucInstance.ADAGUC_DATASET_DIR
     adagucDataDir = adagucInstance.ADAGUC_DATA_DIR
