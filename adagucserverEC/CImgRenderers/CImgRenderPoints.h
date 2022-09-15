@@ -32,6 +32,21 @@ private:
   DEF_ERRORFUNCTION();
   CT::string settings;
 
+  class SimpleSymbol {
+  public:
+    class Coordinate {
+    public:
+      Coordinate(float x, float y) {
+        this->x = x;
+        this->y = y;
+      }
+      float x, y;
+    };
+    std::vector<Coordinate> coordinates;
+  };
+
+  std::map<std::string, SimpleSymbol> SimpleSymbolMap;
+
   bool drawVector;
   bool drawPoints;
   bool drawBarb;

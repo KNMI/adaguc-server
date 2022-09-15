@@ -79,6 +79,7 @@
     "editor.formatOnSave": true,
     "editor.tabSize": 4,
     "editor.insertSpaces": true,
-    "editor.detectIndentation": false
-  }
+    "editor.detectIndentation": false,
+  },
+  "python.linting.pylintPath": "env/bin/pylint"
 }
