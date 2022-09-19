@@ -178,7 +178,7 @@ void Feature::addProp(CT::string name, double v) {
   fp[name.c_str()] = f;
 }
 
-std::map<std::string, FeatureProperty *> &Feature::getFp() { return fp; }
+std::map<std::string, FeatureProperty *> *Feature::getFp() { return &fp; }
 
 void Feature::addPoint(float lon, float lat) { points.push_back(GeoPoint(lon, lat)); }
 

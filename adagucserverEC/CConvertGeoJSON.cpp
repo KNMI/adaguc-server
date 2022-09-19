@@ -31,6 +31,7 @@
 #include "CConvertGeoJSON.h"
 #include "CConvertUGRIDMesh.h"
 #include "CImageWarper.h"
+#include "CFillTriangle.h"
 #include <values.h>
 #include <string>
 #include <map>
@@ -40,7 +41,6 @@
 const char *CConvertGeoJSON::className = "CConvertGeoJSON";
 
 #define CCONVERTUGRIDMESH_NODATA -32000
-//      #define MEASURETIME 1
 
 void CConvertGeoJSON::drawpoly2(float *imagedata, int w, int h, int polyCorners, float *polyXY, float value) {
   //  public-domain code by Darel Rex Finley, 2007
@@ -982,24 +982,25 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
           if (featureId.length() == 0) {
             std::map<std::string, FeatureProperty *>::iterator it;
             CT::string id_s;
-            it = feat->getFp().find("id");
-            if (it != feat->getFp().end()) {
+            std::map<std::string, FeatureProperty *> *featurePropertyMap = feat->getFp();
+            it = featurePropertyMap->find("id");
+            if (it != featurePropertyMap->end()) {
               id_s = it->second->toString().c_str();
               //                     CDBDebug("Found %s %s", it->first.c_str(), id_s.c_str());
               if (!id_s.equals("NONE")) {
                 featureId = id_s;
               }
             } else {
-              it = feat->getFp().find("NUTS_ID");
-              if (it != feat->getFp().end()) {
+              it = featurePropertyMap->find("NUTS_ID");
+              if (it != featurePropertyMap->end()) {
                 id_s = it->second->toString().c_str();
                 //                       CDBDebug("Found %s %s", it->first.c_str(), id_s.c_str());
                 if (!id_s.equals("NONE")) {
                   featureId = id_s;
                 }
               } else {
-                it = feat->getFp().find("name");
-                if (it != feat->getFp().end()) {
+                it = featurePropertyMap->find("name");
+                if (it != featurePropertyMap->end()) {
                   id_s = it->second->toString().c_str();
                   //                         CDBDebug("Found %s %s", it->first.c_str(), id_s.c_str());
                   if (!id_s.equals("NONE")) {
@@ -1229,22 +1230,23 @@ size_t getDimensionSize(CDFObject *cdfObject) {
 }
 
 int CConvertGeoJSON::addPropertyVariables(CDFObject *cdfObject, std::vector<Feature *> features) {
-  #ifdef CCONVERTGEOJSON_DEBUG
+#ifdef CCONVERTGEOJSON_DEBUG
   CDBDebug("Adding propertyVariables");
-  #endif
+#endif
   std::vector<Feature *> pointFeatures = getPointFeatures(features);
   std::map<CT::string, CDF::Variable *> newVars;
 
   std::vector<CDF::Dimension *> varDims = getVarDimensions(cdfObject);
 
-  for (Feature *f : pointFeatures) {
-    std::vector<GeoPoint> pts = f->getPoints();
-    for (auto iter = f->getFp().begin(); iter != f->getFp().end(); ++iter) {
+  for (Feature *feature : pointFeatures) {
+    std::vector<GeoPoint> pts = feature->getPoints();
+    std::map<std::string, FeatureProperty *> *featurePropertyMap = feature->getFp();
+    for (auto iter = featurePropertyMap->begin(); iter != featurePropertyMap->end(); ++iter) {
       CT::string name = iter->first.c_str();
-      if (newVars.find(name.c_str()) == newVars.end() && cdfObject->getVariableNE(name.c_str())==NULL) {
-        #ifdef CCONVERTGEOJSON_DEBUG
+      if (newVars.find(name.c_str()) == newVars.end() && cdfObject->getVariableNE(name.c_str()) == NULL) {
+#ifdef CCONVERTGEOJSON_DEBUG
         CDBDebug("Creating var %s", name.c_str());
-        #endif
+#endif
         CDF::Variable *newVar = new CDF::Variable();
         newVar->name.copy(name.c_str());
         switch (iter->second->getType()) {
@@ -1270,54 +1272,16 @@ int CConvertGeoJSON::addPropertyVariables(CDFObject *cdfObject, std::vector<Feat
         newVar->setAttributeText("standard_name", name);
         newVar->setAttributeText("grid_mapping", "projection");
         cdfObject->addVariable(newVar);
-        #ifdef CCONVERTGEOJSON_DEBUG
+#ifdef CCONVERTGEOJSON_DEBUG
         CDBDebug("adding variable %s", name.c_str());
-        #endif
+#endif
         newVars[name] = newVar;
       }
     }
   }
-  #ifdef CCONVERTGEOJSON_DEBUG
+#ifdef CCONVERTGEOJSON_DEBUG
   CDBDebug("/Adding propertyVariables");
-  #endif
-  return 0;
-}
-
-int CConvertGeoJSON::addPropertyValues(CDataSource *dataSource, std::vector<Feature *> features) {
-  for (auto iter : *dataSource->getDataObjectsVector()) {
-    CDBDebug("variable: %s", iter->variableName.c_str());
-  }
-  CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
-  CDBDebug("Adding propertyValues");
-  std::vector<Feature *> pointFeatures = getPointFeatures(features);
-  std::map<CT::string, CDF::Variable *> newVars;
-
-  int pos = 0;
-  size_t size = getDimensionSize(cdfObject);
-
-  for (Feature *f : pointFeatures) {
-    std::vector<GeoPoint> pts = f->getPoints();
-    for (auto iter = f->getFp().begin(); iter != f->getFp().end(); ++iter) {
-      CT::string name = iter->first.c_str();
-      if (newVars.find(name.c_str()) == newVars.end()) {
-        // CDBDebug("Initializing propertyValues into var %s", name.c_str());
-        CDF::Variable *newVar = cdfObject->getVariable(name.c_str());
-        CDF::allocateData(newVar->getType(), &(newVar->data), size);
-        CDF::fill(newVar->data, newVar->getType(), 0, size);
-        newVars[name] = newVar;
-      }
-      // CDBDebug("Add value %s to var %s[%d]", iter->second->toString().c_str(), name.c_str(), pos);
-      CDF::Variable *newVar = newVars[name];
-      switch (newVar->getType()) {
-      case CDF_FLOAT:
-        ((float *)newVar->data)[pos] = (float)iter->second->getDblVal();
-        break;
-      default:
-        break;
-      }
-    }
-    pos++;
-  }
+#endif
   return 0;
 }
 
@@ -1345,24 +1309,22 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
   std::vector<Feature *> features = featureStore[geojsonkey];
 
   if (features.size() == 0) {
-    #ifdef CCONVERTGEOJSON_DEBUG
+#ifdef CCONVERTGEOJSON_DEBUG
     CDBDebug("Rereading JSON");
-    #endif
+#endif
     CT::string inputjsondata = (char *)jsonVar->data;
     json_value *json = json_parse((json_char *)inputjsondata.c_str(), inputjsondata.length());
 #ifdef CCONVERTGEOJSON_DEBUG
-      CDBDebug("JSON result: %x", json);
+    CDBDebug("JSON result: %x", json);
 #endif
 
     BBOX dfBBOX;
     getBBOX(cdfObject, dfBBOX, *json, features);
-    #ifdef CCONVERTGEOJSON_DEBUG
+#ifdef CCONVERTGEOJSON_DEBUG
     CDBDebug("addCDFInfo again");
-    #endif
+#endif
     addCDFInfo(cdfObject, dataSource->srvParams, dfBBOX, features, true);
   }
-
-  addPropertyValues(dataSource, features);
 
   // Store featureSet name (geojsonkey) in datasource
   dataSource->featureSet = geojsonkey.c_str();
@@ -1370,15 +1332,15 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
   // Make the width and height of the new 2D adaguc field the same as the viewing window
   dataSource->dWidth = dataSource->srvParams->Geo->dWidth;
   dataSource->dHeight = dataSource->srvParams->Geo->dHeight;
- 
- // Set statistics
+
+  // Set statistics
   if (dataSource->stretchMinMax) {
 #ifdef CCONVERTGEOJSON_DEBUG
     CDBDebug("dataSource->stretchMinMax");
 #endif
     if (dataSource->statistics == NULL) {
 #ifdef CCONVERTGEOJSON_DEBUG
-      CDBDebug("Setting statistics: min/max : %f %f", 0, features.size() - 1);
+      CDBDebug("Setting statistics: min/max : %d %d", 0, features.size() - 1);
 #endif
       dataSource->statistics = new CDataSource::Statistics();
       dataSource->statistics->setMaximum(features.size() - 1);
@@ -1386,16 +1348,18 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
     }
   }
 
-  if (dataSource->srvParams->requestType == REQUEST_WMS_GETLEGENDGRAPHIC) {
+  if (dataSource->srvParams->requestType == REQUEST_WMS_GETLEGENDGRAPHIC && dataSource->stretchMinMax == false) {
+    CDBDebug("Returning because of REQUEST_WMS_GETLEGENDGRAPHIC and  dataSource->stretchMinMax is set to false");
     return 0;
   }
 
-  if (dataSource->dWidth == 1 && dataSource->dHeight == 1) {
+  if (dataSource->dWidth == 1 && dataSource->dHeight == 1 && dataSource->stretchMinMax == false) {
+    CDBDebug("Returning because grid is 1x1");
     dataSource->dfBBOX[0] = dataSource->srvParams->Geo->dfBBOX[0];
     dataSource->dfBBOX[1] = dataSource->srvParams->Geo->dfBBOX[1];
     dataSource->dfBBOX[2] = dataSource->srvParams->Geo->dfBBOX[2];
     dataSource->dfBBOX[3] = dataSource->srvParams->Geo->dfBBOX[3];
-    return result; // TODO
+    return result;
   }
 
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
@@ -1409,7 +1373,7 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
       dataObjects[d] = dataSource->getDataObject(d);
     }
     CDF::Variable *polygonIndexVar;
-    polygonIndexVar = dataObjects[0]->cdfVariable;
+    polygonIndexVar = dataSource->getDataObject(0)->cdfVariable;
     // Width needs to be at least 2 in this case.
     if (dataSource->dWidth == 1) dataSource->dWidth = 2;
     if (dataSource->dHeight == 1) dataSource->dHeight = 2;
@@ -1471,27 +1435,23 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
     CDBDebug("Drawing %s", polygonIndexVar->name.c_str());
 #endif
 
-    // TODO Only draw if datatype is int (or float)
+    /* Allocate data for the 2D field */
     size_t fieldSize = dataSource->dWidth * dataSource->dHeight;
     polygonIndexVar->setSize(fieldSize);
     CDF::allocateData(polygonIndexVar->getType(), &(polygonIndexVar->data), fieldSize);
 
-    // Draw data!
+    /* Determine the fillvalue */
     dataObjects[0]->dfNodataValue = -1;
     CDF::Attribute *fillValue = polygonIndexVar->getAttributeNE("_FillValue");
     if (fillValue != NULL) {
       dataObjects[0]->hasNodataValue = true;
       fillValue->getData(&dataObjects[0]->dfNodataValue, 1);
     } else {
-      unsigned short f = dataObjects[0]->dfNodataValue;
-      polygonIndexVar->setAttribute("_FillValue", CDF_USHORT, &f, 1);
-    }
-    unsigned short sNodataValue = (unsigned short)dataObjects[0]->dfNodataValue;
-    for (size_t j = 0; j < fieldSize; j++) {
-      ((unsigned short *)polygonIndexVar->data)[j] = sNodataValue;
+      polygonIndexVar->setAttribute("_FillValue", polygonIndexVar->getType(), dataObjects[0]->dfNodataValue);
     }
 
-    unsigned short *sdata = ((unsigned short *)polygonIndexVar->data);
+    /* Fill the data with the nodatavalue */
+    CDF::fill(polygonIndexVar->data, polygonIndexVar->getType(), dataObjects[0]->dfNodataValue, fieldSize);
 
 #ifdef MEASURETIME
     StopWatch_Stop("GeoJSON DATA");
@@ -1503,25 +1463,17 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
     CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
 #endif
 
-    int status = imageWarper.initreproj(dataSource, dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
-    if (status != 0) {
-      CDBError("Unable to init projection");
-      return 1;
+    if (projectionRequired) {
+      int status = imageWarper.initreproj(dataSource, dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
+      if (status != 0) {
+        CDBError("Unable to init projection");
+        return 1;
+      }
     }
-    //          bool projectionRequired = imageWarper.isProjectionRequired();
 
 #ifdef MEASURETIME
     StopWatch_Stop("Iterating lat/lon data");
 #endif
-    CDBDebug("DrawPoly");
-
-    //           double llX=dataSource->srvParams->Geo->dfBBOX[0];
-    //           double llY=dataSource->srvParams->Geo->dfBBOX[1];
-    //           double urX=dataSource->srvParams->Geo->dfBBOX[2];
-    //           double urY=dataSource->srvParams->Geo->dfBBOX[3];
-    // #ifdef CCONVERTGEOJSON_DEBUG
-    //           CDBDebug("BBOX:%f,%f,%f,%f", llX, llY, urX, urY);
-    //  #endif
 
 #ifdef MEASURETIME
     StopWatch_Stop("Feature drawing starts");
@@ -1529,173 +1481,14 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
     CDBDebug("nrFeatures: %d", features.size());
 
     unsigned short int featureIndex = 0;
-    typedef std::vector<Feature *>::iterator it_type;
+    float min = NAN;
+    float max = NAN;
     for (it_type feature = features.begin(); feature != features.end(); ++feature) { // Loop over all features
-      std::vector<Polygon> polygons = (*feature)->getPolygons();
-      for (std::vector<Polygon>::iterator itpoly = polygons.begin(); itpoly != polygons.end(); ++itpoly) {
-        float *polyX = itpoly->getLons();
-        float *polyY = itpoly->getLats();
-        int numPoints = itpoly->getSize();
-        float projectedXY[numPoints * 2];
-        float minX = FLT_MAX, minY = FLT_MAX;
-        float maxX = -FLT_MAX, maxY = -FLT_MAX;
+      std::map<std::string, FeatureProperty *> *featurePropertyMap = (*feature)->getFp();
+      drawPolygons(*feature, featureIndex, dataSource, projectionRequired, &imageWarper, cellSizeX, cellSizeY, offsetX, offsetY);
+      drawPoints(*feature, featureIndex, dataSource, projectionRequired, &imageWarper, cellSizeX, cellSizeY, offsetX, offsetY, min, max);
 
-        int pxMin, pxMax, pyMin, pyMax, first = 0;
-
-        // CDBDebug("Plotting a polygon of %d points with %d holes [? of %d]", numPoints, itpoly->getHoles().size(), featureIndex);
-        for (int j = 0; j < numPoints; j++) {
-          double tprojectedX = polyX[j];
-          double tprojectedY = polyY[j];
-          int status = 0;
-          if (projectionRequired) status = imageWarper.reprojfromLatLon(tprojectedX, tprojectedY);
-          int dlon, dlat;
-          if (!status) {
-            dlon = int((tprojectedX - offsetX) / cellSizeX) + 1;
-            dlat = int((tprojectedY - offsetY) / cellSizeY);
-
-            if (first == 0) {
-              first = 1;
-              pxMin = dlon;
-              pxMax = dlon;
-              pyMin = dlat;
-              pyMax = dlat;
-            } else {
-              if (dlon < pxMin) pxMin = dlon;
-              if (dlon > pxMax) pxMax = dlon;
-              if (dlat < pyMin) pyMin = dlat;
-              if (dlat > pyMax) pyMax = dlat;
-            }
-
-            minX = MIN(minX, tprojectedX);
-            minY = MIN(minY, tprojectedY);
-            maxX = MAX(maxX, tprojectedX);
-            maxY = MAX(maxY, tprojectedY);
-          } else {
-            dlat = CCONVERTUGRIDMESH_NODATA;
-            dlon = CCONVERTUGRIDMESH_NODATA;
-          }
-          projectedXY[j * 2] = dlon;
-          projectedXY[j * 2 + 1] = dlat;
-        }
-
-        /*              if ((minX>urX)||(maxX<llX)||(maxY<llY)||(minY>urY))
-                      {
-        //                CDBDebug("skip %f,%f,%f,%f for %f,%f,%f,%f", minX,maxX, minY, maxY, llX, urX, urY, llY);
-                      } else
-                      */
-        {
-          {
-
-            //                float tolerance=0.001;
-            //                std::deque <float> polyline(projectedXY,projectedXY+numPoints*2);
-            //                  float *result=new float[polyline.size()];
-
-            //                  float *last = psimpl::simplify_douglas_peucker<2>(
-            //                  polyline.begin(), polyline.end(), tolerance, result);
-
-            std::vector<PointArray> holes = itpoly->getHoles();
-            int nrHoles = holes.size();
-            int holeSize[nrHoles];
-            float *holeX[nrHoles];
-            float *holeY[nrHoles];
-            float *projectedHoleXY[nrHoles];
-            int h = 0;
-            for (std::vector<PointArray>::iterator itholes = holes.begin(); itholes != holes.end(); ++itholes) {
-              //                   CDBDebug("holes[%d]: %d found in %d", 0, itholes->getSize(), featureIndex);
-              holeX[h] = itholes->getLons();
-              holeY[h] = itholes->getLats();
-              holeSize[h] = itholes->getSize();
-              projectedHoleXY[h] = new float[holeSize[h] * 2];
-              for (int j = 0; j < holeSize[h]; j++) {
-                //                      CDBDebug("J: %d", j);
-                double tprojectedX = holeX[h][j];
-                double tprojectedY = holeY[h][j];
-                int holeStatus = 0;
-                if (projectionRequired) holeStatus = imageWarper.reprojfromLatLon(tprojectedX, tprojectedY);
-                int dlon, dlat;
-                if (!holeStatus) {
-                  dlon = int((tprojectedX - offsetX) / cellSizeX) + 1;
-                  dlat = int((tprojectedY - offsetY) / cellSizeY);
-                } else {
-                  dlat = CCONVERTUGRIDMESH_NODATA;
-                  dlon = CCONVERTUGRIDMESH_NODATA;
-                }
-                projectedHoleXY[h][j * 2] = dlon;
-                projectedHoleXY[h][j * 2 + 1] = dlat;
-                //                      CDBDebug("J: %d", j);
-              }
-              h++;
-            }
-            {
-              int dpCount = numPoints;
-              drawpolyWithHoles_index(pxMin, pyMin, pxMax, pyMax, sdata, dataSource->dWidth, dataSource->dHeight, dpCount, projectedXY, featureIndex, nrHoles, holeSize, projectedHoleXY);
-
-              for (int h = 0; h < nrHoles; h++) {
-                delete[] projectedHoleXY[h];
-              }
-            }
-          }
-        }
-      }
-      std::vector<GeoPoint> points = (*feature)->getPoints();
-
-      std::map<std::string, FeatureProperty *> fp = (*feature)->getFp();
-      std::map<std::string, FeatureProperty*>::iterator ftit;
-      for (std::map<std::string, FeatureProperty*>::iterator ftit=fp.begin(); ftit!=fp.end(); ++ftit) {
-        // CDBDebug("FT: [%s]=[%s]", ftit->first.c_str(), ftit->second->toString().c_str());
-        dataSource->getDataObject(0)->features[featureIndex] = CFeature(featureIndex);
-      }
-
-
-    
-      CT::string pointValue;
-      CT::string pointName;
-      CT::string pointDescription;
-      bool isString = false;
-      ftit = fp.find(polygonIndexVar->name.c_str());
-      if (ftit!=fp.end()) {
-        // CDBDebug("Value === %s", ftit->second->toString().c_str());
-        isString = (ftit->second->getType() == typeStr);
-        pointValue = ftit->second->toString().c_str();
-        pointName = polygonIndexVar->name.c_str();
-        pointDescription = pointName;
-        CDF::Attribute *longName = polygonIndexVar->getAttributeNE("long_name");
-        if(longName) {
-          pointDescription = (const char *)longName->data;
-        }
-      }
-
-
-      for (std::vector<GeoPoint>::iterator itpoint = points.begin(); itpoint != points.end(); ++itpoint) {
-        // Draw point
-
-        double pointLongitude = itpoint->getLon();
-        double pointLatitude = itpoint->getLat();
-        double tprojectedX = pointLongitude;
-        double tprojectedY = pointLatitude;
-        int status = 0;
-        if (projectionRequired) status = imageWarper.reprojfromLatLon(tprojectedX, tprojectedY);
-        int dlon, dlat;
-        if (!status) {
-          dlon = int((tprojectedX - offsetX) / cellSizeX) + 1;
-          dlat = int((tprojectedY - offsetY) / cellSizeY);
-        }
-        // CDBDebug("PT [%d,%d] [%f,%f] %f", dlon, dlat, itpoint->getLon(), itpoint->getLat(), pointValue);
-        drawDot(dlon, dlat, featureIndex, dimX->length, dimY->length, sdata);
-        PointDVWithLatLon *lastPoint = NULL;
-        float f = isString ? NAN : pointValue.toFloat();
-        dataSource->getDataObject(0)->points.push_back(PointDVWithLatLon(dlon, dlat,pointLongitude, pointLatitude, f));
-        lastPoint = &(dataSource->getDataObject(0)->points.back());
-        /* Get the last pushed point from the array and push the character text data in the paramlist */
-    
-        lastPoint->paramList.push_back(CKeyValue(pointName.c_str(),pointDescription.c_str(),pointValue.c_str()));
-
-      }
-#ifdef MEASURETIME
-      StopWatch_Stop("Feature drawn %d", featureIndex);
-#endif
-      
-      for (std::map<std::string, FeatureProperty *>::iterator ftit = (*feature)->getFp().begin(); ftit != (*feature)->getFp().end(); ++ftit) {
+      for (std::map<std::string, FeatureProperty *>::iterator ftit = featurePropertyMap->begin(); ftit != featurePropertyMap->end(); ++ftit) {
         if (dataSource->getDataObject(0)->features.count(featureIndex) == 0) {
           dataSource->getDataObject(0)->features[featureIndex] = CFeature(featureIndex);
         }
@@ -1704,6 +1497,12 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
       featureIndex++;
     }
 
+    if (min != NAN) dataSource->statistics->setMinimum(min);
+    if (max != NAN) dataSource->statistics->setMaximum(max);
+
+#ifdef MEASURETIME
+    StopWatch_Stop("Feature drawing done");
+#endif
 #ifdef CCONVERTGEOJSON_DEBUG
     CDBDebug("/convertGEOJSONData");
 #endif
@@ -1711,12 +1510,164 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
   return result;
 }
 
-void CConvertGeoJSON::drawDot(int px, int py, unsigned short int v, int W, int H, unsigned short int *grid) {
+void CConvertGeoJSON::drawDot(int px, int py, unsigned short v, int W, int H, unsigned short *grid) {
   for (int x = -4; x < 6; x++) {
     for (int y = -4; y < 6; y++) {
       int pointX = px + x;
       int pointY = py + y;
       if (pointX >= 0 && pointY >= 0 && pointX < W && pointY < H) grid[pointX + pointY * W] = v;
     }
+  }
+}
+
+void CConvertGeoJSON::drawPolygons(Feature *feature, unsigned short int featureIndex, CDataSource *dataSource, bool projectionRequired, CImageWarper *imageWarper, double cellSizeX, double cellSizeY,
+                                   double offsetX, double offsetY) {
+  std::vector<Polygon> polygons = feature->getPolygons();
+  if (polygons.size() == 0) return;
+  CDF::Variable *polygonIndexVar = dataSource->getDataObject(0)->cdfVariable;
+
+  for (std::vector<Polygon>::iterator itpoly = polygons.begin(); itpoly != polygons.end(); ++itpoly) {
+    float *polyX = itpoly->getLons();
+    float *polyY = itpoly->getLats();
+    int numPolygonPoints = itpoly->getSize();
+    float projectedXY[numPolygonPoints * 2];
+    float minX = FLT_MAX, minY = FLT_MAX;
+    float maxX = -FLT_MAX, maxY = -FLT_MAX;
+
+    int pxMin, pxMax, pyMin, pyMax, first = 0;
+
+    for (int j = 0; j < numPolygonPoints; j++) {
+      double tprojectedX = polyX[j];
+      double tprojectedY = polyY[j];
+      int status = 0;
+      if (projectionRequired) status = imageWarper->reprojfromLatLon(tprojectedX, tprojectedY);
+      int dlon, dlat;
+      if (!status) {
+        dlon = int((tprojectedX - offsetX) / cellSizeX) + 1;
+        dlat = int((tprojectedY - offsetY) / cellSizeY);
+
+        if (first == 0) {
+          first = 1;
+          pxMin = dlon;
+          pxMax = dlon;
+          pyMin = dlat;
+          pyMax = dlat;
+        } else {
+          if (dlon < pxMin) pxMin = dlon;
+          if (dlon > pxMax) pxMax = dlon;
+          if (dlat < pyMin) pyMin = dlat;
+          if (dlat > pyMax) pyMax = dlat;
+        }
+
+        minX = MIN(minX, tprojectedX);
+        minY = MIN(minY, tprojectedY);
+        maxX = MAX(maxX, tprojectedX);
+        maxY = MAX(maxY, tprojectedY);
+      } else {
+        dlat = CCONVERTUGRIDMESH_NODATA;
+        dlon = CCONVERTUGRIDMESH_NODATA;
+      }
+      projectedXY[j * 2] = dlon;
+      projectedXY[j * 2 + 1] = dlat;
+    }
+
+    std::vector<PointArray> holes = itpoly->getHoles();
+    int nrHoles = holes.size();
+    int holeSize[nrHoles];
+    float *holeX[nrHoles];
+    float *holeY[nrHoles];
+    float *projectedHoleXY[nrHoles];
+    int h = 0;
+    for (std::vector<PointArray>::iterator itholes = holes.begin(); itholes != holes.end(); ++itholes) {
+      holeX[h] = itholes->getLons();
+      holeY[h] = itholes->getLats();
+      holeSize[h] = itholes->getSize();
+      projectedHoleXY[h] = new float[holeSize[h] * 2];
+      for (int j = 0; j < holeSize[h]; j++) {
+        double tprojectedX = holeX[h][j];
+        double tprojectedY = holeY[h][j];
+        int holeStatus = 0;
+        if (projectionRequired) holeStatus = imageWarper->reprojfromLatLon(tprojectedX, tprojectedY);
+        int dlon, dlat;
+        if (!holeStatus) {
+          dlon = int((tprojectedX - offsetX) / cellSizeX) + 1;
+          dlat = int((tprojectedY - offsetY) / cellSizeY);
+        } else {
+          dlat = CCONVERTUGRIDMESH_NODATA;
+          dlon = CCONVERTUGRIDMESH_NODATA;
+        }
+        projectedHoleXY[h][j * 2] = dlon;
+        projectedHoleXY[h][j * 2 + 1] = dlat;
+        std::vector<GeoPoint> points = feature->getPoints();
+
+#ifdef MEASURETIME
+        StopWatch_Stop("Feature drawn %d", featureIndex);
+#endif
+      }
+      h++;
+    }
+
+    int dpCount = numPolygonPoints;
+    if (polygonIndexVar->getType() == CDF_USHORT) {
+      unsigned short *sdata = (unsigned short *)polygonIndexVar->data;
+      drawpolyWithHoles_index(pxMin, pyMin, pxMax, pyMax, sdata, dataSource->dWidth, dataSource->dHeight, dpCount, projectedXY, featureIndex, nrHoles, holeSize, projectedHoleXY);
+    }
+
+    for (int h = 0; h < nrHoles; h++) {
+      delete[] projectedHoleXY[h];
+    }
+  }
+}
+
+void CConvertGeoJSON::drawPoints(Feature *feature, unsigned short int featureIndex, CDataSource *dataSource, bool projectionRequired, CImageWarper *imageWarper, double cellSizeX, double cellSizeY,
+                                 double offsetX, double offsetY, float &min, float &max) {
+  std::vector<GeoPoint> points = feature->getPoints();
+  if (points.size() == 0) return;
+  CDF::Variable *pointGridVariable = dataSource->getDataObject(0)->cdfVariable;
+
+  std::map<std::string, FeatureProperty *> *fp = feature->getFp();
+
+  CT::string pointValue, pointName, pointDescription;
+  bool isString = false;
+  std::map<std::string, FeatureProperty *>::iterator ftit = fp->find(pointGridVariable->name.c_str());
+  if (ftit != fp->end()) {
+    isString = (ftit->second->getType() == typeStr);
+    pointValue = ftit->second->toString().c_str();
+    pointName = pointGridVariable->name.c_str();
+    pointDescription = pointName;
+    CDF::Attribute *longName = pointGridVariable->getAttributeNE("long_name");
+    if (longName) {
+      pointDescription = (const char *)longName->data;
+    }
+  }
+
+  for (std::vector<GeoPoint>::iterator itpoint = points.begin(); itpoint != points.end(); ++itpoint) {
+    /* Draw point */
+    double pointLongitude = itpoint->getLon();
+    double pointLatitude = itpoint->getLat();
+    double tprojectedX = pointLongitude;
+    double tprojectedY = pointLatitude;
+    int status = 0;
+    if (projectionRequired) status = imageWarper->reprojfromLatLon(tprojectedX, tprojectedY);
+    int dlon, dlat;
+    if (!status) {
+      dlon = int((tprojectedX - offsetX) / cellSizeX) + 1;
+      dlat = int((tprojectedY - offsetY) / cellSizeY);
+    }
+    float f = isString ? NAN : pointValue.toFloat();
+    dataSource->getDataObject(0)->points.push_back(PointDVWithLatLon(dlon, dlat, pointLongitude, pointLatitude, f));
+    /* Draw indices of the points, corresponding to the featureindex in the geojson */
+    if (pointGridVariable->getType() == CDF_USHORT) {
+      drawDot(dlon, dlat, featureIndex, dataSource->dWidth, dataSource->dHeight, (unsigned short *)pointGridVariable->data);
+    }
+    /* Draw values of the points */
+    if (pointGridVariable->getType() == CDF_FLOAT) {
+      if (f < min || min != min) min = f;
+      if (f > max || max != max) max = f;
+      drawCircle((float *)pointGridVariable->data, f, dataSource->dWidth, dataSource->dHeight, dlon - 1, dlat, 10);
+    }
+    PointDVWithLatLon *lastPoint = &(dataSource->getDataObject(0)->points.back());
+    /* Get the last pushed point from the array and push the character text data in the paramlist */
+    lastPoint->paramList.push_back(CKeyValue(pointName.c_str(), pointDescription.c_str(), pointValue.c_str()));
   }
 }
