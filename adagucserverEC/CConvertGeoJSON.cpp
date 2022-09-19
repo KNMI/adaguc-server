@@ -1510,9 +1510,11 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
       }
       featureIndex++;
     }
-    if (dataSource->getDataObject(0)->variableName.equals("features") == false) {
-      if (min != NAN) dataSource->statistics->setMinimum(min);
-      if (max != NAN) dataSource->statistics->setMaximum(max);
+    if (dataSource && dataSource->statistics != NULL) {
+      if (dataSource->getDataObject(0)->variableName.equals("features") == false) {
+        if (min != NAN) dataSource->statistics->setMinimum(min);
+        if (max != NAN) dataSource->statistics->setMaximum(max);
+      }
     }
 
 #ifdef MEASURETIME
