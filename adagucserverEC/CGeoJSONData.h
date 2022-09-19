@@ -144,7 +144,7 @@ public:
   void addProp(CT::string name, int v);
   void addProp(CT::string name, char *v);
   void addProp(CT::string name, double v);
-  std::map<std::string, FeatureProperty *> &getFp();
+  std::map<std::string, FeatureProperty *> *getFp();
   bool hasHoles();
 };
 

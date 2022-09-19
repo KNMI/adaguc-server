@@ -30,6 +30,7 @@
 #include <map>
 #include "json.h"
 #include "CDebugger.h"
+#include "CImageWarper.h"
 
 typedef struct {
   double llX;
@@ -41,6 +42,7 @@ typedef struct {
 class CConvertGeoJSON {
 private:
   DEF_ERRORFUNCTION();
+  typedef std::vector<Feature *>::iterator it_type;
   static void getBBOX(CDFObject *cdfObject, BBOX &bbox, json_value &json, std::vector<Feature *> &features);
   static void getDimensions(CDFObject *cdfObject, json_value &json, bool openAll);
   static void getPolygons(json_value &j);
@@ -52,7 +54,11 @@ private:
   static void drawpolyWithHoles_index(int xMin, int yMin, int xMax, int yMax, unsigned short *imagedata, int w, int h, int polyCorners, float *polyXY, unsigned short int value, int holes,
                                       int *holeCorners, float *holeXY[]);
   static void drawpolyWithHoles_indexORG(unsigned short *imagedata, int w, int h, int polyCorners, float *polyXY, unsigned short int value, int holes, int *holeCorners, float *holeXY[]);
-  static void drawDot(int px, int py, unsigned short int v, int W, int H, unsigned short int *grid);
+  static void drawDot(int px, int py, unsigned short v, int W, int H, unsigned short *grid);
+  static void drawPolygons(Feature *feature, unsigned short int featureIndex, CDataSource *dataSource, bool projectionRequired, CImageWarper *imageWarper, double cellSizeX, double cellSizeY,
+                           double offsetX, double offsetY);
+  static void drawPoints(Feature *feature, unsigned short int featureIndex, CDataSource *dataSource, bool projectionRequired, CImageWarper *imageWarper, double cellSizeX, double cellSizeY,
+                         double offsetX, double offsetY, float &min, float &max);
 
 public:
   static std::map<std::string, std::vector<Feature *>> featureStore;
@@ -62,6 +68,5 @@ public:
   static int convertGeoJSONHeader(CDFObject *cdfObject);
   static int convertGeoJSONData(CDataSource *dataSource, int mode);
   static int addPropertyVariables(CDFObject *cdfObject, std::vector<Feature *> features);
-  static int addPropertyValues(CDataSource *dataSource, std::vector<Feature *> features);
 };
 #endif
