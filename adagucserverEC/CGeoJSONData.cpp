@@ -120,11 +120,11 @@ bool Feature::hasHoles() {
   return false;
 }
 
-std::vector<Polygon> Feature::getPolygons() { return polygons; }
+std::vector<Polygon> *Feature::getPolygons() { return &polygons; }
 
-std::vector<Polyline> Feature::getPolylines() { return polylines; }
+std::vector<Polyline> *Feature::getPolylines() { return &polylines; }
 
-std::vector<GeoPoint> Feature::getPoints() { return points; }
+std::vector<GeoPoint> *Feature::getPoints() { return &points; }
 
 CT::string Feature::toString() {
   CT::string s;

@@ -135,9 +135,9 @@ public:
   void newHole();
   void addHolePoint(float lon, float lat);
   CT::string toString();
-  std::vector<Polygon> getPolygons();
-  std::vector<Polyline> getPolylines();
-  std::vector<GeoPoint> getPoints();
+  std::vector<Polygon> *getPolygons();
+  std::vector<Polyline> *getPolylines();
+  std::vector<GeoPoint> *getPoints();
   CT::string getId() { return id; }
   void setId(CT::string s) { id = s; }
   void addPoint(float lon, float lat);
