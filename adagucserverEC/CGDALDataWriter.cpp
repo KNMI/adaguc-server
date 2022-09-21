@@ -27,7 +27,7 @@
 #ifdef ADAGUC_USE_GDAL
 #include "CGDALDataWriter.h"
 
-#define CGDALDATAWRITER_DEBUG
+// #define CGDALDATAWRITER_DEBUG
 
 const char *CGDALDataWriter::className = "CGDALDataWriter";
 

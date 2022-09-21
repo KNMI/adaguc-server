@@ -20,6 +20,11 @@ class AdagucTestTools:
         except Exception:
             pass
         return ""
+    
+    def getLogFileSize(self):
+        ADAGUC_LOGFILE = os.environ['ADAGUC_LOGFILE']
+        file_stats = os.stat(ADAGUC_LOGFILE)
+        return file_stats.st_size
 
     def printLogFile(self):
         print("\n=== START ADAGUC LOGS ===")
@@ -31,7 +36,7 @@ class AdagucTestTools:
         content = urllib.request.urlopen(req)
         return [content.getcode(), content.read(), content.getheaders()]
 
-    def runADAGUCServer(self, url=None, env=None, path=None, args=None, isCGI=True, showLogOnError=True, showLog=False):
+    def runADAGUCServer(self, url=None, env=None, path=None, args=None, isCGI=True, showLogOnError=True, showLog=False, maxLogFileSize = 8192):
 
         if env is None:
             env = []
@@ -56,7 +61,7 @@ class AdagucTestTools:
         os.chdir(ADAGUC_PATH+"/tests")
 
         filetogenerate = BytesIO()
-        status, headers = CGIRunner().run(adagucargs, url=url, output=filetogenerate,
+        status, headers, processErr = CGIRunner().run(adagucargs, url=url, output=filetogenerate,
                                           env=adagucenv, path=path, isCGI=isCGI)
 
         if (status != 0 and showLogOnError == True) or showLog == True:
@@ -82,6 +87,15 @@ class AdagucTestTools:
             return [status, filetogenerate, headers]
 
         else:
+            # The executable wrote to stderr, which is unwanted behaviour. Stderr should be empty when running adaguc-server.
+            if processErr:
+                #print(processErr.decode())  
+                print("[WARNING]: the process should not write to stderr")    
+            # Check if the code did not write a too big logfile
+            logfileSize = self.getLogFileSize()
+            if logfileSize > maxLogFileSize:
+                self.printLogFile()
+                print("[WARNING]: Adaguc-server writes too many lines to the logfile, size = %d kilobytes" % (logfileSize/1024))
             return [status, filetogenerate, headers]
 
     def writetofile(self, filename, data):
