@@ -1,3 +1,7 @@
+**Version 2.7.7 2022-09-19**
+
+- GeoJSON reader now supports featuretype Point.
+
 **Version 2.7.6 2022-07-12**
 
 - Fix: Legend with a logaritmic scale do work again.
