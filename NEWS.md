@@ -1,5 +1,11 @@
+**Version 2.7.8 2022-09-21**
+
+- Updated documentation
+
 **Version 2.7.7 2022-09-19**
 
+- Added OGCAPI support
+- Added RADAR volume scan support
 - GeoJSON reader now supports featuretype Point.
 
 **Version 2.7.6 2022-07-12**
