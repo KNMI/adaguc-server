@@ -163,7 +163,7 @@ Feature::Feature(CT::string _id) { id = _id; }
 
 Feature::Feature(const char *_id) { id = _id; }
 
-void Feature::addProp(CT::string name, int v) {
+void Feature::addPropInt64(CT::string name, int64_t v) {
   FeatureProperty *f = new FeatureProperty(v);
   fp[name.c_str()] = f;
 }
