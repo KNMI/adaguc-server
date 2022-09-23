@@ -122,3 +122,19 @@ class TestWMSPolylineRenderer(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertEqual(data.getvalue(), AdagucTestTools(
         ).readfromfile(self.expectedoutputsspath + filename))
+
+    def test_WMSPointRenderer_usgs_earthquakes_geojson_GetMap_MultiVar(self):
+        AdagucTestTools().cleanTempDir()
+
+        config = ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml,' + \
+            ADAGUC_PATH + '/data/config/datasets/adaguc.testGeoJSONReaderMultivariable.xml'
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=['--updatedb', '--config', config], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+
+        filename="test_WMSPointRenderer_usgs_earthquakes_geojson_GetMap_MultiVar.png"
+        status, data, headers = AdagucTestTools().runADAGUCServer("DATASET=adaguc.testGeoJSONReaderMultivariable&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=usgs_earthquakes_age_magnitude_geojson&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=500571.08859811374,5790835.942920016,1024650.2598764997,7187305.365464885&STYLES=age_magnitude_triangles%2Fpoint&FORMAT=image/png&TRANSPARENT=TRUE&&time=2022-09-22T07%3A25%3A20Z&", env=self.env)
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools(
+        ).readfromfile(self.expectedoutputsspath + filename))
