@@ -982,10 +982,10 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
                 //                      CDBDebug("[%d] prop[%s]S =%s", cnt, propName.c_str(),prop.u.string.ptr);
                 feat->addProp(propName, prop.u.string.ptr);
               } else if (prop.type == json_integer) {
-                //                      CDBDebug("[%d] prop[%s]I =%d", cnt, propName.c_str(), (int)prop.u.integer);
-                feat->addProp(propName, (int)prop.u.integer);
+                // CDBDebug("[%d] prop[%s]I =%ld", cnt, propName.c_str(), prop.u.integer);
+                feat->addPropInt64(propName, (int64_t)prop.u.integer);
               } else if (prop.type == json_double) {
-                //                      CDBDebug("[%d] prop[%s]D =%f", cnt, propName.c_str(), prop.u.dbl);
+                // CDBDebug("[%d] prop[%s]D =%f", cnt, propName.c_str(), prop.u.dbl);
                 feat->addProp(propName, prop.u.dbl);
               }
             }
@@ -1381,148 +1381,150 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
 #endif
     CDBDebug("convertGeoJSONData OPEN ALL (*)");
 
-    CDataSource::DataObject *dataObjects[nrDataObjects];
+    CDataSource::DataObject *dataObject;
     for (size_t d = 0; d < nrDataObjects; d++) {
-      dataObjects[d] = dataSource->getDataObject(d);
-    }
-    CDF::Variable *polygonIndexVar;
-    polygonIndexVar = dataSource->getDataObject(0)->cdfVariable;
-    // Width needs to be at least 2 in this case.
-    if (dataSource->dWidth == 1) dataSource->dWidth = 2;
-    if (dataSource->dHeight == 1) dataSource->dHeight = 2;
-    double cellSizeX = (dataSource->srvParams->Geo->dfBBOX[2] - dataSource->srvParams->Geo->dfBBOX[0]) / double(dataSource->dWidth);
-    double cellSizeY = (dataSource->srvParams->Geo->dfBBOX[3] - dataSource->srvParams->Geo->dfBBOX[1]) / double(dataSource->dHeight);
-    double offsetX = dataSource->srvParams->Geo->dfBBOX[0] + cellSizeX / 2;
-    double offsetY = dataSource->srvParams->Geo->dfBBOX[1] + cellSizeY / 2;
+      dataObject = dataSource->getDataObject(d);
 
-    CDF::Dimension *dimX;
-    CDF::Dimension *dimY;
-    CDF::Variable *varX;
-    CDF::Variable *varY;
+      CDF::Variable *polygonIndexVar;
+      polygonIndexVar = dataObject->cdfVariable;
+      // Width needs to be at least 2 in this case.
+      if (dataSource->dWidth == 1) dataSource->dWidth = 2;
+      if (dataSource->dHeight == 1) dataSource->dHeight = 2;
+      double cellSizeX = (dataSource->srvParams->Geo->dfBBOX[2] - dataSource->srvParams->Geo->dfBBOX[0]) / double(dataSource->dWidth);
+      double cellSizeY = (dataSource->srvParams->Geo->dfBBOX[3] - dataSource->srvParams->Geo->dfBBOX[1]) / double(dataSource->dHeight);
+      double offsetX = dataSource->srvParams->Geo->dfBBOX[0] + cellSizeX / 2;
+      double offsetY = dataSource->srvParams->Geo->dfBBOX[1] + cellSizeY / 2;
 
-    // Create new dimensions and variables (X,Y,T)
-    dimX = cdfObject->getDimension("x");
-    dimX->setSize(dataSource->dWidth);
+      CDF::Dimension *dimX;
+      CDF::Dimension *dimY;
+      CDF::Variable *varX;
+      CDF::Variable *varY;
 
-    dimY = cdfObject->getDimension("y");
-    dimY->setSize(dataSource->dHeight);
+      // Create new dimensions and variables (X,Y,T)
+      dimX = cdfObject->getDimension("x");
+      dimX->setSize(dataSource->dWidth);
 
-    varX = cdfObject->getVariable("x");
-    varY = cdfObject->getVariable("y");
+      dimY = cdfObject->getDimension("y");
+      dimY->setSize(dataSource->dHeight);
 
-    CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
-    CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+      varX = cdfObject->getVariable("x");
+      varY = cdfObject->getVariable("y");
 
-    // Fill in the X and Y dimensions with the array of coordinates
-    for (size_t j = 0; j < dimX->length; j++) {
-      double x = offsetX + double(j) * cellSizeX;
-      ((double *)varX->data)[j] = x;
-    }
-    for (size_t j = 0; j < dimY->length; j++) {
-      double y = offsetY + double(j) * cellSizeY;
-      ((double *)varY->data)[j] = y;
-    }
-    bool projectionRequired = false;
-    CImageWarper imageWarper;
-    if (dataSource->srvParams->Geo->CRS.length() > 0) {
-      projectionRequired = true;
-      //            for(size_t d=0;d<nrDataObjects;d++){
-      polygonIndexVar->setAttributeText("grid_mapping", "customgridprojection");
-      //            }
-      if (cdfObject->getVariableNE("customgridprojection") == NULL) {
-        CDF::Variable *projectionVar = new CDF::Variable();
-        projectionVar->name.copy("customgridprojection");
-        cdfObject->addVariable(projectionVar);
-        dataSource->nativeEPSG = dataSource->srvParams->Geo->CRS.c_str();
-        imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
-        if (dataSource->nativeProj4.length() == 0) {
-          dataSource->nativeProj4 = LATLONPROJECTION;
-          dataSource->nativeEPSG = "EPSG:4326";
-          projectionRequired = false;
+      CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
+      CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+
+      // Fill in the X and Y dimensions with the array of coordinates
+      for (size_t j = 0; j < dimX->length; j++) {
+        double x = offsetX + double(j) * cellSizeX;
+        ((double *)varX->data)[j] = x;
+      }
+      for (size_t j = 0; j < dimY->length; j++) {
+        double y = offsetY + double(j) * cellSizeY;
+        ((double *)varY->data)[j] = y;
+      }
+      bool projectionRequired = false;
+      CImageWarper imageWarper;
+      if (dataSource->srvParams->Geo->CRS.length() > 0) {
+        projectionRequired = true;
+        //            for(size_t d=0;d<nrDataObjects;d++){
+        polygonIndexVar->setAttributeText("grid_mapping", "customgridprojection");
+        //            }
+        if (cdfObject->getVariableNE("customgridprojection") == NULL) {
+          CDF::Variable *projectionVar = new CDF::Variable();
+          projectionVar->name.copy("customgridprojection");
+          cdfObject->addVariable(projectionVar);
+          dataSource->nativeEPSG = dataSource->srvParams->Geo->CRS.c_str();
+          imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
+          if (dataSource->nativeProj4.length() == 0) {
+            dataSource->nativeProj4 = LATLONPROJECTION;
+            dataSource->nativeEPSG = "EPSG:4326";
+            projectionRequired = false;
+          }
+          projectionVar->setAttributeText("proj4_params", dataSource->nativeProj4.c_str());
         }
-        projectionVar->setAttributeText("proj4_params", dataSource->nativeProj4.c_str());
       }
-    }
 
 #ifdef CCONVERTGEOJSON_DEBUG
-    CDBDebug("Drawing %s", polygonIndexVar->name.c_str());
+      CDBDebug("Drawing %s", polygonIndexVar->name.c_str());
 #endif
 
-    /* Allocate data for the 2D field */
-    size_t fieldSize = dataSource->dWidth * dataSource->dHeight;
-    polygonIndexVar->setSize(fieldSize);
-    CDF::allocateData(polygonIndexVar->getType(), &(polygonIndexVar->data), fieldSize);
+      /* Allocate data for the 2D field */
+      size_t fieldSize = dataSource->dWidth * dataSource->dHeight;
+      polygonIndexVar->setSize(fieldSize);
+      CDF::allocateData(polygonIndexVar->getType(), &(polygonIndexVar->data), fieldSize);
 
-    /* Determine the fillvalue */
-    dataObjects[0]->dfNodataValue = -1;
-    CDF::Attribute *fillValue = polygonIndexVar->getAttributeNE("_FillValue");
-    if (fillValue != NULL) {
-      dataObjects[0]->hasNodataValue = true;
-      fillValue->getData(&dataObjects[0]->dfNodataValue, 1);
-    } else {
-      polygonIndexVar->setAttribute("_FillValue", polygonIndexVar->getType(), dataObjects[0]->dfNodataValue);
-    }
+      /* Determine the fillvalue */
+      dataObject->dfNodataValue = -1;
+      CDF::Attribute *fillValue = polygonIndexVar->getAttributeNE("_FillValue");
+      if (fillValue != NULL) {
+        dataObject->hasNodataValue = true;
+        fillValue->getData(&dataObject->dfNodataValue, 1);
+      } else {
+        polygonIndexVar->setAttribute("_FillValue", polygonIndexVar->getType(), dataObject->dfNodataValue);
+      }
 
-    /* Fill the data with the nodatavalue */
-    CDF::fill(polygonIndexVar->data, polygonIndexVar->getType(), dataObjects[0]->dfNodataValue, fieldSize);
+      /* Fill the data with the nodatavalue */
+      CDF::fill(polygonIndexVar->data, polygonIndexVar->getType(), dataObject->dfNodataValue, fieldSize);
 
 #ifdef MEASURETIME
-    StopWatch_Stop("GeoJSON DATA");
+      StopWatch_Stop("GeoJSON DATA");
 #endif
 
 #ifdef CCONVERTGEOJSON_DEBUG
-    CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
-    CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->Geo->dfBBOX[0], dataSource->srvParams->Geo->dfBBOX[1], dataSource->srvParams->Geo->dfBBOX[2], dataSource->srvParams->Geo->dfBBOX[3]);
-    CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
+      CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
+      CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->Geo->dfBBOX[0], dataSource->srvParams->Geo->dfBBOX[1], dataSource->srvParams->Geo->dfBBOX[2],
+               dataSource->srvParams->Geo->dfBBOX[3]);
+      CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
 #endif
 
-    if (projectionRequired) {
-      int status = imageWarper.initreproj(dataSource, dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
-      if (status != 0) {
-        CDBError("Unable to init projection");
-        return 1;
-      }
-    }
-
-#ifdef MEASURETIME
-    StopWatch_Stop("Iterating lat/lon data");
-#endif
-
-#ifdef MEASURETIME
-    StopWatch_Stop("Feature drawing starts");
-#endif
-    CDBDebug("nrFeatures: %d", features.size());
-
-    unsigned short int featureIndex = 0;
-    float min = NAN;
-    float max = NAN;
-
-    for (it_type feature = features.begin(); feature != features.end(); ++feature) { // Loop over all features
-      std::map<std::string, FeatureProperty *> *featurePropertyMap = (*feature)->getFp();
-      drawPolygons(*feature, featureIndex, dataSource, projectionRequired, &imageWarper, cellSizeX, cellSizeY, offsetX, offsetY);
-      drawPoints(*feature, featureIndex, dataSource, projectionRequired, &imageWarper, cellSizeX, cellSizeY, offsetX, offsetY, min, max);
-
-      for (std::map<std::string, FeatureProperty *>::iterator ftit = featurePropertyMap->begin(); ftit != featurePropertyMap->end(); ++ftit) {
-        if (dataSource->getDataObject(0)->features.count(featureIndex) == 0) {
-          dataSource->getDataObject(0)->features[featureIndex] = CFeature(featureIndex);
+      if (projectionRequired) {
+        int status = imageWarper.initreproj(dataSource, dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
+        if (status != 0) {
+          CDBError("Unable to init projection");
+          return 1;
         }
-        dataSource->getDataObject(0)->features[featureIndex].addProperty(ftit->first.c_str(), ftit->second->toString().c_str());
       }
-      featureIndex++;
-    }
-    if (dataSource && dataSource->statistics != NULL) {
-      if (dataSource->getDataObject(0)->variableName.equals("features") == false) {
-        if (min != NAN) dataSource->statistics->setMinimum(min);
-        if (max != NAN) dataSource->statistics->setMaximum(max);
-      }
-    }
 
 #ifdef MEASURETIME
-    StopWatch_Stop("Feature drawing done");
+      StopWatch_Stop("Iterating lat/lon data");
+#endif
+
+#ifdef MEASURETIME
+      StopWatch_Stop("Feature drawing starts");
+#endif
+      CDBDebug("nrFeatures: %d", features.size());
+
+      unsigned short int featureIndex = 0;
+      float min = NAN;
+      float max = NAN;
+
+      for (it_type feature = features.begin(); feature != features.end(); ++feature) { // Loop over all features
+        std::map<std::string, FeatureProperty *> *featurePropertyMap = (*feature)->getFp();
+        drawPolygons(*feature, featureIndex, dataSource, projectionRequired, &imageWarper, cellSizeX, cellSizeY, offsetX, offsetY);
+        drawPoints(*feature, featureIndex, dataSource, projectionRequired, &imageWarper, cellSizeX, cellSizeY, offsetX, offsetY, min, max);
+
+        for (std::map<std::string, FeatureProperty *>::iterator ftit = featurePropertyMap->begin(); ftit != featurePropertyMap->end(); ++ftit) {
+          if (dataObject->features.count(featureIndex) == 0) {
+            dataObject->features[featureIndex] = CFeature(featureIndex);
+          }
+          dataObject->features[featureIndex].addProperty(ftit->first.c_str(), ftit->second->toString().c_str());
+        }
+        featureIndex++;
+      }
+      if (dataSource && dataSource->statistics != NULL) {
+        if (dataObject->variableName.equals("features") == false) {
+          if (min != NAN) dataSource->statistics->setMinimum(min);
+          if (max != NAN) dataSource->statistics->setMaximum(max);
+        }
+      }
+
+#ifdef MEASURETIME
+      StopWatch_Stop("Feature drawing done");
 #endif
 #ifdef CCONVERTGEOJSON_DEBUG
-    CDBDebug("/convertGEOJSONData");
+      CDBDebug("/convertGEOJSONData");
 #endif
+    }
   }
   return result;
 }
@@ -1640,51 +1642,57 @@ void CConvertGeoJSON::drawPoints(Feature *feature, unsigned short int featureInd
                                  double offsetX, double offsetY, float &min, float &max) {
   std::vector<GeoPoint> *points = feature->getPoints();
   if (points->size() == 0) return;
-  CDF::Variable *pointGridVariable = dataSource->getDataObject(0)->cdfVariable;
+  size_t nrDataObjects = dataSource->getNumDataObjects();
+  for (size_t d = 0; d < nrDataObjects; d++) {
+    CDataSource::DataObject *dataObject = dataSource->getDataObject(d);
+    CDF::Variable *pointGridVariable = dataObject->cdfVariable;
 
-  std::map<std::string, FeatureProperty *> *fp = feature->getFp();
+    std::map<std::string, FeatureProperty *> *fp = feature->getFp();
 
-  CT::string pointValue, pointName, pointDescription;
-  bool isString = false;
-  std::map<std::string, FeatureProperty *>::iterator ftit = fp->find(pointGridVariable->name.c_str());
-  if (ftit != fp->end()) {
-    isString = (ftit->second->getType() == typeStr);
-    pointValue = ftit->second->toString().c_str();
-    pointName = pointGridVariable->name.c_str();
-    pointDescription = pointName;
-    CDF::Attribute *longName = pointGridVariable->getAttributeNE("long_name");
-    if (longName) {
-      pointDescription = (const char *)longName->data;
+    CT::string pointValue, pointName, pointDescription;
+    bool isString = false;
+    std::map<std::string, FeatureProperty *>::iterator ftit = fp->find(pointGridVariable->name.c_str());
+    if (ftit != fp->end()) {
+      isString = (ftit->second->getType() == typeStr);
+      pointValue = ftit->second->toString().c_str();
+      pointName = pointGridVariable->name.c_str();
+      pointDescription = pointName;
+      CDF::Attribute *longName = pointGridVariable->getAttributeNE("long_name");
+      if (longName) {
+        pointDescription = (const char *)longName->data;
+      }
     }
-  }
 
-  for (std::vector<GeoPoint>::iterator itpoint = points->begin(); itpoint != points->end(); ++itpoint) {
-    /* Draw point */
-    double pointLongitude = itpoint->getLon();
-    double pointLatitude = itpoint->getLat();
-    double tprojectedX = pointLongitude;
-    double tprojectedY = pointLatitude;
-    int status = 0;
-    if (projectionRequired) status = imageWarper->reprojfromLatLon(tprojectedX, tprojectedY);
-    int dlon, dlat;
-    if (!status) {
-      dlon = int((tprojectedX - offsetX) / cellSizeX) + 1;
-      dlat = int((tprojectedY - offsetY) / cellSizeY);
+    for (std::vector<GeoPoint>::iterator itpoint = points->begin(); itpoint != points->end(); ++itpoint) {
+      /* Draw point */
+      double pointLongitude = itpoint->getLon();
+      double pointLatitude = itpoint->getLat();
+      double tprojectedX = pointLongitude;
+      double tprojectedY = pointLatitude;
+      int status = 0;
+      if (projectionRequired) status = imageWarper->reprojfromLatLon(tprojectedX, tprojectedY);
+      int dlon, dlat;
+      if (!status) {
+        dlon = int((tprojectedX - offsetX) / cellSizeX) + 1;
+        dlat = int((tprojectedY - offsetY) / cellSizeY);
+      }
+      float f = isString ? NAN : pointValue.toFloat();
+      dataObject->points.push_back(PointDVWithLatLon(dlon, dlat, pointLongitude, pointLatitude, f));
+      /* Draw indices of the points, corresponding to the featureindex in the geojson */
+      if (pointGridVariable->getType() == CDF_USHORT) {
+        drawDot(dlon, dlat, featureIndex, dataSource->dWidth, dataSource->dHeight, (unsigned short *)pointGridVariable->data);
+      }
+      /* Draw values of the points */
+      if (pointGridVariable->getType() == CDF_FLOAT) {
+        if (f < min || min != min) min = f;
+        if (f > max || max != max) max = f;
+        if (pointGridVariable->data != NULL) {
+          drawCircle((float *)pointGridVariable->data, f, dataSource->dWidth, dataSource->dHeight, dlon - 1, dlat, 10);
+        }
+      }
+      PointDVWithLatLon *lastPoint = &(dataObject->points.back());
+      /* Get the last pushed point from the array and push the character text data in the paramlist */
+      lastPoint->paramList.push_back(CKeyValue(pointName.c_str(), pointDescription.c_str(), pointValue.c_str()));
     }
-    float f = isString ? NAN : pointValue.toFloat();
-    dataSource->getDataObject(0)->points.push_back(PointDVWithLatLon(dlon, dlat, pointLongitude, pointLatitude, f));
-    /* Draw indices of the points, corresponding to the featureindex in the geojson */
-    if (pointGridVariable->getType() == CDF_USHORT) {
-      drawDot(dlon, dlat, featureIndex, dataSource->dWidth, dataSource->dHeight, (unsigned short *)pointGridVariable->data);
-    }
-    /* Draw values of the points */
-    if (pointGridVariable->getType() == CDF_FLOAT) {
-      if (f < min || min != min) min = f;
-      if (f > max || max != max) max = f;
-      drawCircle((float *)pointGridVariable->data, f, dataSource->dWidth, dataSource->dHeight, dlon - 1, dlat, 10);
-    }
-    PointDVWithLatLon *lastPoint = &(dataSource->getDataObject(0)->points.back());
-    /* Get the last pushed point from the array and push the character text data in the paramlist */
-    lastPoint->paramList.push_back(CKeyValue(pointName.c_str(), pointDescription.c_str(), pointValue.c_str()));
   }
 }
