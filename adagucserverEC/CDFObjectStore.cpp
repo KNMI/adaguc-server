@@ -294,7 +294,12 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
 
   cdfObject->attachCDFReader(cdfReader);
 
-  int status = cdfObject->open(fileLocationToOpen);
+  int status = 0;
+  try {
+    status = cdfObject->open(fileLocationToOpen);
+  } catch (int e) {
+    CDBError("Exception thrown during opening of %s", fileLocationToOpen);
+  }
 
   /* Apply NCML file to the datamodel */
   if (dataSource) {

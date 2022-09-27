@@ -1505,7 +1505,7 @@ CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *, CDF::Varia
   }
 
   if (standardName.length() == 0) {
-    CDBDebug("Warning no standard name given for dimension %s, using variable name instead.", variable->name.c_str());
+    // CDBDebug("Warning no standard name given for dimension %s, using variable name instead.", variable->name.c_str());
     standardName = variable->name;
     ;
   }
@@ -1539,7 +1539,7 @@ CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *, CDF::Varia
     return dtype_elevation;
   } catch (int e) {
   }
-  CDBDebug("Dimension %s with standard_name [%s] is a normal dimension", variable->name.c_str(), standardName.c_str());
+  // CDBDebug("Dimension %s with standard_name [%s] is a normal dimension", variable->name.c_str(), standardName.c_str());
 
   return dtype_normal;
 }

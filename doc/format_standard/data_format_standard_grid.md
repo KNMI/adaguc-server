@@ -1,8 +1,9 @@
-
-
-
 ## NetCDF file example geographic coordinate system
-[Script to generate NetCDF file](https://github.com/KNMI/adaguc-server/blob/master/python/format_standard/generate_example_file_grid_format_lat_lon.py)
+
+[Back](./README.md)
+
+
+[Script to generate NetCDF file](../../python/format_standard/generate_example_file_grid_format_lat_lon.py)
 
 ``` 
 dimensions:
@@ -45,8 +46,8 @@ data:
 ```
 
 ### Resulting image
-![Grid format example](images/grid_format_lat_lon_example_1.png)
 
+<img src="images/grid_format_lat_lon_example_1.png" alt="grid_format_lat_lon_example_1" width="500"/>
 
 ## NetCDF file example with projection
 [Script to generate NetCDF file](https://github.com/KNMI/adaguc-server/blob/master/python/format_standard/generate_example_file_grid_format_proj.py)
@@ -108,4 +109,5 @@ data:
 ```
 
 ### Resulting image
-![Grid format example](images/grid_format_proj_example_1.png)
+
+<img src="images/grid_format_proj_example_1.png" alt="grid_format_proj_example_1" width="500"/>
