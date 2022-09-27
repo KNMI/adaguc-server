@@ -42,7 +42,7 @@ int CProj4ToCF::getProjectionUnits(const CDF::Variable *const projectionVariable
         if (cdfObject->variables[j]->isDimension) {
           if (cdfObject->variables[j]->dimensionlinks.size() == 1) {
             try {
-              if (cdfObject->variables[j]->getAttribute("standard_name")->getDataAsString().equals("projection_x_coordinate")) {
+              if (cdfObject->variables[j]->getAttribute("standard_name")->getDataAsString().equals("projection_x_coordinate") || cdfObject->variables[j]->getAttribute("standard_name")->getDataAsString().equals("projection_x_angular_coordinate")) {
                 CT::string units = cdfObject->variables[j]->getAttribute("units")->getDataAsString();
                 units.toLowerCaseSelf();
                 if (units.equals("km")) {
@@ -69,6 +69,8 @@ CT::string CProj4ToCF::setProjectionUnits(const CDF::Variable *const projectionV
   int projectionUnits = getProjectionUnits(projectionVariable);
   if (projectionUnits == CPROJ4TOCF_UNITS_KILOMETER) {
     units = "km";
+  } else if (projectionUnits == CPROJ4TOCF_UNITS_RADIANS) {
+    units = "radian";
   } else {
     CREPORT_INFO_NODOC(CT::string("Projection unit is not km. Assuming 'm' as projection unit."), CReportMessage::Categories::GENERAL);
   }
