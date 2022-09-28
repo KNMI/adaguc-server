@@ -499,7 +499,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
       const CT::string unitString = units->toString();
       if (unitString.equals("rad") || unitString.equals("radian")) {
         CDBDebug("units: %s", units->toString().c_str());
-        CDBDebug("Correct varX and varY");
+        
         double *xdata = (double *)dataSource->varX->data;
         double *ydata = (double *)dataSource->varY->data;
         CDF::Attribute *projvarnameAttr = dataSourceVar->getAttributeNE("grid_mapping");
@@ -510,40 +510,139 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
           } else {
             CDF::Attribute *grid_mapping_name = projVar->getAttributeNE("grid_mapping_name");
             if ((grid_mapping_name != NULL) && grid_mapping_name->toString().equals("geostationary")) {
-              // Get perspective_height
+              // Get geostationary projection attributes or providing WGS84 
               CDF::Attribute *perspectiveHeightAttr = projVar->getAttributeNE("perspective_point_height");
               double perspectiveHeight = 35786000.;
               if (perspectiveHeightAttr != NULL) {
-                try {
-                  perspectiveHeight = perspectiveHeightAttr->toString().toDouble();
-                } catch (int e) {
-                  CDBDebug("Falling back to default perspective_point_height: 35786000");
-                }
+              try {
+                perspectiveHeight = perspectiveHeightAttr->toString().toDouble();
+              } catch (int e) {
+                CDBDebug("Falling back to default perspective_point_height: 35786000");
               }
-              // TODO: Dit moet voor alle data gebeuren toch, niet een subset van de data?
-              sta[0] = start[dataSource->dimXIndex];
-              str[0] = dataSource->stride2DMap;
-              sto[0] = dataSource->dWidth;
-              if (singleCellMode) {
-                sta[0] = 0;
-                str[0] = 1;
-                sto[0] = 2;
               }
-              for (size_t j = sta[0]; j < sto[0]; j += str[0]) {
-                xdata[j] = xdata[j] * perspectiveHeight;
+                        
+              CDF::Attribute *lon_0Attr = projVar->getAttributeNE("longitude_of_projection_origin");
+              double lon_0 = 0.0;
+              if (lon_0Attr != NULL) {
+              try {
+                lon_0 = lon_0Attr->toString().toDouble();
+              } catch (int e) {
+                CDBDebug("Falling back to default lon_0: 0.0");
+              }
+              }
+                
+              CDF::Attribute *lat_0Attr = projVar->getAttributeNE("latitude_of_projection_origin");
+              double lat_0 = 0.0;
+              if (lat_0Attr != NULL) {
+              try {
+                lat_0 = lat_0Attr->toString().toDouble();
+              } catch (int e) {
+                CDBDebug("Falling back to default lat_0: 0.0");
+              }
+              }
+              
+              CDF::Attribute *aAttr = projVar->getAttributeNE("semi_major_axis");
+              double a = 6378137.0;
+              if (aAttr != NULL) {
+              try {
+                a = aAttr->toString().toDouble();
+              } catch (int e) {
+                CDBDebug("Falling back to default semimajor axis: 6378137.0");
+              }
+              }
+              
+              CDF::Attribute *bAttr = projVar->getAttributeNE("semi_minor_axis");
+              double b = 6356752.30;
+              if (bAttr != NULL) {
+              try {
+                b = bAttr->toString().toDouble();
+              } catch (int e) {
+                CDBDebug("Falling back to default semiminor axis: 6356752.30");
+              }
               }
 
-              sta[0] = start[dataSource->dimYIndex];
-              str[0] = dataSource->stride2DMap;
-              sto[0] = dataSource->dHeight;
-              if (singleCellMode) {
-                sta[0] = 0;
-                str[0] = 1;
-                sto[0] = 2;
+              CDF::Attribute *sweepAttr = projVar->getAttributeNE("sweep_angle_axis");
+              CT::string sweep = "y";
+              // sweep angle y corresponds to Meteosat
+              if (sweepAttr != NULL) {
+              try {
+                sweep = sweepAttr->toString();
+              } catch (int e) {
+                CDBDebug("Falling back to sweep angle y");
               }
-              for (size_t j = sta[0]; j < sto[0]; j += str[0]) {
-                ydata[j] = ydata[j] * perspectiveHeight;
               }
+
+              CDF::Attribute *fixedAttr = projVar->getAttributeNE("fixed_angle_axis");
+              CT::string fixed = "x";
+              if (fixedAttr != NULL) {
+              try {
+                fixed = fixedAttr->toString();
+                if ((fixed.equals("y")) || (fixed.equals("Y"))){
+                  // fixed angle y, corresponds to sweep x. i.e: GOES satellite
+                  sweep = "x";
+                }
+              } catch (int e) {
+                CDBDebug("Falling back to sweep angle y");
+              }
+              }
+
+              // End of the capture of the grid_mapping
+              CT::string str_std_x_name = "undefined";
+              CDF::Attribute *X_standard_name = dataSource->varX->getAttributeNE("standard_name");
+              if (X_standard_name != NULL) {
+	                str_std_x_name = X_standard_name->toString();
+                  CDBDebug("Standard Name of the nx variable: %s", str_std_x_name.c_str()); 
+              }
+              CDBDebug("-----------------");
+              if (!str_std_x_name.equals("projection_x_angular_coordinate")) {
+                  // TODO: Dit moet voor alle data gebeuren toch, niet een subset van de data?
+                  CDBDebug("Correct varX and varY");
+                  sta[0] = start[dataSource->dimXIndex];
+                  str[0] = dataSource->stride2DMap;
+                  sto[0] = dataSource->dWidth;
+                  if (singleCellMode) {
+                    sta[0] = 0;
+                    str[0] = 1;
+                    sto[0] = 2;
+                  }
+                  for (size_t j = sta[0]; j < sto[0]; j += str[0]) {
+                    xdata[j] = xdata[j] * perspectiveHeight;
+                  }
+
+                  sta[0] = start[dataSource->dimYIndex];
+                  str[0] = dataSource->stride2DMap;
+                  sto[0] = dataSource->dHeight;
+                  if (singleCellMode) {
+                    sta[0] = 0;
+                    str[0] = 1;
+                    sto[0] = 2;
+                  }
+                  for (size_t j = sta[0]; j < sto[0]; j += str[0]) {
+                    ydata[j] = ydata[j] * perspectiveHeight;
+                  }
+                CDBDebug("Assuming  CF <1.9. geostationary projection, units converted to meters");
+							  CT::string UpdatedProjString = "+proj=geos +lon_0=";
+							  UpdatedProjString.print("+proj=geos +lon_0=%f +lat_0=%f +h=%f +a=%f +b=%f +sweep=%s", lon_0, lat_0, perspectiveHeight, a, b, sweep.c_str());
+							  CDBDebug("Overwriting the projection string with: %s", UpdatedProjString.c_str());
+							    	
+							  dataSource->nativeProj4.copy(UpdatedProjString.c_str());
+                CDF::Attribute *proj4 = projVar->getAttributeNE("proj4");
+							  if (proj4 == NULL) {
+							    		projVar->setAttributeText("autogen_proj", UpdatedProjString.c_str());
+							  }	
+              }
+              else {
+                CDBDebug("Assuming  CF 1.9. geostationary projection, keeping radians as units");
+							  CT::string UpdatedProjString = "+proj=geos +lon_0=";
+							  UpdatedProjString.print("+proj=geos +lon_0=%f +lat_0=%f +h=%f +a=%f +b=%f +sweep=%s", lon_0, lat_0, 1.0, a / perspectiveHeight, b / perspectiveHeight, sweep.c_str());
+							  CDBDebug("Overwriting the projection string with: %s", UpdatedProjString.c_str());
+							    	
+							  dataSource->nativeProj4.copy(UpdatedProjString.c_str());
+							  CDF::Attribute *proj4 = projVar->getAttributeNE("proj4");
+							  if (proj4 == NULL) {
+							    		projVar->setAttributeText("autogen_proj", UpdatedProjString.c_str());
+							  }	
+              }            
             }
           }
         }
