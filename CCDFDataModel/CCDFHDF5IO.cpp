@@ -2120,5 +2120,25 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
 
 int CDFHDF5Reader::convertODIMHDF5toCF() {
   CDBDebug("ODIM");
+
+  CDF::Variable *whereVar = cdfObject->getVariableNE("where");
+  if (whereVar == NULL) {
+    return 2;
+  }
+
+  double xScale;
+  double yScale;
+
+  CDF::Attribute *xScaleAttr = whereVar->getAttributeNE("xscale");
+  if (xScaleAttr != NULL) {
+    xScale = xScaleAttr->getDataAt<double>(0);
+  }
+  CDF::Attribute *yScaleAttr = whereVar->getAttributeNE("yscale");
+  if (yScaleAttr != NULL) {
+    yScale = yScaleAttr->getDataAt<double>(0);
+  }
+
+  CDBDebug("xScale %f, yScale %f", xScale, yScale);
+
   return 0;
 }

@@ -162,6 +162,27 @@ namespace CDF {
       CDF::DataCopier::copy(dataToGet, data, type, getlength);
       return getlength;
     }
+
+    template <class T> T getDataAt(int index) {
+      if (data == NULL) {
+        throw(CDF_E_VARHASNODATA);
+      }
+      T dataElement = 0;
+      if (type == CDF_CHAR) dataElement = (T)((char *)data)[index];
+      if (type == CDF_BYTE) dataElement = (T)((char *)data)[index];
+      if (type == CDF_UBYTE) dataElement = (T)((unsigned char *)data)[index];
+      if (type == CDF_SHORT) dataElement = (T)((short *)data)[index];
+      if (type == CDF_USHORT) dataElement = (T)((ushort *)data)[index];
+      if (type == CDF_INT) dataElement = (T)((int *)data)[index];
+      if (type == CDF_UINT) dataElement = (T)((unsigned int *)data)[index];
+      if (type == CDF_INT64) dataElement = (T)((long *)data)[index];
+      if (type == CDF_UINT64) dataElement = (T)((unsigned long *)data)[index];
+      if (type == CDF_FLOAT) dataElement = (T)((float *)data)[index];
+      if (type == CDF_DOUBLE) dataElement = (T)((double *)data)[index];
+
+      return dataElement;
+    }
+
     int getDataAsString(CT::string *out) {
       out->copy("");
       if (type == CDF_CHAR) {
