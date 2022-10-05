@@ -10,6 +10,8 @@ from routeAdagucOpenDAP import routeAdagucOpenDAP
 from routeAutoWMS import routeAutoWMS
 from routeAdagucServer import routeAdagucServer
 from ogcapi.routeOGCApi import routeOGCApi, init_views
+from kdpapi.routeKDPApi import routeKDPApi
+from flask_openapi3 import OpenAPI, Info
 from cacher import cacher, init_cache
 
 from flask import Flask
@@ -17,9 +19,11 @@ from flask import Flask
 configureLogging(logging)
 logger = logging.getLogger(__name__)
 
+info = Info(title='book API', version='1.0.0')
+
 def create_app():
     """Create the Flask/Gunicorn appliicaiton"""
-    _app = Flask(__name__)
+    _app =OpenAPI(__name__, info=info)
 
     init_cache(_app)
 
@@ -29,6 +33,7 @@ def create_app():
     _app.register_blueprint(routeRoot)
     _app.register_blueprint(routeHealthCheck)
     _app.register_blueprint(routeOGCApi, url_prefix="/ogcapi")
+    _app.register_api(routeKDPApi)
     with _app.app_context():
         init_views()
     return _app
