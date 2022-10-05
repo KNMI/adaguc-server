@@ -36,7 +36,7 @@
 #include "CTime.h"
 #include "CProj4ToCF.h"
 #include "proj_api.h"
-// #define CCDFHDF5IO_DEBUG
+#define CCDFHDF5IO_DEBUG
 
 #define CCDFHDF5IO_GROUPSEPARATOR "."
 
