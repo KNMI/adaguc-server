@@ -1,3 +1,7 @@
+**Version 2.8.0 2022-10-06**
+
+- Using debian as base docker image
+
 **Version 2.7.9 2022-09-22**
 
 - GeoJSON reader now supports multiple dataobjects, useful for styling earthquake files with age and magnitude variables.
