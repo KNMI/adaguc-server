@@ -133,11 +133,30 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
 #ifdef CNetCDFDataWriter_DEBUG
     CDBDebug("GO NON NATIVE");
 #endif
+
     // Non native projection units
     for (int j = 0; j < 4; j++) dfSrcBBOX[j] = dataSource->dfBBOX[j];
     for (int j = 0; j < 4; j++) dfDstBBOX[j] = srvParam->Geo->dfBBOX[j];
+
+    /* CRS is provided, but not RESX+RESY or HEIGHT+WIDTH, calculate here */
+    if (srvParam->dfResX == 0 && srvParam->dfResY == 0 && srvParam->Geo->dWidth == 1 && srvParam->Geo->dHeight == 1) {
+      CImageWarper warper;
+      dataSource->srvParams = this->srvParam;
+      status = warper.initreproj(dataSource, this->srvParam->Geo, &srvParam->cfg->Projection);
+      if (status != 0) {
+        CDBError("Unable to initialize projection");
+        return 1;
+      }
+      double dfBBOX[4];
+      for (int j = 0; j < 4; j++) dfBBOX[j] = dataSource->dfBBOX[j];
+      warper.findExtent(dataSource, dfBBOX);
+      double resXInRequestedCRS = fabs((dfBBOX[2] - dfBBOX[0]) / dataSource->dWidth);
+      double resYInRequestedCRS = fabs((dfBBOX[3] - dfBBOX[1]) / dataSource->dWidth);
+      srvParam->dfResX = resXInRequestedCRS;
+      srvParam->dfResY = resYInRequestedCRS;
+    }
     // dfResX and dfResY are in the CRS ore ResponseCRS
-    if (srvParam->dWCS_RES_OR_WH == 1) {
+    if (srvParam->dfResX != 0 && srvParam->dfResY != 0) {
       srvParam->Geo->dWidth = int(((dfDstBBOX[2] - dfDstBBOX[0]) / srvParam->dfResX));
       srvParam->Geo->dHeight = int(((dfDstBBOX[1] - dfDstBBOX[3]) / srvParam->dfResY));
       srvParam->Geo->dHeight = abs(srvParam->Geo->dHeight);
@@ -156,8 +175,10 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
   }
 
   CT::string adagucwcsdestgrid;
-  adagucwcsdestgrid.print("width=%d&height=%d&bbox=%f,%f,%f,%f&crs=%s", srvParam->Geo->dWidth, srvParam->Geo->dHeight, dfDstBBOX[0], dfDstBBOX[1], dfDstBBOX[2], dfDstBBOX[3],
-                          srvParam->Geo->CRS.c_str());
+  double rx = fabs((dfDstBBOX[2] - dfDstBBOX[0]) / srvParam->Geo->dWidth);
+  double ry = fabs((dfDstBBOX[3] - dfDstBBOX[1]) / srvParam->Geo->dHeight);
+  adagucwcsdestgrid.print("width=%d&height=%d&resx=%f&resy=%f&&bbox=%f,%f,%f,%f&crs=%s", srvParam->Geo->dWidth, srvParam->Geo->dHeight, rx, ry, dfDstBBOX[0], dfDstBBOX[1], dfDstBBOX[2], dfDstBBOX[3],
+                          srvParam->Geo->CRS.trim().c_str());
 
   CT::string newHistoryText;
   newHistoryText.print("Created by ADAGUC WCS Server version %s, destination grid settings: %s. %s", ADAGUCSERVER_VERSION, adagucwcsdestgrid.c_str(), historyText.c_str());
@@ -701,7 +722,18 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       CDBDebug("DataStep index = %d, timestep = %d", dataStepIndex, dataSource->getCurrentTimeStep());
 #endif
 
-      destCDFObject->getVariable("crs")->setAttributeText("proj4_params", warper.getDestProjString().c_str());
+      CT::string dataSourceProjectionString = warper.getDestProjString().trim().c_str();
+      destCDFObject->getVariable("crs")->setAttributeText("proj4_params", dataSourceProjectionString.c_str());
+
+      /* Lookup possible projection EPSG codes based on this */
+      std::vector<CServerConfig::XMLE_Projection *> *prj = &dataSource->srvParams->cfg->Projection;
+      destCDFObject->getVariable("crs")->setAttributeText("id", "unknown");
+      for (size_t j = 0; j < (*prj).size(); j++) {
+        if ((*prj)[j]->attr.proj4.trim().equals(dataSourceProjectionString)) {
+          destCDFObject->getVariable("crs")->setAttributeText("id", (*prj)[j]->attr.id);
+          break;
+        }
+      }
 
       void *sourceData = dataSource->getDataObject(j)->cdfVariable->data;
 

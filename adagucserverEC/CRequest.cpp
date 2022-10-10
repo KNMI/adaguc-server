@@ -2321,6 +2321,7 @@ int CRequest::process_querystring() {
 
   int dFound_SRS = 0;
   int dFound_CRS = 0;
+
   // int dFound_Debug=0;
   int dFound_Request = 0;
   int dFound_Service = 0;
@@ -2342,35 +2343,6 @@ int CRequest::process_querystring() {
   // int dFound_OpenDAPVariable=0;
 
   const char *pszQueryString = getenv("QUERY_STRING");
-
-  /*
-  std::vector<CT::string> keys;
-  keys.push_back("DOCUMENT_ROOT");
-  keys.push_back("HTTP_COOKIE");
-  keys.push_back("HTTP_HOST");
-  keys.push_back("HTTP_REFERER");
-  keys.push_back("HTTP_USER_AGENT");
-  keys.push_back("HTTPS");
-  keys.push_back("PATH");
-  keys.push_back("QUERY_STRING");
-  keys.push_back("REMOTE_ADDR");
-  keys.push_back("REMOTE_HOST");
-  keys.push_back("REMOTE_PORT");
-  keys.push_back("REMOTE_USER");
-  keys.push_back("REQUEST_METHOD");
-  keys.push_back("REQUEST_URI");
-  keys.push_back("SCRIPT_FILENAME");
-  keys.push_back("SCRIPT_NAME");
-  keys.push_back("SERVER_ADMIN");
-  keys.push_back("SERVER_NAME");
-  keys.push_back("SERVER_PORT");
-  keys.push_back("SERVER_SOFTWARE");
-
-
-  for(size_t j=0;j<keys.size();j++){
-    const char *key=keys[j].c_str();
-    CDBDebug("pszPATH %s = %s",key,getenv(key));
-  }*/
 
   /**
    * Check for OPENDAP
@@ -2413,39 +2385,29 @@ int CRequest::process_querystring() {
   queryString.decodeURLSelf();
   // CDBDebug("QueryString: \"%s\"",queryString.c_str());
   CT::string *parameters = queryString.splitToArray("&");
-  CT::string value0Cap;
 
 #ifdef CREQUEST_DEBUG
   CDBDebug("Parsing query string parameters");
 #endif
   for (size_t j = 0; j < parameters->count; j++) {
-    CT::string values[2];
+    CT::string uriKeyUpperCase;
+    CT::string uriValue;
 
     int equalPos = parameters[j].indexOf("="); // splitToArray("=");
 
     if (equalPos != -1) {
-
-      values[0] = parameters[j].substring(0, equalPos);
-      values[1] = parameters[j].c_str() + equalPos + 1;
-      values[0].count = 2;
+      uriKeyUpperCase = parameters[j].substring(0, equalPos);
+      uriValue = parameters[j].c_str() + equalPos + 1;
     } else {
-
-      values[0] = parameters[j].c_str();
-      values[1] = "";
-      values[0].count = 1;
+      uriKeyUpperCase = parameters[j].c_str();
     }
 
-    // values[1] = value
-    //=parameters[j].splitToArray("=");
+    uriKeyUpperCase.toUpperCaseSelf();
 
-    // Styles parameter
-    value0Cap.copy(&values[0]);
-    value0Cap.toUpperCaseSelf();
-
-    if (value0Cap.equals("STYLES")) {
+    if (uriKeyUpperCase.equals("STYLES")) {
       if (dFound_Styles == 0) {
-        if (values->count == 2 && values[1].length() > 0) {
-          srvParam->Styles.copy(&values[1]);
+        if (!uriValue.empty()) {
+          srvParam->Styles.copy(&uriValue);
         } else
           srvParam->Styles.copy("");
         dFound_Styles = 1;
@@ -2455,10 +2417,10 @@ int CRequest::process_querystring() {
       }
     }
     // Style parameter
-    if (value0Cap.equals("STYLE")) {
+    if (uriKeyUpperCase.equals("STYLE")) {
       if (dFound_Style == 0) {
-        if (values->count == 2 && values[1].length() > 0) {
-          srvParam->Style.copy(&values[1]);
+        if (!uriValue.empty()) {
+          srvParam->Style.copy(&uriValue);
         } else
           srvParam->Style.copy("");
         dFound_Style = 1;
@@ -2467,11 +2429,10 @@ int CRequest::process_querystring() {
         dErrorOccured = 1;
       }
     }
-    if (values->count >= 2) {
+    if (!uriValue.empty()) {
       // BBOX Parameters
-      if (value0Cap.equals("BBOX")) {
-        values[1].replaceSelf("%2C", ",");
-        CT::string *bboxvalues = values[1].splitToArray(",");
+      if (uriKeyUpperCase.equals("BBOX")) {
+        CT::string *bboxvalues = uriValue.replace("%2C", ",").splitToArray(",");
         if (bboxvalues->count == 4) {
           for (int j = 0; j < 4; j++) {
             srvParam->Geo->dfBBOX[j] = atof(bboxvalues[j].c_str());
@@ -2483,28 +2444,28 @@ int CRequest::process_querystring() {
         delete[] bboxvalues;
         srvParam->dFound_BBOX = 1;
       }
-      if (value0Cap.equals("BBOXWIDTH")) {
+      if (uriKeyUpperCase.equals("BBOXWIDTH")) {
 
         srvParam->Geo->dfBBOX[0] = 0;
         srvParam->Geo->dfBBOX[1] = 0;
-        srvParam->Geo->dfBBOX[2] = values[1].toDouble();
-        srvParam->Geo->dfBBOX[3] = values[1].toDouble();
+        srvParam->Geo->dfBBOX[2] = uriValue.toDouble();
+        srvParam->Geo->dfBBOX[3] = uriValue.toDouble();
 
         srvParam->dFound_BBOX = 1;
       }
 
-      if (value0Cap.equals("FIGWIDTH")) {
-        srvParam->figWidth = atoi(values[1].c_str());
+      if (uriKeyUpperCase.equals("FIGWIDTH")) {
+        srvParam->figWidth = atoi(uriValue.c_str());
         if (srvParam->figWidth < 1) srvParam->figWidth = -1;
       }
-      if (value0Cap.equals("FIGHEIGHT")) {
-        srvParam->figHeight = atoi(values[1].c_str());
+      if (uriKeyUpperCase.equals("FIGHEIGHT")) {
+        srvParam->figHeight = atoi(uriValue.c_str());
         if (srvParam->figHeight < 1) srvParam->figHeight = -1;
       }
 
       // Width Parameters
-      if (value0Cap.equals("WIDTH")) {
-        srvParam->Geo->dWidth = atoi(values[1].c_str());
+      if (uriKeyUpperCase.equals("WIDTH")) {
+        srvParam->Geo->dWidth = atoi(uriValue.c_str());
         if (srvParam->Geo->dWidth < 1) {
           CDBError("ADAGUC Server: Parameter Width should be at least 1");
           dErrorOccured = 1;
@@ -2512,8 +2473,8 @@ int CRequest::process_querystring() {
         dFound_Width = 1;
       }
       // Height Parameters
-      if (value0Cap.equals("HEIGHT")) {
-        srvParam->Geo->dHeight = atoi(values[1].c_str());
+      if (uriKeyUpperCase.equals("HEIGHT")) {
+        srvParam->Geo->dHeight = atoi(uriValue.c_str());
         if (srvParam->Geo->dHeight < 1) {
           CDBError("ADAGUC Server: Parameter Height should be at least 1");
           dErrorOccured = 1;
@@ -2522,8 +2483,8 @@ int CRequest::process_querystring() {
         dFound_Height = 1;
       }
       // RESX Parameters
-      if (value0Cap.equals("RESX")) {
-        srvParam->dfResX = atof(values[1].c_str());
+      if (uriKeyUpperCase.equals("RESX")) {
+        srvParam->dfResX = atof(uriValue.c_str());
         if (srvParam->dfResX == 0) {
           CDBError("ADAGUC Server: Parameter RESX should not be zero");
           dErrorOccured = 1;
@@ -2531,8 +2492,8 @@ int CRequest::process_querystring() {
         dFound_RESX = 1;
       }
       // RESY Parameters
-      if (value0Cap.equals("RESY")) {
-        srvParam->dfResY = atof(values[1].c_str());
+      if (uriKeyUpperCase.equals("RESY")) {
+        srvParam->dfResY = atof(uriValue.c_str());
         if (srvParam->dfResY == 0) {
           CDBError("ADAGUC Server: Parameter RESY should not be zero");
           dErrorOccured = 1;
@@ -2541,49 +2502,60 @@ int CRequest::process_querystring() {
       }
 
       // X/I Parameters
-      if (strncmp(value0Cap.c_str(), "X", 1) == 0 && value0Cap.length() == 1) {
-        srvParam->dX = atof(values[1].c_str());
+      if (strncmp(uriKeyUpperCase.c_str(), "X", 1) == 0 && uriKeyUpperCase.length() == 1) {
+        srvParam->dX = atof(uriValue.c_str());
         dFound_X = 1;
       }
-      if (strncmp(value0Cap.c_str(), "I", 1) == 0 && value0Cap.length() == 1) {
-        srvParam->dX = atof(values[1].c_str());
+      if (strncmp(uriKeyUpperCase.c_str(), "I", 1) == 0 && uriKeyUpperCase.length() == 1) {
+        srvParam->dX = atof(uriValue.c_str());
         dFound_I = 1;
       }
       // Y/J Parameter
-      if (strncmp(value0Cap.c_str(), "Y", 1) == 0 && value0Cap.length() == 1) {
-        srvParam->dY = atof(values[1].c_str());
+      if (strncmp(uriKeyUpperCase.c_str(), "Y", 1) == 0 && uriKeyUpperCase.length() == 1) {
+        srvParam->dY = atof(uriValue.c_str());
         dFound_Y = 1;
       }
-      if (strncmp(value0Cap.c_str(), "J", 1) == 0 && value0Cap.length() == 1) {
-        srvParam->dY = atof(values[1].c_str());
+      if (strncmp(uriKeyUpperCase.c_str(), "J", 1) == 0 && uriKeyUpperCase.length() == 1) {
+        srvParam->dY = atof(uriValue.c_str());
         dFound_J = 1;
       }
       // SRS / CRS Parameters
-      if (value0Cap.equals("SRS")) {
-        if (parameters[j].length() > 5) {
-          srvParam->Geo->CRS.copy(parameters[j].c_str() + 4);
+      if (uriKeyUpperCase.equals("SRS")) {
+        if (uriValue.length() > 2) {
+          srvParam->Geo->CRS.copy(uriValue);
           // srvParam->Geo->CRS.decodeURLSelf();
           dFound_SRS = 1;
         }
       }
-      if (value0Cap.equals("CRS")) {
-        if (parameters[j].length() > 5) {
-          srvParam->Geo->CRS.copy(parameters[j].c_str() + 4);
-          // srvParam->Geo->CRS.decodeURLSelf();
+      if (uriKeyUpperCase.equals("CRS")) {
+        if (uriValue.length() > 2) {
+          srvParam->Geo->CRS.copy(uriValue);
           dFound_CRS = 1;
         }
       }
+
+      // if (uriKeyUpperCase.equals("RESPONSE_CRS")) {
+      //   if (uriValue.length() > 2) {
+      //     srvParam->Geo->RESPONSE_CRS.copy(uriValue);
+      //   }
+      // }
+
+      // if (uriKeyUpperCase.equals("RESPONSE_CRS")) {
+      //   if (uriValue.length() > 5) {
+      //     srvParam->Geo->RESPONSE_CRS.copy(&uriValue);
+      //   }
+      // }
       // DIM Params
       int foundDim = -1;
-      if (value0Cap.equals("TIME") || value0Cap.equals("ELEVATION")) {
+      if (uriKeyUpperCase.equals("TIME") || uriKeyUpperCase.equals("ELEVATION")) {
         foundDim = 0;
-      } else if (value0Cap.indexOf("DIM_") == 0) {
+      } else if (uriKeyUpperCase.indexOf("DIM_") == 0) {
         // We store the OGCdim without the DIM_ prefix
         foundDim = 4;
       }
       if (foundDim != -1) {
         COGCDims *ogcDim = NULL;
-        const char *ogcDimName = value0Cap.c_str() + foundDim;
+        const char *ogcDimName = uriKeyUpperCase.c_str() + foundDim;
         for (size_t j = 0; j < srvParam->requestDims.size(); j++) {
           if (srvParam->requestDims[j]->name.equals(ogcDimName)) {
             ogcDim = srvParam->requestDims[j];
@@ -2597,14 +2569,14 @@ int CRequest::process_querystring() {
           CDBDebug("OGC Dim %s reused", ogcDimName);
         }
         ogcDim->name.copy(ogcDimName);
-        ogcDim->value.copy(&values[1]);
+        ogcDim->value.copy(&uriValue);
       }
 
       // FORMAT parameter
-      if (value0Cap.equals("FORMAT")) {
+      if (uriKeyUpperCase.equals("FORMAT")) {
         if (dFound_Format == 0) {
-          if (values[1].length() > 1) {
-            srvParam->Format.copy(&values[1]);
+          if (uriValue.length() > 1) {
+            srvParam->Format.copy(&uriValue);
             dFound_Format = 1;
           }
         } else {
@@ -2614,10 +2586,10 @@ int CRequest::process_querystring() {
       }
 
       // INFO_FORMAT parameter
-      if (value0Cap.equals("INFO_FORMAT")) {
+      if (uriKeyUpperCase.equals("INFO_FORMAT")) {
         if (dFound_InfoFormat == 0) {
-          if (values[1].length() > 1) {
-            srvParam->InfoFormat.copy(&values[1]);
+          if (uriValue.length() > 1) {
+            srvParam->InfoFormat.copy(&uriValue);
             dFound_InfoFormat = 1;
           }
         } else {
@@ -2627,11 +2599,10 @@ int CRequest::process_querystring() {
       }
 
       // TRANSPARENT parameter
-      if (value0Cap.equals("TRANSPARENT")) {
+      if (uriKeyUpperCase.equals("TRANSPARENT")) {
         if (dFound_Transparent == 0) {
-          if (values[1].length() > 1) {
-            values[1].toUpperCaseSelf();
-            if (values[1].equals("TRUE")) {
+          if (uriValue.length() > 1) {
+            if (uriValue.toUpperCase().equals("TRUE")) {
               srvParam->Transparent = true;
             }
             dFound_Transparent = 1;
@@ -2642,10 +2613,10 @@ int CRequest::process_querystring() {
         }
       }
       // BGCOLOR parameter
-      if (value0Cap.equals("BGCOLOR")) {
+      if (uriKeyUpperCase.equals("BGCOLOR")) {
         if (dFound_BGColor == 0) {
-          if (values[1].length() > 1) {
-            srvParam->BGColor.copy(&values[1]);
+          if (uriValue.length() > 1) {
+            srvParam->BGColor.copy(&uriValue);
             dFound_BGColor = 1;
           }
         } else {
@@ -2655,10 +2626,10 @@ int CRequest::process_querystring() {
       }
 
       // Version parameter
-      if (value0Cap.equals("VERSION")) {
+      if (uriKeyUpperCase.equals("VERSION")) {
         if (dFound_Version == 0) {
-          if (values[1].length() > 1) {
-            Version.copy(&values[1]);
+          if (uriValue.length() > 1) {
+            Version.copy(&uriValue);
             dFound_Version = 1;
           }
         }
@@ -2670,10 +2641,10 @@ int CRequest::process_querystring() {
       }
 
       // Exceptions parameter
-      if (value0Cap.equals("EXCEPTIONS")) {
+      if (uriKeyUpperCase.equals("EXCEPTIONS")) {
         if (dFound_Exceptions == 0) {
-          if (values[1].length() > 1) {
-            Exceptions.copy(&values[1]);
+          if (uriValue.length() > 1) {
+            Exceptions.copy(&uriValue);
             dFound_Exceptions = 1;
           }
         } else {
@@ -2684,9 +2655,9 @@ int CRequest::process_querystring() {
 
       // Opendap source parameter
       if (dFound_autoResourceLocation == 0) {
-        if (value0Cap.equals("SOURCE")) {
+        if (uriKeyUpperCase.equals("SOURCE")) {
           if (srvParam->autoResourceLocation.empty()) {
-            CT::string *hashList = values[1].splitToArray("#");
+            CT::string *hashList = uriValue.splitToArray("#");
             srvParam->autoResourceLocation.copy(hashList[0].c_str());
             delete[] hashList;
           }
@@ -2696,7 +2667,7 @@ int CRequest::process_querystring() {
 
       /* //Opendap variable parameter
         if(dFound_OpenDAPVariable==0){
-         if(value0Cap.equals("VARIABLE")){
+         if(uriKeyUpperCase.equals("VARIABLE")){
            if(srvParam->autoResourceVariable.empty()){
              srvParam->autoResourceVariable.copy(values[1].c_str());
            }
@@ -2705,103 +2676,98 @@ int CRequest::process_querystring() {
        }*/
 
       // WMS Layers parameter
-      if (value0Cap.equals("LAYERS")) {
+      if (uriKeyUpperCase.equals("LAYERS")) {
         if (srvParam->WMSLayers != NULL) {
           delete[] srvParam->WMSLayers;
         }
-        srvParam->WMSLayers = values[1].splitToArray(",");
+        srvParam->WMSLayers = uriValue.splitToArray(",");
         dFound_WMSLAYERS = 1;
       }
       // WMS Layer parameter
-      if (value0Cap.equals("LAYER")) {
+      if (uriKeyUpperCase.equals("LAYER")) {
         if (srvParam->WMSLayers != NULL) {
           delete[] srvParam->WMSLayers;
         }
-        srvParam->WMSLayers = values[1].splitToArray(",");
+        srvParam->WMSLayers = uriValue.splitToArray(",");
         dFound_WMSLAYER = 1;
       }
 
       // WMS Layer parameter
-      if (value0Cap.equals("QUERY_LAYERS")) {
+      if (uriKeyUpperCase.equals("QUERY_LAYERS")) {
         if (srvParam->WMSLayers != NULL) {
           delete[] srvParam->WMSLayers;
         }
-        srvParam->WMSLayers = values[1].splitToArray(",");
+        srvParam->WMSLayers = uriValue.splitToArray(",");
         dFound_WMSLAYER = 1;
       }
       // WCS Coverage parameter
-      if (value0Cap.equals("COVERAGE")) {
+      if (uriKeyUpperCase.equals("COVERAGE")) {
         if (srvParam->WMSLayers != NULL) {
           CDBError("ADAGUC Server: COVERAGE already defined");
           dErrorOccured = 1;
         } else {
-          srvParam->WMSLayers = values[1].splitToArray(",");
+          srvParam->WMSLayers = uriValue.splitToArray(",");
         }
         dFound_WCSCOVERAGE = 1;
       }
 
       // Service parameters
-      if (value0Cap.equals("SERVICE")) {
-        values[1].toUpperCaseSelf();
-        SERVICE.copy(values[1].c_str(), values[1].length());
+      if (uriKeyUpperCase.equals("SERVICE")) {
+        SERVICE.copy(uriValue.toUpperCase());
         dFound_Service = 1;
       }
       // Request parameters
-      if (value0Cap.equals("REQUEST")) {
-        values[1].toUpperCaseSelf();
-        REQUEST.copy(values[1].c_str(), values[1].length());
+      if (uriKeyUpperCase.equals("REQUEST")) {
+        REQUEST.copy(uriValue.toUpperCase());
         dFound_Request = 1;
       }
 
       // debug Parameters
-      if (value0Cap.equals("DEBUG")) {
-        if (values[1].equals("ON")) {
+      if (uriKeyUpperCase.equals("DEBUG")) {
+        if (uriValue.equals("ON")) {
           printf("%s%c%c\n", "Content-Type:text/plain", 13, 10);
           printf("Debug mode:ON\nDebug messages:<br>\r\n\n");
           // dFound_Debug=1;
         }
       }
 
-      if (value0Cap.equals("TITLE")) {
-        if (values[1].length() > 0) {
-          srvParam->mapTitle = values[1].c_str();
+      if (uriKeyUpperCase.equals("TITLE")) {
+        if (uriValue.length() > 0) {
+          srvParam->mapTitle = uriValue.c_str();
         }
       }
-      if (value0Cap.equals("SUBTITLE")) {
-        if (values[1].length() > 0) {
-          srvParam->mapSubTitle = values[1].c_str();
+      if (uriKeyUpperCase.equals("SUBTITLE")) {
+        if (uriValue.length() > 0) {
+          srvParam->mapSubTitle = uriValue.c_str();
         }
       }
-      if (value0Cap.equals("SHOWDIMS")) {
-        values[1].toLowerCaseSelf();
-        if (!values[1].equals("false")) {
+      if (uriKeyUpperCase.equals("SHOWDIMS")) {
+        if (!uriValue.toLowerCase().equals("false")) {
           srvParam->showDimensionsInImage = true;
         }
       }
-      if (value0Cap.equals("SHOWLEGEND")) {
-        if (!values[1].toLowerCase().equals("false")) {
-          srvParam->showLegendInImage = values[1];
+      if (uriKeyUpperCase.equals("SHOWLEGEND")) {
+        if (!uriValue.toLowerCase().equals("false")) {
+          srvParam->showLegendInImage = uriValue.toLowerCase();
         }
       }
-      if (value0Cap.equals("SHOWSCALEBAR")) {
-        values[1].toLowerCaseSelf();
-        if (values[1].equals("true")) {
+      if (uriKeyUpperCase.equals("SHOWSCALEBAR")) {
+        if (uriValue.toLowerCase().equals("true")) {
           srvParam->showScaleBarInImage = true;
         }
       }
-      if (value0Cap.equals("SHOWNORTHARROW")) {
-        values[1].toLowerCaseSelf();
-        if (values[1].equals("true")) {
+      if (uriKeyUpperCase.equals("SHOWNORTHARROW")) {
+        if (uriValue.toLowerCase().equals("true")) {
           srvParam->showNorthArrow = true;
         }
       }
 
       // http://www.resc.rdg.ac.uk/trac/ncWMS/wiki/WmsExtensions
-      if (value0Cap.equals("OPACITY")) {
-        srvParam->wmsExtensions.opacity = values[1].toDouble();
+      if (uriKeyUpperCase.equals("OPACITY")) {
+        srvParam->wmsExtensions.opacity = uriValue.toDouble();
       }
-      if (value0Cap.equals("COLORSCALERANGE")) {
-        CT::string *valuesC = values[1].splitToArray(",");
+      if (uriKeyUpperCase.equals("COLORSCALERANGE")) {
+        CT::string *valuesC = uriValue.splitToArray(",");
         if (valuesC->count == 2) {
           srvParam->wmsExtensions.colorScaleRangeMin = valuesC[0].toDouble();
           srvParam->wmsExtensions.colorScaleRangeMax = valuesC[1].toDouble();
@@ -2809,21 +2775,20 @@ int CRequest::process_querystring() {
         }
         delete[] valuesC;
       }
-      if (value0Cap.equals("NUMCOLORBANDS")) {
-        srvParam->wmsExtensions.numColorBands = values[1].toFloat();
+      if (uriKeyUpperCase.equals("NUMCOLORBANDS")) {
+        srvParam->wmsExtensions.numColorBands = uriValue.toFloat();
         srvParam->wmsExtensions.numColorBandsSet = true;
       }
-      if (value0Cap.equals("LOGSCALE")) {
-        values[1].toLowerCaseSelf();
-        if (values[1].equals("true")) {
+      if (uriKeyUpperCase.equals("LOGSCALE")) {
+        if (uriValue.toLowerCase().equals("true")) {
           srvParam->wmsExtensions.logScale = true;
         }
       }
       // JSONP parameter
-      if (value0Cap.equals("JSONP")) {
+      if (uriKeyUpperCase.equals("JSONP")) {
         if (dFound_JSONP == 0) {
-          if (values[1].length() > 1) {
-            srvParam->JSONP.copy(&values[1]);
+          if (uriValue.length() > 1) {
+            srvParam->JSONP.copy(&uriValue);
             dFound_JSONP = 1;
           }
         } else {
@@ -3137,6 +3102,8 @@ int CRequest::process_querystring() {
       if (dFound_Height == 0) {
         if (srvParam->Geo->dfBBOX[2] != srvParam->Geo->dfBBOX[0]) {
           float r = fabs(srvParam->Geo->dfBBOX[3] - srvParam->Geo->dfBBOX[1]) / fabs(srvParam->Geo->dfBBOX[2] - srvParam->Geo->dfBBOX[0]);
+          CDBDebug("NNOX = %f, %f, %f, %f", srvParam->Geo->dfBBOX[0], srvParam->Geo->dfBBOX[1], srvParam->Geo->dfBBOX[2], srvParam->Geo->dfBBOX[3]);
+          CDBDebug("R = %f", r);
           srvParam->Geo->dHeight = int(float(srvParam->Geo->dWidth) * r);
           if (srvParam->Geo->dHeight > MAX_IMAGE_HEIGHT) {
             srvParam->Geo->dHeight = srvParam->Geo->dWidth;
@@ -3144,6 +3111,8 @@ int CRequest::process_querystring() {
         } else {
           srvParam->Geo->dHeight = srvParam->Geo->dWidth;
         }
+        CDBDebug("Calculated height: %d", srvParam->Geo->dHeight);
+        CDBDebug("dWidth: %d", srvParam->Geo->dWidth);
       }
 
       if (srvParam->Geo->dWidth < 0) srvParam->Geo->dWidth = 1;
@@ -3334,31 +3303,32 @@ int CRequest::process_querystring() {
     }
     if (dErrorOccured == 0 && srvParam->requestType == REQUEST_WCS_GETCOVERAGE) {
       CDBDebug("WCS");
+
       if (dFound_Width == 0 && dFound_Height == 0 && dFound_RESX == 0 && dFound_RESY == 0 && srvParam->dFound_BBOX == 0 && dFound_CRS == 0)
         srvParam->WCS_GoNative = 1;
       else {
         srvParam->WCS_GoNative = 0;
-        if (dFound_RESX == 0 || dFound_RESY == 0) {
-          if (dFound_Width == 0) {
-            CDBError("ADAGUC Server: Parameter WIDTH/RESX missing");
-            dErrorOccured = 1;
-          }
-          if (dFound_Height == 0) {
-            CDBError("ADAGUC Server: Parameter HEIGHT/RESY missing");
-            dErrorOccured = 1;
-          }
-          srvParam->dWCS_RES_OR_WH = 0;
-        } else if (dFound_Width == 0 || dFound_Height == 0) {
-          if (dFound_RESX == 0) {
-            CDBError("ADAGUC Server: Parameter RESX missing");
-            dErrorOccured = 1;
-          }
-          if (dFound_RESY == 0) {
-            CDBError("ADAGUC Server: Parameter RESY missing");
-            dErrorOccured = 1;
-          }
-          srvParam->dWCS_RES_OR_WH = 1;
-        }
+        // if (dFound_RESX == 0 || dFound_RESY == 0) {
+        //   if (dFound_Width == 0) {
+        //     CDBError("ADAGUC Server: Parameter WIDTH/RESX missing");
+        //     dErrorOccured = 1;
+        //   }
+        //   if (dFound_Height == 0) {
+        //     CDBError("ADAGUC Server: Parameter HEIGHT/RESY missing");
+        //     dErrorOccured = 1;
+        //   }
+        //   srvParam->dWCS_RES_OR_WH = 0;
+        // } else if (dFound_Width == 0 || dFound_Height == 0) {
+        //   if (dFound_RESX == 0) {
+        //     CDBError("ADAGUC Server: Parameter RESX missing");
+        //     dErrorOccured = 1;
+        //   }
+        //   if (dFound_RESY == 0) {
+        //     CDBError("ADAGUC Server: Parameter RESY missing");
+        //     dErrorOccured = 1;
+        //   }
+        //   srvParam->dWCS_RES_OR_WH = 1;
+        // }
         if (srvParam->dFound_BBOX == 0) {
           CDBError("ADAGUC Server: Parameter BBOX missing");
           dErrorOccured = 1;
