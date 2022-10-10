@@ -111,8 +111,27 @@ int CGDALDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource, int
     // Non native projection units
     for (int j = 0; j < 4; j++) dfSrcBBOX[j] = dataSource->dfBBOX[j];
     for (int j = 0; j < 4; j++) dfDstBBOX[j] = srvParam->Geo->dfBBOX[j];
+
+    /* CRS is provided, but not RESX+RESY or HEIGHT+WIDTH, calculate here */
+    if (srvParam->dfResX == 0 && srvParam->dfResY == 0 && srvParam->Geo->dWidth == 1 && srvParam->Geo->dHeight == 1) {
+      CImageWarper warper;
+      dataSource->srvParams = this->srvParam;
+      status = warper.initreproj(dataSource, this->srvParam->Geo, &srvParam->cfg->Projection);
+      if (status != 0) {
+        CDBError("Unable to initialize projection");
+        return 1;
+      }
+      double dfBBOX[4];
+      for (int j = 0; j < 4; j++) dfBBOX[j] = dataSource->dfBBOX[j];
+      warper.findExtent(dataSource, dfBBOX);
+      double resXInRequestedCRS = fabs((dfBBOX[2] - dfBBOX[0]) / dataSource->dWidth);
+      double resYInRequestedCRS = fabs((dfBBOX[3] - dfBBOX[1]) / dataSource->dWidth);
+      srvParam->dfResX = resXInRequestedCRS;
+      srvParam->dfResY = resYInRequestedCRS;
+    }
+
     // dfResX and dfResY are in the CRS ore ResponseCRS
-    if (srvParam->dWCS_RES_OR_WH == 1) {
+    if (srvParam->dfResX != 0 && srvParam->dfResY != 0) {
       srvParam->Geo->dWidth = int(((dfDstBBOX[2] - dfDstBBOX[0]) / srvParam->dfResX));
       srvParam->Geo->dHeight = int(((dfDstBBOX[1] - dfDstBBOX[3]) / srvParam->dfResY));
       srvParam->Geo->dHeight = abs(srvParam->Geo->dHeight);
