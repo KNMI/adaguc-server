@@ -53,7 +53,7 @@ public:
   int dWidth, dHeight;
   double dfBBOX[4];
   double dfCellSizeX, dfCellSizeY;
-  CT::string CRS, RESPONSE_CRS;
+  CT::string CRS, BBOX_CRS;
   CGeoParams() {
     dWidth = 1;
     dHeight = 1;
@@ -71,7 +71,7 @@ public:
     dfCellSizeX = _Geo->dfCellSizeX;
     dfCellSizeY = _Geo->dfCellSizeY;
     CRS.copy(&_Geo->CRS);
-    RESPONSE_CRS.copy(&_Geo->RESPONSE_CRS);
+    BBOX_CRS.copy(&_Geo->BBOX_CRS);
     for (int j = 0; j < 4; j++) dfBBOX[j] = _Geo->dfBBOX[j];
     return 0;
   }

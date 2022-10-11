@@ -2321,6 +2321,7 @@ int CRequest::process_querystring() {
 
   int dFound_SRS = 0;
   int dFound_CRS = 0;
+  int dFound_RESPONSE_CRS = 0;
 
   // int dFound_Debug=0;
   int dFound_Request = 0;
@@ -2534,17 +2535,13 @@ int CRequest::process_querystring() {
         }
       }
 
-      // if (uriKeyUpperCase.equals("RESPONSE_CRS")) {
-      //   if (uriValue.length() > 2) {
-      //     srvParam->Geo->RESPONSE_CRS.copy(uriValue);
-      //   }
-      // }
+      if (uriKeyUpperCase.equals("RESPONSE_CRS")) {
+        if (uriValue.length() > 2) {
+          srvParam->Geo->BBOX_CRS.copy(uriValue);
+          dFound_RESPONSE_CRS = 1;
+        }
+      }
 
-      // if (uriKeyUpperCase.equals("RESPONSE_CRS")) {
-      //   if (uriValue.length() > 5) {
-      //     srvParam->Geo->RESPONSE_CRS.copy(&uriValue);
-      //   }
-      // }
       // DIM Params
       int foundDim = -1;
       if (uriKeyUpperCase.equals("TIME") || uriKeyUpperCase.equals("ELEVATION")) {
@@ -3307,28 +3304,15 @@ int CRequest::process_querystring() {
       if (dFound_Width == 0 && dFound_Height == 0 && dFound_RESX == 0 && dFound_RESY == 0 && srvParam->dFound_BBOX == 0 && dFound_CRS == 0)
         srvParam->WCS_GoNative = 1;
       else {
+        if (dFound_CRS == 1 && dFound_RESPONSE_CRS == 1) {
+          CT::string CRS = srvParam->Geo->BBOX_CRS;
+          CT::string RESPONSE_CRS = srvParam->Geo->CRS;
+          srvParam->Geo->CRS = CRS;
+          srvParam->Geo->BBOX_CRS = RESPONSE_CRS;
+        } else {
+          srvParam->Geo->BBOX_CRS = srvParam->Geo->CRS;
+        }
         srvParam->WCS_GoNative = 0;
-        // if (dFound_RESX == 0 || dFound_RESY == 0) {
-        //   if (dFound_Width == 0) {
-        //     CDBError("ADAGUC Server: Parameter WIDTH/RESX missing");
-        //     dErrorOccured = 1;
-        //   }
-        //   if (dFound_Height == 0) {
-        //     CDBError("ADAGUC Server: Parameter HEIGHT/RESY missing");
-        //     dErrorOccured = 1;
-        //   }
-        //   srvParam->dWCS_RES_OR_WH = 0;
-        // } else if (dFound_Width == 0 || dFound_Height == 0) {
-        //   if (dFound_RESX == 0) {
-        //     CDBError("ADAGUC Server: Parameter RESX missing");
-        //     dErrorOccured = 1;
-        //   }
-        //   if (dFound_RESY == 0) {
-        //     CDBError("ADAGUC Server: Parameter RESY missing");
-        //     dErrorOccured = 1;
-        //   }
-        //   srvParam->dWCS_RES_OR_WH = 1;
-        // }
         if (srvParam->dFound_BBOX == 0) {
           CDBError("ADAGUC Server: Parameter BBOX missing");
           dErrorOccured = 1;

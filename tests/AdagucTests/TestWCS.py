@@ -100,7 +100,7 @@ class TestWCS(unittest.TestCase):
     ).readfromfile(self.expectedoutputsspath + filename))
 
 
-  def test_WCSGetCoverageNetCDF4_testdatanc_adaguc_wcs_destgridspec_specifiedgrid(self):
+  def test_WCSGetCoverageNetCDF4_testdatanc_adaguc_wcs_destgridspec_specifiedgridresxresy(self):
     """
     Check if WCS GetCoverage for specified settings returns correct grid spec
     """
@@ -112,12 +112,29 @@ class TestWCS(unittest.TestCase):
 
     ds = netCDF4.Dataset("filename.nc", memory=data.getvalue())
 
-    expectedgridspec="width=360&height=180&resx=1.000000&resy=1.000000&&bbox=-180.000000,-90.000000,180.000000,90.000000&crs=EPSG:4326"
+    expectedgridspec="width=360&height=180&resx=1.000000&resy=1.000000&bbox=-180.000000,-90.000000,180.000000,90.000000&crs=EPSG:4326"
     foundgridspec = ds.getncattr("adaguc_wcs_destgridspec")
     self.assertEqual(foundgridspec, expectedgridspec)
     projectionid = ds.variables["crs"].getncattr("id")
     self.assertEqual("EPSG:4326", projectionid)
 
+  def test_WCSGetCoverageNetCDF4_testdatanc_adaguc_wcs_destgridspec_specifiedgridwidthheight(self):
+    """
+    Check if WCS GetCoverage for specified settings returns correct grid spec
+    """
+    AdagucTestTools().cleanTempDir()
+    status, data, headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=testdata&CRS=EPSG%3A4326&FORMAT=NetCDF4&BBOX=-180,-90,180,90&width=360&height=180",
+                                                              env=self.env, args=["--report"])
+    self.assertEqual(status, 0)
+    self.assertEqual(data.getvalue()[0:6], b'\x89HDF\r\n')
+
+    ds = netCDF4.Dataset("filename.nc", memory=data.getvalue())
+
+    expectedgridspec="width=360&height=180&resx=1.000000&resy=1.000000&bbox=-180.000000,-90.000000,180.000000,90.000000&crs=EPSG:4326"
+    foundgridspec = ds.getncattr("adaguc_wcs_destgridspec")
+    self.assertEqual(foundgridspec, expectedgridspec)
+    projectionid = ds.variables["crs"].getncattr("id")
+    self.assertEqual("EPSG:4326", projectionid)
 
   def test_WCSGetCoverageNetCDF4_testdatanc_adaguc_wcs_destgridspec_native(self):
     """
@@ -131,7 +148,7 @@ class TestWCS(unittest.TestCase):
 
     ds = netCDF4.Dataset("filename.nc", memory=data.getvalue())
 
-    expectedgridspec="width=29&height=31&resx=103448.276786&resy=96774.191667&&bbox=-1500000.013393,-999999.970833,1500000.013393,1999999.970833&crs=+proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.9999079 +x_0=155000 +y_0=463000 +ellps=bessel +towgs84=565.417,50.3319,465.552,-0.398957,0.343988,-1.8774,4.0725 +units=m +no_defs"
+    expectedgridspec="width=29&height=31&resx=103448.276786&resy=96774.191667&bbox=-1500000.013393,-999999.970833,1500000.013393,1999999.970833&crs=+proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.9999079 +x_0=155000 +y_0=463000 +ellps=bessel +towgs84=565.417,50.3319,465.552,-0.398957,0.343988,-1.8774,4.0725 +units=m +no_defs"
     foundgridspec = ds.getncattr("adaguc_wcs_destgridspec")
     self.assertEqual(foundgridspec, expectedgridspec)
     projectionid = ds.variables["crs"].getncattr("id")
@@ -149,7 +166,7 @@ class TestWCS(unittest.TestCase):
 
     ds = netCDF4.Dataset("filename.nc", memory=data.getvalue())
 
-    expectedgridspec="width=174&height=182&resx=2.068966&resy=0.989011&&bbox=-180.000000,-90.000000,180.000000,90.000000&crs=EPSG:4326"
+    expectedgridspec="width=174&height=196&resx=2.068966&resy=0.918367&bbox=-180.000000,-90.000000,180.000000,90.000000&crs=EPSG:4326"
     foundgridspec = ds.getncattr("adaguc_wcs_destgridspec")
     self.assertEqual(foundgridspec, expectedgridspec)
     projectionid = ds.variables["crs"].getncattr("id")
@@ -166,8 +183,27 @@ class TestWCS(unittest.TestCase):
     self.assertEqual(data.getvalue()[0:6], b'\x89HDF\r\n')
     ds = netCDF4.Dataset("filename.nc", memory=data.getvalue())
 
-    expectedgridspec="width=14&height=20&resx=2.142857&resy=1.000000&&bbox=-10.000000,40.000000,20.000000,60.000000&crs=EPSG:4326"
+    expectedgridspec="width=15&height=22&resx=2.000000&resy=0.909091&bbox=-10.000000,40.000000,20.000000,60.000000&crs=EPSG:4326"
     foundgridspec = ds.getncattr("adaguc_wcs_destgridspec")
     self.assertEqual(foundgridspec, expectedgridspec)
     projectionid = ds.variables["crs"].getncattr("id")
     self.assertEqual("EPSG:4326", projectionid)
+
+
+  def test_WCSGetCoverageNetCDF4_testdatanc_adaguc_wcs_destgridspec_specifiedgridwidthheight_responsecrs(self):
+    """
+    Check if WCS GetCoverage for specified settings returns correct grid spec
+    """
+    AdagucTestTools().cleanTempDir()
+    status, data, headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=testdata&CRS=EPSG%3A4326&FORMAT=NetCDF4&BBOX=0,50,10,60&width=100&height=100&RESPONSE_CRS=EPSG:28992&",
+                                                              env=self.env, args=["--report"])
+    self.assertEqual(status, 0)
+    self.assertEqual(data.getvalue()[0:6], b'\x89HDF\r\n')
+
+    ds = netCDF4.Dataset("filename.nc", memory=data.getvalue())
+
+    expectedgridspec="width=100&height=100&resx=7167.687040&resy=11262.730534&bbox=-231108.757898,223282.967525,485659.946091,1349556.020954&crs=EPSG:28992"
+    foundgridspec = ds.getncattr("adaguc_wcs_destgridspec")
+    self.assertEqual(foundgridspec, expectedgridspec)
+    projectionid = ds.variables["crs"].getncattr("id")
+    self.assertEqual("EPSG:28992", projectionid)
