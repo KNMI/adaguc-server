@@ -125,7 +125,7 @@ int CGDALDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource, int
       for (int j = 0; j < 4; j++) dfBBOX[j] = dataSource->dfBBOX[j];
       warper.findExtent(dataSource, dfBBOX);
       double resXInRequestedCRS = fabs((dfBBOX[2] - dfBBOX[0]) / dataSource->dWidth);
-      double resYInRequestedCRS = fabs((dfBBOX[3] - dfBBOX[1]) / dataSource->dWidth);
+      double resYInRequestedCRS = fabs((dfBBOX[3] - dfBBOX[1]) / dataSource->dHeight);
       srvParam->dfResX = resXInRequestedCRS;
       srvParam->dfResY = resYInRequestedCRS;
     }

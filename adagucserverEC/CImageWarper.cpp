@@ -649,3 +649,20 @@ void CImageWarper::reprojBBOX(double *df4PixelExtent) {
   df4PixelExtent[2] = xmax;
   df4PixelExtent[3] = ymax;
 }
+
+CT::string CImageWarper::getProj4FromId(CDataSource *dataSource, CT::string projectionId) {
+  CT::string bboxProj4Params;
+  if (projectionId.equals("native")) {
+    bboxProj4Params = dataSource->nativeProj4;
+    return bboxProj4Params;
+  }
+  std::vector<CServerConfig::XMLE_Projection *> *prj = &dataSource->srvParams->cfg->Projection;
+  for (size_t j = 0; j < (*prj).size(); j++) {
+    if ((*prj)[j]->attr.id.equals(projectionId.trim())) {
+      bboxProj4Params = (*prj)[j]->attr.proj4;
+      return bboxProj4Params;
+      break;
+    }
+  }
+  return projectionId;
+}

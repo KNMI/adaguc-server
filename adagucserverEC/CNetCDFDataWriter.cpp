@@ -93,20 +93,6 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
     destCDFObject->setAttribute(srcObj->attributes[j]->name.c_str(), srcObj->attributes[j]->type, srcObj->attributes[j]->data, srcObj->attributes[j]->length);
   }
 
-  //   //Copy provenance, if available
-  //   CDF::Variable *KNMIProv = srcObj->getVariableNE("knmi_provenance");
-  //   if(KNMIProv!=NULL){
-  //     CDF::Variable *newProv = new CDF::Variable();
-  //     newProv->name="knmi_provenance";
-  //     newProv->setType(CDF_CHAR);
-  //     newProv->setSize(0);
-  //     destCDFObject->addVariable(newProv);
-  //     for(size_t j=0;j<KNMIProv->attributes.size();j++){
-  //       newProv->setAttribute(KNMIProv->attributes[j]->name.c_str(),KNMIProv->attributes[j]->type,KNMIProv->attributes[j]->data,KNMIProv->attributes[j]->length);
-  //     }
-  //   }
-  //
-
   double dfDstBBOX[4];
   double dfSrcBBOX[4];
   // Setup projection
@@ -128,8 +114,21 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
     srvParam->Geo->dWidth = dataSource->dWidth;
     srvParam->Geo->dHeight = dataSource->dHeight;
     srvParam->Geo->CRS.copy(&dataSource->nativeProj4);
+
     if (srvParam->Format.length() == 0) srvParam->Format.copy("adagucnetcdf");
-  } else {
+  }
+
+  CT::string srvParamBboxProj4Params = CImageWarper::getProj4FromId(dataSource, srvParam->Geo->BBOX_CRS);
+  CT::string srvParamGridProj4Params = CImageWarper::getProj4FromId(dataSource, srvParam->Geo->CRS);
+  CGeoParams serverWCSGeoParams;
+  serverWCSGeoParams.copy(this->srvParam->Geo);
+  if (!srvParamBboxProj4Params.empty()) {
+    serverWCSGeoParams.CRS = srvParamBboxProj4Params;
+  }
+  CDBDebug("Found srvParamBboxProj4Params [%s]", srvParamBboxProj4Params.c_str());
+  CDBDebug("Found srvParamGridProj4Params [%s]", srvParamGridProj4Params.c_str());
+
+  if (srvParam->WCS_GoNative == 0) {
 #ifdef CNetCDFDataWriter_DEBUG
     CDBDebug("GO NON NATIVE");
 #endif
@@ -138,11 +137,46 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
     for (int j = 0; j < 4; j++) dfSrcBBOX[j] = dataSource->dfBBOX[j];
     for (int j = 0; j < 4; j++) dfDstBBOX[j] = srvParam->Geo->dfBBOX[j];
 
+    /* BBOX_CRS is set, that means that we have to recalculate the BBOX and the RESX/RESY from the BBOX_CRS coordinate to the CRS coordinates */
+    if (srvParam->Geo->BBOX_CRS.empty() == false && srvParam->Geo->BBOX_CRS.equals(srvParam->Geo->CRS) == false) {
+      CDBDebug("BBOX_CRS is set, that means that we have to recalculate the BBOX and the RESX/RESY from the BBOX_CRS coordinate to the CRS coordinates ");
+
+      CImageWarper warper;
+
+      status = warper.initreproj(srvParamGridProj4Params.c_str(), &serverWCSGeoParams, &srvParam->cfg->Projection);
+      if (status != 0) {
+        CDBError("Unable to initialize projection");
+        return 1;
+      }
+      double dfBBOX[4];
+      for (int j = 0; j < 4; j++) dfBBOX[j] = srvParam->Geo->dfBBOX[j];
+
+      CDBDebug("(%f, %f) (%d, %d) %f %f %f %f", srvParam->dfResX, srvParam->dfResY, srvParam->Geo->dWidth, srvParam->Geo->dHeight, dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]);
+
+      warper.reprojBBOX(dfBBOX);
+      for (int j = 0; j < 4; j++) {
+        srvParam->Geo->dfBBOX[j] = dfBBOX[j];
+        dfDstBBOX[j] = dfBBOX[j];
+        serverWCSGeoParams.dfBBOX[j] = dfBBOX[j];
+      }
+
+      /* If resolution is set, recalculate it */
+      if (srvParam->dfResX != 0 && srvParam->dfResY != 0) {
+        double resXInRequestedCRS = fabs((dfBBOX[2] - dfBBOX[0]) / srvParam->Geo->dWidth);
+        double resYInRequestedCRS = fabs((dfBBOX[3] - dfBBOX[1]) / srvParam->Geo->dHeight);
+        srvParam->dfResX = resXInRequestedCRS;
+        srvParam->dfResY = resYInRequestedCRS;
+      }
+
+      CDBDebug("(%f, %f) (%d, %d) %f %f %f %f", srvParam->dfResX, srvParam->dfResY, srvParam->Geo->dWidth, srvParam->Geo->dHeight, dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]);
+    }
+
     /* CRS is provided, but not RESX+RESY or HEIGHT+WIDTH, calculate here */
     if (srvParam->dfResX == 0 && srvParam->dfResY == 0 && srvParam->Geo->dWidth == 1 && srvParam->Geo->dHeight == 1) {
+      CDBDebug("CRS is provided, but not RESX+RESY or HEIGHT+WIDTH, calculate it");
       CImageWarper warper;
       dataSource->srvParams = this->srvParam;
-      status = warper.initreproj(dataSource, this->srvParam->Geo, &srvParam->cfg->Projection);
+      status = warper.initreproj(dataSource, &serverWCSGeoParams, &srvParam->cfg->Projection);
       if (status != 0) {
         CDBError("Unable to initialize projection");
         return 1;
@@ -151,20 +185,23 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
       for (int j = 0; j < 4; j++) dfBBOX[j] = dataSource->dfBBOX[j];
       warper.findExtent(dataSource, dfBBOX);
       double resXInRequestedCRS = fabs((dfBBOX[2] - dfBBOX[0]) / dataSource->dWidth);
-      double resYInRequestedCRS = fabs((dfBBOX[3] - dfBBOX[1]) / dataSource->dWidth);
+      double resYInRequestedCRS = fabs((dfBBOX[3] - dfBBOX[1]) / dataSource->dHeight);
       srvParam->dfResX = resXInRequestedCRS;
       srvParam->dfResY = resYInRequestedCRS;
+      CDBDebug("(%f, %f) (%d, %d) %f %f %f %f", srvParam->dfResX, srvParam->dfResY, srvParam->Geo->dWidth, srvParam->Geo->dHeight, dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]);
     }
+
     // dfResX and dfResY are in the CRS ore ResponseCRS
     if (srvParam->dfResX != 0 && srvParam->dfResY != 0) {
-      srvParam->Geo->dWidth = int(((dfDstBBOX[2] - dfDstBBOX[0]) / srvParam->dfResX));
-      srvParam->Geo->dHeight = int(((dfDstBBOX[1] - dfDstBBOX[3]) / srvParam->dfResY));
-      srvParam->Geo->dHeight = abs(srvParam->Geo->dHeight);
+      srvParam->Geo->dWidth = int(fabs(((dfDstBBOX[2] - dfDstBBOX[0]) / srvParam->dfResX)) + 0.5);
+      srvParam->Geo->dHeight = int(fabs(((dfDstBBOX[1] - dfDstBBOX[3]) / srvParam->dfResY)) + 0.5);
     }
-    if (srvParam->Geo->dWidth > 20000 || srvParam->Geo->dHeight > 20000) {
-      CDBError("Requested Width or Height is larger than 20000 pixels. Aborting request.");
-      return 1;
-    }
+  }
+  CDBDebug("(%f, %f) (%d, %d) %f %f %f %f", srvParam->dfResX, srvParam->dfResY, srvParam->Geo->dWidth, srvParam->Geo->dHeight, dfDstBBOX[0], dfDstBBOX[1], dfDstBBOX[2], dfDstBBOX[3]);
+
+  if (srvParam->Geo->dWidth > 20000 || srvParam->Geo->dHeight > 20000) {
+    CDBError("Requested Width or Height is larger than 20000 pixels. Aborting request.");
+    return 1;
   }
 
   // Adjust history
@@ -177,7 +214,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
   CT::string adagucwcsdestgrid;
   double rx = fabs((dfDstBBOX[2] - dfDstBBOX[0]) / srvParam->Geo->dWidth);
   double ry = fabs((dfDstBBOX[3] - dfDstBBOX[1]) / srvParam->Geo->dHeight);
-  adagucwcsdestgrid.print("width=%d&height=%d&resx=%f&resy=%f&&bbox=%f,%f,%f,%f&crs=%s", srvParam->Geo->dWidth, srvParam->Geo->dHeight, rx, ry, dfDstBBOX[0], dfDstBBOX[1], dfDstBBOX[2], dfDstBBOX[3],
+  adagucwcsdestgrid.print("width=%d&height=%d&resx=%f&resy=%f&bbox=%f,%f,%f,%f&crs=%s", srvParam->Geo->dWidth, srvParam->Geo->dHeight, rx, ry, dfDstBBOX[0], dfDstBBOX[1], dfDstBBOX[2], dfDstBBOX[3],
                           srvParam->Geo->CRS.trim().c_str());
 
   CT::string newHistoryText;
@@ -487,7 +524,13 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
 
     CImageWarper warper;
     dataSource->srvParams = this->srvParam;
-    status = warper.initreproj(dataSource, this->srvParam->Geo, &srvParam->cfg->Projection);
+
+    CT::string srvParamGridProj4Params = CImageWarper::getProj4FromId(dataSource, srvParam->Geo->CRS);
+    CGeoParams clonedSrvGeoParams;
+    clonedSrvGeoParams.copy(srvParam->Geo);
+    clonedSrvGeoParams.CRS = srvParamGridProj4Params;
+
+    status = warper.initreproj(dataSource, &clonedSrvGeoParams, &srvParam->cfg->Projection);
     if (status != 0) {
       CDBError("Unable to initialize projection");
       return 1;
