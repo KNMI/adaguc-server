@@ -2128,6 +2128,9 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
 
   double xScale;
   double yScale;
+  unsigned int xSize;
+  unsigned int ySize;
+  CT::string projectionString;
 
   CDF::Attribute *xScaleAttr = whereVar->getAttributeNE("xscale");
   if (xScaleAttr != NULL) {
@@ -2137,8 +2140,73 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
   if (yScaleAttr != NULL) {
     yScale = yScaleAttr->getDataAt<double>(0);
   }
+  CDF::Attribute *ySizeAttr = whereVar->getAttributeNE("ysize");
+  if (ySizeAttr != NULL) {
+    ySize = ySizeAttr->getDataAt<unsigned int>(0);
+  }
+  CDF::Attribute *xSizeAttr = whereVar->getAttributeNE("xsize");
+  if (xSizeAttr != NULL) {
+    xSize = xSizeAttr->getDataAt<unsigned int>(0);
+  }
+  CDF::Attribute *projDefAttr = whereVar->getAttributeNE("projdef");
+  if (projDefAttr != NULL) {
+    projectionString = projDefAttr->getDataAsString();
+  }
 
-  CDBDebug("xScale %f, yScale %f", xScale, yScale);
+  double offsetX = -1;
+  double offsetY = -1;
 
+  CDF::Variable *whatVar = cdfObject->getVariableNE("dataset1.what");
+  if (whatVar == NULL) {
+    return 2;
+  }
+
+  CDF::Attribute *offsetAttr = whatVar->getAttributeNE("offset");
+  if (offsetAttr != NULL) {
+    offsetX = offsetAttr->getDataAt<double>(0);
+    offsetY = offsetAttr->getDataAt<double>(1);
+  }
+
+  CDBDebug("\nxScale: %f\nyScale: %f\nxSize: %d\nySize: %d\nprojdef: %s\noffsetX: %f\noffsetY: %f", xScale, yScale, xSize, ySize, projectionString.c_str(), offsetX, offsetY);
+
+  CDF::Variable *dataVar = cdfObject->getVariableNE("dataset1.data1.data");
+  if (dataVar != NULL) {
+    if (dataVar->dimensionlinks.size() == 2) {
+      dataVar->setAttributeText("grid_mapping", "crs");
+      CDF::Variable *crs = NULL;
+      crs = cdfObject->getVariableNE("crs");
+      if (crs == NULL) {
+        crs = new CDF::Variable("crs", CDF_CHAR, NULL, 0, false);
+        cdfObject->addVariable(crs);
+      }
+      crs->setAttributeText("proj4_params", projectionString.c_str());
+      CDF::Dimension *dimX = dataVar->dimensionlinks[1];
+      CDF::Dimension *dimY = dataVar->dimensionlinks[0];
+      CDF::Variable *varX = cdfObject->getVariableNE(dimX->name.c_str());
+      CDF::Variable *varY = cdfObject->getVariableNE(dimY->name.c_str());
+      varX->setName("x");
+      varY->setName("y");
+      dimX->setName("x");
+      dimY->setName("y");
+      if (CDF::allocateData(varX->currentType, &varX->data, dimX->length)) {
+        throw(__LINE__);
+      }
+      if (CDF::allocateData(varY->currentType, &varY->data, dimY->length)) {
+        throw(__LINE__);
+      }
+
+      for (size_t j = 0; j < dimX->length; j = j + 1) {
+        double x = (offsetX + double(j)) * xScale + xScale / 2;
+        ((double *)varX->data)[j] = x;
+      }
+
+      for (size_t j = 0; j < dimY->length; j = j + 1) {
+        double y = (offsetY + float(j)) * yScale + yScale / 2;
+        ((double *)varY->data)[j] = y;
+      }
+    } else {
+      CDBWarning("Data variable has only [%d] dimensions", dataVar->dimensionlinks.size());
+    }
+  }
   return 0;
 }
