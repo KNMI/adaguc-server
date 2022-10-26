@@ -1,0 +1,48 @@
+La versión de proj4 que trae el ubuntu 22.04.1 es demasiado moderna para el adaguc-server, tienes que descargar y compilar la versión 4.9.3, los pasos serían:
+
+como root:
+
+mkdir -p /usr/src/proj4/4.9.3
+
+cd /usr/src/proj4/4.9.3
+
+mkdir pkg build src
+
+cd pkg
+
+wget https://download.osgeo.org/proj/proj-4.9.3.tar.gz
+
+cd ../src
+
+tar xvf ../pkg/proj-4.9.3.tar.gz
+
+cd ../build
+
+../src/proj-4.9.3/configure --prefix=/usr/local/proj4/4.9.3
+
+make -j8
+
+make -j8 install
+
+// salir de root
+
+export LD_LIBRARY_PATH=/usr/local/proj4/4.9.3/lib:$LD_LIBRARY_PATH
+
+export PKG_CONFIG_PATH=/usr/local/proj4/4.9.3/lib/pkgconfig/
+
+export CFLAGS=-I/usr/local/proj4/4.9.3/include/
+
+export CXXFLAGS=-I/usr/local/proj4/4.9.3/include/
+
+export LDFLAGS="-L/usr/local/proj4/4.9.3/lib -lproj"
+
+cd /src/KNMI/adaguc-server/
+editar el fichero compile.sh y modificar la línea:
+
+    cmake .. &&  cmake   --build . --parallel -v
+
+por
+
+    cmake -DCMAKE_PREFIX_PATH=/usr/local/proj4/4.9.3  .. &&  cmake   --build . --parallel -v
+
+bash compile.sh
