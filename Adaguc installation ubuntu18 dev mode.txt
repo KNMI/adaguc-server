@@ -1,0 +1,167 @@
+/// instructions for new instalation on ubuntu 18
+
+
+sudo apt-get -y install vim kate kwrite konsole g++ m4 ncview curl git
+
+sudo apt-get -y  install postgresql postgresql-server-dev-all postgresql-client postgresql-client-common  postgresql-contrib
+
+/// check ih new directory /usr/lib/postgresql/10 exists
+/// knowing the exact version /usr/lib/postgresql/10/bin/postgres -V
+/// OUTPUT: postgres (PostgreSQL) 10.22 (Ubuntu 10.22-0ubuntu0.18.04.1)
+
+sudo apt-get -y install libcurl4-openssl-dev libcairo2-dev libxml2-dev libgd-dev libudunits2-dev udunits-bin netcdf-bin libnetcdf-dev libhdf5-dev libproj-dev libgdal-dev
+
+sudo apt-get install openjdk-8-jdk
+
+/// Check java -version
+/// OUTPUT
+// openjdk version "1.8.0_342"
+// OpenJDK Runtime Environment (build 1.8.0_342-8u342-b07-0ubuntu1~18.04-b07)
+// OpenJDK 64-Bit Server VM (build 25.342-b07, mixed mode)
+
+sudo apt-get install maven
+
+sudo apt-get install build-essential
+
+wget http://www.cmake.org/files/v3.24/cmake-3.24.1.tar.gz
+
+tar xf cmake-3.24.1.tar.gz
+
+cd  cmake-3.24.1
+
+./configure
+
+make
+
+sudo make install
+
+// check cmake version cmake --version
+// OUTPUT: cmake version 3.24.1
+//CMake suite maintained and supported by Kitware (kitware.com/cmake).
+// SETUP POSTGRES SQL
+sudo service postgresql start
+sudo -u postgres createuser --superuser adaguc
+sudo -u postgres psql postgres -c "ALTER USER adaguc PASSWORD 'adaguc';" 
+sudo -u postgres psql postgres -c "CREATE DATABASE adaguc;" 
+echo "\q" | psql "dbname=adaguc user=adaguc password=adaguc host=localhost" 
+if [ ${?} -eq 0 ];then
+    echo "Postgres database setup correctly" 
+fi
+
+//INSTALLING TOMCAT
+
+sudo mkdir -p /src/
+sudo chown -R $USER: /src
+cd /src/
+curl -L https://archive.apache.org/dist/tomcat/tomcat-8/v8.0.44/bin/apache-tomcat-8.0.44.tar.gz > apache-tomcat-8.0.44.tar.gz
+tar -xzvf apache-tomcat-8.0.44.tar.gz
+
+printf "export CATALINA_HOME=\"/src/apache-tomcat-8.0.44\"\n\
+export CATALINA_BASE=\"/src/apache-tomcat-8.0.44\"\n\
+export ADAGUC_SERVICES_CONFIG=/src/config/adaguc-services-config-tomcat.xml\n\
+export JAVA_HOME=\"/usr\"\n\
+CONTENT_ROOT=-Dtds.content.root.path=/src/apache-tomcat-8.0.44/content\n\
+JAVA_PREFS_ROOTS=\"-Djava.util.prefs.systemRoot=$CATALINA_HOME/content/thredds/javaUtilPrefs -Djava.util.prefs.userRoot=$CATALINA_HOME/content/thredds/javaUtilPrefs\"\n\
+NORMAL=\"-d64 -Xmx4096m -Xms512m -server -ea\"\n\
+HEAP_DUMP=\"-XX:+HeapDumpOnOutOfMemoryError\"\n\
+HEADLESS=\"-Djava.awt.headless=true\"\n\
+JAVA_OPTS=\"$CONTENT_ROOT $NORMAL $MAX_PERM_GEN $HEAP_DUMP $HEADLESS $JAVA_PREFS_ROOTS\"\n\
+export JAVA_OPTS" > /src/apache-tomcat-8.0.44/setenv.sh
+
+
+//installing ADAGUC SERVICES
+
+sudo mkdir -p /src/KNMI
+sudo chown -R $USER: /src
+mkdir -p /src/config
+sudo mkdir -p /data
+sudo chown -R $USER: /data
+mkdir -p /data/adaguc-services-base
+mkdir -p /data/adaguc-services-space
+mkdir -p /src/log/
+cd /src/KNMI
+git clone https://github.com/KNMI/adaguc-services
+cd /src/KNMI/adaguc-services
+git checkout 1.0.13
+mvn package
+cp ./target/adaguc-services-*.war /src/apache-tomcat-8.0.44/webapps/adaguc-services.war
+
+# Configure adaguc-services
+printf "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\
+<adaguc-services>\n\
+  <external-home-url>http://localhost:8080/adaguc-services/</external-home-url>\n\
+  <basedir>/data/adaguc-services-base</basedir>\n\
+  <userworkspace>/data/adaguc-services-space</userworkspace>\n\
+  <server>\n\
+    <port>8080</port>\n\
+  </server>\n\
+  <security>\n\
+    <keystore>/src/keystore.jks</keystore>\n\
+    <keystorepassword>password</keystorepassword>\n\
+    <keystoretype>JKS</keystoretype>\n\
+    <keyalias>tomcat</keyalias>\n\
+  </security>\n\
+  <adaguc-server>\n\
+    <adagucexecutable>/src/KNMI/adaguc-server/bin/adagucserver</adagucexecutable>\n\
+    <export>ADAGUC_PATH=/src/KNMI/adaguc-server/</export>\n\
+    <export>ADAGUC_CONFIG=/src/KNMI/adaguc-server/data/config/adaguc.vm.xml</export>\n\
+    <export>ADAGUC_DATARESTRICTION=FALSE</export>\n\
+    <export>ADAGUC_FONT=/src/KNMI/adaguc-server/data/fonts/FreeSans.ttf</export>\n\
+    <export>ADAGUC_LOGFILE=/src/log/adaguc-server.log</export>\n\
+  </adaguc-server>\n\
+  <autowms>\n\
+    <enabled>true</enabled>\n\
+    <autowmspath>/data/adaguc-autowms/</autowmspath>\n\
+    <datasetpath>/data/adaguc-datasets/</datasetpath>\n\
+  </autowms>\n\
+</adaguc-services>" > /src/config/adaguc-services-config-tomcat.xml
+
+
+//// Install the viewer
+
+
+cd /src/apache-tomcat-8.0.44/webapps
+git clone https://github.com/KNMI/adaguc-viewer/
+printf "\n\
+xml2jsonrequestURL = '/adaguc-services/xml2json?'\n\
+autowmsURL = '/adaguc-services/autowms?';\n\
+" >> adaguc-viewer/config.js
+
+/// install the server from lllliso
+
+
+sudo mkdir -p /src/KNMI
+sudo chown -R $USER: /src
+sudo mkdir -p /data/
+sudo chown -R $USER: /data
+mkdir /data/adaguc-autowms
+mkdir /data/adaguc-datasets
+cd /src/KNMI
+git clone https://github.com/lllliso/adaguc-server
+cd /src/KNMI/adaguc-server
+bash compile.sh
+cp /src/KNMI/adaguc-server/data/datasets/testdata.nc /data/adaguc-autowms/
+cp /src/KNMI/adaguc-server/data/config/datasets/dataset_a.xml /data/adaguc-datasets/
+
+//// Start TOMCAT
+
+echo -e '#!/bin/bash
+t=`ps -ef | grep apache-tomcat-8 | grep adaguc | grep -v grep`
+if [ ! -z "$t" -a "$t" != " " ]; then
+        echo "Tomcat is running" 
+else
+  echo "Tomcat is not running, starting it" 
+  . /src/apache-tomcat-8.0.44/setenv.sh
+  /src/apache-tomcat-8.0.44/bin/startup.sh
+  sleep 2
+fi' > /src/tomcatstarter.sh
+chmod +x /src/tomcatstarter.sh
+/src/tomcatstarter.sh
+
+echo -e '@reboot /src/tomcatstarter.sh  > /dev/null 2>&1' > /src/crontab
+crontab /src/crontab
+
+
+
+
+
