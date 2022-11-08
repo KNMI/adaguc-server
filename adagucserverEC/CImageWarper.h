@@ -68,7 +68,6 @@ private:
 
   DEF_ERRORFUNCTION();
   unsigned char pixel;
-  CDataSource *_dataSource;
   CGeoParams *_geoDest;
   CT::string sourceCRSString;
   CT::string destinationCRS;
@@ -126,6 +125,14 @@ public:
   int decodeCRS(CT::string *outputCRS, CT::string *inputCRS, std::vector<CServerConfig::XMLE_Projection *> *prj);
   int findExtent(CDataSource *dataSource, double *dfBBOX);
   bool isProjectionRequired() { return requireReprojection; }
+  /**
+   * @brief Get the Proj4 From EPSG code
+   *
+   * @param dataSource DataSource
+   * @param projectionId EPSG code, or projection string, or string "native"
+   * @return CT::string Will return proj4 parameters for given projection id
+   */
+  static CT::string getProj4FromId(CDataSource *dataSource, CT::string projectionId);
 };
 
 #endif
