@@ -93,6 +93,17 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(data.getvalue(), AdagucTestTools(
         ).readfromfile(self.expectedoutputsspath + filename))
 
+    def test_WMSGetMap_testdatanc_autoheight(self):
+        AdagucTestTools().cleanTempDir()
+        filename = "test_WMSGetMap_testdatanc.png_autoheight.png"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&service=WMS&request=getmap&format=image/png&layers=testdata&width=256&CRS=EPSG:4326&STYLES=&EXCEPTIONS=INIMAGE&showlegend=true&",
+                                                                  env=self.env, args=["--report"])
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools(
+        ).readfromfile(self.expectedoutputsspath + filename))
+
     def test_WMSGetLegendGraphic_testdatanc(self):
         AdagucTestTools().cleanTempDir()
         filename = "test_WMSGetLegendGraphic_testdatanc.png"
