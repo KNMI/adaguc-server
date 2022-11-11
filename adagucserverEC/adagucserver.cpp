@@ -173,7 +173,7 @@ int _main(int argc, char **argv, char **) {
       }
       if (strncmp(long_options[opt_idx].name, "cleanfiles", 10) == 0) {
         CDBDebug("CLEAN: Delete old files according to Layer configuration");
-        scanFlags |= CDBFILESCANNER_CLEANFILES;
+        scanFlags |= CDBFILESCANNER_CLEANFILES + CDBFILESCANNER_UPDATEDB;
       }
       if (strncmp(long_options[opt_idx].name, "recreate", 8) == 0) {
         CDBDebug("RECREATE: Drop tables and recreate them");

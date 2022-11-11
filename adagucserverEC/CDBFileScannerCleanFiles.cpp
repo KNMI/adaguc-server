@@ -6,6 +6,22 @@
 #include "CNetCDFDataWriter.h"
 #include <set>
 
+void CDBFileScanner::_removeFileFromTables(CT::string fileNamestr, CDataSource *dataSource) {
+  CDBAdapter *dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
+  for (size_t i = 0; i < dataSource->requiredDims.size(); i++) {
+    CT::string tableName;
+    CT::string colName = dataSource->requiredDims[i]->netCDFDimName;
+    try {
+      tableName =
+          dbAdapter->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), colName.c_str(), dataSource);
+    } catch (int e) {
+      CDBWarning("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), colName.c_str());
+    }
+    CDBDebug("DB: Removing from table %s and dimension %s file %s", tableName.c_str(), colName.c_str(), fileNamestr.c_str());
+    dbAdapter->removeFile(tableName.c_str(), fileNamestr.c_str());
+  }
+}
+
 int CDBFileScanner::cleanFiles(CDataSource *dataSource, int) {
   CDBDebug("Cleanfiles");
   CDBAdapter *dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
@@ -21,14 +37,40 @@ int CDBFileScanner::cleanFiles(CDataSource *dataSource, int) {
     CDBError("Exception in setDimValuesForDataSource");
     return 1;
   }
-  CDBStore::Store *store = dbAdapter->getFilesAndIndicesForDimensions(dataSource, 10);
+
+  CT::string tableNameForTimeDimension;
+  CT::string colName = dataSource->requiredDims[0]->netCDFDimName;
+
+  try {
+    tableNameForTimeDimension =
+        dbAdapter->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), colName.c_str(), dataSource);
+  } catch (int e) {
+    CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), colName.c_str());
+    return 1;
+  }
+
+  CTime ctime;
+  ctime.init("seconds since 1970", "none");
+
+  CT::string currentTime = CTime::currentDateTime();
+  CTime::Date date = ctime.freeDateStringToDate(currentTime.c_str());
+
+  CDBDebug("currentDate\t\t\t%s", ctime.dateToISOString(date).c_str());
+
+  CT::string dateMinusRetentionPeriod = ctime.dateToISOString(ctime.subtractPeriodFromDate(date, "PT20M"));
+
+  CDBDebug("dateMinusRetentionPeriod\t%s", dateMinusRetentionPeriod.c_str());
+
+  CDBStore::Store *store = dbAdapter->getBetween("0000-01-01T00:00:00Z", dateMinusRetentionPeriod.c_str(), colName.c_str(), tableNameForTimeDimension.c_str(), 10000);
+
   if (store != NULL && store->getSize() > 0) {
-    for (size_t c = 0; c < store->getColumnModel()->getSize(); c++) {
-      CDBDebug("%d %s", c, store->getColumnModel()->getName(c));
-    }
     for (size_t j = 0; j < store->getSize(); j++) {
       CT::string fileNamestr = store->getRecord(j)->get(0)->c_str();
-      CDBDebug("fileName from DB: %s", fileNamestr.c_str());
+      _removeFileFromTables(fileNamestr, dataSource);
+      int status = remove(fileNamestr.c_str());
+      if (status != 0) {
+        CDBError("Unable to remove file from FS: [%s]", fileNamestr.c_str());
+      }
     }
   }
   delete store;

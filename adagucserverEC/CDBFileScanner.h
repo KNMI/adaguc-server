@@ -90,6 +90,9 @@ public:
    *
    */
   static int cleanFiles(CDataSource *dataSource, int scanFlags);
+
+private:
+  static void _removeFileFromTables(CT::string fileNamestr, CDataSource *dataSource);
 };
 
 #endif

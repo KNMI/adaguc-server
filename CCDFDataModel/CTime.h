@@ -220,6 +220,11 @@ public:
   static void *currentInitializedVar;
 
   static time_t getEpochTimeFromDateString(CT::string dateString);
+
+  Date subtractPeriodFromDate(CTime::Date date, CT::string period);
+
+  static Date periodToDate(CT::string period);
+  static CT::string dateToPeriod(CTime::Date date);
 };
 
 #endif
