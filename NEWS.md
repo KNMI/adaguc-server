@@ -1,3 +1,7 @@
+**Version 2.7.11 2022-11-14**
+
+- Rolling archives are now possible by setting the retentionperiod in the FilePath setting of the layer configuration
+
 **Version 2.7.10 2022-11-11**
 
 - Web Coverage Service can determine width and height or resx or resy parameters on its own
