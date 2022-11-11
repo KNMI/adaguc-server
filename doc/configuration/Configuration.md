@@ -122,7 +122,7 @@ Configuration
     -   Variable `<value>` - Mandatory, The variable from the file
         to use in the Layer. Multiple can be used for e.g. wind vector
         plotting.
-    -   [FilePath](FilePath.md) (filter, maxquerylimit, ncml) `<value>` -
+    -   [FilePath](FilePath.md) (filter, maxquerylimit, ncml, retentionperiod, retentiontype) `<value>` -
         Mandatory, The directory to scan files with additional filter,
         or the file to use, or the OpenDAP url to use.
     -   [Dimension](Dimension.md)
