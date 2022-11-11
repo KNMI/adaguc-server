@@ -261,7 +261,7 @@ int testCTimeEpochTimeConversion() {
 
 int testHDF5Reader() {
   CDBDebug("testHDF5Reader");
-  CT::string testFile = "./CCDFDataModel/testdata/variable_string.h5";
+  CT::string testFile = "./testdata/variable_string.h5";
   CDFReader *cdfReader = findReaderByFileName(testFile.c_str());
   CDFObject *cdfObject = new CDFObject();
   cdfObject->attachCDFReader(cdfReader);
