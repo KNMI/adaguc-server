@@ -132,12 +132,136 @@ int testCTimeEpochTimeConversion() {
   } catch (int e) {
     CDBDebug("[OK] CTime::getEpochTimeFromDateString(\"SHOULDTHROWEXCEPTION\") throws an exception");
   }
+
+  try {
+    CTime::Date date = CTime::periodToDate("P3Y4M5DT6H7M13S");
+    if (!CTime::dateToPeriod(date).equals("P3Y4M5DT6H7M13S")) {
+      CDBError("[FAILED] CTime::dateToPeriod(date).equals(\"P3Y4M5DT6H7M13S\") is %s", CTime::dateToPeriod(date).c_str());
+      failed = true;
+    } else {
+      CDBDebug("[OK] CTime::dateToPeriod(date).equals(\"P3Y4M5DT6H7M13S\") is %s", CTime::dateToPeriod(date).c_str());
+    }
+  } catch (int e) {
+    CDBError("[FAILED] CTime::dateToPeriod(date).equals(\"P3Y4M5DT6H7M13S\") throws an exception");
+    failed = true;
+  }
+
+  try {
+    CTime::Date date = CTime::periodToDate("P1234Y");
+    if (!CTime::dateToPeriod(date).equals("P1234Y")) {
+      CDBError("[FAILED] CTime::dateToPeriod(date).equals(\"P1234Y\") is %s", CTime::dateToPeriod(date).c_str());
+      failed = true;
+    } else {
+      CDBDebug("[OK] CTime::dateToPeriod(date).equals(\"P1234Y\") is %s", CTime::dateToPeriod(date).c_str());
+    }
+  } catch (int e) {
+    CDBError("[FAILED] CTime::dateToPeriod(date).equals(\"P1234Y\") throws an exception");
+    failed = true;
+  }
+
+  try {
+    CTime::Date date = CTime::periodToDate("P15M");
+    if (!CTime::dateToPeriod(date).equals("P15M")) {
+      CDBError("[FAILED] CTime::dateToPeriod(date).equals(\"P15M\") is %s", CTime::dateToPeriod(date).c_str());
+      failed = true;
+    } else {
+      CDBDebug("[OK] CTime::dateToPeriod(date).equals(\"P15M\") is %s", CTime::dateToPeriod(date).c_str());
+    }
+  } catch (int e) {
+    CDBError("[FAILED] CTime::dateToPeriod(date).equals(\"P15M\") throws an exception");
+    failed = true;
+  }
+
+  try {
+    CTime::Date date = CTime::periodToDate("P7D");
+    if (!CTime::dateToPeriod(date).equals("P7D")) {
+      CDBError("[FAILED] CTime::dateToPeriod(date).equals(\"P7D\") is %s", CTime::dateToPeriod(date).c_str());
+      failed = true;
+    } else {
+      CDBDebug("[OK] CTime::dateToPeriod(date).equals(\"P7D\") is %s", CTime::dateToPeriod(date).c_str());
+    }
+  } catch (int e) {
+    CDBError("[FAILED] CTime::dateToPeriod(date).equals(\"P7D\") throws an exception");
+    failed = true;
+  }
+
+  try {
+    CTime::Date date = CTime::periodToDate("PT12H");
+    if (!CTime::dateToPeriod(date).equals("PT12H")) {
+      CDBError("[FAILED] CTime::dateToPeriod(date).equals(\"PT12H\") is %s", CTime::dateToPeriod(date).c_str());
+      failed = true;
+    } else {
+      CDBDebug("[OK] CTime::dateToPeriod(date).equals(\"PT12H\") is %s", CTime::dateToPeriod(date).c_str());
+    }
+  } catch (int e) {
+    CDBError("[FAILED] CTime::dateToPeriod(date).equals(\"PT12H\") throws an exception");
+    failed = true;
+  }
+
+  try {
+    CTime::Date date = CTime::periodToDate("PT1M");
+    if (!CTime::dateToPeriod(date).equals("PT1M")) {
+      CDBError("[FAILED] CTime::dateToPeriod(date).equals(\"PT1M\") is %s", CTime::dateToPeriod(date).c_str());
+      failed = true;
+    } else {
+      CDBDebug("[OK] CTime::dateToPeriod(date).equals(\"PT1M\") is %s", CTime::dateToPeriod(date).c_str());
+    }
+  } catch (int e) {
+    CDBError("[FAILED] CTime::dateToPeriod(date).equals(\"PT1M\") throws an exception");
+    failed = true;
+  }
+
+  try {
+    CTime::Date date = CTime::periodToDate("PT30S");
+    if (!CTime::dateToPeriod(date).equals("PT30S")) {
+      CDBError("[FAILED] CTime::dateToPeriod(date).equals(\"PT30S\") is %s", CTime::dateToPeriod(date).c_str());
+      failed = true;
+    } else {
+      CDBDebug("[OK] CTime::dateToPeriod(date).equals(\"PT30S\") is %s", CTime::dateToPeriod(date).c_str());
+    }
+  } catch (int e) {
+    CDBError("[FAILED] CTime::dateToPeriod(date).equals(\"PT30S\") throws an exception");
+    failed = true;
+  }
+
+  CT::string f[] = {// 0                                                                                 //
+                    "2019-09-22T13:23:18Z", "PT1H", "2019-09-22T12:23:18Z",
+                    // 1                                                                                 //
+                    "2019-09-22T13:23:18Z", "PT60M", "2019-09-22T12:23:18Z",
+                    // 2                                                                                 //
+                    "2019-09-22T13:23:18Z", "P1M", "2019-08-22T13:23:18Z",
+                    // 3                                                                                 //
+                    "2019-09-22T13:23:18Z", "P19Y08M21DT13H23M18S", "2000-01-01T00:00:00Z"};
+
+  for (int j = 0; j < 4; j++) {
+    CT::string in = f[j * 3 + 0];
+    CT::string op = f[j * 3 + 1];
+    CT::string out = f[j * 3 + 2];
+    try {
+      CTime ctime;
+      ctime.init("seconds since 1970", "none");
+      CTime::Date date = ctime.ISOStringToDate(in.c_str());
+      if (!ctime.dateToISOString(ctime.subtractPeriodFromDate(date, op.c_str())).equals(out.c_str())) {
+        CDBError("[FAILED]!ctime.dateToISOString(ctime.subtractPeriodFromDate(date, \"%s\")) returns %s and not %s", op.c_str(),
+                 ctime.dateToISOString(ctime.subtractPeriodFromDate(date, op.c_str())).c_str(), out.c_str());
+        failed = true;
+        break;
+      } else {
+        CDBDebug("[OK] CTime::subtractPeriodFromDate(\"%s\",(\"%s\" ) == (\"%s\")", in.c_str(), op.c_str(), out.c_str());
+      }
+    } catch (int e) {
+      failed = true;
+      CDBError("[FAILED]  CTime::subtractPeriodFromDate(\"%s\",(\"%s\" ) throws an exception", in.c_str(), op.c_str());
+      break;
+    }
+  }
+
   return failed;
 }
 
 int testHDF5Reader() {
   CDBDebug("testHDF5Reader");
-  CT::string testFile = "./testdata/variable_string.h5";
+  CT::string testFile = "./CCDFDataModel/testdata/variable_string.h5";
   CDFReader *cdfReader = findReaderByFileName(testFile.c_str());
   CDFObject *cdfObject = new CDFObject();
   cdfObject->attachCDFReader(cdfReader);
@@ -186,5 +310,8 @@ int main(int, char **) {
   CTime::cleanInstances();
   delete testVarA;
   delete testVarB;
+  if (failed) {
+    CDBError("[FAILED] Some tests failed.");
+  }
   return failed;
 }

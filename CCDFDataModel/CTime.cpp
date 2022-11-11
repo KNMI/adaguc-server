@@ -27,6 +27,7 @@
 #include <ctime>
 #include <sys/time.h>
 #include <math.h>
+#include <algorithm>
 
 const char *CTime::className = "CTime";
 void *CTime::currentInitializedVar = NULL;
@@ -1049,4 +1050,61 @@ time_t CTime::getEpochTimeFromDateString(CT::string dateString) {
 
   CDBDebug("Warning: CTime::getEpochTimeFromDateString: Unable to convert [%s] to epoch time.", dateString.c_str());
   throw(CTIME_CONVERSION_ERROR);
+}
+
+CTime::Date CTime::subtractPeriodFromDate(CTime::Date date, CT::string period) {
+  CTime::Date datePeriod = periodToDate(period);
+  Date newDate;
+  newDate.year = date.year - datePeriod.year;
+  newDate.month = date.month - datePeriod.month;
+  newDate.day = date.day - datePeriod.day;
+  newDate.hour = date.hour - datePeriod.hour;
+  newDate.minute = date.minute - datePeriod.minute;
+  newDate.second = date.second - datePeriod.second;
+  double offset = this->dateToOffset(newDate);
+
+  return this->offsetToDate(offset);
+}
+
+CT::string CTime::dateToPeriod(CTime::Date date) {
+  CT::string period = "P";
+  if (date.year > 0) period.printconcat("%dY", date.year);
+  if (date.month > 0) period.printconcat("%dM", date.month);
+  if (date.day > 0) period.printconcat("%dD", date.day);
+  if (date.hour > 0 || date.minute > 0 || date.second > 0) {
+    period.concat("T");
+  }
+  if (date.hour > 0) period.printconcat("%dH", date.hour);
+  if (date.minute > 0) period.printconcat("%dM", date.minute);
+  if (date.second > 0) period.printconcat("%0.fS", date.second);
+  return period;
+}
+
+CTime::Date CTime::periodToDate(CT::string period) {
+  CT::StackList<CT::string> p = period.splitToStack("T");
+  if (p.size() < 1 || !p[0].startsWith("P")) {
+    CDBError("Invalid time period %s", period.c_str());
+    throw(__LINE__);
+  }
+  CT::string ymdPeriodPart = p[0].substring(1, -1);
+  CT::string hmsPeriodPart = p.size() > 1 ? p[1] : "";
+
+  int indexY = ymdPeriodPart.indexOf("Y");
+  int indexMo = ymdPeriodPart.indexOf("M");
+  int indexD = ymdPeriodPart.indexOf("D");
+
+  int indexH = hmsPeriodPart.indexOf("H");
+  int indexMi = hmsPeriodPart.indexOf("M");
+  int indexS = hmsPeriodPart.indexOf("S");
+
+  Date dateOperator;
+  dateOperator.year = ymdPeriodPart.substring(0, indexY == -1 ? 0 : indexY).toInt();
+  dateOperator.month = ymdPeriodPart.substring(std::max({0, indexY + 1}), indexMo == -1 ? 0 : indexMo).toInt();
+  dateOperator.day = ymdPeriodPart.substring(std::max({0, indexY + 1, indexMo + 1}), indexD == -1 ? 0 : indexD).toInt();
+
+  dateOperator.hour = hmsPeriodPart.substring(0, indexH == -1 ? 0 : indexH).toInt();
+  dateOperator.minute = hmsPeriodPart.substring(std::max({0, indexH + 1}), indexMi == -1 ? 0 : indexMi).toInt();
+  dateOperator.second = hmsPeriodPart.substring(std::max({0, indexH + 1, indexMi + 1}), indexS == -1 ? 0 : indexS).toInt();
+
+  return dateOperator;
 }
