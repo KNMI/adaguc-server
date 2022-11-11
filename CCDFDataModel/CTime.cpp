@@ -1016,7 +1016,7 @@ double CTime::quantizeTimeToISO8601(double offsetOrig, CT::string period, CT::st
 
 CT::string CTime::quantizeTimeToISO8601(CT::string value, CT::string period, CT::string method) {
   CT::string newDateString = value;
-  CDBDebug("quantizetime with for value %s with period %s and method %s", value.c_str(), period.c_str(), method.c_str());
+  // CDBDebug("quantizetime with for value %s with period %s and method %s", value.c_str(), period.c_str(), method.c_str());
   try {
     CTime time;
     time.init("seconds since 0000-01-01T00:00:00Z", NULL);
@@ -1026,7 +1026,7 @@ CT::string CTime::quantizeTimeToISO8601(CT::string value, CT::string period, CT:
   } catch (int e) {
     CDBError("Exception in quantizetime with message %s", CTime::getErrorMessage(e).c_str());
   }
-  CDBDebug("New date is %s", newDateString.c_str());
+  // CDBDebug("New date is %s", newDateString.c_str());
   return newDateString;
   // return "2016-01-13T09:50:00Z";
 }

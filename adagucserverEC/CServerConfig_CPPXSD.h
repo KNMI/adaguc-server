@@ -974,7 +974,7 @@ public:
   public:
     class Cattr {
     public:
-      CT::string filter, gfi_openall, ncml, maxquerylimit;
+      CT::string filter, gfi_openall, ncml, maxquerylimit, retentionperiod, retentiontype;
     } attr;
     void addElement(CXMLObjectInterface *baseClass, int rc, const char *name, const char *value) {
       CXMLSerializerInterface *base = (CXMLSerializerInterface *)baseClass;
@@ -996,6 +996,12 @@ public:
         return;
       } else if (equals("ncml", 4, name)) {
         attr.ncml.copy(value);
+        return;
+      } else if (equals("retentionperiod", 15, name)) {
+        attr.retentionperiod.copy(value);
+        return;
+      } else if (equals("retentiontype", 13, name)) {
+        attr.retentiontype.copy(value);
         return;
       }
     }

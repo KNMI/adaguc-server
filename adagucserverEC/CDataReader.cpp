@@ -195,7 +195,7 @@ int CDataReader::getCRS(CDataSource *dataSource) {
   }
 
   // If undefined, set standard lat lon projection
-  CREPORT_WARN_NODOC(CT::string("No correct projection found, using by default the geographic coordinate system (latitude and longitude)."), CReportMessage::Categories::GENERAL);
+  // CREPORT_WARN_NODOC(CT::string("No correct projection found, using by default the geographic coordinate system (latitude and longitude)."), CReportMessage::Categories::GENERAL);
   copyLatLonCRS(dataSource);
   return 0;
 }

@@ -23,7 +23,13 @@ void CDBFileScanner::_removeFileFromTables(CT::string fileNamestr, CDataSource *
 }
 
 int CDBFileScanner::cleanFiles(CDataSource *dataSource, int) {
-  CDBDebug("Cleanfiles");
+  if (!dataSource->cfgLayer->FilePath[0]->attr.retentiontype.equals("filetimedate") || dataSource->cfgLayer->FilePath[0]->attr.retentionperiod.empty()) {
+    return 0;
+  }
+  CT::string retentiontype = dataSource->cfgLayer->FilePath[0]->attr.retentiontype;
+  CT::string retentionperiod = dataSource->cfgLayer->FilePath[0]->attr.retentionperiod;
+  CDBDebug("Start Cleanfiles with retentiontype [%s] and retentionperiod [%s]", retentiontype.c_str(), retentionperiod.c_str());
+
   CDBAdapter *dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
   if (dataSource->cfgLayer->Dimension.size() == 0) {
     if (CAutoConfigure::autoConfigureDimensions(dataSource) != 0) {
@@ -57,7 +63,7 @@ int CDBFileScanner::cleanFiles(CDataSource *dataSource, int) {
 
   CDBDebug("currentDate\t\t\t%s", ctime.dateToISOString(date).c_str());
 
-  CT::string dateMinusRetentionPeriod = ctime.dateToISOString(ctime.subtractPeriodFromDate(date, "PT20M"));
+  CT::string dateMinusRetentionPeriod = ctime.dateToISOString(ctime.subtractPeriodFromDate(date, retentionperiod.c_str()));
 
   CDBDebug("dateMinusRetentionPeriod\t%s", dateMinusRetentionPeriod.c_str());
 

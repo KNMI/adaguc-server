@@ -92,7 +92,7 @@ public:
   int autoUpdateAndScanDimensionTables(CDataSource *dataSource);
   CDBStore::Store *getMin(const char *name, const char *table);
   CDBStore::Store *getMax(const char *name, const char *table);
-  CDBStore::Store *getBetween(const char *, const char *, const char *, const char *, int) { return NULL; }
+  CDBStore::Store *getBetween(const char *, const char *, const char *, const char *, int);
   CT::string getDimValueForFileName(const char *filename, const char *table);
   CDBStore::Store *getUniqueValuesOrderedByValue(const char *name, int limit, bool orderDescOrAsc, const char *table);
   CDBStore::Store *getUniqueValuesOrderedByIndex(const char *name, int limit, bool orderDescOrAsc, const char *table);
