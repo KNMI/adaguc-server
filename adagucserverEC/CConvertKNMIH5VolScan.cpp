@@ -256,7 +256,6 @@ int CConvertKNMIH5VolScan::getCalibrationParameters(CT::string formula, float &f
 }
 
 int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int mode) {
-  CDBDebug("convertKNMIH5VolScanData(%d)", mode);
   CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
   if (checkIfIsKNMIH5VolScan(cdfObject, dataSource->srvParams) != 0) return 1;
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
@@ -423,7 +422,6 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     }
     CImageWarper radarProj;
     radarProj.initreproj(scanProj4.c_str(), dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
-
 
     double x, y;
     float rang, azim;

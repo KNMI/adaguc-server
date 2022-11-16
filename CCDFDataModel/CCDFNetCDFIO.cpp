@@ -1202,14 +1202,17 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
           }
 
           if (netcdfMode >= 4) {
-            // CDBDebug("shuffle ,deflate, deflate_level %d,%d,%d",shuffle ,deflate, deflate_level);
-            status = nc_def_var_deflate(root_id, nc_var_id, shuffle, deflate, deflate_level);
-            if (status != NC_NOERR) {
-              ncError(__LINE__, className, "nc_def_var_deflate: ", status);
-              return 1;
-            }
-            if (listNCCommands) {
-              NCCommands.printconcat("nc_def_var_deflate(root_id,var_id_%d,shuffle ,deflate, deflate_level);\n", j);
+            /* Only set deflate settings on non-scalar variables */
+            if (variable->dimensionlinks.size() > 0) {
+              // CDBDebug("Var %s, shuffle ,deflate, deflate_level %d,%d,%d", variable->name.c_str(), deflate, deflate_level);
+              status = nc_def_var_deflate(root_id, nc_var_id, shuffle, deflate, deflate_level);
+              if (status != NC_NOERR) {
+                ncError(__LINE__, className, "nc_def_var_deflate: ", status);
+                return 1;
+              }
+              if (listNCCommands) {
+                NCCommands.printconcat("nc_def_var_deflate(root_id,var_id_%d,shuffle ,deflate, deflate_level);\n", j);
+              }
             }
           }
 
