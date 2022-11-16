@@ -2153,18 +2153,37 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
     projectionString = projDefAttr->getDataAsString();
   }
 
-  double offsetX = -1;
-  double offsetY = -1;
+  double offsetX = 0;
+  double offsetY = 0;
 
   CDF::Variable *whatVar = cdfObject->getVariableNE("dataset1.what");
   if (whatVar == NULL) {
     return 2;
   }
 
-  CDF::Attribute *offsetAttr = whatVar->getAttributeNE("offset");
-  if (offsetAttr != NULL) {
-    offsetX = offsetAttr->getDataAt<double>(0);
-    offsetY = offsetAttr->getDataAt<double>(1);
+  /* Handle time based on date and time from the HDF5 ODIM file */
+  CDF::Attribute *startDateAttr = whatVar->getAttributeNE("startdate");
+  CDF::Attribute *startTimeAttr = whatVar->getAttributeNE("starttime");
+  CT::string timeString;
+  if (startDateAttr != NULL && startTimeAttr != NULL) {
+    /* Compose the timestring based on date and time from the HDF5 ODIM file */
+    timeString.print("%sT%sZ", startDateAttr->getDataAsString().c_str(), startTimeAttr->getDataAsString().c_str());
+    CDBDebug("timeString %s", timeString.c_str());
+
+    /* Add the time dimension and timevariable */
+    CDF::Dimension *timeDim = new CDF::Dimension("time", 1);
+    cdfObject->addDimension(timeDim);
+    CDF::Dimension *varDims[] = {timeDim};
+    CDF::Variable *timeVar = new CDF::Variable(timeDim->getName().c_str(), CDF_DOUBLE, varDims, 1, true);
+    cdfObject->addVariable(timeVar);
+    timeVar->allocateData(1);
+    timeVar->setAttributeText("standard_name", "time");
+    timeVar->setAttributeText("units", "seconds since 1970-01-1");
+
+    /* Set the offset time in the time variable */
+    CTime *ctime = CTime::GetCTimeInstance(timeVar);
+    ((double *)timeVar->data)[0] = ctime->dateToOffset(ctime->freeDateStringToDate(timeString.c_str()));
+    CDBDebug("Time offset = %f", ((double *)timeVar->data)[0]);
   }
 
   CDBDebug("\nxScale: %f\nyScale: %f\nxSize: %d\nySize: %d\nprojdef: %s\noffsetX: %f\noffsetY: %f", xScale, yScale, xSize, ySize, projectionString.c_str(), offsetX, offsetY);
@@ -2182,6 +2201,11 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
       crs->setAttributeText("proj4_params", projectionString.c_str());
       CDF::Dimension *dimX = dataVar->dimensionlinks[1];
       CDF::Dimension *dimY = dataVar->dimensionlinks[0];
+
+      if (cdfObject->getDimensionNE("time") != NULL) {
+        dataVar->dimensionlinks.insert(dataVar->dimensionlinks.begin(), cdfObject->getDimensionNE("time"));
+      }
+
       CDF::Variable *varX = cdfObject->getVariableNE(dimX->name.c_str());
       CDF::Variable *varY = cdfObject->getVariableNE(dimY->name.c_str());
       varX->setName("x");
@@ -2196,12 +2220,12 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
       }
 
       for (size_t j = 0; j < dimX->length; j = j + 1) {
-        double x = (offsetX + double(j)) * xScale + xScale / 2;
+        double x = (offsetX + double(j)) * xScale + xScale / 2 - xScale * (double(dimX->length / 2));
         ((double *)varX->data)[j] = x;
       }
 
       for (size_t j = 0; j < dimY->length; j = j + 1) {
-        double y = (offsetY + float(j)) * yScale + yScale / 2;
+        double y = (offsetY + float(j)) * yScale + yScale / 2 - yScale * (double(dimY->length / 2));
         ((double *)varY->data)[j] = y;
       }
     } else {
