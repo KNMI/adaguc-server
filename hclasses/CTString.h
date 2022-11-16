@@ -323,6 +323,11 @@ namespace CT {
     CT::string toLowerCase();
 
     /**
+     * Return uppercase string
+     */
+    CT::string toUpperCase();
+
+    /**
      * Decodes URL to string
      */
     void decodeURLSelf();
