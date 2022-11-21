@@ -52,8 +52,6 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
   /* Start collecting projection attributes */
   double xScale;
   double yScale;
-  unsigned int xSize;
-  unsigned int ySize;
   CT::string projectionString;
 
   CDF::Attribute *xScaleAttr = whereVar->getAttributeNE("xscale");
@@ -63,14 +61,6 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
   CDF::Attribute *yScaleAttr = whereVar->getAttributeNE("yscale");
   if (yScaleAttr != NULL) {
     yScale = yScaleAttr->getDataAt<double>(0);
-  }
-  CDF::Attribute *xSizeAttr = whereVar->getAttributeNE("xsize");
-  if (xSizeAttr != NULL) {
-    xSize = xSizeAttr->getDataAt<unsigned int>(0);
-  }
-  CDF::Attribute *ySizeAttr = whereVar->getAttributeNE("ysize");
-  if (ySizeAttr != NULL) {
-    ySize = ySizeAttr->getDataAt<unsigned int>(0);
   }
   CDF::Attribute *projDefAttr = whereVar->getAttributeNE("projdef");
   if (projDefAttr != NULL) {
@@ -177,7 +167,7 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
       }
 
       for (size_t j = 0; j < dimY->length; j = j + 1) {
-        double y = (offsetY + float(j)) * yScale + yScale / 2 - yScale * (double(dimY->length / 2));
+        double y = (offsetY + float(j)) * (-yScale) + yScale / 2 + yScale * (double(dimY->length / 2));
         ((double *)varY->data)[j] = y;
       }
     } else {

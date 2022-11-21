@@ -24,7 +24,7 @@
  ******************************************************************************/
 
 #include "CCDFHDF5IO.h"
-#include "CCDFHDF5IO_ODIM.cpp"
+
 const char *CDFHDF5Reader::className = "CDFHDF5Reader";
 
 int CDFHDF5Reader::CustomForecastReader::readData(CDF::Variable *thisVar, size_t *start, size_t *count, ptrdiff_t *stride) {

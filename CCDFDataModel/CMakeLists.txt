@@ -27,6 +27,7 @@ add_library(CCDFDataModel
     CCDFNetCDFIO.cpp
     CTime.cpp
     CCDFHDF5IO.cpp
+    CCDFHDF5IO_ODIM.cpp
     CProj4ToCF.cpp
     CCDFVariable.cpp
     CCDFObject.cpp
