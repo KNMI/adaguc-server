@@ -45,9 +45,14 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
   /* Check for the what variable */
   CDF::Variable *whatVar = cdfObject->getVariableNE("dataset1.what");
   if (whatVar == NULL) {
-    CDBDebug("Looks like ODIM, but unable to find dataset1.what variable");
-    return 2;
+    whatVar = cdfObject->getVariableNE("what");
+    if (whatVar == NULL) {
+      CDBDebug("Looks like ODIM, but unable to find dataset1.what variable");
+      return 2;
+    }
   }
+
+  cdfObject->setAttributeText("ADAGUC_ODIM_CONVERTER", "true");
 
   /* Start collecting projection attributes */
   double xScale;
@@ -101,7 +106,9 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
 
   /* Handle time based on date and time from the HDF5 ODIM file */
   CDF::Attribute *startDateAttr = whatVar->getAttributeNE("startdate");
+  if (startDateAttr == NULL) startDateAttr = whatVar->getAttributeNE("date");
   CDF::Attribute *startTimeAttr = whatVar->getAttributeNE("starttime");
+  if (startTimeAttr == NULL) startTimeAttr = whatVar->getAttributeNE("time");
   if (startDateAttr != NULL && startTimeAttr != NULL) {
     /* Compose the timestring based on date and time from the HDF5 ODIM file */
     CT::string timeString;
@@ -159,16 +166,17 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
       }
       if (CDF::allocateData(varY->currentType, &varY->data, dimY->length)) {
         throw(__LINE__);
-      }
-
+      };
+      offsetX = -double(dimX->length) / 2;
       for (size_t j = 0; j < dimX->length; j = j + 1) {
-        double x = (offsetX + double(j)) * xScale + xScale / 2 - xScale * (double(dimX->length / 2));
+        double x = (offsetX + double(j)) * (xScale);
         ((double *)varX->data)[j] = x;
       }
 
+      offsetY = -double(dimY->length) / 2;
       for (size_t j = 0; j < dimY->length; j = j + 1) {
-        double y = (offsetY + float(j)) * (-yScale) + yScale / 2 + yScale * (double(dimY->length / 2));
-        ((double *)varY->data)[j] = y;
+        double y = (offsetY + double(j)) * (yScale);
+        ((double *)varY->data)[(dimY->length - 1) - j] = y;
       }
     } else {
       CDBWarning("Data variable has only [%d] dimensions", dataVar->dimensionlinks.size());
