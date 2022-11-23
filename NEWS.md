@@ -1,3 +1,7 @@
+**Version 2.7.11 2022-11-23**
+
+- Support for HDF5 ODIM files containing one dataset with lat/lon and time.
+
 **Version 2.7.10 2022-11-11**
 
 - Web Coverage Service can determine width and height or resx or resy parameters on its own
