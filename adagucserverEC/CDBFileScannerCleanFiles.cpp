@@ -26,6 +26,10 @@ int CDBFileScanner::cleanFiles(CDataSource *dataSource, int) {
   if (!dataSource->cfgLayer->FilePath[0]->attr.retentiontype.equals("filetimedate") || dataSource->cfgLayer->FilePath[0]->attr.retentionperiod.empty()) {
     return 0;
   }
+  if (!(dataSource->cfg->Settings.size() == 1 && dataSource->cfg->Settings[0]->attr.enablecleanupsystem.equals("true"))) {
+    CDBWarning("Layer wants to autocleanup, but attribute enablecleanupsystem in Settings is not set to true");
+    return 1;
+  }
   CT::string retentiontype = dataSource->cfgLayer->FilePath[0]->attr.retentiontype;
   CT::string retentionperiod = dataSource->cfgLayer->FilePath[0]->attr.retentionperiod;
   CDBDebug("Start Cleanfiles with retentiontype [%s] and retentionperiod [%s]", retentiontype.c_str(), retentionperiod.c_str());
