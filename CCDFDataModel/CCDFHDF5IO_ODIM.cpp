@@ -54,6 +54,10 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
 
   cdfObject->setAttributeText("ADAGUC_ODIM_CONVERTER", "true");
 
+  std::map<std::string, std::string> quantityToUnits = {
+      {"TH", "dBZ"}, {"TV", "dBZ"}, {"DBZH", "dBZ"}, {"DBZV", "dBZ"}, {"ZDR", "dB"}, {"UZDR", "dB"}, {"RHOHV", "-"}, {"URHOHV", "-"},
+  };
+
   /* Start collecting projection attributes */
   double xScale;
   double yScale;
@@ -87,7 +91,13 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
   /* Add units*/
   CDF::Attribute *quantityAttr = whatVar->getAttributeNE("quantity");
   if (quantityAttr != NULL) {
-    dataVar->setAttributeText("units", quantityAttr->getDataAsString().c_str());
+    /* Try to find the units based on the quantity, otherwise forward the quantity. */
+    auto result = quantityToUnits.find(quantityAttr->getDataAsString().toUpperCase().c_str());
+    if (result == quantityToUnits.end()) {
+      dataVar->setAttributeText("units", quantityAttr->getDataAsString().c_str());
+    } else {
+      dataVar->setAttributeText("units", result->second.c_str());
+    }
   }
 
   /* Add nodata*/
