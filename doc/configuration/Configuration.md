@@ -27,6 +27,7 @@ Configuration
 -   [Include](Include.md) - (location) - Include additional configuration
     files to the service
 -   [Logging](Logging.md) - (debug) - Configure the type of logging
+-   [Settings](Settings.md) - (enablecleanupsystem) - Configure global settings of the server / Dataset
 
 <!-- -->
 

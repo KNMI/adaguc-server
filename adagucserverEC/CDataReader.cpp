@@ -231,7 +231,7 @@ bool CDataReader::copyCRSFromConfigToDataSource(CDataSource *dataSource) const {
 }
 
 void CDataReader::copyLatLonCRS(CDataSource *dataSource) const {
-  CREPORT_INFO_NODOC(CT::string("Using the geographic coordinate system (latitude and longitude)"), CReportMessage::Categories::GENERAL);
+  // CREPORT_INFO_NODOC(CT::string("Using the geographic coordinate system (latitude and longitude)"), CReportMessage::Categories::GENERAL);
   dataSource->nativeProj4.copy("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
   dataSource->nativeEPSG.copy("EPSG:4326");
 }

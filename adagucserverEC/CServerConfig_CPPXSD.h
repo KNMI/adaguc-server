@@ -1190,6 +1190,20 @@ public:
       }
     }
   };
+
+  class XMLE_Settings : public CXMLObjectInterface {
+  public:
+    class Cattr {
+    public:
+      CT::string enablecleanupsystem;
+    } attr;
+    void addAttribute(const char *attrname, const char *attrvalue) {
+      if (equals("enablecleanupsystem", 19, attrname)) {
+        attr.enablecleanupsystem.copy(attrvalue);
+        return;
+      }
+    }
+  };
   class XMLE_OnlineResource : public CXMLObjectInterface {
   public:
     class Cattr {
@@ -1820,6 +1834,7 @@ public:
     std::vector<XMLE_Include *> Include;
     std::vector<XMLE_Logging *> Logging;
     std::vector<XMLE_Symbol *> Symbol;
+    std::vector<XMLE_Settings *> Settings;
 
     ~XMLE_Configuration() {
       XMLE_DELOBJ(Legend);
@@ -1839,6 +1854,7 @@ public:
       XMLE_DELOBJ(Include);
       XMLE_DELOBJ(Logging);
       XMLE_DELOBJ(Symbol);
+      XMLE_DELOBJ(Settings);
     }
     void addElement(CXMLObjectInterface *baseClass, int rc, const char *name, const char *value) {
       CXMLSerializerInterface *base = (CXMLSerializerInterface *)baseClass;
@@ -1881,6 +1897,8 @@ public:
           XMLE_ADDOBJ(Logging);
         } else if (equals("Symbol", 6, name)) {
           XMLE_ADDOBJ(Symbol);
+        } else if (equals("Settings", 8, name)) {
+          XMLE_ADDOBJ(Settings);
         }
       }
       if (pt2Class != NULL) pt2Class->addElement(baseClass, rc - pt2Class->level, name, value);

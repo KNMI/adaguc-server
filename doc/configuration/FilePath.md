@@ -9,7 +9,7 @@ Back to [Configuration](./Configuration.md)
     the single request
 -   ncml - The ncmlfile to apply, see [NCML support](../info/ncml.md) for
     details
--   retentionperiod - Optional setting in [iso period](../info/ISO8601.md) format to schedule an automatic cleanup. This feature is used to create rolling archives of streaming datasets.
+-   retentionperiod - Optional setting in [iso period](../info/ISO8601.md) format to schedule an automatic cleanup. This feature is used to create rolling archives of streaming datasets. Note that `<Settings enablecleanupsystem="true"/>` ( See [Settings](./Settings.md) ) also needs to be set.
 -   retentiontype - Optional setting, and currently only `filetimedate` is allowed.
 -   <value> - Directory, file or OpenDAP url
 
