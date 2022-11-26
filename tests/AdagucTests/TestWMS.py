@@ -92,7 +92,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertEqual(data.getvalue(), AdagucTestTools(
         ).readfromfile(self.expectedoutputsspath + filename))
-    '''
+    
     def test_WMSGetMap_geos(self):
         AdagucTestTools().cleanTempDir()
         filename = "test_WMSGetMap_testgeosnc.png"
@@ -104,7 +104,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertEqual(data.getvalue(), AdagucTestTools(
         ).readfromfile(self.expectedoutputsspath + filename))
-    '''
+    
 
     def test_WMSGetLegendGraphic_testdatanc(self):
         AdagucTestTools().cleanTempDir()
