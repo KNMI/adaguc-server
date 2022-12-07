@@ -25,145 +25,163 @@
 
 #include "CCDFHDF5IO.h"
 
+double getAttrValueDouble(CDF::Variable *var, const char *attrName, double initialValue) {
+  CDF::Attribute *attr = var->getAttributeNE(attrName);
+  if (attr != NULL) {
+    return attr->getDataAsString().toDouble();
+  }
+  return initialValue;
+}
+
 /*  https://www.eumetnet.eu/wp-content/uploads/2021/07/ODIM_H5_v2.4.pdf */
 int CDFHDF5Reader::convertODIMHDF5toCF() {
-
   CDF::Variable *whereVar = cdfObject->getVariableNE("where");
   if (whereVar == NULL) {
     return 2;
   }
+  std::map<std::string, std::string> quantityToUnits = {{"TH", "dBZ"}, {"TV", "dBZ"}, {"DBZH", "dBZ"}, {"DBZV", "dBZ"}, {"ZDR", "dB"}, {"UZDR", "dB"}, {"RHOHV", "-"}, {"URHOHV", "-"}, {"ACRR", "mm"}};
+  // CDBDebug("convertODIMHDF5toCF");
 
-  CDBDebug("convertODIMHDF5toCF");
+  for (size_t datasetCounter = 0; datasetCounter < 100; datasetCounter += 1) {
+    CT::string datasetId = "dataset";
+    datasetId.printconcat("%d", datasetCounter + 1);
+    CT::string datasetIdDataId = datasetId + ".data1.data";
+    CT::string wharVarName = datasetId + ".what";
 
-  /* Check for the data variable */
-  CDF::Variable *dataVar = cdfObject->getVariableNE("dataset1.data1.data");
-  if (dataVar == NULL) {
-    CDBDebug("Looks like ODIM, but unable to find dataset1.data1.data variable");
-    return 2;
-  }
-
-  /* Check for the what variable */
-  CDF::Variable *whatVar = cdfObject->getVariableNE("dataset1.what");
-  if (whatVar == NULL) {
-    whatVar = cdfObject->getVariableNE("what");
-    if (whatVar == NULL) {
-      CDBDebug("Looks like ODIM, but unable to find dataset1.what variable");
+    /* Check for the data variable */
+    CDF::Variable *dataVar = cdfObject->getVariableNE(datasetIdDataId.c_str());
+    if (dataVar == NULL) {
+      if (datasetCounter > 0) {
+        return 0;
+      }
+      CDBDebug("Looks like ODIM, but unable to find %s variable", datasetIdDataId.c_str());
       return 2;
     }
-  }
 
-  cdfObject->setAttributeText("ADAGUC_ODIM_CONVERTER", "true");
+    /* Check for the what variable */
 
-  std::map<std::string, std::string> quantityToUnits = {
-      {"TH", "dBZ"}, {"TV", "dBZ"}, {"DBZH", "dBZ"}, {"DBZV", "dBZ"}, {"ZDR", "dB"}, {"UZDR", "dB"}, {"RHOHV", "-"}, {"URHOHV", "-"},
-  };
-
-  /* Start collecting projection attributes */
-  double xScale;
-  double yScale;
-  CT::string projectionString;
-
-  CDF::Attribute *xScaleAttr = whereVar->getAttributeNE("xscale");
-  if (xScaleAttr != NULL) {
-    xScale = xScaleAttr->getDataAt<double>(0);
-  }
-  CDF::Attribute *yScaleAttr = whereVar->getAttributeNE("yscale");
-  if (yScaleAttr != NULL) {
-    yScale = yScaleAttr->getDataAt<double>(0);
-  }
-  CDF::Attribute *projDefAttr = whereVar->getAttributeNE("projdef");
-  if (projDefAttr != NULL) {
-    projectionString = projDefAttr->getDataAsString();
-  }
-
-  /* Set scale and offset */
-  CDF::Attribute *offsetAttr = whatVar->getAttributeNE("offset");
-  CDF::Attribute *gainAttr = whatVar->getAttributeNE("gain");
-  if (offsetAttr != NULL && gainAttr != NULL) {
-    float dataOffset = 0;
-    float dataGain = 1;
-    dataOffset = offsetAttr->getDataAt<float>(0);
-    dataGain = gainAttr->getDataAt<float>(0);
-    dataVar->setAttribute("scale_factor", CDF_FLOAT, &dataGain, 1);
-    dataVar->setAttribute("add_offset", CDF_FLOAT, &dataOffset, 1);
-  }
-
-  /* Add units*/
-  CDF::Attribute *quantityAttr = whatVar->getAttributeNE("quantity");
-  if (quantityAttr != NULL) {
-    /* Try to find the units based on the quantity, otherwise forward the quantity. */
-    auto result = quantityToUnits.find(quantityAttr->getDataAsString().toUpperCase().c_str());
-    if (result == quantityToUnits.end()) {
-      dataVar->setAttributeText("units", quantityAttr->getDataAsString().c_str());
-    } else {
-      dataVar->setAttributeText("units", result->second.c_str());
-    }
-  }
-
-  /* Add nodata*/
-  CDF::Attribute *noDataAttr = whatVar->getAttributeNE("nodata");
-  if (noDataAttr != NULL) {
-    float fillValue = noDataAttr->getDataAt<float>(0);
-    dataVar->setAttribute("_FillValue", CDF_FLOAT, &fillValue, 1);
-  }
-
-  /* Add standard_name*/
-  CDF::Attribute *productAttr = whatVar->getAttributeNE("product");
-  if (productAttr != NULL) {
-    dataVar->setAttributeText("standard_name", productAttr->getDataAsString().c_str());
-    dataVar->setAttributeText("long_name", productAttr->getDataAsString().c_str());
-  }
-
-  /* Handle time based on date and time from the HDF5 ODIM file */
-  CDF::Attribute *startDateAttr = whatVar->getAttributeNE("startdate");
-  if (startDateAttr == NULL) startDateAttr = whatVar->getAttributeNE("date");
-  CDF::Attribute *startTimeAttr = whatVar->getAttributeNE("starttime");
-  if (startTimeAttr == NULL) startTimeAttr = whatVar->getAttributeNE("time");
-  if (startDateAttr != NULL && startTimeAttr != NULL) {
-    /* Compose the timestring based on date and time from the HDF5 ODIM file */
-    CT::string timeString;
-    timeString.print("%sT%sZ", startDateAttr->getDataAsString().c_str(), startTimeAttr->getDataAsString().c_str());
-    CDBDebug("timeString %s", timeString.c_str());
-
-    /* Add the time dimension and timevariable */
-    CDF::Dimension *timeDim = new CDF::Dimension("time", 1);
-    cdfObject->addDimension(timeDim);
-    CDF::Dimension *varDims[] = {timeDim};
-    CDF::Variable *timeVar = new CDF::Variable(timeDim->getName().c_str(), CDF_DOUBLE, varDims, 1, true);
-    cdfObject->addVariable(timeVar);
-    timeVar->allocateData(1);
-    timeVar->setAttributeText("standard_name", "time");
-    timeVar->setAttributeText("units", "seconds since 1970-01-1");
-
-    /* Set the offset time in the time variable */
-    CTime *ctime = CTime::GetCTimeInstance(timeVar);
-    ((double *)timeVar->data)[0] = ctime->dateToOffset(ctime->freeDateStringToDate(timeString.c_str()));
-    CDBDebug("Time offset = %f", ((double *)timeVar->data)[0]);
-  }
-
-  /* Handle dataVar and draw it*/
-  if (dataVar != NULL) {
-    if (dataVar->dimensionlinks.size() >= 2) {
-      double offsetX = 0;
-      double offsetY = 0;
-
-      dataVar->setAttributeText("grid_mapping", "crs");
-      CDF::Variable *crs = NULL;
-      crs = cdfObject->getVariableNE("crs");
-      if (crs == NULL) {
-        crs = new CDF::Variable("crs", CDF_CHAR, NULL, 0, false);
-        cdfObject->addVariable(crs);
+    CDF::Variable *whatVar = cdfObject->getVariableNE(wharVarName.c_str());
+    if (whatVar == NULL) {
+      whatVar = cdfObject->getVariableNE("what");
+      if (whatVar == NULL) {
+        CDBDebug("Looks like ODIM, but unable to find %s variable", wharVarName.c_str());
+        return 2;
       }
-      crs->setAttributeText("proj4_params", projectionString.c_str());
+    }
+
+    cdfObject->setAttributeText("ADAGUC_ODIM_CONVERTER", "true");
+
+    /* Start collecting projection attributes */
+    double xScale;
+    double yScale;
+    CT::string projectionString;
+
+    CDF::Attribute *xScaleAttr = whereVar->getAttributeNE("xscale");
+    if (xScaleAttr != NULL) {
+      xScale = xScaleAttr->getDataAt<double>(0);
+    }
+    CDF::Attribute *yScaleAttr = whereVar->getAttributeNE("yscale");
+    if (yScaleAttr != NULL) {
+      yScale = yScaleAttr->getDataAt<double>(0);
+    }
+    CDF::Attribute *projDefAttr = whereVar->getAttributeNE("projdef");
+    if (projDefAttr != NULL) {
+      projectionString = projDefAttr->getDataAsString();
+    }
+
+    double cornerX[4];
+    double cornerY[4];
+
+    cornerX[0] = getAttrValueDouble(whereVar, "LL_lon", -1);
+    cornerY[0] = getAttrValueDouble(whereVar, "LL_lat", -1);
+    cornerX[1] = getAttrValueDouble(whereVar, "LR_lon", -1);
+    cornerY[1] = getAttrValueDouble(whereVar, "LR_lat", -1);
+    cornerX[2] = getAttrValueDouble(whereVar, "UL_lon", -1);
+    cornerY[2] = getAttrValueDouble(whereVar, "UL_lat", -1);
+    cornerX[3] = getAttrValueDouble(whereVar, "UR_lon", -1);
+    cornerY[3] = getAttrValueDouble(whereVar, "UR_lat", -1);
+
+    projCtx proj4Context = pj_ctx_alloc();
+    projPJ sourcepj = pj_init_plus_ctx(proj4Context, projectionString.c_str());
+    projPJ latlonpj = pj_init_plus_ctx(proj4Context, "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
+    for (size_t j = 0; j < 4; j += 1) {
+      cornerX[j] *= DEG_TO_RAD;
+      cornerY[j] *= DEG_TO_RAD;
+    }
+    pj_transform(latlonpj, sourcepj, 4, 0, cornerX, cornerY, NULL);
+
+    pj_free(sourcepj);
+    pj_free(latlonpj);
+    pj_ctx_free(proj4Context);
+
+    /* Set scale and offset */
+    CDF::Attribute *offsetAttr = whatVar->getAttributeNE("offset");
+    CDF::Attribute *gainAttr = whatVar->getAttributeNE("gain");
+    if (offsetAttr != NULL && gainAttr != NULL) {
+      float dataOffset = 0;
+      float dataGain = 1;
+      dataOffset = offsetAttr->getDataAt<float>(0);
+      dataGain = gainAttr->getDataAt<float>(0);
+      dataVar->setAttribute("scale_factor", CDF_FLOAT, &dataGain, 1);
+      dataVar->setAttribute("add_offset", CDF_FLOAT, &dataOffset, 1);
+    }
+
+    /* Add units*/
+    CDF::Attribute *quantityAttr = whatVar->getAttributeNE("quantity");
+    if (quantityAttr != NULL) {
+      /* Try to find the units based on the quantity, otherwise forward the quantity. */
+      auto result = quantityToUnits.find(quantityAttr->getDataAsString().toUpperCase().c_str());
+      if (result == quantityToUnits.end()) {
+        dataVar->setAttributeText("units", quantityAttr->getDataAsString().c_str());
+      } else {
+        dataVar->setAttributeText("units", result->second.c_str());
+      }
+    }
+
+    /* Add nodata*/
+    CDF::Attribute *noDataAttr = whatVar->getAttributeNE("nodata");
+    if (noDataAttr != NULL) {
+      float fillValue = noDataAttr->getDataAt<float>(0);
+      dataVar->setAttribute("_FillValue", CDF_FLOAT, &fillValue, 1);
+    }
+
+    /* Add standard_name*/
+    CDF::Attribute *productAttr = whatVar->getAttributeNE("product");
+    if (productAttr != NULL) {
+      dataVar->setAttributeText("standard_name", productAttr->getDataAsString().c_str());
+      dataVar->setAttributeText("long_name", productAttr->getDataAsString().c_str());
+    }
+
+    if (datasetCounter == 0) {
+      /* Handle time based on date and time from the HDF5 ODIM file */
+      CDF::Attribute *startDateAttr = whatVar->getAttributeNE("startdate");
+      if (startDateAttr == NULL) startDateAttr = whatVar->getAttributeNE("date");
+      CDF::Attribute *startTimeAttr = whatVar->getAttributeNE("starttime");
+      if (startTimeAttr == NULL) startTimeAttr = whatVar->getAttributeNE("time");
+      if (startDateAttr != NULL && startTimeAttr != NULL) {
+        /* Compose the timestring based on date and time from the HDF5 ODIM file */
+        CT::string timeString;
+        timeString.print("%sT%sZ", startDateAttr->getDataAsString().c_str(), startTimeAttr->getDataAsString().c_str());
+        // CDBDebug("timeString %s", timeString.c_str());
+
+        /* Add the time dimension and timevariable */
+        CDF::Dimension *timeDim = new CDF::Dimension("time", 1);
+        cdfObject->addDimension(timeDim);
+        CDF::Dimension *varDims[] = {timeDim};
+        CDF::Variable *timeVar = new CDF::Variable(timeDim->getName().c_str(), CDF_DOUBLE, varDims, 1, true);
+        cdfObject->addVariable(timeVar);
+        timeVar->allocateData(1);
+        timeVar->setAttributeText("standard_name", "time");
+        timeVar->setAttributeText("units", "seconds since 1970-01-01");
+
+        /* Set the offset time in the time variable */
+        CTime *ctime = CTime::GetCTimeInstance(timeVar);
+        ((double *)timeVar->data)[0] = ctime->dateToOffset(ctime->freeDateStringToDate(timeString.c_str()));
+        // CDBDebug("Time offset = %f", ((double *)timeVar->data)[0]);
+      }
 
       CDF::Dimension *dimX = dataVar->dimensionlinks[1];
       CDF::Dimension *dimY = dataVar->dimensionlinks[0];
-
-      if (dataVar->dimensionlinks.size() == 2) {
-        if (cdfObject->getDimensionNE("time") != NULL) {
-          dataVar->dimensionlinks.insert(dataVar->dimensionlinks.begin(), cdfObject->getDimensionNE("time"));
-        }
-      }
 
       CDF::Variable *varX = cdfObject->getVariableNE(dimX->name.c_str());
       CDF::Variable *varY = cdfObject->getVariableNE(dimY->name.c_str());
@@ -177,19 +195,47 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
       if (CDF::allocateData(varY->currentType, &varY->data, dimY->length)) {
         throw(__LINE__);
       };
-      offsetX = -double(dimX->length) / 2;
+
+      // CDBDebug("Metadata xScale %f, Calculated yScale: %f", xScale, yScale);
+      double offsetX = cornerX[0]; //-double(dimX->length) / 2;
+      xScale = (((cornerX[1] - cornerX[0]) + (cornerX[3] - cornerX[2])) / 2) / double(dimX->length);
+
+      // CDBDebug("Calculated xScale %f, Calculated yScale: %f", xScale, yScale);
       for (size_t j = 0; j < dimX->length; j = j + 1) {
-        double x = (offsetX + double(j)) * (xScale);
-        ((double *)varX->data)[j] = x;
+        double x = (double(j)) * (xScale);
+        ((double *)varX->data)[j] = x + offsetX + xScale / 2;
       }
 
-      offsetY = -double(dimY->length) / 2;
+      double offsetY = cornerY[0]; //-double(dimY->length) / 2;
+      yScale = (((cornerY[2] - cornerY[0]) + (cornerY[3] - cornerY[1])) / 2) / double(dimY->length);
       for (size_t j = 0; j < dimY->length; j = j + 1) {
-        double y = (offsetY + double(j)) * (yScale);
-        ((double *)varY->data)[(dimY->length - 1) - j] = y;
+        double y = (+double(j)) * (yScale);
+        ((double *)varY->data)[(dimY->length - 1) - j] = y + offsetY + yScale / 2;
       }
-    } else {
-      CDBWarning("Data variable has only [%d] dimensions", dataVar->dimensionlinks.size());
+    }
+
+    /* Handle dataVar and draw it*/
+    if (dataVar != NULL) {
+      if (dataVar->dimensionlinks.size() >= 2) {
+
+        dataVar->setAttributeText("grid_mapping", "crs");
+        CDF::Variable *crs = NULL;
+        crs = cdfObject->getVariableNE("crs");
+        if (crs == NULL) {
+          crs = new CDF::Variable("crs", CDF_CHAR, NULL, 0, false);
+          cdfObject->addVariable(crs);
+        }
+        crs->setAttributeText("proj4_params", projectionString.c_str());
+
+        if (dataVar->dimensionlinks.size() == 2) {
+          if (cdfObject->getDimensionNE("time") != NULL) {
+            dataVar->dimensionlinks.insert(dataVar->dimensionlinks.begin(), cdfObject->getDimensionNE("time"));
+          }
+        }
+
+      } else {
+        CDBWarning("Data variable has only [%d] dimensions", dataVar->dimensionlinks.size());
+      }
     }
   }
   return 0;
