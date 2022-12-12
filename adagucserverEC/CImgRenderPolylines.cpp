@@ -152,11 +152,12 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
     if (fileName == name.c_str()) {
       // CDBDebug("Plotting %d features ONLY for %s", featureStore[fileName].size(), fileName.c_str());
       std::vector<RectangleText> rects;
+      size_t featureStoreSize = featureStore[fileName].size();
       int featureRandomStart = 0; // For specifying a random polygon index to draw first
       if (randomStart) {
-        featureRandomStart = rand() % featureStore[fileName].size(); // Random start for first feature to draw
+        featureRandomStart = rand() % featureStoreSize; // Random start for first feature to draw
       }
-      size_t featureStoreSize = featureStore[fileName].size();
+
       for (size_t featureStepper = 0; featureStepper < featureStoreSize; featureStepper++) {
         size_t featureIndex = (featureStepper + featureRandomStart) % featureStoreSize;
         Feature *feature = featureStore[fileName][featureIndex];
@@ -165,9 +166,10 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
         CColor drawPointLineColor2(featureStyle.color.c_str());
         float drawPointLineWidth = featureStyle.width;
         // if(featureIndex!=0)break;
-        std::vector<Polygon> polygons = feature->getPolygons();
+        std::vector<Polygon> *polygons = feature->getPolygons();
         CT::string id = feature->getId();
-        for (std::vector<Polygon>::iterator itpoly = polygons.begin(); itpoly != polygons.end(); ++itpoly) {
+        //                  CDBDebug("feature[%s] %d of %d with %d polygons", id.c_str(), featureIndex,           featureStore[fileName].size(), polygons.size());
+        for (std::vector<Polygon>::iterator itpoly = polygons->begin(); itpoly != polygons->end(); ++itpoly) {
           float *polyX = itpoly->getLons();
           float *polyY = itpoly->getLats();
           int numPoints = itpoly->getSize();
@@ -209,8 +211,11 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
               dlat = int((centroidY - offsetY) / cellSizeY);
               std::map<std::string, FeatureProperty *>::iterator it;
               CT::string featureId;
-              it = feature->getFp().find(featureStyle.propertyName.c_str());
-              if (it != feature->getFp().end()) {
+              Feature *f2 = feature;
+              std::map<std::string, FeatureProperty *> *fp = f2->getFp();
+              std::map<std::string, FeatureProperty *> *featurePropertyMap = feature->getFp();
+              it = feature->getFp()->find(std::string(featureStyle.propertyName.c_str()));
+              if (it != feature->getFp()->end()) {
                 featureId.print(it->second->toString(featureStyle.propertyFormat));
               } else {
                 featureId = feature->getId();
@@ -262,10 +267,10 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
           }
         }
 
-        std::vector<Polyline> polylines = feature->getPolylines();
+        std::vector<Polyline> *polylines = feature->getPolylines();
         CT::string idl = feature->getId();
         //  CDBDebug("feature[%s] %d of %d with %d polylines", idl.c_str(), featureIndex, featureStore[fileName].size(), polylines.size());
-        for (std::vector<Polyline>::iterator itpoly = polylines.begin(); itpoly != polylines.end(); ++itpoly) {
+        for (std::vector<Polyline>::iterator itpoly = polylines->begin(); itpoly != polylines->end(); ++itpoly) {
           float *polyX = itpoly->getLons();
           float *polyY = itpoly->getLats();
           int numPoints = itpoly->getSize();
