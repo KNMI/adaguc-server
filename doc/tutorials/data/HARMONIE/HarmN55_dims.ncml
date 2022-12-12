@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<netcdf xmlns="http://www.unidata.ucar.edu/namespaces/netcdf/ncml-2.2">
+  <variable name="air_temperature__at_2m" shape="rlon rlat time" type="float"/>
+  <variable name="x_wind__at_10m" shape="rlon rlat time" type="float"/>
+  <variable name="y_wind__at_10m" shape="rlon rlat time" type="float"/>
+  <variable name="relative_humidity__at_2m" shape="rlon rlat time" type="float"/>
+  <variable name="icing_index" shape="rlon rlat time" type="float"/>
+  <variable name="vertical_integral_of_cloud_liquid" shape="rlon rlat time" type="float"/>
+</netcdf>

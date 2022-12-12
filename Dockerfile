@@ -4,7 +4,7 @@ USER root
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="2.7.6"
+LABEL version="2.7.10"
 
 ######### First stage (build) ############
 
@@ -78,7 +78,6 @@ RUN yum update -y && \
     netcdf \
     libwebp \
     python36-numpy \
-    python36-netcdf4 \
     python36-six \
     python36-requests \
     python36-pillow \
@@ -86,7 +85,8 @@ RUN yum update -y && \
     yum clean all && \
     rm -rf /var/cache/yum
 
-RUN pip3 install flask flask-cors flask-caching gunicorn pytest marshmallow owslib pyproj==2.6.1 apispec apispec-webframeworks marshmallow-oneofschema defusedxml
+RUN pip3 install --no-cache-dir --upgrade pip \
+   && pip3 install --no-cache-dir install flask flask-cors flask-caching gunicorn pytest marshmallow owslib pyproj==2.6.1 apispec apispec-webframeworks marshmallow-oneofschema defusedxml netcdf4
 
 WORKDIR /adaguc/adaguc-server-master
 

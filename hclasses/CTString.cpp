@@ -589,6 +589,13 @@ namespace CT {
     return t;
   }
 
+  CT::string string::toUpperCase() {
+    CT::string t;
+    t.copy(c_str(), privatelength);
+    t.toUpperCaseSelf();
+    return t;
+  }
+
   bool string::empty() {
     if (privatelength == 0) {
       return true;

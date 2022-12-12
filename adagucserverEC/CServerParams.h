@@ -78,7 +78,6 @@ private:
 public:
   double dfResX, dfResY;
   int dFound_BBOX;
-  int dWCS_RES_OR_WH;
   double dX, dY;
   CT::string *WMSLayers;
   CT::string Format;

@@ -1,3 +1,21 @@
+**Version 2.7.10 2022-11-11**
+
+- Web Coverage Service can determine width and height or resx or resy parameters on its own
+
+**Version 2.7.9 2022-09-22**
+
+- GeoJSON reader now supports multiple dataobjects, useful for styling earthquake files with age and magnitude variables.
+
+**Version 2.7.8 2022-09-21**
+
+- Updated documentation
+
+**Version 2.7.7 2022-09-19**
+
+- Added OGCAPI support
+- Added RADAR volume scan support
+- GeoJSON reader now supports featuretype Point.
+
 **Version 2.7.6 2022-07-12**
 
 - Fix: Legend with a logaritmic scale do work again.
