@@ -5,7 +5,7 @@
   
   <!-- Layers -->
   <Layer type="database">
-    <FilePath filter="^.*\.csv$" retentionperiod="P7D" retentiontype="filetimedate">{ADAGUC_TMP}/cleandb/</FilePath>
+    <FilePath filter="^.*\.csv$" retentionperiod="P7D" retentiontype="datatime">{ADAGUC_TMP}/cleandb/</FilePath>
     <Name>test</Name>
     <Title>test</Title>
     <Variable>test</Variable>
@@ -13,4 +13,3 @@
     <Dimension name="time">time</Dimension>
   </Layer>
 </Configuration>
-

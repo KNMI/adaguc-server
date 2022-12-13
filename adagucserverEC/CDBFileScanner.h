@@ -42,6 +42,8 @@
 #define CDBFILESCANNER_CLEANFILES 64
 #define CDBFILESCANNER_DONOTTILE 128
 
+#define CDBFILESCANNER_RETENTIONTYPE_DATATIME "datatime"
+
 /**
  * Class which scans files and updates the database.
  */
