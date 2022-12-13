@@ -5,6 +5,7 @@
 #include "adagucserver.h"
 #include "CNetCDFDataWriter.h"
 #include <set>
+std::set<std::string> CDBFileScanner::filesDeletedFromFS;
 
 void CDBFileScanner::_removeFileFromTables(CT::string fileNamestr, CDataSource *dataSource) {
   CDBAdapter *dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
@@ -75,11 +76,16 @@ int CDBFileScanner::cleanFiles(CDataSource *dataSource, int) {
 
   if (store != NULL && store->getSize() > 0) {
     for (size_t j = 0; j < store->getSize(); j++) {
-      CT::string fileNamestr = store->getRecord(j)->get(0)->c_str();
-      _removeFileFromTables(fileNamestr, dataSource);
-      int status = remove(fileNamestr.c_str());
-      if (status != 0) {
-        CDBError("Unable to remove file from FS: [%s]", fileNamestr.c_str());
+      std::string fileNamestr = store->getRecord(j)->get(0)->c_str();
+      _removeFileFromTables(fileNamestr.c_str(), dataSource);
+      /* Don't delete files which where already deleted */
+      if (filesDeletedFromFS.find(fileNamestr) == filesDeletedFromFS.end()) {
+        int status = remove(fileNamestr.c_str());
+        if (status != 0) {
+          CDBError("Unable to remove file from FS: [%s]", fileNamestr.c_str());
+        } else {
+          filesDeletedFromFS.insert(fileNamestr);
+        }
       }
     }
   }
