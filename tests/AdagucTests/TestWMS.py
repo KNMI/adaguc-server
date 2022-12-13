@@ -93,7 +93,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(data.getvalue(), AdagucTestTools(
         ).readfromfile(self.expectedoutputsspath + filename))
     
-    # This test will fail with proj 4.8.0. In  and proj 4.9.3 this test succeeds. 4.8.0 provides wrong coordinates.
+    # # This test will fail with proj 4.8.0. In  and proj 4.9.3 this test succeeds. 4.8.0 provides wrong coordinates.
     # def test_WMSGetMap_geos(self):
     #     AdagucTestTools().cleanTempDir()
     #     filename = "test_WMSGetMap_testgeosnc.png"
