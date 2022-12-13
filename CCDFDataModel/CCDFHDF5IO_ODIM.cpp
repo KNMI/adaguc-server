@@ -33,6 +33,58 @@ double getAttrValueDouble(CDF::Variable *var, const char *attrName, double initi
   return initialValue;
 }
 
+CDF::Variable *CDFHDF5Reader::getWhatVar(CDFObject *cdfObject, int datasetCounter, int dataCounter) {
+  CDF::Variable *whatVar = NULL;
+  CT::string whatVarName;
+  /* First try "dataset%d.data%d.what" */
+  whatVarName.print("dataset%d.data%d.what", datasetCounter, dataCounter);
+  whatVar = cdfObject->getVariableNE(whatVarName.c_str());
+  if (whatVar == NULL) {
+    /* Second try "dataset%d.what" */
+    whatVarName.print("dataset%d.what", datasetCounter);
+    whatVar = cdfObject->getVariableNE(whatVarName.c_str());
+    if (whatVar == NULL) {
+      /* Finally try "what" */
+      whatVarName.print("what");
+      whatVar = cdfObject->getVariableNE(whatVarName.c_str());
+    }
+  }
+  return whatVar;
+}
+
+CDF::Attribute *CDFHDF5Reader::getNestedAttribute(CDFObject *cdfObject, int datasetCounter, int dataCounter, const char *varName, const char *attrName) {
+  CDF::Variable *nestedVar = NULL;
+  CDF::Attribute *attr = NULL;
+  CT::string nestedVarName;
+
+  /* First try "dataset%d.data%d.what" */
+  nestedVarName.print("dataset%d.data%d.%s", datasetCounter, dataCounter, varName);
+  nestedVar = cdfObject->getVariableNE(nestedVarName.c_str());
+  attr = (nestedVar != NULL) ? nestedVar->getAttributeNE(attrName) : NULL;
+
+  if (attr == NULL) {
+    CDBDebug("Did not find %s / %s", nestedVarName.c_str(), attrName);
+    /* Second try "dataset%d.what" */
+    nestedVarName.print("dataset%d.%s", datasetCounter, varName);
+    nestedVar = cdfObject->getVariableNE(nestedVarName.c_str());
+    attr = (nestedVar != NULL) ? nestedVar->getAttributeNE(attrName) : NULL;
+    if (attr == NULL) {
+      CDBDebug("Did not find %s / %s", nestedVarName.c_str(), attrName);
+      /* Finally try "what" */
+      nestedVarName.print("%s", varName);
+      nestedVar = cdfObject->getVariableNE(nestedVarName.c_str());
+      attr = (nestedVar != NULL) ? nestedVar->getAttributeNE(attrName) : NULL;
+    }
+  }
+
+  if (attr == NULL) {
+    CDBDebug("Did not find %s / %s", nestedVarName.c_str(), attrName);
+  } else {
+    CDBDebug("Found %s / %s", nestedVarName.c_str(), attrName);
+  }
+  return attr;
+}
+
 /*  https://www.eumetnet.eu/wp-content/uploads/2021/07/ODIM_H5_v2.4.pdf */
 int CDFHDF5Reader::convertODIMHDF5toCF() {
   CDF::Variable *whereVar = cdfObject->getVariableNE("where");
@@ -42,16 +94,16 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
   std::map<std::string, std::string> quantityToUnits = {{"TH", "dBZ"}, {"TV", "dBZ"}, {"DBZH", "dBZ"}, {"DBZV", "dBZ"}, {"ZDR", "dB"}, {"UZDR", "dB"}, {"RHOHV", "-"}, {"URHOHV", "-"}, {"ACRR", "mm"}};
   // CDBDebug("convertODIMHDF5toCF");
 
-  for (size_t datasetCounter = 0; datasetCounter < 100; datasetCounter += 1) {
+  for (size_t datasetCounter = 1; datasetCounter < 100; datasetCounter += 1) {
+    int dataCounter = 1;
     CT::string datasetId = "dataset";
-    datasetId.printconcat("%d", datasetCounter + 1);
+    datasetId.printconcat("%d", datasetCounter);
     CT::string datasetIdDataId = datasetId + ".data1.data";
-    CT::string wharVarName = datasetId + ".what";
 
     /* Check for the data variable */
     CDF::Variable *dataVar = cdfObject->getVariableNE(datasetIdDataId.c_str());
     if (dataVar == NULL) {
-      if (datasetCounter > 0) {
+      if (datasetCounter > 1) {
         return 0;
       }
       CDBDebug("Looks like ODIM, but unable to find %s variable", datasetIdDataId.c_str());
@@ -59,14 +111,10 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
     }
 
     /* Check for the what variable */
-
-    CDF::Variable *whatVar = cdfObject->getVariableNE(wharVarName.c_str());
-    if (whatVar == NULL) {
-      whatVar = cdfObject->getVariableNE("what");
-      if (whatVar == NULL) {
-        CDBDebug("Looks like ODIM, but unable to find %s variable", wharVarName.c_str());
-        return 2;
-      }
+    CDF::Variable *whatVarCheck = getWhatVar(cdfObject, datasetCounter, dataCounter);
+    if (whatVarCheck == NULL) {
+      CDBDebug("Looks like ODIM, but unable to find what variable for dataset %d", datasetCounter);
+      return 2;
     }
 
     cdfObject->setAttributeText("ADAGUC_ODIM_CONVERTER", "true");
@@ -115,8 +163,8 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
     pj_ctx_free(proj4Context);
 
     /* Set scale and offset */
-    CDF::Attribute *offsetAttr = whatVar->getAttributeNE("offset");
-    CDF::Attribute *gainAttr = whatVar->getAttributeNE("gain");
+    CDF::Attribute *offsetAttr = getNestedAttribute(cdfObject, datasetCounter, dataCounter, "what", "offset");
+    CDF::Attribute *gainAttr = getNestedAttribute(cdfObject, datasetCounter, dataCounter, "what", "gain");
     if (offsetAttr != NULL && gainAttr != NULL) {
       float dataOffset = 0;
       float dataGain = 1;
@@ -127,7 +175,7 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
     }
 
     /* Add units*/
-    CDF::Attribute *quantityAttr = whatVar->getAttributeNE("quantity");
+    CDF::Attribute *quantityAttr = getNestedAttribute(cdfObject, datasetCounter, dataCounter, "what", "quantity");
     if (quantityAttr != NULL) {
       /* Try to find the units based on the quantity, otherwise forward the quantity. */
       auto result = quantityToUnits.find(quantityAttr->getDataAsString().toUpperCase().c_str());
@@ -139,25 +187,25 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
     }
 
     /* Add nodata*/
-    CDF::Attribute *noDataAttr = whatVar->getAttributeNE("nodata");
+    CDF::Attribute *noDataAttr = getNestedAttribute(cdfObject, datasetCounter, dataCounter, "what", "nodata");
     if (noDataAttr != NULL) {
       float fillValue = noDataAttr->getDataAt<float>(0);
       dataVar->setAttribute("_FillValue", CDF_FLOAT, &fillValue, 1);
     }
 
     /* Add standard_name*/
-    CDF::Attribute *productAttr = whatVar->getAttributeNE("product");
+    CDF::Attribute *productAttr = getNestedAttribute(cdfObject, datasetCounter, dataCounter, "what", "product");
     if (productAttr != NULL) {
       dataVar->setAttributeText("standard_name", productAttr->getDataAsString().c_str());
       dataVar->setAttributeText("long_name", productAttr->getDataAsString().c_str());
     }
 
-    if (datasetCounter == 0) {
+    if (datasetCounter == 1) {
       /* Handle time based on date and time from the HDF5 ODIM file */
-      CDF::Attribute *startDateAttr = whatVar->getAttributeNE("startdate");
-      if (startDateAttr == NULL) startDateAttr = whatVar->getAttributeNE("date");
-      CDF::Attribute *startTimeAttr = whatVar->getAttributeNE("starttime");
-      if (startTimeAttr == NULL) startTimeAttr = whatVar->getAttributeNE("time");
+      CDF::Attribute *startDateAttr = getNestedAttribute(cdfObject, datasetCounter, dataCounter, "what", "startdate");
+      if (startDateAttr == NULL) startDateAttr = getNestedAttribute(cdfObject, datasetCounter, dataCounter, "what", "date");
+      CDF::Attribute *startTimeAttr = getNestedAttribute(cdfObject, datasetCounter, dataCounter, "what", "starttime");
+      if (startTimeAttr == NULL) startTimeAttr = getNestedAttribute(cdfObject, datasetCounter, dataCounter, "what", "time");
       if (startDateAttr != NULL && startTimeAttr != NULL) {
         /* Compose the timestring based on date and time from the HDF5 ODIM file */
         CT::string timeString;
