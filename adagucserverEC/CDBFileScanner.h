@@ -26,6 +26,7 @@
 #ifndef CDBFileScanner_H
 #define CDBFileScanner_H
 
+#include <set>
 #include "CDebugger.h"
 #include "CStopWatch.h"
 #include "CDataReader.h"
@@ -53,6 +54,8 @@ private:
   static int createDBUpdateTables(CDataSource *dataSource, int &removeNonExistingFiles, std::vector<std::string> *fileList, bool recreateTable);
 
   static std::vector<CT::string> tableNamesDone;
+
+  static std::set<std::string> filesDeletedFromFS;
 
   static void handleDirHasNewFile(std::string) {}
 
