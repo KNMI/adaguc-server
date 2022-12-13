@@ -23,7 +23,7 @@ void CDBFileScanner::_removeFileFromTables(CT::string fileNamestr, CDataSource *
 }
 
 int CDBFileScanner::cleanFiles(CDataSource *dataSource, int) {
-  if (!dataSource->cfgLayer->FilePath[0]->attr.retentiontype.equals("filetimedate") || dataSource->cfgLayer->FilePath[0]->attr.retentionperiod.empty()) {
+  if (!dataSource->cfgLayer->FilePath[0]->attr.retentiontype.equals(CDBFILESCANNER_RETENTIONTYPE_DATATIME) || dataSource->cfgLayer->FilePath[0]->attr.retentionperiod.empty()) {
     return 0;
   }
   if (!(dataSource->cfg->Settings.size() == 1 && dataSource->cfg->Settings[0]->attr.enablecleanupsystem.equals("true"))) {
