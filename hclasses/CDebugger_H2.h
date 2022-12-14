@@ -36,6 +36,9 @@
 #include <iostream>
 #include <vector>
 
+// Used to silence -Wunused-parameter warnings
+template<class T> void ignoreParameter( const T& ) { }
+
 extern unsigned int logMessageNumber;
 extern unsigned long logProcessIdentifier;
 
@@ -84,6 +87,8 @@ template <class myFreeType> void _allocateArray(myFreeType *object[], size_t ele
   *object = new (file, line) myFreeType[elements];
 #else
   *object = new myFreeType[elements];
+  ignoreParameter(file);
+  ignoreParameter(line);
 #endif
 }
 
