@@ -9,13 +9,16 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
-# TODO: Make this architecture dependent
-#set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -Wall -Wextra")
-##set(CMAKE_CXX_FLAGS_DEBUG "-g")
-#set(CMAKE_CXX_FLAGS_RELEASE "-O3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse")
-set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -Wall -Wextra")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
-
+MESSAGE(STATUS "Processor: ${CMAKE_HOST_SYSTEM_PROCESSOR}")
+IF (CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "arm64")
+  set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -Wall -Wextra")
+  set(CMAKE_CXX_FLAGS_RELEASE "-O3 -mcpu=native")
+ELSE()
+  set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -Wall -Wextra")
+  set(CMAKE_CXX_FLAGS_RELEASE "-O3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse")
+ENDIF()
+MESSAGE(STATUS "CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
+MESSAGE(STATUS "CMAKE_CXX_FLAGS_RELEASE: ${CMAKE_CXX_FLAGS_RELEASE}")
 
 # The additional / is important to remove the last character from the path.
 # Note that it does not matter if the OS uses / or \, because we are only
