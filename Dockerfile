@@ -31,6 +31,7 @@ RUN apt-get -q -y update \
     libproj-dev \ 
     libgdal-dev \ 
     libsqlite3-dev \ 
+    time \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -61,6 +62,7 @@ RUN apt-get -q -y update \
     libcurl4-openssl-dev \ 
     libgd-dev \
     libproj-dev \
+    time \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -82,7 +84,7 @@ RUN pip3 install --no-cache-dir --upgrade pip \
 
 # Run adaguc-server functional and regression tests
 
-RUN  bash runtests.sh
+RUN bash runtests.sh
 
     # Set same uid as vivid
 RUN useradd -m adaguc -u 1000 && \
@@ -91,7 +93,9 @@ RUN useradd -m adaguc -u 1000 && \
     mkdir -p /data/adaguc-datasets && \
     mkdir -p /data/adaguc-data && \
     mkdir -p /adaguc/userworkspace && \
-    mkdir -p /adaguc/adaguc-datasets-internal
+    mkdir -p /adaguc/adaguc-datasets-internal && \
+    chown adaguc: /tmp -R
+
 
 # Configure
 COPY ./Docker/adaguc-server-config-python-postgres.xml /adaguc/adaguc-server-config.xml
