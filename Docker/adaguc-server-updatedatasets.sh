@@ -1,6 +1,10 @@
 #!/bin/bash
 
-# This script requires ADAGUC_CONFIG to be set. In case of running locally with adaguc-services, this is probably 
+# nullglob is a Bash shell option which modifies [[glob]] expansion such
+# that patterns that match no files expand to zero arguments, rather than to themselves.
+shopt -s nullglob
+
+# This script requires ADAGUC_CONFIG to be set. In case of running locally with adaguc-services, this is probably
 # `export ADAGUC_CONFIG=./data/config/adaguc.vm.xml`
 
 # TODO: https://github.com/KNMI/adaguc-server/issues/71
