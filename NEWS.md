@@ -1,6 +1,9 @@
 **Version 2.8.0 2022-10-06**
-
 - Using debian as base docker image
+
+**Version 2.7.10 2022-11-11**
+
+- Web Coverage Service can determine width and height or resx or resy parameters on its own
 
 **Version 2.7.9 2022-09-22**
 
