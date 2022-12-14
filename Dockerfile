@@ -5,7 +5,11 @@ USER root
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
+<<<<<<< HEAD
 LABEL version="2.8.0"
+=======
+LABEL version="2.7.10"
+>>>>>>> 39d3671146e0fcb358d03fbe3d4a08a61c12baae
 
 ######### First stage (build) ############
 
@@ -48,6 +52,7 @@ FROM python:3.8-slim-bullseye
 
 USER root
 
+<<<<<<< HEAD
 
 # Try to update image packages
 RUN apt-get -q -y update \
@@ -65,6 +70,35 @@ RUN apt-get -q -y update \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+=======
+# production packages, same as stage one
+RUN yum update -y && \
+    yum install -y epel-release deltarpm && \
+    yum install -y cairo \
+    curl \
+    gd \
+    gdal \
+    hdf5 \
+    libxml2 \
+    proj \
+    python3 \
+    python3-lxml \
+    postgresql \
+    udunits2 \
+    openssl \
+    netcdf \
+    libwebp \
+    python36-numpy \
+    python36-six \
+    python36-requests \
+    python36-pillow \
+    python36-lxml && \
+    yum clean all && \
+    rm -rf /var/cache/yum
+
+RUN pip3 install --no-cache-dir --upgrade pip \
+   && pip3 install --no-cache-dir install flask flask-cors flask-caching gunicorn pytest marshmallow owslib pyproj==2.6.1 apispec apispec-webframeworks marshmallow-oneofschema defusedxml netcdf4
+>>>>>>> 39d3671146e0fcb358d03fbe3d4a08a61c12baae
 
 WORKDIR /adaguc/adaguc-server-master
 

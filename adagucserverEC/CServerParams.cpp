@@ -48,6 +48,8 @@ CServerParams::CServerParams() {
   figWidth = -1;
   figHeight = -1;
   imageQuality = 75;
+  dfResX = 0;
+  dfResY = 0;
 }
 
 CServerParams::~CServerParams() {
