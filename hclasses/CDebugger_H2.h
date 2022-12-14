@@ -30,7 +30,7 @@
 #define SOURCE_PATH_SIZE 80
 #endif
 
-#define __FILENAME__ (__FILE__ + SOURCE_PATH_SIZE)
+#define __FILENAME__ (&__FILE__[SOURCE_PATH_SIZE])
 
 #include <stdio.h>
 #include <iostream>

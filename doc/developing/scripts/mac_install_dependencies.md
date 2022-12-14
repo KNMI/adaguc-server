@@ -23,6 +23,10 @@ export CPATH=/opt/homebrew/opt/proj@7/include
 ./compile.sh
 ```
 
+If you use CMake from IntelliJ/CLion, configure it to use the CMake that was installed with Homebrew,
+as the bundled one might be too old and might not pick up the postgres libraries.
+This can be set in the toolchain.
+
 ### Python dependencies
 
 If you don't already have a working Python setup, a way to support multiple Python versions
