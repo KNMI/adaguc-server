@@ -61,7 +61,7 @@ def dolog(tmpdir, data):
       myfile.flush();
 
 def openfile(file):
-  with open (file, "rb") as myfile:
+  with open (file, "r") as myfile:
     data = myfile.read()
     return data
   
