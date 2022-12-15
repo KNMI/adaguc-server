@@ -1,3 +1,7 @@
+**Version 2.7.11 2022-12-15**
+
+- The Docker/adaguc-server-addfile.sh script does now exit with statuscode 1 if the adding of a file failed.
+
 **Version 2.7.10 2022-11-11**
 
 - Web Coverage Service can determine width and height or resx or resy parameters on its own
