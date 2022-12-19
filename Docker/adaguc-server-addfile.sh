@@ -43,7 +43,7 @@ done
 #   echo "You did not supply a file to add!"
 #   exit 1
 # fi
-
+STATUSCODE=0
 # Update all datasets
 for configfile in /data/adaguc-datasets/${ADAGUC_DATASET} ;do
   filename=/data/adaguc-datasets/"${configfile##*/}" 
@@ -60,17 +60,18 @@ for configfile in /data/adaguc-datasets/${ADAGUC_DATASET} ;do
     echo "Starting update for dataset ${filename} and datafile ${ADAGUC_DATAFILE}" 
     ${ADAGUC_PATH}/bin/adagucserver --updatedb --config ${ADAGUC_CONFIG},${filename} --path ${ADAGUC_DATAFILE}
     OUT=$?
-    if [ -d /servicehealth ]; then
-      echo "$OUT" > /servicehealth/${filebasename%.*}
-    fi
   else
     echo ""
     echo "Starting update for dataset ${filename}" 
     ${ADAGUC_PATH}/bin/adagucserver --updatedb --config ${ADAGUC_CONFIG},${filename}
     OUT=$?
-    if [ -d /servicehealth ]; then
-      echo "$OUT" > /servicehealth/${filebasename%.*}
-    fi
+  fi
+
+  # If one of the found datasets gives an error, set the returncode to zero.
+  if [ ${OUT} -ne 0 ]; then
+    STATUSCODE=1
   fi
 done
+
+exit ${STATUSCODE}
 

@@ -3459,7 +3459,7 @@ int CRequest::updatedb(CT::string *tailPath, CT::string *layerPathToScan, int sc
   CConvertGeoJSON::clearFeatureStore();
   CDFStore::clear();
   CDBFactory::clear();
-  return errorHasOccured;
+  return errorHasOccured > 0;
 }
 
 int CRequest::getDocumentCacheName(CT::string *documentName, CServerParams *srvParam) {
