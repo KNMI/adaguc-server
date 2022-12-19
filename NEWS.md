@@ -1,6 +1,10 @@
-**Version 2.7.11 2022-11-14**
+**Version 2.7.12 2022-12-19**
 
 - Rolling archives are now possible by setting the retentionperiod in the FilePath setting of the layer configuration
+
+**Version 2.7.11 2022-12-15**
+
+- The Docker/adaguc-server-addfile.sh script does now exit with statuscode 1 if the adding of a file failed.
 
 **Version 2.7.10 2022-11-11**
 
