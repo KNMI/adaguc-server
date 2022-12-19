@@ -25,6 +25,8 @@
 
 #include "CCDFHDF5IO.h"
 
+// #define CCDFHDF5IO_DEBUG_H
+
 double getAttrValueDouble(CDF::Variable *var, const char *attrName, double initialValue) {
   CDF::Attribute *attr = var->getAttributeNE(attrName);
   if (attr != NULL) {
@@ -63,13 +65,17 @@ CDF::Attribute *CDFHDF5Reader::getNestedAttribute(CDFObject *cdfObject, int data
   attr = (nestedVar != NULL) ? nestedVar->getAttributeNE(attrName) : NULL;
 
   if (attr == NULL) {
+#ifdef CCDFHDF5IO_DEBUG_H
     CDBDebug("Did not find %s / %s", nestedVarName.c_str(), attrName);
+#endif
     /* Second try "dataset%d.what" */
     nestedVarName.print("dataset%d.%s", datasetCounter, varName);
     nestedVar = cdfObject->getVariableNE(nestedVarName.c_str());
     attr = (nestedVar != NULL) ? nestedVar->getAttributeNE(attrName) : NULL;
     if (attr == NULL) {
+#ifdef CCDFHDF5IO_DEBUG_H
       CDBDebug("Did not find %s / %s", nestedVarName.c_str(), attrName);
+#endif
       /* Finally try "what" */
       nestedVarName.print("%s", varName);
       nestedVar = cdfObject->getVariableNE(nestedVarName.c_str());
@@ -77,11 +83,13 @@ CDF::Attribute *CDFHDF5Reader::getNestedAttribute(CDFObject *cdfObject, int data
     }
   }
 
+#ifdef CCDFHDF5IO_DEBUG_H
   if (attr == NULL) {
     CDBDebug("Did not find %s / %s", nestedVarName.c_str(), attrName);
   } else {
     CDBDebug("Found %s / %s", nestedVarName.c_str(), attrName);
   }
+#endif
   return attr;
 }
 
@@ -92,7 +100,6 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
     return 2;
   }
   std::map<std::string, std::string> quantityToUnits = {{"TH", "dBZ"}, {"TV", "dBZ"}, {"DBZH", "dBZ"}, {"DBZV", "dBZ"}, {"ZDR", "dB"}, {"UZDR", "dB"}, {"RHOHV", "-"}, {"URHOHV", "-"}, {"ACRR", "mm"}};
-  // CDBDebug("convertODIMHDF5toCF");
 
   for (size_t datasetCounter = 1; datasetCounter < 100; datasetCounter += 1) {
     int dataCounter = 1;
