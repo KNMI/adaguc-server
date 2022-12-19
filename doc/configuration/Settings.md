@@ -3,7 +3,7 @@ Settings (enablecleanupsystem)
 
 Back to [Configuration](./Configuration.md)
 
-Available since: 2.7.11
+Available since: 2.7.12
 
 - enablecleanupsystem: Enables the auto cleanup system. See [FilePath](./FilePath.md) and retentionperiod for details
 
