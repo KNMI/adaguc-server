@@ -1391,9 +1391,11 @@ CDataSource *CDataSource::clone() {
 double CDataSource::getScaling() {
   if (this->getStyle() != NULL && this->getStyle()->styleConfig != NULL) {
     if (this->getStyle()->styleConfig->RenderSettings.size() > 0) {
-      double scaleWidth = this->getStyle()->styleConfig->RenderSettings[0]->attr.scalewidth.toDouble();
-      double imageWidth = (double)this->srvParams->Geo->dWidth;
-      return imageWidth / scaleWidth;
+      if (!this->getStyle()->styleConfig->RenderSettings[0]->attr.scalewidth.empty()) {
+        double scaleWidth = this->getStyle()->styleConfig->RenderSettings[0]->attr.scalewidth.toDouble();
+        double imageWidth = (double)this->srvParams->Geo->dWidth;
+        return imageWidth / scaleWidth;
+      }
     }
   }
   return 1;

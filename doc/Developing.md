@@ -75,6 +75,7 @@ export ADAGUC_ENABLELOGBUFFER=FALSE
 # To enable core dump generation, additionally do:
 #ulimit -c unlimited
 #sudo sysctl -w kernel.core_pattern=core-adagucserver # 
+# Then you can use gdb ./bin/adagucserver core-adagucserver
 
 python3 ./python/python-adaguc-server/main.py
 ```

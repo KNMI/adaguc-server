@@ -1,5 +1,7 @@
-**Version 2.7.12 2022-12-19**
+**Version 2.7.13 2022-12-20**
+- Support for HDF5 ODIM files containing one dataset with lat/lon and time.
 
+**Version 2.7.12 2022-12-19**
 - Rolling archives are now possible by setting the retentionperiod in the FilePath setting of the layer configuration
 
 **Version 2.7.11 2022-12-15**
