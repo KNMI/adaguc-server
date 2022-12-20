@@ -984,6 +984,9 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
       // Loop Through all files
       status = DBLoopFiles(dataSource, removeNonExistingFiles, &fileList, scanFlags);
       if (status != 0) throw(__LINE__);
+
+      // Clean up if needed
+      cleanFiles(dataSource, scanFlags);
     }
   } catch (int linenr) {
     CDBError("Exception in updatedb at line %d", linenr);
