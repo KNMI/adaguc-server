@@ -26,6 +26,7 @@
 #ifndef CDBFileScanner_H
 #define CDBFileScanner_H
 
+#include <set>
 #include "CDebugger.h"
 #include "CStopWatch.h"
 #include "CDataReader.h"
@@ -42,6 +43,8 @@
 #define CDBFILESCANNER_CLEANFILES 64
 #define CDBFILESCANNER_DONOTTILE 128
 
+#define CDBFILESCANNER_RETENTIONTYPE_DATATIME "datatime"
+
 /**
  * Class which scans files and updates the database.
  */
@@ -51,6 +54,8 @@ private:
   static int createDBUpdateTables(CDataSource *dataSource, int &removeNonExistingFiles, std::vector<std::string> *fileList, bool recreateTable);
 
   static std::vector<CT::string> tableNamesDone;
+
+  static std::set<std::string> filesDeletedFromFS;
 
   static void handleDirHasNewFile(std::string) {}
 
@@ -90,6 +95,9 @@ public:
    *
    */
   static int cleanFiles(CDataSource *dataSource, int scanFlags);
+
+private:
+  static void _removeFileFromTables(CT::string fileNamestr, CDataSource *dataSource);
 };
 
 #endif

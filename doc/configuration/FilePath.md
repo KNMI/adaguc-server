@@ -1,4 +1,4 @@
-FilePath (filter, maxquerylimit, ncml) <value>
+FilePath (filter, maxquerylimit, ncml, retentionperiod, retentiontype) <value>
 ====================================================
 
 Back to [Configuration](./Configuration.md)
@@ -9,6 +9,8 @@ Back to [Configuration](./Configuration.md)
     the single request
 -   ncml - The ncmlfile to apply, see [NCML support](../info/ncml.md) for
     details
+-   retentionperiod - Optional setting in [iso period](../info/ISO8601.md) format to schedule an automatic cleanup. This feature is used to create rolling archives of streaming datasets. Note that `<Settings enablecleanupsystem="true"/>` ( See [Settings](./Settings.md) ) also needs to be set.
+-   retentiontype - Optional setting, and currently only `datatime` is allowed.
 -   <value> - Directory, file or OpenDAP url
 
 The following configuration adds all files in the specified directory
@@ -46,3 +48,38 @@ maxquerylimit
     is 512 entries. Overrides the settings set in the [DataBase](DataBase.md)
     configuration.
 
+
+
+retentionperiod and retentiontype 
+--------------
+
+This feature is available since adaguc-server version 2.7.11
+
+The following dataset configuration configures a dataset which is updated every minute. Without the retentionperiod setting, the archive would grow infinetly large. By setting the retionperiod to `PT1H`, we keep the last hour of data. The files are first removed from the database and then from the filesystem.
+
+- `retentionperiod="PT1H"` means that we want to keep the last hour until now (UTC time). You can configure this according to [iso period](../info/ISO8601.md)
+- `retentiontype="datatime"` means that the value of the time dimension in the file is read to determine if the file is ready to be deleted.
+
+The retention check is done when a new file is added to the system. 
+
+Manual trigger can be executed with the `--cleanfiles` command:
+```
+${ADAGUC_PATH}/bin/adagucserver --cleanfiles --config ${ADAGUC_CONFIG},livetimestream
+```
+But this is normally not necessary, because the step above is done during ingestion of new data.
+
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  
+  <Layer type="database">
+    <FilePath filter=".*\.nc$" retentionperiod="PT1H" retentiontype="datatime">/data/adaguc-data/livetimestream/</FilePath>
+    
+    <Variable>data</Variable>
+    <Dimension name="time" interval="PT1M" quantizeperiod="PT1M" quantizemethod="low" >time</Dimension>
+    <RenderMethod>rgba</RenderMethod>
+  </Layer>
+
+</Configuration>
+```
