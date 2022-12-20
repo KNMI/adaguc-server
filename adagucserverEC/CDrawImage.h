@@ -86,16 +86,16 @@ public:
   void parse(const char *color) {
     if (color[0] == '#') {
       if (strlen(color) == 7) {
-        r = ((color[1] > 64) ? color[1] - 55 : color[1] - 48) * 16 + ((color[2] > 64) ? color[2] - 55 : color[2] - 48);
-        g = ((color[3] > 64) ? color[3] - 55 : color[3] - 48) * 16 + ((color[4] > 64) ? color[4] - 55 : color[4] - 48);
-        b = ((color[5] > 64) ? color[5] - 55 : color[5] - 48) * 16 + ((color[6] > 64) ? color[6] - 55 : color[6] - 48);
+        r = CSERVER_HEXDIGIT_TO_DEC(color[1]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[2]);
+        g = CSERVER_HEXDIGIT_TO_DEC(color[3]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[4]);
+        b = CSERVER_HEXDIGIT_TO_DEC(color[5]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[6]);
         a = 255;
       }
       if (strlen(color) == 9) {
-        r = ((color[1] > 64) ? color[1] - 55 : color[1] - 48) * 16 + ((color[2] > 64) ? color[2] - 55 : color[2] - 48);
-        g = ((color[3] > 64) ? color[3] - 55 : color[3] - 48) * 16 + ((color[4] > 64) ? color[4] - 55 : color[4] - 48);
-        b = ((color[5] > 64) ? color[5] - 55 : color[5] - 48) * 16 + ((color[6] > 64) ? color[6] - 55 : color[6] - 48);
-        a = ((color[7] > 64) ? color[7] - 55 : color[7] - 48) * 16 + ((color[8] > 64) ? color[8] - 55 : color[8] - 48);
+        r = CSERVER_HEXDIGIT_TO_DEC(color[1]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[2]);
+        g = CSERVER_HEXDIGIT_TO_DEC(color[3]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[4]);
+        b = CSERVER_HEXDIGIT_TO_DEC(color[5]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[6]);
+        a = CSERVER_HEXDIGIT_TO_DEC(color[7]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[8]);
       }
     }
   }

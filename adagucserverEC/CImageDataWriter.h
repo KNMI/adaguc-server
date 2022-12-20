@@ -43,6 +43,8 @@
 #include "CXMLParser.h"
 #include "CDebugger.h"
 
+#define RENDERHINT_DISCRETECLASSES "discreteclasses"
+
 class CImageDataWriter : public CBaseDataWriterInterface {
 public:
   class ProjCacheInfo {

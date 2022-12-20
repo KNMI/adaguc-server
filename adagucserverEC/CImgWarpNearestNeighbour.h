@@ -25,6 +25,7 @@
 
 #ifndef CIMGWARPNEARESTNEIGHBOUR_H
 #define CIMGWARPNEARESTNEIGHBOUR_H
+// #define CIMGWARPNEARESTNEIGHBOUR_DEBUG
 #include <float.h>
 #include <pthread.h>
 #include "CImageWarperRenderInterface.h"
@@ -569,17 +570,7 @@ private:
     // int tile_height=int((double(drawImage->Geo->dHeight)/double(y_div))+0.5);
 
     // Setup the renderer to draw the tiles with.We do not keep the calculated results for CDF_CHAR (faster)
-    CAreaMapper *drawTileClass = NULL;
-    if (dataSource->getDataObject(0)->cdfVariable->getType() == CDF_CHAR || dataSource->getDataObject(0)->cdfVariable->getType() == CDF_BYTE ||
-        dataSource->getDataObject(0)->cdfVariable->getType() == CDF_UBYTE) {
-      drawTileClass = new CAreaMapper(); // Do not keep the calculated results for CDF_CHAR
-
-    } else {
-      // drawTileClass = new CDrawTileObjByteCache();  //keep the calculated results
-      drawTileClass = new CAreaMapper(); // Do not keep the calculated results for CDF_CHAR
-    }
-    // drawTileClass = new CDrawTileObjByteCache();           //Do not keep the calculated results for CDF_CHAR
-    // drawTileClass = new CDrawTileObj();  //keep the calculated results
+    CAreaMapper *drawTileClass = new CAreaMapper();
 
     // Reproj back and forth datasource boundingbox
     double y1 = dataSource->dfBBOX[1];

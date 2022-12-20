@@ -30,6 +30,7 @@
  */
 
 #include "CAreaMapper.h"
+#include "CImageDataWriter.h"
 
 const char *CAreaMapper::className = "CAreaMapper";
 
@@ -82,6 +83,31 @@ void CAreaMapper::init(CDataSource *dataSource, CDrawImage *drawImage, int tileW
 
   internalWidth = width;
   internalHeight = height;
+
+  /* Check the if we want to use discrete type */
+  if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL && styleConfiguration->styleConfig->RenderSettings.size() == 1) {
+    CT::string renderHint = styleConfiguration->styleConfig->RenderSettings[0]->attr.renderhint;
+    if (renderHint.equals(RENDERHINT_DISCRETECLASSES)) {
+      isUsingShadeIntervals = true;
+    }
+  }
+
+  /* Make a shorthand vector from the shadeInterval configuration*/
+  if (isUsingShadeIntervals) {
+    int numShadeDefs = (int)styleConfiguration->shadeIntervals->size();
+    intervals.reserve(numShadeDefs);
+    for (int j = 0; j < numShadeDefs; j++) {
+      CServerConfig::XMLE_ShadeInterval *shadeInterVal = ((*styleConfiguration->shadeIntervals)[j]);
+      intervals.push_back(Interval(shadeInterVal->attr.min.toFloat(), shadeInterVal->attr.max.toFloat(), CColor(shadeInterVal->attr.fillcolor.c_str())));
+      /* Check for bgcolor */
+      if (j == 0) {
+        if (shadeInterVal->attr.bgcolor.empty() == false) {
+          bgColorDefined = true;
+          bgColor = CColor(shadeInterVal->attr.bgcolor.c_str());
+        }
+      }
+    }
+  }
 }
 
 int CAreaMapper::drawTile(double *x_corners, double *y_corners, int &dDestX, int &dDestY) {
@@ -188,8 +214,11 @@ template <class T> int CAreaMapper::myDrawRawTile(const T *data, double *x_corne
       int sourceSampleY = floor(dfSourceSampleY);
       int destPixelX = dstpixel_x + dDestX;
       int destPixelY = dstpixel_y + dDestY;
+
       if (sourceSampleX >= 0 && sourceSampleX < width && sourceSampleY >= 0 && sourceSampleY < height && destPixelX >= 0 && destPixelY >= 0 && destPixelX < imageWidth && destPixelY < imageHeight) {
+        bool pixelSet = false;
         imgpointer = sourceSampleX + (sourceSampleY)*width;
+
         val = data[imgpointer];
         isNodata = false;
         if (hasNodataValue) {
@@ -200,18 +229,31 @@ template <class T> int CAreaMapper::myDrawRawTile(const T *data, double *x_corne
           if (legendValueRange)
             if (val < legendLowerRange || val > legendUpperRange) isNodata = true;
         if (!isNodata) {
-          if (legendLog != 0) {
-            if (val > 0) {
-              val = (T)(log10(val) / legendLogAsLog);
-            } else
-              val = (T)(-legendOffset);
+          if (isUsingShadeIntervals) {
+            for (size_t j = 0; j < intervals.size(); j += 1) {
+              if (val >= intervals[j].min && val < intervals[j].max) {
+                drawImage->setPixel(destPixelX, dstpixel_y + dDestY, intervals[j].color);
+                pixelSet = true;
+              }
+            }
+          } else {
+            if (legendLog != 0) {
+              if (val > 0) {
+                val = (T)(log10(val) / legendLogAsLog);
+              } else
+                val = (T)(-legendOffset);
+            }
+            int pcolorind = (int)(val * legendScale + legendOffset);
+            if (pcolorind >= 239)
+              pcolorind = 239;
+            else if (pcolorind <= 0)
+              pcolorind = 0;
+            drawImage->setPixelIndexed(destPixelX, dstpixel_y + dDestY, pcolorind);
+            pixelSet = true;
           }
-          int pcolorind = (int)(val * legendScale + legendOffset);
-          if (pcolorind >= 239)
-            pcolorind = 239;
-          else if (pcolorind <= 0)
-            pcolorind = 0;
-          drawImage->setPixelIndexed(destPixelX, dstpixel_y + dDestY, pcolorind);
+        }
+        if (bgColorDefined && pixelSet == false) {
+          drawImage->setPixel(destPixelX, dstpixel_y + dDestY, bgColor);
         }
         if (debug) {
           bool draw = false;
