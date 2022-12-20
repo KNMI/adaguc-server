@@ -34,6 +34,21 @@
 class CAreaMapper {
 private:
   DEF_ERRORFUNCTION();
+  bool isUsingShadeIntervals = false;
+  class Interval {
+  public:
+    float min;
+    float max;
+    CColor color;
+    Interval(float min, float max, CColor color) {
+      this->min = min;
+      this->max = max;
+      this->color = color;
+    }
+  };
+  std::vector<Interval> intervals;
+  CColor bgColor;
+  bool bgColorDefined = false;
   double dfTileWidth, dfTileHeight;
   double dfSourceBBOX[4];
   double dfImageBBOX[4];
