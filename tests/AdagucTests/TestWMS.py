@@ -1080,3 +1080,91 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
 
 
+    def test_DBScannerCleanFiles(self):
+        """Testing cleanup system of filescanner using the retentionperiod function."""
+        AdagucTestTools().cleanTempDir()
+        ADAGUC_PATH = os.environ['ADAGUC_PATH']
+        ADAGUC_TMP = os.environ['ADAGUC_TMP']
+        
+        config = ADAGUC_PATH + '/data/config/adaguc.tests.datasetsmall.xml'
+        env = {'ADAGUC_CONFIG': config}
+
+        # Setup directories
+        AdagucTestTools().cleanTempDir()
+        AdagucTestTools().mkdir_p(f'{ADAGUC_TMP}/cleandb')
+
+
+        # Make a time recent to now (less then 7 days ago)
+        def roundSeconds(dateTimeObject):
+            newDateTime = dateTimeObject
+            newDateTime = newDateTime.replace(second=0)
+            return newDateTime.replace(microsecond=0)
+        recenttimesteptowrite = roundSeconds(datetime.datetime.utcnow()).isoformat()+'Z'   
+
+        # Make the three filenames        
+        oldfile1 = f'{ADAGUC_TMP}/cleandb/csv-20200601T000000.csv';
+        oldfile2 = f'{ADAGUC_TMP}/cleandb/csv-20200602T000000.csv';
+        newfile1 = f'{ADAGUC_TMP}/cleandb/csv-{recenttimesteptowrite}.csv'       
+
+        # Make sure the files are not there.
+        self.assertEqual(os.path.exists(oldfile1), False)
+        self.assertEqual(os.path.exists(oldfile2), False)
+        self.assertEqual(os.path.exists(newfile1), False)
+
+        #print(f'Writing to {newfile1}')            
+        
+        # Write files to disk ready to scan without cleanup
+        with open(oldfile1, 'w') as f:
+            f.write('# time=2020-06-01T00:00:00Z\nlat,lon,Name,test\n48.1,0.25,"Station",60');
+        with open(oldfile2, 'w') as f:
+            f.write('# time=2020-06-02T00:00:00Z\nlat,lon,Name,test\n48.1,0.25,"Station",60');
+        with open(newfile1, 'w') as f:
+            f.write(f'# time={recenttimesteptowrite}\nlat,lon,Name,test\n48.1,0.25,"Station",60');
+        
+        ### Step 1 ###
+
+        # Scan with adaguc.tests.cleandb-step1, cleanup DISABLED. All three timesteps should be found.
+        DATASET='adaguc.tests.cleandb-step1'
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=['--updatedb', '--config', config+ f',{ADAGUC_PATH}/data/config/datasets/{DATASET}.xml'], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+
+        # Make sure the files are still there.
+        self.assertEqual(os.path.exists(oldfile1), True)
+        self.assertEqual(os.path.exists(oldfile2), True)
+        self.assertEqual(os.path.exists(newfile1), True)
+        
+        
+        # Read getcapabilities and check the dimensions for the three expected values
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            f'DATASET={DATASET}&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities', env=env)
+        xslt_root = etree.XML(re.sub(' xmlns="[^"]+"', '', data.getvalue().decode('UTF-8'), count=1).encode('ascii'));
+        dimvalues = xslt_root.findall('Capability/Layer/Layer/Dimension')[0].text
+        expecteddimensionvalues = f'2020-06-01T00:00:00Z,2020-06-02T00:00:00Z,{recenttimesteptowrite}'
+        self.assertEqual(expecteddimensionvalues, dimvalues)
+
+        ### Step 2 ###
+        
+        # Scan with adaguc.tests.cleandb-step1, cleanup ENABLED, only the recent timestep should be left
+        DATASET='adaguc.tests.cleandb-step2'
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=['--updatedb', '--config', config+ f',{ADAGUC_PATH}/data/config/datasets/{DATASET}.xml'], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+
+        # Make sure the files are gone.
+        self.assertEqual(os.path.exists(oldfile1), False)
+        self.assertEqual(os.path.exists(oldfile2), False)
+        self.assertEqual(os.path.exists(newfile1), True)
+        
+        
+        # Read getcapabilities and check the dimensions
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            f'DATASET={DATASET}&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities', env=env)
+        xslt_root = etree.XML(re.sub(' xmlns="[^"]+"', '', data.getvalue().decode('UTF-8'), count=1).encode('ascii'));
+        dimvalues = xslt_root.findall('Capability/Layer/Layer/Dimension')[0].text
+        self.assertEqual(recenttimesteptowrite, dimvalues)
+
+        
+
+        
+      
