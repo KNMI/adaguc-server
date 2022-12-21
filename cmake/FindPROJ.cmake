@@ -1,5 +1,4 @@
 # Based on https://github.com/MapServer/MapServer/blob/main/cmake/FindProj.cmake
-# TODO: Do we need to mention license??
 
 # Find Proj
 #

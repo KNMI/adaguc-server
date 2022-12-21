@@ -19,7 +19,7 @@ it gets installed at a non-standard location.
 CMake will only find this if you use the following export before running CMake:
 
 ```shell
-export CPATH=/opt/homebrew/opt/proj@7/include
+export PROJ_ROOT=/opt/homebrew/opt/proj@7
 ./compile.sh
 ```
 
