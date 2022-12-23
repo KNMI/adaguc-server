@@ -72,7 +72,14 @@ int Tracer::Dump() {
       }
     }
   }
-  _map.clear();
+  // Use this instead of _map.clear() has that can give a race condition:
+  // _map is being destroyed, leading to calls to the overloaded new, which call Tracer::Remove(),
+  // which does _map.find().
+  // TODO: Fix this workaround
+  for (auto it = _map.cbegin(); it != _map.cend(); /* no increment */) {
+    _map.erase(it++);
+  }
+
   return status;
 }
 
