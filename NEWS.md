@@ -1,3 +1,6 @@
+**Version 2.8.0 2022-12-23**
+- Support for building Adaguc on Mac M1 architecture (arm64) 
+
 **Version 2.7.13 2022-12-20**
 - Support for HDF5 ODIM files containing one dataset with lat/lon and time.
 
