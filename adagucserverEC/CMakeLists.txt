@@ -4,7 +4,7 @@ find_package(Freetype REQUIRED)
 find_package(NetCDF REQUIRED)
 find_package(Threads REQUIRED)
 find_package(PNG REQUIRED)
-find_package(PROJ4 REQUIRED)
+find_package(PROJ REQUIRED)
 find_package(UDUNITS2 REQUIRED)
 find_package(GD REQUIRED)
 find_package(CURL)
@@ -147,8 +147,8 @@ add_library(
     testadagucserver.cpp
 )
 
-target_include_directories(adagucserverEC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${Cairo_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS} ${PostgreSQL_INCLUDE_DIRS} ${GDAL_INCLUDE_DIRS})
-target_link_libraries(adagucserverEC CCDFDataModel hclasses ${NetCDF_LIBRARIES} ${HDF5_LIBRARIES} ${Cairo_LIBRARIES} ${FREETYPE_LIBRARIES} ${LIBXML2_LIBRARY} Threads::Threads ${PNG_LIBRARY} ${PROJ4_LIBRARIES} ${UDUNITS2_LIBRARIES} ${GD_LIBRARIES} ${CURL_LIBRARIES} ${SQLite3_LIBRARIES} ${GDAL_LIBRARIES} ${PostgreSQL_LIBRARIES} ${WebP_LIBRARIES})
+target_include_directories(adagucserverEC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${Cairo_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS} ${PostgreSQL_INCLUDE_DIRS} ${GDAL_INCLUDE_DIRS} ${PROJ_INCLUDE_DIR})
+target_link_libraries(adagucserverEC CCDFDataModel hclasses ${NetCDF_LIBRARIES} ${HDF5_LIBRARIES} ${Cairo_LIBRARIES} ${FREETYPE_LIBRARIES} ${LIBXML2_LIBRARY} Threads::Threads ${PNG_LIBRARY} ${PROJ_LIBRARIES} ${UDUNITS2_LIBRARIES} ${GD_LIBRARIES} ${CURL_LIBRARIES} ${SQLite3_LIBRARIES} ${GDAL_LIBRARIES} ${PostgreSQL_LIBRARIES} ${WebP_LIBRARIES})
 
 # Build unit test executable
 add_executable(testadagucserver testadagucserver.cpp)

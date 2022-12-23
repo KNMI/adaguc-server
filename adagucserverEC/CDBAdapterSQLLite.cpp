@@ -288,6 +288,24 @@ CDBStore::Store *CDBAdapterSQLLite::getMin(const char *name, const char *table) 
   return maxStore;
 };
 
+CDBStore::Store *CDBAdapterSQLLite::getBetween(const char *min, const char *max, const char *colname, const char *table, int limit) {
+  CSQLLiteDB *DB = getDataBaseConnection();
+  if (DB == NULL) {
+    return NULL;
+  }
+  CT::string query;
+
+  query.print("select path, %s FROM %s WHERE %s between '%s' and '%s' order by %s asc limit %d ", colname, table, colname, min, max, colname, limit);
+  CDBStore::Store *maxStore = DB->queryToStore(query.c_str());
+  if (maxStore == NULL) {
+    setExceptionType(InvalidDimensionValue);
+    CDBError("Invalid dimension value for  %s", colname);
+    CDBError("query failed");
+    return NULL;
+  }
+  return maxStore;
+};
+
 CDBStore::Store *CDBAdapterSQLLite::getUniqueValuesOrderedByValue(const char *name, int limit, bool orderDescOrAsc, const char *table) {
   CSQLLiteDB *DB = getDataBaseConnection();
   if (DB == NULL) {
