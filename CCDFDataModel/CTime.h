@@ -220,6 +220,31 @@ public:
   static void *currentInitializedVar;
 
   static time_t getEpochTimeFromDateString(CT::string dateString);
+
+  /**
+   * @brief Can be used to substract an iso8601 period string from a date. The function ensures that allowed ranges for the individual time componets are preserved.
+   *
+   * @param date
+   * @param period
+   * @return Date
+   */
+  Date subtractPeriodFromDate(CTime::Date date, CT::string period);
+
+  /**
+   * @brief Converts a iso8601 period string to a date
+   *
+   * @param period
+   * @return Date
+   */
+  static Date periodToDate(CT::string period);
+
+  /**
+   * @brief Converts a date to an iso8601 period string
+   *
+   * @param period
+   * @return Date
+   */
+  static CT::string dateToPeriod(CTime::Date date);
 };
 
 #endif

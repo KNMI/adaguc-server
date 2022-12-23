@@ -62,8 +62,8 @@ int CDirReader::_listDirRecursive(const char *directory, const char *ext_filter)
     return _ReadDir(directory, ext_filter, 1);
   } catch (int a) {
     /* Maybe the user provided a file instead of a directory? */
-    struct stat64 fileattr;
-    if (stat64(directory, &fileattr) == -1) {
+    struct stat fileattr;
+    if (stat(directory, &fileattr) == -1) {
       CDBWarning("Unable to stat %s", directory);
       return 1;
     }
@@ -163,8 +163,8 @@ CT::string CDirReader::makeCleanPath(const char *_path) {
 }
 
 bool CDirReader::isDir(const char *directory) {
-  struct stat64 fileattr;
-  if (stat64(directory, &fileattr) == -1) {
+  struct stat fileattr;
+  if (stat(directory, &fileattr) == -1) {
     return false;
   }
   return S_ISDIR(fileattr.st_mode);

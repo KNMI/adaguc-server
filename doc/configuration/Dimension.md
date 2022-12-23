@@ -21,7 +21,7 @@ Back to [Configuration](./Configuration.md)
 </Layer>
 ```
 
--   See [ISO8601](ISO8601.md) for the time resolution specification
+-   See [ISO8601](../info/ISO8601.md) for the time resolution specification
 
 Time quantization
 -----------------
