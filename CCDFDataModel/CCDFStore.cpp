@@ -4,7 +4,7 @@
 #include "CCDFNetCDFIO.h"
 const char *CDFStore::className = "CDFStore";
 
-extern std::map<std::string, CDFReader *> CDFStore::cdfReaders;
+std::map<std::string, CDFReader *> CDFStore::cdfReaders = {};
 
 CDFReader *CDFStore::getCDFReader(const char *fileName) {
   // CDBDebug("CDFReader");

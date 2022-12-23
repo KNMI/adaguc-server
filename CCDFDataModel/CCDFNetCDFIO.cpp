@@ -1203,7 +1203,8 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
 
           if (netcdfMode >= 4) {
             /* Only set deflate settings on non-scalar variables */
-            if (variable->dimensionlinks.size() > 0) {
+            /* Compression on variable length variables is no longer supported: https://github.com/Unidata/netcdf-c/pull/2231 */
+            if (variable->dimensionlinks.size() > 0 && variable->currentType != CDF_STRING) {
               // CDBDebug("Var %s, shuffle ,deflate, deflate_level %d,%d,%d", variable->name.c_str(), deflate, deflate_level);
               status = nc_def_var_deflate(root_id, nc_var_id, shuffle, deflate, deflate_level);
               if (status != NC_NOERR) {

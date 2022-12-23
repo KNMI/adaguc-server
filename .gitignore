@@ -55,9 +55,12 @@ adagucserverEC/aggregate_time
 adagucserverEC/geojsondump
 adagucserverEC/h5ncdump
 bin/*
+cmake-build-debug/*
+cmake-build-release/*
 
 #Python pyc files
 *.pyc
+.python-version
 
 #Sqlite files
 *db
@@ -103,7 +106,7 @@ python/lib/dist
 *.pytest_cache*
 *__pycache__*
 Testing
-        
+
 .cmake
 */.cmake
 *CMakeFiles*
