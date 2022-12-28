@@ -1,92 +1,70 @@
-FROM centos/devtoolset-7-toolchain-centos7:7
+FROM python:3.9-slim-bullseye as base
+
 USER root
 
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="2.8.0"
+LABEL version="2.8.1"
 
 ######### First stage (build) ############
 
-# production packages, same as stage two
-RUN yum update -y && \
-    yum install -y epel-release deltarpm && \
-    yum install -y cairo \
-    curl \
-    python3 \
-    gd \
-    gdal \
-    hdf5 \
-    libxml2 \
-    proj \
-    udunits2 \
-    openssl \
-    netcdf \
-    libwebp-devel \
-    # building / development packages
-    yum install -y centos-release-scl && \
-    yum install -y devtoolset-7-gcc-c++ && \
-    source /opt/rh/devtoolset-7/enable && \
-    yum install -y cmake3 cairo-devel \
-    gd-devel \
-    gdal-devel \
-    hdf5-devel \
-    libxml2-devel \
-    make \
-    netcdf-devel \
-    openssl \
-    postgresql-devel \
-    proj-devel \
-    sqlite-devel \
-    udunits2-devel && \
-    yum clean all && \
-    rm -rf /var/cache/yum
+# Try to update image packages
+RUN apt-get -q -y update \
+    && DEBIAN_FRONTEND=noninteractive apt-get -q -y upgrade \
+    && apt-get -q -y install \ 
+    cmake \ 
+    postgresql \ 
+    libcurl4-openssl-dev \ 
+    libcairo2-dev \ 
+    libxml2-dev \ 
+    libgd-dev \ 
+    postgresql-server-dev-all \ 
+    postgresql-client \ 
+    libudunits2-dev \ 
+    udunits-bin \ 
+    g++ \ 
+    m4 \ 
+    netcdf-bin \ 
+    libnetcdf-dev \ 
+    libhdf5-dev \ 
+    libproj-dev \ 
+    libgdal-dev \ 
+    libsqlite3-dev \ 
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install adaguc-server from context
 COPY . /adaguc/adaguc-server-master
 
 WORKDIR /adaguc/adaguc-server-master
 
-# Force to use Python 3
-RUN ln -sf /usr/bin/python3 /usr/bin/python
-RUN ln -sf /usr/bin/cmake3 /usr/bin/cmake
-RUN ln -sf /usr/bin/ctest3 /usr/bin/ctest
-RUN cp -r /usr/include/udunits2/* /usr/include/
-
 RUN bash compile.sh
 
 
-######### Second stage (production) ############
-FROM centos:7
+# ######### Second stage (production) ############
+FROM python:3.9-slim-bullseye
+
 USER root
 
-# production packages, same as stage one
-RUN yum update -y && \
-    yum install -y epel-release deltarpm && \
-    yum install -y cairo \
-    curl \
-    gd \
-    gdal \
-    hdf5 \
-    libxml2 \
-    proj \
-    python3 \
-    python3-lxml \
-    postgresql \
-    udunits2 \
-    openssl \
-    netcdf \
-    libwebp \
-    python36-numpy \
-    python36-six \
-    python36-requests \
-    python36-pillow \
-    python36-lxml && \
-    yum clean all && \
-    rm -rf /var/cache/yum
 
-RUN pip3 install --no-cache-dir --upgrade pip \
-   && pip3 install --no-cache-dir install flask flask-cors flask-caching gunicorn pytest marshmallow owslib pyproj==2.6.1 apispec apispec-webframeworks marshmallow-oneofschema defusedxml netcdf4
+# Try to update image packages
+RUN apt-get -q -y update \
+    && DEBIAN_FRONTEND=noninteractive apt-get -q -y upgrade \
+    && apt-get -q -y install \ 
+    postgresql-client \ 
+    udunits-bin \ 
+    netcdf-bin \ 
+    libcairo2 \
+    libgdal-dev \ 
+    libcurl4-openssl-dev \ 
+    libgd-dev \
+    libproj-dev \
+    time \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /adaguc/adaguc-server-master
 
@@ -96,9 +74,16 @@ COPY --from=0 /adaguc/adaguc-server-master/data /adaguc/adaguc-server-master/dat
 COPY --from=0 /adaguc/adaguc-server-master/python /adaguc/adaguc-server-master/python
 COPY --from=0 /adaguc/adaguc-server-master/tests /adaguc/adaguc-server-master/tests
 COPY --from=0 /adaguc/adaguc-server-master/runtests.sh /adaguc/adaguc-server-master/runtests.sh
+COPY --from=0 /adaguc/adaguc-server-master/requirements.txt /adaguc/adaguc-server-master/requirements.txt
+
+# Upgrade pip and install python requirements.txt
+RUN pip3 install --no-cache-dir --upgrade pip \
+   && pip3 install --no-cache-dir -r requirements.txt
+
 
 # Run adaguc-server functional and regression tests
-RUN  bash runtests.sh
+
+RUN bash runtests.sh
 
     # Set same uid as vivid
 RUN useradd -m adaguc -u 1000 && \
@@ -107,7 +92,9 @@ RUN useradd -m adaguc -u 1000 && \
     mkdir -p /data/adaguc-datasets && \
     mkdir -p /data/adaguc-data && \
     mkdir -p /adaguc/userworkspace && \
-    mkdir -p /adaguc/adaguc-datasets-internal
+    mkdir -p /adaguc/adaguc-datasets-internal && \
+    chown adaguc: /tmp -R
+
 
 # Configure
 COPY ./Docker/adaguc-server-config-python-postgres.xml /adaguc/adaguc-server-config.xml

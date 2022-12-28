@@ -1,3 +1,7 @@
+
+**Version 2.8.1 2022-12-24**
+- Using debian as base docker image
+
 **Version 2.8.0 2022-12-23**
 - Support for building Adaguc on Mac M1 architecture (arm64) 
 
