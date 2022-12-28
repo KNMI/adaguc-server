@@ -26,6 +26,7 @@
 #ifndef CCDFVARIABLE_H
 #define CCDFVARIABLE_H
 
+#include <algorithm>
 #include "CCDFTypes.h"
 #include "CCDFAttribute.h"
 #include "CCDFDimension.h"
