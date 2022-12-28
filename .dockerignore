@@ -1,60 +1,16 @@
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
-
-#Other binaries
-CCDFDataModel/anydump
-adagucserverEC/adagucserver
-adagucserverEC/aggregate_dim
-adagucserverEC/aggregate_time
-adagucserverEC/geojsondump
-adagucserverEC/h5ncdump
-bin/*
-
-#Python pyc files
-*.pyc
-
-#Test results
-tests/log
-tests/tmp
-tests/testresults/*
-
-Dockerfile
-Docker/adaguc-server.dockerimage
-Docker/scanner
-Dockerfile
-Docker/letsencrypt
-Docker/letsencrypt/*
-Docker/cert
-Docker/cert/*
-
-*CMakeCache.txt*
-*CTestTestfile.cmake*
-*Makefile*
-*cmake_install.cmake*
+*
+!compile.sh
+!runtests.sh
+!CMakeLists.txt
+!Docker/adaguc-server-config-python-postgres.xml
+!Docker/start.sh
+!Docker/adaguc-server-*.sh
+!Docker/baselayers.xml
+!requirements.txt
+!adagucserverEC/
+!CCDFDataModel/
+!cmake/
+!data/
+!hclasses/
+!python/
+!tests/
