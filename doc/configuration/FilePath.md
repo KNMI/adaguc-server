@@ -73,6 +73,8 @@ But this is normally not necessary, because the step above is done during ingest
 <?xml version="1.0" encoding="UTF-8" ?>
 <Configuration>
   
+  <Settings enablecleanupsystem="true"/>
+  
   <Layer type="database">
     <FilePath filter=".*\.nc$" retentionperiod="PT1H" retentiontype="datatime">/data/adaguc-data/livetimestream/</FilePath>
     
