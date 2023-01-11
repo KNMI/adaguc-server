@@ -975,10 +975,6 @@ void CCairoPlotter::setToSurface(cairo_surface_t *png) {
   //   cairo_surface_destroy(surface);
 }
 
-#ifndef ADAGUC_USE_WEBP
-#define ADAGUC_USE_WEBP
-#endif
-
 #ifdef ADAGUC_USE_WEBP
 #include "webp/encode.h"
 #include "webp/decode.h"
