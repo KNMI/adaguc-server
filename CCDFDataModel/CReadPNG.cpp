@@ -134,7 +134,7 @@ CReadPNG::CPNGRaster *CReadPNG::read_png_file(const char *file_name, bool pngRea
   CDBDebug("/done png_read_image");
   CDBDebug("PNG data: [%d, %d, %d, %d]", pngRaster->width, pngRaster->height, (int)bit_depth, color_type);
 #endif
-  int bpp = 4;
+
   int pngwidthdivisor = 1;
   if (bit_depth == 4) {
 
@@ -144,13 +144,9 @@ CReadPNG::CPNGRaster *CReadPNG::read_png_file(const char *file_name, bool pngRea
 
     pngwidthdivisor = 8;
   }
-  if (color_type == 2) {
-    bpp = 3;
-  }
   int num_palette;
   png_colorp palette;
   if (color_type == 3) {
-    bpp = 1;
     png_get_PLTE(png_ptr, info_ptr, &palette, &num_palette);
   }
 
@@ -162,21 +158,25 @@ CReadPNG::CPNGRaster *CReadPNG::read_png_file(const char *file_name, bool pngRea
   pngRaster->data = new unsigned char[pngRaster->width * pngRaster->height * 4];
   for (size_t y = 0; y < pngRaster->height; y++) {
     unsigned char *line = row_pointers[y];
-    for (size_t x = 0; x < pngRaster->width / pngwidthdivisor; x += 1) {
+    for (size_t x = 0; x < (pngRaster->width / pngwidthdivisor) + 1; x += 1) {
 
-      if (bpp == 1) {
-        unsigned char i = line[x * bpp + 0];
-        if (bit_depth == 1) {
-          int d = 1;
+      /*  Each pixel is a palette index, using PLTE */
+      if (color_type == 3) {
+        unsigned char i = line[x * 1 + 0];
+        if (bit_depth == 1) { // 1 byte is 8 pixels (colormap of 2 colors)
+          int d = 128;
           for (int j = 0; j < 8; j++) {
-            pngRaster->data[x * 32 + j * 4 + 0 + (y * pngRaster->width * 4)] = palette[(i & d) / d].red;
-            pngRaster->data[x * 32 + j * 4 + 1 + (y * pngRaster->width * 4)] = palette[(i & d) / d].green;
-            pngRaster->data[x * 32 + j * 4 + 2 + (y * pngRaster->width * 4)] = palette[(i & d) / d].blue;
-            pngRaster->data[x * 32 + j * 4 + 3 + (y * pngRaster->width * 4)] = 255;
-            d = d + d;
+            int nx = x * 32 + j * 4;
+            if (nx + 3 < pngRaster->width * 4) {
+              pngRaster->data[nx + 0 + (y * pngRaster->width * 4)] = palette[(i & d) / d].red;
+              pngRaster->data[nx + 1 + (y * pngRaster->width * 4)] = palette[(i & d) / d].green;
+              pngRaster->data[nx + 2 + (y * pngRaster->width * 4)] = palette[(i & d) / d].blue;
+              pngRaster->data[nx + 3 + (y * pngRaster->width * 4)] = 255;
+            }
+            d = d / 2;
           }
         }
-        if (bit_depth == 4) {
+        if (bit_depth == 4) { // 1 byte is 2 pixels (colormap of 16 colors)
           pngRaster->data[x * 8 + 0 + (y * pngRaster->width * 4)] = palette[i / 16].red;
           pngRaster->data[x * 8 + 1 + (y * pngRaster->width * 4)] = palette[i / 16].green;
           pngRaster->data[x * 8 + 2 + (y * pngRaster->width * 4)] = palette[i / 16].blue;
@@ -186,20 +186,53 @@ CReadPNG::CPNGRaster *CReadPNG::read_png_file(const char *file_name, bool pngRea
           pngRaster->data[x * 8 + 6 + (y * pngRaster->width * 4)] = palette[i % 16].blue;
           pngRaster->data[x * 8 + 7 + (y * pngRaster->width * 4)] = 255;
         }
-        if (bit_depth == 8) {
+        if (bit_depth == 8) { // 1 byte is 1 pixel (colormap of 256 colors)
           pngRaster->data[x * 4 + 0 + (y * pngRaster->width * 4)] = palette[i].red;
           pngRaster->data[x * 4 + 1 + (y * pngRaster->width * 4)] = palette[i].green;
           pngRaster->data[x * 4 + 2 + (y * pngRaster->width * 4)] = palette[i].blue;
           pngRaster->data[x * 4 + 3 + (y * pngRaster->width * 4)] = 255;
         }
-      } else {
-        pngRaster->data[x * 4 + 0 + (y * pngRaster->width * 4)] = line[x * bpp + 0];
-        if (bpp == 3 || bpp == 4) {
-          pngRaster->data[x * 4 + 1 + (y * pngRaster->width * 4)] = line[x * bpp + 1];
-          pngRaster->data[x * 4 + 2 + (y * pngRaster->width * 4)] = line[x * bpp + 2];
+      }
+      /*  Each pixel is an R,G,B triple (2) or Each pixel is an R,G,B triple, followed by an alpha sample. (6)*/
+      if (color_type == 2 || color_type == 6) {
+
+        int bpp = 0;
+        int bbpo = 1;
+
+        /* Each pixel is an R,G,B triple: 3 bytes per pixel */
+        if (color_type == 2) {
+          if (bit_depth == 8) {
+            bpp = 3;
+            bbpo = 1;
+          }
+          if (bit_depth == 16) {
+            bpp = 6;
+            bbpo = 2;
+          }
         }
-        if (bpp == 4) {
-          pngRaster->data[x * 4 + 3 + (y * pngRaster->width * 4)] = line[x * 4 + 3];
+
+        /*  Each pixel is an R,G,B triple, followed by an alpha sample.*/
+        if (color_type == 6) {
+          if (bit_depth == 8) {
+            bpp = 4;
+            bbpo = 1;
+          }
+          if (bit_depth == 16) {
+            bpp = 8;
+            bbpo = 2;
+          }
+        }
+
+        /* Red */
+        pngRaster->data[x * 4 + 0 + (y * pngRaster->width * 4)] = line[x * bpp + 0];
+
+        /* Green and blue */
+        pngRaster->data[x * 4 + 1 + (y * pngRaster->width * 4)] = line[x * bpp + 1 * bbpo];
+        pngRaster->data[x * 4 + 2 + (y * pngRaster->width * 4)] = line[x * bpp + 2 * bbpo];
+
+        /* Alpha */
+        if (bpp == 4 || bpp == 8) {
+          pngRaster->data[x * 4 + 3 + (y * pngRaster->width * 4)] = line[x * bpp + 3 * bbpo];
         } else {
           pngRaster->data[x * 4 + 3 + (y * pngRaster->width * 4)] = 255;
         }
