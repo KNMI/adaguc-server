@@ -2987,10 +2987,14 @@ int CRequest::process_querystring() {
       } else {
 
         // Mapping
+        CT::string currentFormat = srvParam->Format;
         for (size_t j = 0; j < srvParam->cfg->WMS[0]->WMSFormat.size(); j++) {
-          if (srvParam->Format.equals(srvParam->cfg->WMS[0]->WMSFormat[j]->attr.name.c_str())) {
+          if (currentFormat.equals(srvParam->cfg->WMS[0]->WMSFormat[j]->attr.name.c_str())) {
             if (srvParam->cfg->WMS[0]->WMSFormat[j]->attr.format.empty() == false) {
               srvParam->Format.copy(srvParam->cfg->WMS[0]->WMSFormat[j]->attr.format.c_str());
+            }
+            if (srvParam->cfg->WMS[0]->WMSFormat[j]->attr.quality.empty() == false) {
+              srvParam->imageQuality = srvParam->cfg->WMS[0]->WMSFormat[j]->attr.quality.toInt();
             }
             break;
           }
@@ -3000,7 +3004,11 @@ int CRequest::process_querystring() {
         // CDBDebug("FORMAT: %s",srvParam->Format.c_str());
         // srvParam->imageFormat=IMAGEFORMAT_IMAGEPNG8;
         CT::string outputFormat = srvParam->Format;
-        if (outputFormat.indexOf("32") > 0) {
+        outputFormat.toLowerCaseSelf();
+        if (outputFormat.indexOf("webp") > 0) {
+          srvParam->imageFormat = IMAGEFORMAT_IMAGEWEBP;
+          srvParam->imageMode = SERVERIMAGEMODE_RGBA;
+        } else if (outputFormat.indexOf("32") > 0) {
           srvParam->imageFormat = IMAGEFORMAT_IMAGEPNG32;
           srvParam->imageMode = SERVERIMAGEMODE_RGBA;
         } else if (outputFormat.indexOf("24") > 0) {
@@ -3015,13 +3023,7 @@ int CRequest::process_querystring() {
         } else if (outputFormat.indexOf("8") > 0) {
           srvParam->imageFormat = IMAGEFORMAT_IMAGEPNG8;
           srvParam->imageMode = SERVERIMAGEMODE_RGBA;
-        } else if (outputFormat.indexOf("webp") > 0) {
-          srvParam->imageFormat = IMAGEFORMAT_IMAGEWEBP;
-          srvParam->imageMode = SERVERIMAGEMODE_RGBA;
         } else if (outputFormat.indexOf("gif") > 0) {
-          srvParam->imageFormat = IMAGEFORMAT_IMAGEGIF;
-          srvParam->imageMode = SERVERIMAGEMODE_8BIT;
-        } else if (outputFormat.indexOf("GIF") > 0) {
           srvParam->imageFormat = IMAGEFORMAT_IMAGEGIF;
           srvParam->imageMode = SERVERIMAGEMODE_8BIT;
         }
