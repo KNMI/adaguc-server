@@ -464,11 +464,12 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
     // Adjust online resource in order to pass on variable and source parameters
     CT::string onlineResource = srvParam->getOnlineResource();
     CT::string stringToAdd;
-    stringToAdd.concat("&source=");
-    stringToAdd.concat(srvParam->autoResourceLocation.c_str());
+    stringToAdd.concat("source=");
+    CT::string autoResourceLocation(srvParam->autoResourceLocation);
+    autoResourceLocation.encodeURLSelf(); // urlencode only the filename
+    stringToAdd.concat(autoResourceLocation);
     // stringToAdd.concat("&variable=");stringToAdd.concat(srvParam->autoResourceVariable.c_str());
 
-    stringToAdd.encodeURLSelf();
     stringToAdd.concat("&amp;");
     onlineResource.concat(stringToAdd.c_str());
     srvParam->setOnlineResource(onlineResource.c_str());
