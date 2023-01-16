@@ -1,0 +1,48 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+  <div class="container">
+      <h1>{{title}}</h1>
+      <p>{{description}}</p>
+  </div>
+{% endblock %}
+
+{% block collection %}
+  <h2>Collection</h2>
+  <div class="collection">
+        <h3>{{collection.title}}&nbsp;({{collection.id}})</h3>
+        <br/>
+        {{collection.description}}
+        <h4>CRS</h4>
+        {% for crs in collection.crs%}
+        {{crs}}
+        {% endfor %}
+        <h4>Links</h4>
+        {% for link in collection.links %}
+            {{link.rel}} = <a href="{{link.href}}">{{link.title}}</a>&nbsp;({{link.type}})
+            <br/>
+        {% endfor %}
+  </div>
+{% endblock %}
+
+{% block links %}
+<h2>Links</h2>
+  <div class="links">
+     <nav>
+        {% for link in collection.links %}
+           {{link.rel}} = <a href="{{link.href}}">{{link.title}}</a> ({{link.type}})
+           </p>
+        {% endfor %}
+     </nav>
+  </div>
+{% endblock %}
+
+{% block json %}
+  <div id="jsonContainer" class="jsonContainer">
+      <script>
+         renderjson.set_show_to_level(3);
+         renderjson.set_icons("+", "-");
+         document.getElementById("jsonContainer").appendChild(renderjson({{collection|tojson}}));
+      </script>
+  </div>
+{% endblock %}
