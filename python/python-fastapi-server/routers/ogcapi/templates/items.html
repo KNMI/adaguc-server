@@ -1,0 +1,47 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+  <div class="container">
+      <h1>Items</h1>
+      <p>{{description}}</p>
+  </div>
+{% endblock %}
+
+{% block itemlist %}
+<h2>Items</h2>
+  <h2>Data from collection {{collection}}</h2>
+  <div class="items">
+        <h3>Features</h3>
+        <br/>
+        {% for feature in items.features %}
+          {{feature}}
+          {{feature.properties.observedPropertyName}}:<br/>
+          {% for ts in feature.properties.timestep %}
+            {{ ts }} {{feature.properties.result[loop.index0]}} {{feature.geometry.coordinates}} [{{feature.id}}]<br/>
+          {% endfor %}
+        {% endfor %}
+        <br/>At: {{items.timeStamp}}
+  </div>
+{% endblock %}
+
+{% block links %}
+<h2>Links 2</h2>
+  <div class="links">
+     <nav>
+        {% for link in items.links %}
+           {{link.rel}} = <a href="{{link.href}}">{{link.title}}</a> ({{link.type}})
+           </p>
+        {% endfor %}
+     </nav>
+  </div>
+{% endblock %}
+
+{% block json %}
+  <div id="jsonContainer" class="jsonContainer">
+      <script>
+         renderjson.set_show_to_level(3);
+         renderjson.set_icons("+", "-");
+         document.getElementById("jsonContainer").appendChild(renderjson({{collection|tojson}}));
+      </script>
+  </div>
+{% endblock %}
