@@ -234,10 +234,7 @@ namespace CT {
     size_t total_len = privatelength + len;
     if (total_len < bufferlength) {
       char *value = useStack ? stackValue : heapValue;
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstringop-overflow"
       strncpy(value + privatelength, _value, len);
-#pragma GCC diagnostic pop
       value[total_len] = '\0';
       privatelength = total_len;
       return;
