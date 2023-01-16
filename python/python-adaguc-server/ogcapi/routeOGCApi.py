@@ -24,7 +24,7 @@ from defusedxml.ElementTree import fromstring, parse, ParseError
 import yaml
 from .schemas.schemas import create_apispec
 
-routeOGCApi = Blueprint('routeOGCApi', __name__, template_folder='templates')
+routeOGCApi = Blueprint("routeOGCApi", __name__, template_folder="templates")
 
 logger = logging.getLogger(__name__)
 
@@ -39,10 +39,7 @@ settings = yaml.safe_load(EXTRA_SETTINGS)
 logger.debug("settings: %s", str(settings))
 
 spec = create_apispec(
-    title="OGCAPI_F",
-    version="0.0.1",
-    openapi_version="3.0.2",
-    settings=settings
+    title="OGCAPI_F", version="0.0.1", openapi_version="3.0.2", settings=settings
 )
 
 SUPPORTED_CRS = [
@@ -57,23 +54,26 @@ def callADAGUC(url):
 
     url = url.decode()
     logger.info(">>>>>%s", url)
-    if '?' in url:
-        url=url[url.index('?')+1:]
+    if "?" in url:
+        url = url[url.index("?") + 1 :]
     logger.info(url)
     stage1 = time.perf_counter()
 
     adagucenv = {}
 
     # Set required environment variables
-    adagucenv['ADAGUC_ONLINERESOURCE'] = os.getenv(
-        'EXTERNALADDRESS', 'http://192.168.178.113:8080') + "/adaguc-server?"
-    adagucenv['ADAGUC_DB'] = os.getenv(
-        'ADAGUC_DB', "user=adaguc password=adaguc host=localhost dbname=adaguc")
+    adagucenv["ADAGUC_ONLINERESOURCE"] = (
+        os.getenv("EXTERNALADDRESS", "http://192.168.178.113:8080") + "/adaguc-server?"
+    )
+    adagucenv["ADAGUC_DB"] = os.getenv(
+        "ADAGUC_DB", "user=adaguc password=adaguc host=localhost dbname=adaguc"
+    )
 
     # Run adaguc-server
     # pylint: disable=unused-variable
     status, data, headers = adagucInstance.runADAGUCServer(
-        url, env=adagucenv,  showLogOnError=True)
+        url, env=adagucenv, showLogOnError=True
+    )
 
     # Obtain logfile
     logfile = adagucInstance.getLogFile()
@@ -97,25 +97,29 @@ def get_capabilities(collname):
     if "dataset" in coll:
         logger.info("callADAGUC by dataset")
         dataset = coll["dataset"]
-        urlrequest = f"dataset={dataset}&service=wms&version=1.3.0&request=getcapabilities"
-        status, response = callADAGUC(url=urlrequest.encode('UTF-8'))
+        urlrequest = (
+            f"dataset={dataset}&service=wms&version=1.3.0&request=getcapabilities"
+        )
+        status, response = callADAGUC(url=urlrequest.encode("UTF-8"))
         logger.info("status: %d", status)
         if status == 0:
             xml = response.getvalue()
-            wms = WebMapService(coll["service"], xml=xml, version='1.3.0')
+            wms = WebMapService(coll["service"], xml=xml, version="1.3.0")
         else:
             logger.error("status: %d", status)
             return {}
     else:
         logger.info("callADAGUC by service %s", coll)
-        wms = WebMapService(coll["service"], version='1.3.0')
+        wms = WebMapService(coll["service"], version="1.3.0")
     return wms.contents
 
+
 def make_bbox(extent):
-    s=[]
+    s = []
     for i in extent:
-        s.append("%f"%(i,))
+        s.append("%f" % (i,))
     return ",".join(s)
+
 
 def get_extent(coll):
     """
@@ -132,32 +136,36 @@ def get_datasets(adagucDataSetDir):
     Return all possible OGCAPI feature datasets, based on the dataset directory
     """
     logger.info("getDatasets(%s)", adagucDataSetDir)
-    datasetFiles = [f for f in os.listdir(adagucDataSetDir) if os.path.isfile(
-        os.path.join(adagucDataSetDir, f)) and f.endswith(".xml")]
+    datasetFiles = [
+        f
+        for f in os.listdir(adagucDataSetDir)
+        if os.path.isfile(os.path.join(adagucDataSetDir, f)) and f.endswith(".xml")
+    ]
     datasets = {}
     for datasetFile in datasetFiles:
         try:
             tree = parse(os.path.join(adagucDataSetDir, datasetFile))
             root = tree.getroot()
-            for ogcapi in root.iter('OgcApiFeatures'):
+            for ogcapi in root.iter("OgcApiFeatures"):
                 logger.info("ogcapi: %s", ogcapi)
                 """Note, service is just a placeholder because it is needed by OWSLib. Adaguc is still ran as executable, not as service"""
                 dataset = {
                     "dataset": datasetFile.replace(".xml", ""),
                     "name": datasetFile.replace(".xml", ""),
                     "title": datasetFile.replace(".xml", "").lower().capitalize(),
-                    "service": "http://localhost:8080/wms?DATASET="+datasetFile.replace(".xml", ""),
+                    "service": "http://localhost:8080/wms?DATASET="
+                    + datasetFile.replace(".xml", ""),
                 }
-                datasets[dataset["name"]]=dataset
+                datasets[dataset["name"]] = dataset
         except ParseError:
             pass
 
     return datasets
 
 
-'''
+"""
 runs before each request for this blueprint
-'''
+"""
 
 
 @routeOGCApi.before_request
@@ -166,6 +174,7 @@ def init_collections():
     Calls Generate OGC API Feature collection function before requests starts
     """
     generate_collections()
+
 
 @cacher.cached(timeout=30, key_prefix="collections")
 def generate_collections():
@@ -266,8 +275,9 @@ def get_args(trequest):
     if "phenomenonTime" in request_args:
         args["phenomenonTime"] = request_args.pop("phenomenonTime", None)
     if "observedPropertyName" in request_args:
-        args["observedPropertyName"] = request_args.pop(
-            "observedPropertyName").split(",")
+        args["observedPropertyName"] = request_args.pop("observedPropertyName").split(
+            ","
+        )
     if "lonlat" in request_args:
         args["lonlat"] = request_args.pop("lonlat")
     if "latlon" in request_args:
@@ -291,11 +301,7 @@ def make_link(pth, rel, typ, title, tvars=None):
     """
     make_link
     """
-    link = {
-        "rel": rel,
-        "type": typ,
-        "title": title
-    }
+    link = {"rel": rel, "type": typ, "title": title}
     if tvars:
         link["href"] = url_for(pth, **tvars)
     else:
@@ -303,7 +309,7 @@ def make_link(pth, rel, typ, title, tvars=None):
     return link
 
 
-@routeOGCApi.route("/", methods=['GET'], strict_slashes=False)
+@routeOGCApi.route("/", methods=["GET"], strict_slashes=False)
 @cross_origin()
 def hello():
     """Root endpoint.
@@ -320,18 +326,43 @@ def hello():
     root = {
         "title": "ADAGUC OGCAPI-Features server",
         "description": "ADAGUC OGCAPI-Features server demo",
-        "links": []
+        "links": [],
     }
-    root["links"].append(make_link(
-        ".hello", "self", "application/json", "ADAGUC OGCAPI_Features server"))
-    root["links"].append(make_link(".api", "service-desc",
-                         "application/vnd.oai.openapi+json;version=3.0", "API definition (JSON)"))
-    root["links"].append(make_link(".api_yaml", "service-desc",
-                         "application/vnd.oai.openapi;version=3.0", "API definition (YAML)"))
-    root["links"].append(make_link(".getconformance", "conformance", "application/json",
-                         "OGC API Features conformance classes implemented by this server"))
-    root["links"].append(make_link(".getcollections", "data",
-                         "application/json", "Metadata about the feature collections"))
+    root["links"].append(
+        make_link(".hello", "self", "application/json", "ADAGUC OGCAPI_Features server")
+    )
+    root["links"].append(
+        make_link(
+            ".api",
+            "service-desc",
+            "application/vnd.oai.openapi+json;version=3.0",
+            "API definition (JSON)",
+        )
+    )
+    root["links"].append(
+        make_link(
+            ".api_yaml",
+            "service-desc",
+            "application/vnd.oai.openapi;version=3.0",
+            "API definition (YAML)",
+        )
+    )
+    root["links"].append(
+        make_link(
+            ".getconformance",
+            "conformance",
+            "application/json",
+            "OGC API Features conformance classes implemented by this server",
+        )
+    )
+    root["links"].append(
+        make_link(
+            ".getcollections",
+            "data",
+            "application/json",
+            "Metadata about the feature collections",
+        )
+    )
 
     if "f" in request.args and request.args["f"] == "html":
         response = render_template("root.html", root=root)
@@ -339,7 +370,7 @@ def hello():
     return root
 
 
-@routeOGCApi.route("/api", methods=['GET'])
+@routeOGCApi.route("/api", methods=["GET"])
 @cross_origin()
 def api():
     """
@@ -350,7 +381,7 @@ def api():
     return resp
 
 
-@routeOGCApi.route("/api.yaml", methods=['GET'])
+@routeOGCApi.route("/api.yaml", methods=["GET"])
 @cross_origin()
 def api_yaml():
     """
@@ -381,12 +412,16 @@ def getconformance():
             "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30",
             "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson",
             "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/html",
-            "http://www.opengis.net/spec/ogcapi-features-2/1.0/conf/crs"
+            "http://www.opengis.net/spec/ogcapi-features-2/1.0/conf/crs",
         ]
     }
     if "f" in request.args and request.args["f"] == "html":
-        response = render_template("conformance.html", title="Conformance",
-                                   description="conforms to:", conformance=conformance)
+        response = render_template(
+            "conformance.html",
+            title="Conformance",
+            description="conforms to:",
+            conformance=conformance,
+        )
         return response
 
     return conformance
@@ -396,7 +431,7 @@ def make_wms1_3(serv):
     """
     Template for WMS 1.3.0 url string
     """
-    return serv+"&service=WMS&version=1.3.0"
+    return serv + "&service=WMS&version=1.3.0"
 
 
 def get_dimensions(l, skip_dims=None):
@@ -457,7 +492,7 @@ def getcollection_by_name(coll):
     param_s = ""
     for p in params:
         if len(param_s) > 0:
-            param_s += ', '
+            param_s += ", "
         param_s += p["name"]
         if "dims" in p:
             for d in p["dims"]:
@@ -470,23 +505,51 @@ def getcollection_by_name(coll):
         "title": collectiondata["title"],
         "name": collectiondata["name"],
         "extent": {"spatial": {"bbox": [get_extent(collectiondata["name"])]}},
-        "description": collectiondata["name"]+" with parameters: "+param_s,
+        "description": collectiondata["name"] + " with parameters: " + param_s,
         "links": [],
         "crs": ["http://www.opengis.net/def/crs/OGC/1.3/CRS84"],
-        "storageCrs": "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+        "storageCrs": "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
     }
 
-    c["links"].append(make_link(".getcollection",
-                                "self", "application/json", "Metadata of "+collectiondata["title"], {"coll": collectiondata["name"]}))
+    c["links"].append(
+        make_link(
+            ".getcollection",
+            "self",
+            "application/json",
+            "Metadata of " + collectiondata["title"],
+            {"coll": collectiondata["name"]},
+        )
+    )
 
-    c["links"].append(make_link(".getcollection",
-                                "self", "text/html", "Metadata of "+collectiondata["title"], {"coll": collectiondata["name"], "f": "html"}))
+    c["links"].append(
+        make_link(
+            ".getcollection",
+            "self",
+            "text/html",
+            "Metadata of " + collectiondata["title"],
+            {"coll": collectiondata["name"], "f": "html"},
+        )
+    )
 
-    c["links"].append(make_link(".getcollitems",
-                                "self", "application/geo+json", "Items of "+collectiondata["title"], {"coll": collectiondata["name"], "f": "json"}))
+    c["links"].append(
+        make_link(
+            ".getcollitems",
+            "self",
+            "application/geo+json",
+            "Items of " + collectiondata["title"],
+            {"coll": collectiondata["name"], "f": "json"},
+        )
+    )
 
-    c["links"].append(make_link(".getcollitems",
-                                "self", "text/html", "Items of "+collectiondata["title"], {"coll": collectiondata["name"], "f": "html"}))
+    c["links"].append(
+        make_link(
+            ".getcollitems",
+            "self",
+            "text/html",
+            "Items of " + collectiondata["title"],
+            {"coll": collectiondata["name"], "f": "html"},
+        )
+    )
     return c
 
 
@@ -510,12 +573,25 @@ def getcollections():
             "http://www.opengis.net/def/crs/EPSG/0/4326",
         ],
         "collections": [],
-        "links": []
+        "links": [],
     }
-    res["links"].append(make_link(".getcollections",
-                                  "self", "application/json", "Metadata about the feature collections"))
-    res["links"].append(make_link(".getcollections",
-                                  "alternate", "text/html", "Metadata about the feature collections (HTML)", {"f": "html"}))
+    res["links"].append(
+        make_link(
+            ".getcollections",
+            "self",
+            "application/json",
+            "Metadata about the feature collections",
+        )
+    )
+    res["links"].append(
+        make_link(
+            ".getcollections",
+            "alternate",
+            "text/html",
+            "Metadata about the feature collections (HTML)",
+            {"f": "html"},
+        )
+    )
     for c in generate_collections().values():
         res["collections"].append(getcollection_by_name(c["name"]))
 
@@ -552,8 +628,7 @@ def request_by_id(url, name, headers=None, requested_id=None):
     """
     request_by_id
     """
-    url = make_wms1_3(
-        url)+"&request=getPointValue&INFO_FORMAT=application/json"
+    url = make_wms1_3(url) + "&request=getPointValue&INFO_FORMAT=application/json"
 
     if requested_id is not None:
         # Get feature data for this id
@@ -576,24 +651,44 @@ def request_by_id(url, name, headers=None, requested_id=None):
         response = requests.get(url, headers=headers, timeout=TIMEOUT)
         if response.status_code == 200:
             try:
-                data = json.loads(response.content.decode(
-                    'utf-8'), object_pairs_hook=OrderedDict)
+                data = json.loads(
+                    response.content.decode("utf-8"), object_pairs_hook=OrderedDict
+                )
             except ValueError:
-                root = fromstring(response.content.decode('utf-8'))
+                root = fromstring(response.content.decode("utf-8"))
 
                 return 400, root[0].text.strip(), None
             dat = data[0]
             item_feature = feature_from_dat(dat, observedPropertyName, name)
             feature = item_feature[0]
             feature["links"] = [
-                make_link(".getcollitembyid", "self", "application/geo+json",
-                          "This document", {"coll": name, "featureid": requested_id}),
-                make_link(".getcollitembyid", "alternate", "text/html", "This document in html",
-                          {"coll": name, "featureid": requested_id, "f": "html"}),
-                make_link(".getcollection", "collection",
-                          "application/json", "Collection", {"coll": name})
+                make_link(
+                    ".getcollitembyid",
+                    "self",
+                    "application/geo+json",
+                    "This document",
+                    {"coll": name, "featureid": requested_id},
+                ),
+                make_link(
+                    ".getcollitembyid",
+                    "alternate",
+                    "text/html",
+                    "This document in html",
+                    {"coll": name, "featureid": requested_id, "f": "html"},
+                ),
+                make_link(
+                    ".getcollection",
+                    "collection",
+                    "application/json",
+                    "Collection",
+                    {"coll": name},
+                ),
             ]
-            return 200, json.dumps(feature), {'Content-Crs': "<http://www.opengis.net/def/crs/OGC/1.3/CRS84>"}
+            return (
+                200,
+                json.dumps(feature),
+                {"Content-Crs": "<http://www.opengis.net/def/crs/OGC/1.3/CRS84>"},
+            )
     return 400, None, None
 
 
@@ -617,14 +712,18 @@ def feature_from_dat(dat, observedPropertyName, name):
     tuples = list(itertools.product(*valstack))
 
     features = []
-    logger.info("TUPLES: %s [%d] %s", json.dumps(
-        tuples), len(tuples), json.dumps(dims_without_time))
+    logger.info(
+        "TUPLES: %s [%d] %s",
+        json.dumps(tuples),
+        len(tuples),
+        json.dumps(dims_without_time),
+    )
 
     for t in tuples:
         logger.info("T:%s", t)
         result = []
         for ts in timeSteps:
-            v = multi_get(dat["data"], t+(ts,))
+            v = multi_get(dat["data"], t + (ts,))
             if v:
                 try:
                     value = float(v)
@@ -640,9 +739,11 @@ def feature_from_dat(dat, observedPropertyName, name):
         for dim_value in t:
             feature_dims[list(dims_without_time[i].keys())[0]] = dim_value
             # pylint: disable=consider-using-f-string
-            feature_id = feature_id + \
-                ";%s=%s" % (list(dims_without_time[i].keys())[0], dim_value)
-            i = i+1
+            feature_id = feature_id + ";%s=%s" % (
+                list(dims_without_time[i].keys())[0],
+                dim_value,
+            )
+            i = i + 1
 
         feature_id = feature_id + f";{timeSteps[0]}${timeSteps[-1]}"
         if len(feature_dims) == 0:
@@ -650,7 +751,7 @@ def feature_from_dat(dat, observedPropertyName, name):
                 "timestep": timeSteps,
                 "observationType": "MeasureTimeseriesObservation",
                 "observedPropertyName": observedPropertyName,
-                "result": result
+                "result": result,
             }
         else:
             properties = {
@@ -658,7 +759,7 @@ def feature_from_dat(dat, observedPropertyName, name):
                 "dims": feature_dims,
                 "observationType": "MeasureTimeseriesObservation",
                 "observedPropertyName": observedPropertyName,
-                "result": result
+                "result": result,
             }
 
         coords = dat["point"]["coords"].split(",")
@@ -666,12 +767,9 @@ def feature_from_dat(dat, observedPropertyName, name):
         coords[1] = float(coords[1])
         feature = {
             "type": "Feature",
-            "geometry": {
-                    "type": "Point",
-                    "coordinates":  coords
-            },
+            "geometry": {"type": "Point", "coordinates": coords},
             "properties": properties,
-            "id": feature_id
+            "id": feature_id,
         }
         features.append(feature)
     return features
@@ -698,25 +796,26 @@ def getcollitembyid(coll, featureid):
     """
 
     headers = {
-        'Content-Type': 'application/geo+json',
+        "Content-Type": "application/geo+json",
     }
 
     coll_info = generate_collections().get(coll)
     (status, feature, headers) = request_by_id(
-        coll_info["service"], coll_info["name"], headers, featureid)
+        coll_info["service"], coll_info["name"], headers, featureid
+    )
     return Response(feature, status, headers=headers)
 
 
 def calculate_coords(bbox, nlon, nlat):
     """calculate_coords"""
-    bboxvalues=[float(i) for i in bbox.split(",")]
-    dlon = (bboxvalues[2]-bboxvalues[0])/(nlon+1)
-    dlat = (bboxvalues[3]-bboxvalues[1])/(nlat+1)
+    bboxvalues = [float(i) for i in bbox.split(",")]
+    dlon = (bboxvalues[2] - bboxvalues[0]) / (nlon + 1)
+    dlat = (bboxvalues[3] - bboxvalues[1]) / (nlat + 1)
     coords = []
     for lo in range(nlon):
-        lon = bboxvalues[0]+lo*dlon+dlon/2.
+        lon = bboxvalues[0] + lo * dlon + dlon / 2.0
         for la in range(nlat):
-            lat = bboxvalues[1]+la*dlat+dlat/2
+            lat = bboxvalues[1] + la * dlat + dlat / 2
             coords.append([lon, lat])
     return coords
 
@@ -726,21 +825,23 @@ def get_coords(coords, tnext, limit):
     if tnext > len(coords):
         return None
     else:
-        return coords[tnext:tnext+limit]
+        return coords[tnext : tnext + limit]
 
 
 def replaceNextToken(url, newNextToken):
     """replaceNextToken"""
     if "nextToken=" in url:
-        return re.sub(r'(.*)nextToken=(\d+)(.*)', r'\1nextToken='+newNextToken+r'\3', url)
-    return url+'&nextToken='+newNextToken
+        return re.sub(
+            r"(.*)nextToken=(\d+)(.*)", r"\1nextToken=" + newNextToken + r"\3", url
+        )
+    return url + "&nextToken=" + newNextToken
 
 
 def replaceFormat(url, newFormat):
     """replaceFormat"""
     if "f=" in url:
-        return re.sub(r'(.*)f=([^&]*)(&.*)', r'\1&f='+newFormat+r'\3', url)
-    return url+"&f="+newFormat
+        return re.sub(r"(.*)f=([^&]*)(&.*)", r"\1&f=" + newFormat + r"\3", url)
+    return url + "&f=" + newFormat
 
 
 def get_reference_times(collinfo, layer, last=False):
@@ -757,11 +858,11 @@ def get_reference_times(collinfo, layer, last=False):
 
     return None
 
+
 def request_(call_adaguc, url, args, name, headers=None):
     # pylint: disable=consider-using-f-string
     """request_"""
-    url = make_wms1_3(
-        url)+"&request=getPointValue&INFO_FORMAT=application/json"
+    url = make_wms1_3(url) + "&request=getPointValue&INFO_FORMAT=application/json"
 
     if "latlon" in args and args["latlon"]:
         x = args["latlon"].split(",")[1]
@@ -783,7 +884,10 @@ def request_(call_adaguc, url, args, name, headers=None):
         url = "%s&TIME=%s" % (url, "*")
 
     url = "%s&LAYERS=%s&QUERY_LAYERS=%s" % (
-        url, args["observedPropertyName"], args["observedPropertyName"])
+        url,
+        args["observedPropertyName"],
+        args["observedPropertyName"],
+    )
 
     if "dims" in args and args["dims"]:
         for dim in args["dims"].split(";"):
@@ -794,43 +898,50 @@ def request_(call_adaguc, url, args, name, headers=None):
                 url = "%s&DIM_%s=%s" % (url, dimname, dimval)
 
     if call_adaguc:
-        status, data = callADAGUC(url.encode('UTF-8'))
-        print('s: %d, data=%s', status, data)
+        status, data = callADAGUC(url.encode("UTF-8"))
+        print("s: %d, data=%s", status, data)
         if status == 0:
             try:
-                response_data = json.loads(data.getvalue(), object_pairs_hook=OrderedDict)
+                response_data = json.loads(
+                    data.getvalue(), object_pairs_hook=OrderedDict
+                )
             except ValueError:
                 root = fromstring(data)
                 logger.info("ET:%s", root)
 
                 retval = json.dumps(
-                    {"Error":  {"code": root[0].attrib["code"], "message": root[0].text}})
+                    {"Error": {"code": root[0].attrib["code"], "message": root[0].text}}
+                )
                 logger.info("retval=%s", retval)
                 return 400, root[0].text.strip()
             features = []
             for data in response_data:
                 data_features = feature_from_dat(
-                    data, args["observedPropertyName"], name)
+                    data, args["observedPropertyName"], name
+                )
                 features.extend(data_features)
             return 200, features
     else:
         response = requests.get(url, headers=headers, timeout=TIMEOUT)
         if response.status_code == 200:
             try:
-                response_data = json.loads(response.content.decode(
-                    'utf-8'), object_pairs_hook=OrderedDict)
+                response_data = json.loads(
+                    response.content.decode("utf-8"), object_pairs_hook=OrderedDict
+                )
             except ValueError:
-                root = fromstring(response.content.decode('utf-8'))
+                root = fromstring(response.content.decode("utf-8"))
                 logger.info("ET:%s", root)
 
                 retval = json.dumps(
-                    {"Error":  {"code": root[0].attrib["code"], "message": root[0].text}})
+                    {"Error": {"code": root[0].attrib["code"], "message": root[0].text}}
+                )
                 logger.info("retval=%s", retval)
                 return 400, root[0].text.strip()
             features = []
             for data in response_data:
                 data_features = feature_from_dat(
-                    data, args["observedPropertyName"], name)
+                    data, args["observedPropertyName"], name
+                )
                 features.extend(data_features)
             return 200, features
     return 400, "Error"
@@ -891,14 +1002,14 @@ def getcollitems(coll):
     if leftover_args > 0:
         return Response("Too many arguments", 400)
 
-    headers = {
-        'Content-Type': 'application/json'
-    }
+    headers = {"Content-Type": "application/json"}
 
     features = []
     if "observedPropertyName" not in args or args["observedPropertyName"] is None:
         collinfo = get_parameters(coll)
-        args["observedPropertyName"] = [collinfo["layers"][0]["name"]] # Default observedPropertyName = first layername
+        args["observedPropertyName"] = [
+            collinfo["layers"][0]["name"]
+        ]  # Default observedPropertyName = first layername
     logger.info("OBS:%s", args["observedPropertyName"])
 
     if "resultTime" not in args:
@@ -910,13 +1021,17 @@ def getcollitems(coll):
         param_args = {**args}
         param_args["observedPropertyName"] = parameter_name
         if "resultTime" not in param_args:
-            latest_reference_time = get_reference_times(
-                collinfo, parameter_name, True)
+            latest_reference_time = get_reference_times(collinfo, parameter_name, True)
             if latest_reference_time:
                 param_args["resultTime"] = latest_reference_time
         if "lonlat" in param_args or "latlon" in param_args:
             status, coordfeatures = request_(
-                "dataset" in coll_info, coll_info["service"], param_args, coll_info["name"], headers)
+                "dataset" in coll_info,
+                coll_info["service"],
+                param_args,
+                coll_info["name"],
+                headers,
+            )
             if status == 200:
                 features.extend(coordfeatures)
         else:
@@ -925,29 +1040,61 @@ def getcollitems(coll):
             for c in coords:
                 param_args["lonlat"] = f"{c[0]},{c[1]}"
                 status, coordfeatures = request_(
-                    "dataset" in coll_info, coll_info["service"], param_args, coll_info["name"], headers)
+                    "dataset" in coll_info,
+                    coll_info["service"],
+                    param_args,
+                    coll_info["name"],
+                    headers,
+                )
                 if status == 200:
                     features.extend(coordfeatures)
 
     if "f" in request.args and request.args["f"] == "html":
         links = [
-            make_link(".getcollitems", "self", "text/html",
-                      "This document", {"coll": coll, "f": "html"}),
-            make_link(".getcollitems", "alternate",
-                      "application/geo+json", "This document", {"coll": coll}),
+            make_link(
+                ".getcollitems",
+                "self",
+                "text/html",
+                "This document",
+                {"coll": coll, "f": "html"},
+            ),
+            make_link(
+                ".getcollitems",
+                "alternate",
+                "application/geo+json",
+                "This document",
+                {"coll": coll},
+            ),
         ]
     else:
         links = [
-            make_link(".getcollitems", "self", "application/geo+json",
-                      "This document", {"coll": coll}),
-            make_link(".getcollitems", "alternate", "text/html",
-                      "This document", {"coll": coll, "f": "html"}),
+            make_link(
+                ".getcollitems",
+                "self",
+                "application/geo+json",
+                "This document",
+                {"coll": coll},
+            ),
+            make_link(
+                ".getcollitems",
+                "alternate",
+                "text/html",
+                "This document",
+                {"coll": coll, "f": "html"},
+            ),
         ]
 
-    response_features = features[nextToken:nextToken+limit]
-    if len(features) > limit and len(features) > (nextToken+limit):
-        links.append(make_link(".getcollitems", "next", "application/geo+json",
-                     "Next set of elements", {"coll": coll, "limit": limit}))
+    response_features = features[nextToken : nextToken + limit]
+    if len(features) > limit and len(features) > (nextToken + limit):
+        links.append(
+            make_link(
+                ".getcollitems",
+                "next",
+                "application/geo+json",
+                "Next set of elements",
+                {"coll": coll, "limit": limit},
+            )
+        )
 
     featurecollection = {
         "type": "FeatureCollection",
@@ -955,16 +1102,19 @@ def getcollitems(coll):
         "timeStamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
         "numberReturned": len(response_features),
         "numberMatched": len(features),
-        "links": links
+        "links": links,
     }
 
     mime_type = "application/geo+json"
-    headers = {'Content-Crs': "<http://www.opengis.net/def/crs/OGC/1.3/CRS84>"}
+    headers = {"Content-Crs": "<http://www.opengis.net/def/crs/OGC/1.3/CRS84>"}
     if "f" in request.args and request.args["f"] == "html":
         response = render_template(
-            "items.html", collection=coll_info["name"], items=featurecollection)
+            "items.html", collection=coll_info["name"], items=featurecollection
+        )
         return response
-    return Response(json.dumps(featurecollection), 200, mimetype=mime_type, headers=headers)
+    return Response(
+        json.dumps(featurecollection), 200, mimetype=mime_type, headers=headers
+    )
 
 
 def init_views():
@@ -975,5 +1125,4 @@ def init_views():
         spec.path(view=getcollection, path="/collections/<coll>")
         spec.path(view=getcollections, path="/collections")
         spec.path(view=getcollitems, path="/collections/<coll>/items")
-        spec.path(view=getcollitembyid,
-                  path="/collections/<coll>/items/<featureid>")
+        spec.path(view=getcollitembyid, path="/collections/<coll>/items/<featureid>")
