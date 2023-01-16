@@ -15,3 +15,7 @@ apispec
 apispec-webframeworks
 marshmallow-oneofschema
 defusedxml
+fastapi
+httpx
+geojson-pydantic
+cachetools>=5.2.1
