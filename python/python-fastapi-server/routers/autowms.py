@@ -40,7 +40,7 @@ def handleDatasetsRoute(adagucDataSetDir, adagucOnlineResource):
         if os.path.isfile(os.path.join(adagucDataSetDir, f)) and f.endswith(".xml")
     ]
     datasets = []
-    for datasetFile in datasetFiles:
+    for datasetFile in sorted(datasetFiles, key=lambda f: f.upper()):
         datasets.append(
             {
                 "path": "/adaguc::datasets/" + datasetFile,
@@ -213,7 +213,6 @@ async def handleAutoWMS(req: Request, request: str = None, path: str = None):
     url = req.url
     baseUrl = f"{url.scheme}://{url.hostname}:{url.port}"
     adagucOnlineResource = os.getenv("EXTERNALADDRESS", baseUrl)
-    print("Online resource = [%s]" % adagucOnlineResource)
     if request is None or path is None:
         response = Response(
             content="Mandatory parameters [request] and or [path] are missing",
@@ -226,7 +225,6 @@ async def handleAutoWMS(req: Request, request: str = None, path: str = None):
             status_code=400,
         )
         return response
-    print(path)
 
     if path == "":
         return handleBaseRoute()
