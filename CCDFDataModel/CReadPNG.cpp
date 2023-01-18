@@ -168,29 +168,32 @@ CReadPNG::CPNGRaster *CReadPNG::read_png_file(const char *file_name, bool pngRea
           for (int j = 0; j < 8; j++) {
             int nx = x * 32 + j * 4;
             if (nx + 3 < pngRaster->width * 4) {
-              pngRaster->data[nx + 0 + (y * pngRaster->width * 4)] = palette[(i & d) / d].red;
-              pngRaster->data[nx + 1 + (y * pngRaster->width * 4)] = palette[(i & d) / d].green;
-              pngRaster->data[nx + 2 + (y * pngRaster->width * 4)] = palette[(i & d) / d].blue;
-              pngRaster->data[nx + 3 + (y * pngRaster->width * 4)] = 255;
+              size_t b = nx + 0 + (y * pngRaster->width * 4);
+              pngRaster->data[b + 0] = palette[(i & d) / d].red;
+              pngRaster->data[b + 1] = palette[(i & d) / d].green;
+              pngRaster->data[b + 2] = palette[(i & d) / d].blue;
+              pngRaster->data[b + 3] = 255;
             }
             d = d / 2;
           }
         }
         if (bit_depth == 4) { // 1 byte is 2 pixels (colormap of 16 colors)
-          pngRaster->data[x * 8 + 0 + (y * pngRaster->width * 4)] = palette[i / 16].red;
-          pngRaster->data[x * 8 + 1 + (y * pngRaster->width * 4)] = palette[i / 16].green;
-          pngRaster->data[x * 8 + 2 + (y * pngRaster->width * 4)] = palette[i / 16].blue;
-          pngRaster->data[x * 8 + 3 + (y * pngRaster->width * 4)] = 255;
-          pngRaster->data[x * 8 + 4 + (y * pngRaster->width * 4)] = palette[i % 16].red;
-          pngRaster->data[x * 8 + 5 + (y * pngRaster->width * 4)] = palette[i % 16].green;
-          pngRaster->data[x * 8 + 6 + (y * pngRaster->width * 4)] = palette[i % 16].blue;
-          pngRaster->data[x * 8 + 7 + (y * pngRaster->width * 4)] = 255;
+          size_t b = x * 8 + (y * pngRaster->width * 4);
+          pngRaster->data[b + 0] = palette[i / 16].red;
+          pngRaster->data[b + 1] = palette[i / 16].green;
+          pngRaster->data[b + 2] = palette[i / 16].blue;
+          pngRaster->data[b + 3] = 255;
+          pngRaster->data[b + 4] = palette[i % 16].red;
+          pngRaster->data[b + 5] = palette[i % 16].green;
+          pngRaster->data[b + 6] = palette[i % 16].blue;
+          pngRaster->data[b + 7] = 255;
         }
         if (bit_depth == 8) { // 1 byte is 1 pixel (colormap of 256 colors)
-          pngRaster->data[x * 4 + 0 + (y * pngRaster->width * 4)] = palette[i].red;
-          pngRaster->data[x * 4 + 1 + (y * pngRaster->width * 4)] = palette[i].green;
-          pngRaster->data[x * 4 + 2 + (y * pngRaster->width * 4)] = palette[i].blue;
-          pngRaster->data[x * 4 + 3 + (y * pngRaster->width * 4)] = 255;
+          size_t b = x * 4 + 0 + (y * pngRaster->width * 4);
+          pngRaster->data[b + 0] = palette[i].red;
+          pngRaster->data[b + 1] = palette[i].green;
+          pngRaster->data[b + 2] = palette[i].blue;
+          pngRaster->data[b + 3] = 255;
         }
       }
       /*  Each pixel is an R,G,B triple (2) or Each pixel is an R,G,B triple, followed by an alpha sample. (6)*/
