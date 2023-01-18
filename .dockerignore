@@ -13,4 +13,8 @@
 !data/
 !hclasses/
 !python/
-!tests/
+!tests/AdagucTests/
+!tests/expectedoutputs/
+!tests/inspiretests/
+!tests/functional_test.py
+!tests/starttests.sh
