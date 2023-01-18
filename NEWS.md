@@ -1,4 +1,8 @@
 
+**Version 2.8.2 2023-01-10**
+- WebP quality is now configurable via WMSFormat and WMS Format (use format=image/webp;90) 
+- PNG can now read more image types (PNG color_type=6)
+
 **Version 2.8.1 2022-12-24**
 - Using debian as base docker image
 
