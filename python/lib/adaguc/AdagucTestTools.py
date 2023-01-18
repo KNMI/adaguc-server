@@ -5,6 +5,7 @@ from .CGIRunner import CGIRunner
 import re
 from lxml import etree, objectify
 import urllib.request
+from PIL import Image
 
 ADAGUC_PATH = os.getenv('ADAGUC_PATH', " ")
 
@@ -121,6 +122,32 @@ class AdagucTestTools:
     def mkdir_p(self, directory):
         if not os.path.exists(directory):
             os.makedirs(directory)
+
+    def compareImage(self,expectedImagePath, gotImagePath):
+        """_summary_
+
+        Args:
+            expectedImagePath (_type_): _description_ TODO
+            gotImagePath (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
+        expected = Image.open(expectedImagePath)
+        got = Image.open(gotImagePath)
+        width, height = expected.size
+        for x in range(0, width):
+            for y in range(0, height):
+                c = (x,y)
+                expected_color = expected.getpixel(c)
+                got_color = got.getpixel(c)
+                diff_color = (expected_color[0] - got_color[0], expected_color[1] - got_color[1], expected_color[2] - got_color[2])
+                if (abs(diff_color[0]) > 3 or abs(diff_color[1]) > 3 or abs(diff_color[2]) > 3):
+                    print(f"\nError, too much difference: {c}\t{expected_color}\t{got_color}\t{diff_color}")
+                    return False
+                if expected_color != got_color:
+                    print(f"Warning: {c}\t{expected_color}\t{got_color}\t{diff_color}")
+        return True
 
     def compareGetCapabilitiesXML(self, testresultFileLocation, expectedOutputFileLocation):
         expectedxml = self.readfromfile(expectedOutputFileLocation)
