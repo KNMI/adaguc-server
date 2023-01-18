@@ -89,7 +89,7 @@ public:
     this->lineWidth = lineWidth;
     this->linecolor = linecolor;
     this->textcolor = textcolor;
-    this->continuousInterval = continuousInterval;
+    this->continuousInterval = 0;
 
     if (_definedIntervals != NULL) {
       CT::string defIntervalString = _definedIntervals;
