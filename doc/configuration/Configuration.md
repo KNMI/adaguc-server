@@ -149,6 +149,7 @@ Configuration
     -   [AdditionalLayer](AdditionalLayer.md) (replace, style) `<value>` -
         Configure a new layer which is a composition of multiple other
         layers.
+    -   [WMSFormat](WMSFormat.md) (name, quality) - Force the image format for this layer.
     -   \*All Style elements are accessible in Layer and can be
         overridden
 
