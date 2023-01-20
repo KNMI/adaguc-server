@@ -1,4 +1,7 @@
 
+**Version 2.8.3 2023-01-20**
+- Nearest neighbour rendering can now be done with discrete classes using ShadeInterval and renderhint="discreteclasses"
+
 **Version 2.8.2 2023-01-10**
 - WebP quality is now configurable via WMSFormat and WMS Format (use format=image/webp;90) 
 - PNG can now read more image types (PNG color_type=6)
