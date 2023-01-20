@@ -195,7 +195,7 @@ int CDataReader::getCRS(CDataSource *dataSource) {
   }
 
   // If undefined, set standard lat lon projection
-  CREPORT_WARN_NODOC(CT::string("No correct projection found, using by default the geographic coordinate system (latitude and longitude)."), CReportMessage::Categories::GENERAL);
+  // CREPORT_WARN_NODOC(CT::string("No correct projection found, using by default the geographic coordinate system (latitude and longitude)."), CReportMessage::Categories::GENERAL);
   copyLatLonCRS(dataSource);
   return 0;
 }
@@ -231,7 +231,7 @@ bool CDataReader::copyCRSFromConfigToDataSource(CDataSource *dataSource) const {
 }
 
 void CDataReader::copyLatLonCRS(CDataSource *dataSource) const {
-  CREPORT_INFO_NODOC(CT::string("Using the geographic coordinate system (latitude and longitude)"), CReportMessage::Categories::GENERAL);
+  // CREPORT_INFO_NODOC(CT::string("Using the geographic coordinate system (latitude and longitude)"), CReportMessage::Categories::GENERAL);
   dataSource->nativeProj4.copy("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
   dataSource->nativeEPSG.copy("EPSG:4326");
 }

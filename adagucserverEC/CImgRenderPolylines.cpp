@@ -26,7 +26,6 @@
 #include "CImgRenderPolylines.h"
 #include <set>
 #include "CConvertGeoJSON.h"
-#include <values.h>
 #include <string>
 
 //   #define MEASURETIME

@@ -1,5 +1,19 @@
-**Version 2.7.12 2022-12-19**
+
+**Version 2.8.2 2023-01-10**
+- WebP quality is now configurable via WMSFormat and WMS Format (use format=image/webp;90) 
+- PNG can now read more image types (PNG color_type=6)
+
+**Version 2.8.1 2022-12-24**
+- Using debian as base docker image
+
+**Version 2.8.0 2022-12-23**
+- Support for building Adaguc on Mac M1 architecture (arm64) 
+
+**Version 2.7.13 2022-12-20**
 - Support for HDF5 ODIM files containing one dataset with lat/lon and time.
+
+**Version 2.7.12 2022-12-19**
+- Rolling archives are now possible by setting the retentionperiod in the FilePath setting of the layer configuration
 
 **Version 2.7.11 2022-12-15**
 
