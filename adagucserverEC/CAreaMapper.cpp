@@ -216,9 +216,7 @@ template <class T> int CAreaMapper::myDrawRawTile(const T *data, double *x_corne
       int destPixelY = dstpixel_y + dDestY;
 
       if (sourceSampleX >= 0 && sourceSampleX < width && sourceSampleY >= 0 && sourceSampleY < height && destPixelX >= 0 && destPixelY >= 0 && destPixelX < imageWidth && destPixelY < imageHeight) {
-        bool pixelSet = false;
         imgpointer = sourceSampleX + (sourceSampleY)*width;
-
         val = data[imgpointer];
         isNodata = false;
         if (hasNodataValue) {
@@ -230,11 +228,15 @@ template <class T> int CAreaMapper::myDrawRawTile(const T *data, double *x_corne
             if (val < legendLowerRange || val > legendUpperRange) isNodata = true;
         if (!isNodata) {
           if (isUsingShadeIntervals) {
-            for (size_t j = 0; j < intervals.size(); j += 1) {
+            bool pixelSet = false; // Remember if a pixel was set. If not set and bgColorDefined is defined, draw the background color.
+            for (size_t j = 0; (j < intervals.size() && pixelSet == false); j += 1) {
               if (val >= intervals[j].min && val < intervals[j].max) {
                 drawImage->setPixel(destPixelX, dstpixel_y + dDestY, intervals[j].color);
                 pixelSet = true;
               }
+            }
+            if (bgColorDefined && pixelSet == false) {
+              drawImage->setPixel(destPixelX, dstpixel_y + dDestY, bgColor);
             }
           } else {
             if (legendLog != 0) {
@@ -249,12 +251,9 @@ template <class T> int CAreaMapper::myDrawRawTile(const T *data, double *x_corne
             else if (pcolorind <= 0)
               pcolorind = 0;
             drawImage->setPixelIndexed(destPixelX, dstpixel_y + dDestY, pcolorind);
-            pixelSet = true;
           }
         }
-        if (bgColorDefined && pixelSet == false) {
-          drawImage->setPixel(destPixelX, dstpixel_y + dDestY, bgColor);
-        }
+
         if (debug) {
           bool draw = false;
           bool draw2 = false;

@@ -130,8 +130,9 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
 
   if (definedLegendOnShadeClasses) {
     float blockHeight = (legendImage->Geo->dHeight - 40) / styleConfiguration->shadeIntervals->size();
+    /* Legend classes displayed as blocks in the legend can have a maximum and a minimum height depending on the amount of classes and legendheight */
     if (blockHeight > 12) blockHeight = 12;
-    if (blockHeight < 6) blockHeight = 6;
+    if (blockHeight < 3) blockHeight = 3;
     char szTemp[1024];
     for (size_t j = 0; j < styleConfiguration->shadeIntervals->size(); j++) {
       CServerConfig::XMLE_ShadeInterval *s = (*styleConfiguration->shadeIntervals)[j];
