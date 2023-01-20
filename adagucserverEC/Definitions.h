@@ -119,6 +119,8 @@
 #define MAX_IMAGE_WIDTH 16384
 #define MAX_IMAGE_HEIGHT 16384
 
+#define RENDERHINT_DISCRETECLASSES "discreteclasses"
+
 #define ADAGUC_USE_CAIRO
 
 // #define CImgWarpBilinear_DEBUG

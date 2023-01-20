@@ -266,8 +266,24 @@ private:
     }
   }
 
+  /* TODO: Maarten Plieger 2023-01-20: Possibly re-use this in CAreaMapper.h */
   class Settings {
   public:
+    class Interval {
+    public:
+      float min;
+      float max;
+      CColor color;
+      Interval(float min, float max, CColor color) {
+        this->min = min;
+        this->max = max;
+        this->color = color;
+      }
+    };
+    bool isUsingShadeIntervals = false;
+    std::vector<Interval> intervals;
+    CColor bgColor;
+    bool bgColorDefined = false;
     double dfNodataValue;
     double legendValueRange;
     double legendLowerRange;
@@ -282,10 +298,18 @@ private:
   };
 
   template <class T> static void drawFunction(int x, int y, T val, void *_settings, void *) {
+    /*
+      Please note that this is part of the precise renderer. Changes to this routine should also be implemented in:
+
+      adagucserverEC/CAreaMapper.cpp, myDrawRawTile
+    */
     Settings *settings = (Settings *)_settings;
     if (settings->drawImage->trueColorAVG_RGBA == false) {
+      /* Using the precise renderer with shadeinterval */
 
+      /* Using the precise renderer with a legend */
       bool isNodata = false;
+
       if (settings->hasNodataValue) {
         if (val == settings->nodataValue) isNodata = true;
       }
@@ -294,23 +318,33 @@ private:
         if (settings->legendValueRange)
           if (val < settings->legendLowerRange || val > settings->legendUpperRange) isNodata = true;
       if (!isNodata) {
-        if (settings->legendLog != 0) {
-          if (val > 0) {
-            val = (T)(log10(val) / settings->legendLogAsLog);
-          } else
-            val = (T)(-settings->legendOffset);
+        if (settings->isUsingShadeIntervals) {
+          bool pixelSet = false; // Remember if a pixel was set. If not set and bgColorDefined is defined, draw the background color.
+          for (size_t j = 0; (j < settings->intervals.size() && pixelSet == false); j += 1) {
+            if (val >= settings->intervals[j].min && val < settings->intervals[j].max) {
+              settings->drawImage->setPixel(x, y, settings->intervals[j].color);
+              pixelSet = true;
+            }
+          }
+          if (settings->bgColorDefined && pixelSet == false) {
+            settings->drawImage->setPixel(x, y, settings->bgColor);
+          }
+        } else {
+          if (settings->legendLog != 0) {
+            if (val > 0) {
+              val = (T)(log10(val) / settings->legendLogAsLog);
+            } else
+              val = (T)(-settings->legendOffset);
+          }
+          int pcolorind = (int)(val * settings->legendScale + settings->legendOffset);
+          if (pcolorind >= 239)
+            pcolorind = 239;
+          else if (pcolorind <= 0)
+            pcolorind = 0;
+          settings->drawImage->setPixelIndexed(x, y, pcolorind);
         }
-        int pcolorind = (int)(val * settings->legendScale + settings->legendOffset);
-        // val+=legendOffset;
-        if (pcolorind >= 239)
-          pcolorind = 239;
-        else if (pcolorind <= 0)
-          pcolorind = 0;
-
-        settings->drawImage->setPixelIndexed(x, y, pcolorind);
-
-        // settings->drawImage->setPixelTrueColorOverWrite(x,y,0,0,0,0);
       }
+
     } else {
       if (x >= 0 && y >= 0 && x < settings->drawImage->Geo->dWidth && y < settings->drawImage->Geo->dHeight) {
         size_t p = x + y * settings->drawImage->Geo->dWidth;
@@ -444,6 +478,31 @@ private:
       settings.legendScale = styleConfiguration->legendScale;
       settings.legendOffset = styleConfiguration->legendOffset;
       settings.drawImage = drawImage;
+
+      /* Check the if we want to use discrete type */
+      if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL && styleConfiguration->styleConfig->RenderSettings.size() == 1) {
+        CT::string renderHint = styleConfiguration->styleConfig->RenderSettings[0]->attr.renderhint;
+        if (renderHint.equals(RENDERHINT_DISCRETECLASSES)) {
+          settings.isUsingShadeIntervals = true;
+        }
+      }
+
+      /* Make a shorthand vector from the shadeInterval configuration*/
+      if (settings.isUsingShadeIntervals) {
+        int numShadeDefs = (int)styleConfiguration->shadeIntervals->size();
+        settings.intervals.reserve(numShadeDefs);
+        for (int j = 0; j < numShadeDefs; j++) {
+          CServerConfig::XMLE_ShadeInterval *shadeInterVal = ((*styleConfiguration->shadeIntervals)[j]);
+          settings.intervals.push_back(Settings::Interval(shadeInterVal->attr.min.toFloat(), shadeInterVal->attr.max.toFloat(), CColor(shadeInterVal->attr.fillcolor.c_str())));
+          /* Check for bgcolor */
+          if (j == 0) {
+            if (shadeInterVal->attr.bgcolor.empty() == false) {
+              settings.bgColorDefined = true;
+              settings.bgColor = CColor(shadeInterVal->attr.bgcolor.c_str());
+            }
+          }
+        }
+      }
 
       if (styleConfiguration->renderMethod & RM_AVG_RGBA) {
 
