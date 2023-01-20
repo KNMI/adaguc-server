@@ -129,7 +129,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
    */
 
   if (definedLegendOnShadeClasses) {
-    float blockHeight = (legendImage->Geo->dHeight - 40) / styleConfiguration->shadeIntervals->size();
+    float blockHeight = float(legendImage->Geo->dHeight - 30) / float(styleConfiguration->shadeIntervals->size());
     /* Legend classes displayed as blocks in the legend can have a maximum and a minimum height depending on the amount of classes and legendheight */
     if (blockHeight > 12) blockHeight = 12;
     if (blockHeight < 3) blockHeight = 3;
@@ -137,8 +137,8 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
     for (size_t j = 0; j < styleConfiguration->shadeIntervals->size(); j++) {
       CServerConfig::XMLE_ShadeInterval *s = (*styleConfiguration->shadeIntervals)[j];
       if (s->attr.min.empty() == false && s->attr.max.empty() == false) {
-        int cY1 = int(cbH - (j * blockHeight) * scaling);
-        int cY2 = int(cbH - ((((j + 1) * blockHeight) - 2)) * scaling);
+        int cY1 = int(cbH - (float(j) * blockHeight) * scaling);
+        int cY2 = int(cbH - (((float(j + 1) * blockHeight) - 2)) * scaling);
         CColor color;
         if (s->attr.fillcolor.empty() == false) {
           color = CColor(s->attr.fillcolor.c_str());
