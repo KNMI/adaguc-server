@@ -218,6 +218,12 @@ template <class T> int CAreaMapper::myDrawRawTile(const T *data, double *x_corne
       if (sourceSampleX >= 0 && sourceSampleX < width && sourceSampleY >= 0 && sourceSampleY < height && destPixelX >= 0 && destPixelY >= 0 && destPixelX < imageWidth && destPixelY < imageHeight) {
         imgpointer = sourceSampleX + (sourceSampleY)*width;
         val = data[imgpointer];
+
+        /*
+          Please note that this is part of the fast renderer. Changes to this routine should also be implemented in:
+
+          adagucserverEC/CImgWarpNearestNeighbour.h, DrawFunction
+        */
         isNodata = false;
         if (hasNodataValue) {
           if (val == nodataValue) isNodata = true;
