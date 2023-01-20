@@ -1330,7 +1330,7 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
       return 1;
     } else {
       CDF::Variable *fvar = featureDataSource.getDataObject(0)->cdfObject->getVariableNE("featureids");
-      size_t nrFeatures;
+      size_t nrFeatures = 0;
       if (fvar == NULL) {
         CDBDebug("featureids not found");
       } else {

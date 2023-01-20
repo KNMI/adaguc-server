@@ -22,8 +22,9 @@
  * limitations under the License.
  *
  ******************************************************************************/
-#ifdef ADAGUC_USE_POSTGRESQL
 #include "CDBAdapterPostgreSQL.h"
+
+#ifdef ADAGUC_USE_POSTGRESQL
 #include <set>
 #include "CDebugger.h"
 
@@ -76,7 +77,7 @@ int CDBAdapterPostgreSQL::setConfig(CServerConfig::XMLE_Configuration *cfg) {
 
 CT::string CDBAdapterPostgreSQL::getDimValueForFileName(const char *filename, const char *table) {
 #ifdef MEASURETIME
-  StopWatch_Stop(">CDBAdapterPostgreSQL::getMax");
+  StopWatch_Stop(">CDBAdapterPostgreSQL::getDimValueForFileName");
 #endif
   CPGSQLDB *DB = getDataBaseConnection();
   if (DB == NULL) {
@@ -93,7 +94,7 @@ CT::string CDBAdapterPostgreSQL::getDimValueForFileName(const char *filename, co
     return "";
   }
 #ifdef MEASURETIME
-  StopWatch_Stop("<CDBAdapterPostgreSQL::getMax");
+  StopWatch_Stop("<CDBAdapterPostgreSQL::getDimValueForFileName");
 #endif
   CT::string dimValue = store->getRecord(0)->get(1);
   delete store;
@@ -110,9 +111,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getMax(const char *name, const char *tabl
   }
 
   CT::string query;
-  // CREATE INDEX MAXINDEX ON t20171017t085357097_iwna17kzcgyvrvr183as (none)
   query.print("select max(%s) from %s", name, table);
-  // query.print("SELECT %s FROM %s ORDER BY %s DESC LIMIT 1",name, table,name);
   CDBStore::Store *maxStore = DB->queryToStore(query.c_str());
   if (maxStore == NULL) {
     setExceptionType(InvalidDimensionValue);
@@ -146,6 +145,31 @@ CDBStore::Store *CDBAdapterPostgreSQL::getMin(const char *name, const char *tabl
   }
 #ifdef MEASURETIME
   StopWatch_Stop(">CDBAdapterPostgreSQL::getMin");
+#endif
+  return maxStore;
+};
+
+CDBStore::Store *CDBAdapterPostgreSQL::getBetween(const char *min, const char *max, const char *colname, const char *table, int limit) {
+#ifdef MEASURETIME
+  StopWatch_Stop(">CDBAdapterPostgreSQL::getBetween");
+#endif
+  CPGSQLDB *DB = getDataBaseConnection();
+  if (DB == NULL) {
+    return NULL;
+  }
+
+  CT::string query;
+  query.print("select path, %s FROM %s WHERE %s between '%s' and '%s' order by %s asc limit %d ", colname, table, colname, min, max, colname, limit);
+
+  CDBStore::Store *maxStore = DB->queryToStore(query.c_str());
+  if (maxStore == NULL) {
+    setExceptionType(InvalidDimensionValue);
+    CDBError("Invalid dimension value for  %s", colname);
+    CDBError("query failed");
+    return NULL;
+  }
+#ifdef MEASURETIME
+  StopWatch_Stop("<CDBAdapterPostgreSQL::getBetween");
 #endif
   return maxStore;
 };

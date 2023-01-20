@@ -32,7 +32,6 @@
 #include "CConvertUGRIDMesh.h"
 #include "CImageWarper.h"
 #include "CFillTriangle.h"
-#include <values.h>
 #include <string>
 #include <map>
 #include <cstdlib>

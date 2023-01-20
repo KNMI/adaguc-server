@@ -27,6 +27,7 @@ Configuration
 -   [Include](Include.md) - (location) - Include additional configuration
     files to the service
 -   [Logging](Logging.md) - (debug) - Configure the type of logging
+-   [Settings](Settings.md) - (enablecleanupsystem) - Configure global settings of the server / Dataset
 
 <!-- -->
 
@@ -122,7 +123,7 @@ Configuration
     -   Variable `<value>` - Mandatory, The variable from the file
         to use in the Layer. Multiple can be used for e.g. wind vector
         plotting.
-    -   [FilePath](FilePath.md) (filter, maxquerylimit, ncml) `<value>` -
+    -   [FilePath](FilePath.md) (filter, maxquerylimit, ncml, retentionperiod, retentiontype) `<value>` -
         Mandatory, The directory to scan files with additional filter,
         or the file to use, or the OpenDAP url to use.
     -   [Dimension](Dimension.md)
@@ -148,6 +149,7 @@ Configuration
     -   [AdditionalLayer](AdditionalLayer.md) (replace, style) `<value>` -
         Configure a new layer which is a composition of multiple other
         layers.
+    -   [WMSFormat](WMSFormat.md) (name, quality) - Force the image format for this layer.
     -   \*All Style elements are accessible in Layer and can be
         overridden
 

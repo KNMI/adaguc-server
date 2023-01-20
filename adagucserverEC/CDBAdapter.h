@@ -64,6 +64,7 @@ public:
 
   virtual CDBStore::Store *getMin(const char *name, const char *table) = 0;
   virtual CDBStore::Store *getMax(const char *name, const char *table) = 0;
+  virtual CDBStore::Store *getBetween(const char *min, const char *max, const char *colname, const char *table, int limit) = 0;
   virtual CT::string getDimValueForFileName(const char *filename, const char *table) = 0;
   virtual CDBStore::Store *getUniqueValuesOrderedByValue(const char *name, int limit, bool orderDescOrAsc, const char *table) = 0;
   virtual CDBStore::Store *getUniqueValuesOrderedByIndex(const char *name, int limit, bool orderDescOrAsc, const char *table) = 0;

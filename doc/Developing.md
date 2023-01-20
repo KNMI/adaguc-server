@@ -17,6 +17,7 @@ To be able to compile adaguc-server you need to have the required dependencies i
 - [Dependencies for redhat](./developing/scripts/redhat_install_dependencies.md)
 - [Dependencies for Ubuntu18](./developing/scripts/ubuntu_18_install_dependencies.md)
 - [Dependencies for Ubuntu20](./developing/scripts/ubuntu_20_install_dependencies.md)
+- [Dependencies for Mac](./developing/scripts/mac_install_dependencies.md)
 
 After the dependencies have been installed you need to execute a script to start the compilation of the adaguc-server binaries.
 

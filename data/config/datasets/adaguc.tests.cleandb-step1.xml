@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <!-- Custom styles -->
+  <!-- Layers -->
+  <Layer type="database">
+    <FilePath filter="^.*\.csv$">{ADAGUC_TMP}/cleandb/</FilePath>
+    <Name>test</Name>
+    <Title>test</Title>
+    <Variable>test</Variable>
+    <Styles>default</Styles>
+    <Dimension name="time">time</Dimension>
+  </Layer>
+</Configuration>
+
