@@ -50,8 +50,7 @@ class TestWMSPolylineRenderer(unittest.TestCase):
         status, data, headers = AdagucTestTools().runADAGUCServer("source=usgs_earthquakes.geojson&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=baselayer,mag&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=-21270915.530506067,-12592019.023145191,-1311264.2622161265,17664837.49309645&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&", env=env)
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertEqual(data.getvalue(), AdagucTestTools(
-        ).readfromfile(self.expectedoutputsspath + filename))
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
 
     def test_WMSPointRenderer_usgs_earthquakes_geojson_auto_point_GetMap(self):
@@ -62,8 +61,7 @@ class TestWMSPolylineRenderer(unittest.TestCase):
         status, data, headers = AdagucTestTools().runADAGUCServer("source=usgs_earthquakes.geojson&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=baselayer,mag&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=-21270915.530506067,-12592019.023145191,-1311264.2622161265,17664837.49309645&STYLES=auto%2Fpoint&FORMAT=image/png&TRANSPARENT=TRUE&", env=env)
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertEqual(data.getvalue(), AdagucTestTools(
-        ).readfromfile(self.expectedoutputsspath + filename))
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSPointRenderer_usgs_earthquakes_geojson_auto_nearest_GetMapColorScaleRange0_20(self):
         env = {'ADAGUC_CONFIG': ADAGUC_PATH +
@@ -73,8 +71,7 @@ class TestWMSPolylineRenderer(unittest.TestCase):
         status, data, headers = AdagucTestTools().runADAGUCServer("source=usgs_earthquakes.geojson&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=baselayer,mag&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=-21270915.530506067,-12592019.023145191,-1311264.2622161265,17664837.49309645&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&e&colorscalerange=0,20", env=env)
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertEqual(data.getvalue(), AdagucTestTools(
-        ).readfromfile(self.expectedoutputsspath + filename))
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
 
     def test_WMSPointRenderer_usgs_earthquakes_geojson_auto_point_GetMapColorScaleRange0_20(self):
@@ -85,8 +82,7 @@ class TestWMSPolylineRenderer(unittest.TestCase):
         status, data, headers = AdagucTestTools().runADAGUCServer("source=usgs_earthquakes.geojson&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=baselayer,mag&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=-21270915.530506067,-12592019.023145191,-1311264.2622161265,17664837.49309645&STYLES=auto%2Fpoint&FORMAT=image/png&TRANSPARENT=TRUE&e&colorscalerange=0,20", env=env)
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertEqual(data.getvalue(), AdagucTestTools(
-        ).readfromfile(self.expectedoutputsspath + filename))
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSPointRenderer_usgs_earthquakes_geojson_GetFeatureInfoJSON(self):
         env = {'ADAGUC_CONFIG': ADAGUC_PATH +
