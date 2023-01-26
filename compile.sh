@@ -42,7 +42,7 @@ function build {
   clean  
   cd $CURRENTDIR/bin
   
-  cmake .. &&  cmake  --build . --parallel 2 -v
+  cmake .. &&  cmake  --build . --parallel 4 -v
 
   if [ -f adagucserver ]
     then
