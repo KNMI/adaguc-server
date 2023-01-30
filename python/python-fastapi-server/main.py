@@ -10,7 +10,6 @@ from routers.healthcheck import healthCheckRouter
 from routers.wmswcs import wmsWcsRouter
 from routers.autowms import autoWmsRouter
 from routers.opendap import opendapRouter
-from routers.ogcapi.routeOGCApi import routeOGCApi, init_views
 from routers.cacher import cacher, init_cache
 from routers.ogcapi2 import ogcApiApp
 
