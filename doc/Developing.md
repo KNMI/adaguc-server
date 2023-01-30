@@ -17,6 +17,7 @@ To be able to compile adaguc-server you need to have the required dependencies i
 - [Dependencies for redhat](./developing/scripts/redhat_install_dependencies.md)
 - [Dependencies for Ubuntu18](./developing/scripts/ubuntu_18_install_dependencies.md)
 - [Dependencies for Ubuntu20](./developing/scripts/ubuntu_20_install_dependencies.md)
+- [Dependencies for Mac](./developing/scripts/mac_install_dependencies.md)
 
 After the dependencies have been installed you need to execute a script to start the compilation of the adaguc-server binaries.
 
@@ -75,6 +76,7 @@ export ADAGUC_ENABLELOGBUFFER=FALSE
 # To enable core dump generation, additionally do:
 #ulimit -c unlimited
 #sudo sysctl -w kernel.core_pattern=core-adagucserver # 
+# Then you can use gdb ./bin/adagucserver core-adagucserver
 
 python3 ./python/python-adaguc-server/main.py
 ```

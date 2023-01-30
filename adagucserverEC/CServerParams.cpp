@@ -47,7 +47,7 @@ CServerParams::CServerParams() {
   showScaleBarInImage = false;
   figWidth = -1;
   figHeight = -1;
-  imageQuality = 75;
+  imageQuality = 85;
   dfResX = 0;
   dfResY = 0;
 }
