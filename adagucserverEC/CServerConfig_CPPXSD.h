@@ -87,11 +87,14 @@ public:
   public:
     class Cattr {
     public:
-      CT::string name, format;
+      CT::string name, format, quality;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("name", 4, attrname)) {
         attr.name.copy(attrvalue);
+        return;
+      } else if (equals("quality", 7, attrname)) {
+        attr.quality.copy(attrvalue);
         return;
       } else if (equals("format", 6, attrname)) {
         attr.format.copy(attrvalue);
