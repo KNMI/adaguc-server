@@ -93,18 +93,18 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(data.getvalue(), AdagucTestTools(
         ).readfromfile(self.expectedoutputsspath + filename))
     
-    # # This test will fail with proj 4.8.0. In  and proj 4.9.3 this test succeeds. 4.8.0 provides wrong coordinates.
-    # def test_WMSGetMap_geos(self):
-    #     AdagucTestTools().cleanTempDir()
-    #     filename = "test_WMSGetMap_testgeosnc.png"
-    #     # pylint: disable=unused-variable
-    #     status, data, headers = AdagucTestTools().runADAGUCServer("source=testgeos.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ct&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=40,-3,45,3&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&",
-    #                                                               env=self.env, args=["--report"])
-    #     AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+    
+    def test_WMSGetMap_geos(self):
+        AdagucTestTools().cleanTempDir()
+        filename = "test_WMSGetMap_testgeosnc.png"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer("source=testgeos.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ct&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=40,-3,45,3&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&",
+                                                                  env=self.env, args=["--report"])
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         
-    #     self.assertEqual(status, 0)
-    #     self.assertEqual(data.getvalue(), AdagucTestTools(
-    #     ).readfromfile(self.expectedoutputsspath + filename))
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools(
+        ).readfromfile(self.expectedoutputsspath + filename))
     
 
     def test_WMSGetMap_testdatanc_autoheight(self):
@@ -1184,7 +1184,90 @@ class TestWMS(unittest.TestCase):
         dimvalues = xslt_root.findall('Capability/Layer/Layer/Dimension')[0].text
         self.assertEqual(recenttimesteptowrite, dimvalues)
 
-        
 
+    def test_WMSGetMap_PNGFile_colortype2_bitdepth8(self):
+        AdagucTestTools().cleanTempDir()
+        # convert png-100x100.png  -define png:color-type=2 -define png:bit-depth=8  png-100x100-ct2_bd8.png
+        filename = "test_WMSGetMap_PNGFile_colortype2_bitdepth8.png"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "source=png-100x100-ct2_bd8.png&&service=WMS&request=getmap&format=image/png32&layers=pngdata&width=100&height=100&CRS=EPSG:4326&STYLES=&EXCEPTIONS=INIMAGE&bbox=-90,-180,90,180", env=self.env)
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools(
+        ).readfromfile(self.expectedoutputsspath + filename))
+    
+    def test_WMSGetMap_PNGFile_colortype2_bitdepth16(self):
+        AdagucTestTools().cleanTempDir()
+        # convert png-100x100.png  -define png:color-type=2 -define png:bit-depth=16  png-100x100-ct2_bd16.png
+        filename = "test_WMSGetMap_PNGFile_colortype2_bitdepth16.png"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "source=png-100x100-ct2_bd16.png&&service=WMS&request=getmap&format=image/png32&layers=pngdata&width=100&height=100&CRS=EPSG:4326&STYLES=&EXCEPTIONS=INIMAGE&bbox=-90,-180,90,180", env=self.env)
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools(
+        ).readfromfile(self.expectedoutputsspath + filename))
+
+    def test_WMSGetMap_PNGFile_colortype3_bitdepth1(self):
+        AdagucTestTools().cleanTempDir()
+        # convert png-100x100-boolean.png  -type palette  -colors 2  -define png:color-type=3 -define png:bit-depth=1 png-100x100-ct3_bd1.png
+        filename = "test_WMSGetMap_PNGFile_colortype3_bitdepth1.png"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "source=png-100x100-ct3_bd1.png&&service=WMS&request=getmap&format=image/png32&layers=pngdata&width=100&height=100&CRS=EPSG:4326&STYLES=&EXCEPTIONS=INIMAGE&bbox=-90,-180,90,180", env=self.env)
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools(
+        ).readfromfile(self.expectedoutputsspath + filename))
+
+
+    def test_WMSGetMap_PNGFile_colortype3_bitdepth4(self):
+        AdagucTestTools().cleanTempDir()
+        # convert png-100x100.png  -type palette  -colors 16 -define png:color-type=3 -define png:bit-depth=4 png-100x100-ct3_bd4.png
+        filename = "test_WMSGetMap_PNGFile_colortype3_bitdepth4.png"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "source=png-100x100-ct3_bd4.png&&service=WMS&request=getmap&format=image/png32&layers=pngdata&width=100&height=100&CRS=EPSG:4326&STYLES=&EXCEPTIONS=INIMAGE&bbox=-90,-180,90,180", env=self.env)
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools(
+        ).readfromfile(self.expectedoutputsspath + filename))
+
+    def test_WMSGetMap_PNGFile_colortype3_bitdepth8(self):
+        AdagucTestTools().cleanTempDir()
+        # convert png-100x100.png  -type palette -colors 256 -define png:color-type=3 -define png:bit-depth=8  png-100x100-ct3_bd8.png
+        filename = "test_WMSGetMap_PNGFile_colortype3_bitdepth8.png"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "source=png-100x100-ct3_bd8.png&&service=WMS&request=getmap&format=image/png32&layers=pngdata&width=100&height=100&CRS=EPSG:4326&STYLES=&EXCEPTIONS=INIMAGE&bbox=-90,-180,90,180", env=self.env)
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools(
+        ).readfromfile(self.expectedoutputsspath + filename))
+
+    def test_WMSGetMap_PNGFile_colortyp6_bitdepth8(self):
+        AdagucTestTools().cleanTempDir()
+        # convert png-100x100.png  -define png:color-type=6 -define png:bit-depth=8  png-100x100-ct6_bd8.png
+        filename = "test_WMSGetMap_PNGFile_colortype6_bitdepth8.png"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "source=png-100x100-ct6_bd8.png&&service=WMS&request=getmap&format=image/png32&layers=pngdata&width=100&height=100&CRS=EPSG:4326&STYLES=&EXCEPTIONS=INIMAGE&bbox=-90,-180,90,180", env=self.env)
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools(
+        ).readfromfile(self.expectedoutputsspath + filename))
+
+    def test_WMSGetMap_PNGFile_colortyp6_bitdepth16(self):
+        AdagucTestTools().cleanTempDir()
+        # convert png-100x100.png  -define png:color-type=6 -define png:bit-depth=16  png-100x100-ct6_bd16.png
+        filename = "test_WMSGetMap_PNGFile_colortype6_bitdepth16.png"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "source=png-100x100-ct6_bd16.png&&service=WMS&request=getmap&format=image/png32&layers=pngdata&width=100&height=100&CRS=EPSG:4326&STYLES=&EXCEPTIONS=INIMAGE&bbox=-90,-180,90,180", env=self.env)
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools(
+        ).readfromfile(self.expectedoutputsspath + filename))        
         
       
