@@ -93,18 +93,18 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(data.getvalue(), AdagucTestTools(
         ).readfromfile(self.expectedoutputsspath + filename))
     
-    # # This test will fail with proj 4.8.0. In  and proj 4.9.3 this test succeeds. 4.8.0 provides wrong coordinates.
-    # def test_WMSGetMap_geos(self):
-    #     AdagucTestTools().cleanTempDir()
-    #     filename = "test_WMSGetMap_testgeosnc.png"
-    #     # pylint: disable=unused-variable
-    #     status, data, headers = AdagucTestTools().runADAGUCServer("source=testgeos.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ct&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=40,-3,45,3&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&",
-    #                                                               env=self.env, args=["--report"])
-    #     AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+    
+    def test_WMSGetMap_geos(self):
+        AdagucTestTools().cleanTempDir()
+        filename = "test_WMSGetMap_testgeosnc.png"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer("source=testgeos.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ct&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=40,-3,45,3&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&",
+                                                                  env=self.env, args=["--report"])
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         
-    #     self.assertEqual(status, 0)
-    #     self.assertEqual(data.getvalue(), AdagucTestTools(
-    #     ).readfromfile(self.expectedoutputsspath + filename))
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools(
+        ).readfromfile(self.expectedoutputsspath + filename))
     
 
     def test_WMSGetMap_testdatanc_autoheight(self):
@@ -1078,5 +1078,196 @@ class TestWMS(unittest.TestCase):
         self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
             self.testresultspath + filename, self.expectedoutputsspath + filename))
         self.assertEqual(status, 0)
+    
+    def test_WMSGetMap_ODIMHDF5_RAD_CU21_PPZ_E05(self):
+        AdagucTestTools().cleanTempDir()
+        config = ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml,' + \
+            ADAGUC_PATH + '/data/config/datasets/adaguc.tests.ODIMHDF5.xml'
+        env = {'ADAGUC_CONFIG': config}
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=['--updatedb', '--config', config], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSGetMap_ODIMHDF5_RAD_CU21_PPZ_E05.png"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.ODIMHDF5&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=CAPPI&WIDTH=746&HEIGHT=927&CRS=EPSG%3A3857&BBOX=-8153802.59473168,773907.3916620318,-7198456.3109903205,1961046.808589968&STYLES=radar%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&&time=2022-08-30T22%3A35%3A00Z", env=env)
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools(
+        ).readfromfile(self.expectedoutputsspath + filename))
 
 
+
+
+    def test_DBScannerCleanFiles(self):
+        """Testing cleanup system of filescanner using the retentionperiod function."""
+        AdagucTestTools().cleanTempDir()
+        ADAGUC_PATH = os.environ['ADAGUC_PATH']
+        ADAGUC_TMP = os.environ['ADAGUC_TMP']
+        
+        config = ADAGUC_PATH + '/data/config/adaguc.tests.datasetsmall.xml'
+        env = {'ADAGUC_CONFIG': config}
+
+        # Setup directories
+        AdagucTestTools().cleanTempDir()
+        AdagucTestTools().mkdir_p(f'{ADAGUC_TMP}/cleandb')
+
+
+        # Make a time recent to now (less then 7 days ago)
+        def roundSeconds(dateTimeObject):
+            newDateTime = dateTimeObject
+            newDateTime = newDateTime.replace(second=0)
+            return newDateTime.replace(microsecond=0)
+        recenttimesteptowrite = roundSeconds(datetime.datetime.utcnow()).isoformat()+'Z'   
+
+        # Make the three filenames        
+        oldfile1 = f'{ADAGUC_TMP}/cleandb/csv-20200601T000000.csv';
+        oldfile2 = f'{ADAGUC_TMP}/cleandb/csv-20200602T000000.csv';
+        newfile1 = f'{ADAGUC_TMP}/cleandb/csv-{recenttimesteptowrite}.csv'       
+
+        # Make sure the files are not there.
+        self.assertEqual(os.path.exists(oldfile1), False)
+        self.assertEqual(os.path.exists(oldfile2), False)
+        self.assertEqual(os.path.exists(newfile1), False)
+
+        #print(f'Writing to {newfile1}')            
+        
+        # Write files to disk ready to scan without cleanup
+        with open(oldfile1, 'w') as f:
+            f.write('# time=2020-06-01T00:00:00Z\nlat,lon,Name,test\n48.1,0.25,"Station",60');
+        with open(oldfile2, 'w') as f:
+            f.write('# time=2020-06-02T00:00:00Z\nlat,lon,Name,test\n48.1,0.25,"Station",60');
+        with open(newfile1, 'w') as f:
+            f.write(f'# time={recenttimesteptowrite}\nlat,lon,Name,test\n48.1,0.25,"Station",60');
+        
+        ### Step 1 ###
+
+        # Scan with adaguc.tests.cleandb-step1, cleanup DISABLED. All three timesteps should be found.
+        DATASET='adaguc.tests.cleandb-step1'
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=['--updatedb', '--config', config+ f',{ADAGUC_PATH}/data/config/datasets/{DATASET}.xml'], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+
+        # Make sure the files are still there.
+        self.assertEqual(os.path.exists(oldfile1), True)
+        self.assertEqual(os.path.exists(oldfile2), True)
+        self.assertEqual(os.path.exists(newfile1), True)
+        
+        
+        # Read getcapabilities and check the dimensions for the three expected values
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            f'DATASET={DATASET}&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities', env=env)
+        xslt_root = etree.XML(re.sub(' xmlns="[^"]+"', '', data.getvalue().decode('UTF-8'), count=1).encode('ascii'));
+        dimvalues = xslt_root.findall('Capability/Layer/Layer/Dimension')[0].text
+        expecteddimensionvalues = f'2020-06-01T00:00:00Z,2020-06-02T00:00:00Z,{recenttimesteptowrite}'
+        self.assertEqual(expecteddimensionvalues, dimvalues)
+
+        ### Step 2 ###
+        
+        # Scan with adaguc.tests.cleandb-step1, cleanup ENABLED, only the recent timestep should be left
+        DATASET='adaguc.tests.cleandb-step2'
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=['--updatedb', '--config', config+ f',{ADAGUC_PATH}/data/config/datasets/{DATASET}.xml'], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+
+        # Make sure the files are gone.
+        self.assertEqual(os.path.exists(oldfile1), False)
+        self.assertEqual(os.path.exists(oldfile2), False)
+        self.assertEqual(os.path.exists(newfile1), True)
+        
+        
+        # Read getcapabilities and check the dimensions
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            f'DATASET={DATASET}&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities', env=env)
+        xslt_root = etree.XML(re.sub(' xmlns="[^"]+"', '', data.getvalue().decode('UTF-8'), count=1).encode('ascii'));
+        dimvalues = xslt_root.findall('Capability/Layer/Layer/Dimension')[0].text
+        self.assertEqual(recenttimesteptowrite, dimvalues)
+
+
+    def test_WMSGetMap_PNGFile_colortype2_bitdepth8(self):
+        AdagucTestTools().cleanTempDir()
+        # convert png-100x100.png  -define png:color-type=2 -define png:bit-depth=8  png-100x100-ct2_bd8.png
+        filename = "test_WMSGetMap_PNGFile_colortype2_bitdepth8.png"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "source=png-100x100-ct2_bd8.png&&service=WMS&request=getmap&format=image/png32&layers=pngdata&width=100&height=100&CRS=EPSG:4326&STYLES=&EXCEPTIONS=INIMAGE&bbox=-90,-180,90,180", env=self.env)
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools(
+        ).readfromfile(self.expectedoutputsspath + filename))
+    
+    def test_WMSGetMap_PNGFile_colortype2_bitdepth16(self):
+        AdagucTestTools().cleanTempDir()
+        # convert png-100x100.png  -define png:color-type=2 -define png:bit-depth=16  png-100x100-ct2_bd16.png
+        filename = "test_WMSGetMap_PNGFile_colortype2_bitdepth16.png"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "source=png-100x100-ct2_bd16.png&&service=WMS&request=getmap&format=image/png32&layers=pngdata&width=100&height=100&CRS=EPSG:4326&STYLES=&EXCEPTIONS=INIMAGE&bbox=-90,-180,90,180", env=self.env)
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools(
+        ).readfromfile(self.expectedoutputsspath + filename))
+
+    def test_WMSGetMap_PNGFile_colortype3_bitdepth1(self):
+        AdagucTestTools().cleanTempDir()
+        # convert png-100x100-boolean.png  -type palette  -colors 2  -define png:color-type=3 -define png:bit-depth=1 png-100x100-ct3_bd1.png
+        filename = "test_WMSGetMap_PNGFile_colortype3_bitdepth1.png"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "source=png-100x100-ct3_bd1.png&&service=WMS&request=getmap&format=image/png32&layers=pngdata&width=100&height=100&CRS=EPSG:4326&STYLES=&EXCEPTIONS=INIMAGE&bbox=-90,-180,90,180", env=self.env)
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools(
+        ).readfromfile(self.expectedoutputsspath + filename))
+
+
+    def test_WMSGetMap_PNGFile_colortype3_bitdepth4(self):
+        AdagucTestTools().cleanTempDir()
+        # convert png-100x100.png  -type palette  -colors 16 -define png:color-type=3 -define png:bit-depth=4 png-100x100-ct3_bd4.png
+        filename = "test_WMSGetMap_PNGFile_colortype3_bitdepth4.png"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "source=png-100x100-ct3_bd4.png&&service=WMS&request=getmap&format=image/png32&layers=pngdata&width=100&height=100&CRS=EPSG:4326&STYLES=&EXCEPTIONS=INIMAGE&bbox=-90,-180,90,180", env=self.env)
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools(
+        ).readfromfile(self.expectedoutputsspath + filename))
+
+    def test_WMSGetMap_PNGFile_colortype3_bitdepth8(self):
+        AdagucTestTools().cleanTempDir()
+        # convert png-100x100.png  -type palette -colors 256 -define png:color-type=3 -define png:bit-depth=8  png-100x100-ct3_bd8.png
+        filename = "test_WMSGetMap_PNGFile_colortype3_bitdepth8.png"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "source=png-100x100-ct3_bd8.png&&service=WMS&request=getmap&format=image/png32&layers=pngdata&width=100&height=100&CRS=EPSG:4326&STYLES=&EXCEPTIONS=INIMAGE&bbox=-90,-180,90,180", env=self.env)
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools(
+        ).readfromfile(self.expectedoutputsspath + filename))
+
+    def test_WMSGetMap_PNGFile_colortyp6_bitdepth8(self):
+        AdagucTestTools().cleanTempDir()
+        # convert png-100x100.png  -define png:color-type=6 -define png:bit-depth=8  png-100x100-ct6_bd8.png
+        filename = "test_WMSGetMap_PNGFile_colortype6_bitdepth8.png"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "source=png-100x100-ct6_bd8.png&&service=WMS&request=getmap&format=image/png32&layers=pngdata&width=100&height=100&CRS=EPSG:4326&STYLES=&EXCEPTIONS=INIMAGE&bbox=-90,-180,90,180", env=self.env)
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools(
+        ).readfromfile(self.expectedoutputsspath + filename))
+
+    def test_WMSGetMap_PNGFile_colortyp6_bitdepth16(self):
+        AdagucTestTools().cleanTempDir()
+        # convert png-100x100.png  -define png:color-type=6 -define png:bit-depth=16  png-100x100-ct6_bd16.png
+        filename = "test_WMSGetMap_PNGFile_colortype6_bitdepth16.png"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "source=png-100x100-ct6_bd16.png&&service=WMS&request=getmap&format=image/png32&layers=pngdata&width=100&height=100&CRS=EPSG:4326&STYLES=&EXCEPTIONS=INIMAGE&bbox=-90,-180,90,180", env=self.env)
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools(
+        ).readfromfile(self.expectedoutputsspath + filename))        
+        
+      

@@ -22,6 +22,7 @@
  * limitations under the License.
  *
  ******************************************************************************/
+
 #ifdef ADAGUC_USE_POSTGRESQL
 #include "CDBAdapter.h"
 #include "CDebugger.h"
@@ -49,6 +50,7 @@ public:
   int autoUpdateAndScanDimensionTables(CDataSource *dataSource);
   CDBStore::Store *getMin(const char *name, const char *table);
   CDBStore::Store *getMax(const char *name, const char *table);
+  CDBStore::Store *getBetween(const char *min, const char *max, const char *colname, const char *table, int limit);
   CT::string getDimValueForFileName(const char *filename, const char *table);
   CDBStore::Store *getUniqueValuesOrderedByValue(const char *name, int limit, bool orderDescOrAsc, const char *table);
   CDBStore::Store *getUniqueValuesOrderedByIndex(const char *name, int limit, bool orderDescOrAsc, const char *table);
