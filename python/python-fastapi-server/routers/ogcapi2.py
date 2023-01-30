@@ -236,13 +236,14 @@ async def getCollections(req: Request, f: str = "json"):
 
 @ogcApiApp.get("/collections/{id}", response_model=Collection)
 async def getCollection(id: str, req: Request, f: str = "json"):
+    print(f"getCollection({id})")
     extent = Extent(spatial=Spatial(bbox=[get_extent(id)]))
     coll = Collection(
         id=id,
         title="title1",
         description="descr1",
         extent=extent,
-        links=getCollectionLinks(req.url_for("getCollection", id=id), "coll1"),
+        links=getCollectionLinks(req.url_for("getCollection", id=id)),
     )
     return coll
 
@@ -320,7 +321,71 @@ async def getOpenApiYaml(req: Request, f: str = "yaml"):
     )
 
 
+def request_(call_adaguc, url, args, name, headers=None):
+    # pylint: disable=consider-using-f-string
+    """request_"""
+    url = (
+        url
+        + "service=WMS&version=1.3.0&request=getPointValue&INFO_FORMAT=application/json"
+    )
+
+    if "latlon" in args and args["latlon"]:
+        x = args["latlon"].split(",")[1]
+        y = args["latlon"].split(",")[0]
+        url = "%s&X=%s&Y=%s&CRS=EPSG:4326" % (url, x, y)
+    if "lonlat" in args and args["lonlat"]:
+        x = args["lonlat"].split(",")[0]
+        y = args["lonlat"].split(",")[1]
+        url = "%s&X=%s&Y=%s&CRS=EPSG:4326" % (url, x, y)
+    if not "CRS=" in url.upper():
+        url = "%s&X=%s&Y=%s&CRS=EPSG:4326" % (url, 5.2, 52.0)
+
+    if "resultTime" in args and args["resultTime"]:
+        url = "%s&DIM_REFERENCE_TIME=%s" % (url, args["resultTime"])
+
+    if "datetime" in args and args["datetime"] is not None:
+        url = "%s&TIME=%s" % (url, args["datetime"])
+    else:
+        url = "%s&TIME=%s" % (url, "*")
+
+    url = "%s&LAYERS=%s&QUERY_LAYERS=%s" % (
+        url,
+        args["observedPropertyName"],
+        args["observedPropertyName"],
+    )
+
+    if "dims" in args and args["dims"]:
+        for dim in args["dims"].split(";"):
+            dimname, dimval = dim.split(":")
+            if dimname.upper() == "ELEVATION":
+                url = "%s&%s=%s" % (url, dimname, dimval)
+            else:
+                url = "%s&DIM_%s=%s" % (url, dimname, dimval)
+
+
 def getFeaturesForItems(
+    id: str,
+    limit: int = 10,
+    start: int = 0,
+    point=None,
+    bbox=None,
+    datetime_=None,
+    resultTime=None,
+    observedPropertyName: str = None,
+    dims=None,
+) -> List[FeatureGeoJSON]:
+    print("getFeaturesforItems")
+    features: List[FeatureGeoJSON] = []
+    request_url = (
+        "http://localhost:8000/wms?dataset=HARM_N25_MAXQL"
+        + "&service=WMS&version=1.3.0&request=getPointValue&INFO_FORMAT=application/json"
+    )
+    request_url
+
+    return features
+
+
+def getFeaturesForItems2(
     id: str, limit: int = 10, start: int = 0, bbox=None, datetime_=None
 ) -> List[FeatureGeoJSON]:
     features: List[FeatureGeoJSON] = []
@@ -338,6 +403,17 @@ def getFeaturesForItems(
             )
         )
     return features
+
+
+def check_point(point: Union[str, None] = Query(default=None)) -> List[float]:
+    print("point:", point)
+    if point is None:
+        return None
+    coords = point.split(",")
+    if len(coords) != 2:
+        # Error
+        raise HTTPException(status_code=404, detail="point should contain 2 floats")
+    return list(map(float, coords))
 
 
 def check_bbox(bbox: Union[str, None] = Query(default=None)) -> List[float]:
@@ -363,10 +439,23 @@ async def getItemsForCollection(
     limit: Union[int, None] = Query(default=10),
     start: Union[int, None] = Query(default=0),
     bbox: Union[str, None] = Depends(check_bbox),
+    point: Union[str, None] = Depends(check_point),
+    crs: Union[str, None] = Query(default=None),
+    resultTime: Union[str, None] = Query(default=None),
     datetime_: Union[str, None] = Query(default=None, alias="datetime"),
 ):
     print("getItemsForCollection")
-    allowed_params = ["f", "limit", "start", "bbox", "datetime"]
+    allowed_params = [
+        "f",
+        "limit",
+        "start",
+        "point",
+        "bbox",
+        "datetime",
+        "resultTime",
+        "observedPropertyName",
+        "dims",
+    ]
     extra_params = [k for k in req.query_params if k not in allowed_params]
 
     if len(extra_params):
@@ -380,7 +469,9 @@ async def getItemsForCollection(
             ),
         )
     try:
-        features = getFeaturesForItems(id, limit, start, bbox, datetime_)
+        features = getFeaturesForItems(
+            id, limit, start, point, bbox, datetime_, resultTime, crs, []
+        )
         # print(features)
         features_to_return = features[start : start + limit]
         number_matched = len(features)
