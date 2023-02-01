@@ -85,6 +85,7 @@ add_library(
     CGeoParams.cpp
     CCairoPlotter.cpp
     CDrawImage.cpp
+    CDrawFunction.h
     CServerError.cpp
     CRequest.cpp
     CXMLGen.cpp
