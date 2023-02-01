@@ -31,6 +31,7 @@
 #include "CImageWarperRenderInterface.h"
 #include "CGenericDataWarper.h"
 #include "CAreaMapper.h"
+#include "CDrawFunction.h"
 
 /**
  *  This is the main class of this file. It renders the sourcedata on the destination image using nearest neighbour interpolation.
@@ -266,85 +267,18 @@ private:
     }
   }
 
-  /* TODO: Maarten Plieger 2023-01-20: Possibly re-use this in CAreaMapper.h */
-  class Settings {
-  public:
-    class Interval {
-    public:
-      float min;
-      float max;
-      CColor color;
-      Interval(float min, float max, CColor color) {
-        this->min = min;
-        this->max = max;
-        this->color = color;
-      }
-    };
-    bool isUsingShadeIntervals = false;
-    std::vector<Interval> intervals;
-    CColor bgColor;
-    bool bgColorDefined = false;
-    double dfNodataValue;
-    double legendValueRange;
-    double legendLowerRange;
-    double legendUpperRange;
-    bool hasNodataValue;
-    float nodataValue;
-    float legendLog;
-    float legendLogAsLog;
-    float legendScale;
-    float legendOffset;
-    CDrawImage *drawImage;
-  };
-
   template <class T> static void drawFunction(int x, int y, T val, void *_settings, void *) {
     /*
       Please note that this is part of the precise renderer. Changes to this routine should also be implemented in:
 
       adagucserverEC/CAreaMapper.cpp, myDrawRawTile
     */
-    Settings *settings = (Settings *)_settings;
+    CDrawFunctionSettings *settings = (CDrawFunctionSettings *)_settings;
     if (settings->drawImage->trueColorAVG_RGBA == false) {
       /* Using the precise renderer with shadeinterval */
 
       /* Using the precise renderer with a legend */
-      bool isNodata = false;
-
-      if (settings->hasNodataValue) {
-        if (val == settings->nodataValue) isNodata = true;
-      }
-      if (!(val == val)) isNodata = true;
-      if (!isNodata)
-        if (settings->legendValueRange)
-          if (val < settings->legendLowerRange || val > settings->legendUpperRange) isNodata = true;
-      if (!isNodata) {
-        if (settings->isUsingShadeIntervals) {
-          bool pixelSet = false; // Remember if a pixel was set. If not set and bgColorDefined is defined, draw the background color.
-          for (size_t j = 0; (j < settings->intervals.size() && pixelSet == false); j += 1) {
-            if (val >= settings->intervals[j].min && val < settings->intervals[j].max) {
-              settings->drawImage->setPixel(x, y, settings->intervals[j].color);
-              pixelSet = true;
-            }
-          }
-          if (settings->bgColorDefined && pixelSet == false) {
-            settings->drawImage->setPixel(x, y, settings->bgColor);
-          }
-        } else {
-          if (settings->legendLog != 0) {
-            if (val > 0) {
-              val = (T)(log10(val) / settings->legendLogAsLog);
-            } else
-              val = (T)(-settings->legendOffset);
-          }
-          int pcolorind = (int)(val * settings->legendScale + settings->legendOffset);
-          if (pcolorind >= 239)
-            pcolorind = 239;
-          else if (pcolorind <= 0)
-            pcolorind = 0;
-          settings->drawImage->setPixelIndexed(x, y, pcolorind);
-        }
-      }
-
+      setPixelInDrawImage(x, y, val, settings);
     } else {
       if (x >= 0 && y >= 0 && x < settings->drawImage->Geo->dWidth && y < settings->drawImage->Geo->dHeight) {
         size_t p = x + y * settings->drawImage->Geo->dWidth;
@@ -362,7 +296,7 @@ private:
         }
       }
     }
-  };
+  }
 
   pthread_mutex_t CImgWarpNearestNeighbour_render_lock;
 
@@ -460,14 +394,13 @@ private:
       usePrecise = true;
     }
     if (usePrecise) {
-      Settings settings;
+      CDrawFunctionSettings settings;
 
       settings.dfNodataValue = dataSource->getDataObject(0)->dfNodataValue;
       settings.legendValueRange = styleConfiguration->hasLegendValueRange;
       settings.legendLowerRange = styleConfiguration->legendLowerRange;
       settings.legendUpperRange = styleConfiguration->legendUpperRange;
       settings.hasNodataValue = dataSource->getDataObject(0)->hasNodataValue;
-      settings.nodataValue = (float)settings.dfNodataValue;
 
       settings.legendLog = styleConfiguration->legendLog;
       if (settings.legendLog > 0) {
@@ -493,7 +426,7 @@ private:
         settings.intervals.reserve(numShadeDefs);
         for (int j = 0; j < numShadeDefs; j++) {
           CServerConfig::XMLE_ShadeInterval *shadeInterVal = ((*styleConfiguration->shadeIntervals)[j]);
-          settings.intervals.push_back(Settings::Interval(shadeInterVal->attr.min.toFloat(), shadeInterVal->attr.max.toFloat(), CColor(shadeInterVal->attr.fillcolor.c_str())));
+          settings.intervals.push_back(CDrawFunctionSettings::Interval(shadeInterVal->attr.min.toFloat(), shadeInterVal->attr.max.toFloat(), CColor(shadeInterVal->attr.fillcolor.c_str())));
           /* Check for bgcolor */
           if (j == 0) {
             if (shadeInterVal->attr.bgcolor.empty() == false) {
