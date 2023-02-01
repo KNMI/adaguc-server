@@ -42,7 +42,7 @@ private:
   double dfSourceBBOX[4];
   double dfImageBBOX[4];
   int width, height;
-  int internalWidth, internalHeight;
+//  int internalWidth, internalHeight;
   CDataSource *dataSource;
   bool debug;
 

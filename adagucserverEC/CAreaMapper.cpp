@@ -36,7 +36,6 @@ const char *CAreaMapper::className = "CAreaMapper";
 
 void CAreaMapper::init(CDataSource *dataSource, CDrawImage *drawImage, int tileWidth, int tileHeight) {
   this->dataSource = dataSource;
-  this->settings.drawImage = drawImage;
   dfTileWidth = double(tileWidth);
   dfTileHeight = double(tileHeight);
   for (int k = 0; k < 4; k++) {
@@ -64,50 +63,12 @@ void CAreaMapper::init(CDataSource *dataSource, CDrawImage *drawImage, int tileW
   }
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-
-  settings.dfNodataValue = dataSource->getDataObject(0)->dfNodataValue;
-  settings.legendValueRange = styleConfiguration->hasLegendValueRange;
-  settings.legendLowerRange = styleConfiguration->legendLowerRange;
-  settings.legendUpperRange = styleConfiguration->legendUpperRange;
-  settings.hasNodataValue = dataSource->getDataObject(0)->hasNodataValue;
   width = dataSource->dWidth;
   height = dataSource->dHeight;
-  settings.legendLog = styleConfiguration->legendLog;
-  if (settings.legendLog > 0) {
-    settings.legendLogAsLog = log10(settings.legendLog);
-  } else {
-    settings.legendLogAsLog = 0;
-  }
-  settings.legendScale = styleConfiguration->legendScale;
-  settings.legendOffset = styleConfiguration->legendOffset;
+//  internalWidth = width;
+//  internalHeight = height;
 
-  internalWidth = width;
-  internalHeight = height;
-
-  /* Check the if we want to use discrete type */
-  if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL && styleConfiguration->styleConfig->RenderSettings.size() == 1) {
-    CT::string renderHint = styleConfiguration->styleConfig->RenderSettings[0]->attr.renderhint;
-    if (renderHint.equals(RENDERHINT_DISCRETECLASSES)) {
-      settings.isUsingShadeIntervals = true;
-    }
-  }
-
-  /* Make a shorthand vector from the shadeInterval configuration*/
-  if (settings.isUsingShadeIntervals) {
-    int numShadeDefs = (int)styleConfiguration->shadeIntervals->size();
-    settings.intervals.reserve(numShadeDefs);
-    for (int j = 0; j < numShadeDefs; j++) {
-      CServerConfig::XMLE_ShadeInterval *shadeInterVal = ((*styleConfiguration->shadeIntervals)[j]);
-      settings.intervals.push_back(CDrawFunctionSettings::Interval(shadeInterVal->attr.min.toFloat(), shadeInterVal->attr.max.toFloat(), CColor(shadeInterVal->attr.fillcolor.c_str())));
-      /* Check for bgcolor */
-      if (j == 0) {
-        if (shadeInterVal->attr.bgcolor.empty() == false) {
-          settings.bgColorDefined = true;
-          settings.bgColor = CColor(shadeInterVal->attr.bgcolor.c_str());
-        }
-      }
-    }
-  }
+  settings = getDrawFunctionSettings(dataSource, drawImage, styleConfiguration);
 }
 
 int CAreaMapper::drawTile(double *x_corners, double *y_corners, int &dDestX, int &dDestY) {
