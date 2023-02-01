@@ -1,12 +1,12 @@
-#ifndef INTERVALSETTINGS
-#define INTERVALSETTINGS
+#ifndef CDRAWFUNCTION
+#define CDRAWFUNCTION
 
 #include <float.h>
 #include <pthread.h>
-#include "CAreaMapper.h"
-#include "CGenericDataWarper.h"
-#include "CImageWarperRenderInterface.h"
+#include "CDataSource.h"
 #include "CDrawImage.h"
+#include "CGenericDataWarper.h"
+#include "CStyleConfiguration.h"
 
 class CDrawFunctionSettings {
 public:
@@ -36,6 +36,10 @@ public:
   float legendOffset;
   CDrawImage *drawImage;
 };
+
+
+CDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawImage *drawImage, const CStyleConfiguration *styleConfiguration);
+
 
 template <class T> void setPixelInDrawImage(int x, int y, T val, CDrawFunctionSettings *settings) {
   bool isNodata = false;
