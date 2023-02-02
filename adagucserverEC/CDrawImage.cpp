@@ -1116,19 +1116,13 @@ void CDrawImage::drawCenteredTextNoOverlap(int x, int y, const char *fontFile, f
 
   int w, h;
   float radAngle = angle * M_PI / 180;
+  RectangleText rect;
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
     CCairoPlotter *freeType = this->getCairoPlotter(fontFile, size, Geo->dWidth, Geo->dHeight, cairo->getByteBuffer());
     freeType->setColor(color.r, color.g, color.b, color.a);
     freeType->getTextSize(w, h, radAngle, text);
-    RectangleText rect(x, y, (x + w), (y + h), angle, padding, text, fontFile, size, color);
-    if (noOverlap) {
-      for (size_t j = 0; j < rects.size(); j++) {
-        if (rects[j].overlaps(rect)) {
-          return;
-        }
-      }
-    }
-    rects.push_back(rect);
+    rect.init(x, y, (x + w), (y + h), angle, padding, text, fontFile, size, color);
+
   } else {
     // TODO GD renderer does not center text yet
     char *_text = new char[strlen(text) + 1];
@@ -1136,20 +1130,29 @@ void CDrawImage::drawCenteredTextNoOverlap(int x, int y, const char *fontFile, f
     int tcolor = getClosestGDColor(color.r, color.g, color.b);
     if (_bEnableTrueColor) tcolor = -tcolor;
     // Use the text size for angle 0 for detecting overlaps
-    gdImageStringFT(NULL, &brect[0], tcolor, (char *)TTFFontLocation, 8.0f, radAngle, x, y, (char *)_text);
-    RectangleText rect(brect[0], brect[3], brect[2], brect[5], angle, padding, text, fontFile, size, color);
-    rects.push_back(rect);
+    gdImageStringFT(NULL, &brect[0], tcolor, (char *)TTFFontLocation, size, radAngle, x, y, (char *)_text);
+    rect.init(brect[0], brect[5], brect[4], brect[1], angle, padding, text, fontFile, size, color);
     delete[] _text;
   }
+  if (noOverlap) {
+    for (size_t j = 0; j < rects.size(); j++) {
+      if (rects[j].overlaps(rect)) {
+        return;
+      }
+    }
+  }
+  rects.push_back(rect);
 }
 
 void CDrawImage::drawText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color) {
 
+  CDBDebug("drawText(%s) with %s", text, currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO ? "cairo" : "GD");
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
     CCairoPlotter *freeType = this->getCairoPlotter(fontfile, size, Geo->dWidth, Geo->dHeight, cairo->getByteBuffer());
     freeType->setColor(color.r, color.g, color.b, color.a);
     freeType->drawText(x, y, angle, text);
     cairo->isAlphaUsed |= freeType->isAlphaUsed; // remember freetype's isAlphaUsed flag
+    CDBDebug("drawText(%s) finished with font", text);
   } else {
     char *_text = new char[strlen(text) + 1];
     memcpy(_text, text, strlen(text) + 1);

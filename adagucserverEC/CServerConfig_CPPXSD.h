@@ -708,23 +708,17 @@ public:
       } else if (equals("bgcolor", 7, attrname)) {
         attr.bgcolor.copy(attrvalue);
         return;
-      } else if (equals("linecolor", 9, attrname)) {
-        attr.linecolor.copy(attrvalue);
-        return;
-      } else if (equals("linewidth", 9, attrname)) {
-        attr.linewidth.copy(attrvalue);
-        return;
       } else if (equals("borderwidth", 11, attrname)) {
         attr.borderwidth.copy(attrvalue);
         return;
       } else if (equals("bordercolor", 11, attrname)) {
         attr.bordercolor.copy(attrvalue);
         return;
-      } else if (equals("labelfontfile", 13, attrname)) {
-        attr.labelfontfile.copy(attrvalue);
-        return;
       } else if (equals("labelfontsize", 13, attrname)) {
         attr.labelfontsize.copy(attrvalue);
+        return;
+      } else if (equals("labelfontfile", 13, attrname)) {
+        attr.labelfontfile.copy(attrvalue);
         return;
       } else if (equals("labelcolor", 10, attrname)) {
         attr.labelcolor.copy(attrvalue);

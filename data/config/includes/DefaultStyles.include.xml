@@ -154,7 +154,7 @@
         fillcolor="#000080FF"
         bordercolor="#000000"
         borderwidth="4.0"
-	    labelfontpath="{ADAGUC_PATH}/data/fonts/Roboto-Black.ttf"
+	    labelfontfile="{ADAGUC_PATH}/data/fonts/Roboto-Black.ttf"
         labelfontsize="8"
         labelcolor="#800000FF"
         labelpropertyname="Gemeentenaam"

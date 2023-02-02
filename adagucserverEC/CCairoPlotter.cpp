@@ -25,7 +25,7 @@
 
 #include "CCairoPlotter.h"
 #ifdef ADAGUC_USE_CAIRO
-//#define MEASURETIME
+// #define MEASURETIME
 
 #include "CStopWatch.h"
 const char *CCairoPlotter::className = "CCairoPlotter";
@@ -239,7 +239,7 @@ int CCairoPlotter::renderFont(FT_Bitmap *bitmap, int left, int top) {
   return 0;
 }
 int CCairoPlotter::initializeFreeType() {
-  // CDBDebug("initializeFreeType(%d)\n", library==NULL);
+  // CDBDebug("initializeFreeType(%d)\n", library == NULL);
   if (library != NULL) {
     CDBError("Freetype is already intialized");
     return 1;
@@ -303,6 +303,7 @@ int CCairoPlotter::_drawFreeTypeText(int x, int y, int &w, int &h, float angle, 
     }
   };
   int error;
+  // CDBDebug("font: %s", this->fontLocation);
 
   FT_GlyphSlot slot;
   FT_Matrix matrix; /* transformation matrix */
