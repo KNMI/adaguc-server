@@ -2,8 +2,6 @@
 <Configuration>
   <!-- Custom styles -->
   <Style name="shadedstylefast">
-    <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
-
     <ShadeInterval min="-80" max="-7" fillcolor="#08387b" bgcolor="#FF000080" />
     <ShadeInterval min="-7" max="-6" fillcolor="#084584" />
     <ShadeInterval min="-6" max="-5" fillcolor="#105184" />
@@ -63,8 +61,6 @@
 
 
   <Style name="shadedstyleprecise">
-    <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
-
     <ShadeInterval min="-80" max="-7" fillcolor="#08387b" bgcolor="#FF000080" />
     <ShadeInterval min="-7" max="-6" fillcolor="#084584" />
     <ShadeInterval min="-6" max="-5" fillcolor="#105184" />
