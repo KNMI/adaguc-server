@@ -41,7 +41,7 @@
 #include "CServerError.h"
 #include "CServerConfig_CPPXSD.h"
 #include <math.h>
-//#include <png.h>
+// #include <png.h>
 #include <gd.h>
 #include "gdfontl.h"
 #include "gdfonts.h"
@@ -115,7 +115,9 @@ public:
   CColor color;
 
   DEF_ERRORFUNCTION();
-  RectangleText(int llx, int lly, int urx, int ury, float angle, int padding, const char *text, const char *fontFile, float fontSize, CColor color) {
+  RectangleText() {}
+
+  void init(int llx, int lly, int urx, int ury, float angle, int padding, const char *text, const char *fontFile, float fontSize, CColor color) {
     this->llx = llx;
     this->lly = lly;
     this->urx = urx;
