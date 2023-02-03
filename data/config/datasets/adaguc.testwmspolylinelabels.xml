@@ -62,8 +62,8 @@
  <Style name="polyline_with_label_roboto_gd">
     <RenderMethod>polyline</RenderMethod>
     <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
-    <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF" bordercolor="#0000FFFF" label="area" borderwidth="0.5" labelpropertyname="name" labelfontsize="12" labelangle="0" labelfontfile="{ADAGUC_PATH}/data/fonts/Roboto-MediumItalic.ttf" labelcolor="#808000FF"/>
-    <NameMapping name="polyline+label+roboto_gd"   title="border 0.5px blue" abstract="border 0.5px blue"/>
+    <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF" bordercolor="#0000FFFF" label="area" borderwidth="0.5" labelpropertyname="name" labelfontsize="12" labelangle="0" labelfontfile="{ADAGUC_PATH}/data/fonts/Roboto-MediumItalic.ttf" labelcolor="#FF0000FF"/>
+    <NameMapping name="polyline+label+roboto+gd"   title="border 0.5px blue" abstract="border 0.5px blue"/>
     <RenderSettings featuresoverlap="true" renderer="gd"/>
  </Style>
 

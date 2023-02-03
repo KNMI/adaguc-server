@@ -1130,7 +1130,7 @@ void CDrawImage::drawCenteredTextNoOverlap(int x, int y, const char *fontFile, f
     int tcolor = getClosestGDColor(color.r, color.g, color.b);
     if (_bEnableTrueColor) tcolor = -tcolor;
     // Use the text size for angle 0 for detecting overlaps
-    gdImageStringFT(NULL, &brect[0], tcolor, (char *)TTFFontLocation, size, radAngle, x, y, (char *)_text);
+    gdImageStringFT(NULL, &brect[0], tcolor, (char *)fontFile, size, radAngle, x, y, (char *)_text);
     rect.init(brect[0], brect[5], brect[4], brect[1], angle, padding, text, fontFile, size, color);
     delete[] _text;
   }
@@ -1146,7 +1146,6 @@ void CDrawImage::drawCenteredTextNoOverlap(int x, int y, const char *fontFile, f
 
 void CDrawImage::drawText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color) {
 
-  CDBDebug("drawText(%s) with %s", text, currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO ? "cairo" : "GD");
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
     CCairoPlotter *freeType = this->getCairoPlotter(fontfile, size, Geo->dWidth, Geo->dHeight, cairo->getByteBuffer());
     freeType->setColor(color.r, color.g, color.b, color.a);
