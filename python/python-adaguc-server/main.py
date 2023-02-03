@@ -68,4 +68,4 @@ def testadaguc():
 if __name__ == "__main__":
     app.secret_key = os.urandom(24)
     testadaguc()
-    app.run(debug=True, host="0.0.0.0", port=8080)
+    app.run(debug=True, host="0.0.0.0", port=8081)
