@@ -3,12 +3,29 @@ FeatureInterval (match, matchid, label, bgcolor, fillcolor)
 
 Back to [Configuration](./Configuration.md)
 
+The FeatureInterval element is used to confiure the styling of GeoJSON Features:
+
 -   match - Required, The regular expression to match with the attribute value
--   matchid - Required, The attribute name to match with. All attributes per feature can be queried with GetFeatureInfo (click on the map in ADAGUCViewer).
+-   matchid - Required, The attribute name to match with. The complete set of attributes per feature can be queried with GetFeatureInfo (click on the map in ADAGUCViewer).
 -   label - Recommended, the label to display inside the legend
 -   bgcolor - Optional, the background color for the map, can only be configured in the first FeatureInterval
 -   fillcolor - Required, the color to shade.
+-   borderwidth - Optional, the width used for drawing the border
+-   bordercolor - Optional, the color used for drawing the border
 
+It is also possible to add text labels to the displayed features. These labels can be styled with the following attributes:
+
+-   labelfontsize - Optional, the fontsize to be used for drawing the label
+-   labelfontfile - Optional, the TrueType fontfile to be used for drawing the label
+-   labelcolor - Optional, the color to be used for drawing the label
+-   labelproperytname- Optional, determines which GeoJSON property is used for the label
+-   labelpropertyformat - Optional, determines the printf format string used to convert the labelpropertyname into a string (default %s)
+-   labelangle - Optional, the angle at which the label will be drawn (in degrees), default 0 (=horizontal)
+-   labelpadding - Optional, the padding in pixels to be added around the bounding boxes of labels when not plotting overlapping labels
+
+The drawing of overlapping labels can be enabled or disabled with a [RenderSetting](./RenderSettings.md):
+-   featuresoverlap - Optional, values true or false, default false. Enable or disable overlapping labels, for readability
+-   randomizefeatures - Optional, values true or false, default false. Start drawing of list of labels at a random start point, so that not always the same overlapping labels are being skipped.
 
 ```xml
 <Style name="countries_nlmask">
