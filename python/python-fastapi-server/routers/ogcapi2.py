@@ -4,10 +4,12 @@ import traceback
 import types
 from typing import Any, Dict, List, Union, Sequence, Type
 from enum import Enum
-import weakref
 import yaml
+from defusedxml.ElementTree import fromstring, parse, ParseError
 
 import pydantic
+
+from collections import OrderedDict
 
 from cachetools import cached, TTLCache
 
@@ -57,7 +59,10 @@ from .models.ogcapifeatures_1_model import (
     Spatial,
     Temporal,
 )
-from .ogcapi_tools import generate_collections, get_capabilities, get_extent, make_bbox
+from .ogcapi_tools import generate_collections, get_capabilities, get_extent, make_bbox, calculate_coords, get_parameters, callADAGUC, feature_from_dat, getItemLinks
+
+DEFAULT_CRS = "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+SUPPORTED_CRS_LIST = [DEFAULT_CRS]
 
 import sys
 import os
@@ -203,7 +208,6 @@ def getCollectionsLinks(url):
 @ogcApiApp.get("/collections/", response_model=Collections)
 @ogcApiApp.get("/collections", response_model=Collections)
 async def getCollections(req: Request, f: str = "json"):
-    print("getCollections()")
     collections: List[Collection] = []
     parsed_collections = generate_collections()
     for parsed_collection in parsed_collections:
@@ -225,6 +229,8 @@ async def getCollections(req: Request, f: str = "json"):
                 ),
                 extent=extent,
                 itemType="feature",
+                crs=[DEFAULT_CRS],
+                storageCrs=DEFAULT_CRS
             )
         )
     links = getCollectionsLinks(req.url_for("getCollections"))
@@ -236,7 +242,6 @@ async def getCollections(req: Request, f: str = "json"):
 
 @ogcApiApp.get("/collections/{id}", response_model=Collection)
 async def getCollection(id: str, req: Request, f: str = "json"):
-    print(f"getCollection({id})")
     extent = Extent(spatial=Spatial(bbox=[get_extent(id)]))
     coll = Collection(
         id=id,
@@ -314,7 +319,6 @@ async def getOpenApi(req: Request, f: str = "json"):
 async def getOpenApiYaml(req: Request, f: str = "yaml"):
     openapi = makeOpenApi()
     openapi_yaml = yaml.dump(openapi, sort_keys=False)
-    print(openapi_yaml, "\nNNNN")
     return Response(
         content=openapi_yaml,
         media_type="application/vnd.oai.openapi;version=3.0",
@@ -362,25 +366,122 @@ def request_(call_adaguc, url, args, name, headers=None):
             else:
                 url = "%s&DIM_%s=%s" % (url, dimname, dimval)
 
+def getSingleItem(id: str, coll_id:str, url: str)->FeatureGeoJSON:
+    collection, observed_property_name, point, dims, datetime_=id.split(";")
+    coord=list(map(float,point.split(",")))
+    dimspec=""
+    for dim in dims.split(";"):
+        dimname, dimval = dim.split("=")
+        dimspec+=f"&{dimname}={dimval}"
+    datetime_=datetime_.replace("$", "/")
+    request_url = (
+            f"http://localhost:8000/wms?dataset={coll_id}&query_layers={observed_property_name}"
+            + "&service=WMS&version=1.3.0&request=getPointValue&FORMAT=application/json&INFO_FORMAT=application/json"
+            + f"&X={coord[0]}&Y={coord[1]}&CRS=EPSG:4326"
+        )
+    if datetime_:
+        request_url+=f"&TIME={datetime_}"
+    request_url+=dimspec
+    status, data = callADAGUC(request_url.encode("UTF-8"))
+    if status == 0:
+        try:
+            response_data = json.loads(
+                data.getvalue(), object_pairs_hook=OrderedDict
+            )
+        except ValueError:
+            root = fromstring(data)
+            logger.info("ET:%s", root)
+
+            retval = json.dumps(
+                {"Error": {"code": root[0].attrib["code"], "message": root[0].text}}
+            )
+            logger.info("retval=%s", retval)
+            return 400, root[0].text.strip() #TODO
+        features = []
+        for data in response_data:
+            data_features = feature_from_dat(
+                data, observed_property_name, id, url, url
+            )
+            features.extend(data_features)
+        return features[0]
+
+    return None
 
 def getFeaturesForItems(
     id: str,
+    base_url: str,
     limit: int = 10,
     start: int = 0,
     point=None,
     bbox=None,
     datetime_=None,
     resultTime=None,
-    observedPropertyName: str = None,
+    observedPropertyName=None,
     dims=None,
+    npoints=None,
+    crs=None,
+    bbox_crs=None
 ) -> List[FeatureGeoJSON]:
-    print("getFeaturesforItems")
     features: List[FeatureGeoJSON] = []
-    request_url = (
-        "http://localhost:8000/wms?dataset=HARM_N25_MAXQL"
-        + "&service=WMS&version=1.3.0&request=getPointValue&INFO_FORMAT=application/json"
-    )
-    request_url
+    if not point:
+        if not bbox :
+            bbox =  make_bbox(get_extent(id))
+
+        if not npoints:
+            npoints = 4
+        coords = calculate_coords(bbox, npoints, npoints)
+    else:
+        coords = [point]
+    if not observedPropertyName:
+        collinfo = get_parameters(id)
+        observedPropertyName = [collinfo["layers"][0]["name"]]
+         # Default observedPropertyName = first layername
+    paramList = ",".join(observedPropertyName)
+
+    if resultTime:
+       collinfo = get_parameters(id)
+
+
+    paramList = ",".join(observedPropertyName)
+
+    dimspec=""
+    if dims:
+        for dimname,dimval in dims.items():
+            dimspec += "&%s=%s" % (dimname, dimval)
+
+    for coord in coords:
+        request_url = (
+            f"http://localhost:8000/wms?dataset={id}&query_layers={paramList}"
+            + "&service=WMS&version=1.3.0&request=getPointValue&FORMAT=application/json&INFO_FORMAT=application/json"
+            + f"&X={coord[0]}&Y={coord[1]}&CRS=EPSG:4326"
+        )
+        if datetime_:
+            request_url+=f"&TIME={datetime_}"
+        if resultTime:
+            request_url+=f"&DIM_REFERENCE_TIME={resultTime}"
+        request_url+=dimspec
+        status, data = callADAGUC(request_url.encode("UTF-8"))
+        if status == 0:
+            try:
+                response_data = json.loads(
+                    data.getvalue(), object_pairs_hook=OrderedDict
+                )
+            except ValueError:
+                root = fromstring(data)
+                logger.info("ET:%s", root)
+
+                retval = json.dumps(
+                    {"Error": {"code": root[0].attrib["code"], "message": root[0].text}}
+                )
+                logger.info("retval=%s", retval)
+                return 400, root[0].text.strip() #TODO
+            features = []
+            for data in response_data:
+                data_features = feature_from_dat(
+                    data, observedPropertyName, id, base_url, base_url
+                )
+                features.extend(data_features)
+            return features
 
     return features
 
@@ -406,7 +507,6 @@ def getFeaturesForItems2(
 
 
 def check_point(point: Union[str, None] = Query(default=None)) -> List[float]:
-    print("point:", point)
     if point is None:
         return None
     coords = point.split(",")
@@ -417,16 +517,60 @@ def check_point(point: Union[str, None] = Query(default=None)) -> List[float]:
 
 
 def check_bbox(bbox: Union[str, None] = Query(default=None)) -> List[float]:
-    print("bbox:", bbox)
     if bbox is None:
         return None
+    print("BBOX:", bbox)
     coords = bbox.split(",")
-    print("coords:", coords)
     if len(coords) != 4 and len(coords) != 6:
         # Error
         raise HTTPException(status_code=404, detail="bbox should contain 4 or 6 floats")
     return list(map(float, coords))
 
+
+def check_observed_property_name(observedPropertyName: Union[str, None] = Query(default=None)) -> List[str]:
+    if observedPropertyName is None:
+        return None
+    names = observedPropertyName.split(",")
+    if len(names) < 1:
+        # Error
+        raise HTTPException(status_code=404, detail="observedPropertyName should contain > 0 names")
+    return names
+
+
+def check_dims(dims: Union[str, None] = Query(default=None)) -> Dict[str,str]:
+    if dims is None:
+        return None
+    dim_terms = dims.split(";")
+    if len(dim_terms) < 1:
+        # Error
+        raise HTTPException(status_code=404, detail="dims should contain > 0 names")
+    dimensions = dict()
+    for dim in dim_terms:
+        dimname, dimval = dim.split(":")
+        if dimname.upper() == "ELEVATION":
+            dimensions["ELEVATION"]=dimval
+        else:
+            dimensions[dimname]=dimval
+
+    return dimensions
+
+def check_bbox_crs(bbox_crs: Union[str, None] = Query(default=None, alias="bbox-crs")) -> str:
+    if bbox_crs is None:
+        return None
+
+    if bbox_crs not in SUPPORTED_CRS_LIST:
+        # Error
+        raise HTTPException(status_code=400, detail=f"bbox-crs {bbox_crs} not in supported list")
+    return bbox_crs
+
+def check_crs(crs: Union[str, None] = Query(default=None)) -> str:
+    if crs is None:
+        return None
+
+    if crs not in SUPPORTED_CRS_LIST:
+        # Error
+        raise HTTPException(status_code=400, detail=f"crs {crs} not in supported list")
+    return crs
 
 @ogcApiApp.get(
     "/collections/{id}/items",
@@ -435,16 +579,20 @@ def check_bbox(bbox: Union[str, None] = Query(default=None)) -> List[float]:
 async def getItemsForCollection(
     id: str,
     req: Request,
+    response: Response,
     f: str = "json",
     limit: Union[int, None] = Query(default=10),
     start: Union[int, None] = Query(default=0),
     bbox: Union[str, None] = Depends(check_bbox),
     point: Union[str, None] = Depends(check_point),
-    crs: Union[str, None] = Query(default=None),
+    crs: Union[str, None] = Depends(check_crs), #Query(default=None),
     resultTime: Union[str, None] = Query(default=None),
     datetime_: Union[str, None] = Query(default=None, alias="datetime"),
+    observedPropertyName: Union[str, None] = Depends(check_observed_property_name),
+    dims: Union[str, None] = Depends(check_dims),
+    npoints: Union[int, None] = Query(default=4),
+    bbox_crs: Union[str, None] = Depends(check_bbox_crs)
 ):
-    print("getItemsForCollection")
     allowed_params = [
         "f",
         "limit",
@@ -455,6 +603,9 @@ async def getItemsForCollection(
         "resultTime",
         "observedPropertyName",
         "dims",
+        "npoints",
+        "crs",
+        "bbox-crs"
     ]
     extra_params = [k for k in req.query_params if k not in allowed_params]
 
@@ -468,31 +619,29 @@ async def getItemsForCollection(
                 }
             ),
         )
+    base_url = req.url_for("getItemsForCollection", id=id)
     try:
         features = getFeaturesForItems(
-            id, limit, start, point, bbox, datetime_, resultTime, crs, []
+            id=id, base_url=base_url, limit=limit, start=start, point=point, bbox=bbox, datetime_=datetime_, resultTime=resultTime, crs=crs, observedPropertyName=observedPropertyName, npoints=npoints, dims=dims
         )
-        # print(features)
         features_to_return = features[start : start + limit]
         number_matched = len(features)
         number_returned = len(features_to_return)
-        print("LEN:", len(features), len(features_to_return), limit, start)
         prev_start = None
         if start > 0:
             prev_start = max(start - limit, 0)
         next_start = None
         if (start + limit) < number_matched:
             next_start = start + limit
-            print(start, limit, prev_start, next_start)
         links = getItemLinks(
             id,
             None,
             req.url_for("getItemsForCollection", id=id),
+            str(req.url),
             prev_start=prev_start,
             next_start=next_start,
             limit=limit,
         )
-        print("links:", links)
 
         featureCollection = FeatureCollectionGeoJSON(
             type=Type.FeatureCollection,
@@ -502,9 +651,7 @@ async def getItemsForCollection(
             numberMatched=len(features),
             numberReturned=len(features_to_return),
         )
-        print(
-            "numberMatched:", len(features), "numberReturned:", len(features_to_return)
-        )
+        response.headers["Content-Crs"]=f"<{DEFAULT_CRS}>"
         return featureCollection
     except Exception as e:
         print(
@@ -517,7 +664,7 @@ async def getItemsForCollection(
     return None
 
 
-def getItemLinks(
+def getItemLinks2(
     id: str,
     item_id: str,
     url: str,
@@ -575,24 +722,16 @@ def getItemLinks(
 
 @ogcApiApp.get("/collections/{id}/items/{item_id}", response_model=FeatureGeoJSON)
 async def getItemForCollection(
-    id: str, item_id: str, req: Request, f: str = "json", crs: str = None
+    id: str, item_id: str, req: Request,  response: Response, f: str = "json", crs: Union[str, None] = Depends(check_crs),
 ):
-    features: List[FeatureGeoJSON] = getFeaturesForItems(id, limit=-1)
-    feature: FeatureGeoJSON = None
-    for f in features:
-        if f.id == item_id:
-            feature = f
-            break
-    url = (
-        req.url
-    )  # req.url_for("getItemForCollection", id=id, item_id=item_id, req=req)
-    try:
-        f.links = getItemLinks(
+    url = req.url
+    feature_to_return = getSingleItem(item_id, id, str(url))
+
+    links = getItemLinks(
             id,
             item_id,
             str(url),
+            str(req.url)
         )
-    except ValidationError as e:
-        print("ValidationError:", e)
-
-    return feature
+    response.headers["Content-Crs"]=f"<{DEFAULT_CRS}>"
+    return feature_to_return
