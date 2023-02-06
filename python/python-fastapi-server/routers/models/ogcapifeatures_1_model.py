@@ -226,6 +226,11 @@ class Collection(BaseModel):
             'http://www.opengis.net/def/crs/EPSG/0/4326',
         ],
     )
+    storageCrs: Optional[str]= Field(
+      'http://www.opengis.net/def/crs/OGC/1.3/CRS84',
+      description="storageCrs",
+      example='http://www.opengis.net/def/crs/OGC/1.3/CRS84'
+    )
 
 
 class Collections(BaseModel):
