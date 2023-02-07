@@ -1,7 +1,6 @@
 from wsgiref.simple_server import WSGIRequestHandler
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import RedirectResponse
-from flask import Flask
 import uvicorn
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,8 +9,7 @@ from routers.healthcheck import healthCheckRouter
 from routers.wmswcs import wmsWcsRouter
 from routers.autowms import autoWmsRouter
 from routers.opendap import opendapRouter
-from routers.cacher import cacher, init_cache
-from routers.ogcapi2 import ogcApiApp
+from routers.ogcapi import ogcApiApp
 
 import time
 
