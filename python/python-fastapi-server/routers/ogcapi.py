@@ -17,8 +17,6 @@ cache = TTLCache(maxsize=1000, ttl=30)
 
 from .setup_adaguc import setup_adaguc
 
-# from routers.cacher import init_cache
-
 from fastapi import (
     Body,
     Depends,
