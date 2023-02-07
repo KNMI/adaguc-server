@@ -3,8 +3,7 @@ lxml
 werkzeug
 netCDF4
 Pillow
-flask-cors
-flask-caching
+gunicorn
 uvicorn
 pytest
 marshmallow
