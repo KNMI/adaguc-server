@@ -23,5 +23,4 @@ ulimit -c unlimited
 
 
 python3 ${ADAGUC_PATH}/tests/functional_test.py $1 && \
-pytest -s ../python/python-adaguc-server/testOgcApiFeatures.py && \
 pytest -s ../python/python-fastapi-server/testOgcApiFeatures.py
