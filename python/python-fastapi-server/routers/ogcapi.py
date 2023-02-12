@@ -57,7 +57,17 @@ from .models.ogcapifeatures_1_model import (
     Spatial,
     Temporal,
 )
-from .ogcapi_tools import generate_collections, get_capabilities, get_extent, make_bbox, calculate_coords, get_parameters, callADAGUC, feature_from_dat, getItemLinks
+from .ogcapi_tools import (
+    generate_collections,
+    get_capabilities,
+    get_extent,
+    make_bbox,
+    calculate_coords,
+    get_parameters,
+    callADAGUC,
+    feature_from_dat,
+    getItemLinks,
+)
 
 DEFAULT_CRS = "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
 SUPPORTED_CRS_LIST = [DEFAULT_CRS]
@@ -139,7 +149,9 @@ async def handleOgcApiRoot(req: Request, f: str = "json"):
             type="application/vnd.oai.openapi;version=3.0",
         )
     )
-    landingPage = LandingPage(title="ogcapi2", description="ADAGUC OGCAPI-Features server demo", links=links)
+    landingPage = LandingPage(
+        title="ogcapi2", description="ADAGUC OGCAPI-Features server demo", links=links
+    )
     if f == "json":
         return landingPage
     return landingPage
@@ -209,28 +221,33 @@ async def getCollections(req: Request, f: str = "json"):
     collections: List[Collection] = []
     parsed_collections = generate_collections()
     for parsed_collection in parsed_collections:
-        spatial = Spatial(
-            bbox=[list(get_extent(parsed_collections[parsed_collection]["dataset"]))]
-        )
-        extent = Extent(spatial=spatial)
-        collections.append(
-            Collection(
-                id=parsed_collections[parsed_collection]["dataset"],
-                title="title1",
-                description="descr1",
-                links=getCollectionLinks(
-                    req.url_for(
-                        "getCollection",
-                        id=parsed_collections[parsed_collection]["dataset"],
-                    ),
-                    parsed_collections[parsed_collection]["dataset"],
-                ),
-                extent=extent,
-                itemType="feature",
-                crs=[DEFAULT_CRS],
-                storageCrs=DEFAULT_CRS
+        parsed_extent = get_extent(parsed_collections[parsed_collection]["dataset"])
+        if parsed_extent:
+            spatial = Spatial(
+                bbox=[
+                    list(get_extent(parsed_collections[parsed_collection]["dataset"]))
+                ]
             )
-        )
+            extent = Extent(spatial=spatial)
+            collections.append(
+                Collection(
+                    id=parsed_collections[parsed_collection]["dataset"],
+                    title="title1",
+                    description="descr1",
+                    links=getCollectionLinks(
+                        req.url_for(
+                            "getCollection",
+                            id=parsed_collections[parsed_collection]["dataset"],
+                        ),
+                        parsed_collections[parsed_collection]["dataset"],
+                    ),
+                    extent=extent,
+                    itemType="feature",
+                    crs=[DEFAULT_CRS],
+                    storageCrs=DEFAULT_CRS,
+                )
+            )
+
     links = getCollectionsLinks(req.url_for("getCollections"))
     return Collections(
         links=links,
@@ -364,28 +381,27 @@ def request_(call_adaguc, url, args, name, headers=None):
             else:
                 url = "%s&DIM_%s=%s" % (url, dimname, dimval)
 
-def getSingleItem(id: str, coll_id:str, url: str)->FeatureGeoJSON:
-    collection, observed_property_name, point, dims, datetime_=id.split(";")
-    coord=list(map(float,point.split(",")))
-    dimspec=""
+
+def getSingleItem(id: str, coll_id: str, url: str) -> FeatureGeoJSON:
+    collection, observed_property_name, point, dims, datetime_ = id.split(";")
+    coord = list(map(float, point.split(",")))
+    dimspec = ""
     for dim in dims.split(";"):
         dimname, dimval = dim.split("=")
-        dimspec+=f"&{dimname}={dimval}"
-    datetime_=datetime_.replace("$", "/")
+        dimspec += f"&{dimname}={dimval}"
+    datetime_ = datetime_.replace("$", "/")
     request_url = (
-            f"http://localhost:8000/wms?dataset={coll_id}&query_layers={observed_property_name}"
-            + "&service=WMS&version=1.3.0&request=getPointValue&FORMAT=application/json&INFO_FORMAT=application/json"
-            + f"&X={coord[0]}&Y={coord[1]}&CRS=EPSG:4326"
-        )
+        f"http://localhost:8000/wms?dataset={coll_id}&query_layers={observed_property_name}"
+        + "&service=WMS&version=1.3.0&request=getPointValue&FORMAT=application/json&INFO_FORMAT=application/json"
+        + f"&X={coord[0]}&Y={coord[1]}&CRS=EPSG:4326"
+    )
     if datetime_:
-        request_url+=f"&TIME={datetime_}"
-    request_url+=dimspec
+        request_url += f"&TIME={datetime_}"
+    request_url += dimspec
     status, data = callADAGUC(request_url.encode("UTF-8"))
     if status == 0:
         try:
-            response_data = json.loads(
-                data.getvalue(), object_pairs_hook=OrderedDict
-            )
+            response_data = json.loads(data.getvalue(), object_pairs_hook=OrderedDict)
         except ValueError:
             root = fromstring(data)
             logger.info("ET:%s", root)
@@ -394,16 +410,15 @@ def getSingleItem(id: str, coll_id:str, url: str)->FeatureGeoJSON:
                 {"Error": {"code": root[0].attrib["code"], "message": root[0].text}}
             )
             logger.info("retval=%s", retval)
-            return 400, root[0].text.strip() #TODO
+            return 400, root[0].text.strip()  # TODO
         features = []
         for data in response_data:
-            data_features = feature_from_dat(
-                data, observed_property_name, id, url, url
-            )
+            data_features = feature_from_dat(data, observed_property_name, id, url, url)
             features.extend(data_features)
         return features[0]
 
     return None
+
 
 def getFeaturesForItems(
     id: str,
@@ -418,12 +433,12 @@ def getFeaturesForItems(
     dims=None,
     npoints=None,
     crs=None,
-    bbox_crs=None
+    bbox_crs=None,
 ) -> List[FeatureGeoJSON]:
     features: List[FeatureGeoJSON] = []
     if not point:
-        if not bbox :
-            bbox =  make_bbox(get_extent(id))
+        if not bbox:
+            bbox = make_bbox(get_extent(id))
 
         if not npoints:
             npoints = 4
@@ -433,18 +448,17 @@ def getFeaturesForItems(
     if not observedPropertyName:
         collinfo = get_parameters(id)
         observedPropertyName = [collinfo["layers"][0]["name"]]
-         # Default observedPropertyName = first layername
+        # Default observedPropertyName = first layername
     paramList = ",".join(observedPropertyName)
 
     if resultTime:
-       collinfo = get_parameters(id)
-
+        collinfo = get_parameters(id)
 
     paramList = ",".join(observedPropertyName)
 
-    dimspec=""
+    dimspec = ""
     if dims:
-        for dimname,dimval in dims.items():
+        for dimname, dimval in dims.items():
             dimspec += "&%s=%s" % (dimname, dimval)
 
     for coord in coords:
@@ -454,10 +468,10 @@ def getFeaturesForItems(
             + f"&X={coord[0]}&Y={coord[1]}&CRS=EPSG:4326"
         )
         if datetime_:
-            request_url+=f"&TIME={datetime_}"
+            request_url += f"&TIME={datetime_}"
         if resultTime:
-            request_url+=f"&DIM_REFERENCE_TIME={resultTime}"
-        request_url+=dimspec
+            request_url += f"&DIM_REFERENCE_TIME={resultTime}"
+        request_url += dimspec
         status, data = callADAGUC(request_url.encode("UTF-8"))
         if status == 0:
             try:
@@ -472,7 +486,7 @@ def getFeaturesForItems(
                     {"Error": {"code": root[0].attrib["code"], "message": root[0].text}}
                 )
                 logger.info("retval=%s", retval)
-                return 400, root[0].text.strip() #TODO
+                return 400, root[0].text.strip()  # TODO
             features = []
             for data in response_data:
                 data_features = feature_from_dat(
@@ -517,7 +531,6 @@ def check_point(point: Union[str, None] = Query(default=None)) -> List[float]:
 def check_bbox(bbox: Union[str, None] = Query(default=None)) -> List[float]:
     if bbox is None:
         return None
-    print("BBOX:", bbox)
     coords = bbox.split(",")
     if len(coords) != 4 and len(coords) != 6:
         # Error
@@ -525,17 +538,21 @@ def check_bbox(bbox: Union[str, None] = Query(default=None)) -> List[float]:
     return list(map(float, coords))
 
 
-def check_observed_property_name(observedPropertyName: Union[str, None] = Query(default=None)) -> List[str]:
+def check_observed_property_name(
+    observedPropertyName: Union[str, None] = Query(default=None)
+) -> List[str]:
     if observedPropertyName is None:
         return None
     names = observedPropertyName.split(",")
     if len(names) < 1:
         # Error
-        raise HTTPException(status_code=404, detail="observedPropertyName should contain > 0 names")
+        raise HTTPException(
+            status_code=404, detail="observedPropertyName should contain > 0 names"
+        )
     return names
 
 
-def check_dims(dims: Union[str, None] = Query(default=None)) -> Dict[str,str]:
+def check_dims(dims: Union[str, None] = Query(default=None)) -> Dict[str, str]:
     if dims is None:
         return None
     dim_terms = dims.split(";")
@@ -546,20 +563,26 @@ def check_dims(dims: Union[str, None] = Query(default=None)) -> Dict[str,str]:
     for dim in dim_terms:
         dimname, dimval = dim.split(":")
         if dimname.upper() == "ELEVATION":
-            dimensions["ELEVATION"]=dimval
+            dimensions["ELEVATION"] = dimval
         else:
-            dimensions[dimname]=dimval
+            dimensions[dimname] = dimval
 
     return dimensions
 
-def check_bbox_crs(bbox_crs: Union[str, None] = Query(default=None, alias="bbox-crs")) -> str:
+
+def check_bbox_crs(
+    bbox_crs: Union[str, None] = Query(default=None, alias="bbox-crs")
+) -> str:
     if bbox_crs is None:
         return None
 
     if bbox_crs not in SUPPORTED_CRS_LIST:
         # Error
-        raise HTTPException(status_code=400, detail=f"bbox-crs {bbox_crs} not in supported list")
+        raise HTTPException(
+            status_code=400, detail=f"bbox-crs {bbox_crs} not in supported list"
+        )
     return bbox_crs
+
 
 def check_crs(crs: Union[str, None] = Query(default=None)) -> str:
     if crs is None:
@@ -569,6 +592,7 @@ def check_crs(crs: Union[str, None] = Query(default=None)) -> str:
         # Error
         raise HTTPException(status_code=400, detail=f"crs {crs} not in supported list")
     return crs
+
 
 @ogcApiApp.get(
     "/collections/{id}/items",
@@ -583,13 +607,13 @@ async def getItemsForCollection(
     start: Union[int, None] = Query(default=0),
     bbox: Union[str, None] = Depends(check_bbox),
     point: Union[str, None] = Depends(check_point),
-    crs: Union[str, None] = Depends(check_crs), #Query(default=None),
+    crs: Union[str, None] = Depends(check_crs),  # Query(default=None),
     resultTime: Union[str, None] = Query(default=None),
     datetime_: Union[str, None] = Query(default=None, alias="datetime"),
     observedPropertyName: Union[str, None] = Depends(check_observed_property_name),
     dims: Union[str, None] = Depends(check_dims),
     npoints: Union[int, None] = Query(default=4),
-    bbox_crs: Union[str, None] = Depends(check_bbox_crs)
+    bbox_crs: Union[str, None] = Depends(check_bbox_crs),
 ):
     allowed_params = [
         "f",
@@ -603,7 +627,7 @@ async def getItemsForCollection(
         "dims",
         "npoints",
         "crs",
-        "bbox-crs"
+        "bbox-crs",
     ]
     extra_params = [k for k in req.query_params if k not in allowed_params]
 
@@ -620,7 +644,18 @@ async def getItemsForCollection(
     base_url = req.url_for("getItemsForCollection", id=id)
     try:
         features = getFeaturesForItems(
-            id=id, base_url=base_url, limit=limit, start=start, point=point, bbox=bbox, datetime_=datetime_, resultTime=resultTime, crs=crs, observedPropertyName=observedPropertyName, npoints=npoints, dims=dims
+            id=id,
+            base_url=base_url,
+            limit=limit,
+            start=start,
+            point=point,
+            bbox=bbox,
+            datetime_=datetime_,
+            resultTime=resultTime,
+            crs=crs,
+            observedPropertyName=observedPropertyName,
+            npoints=npoints,
+            dims=dims,
         )
         features_to_return = features[start : start + limit]
         number_matched = len(features)
@@ -649,10 +684,10 @@ async def getItemsForCollection(
             numberMatched=len(features),
             numberReturned=len(features_to_return),
         )
-        response.headers["Content-Crs"]=f"<{DEFAULT_CRS}>"
+        response.headers["Content-Crs"] = f"<{DEFAULT_CRS}>"
         return featureCollection
     except Exception as e:
-        print(
+        logger.error(
             "ERR:",
             traceback.format_exception(None, e, e.__traceback__),
             file=sys.stderr,
@@ -662,74 +697,18 @@ async def getItemsForCollection(
     return None
 
 
-def getItemLinks2(
-    id: str,
-    item_id: str,
-    url: str,
-    prev_start: int = None,
-    next_start: int = None,
-    limit: int = None,
-) -> List[Link]:
-    links: List[Link] = []
-    links.append(
-        Link(
-            href=url,
-            rel="self",
-            title="Item in JSON",
-            type="application/geo+json",
-        )
-    )
-    links.append(
-        Link(
-            href=url + "?f=html",
-            rel="alternate",
-            title="Item in HTML",
-            type="text/html",
-        )
-    )
-    if prev_start is not None:
-        links.append(
-            Link(
-                href=url + f"?start={prev_start}&limit={limit}",
-                rel="prev",
-                title="Item in JSON",
-                type="application/geo+json",
-            )
-        )
-    if next_start is not None:
-        links.append(
-            Link(
-                href=url + f"?start={next_start}&limit={limit}",
-                rel="next",
-                title="Item in JSON",
-                type="application/geo+json",
-            )
-        )
-
-    collection_url = "/".join(url.split("/")[:-2])
-    links.append(
-        Link(
-            href=collection_url,
-            rel="collection",
-            title="Collection",
-            type="application/geo+json",
-        )
-    )
-    return links
-
-
 @ogcApiApp.get("/collections/{id}/items/{item_id}", response_model=FeatureGeoJSON)
 async def getItemForCollection(
-    id: str, item_id: str, req: Request,  response: Response, f: str = "json", crs: Union[str, None] = Depends(check_crs),
+    id: str,
+    item_id: str,
+    req: Request,
+    response: Response,
+    f: str = "json",
+    crs: Union[str, None] = Depends(check_crs),
 ):
     url = req.url
     feature_to_return = getSingleItem(item_id, id, str(url))
 
-    links = getItemLinks(
-            id,
-            item_id,
-            str(url),
-            str(req.url)
-        )
-    response.headers["Content-Crs"]=f"<{DEFAULT_CRS}>"
+    links = getItemLinks(id, item_id, str(url), str(req.url))
+    response.headers["Content-Crs"] = f"<{DEFAULT_CRS}>"
     return feature_to_return

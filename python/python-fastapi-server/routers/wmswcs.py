@@ -79,3 +79,26 @@ async def handleWMS(
         response.headers[key] = value
 
     return response
+
+def testadaguc():
+    """Test adaguc is setup correctly"""
+    logger.info("Checking adaguc-server.")
+    adaguc_instance = setup_adaguc()
+    url = "SERVICE=WMS&REQUEST=GETCAPABILITIES"
+    adagucenv = {}
+
+    #  Set required environment variables
+    baseurl = "---"
+    adagucenv['ADAGUC_ONLINERESOURCE'] = os.getenv(
+        'EXTERNALADDRESS', baseurl) + "/adaguc-server?"
+    adagucenv['ADAGUC_DB'] = os.getenv(
+        'ADAGUC_DB', "user=adaguc password=adaguc host=localhost dbname=adaguc")
+
+    # Run adaguc-server
+    # pylint: disable=unused-variable
+    status, data, headers = adaguc_instance.runADAGUCServer(
+        url, env=adagucenv,  showLogOnError=False)
+    assert status == 0
+    assert headers == ['Content-Type:text/xml']
+    logger.info("adaguc-server seems [OK]")
+
