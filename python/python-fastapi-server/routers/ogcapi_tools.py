@@ -49,7 +49,7 @@ def get_extent(coll):
     Get the boundingbox extent from the WMS GetCapabilities
     """
     contents = get_capabilities(coll)
-    if len(contents):
+    if contents and len(contents):
         return contents[next(iter(contents))].boundingBoxWGS84
     return None
 
@@ -133,13 +133,12 @@ def calculate_coords(bbox, nlon, nlat):
             coords.append([lon, lat])
     return coords
 
+
 def callADAGUC(url):
-    print(f"callADAGUC({url}")
     """Call adaguc-server"""
     adagucInstance = setup_adaguc()
 
     url = url.decode()
-    logger.info(">>>>>%s", url)
     if "?" in url:
         url = url[url.index("?") + 1 :]
     logger.info(url)
@@ -242,6 +241,7 @@ def get_parameters(collname):
     # logger.info("l:%s", json.dumps(layers)) # THIS CAUSES A HUGE LOGGING MESSAGE!
     return {"layers": layers}
 
+
 def makedims(dims, data):
     """
     Makedims
@@ -276,6 +276,7 @@ def makedims(dims, data):
 
     return dimlist
 
+
 def getdimvals(dims, name):
     """
     getdimvals
@@ -297,6 +298,7 @@ def multi_get(dict_obj, attrs, default=None):
         result = result[attr]
     return result
 
+
 def getCollectionLinks(
     id: str,
     item_id: str,
@@ -316,6 +318,7 @@ def getCollectionLinks(
         )
     )
     return links
+
 
 def getItemLinks(
     id: str,
@@ -377,11 +380,11 @@ def getItemLinks(
 
     return links
 
+
 def feature_from_dat(dat, observedPropertyName, name, url, self_url):
     """
     feature_from_dat
     """
-    print("FEATURE_FROM_DAT")
     dims = makedims(dat["dims"], dat["data"])
     timeSteps = getdimvals(dims, "time")
     if not timeSteps or len(timeSteps) == 0:
@@ -398,12 +401,6 @@ def feature_from_dat(dat, observedPropertyName, name, url, self_url):
     tuples = list(itertools.product(*valstack))
 
     features = []
-    logger.info(
-        "TUPLES: %s [%d] %s",
-        json.dumps(tuples),
-        len(tuples),
-        json.dumps(dims_without_time),
-    )
 
     for t in tuples:
         logger.info("T:%s", t)
@@ -451,15 +448,15 @@ def feature_from_dat(dat, observedPropertyName, name, url, self_url):
         coords = dat["point"]["coords"].split(",")
         coords[0] = float(coords[0])
         coords[1] = float(coords[1])
-        links = getItemLinks(
-            id,
-            feature_id,
-            str(url),
-            str(self_url)
-        )
+        links = getItemLinks(id, feature_id, str(url), str(self_url))
 
         point = PointGeoJSON(type=Type7.Point, coordinates=coords)
-        feature = FeatureGeoJSON(type=Type1.Feature, geometry=point, properties=properties, id=feature_id, links=links)
+        feature = FeatureGeoJSON(
+            type=Type1.Feature,
+            geometry=point,
+            properties=properties,
+            id=feature_id,
+            links=links,
+        )
         features.append(feature)
     return features
-
