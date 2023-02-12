@@ -150,7 +150,7 @@ async def handleOgcApiRoot(req: Request, f: str = "json"):
         )
     )
     landingPage = LandingPage(
-        title="ogcapi2", description="ADAGUC OGCAPI-Features server demo", links=links
+        title="ogcapi", description="ADAGUC OGCAPI-Features server", links=links
     )
     if f == "json":
         return landingPage

@@ -1,3 +1,5 @@
+import os
+
 from wsgiref.simple_server import WSGIRequestHandler
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import RedirectResponse
@@ -11,6 +13,7 @@ from routers.autowms import autoWmsRouter
 from routers.opendap import opendapRouter
 from routers.ogcapi import ogcApiApp
 
+from routers.middleware import FixSchemeMiddleware
 import time
 
 import logging
@@ -40,11 +43,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+if "EXTERNALADDRESS" in os.environ:
+    app.add_middleware(FixSchemeMiddleware)
 
 
 @app.get("/")
 async def root():
-    return {"message": "Hello Bigger Applications!"}
+    return {"message": "ADAGUC server base URL, use /wms, /wcs, /autowms or /ogcapi"}
 
 
 app.mount("/ogcapi", ogcApiApp)
