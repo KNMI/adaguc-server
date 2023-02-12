@@ -59,7 +59,7 @@ def test_root(client: TestClient):
 
     resp = client.get("/ogcapi/")
     print("resp:", resp, resp.json())
-    assert resp.json()["description"] == "ADAGUC OGCAPI-Features server demo"
+    assert resp.json()["description"] == "ADAGUC OGCAPI-Features server"
 
 
 def test_collections(client: TestClient):
