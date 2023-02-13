@@ -70,7 +70,6 @@ def get_datasets(adagucDataSetDir):
             tree = parse(os.path.join(adagucDataSetDir, datasetFile))
             root = tree.getroot()
             for ogcapi in root.iter("OgcApiFeatures"):
-                logger.info("ogcapi: %s", ogcapi)
                 """Note, service is just a placeholder because it is needed by OWSLib. Adaguc is still ran as executable, not as service"""
                 dataset = {
                     "dataset": datasetFile.replace(".xml", ""),
@@ -330,9 +329,10 @@ def getItemLinks(
     limit: int = None,
 ) -> List[Link]:
     links: List[Link] = []
+    logger.info(f"GI:{id},{item_id}{url==self_url}")
     links.append(
         Link(
-            href=self_url,
+            href=f"{url}{'/'+item_id if item_id else ''}",
             rel="self",
             title="Item in JSON",
             type="application/geo+json",
@@ -340,7 +340,7 @@ def getItemLinks(
     )
     links.append(
         Link(
-            href=self_url + "?f=html",
+            href=f"{url}{'/'+item_id if item_id else ''}?f=html",
             rel="alternate",
             title="Item in HTML",
             type="text/html",
@@ -448,7 +448,7 @@ def feature_from_dat(dat, observedPropertyName, name, url, self_url):
         coords = dat["point"]["coords"].split(",")
         coords[0] = float(coords[0])
         coords[1] = float(coords[1])
-        links = getItemLinks(id, feature_id, str(url), str(self_url))
+        links = getItemLinks("ID???", feature_id, str(url), str(self_url))
 
         point = PointGeoJSON(type=Type7.Point, coordinates=coords)
         feature = FeatureGeoJSON(

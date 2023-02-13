@@ -1,12 +1,9 @@
 import os
 
-from wsgiref.simple_server import WSGIRequestHandler
 from fastapi import Depends, FastAPI, Request
-from fastapi.responses import RedirectResponse
 import uvicorn
 
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.wsgi import WSGIMiddleware
 from routers.healthcheck import healthCheckRouter
 from routers.wmswcs import wmsWcsRouter, testadaguc
 from routers.autowms import autoWmsRouter

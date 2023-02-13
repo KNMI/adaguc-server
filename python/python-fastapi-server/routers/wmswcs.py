@@ -20,9 +20,6 @@ logger = logging.getLogger(__name__)
 async def handleWMS(
     req: Request,
     response: Response,
-    version: str = "1.3.0",
-    service: str = "WMS",
-    request: str = "GetCapabilities",
 ):
     start = time.perf_counter()
     adagucInstance = setup_adaguc()
@@ -44,9 +41,13 @@ async def handleWMS(
         "ADAGUC_DB", "user=adaguc password=adaguc host=localhost dbname=adaguc"
     )
 
-    query_string = f"version={version}&service={service}&request={request}"
+    query_string = ""
     for k in req.query_params:
-        if k not in ["version", "service", "request"]:
+        param_parts = k.split("=")
+        # Hack for urlencode dataset= parametwer (i.e. dataset%03DHARM_N25)
+        if len(param_parts) == 2 and param_parts[0].upper() == "DATASET":
+            query_string += f"&{param_parts[0]}={param_parts[1]}"
+        else:
             query_string += f"&{k}={req.query_params[k]}"
 
     """ Run adaguc-server """
@@ -80,6 +81,7 @@ async def handleWMS(
 
     return response
 
+
 def testadaguc():
     """Test adaguc is setup correctly"""
     logger.info("Checking adaguc-server.")
@@ -89,16 +91,18 @@ def testadaguc():
 
     #  Set required environment variables
     baseurl = "---"
-    adagucenv['ADAGUC_ONLINERESOURCE'] = os.getenv(
-        'EXTERNALADDRESS', baseurl) + "/adaguc-server?"
-    adagucenv['ADAGUC_DB'] = os.getenv(
-        'ADAGUC_DB', "user=adaguc password=adaguc host=localhost dbname=adaguc")
+    adagucenv["ADAGUC_ONLINERESOURCE"] = (
+        os.getenv("EXTERNALADDRESS", baseurl) + "/adaguc-server?"
+    )
+    adagucenv["ADAGUC_DB"] = os.getenv(
+        "ADAGUC_DB", "user=adaguc password=adaguc host=localhost dbname=adaguc"
+    )
 
     # Run adaguc-server
     # pylint: disable=unused-variable
     status, data, headers = adaguc_instance.runADAGUCServer(
-        url, env=adagucenv,  showLogOnError=False)
+        url, env=adagucenv, showLogOnError=False
+    )
     assert status == 0
-    assert headers == ['Content-Type:text/xml']
+    assert headers == ["Content-Type:text/xml"]
     logger.info("adaguc-server seems [OK]")
-
