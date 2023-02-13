@@ -22,7 +22,6 @@ export ADAGUC_AUTOWMS_DIR=${ADAGUC_PATH}/data/datasets/
 ulimit -c unlimited
 
 
-#python3 ${ADAGUC_PATH}/tests/functional_test.py $1 && \
-pytest -s ../python/python-adaguc-server/testOgcApiFeatures.py && \
+python3 ${ADAGUC_PATH}/tests/functional_test.py $1 && \
 cd ../python/python-fastapi-server && \
 bash ./test_server.sh
