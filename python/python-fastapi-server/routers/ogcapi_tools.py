@@ -84,42 +84,6 @@ def get_datasets(adagucDataSetDir):
     return datasets
 
 
-def get_parameters(collname):
-    """
-    get_parameters
-    """
-    contents = get_capabilities(collname)
-    # if "dataset" in coll:
-    #     logger.info("callADAGUC by dataset")
-    #     dataset = coll["dataset"]
-    #     urlrequest = f"dataset={dataset}&service=wms&version=1.3.0&request=getcapabilities"
-    #     status, response = callADAGUC(url=urlrequest.encode('UTF-8'))
-    #     logger.info("status: %d", status)
-    #     if status == 0:
-    #         xml = response.getvalue()
-    #         wms = WebMapService(coll["service"], xml=xml, version='1.3.0')
-    #     else:
-    #         logger.error("status: %d", status)
-    #         return {}
-    # else:
-    #     logger.info("callADAGUC by service %s", coll["service"])
-    #     wms = WebMapService(coll["service"], version='1.3.0')
-    layers = []
-    for l in contents:
-        logger.info("l: %s", l)
-        ls = l
-        dims = get_dimensions(contents[l], ["time"])
-        if len(dims) > 0:
-            layer = {"name": ls, "dims": dims}
-        else:
-            layer = {"name": ls}
-        layers.append(layer)
-
-    layers.sort(key=lambda l: l["name"])
-    # logger.info("l:%s", json.dumps(layers)) # THIS CAUSES A HUGE LOGGING MESSAGE!
-    return {"layers": layers}
-
-
 def calculate_coords(bbox, nlon, nlat):
     """calculate_coords"""
     dlon = (bbox[2] - bbox[0]) / (nlon + 1)
