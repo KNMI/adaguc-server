@@ -85,14 +85,13 @@ import os
 import json
 import urllib.parse
 
-# ogcApiApp = APIRouter(
-#     responses={404: {"description": "Not found at all"}},
-#     redirect_slashes=False,
-# )
-
 ogcApiApp = FastAPI(debug=True)
-ogcApiApp.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="routers/templates/ogcapi")
+
+script_dir = os.path.dirname(__file__)
+static_abs_file_path = os.path.join(script_dir, "static")
+ogcApiApp.mount("/static", StaticFiles(directory=static_abs_file_path), name="static")
+templates_abs_file_path = os.path.join(script_dir, "templates/ogcapi")
+templates = Jinja2Templates(directory=templates_abs_file_path)
 
 
 @ogcApiApp.exception_handler(RequestValidationError)
