@@ -15,6 +15,7 @@ marshmallow-oneofschema
 defusedxml
 fastapi
 httpx
+Jinja2
 geojson-pydantic
 cachetools>=5.2.1
 pytz
