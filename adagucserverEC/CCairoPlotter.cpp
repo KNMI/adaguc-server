@@ -996,18 +996,53 @@ void CCairoPlotter::setToSurface(cairo_surface_t *png) {
 #include "webp/encode.h"
 #include "webp/decode.h"
 #include "webp/types.h"
+
+static int MyWriter(const uint8_t *data, size_t data_size, const WebPPicture *const pic) {
+  FILE *const out = (FILE *)pic->custom_ptr;
+  return data_size ? (fwrite(data, data_size, 1, out) == 1) : 1;
+}
+
 #endif
+
 void CCairoPlotter::writeToWebP32Stream(FILE *fp, unsigned char, int quality) {
 #ifdef ADAGUC_USE_WEBP
-  /* sudo apt-get install libwebp-dev */
-  uint8_t *output = NULL;
-  size_t numBytes = WebPEncodeBGRA(ARGBByteBuffer, width, height, stride, quality, &output);
-  if (numBytes == 0) {
-    CDBError("Unable to encode WebPEncodeBGRA");
-  } else {
-    fwrite(output, 1, numBytes, fp);
-    free(output);
+  // https://developers.google.com/speed/webp/docs/api
+
+  WebPConfig config;
+  WebPPicture picture;
+  if (!WebPPictureInit(&picture) || !WebPConfigInit(&config)) {
+    CDBError("Error! WEBP Version mismatch!\n");
+    return;
   }
+
+  config.lossless = quality == 100 ? 1 : 0; // Lossless encoding (0=lossy(default), 1=lossless).
+  config.quality = quality;                 // between 0 and 100. For lossy, 0 gives the smallest
+  config.method = 0;                        // quality/speed trade-off (0=fast, 6=slower-better)
+  config.alpha_quality = 100;               // Between 0 (smallest size) and 100 (lossless). Default is 100.
+  config.pass = 1;                          // number of entropy-analysis passes (in [1..10]).
+  config.preprocessing = 0;                 // preprocessing filter (0=none, 1=segment-smooth)
+  config.partitions = 0;                    // log2(number of token partitions) in [0..3] Default is set to 0 for easier progressive decoding.
+  config.partition_limit = 100;             // quality degradation allowed to fit the 512k limit on prediction modes coding (0: no degradation, 100: maximum possible degradation).
+  picture.use_argb = 1;                     // To select between ARGB and YUVA input.
+  config.thread_level = 1;
+  picture.width = width;
+  picture.height = height;
+  picture.writer = MyWriter;
+  picture.custom_ptr = (void *)fp;
+  if (!WebPPictureAlloc(&picture)) return; // memory error
+
+  if (!WebPValidateConfig(&config)) {
+    CDBError("Error! Invalid configuration.");
+    return;
+  }
+
+  WebPPictureImportBGRA(&picture, ARGBByteBuffer, stride);
+
+  if (!WebPEncode(&config, &picture)) {
+    CDBError("Error!  Cannot encode picture as WebP");
+  }
+  WebPPictureFree(&picture);
+
 #else
   CDBError("-DADAGUC_USE_WEBP not enabled");
 #endif

@@ -61,15 +61,15 @@ class FeatureProperty {
 private:
   FeaturePropertyType type;
   CT::string pstr;
-  int intVal;
+  int64_t intVal;
   double dblVal;
   DEF_ERRORFUNCTION();
 
 public:
-  FeatureProperty(int i) {
+  FeatureProperty(int64_t i) {
     type = typeInt;
     intVal = i;
-    dblVal = -12;
+    dblVal = i;
     pstr = "EMPTY i";
   }
   FeatureProperty(CT::string s) {
@@ -90,10 +90,16 @@ public:
 
   FeaturePropertyType getType() { return type; }
 
+  double getDblVal() { return dblVal; }
+
+  int getIntVal() { return intVal; }
+
+  CT::string getStringVal() { return pstr; }
+
   CT::string toString() {
     CT::string s;
     if (type == typeInt) {
-      s.print("%d", intVal);
+      s.print("%ld", intVal);
     } else if (type == typeStr) {
       s.print("%s", pstr.c_str());
     } else if (type == typeDouble) {
@@ -129,15 +135,16 @@ public:
   void newHole();
   void addHolePoint(float lon, float lat);
   CT::string toString();
-  std::vector<Polygon> getPolygons();
-  std::vector<Polyline> getPolylines();
+  std::vector<Polygon> *getPolygons();
+  std::vector<Polyline> *getPolylines();
+  std::vector<GeoPoint> *getPoints();
   CT::string getId() { return id; }
   void setId(CT::string s) { id = s; }
   void addPoint(float lon, float lat);
-  void addProp(CT::string name, int v);
+  void addPropInt64(CT::string name, int64_t v);
   void addProp(CT::string name, char *v);
   void addProp(CT::string name, double v);
-  std::map<std::string, FeatureProperty *> &getFp();
+  std::map<std::string, FeatureProperty *> *getFp();
   bool hasHoles();
 };
 

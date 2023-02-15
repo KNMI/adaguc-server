@@ -26,7 +26,6 @@
 #include "CImgRenderPolylines.h"
 #include <set>
 #include "CConvertGeoJSON.h"
-#include <values.h>
 #include <string>
 
 //   #define MEASURETIME
@@ -118,10 +117,10 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
         CColor drawPointLineColor2(borderStyle.color.c_str());
         float drawPointLineWidth = borderStyle.width.toFloat();
         // if(featureIndex!=0)break;
-        std::vector<Polygon> polygons = (*feature)->getPolygons();
+        std::vector<Polygon> *polygons = (*feature)->getPolygons();
         CT::string id = (*feature)->getId();
         //                  CDBDebug("feature[%s] %d of %d with %d polygons", id.c_str(), featureIndex,           featureStore[fileName].size(), polygons.size());
-        for (std::vector<Polygon>::iterator itpoly = polygons.begin(); itpoly != polygons.end(); ++itpoly) {
+        for (std::vector<Polygon>::iterator itpoly = polygons->begin(); itpoly != polygons->end(); ++itpoly) {
           float *polyX = itpoly->getLons();
           float *polyY = itpoly->getLats();
           int numPoints = itpoly->getSize();
@@ -190,10 +189,10 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
           }
         }
 
-        std::vector<Polyline> polylines = (*feature)->getPolylines();
+        std::vector<Polyline> *polylines = (*feature)->getPolylines();
         CT::string idl = (*feature)->getId();
         //  CDBDebug("feature[%s] %d of %d with %d polylines", idl.c_str(), featureIndex, featureStore[fileName].size(), polylines.size());
-        for (std::vector<Polyline>::iterator itpoly = polylines.begin(); itpoly != polylines.end(); ++itpoly) {
+        for (std::vector<Polyline>::iterator itpoly = polylines->begin(); itpoly != polylines->end(); ++itpoly) {
           float *polyX = itpoly->getLons();
           float *polyY = itpoly->getLats();
           int numPoints = itpoly->getSize();

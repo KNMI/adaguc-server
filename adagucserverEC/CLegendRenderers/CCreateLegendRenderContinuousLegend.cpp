@@ -1,8 +1,46 @@
 #include "CCreateLegend.h"
 #include "CDataReader.h"
 #include "CImageDataWriter.h"
+#include <algorithm>
 
-int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *legendImage, CStyleConfiguration *styleConfiguration, bool, bool estimateMinMax) {
+double CCreateLegend::nextTick(double prev) {
+  // scale will be between pow(10,floor(prevLog)) and pow(10,ceil(prevLog))
+  double prevLog = log10(prev);
+  // number 15
+  // log (15) = 1.17
+  // between 1 (10) and 2 (100)
+
+  // log (1) = 0
+  // between 0 (1) and 1 (10)
+
+  double conversion = pow(10, floor(prevLog));
+  double tick02 = 2 * conversion;
+  if (prev < tick02) {
+    return tick02;
+  }
+  double tick05 = 5 * conversion;
+  if (prev < tick05) {
+    return tick05;
+  }
+  return 10 * conversion;
+}
+
+char *CCreateLegend::formatTickLabel(CT::string textformatting, char *szTemp, double tick, double min, double max, int tickRound) {
+  if (textformatting.empty() == false) {
+    CT::string textFormat;
+    textFormat.print("%s", textformatting.c_str());
+    sprintf(szTemp, textFormat.c_str(), tick);
+  } else {
+    if (tickRound == 0) {
+      floatToString(szTemp, 255, min, max, tick);
+    } else {
+      floatToString(szTemp, 255, tickRound, tick);
+    }
+  }
+  return szTemp;
+}
+
+int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *legendImage, CStyleConfiguration *styleConfiguration, bool, bool) {
 #ifdef CIMAGEDATAWRITER_DEBUG
   CDBDebug("legendtype continous");
 #endif
@@ -118,56 +156,75 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
   if (styleConfiguration->legendTickInterval > 0) {
     increment = double(styleConfiguration->legendTickInterval);
   }
-  if (increment <= 0) increment = 1;
 
   if (styleConfiguration->legendTickRound > 0) {
     tickRound = int(round(log10(styleConfiguration->legendTickRound)) + 3);
   }
 
-  if (increment > max - min) {
+  if (std::abs(increment) > std::max(max, min) - std::min(max, min)) {
     increment = max - min;
   }
+
   if ((max - min) / increment > 250) increment = (max - min) / 250;
   if (increment <= 0) {
-    CDBDebug("Increment is 0, setting to 1");
-    increment = 1;
+    increment = -increment;
   }
+
   classes = abs(int((max - min) / increment));
+  if (increment <= 0) increment = (std::max(max, min) - std::min(max, min)) / 3;
 
   char szTemp[256];
   if (styleConfiguration->legendLog != 0) {
-    for (int j = 0; j <= classes; j++) {
-      double c = ((double(classes - j) / classes)) * (cbH);
-      double v = ((double(j) / classes)) * (240.0f);
-      v -= styleConfiguration->legendOffset;
-      if (styleConfiguration->legendScale != 0) v /= styleConfiguration->legendScale;
-      if (styleConfiguration->legendLog != 0) {
-        v = pow(styleConfiguration->legendLog, v);
+    // vertical axis going from log(min) to log(max)
+    // log(intermediate values)
+    // Fixed number of intermediate classes: 2,5,10
+    // assume log 10
+    classes = floor(log10(max) - log10(min)) + 2;
+
+    double tick = min;
+
+    while (tick < max) {
+      double difference = log(max) - log(tick);
+      double c = (difference / (log(max) - log(min))) * cbH;
+      int labelY = (int)c + 6 + dH + pTop;
+      legendImage->line(((int)cbW - 1) * scaling + pLeft, labelY, ((int)cbW + 6) * scaling + pLeft, (int)c + 6 + dH + pTop, lineWidth, 248);
+
+      strcpy(szTemp, formatTickLabel(textformatting, szTemp, tick, min, max, tickRound));
+
+      if (!fontLocation.empty()) {
+        int textX = ((int)cbW + 12 + pLeft) * scaling;
+        int textY = labelY + 4;
+        legendImage->drawText(textX, textY, fontLocation.c_str(), fontSize * scaling, 0, szTemp, 248);
       }
-      {
-        legendImage->line(((int)cbW - 1) * scaling + pLeft, (int)c + 6 + dH + pTop, ((int)cbW + 6) * scaling + pLeft, (int)c + 6 + dH + pTop, lineWidth, 248);
-        if (textformatting.empty() == false) {
-          CT::string textFormat;
-          textFormat.print("%s", textformatting.c_str());
-          sprintf(szTemp, textFormat.c_str(), v);
-        } else {
-          if (tickRound == 0) {
-            floatToString(szTemp, 255, min, max, v);
-          } else {
-            floatToString(szTemp, 255, tickRound, v);
-          }
-        }
-        if (!fontLocation.empty()) {
-          legendImage->drawText(((int)cbW + 12 + pLeft) * scaling, (pTop) - ((fontSize * scaling) / 4) + 3, fontLocation.c_str(), fontSize * scaling, 0, szTemp, 248);
-        }
-      }
+
+      tick = nextTick(tick);
+    }
+
+    // Case for max
+    int labelY = (int)6 + dH + pTop;
+    legendImage->line(((int)cbW - 1) * scaling + pLeft, labelY, ((int)cbW + 6) * scaling + pLeft, 6 + dH + pTop, lineWidth, 248);
+
+    strcpy(szTemp, formatTickLabel(textformatting, szTemp, max, min, max, tickRound));
+
+    if (!fontLocation.empty()) {
+      int textX = ((int)cbW + 12 + pLeft) * scaling;
+      int textY = labelY + 4;
+      legendImage->drawText(textX, textY, fontLocation.c_str(), fontSize * scaling, 0, szTemp, 248);
     }
   } else {
-
-    for (double j = min; j < max + increment; j = j + increment) {
-      double lineY = cbH - ((j - min) / (max - min)) * cbH;
+    bool isInverted = min > max;
+    double loopMin = min;
+    double loopMax = max;
+    if (isInverted) {
+      loopMin = -min;
+      loopMax = -max;
+    }
+    for (double j = loopMin; j < loopMax + increment; j = j + increment) {
+      double lineY = cbH - ((j - loopMin) / (loopMax - loopMin)) * cbH;
       double v = j; // pow(j,10);
-
+      if (isInverted) {
+        v = -v;
+      }
       if (lineY >= -2 && lineY < cbH + 2) {
         legendImage->line(((int)cbW - 1) * scaling + pLeft, (int)lineY + 6 + dH + pTop, ((int)cbW + 6) * scaling + pLeft, (int)lineY + 6 + dH + pTop, lineWidth, 248);
         if (textformatting.empty() == false) {

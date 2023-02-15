@@ -53,7 +53,7 @@ int CDPPAXplusB::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *da
     CDBError("CDPPAXplusB not possible when a format converter is active.");
     return -1;
   }
-  CDBDebug("Applying ax+b");
+  // CDBDebug("Applying ax+b");
   for (size_t varNr = 0; varNr < dataSource->getNumDataObjects(); varNr++) {
     dataSource->getDataObject(varNr)->hasScaleOffset = true;
     dataSource->getDataObject(varNr)->cdfVariable->setType(CDF_DOUBLE);
@@ -1330,7 +1330,7 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
       return 1;
     } else {
       CDF::Variable *fvar = featureDataSource.getDataObject(0)->cdfObject->getVariableNE("featureids");
-      size_t nrFeatures;
+      size_t nrFeatures = 0;
       if (fvar == NULL) {
         CDBDebug("featureids not found");
       } else {

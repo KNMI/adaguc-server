@@ -61,7 +61,7 @@ def dolog(tmpdir, data):
       myfile.flush();
 
 def openfile(file):
-  with open (file, "rb") as myfile:
+  with open (file, "r") as myfile:
     data = myfile.read()
     return data
   
@@ -95,7 +95,7 @@ def callADAGUC(adagucexecutable,tmpdir,LOGFILE,url,filetogenerate, env = {}):
   #  status, headers = CGIRunner().run(adagucargs,url=url,output = filetogenerate, env=adagucenv, path=path, isCGI= isCGI)
 
   
-  status, headers = CGIRunner().run([adagucexecutable],url,output = filetogenerate,env=env)
+  status, headers, processErr = CGIRunner().run([adagucexecutable],url,output = filetogenerate,env=env)
   return status
 
 

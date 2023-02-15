@@ -1,5 +1,8 @@
 # Example format
-[Script to generate NetCDF file](https://github.com/KNMI/adaguc-server/blob/master/python/format_standard/generate_example_file_vector_format.py)
+
+[Back](./README.md)
+
+[Script to generate NetCDF file](../../python/format_standard/format_standard/generate_example_file_vector_format.py)
 
 ## NetCDF file
 ``` 
@@ -47,4 +50,5 @@ data:
 ```
 
 ### Resulting image
-![Vector format example](images/vector_format_example_1.png)
+
+<img src="images/vector_format_example_1.png" alt="vector_format_example_1" width="500"/>
