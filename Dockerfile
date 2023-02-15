@@ -80,6 +80,13 @@ COPY --from=0 /adaguc/adaguc-server-master/requirements.txt /adaguc/adaguc-serve
 RUN pip3 install --no-cache-dir --upgrade pip \
    && pip3 install --no-cache-dir -r requirements.txt
 
+# Build and test adaguc python support
+WORKDIR /adaguc/adaguc-server-master/python/lib/
+RUN python3 setup.py install
+WORKDIR /adaguc/adaguc-server-master/python/edr_package
+RUN python3 setup.py install
+RUN bash -c "python3 /adaguc/adaguc-server-master/python/examples/runautowms/run.py && ls result.png"
+WORKDIR /adaguc/adaguc-server-master
 
 # Run adaguc-server functional and regression tests
 
@@ -109,13 +116,7 @@ ENV ADAGUC_PATH=/adaguc/adaguc-server-master
 
 ENV PYTHONPATH=${ADAGUC_PATH}/python/python-fastapi-server
 
-# Build and test adaguc python support
-WORKDIR /adaguc/adaguc-server-master/python/lib/
-RUN python3 setup.py install
-WORKDIR /adaguc/adaguc-server-master/python/edr_package
-RUN python3 setup.py install
-RUN bash -c "python3 /adaguc/adaguc-server-master/python/examples/runautowms/run.py && ls result.png"
-WORKDIR /adaguc/adaguc-server-master
+
 
 USER adaguc
 
