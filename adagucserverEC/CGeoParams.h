@@ -209,7 +209,7 @@ public:
   CFeature() {}
   CFeature(int _id) { this->id = _id; }
   void addProperty(const char *propertyName, const char *propertyValue) { paramMap[propertyName] = propertyValue; }
-  int id;
+  int id = -1;
   std::map<std::string, std::string> paramMap;
 };
 

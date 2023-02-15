@@ -1,4 +1,7 @@
 
+**Version 2.8.3 2023-02-15**
+- Build docker image for arm64 architecture (e.g. Mac M1)
+
 **Version 2.8.2 2023-01-10**
 - WebP quality is now configurable via WMSFormat and WMS Format (use format=image/webp;90) 
 - PNG can now read more image types (PNG color_type=6)

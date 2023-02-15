@@ -5,32 +5,32 @@ USER root
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="2.8.2"
+LABEL version="2.8.3"
 
 ######### First stage (build) ############
 
 # Try to update image packages
 RUN apt-get -q -y update \
     && DEBIAN_FRONTEND=noninteractive apt-get -q -y upgrade \
-    && apt-get -q -y install \ 
-    cmake \ 
-    postgresql \ 
-    libcurl4-openssl-dev \ 
-    libcairo2-dev \ 
-    libxml2-dev \ 
-    libgd-dev \ 
-    postgresql-server-dev-all \ 
-    postgresql-client \ 
-    libudunits2-dev \ 
-    udunits-bin \ 
-    g++ \ 
-    m4 \ 
-    netcdf-bin \ 
-    libnetcdf-dev \ 
-    libhdf5-dev \ 
-    libproj-dev \ 
-    libgdal-dev \ 
-    libsqlite3-dev \ 
+    && apt-get -q -y install \
+    cmake \
+    postgresql \
+    libcurl4-openssl-dev \
+    libcairo2-dev \
+    libxml2-dev \
+    libgd-dev \
+    postgresql-server-dev-all \
+    postgresql-client \
+    libudunits2-dev \
+    udunits-bin \
+    g++ \
+    m4 \
+    netcdf-bin \
+    libnetcdf-dev \
+    libhdf5-dev \
+    libproj-dev \
+    libgdal-dev \
+    libsqlite3-dev \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -52,13 +52,13 @@ USER root
 # Try to update image packages
 RUN apt-get -q -y update \
     && DEBIAN_FRONTEND=noninteractive apt-get -q -y upgrade \
-    && apt-get -q -y install \ 
-    postgresql-client \ 
-    udunits-bin \ 
-    netcdf-bin \ 
+    && apt-get -q -y install \
+    postgresql-client \
+    udunits-bin \
+    netcdf-bin \
     libcairo2 \
-    libgdal-dev \ 
-    libcurl4-openssl-dev \ 
+    libgdal-dev \
+    libcurl4-openssl-dev \
     libgd-dev \
     libproj-dev \
     time \

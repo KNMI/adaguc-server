@@ -563,8 +563,7 @@ class TestWMS(unittest.TestCase):
                                                                   {'ADAGUC_CONFIG': ADAGUC_PATH + '/data/config/adaguc.tests.manycontours.xml'})
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertEqual(data.getvalue(), AdagucTestTools(
-        ).readfromfile(self.expectedoutputsspath + filename))
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, 7, 0.025))
 
     def test_WMSGetMapWithShowLegendFalse_testdatanc(self):
         AdagucTestTools().cleanTempDir()
@@ -651,8 +650,7 @@ class TestWMS(unittest.TestCase):
                                                                   {'ADAGUC_CONFIG': ADAGUC_PATH + '/data/config/adaguc.tests.autostyle.xml'})
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertEqual(data.getvalue(), AdagucTestTools(
-        ).readfromfile(self.expectedoutputsspath + filename))
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMapCustomCRSEPSG3413Projection_sample_tas_cmip6_ssp585_preIndustrial_warming2_year(self):
         AdagucTestTools().cleanTempDir()
@@ -665,8 +663,7 @@ class TestWMS(unittest.TestCase):
                                                                   {'ADAGUC_CONFIG': ADAGUC_PATH + '/data/config/adaguc.tests.autostyle.xml'})
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertEqual(data.getvalue(), AdagucTestTools(
-        ).readfromfile(self.expectedoutputsspath + filename))
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, 8))
 
     def test_WMSGetMapRobinsonProjection_ipcc_cmip5_tas_historical_subset_nc(self):
         AdagucTestTools().cleanTempDir()
@@ -693,8 +690,7 @@ class TestWMS(unittest.TestCase):
                                                                   {'ADAGUC_CONFIG': ADAGUC_PATH + '/data/config/adaguc.tests.autostyle.xml'})
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertEqual(data.getvalue(), AdagucTestTools(
-        ).readfromfile(self.expectedoutputsspath + filename))
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMapCustomCRSEPSG3413Projection_ipcc_cmip5_tas_historical_subset_nc(self):
         AdagucTestTools().cleanTempDir()
@@ -707,8 +703,7 @@ class TestWMS(unittest.TestCase):
                                                                   {'ADAGUC_CONFIG': ADAGUC_PATH + '/data/config/adaguc.tests.autostyle.xml'})
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertEqual(data.getvalue(), AdagucTestTools(
-        ).readfromfile(self.expectedoutputsspath + filename))
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, 8))
 
     # def test_WMSGetMapCustomCRSClippedRobinsonProjection_ipcc_cmip5_tas_historical_subset_nc(self):
     #     AdagucTestTools().cleanTempDir()

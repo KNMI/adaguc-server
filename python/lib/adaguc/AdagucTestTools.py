@@ -5,6 +5,7 @@ from .CGIRunner import CGIRunner
 import re
 from lxml import etree, objectify
 import urllib.request
+from PIL import Image
 
 ADAGUC_PATH = os.getenv('ADAGUC_PATH', " ")
 
@@ -121,6 +122,70 @@ class AdagucTestTools:
     def mkdir_p(self, directory):
         if not os.path.exists(directory):
             os.makedirs(directory)
+
+    def compareImage(self, expectedImagePath, returnedImagePath, maxAllowedColorDifference = 1, maxAllowedColorPercentage = 0.01):
+        """Compare the pictures referred to by the arguments.
+
+        Args:
+            expectedImagePath (str): path of the image that we expected
+            returnedImagePath (str): path of the image that we got as output from the test
+            maxAllowedColorDifference(int): max allowed difference in a single color band
+            maxAllowedColorPercentage(float): max allowed percentage of pixels that have different colors
+
+        Returns:
+            bool: True if the difference is "small enough"
+        """
+        expected_image = Image.open(expectedImagePath)
+        returned_image = Image.open(returnedImagePath)
+        if expected_image.size != returned_image.size:
+            print(f"\nError, size of expected and actual image do not match: {expected_image.size} vs {returned_image.size}")
+            return False
+
+        width, height = expected_image.size
+        n_bands = len(expected_image.getbands())
+
+        max_color_difference_pixel = None
+        max_color_difference_value = -1
+        sum_color_difference = 0
+        count_pixels_with_color_difference = 0
+        for x in range(0, width):
+            for y in range(0, height):
+                c = (x, y)
+                expected_color = expected_image.getpixel(c)
+                returned_color = returned_image.getpixel(c)
+
+                if n_bands == 1:
+                    expected_color = (expected_color,)
+                    returned_color = (returned_color,)
+                diff_color = tuple(map(lambda e, g: e - g, expected_color, returned_color))
+
+                if expected_color != returned_color:
+                    print(f"Warning: pixel {c} has different color, (expected, actual, diff) = "
+                          f"{expected_color} \t{returned_color} \t{diff_color}", flush=True)
+                    count_pixels_with_color_difference += 1
+                    abs_color_diff = tuple(abs(d) for d in diff_color)
+                    if max(abs_color_diff) > max_color_difference_value:
+                        max_color_difference_value = max(abs_color_diff)
+                        max_color_difference_pixel = c
+                    sum_color_difference += sum(abs_color_diff)
+
+        if count_pixels_with_color_difference > 0:
+            print(f"Warning: Max color difference {max_color_difference_value} in pixel {max_color_difference_pixel}. "
+                  f"Sum of absolute color difference: {sum_color_difference}. "
+                  f"Number of pixels with color difference: {count_pixels_with_color_difference}. "
+                  f"Percentage of pixel with color difference: {count_pixels_with_color_difference*100.0/(width*height):.6f} %", flush=True)
+
+        if max_color_difference_value > maxAllowedColorDifference:
+            print(f"Error, difference for pixel {c} is too large ({max_color_difference_value} > {maxAllowedColorDifference})", flush=True)
+            return False
+
+        if count_pixels_with_color_difference*100.0/(width*height) > maxAllowedColorPercentage:
+            print(f"Error, percentage of pixels with color difference is too large "
+                  f"({count_pixels_with_color_difference*100.0/(width*height)} % > {maxAllowedColorPercentage} %)", flush=True)
+            return False
+
+
+        return True
 
     def compareGetCapabilitiesXML(self, testresultFileLocation, expectedOutputFileLocation):
         expectedxml = self.readfromfile(expectedOutputFileLocation)
