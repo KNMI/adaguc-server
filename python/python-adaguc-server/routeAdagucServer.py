@@ -13,7 +13,7 @@ routeAdagucServer = Blueprint('routeAdagucServer', __name__)
 logger = logging.getLogger(__name__)
 
 
-@routeAdagucServer.route("/wms", methods=["GET"], strict_slashes=False)
+@routeAdagucServer.route("/wms", methods=["GET"])
 @routeAdagucServer.route("/wcs", methods=["GET"])
 @routeAdagucServer.route("/adagucserver", methods=["GET"])
 @routeAdagucServer.route("/adaguc-server", methods=["GET"])
@@ -49,7 +49,7 @@ def handleWMS():
 
     if len(logfile) > 0:
         logger.info(logfile)
-  
+
     responseCode = 200
     if status != 0:
         logger.info("Adaguc status code was %d" % status)

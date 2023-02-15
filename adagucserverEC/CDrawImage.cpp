@@ -26,7 +26,6 @@
 #include "CDrawImage.h"
 #include "CXMLParser.h"
 const char *CDrawImage::className = "CDrawImage";
-const char *RectangleText::className = "RectangleText";
 
 float convertValueToClass(float val, float interval) {
   float f = int(val / interval);
@@ -1102,21 +1101,15 @@ void CDrawImage::drawCenteredText(int x, int y, const char *fontfile, float size
   }
 }
 
-bool RectangleText::overlaps(RectangleText &r2) {
-  if ((this->ury + padding < r2.lly) || (this->lly - padding > r2.ury)) return false;
-  if ((this->urx + padding < r2.llx) || (this->llx - padding > r2.urx)) return false;
-  return true;
-}
-
 void CDrawImage::drawCenteredTextNoOverlap(int x, int y, const char *fontFile, float size, float angle, int padding, const char *text, CColor color, bool noOverlap,
-                                           std::vector<RectangleText> &rects) {
+                                           std::vector<CRectangleText> &rects) {
   if (size <= 0) { // size 0 means do not draw label
     return;
   }
 
   int w, h;
   float radAngle = angle * M_PI / 180;
-  RectangleText rect;
+  CRectangleText rect;
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
     CCairoPlotter *freeType = this->getCairoPlotter(fontFile, size, Geo->dWidth, Geo->dHeight, cairo->getByteBuffer());
     freeType->setColor(color.r, color.g, color.b, color.a);

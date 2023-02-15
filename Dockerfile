@@ -83,7 +83,7 @@ RUN pip3 install --no-cache-dir --upgrade pip \
 
 # Run adaguc-server functional and regression tests
 
-#RUN bash runtests.sh
+RUN bash runtests.sh
 
     # Set same uid as vivid
 RUN useradd -m adaguc -u 1000 && \
