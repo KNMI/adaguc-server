@@ -120,7 +120,7 @@ int CConvertADAGUCPoint::checkIfADAGUCPointFormat(CDFObject *cdfObject) {
 int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
   // Check whether this is really an adaguc file
   if (CConvertADAGUCPoint::checkIfADAGUCPointFormat(cdfObject) == 1) return 1;
-  CDBDebug("Using CConvertADAGUCPoint.h");
+  // CDBDebug("Using CConvertADAGUCPoint.h");
 
   // Standard bounding box of adaguc data is worldwide
   CDF::Variable *pointLon;

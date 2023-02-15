@@ -1303,7 +1303,7 @@ int CImageDataWriter::createAnimation() {
   return 0;
 }
 
-void CImageDataWriter::setDate(const char *szTemp) { drawImage.setTextStroke(szTemp, strlen(szTemp), drawImage.Geo->dWidth - 170, 5, 240, 254, 0); }
+void CImageDataWriter::setDate(const char *szTemp) { drawImage.setTextStroke(drawImage.Geo->dWidth - 170, 5, 0, szTemp, NULL, 12.0, CColor(0, 0, 0, 255), CColor(255, 255, 255, 255)); }
 
 CImageDataWriter::IndexRange::IndexRange() {
   min = 0;
@@ -1920,8 +1920,7 @@ int CImageDataWriter::calculateData(std::vector<CDataSource *> &dataSources) {
 
       if (dataSource->cfgLayer->ImageText.size() > 0) {
         if (dataSource->cfgLayer->ImageText[0]->value.empty() == false) {
-          size_t len = strlen(dataSource->cfgLayer->ImageText[0]->value.c_str());
-          drawImage.setTextStroke(dataSource->cfgLayer->ImageText[0]->value.c_str(), len, int(drawImage.Geo->dWidth / 2 - len * 3), drawImage.Geo->dHeight - 16, 240, 254, -1);
+          drawImage.setTextStroke(drawImage.Geo->dWidth - 170, 5, 0, dataSource->cfgLayer->ImageText[0]->value.c_str(), NULL, 12.0, CColor(0, 0, 0, 255), CColor(255, 255, 255, 255));
         }
       }
     }
