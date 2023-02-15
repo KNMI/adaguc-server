@@ -670,6 +670,14 @@ void CDrawImage::endLine() {
   }
 }
 
+void CDrawImage::endLine(const double *dashes, int num_dashes) {
+  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
+    if (currentLegend == NULL) return;
+    cairo->endLine(dashes, num_dashes);
+  } else {
+  }
+}
+
 CColor CDrawImage::getColorForIndex(int colorIndex) {
   CColor color;
   if (currentLegend == NULL) return color;
@@ -871,7 +879,7 @@ void CDrawImage::setTextStroke(int x, int y, float angle, const char *text, cons
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
     // Not yet supported...
     // setText(text, length, x, y, fgcolor, fontSize);
-    cairo->drawStrokedText(x, y, -angle, text, fontFile, fontSize * 3, bgcolor, fgcolor);
+    cairo->drawStrokedText(x, y, -angle, text, fontFile, fontSize * 1.4, bgcolor, fgcolor);
   } else {
     int fgColorIndex = getClosestGDColor(fgcolor.r, fgcolor.g, fgcolor.b);
     int bgColorIndex = getClosestGDColor(bgcolor.r, bgcolor.g, bgcolor.b);
@@ -1011,6 +1019,7 @@ void CDrawImage::setEllipse(int x, int y, float discRadiusX, float discRadiusY, 
     cairo->setFillColor(fillColor.r, fillColor.g, fillColor.b, fillColor.a);
     cairo->setColor(lineColor.r, lineColor.g, lineColor.b, lineColor.a);
     cairo->filledEllipse(x, y, discRadiusX, discRadiusY, rotation);
+
     //    circle( x,  y,  discRadius,lineColor,1);
   }
 }
