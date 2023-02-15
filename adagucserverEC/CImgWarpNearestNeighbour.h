@@ -25,11 +25,13 @@
 
 #ifndef CIMGWARPNEARESTNEIGHBOUR_H
 #define CIMGWARPNEARESTNEIGHBOUR_H
+// #define CIMGWARPNEARESTNEIGHBOUR_DEBUG
 #include <float.h>
 #include <pthread.h>
 #include "CImageWarperRenderInterface.h"
 #include "CGenericDataWarper.h"
 #include "CAreaMapper.h"
+#include "CDrawFunction.h"
 
 /**
  *  This is the main class of this file. It renders the sourcedata on the destination image using nearest neighbour interpolation.
@@ -265,51 +267,18 @@ private:
     }
   }
 
-  class Settings {
-  public:
-    double dfNodataValue;
-    double legendValueRange;
-    double legendLowerRange;
-    double legendUpperRange;
-    bool hasNodataValue;
-    float nodataValue;
-    float legendLog;
-    float legendLogAsLog;
-    float legendScale;
-    float legendOffset;
-    CDrawImage *drawImage;
-  };
-
   template <class T> static void drawFunction(int x, int y, T val, void *_settings, void *) {
-    Settings *settings = (Settings *)_settings;
+    /*
+      Please note that this is part of the precise renderer. Changes to this routine should also be implemented in:
+
+      adagucserverEC/CAreaMapper.cpp, myDrawRawTile
+    */
+    CDrawFunctionSettings *settings = (CDrawFunctionSettings *)_settings;
     if (settings->drawImage->trueColorAVG_RGBA == false) {
+      /* Using the precise renderer with shadeinterval */
 
-      bool isNodata = false;
-      if (settings->hasNodataValue) {
-        if (val == settings->nodataValue) isNodata = true;
-      }
-      if (!(val == val)) isNodata = true;
-      if (!isNodata)
-        if (settings->legendValueRange)
-          if (val < settings->legendLowerRange || val > settings->legendUpperRange) isNodata = true;
-      if (!isNodata) {
-        if (settings->legendLog != 0) {
-          if (val > 0) {
-            val = (T)(log10(val) / settings->legendLogAsLog);
-          } else
-            val = (T)(-settings->legendOffset);
-        }
-        int pcolorind = (int)(val * settings->legendScale + settings->legendOffset);
-        // val+=legendOffset;
-        if (pcolorind >= 239)
-          pcolorind = 239;
-        else if (pcolorind <= 0)
-          pcolorind = 0;
-
-        settings->drawImage->setPixelIndexed(x, y, pcolorind);
-
-        // settings->drawImage->setPixelTrueColorOverWrite(x,y,0,0,0,0);
-      }
+      /* Using the precise renderer with a legend */
+      setPixelInDrawImage(x, y, val, settings);
     } else {
       if (x >= 0 && y >= 0 && x < settings->drawImage->Geo->dWidth && y < settings->drawImage->Geo->dHeight) {
         size_t p = x + y * settings->drawImage->Geo->dWidth;
@@ -327,7 +296,7 @@ private:
         }
       }
     }
-  };
+  }
 
   pthread_mutex_t CImgWarpNearestNeighbour_render_lock;
 
@@ -425,24 +394,7 @@ private:
       usePrecise = true;
     }
     if (usePrecise) {
-      Settings settings;
-
-      settings.dfNodataValue = dataSource->getDataObject(0)->dfNodataValue;
-      settings.legendValueRange = styleConfiguration->hasLegendValueRange;
-      settings.legendLowerRange = styleConfiguration->legendLowerRange;
-      settings.legendUpperRange = styleConfiguration->legendUpperRange;
-      settings.hasNodataValue = dataSource->getDataObject(0)->hasNodataValue;
-      settings.nodataValue = (float)settings.dfNodataValue;
-
-      settings.legendLog = styleConfiguration->legendLog;
-      if (settings.legendLog > 0) {
-        settings.legendLogAsLog = log10(settings.legendLog);
-      } else {
-        settings.legendLogAsLog = 0;
-      }
-      settings.legendScale = styleConfiguration->legendScale;
-      settings.legendOffset = styleConfiguration->legendOffset;
-      settings.drawImage = drawImage;
+      CDrawFunctionSettings settings = getDrawFunctionSettings(dataSource, drawImage, styleConfiguration);
 
       if (styleConfiguration->renderMethod & RM_AVG_RGBA) {
 
@@ -569,17 +521,7 @@ private:
     // int tile_height=int((double(drawImage->Geo->dHeight)/double(y_div))+0.5);
 
     // Setup the renderer to draw the tiles with.We do not keep the calculated results for CDF_CHAR (faster)
-    CAreaMapper *drawTileClass = NULL;
-    if (dataSource->getDataObject(0)->cdfVariable->getType() == CDF_CHAR || dataSource->getDataObject(0)->cdfVariable->getType() == CDF_BYTE ||
-        dataSource->getDataObject(0)->cdfVariable->getType() == CDF_UBYTE) {
-      drawTileClass = new CAreaMapper(); // Do not keep the calculated results for CDF_CHAR
-
-    } else {
-      // drawTileClass = new CDrawTileObjByteCache();  //keep the calculated results
-      drawTileClass = new CAreaMapper(); // Do not keep the calculated results for CDF_CHAR
-    }
-    // drawTileClass = new CDrawTileObjByteCache();           //Do not keep the calculated results for CDF_CHAR
-    // drawTileClass = new CDrawTileObj();  //keep the calculated results
+    CAreaMapper *drawTileClass = new CAreaMapper();
 
     // Reproj back and forth datasource boundingbox
     double y1 = dataSource->dfBBOX[1];

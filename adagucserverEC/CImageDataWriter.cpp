@@ -1536,6 +1536,18 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
       if (renderMethod & RM_BARB) drawBarb = true;
       if (renderMethod & RM_THIN) drawGridVectors = true;
 
+      /*
+        Check the if we want to use discrete type with the bilinear rendermethod.
+        The bilinear Rendermethod can shade using ShadeInterval if renderhint in RenderSettings is set to RENDERHINT_DISCRETECLASSES
+      */
+      if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL && styleConfiguration->styleConfig->RenderSettings.size() == 1) {
+        CT::string renderHint = styleConfiguration->styleConfig->RenderSettings[0]->attr.renderhint;
+        if (renderHint.equals(RENDERHINT_DISCRETECLASSES)) {
+          drawMap = false;   // Don't use continous legends with the bilinear renderer
+          drawShaded = true; // Use discrete legends defined by ShadeInterval with the bilinear renderer
+        }
+      }
+
       if (drawMap == true) bilinearSettings.printconcat("drawMap=true;");
       if (drawVector == true) bilinearSettings.printconcat("drawVector=true;");
       if (drawBarb == true) bilinearSettings.printconcat("drawBarb=true;");
