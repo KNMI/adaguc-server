@@ -191,7 +191,6 @@ def get_parameters(collname):
     contents = get_capabilities(collname)
     layers = []
     for l in contents:
-        logger.info("l: %s", l)
         ls = l
         dims = get_dimensions(contents[l], ["time"])
         if len(dims) > 0:
@@ -262,9 +261,8 @@ def multi_get(dict_obj, attrs, default=None):
     return result
 
 
-def getCollectionLinks(
-    id: str,
-    item_id: str,
+def getItemsLinks(
+    coll: str,
     url: str,
     self_url: str,
     prev_start: int = None,
@@ -274,29 +272,63 @@ def getCollectionLinks(
     links: List[Link] = []
     links.append(
         Link(
-            href=self_url,
+            href=f"{url}",
             rel="self",
             title="Item in JSON",
             type="application/geo+json",
         )
     )
+    links.append(
+        Link(
+            href=f"{url}?f=html",
+            rel="alternate",
+            title="Item in HTML",
+            type="text/html",
+        )
+    )
+    if prev_start is not None:
+        links.append(
+            Link(
+                href=url + f"?start={prev_start}&limit={limit}",
+                rel="prev",
+                title="Item in JSON",
+                type="application/geo+json",
+            )
+        )
+    if next_start is not None:
+        links.append(
+            Link(
+                href=url + f"?start={next_start}&limit={limit}",
+                rel="next",
+                title="Item in JSON",
+                type="application/geo+json",
+            )
+        )
+    collection_url = "/".join(url.split("/")[:-1])
+    links.append(
+        Link(
+            href=collection_url,
+            rel="collection",
+            title="Collection",
+            type="application/geo+json",
+        )
+    )
+
     return links
 
 
-def getItemLinks(
-    id: str,
+def getSingleItemLinks(
+    coll: str,
     item_id: str,
     url: str,
-    self_url: str,
     prev_start: int = None,
     next_start: int = None,
     limit: int = None,
 ) -> List[Link]:
     links: List[Link] = []
-    logger.info(f"GI:{id},{item_id}{url==self_url}")
     links.append(
         Link(
-            href=f"{url}{'/'+item_id if item_id else ''}",
+            href=f"{url}",
             rel="self",
             title="Item in JSON",
             type="application/geo+json",
@@ -304,7 +336,7 @@ def getItemLinks(
     )
     links.append(
         Link(
-            href=f"{url}{'/'+item_id if item_id else ''}?f=html",
+            href=f"{url}?f=html",
             rel="alternate",
             title="Item in HTML",
             type="text/html",
@@ -345,7 +377,7 @@ def getItemLinks(
     return links
 
 
-def feature_from_dat(dat, observedPropertyName, name, url, self_url):
+def feature_from_dat(dat, coll, url, self_url, add_links: bool = False):
     """
     feature_from_dat
     """
@@ -381,15 +413,22 @@ def feature_from_dat(dat, observedPropertyName, name, url, self_url):
         feature_dims = {}
         datname = dat["name"]
         datpointcoords = dat["point"]["coords"]
-        feature_id = f"{name};{datname};{datpointcoords}"
+        feature_id = f"{coll};{datname};{datpointcoords};"
         i = 0
+        resultTime = None
         for dim_value in t:
-            feature_dims[list(dims_without_time[i].keys())[0]] = dim_value
-            # pylint: disable=consider-using-f-string
-            feature_id = feature_id + ";%s=%s" % (
-                list(dims_without_time[i].keys())[0],
-                dim_value,
-            )
+            dim_name = list(dims_without_time[i].keys())[0]
+            if dim_name.lower() == "reference_time":
+                resultTime = dim_value
+            else:
+                feature_dims[dim_name] = dim_value
+                if i > 0:
+                    feature_id += "|"
+                # pylint: disable=consider-using-f-string
+                feature_id = feature_id + "%s=%s" % (
+                    dim_name,
+                    dim_value,
+                )
             i = i + 1
 
         feature_id = feature_id + f";{timeSteps[0]}${timeSteps[-1]}"
@@ -397,22 +436,27 @@ def feature_from_dat(dat, observedPropertyName, name, url, self_url):
             properties = {
                 "timestep": timeSteps,
                 "observationType": "MeasureTimeseriesObservation",
-                "observedPropertyName": observedPropertyName,
+                "observedPropertyName": datname,
                 "result": result,
+                "resultTime": resultTime,
             }
         else:
             properties = {
                 "timestep": timeSteps,
                 "dims": feature_dims,
                 "observationType": "MeasureTimeseriesObservation",
-                "observedPropertyName": observedPropertyName,
+                "observedPropertyName": datname,
                 "result": result,
+                "resultTime": resultTime,
             }
 
         coords = dat["point"]["coords"].split(",")
         coords[0] = float(coords[0])
         coords[1] = float(coords[1])
-        links = getItemLinks("ID???", feature_id, str(url), str(self_url))
+        if add_links:
+            links = getSingleItemLinks(coll, feature_id, str(url), str(self_url))
+        else:
+            links = None
 
         point = PointGeoJSON(type=Type7.Point, coordinates=coords)
         feature = FeatureGeoJSON(

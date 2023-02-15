@@ -74,7 +74,8 @@ from .ogcapi_tools import (
     get_parameters,
     callADAGUC,
     feature_from_dat,
-    getItemLinks,
+    getItemsLinks,
+    getSingleItemLinks,
 )
 
 DEFAULT_CRS = "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
@@ -382,16 +383,16 @@ async def getOpenApiYaml(req: Request, f: str = "yaml"):
     )
 
 
-def getSingleItem(id: str, coll_id: str, url: str) -> FeatureGeoJSON:
-    collection, observed_property_name, point, dims, datetime_ = id.split(";")
+def getSingleItem(item_id: str, url: str) -> FeatureGeoJSON:
+    collection, observed_property_name, point, dims, datetime_ = item_id.split(";")
     coord = list(map(float, point.split(",")))
     dimspec = ""
-    for dim in dims.split(";"):
+    for dim in dims.split("|"):
         dimname, dimval = dim.split("=")
         dimspec += f"&{dimname}={dimval}"
     datetime_ = datetime_.replace("$", "/")
     request_url = (
-        f"http://localhost:8000/wms?dataset={coll_id}&query_layers={observed_property_name}"
+        f"http://localhost:8000/wms?dataset={collection}&query_layers={observed_property_name}"
         + "&service=WMS&version=1.3.0&request=getPointValue&FORMAT=application/json&INFO_FORMAT=application/json"
         + f"&X={coord[0]}&Y={coord[1]}&CRS=EPSG:4326"
     )
@@ -413,7 +414,7 @@ def getSingleItem(id: str, coll_id: str, url: str) -> FeatureGeoJSON:
             return 400, root[0].text.strip()  # TODO
         features = []
         for data in response_data:
-            data_features = feature_from_dat(data, observed_property_name, id, url, url)
+            data_features = feature_from_dat(data, collection, url, url, True)
             features.extend(data_features)
         return features[0]
 
@@ -421,7 +422,7 @@ def getSingleItem(id: str, coll_id: str, url: str) -> FeatureGeoJSON:
 
 
 def getFeaturesForItems(
-    id: str,
+    coll: str,
     base_url: str,
     limit: int = 10,
     start: int = 0,
@@ -438,21 +439,22 @@ def getFeaturesForItems(
     features: List[FeatureGeoJSON] = []
     if not point:
         if not bbox:
-            bbox = make_bbox(get_extent(id))
+            bbox = make_bbox(get_extent(coll))
 
         if not npoints:
             npoints = 4
         coords = calculate_coords(bbox, npoints, npoints)
     else:
         coords = [point]
+    logger.info("COORDS: %d", len(coords))
     if not observedPropertyName:
-        collinfo = get_parameters(id)
+        collinfo = get_parameters(coll)
         observedPropertyName = [collinfo["layers"][0]["name"]]
         # Default observedPropertyName = first layername
     paramList = ",".join(observedPropertyName)
 
     if resultTime:
-        collinfo = get_parameters(id)
+        collinfo = get_parameters(coll)
 
     paramList = ",".join(observedPropertyName)
 
@@ -461,9 +463,11 @@ def getFeaturesForItems(
         for dimname, dimval in dims.items():
             dimspec += "&%s=%s" % (dimname, dimval)
 
+    features = []
     for coord in coords:
+        logger.info("POINT: %s", coord)
         request_url = (
-            f"http://localhost:8000/wms?dataset={id}&query_layers={paramList}"
+            f"http://localhost:8000/wms?dataset={coll}&query_layers={paramList}"
             + "&service=WMS&version=1.3.0&request=getPointValue&FORMAT=application/json&INFO_FORMAT=application/json"
             + f"&X={coord[0]}&Y={coord[1]}&CRS=EPSG:4326"
         )
@@ -487,13 +491,9 @@ def getFeaturesForItems(
                 )
                 logger.info("retval=%s", retval)
                 return 400, root[0].text.strip()  # TODO
-            features = []
             for data in response_data:
-                data_features = feature_from_dat(
-                    data, observedPropertyName, id, base_url, base_url
-                )
+                data_features = feature_from_dat(data, coll, base_url, base_url, False)
                 features.extend(data_features)
-            return features
 
     return features
 
@@ -645,7 +645,7 @@ async def getItemsForCollection(
     base_url = req.url_for("getItemsForCollection", coll=coll)
     try:
         features = getFeaturesForItems(
-            id=coll,
+            coll=coll,
             base_url=base_url,
             limit=limit,
             start=start,
@@ -667,9 +667,8 @@ async def getItemsForCollection(
         next_start = None
         if (start + limit) < number_matched:
             next_start = start + limit
-        links = getItemLinks(
+        links = getItemsLinks(
             coll,
-            None,
             req.url_for("getItemsForCollection", coll=coll),
             str(req.url),
             prev_start=prev_start,
@@ -687,14 +686,7 @@ async def getItemsForCollection(
         )
         response.headers["Content-Crs"] = f"<{DEFAULT_CRS}>"
         if request_type(f) == "HTML":
-            logger.info("Returning items in HTML")
             features = [f.dict() for f in featureCollection.features]
-            logger.info(
-                "Returning %d items in HTML %s %s",
-                len(features),
-                features,
-                featureCollection.timeStamp,
-            )
             return templates.TemplateResponse(
                 "items.html",
                 {
@@ -714,12 +706,12 @@ async def getItemsForCollection(
 
 
 @ogcApiApp.get(
-    "/collections/{id}/items/{item_id}",
+    "/collections/{coll}/items/{item_id}",
     response_model=FeatureGeoJSON,
     response_model_exclude_none=True,
 )
 async def getItemForCollection(
-    id: str,
+    coll: str,
     item_id: str,
     req: Request,
     response: Response,
@@ -727,16 +719,16 @@ async def getItemForCollection(
     crs: Union[str, None] = Depends(check_crs),
 ):
     url = req.url
-    feature_to_return = getSingleItem(item_id, id, str(url))
+    feature_to_return = getSingleItem(item_id, str(url))
 
-    links = getItemLinks(id, item_id, str(url), str(req.url))
+    # links = getSingleItemLinks(coll, item_id, str(url), str(req.url))
     response.headers["Content-Crs"] = f"<{DEFAULT_CRS}>"
     if request_type(f) == "HTML":
         return templates.TemplateResponse(
             "item.html",
             {
                 "request": req,
-                "collection": id,
+                "collection": coll,
                 "description": "D",
                 "item": jsonable_encoder(feature_to_return),
             },
