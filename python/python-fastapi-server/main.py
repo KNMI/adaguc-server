@@ -9,6 +9,8 @@ from routers.wmswcs import wmsWcsRouter, testadaguc
 from routers.autowms import autoWmsRouter
 from routers.opendap import opendapRouter
 from routers.ogcapi import ogcApiApp
+from routers.edr import edrApiApp
+from routers.maps import create_maps_routes
 
 from routers.middleware import FixSchemeMiddleware
 import time
@@ -50,6 +52,9 @@ async def root():
 
 
 app.mount("/ogcapi", ogcApiApp)
+app.mount("/edr", edrApiApp)
+# app.mount("/maps", mapsApiApp)
+create_maps_routes(app, ["RADAR", "HARM_N25"])
 
 app.include_router(healthCheckRouter)
 app.include_router(wmsWcsRouter)

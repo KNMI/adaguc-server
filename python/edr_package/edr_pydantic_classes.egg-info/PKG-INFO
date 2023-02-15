@@ -1,0 +1,9 @@
+Metadata-Version: 2.1
+Name: edr-pydantic-classes
+Version: 0.0.9
+Summary: The Pydantic models for EDR datatypes
+Home-page: https://gitlab.com/KNMI/data-platform/observation-api/internal-data-api
+Author: KNMI Data Platform
+Author-email: dataplatform@knmi.nl
+License: MIT
+Requires-Python: >=3.8.0
