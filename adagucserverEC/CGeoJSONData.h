@@ -96,33 +96,8 @@ public:
 
   CT::string getStringVal() { return pstr; }
 
-  CT::string toString() {
-    CT::string s;
-    if (type == typeInt) {
-      s.print("%ld", intVal);
-    } else if (type == typeStr) {
-      s.print("%s", pstr.c_str());
-    } else if (type == typeDouble) {
-      s.print("%f", dblVal);
-    } else {
-      s.print("NONE");
-    }
-    return s;
-  };
-
-  CT::string toString(const char *fmt) {
-    CT::string s;
-    if (type == typeInt) {
-      s.print(fmt, intVal);
-    } else if (type == typeStr) {
-      s.print(fmt, pstr.c_str());
-    } else if (type == typeDouble) {
-      s.print(fmt, dblVal);
-    } else {
-      s.print("NONE");
-    }
-    return s;
-  };
+  CT::string toString();
+  CT::string toString(const char *fmt);
 };
 
 // class FeatureProperties {

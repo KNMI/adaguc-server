@@ -47,6 +47,8 @@
 #include "gdfonts.h"
 #include "gdfontmb.h"
 #include "CCairoPlotter.h"
+#include "CColor.h"
+#include "CRectangleText.h"
 
 float convertValueToClass(float val, float interval);
 
@@ -62,74 +64,6 @@ public:
   unsigned char CDIred[256], CDIgreen[256], CDIblue[256];
   short CDIalpha[256]; // Currently alpha of 0 and 255 is supported, but nothin in between.
   CT::string legendName;
-};
-
-class CColor {
-public:
-  unsigned char r, g, b, a;
-  CColor() {
-    r = 0;
-    g = 0;
-    b = 0;
-    a = 255;
-  }
-  CColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
-    this->r = r;
-    this->g = g;
-    this->b = b;
-    this->a = a;
-  }
-  CColor(const char *color) { parse(color); }
-  /**
-   * color can have format #RRGGBB or #RRGGBBAA
-   */
-  void parse(const char *color) {
-    if (color[0] == '#') {
-      if (strlen(color) == 7) {
-        r = ((color[1] > 64) ? color[1] - 55 : color[1] - 48) * 16 + ((color[2] > 64) ? color[2] - 55 : color[2] - 48);
-        g = ((color[3] > 64) ? color[3] - 55 : color[3] - 48) * 16 + ((color[4] > 64) ? color[4] - 55 : color[4] - 48);
-        b = ((color[5] > 64) ? color[5] - 55 : color[5] - 48) * 16 + ((color[6] > 64) ? color[6] - 55 : color[6] - 48);
-        a = 255;
-      }
-      if (strlen(color) == 9) {
-        r = ((color[1] > 64) ? color[1] - 55 : color[1] - 48) * 16 + ((color[2] > 64) ? color[2] - 55 : color[2] - 48);
-        g = ((color[3] > 64) ? color[3] - 55 : color[3] - 48) * 16 + ((color[4] > 64) ? color[4] - 55 : color[4] - 48);
-        b = ((color[5] > 64) ? color[5] - 55 : color[5] - 48) * 16 + ((color[6] > 64) ? color[6] - 55 : color[6] - 48);
-        a = ((color[7] > 64) ? color[7] - 55 : color[7] - 48) * 16 + ((color[8] > 64) ? color[8] - 55 : color[8] - 48);
-      }
-    }
-  }
-};
-
-class RectangleText {
-public:
-  int llx;
-  int lly;
-  int urx;
-  int ury;
-  float angle;
-  int padding;
-  CT::string text;
-  CT::string fontFile;
-  float fontSize;
-  CColor color;
-
-  DEF_ERRORFUNCTION();
-  RectangleText() {}
-
-  void init(int llx, int lly, int urx, int ury, float angle, int padding, const char *text, const char *fontFile, float fontSize, CColor color) {
-    this->llx = llx;
-    this->lly = lly;
-    this->urx = urx;
-    this->ury = ury;
-    this->angle = angle;
-    this->padding = padding;
-    this->text = CT::string(text);
-    this->fontFile = CT::string(fontFile);
-    this->fontSize = fontSize;
-    this->color = color;
-  }
-  bool overlaps(RectangleText &r1);
 };
 
 class CDrawImage {
@@ -228,7 +162,7 @@ public:
   void drawText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor fgcolor, CColor bgcolor);
   void drawAnchoredText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color, int anchor);
   void drawCenteredText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color);
-  void drawCenteredTextNoOverlap(int x, int y, const char *fontfile, float size, float angle, int padding, const char *text, CColor color, bool noOverlap, std::vector<RectangleText> &rects);
+  void drawCenteredTextNoOverlap(int x, int y, const char *fontfile, float size, float angle, int padding, const char *text, CColor color, bool noOverlap, std::vector<CRectangleText> &rects);
   int drawTextArea(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor fgcolor, CColor bgcolor);
 
   // void drawTextAngle(const char * text, size_t length,double angle,int x,int y,int color,int fontSize);

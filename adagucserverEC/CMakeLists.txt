@@ -79,6 +79,8 @@ add_library(
     CAreaMapper.h
     CSLD.h
     CHandleMetadata.h
+    CColor.h
+    CRectangleText.h
     CDataReader.cpp
     COGCDims.cpp
     CImageWarper.cpp
@@ -145,6 +147,7 @@ add_library(
     CCreateTiles.cpp
     CUniqueRequests/CUniqueRequests.cpp
     testadagucserver.cpp
+    CRectangleText.cpp
 )
 
 target_include_directories(adagucserverEC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${Cairo_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS} ${PostgreSQL_INCLUDE_DIRS} ${GDAL_INCLUDE_DIRS} ${PROJ_INCLUDE_DIR})

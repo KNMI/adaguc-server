@@ -28,6 +28,7 @@
 #include "CConvertGeoJSON.h"
 #include <string>
 #include <algorithm>
+#include "CRectangleText.h"
 
 //   #define MEASURETIME
 
@@ -150,7 +151,7 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
     std::string fileName = itf->first.c_str();
     if (fileName == name.c_str()) {
       // CDBDebug("Plotting %d features ONLY for %s", featureStore[fileName].size(), fileName.c_str());
-      std::vector<RectangleText> rects;
+      std::vector<CRectangleText> rects;
       size_t featureStoreSize = featureStore[fileName].size();
       int featureRandomStart = 0; // For specifying a random polygon index to draw first
       if (randomStart) {
@@ -302,7 +303,7 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
       }
       CDBDebug("Drawing %d rects", rects.size());
       // Draw polygon labels here, so they end up on top
-      for (RectangleText rect : rects) {
+      for (CRectangleText rect : rects) {
         // drawImage->setDisc(rect.llx, rect.lly, 2, rect.color, rect.color); // dot
         drawImage->drawText(rect.llx, rect.lly, rect.fontFile.c_str(), rect.fontSize, rect.angle, rect.text.c_str(), rect.color);
       }
