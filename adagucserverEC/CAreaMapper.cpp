@@ -65,9 +65,6 @@ void CAreaMapper::init(CDataSource *dataSource, CDrawImage *drawImage, int tileW
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   width = dataSource->dWidth;
   height = dataSource->dHeight;
-//  internalWidth = width;
-//  internalHeight = height;
-
   settings = getDrawFunctionSettings(dataSource, drawImage, styleConfiguration);
 }
 
