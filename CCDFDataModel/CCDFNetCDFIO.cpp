@@ -31,8 +31,8 @@ const char *CDFNetCDFWriter::className = "NetCDFWriter";
 #define CDFNetCDFGroupSeparator "/"
 // const char *CCDFWarper::className="CCDFWarper";
 
-//  #define CCDFNETCDFIO_DEBUG
-//  #define CCDFNETCDFIO_DEBUG_OPEN
+// #define CCDFNETCDFIO_DEBUG
+// #define CCDFNETCDFIO_DEBUG_OPEN
 // #define CCDFNETCDFWRITER_DEBUG
 
 CDFNetCDFReader::CDFNetCDFReader() : CDFReader() {
@@ -142,6 +142,11 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
   if (useStartCount == true) {
     for (size_t i = 0; i < var->dimensionlinks.size(); i++) {
       totalVariableSize *= count[i]; // stride[i];
+      if (count[i] + start[i] > var->dimensionlinks[i]->getSize()) {
+        CDBError("Start and count are out of bounds for dim nr [%d]): dim [%s]: start[%d], count[%d], dimensionlinks size[%d]", i, var->dimensionlinks[i]->name.c_str(), start[i], count[i],
+                 var->dimensionlinks[i]->getSize());
+        return 1;
+      }
       if (stride[i] != 1) {
         useStriding = true;
       }
@@ -1091,8 +1096,12 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
   // writeDimsFirst==1: variables
   for (int writeDimsFirst = 0; writeDimsFirst < 2; writeDimsFirst++) {
 #ifdef CCDFNETCDFWRITER_DEBUG
-    if (writeDimsFirst == 0) CDBDebug("Write dimensions");
-    if (writeDimsFirst == 1) CDBDebug("Write variables");
+    if (writeDimsFirst == 0) {
+      CDBDebug("Write dimensions");
+    }
+    if (writeDimsFirst == 1) {
+      CDBDebug("Write variables");
+    }
 #endif
 
     // Write all different variables.
@@ -1108,7 +1117,9 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
       CDF::Variable *variable = cdfObject->variables[j];
       const char *name = variable->name.c_str();
 #ifdef CCDFNETCDFWRITER_DEBUG
-      if (writeDimsFirst == 0) CDBDebug("Writing %s", name);
+      if (writeDimsFirst == 0) {
+        CDBDebug("Writing %s", name);
+      }
 #endif
 
       int numDims = variable->dimensionlinks.size();
@@ -1191,14 +1202,18 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
           }
 
           if (netcdfMode >= 4) {
-            // CDBDebug("shuffle ,deflate, deflate_level %d,%d,%d",shuffle ,deflate, deflate_level);
-            status = nc_def_var_deflate(root_id, nc_var_id, shuffle, deflate, deflate_level);
-            if (status != NC_NOERR) {
-              ncError(__LINE__, className, "nc_def_var_deflate: ", status);
-              return 1;
-            }
-            if (listNCCommands) {
-              NCCommands.printconcat("nc_def_var_deflate(root_id,var_id_%d,shuffle ,deflate, deflate_level);\n", j);
+            /* Only set deflate settings on non-scalar variables */
+            /* Compression on variable length variables is no longer supported: https://github.com/Unidata/netcdf-c/pull/2231 */
+            if (variable->dimensionlinks.size() > 0 && variable->currentType != CDF_STRING) {
+              // CDBDebug("Var %s, shuffle ,deflate, deflate_level %d,%d,%d", variable->name.c_str(), deflate, deflate_level);
+              status = nc_def_var_deflate(root_id, nc_var_id, shuffle, deflate, deflate_level);
+              if (status != NC_NOERR) {
+                ncError(__LINE__, className, "nc_def_var_deflate: ", status);
+                return 1;
+              }
+              if (listNCCommands) {
+                NCCommands.printconcat("nc_def_var_deflate(root_id,var_id_%d,shuffle ,deflate, deflate_level);\n", j);
+              }
             }
           }
 

@@ -1,0 +1,5 @@
+#jsonContainer .disclosure { font-weight: bold; text-decoration: none; }
+#jsonContainer .key     { color: #666; }
+#jsonContainer .string  { color: #191; }
+#jsonContainer .number  { color: #911; }
+#jsonContainer .boolean { color: #119; }

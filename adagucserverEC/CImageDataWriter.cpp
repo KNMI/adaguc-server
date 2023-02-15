@@ -540,6 +540,9 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
         drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
         srvParam->imageFormat = IMAGEFORMAT_IMAGEWEBP;
       }
+      if (dataSource->cfgLayer->WMSFormat[0]->attr.quality.empty() == false) {
+        srvParam->imageQuality = dataSource->cfgLayer->WMSFormat[0]->attr.quality.toInt();
+      }
     }
   }
   // Set font location
@@ -3410,7 +3413,19 @@ int CImageDataWriter::end() {
   } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEWEBP) {
     CDBDebug("Creating 32 bit webp");
     printf("%s%c%c\n", "Content-Type:image/webp", 13, 10);
-    status = drawImage.printImageWebP32(srvParam->imageQuality);
+    int webPQuality = srvParam->imageQuality;
+    if (!srvParam->Format.empty()) {
+      /* Support setting quality via wms format parameter, e.g. format=image/webp;90& */
+      auto s = srvParam->Format.splitToStack(";");
+      if (s.size() > 1) {
+        int q = s[1].toInt();
+        if (q >= 0 && q <= 100) {
+          webPQuality = q;
+        }
+      }
+    }
+    CDBDebug("webPQuality = %d", webPQuality);
+    status = drawImage.printImageWebP32(webPQuality);
   } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEGIF) {
     // CDBDebug("LegendGraphic GIF");
     if (animation == 0) {

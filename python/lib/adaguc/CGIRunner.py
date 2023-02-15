@@ -36,8 +36,9 @@ class CGIRunner:
 
         # Execute adaguc-server binary
         ON_POSIX = 'posix' in sys.builtin_module_names
-        process = Popen(cmds, stdout=PIPE, env=localenv, close_fds=ON_POSIX)
-        (processOutput, err) = process.communicate()
+        process = Popen(cmds, stdout=PIPE, stderr=PIPE, env=localenv, close_fds=ON_POSIX)
+        (processOutput, processError) = process.communicate()
+ 
         status = process.wait()
 
         # Split headers from body using a regex
@@ -51,10 +52,10 @@ class CGIRunner:
                 headers = (processOutput[0:headersEndAt-1]).decode()
             else:
                 output.write(
-                    b'Error: No headers found in response from adaguc-server application')
-                return 1, []
+                    b'Error: No headers found in response from adaguc-server application, status was %d' % status)
+                return 1, [], None
 
         body = processOutput[headersEndAt+2:]
         output.write(body)
         headersList = headers.split("\r\n")
-        return status, [s for s in headersList if s != "\n" and ":" in s]
+        return status, [s for s in headersList if s != "\n" and ":" in s], processError

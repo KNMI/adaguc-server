@@ -516,10 +516,25 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject
       }
       CDF::Attribute *adaguc_data_type = variable->getAttributeNE("adaguc_data_type");
       if (adaguc_data_type != NULL) {
+
         if (adaguc_data_type->toString().equals("CConvertGeoJSON")) {
           CServerConfig::XMLE_RenderMethod *xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
           CREPORT_INFO_NODOC("adaguc_data_type set to CConvertGeoJSON. Assuming polyline render method for now.", CReportMessage::Categories::GENERAL);
           xmleRenderMethod->value.copy("polyline");
+          xmleLayer->RenderMethod.insert(xmleLayer->RenderMethod.begin(), xmleRenderMethod);
+        }
+
+        if (adaguc_data_type->toString().equals("CConvertGeoJSONPOLYGON")) {
+          CServerConfig::XMLE_RenderMethod *xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
+          CREPORT_INFO_NODOC("adaguc_data_type set to CConvertGeoJSONPOLYGON. Assuming polyline render method for now.", CReportMessage::Categories::GENERAL);
+          xmleRenderMethod->value.copy("polyline");
+          xmleLayer->RenderMethod.insert(xmleLayer->RenderMethod.begin(), xmleRenderMethod);
+        }
+
+        if (adaguc_data_type->toString().equals("CConvertGeoJSONPOINT")) {
+          CServerConfig::XMLE_RenderMethod *xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
+          CREPORT_INFO_NODOC("adaguc_data_type set to CConvertGeoJSONPOINT. Assuming point render method for now.", CReportMessage::Categories::GENERAL);
+          xmleRenderMethod->value.copy("point");
           xmleLayer->RenderMethod.insert(xmleLayer->RenderMethod.begin(), xmleRenderMethod);
         }
       }

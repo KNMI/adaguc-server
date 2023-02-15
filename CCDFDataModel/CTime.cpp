@@ -27,6 +27,7 @@
 #include <ctime>
 #include <sys/time.h>
 #include <math.h>
+#include <algorithm>
 
 const char *CTime::className = "CTime";
 void *CTime::currentInitializedVar = NULL;
@@ -911,26 +912,35 @@ double CTime::quantizeTimeToISO8601(double offsetOrig, CT::string period, CT::st
       int origH = date.hour;
       date.minute = 0;
       date.second = 0;
-      date.hour = origH - origH % H;
+      int restH = origH % H;
+      date.hour = origH - restH;
       offsetLow = thisTime->dateToOffset(date);
-      date.hour = date.hour + H;
+      if (restH > 0) {
+        date.hour = date.hour + restH;
+      }
       offsetHigh = thisTime->dateToOffset(date);
     } else if (hmsPart.indexOf("M") != -1) { // 5M
       hmsPart.replaceSelf("M", "");
       int M = hmsPart.toInt();
       int origM = date.minute;
       date.second = 0;
-      date.minute = origM - origM % M;
+      int restM = origM % M;
+      date.minute = origM - restM;
       offsetLow = thisTime->dateToOffset(date);
-      date.minute = date.minute + M;
+      if (restM > 0) {
+        date.minute = date.minute + M;
+      }
       offsetHigh = thisTime->dateToOffset(date);
     } else if (hmsPart.indexOf("S") != -1) { // 30S
       hmsPart.replaceSelf("S", "");
       int S = hmsPart.toInt();
       int origS = date.second;
-      date.second = origS - origS % S;
+      int restS = origS % S;
+      date.second = origS - restS;
       offsetLow = thisTime->dateToOffset(date);
-      date.second = date.second + S;
+      if (restS > 0) {
+        date.second = origS + restS;
+      }
       offsetHigh = thisTime->dateToOffset(date);
     }
 
@@ -949,9 +959,12 @@ double CTime::quantizeTimeToISO8601(double offsetOrig, CT::string period, CT::st
       date.hour = 0;
       date.minute = 0;
       date.second = 0;
-      date.year = origY - origY % Y;
+      int restY = origY % Y;
+      date.year = origY - restY;
       offsetLow = thisTime->dateToOffset(date);
-      date.year = date.year + Y;
+      if (restY > 0) {
+        date.year = date.year + Y;
+      }
       offsetHigh = thisTime->dateToOffset(date);
     } else if (hmsPart.indexOf("M") != -1) { // 5M
       date.day = 1;
@@ -961,9 +974,12 @@ double CTime::quantizeTimeToISO8601(double offsetOrig, CT::string period, CT::st
       hmsPart.replaceSelf("M", "");
       int M = hmsPart.toInt();
       int origM = date.month;
-      date.month = origM - origM % M;
+      int restM = origM % M;
+      date.month = origM - restM;
       offsetLow = thisTime->dateToOffset(date);
-      date.month = date.month + M;
+      if (restM > 0) {
+        date.month = date.month + M;
+      }
       offsetHigh = thisTime->dateToOffset(date);
     } else if (hmsPart.indexOf("D") != -1) { // 30S
       date.hour = 0;
@@ -972,9 +988,12 @@ double CTime::quantizeTimeToISO8601(double offsetOrig, CT::string period, CT::st
       hmsPart.replaceSelf("D", "");
       int D = hmsPart.toInt();
       int origD = date.day;
-      date.day = origD - origD % D;
+      int restD = origD % D;
+      date.day = origD - restD;
       offsetLow = thisTime->dateToOffset(date);
-      date.day = date.day + D;
+      if (restD > 0) {
+        date.day = date.day + D;
+      }
       offsetHigh = thisTime->dateToOffset(date);
     }
   }
@@ -997,7 +1016,7 @@ double CTime::quantizeTimeToISO8601(double offsetOrig, CT::string period, CT::st
 
 CT::string CTime::quantizeTimeToISO8601(CT::string value, CT::string period, CT::string method) {
   CT::string newDateString = value;
-  CDBDebug("quantizetime with for value %s with period %s and method %s", value.c_str(), period.c_str(), method.c_str());
+  // CDBDebug("quantizetime with for value %s with period %s and method %s", value.c_str(), period.c_str(), method.c_str());
   try {
     CTime time;
     time.init("seconds since 0000-01-01T00:00:00Z", NULL);
@@ -1007,7 +1026,7 @@ CT::string CTime::quantizeTimeToISO8601(CT::string value, CT::string period, CT:
   } catch (int e) {
     CDBError("Exception in quantizetime with message %s", CTime::getErrorMessage(e).c_str());
   }
-  CDBDebug("New date is %s", newDateString.c_str());
+  // CDBDebug("New date is %s", newDateString.c_str());
   return newDateString;
   // return "2016-01-13T09:50:00Z";
 }
@@ -1031,4 +1050,61 @@ time_t CTime::getEpochTimeFromDateString(CT::string dateString) {
 
   CDBDebug("Warning: CTime::getEpochTimeFromDateString: Unable to convert [%s] to epoch time.", dateString.c_str());
   throw(CTIME_CONVERSION_ERROR);
+}
+
+CTime::Date CTime::subtractPeriodFromDate(CTime::Date date, CT::string period) {
+  CTime::Date datePeriod = periodToDate(period);
+  Date newDate;
+  newDate.year = date.year - datePeriod.year;
+  newDate.month = date.month - datePeriod.month;
+  newDate.day = date.day - datePeriod.day;
+  newDate.hour = date.hour - datePeriod.hour;
+  newDate.minute = date.minute - datePeriod.minute;
+  newDate.second = date.second - datePeriod.second;
+  double offset = this->dateToOffset(newDate);
+
+  return this->offsetToDate(offset);
+}
+
+CT::string CTime::dateToPeriod(CTime::Date date) {
+  CT::string period = "P";
+  if (date.year > 0) period.printconcat("%dY", date.year);
+  if (date.month > 0) period.printconcat("%dM", date.month);
+  if (date.day > 0) period.printconcat("%dD", date.day);
+  if (date.hour > 0 || date.minute > 0 || date.second > 0) {
+    period.concat("T");
+  }
+  if (date.hour > 0) period.printconcat("%dH", date.hour);
+  if (date.minute > 0) period.printconcat("%dM", date.minute);
+  if (date.second > 0) period.printconcat("%0.fS", date.second);
+  return period;
+}
+
+CTime::Date CTime::periodToDate(CT::string period) {
+  CT::StackList<CT::string> p = period.splitToStack("T");
+  if (p.size() < 1 || !p[0].startsWith("P")) {
+    CDBError("Invalid time period %s", period.c_str());
+    throw(__LINE__);
+  }
+  CT::string ymdPeriodPart = p[0].substring(1, -1);
+  CT::string hmsPeriodPart = p.size() > 1 ? p[1] : "";
+
+  int indexY = ymdPeriodPart.indexOf("Y");
+  int indexMo = ymdPeriodPart.indexOf("M");
+  int indexD = ymdPeriodPart.indexOf("D");
+
+  int indexH = hmsPeriodPart.indexOf("H");
+  int indexMi = hmsPeriodPart.indexOf("M");
+  int indexS = hmsPeriodPart.indexOf("S");
+
+  Date dateOperator;
+  dateOperator.year = ymdPeriodPart.substring(0, indexY == -1 ? 0 : indexY).toInt();
+  dateOperator.month = ymdPeriodPart.substring(std::max({0, indexY + 1}), indexMo == -1 ? 0 : indexMo).toInt();
+  dateOperator.day = ymdPeriodPart.substring(std::max({0, indexY + 1, indexMo + 1}), indexD == -1 ? 0 : indexD).toInt();
+
+  dateOperator.hour = hmsPeriodPart.substring(0, indexH == -1 ? 0 : indexH).toInt();
+  dateOperator.minute = hmsPeriodPart.substring(std::max({0, indexH + 1}), indexMi == -1 ? 0 : indexMi).toInt();
+  dateOperator.second = hmsPeriodPart.substring(std::max({0, indexH + 1, indexMi + 1}), indexS == -1 ? 0 : indexS).toInt();
+
+  return dateOperator;
 }
