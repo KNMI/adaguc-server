@@ -641,6 +641,23 @@ void CCairoPlotter::drawText(int x, int y, double angle, const char *text) {
   _drawFreeTypeText(x, y, w, h, angle, text, true);
 }
 
+void CCairoPlotter::drawStrokedText(int x, int y, double angle, const char *text, const char *fontFile, float fontSize, CColor bgcolor, CColor fgcolor) {
+  if (fontFile) {
+  }
+  /* https://www.cairographics.org/samples/text/ */
+  cairo_save(cr);
+  cairo_set_font_size(cr, fontSize);
+  cairo_move_to(cr, x, y);
+  cairo_rotate(cr, angle);
+  cairo_text_path(cr, text);
+  cairo_set_source_rgb(cr, 0.5, 0.5, 1);
+  cairo_fill_preserve(cr);
+  cairo_set_source_rgb(cr, 0, 0, 0);
+  cairo_set_line_width(cr, 0.56);
+  cairo_stroke(cr);
+  cairo_restore(cr);
+}
+
 void CCairoPlotter::writeToPng24Stream(FILE *fp, unsigned char) { writeARGBPng(width, height, ARGBByteBuffer, fp, 24, false); }
 
 void CCairoPlotter::writeToPng8Stream(FILE *fp, unsigned char, bool use8bitpalAlpha) { writeARGBPng(width, height, ARGBByteBuffer, fp, 8, use8bitpalAlpha); }

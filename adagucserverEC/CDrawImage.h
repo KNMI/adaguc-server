@@ -30,7 +30,7 @@
 #include <iostream>
 #include "CDebugger.h"
 #include "CTypes.h"
-
+#include "CColor.h"
 #include "Definitions.h"
 #include "CStopWatch.h"
 #include <stdio.h>
@@ -62,43 +62,6 @@ public:
   unsigned char CDIred[256], CDIgreen[256], CDIblue[256];
   short CDIalpha[256]; // Currently alpha of 0 and 255 is supported, but nothin in between.
   CT::string legendName;
-};
-
-class CColor {
-public:
-  unsigned char r, g, b, a;
-  CColor() {
-    r = 0;
-    g = 0;
-    b = 0;
-    a = 255;
-  }
-  CColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
-    this->r = r;
-    this->g = g;
-    this->b = b;
-    this->a = a;
-  }
-  CColor(const char *color) { parse(color); }
-  /**
-   * color can have format #RRGGBB or #RRGGBBAA
-   */
-  void parse(const char *color) {
-    if (color[0] == '#') {
-      if (strlen(color) == 7) {
-        r = ((color[1] > 64) ? color[1] - 55 : color[1] - 48) * 16 + ((color[2] > 64) ? color[2] - 55 : color[2] - 48);
-        g = ((color[3] > 64) ? color[3] - 55 : color[3] - 48) * 16 + ((color[4] > 64) ? color[4] - 55 : color[4] - 48);
-        b = ((color[5] > 64) ? color[5] - 55 : color[5] - 48) * 16 + ((color[6] > 64) ? color[6] - 55 : color[6] - 48);
-        a = 255;
-      }
-      if (strlen(color) == 9) {
-        r = ((color[1] > 64) ? color[1] - 55 : color[1] - 48) * 16 + ((color[2] > 64) ? color[2] - 55 : color[2] - 48);
-        g = ((color[3] > 64) ? color[3] - 55 : color[3] - 48) * 16 + ((color[4] > 64) ? color[4] - 55 : color[4] - 48);
-        b = ((color[5] > 64) ? color[5] - 55 : color[5] - 48) * 16 + ((color[6] > 64) ? color[6] - 55 : color[6] - 48);
-        a = ((color[7] > 64) ? color[7] - 55 : color[7] - 48) * 16 + ((color[8] > 64) ? color[8] - 55 : color[8] - 48);
-      }
-    }
-  }
 };
 
 class CDrawImage {
@@ -242,7 +205,7 @@ public:
   void setDisc(int x, int y, float discRadius, CColor fillColor, CColor lineColor);
   void setEllipse(int x, int y, float discRadiusX, float discRadiusY, float rotation, CColor fillColor, CColor lineColor);
   void setTextDisc(int x, int y, int discRadius, const char *text, const char *fontfile, float fontsize, CColor textcolor, CColor fillcolor, CColor lineColor);
-  void setTextStroke(const char *text, size_t length, int x, int y, int fgcolor, int bgcolor, int fontSize);
+  void setTextStroke(int x, int y, float angle, const char *text, const char *fontFile, float fontsize, CColor bgcolor, CColor fgcolor);
   void rectangle(int x1, int y1, int x2, int y2, int innercolor, int outercolor);
   void rectangle(int x1, int y1, int x2, int y2, int outercolor);
   void rectangle(int x1, int y1, int x2, int y2, CColor innercolor, CColor outercolor);

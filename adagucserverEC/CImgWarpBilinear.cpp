@@ -806,8 +806,10 @@ void CImgWarpBilinear::drawTextForContourLines(CDrawImage *drawImage, ContourDef
   ty -= offY;
   int x = int(tx) + 1;
   int y = int(ty) + 1;
+  // onst char *text, size_t length, int x, int y, int fgcolor, int bgcolor, int fontSize
+  // drawImage->drawText(x, y, fontLocation, fontSize, angle, text.c_str(), textColor);
 
-  drawImage->drawText(x, y, fontLocation, fontSize, angle, text.c_str(), textColor);
+  drawImage->setTextStroke(x, y, angle, text.c_str(), fontLocation, fontSize, CColor(0, 0, 0, 255), textColor);
 }
 
 /*

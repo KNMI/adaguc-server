@@ -867,28 +867,27 @@ void CDrawImage::setText(const char *text, size_t length, int x, int y, CColor c
   }
 }
 
-void CDrawImage::setTextStroke(const char *text, size_t length, int x, int y, int fgcolor, int bgcolor, int fontSize) {
+void CDrawImage::setTextStroke(int x, int y, float angle, const char *text, const char *fontFile, float fontSize, CColor bgcolor, CColor fgcolor) {
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
     // Not yet supported...
-    setText(text, length, x, y, fgcolor, fontSize);
+    // setText(text, length, x, y, fgcolor, fontSize);
+    cairo->drawStrokedText(x, y, -angle, text, fontFile, fontSize * 3, bgcolor, fgcolor);
   } else {
-    fgcolor = colors[fgcolor];
-    bgcolor = colors[bgcolor];
+    int fgColorIndex = getClosestGDColor(fgcolor.r, fgcolor.g, fgcolor.b);
+    int bgColorIndex = getClosestGDColor(bgcolor.r, bgcolor.g, bgcolor.b);
+    size_t length = strlen(text);
     char *pszText = new char[length + 1];
     strncpy(pszText, text, length);
     pszText[length] = '\0';
 
-    for (int dy = -1; dy < 2; dy = dy + 1)
-      for (int dx = -1; dx < 2; dx = dx + 1)
+    for (int dy = -1; dy < 2; dy = dy + 1) {
+      for (int dx = -1; dx < 2; dx = dx + 1) {
         if (!(dx == 0 && dy == 0)) {
-          if (fontSize == -1) gdImageString(image, gdFontSmall, x + dx, y + dy, (unsigned char *)pszText, bgcolor);
-          if (fontSize == 0) gdImageString(image, gdFontMediumBold, x + dx, y + dy, (unsigned char *)pszText, bgcolor);
-          if (fontSize == 1) gdImageString(image, gdFontLarge, x + dx, y + dy, (unsigned char *)pszText, bgcolor);
+          gdImageStringFT(image, &brect[0], bgColorIndex, (char *)TTFFontLocation, fontSize, angle, x + dx, y + dy, (char *)pszText);
         }
-    if (fontSize == -1) gdImageString(image, gdFontSmall, x, y, (unsigned char *)pszText, fgcolor);
-    if (fontSize == 0) gdImageString(image, gdFontMediumBold, x, y, (unsigned char *)pszText, fgcolor);
-    if (fontSize == 1) gdImageString(image, gdFontLarge, x, y, (unsigned char *)pszText, fgcolor);
-
+      }
+    }
+    gdImageStringFT(image, &brect[0], fgColorIndex, (char *)TTFFontLocation, fontSize, angle, x, y, (char *)pszText);
     delete[] pszText;
   }
 }
