@@ -1593,11 +1593,20 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
               if (contourLine->attr.textcolor.empty() == false) {
                 bilinearSettings.printconcat("textcolor(%s)$", contourLine->attr.textcolor.c_str());
               }
+              if (contourLine->attr.textsize.empty() == false) {
+                bilinearSettings.printconcat("textsize(%s)$", contourLine->attr.textsize.c_str());
+              }
+              if (contourLine->attr.textstrokecolor.empty() == false) {
+                bilinearSettings.printconcat("textstrokecolor(%s)$", contourLine->attr.textstrokecolor.c_str());
+              }
               if (contourLine->attr.interval.empty() == false) {
                 bilinearSettings.printconcat("interval(%s)$", contourLine->attr.interval.c_str());
               }
               if (contourLine->attr.textformatting.empty() == false) {
                 bilinearSettings.printconcat("textformatting(%s)$", contourLine->attr.textformatting.c_str());
+              }
+              if (contourLine->attr.dashing.empty() == false) {
+                bilinearSettings.printconcat("dashing(%s)$", contourLine->attr.dashing.c_str());
               }
               bilinearSettings.printconcat(";");
             }
@@ -1616,8 +1625,17 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
               if (contourLine->attr.classes.empty() == false) {
                 bilinearSettings.printconcat("classes(%s)$", contourLine->attr.classes.c_str());
               }
+              if (contourLine->attr.textsize.empty() == false) {
+                bilinearSettings.printconcat("textsize(%s)$", contourLine->attr.textsize.c_str());
+              }
+              if (contourLine->attr.textstrokecolor.empty() == false) {
+                bilinearSettings.printconcat("textstrokecolor(%s)$", contourLine->attr.textstrokecolor.c_str());
+              }
               if (contourLine->attr.textformatting.empty() == false) {
                 bilinearSettings.printconcat("textformatting(%s)$", contourLine->attr.textformatting.c_str());
+              }
+              if (contourLine->attr.dashing.empty() == false) {
+                bilinearSettings.printconcat("dashing(%s)$", contourLine->attr.dashing.c_str());
               }
               bilinearSettings.printconcat(";");
             }

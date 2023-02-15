@@ -109,6 +109,7 @@ public:
   void lineTo(float x1, float y1);
   void lineTo(float x1, float y1, float width);
   void endLine();
+  void endLine(const double *dashes, int num_dashes);
   void line(float x1, float y1, float x2, float y2);
   void line(float x1, float y1, float x2, float y2, float width);
   void circle(int x, int y, int r);

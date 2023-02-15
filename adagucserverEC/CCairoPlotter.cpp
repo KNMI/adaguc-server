@@ -523,8 +523,17 @@ void CCairoPlotter::lineTo(float x1, float y1, float width) {
   cairo_set_line_width(cr, width);
   cairo_line_to(cr, x1 + 0.5, y1 + 0.5);
 }
+
 void CCairoPlotter::endLine() {
   cairo_set_line_join(cr, CAIRO_LINE_JOIN_MITER);
+  double dashes[2] = {2, 2};
+  cairo_set_dash(cr, 0, 0, 0);
+  cairo_stroke(cr);
+}
+
+void CCairoPlotter::endLine(const double *dashes, int num_dashes) {
+  cairo_set_line_join(cr, CAIRO_LINE_JOIN_MITER);
+  cairo_set_dash(cr, dashes, num_dashes, 0);
   cairo_stroke(cr);
 }
 
@@ -646,16 +655,26 @@ void CCairoPlotter::drawStrokedText(int x, int y, double angle, const char *text
   }
   /* https://www.cairographics.org/samples/text/ */
   cairo_save(cr);
+  cairo_path_t *cp = cairo_copy_path(cr);
+
+  cairo_new_path(cr);
+
   cairo_set_font_size(cr, fontSize);
   cairo_move_to(cr, x, y);
   cairo_rotate(cr, angle);
   cairo_text_path(cr, text);
-  cairo_set_source_rgb(cr, 0.5, 0.5, 1);
+  cairo_set_source_rgb(cr, fgcolor.r, fgcolor.g, fgcolor.b);
   cairo_fill_preserve(cr);
-  cairo_set_source_rgb(cr, 0, 0, 0);
-  cairo_set_line_width(cr, 0.56);
+  cairo_set_source_rgb(cr, bgcolor.r, bgcolor.g, bgcolor.b);
+  cairo_set_line_width(cr, 0.75);
+  cairo_set_dash(cr, 0, 0, 0);
   cairo_stroke(cr);
+
+  cairo_close_path(cr);
+
   cairo_restore(cr);
+  cairo_append_path(cr, cp);
+  cairo_path_destroy(cp);
 }
 
 void CCairoPlotter::writeToPng24Stream(FILE *fp, unsigned char) { writeARGBPng(width, height, ARGBByteBuffer, fp, 24, false); }

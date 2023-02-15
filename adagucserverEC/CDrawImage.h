@@ -173,6 +173,7 @@ public:
   void moveTo(float x1, float y1);
   void lineTo(float x1, float y1, float w, CColor color);
   void endLine();
+  void endLine(const double *dashes, int num_dashes);
 
   void poly(float x1, float y1, float x2, float y2, float x3, float y3, int c, bool fill);
   void poly(float x1, float y1, float x2, float y2, float x3, float y3, CColor color, bool fill);
