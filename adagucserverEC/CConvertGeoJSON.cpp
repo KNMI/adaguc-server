@@ -1688,7 +1688,7 @@ void CConvertGeoJSON::drawPoints(Feature *feature, unsigned short int featureInd
       if (pointGridVariable->getType() == CDF_FLOAT) {
         if (f < min || min != min) min = f;
         if (f > max || max != max) max = f;
-        if (!(pointGridVariable->data == nullptr)) {
+        if (pointGridVariable->data != nullptr) {
           drawCircle((float *)pointGridVariable->data, f, dataSource->dWidth, dataSource->dHeight, dlon - 1, dlat, 10);
         }
       }

@@ -400,8 +400,8 @@ public:
       for (int y = 0; y < dataHeight + 1; y++) {
         for (int x = 0; x < dataWidth + 1; x++) {
           size_t p = x + y * (dataWidth + 1);
-          double valX = dfSourcedExtW * double(double(x + halfCell) + PXExtentBasedOnSource[0]) + dfSourceOrigX;
-          double valY = dfSourcedExtH * double(double(y - halfCell) + PXExtentBasedOnSource[1]) + dfSourceOrigY;
+          double valX = dfSourcedExtW * (x + halfCell + PXExtentBasedOnSource[0]) + dfSourceOrigX;
+          double valY = dfSourcedExtH * (y - halfCell + PXExtentBasedOnSource[1]) + dfSourceOrigY;
           px[p] = valX;
           py[p] = valY;
           skip[p] = false;
@@ -448,8 +448,8 @@ public:
         for (size_t x = 0; x < dataWidthStrided; x++) {
           size_t pS = x + y * dataWidthStrided;
 
-          double valX = dfSourcedExtW * double(double(double(x * projStrideFactor) + halfCell) + double(PXExtentBasedOnSource[0])) + dfSourceOrigX;
-          double valY = dfSourcedExtH * double(double(double(y * projStrideFactor) - halfCell) + double(PXExtentBasedOnSource[1])) + dfSourceOrigY;
+          double valX = dfSourcedExtW * (x * projStrideFactor + halfCell + PXExtentBasedOnSource[0]) + dfSourceOrigX;
+          double valY = dfSourcedExtH * (y * projStrideFactor - halfCell + PXExtentBasedOnSource[1]) + dfSourceOrigY;
           pxStrided[pS] = valX;
           pyStrided[pS] = valY;
         }

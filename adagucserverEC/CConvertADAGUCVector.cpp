@@ -453,10 +453,8 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
           if (projectionRequired) {
             if (imageWarper.reprojfromLatLon(lons[j], lats[j]) != 0) projectionIsOk = false;
           }
-          if (cellSizeX != 0 && cellSizeY != 0) {
-            dlons[j] = int((lons[j] - offsetX) / cellSizeX);
-            dlats[j] = int((lats[j] - offsetY) / cellSizeY);
-          }
+          dlons[j] = int((lons[j] - offsetX) / cellSizeX);
+          dlats[j] = int((lats[j] - offsetY) / cellSizeY);
           int lon = dlons[j];
           int lat = dlats[j];
           if (j == 0) {
