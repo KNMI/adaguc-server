@@ -81,9 +81,11 @@ RUN pip3 install --no-cache-dir --upgrade pip \
    && pip3 install --no-cache-dir -r requirements.txt
 
 # Build and test adaguc python support
+ENV ADAGUC_PATH=/adaguc/adaguc-server-master
 WORKDIR /adaguc/adaguc-server-master/python/lib/
 RUN python3 setup.py install
 RUN bash -c "python3 /adaguc/adaguc-server-master/python/examples/runautowms/run.py && ls result.png"
+
 
 # Build local edr_package
 WORKDIR /adaguc/adaguc-server-master/python/edr_package
@@ -115,7 +117,7 @@ RUN  chmod +x /adaguc/adaguc-server-*.sh && \
     chmod +x /adaguc/start.sh && \
     chown -R adaguc:adaguc /data/adaguc* /adaguc /adaguc/*
 
-ENV ADAGUC_PATH=/adaguc/adaguc-server-master
+
 
 ENV PYTHONPATH=${ADAGUC_PATH}/python/python-fastapi-server
 

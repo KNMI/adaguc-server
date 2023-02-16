@@ -1,5 +1,7 @@
 from fastapi import Request, Response, FastAPI,APIRouter
 
+from typing import Optional
+
 from .edr_types.styles import Styles
 from .edr_types.maps_service_descr import maps_service_descr
 from .edr_types.landing_page import landing_page
@@ -314,6 +316,8 @@ def list_collection(
 async def get_collection(id: str, request: Request):
     dataset = get_dataset(request)
     wmscontent = get_capabilities(dataset)
+    if id not in wmscontent:
+        return {"message": f"incorrect parameter {id}"}
     return list_collection(dataset, id, get_baseurl(request), wmscontent[id])
 
 
@@ -365,8 +369,8 @@ async def get_collection_map(
     height: int = 600,
     crs: str = "http://www.opengis.net/def/crs/EPSG/0/3857",
     bbox: str = "0,45,10,55",
-    bbox_crs: str | None = None,
-    transparent: str | None = None,
+    bbox_crs: Optional[str] = None,
+    transparent: Optional[str] = None,
 ):
     logger.info("Map for %s %dx%d %s %s %s", id, width, height, crs, bbox, transparent)
     dataset = get_dataset(request)
@@ -440,8 +444,8 @@ async def get_collection_map_styled(
     height: int = 600,
     crs: str = "http://www.opengis.net/def/crs/EPSG/0/3857",
     bbox: str = "0,45,10,55",
-    bbox_crs: str | None = None,
-    transparent: str | None = None,
+    bbox_crs: Optional[str] = None,
+    transparent: Optional[str] = None,
 ):
     fixed_style = style.replace("|", "/")
     logger.info(

@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-
+from typing import Optional
 
 class Spatial(BaseModel):
     bbox: list[float]
@@ -28,9 +28,9 @@ class Extent(BaseModel):
         cls,
         bbox: list[float],
         crs: str,
-        interval: list[str] = None,
+        interval: Optional[list[str]] = None,
         trs: str = "ISO8601",
-        other_dims: dict | None = None,
+        other_dims: Optional[dict] = None,
     ):
         _spatial = Spatial.custom_init(bbox, crs)
         _temporal: Temporal = Temporal.custom_init(interval, trs)

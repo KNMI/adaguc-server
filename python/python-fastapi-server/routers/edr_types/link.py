@@ -1,13 +1,13 @@
 from pydantic import BaseModel
-
+from typing import Optional
 
 class Link(BaseModel):
     href: str
     rel: str
-    description: str | None = None
-    type: str | None = None
-    hreflang: str | None = None
-    title: str | None = None
+    description: Optional[str] = None
+    type: Optional[str] = None
+    hreflang: Optional[str] = None
+    title: Optional[str] = None
 
     @classmethod
     def custom_init(

@@ -138,6 +138,7 @@ async def get_collection_position(
     parameter_names: str = Query(alias="parameter-names"),
 ):
     latlons = wkt.loads(coords)
+    logger.info("latlons:%s", latlons)
     coord = {"lat": latlons["coordinates"][0], "lon": latlons["coordinates"][1]}
     instance = None
     resp = getPointValue(

@@ -1,12 +1,13 @@
 from pydantic import BaseModel
+from typing import Optional
 from .link import Link
 
 
 class landing_page(BaseModel):
     title: str
     description: str
-    attribution: str | None = None
-    links: list[Link] | None
+    attribution: Optional[str] = None
+    links: Optional[list[Link]]
 
     @classmethod
     def custom_init(
