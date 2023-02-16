@@ -1559,10 +1559,12 @@ void CConvertGeoJSON::drawPolygons(Feature *feature, unsigned short int featureI
       double tprojectedY = polyY[j];
       int status = 0;
       if (projectionRequired) status = imageWarper->reprojfromLatLon(tprojectedX, tprojectedY);
-      int dlon, dlat;
+      int dlon = 0, dlat = 0;
       if (!status) {
-        dlon = int((tprojectedX - offsetX) / cellSizeX) + 1;
-        dlat = int((tprojectedY - offsetY) / cellSizeY);
+        if (cellSizeX != 0 && cellSizeY != 0) {
+          dlon = int((tprojectedX - offsetX) / cellSizeX) + 1;
+          dlat = int((tprojectedY - offsetY) / cellSizeY);
+        }
 
         if (first == 0) {
           first = 1;
@@ -1670,8 +1672,9 @@ void CConvertGeoJSON::drawPoints(Feature *feature, unsigned short int featureInd
       double tprojectedY = pointLatitude;
       int status = 0;
       if (projectionRequired) status = imageWarper->reprojfromLatLon(tprojectedX, tprojectedY);
-      int dlon, dlat;
-      if (!status) {
+
+      int dlon = 0, dlat = 0;
+      if (!status && cellSizeX != 0 && cellSizeY != 0) {
         dlon = int((tprojectedX - offsetX) / cellSizeX) + 1;
         dlat = int((tprojectedY - offsetY) / cellSizeY);
       }
@@ -1685,7 +1688,7 @@ void CConvertGeoJSON::drawPoints(Feature *feature, unsigned short int featureInd
       if (pointGridVariable->getType() == CDF_FLOAT) {
         if (f < min || min != min) min = f;
         if (f > max || max != max) max = f;
-        if (pointGridVariable->data != NULL) {
+        if (pointGridVariable->data != nullptr) {
           drawCircle((float *)pointGridVariable->data, f, dataSource->dWidth, dataSource->dHeight, dlon - 1, dlat, 10);
         }
       }
