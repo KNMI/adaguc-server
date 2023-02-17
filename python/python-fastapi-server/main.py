@@ -45,10 +45,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.add_middleware(
-    BrotliMiddleware,
-    gzip_fallback=True
-)
+app.add_middleware(BrotliMiddleware, gzip_fallback=True)
 
 if "EXTERNALADDRESS" in os.environ:
     app.add_middleware(FixSchemeMiddleware)
