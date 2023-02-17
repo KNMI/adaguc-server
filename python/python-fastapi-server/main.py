@@ -11,6 +11,8 @@ from routers.opendap import opendapRouter
 from routers.ogcapi import ogcApiApp
 
 from routers.middleware import FixSchemeMiddleware
+from brotli_asgi import BrotliMiddleware
+
 import time
 
 import logging
@@ -40,6 +42,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(BrotliMiddleware, gzip_fallback=True)
+
 if "EXTERNALADDRESS" in os.environ:
     app.add_middleware(FixSchemeMiddleware)
 
