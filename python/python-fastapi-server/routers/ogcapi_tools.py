@@ -58,7 +58,6 @@ def get_datasets(adagucDataSetDir):
     """
     Return all possible OGCAPI feature datasets, based on the dataset directory
     """
-    logger.info("getDatasets(%s)", adagucDataSetDir)
     datasetFiles = [
         f
         for f in os.listdir(adagucDataSetDir)
@@ -149,7 +148,6 @@ def get_capabilities(collname):
             f"dataset={dataset}&service=wms&version=1.3.0&request=getcapabilities"
         )
         status, response = callADAGUC(url=urlrequest.encode("UTF-8"))
-        logger.info("status: %d", status)
         if status == 0:
             xml = response.getvalue()
             wms = WebMapService(coll["service"], xml=xml, version="1.3.0")
@@ -200,7 +198,6 @@ def get_parameters(collname):
         layers.append(layer)
 
     layers.sort(key=lambda l: l["name"])
-    # logger.info("l:%s", json.dumps(layers)) # THIS CAUSES A HUGE LOGGING MESSAGE!
     return {"layers": layers}
 
 
@@ -399,7 +396,6 @@ def feature_from_dat(dat, coll, url, self_url, add_links: bool = False):
     features = []
 
     for t in tuples:
-        logger.info("T:%s", t)
         result = []
         for ts in timeSteps:
             v = multi_get(dat["data"], t + (ts,))

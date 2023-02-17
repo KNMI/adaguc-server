@@ -387,9 +387,11 @@ def getSingleItem(item_id: str, url: str) -> FeatureGeoJSON:
     collection, observed_property_name, point, dims, datetime_ = item_id.split(";")
     coord = list(map(float, point.split(",")))
     dimspec = ""
-    for dim in dims.split("|"):
-        dimname, dimval = dim.split("=")
-        dimspec += f"&{dimname}={dimval}"
+    if len(dims):
+        for dim in dims.split("|"):
+            dimname, dimval = dim.split("=")
+            dimspec += f"&{dimname}={dimval}"
+
     datetime_ = datetime_.replace("$", "/")
     request_url = (
         f"http://localhost:8000/wms?dataset={collection}&query_layers={observed_property_name}"
@@ -405,12 +407,10 @@ def getSingleItem(item_id: str, url: str) -> FeatureGeoJSON:
             response_data = json.loads(data.getvalue(), object_pairs_hook=OrderedDict)
         except ValueError:
             root = fromstring(data)
-            logger.info("ET:%s", root)
 
             retval = json.dumps(
                 {"Error": {"code": root[0].attrib["code"], "message": root[0].text}}
             )
-            logger.info("retval=%s", retval)
             return 400, root[0].text.strip()  # TODO
         features = []
         for data in response_data:
@@ -446,7 +446,6 @@ def getFeaturesForItems(
         coords = calculate_coords(bbox, npoints, npoints)
     else:
         coords = [point]
-    logger.info("COORDS: %d", len(coords))
     if not observedPropertyName:
         collinfo = get_parameters(coll)
         observedPropertyName = [collinfo["layers"][0]["name"]]
@@ -465,7 +464,6 @@ def getFeaturesForItems(
 
     features = []
     for coord in coords:
-        logger.info("POINT: %s", coord)
         request_url = (
             f"http://localhost:8000/wms?dataset={coll}&query_layers={paramList}"
             + "&service=WMS&version=1.3.0&request=getPointValue&FORMAT=application/json&INFO_FORMAT=application/json"
@@ -484,12 +482,10 @@ def getFeaturesForItems(
                 )
             except ValueError:
                 root = fromstring(data)
-                logger.info("ET:%s", root)
 
                 retval = json.dumps(
                     {"Error": {"code": root[0].attrib["code"], "message": root[0].text}}
                 )
-                logger.info("retval=%s", retval)
                 return 400, root[0].text.strip()  # TODO
             for data in response_data:
                 data_features = feature_from_dat(data, coll, base_url, base_url, False)
@@ -699,7 +695,6 @@ async def getItemsForCollection(
             )
         return featureCollection
     except Exception as e:
-        print("E:", e)
         logger.error("ERR: %s", traceback.format_exception(None, e, e.__traceback__))
 
     return None
@@ -721,16 +716,24 @@ async def getItemForCollection(
     url = req.url
     feature_to_return = getSingleItem(item_id, str(url))
 
-    # links = getSingleItemLinks(coll, item_id, str(url), str(req.url))
-    response.headers["Content-Crs"] = f"<{DEFAULT_CRS}>"
-    if request_type(f) == "HTML":
-        return templates.TemplateResponse(
-            "item.html",
-            {
-                "request": req,
-                "collection": coll,
-                "description": "D",
-                "item": jsonable_encoder(feature_to_return),
-            },
+    if feature_to_return:
+        response.headers["Content-Crs"] = f"<{DEFAULT_CRS}>"
+        if request_type(f) == "HTML":
+            return templates.TemplateResponse(
+                "item.html",
+                {
+                    "request": req,
+                    "collection": coll,
+                    "description": "D",
+                    "item": jsonable_encoder(feature_to_return),
+                },
+            )
+        return feature_to_return
+    else:
+        return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content={
+                    "detail": "Unknown item_id",
+                    "body": item_id,
+                }
         )
-    return feature_to_return
