@@ -449,7 +449,7 @@ def feature_from_dat(dat, coll, url, self_url, add_links: bool = False):
         coords[0] = float(coords[0])
         coords[1] = float(coords[1])
         if add_links:
-            links = getSingleItemLinks(coll, feature_id, str(url), str(self_url))
+            links = getSingleItemLinks(coll, feature_id, str(url))
         else:
             links = None
 
