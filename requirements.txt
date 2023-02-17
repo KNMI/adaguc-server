@@ -21,3 +21,4 @@ cachetools>=5.2.1
 pytz
 geomet
 covjson-pydantic
+brotli-asgi

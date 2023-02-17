@@ -420,15 +420,14 @@ def feature_from_dat(dat, coll, url, self_url, add_links: bool = False):
             dim_name = list(dims_without_time[i].keys())[0]
             if dim_name.lower() == "reference_time":
                 resultTime = dim_value
-            else:
-                feature_dims[dim_name] = dim_value
-                if i > 0:
-                    feature_id += "|"
-                # pylint: disable=consider-using-f-string
-                feature_id = feature_id + "%s=%s" % (
-                    dim_name,
-                    dim_value,
-                )
+            feature_dims[dim_name] = dim_value
+            if i > 0:
+                feature_id += "|"
+            # pylint: disable=consider-using-f-string
+            feature_id = feature_id + "%s=%s" % (
+                dim_name,
+                dim_value,
+            )
             i = i + 1
 
         feature_id = feature_id + f";{timeSteps[0]}${timeSteps[-1]}"
