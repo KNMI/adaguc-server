@@ -1,6 +1,7 @@
 #ifndef CDRAWFUNCTION
 #define CDRAWFUNCTION
 
+#include <cmath>
 #include <float.h>
 #include <pthread.h>
 #include "CDataSource.h"
@@ -45,9 +46,12 @@ template <class T> void setPixelInDrawImage(int x, int y, T val, CDrawFunctionSe
   bool isNodata = false;
 
   if (settings->hasNodataValue) {
-    if (val == settings->dfNodataValue) isNodata = true;
+    // if (val == settings->dfNodataValue) isNodata = true;
+    // Temporary HACK
+    if (fabs(val - settings->dfNodataValue)<1e-6) isNodata = true;
   }
   if (!(val == val)) isNodata = true;
+//  if (std::isnan(val)) isNodata = true;
   if (!isNodata)
     if (settings->legendValueRange)
       if (val < settings->legendLowerRange || val > settings->legendUpperRange) isNodata = true;
