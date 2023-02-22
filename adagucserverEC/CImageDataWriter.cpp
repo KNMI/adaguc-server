@@ -1469,6 +1469,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
                 shadeInterval->attr.fillcolor = featureInterval->attr.fillcolor;
                 shadeInterval->attr.bgcolor = featureInterval->attr.bgcolor;
                 shadeInterval->attr.label = featureInterval->attr.label;
+                CDBDebug("%s %s %s", shadeInterval->attr.min.c_str(), shadeInterval->attr.max.c_str(), shadeInterval->attr.fillcolor.c_str());
               }
             }
           }
@@ -3652,7 +3653,7 @@ void rotateUvNorth(double &u, double &v, double rlo, double rla, float deltaX, f
   dLatNorth = radians(lat_pntNorth);
   xpntNorthSph = cos(dLatNorth) * cos(dLonNorth);
   ypntNorthSph = cos(dLatNorth) * sin(dLonNorth); // # Get [dLonNorth,dLatNorth] on the unit sphere.
-  zpntNorthSph = sin(dLatNorth);                  //# Only XY plane is needed.
+  zpntNorthSph = sin(dLatNorth);                  // # Only XY plane is needed.
   dLonEast = radians(lon_pntEast);
   dLatEast = radians(lat_pntEast);
   xpntEastSph = cos(dLatEast) * cos(dLonEast);
@@ -3675,11 +3676,11 @@ void rotateUvNorth(double &u, double &v, double rlo, double rla, float deltaX, f
 
   // vecz = CrossProd(vecx,vecy)
   CrossProd(xpntEastSph, ypntEastSph, zpntEastSph, xpntNorthSph, ypntNorthSph, zpntNorthSph, xnormSph, ynormSph, znormSph); // vec z
-  //# vecn = (0.0,0.0,1.0)                   // up-vector in a global coordinate system
-  //# Project vecn onto plane XY, where plane-normal is vecz
-  //# vecnProjXY = vecn - D*vecz;   D= a*x1+b*y1+c*z1;  vecz=(a,b,c); vecn=(x1,y1,z1)=(0,0,1)
-  //#                               D= vecz[2]*1;
-  //# vecyRot = NormVector( (0.0 - vecz[2]*vecz[0],0.0  - vecz[2]*vecz[1], 1.0  - vecz[2]*vecz[2]) )
+  // # vecn = (0.0,0.0,1.0)                   // up-vector in a global coordinate system
+  // # Project vecn onto plane XY, where plane-normal is vecz
+  // # vecnProjXY = vecn - D*vecz;   D= a*x1+b*y1+c*z1;  vecz=(a,b,c); vecn=(x1,y1,z1)=(0,0,1)
+  // #                               D= vecz[2]*1;
+  // # vecyRot = NormVector( (0.0 - vecz[2]*vecz[0],0.0  - vecz[2]*vecz[1], 1.0  - vecz[2]*vecz[2]) )
 
   // double Dist =  xnormSph * 0.0 +  ynormSph * 0.0 + znormSph * 1.0; // Left out for optimization
   xpntNorthSphRot = -znormSph * xnormSph;      // xpntNorthSphRot = 0.0 - Dist*xnormSph;
