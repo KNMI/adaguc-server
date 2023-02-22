@@ -45,6 +45,8 @@ class AdagucTestTools:
         adagucenv = os.environ.copy()
         adagucenv.update(env)
 
+        adagucenv['LD_LIBRARY_PATH'] = os.getenv('LD_LIBRARY_PATH', "")
+
         ADAGUC_LOGFILE = os.environ['ADAGUC_LOGFILE']
 
         try:

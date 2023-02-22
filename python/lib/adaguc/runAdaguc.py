@@ -144,6 +144,7 @@ class runAdaguc:
         adagucenv['ADAGUC_DATASET_DIR'] = self.ADAGUC_DATASET_DIR
         adagucenv['ADAGUC_TMP'] = self.ADAGUC_TMP
         adagucenv['ADAGUC_FONT'] = self.ADAGUC_FONT
+        adagucenv['LD_LIBRARY_PATH'] = os.getenv('LD_LIBRARY_PATH', "")
 
         ADAGUC_PATH = adagucenv['ADAGUC_PATH']
         ADAGUC_LOGFILE = adagucenv['ADAGUC_LOGFILE']

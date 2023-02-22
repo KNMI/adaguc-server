@@ -17,6 +17,7 @@ To be able to compile adaguc-server you need to have the required dependencies i
 - [Dependencies for redhat](./developing/scripts/redhat_install_dependencies.md)
 - [Dependencies for Ubuntu18](./developing/scripts/ubuntu_18_install_dependencies.md)
 - [Dependencies for Ubuntu20](./developing/scripts/ubuntu_20_install_dependencies.md)
+- [Dependencies for Ubuntu22](./developing/scripts/ubuntu_22_install_dependencies.md)
 - [Dependencies for Mac](./developing/scripts/mac_install_dependencies.md)
 
 After the dependencies have been installed you need to execute a script to start the compilation of the adaguc-server binaries.
@@ -39,6 +40,7 @@ We provide several scripts to setup postgresql on your machine:
 - [Postgres for redhat](./developing/scripts/redhat_setup_postgres.md)
 - [Postgres for Ubuntu18](./developing/scripts/ubuntu_18_setup_postgres.md)
 - [Postgres for Ubuntu20](./developing/scripts/ubuntu_20_setup_postgres.md)
+- [Postgres for Ubuntu22](./developing/scripts/ubuntu_22_setup_postgres.md)
 
 When started, the database is available via username adaguc, databasename adaguc, password adageuc, and localhost. You can use the following to inspect the database:
 
@@ -57,8 +59,10 @@ You have to do once:
 python3 -m venv env
 source env/bin/activate
 pip3 install --upgrade pip
-pip3 install flask flask-cors flask-caching gunicorn pytest marshmallow owslib pyproj==2.6.1 apispec apispec-webframeworks marshmallow-oneofschema defusedxml werkzeug netCDF4 pillow lxml chardet
+pip3 install -r requirements.txt
 cd ./python/lib/ && python3 setup.py develop && cd ../../
+
+
 
 ```
 
