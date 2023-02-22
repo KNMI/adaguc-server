@@ -98,7 +98,8 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
   }
   std::map<std::string, std::string> quantityToUnits = {{"TH", "dBZ"}, {"TV", "dBZ"}, {"DBZH", "dBZ"}, {"DBZV", "dBZ"}, {"ZDR", "dB"}, {"UZDR", "dB"}, {"RHOHV", "-"}, {"URHOHV", "-"}, {"ACRR", "mm"}};
 
-  for (size_t datasetCounter = 1; datasetCounter < 100; datasetCounter += 1) { // Q: Why 100?
+  const size_t MAX_ODIM_DATASETS = 100;
+  for (size_t datasetCounter = 1; datasetCounter < MAX_ODIM_DATASETS; datasetCounter += 1) {
     int dataCounter = 1;
     CT::string datasetId = "dataset";
     datasetId.printconcat("%d", datasetCounter);
@@ -253,17 +254,17 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
       xScale = (((cornerX[1] - cornerX[0]) + (cornerX[3] - cornerX[2])) / 2) / double(dimX->length);
 
       // CDBDebug("Calculated xScale %f, Calculated yScale: %f", xScale, yScale);
+      auto *varXdata = (double *)varX->data;
       for (size_t j = 0; j < dimX->length; j += 1) {
         double x = double(j) * xScale;
-        auto *varXdata = (double *)varX->data;
         varXdata[j] = x + offsetX + xScale / 2;
       }
 
       double offsetY = cornerY[0]; //-double(dimY->length) / 2;
       yScale = (((cornerY[2] - cornerY[0]) + (cornerY[3] - cornerY[1])) / 2) / double(dimY->length);
+      auto *varYdata = (double *)varY->data;
       for (size_t j = 0; j < dimY->length; j += 1) {
         double y = double(j) * yScale;
-        auto *varYdata = (double *)varY->data;
         varYdata[(dimY->length - 1) - j] = y + offsetY + yScale / 2;
       }
     }

@@ -25,11 +25,11 @@ double CCreateLegend::nextTick(double prev) {
   return 10 * conversion;
 }
 
-char *CCreateLegend::formatTickLabel(CT::string textformatting, char *szTemp, double tick, double min, double max, int tickRound) {
+char *CCreateLegend::formatTickLabel(CT::string textformatting, char *szTemp, size_t szTempLength, double tick, double min, double max, int tickRound) {
   if (textformatting.empty() == false) {
     CT::string textFormat;
     textFormat.print("%s", textformatting.c_str());
-    sprintf(szTemp, textFormat.c_str(), tick);
+    snprintf(szTemp, szTempLength, textFormat.c_str(), tick);
   } else {
     if (tickRound == 0) {
       floatToString(szTemp, 255, min, max, tick);
@@ -173,7 +173,8 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
   classes = abs(int((max - min) / increment));
   if (increment <= 0) increment = (std::max(max, min) - std::min(max, min)) / 3;
 
-  char szTemp[256];
+  size_t szTempLength = 256;
+  char szTemp[szTempLength];
   if (styleConfiguration->legendLog != 0) {
     // vertical axis going from log(min) to log(max)
     // log(intermediate values)
@@ -189,7 +190,7 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
       int labelY = (int)c + 6 + dH + pTop;
       legendImage->line(((int)cbW - 1) * scaling + pLeft, labelY, ((int)cbW + 6) * scaling + pLeft, (int)c + 6 + dH + pTop, lineWidth, 248);
 
-      strcpy(szTemp, formatTickLabel(textformatting, szTemp, tick, min, max, tickRound));
+      strcpy(szTemp, formatTickLabel(textformatting, szTemp, szTempLength, tick, min, max, tickRound));
 
       if (!fontLocation.empty()) {
         int textX = ((int)cbW + 12 + pLeft) * scaling;
@@ -204,7 +205,7 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
     int labelY = (int)6 + dH + pTop;
     legendImage->line(((int)cbW - 1) * scaling + pLeft, labelY, ((int)cbW + 6) * scaling + pLeft, 6 + dH + pTop, lineWidth, 248);
 
-    strcpy(szTemp, formatTickLabel(textformatting, szTemp, max, min, max, tickRound));
+    strcpy(szTemp, formatTickLabel(textformatting, szTemp, szTempLength, max, min, max, tickRound));
 
     if (!fontLocation.empty()) {
       int textX = ((int)cbW + 12 + pLeft) * scaling;
@@ -230,7 +231,7 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
         if (textformatting.empty() == false) {
           CT::string textFormat;
           textFormat.print("%s", textformatting.c_str());
-          sprintf(szTemp, textFormat.c_str(), v);
+          snprintf(szTemp, szTempLength, textFormat.c_str(), v);
         } else {
           if (tickRound == 0) {
             floatToString(szTemp, 255, min, max, v);

@@ -1221,14 +1221,6 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
                   if (val[j] < min) min = val[j];
                   if (val[j] > max) max = val[j];
                 }
-                float iMin = int(min / contourinterval);
-                if (min < 0) iMin -= 1;
-                iMin *= contourinterval;
-                float iMax = int(max / contourinterval);
-                if (max < 0) iMax -= 1;
-                iMax *= contourinterval;
-                iMax += contourinterval;
-                // float difference = iMax - iMin;
 
                 float classStart = round(val[0] / contourinterval) * contourinterval;
                 {
