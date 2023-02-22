@@ -81,5 +81,6 @@
     "editor.insertSpaces": true,
     "editor.detectIndentation": false,
   },
-  "python.linting.pylintPath": "env/bin/pylint"
+  "python.linting.pylintPath": "env/bin/pylint",
+  "python.formatting.provider": "black"
 }
