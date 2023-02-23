@@ -555,8 +555,9 @@ int CConvertGeoJSON::convertGeoJSONHeader(CDFObject *cdfObject) {
   } catch (int e) {
     return 1;
   }
-  CDBDebug("convertGeoJSONHeader");
+
 #ifdef CCONVERTGEOJSON_DEBUG
+  CDBDebug("convertGeoJSONHeader");
   CDBDebug("Using CConvertGeoJSON.cpp");
 #endif
 
@@ -586,7 +587,6 @@ int CConvertGeoJSON::convertGeoJSONHeader(CDFObject *cdfObject) {
 
   getDimensions(cdfObject, *json, false);
 
-  CDBDebug("addCDFInfo");
   addCDFInfo(cdfObject, NULL, dfBBOX, features, false);
 
   addPropertyVariables(cdfObject, features);
@@ -1370,9 +1370,11 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
       return 0;
     }
   }
+#ifdef CCONVERTGEOJSON_DEBUG
   if (nrDataObjects > 0) {
     CDBDebug("Working on %s", dataSource->getDataObject(0)->variableName.c_str());
   }
+#endif
 
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
 #ifdef CCONVERTGEOJSON_DEBUG
@@ -1491,7 +1493,7 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
 #ifdef MEASURETIME
       StopWatch_Stop("Feature drawing starts");
 #endif
-      CDBDebug("nrFeatures: %d", features.size());
+      // CDBDebug("nrFeatures: %d", features.size());
 
       unsigned short int featureIndex = 0;
       float min = NAN;
