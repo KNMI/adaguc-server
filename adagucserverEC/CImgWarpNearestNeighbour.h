@@ -25,7 +25,7 @@
 
 #ifndef CIMGWARPNEARESTNEIGHBOUR_H
 #define CIMGWARPNEARESTNEIGHBOUR_H
-#define CIMGWARPNEARESTNEIGHBOUR_DEBUG
+// #define CIMGWARPNEARESTNEIGHBOUR_DEBUG
 #include <float.h>
 #include <pthread.h>
 #include "CImageWarperRenderInterface.h"
@@ -182,6 +182,7 @@ private:
     }
 
     if (shade) {
+      /* TODO: make use of drawfunction as well, less code duplication */
       int numShadeDefs = (int)styleConfiguration->shadeIntervals->size();
       T shadeDefMin[numShadeDefs];
       T shadeDefMax[numShadeDefs];
@@ -199,9 +200,9 @@ private:
             bgColor = CColor(featureInterval->attr.bgcolor.c_str());
           }
         }
-        double min = ((double)shadeDefMin[j]);
-        double max = ((double)shadeDefMax[j]);
-        CDBDebug("%f %f %d-%d-%d-%d", min, max, fillColors[j].r, fillColors[j].g, fillColors[j].b, fillColors[j].a);
+        // double min = ((double)shadeDefMin[j]);
+        // double max = ((double)shadeDefMax[j]);
+        // CDBDebug("%f %f %d-%d-%d-%d", min, max, fillColors[j].r, fillColors[j].g, fillColors[j].b, fillColors[j].a);
       }
 
       for (int y = 0; y < drawImage->Geo->dHeight; y++) {
