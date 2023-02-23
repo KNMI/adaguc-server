@@ -44,12 +44,15 @@ template <class T> void setPixelInDrawImage(int x, int y, T val, CDrawFunctionSe
   bool isNodata = false;
 
   if (settings->hasNodataValue) {
+    /*
+     * Casting the double dfNodataValue back to the precision of the data itself,
+     * to do a correct comparison to check if this value is a nodatavalue.
+     */
     T noDataValue = (T)settings->dfNodataValue;
     if (val == noDataValue) isNodata = true;
-    // Temporary HACK
-    // if (fabs(val - settings->dfNodataValue) < 1e-6) isNodata = true;
   }
-  if (!(val == val)) isNodata = true;
+
+  if (std::isnan(val)) isNodata = true;
 
   if (!isNodata)
     if (settings->legendValueRange)
