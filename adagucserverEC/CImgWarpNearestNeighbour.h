@@ -155,14 +155,14 @@ private:
   template <class T> void _plot(CImageWarper *, CDataSource *dataSource, CDrawImage *drawImage) {
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
     double dfNodataValue = dataSource->getDataObject(0)->dfNodataValue;
-    double dval = ((T)dfNodataValue);
-    CDBDebug("dfNodataValue = %f %f %d %d", dfNodataValue, dval, 65535u, dfNodataValue == 65535u);
+    // double dval = ((T)dfNodataValue);
+    // CDBDebug("dfNodataValue = %f %f %d %d", dfNodataValue, dval, 65535u, dfNodataValue == 65535u);
 
     double legendValueRange = styleConfiguration->hasLegendValueRange;
     double legendLowerRange = styleConfiguration->legendLowerRange;
     double legendUpperRange = styleConfiguration->legendUpperRange;
     bool hasNodataValue = dataSource->getDataObject(0)->hasNodataValue;
-    float nodataValue = (float)dfNodataValue;
+    T nodataValue = (T)dfNodataValue;
     float legendLog = styleConfiguration->legendLog;
     float legendLogAsLog;
     if (legendLog > 0) {
