@@ -1460,6 +1460,12 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
               }
             }
             if (featureInterval->attr.fillcolor.empty() == false) {
+              /*
+                Make a shade interval configuration based on the match and matchid properties in the GeoJSON.
+                The datafield is already populated with the feature indices of the geojson polygon.
+                The shadeinterval configuration can style these indices of the polygons with colors.
+                Actual rendering of this is done in CImageNearestNeighbour with the _plot function
+              */
               std::vector<CImageDataWriter::IndexRange> ranges = getIndexRangesForRegex(featureInterval->attr.match, attributeValues, numFeatures);
               for (size_t i = 0; i < ranges.size(); i++) {
                 CServerConfig::XMLE_ShadeInterval *shadeInterval = new CServerConfig::XMLE_ShadeInterval();
@@ -1469,7 +1475,6 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
                 shadeInterval->attr.fillcolor = featureInterval->attr.fillcolor;
                 shadeInterval->attr.bgcolor = featureInterval->attr.bgcolor;
                 shadeInterval->attr.label = featureInterval->attr.label;
-                CDBDebug("%s %s %s", shadeInterval->attr.min.c_str(), shadeInterval->attr.max.c_str(), shadeInterval->attr.fillcolor.c_str());
               }
             }
           }
