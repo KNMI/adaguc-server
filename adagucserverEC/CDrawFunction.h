@@ -44,8 +44,8 @@ template <class T> void setPixelInDrawImage(int x, int y, T val, CDrawFunctionSe
   bool isNodata = false;
 
   if (settings->hasNodataValue) {
-    double dfVal = (double)val;
-    if (dfVal == settings->dfNodataValue) isNodata = true;
+    T noDataValue = (T)settings->dfNodataValue;
+    if (val == noDataValue) isNodata = true;
     // Temporary HACK
     // if (fabs(val - settings->dfNodataValue) < 1e-6) isNodata = true;
   }
