@@ -234,13 +234,13 @@ namespace CT {
     size_t total_len = privatelength + len;
     if (total_len < bufferlength) {
       char *value = useStack ? stackValue : heapValue;
-      strncpy(value + privatelength, _value, len);
+      memcpy(value + privatelength, _value, len);
       value[total_len] = '\0';
       privatelength = total_len;
       return;
     }
 
-    /* Source buffer is to small, reallocate and copy to bigger buffer. */
+    /* Source buffer is too small, reallocate and copy to bigger buffer. */
     bufferlength = total_len + privatelength * 2; /* 8192*4-1; */
 
     char *temp = new char[bufferlength + 1];
