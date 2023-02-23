@@ -67,7 +67,6 @@ private:
   int dMaxExtentDefined;
 
   DEF_ERRORFUNCTION();
-  unsigned char pixel;
   CGeoParams *_geoDest;
   CT::string sourceCRSString;
   CT::string destinationCRS;

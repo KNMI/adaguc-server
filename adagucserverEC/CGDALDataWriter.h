@@ -80,15 +80,12 @@ private:
   CDataReader reader;
   GDALDataType datatype;
 
-  GDALWarpOptions *psWarpOptions;
   int currentBandNr;
   int NrOfBands;
   CT::string mimeType;
   CT::string customOptions;
   CT::string *InputProducts;
   CT::string TimeUnit;
-  char szTemp[MAX_STR_LEN + 1];
-  char szTemp2[MAX_STR_LEN + 1];
   double dfNoData;
   DEF_ERRORFUNCTION();
   CDataSource *_dataSource;

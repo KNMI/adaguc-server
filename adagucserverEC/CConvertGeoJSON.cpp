@@ -319,20 +319,6 @@ void bubbleSort(int nodes, int nodeX[]) {
   }
 }
 
-static inline void fillLine(int &nodes, int *nodeX, int &IMAGE_LEFT, int &IMAGE_RIGHT, unsigned short int *scanline, unsigned short value) {
-  //  Fill the pixels between node pairs.
-  for (int i = 0; i < nodes; i += 2) {
-    if (nodeX[i] >= IMAGE_RIGHT) break;
-    if (nodeX[i + 1] > IMAGE_LEFT) {
-      if (nodeX[i] < IMAGE_LEFT) nodeX[i] = IMAGE_LEFT;
-      if (nodeX[i + 1] > IMAGE_RIGHT) nodeX[i + 1] = IMAGE_RIGHT;
-      for (int j = nodeX[i]; j < nodeX[i + 1]; j++) {
-        scanline[j] = value;
-      }
-    }
-  }
-}
-
 void CConvertGeoJSON::drawpolyWithHoles_index(int xMin, int yMin, int xMax, int yMax, unsigned short int *imagedata, int w, int h, int polyCorners, float *polyXY, unsigned short int value, int holes,
                                               int *holeCorners, float *holeXY[]) {
   if (xMax < 0 || yMax < 0 || xMin >= w || yMin >= h) return;
@@ -354,8 +340,8 @@ void CConvertGeoJSON::drawpolyWithHoles_index(int xMin, int yMin, int xMax, int 
   int scanLineWidth = IMAGE_RIGHT - IMAGE_LEFT;
 
   int cntLines = 0;
-  int cntNodes = 0;
-  int cntHoles = 0;
+//  int cntNodes = 0;
+//  int cntHoles = 0;
   int cntHoleLists = 0;
   // Allocate  scanline
   unsigned short scanline[scanLineWidth];
@@ -365,9 +351,8 @@ void CConvertGeoJSON::drawpolyWithHoles_index(int xMin, int yMin, int xMax, int 
     cntLines++;
     for (i = 0; i < scanLineWidth; i++) scanline[i] = 65535u;
     buildNodeList(pixelY, nodes, nodeX, polyCorners, polyXY);
-    cntNodes += nodes;
+//    cntNodes += nodes;
     bubbleSort(nodes, nodeX);
-    // fillLine2(nodes, nodeX, IMAGE_LEFT,IMAGE_RIGHT, scanline, value);
     for (i = 0; i < nodes; i += 2) {
       int x1 = nodeX[i] - IMAGE_LEFT;
       int x2 = nodeX[i + 1] - IMAGE_LEFT;
@@ -381,7 +366,7 @@ void CConvertGeoJSON::drawpolyWithHoles_index(int xMin, int yMin, int xMax, int 
     for (int h = 0; h < holes; h++) {
       buildNodeList(pixelY, nodes, nodeX, holeCorners[h], holeXY[h]);
       cntHoleLists++;
-      cntHoles += holes;
+//      cntHoles += holes;
       bubbleSort(nodes, nodeX);
       for (i = 0; i < nodes; i += 2) {
         int x1 = nodeX[i] - IMAGE_LEFT;
@@ -821,6 +806,9 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
                 timeOffset = dTimeVal;
               } else if (iTimeVal > 0) {
                 timeOffset = iTimeVal;
+              } else {
+                timeOffset = 0.0;
+                CDBDebug("CConvertGeoJSON::getDimensions: WARNING: timeOffset set to 0.0");
               }
               // CDBDebug("timeOffset=%f", timeOffset);
               CDF::Dimension *timeDim = new CDF::Dimension();
@@ -842,7 +830,7 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
               // CDBDebug("other dim: %s", dimName.c_str());
               CT::string dimUnits;
               CT::string dimVal;
-              double dDimVal;
+              double dDimVal = 0.0;
 
               if (dim.type == json_object) {
                 for (unsigned int fldCnt = 0; fldCnt < dim.u.object.length; fldCnt++) {
