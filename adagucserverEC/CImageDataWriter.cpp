@@ -1476,6 +1476,10 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
                 shadeInterval->attr.bgcolor = featureInterval->attr.bgcolor;
                 shadeInterval->attr.label = featureInterval->attr.label;
               }
+              // for (size_t i = 0; i < styleConfiguration->shadeIntervals->size(); i += 1) {
+              //   CServerConfig::XMLE_ShadeInterval *p = (*styleConfiguration->shadeIntervals)[i];
+              //   CDBDebug("%d %s %s %s %s %s", i, p->attr.min.c_str(), p->attr.max.c_str(), p->attr.fillcolor.c_str(), p->attr.bgcolor.c_str(), p->attr.label.c_str());
+              // }
             }
           }
         }

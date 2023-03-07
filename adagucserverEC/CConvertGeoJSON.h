@@ -42,8 +42,8 @@ public:
 
 private:
   DEF_ERRORFUNCTION();
-  static void buildNodeList(int pixelY, int &nodes, int nodeX[], int polyCorners, float *polyXY, size_t nodeXLength);
-  static void bubbleSort(int nodes, int nodeX[], size_t nodeXLength);
+  static void buildNodeList(int pixelY, int &nodes, int nodeX[], int polyCorners, float *polyXY);
+  static void bubbleSort(int nodes, int nodeX[]);
   static void getBBOX(CDFObject *cdfObject, BBOX &bbox, json_value &json, std::vector<Feature *> &features);
   static void getDimensions(CDFObject *cdfObject, json_value &json, bool openAll);
   static void getPolygons(json_value &j);
