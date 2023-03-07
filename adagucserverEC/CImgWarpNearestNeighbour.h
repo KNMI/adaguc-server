@@ -155,8 +155,6 @@ private:
   template <class T> void _plot(CImageWarper *, CDataSource *dataSource, CDrawImage *drawImage) {
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
     double dfNodataValue = dataSource->getDataObject(0)->dfNodataValue;
-    // double dval = ((T)dfNodataValue);
-    // CDBDebug("dfNodataValue = %f %f %d %d", dfNodataValue, dval, 65535u, dfNodataValue == 65535u);
 
     double legendValueRange = styleConfiguration->hasLegendValueRange;
     double legendLowerRange = styleConfiguration->legendLowerRange;
@@ -205,7 +203,7 @@ private:
         }
         // double min = ((double)shadeDefMin[j]);
         // double max = ((double)shadeDefMax[j]);
-        // CDBDebug("%f %f %d-%d-%d-%d", min, max, fillColors[j].r, fillColors[j].g, fillColors[j].b, fillColors[j].a);
+        // CDBDebug("%d %f %f %d-%d-%d-%d", j, min, max, fillColors[j].r, fillColors[j].g, fillColors[j].b, fillColors[j].a);
       }
 
       for (int y = 0; y < drawImage->Geo->dHeight; y++) {
@@ -221,7 +219,7 @@ private:
             if (legendValueRange)
               if (val < legendLowerRange || val > legendUpperRange) isNodata = true;
           if (!isNodata) {
-            for (int snr = numShadeDefs; snr >= 0; snr--) {
+            for (int snr = numShadeDefs - 1; snr >= 0; snr--) {
               if (val >= shadeDefMin[snr] && val < shadeDefMax[snr]) {
                 if (fillColors[snr].a == 0) { // When a fully transparent color is deliberately set, force this color in the image
                   drawImage->setPixelTrueColorOverWrite(x, (drawImage->Geo->dHeight - 1) - y, fillColors[snr].r, fillColors[snr].g, fillColors[snr].b, fillColors[snr].a);

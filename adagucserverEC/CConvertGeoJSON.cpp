@@ -42,7 +42,7 @@ const char *CConvertGeoJSON::className = "CConvertGeoJSON";
 #define CCONVERTGEOJSON_FILL 65535u
 
 int cntCnt = 0;
-void CConvertGeoJSON::buildNodeList(int pixelY, int &nodes, int nodeX[], int polyCorners, float *polyXY, size_t nodeXLength) {
+void CConvertGeoJSON::buildNodeList(int pixelY, int &nodes, int nodeX[], int polyCorners, float *polyXY) {
   int i, j;
   int i2, j2;
   cntCnt++;
@@ -53,23 +53,17 @@ void CConvertGeoJSON::buildNodeList(int pixelY, int &nodes, int nodeX[], int pol
     i2 = i * 2;
     j2 = j * 2;
     if ((polyXY[i2 + 1] < (double)pixelY && polyXY[j2 + 1] >= (double)pixelY) || (polyXY[j2 + 1] < (double)pixelY && polyXY[i2 + 1] >= (double)pixelY)) {
-      if (nodes >= nodeXLength) {
-        throw -1;
-      }
       nodeX[nodes++] = (int)(polyXY[i2] + (pixelY - polyXY[i2 + 1]) / (polyXY[j2 + 1] - polyXY[i2 + 1]) * (polyXY[j2] - polyXY[i2]));
     }
     j = i;
   }
 }
 
-void CConvertGeoJSON::bubbleSort(int nodes, int nodeX[], size_t nodeXLength) {
+void CConvertGeoJSON::bubbleSort(int nodes, int nodeX[]) {
   //  Sort the nodes, via a simple “Bubble” sort.
   int i, swap;
   i = 0;
   while (i < nodes - 1) {
-    if (i + 1 >= nodeXLength) {
-      throw -1;
-    }
     if (nodeX[i] > nodeX[i + 1]) {
       swap = nodeX[i];
       nodeX[i] = nodeX[i + 1];
@@ -113,38 +107,29 @@ void CConvertGeoJSON::drawpolyWithHoles_index(int xMin, int yMin, int xMax, int 
 
     cntLines++;
     for (i = 0; i < scanLineWidth; i++) scanline[i] = CCONVERTGEOJSON_FILL;
-    buildNodeList(pixelY, nodes, nodeX, polyCorners, polyXY, nodeXLength);
+    buildNodeList(pixelY, nodes, nodeX, polyCorners, polyXY);
     //    cntNodes += nodes;
-    bubbleSort(nodes, nodeX, nodeXLength);
+    bubbleSort(nodes, nodeX);
     for (i = 0; i < nodes; i += 2) {
-      if (i + 1 >= nodeXLength) {
-        throw -1;
-      }
       int x1 = nodeX[i] - IMAGE_LEFT;
       int x2 = nodeX[i + 1] - IMAGE_LEFT;
       if (x1 < 0) x1 = 0;
       if (x2 > scanLineWidth) x2 = scanLineWidth;
       for (int j = x1; j < x2; j++) {
-        if (j >= scanLineWidth) {
-          throw -1;
-        }
         scanline[j] = value;
       }
     }
 
     for (int h = 0; h < holes; h++) {
-      buildNodeList(pixelY, nodes, nodeX, holeCorners[h], holeXY[h], nodeXLength);
+      buildNodeList(pixelY, nodes, nodeX, holeCorners[h], holeXY[h]);
       cntHoleLists++;
-      bubbleSort(nodes, nodeX, nodeXLength);
+      bubbleSort(nodes, nodeX);
       for (i = 0; i < nodes; i += 2) {
         int x1 = nodeX[i] - IMAGE_LEFT;
         int x2 = nodeX[i + 1] - IMAGE_LEFT;
         if (x1 < 0) x1 = 0;
         if (x2 > scanLineWidth) x2 = scanLineWidth;
         for (int j = x1; j < x2; j++) {
-          if (j >= scanLineWidth) {
-            throw -1;
-          }
           scanline[j] = CCONVERTGEOJSON_FILL;
         }
       }
@@ -152,12 +137,6 @@ void CConvertGeoJSON::drawpolyWithHoles_index(int xMin, int yMin, int xMax, int 
     unsigned int startScanLineY = pixelY * w;
     for (i = IMAGE_LEFT; i < IMAGE_RIGHT; i++) {
       if (scanline[i - IMAGE_LEFT] != CCONVERTGEOJSON_FILL) {
-        if (i - IMAGE_LEFT >= scanLineWidth || i - IMAGE_LEFT < 0) {
-          throw -1;
-        }
-        if (i + startScanLineY > w * h) {
-          throw -1;
-        }
         imagedata[i + startScanLineY] = scanline[i - IMAGE_LEFT];
       }
     }
@@ -1118,14 +1097,14 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
       if (fillValue == NULL) {
         polygonIndexVar->setAttribute("_FillValue", polygonIndexVar->getType(), dataObject->dfNodataValue);
         fillValue = polygonIndexVar->getAttributeNE("_FillValue");
-        CDBDebug("Setting fill value to %f", dataObject->dfNodataValue);
+        // CDBDebug("Setting fill value to %f", dataObject->dfNodataValue);
       }
 
       dataObject->hasNodataValue = true;
       fillValue->getData(&dataObject->dfNodataValue, 1);
 
-      CDBDebug("polygonIndexVar type is %s", CDF::getCDFDataTypeName(polygonIndexVar->getType()).c_str());
-      CDBDebug("Fill value is %f", dataObject->dfNodataValue);
+      // CDBDebug("polygonIndexVar type is %s", CDF::getCDFDataTypeName(polygonIndexVar->getType()).c_str());
+      // CDBDebug("Fill value is %f", dataObject->dfNodataValue);
       /* Fill the data with the nodatavalue */
       CDF::fill(polygonIndexVar->data, polygonIndexVar->getType(), dataObject->dfNodataValue, fieldSize);
 
