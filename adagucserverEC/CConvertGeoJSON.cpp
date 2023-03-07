@@ -29,264 +29,20 @@
 // http://cariska.mona.uwi.edu/geoserver/wfs?typename=geonode%3ACatchment&outputFormat=json&version=1.0.0&request=GetFeature&service=WFS&srsName=EPSG:4326
 
 #include "CConvertGeoJSON.h"
-#include "CConvertUGRIDMesh.h"
 #include "CImageWarper.h"
 #include "CFillTriangle.h"
-#include <string>
-#include <map>
-#include <cstdlib>
-#include <queue>
+// #include <string>
+// #include <map>
+// #include <cstdlib>
+// #include <queue>
 // #define CCONVERTGEOJSON_DEBUG
 const char *CConvertGeoJSON::className = "CConvertGeoJSON";
 
-#define CCONVERTUGRIDMESH_NODATA -32000
+#define CCONVERTGEOJSONCOORDS_NODATA -32000
+#define CCONVERTGEOJSON_FILL 65535u
 
-void CConvertGeoJSON::drawpoly2(float *imagedata, int w, int h, int polyCorners, float *polyXY, float value) {
-  //  public-domain code by Darel Rex Finley, 2007
-
-  int nodes, nodeX[polyCorners * 2 + 1], pixelY, i, j, swap;
-  int IMAGE_TOP = 0;
-  int IMAGE_BOT = h;
-  int IMAGE_LEFT = 0;
-  int IMAGE_RIGHT = w;
-
-  //  Loop through the rows of the image.
-  for (pixelY = IMAGE_TOP; pixelY < IMAGE_BOT; pixelY++) {
-
-    //  Build a list of nodes.
-    nodes = 0;
-    j = polyCorners - 1;
-    for (i = 0; i < polyCorners; i++) {
-      if ((polyXY[i * 2 + 1] < (double)pixelY && polyXY[j * 2 + 1] >= (double)pixelY) || (polyXY[j * 2 + 1] < (double)pixelY && polyXY[i * 2 + 1] >= (double)pixelY)) {
-        nodeX[nodes++] = (int)(polyXY[i * 2] + (pixelY - polyXY[i * 2 + 1]) / (polyXY[j * 2 + 1] - polyXY[i * 2 + 1]) * (polyXY[j * 2] - polyXY[i * 2]));
-      }
-      j = i;
-    }
-
-    //  Sort the nodes, via a simple “Bubble” sort.
-    i = 0;
-    while (i < nodes - 1) {
-      if (nodeX[i] > nodeX[i + 1]) {
-        swap = nodeX[i];
-        nodeX[i] = nodeX[i + 1];
-        nodeX[i + 1] = swap;
-        if (i) i--;
-      } else {
-        i++;
-      }
-    }
-
-    //  Fill the pixels between node pairs.
-    for (i = 0; i < nodes; i += 2) {
-      if (nodeX[i] >= IMAGE_RIGHT) break;
-      if (nodeX[i + 1] > IMAGE_LEFT) {
-        if (nodeX[i] < IMAGE_LEFT) nodeX[i] = IMAGE_LEFT;
-        if (nodeX[i + 1] > IMAGE_RIGHT) nodeX[i + 1] = IMAGE_RIGHT;
-        for (j = nodeX[i]; j < nodeX[i + 1]; j++) {
-          imagedata[int(j) + int(pixelY) * w] = value;
-        }
-      }
-    }
-  }
-}
-
-void CConvertGeoJSON::drawpolyWithHoles(float *imagedata, int w, int h, int polyCorners, float *polyXY, float value, int holes, int *holeCorners, float *holeXY[]) {
-  //  public-domain code by Darel Rex Finley, 2007
-
-  int nodes, nodeX[polyCorners * 2 + 1], pixelY, i, j, swap;
-  int IMAGE_TOP = 0;
-  int IMAGE_BOT = h;
-  int IMAGE_LEFT = 0;
-  int IMAGE_RIGHT = w;
-
-  // Allocate  scanline
-  float scanline[w];
-  //  Loop through the rows of the image.
-  for (pixelY = IMAGE_TOP; pixelY < IMAGE_BOT; pixelY++) {
-
-    for (i = 0; i < w; i++) scanline[i] = -9999;
-
-    //  Build a list of nodes.
-    nodes = 0;
-    j = polyCorners - 1;
-    for (i = 0; i < polyCorners; i++) {
-      if ((polyXY[i * 2 + 1] < (double)pixelY && polyXY[j * 2 + 1] >= (double)pixelY) || (polyXY[j * 2 + 1] < (double)pixelY && polyXY[i * 2 + 1] >= (double)pixelY)) {
-        nodeX[nodes++] = (int)(polyXY[i * 2] + (pixelY - polyXY[i * 2 + 1]) / (polyXY[j * 2 + 1] - polyXY[i * 2 + 1]) * (polyXY[j * 2] - polyXY[i * 2]));
-      }
-      j = i;
-    }
-
-    //  Sort the nodes, via a simple “Bubble” sort.
-    i = 0;
-    while (i < nodes - 1) {
-      if (nodeX[i] > nodeX[i + 1]) {
-        swap = nodeX[i];
-        nodeX[i] = nodeX[i + 1];
-        nodeX[i + 1] = swap;
-        if (i) i--;
-      } else {
-        i++;
-      }
-    }
-
-    //  Fill the pixels between node pairs.
-    for (i = 0; i < nodes; i += 2) {
-      if (nodeX[i] >= IMAGE_RIGHT) break;
-      if (nodeX[i + 1] > IMAGE_LEFT) {
-        if (nodeX[i] < IMAGE_LEFT) nodeX[i] = IMAGE_LEFT;
-        if (nodeX[i + 1] > IMAGE_RIGHT) nodeX[i + 1] = IMAGE_RIGHT;
-        for (j = nodeX[i]; j < nodeX[i + 1]; j++) {
-          //                imagedata[int(j)+int(pixelY)*w] = value;
-          scanline[int(j)] = value;
-        }
-      }
-    }
-
-    for (int h = 0; h < holes; h++) {
-      //  Build a list of hole nodes.
-      nodes = 0;
-      j = holeCorners[h] - 1;
-      for (i = 0; i < holeCorners[h]; i++) {
-        if ((holeXY[h][i * 2 + 1] < (double)pixelY && holeXY[h][j * 2 + 1] >= (double)pixelY) || (holeXY[h][j * 2 + 1] < (double)pixelY && holeXY[h][i * 2 + 1] >= (double)pixelY)) {
-          nodeX[nodes++] = (int)(holeXY[h][i * 2] + (pixelY - holeXY[h][i * 2 + 1]) / (holeXY[h][j * 2 + 1] - holeXY[h][i * 2 + 1]) * (holeXY[h][j * 2] - holeXY[h][i * 2]));
-        }
-        j = i;
-      }
-
-      //  Sort the nodes, via a simple “Bubble” sort.
-      i = 0;
-      while (i < nodes - 1) {
-        if (nodeX[i] > nodeX[i + 1]) {
-          swap = nodeX[i];
-          nodeX[i] = nodeX[i + 1];
-          nodeX[i + 1] = swap;
-          if (i) i--;
-        } else {
-          i++;
-        }
-      }
-
-      //  Fill the pixels between node pairs.
-      for (i = 0; i < nodes; i += 2) {
-        if (nodeX[i] >= IMAGE_RIGHT) break;
-        if (nodeX[i + 1] > IMAGE_LEFT) {
-          if (nodeX[i] < IMAGE_LEFT) nodeX[i] = IMAGE_LEFT;
-          if (nodeX[i + 1] > IMAGE_RIGHT) nodeX[i + 1] = IMAGE_RIGHT;
-          for (j = nodeX[i]; j < nodeX[i + 1]; j++) {
-            //                imagedata[int(j)+int(pixelY)*w] = value;
-            scanline[int(j)] = -9999;
-          }
-        }
-      }
-    }
-    int startScanLine = pixelY * w;
-    for (i = 0; i < w; i++) {
-      if (scanline[i] != -9999) {
-        imagedata[i + startScanLine] = scanline[i];
-      }
-    }
-  }
-}
-
-void CConvertGeoJSON::drawpolyWithHoles_indexORG(unsigned short int *imagedata, int w, int h, int polyCorners, float *polyXY, unsigned short int value, int holes, int *holeCorners, float *holeXY[]) {
-  //  public-domain code by Darel Rex Finley, 2007
-
-  int nodes, nodeX[polyCorners * 2 + 1], pixelY, i, j, swap;
-  int IMAGE_TOP = 0;
-  int IMAGE_BOT = h;
-  int IMAGE_LEFT = 0;
-  int IMAGE_RIGHT = w;
-
-  // Allocate  scanline
-  unsigned short scanline[w];
-  //  Loop through the rows of the image.
-  for (pixelY = IMAGE_TOP; pixelY < IMAGE_BOT; pixelY++) {
-
-    for (i = 0; i < w; i++) scanline[i] = 65535u;
-
-    //  Build a list of nodes.
-    nodes = 0;
-    j = polyCorners - 1;
-    for (i = 0; i < polyCorners; i++) {
-      if ((polyXY[i * 2 + 1] < (double)pixelY && polyXY[j * 2 + 1] >= (double)pixelY) || (polyXY[j * 2 + 1] < (double)pixelY && polyXY[i * 2 + 1] >= (double)pixelY)) {
-        nodeX[nodes++] = (int)(polyXY[i * 2] + (pixelY - polyXY[i * 2 + 1]) / (polyXY[j * 2 + 1] - polyXY[i * 2 + 1]) * (polyXY[j * 2] - polyXY[i * 2]));
-      }
-      j = i;
-    }
-
-    //  Sort the nodes, via a simple “Bubble” sort.
-    i = 0;
-    while (i < nodes - 1) {
-      if (nodeX[i] > nodeX[i + 1]) {
-        swap = nodeX[i];
-        nodeX[i] = nodeX[i + 1];
-        nodeX[i + 1] = swap;
-        if (i) i--;
-      } else {
-        i++;
-      }
-    }
-
-    //  Fill the pixels between node pairs.
-    for (i = 0; i < nodes; i += 2) {
-      if (nodeX[i] >= IMAGE_RIGHT) break;
-      if (nodeX[i + 1] > IMAGE_LEFT) {
-        if (nodeX[i] < IMAGE_LEFT) nodeX[i] = IMAGE_LEFT;
-        if (nodeX[i + 1] > IMAGE_RIGHT) nodeX[i + 1] = IMAGE_RIGHT;
-        for (j = nodeX[i]; j < nodeX[i + 1]; j++) {
-          //                imagedata[int(j)+int(pixelY)*w] = value;
-          scanline[int(j)] = value;
-        }
-      }
-    }
-
-    for (int h = 0; h < holes; h++) {
-      //  Build a list of hole nodes.
-      nodes = 0;
-      j = holeCorners[h] - 1;
-      for (i = 0; i < holeCorners[h]; i++) {
-        if ((holeXY[h][i * 2 + 1] < (double)pixelY && holeXY[h][j * 2 + 1] >= (double)pixelY) || (holeXY[h][j * 2 + 1] < (double)pixelY && holeXY[h][i * 2 + 1] >= (double)pixelY)) {
-          nodeX[nodes++] = (int)(holeXY[h][i * 2] + (pixelY - holeXY[h][i * 2 + 1]) / (holeXY[h][j * 2 + 1] - holeXY[h][i * 2 + 1]) * (holeXY[h][j * 2] - holeXY[h][i * 2]));
-        }
-        j = i;
-      }
-
-      //  Sort the nodes, via a simple “Bubble” sort.
-      i = 0;
-      while (i < nodes - 1) {
-        if (nodeX[i] > nodeX[i + 1]) {
-          swap = nodeX[i];
-          nodeX[i] = nodeX[i + 1];
-          nodeX[i + 1] = swap;
-          if (i) i--;
-        } else {
-          i++;
-        }
-      }
-
-      //  Fill the pixels between node pairs.
-      for (i = 0; i < nodes; i += 2) {
-        if (nodeX[i] >= IMAGE_RIGHT) break;
-        if (nodeX[i + 1] > IMAGE_LEFT) {
-          if (nodeX[i] < IMAGE_LEFT) nodeX[i] = IMAGE_LEFT;
-          if (nodeX[i + 1] > IMAGE_RIGHT) nodeX[i + 1] = IMAGE_RIGHT;
-          for (j = nodeX[i]; j < nodeX[i + 1]; j++) {
-            //                imagedata[int(j)+int(pixelY)*w] = value;
-            scanline[int(j)] = 65535u;
-          }
-        }
-      }
-    }
-    unsigned int startScanLineY = pixelY * w;
-    for (i = 0; i < w; i++) {
-      if (scanline[i] != 65535u) {
-        imagedata[i + startScanLineY] = scanline[i];
-      }
-    }
-  }
-}
 int cntCnt = 0;
-void buildNodeList(int pixelY, int &nodes, int nodeX[], int polyCorners, float *polyXY) {
+void CConvertGeoJSON::buildNodeList(int pixelY, int &nodes, int nodeX[], int polyCorners, float *polyXY, size_t nodeXLength) {
   int i, j;
   int i2, j2;
   cntCnt++;
@@ -297,17 +53,23 @@ void buildNodeList(int pixelY, int &nodes, int nodeX[], int polyCorners, float *
     i2 = i * 2;
     j2 = j * 2;
     if ((polyXY[i2 + 1] < (double)pixelY && polyXY[j2 + 1] >= (double)pixelY) || (polyXY[j2 + 1] < (double)pixelY && polyXY[i2 + 1] >= (double)pixelY)) {
+      if (nodes >= nodeXLength) {
+        throw -1;
+      }
       nodeX[nodes++] = (int)(polyXY[i2] + (pixelY - polyXY[i2 + 1]) / (polyXY[j2 + 1] - polyXY[i2 + 1]) * (polyXY[j2] - polyXY[i2]));
     }
     j = i;
   }
 }
 
-void bubbleSort(int nodes, int nodeX[]) {
+void CConvertGeoJSON::bubbleSort(int nodes, int nodeX[], size_t nodeXLength) {
   //  Sort the nodes, via a simple “Bubble” sort.
   int i, swap;
   i = 0;
   while (i < nodes - 1) {
+    if (i + 1 >= nodeXLength) {
+      throw -1;
+    }
     if (nodeX[i] > nodeX[i + 1]) {
       swap = nodeX[i];
       nodeX[i] = nodeX[i + 1];
@@ -325,7 +87,8 @@ void CConvertGeoJSON::drawpolyWithHoles_index(int xMin, int yMin, int xMax, int 
 
   //  public-domain code by Darel Rex Finley, 2007
 
-  int nodes, nodeX[polyCorners * 2 + 1], pixelY, i;
+  size_t nodeXLength = polyCorners * 2 + 1;
+  int nodes, nodeX[nodeXLength], pixelY, i;
 
   if (xMin < 0) xMin = 0;
   if (yMin < 5) yMin = 0;
@@ -340,8 +103,8 @@ void CConvertGeoJSON::drawpolyWithHoles_index(int xMin, int yMin, int xMax, int 
   int scanLineWidth = IMAGE_RIGHT - IMAGE_LEFT;
 
   int cntLines = 0;
-//  int cntNodes = 0;
-//  int cntHoles = 0;
+  //  int cntNodes = 0;
+  //  int cntHoles = 0;
   int cntHoleLists = 0;
   // Allocate  scanline
   unsigned short scanline[scanLineWidth];
@@ -349,168 +112,79 @@ void CConvertGeoJSON::drawpolyWithHoles_index(int xMin, int yMin, int xMax, int 
   for (pixelY = IMAGE_TOP; pixelY < IMAGE_BOT; pixelY++) {
 
     cntLines++;
-    for (i = 0; i < scanLineWidth; i++) scanline[i] = 65535u;
-    buildNodeList(pixelY, nodes, nodeX, polyCorners, polyXY);
-//    cntNodes += nodes;
-    bubbleSort(nodes, nodeX);
+    for (i = 0; i < scanLineWidth; i++) scanline[i] = CCONVERTGEOJSON_FILL;
+    buildNodeList(pixelY, nodes, nodeX, polyCorners, polyXY, nodeXLength);
+    //    cntNodes += nodes;
+    bubbleSort(nodes, nodeX, nodeXLength);
     for (i = 0; i < nodes; i += 2) {
+      if (i + 1 >= nodeXLength) {
+        throw -1;
+      }
       int x1 = nodeX[i] - IMAGE_LEFT;
       int x2 = nodeX[i + 1] - IMAGE_LEFT;
       if (x1 < 0) x1 = 0;
       if (x2 > scanLineWidth) x2 = scanLineWidth;
       for (int j = x1; j < x2; j++) {
+        if (j >= scanLineWidth) {
+          throw -1;
+        }
         scanline[j] = value;
       }
     }
 
     for (int h = 0; h < holes; h++) {
-      buildNodeList(pixelY, nodes, nodeX, holeCorners[h], holeXY[h]);
+      buildNodeList(pixelY, nodes, nodeX, holeCorners[h], holeXY[h], nodeXLength);
       cntHoleLists++;
-//      cntHoles += holes;
-      bubbleSort(nodes, nodeX);
+      bubbleSort(nodes, nodeX, nodeXLength);
       for (i = 0; i < nodes; i += 2) {
         int x1 = nodeX[i] - IMAGE_LEFT;
         int x2 = nodeX[i + 1] - IMAGE_LEFT;
         if (x1 < 0) x1 = 0;
         if (x2 > scanLineWidth) x2 = scanLineWidth;
         for (int j = x1; j < x2; j++) {
-          scanline[j] = 65535u;
+          if (j >= scanLineWidth) {
+            throw -1;
+          }
+          scanline[j] = CCONVERTGEOJSON_FILL;
         }
       }
     }
     unsigned int startScanLineY = pixelY * w;
     for (i = IMAGE_LEFT; i < IMAGE_RIGHT; i++) {
-      if (scanline[i - IMAGE_LEFT] != 65535u) {
+      if (scanline[i - IMAGE_LEFT] != CCONVERTGEOJSON_FILL) {
+        if (i - IMAGE_LEFT >= scanLineWidth || i - IMAGE_LEFT < 0) {
+          throw -1;
+        }
+        if (i + startScanLineY > w * h) {
+          throw -1;
+        }
         imagedata[i + startScanLineY] = scanline[i - IMAGE_LEFT];
       }
     }
   }
-
-  //      CDBDebug("drawPoly %d %d %d %d %d", cntLines, cntNodes, cntHoles, cntHoleLists, cntCnt);
 };
-
-void CConvertGeoJSON::drawpoly2_index(unsigned short *imagedata, int w, int h, int polyCorners, float *polyXY, unsigned short value) {
-  //  public-domain code by Darel Rex Finley, 2007
-
-  int nodes, nodeX[polyCorners * 2 + 1], pixelY, i, j, swap;
-  int IMAGE_TOP = 0;
-  int IMAGE_BOT = h;
-  int IMAGE_LEFT = 0;
-  int IMAGE_RIGHT = w;
-
-  //  Loop through the rows of the image.
-  for (pixelY = IMAGE_TOP; pixelY < IMAGE_BOT; pixelY++) {
-
-    //  Build a list of nodes.
-    nodes = 0;
-    j = polyCorners - 1;
-    for (i = 0; i < polyCorners; i++) {
-      if ((polyXY[i * 2 + 1] < (double)pixelY && polyXY[j * 2 + 1] >= (double)pixelY) || (polyXY[j * 2 + 1] < (double)pixelY && polyXY[i * 2 + 1] >= (double)pixelY)) {
-        nodeX[nodes++] = (int)(polyXY[i * 2] + (pixelY - polyXY[i * 2 + 1]) / (polyXY[j * 2 + 1] - polyXY[i * 2 + 1]) * (polyXY[j * 2] - polyXY[i * 2]));
-      }
-      j = i;
-    }
-
-    //  Sort the nodes, via a simple “Bubble” sort.
-    i = 0;
-    while (i < nodes - 1) {
-      if (nodeX[i] > nodeX[i + 1]) {
-        swap = nodeX[i];
-        nodeX[i] = nodeX[i + 1];
-        nodeX[i + 1] = swap;
-        if (i) i--;
-      } else {
-        i++;
-      }
-    }
-
-    //  Fill the pixels between node pairs.
-    for (i = 0; i < nodes; i += 2) {
-      if (nodeX[i] >= IMAGE_RIGHT) break;
-      if (nodeX[i + 1] > IMAGE_LEFT) {
-        if (nodeX[i] < IMAGE_LEFT) nodeX[i] = IMAGE_LEFT;
-        if (nodeX[i + 1] > IMAGE_RIGHT) nodeX[i + 1] = IMAGE_RIGHT;
-        for (j = nodeX[i]; j < nodeX[i + 1]; j++) {
-          imagedata[int(j) + int(pixelY) * w] = value;
-        }
-      }
-    }
-  }
-}
-
-void CConvertGeoJSON::drawpoly(float *imagedata, int w, int h, int polyCorners, float *polyX, float *polyY, float value) {
-  //  public-domain code by Darel Rex Finley, 2007
-
-  int nodes, nodeX[polyCorners * 2 + 1], pixelY, i, j, swap;
-  int IMAGE_TOP = 0;
-  int IMAGE_BOT = h;
-  int IMAGE_LEFT = 0;
-  int IMAGE_RIGHT = w;
-
-  //  Loop through the rows of the image.
-  for (pixelY = IMAGE_TOP; pixelY < IMAGE_BOT; pixelY++) {
-
-    //  Build a list of nodes.
-    nodes = 0;
-    j = polyCorners - 1;
-    for (i = 0; i < polyCorners; i++) {
-      if ((polyY[i] < (double)pixelY && polyY[j] >= (double)pixelY) || (polyY[j] < (double)pixelY && polyY[i] >= (double)pixelY)) {
-        nodeX[nodes++] = (int)(polyX[i] + (pixelY - polyY[i]) / (polyY[j] - polyY[i]) * (polyX[j] - polyX[i]));
-      }
-      j = i;
-    }
-
-    //  Sort the nodes, via a simple “Bubble” sort.
-    i = 0;
-    while (i < nodes - 1) {
-      if (nodeX[i] > nodeX[i + 1]) {
-        swap = nodeX[i];
-        nodeX[i] = nodeX[i + 1];
-        nodeX[i + 1] = swap;
-        if (i) i--;
-      } else {
-        i++;
-      }
-    }
-
-    //  Fill the pixels between node pairs.
-    for (i = 0; i < nodes; i += 2) {
-      if (nodeX[i] >= IMAGE_RIGHT) break;
-      if (nodeX[i + 1] > IMAGE_LEFT) {
-        if (nodeX[i] < IMAGE_LEFT) nodeX[i] = IMAGE_LEFT;
-        if (nodeX[i + 1] > IMAGE_RIGHT) nodeX[i + 1] = IMAGE_RIGHT;
-        for (j = nodeX[i]; j < nodeX[i + 1]; j++) {
-          imagedata[int(j) + int(pixelY) * w] = value;
-        }
-      }
-    }
-  }
-}
 
 std::map<std::string, std::vector<Feature *>> CConvertGeoJSON::featureStore;
 
 void CConvertGeoJSON::clearFeatureStore() {
   for (std::map<std::string, std::vector<Feature *>>::iterator itf = featureStore.begin(); itf != featureStore.end(); ++itf) {
     std::string fileName = itf->first.c_str();
-    //          CDBDebug("Deleting %d features for %s", featureStore[fileName].size(), fileName.c_str());
     for (std::vector<Feature *>::iterator it = featureStore[fileName].begin(); it != featureStore[fileName].end(); ++it) {
-      //            CDBDebug("deleting %s", (*it)->getId().c_str());
       delete *it;
       *it = NULL;
     }
-    //            CDBDebug("Deleted %d features for %s", featureStore[fileName].size(), fileName.c_str());
   }
   featureStore.clear();
 }
 
-// Delete one set of features from the featureStore
+/**
+ * Delete one set of features from the featureStore
+ */
 void CConvertGeoJSON::clearFeatureStore(CT::string name) {
   for (std::map<std::string, std::vector<Feature *>>::iterator itf = featureStore.begin(); itf != featureStore.end(); ++itf) {
     std::string fileName = itf->first.c_str();
     if (fileName == name.c_str()) {
-      // CDBDebug("Deleting %d features ONLY for %s", featureStore[fileName].size(), fileName.c_str());
       for (std::vector<Feature *>::iterator it = featureStore[fileName].begin(); it != featureStore[fileName].end(); ++it) {
-        //                          CDBDebug("deleting %s", (*it)->getId().c_str());
         delete *it;
         *it = NULL;
       }
@@ -533,7 +207,7 @@ std::vector<Feature *> getPointFeatures(std::vector<Feature *> features) {
  * This function adjusts the cdfObject by creating virtual 2D variables
  */
 int CConvertGeoJSON::convertGeoJSONHeader(CDFObject *cdfObject) {
-  // Check whether this is really an ugrid file
+  // Check whether this is really a geojson file
   CDF::Variable *jsonVar;
   try {
     jsonVar = cdfObject->getVariable("jsoncontent");
@@ -546,13 +220,8 @@ int CConvertGeoJSON::convertGeoJSONHeader(CDFObject *cdfObject) {
   CDBDebug("Using CConvertGeoJSON.cpp");
 #endif
 
-  // Standard bounding box of adaguc data is worldwide
-  //    CDF::Variable *pointLon;
-  //    CDF::Variable *pointLat;
-
   jsonVar->readData(CDF_CHAR);
   CT::string inputjsondata = (char *)jsonVar->data;
-  //       CDBDebug("Reading JSON from [%d] %s %d", inputjsondata.length(), inputjsondata.c_str(),inputjsondata.charAt(inputjsondata.length()-1));
   json_value *json = json_parse((json_char *)inputjsondata.c_str(), inputjsondata.length());
 #ifdef CCONVERTGEOJSON_DEBUG
   CDBDebug("JSON result: %x", json);
@@ -678,7 +347,7 @@ void CConvertGeoJSON::addCDFInfo(CDFObject *cdfObject, CServerParams *, BBOX &df
   polygonIndexVar->setAttributeText("long_name", "Feature index");
   polygonIndexVar->setAttributeText("adaguc_data_type", "CConvertGeoJSON");
 
-  unsigned short f = 65535u;
+  unsigned short f = CCONVERTGEOJSON_FILL;
   polygonIndexVar->setAttribute("_FillValue", CDF_USHORT, &f, 1);
 
   //        std::vector<Feature*>::iterator sample=featureMap.begin();
@@ -1443,15 +1112,20 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
       CDF::allocateData(polygonIndexVar->getType(), &(polygonIndexVar->data), fieldSize);
 
       /* Determine the fillvalue */
-      dataObject->dfNodataValue = -1;
+      dataObject->dfNodataValue = CCONVERTGEOJSON_FILL;
+
       CDF::Attribute *fillValue = polygonIndexVar->getAttributeNE("_FillValue");
-      if (fillValue != NULL) {
-        dataObject->hasNodataValue = true;
-        fillValue->getData(&dataObject->dfNodataValue, 1);
-      } else {
+      if (fillValue == NULL) {
         polygonIndexVar->setAttribute("_FillValue", polygonIndexVar->getType(), dataObject->dfNodataValue);
+        fillValue = polygonIndexVar->getAttributeNE("_FillValue");
+        CDBDebug("Setting fill value to %f", dataObject->dfNodataValue);
       }
 
+      dataObject->hasNodataValue = true;
+      fillValue->getData(&dataObject->dfNodataValue, 1);
+
+      CDBDebug("polygonIndexVar type is %s", CDF::getCDFDataTypeName(polygonIndexVar->getType()).c_str());
+      CDBDebug("Fill value is %f", dataObject->dfNodataValue);
       /* Fill the data with the nodatavalue */
       CDF::fill(polygonIndexVar->data, polygonIndexVar->getType(), dataObject->dfNodataValue, fieldSize);
 
@@ -1487,7 +1161,7 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
       float min = NAN;
       float max = NAN;
 
-      for (it_type feature = features.begin(); feature != features.end(); ++feature) { // Loop over all features
+      for (auto feature = features.begin(); feature != features.end(); ++feature) { // Loop over all features
         std::map<std::string, FeatureProperty *> *featurePropertyMap = (*feature)->getFp();
         drawPolygons(*feature, featureIndex, dataSource, projectionRequired, &imageWarper, cellSizeX, cellSizeY, offsetX, offsetY);
         drawPoints(*feature, featureIndex, dataSource, projectionRequired, &imageWarper, cellSizeX, cellSizeY, offsetX, offsetY, min, max);
@@ -1574,8 +1248,8 @@ void CConvertGeoJSON::drawPolygons(Feature *feature, unsigned short int featureI
         maxX = MAX(maxX, tprojectedX);
         maxY = MAX(maxY, tprojectedY);
       } else {
-        dlat = CCONVERTUGRIDMESH_NODATA;
-        dlon = CCONVERTUGRIDMESH_NODATA;
+        dlat = CCONVERTGEOJSONCOORDS_NODATA;
+        dlon = CCONVERTGEOJSONCOORDS_NODATA;
       }
       projectedXY[j * 2] = dlon;
       projectedXY[j * 2 + 1] = dlat;
@@ -1603,8 +1277,8 @@ void CConvertGeoJSON::drawPolygons(Feature *feature, unsigned short int featureI
           dlon = int((tprojectedX - offsetX) / cellSizeX) + 1;
           dlat = int((tprojectedY - offsetY) / cellSizeY);
         } else {
-          dlat = CCONVERTUGRIDMESH_NODATA;
-          dlon = CCONVERTUGRIDMESH_NODATA;
+          dlat = CCONVERTGEOJSONCOORDS_NODATA;
+          dlon = CCONVERTGEOJSONCOORDS_NODATA;
         }
         projectedHoleXY[h][j * 2] = dlon;
         projectedHoleXY[h][j * 2 + 1] = dlat;

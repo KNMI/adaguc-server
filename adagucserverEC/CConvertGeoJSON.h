@@ -27,33 +27,29 @@
 #define CCONVERTGEOJSON_H
 #include "CDataSource.h"
 #include "CGeoJSONData.h"
-#include <map>
+#include "CImageWarper.h"
 #include "json.h"
 #include "CDebugger.h"
-#include "CImageWarper.h"
-
-typedef struct {
-  double llX;
-  double llY;
-  double urX;
-  double urY;
-} BBOX;
 
 class CConvertGeoJSON {
+public:
+  typedef struct {
+    double llX;
+    double llY;
+    double urX;
+    double urY;
+  } BBOX;
+
 private:
   DEF_ERRORFUNCTION();
-  typedef std::vector<Feature *>::iterator it_type;
+  static void buildNodeList(int pixelY, int &nodes, int nodeX[], int polyCorners, float *polyXY, size_t nodeXLength);
+  static void bubbleSort(int nodes, int nodeX[], size_t nodeXLength);
   static void getBBOX(CDFObject *cdfObject, BBOX &bbox, json_value &json, std::vector<Feature *> &features);
   static void getDimensions(CDFObject *cdfObject, json_value &json, bool openAll);
   static void getPolygons(json_value &j);
   static void addCDFInfo(CDFObject *cdfObject, CServerParams *srvParams, BBOX &dfBBOX, std::vector<Feature *> &featureMap, bool openAll);
-  static void drawpoly(float *imagedata, int w, int h, int polyCorners, float *polyX, float *polyY, float value);
-  static void drawpoly2(float *imagedata, int w, int h, int polyCorners, float *polyXY, float value);
-  static void drawpoly2_index(unsigned short *imagedata, int w, int h, int polyCorners, float *polyXY, unsigned short value);
-  static void drawpolyWithHoles(float *imagedata, int w, int h, int polyCorners, float *polyXY, float value, int holes, int *holeCorners, float *holeXY[]);
   static void drawpolyWithHoles_index(int xMin, int yMin, int xMax, int yMax, unsigned short *imagedata, int w, int h, int polyCorners, float *polyXY, unsigned short int value, int holes,
                                       int *holeCorners, float *holeXY[]);
-  static void drawpolyWithHoles_indexORG(unsigned short *imagedata, int w, int h, int polyCorners, float *polyXY, unsigned short int value, int holes, int *holeCorners, float *holeXY[]);
   static void drawDot(int px, int py, unsigned short v, int W, int H, unsigned short *grid);
   static void drawPolygons(Feature *feature, unsigned short int featureIndex, CDataSource *dataSource, bool projectionRequired, CImageWarper *imageWarper, double cellSizeX, double cellSizeY,
                            double offsetX, double offsetY);
