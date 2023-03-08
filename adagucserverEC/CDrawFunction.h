@@ -1,6 +1,7 @@
 #ifndef CDRAWFUNCTION
 #define CDRAWFUNCTION
 
+#include <cmath>
 #include <float.h>
 #include <pthread.h>
 #include "CDataSource.h"
@@ -37,17 +38,22 @@ public:
   CDrawImage *drawImage;
 };
 
-
 CDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawImage *drawImage, const CStyleConfiguration *styleConfiguration);
-
 
 template <class T> void setPixelInDrawImage(int x, int y, T val, CDrawFunctionSettings *settings) {
   bool isNodata = false;
 
   if (settings->hasNodataValue) {
-    if (val == settings->dfNodataValue) isNodata = true;
+    /*
+     * Casting the double dfNodataValue back to the precision of the data itself,
+     * to do a correct comparison to check if this value is a nodatavalue.
+     */
+    T noDataValue = (T)settings->dfNodataValue;
+    if (val == noDataValue) isNodata = true;
   }
-  if (!(val == val)) isNodata = true;
+
+  if (std::isnan(val)) isNodata = true;
+
   if (!isNodata)
     if (settings->legendValueRange)
       if (val < settings->legendLowerRange || val > settings->legendUpperRange) isNodata = true;

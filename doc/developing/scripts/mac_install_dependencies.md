@@ -47,7 +47,7 @@ pyenv virtualenv 3.9.13 adaguc
 pyenv activate adaguc
 
 # Install the required Python packages
-pip install flask flask-cors flask-caching gunicorn pytest marshmallow owslib pyproj==2.6.1 apispec apispec-webframeworks marshmallow-oneofschema defusedxml netcdf4
+pip install -r requirements.txt
 
 # Run the tests
 ./runtest.sh

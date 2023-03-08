@@ -42,11 +42,11 @@ function build {
   clean  
   cd $CURRENTDIR/bin
   
-  cmake .. &&  cmake  --build . --parallel -v 
+  cmake .. &&  cmake  --build . --parallel 4
 
   if [ -f adagucserver ]
     then
-    echo "[OK] ADAGUC has been succesfully compiled."
+    echo "[OK] ADAGUC has been successfully compiled."
     else
       echo "[FAILED] ADAGUC compilation failed"
       quit;

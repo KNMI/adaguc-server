@@ -376,7 +376,7 @@ bool CServerParams::checkResolvePath(const char *path, CT::string *resolvedPath)
         continue;
       }
 
-      if (baseDir != NULL && dirPrefix != NULL) {
+      if (strlen(baseDir) > 0 && strlen(dirPrefix) > 0) {
         // Prepend the prefix to make the absolute path
         CT::string pathToCheck;
         pathToCheck.print("%s/%s", dirPrefix, path);
@@ -397,7 +397,7 @@ bool CServerParams::checkResolvePath(const char *path, CT::string *resolvedPath)
           }
         }
       } else {
-        if (baseDir == NULL) {
+        if (strlen(baseDir)) {
           CDBDebug("basedir not defined");
         }
         if (dirPrefix == NULL) {

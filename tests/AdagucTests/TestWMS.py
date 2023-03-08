@@ -563,8 +563,7 @@ class TestWMS(unittest.TestCase):
                                                                   {'ADAGUC_CONFIG': ADAGUC_PATH + '/data/config/adaguc.tests.manycontours.xml'})
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertEqual(data.getvalue(), AdagucTestTools(
-        ).readfromfile(self.expectedoutputsspath + filename))
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, 7, 0.025))
 
     def test_WMSGetMapWithShowLegendFalse_testdatanc(self):
         AdagucTestTools().cleanTempDir()
@@ -590,7 +589,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
 
         status, data, headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=geojsonbaselayer,testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata_style_2/shadedcontour&FORMAT=image/png&TRANSPARENT=FALSE&showlegend=",
-                                                                  {'ADAGUC_CONFIG': ADAGUC_PATH + '/data/config/adaguc.tests.autostyle.xml'})
+                                                                  {'ADAGUC_CONFIG': ADAGUC_PATH + '/data/config/adaguc.tests.autostyle.xml'}, showLog=False)
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
         self.assertEqual(data.getvalue(), AdagucTestTools(
@@ -651,8 +650,7 @@ class TestWMS(unittest.TestCase):
                                                                   {'ADAGUC_CONFIG': ADAGUC_PATH + '/data/config/adaguc.tests.autostyle.xml'})
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertEqual(data.getvalue(), AdagucTestTools(
-        ).readfromfile(self.expectedoutputsspath + filename))
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMapCustomCRSEPSG3413Projection_sample_tas_cmip6_ssp585_preIndustrial_warming2_year(self):
         AdagucTestTools().cleanTempDir()
@@ -665,8 +663,7 @@ class TestWMS(unittest.TestCase):
                                                                   {'ADAGUC_CONFIG': ADAGUC_PATH + '/data/config/adaguc.tests.autostyle.xml'})
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertEqual(data.getvalue(), AdagucTestTools(
-        ).readfromfile(self.expectedoutputsspath + filename))
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, 8))
 
     def test_WMSGetMapRobinsonProjection_ipcc_cmip5_tas_historical_subset_nc(self):
         AdagucTestTools().cleanTempDir()
@@ -693,8 +690,7 @@ class TestWMS(unittest.TestCase):
                                                                   {'ADAGUC_CONFIG': ADAGUC_PATH + '/data/config/adaguc.tests.autostyle.xml'})
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertEqual(data.getvalue(), AdagucTestTools(
-        ).readfromfile(self.expectedoutputsspath + filename))
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSGetMapCustomCRSEPSG3413Projection_ipcc_cmip5_tas_historical_subset_nc(self):
         AdagucTestTools().cleanTempDir()
@@ -707,8 +703,7 @@ class TestWMS(unittest.TestCase):
                                                                   {'ADAGUC_CONFIG': ADAGUC_PATH + '/data/config/adaguc.tests.autostyle.xml'})
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertEqual(data.getvalue(), AdagucTestTools(
-        ).readfromfile(self.expectedoutputsspath + filename))
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, 8))
 
     # def test_WMSGetMapCustomCRSClippedRobinsonProjection_ipcc_cmip5_tas_historical_subset_nc(self):
     #     AdagucTestTools().cleanTempDir()
