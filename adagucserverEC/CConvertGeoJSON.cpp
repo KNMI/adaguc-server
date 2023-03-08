@@ -31,10 +31,7 @@
 #include "CConvertGeoJSON.h"
 #include "CImageWarper.h"
 #include "CFillTriangle.h"
-// #include <string>
-// #include <map>
-// #include <cstdlib>
-// #include <queue>
+
 // #define CCONVERTGEOJSON_DEBUG
 const char *CConvertGeoJSON::className = "CConvertGeoJSON";
 
@@ -46,7 +43,7 @@ void CConvertGeoJSON::buildNodeList(int pixelY, int &nodes, int nodeX[], int pol
   int i, j;
   int i2, j2;
   cntCnt++;
-  //  Build a list of nodes.
+  /*  Build a list of nodes. */
   nodes = 0;
   j = polyCorners - 1;
   for (i = 0; i < polyCorners; i++) {
@@ -97,18 +94,15 @@ void CConvertGeoJSON::drawpolyWithHoles_index(int xMin, int yMin, int xMax, int 
   int scanLineWidth = IMAGE_RIGHT - IMAGE_LEFT;
 
   int cntLines = 0;
-  //  int cntNodes = 0;
-  //  int cntHoles = 0;
   int cntHoleLists = 0;
-  // Allocate  scanline
+  /* Allocate  scanline */
   unsigned short scanline[scanLineWidth];
-  //  Loop through the rows of the image.
+  /* Loop through the rows of the image. */
   for (pixelY = IMAGE_TOP; pixelY < IMAGE_BOT; pixelY++) {
 
     cntLines++;
     for (i = 0; i < scanLineWidth; i++) scanline[i] = CCONVERTGEOJSON_FILL;
     buildNodeList(pixelY, nodes, nodeX, polyCorners, polyXY);
-    //    cntNodes += nodes;
     bubbleSort(nodes, nodeX);
     for (i = 0; i < nodes; i += 2) {
       int x1 = nodeX[i] - IMAGE_LEFT;
