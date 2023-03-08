@@ -10,7 +10,6 @@ gunicorn
 pytest
 marshmallow
 owslib
-pyproj==2.6.1
 apispec
 apispec-webframeworks
 marshmallow-oneofschema

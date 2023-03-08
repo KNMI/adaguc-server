@@ -55,11 +55,13 @@ def testadaguc():
         'EXTERNALADDRESS', baseurl) + "/adaguc-server?"
     adagucenv['ADAGUC_DB'] = os.getenv(
         'ADAGUC_DB', "user=adaguc password=adaguc host=localhost dbname=adaguc")
-
+    
     # Run adaguc-server
     # pylint: disable=unused-variable
     status, data, headers = adaguc_instance.runADAGUCServer(
-        url, env=adagucenv,  showLogOnError=False)
+        url, env=adagucenv,  showLogOnError=True)
+    if status != 0:
+        print(data.getvalue())
     assert status == 0
     assert headers == ['Content-Type:text/xml']
     logger.info("adaguc-server seems [OK]")
