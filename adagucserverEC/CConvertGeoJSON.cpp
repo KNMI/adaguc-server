@@ -43,7 +43,7 @@ void CConvertGeoJSON::buildNodeList(int pixelY, int &nodes, int nodeX[], int pol
   int i, j;
   int i2, j2;
   cntCnt++;
-  /*  Build a list of nodes. */
+  //  Build a list of nodes.
   nodes = 0;
   j = polyCorners - 1;
   for (i = 0; i < polyCorners; i++) {
@@ -95,9 +95,9 @@ void CConvertGeoJSON::drawpolyWithHoles_index(int xMin, int yMin, int xMax, int 
 
   int cntLines = 0;
   int cntHoleLists = 0;
-  /* Allocate  scanline */
+  // Allocate  scanline
   unsigned short scanline[scanLineWidth];
-  /* Loop through the rows of the image. */
+  // Loop through the rows of the image.
   for (pixelY = IMAGE_TOP; pixelY < IMAGE_BOT; pixelY++) {
 
     cntLines++;
@@ -1079,12 +1079,12 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
       CDBDebug("Drawing %s", polygonIndexVar->name.c_str());
 #endif
 
-      /* Allocate data for the 2D field */
+      // Allocate data for the 2D field
       size_t fieldSize = dataSource->dWidth * dataSource->dHeight;
       polygonIndexVar->setSize(fieldSize);
       CDF::allocateData(polygonIndexVar->getType(), &(polygonIndexVar->data), fieldSize);
 
-      /* Determine the fillvalue */
+      // Determine the fillvalue
       dataObject->dfNodataValue = CCONVERTGEOJSON_FILL;
 
       CDF::Attribute *fillValue = polygonIndexVar->getAttributeNE("_FillValue");
@@ -1097,9 +1097,7 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
       dataObject->hasNodataValue = true;
       fillValue->getData(&dataObject->dfNodataValue, 1);
 
-      // CDBDebug("polygonIndexVar type is %s", CDF::getCDFDataTypeName(polygonIndexVar->getType()).c_str());
-      // CDBDebug("Fill value is %f", dataObject->dfNodataValue);
-      /* Fill the data with the nodatavalue */
+      // Fill the data with the nodatavalue
       CDF::fill(polygonIndexVar->data, polygonIndexVar->getType(), dataObject->dfNodataValue, fieldSize);
 
 #ifdef MEASURETIME
@@ -1302,7 +1300,7 @@ void CConvertGeoJSON::drawPoints(Feature *feature, unsigned short int featureInd
     }
 
     for (std::vector<GeoPoint>::iterator itpoint = points->begin(); itpoint != points->end(); ++itpoint) {
-      /* Draw point */
+      // Draw point
       double pointLongitude = itpoint->getLon();
       double pointLatitude = itpoint->getLat();
       double tprojectedX = pointLongitude;
@@ -1317,11 +1315,11 @@ void CConvertGeoJSON::drawPoints(Feature *feature, unsigned short int featureInd
       }
       float f = isString ? NAN : pointValue.toFloat();
       dataObject->points.push_back(PointDVWithLatLon(dlon, dlat, pointLongitude, pointLatitude, f));
-      /* Draw indices of the points, corresponding to the featureindex in the geojson */
+      // Draw indices of the points, corresponding to the featureindex in the geojson
       if (pointGridVariable->getType() == CDF_USHORT) {
         drawDot(dlon, dlat, featureIndex, dataSource->dWidth, dataSource->dHeight, (unsigned short *)pointGridVariable->data);
       }
-      /* Draw values of the points */
+      // Draw values of the points
       if (pointGridVariable->getType() == CDF_FLOAT) {
         if (f < min || min != min) min = f;
         if (f > max || max != max) max = f;
@@ -1330,7 +1328,7 @@ void CConvertGeoJSON::drawPoints(Feature *feature, unsigned short int featureInd
         }
       }
       PointDVWithLatLon *lastPoint = &(dataObject->points.back());
-      /* Get the last pushed point from the array and push the character text data in the paramlist */
+      // Get the last pushed point from the array and push the character text data in the paramlist
       lastPoint->paramList.push_back(CKeyValue(pointName.c_str(), pointDescription.c_str(), pointValue.c_str()));
     }
   }
