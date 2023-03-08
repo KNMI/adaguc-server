@@ -715,7 +715,7 @@ int CImgWarpBilinear::set(const char *pszSettings) {
         float lineWidth = 1;
         CColor linecolor = CColor(0, 0, 0, 255);
         CColor textcolor = CColor(0, 0, 0, 255);
-        CColor textstrokecolor = CColor(0, 0, 0, 255);
+        CColor textstrokecolor = CColor(0, 0, 0, 0);
 
         float interval = 0;
         float fontSize = 0;

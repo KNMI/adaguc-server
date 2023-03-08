@@ -876,9 +876,11 @@ void CDrawImage::setText(const char *text, size_t length, int x, int y, CColor c
 
 void CDrawImage::setTextStroke(int x, int y, float angle, const char *text, const char *fontFile, float fontSize, CColor bgcolor, CColor fgcolor) {
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    // Not yet supported...
-    // setText(text, length, x, y, fgcolor, fontSize);
-    cairo->drawStrokedText(x, y, -angle, text, fontFile, fontSize * 1.4, bgcolor, fgcolor);
+    if (bgcolor.a == 0) {
+      drawText(x, y, fontFile, fontSize, angle, text, fgcolor);
+    } else {
+      cairo->drawStrokedText(x, y, -angle, text, fontFile, fontSize * 1.4, bgcolor, fgcolor);
+    }
   } else {
     int fgColorIndex = getClosestGDColor(fgcolor.r, fgcolor.g, fgcolor.b);
     int bgColorIndex = getClosestGDColor(bgcolor.r, bgcolor.g, bgcolor.b);
