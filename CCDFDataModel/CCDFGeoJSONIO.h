@@ -37,8 +37,8 @@
 #include "CCDFReader.h"
 #include "CDebugger.h"
 
-#define CCDFGEOJSONIO_DEBUG
-#define CCDFGEOJSONIO_DEBUG_OPEN
+// #define CCDFGEOJSONIO_DEBUG
+// #define CCDFGEOJSONIO_DEBUG_OPEN
 
 class CDFGeoJSONReader : public CDFReader {
 private:

@@ -39,7 +39,6 @@ namespace CT {
 
     const char *constdata;
     char *voldata;
-    char stackValue[CTSTRINGREFSTACKLENGTH + 1];
     size_t _length;
 
   public:

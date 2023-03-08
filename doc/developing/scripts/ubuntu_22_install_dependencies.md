@@ -56,6 +56,7 @@ ls ${CUSTOMLIBS}/lib -l $ should list lib .so files
 export LD_LIBRARY_PATH=${CUSTOMLIBS}/lib:$LD_LIBRARY_PATH
 export PATH=${CUSTOMLIBS}/bin:$PATH
 export PROJ_ROOT=${CUSTOMLIBS}
+export PROJ_LIBRARY=${CUSTOMLIBS}
 export LDFLAGS=-L${CUSTOMLIBS}/lib
 export CPPFLAGS=-I${CUSTOMLIBS}/include
 export GDAL_INCLUDE_DIR=${CUSTOMLIBS}/include
