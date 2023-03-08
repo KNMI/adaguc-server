@@ -41,7 +41,6 @@
 #include "CServerError.h"
 #include "CServerConfig_CPPXSD.h"
 #include <math.h>
-// #include <png.h>
 #include <gd.h>
 #include "gdfontl.h"
 #include "gdfonts.h"
@@ -86,12 +85,12 @@ public:
   void parse(const char *color) {
     size_t l = strlen(color);
 
-    if (color[0] == '#' && l == 7) {
+    if (l == 7 && color[0] == '#') {
       r = CSERVER_HEXDIGIT_TO_DEC(color[1]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[2]);
       g = CSERVER_HEXDIGIT_TO_DEC(color[3]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[4]);
       b = CSERVER_HEXDIGIT_TO_DEC(color[5]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[6]);
       a = 255;
-    } else if (color[0] == '#' && l == 9) {
+    } else if (l == 9 && color[0] == '#') {
       r = CSERVER_HEXDIGIT_TO_DEC(color[1]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[2]);
       g = CSERVER_HEXDIGIT_TO_DEC(color[3]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[4]);
       b = CSERVER_HEXDIGIT_TO_DEC(color[5]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[6]);

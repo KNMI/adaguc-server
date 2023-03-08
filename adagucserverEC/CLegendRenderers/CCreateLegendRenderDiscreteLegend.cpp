@@ -138,8 +138,8 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
     for (size_t j = 0; j < styleConfiguration->shadeIntervals->size(); j++) {
       CServerConfig::XMLE_ShadeInterval *s = (*styleConfiguration->shadeIntervals)[j];
       if (s->attr.min.empty() == false && s->attr.max.empty() == false) {
-        int cY1 = int(cbH - (float(j) * blockHeight) * scaling);
-        int cY2 = int(cbH - (((float(j + 1) * blockHeight) - 2)) * scaling);
+        int cY1 = int(cbH - ((j)*blockHeight) * scaling);
+        int cY2 = int(cbH - ((((j + 1) * blockHeight) - 2)) * scaling);
         CColor color;
         if (s->attr.fillcolor.empty() == false) {
           color = CColor(s->attr.fillcolor.c_str());
