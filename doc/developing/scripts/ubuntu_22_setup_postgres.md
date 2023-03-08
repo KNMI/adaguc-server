@@ -6,6 +6,7 @@
 #/bin/bash
 
 ### Setup postgres database for user adaguc and password adaguc, databasename adaguc ###
+sudo service postgresql start
 sudo -u postgres createuser --superuser adaguc
 sudo -u postgres psql postgres -c "ALTER USER adaguc PASSWORD 'adaguc';"
 sudo -u postgres psql postgres -c "CREATE DATABASE adaguc;"
